@@ -30,3 +30,31 @@
 *.exe
 *.out
 *.app
+
+# User-specific files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+OnBoardFlash.dat.*
+
+# VisualGDB Specific Files
+[Cc]ode[Dd][Bb]
+[Vv]isual[Gg][Dd][Bb][Cc]ache
+*.old
+
+# MAC Stuff
+.DS_Store
+*.DS_Store
