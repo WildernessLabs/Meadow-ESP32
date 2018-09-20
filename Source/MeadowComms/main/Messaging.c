@@ -10,30 +10,6 @@
 #include "MeshNetworkTask.h"
 
 /// <summary>
-///     Handle for the transmit handle for the UART.
-/// </summary>
-/// <remarks>
-///     The UART transmit queue is used to hold data from tasks ready to
-///     send the data to the UART.
-/// </remarks>
-QueueHandle_t UARTTransmitQueueHandle = NULL;
-
-/// <summary>
-///     Handle for the WiFi messages to be processed by the WIFi task.
-/// </summary>
-QueueHandle_t WiFiQueueHandle;
-
-/// <summary>
-///     Handle for the Bluetooth messages to be processed by the WiFi task.
-/// </summary>
-QueueHandle_t BluetoothQueueHandle;
-
-/// <summary>
-///     Handle for the Mesh network messages to be processed by the Mesh network task.
-/// </summary>
-QueueHandle_t MeshNetworkQueueHandle;
-
-/// <summary>
 ///     Set up the message queues.
 /// </summary>
 void SetupMessageQueues()
@@ -105,4 +81,33 @@ uint8_t CRC8(const uint8_t *data, uint16_t len)
         }
     }
     return(crc);
+}
+
+/// <summary>
+///     Calculate the 32-bit CRC of a buffer of data.
+/// </summary>
+uint32_t CRC32(const uint8_t *data, uint16_t len)
+{
+    uint32_t crc = CRC32_SEED;
+
+    for (uint16_t byteCounter = 0; byteCounter < len; byteCounter++)
+    {
+        crc = ProgressiveCRC32(crc, data[byteCounter]);
+    }
+    return (crc);
+}
+
+/// <summary>
+///     Calculate the CRC32 value change for the specified byte.
+/// </summary>
+uint32_t ProgressiveCRC32(uint32_t currentChecksum, uint8_t byte)
+{
+    uint32_t crc = currentChecksum;
+    crc ^= byte;
+    for (uint32_t index = 0; index < 8; index++)
+    {
+        uint32_t mask = (uint32_t) -(crc & 0x01);
+        crc = (crc >> 1) ^ (0xedb88320 & mask);
+    }
+    return (crc);
 }
