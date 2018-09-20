@@ -5,24 +5,57 @@
 #include "freertos/queue.h"
 #include "stdlib.h"
 
-#define TM_HEADER_BYTE0     0
-#define TM_HEADER_BYTE1     1
-#define TM_INTERFACE        2
-#define TM_FUNCTION_BYTE0   3
-#define TM_FUNCTION_BYTE1   4
-#define TM_FUNCTION_BYTE2   5
-#define TM_FUNCTION_BYTE3   6
-#define TM_CRC              7
-#define TM_LENGTH_BYTE0     8
-#define TM_LENGTH_BYTE1     9
-#define TM_PAYLOAD_START    10
+//
+//  The definitions below equate to a structure with the following layout:
+//
+//  struct IncomingMessage
+//  {
+//      uint8_t interface;
+//      uint32_t messageID;
+//      uint32_t function;
+//      uint32_t sequenceNumber;
+//      uint8_t crc;
+//      UINT8_t messageLength
+//      uint16_t payloadLength;
+//      uint8_t payload[payloadLength];
+//  }
+//  
+//  This is the format of the data being sent from the STM32 to the ESP32.
+//
+#define TM_INTERFACE                (0)
+#define TM_FUNCTION_BYTE0           (TM_INTERFACE + 1)
+#define TM_FUNCTION_BYTE1           (TM_FUNCTION_BYTE0 + 1)
+#define TM_FUNCTION_BYTE2           (TM_FUNCTION_BYTE1 + 1)
+#define TM_FUNCTION_BYTE3           (TM_FUNCTION_BYTE2 + 1)
+#define TM_MESSAGE_ID_BYTE0         (TM_FUNCTION_BYTE3 + 1)
+#define TM_MESSAGE_ID_BYTE1         (TM_MESSAGE_ID_BYTE0 + 1)
+#define TM_MESSAGE_ID_BYTE2         (TM_MESSAGE_ID_BYTE1 + 1)
+#define TM_MESSAGE_ID_BYTE3         (TM_MESSAGE_ID_BYTE2 + 1)
+#define TM_SEQUENCE_NUMBER_BYTE0    (TM_MESSAGE_ID_BYTE3 + 1)
+#define TM_SEQUENCE_NUMBER_BYTE1    (TM_SEQUENCE_NUMBER_BYTE0 + 1)
+#define TM_SEQUENCE_NUMBER_BYTE2    (TM_SEQUENCE_NUMBER_BYTE1 + 1)
+#define TM_SEQUENCE_NUMBER_BYTE3    (TM_SEQUENCE_NUMBER_BYTE2 + 1)
+#define TM_HEADER_CRC               (TM_SEQUENCE_NUMBER_BYTE3 + 1)
+#define TM_PAYLOAD_CRC              (TM_HEADER_CRC + 1)
+#define TM_PAYLOAD_LENGTH_BYTE0     (TM_PAYLOAD_CRC + 1)
+#define TM_PAYLOAD_LENGTH_BYTE1     (TM_PAYLOAD_LENGTH_BYTE0 + 1)
+#define TM_PAYLOAD_START            (TM_PAYLOAD_LENGTH_BYTE1 + 1)
 
-#define FUNC_WIFI           0
-#define FUNC_BLUETOOTH      1
-#define FUNC_MESH_NETWORK   2
-#define FUNC_SYSTEM         3
+#define TM_HEADER_LENGTH            (TM_PAYLOAD_START)
 
-#define MAX_QUEUE_LENGTH    5
+//
+//  Available interfaces.
+//
+#define INTERFACE_WIFI                  (0)
+#define INTERFACE_BLUETOOTH             (1)
+#define INTERFACE_MESH_NETWORK          (2)
+#define INTERFACE_SYSTEM                (3)
+#define INTERFACE_MAX                   (3)
+
+//
+//  Length of the queues for the interfaces.
+//
+#define MAX_QUEUE_LENGTH            (5)
 
 /// <summary>
 ///     Handle for the transmit handle for the UART.
@@ -60,8 +93,41 @@ struct TaskMessage
 {
     uint8_t interface;
     uint32_t function;
+    uint32_t messageID;
     uint16_t payloadLength;
     uint8_t *payload;
+    uint8_t payloadCRC;
+};
+
+#define RM_INTERFACE                (0)
+#define RM_RESPONSE_CODE_BYTE0      (RM_INTERFACE + 1)
+#define RM_RESPONSE_CODE_BYTE1      (RM_RESPONSE_CODE_BYTE0 + 1)
+#define RM_RESPONSE_CODE_BYTE2      (RM_RESPONSE_CODE_BYTE1 + 1)
+#define RM_RESPONSE_CODE_BYTE3      (RM_RESPONSE_CODE_BYTE2 + 1)
+#define RM_MESSAGE_ID_BYTE0         (RM_RESPONSE_CODE_BYTE3 + 1)
+#define RM_MESSAGE_ID_BYTE1         (RM_MESSAGE_ID_BYTE0 + 1)
+#define RM_MESSAGE_ID_BYTE2         (RM_MESSAGE_ID_BYTE1 + 1)
+#define RM_MESSAGE_ID_BYTE3         (RM_MESSAGE_ID_BYTE2 + 1)
+#define RM_PAYLOAD_LENGTH_BYTE0     (RM_MESSAGE_ID_BYTE3 + 1)
+#define RM_PAYLOAD_LENGTH_BYTE1     (RM_PAYLOAD_LENGTH_BYTE0 + 1)
+#define RM_HEADER_CRC               (RM_PAYLOAD_LENGTH_BYTE1 + 1)
+#define RM_PAYLOAD_CRC              (RM_HEADER_CRC + 1)
+#define RM_HEADER_LENGTH            (RM_PAYLOAD_CRC + 1)
+
+#define CRC32_SEED                  (0xffffffff)
+
+/// <summary>
+///     
+/// </summary>
+struct Response
+{
+    uint8_t interface;
+    uint32_t code;
+    uint32_t messageID;
+    uint8_t payload;
+    uint16_t payloadLength;
 };
 
 extern uint8_t CRC8(const uint8_t *, uint16_t);
+extern uint32_t CRC32(const uint8_t *, uint16_t);
+extern uint32_t ProgressiveCRC32(uint32_t, uint8_t);

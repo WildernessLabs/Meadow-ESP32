@@ -4,15 +4,52 @@
 #pragma once
 
 //
-//  Number of bytes in the receive buffer.
+//  Number of bytes in the Rx and Tx buffers.
 //
 static const int RX_BUF_SIZE = 1024;
+static const int TX_BUF_SIZE = 1024;
 
 //
 //  Which pins are used UART.
 //
 #define TXD_PIN (GPIO_NUM_4)
 #define RXD_PIN (GPIO_NUM_5)
+
+//
+//  UART used for communication with the STM32.
+//
+#define STM32_UART_NUMBER (UART_NUM_1)
+
+//
+//  A repeating pattern of the character indicates a start of message.
+//
+#define START_OF_FRAME_CHARACTER    (0xaa)
+
+//
+//  Character marking the end of a data frame.
+//
+#define END_OF_FRAME_CHARACTER      (0x55)
+
+//
+//  The filler character is used to send a sequence of Start of Frame
+//  characters in the binary data.
+//
+#define FILLER_CHARACTER            (0x55)
+
+//
+//  Number of characters to be used in the pattern matching.
+//
+#define NUMBER_OF_PATTERN_CHARACTERS    (3)
+
+//
+//  Length of the queue used for pattern matching.
+//
+#define PATTERN_QUEUE_LENGTH (10)
+
+//
+//  Handle for the queue dealing with the incoming messages.
+//
+extern QueueHandle_t UARTRxQueueHandle;
 
 //
 //  Handle for the UART receive task.
@@ -33,6 +70,19 @@ extern char *UART_RX_TASK_NAME;
 //  Friendly name for the transmit task (used for logging).
 //
 extern char *UART_TX_TASK_NAME;
+
+//
+//  Communication states for the UART.
+//
+enum CommunicationStates
+{
+    StartOfFrame = 0,
+    FrameType,
+    Length,
+    Payload,
+    CRC,
+    EndOfFrame
+};
 
 //
 //  Function prototypes
