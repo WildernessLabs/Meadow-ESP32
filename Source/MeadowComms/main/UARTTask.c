@@ -52,13 +52,9 @@ char *UART_RX_TASK_NAME = "UART_RX_TASK";
 /// </summary>
 char *UART_TX_TASK_NAME = "UART_TX_TASK";
 
-/// <summary>
-/// </summary>
-static uint8_t *rxBuffer = NULL;
-
-static uint8_t *currentRxBufferPointer = NULL;
-
 static int bytesRemaining = 0;
+
+static uint8_t *nextPayloadLocation;
 
 static struct TaskMessage messageHeader;
 
@@ -117,47 +113,6 @@ void UARTTxTask(void *pvParameters)
     //  should we get here.
     //
     vTaskDelete(xUARTTransmitTaskHandle);
-}
-
-/// <summary>
-///     Decode the incoming data packet and work out if the data can be queued.
-/// </summary>
-uint32_t DecodeHeader(uint8_t *packet, uint16_t length)
-{
-    uint32_t result = ERR_OK;
-
-    //
-    //  The data packets from the sender will have an embedded CRC in the header.  The
-    //  original CRC will have been calculated with the CRC byte in the header set to 0
-    //  so extract the CRC value but then set the CRC in the header to 0 so that we can
-    //  check the CRC.
-    //
-    uint8_t crc = packet[TM_HEADER_CRC + NUMBER_OF_PATTERN_CHARACTERS];
-    packet[TM_HEADER_CRC + NUMBER_OF_PATTERN_CHARACTERS] = 0;
-    if (crc != CRC8(packet, length))
-    {
-        result = ERR_CRC_ERROR;
-    }
-    else
-    {
-        //
-        //  We now know that the data recieved is valid so start to extract the message.
-        //
-        messageHeader.interface = *(packet + NUMBER_OF_PATTERN_CHARACTERS);
-        if (messageHeader.interface > INTERFACE_MAX)
-        {
-            result = ERR_INVALID_INTERFACE;
-        }
-        else
-        {
-            messageHeader.function = ExtractUInt32(packet + TM_FUNCTION_BYTE0 + NUMBER_OF_PATTERN_CHARACTERS);
-            messageHeader.messageID = ExtractUInt32(packet + TM_MESSAGE_ID_BYTE0 + NUMBER_OF_PATTERN_CHARACTERS);
-            messageHeader.payloadLength = ExtractUInt16(packet + TM_PAYLOAD_LENGTH_BYTE0 + NUMBER_OF_PATTERN_CHARACTERS);
-            messageHeader.payloadCRC = packet[TM_PAYLOAD_CRC + NUMBER_OF_PATTERN_CHARACTERS];
-        }
-    }
-
-    return (result);
 }
 
 /// <summary>
@@ -229,12 +184,131 @@ void InvalidFrame(uint8_t frameType)
 }
 
 /// <summary>
+///     Reset the message header and delete the message body storage.
+/// <summary>
+void ResetIncomingMessage(bool releasePayloadMemory)
+{
+    messageHeader.interface = 0;
+    messageHeader.function = 0;
+    messageHeader.messageID = 0;
+    if ((messageHeader.payload != NULL) && releasePayloadMemory)
+    {
+        vPortFree(messageHeader.payload);
+    }
+    messageHeader.payload = NULL;
+    messageHeader.payloadLength = 0;
+    bytesRemaining  = 0;
+    nextPayloadLocation = NULL;
+}
+
+/// <summary>
+///     Send a positive or negative acknowledgement along with a response code.
+/// </summary>
+void AcknowledgeFrame(uint8_t ackNak, uint32_t status)
+{
+}
+
+/// <summary>
+///     Process an application header packet.
+/// </summary>
+/// <remarks>
+///     Put packet definition here.
+/// </remarks>
+void ProcessHeader(uint8_t *packet, uint8_t packetLength)
+{
+    if (packetLength != TM_HEADER_LENGTH)
+    {
+        ESP_LOGI(UART_RX_TASK_NAME, "Invalid header legth: %d", packetLength);
+        AcknowledgeFrame(MSG_NAK, ERR_INVALID_HEADER);
+    }
+    else
+    {
+        ResetIncomingMessage(true);
+        messageHeader.interface = packet[0];
+        messageHeader.function = ExtractUInt32(packet + TM_FUNCTION_BYTE0);
+        messageHeader.messageID = ExtractUInt32(packet + TM_MESSAGE_ID_BYTE0);
+        bytesRemaining = ExtractUInt16(packet + TM_PAYLOAD_LENGTH_BYTE0);
+        messageHeader.payloadLength = bytesRemaining;
+        if (messageHeader.payloadLength > 0)
+        {
+            messageHeader.payload = pvPortMalloc(messageHeader.payloadLength);
+        }
+        else
+        {
+            messageHeader.payload = NULL;
+        }
+        nextPayloadLocation = messageHeader.payload;
+        AcknowledgeFrame(MSG_ACK, ERR_OK);
+    }
+}
+/// <summary>
+///     Process an application data packet.
+/// </summary>
+void ProcessData(uint8_t *packet, uint8_t packetLength)
+{
+    if ((nextPayloadLocation != NULL) && (bytesRemaining > 0) && (packetLength <= bytesRemaining))
+    {
+        memcpy(nextPayloadLocation, packet, packetLength);
+        nextPayloadLocation += packetLength;
+        bytesRemaining -= packetLength;
+        if (bytesRemaining == 0)
+        {
+            QueueMessage();
+            ResetIncomingMessage(false);
+            ESP_LOGI(UART_RX_TASK_NAME, "Message received and queued.");
+        }
+        AcknowledgeFrame(MSG_ACK, ERR_OK);
+    }
+    else
+    {
+        ESP_LOGI(UART_RX_TASK_NAME, "Unexpected message data bytes (%d received, %d expected)", packetLength, bytesRemaining);
+        AcknowledgeFrame(MSG_NAK, ERR_UNEXPECTED_DATA);
+    }
+}
+
+/// <summary>
 ///     
 /// </summary>
 void ValidFrame(uint8_t frameType, uint8_t *packet, uint8_t packetLength)
 {
     ESP_LOGI(UART_RX_TASK_NAME, "Valid frame detected.");
     ESP_LOG_BUFFER_HEXDUMP(UART_RX_TASK_NAME, packet, packetLength, ESP_LOG_INFO);
+    if (frameType & PKT_TRANSPORT)
+    {
+        switch (frameType & 0x2f)
+        {
+            case TRANSPORT_ACK:
+                //
+                //  Delete any packets waiting to be sent.
+                //
+                break;
+            case TRANSPORT_NAK:
+                //
+                //  Resend the message.
+                //
+                break;
+            case TRANSPORT_RESET:
+                //
+                //  Reset the interface back to power on.
+                //
+                ResetIncomingMessage(true);
+                break;
+        }
+    }
+    else
+    {
+        //
+        //  Application data packets are either header or data packets.
+        //
+        if (frameType & DATA_HEADER)
+        {
+            ProcessHeader(packet, packetLength);
+        }
+        else
+        {
+            ProcessData(packet, packetLength);
+        }
+    }
 }
 
 /// <summary>
