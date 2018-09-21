@@ -1,5 +1,8 @@
 #pragma once
 
+#define MSG_ACK                 (0)
+#define MSG_NAK                 (1)
+
 //
 //  Error codes.
 //
@@ -11,3 +14,4 @@
 #define ERR_QUEUE_ERROR         (5)
 #define ERR_INVALID_PACKET      (6)
 #define ERR_INVALID_HEADER      (7)
+#define ERR_UNEXPECTED_DATA     (8)

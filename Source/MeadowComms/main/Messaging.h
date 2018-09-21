@@ -5,43 +5,6 @@
 #include "freertos/queue.h"
 #include "stdlib.h"
 
-//
-//  The definitions below equate to a structure with the following layout:
-//
-//  struct IncomingMessage
-//  {
-//      uint8_t interface;
-//      uint32_t messageID;
-//      uint32_t function;
-//      uint32_t sequenceNumber;
-//      uint8_t crc;
-//      UINT8_t messageLength
-//      uint16_t payloadLength;
-//      uint8_t payload[payloadLength];
-//  }
-//  
-//  This is the format of the data being sent from the STM32 to the ESP32.
-//
-#define TM_INTERFACE                (0)
-#define TM_FUNCTION_BYTE0           (TM_INTERFACE + 1)
-#define TM_FUNCTION_BYTE1           (TM_FUNCTION_BYTE0 + 1)
-#define TM_FUNCTION_BYTE2           (TM_FUNCTION_BYTE1 + 1)
-#define TM_FUNCTION_BYTE3           (TM_FUNCTION_BYTE2 + 1)
-#define TM_MESSAGE_ID_BYTE0         (TM_FUNCTION_BYTE3 + 1)
-#define TM_MESSAGE_ID_BYTE1         (TM_MESSAGE_ID_BYTE0 + 1)
-#define TM_MESSAGE_ID_BYTE2         (TM_MESSAGE_ID_BYTE1 + 1)
-#define TM_MESSAGE_ID_BYTE3         (TM_MESSAGE_ID_BYTE2 + 1)
-#define TM_SEQUENCE_NUMBER_BYTE0    (TM_MESSAGE_ID_BYTE3 + 1)
-#define TM_SEQUENCE_NUMBER_BYTE1    (TM_SEQUENCE_NUMBER_BYTE0 + 1)
-#define TM_SEQUENCE_NUMBER_BYTE2    (TM_SEQUENCE_NUMBER_BYTE1 + 1)
-#define TM_SEQUENCE_NUMBER_BYTE3    (TM_SEQUENCE_NUMBER_BYTE2 + 1)
-#define TM_HEADER_CRC               (TM_SEQUENCE_NUMBER_BYTE3 + 1)
-#define TM_PAYLOAD_CRC              (TM_HEADER_CRC + 1)
-#define TM_PAYLOAD_LENGTH_BYTE0     (TM_PAYLOAD_CRC + 1)
-#define TM_PAYLOAD_LENGTH_BYTE1     (TM_PAYLOAD_LENGTH_BYTE0 + 1)
-#define TM_PAYLOAD_START            (TM_PAYLOAD_LENGTH_BYTE1 + 1)
-
-#define TM_HEADER_LENGTH            (TM_PAYLOAD_START)
 
 //
 //  Available interfaces.
@@ -86,6 +49,43 @@ extern QueueHandle_t MeshNetworkQueueHandle;
 /// </summary>
 extern void SetupMessageQueues();
 
+//
+//  Bit masks for transport and data packets.
+//
+#define PKT_DATA                    (0x80)
+#define PKT_TRANSPORT               (0x40)
+
+//
+//  Transport (UART) packet commands.
+//
+#define TRANSPORT_ACK               (0x01)
+#define TRANSPORT_NAK               (0x02)
+#define TRANSPORT_RESET             (0x04)
+
+//
+//  Data packet types.
+//
+#define DATA_HEADER                 (0x01)
+#define DATA_PAYLOAD                (0x02)
+
+#define UART_MESSAGE_HEADER_SIZE    (2)
+
+//  
+//  This is the format of the data being sent from the STM32 to the ESP32.
+//
+#define TM_INTERFACE                (0)
+#define TM_FUNCTION_BYTE0           (TM_INTERFACE + 1)
+#define TM_FUNCTION_BYTE1           (TM_FUNCTION_BYTE0 + 1)
+#define TM_FUNCTION_BYTE2           (TM_FUNCTION_BYTE1 + 1)
+#define TM_FUNCTION_BYTE3           (TM_FUNCTION_BYTE2 + 1)
+#define TM_MESSAGE_ID_BYTE0         (TM_FUNCTION_BYTE3 + 1)
+#define TM_MESSAGE_ID_BYTE1         (TM_MESSAGE_ID_BYTE0 + 1)
+#define TM_MESSAGE_ID_BYTE2         (TM_MESSAGE_ID_BYTE1 + 1)
+#define TM_MESSAGE_ID_BYTE3         (TM_MESSAGE_ID_BYTE2 + 1)
+#define TM_PAYLOAD_LENGTH_BYTE0     (TM_MESSAGE_ID_BYTE3 + 1)
+#define TM_PAYLOAD_LENGTH_BYTE1     (TM_PAYLOAD_LENGTH_BYTE0 + 1)
+#define TM_HEADER_LENGTH            (TM_PAYLOAD_LENGTH_BYTE1 + 1)
+
 /// <summary>
 ///     
 /// </summary>
@@ -96,7 +96,6 @@ struct TaskMessage
     uint32_t messageID;
     uint16_t payloadLength;
     uint8_t *payload;
-    uint8_t payloadCRC;
 };
 
 #define RM_INTERFACE                (0)
