@@ -225,9 +225,9 @@ void ProcessHeader(uint8_t *packet, uint8_t packetLength)
     {
         ResetIncomingMessage(true);
         messageHeader.interface = packet[0];
-        messageHeader.function = ExtractUInt32(packet + TM_FUNCTION_BYTE0);
-        messageHeader.messageID = ExtractUInt32(packet + TM_MESSAGE_ID_BYTE0);
-        bytesRemaining = ExtractUInt16(packet + TM_PAYLOAD_LENGTH_BYTE0);
+        messageHeader.function = ExtractUInt32(packet + TM_FUNCTION);
+        messageHeader.messageID = ExtractUInt32(packet + TM_MESSAGE_ID);
+        bytesRemaining = ExtractUInt16(packet + TM_PAYLOAD_LENGTH);
         messageHeader.payloadLength = bytesRemaining;
         if (messageHeader.payloadLength > 0)
         {
@@ -254,6 +254,15 @@ void ProcessData(uint8_t *packet, uint8_t packetLength)
         if (bytesRemaining == 0)
         {
             QueueMessage();
+            //
+            //  It is important NOT to release the memory containing the payload
+            //  as the pointer to the payload has been copied into the queue for
+            //  the appropriate interface.
+            //
+            //  It is the responsibility of the queue handler to release the payload
+            //  memory when the handler has finished processing the message.
+            //  Releasing the memory here will corrupt the heap.
+            //
             ResetIncomingMessage(false);
             ESP_LOGI(UART_RX_TASK_NAME, "Message received and queued.");
         }
@@ -327,7 +336,9 @@ void UARTRxTask(void *pvParameters)
     static uint8_t packetIndex = 0;
     static uint32_t checksum = 0;
     static uint32_t calculatedChecksum;
-    static int crcByteNumber = 0;
+    static int byteNumber = 0;
+    static uint32_t messageID = 0;
+    static uint8_t sequenceNumber = 0;
     
     while (true)
     {
@@ -379,8 +390,23 @@ void UARTRxTask(void *pvParameters)
                                     break;
                                 case FrameType:
                                     frameType = byte;
-                                    communicationState = Length;
+                                    communicationState = MessageID;
                                     calculatedChecksum = CRC32_SEED;
+                                    calculatedChecksum = ProgressiveCRC32(calculatedChecksum, byte);
+                                    byteNumber = 0;
+                                    break;
+                                case MessageID:
+                                    messageID |= (byte << (byteNumber * 8));
+                                    byteNumber++;
+                                    if (byteNumber == 4)
+                                    {
+                                        communicationState = SequenceNumber;                                    
+                                    }
+                                    calculatedChecksum = ProgressiveCRC32(calculatedChecksum, byte);
+                                    break;
+                                case SequenceNumber:
+                                    sequenceNumber = byte;
+                                    communicationState = Length;
                                     calculatedChecksum = ProgressiveCRC32(calculatedChecksum, byte);
                                     break;
                                 case Length:
@@ -395,7 +421,7 @@ void UARTRxTask(void *pvParameters)
                                     else
                                     {
                                         communicationState = CRC;
-                                        crcByteNumber = 0;
+                                        byteNumber = 0;
                                     }
                                     break;
                                 case Payload:
@@ -405,14 +431,14 @@ void UARTRxTask(void *pvParameters)
                                     if (packetIndex == packetLength)
                                     {
                                         communicationState = CRC;
-                                        crcByteNumber = 0;
+                                        byteNumber = 0;
                                         checksum = 0;
                                     }
                                     break;
                                 case CRC:
-                                    checksum |= (byte << (crcByteNumber * 8));
-                                    crcByteNumber++;
-                                    if (crcByteNumber == 4)
+                                    checksum |= (byte << (byteNumber * 8));
+                                    byteNumber++;
+                                    if (byteNumber == 4)
                                     {
                                         communicationState = EndOfFrame;                                    
                                     }
