@@ -29,7 +29,7 @@ TaskHandle_t xUARTReceiveTaskHandle = NULL;
 TaskHandle_t xUARTTransmitTaskHandle = NULL;
 
 /// <summary>
-///     Handle for the incomng messages on the UART.
+///     Handle for the incoming messages on the UART.
 /// </summary>
 QueueHandle_t UARTRxQueueHandle = NULL;
 

@@ -21,7 +21,7 @@ uint16_t ExtractUInt16(uint8_t *buffer)
 }
 
 /// <summary>
-///     Encode a 16-bit integer as four bytes in the buffer.  The data is
+///     Encode a 16-bit integer as two bytes in the buffer.  The data is
 ///     encoded LSB first.
 /// </summary>
 void EncodeUInt16(uint16_t value, uint8_t *buffer)
