@@ -42,11 +42,6 @@ static const int TX_BUF_SIZE = 1024;
 #define NUMBER_OF_PATTERN_CHARACTERS    (3)
 
 //
-//  Length of the queue used for pattern matching.
-//
-#define PATTERN_QUEUE_LENGTH (10)
-
-//
 //  Handle for the queue dealing with the incoming messages.
 //
 extern QueueHandle_t UARTRxQueueHandle;
@@ -78,6 +73,8 @@ enum CommunicationStates
 {
     StartOfFrame = 0,
     FrameType,
+    MessageID,
+    SequenceNumber,
     Length,
     Payload,
     CRC,

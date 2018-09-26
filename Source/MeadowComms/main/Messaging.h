@@ -74,17 +74,10 @@ extern void SetupMessageQueues();
 //  This is the format of the data being sent from the STM32 to the ESP32.
 //
 #define TM_INTERFACE                (0)
-#define TM_FUNCTION_BYTE0           (TM_INTERFACE + 1)
-#define TM_FUNCTION_BYTE1           (TM_FUNCTION_BYTE0 + 1)
-#define TM_FUNCTION_BYTE2           (TM_FUNCTION_BYTE1 + 1)
-#define TM_FUNCTION_BYTE3           (TM_FUNCTION_BYTE2 + 1)
-#define TM_MESSAGE_ID_BYTE0         (TM_FUNCTION_BYTE3 + 1)
-#define TM_MESSAGE_ID_BYTE1         (TM_MESSAGE_ID_BYTE0 + 1)
-#define TM_MESSAGE_ID_BYTE2         (TM_MESSAGE_ID_BYTE1 + 1)
-#define TM_MESSAGE_ID_BYTE3         (TM_MESSAGE_ID_BYTE2 + 1)
-#define TM_PAYLOAD_LENGTH_BYTE0     (TM_MESSAGE_ID_BYTE3 + 1)
-#define TM_PAYLOAD_LENGTH_BYTE1     (TM_PAYLOAD_LENGTH_BYTE0 + 1)
-#define TM_HEADER_LENGTH            (TM_PAYLOAD_LENGTH_BYTE1 + 1)
+#define TM_FUNCTION                 (TM_INTERFACE + 1)
+#define TM_MESSAGE_ID               (TM_FUNCTION + 4)
+#define TM_PAYLOAD_LENGTH           (TM_MESSAGE_ID + 4)
+#define TM_HEADER_LENGTH            (TM_PAYLOAD_LENGTH + 2)
 
 /// <summary>
 ///     
@@ -100,16 +93,9 @@ struct TaskMessage
 
 #define RM_INTERFACE                (0)
 #define RM_RESPONSE_CODE_BYTE0      (RM_INTERFACE + 1)
-#define RM_RESPONSE_CODE_BYTE1      (RM_RESPONSE_CODE_BYTE0 + 1)
-#define RM_RESPONSE_CODE_BYTE2      (RM_RESPONSE_CODE_BYTE1 + 1)
-#define RM_RESPONSE_CODE_BYTE3      (RM_RESPONSE_CODE_BYTE2 + 1)
-#define RM_MESSAGE_ID_BYTE0         (RM_RESPONSE_CODE_BYTE3 + 1)
-#define RM_MESSAGE_ID_BYTE1         (RM_MESSAGE_ID_BYTE0 + 1)
-#define RM_MESSAGE_ID_BYTE2         (RM_MESSAGE_ID_BYTE1 + 1)
-#define RM_MESSAGE_ID_BYTE3         (RM_MESSAGE_ID_BYTE2 + 1)
-#define RM_PAYLOAD_LENGTH_BYTE0     (RM_MESSAGE_ID_BYTE3 + 1)
-#define RM_PAYLOAD_LENGTH_BYTE1     (RM_PAYLOAD_LENGTH_BYTE0 + 1)
-#define RM_HEADER_CRC               (RM_PAYLOAD_LENGTH_BYTE1 + 1)
+#define RM_MESSAGE_ID_BYTE0         (RM_RESPONSE_CODE + 4)
+#define RM_PAYLOAD_LENGTH           (RM_MESSAGE_ID + 4)
+#define RM_HEADER_CRC               (RM_PAYLOAD_LENGTH + 2)
 #define RM_PAYLOAD_CRC              (RM_HEADER_CRC + 1)
 #define RM_HEADER_LENGTH            (RM_PAYLOAD_CRC + 1)
 
