@@ -15,8 +15,8 @@ Communication between the STM32 and the ESP32 is achieved using the UART.  Furth
 
 * [Message Format](MessageFormat.md)
 * [Frame Format](FrameFormat.md)
-* UARTRxProcessor States - TBC
-* UARTxProcessor States - TBC
+* UART Rx Processor States - TBC
+* UART Tx Processor States - TBC
 
 ## Tools
 
