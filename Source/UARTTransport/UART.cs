@@ -5,6 +5,17 @@ namespace UARTTransport
 {
     public class UART
     {
+        #region Enums
+
+        /// <summary>
+        ///     Frames types available to the application.
+        /// </summary>
+        public enum FrameType :  byte { Header = 0x81, Data = 0x82 };
+
+        #endregion Enums
+
+        #region Constants
+
         /// <summary>
         ///     Number of START_OF_FRAME_CHARACTERS to use to indicate the
         ///     start of a data frame.
@@ -54,7 +65,9 @@ namespace UARTTransport
         /// <summary>
         ///     Maximum number of bytes (un-padded that can be added to a payload)
         /// </summary>
-        private const int MAX_UNPADDED_PAYLOAD_SIZE = 255;
+        private const int MAX_FRAME_SIZE = 255;
+
+        #endregion Constants
 
         #region Private member variables
 
@@ -85,6 +98,7 @@ namespace UARTTransport
         public UART(string serialPortName)
         {
              _port = new SerialPort(serialPortName.ToUpper(), 115200, Parity.None, 8, StopBits.None);
+             _port.Open();
              for (int index = 0; index < _startOfFrame.Length; index++)
              {
                  _startOfFrame[index] = START_OF_FRAME_CHARACTER;
@@ -282,31 +296,49 @@ namespace UARTTransport
         }
 
         /// <summary>
-        ///     Send the specified message on the serial line.
+        ///     Send a frame of data on the serial port.
         /// </summary>
-        /// <param name="message">Byte array of data to be transmitted on the UART.</param>
-        public void SendMessage(byte[] message)
+        /// <remarks>
+        ///     TODO: ACK / NAK / ABORT / RESET - deal with the different return types.
+        /// </remarks>
+        /// <param name="frameType">Frame type.</param>
+        /// <param name="messageID">ID of the message that this frame belongs to.</param>
+        /// <param name="sequenceNumber">Sequence number of the frame.</param>
+        /// <param name="message">Full message to send (not just the frame).</param>
+        /// <param name="offset">Offset into the message of the first byte of this frame.</param>
+        /// <param name="length">Number of payload bytes in the frame.</param>
+        private void SendFrame(FrameType frameType, UInt32 messageID, byte sequenceNumber, byte[] message, UInt16 offset, byte length)
         {
-            int start = 0;
-            byte sequenceNumber = 0;
-
-            while (start < message.Length)
-            {
-
-            }
+            byte[] frame = GenerateFrame(frameType, messageID, sequenceNumber, message, offset, length);
+            _port.Write(_startOfFrame, 0, _startOfFrame.Length);
+            _port.Write(frame, offset, frame.Length);
+            _port.Write(new byte[] { END_OF_FRAME_CHARACTER }, 0, 1);
+            //
+            //  TODO: Work out what to do about ACK etc.
+            //
         }
 
         /// <summary>
         ///     Send the specified message on the serial line.
         /// </summary>
-        /// <param name="header">Header for the message.</param>
-        /// <param name="message">Message to be sent.</param>
-        public void SendMessage(UInt32 messageID, byte[] header, byte[] message)
+        /// <param name="frameType">Frame type to use to send the messages.</param>
+        /// <param name="messageID">Message ID for the frames.</param>
+        /// <param name="message">Byte array of data to be transmitted on the UART.</param>
+        public void SendMessage(FrameType frameType, UInt32 messageID, byte[] message)
         {
-            SendMessage(header);
-            SendMessage(message);
-        }
+            int start = 0;
+            byte sequenceNumber = 0;
+            int amountLeftToSend = message.Length;
 
+            while (amountLeftToSend > 0)
+            {
+                byte length = amountLeftToSend < MAX_FRAME_SIZE ? amountLeftToSend : MAX_FRAME_SIZE;
+                SendFrame(frameType, messageID, sequenceNumber, message, start, length);
+                start += length;
+                amountLeftToSend -= length;
+                sequenceNumber++;
+            }
+        }
         #endregion Methods
     }
 }
