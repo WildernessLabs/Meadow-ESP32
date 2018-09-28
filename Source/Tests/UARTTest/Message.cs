@@ -13,9 +13,8 @@ namespace UARTTest
         public const int INTERFACE = 0;
         public const int FUNCTION_NUMBER = INTERFACE + 1;
         public const int MESSAGE_ID = FUNCTION_NUMBER + 4;
-        public const short PACKET_LENGTH= MESSAGE_ID + 4;
-        public const short PACKET_LENGTH_BYTE1 = PACKET_LENGTH_BYTE0 + 1;
-        public const int HEADER_LENGTH = PACKET_LENGTH_BYTE1 + 1;
+        public const short PACKET_LENGTH = MESSAGE_ID + 4;
+        public const int HEADER_LENGTH = PACKET_LENGTH + 2;
 
         #endregion Constants
 
