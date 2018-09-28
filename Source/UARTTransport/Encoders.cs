@@ -61,7 +61,5 @@ namespace UARTTransport
             buffer[offset + 2] = ((value >> 16) & 0xff);
             buffer[offset + 3] = ((value >> 24) & 0xff);
         }
-
-
     }
 }
