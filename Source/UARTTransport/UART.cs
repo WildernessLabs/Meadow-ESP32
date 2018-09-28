@@ -51,12 +51,22 @@ namespace UARTTransport
         /// </summary>
         private const int HEADER_LENGTH = LENGTH + 1;
 
+        /// <summary>
+        ///     Maximum number of bytes (un-padded that can be added to a payload)
+        /// </summary>
+        private const int MAX_UNPADDED_PAYLOAD_SIZE = 255;
+
         #region Private member variables
 
         /// <summary>
         ///     Serial port to which the ESP32 is connected.
         /// </summary>
         private SerialPort _port;
+
+        /// <summary>
+        ///     Array holding the start of frame characters.
+        /// </summary>
+        private byte[] _startOfFrame = new byte[NUMBER_OF_START_OF_FRAME_CHARACTERS];
 
         #endregion Private member variables
 
@@ -75,6 +85,10 @@ namespace UARTTransport
         public UART(string serialPortName)
         {
              _port = new SerialPort(serialPortName.ToUpper(), 115200, Parity.None, 8, StopBits.None);
+             for (int index = 0; index < _startOfFrame.Length; index++)
+             {
+                 _startOfFrame[index] = START_OF_FRAME_CHARACTER;
+             }
         }
 
         #endregion Constructors
@@ -86,11 +100,23 @@ namespace UARTTransport
         /// </summary>
         /// <param name="data">Buffer of data.</param>
         /// <returns>32-bit CRC for the array of bytes.</returns>
-        private static UInt32 CRC32(byte[] data)
+        private static UInt32 CRC32(byte[] buffer)
+        {
+            return(CRC32(buffer, 0, buffer.Length));
+        }
+
+        /// <summary>
+        ///     Calculate the 32-bit CRC for the array of bytes.
+        /// </summary>
+        /// <param name="data">Buffer of data.</param>
+        /// <param name="start">Offset into the buffer at which the CRC calculation will start</param>
+        /// <param name="length">Amount of data to calculate the CRC</param>
+        /// <returns>32-bit CRC for the array of bytes.</returns>
+        private static UInt32 CRC32(byte[] data, int start, int length)
         {
             UInt32 crc = 0xffffffff;
 
-            for (int index = 0; index < data.Length - 4; index++)
+            for (int index = start; index < length; index++)
             {
                 crc ^= data[index];
                 for (byte innerLoop = 0; innerLoop < 8; innerLoop++)
@@ -116,7 +142,7 @@ namespace UARTTransport
         ///     this.
         /// <remarks>
         /// <param name="buffer">Buffer containing the data to be checked.</param>
-        private int FrameSize(byte[] buffer)
+        private int HeaderAndPayloadSize(byte[] buffer)
         {
             int startOfFrameCharacterCount = 0;
             int byteCount = 0;
@@ -215,8 +241,7 @@ namespace UARTTransport
         /// <returns></returns>
         private byte[] GenerateFrame(byte frameType, Uint32 messageID, byte sequenceNumber, byte[] message, byte offset, byte length)
         {
-            int length = FrameSize(message);
-            byte[] frame = new byte[length + HEADER_LENGTH];
+            byte[] frame = new byte[HeaderAndPayloadSize(message) + 4];
 
             int currentByte = 0;
             //
@@ -226,7 +251,7 @@ namespace UARTTransport
             EncodeUInt32(messageID, frame, currentByte);
             currentByte += 4;
             frame[currentByte++] = sequenceNumber;
-            frame[currentByte++] = (byte) (message.Length & 0xff);
+            frame[currentByte++] = length;
             //
             //  Copy the data into the new frame taking into account the need to insert
             //  padding characters if we hit a sequence of start of frame characters.
@@ -249,10 +274,10 @@ namespace UARTTransport
                     startOfFrameCharacterCount = 0;
                 }
             }
-            EncodeUInt32(CRC32(frame), frame, currentByte);
             //
-            //  Now add the CRC and end of frame byte to the frame.
+            //  Now add the CRC to the frame.
             //
+            EncodeUInt32(CRC32(frame, 0, frame.Length - 4), frame, currentByte);
             return(frame);
         }
 
@@ -262,7 +287,24 @@ namespace UARTTransport
         /// <param name="message">Byte array of data to be transmitted on the UART.</param>
         public void SendMessage(byte[] message)
         {
-            
+            int start = 0;
+            byte sequenceNumber = 0;
+
+            while (start < message.Length)
+            {
+
+            }
+        }
+
+        /// <summary>
+        ///     Send the specified message on the serial line.
+        /// </summary>
+        /// <param name="header">Header for the message.</param>
+        /// <param name="message">Message to be sent.</param>
+        public void SendMessage(UInt32 messageID, byte[] header, byte[] message)
+        {
+            SendMessage(header);
+            SendMessage(message);
         }
 
         #endregion Methods

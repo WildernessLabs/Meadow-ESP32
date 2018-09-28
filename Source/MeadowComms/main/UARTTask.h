@@ -34,7 +34,7 @@ static const int TX_BUF_SIZE = 1024;
 //  The filler character is used to send a sequence of Start of Frame
 //  characters in the binary data.
 //
-#define FILLER_CHARACTER            (0x55)
+#define FILLER_CHARACTER            (0x52)
 
 //
 //  Number of characters to be used in the pattern matching.
