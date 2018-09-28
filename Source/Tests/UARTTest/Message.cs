@@ -27,49 +27,6 @@ namespace UARTTest
         public const short PACKET_LENGTH_BYTE1 = PACKET_LENGTH_BYTE0 + 1;
         public const int HEADER_LENGTH = PACKET_LENGTH_BYTE1 + 1;
 
-        /// <summary>
-        ///     Calculate the HEADER_CRC for the buffer.
-        /// </summary>
-        /// <param name="data">Buffer of data.</param>
-        /// <returns>8-bit HEADER_CRC value for the message.</returns>
-        public static byte CRC8(byte[] data)
-        {
-            byte crc = 0x00;
-
-            for (byte byteCounter = 0; byteCounter < data.Length; byteCounter++)
-            {
-                byte b = data[byteCounter];
-                for (byte bitCounter = 8; bitCounter > 0; bitCounter--)
-                {
-                    byte sum = (byte)((crc ^ b) & 0x01);
-                    crc >>= 1;
-                    if (sum > 0)
-                    {
-                        crc ^= 0x8C;
-                    }
-                    b >>= 1;
-                }
-            }
-            return (crc);
-        }
-
-        public static UInt32 CRC32(byte[] data)
-        {
-            UInt32 crc = 0xffffffff;
-
-            for (int index = 0; index < data.Length - 4; index++)
-            {
-                crc ^= data[index];
-                for (byte innerLoop = 0; innerLoop < 8; innerLoop++)
-                {
-                    UInt32 mask = (UInt32) (-(crc & 0x01));
-                    crc = (crc >> 1) ^ (0xedb88320 & mask);
-                }
-            }
-
-            return (crc);
-        }
-
         private static void EncodeUInt16(byte[] buffer, int offset, UInt16 value)
         {
             buffer[offset] = (byte)(value & 0xff);
