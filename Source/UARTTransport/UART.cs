@@ -184,66 +184,6 @@ namespace UARTTransport
         }
 
         /// <summary>
-        ///     Take two bytes from the buffer and encode them as a 16-bit integer.
-        ///     Note that the data should be encoded as LSB first.
-        /// </summary>
-        /// <param name="buffer">Buffer holding the value.</param>
-        /// <param name="offset">Offset into the buffer for the LSB.</param>
-        public UInt16 ExtractUInt16(byte[] buffer, int offset)
-        {
-            UInt16 result;
-
-            result = buffer[offset];
-            result |= (buffer[offset + 1] << 8);
-            return (result);
-        }
-
-        /// <summary>
-        ///     Encode a 16-bit integer as two bytes in the buffer.  The data is
-        ///     encoded LSB first.
-        /// </summary>
-        /// <param name="value">Value to encode.</param>
-        /// <param name="buffer">Buffer to store the value.</param>
-        /// <param name="offset">Offset into the buffer for the first byte to store.</param>
-        void EncodeUInt16(UInt16 value, byte[] buffer, int offset)
-        {
-            buffer[offset] = (value & 0xff);
-            buffer[offset + 1] = ((value >> 8) & 0xff);
-        }
-
-        /// <summary>
-        ///     Take four bytes from the buffer and encode them as a 32-bit integer.
-        ///     Note that the data should be encoded as LSB first.
-        /// </summary>
-        /// <param name="buffer">Buffer holding the 32-bit value to decode.</param>
-        /// <param name="offset">Offset of the 32-bit in the buffer.</param>
-        UInt32 ExtractUInt32(byte[] buffer, int offset)
-        {
-            UInt32 result;
-
-            result = buffer[offset];
-            result |= (buffer[offset + 1] << 8);
-            result |= (buffer[offset + 2] << 16);
-            result |= (buffer[offset + 3] << 24);
-            return (result);
-        }
-
-        /// <summary>
-        ///     Encode a 32-bit integer as four bytes in the buffer.  The data is
-        ///     encoded LSB first.
-        /// </summary>
-        /// <param name="value">Value to encode.</param>
-        /// <param name="buffer">Buffer to store the value.</param>
-        /// <param name="offset">Offset into the buffer for the first byte to store.</param>
-        void EncodeUInt32(UInt32 value, byte[] buffer, int offset)
-        {
-            buffer[offset] = (value & 0xff);
-            buffer[offset + 1] = ((value >> 8) & 0xff);
-            buffer[offset + 2] = ((value >> 16) & 0xff);
-            buffer[offset + 3] = ((value >> 24) & 0xff);
-        }
-
-        /// <summary>
         ///     Generate a data frame from the message.
         /// </summary>
         /// <param name="frameType">Frame type (transport, application etc.)</param>
@@ -262,7 +202,7 @@ namespace UARTTransport
             //  Now add the frame header information.
             //
             frame[currentByte++] = frameType;
-            EncodeUInt32(messageID, frame, currentByte);
+            Encoders.EncodeUInt32(messageID, frame, currentByte);
             currentByte += 4;
             frame[currentByte++] = sequenceNumber;
             frame[currentByte++] = length;
@@ -291,7 +231,7 @@ namespace UARTTransport
             //
             //  Now add the CRC to the frame.
             //
-            EncodeUInt32(CRC32(frame, 0, frame.Length - 4), frame, currentByte);
+            Encoders.EncodeUInt32(CRC32(frame, 0, frame.Length - 4), frame, currentByte);
             return(frame);
         }
 
