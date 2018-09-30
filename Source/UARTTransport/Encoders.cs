@@ -1,6 +1,8 @@
+using System;
+
 namespace UARTTransport
 {
-    class Encoders
+    public class Encoders
     {
         /// <summary>
         ///     Take two bytes from the buffer and encode them as a 16-bit integer.
@@ -13,7 +15,7 @@ namespace UARTTransport
             UInt16 result;
 
             result = buffer[offset];
-            result |= (buffer[offset + 1] << 8);
+            result |= (UInt16) (buffer[offset + 1] << 8);
             return (result);
         }
 
@@ -26,8 +28,8 @@ namespace UARTTransport
         /// <param name="offset">Offset into the buffer for the first byte to store.</param>
         public static void EncodeUInt16(UInt16 value, byte[] buffer, int offset)
         {
-            buffer[offset] = (value & 0xff);
-            buffer[offset + 1] = ((value >> 8) & 0xff);
+            buffer[offset] = (byte) (value & 0xff);
+            buffer[offset + 1] = (byte) ((value >> 8) & 0xff);
         }
 
         /// <summary>
@@ -41,9 +43,9 @@ namespace UARTTransport
             UInt32 result;
 
             result = buffer[offset];
-            result |= (buffer[offset + 1] << 8);
-            result |= (buffer[offset + 2] << 16);
-            result |= (buffer[offset + 3] << 24);
+            result |= (UInt32) (buffer[offset + 1] << 8);
+            result |= (UInt32) (buffer[offset + 2] << 16);
+            result |= (UInt32) (buffer[offset + 3] << 24);
             return (result);
         }
 
@@ -56,10 +58,10 @@ namespace UARTTransport
         /// <param name="offset">Offset into the buffer for the first byte to store.</param>
         public static void EncodeUInt32(UInt32 value, byte[] buffer, int offset)
         {
-            buffer[offset] = (value & 0xff);
-            buffer[offset + 1] = ((value >> 8) & 0xff);
-            buffer[offset + 2] = ((value >> 16) & 0xff);
-            buffer[offset + 3] = ((value >> 24) & 0xff);
+            buffer[offset] = (byte) (value & 0xff);
+            buffer[offset + 1] = (byte) ((value >> 8) & 0xff);
+            buffer[offset + 2] = (byte) ((value >> 16) & 0xff);
+            buffer[offset + 3] = (byte) ((value >> 24) & 0xff);
         }
     }
 }

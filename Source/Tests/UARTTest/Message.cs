@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using UARTTransport;
 
 namespace UARTTest
 {
@@ -25,11 +26,23 @@ namespace UARTTest
             byte[] buffer = new byte[HEADER_LENGTH + 6];
 
             buffer[INTERFACE] = device;
-            Encoders.EncodeUInt32(buffer, FUNCTION_NUMBER, function);
-            Encoders.EncodeUInt32(buffer, MESSAGE_ID, messageID);
-            Encoders.EncodeUInt16(buffer, PACKET_LENGTH, 45);
+            //Encoders.EncodeUInt32(buffer, FUNCTION_NUMBER, function);
+            //Encoders.EncodeUInt32(buffer, MESSAGE_ID, messageID);
+            //Encoders.EncodeUInt16(buffer, PACKET_LENGTH, 45);
 
             return (buffer);
+        }
+
+        public static byte[] CreateDataPacket(byte[] payload)
+        {
+            byte[] result = new byte[10];
+            return (result);
+        }
+
+        public static byte[] CreateDataPacket(byte[] payload, int offset, int length)
+        {
+            byte[] result = new byte[10];
+            return (result);
         }
 
         #endregion Methods

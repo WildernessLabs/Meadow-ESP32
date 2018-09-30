@@ -154,7 +154,7 @@ namespace UARTTransport
         ///     frame character.  A number of start of frame characters in the data could
         ///     be interpreted as a new packet.  A padding character is used to prevent
         ///     this.
-        /// <remarks>
+        /// </remarks>
         /// <param name="buffer">Buffer containing the data to be checked.</param>
         private int HeaderAndPayloadSize(byte[] buffer)
         {
@@ -178,7 +178,7 @@ namespace UARTTransport
                 }
                 byteCount++;
             }
-            byteCount += HEADER_SIZE;   //  Size of the header.
+            byteCount += HEADER_LENGTH;   //  Size of the header.
             byteCount += 4;             //  CRC is a 32-bit CRC and takes 4 bytes.
             return(byteCount);
         }
@@ -193,7 +193,7 @@ namespace UARTTransport
         /// <param name="offset">Index (in the message) of the first byte of the frame.</param>
         /// <param name="length">Number of bytes in the frame.</param>
         /// <returns></returns>
-        private byte[] GenerateFrame(byte frameType, Uint32 messageID, byte sequenceNumber, byte[] message, byte offset, byte length)
+        private byte[] GenerateFrame(FrameType frameType, UInt32 messageID, byte sequenceNumber, byte[] message, UInt16 offset, byte length)
         {
             byte[] frame = new byte[HeaderAndPayloadSize(message) + 4];
 
@@ -201,7 +201,7 @@ namespace UARTTransport
             //
             //  Now add the frame header information.
             //
-            frame[currentByte++] = frameType;
+            frame[currentByte++] = (byte) frameType;
             Encoders.EncodeUInt32(messageID, frame, currentByte);
             currentByte += 4;
             frame[currentByte++] = sequenceNumber;
@@ -266,13 +266,13 @@ namespace UARTTransport
         /// <param name="message">Byte array of data to be transmitted on the UART.</param>
         public void SendMessage(FrameType frameType, UInt32 messageID, byte[] message)
         {
-            int start = 0;
+            UInt16 start = 0;
             byte sequenceNumber = 0;
             int amountLeftToSend = message.Length;
 
             while (amountLeftToSend > 0)
             {
-                byte length = amountLeftToSend < MAX_FRAME_SIZE ? amountLeftToSend : MAX_FRAME_SIZE;
+                byte length = (byte) ((amountLeftToSend < MAX_FRAME_SIZE ? amountLeftToSend : MAX_FRAME_SIZE) & 0xff);                
                 SendFrame(frameType, messageID, sequenceNumber, message, start, length);
                 start += length;
                 amountLeftToSend -= length;
