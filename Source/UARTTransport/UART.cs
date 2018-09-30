@@ -74,14 +74,28 @@ namespace UARTTransport
         /// <summary>
         ///     Serial port to which the ESP32 is connected.
         /// </summary>
-        private SerialPort _port;
+        private readonly SerialPort _port;
 
         /// <summary>
         ///     Array holding the start of frame characters.
         /// </summary>
-        private byte[] _startOfFrame = new byte[NUMBER_OF_START_OF_FRAME_CHARACTERS];
+        private readonly byte[] _startOfFrame = new byte[NUMBER_OF_START_OF_FRAME_CHARACTERS];
 
         #endregion Private member variables
+
+        #region Events
+
+        /// <summary>
+        ///     Process the data as it arrives at the serial port.
+        /// </summary>
+        /// <param name="sender">Object sending the serial data.</param>
+        /// <param name="e">Serial data.</param>
+        private void _port_DataReceived(object sender, SerialDataReceivedEventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        #endregion Events
 
         #region Constructors
 
@@ -97,12 +111,13 @@ namespace UARTTransport
         /// </summary>
         public UART(string serialPortName)
         {
-             _port = new SerialPort(serialPortName.ToUpper(), 115200, Parity.None, 8, StopBits.None);
-             _port.Open();
-             for (int index = 0; index < _startOfFrame.Length; index++)
-             {
-                 _startOfFrame[index] = START_OF_FRAME_CHARACTER;
-             }
+            _port = new SerialPort(serialPortName.ToUpper(), 115200, Parity.None, 8, StopBits.None);
+            _port.DataReceived += _port_DataReceived;
+            _port.Open();
+            for (int index = 0; index < _startOfFrame.Length; index++)
+            {
+                _startOfFrame[index] = START_OF_FRAME_CHARACTER;
+            }
         }
 
         #endregion Constructors
