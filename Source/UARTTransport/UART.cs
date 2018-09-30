@@ -85,11 +85,6 @@ namespace UARTTransport
         private const int HEADER_LENGTH = LENGTH + 1;
 
         /// <summary>
-        ///     Maximum number of bytes (un-padded that can be added to a payload)
-        /// </summary>
-        private const int MAX_FRAME_SIZE = 255;
-
-        /// <summary>
         ///     Maximum number of bytes that can be read from the serial port in one chunk.
         /// </summary>
         private const int RX_BUFFER_SIZE = 1024;
@@ -527,7 +522,7 @@ namespace UARTTransport
 
             while (amountLeftToSend > 0)
             {
-                byte length = (byte) ((amountLeftToSend < MAX_FRAME_SIZE ? amountLeftToSend : MAX_FRAME_SIZE) & 0xff);                
+                byte length = (byte) ((amountLeftToSend < Frame.MAX_PAYLOAD_SIZE ? amountLeftToSend : Frame.MAX_PAYLOAD_SIZE) & 0xff);                
                 SendFrame(frameType, messageID, sequenceNumber, message, start, length);
                 start += length;
                 amountLeftToSend -= length;

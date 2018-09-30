@@ -19,6 +19,48 @@ namespace UARTTest
 
         #endregion Constants
 
+        /// <summary>
+        ///     Device / interface this message is destined for.
+        /// </summary>
+        private byte Device { get; set; }
+
+        /// <summary>
+        ///     Function to be executed by the device.
+        /// </summary>
+        private UInt32 Function { get; set; }
+        
+        /// <summary>
+        ///     Unique message ID.
+        /// </summary>
+        private UInt32 MessageID { get; set; }
+
+        /// <summary>
+        ///     Payload of the message (data for the function to act upon).
+        /// </summary>
+        private byte[] Payload { get; set; }
+
+        #region Constructors
+
+        private Message()
+        {
+        }
+
+        /// <summary>
+        ///     Construct a new message for the ESP32.
+        /// </summary>
+        /// <param name="device">Device / Interface the message is intended for.</param>
+        /// <param name="function">Function that the device / interface should perform.</param>
+        /// <param name="messageID">Unique ID of this message.</param>
+        public Message(byte device, UInt32 function, UInt32 messageID, byte[] payload)
+        {
+            Device = device;
+            Function = function;
+            MessageID = messageID;
+            Payload = payload;
+        }
+
+        #endregion Constructors
+
         #region Methods
 
         public static byte[] CreateHeader(byte device, UInt32 function, UInt32 messageID)
@@ -45,6 +87,17 @@ namespace UARTTest
             return (result);
         }
 
+        /// <summary>
+        ///     Send this message on the specified UART.
+        /// </summary>
+        /// <param name="uart">UART object used to send the message.</param>
+        public void Send(UART uart)
+        {
+
+        }
+
         #endregion Methods
+
+
     }
 }

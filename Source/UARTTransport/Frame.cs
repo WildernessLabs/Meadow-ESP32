@@ -9,6 +9,15 @@ namespace UARTTransport
     /// </summary>
     public class Frame
     {
+        #region Constants
+
+        /// <summary>
+        ///     Maximum number of bytes (un-padded that can be added to a payload)
+        /// </summary>
+        public const int MAX_PAYLOAD_SIZE = 255;
+
+        #endregion Constants
+
         #region Properties.
 
         /// <summary>
@@ -56,5 +65,19 @@ namespace UARTTransport
         }
 
         #endregion Constructors
+
+        #region Methods
+
+        /// <summary>
+        ///     Convert this frame into an array of bytes.
+        /// </summary>
+        /// <returns>Array of bytes containing the frame header and frame payload.</returns>
+        public byte[] ToByteArray()
+        {
+            byte[] result = new byte[10];
+            return (result);
+        }
+
+        #endregion Methods
     }
 }
