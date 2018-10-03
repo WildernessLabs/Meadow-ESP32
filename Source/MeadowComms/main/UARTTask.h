@@ -42,6 +42,11 @@ static const int TX_BUF_SIZE = 1024;
 #define NUMBER_OF_PATTERN_CHARACTERS    (3)
 
 //
+//  Length of the UART queue.
+//
+#define UART_QUEUE_LENGTH               10
+
+//
 //  Handle for the queue dealing with the incoming messages.
 //
 extern QueueHandle_t UARTRxQueueHandle;

@@ -92,8 +92,8 @@ struct TaskMessage
 };
 
 #define RM_INTERFACE                (0)
-#define RM_RESPONSE_CODE_BYTE0      (RM_INTERFACE + 1)
-#define RM_MESSAGE_ID_BYTE0         (RM_RESPONSE_CODE + 4)
+#define RM_RESPONSE_CODE            (RM_INTERFACE + 1)
+#define RM_MESSAGE_ID               (RM_RESPONSE_CODE + 4)
 #define RM_PAYLOAD_LENGTH           (RM_MESSAGE_ID + 4)
 #define RM_HEADER_CRC               (RM_PAYLOAD_LENGTH + 2)
 #define RM_PAYLOAD_CRC              (RM_HEADER_CRC + 1)
