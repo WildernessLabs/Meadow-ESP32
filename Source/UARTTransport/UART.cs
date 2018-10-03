@@ -80,6 +80,11 @@ namespace UARTTransport
         private const int HEADER_LENGTH = FRAME_PAYLOAD_LENGTH + 1;
 
         /// <summary>
+        ///     Maximum number of bytes in the frame payload.
+        /// </summary>
+        public const int MAXIMUM_PAYLOAD_LENGTH = 255;
+
+        /// <summary>
         ///     Seed for the CRC32 algorithm.
         /// </summary>
         private const UInt32 CRC32_SEED = 0xffffffff;
@@ -172,7 +177,26 @@ namespace UARTTransport
         /// </summary>
         private CommunicationStates CurrentCommunicationState { get; set; } = CommunicationStates.StartOfFrame;
 
+        /// <summary>
+        ///     Current retry count for serial transmission of data to the ESP32
+        /// </summary>
+        private uint CurrentRetryCount { get; set; } = 0;
+
+        /// <summary>
+        ///     Maximum retry count for serial communication.
+        /// </summary>
+        private uint MaximumRetryCount { get; set; } = 3;
+
         #endregion Properties
+
+        #region Delegates
+
+        /// <summary>
+        ///     Error event.
+        /// </summary>
+        public event UARTErrorEventHandler OnError = delegate { };
+
+        #endregion Delegates
 
         #region Events
 
@@ -321,9 +345,11 @@ namespace UARTTransport
         /// <summary>
         ///     Create a new UART object on the specified serial port.
         /// </summary>
-        public UART(string serialPortName)
+        /// <param name="serialPortName">Name of the serial port connected to the ESP32.</param>
+        /// <param name="maximumRetries">Maximum number of retries should a timeout or NAK occur.</param>
+        public UART(string serialPortName, uint maximumRetries = 3)
         {
-            _port = new SerialPort(serialPortName.ToUpper(), 115200, Parity.None, 8, StopBits.None);
+            _port = new SerialPort(serialPortName, 115200, Parity.None, 8, StopBits.One);
             _port.DataReceived += _port_DataReceived;
             _port.Open();
             for (int index = 0; index < _startOfFrame.Length; index++)
@@ -331,6 +357,7 @@ namespace UARTTransport
                 _startOfFrame[index] = START_OF_FRAME_CHARACTER;
             }
             _buffer = new byte[RX_BUFFER_SIZE];
+            MaximumRetryCount = maximumRetries;
         }
 
         #endregion Constructors
@@ -360,10 +387,7 @@ namespace UARTTransport
 
             for (int index = start; index < length; index++)
             {
-                for (byte innerLoop = 0; innerLoop < 8; innerLoop++)
-                {
-                    crc = ProgressiveCRC32(crc, data[innerLoop]);
-                }
+                crc = ProgressiveCRC32(crc, data[index]);
             }
 
             return (crc);
@@ -427,8 +451,8 @@ namespace UARTTransport
                 }
                 byteCount++;
             }
-            byteCount += HEADER_LENGTH;   //  Size of the header.
-            byteCount += 4;             //  CRC is a 32-bit CRC and takes 4 bytes.
+            byteCount += HEADER_LENGTH;     //  Size of the header.
+            byteCount += 4;                 //  CRC is a 32-bit CRC and takes 4 bytes.
             return(byteCount);
         }
 
@@ -439,12 +463,10 @@ namespace UARTTransport
         /// <param name="messageID">Unique message ID for the message.</param>
         /// <param name="sequenceNumber">Sequence number for this frame for the specified MessageID</param>
         /// <param name="message">Array of bytes containing the message to be sent.</param>
-        /// <param name="offset">Index (in the message) of the first byte of the frame.</param>
-        /// <param name="length">Number of bytes in the frame.</param>
         /// <returns></returns>
-        private byte[] GenerateFrame(FrameType frameType, UInt32 messageID, byte sequenceNumber, byte[] message, UInt16 offset, byte length)
+        private byte[] GenerateFrame(FrameType frameType, UInt32 messageID, byte sequenceNumber, byte[] message)
         {
-            byte[] frame = new byte[HeaderAndPayloadSize(message) + 4];
+            byte[] frame = new byte[HeaderAndPayloadSize(message)];
 
             int currentByte = 0;
             //
@@ -454,13 +476,13 @@ namespace UARTTransport
             Encoders.EncodeUInt32(messageID, frame, currentByte);
             currentByte += 4;
             frame[currentByte++] = sequenceNumber;
-            frame[currentByte++] = length;
+            frame[currentByte++] = (byte) (message.Length & 0xff);
             //
             //  Copy the data into the new frame taking into account the need to insert
             //  padding characters if we hit a sequence of start of frame characters.
             //
             int startOfFrameCharacterCount = 0;
-            for (int index = offset; index < (offset + length); index++)
+            for (int index = 0; index < message.Length; index++)
             {
                 frame[currentByte++] = message[index];
                 if (message[index] == START_OF_FRAME_CHARACTER)
@@ -494,40 +516,52 @@ namespace UARTTransport
         /// <param name="messageID">ID of the message that this frame belongs to.</param>
         /// <param name="sequenceNumber">Sequence number of the frame.</param>
         /// <param name="message">Full message to send (not just the frame).</param>
-        /// <param name="offset">Offset into the message of the first byte of this frame.</param>
-        /// <param name="length">Number of payload bytes in the frame.</param>
-        private void SendFrame(FrameType frameType, UInt32 messageID, byte sequenceNumber, byte[] message, UInt16 offset, byte length)
+        public void Send(FrameType frameType, UInt32 messageID, byte sequenceNumber, byte[] message)
         {
-            byte[] frame = GenerateFrame(frameType, messageID, sequenceNumber, message, offset, length);
+            if (message.Length > MAXIMUM_PAYLOAD_LENGTH)
+            {
+                throw new ArgumentOutOfRangeException(nameof(message),
+                    $"Message must be smaller than {MAXIMUM_PAYLOAD_LENGTH} bytes.");
+            }
+
+            _lastFrameSent = GenerateFrame(frameType, messageID, sequenceNumber, message);
+            DisplayFrame(_lastFrameSent);
             _port.Write(_startOfFrame, 0, _startOfFrame.Length);
-            _port.Write(frame, offset, frame.Length);
-            _port.Write(new byte[] { END_OF_FRAME_CHARACTER }, 0, 1);
+            _port.Write(_lastFrameSent, 0, _lastFrameSent.Length);
+            _port.Write(new[] {END_OF_FRAME_CHARACTER}, 0, 1);
             //
             //  TODO: Work out what to do about ACK etc.
             //
         }
 
-        /// <summary>
-        ///     Send the specified message on the serial line.
-        /// </summary>
-        /// <param name="frameType">Frame type to use to send the messages.</param>
-        /// <param name="messageID">Message ID for the frames.</param>
-        /// <param name="message">Byte array of data to be transmitted on the UART.</param>
-        public void SendMessage(FrameType frameType, UInt32 messageID, byte[] message)
-        {
-            UInt16 start = 0;
-            byte sequenceNumber = 0;
-            int amountLeftToSend = message.Length;
 
-            while (amountLeftToSend > 0)
+        /// <summary>
+        ///     Dump the array of bytes to the debug output in hexadecimal.
+        /// </summary>
+        private void DisplayFrame(byte[] frame)
+        {
+            var line = string.Empty;
+            Debug.Print("\n\n       0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f\n");
+            for (var index = 0; index < frame.Length; index++)
             {
-                byte length = (byte) ((amountLeftToSend < Frame.MAX_PAYLOAD_SIZE ? amountLeftToSend : Frame.MAX_PAYLOAD_SIZE) & 0xff);                
-                SendFrame(frameType, messageID, sequenceNumber, message, start, length);
-                start += length;
-                amountLeftToSend -= length;
-                sequenceNumber++;
+                if ((index % 16) == 0)
+                {
+                    if (line != string.Empty)
+                    {
+                        Debug.Print(line);
+                        Debug.Print("\n");
+                        line = String.Empty;
+                    }
+                    line += $"{index:X4}: ";
+                }
+                line += $"{frame[index]:X2} ";
+            }
+            if (line != string.Empty)
+            {
+                Debug.Print(line);
             }
         }
+
         #endregion Methods
     }
 }
