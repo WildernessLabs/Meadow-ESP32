@@ -1,6 +1,9 @@
 # Prerequisites
 *.d
 
+# Visual Studio Design Time Build cache
+.dtbcache
+
 # Compiled Object files
 *.slo
 *.lo
@@ -61,3 +64,4 @@ OnBoardFlash.dat.*
 /Source/Tests/UARTTest/.vs/UARTTest/v15/Server/sqlite3/db.lock
 /Source/Tests/UARTTest/.vs/UARTTest/v15/Server/sqlite3/storage.ide
 /Source/Tests/UARTTest/.vs/UARTTest/v15/Server/sqlite3
+Source/Tests/UARTTest/.vs/UARTTest/DesignTimeBuild/.dtbcache
