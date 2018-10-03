@@ -75,7 +75,7 @@ void SetupUART()
     };
     uart_param_config(STM32_UART_NUMBER, &uart_config);
     uart_set_pin(STM32_UART_NUMBER, TXD_PIN, RXD_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
-    uart_driver_install(STM32_UART_NUMBER, RX_BUF_SIZE * 2, TX_BUF_SIZE * 2, PATTERN_QUEUE_LENGTH, &UARTRxQueueHandle, 0);
+    uart_driver_install(STM32_UART_NUMBER, RX_BUF_SIZE * 2, TX_BUF_SIZE * 2, UART_QUEUE_LENGTH, &UARTRxQueueHandle, 0);
     //
     //  Set up the pattern matching algorithm.
     //
@@ -99,8 +99,8 @@ void UARTTxTask(void *pvParameters)
 
             memset(buffer, 0, RM_HEADER_LENGTH);
             buffer[RM_INTERFACE] = message.interface;
-            EncodeUInt32(message.code, buffer + RM_RESPONSE_CODE_BYTE0);
-            EncodeUInt32(message.messageID, buffer + RM_MESSAGE_ID_BYTE0);
+            EncodeUInt32(message.code, buffer + RM_RESPONSE_CODE);
+            EncodeUInt32(message.messageID, buffer + RM_MESSAGE_ID);
             uint8_t crc = CRC8(buffer, RM_HEADER_LENGTH);
             buffer[RM_HEADER_CRC] = crc;
             const int txBytes = uart_write_bytes(STM32_UART_NUMBER, (const char *) buffer, RM_HEADER_LENGTH);
@@ -421,6 +421,7 @@ void UARTRxTask(void *pvParameters)
                                     else
                                     {
                                         communicationState = CRC;
+                                        checksum = 0;
                                         byteNumber = 0;
                                     }
                                     break;
@@ -431,8 +432,8 @@ void UARTRxTask(void *pvParameters)
                                     if (packetIndex == packetLength)
                                     {
                                         communicationState = CRC;
-                                        byteNumber = 0;
                                         checksum = 0;
+                                        byteNumber = 0;
                                     }
                                     break;
                                 case CRC:
