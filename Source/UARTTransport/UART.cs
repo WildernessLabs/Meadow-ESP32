@@ -60,11 +60,6 @@ namespace UARTTransport
         private const int FRAME_TYPE = 0x00;
 
         /// <summary>
-        ///     Seed for the CRC32 algorithm.
-        /// </summary>
-        private const UInt32 CRC32_SEED = 0xffffffff;
-
-        /// <summary>
         ///     Location of the message ID in the message FramePayload.
         /// </summary>
         private const int MESSAGE_ID = FRAME_TYPE + 1;
@@ -77,12 +72,17 @@ namespace UARTTransport
         /// <summary>
         ///     Location of the frame length in the message FramePayload.
         /// </summary>
-        private const int LENGTH = SEQUENCE_ID + 1;
+        private const int FRAME_PAYLOAD_LENGTH = SEQUENCE_ID + 1;
 
         /// <summary>
         ///     Size of the header.
         /// </summary>
-        private const int HEADER_LENGTH = LENGTH + 1;
+        private const int HEADER_LENGTH = FRAME_PAYLOAD_LENGTH + 1;
+
+        /// <summary>
+        ///     Seed for the CRC32 algorithm.
+        /// </summary>
+        private const UInt32 CRC32_SEED = 0xffffffff;
 
         /// <summary>
         ///     Maximum number of bytes that can be read from the serial port in one chunk.
@@ -107,7 +107,7 @@ namespace UARTTransport
         ///     Last frame of data sent over the serial port.
         /// </summary>
         /// <remarks>
-        ///The last frame is kept until and ACK or reset is received in case we need to resend the frame.
+        ///     The last frame is kept until and ACK or reset is received in case we need to resend the frame.
         /// </remarks>
         private byte[] _lastFrameSent = null;
 
@@ -357,7 +357,6 @@ namespace UARTTransport
         private static UInt32 CRC32(byte[] data, int start, int length)
         {
             UInt32 crc = CRC32_SEED;
-            ;
 
             for (int index = start; index < length; index++)
             {
@@ -394,7 +393,7 @@ namespace UARTTransport
         }
 
         /// <summary>
-        ///     Calculate the size of the frame .
+        ///     Calculate the size of the frame.
         /// </summary>
         /// <remarks>
         ///     The frame is composed of the header, the data to be transmitted and the
