@@ -11,11 +11,35 @@ namespace UARTTest
     {
         #region Constants
 
+        /// <summary>
+        ///     Location of the Interface indicator in the message header.
+        /// </summary>
         public const int INTERFACE = 0;
+
+        /// <summary>
+        ///     Location of the Function bytes (4) in the message header.
+        /// </summary>
         public const int FUNCTION_NUMBER = INTERFACE + 1;
+
+        /// <summary>
+        ///     Location of the MessageID bytes (4) in the message header
+        /// </summary>
         public const int MESSAGE_ID = FUNCTION_NUMBER + 4;
-        public const short PACKET_LENGTH = MESSAGE_ID + 4;
-        public const int HEADER_LENGTH = PACKET_LENGTH + 2;
+
+        /// <summary>
+        ///     Location of the Payload length bytes (2) in the message header.
+        /// </summary>
+        public const short PAYLOAD_LENGTH = MESSAGE_ID + 4;
+
+        /// <summary>
+        ///     Length of the header in bytes.
+        /// </summary>
+        public const int HEADER_LENGTH = PAYLOAD_LENGTH + 2;
+
+        /// <summary>
+        ///     Maximum length of the payload of a message.
+        /// </summary>
+        public const UInt16 MAXIMUM_MESSAGE_LENGTH = 0xffff;
 
         #endregion Constants
 
@@ -51,8 +75,14 @@ namespace UARTTest
         /// <param name="device">Device / Interface the message is intended for.</param>
         /// <param name="function">Function that the device / interface should perform.</param>
         /// <param name="messageID">Unique ID of this message.</param>
+        /// <param name="payload">Payload for this message.</param>
         public Message(byte device, UInt32 function, UInt32 messageID, byte[] payload)
         {
+            if (payload.Length > MAXIMUM_MESSAGE_LENGTH)
+            {
+                throw new ArgumentOutOfRangeException(nameof(payload), $"Payload length should be less than or equal to {MAXIMUM_MESSAGE_LENGTH} bytes");
+            }
+
             Device = device;
             Function = function;
             MessageID = messageID;
@@ -63,41 +93,42 @@ namespace UARTTest
 
         #region Methods
 
-        public static byte[] CreateHeader(byte device, UInt32 function, UInt32 messageID)
-        {
-            byte[] buffer = new byte[HEADER_LENGTH + 6];
-
-            buffer[INTERFACE] = device;
-            //Encoders.EncodeUInt32(buffer, FUNCTION_NUMBER, function);
-            //Encoders.EncodeUInt32(buffer, MESSAGE_ID, messageID);
-            //Encoders.EncodeUInt16(buffer, PACKET_LENGTH, 45);
-
-            return (buffer);
-        }
-
-        public static byte[] CreateDataPacket(byte[] payload)
-        {
-            byte[] result = new byte[10];
-            return (result);
-        }
-
-        public static byte[] CreateDataPacket(byte[] payload, int offset, int length)
-        {
-            byte[] result = new byte[10];
-            return (result);
-        }
-
         /// <summary>
-        ///     Send this message on the specified UART.
+        ///     Send the specified message on the serial line.
         /// </summary>
-        /// <param name="uart">UART object used to send the message.</param>
+        /// <param name="uart">Serial port / UART used to communicate with the ESP32.</param>
         public void Send(UART uart)
         {
-
+            byte sequenceNumber = 0;
+            byte[] buffer = new byte[HEADER_LENGTH];
+            //
+            //  Send the message header.
+            //
+            buffer[INTERFACE] = Device;
+            Encoders.EncodeUInt32(Function, buffer, FUNCTION_NUMBER);
+            Encoders.EncodeUInt32(MessageID, buffer, MESSAGE_ID);
+            Encoders.EncodeUInt16((UInt16) (Payload.Length & 0xffff), buffer, PAYLOAD_LENGTH);
+            uart.Send(UART.FrameType.Header, MessageID, sequenceNumber++, buffer);
+            //
+            //  Now we can send the message payload.
+            //
+            UInt16 start = 0;
+            int amountLeftToSend = Payload.Length;
+            while (amountLeftToSend > 0)
+            {
+                byte length = (byte) ((amountLeftToSend < Frame.MAX_PAYLOAD_SIZE ? amountLeftToSend : UART.MAXIMUM_PAYLOAD_LENGTH) & 0xff);
+                if (length != buffer.Length)
+                {
+                    buffer = new byte[length];
+                }
+                Array.Copy(Payload, start, buffer, 0, length);
+                uart.Send(UART.FrameType.Data, MessageID, sequenceNumber, buffer);
+                start += length;
+                amountLeftToSend -= length;
+                sequenceNumber++;
+            }
         }
 
         #endregion Methods
-
-
     }
 }
