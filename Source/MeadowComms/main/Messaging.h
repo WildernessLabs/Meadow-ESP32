@@ -73,16 +73,16 @@ extern void SetupMessageQueues();
 //  
 //  This is the format of the data being sent from the STM32 to the ESP32.
 //
-#define TM_INTERFACE                (0)
-#define TM_FUNCTION                 (TM_INTERFACE + 1)
-#define TM_MESSAGE_ID               (TM_FUNCTION + 4)
-#define TM_PAYLOAD_LENGTH           (TM_MESSAGE_ID + 4)
-#define TM_HEADER_LENGTH            (TM_PAYLOAD_LENGTH + 2)
+#define APP_REQUEST_INTERFACE               (0)
+#define APP_REQUEST_FUNCTION                (APP_REQUEST_INTERFACE + 1)
+#define APP_REQUEST_MESSAGE_ID              (APP_REQUEST_FUNCTION + 4)
+#define APP_REQUEST_PAYLOAD_LENGTH          (APP_REQUEST_MESSAGE_ID + 4)
+#define APP_REQUEST_HEADER_LENGTH           (APP_REQUEST_PAYLOAD_LENGTH + 2)
 
 /// <summary>
-///     
+///     Application request from the STM32 for a service.
 /// </summary>
-struct TaskMessage
+struct ApplicationRequest
 {
     uint8_t interface;
     uint32_t function;
@@ -91,25 +91,25 @@ struct TaskMessage
     uint8_t *payload;
 };
 
-#define RM_INTERFACE                (0)
-#define RM_RESPONSE_CODE            (RM_INTERFACE + 1)
-#define RM_MESSAGE_ID               (RM_RESPONSE_CODE + 4)
-#define RM_PAYLOAD_LENGTH           (RM_MESSAGE_ID + 4)
-#define RM_HEADER_CRC               (RM_PAYLOAD_LENGTH + 2)
-#define RM_PAYLOAD_CRC              (RM_HEADER_CRC + 1)
-#define RM_HEADER_LENGTH            (RM_PAYLOAD_CRC + 1)
+#define APP_RESPONSE_INTERFACE          (0)
+#define APP_RESPONSE_CODE               (APP_RESPONSE_INTERFACE + 1)
+#define APP_RESPONSE_MESSAGE_ID         (APP_RESPONSE_CODE + 4)
+#define APP_RESPONSE_PAYLOAD_LENGTH     (APP_RESPONSE_MESSAGE_ID + 4)
+#define APP_RESPONSE_HEADER_CRC         (APP_RESPONSE_PAYLOAD_LENGTH + 2)
+#define APP_RESPONSE_PAYLOAD_CRC        (APP_RESPONSE_HEADER_CRC + 4)
+#define APP_RESPONSE_HEADER_LENGTH      (APP_RESPONSE_PAYLOAD_CRC + 4)
 
 #define CRC32_SEED                  (0xffffffff)
 
 /// <summary>
 ///     
 /// </summary>
-struct Response
+struct ApplicationResponse
 {
     uint8_t interface;
     uint32_t code;
     uint32_t messageID;
-    uint8_t payload;
+    uint8_t *payload;
     uint16_t payloadLength;
 };
 

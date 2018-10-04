@@ -56,7 +56,7 @@ static int bytesRemaining = 0;
 
 static uint8_t *nextPayloadLocation;
 
-static struct TaskMessage messageHeader;
+static struct ApplicationRequest messageHeader;
 
 /// <summary>
 ///     Configure the UART and install the driver.
@@ -67,7 +67,7 @@ void SetupUART()
 {
     const uart_config_t uart_config =
     {
-        .baud_rate = 115200,
+        .baud_rate = 57600,
         .data_bits = UART_DATA_8_BITS,
         .parity = UART_PARITY_DISABLE,
         .stop_bits = UART_STOP_BITS_1,
@@ -76,11 +76,6 @@ void SetupUART()
     uart_param_config(STM32_UART_NUMBER, &uart_config);
     uart_set_pin(STM32_UART_NUMBER, TXD_PIN, RXD_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
     uart_driver_install(STM32_UART_NUMBER, RX_BUF_SIZE * 2, TX_BUF_SIZE * 2, UART_QUEUE_LENGTH, &UARTRxQueueHandle, 0);
-    //
-    //  Set up the pattern matching algorithm.
-    //
-//    uart_enable_pattern_det_intr(STM32_UART_NUMBER, PATTERN_CHARACTER, NUMBER_OF_PATTERN_CHARACTERS, 10000, 10, 10);
-//    uart_pattern_queue_reset(STM32_UART_NUMBER, PATTERN_QUEUE_LENGTH);
 }
 
 /// <summary>
@@ -91,19 +86,19 @@ void UARTTxTask(void *pvParameters)
     esp_log_level_set(UART_TX_TASK_NAME, ESP_LOG_INFO);
     while (true)
     {
-        struct Response message;
+        struct ApplicationResponse message;
         BaseType_t result = xQueueReceive(UARTTransmitQueueHandle, &message, portMAX_DELAY);
         if (result == pdTRUE)
         {
-            uint8_t buffer[RM_HEADER_LENGTH];
+            uint8_t buffer[APP_RESPONSE_HEADER_LENGTH];
 
-            memset(buffer, 0, RM_HEADER_LENGTH);
-            buffer[RM_INTERFACE] = message.interface;
-            EncodeUInt32(message.code, buffer + RM_RESPONSE_CODE);
-            EncodeUInt32(message.messageID, buffer + RM_MESSAGE_ID);
-            uint8_t crc = CRC8(buffer, RM_HEADER_LENGTH);
-            buffer[RM_HEADER_CRC] = crc;
-            const int txBytes = uart_write_bytes(STM32_UART_NUMBER, (const char *) buffer, RM_HEADER_LENGTH);
+            memset(buffer, 0, APP_RESPONSE_HEADER_LENGTH);
+            buffer[APP_RESPONSE_INTERFACE] = message.interface;
+            EncodeUInt32(message.code, buffer + APP_RESPONSE_CODE);
+            EncodeUInt32(message.messageID, buffer + APP_RESPONSE_MESSAGE_ID);
+            uint32_t crc = CRC32(buffer, APP_RESPONSE_HEADER_CRC);
+            buffer[APP_RESPONSE_HEADER_CRC] = crc;
+            const int txBytes = uart_write_bytes(STM32_UART_NUMBER, (const char *) buffer, APP_RESPONSE_HEADER_LENGTH);
             ESP_LOGI(UART_TX_TASK_NAME, "Wrote %d bytes to UART", txBytes);
         }
     }
@@ -113,6 +108,24 @@ void UARTTxTask(void *pvParameters)
     //  should we get here.
     //
     vTaskDelete(xUARTTransmitTaskHandle);
+}
+
+/// <summary>
+///     Reset the message header and delete the message body storage.
+/// <summary>
+void ResetIncomingMessage(bool releasePayloadMemory)
+{
+    messageHeader.interface = 0;
+    messageHeader.function = 0;
+    messageHeader.messageID = 0;
+    if ((messageHeader.payload != NULL) && releasePayloadMemory)
+    {
+        vPortFree(messageHeader.payload);
+    }
+    messageHeader.payload = NULL;
+    messageHeader.payloadLength = 0;
+    bytesRemaining  = 0;
+    nextPayloadLocation = NULL;
 }
 
 /// <summary>
@@ -162,7 +175,7 @@ uint32_t QueueMessage()
 /// </summary>
 void QueueUARTResponse(uint8_t interface, uint32_t code, uint32_t messageID, uint8_t *payload, uint8_t payloadLength)
 {
-    struct Response response;
+    struct ApplicationResponse response;
 
     response.interface = interface;
     response.code = code;
@@ -184,24 +197,6 @@ void InvalidFrame(uint8_t frameType)
 }
 
 /// <summary>
-///     Reset the message header and delete the message body storage.
-/// <summary>
-void ResetIncomingMessage(bool releasePayloadMemory)
-{
-    messageHeader.interface = 0;
-    messageHeader.function = 0;
-    messageHeader.messageID = 0;
-    if ((messageHeader.payload != NULL) && releasePayloadMemory)
-    {
-        vPortFree(messageHeader.payload);
-    }
-    messageHeader.payload = NULL;
-    messageHeader.payloadLength = 0;
-    bytesRemaining  = 0;
-    nextPayloadLocation = NULL;
-}
-
-/// <summary>
 ///     Send a positive or negative acknowledgement along with a response code.
 /// </summary>
 void AcknowledgeFrame(uint8_t ackNak, uint32_t status)
@@ -216,7 +211,7 @@ void AcknowledgeFrame(uint8_t ackNak, uint32_t status)
 /// </remarks>
 void ProcessHeader(uint8_t *packet, uint8_t packetLength)
 {
-    if (packetLength != TM_HEADER_LENGTH)
+    if (packetLength != APP_RESPONSE_HEADER_LENGTH)
     {
         ESP_LOGI(UART_RX_TASK_NAME, "Invalid header legth: %d", packetLength);
         AcknowledgeFrame(MSG_NAK, ERR_INVALID_HEADER);
@@ -225,9 +220,9 @@ void ProcessHeader(uint8_t *packet, uint8_t packetLength)
     {
         ResetIncomingMessage(true);
         messageHeader.interface = packet[0];
-        messageHeader.function = ExtractUInt32(packet + TM_FUNCTION);
-        messageHeader.messageID = ExtractUInt32(packet + TM_MESSAGE_ID);
-        bytesRemaining = ExtractUInt16(packet + TM_PAYLOAD_LENGTH);
+        messageHeader.function = ExtractUInt32(packet + APP_REQUEST_FUNCTION);
+        messageHeader.messageID = ExtractUInt32(packet + APP_REQUEST_MESSAGE_ID);
+        bytesRemaining = ExtractUInt16(packet + APP_REQUEST_PAYLOAD_LENGTH);
         messageHeader.payloadLength = bytesRemaining;
         if (messageHeader.payloadLength > 0)
         {
@@ -236,6 +231,10 @@ void ProcessHeader(uint8_t *packet, uint8_t packetLength)
         else
         {
             messageHeader.payload = NULL;
+            //
+            //  Messages with no payload should be queued immediately.
+            //
+            QueueMessage();
         }
         nextPayloadLocation = messageHeader.payload;
         AcknowledgeFrame(MSG_ACK, ERR_OK);
