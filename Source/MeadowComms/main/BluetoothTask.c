@@ -30,7 +30,7 @@ void BluetoothTask(void *pvParameters)
     ESP_LOGI(BLUETOOTH_TASK_NAME, "Bluetooth task created.");
     while (true)
     {
-        struct TaskMessage message;
+        struct ApplicationRequest message;
         BaseType_t result = xQueueReceive(BluetoothQueueHandle, &message, portMAX_DELAY);
         if (result == pdTRUE)
         {

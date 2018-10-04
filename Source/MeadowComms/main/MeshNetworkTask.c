@@ -30,7 +30,7 @@ void MeshNetworkTask(void *pvParameters)
     ESP_LOGI(MESH_NETWORK_TASK_NAME, "Mesh network task created.");
     while (true)
     {
-        struct TaskMessage message;
+        struct ApplicationRequest message;
         BaseType_t result = xQueueReceive(MeshNetworkQueueHandle, &message, portMAX_DELAY);
         if (result == pdTRUE)
         {
