@@ -31,7 +31,7 @@ void WiFiTask(void *pvParameters)
     ESP_LOGI(WIFI_TASK_NAME, "WiFi task created.");
     while (true)
     {
-        struct TaskMessage message;
+        struct ApplicationRequest message;
         BaseType_t result = xQueueReceive(WiFiQueueHandle, &message, portMAX_DELAY);
         if (result == pdTRUE)
         {

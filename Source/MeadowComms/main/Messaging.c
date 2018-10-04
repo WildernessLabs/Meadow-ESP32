@@ -14,7 +14,7 @@
 /// </summary>
 void SetupMessageQueues()
 {
-    const size_t messageSize = sizeof(struct TaskMessage);
+    const size_t messageSize = sizeof(struct ApplicationRequest);
     UARTTransmitQueueHandle = xQueueCreate(MAX_QUEUE_LENGTH, messageSize);
     if (UARTTransmitQueueHandle == NULL)
     {
