@@ -12,7 +12,14 @@ namespace UARTTransport
         /// <summary>
         ///     Frames types available to the application.
         /// </summary>
-        public enum FrameType :  byte { Header = 0x81, Data = 0x82 };
+        public enum FrameType : byte
+        {
+            ApplicationHeader = PKT_DATA + DATA_HEADER,
+            ApplicationData = PKT_DATA + DATA_PAYLOAD,
+            ACK = PKT_TRANSPORT + TRANSPORT_ACK,
+            NAK = PKT_TRANSPORT + TRANSPORT_NAK,
+            Reset = PKT_TRANSPORT + TRANSPORT_RESET
+        };
 
         /// <summary>
         ///     Communication states for the UART.
@@ -32,6 +39,41 @@ namespace UARTTransport
         #endregion Enums
 
         #region Constants
+
+        /// <summary>
+        ///     Bit mask for an application message.
+        /// </summary>
+        public const byte PKT_DATA = 0x80;
+
+        /// <summary>
+        ///     Bit mask for transport messages.
+        /// </summary>
+        public const byte PKT_TRANSPORT = 0x40;
+
+        /// <summary>
+        ///     Bit mask for the ACK message type.
+        /// </summary>
+        public const byte TRANSPORT_ACK = 0x01;
+
+        /// <summary>
+        ///     Bit mask for the NAK message type.
+        /// </summary>
+        public const byte TRANSPORT_NAK = 0x02;
+
+        /// <summary>
+        ///     Bit mask for the reset request message type.
+        /// </summary>
+        public const byte TRANSPORT_RESET = 0x04;
+
+        /// <summary>
+        ///     Bit mask for the application data message type.
+        /// </summary>
+        public const byte DATA_HEADER = 0x01;
+
+        /// <summary>
+        ///     Bit mask for the application data payload type.
+        /// </summary>
+        public const byte DATA_PAYLOAD = 0x02;
 
         /// <summary>
         ///     Number of START_OF_FRAME_CHARACTERS to use to indicate the
@@ -349,7 +391,7 @@ namespace UARTTransport
         /// <param name="maximumRetries">Maximum number of retries should a timeout or NAK occur.</param>
         public UART(string serialPortName, uint maximumRetries = 3)
         {
-            _port = new SerialPort(serialPortName, 115200, Parity.None, 8, StopBits.One);
+            _port = new SerialPort(serialPortName, 57600, Parity.None, 8, StopBits.One);
             _port.DataReceived += _port_DataReceived;
             _port.Open();
             for (int index = 0; index < _startOfFrame.Length; index++)
@@ -402,7 +444,7 @@ namespace UARTTransport
         ///     does not need to be present in order to calculate this value.
         /// </remarks>
         /// <param name="currentChecksum">Current value for the OriginalChecksum.</param>
-        /// <param name="data">Data byte to be processed.</param>
+        /// <param name="data">ApplicationData byte to be processed.</param>
         /// <returns>Next value for the CRC32.</returns>
         private static UInt32 ProgressiveCRC32(UInt32 currentChecksum, byte data)
         {
@@ -533,7 +575,6 @@ namespace UARTTransport
             //  TODO: Work out what to do about ACK etc.
             //
         }
-
 
         /// <summary>
         ///     Dump the array of bytes to the debug output in hexadecimal.
