@@ -505,7 +505,7 @@ namespace UARTTransport
         /// <param name="messageID">Unique message ID for the message.</param>
         /// <param name="sequenceNumber">Sequence number for this frame for the specified MessageID</param>
         /// <param name="message">Array of bytes containing the message to be sent.</param>
-        /// <returns></returns>
+        /// <returns>Frame with CRC ready for transmission over the UART.</returns>
         private byte[] GenerateFrame(FrameType frameType, UInt32 messageID, byte sequenceNumber, byte[] message)
         {
             byte[] frame = new byte[HeaderAndPayloadSize(message)];
