@@ -108,7 +108,7 @@ namespace UARTTest
             Encoders.EncodeUInt32(Function, buffer, FUNCTION_NUMBER);
             Encoders.EncodeUInt32(MessageID, buffer, MESSAGE_ID);
             Encoders.EncodeUInt16((UInt16) (Payload.Length & 0xffff), buffer, PAYLOAD_LENGTH);
-            uart.Send(UART.FrameType.Header, MessageID, sequenceNumber++, buffer);
+            uart.Send(UART.FrameType.ApplicationHeader, MessageID, sequenceNumber++, buffer);
             //
             //  Now we can send the message payload.
             //
@@ -122,7 +122,7 @@ namespace UARTTest
                     buffer = new byte[length];
                 }
                 Array.Copy(Payload, start, buffer, 0, length);
-                uart.Send(UART.FrameType.Data, MessageID, sequenceNumber, buffer);
+                uart.Send(UART.FrameType.ApplicationData, MessageID, sequenceNumber, buffer);
                 start += length;
                 amountLeftToSend -= length;
                 sequenceNumber++;

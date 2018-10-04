@@ -5,7 +5,7 @@ using System.Text;
 namespace UARTTransport
 {
     /// <summary>
-    ///     Data frame for sending / receiving over the serial port.
+    ///     ApplicationData frame for sending / receiving over the serial port.
     /// </summary>
     public class Frame
     {
