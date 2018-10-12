@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace UARTTransport
+namespace Esp32Messaging
 {
     /// <summary>
     ///     ApplicationData frame for sending / receiving over the serial port.

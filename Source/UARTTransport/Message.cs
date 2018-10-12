@@ -5,9 +5,9 @@ using System.Text;
 using System.Threading.Tasks;
 using UARTTransport;
 
-namespace UARTTest
+namespace Esp32Messaging
 {
-    class Message
+    public class Message
     {
         #region Constants
 
