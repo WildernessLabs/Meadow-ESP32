@@ -4,32 +4,41 @@ using System.Text;
 
 namespace UARTTransport
 {
-    public class UARTErrorEventArgs
+    /// <summary>
+    ///     This class deals with the responses from the ESP32 indicating
+    ///     success or failure of a request to send a packet of data to
+    ///     the ESP32.
+    /// </summary>
+    public class UARTResponseEventArgs
     {
+        #region Properties
+
         /// <summary>
         ///     Enum listing possible error that can occur.
         /// </summary>
-        public enum ErrorType {  NAK, Timeout }
+        public enum ErrorType {  Unknown, ACK, NAK, Timeout }
 
         /// <summary>
         ///     Indicate the error that has occurred.
         /// </summary>
         public ErrorType Error { get; private set; }
 
+        #endregion Properties
+
         #region Constructors
 
         /// <summary>
         ///     Default constructor is private to prevent it being used.
         /// </summary>
-        public UARTErrorEventArgs()
+        public UARTResponseEventArgs()
         {
         }
 
         /// <summary>
-        ///     Create a new UARTErrorEventArgs indicating that the specified error has occurred.
+        ///     Create a new UARTResponseEventArgs indicating that the specified error has occurred.
         /// </summary>
         /// <param name="errorType">Error that has occurred.</param>
-        public UARTErrorEventArgs(ErrorType errorType)
+        public UARTResponseEventArgs(ErrorType errorType)
         {
             Error = errorType;
         }
@@ -43,8 +52,8 @@ namespace UARTTransport
     ///     Delegate for the UART error event handler.
     /// </summary>
     /// <param name="sender">Object that is sending the error response.</param>
-    /// <param name="e">UARTErrorEventArgs indicating the error condition that occurred.</param>
-    public delegate void UARTErrorEventHandler(object sender, UARTErrorEventArgs e);
+    /// <param name="e">UARTResponseEventArgs indicating the error condition that occurred.</param>
+    public delegate void UARTResponseEventHandler(object sender, UARTResponseEventArgs e);
 
     #endregion
 }
