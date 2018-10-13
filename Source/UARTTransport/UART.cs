@@ -136,6 +136,11 @@ namespace UARTTransport
         /// </summary>
         private const int RX_BUFFER_SIZE = 1024;
 
+        /// <summary>
+        ///     Maximum time (in milliseconds) between the end of transmission to a ACK / NAK being received.
+        /// </summary>
+        public const ushort TIMEOUT_MS = 500;
+
         #endregion Constants
 
         #region Private member variables
@@ -236,7 +241,12 @@ namespace UARTTransport
         /// <summary>
         ///     Error event.
         /// </summary>
-        public event UARTErrorEventHandler OnError = delegate { };
+        public event UARTResponseEventHandler ResponseReceived = delegate { };
+
+        /// <summary>
+        ///     Data received event.
+        /// </summary>
+        public event UARTDataReceivedEventHandler DataReceived = delegate { };
 
         #endregion Delegates
 
