@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using UARTTransport;
 
 namespace Esp32Messaging
@@ -10,15 +8,6 @@ namespace Esp32Messaging
     /// </summary>
     public class Frame
     {
-        #region Constants
-
-        /// <summary>
-        ///     Maximum number of bytes (un-padded that can be added to a payload)
-        /// </summary>
-        public const int MAX_PAYLOAD_SIZE = 255;
-
-        #endregion Constants
-
         #region Properties.
 
         /// <summary>
