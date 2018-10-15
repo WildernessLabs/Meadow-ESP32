@@ -76,32 +76,31 @@ namespace Esp32Messaging
             Frame frame;
             byte[] buffer = new byte[HEADER_LENGTH];
             //
-            //  Send the message header.
+            //  Return the message header.
             //
             buffer[INTERFACE] = Device;
             Encoders.EncodeUInt32(Function, buffer, FUNCTION_NUMBER);
             Encoders.EncodeUInt32(MessageID, buffer, MESSAGE_ID);
             Encoders.EncodeUInt16((UInt16) (Payload.Length & 0xffff), buffer, PAYLOAD_LENGTH);
-            frame = new Frame(UART.FrameType.ApplicationHeader, MessageID, sequenceNumber, buffer);
+            frame = new Frame(UART.FrameType.ApplicationHeader, MessageID, sequenceNumber++, buffer);
             yield return frame;
             //
-            //  Now we can send the message payload.
+            //  Now we can process the message payload.
             //
             UInt16 start = 0;
             int amountLeftToSend = Payload.Length;
             while (amountLeftToSend > 0)
             {
-                byte length = (byte) ((amountLeftToSend < Frame.MAX_PAYLOAD_SIZE ? amountLeftToSend : UART.MAXIMUM_PAYLOAD_LENGTH) & 0xff);
+                byte length = (byte) ((amountLeftToSend < UART.MAXIMUM_PAYLOAD_LENGTH ? amountLeftToSend : UART.MAXIMUM_PAYLOAD_LENGTH) & 0xff);
                 if (length != buffer.Length)
                 {
                     buffer = new byte[length];
                 }
                 Array.Copy(Payload, start, buffer, 0, length);
-                frame = new Frame(UART.FrameType.ApplicationData, MessageID, sequenceNumber, buffer);
-                yield return frame;
                 start += length;
                 amountLeftToSend -= length;
-                sequenceNumber++;
+                frame = new Frame(UART.FrameType.ApplicationData, MessageID, sequenceNumber++, buffer);
+                yield return frame;
             }
         }
 

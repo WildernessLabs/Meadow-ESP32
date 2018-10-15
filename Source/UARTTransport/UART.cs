@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Dynamic;
 using System.IO.Ports;
+using System.Timers;
 
 namespace UARTTransport
 {
@@ -167,6 +168,19 @@ namespace UARTTransport
         ///     Buffer to hold the data being read from the serial port.
         /// </summary>
         private readonly byte[] _buffer = new byte[RX_BUFFER_SIZE];
+
+        /// <summary>
+        ///     Timeout timer is used to work out if we should raise an error event
+        ///     as there has been too long between sending the frame and receiving
+        ///     an ACK / NAK.
+        /// </summary>
+        private System.Timers.Timer _timeoutTimer = null;
+
+        /// <summary>
+        ///     Retry counter used to work out if the system should resend the frame
+        ///     or if it should generate an error.
+        /// </summary>
+        private int _currentRetryCount = 0;
 
         #endregion Private member variables
 
@@ -383,6 +397,16 @@ namespace UARTTransport
             }
         }
 
+        /// <summary>
+        ///     The system should receive a response with a maximum time period.
+        /// </summary>
+        /// <param name="sender">Object generating this event.</param>
+        /// <param name="e">Event data for the timer Elapsed event.</param>
+        private void _timeoutTimer_Elapsed(object sender, ElapsedEventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
         #endregion Events
 
         #region Constructors
@@ -410,6 +434,14 @@ namespace UARTTransport
             }
             _buffer = new byte[RX_BUFFER_SIZE];
             MaximumRetryCount = maximumRetries;
+            //
+            //  Create a new timeout timer but do not start it.  The timer should
+            //  be set for a manual restart.
+            //
+            _timeoutTimer = new Timer(TIMEOUT_MS);
+            _timeoutTimer.Enabled = false;              // Don't start it yet.
+            _timeoutTimer.AutoReset = false;            // Manual restart.
+            _timeoutTimer.Elapsed += _timeoutTimer_Elapsed;
         }
 
         #endregion Constructors
@@ -559,11 +591,19 @@ namespace UARTTransport
         }
 
         /// <summary>
+        ///     Send a frame of data over the serial port.
+        /// </summary>
+        /// <param name="frame">Byte array containing the raw data to be sent.</param>
+        private void Send(byte[] frame)
+        {
+            _port.Write(_startOfFrame, 0, _startOfFrame.Length);
+            _port.Write(_lastFrameSent, 0, _lastFrameSent.Length);
+            _port.Write(new[] { END_OF_FRAME_CHARACTER }, 0, 1);
+        }
+
+        /// <summary>
         ///     Send a frame of data on the serial port.
         /// </summary>
-        /// <remarks>
-        ///     TODO: ACK / NAK / ABORT / RESET - deal with the different return types.
-        /// </remarks>
         /// <param name="frameType">Frame type.</param>
         /// <param name="messageID">ID of the message that this frame belongs to.</param>
         /// <param name="sequenceNumber">Sequence number of the frame.</param>
@@ -577,13 +617,10 @@ namespace UARTTransport
             }
 
             _lastFrameSent = GenerateFrame(frameType, messageID, sequenceNumber, message);
+            _currentRetryCount = 0;
             DisplayFrame(_lastFrameSent);
-            _port.Write(_startOfFrame, 0, _startOfFrame.Length);
-            _port.Write(_lastFrameSent, 0, _lastFrameSent.Length);
-            _port.Write(new[] {END_OF_FRAME_CHARACTER}, 0, 1);
-            //
-            //  TODO: Work out what to do about ACK etc.
-            //
+            Send(_lastFrameSent);
+            _timeoutTimer.Enabled = true;       // Start the timeout timer.
         }
 
         /// <summary>
