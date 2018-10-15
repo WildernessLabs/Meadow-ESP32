@@ -154,7 +154,10 @@ namespace Esp32Messaging
             Message message = GetMessageFromQueue();
             while (message != null)
             {
-                
+                foreach (Frame frame in message)
+                {
+                    _uart.Send(frame.FrameType, frame.MessageID, frame.SequenceNumber, frame.Payload);
+                }
                 message = GetMessageFromQueue();
             }
         }

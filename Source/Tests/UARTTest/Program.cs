@@ -24,7 +24,7 @@ namespace UARTTest
             }
             else
             {
-                UART uart = new UART(comPortName);
+                MessageQueue queue = new MessageQueue(comPortName);
                 UInt32 counter = 0;
                 byte[] payload = new byte[45];
 
@@ -37,7 +37,7 @@ namespace UARTTest
                 {
                     counter++;
                     Message message = new Message(0, 10, counter, payload);
-                    message.Send(uart);
+                    queue.Add(message);
                     Thread.Sleep(1000);
                 }
             }
