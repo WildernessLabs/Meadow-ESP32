@@ -73,7 +73,6 @@ namespace Esp32Messaging
         public IEnumerator GetEnumerator()
         {
             byte sequenceNumber = 0;
-            Frame frame;
             byte[] buffer = new byte[HEADER_LENGTH];
             //
             //  Return the message header.
@@ -82,7 +81,7 @@ namespace Esp32Messaging
             Encoders.EncodeUInt32(Function, buffer, FUNCTION_NUMBER);
             Encoders.EncodeUInt32(MessageID, buffer, MESSAGE_ID);
             Encoders.EncodeUInt16((UInt16) (Payload.Length & 0xffff), buffer, PAYLOAD_LENGTH);
-            frame = new Frame(UART.FrameType.ApplicationHeader, MessageID, sequenceNumber++, buffer);
+            Frame frame = new Frame(UART.FrameType.ApplicationHeader, MessageID, sequenceNumber++, buffer);
             yield return frame;
             //
             //  Now we can process the message payload.
