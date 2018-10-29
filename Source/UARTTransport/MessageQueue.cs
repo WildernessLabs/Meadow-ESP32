@@ -56,9 +56,9 @@ namespace Esp32Messaging
         private Message _incomingMessage = null;
 
         /// <summary>
-        ///     Error returned by the UART Response event.
+        ///     Packet returned by the UART Response event.
         /// </summary>
-        private UARTResponseEventArgs.ErrorType _uartResponse = UARTResponseEventArgs.ErrorType.Unknown;
+        private UARTResponseEventArgs.TransportPacketType _uartResponse = UARTResponseEventArgs.TransportPacketType.Unknown;
 
         #endregion Private variables
 
@@ -104,11 +104,17 @@ namespace Esp32Messaging
         /// <summary>
         ///     UART has sent a response to the request to send some data to the ESP32.
         /// </summary>
+        /// <remarks>
+        ///     This method simply stores the response code returned by the UART and then
+        ///     signals that a response that a response has been received.  It is up to the
+        ///     code queuing the items to deal with the response.
+        /// </remarks>
         /// <param name="sender">Object raising the event.</param>
         /// <param name="e">Event arguments containing information about the success or failure of the send request.</param>
         private void _uart_ResponseReceived(object sender, UARTResponseEventArgs e)
         {
-            throw new NotImplementedException();
+            _uartResponse = e.Packet;
+            _waitingForResponseHandle.Set();
         }
 
         /// <summary>
@@ -158,6 +164,11 @@ namespace Esp32Messaging
                 foreach (Frame frame in message)
                 {
                     _uart.Send(frame.FrameType, frame.MessageID, frame.SequenceNumber, frame.Payload);
+                    _waitingForResponseHandle.WaitOne();
+                    if (_uartResponse != UARTResponseEventArgs.TransportPacketType.ACK)
+                    {
+                        //  TODO: Deal with the error here.
+                    }
                 }
                 message = GetMessageFromQueue();
             }
