@@ -95,9 +95,7 @@ struct ApplicationRequest
 #define APP_RESPONSE_CODE               (APP_RESPONSE_INTERFACE + 1)
 #define APP_RESPONSE_MESSAGE_ID         (APP_RESPONSE_CODE + 4)
 #define APP_RESPONSE_PAYLOAD_LENGTH     (APP_RESPONSE_MESSAGE_ID + 4)
-#define APP_RESPONSE_HEADER_CRC         (APP_RESPONSE_PAYLOAD_LENGTH + 2)
-#define APP_RESPONSE_PAYLOAD_CRC        (APP_RESPONSE_HEADER_CRC + 4)
-#define APP_RESPONSE_HEADER_LENGTH      (APP_RESPONSE_PAYLOAD_CRC + 4)
+#define APP_RESPONSE_HEADER_LENGTH      (APP_RESPONSE_PAYLOAD_LENGTH + 2)
 
 #define CRC32_SEED                  (0xffffffff)
 
@@ -112,6 +110,10 @@ struct ApplicationResponse
     uint8_t *payload;
     uint16_t payloadLength;
 };
+
+#define TRANSPORT_FRAME_TYPE        0
+#define TRANSPORT_STATUS_CODE       (TRANSPORT_FRAME_TYPE + 1)
+#define TRANSPORT_MESSAGE_LENGTH    (TRANSPORT_STATUS_CODE + 4)
 
 extern uint8_t CRC8(const uint8_t *, uint16_t);
 extern uint32_t CRC32(const uint8_t *, uint16_t);
