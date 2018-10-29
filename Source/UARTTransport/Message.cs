@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -7,7 +8,7 @@ using UARTTransport;
 
 namespace Esp32Messaging
 {
-    public class Message
+    public class Message : IEnumerable
     {
         #region Constants
 
@@ -43,6 +44,8 @@ namespace Esp32Messaging
 
         #endregion Constants
 
+        #region Private member variables
+
         /// <summary>
         ///     Device / interface this message is destined for.
         /// </summary>
@@ -56,12 +59,52 @@ namespace Esp32Messaging
         /// <summary>
         ///     Unique message ID.
         /// </summary>
-        private UInt32 MessageID { get; set; }
+        public UInt32 MessageID { get; private set; }
 
         /// <summary>
         ///     Payload of the message (data for the function to act upon).
         /// </summary>
         private byte[] Payload { get; set; }
+
+        #endregion Private member variables
+
+        #region IEnumerable interface implementation
+
+        public IEnumerator GetEnumerator()
+        {
+            byte sequenceNumber = 0;
+            Frame frame;
+            byte[] buffer = new byte[HEADER_LENGTH];
+            //
+            //  Return the message header.
+            //
+            buffer[INTERFACE] = Device;
+            Encoders.EncodeUInt32(Function, buffer, FUNCTION_NUMBER);
+            Encoders.EncodeUInt32(MessageID, buffer, MESSAGE_ID);
+            Encoders.EncodeUInt16((UInt16) (Payload.Length & 0xffff), buffer, PAYLOAD_LENGTH);
+            frame = new Frame(UART.FrameType.ApplicationHeader, MessageID, sequenceNumber++, buffer);
+            yield return frame;
+            //
+            //  Now we can process the message payload.
+            //
+            UInt16 start = 0;
+            int amountLeftToSend = Payload.Length;
+            while (amountLeftToSend > 0)
+            {
+                byte length = (byte) ((amountLeftToSend < UART.MAXIMUM_PAYLOAD_LENGTH ? amountLeftToSend : UART.MAXIMUM_PAYLOAD_LENGTH) & 0xff);
+                if (length != buffer.Length)
+                {
+                    buffer = new byte[length];
+                }
+                Array.Copy(Payload, start, buffer, 0, length);
+                start += length;
+                amountLeftToSend -= length;
+                frame = new Frame(UART.FrameType.ApplicationData, MessageID, sequenceNumber++, buffer);
+                yield return frame;
+            }
+        }
+
+        #endregion IEnumerable interface implementation
 
         #region Constructors
 
@@ -93,41 +136,6 @@ namespace Esp32Messaging
 
         #region Methods
 
-        /// <summary>
-        ///     Send the specified message on the serial line.
-        /// </summary>
-        /// <param name="uart">Serial port / UART used to communicate with the ESP32.</param>
-        public void Send(UART uart)
-        {
-            byte sequenceNumber = 0;
-            byte[] buffer = new byte[HEADER_LENGTH];
-            //
-            //  Send the message header.
-            //
-            buffer[INTERFACE] = Device;
-            Encoders.EncodeUInt32(Function, buffer, FUNCTION_NUMBER);
-            Encoders.EncodeUInt32(MessageID, buffer, MESSAGE_ID);
-            Encoders.EncodeUInt16((UInt16) (Payload.Length & 0xffff), buffer, PAYLOAD_LENGTH);
-            uart.Send(UART.FrameType.ApplicationHeader, MessageID, sequenceNumber++, buffer);
-            //
-            //  Now we can send the message payload.
-            //
-            UInt16 start = 0;
-            int amountLeftToSend = Payload.Length;
-            while (amountLeftToSend > 0)
-            {
-                byte length = (byte) ((amountLeftToSend < Frame.MAX_PAYLOAD_SIZE ? amountLeftToSend : UART.MAXIMUM_PAYLOAD_LENGTH) & 0xff);
-                if (length != buffer.Length)
-                {
-                    buffer = new byte[length];
-                }
-                Array.Copy(Payload, start, buffer, 0, length);
-                uart.Send(UART.FrameType.ApplicationData, MessageID, sequenceNumber, buffer);
-                start += length;
-                amountLeftToSend -= length;
-                sequenceNumber++;
-            }
-        }
 
         #endregion Methods
     }

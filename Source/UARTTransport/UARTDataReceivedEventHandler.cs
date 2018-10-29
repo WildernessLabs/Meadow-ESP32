@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Xml.Serialization;
 
 namespace UARTTransport
 {
@@ -51,9 +52,16 @@ namespace UARTTransport
         /// <summary>
         ///     Create a new UARTDataReceivedEventArgs and add the data frame.
         /// </summary>
+        /// <param name="device">Interface / device sending the data frame.</param>
+        /// <param name="messageID">Message ID used by the STM32 in the original request.</param>
+        /// <param name="sequenceNumber">Sequence number of this frame in the response.</param>
         /// <param name="frame">Data received from the UART.</param>
-        public UARTDataReceivedEventArgs(byte[] frame)
+        public UARTDataReceivedEventArgs(byte device, UInt32 messageID, UInt16 sequenceNumber, byte[] frame)
         {
+            Interface = device;
+            MessageID = messageID;
+            SequenceNumber = sequenceNumber;
+            Data = frame;
         }
 
         #endregion

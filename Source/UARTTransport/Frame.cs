@@ -1,6 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
+using UARTTransport;
 
 namespace Esp32Messaging
 {
@@ -9,36 +8,27 @@ namespace Esp32Messaging
     /// </summary>
     public class Frame
     {
-        #region Constants
-
-        /// <summary>
-        ///     Maximum number of bytes (un-padded that can be added to a payload)
-        /// </summary>
-        public const int MAX_PAYLOAD_SIZE = 255;
-
-        #endregion Constants
-
         #region Properties.
 
         /// <summary>
         ///     Frame type.
         /// </summary>
-        public byte FrameType { get; set; }
+        public UART.FrameType FrameType { get; private set; }
 
         /// <summary>
         ///     Message ID that this frame belongs to.
         /// </summary>
-        public UInt32 MessageID { get; set; }
+        public UInt32 MessageID { get; private set; }
 
         /// <summary>
         ///     Sequence number of this frame in the overall message.
         /// </summary>
-        public byte SequenceNumber { get; set; }
+        public byte SequenceNumber { get; private set; }
 
         /// <summary>
         ///     Payload bytes in this frame (maximum is 255).
         /// </summary>
-        public byte[] Payload { get; set; }
+        public byte[] Payload { get; private set; }
 
         #endregion Properties.
 
@@ -56,7 +46,7 @@ namespace Esp32Messaging
         /// <param name="messageID">ID of the message being sent.</param>
         /// <param name="sequenceNumber">Sequence number of this packet in the overall message.</param>
         /// <param name="payload">Payload bytes.</param>
-        public Frame(byte frameType, UInt32 messageID, byte sequenceNumber, byte[] payload)
+        public Frame(UART.FrameType frameType, UInt32 messageID, byte sequenceNumber, byte[] payload)
         {
             FrameType = frameType;
             MessageID = messageID;
@@ -65,19 +55,5 @@ namespace Esp32Messaging
         }
 
         #endregion Constructors
-
-        #region Methods
-
-        /// <summary>
-        ///     Convert this frame into an array of bytes.
-        /// </summary>
-        /// <returns>Array of bytes containing the frame header and frame payload.</returns>
-        public byte[] ToByteArray()
-        {
-            byte[] result = new byte[10];
-            return (result);
-        }
-
-        #endregion Methods
     }
 }

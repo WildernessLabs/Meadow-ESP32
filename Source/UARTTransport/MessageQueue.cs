@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
+using System.Timers;
 using UARTTransport;
 
 namespace Esp32Messaging
@@ -39,7 +40,7 @@ namespace Esp32Messaging
         private Thread _queueHandler = null;
 
         /// <summary>
-        /// 
+        ///     Serial port connecting the STM32 and the ESP32 microcontrollers.
         /// </summary>
         private readonly UART _uart;
 
@@ -154,7 +155,10 @@ namespace Esp32Messaging
             Message message = GetMessageFromQueue();
             while (message != null)
             {
-                
+                foreach (Frame frame in message)
+                {
+                    _uart.Send(frame.FrameType, frame.MessageID, frame.SequenceNumber, frame.Payload);
+                }
                 message = GetMessageFromQueue();
             }
         }
