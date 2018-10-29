@@ -34,12 +34,12 @@ static const int TX_BUF_SIZE = 1024;
 //  The filler character is used to send a sequence of Start of Frame
 //  characters in the binary data.
 //
-#define FILLER_CHARACTER            (0x52)
+#define PADDING_CHARACTER            (0x52)
 
 //
 //  Number of characters to be used in the pattern matching.
 //
-#define NUMBER_OF_PATTERN_CHARACTERS    (3)
+#define NUMBER_OF_START_OF_FRAME_CHARACTERS    (3)
 
 //
 //  Length of the UART queue.
@@ -78,6 +78,7 @@ enum CommunicationStates
 {
     StartOfFrame = 0,
     FrameType,
+    StatusCode,
     MessageID,
     SequenceNumber,
     Length,
