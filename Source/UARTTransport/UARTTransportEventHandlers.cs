@@ -16,12 +16,17 @@ namespace UARTTransport
         /// <summary>
         ///     Enum listing possible error that can occur.
         /// </summary>
-        public enum ErrorType {  Unknown, ACK, NAK, Timeout }
+        public enum TransportPacketType { Unknown, ACK, NAK, Timeout }
+
+        /// <summary>
+        ///     Packet code returned by the UART.
+        /// </summary>
+        public UInt32 StatusCode { get; private set; }
 
         /// <summary>
         ///     Indicate the error that has occurred.
         /// </summary>
-        public ErrorType Error { get; private set; }
+        public TransportPacketType Packet { get; private set; }
 
         #endregion Properties
 
@@ -37,10 +42,12 @@ namespace UARTTransport
         /// <summary>
         ///     Create a new UARTResponseEventArgs indicating that the specified error has occurred.
         /// </summary>
-        /// <param name="errorType">Error that has occurred.</param>
-        public UARTResponseEventArgs(ErrorType errorType)
+        /// <param name="packetType">Packet that has occurred.</param>
+        /// <param name="statusCode">Status code returned by the UART.</param>
+        public UARTResponseEventArgs(TransportPacketType packetType, UInt32 statusCode)
         {
-            Error = errorType;
+            Packet = packetType;
+            StatusCode = statusCode;
         }
 
         #endregion

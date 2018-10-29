@@ -28,7 +28,7 @@ namespace Esp32Messaging
         public const int MESSAGE_ID = FUNCTION_NUMBER + 4;
 
         /// <summary>
-        ///     Location of the Payload length bytes (2) in the message header.
+        ///     Location of the Payload length bytes (4) in the message header.
         /// </summary>
         public const short PAYLOAD_LENGTH = MESSAGE_ID + 4;
 
@@ -132,10 +132,5 @@ namespace Esp32Messaging
         }
 
         #endregion Constructors
-
-        #region Methods
-
-
-        #endregion Methods
     }
 }

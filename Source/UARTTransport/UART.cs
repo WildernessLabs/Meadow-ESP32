@@ -29,6 +29,7 @@ namespace UARTTransport
         {
             StartOfFrame = 0,
             FrameType,
+            StatusCode,
             MessageID,
             SequenceNumber,
             Length,
@@ -170,6 +171,11 @@ namespace UARTTransport
         private readonly byte[] _buffer = new byte[RX_BUFFER_SIZE];
 
         /// <summary>
+        ///     Object used to lock the _timeroutTimer object.
+        /// </summary>
+        private object _timeoutTimeLock = new Object();
+
+        /// <summary>
         ///     Timeout timer is used to work out if we should raise an error event
         ///     as there has been too long between sending the frame and receiving
         ///     an ACK / NAK.
@@ -181,6 +187,13 @@ namespace UARTTransport
         ///     or if it should generate an error.
         /// </summary>
         private int _currentRetryCount = 0;
+
+        /// <summary>
+        ///     This variable holds the byte number when putting together multi-byte
+        ///     values (i.e. 4 bytes in a UInt32 object).  this allows the original
+        ///     object to be rehydrated from the UART byte stream.
+        /// </summary>
+        private int _byteNumber = 0;
 
         #endregion Private member variables
 
@@ -221,7 +234,10 @@ namespace UARTTransport
         /// </summary>
         private UInt32 CalculatedChecksum { get; set;  } = 0;
 
-        private int byteNumber = 0;
+        /// <summary>
+        ///     Packet code returned by the transport packets.
+        /// </summary>
+        private UInt32 StatusCode { get; set; } = 0;
 
         /// <summary>
         ///     Message ID of the data packets being received.
@@ -239,11 +255,6 @@ namespace UARTTransport
         private CommunicationStates CurrentCommunicationState { get; set; } = CommunicationStates.StartOfFrame;
 
         /// <summary>
-        ///     Current retry count for serial transmission of data to the ESP32
-        /// </summary>
-        private uint CurrentRetryCount { get; set; } = 0;
-
-        /// <summary>
         ///     Maximum retry count for serial communication.
         /// </summary>
         private uint MaximumRetryCount { get; set; } = 3;
@@ -253,7 +264,7 @@ namespace UARTTransport
         #region Delegates
 
         /// <summary>
-        ///     Error event.
+        ///     Packet event.
         /// </summary>
         public event UARTResponseEventHandler ResponseReceived = delegate { };
 
@@ -317,15 +328,31 @@ namespace UARTTransport
                                     break;
                                 case CommunicationStates.FrameType:
                                     CurrentFrameType = data;
-                                    CurrentCommunicationState = CommunicationStates.MessageID;
+                                    if ((CurrentFrameType & PKT_TRANSPORT) > 0)
+                                    {
+                                        CurrentCommunicationState = CommunicationStates.StatusCode;
+                                    }
+                                    else
+                                    {
+                                        CurrentCommunicationState = CommunicationStates.MessageID;
+                                    }
                                     CalculatedChecksum = CRC32_SEED;
                                     CalculatedChecksum = ProgressiveCRC32(CalculatedChecksum, data);
-                                    byteNumber = 0;
+                                    _byteNumber = 0;
+                                    break;
+                                case CommunicationStates.StatusCode:
+                                    StatusCode |= (UInt32) (data << (_byteNumber * 8));
+                                    _byteNumber++;
+                                    if (_byteNumber == 4)
+                                    {
+                                        CurrentCommunicationState = CommunicationStates.CRC;
+                                    }
+                                    CalculatedChecksum = ProgressiveCRC32(CalculatedChecksum, data);
                                     break;
                                 case CommunicationStates.MessageID:
-                                    MessageID |= (UInt32) (data << (byteNumber * 8));
-                                    byteNumber++;
-                                    if (byteNumber == 4)
+                                    MessageID |= (UInt32) (data << (_byteNumber * 8));
+                                    _byteNumber++;
+                                    if (_byteNumber == 4)
                                     {
                                         CurrentCommunicationState = CommunicationStates.SequenceNumber;
                                     }
@@ -348,7 +375,7 @@ namespace UARTTransport
                                     else
                                     {
                                         CurrentCommunicationState = CommunicationStates.CRC;
-                                        byteNumber = 0;
+                                        _byteNumber = 0;
                                     }
                                     break;
                                 case CommunicationStates.Payload:
@@ -358,14 +385,14 @@ namespace UARTTransport
                                     if (PayloadIndex == FramePayloadLength)
                                     {
                                         CurrentCommunicationState = CommunicationStates.CRC;
-                                        byteNumber = 0;
+                                        _byteNumber = 0;
                                         OriginalChecksum = 0;
                                     }
                                     break;
                                 case CommunicationStates.CRC:
-                                    OriginalChecksum |= (UInt32) (data << (byteNumber * 8));
-                                    byteNumber++;
-                                    if (byteNumber == 4)
+                                    OriginalChecksum |= (UInt32) (data << (_byteNumber * 8));
+                                    _byteNumber++;
+                                    if (_byteNumber == 4)
                                     {
                                         CurrentCommunicationState = CommunicationStates.EndOfFrame;
                                     }
@@ -373,12 +400,18 @@ namespace UARTTransport
                                 case CommunicationStates.EndOfFrame:
                                     if ((data == END_OF_FRAME_CHARACTER) && (CalculatedChecksum == OriginalChecksum))
                                     {
-                                        //ValidFrame(frameType, FramePayload, FramePayloadLength);
+                                        if ((CurrentFrameType & PKT_TRANSPORT) > 0)
+                                        {
+                                            ProcessTransportData();
+                                        }
+                                        else
+                                        {
+                                            ProcessApplicationDataFrame(CurrentFrameType, FramePayload, FramePayloadLength);
+                                        }
                                     }
                                     else
                                     {
                                         //InvalidFrame(frameType);
-                                        CurrentCommunicationState = CommunicationStates.StartOfFrame;
                                     }
                                     if (FramePayload != null)
                                     {
@@ -620,7 +653,114 @@ namespace UARTTransport
             _currentRetryCount = 0;
             DisplayFrame(_lastFrameSent);
             Send(_lastFrameSent);
-            _timeoutTimer.Enabled = true;       // Start the timeout timer.
+            //
+            //  
+            //
+            //_timeoutTimer.Enabled = true;       // Start the timeout timer.
+        }
+
+        /// <summary>
+        ///     An invalid frame has been sent, send a NAK to the STM32.
+        /// </summary>
+        /// <param name="frameType"></param>
+        void InvalidFrame(byte frameType)
+        {
+        }
+
+        /// <summary>
+        ///     Send a positive (ACK) or negative (NAK) acknowledgement along with a response (error) code.
+        /// </summary>
+        /// <param name="ackNak">Type of acknowledgement (ACK ot NAK).</param>
+        /// <param name="status">Status code to send in the ACK / NAK message.</param>
+        void AcknowledgeFrame(byte ackNak, UInt32 status)
+        {
+        }
+
+        /// <summary>
+        ///     Process the transport request.
+        /// </summary>
+        private void ProcessTransportData()
+        {
+            switch (CurrentFrameType & 0x2f)
+            {
+                case TRANSPORT_ACK:
+                    UARTResponseEventArgs ack = new UARTResponseEventArgs(UARTResponseEventArgs.TransportPacketType.ACK, StatusCode);
+                    ResponseReceived(this, ack);
+                    break;
+                case TRANSPORT_NAK:
+                    _currentRetryCount++;
+                    if (_currentRetryCount > MaximumRetryCount)
+                    {
+                        UARTResponseEventArgs nak = new UARTResponseEventArgs(UARTResponseEventArgs.TransportPacketType.NAK, StatusCode);
+                        ResponseReceived(this, nak);
+                    }
+                    Send(_lastFrameSent);
+                    break;
+                case TRANSPORT_RESET:
+                    //
+                    //  Reset the interface back to power on.
+                    //
+                    //ResetIncomingMessage(true);
+                    break;
+            }
+        }
+
+        private void ProcessHeader(byte[] packet, byte packetLength)
+        {
+            //if (packetLength != APP_RESPONSE_HEADER_LENGTH)
+            //{
+            //    ESP_LOGI(UART_RX_TASK_NAME, "Invalid header legth: %d", packetLength);
+            //    AcknowledgeFrame(MSG_NAK, ERR_INVALID_HEADER);
+            //}
+            //else
+            //{
+            //    ResetIncomingMessage(true);
+            //    messageHeader.interface = packet[0];
+            //    messageHeader.function = ExtractUInt32(packet + APP_REQUEST_FUNCTION);
+            //    messageHeader.messageID = ExtractUInt32(packet + APP_REQUEST_MESSAGE_ID);
+            //    bytesRemaining = ExtractUInt16(packet + APP_REQUEST_PAYLOAD_LENGTH);
+            //    messageHeader.payloadLength = bytesRemaining;
+            //    if (messageHeader.payloadLength > 0)
+            //    {
+            //        messageHeader.payload = pvPortMalloc(messageHeader.payloadLength);
+            //    }
+            //    else
+            //    {
+            //        messageHeader.payload = NULL;
+            //        //
+            //        //  Messages with no payload should be queued immediately.
+            //        //
+            //        QueueMessage();
+            //    }
+            //    nextPayloadLocation = messageHeader.payload;
+            //    AcknowledgeFrame(MSG_ACK, ERR_OK);
+            //}
+        }
+
+        private void ProcessData(byte[] packet, byte packetLength)
+        {
+
+        }
+
+        /// <summary>
+        ///     A valid frame has been received, work out what to do with it.
+        /// </summary>
+        /// <param name="frameType">Type of frame that has been received (transport, application etc.)</param>
+        /// <param name="packet">Payload to be processed.</param>
+        /// <param name="packetLength">Amount of data in the payload.</param>
+        private void ProcessApplicationDataFrame(byte frameType, byte[] packet, byte packetLength)
+        {
+            //
+            //  Application data packets are either header or data packets.
+            //
+            if ((frameType & DATA_HEADER) > 0)
+            {
+                ProcessHeader(packet, packetLength);
+            }
+            else
+            {
+                ProcessData(packet, packetLength);
+            }
         }
 
         /// <summary>
