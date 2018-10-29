@@ -96,8 +96,7 @@ void UARTTxTask(void *pvParameters)
             buffer[APP_RESPONSE_INTERFACE] = message.interface;
             EncodeUInt32(message.code, buffer + APP_RESPONSE_CODE);
             EncodeUInt32(message.messageID, buffer + APP_RESPONSE_MESSAGE_ID);
-            uint32_t crc = CRC32(buffer, APP_RESPONSE_HEADER_CRC);
-            buffer[APP_RESPONSE_HEADER_CRC] = crc;
+            EncodeUInt32(message.payloadLength, buffer + APP_RESPONSE_PAYLOAD_LENGTH);
             const int txBytes = uart_write_bytes(STM32_UART_NUMBER, (const char *) buffer, APP_RESPONSE_HEADER_LENGTH);
             ESP_LOGI(UART_TX_TASK_NAME, "Wrote %d bytes to UART", txBytes);
         }
@@ -197,10 +196,94 @@ void InvalidFrame(uint8_t frameType)
 }
 
 /// <summary>
-///     Send a positive or negative acknowledgement along with a response code.
+///     Work out how big the frame buffer should be for the message that
+//      is going to be sent.  This will take into account the padding
+//      and CRC etc.
+/// </summary>
+uint32_t HeaderAndPayloadSize(uint8_t *buffer, uint8_t bufferLength)
+{
+    uint32_t frameLength = 0;
+
+    int startOfFrameCharacterCount = 0;
+    int byteCount = 0;
+            
+    for (int index = 0; index < bufferLength; index++)
+    {
+        if (buffer[index] == START_OF_FRAME_CHARACTER)
+        {
+            startOfFrameCharacterCount++;
+            if (startOfFrameCharacterCount == (NUMBER_OF_START_OF_FRAME_CHARACTERS - 1))
+            {
+                byteCount++;     // An additional byte is needed for the padding character.
+                startOfFrameCharacterCount = 0;
+            }
+        }
+        else
+        {
+            startOfFrameCharacterCount = 0;
+        }
+        byteCount++;
+    }
+    byteCount += bufferLength;       //  Size of the header.
+    byteCount += 4;                  //  CRC is a 32-bit CRC and takes 4 bytes.
+    return(byteCount);
+}
+
+/// <summary>
+///     Take a buffer of data and generate a sequences of bytes to send over the UART.
+//      This sequence will contain the start of frame characters, data, CRC and end
+//      of frame characters.
+/// </summary>
+uint8_t *GenerateFrame(uint8_t *buffer, uint32_t bufferLength, uint32_t frameLength)
+{
+    uint8_t *frame = pvPortMalloc(frameLength);
+    memset(frame, START_OF_FRAME_CHARACTER, NUMBER_OF_START_OF_FRAME_CHARACTERS);
+    uint32_t currentByte = NUMBER_OF_START_OF_FRAME_CHARACTERS;
+    //
+    //  Copy the data into the new frame taking into account the need to insert
+    //  padding characters if we hit a sequence of start of frame characters.
+    //
+    int startOfFrameCharacterCount = 0;
+    for (int index = 0; index < bufferLength; index++)
+    {
+        frame[currentByte++] = buffer[index];
+        if (buffer[index] == START_OF_FRAME_CHARACTER)
+        {
+            startOfFrameCharacterCount++;
+            if (startOfFrameCharacterCount == (NUMBER_OF_START_OF_FRAME_CHARACTERS - 1))
+            {
+                frame[currentByte++] = PADDING_CHARACTER;
+                startOfFrameCharacterCount = 0;
+            }
+        }
+        else
+        {
+            startOfFrameCharacterCount = 0;
+        }
+    }
+    EncodeUInt32(CRC32(frame,  frameLength - 4), frame + currentByte);
+    currentByte += 4;
+    frame[currentByte] = END_OF_FRAME_CHARACTER;
+    return (frame);
+}
+
+/// <summary>
+///     Send a positive (ACK) or negative (NAK) acknowledgement along with a response code.
 /// </summary>
 void AcknowledgeFrame(uint8_t ackNak, uint32_t status)
 {
+    uint8_t buffer[TRANSPORT_MESSAGE_LENGTH];
+    memset(buffer, 0, TRANSPORT_MESSAGE_LENGTH);
+    buffer[TRANSPORT_FRAME_TYPE] = PKT_TRANSPORT | ackNak;
+    EncodeUInt32(status, buffer + TRANSPORT_STATUS_CODE);
+    uint32_t frameLength = HeaderAndPayloadSize(buffer, TRANSPORT_MESSAGE_LENGTH);
+    uint8_t *frame = GenerateFrame(buffer, TRANSPORT_MESSAGE_LENGTH, frameLength);
+    //
+    //  TODO: Need to work out how to lock the UART.
+    //
+    const int txBytes = uart_write_bytes(STM32_UART_NUMBER, (const char *) frame, frameLength);
+    vPortFree(frame);
+    ESP_LOGI(UART_TX_TASK_NAME, "Wrote %d bytes to UART", txBytes);
 }
 
 /// <summary>
@@ -211,10 +294,10 @@ void AcknowledgeFrame(uint8_t ackNak, uint32_t status)
 /// </remarks>
 void ProcessHeader(uint8_t *packet, uint8_t packetLength)
 {
-    if (packetLength != APP_RESPONSE_HEADER_LENGTH)
+    if (packetLength != APP_REQUEST_HEADER_LENGTH)
     {
-        ESP_LOGI(UART_RX_TASK_NAME, "Invalid header legth: %d", packetLength);
-        AcknowledgeFrame(MSG_NAK, ERR_INVALID_HEADER);
+        ESP_LOGI(UART_RX_TASK_NAME, "Invalid header length: %d", packetLength);
+        AcknowledgeFrame(TRANSPORT_NAK, ERR_INVALID_HEADER);
     }
     else
     {
@@ -237,9 +320,10 @@ void ProcessHeader(uint8_t *packet, uint8_t packetLength)
             QueueMessage();
         }
         nextPayloadLocation = messageHeader.payload;
-        AcknowledgeFrame(MSG_ACK, ERR_OK);
+        AcknowledgeFrame(TRANSPORT_ACK, ERR_OK);
     }
 }
+
 /// <summary>
 ///     Process an application data packet.
 /// </summary>
@@ -265,7 +349,7 @@ void ProcessData(uint8_t *packet, uint8_t packetLength)
             ResetIncomingMessage(false);
             ESP_LOGI(UART_RX_TASK_NAME, "Message received and queued.");
         }
-        AcknowledgeFrame(MSG_ACK, ERR_OK);
+        AcknowledgeFrame(TRANSPORT_ACK, ERR_OK);
     }
     else
     {
@@ -338,6 +422,7 @@ void UARTRxTask(void *pvParameters)
     static int byteNumber = 0;
     static uint32_t messageID = 0;
     static uint8_t sequenceNumber = 0;
+    static uint32_t statusCode = 0;
     
     while (true)
     {
@@ -362,7 +447,7 @@ void UARTRxTask(void *pvParameters)
                                 case START_OF_FRAME_CHARACTER:
                                     communicationState = FrameType;
                                     break;
-                                case FILLER_CHARACTER:
+                                case PADDING_CHARACTER:
                                     break;
                                 default:
                                     communicationState = StartOfFrame;
@@ -389,10 +474,26 @@ void UARTRxTask(void *pvParameters)
                                     break;
                                 case FrameType:
                                     frameType = byte;
-                                    communicationState = MessageID;
+                                    if ((frameType & PKT_TRANSPORT) > 0)
+                                    {
+                                        communicationState = StatusCode;
+                                    }
+                                    else
+                                    {
+                                        communicationState = MessageID;
+                                    }
                                     calculatedChecksum = CRC32_SEED;
                                     calculatedChecksum = ProgressiveCRC32(calculatedChecksum, byte);
                                     byteNumber = 0;
+                                    break;
+                                case StatusCode:
+                                        statusCode |= (byte << (byteNumber * 8));
+                                        byteNumber++;
+                                        if (byteNumber == 4)
+                                        {
+                                            communicationState = CRC;
+                                        }
+                                        calculatedChecksum = ProgressiveCRC32(calculatedChecksum, byte);
                                     break;
                                 case MessageID:
                                     messageID |= (byte << (byteNumber * 8));
