@@ -224,8 +224,11 @@ uint32_t HeaderAndPayloadSize(uint8_t *buffer, uint8_t bufferLength)
         }
         byteCount++;
     }
-    byteCount += bufferLength;       //  Size of the header.
-    byteCount += 4;                  //  CRC is a 32-bit CRC and takes 4 bytes.
+    //
+    //  We need to take into consideration the size of the buffer required for
+    //  the data plus the start of frame characters and the end of frame character.
+    //
+    byteCount += (NUMBER_OF_START_OF_FRAME_CHARACTERS + 5);
     return(byteCount);
 }
 
@@ -261,7 +264,14 @@ uint8_t *GenerateFrame(uint8_t *buffer, uint32_t bufferLength, uint32_t frameLen
             startOfFrameCharacterCount = 0;
         }
     }
-    EncodeUInt32(CRC32(frame,  frameLength - 4), frame + currentByte);
+    //
+    //  The frame length calculated contains the header characters, CRC
+    //  and the end of frame characters.  We need to take this into consideration 
+    //  when the CRC is calculated as the CRC should only be calculated on
+    //  the actual data plus any padding characters.
+    //
+    uint32_t crc = CRC32(frame + NUMBER_OF_START_OF_FRAME_CHARACTERS, frameLength - (NUMBER_OF_START_OF_FRAME_CHARACTERS + 5));
+    EncodeUInt32(crc, frame + currentByte);
     currentByte += 4;
     frame[currentByte] = END_OF_FRAME_CHARACTER;
     return (frame);
@@ -282,8 +292,9 @@ void AcknowledgeFrame(uint8_t ackNak, uint32_t status)
     //  TODO: Need to work out how to lock the UART.
     //
     const int txBytes = uart_write_bytes(STM32_UART_NUMBER, (const char *) frame, frameLength);
-    vPortFree(frame);
     ESP_LOGI(UART_TX_TASK_NAME, "Wrote %d bytes to UART", txBytes);
+    ESP_LOG_BUFFER_HEXDUMP(UART_TX_TASK_NAME, frame, frameLength, ESP_LOG_INFO);
+    vPortFree(frame);
 }
 
 /// <summary>
