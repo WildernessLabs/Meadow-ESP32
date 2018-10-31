@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO.Ports;
 using System.Linq;
 using System.Net;
+using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -15,7 +16,7 @@ namespace UARTTest
     class Program
     {
         private const string FTDI_COM_PORT_ENVIRONMENT_VARIABLE_NAME = "FTDIComPort";
-        
+
         /// <summary>
         ///     Location of the Interface indicator in the message header.
         /// </summary>
@@ -70,8 +71,11 @@ namespace UARTTest
 
                 while (true)
                 {
+                    //Console.Write("Press enter to send the next message.");
+                    //string result = Console.ReadLine();
                     Frame frame = new Frame(UART.FrameType.ApplicationHeader, 1, sequenceNumber++, buffer);
                     uart.Send(frame.FrameType, frame.MessageID, frame.SequenceNumber, frame.Payload);
+                    Thread.Sleep(500);
                 }
 
                 //MessageQueue queue = new MessageQueue(comPortName);
@@ -89,7 +93,7 @@ namespace UARTTest
 
         private static void Uart_ResponseReceived(object sender, UARTResponseEventArgs e)
         {
-            Debug.Print($"Response {e.Packet} received.");
+            Console.WriteLine($"Response {e.Packet} received.");
         }
     }
 }
