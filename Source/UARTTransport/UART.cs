@@ -695,7 +695,7 @@ namespace UARTTransport
                     ResponseReceived(this, ack);
                     break;
                 case TRANSPORT_NAK:
-                    _currentRetryCount = MaximumRetryCount + 1;
+                    _currentRetryCount++;
                     if (_currentRetryCount > MaximumRetryCount)
                     {
                         UARTResponseEventArgs nak = new UARTResponseEventArgs(UARTResponseEventArgs.TransportPacketType.NAK, StatusCode);
