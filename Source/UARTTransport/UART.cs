@@ -186,7 +186,7 @@ namespace UARTTransport
         ///     Retry counter used to work out if the system should resend the frame
         ///     or if it should generate an error.
         /// </summary>
-        private int _currentRetryCount = 0;
+        private uint _currentRetryCount = 0;
 
         /// <summary>
         ///     This variable holds the byte number when putting together multi-byte
@@ -287,6 +287,9 @@ namespace UARTTransport
             if (e.EventType == SerialData.Chars)
             {
                 int amount = ((SerialPort) sender).Read(_buffer, 0, RX_BUFFER_SIZE);
+                Debug.Print($"\nData received ({amount}) bytes:");
+                DisplayFrame(_buffer, amount);
+                
                 if (amount > 0)
                 {
                     for (int index = 0; index < amount; index++)
@@ -347,6 +350,7 @@ namespace UARTTransport
                                     {
                                         CurrentCommunicationState = CommunicationStates.CRC;
                                         _byteNumber = 0;
+                                        OriginalChecksum = 0;
                                     }
                                     CalculatedChecksum = ProgressiveCRC32(CalculatedChecksum, data);
                                     break;
@@ -377,6 +381,7 @@ namespace UARTTransport
                                     {
                                         CurrentCommunicationState = CommunicationStates.CRC;
                                         _byteNumber = 0;
+                                        OriginalChecksum = 0;
                                     }
                                     break;
                                 case CommunicationStates.Payload:
@@ -403,7 +408,7 @@ namespace UARTTransport
                                     {
                                         if ((CurrentFrameType & PKT_TRANSPORT) > 0)
                                         {
-                                            ProcessTransportData();
+                                            ProcessTransportData(CurrentFrameType);
                                         }
                                         else
                                         {
@@ -412,6 +417,7 @@ namespace UARTTransport
                                     }
                                     else
                                     {
+                                        Console.WriteLine("Invalid frame");
                                         //InvalidFrame(frameType);
                                     }
                                     if (FramePayload != null)
@@ -680,16 +686,16 @@ namespace UARTTransport
         /// <summary>
         ///     Process the transport request.
         /// </summary>
-        private void ProcessTransportData()
+        private void ProcessTransportData(byte currentFrameType)
         {
-            switch (CurrentFrameType & 0x2f)
+            switch (currentFrameType & 0x2f)
             {
                 case TRANSPORT_ACK:
                     UARTResponseEventArgs ack = new UARTResponseEventArgs(UARTResponseEventArgs.TransportPacketType.ACK, StatusCode);
                     ResponseReceived(this, ack);
                     break;
                 case TRANSPORT_NAK:
-                    _currentRetryCount++;
+                    _currentRetryCount = MaximumRetryCount + 1;
                     if (_currentRetryCount > MaximumRetryCount)
                     {
                         UARTResponseEventArgs nak = new UARTResponseEventArgs(UARTResponseEventArgs.TransportPacketType.NAK, StatusCode);
@@ -767,11 +773,15 @@ namespace UARTTransport
         /// <summary>
         ///     Dump the array of bytes to the debug output in hexadecimal.
         /// </summary>
-        private void DisplayFrame(byte[] frame)
+        private void DisplayFrame(byte[] frame, int amount = -1)
         {
             var line = string.Empty;
             Debug.Print("\n\n       0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f\n");
-            for (var index = 0; index < frame.Length; index++)
+            if (amount < 0)
+            {
+                amount = frame.Length;
+            }
+            for (var index = 0; index < amount; index++)
             {
                 if ((index % 16) == 0)
                 {
@@ -789,6 +799,8 @@ namespace UARTTransport
             {
                 Debug.Print(line);
             }
+
+            Debug.Print("\n");
         }
 
         #endregion Methods
