@@ -188,14 +188,6 @@ void QueueUARTResponse(uint8_t interface, uint32_t code, uint32_t messageID, uin
 }
 
 /// <summary>
-///     
-/// </summary>
-void InvalidFrame(uint8_t frameType)
-{
-    ESP_LOGI(UART_RX_TASK_NAME, "Invalid frame detected.");
-}
-
-/// <summary>
 ///     Work out how big the frame buffer should be for the message that
 //      is going to be sent.  This will take into account the padding
 //      and CRC etc.
@@ -370,47 +362,52 @@ void ProcessData(uint8_t *packet, uint8_t packetLength)
 }
 
 /// <summary>
-///     
+///     Process the current frame as a transport message.
 /// </summary>
-void ValidFrame(uint8_t frameType, uint8_t *packet, uint8_t packetLength)
+void ProcessTransportData(uint8_t currentFrameType)
+{
+    switch (currentFrameType & 0x2f)
+    {
+        case TRANSPORT_ACK:
+            //
+            //  Delete any packets waiting to be sent.
+            //
+            break;
+        case TRANSPORT_NAK:
+            //
+            //  Resend the message.
+            //
+            break;
+        case TRANSPORT_RESET:
+            //
+            //  Reset the interface back to power on.
+            //
+            ResetIncomingMessage(true);
+            break;
+    }
+}
+
+/// <summary>
+///     A valid frame has been received, work out what action should be taken.
+/// </summary>
+/// <remarks>
+///     Note that it is responsibility of the processor to work out if an ACK / NAK 
+///     should be sent.
+/// </remarks>
+void ProcessApplicationDataFrame(uint8_t frameType, uint8_t *packet, uint8_t packetLength)
 {
     ESP_LOGI(UART_RX_TASK_NAME, "Valid frame detected.");
     ESP_LOG_BUFFER_HEXDUMP(UART_RX_TASK_NAME, packet, packetLength, ESP_LOG_INFO);
-    if (frameType & PKT_TRANSPORT)
+    //
+    //  Application data packets are either header or data packets.
+    //
+    if (frameType & DATA_HEADER)
     {
-        switch (frameType & 0x2f)
-        {
-            case TRANSPORT_ACK:
-                //
-                //  Delete any packets waiting to be sent.
-                //
-                break;
-            case TRANSPORT_NAK:
-                //
-                //  Resend the message.
-                //
-                break;
-            case TRANSPORT_RESET:
-                //
-                //  Reset the interface back to power on.
-                //
-                ResetIncomingMessage(true);
-                break;
-        }
+        ProcessHeader(packet, packetLength);
     }
     else
     {
-        //
-        //  Application data packets are either header or data packets.
-        //
-        if (frameType & DATA_HEADER)
-        {
-            ProcessHeader(packet, packetLength);
-        }
-        else
-        {
-            ProcessData(packet, packetLength);
-        }
+        ProcessData(packet, packetLength);
     }
 }
 
@@ -424,7 +421,7 @@ void UARTRxTask(void *pvParameters)
 
     static enum CommunicationStates communicationState = StartOfFrame;
     static int startOfFrameByteCount = 0;
-    static uint8_t frameType;
+    static uint8_t currentFrameType;
     static uint8_t packetLength = 0;
     static uint8_t *packet = NULL;
     static uint8_t packetIndex = 0;
@@ -484,8 +481,8 @@ void UARTRxTask(void *pvParameters)
                                     //
                                     break;
                                 case FrameType:
-                                    frameType = byte;
-                                    if ((frameType & PKT_TRANSPORT) > 0)
+                                    currentFrameType = byte;
+                                    if ((currentFrameType & PKT_TRANSPORT) > 0)
                                     {
                                         communicationState = StatusCode;
                                     }
@@ -503,6 +500,8 @@ void UARTRxTask(void *pvParameters)
                                         if (byteNumber == 4)
                                         {
                                             communicationState = CRC;
+                                            byteNumber = 0;
+                                            checksum = 0;
                                         }
                                         calculatedChecksum = ProgressiveCRC32(calculatedChecksum, byte);
                                     break;
@@ -558,11 +557,27 @@ void UARTRxTask(void *pvParameters)
                                 case EndOfFrame:
                                     if ((byte == END_OF_FRAME_CHARACTER) && (calculatedChecksum == checksum)) 
                                     {
-                                        ValidFrame(frameType, packet, packetLength);
+                                        if (currentFrameType & PKT_TRANSPORT)
+                                        {
+                                            ProcessTransportData(currentFrameType);
+                                        }
+                                        else
+                                        {
+                                            ProcessApplicationDataFrame(currentFrameType, packet, packetLength);
+                                        }
                                     }
                                     else
                                     {
-                                        InvalidFrame(frameType);
+                                        if (byte != END_OF_FRAME_CHARACTER)
+                                        {
+                                            ESP_LOGI(UART_RX_TASK_NAME, "Missing end of frame marker.");
+                                            AcknowledgeFrame(TRANSPORT_NAK, ERR_MISSING_END_OF_FRAME_MARKER);
+                                        }
+                                        else
+                                        {
+                                            ESP_LOGI(UART_RX_TASK_NAME, "CRC error.");
+                                            AcknowledgeFrame(TRANSPORT_NAK, ERR_CRC_ERROR);
+                                        }
                                         communicationState = StartOfFrame;
                                     }
                                     if (packet != NULL)
