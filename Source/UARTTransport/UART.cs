@@ -346,6 +346,7 @@ namespace UARTTransport
                                     if (_byteNumber == 4)
                                     {
                                         CurrentCommunicationState = CommunicationStates.CRC;
+                                        _byteNumber = 0;
                                     }
                                     CalculatedChecksum = ProgressiveCRC32(CalculatedChecksum, data);
                                     break;
