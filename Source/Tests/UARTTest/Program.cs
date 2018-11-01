@@ -71,8 +71,8 @@ namespace UARTTest
 
                 while (true)
                 {
-                    //Console.Write("Press enter to send the next message.");
-                    //string result = Console.ReadLine();
+                    Console.Write("Press enter to send the next message.");
+                    string result = Console.ReadLine();
                     Frame frame = new Frame(UART.FrameType.ApplicationHeader, 1, sequenceNumber++, buffer);
                     uart.Send(frame.FrameType, frame.MessageID, frame.SequenceNumber, frame.Payload);
                     Thread.Sleep(500);
