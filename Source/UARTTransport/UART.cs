@@ -497,8 +497,14 @@ namespace UARTTransport
                                     }
                                     else
                                     {
-                                        Console.WriteLine("Invalid frame");
-                                        //InvalidFrame(frameType);
+                                        if (data != END_OF_FRAME_CHARACTER)
+                                        {
+                                            Console.WriteLine("Invalid frame");
+                                        }
+                                        else
+                                        {
+                                            ProcessTransportData(CurrentFrameType);
+                                        }
                                     }
                                     if (FramePayload != null)
                                     {
