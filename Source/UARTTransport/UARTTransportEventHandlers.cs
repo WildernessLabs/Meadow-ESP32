@@ -21,7 +21,7 @@ namespace UARTTransport
         /// <summary>
         ///     Packet code returned by the UART.
         /// </summary>
-        public UInt32 StatusCode { get; private set; }
+        public UART.ErrorCodes StatusCode { get; private set; }
 
         /// <summary>
         ///     Indicate the error that has occurred.
@@ -47,7 +47,7 @@ namespace UARTTransport
         public UARTResponseEventArgs(TransportPacketType packetType, UInt32 statusCode)
         {
             Packet = packetType;
-            StatusCode = statusCode;
+            StatusCode = (UART.ErrorCodes) statusCode;
         }
 
         #endregion

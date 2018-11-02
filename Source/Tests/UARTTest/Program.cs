@@ -94,6 +94,10 @@ namespace UARTTest
         private static void Uart_ResponseReceived(object sender, UARTResponseEventArgs e)
         {
             Console.WriteLine($"Response {e.Packet} received.");
+            if (e.Packet == UARTResponseEventArgs.TransportPacketType.NAK)
+            {
+                Console.WriteLine($"    Status code: {e.StatusCode}");
+            }
         }
     }
 }
