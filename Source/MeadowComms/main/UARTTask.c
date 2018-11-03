@@ -18,6 +18,13 @@
 #include "Encoders.h"
 #include "ErrorCodes.h"
 
+
+// ---------------------------------------------------------------------------
+//
+//                          Global variables.
+//
+// ---------------------------------------------------------------------------
+
 /// <summary>
 ///     Handle for the UART receive task.
 /// </summary>
@@ -57,6 +64,75 @@ static int bytesRemaining = 0;
 static uint8_t *nextPayloadLocation;
 
 static struct ApplicationRequest messageHeader;
+
+/// <summary>
+///     Holds the current state of the communication state machine.
+/// </summary>
+static enum CommunicationStates _communicationState = StartOfFrame;
+
+/// <summary>
+///     Number of consecutive occurrences of the start of frame character has been detected
+/// </summary>
+static int _startOfFrameByteCount = 0;
+
+/// <summary>
+///     Type of frame being received.
+/// </summary>
+static uint8_t _currentFrameType;
+
+/// <summary>
+///     Number of bytes in the current data frame being received.
+/// </summary>
+static uint8_t _framePayloadLength = 0;
+
+/// <summary>
+///     Payload of the frame currently being received.
+/// </summary>
+static uint8_t *_framePayload = NULL;
+
+/// <summary>
+///     Location of the next payload byte in the buffer.
+/// </summary>
+static uint8_t _framePayloadIndex = 0;
+
+/// <summary>
+///     Value of the checksum as read from the incoming data frame.
+/// </summary>
+static uint32_t _originalChecksum = 0;
+
+/// <summary>
+///     Value of the calculated checksum from the progressive checksum calculation.
+/// </summary>
+static uint32_t _calculatedChecksum;
+
+/// <summary>
+///     This variable holds the byte number when putting together multi-byte
+///     values (i.e. 4 bytes in a UInt32 object).  this allows the original
+///     object to be rehydrated from the UART byte stream.
+/// </summary>
+static int _byteNumber = 0;
+
+/// <summary>
+///     Message ID of the data packets being received.
+/// </summary>
+static uint32_t _messageID = 0;
+
+/// <summary>
+///     Sequence number of this frame in the total number of frames being sent.
+/// </summary>
+static uint8_t _frameSequenceNumber = 0;
+
+
+/// <summary>
+///     Packet code returned by the transport packets.
+/// </summary>
+static uint32_t _statusCode = 0;
+
+// ---------------------------------------------------------------------------
+//
+//                                  Methods
+// 
+// ---------------------------------------------------------------------------
 
 /// <summary>
 ///     Configure the UART and install the driver.
@@ -419,19 +495,6 @@ void UARTRxTask(void *pvParameters)
     uart_event_t event;
     uint8_t* data = (uint8_t*) malloc(RX_BUF_SIZE);
 
-    static enum CommunicationStates communicationState = StartOfFrame;
-    static int startOfFrameByteCount = 0;
-    static uint8_t currentFrameType;
-    static uint8_t packetLength = 0;
-    static uint8_t *packet = NULL;
-    static uint8_t packetIndex = 0;
-    static uint32_t checksum = 0;
-    static uint32_t calculatedChecksum;
-    static int byteNumber = 0;
-    static uint32_t messageID = 0;
-    static uint8_t sequenceNumber = 0;
-    static uint32_t statusCode = 0;
-    
     while (true)
     {
         if (xQueueReceive(UARTRxQueueHandle, (void *) &event, portMAX_DELAY))
@@ -447,18 +510,18 @@ void UARTRxTask(void *pvParameters)
                     {
                         uint8_t byte = data[index];
 
-                        if (startOfFrameByteCount == 2)
+                        if (_startOfFrameByteCount == 2)
                         {
-                            startOfFrameByteCount = 0;
+                            _startOfFrameByteCount = 0;
                             switch (byte)
                             {
                                 case START_OF_FRAME_CHARACTER:
-                                    communicationState = FrameType;
+                                    _communicationState = FrameType;
                                     break;
                                 case PADDING_CHARACTER:
                                     break;
                                 default:
-                                    communicationState = StartOfFrame;
+                                    _communicationState = StartOfFrame;
                                     break;
                             }
                         }
@@ -466,13 +529,13 @@ void UARTRxTask(void *pvParameters)
                         {
                             if (byte == START_OF_FRAME_CHARACTER)
                             {
-                                startOfFrameByteCount++;
+                                _startOfFrameByteCount++;
                             }
                             else
                             {
-                                startOfFrameByteCount = 0;
+                                _startOfFrameByteCount = 0;
                             }
-                            switch (communicationState)
+                            switch (_communicationState)
                             {
                                 case StartOfFrame:
                                     //
@@ -481,89 +544,89 @@ void UARTRxTask(void *pvParameters)
                                     //
                                     break;
                                 case FrameType:
-                                    currentFrameType = byte;
-                                    if ((currentFrameType & PKT_TRANSPORT) > 0)
+                                    _currentFrameType = byte;
+                                    if ((_currentFrameType & PKT_TRANSPORT) > 0)
                                     {
-                                        communicationState = StatusCode;
+                                        _communicationState = StatusCode;
                                     }
                                     else
                                     {
-                                        communicationState = MessageID;
+                                        _communicationState = MessageID;
                                     }
-                                    calculatedChecksum = CRC32_SEED;
-                                    calculatedChecksum = ProgressiveCRC32(calculatedChecksum, byte);
-                                    byteNumber = 0;
+                                    _calculatedChecksum = CRC32_SEED;
+                                    _calculatedChecksum = ProgressiveCRC32(_calculatedChecksum, byte);
+                                    _byteNumber = 0;
                                     break;
                                 case StatusCode:
-                                        statusCode |= (byte << (byteNumber * 8));
-                                        byteNumber++;
-                                        if (byteNumber == 4)
+                                        _statusCode |= (byte << (_byteNumber * 8));
+                                        _byteNumber++;
+                                        if (_byteNumber == 4)
                                         {
-                                            communicationState = CRC;
-                                            byteNumber = 0;
-                                            checksum = 0;
+                                            _communicationState = CRC;
+                                            _byteNumber = 0;
+                                            _originalChecksum = 0;
                                         }
-                                        calculatedChecksum = ProgressiveCRC32(calculatedChecksum, byte);
+                                        _calculatedChecksum = ProgressiveCRC32(_calculatedChecksum, byte);
                                     break;
                                 case MessageID:
-                                    messageID |= (byte << (byteNumber * 8));
-                                    byteNumber++;
-                                    if (byteNumber == 4)
+                                    _messageID |= (byte << (_byteNumber * 8));
+                                    _byteNumber++;
+                                    if (_byteNumber == 4)
                                     {
-                                        communicationState = SequenceNumber;                                    
+                                        _communicationState = SequenceNumber;                                    
                                     }
-                                    calculatedChecksum = ProgressiveCRC32(calculatedChecksum, byte);
+                                    _calculatedChecksum = ProgressiveCRC32(_calculatedChecksum, byte);
                                     break;
                                 case SequenceNumber:
-                                    sequenceNumber = byte;
-                                    communicationState = Length;
-                                    calculatedChecksum = ProgressiveCRC32(calculatedChecksum, byte);
+                                    _frameSequenceNumber = byte;
+                                    _communicationState = Length;
+                                    _calculatedChecksum = ProgressiveCRC32(_calculatedChecksum, byte);
                                     break;
                                 case Length:
-                                    packetLength = byte;
-                                    calculatedChecksum = ProgressiveCRC32(calculatedChecksum, byte);
-                                    if (packetLength > 0)
+                                    _framePayloadLength = byte;
+                                    _calculatedChecksum = ProgressiveCRC32(_calculatedChecksum, byte);
+                                    if (_framePayloadLength > 0)
                                     {
-                                        packet = pvPortMalloc(packetLength);
-                                        packetIndex = 0;
-                                        communicationState = Payload;
+                                        _framePayload = pvPortMalloc(_framePayloadLength);
+                                        _framePayloadIndex = 0;
+                                        _communicationState = Payload;
                                     }
                                     else
                                     {
-                                        communicationState = CRC;
-                                        checksum = 0;
-                                        byteNumber = 0;
+                                        _communicationState = CRC;
+                                        _originalChecksum = 0;
+                                        _byteNumber = 0;
                                     }
                                     break;
                                 case Payload:
-                                    packet[packetIndex] = byte;
-                                    packetIndex++;
-                                    calculatedChecksum = ProgressiveCRC32(calculatedChecksum, byte);
-                                    if (packetIndex == packetLength)
+                                    _framePayload[_framePayloadIndex] = byte;
+                                    _framePayloadIndex++;
+                                    _calculatedChecksum = ProgressiveCRC32(_calculatedChecksum, byte);
+                                    if (_framePayloadIndex == _framePayloadLength)
                                     {
-                                        communicationState = CRC;
-                                        checksum = 0;
-                                        byteNumber = 0;
+                                        _communicationState = CRC;
+                                        _originalChecksum = 0;
+                                        _byteNumber = 0;
                                     }
                                     break;
                                 case CRC:
-                                    checksum |= (byte << (byteNumber * 8));
-                                    byteNumber++;
-                                    if (byteNumber == 4)
+                                    _originalChecksum |= (byte << (_byteNumber * 8));
+                                    _byteNumber++;
+                                    if (_byteNumber == 4)
                                     {
-                                        communicationState = EndOfFrame;                                    
+                                        _communicationState = EndOfFrame;                                    
                                     }
                                     break;
                                 case EndOfFrame:
-                                    if ((byte == END_OF_FRAME_CHARACTER) && (calculatedChecksum == checksum)) 
+                                    if ((byte == END_OF_FRAME_CHARACTER) && (_calculatedChecksum == _originalChecksum)) 
                                     {
-                                        if (currentFrameType & PKT_TRANSPORT)
+                                        if (_currentFrameType & PKT_TRANSPORT)
                                         {
-                                            ProcessTransportData(currentFrameType);
+                                            ProcessTransportData(_currentFrameType);
                                         }
                                         else
                                         {
-                                            ProcessApplicationDataFrame(currentFrameType, packet, packetLength);
+                                            ProcessApplicationDataFrame(_currentFrameType, _framePayload, _framePayloadLength);
                                         }
                                     }
                                     else
@@ -578,17 +641,16 @@ void UARTRxTask(void *pvParameters)
                                             ESP_LOGI(UART_RX_TASK_NAME, "CRC error.");
                                             AcknowledgeFrame(TRANSPORT_NAK, ERR_CRC_ERROR);
                                         }
-                                        communicationState = StartOfFrame;
                                     }
-                                    if (packet != NULL)
+                                    if (_framePayload != NULL)
                                     {
-                                        vPortFree(packet);
-                                        packet = NULL;
+                                        vPortFree(_framePayload);
+                                        _framePayload = NULL;
                                     }
-                                    communicationState = StartOfFrame;
+                                    _communicationState = StartOfFrame;
                                     break;
                                 default:
-                                    communicationState = StartOfFrame;
+                                    _communicationState = StartOfFrame;
                                     break;
                             }
                         }
@@ -618,10 +680,10 @@ void UARTRxTask(void *pvParameters)
     //
     free(data);
     data = NULL;
-    if (packet != NULL)
+    if (_framePayload != NULL)
     {
-        vPortFree(packet);
-        packet = NULL;
+        vPortFree(_framePayload);
+        _framePayload = NULL;
     }
     vTaskDelete(xUARTReceiveTaskHandle);
 }
