@@ -35,7 +35,7 @@ namespace Esp32Messaging
         /// <summary>
         ///     Length of the header in bytes.
         /// </summary>
-        public const int HEADER_LENGTH = PAYLOAD_LENGTH + 2;
+        public const int HEADER_LENGTH = PAYLOAD_LENGTH + 4;
 
         /// <summary>
         ///     Maximum length of the payload of a message.

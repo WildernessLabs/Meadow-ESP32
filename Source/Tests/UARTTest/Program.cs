@@ -17,31 +17,6 @@ namespace UARTTest
     {
         private const string FTDI_COM_PORT_ENVIRONMENT_VARIABLE_NAME = "FTDIComPort";
 
-        /// <summary>
-        ///     Location of the Interface indicator in the message header.
-        /// </summary>
-        public const int INTERFACE = 0;
-
-        /// <summary>
-        ///     Location of the Function bytes (4) in the message header.
-        /// </summary>
-        public const int FUNCTION_NUMBER = INTERFACE + 1;
-
-        /// <summary>
-        ///     Location of the MessageID bytes (4) in the message header
-        /// </summary>
-        public const int MESSAGE_ID = FUNCTION_NUMBER + 4;
-
-        /// <summary>
-        ///     Location of the Payload length bytes (2) in the message header.
-        /// </summary>
-        public const short PAYLOAD_LENGTH = MESSAGE_ID + 4;
-
-        /// <summary>
-        ///     Length of the header in bytes.
-        /// </summary>
-        public const int HEADER_LENGTH = PAYLOAD_LENGTH + 2;
-
         static void Main(string[] args)
         {
             string comPortName = Environment.GetEnvironmentVariable(FTDI_COM_PORT_ENVIRONMENT_VARIABLE_NAME);
@@ -63,16 +38,17 @@ namespace UARTTest
                 uart.ResponseReceived += Uart_ResponseReceived;
 
                 byte sequenceNumber = 0;
-                byte[] buffer = new byte[HEADER_LENGTH];
-                buffer[INTERFACE] = 0;
-                Encoders.EncodeUInt32(0, buffer, FUNCTION_NUMBER);
-                Encoders.EncodeUInt32(1, buffer, MESSAGE_ID);
-                Encoders.EncodeUInt16(0, buffer, PAYLOAD_LENGTH);
+                byte[] buffer = new byte[Message.HEADER_LENGTH];
+                buffer[Message.INTERFACE] = 0;
+                Encoders.EncodeUInt32(0, buffer, Message.FUNCTION_NUMBER);
+                Encoders.EncodeUInt32(1, buffer, Message.MESSAGE_ID);
+                Encoders.EncodeUInt32(0, buffer, Message.PAYLOAD_LENGTH);
 
                 while (true)
                 {
                     //Console.Write("Press enter to send the next message.");
                     //string result = Console.ReadLine();
+                    Console.WriteLine($"Sending message");
                     Frame frame = new Frame(UART.FrameType.ApplicationHeader, 1, sequenceNumber++, buffer);
                     uart.Send(frame.FrameType, frame.MessageID, frame.SequenceNumber, frame.Payload);
                     Thread.Sleep(500);
