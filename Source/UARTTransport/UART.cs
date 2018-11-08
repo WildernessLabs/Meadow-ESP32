@@ -782,6 +782,7 @@ namespace UARTTransport
                     break;
                 case TRANSPORT_NAK:
                     _currentRetryCount++;
+                    Console.WriteLine($"    NAK, retrying {_currentRetryCount}");
                     if (_currentRetryCount > MaximumRetryCount)
                     {
                         UARTResponseEventArgs nak = new UARTResponseEventArgs(UARTResponseEventArgs.TransportPacketType.NAK, _statusCode);
@@ -798,6 +799,11 @@ namespace UARTTransport
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="packet"></param>
+        /// <param name="packetLength"></param>
         private void ProcessHeader(byte[] packet, byte packetLength)
         {
             //if (packetLength != APP_RESPONSE_HEADER_LENGTH)
