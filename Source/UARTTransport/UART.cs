@@ -253,7 +253,7 @@ namespace UARTTransport
         /// <summary>
         ///     Object used to lock the _time out Timer object.
         /// </summary>
-        private object _timeoutTimeLock = new Object();
+        private object _timeoutTimerLock = new Object();
 
         /// <summary>
         ///     Timeout timer is used to work out if we should raise an error event
@@ -530,7 +530,25 @@ namespace UARTTransport
         /// <param name="e">Event data for the timer Elapsed event.</param>
         private void _timeoutTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
-            throw new NotImplementedException();
+            lock (_timeoutTimerLock)
+            {
+                _timeoutTimer.Enabled = false;
+            }
+            _currentRetryCount++;
+            Console.WriteLine($"    Timeout sending message {_currentRetryCount}");
+            if (_currentRetryCount > MaximumRetryCount)
+            {
+                UARTResponseEventArgs timeout = new UARTResponseEventArgs(UARTResponseEventArgs.TransportPacketType.Timeout, 0);
+                ResponseReceived(this, timeout);
+            }
+            else
+            {
+                Send(_lastFrameSent);
+                lock (_timeoutTimerLock)
+                {
+                    _timeoutTimer.Enabled = true;
+                }
+            }
         }
 
         #endregion Events
@@ -746,10 +764,7 @@ namespace UARTTransport
             _currentRetryCount = 0;
             DisplayFrame(_lastFrameSent);
             Send(_lastFrameSent);
-            //
-            //  
-            //
-            //_timeoutTimer.Enabled = true;       // Start the timeout timer.
+            _timeoutTimer.Enabled = true;       // Start the timeout timer.
         }
 
         /// <summary>
@@ -777,10 +792,18 @@ namespace UARTTransport
             switch (currentFrameType & 0x2f)
             {
                 case TRANSPORT_ACK:
+                    lock (_timeoutTimerLock)
+                    {
+                        _timeoutTimer.Enabled = false;
+                    }
                     UARTResponseEventArgs ack = new UARTResponseEventArgs(UARTResponseEventArgs.TransportPacketType.ACK, _statusCode);
                     ResponseReceived(this, ack);
                     break;
                 case TRANSPORT_NAK:
+                    lock (_timeoutTimerLock)
+                    {
+                        _timeoutTimer.Enabled = false;
+                    }
                     _currentRetryCount++;
                     Console.WriteLine($"    NAK, retrying {_currentRetryCount}");
                     if (_currentRetryCount > MaximumRetryCount)
@@ -788,7 +811,14 @@ namespace UARTTransport
                         UARTResponseEventArgs nak = new UARTResponseEventArgs(UARTResponseEventArgs.TransportPacketType.NAK, _statusCode);
                         ResponseReceived(this, nak);
                     }
-                    Send(_lastFrameSent);
+                    else
+                    {
+                        Send(_lastFrameSent);
+                        lock (_timeoutTimerLock)
+                        {
+                            _timeoutTimer.Enabled = true;
+                        }
+                    }
                     break;
                 case TRANSPORT_RESET:
                     //
