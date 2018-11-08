@@ -5,7 +5,6 @@
 #include "freertos/queue.h"
 #include "stdlib.h"
 
-
 //
 //  Available interfaces.
 //
@@ -77,17 +76,37 @@ extern void SetupMessageQueues();
 #define APP_REQUEST_FUNCTION                (APP_REQUEST_INTERFACE + 1)
 #define APP_REQUEST_MESSAGE_ID              (APP_REQUEST_FUNCTION + 4)
 #define APP_REQUEST_PAYLOAD_LENGTH          (APP_REQUEST_MESSAGE_ID + 4)
-#define APP_REQUEST_HEADER_LENGTH           (APP_REQUEST_PAYLOAD_LENGTH + 2)
+#define APP_REQUEST_HEADER_LENGTH           (APP_REQUEST_PAYLOAD_LENGTH + 4)
 
 /// <summary>
 ///     Application request from the STM32 for a service.
 /// </summary>
 struct ApplicationRequest
 {
+    /// <summary>
+    ///     Interface or device that is making the request.
+    /// </summary>
     uint8_t interface;
+
+    /// <summary>
+    ///     
+    /// </summary>
     uint32_t function;
+
+    /// <summary>
+    ///     Message ID from the requestor.  This uniquely identifies the 
+    ///     request from the STM32.
+    /// </summary>
     uint32_t messageID;
-    uint16_t payloadLength;
+
+    /// <summary>
+    ///     Amount of data in the request payload (this does not include this header).
+    /// </summary>
+    uint32_t payloadLength;
+
+    /// <summary>
+    ///     Data supporting the request.
+    /// </summary>
     uint8_t *payload;
 };
 
@@ -95,20 +114,40 @@ struct ApplicationRequest
 #define APP_RESPONSE_CODE               (APP_RESPONSE_INTERFACE + 1)
 #define APP_RESPONSE_MESSAGE_ID         (APP_RESPONSE_CODE + 4)
 #define APP_RESPONSE_PAYLOAD_LENGTH     (APP_RESPONSE_MESSAGE_ID + 4)
-#define APP_RESPONSE_HEADER_LENGTH      (APP_RESPONSE_PAYLOAD_LENGTH + 2)
+#define APP_RESPONSE_HEADER_LENGTH      (APP_RESPONSE_PAYLOAD_LENGTH + 4)
 
 #define CRC32_SEED                  (0xffffffff)
 
 /// <summary>
-///     
+///     Structure for holding the elements of a response to a request
+///     from the STM32.
 /// </summary>
 struct ApplicationResponse
 {
+    /// <summary>
+    ///     Interface or device that is responding.
+    /// </summary>
     uint8_t interface;
+
+    /// <summary>
+    ///     Status code returned.
+    /// </summary>
     uint32_t code;
+
+    /// <summary>
+    ///     Message ID that was used in the original request.
+    /// </summary>
     uint32_t messageID;
+
+    /// <summary>
+    ///     Amount of data in the response payload (this does not include this header).
+    /// </summary>
+    uint32_t payloadLength;
+
+    /// <summary>
+    ///     Data to be returned.
+    /// </summary>
     uint8_t *payload;
-    uint16_t payloadLength;
 };
 
 #define TRANSPORT_FRAME_TYPE        0
