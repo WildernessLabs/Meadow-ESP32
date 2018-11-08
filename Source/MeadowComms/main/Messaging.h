@@ -77,7 +77,7 @@ extern void SetupMessageQueues();
 #define APP_REQUEST_FUNCTION                (APP_REQUEST_INTERFACE + 1)
 #define APP_REQUEST_MESSAGE_ID              (APP_REQUEST_FUNCTION + 4)
 #define APP_REQUEST_PAYLOAD_LENGTH          (APP_REQUEST_MESSAGE_ID + 4)
-#define APP_REQUEST_HEADER_LENGTH           (APP_REQUEST_PAYLOAD_LENGTH + 2)
+#define APP_REQUEST_HEADER_LENGTH           (APP_REQUEST_PAYLOAD_LENGTH + 4)
 
 /// <summary>
 ///     Application request from the STM32 for a service.
@@ -87,7 +87,7 @@ struct ApplicationRequest
     uint8_t interface;
     uint32_t function;
     uint32_t messageID;
-    uint16_t payloadLength;
+    uint32_t payloadLength;
     uint8_t *payload;
 };
 
@@ -95,7 +95,7 @@ struct ApplicationRequest
 #define APP_RESPONSE_CODE               (APP_RESPONSE_INTERFACE + 1)
 #define APP_RESPONSE_MESSAGE_ID         (APP_RESPONSE_CODE + 4)
 #define APP_RESPONSE_PAYLOAD_LENGTH     (APP_RESPONSE_MESSAGE_ID + 4)
-#define APP_RESPONSE_HEADER_LENGTH      (APP_RESPONSE_PAYLOAD_LENGTH + 2)
+#define APP_RESPONSE_HEADER_LENGTH      (APP_RESPONSE_PAYLOAD_LENGTH + 4)
 
 #define CRC32_SEED                  (0xffffffff)
 
@@ -108,7 +108,7 @@ struct ApplicationResponse
     uint32_t code;
     uint32_t messageID;
     uint8_t *payload;
-    uint16_t payloadLength;
+    uint32_t payloadLength;
 };
 
 #define TRANSPORT_FRAME_TYPE        0

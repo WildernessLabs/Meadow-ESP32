@@ -246,7 +246,7 @@ uint32_t QueueMessage()
 }
 
 /// <summary>
-///     
+///     Add a response to the UART Tx queue.
 /// </summary>
 void QueueUARTResponse(uint8_t interface, uint32_t code, uint32_t messageID, uint8_t *payload, uint8_t payloadLength)
 {
@@ -384,7 +384,7 @@ void ProcessHeader(uint8_t *packet, uint8_t packetLength)
         messageHeader.interface = packet[0];
         messageHeader.function = ExtractUInt32(packet + APP_REQUEST_FUNCTION);
         messageHeader.messageID = ExtractUInt32(packet + APP_REQUEST_MESSAGE_ID);
-        bytesRemaining = ExtractUInt16(packet + APP_REQUEST_PAYLOAD_LENGTH);
+        bytesRemaining = ExtractUInt32(packet + APP_REQUEST_PAYLOAD_LENGTH);
         messageHeader.payloadLength = bytesRemaining;
         if (messageHeader.payloadLength > 0)
         {
