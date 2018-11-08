@@ -5,7 +5,6 @@
 #include "freertos/queue.h"
 #include "stdlib.h"
 
-
 //
 //  Available interfaces.
 //
@@ -84,10 +83,30 @@ extern void SetupMessageQueues();
 /// </summary>
 struct ApplicationRequest
 {
+    /// <summary>
+    ///     Interface or device that is making the request.
+    /// </summary>
     uint8_t interface;
+
+    /// <summary>
+    ///     
+    /// </summary>
     uint32_t function;
+
+    /// <summary>
+    ///     Message ID from the requestor.  This uniquely identifies the 
+    ///     request from the STM32.
+    /// </summary>
     uint32_t messageID;
+
+    /// <summary>
+    ///     Amount of data in the request payload (this does not include this header).
+    /// </summary>
     uint32_t payloadLength;
+
+    /// <summary>
+    ///     Data supporting the request.
+    /// </summary>
     uint8_t *payload;
 };
 
@@ -100,15 +119,35 @@ struct ApplicationRequest
 #define CRC32_SEED                  (0xffffffff)
 
 /// <summary>
-///     
+///     Structure for holding the elements of a response to a request
+///     from the STM32.
 /// </summary>
 struct ApplicationResponse
 {
+    /// <summary>
+    ///     Interface or device that is responding.
+    /// </summary>
     uint8_t interface;
+
+    /// <summary>
+    ///     Status code returned.
+    /// </summary>
     uint32_t code;
+
+    /// <summary>
+    ///     Message ID that was used in the original request.
+    /// </summary>
     uint32_t messageID;
-    uint8_t *payload;
+
+    /// <summary>
+    ///     Amount of data in the response payload (this does not include this header).
+    /// </summary>
     uint32_t payloadLength;
+
+    /// <summary>
+    ///     Data to be returned.
+    /// </summary>
+    uint8_t *payload;
 };
 
 #define TRANSPORT_FRAME_TYPE        0
