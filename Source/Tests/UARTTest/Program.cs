@@ -51,7 +51,7 @@ namespace UARTTest
                     Console.WriteLine($"Sending message");
                     Frame frame = new Frame(UART.FrameType.ApplicationHeader, 1, sequenceNumber++, buffer);
                     uart.Send(frame.FrameType, frame.MessageID, frame.SequenceNumber, frame.Payload);
-                    Thread.Sleep(500);
+                    Thread.Sleep(1500);
                 }
 
                 //MessageQueue queue = new MessageQueue(comPortName);
