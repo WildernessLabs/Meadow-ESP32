@@ -50,6 +50,16 @@ QueueHandle_t UARTRxQueueHandle = NULL;
 QueueHandle_t UARTTransmitQueueHandle = NULL;
 
 /// <summary>
+///     Mutex to ensure that only one request to access the UART can be 
+///     processed at any time.
+/// </summary>
+/// <remarks>
+///     The UARTTXTask and the ACK/NAK processing could need access to 
+///     the UART and this mutex is used to synchronise the access.
+/// </remarks>
+SemaphoreHandle_t xUARTTxMutex = NULL;
+
+/// <summary>
 ///     Name of the UART receive task (used for logging).
 /// </summary>
 char *UART_RX_TASK_NAME = "UART_RX_TASK";
@@ -152,37 +162,7 @@ void SetupUART()
     uart_param_config(STM32_UART_NUMBER, &uart_config);
     uart_set_pin(STM32_UART_NUMBER, TXD_PIN, RXD_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
     uart_driver_install(STM32_UART_NUMBER, RX_BUF_SIZE * 2, TX_BUF_SIZE * 2, UART_QUEUE_LENGTH, &UARTRxQueueHandle, 0);
-}
-
-/// <summary>
-///     UART transmit task.
-/// </summary>
-void UARTTxTask(void *pvParameters)
-{
-    esp_log_level_set(UART_TX_TASK_NAME, ESP_LOG_INFO);
-    while (true)
-    {
-        struct ApplicationResponse message;
-        BaseType_t result = xQueueReceive(UARTTransmitQueueHandle, &message, portMAX_DELAY);
-        if (result == pdTRUE)
-        {
-            uint8_t buffer[APP_RESPONSE_HEADER_LENGTH];
-
-            memset(buffer, 0, APP_RESPONSE_HEADER_LENGTH);
-            buffer[APP_RESPONSE_INTERFACE] = message.interface;
-            EncodeUInt32(message.code, buffer + APP_RESPONSE_CODE);
-            EncodeUInt32(message.messageID, buffer + APP_RESPONSE_MESSAGE_ID);
-            EncodeUInt32(message.payloadLength, buffer + APP_RESPONSE_PAYLOAD_LENGTH);
-            const int txBytes = uart_write_bytes(STM32_UART_NUMBER, (const char *) buffer, APP_RESPONSE_HEADER_LENGTH);
-            ESP_LOGI(UART_TX_TASK_NAME, "Wrote %d bytes to UART", txBytes);
-        }
-    }
-    //
-    //  We should only get here if the code in the while loop generates a fault.
-    //  The documentation for FreeRTOS states that we should delete the task
-    //  should we get here.
-    //
-    vTaskDelete(xUARTTransmitTaskHandle);
+    xUARTTxMutex = xSemaphoreCreateMutex();
 }
 
 /// <summary>
@@ -357,11 +337,12 @@ void AcknowledgeFrame(uint8_t ackNak, uint32_t status)
     uint32_t frameLength = HeaderAndPayloadSize(buffer, TRANSPORT_MESSAGE_LENGTH);
     uint8_t *frame = GenerateFrame(buffer, TRANSPORT_MESSAGE_LENGTH, frameLength);
     //
-    //  TODO: Need to work out how to lock the UART.
-    //
+    xSemaphoreTake(xUARTTxMutex, portMAX_DELAY);
     const int txBytes = uart_write_bytes(STM32_UART_NUMBER, (const char *) frame, frameLength);
+    xSemaphoreGive(xUARTTxMutex);
     ESP_LOGI(UART_TX_TASK_NAME, "Wrote %d bytes to UART", txBytes);
     ESP_LOG_BUFFER_HEXDUMP(UART_TX_TASK_NAME, frame, frameLength, ESP_LOG_INFO);
+    //
     vPortFree(frame);
 }
 
@@ -485,6 +466,87 @@ void ProcessApplicationDataFrame(uint8_t frameType, uint8_t *packet, uint8_t pac
     {
         ProcessData(packet, packetLength);
     }
+}
+
+/// <summary>
+///     UART transmit task.
+/// </summary>
+void UARTTxTask(void *pvParameters)
+{
+    esp_log_level_set(UART_TX_TASK_NAME, ESP_LOG_INFO);
+    while (true)
+    {
+        struct ApplicationResponse message;
+        BaseType_t result = xQueueReceive(UARTTransmitQueueHandle, &message, portMAX_DELAY);
+        if (result == pdTRUE)
+        {
+            //
+            //  Put together the header for the message.
+            //
+            uint8_t buffer[APP_RESPONSE_HEADER_LENGTH];
+
+            memset(buffer, 0, APP_RESPONSE_HEADER_LENGTH);
+            buffer[APP_RESPONSE_INTERFACE] = message.interface;
+            EncodeUInt32(message.code, buffer + APP_RESPONSE_CODE);
+            EncodeUInt32(message.messageID, buffer + APP_RESPONSE_MESSAGE_ID);
+            EncodeUInt32(message.payloadLength, buffer + APP_RESPONSE_PAYLOAD_LENGTH);
+            //
+            //  Generate an encoded frame.
+            //
+            uint32_t frameLength = HeaderAndPayloadSize(buffer, APP_RESPONSE_HEADER_LENGTH);
+            uint8_t *frame = GenerateFrame(buffer, APP_RESPONSE_HEADER_LENGTH, frameLength);
+            //
+            //  Now send the header.
+            //
+            xSemaphoreTake(xUARTTxMutex, portMAX_DELAY);
+            const int txBytes = uart_write_bytes(STM32_UART_NUMBER, (const char *) frame, frameLength);
+            xSemaphoreGive(xUARTTxMutex);
+            vPortFree(frame);
+            ESP_LOGI(UART_TX_TASK_NAME, "Wrote %d header bytes to UART", txBytes);
+            //
+            //  Now break the payload down into frames and send the frames to the STM32.
+            //
+            int amountLeftToSend = message.payloadLength;
+            int start = 0;
+            uint8_t currentFrameBufferLength = UART_MAXIMUM_FRAME_LENGTH;
+            uint8_t *frameBuffer = pvPortMalloc(currentFrameBufferLength);
+            while (amountLeftToSend > 0)
+            {
+                uint8_t length = (uint8_t) ((amountLeftToSend < UART_MAXIMUM_FRAME_LENGTH ? amountLeftToSend : UART_MAXIMUM_FRAME_LENGTH) & 0xff);
+                if (length != currentFrameBufferLength)
+                {
+                    vPortFree(frameBuffer);
+                    currentFrameBufferLength = length;
+                    frameBuffer = pvPortMalloc(currentFrameBufferLength);
+                }
+                memcpy(frameBuffer, message.payload, length);
+                start += length;
+                amountLeftToSend -= length;
+                xSemaphoreTake(xUARTTxMutex, portMAX_DELAY);
+                //
+                //  Generate an encoded frame.
+                //
+                frameLength = HeaderAndPayloadSize(frameBuffer, length);
+                frame = GenerateFrame(frameBuffer, length, frameLength);
+                //
+                //  Now send the header.
+                //
+                xSemaphoreTake(xUARTTxMutex, portMAX_DELAY);
+                const int txBytes = uart_write_bytes(STM32_UART_NUMBER, (const char *) frame, frameLength);
+                xSemaphoreGive(xUARTTxMutex);
+                ESP_LOGI(UART_TX_TASK_NAME, "Wrote %d data bytes to UART", txBytes);
+                xSemaphoreGive(xUARTTxMutex);
+            }
+            vPortFree(frameBuffer);
+            vPortFree(frame);
+        }
+    }
+    //
+    //  We should only get here if the code in the while loop generates a fault.
+    //  The documentation for FreeRTOS states that we should delete the task
+    //  should we get here.
+    //
+    vTaskDelete(xUARTTransmitTaskHandle);
 }
 
 /// <summary>
