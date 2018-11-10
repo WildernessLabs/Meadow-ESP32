@@ -179,34 +179,34 @@ namespace UARTTransport
         private const byte PADDING_CHARACTER = 0x52;
 
         /// <summary>
-        ///     Location of the frame type in the message _framePayload.
+        ///     Location of the frame type in the message frame.
         /// </summary>
         private const int FRAME_TYPE = 0x00;
 
         /// <summary>
-        ///     Location of the message ID in the message _framePayload.
+        ///     Location of the message ID in the message frame.
         /// </summary>
         private const int MESSAGE_ID = FRAME_TYPE + 1;
 
         /// <summary>
-        ///     Location of the sequence number in the message _framePayload.
+        ///     Location of the sequence number in the message frame.
         /// </summary>
         private const int SEQUENCE_ID = MESSAGE_ID + 4;
 
         /// <summary>
-        ///     Location of the frame length in the message _framePayload.
+        ///     Location of the frame length in the message frame.
         /// </summary>
         private const int FRAME_PAYLOAD_LENGTH = SEQUENCE_ID + 1;
 
         /// <summary>
         ///     Size of the header.
         /// </summary>
-        private const int HEADER_LENGTH = FRAME_PAYLOAD_LENGTH + 1;
+        private const int FRAME_HEADER_LENGTH = FRAME_PAYLOAD_LENGTH + 1;
 
         /// <summary>
         ///     Maximum number of bytes in the frame payload.
         /// </summary>
-        public const int MAXIMUM_PAYLOAD_LENGTH = 255;
+        public const int MAXIMUM_FRAME_LENGTH = 255;
 
         /// <summary>
         ///     Seed for the CRC32 algorithm.
@@ -253,7 +253,7 @@ namespace UARTTransport
         /// <summary>
         ///     Object used to lock the _time out Timer object.
         /// </summary>
-        private object _timeoutTimeLock = new Object();
+        private object _timeoutTimerLock = new Object();
 
         /// <summary>
         ///     Timeout timer is used to work out if we should raise an error event
@@ -530,7 +530,25 @@ namespace UARTTransport
         /// <param name="e">Event data for the timer Elapsed event.</param>
         private void _timeoutTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
-            throw new NotImplementedException();
+            lock (_timeoutTimerLock)
+            {
+                _timeoutTimer.Enabled = false;
+            }
+            _currentRetryCount++;
+            Console.WriteLine($"    Timeout sending message {_currentRetryCount}");
+            if (_currentRetryCount > MaximumRetryCount)
+            {
+                UARTResponseEventArgs timeout = new UARTResponseEventArgs(UARTResponseEventArgs.TransportPacketType.Timeout, 0);
+                ResponseReceived(this, timeout);
+            }
+            else
+            {
+                Send(_lastFrameSent);
+                lock (_timeoutTimerLock)
+                {
+                    _timeoutTimer.Enabled = true;
+                }
+            }
         }
 
         #endregion Events
@@ -661,8 +679,8 @@ namespace UARTTransport
                 }
                 byteCount++;
             }
-            byteCount += HEADER_LENGTH;     //  Size of the header.
-            byteCount += 4;                 //  CRC is a 32-bit CRC and takes 4 bytes.
+            byteCount += FRAME_HEADER_LENGTH;   //  Size of the header.
+            byteCount += 4;                     //  CRC is a 32-bit CRC and takes 4 bytes.
             return(byteCount);
         }
 
@@ -736,20 +754,17 @@ namespace UARTTransport
         /// <param name="message">Full message to send (not just the frame).</param>
         public void Send(FrameType frameType, UInt32 messageID, byte sequenceNumber, byte[] message)
         {
-            if (message.Length > MAXIMUM_PAYLOAD_LENGTH)
+            if (message.Length > MAXIMUM_FRAME_LENGTH)
             {
                 throw new ArgumentOutOfRangeException(nameof(message),
-                    $"Message must be smaller than {MAXIMUM_PAYLOAD_LENGTH} bytes.");
+                    $"Message must be smaller than {MAXIMUM_FRAME_LENGTH} bytes.");
             }
 
             _lastFrameSent = GenerateFrame(frameType, messageID, sequenceNumber, message);
             _currentRetryCount = 0;
             DisplayFrame(_lastFrameSent);
             Send(_lastFrameSent);
-            //
-            //  
-            //
-            //_timeoutTimer.Enabled = true;       // Start the timeout timer.
+            _timeoutTimer.Enabled = true;       // Start the timeout timer.
         }
 
         /// <summary>
@@ -777,17 +792,33 @@ namespace UARTTransport
             switch (currentFrameType & 0x2f)
             {
                 case TRANSPORT_ACK:
+                    lock (_timeoutTimerLock)
+                    {
+                        _timeoutTimer.Enabled = false;
+                    }
                     UARTResponseEventArgs ack = new UARTResponseEventArgs(UARTResponseEventArgs.TransportPacketType.ACK, _statusCode);
                     ResponseReceived(this, ack);
                     break;
                 case TRANSPORT_NAK:
+                    lock (_timeoutTimerLock)
+                    {
+                        _timeoutTimer.Enabled = false;
+                    }
                     _currentRetryCount++;
+                    Console.WriteLine($"    NAK, retrying {_currentRetryCount}");
                     if (_currentRetryCount > MaximumRetryCount)
                     {
                         UARTResponseEventArgs nak = new UARTResponseEventArgs(UARTResponseEventArgs.TransportPacketType.NAK, _statusCode);
                         ResponseReceived(this, nak);
                     }
-                    Send(_lastFrameSent);
+                    else
+                    {
+                        Send(_lastFrameSent);
+                        lock (_timeoutTimerLock)
+                        {
+                            _timeoutTimer.Enabled = true;
+                        }
+                    }
                     break;
                 case TRANSPORT_RESET:
                     //
@@ -798,6 +829,11 @@ namespace UARTTransport
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="packet"></param>
+        /// <param name="packetLength"></param>
         private void ProcessHeader(byte[] packet, byte packetLength)
         {
             //if (packetLength != APP_RESPONSE_HEADER_LENGTH)
