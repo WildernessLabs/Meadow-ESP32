@@ -154,6 +154,33 @@ struct ApplicationResponse
 #define TRANSPORT_STATUS_CODE       (TRANSPORT_FRAME_TYPE + 1)
 #define TRANSPORT_MESSAGE_LENGTH    (TRANSPORT_STATUS_CODE + 4)
 
+/// <summary>
+///     Location of the frame type in the message frame.
+/// </summary>
+#define FRAME_TYPE                  (0x00)
+
+/// <summary>
+///     Location of the message ID in the message frame.
+/// </summary>
+#define MESSAGE_ID                  (FRAME_TYPE + 1)
+
+/// <summary>
+///     Location of the sequence number in the message frame.
+/// </summary>
+#define SEQUENCE_I                  (MESSAGE_ID + 4)
+
+/// <summary>
+///     Location of the frame length in the message frame.
+/// </summary>
+#define FRAME_PAYLOAD_LENGTH        (SEQUENCE_ID + 1)
+
+/// <summary>
+///     Size of the header.
+/// </summary>
+#define FRAME_HEADER_LENGTH         (FRAME_PAYLOAD_LENGTH + 1)
+
+
+
 extern uint8_t CRC8(const uint8_t *, uint16_t);
 extern uint32_t CRC32(const uint8_t *, uint16_t);
 extern uint32_t ProgressiveCRC32(uint32_t, uint8_t);

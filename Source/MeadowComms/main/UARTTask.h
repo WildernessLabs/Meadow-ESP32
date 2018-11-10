@@ -47,6 +47,11 @@ static const int TX_BUF_SIZE = 1024;
 #define UART_QUEUE_LENGTH               10
 
 //
+//  Maximum number of unencoded bytes in a frame.
+//
+#define UART_MAXIMUM_FRAME_LENGTH       255
+
+//
 //  Handle for the queue dealing with the incoming messages.
 //
 extern QueueHandle_t UARTRxQueueHandle;
