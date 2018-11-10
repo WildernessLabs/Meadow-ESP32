@@ -35,7 +35,7 @@ namespace Esp32Messaging
         /// <summary>
         ///     Length of the header in bytes.
         /// </summary>
-        public const int HEADER_LENGTH = PAYLOAD_LENGTH + 2;
+        public const int HEADER_LENGTH = PAYLOAD_LENGTH + 4;
 
         /// <summary>
         ///     Maximum length of the payload of a message.
@@ -90,7 +90,7 @@ namespace Esp32Messaging
             int amountLeftToSend = Payload.Length;
             while (amountLeftToSend > 0)
             {
-                byte length = (byte) ((amountLeftToSend < UART.MAXIMUM_PAYLOAD_LENGTH ? amountLeftToSend : UART.MAXIMUM_PAYLOAD_LENGTH) & 0xff);
+                byte length = (byte) ((amountLeftToSend < UART.MAXIMUM_FRAME_LENGTH ? amountLeftToSend : UART.MAXIMUM_FRAME_LENGTH) & 0xff);
                 if (length != buffer.Length)
                 {
                     buffer = new byte[length];
