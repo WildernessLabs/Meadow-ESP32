@@ -179,34 +179,34 @@ namespace UARTTransport
         private const byte PADDING_CHARACTER = 0x52;
 
         /// <summary>
-        ///     Location of the frame type in the message _framePayload.
+        ///     Location of the frame type in the message frame.
         /// </summary>
         private const int FRAME_TYPE = 0x00;
 
         /// <summary>
-        ///     Location of the message ID in the message _framePayload.
+        ///     Location of the message ID in the message frame.
         /// </summary>
         private const int MESSAGE_ID = FRAME_TYPE + 1;
 
         /// <summary>
-        ///     Location of the sequence number in the message _framePayload.
+        ///     Location of the sequence number in the message frame.
         /// </summary>
         private const int SEQUENCE_ID = MESSAGE_ID + 4;
 
         /// <summary>
-        ///     Location of the frame length in the message _framePayload.
+        ///     Location of the frame length in the message frame.
         /// </summary>
         private const int FRAME_PAYLOAD_LENGTH = SEQUENCE_ID + 1;
 
         /// <summary>
         ///     Size of the header.
         /// </summary>
-        private const int HEADER_LENGTH = FRAME_PAYLOAD_LENGTH + 1;
+        private const int FRAME_HEADER_LENGTH = FRAME_PAYLOAD_LENGTH + 1;
 
         /// <summary>
         ///     Maximum number of bytes in the frame payload.
         /// </summary>
-        public const int MAXIMUM_PAYLOAD_LENGTH = 255;
+        public const int MAXIMUM_FRAME_LENGTH = 255;
 
         /// <summary>
         ///     Seed for the CRC32 algorithm.
@@ -679,8 +679,8 @@ namespace UARTTransport
                 }
                 byteCount++;
             }
-            byteCount += HEADER_LENGTH;     //  Size of the header.
-            byteCount += 4;                 //  CRC is a 32-bit CRC and takes 4 bytes.
+            byteCount += FRAME_HEADER_LENGTH;   //  Size of the header.
+            byteCount += 4;                     //  CRC is a 32-bit CRC and takes 4 bytes.
             return(byteCount);
         }
 
@@ -754,10 +754,10 @@ namespace UARTTransport
         /// <param name="message">Full message to send (not just the frame).</param>
         public void Send(FrameType frameType, UInt32 messageID, byte sequenceNumber, byte[] message)
         {
-            if (message.Length > MAXIMUM_PAYLOAD_LENGTH)
+            if (message.Length > MAXIMUM_FRAME_LENGTH)
             {
                 throw new ArgumentOutOfRangeException(nameof(message),
-                    $"Message must be smaller than {MAXIMUM_PAYLOAD_LENGTH} bytes.");
+                    $"Message must be smaller than {MAXIMUM_FRAME_LENGTH} bytes.");
             }
 
             _lastFrameSent = GenerateFrame(frameType, messageID, sequenceNumber, message);
