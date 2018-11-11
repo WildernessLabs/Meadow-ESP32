@@ -688,6 +688,9 @@ namespace UARTTransport
         ///     Copy the data into the new frame taking into account the need to insert
         ///     padding characters if we hit a sequence of start of frame characters.
         /// </summary>
+        /// <param name="message">Original unencoded data.</param>
+        /// <param name="frame">Byte array to hold the encoded frame.</param>
+        /// <param name="start">Location in the original message at which the method should start encoding.</param>
         private int EncodeData(byte[] message, byte[] frame, int start)
         {
             int currentByte = 0;
@@ -743,6 +746,13 @@ namespace UARTTransport
             return(frame);
         }
 
+        /// <summary>
+        ///     Generate a transport frame message (simple frame type and code).
+        /// </summary>
+        /// <param name="frameType">Frame type being sent.</param>
+        /// <param name="message">Message body.</param>
+        /// <param name="frameLength">Amount of data in the original frame.</param>
+        /// <returns>Encoded frame ready to be sent over the UART.</returns>
         private byte[] GenerateTransportFrame(FrameType frameType, byte[] message, int frameLength)
         {
             byte[] frame = new byte[HeaderAndPayloadSize(message)];
@@ -755,7 +765,7 @@ namespace UARTTransport
             //  when the CRC is calculated as the CRC should only be calculated on
             //  the actual data plus any padding characters.
             //
-            UInt32 crc = CRC32(frame, frame.Length - 4);
+            UInt32 crc = CRC32(frame, 0, frame.Length - 4);
             Encoders.EncodeUInt32(crc, frame, currentByte);
             currentByte += 4;
             frame[currentByte] = END_OF_FRAME_CHARACTER;
