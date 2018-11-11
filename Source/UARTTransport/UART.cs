@@ -3,6 +3,8 @@ using System.Diagnostics;
 using System.Dynamic;
 using System.IO.Ports;
 using System.Timers;
+using Esp32Messaging;
+using System.Runtime.CompilerServices;
 
 namespace UARTTransport
 {
@@ -749,11 +751,10 @@ namespace UARTTransport
         /// <summary>
         ///     Generate a transport frame message (simple frame type and code).
         /// </summary>
-        /// <param name="frameType">Frame type being sent.</param>
         /// <param name="message">Message body.</param>
         /// <param name="frameLength">Amount of data in the original frame.</param>
         /// <returns>Encoded frame ready to be sent over the UART.</returns>
-        private byte[] GenerateTransportFrame(FrameType frameType, byte[] message, int frameLength)
+        private byte[] GenerateTransportFrame(byte[] message, int frameLength)
         {
             byte[] frame = new byte[HeaderAndPayloadSize(message)];
             int currentByte = 0;
@@ -776,10 +777,11 @@ namespace UARTTransport
         ///     Send a frame of data over the serial port.
         /// </summary>
         /// <param name="frame">Byte array containing the raw data to be sent.</param>
+        [MethodImpl(MethodImplOptions.Synchronized)]
         private void Send(byte[] frame)
         {
             _port.Write(_startOfFrame, 0, _startOfFrame.Length);
-            _port.Write(_lastFrameSent, 0, _lastFrameSent.Length);
+            _port.Write(frame, 0, _lastFrameSent.Length);
             _port.Write(new[] { END_OF_FRAME_CHARACTER }, 0, 1);
         }
 
@@ -806,20 +808,18 @@ namespace UARTTransport
         }
 
         /// <summary>
-        ///     An invalid frame has been sent, send a NAK to the STM32.
-        /// </summary>
-        /// <param name="frameType"></param>
-        void InvalidFrame(byte frameType)
-        {
-        }
-
-        /// <summary>
         ///     Send a positive (ACK) or negative (NAK) acknowledgement along with a response (error) code.
         /// </summary>
         /// <param name="ackNak">Type of acknowledgement (ACK ot NAK).</param>
         /// <param name="status">Status code to send in the ACK / NAK message.</param>
         void AcknowledgeFrame(byte ackNak, UInt32 status)
         {
+            byte[] buffer = new byte[Message.TRANSPORT_MESSAGE_LENGTH];
+            buffer[Message.TRANSPORT_FRAME_TYPE] = (byte) (PKT_TRANSPORT | ackNak);
+            Encoders.EncodeUInt32(status, buffer, Message.TRANSPORT_STATUS_CODE);
+            int frameLength = HeaderAndPayloadSize(buffer);
+            byte[] frame = GenerateTransportFrame(buffer, frameLength);
+            Send(frame);
         }
 
         /// <summary>
