@@ -250,8 +250,6 @@ void QueueUARTResponse(uint8_t interface, uint32_t code, uint32_t messageID, uin
 /// </summary>
 uint32_t HeaderAndPayloadSize(uint8_t *buffer, uint8_t bufferLength)
 {
-    uint32_t frameLength = 0;
-
     int startOfFrameCharacterCount = 0;
     int byteCount = 0;
             
@@ -281,15 +279,12 @@ uint32_t HeaderAndPayloadSize(uint8_t *buffer, uint8_t bufferLength)
 }
 
 /// <summary>
-///     Take a buffer of data and generate a sequences of bytes to send over the UART.
-//      This sequence will contain the start of frame characters, data, CRC and end
-//      of frame characters.
+///     Encode the frame data taking into account the possibility of multiple
+///     0xaa characters.
 /// </summary>
-uint8_t *GenerateFrame(uint8_t *buffer, uint32_t bufferLength, uint32_t frameLength)
+int EncodeData(uint8_t *buffer, uint32_t bufferLength, uint8_t *frame)
 {
-    uint8_t *frame = pvPortMalloc(frameLength);
-    memset(frame, START_OF_FRAME_CHARACTER, NUMBER_OF_START_OF_FRAME_CHARACTERS);
-    uint32_t currentByte = NUMBER_OF_START_OF_FRAME_CHARACTERS;
+    uint32_t currentByte = 0;
     //
     //  Copy the data into the new frame taking into account the need to insert
     //  padding characters if we hit a sequence of start of frame characters.
@@ -312,6 +307,50 @@ uint8_t *GenerateFrame(uint8_t *buffer, uint32_t bufferLength, uint32_t frameLen
             startOfFrameCharacterCount = 0;
         }
     }
+    return (currentByte);
+}
+
+/// <summary>
+///     Generate a new application message frame.
+/// </summary>
+uint8_t *GenerateApplicationFrame(uint8_t frameType, uint32_t messageID, uint8_t sequenceNumber, uint8_t *buffer, uint32_t bufferLength, uint32_t frameLength)
+{
+    uint8_t *frame = pvPortMalloc(frameLength);
+    memset(frame, START_OF_FRAME_CHARACTER, NUMBER_OF_START_OF_FRAME_CHARACTERS);
+    uint32_t currentByte = NUMBER_OF_START_OF_FRAME_CHARACTERS;
+    //
+    //  Now add the frame header information.
+    //
+    frame[currentByte++] = frameType;
+    EncodeUInt32(messageID, frame + currentByte);
+    currentByte += 4;
+    frame[currentByte++] = sequenceNumber;
+    frame[currentByte++] = (uint8_t) (bufferLength & 0xff);
+    currentByte += EncodeData(buffer, bufferLength, frame + currentByte);
+    //
+    //  The frame length calculated contains the header characters, CRC
+    //  and the end of frame characters.  We need to take this into consideration 
+    //  when the CRC is calculated as the CRC should only be calculated on
+    //  the actual data plus any padding characters.
+    //
+    uint32_t crc = CRC32(frame + NUMBER_OF_START_OF_FRAME_CHARACTERS, frameLength - (NUMBER_OF_START_OF_FRAME_CHARACTERS + 5));
+    EncodeUInt32(crc, frame + currentByte);
+    currentByte += 4;
+    frame[currentByte] = END_OF_FRAME_CHARACTER;
+    return (frame);
+}
+
+/// <summary>
+///     Take a buffer of data and generate a sequences of bytes to send over the UART.
+//      This sequence will contain the start of frame characters, data, CRC and end
+//      of frame characters.
+/// </summary>
+uint8_t *GenerateTransportFrame(uint8_t *buffer, uint32_t bufferLength, uint32_t frameLength)
+{
+    uint8_t *frame = pvPortMalloc(frameLength);
+    memset(frame, START_OF_FRAME_CHARACTER, NUMBER_OF_START_OF_FRAME_CHARACTERS);
+    uint32_t currentByte = NUMBER_OF_START_OF_FRAME_CHARACTERS;
+    currentByte += EncodeData(buffer, bufferLength, frame + NUMBER_OF_START_OF_FRAME_CHARACTERS);
     //
     //  The frame length calculated contains the header characters, CRC
     //  and the end of frame characters.  We need to take this into consideration 
@@ -335,7 +374,7 @@ void AcknowledgeFrame(uint8_t ackNak, uint32_t status)
     buffer[TRANSPORT_FRAME_TYPE] = PKT_TRANSPORT | ackNak;
     EncodeUInt32(status, buffer + TRANSPORT_STATUS_CODE);
     uint32_t frameLength = HeaderAndPayloadSize(buffer, TRANSPORT_MESSAGE_LENGTH);
-    uint8_t *frame = GenerateFrame(buffer, TRANSPORT_MESSAGE_LENGTH, frameLength);
+    uint8_t *frame = GenerateTransportFrame(buffer, TRANSPORT_MESSAGE_LENGTH, frameLength);
     //
     xSemaphoreTake(xUARTTxMutex, portMAX_DELAY);
     const int txBytes = uart_write_bytes(STM32_UART_NUMBER, (const char *) frame, frameLength);
@@ -494,7 +533,7 @@ void UARTTxTask(void *pvParameters)
             //  Generate an encoded frame.
             //
             uint32_t frameLength = HeaderAndPayloadSize(buffer, APP_RESPONSE_HEADER_LENGTH);
-            uint8_t *frame = GenerateFrame(buffer, APP_RESPONSE_HEADER_LENGTH, frameLength);
+            uint8_t *frame = GenerateTransportFrame(buffer, APP_RESPONSE_HEADER_LENGTH, frameLength);
             //
             //  Now send the header.
             //
@@ -527,7 +566,7 @@ void UARTTxTask(void *pvParameters)
                 //  Generate an encoded frame.
                 //
                 frameLength = HeaderAndPayloadSize(frameBuffer, length);
-                frame = GenerateFrame(frameBuffer, length, frameLength);
+                frame = GenerateTransportFrame(frameBuffer, length, frameLength);
                 //
                 //  Now send the header.
                 //
