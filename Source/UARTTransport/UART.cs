@@ -66,7 +66,7 @@ namespace UARTTransport
         ///     The error codes and values here must be kept in step
         ///     with the error codes in the ESP system.
         /// </remarks>
-        public enum ErrorCodes
+        public enum ErrorCodes : UInt32
         {
             /// <summary>
             ///     No error, frame has been processed OK.
@@ -501,16 +501,17 @@ namespace UARTTransport
                                     {
                                         if (data != END_OF_FRAME_CHARACTER)
                                         {
-                                            Console.WriteLine("Invalid frame");
+                                            Console.WriteLine("    Invalid frame: Missing end of frame marker.");
+                                            AcknowledgeFrame(TRANSPORT_NAK, ErrorCodes.MissingEndOfFrameMarker);
                                         }
                                         else
                                         {
-                                            ProcessTransportData(_currentFrameType);
+                                            Console.WriteLine("    Invalid frame: CRC error.");
+                                            AcknowledgeFrame(TRANSPORT_NAK, ErrorCodes.CRCError);
                                         }
                                     }
                                     if (_framePayload != null)
                                     {
-                                        //vPortFree(_framePayload);
                                         _framePayload = null;
                                     }
                                     _communicationState = CommunicationStates.StartOfFrame;
@@ -812,11 +813,11 @@ namespace UARTTransport
         /// </summary>
         /// <param name="ackNak">Type of acknowledgement (ACK ot NAK).</param>
         /// <param name="status">Status code to send in the ACK / NAK message.</param>
-        void AcknowledgeFrame(byte ackNak, UInt32 status)
+        void AcknowledgeFrame(byte ackNak, ErrorCodes status)
         {
             byte[] buffer = new byte[Message.TRANSPORT_MESSAGE_LENGTH];
             buffer[Message.TRANSPORT_FRAME_TYPE] = (byte) (PKT_TRANSPORT | ackNak);
-            Encoders.EncodeUInt32(status, buffer, Message.TRANSPORT_STATUS_CODE);
+            Encoders.EncodeUInt32((UInt32) status, buffer, Message.TRANSPORT_STATUS_CODE);
             int frameLength = HeaderAndPayloadSize(buffer);
             byte[] frame = GenerateTransportFrame(buffer, frameLength);
             Send(frame);
@@ -904,9 +905,40 @@ namespace UARTTransport
             //}
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="packet"></param>
+        /// <param name="packetLength"></param>
         private void ProcessData(byte[] packet, byte packetLength)
         {
-
+            //if ((nextPayloadLocation != NULL) && (bytesRemaining > 0) && (packetLength <= bytesRemaining))
+            //{
+            //    memcpy(nextPayloadLocation, packet, packetLength);
+            //    nextPayloadLocation += packetLength;
+            //    bytesRemaining -= packetLength;
+            //    if (bytesRemaining == 0)
+            //    {
+            //        QueueMessage();
+            //        //
+            //        //  It is important NOT to release the memory containing the payload
+            //        //  as the pointer to the payload has been copied into the queue for
+            //        //  the appropriate interface.
+            //        //
+            //        //  It is the responsibility of the queue handler to release the payload
+            //        //  memory when the handler has finished processing the message.
+            //        //  Releasing the memory here will corrupt the heap.
+            //        //
+            //        ResetIncomingMessage(false);
+            //        ESP_LOGI(UART_RX_TASK_NAME, "Message received and queued.");
+            //    }
+            //    AcknowledgeFrame(TRANSPORT_ACK, ERR_OK);
+            //}
+            //else
+            //{
+            //    ESP_LOGI(UART_RX_TASK_NAME, "Unexpected message data bytes (%d received, %d expected)", packetLength, bytesRemaining);
+            //    AcknowledgeFrame(MSG_NAK, ERR_UNEXPECTED_DATA);
+            //}
         }
 
         /// <summary>
