@@ -42,6 +42,21 @@ namespace Esp32Messaging
         /// </summary>
         public const UInt16 MAXIMUM_MESSAGE_LENGTH = 0xffff;
 
+        /// <summary>
+        ///     Location of the Frametype byte in a transport message.
+        /// </summary>
+        public const int TRANSPORT_FRAME_TYPE = 0;
+
+        /// <summary>
+        ///     Location of the status code byte in a transport frame.
+        /// </summary>
+        public const int TRANSPORT_STATUS_CODE = TRANSPORT_FRAME_TYPE + 1;
+
+        /// <summary>
+        ///     Transport message packet length.
+        /// </summary>
+        public const int TRANSPORT_MESSAGE_LENGTH = TRANSPORT_STATUS_CODE + 4;
+
         #endregion Constants
 
         #region Private member variables
