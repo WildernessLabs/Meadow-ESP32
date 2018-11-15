@@ -100,7 +100,7 @@ namespace UARTTransport
             QueueError = 5,
 
             /// <summary>
-            ///     Packet / frame is invalid.
+            ///     PacketType / frame is invalid.
             /// </summary>
             InvalidPacket = 6,
 
@@ -328,7 +328,7 @@ namespace UARTTransport
         private byte _framePayloadIndex = 0;
 
         /// <summary>
-        ///     Packet code returned by the transport packets.
+        ///     PacketType code returned by the transport packets.
         /// </summary>
         private UInt32 _statusCode = 0;
 
@@ -346,9 +346,9 @@ namespace UARTTransport
         #region Delegates
 
         /// <summary>
-        ///     Packet event.
+        ///     PacketType event.
         /// </summary>
-        public event UARTResponseEventHandler ResponseReceived = delegate { };
+        public event UARTTransportErrorEventHandler TransportError = delegate { };
 
         /// <summary>
         ///     Data received event.
@@ -370,7 +370,7 @@ namespace UARTTransport
             {
                 int amount = ((SerialPort) sender).Read(_buffer, 0, RX_BUFFER_SIZE);
                 Debug.Print($"\nData received ({amount}) bytes:");
-                DisplayFrame(_buffer, amount);
+                DebugHelpers.DisplayBufferInHex(_buffer, amount);
                 
                 if (amount > 0)
                 {
@@ -494,7 +494,8 @@ namespace UARTTransport
                                         }
                                         else
                                         {
-                                            ProcessApplicationDataFrame(_currentFrameType, _framePayload, _framePayloadLength);
+                                            UARTDataReceivedEventArgs args = new UARTDataReceivedEventArgs((FrameType) _currentFrameType, _messageID, _frameSequenceNumber, _framePayload);
+                                            DataReceived(this, args);
                                         }
                                     }
                                     else
@@ -510,10 +511,7 @@ namespace UARTTransport
                                             AcknowledgeFrame(TRANSPORT_NAK, ErrorCodes.CRCError);
                                         }
                                     }
-                                    if (_framePayload != null)
-                                    {
-                                        _framePayload = null;
-                                    }
+                                    _framePayload = null;
                                     _communicationState = CommunicationStates.StartOfFrame;
                                     break;
                                 default:
@@ -541,8 +539,8 @@ namespace UARTTransport
             Console.WriteLine($"    Timeout sending message {_currentRetryCount}");
             if (_currentRetryCount > MaximumRetryCount)
             {
-                UARTResponseEventArgs timeout = new UARTResponseEventArgs(UARTResponseEventArgs.TransportPacketType.Timeout, 0);
-                ResponseReceived(this, timeout);
+                UARTTransportEventArgs timeout = new UARTTransportEventArgs(UARTTransportEventArgs.TransportPacketType.Timeout, 0);
+                TransportError(this, timeout);
             }
             else
             {
@@ -782,7 +780,7 @@ namespace UARTTransport
         private void Send(byte[] frame)
         {
             _port.Write(_startOfFrame, 0, _startOfFrame.Length);
-            _port.Write(frame, 0, _lastFrameSent.Length);
+            _port.Write(frame, 0, frame.Length);
             _port.Write(new[] { END_OF_FRAME_CHARACTER }, 0, 1);
         }
 
@@ -803,9 +801,12 @@ namespace UARTTransport
 
             _lastFrameSent = GenerateApplicationFrame(frameType, messageID, sequenceNumber, message);
             _currentRetryCount = 0;
-            DisplayFrame(_lastFrameSent);
+            DebugHelpers.DisplayBufferInHex(_lastFrameSent);
             Send(_lastFrameSent);
-            _timeoutTimer.Enabled = true;       // Start the timeout timer.
+            lock (_timeoutTimerLock)
+            {
+                _timeoutTimer.Enabled = true;   // Start the timeout timer.
+            }
         }
 
         /// <summary>
@@ -835,8 +836,8 @@ namespace UARTTransport
                     {
                         _timeoutTimer.Enabled = false;
                     }
-                    UARTResponseEventArgs ack = new UARTResponseEventArgs(UARTResponseEventArgs.TransportPacketType.ACK, _statusCode);
-                    ResponseReceived(this, ack);
+                    UARTTransportEventArgs ack = new UARTTransportEventArgs(UARTTransportEventArgs.TransportPacketType.ACK, _statusCode);
+                    TransportError(this, ack);
                     break;
                 case TRANSPORT_NAK:
                     lock (_timeoutTimerLock)
@@ -847,8 +848,8 @@ namespace UARTTransport
                     Console.WriteLine($"    NAK, retrying {_currentRetryCount}");
                     if (_currentRetryCount > MaximumRetryCount)
                     {
-                        UARTResponseEventArgs nak = new UARTResponseEventArgs(UARTResponseEventArgs.TransportPacketType.NAK, _statusCode);
-                        ResponseReceived(this, nak);
+                        UARTTransportEventArgs nak = new UARTTransportEventArgs(UARTTransportEventArgs.TransportPacketType.NAK, _statusCode);
+                        TransportError(this, nak);
                     }
                     else
                     {
@@ -866,133 +867,6 @@ namespace UARTTransport
                     //ResetIncomingMessage(true);
                     break;
             }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="packet"></param>
-        /// <param name="packetLength"></param>
-        private void ProcessHeader(byte[] packet, byte packetLength)
-        {
-            //if (packetLength != APP_RESPONSE_HEADER_LENGTH)
-            //{
-            //    ESP_LOGI(UART_RX_TASK_NAME, "Invalid header legth: %d", packetLength);
-            //    AcknowledgeFrame(MSG_NAK, ERR_INVALID_HEADER);
-            //}
-            //else
-            //{
-            //    ResetIncomingMessage(true);
-            //    messageHeader.interface = packet[0];
-            //    messageHeader.function = ExtractUInt32(packet + APP_REQUEST_FUNCTION);
-            //    messageHeader.messageID = ExtractUInt32(packet + APP_REQUEST_MESSAGE_ID);
-            //    bytesRemaining = ExtractUInt16(packet + APP_REQUEST_PAYLOAD_LENGTH);
-            //    messageHeader.payloadLength = bytesRemaining;
-            //    if (messageHeader.payloadLength > 0)
-            //    {
-            //        messageHeader.payload = pvPortMalloc(messageHeader.payloadLength);
-            //    }
-            //    else
-            //    {
-            //        messageHeader.payload = NULL;
-            //        //
-            //        //  Messages with no payload should be queued immediately.
-            //        //
-            //        QueueMessage();
-            //    }
-            //    nextPayloadLocation = messageHeader.payload;
-            //    AcknowledgeFrame(MSG_ACK, ERR_OK);
-            //}
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="packet"></param>
-        /// <param name="packetLength"></param>
-        private void ProcessData(byte[] packet, byte packetLength)
-        {
-            //if ((nextPayloadLocation != NULL) && (bytesRemaining > 0) && (packetLength <= bytesRemaining))
-            //{
-            //    memcpy(nextPayloadLocation, packet, packetLength);
-            //    nextPayloadLocation += packetLength;
-            //    bytesRemaining -= packetLength;
-            //    if (bytesRemaining == 0)
-            //    {
-            //        QueueMessage();
-            //        //
-            //        //  It is important NOT to release the memory containing the payload
-            //        //  as the pointer to the payload has been copied into the queue for
-            //        //  the appropriate interface.
-            //        //
-            //        //  It is the responsibility of the queue handler to release the payload
-            //        //  memory when the handler has finished processing the message.
-            //        //  Releasing the memory here will corrupt the heap.
-            //        //
-            //        ResetIncomingMessage(false);
-            //        ESP_LOGI(UART_RX_TASK_NAME, "Message received and queued.");
-            //    }
-            //    AcknowledgeFrame(TRANSPORT_ACK, ERR_OK);
-            //}
-            //else
-            //{
-            //    ESP_LOGI(UART_RX_TASK_NAME, "Unexpected message data bytes (%d received, %d expected)", packetLength, bytesRemaining);
-            //    AcknowledgeFrame(MSG_NAK, ERR_UNEXPECTED_DATA);
-            //}
-        }
-
-        /// <summary>
-        ///     A valid frame has been received, work out what to do with it.
-        /// </summary>
-        /// <param name="frameType">Type of frame that has been received (transport, application etc.)</param>
-        /// <param name="packet">Payload to be processed.</param>
-        /// <param name="packetLength">Amount of data in the payload.</param>
-        private void ProcessApplicationDataFrame(byte frameType, byte[] packet, byte packetLength)
-        {
-            //
-            //  Application data packets are either header or data packets.
-            //
-            if ((frameType & DATA_HEADER) > 0)
-            {
-                ProcessHeader(packet, packetLength);
-            }
-            else
-            {
-                ProcessData(packet, packetLength);
-            }
-        }
-
-        /// <summary>
-        ///     Dump the array of bytes to the debug output in hexadecimal.
-        /// </summary>
-        private void DisplayFrame(byte[] frame, int amount = -1)
-        {
-            var line = string.Empty;
-            Debug.Print("\n\n       0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f\n");
-            if (amount < 0)
-            {
-                amount = frame.Length;
-            }
-            for (var index = 0; index < amount; index++)
-            {
-                if ((index % 16) == 0)
-                {
-                    if (line != string.Empty)
-                    {
-                        Debug.Print(line);
-                        Debug.Print("\n");
-                        line = String.Empty;
-                    }
-                    line += $"{index:X4}: ";
-                }
-                line += $"{frame[index]:X2} ";
-            }
-            if (line != string.Empty)
-            {
-                Debug.Print(line);
-            }
-
-            Debug.Print("\n");
         }
 
         #endregion Methods

@@ -35,7 +35,8 @@ namespace UARTTest
 
                 UART uart = new UART(comPortName);
 
-                uart.ResponseReceived += Uart_ResponseReceived;
+                uart.TransportError += UartTransportError;
+                uart.DataReceived += Uart_DataReceived;
 
                 byte sequenceNumber = 0;
                 byte[] buffer = new byte[Message.HEADER_LENGTH];
@@ -67,10 +68,15 @@ namespace UARTTest
             }
         }
 
-        private static void Uart_ResponseReceived(object sender, UARTResponseEventArgs e)
+        private static void Uart_DataReceived(object sender, UARTDataReceivedEventArgs e)
         {
-            Console.WriteLine($"Response {e.Packet} received.");
-            if (e.Packet == UARTResponseEventArgs.TransportPacketType.NAK)
+            
+        }
+
+        private static void UartTransportError(object sender, UARTTransportEventArgs e)
+        {
+            Console.WriteLine($"Response {e.PacketType} received.");
+            if (e.PacketType == UARTTransportEventArgs.TransportPacketType.NAK)
             {
                 Console.WriteLine($"    Status code: {e.StatusCode}");
             }
