@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
+using System.Diagnostics;
 using System.Timers;
 using UARTTransport;
 
@@ -56,9 +57,9 @@ namespace Esp32Messaging
         private Message _incomingMessage = null;
 
         /// <summary>
-        ///     Packet returned by the UART Response event.
+        ///     PacketType returned by the UART Response event.
         /// </summary>
-        private UARTResponseEventArgs.TransportPacketType _uartResponse = UARTResponseEventArgs.TransportPacketType.Unknown;
+        private UARTTransportEventArgs.TransportPacketType _uartResponse = UARTTransportEventArgs.TransportPacketType.Unknown;
 
         #endregion Private variables
 
@@ -83,7 +84,7 @@ namespace Esp32Messaging
                 throw new InvalidOperationException("Only a single instance of a MessageQueue can be created.");
             }
             _uart = new UART(comPort, maximumRetryCount);
-            _uart.ResponseReceived += _uart_ResponseReceived;
+            _uart.TransportError += UartTransportError;
             _uart.DataReceived += UartDataReceived;
             _messageQueue = new Queue<Message>();
             _queueHandler = new Thread(() =>
@@ -111,20 +112,21 @@ namespace Esp32Messaging
         /// </remarks>
         /// <param name="sender">Object raising the event.</param>
         /// <param name="e">Event arguments containing information about the success or failure of the send request.</param>
-        private void _uart_ResponseReceived(object sender, UARTResponseEventArgs e)
+        private void UartTransportError(object sender, UARTTransportEventArgs e)
         {
-            _uartResponse = e.Packet;
+            _uartResponse = e.PacketType;
             _waitingForResponseHandle.Set();
         }
 
         /// <summary>
-        ///     Data has been received from the UART so process the data.
+        ///     Payload has been received from the UART so process the data.
         /// </summary>
         /// <param name="sender">Object raising the envent.</param>
-        /// <param name="e">Data received from the UART.</param>
+        /// <param name="e">Payload received from the UART.</param>
         private void UartDataReceived(object sender, UARTDataReceivedEventArgs e)
         {
-            throw new NotImplementedException();
+            Debug.Print($"Message received, frame type: {e.FrameType}, message ID: {e.MessageID}, sequence number: {e.SequenceNumber}, message contents:");
+            DebugHelpers.DisplayBufferInHex(e.Frame);
         }
 
         #endregion Event handlers
@@ -165,7 +167,7 @@ namespace Esp32Messaging
                 {
                     _uart.Send(frame.FrameType, frame.MessageID, frame.SequenceNumber, frame.Payload);
                     _waitingForResponseHandle.WaitOne();
-                    if (_uartResponse != UARTResponseEventArgs.TransportPacketType.ACK)
+                    if (_uartResponse != UARTTransportEventArgs.TransportPacketType.ACK)
                     {
                         //  TODO: Deal with the error here.
                     }
@@ -191,6 +193,100 @@ namespace Esp32Messaging
             //  be sent.
             //
             _waitingForMessageHandle.Set();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="packet"></param>
+        /// <param name="packetLength"></param>
+        private void ProcessHeader(byte[] packet, byte packetLength)
+        {
+            //if (packetLength != APP_RESPONSE_HEADER_LENGTH)
+            //{
+            //    ESP_LOGI(UART_RX_TASK_NAME, "Invalid header legth: %d", packetLength);
+            //    AcknowledgeFrame(MSG_NAK, ERR_INVALID_HEADER);
+            //}
+            //else
+            //{
+            //    ResetIncomingMessage(true);
+            //    messageHeader.interface = packet[0];
+            //    messageHeader.function = ExtractUInt32(packet + APP_REQUEST_FUNCTION);
+            //    messageHeader.messageID = ExtractUInt32(packet + APP_REQUEST_MESSAGE_ID);
+            //    bytesRemaining = ExtractUInt16(packet + APP_REQUEST_PAYLOAD_LENGTH);
+            //    messageHeader.payloadLength = bytesRemaining;
+            //    if (messageHeader.payloadLength > 0)
+            //    {
+            //        messageHeader.payload = pvPortMalloc(messageHeader.payloadLength);
+            //    }
+            //    else
+            //    {
+            //        messageHeader.payload = NULL;
+            //        //
+            //        //  Messages with no payload should be queued immediately.
+            //        //
+            //        QueueMessage();
+            //    }
+            //    nextPayloadLocation = messageHeader.payload;
+            //    AcknowledgeFrame(MSG_ACK, ERR_OK);
+            //}
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="packet"></param>
+        /// <param name="packetLength"></param>
+        private void ProcessData(byte[] packet, byte packetLength)
+        {
+            //if ((nextPayloadLocation != NULL) && (bytesRemaining > 0) && (packetLength <= bytesRemaining))
+            //{
+            //    memcpy(nextPayloadLocation, packet, packetLength);
+            //    nextPayloadLocation += packetLength;
+            //    bytesRemaining -= packetLength;
+            //    if (bytesRemaining == 0)
+            //    {
+            //        QueueMessage();
+            //        //
+            //        //  It is important NOT to release the memory containing the payload
+            //        //  as the pointer to the payload has been copied into the queue for
+            //        //  the appropriate interface.
+            //        //
+            //        //  It is the responsibility of the queue handler to release the payload
+            //        //  memory when the handler has finished processing the message.
+            //        //  Releasing the memory here will corrupt the heap.
+            //        //
+            //        ResetIncomingMessage(false);
+            //        ESP_LOGI(UART_RX_TASK_NAME, "Message received and queued.");
+            //    }
+            //    AcknowledgeFrame(TRANSPORT_ACK, ERR_OK);
+            //}
+            //else
+            //{
+            //    ESP_LOGI(UART_RX_TASK_NAME, "Unexpected message data bytes (%d received, %d expected)", packetLength, bytesRemaining);
+            //    AcknowledgeFrame(MSG_NAK, ERR_UNEXPECTED_DATA);
+            //}
+        }
+
+        /// <summary>
+        ///     A valid frame has been received, work out what to do with it.
+        /// </summary>
+        /// <param name="frameType">Type of frame that has been received (transport, application etc.)</param>
+        /// <param name="packet">Payload to be processed.</param>
+        /// <param name="packetLength">Amount of data in the payload.</param>
+        private void ProcessApplicationDataFrame(byte frameType, byte[] packet, byte packetLength)
+        {
+            //
+            //  Application data packets are either header or data packets.
+            //
+            //if ((frameType & DATA_HEADER) > 0)
+            //{
+            //    ProcessHeader(packet, packetLength);
+            //}
+            //else
+            //{
+            //    ProcessData(packet, packetLength);
+            //}
         }
 
         #endregion Methods

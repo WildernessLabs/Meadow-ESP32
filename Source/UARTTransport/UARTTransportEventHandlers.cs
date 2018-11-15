@@ -9,7 +9,7 @@ namespace UARTTransport
     ///     success or failure of a request to send a packet of data to
     ///     the ESP32.
     /// </summary>
-    public class UARTResponseEventArgs
+    public class UARTTransportEventArgs
     {
         #region Properties
 
@@ -19,14 +19,14 @@ namespace UARTTransport
         public enum TransportPacketType { Unknown, ACK, NAK, Timeout }
 
         /// <summary>
-        ///     Packet code returned by the UART.
+        ///     PacketType code returned by the UART.
         /// </summary>
         public UART.ErrorCodes StatusCode { get; private set; }
 
         /// <summary>
         ///     Indicate the error that has occurred.
         /// </summary>
-        public TransportPacketType Packet { get; private set; }
+        public TransportPacketType PacketType { get; private set; }
 
         #endregion Properties
 
@@ -35,18 +35,18 @@ namespace UARTTransport
         /// <summary>
         ///     Default constructor is private to prevent it being used.
         /// </summary>
-        public UARTResponseEventArgs()
+        public UARTTransportEventArgs()
         {
         }
 
         /// <summary>
-        ///     Create a new UARTResponseEventArgs indicating that the specified error has occurred.
+        ///     Create a new UARTTransportEventArgs indicating that the specified error has occurred.
         /// </summary>
-        /// <param name="packetType">Packet that has occurred.</param>
+        /// <param name="packetTypeType">PacketType that has occurred.</param>
         /// <param name="statusCode">Status code returned by the UART.</param>
-        public UARTResponseEventArgs(TransportPacketType packetType, UInt32 statusCode)
+        public UARTTransportEventArgs(TransportPacketType packetType, UInt32 statusCode)
         {
-            Packet = packetType;
+            PacketType = packetType;
             StatusCode = (UART.ErrorCodes) statusCode;
         }
 
@@ -59,8 +59,8 @@ namespace UARTTransport
     ///     Delegate for the UART error event handler.
     /// </summary>
     /// <param name="sender">Object that is sending the error response.</param>
-    /// <param name="e">UARTResponseEventArgs indicating the error condition that occurred.</param>
-    public delegate void UARTResponseEventHandler(object sender, UARTResponseEventArgs e);
+    /// <param name="e">UARTTransportEventArgs indicating the error condition that occurred.</param>
+    public delegate void UARTTransportErrorEventHandler(object sender, UARTTransportEventArgs e);
 
     #endregion
 }
