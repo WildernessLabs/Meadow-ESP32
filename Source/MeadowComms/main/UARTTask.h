@@ -98,3 +98,5 @@ enum CommunicationStates
 extern void SetupUART();
 void UARTTxTask(void *);
 void UARTRxTask(void *);
+
+void QueueUARTResponse(uint8_t, uint32_t, uint32_t, uint8_t *, uint8_t);

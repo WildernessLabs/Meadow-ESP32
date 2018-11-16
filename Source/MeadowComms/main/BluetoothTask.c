@@ -27,7 +27,6 @@ char *BLUETOOTH_TASK_NAME = "BLUETOOTH_TASK";
 void BluetoothTask(void *pvParameters)
 {
     esp_log_level_set(BLUETOOTH_TASK_NAME, ESP_LOG_INFO);
-    ESP_LOGI(BLUETOOTH_TASK_NAME, "Bluetooth task created.");
     while (true)
     {
         struct ApplicationRequest message;
