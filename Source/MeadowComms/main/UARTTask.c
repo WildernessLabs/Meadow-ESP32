@@ -395,7 +395,6 @@ void ProcessHeader(uint8_t *packet, uint8_t packetLength)
 {
     if (packetLength != APP_REQUEST_HEADER_LENGTH)
     {
-        ESP_LOGI(UART_RX_TASK_NAME, "Invalid header length: %d", packetLength);
         AcknowledgeFrame(TRANSPORT_NAK, ERR_INVALID_HEADER);
     }
     else
@@ -452,7 +451,6 @@ void ProcessData(uint8_t *packet, uint8_t packetLength)
     }
     else
     {
-        ESP_LOGI(UART_RX_TASK_NAME, "Unexpected message data bytes (%d received, %d expected)", packetLength, bytesRemaining);
         AcknowledgeFrame(MSG_NAK, ERR_UNEXPECTED_DATA);
     }
 }
@@ -492,8 +490,6 @@ void ProcessTransportData(uint8_t currentFrameType)
 /// </remarks>
 void ProcessApplicationDataFrame(uint8_t frameType, uint8_t *packet, uint8_t packetLength)
 {
-    ESP_LOGI(UART_RX_TASK_NAME, "Valid frame detected.");
-    ESP_LOG_BUFFER_HEXDUMP(UART_RX_TASK_NAME, packet, packetLength, ESP_LOG_INFO);
     //
     //  Application data packets are either header or data packets.
     //
@@ -538,9 +534,12 @@ void UARTTxTask(void *pvParameters)
             //  Now send the header.
             //
             xSemaphoreTake(xUARTTxMutex, portMAX_DELAY);
+            ESP_LOGI(UART_TX_TASK_NAME, "Sending header:");
+            ESP_LOG_BUFFER_HEXDUMP(UART_TX_TASK_NAME, frame, frameLength, ESP_LOG_INFO);
             const int txBytes = uart_write_bytes(STM32_UART_NUMBER, (const char *) frame, frameLength);
             xSemaphoreGive(xUARTTxMutex);
             vPortFree(frame);
+            frame = NULL;
             ESP_LOGI(UART_TX_TASK_NAME, "Wrote %d header bytes to UART", txBytes);
             //
             //  Now break the payload down into frames and send the frames to the STM32.
@@ -558,26 +557,28 @@ void UARTTxTask(void *pvParameters)
                     currentFrameBufferLength = length;
                     frameBuffer = pvPortMalloc(currentFrameBufferLength);
                 }
-                memcpy(frameBuffer, message.payload, length);
+                memcpy(frameBuffer, message.payload + start, length);
                 start += length;
                 amountLeftToSend -= length;
-                xSemaphoreTake(xUARTTxMutex, portMAX_DELAY);
                 //
                 //  Generate an encoded frame.
                 //
                 frameLength = HeaderAndPayloadSize(frameBuffer, length);
                 frame = GenerateTransportFrame(frameBuffer, length, frameLength);
                 //
-                //  Now send the header.
+                //  Now send the payload frame.
                 //
                 xSemaphoreTake(xUARTTxMutex, portMAX_DELAY);
                 const int txBytes = uart_write_bytes(STM32_UART_NUMBER, (const char *) frame, frameLength);
                 xSemaphoreGive(xUARTTxMutex);
-                ESP_LOGI(UART_TX_TASK_NAME, "Wrote %d data bytes to UART", txBytes);
+                ESP_LOGI(UART_TX_TASK_NAME, "Wrote %d payload data bytes to UART", txBytes);
+                ESP_LOG_BUFFER_HEXDUMP(UART_TX_TASK_NAME, frame, frameLength, ESP_LOG_INFO);
                 xSemaphoreGive(xUARTTxMutex);
             }
-            vPortFree(frameBuffer);
-            vPortFree(frame);
+            if (frameBuffer != NULL)
+            {
+                vPortFree(frameBuffer);
+            }
         }
     }
     //
@@ -734,12 +735,10 @@ void UARTRxTask(void *pvParameters)
                                     {
                                         if (byte != END_OF_FRAME_CHARACTER)
                                         {
-                                            ESP_LOGI(UART_RX_TASK_NAME, "Missing end of frame marker.");
                                             AcknowledgeFrame(TRANSPORT_NAK, ERR_MISSING_END_OF_FRAME_MARKER);
                                         }
                                         else
                                         {
-                                            ESP_LOGI(UART_RX_TASK_NAME, "CRC error.");
                                             AcknowledgeFrame(TRANSPORT_NAK, ERR_CRC_ERROR);
                                         }
                                     }
@@ -766,7 +765,6 @@ void UARTRxTask(void *pvParameters)
                     xQueueReset(UARTRxQueueHandle);
                     break;
                 default:
-                    ESP_LOGI(UART_RX_TASK_NAME, "Unable to process UART event type: %d", event.type);
                     uart_flush_input(STM32_UART_NUMBER);
                     xQueueReset(UARTRxQueueHandle);
                     xQueueReset(UARTTransmitQueueHandle);

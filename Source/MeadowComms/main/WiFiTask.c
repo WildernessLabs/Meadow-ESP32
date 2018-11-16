@@ -5,7 +5,8 @@
 #include "esp_log.h"
 
 #include "WiFiTask.h"
-#include  "Messaging.h"
+#include "Messaging.h"
+#include "UARTTask.h"
 
 /// <summary>
 ///     Handle for the WiFi messages to be processed by the WIFi task.
@@ -28,7 +29,6 @@ char *WIFI_TASK_NAME = "WIFI_TASK";
 void WiFiTask(void *pvParameters)
 {
     esp_log_level_set(WIFI_TASK_NAME, ESP_LOG_INFO);
-    ESP_LOGI(WIFI_TASK_NAME, "WiFi task created.");
     while (true)
     {
         struct ApplicationRequest message;
@@ -45,6 +45,7 @@ void WiFiTask(void *pvParameters)
                 vPortFree(message.payload);
             }
         }
+        QueueUARTResponse(message.interface, 10, message.messageID, message.payload, message.payloadLength);
     }
     //
     //  We should only get here if the code in the while loop generates a fault.
