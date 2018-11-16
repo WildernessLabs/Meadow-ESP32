@@ -20,19 +20,11 @@ void SetupMessageQueues()
     {
         ESP_LOGI(UART_TX_TASK_NAME, "Cannot allocate UART transmit queue.");
     }
-    else
-    {
-        ESP_LOGI(UART_TX_TASK_NAME, "UART transmit queue created.");
-    }
     //
     WiFiQueueHandle = xQueueCreate(MAX_QUEUE_LENGTH, messageSize);
     if (WiFiQueueHandle == NULL)
     {
         ESP_LOGI(WIFI_TASK_NAME, "Cannot allocate WiFi processing queue.");
-    }
-    else
-    {
-        ESP_LOGI(WIFI_TASK_NAME, "WiFi processing queue created.");
     }
     //
     BluetoothQueueHandle = xQueueCreate(MAX_QUEUE_LENGTH, messageSize);
@@ -40,19 +32,11 @@ void SetupMessageQueues()
     {
         ESP_LOGI(BLUETOOTH_TASK_NAME, "Cannot allocate Bluetooth processing queue.");
     }
-    else
-    {
-        ESP_LOGI(BLUETOOTH_TASK_NAME, "Bluetooth processing queue created.");
-    }
     //
     MeshNetworkQueueHandle = xQueueCreate(MAX_QUEUE_LENGTH, messageSize);
     if (MeshNetworkQueueHandle == NULL)
     {
         ESP_LOGI(MESH_NETWORK_TASK_NAME, "Cannot allocate Mesh network queue.");
-    }
-    else
-    {
-        ESP_LOGI(MESH_NETWORK_TASK_NAME, "Mesh network queue created.");
     }
 }
 

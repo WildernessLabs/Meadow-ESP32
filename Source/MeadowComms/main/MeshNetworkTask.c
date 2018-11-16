@@ -27,7 +27,6 @@ char *MESH_NETWORK_TASK_NAME = "MESH_NETWORK_TASK_NAME";
 void MeshNetworkTask(void *pvParameters)
 {
     esp_log_level_set(MESH_NETWORK_TASK_NAME, ESP_LOG_INFO);
-    ESP_LOGI(MESH_NETWORK_TASK_NAME, "Mesh network task created.");
     while (true)
     {
         struct ApplicationRequest message;
