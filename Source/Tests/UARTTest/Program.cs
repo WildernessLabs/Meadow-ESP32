@@ -22,7 +22,7 @@ namespace UARTTest
             string comPortName = Environment.GetEnvironmentVariable(FTDI_COM_PORT_ENVIRONMENT_VARIABLE_NAME);
             if (string.IsNullOrEmpty(comPortName))
             {
-                Console.WriteLine($"Please set the {FTDI_COM_PORT_ENVIRONMENT_VARIABLE_NAME} environment variable and restart this application.");
+                Debug.Print($"Please set the {FTDI_COM_PORT_ENVIRONMENT_VARIABLE_NAME} environment variable and restart this application.");
             }
             else
             {
@@ -49,7 +49,7 @@ namespace UARTTest
                 {
                     //Console.Write("Press enter to send the next message.");
                     //string result = Console.ReadLine();
-                    Console.WriteLine($"Sending message");
+                    Debug.Print($"Sending message");
                     Frame frame = new Frame(UART.FrameType.ApplicationHeader, 1, sequenceNumber++, buffer);
                     uart.Send(frame.FrameType, frame.MessageID, frame.SequenceNumber, frame.Payload);
                     Thread.Sleep(1500);
@@ -70,15 +70,16 @@ namespace UARTTest
 
         private static void Uart_DataReceived(object sender, UARTDataReceivedEventArgs e)
         {
-            
+            Debug.Print($"Message received, frame type: {e.FrameType}, message ID: {e.MessageID}, sequence number: {e.SequenceNumber}, message contents:");
+            DebugHelpers.DisplayBufferInHex(e.Frame);
         }
 
         private static void UartTransportError(object sender, UARTTransportEventArgs e)
         {
-            Console.WriteLine($"Response {e.PacketType} received.");
+            Debug.Print($"Response {e.PacketType} received.");
             if (e.PacketType == UARTTransportEventArgs.TransportPacketType.NAK)
             {
-                Console.WriteLine($"    Status code: {e.StatusCode}");
+                Debug.Print($"    Status code: {e.StatusCode}");
             }
         }
     }

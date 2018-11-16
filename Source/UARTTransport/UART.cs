@@ -369,9 +369,8 @@ namespace UARTTransport
             if (e.EventType == SerialData.Chars)
             {
                 int amount = ((SerialPort) sender).Read(_buffer, 0, RX_BUFFER_SIZE);
-                Debug.Print($"\nData received ({amount}) bytes:");
-                DebugHelpers.DisplayBufferInHex(_buffer, amount);
-                
+                Debug.WriteLine($"\nData received ({amount}) bytes:");
+                DebugHelpers.DisplayBufferInHex(_buffer, amount);                
                 if (amount > 0)
                 {
                     for (int index = 0; index < amount; index++)
@@ -502,12 +501,12 @@ namespace UARTTransport
                                     {
                                         if (data != END_OF_FRAME_CHARACTER)
                                         {
-                                            Console.WriteLine("    Invalid frame: Missing end of frame marker.");
+                                            Debug.WriteLine("    Invalid frame: Missing end of frame marker.");
                                             AcknowledgeFrame(TRANSPORT_NAK, ErrorCodes.MissingEndOfFrameMarker);
                                         }
                                         else
                                         {
-                                            Console.WriteLine("    Invalid frame: CRC error.");
+                                            Debug.WriteLine("    Invalid frame: CRC error.");
                                             AcknowledgeFrame(TRANSPORT_NAK, ErrorCodes.CRCError);
                                         }
                                     }
@@ -536,7 +535,7 @@ namespace UARTTransport
                 _timeoutTimer.Enabled = false;
             }
             _currentRetryCount++;
-            Console.WriteLine($"    Timeout sending message {_currentRetryCount}");
+            Debug.WriteLine($"    Timeout sending message {_currentRetryCount}");
             if (_currentRetryCount > MaximumRetryCount)
             {
                 UARTTransportEventArgs timeout = new UARTTransportEventArgs(UARTTransportEventArgs.TransportPacketType.Timeout, 0);
@@ -782,6 +781,8 @@ namespace UARTTransport
             _port.Write(_startOfFrame, 0, _startOfFrame.Length);
             _port.Write(frame, 0, frame.Length);
             _port.Write(new[] { END_OF_FRAME_CHARACTER }, 0, 1);
+            Debug.WriteLine("Sending data frame:");
+            DebugHelpers.DisplayBufferInHex(frame);
         }
 
         /// <summary>
@@ -801,7 +802,6 @@ namespace UARTTransport
 
             _lastFrameSent = GenerateApplicationFrame(frameType, messageID, sequenceNumber, message);
             _currentRetryCount = 0;
-            DebugHelpers.DisplayBufferInHex(_lastFrameSent);
             Send(_lastFrameSent);
             lock (_timeoutTimerLock)
             {
@@ -845,7 +845,7 @@ namespace UARTTransport
                         _timeoutTimer.Enabled = false;
                     }
                     _currentRetryCount++;
-                    Console.WriteLine($"    NAK, retrying {_currentRetryCount}");
+                    Debug.WriteLine($"    NAK, retrying {_currentRetryCount}");
                     if (_currentRetryCount > MaximumRetryCount)
                     {
                         UARTTransportEventArgs nak = new UARTTransportEventArgs(UARTTransportEventArgs.TransportPacketType.NAK, _statusCode);
