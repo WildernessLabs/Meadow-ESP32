@@ -3,7 +3,7 @@ using System.Diagnostics;
 
 namespace UARTTransport
 {
-    class DebugHelpers
+    public class DebugHelpers
     {
         /// <summary>
         ///     Dump the array of bytes to the debug output in hexadecimal.
