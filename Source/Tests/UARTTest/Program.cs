@@ -26,29 +26,26 @@ namespace UARTTest
             }
             else
             {
-                byte[] testBuffer =
-                {
-                    0xaa, 0xaa, 0xaa, 0x81, 0x01, 0x00, 0x00, 0x00, 0x01, 0x0d, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
-                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x6d, 0x34, 0xf5, 0xeb, 0x55
-                };
+                //byte[] testBuffer =
+                //{
+                //    0xaa, 0xaa, 0xaa, 0x81, 0x01, 0x00, 0x00, 0x00, 0x01, 0x0d, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
+                //    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x6d, 0x34, 0xf5, 0xeb, 0x55
+                //};
+
                 UART uart = new UART(comPortName);
                 uart.TransportError += UartTransportError;
                 uart.DataReceived += UartDataReceived;
 
-                uart.DecodeSerialData(testBuffer, testBuffer.Length);
+                //uart.DecodeSerialData(testBuffer, testBuffer.Length);
 
                 Thread.Sleep(Timeout.Infinite);
+
                 byte[] payload = new byte[45];
 
                 for (byte index = 0; index < payload.Length; index++)
                 {
                     payload[index] = index;
                 }
-
-                //UART uart = new UART(comPortName);
-
-                uart.TransportError += UartTransportError;
-                uart.DataReceived += UartDataReceived;
 
                 byte sequenceNumber = 0;
                 byte[] buffer = new byte[Message.HEADER_LENGTH];
