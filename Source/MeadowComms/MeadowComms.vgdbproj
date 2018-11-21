@@ -4,7 +4,7 @@
   <Project xsi:type="com.visualgdb.project.external.esp-idf">
     <CustomSourceDirectories>
       <Directories />
-      <PathStyle>CygwinCygdrive</PathStyle>
+      <PathStyle>MinGWSingleLetterFolder</PathStyle>
     </CustomSourceDirectories>
     <ProjectModeSettings>
       <ProjectGUID>7a9fa35f-6597-47f7-94c4-db564d7e9550</ProjectGUID>
@@ -54,6 +54,8 @@
     </Connection>
     <LastConnectionTime>0</LastConnectionTime>
     <EchoTypedCharacters>false</EchoTypedCharacters>
+    <ClearContentsWhenReconnecting>false</ClearContentsWhenReconnecting>
+    <ReconnectAutomatically>false</ReconnectAutomatically>
     <DisplayMode>ASCII</DisplayMode>
     <Colors>
       <Background>
@@ -80,6 +82,12 @@
         <Green>238</Green>
         <Blue>144</Blue>
       </Echo>
+      <Inactive>
+        <Alpha>255</Alpha>
+        <Red>169</Red>
+        <Green>169</Green>
+        <Blue>169</Blue>
+      </Inactive>
     </Colors>
     <HexSettings>
       <MaximumBytesPerLine>16</MaximumBytesPerLine>
@@ -132,7 +140,11 @@
   </Configurations>
   <ProgramArgumentsSuggestions />
   <Debug xsi:type="com.visualgdb.debug.embedded">
-    <AdditionalStartupCommands />
+    <AdditionalStartupCommands>
+      <GDBPreStartupCommands />
+      <GDBStartupCommands />
+      <GDBFinalizationCommands />
+    </AdditionalStartupCommands>
     <AdditionalGDBSettings>
       <Features>
         <DisableAutoDetection>false</DisableAutoDetection>

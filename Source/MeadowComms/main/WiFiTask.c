@@ -42,7 +42,6 @@ void WiFiTask(void *pvParameters)
             if (message.payload != NULL)
             {
                 ESP_LOG_BUFFER_HEXDUMP(WIFI_TASK_NAME, message.payload, message.payloadLength, ESP_LOG_INFO);
-                vPortFree(message.payload);
             }
         }
         QueueUARTResponse(message.interface, 10, message.messageID, message.payload, message.payloadLength);
