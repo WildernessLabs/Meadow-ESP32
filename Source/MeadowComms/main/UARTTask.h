@@ -39,7 +39,12 @@ static const int TX_BUF_SIZE = 1024;
 //
 //  Number of characters to be used in the pattern matching.
 //
-#define NUMBER_OF_START_OF_FRAME_CHARACTERS    (3)
+#define NUMBER_OF_START_OF_FRAME_CHARACTERS     (3)
+
+//
+//  Number of end of frame characters.
+//
+#define NUMBER_OF_END_OF_FRAME_CHARACTERS       (1)
 
 //
 //  Length of the UART queue.
@@ -67,16 +72,6 @@ extern TaskHandle_t xUARTReceiveTaskHandle;
 extern TaskHandle_t xUARTTransmitTaskHandle;
 
 //
-//  Friendly name for the receive task (used for logging).
-//
-extern char *UART_RX_TASK_NAME;
-
-//
-//  Friendly name for the transmit task (used for logging).
-//
-extern char *UART_TX_TASK_NAME;
-
-//
 //  Communication states for the UART.
 //
 enum CommunicationStates
@@ -90,6 +85,12 @@ enum CommunicationStates
     Payload,
     CRC,
     EndOfFrame
+};
+
+struct BufferAndLength
+{
+    uint32_t BufferLength;
+    uint8_t *Buffer;
 };
 
 //

@@ -18,7 +18,7 @@ void SetupMessageQueues()
     UARTTransmitQueueHandle = xQueueCreate(MAX_QUEUE_LENGTH, messageSize);
     if (UARTTransmitQueueHandle == NULL)
     {
-        ESP_LOGI(UART_TX_TASK_NAME, "Cannot allocate UART transmit queue.");
+        ESP_LOGI(__func__, "Cannot allocate UART transmit queue.");
     }
     //
     WiFiQueueHandle = xQueueCreate(MAX_QUEUE_LENGTH, messageSize);
