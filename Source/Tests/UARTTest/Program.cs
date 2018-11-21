@@ -26,6 +26,18 @@ namespace UARTTest
             }
             else
             {
+                byte[] testBuffer =
+                {
+                    0xaa, 0xaa, 0xaa, 0x81, 0x01, 0x00, 0x00, 0x00, 0x01, 0x0d, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x6d, 0x34, 0xf5, 0xeb, 0x55
+                };
+                UART uart = new UART(comPortName);
+                uart.TransportError += UartTransportError;
+                uart.DataReceived += UartDataReceived;
+
+                uart.DecodeSerialData(testBuffer, testBuffer.Length);
+
+                Thread.Sleep(Timeout.Infinite);
                 byte[] payload = new byte[45];
 
                 for (byte index = 0; index < payload.Length; index++)
@@ -33,10 +45,10 @@ namespace UARTTest
                     payload[index] = index;
                 }
 
-                UART uart = new UART(comPortName);
+                //UART uart = new UART(comPortName);
 
                 uart.TransportError += UartTransportError;
-                uart.DataReceived += Uart_DataReceived;
+                uart.DataReceived += UartDataReceived;
 
                 byte sequenceNumber = 0;
                 byte[] buffer = new byte[Message.HEADER_LENGTH];
@@ -68,9 +80,9 @@ namespace UARTTest
             }
         }
 
-        private static void Uart_DataReceived(object sender, UARTDataReceivedEventArgs e)
+        private static void UartDataReceived(object sender, UARTDataReceivedEventArgs e)
         {
-            Debug.Print($"Message received, frame type: {e.FrameType}, message ID: {e.MessageID}, sequence number: {e.SequenceNumber}, message contents:");
+            Debug.Print($"\nMessage received, frame type: {e.FrameType}, message ID: {e.MessageID}, sequence number: {e.SequenceNumber}, message contents:");
             DebugHelpers.DisplayBufferInHex(e.Frame);
         }
 

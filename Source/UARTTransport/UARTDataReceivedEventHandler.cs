@@ -53,6 +53,7 @@ namespace UARTTransport
         /// <param name="frame">Frame received from the UART.</param>
         public UARTDataReceivedEventArgs(UART.FrameType frameType, UInt32 messageID, UInt16 sequenceNumber, byte[] frame)
         {
+            FrameType = frameType;
             MessageID = messageID;
             SequenceNumber = sequenceNumber;
             Frame = frame;
