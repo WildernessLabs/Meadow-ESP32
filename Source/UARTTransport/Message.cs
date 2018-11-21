@@ -43,7 +43,7 @@ namespace Esp32Messaging
         public const UInt16 MAXIMUM_MESSAGE_LENGTH = 0xffff;
 
         /// <summary>
-        ///     Location of the Frametype byte in a transport message.
+        ///     Location of the Frame type byte in a transport message.
         /// </summary>
         public const int TRANSPORT_FRAME_TYPE = 0;
 
