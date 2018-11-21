@@ -369,157 +369,7 @@ namespace UARTTransport
             if (e.EventType == SerialData.Chars)
             {
                 int amount = ((SerialPort) sender).Read(_buffer, 0, RX_BUFFER_SIZE);
-                Debug.WriteLine($"\nData received ({amount}) bytes:");
-                DebugHelpers.DisplayBufferInHex(_buffer, amount);                
-                if (amount > 0)
-                {
-                    for (int index = 0; index < amount; index++)
-                    {
-                        byte data = _buffer[index];
-
-                        if (_startOfFrameByteCount == 2)
-                        {
-                            _startOfFrameByteCount = 0;
-                            switch (data)
-                            {
-                                case START_OF_FRAME_CHARACTER:
-                                    _communicationState = CommunicationStates.FrameType;
-                                    break;
-                                case PADDING_CHARACTER:
-                                    break;
-                                default:
-                                    _communicationState = CommunicationStates.StartOfFrame;
-                                    break;
-                            }
-                        }
-                        else
-                        {
-                            if (data == START_OF_FRAME_CHARACTER)
-                            {
-                                _startOfFrameByteCount++;
-                            }
-                            else
-                            {
-                                _startOfFrameByteCount = 0;
-                            }
-                            switch (_communicationState)
-                            {
-                                case CommunicationStates.StartOfFrame:
-                                    //
-                                    //  We don't need to do anything here as Start of Frame
-                                    //  is dealt with above.
-                                    //
-                                    break;
-                                case CommunicationStates.FrameType:
-                                    _currentFrameType = data;
-                                    if ((_currentFrameType & PKT_TRANSPORT) > 0)
-                                    {
-                                        _communicationState = CommunicationStates.StatusCode;
-                                    }
-                                    else
-                                    {
-                                        _communicationState = CommunicationStates.MessageID;
-                                    }
-                                    _calculatedChecksum = CRC32_SEED;
-                                    _calculatedChecksum = ProgressiveCRC32(_calculatedChecksum, data);
-                                    _byteNumber = 0;
-                                    break;
-                                case CommunicationStates.StatusCode:
-                                    _statusCode |= (UInt32) (data << (_byteNumber * 8));
-                                    _byteNumber++;
-                                    if (_byteNumber == 4)
-                                    {
-                                        _communicationState = CommunicationStates.CRC;
-                                        _byteNumber = 0;
-                                        _originalChecksum = 0;
-                                    }
-                                    _calculatedChecksum = ProgressiveCRC32(_calculatedChecksum, data);
-                                    break;
-                                case CommunicationStates.MessageID:
-                                    _messageID |= (UInt32) (data << (_byteNumber * 8));
-                                    _byteNumber++;
-                                    if (_byteNumber == 4)
-                                    {
-                                        _communicationState = CommunicationStates.SequenceNumber;
-                                    }
-                                    _calculatedChecksum = ProgressiveCRC32(_calculatedChecksum, data);
-                                    break;
-                                case CommunicationStates.SequenceNumber:
-                                    _frameSequenceNumber = data;
-                                    _communicationState = CommunicationStates.Length;
-                                    _calculatedChecksum = ProgressiveCRC32(_calculatedChecksum, data);
-                                    break;
-                                case CommunicationStates.Length:
-                                    _framePayloadLength = data;
-                                    _calculatedChecksum = ProgressiveCRC32(_calculatedChecksum, data);
-                                    if (_framePayloadLength > 0)
-                                    {
-                                        _framePayload = new byte[_framePayloadLength];
-                                        _framePayloadIndex = 0;
-                                        _communicationState = CommunicationStates.Payload;
-                                    }
-                                    else
-                                    {
-                                        _communicationState = CommunicationStates.CRC;
-                                        _byteNumber = 0;
-                                        _originalChecksum = 0;
-                                    }
-                                    break;
-                                case CommunicationStates.Payload:
-                                    _framePayload[_framePayloadIndex] = data;
-                                    _framePayloadIndex++;
-                                    _calculatedChecksum = ProgressiveCRC32(_calculatedChecksum, data);
-                                    if (_framePayloadIndex == _framePayloadLength)
-                                    {
-                                        _communicationState = CommunicationStates.CRC;
-                                        _byteNumber = 0;
-                                        _originalChecksum = 0;
-                                    }
-                                    break;
-                                case CommunicationStates.CRC:
-                                    _originalChecksum |= (UInt32) (data << (_byteNumber * 8));
-                                    _byteNumber++;
-                                    if (_byteNumber == 4)
-                                    {
-                                        _communicationState = CommunicationStates.EndOfFrame;
-                                    }
-                                    break;
-                                case CommunicationStates.EndOfFrame:
-                                    if ((data == END_OF_FRAME_CHARACTER) && (_calculatedChecksum == _originalChecksum))
-                                    {
-                                        if ((_currentFrameType & PKT_TRANSPORT) > 0)
-                                        {
-                                            ProcessTransportData(_currentFrameType);
-                                        }
-                                        else
-                                        {
-                                            UARTDataReceivedEventArgs args = new UARTDataReceivedEventArgs((FrameType) _currentFrameType, _messageID, _frameSequenceNumber, _framePayload);
-                                            DataReceived(this, args);
-                                        }
-                                    }
-                                    else
-                                    {
-                                        if (data != END_OF_FRAME_CHARACTER)
-                                        {
-                                            Debug.WriteLine("    Invalid frame: Missing end of frame marker.");
-                                            AcknowledgeFrame(TRANSPORT_NAK, ErrorCodes.MissingEndOfFrameMarker);
-                                        }
-                                        else
-                                        {
-                                            Debug.WriteLine("    Invalid frame: CRC error.");
-                                            AcknowledgeFrame(TRANSPORT_NAK, ErrorCodes.CRCError);
-                                        }
-                                    }
-                                    _framePayload = null;
-                                    _communicationState = CommunicationStates.StartOfFrame;
-                                    break;
-                                default:
-                                    _communicationState = CommunicationStates.StartOfFrame;
-                                    break;
-                            }
-                        }
-                    }
-                }
+                DecodeSerialData(_buffer, amount);
             }
         }
 
@@ -534,6 +384,8 @@ namespace UARTTransport
             {
                 _timeoutTimer.Enabled = false;
             }
+
+            return;
             _currentRetryCount++;
             Debug.WriteLine($"    Timeout sending message {_currentRetryCount}");
             if (_currentRetryCount > MaximumRetryCount)
@@ -803,10 +655,10 @@ namespace UARTTransport
             _lastFrameSent = GenerateApplicationFrame(frameType, messageID, sequenceNumber, message);
             _currentRetryCount = 0;
             Send(_lastFrameSent);
-            lock (_timeoutTimerLock)
-            {
-                _timeoutTimer.Enabled = true;   // Start the timeout timer.
-            }
+            //lock (_timeoutTimerLock)
+            //{
+            //    _timeoutTimer.Enabled = true;   // Start the timeout timer.
+            //}
         }
 
         /// <summary>
@@ -854,10 +706,10 @@ namespace UARTTransport
                     else
                     {
                         Send(_lastFrameSent);
-                        lock (_timeoutTimerLock)
-                        {
-                            _timeoutTimer.Enabled = true;
-                        }
+                        //lock (_timeoutTimerLock)
+                        //{
+                        //    _timeoutTimer.Enabled = true;
+                        //}
                     }
                     break;
                 case TRANSPORT_RESET:
@@ -866,6 +718,173 @@ namespace UARTTransport
                     //
                     //ResetIncomingMessage(true);
                     break;
+            }
+        }
+
+        /// <summary>
+        ///     Decode the data received from the serial port.
+        /// </summary>
+        /// <remarks>
+        ///     This process has been abstracted from the serial received event
+        ///     to aid debugging.
+        ///
+        ///     The <i>amount</i> parameter is necessary as the buffer is normally
+        ///     larger than the amount of data that has been received.
+        /// </remarks>
+        /// <param name="buffer">Data to be decoded.</param>
+        /// <param name="amount">Amount of data to decode.</param>
+        public void DecodeSerialData(byte[] buffer, int amount)
+        {
+            Debug.WriteLine($"\nData received ({amount}) bytes:");
+            DebugHelpers.DisplayBufferInHex(buffer, amount);
+            if (amount > 0)
+            {
+                for (int index = 0; index < amount; index++)
+                {
+                    byte data = buffer[index];
+
+                    if (_startOfFrameByteCount == 2)
+                    {
+                        _startOfFrameByteCount = 0;
+                        switch (data)
+                        {
+                            case START_OF_FRAME_CHARACTER:
+                                _communicationState = CommunicationStates.FrameType;
+                                break;
+                            case PADDING_CHARACTER:
+                                break;
+                            default:
+                                _communicationState = CommunicationStates.StartOfFrame;
+                                break;
+                        }
+                    }
+                    else
+                    {
+                        if (data == START_OF_FRAME_CHARACTER)
+                        {
+                            _startOfFrameByteCount++;
+                        }
+                        else
+                        {
+                            _startOfFrameByteCount = 0;
+                        }
+                        switch (_communicationState)
+                        {
+                            case CommunicationStates.StartOfFrame:
+                                //
+                                //  We don't need to do anything here as Start of Frame
+                                //  is dealt with above.
+                                //
+                                break;
+                            case CommunicationStates.FrameType:
+                                _currentFrameType = data;
+                                if ((_currentFrameType & PKT_TRANSPORT) > 0)
+                                {
+                                    _communicationState = CommunicationStates.StatusCode;
+                                }
+                                else
+                                {
+                                    _communicationState = CommunicationStates.MessageID;
+                                }
+                                _calculatedChecksum = CRC32_SEED;
+                                _calculatedChecksum = ProgressiveCRC32(_calculatedChecksum, data);
+                                _byteNumber = 0;
+                                break;
+                            case CommunicationStates.StatusCode:
+                                _statusCode |= (UInt32)(data << (_byteNumber * 8));
+                                _byteNumber++;
+                                if (_byteNumber == 4)
+                                {
+                                    _communicationState = CommunicationStates.CRC;
+                                    _byteNumber = 0;
+                                    _originalChecksum = 0;
+                                }
+                                _calculatedChecksum = ProgressiveCRC32(_calculatedChecksum, data);
+                                break;
+                            case CommunicationStates.MessageID:
+                                _messageID |= (UInt32)(data << (_byteNumber * 8));
+                                _byteNumber++;
+                                if (_byteNumber == 4)
+                                {
+                                    _communicationState = CommunicationStates.SequenceNumber;
+                                }
+                                _calculatedChecksum = ProgressiveCRC32(_calculatedChecksum, data);
+                                break;
+                            case CommunicationStates.SequenceNumber:
+                                _frameSequenceNumber = data;
+                                _communicationState = CommunicationStates.Length;
+                                _calculatedChecksum = ProgressiveCRC32(_calculatedChecksum, data);
+                                break;
+                            case CommunicationStates.Length:
+                                _framePayloadLength = data;
+                                _calculatedChecksum = ProgressiveCRC32(_calculatedChecksum, data);
+                                if (_framePayloadLength > 0)
+                                {
+                                    _framePayload = new byte[_framePayloadLength];
+                                    _framePayloadIndex = 0;
+                                    _communicationState = CommunicationStates.Payload;
+                                }
+                                else
+                                {
+                                    _communicationState = CommunicationStates.CRC;
+                                    _byteNumber = 0;
+                                    _originalChecksum = 0;
+                                }
+                                break;
+                            case CommunicationStates.Payload:
+                                _framePayload[_framePayloadIndex] = data;
+                                _framePayloadIndex++;
+                                _calculatedChecksum = ProgressiveCRC32(_calculatedChecksum, data);
+                                if (_framePayloadIndex == _framePayloadLength)
+                                {
+                                    _communicationState = CommunicationStates.CRC;
+                                    _byteNumber = 0;
+                                    _originalChecksum = 0;
+                                }
+                                break;
+                            case CommunicationStates.CRC:
+                                _originalChecksum |= (UInt32)(data << (_byteNumber * 8));
+                                _byteNumber++;
+                                if (_byteNumber == 4)
+                                {
+                                    _communicationState = CommunicationStates.EndOfFrame;
+                                }
+                                break;
+                            case CommunicationStates.EndOfFrame:
+                                if ((data == END_OF_FRAME_CHARACTER) && (_calculatedChecksum == _originalChecksum))
+                                {
+                                    if ((_currentFrameType & PKT_TRANSPORT) > 0)
+                                    {
+                                        ProcessTransportData(_currentFrameType);
+                                    }
+                                    else
+                                    {
+                                        UARTDataReceivedEventArgs args = new UARTDataReceivedEventArgs((FrameType)_currentFrameType, _messageID, _frameSequenceNumber, _framePayload);
+                                        DataReceived(this, args);
+                                    }
+                                }
+                                else
+                                {
+                                    if (data != END_OF_FRAME_CHARACTER)
+                                    {
+                                        Debug.WriteLine("    Invalid frame: Missing end of frame marker.");
+                                        AcknowledgeFrame(TRANSPORT_NAK, ErrorCodes.MissingEndOfFrameMarker);
+                                    }
+                                    else
+                                    {
+                                        Debug.WriteLine("    Invalid frame: CRC error.");
+                                        AcknowledgeFrame(TRANSPORT_NAK, ErrorCodes.CRCError);
+                                    }
+                                }
+                                _framePayload = null;
+                                _communicationState = CommunicationStates.StartOfFrame;
+                                break;
+                            default:
+                                _communicationState = CommunicationStates.StartOfFrame;
+                                break;
+                        }
+                    }
+                }
             }
         }
 
