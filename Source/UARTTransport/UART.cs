@@ -635,8 +635,6 @@ namespace UARTTransport
                 _port.Write(_startOfFrame, 0, _startOfFrame.Length);
                 _port.Write(frame, 0, frame.Length);
                 _port.Write(new[] { END_OF_FRAME_CHARACTER }, 0, 1);
-                Debug.WriteLine("Sending data frame:");
-                DebugHelpers.DisplayBufferInHex(frame);
             }
         }
 
@@ -700,7 +698,6 @@ namespace UARTTransport
                         _timeoutTimer.Enabled = false;
                     }
                     _currentRetryCount++;
-                    Debug.WriteLine($"    NAK, retrying {_currentRetryCount}");
                     if (_currentRetryCount > MaximumRetryCount)
                     {
                         UARTTransportEventArgs nak = new UARTTransportEventArgs(UARTTransportEventArgs.TransportPacketType.NAK, _statusCode);
@@ -738,8 +735,6 @@ namespace UARTTransport
         /// <param name="amount">Amount of data to decode.</param>
         public void DecodeSerialData(byte[] buffer, int amount)
         {
-            Debug.WriteLine($"\nData received ({amount}) bytes:");
-            DebugHelpers.DisplayBufferInHex(buffer, amount);
             if (amount > 0)
             {
                 for (int index = 0; index < amount; index++)
@@ -784,6 +779,7 @@ namespace UARTTransport
                                 if ((_currentFrameType & PKT_TRANSPORT) > 0)
                                 {
                                     _communicationState = CommunicationStates.StatusCode;
+                                    _statusCode = 0;
                                 }
                                 else
                                 {
@@ -871,12 +867,10 @@ namespace UARTTransport
                                 {
                                     if (data != END_OF_FRAME_CHARACTER)
                                     {
-                                        Debug.WriteLine("    Invalid frame: Missing end of frame marker.");
                                         AcknowledgeFrame(TRANSPORT_NAK, ErrorCodes.MissingEndOfFrameMarker);
                                     }
                                     else
                                     {
-                                        Debug.WriteLine("    Invalid frame: CRC error.");
                                         AcknowledgeFrame(TRANSPORT_NAK, ErrorCodes.CRCError);
                                     }
                                 }
