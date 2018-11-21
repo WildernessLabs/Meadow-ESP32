@@ -509,7 +509,7 @@ namespace UARTTransport
         ///     this.
         /// </remarks>
         /// <param name="buffer">Buffer containing the data to be checked.</param>
-        private int HeaderAndPayloadSize(byte[] buffer)
+        private int HeaderAndPayloadSize(byte[] buffer, int overheadBytes)
         {
             int startOfFrameCharacterCount = 0;
             int byteCount = 0;
@@ -531,8 +531,8 @@ namespace UARTTransport
                 }
                 byteCount++;
             }
-            byteCount += FRAME_HEADER_LENGTH;   //  Size of the header.
-            byteCount += 4;                     //  CRC is a 32-bit CRC and takes 4 bytes.
+            byteCount += overheadBytes;  //  Size of the header.
+            byteCount += 4;             //  CRC is a 32-bit CRC and takes 4 bytes.
             return(byteCount);
         }
 
@@ -579,7 +579,7 @@ namespace UARTTransport
         /// <returns>Frame with CRC ready for transmission over the UART.</returns>
         private byte[] GenerateApplicationFrame(FrameType frameType, UInt32 messageID, byte sequenceNumber, byte[] message)
         {
-            byte[] frame = new byte[HeaderAndPayloadSize(message)];
+            byte[] frame = new byte[HeaderAndPayloadSize(message, FRAME_HEADER_LENGTH)];
 
             int currentByte = 0;
             //
@@ -606,7 +606,7 @@ namespace UARTTransport
         /// <returns>Encoded frame ready to be sent over the UART.</returns>
         private byte[] GenerateTransportFrame(byte[] message, int frameLength)
         {
-            byte[] frame = new byte[HeaderAndPayloadSize(message)];
+            byte[] frame = new byte[frameLength];
             int currentByte = 0;
             
             currentByte += EncodeData(message, frame, 0);
@@ -618,8 +618,8 @@ namespace UARTTransport
             //
             UInt32 crc = CRC32(frame, 0, frame.Length - 4);
             Encoders.EncodeUInt32(crc, frame, currentByte);
-            currentByte += 4;
-            frame[currentByte] = END_OF_FRAME_CHARACTER;
+            //currentByte += 4;
+            //frame[currentByte] = END_OF_FRAME_CHARACTER;
             return (frame);
         }
 
@@ -630,11 +630,12 @@ namespace UARTTransport
         [MethodImpl(MethodImplOptions.Synchronized)]
         private void Send(byte[] frame)
         {
-            _port.Write(_startOfFrame, 0, _startOfFrame.Length);
-            _port.Write(frame, 0, frame.Length);
-            _port.Write(new[] { END_OF_FRAME_CHARACTER }, 0, 1);
-            Debug.WriteLine("Sending data frame:");
-            DebugHelpers.DisplayBufferInHex(frame);
+            if (frame != null)
+            {
+                _port.Write(_startOfFrame, 0, _startOfFrame.Length);
+                _port.Write(frame, 0, frame.Length);
+                _port.Write(new[] { END_OF_FRAME_CHARACTER }, 0, 1);
+            }
         }
 
         /// <summary>
@@ -671,7 +672,7 @@ namespace UARTTransport
             byte[] buffer = new byte[Message.TRANSPORT_MESSAGE_LENGTH];
             buffer[Message.TRANSPORT_FRAME_TYPE] = (byte) (PKT_TRANSPORT | ackNak);
             Encoders.EncodeUInt32((UInt32) status, buffer, Message.TRANSPORT_STATUS_CODE);
-            int frameLength = HeaderAndPayloadSize(buffer);
+            int frameLength = HeaderAndPayloadSize(buffer, 0);
             byte[] frame = GenerateTransportFrame(buffer, frameLength);
             Send(frame);
         }
@@ -697,7 +698,6 @@ namespace UARTTransport
                         _timeoutTimer.Enabled = false;
                     }
                     _currentRetryCount++;
-                    Debug.WriteLine($"    NAK, retrying {_currentRetryCount}");
                     if (_currentRetryCount > MaximumRetryCount)
                     {
                         UARTTransportEventArgs nak = new UARTTransportEventArgs(UARTTransportEventArgs.TransportPacketType.NAK, _statusCode);
@@ -735,8 +735,6 @@ namespace UARTTransport
         /// <param name="amount">Amount of data to decode.</param>
         public void DecodeSerialData(byte[] buffer, int amount)
         {
-            Debug.WriteLine($"\nData received ({amount}) bytes:");
-            DebugHelpers.DisplayBufferInHex(buffer, amount);
             if (amount > 0)
             {
                 for (int index = 0; index < amount; index++)
@@ -781,10 +779,12 @@ namespace UARTTransport
                                 if ((_currentFrameType & PKT_TRANSPORT) > 0)
                                 {
                                     _communicationState = CommunicationStates.StatusCode;
+                                    _statusCode = 0;
                                 }
                                 else
                                 {
                                     _communicationState = CommunicationStates.MessageID;
+                                    _messageID = 0;
                                 }
                                 _calculatedChecksum = CRC32_SEED;
                                 _calculatedChecksum = ProgressiveCRC32(_calculatedChecksum, data);
@@ -867,12 +867,10 @@ namespace UARTTransport
                                 {
                                     if (data != END_OF_FRAME_CHARACTER)
                                     {
-                                        Debug.WriteLine("    Invalid frame: Missing end of frame marker.");
                                         AcknowledgeFrame(TRANSPORT_NAK, ErrorCodes.MissingEndOfFrameMarker);
                                     }
                                     else
                                     {
-                                        Debug.WriteLine("    Invalid frame: CRC error.");
                                         AcknowledgeFrame(TRANSPORT_NAK, ErrorCodes.CRCError);
                                     }
                                 }
