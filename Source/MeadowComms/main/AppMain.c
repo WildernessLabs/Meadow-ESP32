@@ -31,7 +31,7 @@ void app_main()
         EncodeUInt32(sequenceNumber, buffer + APP_RESPONSE_CODE);
         EncodeUInt32(1, buffer + APP_RESPONSE_MESSAGE_ID);
         EncodeUInt32(0, buffer + APP_RESPONSE_PAYLOAD_LENGTH);
-
+        sequenceNumber++;
         struct ApplicationResponse response;
 
         response.interface = 0;

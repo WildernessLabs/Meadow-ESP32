@@ -694,6 +694,7 @@ void DecodeSerialData(uint8_t *buffer, int amount)
                     if ((_currentFrameType & PKT_TRANSPORT) > 0)
                     {
                         _communicationState = StatusCode;
+                        _statusCode = 0;
                     }
                     else
                     {
