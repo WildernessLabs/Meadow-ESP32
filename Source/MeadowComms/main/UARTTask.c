@@ -59,16 +59,6 @@ QueueHandle_t UARTTransmitQueueHandle = NULL;
 /// </remarks>
 SemaphoreHandle_t xUARTTxMutex = NULL;
 
-/// <summary>
-///     Name of the UART receive task (used for logging).
-/// </summary>
-char *UART_RX_TASK_NAME = "UART_RX_TASK";
-
-/// <summary>
-///     Name of the UART transmit task (used for logging).
-/// </summary>
-char *UART_TX_TASK_NAME = "UART_TX_TASK";
-
 static int bytesRemaining = 0;
 
 static uint8_t *nextPayloadLocation;
@@ -138,6 +128,27 @@ static uint8_t _frameSequenceNumber = 0;
 /// </summary>
 static uint32_t _statusCode = 0;
 
+/// <summary>
+///     Buffer for the start of frame characters.
+/// </summary>
+static char _startOfFrameCharacters[NUMBER_OF_START_OF_FRAME_CHARACTERS];
+
+/// <summary>
+///     Buffer for the end of frame characters.
+/// </summary>
+static char _endOfFrameCharacters[NUMBER_OF_END_OF_FRAME_CHARACTERS];
+
+static uint _totalTxBytes = 0;
+static uint _totalRxBytes = 0;
+static uint _totalFramesSent = 0;
+static uint _totalFramesReceived = 0;
+static uint _totalRxErrors = 0;
+static uint _totalTxErrors = 0;
+
+#include "esp_heap_trace.h"
+#define NUMBER_OF_HEAP_TRACE_RECORDS 100
+static heap_trace_record_t heap_trace_records[NUMBER_OF_HEAP_TRACE_RECORDS];
+
 // ---------------------------------------------------------------------------
 //
 //                                  Methods
@@ -163,6 +174,9 @@ void SetupUART()
     uart_set_pin(STM32_UART_NUMBER, TXD_PIN, RXD_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
     uart_driver_install(STM32_UART_NUMBER, RX_BUF_SIZE * 2, TX_BUF_SIZE * 2, UART_QUEUE_LENGTH, &UARTRxQueueHandle, 0);
     xUARTTxMutex = xSemaphoreCreateMutex();
+    //    ESP_ERROR_CHECK(heap_trace_init_standalone(heap_trace_records, NUMBER_OF_HEAP_TRACE_RECORDS));
+    memset(_endOfFrameCharacters, END_OF_FRAME_CHARACTER, NUMBER_OF_END_OF_FRAME_CHARACTERS);
+    memset(_endOfFrameCharacters, END_OF_FRAME_CHARACTER, NUMBER_OF_END_OF_FRAME_CHARACTERS);
 }
 
 /// <summary>
@@ -239,7 +253,7 @@ void QueueUARTResponse(uint8_t interface, uint32_t code, uint32_t messageID, uin
     response.payloadLength = payloadLength;
     if (xQueueSendToBack(UARTTransmitQueueHandle, &response, 0) != pdTRUE)
     {
-        ESP_LOGI(UART_TX_TASK_NAME, "Error sending response, cannot queue message");
+        ESP_LOGI(__func__, "Error sending response, cannot queue message");
     }
 }
 
@@ -248,7 +262,7 @@ void QueueUARTResponse(uint8_t interface, uint32_t code, uint32_t messageID, uin
 //      is going to be sent.  This will take into account the padding
 //      and CRC etc.
 /// </summary>
-uint32_t HeaderAndPayloadSize(uint8_t *buffer, uint8_t bufferLength)
+uint32_t CalculateEncodedFrameLength(uint8_t *buffer, uint8_t bufferLength)
 {
     int startOfFrameCharacterCount = 0;
     int byteCount = 0;
@@ -272,9 +286,10 @@ uint32_t HeaderAndPayloadSize(uint8_t *buffer, uint8_t bufferLength)
     }
     //
     //  We need to take into consideration the size of the buffer required for
-    //  the data plus the start of frame characters and the end of frame character.
+    //  the data plus the start of frame characters, the CRC and the end of 
+    //  frame characters.
     //
-    byteCount += (NUMBER_OF_START_OF_FRAME_CHARACTERS + 5);
+    byteCount += (NUMBER_OF_START_OF_FRAME_CHARACTERS + NUMBER_OF_END_OF_FRAME_CHARACTERS + 4);
     return(byteCount);
 }
 
@@ -285,36 +300,43 @@ uint32_t HeaderAndPayloadSize(uint8_t *buffer, uint8_t bufferLength)
 int EncodeData(uint8_t *buffer, uint32_t bufferLength, uint8_t *frame)
 {
     uint32_t currentByte = 0;
-    //
-    //  Copy the data into the new frame taking into account the need to insert
-    //  padding characters if we hit a sequence of start of frame characters.
-    //
-    int startOfFrameCharacterCount = 0;
-    for (int index = 0; index < bufferLength; index++)
+
+    if (buffer != NULL)
     {
-        frame[currentByte++] = buffer[index];
-        if (buffer[index] == START_OF_FRAME_CHARACTER)
+        //
+        //  Copy the data into the new frame taking into account the need to insert
+        //  padding characters if we hit a sequence of start of frame characters.
+        //
+        int startOfFrameCharacterCount = 0;
+        for (int index = 0; index < bufferLength; index++)
         {
-            startOfFrameCharacterCount++;
-            if (startOfFrameCharacterCount == (NUMBER_OF_START_OF_FRAME_CHARACTERS - 1))
+            frame[currentByte++] = buffer[index];
+            if (buffer[index] == START_OF_FRAME_CHARACTER)
             {
-                frame[currentByte++] = PADDING_CHARACTER;
+                startOfFrameCharacterCount++;
+                if (startOfFrameCharacterCount == (NUMBER_OF_START_OF_FRAME_CHARACTERS - 1))
+                {
+                    frame[currentByte++] = PADDING_CHARACTER;
+                    startOfFrameCharacterCount = 0;
+                }
+            }
+            else
+            {
                 startOfFrameCharacterCount = 0;
             }
-        }
-        else
-        {
-            startOfFrameCharacterCount = 0;
-        }
+        }       
     }
+
     return (currentByte);
 }
 
 /// <summary>
 ///     Generate a new application message frame.
 /// </summary>
-uint8_t *GenerateApplicationFrame(uint8_t frameType, uint32_t messageID, uint8_t sequenceNumber, uint8_t *buffer, uint32_t bufferLength, uint32_t frameLength)
+struct BufferAndLength *GenerateApplicationFrame(uint8_t frameType, uint32_t messageID, uint8_t sequenceNumber, uint8_t *buffer, uint32_t bufferLength)
 {
+    uint32_t frameLength = FRAME_HEADER_LENGTH + CalculateEncodedFrameLength(buffer, bufferLength);
+
     uint8_t *frame = pvPortMalloc(frameLength);
     memset(frame, START_OF_FRAME_CHARACTER, NUMBER_OF_START_OF_FRAME_CHARACTERS);
     uint32_t currentByte = NUMBER_OF_START_OF_FRAME_CHARACTERS;
@@ -336,8 +358,12 @@ uint8_t *GenerateApplicationFrame(uint8_t frameType, uint32_t messageID, uint8_t
     uint32_t crc = CRC32(frame + NUMBER_OF_START_OF_FRAME_CHARACTERS, frameLength - (NUMBER_OF_START_OF_FRAME_CHARACTERS + 5));
     EncodeUInt32(crc, frame + currentByte);
     currentByte += 4;
-    frame[currentByte] = END_OF_FRAME_CHARACTER;
-    return (frame);
+    memset(frame + currentByte, END_OF_FRAME_CHARACTER, NUMBER_OF_END_OF_FRAME_CHARACTERS);
+    currentByte += NUMBER_OF_END_OF_FRAME_CHARACTERS;
+    struct BufferAndLength *f = pvPortMalloc(sizeof(struct BufferAndLength));
+    f->Buffer = frame;
+    f->BufferLength = currentByte;
+    return (f);
 }
 
 /// <summary>
@@ -345,23 +371,29 @@ uint8_t *GenerateApplicationFrame(uint8_t frameType, uint32_t messageID, uint8_t
 //      This sequence will contain the start of frame characters, data, CRC and end
 //      of frame characters.
 /// </summary>
-uint8_t *GenerateTransportFrame(uint8_t *buffer, uint32_t bufferLength, uint32_t frameLength)
+struct BufferAndLength *GenerateTransportFrame(uint8_t *buffer, uint32_t bufferLength)
 {
+    uint32_t frameLength = CalculateEncodedFrameLength(buffer, bufferLength);
+
     uint8_t *frame = pvPortMalloc(frameLength);
     memset(frame, START_OF_FRAME_CHARACTER, NUMBER_OF_START_OF_FRAME_CHARACTERS);
     uint32_t currentByte = NUMBER_OF_START_OF_FRAME_CHARACTERS;
-    currentByte += EncodeData(buffer, bufferLength, frame + NUMBER_OF_START_OF_FRAME_CHARACTERS);
+    currentByte += EncodeData(buffer, bufferLength, frame + currentByte);
     //
     //  The frame length calculated contains the header characters, CRC
     //  and the end of frame characters.  We need to take this into consideration 
     //  when the CRC is calculated as the CRC should only be calculated on
     //  the actual data plus any padding characters.
     //
-    uint32_t crc = CRC32(frame + NUMBER_OF_START_OF_FRAME_CHARACTERS, frameLength - (NUMBER_OF_START_OF_FRAME_CHARACTERS + 5));
+    uint32_t crc = CRC32(frame + NUMBER_OF_START_OF_FRAME_CHARACTERS, currentByte - NUMBER_OF_START_OF_FRAME_CHARACTERS);
     EncodeUInt32(crc, frame + currentByte);
     currentByte += 4;
-    frame[currentByte] = END_OF_FRAME_CHARACTER;
-    return (frame);
+    memset(frame + currentByte, END_OF_FRAME_CHARACTER, NUMBER_OF_END_OF_FRAME_CHARACTERS);
+    currentByte += NUMBER_OF_END_OF_FRAME_CHARACTERS;
+    struct BufferAndLength *f = pvPortMalloc(sizeof(struct BufferAndLength));
+    f->Buffer = frame;
+    f->BufferLength = currentByte;
+    return (f);
 }
 
 /// <summary>
@@ -373,15 +405,15 @@ void AcknowledgeFrame(uint8_t ackNak, uint32_t status)
     memset(buffer, 0, TRANSPORT_MESSAGE_LENGTH);
     buffer[TRANSPORT_FRAME_TYPE] = PKT_TRANSPORT | ackNak;
     EncodeUInt32(status, buffer + TRANSPORT_STATUS_CODE);
-    uint32_t frameLength = HeaderAndPayloadSize(buffer, TRANSPORT_MESSAGE_LENGTH);
-    uint8_t *frame = GenerateTransportFrame(buffer, TRANSPORT_MESSAGE_LENGTH, frameLength);
+    struct BufferAndLength *frame = GenerateTransportFrame(buffer, TRANSPORT_MESSAGE_LENGTH);
     //
     xSemaphoreTake(xUARTTxMutex, portMAX_DELAY);
-    const int txBytes = uart_write_bytes(STM32_UART_NUMBER, (const char *) frame, frameLength);
+    _totalTxBytes += uart_write_bytes(STM32_UART_NUMBER, (const char *) frame->Buffer, frame->BufferLength);
     xSemaphoreGive(xUARTTxMutex);
-    ESP_LOGI(UART_TX_TASK_NAME, "Wrote %d bytes to UART", txBytes);
-    ESP_LOG_BUFFER_HEXDUMP(UART_TX_TASK_NAME, frame, frameLength, ESP_LOG_INFO);
+    ESP_LOGI(__func__, "Total Tx bytes: %d", _totalTxBytes);
+    ESP_LOG_BUFFER_HEXDUMP(__func__, frame->Buffer, frame->BufferLength, ESP_LOG_INFO);
     //
+    vPortFree(frame->Buffer);
     vPortFree(frame);
 }
 
@@ -429,6 +461,9 @@ void ProcessData(uint8_t *packet, uint8_t packetLength)
 {
     if ((nextPayloadLocation != NULL) && (bytesRemaining > 0) && (packetLength <= bytesRemaining))
     {
+        //
+        //  TODO: Change this to use the sequence number for this message to determine where the data should go.
+        //
         memcpy(nextPayloadLocation, packet, packetLength);
         nextPayloadLocation += packetLength;
         bytesRemaining -= packetLength;
@@ -445,7 +480,7 @@ void ProcessData(uint8_t *packet, uint8_t packetLength)
             //  Releasing the memory here will corrupt the heap.
             //
             ResetIncomingMessage(false);
-            ESP_LOGI(UART_RX_TASK_NAME, "Message received and queued.");
+            ESP_LOGI(__func__, "Message received and queued.");
         }
         AcknowledgeFrame(TRANSPORT_ACK, ERR_OK);
     }
@@ -508,7 +543,8 @@ void ProcessApplicationDataFrame(uint8_t frameType, uint8_t *packet, uint8_t pac
 /// </summary>
 void UARTTxTask(void *pvParameters)
 {
-    esp_log_level_set(UART_TX_TASK_NAME, ESP_LOG_INFO);
+    int txBytes = 0;
+    esp_log_level_set(__func__, ESP_LOG_INFO);
     while (true)
     {
         struct ApplicationResponse message;
@@ -528,24 +564,27 @@ void UARTTxTask(void *pvParameters)
             //
             //  Generate an encoded frame.
             //
-            uint32_t frameLength = HeaderAndPayloadSize(buffer, APP_RESPONSE_HEADER_LENGTH);
-            uint8_t *frame = GenerateTransportFrame(buffer, APP_RESPONSE_HEADER_LENGTH, frameLength);
+            struct BufferAndLength *frame = GenerateApplicationFrame(PKT_DATA | DATA_HEADER, message.messageID, 0, buffer, APP_RESPONSE_HEADER_LENGTH);
             //
             //  Now send the header.
             //
+            ESP_LOGI(__func__, "Sending header:");
+            ESP_LOG_BUFFER_HEXDUMP(__func__, frame->Buffer, frame->BufferLength, ESP_LOG_INFO);
             xSemaphoreTake(xUARTTxMutex, portMAX_DELAY);
-            ESP_LOGI(UART_TX_TASK_NAME, "Sending header:");
-            ESP_LOG_BUFFER_HEXDUMP(UART_TX_TASK_NAME, frame, frameLength, ESP_LOG_INFO);
-            const int txBytes = uart_write_bytes(STM32_UART_NUMBER, (const char *) frame, frameLength);
+            _totalTxBytes += uart_write_bytes(STM32_UART_NUMBER, (const char *) frame->Buffer, frame->BufferLength);
             xSemaphoreGive(xUARTTxMutex);
+            if (frame->Buffer != NULL)
+            {
+                vPortFree(frame->Buffer);
+            }
             vPortFree(frame);
             frame = NULL;
-            ESP_LOGI(UART_TX_TASK_NAME, "Wrote %d header bytes to UART", txBytes);
             //
             //  Now break the payload down into frames and send the frames to the STM32.
             //
             int amountLeftToSend = message.payloadLength;
             int start = 0;
+            uint8_t sequenceNumber = 1;
             uint8_t currentFrameBufferLength = UART_MAXIMUM_FRAME_LENGTH;
             uint8_t *frameBuffer = pvPortMalloc(currentFrameBufferLength);
             while (amountLeftToSend > 0)
@@ -563,21 +602,31 @@ void UARTTxTask(void *pvParameters)
                 //
                 //  Generate an encoded frame.
                 //
-                frameLength = HeaderAndPayloadSize(frameBuffer, length);
-                frame = GenerateTransportFrame(frameBuffer, length, frameLength);
+                frame = GenerateApplicationFrame(PKT_DATA | DATA_PAYLOAD, message.messageID, sequenceNumber++, frameBuffer, length);
                 //
                 //  Now send the payload frame.
                 //
+                ESP_LOGI(__func__, "Sending frame:");
+                ESP_LOG_BUFFER_HEXDUMP(__func__, frame->Buffer, frame->BufferLength, ESP_LOG_INFO);
                 xSemaphoreTake(xUARTTxMutex, portMAX_DELAY);
-                const int txBytes = uart_write_bytes(STM32_UART_NUMBER, (const char *) frame, frameLength);
+                _totalTxBytes += uart_write_bytes(STM32_UART_NUMBER, (const char *) frame->Buffer, frame->BufferLength);
                 xSemaphoreGive(xUARTTxMutex);
-                ESP_LOGI(UART_TX_TASK_NAME, "Wrote %d payload data bytes to UART", txBytes);
-                ESP_LOG_BUFFER_HEXDUMP(UART_TX_TASK_NAME, frame, frameLength, ESP_LOG_INFO);
-                xSemaphoreGive(xUARTTxMutex);
+                if (frame->Buffer != NULL)
+                {
+                    vPortFree(frame->Buffer);
+                }
+                vPortFree(frame);
             }
+            //
+            //  Message has been sent so it is time to clean up the heap.
+            //
             if (frameBuffer != NULL)
             {
                 vPortFree(frameBuffer);
+            }
+            if (message.payloadLength > 0)
+            {
+                vPortFree(message.payload);
             }
         }
     }
@@ -595,71 +644,77 @@ void UARTTxTask(void *pvParameters)
 void UARTRxTask(void *pvParameters)
 {
     uart_event_t event;
-    uint8_t* data = (uint8_t*) malloc(RX_BUF_SIZE);
+    uint8_t* data = (uint8_t*) pvPortMalloc(RX_BUF_SIZE);
 
     while (true)
     {
         if (xQueueReceive(UARTRxQueueHandle, (void *) &event, portMAX_DELAY))
         {
             memset(data, 0, RX_BUF_SIZE);
+            int dataLeftToRead = 0;
+            int amountToRead = 0;
             switch (event.type)
             {
-                case UART_DATA :
-                    uart_read_bytes(STM32_UART_NUMBER, data, event.size, portMAX_DELAY);
-                    ESP_LOGI(UART_RX_TASK_NAME, "Data received:");
-                    ESP_LOG_BUFFER_HEXDUMP(UART_RX_TASK_NAME, data, event.size, ESP_LOG_INFO);
-                    for (int index = 0; index < event.size; index++)
+                case UART_DATA:
+                    dataLeftToRead = event.size;
+                    while (dataLeftToRead > 0)
                     {
-                        uint8_t byte = data[index];
+                        amountToRead = dataLeftToRead <= RX_BUF_SIZE ? dataLeftToRead : RX_BUF_SIZE;
+                        uart_read_bytes(STM32_UART_NUMBER, data, amountToRead, portMAX_DELAY);
+                        ESP_LOGI(__func__, "Data received:");
+                        ESP_LOG_BUFFER_HEXDUMP(__func__, data, amountToRead, ESP_LOG_INFO);
+                        for (int index = 0; index < amountToRead; index++)
+                        {
+                            uint8_t byte = data[index];
 
-                        if (_startOfFrameByteCount == 2)
-                        {
-                            _startOfFrameByteCount = 0;
-                            switch (byte)
+                            if (_startOfFrameByteCount == 2)
                             {
-                                case START_OF_FRAME_CHARACTER:
-                                    _communicationState = FrameType;
-                                    break;
-                                case PADDING_CHARACTER:
-                                    break;
-                                default:
-                                    _communicationState = StartOfFrame;
-                                    break;
-                            }
-                        }
-                        else
-                        {
-                            if (byte == START_OF_FRAME_CHARACTER)
-                            {
-                                _startOfFrameByteCount++;
+                                _startOfFrameByteCount = 0;
+                                switch (byte)
+                                {
+                                    case START_OF_FRAME_CHARACTER:
+                                        _communicationState = FrameType;
+                                        break;
+                                    case PADDING_CHARACTER:
+                                        break;
+                                    default:
+                                        _communicationState = StartOfFrame;
+                                        break;
+                                }
                             }
                             else
                             {
-                                _startOfFrameByteCount = 0;
-                            }
-                            switch (_communicationState)
-                            {
-                                case StartOfFrame:
-                                    //
-                                    //  We don't need to do anything here as Start of Frame
-                                    //  is dealt with above.
-                                    //
-                                    break;
-                                case FrameType:
-                                    _currentFrameType = byte;
-                                    if ((_currentFrameType & PKT_TRANSPORT) > 0)
-                                    {
-                                        _communicationState = StatusCode;
-                                    }
-                                    else
-                                    {
-                                        _communicationState = MessageID;
-                                    }
-                                    _calculatedChecksum = CRC32_SEED;
-                                    _calculatedChecksum = ProgressiveCRC32(_calculatedChecksum, byte);
-                                    _byteNumber = 0;
-                                    break;
-                                case StatusCode:
+                                if (byte == START_OF_FRAME_CHARACTER)
+                                {
+                                    _startOfFrameByteCount++;
+                                }
+                                else
+                                {
+                                    _startOfFrameByteCount = 0;
+                                }
+                                switch (_communicationState)
+                                {
+                                    case StartOfFrame:
+                                        //
+                                        //  We don't need to do anything here as Start of Frame
+                                        //  is dealt with above.
+                                        //
+                                        break;
+                                    case FrameType:
+                                        _currentFrameType = byte;
+                                        if ((_currentFrameType & PKT_TRANSPORT) > 0)
+                                        {
+                                            _communicationState = StatusCode;
+                                        }
+                                        else
+                                        {
+                                            _communicationState = MessageID;
+                                        }
+                                        _calculatedChecksum = CRC32_SEED;
+                                        _calculatedChecksum = ProgressiveCRC32(_calculatedChecksum, byte);
+                                        _byteNumber = 0;
+                                        break;
+                                    case StatusCode:
                                         _statusCode |= (byte << (_byteNumber * 8));
                                         _byteNumber++;
                                         if (_byteNumber == 4)
@@ -669,91 +724,93 @@ void UARTRxTask(void *pvParameters)
                                             _originalChecksum = 0;
                                         }
                                         _calculatedChecksum = ProgressiveCRC32(_calculatedChecksum, byte);
-                                    break;
-                                case MessageID:
-                                    _messageID |= (byte << (_byteNumber * 8));
-                                    _byteNumber++;
-                                    if (_byteNumber == 4)
-                                    {
-                                        _communicationState = SequenceNumber;                                    
-                                    }
-                                    _calculatedChecksum = ProgressiveCRC32(_calculatedChecksum, byte);
-                                    break;
-                                case SequenceNumber:
-                                    _frameSequenceNumber = byte;
-                                    _communicationState = Length;
-                                    _calculatedChecksum = ProgressiveCRC32(_calculatedChecksum, byte);
-                                    break;
-                                case Length:
-                                    _framePayloadLength = byte;
-                                    _calculatedChecksum = ProgressiveCRC32(_calculatedChecksum, byte);
-                                    if (_framePayloadLength > 0)
-                                    {
-                                        _framePayload = pvPortMalloc(_framePayloadLength);
-                                        _framePayloadIndex = 0;
-                                        _communicationState = Payload;
-                                    }
-                                    else
-                                    {
-                                        _communicationState = CRC;
-                                        _originalChecksum = 0;
-                                        _byteNumber = 0;
-                                    }
-                                    break;
-                                case Payload:
-                                    _framePayload[_framePayloadIndex] = byte;
-                                    _framePayloadIndex++;
-                                    _calculatedChecksum = ProgressiveCRC32(_calculatedChecksum, byte);
-                                    if (_framePayloadIndex == _framePayloadLength)
-                                    {
-                                        _communicationState = CRC;
-                                        _originalChecksum = 0;
-                                        _byteNumber = 0;
-                                    }
-                                    break;
-                                case CRC:
-                                    _originalChecksum |= (byte << (_byteNumber * 8));
-                                    _byteNumber++;
-                                    if (_byteNumber == 4)
-                                    {
-                                        _communicationState = EndOfFrame;                                    
-                                    }
-                                    break;
-                                case EndOfFrame:
-                                    if ((byte == END_OF_FRAME_CHARACTER) && (_calculatedChecksum == _originalChecksum)) 
-                                    {
-                                        if (_currentFrameType & PKT_TRANSPORT)
+                                        break;
+                                    case MessageID:
+                                        _messageID |= (byte << (_byteNumber * 8));
+                                        _byteNumber++;
+                                        if (_byteNumber == 4)
                                         {
-                                            ProcessTransportData(_currentFrameType);
+                                            _communicationState = SequenceNumber;                                    
+                                        }
+                                        _calculatedChecksum = ProgressiveCRC32(_calculatedChecksum, byte);
+                                        break;
+                                    case SequenceNumber:
+                                        _frameSequenceNumber = byte;
+                                        _communicationState = Length;
+                                        _calculatedChecksum = ProgressiveCRC32(_calculatedChecksum, byte);
+                                        break;
+                                    case Length:
+                                        _framePayloadLength = byte;
+                                        _calculatedChecksum = ProgressiveCRC32(_calculatedChecksum, byte);
+                                        if (_framePayloadLength > 0)
+                                        {
+                                            _framePayload = pvPortMalloc(_framePayloadLength);
+                                            _framePayloadIndex = 0;
+                                            _communicationState = Payload;
                                         }
                                         else
                                         {
-                                            ProcessApplicationDataFrame(_currentFrameType, _framePayload, _framePayloadLength);
+                                            _communicationState = CRC;
+                                            _originalChecksum = 0;
+                                            _byteNumber = 0;
                                         }
-                                    }
-                                    else
-                                    {
-                                        if (byte != END_OF_FRAME_CHARACTER)
+                                        break;
+                                    case Payload:
+                                        _framePayload[_framePayloadIndex] = byte;
+                                        _framePayloadIndex++;
+                                        _calculatedChecksum = ProgressiveCRC32(_calculatedChecksum, byte);
+                                        if (_framePayloadIndex == _framePayloadLength)
                                         {
-                                            AcknowledgeFrame(TRANSPORT_NAK, ERR_MISSING_END_OF_FRAME_MARKER);
+                                            _communicationState = CRC;
+                                            _originalChecksum = 0;
+                                            _byteNumber = 0;
+                                        }
+                                        break;
+                                    case CRC:
+                                        _originalChecksum |= (byte << (_byteNumber * 8));
+                                        _byteNumber++;
+                                        if (_byteNumber == 4)
+                                        {
+                                            _communicationState = EndOfFrame;                                    
+                                        }
+                                        break;
+                                    case EndOfFrame:
+                                        if ((byte == END_OF_FRAME_CHARACTER) && (_calculatedChecksum == _originalChecksum)) 
+                                        {
+                                            if (_currentFrameType & PKT_TRANSPORT)
+                                            {
+                                                ProcessTransportData(_currentFrameType);
+                                            }
+                                            else
+                                            {
+                                                ProcessApplicationDataFrame(_currentFrameType, _framePayload, _framePayloadLength);
+                                            }
                                         }
                                         else
                                         {
-                                            AcknowledgeFrame(TRANSPORT_NAK, ERR_CRC_ERROR);
+                                            if (byte != END_OF_FRAME_CHARACTER)
+                                            {
+                                                AcknowledgeFrame(TRANSPORT_NAK, ERR_MISSING_END_OF_FRAME_MARKER);
+                                            }
+                                            else
+                                            {
+                                                AcknowledgeFrame(TRANSPORT_NAK, ERR_CRC_ERROR);
+                                            }
                                         }
-                                    }
-                                    if (_framePayload != NULL)
-                                    {
-                                        vPortFree(_framePayload);
-                                        _framePayload = NULL;
-                                    }
-                                    _communicationState = StartOfFrame;
-                                    break;
-                                default:
-                                    _communicationState = StartOfFrame;
-                                    break;
+                                        if (_framePayload != NULL)
+                                        {
+                                            vPortFree(_framePayload);
+                                            _framePayload = NULL;
+                                        }
+                                        _communicationState = StartOfFrame;
+                                        break;
+                                    default:
+                                        _communicationState = StartOfFrame;
+                                        break;
+                                }
                             }
                         }
+                        dataLeftToRead -= amountToRead;
                     }
                     break;
                 case UART_BUFFER_FULL:

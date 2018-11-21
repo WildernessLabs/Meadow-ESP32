@@ -167,19 +167,17 @@ struct ApplicationResponse
 /// <summary>
 ///     Location of the sequence number in the message frame.
 /// </summary>
-#define SEQUENCE_I                  (MESSAGE_ID + 4)
+#define SEQUENCE_NUMBER             (MESSAGE_ID + 4)
 
 /// <summary>
 ///     Location of the frame length in the message frame.
 /// </summary>
-#define FRAME_PAYLOAD_LENGTH        (SEQUENCE_ID + 1)
+#define FRAME_PAYLOAD_LENGTH        (SEQUENCE_NUMBER + 1)
 
 /// <summary>
 ///     Size of the header.
 /// </summary>
 #define FRAME_HEADER_LENGTH         (FRAME_PAYLOAD_LENGTH + 1)
-
-
 
 extern uint8_t CRC8(const uint8_t *, uint16_t);
 extern uint32_t CRC32(const uint8_t *, uint16_t);
