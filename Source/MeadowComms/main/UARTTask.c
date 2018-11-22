@@ -546,18 +546,18 @@ void ProcessData(uint8_t *packet, uint8_t packetLength)
 /// </summary>
 void ProcessTransportData(uint8_t currentFrameType)
 {
-    enum UARTSyncStates state = UARTSyncStates.Unknown;
+    enum UARTSyncStates state = Unknown;
     switch (currentFrameType & 0x2f)
     {
         case TRANSPORT_ACK:
-            state = UARTSyncStates.Acknowledge;
+            state = Acknowledge;
             break;
         case TRANSPORT_NAK:
-            state = UARTSyncStates.NegativeAcknowledge;
+            state = NegativeAcknowledge;
             break;
         case TRANSPORT_RESET:
             ResetIncomingMessage(true);
-            state = UARTSyncStates.Reset;
+            state = Reset;
             break;
     }
     if (xQueueSendToBack(xUARTSyncQueueHandle, &state, 0) != pdTRUE)
@@ -588,9 +588,10 @@ void ProcessApplicationDataFrame(uint8_t frameType, uint8_t *packet, uint8_t pac
     }
 }
 
-enum UARTSyncStates SendFrame(BufferAndLength *frame)
+enum UARTSyncStates SendFrame(struct BufferAndLength *frame)
 {
-
+    enum UARTSyncStates result = Unknown;
+    return (result);
 }
 
 /// <summary>
@@ -628,9 +629,9 @@ void UARTTxTask(void *pvParameters)
             ESP_LOG_BUFFER_HEXDUMP(__func__, frame->Buffer, frame->BufferLength, ESP_LOG_INFO);
 
 
-            enum UARTSyncStates state = UARTSyncStates.Unknown;
+            enum UARTSyncStates state = Unknown;
             retryCount = 0;
-            while (state != UARTSyncStates.Acknowledge)
+            while (state != Acknowledge)
             {
                 xSemaphoreTake(xUARTTxMutex, portMAX_DELAY);
                 _totalTxBytes += uart_write_bytes(STM32_UART_NUMBER, (const char *) frame->Buffer, frame->BufferLength);
