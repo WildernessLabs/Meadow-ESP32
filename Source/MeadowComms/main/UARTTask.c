@@ -18,7 +18,6 @@
 #include "Encoders.h"
 #include "ErrorCodes.h"
 
-
 // ---------------------------------------------------------------------------
 //
 //                          Global variables.
@@ -48,6 +47,16 @@ QueueHandle_t UARTRxQueueHandle = NULL;
 ///     send the data to the UART.
 /// </remarks>
 QueueHandle_t UARTTransmitQueueHandle = NULL;
+
+/// <summary>
+///     Handle to the queue used to sync the UART messages.
+/// </summary>
+/// <remarks>
+///     The sync queue is used by the transport message handling methods
+///     to communicate with the Tx and Rx tasks to provide a measure of
+///     reliability and recovery.
+/// </remarks>
+QueueHandle_t xUARTSyncQueueHandle = NULL;
 
 /// <summary>
 ///     Mutex to ensure that only one request to access the UART can be 
@@ -108,7 +117,7 @@ static uint32_t _calculatedChecksum;
 /// <summary>
 ///     This variable holds the byte number when putting together multi-byte
 ///     values (i.e. 4 bytes in a UInt32 object).  this allows the original
-///     object to be rehydrated from the UART byte stream.
+///     object to be re-hydrated from the UART byte stream.
 /// </summary>
 static int _byteNumber = 0;
 
@@ -121,7 +130,6 @@ static uint32_t _messageID = 0;
 ///     Sequence number of this frame in the total number of frames being sent.
 /// </summary>
 static uint8_t _frameSequenceNumber = 0;
-
 
 /// <summary>
 ///     Packet code returned by the transport packets.
@@ -138,13 +146,50 @@ static char _startOfFrameCharacters[NUMBER_OF_START_OF_FRAME_CHARACTERS];
 /// </summary>
 static char _endOfFrameCharacters[NUMBER_OF_END_OF_FRAME_CHARACTERS];
 
+/// <summary>
+///     Current retry count.
+/// </summary>
+static uint32_t _currentRetryCount = 0;
+
+/// <summary>
+///     Current maximum number of retries when sending a frame
+///     before the system declares an error condition.
+/// </summary>
+static uint32_t _maximumRetryCount = UART_DEFAULT_MAXIMUM_RETRIES;
+
+/// <summary>
+///     Total number of bytes sent since the microcontroller was started.
+/// </summary>
 static uint _totalTxBytes = 0;
+
+/// <summary>
+///     Total number of bytes received since the microcontroller was started.
+/// </summary>
 static uint _totalRxBytes = 0;
+
+/// <summary>
+///     Total number of frames sent since the microcontroller was started.
+/// </summary>
 static uint _totalFramesSent = 0;
+
+/// <summary>
+///     Total number of frames received since the microcontroller was started.
+/// </summary>
 static uint _totalFramesReceived = 0;
+
+/// <summary>
+///     Number of Rx errors since the microcontroller was started.
+/// </summary>
 static uint _totalRxErrors = 0;
+
+/// <summary>
+///     Number of Tx errors since the microcontroller was started.
+/// </summary>
 static uint _totalTxErrors = 0;
 
+//
+//  ESP heap debugging stuff.
+//
 #include "esp_heap_trace.h"
 #define NUMBER_OF_HEAP_TRACE_RECORDS 100
 static heap_trace_record_t heap_trace_records[NUMBER_OF_HEAP_TRACE_RECORDS];
@@ -158,7 +203,7 @@ static heap_trace_record_t heap_trace_records[NUMBER_OF_HEAP_TRACE_RECORDS];
 /// <summary>
 ///     Configure the UART and install the driver.
 ///
-///     UART should be configured as 115200 baud, no partity, one stop bit, 8 data bits.
+///     UART should be configured as 115200 baud, no parity, one stop bit, 8 data bits.
 /// </summary>
 void SetupUART()
 {
@@ -174,8 +219,9 @@ void SetupUART()
     uart_set_pin(STM32_UART_NUMBER, TXD_PIN, RXD_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
     uart_driver_install(STM32_UART_NUMBER, RX_BUF_SIZE * 2, TX_BUF_SIZE * 2, UART_QUEUE_LENGTH, &UARTRxQueueHandle, 0);
     xUARTTxMutex = xSemaphoreCreateMutex();
+    xUARTSyncQueueHandle = xQueueCreate(2, sizeof(enum UARTSyncStates));
     //    ESP_ERROR_CHECK(heap_trace_init_standalone(heap_trace_records, NUMBER_OF_HEAP_TRACE_RECORDS));
-    memset(_endOfFrameCharacters, END_OF_FRAME_CHARACTER, NUMBER_OF_END_OF_FRAME_CHARACTERS);
+    memset(_startOfFrameCharacters, START_OF_FRAME_CHARACTER, NUMBER_OF_START_OF_FRAME_CHARACTERS);
     memset(_endOfFrameCharacters, END_OF_FRAME_CHARACTER, NUMBER_OF_END_OF_FRAME_CHARACTERS);
 }
 
@@ -242,6 +288,11 @@ uint32_t QueueMessage()
 /// <summary>
 ///     Add a response to the UART Tx queue.
 /// </summary>
+/// <param name="interface">Interface generating the response.</param>
+/// <param name="code">Status code.</param>
+/// <param name="messageID">Message ID for the response.  This will either be the original ID or a new one if the request originated on the ESP32</param>
+/// <param name="payload">Payload of the message for the STM32.</param>
+/// <param name="payloadLength">Number of bytes in the payload.</param>
 void QueueUARTResponse(uint8_t interface, uint32_t code, uint32_t messageID, uint8_t *payload, uint8_t payloadLength)
 {
     struct ApplicationResponse response;
@@ -495,24 +546,23 @@ void ProcessData(uint8_t *packet, uint8_t packetLength)
 /// </summary>
 void ProcessTransportData(uint8_t currentFrameType)
 {
+    enum UARTSyncStates state = UARTSyncStates.Unknown;
     switch (currentFrameType & 0x2f)
     {
         case TRANSPORT_ACK:
-            //
-            //  Delete any packets waiting to be sent.
-            //
+            state = UARTSyncStates.Acknowledge;
             break;
         case TRANSPORT_NAK:
-            //
-            //  Resend the message.
-            //
+            state = UARTSyncStates.NegativeAcknowledge;
             break;
         case TRANSPORT_RESET:
-            //
-            //  Reset the interface back to power on.
-            //
             ResetIncomingMessage(true);
+            state = UARTSyncStates.Reset;
             break;
+    }
+    if (xQueueSendToBack(xUARTSyncQueueHandle, &state, 0) != pdTRUE)
+    {
+        ESP_LOGI(__func__, "Sending synchronisation message.");
     }
 }
 
@@ -538,12 +588,18 @@ void ProcessApplicationDataFrame(uint8_t frameType, uint8_t *packet, uint8_t pac
     }
 }
 
+enum UARTSyncStates SendFrame(BufferAndLength *frame)
+{
+
+}
+
 /// <summary>
 ///     UART transmit task.
 /// </summary>
 void UARTTxTask(void *pvParameters)
 {
     int txBytes = 0;
+    int retryCount = 0;
     esp_log_level_set(__func__, ESP_LOG_INFO);
     while (true)
     {
@@ -570,9 +626,19 @@ void UARTTxTask(void *pvParameters)
             //
             ESP_LOGI(__func__, "Sending header:");
             ESP_LOG_BUFFER_HEXDUMP(__func__, frame->Buffer, frame->BufferLength, ESP_LOG_INFO);
-            xSemaphoreTake(xUARTTxMutex, portMAX_DELAY);
-            _totalTxBytes += uart_write_bytes(STM32_UART_NUMBER, (const char *) frame->Buffer, frame->BufferLength);
-            xSemaphoreGive(xUARTTxMutex);
+
+
+            enum UARTSyncStates state = UARTSyncStates.Unknown;
+            retryCount = 0;
+            while (state != UARTSyncStates.Acknowledge)
+            {
+                xSemaphoreTake(xUARTTxMutex, portMAX_DELAY);
+                _totalTxBytes += uart_write_bytes(STM32_UART_NUMBER, (const char *) frame->Buffer, frame->BufferLength);
+                _totalFramesSent++;
+                xSemaphoreGive(xUARTTxMutex);
+            }
+
+
             if (frame->Buffer != NULL)
             {
                 vPortFree(frame->Buffer);
@@ -610,6 +676,7 @@ void UARTTxTask(void *pvParameters)
                 ESP_LOG_BUFFER_HEXDUMP(__func__, frame->Buffer, frame->BufferLength, ESP_LOG_INFO);
                 xSemaphoreTake(xUARTTxMutex, portMAX_DELAY);
                 _totalTxBytes += uart_write_bytes(STM32_UART_NUMBER, (const char *) frame->Buffer, frame->BufferLength);
+                _totalFramesSent++;
                 xSemaphoreGive(xUARTTxMutex);
                 if (frame->Buffer != NULL)
                 {
@@ -652,6 +719,7 @@ void UARTTxTask(void *pvParameters)
 /// <param name="amount">Amount of data to decode.</param>
 void DecodeSerialData(uint8_t *buffer, int amount)
 {
+    _totalRxBytes += amount;
     for (int index = 0; index < amount; index++)
     {
         uint8_t byte = buffer[index];

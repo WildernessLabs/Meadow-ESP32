@@ -49,12 +49,17 @@ static const int TX_BUF_SIZE = 1024;
 //
 //  Length of the UART queue.
 //
-#define UART_QUEUE_LENGTH               10
+#define UART_QUEUE_LENGTH               (10)
 
 //
 //  Maximum number of unencoded bytes in a frame.
 //
-#define UART_MAXIMUM_FRAME_LENGTH       255
+#define UART_MAXIMUM_FRAME_LENGTH       (255)
+
+//
+//  Dafault maximum number of time the UART will retry sending a message.
+//
+#define UART_DEFAULT_MAXIMUM_RETRIES    (3)
 
 //
 //  Handle for the queue dealing with the incoming messages.
@@ -85,6 +90,18 @@ enum CommunicationStates
     Payload,
     CRC,
     EndOfFrame
+};
+
+/// <summary>
+///     Synchronisation states for the UART.
+/// </summary>
+enum UARTSyncStates
+{
+    Unknown = 0,
+    Acknowledge,
+    NegativeAcknowledge,
+    Timeout,
+    Reset
 };
 
 struct BufferAndLength
