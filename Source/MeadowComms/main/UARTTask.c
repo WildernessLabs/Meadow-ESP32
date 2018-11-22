@@ -588,9 +588,32 @@ void ProcessApplicationDataFrame(uint8_t frameType, uint8_t *packet, uint8_t pac
     }
 }
 
-enum UARTSyncStates SendFrame(struct BufferAndLength *frame)
+/// <summary>
+///     Send a frame to the STM32 and let the caller know the result.
+/// </summary>
+/// <param name="frame">Data frame to send.</param>
+/// <param name="frameType>Name of the frame type being sent, this is used for debugging purposes.</param>
+enum UARTSyncStates SendFrame(struct BufferAndLength *frame, const char * frameType)
 {
     enum UARTSyncStates result = Unknown;
+    int retryCount = 0;
+
+    ESP_LOGI(__func__, "Sending %s:", frameType);
+    ESP_LOG_BUFFER_HEXDUMP(__func__, frame->Buffer, frame->BufferLength, ESP_LOG_INFO);
+    while ((result != Acknowledge) & (retryCount < _maximumRetryCount))
+    {
+        xSemaphoreTake(xUARTTxMutex, portMAX_DELAY);
+        _totalTxBytes += uart_write_bytes(STM32_UART_NUMBER, (const char *) frame->Buffer, frame->BufferLength);
+        _totalFramesSent++;
+        xSemaphoreGive(xUARTTxMutex);
+        retryCount++;
+        BaseType_t receiveResult = xQueueReceive(UARTTransmitQueueHandle, &result, portMAX_DELAY);
+        if (receiveResult == pdTRUE)
+        {
+            
+        }
+    }
+
     return (result);
 }
 
@@ -599,12 +622,11 @@ enum UARTSyncStates SendFrame(struct BufferAndLength *frame)
 /// </summary>
 void UARTTxTask(void *pvParameters)
 {
-    int txBytes = 0;
-    int retryCount = 0;
     esp_log_level_set(__func__, ESP_LOG_INFO);
     while (true)
     {
         struct ApplicationResponse message;
+        enum UARTSyncStates sendResult;
         BaseType_t result = xQueueReceive(UARTTransmitQueueHandle, &message, portMAX_DELAY);
         if (result == pdTRUE)
         {
@@ -619,33 +641,21 @@ void UARTTxTask(void *pvParameters)
             EncodeUInt32(message.messageID, buffer + APP_RESPONSE_MESSAGE_ID);
             EncodeUInt32(message.payloadLength, buffer + APP_RESPONSE_PAYLOAD_LENGTH);
             //
-            //  Generate an encoded frame.
+            //  Generate an encoded header frame and send it.
             //
             struct BufferAndLength *frame = GenerateApplicationFrame(PKT_DATA | DATA_HEADER, message.messageID, 0, buffer, APP_RESPONSE_HEADER_LENGTH);
-            //
-            //  Now send the header.
-            //
-            ESP_LOGI(__func__, "Sending header:");
-            ESP_LOG_BUFFER_HEXDUMP(__func__, frame->Buffer, frame->BufferLength, ESP_LOG_INFO);
-
-
-            enum UARTSyncStates state = Unknown;
-            retryCount = 0;
-            while (state != Acknowledge)
-            {
-                xSemaphoreTake(xUARTTxMutex, portMAX_DELAY);
-                _totalTxBytes += uart_write_bytes(STM32_UART_NUMBER, (const char *) frame->Buffer, frame->BufferLength);
-                _totalFramesSent++;
-                xSemaphoreGive(xUARTTxMutex);
-            }
-
-
+            sendResult = SendFrame(frame, "header");
             if (frame->Buffer != NULL)
             {
                 vPortFree(frame->Buffer);
             }
             vPortFree(frame);
             frame = NULL;
+            //
+            //  TODO: Work out what to do about errors.
+            //
+
+
             //
             //  Now break the payload down into frames and send the frames to the STM32.
             //
@@ -675,15 +685,15 @@ void UARTTxTask(void *pvParameters)
                 //
                 ESP_LOGI(__func__, "Sending frame:");
                 ESP_LOG_BUFFER_HEXDUMP(__func__, frame->Buffer, frame->BufferLength, ESP_LOG_INFO);
-                xSemaphoreTake(xUARTTxMutex, portMAX_DELAY);
-                _totalTxBytes += uart_write_bytes(STM32_UART_NUMBER, (const char *) frame->Buffer, frame->BufferLength);
-                _totalFramesSent++;
-                xSemaphoreGive(xUARTTxMutex);
+                sendResult = SendFrame(frame, "payload");
                 if (frame->Buffer != NULL)
                 {
                     vPortFree(frame->Buffer);
                 }
                 vPortFree(frame);
+                //
+                //  TODO: Work out what to do about errors.
+                //
             }
             //
             //  Message has been sent so it is time to clean up the heap.

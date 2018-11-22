@@ -101,7 +101,8 @@ enum UARTSyncStates
     Acknowledge,
     NegativeAcknowledge,
     Timeout,
-    Reset
+    Reset,
+    Error
 };
 
 struct BufferAndLength
