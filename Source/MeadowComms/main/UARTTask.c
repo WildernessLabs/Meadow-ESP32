@@ -59,6 +59,15 @@ QueueHandle_t UARTTransmitQueueHandle = NULL;
 QueueHandle_t xUARTSyncQueueHandle = NULL;
 
 /// <summary>
+///     This is the maximum number of milliseconds between sending a frame
+///     and a response being received by the ESP32.  This is a variable as
+///     it will depend upon the baud rate and the size of a frame.
+///
+///     This value should be set whan the UART os configured.
+/// </summary>
+TickType_t _uartMaximumSendResponsePeriod = 0;
+
+/// <summary>
 ///     Mutex to ensure that only one request to access the UART can be 
 ///     processed at any time.
 /// </summary>
@@ -215,6 +224,11 @@ void SetupUART()
         .stop_bits = UART_STOP_BITS_1,
         .flow_ctrl = UART_HW_FLOWCTRL_DISABLE
     };
+    //
+    //  TODO: Calculate this value, for debugging we will use an approximate value.
+    //
+    _uartMaximumSendResponsePeriod = 250 / portTICK_PERIOD_MS;
+    //
     uart_param_config(STM32_UART_NUMBER, &uart_config);
     uart_set_pin(STM32_UART_NUMBER, TXD_PIN, RXD_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
     uart_driver_install(STM32_UART_NUMBER, RX_BUF_SIZE * 2, TX_BUF_SIZE * 2, UART_QUEUE_LENGTH, &UARTRxQueueHandle, 0);
@@ -607,11 +621,14 @@ enum UARTSyncStates SendFrame(struct BufferAndLength *frame, const char * frameT
         _totalFramesSent++;
         xSemaphoreGive(xUARTTxMutex);
         retryCount++;
-        BaseType_t receiveResult = xQueueReceive(UARTTransmitQueueHandle, &result, portMAX_DELAY);
-        if (receiveResult == pdTRUE)
+        if (xQueueReceive(UARTTransmitQueueHandle, &result, _uartMaximumSendResponsePeriod) != pdTRUE)
         {
-            
+            result = Error;
         }
+    }
+    if (result != Acknowledge)
+    {
+        result = Error;
     }
 
     return (result);
