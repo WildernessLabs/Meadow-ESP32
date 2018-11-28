@@ -609,26 +609,46 @@ void ProcessApplicationDataFrame(uint8_t frameType, uint8_t *packet, uint8_t pac
 /// <param name="frameType>Name of the frame type being sent, this is used for debugging purposes.</param>
 enum UARTSyncStates SendFrame(struct BufferAndLength *frame, const char * frameType)
 {
-    enum UARTSyncStates result = Unknown;
+    enum UARTSyncStates result = Error;
     int retryCount = 0;
 
     ESP_LOGI(__func__, "Sending %s:", frameType);
     ESP_LOG_BUFFER_HEXDUMP(__func__, frame->Buffer, frame->BufferLength, ESP_LOG_INFO);
-    while ((result != Acknowledge) & (retryCount < _maximumRetryCount))
+    //
+    //  This queue needs to be empty before we send a frame otherwise we could
+    //  receive and ACK / NAK for the wrong message.
+    //
+    xQueueReset(xUARTSyncQueueHandle);
+    while ((result != Acknowledge) && (retryCount < _maximumRetryCount))
     {
         xSemaphoreTake(xUARTTxMutex, portMAX_DELAY);
         _totalTxBytes += uart_write_bytes(STM32_UART_NUMBER, (const char *) frame->Buffer, frame->BufferLength);
         _totalFramesSent++;
         xSemaphoreGive(xUARTTxMutex);
         retryCount++;
-        if (xQueueReceive(UARTTransmitQueueHandle, &result, _uartMaximumSendResponsePeriod) != pdTRUE)
+        BaseType_t queueResult = xQueueReceive(xUARTSyncQueueHandle, &result, _uartMaximumSendResponsePeriod);
+        ESP_LOGI(__func__, "ACK / NAK queue result: %d, item from queue: %d, retry count: %d", queueResult, result, retryCount);
+        if (queueResult != pdTRUE)
         {
             result = Error;
         }
     }
     if (result != Acknowledge)
     {
-        result = Error;
+        if (retryCount < _maximumRetryCount)
+        {
+            result = Error;
+            ESP_LOGI(__func__, "Error");
+        }
+        else
+        {
+            result = Timeout;
+            ESP_LOGI(__func__, "Timeout");
+        }
+    }
+    else
+    {
+        ESP_LOGI(__func__, "ACK");
     }
 
     return (result);
@@ -639,7 +659,6 @@ enum UARTSyncStates SendFrame(struct BufferAndLength *frame, const char * frameT
 /// </summary>
 void UARTTxTask(void *pvParameters)
 {
-    esp_log_level_set(__func__, ESP_LOG_INFO);
     while (true)
     {
         struct ApplicationResponse message;
@@ -700,8 +719,6 @@ void UARTTxTask(void *pvParameters)
                 //
                 //  Now send the payload frame.
                 //
-                ESP_LOGI(__func__, "Sending frame:");
-                ESP_LOG_BUFFER_HEXDUMP(__func__, frame->Buffer, frame->BufferLength, ESP_LOG_INFO);
                 sendResult = SendFrame(frame, "payload");
                 if (frame->Buffer != NULL)
                 {

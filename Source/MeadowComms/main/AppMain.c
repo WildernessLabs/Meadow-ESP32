@@ -15,6 +15,7 @@
 
 void app_main()
 {
+    esp_log_level_set("*", ESP_LOG_INFO);
     SetupMessageQueues();
     SetupUART();
     xTaskCreate(UARTRxTask, "UART_RX_TASK", 1024 * 2, NULL, configMAX_PRIORITIES, &xUARTReceiveTaskHandle);
@@ -24,6 +25,7 @@ void app_main()
     xTaskCreate(MeshNetworkTask, MESH_NETWORK_TASK_NAME, 1024 * 2, NULL, configMAX_PRIORITIES - 1, &xWiFiTaskHandle);
 
     uint32_t sequenceNumber = 0;
+    const TickType_t xDelay = 1000 / portTICK_PERIOD_MS;
     while (1)
     {
         uint8_t *buffer = pvPortMalloc(APP_RESPONSE_HEADER_LENGTH);
@@ -36,12 +38,13 @@ void app_main()
 
         response.interface = 0;
         response.code = 700;
-        response.messageID = 1025;
+        response.messageID = sequenceNumber;
         response.payload = buffer;
         response.payloadLength = APP_RESPONSE_PAYLOAD_LENGTH;
         if (xQueueSendToBack(UARTTransmitQueueHandle, &response, 0) != pdTRUE)
         {
             ESP_LOGI(__func__, "Error sending response, cannot queue message");
         }
+        vTaskDelay(xDelay);
     }
 }
