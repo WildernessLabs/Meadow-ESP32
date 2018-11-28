@@ -19,7 +19,7 @@
       <Version>
         <GCC>5.2.0</GCC>
         <GDB>7.10</GDB>
-        <Revision>13</Revision>
+        <Revision>15</Revision>
       </Version>
     </ToolchainID>
     <IDFCheckout>
@@ -178,7 +178,7 @@
     <DebugMethod>
       <ID>openocd</ID>
       <InterfaceID>esp32-devkit</InterfaceID>
-      <InterfaceSerialNumber>5&amp;19F4C0D2&amp;0&amp;2</InterfaceSerialNumber>
+      <InterfaceSerialNumber>5&amp;D975007&amp;0&amp;3</InterfaceSerialNumber>
       <Configuration xsi:type="com.visualgdb.edp.openocd.settings.esp32">
         <CommandLine>-f interface/ftdi/esp32_devkitj_v1.cfg -c "adapter_khz 3000" -f target/esp32.cfg</CommandLine>
         <ExtraParameters>
@@ -187,7 +187,7 @@
           <ConnectUnderReset>false</ConnectUnderReset>
         </ExtraParameters>
         <LoadProgressGUIThreshold>131072</LoadProgressGUIThreshold>
-        <ProgramMode>Enabled</ProgramMode>
+        <ProgramMode>Auto</ProgramMode>
         <StartupCommands>
           <string>set remotetimeout 60</string>
           <string>target remote :$$SYS:GDB_PORT$$</string>
