@@ -26,7 +26,6 @@ char *MESH_NETWORK_TASK_NAME = "MESH_NETWORK_TASK_NAME";
 /// <summary>
 void MeshNetworkTask(void *pvParameters)
 {
-    esp_log_level_set(MESH_NETWORK_TASK_NAME, ESP_LOG_INFO);
     while (true)
     {
         struct ApplicationRequest message;
