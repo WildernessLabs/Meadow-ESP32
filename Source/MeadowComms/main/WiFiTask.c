@@ -28,7 +28,6 @@ char *WIFI_TASK_NAME = "WIFI_TASK";
 /// <summary>
 void WiFiTask(void *pvParameters)
 {
-    esp_log_level_set(WIFI_TASK_NAME, ESP_LOG_INFO);
     while (true)
     {
         struct ApplicationRequest message;

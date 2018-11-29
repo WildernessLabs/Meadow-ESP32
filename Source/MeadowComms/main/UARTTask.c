@@ -9,6 +9,8 @@
 #include "soc/uart_struct.h"
 #include "string.h"
 #include "stdlib.h"
+#include "esp_app_trace.h"
+#include "string.h"
 
 #include "UARTTask.h"
 #include "Messaging.h"
@@ -197,6 +199,11 @@ static uint _totalRxErrors = 0;
 static uint _totalTxErrors = 0;
 
 //
+//  Buffer to hold messages to be sent to ESP32 Semihosting output.
+//
+static char _semihostingBuffer[128];
+
+//
 //  ESP heap debugging stuff.
 //
 #include "esp_heap_trace.h"
@@ -218,7 +225,7 @@ void SetupUART()
 {
     const uart_config_t uart_config =
     {
-        .baud_rate = 57600,
+        .baud_rate = 115200,
         .data_bits = UART_DATA_8_BITS,
         .parity = UART_PARITY_DISABLE,
         .stop_bits = UART_STOP_BITS_1,
@@ -233,7 +240,7 @@ void SetupUART()
     uart_set_pin(STM32_UART_NUMBER, TXD_PIN, RXD_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
     uart_driver_install(STM32_UART_NUMBER, RX_BUF_SIZE * 2, TX_BUF_SIZE * 2, UART_QUEUE_LENGTH, &UARTRxQueueHandle, 0);
     xUARTTxMutex = xSemaphoreCreateMutex();
-    xUARTSyncQueueHandle = xQueueCreate(2, sizeof(enum UARTSyncStates));
+    xUARTSyncQueueHandle = xQueueCreate(1, sizeof(enum UARTSyncStates));
     //    ESP_ERROR_CHECK(heap_trace_init_standalone(heap_trace_records, NUMBER_OF_HEAP_TRACE_RECORDS));
     memset(_startOfFrameCharacters, START_OF_FRAME_CHARACTER, NUMBER_OF_START_OF_FRAME_CHARACTERS);
     memset(_endOfFrameCharacters, END_OF_FRAME_CHARACTER, NUMBER_OF_END_OF_FRAME_CHARACTERS);
@@ -609,26 +616,37 @@ void ProcessApplicationDataFrame(uint8_t frameType, uint8_t *packet, uint8_t pac
 /// <param name="frameType>Name of the frame type being sent, this is used for debugging purposes.</param>
 enum UARTSyncStates SendFrame(struct BufferAndLength *frame, const char * frameType)
 {
-    enum UARTSyncStates result = Unknown;
+    enum UARTSyncStates result = Error;
     int retryCount = 0;
 
-    ESP_LOGI(__func__, "Sending %s:", frameType);
-    ESP_LOG_BUFFER_HEXDUMP(__func__, frame->Buffer, frame->BufferLength, ESP_LOG_INFO);
-    while ((result != Acknowledge) & (retryCount < _maximumRetryCount))
+    //
+    //  This queue needs to be empty before we send a frame otherwise we could
+    //  receive and ACK / NAK for the wrong message.
+    //
+    xQueueReset(xUARTSyncQueueHandle);
+    while ((result != Acknowledge) && (retryCount < _maximumRetryCount))
     {
         xSemaphoreTake(xUARTTxMutex, portMAX_DELAY);
         _totalTxBytes += uart_write_bytes(STM32_UART_NUMBER, (const char *) frame->Buffer, frame->BufferLength);
         _totalFramesSent++;
         xSemaphoreGive(xUARTTxMutex);
         retryCount++;
-        if (xQueueReceive(UARTTransmitQueueHandle, &result, _uartMaximumSendResponsePeriod) != pdTRUE)
+        BaseType_t queueResult = xQueueReceive(xUARTSyncQueueHandle, &result, _uartMaximumSendResponsePeriod);
+        if (queueResult != pdTRUE)
         {
             result = Error;
         }
     }
     if (result != Acknowledge)
     {
-        result = Error;
+        if (retryCount < _maximumRetryCount)
+        {
+            result = Error;
+        }
+        else
+        {
+            result = Timeout;
+        }
     }
 
     return (result);
@@ -639,12 +657,12 @@ enum UARTSyncStates SendFrame(struct BufferAndLength *frame, const char * frameT
 /// </summary>
 void UARTTxTask(void *pvParameters)
 {
-    esp_log_level_set(__func__, ESP_LOG_INFO);
     while (true)
     {
         struct ApplicationResponse message;
         enum UARTSyncStates sendResult;
-        BaseType_t result = xQueueReceive(UARTTransmitQueueHandle, &message, portMAX_DELAY);
+
+        BaseType_t result = xQueueReceive(UARTTransmitQueueHandle, &message, portMAX_DELAY);        
         if (result == pdTRUE)
         {
             //
@@ -694,14 +712,9 @@ void UARTTxTask(void *pvParameters)
                 start += length;
                 amountLeftToSend -= length;
                 //
-                //  Generate an encoded frame.
+                //  Generate an encoded header frame and send it.
                 //
                 frame = GenerateApplicationFrame(PKT_DATA | DATA_PAYLOAD, message.messageID, sequenceNumber++, frameBuffer, length);
-                //
-                //  Now send the payload frame.
-                //
-                ESP_LOGI(__func__, "Sending frame:");
-                ESP_LOG_BUFFER_HEXDUMP(__func__, frame->Buffer, frame->BufferLength, ESP_LOG_INFO);
                 sendResult = SendFrame(frame, "payload");
                 if (frame->Buffer != NULL)
                 {

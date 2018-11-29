@@ -14,13 +14,13 @@
 /// </summary>
 void SetupMessageQueues()
 {
-    const size_t messageSize = sizeof(struct ApplicationRequest);
-    UARTTransmitQueueHandle = xQueueCreate(MAX_QUEUE_LENGTH, messageSize);
+    UARTTransmitQueueHandle = xQueueCreate(MAX_QUEUE_LENGTH, sizeof(struct ApplicationResponse));
     if (UARTTransmitQueueHandle == NULL)
     {
         ESP_LOGI(__func__, "Cannot allocate UART transmit queue.");
     }
     //
+    const size_t messageSize = sizeof(struct ApplicationRequest);
     WiFiQueueHandle = xQueueCreate(MAX_QUEUE_LENGTH, messageSize);
     if (WiFiQueueHandle == NULL)
     {
