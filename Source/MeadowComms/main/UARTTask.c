@@ -936,8 +936,6 @@ void UARTRxTask(void *pvParameters)
                         amountToRead = dataLeftToRead <= RX_BUF_SIZE ? dataLeftToRead : RX_BUF_SIZE;
                         memset(data, 0, RX_BUF_SIZE);
                         uart_read_bytes(STM32_UART_NUMBER, data, amountToRead, portMAX_DELAY);
-                        ESP_LOGI(__func__, "Data received:");
-                        ESP_LOG_BUFFER_HEXDUMP(__func__, data, amountToRead, ESP_LOG_INFO);
                         DecodeSerialData(data, amountToRead);
                         dataLeftToRead -= amountToRead;
                     }
