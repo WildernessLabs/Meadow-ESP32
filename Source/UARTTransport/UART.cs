@@ -421,7 +421,7 @@ namespace UARTTransport
         /// <param name="maximumRetries">Maximum number of retries should a timeout or NAK occur.</param>
         public UART(string serialPortName, uint maximumRetries = 3)
         {
-            _port = new SerialPort(serialPortName, 57600, Parity.None, 8, StopBits.One);
+            _port = new SerialPort(serialPortName, 115200, Parity.None, 8, StopBits.One);
             _port.DataReceived += _port_DataReceived;
             _port.Open();
             for (int index = 0; index < _startOfFrame.Length; index++)
@@ -861,6 +861,7 @@ namespace UARTTransport
                                     {
                                         UARTDataReceivedEventArgs args = new UARTDataReceivedEventArgs((FrameType)_currentFrameType, _messageID, _frameSequenceNumber, _framePayload);
                                         DataReceived(this, args);
+                                        AcknowledgeFrame(TRANSPORT_ACK, ErrorCodes.OK);
                                     }
                                 }
                                 else
