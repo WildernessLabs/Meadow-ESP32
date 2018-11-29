@@ -289,7 +289,7 @@ uint32_t QueueMessage()
     }
     if (messageHeader.interface != INTERFACE_SYSTEM)
     {
-        if (xQueueSendToBack(queueHandle, &messageHeader, 0) != pdTRUE)
+        if (xQueueSendToBack(queueHandle, &messageHeader, 0) != pdPASS)
         {
             if (messageHeader.payload != NULL)
             {
@@ -323,7 +323,7 @@ void QueueUARTResponse(uint8_t interface, uint32_t code, uint32_t messageID, uin
     response.messageID = messageID;
     response.payload = payload;
     response.payloadLength = payloadLength;
-    if (xQueueSendToBack(UARTTransmitQueueHandle, &response, 0) != pdTRUE)
+    if (xQueueSendToBack(UARTTransmitQueueHandle, &response, 0) != pdPASS)
     {
         ESP_LOGI(__func__, "Error sending response, cannot queue message");
     }
@@ -581,7 +581,7 @@ void ProcessTransportData(uint8_t currentFrameType)
             state = Reset;
             break;
     }
-    if (xQueueSendToBack(xUARTSyncQueueHandle, &state, 0) != pdTRUE)
+    if (xQueueSendToBack(xUARTSyncQueueHandle, &state, 0) != pdPASS)
     {
         ESP_LOGI(__func__, "Sending synchronisation message.");
     }
