@@ -7,6 +7,7 @@
 #include "string.h"
 #include "esp_app_trace.h"
 #include "string.h"
+#include "nvs_flash.h"
 
 #include "UARTTask.h"
 #include "WiFiTask.h"
@@ -26,6 +27,19 @@ void app_main()
     xTaskCreate(BluetoothTask, BLUETOOTH_TASK_NAME, 1024 * 2, NULL, configMAX_PRIORITIES - 1, &xWiFiTaskHandle);
     xTaskCreate(MeshNetworkTask, MESH_NETWORK_TASK_NAME, 1024 * 2, NULL, configMAX_PRIORITIES - 1, &xWiFiTaskHandle);
 
+    esp_err_t result = nvs_flash_init();
+//    system_init();
+    if ((result == ESP_ERR_NVS_NO_FREE_PAGES) || (result == ESP_ERR_NVS_NEW_VERSION_FOUND))
+    {
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        result = nvs_flash_init();
+    }
+    ESP_ERROR_CHECK(result);
+    //Start();
+//    GetAvailableNetworks();
+
+    
+/**
     uint32_t messageNumber = 0;
     const TickType_t xDelay = 1500 / portTICK_PERIOD_MS;
     while (1)
@@ -51,4 +65,6 @@ void app_main()
         }
         vTaskDelay(xDelay);
     }
+**/
+
 }
