@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Threading;
-using UARTTransport;
+using UartTransport;
 
 namespace Esp32Messaging
 {
@@ -29,7 +29,7 @@ namespace Esp32Messaging
         private EventWaitHandle _waitingForMessageHandle = new AutoResetEvent(false);
 
         /// <summary>
-        ///     Handle used to synchronise the responses from the UART.
+        ///     Handle used to synchronise the responses from the Uart.
         /// </summary>
         private EventWaitHandle _waitingForResponseHandle = new AutoResetEvent(false);
 
@@ -41,7 +41,7 @@ namespace Esp32Messaging
         /// <summary>
         ///     Serial port connecting the STM32 and the ESP32 microcontrollers.
         /// </summary>
-        private readonly UART _uart;
+        private readonly Uart _uart;
 
         /// <summary>
         ///     The message that is being received from the ESP32.
@@ -57,7 +57,7 @@ namespace Esp32Messaging
         /// <summary>
         ///     Transport error information.
         /// </summary>
-        private UARTTransportEventArgs _uartResponse = null;
+        private UartTransportEventArgs _uartResponse = null;
 
         #endregion Private variables
 
@@ -71,7 +71,7 @@ namespace Esp32Messaging
         /// <summary>
         ///     Data received event.
         /// </summary>
-        public event UARTDataReceivedEventHandler DataReceived = delegate { };
+        public event UartDataReceivedEventHandler DataReceived = delegate { };
 
         #endregion Delegates
 
@@ -95,7 +95,7 @@ namespace Esp32Messaging
             {
                 throw new InvalidOperationException("Only a single instance of a MessageQueue can be created.");
             }
-            _uart = new UART(comPort, maximumRetryCount);
+            _uart = new Uart(comPort, maximumRetryCount);
             _uart.TransportError += UartTransportError;
             _uart.DataReceived += UartDataReceived;
             _messageQueue = new Queue<Message>();
@@ -130,10 +130,10 @@ namespace Esp32Messaging
         #region Event handlers
 
         /// <summary>
-        ///     UART has sent a response to the request to send some data to the ESP32.
+        ///     Uart has sent a response to the request to send some data to the ESP32.
         /// </summary>
         /// <remarks>
-        ///     This method simply stores the response code returned by the UART and then
+        ///     This method simply stores the response code returned by the Uart and then
         ///     signals that a response that a response has been received.  It is up to the
         ///     code queuing the items to deal with the response.
         ///     
@@ -142,7 +142,7 @@ namespace Esp32Messaging
         /// </remarks>
         /// <param name="sender">Object raising the event.</param>
         /// <param name="e">Event arguments containing information about the success or failure of the send request.</param>
-        private void UartTransportError(object sender, UARTTransportEventArgs e)
+        private void UartTransportError(object sender, UartTransportEventArgs e)
         {
             _uartResponse = e;
             _incomingMessage = null;
@@ -150,15 +150,15 @@ namespace Esp32Messaging
         }
 
         /// <summary>
-        ///     Payload has been received from the UART so process the data.
+        ///     Payload has been received from the Uart so process the data.
         /// </summary>
         /// <param name="sender">Object raising the event.</param>
-        /// <param name="e">Payload received from the UART.</param>
+        /// <param name="e">Payload received from the Uart.</param>
         private void UartDataReceived(object sender, UARTDataReceivedEventArgs e)
         {
             switch (e.FrameType)
             {
-                case UART.FrameType.ApplicationHeader:
+                case Uart.FrameType.ApplicationHeader:
                     byte device = e.Frame[Message.INTERFACE];
                     UInt32 function = Encoders.ExtractUInt32(e.Frame, Message.FUNCTION_NUMBER);
                     UInt32 messageID = Encoders.ExtractUInt32(e.Frame, Message.MESSAGE_ID);
@@ -178,11 +178,11 @@ namespace Esp32Messaging
                         _incomingMessage = new Message(device, function, messageID, new byte[payloadLength]);
                     }
                     break;
-                case UART.FrameType.ApplicationData:
+                case Uart.FrameType.ApplicationData:
                     if (_incomingMessage != null)
                     {
                         //  TODO: What happens if the messageID does not match the _incomingMessage.MessageID?
-                        UInt32 offset = (UInt32)((e.SequenceNumber - 1) * UART.MAXIMUM_FRAME_LENGTH);
+                        UInt32 offset = (UInt32)((e.SequenceNumber - 1) * Uart.MAXIMUM_FRAME_LENGTH);
                         UInt32 totalLength = offset + ((UInt32)e.Frame.Length);
                         if (totalLength > _incomingMessage.Payload.Length)
                         {
@@ -245,7 +245,7 @@ namespace Esp32Messaging
                 {
                     _uart.Send(frame.FrameType, frame.MessageID, frame.SequenceNumber, frame.Payload);
                     _waitingForResponseHandle.WaitOne();
-                    if (_uartResponse.PacketType != UARTTransportEventArgs.TransportPacketType.ACK)
+                    if (_uartResponse.PacketType != UartTransportEventArgs.TransportPacketType.ACK)
                     {
                         MessageQueueErrorEventArgs args = new MessageQueueErrorEventArgs(message.Device, message.Function, message.MessageID, _uartResponse.StatusCode);
                         MessageError(this, args);

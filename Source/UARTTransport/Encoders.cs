@@ -1,6 +1,6 @@
 using System;
 
-namespace UARTTransport
+namespace UartTransport
 {
     public class Encoders
     {

@@ -3,10 +3,10 @@ using System.Diagnostics;
 using System.Text;
 using System.Threading;
 using Esp32Messaging;
-using UARTTransport;
+using UartTransport;
 using System.Collections.Generic;
 
-namespace UARTTest
+namespace UartTest
 {
     class Program
     {

@@ -1,5 +1,5 @@
 ﻿using System;
-using UARTTransport;
+using UartTransport;
 
 namespace Esp32Messaging
 {
@@ -13,7 +13,7 @@ namespace Esp32Messaging
         /// <summary>
         ///     Frame type.
         /// </summary>
-        public UART.FrameType FrameType { get; private set; }
+        public Uart.FrameType FrameType { get; private set; }
 
         /// <summary>
         ///     Message ID that this frame belongs to.
@@ -46,7 +46,7 @@ namespace Esp32Messaging
         /// <param name="messageID">ID of the message being sent.</param>
         /// <param name="sequenceNumber">Sequence number of this packet in the overall message.</param>
         /// <param name="payload">Payload bytes.</param>
-        public Frame(UART.FrameType frameType, UInt32 messageID, byte sequenceNumber, byte[] payload)
+        public Frame(Uart.FrameType frameType, UInt32 messageID, byte sequenceNumber, byte[] payload)
         {
             FrameType = frameType;
             MessageID = messageID;

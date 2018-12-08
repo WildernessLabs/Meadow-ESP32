@@ -51,7 +51,7 @@ namespace Esp32Messaging
     }
 
     /// <summary>
-    ///     Errors that could be reported by the UART.
+    ///     Errors that could be reported by the Uart.
     /// </summary>
     /// <remarks>
     ///     The error codes and values here must be kept in step
@@ -70,7 +70,7 @@ namespace Esp32Messaging
         CRCError = 1,
 
         /// <summary>
-        ///     UART as requested that the message is restarted from
+        ///     Uart as requested that the message is restarted from
         ///     from the start.
         /// </summary>
         Restart = 2,
