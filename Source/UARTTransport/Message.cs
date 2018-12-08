@@ -4,7 +4,7 @@ using System.Collections;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using UARTTransport;
+using UartTransport;
 
 namespace Esp32Messaging
 {
@@ -97,7 +97,7 @@ namespace Esp32Messaging
             Encoders.EncodeUInt32(MessageID, buffer, MESSAGE_ID);
             UInt16 amountLeftToSend = (UInt16) (Payload == null ? 0 : Payload.Length & 0xffff);
             Encoders.EncodeUInt16(amountLeftToSend, buffer, PAYLOAD_LENGTH);
-            Frame frame = new Frame(UART.FrameType.ApplicationHeader, MessageID, sequenceNumber++, buffer);
+            Frame frame = new Frame(Uart.FrameType.ApplicationHeader, MessageID, sequenceNumber++, buffer);
             yield return frame;
             //
             //  Now we can process the message payload.
@@ -105,7 +105,7 @@ namespace Esp32Messaging
             UInt16 start = 0;
             while (amountLeftToSend > 0)
             {
-                byte length = (byte) ((amountLeftToSend < UART.MAXIMUM_FRAME_LENGTH ? amountLeftToSend : UART.MAXIMUM_FRAME_LENGTH) & 0xff);
+                byte length = (byte) ((amountLeftToSend < Uart.MAXIMUM_FRAME_LENGTH ? amountLeftToSend : Uart.MAXIMUM_FRAME_LENGTH) & 0xff);
                 if (length != buffer.Length)
                 {
                     buffer = new byte[length];
@@ -113,7 +113,7 @@ namespace Esp32Messaging
                 Array.Copy(Payload, start, buffer, 0, length);
                 start += length;
                 amountLeftToSend -= length;
-                frame = new Frame(UART.FrameType.ApplicationData, MessageID, sequenceNumber++, buffer);
+                frame = new Frame(Uart.FrameType.ApplicationData, MessageID, sequenceNumber++, buffer);
                 yield return frame;
             }
         }

@@ -6,9 +6,9 @@ using System.Timers;
 using Esp32Messaging;
 using System.Runtime.CompilerServices;
 
-namespace UARTTransport
+namespace UartTransport
 {
-    public class UART
+    public class Uart
     {
         #region Enums
 
@@ -150,7 +150,7 @@ namespace UARTTransport
         public const UInt32 MAXIMUM_FRAME_LENGTH = 255;
 
         /// <summary>
-        ///     Seed for the CRC32 algorithm.
+        ///     Seed for the Crc32 algorithm.
         /// </summary>
         private const UInt32 CRC32_SEED = 0xffffffff;
 
@@ -212,7 +212,7 @@ namespace UARTTransport
         /// <summary>
         ///     This variable holds the byte number when putting together multi-byte
         ///     values (i.e. 4 bytes in a UInt32 object).  this allows the original
-        ///     object to be rehydrated from the UART byte stream.
+        ///     object to be rehydrated from the Uart byte stream.
         /// </summary>
         private int _byteNumber = 0;
 
@@ -287,12 +287,12 @@ namespace UARTTransport
         /// <summary>
         ///     PacketType event.
         /// </summary>
-        public event UARTTransportErrorEventHandler TransportError = delegate { };
+        public event UartTransportErrorEventHandler TransportError = delegate { };
 
         /// <summary>
         ///     Data received event.
         /// </summary>
-        public event UARTDataReceivedEventHandler DataReceived = delegate { };
+        public event UartDataReceivedEventHandler DataReceived = delegate { };
 
         #endregion Delegates
 
@@ -329,7 +329,7 @@ namespace UARTTransport
             Debug.WriteLine($"    Timeout sending message {_currentRetryCount}");
             if (_currentRetryCount > MaximumRetryCount)
             {
-                UARTTransportEventArgs timeout = new UARTTransportEventArgs(UARTTransportEventArgs.TransportPacketType.Timeout, 0);
+                UartTransportEventArgs timeout = new UartTransportEventArgs(UartTransportEventArgs.TransportPacketType.Timeout, 0);
                 TransportError(this, timeout);
             }
             else
@@ -349,16 +349,16 @@ namespace UARTTransport
         /// <summary>
         ///     Default constructor (private to prevent it being used).
         /// </summary>
-        private UART()
+        private Uart()
         {            
         }
 
         /// <summary>
-        ///     Create a new UART object on the specified serial port.
+        ///     Create a new Uart object on the specified serial port.
         /// </summary>
         /// <param name="serialPortName">Name of the serial port connected to the ESP32.</param>
         /// <param name="maximumRetries">Maximum number of retries should a timeout or NAK occur.</param>
-        public UART(string serialPortName, uint maximumRetries = 3)
+        public Uart(string serialPortName, uint maximumRetries = 3)
         {
             _port = new SerialPort(serialPortName, 115200, Parity.None, 8, StopBits.One);
             _port.DataReceived += _port_DataReceived;
@@ -388,9 +388,9 @@ namespace UARTTransport
         /// </summary>
         /// <param name="data">Buffer of data.</param>
         /// <returns>32-bit CRC for the array of bytes.</returns>
-        private static UInt32 CRC32(byte[] buffer)
+        private static UInt32 Crc32(byte[] buffer)
         {
-            return(CRC32(buffer, 0, buffer.Length));
+            return(Crc32(buffer, 0, buffer.Length));
         }
 
         /// <summary>
@@ -400,30 +400,30 @@ namespace UARTTransport
         /// <param name="start">Offset into the buffer at which the CRC calculation will start</param>
         /// <param name="length">Amount of data to calculate the CRC</param>
         /// <returns>32-bit CRC for the array of bytes.</returns>
-        private static UInt32 CRC32(byte[] data, int start, int length)
+        private static UInt32 Crc32(byte[] data, int start, int length)
         {
             UInt32 crc = CRC32_SEED;
 
             for (int index = start; index < length; index++)
             {
-                crc = ProgressiveCRC32(crc, data[index]);
+                crc = ProgressiveCrc32(crc, data[index]);
             }
 
             return (crc);
         }
 
         /// <summary>
-        ///     Progressively calculate the CRC32 value.
+        ///     Progressively calculate the Crc32 value.
         /// </summary>
         /// <remarks>
-        ///     This allows method allows the CRC32 value to be built up as the data bytes
+        ///     This allows method allows the Crc32 value to be built up as the data bytes
         ///     from the serial port are received.  This means that all of the data frame
         ///     does not need to be present in order to calculate this value.
         /// </remarks>
         /// <param name="currentChecksum">Current value for the _originalChecksum.</param>
         /// <param name="data">ApplicationData byte to be processed.</param>
-        /// <returns>Next value for the CRC32.</returns>
-        private static UInt32 ProgressiveCRC32(UInt32 currentChecksum, byte data)
+        /// <returns>Next value for the Crc32.</returns>
+        private static UInt32 ProgressiveCrc32(UInt32 currentChecksum, byte data)
         {
             UInt32 crc = currentChecksum;
             crc ^= data;
@@ -515,7 +515,7 @@ namespace UARTTransport
         /// <param name="messageID">Unique message ID for the message.</param>
         /// <param name="sequenceNumber">Sequence number for this frame for the specified _messageID</param>
         /// <param name="message">Array of bytes containing the message to be sent.</param>
-        /// <returns>Frame with CRC ready for transmission over the UART.</returns>
+        /// <returns>Frame with CRC ready for transmission over the Uart.</returns>
         private byte[] GenerateApplicationFrame(FrameType frameType, UInt32 messageID, byte sequenceNumber, byte[] message)
         {
             byte[] frame = new byte[HeaderAndPayloadSize(message, FRAME_HEADER_LENGTH)];
@@ -533,7 +533,7 @@ namespace UARTTransport
             //
             //  Now add the CRC to the frame.
             //
-            Encoders.EncodeUInt32(CRC32(frame, 0, frame.Length - 4), frame, currentByte);
+            Encoders.EncodeUInt32(Crc32(frame, 0, frame.Length - 4), frame, currentByte);
             return(frame);
         }
 
@@ -542,7 +542,7 @@ namespace UARTTransport
         /// </summary>
         /// <param name="message">Message body.</param>
         /// <param name="frameLength">Amount of data in the original frame.</param>
-        /// <returns>Encoded frame ready to be sent over the UART.</returns>
+        /// <returns>Encoded frame ready to be sent over the Uart.</returns>
         private byte[] GenerateTransportFrame(byte[] message, int frameLength)
         {
             byte[] frame = new byte[frameLength];
@@ -555,7 +555,7 @@ namespace UARTTransport
             //  when the CRC is calculated as the CRC should only be calculated on
             //  the actual data plus any padding characters.
             //
-            UInt32 crc = CRC32(frame, 0, frame.Length - 4);
+            UInt32 crc = Crc32(frame, 0, frame.Length - 4);
             Encoders.EncodeUInt32(crc, frame, currentByte);
             //currentByte += 4;
             //frame[currentByte] = END_OF_FRAME_CHARACTER;
@@ -628,7 +628,7 @@ namespace UARTTransport
                     {
                         _timeoutTimer.Enabled = false;
                     }
-                    UARTTransportEventArgs ack = new UARTTransportEventArgs(UARTTransportEventArgs.TransportPacketType.ACK, (Esp32Messaging.StatusCodes) _statusCode);
+                    UartTransportEventArgs ack = new UartTransportEventArgs(UartTransportEventArgs.TransportPacketType.ACK, (Esp32Messaging.StatusCodes) _statusCode);
                     TransportError(this, ack);
                     break;
                 case TRANSPORT_NAK:
@@ -639,7 +639,7 @@ namespace UARTTransport
                     _currentRetryCount++;
                     if (_currentRetryCount > MaximumRetryCount)
                     {
-                        UARTTransportEventArgs nak = new UARTTransportEventArgs(UARTTransportEventArgs.TransportPacketType.NAK, (Esp32Messaging.StatusCodes) _statusCode);
+                        UartTransportEventArgs nak = new UartTransportEventArgs(UartTransportEventArgs.TransportPacketType.NAK, (Esp32Messaging.StatusCodes) _statusCode);
                         TransportError(this, nak);
                     }
                     else
@@ -726,7 +726,7 @@ namespace UARTTransport
                                     _messageID = 0;
                                 }
                                 _calculatedChecksum = CRC32_SEED;
-                                _calculatedChecksum = ProgressiveCRC32(_calculatedChecksum, data);
+                                _calculatedChecksum = ProgressiveCrc32(_calculatedChecksum, data);
                                 _byteNumber = 0;
                                 break;
                             case CommunicationStates.StatusCode:
@@ -738,7 +738,7 @@ namespace UARTTransport
                                     _byteNumber = 0;
                                     _originalChecksum = 0;
                                 }
-                                _calculatedChecksum = ProgressiveCRC32(_calculatedChecksum, data);
+                                _calculatedChecksum = ProgressiveCrc32(_calculatedChecksum, data);
                                 break;
                             case CommunicationStates.MessageID:
                                 _messageID |= (UInt32)(data << (_byteNumber * 8));
@@ -747,16 +747,16 @@ namespace UARTTransport
                                 {
                                     _communicationState = CommunicationStates.SequenceNumber;
                                 }
-                                _calculatedChecksum = ProgressiveCRC32(_calculatedChecksum, data);
+                                _calculatedChecksum = ProgressiveCrc32(_calculatedChecksum, data);
                                 break;
                             case CommunicationStates.SequenceNumber:
                                 _frameSequenceNumber = data;
                                 _communicationState = CommunicationStates.Length;
-                                _calculatedChecksum = ProgressiveCRC32(_calculatedChecksum, data);
+                                _calculatedChecksum = ProgressiveCrc32(_calculatedChecksum, data);
                                 break;
                             case CommunicationStates.Length:
                                 _framePayloadLength = data;
-                                _calculatedChecksum = ProgressiveCRC32(_calculatedChecksum, data);
+                                _calculatedChecksum = ProgressiveCrc32(_calculatedChecksum, data);
                                 if (_framePayloadLength > 0)
                                 {
                                     _framePayload = new byte[_framePayloadLength];
@@ -773,7 +773,7 @@ namespace UARTTransport
                             case CommunicationStates.Payload:
                                 _framePayload[_framePayloadIndex] = data;
                                 _framePayloadIndex++;
-                                _calculatedChecksum = ProgressiveCRC32(_calculatedChecksum, data);
+                                _calculatedChecksum = ProgressiveCrc32(_calculatedChecksum, data);
                                 if (_framePayloadIndex == _framePayloadLength)
                                 {
                                     _communicationState = CommunicationStates.CRC;
