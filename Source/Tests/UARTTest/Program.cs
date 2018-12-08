@@ -4,6 +4,7 @@ using System.Text;
 using System.Threading;
 using Esp32Messaging;
 using UARTTransport;
+using System.Collections.Generic;
 
 namespace UARTTest
 {
@@ -50,15 +51,63 @@ namespace UARTTest
                 queue.MessageReceived += Queue_MessageReceived;
                 queue.MessageError += Queue_MessageError;
 
-                UInt32 messageID = 0x01;
-                Message message = new Message(WiFiInterface, WiFiFunctionStart, messageID++, payload);
+                UInt32 messageID = WiFiFunctionStart;
+                Message message = new Message(WiFiInterface, WiFiFunctionStart, messageID, payload);
                 queue.Add(message);
                 Thread.Sleep(5000);
-                Message scanForNetworksMessage = new Message(WiFiInterface, WiFiFunctionScanForNetworks, messageID++, null);
+                messageID = WiFiFunctionScanForNetworks;
+                Message scanForNetworksMessage = new Message(WiFiInterface, WiFiFunctionScanForNetworks, messageID, null);
                 queue.Add(scanForNetworksMessage);
 
                 Thread.Sleep(Timeout.Infinite);
             }
+        }
+
+        private const int BSSID_OFFSET = 0;
+        private const int SSID_OFFSET = BSSID_OFFSET + 6;
+        private const int PRIMARY_CHANNEL_OFFSET = SSID_OFFSET + 33;
+        private const int SECONDARY_CHANNEL_OFFSET = PRIMARY_CHANNEL_OFFSET + 1;
+        private const int RSSI_OFFSET = SECONDARY_CHANNEL_OFFSET + 1;
+        private const int AUTHENTICATION_MODE_OFFSET = RSSI_OFFSET + 1;
+        private const int PAIRWISE_CIPHER_OFFSET = AUTHENTICATION_MODE_OFFSET + 1;
+        private const int GROUP_CIPHER_OFFSET = PAIRWISE_CIPHER_OFFSET + 1;
+        private const int ANTENNA_OFFSET = GROUP_CIPHER_OFFSET + 1;
+        private const int PROTOCOLS_OFFSET = ANTENNA_OFFSET + 1;
+        private const int COUNTRY_CODE_OFFSET = PROTOCOLS_OFFSET + 4;
+        private const int START_CHANNEL_OFFSET = COUNTRY_CODE_OFFSET + 3;
+        private const int NUMBER_OF_CHANNELS_OFFSET = START_CHANNEL_OFFSET + 1;
+        private const int TX_POWER_MAXIMUM_OFFSET = NUMBER_OF_CHANNELS_OFFSET + 1;
+        private const int POLICY_OFFSET = TX_POWER_MAXIMUM_OFFSET + 1;
+        private const int ACCESS_POINT_INFORMATION_LENGTH = POLICY_OFFSET + 1;
+
+        private static List<AccessPoint> BuildAccessPointsList(UInt16 numberOfAccessPoints, byte[] payload)
+        {
+            List<AccessPoint> accessPoints = new List<AccessPoint>(numberOfAccessPoints);
+            int offset = 2;
+            for (int accessPoint = 0; accessPoint < numberOfAccessPoints; accessPoint++)
+            {
+                AccessPoint ap = new AccessPoint();
+
+                byte[] bssid = new byte[6];
+                Array.Copy(payload, offset + BSSID_OFFSET, bssid, 0, 6);
+                ap.Bssid = new MacAddress(bssid);
+                byte[] ssid = new byte[33];
+                Array.Copy(payload, offset + SSID_OFFSET, ssid, 0, 33);
+                char[] apName = Encoding.UTF8.GetChars(ssid);
+                int index = 0;
+                while ((index < 33) && (ssid[index] != 0))
+                {
+                    ap.Ssid += apName[index];
+                    index++;
+                }
+                ap.PrimaryChannel = payload[offset + PRIMARY_CHANNEL_OFFSET];
+                ap.SecondaryChannel = (WiFiSecondChannel) payload[offset + SECONDARY_CHANNEL_OFFSET];
+                ap.Rssi = (sbyte) payload[offset + RSSI_OFFSET];
+                ap.AuthenticationMode = (WiFiAuthenticationMode) payload[offset + AUTHENTICATION_MODE_OFFSET];
+                accessPoints.Add(ap);
+                offset += ACCESS_POINT_INFORMATION_LENGTH;
+            }
+            return (accessPoints);
         }
 
         private static void Queue_MessageError(object sender, MessageQueueErrorEventArgs e)
@@ -70,21 +119,33 @@ namespace UARTTest
         {
             switch (e.Esp32Message.MessageID)
             {
-                case 0x01:
+                case WiFiFunctionStart:
                     Debug.WriteLine("WiFi Started.");
                     Debug.WriteLine($"    IP Address: {e.Esp32Message.Payload[0]}.{e.Esp32Message.Payload[1]}.{e.Esp32Message.Payload[2]}.{e.Esp32Message.Payload[3]}");
                     break;
-                case 0x02:
+                case WiFiFunctionScanForNetworks:
                     Debug.WriteLine("Access point list retrieved");
                     UInt16 numberOfAccessPoints = 0;
-                    UInt16 sizeOfWiFiAccessPointInformation = 0;
                     if (e.Esp32Message.Payload.Length > 0)
                     {
                         numberOfAccessPoints = Encoders.ExtractUInt16(e.Esp32Message.Payload, 0);
-                        sizeOfWiFiAccessPointInformation = Encoders.ExtractUInt16(e.Esp32Message.Payload, 2);
+                        Debug.WriteLine($"    Number of access points: {numberOfAccessPoints}");
+                        List<AccessPoint> accessPoints = BuildAccessPointsList(numberOfAccessPoints, e.Esp32Message.Payload);
+                        Debug.WriteLine("    ===============================================================");
+                        Debug.WriteLine("    |             SSID                 |    MAC Address    | RSSI |");
+                        Debug.WriteLine("    ===============================================================");
+                        foreach (AccessPoint accessPoint in accessPoints)
+                        {
+                            Debug.WriteLine($"    | {accessPoint.Ssid,32} | {accessPoint.Bssid.ToString(),17} | {accessPoint.Rssi,4} |");
+                        }
                     }
-                    Debug.WriteLine($"    Number of access points: {numberOfAccessPoints}");
-                    Debug.WriteLine($"    Size of WiFi Access Point structure {sizeOfWiFiAccessPointInformation}");
+                    else
+                    {
+                        Debug.WriteLine("    No access points detected.");
+                    }
+                    break;
+                default:
+                    Debug.WriteLine($"Unknown message ID {e.Esp32Message.MessageID}");
                     break;
             }
         }

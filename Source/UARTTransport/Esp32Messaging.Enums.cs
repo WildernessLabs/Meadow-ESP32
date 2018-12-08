@@ -4,6 +4,52 @@ using System.Text;
 
 namespace Esp32Messaging
 {
+    public enum WiFiAuthenticationMode : byte
+    {
+        Open = 0,
+        Wep = 1,
+        WpaPsk = 2,
+        Wpa2Psk = 3,
+        WpaWpa2Psk = 4,
+        Wpa2Enterprise = 5
+    }
+
+    public enum WiFiCountryPolicy
+    {
+        Automatic = 0,
+        Manual = 1
+    }
+
+    public enum WiFiSecondChannel
+    {
+        None = 0,
+        Above = 1,
+        Below = 2
+    }
+
+    public enum WiFiScanType
+    {
+        Active = 0,
+        Passive = 1
+    }
+
+    public enum WiFiCipherType
+    {
+        None = 0,
+        Wep40 = 1,
+        Wep104 = 2,
+        Tkip = 3,
+        Ccmp = 4,
+        TkipCcmp = 5,
+        Unknown = 6
+    }
+
+    public enum Antenna
+    {
+        Antenna0 = 0,
+        Antenna1 = 1
+    }
+
     /// <summary>
     ///     Errors that could be reported by the UART.
     /// </summary>
