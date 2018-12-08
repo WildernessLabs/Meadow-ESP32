@@ -59,67 +59,6 @@ namespace UARTTransport
             EndOfFrame
         };
 
-        /// <summary>
-        ///     Errors that could be reported by the UART.
-        /// </summary>
-        /// <remarks>
-        ///     The error codes and values here must be kept in step
-        ///     with the error codes in the ESP system.
-        /// </remarks>
-        public enum ErrorCodes : UInt32
-        {
-            /// <summary>
-            ///     No error, frame has been processed OK.
-            /// </summary>
-            OK = 0,
-
-            /// <summary>
-            ///     CRC check has failed.
-            /// </summary>
-            CRCError = 1,
-
-            /// <summary>
-            ///     UART as requested that the message is restarted from
-            ///     from the start.
-            /// </summary>
-            Restart = 2, 
-
-            /// <summary>
-            ///     General failure.
-            /// </summary>
-            Failure = 3,
-
-            /// <summary>
-            ///     Interface (device) not recognised.
-            /// </summary>
-            InvalidInterface = 4,
-
-            /// <summary>
-            ///     Error queuing the request.
-            /// </summary>
-            QueueError = 5,
-
-            /// <summary>
-            ///     PacketType / frame is invalid.
-            /// </summary>
-            InvalidPacket = 6,
-
-            /// <summary>
-            ///     Header for the message is invalid.
-            /// </summary>
-            InvalidHeader = 7,
-
-            /// <summary>
-            ///     Unexpected frame.
-            /// </summary>
-            UnexpectedData = 8,
-
-            /// <summary>
-            ///     End of frame marker is missing or invalid.
-            /// </summary>
-            MissingEndOfFrameMarker = 9
-        }
-
         #endregion Enums
 
         #region Constants
@@ -208,7 +147,7 @@ namespace UARTTransport
         /// <summary>
         ///     Maximum number of bytes in the frame payload.
         /// </summary>
-        public const int MAXIMUM_FRAME_LENGTH = 255;
+        public const UInt32 MAXIMUM_FRAME_LENGTH = 255;
 
         /// <summary>
         ///     Seed for the CRC32 algorithm.
@@ -667,7 +606,7 @@ namespace UARTTransport
         /// </summary>
         /// <param name="ackNak">Type of acknowledgement (ACK ot NAK).</param>
         /// <param name="status">Status code to send in the ACK / NAK message.</param>
-        void AcknowledgeFrame(byte ackNak, ErrorCodes status)
+        void AcknowledgeFrame(byte ackNak, StatusCodes status)
         {
             byte[] buffer = new byte[Message.TRANSPORT_MESSAGE_LENGTH];
             buffer[Message.TRANSPORT_FRAME_TYPE] = (byte) (PKT_TRANSPORT | ackNak);
@@ -689,7 +628,7 @@ namespace UARTTransport
                     {
                         _timeoutTimer.Enabled = false;
                     }
-                    UARTTransportEventArgs ack = new UARTTransportEventArgs(UARTTransportEventArgs.TransportPacketType.ACK, _statusCode);
+                    UARTTransportEventArgs ack = new UARTTransportEventArgs(UARTTransportEventArgs.TransportPacketType.ACK, (Esp32Messaging.StatusCodes) _statusCode);
                     TransportError(this, ack);
                     break;
                 case TRANSPORT_NAK:
@@ -700,7 +639,7 @@ namespace UARTTransport
                     _currentRetryCount++;
                     if (_currentRetryCount > MaximumRetryCount)
                     {
-                        UARTTransportEventArgs nak = new UARTTransportEventArgs(UARTTransportEventArgs.TransportPacketType.NAK, _statusCode);
+                        UARTTransportEventArgs nak = new UARTTransportEventArgs(UARTTransportEventArgs.TransportPacketType.NAK, (Esp32Messaging.StatusCodes) _statusCode);
                         TransportError(this, nak);
                     }
                     else
@@ -860,19 +799,19 @@ namespace UARTTransport
                                     else
                                     {
                                         UARTDataReceivedEventArgs args = new UARTDataReceivedEventArgs((FrameType)_currentFrameType, _messageID, _frameSequenceNumber, _framePayload);
+                                        AcknowledgeFrame(TRANSPORT_ACK, StatusCodes.OK);
                                         DataReceived(this, args);
-                                        AcknowledgeFrame(TRANSPORT_ACK, ErrorCodes.OK);
                                     }
                                 }
                                 else
                                 {
                                     if (data != END_OF_FRAME_CHARACTER)
                                     {
-                                        AcknowledgeFrame(TRANSPORT_NAK, ErrorCodes.MissingEndOfFrameMarker);
+                                        AcknowledgeFrame(TRANSPORT_NAK, StatusCodes.MissingEndOfFrameMarker);
                                     }
                                     else
                                     {
-                                        AcknowledgeFrame(TRANSPORT_NAK, ErrorCodes.CRCError);
+                                        AcknowledgeFrame(TRANSPORT_NAK, StatusCodes.CRCError);
                                     }
                                 }
                                 _framePayload = null;

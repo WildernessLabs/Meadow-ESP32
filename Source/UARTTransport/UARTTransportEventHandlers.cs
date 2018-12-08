@@ -21,7 +21,7 @@ namespace UARTTransport
         /// <summary>
         ///     PacketType code returned by the UART.
         /// </summary>
-        public UART.ErrorCodes StatusCode { get; private set; }
+        public Esp32Messaging.StatusCodes StatusCode { get; private set; }
 
         /// <summary>
         ///     Indicate the error that has occurred.
@@ -44,10 +44,10 @@ namespace UARTTransport
         /// </summary>
         /// <param name="packetTypeType">PacketType that has occurred.</param>
         /// <param name="statusCode">Status code returned by the UART.</param>
-        public UARTTransportEventArgs(TransportPacketType packetType, UInt32 statusCode)
+        public UARTTransportEventArgs(TransportPacketType packetType, Esp32Messaging.StatusCodes statusCode)
         {
             PacketType = packetType;
-            StatusCode = (UART.ErrorCodes) statusCode;
+            StatusCode = statusCode;
         }
 
         #endregion
