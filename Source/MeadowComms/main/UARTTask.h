@@ -3,6 +3,8 @@
 //
 #pragma once
 
+#include "Messaging.h"
+
 //
 //  Number of bytes in the Rx and Tx buffers.
 //
@@ -118,4 +120,5 @@ extern void SetupUART();
 void UARTTxTask(void *);
 void UARTRxTask(void *);
 
-void QueueUARTResponse(uint8_t, uint32_t, uint32_t, uint8_t *, uint8_t);
+void QueueUARTResponse(struct ApplicationResponse *);
+

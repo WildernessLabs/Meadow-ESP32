@@ -13,6 +13,7 @@
 #include "WiFiTask.h"
 #include "Messaging.h"
 #include "UARTTask.h"
+#include "Encoders.h"
 
 /// <summary>
 ///     Handle for the WiFi messages to be processed by the WIFi task.
@@ -71,47 +72,37 @@ const char *WIFI_TASK_NAME = "WiFiTask";
 
 static int s_retry_num = 0;
 
-void PrintScanResults(system_event_t *event)
+static struct ApplicationResponse *_wifiResponse = NULL;
+
+void ProcessAccessPointScanCompletion(system_event_t *event)
 {
     uint16_t apCount = 0;
     esp_wifi_scan_get_ap_num(&apCount);
     printf("Number of access points found: %d\n", event->event_info.scan_done.number);
     if (apCount == 0)
     {
-        return;
+        _wifiResponse->payload = NULL;
+        _wifiResponse->payloadLength = 0;
     }
-    wifi_ap_record_t *list = (wifi_ap_record_t *)malloc(sizeof(wifi_ap_record_t) * apCount);
-    ESP_ERROR_CHECK(esp_wifi_scan_get_ap_records(&apCount, list));
-    int i;
-    printf("======================================================================\n");
-    printf("             SSID             |    RSSI    |           AUTH           \n");
-    printf("======================================================================\n");
-    for (i = 0; i < apCount; i++) {
-        char *authmode;
-        switch (list[i].authmode) {
-        case WIFI_AUTH_OPEN:
-            authmode = "WIFI_AUTH_OPEN";
-            break;
-        case WIFI_AUTH_WEP:
-            authmode = "WIFI_AUTH_WEP";
-            break;           
-        case WIFI_AUTH_WPA_PSK:
-            authmode = "WIFI_AUTH_WPA_PSK";
-            break;           
-        case WIFI_AUTH_WPA2_PSK:
-            authmode = "WIFI_AUTH_WPA2_PSK";
-            break;           
-        case WIFI_AUTH_WPA_WPA2_PSK:
-            authmode = "WIFI_AUTH_WPA_WPA2_PSK";
-            break;
-        default:
-            authmode = "Unknown";
-            break;
-        }
-        printf("%26.26s    |    % 4d    |    %22.22s\n", list[i].ssid, list[i].rssi, authmode);
+    else
+    {
+        uint16_t apRecordSize = sizeof(wifi_ap_record_t);
+        //
+        //  First two elements in this payload are the number of access points
+        //  and the size of the access point record.
+        //
+        _wifiResponse->payloadLength = (apRecordSize * apCount) + 4;
+        _wifiResponse->payload = pvPortMalloc(_wifiResponse->payloadLength);
+        EncodeUInt16(apCount, _wifiResponse->payload);
+        EncodeUInt16(apRecordSize, _wifiResponse->payload + 2);
+        //
+        //  Now we get the access point information.
+        //
+        ESP_ERROR_CHECK(esp_wifi_scan_get_ap_records(&apCount, (wifi_ap_record_t *) (_wifiResponse->payload + 4)));
     }
-    free(list);
-    printf("\n\n");
+    QueueUARTResponse(_wifiResponse);
+    vPortFree(_wifiResponse);
+    _wifiResponse = NULL;
 }
 
 static esp_err_t event_handler(void *ctx, system_event_t *event)
@@ -124,6 +115,12 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
         case SYSTEM_EVENT_STA_GOT_IP:
             ESP_LOGI(__func__, "Got ip:%s", ip4addr_ntoa(&event->event_info.got_ip.ip_info.ip));
             s_retry_num = 0;
+            _wifiResponse->payloadLength = sizeof(ip4_addr_t);
+            _wifiResponse->payload = pvPortMalloc(_wifiResponse->payloadLength);
+            memcpy(_wifiResponse->payload, &event->event_info.got_ip.ip_info.ip, _wifiResponse->payloadLength);
+            QueueUARTResponse(_wifiResponse);
+            vPortFree(_wifiResponse);
+            _wifiResponse = NULL;
             xEventGroupSetBits(s_wifi_event_group, WIFI_CONNECTED_BIT);
             break;
         case SYSTEM_EVENT_STA_DISCONNECTED:
@@ -137,7 +134,7 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
             ESP_LOGI(__func__, "Connect to the AP fail\n");
             break;
         case SYSTEM_EVENT_SCAN_DONE:
-            PrintScanResults(event);
+            ProcessAccessPointScanCompletion(event);
             break;
         default:
             break;
@@ -148,8 +145,24 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
 /// <summary>
 ///     Start the wireless hardware.
 /// </summary>
-void Start(const char *ssid, const char *password)
+void StartNetwork(struct ApplicationRequest *message)
 {
+    if (_wifiResponse != NULL)
+    {
+        // TODO: Deal with this error.
+        vPortFree(_wifiResponse);
+    }
+    _wifiResponse = pvPortMalloc(sizeof(struct ApplicationResponse));
+    _wifiResponse->interface = message->interface;
+    _wifiResponse->messageID = message->messageID;
+    _wifiResponse->code = 0;
+    char *ssid = (char *) message->payload;
+    if (ssid == NULL)
+    {
+        //  TODO: Deal with error.
+    }
+
+    char *password = (char *) (message->payload + strlen(ssid) + 1);
     tcpip_adapter_init();
     ESP_ERROR_CHECK(esp_event_loop_init(event_handler, NULL));
 
@@ -174,18 +187,6 @@ void Start(const char *ssid, const char *password)
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
     ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));
     ESP_ERROR_CHECK(esp_wifi_start());
-};
-
-void StartNetwork(struct ApplicationRequest *message)
-{
-    char *ssid = (char *) message->payload;
-    if (ssid == NULL)
-    {
-        //  TODO: Deal with error.
-    }
-
-    char *password = (char *) (message->payload + strlen(ssid) + 1);
-    Start(ssid, password);
 }
 
 /// <summary>
@@ -194,8 +195,18 @@ void StartNetwork(struct ApplicationRequest *message)
 /// <remarks>
 ///     The network must be started before this method is called.
 /// </remarks>
-void GetAvailableNetworks()
+void GetAvailableNetworks(struct ApplicationRequest *message)
 {
+    if (_wifiResponse != NULL)
+    {
+        // TODO: Deal with this error.
+        vPortFree(_wifiResponse);
+    }
+    _wifiResponse = pvPortMalloc(sizeof(struct ApplicationResponse));
+    _wifiResponse->interface = message->interface;
+    _wifiResponse->messageID = message->messageID;
+    _wifiResponse->code = 0;
+
     wifi_scan_config_t scanConf =
     {
         .ssid = NULL,
@@ -221,20 +232,23 @@ void WiFiTask(void *pvParameters)
         {
             switch (message.function)
             {
-            case WIFI_FUNC_START:
-                ESP_LOGI(__func__, "Start WiFi request received.");
-                StartNetwork(&message);
-                break;
-            default:
-                ESP_LOGI(__func__, "WiFi message received, function %d", message.function);
-                //
-                //  Memory for the payload is allocated on the heap and it needs to be released.
-                //
-                if(message.payload != NULL)
-                {
-                    ESP_LOG_BUFFER_HEXDUMP(__func__, message.payload, message.payloadLength, ESP_LOG_INFO);
-                }
-                break;
+                case WIFI_FUNC_START:
+                    ESP_LOGI(__func__, "Start WiFi request received.");
+                    StartNetwork(&message);
+                    break;
+                case WIFI_FUNC_GET_ACCESS_POINTS:
+                    GetAvailableNetworks(&message);
+                    break;
+                default:
+                    ESP_LOGI(__func__, "WiFi message received, function %d", message.function);
+                    //
+                    //  Memory for the payload is allocated on the heap and it needs to be released.
+                    //
+                    if(message.payload != NULL)
+                    {
+                        ESP_LOG_BUFFER_HEXDUMP(__func__, message.payload, message.payloadLength, ESP_LOG_INFO);
+                    }
+                    break;
             }
             if (message.payload != NULL)
             {

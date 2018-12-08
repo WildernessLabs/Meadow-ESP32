@@ -269,21 +269,17 @@ void ResetIncomingMessage(bool releasePayloadMemory)
 /// </summary>
 uint32_t QueueMessage()
 {
-    char *taskName = NULL;
     QueueHandle_t queueHandle = NULL;
 
     switch (messageHeader.interface)
     {
         case INTERFACE_WIFI:
-            taskName = WIFI_TASK_NAME;
             queueHandle = WiFiQueueHandle;
             break;
         case INTERFACE_BLUETOOTH:
-            taskName = BLUETOOTH_TASK_NAME;
             queueHandle = BluetoothQueueHandle;
             break;
         case INTERFACE_MESH_NETWORK:
-            taskName = MESH_NETWORK_TASK_NAME;
             queueHandle = MeshNetworkQueueHandle;
             break;
     }
@@ -297,7 +293,6 @@ uint32_t QueueMessage()
             }
             return (ERR_QUEUE_ERROR);
         }
-        ESP_LOGI(taskName, "Message queued.");
     }
     else
     {
@@ -309,21 +304,10 @@ uint32_t QueueMessage()
 /// <summary>
 ///     Add a response to the UART Tx queue.
 /// </summary>
-/// <param name="interface">Interface generating the response.</param>
-/// <param name="code">Status code.</param>
-/// <param name="messageID">Message ID for the response.  This will either be the original ID or a new one if the request originated on the ESP32</param>
-/// <param name="payload">Payload of the message for the STM32.</param>
-/// <param name="payloadLength">Number of bytes in the payload.</param>
-void QueueUARTResponse(uint8_t interface, uint32_t code, uint32_t messageID, uint8_t *payload, uint8_t payloadLength)
+/// <param name="respopnse">Response to be queued for sending to the STM32.</param>
+void QueueUARTResponse(struct ApplicationResponse *response)
 {
-    struct ApplicationResponse response;
-
-    response.interface = interface;
-    response.code = code;
-    response.messageID = messageID;
-    response.payload = payload;
-    response.payloadLength = payloadLength;
-    if (xQueueSendToBack(UARTTransmitQueueHandle, &response, 0) != pdPASS)
+    if (xQueueSendToBack(UARTTransmitQueueHandle, response, 0) != pdPASS)
     {
         ESP_LOGI(__func__, "Error sending response, cannot queue message");
     }
@@ -482,8 +466,6 @@ void AcknowledgeFrame(uint8_t ackNak, uint32_t status)
     xSemaphoreTake(xUARTTxMutex, portMAX_DELAY);
     _totalTxBytes += uart_write_bytes(STM32_UART_NUMBER, (const char *) frame->Buffer, frame->BufferLength);
     xSemaphoreGive(xUARTTxMutex);
-    ESP_LOGI(__func__, "Total Tx bytes: %d", _totalTxBytes);
-    ESP_LOG_BUFFER_HEXDUMP(__func__, frame->Buffer, frame->BufferLength, ESP_LOG_INFO);
     //
     vPortFree(frame->Buffer);
     vPortFree(frame);
@@ -552,7 +534,6 @@ void ProcessData(uint8_t *packet, uint8_t packetLength)
             //  Releasing the memory here will corrupt the heap.
             //
             ResetIncomingMessage(false);
-            ESP_LOGI(__func__, "Message received and queued.");
         }
         AcknowledgeFrame(TRANSPORT_ACK, ERR_OK);
     }

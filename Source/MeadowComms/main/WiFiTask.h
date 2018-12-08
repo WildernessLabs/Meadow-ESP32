@@ -15,6 +15,13 @@
 #define WIFI_FUNC_DEEP_SLEEP                4
 #define WIFI_FUNC_MAX                       4
 
+struct AccessPointInformation
+{
+    char        name[33];
+    uint8_t     rssi;
+
+};
+
 /// <summary>
 ///     Handle for the WiFi messages to be processed by the WIFi task.
 /// </summary>
