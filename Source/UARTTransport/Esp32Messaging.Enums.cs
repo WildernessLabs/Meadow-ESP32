@@ -1,9 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Esp32Messaging
 {
+    /// <summary>
+    ///     Access point authentication method.
+    /// </summary>
     public enum WiFiAuthenticationMode : byte
     {
         Open = 0,
@@ -20,6 +21,9 @@ namespace Esp32Messaging
         Manual = 1
     }
 
+    /// <summary>
+    ///     Location of the secondary channel in respect to the primary channel.
+    /// </summary>
     public enum WiFiSecondChannel
     {
         None = 0,
@@ -27,12 +31,18 @@ namespace Esp32Messaging
         Below = 2
     }
 
+    /// <summary>
+    ///     WiFi scan type.
+    /// </summary>
     public enum WiFiScanType
     {
         Active = 0,
         Passive = 1
     }
 
+    /// <summary>
+    ///     Encryption method used by the access point.
+    /// </summary>
     public enum WiFiCipherType
     {
         None = 0,

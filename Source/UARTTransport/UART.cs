@@ -1,10 +1,9 @@
-﻿using System;
+﻿using Esp32Messaging;
+using System;
 using System.Diagnostics;
-using System.Dynamic;
 using System.IO.Ports;
-using System.Timers;
-using Esp32Messaging;
 using System.Runtime.CompilerServices;
+using System.Timers;
 
 namespace UartTransport
 {
