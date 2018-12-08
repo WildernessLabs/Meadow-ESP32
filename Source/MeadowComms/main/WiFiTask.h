@@ -15,12 +15,23 @@
 #define WIFI_FUNC_DEEP_SLEEP                4
 #define WIFI_FUNC_MAX                       4
 
-struct AccessPointInformation
-{
-    char        name[33];
-    uint8_t     rssi;
 
-};
+#define BSSID_OFFSET                        (0)
+#define SSID_OFFSET                         (BSSID_OFFSET + 6)
+#define PRIMARY_CHANNEL_OFFSET              (SSID_OFFSET + 33)
+#define SECONDARY_CHANNEL_OFFSET            (PRIMARY_CHANNEL_OFFSET + 1)
+#define RSSI_OFFSET                         (SECONDARY_CHANNEL_OFFSET + 1)
+#define AUTHENTICATION_MODE_OFFSET          (RSSI_OFFSET + 1)
+#define PAIRWISE_CIPHER_OFFSET              (AUTHENTICATION_MODE_OFFSET + 1)
+#define GROUP_CIPHER_OFFSET                 (PAIRWISE_CIPHER_OFFSET + 1)
+#define ANTENNA_OFFSET                      (GROUP_CIPHER_OFFSET + 1)
+#define PROTOCOLS_OFFSET                    (ANTENNA_OFFSET + 1)
+#define COUNTRY_CODE_OFFSET                 (PROTOCOLS_OFFSET + 4)
+#define START_CHANNEL_OFFSET                (COUNTRY_CODE_OFFSET + 3)
+#define NUMBER_OF_CHANNELS_OFFSET           (START_CHANNEL_OFFSET + 1)
+#define TX_POWER_MAXIMUM_OFFSET             (NUMBER_OF_CHANNELS_OFFSET + 1)
+#define POLICY_OFFSET                       (TX_POWER_MAXIMUM_OFFSET + 1)
+#define ACCESS_POINT_INFORMATION_LENGTH     (POLICY_OFFSET + 1)
 
 /// <summary>
 ///     Handle for the WiFi messages to be processed by the WIFi task.
