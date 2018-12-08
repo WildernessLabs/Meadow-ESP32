@@ -59,17 +59,17 @@ namespace Esp32Messaging
 
         #endregion Constants
 
-        #region Private member variables
+        #region Properties
 
         /// <summary>
         ///     Device / interface this message is destined for.
         /// </summary>
-        private byte Device { get; set; }
+        public byte Device { get; private set; }
 
         /// <summary>
         ///     Function to be executed by the device.
         /// </summary>
-        private UInt32 Function { get; set; }
+        public UInt32 Function { get; private set; }
         
         /// <summary>
         ///     Unique message ID.
@@ -79,9 +79,9 @@ namespace Esp32Messaging
         /// <summary>
         ///     Payload of the message (data for the function to act upon).
         /// </summary>
-        private byte[] Payload { get; set; }
+        public byte[] Payload { get; private set; }
 
-        #endregion Private member variables
+        #endregion Properties
 
         #region IEnumerable interface implementation
 
@@ -95,14 +95,14 @@ namespace Esp32Messaging
             buffer[INTERFACE] = Device;
             Encoders.EncodeUInt32(Function, buffer, FUNCTION_NUMBER);
             Encoders.EncodeUInt32(MessageID, buffer, MESSAGE_ID);
-            Encoders.EncodeUInt16((UInt16) (Payload.Length & 0xffff), buffer, PAYLOAD_LENGTH);
+            UInt16 amountLeftToSend = (UInt16) (Payload == null ? 0 : Payload.Length & 0xffff);
+            Encoders.EncodeUInt16(amountLeftToSend, buffer, PAYLOAD_LENGTH);
             Frame frame = new Frame(UART.FrameType.ApplicationHeader, MessageID, sequenceNumber++, buffer);
             yield return frame;
             //
             //  Now we can process the message payload.
             //
             UInt16 start = 0;
-            int amountLeftToSend = Payload.Length;
             while (amountLeftToSend > 0)
             {
                 byte length = (byte) ((amountLeftToSend < UART.MAXIMUM_FRAME_LENGTH ? amountLeftToSend : UART.MAXIMUM_FRAME_LENGTH) & 0xff);
@@ -122,9 +122,10 @@ namespace Esp32Messaging
 
         #region Constructors
 
-        private Message()
-        {
-        }
+        /// <summary>
+        ///     Default constructor is private to prevent it being used.
+        /// </summary>
+        private Message() { }
 
         /// <summary>
         ///     Construct a new message for the ESP32.
@@ -135,7 +136,7 @@ namespace Esp32Messaging
         /// <param name="payload">Payload for this message.</param>
         public Message(byte device, UInt32 function, UInt32 messageID, byte[] payload)
         {
-            if (payload.Length > MAXIMUM_MESSAGE_LENGTH)
+            if (payload?.Length > MAXIMUM_MESSAGE_LENGTH)
             {
                 throw new ArgumentOutOfRangeException(nameof(payload), $"Payload length should be less than or equal to {MAXIMUM_MESSAGE_LENGTH} bytes");
             }
