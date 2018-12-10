@@ -21,16 +21,16 @@ void SetupMessageQueues()
     }
     //
     const size_t messageSize = sizeof(struct ApplicationRequest);
-    WiFiQueueHandle = xQueueCreate(MAX_QUEUE_LENGTH, messageSize);
-    if (WiFiQueueHandle == NULL)
+    xWiFiQueueHandle = xQueueCreate(MAX_QUEUE_LENGTH, messageSize);
+    if (xWiFiQueueHandle == NULL)
     {
-        ESP_LOGI(WIFI_TASK_NAME, "Cannot allocate WiFi processing queue.");
+        ESP_LOGI(__func__, "Cannot allocate WiFi processing queue.");
     }
     //
     BluetoothQueueHandle = xQueueCreate(MAX_QUEUE_LENGTH, messageSize);
     if (BluetoothQueueHandle == NULL)
     {
-        ESP_LOGI(BLUETOOTH_TASK_NAME, "Cannot allocate Bluetooth processing queue.");
+        ESP_LOGI(__func__, "Cannot allocate Bluetooth processing queue.");
     }
     //
     MeshNetworkQueueHandle = xQueueCreate(MAX_QUEUE_LENGTH, messageSize);
