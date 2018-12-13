@@ -274,7 +274,7 @@ uint32_t QueueMessage()
     switch (messageHeader.interface)
     {
         case INTERFACE_WIFI:
-            queueHandle = WiFiQueueHandle;
+            queueHandle = xWiFiQueueHandle;
             break;
         case INTERFACE_BLUETOOTH:
             queueHandle = BluetoothQueueHandle;
