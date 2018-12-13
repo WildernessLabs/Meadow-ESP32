@@ -298,7 +298,7 @@ uint32_t QueueMessage()
     {
         ESP_LOGI("SYSTEM", "System tasks not implemented.");
     }
-    return (ERR_OK);
+    return (ERR_COMPLETED_OK);
 }
 
 /// <summary>
@@ -504,7 +504,7 @@ void ProcessHeader(uint8_t *packet, uint8_t packetLength)
             QueueMessage();
         }
         nextPayloadLocation = messageHeader.payload;
-        AcknowledgeFrame(TRANSPORT_ACK, ERR_OK);
+        AcknowledgeFrame(TRANSPORT_ACK, ERR_COMPLETED_OK);
     }
 }
 
@@ -535,7 +535,7 @@ void ProcessData(uint8_t *packet, uint8_t packetLength)
             //
             ResetIncomingMessage(false);
         }
-        AcknowledgeFrame(TRANSPORT_ACK, ERR_OK);
+        AcknowledgeFrame(TRANSPORT_ACK, ERR_COMPLETED_OK);
     }
     else
     {
