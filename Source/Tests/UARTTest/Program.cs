@@ -16,6 +16,13 @@ namespace UartTest
         private const byte WiFiInterface = 0x00;
         private const UInt32 WiFiFunctionStart = 0x00;
         private const UInt32 WiFiFunctionScanForNetworks = 0x03;
+        //
+        //  Constants for the HTTP Get request test.
+        //
+        private const string ServerName = "google.com";
+        private const string Uri = "http://google.com/";
+        private const UInt16 PortNumber = 443;
+        private const UInt32 WiFiFunctionHttpGet = 0x05;
 
         static void Main(string[] args)
         {
@@ -42,10 +49,14 @@ namespace UartTest
             if (environmentOK)
             {
                 byte[] payload = new byte[ssid.Length + networkPassword.Length + 2];
+                int destination = 0;
                 Array.Copy(Encoding.UTF8.GetBytes(ssid), payload, ssid.Length);
-                payload[ssid.Length] = 0;
-                Array.Copy(Encoding.UTF8.GetBytes(networkPassword), 0, payload, ssid.Length + 1, networkPassword.Length);
-                payload[ssid.Length + networkPassword.Length + 1] = 0;
+                destination = ssid.Length;
+                payload[destination] = 0;
+                destination++;
+                Array.Copy(Encoding.UTF8.GetBytes(networkPassword), 0, payload, destination, networkPassword.Length);
+                destination += networkPassword.Length;
+                payload[destination] = 0;
 
                 MessageQueue queue = new MessageQueue(comPortName);
                 queue.MessageReceived += Queue_MessageReceived;
@@ -58,6 +69,23 @@ namespace UartTest
                 messageID = WiFiFunctionScanForNetworks;
                 Message scanForNetworksMessage = new Message(WiFiInterface, WiFiFunctionScanForNetworks, messageID, null);
                 queue.Add(scanForNetworksMessage);
+                Thread.Sleep(5000);
+                //
+                //  Prepare a Get request.
+                //
+                byte[] httpGetRequestPayload = new byte[ServerName.Length + Uri.Length + 4];
+                Encoders.EncodeUInt16(PortNumber, httpGetRequestPayload, 0);
+                destination = 2;
+                Array.Copy(Encoding.UTF8.GetBytes(ServerName), 0, httpGetRequestPayload, destination, ServerName.Length);
+                destination += ServerName.Length;
+                httpGetRequestPayload[destination] = 0;
+                destination++;
+                Array.Copy(Encoding.UTF8.GetBytes(Uri), 0, httpGetRequestPayload, destination, Uri.Length);
+                destination += Uri.Length;
+                httpGetRequestPayload[destination] = 0;
+                messageID = WiFiFunctionHttpGet;
+                Message httpGetRequest = new Message(WiFiInterface, WiFiFunctionHttpGet, messageID, httpGetRequestPayload);
+                queue.Add(httpGetRequest);
 
                 Thread.Sleep(Timeout.Infinite);
             }
@@ -143,6 +171,9 @@ namespace UartTest
                     {
                         Debug.WriteLine("    No access points detected.");
                     }
+                    break;
+                case WiFiFunctionHttpGet:
+                    Debug.WriteLine("HTTP Get responded.");
                     break;
                 default:
                     Debug.WriteLine($"Unknown message ID {e.Esp32Message.MessageID}");
