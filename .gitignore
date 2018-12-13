@@ -65,3 +65,5 @@ OnBoardFlash.dat.*
 /Source/Tests/UARTTest/.vs/UARTTest/v15/Server/sqlite3/storage.ide
 /Source/Tests/UARTTest/.vs/UARTTest/v15/Server/sqlite3
 Source/Tests/UARTTest/.vs/UARTTest/DesignTimeBuild/.dtbcache
+/Source/MeadowComms/.vs/MeadowComms/v15/Browse.VC.db
+/Source/MeadowComms/.vs/MeadowComms/v15/Browse.VC.opendb
