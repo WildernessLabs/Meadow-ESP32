@@ -313,14 +313,16 @@ void HttpGet(struct ApplicationRequest *message)
     //
     char *uri = serverName + strlen(serverName) + 1;
     char *request = pvPortMalloc(strlen(serverName) + strlen(uri) + 60);
-    sprintf(request, "GET %s HTTP/1.0\r\nHost: %s\r\nUser-Agent: esp-idf/1.0 esp32\r\n\r\n", serverName, uri);
+    sprintf(request, "GET %s HTTP/1.0\r\nHost: %s\r\nUser-Agent: esp-idf/1.0 esp32\r\n\r\n", uri, serverName);
     ESP_LOGI(__func__, "HTTP Get Request");
     ESP_LOGI(__func__, "    Host: %s", serverName);
     ESP_LOGI(__func__, "    URI: %s", uri);
+    ESP_LOGI(__func__, "    Request length: %d", strlen(request));
+    ESP_LOGI(__func__, "    Request: %s", request);
    
     xEventGroupWaitBits(xWiFiEventGroup, WIFI_CONNECTED_BIT, false, true, portMAX_DELAY);
 
-    int errorCode = getaddrinfo(serverName, "80", &hints, &addressInformation);
+    int errorCode = getaddrinfo(serverName, portNumber, &hints, &addressInformation);
 
     if ((errorCode != 0) || (addressInformation == NULL))
     {
