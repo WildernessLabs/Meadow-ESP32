@@ -21,7 +21,7 @@ namespace UartTest
         //
         private const string ServerName = "google.com";
         private const string Uri = "http://google.com/";
-        private const UInt16 PortNumber = 443;
+        private const UInt16 PortNumber = 80;
         private const UInt32 WiFiFunctionHttpGet = 0x05;
 
         static void Main(string[] args)
