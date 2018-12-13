@@ -19,3 +19,4 @@
 #define ERR_WIFI_ALREADY_STARTED            (10)
 #define ERR_INVALID_SSID                    (11)
 #define ERR_INVALID_PASSWORD                (12)
+#define ERR_WIFI_DISCONNECTED               (13)
