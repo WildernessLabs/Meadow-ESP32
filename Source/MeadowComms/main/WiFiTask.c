@@ -4,6 +4,9 @@
 #include "freertos/event_groups.h"
 #include "lwip/err.h"
 #include "lwip/sys.h"
+#include "lwip/sockets.h"
+#include "lwip/netdb.h"
+#include "lwip/dns.h"
 #include "esp_system.h"
 #include "esp_log.h"
 #include "esp_wifi.h"
@@ -67,6 +70,7 @@ void SetupWiFi()
 /// <summary>
 ///     Send the response and clean up the WiFi response object.
 /// </summary>
+/// <param name="statusCode">Response code to be sent back to the STM32</param>
 void SendResponse(uint32_t statusCode)
 {
     _wifiResponse->code = statusCode;
@@ -130,7 +134,8 @@ void ProcessAccessPointScanCompletion(system_event_t *event)
 /// <summary>
 ///     Event handler for the WiFi system.
 /// </summary>
-/// <param name="
+/// <param name="ctx"></param>
+/// <param name="event">Information relevant to the event being raised.</param>
 static esp_err_t WiFiEventHandler(void *ctx, system_event_t *event)
 {
     EventBits_t bits;
@@ -143,14 +148,15 @@ static esp_err_t WiFiEventHandler(void *ctx, system_event_t *event)
         case SYSTEM_EVENT_STA_GOT_IP:
             _currentRetryCount = 0;
             bits = xEventGroupGetBits(xWiFiEventGroup);
-            if (bits & WIFI_CONNECTING_BIT)
+            //
+            //  TODO: We can sometimes get here when _wifiResponse is NULL, need to review this.
+            //
+            if ((_wifiResponse != NULL) && (bits & WIFI_CONNECTING_BIT))
             {
                 _wifiResponse->payloadLength = sizeof(ip4_addr_t);
                 _wifiResponse->payload = pvPortMalloc(_wifiResponse->payloadLength);
                 memcpy(_wifiResponse->payload, &event->event_info.got_ip.ip_info.ip, _wifiResponse->payloadLength);
-                QueueUARTResponse(_wifiResponse);
-                vPortFree(_wifiResponse);
-                _wifiResponse = NULL;
+                SendResponse(ERR_COMPLETED_OK);
             }
             xEventGroupSetBits(xWiFiEventGroup, WIFI_CONNECTED_BIT);
             xEventGroupClearBits(xWiFiEventGroup, WIFI_BUSY_BIT | WIFI_CONNECTING_BIT | WIFI_RECONNECTING_BIT);
@@ -158,13 +164,20 @@ static esp_err_t WiFiEventHandler(void *ctx, system_event_t *event)
         case SYSTEM_EVENT_STA_DISCONNECTED:
             if (_automaticReconnect)
             {
-                xEventGroupClearBits(xWiFiEventGroup, WIFI_CONNECTED_BIT);
+                xEventGroupClearBits(xWiFiEventGroup, WIFI_CONNECTED_BIT | WIFI_CONNECTING_BIT | WIFI_RECONNECTING_BIT);
                 if (_currentRetryCount < _maximumRetryCount)
                 {
                     xEventGroupSetBits(xWiFiEventGroup, WIFI_BUSY_BIT | WIFI_RECONNECTING_BIT);
                     esp_wifi_connect();
                     _currentRetryCount++;
                 }
+            }
+            else
+            {
+                //
+                //  TODO: Send disconnect message ?
+                //
+                xEventGroupClearBits(xWiFiEventGroup, WIFI_BUSY_BIT | WIFI_CONNECTED_BIT | WIFI_CONNECTING_BIT | WIFI_RECONNECTING_BIT);
             }
             break;
         case SYSTEM_EVENT_SCAN_DONE:
@@ -179,6 +192,7 @@ static esp_err_t WiFiEventHandler(void *ctx, system_event_t *event)
 /// <summary>
 ///     Start the wireless hardware.
 /// </summary>
+/// <param name="message">Request sent from the STM32.</param>
 void StartNetwork(struct ApplicationRequest *message)
 {
     if (_wifiResponse != NULL)
@@ -243,6 +257,7 @@ void StartNetwork(struct ApplicationRequest *message)
 /// <remarks>
 ///     The network must be started before this method is called.
 /// </remarks>
+/// <param name="message">Request sent from the STM32.</param>
 void GetAvailableNetworks(struct ApplicationRequest *message)
 {
     if (_wifiResponse != NULL)
@@ -266,6 +281,114 @@ void GetAvailableNetworks(struct ApplicationRequest *message)
     ESP_ERROR_CHECK(esp_wifi_scan_start(&scanConf, true));
 }
 
+
+/// <summary>
+///     Perform a HTTP GET request.
+/// </summary>
+/// <remarks>
+///     The network must be started before this method is called.
+/// </remarks>
+/// <param name="message">Request sent from the STM32.</param>
+void HttpGet(struct ApplicationRequest *message)
+{
+    const struct addrinfo hints = { .ai_family = AF_INET, .ai_socktype = SOCK_STREAM, };
+    struct addrinfo *addressInformation;
+    struct in_addr *address;
+    int socketHandle, r;
+    char receiveBuffer[64];
+
+    //
+    //  TODO: Perform some error checking here.
+    //
+
+    char portNumber[6];
+    utoa(ExtractUInt16(message->payload), portNumber, 10);
+    //
+    //  The server name (e.g. google.com) follows the 16-bit port number in the payload.
+    //
+    char *serverName = (char *) message->payload + 2;
+    //
+    //  The full URI being requested follows the server name (remember there server name
+    //  is terminated by a 0 byte.
+    //
+    char *uri = serverName + strlen(serverName) + 1;
+    char *request = pvPortMalloc(strlen(serverName) + strlen(uri) + 60);
+    sprintf(request, "GET %s HTTP/1.0\r\nHost: %s\r\nUser-Agent: esp-idf/1.0 esp32\r\n\r\n", serverName, uri);
+    ESP_LOGI(__func__, "HTTP Get Request");
+    ESP_LOGI(__func__, "    Host: %s", serverName);
+    ESP_LOGI(__func__, "    URI: %s", uri);
+   
+    xEventGroupWaitBits(xWiFiEventGroup, WIFI_CONNECTED_BIT, false, true, portMAX_DELAY);
+
+    int errorCode = getaddrinfo(serverName, "80", &hints, &addressInformation);
+
+    if ((errorCode != 0) || (addressInformation == NULL))
+    {
+        ESP_LOGE(__func__, "    DNS lookup failed err: %d addressInformation: %p", errorCode, addressInformation);
+        return;
+    }
+    //
+    //  Perform DNS lookup.
+    //
+    address = &((struct sockaddr_in *) addressInformation->ai_addr)->sin_addr;
+    socketHandle = socket(addressInformation->ai_family, addressInformation->ai_socktype, 0);
+    if (socketHandle < 0)
+    {
+        ESP_LOGE(__func__, "    Failed to allocate socket.");
+        freeaddrinfo(addressInformation);
+        return;
+    }
+    if (connect(socketHandle, addressInformation->ai_addr, addressInformation->ai_addrlen) != 0)
+    {
+        ESP_LOGE(__func__, "    Socket connect failed errno: %d", errno);
+        close(socketHandle);
+        freeaddrinfo(addressInformation);
+        return;
+    }
+
+    freeaddrinfo(addressInformation);
+
+    if (write(socketHandle, request, strlen(request)) < 0)
+    {
+        ESP_LOGE(__func__, "    Socket send failed");
+        close(socketHandle);
+        return;
+    }
+
+    struct timeval timeOut;
+    timeOut.tv_sec = 5;
+    timeOut.tv_usec = 0;
+    if (setsockopt(socketHandle, SOL_SOCKET, SO_RCVTIMEO, &timeOut, sizeof(timeOut)) < 0)
+    {
+        ESP_LOGE(__func__, "    Failed to set socket receiving timeout");
+        close(socketHandle);
+        return;
+    }
+
+    do
+    {
+        bzero(receiveBuffer, sizeof(receiveBuffer));
+        r = read(socketHandle, receiveBuffer, sizeof(receiveBuffer) - 1);
+        for (int i = 0; i < r; i++)
+        {
+            putchar(receiveBuffer[i]);
+        }
+    }
+    while (r > 0);
+    printf("\n");
+
+    ESP_LOGI(__func__, "    Finished reading from socket. Last read return: %d errno: %d\r\n", r, errno);
+    close(socketHandle);
+
+    vPortFree(request);
+    _wifiResponse = pvPortMalloc(sizeof(struct ApplicationResponse));
+    _wifiResponse->interface = message->interface;
+    _wifiResponse->messageID = message->messageID;
+    _wifiResponse->payload = NULL;
+    _wifiResponse->payloadLength = 0;
+    SendResponse(ERR_COMPLETED_OK);
+}
+
 /// <summary>
 ///     Task to process the WiFi messages.
 /// <summary>
@@ -284,6 +407,9 @@ void WiFiTask(void *pvParameters)
                     break;
                 case WIFI_FUNC_GET_ACCESS_POINTS:
                     GetAvailableNetworks(&message);
+                    break;
+                case WIFI_FUNC_HTTP_GET:
+                    HttpGet(&message);
                     break;
                 default:
                     ESP_LOGI(__func__, "WiFi message received, function %d", message.function);
