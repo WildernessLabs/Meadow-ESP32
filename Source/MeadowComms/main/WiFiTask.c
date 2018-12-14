@@ -158,16 +158,16 @@ static esp_err_t WiFiEventHandler(void *ctx, system_event_t *event)
                 memcpy(_wifiResponse->payload, &event->event_info.got_ip.ip_info.ip, _wifiResponse->payloadLength);
                 SendResponse(ERR_COMPLETED_OK);
             }
-            xEventGroupSetBits(xWiFiEventGroup, WIFI_CONNECTED_BIT);
-            xEventGroupClearBits(xWiFiEventGroup, WIFI_BUSY_BIT | WIFI_CONNECTING_BIT | WIFI_RECONNECTING_BIT);
+            xEventGroupSetBits(xWiFiEventGroup, WIFI_CONNECTED_BIT | WIFI_READY_BIT);
+            xEventGroupClearBits(xWiFiEventGroup, WIFI_CONNECTING_BIT | WIFI_RECONNECTING_BIT);
             break;
         case SYSTEM_EVENT_STA_DISCONNECTED:
             if (_automaticReconnect)
             {
-                xEventGroupClearBits(xWiFiEventGroup, WIFI_CONNECTED_BIT | WIFI_CONNECTING_BIT | WIFI_RECONNECTING_BIT);
+                xEventGroupClearBits(xWiFiEventGroup, WIFI_READY_BIT | WIFI_CONNECTED_BIT | WIFI_CONNECTING_BIT | WIFI_RECONNECTING_BIT);
                 if (_currentRetryCount < _maximumRetryCount)
                 {
-                    xEventGroupSetBits(xWiFiEventGroup, WIFI_BUSY_BIT | WIFI_RECONNECTING_BIT);
+                    xEventGroupSetBits(xWiFiEventGroup, WIFI_RECONNECTING_BIT);
                     esp_wifi_connect();
                     _currentRetryCount++;
                 }
@@ -177,7 +177,8 @@ static esp_err_t WiFiEventHandler(void *ctx, system_event_t *event)
                 //
                 //  TODO: Send disconnect message ?
                 //
-                xEventGroupClearBits(xWiFiEventGroup, WIFI_BUSY_BIT | WIFI_CONNECTED_BIT | WIFI_CONNECTING_BIT | WIFI_RECONNECTING_BIT);
+                xEventGroupClearBits(xWiFiEventGroup, WIFI_CONNECTED_BIT | WIFI_CONNECTING_BIT | WIFI_RECONNECTING_BIT);
+                xEventGroupSetBits(xWiFiEventGroup, WIFI_READY_BIT);
             }
             break;
         case SYSTEM_EVENT_SCAN_DONE:
@@ -243,7 +244,8 @@ void StartNetwork(struct ApplicationRequest *message)
         ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
         ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));
         ESP_ERROR_CHECK(esp_wifi_start());
-        xEventGroupSetBits(xWiFiEventGroup, WIFI_BUSY_BIT | WIFI_INITIALISED_BIT | WIFI_CONNECTING_BIT);
+        xEventGroupSetBits(xWiFiEventGroup, WIFI_INITIALISED_BIT | WIFI_CONNECTING_BIT);
+        xEventGroupClearBits(xWiFiEventGroup, WIFI_READY_BIT);
     }
     else
     {
@@ -320,7 +322,7 @@ void HttpGet(struct ApplicationRequest *message)
     ESP_LOGI(__func__, "    Request length: %d", strlen(request));
     ESP_LOGI(__func__, "    Request: %s", request);
    
-    xEventGroupWaitBits(xWiFiEventGroup, WIFI_CONNECTED_BIT, false, true, portMAX_DELAY);
+    xEventGroupWaitBits(xWiFiEventGroup, WIFI_READY_BIT | WIFI_CONNECTED_BIT, false, true, portMAX_DELAY);
 
     int errorCode = getaddrinfo(serverName, portNumber, &hints, &addressInformation);
 

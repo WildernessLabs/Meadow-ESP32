@@ -60,9 +60,9 @@
 //
 //  Event group bits.
 //
-#define WIFI_BUSY_BIT                   (BIT0)      /* Indicate if the WiFi task can process another request. */
+#define WIFI_READY_BIT                  (BIT0)      /* Indicate if the WiFi task can process another request. */
 #define WIFI_CONNECTING_BIT             (BIT1)      /* Indicate if in the process of connecting to a WiFi access point. */
-#define WIFI_CONNECTED_BIT              (BIT2)      /* Indicate if the ESP32 is onnected to a WiFi access point.*/
+#define WIFI_CONNECTED_BIT              (BIT2)      /* Indicate if the ESP32 is connected to a WiFi access point.*/
 #define WIFI_RECONNECTING_BIT           (BIT3)      /* Indicate if a reconnection (as opposed to a new connection) is being made. */
 #define WIFI_INITIALISED_BIT            (BIT4)      /* Indicate if the WiFi system has been initialised. */
 
