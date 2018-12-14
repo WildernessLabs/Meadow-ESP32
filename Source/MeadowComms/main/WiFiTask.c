@@ -414,16 +414,16 @@ void WiFiTask(void *pvParameters)
                     HttpGet(&message);
                     break;
                 default:
-                    ESP_LOGI(__func__, "WiFi message received, function %d", message.function);
-                    //
-                    //  Memory for the payload is allocated on the heap and it needs to be released.
-                    //
+                    ESP_LOGI(__func__, "Unknown WiFi message received, function %d", message.function);
                     if (message.payload != NULL)
                     {
                         ESP_LOG_BUFFER_HEXDUMP(__func__, message.payload, message.payloadLength, ESP_LOG_INFO);
                     }
                     break;
             }
+            //
+            //  Memory for the payload is allocated on the heap and it needs to be released.
+            //
             if (message.payload != NULL)
             {
                 vPortFree(message.payload);
