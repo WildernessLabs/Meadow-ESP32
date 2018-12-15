@@ -55,7 +55,7 @@
 //
 //  Maximum length of the password for the access point.
 //
-#define MAXIMUM_PASSWORD_LENGTH         32
+#define MAXIMUM_PASSWORD_LENGTH         64
 
 //
 //  Event group bits.

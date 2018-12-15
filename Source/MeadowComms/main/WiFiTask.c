@@ -314,8 +314,13 @@ void HttpGet(struct ApplicationRequest *message)
     //  is terminated by a 0 byte.
     //
     char *uri = serverName + strlen(serverName) + 1;
-    char *request = pvPortMalloc(strlen(serverName) + strlen(uri) + 60);
-    sprintf(request, "GET %s HTTP/1.0\r\nHost: %s\r\nUser-Agent: esp-idf/1.0 esp32\r\n\r\n", uri, serverName);
+    int maximumRequestLength = strlen(serverName) + strlen(uri) + 60;
+    char *request = pvPortMalloc(maximumRequestLength);
+    int actualRequestLength = snprintf(request, maximumRequestLength,  "GET %s HTTP/1.0\r\nHost: %s\r\nUser-Agent: esp-idf/1.0 esp32\r\n\r\n", uri, serverName);
+    if (actualRequestLength > (maximumRequestLength - 1))
+    {
+        ESP_LOGI(__func__, "Actual request length, %d,  would be too long for the allocated buffer %d.", actualRequestLength, actualRequestLength);
+    }
     ESP_LOGI(__func__, "HTTP Get Request");
     ESP_LOGI(__func__, "    Host: %s", serverName);
     ESP_LOGI(__func__, "    URI: %s", uri);
