@@ -52,6 +52,7 @@ bld/
 [Oo]bj/
 [Ll]og/
 OnBoardFlash.dat.*
+[Bb]uild
 
 # VisualGDB Specific Files
 [Cc]ode[Dd][Bb]
