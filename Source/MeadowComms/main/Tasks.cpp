@@ -9,8 +9,10 @@
 #include "freertos/task.h"
 #include "freertos/queue.h"
 #include "esp_log.h"
-#include "Tasks.hpp"
 
+#include "Tasks.hpp"
+#include "WiFi.hpp"
+#include "WiFiTask.h"
 #include  "Messaging.h"
 
 /// <summary>
@@ -26,7 +28,7 @@ TaskHandle_t xBluetoothTaskHandle = NULL;
 /// <summary>
 ///     Name of the Bluetooth task (used for logging).
 /// </summary>
-char *BLUETOOTH_TASK_NAME = const_cast<char *> ("BluetoothTask");
+const char *BLUETOOTH_TASK_NAME = const_cast<const char *> ("BluetoothTask");
 
 /// <summary>
 ///     Handle for the Mesh network messages to be processed by the Mesh network task.
@@ -41,7 +43,17 @@ TaskHandle_t xMeshNetworkTaskHandle = NULL;
 /// <summary>
 ///     Name of the Mesh network task (used for logging).
 /// </summary>
-char *MESH_NETWORK_TASK_NAME = const_cast<char *> ("MeshNetworkTask");
+const char *MESH_NETWORK_TASK_NAME = const_cast<const char *> ("MeshNetworkTask");
+
+// <summary>
+//  	Handle for the WiFi task.
+// </summary>
+TaskHandle_t xWiFiTaskHandle = NULL;
+
+// <summary>
+// 		Name of the WiFi Task.
+// </summary>
+const char *WIFI_TASK_NAME = const_cast<const char *> ("WiFiTask");
 
 /// <summary>
 ///     Task to process the Bluetooth messages.
@@ -102,4 +114,26 @@ void MeshNetworkTask(void *pvParameters)
     //  should we get here.
     //
     vTaskDelete(xMeshNetworkTaskHandle);
+}
+
+/// <summary>
+///     Task to process the WiFi messages.
+/// <summary>
+void WiFiTask(void *pvParameters)
+{
+    while (true)
+    {
+        struct ApplicationRequest message;
+        BaseType_t result = xQueueReceive(xWiFiQueueHandle, &message, portMAX_DELAY);
+        if (result == pdTRUE)
+        {
+        	wifi->DispatchRequest(&message);
+        }
+    }
+    //
+    //  We should only get here if the code in the while loop generates a fault.
+    //  The documentation for FreeRTOS states that we should delete the task
+    //  should we get here.
+    //
+    vTaskDelete(xWiFiTaskHandle);
 }
