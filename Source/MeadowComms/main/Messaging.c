@@ -6,7 +6,7 @@
 #include "UARTTask.h"
 #include "Messaging.h"
 #include "WiFiTask.h"
-#include "MeshNetworkTask.h"
+#include "Tasks.hpp"
 
 /// <summary>
 ///     Set up the message queues.
