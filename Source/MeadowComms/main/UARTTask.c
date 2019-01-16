@@ -65,7 +65,7 @@ QueueHandle_t xUARTSyncQueueHandle = NULL;
 ///     and a response being received by the ESP32.  This is a variable as
 ///     it will depend upon the baud rate and the size of a frame.
 ///
-///     This value should be set whan the UART os configured.
+///     This value should be set when the UART is configured.
 /// </summary>
 TickType_t _uartMaximumSendResponsePeriod = 0;
 
@@ -304,7 +304,7 @@ uint32_t QueueMessage()
 /// <summary>
 ///     Add a response to the UART Tx queue.
 /// </summary>
-/// <param name="respopnse">Response to be queued for sending to the STM32.</param>
+/// <param name="response">Response to be queued for sending to the STM32.</param>
 void QueueUARTResponse(struct ApplicationResponse *response)
 {
     if (xQueueSendToBack(UARTTransmitQueueHandle, response, 0) != pdPASS)
