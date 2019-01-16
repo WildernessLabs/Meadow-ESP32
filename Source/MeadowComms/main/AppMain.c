@@ -9,9 +9,9 @@
 #include "string.h"
 #include "nvs_flash.h"
 
+#include "Tasks.hpp"
 #include "UARTTask.h"
 #include "WiFiTask.h"
-#include "BluetoothTask.h"
 #include "MeshNetworkTask.h"
 #include "Messaging.h"
 #include "Encoders.h"

@@ -1,8 +1,12 @@
-#pragma once
+/*
+ * Tasks.hpp
+ *
+ *  Created on: 16 Jan 2019
+ *      Author: markstevens
+ */
 
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "freertos/queue.h"
+#ifndef MAIN_TASKS_HPP_
+#define MAIN_TASKS_HPP_
 
 /// <summary>
 ///     Handle for the Bluetooth processing queue.
@@ -19,7 +23,23 @@ extern TaskHandle_t xBluetoothTaskHandle;
 /// </summary>
 extern char *BLUETOOTH_TASK_NAME;
 
-/// <summary>
-///     Task to process the Bluetooth messages.
-/// <summary>
+
+#ifdef __cplusplus
+
+extern "C"
+{
+
+#endif
+
+
 void BluetoothTask(void *);
+
+
+#ifdef __cplusplus
+
+}
+
+#endif
+
+
+#endif /* MAIN_TASKS_HPP_ */
