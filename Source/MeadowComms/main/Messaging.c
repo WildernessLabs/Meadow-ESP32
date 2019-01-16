@@ -5,7 +5,6 @@
 
 #include "UARTTask.h"
 #include "Messaging.h"
-#include "BluetoothTask.h"
 #include "WiFiTask.h"
 #include "MeshNetworkTask.h"
 
