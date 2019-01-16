@@ -8,6 +8,14 @@
 #ifndef MAIN_TASKS_HPP_
 #define MAIN_TASKS_HPP_
 
+#ifdef __cplusplus
+
+extern "C"
+{
+
+#endif
+
+
 /// <summary>
 ///     Handle for the Bluetooth processing queue.
 /// </summary>
@@ -23,17 +31,23 @@ extern TaskHandle_t xBluetoothTaskHandle;
 /// </summary>
 extern char *BLUETOOTH_TASK_NAME;
 
+/// <summary>
+///     Handle for the Mesh network messages to be processed by the Mesh network task.
+/// </summary>
+extern QueueHandle_t MeshNetworkQueueHandle;
 
-#ifdef __cplusplus
+/// <summary>
+///     Handle for the Mesh Network task.
+/// </summary>
+extern TaskHandle_t xMeshNetworkTaskHandle;
 
-extern "C"
-{
-
-#endif
-
+/// <summary>
+///     Name of the Mesh network task (used for logging).
+/// </summary>
+extern char *MESH_NETWORK_TASK_NAME;
 
 void BluetoothTask(void *);
-
+void MeshNetworkTask(void *);
 
 #ifdef __cplusplus
 

@@ -12,7 +12,6 @@
 #include "Tasks.hpp"
 #include "UARTTask.h"
 #include "WiFiTask.h"
-#include "MeshNetworkTask.h"
 #include "Messaging.h"
 #include "Encoders.h"
 

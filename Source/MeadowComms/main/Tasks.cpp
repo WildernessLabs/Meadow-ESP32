@@ -29,6 +29,21 @@ TaskHandle_t xBluetoothTaskHandle = NULL;
 char *BLUETOOTH_TASK_NAME = const_cast<char *> ("BluetoothTask");
 
 /// <summary>
+///     Handle for the Mesh network messages to be processed by the Mesh network task.
+/// </summary>
+QueueHandle_t MeshNetworkQueueHandle = NULL;
+
+/// <summary>
+///     Handle for the Mesh Network task.
+/// </summary>
+TaskHandle_t xMeshNetworkTaskHandle = NULL;
+
+/// <summary>
+///     Name of the Mesh network task (used for logging).
+/// </summary>
+char *MESH_NETWORK_TASK_NAME = const_cast<char *> ("MeshNetworkTask");
+
+/// <summary>
 ///     Task to process the Bluetooth messages.
 /// <summary>
 void BluetoothTask(void *pvParameters)
@@ -58,3 +73,33 @@ void BluetoothTask(void *pvParameters)
     vTaskDelete(xBluetoothTaskHandle);
 }
 
+
+/// <summary>
+///     Task to process the Mesh network messages.
+/// <summary>
+void MeshNetworkTask(void *pvParameters)
+{
+    while (true)
+    {
+        struct ApplicationRequest message;
+        BaseType_t result = xQueueReceive(MeshNetworkQueueHandle, &message, portMAX_DELAY);
+        if (result == pdTRUE)
+        {
+            ESP_LOGI(MESH_NETWORK_TASK_NAME, "Message handling not implemented, message will be deleted");
+            //
+            //  Memory for the payload is allocated on the heap and it needs to be released.
+            //
+            if(message.payload != NULL)
+            {
+                ESP_LOG_BUFFER_HEXDUMP(MESH_NETWORK_TASK_NAME, message.payload, message.payloadLength, ESP_LOG_INFO);
+                vPortFree(message.payload);
+            }
+        }
+    }
+    //
+    //  We should only get here if the code in the while loop generates a fault.
+    //  The documentation for FreeRTOS states that we should delete the task
+    //  should we get here.
+    //
+    vTaskDelete(xMeshNetworkTaskHandle);
+}
