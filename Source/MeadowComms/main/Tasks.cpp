@@ -1,9 +1,16 @@
+/*
+ *  Tasks.cpp
+ *
+ *	Create the tasks for the RTOS.
+ */
+
+#include <string>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
 #include "esp_log.h"
+#include "Tasks.hpp"
 
-#include  "BluetoothTask.h"
 #include  "Messaging.h"
 
 /// <summary>
@@ -19,7 +26,7 @@ TaskHandle_t xBluetoothTaskHandle = NULL;
 /// <summary>
 ///     Name of the Bluetooth task (used for logging).
 /// </summary>
-char *BLUETOOTH_TASK_NAME = "BLUETOOTH_TASK";
+char *BLUETOOTH_TASK_NAME = const_cast<char *> ("BluetoothTask");
 
 /// <summary>
 ///     Task to process the Bluetooth messages.
@@ -50,3 +57,4 @@ void BluetoothTask(void *pvParameters)
     //
     vTaskDelete(xBluetoothTaskHandle);
 }
+

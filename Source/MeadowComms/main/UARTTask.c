@@ -15,7 +15,6 @@
 #include "UARTTask.h"
 #include "Messaging.h"
 #include "WiFiTask.h"
-#include "BluetoothTask.h"
 #include "MeshNetworkTask.h"
 #include "Encoders.h"
 #include "ErrorCodes.h"
