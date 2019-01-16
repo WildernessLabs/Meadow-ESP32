@@ -14,13 +14,17 @@
 #include "WiFiTask.h"
 #include "Messaging.h"
 #include "Encoders.h"
+#include "WiFi.hpp"
 
-void app_main()
+WiFi *wifi;
+
+extern "C" void app_main()
 {
     esp_log_level_set("*", ESP_LOG_INFO);
+    wifi = new(WiFi);
     SetupMessageQueues();
     SetupUART();
-    SetupWiFi();
+    wifi->SetupWiFi();
     xTaskCreate(UARTRxTask, "UART_RX_TASK", 1024 * 2, NULL, configMAX_PRIORITIES - 5, &xUARTReceiveTaskHandle);
     xTaskCreate(UARTTxTask, "UART_TX_TASK", 1024 * 2, NULL, configMAX_PRIORITIES - 5, &xUARTTransmitTaskHandle);
     xTaskCreate(BluetoothTask, BLUETOOTH_TASK_NAME, 1024 * 2, NULL, configMAX_PRIORITIES - 1, &xWiFiTaskHandle);

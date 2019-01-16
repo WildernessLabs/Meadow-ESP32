@@ -5,6 +5,15 @@
 #include "freertos/queue.h"
 #include "stdlib.h"
 
+#ifdef __cplusplus
+
+extern "C"
+{
+
+#endif
+
+
+
 //
 //  Available interfaces.
 //
@@ -94,7 +103,7 @@ struct ApplicationRequest
     uint32_t function;
 
     /// <summary>
-    ///     Message ID from the requestor.  This uniquely identifies the 
+    ///     Message ID from the requester.  This uniquely identifies the
     ///     request from the STM32.
     /// </summary>
     uint32_t messageID;
@@ -182,3 +191,10 @@ struct ApplicationResponse
 extern uint8_t CRC8(const uint8_t *, uint16_t);
 extern uint32_t CRC32(const uint8_t *, uint16_t);
 extern uint32_t ProgressiveCRC32(uint32_t, uint8_t);
+
+#ifdef __cplusplus
+
+}
+
+#endif
+

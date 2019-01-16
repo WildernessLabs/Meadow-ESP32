@@ -66,18 +66,3 @@
 #define WIFI_RECONNECTING_BIT           (BIT3)      /* Indicate if a reconnection (as opposed to a new connection) is being made. */
 #define WIFI_INITIALISED_BIT            (BIT4)      /* Indicate if the WiFi system has been initialised. */
 
-/// <summary>
-///     Handle for the WiFi messages to be processed by the WIFi task.
-/// </summary>
-extern QueueHandle_t xWiFiQueueHandle;
-
-/// <summary>
-///     Handle for the WiFi task.
-/// </summary>
-extern TaskHandle_t xWiFiTaskHandle;
-
-//
-//  Function prototypes for the WiFi subsystem.
-//
-void SetupWiFi();
-void WiFiTask(void *);

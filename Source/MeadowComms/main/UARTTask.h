@@ -5,6 +5,13 @@
 
 #include "Messaging.h"
 
+#ifdef __cplusplus
+
+extern "C"
+{
+
+#endif
+
 //
 //  Number of bytes in the Rx and Tx buffers.
 //
@@ -121,4 +128,10 @@ void UARTTxTask(void *);
 void UARTRxTask(void *);
 
 void QueueUARTResponse(struct ApplicationResponse *);
+
+#ifdef __cplusplus
+
+}
+
+#endif
 
