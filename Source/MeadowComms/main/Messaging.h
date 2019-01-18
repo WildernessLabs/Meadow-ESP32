@@ -120,8 +120,6 @@ struct ApplicationRequest
 #define APP_RESPONSE_PAYLOAD_LENGTH     (APP_RESPONSE_MESSAGE_ID + 4)
 #define APP_RESPONSE_HEADER_LENGTH      (APP_RESPONSE_PAYLOAD_LENGTH + 4)
 
-#define CRC32_SEED                  (0xffffffff)
-
 /// <summary>
 ///     Structure for holding the elements of a response to a request
 ///     from the STM32.
@@ -182,10 +180,6 @@ struct ApplicationResponse
 ///     Size of the header.
 /// </summary>
 #define FRAME_HEADER_LENGTH         (FRAME_PAYLOAD_LENGTH + 1)
-
-extern uint8_t CRC8(const uint8_t *, uint16_t);
-extern uint32_t CRC32(const uint8_t *, uint16_t);
-extern uint32_t ProgressiveCRC32(uint32_t, uint8_t);
 
 #ifdef __cplusplus
 

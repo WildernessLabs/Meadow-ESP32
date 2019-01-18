@@ -74,3 +74,59 @@ void Encoders::EncodeUInt32(uint32_t value, uint8_t *buffer)
     buffer[2] = ((value >> 16) & 0xff);
     buffer[3] = ((value >> 24) & 0xff);
 }
+
+/// <summary>
+///     Calculate the CRC value for the specified data buffer.
+/// </summary>
+/// <remarks>
+///     This algorithm is loosely based upon the Dallas 1-Wire algorithm.
+/// </remarks>
+uint8_t Encoders::CRC8(const uint8_t *data, uint16_t len)
+{
+    uint8_t crc = 0x00;
+
+    for (uint16_t byteCounter = 0; byteCounter < len; byteCounter++)
+    {
+        uint8_t byte = data[byteCounter];
+        for (uint8_t bitCounter = 8; bitCounter; bitCounter--)
+        {
+            uint8_t sum = (crc ^ byte) & 0x01;
+            crc >>= 1;
+            if (sum)
+            {
+                crc ^= 0x8C;
+            }
+            byte >>= 1;
+        }
+    }
+    return(crc);
+}
+
+/// <summary>
+///     Calculate the 32-bit CRC of a buffer of data.
+/// </summary>
+uint32_t Encoders::CRC32(const uint8_t *data, uint16_t len)
+{
+    uint32_t crc = CRC32_SEED;
+
+    for (uint16_t byteCounter = 0; byteCounter < len; byteCounter++)
+    {
+        crc = ProgressiveCRC32(crc, data[byteCounter]);
+    }
+    return (crc);
+}
+
+/// <summary>
+///     Calculate the CRC32 value change for the specified byte.
+/// </summary>
+uint32_t Encoders::ProgressiveCRC32(uint32_t currentChecksum, uint8_t byte)
+{
+    uint32_t crc = currentChecksum;
+    crc ^= byte;
+    for (uint32_t index = 0; index < 8; index++)
+    {
+        uint32_t mask = (uint32_t) -(crc & 0x01);
+        crc = (crc >> 1) ^ (0xedb88320 & mask);
+    }
+    return (crc);
+}
