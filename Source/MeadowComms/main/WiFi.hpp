@@ -89,16 +89,16 @@
 class WiFi
 {
 private:
-	//
-	//  Handle for the WiFi messages to be processed by the WIFi task.
-	//
-	QueueHandle_t xWiFiQueueHandle = NULL;
+	/// <summary>
+	///     Handle for the WiFi messages to be processed by the WIFi task.
+	/// </summary>
+	QueueHandle_t QueueHandle = NULL;
 
 	//
 	//  Event group containing 24-bits used to indicate the state
 	//  of the WiFi connection.
 	//
-	EventGroupHandle_t xWiFiEventGroup;
+	EventGroupHandle_t xWiFiEventGroup = NULL;
 
 	//
 	//  Current retry count.
@@ -121,6 +121,14 @@ private:
 	//
 	struct ApplicationResponse *_wifiResponse = NULL;
 
+	void SendResponse(uint32_t);
+	void ProcessAccessPointScanCompletion(system_event_t *);
+
+	//
+	//	Getters and setters.
+	//
+	void SetQueueHandle(QueueHandle_t);
+
 
 public:
 	//
@@ -131,11 +139,16 @@ public:
 	//
 	//	Public methods.
 	//
-	void SetupWiFi();
+	void Setup();
 	void DispatchRequest(struct ApplicationRequest *);
+	esp_err_t EventHandler(void *, system_event_t *);
 	void StartNetwork(struct ApplicationRequest *);
 	void GetAvailableNetworks(struct ApplicationRequest *);
 	void HttpGet(struct ApplicationRequest *);
+	//
+	//	Getters and setters.
+	//
+	QueueHandle_t GetQueueHandle() const;
 };
 
 extern WiFi *wifi;
