@@ -117,6 +117,11 @@ void UART::Setup()
     xUARTSyncQueueHandle = xQueueCreate(1, sizeof(enum UARTSyncStates));
     memset(_startOfFrameCharacters, START_OF_FRAME_CHARACTER, NUMBER_OF_START_OF_FRAME_CHARACTERS);
     memset(_endOfFrameCharacters, END_OF_FRAME_CHARACTER, NUMBER_OF_END_OF_FRAME_CHARACTERS);
+    UARTTransmitQueueHandle = xQueueCreate(MAX_QUEUE_LENGTH, sizeof(struct ApplicationResponse));
+    if (UARTTransmitQueueHandle == NULL)
+    {
+        ESP_LOGI(__func__, "Cannot allocate UART transmit queue.");
+    }
     xTaskCreate(UARTRxTask, UART_RX_TASK_NAME, 1024 * 2, NULL, configMAX_PRIORITIES - 5, &xUARTReceiveTaskHandle);
     xTaskCreate(UARTTxTask, UART_TX_TASK_NAME, 1024 * 2, NULL, configMAX_PRIORITIES - 5, &xUARTTransmitTaskHandle);
 }
@@ -189,7 +194,7 @@ uint32_t UART::QueueMessage()
 ///     Add a response to the UART Tx queue.
 /// </summary>
 /// <param name="response">Response to be queued for sending to the STM32.</param>
-void UART::QueueUARTResponse(struct ApplicationResponse *response)
+void UART::QueueResponse(struct ApplicationResponse *response)
 {
     if (xQueueSendToBack(UARTTransmitQueueHandle, response, 0) != pdPASS)
     {
@@ -762,7 +767,7 @@ void UART::Send(struct ApplicationResponse *message)
 	//
 	//  Generate an encoded header frame and send it.
 	//
-	struct BufferAndLength *frame = GenerateApplicationFrame(PKT_DATA | DATA_HEADER, message->messageID, 0, buffer, APP_RESPONSE_HEADER_LENGTH);
+	BufferAndLength *frame = GenerateApplicationFrame(PKT_DATA | DATA_HEADER, message->messageID, 0, buffer, APP_RESPONSE_HEADER_LENGTH);
 	sendResult = SendFrame(frame, "header");
 	if (frame->Buffer != NULL)
 	{

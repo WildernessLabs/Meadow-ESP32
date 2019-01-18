@@ -297,7 +297,7 @@ public:
 //	void UARTRxTask(void *);
 
 	void DecodeSerialData(uint8_t *, int);
-	void QueueUARTResponse(struct ApplicationResponse *);
+	void QueueResponse(struct ApplicationResponse *);
 	void RxCleanup();
 	void Send(struct ApplicationResponse *);
 

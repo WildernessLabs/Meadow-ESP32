@@ -11,11 +11,6 @@
 /// </summary>
 void SetupMessageQueues()
 {
-    UARTTransmitQueueHandle = xQueueCreate(MAX_QUEUE_LENGTH, sizeof(struct ApplicationResponse));
-    if (UARTTransmitQueueHandle == NULL)
-    {
-        ESP_LOGI(__func__, "Cannot allocate UART transmit queue.");
-    }
     //
     const size_t messageSize = sizeof(struct ApplicationRequest);
     BluetoothQueueHandle = xQueueCreate(MAX_QUEUE_LENGTH, messageSize);
