@@ -3,9 +3,7 @@
 #include "freertos/queue.h"
 #include "esp_log.h"
 
-#include "UARTTask.h"
 #include "Messaging.h"
-#include "WiFiTask.h"
 #include "Tasks.hpp"
 
 /// <summary>
@@ -20,12 +18,6 @@ void SetupMessageQueues()
     }
     //
     const size_t messageSize = sizeof(struct ApplicationRequest);
-    xWiFiQueueHandle = xQueueCreate(MAX_QUEUE_LENGTH, messageSize);
-    if (xWiFiQueueHandle == NULL)
-    {
-        ESP_LOGI(__func__, "Cannot allocate WiFi processing queue.");
-    }
-    //
     BluetoothQueueHandle = xQueueCreate(MAX_QUEUE_LENGTH, messageSize);
     if (BluetoothQueueHandle == NULL)
     {

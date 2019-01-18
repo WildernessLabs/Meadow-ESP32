@@ -38,11 +38,6 @@ extern "C"
 extern QueueHandle_t UARTTransmitQueueHandle;
 
 /// <summary>
-///     Handle for the WiFi messages to be processed by the WIFi task.
-/// </summary>
-extern QueueHandle_t xWiFiQueueHandle;
-
-/// <summary>
 ///     Handle for the Bluetooth messages to be processed by the WiFi task.
 /// </summary>
 extern QueueHandle_t BluetoothQueueHandle;
