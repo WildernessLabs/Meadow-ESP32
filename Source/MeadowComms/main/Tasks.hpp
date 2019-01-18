@@ -57,6 +57,35 @@ extern QueueHandle_t xWiFiQueueHandle;
 extern TaskHandle_t xWiFiTaskHandle;
 
 /// <summary>
+///     Handle for the incoming messages on the UART.
+/// </summary>
+extern QueueHandle_t UARTRxQueueHandle;
+
+/// <summary>
+///     Handle for the UART receive task.
+/// </summary>
+extern TaskHandle_t xUARTReceiveTaskHandle;
+
+extern const char *UART_RX_TASK_NAME;
+
+/// <summary>
+///     Handle for the transmit handle for the UART.
+/// </summary>
+/// <remarks>
+///     The UART transmit queue is used to hold data from tasks ready to
+///     send the data to the UART.
+/// </remarks>
+extern QueueHandle_t UARTTransmitQueueHandle;
+
+/// <summary>
+///     Handle for the UART transmit task.
+/// </summary>
+extern TaskHandle_t xUARTTransmitTaskHandle;
+
+extern const char *UART_TX_TASK_NAME;
+
+
+/// <summary>
 ///     Name of the WiFi task (used for logging).
 /// </summary>
 extern const char *WIFI_TASK_NAME;
@@ -64,6 +93,8 @@ extern const char *WIFI_TASK_NAME;
 void BluetoothTask(void *);
 void MeshNetworkTask(void *);
 void WiFiTask(void *);
+void UARTRxTask(void *);
+void UARTTxTask(void *);
 
 #ifdef __cplusplus
 
