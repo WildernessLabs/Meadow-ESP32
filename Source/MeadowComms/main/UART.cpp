@@ -1,217 +1,93 @@
-//
-//  Implementation of the UART code for Meadow.
-//
+/*
+ * UART.cpp
+ *
+ *  Created on: 18 Jan 2019
+ *      Author: markstevens
+ */
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "freertos/queue.h"
 #include "esp_system.h"
 #include "esp_log.h"
 #include "driver/uart.h"
 #include "soc/uart_struct.h"
-#include "string.h"
-#include "stdlib.h"
-#include "esp_app_trace.h"
-#include "string.h"
+#include <string.h>
+#include <stdlib.h>
 
-#include "UARTTask.h"
+#include "UART.hpp"
+#include "WiFi.hpp"
+#include "Tasks.hpp"
 #include "Messaging.h"
-#include "WiFiTask.h"
-#include "Encoders.h"
 #include "ErrorCodes.h"
+#include "Encoders.hpp"
+
+extern WiFi *wifi;
 
 // ---------------------------------------------------------------------------
 //
-//                          Global variables.
+//                         Constructors and destructor
 //
 // ---------------------------------------------------------------------------
 
-/// <summary>
-///     Handle for the UART receive task.
-/// </summary>
-TaskHandle_t xUARTReceiveTaskHandle = NULL;
 
-/// <summary>
-///     Handle for the UART transmit task.
-/// </summary>
-TaskHandle_t xUARTTransmitTaskHandle = NULL;
+UART::UART()
+{
+}
 
-/// <summary>
-///     Handle for the incoming messages on the UART.
-/// </summary>
-QueueHandle_t UARTRxQueueHandle = NULL;
+UART::~UART()
+{
+}
 
-/// <summary>
-///     Handle for the transmit handle for the UART.
-/// </summary>
-/// <remarks>
-///     The UART transmit queue is used to hold data from tasks ready to
-///     send the data to the UART.
-/// </remarks>
-QueueHandle_t UARTTransmitQueueHandle = NULL;
-
-/// <summary>
-///     Handle to the queue used to sync the UART messages.
-/// </summary>
-/// <remarks>
-///     The sync queue is used by the transport message handling methods
-///     to communicate with the Tx and Rx tasks to provide a measure of
-///     reliability and recovery.
-/// </remarks>
-QueueHandle_t xUARTSyncQueueHandle = NULL;
-
-/// <summary>
-///     This is the maximum number of milliseconds between sending a frame
-///     and a response being received by the ESP32.  This is a variable as
-///     it will depend upon the baud rate and the size of a frame.
-///
-///     This value should be set when the UART is configured.
-/// </summary>
-TickType_t _uartMaximumSendResponsePeriod = 0;
-
-/// <summary>
-///     Mutex to ensure that only one request to access the UART can be 
-///     processed at any time.
-/// </summary>
-/// <remarks>
-///     The UARTTXTask and the ACK/NAK processing could need access to 
-///     the UART and this mutex is used to synchronise the access.
-/// </remarks>
-SemaphoreHandle_t xUARTTxMutex = NULL;
-
-static int bytesRemaining = 0;
-
-static uint8_t *nextPayloadLocation;
-
-static struct ApplicationRequest messageHeader;
-
-/// <summary>
-///     Holds the current state of the communication state machine.
-/// </summary>
-static enum CommunicationStates _communicationState = StartOfFrame;
-
-/// <summary>
-///     Number of consecutive occurrences of the start of frame character has been detected
-/// </summary>
-static int _startOfFrameByteCount = 0;
-
-/// <summary>
-///     Type of frame being received.
-/// </summary>
-static uint8_t _currentFrameType;
-
-/// <summary>
-///     Number of bytes in the current data frame being received.
-/// </summary>
-static uint8_t _framePayloadLength = 0;
-
-/// <summary>
-///     Payload of the frame currently being received.
-/// </summary>
-static uint8_t *_framePayload = NULL;
-
-/// <summary>
-///     Location of the next payload byte in the buffer.
-/// </summary>
-static uint8_t _framePayloadIndex = 0;
-
-/// <summary>
-///     Value of the checksum as read from the incoming data frame.
-/// </summary>
-static uint32_t _originalChecksum = 0;
-
-/// <summary>
-///     Value of the calculated checksum from the progressive checksum calculation.
-/// </summary>
-static uint32_t _calculatedChecksum;
-
-/// <summary>
-///     This variable holds the byte number when putting together multi-byte
-///     values (i.e. 4 bytes in a UInt32 object).  this allows the original
-///     object to be re-hydrated from the UART byte stream.
-/// </summary>
-static int _byteNumber = 0;
-
-/// <summary>
-///     Message ID of the data packets being received.
-/// </summary>
-static uint32_t _messageID = 0;
-
-/// <summary>
-///     Sequence number of this frame in the total number of frames being sent.
-/// </summary>
-static uint8_t _frameSequenceNumber = 0;
-
-/// <summary>
-///     Packet code returned by the transport packets.
-/// </summary>
-static uint32_t _statusCode = 0;
-
-/// <summary>
-///     Buffer for the start of frame characters.
-/// </summary>
-static char _startOfFrameCharacters[NUMBER_OF_START_OF_FRAME_CHARACTERS];
-
-/// <summary>
-///     Buffer for the end of frame characters.
-/// </summary>
-static char _endOfFrameCharacters[NUMBER_OF_END_OF_FRAME_CHARACTERS];
-
-/// <summary>
-///     Current retry count.
-/// </summary>
-static uint32_t _currentRetryCount = 0;
-
-/// <summary>
-///     Current maximum number of retries when sending a frame
-///     before the system declares an error condition.
-/// </summary>
-static uint32_t _maximumRetryCount = UART_DEFAULT_MAXIMUM_RETRIES;
-
-/// <summary>
-///     Total number of bytes sent since the microcontroller was started.
-/// </summary>
-static uint _totalTxBytes = 0;
-
-/// <summary>
-///     Total number of bytes received since the microcontroller was started.
-/// </summary>
-static uint _totalRxBytes = 0;
-
-/// <summary>
-///     Total number of frames sent since the microcontroller was started.
-/// </summary>
-static uint _totalFramesSent = 0;
-
-/// <summary>
-///     Total number of frames received since the microcontroller was started.
-/// </summary>
-static uint _totalFramesReceived = 0;
-
-/// <summary>
-///     Number of Rx errors since the microcontroller was started.
-/// </summary>
-static uint _totalRxErrors = 0;
-
-/// <summary>
-///     Number of Tx errors since the microcontroller was started.
-/// </summary>
-static uint _totalTxErrors = 0;
-
+// ---------------------------------------------------------------------------
 //
-//  Buffer to hold messages to be sent to ESP32 Semihosting output.
+//                           Getters and Setters
 //
-static char _semihostingBuffer[128];
+// ---------------------------------------------------------------------------
 
-//
-//  ESP heap debugging stuff.
-//
-#include "esp_heap_trace.h"
-#define NUMBER_OF_HEAP_TRACE_RECORDS 100
-static heap_trace_record_t heap_trace_records[NUMBER_OF_HEAP_TRACE_RECORDS];
+QueueHandle_t UART::GetUartRxQueueHandle() const
+{
+	return UARTRxQueueHandle;
+}
+
+void UART::SetUartRxQueueHandle(QueueHandle_t uartRxQueueHandle = NULL)
+{
+	UARTRxQueueHandle = uartRxQueueHandle;
+}
+
+QueueHandle_t UART::GetUartTransmitQueueHandle() const
+{
+	return UARTTransmitQueueHandle;
+}
+
+void UART::SetUartTransmitQueueHandle(QueueHandle_t uartTransmitQueueHandle = NULL)
+{
+	UARTTransmitQueueHandle = uartTransmitQueueHandle;
+}
+
+TaskHandle_t UART::GetUartReceiveTaskHandle() const
+{
+	return xUARTReceiveTaskHandle;
+}
+
+void UART::SetUartReceiveTaskHandle(TaskHandle_t uartReceiveTaskHandle = NULL)
+{
+	xUARTReceiveTaskHandle = uartReceiveTaskHandle;
+}
+
+TaskHandle_t UART::GetUartTransmitTaskHandle() const
+{
+	return xUARTTransmitTaskHandle;
+}
+
+void UART::SetUartTransmitTaskHandle(TaskHandle_t uartTransmitTaskHandle = NULL)
+{
+	xUARTTransmitTaskHandle = uartTransmitTaskHandle;
+}
 
 // ---------------------------------------------------------------------------
 //
 //                                  Methods
-// 
+//
 // ---------------------------------------------------------------------------
 
 /// <summary>
@@ -219,7 +95,7 @@ static heap_trace_record_t heap_trace_records[NUMBER_OF_HEAP_TRACE_RECORDS];
 ///
 ///     UART should be configured as 115200 baud, no parity, one stop bit, 8 data bits.
 /// </summary>
-void SetupUART()
+void UART::Setup()
 {
     const uart_config_t uart_config =
     {
@@ -239,15 +115,25 @@ void SetupUART()
     uart_driver_install(STM32_UART_NUMBER, RX_BUF_SIZE * 2, TX_BUF_SIZE * 2, UART_QUEUE_LENGTH, &UARTRxQueueHandle, 0);
     xUARTTxMutex = xSemaphoreCreateMutex();
     xUARTSyncQueueHandle = xQueueCreate(1, sizeof(enum UARTSyncStates));
-    //    ESP_ERROR_CHECK(heap_trace_init_standalone(heap_trace_records, NUMBER_OF_HEAP_TRACE_RECORDS));
     memset(_startOfFrameCharacters, START_OF_FRAME_CHARACTER, NUMBER_OF_START_OF_FRAME_CHARACTERS);
     memset(_endOfFrameCharacters, END_OF_FRAME_CHARACTER, NUMBER_OF_END_OF_FRAME_CHARACTERS);
+    xTaskCreate(UARTRxTask, UART_RX_TASK_NAME, 1024 * 2, NULL, configMAX_PRIORITIES - 5, &xUARTReceiveTaskHandle);
+    xTaskCreate(UARTTxTask, UART_TX_TASK_NAME, 1024 * 2, NULL, configMAX_PRIORITIES - 5, &xUARTTransmitTaskHandle);
+}
+
+void UART::RxCleanup()
+{
+    if (_framePayload != NULL)
+    {
+        vPortFree(_framePayload);
+        _framePayload = NULL;
+    }
 }
 
 /// <summary>
 ///     Reset the message header and delete the message body storage.
 /// <summary>
-void ResetIncomingMessage(bool releasePayloadMemory)
+void UART::ResetIncomingMessage(bool releasePayloadMemory)
 {
     messageHeader.interface = 0;
     messageHeader.function = 0;
@@ -265,14 +151,14 @@ void ResetIncomingMessage(bool releasePayloadMemory)
 /// <summary>
 ///     Add the message to the appropriate queue if possible.
 /// </summary>
-uint32_t QueueMessage()
+uint32_t UART::QueueMessage()
 {
     QueueHandle_t queueHandle = NULL;
 
     switch (messageHeader.interface)
     {
         case INTERFACE_WIFI:
-            queueHandle = xWiFiQueueHandle;
+            queueHandle = wifi->GetQueueHandle();
             break;
         case INTERFACE_BLUETOOTH:
             queueHandle = BluetoothQueueHandle;
@@ -303,7 +189,7 @@ uint32_t QueueMessage()
 ///     Add a response to the UART Tx queue.
 /// </summary>
 /// <param name="response">Response to be queued for sending to the STM32.</param>
-void QueueUARTResponse(struct ApplicationResponse *response)
+void UART::QueueUARTResponse(struct ApplicationResponse *response)
 {
     if (xQueueSendToBack(UARTTransmitQueueHandle, response, 0) != pdPASS)
     {
@@ -316,11 +202,11 @@ void QueueUARTResponse(struct ApplicationResponse *response)
 //      is going to be sent.  This will take into account the padding
 //      and CRC etc.
 /// </summary>
-uint32_t CalculateEncodedFrameLength(uint8_t *buffer, uint8_t bufferLength)
+uint32_t UART::CalculateEncodedFrameLength(uint8_t *buffer, uint8_t bufferLength)
 {
     int startOfFrameCharacterCount = 0;
     int byteCount = 0;
-            
+
     for (int index = 0; index < bufferLength; index++)
     {
         if (buffer[index] == START_OF_FRAME_CHARACTER)
@@ -340,7 +226,7 @@ uint32_t CalculateEncodedFrameLength(uint8_t *buffer, uint8_t bufferLength)
     }
     //
     //  We need to take into consideration the size of the buffer required for
-    //  the data plus the start of frame characters, the CRC and the end of 
+    //  the data plus the start of frame characters, the CRC and the end of
     //  frame characters.
     //
     byteCount += (NUMBER_OF_START_OF_FRAME_CHARACTERS + NUMBER_OF_END_OF_FRAME_CHARACTERS + 4);
@@ -351,7 +237,7 @@ uint32_t CalculateEncodedFrameLength(uint8_t *buffer, uint8_t bufferLength)
 ///     Encode the frame data taking into account the possibility of multiple
 ///     0xaa characters.
 /// </summary>
-int EncodeData(uint8_t *buffer, uint32_t bufferLength, uint8_t *frame)
+int UART::EncodeData(uint8_t *buffer, uint32_t bufferLength, uint8_t *frame)
 {
     uint32_t currentByte = 0;
 
@@ -378,7 +264,7 @@ int EncodeData(uint8_t *buffer, uint32_t bufferLength, uint8_t *frame)
             {
                 startOfFrameCharacterCount = 0;
             }
-        }       
+        }
     }
 
     return (currentByte);
@@ -387,34 +273,34 @@ int EncodeData(uint8_t *buffer, uint32_t bufferLength, uint8_t *frame)
 /// <summary>
 ///     Generate a new application message frame.
 /// </summary>
-struct BufferAndLength *GenerateApplicationFrame(uint8_t frameType, uint32_t messageID, uint8_t sequenceNumber, uint8_t *buffer, uint32_t bufferLength)
+struct BufferAndLength *UART::GenerateApplicationFrame(uint8_t frameType, uint32_t messageID, uint8_t sequenceNumber, uint8_t *buffer, uint32_t bufferLength)
 {
     uint32_t frameLength = FRAME_HEADER_LENGTH + CalculateEncodedFrameLength(buffer, bufferLength);
 
-    uint8_t *frame = pvPortMalloc(frameLength);
+    uint8_t *frame = (uint8_t *) pvPortMalloc(frameLength);
     memset(frame, START_OF_FRAME_CHARACTER, NUMBER_OF_START_OF_FRAME_CHARACTERS);
     uint32_t currentByte = NUMBER_OF_START_OF_FRAME_CHARACTERS;
     //
     //  Now add the frame header information.
     //
     frame[currentByte++] = frameType;
-    EncodeUInt32(messageID, frame + currentByte);
+    Encoders::EncodeUInt32(messageID, frame + currentByte);
     currentByte += 4;
     frame[currentByte++] = sequenceNumber;
     frame[currentByte++] = (uint8_t) (bufferLength & 0xff);
     currentByte += EncodeData(buffer, bufferLength, frame + currentByte);
     //
     //  The frame length calculated contains the header characters, CRC
-    //  and the end of frame characters.  We need to take this into consideration 
+    //  and the end of frame characters.  We need to take this into consideration
     //  when the CRC is calculated as the CRC should only be calculated on
     //  the actual data plus any padding characters.
     //
     uint32_t crc = CRC32(frame + NUMBER_OF_START_OF_FRAME_CHARACTERS, frameLength - (NUMBER_OF_START_OF_FRAME_CHARACTERS + 5));
-    EncodeUInt32(crc, frame + currentByte);
+    Encoders::EncodeUInt32(crc, frame + currentByte);
     currentByte += 4;
     memset(frame + currentByte, END_OF_FRAME_CHARACTER, NUMBER_OF_END_OF_FRAME_CHARACTERS);
     currentByte += NUMBER_OF_END_OF_FRAME_CHARACTERS;
-    struct BufferAndLength *f = pvPortMalloc(sizeof(struct BufferAndLength));
+    BufferAndLength *f = (BufferAndLength *) pvPortMalloc(sizeof(struct BufferAndLength));
     f->Buffer = frame;
     f->BufferLength = currentByte;
     return (f);
@@ -425,26 +311,26 @@ struct BufferAndLength *GenerateApplicationFrame(uint8_t frameType, uint32_t mes
 //      This sequence will contain the start of frame characters, data, CRC and end
 //      of frame characters.
 /// </summary>
-struct BufferAndLength *GenerateTransportFrame(uint8_t *buffer, uint32_t bufferLength)
+struct BufferAndLength *UART::GenerateTransportFrame(uint8_t *buffer, uint32_t bufferLength)
 {
     uint32_t frameLength = CalculateEncodedFrameLength(buffer, bufferLength);
 
-    uint8_t *frame = pvPortMalloc(frameLength);
+    uint8_t *frame = (uint8_t *) pvPortMalloc(frameLength);
     memset(frame, START_OF_FRAME_CHARACTER, NUMBER_OF_START_OF_FRAME_CHARACTERS);
     uint32_t currentByte = NUMBER_OF_START_OF_FRAME_CHARACTERS;
     currentByte += EncodeData(buffer, bufferLength, frame + currentByte);
     //
     //  The frame length calculated contains the header characters, CRC
-    //  and the end of frame characters.  We need to take this into consideration 
+    //  and the end of frame characters.  We need to take this into consideration
     //  when the CRC is calculated as the CRC should only be calculated on
     //  the actual data plus any padding characters.
     //
     uint32_t crc = CRC32(frame + NUMBER_OF_START_OF_FRAME_CHARACTERS, currentByte - NUMBER_OF_START_OF_FRAME_CHARACTERS);
-    EncodeUInt32(crc, frame + currentByte);
+    Encoders::EncodeUInt32(crc, frame + currentByte);
     currentByte += 4;
     memset(frame + currentByte, END_OF_FRAME_CHARACTER, NUMBER_OF_END_OF_FRAME_CHARACTERS);
     currentByte += NUMBER_OF_END_OF_FRAME_CHARACTERS;
-    struct BufferAndLength *f = pvPortMalloc(sizeof(struct BufferAndLength));
+    BufferAndLength *f = (BufferAndLength *) pvPortMalloc(sizeof(struct BufferAndLength));
     f->Buffer = frame;
     f->BufferLength = currentByte;
     return (f);
@@ -453,12 +339,12 @@ struct BufferAndLength *GenerateTransportFrame(uint8_t *buffer, uint32_t bufferL
 /// <summary>
 ///     Send a positive (ACK) or negative (NAK) acknowledgement along with a response code.
 /// </summary>
-void AcknowledgeFrame(uint8_t ackNak, uint32_t status)
+void UART::AcknowledgeFrame(uint8_t ackNak, uint32_t status)
 {
     uint8_t buffer[TRANSPORT_MESSAGE_LENGTH];
     memset(buffer, 0, TRANSPORT_MESSAGE_LENGTH);
     buffer[TRANSPORT_FRAME_TYPE] = PKT_TRANSPORT | ackNak;
-    EncodeUInt32(status, buffer + TRANSPORT_STATUS_CODE);
+    Encoders::EncodeUInt32(status, buffer + TRANSPORT_STATUS_CODE);
     struct BufferAndLength *frame = GenerateTransportFrame(buffer, TRANSPORT_MESSAGE_LENGTH);
     //
     xSemaphoreTake(xUARTTxMutex, portMAX_DELAY);
@@ -475,7 +361,7 @@ void AcknowledgeFrame(uint8_t ackNak, uint32_t status)
 /// <remarks>
 ///     Put packet definition here.
 /// </remarks>
-void ProcessHeader(uint8_t *packet, uint8_t packetLength)
+void UART::ProcessHeader(uint8_t *packet, uint8_t packetLength)
 {
     if (packetLength != APP_REQUEST_HEADER_LENGTH)
     {
@@ -485,13 +371,13 @@ void ProcessHeader(uint8_t *packet, uint8_t packetLength)
     {
         ResetIncomingMessage(true);
         messageHeader.interface = packet[0];
-        messageHeader.function = ExtractUInt32(packet + APP_REQUEST_FUNCTION);
-        messageHeader.messageID = ExtractUInt32(packet + APP_REQUEST_MESSAGE_ID);
-        bytesRemaining = ExtractUInt32(packet + APP_REQUEST_PAYLOAD_LENGTH);
+        messageHeader.function = Encoders::ExtractUInt32(packet + APP_REQUEST_FUNCTION);
+        messageHeader.messageID = Encoders::ExtractUInt32(packet + APP_REQUEST_MESSAGE_ID);
+        bytesRemaining = Encoders::ExtractUInt32(packet + APP_REQUEST_PAYLOAD_LENGTH);
         messageHeader.payloadLength = bytesRemaining;
         if (messageHeader.payloadLength > 0)
         {
-            messageHeader.payload = pvPortMalloc(messageHeader.payloadLength);
+            messageHeader.payload = (uint8_t *) pvPortMalloc(messageHeader.payloadLength);
         }
         else
         {
@@ -509,7 +395,7 @@ void ProcessHeader(uint8_t *packet, uint8_t packetLength)
 /// <summary>
 ///     Process an application data packet.
 /// </summary>
-void ProcessData(uint8_t *packet, uint8_t packetLength)
+void UART::ProcessData(uint8_t *packet, uint8_t packetLength)
 {
     if ((nextPayloadLocation != NULL) && (bytesRemaining > 0) && (packetLength <= bytesRemaining))
     {
@@ -544,7 +430,7 @@ void ProcessData(uint8_t *packet, uint8_t packetLength)
 /// <summary>
 ///     Process the current frame as a transport message.
 /// </summary>
-void ProcessTransportData(uint8_t currentFrameType)
+void UART::ProcessTransportData(uint8_t currentFrameType)
 {
     enum UARTSyncStates state = Unknown;
     switch (currentFrameType & 0x2f)
@@ -570,10 +456,10 @@ void ProcessTransportData(uint8_t currentFrameType)
 ///     A valid frame has been received, work out what action should be taken.
 /// </summary>
 /// <remarks>
-///     Note that it is responsibility of the processor to work out if an ACK / NAK 
+///     Note that it is responsibility of the processor to work out if an ACK / NAK
 ///     should be sent.
 /// </remarks>
-void ProcessApplicationDataFrame(uint8_t frameType, uint8_t *packet, uint8_t packetLength)
+void UART::ProcessApplicationDataFrame(uint8_t frameType, uint8_t *packet, uint8_t packetLength)
 {
     //
     //  Application data packets are either header or data packets.
@@ -593,7 +479,7 @@ void ProcessApplicationDataFrame(uint8_t frameType, uint8_t *packet, uint8_t pac
 /// </summary>
 /// <param name="frame">Data frame to send.</param>
 /// <param name="frameType>Name of the frame type being sent, this is used for debugging purposes.</param>
-enum UARTSyncStates SendFrame(struct BufferAndLength *frame, const char * frameType)
+enum UARTSyncStates UART::SendFrame(struct BufferAndLength *frame, const char * frameType)
 {
     enum UARTSyncStates result = Error;
     int retryCount = 0;
@@ -632,100 +518,6 @@ enum UARTSyncStates SendFrame(struct BufferAndLength *frame, const char * frameT
 }
 
 /// <summary>
-///     UART transmit task.
-/// </summary>
-void UARTTxTask(void *pvParameters)
-{
-    while (true)
-    {
-        struct ApplicationResponse message;
-        enum UARTSyncStates sendResult;
-
-        BaseType_t result = xQueueReceive(UARTTransmitQueueHandle, &message, portMAX_DELAY);        
-        if (result == pdTRUE)
-        {
-            //
-            //  Put together the header for the message.
-            //
-            uint8_t buffer[APP_RESPONSE_HEADER_LENGTH];
-
-            memset(buffer, 0, APP_RESPONSE_HEADER_LENGTH);
-            buffer[APP_RESPONSE_INTERFACE] = message.interface;
-            EncodeUInt32(message.code, buffer + APP_RESPONSE_CODE);
-            EncodeUInt32(message.messageID, buffer + APP_RESPONSE_MESSAGE_ID);
-            EncodeUInt32(message.payloadLength, buffer + APP_RESPONSE_PAYLOAD_LENGTH);
-            //
-            //  Generate an encoded header frame and send it.
-            //
-            struct BufferAndLength *frame = GenerateApplicationFrame(PKT_DATA | DATA_HEADER, message.messageID, 0, buffer, APP_RESPONSE_HEADER_LENGTH);
-            sendResult = SendFrame(frame, "header");
-            if (frame->Buffer != NULL)
-            {
-                vPortFree(frame->Buffer);
-            }
-            vPortFree(frame);
-            frame = NULL;
-            //
-            //  TODO: Work out what to do about errors.
-            //
-
-
-            //
-            //  Now break the payload down into frames and send the frames to the STM32.
-            //
-            int amountLeftToSend = message.payloadLength;
-            int start = 0;
-            uint8_t sequenceNumber = 1;
-            uint8_t currentFrameBufferLength = UART_MAXIMUM_FRAME_LENGTH;
-            uint8_t *frameBuffer = pvPortMalloc(currentFrameBufferLength);
-            while (amountLeftToSend > 0)
-            {
-                uint8_t length = (uint8_t) ((amountLeftToSend < UART_MAXIMUM_FRAME_LENGTH ? amountLeftToSend : UART_MAXIMUM_FRAME_LENGTH) & 0xff);
-                if (length != currentFrameBufferLength)
-                {
-                    vPortFree(frameBuffer);
-                    currentFrameBufferLength = length;
-                    frameBuffer = pvPortMalloc(currentFrameBufferLength);
-                }
-                memcpy(frameBuffer, message.payload + start, length);
-                start += length;
-                amountLeftToSend -= length;
-                //
-                //  Generate an encoded header frame and send it.
-                //
-                frame = GenerateApplicationFrame(PKT_DATA | DATA_PAYLOAD, message.messageID, sequenceNumber++, frameBuffer, length);
-                sendResult = SendFrame(frame, "payload");
-                if (frame->Buffer != NULL)
-                {
-                    vPortFree(frame->Buffer);
-                }
-                vPortFree(frame);
-                //
-                //  TODO: Work out what to do about errors.
-                //
-            }
-            //
-            //  Message has been sent so it is time to clean up the heap.
-            //
-            if (frameBuffer != NULL)
-            {
-                vPortFree(frameBuffer);
-            }
-            if (message.payloadLength > 0)
-            {
-                vPortFree(message.payload);
-            }
-        }
-    }
-    //
-    //  We should only get here if the code in the while loop generates a fault.
-    //  The documentation for FreeRTOS states that we should delete the task
-    //  should we get here.
-    //
-    vTaskDelete(xUARTTransmitTaskHandle);
-}
-
-/// <summary>
 ///     Decode data received from the serial port.
 /// </summary>
 /// <remarks>
@@ -737,7 +529,7 @@ void UARTTxTask(void *pvParameters)
 /// </remarks>
 /// <param name="buffer">Data to be decoded.</param>
 /// <param name="amount">Amount of data to decode.</param>
-void DecodeSerialData(uint8_t *buffer, int amount)
+void UART::DecodeSerialData(uint8_t *buffer, int amount)
 {
     _totalRxBytes += amount;
     for (int index = 0; index < amount; index++)
@@ -809,7 +601,7 @@ void DecodeSerialData(uint8_t *buffer, int amount)
                     _byteNumber++;
                     if (_byteNumber == 4)
                     {
-                        _communicationState = SequenceNumber;                                    
+                        _communicationState = SequenceNumber;
                     }
                     _calculatedChecksum = ProgressiveCRC32(_calculatedChecksum, byte);
                     break;
@@ -823,7 +615,7 @@ void DecodeSerialData(uint8_t *buffer, int amount)
                     _calculatedChecksum = ProgressiveCRC32(_calculatedChecksum, byte);
                     if (_framePayloadLength > 0)
                     {
-                        _framePayload = pvPortMalloc(_framePayloadLength);
+                        _framePayload = (uint8_t *) pvPortMalloc(_framePayloadLength);
                         _framePayloadIndex = 0;
                         _communicationState = Payload;
                     }
@@ -850,11 +642,11 @@ void DecodeSerialData(uint8_t *buffer, int amount)
                     _byteNumber++;
                     if (_byteNumber == 4)
                     {
-                        _communicationState = EndOfFrame;                                    
+                        _communicationState = EndOfFrame;
                     }
                     break;
                 case EndOfFrame:
-                    if ((byte == END_OF_FRAME_CHARACTER) && (_calculatedChecksum == _originalChecksum)) 
+                    if ((byte == END_OF_FRAME_CHARACTER) && (_calculatedChecksum == _originalChecksum))
                     {
                         if (_currentFrameType & PKT_TRANSPORT)
                         {
@@ -894,7 +686,7 @@ void DecodeSerialData(uint8_t *buffer, int amount)
 /// <summary>
 ///     UART data received interrupt task.
 /// </summary>
-void UARTRxTask(void *pvParameters)
+void UART::DispatchRxMessage(struct ApplicationResponse *message)
 {
     uart_event_t event;
     uint8_t* data = (uint8_t *) pvPortMalloc(RX_BUF_SIZE);
@@ -949,3 +741,84 @@ void UARTRxTask(void *pvParameters)
     }
     vTaskDelete(xUARTReceiveTaskHandle);
 }
+
+/// <summary>
+///     UART transmit task.
+/// </summary>
+void UART::Send(struct ApplicationResponse *message)
+{
+    enum UARTSyncStates sendResult;
+
+	//
+	//  Put together the header for the message.
+	//
+	uint8_t buffer[APP_RESPONSE_HEADER_LENGTH];
+
+	memset(buffer, 0, APP_RESPONSE_HEADER_LENGTH);
+	buffer[APP_RESPONSE_INTERFACE] = message->interface;
+	Encoders::EncodeUInt32(message->code, buffer + APP_RESPONSE_CODE);
+	Encoders::EncodeUInt32(message->messageID, buffer + APP_RESPONSE_MESSAGE_ID);
+	Encoders::EncodeUInt32(message->payloadLength, buffer + APP_RESPONSE_PAYLOAD_LENGTH);
+	//
+	//  Generate an encoded header frame and send it.
+	//
+	struct BufferAndLength *frame = GenerateApplicationFrame(PKT_DATA | DATA_HEADER, message->messageID, 0, buffer, APP_RESPONSE_HEADER_LENGTH);
+	sendResult = SendFrame(frame, "header");
+	if (frame->Buffer != NULL)
+	{
+		vPortFree(frame->Buffer);
+	}
+	vPortFree(frame);
+	frame = NULL;
+	//
+	//  TODO: Work out what to do about errors.
+	//
+
+
+	//
+	//  Now break the payload down into frames and send the frames to the STM32.
+	//
+	int amountLeftToSend = message->payloadLength;
+	int start = 0;
+	uint8_t sequenceNumber = 1;
+	uint8_t currentFrameBufferLength = UART_MAXIMUM_FRAME_LENGTH;
+	uint8_t *frameBuffer = (uint8_t *) pvPortMalloc(currentFrameBufferLength);
+	while (amountLeftToSend > 0)
+	{
+		uint8_t length = (uint8_t) ((amountLeftToSend < UART_MAXIMUM_FRAME_LENGTH ? amountLeftToSend : UART_MAXIMUM_FRAME_LENGTH) & 0xff);
+		if (length != currentFrameBufferLength)
+		{
+			vPortFree(frameBuffer);
+			currentFrameBufferLength = length;
+			frameBuffer = (uint8_t *) pvPortMalloc(currentFrameBufferLength);
+		}
+		memcpy(frameBuffer, message->payload + start, length);
+		start += length;
+		amountLeftToSend -= length;
+		//
+		//  Generate an encoded header frame and send it.
+		//
+		frame = GenerateApplicationFrame(PKT_DATA | DATA_PAYLOAD, message->messageID, sequenceNumber++, frameBuffer, length);
+		sendResult = SendFrame(frame, "payload");
+		if (frame->Buffer != NULL)
+		{
+			vPortFree(frame->Buffer);
+		}
+		vPortFree(frame);
+		//
+		//  TODO: Work out what to do about errors.
+		//
+	}
+	//
+	//  Message has been sent so it is time to clean up the heap.
+	//
+	if (frameBuffer != NULL)
+	{
+		vPortFree(frameBuffer);
+	}
+	if (message->payloadLength > 0)
+	{
+		vPortFree(message->payload);
+	}
+}
+
