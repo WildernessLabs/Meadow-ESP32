@@ -24,6 +24,7 @@
 #include <string.h>
 #include <stdlib.h>
 
+#define CRC32_SEED                  (0xffffffff)
 
 class Encoders
 {
@@ -32,6 +33,9 @@ public:
 	static void EncodeUInt16(uint16_t, uint8_t *);
 	static uint32_t ExtractUInt32(uint8_t *);
 	static void EncodeUInt32(uint32_t, uint8_t *);
+	static uint8_t CRC8(const uint8_t *, uint16_t);
+	static uint32_t CRC32(const uint8_t *, uint16_t);
+	static uint32_t ProgressiveCRC32(uint32_t, uint8_t);
 };
 
 

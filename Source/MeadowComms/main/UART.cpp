@@ -295,7 +295,7 @@ struct BufferAndLength *UART::GenerateApplicationFrame(uint8_t frameType, uint32
     //  when the CRC is calculated as the CRC should only be calculated on
     //  the actual data plus any padding characters.
     //
-    uint32_t crc = CRC32(frame + NUMBER_OF_START_OF_FRAME_CHARACTERS, frameLength - (NUMBER_OF_START_OF_FRAME_CHARACTERS + 5));
+    uint32_t crc = Encoders::CRC32(frame + NUMBER_OF_START_OF_FRAME_CHARACTERS, frameLength - (NUMBER_OF_START_OF_FRAME_CHARACTERS + 5));
     Encoders::EncodeUInt32(crc, frame + currentByte);
     currentByte += 4;
     memset(frame + currentByte, END_OF_FRAME_CHARACTER, NUMBER_OF_END_OF_FRAME_CHARACTERS);
@@ -325,7 +325,7 @@ struct BufferAndLength *UART::GenerateTransportFrame(uint8_t *buffer, uint32_t b
     //  when the CRC is calculated as the CRC should only be calculated on
     //  the actual data plus any padding characters.
     //
-    uint32_t crc = CRC32(frame + NUMBER_OF_START_OF_FRAME_CHARACTERS, currentByte - NUMBER_OF_START_OF_FRAME_CHARACTERS);
+    uint32_t crc = Encoders::CRC32(frame + NUMBER_OF_START_OF_FRAME_CHARACTERS, currentByte - NUMBER_OF_START_OF_FRAME_CHARACTERS);
     Encoders::EncodeUInt32(crc, frame + currentByte);
     currentByte += 4;
     memset(frame + currentByte, END_OF_FRAME_CHARACTER, NUMBER_OF_END_OF_FRAME_CHARACTERS);
@@ -582,7 +582,7 @@ void UART::DecodeSerialData(uint8_t *buffer, int amount)
                         _messageID = 0;
                     }
                     _calculatedChecksum = CRC32_SEED;
-                    _calculatedChecksum = ProgressiveCRC32(_calculatedChecksum, byte);
+                    _calculatedChecksum = Encoders::ProgressiveCRC32(_calculatedChecksum, byte);
                     _byteNumber = 0;
                     break;
                 case StatusCode:
@@ -594,7 +594,7 @@ void UART::DecodeSerialData(uint8_t *buffer, int amount)
                         _byteNumber = 0;
                         _originalChecksum = 0;
                     }
-                    _calculatedChecksum = ProgressiveCRC32(_calculatedChecksum, byte);
+                    _calculatedChecksum = Encoders::ProgressiveCRC32(_calculatedChecksum, byte);
                     break;
                 case MessageID:
                     _messageID |= (byte << (_byteNumber * 8));
@@ -603,16 +603,16 @@ void UART::DecodeSerialData(uint8_t *buffer, int amount)
                     {
                         _communicationState = SequenceNumber;
                     }
-                    _calculatedChecksum = ProgressiveCRC32(_calculatedChecksum, byte);
+                    _calculatedChecksum = Encoders::ProgressiveCRC32(_calculatedChecksum, byte);
                     break;
                 case SequenceNumber:
                     _frameSequenceNumber = byte;
                     _communicationState = Length;
-                    _calculatedChecksum = ProgressiveCRC32(_calculatedChecksum, byte);
+                    _calculatedChecksum = Encoders::ProgressiveCRC32(_calculatedChecksum, byte);
                     break;
                 case Length:
                     _framePayloadLength = byte;
-                    _calculatedChecksum = ProgressiveCRC32(_calculatedChecksum, byte);
+                    _calculatedChecksum = Encoders::ProgressiveCRC32(_calculatedChecksum, byte);
                     if (_framePayloadLength > 0)
                     {
                         _framePayload = (uint8_t *) pvPortMalloc(_framePayloadLength);
@@ -629,7 +629,7 @@ void UART::DecodeSerialData(uint8_t *buffer, int amount)
                 case Payload:
                     _framePayload[_framePayloadIndex] = byte;
                     _framePayloadIndex++;
-                    _calculatedChecksum = ProgressiveCRC32(_calculatedChecksum, byte);
+                    _calculatedChecksum = Encoders::ProgressiveCRC32(_calculatedChecksum, byte);
                     if (_framePayloadIndex == _framePayloadLength)
                     {
                         _communicationState = CRC;
