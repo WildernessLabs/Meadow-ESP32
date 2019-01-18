@@ -9,24 +9,23 @@
 #include "string.h"
 #include "nvs_flash.h"
 
+#include "Encoders.hpp"
 #include "Tasks.hpp"
-#include "UARTTask.h"
-#include "WiFiTask.h"
 #include "Messaging.h"
-#include "Encoders.h"
+#include "UART.hpp"
 #include "WiFi.hpp"
 
 WiFi *wifi;
+UART *uart;
 
 extern "C" void app_main()
 {
     esp_log_level_set("*", ESP_LOG_INFO);
     wifi = new(WiFi);
+    uart = new (UART);
     SetupMessageQueues();
-    SetupUART();
-    wifi->SetupWiFi();
-    xTaskCreate(UARTRxTask, "UART_RX_TASK", 1024 * 2, NULL, configMAX_PRIORITIES - 5, &xUARTReceiveTaskHandle);
-    xTaskCreate(UARTTxTask, "UART_TX_TASK", 1024 * 2, NULL, configMAX_PRIORITIES - 5, &xUARTTransmitTaskHandle);
+    uart->Setup();
+    wifi->Setup();
     xTaskCreate(BluetoothTask, BLUETOOTH_TASK_NAME, 1024 * 2, NULL, configMAX_PRIORITIES - 1, &xWiFiTaskHandle);
     xTaskCreate(MeshNetworkTask, MESH_NETWORK_TASK_NAME, 1024 * 2, NULL, configMAX_PRIORITIES - 1, &xWiFiTaskHandle);
 
