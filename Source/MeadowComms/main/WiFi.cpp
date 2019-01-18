@@ -106,7 +106,7 @@ void WiFi::Setup()
 void WiFi::SendResponse(uint32_t statusCode)
 {
     _wifiResponse->code = statusCode;
-    uart->QueueUARTResponse(_wifiResponse);
+    uart->QueueResponse(_wifiResponse);
     vPortFree(_wifiResponse);
     _wifiResponse = NULL;
 }
