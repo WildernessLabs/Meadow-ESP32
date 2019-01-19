@@ -91,11 +91,15 @@ private:
 	//
 	static const int NumberOfEndOfFrameCharacters = 1;
 
-	//
-	//  Which pins are used UART.
-	//
+	// <summary>
+	//  	Pin used to send data to the STM32.
+	// </summary>
 	const int TxPin = (GPIO_NUM_4);
-	const int RxPin = (GPIO_NUM_5);
+
+	// <summary>
+	//  	Pin used to receive data from the STM32.
+	// </summary>
+const int RxPin = (GPIO_NUM_5);
 
 	//
 	//  Length of the UART queue.
@@ -141,10 +145,19 @@ private:
 	/// </remarks>
 	SemaphoreHandle_t xUARTTxMutex = NULL;
 
+	// <summary>
+	//		Number of payload bytes remaining.
+	// </summary>
 	int bytesRemaining = 0;
 
+	// <summary>
+	//		Byte used to store the next byte received as part of a message payload.
+	// </summary>
 	uint8_t *nextPayloadLocation = 0;
 
+	// <summary>
+	//		Message header for the message currently being received.
+	// <summary>
 	struct ApplicationRequest messageHeader;
 
 	/// <summary>
@@ -279,25 +292,24 @@ private:
 	void SetUartTransmitTaskHandle(TaskHandle_t);
 	void SetUartReceiveTaskHandle(TaskHandle_t);
 
-
 public:
-	//
-	//  UART used for communication with the STM32.
-	//
+	// <summary>
+	//  	UART used for communication with the STM32.
+	// </summary>
 	const uart_port_t STM32UartNumber = UART_NUM_1;
-	//
-	//  Number of bytes in the Rx and Tx buffers.
-	//
+	// <summary>
+	//  	Number of bytes in the Rx buffer.
+	// </summary
 	static const int RxBufferSize = 1024;
+	// <summary>
+	//  	Number of bytes in the Rx buffer.
+	// </summary
 	static const int TxBufferSize = 1024;
 
 
 	UART();
 	~UART();
 	void Setup();
-//	void UARTTxTask(void *);
-//	void UARTRxTask(void *);
-
 	void DecodeSerialData(uint8_t *, int);
 	void QueueResponse(struct ApplicationResponse *);
 	void RxCleanup();
