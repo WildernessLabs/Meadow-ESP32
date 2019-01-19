@@ -1,5 +1,5 @@
 /*
- * UART.hpp
+ *  UART.hpp
  *
  *  UART Class for the ESP32.
  *
@@ -26,19 +26,32 @@
 #include "ErrorCodes.h"
 #include "Encoders.hpp"
 
-
+/*
+ *      BufferAndLength holds a buffer and the amount of data in
+ *      the buffer (restricted to 8-bits).
+ */
 struct BufferAndLength
 {
+    /*
+     *      Amount of data in the buffer.
+     */
     uint32_t BufferLength;
+
+    /*
+     *      Pointer to the buffer.
+     */
     uint8_t *Buffer;
 };
 
+/*
+ *      Implementation UART communication between the ESP32 and the STM32.
+ */
 class UART
 {
 private:
-	//
-	//  Communication states for the UART.
-	//
+    /*
+     *      Communication states for the UART.
+     */
 	enum CommunicationStates
 	{
 	    StartOfFrame = 0,
@@ -52,9 +65,9 @@ private:
 	    EndOfFrame
 	};
 
-	/// <summary>
-	///     Synchronisation states for the UART.
-	/// </summary>
+	/*
+	 *      Synchronisation states for the UART.
+	 */
 	enum UARTSyncStates
 	{
 	    Unknown = 0,
@@ -65,89 +78,87 @@ private:
 	    Error
 	};
 
-	//
-	//  A repeating pattern of the character indicates a start of message.
-	//
+	/*
+	 *  A repeating pattern of this character indicates a start of message.
+	 */
 	static const int StartOfFrameCharacter = 0xaa;
 
-	//
-	//  Character marking the end of a data frame.
-	//
+	/*
+	 *      Character marking the end of a data frame.
+	 */
 	static const int EndOfFrameCharacter = 0x55;
 
-	//
-	//  The filler character is used to send a sequence of Start of Frame
-	//  characters in the binary data.
-	//
+	/*
+	 *      The filler character is used to send a sequence of Start of
+	 *      Frame characters in the binary data.
+	 */
 	static const int PaddingCharacter = 0x52;
 
-	//
-	//  Number of characters to be used in the pattern matching.
-	//
+	/*
+	 *      Number of characters to be used in the pattern matching.
+	 */
 	static const int NumberOfStartOfFrameCharacters = 3;
 
-	//
-	//  Number of end of frame characters.
-	//
+	/*
+	 *      Number of end of frame characters.
+	 */
 	static const int NumberOfEndOfFrameCharacters = 1;
 
-	// <summary>
-	//  	Pin used to send data to the STM32.
-	// </summary>
+	/*
+	 *      Pin used to send data to the STM32.
+	 */
 	const int TxPin = (GPIO_NUM_4);
 
-	// <summary>
-	//  	Pin used to receive data from the STM32.
-	// </summary>
-const int RxPin = (GPIO_NUM_5);
+	/*
+	 *      Pin used to receive data from the STM32.
+	 */
+	const int RxPin = (GPIO_NUM_5);
 
-	//
-	//  Length of the UART queue.
-	//
+	/*
+	 *      Length of the UART queue.
+	 */
 	const int  QueueLength = 10;
 
-	//
-	//  Maximum number of unencoded bytes in a frame.
-	//
+	/*
+	 *      Maximum number of unencoded bytes in a frame.
+	 */
 	const int MaximumFrameLength = 255;
 
-	//
-	//  Default maximum number of time the UART will retry sending a message.
-	//
+	/*
+	 *      Default maximum number of time the UART will retry sending a message.
+	 */
 	const int DefaultMaximumRetries = 3;
 
-	/// <summary>
-	///     Handle to the queue used to sync the UART messages.
-	/// </summary>
-	/// <remarks>
-	///     The sync queue is used by the transport message handling methods
-	///     to communicate with the Tx and Rx tasks to provide a measure of
-	///     reliability and recovery.
-	/// </remarks>
+	/*
+	 *      Handle to the queue used to sync the UART messages.
+	 *
+	 *      The sync queue is used by the transport message handling methods to
+	 *      communicate with the Tx and Rx tasks to provide a measure of reliability
+	 *      and recovery.
+	 */
 	QueueHandle_t xUARTSyncQueueHandle = NULL;
 
-	/// <summary>
-	///     This is the maximum number of milliseconds between sending a frame
-	///     and a response being received by the ESP32.  This is a variable as
-	///     it will depend upon the baud rate and the size of a frame.
-	///
-	///     This value should be set when the UART is configured.
-	/// </summary>
+	/*
+	 *      This is the maximum number of milliseconds between sending a frame and a
+	 *      response being received by the ESP32.  This is a variable as it will depend
+	 *      upon the baud rate and the size of a frame.
+	 *
+	 *      This value should be set when the UART is configured.
+	 */
 	TickType_t _uartMaximumSendResponsePeriod = 0;
 
-	/// <summary>
-	///     Mutex to ensure that only one request to access the UART can be
-	///     processed at any time.
-	/// </summary>
-	/// <remarks>
-	///     The UARTTXTask and the ACK/NAK processing could need access to
-	///     the UART and this mutex is used to synchronise the access.
-	/// </remarks>
+	/*
+	 *      Mutex to ensure that only one request to access the UART can be
+	 *      processed at any time.
+	 *
+	 *      The UARTTXTask and the ACK/NAK processing could need access
+	 *      the UART and this mutex is used to synchronise the access.
+	 */
 	SemaphoreHandle_t xUARTTxMutex = NULL;
 
-	// <summary>
-	//		Number of payload bytes remaining.
-	// </summary>
+	/*
+	 *      Number of payload bytes remaining.
+	 */
 	int bytesRemaining = 0;
 
 	// <summary>
@@ -155,122 +166,122 @@ const int RxPin = (GPIO_NUM_5);
 	// </summary>
 	uint8_t *nextPayloadLocation = 0;
 
-	// <summary>
-	//		Message header for the message currently being received.
-	// <summary>
+	/*
+	 *      Message header for the message currently being received.
+	 */
 	struct ApplicationRequest messageHeader;
 
-	/// <summary>
-	///     Holds the current state of the communication state machine.
-	/// </summary>
+	/*
+	 *      Holds the current state of the communication state machine.
+	 */
 	enum CommunicationStates _communicationState = StartOfFrame;
 
-	/// <summary>
-	///     Number of consecutive occurrences of the start of frame character has been detected
-	/// </summary>
+	/*
+	 *      Number of consecutive occurrences of the start of frame character has been detected
+	 */
 	int _startOfFrameByteCount = 0;
 
-	/// <summary>
-	///     Type of frame being received.
-	/// </summary>
+	/*
+	 *      Type of frame being received.
+	 */
 	uint8_t _currentFrameType = 0;
 
-	/// <summary>
-	///     Number of bytes in the current data frame being received.
-	/// </summary>
+	/*
+	 *      Number of bytes in the current data frame being received.
+	 */
 	uint8_t _framePayloadLength = 0;
 
-	/// <summary>
-	///     Payload of the frame currently being received.
-	/// </summary>
+	/*
+	 *      Payload of the frame currently being received.
+	 */
 	uint8_t *_framePayload = NULL;
 
-	/// <summary>
-	///     Location of the next payload byte in the buffer.
-	/// </summary>
+	/*
+	 *      Location of the next payload byte in the buffer.
+	 */
 	uint8_t _framePayloadIndex = 0;
 
-	/// <summary>
-	///     Value of the checksum as read from the incoming data frame.
-	/// </summary>
+	/*
+	 *      Value of the checksum as read from the incoming data frame.
+	 */
 	uint32_t _originalChecksum = 0;
 
-	/// <summary>
-	///     Value of the calculated checksum from the progressive checksum calculation.
-	/// </summary>
+	/*
+	 *      Value of the calculated checksum from the progressive checksum calculation.
+	 */
 	uint32_t _calculatedChecksum = 0;
 
-	/// <summary>
-	///     This variable holds the byte number when putting together multi-byte
-	///     values (i.e. 4 bytes in a UInt32 object).  this allows the original
-	///     object to be re-hydrated from the UART byte stream.
-	/// </summary>
+	/*
+	 *      This variable holds the byte number when putting together multi-byte values
+	 *      (i.e. 4 bytes in a UInt32 object).  this allows the original object to be
+	 *      re-hydrated from the UART byte stream.
+	 */
 	int _byteNumber = 0;
 
-	/// <summary>
-	///     Message ID of the data packets being received.
-	/// </summary>
+	/*
+	 *      Message ID of the data packets being received.
+	 */
 	uint32_t _messageID = 0;
 
-	/// <summary>
-	///     Sequence number of this frame in the total number of frames being sent.
-	/// </summary>
+	/*
+	 *      Sequence number of this frame in the total number of frames being sent.
+	 */
 	uint8_t _frameSequenceNumber = 0;
 
-	/// <summary>
-	///     Packet code returned by the transport packets.
-	/// </summary>
+	/*
+	 *      Packet code returned by the transport packets.
+	 */
 	uint32_t _statusCode = 0;
 
-	/// <summary>
-	///     Buffer for the start of frame characters.
-	/// </summary>
+	/*
+	 *      Buffer for the start of frame characters.
+	 */
 	char _startOfFrameCharacters[NumberOfStartOfFrameCharacters];
 
-	/// <summary>
-	///     Buffer for the end of frame characters.
-	/// </summary>
+	/*
+	 *      Buffer for the end of frame characters.
+	 */
 	char _endOfFrameCharacters[NumberOfEndOfFrameCharacters];
 
-	/// <summary>
-	///     Current retry count.
-	/// </summary>
+	/*
+	 *      Current retry count.
+	 */
 	uint32_t _currentRetryCount = 0;
 
-	/// <summary>
-	///     Current maximum number of retries when sending a frame
-	///     before the system declares an error condition.
-	/// </summary>
+	/*
+	 *      Current maximum number of retries when sending a
+	 *      frame before the system declares an error condition.
+	 */
 	uint32_t _maximumRetryCount = DefaultMaximumRetries;
 
-	/// <summary>
-	///     Total number of bytes sent since the microcontroller was started.
-	/// </summary>
+	/*
+	 *      Total number of bytes sent since the microcontroller was started.
+	 */
 	uint _totalTxBytes = 0;
 
-	/// <summary>
-	///     Total number of bytes received since the microcontroller was started.
-	/// </summary>
+	/*
+	 *      Total number of bytes received since the microcontroller was started.
+	 */
 	uint _totalRxBytes = 0;
 
-	/// <summary>
-	///     Total number of frames sent since the microcontroller was started.
-	/// </summary>
+	/*
+	 *      Total number of frames sent since the microcontroller was started.
+	 */
 	uint _totalFramesSent = 0;
 
-	/// <summary>
-	///     Total number of frames received since the microcontroller was started.
-	/// </summary>
+	/*
+	 *      Total number of frames received since the microcontroller was started.
+	 */
 	uint _totalFramesReceived = 0;
 
-	/// <summary>
-	///     Number of Rx errors since the microcontroller was started.
-	/// </summary>
+	/*
+	 *      Number of Rx errors since the microcontroller was started.
+	 */
 	uint _totalRxErrors = 0;
 
-	/// <summary>
-	///     Number of Tx errors since the microcontroller was started.
-	/// </summary>
+	/*
+	 *      Number of Tx errors since the microcontroller was started.
+	 */
 	uint _totalTxErrors = 0;
 
 	void ResetIncomingMessage(bool);
@@ -293,22 +304,24 @@ const int RxPin = (GPIO_NUM_5);
 	void SetUartReceiveTaskHandle(TaskHandle_t);
 
 public:
-	// <summary>
-	//  	UART used for communication with the STM32.
-	// </summary>
+	/*
+	 *
+	 *      UART used for communication with the STM32.
+	 */
 	const uart_port_t STM32UartNumber = UART_NUM_1;
-	// <summary>
-	//  	Number of bytes in the Rx buffer.
-	// </summary
+	/*
+	 *      Number of bytes in the Rx buffer.
+	 */
 	static const int RxBufferSize = 1024;
-	// <summary>
-	//  	Number of bytes in the Rx buffer.
-	// </summary
+	/*
+	 *      Number of bytes in the Rx buffer.
+	 */
 	static const int TxBufferSize = 1024;
 
 
 	UART();
 	~UART();
+
 	void Setup();
 	void DecodeSerialData(uint8_t *, int);
 	void QueueResponse(struct ApplicationResponse *);
@@ -322,6 +335,5 @@ public:
 };
 
 extern UART *uart;
-
 
 #endif /* MAIN_UART_HPP_ */
