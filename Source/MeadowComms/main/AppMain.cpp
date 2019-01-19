@@ -15,9 +15,19 @@
 #include "UART.hpp"
 #include "WiFi.hpp"
 
+/*
+ *      WiFi object.
+ */
 WiFi *wifi;
+
+/*
+ *      UART object.
+ */
 UART *uart;
 
+/*
+ *      Main program loop for the ESP32 as specified by the FreeRTOS documentation.
+ */
 extern "C" void app_main()
 {
     esp_log_level_set("*", ESP_LOG_INFO);
@@ -30,43 +40,10 @@ extern "C" void app_main()
     xTaskCreate(MeshNetworkTask, MESH_NETWORK_TASK_NAME, 1024 * 2, NULL, configMAX_PRIORITIES - 1, &xWiFiTaskHandle);
 
     esp_err_t result = nvs_flash_init();
-//    system_init();
     if ((result == ESP_ERR_NVS_NO_FREE_PAGES) || (result == ESP_ERR_NVS_NEW_VERSION_FOUND))
     {
         ESP_ERROR_CHECK(nvs_flash_erase());
         result = nvs_flash_init();
     }
     ESP_ERROR_CHECK(result);
-    //Start();
-//    GetAvailableNetworks();
-
-    
-/**
-    uint32_t messageNumber = 0;
-    const TickType_t xDelay = 1500 / portTICK_PERIOD_MS;
-    while (1)
-    {
-        uint8_t *buffer = pvPortMalloc(APP_RESPONSE_HEADER_LENGTH);
-        *buffer = 0;
-        EncodeUInt32(messageNumber, buffer + APP_RESPONSE_CODE);
-        EncodeUInt32(1, buffer + APP_RESPONSE_MESSAGE_ID);
-        EncodeUInt32(0, buffer + APP_RESPONSE_PAYLOAD_LENGTH);
-        messageNumber++;
-        struct ApplicationResponse response;
-
-        response.interface = 0;
-        response.code = 700;
-        response.messageID = messageNumber;
-        response.payload = buffer;
-        response.payloadLength = APP_RESPONSE_PAYLOAD_LENGTH;
-
-        vTaskDelay(xDelay);
-        if (xQueueSendToBack(UARTTransmitQueueHandle, &response, 10 / portTICK_PERIOD_MS) != pdPASS)
-        {
-            ESP_LOGI(__func__, "Error sending response, cannot queue message");
-        }
-        vTaskDelay(xDelay);
-    }
-**/
-
 }
