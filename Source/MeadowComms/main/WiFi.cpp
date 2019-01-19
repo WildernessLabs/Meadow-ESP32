@@ -1,40 +1,34 @@
 /*
- * WiFi.cpp
+ *      WiFi.cpp
  *
- *  Created on: 16 Jan 2019
- *      Author: markstevens
+ *      Implementation of the WiFi functionality.
  */
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "freertos/queue.h"
-#include "freertos/event_groups.h"
-#include "lwip/err.h"
-#include "lwip/sys.h"
-#include "lwip/sockets.h"
-#include "lwip/netdb.h"
-#include "lwip/dns.h"
-#include "esp_system.h"
-#include "esp_log.h"
-#include "esp_wifi.h"
-#include "esp_event_loop.h"
-#include <string.h>
-#include <stdlib.h>
-
-#include "Encoders.hpp"
-#include "Messaging.h"
 #include "WiFi.hpp"
-#include "ErrorCodes.h"
-#include "UART.hpp"
-#include "Tasks.hpp"
 
-
+/*
+ *      Event handler for the WiFi loop.
+ *
+ *      This needs to be a C function prototype in order to be
+ *      called from FreeRTOS.
+ */
 extern "C" esp_err_t WiFiEventHandler(void *ctx, system_event_t *event)
 {
-	WiFi *sender = (WiFi *) ctx;
+    WiFi *sender = (WiFi *) ctx;
 
-	return(sender->EventHandler(ctx, event));
+    return(sender->EventHandler(ctx, event));
 }
 
+/*
+ * ----------------------------------------------------------------------------
+ *
+ *                      Constructors and destructors.
+ *
+ * ----------------------------------------------------------------------------
+ */
+
+/*
+ *      Default constructor for the WiFi class.
+ */
 WiFi::WiFi()
 {
     const size_t messageSize = sizeof(struct ApplicationRequest);
@@ -45,23 +39,51 @@ WiFi::WiFi()
     }
 }
 
+/*
+ *      Destructor for the WiFi class.
+ *
+ *      Free any resources used by the class.
+ */
 WiFi::~WiFi()
 {
 
 }
 
+/*
+ * ----------------------------------------------------------------------------
+ *
+ *                          Getters and setters
+ *
+ * ----------------------------------------------------------------------------
+ */
 
+/*
+ *      Get the handle for the WiFi queue.
+ */
 QueueHandle_t WiFi::GetQueueHandle() const
 {
-	return QueueHandle;
+    return QueueHandle;
 }
 
+/*
+ *      Set the handle for the WiFi queue.
+ */
 void WiFi::SetQueueHandle(QueueHandle_t queueHandle)
 {
-	QueueHandle = queueHandle;
+    QueueHandle = queueHandle;
 }
 
+/*
+ * ----------------------------------------------------------------------------
+ *
+ *                                 Methods
+ *
+ * ----------------------------------------------------------------------------
+ */
 
+/*
+ *      Dispatch the WiFi request to the  appropriate method in the class.
+ */
 void WiFi::DispatchRequest(struct ApplicationRequest *request)
 {
     switch (request->function)
@@ -93,16 +115,21 @@ void WiFi::DispatchRequest(struct ApplicationRequest *request)
 
 }
 
+/*
+ *      Setup the WiFi network.
+ */
 void WiFi::Setup()
 {
     xWiFiEventGroup = xEventGroupCreate();
     xTaskCreate(WiFiTask, WIFI_TASK_NAME, 2048 * 2, NULL, configMAX_PRIORITIES - 1, &xWiFiTaskHandle);
 }
 
-/// <summary>
-///     Send the response and clean up the WiFi response object.
-/// </summary>
-/// <param name="statusCode">Response code to be sent back to the STM32</param>
+/*
+ *      Send the response and clean up the WiFi response object.
+ *
+ *      @param statusCode
+ *          Response code to be sent back to the STM32
+ */
 void WiFi::SendResponse(uint32_t statusCode)
 {
     _wifiResponse->code = statusCode;
@@ -112,11 +139,14 @@ void WiFi::SendResponse(uint32_t statusCode)
 }
 
 
-/// <summary>
-///     Event handler for the WiFi system.
-/// </summary>
-/// <param name="ctx">Context (sender object) information.</param>
-/// <param name="event">Information relevant to the event being raised.</param>
+/*
+ *      Event handler for the WiFi system.
+ *
+ *      @param ctx
+ *          Context (sender object) information.
+ *      @param event
+ *          Information relevant to the event being raised.
+ */
 esp_err_t WiFi::EventHandler(void *ctx, system_event_t *event)
 {
     EventBits_t bits;
@@ -154,7 +184,7 @@ esp_err_t WiFi::EventHandler(void *ctx, system_event_t *event)
                 }
                 else
                 {
-                	//	TODO: Deal with retry counts exceeded in automatic reconnect mode.
+                    //    TODO: Deal with retry counts exceeded in automatic reconnect mode.
                 }
             }
             else
@@ -175,10 +205,12 @@ esp_err_t WiFi::EventHandler(void *ctx, system_event_t *event)
     return ESP_OK;
 }
 
-/// <summary>
-///     Process the scan results.
-/// </summary>
-/// <param name="event">Event information passed to the event loop.</param>
+/*
+ *      Process the scan results.
+ *
+ *      @param event
+ *          Event information passed to the event loop.
+ */
 void WiFi::ProcessAccessPointScanCompletion(system_event_t *event)
 {
     uint16_t apCount = 0;
@@ -228,10 +260,12 @@ void WiFi::ProcessAccessPointScanCompletion(system_event_t *event)
 }
 
 
-/// <summary>
-///     Start the wireless hardware.
-/// </summary>
-/// <param name="request">Request sent from the STM32.</param>
+/*
+ *      Start the wireless hardware.
+ *
+ *      @param request
+ *          Request sent from the STM32.
+ */
 void WiFi::StartNetwork(struct ApplicationRequest *message)
 {
     if (_wifiResponse != NULL)
@@ -248,14 +282,14 @@ void WiFi::StartNetwork(struct ApplicationRequest *message)
     if (!(bits & WIFI_INITIALISED_BIT))
     {
         char *ssid = (char *) message->payload;
-        if ((ssid == NULL) || (strlen(ssid) > MAXIMUM_SSID_NAME_LENGTH))
+        if ((ssid == NULL) || (strlen(ssid) > MaximumSSIDLength))
         {
             SendResponse(ERR_INVALID_SSID);
             return;
         }
 
         char *password = (char *) (message->payload + strlen(ssid) + 1);
-        if (strlen(password) > MAXIMUM_PASSWORD_LENGTH)
+        if (strlen(password) > MaximumPasswordLength)
         {
             SendResponse(ERR_INVALID_PASSWORD);
             return;
@@ -291,13 +325,15 @@ void WiFi::StartNetwork(struct ApplicationRequest *message)
     }
 }
 
-/// <summary>
-///     Get the full list of available networks.
-/// </summary>
-/// <remarks>
-///     The network must be started before this method is called.
-/// </remarks>
-/// <param name="message">Request sent from the STM32.</param>
+/*
+ *      Get the full list of available networks.
+ *
+ *      @pre
+ *          The network must be started before this method is called.
+ *
+ *      @param message
+ *          Request sent from the STM32.
+ */
 void WiFi::GetAvailableNetworks(struct ApplicationRequest *request)
 {
     if (_wifiResponse != NULL)

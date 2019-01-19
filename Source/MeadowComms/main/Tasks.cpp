@@ -1,7 +1,7 @@
 /*
  *  Tasks.cpp
  *
- *	Create the tasks for the RTOS.
+ *    Create the tasks for the RTOS.
  */
 
 #include <string>
@@ -50,12 +50,12 @@ const char *MESH_NETWORK_TASK_NAME = const_cast<const char *> ("MeshNetworkTask"
 QueueHandle_t xWiFiQueueHandle = NULL;
 
 // <summary>
-//  	Handle for the WiFi task.
+//      Handle for the WiFi task.
 // </summary>
 TaskHandle_t xWiFiTaskHandle = NULL;
 
 // <summary>
-// 		Name of the WiFi Task.
+//         Name of the WiFi Task.
 // </summary>
 const char *WIFI_TASK_NAME = const_cast<const char *> ("WiFiTask");
 
@@ -162,7 +162,7 @@ void WiFiTask(void *pvParameters)
         BaseType_t result = xQueueReceive(wifiQueueHandle, &message, portMAX_DELAY);
         if (result == pdTRUE)
         {
-        	wifi->DispatchRequest(&message);
+            wifi->DispatchRequest(&message);
         }
     }
     //
@@ -178,8 +178,8 @@ void WiFiTask(void *pvParameters)
 /// <summary>
 void UARTTxTask(void *pvParameters)
 {
-	QueueHandle_t txQueueHandle = uart->GetUartTransmitQueueHandle();
-	TaskHandle_t txTaskHandle = uart->GetUartTransmitTaskHandle();
+    QueueHandle_t txQueueHandle = uart->GetUartTransmitQueueHandle();
+    TaskHandle_t txTaskHandle = uart->GetUartTransmitTaskHandle();
     while (true)
     {
         struct ApplicationResponse message;
@@ -187,7 +187,7 @@ void UARTTxTask(void *pvParameters)
         BaseType_t result = xQueueReceive(txQueueHandle, &message, portMAX_DELAY);
         if (result == pdTRUE)
         {
-        	uart->Send(&message);
+            uart->Send(&message);
         }
     }
     //
