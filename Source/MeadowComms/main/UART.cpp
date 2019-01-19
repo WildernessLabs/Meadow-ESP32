@@ -1,8 +1,11 @@
 /*
- * UART.cpp
+ *  UART.cpp
  *
- *  Created on: 18 Jan 2019
- *      Author: markstevens
+ *  Code (methods etc.) to implement the UART communications class.
+ *
+ *  This class provides an error tolerant way for the ESP32 and the STM32
+ *  to communicate.
+ *
  */
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -21,6 +24,9 @@
 #include "ErrorCodes.h"
 #include "Encoders.hpp"
 
+/*
+ *      External declaration for the WiFi instance.
+ */
 extern WiFi *wifi;
 
 // ---------------------------------------------------------------------------
@@ -29,11 +35,16 @@ extern WiFi *wifi;
 //
 // ---------------------------------------------------------------------------
 
-
+/*
+ *      Default constructor for the UART class.
+ */
 UART::UART()
 {
 }
 
+/*
+ *      Destructor for the UART class.
+ */
 UART::~UART()
 {
 }
