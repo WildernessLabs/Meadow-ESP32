@@ -1,34 +1,23 @@
 /*
- * Encoders.cpp
+ *  Encoders.cpp
  *
- *  Created on: 18 Jan 2019
- *      Author: markstevens
+ *  Global methods providing encoding functionality.
  */
-
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "freertos/queue.h"
-#include "freertos/event_groups.h"
-#include "lwip/err.h"
-#include "lwip/sys.h"
-#include "lwip/sockets.h"
-#include "lwip/netdb.h"
-#include "lwip/dns.h"
-#include "esp_system.h"
-#include "esp_log.h"
-#include "esp_wifi.h"
-#include "esp_event_loop.h"
-#include <string.h>
-#include <stdlib.h>
-
 
 #include "Encoders.hpp"
 
-
-/// <summary>
-///     Take the first two bytes from the buffer and encode them as a 16
-///     bit integer.  Note that the data should be encoded as LSB first.
-/// </summary>
+/*
+ *      Take the first two bytes from the buffer and encode them as a 16 bit integer.
+ *
+ *      Note that the data should be encoded as LSB first.
+ *
+ *      @param buffer
+ *          Pointer to the buffer holding the data that should be used to created the
+ *          16-bit unsigned integer.
+ *
+ *      @return
+ *          16-bit unsigned integer value from the first two byte in the buffer.
+ */
 uint16_t Encoders::ExtractUInt16(uint8_t *buffer)
 {
     uint16_t result;
@@ -38,20 +27,36 @@ uint16_t Encoders::ExtractUInt16(uint8_t *buffer)
     return (result);
 }
 
-/// <summary>
-///     Encode a 16-bit integer as two bytes in the buffer.  The data is
-///     encoded LSB first.
-/// </summary>
+/*
+ *      Encode a 16-bit integer as two bytes in the buffer.
+ *
+ *      Note that the data will be encoded LSB first.
+ *
+ *      @param value
+ *          16-bit value to encode in the first two bytes of the buffer.
+ *
+ *      @param buffer
+ *          Pointer to the buffer where the two bytes will be inserted
+ *          from the 16-bit unsigned integer (LSB first).
+ */
 void Encoders::EncodeUInt16(uint16_t value, uint8_t *buffer)
 {
     buffer[0] = (value & 0xff);
     buffer[1] = ((value >> 8) & 0xff);
 }
 
-/// <summary>
-///     Take the first four bytes from the buffer and encode them as a 32
-///     bit integer.  Note that the data should be encoded as LSB first.
-/// </summary>
+/*
+ *      Take the first four bytes from the buffer and encode them as a 32 bit integer.
+ *
+ *      Note that the data should be encoded as LSB first.
+ *
+ *      @param buffer
+ *          Pointer to the buffer where the next four bytes should be extracted
+ *          and a 32-bit unsigned integer created (LSB first).
+ *
+ *      @return
+ *          32-bit unsigned integer extracted from the first 4 bytes in the buffer.
+ */
 uint32_t Encoders::ExtractUInt32(uint8_t *buffer)
 {
     uint32_t result;
@@ -63,10 +68,18 @@ uint32_t Encoders::ExtractUInt32(uint8_t *buffer)
     return (result);
 }
 
-/// <summary>
-///     Encode a 32-bit integer as four bytes in the buffer.  The data is
-///     encoded LSB first.
-/// </summary>
+/*
+ *      Encode a 32-bit integer as four bytes in the buffer.
+ *
+ *      Note that the data will be encoded LSB first.
+ *
+ *      @param value
+ *          Unsigned 32-bit integer value to write into the buffer.
+ *
+ *      @param buffer
+ *          Pointer to the buffer where 4 bytes will be replaced with the four
+ *          bytes representing unsigned integer (LSB first).
+ */
 void Encoders::EncodeUInt32(uint32_t value, uint8_t *buffer)
 {
     buffer[0] = (value & 0xff);
@@ -75,12 +88,20 @@ void Encoders::EncodeUInt32(uint32_t value, uint8_t *buffer)
     buffer[3] = ((value >> 24) & 0xff);
 }
 
-/// <summary>
-///     Calculate the CRC value for the specified data buffer.
-/// </summary>
-/// <remarks>
-///     This algorithm is loosely based upon the Dallas 1-Wire algorithm.
-/// </remarks>
+/*
+ *      Calculate the 8-bit CRC value for the specified data buffer.
+ *
+ *      This algorithm is loosely based upon the Dallas 1-Wire algorithm.
+ *
+ *      @param data
+ *          Pointer to the buffer containing the data for which the CRC should be calculated.
+ *
+ *      @param len
+ *          Number of bytes in the data buffer.
+ *
+ *      @return
+ *          8-bit checksum of the bytes in the buffer.
+ */
 uint8_t Encoders::CRC8(const uint8_t *data, uint16_t len)
 {
     uint8_t crc = 0x00;
@@ -102,9 +123,18 @@ uint8_t Encoders::CRC8(const uint8_t *data, uint16_t len)
     return(crc);
 }
 
-/// <summary>
-///     Calculate the 32-bit CRC of a buffer of data.
-/// </summary>
+/*
+ *      Calculate the 32-bit CRC of the buffer of data.
+ *
+ *      @param data
+ *          Pointer to the buffer containing the data for which the CRC should be calculated.
+ *
+ *      @param len
+ *          Number of bytes in the data buffer.
+ *
+ *      @return
+ *          32-bit checksum of the bytes in the buffer.
+ */
 uint32_t Encoders::CRC32(const uint8_t *data, uint16_t len)
 {
     uint32_t crc = CRC32_SEED;
@@ -116,9 +146,18 @@ uint32_t Encoders::CRC32(const uint8_t *data, uint16_t len)
     return (crc);
 }
 
-/// <summary>
-///     Calculate the CRC32 value change for the specified byte.
-/// </summary>
+/*
+ *      Calculate the CRC32 value change for the specified byte.
+ *
+ *      @param currentChecksum
+ *          Current value of the checksum.
+ *
+ *      @param byte
+ *          Next byte to use in the checksum calculation.
+ *
+ *      @return
+ *          Next checksum value.
+ */
 uint32_t Encoders::ProgressiveCRC32(uint32_t currentChecksum, uint8_t byte)
 {
     uint32_t crc = currentChecksum;
