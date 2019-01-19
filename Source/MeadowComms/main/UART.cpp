@@ -46,42 +46,42 @@ UART::~UART()
 
 QueueHandle_t UART::GetUartRxQueueHandle() const
 {
-	return UARTRxQueueHandle;
+    return UARTRxQueueHandle;
 }
 
 void UART::SetUartRxQueueHandle(QueueHandle_t uartRxQueueHandle = NULL)
 {
-	UARTRxQueueHandle = uartRxQueueHandle;
+    UARTRxQueueHandle = uartRxQueueHandle;
 }
 
 QueueHandle_t UART::GetUartTransmitQueueHandle() const
 {
-	return UARTTransmitQueueHandle;
+    return UARTTransmitQueueHandle;
 }
 
 void UART::SetUartTransmitQueueHandle(QueueHandle_t uartTransmitQueueHandle = NULL)
 {
-	UARTTransmitQueueHandle = uartTransmitQueueHandle;
+    UARTTransmitQueueHandle = uartTransmitQueueHandle;
 }
 
 TaskHandle_t UART::GetUartReceiveTaskHandle() const
 {
-	return xUARTReceiveTaskHandle;
+    return xUARTReceiveTaskHandle;
 }
 
 void UART::SetUartReceiveTaskHandle(TaskHandle_t uartReceiveTaskHandle = NULL)
 {
-	xUARTReceiveTaskHandle = uartReceiveTaskHandle;
+    xUARTReceiveTaskHandle = uartReceiveTaskHandle;
 }
 
 TaskHandle_t UART::GetUartTransmitTaskHandle() const
 {
-	return xUARTTransmitTaskHandle;
+    return xUARTTransmitTaskHandle;
 }
 
 void UART::SetUartTransmitTaskHandle(TaskHandle_t uartTransmitTaskHandle = NULL)
 {
-	xUARTTransmitTaskHandle = uartTransmitTaskHandle;
+    xUARTTransmitTaskHandle = uartTransmitTaskHandle;
 }
 
 // ---------------------------------------------------------------------------
@@ -754,76 +754,76 @@ void UART::Send(struct ApplicationResponse *message)
 {
     enum UARTSyncStates sendResult;
 
-	//
-	//  Put together the header for the message.
-	//
-	uint8_t buffer[APP_RESPONSE_HEADER_LENGTH];
+    //
+    //  Put together the header for the message.
+    //
+    uint8_t buffer[APP_RESPONSE_HEADER_LENGTH];
 
-	memset(buffer, 0, APP_RESPONSE_HEADER_LENGTH);
-	buffer[APP_RESPONSE_INTERFACE] = message->interface;
-	Encoders::EncodeUInt32(message->code, buffer + APP_RESPONSE_CODE);
-	Encoders::EncodeUInt32(message->messageID, buffer + APP_RESPONSE_MESSAGE_ID);
-	Encoders::EncodeUInt32(message->payloadLength, buffer + APP_RESPONSE_PAYLOAD_LENGTH);
-	//
-	//  Generate an encoded header frame and send it.
-	//
-	BufferAndLength *frame = GenerateApplicationFrame(PKT_DATA | DATA_HEADER, message->messageID, 0, buffer, APP_RESPONSE_HEADER_LENGTH);
-	sendResult = SendFrame(frame, "header");
-	if (frame->Buffer != NULL)
-	{
-		vPortFree(frame->Buffer);
-	}
-	vPortFree(frame);
-	frame = NULL;
-	//
-	//  TODO: Work out what to do about errors.
-	//
+    memset(buffer, 0, APP_RESPONSE_HEADER_LENGTH);
+    buffer[APP_RESPONSE_INTERFACE] = message->interface;
+    Encoders::EncodeUInt32(message->code, buffer + APP_RESPONSE_CODE);
+    Encoders::EncodeUInt32(message->messageID, buffer + APP_RESPONSE_MESSAGE_ID);
+    Encoders::EncodeUInt32(message->payloadLength, buffer + APP_RESPONSE_PAYLOAD_LENGTH);
+    //
+    //  Generate an encoded header frame and send it.
+    //
+    BufferAndLength *frame = GenerateApplicationFrame(PKT_DATA | DATA_HEADER, message->messageID, 0, buffer, APP_RESPONSE_HEADER_LENGTH);
+    sendResult = SendFrame(frame, "header");
+    if (frame->Buffer != NULL)
+    {
+        vPortFree(frame->Buffer);
+    }
+    vPortFree(frame);
+    frame = NULL;
+    //
+    //  TODO: Work out what to do about errors.
+    //
 
 
-	//
-	//  Now break the payload down into frames and send the frames to the STM32.
-	//
-	int amountLeftToSend = message->payloadLength;
-	int start = 0;
-	uint8_t sequenceNumber = 1;
-	uint8_t currentFrameBufferLength = MaximumFrameLength;
-	uint8_t *frameBuffer = (uint8_t *) pvPortMalloc(currentFrameBufferLength);
-	while (amountLeftToSend > 0)
-	{
-		uint8_t length = (uint8_t) ((amountLeftToSend < MaximumFrameLength ? amountLeftToSend : MaximumFrameLength) & 0xff);
-		if (length != currentFrameBufferLength)
-		{
-			vPortFree(frameBuffer);
-			currentFrameBufferLength = length;
-			frameBuffer = (uint8_t *) pvPortMalloc(currentFrameBufferLength);
-		}
-		memcpy(frameBuffer, message->payload + start, length);
-		start += length;
-		amountLeftToSend -= length;
-		//
-		//  Generate an encoded header frame and send it.
-		//
-		frame = GenerateApplicationFrame(PKT_DATA | DATA_PAYLOAD, message->messageID, sequenceNumber++, frameBuffer, length);
-		sendResult = SendFrame(frame, "payload");
-		if (frame->Buffer != NULL)
-		{
-			vPortFree(frame->Buffer);
-		}
-		vPortFree(frame);
-		//
-		//  TODO: Work out what to do about errors.
-		//
-	}
-	//
-	//  Message has been sent so it is time to clean up the heap.
-	//
-	if (frameBuffer != NULL)
-	{
-		vPortFree(frameBuffer);
-	}
-	if (message->payloadLength > 0)
-	{
-		vPortFree(message->payload);
-	}
+    //
+    //  Now break the payload down into frames and send the frames to the STM32.
+    //
+    int amountLeftToSend = message->payloadLength;
+    int start = 0;
+    uint8_t sequenceNumber = 1;
+    uint8_t currentFrameBufferLength = MaximumFrameLength;
+    uint8_t *frameBuffer = (uint8_t *) pvPortMalloc(currentFrameBufferLength);
+    while (amountLeftToSend > 0)
+    {
+        uint8_t length = (uint8_t) ((amountLeftToSend < MaximumFrameLength ? amountLeftToSend : MaximumFrameLength) & 0xff);
+        if (length != currentFrameBufferLength)
+        {
+            vPortFree(frameBuffer);
+            currentFrameBufferLength = length;
+            frameBuffer = (uint8_t *) pvPortMalloc(currentFrameBufferLength);
+        }
+        memcpy(frameBuffer, message->payload + start, length);
+        start += length;
+        amountLeftToSend -= length;
+        //
+        //  Generate an encoded header frame and send it.
+        //
+        frame = GenerateApplicationFrame(PKT_DATA | DATA_PAYLOAD, message->messageID, sequenceNumber++, frameBuffer, length);
+        sendResult = SendFrame(frame, "payload");
+        if (frame->Buffer != NULL)
+        {
+            vPortFree(frame->Buffer);
+        }
+        vPortFree(frame);
+        //
+        //  TODO: Work out what to do about errors.
+        //
+    }
+    //
+    //  Message has been sent so it is time to clean up the heap.
+    //
+    if (frameBuffer != NULL)
+    {
+        vPortFree(frameBuffer);
+    }
+    if (message->payloadLength > 0)
+    {
+        vPortFree(message->payload);
+    }
 }
 
