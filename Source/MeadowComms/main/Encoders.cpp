@@ -137,7 +137,7 @@ uint8_t Encoders::CRC8(const uint8_t *data, uint16_t len)
  */
 uint32_t Encoders::CRC32(const uint8_t *data, uint16_t len)
 {
-    uint32_t crc = CRC32_SEED;
+    uint32_t crc = CRC32Seed;
 
     for (uint16_t byteCounter = 0; byteCounter < len; byteCounter++)
     {
