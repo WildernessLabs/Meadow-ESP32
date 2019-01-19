@@ -1,8 +1,7 @@
 /*
- * Encoders.hpp
+ *  Encoders.hpp
  *
- *  Created on: 18 Jan 2019
- *      Author: markstevens
+ *  Provide methods to allow the extraction and encoding of data in buffer.
  */
 
 #ifndef MAIN_ENCODERS_HPP_
