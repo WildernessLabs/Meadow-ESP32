@@ -206,7 +206,7 @@ void UARTRxTask(void *pvParameters)
     uart_event_t event;
     QueueHandle_t uartRxHandle = uart->GetUartRxQueueHandle();
     TaskHandle_t uartRxTaskHandle = uart->GetUartReceiveTaskHandle();
-    uint8_t* data = (uint8_t *) pvPortMalloc(RX_BUF_SIZE);
+    uint8_t* data = (uint8_t *) pvPortMalloc(UART::RxBufferSize);
 
     while (true)
     {
@@ -214,16 +214,16 @@ void UARTRxTask(void *pvParameters)
         int amountToRead = 0;
         if (xQueueReceive(uartRxHandle, (void *) &event, portMAX_DELAY))
         {
-            memset(data, 0, RX_BUF_SIZE);
+            memset(data, 0, UART::RxBufferSize);
             switch (event.type)
             {
                 case UART_DATA:
                     dataLeftToRead = event.size;
                     while (dataLeftToRead > 0)
                     {
-                        amountToRead = dataLeftToRead <= RX_BUF_SIZE ? dataLeftToRead : RX_BUF_SIZE;
-                        memset(data, 0, RX_BUF_SIZE);
-                        uart_read_bytes(STM32_UART_NUMBER, data, amountToRead, portMAX_DELAY);
+                        amountToRead = dataLeftToRead <= UART::RxBufferSize ? dataLeftToRead : UART::RxBufferSize;
+                        memset(data, 0, UART::RxBufferSize);
+                        uart_read_bytes(uart->STM32UartNumber, data, amountToRead, portMAX_DELAY);
                         uart->DecodeSerialData(data, amountToRead);
                         dataLeftToRead -= amountToRead;
                     }
@@ -233,11 +233,11 @@ void UARTRxTask(void *pvParameters)
                     //
                     //  Flush the input buffer in the case of a full ring buffer or a FIFO overflow.
                     //
-                    uart_flush_input(STM32_UART_NUMBER);
+                    uart_flush_input(uart->STM32UartNumber);
                     xQueueReset(uartRxHandle);
                     break;
                 default:
-                    uart_flush_input(STM32_UART_NUMBER);
+                    uart_flush_input(uart->STM32UartNumber);
                     xQueueReset(uartRxHandle);
                     xQueueReset(UARTTransmitQueueHandle);
                     break;
