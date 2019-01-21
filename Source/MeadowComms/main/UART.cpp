@@ -40,6 +40,13 @@ extern WiFi *wifi;
  */
 UART::UART()
 {
+    messageHeader.interface = 0;
+    messageHeader.function = 0;
+    messageHeader.messageID = 0;
+    messageHeader.payload = NULL;
+    messageHeader.payloadLength = 0;
+    bytesRemaining  = 0;
+    nextPayloadLocation = NULL;
 }
 
 /*
@@ -57,22 +64,22 @@ UART::~UART()
 
 QueueHandle_t UART::GetUartRxQueueHandle() const
 {
-    return UARTRxQueueHandle;
+    return xUARTReceiveQueueHandle;
 }
 
 void UART::SetUartRxQueueHandle(QueueHandle_t uartRxQueueHandle = NULL)
 {
-    UARTRxQueueHandle = uartRxQueueHandle;
+    xUARTReceiveQueueHandle = uartRxQueueHandle;
 }
 
 QueueHandle_t UART::GetUartTransmitQueueHandle() const
 {
-    return UARTTransmitQueueHandle;
+    return xUARTTransmitQueueHandle;
 }
 
 void UART::SetUartTransmitQueueHandle(QueueHandle_t uartTransmitQueueHandle = NULL)
 {
-    UARTTransmitQueueHandle = uartTransmitQueueHandle;
+    xUARTTransmitQueueHandle = uartTransmitQueueHandle;
 }
 
 TaskHandle_t UART::GetUartReceiveTaskHandle() const
@@ -123,13 +130,16 @@ void UART::Setup()
     //
     uart_param_config(STM32UartNumber, &uart_config);
     uart_set_pin(STM32UartNumber, TxPin, RxPin, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
-    uart_driver_install(STM32UartNumber, RxBufferSize * 2, TxBufferSize * 2, QueueLength, &UARTRxQueueHandle, 0);
+    QueueHandle_t rxQueue;
+    uart_driver_install(STM32UartNumber, RxBufferSize * 2, TxBufferSize * 2, QueueLength, &rxQueue, 0);
+    uart->SetUartRxQueueHandle(rxQueue);
     xUARTTxMutex = xSemaphoreCreateMutex();
     xUARTSyncQueueHandle = xQueueCreate(1, sizeof(enum UARTSyncStates));
     memset(_startOfFrameCharacters, StartOfFrameCharacter, NumberOfStartOfFrameCharacters);
     memset(_endOfFrameCharacters, EndOfFrameCharacter, NumberOfEndOfFrameCharacters);
-    UARTTransmitQueueHandle = xQueueCreate(MAX_QUEUE_LENGTH, sizeof(struct ApplicationResponse));
-    if (UARTTransmitQueueHandle == NULL)
+
+    xUARTTransmitQueueHandle = xQueueCreate(MAX_QUEUE_LENGTH, sizeof(ApplicationResponse));
+    if (xUARTTransmitQueueHandle == NULL)
     {
         ESP_LOGI(__func__, "Cannot allocate UART transmit queue.");
     }
@@ -205,9 +215,9 @@ uint32_t UART::QueueMessage()
 ///     Add a response to the UART Tx queue.
 /// </summary>
 /// <param name="response">Response to be queued for sending to the STM32.</param>
-void UART::QueueResponse(struct ApplicationResponse *response)
+void UART::QueueResponse(ApplicationResponse *response)
 {
-    if (xQueueSendToBack(UARTTransmitQueueHandle, response, 0) != pdPASS)
+    if (xQueueSendToBack(xUARTTransmitQueueHandle, response, 0) != pdPASS)
     {
         ESP_LOGI(__func__, "Error sending response, cannot queue message");
     }
@@ -702,7 +712,7 @@ void UART::DecodeSerialData(uint8_t *buffer, int amount)
 /// <summary>
 ///     UART data received interrupt task.
 /// </summary>
-void UART::DispatchRxMessage(struct ApplicationResponse *message)
+void UART::DispatchRxMessage(ApplicationResponse *message)
 {
     uart_event_t event;
     uint8_t* data = (uint8_t *) pvPortMalloc(RxBufferSize);
@@ -711,7 +721,7 @@ void UART::DispatchRxMessage(struct ApplicationResponse *message)
     {
         int dataLeftToRead = 0;
         int amountToRead = 0;
-        if (xQueueReceive(UARTRxQueueHandle, (void *) &event, portMAX_DELAY))
+        if (xQueueReceive(xUARTReceiveQueueHandle, (void *) &event, portMAX_DELAY))
         {
             memset(data, 0, RxBufferSize);
             switch (event.type)
@@ -733,12 +743,12 @@ void UART::DispatchRxMessage(struct ApplicationResponse *message)
                     //  Flush the input buffer in the case of a full ring buffer or a FIFO overflow.
                     //
                     uart_flush_input(STM32UartNumber);
-                    xQueueReset(UARTRxQueueHandle);
+                    xQueueReset(xUARTReceiveQueueHandle);
                     break;
                 default:
                     uart_flush_input(STM32UartNumber);
-                    xQueueReset(UARTRxQueueHandle);
-                    xQueueReset(UARTTransmitQueueHandle);
+                    xQueueReset(xUARTReceiveQueueHandle);
+                    xQueueReset(xUARTTransmitQueueHandle);
                     break;
             }
         }
@@ -761,7 +771,7 @@ void UART::DispatchRxMessage(struct ApplicationResponse *message)
 /// <summary>
 ///     UART transmit task.
 /// </summary>
-void UART::Send(struct ApplicationResponse *message)
+void UART::Send(ApplicationResponse *message)
 {
     enum UARTSyncStates sendResult;
 

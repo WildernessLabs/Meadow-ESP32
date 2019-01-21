@@ -83,12 +83,12 @@ private:
     /*
      *      Default scan method for WiFi networks.
      */
-    static const int  DefaultScanMethod = WIFI_FAST_SCAN;
+    static const wifi_scan_method_t  DefaultScanMethod = WIFI_FAST_SCAN;
 
     /*
      *      Deafult sort method for the WiFi networks when scanned.
      */
-    static const int DefaultSortMethod = WIFI_CONNECT_AP_BY_SIGNAL;
+    static const wifi_sort_method_t DefaultSortMethod = WIFI_CONNECT_AP_BY_SIGNAL;
 
     /*
      *      Default RSSI when scanning for networks.
@@ -98,7 +98,7 @@ private:
     /*
      *      Default authorisation mode.
      */
-    static const int DefaultAuthorisationMode = WIFI_AUTH_OPEN;
+    static const wifi_auth_mode_t DefaultAuthorisationMode = WIFI_AUTH_OPEN;
 
 	/*
 	 * 		Default number of retires when an error is detected.
@@ -147,7 +147,7 @@ private:
 	/*
 	 *      Response message for the current request.
 	 */
-	struct ApplicationResponse *_wifiResponse = NULL;
+	ApplicationResponse *_wifiResponse = NULL;
 
 	/*
 	 *      Public methods.

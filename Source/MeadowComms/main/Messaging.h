@@ -29,15 +29,6 @@ extern "C"
 #define MAX_QUEUE_LENGTH            (5)
 
 /// <summary>
-///     Handle for the transmit handle for the UART.
-/// </summary>
-/// <remarks>
-///     The UART transmit queue is used to hold data from tasks ready to
-///     send the data to the UART.
-/// </remarks>
-extern QueueHandle_t UARTTransmitQueueHandle;
-
-/// <summary>
 ///     Handle for the Bluetooth messages to be processed by the WiFi task.
 /// </summary>
 extern QueueHandle_t BluetoothQueueHandle;

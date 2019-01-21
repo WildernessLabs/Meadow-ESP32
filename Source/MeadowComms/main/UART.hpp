@@ -13,15 +13,16 @@
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "freertos/queue.h"
 #include "esp_system.h"
 #include "esp_log.h"
 #include "driver/uart.h"
 #include "soc/uart_struct.h"
-#include "string.h"
-#include "stdlib.h"
-#include "esp_app_trace.h"
-#include "string.h"
+#include <string.h>
+#include <stdlib.h>
 
+#include "WiFi.hpp"
+#include "Tasks.hpp"
 #include "Messaging.h"
 #include "ErrorCodes.h"
 #include "Encoders.hpp"
@@ -128,6 +129,20 @@ private:
 	 *      Default maximum number of time the UART will retry sending a message.
 	 */
 	const int DefaultMaximumRetries = 3;
+
+	/*
+	 *      Handle for the UART Tx queue.
+	 */
+	QueueHandle_t xUARTTransmitQueueHandle = NULL;
+	const char *UART_TX_TASK_NAME = const_cast<const char *> ("UARTTxTask");
+	TaskHandle_t xUARTReceiveTaskHandle = NULL;
+
+	/*
+	 *      Handle for the UART Rx queue.
+	 */
+	QueueHandle_t xUARTReceiveQueueHandle = NULL;
+	const char *UART_RX_TASK_NAME = const_cast<const char *> ("UARTRxTask");
+	TaskHandle_t xUARTTransmitTaskHandle = NULL;
 
 	/*
 	 *      Handle to the queue used to sync the UART messages.
@@ -295,8 +310,8 @@ private:
 	void ProcessData(uint8_t *, uint8_t);
 	void ProcessTransportData(uint8_t);
 	void ProcessApplicationDataFrame(uint8_t, uint8_t *, uint8_t);
-	UARTSyncStates SendFrame(struct BufferAndLength *, const char *);
-	void DispatchRxMessage(struct ApplicationResponse *);
+	UARTSyncStates SendFrame(BufferAndLength *, const char *);
+	void DispatchRxMessage(ApplicationResponse *);
 
 	void SetUartTransmitQueueHandle(QueueHandle_t);
 	void SetUartRxQueueHandle(QueueHandle_t);
@@ -324,9 +339,9 @@ public:
 
 	void Setup();
 	void DecodeSerialData(uint8_t *, int);
-	void QueueResponse(struct ApplicationResponse *);
+	void QueueResponse(ApplicationResponse *);
 	void RxCleanup();
-	void Send(struct ApplicationResponse *);
+	void Send(ApplicationResponse *);
 
 	QueueHandle_t GetUartRxQueueHandle() const;
 	QueueHandle_t GetUartTransmitQueueHandle() const;

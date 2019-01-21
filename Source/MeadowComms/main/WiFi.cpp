@@ -31,9 +31,9 @@ extern "C" esp_err_t WiFiEventHandler(void *ctx, system_event_t *event)
  */
 WiFi::WiFi()
 {
-    const size_t messageSize = sizeof(struct ApplicationRequest);
+    const size_t messageSize = sizeof(ApplicationRequest);
     SetQueueHandle(xQueueCreate(MAX_QUEUE_LENGTH, messageSize));
-    if (xWiFiQueueHandle == NULL)
+    if (GetQueueHandle() == NULL)
     {
         ESP_LOGI(__func__, "Cannot allocate WiFi processing queue.");
     }
@@ -266,16 +266,19 @@ void WiFi::ProcessAccessPointScanCompletion(system_event_t *event)
  *      @param request
  *          Request sent from the STM32.
  */
-void WiFi::StartNetwork(struct ApplicationRequest *message)
+void WiFi::StartNetwork(ApplicationRequest *message)
 {
+    ESP_LOGI(__func__, "Starting network.");
     if (_wifiResponse != NULL)
     {
         // TODO: Deal with this error.
         vPortFree(_wifiResponse);
     }
-    _wifiResponse = (struct ApplicationResponse *) pvPortMalloc(sizeof(struct ApplicationResponse));
+    _wifiResponse = (ApplicationResponse *) pvPortMalloc(sizeof(ApplicationResponse));
     _wifiResponse->interface = message->interface;
     _wifiResponse->messageID = message->messageID;
+    _wifiResponse->payload = NULL;
+    _wifiResponse->payloadLength = 0;
     _wifiResponse->code = 0;
 
     EventBits_t bits = xEventGroupGetBits(xWiFiEventGroup);
@@ -301,26 +304,32 @@ void WiFi::StartNetwork(struct ApplicationRequest *message)
         wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
         ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 
-        wifi_config_t wifi_config =
-        {
-            .sta =
-            {
-//                .scan_method = DEFAULT_SCAN_METHOD,
-//                .sort_method = DEFAULT_SORT_METHOD,
-//                .threshold.rssi = DEFAULT_RSSI,
-//                .threshold.authmode = DEFAULT_AUTHMODE,
-            },
-        };
+        wifi_config_t wifi_config;
+        wifi_config.sta.scan_method = DefaultScanMethod;
+        wifi_config.sta.sort_method = DefaultSortMethod;
+        wifi_config.sta.threshold.rssi = DefaultRSSI;
+        wifi_config.sta.threshold.authmode = DefaultAuthorisationMode;
         memcpy(wifi_config.sta.ssid, ssid, strlen(ssid));
+        if (strlen(ssid) < MaximumSSIDLength)
+        {
+            wifi_config.sta.ssid[strlen(ssid)] = 0;
+        }
         memcpy(wifi_config.sta.password, password, strlen(password));
+        if (strlen(ssid) < MaximumPasswordLength)
+        {
+            wifi_config.sta.password[strlen(password)] = 0;
+        }
         ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
         ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));
         ESP_ERROR_CHECK(esp_wifi_start());
+        ESP_LOGI(__func__, "Start called.");
+        vTaskDelay(10000 / portTICK_PERIOD_MS);
         xEventGroupSetBits(xWiFiEventGroup, WIFI_INITIALISED_BIT | WIFI_CONNECTING_BIT);
         xEventGroupClearBits(xWiFiEventGroup, WIFI_READY_BIT);
     }
     else
     {
+        ESP_LOGI(__func__, "Already started.");
         SendResponse(ERR_WIFI_ALREADY_STARTED);
     }
 }
@@ -334,16 +343,20 @@ void WiFi::StartNetwork(struct ApplicationRequest *message)
  *      @param message
  *          Request sent from the STM32.
  */
-void WiFi::GetAvailableNetworks(struct ApplicationRequest *request)
+void WiFi::GetAvailableNetworks(ApplicationRequest *request)
 {
+    ESP_LOGI(__func__, "Start");
     if (_wifiResponse != NULL)
     {
+        ESP_LOGI(__func__, "Deleting old response structure");
         // TODO: Deal with this error.
         vPortFree(_wifiResponse);
     }
-    _wifiResponse = (struct ApplicationResponse *) pvPortMalloc(sizeof(struct ApplicationResponse));
+    _wifiResponse = (ApplicationResponse *) pvPortMalloc(sizeof(ApplicationResponse));
     _wifiResponse->interface = request->interface;
     _wifiResponse->messageID = request->messageID;
+    _wifiResponse->payload = NULL;
+    _wifiResponse->payloadLength = 0;
     _wifiResponse->code = 0;
 
     wifi_scan_config_t scanConf =
@@ -355,6 +368,7 @@ void WiFi::GetAvailableNetworks(struct ApplicationRequest *request)
     };
 
     ESP_ERROR_CHECK(esp_wifi_scan_start(&scanConf, true));
+    ESP_LOGI(__func__, "Scan in progress");
 }
 
 void WiFi::HttpGet(struct ApplicationRequest *message)
