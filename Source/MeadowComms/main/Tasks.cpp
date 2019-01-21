@@ -50,7 +50,7 @@ const char *MESH_NETWORK_TASK_NAME = const_cast<const char *> ("MeshNetworkTask"
 /*
  *      Handle for the WiFi queue.
  */
-QueueHandle_t xWiFiQueueHandle = NULL;
+// QueueHandle_t xWiFiQueueHandle = NULL;
 
 /*
  *      Handle for the WiFi task.
@@ -65,28 +65,14 @@ const char *WIFI_TASK_NAME = const_cast<const char *> ("WiFiTask");
 /*
  *      Handle for the incoming messages on the UART.
  */
-QueueHandle_t UARTRxQueueHandle = NULL;
+//QueueHandle_t UARTRxQueueHandle = NULL;
 
 /*
  *      Handle for the UART receive task.
  */
 TaskHandle_t xUARTReceiveTaskHandle = NULL;
 
-const char *UART_RX_TASK_NAME = const_cast<const char *> ("UARTRxTask");
-
-/*
- *      Handle for the transmit handle for the UART.
- *
- *      The UART transmit queue is used to hold data from tasks ready to send the data to the UART.
- */
-QueueHandle_t UARTTransmitQueueHandle = NULL;
-
-/*
- *      Handle for the UART transmit task.
- */
-TaskHandle_t xUARTTransmitTaskHandle = NULL;
-
-const char *UART_TX_TASK_NAME = const_cast<const char *> ("UARTTxTask");
+//const char *UART_RX_TASK_NAME = const_cast<const char *> ("UARTRxTask");
 
 /*
  *      Process any messages for the Bluetooth controller..
@@ -198,7 +184,7 @@ void UARTTxTask(void *pvParameters)
     TaskHandle_t txTaskHandle = uart->GetUartTransmitTaskHandle();
     while (true)
     {
-        struct ApplicationResponse message;
+        ApplicationResponse message;
 
         BaseType_t result = xQueueReceive(txQueueHandle, &message, portMAX_DELAY);
         if (result == pdTRUE)
@@ -223,15 +209,15 @@ void UARTTxTask(void *pvParameters)
 void UARTRxTask(void *pvParameters)
 {
     uart_event_t event;
-    QueueHandle_t uartRxHandle = uart->GetUartRxQueueHandle();
-    TaskHandle_t uartRxTaskHandle = uart->GetUartReceiveTaskHandle();
+    QueueHandle_t uartRxQueueHandle = uart->GetUartRxQueueHandle();
+    QueueHandle_t uartTxQueueHandle = uart->GetUartTransmitQueueHandle();
     uint8_t* data = (uint8_t *) pvPortMalloc(UART::RxBufferSize);
 
     while (true)
     {
         int dataLeftToRead = 0;
         int amountToRead = 0;
-        if (xQueueReceive(uartRxHandle, (void *) &event, portMAX_DELAY))
+        if (xQueueReceive(uartRxQueueHandle, (void *) &event, portMAX_DELAY))
         {
             memset(data, 0, UART::RxBufferSize);
             switch (event.type)
@@ -253,12 +239,12 @@ void UARTRxTask(void *pvParameters)
                     //  Flush the input buffer in the case of a full ring buffer or a FIFO overflow.
                     //
                     uart_flush_input(uart->STM32UartNumber);
-                    xQueueReset(uartRxHandle);
+                    xQueueReset(uartRxQueueHandle);
                     break;
                 default:
                     uart_flush_input(uart->STM32UartNumber);
-                    xQueueReset(uartRxHandle);
-                    xQueueReset(UARTTransmitQueueHandle);
+                    xQueueReset(uartRxQueueHandle);
+                    xQueueReset(uartTxQueueHandle);
                     break;
             }
         }
@@ -271,5 +257,6 @@ void UARTRxTask(void *pvParameters)
     free(data);
     data = NULL;
     uart->RxCleanup();
-    vTaskDelete(uartRxTaskHandle);
+    vTaskDelete(uart->GetUartReceiveTaskHandle());
+    //uart->SetUartReceiveTaskHandle(NULL);
 }

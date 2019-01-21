@@ -31,15 +31,23 @@ UART *uart;
 extern "C" void app_main()
 {
     esp_log_level_set("*", ESP_LOG_INFO);
+    esp_err_t result = nvs_flash_init();
+    if ((result == ESP_ERR_NVS_NO_FREE_PAGES) || (result == ESP_ERR_NVS_NEW_VERSION_FOUND))
+    {
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        result = nvs_flash_init();
+    }
+    ESP_ERROR_CHECK(result);
     wifi = new(WiFi);
     uart = new (UART);
     SetupMessageQueues();
+
     uart->Setup();
     wifi->Setup();
+
     xTaskCreate(BluetoothTask, BLUETOOTH_TASK_NAME, 1024 * 2, NULL, configMAX_PRIORITIES - 1, &xWiFiTaskHandle);
     xTaskCreate(MeshNetworkTask, MESH_NETWORK_TASK_NAME, 1024 * 2, NULL, configMAX_PRIORITIES - 1, &xWiFiTaskHandle);
 
-    esp_err_t result = nvs_flash_init();
     if ((result == ESP_ERR_NVS_NO_FREE_PAGES) || (result == ESP_ERR_NVS_NEW_VERSION_FOUND))
     {
         ESP_ERROR_CHECK(nvs_flash_erase());
