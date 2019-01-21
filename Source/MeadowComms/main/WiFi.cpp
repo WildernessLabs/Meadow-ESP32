@@ -206,61 +206,6 @@ esp_err_t WiFi::EventHandler(void *ctx, system_event_t *event)
 }
 
 /*
- *      Process the scan results.
- *
- *      @param event
- *          Event information passed to the event loop.
- */
-void WiFi::ProcessAccessPointScanCompletion(system_event_t *event)
-{
-    uint16_t apCount = 0;
-    esp_wifi_scan_get_ap_num(&apCount);
-    ESP_LOGI(__func__, "Number of access points found: %d\n", apCount);
-    if (apCount == 0)
-    {
-        _wifiResponse->payload = NULL;
-        _wifiResponse->payloadLength = 0;
-    }
-    else
-    {
-        //
-        //  First two bytes in this payload are the number of access points.
-        //
-        _wifiResponse->payloadLength = (ACCESS_POINT_INFORMATION_LENGTH * apCount) + 2;
-        _wifiResponse->payload = (uint8_t *) pvPortMalloc(_wifiResponse->payloadLength);
-        Encoders::EncodeUInt16(apCount, _wifiResponse->payload);
-        //
-        //  Now we get the access point information.
-        //
-        wifi_ap_record_t *accessPoints = (wifi_ap_record_t *) pvPortMalloc(apCount * sizeof(wifi_ap_record_t));
-        ESP_ERROR_CHECK(esp_wifi_scan_get_ap_records(&apCount, accessPoints));
-        uint8_t *destination = _wifiResponse->payload + 2;
-        for (int index = 0; index < apCount; index++)
-        {
-            memcpy(destination + BSSID_OFFSET, &accessPoints[index].bssid, 6);
-            memcpy(destination + SSID_OFFSET, &accessPoints[index].ssid, 33);
-            *(destination + PRIMARY_CHANNEL_OFFSET) = accessPoints[index].primary;
-            *(destination + SECONDARY_CHANNEL_OFFSET) = accessPoints[index].second ;
-            *(destination + RSSI_OFFSET) = accessPoints[index].rssi;
-            *(destination + AUTHENTICATION_MODE_OFFSET) = accessPoints[index].authmode;
-            *(destination + PAIRWISE_CIPHER_OFFSET) = accessPoints[index].pairwise_cipher;
-            *(destination + GROUP_CIPHER_OFFSET) = accessPoints[index].group_cipher;
-            *(destination + ANTENNA_OFFSET) = accessPoints[index].ant;
-            *(destination + PROTOCOLS_OFFSET) = accessPoints[index].phy_11b | accessPoints[index].phy_11g | accessPoints[index].phy_11n | accessPoints[index].phy_lr | accessPoints[index].wps;
-            memcpy(destination + COUNTRY_CODE_OFFSET, accessPoints[index].country.cc, 3);
-            *(destination + START_CHANNEL_OFFSET) = accessPoints[index].country.schan;
-            *(destination + NUMBER_OF_CHANNELS_OFFSET) = accessPoints[index].country.nchan;
-            *(destination + TX_POWER_MAXIMUM_OFFSET) = accessPoints[index].country.max_tx_power ;
-            *(destination + POLICY_OFFSET) = accessPoints[index].country.policy;
-            destination += ACCESS_POINT_INFORMATION_LENGTH;
-        }
-        vPortFree(accessPoints);
-    }
-    SendResponse(ERR_COMPLETED_OK);
-}
-
-
-/*
  *      Start the wireless hardware.
  *
  *      @param request
@@ -322,16 +267,68 @@ void WiFi::StartNetwork(ApplicationRequest *message)
         ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
         ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));
         ESP_ERROR_CHECK(esp_wifi_start());
-        ESP_LOGI(__func__, "Start called.");
-        vTaskDelay(10000 / portTICK_PERIOD_MS);
         xEventGroupSetBits(xWiFiEventGroup, WIFI_INITIALISED_BIT | WIFI_CONNECTING_BIT);
         xEventGroupClearBits(xWiFiEventGroup, WIFI_READY_BIT);
+        ESP_LOGI(__func__, "Network started.");
     }
     else
     {
-        ESP_LOGI(__func__, "Already started.");
         SendResponse(ERR_WIFI_ALREADY_STARTED);
     }
+}
+
+/*
+ *      Process the scan results.
+ *
+ *      @param event
+ *          Event information passed to the event loop.
+ */
+void WiFi::ProcessAccessPointScanCompletion(system_event_t *event)
+{
+    uint16_t apCount = 0;
+    esp_wifi_scan_get_ap_num(&apCount);
+    ESP_LOGI(__func__, "Number of access points found: %d\n", apCount);
+    if (apCount == 0)
+    {
+        _wifiResponse->payload = NULL;
+        _wifiResponse->payloadLength = 0;
+    }
+    else
+    {
+        //
+        //  First two bytes in this payload are the number of access points.
+        //
+        _wifiResponse->payloadLength = (ACCESS_POINT_INFORMATION_LENGTH * apCount) + 2;
+        _wifiResponse->payload = (uint8_t *) pvPortMalloc(_wifiResponse->payloadLength);
+        Encoders::EncodeUInt16(apCount, _wifiResponse->payload);
+        //
+        //  Now we get the access point information.
+        //
+        wifi_ap_record_t *accessPoints = (wifi_ap_record_t *) pvPortMalloc(apCount * sizeof(wifi_ap_record_t));
+        ESP_ERROR_CHECK(esp_wifi_scan_get_ap_records(&apCount, accessPoints));
+        uint8_t *destination = _wifiResponse->payload + 2;
+        for (int index = 0; index < apCount; index++)
+        {
+            memcpy(destination + BSSID_OFFSET, &accessPoints[index].bssid, 6);
+            memcpy(destination + SSID_OFFSET, &accessPoints[index].ssid, 33);
+            *(destination + PRIMARY_CHANNEL_OFFSET) = accessPoints[index].primary;
+            *(destination + SECONDARY_CHANNEL_OFFSET) = accessPoints[index].second ;
+            *(destination + RSSI_OFFSET) = accessPoints[index].rssi;
+            *(destination + AUTHENTICATION_MODE_OFFSET) = accessPoints[index].authmode;
+            *(destination + PAIRWISE_CIPHER_OFFSET) = accessPoints[index].pairwise_cipher;
+            *(destination + GROUP_CIPHER_OFFSET) = accessPoints[index].group_cipher;
+            *(destination + ANTENNA_OFFSET) = accessPoints[index].ant;
+            *(destination + PROTOCOLS_OFFSET) = accessPoints[index].phy_11b | accessPoints[index].phy_11g | accessPoints[index].phy_11n | accessPoints[index].phy_lr | accessPoints[index].wps;
+            memcpy(destination + COUNTRY_CODE_OFFSET, accessPoints[index].country.cc, 3);
+            *(destination + START_CHANNEL_OFFSET) = accessPoints[index].country.schan;
+            *(destination + NUMBER_OF_CHANNELS_OFFSET) = accessPoints[index].country.nchan;
+            *(destination + TX_POWER_MAXIMUM_OFFSET) = accessPoints[index].country.max_tx_power ;
+            *(destination + POLICY_OFFSET) = accessPoints[index].country.policy;
+            destination += ACCESS_POINT_INFORMATION_LENGTH;
+        }
+        vPortFree(accessPoints);
+    }
+    SendResponse(ERR_COMPLETED_OK);
 }
 
 /*
@@ -345,7 +342,6 @@ void WiFi::StartNetwork(ApplicationRequest *message)
  */
 void WiFi::GetAvailableNetworks(ApplicationRequest *request)
 {
-    ESP_LOGI(__func__, "Start");
     if (_wifiResponse != NULL)
     {
         ESP_LOGI(__func__, "Deleting old response structure");
@@ -368,10 +364,9 @@ void WiFi::GetAvailableNetworks(ApplicationRequest *request)
     };
 
     ESP_ERROR_CHECK(esp_wifi_scan_start(&scanConf, true));
-    ESP_LOGI(__func__, "Scan in progress");
 }
 
-void WiFi::HttpGet(struct ApplicationRequest *message)
+void WiFi::HttpGet(ApplicationRequest *message)
 {
 //    const struct addrinfo hints = { .ai_family = AF_INET, .ai_socktype = SOCK_STREAM, };
 //    struct addrinfo *addressInformation;
