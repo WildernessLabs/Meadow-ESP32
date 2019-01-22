@@ -23,7 +23,7 @@ public:
     /*
      *      Seed for the 32-bit CRC calculation.
      */
-    static const uint32_t CRC32Seed = 0xffffffff;
+    static const uint32_t CRC32_SEED = 0xffffffff;
 
     static uint16_t ExtractUInt16(uint8_t *);
     static void EncodeUInt16(uint16_t, uint8_t *);

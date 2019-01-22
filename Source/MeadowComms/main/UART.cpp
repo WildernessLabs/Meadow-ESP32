@@ -760,7 +760,7 @@ void UART::DecodeSerialData(uint8_t *buffer, int amount)
                         _communicationState = MessageID;
                         _messageID = 0;
                     }
-                    _calculatedChecksum = Encoders::CRC32Seed;
+                    _calculatedChecksum = Encoders::CRC32_SEED;
                     _calculatedChecksum = Encoders::ProgressiveCRC32(_calculatedChecksum, byte);
                     _byteNumber = 0;
                     break;
