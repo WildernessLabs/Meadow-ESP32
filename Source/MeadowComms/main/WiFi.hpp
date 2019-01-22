@@ -1,5 +1,5 @@
 /*
- * 	    WiFi.hpp
+ *      WiFi.hpp
  *
  *      Encapsulate the properties and methods required to provide the
  *      ability to communicate with the WiFi network.
@@ -83,12 +83,13 @@ private:
     /*
      *      Default scan method for WiFi networks.
      */
-    static const wifi_scan_method_t  DefaultScanMethod = WIFI_FAST_SCAN;
+    static const wifi_scan_method_t DefaultScanMethod = WIFI_FAST_SCAN;
 
     /*
      *      Deafult sort method for the WiFi networks when scanned.
      */
-    static const wifi_sort_method_t DefaultSortMethod = WIFI_CONNECT_AP_BY_SIGNAL;
+    static const wifi_sort_method_t DefaultSortMethod =
+            WIFI_CONNECT_AP_BY_SIGNAL;
 
     /*
      *      Default RSSI when scanning for networks.
@@ -100,43 +101,43 @@ private:
      */
     static const wifi_auth_mode_t DefaultAuthorisationMode = WIFI_AUTH_OPEN;
 
-	/*
-	 * 		Default number of retires when an error is detected.
-	 */
-	static const int DefaultMaximumRetryCount = 3;
+    /*
+     *  Default number of retires when an error is detected.
+     */
+    static const int DefaultMaximumRetryCount = 3;
 
 
-	/*
-	 *      Maximum length of the string containing the SSID name.
-	 */
-	static const int MaximumSSIDLength = 32;
+    /*
+     *      Maximum length of the string containing the SSID name.
+     */
+    static const int MaximumSSIDLength = 32;
 
-	/*
-	 *      Maximum length of the password for the access point.
-	 */
-	static const int MaximumPasswordLength = 64;
+    /*
+     *      Maximum length of the password for the access point.
+     */
+    static const int MaximumPasswordLength = 64;
 
-	/*
-	 *      Handle for the WiFi messages to be processed by the WIFi task.
-	 */
-	QueueHandle_t QueueHandle = NULL;
+    /*
+     *      Handle for the WiFi messages to be processed by the WIFi task.
+     */
+    QueueHandle_t QueueHandle = NULL;
 
-	/*
-	 *      Event group containing 24-bits used to indicate the state of the WiFi connection.
-	 */
-	EventGroupHandle_t xWiFiEventGroup = NULL;
+    /*
+     *      Event group containing 24-bits used to indicate the state of the WiFi connection.
+     */
+    EventGroupHandle_t xWiFiEventGroup = NULL;
 
-	/*
-	 *      Current retry count.
-	 */
-	int _currentRetryCount = 0;
+    /*
+     *      Current retry count.
+     */
+    int _currentRetryCount = 0;
 
-	/*
-	 *      Maximum number of retries for a failed operation.
-	 *
-	 *      This can be overridden using system configuration.
-	 */
-	int _maximumRetryCount = DefaultMaximumRetryCount;
+    /*
+     *      Maximum number of retries for a failed operation.
+     *
+     *      This can be overridden using system configuration.
+     */
+    int _maximumRetryCount = DefaultMaximumRetryCount;
 
 	/*
 	 *      Indicate if the system should automatically reconnect to the WiFi if we
