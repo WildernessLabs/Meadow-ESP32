@@ -43,13 +43,13 @@ extern WiFi *wifi;
  */
 UART::UART()
 {
-    messageHeader.interface = 0;
-    messageHeader.function = 0;
-    messageHeader.messageID = 0;
-    messageHeader.payload = NULL;
-    messageHeader.payloadLength = 0;
-    bytesRemaining  = 0;
-    nextPayloadLocation = NULL;
+    _messageHeader.interface = 0;
+    _messageHeader.function = 0;
+    _messageHeader.messageID = 0;
+    _messageHeader.payload = NULL;
+    _messageHeader.payloadLength = 0;
+    _bytesRemaining  = 0;
+    _nextPayloadLocation = NULL;
 }
 
 /*
@@ -75,7 +75,7 @@ UART::~UART()
  */
 QueueHandle_t UART::GetUartRxQueueHandle() const
 {
-    return xUARTReceiveQueueHandle;
+    return _xUARTRxQueueHandle;
 }
 
 /*
@@ -86,7 +86,7 @@ QueueHandle_t UART::GetUartRxQueueHandle() const
  */
 void UART::SetUartRxQueueHandle(QueueHandle_t uartRxQueueHandle = NULL)
 {
-    xUARTReceiveQueueHandle = uartRxQueueHandle;
+    _xUARTRxQueueHandle = uartRxQueueHandle;
 }
 
 /*
@@ -97,7 +97,7 @@ void UART::SetUartRxQueueHandle(QueueHandle_t uartRxQueueHandle = NULL)
  */
 QueueHandle_t UART::GetUartTransmitQueueHandle() const
 {
-    return xUARTTransmitQueueHandle;
+    return _xUARTTxQueueHandle;
 }
 
 /*
@@ -108,7 +108,7 @@ QueueHandle_t UART::GetUartTransmitQueueHandle() const
  */
 void UART::SetUartTransmitQueueHandle(QueueHandle_t uartTransmitQueueHandle = NULL)
 {
-    xUARTTransmitQueueHandle = uartTransmitQueueHandle;
+    _xUARTTxQueueHandle = uartTransmitQueueHandle;
 }
 
 /*
@@ -119,7 +119,7 @@ void UART::SetUartTransmitQueueHandle(QueueHandle_t uartTransmitQueueHandle = NU
  */
 TaskHandle_t UART::GetUartReceiveTaskHandle() const
 {
-    return xUARTReceiveTaskHandle;
+    return _xUARTRxTaskHandle;
 }
 
 /*
@@ -130,12 +130,18 @@ TaskHandle_t UART::GetUartReceiveTaskHandle() const
  */
 void UART::SetUartReceiveTaskHandle(TaskHandle_t uartReceiveTaskHandle = NULL)
 {
-    xUARTReceiveTaskHandle = uartReceiveTaskHandle;
+    _xUARTRxTaskHandle = uartReceiveTaskHandle;
 }
 
+/*
+ *      Get the UART Tx task handle.
+ *
+ *      @return
+ *          UART Tx task handle.
+ */
 TaskHandle_t UART::GetUartTransmitTaskHandle() const
 {
-    return xUARTTransmitTaskHandle;
+    return _xUARTTxTaskHandle;
 }
 
 /*
@@ -146,7 +152,7 @@ TaskHandle_t UART::GetUartTransmitTaskHandle() const
  */
 void UART::SetUartTransmitTaskHandle(TaskHandle_t uartTransmitTaskHandle = NULL)
 {
-    xUARTTransmitTaskHandle = uartTransmitTaskHandle;
+    _xUARTTxTaskHandle = uartTransmitTaskHandle;
 }
 
 /*
@@ -177,23 +183,23 @@ void UART::Setup()
     //
     _uartMaximumSendResponsePeriod = 500 / portTICK_PERIOD_MS;
     //
-    uart_param_config(STM32UartNumber, &uart_config);
-    uart_set_pin(STM32UartNumber, TxPin, RxPin, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
+    uart_param_config(STM32_UART_PORT_NUMBER, &uart_config);
+    uart_set_pin(STM32_UART_PORT_NUMBER, TX_PIN, RX_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
     QueueHandle_t rxQueue;
-    uart_driver_install(STM32UartNumber, RxBufferSize * 2, TxBufferSize * 2, QueueLength, &rxQueue, 0);
+    uart_driver_install(STM32_UART_PORT_NUMBER, RX_BUFFER_SIZE * 2, TX_BUFFER_SIZE * 2, QUEUE_LENGTH, &rxQueue, 0);
     uart->SetUartRxQueueHandle(rxQueue);
-    xUARTTxMutex = xSemaphoreCreateMutex();
-    xUARTSyncQueueHandle = xQueueCreate(1, sizeof(enum UARTSyncStates));
-    memset(_startOfFrameCharacters, StartOfFrameCharacter, NumberOfStartOfFrameCharacters);
-    memset(_endOfFrameCharacters, EndOfFrameCharacter, NumberOfEndOfFrameCharacters);
+    _xUARTTxMutex = xSemaphoreCreateMutex();
+    _xUARTSyncQueueHandle = xQueueCreate(1, sizeof(enum UARTSyncStates));
+    memset(_startOfFrameCharacters, START_OF_FRAME_CHARACTER, NUMBER_OF_START_OF_FRAME_CHARACTERS);
+    memset(_endOfFrameCharacters, END_OF_FRAME_CHARACTER, NUMBER_OF_END_OF_FRAME_CHARACTERS);
 
-    xUARTTransmitQueueHandle = xQueueCreate(MAX_QUEUE_LENGTH, sizeof(ApplicationResponse));
-    if (xUARTTransmitQueueHandle == NULL)
+    _xUARTTxQueueHandle = xQueueCreate(MAX_QUEUE_LENGTH, sizeof(ApplicationResponse));
+    if (_xUARTTxQueueHandle == NULL)
     {
         ESP_LOGI(__func__, "Cannot allocate UART transmit queue.");
     }
-    xTaskCreate(UARTRxTask, UART_RX_TASK_NAME, 1024 * 2, NULL, configMAX_PRIORITIES - 5, &xUARTReceiveTaskHandle);
-    xTaskCreate(UARTTxTask, UART_TX_TASK_NAME, 1024 * 2, NULL, configMAX_PRIORITIES - 5, &xUARTTransmitTaskHandle);
+    xTaskCreate(UARTRxTask, UART_RX_TASK_NAME, 1024 * 2, NULL, configMAX_PRIORITIES - 5, &_xUARTRxTaskHandle);
+    xTaskCreate(UARTTxTask, UART_TX_TASK_NAME, 1024 * 2, NULL, configMAX_PRIORITIES - 5, &_xUARTTxTaskHandle);
 }
 
 /*
@@ -213,17 +219,17 @@ void UART::RxCleanup()
  */
 void UART::ResetIncomingMessage(bool releasePayloadMemory)
 {
-    messageHeader.interface = 0;
-    messageHeader.function = 0;
-    messageHeader.messageID = 0;
-    if ((messageHeader.payload != NULL) && releasePayloadMemory)
+    _messageHeader.interface = 0;
+    _messageHeader.function = 0;
+    _messageHeader.messageID = 0;
+    if ((_messageHeader.payload != NULL) && releasePayloadMemory)
     {
-        vPortFree(messageHeader.payload);
+        vPortFree(_messageHeader.payload);
     }
-    messageHeader.payload = NULL;
-    messageHeader.payloadLength = 0;
-    bytesRemaining  = 0;
-    nextPayloadLocation = NULL;
+    _messageHeader.payload = NULL;
+    _messageHeader.payloadLength = 0;
+    _bytesRemaining  = 0;
+    _nextPayloadLocation = NULL;
 }
 
 /*
@@ -236,7 +242,7 @@ uint32_t UART::QueueMessage()
 {
     QueueHandle_t queueHandle = NULL;
 
-    switch (messageHeader.interface)
+    switch (_messageHeader.interface)
     {
         case INTERFACE_WIFI:
             queueHandle = wifi->GetQueueHandle();
@@ -248,13 +254,13 @@ uint32_t UART::QueueMessage()
             queueHandle = MeshNetworkQueueHandle;
             break;
     }
-    if (messageHeader.interface != INTERFACE_SYSTEM)
+    if (_messageHeader.interface != INTERFACE_SYSTEM)
     {
-        if (xQueueSendToBack(queueHandle, &messageHeader, 0) != pdPASS)
+        if (xQueueSendToBack(queueHandle, &_messageHeader, 0) != pdPASS)
         {
-            if (messageHeader.payload != NULL)
+            if (_messageHeader.payload != NULL)
             {
-                vPortFree(messageHeader.payload);
+                vPortFree(_messageHeader.payload);
             }
             return (ERR_QUEUE_ERROR);
         }
@@ -274,7 +280,7 @@ uint32_t UART::QueueMessage()
  */
 void UART::QueueResponse(ApplicationResponse *response)
 {
-    if (xQueueSendToBack(xUARTTransmitQueueHandle, response, 0) != pdPASS)
+    if (xQueueSendToBack(_xUARTTxQueueHandle, response, 0) != pdPASS)
     {
         ESP_LOGI(__func__, "Error sending response, cannot queue message");
     }
@@ -301,10 +307,10 @@ uint32_t UART::CalculateEncodedFrameLength(uint8_t *buffer, uint8_t bufferLength
 
     for (int index = 0; index < bufferLength; index++)
     {
-        if (buffer[index] == StartOfFrameCharacter)
+        if (buffer[index] == START_OF_FRAME_CHARACTER)
         {
             startOfFrameCharacterCount++;
-            if (startOfFrameCharacterCount == (NumberOfStartOfFrameCharacters - 1))
+            if (startOfFrameCharacterCount == (NUMBER_OF_START_OF_FRAME_CHARACTERS - 1))
             {
                 byteCount++;     // An additional byte is needed for the padding character.
                 startOfFrameCharacterCount = 0;
@@ -321,7 +327,7 @@ uint32_t UART::CalculateEncodedFrameLength(uint8_t *buffer, uint8_t bufferLength
     //  the data plus the start of frame characters, the CRC and the end of
     //  frame characters.
     //
-    byteCount += (NumberOfStartOfFrameCharacters + NumberOfEndOfFrameCharacters + 4);
+    byteCount += (NUMBER_OF_START_OF_FRAME_CHARACTERS + NUMBER_OF_END_OF_FRAME_CHARACTERS + 4);
     return(byteCount);
 }
 
@@ -355,12 +361,12 @@ int UART::EncodeData(uint8_t *buffer, uint32_t bufferLength, uint8_t *frame)
         for (int index = 0; index < bufferLength; index++)
         {
             frame[currentByte++] = buffer[index];
-            if (buffer[index] == StartOfFrameCharacter)
+            if (buffer[index] == START_OF_FRAME_CHARACTER)
             {
                 startOfFrameCharacterCount++;
-                if (startOfFrameCharacterCount == (NumberOfStartOfFrameCharacters - 1))
+                if (startOfFrameCharacterCount == (NUMBER_OF_START_OF_FRAME_CHARACTERS - 1))
                 {
-                    frame[currentByte++] = PaddingCharacter;
+                    frame[currentByte++] = PADDING_CHARACTER;
                     startOfFrameCharacterCount = 0;
                 }
             }
@@ -401,8 +407,8 @@ BufferAndLength *UART::GenerateApplicationFrame(uint8_t frameType, uint32_t mess
     uint32_t frameLength = FRAME_HEADER_LENGTH + CalculateEncodedFrameLength(buffer, bufferLength);
 
     uint8_t *frame = (uint8_t *) pvPortMalloc(frameLength);
-    memset(frame, StartOfFrameCharacter, NumberOfStartOfFrameCharacters);
-    uint32_t currentByte = NumberOfStartOfFrameCharacters;
+    memset(frame, START_OF_FRAME_CHARACTER, NUMBER_OF_START_OF_FRAME_CHARACTERS);
+    uint32_t currentByte = NUMBER_OF_START_OF_FRAME_CHARACTERS;
     //
     //  Now add the frame header information.
     //
@@ -418,11 +424,11 @@ BufferAndLength *UART::GenerateApplicationFrame(uint8_t frameType, uint32_t mess
     //  when the CRC is calculated as the CRC should only be calculated on
     //  the actual data plus any padding characters.
     //
-    uint32_t crc = Encoders::CRC32(frame + NumberOfStartOfFrameCharacters, frameLength - (NumberOfStartOfFrameCharacters + 5));
+    uint32_t crc = Encoders::CRC32(frame + NUMBER_OF_START_OF_FRAME_CHARACTERS, frameLength - (NUMBER_OF_START_OF_FRAME_CHARACTERS + 5));
     Encoders::EncodeUInt32(crc, frame + currentByte);
     currentByte += 4;
-    memset(frame + currentByte, EndOfFrameCharacter, NumberOfEndOfFrameCharacters);
-    currentByte += NumberOfEndOfFrameCharacters;
+    memset(frame + currentByte, END_OF_FRAME_CHARACTER, NUMBER_OF_END_OF_FRAME_CHARACTERS);
+    currentByte += NUMBER_OF_END_OF_FRAME_CHARACTERS;
     BufferAndLength *f = (BufferAndLength *) pvPortMalloc(sizeof(BufferAndLength));
     f->Buffer = frame;
     f->BufferLength = currentByte;
@@ -454,8 +460,8 @@ BufferAndLength *UART::GenerateTransportFrame(uint8_t *buffer, uint32_t bufferLe
     uint32_t frameLength = CalculateEncodedFrameLength(buffer, bufferLength);
 
     uint8_t *frame = (uint8_t *) pvPortMalloc(frameLength);
-    memset(frame, StartOfFrameCharacter, NumberOfStartOfFrameCharacters);
-    uint32_t currentByte = NumberOfStartOfFrameCharacters;
+    memset(frame, START_OF_FRAME_CHARACTER, NUMBER_OF_START_OF_FRAME_CHARACTERS);
+    uint32_t currentByte = NUMBER_OF_START_OF_FRAME_CHARACTERS;
     currentByte += EncodeData(buffer, bufferLength, frame + currentByte);
     //
     //  The frame length calculated contains the header characters, CRC
@@ -463,11 +469,11 @@ BufferAndLength *UART::GenerateTransportFrame(uint8_t *buffer, uint32_t bufferLe
     //  when the CRC is calculated as the CRC should only be calculated on
     //  the actual data plus any padding characters.
     //
-    uint32_t crc = Encoders::CRC32(frame + NumberOfStartOfFrameCharacters, currentByte - NumberOfStartOfFrameCharacters);
+    uint32_t crc = Encoders::CRC32(frame + NUMBER_OF_START_OF_FRAME_CHARACTERS, currentByte - NUMBER_OF_START_OF_FRAME_CHARACTERS);
     Encoders::EncodeUInt32(crc, frame + currentByte);
     currentByte += 4;
-    memset(frame + currentByte, EndOfFrameCharacter, NumberOfStartOfFrameCharacters);
-    currentByte += NumberOfStartOfFrameCharacters;
+    memset(frame + currentByte, END_OF_FRAME_CHARACTER, NUMBER_OF_START_OF_FRAME_CHARACTERS);
+    currentByte += NUMBER_OF_START_OF_FRAME_CHARACTERS;
     BufferAndLength *f = (BufferAndLength *) pvPortMalloc(sizeof(BufferAndLength));
     f->Buffer = frame;
     f->BufferLength = currentByte;
@@ -491,9 +497,9 @@ void UART::AcknowledgeFrame(uint8_t ackNak, uint32_t status)
     Encoders::EncodeUInt32(status, buffer + TRANSPORT_STATUS_CODE);
     struct BufferAndLength *frame = GenerateTransportFrame(buffer, TRANSPORT_MESSAGE_LENGTH);
     //
-    xSemaphoreTake(xUARTTxMutex, portMAX_DELAY);
-    _totalTxBytes += uart_write_bytes(STM32UartNumber, (const char *) frame->Buffer, frame->BufferLength);
-    xSemaphoreGive(xUARTTxMutex);
+    xSemaphoreTake(_xUARTTxMutex, portMAX_DELAY);
+    _totalTxBytes += uart_write_bytes(STM32_UART_PORT_NUMBER, (const char *) frame->Buffer, frame->BufferLength);
+    xSemaphoreGive(_xUARTTxMutex);
     //
     vPortFree(frame->Buffer);
     vPortFree(frame);
@@ -520,24 +526,24 @@ void UART::ProcessHeader(uint8_t *packet, uint8_t packetLength)
     else
     {
         ResetIncomingMessage(true);
-        messageHeader.interface = packet[0];
-        messageHeader.function = Encoders::ExtractUInt32(packet + APP_REQUEST_FUNCTION);
-        messageHeader.messageID = Encoders::ExtractUInt32(packet + APP_REQUEST_MESSAGE_ID);
-        bytesRemaining = Encoders::ExtractUInt32(packet + APP_REQUEST_PAYLOAD_LENGTH);
-        messageHeader.payloadLength = bytesRemaining;
-        if (messageHeader.payloadLength > 0)
+        _messageHeader.interface = packet[0];
+        _messageHeader.function = Encoders::ExtractUInt32(packet + APP_REQUEST_FUNCTION);
+        _messageHeader.messageID = Encoders::ExtractUInt32(packet + APP_REQUEST_MESSAGE_ID);
+        _bytesRemaining = Encoders::ExtractUInt32(packet + APP_REQUEST_PAYLOAD_LENGTH);
+        _messageHeader.payloadLength = _bytesRemaining;
+        if (_messageHeader.payloadLength > 0)
         {
-            messageHeader.payload = (uint8_t *) pvPortMalloc(messageHeader.payloadLength);
+            _messageHeader.payload = (uint8_t *) pvPortMalloc(_messageHeader.payloadLength);
         }
         else
         {
-            messageHeader.payload = NULL;
+            _messageHeader.payload = NULL;
             //
             //  Messages with no payload should be queued immediately.
             //
             QueueMessage();
         }
-        nextPayloadLocation = messageHeader.payload;
+        _nextPayloadLocation = _messageHeader.payload;
         AcknowledgeFrame(TRANSPORT_ACK, ERR_COMPLETED_OK);
     }
 }
@@ -557,15 +563,15 @@ void UART::ProcessHeader(uint8_t *packet, uint8_t packetLength)
  */
 void UART::ProcessData(uint8_t *packet, uint8_t packetLength)
 {
-    if ((nextPayloadLocation != NULL) && (bytesRemaining > 0) && (packetLength <= bytesRemaining))
+    if ((_nextPayloadLocation != NULL) && (_bytesRemaining > 0) && (packetLength <= _bytesRemaining))
     {
         //
         //  TODO: Change this to use the sequence number for this message to determine where the data should go.
         //
-        memcpy(nextPayloadLocation, packet, packetLength);
-        nextPayloadLocation += packetLength;
-        bytesRemaining -= packetLength;
-        if (bytesRemaining == 0)
+        memcpy(_nextPayloadLocation, packet, packetLength);
+        _nextPayloadLocation += packetLength;
+        _bytesRemaining -= packetLength;
+        if (_bytesRemaining == 0)
         {
             QueueMessage();
             //
@@ -609,7 +615,7 @@ void UART::ProcessTransportData(uint8_t currentFrameType)
             state = Reset;
             break;
     }
-    if (xQueueSendToBack(xUARTSyncQueueHandle, &state, 0) != pdPASS)
+    if (xQueueSendToBack(_xUARTSyncQueueHandle, &state, 0) != pdPASS)
     {
         ESP_LOGI(__func__, "Sending synchronisation message.");
     }
@@ -665,15 +671,15 @@ UART::UARTSyncStates UART::SendFrame(BufferAndLength *frame, const char * frameT
     //  This queue needs to be empty before we send a frame otherwise we could
     //  receive and ACK / NAK for the wrong message.
     //
-    xQueueReset(xUARTSyncQueueHandle);
+    xQueueReset(_xUARTSyncQueueHandle);
     while ((result != Acknowledge) && (retryCount < _maximumRetryCount))
     {
-        xSemaphoreTake(xUARTTxMutex, portMAX_DELAY);
-        _totalTxBytes += uart_write_bytes(STM32UartNumber, (const char *) frame->Buffer, frame->BufferLength);
+        xSemaphoreTake(_xUARTTxMutex, portMAX_DELAY);
+        _totalTxBytes += uart_write_bytes(STM32_UART_PORT_NUMBER, (const char *) frame->Buffer, frame->BufferLength);
         _totalFramesSent++;
-        xSemaphoreGive(xUARTTxMutex);
+        xSemaphoreGive(_xUARTTxMutex);
         retryCount++;
-        BaseType_t queueResult = xQueueReceive(xUARTSyncQueueHandle, &result, _uartMaximumSendResponsePeriod);
+        BaseType_t queueResult = xQueueReceive(_xUARTSyncQueueHandle, &result, _uartMaximumSendResponsePeriod);
         if (queueResult != pdTRUE)
         {
             result = Error;
@@ -720,10 +726,10 @@ void UART::DecodeSerialData(uint8_t *buffer, int amount)
             _startOfFrameByteCount = 0;
             switch (byte)
             {
-                case StartOfFrameCharacter:
+                case START_OF_FRAME_CHARACTER:
                     _communicationState = FrameType;
                     break;
-                case PaddingCharacter:
+                case PADDING_CHARACTER:
                     break;
                 default:
                     _communicationState = StartOfFrame;
@@ -732,7 +738,7 @@ void UART::DecodeSerialData(uint8_t *buffer, int amount)
         }
         else
         {
-            if (byte == StartOfFrameCharacter)
+            if (byte == START_OF_FRAME_CHARACTER)
             {
                 _startOfFrameByteCount++;
             }
@@ -825,7 +831,7 @@ void UART::DecodeSerialData(uint8_t *buffer, int amount)
                     }
                     break;
                 case EndOfFrame:
-                    if ((byte == EndOfFrameCharacter) && (_calculatedChecksum == _originalChecksum))
+                    if ((byte == END_OF_FRAME_CHARACTER) && (_calculatedChecksum == _originalChecksum))
                     {
                         if (_currentFrameType & PKT_TRANSPORT)
                         {
@@ -838,7 +844,7 @@ void UART::DecodeSerialData(uint8_t *buffer, int amount)
                     }
                     else
                     {
-                        if (byte != EndOfFrameCharacter)
+                        if (byte != END_OF_FRAME_CHARACTER)
                         {
                             AcknowledgeFrame(TRANSPORT_NAK, ERR_MISSING_END_OF_FRAME_MARKER);
                         }
@@ -871,24 +877,24 @@ void UART::DecodeSerialData(uint8_t *buffer, int amount)
 void UART::DispatchRxMessage(ApplicationResponse *message)
 {
     uart_event_t event;
-    uint8_t* data = (uint8_t *) pvPortMalloc(RxBufferSize);
+    uint8_t* data = (uint8_t *) pvPortMalloc(RX_BUFFER_SIZE);
 
     while (true)
     {
         int dataLeftToRead = 0;
         int amountToRead = 0;
-        if (xQueueReceive(xUARTReceiveQueueHandle, (void *) &event, portMAX_DELAY))
+        if (xQueueReceive(_xUARTRxQueueHandle, (void *) &event, portMAX_DELAY))
         {
-            memset(data, 0, RxBufferSize);
+            memset(data, 0, RX_BUFFER_SIZE);
             switch (event.type)
             {
                 case UART_DATA:
                     dataLeftToRead = event.size;
                     while (dataLeftToRead > 0)
                     {
-                        amountToRead = dataLeftToRead <= RxBufferSize ? dataLeftToRead : RxBufferSize;
-                        memset(data, 0, RxBufferSize);
-                        uart_read_bytes(STM32UartNumber, data, amountToRead, portMAX_DELAY);
+                        amountToRead = dataLeftToRead <= RX_BUFFER_SIZE ? dataLeftToRead : RX_BUFFER_SIZE;
+                        memset(data, 0, RX_BUFFER_SIZE);
+                        uart_read_bytes(STM32_UART_PORT_NUMBER, data, amountToRead, portMAX_DELAY);
                         DecodeSerialData(data, amountToRead);
                         dataLeftToRead -= amountToRead;
                     }
@@ -898,13 +904,13 @@ void UART::DispatchRxMessage(ApplicationResponse *message)
                     //
                     //  Flush the input buffer in the case of a full ring buffer or a FIFO overflow.
                     //
-                    uart_flush_input(STM32UartNumber);
-                    xQueueReset(xUARTReceiveQueueHandle);
+                    uart_flush_input(STM32_UART_PORT_NUMBER);
+                    xQueueReset(_xUARTRxQueueHandle);
                     break;
                 default:
-                    uart_flush_input(STM32UartNumber);
-                    xQueueReset(xUARTReceiveQueueHandle);
-                    xQueueReset(xUARTTransmitQueueHandle);
+                    uart_flush_input(STM32_UART_PORT_NUMBER);
+                    xQueueReset(_xUARTRxQueueHandle);
+                    xQueueReset(_xUARTTxQueueHandle);
                     break;
             }
         }
@@ -921,7 +927,7 @@ void UART::DispatchRxMessage(ApplicationResponse *message)
         vPortFree(_framePayload);
         _framePayload = NULL;
     }
-    vTaskDelete(xUARTReceiveTaskHandle);
+    vTaskDelete(_xUARTRxTaskHandle);
 }
 
 /*
@@ -966,11 +972,11 @@ void UART::Send(ApplicationResponse *message)
     int amountLeftToSend = message->payloadLength;
     int start = 0;
     uint8_t sequenceNumber = 1;
-    uint8_t currentFrameBufferLength = MaximumFrameLength;
+    uint8_t currentFrameBufferLength = MAXIMUM_FRAME_LENGTH;
     uint8_t *frameBuffer = (uint8_t *) pvPortMalloc(currentFrameBufferLength);
     while (amountLeftToSend > 0)
     {
-        uint8_t length = (uint8_t) ((amountLeftToSend < MaximumFrameLength ? amountLeftToSend : MaximumFrameLength) & 0xff);
+        uint8_t length = (uint8_t) ((amountLeftToSend < MAXIMUM_FRAME_LENGTH ? amountLeftToSend : MAXIMUM_FRAME_LENGTH) & 0xff);
         if (length != currentFrameBufferLength)
         {
             vPortFree(frameBuffer);
