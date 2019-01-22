@@ -1,3 +1,7 @@
+/*
+ *      Main application for the ESP32 code for Meadow.
+ */
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_system.h"
