@@ -86,7 +86,7 @@ void WiFi::SetQueueHandle(QueueHandle_t queueHandle)
  */
 void WiFi::DispatchRequest(struct ApplicationRequest *request)
 {
-    switch (request->function)
+    switch (request->_function)
     {
         case WIFI_FUNC_START:
             StartNetwork(request);
@@ -98,19 +98,19 @@ void WiFi::DispatchRequest(struct ApplicationRequest *request)
             HttpGet(request);
             break;
         default:
-            ESP_LOGI(__func__, "Unknown WiFi message received, function %d", request->function);
-            if (request->payload != NULL)
+            ESP_LOGI(__func__, "Unknown WiFi message received, function %d", request->_function);
+            if (request->_payload != NULL)
             {
-                ESP_LOG_BUFFER_HEXDUMP(__func__, request->payload, request->payloadLength, ESP_LOG_INFO);
+                ESP_LOG_BUFFER_HEXDUMP(__func__, request->_payload, request->_payloadLength, ESP_LOG_INFO);
             }
             break;
     }
     //
     //  Memory for the payload is allocated on the heap and it needs to be released.
     //
-    if (request->payload != NULL)
+    if (request->_payload != NULL)
     {
-        vPortFree(request->payload);
+        vPortFree(request->_payload);
     }
 
 }
@@ -132,7 +132,7 @@ void WiFi::Setup()
  */
 void WiFi::SendResponse(uint32_t statusCode)
 {
-    _wifiResponse->code = statusCode;
+    _wifiResponse->_code = statusCode;
     uart->QueueResponse(_wifiResponse);
     vPortFree(_wifiResponse);
     _wifiResponse = NULL;
@@ -164,9 +164,9 @@ esp_err_t WiFi::EventHandler(void *ctx, system_event_t *event)
             //
             if ((_wifiResponse != NULL) && (bits & WIFI_CONNECTING_BIT))
             {
-                _wifiResponse->payloadLength = sizeof(ip4_addr_t);
-                _wifiResponse->payload = (uint8_t *) pvPortMalloc(_wifiResponse->payloadLength);
-                memcpy(_wifiResponse->payload, &event->event_info.got_ip.ip_info.ip, _wifiResponse->payloadLength);
+                _wifiResponse->_payloadLength = sizeof(ip4_addr_t);
+                _wifiResponse->_payload = (uint8_t *) pvPortMalloc(_wifiResponse->_payloadLength);
+                memcpy(_wifiResponse->_payload, &event->event_info.got_ip.ip_info.ip, _wifiResponse->_payloadLength);
                 SendResponse(ERR_COMPLETED_OK);
             }
             xEventGroupSetBits(xWiFiEventGroup, WIFI_CONNECTED_BIT | WIFI_READY_BIT);
@@ -220,23 +220,23 @@ void WiFi::StartNetwork(ApplicationRequest *message)
         vPortFree(_wifiResponse);
     }
     _wifiResponse = (ApplicationResponse *) pvPortMalloc(sizeof(ApplicationResponse));
-    _wifiResponse->interface = message->interface;
-    _wifiResponse->messageID = message->messageID;
-    _wifiResponse->payload = NULL;
-    _wifiResponse->payloadLength = 0;
-    _wifiResponse->code = 0;
+    _wifiResponse->_interface = message->_interface;
+    _wifiResponse->_messageID = message->_messageID;
+    _wifiResponse->_payload = NULL;
+    _wifiResponse->_payloadLength = 0;
+    _wifiResponse->_code = 0;
 
     EventBits_t bits = xEventGroupGetBits(xWiFiEventGroup);
     if (!(bits & WIFI_INITIALISED_BIT))
     {
-        char *ssid = (char *) message->payload;
+        char *ssid = (char *) message->_payload;
         if ((ssid == NULL) || (strlen(ssid) > MAXIMUM_SSID_LENGTH))
         {
             SendResponse(ERR_INVALID_SSID);
             return;
         }
 
-        char *password = (char *) (message->payload + strlen(ssid) + 1);
+        char *password = (char *) (message->_payload + strlen(ssid) + 1);
         if (strlen(password) > MAXIMUM_PASSWORD_LENGTH)
         {
             SendResponse(ERR_INVALID_PASSWORD);
@@ -290,23 +290,23 @@ void WiFi::ProcessAccessPointScanCompletion(system_event_t *event)
     ESP_LOGI(__func__, "Number of access points found: %d\n", apCount);
     if (apCount == 0)
     {
-        _wifiResponse->payload = NULL;
-        _wifiResponse->payloadLength = 0;
+        _wifiResponse->_payload = NULL;
+        _wifiResponse->_payloadLength = 0;
     }
     else
     {
         //
         //  First two bytes in this payload are the number of access points.
         //
-        _wifiResponse->payloadLength = (ACCESS_POINT_INFORMATION_LENGTH * apCount) + 2;
-        _wifiResponse->payload = (uint8_t *) pvPortMalloc(_wifiResponse->payloadLength);
-        Encoders::EncodeUInt16(apCount, _wifiResponse->payload);
+        _wifiResponse->_payloadLength = (ACCESS_POINT_INFORMATION_LENGTH * apCount) + 2;
+        _wifiResponse->_payload = (uint8_t *) pvPortMalloc(_wifiResponse->_payloadLength);
+        Encoders::EncodeUInt16(apCount, _wifiResponse->_payload);
         //
         //  Now we get the access point information.
         //
         wifi_ap_record_t *accessPoints = (wifi_ap_record_t *) pvPortMalloc(apCount * sizeof(wifi_ap_record_t));
         ESP_ERROR_CHECK(esp_wifi_scan_get_ap_records(&apCount, accessPoints));
-        uint8_t *destination = _wifiResponse->payload + 2;
+        uint8_t *destination = _wifiResponse->_payload + 2;
         for (int index = 0; index < apCount; index++)
         {
             memcpy(destination + BSSID_OFFSET, &accessPoints[index].bssid, 6);
@@ -349,11 +349,11 @@ void WiFi::GetAvailableNetworks(ApplicationRequest *request)
         vPortFree(_wifiResponse);
     }
     _wifiResponse = (ApplicationResponse *) pvPortMalloc(sizeof(ApplicationResponse));
-    _wifiResponse->interface = request->interface;
-    _wifiResponse->messageID = request->messageID;
-    _wifiResponse->payload = NULL;
-    _wifiResponse->payloadLength = 0;
-    _wifiResponse->code = 0;
+    _wifiResponse->_interface = request->_interface;
+    _wifiResponse->_messageID = request->_messageID;
+    _wifiResponse->_payload = NULL;
+    _wifiResponse->_payloadLength = 0;
+    _wifiResponse->_code = 0;
 
     wifi_scan_config_t scanConf =
     {

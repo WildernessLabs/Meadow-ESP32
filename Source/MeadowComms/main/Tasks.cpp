@@ -82,10 +82,10 @@ void BluetoothTask(void *pvParameters)
             //
             //  Memory for the payload is allocated on the heap and it needs to be released.
             //
-            if(message.payload != NULL)
+            if(message._payload != NULL)
             {
-                ESP_LOG_BUFFER_HEXDUMP(BLUETOOTH_TASK_NAME, message.payload, message.payloadLength, ESP_LOG_INFO);
-                vPortFree(message.payload);
+                ESP_LOG_BUFFER_HEXDUMP(BLUETOOTH_TASK_NAME, message._payload, message._payloadLength, ESP_LOG_INFO);
+                vPortFree(message._payload);
             }
         }
     }
@@ -117,10 +117,10 @@ void MeshNetworkTask(void *pvParameters)
             //
             //  Memory for the payload is allocated on the heap and it needs to be released.
             //
-            if(message.payload != NULL)
+            if(message._payload != NULL)
             {
-                ESP_LOG_BUFFER_HEXDUMP(MESH_NETWORK_TASK_NAME, message.payload, message.payloadLength, ESP_LOG_INFO);
-                vPortFree(message.payload);
+                ESP_LOG_BUFFER_HEXDUMP(MESH_NETWORK_TASK_NAME, message._payload, message._payloadLength, ESP_LOG_INFO);
+                vPortFree(message._payload);
             }
         }
     }
