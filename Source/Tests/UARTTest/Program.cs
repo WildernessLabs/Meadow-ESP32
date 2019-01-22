@@ -73,6 +73,7 @@ namespace UartTest
                 //
                 //  Prepare a Get request.
                 //
+                /*
                 byte[] httpGetRequestPayload = new byte[ServerName.Length + Uri.Length + 4];
                 Encoders.EncodeUInt16(PortNumber, httpGetRequestPayload, 0);
                 destination = 2;
@@ -86,7 +87,7 @@ namespace UartTest
                 messageID = WiFiFunctionHttpGet;
                 Message httpGetRequest = new Message(WiFiInterface, WiFiFunctionHttpGet, messageID, httpGetRequestPayload);
                 queue.Add(httpGetRequest);
-
+                */
                 Thread.Sleep(Timeout.Infinite);
             }
         }
