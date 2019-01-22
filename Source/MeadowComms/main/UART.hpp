@@ -82,67 +82,83 @@ private:
     /*
      *  A repeating pattern of this character indicates a start of message.
      */
-    static const int StartOfFrameCharacter = 0xaa;
+    static const int START_OF_FRAME_CHARACTER = 0xaa;
 
     /*
      *      Character marking the end of a data frame.
      */
-    static const int EndOfFrameCharacter = 0x55;
+    static const int END_OF_FRAME_CHARACTER = 0x55;
 
     /*
      *      The filler character is used to send a sequence of Start of
      *      Frame characters in the binary data.
      */
-    static const int PaddingCharacter = 0x52;
+    static const int PADDING_CHARACTER = 0x52;
 
     /*
      *      Number of characters to be used in the pattern matching.
      */
-    static const int NumberOfStartOfFrameCharacters = 3;
+    static const int NUMBER_OF_START_OF_FRAME_CHARACTERS = 3;
 
     /*
      *      Number of end of frame characters.
      */
-    static const int NumberOfEndOfFrameCharacters = 1;
+    static const int NUMBER_OF_END_OF_FRAME_CHARACTERS = 1;
 
     /*
      *      Pin used to send data to the STM32.
      */
-    const int TxPin = (GPIO_NUM_4);
+    const int TX_PIN = (GPIO_NUM_4);
 
     /*
      *      Pin used to receive data from the STM32.
      */
-    const int RxPin = (GPIO_NUM_5);
+    const int RX_PIN = (GPIO_NUM_5);
 
     /*
      *      Length of the UART queue.
      */
-    const int  QueueLength = 10;
+    const int  QUEUE_LENGTH = 10;
 
     /*
      *      Maximum number of unencoded bytes in a frame.
      */
-    const int MaximumFrameLength = 255;
+    const int MAXIMUM_FRAME_LENGTH = 255;
 
     /*
      *      Default maximum number of time the UART will retry sending a message.
      */
-    const int DefaultMaximumRetries = 3;
+    const int DEFAULT_MAXIMUM_RETRIES = 3;
 
     /*
      *      Handle for the UART Tx queue.
      */
-    QueueHandle_t xUARTTransmitQueueHandle = NULL;
+    QueueHandle_t _xUARTTxQueueHandle = NULL;
+
+    /*
+     *      Name of the Tx task.
+     */
     const char *UART_TX_TASK_NAME = const_cast<const char *> ("UARTTxTask");
-    TaskHandle_t xUARTReceiveTaskHandle = NULL;
+
+    /*
+     *      Handle for the Tx task.
+     */
+    TaskHandle_t _xUARTTxTaskHandle = NULL;
 
     /*
      *      Handle for the UART Rx queue.
      */
-    QueueHandle_t xUARTReceiveQueueHandle = NULL;
+    QueueHandle_t _xUARTRxQueueHandle = NULL;
+
+    /*
+     *      Name of the Rx Task.
+     */
     const char *UART_RX_TASK_NAME = const_cast<const char *> ("UARTRxTask");
-    TaskHandle_t xUARTTransmitTaskHandle = NULL;
+
+    /*
+     *      Handle for the Rx task.
+     */
+    TaskHandle_t _xUARTRxTaskHandle = NULL;
 
     /*
      *      Handle to the queue used to sync the UART messages.
@@ -151,7 +167,7 @@ private:
      *      communicate with the Tx and Rx tasks to provide a measure of reliability
      *      and recovery.
      */
-    QueueHandle_t xUARTSyncQueueHandle = NULL;
+    QueueHandle_t _xUARTSyncQueueHandle = NULL;
 
     /*
      *      This is the maximum number of milliseconds between sending a frame and a
@@ -169,27 +185,27 @@ private:
      *      The UARTTXTask and the ACK/NAK processing could need access
      *      the UART and this mutex is used to synchronise the access.
      */
-    SemaphoreHandle_t xUARTTxMutex = NULL;
+    SemaphoreHandle_t _xUARTTxMutex = NULL;
 
     /*
      *      Number of payload bytes remaining.
      */
-    int bytesRemaining = 0;
+    int _bytesRemaining = 0;
 
-    // <summary>
-    //      Byte used to store the next byte received as part of a message payload.
-    // </summary>
-    uint8_t *nextPayloadLocation = 0;
+    /*
+     *      Byte used to store the next byte received as part of a message payload.
+     */
+    uint8_t *_nextPayloadLocation = 0;
 
     /*
      *      Message header for the message currently being received.
      */
-    struct ApplicationRequest messageHeader;
+    ApplicationRequest _messageHeader;
 
     /*
      *      Holds the current state of the communication state machine.
      */
-    enum CommunicationStates _communicationState = StartOfFrame;
+    CommunicationStates _communicationState = StartOfFrame;
 
     /*
      *      Number of consecutive occurrences of the start of frame character has been detected
@@ -251,12 +267,12 @@ private:
     /*
      *      Buffer for the start of frame characters.
      */
-    char _startOfFrameCharacters[NumberOfStartOfFrameCharacters];
+    char _startOfFrameCharacters[NUMBER_OF_START_OF_FRAME_CHARACTERS];
 
     /*
      *      Buffer for the end of frame characters.
      */
-    char _endOfFrameCharacters[NumberOfEndOfFrameCharacters];
+    char _endOfFrameCharacters[NUMBER_OF_END_OF_FRAME_CHARACTERS];
 
     /*
      *      Current retry count.
@@ -267,7 +283,7 @@ private:
      *      Current maximum number of retries when sending a
      *      frame before the system declares an error condition.
      */
-    uint32_t _maximumRetryCount = DefaultMaximumRetries;
+    uint32_t _maximumRetryCount = DEFAULT_MAXIMUM_RETRIES;
 
     /*
      *      Total number of bytes sent since the microcontroller was started.
@@ -323,15 +339,15 @@ public:
      *
      *      UART used for communication with the STM32.
      */
-    const uart_port_t STM32UartNumber = UART_NUM_1;
+    const uart_port_t STM32_UART_PORT_NUMBER = UART_NUM_1;
     /*
      *      Number of bytes in the Rx buffer.
      */
-    static const int RxBufferSize = 1024;
+    static const int RX_BUFFER_SIZE = 1024;
     /*
      *      Number of bytes in the Rx buffer.
      */
-    static const int TxBufferSize = 1024;
+    static const int TX_BUFFER_SIZE = 1024;
 
 
     UART();
