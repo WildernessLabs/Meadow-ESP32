@@ -48,11 +48,6 @@ TaskHandle_t xMeshNetworkTaskHandle = NULL;
 const char *MESH_NETWORK_TASK_NAME = const_cast<const char *> ("MeshNetworkTask");
 
 /*
- *      Handle for the WiFi queue.
- */
-// QueueHandle_t xWiFiQueueHandle = NULL;
-
-/*
  *      Handle for the WiFi task.
  */
 TaskHandle_t xWiFiTaskHandle = NULL;
@@ -63,16 +58,9 @@ TaskHandle_t xWiFiTaskHandle = NULL;
 const char *WIFI_TASK_NAME = const_cast<const char *> ("WiFiTask");
 
 /*
- *      Handle for the incoming messages on the UART.
- */
-//QueueHandle_t UARTRxQueueHandle = NULL;
-
-/*
  *      Handle for the UART receive task.
  */
 TaskHandle_t xUARTReceiveTaskHandle = NULL;
-
-//const char *UART_RX_TASK_NAME = const_cast<const char *> ("UARTRxTask");
 
 /*
  *      Process any messages for the Bluetooth controller..

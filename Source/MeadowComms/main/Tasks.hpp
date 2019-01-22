@@ -1,8 +1,7 @@
 /*
- * Tasks.hpp
+ *      Tasks.hpp
  *
- *  Created on: 16 Jan 2019
- *      Author: markstevens
+ *
  */
 
 #ifndef MAIN_TASKS_HPP_
@@ -47,40 +46,9 @@ extern TaskHandle_t xMeshNetworkTaskHandle;
 extern const char *MESH_NETWORK_TASK_NAME;
 
 /// <summary>
-///     Handle for the WiFi messages to be processed by the WIFi task.
-/// </summary>
-// extern QueueHandle_t xWiFiQueueHandle;
-
-/// <summary>
 ///     Handle for the WiFi task.
 /// </summary>
 extern TaskHandle_t xWiFiTaskHandle;
-
-/// <summary>
-///     Handle for the incoming messages on the UART.
-/// </summary>
-//extern QueueHandle_t UARTRxQueueHandle;
-
-/// <summary>
-///     Handle for the UART receive task.
-/// </summary>
-//extern TaskHandle_t xUARTReceiveTaskHandle;
-
-//extern const char *UART_RX_TASK_NAME;
-
-/// <summary>
-///     Handle for the transmit handle for the UART.
-/// </summary>
-/// <remarks>
-///     The UART transmit queue is used to hold data from tasks ready to
-///     send the data to the UART.
-/// </remarks>
-//extern QueueHandle_t UARTTransmitQueueHandle;
-
-/// <summary>
-///     Handle for the UART transmit task.
-/// </summary>
-//extern TaskHandle_t xUARTTransmitTaskHandle;
 
 /// <summary>
 ///     Name of the WiFi task (used for logging).
