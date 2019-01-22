@@ -593,6 +593,7 @@ namespace UartTransport
 
             _lastFrameSent = GenerateApplicationFrame(frameType, messageID, sequenceNumber, message);
             _currentRetryCount = 0;
+            //Debug.WriteLine($"Sending frame type: {frameType}");
             Send(_lastFrameSent);
             //lock (_timeoutTimerLock)
             //{
@@ -612,6 +613,7 @@ namespace UartTransport
             Encoders.EncodeUInt32((UInt32) status, buffer, Message.TRANSPORT_STATUS_CODE);
             int frameLength = HeaderAndPayloadSize(buffer, 0);
             byte[] frame = GenerateTransportFrame(buffer, frameLength);
+            //Debug.WriteLine($"Sending ACK/NAK: {ackNak}, {status}");
             Send(frame);
         }
 
@@ -810,6 +812,7 @@ namespace UartTransport
                                     }
                                     else
                                     {
+                                        // Debug.WriteLine($"Checksum error, original: {_originalChecksum:X8}, calculated: {_calculatedChecksum:X8}");
                                         AcknowledgeFrame(TRANSPORT_NAK, StatusCodes.CRCError);
                                     }
                                 }
