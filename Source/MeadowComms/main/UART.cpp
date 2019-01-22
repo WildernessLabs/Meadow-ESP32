@@ -29,11 +29,14 @@
  */
 extern WiFi *wifi;
 
-// ---------------------------------------------------------------------------
-//
-//                         Constructors and destructor
-//
-// ---------------------------------------------------------------------------
+/*
+ * ---------------------------------------------------------------------------
+ *
+ *                         Constructors and destructor
+ *
+ * ---------------------------------------------------------------------------
+ */
+
 
 /*
  *      Default constructor for the UART class.
@@ -56,11 +59,13 @@ UART::~UART()
 {
 }
 
-// ---------------------------------------------------------------------------
-//
-//                           Getters and Setters
-//
-// ---------------------------------------------------------------------------
+/*
+ * ---------------------------------------------------------------------------
+ *
+ *                           Getters and Setters
+ *
+ * ---------------------------------------------------------------------------
+ */
 
 QueueHandle_t UART::GetUartRxQueueHandle() const
 {
@@ -102,17 +107,19 @@ void UART::SetUartTransmitTaskHandle(TaskHandle_t uartTransmitTaskHandle = NULL)
     xUARTTransmitTaskHandle = uartTransmitTaskHandle;
 }
 
-// ---------------------------------------------------------------------------
-//
-//                                  Methods
-//
-// ---------------------------------------------------------------------------
+/*
+ * ---------------------------------------------------------------------------
+ *
+ *                                  Methods
+ *
+ * ---------------------------------------------------------------------------
+ */
 
-/// <summary>
-///     Configure the UART and install the driver.
-///
-///     UART should be configured as 115200 baud, no parity, one stop bit, 8 data bits.
-/// </summary>
+/*
+ *      Configure the UART and install the driver.
+ *
+ *      UART should be configured as 115200 baud, no parity, one stop bit, 8 data bits.
+ */
 void UART::Setup()
 {
     const uart_config_t uart_config =
@@ -147,6 +154,9 @@ void UART::Setup()
     xTaskCreate(UARTTxTask, UART_TX_TASK_NAME, 1024 * 2, NULL, configMAX_PRIORITIES - 5, &xUARTTransmitTaskHandle);
 }
 
+/*
+ *      Clean up following a failure in the Rx task.
+ */
 void UART::RxCleanup()
 {
     if (_framePayload != NULL)
@@ -156,9 +166,9 @@ void UART::RxCleanup()
     }
 }
 
-/// <summary>
-///     Reset the message header and delete the message body storage.
-/// <summary>
+/*
+ *      Reset the message header and delete the message body storage.
+ */
 void UART::ResetIncomingMessage(bool releasePayloadMemory)
 {
     messageHeader.interface = 0;
@@ -174,9 +184,9 @@ void UART::ResetIncomingMessage(bool releasePayloadMemory)
     nextPayloadLocation = NULL;
 }
 
-/// <summary>
-///     Add the message to the appropriate queue if possible.
-/// </summary>
+/*
+ *      Add the message to the appropriate queue if possible.
+ */
 uint32_t UART::QueueMessage()
 {
     QueueHandle_t queueHandle = NULL;
@@ -211,10 +221,12 @@ uint32_t UART::QueueMessage()
     return (ERR_COMPLETED_OK);
 }
 
-/// <summary>
-///     Add a response to the UART Tx queue.
-/// </summary>
-/// <param name="response">Response to be queued for sending to the STM32.</param>
+/*
+ *      Add a response to the UART Tx queue.
+ *
+ *      @param response
+ *          Response to be queued for sending to the STM32.
+ */
 void UART::QueueResponse(ApplicationResponse *response)
 {
     if (xQueueSendToBack(xUARTTransmitQueueHandle, response, 0) != pdPASS)
@@ -223,11 +235,17 @@ void UART::QueueResponse(ApplicationResponse *response)
     }
 }
 
-/// <summary>
-///     Work out how big the frame buffer should be for the message that
-//      is going to be sent.  This will take into account the padding
-//      and CRC etc.
-/// </summary>
+/*
+ *      Work out how big the frame buffer should be for the message that
+ *      is going to be sent.  This will take into account the padding
+ *      and CRC etc.
+ *
+ *      @param buffer
+ *          Buffer of data to calculate the encoded length.
+ *
+ *      @param bufferLength
+ *          Amount of data in the buffer.
+ */
 uint32_t UART::CalculateEncodedFrameLength(uint8_t *buffer, uint8_t bufferLength)
 {
     int startOfFrameCharacterCount = 0;
@@ -259,10 +277,19 @@ uint32_t UART::CalculateEncodedFrameLength(uint8_t *buffer, uint8_t bufferLength
     return(byteCount);
 }
 
-/// <summary>
-///     Encode the frame data taking into account the possibility of multiple
-///     0xaa characters.
-/// </summary>
+/*
+ *      Encode the frame data taking into account the possibility of multiple
+ *      0xaa characters.
+ *
+ *      @param buffer
+ *          Buffer of data to calculate the encoded length.
+ *
+ *      @param bufferLength
+ *          Amount of data in the buffer.
+ *
+ *       @param frame
+ *          Pointer to the memory that will hold the encoded data.
+ */
 int UART::EncodeData(uint8_t *buffer, uint32_t bufferLength, uint8_t *frame)
 {
     uint32_t currentByte = 0;
@@ -296,9 +323,25 @@ int UART::EncodeData(uint8_t *buffer, uint32_t bufferLength, uint8_t *frame)
     return (currentByte);
 }
 
-/// <summary>
-///     Generate a new application message frame.
-/// </summary>
+/*
+ *      Generate a new application frame.
+ *
+ *      @param frameType
+ *          Frame type (header of data).
+ *
+ *      @param messageID
+ *          ID of the message being sent.
+ *
+ *      @param sequenceNumber
+ *          Sequence number of this frame in the message.  Each frame will be sequentially
+ *          numbered from 0 for the header and 1..n for the data frames.
+ *
+ *      @param buffer
+ *          Buffer of data to calculate the encoded length.
+ *
+ *      @param bufferLength
+ *          Amount of data in the buffer.
+ */
 struct BufferAndLength *UART::GenerateApplicationFrame(uint8_t frameType, uint32_t messageID, uint8_t sequenceNumber, uint8_t *buffer, uint32_t bufferLength)
 {
     uint32_t frameLength = FRAME_HEADER_LENGTH + CalculateEncodedFrameLength(buffer, bufferLength);
@@ -329,18 +372,26 @@ struct BufferAndLength *UART::GenerateApplicationFrame(uint8_t frameType, uint32
     BufferAndLength *f = (BufferAndLength *) pvPortMalloc(sizeof(BufferAndLength));
     f->Buffer = frame;
     f->BufferLength = currentByte;
-//
-//    ESP_LOGI(__func__, "Sending frame:");
-//    ESP_LOG_BUFFER_HEXDUMP(__func__, frame, currentByte, ESP_LOG_INFO);
-//
+    //
+    //  The following lines are for debugging and will dump the frame being sent to the LOG UART.
+    //
+    //  ESP_LOGI(__func__, "Sending frame:");
+    //  ESP_LOG_BUFFER_HEXDUMP(__func__, frame, currentByte, ESP_LOG_INFO);
+    //
     return (f);
 }
 
-/// <summary>
-///     Take a buffer of data and generate a sequences of bytes to send over the UART.
-//      This sequence will contain the start of frame characters, data, CRC and end
-//      of frame characters.
-/// </summary>
+/*
+ *      Take a buffer of data and generate a sequences of bytes to send over the UART.
+ *
+ *      This sequence will contain the start of frame characters, data, CRC and end of frame characters.
+ *
+ *      @param buffer
+ *          Buffer of data to calculate the encoded length.
+ *
+ *      @param bufferLength
+ *          Amount of data in the buffer.
+ */
 struct BufferAndLength *UART::GenerateTransportFrame(uint8_t *buffer, uint32_t bufferLength)
 {
     uint32_t frameLength = CalculateEncodedFrameLength(buffer, bufferLength);
@@ -366,9 +417,15 @@ struct BufferAndLength *UART::GenerateTransportFrame(uint8_t *buffer, uint32_t b
     return (f);
 }
 
-/// <summary>
-///     Send a positive (ACK) or negative (NAK) acknowledgement along with a response code.
-/// </summary>
+/*
+ *      Send a positive (ACK) or negative (NAK) acknowledgement along with a response code.
+ *
+ *      @param ackNak
+ *          Code for and ACK or NAK (as an integer)
+ *
+ *      @param statuc
+ *          Status code to be encoded in the transport frame.
+ */
 void UART::AcknowledgeFrame(uint8_t ackNak, uint32_t status)
 {
     uint8_t buffer[TRANSPORT_MESSAGE_LENGTH];
@@ -385,12 +442,18 @@ void UART::AcknowledgeFrame(uint8_t ackNak, uint32_t status)
     vPortFree(frame);
 }
 
-/// <summary>
-///     Process an application header packet.
-/// </summary>
-/// <remarks>
-///     Put packet definition here.
-/// </remarks>
+/*
+ *      Process an incoming application header packet.
+ *
+ *      This method will extract the message information (ID, interface etc) from the incoming
+ *      message packet.
+ *
+ *      @param packet
+ *          Pointer to the header packet to be processed.
+ *
+ *      @param packetLength
+ *          Amount of data in the packet.
+ */
 void UART::ProcessHeader(uint8_t *packet, uint8_t packetLength)
 {
     if (packetLength != APP_REQUEST_HEADER_LENGTH)
@@ -422,9 +485,19 @@ void UART::ProcessHeader(uint8_t *packet, uint8_t packetLength)
     }
 }
 
-/// <summary>
-///     Process an application data packet.
-/// </summary>
+/*
+ *      Process an application data packet.
+ *
+ *      The application frames will be reassembled into a larger message (if required).  The message
+ *      will be added to the appropriate message queue for processing once a full message has been
+ *      received.
+ *
+ *      @param packet
+ *          Pointer to the header packet to be processed.
+ *
+ *      @param packetLength
+ *          Amount of data in the packet.
+ */
 void UART::ProcessData(uint8_t *packet, uint8_t packetLength)
 {
     if ((nextPayloadLocation != NULL) && (bytesRemaining > 0) && (packetLength <= bytesRemaining))
@@ -457,9 +530,12 @@ void UART::ProcessData(uint8_t *packet, uint8_t packetLength)
     }
 }
 
-/// <summary>
-///     Process the current frame as a transport message.
-/// </summary>
+/*
+ *      Process the current frame as a transport message.
+ *
+ *      @param currentFrameType
+ *          Transport frame type.
+ */
 void UART::ProcessTransportData(uint8_t currentFrameType)
 {
     enum UARTSyncStates state = Unknown;
@@ -482,13 +558,20 @@ void UART::ProcessTransportData(uint8_t currentFrameType)
     }
 }
 
-/// <summary>
-///     A valid frame has been received, work out what action should be taken.
-/// </summary>
-/// <remarks>
-///     Note that it is responsibility of the processor to work out if an ACK / NAK
-///     should be sent.
-/// </remarks>
+/*
+ *      A valid frame has been received, work out what action should be taken.
+ *
+ *      Note that it is responsibility of the processor to work out if an ACK / NAK should be sent.
+ *
+ *      @param frameType
+ *          Frame type information from the frame.
+ *
+ *      @param packet
+ *          Frame to be processed.
+ *
+ *      @param packetLength
+ *          Amount of data in the frame.
+ */
 void UART::ProcessApplicationDataFrame(uint8_t frameType, uint8_t *packet, uint8_t packetLength)
 {
     //
@@ -504,11 +587,15 @@ void UART::ProcessApplicationDataFrame(uint8_t frameType, uint8_t *packet, uint8
     }
 }
 
-/// <summary>
-///     Send a frame to the STM32 and let the caller know the result.
-/// </summary>
-/// <param name="frame">Data frame to send.</param>
-/// <param name="frameType>Name of the frame type being sent, this is used for debugging purposes.</param>
+/*
+ *      Send a frame to the STM32 and let the caller know the result.
+ *
+ *      @param frame
+ *          Data frame to send.
+ *
+ *      @param frameType
+ *          Name of the frame type being sent, this is used for debugging purposes.
+ */
 UART::UARTSyncStates UART::SendFrame(struct BufferAndLength *frame, const char * frameType)
 {
     enum UARTSyncStates result = Error;
@@ -547,18 +634,20 @@ UART::UARTSyncStates UART::SendFrame(struct BufferAndLength *frame, const char *
     return (result);
 }
 
-/// <summary>
-///     Decode data received from the serial port.
-/// </summary>
-/// <remarks>
-///     This process has been abstracted from the serial received event
-///     to aid debugging.
-///
-///     The <i>amount</i> parameter is necessary as the buffer is normally
-///     larger than the amount of data that has been received.
-/// </remarks>
-/// <param name="buffer">Data to be decoded.</param>
-/// <param name="amount">Amount of data to decode.</param>
+/*
+ *      Decode data received from the serial port.
+ *
+ *      This process has been abstracted from the serial received event to aid debugging.
+ *
+ *      The amount parameter is necessary as the buffer is normally larger than the amount of data
+ *      that has been received.
+ *
+ *      @param buffer
+ *          Data to be decoded.
+ *
+ *      @param amount
+ *          Amount of data to decode.
+ */
 void UART::DecodeSerialData(uint8_t *buffer, int amount)
 {
     _totalRxBytes += amount;
@@ -713,9 +802,12 @@ void UART::DecodeSerialData(uint8_t *buffer, int amount)
     }
 }
 
-/// <summary>
-///     UART data received interrupt task.
-/// </summary>
+/*
+ *      UART data received interrupt task.
+ *
+ *      @param message
+ *          Application response.
+ */
 void UART::DispatchRxMessage(ApplicationResponse *message)
 {
     uart_event_t event;
@@ -772,9 +864,12 @@ void UART::DispatchRxMessage(ApplicationResponse *message)
     vTaskDelete(xUARTReceiveTaskHandle);
 }
 
-/// <summary>
-///     UART transmit task.
-/// </summary>
+/*
+ *      Break the message into header and data frames and send the message to the STM32.
+ *
+ *      @param message
+ *          Message to be sent to the STM32.
+ */
 void UART::Send(ApplicationResponse *message)
 {
     enum UARTSyncStates sendResult;
