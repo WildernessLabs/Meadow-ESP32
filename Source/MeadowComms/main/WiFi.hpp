@@ -139,49 +139,49 @@ private:
      */
     int _maximumRetryCount = DefaultMaximumRetryCount;
 
-	/*
-	 *      Indicate if the system should automatically reconnect to the WiFi if we
-	 *      disconnect for any reason.
-	 */
-	bool _automaticReconnect = true;
+    /*
+     *      Indicate if the system should automatically reconnect to the WiFi if we
+     *      disconnect for any reason.
+     */
+    bool _automaticReconnect = true;
 
-	/*
-	 *      Response message for the current request.
-	 */
-	ApplicationResponse *_wifiResponse = NULL;
+    /*
+     *      Response message for the current request.
+     */
+    ApplicationResponse *_wifiResponse = NULL;
 
-	/*
-	 *      Public methods.
-	 */
-	void SendResponse(uint32_t);
-	void ProcessAccessPointScanCompletion(system_event_t *);
-
-	/*
-	 *      Getters and setters.
-	 */
-	void SetQueueHandle(QueueHandle_t);
-
-
-public:
-	/*
-	 *      Constructor(s) and destructor.
-	 */
-	WiFi();
-	~WiFi();
-	/*
-	 *      Public methods.
-	 */
-	void Setup();
-	void DispatchRequest(struct ApplicationRequest *);
-	esp_err_t EventHandler(void *, system_event_t *);
-	void StartNetwork(struct ApplicationRequest *);
-	void GetAvailableNetworks(struct ApplicationRequest *);
-	void HttpGet(struct ApplicationRequest *);
+    /*
+     *      Public methods.
+     */
+    void SendResponse(uint32_t);
+    void ProcessAccessPointScanCompletion(system_event_t *);
 
     /*
      *      Getters and setters.
      */
-	QueueHandle_t GetQueueHandle() const;
+    void SetQueueHandle(QueueHandle_t);
+
+
+public:
+    /*
+     *      Constructor(s) and destructor.
+     */
+    WiFi();
+    ~WiFi();
+    /*
+     *      Public methods.
+     */
+    void Setup();
+    void DispatchRequest(struct ApplicationRequest *);
+    esp_err_t EventHandler(void *, system_event_t *);
+    void StartNetwork(struct ApplicationRequest *);
+    void GetAvailableNetworks(struct ApplicationRequest *);
+    void HttpGet(struct ApplicationRequest *);
+
+    /*
+     *      Getters and setters.
+     */
+    QueueHandle_t GetQueueHandle() const;
 };
 
 /*
