@@ -230,14 +230,14 @@ void WiFi::StartNetwork(ApplicationRequest *message)
     if (!(bits & WIFI_INITIALISED_BIT))
     {
         char *ssid = (char *) message->payload;
-        if ((ssid == NULL) || (strlen(ssid) > MaximumSSIDLength))
+        if ((ssid == NULL) || (strlen(ssid) > MAXIMUM_SSID_LENGTH))
         {
             SendResponse(ERR_INVALID_SSID);
             return;
         }
 
         char *password = (char *) (message->payload + strlen(ssid) + 1);
-        if (strlen(password) > MaximumPasswordLength)
+        if (strlen(password) > MAXIMUM_PASSWORD_LENGTH)
         {
             SendResponse(ERR_INVALID_PASSWORD);
             return;
@@ -250,17 +250,17 @@ void WiFi::StartNetwork(ApplicationRequest *message)
         ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 
         wifi_config_t wifi_config;
-        wifi_config.sta.scan_method = DefaultScanMethod;
-        wifi_config.sta.sort_method = DefaultSortMethod;
-        wifi_config.sta.threshold.rssi = DefaultRSSI;
-        wifi_config.sta.threshold.authmode = DefaultAuthorisationMode;
+        wifi_config.sta.scan_method = DEFAULT_SCAN_METHOD;
+        wifi_config.sta.sort_method = DEFAULT_SORT_METHOD;
+        wifi_config.sta.threshold.rssi = DEFAULT_RSSI;
+        wifi_config.sta.threshold.authmode = DEFAULT_AUTH_MODE;
         memcpy(wifi_config.sta.ssid, ssid, strlen(ssid));
-        if (strlen(ssid) < MaximumSSIDLength)
+        if (strlen(ssid) < MAXIMUM_SSID_LENGTH)
         {
             wifi_config.sta.ssid[strlen(ssid)] = 0;
         }
         memcpy(wifi_config.sta.password, password, strlen(password));
-        if (strlen(ssid) < MaximumPasswordLength)
+        if (strlen(ssid) < MAXIMUM_PASSWORD_LENGTH)
         {
             wifi_config.sta.password[strlen(password)] = 0;
         }
