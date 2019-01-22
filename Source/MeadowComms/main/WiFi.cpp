@@ -31,9 +31,9 @@ extern "C" esp_err_t WiFiEventHandler(void *ctx, system_event_t *event)
  */
 WiFi::WiFi()
 {
-    const size_t messageSize = sizeof(struct ApplicationRequest);
+    const size_t messageSize = sizeof(ApplicationRequest);
     SetQueueHandle(xQueueCreate(MAX_QUEUE_LENGTH, messageSize));
-    if (xWiFiQueueHandle == NULL)
+    if (GetQueueHandle() == NULL)
     {
         ESP_LOGI(__func__, "Cannot allocate WiFi processing queue.");
     }
@@ -206,6 +206,78 @@ esp_err_t WiFi::EventHandler(void *ctx, system_event_t *event)
 }
 
 /*
+ *      Start the wireless hardware.
+ *
+ *      @param request
+ *          Request sent from the STM32.
+ */
+void WiFi::StartNetwork(ApplicationRequest *message)
+{
+    ESP_LOGI(__func__, "Starting network.");
+    if (_wifiResponse != NULL)
+    {
+        // TODO: Deal with this error.
+        vPortFree(_wifiResponse);
+    }
+    _wifiResponse = (ApplicationResponse *) pvPortMalloc(sizeof(ApplicationResponse));
+    _wifiResponse->interface = message->interface;
+    _wifiResponse->messageID = message->messageID;
+    _wifiResponse->payload = NULL;
+    _wifiResponse->payloadLength = 0;
+    _wifiResponse->code = 0;
+
+    EventBits_t bits = xEventGroupGetBits(xWiFiEventGroup);
+    if (!(bits & WIFI_INITIALISED_BIT))
+    {
+        char *ssid = (char *) message->payload;
+        if ((ssid == NULL) || (strlen(ssid) > MaximumSSIDLength))
+        {
+            SendResponse(ERR_INVALID_SSID);
+            return;
+        }
+
+        char *password = (char *) (message->payload + strlen(ssid) + 1);
+        if (strlen(password) > MaximumPasswordLength)
+        {
+            SendResponse(ERR_INVALID_PASSWORD);
+            return;
+        }
+
+        tcpip_adapter_init();
+        ESP_ERROR_CHECK(esp_event_loop_init(WiFiEventHandler, this));
+
+        wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+        ESP_ERROR_CHECK(esp_wifi_init(&cfg));
+
+        wifi_config_t wifi_config;
+        wifi_config.sta.scan_method = DefaultScanMethod;
+        wifi_config.sta.sort_method = DefaultSortMethod;
+        wifi_config.sta.threshold.rssi = DefaultRSSI;
+        wifi_config.sta.threshold.authmode = DefaultAuthorisationMode;
+        memcpy(wifi_config.sta.ssid, ssid, strlen(ssid));
+        if (strlen(ssid) < MaximumSSIDLength)
+        {
+            wifi_config.sta.ssid[strlen(ssid)] = 0;
+        }
+        memcpy(wifi_config.sta.password, password, strlen(password));
+        if (strlen(ssid) < MaximumPasswordLength)
+        {
+            wifi_config.sta.password[strlen(password)] = 0;
+        }
+        ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+        ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));
+        ESP_ERROR_CHECK(esp_wifi_start());
+        xEventGroupSetBits(xWiFiEventGroup, WIFI_INITIALISED_BIT | WIFI_CONNECTING_BIT);
+        xEventGroupClearBits(xWiFiEventGroup, WIFI_READY_BIT);
+        ESP_LOGI(__func__, "Network started.");
+    }
+    else
+    {
+        SendResponse(ERR_WIFI_ALREADY_STARTED);
+    }
+}
+
+/*
  *      Process the scan results.
  *
  *      @param event
@@ -259,72 +331,6 @@ void WiFi::ProcessAccessPointScanCompletion(system_event_t *event)
     SendResponse(ERR_COMPLETED_OK);
 }
 
-
-/*
- *      Start the wireless hardware.
- *
- *      @param request
- *          Request sent from the STM32.
- */
-void WiFi::StartNetwork(struct ApplicationRequest *message)
-{
-    if (_wifiResponse != NULL)
-    {
-        // TODO: Deal with this error.
-        vPortFree(_wifiResponse);
-    }
-    _wifiResponse = (struct ApplicationResponse *) pvPortMalloc(sizeof(struct ApplicationResponse));
-    _wifiResponse->interface = message->interface;
-    _wifiResponse->messageID = message->messageID;
-    _wifiResponse->code = 0;
-
-    EventBits_t bits = xEventGroupGetBits(xWiFiEventGroup);
-    if (!(bits & WIFI_INITIALISED_BIT))
-    {
-        char *ssid = (char *) message->payload;
-        if ((ssid == NULL) || (strlen(ssid) > MaximumSSIDLength))
-        {
-            SendResponse(ERR_INVALID_SSID);
-            return;
-        }
-
-        char *password = (char *) (message->payload + strlen(ssid) + 1);
-        if (strlen(password) > MaximumPasswordLength)
-        {
-            SendResponse(ERR_INVALID_PASSWORD);
-            return;
-        }
-
-        tcpip_adapter_init();
-        ESP_ERROR_CHECK(esp_event_loop_init(WiFiEventHandler, this));
-
-        wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-        ESP_ERROR_CHECK(esp_wifi_init(&cfg));
-
-        wifi_config_t wifi_config =
-        {
-            .sta =
-            {
-//                .scan_method = DEFAULT_SCAN_METHOD,
-//                .sort_method = DEFAULT_SORT_METHOD,
-//                .threshold.rssi = DEFAULT_RSSI,
-//                .threshold.authmode = DEFAULT_AUTHMODE,
-            },
-        };
-        memcpy(wifi_config.sta.ssid, ssid, strlen(ssid));
-        memcpy(wifi_config.sta.password, password, strlen(password));
-        ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
-        ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));
-        ESP_ERROR_CHECK(esp_wifi_start());
-        xEventGroupSetBits(xWiFiEventGroup, WIFI_INITIALISED_BIT | WIFI_CONNECTING_BIT);
-        xEventGroupClearBits(xWiFiEventGroup, WIFI_READY_BIT);
-    }
-    else
-    {
-        SendResponse(ERR_WIFI_ALREADY_STARTED);
-    }
-}
-
 /*
  *      Get the full list of available networks.
  *
@@ -334,16 +340,19 @@ void WiFi::StartNetwork(struct ApplicationRequest *message)
  *      @param message
  *          Request sent from the STM32.
  */
-void WiFi::GetAvailableNetworks(struct ApplicationRequest *request)
+void WiFi::GetAvailableNetworks(ApplicationRequest *request)
 {
     if (_wifiResponse != NULL)
     {
+        ESP_LOGI(__func__, "Deleting old response structure");
         // TODO: Deal with this error.
         vPortFree(_wifiResponse);
     }
-    _wifiResponse = (struct ApplicationResponse *) pvPortMalloc(sizeof(struct ApplicationResponse));
+    _wifiResponse = (ApplicationResponse *) pvPortMalloc(sizeof(ApplicationResponse));
     _wifiResponse->interface = request->interface;
     _wifiResponse->messageID = request->messageID;
+    _wifiResponse->payload = NULL;
+    _wifiResponse->payloadLength = 0;
     _wifiResponse->code = 0;
 
     wifi_scan_config_t scanConf =
@@ -357,7 +366,7 @@ void WiFi::GetAvailableNetworks(struct ApplicationRequest *request)
     ESP_ERROR_CHECK(esp_wifi_scan_start(&scanConf, true));
 }
 
-void WiFi::HttpGet(struct ApplicationRequest *message)
+void WiFi::HttpGet(ApplicationRequest *message)
 {
 //    const struct addrinfo hints = { .ai_family = AF_INET, .ai_socktype = SOCK_STREAM, };
 //    struct addrinfo *addressInformation;
