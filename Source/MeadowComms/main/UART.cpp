@@ -67,31 +67,67 @@ UART::~UART()
  * ---------------------------------------------------------------------------
  */
 
+/*
+ *      Get the handle for the UART Rx queue.
+ *
+ *      @return
+ *          Handle for the UART Rx queue.
+ */
 QueueHandle_t UART::GetUartRxQueueHandle() const
 {
     return xUARTReceiveQueueHandle;
 }
 
+/*
+ *      Set the handle for the UART Rx queue.
+ *
+ *      @param uartRxQueueHandle
+ *          New handle for the UART Rx queue.
+ */
 void UART::SetUartRxQueueHandle(QueueHandle_t uartRxQueueHandle = NULL)
 {
     xUARTReceiveQueueHandle = uartRxQueueHandle;
 }
 
+/*
+ *      Get the handle for the UART Tx queue.
+ *
+ *      @return
+ *          Handle for the UART Tx queue.
+ */
 QueueHandle_t UART::GetUartTransmitQueueHandle() const
 {
     return xUARTTransmitQueueHandle;
 }
 
+/*
+ *      Set the handle for the UART Tx queue.
+ *
+ *      @param uartTransmitQueueHandle
+ *          New hadle for the UART Tx queue.
+ */
 void UART::SetUartTransmitQueueHandle(QueueHandle_t uartTransmitQueueHandle = NULL)
 {
     xUARTTransmitQueueHandle = uartTransmitQueueHandle;
 }
 
+/*
+ *      Get the handle for the UART Rx task.
+ *
+ *      @return
+ *          Handle for the UART Rx task.
+ */
 TaskHandle_t UART::GetUartReceiveTaskHandle() const
 {
     return xUARTReceiveTaskHandle;
 }
 
+/*
+ *      Set the handle for the UART Tx task.
+ *
+ *      @param uartReceiveTaskHandle
+ *          Set the new handle for the UART Rx task.
+ */
 void UART::SetUartReceiveTaskHandle(TaskHandle_t uartReceiveTaskHandle = NULL)
 {
     xUARTReceiveTaskHandle = uartReceiveTaskHandle;
@@ -102,6 +138,12 @@ TaskHandle_t UART::GetUartTransmitTaskHandle() const
     return xUARTTransmitTaskHandle;
 }
 
+/*
+ *      Set the handle for the UART Tx task.
+ *
+ *      @param uartTransmitTaskHandle
+ *          New handle fro the UART Tx task.
+ */
 void UART::SetUartTransmitTaskHandle(TaskHandle_t uartTransmitTaskHandle = NULL)
 {
     xUARTTransmitTaskHandle = uartTransmitTaskHandle;
@@ -186,6 +228,9 @@ void UART::ResetIncomingMessage(bool releasePayloadMemory)
 
 /*
  *      Add the message to the appropriate queue if possible.
+ *
+ *      @return
+ *          Error / status code.
  */
 uint32_t UART::QueueMessage()
 {
@@ -245,6 +290,9 @@ void UART::QueueResponse(ApplicationResponse *response)
  *
  *      @param bufferLength
  *          Amount of data in the buffer.
+ *
+ *      @return
+ *          Number of bytes that will be required to hold the frame once it has been encoded.
  */
 uint32_t UART::CalculateEncodedFrameLength(uint8_t *buffer, uint8_t bufferLength)
 {
@@ -289,6 +337,9 @@ uint32_t UART::CalculateEncodedFrameLength(uint8_t *buffer, uint8_t bufferLength
  *
  *       @param frame
  *          Pointer to the memory that will hold the encoded data.
+ *
+ *       @return
+ *          Amount of data encoded.
  */
 int UART::EncodeData(uint8_t *buffer, uint32_t bufferLength, uint8_t *frame)
 {
@@ -341,8 +392,11 @@ int UART::EncodeData(uint8_t *buffer, uint32_t bufferLength, uint8_t *frame)
  *
  *      @param bufferLength
  *          Amount of data in the buffer.
+ *
+ *      @return
+ *          Buffer and length for the application frame ready to sent to the STM32.
  */
-struct BufferAndLength *UART::GenerateApplicationFrame(uint8_t frameType, uint32_t messageID, uint8_t sequenceNumber, uint8_t *buffer, uint32_t bufferLength)
+BufferAndLength *UART::GenerateApplicationFrame(uint8_t frameType, uint32_t messageID, uint8_t sequenceNumber, uint8_t *buffer, uint32_t bufferLength)
 {
     uint32_t frameLength = FRAME_HEADER_LENGTH + CalculateEncodedFrameLength(buffer, bufferLength);
 
@@ -391,8 +445,11 @@ struct BufferAndLength *UART::GenerateApplicationFrame(uint8_t frameType, uint32
  *
  *      @param bufferLength
  *          Amount of data in the buffer.
+ *
+ *      @return
+ *          Buffer and length for the transport frame ready to sent to the STM32.
  */
-struct BufferAndLength *UART::GenerateTransportFrame(uint8_t *buffer, uint32_t bufferLength)
+BufferAndLength *UART::GenerateTransportFrame(uint8_t *buffer, uint32_t bufferLength)
 {
     uint32_t frameLength = CalculateEncodedFrameLength(buffer, bufferLength);
 
@@ -411,7 +468,7 @@ struct BufferAndLength *UART::GenerateTransportFrame(uint8_t *buffer, uint32_t b
     currentByte += 4;
     memset(frame + currentByte, EndOfFrameCharacter, NumberOfStartOfFrameCharacters);
     currentByte += NumberOfStartOfFrameCharacters;
-    BufferAndLength *f = (BufferAndLength *) pvPortMalloc(sizeof(struct BufferAndLength));
+    BufferAndLength *f = (BufferAndLength *) pvPortMalloc(sizeof(BufferAndLength));
     f->Buffer = frame;
     f->BufferLength = currentByte;
     return (f);
@@ -595,10 +652,13 @@ void UART::ProcessApplicationDataFrame(uint8_t frameType, uint8_t *packet, uint8
  *
  *      @param frameType
  *          Name of the frame type being sent, this is used for debugging purposes.
+ *
+ *      @return
+ *          Error code indicating the result of sending the frame.
  */
-UART::UARTSyncStates UART::SendFrame(struct BufferAndLength *frame, const char * frameType)
+UART::UARTSyncStates UART::SendFrame(BufferAndLength *frame, const char * frameType)
 {
-    enum UARTSyncStates result = Error;
+    UARTSyncStates result = Error;
     int retryCount = 0;
 
     //
