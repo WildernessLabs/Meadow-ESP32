@@ -126,7 +126,7 @@ void UART::Setup()
     //
     //  TODO: Calculate this value, for debugging we will use an approximate value.
     //
-    _uartMaximumSendResponsePeriod = 250 / portTICK_PERIOD_MS;
+    _uartMaximumSendResponsePeriod = 500 / portTICK_PERIOD_MS;
     //
     uart_param_config(STM32UartNumber, &uart_config);
     uart_set_pin(STM32UartNumber, TxPin, RxPin, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
@@ -255,7 +255,7 @@ uint32_t UART::CalculateEncodedFrameLength(uint8_t *buffer, uint8_t bufferLength
     //  the data plus the start of frame characters, the CRC and the end of
     //  frame characters.
     //
-    byteCount += (NumberOfStartOfFrameCharacters + NumberOfStartOfFrameCharacters + 4);
+    byteCount += (NumberOfStartOfFrameCharacters + NumberOfEndOfFrameCharacters + 4);
     return(byteCount);
 }
 
@@ -324,11 +324,13 @@ struct BufferAndLength *UART::GenerateApplicationFrame(uint8_t frameType, uint32
     uint32_t crc = Encoders::CRC32(frame + NumberOfStartOfFrameCharacters, frameLength - (NumberOfStartOfFrameCharacters + 5));
     Encoders::EncodeUInt32(crc, frame + currentByte);
     currentByte += 4;
-    memset(frame + currentByte, EndOfFrameCharacter, NumberOfStartOfFrameCharacters);
-    currentByte += NumberOfStartOfFrameCharacters;
-    BufferAndLength *f = (BufferAndLength *) pvPortMalloc(sizeof(struct BufferAndLength));
+    memset(frame + currentByte, EndOfFrameCharacter, NumberOfEndOfFrameCharacters);
+    currentByte += NumberOfEndOfFrameCharacters;
+    BufferAndLength *f = (BufferAndLength *) pvPortMalloc(sizeof(BufferAndLength));
     f->Buffer = frame;
     f->BufferLength = currentByte;
+    ESP_LOGI(__func__, "Sending frame:");
+    ESP_LOG_BUFFER_HEXDUMP(__func__, frame, currentByte, ESP_LOG_INFO);
     return (f);
 }
 
