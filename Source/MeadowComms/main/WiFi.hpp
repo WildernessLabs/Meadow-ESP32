@@ -83,39 +83,38 @@ private:
     /*
      *      Default scan method for WiFi networks.
      */
-    static const wifi_scan_method_t DefaultScanMethod = WIFI_FAST_SCAN;
+    static const wifi_scan_method_t DEFAULT_SCAN_METHOD = WIFI_FAST_SCAN;
 
     /*
-     *      Deafult sort method for the WiFi networks when scanned.
+     *      Default sort method for the WiFi networks when scanned.
      */
-    static const wifi_sort_method_t DefaultSortMethod =
-            WIFI_CONNECT_AP_BY_SIGNAL;
+    static const wifi_sort_method_t DEFAULT_SORT_METHOD = WIFI_CONNECT_AP_BY_SIGNAL;
 
     /*
      *      Default RSSI when scanning for networks.
      */
-    static const int DefaultRSSI = -127;
+    static const int DEFAULT_RSSI = -127;
 
     /*
      *      Default authorisation mode.
      */
-    static const wifi_auth_mode_t DefaultAuthorisationMode = WIFI_AUTH_OPEN;
+    static const wifi_auth_mode_t DEFAULT_AUTH_MODE = WIFI_AUTH_OPEN;
 
     /*
      *  Default number of retires when an error is detected.
      */
-    static const int DefaultMaximumRetryCount = 3;
+    static const int DEFAULT_MAXIMUM_RETRY_COUNT = 3;
 
 
     /*
      *      Maximum length of the string containing the SSID name.
      */
-    static const int MaximumSSIDLength = 32;
+    static const int MAXIMUM_SSID_LENGTH = 32;
 
     /*
      *      Maximum length of the password for the access point.
      */
-    static const int MaximumPasswordLength = 64;
+    static const int MAXIMUM_PASSWORD_LENGTH = 64;
 
     /*
      *      Handle for the WiFi messages to be processed by the WIFi task.
@@ -137,7 +136,7 @@ private:
      *
      *      This can be overridden using system configuration.
      */
-    int _maximumRetryCount = DefaultMaximumRetryCount;
+    int _maximumRetryCount = DEFAULT_MAXIMUM_RETRY_COUNT;
 
     /*
      *      Indicate if the system should automatically reconnect to the WiFi if we
@@ -151,7 +150,7 @@ private:
     ApplicationResponse *_wifiResponse = NULL;
 
     /*
-     *      Public methods.
+     *      Private methods.
      */
     void SendResponse(uint32_t);
     void ProcessAccessPointScanCompletion(system_event_t *);
@@ -160,7 +159,6 @@ private:
      *      Getters and setters.
      */
     void SetQueueHandle(QueueHandle_t);
-
 
 public:
     /*
