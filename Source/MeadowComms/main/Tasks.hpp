@@ -1,7 +1,7 @@
 /*
  *      Tasks.hpp
  *
- *
+ *      Task information for the RTOS tasks.
  */
 
 #ifndef MAIN_TASKS_HPP_
