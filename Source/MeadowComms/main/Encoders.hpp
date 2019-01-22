@@ -26,12 +26,12 @@ public:
     static const uint32_t CRC32Seed = 0xffffffff;
 
     static uint16_t ExtractUInt16(uint8_t *);
-	static void EncodeUInt16(uint16_t, uint8_t *);
-	static uint32_t ExtractUInt32(uint8_t *);
-	static void EncodeUInt32(uint32_t, uint8_t *);
-	static uint8_t CRC8(const uint8_t *, uint16_t);
-	static uint32_t CRC32(const uint8_t *, uint16_t);
-	static uint32_t ProgressiveCRC32(uint32_t, uint8_t);
+    static void EncodeUInt16(uint16_t, uint8_t *);
+    static uint32_t ExtractUInt32(uint8_t *);
+    static void EncodeUInt32(uint32_t, uint8_t *);
+    static uint8_t CRC8(const uint8_t *, uint16_t);
+    static uint32_t CRC32(const uint8_t *, uint16_t);
+    static uint32_t ProgressiveCRC32(uint32_t, uint8_t);
 };
 
 
