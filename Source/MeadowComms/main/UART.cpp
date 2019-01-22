@@ -43,11 +43,11 @@ extern WiFi *wifi;
  */
 UART::UART()
 {
-    _messageHeader.interface = 0;
-    _messageHeader.function = 0;
-    _messageHeader.messageID = 0;
-    _messageHeader.payload = NULL;
-    _messageHeader.payloadLength = 0;
+    _messageHeader._interface = 0;
+    _messageHeader._function = 0;
+    _messageHeader._messageID = 0;
+    _messageHeader._payload = NULL;
+    _messageHeader._payloadLength = 0;
     _bytesRemaining  = 0;
     _nextPayloadLocation = NULL;
 }
@@ -219,15 +219,15 @@ void UART::RxCleanup()
  */
 void UART::ResetIncomingMessage(bool releasePayloadMemory)
 {
-    _messageHeader.interface = 0;
-    _messageHeader.function = 0;
-    _messageHeader.messageID = 0;
-    if ((_messageHeader.payload != NULL) && releasePayloadMemory)
+    _messageHeader._interface = 0;
+    _messageHeader._function = 0;
+    _messageHeader._messageID = 0;
+    if ((_messageHeader._payload != NULL) && releasePayloadMemory)
     {
-        vPortFree(_messageHeader.payload);
+        vPortFree(_messageHeader._payload);
     }
-    _messageHeader.payload = NULL;
-    _messageHeader.payloadLength = 0;
+    _messageHeader._payload = NULL;
+    _messageHeader._payloadLength = 0;
     _bytesRemaining  = 0;
     _nextPayloadLocation = NULL;
 }
@@ -242,7 +242,7 @@ uint32_t UART::QueueMessage()
 {
     QueueHandle_t queueHandle = NULL;
 
-    switch (_messageHeader.interface)
+    switch (_messageHeader._interface)
     {
         case INTERFACE_WIFI:
             queueHandle = wifi->GetQueueHandle();
@@ -254,13 +254,13 @@ uint32_t UART::QueueMessage()
             queueHandle = MeshNetworkQueueHandle;
             break;
     }
-    if (_messageHeader.interface != INTERFACE_SYSTEM)
+    if (_messageHeader._interface != INTERFACE_SYSTEM)
     {
         if (xQueueSendToBack(queueHandle, &_messageHeader, 0) != pdPASS)
         {
-            if (_messageHeader.payload != NULL)
+            if (_messageHeader._payload != NULL)
             {
-                vPortFree(_messageHeader.payload);
+                vPortFree(_messageHeader._payload);
             }
             return (ERR_QUEUE_ERROR);
         }
@@ -526,24 +526,24 @@ void UART::ProcessHeader(uint8_t *packet, uint8_t packetLength)
     else
     {
         ResetIncomingMessage(true);
-        _messageHeader.interface = packet[0];
-        _messageHeader.function = Encoders::ExtractUInt32(packet + APP_REQUEST_FUNCTION);
-        _messageHeader.messageID = Encoders::ExtractUInt32(packet + APP_REQUEST_MESSAGE_ID);
+        _messageHeader._interface = packet[0];
+        _messageHeader._function = Encoders::ExtractUInt32(packet + APP_REQUEST_FUNCTION);
+        _messageHeader._messageID = Encoders::ExtractUInt32(packet + APP_REQUEST_MESSAGE_ID);
         _bytesRemaining = Encoders::ExtractUInt32(packet + APP_REQUEST_PAYLOAD_LENGTH);
-        _messageHeader.payloadLength = _bytesRemaining;
-        if (_messageHeader.payloadLength > 0)
+        _messageHeader._payloadLength = _bytesRemaining;
+        if (_messageHeader._payloadLength > 0)
         {
-            _messageHeader.payload = (uint8_t *) pvPortMalloc(_messageHeader.payloadLength);
+            _messageHeader._payload = (uint8_t *) pvPortMalloc(_messageHeader._payloadLength);
         }
         else
         {
-            _messageHeader.payload = NULL;
+            _messageHeader._payload = NULL;
             //
             //  Messages with no payload should be queued immediately.
             //
             QueueMessage();
         }
-        _nextPayloadLocation = _messageHeader.payload;
+        _nextPayloadLocation = _messageHeader._payload;
         AcknowledgeFrame(TRANSPORT_ACK, ERR_COMPLETED_OK);
     }
 }
@@ -946,14 +946,14 @@ void UART::Send(ApplicationResponse *message)
     uint8_t buffer[APP_RESPONSE_HEADER_LENGTH];
 
     memset(buffer, 0, APP_RESPONSE_HEADER_LENGTH);
-    buffer[APP_RESPONSE_INTERFACE] = message->interface;
-    Encoders::EncodeUInt32(message->code, buffer + APP_RESPONSE_CODE);
-    Encoders::EncodeUInt32(message->messageID, buffer + APP_RESPONSE_MESSAGE_ID);
-    Encoders::EncodeUInt32(message->payloadLength, buffer + APP_RESPONSE_PAYLOAD_LENGTH);
+    buffer[APP_RESPONSE_INTERFACE] = message->_interface;
+    Encoders::EncodeUInt32(message->_code, buffer + APP_RESPONSE_CODE);
+    Encoders::EncodeUInt32(message->_messageID, buffer + APP_RESPONSE_MESSAGE_ID);
+    Encoders::EncodeUInt32(message->_payloadLength, buffer + APP_RESPONSE_PAYLOAD_LENGTH);
     //
     //  Generate an encoded header frame and send it.
     //
-    BufferAndLength *frame = GenerateApplicationFrame(PKT_DATA | DATA_HEADER, message->messageID, 0, buffer, APP_RESPONSE_HEADER_LENGTH);
+    BufferAndLength *frame = GenerateApplicationFrame(PKT_DATA | DATA_HEADER, message->_messageID, 0, buffer, APP_RESPONSE_HEADER_LENGTH);
     sendResult = SendFrame(frame, "header");
     if (frame->Buffer != NULL)
     {
@@ -969,7 +969,7 @@ void UART::Send(ApplicationResponse *message)
     //
     //  Now break the payload down into frames and send the frames to the STM32.
     //
-    int amountLeftToSend = message->payloadLength;
+    int amountLeftToSend = message->_payloadLength;
     int start = 0;
     uint8_t sequenceNumber = 1;
     uint8_t currentFrameBufferLength = MAXIMUM_FRAME_LENGTH;
@@ -983,13 +983,13 @@ void UART::Send(ApplicationResponse *message)
             currentFrameBufferLength = length;
             frameBuffer = (uint8_t *) pvPortMalloc(currentFrameBufferLength);
         }
-        memcpy(frameBuffer, message->payload + start, length);
+        memcpy(frameBuffer, message->_payload + start, length);
         start += length;
         amountLeftToSend -= length;
         //
         //  Generate an encoded header frame and send it.
         //
-        frame = GenerateApplicationFrame(PKT_DATA | DATA_PAYLOAD, message->messageID, sequenceNumber++, frameBuffer, length);
+        frame = GenerateApplicationFrame(PKT_DATA | DATA_PAYLOAD, message->_messageID, sequenceNumber++, frameBuffer, length);
         sendResult = SendFrame(frame, "payload");
         if (frame->Buffer != NULL)
         {
@@ -1007,9 +1007,9 @@ void UART::Send(ApplicationResponse *message)
     {
         vPortFree(frameBuffer);
     }
-    if (message->payloadLength > 0)
+    if (message->_payloadLength > 0)
     {
-        vPortFree(message->payload);
+        vPortFree(message->_payload);
     }
 }
 

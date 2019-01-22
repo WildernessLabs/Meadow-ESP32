@@ -81,28 +81,28 @@ struct ApplicationRequest
     /// <summary>
     ///     Interface or device that is making the request.
     /// </summary>
-    uint8_t interface;
+    uint8_t _interface;
 
     /// <summary>
     ///     
     /// </summary>
-    uint32_t function;
+    uint32_t _function;
 
     /// <summary>
     ///     Message ID from the requester.  This uniquely identifies the
     ///     request from the STM32.
     /// </summary>
-    uint32_t messageID;
+    uint32_t _messageID;
 
     /// <summary>
     ///     Amount of data in the request payload (this does not include this header).
     /// </summary>
-    uint32_t payloadLength;
+    uint32_t _payloadLength;
 
     /// <summary>
     ///     Data supporting the request.
     /// </summary>
-    uint8_t *payload;
+    uint8_t *_payload;
 };
 
 #define APP_RESPONSE_INTERFACE          (0)
@@ -120,27 +120,27 @@ struct ApplicationResponse
     /// <summary>
     ///     Interface or device that is responding.
     /// </summary>
-    uint8_t interface;
+    uint8_t _interface;
 
     /// <summary>
     ///     Status code returned.
     /// </summary>
-    uint32_t code;
+    uint32_t _code;
 
     /// <summary>
     ///     Message ID that was used in the original request.
     /// </summary>
-    uint32_t messageID;
+    uint32_t _messageID;
 
     /// <summary>
     ///     Amount of data in the response payload (this does not include this header).
     /// </summary>
-    uint32_t payloadLength;
+    uint32_t _payloadLength;
 
     /// <summary>
     ///     Data to be returned.
     /// </summary>
-    uint8_t *payload;
+    uint8_t *_payload;
 };
 
 #define TRANSPORT_FRAME_TYPE        0
