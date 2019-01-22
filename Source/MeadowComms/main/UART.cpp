@@ -329,8 +329,10 @@ struct BufferAndLength *UART::GenerateApplicationFrame(uint8_t frameType, uint32
     BufferAndLength *f = (BufferAndLength *) pvPortMalloc(sizeof(BufferAndLength));
     f->Buffer = frame;
     f->BufferLength = currentByte;
-    ESP_LOGI(__func__, "Sending frame:");
-    ESP_LOG_BUFFER_HEXDUMP(__func__, frame, currentByte, ESP_LOG_INFO);
+//
+//    ESP_LOGI(__func__, "Sending frame:");
+//    ESP_LOG_BUFFER_HEXDUMP(__func__, frame, currentByte, ESP_LOG_INFO);
+//
     return (f);
 }
 
