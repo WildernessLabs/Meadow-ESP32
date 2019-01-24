@@ -108,12 +108,12 @@ private:
     /*
      *      Pin used to send data to the STM32.
      */
-    const int TX_PIN = (GPIO_NUM_4);
+    const int TX_PIN = GPIO_NUM_1;
 
     /*
      *      Pin used to receive data from the STM32.
      */
-    const int RX_PIN = (GPIO_NUM_5);
+    const int RX_PIN = GPIO_NUM_3;
 
     /*
      *      Length of the UART queue.
@@ -340,6 +340,7 @@ public:
      *      UART used for communication with the STM32.
      */
     const uart_port_t STM32_UART_PORT_NUMBER = UART_NUM_1;
+
     /*
      *      Number of bytes in the Rx buffer.
      */
@@ -348,7 +349,6 @@ public:
      *      Number of bytes in the Rx buffer.
      */
     static const int TX_BUFFER_SIZE = 1024;
-
 
     UART();
     ~UART();

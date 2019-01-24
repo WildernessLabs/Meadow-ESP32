@@ -18,6 +18,7 @@
 #include "Messaging.h"
 #include "UART.hpp"
 #include "WiFi.hpp"
+#include "Logging.hpp"
 
 /*
  *      WiFi object.
@@ -34,6 +35,7 @@ UART *uart;
  */
 extern "C" void app_main()
 {
+    Logging::Setup();
     esp_log_level_set("*", ESP_LOG_INFO);
     esp_err_t result = nvs_flash_init();
     if ((result == ESP_ERR_NVS_NO_FREE_PAGES) || (result == ESP_ERR_NVS_NEW_VERSION_FOUND))
