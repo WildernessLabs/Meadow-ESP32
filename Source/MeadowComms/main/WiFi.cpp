@@ -31,12 +31,6 @@ extern "C" esp_err_t WiFiEventHandler(void *ctx, system_event_t *event)
  */
 WiFi::WiFi()
 {
-    const size_t messageSize = sizeof(ApplicationRequest);
-    SetQueueHandle(xQueueCreate(MAX_QUEUE_LENGTH, messageSize));
-    if (GetQueueHandle() == NULL)
-    {
-        ESP_LOGI(__func__, "Cannot allocate WiFi processing queue.");
-    }
 }
 
 /*
@@ -82,6 +76,21 @@ void WiFi::SetQueueHandle(QueueHandle_t queueHandle)
  */
 
 /*
+ *      Setup the WiFi network.
+ */
+void WiFi::Setup()
+{
+    const size_t messageSize = sizeof(ApplicationRequest);
+    SetQueueHandle(xQueueCreate(MAX_QUEUE_LENGTH, messageSize));
+    if (GetQueueHandle() == NULL)
+    {
+        ESP_LOGI(__func__, "Cannot allocate WiFi processing queue.");
+    }
+    xWiFiEventGroup = xEventGroupCreate();
+    xTaskCreate(WiFiTask, WIFI_TASK_NAME, 2048 * 2, NULL, configMAX_PRIORITIES - 1, &xWiFiTaskHandle);
+}
+
+/*
  *      Dispatch the WiFi request to the  appropriate method in the class.
  */
 void WiFi::DispatchRequest(struct ApplicationRequest *request)
@@ -113,15 +122,6 @@ void WiFi::DispatchRequest(struct ApplicationRequest *request)
         vPortFree(request->_payload);
     }
 
-}
-
-/*
- *      Setup the WiFi network.
- */
-void WiFi::Setup()
-{
-    xWiFiEventGroup = xEventGroupCreate();
-    xTaskCreate(WiFiTask, WIFI_TASK_NAME, 2048 * 2, NULL, configMAX_PRIORITIES - 1, &xWiFiTaskHandle);
 }
 
 /*
