@@ -19,6 +19,8 @@
 
 #include "UART.hpp"
 #include "WiFi.hpp"
+#include "Bluetooth.hpp"
+#include "MeshNetwork.hpp"
 #include "Tasks.hpp"
 #include "Messaging.h"
 #include "ErrorCodes.h"
@@ -248,10 +250,10 @@ uint32_t UART::QueueMessage()
             queueHandle = wifi->GetQueueHandle();
             break;
         case INTERFACE_BLUETOOTH:
-            queueHandle = BluetoothQueueHandle;
+            queueHandle = bluetooth->GetQueueHandle();
             break;
         case INTERFACE_MESH_NETWORK:
-            queueHandle = MeshNetworkQueueHandle;
+            queueHandle = meshNetwork->GetQueueHandle();
             break;
     }
     if (_messageHeader._interface != INTERFACE_SYSTEM)

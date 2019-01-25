@@ -29,16 +29,6 @@ extern "C"
 #define MAX_QUEUE_LENGTH            (5)
 
 /// <summary>
-///     Handle for the Bluetooth messages to be processed by the WiFi task.
-/// </summary>
-extern QueueHandle_t BluetoothQueueHandle;
-
-/// <summary>
-///     Handle for the Mesh network messages to be processed by the Mesh network task.
-/// </summary>
-extern QueueHandle_t MeshNetworkQueueHandle;
-
-/// <summary>
 ///     Set up the message queues.
 /// </summary>
 extern void SetupMessageQueues();
