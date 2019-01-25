@@ -14,37 +14,6 @@ extern "C"
 
 #endif
 
-
-/// <summary>
-///     Handle for the Bluetooth processing queue.
-/// </summary>
-extern QueueHandle_t BluetoothQueueHandle;
-
-/// <summary>
-///     Handle for the Bluetooth task.
-/// </summary>
-extern TaskHandle_t xBluetoothTaskHandle;
-
-/// <summary>
-///     Name of the Bluetooth task (used for logging).
-/// </summary>
-extern const char *BLUETOOTH_TASK_NAME;
-
-/// <summary>
-///     Handle for the Mesh network messages to be processed by the Mesh network task.
-/// </summary>
-extern QueueHandle_t MeshNetworkQueueHandle;
-
-/// <summary>
-///     Handle for the Mesh Network task.
-/// </summary>
-extern TaskHandle_t xMeshNetworkTaskHandle;
-
-/// <summary>
-///     Name of the Mesh network task (used for logging).
-/// </summary>
-extern const char *MESH_NETWORK_TASK_NAME;
-
 /// <summary>
 ///     Handle for the WiFi task.
 /// </summary>

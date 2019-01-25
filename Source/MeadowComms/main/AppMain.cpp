@@ -18,6 +18,8 @@
 #include "Messaging.h"
 #include "UART.hpp"
 #include "WiFi.hpp"
+#include "Bluetooth.hpp"
+#include "MeshNetwork.hpp"
 #include "Logging.hpp"
 
 /*
@@ -29,6 +31,16 @@ WiFi *wifi;
  *      UART object.
  */
 UART *uart;
+
+/*
+ *      Bluetooth object.
+ */
+Bluetooth *bluetooth;
+
+/*
+ *      Mesh networking object.
+ */
+MeshNetwork *meshNetwork;
 
 /*
  *      Main program loop for the ESP32 as specified by the FreeRTOS documentation.
@@ -50,9 +62,6 @@ extern "C" void app_main()
 
     uart->Setup();
     wifi->Setup();
-
-    xTaskCreate(BluetoothTask, BLUETOOTH_TASK_NAME, 1024 * 2, NULL, configMAX_PRIORITIES - 1, &xWiFiTaskHandle);
-    xTaskCreate(MeshNetworkTask, MESH_NETWORK_TASK_NAME, 1024 * 2, NULL, configMAX_PRIORITIES - 1, &xWiFiTaskHandle);
 
     if ((result == ESP_ERR_NVS_NO_FREE_PAGES) || (result == ESP_ERR_NVS_NEW_VERSION_FOUND))
     {
