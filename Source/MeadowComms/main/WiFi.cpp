@@ -56,7 +56,7 @@ WiFi::~WiFi()
  */
 QueueHandle_t WiFi::GetQueueHandle() const
 {
-    return QueueHandle;
+    return _queueHandle;
 }
 
 /*
@@ -64,13 +64,13 @@ QueueHandle_t WiFi::GetQueueHandle() const
  */
 void WiFi::SetQueueHandle(QueueHandle_t queueHandle)
 {
-    QueueHandle = queueHandle;
+    _queueHandle = queueHandle;
 }
 
 /*
  *      Get the currently selected antenna.
  */
-WiFi::Antenna WiFi::GetAntenna()
+WiFi::Antenna WiFi::GetAntenna() const
 {
     return(_currentAntenna);
 }
@@ -84,8 +84,8 @@ void WiFi::SetAntenna(WiFi::Antenna newAntenna)
 {
     if (_currentAntenna != newAntenna)
     {
-        gpio_num_t newAntennaPin = (newAntenna == OnBoard) ? ON_BOARD_ANTENNA : EXTERNAL_ANTENNA;
-        gpio_num_t oldAntennaPin = (_currentAntenna == OnBoard) ? ON_BOARD_ANTENNA : EXTERNAL_ANTENNA;
+        gpio_num_t newAntennaPin = (newAntenna == OnBoard) ? ON_BOARD_ANTENNA_PIN : EXTERNAL_ANTENNA_PIN;
+        gpio_num_t oldAntennaPin = (_currentAntenna == OnBoard) ? ON_BOARD_ANTENNA_PIN : EXTERNAL_ANTENNA_PIN;
         //
         //  Make sure the old antenna is switched off before the new one is turned on.
         //
@@ -112,11 +112,11 @@ void WiFi::Setup()
      *      Configure the antenna, by default, the on board antenna will be used.
      */
     //gpio_pad_select_gpio(EXTERNAL_ANTENNA);
-    gpio_set_direction(EXTERNAL_ANTENNA, GPIO_MODE_OUTPUT);
-    gpio_set_level(EXTERNAL_ANTENNA, 0);
+    gpio_set_direction(EXTERNAL_ANTENNA_PIN, GPIO_MODE_OUTPUT);
+    gpio_set_level(EXTERNAL_ANTENNA_PIN, 0);
     //gpio_pad_select_gpio(ON_BOARD_ANTENNA);
-    gpio_set_direction(ON_BOARD_ANTENNA, GPIO_MODE_OUTPUT);
-    gpio_set_level(ON_BOARD_ANTENNA, 1);
+    gpio_set_direction(ON_BOARD_ANTENNA_PIN, GPIO_MODE_OUTPUT);
+    gpio_set_level(ON_BOARD_ANTENNA_PIN, 1);
     _currentAntenna = OnBoard;
 
     /*
@@ -128,7 +128,7 @@ void WiFi::Setup()
     {
         ESP_LOGI(__func__, "Cannot allocate WiFi processing queue.");
     }
-    xWiFiEventGroup = xEventGroupCreate();
+    _xWiFiEventGroup = xEventGroupCreate();
     xTaskCreate(WiFiTask, WIFI_TASK_NAME, 2048 * 2, NULL, configMAX_PRIORITIES - 1, &xWiFiTaskHandle);
 }
 
@@ -200,7 +200,7 @@ esp_err_t WiFi::EventHandler(void *ctx, system_event_t *event)
             break;
         case SYSTEM_EVENT_STA_GOT_IP:
             _currentRetryCount = 0;
-            bits = xEventGroupGetBits(xWiFiEventGroup);
+            bits = xEventGroupGetBits(_xWiFiEventGroup);
             //
             //  TODO: We can sometimes get here when _wifiResponse is NULL, need to review this.
             //
@@ -211,16 +211,16 @@ esp_err_t WiFi::EventHandler(void *ctx, system_event_t *event)
                 memcpy(_wifiResponse->_payload, &event->event_info.got_ip.ip_info.ip, _wifiResponse->_payloadLength);
                 SendResponse(ERR_COMPLETED_OK);
             }
-            xEventGroupSetBits(xWiFiEventGroup, WIFI_CONNECTED_BIT | WIFI_READY_BIT);
-            xEventGroupClearBits(xWiFiEventGroup, WIFI_CONNECTING_BIT | WIFI_RECONNECTING_BIT);
+            xEventGroupSetBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT | WIFI_READY_BIT);
+            xEventGroupClearBits(_xWiFiEventGroup, WIFI_CONNECTING_BIT | WIFI_RECONNECTING_BIT);
             break;
         case SYSTEM_EVENT_STA_DISCONNECTED:
             if (_automaticReconnect)
             {
-                xEventGroupClearBits(xWiFiEventGroup, WIFI_READY_BIT | WIFI_CONNECTED_BIT | WIFI_CONNECTING_BIT | WIFI_RECONNECTING_BIT);
+                xEventGroupClearBits(_xWiFiEventGroup, WIFI_READY_BIT | WIFI_CONNECTED_BIT | WIFI_CONNECTING_BIT | WIFI_RECONNECTING_BIT);
                 if (_currentRetryCount < _maximumRetryCount)
                 {
-                    xEventGroupSetBits(xWiFiEventGroup, WIFI_RECONNECTING_BIT);
+                    xEventGroupSetBits(_xWiFiEventGroup, WIFI_RECONNECTING_BIT);
                     esp_wifi_connect();
                     _currentRetryCount++;
                 }
@@ -234,8 +234,8 @@ esp_err_t WiFi::EventHandler(void *ctx, system_event_t *event)
                 //
                 //  TODO: Send disconnect message ?
                 //
-                xEventGroupClearBits(xWiFiEventGroup, WIFI_CONNECTED_BIT | WIFI_CONNECTING_BIT | WIFI_RECONNECTING_BIT);
-                xEventGroupSetBits(xWiFiEventGroup, WIFI_READY_BIT);
+                xEventGroupClearBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT | WIFI_CONNECTING_BIT | WIFI_RECONNECTING_BIT);
+                xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
             }
             break;
         case SYSTEM_EVENT_SCAN_DONE:
@@ -268,7 +268,7 @@ void WiFi::StartNetwork(ApplicationRequest *message)
     _wifiResponse->_payloadLength = 0;
     _wifiResponse->_code = 0;
 
-    EventBits_t bits = xEventGroupGetBits(xWiFiEventGroup);
+    EventBits_t bits = xEventGroupGetBits(_xWiFiEventGroup);
     if (!(bits & WIFI_INITIALISED_BIT))
     {
         char *ssid = (char *) message->_payload;
@@ -309,8 +309,8 @@ void WiFi::StartNetwork(ApplicationRequest *message)
         ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
         ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));
         ESP_ERROR_CHECK(esp_wifi_start());
-        xEventGroupSetBits(xWiFiEventGroup, WIFI_INITIALISED_BIT | WIFI_CONNECTING_BIT);
-        xEventGroupClearBits(xWiFiEventGroup, WIFI_READY_BIT);
+        xEventGroupSetBits(_xWiFiEventGroup, WIFI_INITIALISED_BIT | WIFI_CONNECTING_BIT);
+        xEventGroupClearBits(_xWiFiEventGroup, WIFI_READY_BIT);
         ESP_LOGI(__func__, "Network started.");
     }
     else
