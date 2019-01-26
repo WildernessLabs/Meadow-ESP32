@@ -89,59 +89,59 @@ private:
     /*
      *      Default scan method for WiFi networks.
      */
-    static const wifi_scan_method_t DEFAULT_SCAN_METHOD = WIFI_FAST_SCAN;
+    const wifi_scan_method_t DEFAULT_SCAN_METHOD = WIFI_FAST_SCAN;
 
     /*
      *      Default sort method for the WiFi networks when scanned.
      */
-    static const wifi_sort_method_t DEFAULT_SORT_METHOD = WIFI_CONNECT_AP_BY_SIGNAL;
+    const wifi_sort_method_t DEFAULT_SORT_METHOD = WIFI_CONNECT_AP_BY_SIGNAL;
 
     /*
      *      Default RSSI when scanning for networks.
      */
-    static const int DEFAULT_RSSI = -127;
+    const int DEFAULT_RSSI = -127;
 
     /*
      *      Default authorisation mode.
      */
-    static const wifi_auth_mode_t DEFAULT_AUTH_MODE = WIFI_AUTH_OPEN;
+    const wifi_auth_mode_t DEFAULT_AUTH_MODE = WIFI_AUTH_OPEN;
 
     /*
      *  Default number of retires when an error is detected.
      */
-    static const int DEFAULT_MAXIMUM_RETRY_COUNT = 3;
+    const int DEFAULT_MAXIMUM_RETRY_COUNT = 3;
 
     /*
      *      Maximum length of the string containing the SSID name.
      */
-    static const int MAXIMUM_SSID_LENGTH = 32;
+    const int MAXIMUM_SSID_LENGTH = 32;
 
     /*
      *      Maximum length of the password for the access point.
      */
-    static const int MAXIMUM_PASSWORD_LENGTH = 64;
+    const int MAXIMUM_PASSWORD_LENGTH = 64;
 
     /*
      *      GPIO Pin connected to the antenna selection switch
      *      which will connect the on board antenna to the ESP32.
      */
-    const gpio_num_t ON_BOARD_ANTENNA = GPIO_NUM_26;
+    const gpio_num_t ON_BOARD_ANTENNA_PIN = GPIO_NUM_26;
 
     /*
      *      GPIO Pin connected to the antenna selection switch
      *      which will connect the external antenna to the ESP32.
      */
-    const gpio_num_t EXTERNAL_ANTENNA = GPIO_NUM_27;
+    const gpio_num_t EXTERNAL_ANTENNA_PIN = GPIO_NUM_27;
 
     /*
      *      Handle for the WiFi messages to be processed by the WIFi task.
      */
-    QueueHandle_t QueueHandle = NULL;
+    QueueHandle_t _queueHandle = NULL;
 
     /*
      *      Event group containing 24-bits used to indicate the state of the WiFi connection.
      */
-    EventGroupHandle_t xWiFiEventGroup = NULL;
+    EventGroupHandle_t _xWiFiEventGroup = NULL;
 
     /*
      *      Current retry count.
@@ -180,7 +180,7 @@ private:
     /*
      *      Getters and setters.
      */
-    void SetQueueHandle(QueueHandle_t);
+    void SetQueueHandle(QueueHandle_t queueHandle = NULL);
 
 public:
     /*
@@ -202,7 +202,7 @@ public:
      *      Getters and setters.
      */
     QueueHandle_t GetQueueHandle() const;
-    Antenna GetAntenna();
+    Antenna GetAntenna() const;
     void SetAntenna(Antenna newAntenna = OnBoard);
 };
 
