@@ -68,6 +68,34 @@ void WiFi::SetQueueHandle(QueueHandle_t queueHandle)
 }
 
 /*
+ *      Get the currently selected antenna.
+ */
+WiFi::Antenna WiFi::GetAntenna()
+{
+    return(_currentAntenna);
+}
+
+/*
+ *      Switch the current antenna.
+ *
+ *      TODO: Do we need to turn the WiFi off before switching the antenna?
+ */
+void WiFi::SetAntenna(WiFi::Antenna newAntenna)
+{
+    if (_currentAntenna != newAntenna)
+    {
+        gpio_num_t newAntennaPin = (newAntenna == OnBoard) ? ON_BOARD_ANTENNA : EXTERNAL_ANTENNA;
+        gpio_num_t oldAntennaPin = (_currentAntenna == OnBoard) ? ON_BOARD_ANTENNA : EXTERNAL_ANTENNA;
+        //
+        //  Make sure the old antenna is switched off before the new one is turned on.
+        //
+        gpio_set_level(oldAntennaPin, 0);
+        gpio_set_level(newAntennaPin, 1);
+        _currentAntenna = newAntenna;
+    }
+}
+
+/*
  * ----------------------------------------------------------------------------
  *
  *                                 Methods
@@ -80,6 +108,20 @@ void WiFi::SetQueueHandle(QueueHandle_t queueHandle)
  */
 void WiFi::Setup()
 {
+    /*
+     *      Configure the antenna, by default, the on board antenna will be used.
+     */
+    //gpio_pad_select_gpio(EXTERNAL_ANTENNA);
+    gpio_set_direction(EXTERNAL_ANTENNA, GPIO_MODE_OUTPUT);
+    gpio_set_level(EXTERNAL_ANTENNA, 0);
+    //gpio_pad_select_gpio(ON_BOARD_ANTENNA);
+    gpio_set_direction(ON_BOARD_ANTENNA, GPIO_MODE_OUTPUT);
+    gpio_set_level(ON_BOARD_ANTENNA, 1);
+    _currentAntenna = OnBoard;
+
+    /*
+     *      Now create the objects necessary for the WiFi tasks.
+     */
     const size_t messageSize = sizeof(ApplicationRequest);
     SetQueueHandle(xQueueCreate(MAX_QUEUE_LENGTH, messageSize));
     if (GetQueueHandle() == NULL)
