@@ -134,6 +134,16 @@ private:
     const gpio_num_t EXTERNAL_ANTENNA_PIN = GPIO_NUM_27;
 
     /*
+     *      Handle for the WiFi task.
+     */
+    TaskHandle_t _taskHandle = NULL;
+
+    /*
+     *      Name of the WiFi Task.
+     */
+    const char *WIFI_TASK_NAME = const_cast<const char *> ("WiFiTask");
+
+    /*
      *      Handle for the WiFi messages to be processed by the WIFi task.
      */
     QueueHandle_t _queueHandle = NULL;
@@ -181,6 +191,7 @@ private:
      *      Getters and setters.
      */
     void SetQueueHandle(QueueHandle_t queueHandle = NULL);
+    void SetTaskHandle(TaskHandle_t bluetoothTaskHandle);
 
 public:
     /*
@@ -201,7 +212,10 @@ public:
     /*
      *      Getters and setters.
      */
+    char *GetTaskName();
     QueueHandle_t GetQueueHandle() const;
+    TaskHandle_t GetTaskHandle() const;
+
     Antenna GetAntenna() const;
     void SetAntenna(Antenna newAntenna = OnBoard);
 };

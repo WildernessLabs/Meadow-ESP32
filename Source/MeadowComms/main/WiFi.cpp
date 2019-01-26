@@ -67,6 +67,16 @@ void WiFi::SetQueueHandle(QueueHandle_t queueHandle)
     _queueHandle = queueHandle;
 }
 
+void WiFi::SetTaskHandle(TaskHandle_t taskHandle)
+{
+    _taskHandle = taskHandle;
+}
+
+TaskHandle_t WiFi::GetTaskHandle() const
+{
+    return(_taskHandle);
+}
+
 /*
  *      Get the currently selected antenna.
  */
@@ -129,7 +139,7 @@ void WiFi::Setup()
         ESP_LOGI(__func__, "Cannot allocate WiFi processing queue.");
     }
     _xWiFiEventGroup = xEventGroupCreate();
-    xTaskCreate(WiFiTask, WIFI_TASK_NAME, 2048 * 2, NULL, configMAX_PRIORITIES - 1, &xWiFiTaskHandle);
+    xTaskCreate(WiFiTask, WIFI_TASK_NAME, 2048 * 2, NULL, configMAX_PRIORITIES - 1, &_taskHandle);
 }
 
 /*
