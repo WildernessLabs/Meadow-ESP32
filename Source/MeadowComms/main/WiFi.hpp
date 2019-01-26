@@ -79,6 +79,12 @@
  */
 class WiFi
 {
+public:
+    /*
+     *      Available antenna types.
+     */
+    enum Antenna { OnBoard, External };
+
 private:
     /*
      *      Default scan method for WiFi networks.
@@ -105,7 +111,6 @@ private:
      */
     static const int DEFAULT_MAXIMUM_RETRY_COUNT = 3;
 
-
     /*
      *      Maximum length of the string containing the SSID name.
      */
@@ -115,6 +120,18 @@ private:
      *      Maximum length of the password for the access point.
      */
     static const int MAXIMUM_PASSWORD_LENGTH = 64;
+
+    /*
+     *      GPIO Pin connected to the antenna selection switch
+     *      which will connect the on board antenna to the ESP32.
+     */
+    const gpio_num_t ON_BOARD_ANTENNA = GPIO_NUM_26;
+
+    /*
+     *      GPIO Pin connected to the antenna selection switch
+     *      which will connect the external antenna to the ESP32.
+     */
+    const gpio_num_t EXTERNAL_ANTENNA = GPIO_NUM_27;
 
     /*
      *      Handle for the WiFi messages to be processed by the WIFi task.
@@ -143,6 +160,11 @@ private:
      *      disconnect for any reason.
      */
     bool _automaticReconnect = true;
+
+    /*
+     *      Indicate which antenna is currently selected.
+     */
+    Antenna _currentAntenna = OnBoard;
 
     /*
      *      Response message for the current request.
@@ -180,6 +202,8 @@ public:
      *      Getters and setters.
      */
     QueueHandle_t GetQueueHandle() const;
+    Antenna GetAntenna();
+    void SetAntenna(Antenna newAntenna = OnBoard);
 };
 
 /*
