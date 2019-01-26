@@ -60,5 +60,5 @@ void Bluetooth::Setup()
     {
         ESP_LOGI(__func__, "Cannot allocate Bluetooth processing queue.");
     }
-    xTaskCreate(BluetoothTask, bluetooth->GetTaskName(), 1024 * 2, NULL, configMAX_PRIORITIES - 1, &xWiFiTaskHandle);
+    xTaskCreate(BluetoothTask, bluetooth->GetTaskName(), 1024 * 2, NULL, configMAX_PRIORITIES - 1, &xBluetoothTaskHandle);
 }
