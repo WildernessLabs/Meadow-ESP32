@@ -243,7 +243,7 @@ esp_err_t WiFi::EventHandler(void *ctx, system_event_t *event)
                 _wifiResponse->_payloadLength = sizeof(ip4_addr_t);
                 _wifiResponse->_payload = (uint8_t *) pvPortMalloc(_wifiResponse->_payloadLength);
                 memcpy(_wifiResponse->_payload, &event->event_info.got_ip.ip_info.ip, _wifiResponse->_payloadLength);
-                SendResponse(ERR_COMPLETED_OK);
+                SendResponse((uint32_t) StatusCodes::CompletedOK);
             }
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT | WIFI_READY_BIT);
             xEventGroupClearBits(_xWiFiEventGroup, WIFI_CONNECTING_BIT | WIFI_RECONNECTING_BIT);
@@ -322,14 +322,14 @@ void WiFi::StartNetwork(ApplicationRequest *message)
         char *ssid = (char *) message->_payload;
         if ((ssid == NULL) || (strlen(ssid) > MAXIMUM_SSID_LENGTH))
         {
-            SendResponse(ERR_INVALID_SSID);
+            SendResponse(StatusCodes::InvalidSSID);
             return;
         }
 
         char *password = (char *) (message->_payload + strlen(ssid) + 1);
         if (strlen(password) > MAXIMUM_PASSWORD_LENGTH)
         {
-            SendResponse(ERR_INVALID_PASSWORD);
+            SendResponse(StatusCodes::InvalidPassword);
             return;
         }
 
@@ -367,7 +367,7 @@ void WiFi::StartNetwork(ApplicationRequest *message)
     }
     else
     {
-        SendResponse(ERR_WIFI_ALREADY_STARTED);
+        SendResponse(StatusCodes::WiFiAlreadyStarted);
     }
 }
 
@@ -422,7 +422,7 @@ void WiFi::ProcessAccessPointScanCompletion(system_event_t *event)
         }
         vPortFree(accessPoints);
     }
-    SendResponse(ERR_COMPLETED_OK);
+    SendResponse(StatusCodes::CompletedOK);
 }
 
 /*

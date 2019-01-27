@@ -21,6 +21,7 @@
 #include "Bluetooth.hpp"
 #include "MeshNetwork.hpp"
 #include "Logging.hpp"
+#include "StatusCodes.hpp"
 
 /*
  *      WiFi object.

@@ -23,7 +23,7 @@
 #include "MeshNetwork.hpp"
 #include "Tasks.hpp"
 #include "Messaging.h"
-#include "ErrorCodes.h"
+#include "StatusCodes.hpp"
 #include "Encoders.hpp"
 
 /*
@@ -264,14 +264,14 @@ uint32_t UART::QueueMessage()
             {
                 vPortFree(_messageHeader._payload);
             }
-            return (ERR_QUEUE_ERROR);
+            return (StatusCodes::QueueError);
         }
     }
     else
     {
         ESP_LOGI("SYSTEM", "System tasks not implemented.");
     }
-    return (ERR_COMPLETED_OK);
+    return (StatusCodes::CompletedOK);
 }
 
 /*
@@ -523,7 +523,7 @@ void UART::ProcessHeader(uint8_t *packet, uint8_t packetLength)
 {
     if (packetLength != APP_REQUEST_HEADER_LENGTH)
     {
-        AcknowledgeFrame(TRANSPORT_NAK, ERR_INVALID_HEADER);
+        AcknowledgeFrame(TRANSPORT_NAK, StatusCodes::InvalidHeader);
     }
     else
     {
@@ -546,7 +546,7 @@ void UART::ProcessHeader(uint8_t *packet, uint8_t packetLength)
             QueueMessage();
         }
         _nextPayloadLocation = _messageHeader._payload;
-        AcknowledgeFrame(TRANSPORT_ACK, ERR_COMPLETED_OK);
+        AcknowledgeFrame(TRANSPORT_ACK, StatusCodes::CompletedOK);
     }
 }
 
@@ -587,11 +587,11 @@ void UART::ProcessData(uint8_t *packet, uint8_t packetLength)
             //
             ResetIncomingMessage(false);
         }
-        AcknowledgeFrame(TRANSPORT_ACK, ERR_COMPLETED_OK);
+        AcknowledgeFrame(TRANSPORT_ACK, StatusCodes::CompletedOK);
     }
     else
     {
-        AcknowledgeFrame(MSG_NAK, ERR_UNEXPECTED_DATA);
+        AcknowledgeFrame(MSG_NAK, StatusCodes::UnexpectedData);
     }
 }
 
@@ -848,11 +848,11 @@ void UART::DecodeSerialData(uint8_t *buffer, int amount)
                     {
                         if (byte != END_OF_FRAME_CHARACTER)
                         {
-                            AcknowledgeFrame(TRANSPORT_NAK, ERR_MISSING_END_OF_FRAME_MARKER);
+                            AcknowledgeFrame(TRANSPORT_NAK, StatusCodes::MissingEndOfFrameMarker);
                         }
                         else
                         {
-                            AcknowledgeFrame(TRANSPORT_NAK, ERR_CRC_ERROR);
+                            AcknowledgeFrame(TRANSPORT_NAK, StatusCodes::CRCError);
                         }
                     }
                     if (_framePayload != NULL)
