@@ -87,6 +87,11 @@ public:
 
 private:
     /*
+     *      Determine if this class is instantiated already (i.e. this should be a singleton).
+     */
+    bool _instantiated = false;
+
+    /*
      *      Default scan method for WiFi networks.
      */
     const wifi_scan_method_t DEFAULT_SCAN_METHOD = WIFI_FAST_SCAN;
@@ -186,6 +191,7 @@ private:
      */
     void SendResponse(uint32_t);
     void ProcessAccessPointScanCompletion(system_event_t *);
+    static void Task(void *);
 
     /*
      *      Getters and setters.
