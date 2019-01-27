@@ -26,7 +26,7 @@
 
 #include "Encoders.hpp"
 #include "Messaging.h"
-#include "ErrorCodes.h"
+#include "StatusCodes.hpp"
 #include "UART.hpp"
 #include "Tasks.hpp"
 

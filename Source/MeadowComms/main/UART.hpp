@@ -24,7 +24,7 @@
 #include "WiFi.hpp"
 #include "Tasks.hpp"
 #include "Messaging.h"
-#include "ErrorCodes.h"
+#include "StatusCodes.hpp"
 #include "Encoders.hpp"
 
 /*
