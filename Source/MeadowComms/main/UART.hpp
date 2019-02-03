@@ -21,11 +21,11 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "WiFi.hpp"
 #include "Tasks.hpp"
 #include "Messaging.h"
 #include "StatusCodes.hpp"
 #include "Encoders.hpp"
+#include "WiFiRequestHandler.hpp"
 
 /*
  *      BufferAndLength holds a buffer and the amount of data in

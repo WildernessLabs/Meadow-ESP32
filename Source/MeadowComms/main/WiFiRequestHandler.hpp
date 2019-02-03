@@ -5,8 +5,8 @@
  *      ability to communicate with the WiFi network.
  */
 
-#ifndef MAIN_WIFI_HPP_
-#define MAIN_WIFI_HPP_
+#ifndef MAIN_WIFIREQUESTHANDLER_HPP_
+#define MAIN_WIFIREQUESTHANDLER_HPP_
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -26,6 +26,7 @@
 
 #include "Encoders.hpp"
 #include "Messaging.h"
+#include "RequestHandlerBase.hpp"
 #include "StatusCodes.hpp"
 #include "UART.hpp"
 #include "Tasks.hpp"
@@ -77,7 +78,7 @@
  *      Encapsulate the properties and methods required to provide the
  *      ability to communicate with the WiFi network.
  */
-class WiFi
+class WiFi : public RequestHandlerBase
 {
 public:
     /*
@@ -139,19 +140,9 @@ private:
     const gpio_num_t EXTERNAL_ANTENNA_PIN = GPIO_NUM_27;
 
     /*
-     *      Handle for the WiFi task.
-     */
-    TaskHandle_t _taskHandle = NULL;
-
-    /*
      *      Name of the WiFi Task.
      */
     const char *WIFI_TASK_NAME = const_cast<const char *> ("WiFiTask");
-
-    /*
-     *      Handle for the WiFi messages to be processed by the WIFi task.
-     */
-    QueueHandle_t _queueHandle = NULL;
 
     /*
      *      Event group containing 24-bits used to indicate the state of the WiFi connection.
@@ -193,12 +184,6 @@ private:
     void ProcessAccessPointScanCompletion(system_event_t *);
     static void Task(void *);
 
-    /*
-     *      Getters and setters.
-     */
-    void SetQueueHandle(QueueHandle_t queueHandle = NULL);
-    void SetTaskHandle(TaskHandle_t bluetoothTaskHandle);
-
 public:
     /*
      *      Constructor(s) and destructor.
@@ -219,8 +204,6 @@ public:
      *      Getters and setters.
      */
     char *GetTaskName();
-    QueueHandle_t GetQueueHandle() const;
-    TaskHandle_t GetTaskHandle() const;
 
     Antenna GetAntenna() const;
     void SetAntenna(Antenna newAntenna = OnBoard);
@@ -232,4 +215,4 @@ public:
 extern WiFi *wifi;
 
 
-#endif /* MAIN_WIFI_HPP_ */
+#endif /* MAIN_WIFIREQUESTHANDLER_HPP_ */

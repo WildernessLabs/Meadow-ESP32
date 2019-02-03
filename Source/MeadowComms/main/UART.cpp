@@ -7,6 +7,9 @@
  *  to communicate.
  *
  */
+#include "BluetoothRequestHandler.hpp"
+#include "MeshNetworkHandler.hpp"
+#include "WiFiRequestHandler.hpp"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
@@ -18,9 +21,6 @@
 #include <stdlib.h>
 
 #include "UART.hpp"
-#include "WiFi.hpp"
-#include "Bluetooth.hpp"
-#include "MeshNetwork.hpp"
 #include "Tasks.hpp"
 #include "Messaging.h"
 #include "StatusCodes.hpp"

@@ -1,0 +1,45 @@
+/*
+ *  Bluetooth.cpp
+ *
+ *  Created on: 24 Jan 2019
+ *      Author: mark
+ */
+
+#include "BluetoothRequestHandler.hpp"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/queue.h"
+#include "esp_system.h"
+#include "esp_log.h"
+#include "driver/uart.h"
+#include "soc/uart_struct.h"
+#include <string.h>
+#include <stdlib.h>
+
+#include "Messaging.h"
+#include "Tasks.hpp"
+
+Bluetooth::Bluetooth()
+{
+}
+
+Bluetooth::~Bluetooth()
+{
+}
+
+
+char *Bluetooth::GetTaskName()
+{
+    return("BluetoothTask");
+}
+
+void Bluetooth::Setup()
+{
+    const size_t messageSize = sizeof(ApplicationRequest);
+    SetQueueHandle(xQueueCreate(MAX_QUEUE_LENGTH, messageSize));
+    if (GetQueueHandle() == NULL)
+    {
+        ESP_LOGI(__func__, "Cannot allocate Bluetooth processing queue.");
+    }
+    xTaskCreate(BluetoothTask, bluetooth->GetTaskName(), 1024 * 2, NULL, configMAX_PRIORITIES - 1, &_taskHandle);
+}
