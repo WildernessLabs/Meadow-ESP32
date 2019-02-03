@@ -94,6 +94,14 @@ void WiFi::SetAntenna(WiFi::Antenna newAntenna)
 }
 
 /*
+ *      Get the name for the WiFi task.
+ */
+const char *WiFi::GetTaskName()
+{
+    return("WiFiTAsk");
+}
+
+/*
  * ----------------------------------------------------------------------------
  *
  *                                 Methods
@@ -126,7 +134,7 @@ void WiFi::Setup()
         ESP_LOGI(__func__, "Cannot allocate WiFi processing queue.");
     }
     _xWiFiEventGroup = xEventGroupCreate();
-    xTaskCreate(Task, WIFI_TASK_NAME, 2048 * 2, NULL, configMAX_PRIORITIES - 1, &_taskHandle);
+    xTaskCreate(Task, GetTaskName(), 2048 * 2, NULL, configMAX_PRIORITIES - 1, &_taskHandle);
 }
 
 /*

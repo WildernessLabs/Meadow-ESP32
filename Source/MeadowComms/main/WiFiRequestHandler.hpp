@@ -140,11 +140,6 @@ private:
     const gpio_num_t EXTERNAL_ANTENNA_PIN = GPIO_NUM_27;
 
     /*
-     *      Name of the WiFi Task.
-     */
-    const char *WIFI_TASK_NAME = const_cast<const char *> ("WiFiTask");
-
-    /*
      *      Event group containing 24-bits used to indicate the state of the WiFi connection.
      */
     EventGroupHandle_t _xWiFiEventGroup = NULL;
@@ -203,8 +198,7 @@ public:
     /*
      *      Getters and setters.
      */
-    char *GetTaskName();
-
+    const char *GetTaskName();
     Antenna GetAntenna() const;
     void SetAntenna(Antenna newAntenna = OnBoard);
 };

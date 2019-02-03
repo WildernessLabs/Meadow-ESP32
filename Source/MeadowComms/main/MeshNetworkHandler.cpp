@@ -20,6 +20,14 @@
 #include "Tasks.hpp"
 
 /*
+ * ----------------------------------------------------------------------------
+ *
+ *                      Constructors and destructors.
+ *
+ * ----------------------------------------------------------------------------
+ */
+
+/*
  *      Default constructor for the mesh network.
  */
 MeshNetwork::MeshNetwork()
@@ -32,6 +40,14 @@ MeshNetwork::MeshNetwork()
 MeshNetwork::~MeshNetwork()
 {
 }
+
+/*
+ * ----------------------------------------------------------------------------
+ *
+ *                          Getters and setters
+ *
+ * ----------------------------------------------------------------------------
+ */
 
 /*
  *      Setup the mesh network.

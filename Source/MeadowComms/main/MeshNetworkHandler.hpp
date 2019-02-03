@@ -29,7 +29,7 @@ public:
 
     void Setup();
 
-    char *GetTaskName();
+    const char *GetTaskName();
 };
 
 extern MeshNetwork *meshNetwork;

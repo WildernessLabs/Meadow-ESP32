@@ -20,9 +20,16 @@
 #include "Tasks.hpp"
 
 /*
- *      Default constructor for the bluetooth class.
+ * ----------------------------------------------------------------------------
+ *
+ *                      Constructors and destructors.
+ *
+ * ----------------------------------------------------------------------------
  */
 
+/*
+ *      Default constructor for the bluetooth class.
+ */
 Bluetooth::Bluetooth()
 {
 }
@@ -35,9 +42,17 @@ Bluetooth::~Bluetooth()
 }
 
 /*
+ * ----------------------------------------------------------------------------
+ *
+ *                          Getters and setters
+ *
+ * ----------------------------------------------------------------------------
+ */
+
+/*
  *
  */
-char *Bluetooth::GetTaskName()
+const char *Bluetooth::GetTaskName()
 {
     return("BluetoothTask");
 }

@@ -8,6 +8,14 @@
 #include "SystemRequestHandler.hpp"
 
 /*
+ * ----------------------------------------------------------------------------
+ *
+ *                      Constructors and destructors.
+ *
+ * ----------------------------------------------------------------------------
+ */
+
+/*
  *      Default constructor for the system request handler class.
  */
 SystemRequestHandler::SystemRequestHandler()
@@ -21,6 +29,22 @@ SystemRequestHandler::SystemRequestHandler()
 SystemRequestHandler::~SystemRequestHandler()
 {
 
+}
+
+/*
+ * ----------------------------------------------------------------------------
+ *
+ *                          Getters and setters
+ *
+ * ----------------------------------------------------------------------------
+ */
+
+/*
+ *      Get the name of this task.
+ */
+const char *GetTaskName()
+{
+    return("SystemTask");
 }
 
 /*

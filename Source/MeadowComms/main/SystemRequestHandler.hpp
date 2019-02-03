@@ -13,10 +13,21 @@
 class SystemRequestHandler : public RequestHandlerBase
 {
 public:
+    /*
+     *      Constructor(s) and destructor.
+     */
     SystemRequestHandler();
     ~SystemRequestHandler();
 
+    /*
+     *      Public methods.
+     */
     void Setup();
+
+    /*
+     *      Getters and setters.
+     */
+    const char *GetTaskName();
 };
 
 
