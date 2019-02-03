@@ -18,12 +18,21 @@
 class Bluetooth : public RequestHandlerBase
 {
 public:
+    /*
+     *      Constructor(s) and destructor.
+     */
     Bluetooth();
     ~Bluetooth();
 
+    /*
+     *      Public methods.
+     */
     void Setup();
 
-    char *GetTaskName();
+    /*
+     *      Getters and setters.
+     */
+    const char *GetTaskName();
 };
 
 extern Bluetooth *bluetooth;

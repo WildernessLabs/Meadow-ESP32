@@ -57,5 +57,3 @@ TaskHandle_t RequestHandlerBase::GetTaskHandle()
 {
     return(_taskHandle);
 }
-
-

@@ -70,6 +70,11 @@ public:
      *      Setup the various properties for correct functioning of the request handler.
      */
     virtual void Setup() = 0;
+
+    /*
+     *      Get the name of the task for this request handler.
+     */
+    virtual const char *GetTaskName() = 0;
 };
 
 
