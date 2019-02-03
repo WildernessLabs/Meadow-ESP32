@@ -3,7 +3,7 @@
  *
  *      Implementation of the WiFi functionality.
  */
-#include "WiFi.hpp"
+#include "WiFiRequestHandler.hpp"
 
 /*
  *      Event handler for the WiFi loop.
@@ -64,32 +64,6 @@ WiFi::~WiFi()
  *
  * ----------------------------------------------------------------------------
  */
-
-/*
- *      Get the handle for the WiFi queue.
- */
-QueueHandle_t WiFi::GetQueueHandle() const
-{
-    return(_queueHandle);
-}
-
-/*
- *      Set the handle for the WiFi queue.
- */
-void WiFi::SetQueueHandle(QueueHandle_t queueHandle)
-{
-    _queueHandle = queueHandle;
-}
-
-void WiFi::SetTaskHandle(TaskHandle_t taskHandle)
-{
-    _taskHandle = taskHandle;
-}
-
-TaskHandle_t WiFi::GetTaskHandle() const
-{
-    return(_taskHandle);
-}
 
 /*
  *      Get the currently selected antenna.

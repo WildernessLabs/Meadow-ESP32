@@ -4,6 +4,9 @@
  *      Create the tasks for the RTOS.
  */
 
+#include "BluetoothRequestHandler.hpp"
+#include "MeshNetworkHandler.hpp"
+#include "WiFiRequestHandler.hpp"
 #include <string>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -13,11 +16,8 @@
 #include "esp_log.h"
 
 #include "Tasks.hpp"
-#include "WiFi.hpp"
 #include  "Messaging.h"
 #include "UART.hpp"
-#include "Bluetooth.hpp"
-#include "MeshNetwork.hpp"
 
 /*
  *      Process any messages for the Bluetooth controller.

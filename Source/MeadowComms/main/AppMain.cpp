@@ -2,6 +2,9 @@
  *      Main application for the ESP32 code for Meadow.
  */
 
+#include "BluetoothRequestHandler.hpp"
+#include "MeshNetworkHandler.hpp"
+#include "WiFiRequestHandler.hpp"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_system.h"
@@ -17,9 +20,6 @@
 #include "Tasks.hpp"
 #include "Messaging.h"
 #include "UART.hpp"
-#include "WiFi.hpp"
-#include "Bluetooth.hpp"
-#include "MeshNetwork.hpp"
 #include "Logging.hpp"
 #include "StatusCodes.hpp"
 
