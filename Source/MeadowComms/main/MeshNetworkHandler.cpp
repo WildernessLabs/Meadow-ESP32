@@ -19,14 +19,23 @@
 #include "Messaging.h"
 #include "Tasks.hpp"
 
+/*
+ *      Default constructor for the mesh network.
+ */
 MeshNetwork::MeshNetwork()
 {
 }
 
+/*
+ *      Default destructor for the mesh network class.
+ */
 MeshNetwork::~MeshNetwork()
 {
 }
 
+/*
+ *      Setup the mesh network.
+ */
 void MeshNetwork::Setup()
 {
     const size_t messageSize = sizeof(ApplicationRequest);

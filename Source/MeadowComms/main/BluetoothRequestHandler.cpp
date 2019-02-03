@@ -19,20 +19,32 @@
 #include "Messaging.h"
 #include "Tasks.hpp"
 
+/*
+ *      Default constructor for the bluetooth class.
+ */
+
 Bluetooth::Bluetooth()
 {
 }
 
+/*
+ *      Default destructor for the bluetooth class.
+ */
 Bluetooth::~Bluetooth()
 {
 }
 
-
+/*
+ *
+ */
 char *Bluetooth::GetTaskName()
 {
     return("BluetoothTask");
 }
 
+/*
+ *      Setup the bluetooth system.
+ */
 void Bluetooth::Setup()
 {
     const size_t messageSize = sizeof(ApplicationRequest);

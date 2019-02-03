@@ -65,6 +65,11 @@ public:
      *      Set the task handle.
      */
     TaskHandle_t GetTaskHandle();
+
+    /*
+     *      Setup the various properties for correct functioning of the request handler.
+     */
+    virtual void Setup() = 0;
 };
 
 
