@@ -50,4 +50,5 @@ void Logging::Setup()
     //  We won't use a buffer for sending data.
     //
     uart_driver_install(LOGGING_UART_PORT_NUMBER, RX_BUFFER_SIZE * 2, 0, 0, NULL, 0);
+    ESP_LOGI(__func__, "Logging redirected to UART_NUM_10 on pins %d (Tx), %d (Rx)", LOGGING_TX_PIN, LOGGING_RX_PIN);
 }
