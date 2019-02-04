@@ -28,6 +28,10 @@ enum MessageAcknowledgement : uint8_t
     MSG_ACK = 0,
     MSG_NAK = 1
 };
+
+/*
+ *      Namespace to hold the status codes.
+ */
 namespace StatusCodes
 {
     /*
@@ -43,7 +47,7 @@ namespace StatusCodes
         QueueError = 5,
         InvalidPacket = 6,
         InvalidHeader = 7,
-        UnexpectedData =8,
+        UnexpectedData = 8,
         MissingEndOfFrameMarker = 9,
         WiFiAlreadyStarted = 10,
         InvalidSSID = 11,
