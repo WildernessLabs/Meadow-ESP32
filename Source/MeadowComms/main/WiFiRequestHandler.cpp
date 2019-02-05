@@ -134,7 +134,7 @@ void WiFi::Setup()
         ESP_LOGI(__func__, "Cannot allocate WiFi processing queue.");
     }
     _xWiFiEventGroup = xEventGroupCreate();
-    xTaskCreate(Task, GetTaskName(), 2048 * 2, NULL, configMAX_PRIORITIES - 1, &_taskHandle);
+    xTaskCreate(Task, GetTaskName(), 2048 * 2, this, configMAX_PRIORITIES - 1, &_taskHandle);
 }
 
 /*
@@ -147,14 +147,20 @@ void WiFi::Setup()
  */
 void WiFi::Task(void *pvParameters)
 {
+    WiFi *sender = (WiFi *) pvParameters;
     struct ApplicationRequest message;
     while (true)
     {
-        BaseType_t result = xQueueReceive(wifi->GetQueueHandle(), &message, portMAX_DELAY);
+        BaseType_t result = xQueueReceive(sender->GetQueueHandle(), &message, portMAX_DELAY);
         if (result == pdTRUE)
         {
-            wifi->DispatchRequest(&message);
+            sender->DispatchRequest(&message);
         }
+//        BaseType_t result = xQueueReceive(wifi->GetQueueHandle(), &message, portMAX_DELAY);
+//        if (result == pdTRUE)
+//        {
+//            wifi->DispatchRequest(&message);
+//        }
     }
     //
     //  We should only get here if the code in the while loop generates a fault.
