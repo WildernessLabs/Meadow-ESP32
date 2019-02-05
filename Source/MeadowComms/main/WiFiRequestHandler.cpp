@@ -192,7 +192,7 @@ void WiFi::DispatchRequest(ApplicationRequest *request)
 void WiFi::Task(void *pvParameters)
 {
     WiFi *sender = (WiFi *) pvParameters;
-    struct ApplicationRequest request;
+    ApplicationRequest request;
     while (true)
     {
         BaseType_t result = xQueueReceive(sender->GetQueueHandle(), &request, portMAX_DELAY);

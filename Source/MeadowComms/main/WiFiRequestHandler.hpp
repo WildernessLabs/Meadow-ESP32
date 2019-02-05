@@ -192,7 +192,7 @@ private:
      */
     void SendResponse(uint32_t);
     void ProcessAccessPointScanCompletion(system_event_t *);
-    void DispatchRequest(struct ApplicationRequest *);
+    void DispatchRequest(ApplicationRequest *);
     static void Task(void *);
 
 public:
