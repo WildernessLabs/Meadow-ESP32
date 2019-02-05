@@ -22,26 +22,30 @@
 #include "UART.hpp"
 #include "Logging.hpp"
 #include "StatusCodes.hpp"
+#include "SystemRequestHandler.hpp"
 
 /*
  *      WiFi object.
  */
-WiFi *wifi;
+WiFi *wifi = NULL;
 
 /*
  *      UART object.
  */
-UART *uart;
+UART *uart = NULL;
 
 /*
  *      Bluetooth object.
  */
-Bluetooth *bluetooth;
+Bluetooth *bluetooth = NULL;
 
 /*
  *      Mesh networking object.
  */
-MeshNetwork *meshNetwork;
+MeshNetwork *meshNetwork = NULL;
+
+SystemRequestHandler *systemRequestHandler = NULL;
+
 
 /*
  *      Main program loop for the ESP32 as specified by the FreeRTOS documentation.

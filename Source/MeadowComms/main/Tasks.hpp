@@ -14,9 +14,6 @@ extern "C"
 
 #endif
 
-void BluetoothTask(void *);
-void MeshNetworkTask(void *);
-void WiFiTask(void *);
 void UARTRxTask(void *);
 void UARTTxTask(void *);
 

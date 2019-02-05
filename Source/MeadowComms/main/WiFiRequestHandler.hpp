@@ -88,9 +88,9 @@ public:
 
 private:
     /*
-     *      Determine if this class is instantiated already (i.e. this should be a singleton).
+     *      Name of the FreeRTOS task for the WiFi system.
      */
-    bool _instantiated = false;
+    const char *_taskName = "WiFiTask";
 
     /*
      *      Default scan method for WiFi networks.
@@ -140,6 +140,21 @@ private:
     const gpio_num_t EXTERNAL_ANTENNA_PIN = GPIO_NUM_27;
 
     /*
+     *      Determine if this class is instantiated already (i.e. this should be a singleton).
+     */
+    bool _instantiated = false;
+
+    /*
+     *      Handle for the WiFi messages to be processed by the System task.
+     */
+    QueueHandle_t _queueHandle = NULL;
+
+    /*
+     *      Handle for the System request handler task.
+     */
+    TaskHandle_t _taskHandle = NULL;
+
+    /*
      *      Event group containing 24-bits used to indicate the state of the WiFi connection.
      */
     EventGroupHandle_t _xWiFiEventGroup = NULL;
@@ -177,6 +192,7 @@ private:
      */
     void SendResponse(uint32_t);
     void ProcessAccessPointScanCompletion(system_event_t *);
+    void DispatchRequest(struct ApplicationRequest *);
     static void Task(void *);
 
 public:
@@ -189,7 +205,6 @@ public:
      *      Public methods.
      */
     void Setup();
-    void DispatchRequest(struct ApplicationRequest *);
     esp_err_t EventHandler(void *, system_event_t *);
     void StartNetwork(struct ApplicationRequest *);
     void GetAvailableNetworks(struct ApplicationRequest *);
@@ -198,9 +213,10 @@ public:
     /*
      *      Getters and setters.
      */
-    const char *GetTaskName();
     Antenna GetAntenna() const;
     void SetAntenna(Antenna newAntenna = OnBoard);
+    const QueueHandle_t GetQueueHandle();
+    const TaskHandle_t GetTaskHandle();
 };
 
 /*
