@@ -34,6 +34,8 @@ public:
      *      Setup the various properties for correct functioning of the request handler.
      */
     virtual void Setup() = 0;
+    virtual QueueHandle_t GetQueueHandle() = 0;
+    virtual TaskHandle_t GetTaskHandle() = 0;
 };
 
 
