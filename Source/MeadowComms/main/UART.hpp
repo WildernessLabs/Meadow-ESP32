@@ -21,7 +21,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "Tasks.hpp"
 #include "Messaging.h"
 #include "StatusCodes.hpp"
 #include "Encoders.hpp"
@@ -333,6 +332,9 @@ private:
     void SetUartRxQueueHandle(QueueHandle_t);
     void SetUartTransmitTaskHandle(TaskHandle_t);
     void SetUartReceiveTaskHandle(TaskHandle_t);
+
+    static void UARTTxTask(void *);
+    static void UARTRxTask(void *);
 
 public:
     /*

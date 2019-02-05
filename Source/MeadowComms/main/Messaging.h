@@ -12,8 +12,6 @@ extern "C"
 
 #endif
 
-
-
 //
 //  Available interfaces.
 //

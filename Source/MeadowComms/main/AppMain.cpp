@@ -17,7 +17,6 @@
 #include "nvs_flash.h"
 
 #include "Encoders.hpp"
-#include "Tasks.hpp"
 #include "Messaging.h"
 #include "UART.hpp"
 #include "Logging.hpp"
@@ -63,7 +62,6 @@ extern "C" void app_main()
     ESP_ERROR_CHECK(result);
     wifi = new(WiFiRequestHandler);
     uart = new (UART);
-    SetupMessageQueues();
 
     uart->Setup();
     wifi->Setup();
