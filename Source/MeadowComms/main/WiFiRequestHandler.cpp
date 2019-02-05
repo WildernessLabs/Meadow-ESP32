@@ -1,5 +1,5 @@
 /*
- *      WiFi.cpp
+ *      WiFiRequestHandler.cpp
  *
  *      Implementation of the WiFi functionality.
  */
@@ -20,7 +20,7 @@
  */
 extern "C" esp_err_t WiFiEventHandler(void *context, system_event_t *event)
 {
-    WiFi *sender = (WiFi *) context;
+    WiFiRequestHandler *sender = (WiFiRequestHandler *) context;
 
     return(sender->EventHandler(context, event));
 }
@@ -36,7 +36,7 @@ extern "C" esp_err_t WiFiEventHandler(void *context, system_event_t *event)
 /*
  *      Default constructor for the WiFi class.
  */
-WiFi::WiFi()
+WiFiRequestHandler::WiFiRequestHandler()
 {
     if (_instantiated)
     {
@@ -53,7 +53,7 @@ WiFi::WiFi()
  *
  *      Free any resources used by the class.
  */
-WiFi::~WiFi()
+WiFiRequestHandler::~WiFiRequestHandler()
 {
 }
 
@@ -68,7 +68,7 @@ WiFi::~WiFi()
 /*
  *      Get the currently selected antenna.
  */
-WiFi::Antenna WiFi::GetAntenna() const
+WiFiRequestHandler::Antenna WiFiRequestHandler::GetAntenna() const
 {
     return(_currentAntenna);
 }
@@ -78,7 +78,7 @@ WiFi::Antenna WiFi::GetAntenna() const
  *
  *      TODO: Do we need to turn the WiFi off before switching the antenna?
  */
-void WiFi::SetAntenna(WiFi::Antenna newAntenna)
+void WiFiRequestHandler::SetAntenna(WiFiRequestHandler::Antenna newAntenna)
 {
     if (_currentAntenna != newAntenna)
     {
@@ -96,7 +96,7 @@ void WiFi::SetAntenna(WiFi::Antenna newAntenna)
 /*
  *      Get the handle for the WiFi message queue.
  */
-QueueHandle_t WiFi::GetQueueHandle()
+QueueHandle_t WiFiRequestHandler::GetQueueHandle()
 {
     return(_queueHandle);
 }
@@ -104,7 +104,7 @@ QueueHandle_t WiFi::GetQueueHandle()
 /*
  *      Get the handle to the WiFi task.
  */
-TaskHandle_t WiFi::GetTaskHandle()
+TaskHandle_t WiFiRequestHandler::GetTaskHandle()
 {
     return(_taskHandle);
 }
@@ -120,7 +120,7 @@ TaskHandle_t WiFi::GetTaskHandle()
 /*
  *      Setup the WiFi network.
  */
-void WiFi::Setup()
+void WiFiRequestHandler::Setup()
 {
     /*
      *      Configure the antenna, by default, the on board antenna will be used.
@@ -151,7 +151,7 @@ void WiFi::Setup()
  *      @param request
  *          Data structure containing the request information from the sender.
  */
-void WiFi::DispatchRequest(ApplicationRequest *request)
+void WiFiRequestHandler::DispatchRequest(ApplicationRequest *request)
 {
     switch (request->_function)
     {
@@ -189,9 +189,9 @@ void WiFi::DispatchRequest(ApplicationRequest *request)
  *      @param pvParameters
  *          Pointer to the instance of the WiFi class making the request.
  */
-void WiFi::Task(void *pvParameters)
+void WiFiRequestHandler::Task(void *pvParameters)
 {
-    WiFi *sender = (WiFi *) pvParameters;
+    WiFiRequestHandler *sender = (WiFiRequestHandler *) pvParameters;
     ApplicationRequest request;
     while (true)
     {
@@ -217,7 +217,7 @@ void WiFi::Task(void *pvParameters)
  *      @param event
  *          Information relevant to the event being raised.
  */
-esp_err_t WiFi::EventHandler(void *ctx, system_event_t *event)
+esp_err_t WiFiRequestHandler::EventHandler(void *ctx, system_event_t *event)
 {
     EventBits_t bits;
 
@@ -281,7 +281,7 @@ esp_err_t WiFi::EventHandler(void *ctx, system_event_t *event)
  *      @param statusCode
  *          Response code to be sent back to the STM32
  */
-void WiFi::SendResponse(uint32_t statusCode)
+void WiFiRequestHandler::SendResponse(uint32_t statusCode)
 {
     _wifiResponse->_code = statusCode;
     uart->QueueResponse(_wifiResponse);
@@ -295,7 +295,7 @@ void WiFi::SendResponse(uint32_t statusCode)
  *      @param request
  *          Request sent from the STM32.
  */
-void WiFi::StartNetwork(ApplicationRequest *message)
+void WiFiRequestHandler::StartNetwork(ApplicationRequest *message)
 {
     ESP_LOGI(__func__, "Starting network.");
     if (_wifiResponse != NULL)
@@ -371,7 +371,7 @@ void WiFi::StartNetwork(ApplicationRequest *message)
  *      @param event
  *          Event information passed to the event loop.
  */
-void WiFi::ProcessAccessPointScanCompletion(system_event_t *event)
+void WiFiRequestHandler::ProcessAccessPointScanCompletion(system_event_t *event)
 {
     uint16_t apCount = 0;
     esp_wifi_scan_get_ap_num(&apCount);
@@ -428,7 +428,7 @@ void WiFi::ProcessAccessPointScanCompletion(system_event_t *event)
  *      @param message
  *          Request sent from the STM32.
  */
-void WiFi::GetAvailableNetworks(ApplicationRequest *request)
+void WiFiRequestHandler::GetAvailableNetworks(ApplicationRequest *request)
 {
     if (_wifiResponse != NULL)
     {
@@ -454,7 +454,7 @@ void WiFi::GetAvailableNetworks(ApplicationRequest *request)
     ESP_ERROR_CHECK(esp_wifi_scan_start(&scanConf, true));
 }
 
-void WiFi::HttpGet(ApplicationRequest *message)
+void WiFiRequestHandler::HttpGet(ApplicationRequest *message)
 {
 //    const struct addrinfo hints = { .ai_family = AF_INET, .ai_socktype = SOCK_STREAM, };
 //    struct addrinfo *addressInformation;

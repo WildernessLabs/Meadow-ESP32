@@ -7,9 +7,9 @@
  *  to communicate.
  *
  */
+#include "WiFiRequestHandler.hpp"
 #include "BluetoothRequestHandler.hpp"
 #include "MeshNetworkHandler.hpp"
-#include "WiFiRequestHandler.hpp"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
@@ -29,7 +29,7 @@
 /*
  *      External declaration for the WiFi instance.
  */
-extern WiFi *wifi;
+extern WiFiRequestHandler *wifi;
 
 /*
  * ---------------------------------------------------------------------------

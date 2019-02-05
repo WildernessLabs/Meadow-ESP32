@@ -4,9 +4,9 @@
  *      Create the tasks for the RTOS.
  */
 
+#include "WiFiRequestHandler.hpp"
 #include "BluetoothRequestHandler.hpp"
 #include "MeshNetworkHandler.hpp"
-#include "WiFiRequestHandler.hpp"
 #include <string>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"

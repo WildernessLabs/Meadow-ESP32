@@ -5,8 +5,8 @@
  *      ability to communicate with the WiFi network.
  */
 
-#ifndef MAIN_WIFIREQUESTHANDLER_HPP_
-#define MAIN_WIFIREQUESTHANDLER_HPP_
+#ifndef MAIN_WIFI_REQUEST_HANDLER_HPP_
+#define MAIN_WIFI_REQUEST_HANDLER_HPP_
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -78,7 +78,7 @@
  *      Encapsulate the properties and methods required to provide the
  *      ability to communicate with the WiFi network.
  */
-class WiFi : public RequestHandlerBase
+class WiFiRequestHandler : public RequestHandlerBase
 {
 public:
     /*
@@ -199,8 +199,8 @@ public:
     /*
      *      Constructor(s) and destructor.
      */
-    WiFi();
-    ~WiFi();
+    WiFiRequestHandler();
+    ~WiFiRequestHandler();
     /*
      *      Public methods.
      */
@@ -222,7 +222,7 @@ public:
 /*
  *      External declaration for the global WiFi object.
  */
-extern WiFi *wifi;
+extern WiFiRequestHandler *wifi;
 
 
-#endif /* MAIN_WIFIREQUESTHANDLER_HPP_ */
+#endif /* MAIN_WIFI_REQUEST_HANDLER_HPP_ */

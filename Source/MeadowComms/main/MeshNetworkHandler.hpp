@@ -5,8 +5,8 @@
  *      Author: mark
  */
 
-#ifndef MAIN_MESHNETWORKHANDLER_HPP_
-#define MAIN_MESHNETWORKHANDLER_HPP_
+#ifndef MAIN_MESH_NETWORK_REQUEST_HANDLER_HPP_
+#define MAIN_MESH_NETWORK_REQUEST_HANDLER_HPP_
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -21,7 +21,7 @@
 #include "RequestHandlerBase.hpp"
 #include "Messaging.h"
 
-class MeshNetwork : public RequestHandlerBase
+class MeshNetworkRequestHandler : public RequestHandlerBase
 {
 private:
     /*
@@ -48,14 +48,14 @@ private:
     static void Task(void *);
 
 public:
-    MeshNetwork();
-    ~MeshNetwork();
+    MeshNetworkRequestHandler();
+    ~MeshNetworkRequestHandler();
 
     void Setup();
     QueueHandle_t GetQueueHandle();
     TaskHandle_t GetTaskHandle();
 };
 
-extern MeshNetwork *meshNetwork;
+extern MeshNetworkRequestHandler *meshNetwork;
 
-#endif /* MAIN_MESHNETWORKHANDLER_HPP_ */
+#endif /* MAIN_MESH_NETWORK_REQUEST_HANDLER_HPP_ */

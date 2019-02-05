@@ -30,14 +30,14 @@
 /*
  *      Default constructor for the mesh network.
  */
-MeshNetwork::MeshNetwork()
+MeshNetworkRequestHandler::MeshNetworkRequestHandler()
 {
 }
 
 /*
  *      Default destructor for the mesh network class.
  */
-MeshNetwork::~MeshNetwork()
+MeshNetworkRequestHandler::~MeshNetworkRequestHandler()
 {
 }
 
@@ -52,7 +52,7 @@ MeshNetwork::~MeshNetwork()
 /*
  *      Get the handle for the Mesh network message queue.
  */
-QueueHandle_t MeshNetwork::GetQueueHandle()
+QueueHandle_t MeshNetworkRequestHandler::GetQueueHandle()
 {
     return(_queueHandle);
 }
@@ -60,7 +60,7 @@ QueueHandle_t MeshNetwork::GetQueueHandle()
 /*
  *      Get the handle to the Mesh Network task.
  */
-TaskHandle_t MeshNetwork::GetTaskHandle()
+TaskHandle_t MeshNetworkRequestHandler::GetTaskHandle()
 {
     return(_taskHandle);
 }
@@ -76,7 +76,7 @@ TaskHandle_t MeshNetwork::GetTaskHandle()
 /*
  *      Setup the mesh network.
  */
-void MeshNetwork::Setup()
+void MeshNetworkRequestHandler::Setup()
 {
     const size_t messageSize = sizeof(ApplicationRequest);
     _queueHandle = xQueueCreate(MAX_QUEUE_LENGTH, messageSize);
@@ -90,7 +90,7 @@ void MeshNetwork::Setup()
 /*
  *      Dispatch the message
  */
-void MeshNetwork::DispatchRequest(ApplicationRequest *request)
+void MeshNetworkRequestHandler::DispatchRequest(ApplicationRequest *request)
 {
     ESP_LOGI(_taskName, "Message handling not implemented, message will be deleted");
     //
@@ -111,9 +111,9 @@ void MeshNetwork::DispatchRequest(ApplicationRequest *request)
  *      @param pvParameters
  *          Pointer to the instance of the Mesh Network object making the call.
  */
-void MeshNetwork::Task(void *pvParameters)
+void MeshNetworkRequestHandler::Task(void *pvParameters)
 {
-    MeshNetwork *sender = (MeshNetwork *) pvParameters;
+    MeshNetworkRequestHandler *sender = (MeshNetworkRequestHandler *) pvParameters;
     while (true)
     {
         ApplicationRequest request;

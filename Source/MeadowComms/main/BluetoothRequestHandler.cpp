@@ -30,14 +30,14 @@
 /*
  *      Default constructor for the bluetooth class.
  */
-Bluetooth::Bluetooth()
+BluetoothRequestHandler::BluetoothRequestHandler()
 {
 }
 
 /*
  *      Default destructor for the bluetooth class.
  */
-Bluetooth::~Bluetooth()
+BluetoothRequestHandler::~BluetoothRequestHandler()
 {
 }
 
@@ -52,7 +52,7 @@ Bluetooth::~Bluetooth()
 /*
  *      Get the Bluetooth queue handle.
  */
-QueueHandle_t Bluetooth::GetQueueHandle()
+QueueHandle_t BluetoothRequestHandler::GetQueueHandle()
 {
     return(_queueHandle);
 }
@@ -60,7 +60,7 @@ QueueHandle_t Bluetooth::GetQueueHandle()
 /*
  *      Get the handle to the Bluetooth task queue.
  */
-TaskHandle_t Bluetooth::GetTaskHandle()
+TaskHandle_t BluetoothRequestHandler::GetTaskHandle()
 {
     return(_taskHandle);
 }
@@ -76,7 +76,7 @@ TaskHandle_t Bluetooth::GetTaskHandle()
 /*
  *      Setup the bluetooth system.
  */
-void Bluetooth::Setup()
+void BluetoothRequestHandler::Setup()
 {
     const size_t messageSize = sizeof(ApplicationRequest);
     _queueHandle = xQueueCreate(MAX_QUEUE_LENGTH, messageSize);
@@ -88,7 +88,7 @@ void Bluetooth::Setup()
     _instantiated = true;
 }
 
-void Bluetooth::DispatchRequest(ApplicationRequest *request)
+void BluetoothRequestHandler::DispatchRequest(ApplicationRequest *request)
 {
     ESP_LOGI(_taskName, "Message handling not implemented, message will be deleted");
     //
@@ -109,9 +109,9 @@ void Bluetooth::DispatchRequest(ApplicationRequest *request)
  *      @param pvParameters
  *          Pointer to the instance of the Bluetooth class making the request.
  */
-void Bluetooth::Task(void *pvParameters)
+void BluetoothRequestHandler::Task(void *pvParameters)
 {
-    Bluetooth *sender = (Bluetooth *) pvParameters;
+    BluetoothRequestHandler *sender = (BluetoothRequestHandler *) pvParameters;
     while (true)
     {
         ApplicationRequest message;
