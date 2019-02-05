@@ -96,7 +96,7 @@ void WiFi::SetAntenna(WiFi::Antenna newAntenna)
 /*
  *      Get the handle for the WiFi message queue.
  */
-const QueueHandle_t WiFi::GetQueueHandle()
+QueueHandle_t WiFi::GetQueueHandle()
 {
     return(_queueHandle);
 }
@@ -104,7 +104,7 @@ const QueueHandle_t WiFi::GetQueueHandle()
 /*
  *      Get the handle to the WiFi task.
  */
-const TaskHandle_t WiFi::GetTaskHandle()
+TaskHandle_t WiFi::GetTaskHandle()
 {
     return(_taskHandle);
 }

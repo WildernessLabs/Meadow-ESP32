@@ -66,6 +66,9 @@ public:
      *      Public methods.
      */
     void Setup();
+
+    QueueHandle_t GetQueueHandle();
+    TaskHandle_t GetTaskHandle();
 };
 
 extern SystemRequestHandler *systemRequestHandler;

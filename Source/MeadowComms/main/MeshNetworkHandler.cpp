@@ -52,10 +52,26 @@ MeshNetwork::~MeshNetwork()
 /*
  *      Get the handle for the Mesh network message queue.
  */
-const QueueHandle_t MeshNetwork::GetQueueHandle()
+QueueHandle_t MeshNetwork::GetQueueHandle()
 {
     return(_queueHandle);
 }
+
+/*
+ *      Get the handle to the Mesh Network task.
+ */
+TaskHandle_t MeshNetwork::GetTaskHandle()
+{
+    return(_taskHandle);
+}
+
+/*
+ * ----------------------------------------------------------------------------
+ *
+ *                               Methods
+ *
+ * ----------------------------------------------------------------------------
+ */
 
 /*
  *      Setup the mesh network.
