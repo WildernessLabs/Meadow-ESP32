@@ -2,9 +2,9 @@
  *      Main application for the ESP32 code for Meadow.
  */
 
+#include "WiFiRequestHandler.hpp""
 #include "BluetoothRequestHandler.hpp"
 #include "MeshNetworkHandler.hpp"
-#include "WiFiRequestHandler.hpp"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "esp_system.h"
@@ -27,7 +27,7 @@
 /*
  *      WiFi object.
  */
-WiFi *wifi = NULL;
+WiFiRequestHandler *wifi = NULL;
 
 /*
  *      UART object.
@@ -37,12 +37,12 @@ UART *uart = NULL;
 /*
  *      Bluetooth object.
  */
-Bluetooth *bluetooth = NULL;
+BluetoothRequestHandler *bluetooth = NULL;
 
 /*
  *      Mesh networking object.
  */
-MeshNetwork *meshNetwork = NULL;
+MeshNetworkRequestHandler *meshNetwork = NULL;
 
 SystemRequestHandler *systemRequestHandler = NULL;
 
@@ -61,7 +61,7 @@ extern "C" void app_main()
         result = nvs_flash_init();
     }
     ESP_ERROR_CHECK(result);
-    wifi = new(WiFi);
+    wifi = new(WiFiRequestHandler);
     uart = new (UART);
     SetupMessageQueues();
 

@@ -5,8 +5,8 @@
  *      Author: mark
  */
 
-#ifndef MAIN_BLUETOOTHREQUESTHANDLER_HPP_
-#define MAIN_BLUETOOTHREQUESTHANDLER_HPP_
+#ifndef MAIN_BLUETOOTH_REQUEST_HANDLER_HPP_
+#define MAIN_BLUETOOTH_REQUEST_HANDLER_HPP_
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -16,7 +16,7 @@
 #include "Messaging.h"
 #include "RequestHandlerBase.hpp"
 
-class Bluetooth : public RequestHandlerBase
+class BluetoothRequestHandler : public RequestHandlerBase
 {
 private:
     /*
@@ -46,8 +46,8 @@ public:
     /*
      *      Constructor(s) and destructor.
      */
-    Bluetooth();
-    ~Bluetooth();
+    BluetoothRequestHandler();
+    ~BluetoothRequestHandler();
 
     /*
      *      Public methods.
@@ -57,7 +57,7 @@ public:
     TaskHandle_t GetTaskHandle();
 };
 
-extern Bluetooth *bluetooth;
+extern BluetoothRequestHandler *bluetooth;
 
 
-#endif /* MAIN_BLUETOOTHREQUESTHANDLER_HPP_ */
+#endif /* MAIN_BLUETOOTH_REQUEST_HANDLER_HPP_ */

@@ -1,12 +1,11 @@
 /*
- * RequestHandler.hpp
+ *      RequestHandler.hpp
  *
- *  Created on: 3 Feb 2019
- *      Author: mark
+ *      Base class for the request handlers.
  */
 
-#ifndef MAIN_REQUESTHANDLERBASE_HPP_
-#define MAIN_REQUESTHANDLERBASE_HPP_
+#ifndef MAIN_REQUEST_HANDLER_BASE_HPP_
+#define MAIN_REQUEST_HANDLER_BASE_HPP_
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -39,4 +38,4 @@ public:
 };
 
 
-#endif /* MAIN_REQUESTHANDLERBASE_HPP_ */
+#endif /* MAIN_REQUEST_HANDLER_BASE_HPP_ */
