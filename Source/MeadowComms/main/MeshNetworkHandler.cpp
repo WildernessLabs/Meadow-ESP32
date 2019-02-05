@@ -74,7 +74,7 @@ void MeshNetwork::Setup()
 /*
  *      Dispatch the message
  */
-void MeshNetwork::DispatchRequest(struct ApplicationRequest *request)
+void MeshNetwork::DispatchRequest(ApplicationRequest *request)
 {
     ESP_LOGI(_taskName, "Message handling not implemented, message will be deleted");
     //
@@ -100,7 +100,7 @@ void MeshNetwork::Task(void *pvParameters)
     MeshNetwork *sender = (MeshNetwork *) pvParameters;
     while (true)
     {
-        struct ApplicationRequest request;
+        ApplicationRequest request;
         BaseType_t result = xQueueReceive(sender->GetQueueHandle(), &request, portMAX_DELAY);
         if (result == pdTRUE)
         {

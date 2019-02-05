@@ -53,7 +53,7 @@ private:
      *      FreeRTOS task for processing requests.
      */
     static void Task(void *);
-    void DispatchRequest(struct ApplicationRequest *);
+    void DispatchRequest(ApplicationRequest *);
 
 public:
     /*

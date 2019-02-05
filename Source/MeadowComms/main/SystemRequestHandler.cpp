@@ -78,7 +78,7 @@ void SystemRequestHandler::Setup()
  *      @param request
  *          Request to be processed.
  */
-void SystemRequestHandler::DispatchRequest(struct ApplicationRequest *request)
+void SystemRequestHandler::DispatchRequest(ApplicationRequest *request)
 {
     switch (request->_function)
     {
@@ -110,7 +110,7 @@ void SystemRequestHandler::DispatchRequest(struct ApplicationRequest *request)
 void SystemRequestHandler::Task(void *pvParameters)
 {
     SystemRequestHandler *sender = (SystemRequestHandler *) pvParameters;
-    struct ApplicationRequest message;
+    ApplicationRequest message;
     while (true)
     {
         BaseType_t result = xQueueReceive(sender->_queueHandle, &message, portMAX_DELAY);

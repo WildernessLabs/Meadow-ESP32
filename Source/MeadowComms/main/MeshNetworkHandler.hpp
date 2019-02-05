@@ -44,7 +44,7 @@ private:
      */
     const char *_taskName = "MeshNetworkTask";
 
-    void DispatchRequest(struct ApplicationRequest *);
+    void DispatchRequest(ApplicationRequest *);
     static void Task(void *);
 
 public:

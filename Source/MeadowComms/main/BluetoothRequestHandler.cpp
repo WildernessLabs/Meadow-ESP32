@@ -106,7 +106,7 @@ void Bluetooth::Task(void *pvParameters)
     Bluetooth *sender = (Bluetooth *) pvParameters;
     while (true)
     {
-        struct ApplicationRequest message;
+        ApplicationRequest message;
         QueueHandle_t bluetoothQueueHandle = bluetooth->GetQueueHandle();
         BaseType_t result = xQueueReceive(bluetoothQueueHandle, &message, portMAX_DELAY);
         if (result == pdTRUE)
