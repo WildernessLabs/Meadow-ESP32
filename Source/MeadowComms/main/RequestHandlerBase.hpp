@@ -27,54 +27,13 @@
 
 class RequestHandlerBase
 {
+protected:
+
 public:
-    /*
-     *      Handle for the WiFi messages to be processed by the WIFi task.
-     */
-    QueueHandle_t _queueHandle = NULL;
-
-    /*
-     *      Handle for the request handler task.
-     */
-    TaskHandle_t _taskHandle = NULL;
-
-    /*
-     * ----------------------------------------------------------------------------
-     *
-     *                          Getters and setters
-     *
-     * ----------------------------------------------------------------------------
-     */
-
-    /*
-     *      Get the handle for the queue.
-     */
-    QueueHandle_t GetQueueHandle();
-
-    /*
-     *      Set the handle for the queue.
-     */
-    void SetQueueHandle(QueueHandle_t);
-
-    /*
-     *      Set the task handle.
-     */
-    void SetTaskHandle(TaskHandle_t);
-
-    /*
-     *      Set the task handle.
-     */
-    TaskHandle_t GetTaskHandle();
-
     /*
      *      Setup the various properties for correct functioning of the request handler.
      */
     virtual void Setup() = 0;
-
-    /*
-     *      Get the name of the task for this request handler.
-     */
-    virtual const char *GetTaskName() = 0;
 };
 
 

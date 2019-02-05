@@ -22,38 +22,5 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "Messaging.h"
 #include "RequestHandlerBase.hpp"
-
-/*
- * ----------------------------------------------------------------------------
- *
- *                          Getters and setters
- *
- * ----------------------------------------------------------------------------
- */
-
-/*
- *      Get the handle for the WiFi queue.
- */
-QueueHandle_t RequestHandlerBase::GetQueueHandle()
-{
-    return(_queueHandle);
-}
-
-/*
- *      Set the handle for the WiFi queue.
- */
-void RequestHandlerBase::SetQueueHandle(QueueHandle_t queueHandle)
-{
-    _queueHandle = queueHandle;
-}
-
-void RequestHandlerBase::SetTaskHandle(TaskHandle_t taskHandle)
-{
-    _taskHandle = taskHandle;
-}
-
-TaskHandle_t RequestHandlerBase::GetTaskHandle()
-{
-    return(_taskHandle);
-}
