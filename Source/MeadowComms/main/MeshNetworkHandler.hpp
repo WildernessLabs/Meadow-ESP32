@@ -52,8 +52,8 @@ public:
     ~MeshNetwork();
 
     void Setup();
-    const QueueHandle_t GetQueueHandle();
-    const TaskHandle_t GetTaskHandle();
+    QueueHandle_t GetQueueHandle();
+    TaskHandle_t GetTaskHandle();
 };
 
 extern MeshNetwork *meshNetwork;

@@ -55,6 +55,30 @@ SystemRequestHandler::~SystemRequestHandler()
  */
 
 /*
+ *      Get the handle for the System Request message queue.
+ */
+QueueHandle_t SystemRequestHandler::GetQueueHandle()
+{
+    return(_queueHandle);
+}
+
+/*
+ *      Get the handle to the System Request handler task.
+ */
+TaskHandle_t SystemRequestHandler::GetTaskHandle()
+{
+    return(_taskHandle);
+}
+
+/*
+ * ----------------------------------------------------------------------------
+ *
+ *                               Methods
+ *
+ * ----------------------------------------------------------------------------
+ */
+
+/*
  *      Setup the system request handler.
  */
 void SystemRequestHandler::Setup()
@@ -113,7 +137,7 @@ void SystemRequestHandler::Task(void *pvParameters)
     ApplicationRequest message;
     while (true)
     {
-        BaseType_t result = xQueueReceive(sender->_queueHandle, &message, portMAX_DELAY);
+        BaseType_t result = xQueueReceive(sender->GetQueueHandle(), &message, portMAX_DELAY);
         if (result == pdTRUE)
         {
             sender->DispatchRequest(&message);
@@ -124,6 +148,6 @@ void SystemRequestHandler::Task(void *pvParameters)
     //  The documentation for FreeRTOS states that we should delete the task
     //  should we get here.
     //
-    vTaskDelete(sender->_taskHandle);
+    vTaskDelete(sender->GetTaskHandle());
 }
 

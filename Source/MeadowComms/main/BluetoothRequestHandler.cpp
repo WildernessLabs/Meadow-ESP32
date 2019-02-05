@@ -52,7 +52,7 @@ Bluetooth::~Bluetooth()
 /*
  *      Get the Bluetooth queue handle.
  */
-const QueueHandle_t Bluetooth::GetQueueHandle()
+QueueHandle_t Bluetooth::GetQueueHandle()
 {
     return(_queueHandle);
 }
@@ -60,10 +60,18 @@ const QueueHandle_t Bluetooth::GetQueueHandle()
 /*
  *      Get the handle to the Bluetooth task queue.
  */
-const TaskHandle_t Bluetooth::GetTaskHandle()
+TaskHandle_t Bluetooth::GetTaskHandle()
 {
     return(_taskHandle);
 }
+
+/*
+ * ----------------------------------------------------------------------------
+ *
+ *                               Methods
+ *
+ * ----------------------------------------------------------------------------
+ */
 
 /*
  *      Setup the bluetooth system.
@@ -107,8 +115,7 @@ void Bluetooth::Task(void *pvParameters)
     while (true)
     {
         ApplicationRequest message;
-        QueueHandle_t bluetoothQueueHandle = bluetooth->GetQueueHandle();
-        BaseType_t result = xQueueReceive(bluetoothQueueHandle, &message, portMAX_DELAY);
+        BaseType_t result = xQueueReceive(sender->GetQueueHandle(), &message, portMAX_DELAY);
         if (result == pdTRUE)
         {
             sender->DispatchRequest(&message);
