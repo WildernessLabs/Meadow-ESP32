@@ -156,18 +156,13 @@ void WiFi::Task(void *pvParameters)
         {
             sender->DispatchRequest(&message);
         }
-//        BaseType_t result = xQueueReceive(wifi->GetQueueHandle(), &message, portMAX_DELAY);
-//        if (result == pdTRUE)
-//        {
-//            wifi->DispatchRequest(&message);
-//        }
     }
     //
     //  We should only get here if the code in the while loop generates a fault.
     //  The documentation for FreeRTOS states that we should delete the task
     //  should we get here.
     //
-    vTaskDelete(wifi->_taskHandle);
+    vTaskDelete(sender->_taskHandle);
 }
 
 /*
