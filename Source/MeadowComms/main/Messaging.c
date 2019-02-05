@@ -4,11 +4,3 @@
 #include "esp_log.h"
 
 #include "Messaging.h"
-#include "Tasks.hpp"
-
-/// <summary>
-///     Set up the message queues.
-/// </summary>
-void SetupMessageQueues()
-{
-}

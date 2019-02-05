@@ -21,7 +21,6 @@
 #include <stdlib.h>
 
 #include "UART.hpp"
-#include "Tasks.hpp"
 #include "Messaging.h"
 #include "StatusCodes.hpp"
 #include "Encoders.hpp"
@@ -200,8 +199,8 @@ void UART::Setup()
     {
         ESP_LOGI(__func__, "Cannot allocate UART transmit queue.");
     }
-    xTaskCreate(UARTRxTask, UART_RX_TASK_NAME, 1024 * 2, NULL, configMAX_PRIORITIES - 5, &_xUARTRxTaskHandle);
-    xTaskCreate(UARTTxTask, UART_TX_TASK_NAME, 1024 * 2, NULL, configMAX_PRIORITIES - 5, &_xUARTTxTaskHandle);
+    xTaskCreate(UARTRxTask, UART_RX_TASK_NAME, 1024 * 2, this, configMAX_PRIORITIES - 5, &_xUARTRxTaskHandle);
+    xTaskCreate(UARTTxTask, UART_TX_TASK_NAME, 1024 * 2, this, configMAX_PRIORITIES - 5, &_xUARTTxTaskHandle);
 }
 
 /*
@@ -1015,3 +1014,90 @@ void UART::Send(ApplicationResponse *message)
     }
 }
 
+/*
+ *      Process the UART transmit messages received through the UART Tx queue.
+ *
+ *      @param pvParameters
+ *          Pointer to a list of parameters passed to the UART Tx task.
+ */
+void UART::UARTTxTask(void *pvParameters)
+{
+    UART *sender = (UART *) pvParameters;
+    while (true)
+    {
+        ApplicationResponse request;
+
+        BaseType_t result = xQueueReceive(sender->GetUartTransmitQueueHandle(), &request, portMAX_DELAY);
+        if (result == pdTRUE)
+        {
+            sender->Send(&request);
+        }
+    }
+    //
+    //  We should only get here if the code in the while loop generates a fault.
+    //  The documentation for FreeRTOS states that we should delete the task
+    //  should we get here.
+    //
+    vTaskDelete(sender->GetUartTransmitTaskHandle());
+}
+
+/*
+ *      Process data received data from the UART interrupt task through the UART Rx queue.
+ *
+ *      @param pvParameters
+ *          Pointer to a list of parameters passed to the UART Rx task.
+ */
+void UART::UARTRxTask(void *pvParameters)
+{
+    UART *sender = (UART *) pvParameters;
+    uart_event_t event;
+    QueueHandle_t uartRxQueueHandle = sender->GetUartRxQueueHandle();
+    QueueHandle_t uartTxQueueHandle = sender->GetUartTransmitQueueHandle();
+    uint8_t* data = (uint8_t *) pvPortMalloc(UART::RX_BUFFER_SIZE);
+
+    while (true)
+    {
+        int dataLeftToRead = 0;
+        int amountToRead = 0;
+        if (xQueueReceive(uartRxQueueHandle, (void *) &event, portMAX_DELAY))
+        {
+            memset(data, 0, UART::RX_BUFFER_SIZE);
+            switch (event.type)
+            {
+                case UART_DATA:
+                    dataLeftToRead = event.size;
+                    while (dataLeftToRead > 0)
+                    {
+                        amountToRead = dataLeftToRead <= UART::RX_BUFFER_SIZE ? dataLeftToRead : UART::RX_BUFFER_SIZE;
+                        memset(data, 0, UART::RX_BUFFER_SIZE);
+                        uart_read_bytes(sender->STM32_UART_PORT_NUMBER, data, amountToRead, portMAX_DELAY);
+                        uart->DecodeSerialData(data, amountToRead);
+                        dataLeftToRead -= amountToRead;
+                    }
+                    break;
+                case UART_BUFFER_FULL:
+                case UART_FIFO_OVF:
+                    //
+                    //  Flush the input buffer in the case of a full ring buffer or a FIFO overflow.
+                    //
+                    uart_flush_input(sender->STM32_UART_PORT_NUMBER);
+                    xQueueReset(uartRxQueueHandle);
+                    break;
+                default:
+                    uart_flush_input(sender->STM32_UART_PORT_NUMBER);
+                    xQueueReset(uartRxQueueHandle);
+                    xQueueReset(uartTxQueueHandle);
+                    break;
+            }
+        }
+    }
+    //
+    //  We should only get here if the code in the while loop generates a fault.
+    //  The documentation for FreeRTOS states that we should delete the task
+    //  should we get here.
+    //
+    free(data);
+    data = NULL;
+    sender->RxCleanup();
+    vTaskDelete(sender->GetUartReceiveTaskHandle());
+}

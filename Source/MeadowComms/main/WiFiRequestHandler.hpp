@@ -29,7 +29,6 @@
 #include "RequestHandlerBase.hpp"
 #include "StatusCodes.hpp"
 #include "UART.hpp"
-#include "Tasks.hpp"
 
 /*
  *      WiFi Function codes.

@@ -17,7 +17,6 @@
 #include <stdlib.h>
 
 #include "Messaging.h"
-#include "Tasks.hpp"
 
 /*
  * ----------------------------------------------------------------------------
