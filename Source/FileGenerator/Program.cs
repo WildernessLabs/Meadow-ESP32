@@ -43,6 +43,27 @@ namespace FileGenerator
                     }
                 }
             }
+            using (StreamReader structuresFile = new StreamReader("Messages.json"))
+            {
+                string fileContents = structuresFile.ReadToEnd();
+                JObject o = JObject.Parse(fileContents);
+
+                JArray a = (JArray)o["Messages"];
+
+                IList<Message> messages = a.ToObject<IList<Message>>();
+                foreach (Message m in messages)
+                {
+                    Console.WriteLine($"Message name: {m.Name}");
+                    if (m.MessageElements != null)
+                    {
+                        Console.WriteLine("    Message elements: ");
+                        foreach (MessageElement me in m.MessageElements)
+                        {
+                            Console.WriteLine($"        {me.Name} : {me.DateType}");
+                        }
+                    }
+                }
+            }
         }
     }
 }
