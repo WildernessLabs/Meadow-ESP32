@@ -1,0 +1,23 @@
+{
+    "Messages":
+    [
+        { 
+            "Name": "Message1",
+            "MessageElements":
+            [
+                { "Name": "Name1", "DateType": "UInt32" },
+                { "Name": "Name2", "DateType": "Byte" },
+                { "Name": "Name3", "DateType": "UInt32" }
+            ]
+        },
+        {
+            "Name": "Message2",
+            "MessageElements":
+            [
+                { "Name": "Name1", "DateType": "UInt32" },
+                { "Name": "Name2", "DateType": "UInt32" },
+                { "Name": "Name3", "DateType": "UInt32" }
+            ]
+        }
+    ]
+}

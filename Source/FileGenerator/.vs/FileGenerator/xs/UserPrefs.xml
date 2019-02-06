@@ -1,0 +1,16 @@
+﻿<Properties StartupConfiguration="{5119E0F0-99A6-469B-B574-252D22C01793}|Default">
+  <MonoDevelop.Ide.ItemProperties.FileGenerator PreferredExecutionTarget="MonoDevelop.Default" />
+  <MonoDevelop.Ide.Workbench ActiveDocument="enums.json">
+    <Files>
+      <File FileName="enums.json" Line="1" Column="1" />
+    </Files>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug|x86" />
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore>
+      <Breakpoint file="/Users/mark/SoftwareDevelopment/WildernessLabs/Meadow/Meadow-ESP32/Source/FileGenerator/Program.cs" relfile="Program.cs" line="11" column="46" />
+    </BreakpointStore>
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MultiItemStartupConfigurations />
+</Properties>

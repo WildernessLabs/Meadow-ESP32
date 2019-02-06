@@ -1,4 +1,8 @@
 ﻿using System;
+using System.IO;
+using System.Collections.Generic;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace FileGenerator
 {
@@ -6,7 +10,39 @@ namespace FileGenerator
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Hello World!");
+            Console.WriteLine("File Generator");
+
+            using (StreamReader enumFile = new StreamReader("enums.json"))
+            {
+                string fileContents = enumFile.ReadToEnd();
+                JObject o = JObject.Parse(fileContents);
+
+                JArray a = (JArray)o["Enums"];
+
+                IList<EnumDataType> enums = a.ToObject<IList<EnumDataType>>();
+                foreach (EnumDataType e in enums)
+                {
+                    Console.WriteLine($"Enum name: {e.Name}, data type: {e.BaseDataType}");
+                    if (e.EnumNames != null)
+                    {
+                        Console.Write("    Enum value names: ");
+                        foreach (string en in e.EnumNames)
+                        {
+                            Console.Write($"{en} ");
+                        }
+                        Console.WriteLine();
+                    }
+                    if (e.NameValuePairs != null)
+                    {
+                        Console.Write("    Name value pairs: ");
+                        foreach (EnumNameValuePairs nvp in e.NameValuePairs)
+                        {
+                            Console.Write($"{nvp.Name} = {nvp.Value} ");
+                        }
+                        Console.WriteLine();
+                    }
+                }
+            }
         }
     }
 }
