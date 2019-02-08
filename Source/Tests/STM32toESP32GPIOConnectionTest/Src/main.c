@@ -78,27 +78,6 @@ static void MX_GPIO_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-void delay_ms (uint32_t t)
-{
-  uint32_t start, end;
-  start = HAL_GetTick();
-  end = start + t;
-  if (start < end)
-  { 
-  	while ((HAL_GetTick() >= start) && (HAL_GetTick() < end))
-    { 
-  	  // do nothing 
-  	} 
-  }
-  else 
-  { 
-    while ((HAL_GetTick() >= start) || (HAL_GetTick() < end))
-    {
-      // do nothing
-    };
-  }
-}
-
 /* USER CODE END 0 */
 
 /**
@@ -140,7 +119,7 @@ int main(void)
   
   while (1)
   {
-    delay_ms(250);
+    HAL_Delay(250);
     if (level == 1)
     {
       HAL_GPIO_WritePin(GPIOB, GPIO_PIN_15, GPIO_PIN_SET);
