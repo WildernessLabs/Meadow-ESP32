@@ -202,7 +202,7 @@ namespace FileGenerator
                     switch (e.BaseDataType.ToLower())
                     {
                         case "byte":
-                            dataType = "UInt8";
+                            dataType = "byte";
                             break;
                         case "uint32":
                             dataType = "UInt32";
