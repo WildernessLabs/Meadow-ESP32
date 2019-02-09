@@ -1,0 +1,102 @@
+﻿{
+    "Enums":
+    [
+        { 
+            "Name": "StatusCodes",
+            "Namespace": "StatusCodes",
+            "Comment": "Status and error codes for the various function calls.",
+            "BaseDataType": "UInt32",
+            "EnumNames": [ "CompletedOK", "CRCError", "Restart", "Failure", "InvalidInterface", "QueueError",
+                "InvalidPacket", "InvalidHeader", "UnexpectedData", "MissingEndOfFrameMarker", "WiFiAlreadyStarted",
+                "InvalidSSID", "InvalidPassword", "WiFiDisconnected"
+            ]
+        },
+        {
+            "Name": "MessageAcknowledgement",
+            "BaseDataType": "Byte",
+            "Namespace": "",
+            "Comment": "Possible acknowledgement types.",
+            "NameValuePairs":
+            [
+                { "Name": "MSG_ACK", "Value": "0" },
+                { "Name": "MSG_NAK", "Value": "1" }
+            ]
+        },
+        {
+            "Name": "WiFiAuthenticationMode",
+            "BaseDataType": "Byte",
+            "Namespace": "Esp32Messaging",
+            "Comment": "Access point authentication method.",
+            "NameValuePairs":
+            [
+                { "Name": "Open", "Value": "0" },
+                { "Name": "Wep", "Value": "1" },
+                { "Name": "WpaPsk", "Value": "2" },
+                { "Name": "Wpa2Psk", "Value": "3" },
+                { "Name": "WpaWpa2Psk", "Value": "4" },
+                { "Name": "Wpa2Enterprise", "Value": "5" },
+            ]
+        },
+        {
+            "Name": "WiFiCountryPolicy",
+            "BaseDataType": "",
+            "Namespace": "Esp32Messaging",
+            "Comment": "WiFi Country Policy.",
+            "NameValuePairs":
+            [
+                { "Name": "Automatic", "Value": "0" },
+                { "Name": "Manual", "Value": "1" }
+            ]
+        },
+        {
+            "Name": "WiFiSecondChannel",
+            "BaseDataType": "",
+            "Namespace": "Esp32Messaging",
+            "Comment": "Location of the secondary channel in respect to the primary channel.",
+            "NameValuePairs":
+            [
+                { "Name": "None", "Value": "0" },
+                { "Name": "Above", "Value": "1" },
+                { "Name": "Below", "Value": "2" }
+            ]
+        },
+        {
+            "Name": "WiFiScanType",
+            "BaseDataType": "",
+            "Namespace": "Esp32Messaging",
+            "Comment": "WiFiScanType",
+            "NameValuePairs":
+            [
+                { "Name": "Active", "Value": "0" },
+                { "Name": "Passive", "Value": "1" }
+            ]
+        },
+        {
+            "Name": "Antenna",
+            "BaseDataType": "",
+            "Namespace": "Esp32Messaging",
+            "Comment": "Types of antennas that are selectable.",
+            "NameValuePairs":
+            [
+                { "Name": "OnBoard", "Value": "0" },
+                { "Name": "External", "Value": "1" }
+            ]
+        },
+        {
+            "Name": "WiFiCipherType",
+            "BaseDataType": "",
+            "Namespace": "Esp32Messaging",
+            "Comment": "Encryption method used by the access point.",
+            "NameValuePairs":
+            [
+                { "Name": "None", "Value": "0" },
+                { "Name": "Wep40", "Value": "1" },
+                { "Name": "Tkip", "Value": "2" },
+                { "Name": "Tkip", "Value": "3" },
+                { "Name": "Ccmp", "Value": "4" },
+                { "Name": "TkipCcmp", "Value": "5" },
+                { "Name": "Unknown", "Value": "6" }
+            ]
+        },
+    ]
+}

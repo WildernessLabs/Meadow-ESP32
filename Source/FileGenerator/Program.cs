@@ -8,41 +8,25 @@ namespace FileGenerator
 {
     class Program
     {
+        static DataType[] _dataTypes = 
+        {
+            new DataType("uint32", 4),
+            new DataType("int", 4),
+            new DataType("byte", 1),
+            new DataType("array", -1)
+        };
+
         static void Main(string[] args)
         {
+            string sourceFileName = $"..{Path.DirectorySeparatorChar}MeadowComms{Path.DirectorySeparatorChar}main{Path.DirectorySeparatorChar}SharedEnums.json";
+            string cFileName = $"..{Path.DirectorySeparatorChar}MeadowComms{Path.DirectorySeparatorChar}main{Path.DirectorySeparatorChar}SharedEnums.hpp";
+            string cSharpFileName = $"..{Path.DirectorySeparatorChar}UARTTransport{Path.DirectorySeparatorChar}Esp32Messaging.SharedEnums.cs";
+            EnumProcessor enumProcessor = new EnumProcessor(sourceFileName, cFileName, cSharpFileName);
+
             Console.WriteLine("File Generator");
 
-            using (StreamReader enumFile = new StreamReader("enums.json"))
-            {
-                string fileContents = enumFile.ReadToEnd();
-                JObject o = JObject.Parse(fileContents);
+            enumProcessor.ProcessFile();
 
-                JArray a = (JArray)o["Enums"];
-
-                IList<EnumDataType> enums = a.ToObject<IList<EnumDataType>>();
-                foreach (EnumDataType e in enums)
-                {
-                    Console.WriteLine($"Enum name: {e.Name}, data type: {e.BaseDataType}");
-                    if (e.EnumNames != null)
-                    {
-                        Console.Write("    Enum value names: ");
-                        foreach (string en in e.EnumNames)
-                        {
-                            Console.Write($"{en} ");
-                        }
-                        Console.WriteLine();
-                    }
-                    if (e.NameValuePairs != null)
-                    {
-                        Console.Write("    Name value pairs: ");
-                        foreach (EnumNameValuePairs nvp in e.NameValuePairs)
-                        {
-                            Console.Write($"{nvp.Name} = {nvp.Value} ");
-                        }
-                        Console.WriteLine();
-                    }
-                }
-            }
             using (StreamReader structuresFile = new StreamReader("Messages.json"))
             {
                 string fileContents = structuresFile.ReadToEnd();
