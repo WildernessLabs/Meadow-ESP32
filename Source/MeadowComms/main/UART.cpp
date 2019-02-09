@@ -1071,7 +1071,7 @@ void UART::UARTRxTask(void *pvParameters)
                         amountToRead = dataLeftToRead <= UART::RX_BUFFER_SIZE ? dataLeftToRead : UART::RX_BUFFER_SIZE;
                         memset(data, 0, UART::RX_BUFFER_SIZE);
                         uart_read_bytes(sender->STM32_UART_PORT_NUMBER, data, amountToRead, portMAX_DELAY);
-                        uart->DecodeSerialData(data, amountToRead);
+                        sender->DecodeSerialData(data, amountToRead);
                         dataLeftToRead -= amountToRead;
                     }
                     break;

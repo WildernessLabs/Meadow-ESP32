@@ -43,6 +43,9 @@ BluetoothRequestHandler *bluetooth = NULL;
  */
 MeshNetworkRequestHandler *meshNetwork = NULL;
 
+/*
+ *      System request handler.
+ */
 SystemRequestHandler *systemRequestHandler = NULL;
 
 
