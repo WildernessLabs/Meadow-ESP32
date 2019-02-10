@@ -14,6 +14,8 @@
 #ifndef _SHARED_ENUMS_HPP_
 #define _SHARED_ENUMS_HPP_
 
+#include "freertos/FreeRTOS.h"
+
 namespace StatusCodes
 {
     /*
@@ -77,7 +79,7 @@ namespace Esp32Messaging
      */
     enum WiFiSecondChannel
     {
-        None = 0,
+        SecondChannelNone = 0,
         Above = 1,
         Below = 2
     };
@@ -105,9 +107,9 @@ namespace Esp32Messaging
      */
     enum WiFiCipherType
     {
-        None = 0,
+        CipherTypeNone = 0,
         Wep40 = 1,
-        Tkip = 2,
+        Wep104 = 2,
         Tkip = 3,
         Ccmp = 4,
         TkipCcmp = 5,
