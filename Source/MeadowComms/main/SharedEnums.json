@@ -55,7 +55,7 @@
             "Comment": "Location of the secondary channel in respect to the primary channel.",
             "NameValuePairs":
             [
-                { "Name": "None", "Value": "0" },
+                { "Name": "SecondChannelNone", "Value": "0" },
                 { "Name": "Above", "Value": "1" },
                 { "Name": "Below", "Value": "2" }
             ]
@@ -89,9 +89,9 @@
             "Comment": "Encryption method used by the access point.",
             "NameValuePairs":
             [
-                { "Name": "None", "Value": "0" },
+                { "Name": "CipherTypeNone", "Value": "0" },
                 { "Name": "Wep40", "Value": "1" },
-                { "Name": "Tkip", "Value": "2" },
+                { "Name": "Wep104", "Value": "2" },
                 { "Name": "Tkip", "Value": "3" },
                 { "Name": "Ccmp", "Value": "4" },
                 { "Name": "TkipCcmp", "Value": "5" },

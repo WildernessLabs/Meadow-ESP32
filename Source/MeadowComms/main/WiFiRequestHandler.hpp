@@ -27,7 +27,7 @@
 #include "Encoders.hpp"
 #include "Messaging.h"
 #include "RequestHandlerBase.hpp"
-#include "StatusCodes.hpp"
+#include "SharedEnums.hpp"
 #include "UART.hpp"
 
 /*
