@@ -22,7 +22,7 @@
 
 #include "UART.hpp"
 #include "Messaging.h"
-#include "StatusCodes.hpp"
+#include "SharedEnums.hpp"
 #include "Encoders.hpp"
 
 /*

@@ -20,7 +20,7 @@
 #include "Messaging.h"
 #include "UART.hpp"
 #include "Logging.hpp"
-#include "StatusCodes.hpp"
+#include "SharedEnums.hpp"
 #include "SystemRequestHandler.hpp"
 
 /*
