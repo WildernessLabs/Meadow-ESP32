@@ -39,6 +39,8 @@ namespace FileGenerator
             outputFile.WriteLine("#ifndef _SHARED_ENUMS_HPP_");
             outputFile.WriteLine("#define _SHARED_ENUMS_HPP_");
             outputFile.WriteLine("");
+            outputFile.WriteLine("#include \"freertos/FreeRTOS.h\"");
+            outputFile.WriteLine("");
         }
 
         private void OutputCFileFooter(StreamWriter outputFile)
