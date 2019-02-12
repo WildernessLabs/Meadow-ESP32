@@ -269,7 +269,7 @@ namespace FileGenerator
         public void ProcessFile()
         {
             IList<Message> messages;
-            using (StreamReader structuresFile = new StreamReader("Messages.json"))
+            using (StreamReader structuresFile = new StreamReader(InputFileName))
             {
                 string fileContents = structuresFile.ReadToEnd();
                 JObject o = JObject.Parse(fileContents);
