@@ -279,6 +279,11 @@ namespace FileGenerator
                 messages = a.ToObject<IList<Message>>();
             }
             GenerateCMessagesEncoders(messages);
+            //
+            //  The message structure header file must be generated after the message encoders file
+            //  as the prototypes are built up in the GenerateCMessagesEncoders method.  The prototypes
+            //  are then added to the end of the structure file. 
+            //
             GenerateCMessageStructureFile(messages);
             GenerateCSharpEncodersFile(messages);
             GenerateCSharpMessageStructureFile(messages);
