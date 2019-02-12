@@ -14,7 +14,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration buildProperties="" description="" id="cdt.managedbuild.toolchain.gnu.cross.base.465614450" name="Default" optionalBuildProperties="" parent="org.eclipse.cdt.build.core.emptycfg">
+				<configuration artifactName="${ProjName}" buildProperties="" description="" id="cdt.managedbuild.toolchain.gnu.cross.base.465614450" name="Default" optionalBuildProperties="org.eclipse.cdt.docker.launcher.containerbuild.property.selectedvolumes=,org.eclipse.cdt.docker.launcher.containerbuild.property.volumes=" parent="org.eclipse.cdt.build.core.emptycfg">
 					<folderInfo id="cdt.managedbuild.toolchain.gnu.cross.base.465614450.1101202462" name="/" resourcePath="">
 						<toolChain id="cdt.managedbuild.toolchain.gnu.cross.base.1266287526" name="Cross GCC" superClass="cdt.managedbuild.toolchain.gnu.cross.base">
 							<option id="cdt.managedbuild.option.gnu.cross.prefix.1002503662" name="Prefix" superClass="cdt.managedbuild.option.gnu.cross.prefix"/>
@@ -40,6 +40,11 @@
 							</tool>
 						</toolChain>
 					</folderInfo>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.cross.base.465614450.1405017021" name="Encoders.cpp.txt" rcbsApplicability="disable" resourcePath="Metadata/Encoders.cpp.txt" toolsToInvoke=""/>
+					<fileInfo id="cdt.managedbuild.toolchain.gnu.cross.base.465614450.749413345" name="Encoders.hpp.txt" rcbsApplicability="disable" resourcePath="Metadata/Encoders.hpp.txt" toolsToInvoke=""/>
+					<sourceEntries>
+						<entry excluding="Metadata/Encoders.hpp.txt|Metadata/Encoders.cpp.txt" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+					</sourceEntries>
 				</configuration>
 			</storageModule>
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
