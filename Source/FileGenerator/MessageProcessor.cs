@@ -17,26 +17,25 @@ namespace FileGenerator
             new DataType("array", -1, "void *", "byte[]")
         };
 
-        private string InputFileName { get; set; }
+        public string InputFileName { get; set; }
 
-        private string CSourceFileName { get; set; }
+        public string CSourceFileName { get; set; }
 
-        private string CHeaderFileName { get; set; }
+        public string CHeaderFileName { get; set; }
 
-        private string CSharpFileName { get; set; }
+        public string CSharpFileName { get; set; }
 
-        private string CSharpStructureFileName { get; set; }
+        public string CSharpStructureFileName { get; set; }
+
+        public string CHeaderTemplateFileName { get; set; }
+
+        public string CSourceTemplateFileName { get; set; }
 
         private StringBuilder FunctionPrototypes = null;
 
 
-        public MessageProcessor(string fileName, string cHeaderFileName, string cSourceFileName, string csharpFileName, string csharpStructuresFileName)
+        public MessageProcessor()
         {
-            InputFileName = fileName;
-            CHeaderFileName = cHeaderFileName;
-            CSourceFileName = cSourceFileName;
-            CSharpFileName = csharpFileName;
-            CSharpStructureFileName = csharpStructuresFileName;
         }
 
         private DataType GetDataType(string elementDataType)
@@ -187,8 +186,8 @@ namespace FileGenerator
             using (StreamWriter sourceFile = new StreamWriter(CHeaderFileName))
             {
                 OutputCHeaderFileHeader(sourceFile, CHeaderFileName);
-                sourceFile.WriteLine("#ifndef _MESSAGE_ENCODERS_HPP_");
-                sourceFile.WriteLine("#define _MESSAGE_ENCODERS_HPP_");
+                sourceFile.WriteLine("#ifndef _ENCODERS_HPP_");
+                sourceFile.WriteLine("#define _ENCODERS_HPP_");
                 sourceFile.WriteLine();
                 sourceFile.WriteLine("#include \"freertos/FreeRTOS.h\"");
                 sourceFile.WriteLine();
@@ -206,15 +205,20 @@ namespace FileGenerator
                             DataType dt = GetDataType(me.DateType);
                             sourceFile.WriteLine($"        {dt.CTypeName} {me.Name};");                         
                         }
-                        sourceFile.WriteLine("    }");
+                        sourceFile.WriteLine("    };");
+                        sourceFile.WriteLine();
                     }
                 }
                 sourceFile.WriteLine("}");
                 sourceFile.WriteLine();
-                sourceFile.WriteLine("namespace Encoders");
-                sourceFile.WriteLine("{");
+                using (StreamReader templateFile = new StreamReader(CHeaderTemplateFileName))
+                {
+                    sourceFile.Write(templateFile.ReadToEnd());
+                }
                 sourceFile.WriteLine(FunctionPrototypes.ToString());
-                sourceFile.WriteLine("}");
+                sourceFile.WriteLine("};");
+                sourceFile.WriteLine();
+                sourceFile.WriteLine("  #endif /* _ENCODERS_HPP_ */");
                 sourceFile.WriteLine();
             }
         }
@@ -228,41 +232,67 @@ namespace FileGenerator
                 sourceFile.WriteLine();
                 sourceFile.WriteLine("#include \"Encoders.hpp\"");
                 sourceFile.WriteLine();
-                sourceFile.WriteLine("namespace Encoders");
-                sourceFile.WriteLine("{");
+                using (StreamReader templateFile = new StreamReader(CSourceTemplateFileName))
+                {
+                    sourceFile.Write(templateFile.ReadToEnd());
+                }
+                sourceFile.WriteLine();
+                sourceFile.WriteLine("/*");
+                sourceFile.WriteLine(" *******************************************************************************");
+                sourceFile.WriteLine();
+                sourceFile.WriteLine("       THE METHODS BELOW HAVE BEEN AUTOMATICALLY GENERATED BASED UPON THE");
+                sourceFile.WriteLine("       Messages.json METADATA FILE.");
+                sourceFile.WriteLine();
+                sourceFile.WriteLine(" *******************************************************************************");
+                sourceFile.WriteLine("*/");
                 foreach (Message m in messages)
                 {
                     if (m.MessageElements != null)
                     {
                         string variableName = m.Name.Substring(0, 1).ToLower() + m.Name.Substring(1);
-                        sourceFile.WriteLine($"    public static void Encode{m.Name}({m.Name} {variableName}, byte[] buffer, int offset)");
-                        FunctionPrototypes.AppendLine($"    public static void Encode{m.Name}({m.Name}, byte[], int);");
-                        sourceFile.WriteLine("    {");
+                        sourceFile.WriteLine($"void Encoders::Encode{m.Name}(Esp32Messaging::{m.Name} *{variableName}, uint8_t *buffer, int offset)");
+                        FunctionPrototypes.AppendLine($"    static void Encode{m.Name}(Esp32Messaging::{m.Name} *, uint8_t *, int);");
+                        sourceFile.WriteLine("{");
                         int offset = 0;
                         foreach (MessageElement me in m.MessageElements)
                         {
-                            offset += OutputEncoderFunctionBody(sourceFile, "        ", variableName, me, offset);
+                            DataType dt = GetDataType(me.DateType);
+                            if (dt.CTypeName.ToLower() == ("uint8_t"))
+                            {
+                                sourceFile.WriteLine($"    *(buffer + {offset}) = {variableName}->{me.Name};");
+                            }
+                            else
+                            {
+                                sourceFile.WriteLine($"    Encode{dt.CSharpTypeName}({variableName}->{me.Name}, (uint8_t *) (buffer + {offset}));");
+                            }
+                            offset += dt.Size;
                         }
-                        sourceFile.WriteLine("    }");
+                        sourceFile.WriteLine("}");
                         sourceFile.WriteLine();
-                        sourceFile.WriteLine($"    public static {m.Name} *Extract{m.Name}(byte[] buffer, int offset)");
-                        FunctionPrototypes.AppendLine($"    public static {m.Name} *Extract{m.Name}(byte[], int);");
-                        sourceFile.WriteLine("     {");
-                        sourceFile.WriteLine($"        {m.Name} *{variableName} = ({m.Name} *) pvPortMalloc(sizeof({m.Name}));");
+                        sourceFile.WriteLine($"Esp32Messaging::{m.Name} *Encoders::Extract{m.Name}(uint8_t *buffer, int offset)");
+                        FunctionPrototypes.AppendLine($"    static Esp32Messaging::{m.Name} *Extract{m.Name}(uint8_t *, int);");
+                        sourceFile.WriteLine("{");
+                        sourceFile.WriteLine($"    Esp32Messaging::{m.Name} *{variableName} = (Esp32Messaging::{m.Name} *) pvPortMalloc(sizeof(Esp32Messaging::{m.Name}));");
                         sourceFile.WriteLine();
                         offset = 0;
                         foreach (MessageElement me in m.MessageElements)
                         {
                             DataType dt = GetDataType(me.DateType);
-                            sourceFile.WriteLine($"        {variableName}->{me.Name} = Extract{dt.CSharpTypeName}(buffer, offset + {offset});");
+                            if (dt.CTypeName.ToLower() == ("uint8_t"))
+                            {
+                                sourceFile.WriteLine($"    {variableName}->{me.Name} = *(buffer + {offset});");
+                            }
+                            else
+                            {
+                                sourceFile.WriteLine($"    {variableName}->{me.Name} = Extract{dt.CSharpTypeName}(buffer + {offset});");
+                            }
                             offset += dt.Size;
                         }
-                        sourceFile.WriteLine($"        return({variableName});");
-                        sourceFile.WriteLine("    }");
+                        sourceFile.WriteLine($"    return({variableName});");
+                        sourceFile.WriteLine("}");
                         sourceFile.WriteLine();
                     }
                 }
-                sourceFile.WriteLine("}");
             }
         }
 
