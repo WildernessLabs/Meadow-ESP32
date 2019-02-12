@@ -50,7 +50,7 @@ enum MessageAcknowledgement : uint8_t
     MSG_NAK = 1
 };
 
-namespace Esp32Messaging
+namespace WiFiAuthenticationMode
 {
     /*
      *      Access point authentication method.
@@ -65,6 +65,10 @@ namespace Esp32Messaging
         Wpa2Enterprise = 5
     };
 
+}
+
+namespace WiFiCountryPolicy
+{
     /*
      *      WiFi Country Policy.
      */
@@ -74,16 +78,24 @@ namespace Esp32Messaging
         Manual = 1
     };
 
+}
+
+namespace WiFiSecondChannel
+{
     /*
      *      Location of the secondary channel in respect to the primary channel.
      */
     enum WiFiSecondChannel
     {
-        SecondChannelNone = 0,
+        None = 0,
         Above = 1,
         Below = 2
     };
 
+}
+
+namespace WiFiScanType
+{
     /*
      *      WiFiScanType
      */
@@ -93,6 +105,10 @@ namespace Esp32Messaging
         Passive = 1
     };
 
+}
+
+namespace Antenna
+{
     /*
      *      Types of antennas that are selectable.
      */
@@ -102,12 +118,16 @@ namespace Esp32Messaging
         External = 1
     };
 
+}
+
+namespace WiFiCipherType
+{
     /*
      *      Encryption method used by the access point.
      */
     enum WiFiCipherType
     {
-        CipherTypeNone = 0,
+        None = 0,
         Wep40 = 1,
         Wep104 = 2,
         Tkip = 3,
@@ -117,6 +137,7 @@ namespace Esp32Messaging
     };
 
 }
+
 
 #endif /* _SHARED_ENUMS_HPP_ */
 
