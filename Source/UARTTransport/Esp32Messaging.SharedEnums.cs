@@ -59,7 +59,7 @@ namespace Esp32Messaging
 
     enum WiFiSecondChannel
     {
-        SecondChannelNone = 0,
+        None = 0,
         Above = 1,
         Below = 2
     };
@@ -78,7 +78,7 @@ namespace Esp32Messaging
 
     enum WiFiCipherType
     {
-        CipherTypeNone = 0,
+        None = 0,
         Wep40 = 1,
         Wep104 = 2,
         Tkip = 3,
