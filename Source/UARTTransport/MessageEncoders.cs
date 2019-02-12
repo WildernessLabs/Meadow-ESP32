@@ -17,38 +17,34 @@ namespace UartTransport
 {
     public class Encoders
     {
-        public static void EncodeMessage1(Message1 message1, byte[] buffer, int offset)
+        public static void EncodeStartNetwork(StartNetwork startNetwork, byte[] buffer, int offset)
         {
-            EncodeUInt32(message1.Name1, buffer, offset + 0);
-            EncodeUint8(message1.Name2, buffer, offset + 4);
-            EncodeUInt32(message1.Name3, buffer, offset + 5);
+            EncodeUInt32(startNetwork.Name1, buffer, offset + 0);
+            EncodeUint8(startNetwork.Name2, buffer, offset + 4);
+            EncodeUInt32(startNetwork.Name3, buffer, offset + 5);
         }
 
-        public static Message1 *ExtractMessage1(byte[] buffer, int offset)
+        public static StartNetwork *ExtractStartNetwork(byte[] buffer, int offset)
         {
-            Message1 message1;
+            StartNetwork startNetwork;
 
-            Name1 = ExtractUInt32(buffer, offset + 0);
-            Name2 = ExtractUint8(buffer, offset + 4);
-            Name3 = ExtractUInt32(buffer, offset + 5);
-            return(message1);
+        startNetwork.Name1 = ExtractUInt32(buffer, offset + 0);
+        startNetwork.Name2 = ExtractUint8(buffer, offset + 4);
+        startNetwork.Name3 = ExtractUInt32(buffer, offset + 5);
+            return(startNetwork);
         }
 
-        public static void EncodeMessage2(Message2 message2, byte[] buffer, int offset)
+        public static void EncodeSwitchAntenna(SwitchAntenna switchAntenna, byte[] buffer, int offset)
         {
-            EncodeUInt32(message2.Name1, buffer, offset + 0);
-            EncodeUInt32(message2.Name2, buffer, offset + 4);
-            EncodeUInt32(message2.Name3, buffer, offset + 8);
+            EncodeUint8(switchAntenna.Antenna, buffer, offset + 0);
         }
 
-        public static Message2 *ExtractMessage2(byte[] buffer, int offset)
+        public static SwitchAntenna *ExtractSwitchAntenna(byte[] buffer, int offset)
         {
-            Message2 message2;
+            SwitchAntenna switchAntenna;
 
-            Name1 = ExtractUInt32(buffer, offset + 0);
-            Name2 = ExtractUInt32(buffer, offset + 4);
-            Name3 = ExtractUInt32(buffer, offset + 8);
-            return(message2);
+        switchAntenna.Antenna = ExtractUint8(buffer, offset + 0);
+            return(switchAntenna);
         }
 
     }

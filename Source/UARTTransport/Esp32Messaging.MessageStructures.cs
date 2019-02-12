@@ -15,16 +15,16 @@ using System;
 
 namespace Esp32Messaging
 {
-    public struct Message1
+    public struct StartNetwork
     {
         UInt32 Name1;
         Uint8 Name2;
         UInt32 Name3;
-    }
-    public struct Message2
+    };
+
+    public struct SwitchAntenna
     {
-        UInt32 Name1;
-        UInt32 Name2;
-        UInt32 Name3;
-    }
+        Uint8 Antenna;
+    };
+
 }

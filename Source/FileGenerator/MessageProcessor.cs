@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Text;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -24,7 +25,10 @@ namespace FileGenerator
 
         private string CSharpFileName { get; set; }
 
-        private string CSharpStructureFileName;
+        private string CSharpStructureFileName { get; set; }
+
+        private StringBuilder FunctionPrototypes = null;
+
 
         public MessageProcessor(string fileName, string cHeaderFileName, string cSourceFileName, string csharpFileName, string csharpStructuresFileName)
         {
@@ -137,11 +141,13 @@ namespace FileGenerator
                         offset = 0;
                         foreach (MessageElement me in m.MessageElements)
                         {
-                            offset += OutputDecoderFunctionBody(sourceFile, "            ", variableName, me, offset);
+                            DataType dt = GetDataType(me.DateType);
+                            sourceFile.WriteLine($"        {variableName}.{me.Name} = Extract{dt.CSharpTypeName}(buffer, offset + {offset});");
+                            offset += dt.Size;
                         }
                         sourceFile.WriteLine($"            return({variableName});");
                         sourceFile.WriteLine("        }");
-                        sourceFile.WriteLine("");
+                        sourceFile.WriteLine();
                     }
                 }
                 sourceFile.WriteLine("    }");
@@ -204,7 +210,59 @@ namespace FileGenerator
                     }
                 }
                 sourceFile.WriteLine("}");
+                sourceFile.WriteLine();
+                sourceFile.WriteLine("namespace Encoders");
+                sourceFile.WriteLine("{");
+                sourceFile.WriteLine(FunctionPrototypes.ToString());
+                sourceFile.WriteLine("}");
+                sourceFile.WriteLine();
+            }
+        }
 
+        private void GenerateCMessagesEncoders(IList<Message> messages)
+        {
+            FunctionPrototypes = new StringBuilder();
+            using (StreamWriter sourceFile = new StreamWriter(CSourceFileName))
+            {
+                OutputCHeaderFileHeader(sourceFile, CSourceFileName);
+                sourceFile.WriteLine();
+                sourceFile.WriteLine("#include \"Encoders.hpp\"");
+                sourceFile.WriteLine();
+                sourceFile.WriteLine("namespace Encoders");
+                sourceFile.WriteLine("{");
+                foreach (Message m in messages)
+                {
+                    if (m.MessageElements != null)
+                    {
+                        string variableName = m.Name.Substring(0, 1).ToLower() + m.Name.Substring(1);
+                        sourceFile.WriteLine($"    public static void Encode{m.Name}({m.Name} {variableName}, byte[] buffer, int offset)");
+                        FunctionPrototypes.AppendLine($"    public static void Encode{m.Name}({m.Name}, byte[], int);");
+                        sourceFile.WriteLine("    {");
+                        int offset = 0;
+                        foreach (MessageElement me in m.MessageElements)
+                        {
+                            offset += OutputEncoderFunctionBody(sourceFile, "        ", variableName, me, offset);
+                        }
+                        sourceFile.WriteLine("    }");
+                        sourceFile.WriteLine();
+                        sourceFile.WriteLine($"    public static {m.Name} *Extract{m.Name}(byte[] buffer, int offset)");
+                        FunctionPrototypes.AppendLine($"    public static {m.Name} *Extract{m.Name}(byte[], int);");
+                        sourceFile.WriteLine("     {");
+                        sourceFile.WriteLine($"        {m.Name} *{variableName} = ({m.Name} *) pvPortMalloc(sizeof({m.Name}));");
+                        sourceFile.WriteLine();
+                        offset = 0;
+                        foreach (MessageElement me in m.MessageElements)
+                        {
+                            DataType dt = GetDataType(me.DateType);
+                            sourceFile.WriteLine($"        {variableName}->{me.Name} = Extract{dt.CSharpTypeName}(buffer, offset + {offset});");
+                            offset += dt.Size;
+                        }
+                        sourceFile.WriteLine($"        return({variableName});");
+                        sourceFile.WriteLine("    }");
+                        sourceFile.WriteLine();
+                    }
+                }
+                sourceFile.WriteLine("}");
             }
         }
 
@@ -220,6 +278,7 @@ namespace FileGenerator
 
                 messages = a.ToObject<IList<Message>>();
             }
+            GenerateCMessagesEncoders(messages);
             GenerateCMessageStructureFile(messages);
             GenerateCSharpEncodersFile(messages);
             GenerateCSharpMessageStructureFile(messages);

@@ -24,7 +24,7 @@ namespace FileGenerator
             Console.WriteLine("File Generator");
 
             EnumProcessor enumProcessor = new EnumProcessor(esp32EnumJsonFileName, cEnumFileName, cSharpEnumFileName);
-            enumProcessor.ProcessFile();
+            //enumProcessor.ProcessFile();
             MessageProcessor messageProcessor = new MessageProcessor(messageEncodersJsonFileName, cMessageEncodersHeaderFileName, cMessageEncodersSourceFileName, cSharpMessageProcessorFileName, cSharpStructuresFileName);
             messageProcessor.ProcessFile();
         }
