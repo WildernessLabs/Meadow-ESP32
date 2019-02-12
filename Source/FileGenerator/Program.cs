@@ -8,46 +8,25 @@ namespace FileGenerator
 {
     class Program
     {
-        static DataType[] _dataTypes = 
-        {
-            new DataType("uint32", 4),
-            new DataType("int", 4),
-            new DataType("byte", 1),
-            new DataType("array", -1)
-        };
-
         static void Main(string[] args)
         {
-            string sourceFileName = $"..{Path.DirectorySeparatorChar}MeadowComms{Path.DirectorySeparatorChar}main{Path.DirectorySeparatorChar}SharedEnums.json";
-            string cFileName = $"..{Path.DirectorySeparatorChar}MeadowComms{Path.DirectorySeparatorChar}main{Path.DirectorySeparatorChar}SharedEnums.hpp";
-            string cSharpFileName = $"..{Path.DirectorySeparatorChar}UARTTransport{Path.DirectorySeparatorChar}Esp32Messaging.SharedEnums.cs";
-            EnumProcessor enumProcessor = new EnumProcessor(sourceFileName, cFileName, cSharpFileName);
+            string esp32SourceDirectory = $"..{Path.DirectorySeparatorChar}MeadowComms{Path.DirectorySeparatorChar}main{Path.DirectorySeparatorChar}";
+            string esp32EnumJsonFileName = $"{esp32SourceDirectory}SharedEnums.json";
+            string cEnumFileName = $"{esp32SourceDirectory}SharedEnums.hpp";
+            string messageEncodersJsonFileName = $"{esp32SourceDirectory}Messages.json";
+            string cMessageEncodersHeaderFileName = $"{esp32SourceDirectory}MessageEncoders.hpp";
+            string cMessageEncodersSourceFileName = $"{esp32SourceDirectory}MessageEncoders.cpp";
+            //
+            string cSharpEnumFileName = $"..{Path.DirectorySeparatorChar}UARTTransport{Path.DirectorySeparatorChar}Esp32Messaging.SharedEnums.cs";
+            string cSharpMessageProcessorFileName = $"..{Path.DirectorySeparatorChar}UARTTransport{Path.DirectorySeparatorChar}MessageEncoders.cs";
+            string cSharpStructuresFileName = $"..{Path.DirectorySeparatorChar}UARTTransport{Path.DirectorySeparatorChar}Esp32Messaging.MessageStructures.cs";
 
             Console.WriteLine("File Generator");
 
-            enumProcessor.ProcessFile();
-
-            using (StreamReader structuresFile = new StreamReader("Messages.json"))
-            {
-                string fileContents = structuresFile.ReadToEnd();
-                JObject o = JObject.Parse(fileContents);
-
-                JArray a = (JArray)o["Messages"];
-
-                IList<Message> messages = a.ToObject<IList<Message>>();
-                foreach (Message m in messages)
-                {
-                    Console.WriteLine($"Message name: {m.Name}");
-                    if (m.MessageElements != null)
-                    {
-                        Console.WriteLine("    Message elements: ");
-                        foreach (MessageElement me in m.MessageElements)
-                        {
-                            Console.WriteLine($"        {me.Name} : {me.DateType}");
-                        }
-                    }
-                }
-            }
+            EnumProcessor enumProcessor = new EnumProcessor(esp32EnumJsonFileName, cEnumFileName, cSharpEnumFileName);
+            //enumProcessor.ProcessFile();
+            MessageProcessor messageProcessor = new MessageProcessor(messageEncodersJsonFileName, cMessageEncodersHeaderFileName, cMessageEncodersSourceFileName, cSharpMessageProcessorFileName, cSharpStructuresFileName);
+            messageProcessor.ProcessFile();
         }
     }
 }
