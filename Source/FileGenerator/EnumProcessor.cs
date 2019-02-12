@@ -149,12 +149,13 @@ namespace FileGenerator
                             if (namespaceOpen)
                             {
                                 cFile.WriteLine("}");
+                                cFile.WriteLine();
                             }
-                            cFile.WriteLine($"namespace {e.Namespace}");
+                            cFile.WriteLine($"namespace {e.Name}");
                             cFile.WriteLine("{");
                             indent = "    ";
                             namespaceOpen = true;
-                            lastNamespace = e.Namespace;
+                            lastNamespace = e.Name;
                         }
                     }
                     else
@@ -182,11 +183,12 @@ namespace FileGenerator
                             break;
                     }
                     OutputCommonEnumText(cFile, e, indent, dataType, "");
-                    cFile.WriteLine("");
+                    cFile.WriteLine();
                 }
                 if (namespaceOpen)
                 {
                     cFile.WriteLine("}");
+                    cFile.WriteLine();
                 }
                 OutputCFileFooter(cFile);
             }
