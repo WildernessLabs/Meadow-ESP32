@@ -128,7 +128,6 @@ namespace FileGenerator
                     fileStream.WriteLine();
                 }
             }
-            fileStream.Write($"{indent}");
             fileStream.WriteLine("};");
         }
 
@@ -183,7 +182,6 @@ namespace FileGenerator
                             break;
                     }
                     OutputCommonEnumText(cFile, e, indent, dataType, "");
-                    cFile.WriteLine();
                 }
                 if (namespaceOpen)
                 {

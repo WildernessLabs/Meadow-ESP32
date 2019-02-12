@@ -40,10 +40,8 @@
 							</tool>
 						</toolChain>
 					</folderInfo>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.cross.base.465614450.1405017021" name="Encoders.cpp.txt" rcbsApplicability="disable" resourcePath="Metadata/Encoders.cpp.txt" toolsToInvoke=""/>
-					<fileInfo id="cdt.managedbuild.toolchain.gnu.cross.base.465614450.749413345" name="Encoders.hpp.txt" rcbsApplicability="disable" resourcePath="Metadata/Encoders.hpp.txt" toolsToInvoke=""/>
 					<sourceEntries>
-						<entry excluding="Metadata/Encoders.hpp.txt|Metadata/Encoders.cpp.txt" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="Metadata|Metadata/EncodersHeader.txt|Metadata/EncodersCCode.txt|Metadata/Encoders.hpp.txt|Metadata/Encoders.cpp.txt" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>
@@ -58,9 +56,6 @@
 		<configuration configurationName="Default">
 			<resource resourceType="PROJECT" workspacePath="/MeadowComms"/>
 		</configuration>
-	</storageModule>
-	<storageModule moduleId="scannerConfiguration">
-		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets">
 		<buildTargets>
@@ -81,5 +76,14 @@
 				<runAllBuilders>true</runAllBuilders>
 			</target>
 		</buildTargets>
+	</storageModule>
+	<storageModule moduleId="scannerConfiguration">
+		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.toolchain.gnu.cross.base.465614450;cdt.managedbuild.toolchain.gnu.cross.base.465614450.1101202462;cdt.managedbuild.tool.gnu.cross.c.compiler.1900607333;cdt.managedbuild.tool.gnu.c.compiler.input.2084764847">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.toolchain.gnu.cross.base.465614450;cdt.managedbuild.toolchain.gnu.cross.base.465614450.1101202462;cdt.managedbuild.tool.gnu.cross.cpp.compiler.1403291712;cdt.managedbuild.tool.gnu.cpp.compiler.input.1981906844">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
 	</storageModule>
 </cproject>
