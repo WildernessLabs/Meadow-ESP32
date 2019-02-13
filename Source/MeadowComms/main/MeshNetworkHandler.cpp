@@ -17,6 +17,7 @@
 #include <stdlib.h>
 
 #include "Messaging.h"
+#include "Exceptions/MultipleInstancesException.hpp"
 
 /*
  * ----------------------------------------------------------------------------
@@ -33,7 +34,7 @@ MeshNetworkRequestHandler::MeshNetworkRequestHandler()
 {
     if (_instantiated)
     {
-        //  TODO: Error condition, "there can be only one..."
+        throw new MultipleInstancesException();
     }
     else
     {
