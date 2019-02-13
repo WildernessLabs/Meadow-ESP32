@@ -4,6 +4,7 @@
  *      Implementation of the WiFi functionality.
  */
 #include "WiFiRequestHandler.hpp"
+#include "Exceptions/MultipleInstancesException.hpp"
 
 /*
  *      Event handler for the WiFi loop.
@@ -40,7 +41,7 @@ WiFiRequestHandler::WiFiRequestHandler()
 {
     if (_instantiated)
     {
-        //  TODO: Error condition, "there can be only one..."
+        throw new MultipleInstancesException();
     }
     else
     {

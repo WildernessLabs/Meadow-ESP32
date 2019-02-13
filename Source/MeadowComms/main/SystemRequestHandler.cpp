@@ -23,6 +23,7 @@
 
 #include "Messaging.h"
 #include "SystemRequestHandler.hpp"
+#include "Exceptions/MultipleInstancesException.hpp"
 
 /*
  * ----------------------------------------------------------------------------
@@ -39,7 +40,7 @@ SystemRequestHandler::SystemRequestHandler()
 {
     if (_instantiated)
     {
-        //  TODO: Error condition, "there can be only one..."
+        throw new MultipleInstancesException();
     }
     else
     {
