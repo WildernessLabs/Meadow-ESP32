@@ -214,8 +214,6 @@ public:
      */
     Antenna GetAntenna() const;
     void SetAntenna(Antenna newAntenna = OnBoard);
-    QueueHandle_t GetQueueHandle();
-    TaskHandle_t GetTaskHandle();
 };
 
 /*

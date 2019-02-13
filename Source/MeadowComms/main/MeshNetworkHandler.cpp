@@ -43,30 +43,6 @@ MeshNetworkRequestHandler::~MeshNetworkRequestHandler()
 /*
  * ----------------------------------------------------------------------------
  *
- *                          Getters and setters
- *
- * ----------------------------------------------------------------------------
- */
-
-/*
- *      Get the handle for the Mesh network message queue.
- */
-QueueHandle_t MeshNetworkRequestHandler::GetQueueHandle()
-{
-    return(_queueHandle);
-}
-
-/*
- *      Get the handle to the Mesh Network task.
- */
-TaskHandle_t MeshNetworkRequestHandler::GetTaskHandle()
-{
-    return(_taskHandle);
-}
-
-/*
- * ----------------------------------------------------------------------------
- *
  *                               Methods
  *
  * ----------------------------------------------------------------------------
@@ -78,12 +54,15 @@ TaskHandle_t MeshNetworkRequestHandler::GetTaskHandle()
 void MeshNetworkRequestHandler::Setup()
 {
     const size_t messageSize = sizeof(ApplicationRequest);
-    _queueHandle = xQueueCreate(MAX_QUEUE_LENGTH, messageSize);
-    if (_queueHandle == NULL)
+    QueueHandle_t queueHandle = xQueueCreate(MAX_QUEUE_LENGTH, messageSize);
+    if (queueHandle == NULL)
     {
         ESP_LOGI(_taskName, "Cannot allocate Mesh network queue.");
     }
-    xTaskCreate(Task, _taskName, 1024 * 2, this, configMAX_PRIORITIES - 1, &_taskHandle);
+    SetQueueHandle(queueHandle);
+    TaskHandle_t taskHandle;
+    xTaskCreate(Task, _taskName, 1024 * 2, this, configMAX_PRIORITIES - 1, &taskHandle);
+    SetTaskHandle(taskHandle);
 }
 
 /*

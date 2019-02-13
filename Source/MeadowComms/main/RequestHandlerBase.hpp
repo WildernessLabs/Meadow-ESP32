@@ -26,15 +26,30 @@
 
 class RequestHandlerBase
 {
+private:
+    /*
+     *      Handle for the System messages to be processed by the System task.
+     */
+    QueueHandle_t _queueHandle = NULL;
+
+    /*
+     *      Handle for the System request handler task.
+     */
+    TaskHandle_t _taskHandle = NULL;
+
+
 protected:
+    void SetQueueHandle(QueueHandle_t);
+    TaskHandle_t GetTaskHandle();
+    void SetTaskHandle(TaskHandle_t);
 
 public:
     /*
      *      Setup the various properties for correct functioning of the request handler.
      */
     virtual void Setup() = 0;
-    virtual QueueHandle_t GetQueueHandle() = 0;
-    virtual TaskHandle_t GetTaskHandle() = 0;
+    virtual ~RequestHandlerBase() { };
+    QueueHandle_t GetQueueHandle();
 };
 
 

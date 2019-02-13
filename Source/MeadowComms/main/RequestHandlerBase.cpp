@@ -24,3 +24,44 @@
 
 #include "Messaging.h"
 #include "RequestHandlerBase.hpp"
+
+
+/*
+ * ----------------------------------------------------------------------------
+ *
+ *                          Getters and setters
+ *
+ * ----------------------------------------------------------------------------
+ */
+
+/*
+ *      Get the queue handle.
+ */
+QueueHandle_t RequestHandlerBase::GetQueueHandle()
+{
+    return(_queueHandle);
+}
+
+/*
+ *      Set the queue handle.
+ */
+void RequestHandlerBase::SetQueueHandle(QueueHandle_t queueHandle)
+{
+    _queueHandle = queueHandle;
+}
+
+/*
+ *      Get the handle to the task queue.
+ */
+TaskHandle_t RequestHandlerBase::GetTaskHandle()
+{
+    return(_taskHandle);
+}
+
+/*
+ *      Set the task handle.
+ */
+void RequestHandlerBase::SetTaskHandle(TaskHandle_t taskHandle)
+{
+    _taskHandle = taskHandle;
+}

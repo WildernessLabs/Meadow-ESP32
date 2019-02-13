@@ -29,16 +29,6 @@ private:
      */
     bool _instantiated = false;
 
-    /*
-     *      Handle for the Bluetooth message queue to be processed by the Bluetooth task.
-     */
-    QueueHandle_t _queueHandle = NULL;
-
-    /*
-     *      Handle for the Bluetooth request handler task.
-     */
-    TaskHandle_t _taskHandle = NULL;
-
     void DispatchRequest(ApplicationRequest *);
     static void Task(void *);
 
@@ -53,8 +43,6 @@ public:
      *      Public methods.
      */
     void Setup();
-    QueueHandle_t GetQueueHandle();
-    TaskHandle_t GetTaskHandle();
 };
 
 extern BluetoothRequestHandler *bluetooth;

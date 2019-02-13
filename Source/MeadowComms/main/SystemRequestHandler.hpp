@@ -40,16 +40,6 @@ private:
     bool _instantiated = false;
 
     /*
-     *      Handle for the System messages to be processed by the System task.
-     */
-    QueueHandle_t _queueHandle = NULL;
-
-    /*
-     *      Handle for the System request handler task.
-     */
-    TaskHandle_t _taskHandle = NULL;
-
-    /*
      *      FreeRTOS task for processing requests.
      */
     static void Task(void *);
@@ -66,9 +56,6 @@ public:
      *      Public methods.
      */
     void Setup();
-
-    QueueHandle_t GetQueueHandle();
-    TaskHandle_t GetTaskHandle();
 };
 
 extern SystemRequestHandler *systemRequestHandler;
