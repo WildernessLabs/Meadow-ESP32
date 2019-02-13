@@ -5,13 +5,6 @@
 #include "freertos/queue.h"
 #include "stdlib.h"
 
-#ifdef __cplusplus
-
-extern "C"
-{
-
-#endif
-
 //
 //  Available interfaces.
 //
@@ -159,10 +152,4 @@ struct ApplicationResponse
 ///     Size of the header.
 /// </summary>
 #define FRAME_HEADER_LENGTH         (FRAME_PAYLOAD_LENGTH + 1)
-
-#ifdef __cplusplus
-
-}
-
-#endif
 
