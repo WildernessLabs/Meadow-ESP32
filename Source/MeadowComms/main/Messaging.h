@@ -19,11 +19,6 @@
 //
 #define MAX_QUEUE_LENGTH            (5)
 
-/// <summary>
-///     Set up the message queues.
-/// </summary>
-extern void SetupMessageQueues();
-
 //
 //  Bit masks for transport and data packets.
 //
