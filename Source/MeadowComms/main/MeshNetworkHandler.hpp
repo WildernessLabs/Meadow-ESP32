@@ -30,16 +30,6 @@ private:
     bool _instantiated = false;
 
     /*
-     *      Handle for the WiFi messages to be processed by the System task.
-     */
-    QueueHandle_t _queueHandle = NULL;
-
-    /*
-     *      Handle for the System request handler task.
-     */
-    TaskHandle_t _taskHandle = NULL;
-
-    /*
      *      Name of the FreeRTOS task for the WiFi system.
      */
     const char *_taskName = "MeshNetworkTask";
@@ -52,8 +42,6 @@ public:
     ~MeshNetworkRequestHandler();
 
     void Setup();
-    QueueHandle_t GetQueueHandle();
-    TaskHandle_t GetTaskHandle();
 };
 
 extern MeshNetworkRequestHandler *meshNetwork;

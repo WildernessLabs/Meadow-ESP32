@@ -49,30 +49,6 @@ SystemRequestHandler::~SystemRequestHandler()
 /*
  * ----------------------------------------------------------------------------
  *
- *                          Getters and setters
- *
- * ----------------------------------------------------------------------------
- */
-
-/*
- *      Get the handle for the System Request message queue.
- */
-QueueHandle_t SystemRequestHandler::GetQueueHandle()
-{
-    return(_queueHandle);
-}
-
-/*
- *      Get the handle to the System Request handler task.
- */
-TaskHandle_t SystemRequestHandler::GetTaskHandle()
-{
-    return(_taskHandle);
-}
-
-/*
- * ----------------------------------------------------------------------------
- *
  *                               Methods
  *
  * ----------------------------------------------------------------------------
@@ -87,12 +63,15 @@ void SystemRequestHandler::Setup()
      *      Now create the objects necessary for the System task.
      */
     const size_t messageSize = sizeof(ApplicationRequest);
-    _queueHandle = xQueueCreate(MAX_QUEUE_LENGTH, messageSize);
-    if (_queueHandle == NULL)
+    QueueHandle_t queueHandle = xQueueCreate(MAX_QUEUE_LENGTH, messageSize);
+    if (queueHandle == NULL)
     {
         ESP_LOGI(__func__, "Cannot allocate System processing queue.");
     }
-    xTaskCreate(Task, _taskName, 2048 * 2, this, configMAX_PRIORITIES - 1, &_taskHandle);
+    SetQueueHandle(queueHandle);
+    TaskHandle_t taskHandle;
+    xTaskCreate(Task, _taskName, 2048 * 2, this, configMAX_PRIORITIES - 1, &taskHandle);
+    SetTaskHandle(taskHandle);
     _instantiated = true;
 }
 

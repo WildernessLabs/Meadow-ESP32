@@ -94,22 +94,6 @@ void WiFiRequestHandler::SetAntenna(WiFiRequestHandler::Antenna newAntenna)
 }
 
 /*
- *      Get the handle for the WiFi message queue.
- */
-QueueHandle_t WiFiRequestHandler::GetQueueHandle()
-{
-    return(_queueHandle);
-}
-
-/*
- *      Get the handle to the WiFi task.
- */
-TaskHandle_t WiFiRequestHandler::GetTaskHandle()
-{
-    return(_taskHandle);
-}
-
-/*
  * ----------------------------------------------------------------------------
  *
  *                                 Methods
