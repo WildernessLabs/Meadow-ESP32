@@ -37,6 +37,14 @@
  */
 SystemRequestHandler::SystemRequestHandler()
 {
+    if (_instantiated)
+    {
+        //  TODO: Error condition, "there can be only one..."
+    }
+    else
+    {
+        _instantiated = true;
+    }
 }
 
 /*
