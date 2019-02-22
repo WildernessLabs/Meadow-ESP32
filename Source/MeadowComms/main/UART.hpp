@@ -25,6 +25,7 @@
 #include "SharedEnums.hpp"
 #include "Encoders.hpp"
 #include "WiFiRequestHandler.hpp"
+#include "TransportProviderBase.hpp"
 
 /*
  *      BufferAndLength holds a buffer and the amount of data in
@@ -46,7 +47,7 @@ struct BufferAndLength
 /*
  *      Implementation UART communication between the ESP32 and the STM32.
  */
-class UART
+class UART : TransportProviderBase
 {
 private:
     /*
