@@ -7,9 +7,9 @@
  *  to communicate.
  *
  */
+#include "MeshNetworkRequestHandler.hpp"
 #include "WiFiRequestHandler.hpp"
 #include "BluetoothRequestHandler.hpp"
-#include "MeshNetworkHandler.hpp"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
@@ -487,7 +487,7 @@ BufferAndLength *UART::GenerateTransportFrame(uint8_t *buffer, uint32_t bufferLe
  *      @param ackNak
  *          Code for and ACK or NAK (as an integer)
  *
- *      @param statuc
+ *      @param status
  *          Status code to be encoded in the transport frame.
  */
 void UART::AcknowledgeFrame(uint8_t ackNak, uint32_t status)
@@ -526,25 +526,7 @@ void UART::ProcessHeader(uint8_t *packet, uint8_t packetLength)
     }
     else
     {
-        ResetIncomingMessage(true);
-        _messageHeader._interface = packet[0];
-        _messageHeader._function = Encoders::ExtractUInt32(packet + APP_REQUEST_FUNCTION);
-        _messageHeader._messageID = Encoders::ExtractUInt32(packet + APP_REQUEST_MESSAGE_ID);
-        _bytesRemaining = Encoders::ExtractUInt32(packet + APP_REQUEST_PAYLOAD_LENGTH);
-        _messageHeader._payloadLength = _bytesRemaining;
-        if (_messageHeader._payloadLength > 0)
-        {
-            _messageHeader._payload = (uint8_t *) pvPortMalloc(_messageHeader._payloadLength);
-        }
-        else
-        {
-            _messageHeader._payload = NULL;
-            //
-            //  Messages with no payload should be queued immediately.
-            //
-            QueueMessage();
-        }
-        _nextPayloadLocation = _messageHeader._payload;
+        (_headerReceivedCallback)(packet, packetLength);
         AcknowledgeFrame(TRANSPORT_ACK, StatusCodes::CompletedOK);
     }
 }
