@@ -22,9 +22,13 @@ namespace Esp32Messaging
         UInt32 Name3;
     };
 
+    public const UInt32 START_NETWORK_MESSAGE_SIZE = 9;
+
     public struct SwitchAntenna
     {
         Uint8 Antenna;
     };
+
+    public const UInt32 SWITCH_ANTENNA_MESSAGE_SIZE = 1;
 
 }
