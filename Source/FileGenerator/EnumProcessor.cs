@@ -128,6 +128,7 @@ namespace FileGenerator
                     fileStream.WriteLine();
                 }
             }
+            fileStream.WriteLine($"{indent}");
             fileStream.WriteLine("};");
         }
 

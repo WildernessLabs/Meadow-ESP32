@@ -18,8 +18,11 @@ namespace FileGenerator
 
             Console.WriteLine("File Generator");
 
+            Console.WriteLine("    Generating enums.");
             EnumProcessor enumProcessor = new EnumProcessor(esp32EnumJsonFileName, cEnumFileName, cSharpEnumFileName);
-            //enumProcessor.ProcessFile();
+            enumProcessor.ProcessFile();
+
+            Console.WriteLine("    Generating message encoders and decoders.");
             MessageProcessor messageProcessor = new MessageProcessor();
             messageProcessor.InputFileName = $"..{Path.DirectorySeparatorChar}Metadata{Path.DirectorySeparatorChar}Messages.json";;
             messageProcessor.CHeaderFileName = $"{esp32SourceDirectory}Encoders.hpp";

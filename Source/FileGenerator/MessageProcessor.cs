@@ -151,6 +151,22 @@ namespace FileGenerator
             }
         }
 
+        private string ConvertNameToConstantName(string name)
+        {
+            string result = "";
+            char[] characters = name.ToCharArray();
+            for (var index = 0; index < characters.Length; index++)
+            {
+                if ((index != 0) && (Char.IsUpper(characters[index])))
+                {
+                    result += "_";
+                }
+                result += Char.ToUpper(characters[index]);
+            }
+
+            return(result);
+        }
+
         private void GenerateCSharpMessageStructureFile(IList<Message> messages)
         {
             using (StreamWriter sourceFile = new StreamWriter(CSharpStructureFileName))
@@ -160,6 +176,7 @@ namespace FileGenerator
                 sourceFile.WriteLine("{");
                 foreach (Message m in messages)
                 {
+                    int messageSize = 0;
                     if (m.MessageElements != null)
                     {
                         string variableName = m.Name.Substring(0, 1).ToLower() + m.Name.Substring(1);
@@ -168,10 +185,13 @@ namespace FileGenerator
                         foreach (MessageElement me in m.MessageElements)
                         {
                             DataType dt = GetDataType(me.DateType);
-                            sourceFile.WriteLine($"        {dt.CSharpTypeName} {me.Name};");                         
+                            sourceFile.WriteLine($"        {dt.CSharpTypeName} {me.Name};");
+                            messageSize += GetDataType(me.DateType).Size;
                         }
                     }
                     sourceFile.WriteLine("    };");
+                    sourceFile.WriteLine();
+                    sourceFile.WriteLine($"    public const UInt32 {ConvertNameToConstantName(m.Name)}_MESSAGE_SIZE = {messageSize};");
                     sourceFile.WriteLine();
                 }
                 sourceFile.WriteLine("}");
@@ -197,12 +217,16 @@ namespace FileGenerator
                         string variableName = m.Name.Substring(0, 1).ToLower() + m.Name.Substring(1);
                         sourceFile.WriteLine($"    struct {m.Name}");
                         sourceFile.WriteLine("    {");
+                        int messageSize = 0;
                         foreach (MessageElement me in m.MessageElements)
                         {
                             DataType dt = GetDataType(me.DateType);
-                            sourceFile.WriteLine($"        {dt.CTypeName} {me.Name};");                         
+                            sourceFile.WriteLine($"        {dt.CTypeName} {me.Name};");
+                            messageSize += GetDataType(me.DateType).Size;
                         }
                         sourceFile.WriteLine("    };");
+                        sourceFile.WriteLine();
+                        sourceFile.WriteLine($"    const uint32_t {ConvertNameToConstantName(m.Name)}_MESSAGE_SIZE = {messageSize};");
                         sourceFile.WriteLine();
                     }
                 }
@@ -290,6 +314,7 @@ namespace FileGenerator
                         sourceFile.WriteLine();
                     }
                 }
+                sourceFile.WriteLine();
             }
         }
 
