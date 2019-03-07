@@ -37,8 +37,8 @@ namespace StatusCodes
         InvalidSSID = 11,
         InvalidPassword = 12,
         WiFiDisconnected = 13
-    };
-
+    
+};
 }
 
 /*
@@ -48,8 +48,8 @@ enum MessageAcknowledgement : uint8_t
 {
     MSG_ACK = 0,
     MSG_NAK = 1
-};
 
+};
 namespace WiFiAuthenticationMode
 {
     /*
@@ -63,8 +63,8 @@ namespace WiFiAuthenticationMode
         Wpa2Psk = 3,
         WpaWpa2Psk = 4,
         Wpa2Enterprise = 5
-    };
-
+    
+};
 }
 
 namespace WiFiCountryPolicy
@@ -76,8 +76,8 @@ namespace WiFiCountryPolicy
     {
         Automatic = 0,
         Manual = 1
-    };
-
+    
+};
 }
 
 namespace WiFiSecondChannel
@@ -90,8 +90,8 @@ namespace WiFiSecondChannel
         None = 0,
         Above = 1,
         Below = 2
-    };
-
+    
+};
 }
 
 namespace WiFiScanType
@@ -103,8 +103,8 @@ namespace WiFiScanType
     {
         Active = 0,
         Passive = 1
-    };
-
+    
+};
 }
 
 namespace Antenna
@@ -116,8 +116,8 @@ namespace Antenna
     {
         OnBoard = 0,
         External = 1
-    };
-
+    
+};
 }
 
 namespace WiFiCipherType
@@ -134,8 +134,8 @@ namespace WiFiCipherType
         Ccmp = 4,
         TkipCcmp = 5,
         Unknown = 6
-    };
-
+    
+};
 }
 
 

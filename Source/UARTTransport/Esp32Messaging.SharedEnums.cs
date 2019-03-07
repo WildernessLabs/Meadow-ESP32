@@ -33,13 +33,15 @@ namespace Esp32Messaging
         InvalidSSID = 11,
         InvalidPassword = 12,
         WiFiDisconnected = 13
-    };
+    
+};
 
     enum MessageAcknowledgement : byte
     {
         MSG_ACK = 0,
         MSG_NAK = 1
-    };
+    
+};
 
     enum WiFiAuthenticationMode : byte
     {
@@ -49,32 +51,37 @@ namespace Esp32Messaging
         Wpa2Psk = 3,
         WpaWpa2Psk = 4,
         Wpa2Enterprise = 5
-    };
+    
+};
 
     enum WiFiCountryPolicy
     {
         Automatic = 0,
         Manual = 1
-    };
+    
+};
 
     enum WiFiSecondChannel
     {
         None = 0,
         Above = 1,
         Below = 2
-    };
+    
+};
 
     enum WiFiScanType
     {
         Active = 0,
         Passive = 1
-    };
+    
+};
 
     enum Antenna
     {
         OnBoard = 0,
         External = 1
-    };
+    
+};
 
     enum WiFiCipherType
     {
@@ -85,6 +92,7 @@ namespace Esp32Messaging
         Ccmp = 4,
         TkipCcmp = 5,
         Unknown = 6
-    };
+    
+};
 
 }
