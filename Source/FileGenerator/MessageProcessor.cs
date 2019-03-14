@@ -14,7 +14,8 @@ namespace FileGenerator
             new DataType("uint32", 4, "uint32_t", "UInt32"),
             new DataType("int", 4, "int32_t", "Int32"),
             new DataType("byte", 1, "uint8_t", "Uint8"),
-            new DataType("array", -1, "void *", "byte[]")
+            new DataType("pbyte", 4, "uint8_t *", "byte[]"),
+            new DataType("string", 4, "char *", "String")
         };
 
         public string InputFileName { get; set; }
@@ -95,14 +96,14 @@ namespace FileGenerator
 
         public int OutputEncoderFunctionBody(StreamWriter file, string indent, string variableName, MessageElement me, int offset)
         {
-            DataType dt = GetDataType(me.DateType);
+            DataType dt = GetDataType(me.DataType);
             file.WriteLine($"{indent}Encode{dt.CSharpTypeName}({variableName}.{me.Name}, buffer, offset + {offset});");
             return(dt.Size);
         }
 
         public int OutputDecoderFunctionBody(StreamWriter file, string indent, string variableName, MessageElement me, int offset)
         {
-            DataType dt = GetDataType(me.DateType);
+            DataType dt = GetDataType(me.DataType);
             file.WriteLine($"{indent}{me.Name} = Extract{dt.CSharpTypeName}(buffer, offset + {offset});");
             return(dt.Size);
         }
@@ -137,7 +138,7 @@ namespace FileGenerator
                         offset = 0;
                         foreach (MessageElement me in m.MessageElements)
                         {
-                            DataType dt = GetDataType(me.DateType);
+                            DataType dt = GetDataType(me.DataType);
                             sourceFile.WriteLine($"        {variableName}.{me.Name} = Extract{dt.CSharpTypeName}(buffer, offset + {offset});");
                             offset += dt.Size;
                         }
@@ -184,9 +185,9 @@ namespace FileGenerator
                         sourceFile.WriteLine("    {");
                         foreach (MessageElement me in m.MessageElements)
                         {
-                            DataType dt = GetDataType(me.DateType);
+                            DataType dt = GetDataType(me.DataType);
                             sourceFile.WriteLine($"        {dt.CSharpTypeName} {me.Name};");
-                            messageSize += GetDataType(me.DateType).Size;
+                            messageSize += GetDataType(me.DataType).Size;
                         }
                     }
                     sourceFile.WriteLine("    };");
@@ -207,6 +208,9 @@ namespace FileGenerator
                 sourceFile.WriteLine("#define _ENCODERS_HPP_");
                 sourceFile.WriteLine();
                 sourceFile.WriteLine("#include \"freertos/FreeRTOS.h\"");
+                sourceFile.WriteLine("#include <stdlib.h>");
+                sourceFile.WriteLine("#include <string.h>");
+                sourceFile.WriteLine("#include \"SharedEnums.hpp\"");
                 sourceFile.WriteLine();
                 sourceFile.WriteLine("namespace Esp32Messaging");
                 sourceFile.WriteLine("{");
@@ -220,9 +224,9 @@ namespace FileGenerator
                         int messageSize = 0;
                         foreach (MessageElement me in m.MessageElements)
                         {
-                            DataType dt = GetDataType(me.DateType);
+                            DataType dt = GetDataType(me.DataType);
                             sourceFile.WriteLine($"        {dt.CTypeName} {me.Name};");
-                            messageSize += GetDataType(me.DateType).Size;
+                            messageSize += GetDataType(me.DataType).Size;
                         }
                         sourceFile.WriteLine("    };");
                         sourceFile.WriteLine();
@@ -277,36 +281,38 @@ namespace FileGenerator
                         int offset = 0;
                         foreach (MessageElement me in m.MessageElements)
                         {
-                            DataType dt = GetDataType(me.DateType);
+                            DataType dt = GetDataType(me.DataType);
                             if (dt.CTypeName.ToLower() == ("uint8_t"))
                             {
-                                sourceFile.WriteLine($"    *(buffer + {offset}) = {variableName}->{me.Name};");
+                                sourceFile.WriteLine($"    *buffer = {variableName}->{me.Name};");
                             }
                             else
                             {
-                                sourceFile.WriteLine($"    Encode{dt.CSharpTypeName}({variableName}->{me.Name}, (uint8_t *) (buffer + {offset}));");
+                                sourceFile.WriteLine($"    Encode{dt.CSharpTypeName}({variableName}->{me.Name}, buffer);");
                             }
+                            sourceFile.WriteLine($"    buffer += {dt.Size};");
                             offset += dt.Size;
                         }
                         sourceFile.WriteLine("}");
                         sourceFile.WriteLine();
-                        sourceFile.WriteLine($"Esp32Messaging::{m.Name} *Encoders::Extract{m.Name}(uint8_t *buffer, int offset)");
-                        FunctionPrototypes.AppendLine($"    static Esp32Messaging::{m.Name} *Extract{m.Name}(uint8_t *, int);");
+                        sourceFile.WriteLine($"Esp32Messaging::{m.Name} *Encoders::Extract{m.Name}(uint8_t *buffer)");
+                        FunctionPrototypes.AppendLine($"    static Esp32Messaging::{m.Name} *Extract{m.Name}(uint8_t *);");
                         sourceFile.WriteLine("{");
                         sourceFile.WriteLine($"    Esp32Messaging::{m.Name} *{variableName} = (Esp32Messaging::{m.Name} *) pvPortMalloc(sizeof(Esp32Messaging::{m.Name}));");
                         sourceFile.WriteLine();
                         offset = 0;
                         foreach (MessageElement me in m.MessageElements)
                         {
-                            DataType dt = GetDataType(me.DateType);
+                            DataType dt = GetDataType(me.DataType);
                             if (dt.CTypeName.ToLower() == ("uint8_t"))
                             {
-                                sourceFile.WriteLine($"    {variableName}->{me.Name} = *(buffer + {offset});");
+                                sourceFile.WriteLine($"    {variableName}->{me.Name} = *buffer;");
                             }
                             else
                             {
-                                sourceFile.WriteLine($"    {variableName}->{me.Name} = Extract{dt.CSharpTypeName}(buffer + {offset});");
+                                sourceFile.WriteLine($"    {variableName}->{me.Name} = Extract{dt.CSharpTypeName}(buffer);");
                             }
+                            sourceFile.WriteLine($"    buffer += {dt.Size};");
                             offset += dt.Size;
                         }
                         sourceFile.WriteLine($"    return({variableName});");

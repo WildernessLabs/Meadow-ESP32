@@ -5,16 +5,15 @@
             "Name": "StartNetwork",
             "MessageElements":
             [
-                { "Name": "Name1", "DateType": "UInt32" },
-                { "Name": "Name2", "DateType": "Byte" },
-                { "Name": "Name3", "DateType": "UInt32" }
+                { "Name": "NetworkName", "DataType": "string" },
+                { "Name": "Password", "DataType": "string" }
             ]
         },
         {
             "Name": "SwitchAntenna",
             "MessageElements":
             [
-                { "Name": "Antenna", "DateType": "Byte" }
+                { "Name": "Antenna", "DataType": "Byte" }
             ]
         }
     ]

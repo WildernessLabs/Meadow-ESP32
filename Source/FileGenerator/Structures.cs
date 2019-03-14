@@ -6,7 +6,7 @@ namespace FileGenerator
     public class MessageElement
     {
         public string Name;
-        public string DateType;
+        public string DataType;
     }
 
     public class Message

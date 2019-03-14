@@ -6,20 +6,33 @@
             "Namespace": "StatusCodes",
             "Comment": "Status and error codes for the various function calls.",
             "BaseDataType": "UInt32",
-            "EnumNames": [ "CompletedOK", "CRCError", "Restart", "Failure", "InvalidInterface", "QueueError",
+            "EnumNames": [ 
+                "CompletedOK", "CRCError", "Restart", "Failure", "InvalidInterface", "QueueError",
                 "InvalidPacket", "InvalidHeader", "UnexpectedData", "MissingEndOfFrameMarker", "WiFiAlreadyStarted",
                 "InvalidSSID", "InvalidPassword", "WiFiDisconnected"
             ]
         },
         {
-            "Name": "MessageAcknowledgement",
+          "Name": "Esp32Interfaces",
+          "Namespace": "Esp32Interfaces",
+          "Comment": "System interfaces available on the ESP32 for the various function calls.",
+          "BaseDataType": "Byte",
+          "EnumNames": [ 
+              "WiFi", "BlueTooth", "MeshNetwork", "System", "TransportProvider"
+          ]
+      },
+        {
+            "Name": "TransportPacketType",
             "BaseDataType": "Byte",
             "Namespace": "",
-            "Comment": "Possible acknowledgement types.",
+            "Comment": "Possible transport packet types.",
             "NameValuePairs":
             [
-                { "Name": "MSG_ACK", "Value": "0" },
-                { "Name": "MSG_NAK", "Value": "1" }
+              { "Name": "Ack", "Value": "0x00" },
+              { "Name": "Nak", "Value": "0x01" },
+              { "Name": "Reset", "Value": "0x02" },
+              { "Name": "Data", "Value": "0x40" },
+              { "Name": "Transport", "Value": "0x80" }
             ]
         },
         {
