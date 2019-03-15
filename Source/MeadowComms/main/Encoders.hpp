@@ -15,17 +15,19 @@
 #define _ENCODERS_HPP_
 
 #include "freertos/FreeRTOS.h"
+#include <stdlib.h>
+#include <string.h>
+#include "SharedEnums.hpp"
 
 namespace Esp32Messaging
 {
     struct StartNetwork
     {
-        uint32_t Name1;
-        uint8_t Name2;
-        uint32_t Name3;
+        char * NetworkName;
+        char * Password;
     };
 
-    const uint32_t START_NETWORK_MESSAGE_SIZE = 9;
+    const uint32_t START_NETWORK_MESSAGE_SIZE = 8;
 
     struct SwitchAntenna
     {
@@ -34,6 +36,28 @@ namespace Esp32Messaging
 
     const uint32_t SWITCH_ANTENNA_MESSAGE_SIZE = 1;
 
+}
+
+/*
+ *      Messages between the ESP32 and the STM32 will be encoded and
+ *      extracted through the message structure blow.
+ */
+namespace Esp32Messaging
+{
+    struct Message
+    {
+        uint8_t MessageType;
+        uint8_t Interface;
+        uint32_t Function;
+        uint32_t StatusCode;
+        uint32_t MessageID;
+        uint32_t PayloadLength;
+        uint32_t Crc;
+        uint8_t *Payload;
+    };
+
+    static const uint32_t MESSAGE_SIZE = 23;
+    static const uint32_t CRC_OFFSET = 18;
 }
 
 /*
@@ -56,13 +80,17 @@ public:
     static void EncodeUInt16(uint16_t, uint8_t *);
     static uint32_t ExtractUInt32(uint8_t *);
     static void EncodeUInt32(uint32_t, uint8_t *);
+    static char *ExtractString(uint8_t *);
+    static void EncodeString(char *, uint8_t *);
     static uint8_t CRC8(const uint8_t *, uint16_t);
     static uint32_t CRC32(const uint8_t *, uint16_t);
     static uint32_t ProgressiveCRC32(uint32_t, uint8_t);
+    static void EncodeMessage(Esp32Messaging::Message *, uint8_t *);
+    static Esp32Messaging::Message *ExtractMessage(uint8_t *);
     static void EncodeStartNetwork(Esp32Messaging::StartNetwork *, uint8_t *, int);
-    static Esp32Messaging::StartNetwork *ExtractStartNetwork(uint8_t *, int);
+    static Esp32Messaging::StartNetwork *ExtractStartNetwork(uint8_t *);
     static void EncodeSwitchAntenna(Esp32Messaging::SwitchAntenna *, uint8_t *, int);
-    static Esp32Messaging::SwitchAntenna *ExtractSwitchAntenna(uint8_t *, int);
+    static Esp32Messaging::SwitchAntenna *ExtractSwitchAntenna(uint8_t *);
 
 };
 

@@ -19,18 +19,16 @@ namespace UartTransport
     {
         public static void EncodeStartNetwork(StartNetwork startNetwork, byte[] buffer, int offset)
         {
-            EncodeUInt32(startNetwork.Name1, buffer, offset + 0);
-            EncodeUint8(startNetwork.Name2, buffer, offset + 4);
-            EncodeUInt32(startNetwork.Name3, buffer, offset + 5);
+            EncodeString(startNetwork.NetworkName, buffer, offset + 0);
+            EncodeString(startNetwork.Password, buffer, offset + 4);
         }
 
         public static StartNetwork *ExtractStartNetwork(byte[] buffer, int offset)
         {
             StartNetwork startNetwork;
 
-        startNetwork.Name1 = ExtractUInt32(buffer, offset + 0);
-        startNetwork.Name2 = ExtractUint8(buffer, offset + 4);
-        startNetwork.Name3 = ExtractUInt32(buffer, offset + 5);
+        startNetwork.NetworkName = ExtractString(buffer, offset + 0);
+        startNetwork.Password = ExtractString(buffer, offset + 4);
             return(startNetwork);
         }
 

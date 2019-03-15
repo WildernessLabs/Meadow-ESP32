@@ -97,6 +97,45 @@ void Encoders::EncodeUInt32(uint32_t value, uint8_t *buffer)
 }
 
 /*
+ *      Copy the string into the buffer.
+ *
+ *      @param source
+ *          Block of memory containing the string.
+ *
+ *      @param buffer
+ *          Pointer to a block of memory to take the string.
+ */
+void Encoders::EncodeString(char *source, uint8_t *buffer)
+{
+    memcpy((uint8_t *) source, buffer, strlen(source));
+}
+
+/*
+ *      Extract a string (terminated by 0) from a block of memory.
+ *
+ *      @param buffer
+ *          Pointer to the block of memory containing the string.
+ *
+ *      @return
+ *          Pointer to the extracted string.
+ */
+char *Encoders::ExtractString(uint8_t *buffer)
+{
+    uint32_t length = 0;
+    uint8_t *ptr = buffer;
+
+    while (*ptr != 0)
+    {
+        ptr++;
+        length++;
+    }
+
+    ptr = (uint8_t *) pvPortMalloc(length);
+    memcpy(buffer, ptr, length);
+    return((char *) ptr);
+}
+
+/*
  *      Calculate the 8-bit CRC value for the specified data buffer.
  *
  *      This algorithm is loosely based upon the Dallas 1-Wire algorithm.
@@ -179,6 +218,58 @@ uint32_t Encoders::ProgressiveCRC32(uint32_t currentChecksum, uint8_t byte)
 }
 
 /*
+ *      Encode a message into a block of memory.
+ */
+void Encoders::EncodeMessage(Esp32Messaging::Message *message, uint8_t *buffer)
+{
+    *buffer = message->MessageType;
+    buffer++;
+    *buffer = message->Interface;
+    buffer++;
+    EncodeUInt32(message->Function, buffer);
+    buffer += 4;
+    EncodeUInt32(message->StatusCode, buffer);
+    buffer += 4;
+    EncodeUInt32(message->MessageID, buffer);
+    buffer += 4;
+    EncodeUInt32(message->PayloadLength, buffer);
+    buffer += 4;
+    //
+    //  The byte after the PayloadLength is the CRC.  This is filled in later
+    //  and so a 0 is written into the message temporarily.
+    //
+    EncodeUInt32(message->Crc, 0);
+    buffer += 4;
+    memcpy(message->Payload, (uint8_t *) (buffer + 18), message->PayloadLength);
+}
+
+/*
+ *      Extract a message from a block of memory and create a new Message object.
+ */
+Esp32Messaging::Message *Encoders::ExtractMessage(uint8_t *buffer)
+{
+    Esp32Messaging::Message *message = (Esp32Messaging::Message *) pvPortMalloc(sizeof(Esp32Messaging::Message));
+
+    message->MessageType = *buffer;
+    buffer++;
+    message->Interface = *buffer;
+    buffer++;
+    message->Function = ExtractUInt32(buffer);
+    buffer += 4;
+    message->StatusCode = ExtractUInt32(buffer);
+    buffer += 4;
+    message->MessageID = ExtractUInt32(buffer);
+    buffer += 4;
+    message->PayloadLength = ExtractUInt32(buffer);
+    buffer += 4;
+    message->Crc = ExtractUInt32(buffer);
+    buffer += 4;
+    message->Payload = (uint8_t *) pvPortMalloc(message->PayloadLength);
+    memcpy(buffer, message->Payload, message->PayloadLength);
+    return(message);
+}
+
+/*
  *******************************************************************************
 
        THE METHODS BELOW HAVE BEEN AUTOMATICALLY GENERATED BASED UPON THE
@@ -188,31 +279,35 @@ uint32_t Encoders::ProgressiveCRC32(uint32_t currentChecksum, uint8_t byte)
 */
 void Encoders::EncodeStartNetwork(Esp32Messaging::StartNetwork *startNetwork, uint8_t *buffer, int offset)
 {
-    EncodeUInt32(startNetwork->Name1, (uint8_t *) (buffer + 0));
-    *(buffer + 4) = startNetwork->Name2;
-    EncodeUInt32(startNetwork->Name3, (uint8_t *) (buffer + 5));
+    EncodeString(startNetwork->NetworkName, buffer);
+    buffer += 4;
+    EncodeString(startNetwork->Password, buffer);
+    buffer += 4;
 }
 
-Esp32Messaging::StartNetwork *Encoders::ExtractStartNetwork(uint8_t *buffer, int offset)
+Esp32Messaging::StartNetwork *Encoders::ExtractStartNetwork(uint8_t *buffer)
 {
     Esp32Messaging::StartNetwork *startNetwork = (Esp32Messaging::StartNetwork *) pvPortMalloc(sizeof(Esp32Messaging::StartNetwork));
 
-    startNetwork->Name1 = ExtractUInt32(buffer + 0);
-    startNetwork->Name2 = *(buffer + 4);
-    startNetwork->Name3 = ExtractUInt32(buffer + 5);
+    startNetwork->NetworkName = ExtractString(buffer);
+    buffer += 4;
+    startNetwork->Password = ExtractString(buffer);
+    buffer += 4;
     return(startNetwork);
 }
 
 void Encoders::EncodeSwitchAntenna(Esp32Messaging::SwitchAntenna *switchAntenna, uint8_t *buffer, int offset)
 {
-    *(buffer + 0) = switchAntenna->Antenna;
+    *buffer = switchAntenna->Antenna;
+    buffer += 1;
 }
 
-Esp32Messaging::SwitchAntenna *Encoders::ExtractSwitchAntenna(uint8_t *buffer, int offset)
+Esp32Messaging::SwitchAntenna *Encoders::ExtractSwitchAntenna(uint8_t *buffer)
 {
     Esp32Messaging::SwitchAntenna *switchAntenna = (Esp32Messaging::SwitchAntenna *) pvPortMalloc(sizeof(Esp32Messaging::SwitchAntenna));
 
-    switchAntenna->Antenna = *(buffer + 0);
+    switchAntenna->Antenna = *buffer;
+    buffer += 1;
     return(switchAntenna);
 }
 

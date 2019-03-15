@@ -36,10 +36,23 @@ namespace Esp32Messaging
     
 };
 
-    enum MessageAcknowledgement : byte
+    enum Esp32Interfaces : byte
     {
-        MSG_ACK = 0,
-        MSG_NAK = 1
+        WiFi = 0,
+        BlueTooth = 1,
+        MeshNetwork = 2,
+        System = 3,
+        TransportProvider = 4
+    
+};
+
+    enum TransportPacketType : byte
+    {
+        Ack = 0x00,
+        Nak = 0x01,
+        Reset = 0x02,
+        Data = 0x40,
+        Transport = 0x80
     
 };
 
