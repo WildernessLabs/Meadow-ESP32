@@ -68,3 +68,6 @@ OnBoardFlash.dat.*
 Source/Tests/UARTTest/.vs/UARTTest/DesignTimeBuild/.dtbcache
 /Source/MeadowComms/.vs/MeadowComms/v15/Browse.VC.db
 /Source/MeadowComms/.vs/MeadowComms/v15/Browse.VC.opendb
+Source/MeadowComms/Comms.srctrlbm
+Source/MeadowComms/Comms.srctrldb
+Source/MeadowComms/Comms.srctrlprj
