@@ -24,11 +24,9 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "Encoders.hpp"
-#include "Messaging.h"
+#include "Esp32Messaging.hpp"
 #include "RequestHandlerBase.hpp"
 #include "SharedEnums.hpp"
-#include "UART.hpp"
 
 /*
  *      WiFi Function codes.
@@ -184,14 +182,14 @@ private:
     /*
      *      Response message for the current request.
      */
-    ApplicationResponse *_wifiResponse = NULL;
+    Esp32Messaging::Message *_wifiResponse = NULL;
 
     /*
      *      Private methods.
      */
     void SendResponse(uint32_t);
     void ProcessAccessPointScanCompletion(system_event_t *);
-    void DispatchRequest(ApplicationRequest *);
+    void DispatchRequest(Esp32Messaging::Message *);
     static void Task(void *);
 
 public:
@@ -205,9 +203,9 @@ public:
      */
     void Setup();
     esp_err_t EventHandler(void *, system_event_t *);
-    void StartNetwork(struct ApplicationRequest *);
-    void GetAvailableNetworks(struct ApplicationRequest *);
-    void HttpGet(struct ApplicationRequest *);
+    void StartNetwork(Esp32Messaging::Message *);
+    void GetAvailableNetworks(Esp32Messaging::Message *);
+    void HttpGet(Esp32Messaging::Message *);
 
     /*
      *      Getters and setters.

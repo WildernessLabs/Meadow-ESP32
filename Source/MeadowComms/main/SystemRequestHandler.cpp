@@ -21,7 +21,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "Messaging.h"
+#include "Encoders.hpp"
 #include "SystemRequestHandler.hpp"
 #include "Exceptions/MultipleInstancesException.hpp"
 
@@ -71,16 +71,13 @@ void SystemRequestHandler::Setup()
     /*
      *      Now create the objects necessary for the System task.
      */
-    const size_t messageSize = sizeof(ApplicationRequest);
-    QueueHandle_t queueHandle = xQueueCreate(MAX_QUEUE_LENGTH, messageSize);
-    if (queueHandle == NULL)
+    const size_t messageSize = sizeof(Esp32Messaging::Message);
+    _queueHandle = xQueueCreate(MAX_QUEUE_LENGTH, messageSize);
+    if (_queueHandle == NULL)
     {
         ESP_LOGI(__func__, "Cannot allocate System processing queue.");
     }
-    SetQueueHandle(queueHandle);
-    TaskHandle_t taskHandle;
-    xTaskCreate(Task, _taskName, 2048 * 2, this, configMAX_PRIORITIES - 1, &taskHandle);
-    SetTaskHandle(taskHandle);
+    xTaskCreate(Task, _taskName, 2048 * 2, this, configMAX_PRIORITIES - 1, &_taskHandle);
     _instantiated = true;
 }
 
@@ -90,24 +87,24 @@ void SystemRequestHandler::Setup()
  *      @param request
  *          Request to be processed.
  */
-void SystemRequestHandler::DispatchRequest(ApplicationRequest *request)
+void SystemRequestHandler::DispatchRequest(Esp32Messaging::Message *request)
 {
-    switch (request->_function)
+    switch (request->Function)
     {
         default:
-            ESP_LOGI(__func__, "Unknown System message received, function %d", request->_function);
-            if (request->_payload != NULL)
+            ESP_LOGI(__func__, "Unknown System message received, function %d", request->Function);
+            if (request->Payload != NULL)
             {
-                ESP_LOG_BUFFER_HEXDUMP(__func__, request->_payload, request->_payloadLength, ESP_LOG_INFO);
+                ESP_LOG_BUFFER_HEXDUMP(__func__, request->Payload, request->PayloadLength, ESP_LOG_INFO);
             }
             break;
     }
     //
     //  Memory for the payload is allocated on the heap and it needs to be released.
     //
-    if (request->_payload != NULL)
+    if (request->Payload != NULL)
     {
-        vPortFree(request->_payload);
+        vPortFree(request->Payload);
     }
 }
 
@@ -119,23 +116,23 @@ void SystemRequestHandler::DispatchRequest(ApplicationRequest *request)
  *      @param pvParameters
  *          Pointer to a list of parameters passed to the System task.
  */
-void SystemRequestHandler::Task(void *pvParameters)
-{
-    SystemRequestHandler *sender = (SystemRequestHandler *) pvParameters;
-    ApplicationRequest message;
-    while (true)
-    {
-        BaseType_t result = xQueueReceive(sender->GetQueueHandle(), &message, portMAX_DELAY);
-        if (result == pdTRUE)
-        {
-            sender->DispatchRequest(&message);
-        }
-    }
-    //
-    //  We should only get here if the code in the while loop generates a fault.
-    //  The documentation for FreeRTOS states that we should delete the task
-    //  should we get here.
-    //
-    vTaskDelete(sender->GetTaskHandle());
-}
+//void SystemRequestHandler::Task(void *pvParameters)
+//{
+//    SystemRequestHandler *sender = (SystemRequestHandler *) pvParameters;
+//    Esp32Messaging::Message message;
+//    while (true)
+//    {
+//        BaseType_t result = xQueueReceive(sender->GetQueueHandle(), &message, portMAX_DELAY);
+//        if (result == pdTRUE)
+//        {
+//            sender->DispatchRequest(&message);
+//        }
+//    }
+//    //
+//    //  We should only get here if the code in the while loop generates a fault.
+//    //  The documentation for FreeRTOS states that we should delete the task
+//    //  should we get here.
+//    //
+//    vTaskDelete(sender->GetTaskHandle());
+//}
 

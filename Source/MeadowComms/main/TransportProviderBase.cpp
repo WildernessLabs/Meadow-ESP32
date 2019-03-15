@@ -6,7 +6,8 @@
  */
 
 #include "TransportProviderBase.hpp"
-#include "Messaging.h"
+#include "MessageDispatcher.hpp"
+#include "Encoders.hpp"
 
 /*
  * ---------------------------------------------------------------------------
@@ -31,61 +32,42 @@ TransportProviderBase::~TransportProviderBase()
 }
 
 /*
- * ---------------------------------------------------------------------------
+ * ----------------------------------------------------------------------------
  *
- *                           Getters and Setters
+ *                                 Methods
  *
- * ---------------------------------------------------------------------------
+ * ----------------------------------------------------------------------------
  */
 
 /*
- *      Get the current frame size.
+ *      Setup the hardware transport provider.
  */
-uint32_t TransportProviderBase::GetFrameSize()
+void TransportProviderBase::Setup()
 {
-    return(_frameSize);
-}
-
-/*
- *      Change the frame size.
- *
- *      @param newFrameSize
- *          New frame size.
- *
- *      @return
- *          New frame size (if the new size is within bounds) or the current
- *          frame size if the frame size is out of bounds.
- *
- *          It is important that the caller checks the return result to make
- *          sure that the new frame size has been accepted.
- */
-uint32_t TransportProviderBase::SetFrameSize(uint32_t newFrameSize)
-{
-    if ((newFrameSize <= _maximumFrameSize) && (newFrameSize >= MINIMUM_FRAME_SIZE))
+    _queueHandle = xQueueCreate(MAX_QUEUE_LENGTH, sizeof(Esp32Messaging::Message));
+    if (_queueHandle == NULL)
     {
-        _frameSize = newFrameSize;
+        ESP_LOGE(__func__, "Cannot allocate hardware transport queue.");
     }
-    return(_frameSize);
 }
 
 /*
- *      Set the function to be called when a new data frame is received from the STM32.
+ *      Add the message to the queue of messages waiting to be sent to
+ *      the STM32.
  *
- *      @param newHeaderReceviedCallback
- *          Pointer to the function to be called when a new data frame is received.
- */
-void TransportProviderBase::SetFrameReceivedCallback(FrameReceivedFunctionPointer newHeaderReceivedCallback)
-{
-    _headerReceivedCallback = newHeaderReceivedCallback;
-}
-
-/*
- *      Get the maximum size of a data frame for this transport provider.
+ *      @param message
+ *          Message to be sent to the STM32.
  *
  *      @return
- *          Maximum size of a data frame that this provider can support.
+ *          true if the message was queued, false otherwise.
  */
-uint32_t TransportProviderBase::GetMaximumFrameSize()
+bool TransportProviderBase::QueueMessageForStm32(Esp32Messaging::Message *message)
 {
-    return(_maximumFrameSize);
+    bool result = true;
+    if (xQueueSendToBack(_queueHandle, &message, 0) != pdPASS)
+    {
+        ESP_LOGE(__func__, "Cannot queue message.");
+        result = false;
+    }
+    return(result);
 }

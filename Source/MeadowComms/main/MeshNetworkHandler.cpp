@@ -16,7 +16,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "Messaging.h"
+#include "Encoders.hpp"
 #include "Exceptions/MultipleInstancesException.hpp"
 
 /*
@@ -62,31 +62,28 @@ MeshNetworkRequestHandler::~MeshNetworkRequestHandler()
  */
 void MeshNetworkRequestHandler::Setup()
 {
-    const size_t messageSize = sizeof(ApplicationRequest);
-    QueueHandle_t queueHandle = xQueueCreate(MAX_QUEUE_LENGTH, messageSize);
-    if (queueHandle == NULL)
+    const size_t messageSize = sizeof(Esp32Messaging::Message);
+    _queueHandle = xQueueCreate(MAX_QUEUE_LENGTH, messageSize);
+    if (_queueHandle == NULL)
     {
         ESP_LOGI(_taskName, "Cannot allocate Mesh network queue.");
     }
-    SetQueueHandle(queueHandle);
-    TaskHandle_t taskHandle;
-    xTaskCreate(Task, _taskName, 1024 * 2, this, configMAX_PRIORITIES - 1, &taskHandle);
-    SetTaskHandle(taskHandle);
+    xTaskCreate(Task, _taskName, 1024 * 2, this, configMAX_PRIORITIES - 1, &_taskHandle);
 }
 
 /*
  *      Dispatch the message
  */
-void MeshNetworkRequestHandler::DispatchRequest(ApplicationRequest *request)
+void MeshNetworkRequestHandler::DispatchRequest(Esp32Messaging::Message *request)
 {
     ESP_LOGI(_taskName, "Message handling not implemented, message will be deleted");
     //
     //  Memory for the payload is allocated on the heap and it needs to be released.
     //
-    if(request->_payload != NULL)
+    if(request->Payload != NULL)
     {
-        ESP_LOG_BUFFER_HEXDUMP(_taskName, request->_payload, request->_payloadLength, ESP_LOG_INFO);
-        vPortFree(request->_payload);
+        ESP_LOG_BUFFER_HEXDUMP(_taskName, request->Payload, request->PayloadLength, ESP_LOG_INFO);
+        vPortFree(request->Payload);
     }
 }
 
@@ -98,22 +95,22 @@ void MeshNetworkRequestHandler::DispatchRequest(ApplicationRequest *request)
  *      @param pvParameters
  *          Pointer to the instance of the Mesh Network object making the call.
  */
-void MeshNetworkRequestHandler::Task(void *pvParameters)
-{
-    MeshNetworkRequestHandler *sender = (MeshNetworkRequestHandler *) pvParameters;
-    while (true)
-    {
-        ApplicationRequest request;
-        BaseType_t result = xQueueReceive(sender->GetQueueHandle(), &request, portMAX_DELAY);
-        if (result == pdTRUE)
-        {
-            sender->DispatchRequest(&request);
-        }
-    }
-    //
-    //  We should only get here if the code in the while loop generates a fault.
-    //  The documentation for FreeRTOS states that we should delete the task
-    //  should we get here.
-    //
-    vTaskDelete(sender->GetTaskHandle());
-}
+//void MeshNetworkRequestHandler::Task(void *pvParameters)
+//{
+//    MeshNetworkRequestHandler *sender = (MeshNetworkRequestHandler *) pvParameters;
+//    while (true)
+//    {
+//        Esp32Messaging::Message request;
+//        BaseType_t result = xQueueReceive(sender->GetQueueHandle(), &request, portMAX_DELAY);
+//        if (result == pdTRUE)
+//        {
+//            sender->DispatchRequest(&request);
+//        }
+//    }
+//    //
+//    //  We should only get here if the code in the while loop generates a fault.
+//    //  The documentation for FreeRTOS states that we should delete the task
+//    //  should we get here.
+//    //
+//    vTaskDelete(sender->GetTaskHandle());
+//}

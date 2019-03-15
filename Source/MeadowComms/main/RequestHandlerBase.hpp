@@ -4,29 +4,29 @@
  *      Base class for the request handlers.
  */
 
-#ifndef MAIN_REQUEST_HANDLER_BASE_HPP_
-#define MAIN_REQUEST_HANDLER_BASE_HPP_
+#ifndef _REQUEST_HANDLER_BASE_HPP_
+#define _REQUEST_HANDLER_BASE_HPP_
 
 #include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "freertos/queue.h"
-#include "freertos/event_groups.h"
-#include "lwip/err.h"
-#include "lwip/sys.h"
-#include "lwip/sockets.h"
-#include "lwip/netdb.h"
-#include "lwip/dns.h"
-#include "esp_system.h"
-#include "esp_log.h"
-#include "esp_wifi.h"
-#include "esp_event_loop.h"
-#include <string.h>
-#include <stdlib.h>
 
+#include "Esp32Messaging.hpp"
 
 class RequestHandlerBase
 {
 private:
+    /*
+     *      Dispatch messages.
+     *
+     *      This method is unique to each specific interface.
+     */
+    virtual void DispatchRequest(Esp32Messaging::Message *) = 0;
+
+protected:
+    /*
+     *      Get the task handle for the
+     */
+    TaskHandle_t GetTaskHandle();
+
     /*
      *      Handle for the System messages to be processed by the System task.
      */
@@ -37,20 +37,36 @@ private:
      */
     TaskHandle_t _taskHandle = NULL;
 
+    /*
+     *      Task that will be used to retrieve and dispatch
+     *      messages to the appropriate method.
+     */
+    void Task(void *);
 
-protected:
-    void SetQueueHandle(QueueHandle_t);
-    TaskHandle_t GetTaskHandle();
-    void SetTaskHandle(TaskHandle_t);
+    RequestHandlerBase();
+
+    /*
+     *      Destructor for the RequestHandlerBase class.
+     */
+    ~RequestHandlerBase();
+
 
 public:
     /*
+     *  Maximum length of a message queue.
+     */
+    const uint32_t MAX_QUEUE_LENGTH = 10;
+
+    /*
+     *      Constructor for the RequestHandlerBase class.
+     */
+    RequestHandlerBase(Esp32Messaging::MessageReceivedFunctionPointer);
+
+    /*
      *      Setup the various properties for correct functioning of the request handler.
      */
-    virtual void Setup() = 0;
-    virtual ~RequestHandlerBase() { };
-    QueueHandle_t GetQueueHandle();
+    void Setup();
 };
 
 
-#endif /* MAIN_REQUEST_HANDLER_BASE_HPP_ */
+#endif /* _REQUEST_HANDLER_BASE_HPP_ */

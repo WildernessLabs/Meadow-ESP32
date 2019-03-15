@@ -1,77 +1,53 @@
 /*
  *      TransportProviderBase.hpp
- *
- *
  */
 
 #ifndef _TRANSPORT_PROVIDER_BASE_HPP_
 #define _TRANSPORT_PROVIDER_BASE_HPP_
 
+#include "freertos/FreeRTOS.h"
+#include "freertos/queue.h"
+#include "esp_system.h"
+#include "esp_log.h"
+#include "esp_wifi.h"
+#include "esp_event_loop.h"
+#include <string.h>
+#include <stdlib.h>
+
 #include "SharedEnums.hpp"
-#include "Messaging.h"
+#include "Esp32Messaging.hpp"
 
 class TransportProviderBase
 {
 public:
-    typedef void (*FrameReceivedFunctionPointer)(uint8_t *, uint32_t);
-
-    /*
-     *      Default frame size.
-     */
-    const uint32_t DEFAULT_FRAME_SIZE = 256;
-
-    /*
-     *      minimum size of a data frame.
-     */
-    const uint32_t MINIMUM_FRAME_SIZE = DEFAULT_FRAME_SIZE;
-
     /*
      *      Setup the transport provider.
      */
-    virtual void Setup() = 0;
+    void Setup();
 
     /*
-     *      Send a frame to the STM32.
+     *      Add the message given to the queue of messages waiting
+     *      for transmission to the STM32.
      */
-    virtual void SendFrame(uint8_t *, uint32_t) = 0;
-
-    /*
-     *      Get the current frame size.
-     */
-    uint32_t GetFrameSize();
-
-    /*
-     *      Set the the new frame size.
-     */
-    uint32_t SetFrameSize(uint32_t);
-
-    /*
-     *      Get the maximum number of bytes in a frame.
-     */
-    uint32_t GetMaximumFrameSize();
-
-    /*
-     *      Set the method to ba called when a new frame is received.
-     */
-    void SetHeaderReceivedCallback(FrameReceivedFunctionPointer);
+    bool QueueMessageForStm32(Esp32Messaging::Message *);
 
 private:
     /*
-     *      Current frame size
+     *      Maximum length of the message queue.
      */
-    uint32_t _frameSize = DEFAULT_FRAME_SIZE;
+    const uint32_t MAX_QUEUE_LENGTH = 10;
 
     /*
-     *      Maximum frame size for this transport provider.  This must be set in the
-     *      transport provider constructor.
+     *      Function to call when a new message is received.
      */
-    uint32_t _maximumFrameSize;
+    //QueueMessageForStm32FunctionPointer _queueMessageForStm32FunctionPointer;
 
     /*
-     *      Function to call when a new frame is received.
+     *      Queue handle for the messages to be sent to the STM32.
      */
-    FrameReceivedFunctionPointer _headerReceivedCallback = NULL;
+    QueueHandle_t _queueHandle = NULL;
 
+protected:
     /*
      *      Default constructor.
      */
