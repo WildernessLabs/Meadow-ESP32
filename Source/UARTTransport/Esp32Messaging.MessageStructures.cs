@@ -17,12 +17,11 @@ namespace Esp32Messaging
 {
     public struct StartNetwork
     {
-        UInt32 Name1;
-        Uint8 Name2;
-        UInt32 Name3;
+        String NetworkName;
+        String Password;
     };
 
-    public const UInt32 START_NETWORK_MESSAGE_SIZE = 9;
+    public const UInt32 START_NETWORK_MESSAGE_SIZE = 8;
 
     public struct SwitchAntenna
     {
