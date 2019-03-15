@@ -13,6 +13,7 @@
 
 
 #include "Encoders.hpp"
+#include "Esp32Messaging.hpp"
 
 /*
  *      Take the first two bytes from the buffer and encode them as a 16 bit integer.

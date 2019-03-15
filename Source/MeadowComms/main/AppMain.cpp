@@ -17,37 +17,16 @@
 #include "nvs_flash.h"
 
 #include "Encoders.hpp"
-#include "Messaging.h"
-#include "UART.hpp"
 #include "Logging.hpp"
 #include "SharedEnums.hpp"
 #include "SystemRequestHandler.hpp"
+#include "MessageDispatcher.hpp"
+#include "SpiTransportProvider.hpp"
 
 /*
- *      WiFi object.
+ *
  */
-WiFiRequestHandler *wifi = NULL;
-
-/*
- *      UART object.
- */
-UART *uart = NULL;
-
-/*
- *      Bluetooth object.
- */
-BluetoothRequestHandler *bluetooth = NULL;
-
-/*
- *      Mesh networking object.
- */
-MeshNetworkRequestHandler *meshNetwork = NULL;
-
-/*
- *      System request handler.
- */
-SystemRequestHandler *systemRequestHandler = NULL;
-
+MessageDispatcher *messageDispatcher = new MessageDispatcher(new SpiTransportProvider());
 
 /*
  *      Main program loop for the ESP32 as specified by the FreeRTOS documentation.
@@ -56,6 +35,7 @@ extern "C" void app_main()
 {
     Logging::Setup();
     esp_log_level_set("*", ESP_LOG_INFO);
+    messageDispatcher->Setup();
     esp_err_t result = nvs_flash_init();
     if ((result == ESP_ERR_NVS_NO_FREE_PAGES) || (result == ESP_ERR_NVS_NEW_VERSION_FOUND))
     {
@@ -63,12 +43,6 @@ extern "C" void app_main()
         result = nvs_flash_init();
     }
     ESP_ERROR_CHECK(result);
-    wifi = new(WiFiRequestHandler);
-    uart = new (UART);
-
-    uart->Setup();
-    wifi->Setup();
-
     if ((result == ESP_ERR_NVS_NO_FREE_PAGES) || (result == ESP_ERR_NVS_NEW_VERSION_FOUND))
     {
         ESP_ERROR_CHECK(nvs_flash_erase());

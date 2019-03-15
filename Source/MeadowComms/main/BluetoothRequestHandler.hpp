@@ -13,8 +13,8 @@
 #include "freertos/queue.h"
 #include "stdlib.h"
 
-#include "Messaging.h"
 #include "RequestHandlerBase.hpp"
+#include "Esp32Messaging.hpp"
 
 class BluetoothRequestHandler : public RequestHandlerBase
 {
@@ -29,7 +29,7 @@ private:
      */
     bool _instantiated = false;
 
-    void DispatchRequest(ApplicationRequest *);
+    void DispatchRequest(Esp32Messaging::Message *);
     static void Task(void *);
 
 public:

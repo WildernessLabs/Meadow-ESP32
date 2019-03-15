@@ -16,7 +16,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "Messaging.h"
+#include "Encoders.hpp"
 #include "Exceptions/MultipleInstancesException.hpp"
 
 /*
@@ -62,29 +62,26 @@ BluetoothRequestHandler::~BluetoothRequestHandler()
  */
 void BluetoothRequestHandler::Setup()
 {
-    const size_t messageSize = sizeof(ApplicationRequest);
-    QueueHandle_t queueHandle = xQueueCreate(MAX_QUEUE_LENGTH, messageSize);
-    if (queueHandle == NULL)
+    const size_t messageSize = sizeof(Esp32Messaging::Message);
+    _queueHandle = xQueueCreate(MAX_QUEUE_LENGTH, messageSize);
+    if (_queueHandle == NULL)
     {
         ESP_LOGI(__func__, "Cannot allocate Bluetooth processing queue.");
     }
-    SetQueueHandle(queueHandle);
-    TaskHandle_t taskHandle;
-    xTaskCreate(Task, _taskName, 1024 * 2, this, configMAX_PRIORITIES - 1, &taskHandle);
-    SetTaskHandle(taskHandle);
+    xTaskCreate(Task, _taskName, 1024 * 2, this, configMAX_PRIORITIES - 1, &_taskHandle);
     _instantiated = true;
 }
 
-void BluetoothRequestHandler::DispatchRequest(ApplicationRequest *request)
+void BluetoothRequestHandler::DispatchRequest(Esp32Messaging::Message *request)
 {
     ESP_LOGI(_taskName, "Message handling not implemented, message will be deleted");
     //
     //  Memory for the payload is allocated on the heap and it needs to be released.
     //
-    if(request->_payload != NULL)
+    if(request->Payload != NULL)
     {
-        ESP_LOG_BUFFER_HEXDUMP(_taskName, request->_payload, request->_payloadLength, ESP_LOG_INFO);
-        vPortFree(request->_payload);
+        ESP_LOG_BUFFER_HEXDUMP(_taskName, request->Payload, request->PayloadLength, ESP_LOG_INFO);
+        vPortFree(request->Payload);
     }
 }
 
@@ -96,22 +93,22 @@ void BluetoothRequestHandler::DispatchRequest(ApplicationRequest *request)
  *      @param pvParameters
  *          Pointer to the instance of the Bluetooth class making the request.
  */
-void BluetoothRequestHandler::Task(void *pvParameters)
-{
-    BluetoothRequestHandler *sender = (BluetoothRequestHandler *) pvParameters;
-    while (true)
-    {
-        ApplicationRequest message;
-        BaseType_t result = xQueueReceive(sender->GetQueueHandle(), &message, portMAX_DELAY);
-        if (result == pdTRUE)
-        {
-            sender->DispatchRequest(&message);
-        }
-    }
-    //
-    //  We should only get here if the code in the while loop generates a fault.
-    //  The documentation for FreeRTOS states that we should delete the task
-    //  should we get here.
-    //
-    vTaskDelete(sender->GetTaskHandle());
-}
+//void BluetoothRequestHandler::Task(void *pvParameters)
+//{
+//    BluetoothRequestHandler *sender = (BluetoothRequestHandler *) pvParameters;
+//    while (true)
+//    {
+//        Esp32Messaging::Message message;
+//        BaseType_t result = xQueueReceive(sender->GetQueueHandle(), &message, portMAX_DELAY);
+//        if (result == pdTRUE)
+//        {
+//            sender->DispatchRequest(&message);
+//        }
+//    }
+//    //
+//    //  We should only get here if the code in the while loop generates a fault.
+//    //  The documentation for FreeRTOS states that we should delete the task
+//    //  should we get here.
+//    //
+//    vTaskDelete(sender->GetTaskHandle());
+//}

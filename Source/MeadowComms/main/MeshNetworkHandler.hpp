@@ -19,7 +19,7 @@
 #include <stdlib.h>
 
 #include "RequestHandlerBase.hpp"
-#include "Messaging.h"
+#include "Esp32Messaging.hpp"
 
 class MeshNetworkRequestHandler : public RequestHandlerBase
 {
@@ -34,7 +34,7 @@ private:
      */
     const char *_taskName = "MeshNetworkTask";
 
-    void DispatchRequest(ApplicationRequest *);
+    void DispatchRequest(Esp32Messaging::Message *);
     static void Task(void *);
 
 public:
