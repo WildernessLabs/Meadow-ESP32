@@ -36,11 +36,11 @@ private:
     const char *_taskName = "MeshNetworkTask";
 
     void DispatchRequest(Esp32Messaging::Message *);
-    static void Task(void *);
-
-public:
     MeshNetworkRequestHandler();
     ~MeshNetworkRequestHandler();
+
+public:
+    MeshNetworkRequestHandler(MessageDispatcher *);
 
     void Setup();
 };

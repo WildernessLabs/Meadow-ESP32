@@ -51,6 +51,18 @@ WiFiRequestHandler::WiFiRequestHandler()
 }
 
 /*
+ *      Create a new object and set the message dispatcher accordingly.
+ *
+ *      @param messageDispatcher
+ *          Message Dispatcher object that can be used to send messages to
+ *          the STM32.
+ */
+WiFiRequestHandler::WiFiRequestHandler(MessageDispatcher *messageDispatcher)
+{
+    _messageDispatcher = messageDispatcher;
+}
+
+/*
  *      Destructor for the WiFi class.
  *
  *      Free any resources used by the class.

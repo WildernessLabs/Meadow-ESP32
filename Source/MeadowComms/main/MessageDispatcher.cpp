@@ -59,25 +59,29 @@ bool MessageDispatcher::QueueMessageForEsp32(Esp32Messaging::Message *request)
         case Esp32Interfaces::WiFi:
             if (!_wifiRequestHandler)
             {
-                _wifiRequestHandler = new WiFiRequestHandler();
+                _wifiRequestHandler = new WiFiRequestHandler(this);
             }
             provider = (RequestHandlerBase *) _wifiRequestHandler;
             break;
         case Esp32Interfaces::BlueTooth:
             if (!_bluetoothRequestHandler)
             {
-                _bluetoothRequestHandler = new BluetoothRequestHandler();
+                _bluetoothRequestHandler = new BluetoothRequestHandler(this);
             }
             provider = (RequestHandlerBase *) _bluetoothRequestHandler;
             break;
         case Esp32Interfaces::MeshNetwork:
             if (!_meshNetworkRequestHandler)
             {
-                _meshNetworkRequestHandler = new MeshNetworkRequestHandler();
+                _meshNetworkRequestHandler = new MeshNetworkRequestHandler(this);
             }
             provider = (RequestHandlerBase *) _meshNetworkRequestHandler;
             break;
         case Esp32Interfaces::System:
+            if (!_systemRequestHandler)
+            {
+                _systemRequestHandler = new SystemRequestHandler(this);
+            }
             provider = (RequestHandlerBase *) _systemRequestHandler;
             break;
         case Esp32Interfaces::TransportProvider:
