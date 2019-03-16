@@ -53,14 +53,6 @@ RequestHandlerBase::~RequestHandlerBase()
  * ----------------------------------------------------------------------------
  */
 
-/*
- *      Get the handle to the task queue.
- */
-TaskHandle_t RequestHandlerBase::GetTaskHandle()
-{
-    return(_taskHandle);
-}
-
 /* ---------------------------------------------------------------------------
  *
  *                                  Methods
@@ -103,7 +95,7 @@ void RequestHandlerBase::Task(void *pvParameters)
     //  The documentation for FreeRTOS states that we should delete the task
     //  should we get here.
     //
-    vTaskDelete(sender->GetTaskHandle());
+    vTaskDelete(_taskHandle);
 }
 
 /*

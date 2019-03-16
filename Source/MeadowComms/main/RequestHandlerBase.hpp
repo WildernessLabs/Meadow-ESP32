@@ -30,11 +30,6 @@ private:
 
 protected:
     /*
-     *      Get the task handle for the
-     */
-    TaskHandle_t GetTaskHandle();
-
-    /*
      *      Handle for the System messages to be processed by the System task.
      */
     QueueHandle_t _queueHandle = nullptr;
@@ -50,6 +45,9 @@ protected:
      */
     void Task(void *);
 
+    /*
+     *      Constructor for the RequestHandlerBase class.
+     */
     RequestHandlerBase();
 
     /*
