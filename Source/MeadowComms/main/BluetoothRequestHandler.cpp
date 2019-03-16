@@ -42,6 +42,11 @@ BluetoothRequestHandler::BluetoothRequestHandler()
     }
 }
 
+BluetoothRequestHandler::BluetoothRequestHandler(MessageDispatcher *messageDispatcher)
+{
+    _messageDispatcher = messageDispatcher;
+}
+
 /*
  *      Default destructor for the bluetooth class.
  */

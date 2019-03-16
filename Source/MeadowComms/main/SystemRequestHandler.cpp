@@ -48,6 +48,11 @@ SystemRequestHandler::SystemRequestHandler()
     }
 }
 
+SystemRequestHandler::SystemRequestHandler(MessageDispatcher *messageDispatcher)
+{
+    _messageDispatcher = messageDispatcher;
+}
+
 /*
  *      Default destructor for the system request handler class.
  */

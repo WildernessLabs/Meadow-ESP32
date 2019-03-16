@@ -39,6 +39,21 @@ RequestHandlerBase::RequestHandlerBase()
 }
 
 /*
+ *      Create a new request handler object and ensure that
+ *      the message dispatcher reference is set up correctly.
+ *
+ *      @param messageDispatcher
+ *          Message dispatcher object that will allow communication
+ *          with the STM32.
+ */
+RequestHandlerBase::RequestHandlerBase(MessageDispatcher *messageDispatcher)
+{
+    _messageDispatcher = messageDispatcher;
+    _queueHandle = nullptr;
+    _taskHandle = nullptr;
+}
+
+/*
  *      Destructor for the RequestHandlerBase class.
  */
 RequestHandlerBase::~RequestHandlerBase()
@@ -84,7 +99,7 @@ void RequestHandlerBase::Task(void *pvParameters)
     while (true)
     {
         Esp32Messaging::Message message;
-        BaseType_t result = xQueueReceive(_queueHandle, &message, portMAX_DELAY);
+        BaseType_t result = xQueueReceive(sender->_queueHandle, &message, portMAX_DELAY);
         if (result == pdTRUE)
         {
             sender->DispatchRequest(&message);
@@ -95,7 +110,7 @@ void RequestHandlerBase::Task(void *pvParameters)
     //  The documentation for FreeRTOS states that we should delete the task
     //  should we get here.
     //
-    vTaskDelete(_taskHandle);
+    vTaskDelete(sender->_taskHandle);
 }
 
 /*

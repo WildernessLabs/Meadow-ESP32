@@ -27,24 +27,23 @@ private:
     /*
      *      Determine if this class is instantiated already (i.e. this should be a singleton).
      */
-    bool _instantiated = false;
+    static bool _instantiated;
 
     void DispatchRequest(Esp32Messaging::Message *);
 
-public:
     /*
      *      Constructor(s) and destructor.
      */
     BluetoothRequestHandler();
     ~BluetoothRequestHandler();
 
+public:
+    BluetoothRequestHandler(MessageDispatcher *);
+
     /*
      *      Public methods.
      */
     void Setup();
 };
-
-extern BluetoothRequestHandler *bluetooth;
-
 
 #endif /* MAIN_BLUETOOTH_REQUEST_HANDLER_HPP_ */

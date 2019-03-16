@@ -39,25 +39,20 @@ private:
      */
     bool _instantiated = false;
 
-    /*
-     *      FreeRTOS task for processing requests.
-     */
-    static void Task(void *);
     void DispatchRequest(Esp32Messaging::Message *);
 
-public:
     /*
      *      Constructor(s) and destructor.
      */
     SystemRequestHandler();
     ~SystemRequestHandler();
 
+public:
+    SystemRequestHandler(MessageDispatcher *);
     /*
      *      Public methods.
      */
     void Setup();
 };
-
-extern SystemRequestHandler *systemRequestHandler;
 
 #endif /* MAIN_SYSTEMREQUESTHANDLER_HPP_ */

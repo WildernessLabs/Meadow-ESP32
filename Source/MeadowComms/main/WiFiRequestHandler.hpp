@@ -142,16 +142,6 @@ private:
     bool _instantiated = false;
 
     /*
-     *      Handle for the WiFi messages to be processed by the System task.
-     */
-    QueueHandle_t _queueHandle = NULL;
-
-    /*
-     *      Handle for the System request handler task.
-     */
-    TaskHandle_t _taskHandle = NULL;
-
-    /*
      *      Event group containing 24-bits used to indicate the state of the WiFi connection.
      */
     EventGroupHandle_t _xWiFiEventGroup = NULL;
@@ -190,14 +180,15 @@ private:
     void SendResponse(uint32_t);
     void ProcessAccessPointScanCompletion(system_event_t *);
     void DispatchRequest(Esp32Messaging::Message *);
-    static void Task(void *);
+
+    WiFiRequestHandler();
+    ~WiFiRequestHandler();
 
 public:
     /*
      *      Constructor(s) and destructor.
      */
-    WiFiRequestHandler();
-    ~WiFiRequestHandler();
+    WiFiRequestHandler(MessageDispatcher *);
     /*
      *      Public methods.
      */
@@ -213,11 +204,5 @@ public:
     Antenna GetAntenna() const;
     void SetAntenna(Antenna newAntenna = OnBoard);
 };
-
-/*
- *      External declaration for the global WiFi object.
- */
-extern WiFiRequestHandler *wifi;
-
 
 #endif /* MAIN_WIFI_REQUEST_HANDLER_HPP_ */

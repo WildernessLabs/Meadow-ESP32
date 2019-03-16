@@ -40,10 +40,16 @@ protected:
     TaskHandle_t _taskHandle = nullptr;
 
     /*
+     *      Object that will be used to send messages to the STM32
+     *      from the ESP32.
+     */
+    MessageDispatcher *_messageDispatcher = nullptr;
+
+    /*
      *      Task that will be used to retrieve and dispatch
      *      messages to the appropriate method.
      */
-    void Task(void *);
+    static void Task(void *);
 
     /*
      *      Constructor for the RequestHandlerBase class.
@@ -65,7 +71,7 @@ public:
     /*
      *      Constructor for the RequestHandlerBase class.
      */
-    RequestHandlerBase(Esp32Messaging::MessageReceivedFunctionPointer);
+    RequestHandlerBase(MessageDispatcher *);
 
     /*
      *      Setup the various properties for correct functioning of the request handler.
