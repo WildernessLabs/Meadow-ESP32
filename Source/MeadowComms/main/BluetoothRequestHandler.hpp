@@ -30,7 +30,6 @@ private:
     bool _instantiated = false;
 
     void DispatchRequest(Esp32Messaging::Message *);
-    static void Task(void *);
 
 public:
     /*
