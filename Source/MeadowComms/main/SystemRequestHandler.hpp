@@ -1,22 +1,16 @@
 /*
- * SystemRequestHandler.hpp
+ *      SystemRequestHandler.hpp
  *
- *  Created on: 3 Feb 2019
- *      Author: mark
+ *      System message request handler
  */
 
-#ifndef MAIN_SYSTEMREQUESTHANDLER_HPP_
-#define MAIN_SYSTEMREQUESTHANDLER_HPP_
+#ifndef _SYSTEMREQUESTHANDLER_HPP_
+#define _SYSTEMREQUESTHANDLER_HPP_
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
 #include "freertos/event_groups.h"
-#include "lwip/err.h"
-#include "lwip/sys.h"
-#include "lwip/sockets.h"
-#include "lwip/netdb.h"
-#include "lwip/dns.h"
 #include "esp_system.h"
 #include "esp_log.h"
 #include "esp_wifi.h"
@@ -26,19 +20,25 @@
 
 #include "RequestHandlerBase.hpp"
 
+/*
+ *      Object to deal with system requests such as configuration settings etc.
+ */
 class SystemRequestHandler : public RequestHandlerBase
 {
 private:
     /*
-     *      Name of the FreeRTOS task for the System system.
+     *      Name of the FreeRTOS task for the System task.
      */
     const char *_taskName = "SystemTask";
 
     /*
      *      Determine if this class is instantiated already (i.e. this should be a singleton).
      */
-    bool _instantiated = false;
+    static bool _instantiated;
 
+    /*
+     *      This method will dispatch incoming messages to the appropriate request handler.
+     */
     void DispatchRequest(Esp32Messaging::Message *);
 
     /*
@@ -48,11 +48,15 @@ private:
     ~SystemRequestHandler();
 
 public:
+    /*
+     *
+     */
     SystemRequestHandler(MessageDispatcher *);
+
     /*
      *      Public methods.
      */
     void Setup();
 };
 
-#endif /* MAIN_SYSTEMREQUESTHANDLER_HPP_ */
+#endif /* _SYSTEMREQUESTHANDLER_HPP_ */

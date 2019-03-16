@@ -30,6 +30,15 @@ extern "C" esp_err_t WiFiEventHandler(void *context, system_event_t *event)
 /*
  * ----------------------------------------------------------------------------
  *
+ *                   Initialise class level static variables.
+ *
+ * ----------------------------------------------------------------------------
+ */
+bool WiFiRequestHandler::_instantiated = false;
+
+/*
+ * ----------------------------------------------------------------------------
+ *
  *                      Constructors and destructors.
  *
  * ----------------------------------------------------------------------------

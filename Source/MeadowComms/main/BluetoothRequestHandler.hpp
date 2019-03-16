@@ -1,12 +1,11 @@
 /*
- * Bluetooth.hpp
+ *      BluetoothRequestHandler.hpp
  *
- *  Created on: 24 Jan 2019
- *      Author: mark
+ *      Bluetooth request handler will deal with incoming bluetooth requests.
  */
 
-#ifndef MAIN_BLUETOOTH_REQUEST_HANDLER_HPP_
-#define MAIN_BLUETOOTH_REQUEST_HANDLER_HPP_
+#ifndef _BLUETOOTH_REQUEST_HANDLER_HPP_
+#define _BLUETOOTH_REQUEST_HANDLER_HPP_
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -16,6 +15,9 @@
 #include "RequestHandlerBase.hpp"
 #include "Esp32Messaging.hpp"
 
+/*
+ *      Bluetooth request handler object.
+ */
 class BluetoothRequestHandler : public RequestHandlerBase
 {
 private:
@@ -29,21 +31,28 @@ private:
      */
     static bool _instantiated;
 
+    /*
+     *      This method will dispatch incoming messages to the appropriate request handler.
+     */
     void DispatchRequest(Esp32Messaging::Message *);
 
     /*
-     *      Constructor(s) and destructor.
+     *      Private constructor and destructor.
      */
     BluetoothRequestHandler();
     ~BluetoothRequestHandler();
 
 public:
+    /*
+     *      Construct a new Bluetooth request handler object with reference to a
+     *      Message Dispatcher object.
+     */
     BluetoothRequestHandler(MessageDispatcher *);
 
     /*
-     *      Public methods.
+     *      Provide and additional setup operations not covered by the constructors.
      */
     void Setup();
 };
 
-#endif /* MAIN_BLUETOOTH_REQUEST_HANDLER_HPP_ */
+#endif /* _BLUETOOTH_REQUEST_HANDLER_HPP_ */
