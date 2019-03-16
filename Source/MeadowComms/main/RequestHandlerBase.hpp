@@ -11,6 +11,13 @@
 
 #include "Esp32Messaging.hpp"
 
+//
+//  Forward reference for the MessageDispatcher class.  This is needed
+//  here to get around compiler errors if the MessageDispatcher.hpp
+//  file is included.
+//
+class MessageDispatcher;
+
 class RequestHandlerBase
 {
 private:
@@ -30,12 +37,12 @@ protected:
     /*
      *      Handle for the System messages to be processed by the System task.
      */
-    QueueHandle_t _queueHandle = NULL;
+    QueueHandle_t _queueHandle = nullptr;
 
     /*
      *      Handle for the System request handler task.
      */
-    TaskHandle_t _taskHandle = NULL;
+    TaskHandle_t _taskHandle = nullptr;
 
     /*
      *      Task that will be used to retrieve and dispatch
@@ -66,6 +73,12 @@ public:
      *      Setup the various properties for correct functioning of the request handler.
      */
     void Setup();
+
+    /*
+     *      Add the message to the queue of messages waiting to be
+     *      processed by the interface object.
+     */
+    bool QueueEsp32Message(Esp32Messaging::Message *);
 };
 
 

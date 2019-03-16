@@ -49,30 +49,42 @@ MessageDispatcher::~MessageDispatcher()
  * ---------------------------------------------------------------------------
  */
 
-StatusCodes::StatusCodes MessageDispatcher::QueueMessage(Esp32Messaging::Message *request)
+bool MessageDispatcher::QueueMessageForEsp32(Esp32Messaging::Message *request)
 {
     StatusCodes::StatusCodes result = StatusCodes::CompletedOK;
-    TransportProviderBase *provider = NULL;
+    RequestHandlerBase *provider = nullptr;
 
     switch ((Esp32Interfaces::Esp32Interfaces) request->Interface)
     {
         case Esp32Interfaces::WiFi:
-            provider = (TransportProviderBase *) _wifiRequestHandler;
+            if (!_wifiRequestHandler)
+            {
+                _wifiRequestHandler = new WiFiRequestHandler();
+            }
+            provider = (RequestHandlerBase *) _wifiRequestHandler;
             break;
         case Esp32Interfaces::BlueTooth:
-            provider = (TransportProviderBase *) _bluetoothRequestHandler;
+            if (!_bluetoothRequestHandler)
+            {
+                _bluetoothRequestHandler = new BluetoothRequestHandler();
+            }
+            provider = (RequestHandlerBase *) _bluetoothRequestHandler;
             break;
         case Esp32Interfaces::MeshNetwork:
-            provider = (TransportProviderBase *) _meshNetworkRequestHandler;
+            if (!_meshNetworkRequestHandler)
+            {
+                _meshNetworkRequestHandler = new MeshNetworkRequestHandler();
+            }
+            provider = (RequestHandlerBase *) _meshNetworkRequestHandler;
             break;
         case Esp32Interfaces::System:
-            provider = (TransportProviderBase *) _systemRequestHandler;
+            provider = (RequestHandlerBase *) _systemRequestHandler;
             break;
         case Esp32Interfaces::TransportProvider:
         default:
             break;
     }
-    if (!provider->QueueMessageForStm32(request))
+    if (!provider->QueueEsp32Message(request))
     {
         result = StatusCodes::QueueError;
     }
@@ -81,5 +93,5 @@ StatusCodes::StatusCodes MessageDispatcher::QueueMessage(Esp32Messaging::Message
 
 void MessageDispatcher::Setup()
 {
-    _transportProvider->Setup();
+    _transportProvider->Setup(this);
 }

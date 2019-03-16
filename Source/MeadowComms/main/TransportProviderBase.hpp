@@ -17,13 +17,20 @@
 #include "SharedEnums.hpp"
 #include "Esp32Messaging.hpp"
 
+//
+//  Forward reference for the MessageDispatcher class.  This is needed
+//  here to get around compiler errors if the MessageDispatcher.hpp
+//  file is included.
+//
+class MessageDispatcher;
+
 class TransportProviderBase
 {
 public:
     /*
      *      Setup the transport provider.
      */
-    void Setup();
+    void Setup(MessageDispatcher *);
 
     /*
      *      Add the message given to the queue of messages waiting
@@ -38,14 +45,15 @@ private:
     const uint32_t MAX_QUEUE_LENGTH = 10;
 
     /*
-     *      Function to call when a new message is received.
-     */
-    //QueueMessageForStm32FunctionPointer _queueMessageForStm32FunctionPointer;
-
-    /*
      *      Queue handle for the messages to be sent to the STM32.
      */
     QueueHandle_t _queueHandle = NULL;
+
+    /*
+     *      Message dispatcher object used to send messages to the
+     *      various interfaces on the ESP32.
+     */
+    MessageDispatcher *_messageDispatcher = nullptr;
 
 protected:
     /*
