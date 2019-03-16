@@ -22,6 +22,15 @@
 /*
  * ----------------------------------------------------------------------------
  *
+ *                   Initialise class level static variables.
+ *
+ * ----------------------------------------------------------------------------
+ */
+bool BluetoothRequestHandler::_instantiated = false;
+
+/*
+ * ----------------------------------------------------------------------------
+ *
  *                      Constructors and destructors.
  *
  * ----------------------------------------------------------------------------
@@ -42,7 +51,13 @@ BluetoothRequestHandler::BluetoothRequestHandler()
     }
 }
 
-BluetoothRequestHandler::BluetoothRequestHandler(MessageDispatcher *messageDispatcher)
+/*
+ *      Create a new BluetoothRequestHandler object.
+ *
+ *      @param messageDispatcher
+ *          Message Dispatcher that can be used to send messages to the STM32.
+ */
+BluetoothRequestHandler::BluetoothRequestHandler(MessageDispatcher *messageDispatcher) : BluetoothRequestHandler()
 {
     _messageDispatcher = messageDispatcher;
 }
@@ -77,6 +92,12 @@ void BluetoothRequestHandler::Setup()
     _instantiated = true;
 }
 
+/*
+ *      Dispatch bluetooth messages to the appropriate method.
+ *
+ *      @param request
+ *          Bluetooth request being made by the STM32.
+ */
 void BluetoothRequestHandler::DispatchRequest(Esp32Messaging::Message *request)
 {
     ESP_LOGI(_taskName, "Message handling not implemented, message will be deleted");

@@ -139,7 +139,7 @@ private:
     /*
      *      Determine if this class is instantiated already (i.e. this should be a singleton).
      */
-    bool _instantiated = false;
+    static bool _instantiated;
 
     /*
      *      Event group containing 24-bits used to indicate the state of the WiFi connection.
@@ -179,16 +179,24 @@ private:
      */
     void SendResponse(uint32_t);
     void ProcessAccessPointScanCompletion(system_event_t *);
+
+    /*
+     *      This method will dispatch incoming messages to the appropriate request handler.
+     */
     void DispatchRequest(Esp32Messaging::Message *);
 
+    /*
+     *      Private constructor and destructor.
+     */
     WiFiRequestHandler();
     ~WiFiRequestHandler();
 
 public:
     /*
-     *      Constructor(s) and destructor.
+     *      Constructor for the WiFi object.
      */
     WiFiRequestHandler(MessageDispatcher *);
+
     /*
      *      Public methods.
      */
