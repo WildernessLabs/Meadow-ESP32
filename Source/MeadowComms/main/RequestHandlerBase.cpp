@@ -105,3 +105,27 @@ void RequestHandlerBase::Task(void *pvParameters)
     //
     vTaskDelete(sender->GetTaskHandle());
 }
+
+/*
+ *      Add an incoming message to the queue of messages waiting to be processed.
+ *
+ *      @param message
+ *          Message from the STM32 that needs to be queued.
+ *
+ *      @return
+ *          true if the message could be queued, false if there was a problem.
+ */
+bool RequestHandlerBase::QueueEsp32Message(Esp32Messaging::Message *message)
+{
+    bool result = true;
+    if (xQueueSendToBack(_queueHandle, &message, 0) != pdPASS)
+    {
+        if (message->Payload != NULL)
+        {
+            vPortFree(message->Payload);
+        }
+        result = false;
+    }
+
+    return(result);
+}

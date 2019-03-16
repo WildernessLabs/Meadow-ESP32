@@ -9,6 +9,7 @@
 #define _SPI_TRANSPORT_PROVIDER_HPP_
 
 #include "TransportProviderBase.hpp"
+#include "MessageDispatcher.hpp"
 
 
 class SpiTransportProvider : public TransportProviderBase
@@ -28,7 +29,7 @@ public:
     /*
      *      Setup the SPI transport class.
      */
-    void Setup();
+    void Setup(MessageDispatcher *);
 };
 
 #endif /* _SPI_TRANSPORT_PROVIDER_HPP_ */

@@ -33,7 +33,14 @@ SpiTransportProvider::~SpiTransportProvider()
  * ---------------------------------------------------------------------------
  */
 
-void SpiTransportProvider::Setup()
+/*
+ *      Setup the SPI transport provider.
+ *
+ *      @param messageDispatcher
+ *          MessageDispatcher object used to send messages from the SPI
+ *          interface through to the interfaces on the ESP32.
+ */
+void SpiTransportProvider::Setup(MessageDispatcher *messageDispatcher)
 {
-    TransportProviderBase::Setup();
+    TransportProviderBase::Setup(messageDispatcher);
 }

@@ -6,7 +6,6 @@
  */
 
 #include "TransportProviderBase.hpp"
-#include "MessageDispatcher.hpp"
 #include "Encoders.hpp"
 
 /*
@@ -42,8 +41,9 @@ TransportProviderBase::~TransportProviderBase()
 /*
  *      Setup the hardware transport provider.
  */
-void TransportProviderBase::Setup()
+void TransportProviderBase::Setup(MessageDispatcher *messageDispatcher)
 {
+    _messageDispatcher = messageDispatcher;
     _queueHandle = xQueueCreate(MAX_QUEUE_LENGTH, sizeof(Esp32Messaging::Message));
     if (_queueHandle == NULL)
     {
@@ -71,3 +71,4 @@ bool TransportProviderBase::QueueMessageForStm32(Esp32Messaging::Message *messag
     }
     return(result);
 }
+
