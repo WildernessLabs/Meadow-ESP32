@@ -57,7 +57,13 @@ SystemRequestHandler::SystemRequestHandler()
     }
 }
 
-SystemRequestHandler::SystemRequestHandler(MessageDispatcher *messageDispatcher)
+/*
+ *      Initailse a new System Request handler object.
+ *
+ *      @param messageDispatcher
+ *          Message dispatcher object that will deal with and communication between the ESP32 and the STM32.
+ */
+SystemRequestHandler::SystemRequestHandler(MessageDispatcher *messageDispatcher) : SystemRequestHandler()
 {
     _messageDispatcher = messageDispatcher;
 }

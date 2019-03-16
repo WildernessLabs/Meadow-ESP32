@@ -66,7 +66,7 @@ WiFiRequestHandler::WiFiRequestHandler()
  *          Message Dispatcher object that can be used to send messages to
  *          the STM32.
  */
-WiFiRequestHandler::WiFiRequestHandler(MessageDispatcher *messageDispatcher)
+WiFiRequestHandler::WiFiRequestHandler(MessageDispatcher *messageDispatcher) : WiFiRequestHandler()
 {
     _messageDispatcher = messageDispatcher;
 }
