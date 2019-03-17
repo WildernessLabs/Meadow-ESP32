@@ -9,7 +9,6 @@
 #define _ESP32_MESSAGING_HPP_
 
 #include "freertos/FreeRTOS.h"
-#include "SharedEnums.hpp"
 
 namespace Esp32Messaging
 {
@@ -31,9 +30,6 @@ namespace Esp32Messaging
 
     static const uint32_t MESSAGE_SIZE = 23;
     static const uint32_t CRC_OFFSET = 18;
-
-    typedef void (*MessageReceivedFunctionPointer)(Message *);
-    //typedef StatusCodes::StatusCodes (MessageDispatcher::*QueueMessageForStm32FunctionPointer(Message *));
 }
 
 
