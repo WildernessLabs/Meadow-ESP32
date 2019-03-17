@@ -44,7 +44,7 @@ TransportProviderBase::~TransportProviderBase()
 void TransportProviderBase::Setup(MessageDispatcher *messageDispatcher)
 {
     _messageDispatcher = messageDispatcher;
-    _queueHandle = xQueueCreate(MAX_QUEUE_LENGTH, sizeof(Esp32Messaging::Message));
+    _queueHandle = xQueueCreate(MAX_QUEUE_LENGTH, sizeof(Message));
     if (_queueHandle == NULL)
     {
         ESP_LOGE(__func__, "Cannot allocate hardware transport queue.");
@@ -61,7 +61,7 @@ void TransportProviderBase::Setup(MessageDispatcher *messageDispatcher)
  *      @return
  *          true if the message was queued, false otherwise.
  */
-bool TransportProviderBase::QueueMessageForStm32(Esp32Messaging::Message *message)
+bool TransportProviderBase::QueueMessageForStm32(Message *message)
 {
     bool result = true;
     if ((message->Interface == Esp32Interfaces::System) && (message->Function == SystemFunction::Echo))

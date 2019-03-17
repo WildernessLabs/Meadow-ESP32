@@ -86,7 +86,7 @@ void SystemRequestHandler::Setup()
     /*
      *      Now create the objects necessary for the System task.
      */
-//    const size_t messageSize = sizeof(Esp32Messaging::Message);
+//    const size_t messageSize = sizeof(Message);
     RequestHandlerBase::Setup();
 //    _queueHandle = xQueueCreate(MAX_QUEUE_LENGTH, messageSize);
 //    if (_queueHandle == NULL)
@@ -104,7 +104,7 @@ void SystemRequestHandler::Setup()
  *      @param request
  *          Request from the system.
  */
-void SystemRequestHandler::Echo(Esp32Messaging::Message *request)
+void SystemRequestHandler::Echo(Message *request)
 {
     ESP_LOGI(__func__, "System received echo request: %s", (char *) request->Payload);
     vPortFree(request->Payload);
@@ -121,7 +121,7 @@ void SystemRequestHandler::Echo(Esp32Messaging::Message *request)
  *      @param request
  *          Request to be processed.
  */
-void SystemRequestHandler::DispatchRequest(Esp32Messaging::Message *request)
+void SystemRequestHandler::DispatchRequest(Message *request)
 {
     switch (request->Function)
     {

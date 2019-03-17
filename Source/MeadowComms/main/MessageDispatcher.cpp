@@ -57,7 +57,7 @@ MessageDispatcher::~MessageDispatcher()
  *      @return
  *          True if the request could be queue, false otherwise.
  */
-bool MessageDispatcher::QueueMessageForEsp32(Esp32Messaging::Message *request)
+bool MessageDispatcher::QueueMessageForEsp32(Message *request)
 {
     RequestHandlerBase *provider = nullptr;
 
@@ -113,7 +113,7 @@ bool MessageDispatcher::QueueMessageForEsp32(Esp32Messaging::Message *request)
  *      @return
  *          True if the response was queued correctly, false otherwise.
  */
-bool MessageDispatcher::QueueMessageForStm32(Esp32Messaging::Message *response)
+bool MessageDispatcher::QueueMessageForStm32(Message *response)
 {
     return(_transportProvider->QueueMessageForStm32(response));
 }

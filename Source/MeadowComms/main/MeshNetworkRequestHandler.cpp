@@ -80,7 +80,7 @@ MeshNetworkRequestHandler::~MeshNetworkRequestHandler()
  */
 void MeshNetworkRequestHandler::Setup()
 {
-    _queueHandle = xQueueCreate(MAX_QUEUE_LENGTH, sizeof(Esp32Messaging::Message));
+    _queueHandle = xQueueCreate(MAX_QUEUE_LENGTH, sizeof(Message));
     if (_queueHandle == NULL)
     {
         ESP_LOGI(_taskName, "Cannot allocate Mesh network queue.");
@@ -91,7 +91,7 @@ void MeshNetworkRequestHandler::Setup()
 /*
  *      Dispatch the message
  */
-void MeshNetworkRequestHandler::DispatchRequest(Esp32Messaging::Message *request)
+void MeshNetworkRequestHandler::DispatchRequest(Message *request)
 {
     ESP_LOGI(_taskName, "Message handling not implemented, message will be deleted");
     //

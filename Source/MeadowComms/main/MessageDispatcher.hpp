@@ -68,12 +68,12 @@ public:
     /*
      *      Queue a message for the ESP32 object.
      */
-    bool QueueMessageForEsp32(Esp32Messaging::Message *);
+    bool QueueMessageForEsp32(Message *);
 
     /*
      *      Queue a message for the STM32.
      */
-    bool QueueMessageForStm32(Esp32Messaging::Message *);
+    bool QueueMessageForStm32(Message *);
 };
 
 #endif /* _MESSAGE_DISPATCHER_HPP_ */

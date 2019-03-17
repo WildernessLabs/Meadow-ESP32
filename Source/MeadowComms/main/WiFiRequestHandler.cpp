@@ -152,7 +152,7 @@ void WiFiRequestHandler::Setup()
  *      @param request
  *          Data structure containing the request information from the sender.
  */
-void WiFiRequestHandler::DispatchRequest(Esp32Messaging::Message *request)
+void WiFiRequestHandler::DispatchRequest(Message *request)
 {
     switch (request->Function)
     {
@@ -193,7 +193,7 @@ void WiFiRequestHandler::DispatchRequest(Esp32Messaging::Message *request)
 //void WiFiRequestHandler::Task(void *pvParameters)
 //{
 //    WiFiRequestHandler *sender = (WiFiRequestHandler *) pvParameters;
-//    Esp32Messaging::Message request;
+//    Message request;
 //    while (true)
 //    {
 //        BaseType_t result = xQueueReceive(sender->GetQueueHandle(), &request, portMAX_DELAY);
@@ -299,7 +299,7 @@ void WiFiRequestHandler::SendResponse(uint32_t statusCode)
  *      @param message
  *          Request sent from the STM32.
  */
-void WiFiRequestHandler::StartNetwork(Esp32Messaging::Message *message)
+void WiFiRequestHandler::StartNetwork(Message *message)
 {
     ESP_LOGI(__func__, "Starting network.");
     if (_wifiResponse != NULL)
@@ -307,7 +307,7 @@ void WiFiRequestHandler::StartNetwork(Esp32Messaging::Message *message)
         // TODO: Deal with this error.
         vPortFree(_wifiResponse);
     }
-    _wifiResponse = (Esp32Messaging::Message *) pvPortMalloc(sizeof(Esp32Messaging::Message));
+    _wifiResponse = (Message *) pvPortMalloc(sizeof(Message));
     _wifiResponse->Interface = message->Interface;
     _wifiResponse->MessageID = message->MessageID;
     _wifiResponse->Payload = NULL;
@@ -432,7 +432,7 @@ void WiFiRequestHandler::ProcessAccessPointScanCompletion(system_event_t *event)
  *      @param message
  *          Request sent from the STM32.
  */
-void WiFiRequestHandler::GetAvailableNetworks(Esp32Messaging::Message *request)
+void WiFiRequestHandler::GetAvailableNetworks(Message *request)
 {
     if (_wifiResponse != NULL)
     {
@@ -440,7 +440,7 @@ void WiFiRequestHandler::GetAvailableNetworks(Esp32Messaging::Message *request)
         // TODO: Deal with this error.
         vPortFree(_wifiResponse);
     }
-    _wifiResponse = (Esp32Messaging::Message *) pvPortMalloc(sizeof(Esp32Messaging::Message));
+    _wifiResponse = (Message *) pvPortMalloc(sizeof(Message));
     _wifiResponse->Interface = request->Interface;
     _wifiResponse->MessageID = request->MessageID;
     _wifiResponse->Payload = NULL;
@@ -458,7 +458,7 @@ void WiFiRequestHandler::GetAvailableNetworks(Esp32Messaging::Message *request)
     ESP_ERROR_CHECK(esp_wifi_scan_start(&scanConf, true));
 }
 
-void WiFiRequestHandler::HttpGet(Esp32Messaging::Message *message)
+void WiFiRequestHandler::HttpGet(Message *message)
 {
 //    const struct addrinfo hints = { .ai_family = AF_INET, .ai_socktype = SOCK_STREAM, };
 //    struct addrinfo *addressInformation;

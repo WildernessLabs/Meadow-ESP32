@@ -82,7 +82,7 @@ BluetoothRequestHandler::~BluetoothRequestHandler()
  */
 void BluetoothRequestHandler::Setup()
 {
-    const size_t messageSize = sizeof(Esp32Messaging::Message);
+    const size_t messageSize = sizeof(Message);
     _queueHandle = xQueueCreate(MAX_QUEUE_LENGTH, messageSize);
     if (_queueHandle == NULL)
     {
@@ -98,7 +98,7 @@ void BluetoothRequestHandler::Setup()
  *      @param request
  *          Bluetooth request being made by the STM32.
  */
-void BluetoothRequestHandler::DispatchRequest(Esp32Messaging::Message *request)
+void BluetoothRequestHandler::DispatchRequest(Message *request)
 {
     ESP_LOGI(_taskName, "Message handling not implemented, message will be deleted");
     //

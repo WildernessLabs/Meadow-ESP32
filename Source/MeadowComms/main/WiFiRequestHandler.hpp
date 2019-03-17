@@ -172,7 +172,7 @@ private:
     /*
      *      Response message for the current request.
      */
-    Esp32Messaging::Message *_wifiResponse = NULL;
+    Message *_wifiResponse = NULL;
 
     /*
      *      Private methods.
@@ -183,7 +183,7 @@ private:
     /*
      *      This method will dispatch incoming messages to the appropriate request handler.
      */
-    void DispatchRequest(Esp32Messaging::Message *);
+    void DispatchRequest(Message *);
 
     /*
      *      Private constructor and destructor.
@@ -202,9 +202,9 @@ public:
      */
     void Setup();
     esp_err_t EventHandler(void *, system_event_t *);
-    void StartNetwork(Esp32Messaging::Message *);
-    void GetAvailableNetworks(Esp32Messaging::Message *);
-    void HttpGet(Esp32Messaging::Message *);
+    void StartNetwork(Message *);
+    void GetAvailableNetworks(Message *);
+    void HttpGet(Message *);
 
     /*
      *      Getters and setters.

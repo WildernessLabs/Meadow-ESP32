@@ -60,9 +60,9 @@ void SpiTransportProvider::Setup(MessageDispatcher *messageDispatcher)
  */
 void SpiTransportProvider::Echo(const char *messageString)
 {
-    Esp32Messaging::Message *message;
+    Message *message;
 
-    message = (Esp32Messaging::Message *) pvPortMalloc(sizeof(Esp32Messaging::Message));
+    message = (Message *) pvPortMalloc(sizeof(Message));
     message->Interface = Esp32Interfaces::System;
     message->Function = SystemFunction::Echo;
     message->MessageID = 0x00;

@@ -26,7 +26,7 @@ private:
      *
      *      This method is unique to each specific interface.
      */
-    virtual void DispatchRequest(Esp32Messaging::Message *) = 0;
+    virtual void DispatchRequest(Message *) = 0;
 
 protected:
     /*
@@ -82,7 +82,7 @@ public:
      *      Add the message to the queue of messages waiting to be
      *      processed by the interface object.
      */
-    bool QueueEsp32Message(Esp32Messaging::Message *);
+    bool QueueEsp32Message(Message *);
 };
 
 
