@@ -18,7 +18,7 @@
           "Comment": "System interfaces available on the ESP32 for the various function calls.",
           "BaseDataType": "Byte",
           "EnumNames": [ 
-              "WiFi", "BlueTooth", "MeshNetwork", "System", "TransportProvider"
+              "WiFi", "BlueTooth", "MeshNetwork", "System"
           ]
         },
         {

@@ -91,11 +91,15 @@ bool MessageDispatcher::QueueMessageForEsp32(Esp32Messaging::Message *request)
             }
             provider = (RequestHandlerBase *) _systemRequestHandler;
             break;
-        case Esp32Interfaces::TransportProvider:
         default:
             break;
     }
-    return(provider->QueueEsp32Message(request));
+    bool result = false;
+    if (provider)
+    {
+        result = provider->QueueEsp32Message(request);
+    }
+    return(result);
 }
 
 /*
