@@ -36,7 +36,7 @@ public:
      *      the MessageDispatcher to verify that the message
      *      passing between layers is working.
      */
-    void Echo(char *);
+    void Echo(const char *);
 };
 
 #endif /* _SPI_TRANSPORT_PROVIDER_HPP_ */

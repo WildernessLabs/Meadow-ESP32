@@ -58,18 +58,19 @@ void SpiTransportProvider::Setup(MessageDispatcher *messageDispatcher)
  *      @param messageString
  *          Message to send through the communication layers.
  */
-void SpiTransportProvider::Echo(char *messageString)
+void SpiTransportProvider::Echo(const char *messageString)
 {
-    Esp32Messaging::Message message;
+    Esp32Messaging::Message *message;
 
-    message.Interface = Esp32Interfaces::System;
-    message.Function = SystemFunction::Echo;
-    message.MessageID = 0x00;
-    message.MessageType = TransportPacketType::Data;
-    message.PayloadLength = strlen(messageString) + 1;
-    char *str = (char *) pvPortMalloc(message.PayloadLength);
-    strcpy(messageString, str);
-    message.Payload = (uint8_t *) str;
-    message.Crc = 0x00;
-    _messageDispatcher->QueueMessageForEsp32(&message);
+    message = (Esp32Messaging::Message *) pvPortMalloc(sizeof(Esp32Messaging::Message));
+    message->Interface = Esp32Interfaces::System;
+    message->Function = SystemFunction::Echo;
+    message->MessageID = 0x00;
+    message->MessageType = TransportPacketType::Data;
+    message->PayloadLength = strlen(messageString) + 1;
+    char *str = (char *) pvPortMalloc(message->PayloadLength);
+    strcpy(str, messageString);
+    message->Payload = (uint8_t *) str;
+    message->Crc = 0x00;
+    _messageDispatcher->QueueMessageForEsp32(message);
 }

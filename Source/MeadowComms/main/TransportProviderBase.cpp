@@ -67,7 +67,6 @@ bool TransportProviderBase::QueueMessageForStm32(Esp32Messaging::Message *messag
     if ((message->Interface == Esp32Interfaces::System) && (message->Function == SystemFunction::Echo))
     {
         ESP_LOGI(__func__, "Echo received: %s", (char *) message->Payload);
-        vPortFree(message->Payload);
     }
     else
     {

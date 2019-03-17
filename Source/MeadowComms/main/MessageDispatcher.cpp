@@ -23,12 +23,12 @@ MessageDispatcher::MessageDispatcher()
 }
 
 /*
- *      Create a new instance of the message dispatcher with a an associated transport provider.
+ *      Create a new instance of the message dispatcher with an associated transport provider.
  *
  *      @param transportProvider
  *          Hardware level transport provider that will deliver and receive the message frames.
  */
-MessageDispatcher::MessageDispatcher(TransportProviderBase *transportProvider)
+MessageDispatcher::MessageDispatcher(TransportProviderBase *transportProvider) : MessageDispatcher()
 {
     _transportProvider = transportProvider;
 }
@@ -88,6 +88,7 @@ bool MessageDispatcher::QueueMessageForEsp32(Esp32Messaging::Message *request)
             if (!_systemRequestHandler)
             {
                 _systemRequestHandler = new SystemRequestHandler(this);
+                _systemRequestHandler->Setup();
             }
             provider = (RequestHandlerBase *) _systemRequestHandler;
             break;
