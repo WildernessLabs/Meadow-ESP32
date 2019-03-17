@@ -6,7 +6,7 @@
  */
 
 #include "SpiTransportProvider.hpp"
-
+#include "Esp32Messaging.hpp"
 
 /*
  * ---------------------------------------------------------------------------
@@ -16,15 +16,19 @@
  * ---------------------------------------------------------------------------
  */
 
-
+/*
+ *      Default constructor for the SPI transport provider.
+ */
 SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
 {
 }
 
+/*
+ *      Default destructor for the SPI transport provider.
+ */
 SpiTransportProvider::~SpiTransportProvider()
 {
 }
-
 
 /* ---------------------------------------------------------------------------
  *
@@ -43,4 +47,12 @@ SpiTransportProvider::~SpiTransportProvider()
 void SpiTransportProvider::Setup(MessageDispatcher *messageDispatcher)
 {
     TransportProviderBase::Setup(messageDispatcher);
+}
+
+void SpiTransportProvider::Echo(char *messageString)
+{
+    Esp32Messaging::Message message;
+
+    message.Interface = Esp32Interfaces::System;
+    message.Function = SystemFunction::Echo;
 }
