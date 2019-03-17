@@ -211,6 +211,7 @@ namespace FileGenerator
                 sourceFile.WriteLine("#include <stdlib.h>");
                 sourceFile.WriteLine("#include <string.h>");
                 sourceFile.WriteLine("#include \"SharedEnums.hpp\"");
+                sourceFile.WriteLine("#include \"Esp32Messaging.hpp\"");
                 sourceFile.WriteLine();
                 sourceFile.WriteLine("namespace Esp32Messaging");
                 sourceFile.WriteLine("{");
