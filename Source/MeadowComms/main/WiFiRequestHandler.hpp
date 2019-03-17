@@ -5,8 +5,8 @@
  *      ability to communicate with the WiFi network.
  */
 
-#ifndef MAIN_WIFI_REQUEST_HANDLER_HPP_
-#define MAIN_WIFI_REQUEST_HANDLER_HPP_
+#ifndef _WIFI_REQUEST_HANDLER_HPP_
+#define _WIFI_REQUEST_HANDLER_HPP_
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -213,4 +213,4 @@ public:
     void SetAntenna(Antenna newAntenna = OnBoard);
 };
 
-#endif /* MAIN_WIFI_REQUEST_HANDLER_HPP_ */
+#endif /* _WIFI_REQUEST_HANDLER_HPP_ */

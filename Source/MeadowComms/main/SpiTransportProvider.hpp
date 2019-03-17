@@ -30,6 +30,13 @@ public:
      *      Setup the SPI transport class.
      */
     void Setup(MessageDispatcher *);
+
+    /*
+     *      Test method that will simply pass the string through
+     *      the MessageDispatcher to verify that the message
+     *      passing between layers is working.
+     */
+    void Echo(char *);
 };
 
 #endif /* _SPI_TRANSPORT_PROVIDER_HPP_ */

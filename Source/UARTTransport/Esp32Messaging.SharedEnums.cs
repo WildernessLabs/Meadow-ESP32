@@ -46,6 +46,35 @@ namespace Esp32Messaging
     
 };
 
+    enum SystemFunction : UInt32
+    {
+        Echo = 0,
+        GetConfiguration = 1,
+        SetConfiguration = 2,
+        DeepSleep = 3
+    
+};
+
+    enum WiFiFunction : UInt32
+    {
+        Start = 0,
+        Stop = 1,
+        Connect = 2,
+        Disconnect = 3,
+        GetAccessPoints = 4,
+        GetConfiguration = 5,
+        SetConfiguration = 6
+    
+};
+
+    enum BluetoothFunction : UInt32
+    {
+        Echo = 0,
+        GetConfiguration = 1,
+        SetConfiguration = 2
+    
+};
+
     enum TransportPacketType : byte
     {
         Ack = 0x00,

@@ -57,6 +57,53 @@ namespace Esp32Interfaces
 };
 }
 
+namespace SystemFunction
+{
+    /*
+     *      System functions available on the ESP32
+     */
+    enum SystemFunction : uint32_t
+    {
+        Echo = 0,
+        GetConfiguration = 1,
+        SetConfiguration = 2,
+        DeepSleep = 3
+    
+};
+}
+
+namespace WiFiFunction
+{
+    /*
+     *      WiFi functions available on the ESP32
+     */
+    enum WiFiFunction : uint32_t
+    {
+        Start = 0,
+        Stop = 1,
+        Connect = 2,
+        Disconnect = 3,
+        GetAccessPoints = 4,
+        GetConfiguration = 5,
+        SetConfiguration = 6
+    
+};
+}
+
+namespace BluetoothFunction
+{
+    /*
+     *      Bluetooth functions available on the ESP32
+     */
+    enum BluetoothFunction : uint32_t
+    {
+        Echo = 0,
+        GetConfiguration = 1,
+        SetConfiguration = 2
+    
+};
+}
+
 /*
  *      Possible transport packet types.
  */

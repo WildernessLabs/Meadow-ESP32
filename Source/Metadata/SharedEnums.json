@@ -20,7 +20,34 @@
           "EnumNames": [ 
               "WiFi", "BlueTooth", "MeshNetwork", "System", "TransportProvider"
           ]
-      },
+        },
+        {
+          "Name": "SystemFunction",
+          "Namespace": "SystemFunction",
+          "Comment": "System functions available on the ESP32",
+          "BaseDataType": "UInt32",
+          "EnumNames": [
+              "Echo", "GetConfiguration", "SetConfiguration", "DeepSleep"
+          ]
+        },
+        {
+          "Name": "WiFiFunction",
+          "Namespace": "WiFiFunction",
+          "Comment": "WiFi functions available on the ESP32",
+          "BaseDataType": "UInt32",
+          "EnumNames": [
+              "Start", "Stop", "Connect", "Disconnect", "GetAccessPoints", "GetConfiguration", "SetConfiguration"
+          ]
+        },
+        {
+          "Name": "BluetoothFunction",
+          "Namespace": "BluetoothFunction",
+          "Comment": "Bluetooth functions available on the ESP32",
+          "BaseDataType": "UInt32",
+          "EnumNames": [
+              "Echo", "GetConfiguration", "SetConfiguration"
+          ]
+        },
         {
             "Name": "TransportPacketType",
             "BaseDataType": "Byte",
