@@ -86,12 +86,13 @@ void SystemRequestHandler::Setup()
     /*
      *      Now create the objects necessary for the System task.
      */
-    const size_t messageSize = sizeof(Esp32Messaging::Message);
-    _queueHandle = xQueueCreate(MAX_QUEUE_LENGTH, messageSize);
-    if (_queueHandle == NULL)
-    {
-        ESP_LOGI(__func__, "Cannot allocate System processing queue.");
-    }
+//    const size_t messageSize = sizeof(Esp32Messaging::Message);
+    RequestHandlerBase::Setup();
+//    _queueHandle = xQueueCreate(MAX_QUEUE_LENGTH, messageSize);
+//    if (_queueHandle == NULL)
+//    {
+//        ESP_LOGI(__func__, "Cannot allocate System processing queue.");
+//    }
     xTaskCreate(Task, _taskName, 2048 * 2, this, configMAX_PRIORITIES - 1, &_taskHandle);
 }
 
@@ -128,7 +129,7 @@ void SystemRequestHandler::DispatchRequest(Esp32Messaging::Message *request)
             Echo(request);
             break;
         default:
-            ESP_LOGI(__func__, "Unknown System message received, function %d", request->Function);
+            ESP_LOGI(__func__, "Unknown System message received, function 0x%x", request->Function);
             if (request->Payload != NULL)
             {
                 ESP_LOG_BUFFER_HEXDUMP(__func__, request->Payload, request->PayloadLength, ESP_LOG_INFO);
