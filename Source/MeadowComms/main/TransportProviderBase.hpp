@@ -49,12 +49,6 @@ private:
      */
     QueueHandle_t _queueHandle = NULL;
 
-    /*
-     *      Message dispatcher object used to send messages to the
-     *      various interfaces on the ESP32.
-     */
-    MessageDispatcher *_messageDispatcher = nullptr;
-
 protected:
     /*
      *      Default constructor.
@@ -65,6 +59,12 @@ protected:
      *      Default destructor.
      */
     ~TransportProviderBase();
+
+    /*
+     *      Message dispatcher object used to send messages to the
+     *      various interfaces on the ESP32.
+     */
+    MessageDispatcher *_messageDispatcher = nullptr;
 };
 
 #endif /* _TRANSPORT_PROVIDER_BASE_HPP_ */
