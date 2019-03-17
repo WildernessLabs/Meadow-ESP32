@@ -39,7 +39,7 @@ private:
     /*
      *      This method will dispatch incoming messages to the appropriate request handler.
      */
-    void DispatchRequest(Esp32Messaging::Message *);
+    void DispatchRequest(Message *);
 
     /*
      *      Constructor(s) and destructor.
@@ -50,7 +50,7 @@ private:
     /*
      *      Echo function for testing the communication layers.
      */
-    void Echo(Esp32Messaging::Message *);
+    void Echo(Message *);
 
 public:
     /*

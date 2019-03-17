@@ -36,7 +36,7 @@ public:
      *      Add the message given to the queue of messages waiting
      *      for transmission to the STM32.
      */
-    bool QueueMessageForStm32(Esp32Messaging::Message *);
+    bool QueueMessageForStm32(Message *);
 
 private:
     /*

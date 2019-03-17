@@ -39,7 +39,7 @@ private:
     /*
      *      This method will dispatch incoming messages to the appropriate request handler.
      */
-    void DispatchRequest(Esp32Messaging::Message *);
+    void DispatchRequest(Message *);
 
     /*
      *      Private constructor(s) and destructor.

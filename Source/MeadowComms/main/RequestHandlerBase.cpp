@@ -77,7 +77,7 @@ RequestHandlerBase::~RequestHandlerBase()
 
 void RequestHandlerBase::Setup()
 {
-    _queueHandle = xQueueCreate(MAX_QUEUE_LENGTH, sizeof(Esp32Messaging::Message *));
+    _queueHandle = xQueueCreate(MAX_QUEUE_LENGTH, sizeof(Message *));
     if (_queueHandle == NULL)
     {
         ESP_LOGE(__func__, "Cannot allocate ESP32 handler queue.");
@@ -98,7 +98,7 @@ void RequestHandlerBase::Task(void *pvParameters)
     RequestHandlerBase *sender = (RequestHandlerBase *) pvParameters;
     while (true)
     {
-        Esp32Messaging::Message *message;
+        Message *message;
         BaseType_t result = xQueueReceive(sender->_queueHandle, &message, portMAX_DELAY);
         if (result == pdTRUE)
         {
@@ -122,7 +122,7 @@ void RequestHandlerBase::Task(void *pvParameters)
  *      @return
  *          true if the message could be queued, false if there was a problem.
  */
-bool RequestHandlerBase::QueueEsp32Message(Esp32Messaging::Message *message)
+bool RequestHandlerBase::QueueEsp32Message(Message *message)
 {
     bool result = true;
     if (xQueueSendToBack(_queueHandle, &message, 0) != pdPASS)
