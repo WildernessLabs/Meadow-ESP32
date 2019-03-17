@@ -36,6 +36,8 @@
  */
 RequestHandlerBase::RequestHandlerBase()
 {
+    _queueHandle = nullptr;
+    _taskHandle = nullptr;
 }
 
 /*
@@ -46,11 +48,9 @@ RequestHandlerBase::RequestHandlerBase()
  *          Message dispatcher object that will allow communication
  *          with the STM32.
  */
-RequestHandlerBase::RequestHandlerBase(MessageDispatcher *messageDispatcher)
+RequestHandlerBase::RequestHandlerBase(MessageDispatcher *messageDispatcher) : RequestHandlerBase()
 {
     _messageDispatcher = messageDispatcher;
-    _queueHandle = nullptr;
-    _taskHandle = nullptr;
 }
 
 /*
