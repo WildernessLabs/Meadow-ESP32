@@ -41,8 +41,7 @@ namespace Esp32Messaging
         WiFi = 0,
         BlueTooth = 1,
         MeshNetwork = 2,
-        System = 3,
-        TransportProvider = 4
+        System = 3
     
 };
 
