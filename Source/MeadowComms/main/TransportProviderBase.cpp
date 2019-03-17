@@ -64,10 +64,18 @@ void TransportProviderBase::Setup(MessageDispatcher *messageDispatcher)
 bool TransportProviderBase::QueueMessageForStm32(Esp32Messaging::Message *message)
 {
     bool result = true;
-    if (xQueueSendToBack(_queueHandle, &message, 0) != pdPASS)
+    if ((message->Interface == Esp32Interfaces::System) && (message->Function == SystemFunction::Echo))
     {
-        ESP_LOGE(__func__, "Cannot queue message.");
-        result = false;
+        ESP_LOGI(__func__, "Echo received: %s", (char *) message->Payload);
+        vPortFree(message->Payload);
+    }
+    else
+    {
+        if (xQueueSendToBack(_queueHandle, &message, 0) != pdPASS)
+        {
+            ESP_LOGE(__func__, "Cannot queue message.");
+            result = false;
+        }
     }
     return(result);
 }

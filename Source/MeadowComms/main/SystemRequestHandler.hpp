@@ -4,8 +4,8 @@
  *      System message request handler
  */
 
-#ifndef _SYSTEMREQUESTHANDLER_HPP_
-#define _SYSTEMREQUESTHANDLER_HPP_
+#ifndef _SYSTEM_REQUEST_HANDLER_HPP_
+#define _SYSTEM_REQUEST_HANDLER_HPP_
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -47,6 +47,11 @@ private:
     SystemRequestHandler();
     ~SystemRequestHandler();
 
+    /*
+     *      Echo function for testing the communication layers.
+     */
+    void Echo(Esp32Messaging::Message *);
+
 public:
     /*
      *
@@ -59,4 +64,4 @@ public:
     void Setup();
 };
 
-#endif /* _SYSTEMREQUESTHANDLER_HPP_ */
+#endif /* _SYSTEM_REQUEST_HANDLER_HPP_ */

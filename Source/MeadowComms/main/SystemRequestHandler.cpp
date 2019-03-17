@@ -17,6 +17,7 @@
 
 #include "Encoders.hpp"
 #include "SystemRequestHandler.hpp"
+#include "MessageDispatcher.hpp"
 #include "Exceptions/MultipleInstancesException.hpp"
 
 /*
@@ -92,7 +93,25 @@ void SystemRequestHandler::Setup()
         ESP_LOGI(__func__, "Cannot allocate System processing queue.");
     }
     xTaskCreate(Task, _taskName, 2048 * 2, this, configMAX_PRIORITIES - 1, &_taskHandle);
-    _instantiated = true;
+}
+
+/*
+ *      Implement the echo function.
+ *
+ *      Echo the message on the information console and then send a response back.
+ *
+ *      @param request
+ *          Request from the system.
+ */
+void SystemRequestHandler::Echo(Esp32Messaging::Message *request)
+{
+    ESP_LOGI(__func__, "System received echo request: %s", (char *) request->Payload);
+    vPortFree(request->Payload);
+    const char *str = "Response from ESP32.";
+    request->PayloadLength = strlen(str) + 1;
+    request->Payload = (uint8_t *) pvPortMalloc(request->PayloadLength);
+    strcpy((char *) request->Payload, str);
+    _messageDispatcher->QueueMessageForStm32(request);
 }
 
 /*
@@ -105,6 +124,9 @@ void SystemRequestHandler::DispatchRequest(Esp32Messaging::Message *request)
 {
     switch (request->Function)
     {
+        case SystemFunction::Echo:
+            Echo(request);
+            break;
         default:
             ESP_LOGI(__func__, "Unknown System message received, function %d", request->Function);
             if (request->Payload != NULL)
