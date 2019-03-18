@@ -129,6 +129,7 @@ void WiFiRequestHandler::SetAntenna(WiFiRequestHandler::Antenna newAntenna)
  */
 void WiFiRequestHandler::Setup()
 {
+    RequestHandlerBase::Setup();
     /*
      *      Configure the antenna, by default, the on board antenna will be used.
      */

@@ -83,16 +83,7 @@ SystemRequestHandler::~SystemRequestHandler()
  */
 void SystemRequestHandler::Setup()
 {
-    /*
-     *      Now create the objects necessary for the System task.
-     */
-//    const size_t messageSize = sizeof(Message);
     RequestHandlerBase::Setup();
-//    _queueHandle = xQueueCreate(MAX_QUEUE_LENGTH, messageSize);
-//    if (_queueHandle == NULL)
-//    {
-//        ESP_LOGI(__func__, "Cannot allocate System processing queue.");
-//    }
     xTaskCreate(Task, _taskName, 2048 * 2, this, configMAX_PRIORITIES - 1, &_taskHandle);
 }
 
