@@ -58,6 +58,7 @@
               { "Name": "Ack", "Value": "0x00" },
               { "Name": "Nak", "Value": "0x01" },
               { "Name": "Reset", "Value": "0x02" },
+              { "Name": "Header", "Value": "0x20" },
               { "Name": "Data", "Value": "0x40" },
               { "Name": "Transport", "Value": "0x80" }
             ]

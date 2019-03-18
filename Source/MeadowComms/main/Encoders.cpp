@@ -220,7 +220,7 @@ uint32_t Encoders::ProgressiveCRC32(uint32_t currentChecksum, uint8_t byte)
 /*
  *      Encode a message into a block of memory.
  */
-void Encoders::EncodeMessage(Message *message, uint8_t *buffer)
+void Encoders::EncodeMessage(Esp32Messaging::Message *message, uint8_t *buffer)
 {
     *buffer = message->MessageType;
     buffer++;
@@ -246,9 +246,9 @@ void Encoders::EncodeMessage(Message *message, uint8_t *buffer)
 /*
  *      Extract a message from a block of memory and create a new Message object.
  */
-Message *Encoders::ExtractMessage(uint8_t *buffer)
+Esp32Messaging::Message *Encoders::ExtractMessage(uint8_t *buffer)
 {
-    Message *message = (Message *) pvPortMalloc(sizeof(Message));
+    Esp32Messaging::Message *message = (Esp32Messaging::Message *) pvPortMalloc(sizeof(Esp32Messaging::Message));
 
     message->MessageType = *buffer;
     buffer++;
