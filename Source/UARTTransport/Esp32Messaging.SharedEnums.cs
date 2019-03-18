@@ -79,6 +79,7 @@ namespace Esp32Messaging
         Ack = 0x00,
         Nak = 0x01,
         Reset = 0x02,
+        Header = 0x20,
         Data = 0x40,
         Transport = 0x80
     

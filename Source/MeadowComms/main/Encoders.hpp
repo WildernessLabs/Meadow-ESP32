@@ -64,8 +64,8 @@ public:
     static uint8_t CRC8(const uint8_t *, uint16_t);
     static uint32_t CRC32(const uint8_t *, uint16_t);
     static uint32_t ProgressiveCRC32(uint32_t, uint8_t);
-    static void EncodeMessage(Message *, uint8_t *);
-    static Message *ExtractMessage(uint8_t *);
+    static void EncodeMessage(Esp32Messaging::Message *, uint8_t *);
+    static Esp32Messaging::Message *ExtractMessage(uint8_t *);
     static void EncodeStartNetwork(Esp32Messaging::StartNetwork *, uint8_t *, int);
     static Esp32Messaging::StartNetwork *ExtractStartNetwork(uint8_t *);
     static void EncodeSwitchAntenna(Esp32Messaging::SwitchAntenna *, uint8_t *, int);
