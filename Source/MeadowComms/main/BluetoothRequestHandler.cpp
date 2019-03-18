@@ -82,14 +82,8 @@ BluetoothRequestHandler::~BluetoothRequestHandler()
  */
 void BluetoothRequestHandler::Setup()
 {
-//    const size_t messageSize = sizeof(Message);
-//    _queueHandle = xQueueCreate(MAX_QUEUE_LENGTH, messageSize);
-//    if (_queueHandle == NULL)
-//    {
-//        ESP_LOGI(__func__, "Cannot allocate Bluetooth processing queue.");
-//    }
+    RequestHandlerBase::Setup();
     xTaskCreate(Task, _taskName, 1024 * 2, this, configMAX_PRIORITIES - 1, &_taskHandle);
-    _instantiated = true;
 }
 
 /*
