@@ -80,11 +80,11 @@ MeshNetworkRequestHandler::~MeshNetworkRequestHandler()
  */
 void MeshNetworkRequestHandler::Setup()
 {
-    _queueHandle = xQueueCreate(MAX_QUEUE_LENGTH, sizeof(Message));
-    if (_queueHandle == NULL)
-    {
-        ESP_LOGI(_taskName, "Cannot allocate Mesh network queue.");
-    }
+//    _queueHandle = xQueueCreate(MAX_QUEUE_LENGTH, sizeof(Message));
+//    if (_queueHandle == NULL)
+//    {
+//        ESP_LOGI(_taskName, "Cannot allocate Mesh network queue.");
+//    }
     xTaskCreate(Task, _taskName, 1024 * 2, this, configMAX_PRIORITIES - 1, &_taskHandle);
 }
 
