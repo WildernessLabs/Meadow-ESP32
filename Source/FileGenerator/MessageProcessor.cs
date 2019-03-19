@@ -130,9 +130,36 @@ namespace FileGenerator
                     if (m.MessageElements != null)
                     {
                         string variableName = m.Name.Substring(0, 1).ToLower() + m.Name.Substring(1);
-                        sourceFile.WriteLine($"        public static void Encode{m.Name}(Messages.{m.Name} {variableName}, byte[] buffer, int offset)");
+                        sourceFile.WriteLine($"        public static byte[] Encode{m.Name}(Messages.{m.Name} {variableName})");
                         sourceFile.WriteLine("        {");
+                        sourceFile.WriteLine("            int offset = 0;");
+                        sourceFile.WriteLine("            int length = 0;");
                         sourceFile.WriteLine();
+                        sourceFile.WriteLine("            //");
+                        sourceFile.WriteLine("            //  Calculate the amount of memory needed.");
+                        sourceFile.WriteLine("            //");
+                        int nonStringLength = 0;
+                        foreach (MessageElement me in m.MessageElements)
+                        {
+                            DataType dt = GetDataType(me.DataType);
+                            if (dt.CSharpTypeName.ToLower() == "string")
+                            {
+                                sourceFile.WriteLine($"            length += {variableName}.{me.Name}.Length + 1;");
+                            }
+                            else
+                            {
+                                nonStringLength += dt.Size;
+                            }
+                        }
+                        if (nonStringLength != 0)
+                        {
+                            sourceFile.WriteLine($"            length += {nonStringLength};");
+                        }
+                        sourceFile.WriteLine();
+                        sourceFile.WriteLine("            //");
+                        sourceFile.WriteLine("            //  Now allocate a new buffer and copy the data in to the buffer.");
+                        sourceFile.WriteLine("            //");
+                        sourceFile.WriteLine($"            byte[] buffer = new byte[length];");
                         foreach (MessageElement me in m.MessageElements)
                         {
                             DataType dt = GetDataType(me.DataType);
@@ -153,6 +180,7 @@ namespace FileGenerator
                                 sourceFile.WriteLine($"            offset += {dt.Size};");
                             }
                         }
+                        sourceFile.WriteLine("            return(buffer);");
                         sourceFile.WriteLine("        }");
                         sourceFile.WriteLine();
                         sourceFile.WriteLine($"        public static Messages.{m.Name} Extract{m.Name}(byte[] buffer, int offset)");

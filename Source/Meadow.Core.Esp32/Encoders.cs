@@ -18,13 +18,20 @@ namespace Meadow.Core.Esp32
 {
     public class Encoders : EncodersBase
     {
-        public static void EncodeStartNetwork(Messages.StartNetwork startNetwork, byte[] buffer, int offset)
+        public static byte[] EncodeStartNetwork(Messages.StartNetwork startNetwork)
         {
+            int offset = 0;
+            int length = 0;
+
+            length += startNetwork.NetworkName.Length + 1;
+            length += startNetwork.Password.Length + 1;
+            byte[] buffer = new byte[length];
 
             EncodeString(startNetwork.NetworkName, buffer, offset);
             offset += startNetwork.NetworkName.Length + 1;
             EncodeString(startNetwork.Password, buffer, offset);
             offset += startNetwork.Password.Length + 1;
+            return(buffer);
         }
 
         public static Messages.StartNetwork ExtractStartNetwork(byte[] buffer, int offset)
@@ -38,11 +45,17 @@ namespace Meadow.Core.Esp32
             return(startNetwork);
         }
 
-        public static void EncodeSwitchAntenna(Messages.SwitchAntenna switchAntenna, byte[] buffer, int offset)
+        public static byte[] EncodeSwitchAntenna(Messages.SwitchAntenna switchAntenna)
         {
+            int offset = 0;
+            int length = 0;
+
+            length += 1;
+            byte[] buffer = new byte[length];
 
             switchAntenna.Antenna = buffer[offset];
             offset += 1;
+            return(buffer);
         }
 
         public static Messages.SwitchAntenna ExtractSwitchAntenna(byte[] buffer, int offset)

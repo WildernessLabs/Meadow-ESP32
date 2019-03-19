@@ -32,7 +32,7 @@ namespace SPITest
             _reset.State = true;
             //SoftwareSPIBus esp32 = new SoftwareSPIBus(Device.Pins.D05, Device.Pins.D06, Device.Pins.D07, Device.Pins.D08);
             SoftwareSPIBus esp32 = new SoftwareSPIBus(Device.Pins.ESP_MOSI, Device.Pins.ESP_MISO, Device.Pins.ESP_CLK, Device.Pins.ESP_CS);
-            int counter = 0;
+            var counter = 0;
             while (true)
             {
                 _blueLED.State = !_blueLED.State;
