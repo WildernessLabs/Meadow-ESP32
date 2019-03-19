@@ -5,12 +5,69 @@ namespace Meadow.Core.Esp32
     public class EncodersBase
     {
         /// <summary>
+        ///     Seed for the Crc32 algorithm.
+        /// </summary>
+        private const UInt32 CRC32_SEED = 0xffffffff;
+
+        /// <summary>
+        ///     Calculate the 32-bit CRC for the array of bytes.
+        /// </summary>
+        /// <param name="data">Buffer of data.</param>
+        /// <returns>32-bit CRC for the array of bytes.</returns>
+        private static UInt32 Crc32(byte[] buffer)
+        {
+            return (Crc32(buffer, 0, buffer.Length));
+        }
+
+        /// <summary>
+        ///     Calculate the 32-bit CRC for the array of bytes.
+        /// </summary>
+        /// <param name="data">Buffer of data.</param>
+        /// <param name="start">Offset into the buffer at which the CRC calculation will start</param>
+        /// <param name="length">Amount of data to calculate the CRC</param>
+        /// <returns>32-bit CRC for the array of bytes.</returns>
+        private static UInt32 Crc32(byte[] data, int start, int length)
+        {
+            UInt32 crc = CRC32_SEED;
+
+            for (int index = start; index < length; index++)
+            {
+                crc = ProgressiveCrc32(crc, data[index]);
+            }
+
+            return (crc);
+        }
+
+        /// <summary>
+        ///     Progressively calculate the Crc32 value.
+        /// </summary>
+        /// <remarks>
+        ///     This allows method allows the Crc32 value to be built up as the data bytes
+        ///     from the serial port are received.  This means that all of the data frame
+        ///     does not need to be present in order to calculate this value.
+        /// </remarks>
+        /// <param name="currentChecksum">Current value for the _originalChecksum.</param>
+        /// <param name="data">ApplicationData byte to be processed.</param>
+        /// <returns>Next value for the Crc32.</returns>
+        private static UInt32 ProgressiveCrc32(UInt32 currentChecksum, byte data)
+        {
+            UInt32 crc = currentChecksum;
+            crc ^= data;
+            for (UInt32 index = 0; index < 8; index++)
+            {
+                UInt32 mask = (UInt32) (-(crc & 0x01));
+                crc = (crc >> 1) ^ (0xedb88320 & mask);
+            }
+            return (crc);
+        }
+
+        /// <summary>
         ///     Take two bytes from the buffer and encode them as a 16-bit integer.
         ///     Note that the data should be encoded as LSB first.
         /// </summary>
         /// <param name="buffer">Buffer holding the value.</param>
         /// <param name="offset">Offset into the buffer for the LSB.</param>
-        public static UInt16 ExtractUInt16(byte[] buffer, int offset)
+        public static UInt16 ExtractUInt16(byte[] buffer, int offset = 0)
         {
             UInt16 result;
 
@@ -26,7 +83,7 @@ namespace Meadow.Core.Esp32
         /// <param name="value">Value to encode.</param>
         /// <param name="buffer">Buffer to store the value.</param>
         /// <param name="offset">Offset into the buffer for the first byte to store.</param>
-        public static void EncodeUInt16(UInt16 value, byte[] buffer, int offset)
+        public static void EncodeUInt16(UInt16 value, byte[] buffer, int offset = 0)
         {
             buffer[offset] = (byte) (value & 0xff);
             buffer[offset + 1] = (byte) ((value >> 8) & 0xff);
@@ -38,7 +95,7 @@ namespace Meadow.Core.Esp32
         /// </summary>
         /// <param name="buffer">Buffer holding the 32-bit value to decode.</param>
         /// <param name="offset">Offset of the 32-bit in the buffer.</param>
-        public static UInt32 ExtractUInt32(byte[] buffer, int offset)
+        public static UInt32 ExtractUInt32(byte[] buffer, int offset = 0)
         {
             UInt32 result;
 
@@ -56,7 +113,7 @@ namespace Meadow.Core.Esp32
         /// <param name="value">Value to encode.</param>
         /// <param name="buffer">Buffer to store the value.</param>
         /// <param name="offset">Offset into the buffer for the first byte to store.</param>
-        public static void EncodeUInt32(UInt32 value, byte[] buffer, int offset)
+        public static void EncodeUInt32(UInt32 value, byte[] buffer, int offset = 0)
         {
             buffer[offset] = (byte) (value & 0xff);
             buffer[offset + 1] = (byte) ((value >> 8) & 0xff);
@@ -73,7 +130,7 @@ namespace Meadow.Core.Esp32
         /// <param name="str">String to encode.</param>
         /// <param name="buffer">Buffer to hold the characters.</param>
         /// <param name="offset">Offset into the buffer for the first character.</param>
-        public static void EncodeString(string str, byte[] buffer, int offset)
+        public static void EncodeString(string str, byte[] buffer, int offset = 0)
         {
             Array.Copy(str.ToCharArray(), 0, buffer, offset, str.Length);
             buffer[offset + str.Length + 1] = 0;
@@ -89,7 +146,7 @@ namespace Meadow.Core.Esp32
         /// <returns>The string.</returns>
         /// <param name="buffer">Buffer holding the data to be decoded.</param>
         /// <param name="offset">Offset into the buffer of the string.</param>
-        public static string ExtractString(byte[] buffer, int offset)
+        public static string ExtractString(byte[] buffer, int offset = 0)
         {
             string result = "";
 
@@ -99,6 +156,83 @@ namespace Meadow.Core.Esp32
                 offset++;
             }
             return (result);
+        }
+
+        /// <summary>
+        ///     Encode a message into a byte buffer that can be sent to the ESP32.
+        /// </summary>
+        /// <returns>Byte array containing the encoded message.</returns>
+        /// <param name="message">Message to be encoded.</param>
+        public static byte[] EncodeMessage(Messages.Message message)
+        {
+            byte[] buffer = new byte[Messages.MESSAGE_SIZE + message.PayloadLength];
+            int offset = 0;
+
+            buffer[offset++] = message.MessageType;
+            buffer[offset++] = message.Interface;
+            EncodeUInt32(message.Function, buffer, offset);
+            offset += 4;
+            EncodeUInt32(message.StatusCode, buffer, offset);
+            offset += 4;
+            EncodeUInt32(message.MessageID, buffer, offset);
+            offset += 4;
+            EncodeUInt32(message.PayloadLength, buffer, offset);
+            offset += 4;
+            //
+            //  CRC will be put in later but needs to be 0 for the calculation.
+            //
+            EncodeUInt32(0, buffer, offset);
+            offset += 4;
+            if (message.PayloadLength > 0)
+            {
+                Array.Copy(message.Payload, 0, buffer, offset, message.PayloadLength);
+            }
+            //
+            //  Now we deal with the CRC.
+            //
+            UInt32 crc = Crc32(buffer);
+            EncodeUInt32(crc, buffer, Messages.CRC_OFFSET);
+            return (buffer);
+        }
+
+        /// <summary>
+        ///     Extrat a message from a byte buffer and return a Message object.
+        /// </summary>
+        /// <returns>Extract message ready for processing.</returns>
+        /// <param name="buffer">Byte buffer containing the encoded data.</param>
+        /// <param name="offset">Offset of the message into the buffer (normally this is 0).</param>
+        public static Messages.Message ExtractMessage(byte[] buffer, int offset = 0)
+        {
+            if (buffer.Length < Messages.MESSAGE_SIZE)
+            {
+                //  TODO: Deal with this error.
+            }
+            //
+            //  Now check the CRC.
+            //
+            UInt32 crc = ExtractUInt32(buffer, Messages.CRC_OFFSET);
+            EncodeUInt32(0, buffer, Messages.CRC_OFFSET);
+            if (Crc32(buffer) != crc)
+            {
+                //  TODO: Deal with this error.
+            }
+
+            Messages.Message message = new Messages.Message();
+            message.MessageType = buffer[offset++];
+            message.Interface = buffer[offset++];
+            message.Function = ExtractUInt32(buffer, offset);
+            offset += 4;
+            message.StatusCode = ExtractUInt32(buffer, offset);
+            offset += 4;
+            message.MessageID = ExtractUInt32(buffer, offset);
+            offset += 4;
+            message.PayloadLength = ExtractUInt32(buffer, offset);
+            offset += 4;
+            message.Crc = ExtractUInt32(buffer, offset);
+            offset += 4;
+            message.Payload = new byte[message.PayloadLength];
+            Array.Copy(buffer, offset, message.Payload, 0, message.PayloadLength);
+            return (message);
         }
     }
 }
