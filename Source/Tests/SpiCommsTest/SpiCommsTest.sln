@@ -1,0 +1,23 @@
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpiCommsTest", "SpiCommsTest.csproj", "{2830A7BD-6B63-43A9-BBF9-57A488E6EEDE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Meadow.Core", "..\..\..\..\..\Meadow.Core\source\Meadow.Core\Meadow.Core.csproj", "{B13C7BDD-77F5-45F8-BDB9-6CD368C67410}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2830A7BD-6B63-43A9-BBF9-57A488E6EEDE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2830A7BD-6B63-43A9-BBF9-57A488E6EEDE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2830A7BD-6B63-43A9-BBF9-57A488E6EEDE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2830A7BD-6B63-43A9-BBF9-57A488E6EEDE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B13C7BDD-77F5-45F8-BDB9-6CD368C67410}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B13C7BDD-77F5-45F8-BDB9-6CD368C67410}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B13C7BDD-77F5-45F8-BDB9-6CD368C67410}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B13C7BDD-77F5-45F8-BDB9-6CD368C67410}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

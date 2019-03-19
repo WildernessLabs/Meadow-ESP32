@@ -71,3 +71,8 @@ Source/Tests/UARTTest/.vs/UARTTest/DesignTimeBuild/.dtbcache
 Source/MeadowComms/Comms.srctrlbm
 Source/MeadowComms/Comms.srctrldb
 Source/MeadowComms/Comms.srctrlprj
+Source/Tests/SpiCommsTest/.vs/SpiCommsTest/xs/sqlite3/storage.ide-wal
+Source/Tests/SpiCommsTest/.vs/SpiCommsTest/xs/sqlite3/storage.ide
+Source/Tests/SpiCommsTest/.vs/SpiCommsTest/xs/sqlite3/db.lock
+Source/Tests/SpiCommsTest/.vs/SpiCommsTest/xs/UserPrefs.xml
+Source/Tests/SpiCommsTest/.vs/SpiCommsTest/xs/sqlite3/storage.ide-shm

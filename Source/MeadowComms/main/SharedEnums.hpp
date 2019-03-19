@@ -37,8 +37,7 @@ namespace StatusCodes
         InvalidSSID = 11,
         InvalidPassword = 12,
         WiFiDisconnected = 13
-    
-};
+    };
 }
 
 namespace Esp32Interfaces
@@ -52,8 +51,7 @@ namespace Esp32Interfaces
         BlueTooth = 1,
         MeshNetwork = 2,
         System = 3
-    
-};
+    };
 }
 
 namespace SystemFunction
@@ -67,8 +65,7 @@ namespace SystemFunction
         GetConfiguration = 1,
         SetConfiguration = 2,
         DeepSleep = 3
-    
-};
+    };
 }
 
 namespace WiFiFunction
@@ -85,8 +82,7 @@ namespace WiFiFunction
         GetAccessPoints = 4,
         GetConfiguration = 5,
         SetConfiguration = 6
-    
-};
+    };
 }
 
 namespace BluetoothFunction
@@ -99,8 +95,7 @@ namespace BluetoothFunction
         Echo = 0,
         GetConfiguration = 1,
         SetConfiguration = 2
-    
-};
+    };
 }
 
 /*
@@ -114,7 +109,6 @@ enum TransportPacketType : uint8_t
     Header = 0x20,
     Data = 0x40,
     Transport = 0x80
-
 };
 namespace WiFiAuthenticationMode
 {
@@ -129,8 +123,7 @@ namespace WiFiAuthenticationMode
         Wpa2Psk = 3,
         WpaWpa2Psk = 4,
         Wpa2Enterprise = 5
-    
-};
+    };
 }
 
 namespace WiFiCountryPolicy
@@ -142,8 +135,7 @@ namespace WiFiCountryPolicy
     {
         Automatic = 0,
         Manual = 1
-    
-};
+    };
 }
 
 namespace WiFiSecondChannel
@@ -156,8 +148,7 @@ namespace WiFiSecondChannel
         None = 0,
         Above = 1,
         Below = 2
-    
-};
+    };
 }
 
 namespace WiFiScanType
@@ -169,8 +160,7 @@ namespace WiFiScanType
     {
         Active = 0,
         Passive = 1
-    
-};
+    };
 }
 
 namespace Antenna
@@ -182,8 +172,7 @@ namespace Antenna
     {
         OnBoard = 0,
         External = 1
-    
-};
+    };
 }
 
 namespace WiFiCipherType
@@ -200,8 +189,7 @@ namespace WiFiCipherType
         Ccmp = 4,
         TkipCcmp = 5,
         Unknown = 6
-    
-};
+    };
 }
 
 

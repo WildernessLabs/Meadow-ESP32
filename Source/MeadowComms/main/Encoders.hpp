@@ -28,14 +28,14 @@ namespace Esp32Messaging
         char * Password;
     };
 
-    const uint32_t START_NETWORK_MESSAGE_SIZE = 8;
+    const uint32_t START_NETWORK_ENCODED_MESSAGE_SIZE = 8;
 
     struct SwitchAntenna
     {
         uint8_t Antenna;
     };
 
-    const uint32_t SWITCH_ANTENNA_MESSAGE_SIZE = 1;
+    const uint32_t SWITCH_ANTENNA_ENCODED_MESSAGE_SIZE = 1;
 
 }
 

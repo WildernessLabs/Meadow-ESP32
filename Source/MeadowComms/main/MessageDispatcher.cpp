@@ -67,6 +67,7 @@ bool MessageDispatcher::QueueMessageForEsp32(Message *request)
             if (!_wifiRequestHandler)
             {
                 _wifiRequestHandler = new WiFiRequestHandler(this);
+                _wifiRequestHandler->Setup();
             }
             provider = (RequestHandlerBase *) _wifiRequestHandler;
             break;
@@ -74,6 +75,7 @@ bool MessageDispatcher::QueueMessageForEsp32(Message *request)
             if (!_bluetoothRequestHandler)
             {
                 _bluetoothRequestHandler = new BluetoothRequestHandler(this);
+                _bluetoothRequestHandler->Setup();
             }
             provider = (RequestHandlerBase *) _bluetoothRequestHandler;
             break;
@@ -81,6 +83,7 @@ bool MessageDispatcher::QueueMessageForEsp32(Message *request)
             if (!_meshNetworkRequestHandler)
             {
                 _meshNetworkRequestHandler = new MeshNetworkRequestHandler(this);
+                _meshNetworkRequestHandler->Setup();
             }
             provider = (RequestHandlerBase *) _meshNetworkRequestHandler;
             break;

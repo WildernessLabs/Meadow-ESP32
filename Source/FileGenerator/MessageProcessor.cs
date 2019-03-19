@@ -13,7 +13,7 @@ namespace FileGenerator
         {
             new DataType("uint32", 4, "uint32_t", "UInt32"),
             new DataType("int", 4, "int32_t", "Int32"),
-            new DataType("byte", 1, "uint8_t", "Uint8"),
+            new DataType("byte", 1, "uint8_t", "Byte"),
             new DataType("pbyte", 4, "uint8_t *", "byte[]"),
             new DataType("string", 4, "char *", "String")
         };
@@ -69,6 +69,7 @@ namespace FileGenerator
             outputFile.WriteLine("//");
             outputFile.WriteLine("");
             outputFile.WriteLine("using System;");
+            outputFile.WriteLine("using Meadow.Core.Esp32;");
             outputFile.WriteLine("");
         }
         private void OutputCSharpFileFooter(StreamWriter outputFile)
@@ -104,7 +105,7 @@ namespace FileGenerator
             }
             else
             {
-                file.WriteLine($"{indent}offset += {dt.Size}");
+                file.WriteLine($"{indent}offset += {dt.Size};");
             }
         }
 
@@ -129,32 +130,53 @@ namespace FileGenerator
                     if (m.MessageElements != null)
                     {
                         string variableName = m.Name.Substring(0, 1).ToLower() + m.Name.Substring(1);
-                        sourceFile.WriteLine($"        public static void Encode{m.Name}({m.Name} {variableName}, byte[] buffer, int offset)");
+                        sourceFile.WriteLine($"        public static void Encode{m.Name}(Messages.{m.Name} {variableName}, byte[] buffer, int offset)");
                         sourceFile.WriteLine("        {");
-                        sourceFile.WriteLine("            UInt32 offset = 0;");
-                        sourceFile.WriteLine();
-                        foreach (MessageElement me in m.MessageElements)
-                        {
-                            OutputEncoderFunctionBody(sourceFile, "            ", variableName, me);
-                        }
-                        sourceFile.WriteLine("        }");
-                        sourceFile.WriteLine();
-                        sourceFile.WriteLine($"        public static {m.Name} *Extract{m.Name}(byte[] buffer, int offset)");
-                        sourceFile.WriteLine("        {");
-                        sourceFile.WriteLine($"            {m.Name} {variableName};");
-                        sourceFile.WriteLine("            UInt32 offset = 0;");
                         sourceFile.WriteLine();
                         foreach (MessageElement me in m.MessageElements)
                         {
                             DataType dt = GetDataType(me.DataType);
-                            sourceFile.WriteLine($"            {variableName}.{me.Name} = Extract{dt.CSharpTypeName}(buffer, offset);");
+                            if (dt.CSharpTypeName.ToLower() == "byte")
+                            {
+                                sourceFile.WriteLine($"            {variableName}.{me.Name} = buffer[offset];");
+                            }
+                            else
+                            {
+                                sourceFile.WriteLine($"            Encode{dt.CSharpTypeName}({variableName}.{me.Name}, buffer, offset);");
+                            }
                             if (dt.CSharpTypeName.ToLower() == "string")
                             {
                                 sourceFile.WriteLine($"            offset += {variableName}.{me.Name}.Length + 1;");
                             }
                             else
                             {
-                                sourceFile.WriteLine($"            offset += {dt.Size}");
+                                sourceFile.WriteLine($"            offset += {dt.Size};");
+                            }
+                        }
+                        sourceFile.WriteLine("        }");
+                        sourceFile.WriteLine();
+                        sourceFile.WriteLine($"        public static Messages.{m.Name} Extract{m.Name}(byte[] buffer, int offset)");
+                        sourceFile.WriteLine("        {");
+                        sourceFile.WriteLine($"            Messages.{m.Name} {variableName};");
+                        sourceFile.WriteLine();
+                        foreach (MessageElement me in m.MessageElements)
+                        {
+                            DataType dt = GetDataType(me.DataType);
+                            if (dt.CSharpTypeName.ToLower() == "byte")
+                            {
+                                sourceFile.WriteLine($"            {variableName}.{me.Name} = buffer[offset];");
+                            }
+                            else
+                            {
+                                sourceFile.WriteLine($"            {variableName}.{me.Name} = Extract{dt.CSharpTypeName}(buffer, offset);");
+                            }
+                            if (dt.CSharpTypeName.ToLower() == "string")
+                            {
+                                sourceFile.WriteLine($"            offset += {variableName}.{me.Name}.Length + 1;");
+                            }
+                            else
+                            {
+                                sourceFile.WriteLine($"            offset += {dt.Size};");
                             }
                         }
                         sourceFile.WriteLine($"            return({variableName});");
@@ -188,28 +210,31 @@ namespace FileGenerator
             using (StreamWriter sourceFile = new StreamWriter(CSharpStructureFileName))
             {
                 OutputCSharpFileHeader(sourceFile);
-                sourceFile.WriteLine("namespace Meadow.Core.Esp32.Messages");
+                sourceFile.WriteLine("namespace Meadow.Core.Esp32");
                 sourceFile.WriteLine("{");
+                sourceFile.WriteLine("    public partial class Messages");
+                sourceFile.WriteLine("    {");
                 foreach (Message m in messages)
                 {
                     int messageSize = 0;
                     if (m.MessageElements != null)
                     {
                         string variableName = m.Name.Substring(0, 1).ToLower() + m.Name.Substring(1);
-                        sourceFile.WriteLine($"    public struct {m.Name}");
-                        sourceFile.WriteLine("    {");
+                        sourceFile.WriteLine($"        public struct {m.Name}");
+                        sourceFile.WriteLine("        {");
                         foreach (MessageElement me in m.MessageElements)
                         {
                             DataType dt = GetDataType(me.DataType);
-                            sourceFile.WriteLine($"        {dt.CSharpTypeName} {me.Name};");
+                            sourceFile.WriteLine($"            public {dt.CSharpTypeName} {me.Name};");
                             messageSize += GetDataType(me.DataType).Size;
                         }
                     }
-                    sourceFile.WriteLine("    };");
+                    sourceFile.WriteLine("        };");
                     sourceFile.WriteLine();
-                    sourceFile.WriteLine($"    public const UInt32 {ConvertNameToConstantName(m.Name)}_MESSAGE_SIZE = {messageSize};");
+                    sourceFile.WriteLine($"        public const UInt32 {ConvertNameToConstantName(m.Name)}_ENCODED_MESSAGE_SIZE = {messageSize};");
                     sourceFile.WriteLine();
                 }
+                sourceFile.WriteLine("     }");
                 sourceFile.WriteLine("}");
             }
         }
@@ -246,7 +271,7 @@ namespace FileGenerator
                         }
                         sourceFile.WriteLine("    };");
                         sourceFile.WriteLine();
-                        sourceFile.WriteLine($"    const uint32_t {ConvertNameToConstantName(m.Name)}_MESSAGE_SIZE = {messageSize};");
+                        sourceFile.WriteLine($"    const uint32_t {ConvertNameToConstantName(m.Name)}_ENCODED_MESSAGE_SIZE = {messageSize};");
                         sourceFile.WriteLine();
                     }
                 }

@@ -22,6 +22,26 @@
  */
 SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
 {
+    gpio_set_pull_mode(MOSI_PIN, GPIO_PULLUP_ONLY);
+    gpio_set_pull_mode(CLOCK_PIN, GPIO_PULLUP_ONLY);
+    gpio_set_pull_mode(CHIP_SELECT_PIN, GPIO_PULLUP_ONLY);
+
+    spi_bus_config_t spiBusConfiguration;
+    spiBusConfiguration.mosi_io_num = MOSI_PIN;
+    spiBusConfiguration.miso_io_num = MISO_PIN;
+    spiBusConfiguration.sclk_io_num = CLOCK_PIN;
+
+    //Configuration for the SPI slave interface
+    spi_slave_interface_config_t slaveConfiguration;
+    slaveConfiguration.mode = 0;
+    slaveConfiguration.spics_io_num = CHIP_SELECT_PIN;
+    slaveConfiguration.queue_size = 3;
+    slaveConfiguration.flags = 0;
+    slaveConfiguration.post_setup_cb = SpiPostSetupCallback;
+    slaveConfiguration.post_trans_cb = SpiPostTransmissionCallback;
+
+    esp_err_t result = spi_slave_initialize(VSPI_HOST, &spiBusConfiguration, &slaveConfiguration, 1);
+    ESP_ERROR_CHECK(result);
 }
 
 /*
@@ -37,6 +57,32 @@ SpiTransportProvider::~SpiTransportProvider()
  *
  * ---------------------------------------------------------------------------
  */
+
+/*
+ *      SPI Post Transmission callback
+ *
+ *      This method is called when the SPI interface has received
+ *      the full data load from the STM32.
+ *
+ *      @param transaction
+ */
+void SpiTransportProvider::SpiPostTransmissionCallback(spi_slave_transaction_t *transaction)
+{
+//    gpio_set_level(HANDSHAKE_PIN, 0);
+}
+
+/*
+ *      SPI Post setup callback
+ *
+ *      This method is called when the SPI interface has completed
+ *      setup and data is ready for transmission.
+ *
+ *      @param transaction
+ */
+void SpiTransportProvider::SpiPostSetupCallback(spi_slave_transaction_t *transaction)
+{
+//    gpio_set_level(HANDSHAKE_PIN, 1);
+}
 
 /*
  *      Setup the SPI transport provider.

@@ -63,5 +63,16 @@ namespace Meadow.Core.Esp32
             buffer[offset + 2] = (byte) ((value >> 16) & 0xff);
             buffer[offset + 3] = (byte) ((value >> 24) & 0xff);
         }
+
+        public static void EncodeString(string str, byte[] buffer, int offset)
+        {
+
+        }
+
+        public static string ExtractString(byte[] buffer, int offset)
+        {
+            string result = "";
+            return (result);
+        }
     }
 }
