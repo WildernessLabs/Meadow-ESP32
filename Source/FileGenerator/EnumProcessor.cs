@@ -69,7 +69,7 @@ namespace FileGenerator
             outputFile.WriteLine("");
             outputFile.WriteLine("using System;");
             outputFile.WriteLine("");
-            outputFile.WriteLine("namespace Esp32Messaging");
+            outputFile.WriteLine("namespace Meadow.Core.Esp32");
             outputFile.WriteLine("{");
         }
 
@@ -128,7 +128,7 @@ namespace FileGenerator
                     fileStream.WriteLine();
                 }
             }
-            fileStream.WriteLine($"{indent}");
+            fileStream.Write($"{indent}");
             fileStream.WriteLine("};");
         }
 

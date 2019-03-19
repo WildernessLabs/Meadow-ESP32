@@ -14,7 +14,7 @@ namespace FileGenerator
             string esp32EnumJsonFileName = $"..{Path.DirectorySeparatorChar}Metadata{Path.DirectorySeparatorChar}SharedEnums.json";
             string cEnumFileName = $"{esp32SourceDirectory}SharedEnums.hpp";
             //
-            string cSharpEnumFileName = $"..{Path.DirectorySeparatorChar}UARTTransport{Path.DirectorySeparatorChar}Esp32Messaging.SharedEnums.cs";
+            string cSharpEnumFileName = $"..{Path.DirectorySeparatorChar}Meadow.Core.Esp32{Path.DirectorySeparatorChar}Enums.cs";
 
             Console.WriteLine("File Generator");
 
@@ -27,8 +27,8 @@ namespace FileGenerator
             messageProcessor.InputFileName = $"..{Path.DirectorySeparatorChar}Metadata{Path.DirectorySeparatorChar}Messages.json";;
             messageProcessor.CHeaderFileName = $"{esp32SourceDirectory}Encoders.hpp";
             messageProcessor.CSourceFileName = $"{esp32SourceDirectory}Encoders.cpp";
-            messageProcessor.CSharpFileName = $"..{Path.DirectorySeparatorChar}UARTTransport{Path.DirectorySeparatorChar}MessageEncoders.cs";;
-            messageProcessor.CSharpStructureFileName = $"..{Path.DirectorySeparatorChar}UARTTransport{Path.DirectorySeparatorChar}Esp32Messaging.MessageStructures.cs";;
+            messageProcessor.CSharpFileName = $"..{Path.DirectorySeparatorChar}Meadow.Core.Esp32{Path.DirectorySeparatorChar}Encoders.cs";;
+            messageProcessor.CSharpStructureFileName = $"..{Path.DirectorySeparatorChar}Meadow.Core.Esp32{Path.DirectorySeparatorChar}Messages.cs";;
             messageProcessor.CHeaderTemplateFileName = $"..{Path.DirectorySeparatorChar}Metadata{Path.DirectorySeparatorChar}Encoders.hpp.txt";
             messageProcessor.CSourceTemplateFileName = $"..{Path.DirectorySeparatorChar}Metadata{Path.DirectorySeparatorChar}Encoders.cpp.txt";
             messageProcessor.ProcessFile();
