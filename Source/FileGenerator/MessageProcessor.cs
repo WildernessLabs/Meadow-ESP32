@@ -94,11 +94,18 @@ namespace FileGenerator
             outputFile.WriteLine();
         }
 
-        public int OutputEncoderFunctionBody(StreamWriter file, string indent, string variableName, MessageElement me, int offset)
+        public void OutputEncoderFunctionBody(StreamWriter file, string indent, string variableName, MessageElement me)
         {
             DataType dt = GetDataType(me.DataType);
-            file.WriteLine($"{indent}Encode{dt.CSharpTypeName}({variableName}.{me.Name}, buffer, offset + {offset});");
-            return(dt.Size);
+            file.WriteLine($"{indent}Encode{dt.CSharpTypeName}({variableName}.{me.Name}, buffer, offset);");
+            if (dt.CSharpTypeName.ToLower() == "string")
+            {
+                file.WriteLine($"{indent}offset += {variableName}.{me.Name}.Length + 1;");
+            }
+            else
+            {
+                file.WriteLine($"{indent}offset += {dt.Size}");
+            }
         }
 
         public int OutputDecoderFunctionBody(StreamWriter file, string indent, string variableName, MessageElement me, int offset)
@@ -113,9 +120,9 @@ namespace FileGenerator
             using (StreamWriter sourceFile = new StreamWriter(CSharpFileName))
             {
                 OutputCSharpFileHeader(sourceFile);
-                sourceFile.WriteLine("namespace UartTransport");
+                sourceFile.WriteLine("namespace Meadow.Core.Esp32");
                 sourceFile.WriteLine("{");
-                sourceFile.WriteLine("    public class Encoders");
+                sourceFile.WriteLine("    public class Encoders : EncodersBase");
                 sourceFile.WriteLine("    {");
                 foreach (Message m in messages)
                 {
@@ -124,23 +131,31 @@ namespace FileGenerator
                         string variableName = m.Name.Substring(0, 1).ToLower() + m.Name.Substring(1);
                         sourceFile.WriteLine($"        public static void Encode{m.Name}({m.Name} {variableName}, byte[] buffer, int offset)");
                         sourceFile.WriteLine("        {");
-                        int offset = 0;
+                        sourceFile.WriteLine("            UInt32 offset = 0;");
+                        sourceFile.WriteLine();
                         foreach (MessageElement me in m.MessageElements)
                         {
-                            offset += OutputEncoderFunctionBody(sourceFile, "            ", variableName, me, offset);
+                            OutputEncoderFunctionBody(sourceFile, "            ", variableName, me);
                         }
                         sourceFile.WriteLine("        }");
                         sourceFile.WriteLine();
                         sourceFile.WriteLine($"        public static {m.Name} *Extract{m.Name}(byte[] buffer, int offset)");
                         sourceFile.WriteLine("        {");
                         sourceFile.WriteLine($"            {m.Name} {variableName};");
+                        sourceFile.WriteLine("            UInt32 offset = 0;");
                         sourceFile.WriteLine();
-                        offset = 0;
                         foreach (MessageElement me in m.MessageElements)
                         {
                             DataType dt = GetDataType(me.DataType);
-                            sourceFile.WriteLine($"        {variableName}.{me.Name} = Extract{dt.CSharpTypeName}(buffer, offset + {offset});");
-                            offset += dt.Size;
+                            sourceFile.WriteLine($"            {variableName}.{me.Name} = Extract{dt.CSharpTypeName}(buffer, offset);");
+                            if (dt.CSharpTypeName.ToLower() == "string")
+                            {
+                                sourceFile.WriteLine($"            offset += {variableName}.{me.Name}.Length + 1;");
+                            }
+                            else
+                            {
+                                sourceFile.WriteLine($"            offset += {dt.Size}");
+                            }
                         }
                         sourceFile.WriteLine($"            return({variableName});");
                         sourceFile.WriteLine("        }");
@@ -173,7 +188,7 @@ namespace FileGenerator
             using (StreamWriter sourceFile = new StreamWriter(CSharpStructureFileName))
             {
                 OutputCSharpFileHeader(sourceFile);
-                sourceFile.WriteLine("namespace Esp32Messaging");
+                sourceFile.WriteLine("namespace Meadow.Core.Esp32.Messages");
                 sourceFile.WriteLine("{");
                 foreach (Message m in messages)
                 {
