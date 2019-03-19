@@ -38,6 +38,7 @@
     <Compile Include="Meadow.Core.Esp32\EncodersBase.cs" />
     <Compile Include="Meadow.Core.Esp32\Enums.cs" />
     <Compile Include="Meadow.Core.Esp32\Messages.cs" />
+    <Compile Include="Meadow.Core.Esp32\Message.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\..\Meadow.Core\source\Meadow.Core\Meadow.Core.csproj">
