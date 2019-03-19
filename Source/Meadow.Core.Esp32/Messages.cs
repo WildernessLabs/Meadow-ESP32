@@ -12,22 +12,26 @@
 //
 
 using System;
+using Meadow.Core.Esp32;
 
-namespace Meadow.Core.Esp32.Messages
+namespace Meadow.Core.Esp32
 {
-    public struct StartNetwork
+    public partial class Messages
     {
-        String NetworkName;
-        String Password;
-    };
+        public struct StartNetwork
+        {
+            public String NetworkName;
+            public String Password;
+        };
 
-    public const UInt32 START_NETWORK_MESSAGE_SIZE = 8;
+        public const UInt32 START_NETWORK_ENCODED_MESSAGE_SIZE = 8;
 
-    public struct SwitchAntenna
-    {
-        Uint8 Antenna;
-    };
+        public struct SwitchAntenna
+        {
+            public Byte Antenna;
+        };
 
-    public const UInt32 SWITCH_ANTENNA_MESSAGE_SIZE = 1;
+        public const UInt32 SWITCH_ANTENNA_ENCODED_MESSAGE_SIZE = 1;
 
+     }
 }

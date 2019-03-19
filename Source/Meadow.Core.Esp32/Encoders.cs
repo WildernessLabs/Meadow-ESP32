@@ -12,14 +12,14 @@
 //
 
 using System;
+using Meadow.Core.Esp32;
 
 namespace Meadow.Core.Esp32
 {
     public class Encoders : EncodersBase
     {
-        public static void EncodeStartNetwork(StartNetwork startNetwork, byte[] buffer, int offset)
+        public static void EncodeStartNetwork(Messages.StartNetwork startNetwork, byte[] buffer, int offset)
         {
-            UInt32 offset = 0;
 
             EncodeString(startNetwork.NetworkName, buffer, offset);
             offset += startNetwork.NetworkName.Length + 1;
@@ -27,10 +27,9 @@ namespace Meadow.Core.Esp32
             offset += startNetwork.Password.Length + 1;
         }
 
-        public static StartNetwork *ExtractStartNetwork(byte[] buffer, int offset)
+        public static Messages.StartNetwork ExtractStartNetwork(byte[] buffer, int offset)
         {
-            StartNetwork startNetwork;
-            UInt32 offset = 0;
+            Messages.StartNetwork startNetwork;
 
             startNetwork.NetworkName = ExtractString(buffer, offset);
             offset += startNetwork.NetworkName.Length + 1;
@@ -39,21 +38,19 @@ namespace Meadow.Core.Esp32
             return(startNetwork);
         }
 
-        public static void EncodeSwitchAntenna(SwitchAntenna switchAntenna, byte[] buffer, int offset)
+        public static void EncodeSwitchAntenna(Messages.SwitchAntenna switchAntenna, byte[] buffer, int offset)
         {
-            UInt32 offset = 0;
 
-            EncodeUint8(switchAntenna.Antenna, buffer, offset);
-            offset += 1
+            switchAntenna.Antenna = buffer[offset];
+            offset += 1;
         }
 
-        public static SwitchAntenna *ExtractSwitchAntenna(byte[] buffer, int offset)
+        public static Messages.SwitchAntenna ExtractSwitchAntenna(byte[] buffer, int offset)
         {
-            SwitchAntenna switchAntenna;
-            UInt32 offset = 0;
+            Messages.SwitchAntenna switchAntenna;
 
-            switchAntenna.Antenna = ExtractUint8(buffer, offset);
-            offset += 1
+            switchAntenna.Antenna = buffer[offset];
+            offset += 1;
             return(switchAntenna);
         }
 
