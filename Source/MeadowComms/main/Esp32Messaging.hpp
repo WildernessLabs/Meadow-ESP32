@@ -26,7 +26,7 @@ struct Message
     uint8_t *Payload;
 };
 
-static const uint32_t MESSAGE_SIZE = 23;
-static const uint32_t CRC_OFFSET = 18;
+const uint32_t MESSAGE_SIZE = 23;
+const uint32_t CRC_OFFSET = 18;
 
 #endif /* _ESP32_MESSAGING_HPP_ */
