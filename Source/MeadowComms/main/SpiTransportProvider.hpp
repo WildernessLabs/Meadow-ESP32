@@ -11,37 +11,37 @@
 #include "driver/spi_slave.h"
 #include "esp_system.h"
 
+#include "Exceptions/MultipleInstancesException.hpp"
 #include "TransportProviderBase.hpp"
 #include "MessageDispatcher.hpp"
+#include "Esp32Messaging.hpp"
+#include "Gpio.hpp"
 
 class SpiTransportProvider : public TransportProviderBase
 {
 private:
     /*
-     *      GPIO pin used to indicate to the STM32 that there is data
-     *      waiting for transmission.
+     *      Number of bits in the Message structure (without any payload).
      */
-    const gpio_num_t HANDSHAKE_PIN = GPIO_NUM_2;
+    static const int BITS_PER_HEADER = MESSAGE_SIZE * 8;
 
     /*
-     *      SPI MISO pin.
+     *      Pointer to the (only) instance of the SpiTransportProvider class.
+     *
+     *      This object is needed to allow the static callbacks access to the
+     *      instance level variables and constants.
      */
-    const gpio_num_t MISO_PIN = GPIO_NUM_19;
+    static SpiTransportProvider *_spiInstance;
 
     /*
-     *      SPI MOSI pin.
+     *      SPI Transaction.
      */
-    const gpio_num_t MOSI_PIN = GPIO_NUM_23;
+    static spi_slave_transaction_t _transaction;
 
     /*
-     *      SPI Clock pin.
+     *      Buffer to hold a Message header worth of data.
      */
-    const gpio_num_t CLOCK_PIN = GPIO_NUM_18;
-
-    /*
-     *      SPI Chip Select pin.
-     */
-    const gpio_num_t CHIP_SELECT_PIN = GPIO_NUM_5;
+    char *_headerBuffer = nullptr;
 
     /*
      *      Default destructor.
@@ -50,11 +50,17 @@ private:
 
     /*
      *      SPI Post Transmission callback
+     *
+     *      Note this this method is static as it is used as a callback
+     *      in some C code.
      */
     static void SpiPostTransmissionCallback(spi_slave_transaction_t *);
 
     /*
      *      SPI Post setup callback.
+     *
+     *      Note this this method is static as it is used as a callback
+     *      in some C code.
      */
     static void SpiPostSetupCallback(spi_slave_transaction_t *);
 

@@ -17,6 +17,7 @@
 #include "soc/uart_struct.h"
 #include <string.h>
 #include <stdlib.h>
+#include "Gpio.hpp"
 
 /*
  *      The Logging class provides the functionality necessary to
@@ -25,16 +26,6 @@
 class Logging
 {
 private:
-    /*
-     *      UART Tx pin for the logging output.
-     */
-    static const int LOGGING_TX_PIN = GPIO_NUM_22;
-
-    /*
-     *      UART Rx pin for the logging output.
-     */
-    static const int LOGGING_RX_PIN = GPIO_NUM_21;
-
     /*
      *      UART Port number for the logging output.
      */

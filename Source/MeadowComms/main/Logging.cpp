@@ -45,10 +45,10 @@ void Logging::Setup()
         .flow_ctrl = UART_HW_FLOWCTRL_DISABLE
     };
     uart_param_config(LOGGING_UART_PORT_NUMBER, &loggingUARTConfig);
-    uart_set_pin(LOGGING_UART_PORT_NUMBER, LOGGING_TX_PIN, LOGGING_RX_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
+    uart_set_pin(LOGGING_UART_PORT_NUMBER, Gpio::LOGGING_TX_PIN, Gpio::LOGGING_RX_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
     //
     //  We won't use a buffer for sending data.
     //
     uart_driver_install(LOGGING_UART_PORT_NUMBER, RX_BUFFER_SIZE * 2, 0, 0, NULL, 0);
-    ESP_LOGI(__func__, "Logging redirected to UART_NUM_0 on pins %d (Tx), %d (Rx)", LOGGING_TX_PIN, LOGGING_RX_PIN);
+    ESP_LOGI(__func__, "Logging redirected to UART_NUM_0 on pins %d (Tx), %d (Rx)", Gpio::LOGGING_TX_PIN, Gpio::LOGGING_RX_PIN);
 }
