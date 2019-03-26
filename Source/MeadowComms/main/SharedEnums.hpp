@@ -50,7 +50,8 @@ namespace Esp32Interfaces
         WiFi = 0,
         BlueTooth = 1,
         MeshNetwork = 2,
-        System = 3
+        System = 3,
+        Transport = 4
     };
 }
 
@@ -106,6 +107,8 @@ enum TransportPacketType : uint8_t
     Ack = 0x00,
     Nak = 0x01,
     Reset = 0x02,
+    StartOfMessage = 0x04,
+    EndOfMessage = 0x08,
     Header = 0x20,
     Data = 0x40,
     Transport = 0x80

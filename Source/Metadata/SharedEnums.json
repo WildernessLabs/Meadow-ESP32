@@ -18,7 +18,7 @@
           "Comment": "System interfaces available on the ESP32 for the various function calls.",
           "BaseDataType": "Byte",
           "EnumNames": [ 
-              "WiFi", "BlueTooth", "MeshNetwork", "System"
+              "WiFi", "BlueTooth", "MeshNetwork", "System", "Transport"
           ]
         },
         {
@@ -58,6 +58,8 @@
               { "Name": "Ack", "Value": "0x00" },
               { "Name": "Nak", "Value": "0x01" },
               { "Name": "Reset", "Value": "0x02" },
+              { "Name": "StartOfMessage", "Value": "0x04" },
+              { "Name": "EndOfMessage", "Value": "0x08" },
               { "Name": "Header", "Value": "0x20" },
               { "Name": "Data", "Value": "0x40" },
               { "Name": "Transport", "Value": "0x80" }
