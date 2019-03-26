@@ -8,6 +8,7 @@
 #ifndef _SPI_TRANSPORT_PROVIDER_HPP_
 #define _SPI_TRANSPORT_PROVIDER_HPP_
 
+#include "freertos/FreeRTOS.h"
 #include "driver/spi_slave.h"
 #include "esp_system.h"
 
@@ -21,9 +22,9 @@ class SpiTransportProvider : public TransportProviderBase
 {
 private:
     /*
-     *      Number of bits in the Message structure (without any payload).
+     *      Possible states for the SPI transport layer.
      */
-    static const int BITS_PER_HEADER = MESSAGE_SIZE * 8;
+    enum SpiStates { Invalid, Idle, WaitingForMessageHeader, WaitingForMessageBody };
 
     /*
      *      Pointer to the (only) instance of the SpiTransportProvider class.
@@ -39,10 +40,24 @@ private:
     static spi_slave_transaction_t _transaction;
 
     /*
+     *      Current state of the SPI transport layer.
+     */
+    static SpiStates _currentState;
+
+    /*
      *      Buffer to hold a Message header worth of data.
      */
-    char *_headerBuffer = nullptr;
+    static char *_headerBuffer;
 
+    /*
+     *      Buffer to hold the data to be sent to the STM32.
+     */
+    static char *_transmitBuffer;
+
+    /*
+     *      Handle for the System request handler task.
+     */
+    static TaskHandle_t _taskHandle;
     /*
      *      Default destructor.
      */
@@ -63,6 +78,19 @@ private:
      *      in some C code.
      */
     static void SpiPostSetupCallback(spi_slave_transaction_t *);
+
+    /*
+     *      Calculate the size of the buffer that should be used
+     *      for SPI.
+     */
+    static uint32_t ReceiveBufferSize(uint32_t);
+
+    static void SendErrorResponse(StatusCodes::StatusCodes);
+
+    /*
+     * FreeRTOS task for this class.
+     */
+    static void Task(void *pvParameters);
 
 public:
     /*

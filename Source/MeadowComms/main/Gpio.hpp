@@ -13,18 +13,24 @@
 namespace Gpio
 {
     /*
-     *      Blinky pin, note that this is the same pin that is used
-     *      for the UART Tx pin for the logging output.
+     *      Blinky pin connected to the LED.
+     *
+     *      Note that this is also the same pin used to connect to UART0 Rx.
      */
     const int BLINKY_PIN = GPIO_NUM_22;
 
     /*
      *      UART Tx pin for the logging output.
+     *
+     *      Note that this is also the same pin used to connect to Blinky.
      */
     const int LOGGING_TX_PIN = GPIO_NUM_22;
 
     /*
      *      UART Rx pin for the logging output.
+     *
+     *      Note that the pin used here is not actually connected to
+     *      anything but the pin is necessary to setup the logging UART.
      */
     const int LOGGING_RX_PIN = GPIO_NUM_21;
 

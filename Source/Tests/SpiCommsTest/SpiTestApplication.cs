@@ -5,6 +5,7 @@ using Meadow;
 using Meadow.Devices;
 using Meadow.Hardware;
 using Meadow.Hardware.Communications;
+using Meadow.Core.Esp32;
 
 namespace SPITest
 {
@@ -30,34 +31,37 @@ namespace SPITest
             _boot.State = true;
             _reset.State = false;
             _reset.State = true;
+
+            Console.WriteLine();
+            Console.WriteLine("Basic SPI Test Communication");
+            Console.WriteLine();
+
             //SoftwareSPIBus esp32 = new SoftwareSPIBus(Device.Pins.D05, Device.Pins.D06, Device.Pins.D07, Device.Pins.D08);
             SoftwareSPIBus esp32 = new SoftwareSPIBus(Device.Pins.ESP_MOSI, Device.Pins.ESP_MISO, Device.Pins.ESP_CLK, Device.Pins.ESP_CS);
-            var counter = 0;
+
+            UInt32 counter = 0;
+            Messages.Message message;
+            message.Interface = (byte) Esp32Interfaces.System;
+            message.MessageType = (byte) TransportPacketType.Header;
+            message.Function = (UInt32) SystemFunction.GetConfiguration;
+            message.StatusCode = (UInt32) StatusCodes.CompletedOK;
+            message.PayloadLength = 0;
+            message.Crc = 0;
+            message.Payload = null;
+
             while (true)
             {
                 _blueLED.State = !_blueLED.State;
-                string message = $".NET Message number {counter}";
+
+                message.MessageID = counter;
+                Console.WriteLine($"Sending messageID : '{counter}'");
                 counter++;
-                Console.WriteLine($"Sending message: '{message}'");
-                byte[] buffer = Encoding.UTF8.GetBytes(message);
-                int esp32BufferLength = buffer.Length + 1;
-                //
-                //  The buffer should be a multiple of four bytes long.
-                //
-                if ((esp32BufferLength & 3) != 0)
-                {
-                    esp32BufferLength &= 0xfffc;
-                    esp32BufferLength += 4;
-                }
-                byte[] writeBuffer = new byte[esp32BufferLength];
-                Array.Clear(writeBuffer, 0, esp32BufferLength);
-                Array.Copy(buffer, writeBuffer, buffer.Length);
-                Console.WriteLine(DebugHelpers.PrintableBuffer(writeBuffer));
-                byte[] dataFromESP32 = esp32.WriteRead(writeBuffer, (ushort) writeBuffer.Length);
-                //
-                Console.WriteLine("Message from ESP32:");
-                Console.WriteLine(Encoding.UTF8.GetString(dataFromESP32));
-                Console.WriteLine(DebugHelpers.PrintableBuffer(dataFromESP32));
+
+                byte[] buffer = Encoders.EncodeMessage(message);
+                string bufferText = DebugHelpers.PrintableBuffer(buffer);
+                Console.WriteLine(bufferText);
+                esp32.WriteBytes(buffer);
+
                 Thread.Sleep(500);
             }
         }
