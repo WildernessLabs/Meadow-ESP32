@@ -44,11 +44,6 @@ private:
      */
     const uint32_t MAX_QUEUE_LENGTH = 10;
 
-    /*
-     *      Queue handle for the messages to be sent to the STM32.
-     */
-    QueueHandle_t _queueHandle = NULL;
-
 protected:
     /*
      *      Default constructor.
@@ -65,6 +60,11 @@ protected:
      *      various interfaces on the ESP32.
      */
     MessageDispatcher *_messageDispatcher = nullptr;
+
+    /*
+     *      Queue handle for the messages to be sent to the STM32.
+     */
+    QueueHandle_t _queueHandle = NULL;
 };
 
 #endif /* _TRANSPORT_PROVIDER_BASE_HPP_ */

@@ -4,7 +4,6 @@
  *      Hardware transport provider for messages between the ESP32 and
  *      the STM32 using the SPI interface.
  */
-#include "freertos/FreeRTOS.h"
 #include "SpiTransportProvider.hpp"
 #include "Esp32Messaging.hpp"
 #include <string.h>
@@ -16,7 +15,35 @@
  *
  * ----------------------------------------------------------------------------
  */
+/*
+ *      Default state is that the class has not been fully constructed
+ *      and so there is no current instance.
+ */
 SpiTransportProvider *SpiTransportProvider::_spiInstance = nullptr;
+
+/*
+ *      Initial state of the system is Invalid.  The constructor will set
+ *      up the SPI interface and then move the state to one where we can
+ *      receive data.
+ */
+SpiTransportProvider::SpiStates SpiTransportProvider::_currentState = Invalid;
+
+/*
+ *      Buffers will be allocated as needed and so they are initially null.
+ */
+char *SpiTransportProvider::_headerBuffer = nullptr;
+char *SpiTransportProvider::_transmitBuffer = nullptr;
+
+/*
+ *      Structure for the SPI transaction information.
+ */
+spi_slave_transaction_t SpiTransportProvider::_transaction;
+
+/*
+ *      Handle for the task handler.
+ */
+TaskHandle_t SpiTransportProvider::_taskHandle = nullptr;
+
 
 /*
  * ---------------------------------------------------------------------------
@@ -74,7 +101,26 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
 
     ESP_ERROR_CHECK(spi_slave_initialize(VSPI_HOST, &spiBusConfiguration, &slaveConfiguration, 1));
 
-    _headerBuffer = (char *) heap_caps_malloc(BITS_PER_HEADER, MALLOC_CAP_DMA);
+    /*
+     *  The initial state is to wait for a message header to be sent by the STM32.
+     */
+    uint32_t bufferSize = ReceiveBufferSize(sizeof(Message));
+    _headerBuffer = (char *) heap_caps_malloc(bufferSize, MALLOC_CAP_DMA);
+    _transmitBuffer = (char *) heap_caps_malloc(bufferSize, MALLOC_CAP_DMA);
+    memset(_headerBuffer, 0x00, bufferSize);
+    memset(_transmitBuffer, 0x00, bufferSize);
+
+    memset(&_transaction, 0, sizeof(_transaction));
+    _transaction.rx_buffer = _headerBuffer;
+    _transaction.tx_buffer = _transmitBuffer;
+    _transaction.length = bufferSize * 8;
+
+    _currentState = Idle;
+
+    //
+    //  Indicate to the STM32 that we are ready to receive requests.
+    //
+    gpio_set_level(Gpio::BOOT_PIN, 1);
 }
 
 /*
@@ -82,6 +128,15 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
  */
 SpiTransportProvider::~SpiTransportProvider()
 {
+    spi_slave_free(VSPI_HOST);
+    if (_headerBuffer)
+    {
+        vPortFree(_headerBuffer);
+    }
+    if (_transmitBuffer)
+    {
+        vPortFree(_transmitBuffer);
+    }
 }
 
 /* ---------------------------------------------------------------------------
@@ -90,6 +145,21 @@ SpiTransportProvider::~SpiTransportProvider()
  *
  * ---------------------------------------------------------------------------
  */
+
+void SpiTransportProvider::SendErrorResponse(StatusCodes::StatusCodes errorCode)
+{
+    Message *message;
+
+    message = (Message *) _transmitBuffer;
+    message->Interface = Esp32Interfaces::System;
+    message->Function = SystemFunction::Echo;
+    message->MessageID = 0x00;
+    message->MessageType = TransportPacketType::Data;
+    message->PayloadLength = 0;
+    message->Payload = (uint8_t *) 0;
+    message->Crc = 0x00;
+
+}
 
 /*
  *      SPI Post Transmission callback
@@ -102,6 +172,17 @@ SpiTransportProvider::~SpiTransportProvider()
 void SpiTransportProvider::SpiPostTransmissionCallback(spi_slave_transaction_t *transaction)
 {
     gpio_set_level(Gpio::BOOT_PIN, 0);
+
+    spi_slave_transaction_t *slaveTransaction;
+    ESP_ERROR_CHECK(spi_slave_get_trans_result(VSPI_HOST, &slaveTransaction, portMAX_DELAY));
+    if (transaction->length != transaction->trans_len)
+    {
+        SendErrorResponse(StatusCodes::InvalidHeader);
+    }
+    else
+    {
+
+    }
 }
 
 /*
@@ -130,6 +211,32 @@ void SpiTransportProvider::Setup(MessageDispatcher *messageDispatcher)
 }
 
 /*
+ *      Calculate the amount of memory that should be allocated for
+ *      the receive buffer.
+ *
+ *      SPI reception on the ESP32 should be on a 32-bit boundary and
+ *      also a multiple of 4 bytes long (See the article linked below).
+ *
+ *      https://docs.espressif.com/projects/esp-idf/en/latest/api-reference/peripherals/spi_slave.html#restrictions-and-known-issues
+ *
+ *      @param requestedSize
+ *          Actual amount of data requested / to be received.
+ *
+ *      @return
+ *          Number of bytes that should be allocated.
+ */
+uint32_t SpiTransportProvider::ReceiveBufferSize(uint32_t requestedSize)
+{
+    uint32_t result = requestedSize;
+
+    if ((requestedSize & 0x00000003) != 0)
+    {
+        result = (requestedSize & 0xfffffffc) + 4;
+    }
+    return (result);
+}
+
+/*
  *      The Echo function simply sends a message through the various communication layers.
  *      This is a test function to verify correct communication through the message
  *      stack.
@@ -153,3 +260,33 @@ void SpiTransportProvider::Echo(const char *messageString)
     message->Crc = 0x00;
     _messageDispatcher->QueueMessageForEsp32(message);
 }
+
+/*
+ *      Process any messages for the controller.
+ *
+ *      The messages will be generated by the incoming UART task.
+ *
+ *      @param pvParameters
+ *          Pointer to the instance of the request handler receiving the
+ *          messages for dispatch through the instance specific handler.
+ */
+void SpiTransportProvider::Task(void *pvParameters)
+{
+    SpiTransportProvider *sender = (SpiTransportProvider *) pvParameters;
+    while (true)
+    {
+        Message *message;
+        BaseType_t result = xQueueReceive(sender->_queueHandle, &message, portMAX_DELAY);
+        if (result == pdTRUE)
+        {
+            //sender->DispatchRequest(message);
+        }
+    }
+    //
+    //  We should only get here if the code in the while loop generates a fault.
+    //  The documentation for FreeRTOS states that we should delete the task
+    //  should we get here.
+    //
+    vTaskDelete(sender->_taskHandle);
+}
+
