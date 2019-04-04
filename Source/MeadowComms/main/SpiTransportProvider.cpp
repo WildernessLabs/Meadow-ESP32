@@ -6,6 +6,7 @@
  */
 #include "SpiTransportProvider.hpp"
 #include "Esp32Messaging.hpp"
+#include "Encoders.hpp"
 #include <string.h>
 
 /*
@@ -31,8 +32,10 @@ SpiTransportProvider::SpiStates SpiTransportProvider::_currentState = Invalid;
 /*
  *      Buffers will be allocated as needed and so they are initially null.
  */
-char *SpiTransportProvider::_headerBuffer = nullptr;
-char *SpiTransportProvider::_transmitBuffer = nullptr;
+uint8_t *SpiTransportProvider::_headerBuffer = nullptr;
+uint8_t *SpiTransportProvider::_transmitBuffer = nullptr;
+uint8_t *SpiTransportProvider::_transportFrameBuffer = nullptr;
+uint32_t SpiTransportProvider::_headerFrameSize = 0;
 
 /*
  *      Structure for the SPI transaction information.
@@ -68,10 +71,26 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
     _spiInstance = this;
 
     /*
-     *  Set the handshake pin to output and set the level low.
+     *  Set the handshake pins to output and set the level low for
+     *  the output pin and register the ISR for the input pin.
      */
-    gpio_set_direction(Gpio::BOOT_PIN, GPIO_MODE_OUTPUT);
-    gpio_set_level(Gpio::BOOT_PIN, 0);
+    gpio_set_direction(Gpio::ESP32_READY_PIN, GPIO_MODE_OUTPUT);
+    gpio_set_level(Gpio::ESP32_READY_PIN, 0);
+    //gpio_set_direction(Gpio::STM32_READY_PIN, GPIO_MODE_INPUT);
+
+    //
+    //  Interrupt on rising edges on the STM32_READY_PIN.  The pin has
+    //  pull-up disabled and pull-downs enabled.
+    //
+    gpio_config_t inputPinConfig;
+    inputPinConfig.intr_type = GPIO_INTR_POSEDGE;
+    inputPinConfig.pin_bit_mask = (1ULL << Gpio::STM32_READY_PIN);
+    inputPinConfig.mode = GPIO_MODE_INPUT;
+    inputPinConfig.pull_up_en = GPIO_PULLUP_DISABLE;
+    inputPinConfig.pull_down_en = GPIO_PULLDOWN_ENABLE;
+    gpio_config(&inputPinConfig);
+    gpio_install_isr_service(ESP_INTR_FLAG_EDGE);
+    gpio_isr_handler_add(Gpio::STM32_READY_PIN, Stm32IsrHandler, this);
 
     /*
      *  Configure the pull-ups on the SPI pins.
@@ -104,23 +123,25 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
     /*
      *  The initial state is to wait for a message header to be sent by the STM32.
      */
-    uint32_t bufferSize = ReceiveBufferSize(sizeof(Message));
-    _headerBuffer = (char *) heap_caps_malloc(bufferSize, MALLOC_CAP_DMA);
-    _transmitBuffer = (char *) heap_caps_malloc(bufferSize, MALLOC_CAP_DMA);
-    memset(_headerBuffer, 0x00, bufferSize);
-    memset(_transmitBuffer, 0x00, bufferSize);
+    _headerFrameSize = Encoders::CalculateSpiBufferSize(sizeof(Message));
+    _headerBuffer = (uint8_t *) heap_caps_malloc(_headerFrameSize, MALLOC_CAP_DMA);
+    _transmitBuffer = (uint8_t *) heap_caps_malloc(_headerFrameSize, MALLOC_CAP_DMA);
+    _transportFrameBuffer = (uint8_t *) heap_caps_malloc(_headerFrameSize, MALLOC_CAP_DMA);
+    memset(_headerBuffer, 0, _headerFrameSize);
+    memset(_transmitBuffer, 0, _headerFrameSize);
+    memset(_transportFrameBuffer, 0, _headerFrameSize);
 
     memset(&_transaction, 0, sizeof(_transaction));
     _transaction.rx_buffer = _headerBuffer;
     _transaction.tx_buffer = _transmitBuffer;
-    _transaction.length = bufferSize * 8;
+    _transaction.length = _headerFrameSize * 8;
 
     _currentState = Idle;
 
     //
     //  Indicate to the STM32 that we are ready to receive requests.
     //
-    gpio_set_level(Gpio::BOOT_PIN, 1);
+    gpio_set_level(Gpio::ESP32_READY_PIN, 1);
 }
 
 /*
@@ -157,8 +178,6 @@ void SpiTransportProvider::SendErrorResponse(StatusCodes::StatusCodes errorCode)
     message->MessageType = TransportPacketType::Data;
     message->PayloadLength = 0;
     message->Payload = (uint8_t *) 0;
-    message->Crc = 0x00;
-
 }
 
 /*
@@ -171,7 +190,7 @@ void SpiTransportProvider::SendErrorResponse(StatusCodes::StatusCodes errorCode)
  */
 void SpiTransportProvider::SpiPostTransmissionCallback(spi_slave_transaction_t *transaction)
 {
-    gpio_set_level(Gpio::BOOT_PIN, 0);
+    gpio_set_level(Gpio::ESP32_READY_PIN, 0);
 
     spi_slave_transaction_t *slaveTransaction;
     ESP_ERROR_CHECK(spi_slave_get_trans_result(VSPI_HOST, &slaveTransaction, portMAX_DELAY));
@@ -181,7 +200,13 @@ void SpiTransportProvider::SpiPostTransmissionCallback(spi_slave_transaction_t *
     }
     else
     {
-
+        uint32_t dataSize = transaction->trans_len >> 3;
+        ESP_LOGI(__func__, "Received %d bytes.", dataSize);
+        if (transaction->trans_len > 0)
+        {
+            ESP_LOG_BUFFER_HEX(__func__, transaction->rx_buffer, dataSize);
+            memset(transaction->rx_buffer, 0, dataSize);
+        }
     }
 }
 
@@ -195,7 +220,7 @@ void SpiTransportProvider::SpiPostTransmissionCallback(spi_slave_transaction_t *
  */
 void SpiTransportProvider::SpiPostSetupCallback(spi_slave_transaction_t *transaction)
 {
-    gpio_set_level(Gpio::BOOT_PIN, 1);
+    gpio_set_level(Gpio::ESP32_READY_PIN, 1);
 }
 
 /*
@@ -208,32 +233,6 @@ void SpiTransportProvider::SpiPostSetupCallback(spi_slave_transaction_t *transac
 void SpiTransportProvider::Setup(MessageDispatcher *messageDispatcher)
 {
     TransportProviderBase::Setup(messageDispatcher);
-}
-
-/*
- *      Calculate the amount of memory that should be allocated for
- *      the receive buffer.
- *
- *      SPI reception on the ESP32 should be on a 32-bit boundary and
- *      also a multiple of 4 bytes long (See the article linked below).
- *
- *      https://docs.espressif.com/projects/esp-idf/en/latest/api-reference/peripherals/spi_slave.html#restrictions-and-known-issues
- *
- *      @param requestedSize
- *          Actual amount of data requested / to be received.
- *
- *      @return
- *          Number of bytes that should be allocated.
- */
-uint32_t SpiTransportProvider::ReceiveBufferSize(uint32_t requestedSize)
-{
-    uint32_t result = requestedSize;
-
-    if ((requestedSize & 0x00000003) != 0)
-    {
-        result = (requestedSize & 0xfffffffc) + 4;
-    }
-    return (result);
 }
 
 /*
@@ -257,7 +256,6 @@ void SpiTransportProvider::Echo(const char *messageString)
     char *str = (char *) pvPortMalloc(message->PayloadLength);
     strcpy(str, messageString);
     message->Payload = (uint8_t *) str;
-    message->Crc = 0x00;
     _messageDispatcher->QueueMessageForEsp32(message);
 }
 
@@ -290,3 +288,14 @@ void SpiTransportProvider::Task(void *pvParameters)
     vTaskDelete(sender->_taskHandle);
 }
 
+/*
+ *      ISR for the GPIO pin indicating that the STM32 is
+ *      ready to send data to the ESP32 or that it is ready
+ *      to receive data from the ESP32.
+ */
+void IRAM_ATTR SpiTransportProvider::Stm32IsrHandler(void *pvParameters)
+{
+    SpiTransportProvider *sender = (SpiTransportProvider *) pvParameters;
+    sender->Echo("Interrupt message");
+    //ESP_LOGI(__func__, "Signal received from the STM32.");
+}

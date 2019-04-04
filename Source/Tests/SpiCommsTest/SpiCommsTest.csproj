@@ -28,6 +28,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Program.cs" />
@@ -39,9 +40,10 @@
     <Compile Include="Meadow.Core.Esp32\Enums.cs" />
     <Compile Include="Meadow.Core.Esp32\Messages.cs" />
     <Compile Include="Meadow.Core.Esp32\Message.cs" />
+    <Compile Include="Meadow.Core.Esp32\SpiTransportProvider.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\..\Meadow.Core\source\Meadow.Core\Meadow.Core.csproj">
+    <ProjectReference Include="..\..\..\..\Meadow.Core\source\Meadow.Core\Meadow.Core.csproj">
       <Project>{B13C7BDD-77F5-45F8-BDB9-6CD368C67410}</Project>
       <Name>Meadow.Core</Name>
     </ProjectReference>

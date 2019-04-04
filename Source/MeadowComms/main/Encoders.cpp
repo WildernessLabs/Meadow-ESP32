@@ -15,6 +15,32 @@
 #include "Encoders.hpp"
 
 /*
+ *      Calculate the amount of memory that should be allocated for
+ *      the receive buffer.
+ *
+ *      SPI reception on the ESP32 should be on a 32-bit boundary and
+ *      also a multiple of 4 bytes long (See the article linked below).
+ *
+ *      https://docs.espressif.com/projects/esp-idf/en/latest/api-reference/peripherals/spi_slave.html#restrictions-and-known-issues
+ *
+ *      @param requestedSize
+ *          Actual amount of data requested / to be received.
+ *
+ *      @return
+ *          Number of bytes that should be allocated.
+ */
+uint32_t Encoders::CalculateSpiBufferSize(uint32_t requestedSize)
+{
+    uint32_t result = requestedSize;
+
+    if ((requestedSize & 0x00000003) != 0)
+    {
+        result = (requestedSize & 0xfffffffc) + 4;
+    }
+    return (result);
+}
+
+/*
  *      Take the first two bytes from the buffer and encode them as a 16 bit integer.
  *
  *      Note that the data should be encoded as LSB first.
@@ -220,54 +246,78 @@ uint32_t Encoders::ProgressiveCRC32(uint32_t currentChecksum, uint8_t byte)
 /*
  *      Encode a message into a block of memory.
  */
-void Encoders::EncodeMessage(Message *message, uint8_t *buffer)
+uint8_t *Encoders::EncodeMessage(Message *message)
 {
+    uint32_t bufferSize = Encoders::CalculateSpiBufferSize(sizeof(Message));
+    int offset = 0;
+    uint8_t *buffer = (uint8_t *) pvPortMalloc(bufferSize);
+    
+    memset(buffer, 0, bufferSize);
     *buffer = message->MessageType;
-    buffer++;
+    offset++;
     *buffer = message->Interface;
-    buffer++;
-    EncodeUInt32(message->Function, buffer);
-    buffer += 4;
-    EncodeUInt32(message->StatusCode, buffer);
-    buffer += 4;
-    EncodeUInt32(message->MessageID, buffer);
-    buffer += 4;
-    EncodeUInt32(message->PayloadLength, buffer);
-    buffer += 4;
+    offset++;
+    EncodeUInt32(message->Function, buffer + offset);
+    offset += 4;
+    EncodeUInt32(message->StatusCode, buffer + offset);
+    offset += 4;
+    EncodeUInt32(message->MessageID, buffer + offset);
+    offset += 4;
+    EncodeUInt32(message->PayloadLength, buffer + offset);
+    offset += 4;
     //
     //  The byte after the PayloadLength is the CRC.  This is filled in later
     //  and so a 0 is written into the message temporarily.
     //
-    EncodeUInt32(message->Crc, 0);
-    buffer += 4;
-    memcpy(message->Payload, (uint8_t *) (buffer + 18), message->PayloadLength);
+    EncodeUInt32(0, buffer + offset);
+    offset += 4;
+    memcpy(message->Payload, (uint8_t *) (buffer + offset), message->PayloadLength);
+    uint32_t crc = CRC32(buffer, bufferSize);
+    EncodeUInt32(crc, buffer + CRC_OFFSET);
+
+    return(buffer);
 }
 
 /*
  *      Extract a message from a block of memory and create a new Message object.
  */
-Message *Encoders::ExtractMessage(uint8_t *buffer)
+Message *Encoders::ExtractMessage(uint8_t *buffer, uint32_t bufferLength)
 {
-    Message *message = (Message *) pvPortMalloc(sizeof(Message));
+    uint32_t crc = ExtractUInt32(buffer + CRC_OFFSET);
+    EncodeUInt32(0, buffer + CRC_OFFSET);
+    
+    Message *message = nullptr;
+    if (crc == CRC32(buffer, bufferLength))
+    {
+        message = (Message *) pvPortMalloc(sizeof(Message));
 
-    message->MessageType = *buffer;
-    buffer++;
-    message->Interface = *buffer;
-    buffer++;
-    message->Function = ExtractUInt32(buffer);
-    buffer += 4;
-    message->StatusCode = ExtractUInt32(buffer);
-    buffer += 4;
-    message->MessageID = ExtractUInt32(buffer);
-    buffer += 4;
-    message->PayloadLength = ExtractUInt32(buffer);
-    buffer += 4;
-    message->Crc = ExtractUInt32(buffer);
-    buffer += 4;
-    message->Payload = (uint8_t *) pvPortMalloc(message->PayloadLength);
-    memcpy(buffer, message->Payload, message->PayloadLength);
+        message->MessageType = *buffer;
+        buffer++;
+        message->Interface = *buffer;
+        buffer++;
+        message->Function = ExtractUInt32(buffer);
+        buffer += 4;
+        message->StatusCode = ExtractUInt32(buffer);
+        buffer += 4;
+        message->MessageID = ExtractUInt32(buffer);
+        buffer += 4;
+        message->PayloadLength = ExtractUInt32(buffer);
+        //
+        //  Move over the last field and skip the CRC entry.
+        //
+        buffer += 8;
+        message->Payload = (uint8_t *) pvPortMalloc(message->PayloadLength);
+        memcpy(buffer, message->Payload, message->PayloadLength);
+    }
+    else
+    {
+        //
+        //  TODO: Deal with this error.
+        //
+    }
     return(message);
 }
+
 
 /*
  *******************************************************************************

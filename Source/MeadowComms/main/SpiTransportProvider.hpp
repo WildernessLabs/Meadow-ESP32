@@ -11,6 +11,7 @@
 #include "freertos/FreeRTOS.h"
 #include "driver/spi_slave.h"
 #include "esp_system.h"
+#include "driver/gpio.h"
 
 #include "Exceptions/MultipleInstancesException.hpp"
 #include "TransportProviderBase.hpp"
@@ -47,17 +48,28 @@ private:
     /*
      *      Buffer to hold a Message header worth of data.
      */
-    static char *_headerBuffer;
+    static uint8_t *_headerBuffer;
 
     /*
      *      Buffer to hold the data to be sent to the STM32.
      */
-    static char *_transmitBuffer;
+    static uint8_t *_transmitBuffer;
+
+    /*
+     *      Buffer for the transport frame.
+     */
+    static uint8_t *_transportFrameBuffer;
+
+    /*
+     *      Size of a header / transport frame.
+     */
+    static uint32_t _headerFrameSize;
 
     /*
      *      Handle for the System request handler task.
      */
     static TaskHandle_t _taskHandle;
+
     /*
      *      Default destructor.
      */
@@ -79,18 +91,17 @@ private:
      */
     static void SpiPostSetupCallback(spi_slave_transaction_t *);
 
-    /*
-     *      Calculate the size of the buffer that should be used
-     *      for SPI.
-     */
-    static uint32_t ReceiveBufferSize(uint32_t);
-
     static void SendErrorResponse(StatusCodes::StatusCodes);
 
     /*
-     * FreeRTOS task for this class.
+     *      FreeRTOS task handler for this class.
      */
-    static void Task(void *pvParameters);
+    static void Task(void *);
+
+    /*
+     *      ISR for the GPIO ISR.
+     */
+    static void Stm32IsrHandler(void *);
 
 public:
     /*

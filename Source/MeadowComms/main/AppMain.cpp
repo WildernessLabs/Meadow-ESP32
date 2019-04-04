@@ -6,6 +6,7 @@
 #include "esp_log.h"
 #include <string.h>
 #include "nvs_flash.h"
+#include "esp_ota_ops.h"
 
 #include "Logging.hpp"
 #include "MessageDispatcher.hpp"
@@ -24,7 +25,9 @@ extern "C" void app_main()
 {
     Logging::Setup();
     esp_log_level_set("*", ESP_LOG_INFO);
-    messageDispatcher->Setup();
+
+    const esp_app_desc_t *applicationDescription = esp_ota_get_app_description();
+    ESP_LOGI(__func__, "\n\n    ********** Starting Application (%s version %s) **********\n", applicationDescription->project_name, applicationDescription->version);
     esp_err_t result = nvs_flash_init();
     if ((result == ESP_ERR_NVS_NO_FREE_PAGES) || (result == ESP_ERR_NVS_NEW_VERSION_FOUND))
     {
@@ -34,7 +37,7 @@ extern "C" void app_main()
     ESP_ERROR_CHECK(result);
     while (true)
     {
-        spi->Echo("Hello, world");
+//        spi->Echo("Hello, world");
         vTaskDelay(500 / portTICK_PERIOD_MS);
     }
 }
