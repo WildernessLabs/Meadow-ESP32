@@ -5,7 +5,28 @@ namespace Meadow.Core.Esp32
     public class EncodersBase
     {
         /// <summary>
-        ///     Seed for the Crc32 algorithm.
+        /// Calculate the amount of memory that should be allocated for the receive buffer.
+        /// 
+        /// SPI reception on the ESP32 should be on a 32-bit boundary and also a multiple of 
+        /// 4 bytes long (See the article linked below).
+        /// 
+        /// https://docs.espressif.com/projects/esp-idf/en/latest/api-reference/peripherals/spi_slave.html#restrictions-and-known-issues
+        /// </summary>
+        /// <returns>Size of the buffer that should be used.</returns>
+        /// <param name="requestedSize">Requested size.</param>
+        public static UInt32 CalculateSpiBufferSize(UInt32 requestedSize)
+        {
+            UInt32 result = requestedSize;
+
+            if ((requestedSize & 0x00000003) != 0)
+            {
+                result = (requestedSize & 0xfffffffc) + 4;
+            }
+            return (result);
+        }
+
+        /// <summary>
+        /// Seed for the Crc32 algorithm.
         /// </summary>
         private const UInt32 CRC32_SEED = 0xffffffff;
 
@@ -20,7 +41,7 @@ namespace Meadow.Core.Esp32
         }
 
         /// <summary>
-        ///     Calculate the 32-bit CRC for the array of bytes.
+        /// Calculate the 32-bit CRC for the array of bytes.
         /// </summary>
         /// <param name="data">Buffer of data.</param>
         /// <param name="start">Offset into the buffer at which the CRC calculation will start</param>
@@ -165,9 +186,11 @@ namespace Meadow.Core.Esp32
         /// <param name="message">Message to be encoded.</param>
         public static byte[] EncodeMessage(Messages.Message message)
         {
-            byte[] buffer = new byte[Messages.MESSAGE_SIZE + message.PayloadLength];
+            UInt32 bufferSize = CalculateSpiBufferSize(Messages.MESSAGE_SIZE + message.PayloadLength);
+            byte[] buffer = new byte[bufferSize];
             int offset = 0;
 
+            Array.Clear(buffer, 0, buffer.Length);
             buffer[offset++] = message.MessageType;
             buffer[offset++] = message.Interface;
             EncodeUInt32(message.Function, buffer, offset);

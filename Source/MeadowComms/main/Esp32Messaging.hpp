@@ -22,7 +22,6 @@ struct Message
     uint32_t StatusCode;
     uint32_t MessageID;
     uint32_t PayloadLength;
-    uint32_t Crc;
     uint8_t *Payload;
 };
 

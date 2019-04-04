@@ -31,6 +31,7 @@ MessageDispatcher::MessageDispatcher()
 MessageDispatcher::MessageDispatcher(TransportProviderBase *transportProvider) : MessageDispatcher()
 {
     _transportProvider = transportProvider;
+    _transportProvider->Setup(this);
 }
 
 /*
@@ -121,10 +122,3 @@ bool MessageDispatcher::QueueMessageForStm32(Message *response)
     return(_transportProvider->QueueMessageForStm32(response));
 }
 
-/*
- *      Setup the Message Dispatcher object.
- */
-void MessageDispatcher::Setup()
-{
-    _transportProvider->Setup(this);
-}

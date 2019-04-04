@@ -61,11 +61,6 @@ public:
     MessageDispatcher(TransportProviderBase *);
 
     /*
-     *      Setup the Message Dispatcher object.
-     */
-    void Setup();
-
-    /*
      *      Queue a message for the ESP32 object.
      */
     bool QueueMessageForEsp32(Message *);
