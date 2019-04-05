@@ -65,9 +65,9 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
     {
         throw new MultipleInstancesException();
     }
-    //
-    //  Should only get here if this is the first instance.
-    //
+    /*
+     *  Should only get here if this is the first instance.
+     */
     _spiInstance = this;
 
     /*
@@ -76,20 +76,22 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
      */
     gpio_set_direction(Gpio::ESP32_READY_PIN, GPIO_MODE_OUTPUT);
     gpio_set_level(Gpio::ESP32_READY_PIN, 0);
-    //gpio_set_direction(Gpio::STM32_READY_PIN, GPIO_MODE_INPUT);
 
-    //
-    //  Interrupt on rising edges on the STM32_READY_PIN.  The pin has
-    //  pull-up disabled and pull-downs enabled.
-    //
+    /*
+     * Configure the STM32 Ready signal pin for interrupts.
+     *
+     * Interrupt on rising edges on the STM32_READY_PIN.  The pin has
+     * pull-up disabled and pull-downs enabled.
+     *
+     */
     gpio_config_t inputPinConfig;
-    inputPinConfig.intr_type = GPIO_INTR_POSEDGE;
+    inputPinConfig.intr_type = GPIO_INTR_ANYEDGE;
     inputPinConfig.pin_bit_mask = (1ULL << Gpio::STM32_READY_PIN);
     inputPinConfig.mode = GPIO_MODE_INPUT;
     inputPinConfig.pull_up_en = GPIO_PULLUP_DISABLE;
     inputPinConfig.pull_down_en = GPIO_PULLDOWN_ENABLE;
     gpio_config(&inputPinConfig);
-    gpio_install_isr_service(ESP_INTR_FLAG_EDGE);
+    gpio_install_isr_service(0);
     gpio_isr_handler_add(Gpio::STM32_READY_PIN, Stm32IsrHandler, this);
 
     /*
@@ -103,6 +105,7 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
      *  Setup the SPI bus.
      */
     spi_bus_config_t spiBusConfiguration;
+    memset(&spiBusConfiguration, 0, sizeof(spi_bus_config_t));
     spiBusConfiguration.mosi_io_num = Gpio::MOSI_PIN;
     spiBusConfiguration.miso_io_num = Gpio::MISO_PIN;
     spiBusConfiguration.sclk_io_num = Gpio::CLOCK_PIN;
@@ -111,6 +114,7 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
      *  Configuration for the SPI slave interface.
      */
     spi_slave_interface_config_t slaveConfiguration;
+    memset(&slaveConfiguration, 0, sizeof(spi_slave_interface_config_t));
     slaveConfiguration.mode = 0;
     slaveConfiguration.spics_io_num = Gpio::CHIP_SELECT_PIN;
     slaveConfiguration.queue_size = 3;
@@ -293,9 +297,17 @@ void SpiTransportProvider::Task(void *pvParameters)
  *      ready to send data to the ESP32 or that it is ready
  *      to receive data from the ESP32.
  */
-void IRAM_ATTR SpiTransportProvider::Stm32IsrHandler(void *pvParameters)
+void SpiTransportProvider::Stm32IsrHandler(void *pvParameters)
 {
     SpiTransportProvider *sender = (SpiTransportProvider *) pvParameters;
-    sender->Echo("Interrupt message");
-    //ESP_LOGI(__func__, "Signal received from the STM32.");
+    if (gpio_get_level(Gpio::STM32_READY_PIN) == 1)
+    {
+        gpio_set_level(Gpio::ESP32_READY_PIN, 1);
+        sender->Echo("Interrupt edge high");
+    }
+    else
+    {
+        gpio_set_level(Gpio::ESP32_READY_PIN, 0);
+        sender->Echo("Interrupt edge low");
+    }
 }
