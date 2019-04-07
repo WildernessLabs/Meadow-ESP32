@@ -85,7 +85,7 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
      *
      */
     gpio_config_t inputPinConfig;
-    inputPinConfig.intr_type = GPIO_INTR_ANYEDGE;
+    inputPinConfig.intr_type = GPIO_INTR_POSEDGE;
     inputPinConfig.pin_bit_mask = (1ULL << Gpio::STM32_READY_PIN);
     inputPinConfig.mode = GPIO_MODE_INPUT;
     inputPinConfig.pull_up_en = GPIO_PULLUP_DISABLE;
@@ -224,6 +224,7 @@ void SpiTransportProvider::SpiPostTransmissionCallback(spi_slave_transaction_t *
  */
 void SpiTransportProvider::SpiPostSetupCallback(spi_slave_transaction_t *transaction)
 {
+    ESP_LOGI(__func__, "SPI Post callback invoked");
     gpio_set_level(Gpio::ESP32_READY_PIN, 1);
 }
 
@@ -300,14 +301,6 @@ void SpiTransportProvider::Task(void *pvParameters)
 void SpiTransportProvider::Stm32IsrHandler(void *pvParameters)
 {
     SpiTransportProvider *sender = (SpiTransportProvider *) pvParameters;
-    if (gpio_get_level(Gpio::STM32_READY_PIN) == 1)
-    {
-        gpio_set_level(Gpio::ESP32_READY_PIN, 1);
-        sender->Echo("Interrupt edge high");
-    }
-    else
-    {
-        gpio_set_level(Gpio::ESP32_READY_PIN, 0);
-        sender->Echo("Interrupt edge low");
-    }
+    gpio_set_level(Gpio::ESP32_READY_PIN, 0);
+    sender->Echo("STM32 is ready.");
 }

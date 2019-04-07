@@ -25,27 +25,33 @@ namespace SPITest
             _blueLED = (DigitalOutputPort) Device.CreateDigitalOutputPort(Device.Pins.OnboardLEDBlue, true);
             _greenLED = (DigitalOutputPort) Device.CreateDigitalOutputPort(Device.Pins.OnboardLEDGreen, true);
             _reset = (DigitalOutputPort) Device.CreateDigitalOutputPort(Device.Pins.ESP_RST, true);
-            _boot = (DigitalOutputPort) Device.CreateDigitalOutputPort(Device.Pins.ESP_BOOT, true);
+            _boot = (DigitalOutputPort)Device.CreateDigitalOutputPort(Device.Pins.ESP_BOOT, true);
 
             _stm32ReadyPin = (DigitalOutputPort) Device.CreateDigitalOutputPort(Device.Pins.ESP_UART_RX, false);
             _esp32ReadyPin = (DigitalInputPort) Device.CreateDigitalInputPort(Device.Pins.ESP_UART_TX);
         }
 
-        private void WaitForBootPin()
+        /// <summary>
+        /// Wait for the ESP32 to indicate that it is ready to process a command.
+        ///
+        /// This is indicated by a pulse on the ESP32 Ready pin.
+        /// </summary>
+        private void WaitForEsp32ToBeReady()
         {
-
+            while (_esp32ReadyPin.State == false) ;
+            while (_esp32ReadyPin.State) ;
         }
 
         public void Run()
         {
+            Console.WriteLine();
+            Console.WriteLine("Basic SPI Test Communication (0.10.04)");
+            Console.WriteLine();
             Console.WriteLine("Resetting ESP32");
+
             _boot.State = true;
             _reset.State = false;
             _reset.State = true;
-
-            Console.WriteLine();
-            Console.WriteLine("Basic SPI Test Communication");
-            Console.WriteLine();
 
             //SoftwareSPIBus esp32 = new SoftwareSPIBus(Device, Device.Pins.D05, Device.Pins.D06, Device.Pins.D07, Device.Pins.D08);
             var esp32 = new SoftwareSPIBus(Device, Device.Pins.ESP_MOSI, Device.Pins.ESP_MISO, Device.Pins.ESP_CLK, Device.Pins.ESP_CS);
@@ -68,13 +74,20 @@ namespace SPITest
                 Console.WriteLine($"Sending messageID : '{counter}'");
                 counter++;
 
-                //byte[] buffer = Encoders.EncodeMessage(startMessage);
-                //string bufferText = DebugHelpers.PrintableBuffer(buffer);
-                //Console.WriteLine(bufferText);
-                //esp32.WriteBytes(buffer);
-
+                _stm32ReadyPin.State = false;
                 _stm32ReadyPin.State = true;
-                Thread.Sleep(500);
+                WaitForEsp32ToBeReady();
+                Console.WriteLine("ESP32 is ready.");
+                _stm32ReadyPin.State = false;
+
+                //
+                //  Send the message header to the ESP32.
+                //
+                byte[] buffer = Encoders.EncodeMessage(startMessage);
+                string bufferText = DebugHelpers.PrintableBuffer(buffer);
+                Console.WriteLine(bufferText);
+                esp32.WriteBytes(buffer);
+
                 _stm32ReadyPin.State = false;
                 Thread.Sleep(500);
             }
