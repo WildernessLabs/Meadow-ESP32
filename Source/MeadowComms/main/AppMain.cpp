@@ -36,10 +36,15 @@ extern "C" void app_main()
         result = nvs_flash_init();
     }
     ESP_ERROR_CHECK(result);
-    int counter = 0;
+
+    bool readyPinState = false;
+    gpio_set_level(Gpio::ESP32_READY_PIN, 0);
     while (true)
     {
 //        spi->Echo("Hello, world");
+
+//        gpio_set_level(Gpio::ESP32_READY_PIN, readyPinState ? 1 : 0);
+        readyPinState = !readyPinState;
         vTaskDelay(500 / portTICK_PERIOD_MS);
     }
 }

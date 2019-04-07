@@ -51,4 +51,9 @@ void Logging::Setup()
     //
     uart_driver_install(LOGGING_UART_PORT_NUMBER, RX_BUFFER_SIZE * 2, 0, 0, NULL, 0);
     ESP_LOGI(__func__, "Logging redirected to UART_NUM_0 on pins %d (Tx), %d (Rx)", Gpio::LOGGING_TX_PIN, Gpio::LOGGING_RX_PIN);
+    //
+    //  Now allow the original UART0 pins to be used as GPIO pins.
+    //
+    gpio_pad_select_gpio(Gpio::UART0_TX_PIN);
+    gpio_pad_select_gpio(Gpio::UART0_RX_PIN);
 }
