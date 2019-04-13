@@ -323,14 +323,22 @@ Message *Encoders::ExtractMessage(uint8_t *buffer, uint32_t bufferLength)
         //  Move over the last field and skip the CRC entry.
         //
         buffer += 8;
-        message->Payload = (uint8_t *) pvPortMalloc(message->PayloadLength);
-        memcpy(buffer, message->Payload, message->PayloadLength);
+        if (message->PayloadLength > 0)
+        {
+            message->Payload = (uint8_t *) pvPortMalloc(message->PayloadLength);
+            memcpy(buffer, message->Payload, message->PayloadLength);
+        }
+        else
+        {
+            message->Payload = nullptr;
+        }
     }
     else
     {
         //
         //  TODO: Deal with this error.
         //
+        ESP_LOGI(__func__, "CRC Error.");
     }
     return(message);
 }

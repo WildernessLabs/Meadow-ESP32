@@ -141,7 +141,7 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
     /*
      *  The initial state is to wait for a message header to be sent by the STM32.
      */
-    _headerFrameSize = Encoders::CalculateSpiBufferSize(MESSAGE_SIZE);
+    _headerFrameSize = Encoders::CalculateSpiBufferSize(HEADER_SIZE);
     _headerBuffer = (uint8_t *) heap_caps_malloc(_headerFrameSize, MALLOC_CAP_DMA);
     _transmitBuffer = (uint8_t *) heap_caps_malloc(_headerFrameSize, MALLOC_CAP_DMA);
     _transportFrameBuffer = (uint8_t *) heap_caps_malloc(_headerFrameSize, MALLOC_CAP_DMA);
@@ -333,6 +333,14 @@ void SpiTransportProvider::IncomingSpiMessageTask(void *pvParameters)
                 int dataSize = spiTransaction.length / 8;
                 ESP_LOGI(__func__, "Received %d bytes.", dataSize);
                 ESP_LOG_BUFFER_HEX(__func__, spiTransaction.rx_buffer, dataSize);
+                Message *message = Encoders::ExtractMessage((uint8_t *) spiTransaction.rx_buffer, _headerFrameSize);
+                if (message)
+                {
+                    ESP_LOGI(__func__, "Interface: %d", message->Interface);
+                    ESP_LOGI(__func__, "Function: %d", message->Function);
+                    ESP_LOGI(__func__, "Message ID: %d", message->MessageID);
+                    ESP_LOGI(__func__, "Message type: %d", message->MessageType);
+                }
                 memset(spiTransaction.rx_buffer, 0, dataSize);
             }
             else
@@ -376,7 +384,6 @@ void SpiTransportProvider::Stm32IsrHandler(void *pvParameters)
         case Idle:
             memset(&_transaction, 0, sizeof(_transaction));
             _transaction.rx_buffer = _headerBuffer;
-            memset(_headerBuffer, 0xaa, _headerFrameSize);
             _transaction.tx_buffer = _transmitBuffer;
             _transaction.length = _headerFrameSize * 8;
             _currentState = WaitingForMessageHeader;

@@ -69,7 +69,11 @@ namespace SPITest
             byte[] buffer = Encoders.EncodeMessage(_startMessage);
             string bufferText = DebugHelpers.PrintableBuffer(buffer);
             Console.WriteLine(bufferText);
-            _esp32.WriteBytes(buffer);
+            byte[] receiveBuffer = _esp32.WriteRead(buffer, (ushort) buffer.Length);
+            //_esp32.WriteBytes(buffer);
+            bufferText = DebugHelpers.PrintableBuffer(receiveBuffer);
+            Console.WriteLine("Received:");
+            Console.WriteLine(bufferText);
 
             Console.WriteLine("    Message sent.");
             Console.WriteLine();
