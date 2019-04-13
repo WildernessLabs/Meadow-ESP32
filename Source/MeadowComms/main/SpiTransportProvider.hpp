@@ -25,7 +25,7 @@ private:
     /*
      *      Possible states for the SPI transport layer.
      */
-    enum SpiStates { Invalid, Idle, WaitingForMessageHeader, WaitingForMessageBody };
+    enum SpiStates { Invalid, Idle, WaitingForMessageHeader, WaitingForMessageBody, WantToSendMessageHeader, WantToSendMessageBody, WantToSendTransportMessage };
 
     /*
      *      Pointer to the (only) instance of the SpiTransportProvider class.
@@ -70,6 +70,10 @@ private:
      */
     static TaskHandle_t _taskHandle;
 
+    static QueueHandle_t _incomingMessageQueue;
+
+    static TaskHandle_t _spiMessageTaskHandle;
+
     /*
      *      Default destructor.
      */
@@ -98,6 +102,8 @@ private:
      */
     static void Task(void *);
 
+    static void IncomingSpiMessageTask(void *);
+
     /*
      *      ISR for the GPIO ISR.
      */
@@ -120,6 +126,8 @@ public:
      *      passing between layers is working.
      */
     void Echo(const char *);
+
+    void WaitForData();
 };
 
 #endif /* _SPI_TRANSPORT_PROVIDER_HPP_ */

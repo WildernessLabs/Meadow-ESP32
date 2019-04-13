@@ -8,7 +8,7 @@ namespace Meadow.Core.Esp32
         /// Calculate the amount of memory that should be allocated for the receive buffer.
         /// 
         /// SPI reception on the ESP32 should be on a 32-bit boundary and also a multiple of 
-        /// 4 bytes long (See the article linked below).
+        /// 4 bytes long with a minimum length of 8 bytes (See the article linked below).
         /// 
         /// https://docs.espressif.com/projects/esp-idf/en/latest/api-reference/peripherals/spi_slave.html#restrictions-and-known-issues
         /// </summary>
@@ -18,9 +18,16 @@ namespace Meadow.Core.Esp32
         {
             UInt32 result = requestedSize;
 
-            if ((requestedSize & 0x00000003) != 0)
+            if (result < 8)
             {
-                result = (requestedSize & 0xfffffffc) + 4;
+                result = 8;
+            }
+            else
+            {
+                if ((requestedSize & 3) != 0)
+                {
+                    result = (requestedSize & 0xfffffffc) + 4;
+                }
             }
             return (result);
         }
@@ -189,6 +196,8 @@ namespace Meadow.Core.Esp32
             UInt32 bufferSize = CalculateSpiBufferSize(Messages.MESSAGE_SIZE + message.PayloadLength);
             byte[] buffer = new byte[bufferSize];
             int offset = 0;
+
+            Console.WriteLine($"Requested {Messages.MESSAGE_SIZE}, allocated {bufferSize}");
 
             Array.Clear(buffer, 0, buffer.Length);
             buffer[offset++] = message.MessageType;

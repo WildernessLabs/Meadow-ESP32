@@ -37,14 +37,12 @@ extern "C" void app_main()
     }
     ESP_ERROR_CHECK(result);
 
-    bool readyPinState = false;
-    gpio_set_level(Gpio::ESP32_READY_PIN, 0);
+    bool state = false;
     while (true)
     {
-//        spi->Echo("Hello, world");
-
-//        gpio_set_level(Gpio::ESP32_READY_PIN, readyPinState ? 1 : 0);
-        readyPinState = !readyPinState;
+//        spi->WaitForData();
+//        gpio_set_level(Gpio::ESP32_READY_PIN, state ? 1 : 0);
+        state = !state;
         vTaskDelay(500 / portTICK_PERIOD_MS);
     }
 }

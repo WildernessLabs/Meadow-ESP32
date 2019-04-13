@@ -33,9 +33,16 @@ uint32_t Encoders::CalculateSpiBufferSize(uint32_t requestedSize)
 {
     uint32_t result = requestedSize;
 
-    if ((requestedSize & 0x00000003) != 0)
+    if (result < 8)
     {
-        result = (requestedSize & 0xfffffffc) + 4;
+        result = 8;
+    }
+    else
+    {
+        if ((requestedSize & 3) != 0)
+        {
+            result = (requestedSize & 0xfffffffc) + 4;
+        }
     }
     return (result);
 }

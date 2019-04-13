@@ -36,6 +36,7 @@ uint8_t *SpiTransportProvider::_headerBuffer = nullptr;
 uint8_t *SpiTransportProvider::_transmitBuffer = nullptr;
 uint8_t *SpiTransportProvider::_transportFrameBuffer = nullptr;
 uint32_t SpiTransportProvider::_headerFrameSize = 0;
+QueueHandle_t SpiTransportProvider::_incomingMessageQueue = nullptr;
 
 /*
  *      Structure for the SPI transaction information.
@@ -46,6 +47,7 @@ spi_slave_transaction_t SpiTransportProvider::_transaction;
  *      Handle for the task handler.
  */
 TaskHandle_t SpiTransportProvider::_taskHandle = nullptr;
+TaskHandle_t SpiTransportProvider::_spiMessageTaskHandle = nullptr;
 
 
 /*
@@ -84,15 +86,15 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
      * pull-up disabled and pull-downs enabled.
      *
      */
-    gpio_config_t inputPinConfig;
-    inputPinConfig.intr_type = GPIO_INTR_POSEDGE;
-    inputPinConfig.pin_bit_mask = (1ULL << Gpio::STM32_READY_PIN);
-    inputPinConfig.mode = GPIO_MODE_INPUT;
-    inputPinConfig.pull_up_en = GPIO_PULLUP_DISABLE;
-    inputPinConfig.pull_down_en = GPIO_PULLDOWN_ENABLE;
-    gpio_config(&inputPinConfig);
-    gpio_install_isr_service(0);
-    gpio_isr_handler_add(Gpio::STM32_READY_PIN, Stm32IsrHandler, this);
+    gpio_config_t stm32ReadyPinConfig;
+    stm32ReadyPinConfig.intr_type = GPIO_INTR_POSEDGE;
+    stm32ReadyPinConfig.pin_bit_mask = (1ULL << Gpio::STM32_READY_PIN);
+    stm32ReadyPinConfig.mode = GPIO_MODE_INPUT;
+    stm32ReadyPinConfig.pull_up_en = GPIO_PULLUP_DISABLE;
+    stm32ReadyPinConfig.pull_down_en = GPIO_PULLDOWN_DISABLE;
+    ESP_ERROR_CHECK(gpio_config(&stm32ReadyPinConfig));
+    ESP_ERROR_CHECK(gpio_install_isr_service(0));
+    ESP_ERROR_CHECK(gpio_isr_handler_add(Gpio::STM32_READY_PIN, Stm32IsrHandler, this));
 
     /*
      *  Configure the pull-ups on the SPI pins.
@@ -100,6 +102,18 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
     gpio_set_pull_mode(Gpio::MOSI_PIN, GPIO_PULLUP_ONLY);
     gpio_set_pull_mode(Gpio::CLOCK_PIN, GPIO_PULLUP_ONLY);
     gpio_set_pull_mode(Gpio::CHIP_SELECT_PIN, GPIO_PULLUP_ONLY);
+
+    /*
+     *  Configure the chip select pin for the SPI bus to allow interrupts.
+     */
+    gpio_config_t chipSelectConfiguration;
+    memset(&chipSelectConfiguration, 0, sizeof(gpio_config_t));
+    chipSelectConfiguration.intr_type = GPIO_INTR_DISABLE;
+    chipSelectConfiguration.mode = GPIO_MODE_INPUT;
+//    chipSelectConfiguration.pull_up_en = GPIO_PULLUP_ENABLE;
+//    chipSelectConfiguration.pull_down_en = GPIO_PULLDOWN_DISABLE;
+    chipSelectConfiguration.pin_bit_mask = (1 << Gpio::CHIP_SELECT_PIN);
+    gpio_config(&chipSelectConfiguration);
 
     /*
      *  Setup the SPI bus.
@@ -135,12 +149,19 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
     memset(_transmitBuffer, 0, _headerFrameSize);
     memset(_transportFrameBuffer, 0, _headerFrameSize);
 
-    memset(&_transaction, 0, sizeof(_transaction));
-    _transaction.rx_buffer = _headerBuffer;
-    _transaction.tx_buffer = _transmitBuffer;
-    _transaction.length = _headerFrameSize * 8;
-
     _currentState = Idle;
+
+    /*
+     *  Set up the task and message queue for the incoming SPI messages.
+     *
+     *  Set up the message queue first as the task will wait on the queue.
+     */
+    _incomingMessageQueue = xQueueCreate(1, sizeof(spi_slave_transaction_t));
+    if (_incomingMessageQueue == NULL)
+    {
+        ESP_LOGE(__func__, "Cannot allocate SPI incoming message queue.");
+    }
+    xTaskCreate(IncomingSpiMessageTask, "IncomingSPIMessageTask", 2048 * 2, this, configMAX_PRIORITIES - 1, &SpiTransportProvider::_spiMessageTaskHandle);
 
     //
     //  Indicate to the STM32 that we are ready to receive requests.
@@ -195,23 +216,16 @@ void SpiTransportProvider::SendErrorResponse(StatusCodes::StatusCodes errorCode)
 void SpiTransportProvider::SpiPostTransmissionCallback(spi_slave_transaction_t *transaction)
 {
     gpio_set_level(Gpio::ESP32_READY_PIN, 0);
-
+    //
+    //  The ESP32 API reference states that spi_slave_get_trans_result must be called when
+    //  using the queueing method we are using.
+    //
     spi_slave_transaction_t *slaveTransaction;
-    ESP_ERROR_CHECK(spi_slave_get_trans_result(VSPI_HOST, &slaveTransaction, portMAX_DELAY));
-    if (transaction->length != transaction->trans_len)
-    {
-        SendErrorResponse(StatusCodes::InvalidHeader);
-    }
-    else
-    {
-        uint32_t dataSize = transaction->trans_len >> 3;
-        ESP_LOGI(__func__, "Received %d bytes.", dataSize);
-        if (transaction->trans_len > 0)
-        {
-            ESP_LOG_BUFFER_HEX(__func__, transaction->rx_buffer, dataSize);
-            memset(transaction->rx_buffer, 0, dataSize);
-        }
-    }
+    spi_slave_get_trans_result(VSPI_HOST, &slaveTransaction, (5 / portTICK_PERIOD_MS));
+    //
+    // TODO: Error checking on queueing SPI message from ISR.
+    //
+    xQueueSendToBackFromISR(SpiTransportProvider::_incomingMessageQueue, transaction , NULL);
 }
 
 /*
@@ -220,11 +234,13 @@ void SpiTransportProvider::SpiPostTransmissionCallback(spi_slave_transaction_t *
  *      This method is called when the SPI interface has completed
  *      setup and data is ready for transmission.
  *
+ *      This method sets the ESP32 Ready pin to high to indicate to the STM32
+ *      that we are ready to send / receive data.
+ *
  *      @param transaction
  */
 void SpiTransportProvider::SpiPostSetupCallback(spi_slave_transaction_t *transaction)
 {
-    ESP_LOGI(__func__, "SPI Post callback invoked");
     gpio_set_level(Gpio::ESP32_READY_PIN, 1);
 }
 
@@ -294,13 +310,89 @@ void SpiTransportProvider::Task(void *pvParameters)
 }
 
 /*
+ *      Process any messages for the controller.
+ *
+ *      The messages will be generated by the incoming UART task.
+ *
+ *      @param pvParameters
+ *          Pointer to the instance of the request handler receiving the
+ *          messages for dispatch through the instance specific handler.
+ */
+void SpiTransportProvider::IncomingSpiMessageTask(void *pvParameters)
+{
+    SpiTransportProvider *sender = (SpiTransportProvider *) pvParameters;
+    while (true)
+    {
+        spi_slave_transaction_t spiTransaction;
+        BaseType_t result = xQueueReceive(sender->_incomingMessageQueue, &spiTransaction, portMAX_DELAY);
+        if (result == pdTRUE)
+        {
+            ESP_LOGI(__func__, "Received message from queue.");
+            if (spiTransaction.trans_len > 0)
+            {
+                int dataSize = spiTransaction.length / 8;
+                ESP_LOGI(__func__, "Received %d bytes.", dataSize);
+                ESP_LOG_BUFFER_HEX(__func__, spiTransaction.rx_buffer, dataSize);
+                memset(spiTransaction.rx_buffer, 0, dataSize);
+            }
+            else
+            {
+                ESP_LOGI(__func__, "Message is too short.");
+            }
+        }
+        _currentState = Idle;
+        gpio_set_level(Gpio::ESP32_READY_PIN, 1);
+    }
+    //
+    //  We should only get here if the code in the while loop generates a fault.
+    //  The documentation for FreeRTOS states that we should delete the task
+    //  should we get here.
+    //
+    vTaskDelete(sender->_spiMessageTaskHandle);
+}
+
+void SpiTransportProvider::WaitForData()
+{
+    memset(_transaction.rx_buffer, 0, 23);
+    ESP_ERROR_CHECK(spi_slave_transmit(VSPI_HOST, &_transaction, portMAX_DELAY));
+    ESP_LOGI(__func__, "Received %d bytes from STM32", _transaction.trans_len / 8);
+    ESP_LOG_BUFFER_HEXDUMP(__func__, _transaction.rx_buffer, 23, ESP_LOG_INFO);
+
+}
+
+/*
  *      ISR for the GPIO pin indicating that the STM32 is
  *      ready to send data to the ESP32 or that it is ready
  *      to receive data from the ESP32.
+ *
+ *      The ESP32 ready signal is set to a low state when the
+ *      SPI interface has been set up.
  */
 void SpiTransportProvider::Stm32IsrHandler(void *pvParameters)
 {
     SpiTransportProvider *sender = (SpiTransportProvider *) pvParameters;
-    gpio_set_level(Gpio::ESP32_READY_PIN, 0);
-    sender->Echo("STM32 is ready.");
+    switch (_currentState)
+    {
+        case Idle:
+            memset(&_transaction, 0, sizeof(_transaction));
+            _transaction.rx_buffer = _headerBuffer;
+            _transaction.tx_buffer = _transmitBuffer;
+            _transaction.length = _headerFrameSize * 8;
+            _currentState = WaitingForMessageHeader;
+            ESP_ERROR_CHECK(spi_slave_queue_trans(VSPI_HOST, &_transaction, 0));
+            break;
+        case WaitingForMessageHeader:
+            break;
+        case WaitingForMessageBody:
+            break;
+        case WantToSendMessageHeader:
+            break;
+        case WantToSendMessageBody:
+            break;
+        case WantToSendTransportMessage:
+            break;
+        default:
+            //  TODO: Deal with invalid SPI state.
+            break;
+    }
 }
