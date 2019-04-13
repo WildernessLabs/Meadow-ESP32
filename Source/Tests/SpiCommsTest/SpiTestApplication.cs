@@ -71,9 +71,15 @@ namespace SPITest
             Console.WriteLine(bufferText);
             byte[] receiveBuffer = _esp32.WriteRead(buffer, (ushort) buffer.Length);
             //_esp32.WriteBytes(buffer);
-            bufferText = DebugHelpers.PrintableBuffer(receiveBuffer);
             Console.WriteLine("Received:");
+            bufferText = DebugHelpers.PrintableBuffer(receiveBuffer);
             Console.WriteLine(bufferText);
+            //
+            //  Now we need to wait for the ESP32 to send and ACK / NAK.
+            //
+            _stm32ReadyPin.State = false;
+            WaitForEsp32ToBeReady();
+
 
             Console.WriteLine("    Message sent.");
             Console.WriteLine();
@@ -119,7 +125,7 @@ namespace SPITest
             Console.WriteLine("Waiting for button press.");
 
             _startMessage.Interface = (byte) Esp32Interfaces.Transport;
-            _startMessage.MessageType = (byte) TransportPacketType.StartOfMessage;
+            _startMessage.MessageType = (byte) TransportPacketType.Header;
             _startMessage.Function = 0;
             _startMessage.StatusCode = 0;
             _startMessage.PayloadLength = 0;
