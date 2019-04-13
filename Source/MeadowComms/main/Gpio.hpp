@@ -8,6 +8,8 @@
 #ifndef _GPIO_HPP_
 #define _GPIO_HPP_
 
+//#define USE_MEADOW
+
 #include "esp_system.h"
 
 namespace Gpio
@@ -55,14 +57,22 @@ namespace Gpio
      *      for the STM32 or it is ready to receive data from
      *      the STM32.
      */
+#ifdef USE_MEADOW
     const gpio_num_t ESP32_READY_PIN = UART0_RX_PIN;
+#else
+    const gpio_num_t ESP32_READY_PIN = GPIO_NUM_25;
+#endif
 
     /*
      *      Pin used to by the STM32 to indicate it has data for
      *      the ESP32 or that it is ready to receive data from
      *      the ESP32.
      */
+#ifdef USE_MEADOW
     const gpio_num_t STM32_READY_PIN = UART0_TX_PIN;
+#else
+    const gpio_num_t STM32_READY_PIN = GPIO_NUM_26;
+#endif
 
     /*
      *      SPI MISO pin.
