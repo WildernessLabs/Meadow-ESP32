@@ -22,12 +22,21 @@ namespace Meadow.Core.Esp32
             {
                 result = 8;
             }
-            else
+            //
+            //  The buffer should always be 4 bytes longer than needed.  During development it
+            //  was found that the last four bytes of any transmission were being discarded.
+            //  Empirical tests proved this for 24, 32 and 40 byte packets.
+            //
+            //  The work around is to increase the packet size by 4 and have dummy data in the
+            //  last four bytes and discard the bytes.
+            //
+            //
+            //  See support post: https://esp32.com/viewtopic.php?f=13&t=10117
+            //
+            requestedSize += 4;
+            if ((requestedSize & 3) != 0)
             {
-                if ((requestedSize & 3) != 0)
-                {
-                    result = (requestedSize & 0xfffffffc) + 4;
-                }
+                result = (requestedSize & 0xfffffffc) + 4;
             }
             return (result);
         }
@@ -196,8 +205,6 @@ namespace Meadow.Core.Esp32
             UInt32 bufferSize = CalculateSpiBufferSize(Messages.MESSAGE_SIZE + message.PayloadLength);
             byte[] buffer = new byte[bufferSize];
             int offset = 0;
-
-            Console.WriteLine($"Requested {Messages.MESSAGE_SIZE}, allocated {bufferSize}");
 
             Array.Clear(buffer, 0, buffer.Length);
             buffer[offset++] = message.MessageType;

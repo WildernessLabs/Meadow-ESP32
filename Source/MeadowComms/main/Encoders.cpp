@@ -13,6 +13,7 @@
 
 
 #include "Encoders.hpp"
+#include "esp_log.h"
 
 /*
  *      Calculate the amount of memory that should be allocated for
@@ -37,12 +38,21 @@ uint32_t Encoders::CalculateSpiBufferSize(uint32_t requestedSize)
     {
         result = 8;
     }
-    else
+    //
+    //  The buffer should always be 4 bytes longer than needed.  During development it
+    //  was found that the last four bytes of any transmission were being discarded.
+    //  Empirical tests proved this for 24, 32 and 40 byte packets.
+    //
+    //  The work around is to increase the packet size by 4 and have dummy data in the
+    //  last four bytes and discard the bytes.
+    //
+    //
+    //  See support post: https://esp32.com/viewtopic.php?f=13&t=10117
+    //
+    requestedSize += 4;
+    if ((requestedSize & 3) != 0)
     {
-        if ((requestedSize & 3) != 0)
-        {
-            result = (requestedSize & 0xfffffffc) + 4;
-        }
+        result = (requestedSize & 0xfffffffc) + 4;
     }
     return (result);
 }

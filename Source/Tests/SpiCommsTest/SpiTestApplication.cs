@@ -105,7 +105,7 @@ namespace SPITest
 #endif
 
             Console.WriteLine();
-            Console.WriteLine("Basic SPI Test Communication (0.10.05)");
+            Console.WriteLine("Basic SPI Test Communication (0.10.06)");
             Console.WriteLine();
             Console.WriteLine("Resetting ESP32");
 

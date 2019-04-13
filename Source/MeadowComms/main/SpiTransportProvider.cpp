@@ -141,7 +141,7 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
     /*
      *  The initial state is to wait for a message header to be sent by the STM32.
      */
-    _headerFrameSize = Encoders::CalculateSpiBufferSize(sizeof(Message));
+    _headerFrameSize = Encoders::CalculateSpiBufferSize(MESSAGE_SIZE);
     _headerBuffer = (uint8_t *) heap_caps_malloc(_headerFrameSize, MALLOC_CAP_DMA);
     _transmitBuffer = (uint8_t *) heap_caps_malloc(_headerFrameSize, MALLOC_CAP_DMA);
     _transportFrameBuffer = (uint8_t *) heap_caps_malloc(_headerFrameSize, MALLOC_CAP_DMA);
@@ -376,6 +376,7 @@ void SpiTransportProvider::Stm32IsrHandler(void *pvParameters)
         case Idle:
             memset(&_transaction, 0, sizeof(_transaction));
             _transaction.rx_buffer = _headerBuffer;
+            memset(_headerBuffer, 0xaa, _headerFrameSize);
             _transaction.tx_buffer = _transmitBuffer;
             _transaction.length = _headerFrameSize * 8;
             _currentState = WaitingForMessageHeader;
