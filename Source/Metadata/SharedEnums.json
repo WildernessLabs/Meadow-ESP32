@@ -74,7 +74,7 @@
                 { "Name": "WpaPsk", "Value": "2" },
                 { "Name": "Wpa2Psk", "Value": "3" },
                 { "Name": "WpaWpa2Psk", "Value": "4" },
-                { "Name": "Wpa2Enterprise", "Value": "5" },
+                { "Name": "Wpa2Enterprise", "Value": "5" }
             ]
         },
         {
@@ -115,7 +115,7 @@
             "Name": "Antenna",
             "BaseDataType": "",
             "Namespace": "Esp32Messaging",
-            "Comment": "Types of antennas that are selectable.",
+            "Comment": "Types of antennas that can be selected.",
             "NameValuePairs":
             [
                 { "Name": "OnBoard", "Value": "0" },
