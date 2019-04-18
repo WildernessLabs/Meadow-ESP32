@@ -264,7 +264,7 @@ uint32_t Encoders::ProgressiveCRC32(uint32_t currentChecksum, uint8_t byte)
  */
 uint8_t *Encoders::EncodeMessage(Message *message)
 {
-    uint32_t bufferSize = Encoders::CalculateSpiBufferSize(sizeof(Message));
+    uint32_t bufferSize = Encoders::CalculateSpiBufferSize(sizeof(Message) + message->PayloadLength);
     int offset = 0;
     uint8_t *buffer = (uint8_t *) pvPortMalloc(bufferSize);
     
@@ -287,7 +287,10 @@ uint8_t *Encoders::EncodeMessage(Message *message)
     //
     EncodeUInt32(0, buffer + offset);
     offset += 4;
-    memcpy(message->Payload, (uint8_t *) (buffer + offset), message->PayloadLength);
+    if (message->PayloadLength > 0)
+    {
+        memcpy(message->Payload, (uint8_t *) (buffer + offset), message->PayloadLength);
+    }
     uint32_t crc = CRC32(buffer, bufferSize);
     EncodeUInt32(crc, buffer + CRC_OFFSET);
 
@@ -322,8 +325,15 @@ Message *Encoders::ExtractMessage(uint8_t *buffer, uint32_t bufferLength)
         //  Move over the last field and skip the CRC entry.
         //
         buffer += 8;
-        message->Payload = (uint8_t *) pvPortMalloc(message->PayloadLength);
-        memcpy(buffer, message->Payload, message->PayloadLength);
+        if (message->PayloadLength > 0)
+        {
+            message->Payload = (uint8_t *) pvPortMalloc(message->PayloadLength);
+            memcpy(buffer, message->Payload, message->PayloadLength);
+        }
+        else
+        {
+            message->Payload = nullptr;
+        }
     }
     else
     {

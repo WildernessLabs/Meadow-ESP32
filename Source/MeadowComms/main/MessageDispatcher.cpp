@@ -97,6 +97,7 @@ bool MessageDispatcher::QueueMessageForEsp32(Message *request)
             provider = (RequestHandlerBase *) _systemRequestHandler;
             break;
         default:
+            ESP_LOGI(__func__, "Unknown interface %d, message will not be processed.", request->Interface);
             break;
     }
     bool result = false;

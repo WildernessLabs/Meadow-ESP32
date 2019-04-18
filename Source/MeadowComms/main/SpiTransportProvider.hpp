@@ -25,7 +25,9 @@ private:
     /*
      *      Possible states for the SPI transport layer.
      */
-    enum SpiStates { Invalid, Idle, WaitingForMessageHeader, WaitingForMessageBody, WantToSendMessageHeader, WantToSendMessageBody, WantToSendTransportMessage };
+    enum SpiStates { Invalid, Idle, WaitingForMessageHeader, AcknowledgingMessageHeader,
+        WaitingForMessageBody, AcknowledingMessageBody, WantToSendMessageHeader,
+        WantToSendMessageBody, WantToSendTransportMessage };
 
     /*
      *      Pointer to the (only) instance of the SpiTransportProvider class.
@@ -65,6 +67,8 @@ private:
      */
     static uint32_t _headerFrameSize;
 
+    Message *_lastMessageReceived = nullptr;
+
     /*
      *      Handle for the System request handler task.
      */
@@ -98,6 +102,12 @@ private:
     static void SendErrorResponse(StatusCodes::StatusCodes);
 
     /*
+     *      Send an ACK or NAK with the specified code.
+     */
+    void AcknowledgeMessage(SpiStates, StatusCodes::StatusCodes, TransportPacketType);
+    void AcknowledgeMessage(Message *, SpiStates, StatusCodes::StatusCodes, TransportPacketType);
+
+    /*
      *      FreeRTOS task handler for this class.
      */
     static void Task(void *);
@@ -126,8 +136,6 @@ public:
      *      passing between layers is working.
      */
     void Echo(const char *);
-
-    void WaitForData();
 };
 
 #endif /* _SPI_TRANSPORT_PROVIDER_HPP_ */
