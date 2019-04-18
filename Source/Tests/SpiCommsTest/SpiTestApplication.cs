@@ -24,6 +24,7 @@ namespace SPITest
         private DigitalInputPort _button;
         private UInt32 _counter = 0;
         Messages.Message _startMessage;
+        byte[] _dummyTransportPacket;
         SoftwareSPIBus _esp32;
 
 
@@ -70,7 +71,6 @@ namespace SPITest
             string bufferText = DebugHelpers.PrintableBuffer(buffer);
             Console.WriteLine(bufferText);
             byte[] receiveBuffer = _esp32.WriteRead(buffer, (ushort) buffer.Length);
-            //_esp32.WriteBytes(buffer);
             Console.WriteLine("Received:");
             bufferText = DebugHelpers.PrintableBuffer(receiveBuffer);
             Console.WriteLine(bufferText);
@@ -81,7 +81,19 @@ namespace SPITest
             WaitForEsp32ToBeReady();
 
 
-            Console.WriteLine("    Message sent.");
+            Console.WriteLine("Sending request for ACK / NAK.");
+            Console.WriteLine();
+            //
+            //  Now give the ESP32 chance to send the ACK/NAK packet.
+            //
+            _stm32ReadyPin.State = true;
+            bufferText = DebugHelpers.PrintableBuffer(_dummyTransportPacket);
+            Console.WriteLine(bufferText);
+            receiveBuffer = _esp32.WriteRead(_dummyTransportPacket, (ushort) _dummyTransportPacket.Length);
+            Console.WriteLine("Received:");
+            bufferText = DebugHelpers.PrintableBuffer(receiveBuffer);
+            Console.WriteLine(bufferText);
+
             Console.WriteLine();
             Console.WriteLine("Waiting for button press.");
 
@@ -124,13 +136,23 @@ namespace SPITest
             Console.WriteLine();
             Console.WriteLine("Waiting for button press.");
 
-            _startMessage.Interface = (byte) Esp32Interfaces.Transport;
-            _startMessage.MessageType = (byte) TransportPacketType.Header;
+            _startMessage.Interface = (byte)Esp32Interfaces.Transport;
+            _startMessage.MessageType = (byte)TransportPacketType.Header;
             _startMessage.Function = 0;
             _startMessage.StatusCode = 0;
             _startMessage.PayloadLength = 0;
             _startMessage.Crc = 0;
             _startMessage.Payload = null;
+
+            Messages.Message dummyTransportMessage = new Messages.Message();
+            dummyTransportMessage.Interface = 0;
+            dummyTransportMessage.MessageType = 0;
+            dummyTransportMessage.Function = 0;
+            dummyTransportMessage.StatusCode = 0;
+            dummyTransportMessage.PayloadLength = 0;
+            dummyTransportMessage.Crc = 0;
+            dummyTransportMessage.Payload = null;
+            _dummyTransportPacket = Encoders.EncodeMessage(dummyTransportMessage);
 
             Thread.Sleep(Timeout.Infinite);
         }

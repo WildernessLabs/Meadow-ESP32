@@ -166,7 +166,7 @@ namespace WiFiScanType
 namespace Antenna
 {
     /*
-     *      Types of antennas that are selectable.
+     *      Types of antennas that can be selected.
      */
     enum Antenna
     {
