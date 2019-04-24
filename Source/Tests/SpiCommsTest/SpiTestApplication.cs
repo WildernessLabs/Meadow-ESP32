@@ -152,6 +152,10 @@ namespace SPITest
             dummyTransportMessage.Payload = null;
             _dummyTransportPacket = Encoders.EncodeMessage(dummyTransportMessage);
 
+            while (true)
+            {
+                _button_Changed(this, new DigitalInputPortEventArgs());
+            }
             Thread.Sleep(Timeout.Infinite);
         }
     }
