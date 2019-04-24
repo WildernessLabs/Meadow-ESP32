@@ -74,15 +74,13 @@ namespace SPITest
             Console.WriteLine("Received:");
             bufferText = DebugHelpers.PrintableBuffer(receiveBuffer);
             Console.WriteLine(bufferText);
+            _stm32ReadyPin.State = false;
             //
             //  Now we need to wait for the ESP32 to send and ACK / NAK.
             //
-            _stm32ReadyPin.State = false;
-            WaitForEsp32ToBeReady();
-
-
             Console.WriteLine("Sending request for ACK / NAK.");
             Console.WriteLine();
+            WaitForEsp32ToBeReady();
             //
             //  Now give the ESP32 chance to send the ACK/NAK packet.
             //
@@ -136,8 +134,8 @@ namespace SPITest
             Console.WriteLine();
             Console.WriteLine("Waiting for button press.");
 
-            _startMessage.Interface = (byte)Esp32Interfaces.Transport;
-            _startMessage.MessageType = (byte)TransportPacketType.Header;
+            _startMessage.Interface = (byte) Esp32Interfaces.Transport;
+            _startMessage.MessageType = (byte) PacketType.Header;
             _startMessage.Function = 0;
             _startMessage.StatusCode = 0;
             _startMessage.PayloadLength = 0;
@@ -145,7 +143,7 @@ namespace SPITest
             _startMessage.Payload = null;
 
             Messages.Message dummyTransportMessage = new Messages.Message();
-            dummyTransportMessage.Interface = 0;
+            dummyTransportMessage.Interface = (byte) Esp32Interfaces.Transport;
             dummyTransportMessage.MessageType = 0;
             dummyTransportMessage.Function = 0;
             dummyTransportMessage.StatusCode = 0;
