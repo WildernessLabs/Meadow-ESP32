@@ -50,7 +50,7 @@ namespace SPITest
             _button.Changed += _button_Changed;
         }
 
-        private void _button_Changed(object sender, DigitalInputPortEventArgs e)
+        private void SendMessage()
         {
             _blueLED.State = !_blueLED.State;
             _startMessage.MessageID = _counter;
@@ -70,7 +70,7 @@ namespace SPITest
             byte[] buffer = Encoders.EncodeMessage(_startMessage);
             string bufferText = DebugHelpers.PrintableBuffer(buffer);
             Console.WriteLine(bufferText);
-            byte[] receiveBuffer = _esp32.WriteRead(buffer, (ushort) buffer.Length);
+            byte[] receiveBuffer = _esp32.WriteRead(buffer, (ushort)buffer.Length);
             Console.WriteLine("Received:");
             bufferText = DebugHelpers.PrintableBuffer(receiveBuffer);
             Console.WriteLine(bufferText);
@@ -87,7 +87,7 @@ namespace SPITest
             _stm32ReadyPin.State = true;
             bufferText = DebugHelpers.PrintableBuffer(_dummyTransportPacket);
             Console.WriteLine(bufferText);
-            receiveBuffer = _esp32.WriteRead(_dummyTransportPacket, (ushort) _dummyTransportPacket.Length);
+            receiveBuffer = _esp32.WriteRead(_dummyTransportPacket, (ushort)_dummyTransportPacket.Length);
             Console.WriteLine("Received:");
             bufferText = DebugHelpers.PrintableBuffer(receiveBuffer);
             Console.WriteLine(bufferText);
@@ -97,6 +97,11 @@ namespace SPITest
 
             _stm32ReadyPin.State = false;
             _blueLED.State = !_blueLED.State;
+        }
+
+        private void _button_Changed(object sender, DigitalInputPortEventArgs e)
+        {
+            SendMessage();
         }
 
         /// <summary>
@@ -154,7 +159,7 @@ namespace SPITest
 
             while (true)
             {
-                _button_Changed(this, new DigitalInputPortEventArgs());
+                SendMessage();
             }
             Thread.Sleep(Timeout.Infinite);
         }
