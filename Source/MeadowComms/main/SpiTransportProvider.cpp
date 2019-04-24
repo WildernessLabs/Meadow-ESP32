@@ -150,6 +150,11 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
     memset(_transportFrameBuffer, 0, _headerFrameSize);
 
     _currentState = Idle;
+    _currentStateMutexHandle = xSemaphoreCreateMutex();
+    if (_currentStateMutexHandle == NULL)
+    {
+        ESP_LOGE(__func__, "Cannot create mutex for the current state variable.");
+    }
 
     /*
      *  Set up the task and message queue for the incoming SPI messages.
@@ -195,7 +200,7 @@ SpiTransportProvider::~SpiTransportProvider()
 /*
  *
  */
-void SpiTransportProvider::AcknowledgeMessage(SpiStates newState, StatusCodes::StatusCodes code, TransportPacketType packetType)
+void SpiTransportProvider::AcknowledgeMessage(SpiStates newState, StatusCodes::StatusCodes code, PacketType packetType)
 {
     Message dummyMessage;
 
@@ -213,7 +218,7 @@ void SpiTransportProvider::AcknowledgeMessage(SpiStates newState, StatusCodes::S
 /*
  *      Start the acknowledgement process.
  */
-void SpiTransportProvider::AcknowledgeMessage(Message *message, SpiStates newState,  StatusCodes::StatusCodes code, TransportPacketType packetType)
+void SpiTransportProvider::AcknowledgeMessage(Message *message, SpiStates newState,  StatusCodes::StatusCodes code, PacketType packetType)
 {
     Message response;
 
@@ -245,7 +250,7 @@ void SpiTransportProvider::SendErrorResponse(StatusCodes::StatusCodes errorCode)
     message->Interface = Esp32Interfaces::System;
     message->Function = SystemFunction::Echo;
     message->MessageID = 0x00;
-    message->MessageType = TransportPacketType::Data;
+    message->MessageType = PacketType::Data;
     message->PayloadLength = 0;
     message->Payload = (uint8_t *) 0;
 }
@@ -260,17 +265,23 @@ void SpiTransportProvider::SendErrorResponse(StatusCodes::StatusCodes errorCode)
  */
 void SpiTransportProvider::SpiPostTransmissionCallback(spi_slave_transaction_t *transaction)
 {
-    gpio_set_level(Gpio::ESP32_READY_PIN, 0);
-    //
-    //  The ESP32 API reference states that spi_slave_get_trans_result must be called when
-    //  using the queueing method we are using.
-    //
-    spi_slave_transaction_t *slaveTransaction;
-    spi_slave_get_trans_result(VSPI_HOST, &slaveTransaction, (5 / portTICK_PERIOD_MS));
-    //
-    // TODO: Error checking on queueing SPI message from ISR.
-    //
-    xQueueSendToBackFromISR(SpiTransportProvider::_incomingMessageQueue, transaction , NULL);
+//    gpio_set_level(Gpio::ESP32_READY_PIN, 0);
+//    //
+//    //  The ESP32 API reference states that spi_slave_get_trans_result must be called when
+//    //  using the queueing method we are using.
+//    //
+//    spi_slave_transaction_t *slaveTransaction;
+//    spi_slave_get_trans_result(VSPI_HOST, &slaveTransaction, (5 / portTICK_PERIOD_MS));
+//    //
+//    // TODO: Error checking on queueing SPI message from ISR.
+//    //
+//    xQueueSendToBackFromISR(SpiTransportProvider::_incomingMessageQueue, transaction , NULL);
+//    //
+//    //  Now notify the SPI task that there is something to do.
+//    //
+//    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+//    vTaskNotifyGiveFromISR(_spiMessageTaskHandle, &xHigherPriorityTaskWoken);
+//    portYIELD_FROM_ISR();
 }
 
 /*
@@ -317,7 +328,7 @@ void SpiTransportProvider::Echo(const char *messageString)
     message->Interface = Esp32Interfaces::System;
     message->Function = SystemFunction::Echo;
     message->MessageID = 0x00;
-    message->MessageType = TransportPacketType::Data;
+    message->MessageType = PacketType::Data;
     message->PayloadLength = strlen(messageString) + 1;
     char *str = (char *) pvPortMalloc(message->PayloadLength);
     strcpy(str, messageString);
@@ -354,6 +365,210 @@ void SpiTransportProvider::Task(void *pvParameters)
     vTaskDelete(sender->_taskHandle);
 }
 
+void SpiTransportProvider::ProcessIdleState()
+{
+    ESP_LOGI(__func__, "Processing Idle state");
+    memset(&_transaction, 0, sizeof(_transaction));
+    memset(_headerBuffer, 0, _headerFrameSize);
+    memset(_transmitBuffer, 0, _headerFrameSize);
+
+    _transaction.rx_buffer = _headerBuffer;
+    _transaction.tx_buffer = _transmitBuffer;
+    _transaction.length = _headerFrameSize * 8;
+
+    ESP_ERROR_CHECK(spi_slave_transmit(VSPI_HOST, &_transaction, portMAX_DELAY));
+    gpio_set_level(Gpio::ESP32_READY_PIN, 0);
+
+    _currentState = WaitingForMessageHeader;
+    if (_transaction.trans_len >= (HEADER_SIZE * 8))
+    {
+        int dataSize = _transaction.length / 8;
+        ESP_LOGI(__func__, "Received %d bytes.", dataSize);
+        ESP_LOG_BUFFER_HEX(__func__, _transaction.rx_buffer, dataSize);
+        Message *message = Encoders::ExtractMessage((uint8_t *) _transaction.rx_buffer, _headerFrameSize);
+        StatusCodes::StatusCodes code;
+        PacketType type;
+        if (_lastMessageReceived)
+        {
+            vPortFree(_lastMessageReceived);
+        }
+        if (message)
+        {
+            code = StatusCodes::CompletedOK;
+            type = PacketType::Ack;
+            _lastMessageReceived = message;
+        }
+        else
+        {
+            code = StatusCodes::CRCError;
+            type = PacketType::Nak;
+            _lastMessageReceived = nullptr;
+        }
+        AcknowledgeMessage(message, WaitingForHeaderAckRequest, code, type);
+    }
+    else
+    {
+        _lastMessageReceived = nullptr;
+        AcknowledgeMessage(WaitingForHeaderAckRequest, StatusCodes::InvalidPacket, PacketType::Nak);
+    }
+
+    gpio_set_level(Gpio::ESP32_READY_PIN, 1);
+}
+
+void SpiTransportProvider::ProcessWaitingForMessageHeaderState()
+{
+    ESP_LOGI(__func__, "Processing WaitingForMessageHeader state");
+//    Message *message = nullptr;
+//    spi_slave_transaction_t spiTransaction;
+//    BaseType_t result = xQueueReceive(_incomingMessageQueue, &spiTransaction, portMAX_DELAY);
+//    if (result == pdTRUE)
+//    {
+//        ESP_LOGI(__func__, "Received message from queue.");
+//        if (spiTransaction.trans_len >= (HEADER_SIZE * 8))
+//        {
+//            int dataSize = spiTransaction.length / 8;
+//            ESP_LOGI(__func__, "Received %d bytes.", dataSize);
+//            ESP_LOG_BUFFER_HEX(__func__, spiTransaction.rx_buffer, dataSize);
+//            message = Encoders::ExtractMessage((uint8_t *) spiTransaction.rx_buffer, _headerFrameSize);
+//            StatusCodes::StatusCodes code;
+//            PacketType type;
+//            if (_lastMessageReceived)
+//            {
+//                vPortFree(_lastMessageReceived);
+//            }
+//            if (message)
+//            {
+//                code = StatusCodes::CompletedOK;
+//                type = PacketType::Ack;
+//                _lastMessageReceived = message;
+//            }
+//            else
+//            {
+//                code = StatusCodes::CRCError;
+//                type = PacketType::Nak;
+//                _lastMessageReceived = nullptr;
+//            }
+//            AcknowledgeMessage(message, WaitingForHeaderAckRequest, code, type);
+//        }
+//        else
+//        {
+//            _lastMessageReceived = nullptr;
+//            AcknowledgeMessage(WaitingForHeaderAckRequest, StatusCodes::InvalidPacket, PacketType::Nak);
+//        }
+//    }
+}
+
+void SpiTransportProvider::ProcessWaitingForHeaderAckRequestState()
+{
+    ESP_LOGI(__func__, "Processing WaitingForHeaderAckRequest state");
+    memset(&_transaction, 0, sizeof(_transaction));
+    memset(_headerBuffer, 0, _headerFrameSize);
+
+    _transaction.rx_buffer = _headerBuffer;
+    _transaction.tx_buffer = _transmitBuffer;       // This will have been setup by the Acknowledge functions.
+    _transaction.length = _headerFrameSize * 8;
+
+    _currentState = AcknowledgingMessageHeader;
+//    ESP_ERROR_CHECK(spi_slave_queue_trans(VSPI_HOST, &_transaction, 0));
+    ESP_ERROR_CHECK(spi_slave_transmit(VSPI_HOST, &_transaction, portMAX_DELAY));
+
+    if (_lastMessageReceived)
+    {
+        if (_lastMessageReceived->PayloadLength == 0)
+        {
+            //
+            //  If we get here then the message is simple, i.e. no payload
+            //  so we need to queue the message on the appropriate interface.
+            //
+            if (_lastMessageReceived->Interface != Esp32Interfaces::Transport)
+            {
+                _messageDispatcher->QueueMessageForEsp32(_lastMessageReceived);
+            }
+            //
+            //
+            //
+            vPortFree(_lastMessageReceived);
+            _lastMessageReceived = nullptr;
+            _currentState = Idle;
+        }
+        else
+        {
+            //
+            //  Complex payload, we need to ask for the full message including
+            //  the message payload.
+            //
+            _currentState = WaitingForMessageBody;
+        }
+    }
+    else
+    {
+        _currentState = Idle;
+    }
+    gpio_set_level(Gpio::ESP32_READY_PIN, 0);
+}
+
+void SpiTransportProvider::ProcessAcknowledgingMessageHeaderState()
+{
+    ESP_LOGI(__func__, "Processing AcknowledgingMessageHeader state");
+    if (_lastMessageReceived)
+    {
+        if (_lastMessageReceived->PayloadLength == 0)
+        {
+            //
+            //  If we get here then the message is simple, i.e. no payload
+            //  so we need to queue the message on the appropriate interface.
+            //
+            if (_lastMessageReceived->Interface != Esp32Interfaces::Transport)
+            {
+                _messageDispatcher->QueueMessageForEsp32(_lastMessageReceived);
+            }
+            //
+            //
+            //
+            vPortFree(_lastMessageReceived);
+            _lastMessageReceived = nullptr;
+            _currentState = Idle;
+        }
+        else
+        {
+            //
+            //  Complex payload, we need to ask for the full message including
+            //  the message payload.
+            //
+            _currentState = WaitingForMessageBody;
+        }
+    }
+    else
+    {
+        _currentState = Idle;
+    }
+}
+
+void SpiTransportProvider::ProcessWaitingForMessageBodyState()
+{
+
+}
+
+void SpiTransportProvider::ProcessAcknowledingMessageBodyState()
+{
+
+}
+
+void SpiTransportProvider::ProcessWantToSendMessageHeaderState()
+{
+
+}
+
+void SpiTransportProvider::ProcessWantToSendMessageBodyState()
+{
+
+}
+
+void SpiTransportProvider::ProcessWantToSendTransportMessageState()
+{
+
+}
+
 /*
  *      Process any messages for the controller.
  *
@@ -366,86 +581,51 @@ void SpiTransportProvider::Task(void *pvParameters)
 void SpiTransportProvider::IncomingSpiMessageTask(void *pvParameters)
 {
     SpiTransportProvider *sender = (SpiTransportProvider *) pvParameters;
+
     while (true)
     {
-        spi_slave_transaction_t spiTransaction;
-        BaseType_t result = xQueueReceive(sender->_incomingMessageQueue, &spiTransaction, portMAX_DELAY);
-        if (result == pdTRUE)
+        //
+        //  The Task will get notified that there is something to do in two cases:
+        //      - STM32 interrupt (the STM32 wants us to talk to it)
+        //      - There is at least one message in the send queue.
+        //      - SPI transmission/reception has completed.
+        //
+        //  We must wait until we are woken by one of the events.
+        //
+        ESP_LOGI(__func__, "Waiting for notification.");
+        uint32_t notificationValue = ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+        ESP_LOGI(__func__, "Notification Received, current state: %d", _currentState);
+        switch (_currentState)
         {
-            ESP_LOGI(__func__, "Received message from queue.");
-            if (spiTransaction.trans_len >= (HEADER_SIZE * 8))
-            {
-                int dataSize = spiTransaction.length / 8;
-                ESP_LOGI(__func__, "Received %d bytes.", dataSize);
-                ESP_LOG_BUFFER_HEX(__func__, spiTransaction.rx_buffer, dataSize);
-                Message *message = nullptr;
-                switch (_currentState)
-                {
-                    case Idle:
-                        break;
-                    case WaitingForMessageHeader:
-                        message = Encoders::ExtractMessage((uint8_t *) spiTransaction.rx_buffer, _headerFrameSize);
-                        StatusCodes::StatusCodes code;
-                        TransportPacketType type;
-                        if (message)
-                        {
-                            code = StatusCodes::CompletedOK;
-                            type = TransportPacketType::Ack;
-                        }
-                        else
-                        {
-                            code = StatusCodes::CRCError;
-                            type = TransportPacketType::Nak;
-                        }
-                        if (sender->_lastMessageReceived)
-                        {
-                            vPortFree(sender->_lastMessageReceived);
-                        }
-                        sender->_lastMessageReceived = message;
-                        sender->AcknowledgeMessage(message, AcknowledgingMessageHeader, code, type);
-                        break;
-                    case AcknowledgingMessageHeader:
-                        if (sender->_lastMessageReceived->PayloadLength == 0)
-                        {
-                            //
-                            //  If we get here then the message is simple, i.e. no payload
-                            //  so we need to queue the message on the appropriate interface.
-                            //
-                            sender->_messageDispatcher->QueueMessageForEsp32(sender->_lastMessageReceived);
-                            //
-                            //
-                            //
-                            vPortFree(sender->_lastMessageReceived);
-                            sender->_lastMessageReceived = nullptr;
-                            _currentState = WaitingForMessageHeader;
-                        }
-                        else
-                        {
-                            //
-                            //  Complex payload, we need to ask for the full message including
-                            //  the message payload.
-                            //
-                            _currentState = WaitingForMessageBody;
-                        }
-                        break;
-                    case WaitingForMessageBody:
-                        break;
-                    case AcknowledingMessageBody:
-                        break;
-                    case WantToSendMessageHeader:
-                        break;
-                    case WantToSendMessageBody:
-                        break;
-                    case WantToSendTransportMessage:
-                        break;
-                    default:
-                        break;
-                }
-            }
-            else
-            {
-                sender->AcknowledgeMessage(AcknowledgingMessageHeader, StatusCodes::InvalidPacket, TransportPacketType::Nak);
-            }
+            case Idle:
+                sender->ProcessIdleState();
+                break;
+            case WaitingForMessageHeader:
+                sender->ProcessWaitingForMessageHeaderState();
+                break;
+            case AcknowledgingMessageHeader:
+                sender->ProcessAcknowledgingMessageHeaderState();
+                break;
+            case WaitingForHeaderAckRequest:
+                sender->ProcessWaitingForHeaderAckRequestState();
+                break;
+            case WaitingForMessageBody:
+                sender->ProcessWaitingForMessageBodyState();
+                break;
+            case AcknowledingMessageBody:
+                sender->ProcessAcknowledingMessageBodyState();
+                break;
+            case WantToSendMessageHeader:
+                sender->ProcessWantToSendMessageHeaderState();
+                break;
+            case WantToSendMessageBody:
+                sender->ProcessWantToSendMessageBodyState();
+                break;
+            case WantToSendTransportMessage:
+                sender->ProcessWantToSendTransportMessageState();
+                break;
+            default:
+                break;
         }
     }
     //
@@ -466,39 +646,7 @@ void SpiTransportProvider::IncomingSpiMessageTask(void *pvParameters)
  */
 void SpiTransportProvider::Stm32IsrHandler(void *pvParameters)
 {
-    SpiTransportProvider *sender = (SpiTransportProvider *) pvParameters;
-    memset(&_transaction, 0, sizeof(_transaction));
-    switch (_currentState)
-    {
-        case Idle:
-            _currentState = WaitingForMessageHeader;
-        case WaitingForMessageHeader:
-            memset(&_transaction, 0, sizeof(_transaction));
-            _transaction.rx_buffer = _headerBuffer;
-            _transaction.tx_buffer = _transmitBuffer;
-            _transaction.length = _headerFrameSize * 8;
-            ESP_ERROR_CHECK(spi_slave_queue_trans(VSPI_HOST, &_transaction, 0));
-            break;
-        case AcknowledgingMessageHeader:
-            memset(&_transaction, 0, sizeof(_transaction));
-            _transaction.rx_buffer = _headerBuffer;
-            _transaction.tx_buffer = _transmitBuffer;
-            _transaction.length = _headerFrameSize * 8;
-            _currentState = AcknowledgingMessageHeader;
-            ESP_ERROR_CHECK(spi_slave_queue_trans(VSPI_HOST, &_transaction, 0));
-            break;
-        case WaitingForMessageBody:
-            break;
-        case AcknowledingMessageBody:
-            break;
-        case WantToSendMessageHeader:
-            break;
-        case WantToSendMessageBody:
-            break;
-        case WantToSendTransportMessage:
-            break;
-        default:
-            //  TODO: Deal with invalid SPI state.
-            break;
-    }
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    vTaskNotifyGiveFromISR(_spiMessageTaskHandle, &xHigherPriorityTaskWoken);
+    portYIELD_FROM_ISR();
 }

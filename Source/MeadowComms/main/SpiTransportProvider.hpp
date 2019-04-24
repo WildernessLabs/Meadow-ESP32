@@ -25,7 +25,7 @@ private:
     /*
      *      Possible states for the SPI transport layer.
      */
-    enum SpiStates { Invalid, Idle, WaitingForMessageHeader, AcknowledgingMessageHeader,
+    enum SpiStates { Invalid, Idle, WaitingForMessageHeader, WaitingForHeaderAckRequest, AcknowledgingMessageHeader,
         WaitingForMessageBody, AcknowledingMessageBody, WantToSendMessageHeader,
         WantToSendMessageBody, WantToSendTransportMessage };
 
@@ -78,6 +78,8 @@ private:
 
     static TaskHandle_t _spiMessageTaskHandle;
 
+    SemaphoreHandle_t _currentStateMutexHandle;
+
     /*
      *      Default destructor.
      */
@@ -104,8 +106,8 @@ private:
     /*
      *      Send an ACK or NAK with the specified code.
      */
-    void AcknowledgeMessage(SpiStates, StatusCodes::StatusCodes, TransportPacketType);
-    void AcknowledgeMessage(Message *, SpiStates, StatusCodes::StatusCodes, TransportPacketType);
+    void AcknowledgeMessage(SpiStates, StatusCodes::StatusCodes, PacketType);
+    void AcknowledgeMessage(Message *, SpiStates, StatusCodes::StatusCodes, PacketType);
 
     /*
      *      FreeRTOS task handler for this class.
@@ -113,6 +115,18 @@ private:
     static void Task(void *);
 
     static void IncomingSpiMessageTask(void *);
+
+    void ProcessWaitingForMessageHeaderState();
+
+    void ProcessIdleState();
+
+    void ProcessAcknowledgingMessageHeaderState();
+    void ProcessWaitingForHeaderAckRequestState();
+    void ProcessWaitingForMessageBodyState();
+    void ProcessAcknowledingMessageBodyState();
+    void ProcessWantToSendMessageHeaderState();
+    void ProcessWantToSendMessageBodyState();
+    void ProcessWantToSendTransportMessageState();
 
     /*
      *      ISR for the GPIO ISR.
