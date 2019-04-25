@@ -245,7 +245,11 @@ spi_slave_transaction_t *SpiTransportProvider::AcknowledgeMessage(Message *messa
 }
 
 /*
- *      Remove
+ *      Release any storage allocated on the heap associated
+ *      with an SPI transaction.
+ *
+ *      @param transaction
+ *          Pointer to the transaction (on the heap)
  */
 void SpiTransportProvider::FreeUpTransactionHeapStorage(spi_slave_transaction_t *transaction)
 {
@@ -347,7 +351,12 @@ void SpiTransportProvider::Task(void *pvParameters)
     vTaskDelete(sender->_taskHandle);
 }
 
-
+/*
+ *      Clear the class level variable _currentHeader.
+ *
+ *      This method ensures that any heap storage is released and the
+ *      pointer is set to the nullptr value.
+ */
 void SpiTransportProvider::ClearCurrentHeader()
 {
     if (_currentHeader)
@@ -358,7 +367,10 @@ void SpiTransportProvider::ClearCurrentHeader()
 }
 
 /*
+ *      The STM32 has indicated that it has a message for the ESP32.
  *
+ *      This method requests header information from the STM32 and starts
+ *      the request process.
  */
 void SpiTransportProvider::ProcessIdleState()
 {
@@ -437,6 +449,9 @@ void SpiTransportProvider::ProcessIdleState()
     _currentState = AcknowledgingMessageHeader;
 }
 
+/*
+ *      Acknowledge the message header that has been received and work out the next steps.
+ */
 void SpiTransportProvider::ProcessAcknowledgingMessageHeaderState()
 {
     ESP_LOGI(__func__, "Entering Method.");
@@ -481,6 +496,9 @@ void SpiTransportProvider::ProcessAcknowledgingMessageHeaderState()
     vTaskDelay(50 / portTICK_PERIOD_MS);
 }
 
+/*
+ *      Previous messages have indicated that a message body is required, request the message body.
+ */
 void SpiTransportProvider::ProcessWaitingForMessageBodyState()
 {
     ESP_LOGI(__func__, "Entering Method.");
@@ -544,6 +562,16 @@ void SpiTransportProvider::ProcessWaitingForMessageBodyState()
     vTaskDelay(50 / portTICK_PERIOD_MS);
 }
 
+/*
+ *      Acknowledge the receipt of the message body.
+ *
+ *      This method requires the following class level variables to have
+ *      been setup correctly:
+ *
+ *          _currentHeader
+ *          _responseCode
+ *          _packetType
+ */
 void SpiTransportProvider::ProcessAcknowledingMessageBodyState()
 {
     ESP_LOGI(__func__, "Entering Method.");
