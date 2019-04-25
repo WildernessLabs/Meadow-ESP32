@@ -38,6 +38,10 @@ namespace Meadow.Core.Esp32
             {
                 result = (requestedSize & 0xfffffffc) + 4;
             }
+            else
+            {
+                result += 4;
+            }
             return (result);
         }
 
@@ -233,6 +237,42 @@ namespace Meadow.Core.Esp32
             EncodeUInt32(crc, buffer, Messages.CRC_OFFSET);
             return (buffer);
         }
+
+        /// <summary>
+        ///     Create a message header from the message.
+        /// </summary>
+        /// <param name="message">Message to be used to generate the message header.</param>
+        /// <returns>Padded header for the message.</returns>
+        public static byte[] EncodeHeader(Messages.Message message)
+        {
+            UInt32 bufferSize = CalculateSpiBufferSize(Messages.MESSAGE_SIZE);
+            byte[] buffer = new byte[bufferSize];
+            int offset = 0;
+
+            Array.Clear(buffer, 0, buffer.Length);
+            buffer[offset++] = message.MessageType;
+            buffer[offset++] = message.Interface;
+            EncodeUInt32(message.Function, buffer, offset);
+            offset += 4;
+            EncodeUInt32(message.StatusCode, buffer, offset);
+            offset += 4;
+            EncodeUInt32(message.MessageID, buffer, offset);
+            offset += 4;
+            EncodeUInt32(message.PayloadLength, buffer, offset);
+            offset += 4;
+            //
+            //  CRC will be put in later but needs to be 0 for the calculation.
+            //
+            EncodeUInt32(0, buffer, offset);
+            offset += 4;
+            //
+            //  Now we deal with the CRC.
+            //
+            UInt32 crc = Crc32(buffer);
+            EncodeUInt32(crc, buffer, Messages.CRC_OFFSET);
+            return (buffer);
+        }
+
 
         /// <summary>
         ///     Extrat a message from a byte buffer and return a Message object.

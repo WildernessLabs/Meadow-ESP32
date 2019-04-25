@@ -60,7 +60,8 @@ namespace Meadow.Core.Esp32
         Disconnect = 3,
         GetAccessPoints = 4,
         GetConfiguration = 5,
-        SetConfiguration = 6
+        SetConfiguration = 6,
+        SwitchAntenna = 7
     };
 
     enum BluetoothFunction : UInt32

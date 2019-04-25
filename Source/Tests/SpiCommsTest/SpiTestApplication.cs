@@ -1,4 +1,4 @@
-﻿//define USE_MEADOW
+﻿#define USE_MEADOW
 
 using System;
 using System.Text;
@@ -8,7 +8,6 @@ using Meadow.Devices;
 using Meadow.Hardware;
 using Meadow.Hardware.Communications;
 using Meadow.Core.Esp32;
-
 
 namespace SPITest
 {
@@ -30,9 +29,9 @@ namespace SPITest
 
         public SPITestApplication()
         {
-            _redLED = (DigitalOutputPort)Device.CreateDigitalOutputPort(Device.Pins.OnboardLEDRed, true);
-            _blueLED = (DigitalOutputPort)Device.CreateDigitalOutputPort(Device.Pins.OnboardLEDBlue, true);
-            _greenLED = (DigitalOutputPort)Device.CreateDigitalOutputPort(Device.Pins.OnboardLEDGreen, true);
+            _redLED = (DigitalOutputPort) Device.CreateDigitalOutputPort(Device.Pins.OnboardLEDRed, true);
+            _blueLED = (DigitalOutputPort) Device.CreateDigitalOutputPort(Device.Pins.OnboardLEDBlue, true);
+            _greenLED = (DigitalOutputPort) Device.CreateDigitalOutputPort(Device.Pins.OnboardLEDGreen, true);
 
 
 
@@ -46,44 +45,83 @@ namespace SPITest
             _stm32ReadyPin = (DigitalOutputPort)Device.CreateDigitalOutputPort(Device.Pins.D05, false);
             _esp32ReadyPin = (DigitalInputPort)Device.CreateDigitalInputPort(Device.Pins.D06);
 #endif
-            _button = (DigitalInputPort)Device.CreateDigitalInputPort(Device.Pins.D15, interruptMode: InterruptMode.EdgeFalling, resistorMode: ResistorMode.PullUp);
+            _button = (DigitalInputPort)Device.CreateDigitalInputPort(Device.Pins.D15, interruptMode: InterruptMode.EdgeFalling, resistorMode: ResistorMode.PullUp, debounceDuration: 10);
             _button.Changed += _button_Changed;
         }
 
         private void SendMessage()
         {
             _blueLED.State = !_blueLED.State;
+            _counter++;
             _startMessage.MessageID = _counter;
             Console.WriteLine($"Sending messageID : '{_counter}'");
-            _counter++;
+
 
             Console.WriteLine("    Waiting for ESP32 to be ready.");
             _stm32ReadyPin.State = true;
             WaitForEsp32ToBeReady();
             Console.WriteLine("    ESP32 is ready.");
+            string bufferText;
+            byte[] receiveBuffer;
 
-            Console.WriteLine();
-            Console.WriteLine("Sending message:");
             //
-            //  Send the message header to the ESP32.
+            //  Now send the Antenna switch message.
             //
-            byte[] buffer = Encoders.EncodeMessage(_startMessage);
-            string bufferText = DebugHelpers.PrintableBuffer(buffer);
+            Console.WriteLine();Console.WriteLine("Sending switch antenna message.");
+            Messages.SwitchAntenna switchAntenna = new Messages.SwitchAntenna();
+            switchAntenna.Antenna = (byte) Antenna.OnBoard;
+            byte[] encodedSwitchAntenna = Encoders.EncodeSwitchAntenna(switchAntenna);
+
+            Messages.Message switchAntennaMessage = new Messages.Message();
+
+            switchAntennaMessage.Interface = (byte) Esp32Interfaces.WiFi;
+            switchAntennaMessage.Function = (UInt32) WiFiFunction.SwitchAntenna;
+            switchAntennaMessage.MessageID = _counter;
+            switchAntennaMessage.Payload = encodedSwitchAntenna;
+            switchAntennaMessage.PayloadLength = (UInt32) encodedSwitchAntenna.Length;
+            //
+            //  Send switch Antenna header first.
+            //
+            switchAntennaMessage.MessageType = (byte) (PacketType.Header);
+            byte[] encodedSwitchAntennaHeader = Encoders.EncodeHeader(switchAntennaMessage);
+            bufferText = DebugHelpers.PrintableBuffer(encodedSwitchAntennaHeader);
+            Console.WriteLine("Sending switch antenna header:");
             Console.WriteLine(bufferText);
-            byte[] receiveBuffer = _esp32.WriteRead(buffer, (ushort)buffer.Length);
+            _esp32.WriteBytes(encodedSwitchAntennaHeader);
+            _stm32ReadyPin.State = false;
+            //
+            //  Now we need an ACK.
+            //
+            Console.WriteLine("Sending request for header ACK / NAK.");
+            Console.WriteLine();
+            WaitForEsp32ToBeReady();
+            _stm32ReadyPin.State = true;
+            bufferText = DebugHelpers.PrintableBuffer(_dummyTransportPacket);
+            Console.WriteLine(bufferText);
+            receiveBuffer = _esp32.WriteRead(_dummyTransportPacket, (ushort)_dummyTransportPacket.Length);
             Console.WriteLine("Received:");
             bufferText = DebugHelpers.PrintableBuffer(receiveBuffer);
             Console.WriteLine(bufferText);
             _stm32ReadyPin.State = false;
             //
-            //  Now we need to wait for the ESP32 to send and ACK / NAK.
+            //  Assuming an ACK, we can send the actual message.
             //
-            Console.WriteLine("Sending request for ACK / NAK.");
+            Console.WriteLine("Sending the switch antenna message.");
             Console.WriteLine();
             WaitForEsp32ToBeReady();
+            _stm32ReadyPin.State = true;
+            switchAntennaMessage.MessageType = (byte) (PacketType.Data);
+            byte[] encodedSwitchAntennaMessage = Encoders.EncodeMessage(switchAntennaMessage);
+            bufferText = DebugHelpers.PrintableBuffer(encodedSwitchAntennaMessage);
+            Console.WriteLine(bufferText);
+            _esp32.WriteBytes(encodedSwitchAntennaMessage);
+            _stm32ReadyPin.State = false;
             //
             //  Now give the ESP32 chance to send the ACK/NAK packet.
             //
+            Console.WriteLine("Sending request for message body ACK / NAK.");
+            Console.WriteLine();
+            WaitForEsp32ToBeReady();
             _stm32ReadyPin.State = true;
             bufferText = DebugHelpers.PrintableBuffer(_dummyTransportPacket);
             Console.WriteLine(bufferText);
@@ -149,7 +187,7 @@ namespace SPITest
 
             Messages.Message dummyTransportMessage = new Messages.Message();
             dummyTransportMessage.Interface = (byte) Esp32Interfaces.Transport;
-            dummyTransportMessage.MessageType = 0;
+            dummyTransportMessage.MessageType = (byte)PacketType.Transport;
             dummyTransportMessage.Function = 0;
             dummyTransportMessage.StatusCode = 0;
             dummyTransportMessage.PayloadLength = 0;
@@ -157,10 +195,6 @@ namespace SPITest
             dummyTransportMessage.Payload = null;
             _dummyTransportPacket = Encoders.EncodeMessage(dummyTransportMessage);
 
-            while (true)
-            {
-                SendMessage();
-            }
             Thread.Sleep(Timeout.Infinite);
         }
     }
