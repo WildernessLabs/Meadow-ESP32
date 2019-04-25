@@ -88,9 +88,9 @@ private:
 
     SemaphoreHandle_t _currentStateMutexHandle;
 
-    uint32_t _responseCode;
+    StatusCodes::StatusCodes _responseCode;
 
-    uint8_t _packetType;
+    PacketType _packetType;
 
     /*
      *      Default destructor.
@@ -118,8 +118,9 @@ private:
     /*
      *      Send an ACK or NAK with the specified code.
      */
-    void AcknowledgeMessage(SpiStates, StatusCodes::StatusCodes, PacketType);
-    void AcknowledgeMessage(Message *, SpiStates, StatusCodes::StatusCodes, PacketType);
+    spi_slave_transaction_t *AcknowledgeMessage(Message *, StatusCodes::StatusCodes, PacketType);
+//    void AcknowledgeMessage(SpiStates, StatusCodes::StatusCodes, PacketType);
+//    void AcknowledgeMessage(Message *, SpiStates, StatusCodes::StatusCodes, PacketType);
 
     /*
      *      FreeRTOS task handler for this class.
@@ -130,6 +131,7 @@ private:
 
     void ProcessWaitingForMessageHeaderState();
 
+    void ClearCurrentHeader();
     void ProcessIdleState();
 
     void ProcessAcknowledgingMessageHeaderState();

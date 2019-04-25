@@ -200,60 +200,66 @@ SpiTransportProvider::~SpiTransportProvider()
 /*
  *
  */
-void SpiTransportProvider::AcknowledgeMessage(SpiStates newState, StatusCodes::StatusCodes code, PacketType packetType)
-{
-    Message dummyMessage;
-
-    memset(&dummyMessage, 0, sizeof(Message));
-    dummyMessage.MessageType = packetType;
-    dummyMessage.Interface = Esp32Interfaces::Transport;
-    dummyMessage.Function = 0;
-    dummyMessage.MessageID = 0;
-    dummyMessage.StatusCode = code;
-    dummyMessage.Payload = nullptr;
-    dummyMessage.PayloadLength = 0;
-    AcknowledgeMessage(&dummyMessage, newState, code, packetType);
-}
+//void SpiTransportProvider::AcknowledgeMessage(SpiStates newState, StatusCodes::StatusCodes code, PacketType packetType)
+//{
+//    Message dummyMessage;
+//
+//    memset(&dummyMessage, 0, sizeof(Message));
+//    dummyMessage.MessageType = packetType;
+//    dummyMessage.Interface = Esp32Interfaces::Transport;
+//    dummyMessage.Function = 0;
+//    dummyMessage.MessageID = 0;
+//    dummyMessage.StatusCode = code;
+//    dummyMessage.Payload = nullptr;
+//    dummyMessage.PayloadLength = 0;
+//    AcknowledgeMessage(&dummyMessage, newState, code, packetType);
+//}
 
 /*
  *      Start the acknowledgement process.
  */
-void SpiTransportProvider::AcknowledgeMessage(Message *message, SpiStates newState,  StatusCodes::StatusCodes code, PacketType packetType)
+spi_slave_transaction_t *SpiTransportProvider::AcknowledgeMessage(Message *message, StatusCodes::StatusCodes code, PacketType packetType)
 {
-    Message response;
+    spi_slave_transaction_t *transaction = (spi_slave_transaction_t *) pvPortMalloc(sizeof(spi_slave_transaction_t));
 
-    response.Interface = message->Interface;
-    response.Function = message->Function;
-    response.MessageID = message->MessageID;
-    response.StatusCode = code;
-    response.MessageType = packetType;
-    response.Payload = nullptr;
-    response.PayloadLength = 0;
+    memset(transaction, 0, sizeof(spi_slave_transaction_t));
+    uint8_t *transmitBuffer = (uint8_t *) pvPortMalloc(_headerFrameSize);
+    uint8_t *receiveBuffer = (uint8_t *) pvPortMalloc(_headerFrameSize);
 
-    uint8_t *ackFrame = (uint8_t *) Encoders::EncodeMessage(&response);
-    memset(SpiTransportProvider::_transmitBuffer, 0, _headerFrameSize);
-    memcpy(SpiTransportProvider::_transmitBuffer, ackFrame, _headerFrameSize);
+    _currentHeader->MessageType = (uint8_t) packetType;
+    _currentHeader->StatusCode = (uint32_t) code;
+    uint8_t *ackFrame = (uint8_t *) Encoders::EncodeMessage(message);
+    memset(transmitBuffer, 0, _headerFrameSize);
+    memcpy(transmitBuffer, ackFrame, _headerFrameSize);
     vPortFree(ackFrame);
-    ackFrame = nullptr;
-    _currentState = newState;
-    gpio_set_level(Gpio::ESP32_READY_PIN, 1);
+
+    memset(receiveBuffer, 0, _headerFrameSize);
+
+    transaction->rx_buffer = receiveBuffer;
+    transaction->tx_buffer = transmitBuffer;       // This will have been setup by the Acknowledge functions.
+    transaction->length = _headerFrameSize * 8;
+
+    ESP_ERROR_CHECK(spi_slave_transmit(VSPI_HOST, transaction, portMAX_DELAY));
+    gpio_set_level(Gpio::ESP32_READY_PIN, 0);
+
+    return(transaction);
 }
 
-/*
- *
- */
-void SpiTransportProvider::SendErrorResponse(StatusCodes::StatusCodes errorCode)
-{
-    Message *message;
-
-    message = (Message *) _transmitBuffer;
-    message->Interface = Esp32Interfaces::System;
-    message->Function = SystemFunction::Echo;
-    message->MessageID = 0x00;
-    message->MessageType = PacketType::Data;
-    message->PayloadLength = 0;
-    message->Payload = (uint8_t *) 0;
-}
+///*
+// *
+// */
+//void SpiTransportProvider::SendErrorResponse(StatusCodes::StatusCodes errorCode)
+//{
+//    Message *message;
+//
+//    message = (Message *) _transmitBuffer;
+//    message->Interface = Esp32Interfaces::System;
+//    message->Function = SystemFunction::Echo;
+//    message->MessageID = 0x00;
+//    message->MessageType = PacketType::Data;
+//    message->PayloadLength = 0;
+//    message->Payload = (uint8_t *) 0;
+//}
 
 /*
  *      SPI Post Transmission callback
@@ -348,6 +354,16 @@ void SpiTransportProvider::Task(void *pvParameters)
     vTaskDelete(sender->_taskHandle);
 }
 
+
+void SpiTransportProvider::ClearCurrentHeader()
+{
+    if (_currentHeader)
+    {
+        vPortFree(_currentHeader);
+        _currentHeader = nullptr;
+    }
+}
+
 /*
  *
  */
@@ -383,10 +399,7 @@ void SpiTransportProvider::ProcessIdleState()
         //
         StatusCodes::StatusCodes code;
         PacketType type;
-        if (_currentHeader)
-        {
-            vPortFree(_currentHeader);
-        }
+        ClearCurrentHeader();
         if (messageHeader)
         {
             _responseCode = StatusCodes::CompletedOK;
@@ -426,10 +439,7 @@ void SpiTransportProvider::ProcessIdleState()
 
     vPortFree(receiveBuffer);
     vPortFree(transmitBuffer);
-    if (_currentHeader)
-    {
-        vPortFree(_currentHeader);
-    }
+    ClearCurrentHeader();
     _currentHeader = messageHeader;
     _currentState = AcknowledgingMessageHeader;
 }
@@ -448,31 +458,10 @@ void SpiTransportProvider::ProcessAcknowledgingMessageHeaderState()
 {
     ESP_LOGI(__func__, "Entering Method.");
 
-    spi_slave_transaction_t transaction;
-
-    memset(&transaction, 0, sizeof(transaction));
-    uint8_t *transmitBuffer = (uint8_t *) pvPortMalloc(_headerFrameSize);
-    uint8_t *receiveBuffer = (uint8_t *) pvPortMalloc(_headerFrameSize);
-
-    _currentHeader->MessageType = _packetType;
-    _currentHeader->StatusCode = _responseCode;
-    uint8_t *ackFrame = (uint8_t *) Encoders::EncodeMessage(_currentHeader);
-    memset(transmitBuffer, 0, _headerFrameSize);
-    memcpy(transmitBuffer, ackFrame, _headerFrameSize);
-    vPortFree(ackFrame);
-
-    memset(receiveBuffer, 0, _headerFrameSize);
-
-    transaction.rx_buffer = receiveBuffer;
-    transaction.tx_buffer = transmitBuffer;       // This will have been setup by the Acknowledge functions.
-    transaction.length = _headerFrameSize * 8;
-
-    ESP_ERROR_CHECK(spi_slave_transmit(VSPI_HOST, &transaction, portMAX_DELAY));
-    gpio_set_level(Gpio::ESP32_READY_PIN, 0);
-
-    int dataSize = transaction.length / 8;
+    spi_slave_transaction_t *transaction = AcknowledgeMessage(_currentHeader, _responseCode, _packetType);
+    int dataSize = transaction->length / 8;
     ESP_LOGI(__func__, "Received %d bytes.", dataSize);
-    ESP_LOG_BUFFER_HEX(__func__, transaction.rx_buffer, dataSize);
+    ESP_LOG_BUFFER_HEX(__func__, transaction->rx_buffer, dataSize);
 
     if (_currentHeader)
     {
@@ -489,8 +478,7 @@ void SpiTransportProvider::ProcessAcknowledgingMessageHeaderState()
             //
             //
             //
-            vPortFree(_currentHeader);
-            _currentHeader = nullptr;
+            ClearCurrentHeader();
             _currentState = Idle;
         }
         else
@@ -506,8 +494,9 @@ void SpiTransportProvider::ProcessAcknowledgingMessageHeaderState()
     {
         _currentState = Idle;
     }
-    vPortFree(transmitBuffer);
-    vPortFree(receiveBuffer);
+    vPortFree((void *) transaction->rx_buffer);
+    vPortFree((void *) transaction->tx_buffer);
+    vPortFree(transaction);
     vTaskDelay(50 / portTICK_PERIOD_MS);
 }
 
@@ -553,26 +542,21 @@ void SpiTransportProvider::ProcessWaitingForMessageBodyState()
         }
         else
         {
-            vPortFree(_currentHeader);
-            _currentHeader = nullptr;
+            ClearCurrentHeader();
         }
     }
     else
     {
         code = StatusCodes::CRCError;
         type = PacketType::Nak;
-        vPortFree(_currentHeader);
-        _currentHeader = nullptr;
+        ClearCurrentHeader();
     }
-
-    AcknowledgeMessage(message, AcknowledingMessageBody, code, type);
 
     vPortFree(encodedMessageBody);
     vPortFree(dummyTxBuffer);
     if (_currentHeader)
     {
-      vPortFree(_currentHeader);
-      _currentHeader = nullptr;
+        ClearCurrentHeader();
         _currentState = AcknowledingMessageBody;
     }
     else
@@ -602,11 +586,7 @@ void SpiTransportProvider::ProcessAcknowledingMessageBodyState()
     ESP_LOGI(__func__, "Received %d bytes.", dataSize);
     ESP_LOG_BUFFER_HEX(__func__, transaction.rx_buffer, dataSize);
 
-    if (_currentHeader)
-    {
-        vPortFree(_currentHeader);
-        _currentHeader = nullptr;
-    }
+    ClearCurrentHeader();
     _currentState = Idle;
     vTaskDelay(50 / portTICK_PERIOD_MS);
 }
