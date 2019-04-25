@@ -40,7 +40,7 @@ private:
     /*
      *      SPI Transaction.
      */
-    static spi_slave_transaction_t _transaction;
+//    static spi_slave_transaction_t _transaction;
 
     /*
      *      Current state of the SPI transport layer.
@@ -67,7 +67,15 @@ private:
      */
     static uint32_t _headerFrameSize;
 
-    Message *_lastMessageReceived = nullptr;
+    /*
+     *      Current message header being processed.  The STM32 will send
+     *      the message header before the message body.  This is done so
+     *      that the ESP32 can allocate enough memory for the data being
+     *      sent.
+     *
+     *      This variable holds the message header that has been sent.
+     */
+    Message *_currentHeader = nullptr;
 
     /*
      *      Handle for the System request handler task.
