@@ -25,7 +25,7 @@ private:
     /*
      *      Possible states for the SPI transport layer.
      */
-    enum SpiStates { Invalid, Idle, WaitingForMessageHeader, WaitingForHeaderAckRequest, AcknowledgingMessageHeader,
+    enum SpiStates { Invalid, Idle, AcknowledgingMessageHeader,
         WaitingForMessageBody, AcknowledingMessageBody, WantToSendMessageHeader,
         WantToSendMessageBody, WantToSendTransportMessage };
 
@@ -135,7 +135,6 @@ private:
     void ProcessIdleState();
 
     void ProcessAcknowledgingMessageHeaderState();
-    void ProcessWaitingForHeaderAckRequestState();
     void ProcessWaitingForMessageBodyState();
     void ProcessAcknowledingMessageBodyState();
     void ProcessWantToSendMessageHeaderState();
