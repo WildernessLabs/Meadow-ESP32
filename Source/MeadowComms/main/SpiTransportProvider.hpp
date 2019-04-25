@@ -141,7 +141,7 @@ private:
     void ProcessWantToSendMessageHeaderState();
     void ProcessWantToSendMessageBodyState();
     void ProcessWantToSendTransportMessageState();
-
+    void FreeUpTransactionHeapStorage(spi_slave_transaction_t *);
     /*
      *      ISR for the GPIO ISR.
      */

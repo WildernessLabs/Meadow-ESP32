@@ -198,25 +198,24 @@ SpiTransportProvider::~SpiTransportProvider()
  */
 
 /*
- *
- */
-//void SpiTransportProvider::AcknowledgeMessage(SpiStates newState, StatusCodes::StatusCodes code, PacketType packetType)
-//{
-//    Message dummyMessage;
-//
-//    memset(&dummyMessage, 0, sizeof(Message));
-//    dummyMessage.MessageType = packetType;
-//    dummyMessage.Interface = Esp32Interfaces::Transport;
-//    dummyMessage.Function = 0;
-//    dummyMessage.MessageID = 0;
-//    dummyMessage.StatusCode = code;
-//    dummyMessage.Payload = nullptr;
-//    dummyMessage.PayloadLength = 0;
-//    AcknowledgeMessage(&dummyMessage, newState, code, packetType);
-//}
-
-/*
  *      Start the acknowledgement process.
+ *
+ *      @param message
+ *          Message to acknowledge.
+ *
+ *      @param code
+ *          Status code to return.
+ *
+ *      @param packetType
+ *          Type of message to return.
+ *
+ *      @returns spi_slave_transaction_t object
+ *          This is the transaction that is returned by the ESP-IDF.
+ *
+ *      @Notes
+ *          This method allocates the transaction and two buffers on the heap.  It is essential
+ *          that the caller cleans up both the transaction and the buffers after they are no
+ *          longer necessary.
  */
 spi_slave_transaction_t *SpiTransportProvider::AcknowledgeMessage(Message *message, StatusCodes::StatusCodes code, PacketType packetType)
 {
@@ -245,21 +244,15 @@ spi_slave_transaction_t *SpiTransportProvider::AcknowledgeMessage(Message *messa
     return(transaction);
 }
 
-///*
-// *
-// */
-//void SpiTransportProvider::SendErrorResponse(StatusCodes::StatusCodes errorCode)
-//{
-//    Message *message;
-//
-//    message = (Message *) _transmitBuffer;
-//    message->Interface = Esp32Interfaces::System;
-//    message->Function = SystemFunction::Echo;
-//    message->MessageID = 0x00;
-//    message->MessageType = PacketType::Data;
-//    message->PayloadLength = 0;
-//    message->Payload = (uint8_t *) 0;
-//}
+/*
+ *      Remove
+ */
+void SpiTransportProvider::FreeUpTransactionHeapStorage(spi_slave_transaction_t *transaction)
+{
+    vPortFree((void *) transaction->rx_buffer);
+    vPortFree((void *) transaction->tx_buffer);
+    vPortFree(transaction);
+}
 
 /*
  *      SPI Post Transmission callback
@@ -494,9 +487,7 @@ void SpiTransportProvider::ProcessAcknowledgingMessageHeaderState()
     {
         _currentState = Idle;
     }
-    vPortFree((void *) transaction->rx_buffer);
-    vPortFree((void *) transaction->tx_buffer);
-    vPortFree(transaction);
+    FreeUpTransactionHeapStorage(transaction);
     vTaskDelay(50 / portTICK_PERIOD_MS);
 }
 
@@ -530,12 +521,10 @@ void SpiTransportProvider::ProcessWaitingForMessageBodyState()
     ESP_LOG_BUFFER_HEX(__func__, transaction.rx_buffer, dataSize);
     Message *message = Encoders::ExtractMessage((uint8_t *) transaction.rx_buffer, encodedMessageBodySize);
 
-    StatusCodes::StatusCodes code;
-    PacketType type;
     if (message)
     {
-        code = StatusCodes::CompletedOK;
-        type = PacketType::Ack;
+        _responseCode = StatusCodes::CompletedOK;
+        _packetType = PacketType::Ack;
         if (_currentHeader->Interface != Esp32Interfaces::Transport)
         {
             _messageDispatcher->QueueMessageForEsp32(message);
@@ -547,8 +536,8 @@ void SpiTransportProvider::ProcessWaitingForMessageBodyState()
     }
     else
     {
-        code = StatusCodes::CRCError;
-        type = PacketType::Nak;
+        _responseCode = StatusCodes::CRCError;
+        _packetType = PacketType::Nak;
         ClearCurrentHeader();
     }
 
@@ -556,7 +545,6 @@ void SpiTransportProvider::ProcessWaitingForMessageBodyState()
     vPortFree(dummyTxBuffer);
     if (_currentHeader)
     {
-        ClearCurrentHeader();
         _currentState = AcknowledingMessageBody;
     }
     else
@@ -570,22 +558,12 @@ void SpiTransportProvider::ProcessAcknowledingMessageBodyState()
 {
     ESP_LOGI(__func__, "Entering Method.");
 
-    spi_slave_transaction_t transaction;
-
-    memset(&transaction, 0, sizeof(transaction));
-    memset(_headerBuffer, 0, _headerFrameSize);
-
-    transaction.rx_buffer = _headerBuffer;
-    transaction.tx_buffer = _transmitBuffer;       // This will have been setup by the Acknowledge functions.
-    transaction.length = _headerFrameSize * 8;
-
-    ESP_ERROR_CHECK(spi_slave_transmit(VSPI_HOST, &transaction, portMAX_DELAY));
-    gpio_set_level(Gpio::ESP32_READY_PIN, 0);
-
-    int dataSize = transaction.length / 8;
+    spi_slave_transaction_t *transaction = AcknowledgeMessage(_currentHeader, _responseCode, _packetType);
+    int dataSize = transaction->length / 8;
     ESP_LOGI(__func__, "Received %d bytes.", dataSize);
-    ESP_LOG_BUFFER_HEX(__func__, transaction.rx_buffer, dataSize);
+    ESP_LOG_BUFFER_HEX(__func__, transaction->rx_buffer, dataSize);
 
+    FreeUpTransactionHeapStorage(transaction);
     ClearCurrentHeader();
     _currentState = Idle;
     vTaskDelay(50 / portTICK_PERIOD_MS);
