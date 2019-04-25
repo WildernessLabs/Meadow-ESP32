@@ -157,14 +157,29 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
 {
     switch (request->Function)
     {
-        case WIFI_FUNC_START:
+        case WiFiFunction::Start:
             StartNetwork(request);
             break;
-        case WIFI_FUNC_GET_ACCESS_POINTS:
-            GetAvailableNetworks(request);
+        case WiFiFunction::Stop:
+            ESP_LOGE(__func__, "WiFi Stop function is not implemented yet.");
             break;
-        case WIFI_FUNC_HTTP_GET:
-            HttpGet(request);
+        case WiFiFunction::Connect:
+            ESP_LOGE(__func__, "WiFi Connect function is not implemented yet.");
+            break;
+        case WiFiFunction::Disconnect:
+            ESP_LOGE(__func__, "WiFi Disconnect function is not implemented yet.");
+            break;
+        case WiFiFunction::SetConfiguration:
+            ESP_LOGE(__func__, "WiFi SetConfiguration function is not implemented yet.");
+            break;
+        case WiFiFunction::GetConfiguration:
+            ESP_LOGE(__func__, "WiFi GetConfiguration function is not implemented yet.");
+            break;
+        case WiFiFunction::SwitchAntenna:
+            ESP_LOGE(__func__, "WiFi SetAntenna function not implemented.");
+            break;
+        case WiFiFunction::GetAccessPoints:
+            GetAvailableNetworks(request);
             break;
         default:
             ESP_LOGI(__func__, "Unknown WiFi message received, function %d", request->Function);
