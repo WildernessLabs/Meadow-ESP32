@@ -8,7 +8,7 @@
 #ifndef _GPIO_HPP_
 #define _GPIO_HPP_
 
-//#define USE_MEADOW
+#define USE_MEADOW
 
 #include "esp_system.h"
 
