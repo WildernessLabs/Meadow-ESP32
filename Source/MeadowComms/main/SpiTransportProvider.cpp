@@ -437,16 +437,6 @@ void SpiTransportProvider::ProcessIdleState()
     _currentState = AcknowledgingMessageHeader;
 }
 
-void SpiTransportProvider::ProcessWaitingForMessageHeaderState()
-{
-    ESP_LOGI(__func__, "Entering Method.");
-}
-
-void SpiTransportProvider::ProcessWaitingForHeaderAckRequestState()
-{
-    ESP_LOGI(__func__, "Entering Method.");
-}
-
 void SpiTransportProvider::ProcessAcknowledgingMessageHeaderState()
 {
     ESP_LOGI(__func__, "Entering Method.");
@@ -616,14 +606,8 @@ void SpiTransportProvider::IncomingSpiMessageTask(void *pvParameters)
             case Idle:
                 sender->ProcessIdleState();
                 break;
-            case WaitingForMessageHeader:
-                sender->ProcessWaitingForMessageHeaderState();
-                break;
             case AcknowledgingMessageHeader:
                 sender->ProcessAcknowledgingMessageHeaderState();
-                break;
-            case WaitingForHeaderAckRequest:
-                sender->ProcessWaitingForHeaderAckRequestState();
                 break;
             case WaitingForMessageBody:
                 sender->ProcessWaitingForMessageBodyState();
