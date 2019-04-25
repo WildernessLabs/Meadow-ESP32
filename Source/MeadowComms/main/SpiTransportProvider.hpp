@@ -88,8 +88,14 @@ private:
 
     SemaphoreHandle_t _currentStateMutexHandle;
 
+    /*
+     *      Response code that will be used in any acknowledgement messages.
+     */
     StatusCodes::StatusCodes _responseCode;
 
+    /*
+     *      Packet type that will be used in any acknowledgement messages.
+     */
     PacketType _packetType;
 
     /*
@@ -112,8 +118,6 @@ private:
      *      in some C code.
      */
     static void SpiPostSetupCallback(spi_slave_transaction_t *);
-
-    static void SendErrorResponse(StatusCodes::StatusCodes);
 
     /*
      *      Send an ACK or NAK with the specified code.
@@ -141,6 +145,7 @@ private:
     void ProcessWantToSendMessageBodyState();
     void ProcessWantToSendTransportMessageState();
     void FreeUpTransactionHeapStorage(spi_slave_transaction_t *);
+
     /*
      *      ISR for the GPIO ISR.
      */
