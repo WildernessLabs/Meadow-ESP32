@@ -88,6 +88,10 @@ private:
 
     SemaphoreHandle_t _currentStateMutexHandle;
 
+    uint32_t _responseCode;
+
+    uint8_t _packetType;
+
     /*
      *      Default destructor.
      */
