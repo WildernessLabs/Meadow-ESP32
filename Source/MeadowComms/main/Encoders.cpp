@@ -275,7 +275,7 @@ uint8_t *Encoders::EncodeMessage(Message *message)
     memset(buffer, 0, bufferSize);
     *buffer = message->MessageType;
     offset++;
-    *buffer = message->Interface;
+    *(buffer + offset) = message->Interface;
     offset++;
     EncodeUInt32(message->Function, buffer + offset);
     offset += 4;

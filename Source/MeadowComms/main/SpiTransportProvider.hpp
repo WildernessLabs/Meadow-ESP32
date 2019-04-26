@@ -96,7 +96,7 @@ private:
     /*
      *      Packet type that will be used in any acknowledgement messages.
      */
-    PacketType _packetType;
+    uint8_t _packetType;
 
     /*
      *      Default destructor.
@@ -122,7 +122,7 @@ private:
     /*
      *      Send an ACK or NAK with the specified code.
      */
-    spi_slave_transaction_t *AcknowledgeMessage(Message *, StatusCodes::StatusCodes, PacketType);
+    spi_slave_transaction_t *AcknowledgeMessage(Message *, StatusCodes::StatusCodes, uint8_t);
 
     /*
      *      FreeRTOS task handler for this class.

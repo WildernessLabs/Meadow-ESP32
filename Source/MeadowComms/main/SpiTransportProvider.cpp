@@ -195,6 +195,7 @@ SpiTransportProvider::~SpiTransportProvider()
  * ---------------------------------------------------------------------------
  */
 
+
 /*
  *      Start the acknowledgement process.
  *
@@ -215,13 +216,15 @@ SpiTransportProvider::~SpiTransportProvider()
  *          that the caller cleans up both the transaction and the buffers after they are no
  *          longer necessary.
  */
-spi_slave_transaction_t *SpiTransportProvider::AcknowledgeMessage(Message *message, StatusCodes::StatusCodes code, PacketType packetType)
+spi_slave_transaction_t *SpiTransportProvider::AcknowledgeMessage(Message *message, StatusCodes::StatusCodes code, uint8_t packetType)
 {
     spi_slave_transaction_t *transaction = SetupSpiSlaveTransaction(_headerFrameSize, _headerFrameSize);
 
-    _currentHeader->MessageType = (uint8_t) packetType;
-    _currentHeader->StatusCode = (uint32_t) code;
-    uint8_t *ackFrame = (uint8_t *) Encoders::EncodeMessage(message);
+    Message *copyOfMessage = CopyMessage(message, false);
+    copyOfMessage->MessageType = packetType;
+    copyOfMessage->StatusCode = (uint32_t) code;
+    uint8_t *ackFrame = (uint8_t *) Encoders::EncodeMessage(copyOfMessage);
+    vPortFree(copyOfMessage);
     memcpy((void *) transaction->tx_buffer, ackFrame, _headerFrameSize);
     vPortFree(ackFrame);
 
@@ -414,12 +417,12 @@ void SpiTransportProvider::ProcessIdleState()
         if (messageHeader)
         {
             _responseCode = StatusCodes::CompletedOK;
-            _packetType = PacketType::Ack;
+            _packetType = PacketType::Transport | PacketType::Ack;
         }
         else
         {
             _responseCode = StatusCodes::CRCError;
-            _packetType = PacketType::Nak;
+            _packetType = PacketType::Transport | PacketType::Nak;
 
             messageHeader = (Message *) pvPortMalloc(sizeof(Message));
             memset(messageHeader, 0, sizeof(Message));
@@ -435,7 +438,7 @@ void SpiTransportProvider::ProcessIdleState()
     else
     {
         _responseCode = StatusCodes::InvalidHeader;
-        _packetType = PacketType::Nak;
+        _packetType = PacketType::Transport | PacketType::Nak;
 
         messageHeader = (Message *) pvPortMalloc(sizeof(Message));
         memset(messageHeader, 0, sizeof(Message));
@@ -524,7 +527,7 @@ void SpiTransportProvider::ProcessWaitingForMessageBodyState()
     if (message)
     {
         _responseCode = StatusCodes::CompletedOK;
-        _packetType = PacketType::Ack;
+        _packetType = PacketType::Transport | PacketType::Ack;
         if (_currentHeader->Interface != Esp32Interfaces::Transport)
         {
             _messageDispatcher->QueueMessageForEsp32(message);
@@ -537,7 +540,7 @@ void SpiTransportProvider::ProcessWaitingForMessageBodyState()
     else
     {
         _responseCode = StatusCodes::CRCError;
-        _packetType = PacketType::Nak;
+        _packetType = PacketType::Transport | PacketType::Nak;
         ClearCurrentHeader();
     }
     FreeUpTransactionHeapStorage(transaction);
