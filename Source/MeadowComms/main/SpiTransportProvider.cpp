@@ -402,8 +402,6 @@ void SpiTransportProvider::ProcessIdleState()
         //
         //  TODO: message could be nullptr - deal with it.
         //
-        StatusCodes::StatusCodes code;
-        PacketType type;
         ClearCurrentHeader();
         if (messageHeader)
         {
@@ -587,16 +585,25 @@ void SpiTransportProvider::ProcessAcknowledingMessageBodyState()
     vTaskDelay(50 / portTICK_PERIOD_MS);
 }
 
+/*
+ *      Send a message header to the STM32.
+ */
 void SpiTransportProvider::ProcessWantToSendMessageHeaderState()
 {
     ESP_LOGI(__func__, "Entering Method.");
 }
 
+/*
+ *      Send a message body to the STM32.
+ */
 void SpiTransportProvider::ProcessWantToSendMessageBodyState()
 {
     ESP_LOGI(__func__, "Entering Method.");
 }
 
+/*
+ *      Start the transport message transmission process.
+ */
 void SpiTransportProvider::ProcessWantToSendTransportMessageState()
 {
     ESP_LOGI(__func__, "Entering Method.");
