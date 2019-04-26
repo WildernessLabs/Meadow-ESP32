@@ -223,7 +223,7 @@ spi_slave_transaction_t *SpiTransportProvider::AcknowledgeMessage(Message *messa
     Message *copyOfMessage = CopyMessage(message, false);
     copyOfMessage->MessageType = packetType;
     copyOfMessage->StatusCode = (uint32_t) code;
-    uint8_t *ackFrame = (uint8_t *) Encoders::EncodeMessage(copyOfMessage);
+    uint8_t *ackFrame = (uint8_t *) Encoders::EncodeMessage(copyOfMessage, true);
     vPortFree(copyOfMessage);
     memcpy((void *) transaction->tx_buffer, ackFrame, _headerFrameSize);
     vPortFree(ackFrame);
@@ -407,7 +407,7 @@ void SpiTransportProvider::ProcessIdleState()
     Message *messageHeader;
     if (transaction->trans_len >= (HEADER_SIZE * 8))
     {
-        messageHeader = Encoders::ExtractMessage((uint8_t *) transaction->rx_buffer, _headerFrameSize);
+        messageHeader = Encoders::ExtractMessage((uint8_t *) transaction->rx_buffer, _headerFrameSize, true);
         //
         //  TODO: message could be nullptr - deal with it.
         //
@@ -520,7 +520,7 @@ void SpiTransportProvider::ProcessWaitingForMessageBodyState()
     int dataSize = transaction->length / 8;
     ESP_LOGI(__func__, "Received %d bytes.", dataSize);
     ESP_LOG_BUFFER_HEX(__func__, transaction->rx_buffer, dataSize);
-    Message *message = Encoders::ExtractMessage((uint8_t *) transaction->rx_buffer, encodedMessageBodySize);
+    Message *message = Encoders::ExtractMessage((uint8_t *) transaction->rx_buffer, encodedMessageBodySize, false);
 
     if (message)
     {
