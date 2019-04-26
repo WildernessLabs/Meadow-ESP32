@@ -110,8 +110,6 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
     memset(&chipSelectConfiguration, 0, sizeof(gpio_config_t));
     chipSelectConfiguration.intr_type = GPIO_INTR_DISABLE;
     chipSelectConfiguration.mode = GPIO_MODE_INPUT;
-//    chipSelectConfiguration.pull_up_en = GPIO_PULLUP_ENABLE;
-//    chipSelectConfiguration.pull_down_en = GPIO_PULLDOWN_DISABLE;
     chipSelectConfiguration.pin_bit_mask = (1 << Gpio::CHIP_SELECT_PIN);
     gpio_config(&chipSelectConfiguration);
 
