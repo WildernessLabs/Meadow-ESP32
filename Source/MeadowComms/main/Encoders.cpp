@@ -275,7 +275,7 @@ uint8_t *Encoders::EncodeMessage(Message *message)
     memset(buffer, 0, bufferSize);
     *buffer = message->MessageType;
     offset++;
-    *(buffer + offset) = message->Interface;
+    *buffer = message->Interface;
     offset++;
     EncodeUInt32(message->Function, buffer + offset);
     offset += 4;
@@ -295,6 +295,45 @@ uint8_t *Encoders::EncodeMessage(Message *message)
     {
         memcpy(message->Payload, (uint8_t *) (buffer + offset), message->PayloadLength);
     }
+    uint32_t crc = CRC32(buffer, bufferSize);
+    EncodeUInt32(crc, buffer + CRC_OFFSET);
+
+    return(buffer);
+}
+
+/*
+ *      Create a message header from the message.
+ *
+ *      @param message
+ *          Message to be used to generate the message header.
+ *
+ *      @returns
+ *          Padded header for the message.
+ */
+uint8_t *Encoders::EncodeHeader(Message *message)
+{
+    uint32_t bufferSize = CalculateSpiBufferSize(sizeof(Message));
+    int offset = 0;
+    uint8_t *buffer = (uint8_t *) pvPortMalloc(bufferSize);
+    
+    memset(buffer, 0, bufferSize);
+    *buffer = message->MessageType;
+    offset++;
+    *buffer = message->Interface;
+    offset++;
+    EncodeUInt32(message->Function, buffer + offset);
+    offset += 4;
+    EncodeUInt32(message->StatusCode, buffer + offset);
+    offset += 4;
+    EncodeUInt32(message->MessageID, buffer + offset);
+    offset += 4;
+    EncodeUInt32(message->PayloadLength, buffer + offset);
+    offset += 4;
+    //
+    //  The byte after the PayloadLength is the CRC.  This is filled in later
+    //  and so a 0 is written into the message temporarily.
+    //
+    EncodeUInt32(0, buffer + offset);
     uint32_t crc = CRC32(buffer, bufferSize);
     EncodeUInt32(crc, buffer + CRC_OFFSET);
 
