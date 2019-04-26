@@ -253,10 +253,8 @@ spi_slave_transaction_t * SpiTransportProvider::SetupSpiSlaveTransaction(uint32_
     spi_slave_transaction_t *transaction = (spi_slave_transaction_t *) pvPortMalloc(sizeof(spi_slave_transaction_t));
 
     memset(transaction, 0, sizeof(spi_slave_transaction_t));
-    uint8_t *transmitBuffer = (uint8_t *) heap_caps_malloc(transmitBufferSize, MALLOC_CAP_DMA);
-    uint8_t *receiveBuffer = (uint8_t *) heap_caps_malloc(receiveBufferSize, MALLOC_CAP_DMA);
-    memset(receiveBuffer, 0, receiveBufferSize);
-    memset(transmitBuffer, 0, transmitBufferSize);
+    uint8_t *transmitBuffer = (uint8_t *) heap_caps_calloc(transmitBufferSize, 1, MALLOC_CAP_DMA);
+    uint8_t *receiveBuffer = (uint8_t *) heap_caps_calloc(receiveBufferSize, 1, MALLOC_CAP_DMA);
 
     transaction->rx_buffer = receiveBuffer;
     transaction->tx_buffer = transmitBuffer;
