@@ -249,10 +249,24 @@ uint32_t Encoders::ProgressiveCRC32(uint32_t currentChecksum, uint8_t byte)
 
 /*
  *      Encode a message into a block of memory.
+ *
+ *      @param message
+ *          Message structure to encode in to the byte buffer.
+ *
+ *      @param header
+ *          Copy this as a header only (i.e. do not copy the payload).
+ *
+ *      @returns
+ *          byte buffer containing the encoded message.
  */
-uint8_t *Encoders::EncodeMessage(Message *message)
+uint8_t *Encoders::EncodeMessage(Message *message, bool header)
 {
-    uint32_t bufferSize = Encoders::CalculateSpiBufferSize(sizeof(Message) + message->PayloadLength);
+    uint32_t messageSize = HEADER_SIZE;
+    if (!header)
+    {
+        messageSize += message->PayloadLength;
+    }
+    uint32_t bufferSize = Encoders::CalculateSpiBufferSize(messageSize);
     int offset = 0;
     uint8_t *buffer = (uint8_t *) pvPortMalloc(bufferSize);
     
@@ -275,7 +289,7 @@ uint8_t *Encoders::EncodeMessage(Message *message)
     //
     EncodeUInt32(0, buffer + offset);
     offset += 4;
-    if (message->PayloadLength > 0)
+    if (!header & (message->PayloadLength > 0))
     {
         memcpy(message->Payload, (uint8_t *) (buffer + offset), message->PayloadLength);
     }
@@ -286,48 +300,19 @@ uint8_t *Encoders::EncodeMessage(Message *message)
 }
 
 /*
- *      Create a message header from the message.
- *
- *      @param message
- *          Message to be used to generate the message header.
- *
- *      @returns
- *          Padded header for the message.
- */
-uint8_t *Encoders::EncodeHeader(Message *message)
-{
-    uint32_t bufferSize = CalculateSpiBufferSize(sizeof(Message));
-    int offset = 0;
-    uint8_t *buffer = (uint8_t *) pvPortMalloc(bufferSize);
-    
-    memset(buffer, 0, bufferSize);
-    *buffer = message->MessageType;
-    offset++;
-    *(buffer + offset) = message->Interface;
-    offset++;
-    EncodeUInt32(message->Function, buffer + offset);
-    offset += 4;
-    EncodeUInt32(message->StatusCode, buffer + offset);
-    offset += 4;
-    EncodeUInt32(message->MessageID, buffer + offset);
-    offset += 4;
-    EncodeUInt32(message->PayloadLength, buffer + offset);
-    offset += 4;
-    //
-    //  The byte after the PayloadLength is the CRC.  This is filled in later
-    //  and so a 0 is written into the message temporarily.
-    //
-    EncodeUInt32(0, buffer + offset);
-    uint32_t crc = CRC32(buffer, bufferSize);
-    EncodeUInt32(crc, buffer + CRC_OFFSET);
-
-    return(buffer);
-}
-
-/*
  *      Extract a message from a block of memory and create a new Message object.
+ *
+ *      @param buffer
+ *          Byte (uint8_t) array containing the encoded message.
+ *
+ *      @param bufferLength
+ *          Size of the buffer.
+ *
+ *      @param header
+ *          Indicate if we should extract the header information only
+ *          (i.e. do not copy the payload).
  */
-Message *Encoders::ExtractMessage(uint8_t *buffer, uint32_t bufferLength)
+Message *Encoders::ExtractMessage(uint8_t *buffer, uint32_t bufferLength, bool header)
 {
     uint32_t crc = ExtractUInt32(buffer + CRC_OFFSET);
     EncodeUInt32(0, buffer + CRC_OFFSET);
@@ -352,7 +337,7 @@ Message *Encoders::ExtractMessage(uint8_t *buffer, uint32_t bufferLength)
         //  Move over the last field and skip the CRC entry.
         //
         buffer += 8;
-        if (message->PayloadLength > 0)
+        if (!header | (message->PayloadLength > 0))
         {
             message->Payload = (uint8_t *) pvPortMalloc(message->PayloadLength);
             memcpy(buffer, message->Payload, message->PayloadLength);
