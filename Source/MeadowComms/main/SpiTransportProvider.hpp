@@ -179,6 +179,12 @@ private:
     void ProcessWantToSendTransportMessageState();
 
     /*
+     *      Create a new SPI slave transmission object with zero filled
+     *      buffers of the requested size.
+     */
+    spi_slave_transaction_t *SetupSpiSlaveTransaction(uint32_t, uint32_t);
+
+    /*
      *      Free any memory allocated for the transaction and its Tx and Rx buffers.
      */
     void FreeUpTransactionHeapStorage(spi_slave_transaction_t *);

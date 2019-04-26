@@ -219,27 +219,47 @@ SpiTransportProvider::~SpiTransportProvider()
  */
 spi_slave_transaction_t *SpiTransportProvider::AcknowledgeMessage(Message *message, StatusCodes::StatusCodes code, PacketType packetType)
 {
-    spi_slave_transaction_t *transaction = (spi_slave_transaction_t *) pvPortMalloc(sizeof(spi_slave_transaction_t));
-
-    memset(transaction, 0, sizeof(spi_slave_transaction_t));
-    uint8_t *transmitBuffer = (uint8_t *) pvPortMalloc(_headerFrameSize);
-    uint8_t *receiveBuffer = (uint8_t *) pvPortMalloc(_headerFrameSize);
+    spi_slave_transaction_t *transaction = SetupSpiSlaveTransaction(_headerFrameSize, _headerFrameSize);
 
     _currentHeader->MessageType = (uint8_t) packetType;
     _currentHeader->StatusCode = (uint32_t) code;
     uint8_t *ackFrame = (uint8_t *) Encoders::EncodeMessage(message);
-    memset(transmitBuffer, 0, _headerFrameSize);
-    memcpy(transmitBuffer, ackFrame, _headerFrameSize);
+    memcpy((void *) transaction->tx_buffer, ackFrame, _headerFrameSize);
     vPortFree(ackFrame);
-
-    memset(receiveBuffer, 0, _headerFrameSize);
-
-    transaction->rx_buffer = receiveBuffer;
-    transaction->tx_buffer = transmitBuffer;       // This will have been setup by the Acknowledge functions.
-    transaction->length = _headerFrameSize * 8;
 
     ESP_ERROR_CHECK(spi_slave_transmit(VSPI_HOST, transaction, portMAX_DELAY));
     gpio_set_level(Gpio::ESP32_READY_PIN, 0);
+
+    return(transaction);
+}
+
+/*
+ *      Create a new SPI slave transmission object with zero filled
+ *      buffers of the requested size.
+ *
+ *      @param receiveBufferSize
+ *          Number of bytes in the receive buffer.
+ *
+ *      @param transmitBufferSize
+ *          Number of bytes in the transmit buffer.
+ *
+ *      @returns
+ *          Pointer to a spi_slave_transaction_t object with the
+ *          buffers set up and filled with zeroes.
+ */
+spi_slave_transaction_t * SpiTransportProvider::SetupSpiSlaveTransaction(uint32_t receiveBufferSize, uint32_t transmitBufferSize)
+{
+    spi_slave_transaction_t *transaction = (spi_slave_transaction_t *) pvPortMalloc(sizeof(spi_slave_transaction_t));
+
+    memset(transaction, 0, sizeof(spi_slave_transaction_t));
+    uint8_t *transmitBuffer = (uint8_t *) heap_caps_malloc(transmitBufferSize, MALLOC_CAP_DMA);
+    uint8_t *receiveBuffer = (uint8_t *) heap_caps_malloc(receiveBufferSize, MALLOC_CAP_DMA);
+    memset(receiveBuffer, 0, receiveBufferSize);
+    memset(transmitBuffer, 0, transmitBufferSize);
+
+    transaction->rx_buffer = receiveBuffer;
+    transaction->tx_buffer = transmitBuffer;
+    transaction->length = transmitBufferSize * 8;
 
     return(transaction);
 }
@@ -253,8 +273,8 @@ spi_slave_transaction_t *SpiTransportProvider::AcknowledgeMessage(Message *messa
  */
 void SpiTransportProvider::FreeUpTransactionHeapStorage(spi_slave_transaction_t *transaction)
 {
-    vPortFree((void *) transaction->rx_buffer);
-    vPortFree((void *) transaction->tx_buffer);
+    heap_caps_free((void *) transaction->rx_buffer);
+    heap_caps_free((void *) transaction->tx_buffer);
     vPortFree(transaction);
 }
 
@@ -376,29 +396,19 @@ void SpiTransportProvider::ProcessIdleState()
 {
     ESP_LOGI(__func__, "Entering Method.");
 
-    spi_slave_transaction_t transaction;
+    spi_slave_transaction_t *transaction = SetupSpiSlaveTransaction(_headerFrameSize, _headerFrameSize);
 
-    memset(&transaction, 0, sizeof(transaction));
-    uint8_t *transmitBuffer = (uint8_t *) pvPortMalloc(_headerFrameSize);
-    uint8_t *receiveBuffer = (uint8_t *) pvPortMalloc(_headerFrameSize);
-    memset(receiveBuffer, 0, _headerFrameSize);
-    memset(transmitBuffer, 0, _headerFrameSize);
-
-    transaction.rx_buffer = receiveBuffer;
-    transaction.tx_buffer = transmitBuffer;
-    transaction.length = _headerFrameSize * 8;
-
-    ESP_ERROR_CHECK(spi_slave_transmit(VSPI_HOST, &transaction, portMAX_DELAY));
+    ESP_ERROR_CHECK(spi_slave_transmit(VSPI_HOST, transaction, portMAX_DELAY));
     gpio_set_level(Gpio::ESP32_READY_PIN, 0);
 
-    int dataSize = transaction.length / 8;
+    int dataSize = transaction->length / 8;
     ESP_LOGI(__func__, "Received %d bytes.", dataSize);
-    ESP_LOG_BUFFER_HEX(__func__, transaction.rx_buffer, dataSize);
+    ESP_LOG_BUFFER_HEX(__func__, transaction->rx_buffer, dataSize);
 
     Message *messageHeader;
-    if (transaction.trans_len >= (HEADER_SIZE * 8))
+    if (transaction->trans_len >= (HEADER_SIZE * 8))
     {
-        messageHeader = Encoders::ExtractMessage((uint8_t *) transaction.rx_buffer, _headerFrameSize);
+        messageHeader = Encoders::ExtractMessage((uint8_t *) transaction->rx_buffer, _headerFrameSize);
         //
         //  TODO: message could be nullptr - deal with it.
         //
@@ -439,9 +449,7 @@ void SpiTransportProvider::ProcessIdleState()
         messageHeader->Payload = nullptr;
         messageHeader->PayloadLength = 0;
     }
-
-    vPortFree(receiveBuffer);
-    vPortFree(transmitBuffer);
+    FreeUpTransactionHeapStorage(transaction);
     ClearCurrentHeader();
     _currentHeader = messageHeader;
     _currentState = AcknowledgingMessageHeader;
@@ -501,31 +509,19 @@ void SpiTransportProvider::ProcessWaitingForMessageBodyState()
 {
     ESP_LOGI(__func__, "Entering Method.");
 
-    spi_slave_transaction_t transaction;
-
-    memset(&transaction, 0, sizeof(transaction));
-
     uint32_t encodedMessageBodySize = Encoders::CalculateSpiBufferSize(HEADER_SIZE + _currentHeader->PayloadLength);
+    spi_slave_transaction_t *transaction = SetupSpiSlaveTransaction(encodedMessageBodySize, encodedMessageBodySize);
+
     ESP_LOGI(__func__, "Current header payload length: %d", _currentHeader->PayloadLength);
     ESP_LOGI(__func__, "Message body buffer size: %d", encodedMessageBodySize);
 
-    uint8_t *encodedMessageBody = (uint8_t *) pvPortMalloc(encodedMessageBodySize);
-    memset(encodedMessageBody, 0, encodedMessageBodySize);
-
-    uint8_t *dummyTxBuffer = (uint8_t *) pvPortMalloc(encodedMessageBodySize);
-    memset(dummyTxBuffer, 0, encodedMessageBodySize);
-
-    transaction.rx_buffer = encodedMessageBody;
-    transaction.tx_buffer = dummyTxBuffer;
-    transaction.length = encodedMessageBodySize * 8;
-
-    ESP_ERROR_CHECK(spi_slave_transmit(VSPI_HOST, &transaction, portMAX_DELAY));
+    ESP_ERROR_CHECK(spi_slave_transmit(VSPI_HOST, transaction, portMAX_DELAY));
     gpio_set_level(Gpio::ESP32_READY_PIN, 0);
 
-    int dataSize = transaction.length / 8;
+    int dataSize = transaction->length / 8;
     ESP_LOGI(__func__, "Received %d bytes.", dataSize);
-    ESP_LOG_BUFFER_HEX(__func__, transaction.rx_buffer, dataSize);
-    Message *message = Encoders::ExtractMessage((uint8_t *) transaction.rx_buffer, encodedMessageBodySize);
+    ESP_LOG_BUFFER_HEX(__func__, transaction->rx_buffer, dataSize);
+    Message *message = Encoders::ExtractMessage((uint8_t *) transaction->rx_buffer, encodedMessageBodySize);
 
     if (message)
     {
@@ -546,9 +542,7 @@ void SpiTransportProvider::ProcessWaitingForMessageBodyState()
         _packetType = PacketType::Nak;
         ClearCurrentHeader();
     }
-
-    vPortFree(encodedMessageBody);
-    vPortFree(dummyTxBuffer);
+    FreeUpTransactionHeapStorage(transaction);
     if (_currentHeader)
     {
         _currentState = AcknowledingMessageBody;
