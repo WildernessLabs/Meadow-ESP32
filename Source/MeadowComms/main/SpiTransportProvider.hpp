@@ -123,8 +123,6 @@ private:
      *      Send an ACK or NAK with the specified code.
      */
     spi_slave_transaction_t *AcknowledgeMessage(Message *, StatusCodes::StatusCodes, PacketType);
-//    void AcknowledgeMessage(SpiStates, StatusCodes::StatusCodes, PacketType);
-//    void AcknowledgeMessage(Message *, SpiStates, StatusCodes::StatusCodes, PacketType);
 
     /*
      *      FreeRTOS task handler for this class.
@@ -133,17 +131,56 @@ private:
 
     static void IncomingSpiMessageTask(void *);
 
-    void ProcessWaitingForMessageHeaderState();
-
+    /*
+     *      Clear the _currentHeader variable and free any allocated
+     *      heap memory.
+     */
     void ClearCurrentHeader();
+
+    /*
+     *      Start to process incoming messages (i.e. move from the idle state
+     *      into one where the ESP32 is sending or receiving data).
+     */
     void ProcessIdleState();
 
+    /*
+     *      Implement the incoming message header reception process.
+     */
+    void ProcessWaitingForMessageHeaderState();
+
+    /*
+     *      Implement the incoming message header acknowledgement process.
+     */
     void ProcessAcknowledgingMessageHeaderState();
+
+    /*
+     *      Implement the incoming message body reception process.
+     */
     void ProcessWaitingForMessageBodyState();
+
+    /*
+     *      Implement the incoming message body acknowledgement process.
+     */
     void ProcessAcknowledingMessageBodyState();
+
+    /*
+     *      Implement the out-bound message header process.
+     */
     void ProcessWantToSendMessageHeaderState();
+
+    /*
+     *      Implement the out-bound message body process.
+     */
     void ProcessWantToSendMessageBodyState();
+
+    /*
+     *      Implement the out-bound transport message process.
+     */
     void ProcessWantToSendTransportMessageState();
+
+    /*
+     *      Free any memory allocated for the transaction and its Tx and Rx buffers.
+     */
     void FreeUpTransactionHeapStorage(spi_slave_transaction_t *);
 
     /*
