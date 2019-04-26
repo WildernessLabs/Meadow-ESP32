@@ -28,4 +28,6 @@ struct Message
 const uint32_t HEADER_SIZE = 23;
 const uint32_t CRC_OFFSET = 18;
 
+Message *CopyMessage(Message *, bool);
+
 #endif /* _ESP32_MESSAGING_HPP_ */
