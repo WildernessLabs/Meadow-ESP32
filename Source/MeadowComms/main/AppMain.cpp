@@ -7,7 +7,6 @@
 #include <string.h>
 #include "nvs_flash.h"
 #include "esp_ota_ops.h"
-//#include "esp_image_format.h"
 
 #include "Logging.hpp"
 #include "MessageDispatcher.hpp"
