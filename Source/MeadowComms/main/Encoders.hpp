@@ -30,12 +30,12 @@ namespace Esp32Messaging
 
     const uint32_t START_NETWORK_ENCODED_MESSAGE_SIZE = 8;
 
-    struct SwitchAntenna
+    struct AntennaInfo
     {
         uint8_t Antenna;
     };
 
-    const uint32_t SWITCH_ANTENNA_ENCODED_MESSAGE_SIZE = 1;
+    const uint32_t ANTENNA_INFO_ENCODED_MESSAGE_SIZE = 1;
 
 }
 
@@ -68,8 +68,8 @@ public:
     static Message *ExtractMessage(uint8_t *, uint32_t, bool);
     static void EncodeStartNetwork(Esp32Messaging::StartNetwork *, uint8_t *, int);
     static Esp32Messaging::StartNetwork *ExtractStartNetwork(uint8_t *);
-    static void EncodeSwitchAntenna(Esp32Messaging::SwitchAntenna *, uint8_t *, int);
-    static Esp32Messaging::SwitchAntenna *ExtractSwitchAntenna(uint8_t *);
+    static void EncodeAntennaInfo(Esp32Messaging::AntennaInfo *, uint8_t *, int);
+    static Esp32Messaging::AntennaInfo *ExtractAntennaInfo(uint8_t *);
 
 };
 

@@ -166,10 +166,40 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
     }
     xTaskCreate(IncomingSpiMessageTask, "IncomingSPIMessageTask", 2048 * 2, this, configMAX_PRIORITIES - 1, &SpiTransportProvider::_spiMessageTaskHandle);
 
+    _outboundMessage = nullptr;
+
+    //
+    //  TODO: Remove the code below once testing is complete.
+    //
+    Esp32Messaging::AntennaInfo *antennaInfo = (Esp32Messaging::AntennaInfo *) pvPortMalloc(sizeof(Esp32Messaging::AntennaInfo));
+    antennaInfo->Antenna = Antenna::OnBoard;
+
+    Message *antennaInformationMessage = (Message *) pvPortMalloc(sizeof(Message));
+    antennaInformationMessage->MessageType = PacketType::Header;
+    antennaInformationMessage->Interface = Esp32Interfaces::WiFi;
+    antennaInformationMessage->MessageID = 25;
+    antennaInformationMessage->Function = WiFiFunction::GetAntenna;
+    antennaInformationMessage->StatusCode = StatusCodes::CompletedOK;
+
+    uint8_t *antennaInfoBuffer = (uint8_t *) pvPortMalloc(Esp32Messaging::ANTENNA_INFO_ENCODED_MESSAGE_SIZE);
+    Encoders::EncodeAntennaInfo(antennaInfo, antennaInfoBuffer, 0);
+    antennaInformationMessage->Payload = antennaInfoBuffer;
+    antennaInformationMessage->PayloadLength = Esp32Messaging::ANTENNA_INFO_ENCODED_MESSAGE_SIZE;
+
+    _outboundMessage = antennaInformationMessage;
+
+    _currentState = WantToSendMessageHeader;
+
+    vPortFree(antennaInfo);
+    //
+    //  TODO: End of remove code after testing complete.
+    //
+
     //
     //  Indicate to the STM32 that we are ready to receive requests.
     //
-    gpio_set_level(Gpio::ESP32_READY_PIN, 1);
+//    gpio_set_level(Gpio::ESP32_READY_PIN, 1);
+    gpio_set_level(Gpio::ESP32_READY_PIN, 0);
 }
 
 /*
@@ -584,6 +614,77 @@ void SpiTransportProvider::ProcessAcknowledingMessageBodyState()
 void SpiTransportProvider::ProcessWantToSendMessageHeaderState()
 {
     ESP_LOGI(__func__, "Entering Method.");
+
+    if (_outboundMessage)
+    {
+        uint8_t *encodedMessageHeader = Encoders::EncodeMessage(_outboundMessage, true);
+        spi_slave_transaction_t *transaction = SetupSpiSlaveTransaction(_headerFrameSize, _headerFrameSize);
+        memcpy((void *) transaction->tx_buffer, (void *) encodedMessageHeader, HEADER_SIZE);
+
+        gpio_set_level(Gpio::ESP32_READY_PIN, 1);
+        ESP_ERROR_CHECK(spi_slave_transmit(VSPI_HOST, transaction, portMAX_DELAY));
+        gpio_set_level(Gpio::ESP32_READY_PIN, 0);
+
+        int dataSize = transaction->length / 8;
+        ESP_LOGI(__func__, "Received %d bytes.", dataSize);
+        ESP_LOG_BUFFER_HEX(__func__, transaction->rx_buffer, dataSize);
+        Message *incomingMessage = Encoders::ExtractMessage((uint8_t *) transaction->rx_buffer, _headerFrameSize, true);
+        if (incomingMessage)
+        {
+            if (incomingMessage->MessageType & PacketType::Ready)
+            {
+                _currentState = WaitingForMessageHeaderAcknowledgement;
+            }
+            else
+            {
+                //  TODO: we are expecting a Ready message and we have received something else.
+            }
+        }
+        else
+        {
+            //  TODO: We must have received a corrupt message (CRC error).
+        }
+        FreeUpTransactionHeapStorage(transaction);
+        ClearCurrentHeader();
+    }
+    else
+    {
+        ESP_LOGE(__func__, "No message to send.");
+        _currentState = Idle;
+    }
+}
+
+/*
+ *      Implement processing of the incoming message header acknowledgement messages.
+ */
+void SpiTransportProvider::ProcessWaitingForMessageHeaderAcknowledgementState()
+{
+    ESP_LOGI(__func__, "Entering Method.");
+    spi_slave_transaction_t *transaction = SetupSpiSlaveTransaction(_headerFrameSize, _headerFrameSize);
+
+    gpio_set_level(Gpio::ESP32_READY_PIN, 1);
+    ESP_ERROR_CHECK(spi_slave_transmit(VSPI_HOST, transaction, portMAX_DELAY));
+    gpio_set_level(Gpio::ESP32_READY_PIN, 0);
+
+    int dataSize = transaction->length / 8;
+    ESP_LOGI(__func__, "Received %d bytes.", dataSize);
+    ESP_LOG_BUFFER_HEX(__func__, transaction->rx_buffer, dataSize);
+    Message *incomingMessage = Encoders::ExtractMessage((uint8_t *) transaction->rx_buffer, _headerFrameSize, true);
+    if (incomingMessage)
+    {
+        if (incomingMessage->MessageType == PacketType::Ack)
+        {
+            ESP_LOGI(__func__, "Acknowledgement received.");
+            _currentState = WantToSendMessageHeader;
+        }
+    }
+    else
+    {
+        //  TODO: Deal with corrupt messages.
+        _currentState = Idle;
+    }
+    FreeUpTransactionHeapStorage(transaction);
+    ClearCurrentHeader();
 }
 
 /*
@@ -645,6 +746,9 @@ void SpiTransportProvider::IncomingSpiMessageTask(void *pvParameters)
                 break;
             case WantToSendMessageHeader:
                 sender->ProcessWantToSendMessageHeaderState();
+                break;
+            case WaitingForMessageHeaderAcknowledgement:
+                sender->ProcessWaitingForMessageHeaderAcknowledgementState();
                 break;
             case WantToSendMessageBody:
                 sender->ProcessWantToSendMessageBodyState();

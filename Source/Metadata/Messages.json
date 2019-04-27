@@ -10,7 +10,7 @@
             ]
         },
         {
-            "Name": "SwitchAntenna",
+            "Name": "AntennaInfo",
             "MessageElements":
             [
                 { "Name": "Antenna", "DataType": "Byte" }

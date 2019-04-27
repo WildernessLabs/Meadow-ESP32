@@ -45,7 +45,7 @@ namespace SPITest
             _stm32ReadyPin = (DigitalOutputPort)Device.CreateDigitalOutputPort(Device.Pins.D05, false);
             _esp32ReadyPin = (DigitalInputPort)Device.CreateDigitalInputPort(Device.Pins.D06);
 #endif
-            _button = (DigitalInputPort)Device.CreateDigitalInputPort(Device.Pins.D15, interruptMode: InterruptMode.EdgeFalling, resistorMode: ResistorMode.PullUp, debounceDuration: 10);
+            _button = (DigitalInputPort)Device.CreateDigitalInputPort(Device.Pins.D15, interruptMode: InterruptMode.EdgeFalling, resistorMode: ResistorMode.PullUp, debounceDuration: 100);
             _button.Changed += _button_Changed;
         }
 
@@ -68,14 +68,14 @@ namespace SPITest
             //  Now send the Antenna switch message.
             //
             Console.WriteLine();Console.WriteLine("Sending switch antenna message.");
-            Messages.SwitchAntenna switchAntenna = new Messages.SwitchAntenna();
+            Messages.AntennaInfo switchAntenna = new Messages.AntennaInfo();
             switchAntenna.Antenna = (byte) Antenna.OnBoard;
-            byte[] encodedSwitchAntenna = Encoders.EncodeSwitchAntenna(switchAntenna);
+            byte[] encodedSwitchAntenna = Encoders.EncodeAntennaInfo(switchAntenna);
 
             Messages.Message switchAntennaMessage = new Messages.Message();
 
             switchAntennaMessage.Interface = (byte) Esp32Interfaces.WiFi;
-            switchAntennaMessage.Function = (UInt32) WiFiFunction.SwitchAntenna;
+            switchAntennaMessage.Function = (UInt32) WiFiFunction.SetAntenna;
             switchAntennaMessage.MessageID = _counter;
             switchAntennaMessage.Payload = encodedSwitchAntenna;
             switchAntennaMessage.PayloadLength = (UInt32) encodedSwitchAntenna.Length;
@@ -137,9 +137,101 @@ namespace SPITest
             _blueLED.State = !_blueLED.State;
         }
 
+        private void DisplayMessage(Messages.Message message)
+        {
+            Console.WriteLine("Message:");
+            Console.WriteLine($"    Message type: {DebugHelpers.Hexadecimal(message.MessageType)}");
+            Console.WriteLine($"    Interface: {DebugHelpers.Hexadecimal(message.Interface)}");
+            Console.WriteLine($"    ID: {message.MessageID}");
+            Console.WriteLine($"    Function: {message.Function}");
+            Console.WriteLine($"    Payload length: {message.PayloadLength}");
+        }
+
+        private void ReceiveMessage()
+        {
+            byte[] encodedPacketFromEsp32;
+            byte[] encodedAckMessage;
+            Messages.Message ackMessage = new Messages.Message();
+            Messages.Message readyMessage = new Messages.Message();
+
+            //
+            //  Set this up once, it will be used multiple times.
+            //
+            ackMessage.MessageType = (byte) PacketType.Ack;
+            ackMessage.Interface = 0xff;
+            ackMessage.Function = 0xffffffff;
+            ackMessage.MessageID = 0xffffffff;
+            ackMessage.Payload = null;
+            ackMessage.PayloadLength = 0;
+            //
+            //  Create the Ready packet.
+            //
+            readyMessage.MessageType = (byte) PacketType.Ready;
+            readyMessage.Interface = 0xff;
+            readyMessage.Function = 0xffffffff;
+            readyMessage.MessageID = 0xffffffff;
+            readyMessage.Payload = null;
+            readyMessage.PayloadLength = 0;
+            byte[] encodedReadyPacket = Encoders.EncodeMessage(readyMessage);
+            //
+            //  Set the state pin high to artifically kick off the process.
+            //  this is temporary and only for initial testing.
+            //
+            Console.WriteLine("Starting reception process.");
+            _stm32ReadyPin.State = false;
+            _stm32ReadyPin.State = true;
+            Console.WriteLine("Sending Ready packet.");
+            Console.WriteLine("Sending:");
+            Console.WriteLine($"{DebugHelpers.PrintableBuffer(encodedReadyPacket)}");
+            //
+            //  So we now have a transport packet, wait for ESP32 to be ready and then
+            //  toggle our ready pin and start the transmission process.
+            //
+            WaitForEsp32ToBeReady();
+            encodedPacketFromEsp32 = _esp32.WriteRead(encodedReadyPacket, (ushort) encodedReadyPacket.Length);
+            Console.WriteLine("Received from ESP32:");
+            Console.WriteLine($"{DebugHelpers.PrintableBuffer(encodedPacketFromEsp32)}");
+            Console.WriteLine();
+            _stm32ReadyPin.State = false;
+            //
+            //  The encoded frame should conatin the header for the message the ESP32 wants to send.
+            //  Setup a dummy frame to send and then 
+            //
+            Messages.Message headerMessage = Encoders.ExtractMessage(encodedPacketFromEsp32);
+            DisplayMessage(headerMessage);
+            //
+            //  Next step, tell the ESP32 we are ready and then wait for ESP32 to be ready.
+            //
+            _stm32ReadyPin.State = true;
+            WaitForEsp32ToBeReady();
+            //
+            //  Now send the ACK message.
+            //
+            ackMessage.MessageID = headerMessage.MessageID;
+            ackMessage.Interface = headerMessage.Interface;
+            ackMessage.Function = headerMessage.Function;
+            encodedAckMessage = Encoders.EncodeMessage(ackMessage);
+            Console.WriteLine("Sending ACK:");
+            Console.WriteLine($"{DebugHelpers.PrintableBuffer(encodedAckMessage)}");
+            _esp32.WriteBytes(encodedAckMessage);
+            ackMessage.Interface = 0xff;
+            ackMessage.Function = 0xffffffff;
+            ackMessage.MessageID = 0xffffffff;
+            _stm32ReadyPin.State = false;
+            //
+            //  Next up, the message body.
+            //
+
+            _stm32ReadyPin.State = false;
+
+            Console.WriteLine();
+            Console.WriteLine("Waiting for button press.");
+        }
+
         private void _button_Changed(object sender, DigitalInputPortEventArgs e)
         {
-            SendMessage();
+            // SendMessage();
+            ReceiveMessage();
         }
 
         /// <summary>
