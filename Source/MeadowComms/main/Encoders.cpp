@@ -400,19 +400,19 @@ Esp32Messaging::StartNetwork *Encoders::ExtractStartNetwork(uint8_t *buffer)
     return(startNetwork);
 }
 
-void Encoders::EncodeSwitchAntenna(Esp32Messaging::SwitchAntenna *switchAntenna, uint8_t *buffer, int offset)
+void Encoders::EncodeAntennaInfo(Esp32Messaging::AntennaInfo *antennaInfo, uint8_t *buffer, int offset)
 {
-    *buffer = switchAntenna->Antenna;
+    *buffer = antennaInfo->Antenna;
     buffer += 1;
 }
 
-Esp32Messaging::SwitchAntenna *Encoders::ExtractSwitchAntenna(uint8_t *buffer)
+Esp32Messaging::AntennaInfo *Encoders::ExtractAntennaInfo(uint8_t *buffer)
 {
-    Esp32Messaging::SwitchAntenna *switchAntenna = (Esp32Messaging::SwitchAntenna *) pvPortMalloc(sizeof(Esp32Messaging::SwitchAntenna));
+    Esp32Messaging::AntennaInfo *antennaInfo = (Esp32Messaging::AntennaInfo *) pvPortMalloc(sizeof(Esp32Messaging::AntennaInfo));
 
-    switchAntenna->Antenna = *buffer;
+    antennaInfo->Antenna = *buffer;
     buffer += 1;
-    return(switchAntenna);
+    return(antennaInfo);
 }
 
 
