@@ -27,7 +27,7 @@ private:
      */
     enum SpiStates { Invalid, Idle, AcknowledgingMessageHeader,
         WaitingForMessageBody, AcknowledingMessageBody, WantToSendMessageHeader, WaitingForMessageHeaderAcknowledgement,
-        WantToSendMessageBody, WantToSendTransportMessage };
+        WantToSendMessageBody, WaitingForMessageBodyAcknowledgement, WantToSendTransportMessage };
 
     /*
      *      Pointer to the (only) instance of the SpiTransportProvider class.
@@ -182,6 +182,11 @@ private:
      *      Implement the out-bound message body process.
      */
     void ProcessWantToSendMessageBodyState();
+
+    /*
+     *      Implement processing of the out-bound message body acknowledgement.
+     */
+    void ProcessWaitingForMessageBodyAcknowledgementState();
 
     /*
      *      Implement the out-bound transport message process.

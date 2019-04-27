@@ -172,7 +172,7 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
     //  TODO: Remove the code below once testing is complete.
     //
     Esp32Messaging::AntennaInfo *antennaInfo = (Esp32Messaging::AntennaInfo *) pvPortMalloc(sizeof(Esp32Messaging::AntennaInfo));
-    antennaInfo->Antenna = Antenna::OnBoard;
+    antennaInfo->Antenna = Antenna::External;
 
     Message *antennaInformationMessage = (Message *) pvPortMalloc(sizeof(Message));
     antennaInformationMessage->MessageType = PacketType::Header;
@@ -675,7 +675,10 @@ void SpiTransportProvider::ProcessWaitingForMessageHeaderAcknowledgementState()
         if (incomingMessage->MessageType == PacketType::Ack)
         {
             ESP_LOGI(__func__, "Acknowledgement received.");
-            _currentState = WantToSendMessageHeader;
+            //
+            //  TODO: check if there is a message body ?
+            //
+            _currentState = WantToSendMessageBody;
         }
     }
     else
@@ -693,6 +696,65 @@ void SpiTransportProvider::ProcessWaitingForMessageHeaderAcknowledgementState()
 void SpiTransportProvider::ProcessWantToSendMessageBodyState()
 {
     ESP_LOGI(__func__, "Entering Method.");
+    if (_outboundMessage)
+    {
+        uint8_t *encodedMessageBody = Encoders::EncodeMessage(_outboundMessage, false);
+        uint32_t encodedMessageBufferSize = Encoders::CalculateSpiBufferSize(HEADER_SIZE + _outboundMessage->PayloadLength);
+        spi_slave_transaction_t *transaction = SetupSpiSlaveTransaction(encodedMessageBufferSize, encodedMessageBufferSize);
+        memcpy((void *) transaction->tx_buffer, (void *) encodedMessageBody, HEADER_SIZE + _outboundMessage->PayloadLength);
+
+        gpio_set_level(Gpio::ESP32_READY_PIN, 1);
+        ESP_ERROR_CHECK(spi_slave_transmit(VSPI_HOST, transaction, portMAX_DELAY));
+        gpio_set_level(Gpio::ESP32_READY_PIN, 0);
+
+        int dataSize = transaction->length / 8;
+        ESP_LOGI(__func__, "Received %d bytes.", dataSize);
+        ESP_LOG_BUFFER_HEX(__func__, transaction->rx_buffer, dataSize);
+        //
+        //  TODO: Decision, do we have a specific header for this request?
+        //
+        _currentState = WaitingForMessageBodyAcknowledgement;
+        FreeUpTransactionHeapStorage(transaction);
+        ClearCurrentHeader();
+    }
+    else
+    {
+        ESP_LOGE(__func__, "No message to send.");
+        _currentState = Idle;
+    }
+}
+
+/*
+ *      Implement processing of the out-bound message body acknowledgement.
+ */
+void SpiTransportProvider::ProcessWaitingForMessageBodyAcknowledgementState()
+{
+    ESP_LOGI(__func__, "Entering Method.");
+    spi_slave_transaction_t *transaction = SetupSpiSlaveTransaction(_headerFrameSize, _headerFrameSize);
+
+    gpio_set_level(Gpio::ESP32_READY_PIN, 1);
+    ESP_ERROR_CHECK(spi_slave_transmit(VSPI_HOST, transaction, portMAX_DELAY));
+    gpio_set_level(Gpio::ESP32_READY_PIN, 0);
+
+    int dataSize = transaction->length / 8;
+    ESP_LOGI(__func__, "Received %d bytes.", dataSize);
+    ESP_LOG_BUFFER_HEX(__func__, transaction->rx_buffer, dataSize);
+    Message *incomingMessage = Encoders::ExtractMessage((uint8_t *) transaction->rx_buffer, _headerFrameSize, true);
+    if (incomingMessage)
+    {
+        if (incomingMessage->MessageType == PacketType::Ack)
+        {
+            ESP_LOGI(__func__, "Acknowledgement received.");
+            _currentState = WantToSendMessageHeader;
+        }
+    }
+    else
+    {
+        //  TODO: Deal with corrupt messages.
+        _currentState = Idle;
+    }
+    FreeUpTransactionHeapStorage(transaction);
+    ClearCurrentHeader();
 }
 
 /*
@@ -752,6 +814,9 @@ void SpiTransportProvider::IncomingSpiMessageTask(void *pvParameters)
                 break;
             case WantToSendMessageBody:
                 sender->ProcessWantToSendMessageBodyState();
+                break;
+            case WaitingForMessageBodyAcknowledgement:
+                sender->ProcessWaitingForMessageBodyAcknowledgementState();
                 break;
             case WantToSendTransportMessage:
                 sender->ProcessWantToSendTransportMessageState();
