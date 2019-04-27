@@ -701,7 +701,8 @@ void SpiTransportProvider::ProcessWantToSendMessageBodyState()
         uint8_t *encodedMessageBody = Encoders::EncodeMessage(_outboundMessage, false);
         uint32_t encodedMessageBufferSize = Encoders::CalculateSpiBufferSize(HEADER_SIZE + _outboundMessage->PayloadLength);
         spi_slave_transaction_t *transaction = SetupSpiSlaveTransaction(encodedMessageBufferSize, encodedMessageBufferSize);
-        memcpy((void *) transaction->tx_buffer, (void *) encodedMessageBody, HEADER_SIZE + _outboundMessage->PayloadLength);
+        memcpy((void *) transaction->tx_buffer, (void *) encodedMessageBody, HEADER_SIZE);
+        memcpy((void *) (transaction->tx_buffer + HEADER_SIZE), (void *) _outboundMessage->Payload, _outboundMessage->PayloadLength);
 
         gpio_set_level(Gpio::ESP32_READY_PIN, 1);
         ESP_ERROR_CHECK(spi_slave_transmit(VSPI_HOST, transaction, portMAX_DELAY));
