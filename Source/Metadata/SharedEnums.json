@@ -37,7 +37,7 @@
           "BaseDataType": "UInt32",
           "EnumNames": [
               "Start", "Stop", "Connect", "Disconnect", "GetAccessPoints", "GetConfiguration", "SetConfiguration",
-              "SwitchAntenna"
+              "SetAntenna", "GetAntenna"
           ]
         },
         {
@@ -59,6 +59,7 @@
               { "Name": "Ack", "Value": "0x00" },
               { "Name": "Nak", "Value": "0x01" },
               { "Name": "Reset", "Value": "0x02" },
+              { "name": "Ready", "Value": "0x04" },
               { "Name": "Transport", "Value": "0x20" },
               { "Name": "Header", "Value": "0x40" },
               { "Name": "Data", "Value": "0x80" }

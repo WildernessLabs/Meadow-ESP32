@@ -83,7 +83,8 @@ namespace WiFiFunction
         GetAccessPoints = 4,
         GetConfiguration = 5,
         SetConfiguration = 6,
-        SwitchAntenna = 7
+        SetAntenna = 7,
+        GetAntenna = 8
     };
 }
 
@@ -108,6 +109,7 @@ enum PacketType : uint8_t
     Ack = 0x00,
     Nak = 0x01,
     Reset = 0x02,
+    Ready = 0x04,
     Transport = 0x20,
     Header = 0x40,
     Data = 0x80

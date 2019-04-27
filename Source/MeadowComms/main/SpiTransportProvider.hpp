@@ -78,6 +78,11 @@ private:
     Message *_currentHeader = nullptr;
 
     /*
+     *      The next message to be sent to the STM32.
+     */
+    Message *_outboundMessage = nullptr;
+
+    /*
      *      Handle for the System request handler task.
      */
     static TaskHandle_t _taskHandle;
