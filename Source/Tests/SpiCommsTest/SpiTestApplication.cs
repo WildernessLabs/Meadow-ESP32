@@ -194,7 +194,7 @@ namespace SPITest
             Console.WriteLine();
             _stm32ReadyPin.State = false;
             //
-            //  The encoded frame should conatin the header for the message the ESP32 wants to send.
+            //  The encoded frame should contain the header for the message the ESP32 wants to send.
             //  Setup a dummy frame to send and then 
             //
             Messages.Message headerMessage = Encoders.ExtractMessage(encodedPacketFromEsp32);
@@ -211,8 +211,9 @@ namespace SPITest
             ackMessage.Interface = headerMessage.Interface;
             ackMessage.Function = headerMessage.Function;
             encodedAckMessage = Encoders.EncodeMessage(ackMessage);
-            Console.WriteLine("Sending ACK:");
+            Console.WriteLine("Sending ACK for message header:");
             Console.WriteLine($"{DebugHelpers.PrintableBuffer(encodedAckMessage)}");
+            Console.WriteLine();
             _esp32.WriteBytes(encodedAckMessage);
             ackMessage.Interface = 0xff;
             ackMessage.Function = 0xffffffff;
@@ -221,7 +222,37 @@ namespace SPITest
             //
             //  Next up, the message body.
             //
+            Console.WriteLine("Asking for message body.");
+            byte[] dummyMessage = new byte[Encoders.CalculateSpiBufferSize(Messages.MESSAGE_SIZE + headerMessage.PayloadLength)];
+            Array.Clear(dummyMessage, 0, dummyMessage.Length);
 
+            _stm32ReadyPin.State = true;
+            WaitForEsp32ToBeReady();
+            byte[] encodedMessage = _esp32.WriteRead(dummyMessage, (ushort) dummyMessage.Length);
+            Console.WriteLine("Received:");
+            Console.WriteLine($"{DebugHelpers.PrintableBuffer(encodedMessage)}");
+            Console.WriteLine();
+            Messages.Message message = Encoders.ExtractMessage(encodedMessage);
+            DisplayMessage(message);
+            Messages.AntennaInfo antennaInfo = Encoders.ExtractAntennaInfo(message.Payload, 0);
+            Console.WriteLine($"    Antenna: {antennaInfo.Antenna}");
+            _stm32ReadyPin.State = false;
+            //
+            //  Now we need to ACK the message body.
+            //
+            ackMessage.MessageID = headerMessage.MessageID;
+            ackMessage.Interface = headerMessage.Interface;
+            ackMessage.Function = headerMessage.Function;
+            encodedAckMessage = Encoders.EncodeMessage(ackMessage);
+            Console.WriteLine("Sending ACK for message body:");
+            Console.WriteLine($"{DebugHelpers.PrintableBuffer(encodedAckMessage)}");
+            Console.WriteLine();
+            _stm32ReadyPin.State = true;
+            WaitForEsp32ToBeReady();
+            _esp32.WriteBytes(encodedAckMessage);
+            ackMessage.Interface = 0xff;
+            ackMessage.Function = 0xffffffff;
+            ackMessage.MessageID = 0xffffffff;
             _stm32ReadyPin.State = false;
 
             Console.WriteLine();
