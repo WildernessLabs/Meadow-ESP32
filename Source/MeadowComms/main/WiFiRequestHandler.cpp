@@ -175,7 +175,7 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
         case WiFiFunction::GetConfiguration:
             ESP_LOGE(__func__, "WiFi GetConfiguration function is not implemented yet.");
             break;
-        case WiFiFunction::SwitchAntenna:
+        case WiFiFunction::SetAntenna:
             ESP_LOGE(__func__, "WiFi SetAntenna function not implemented.");
             break;
         case WiFiFunction::GetAccessPoints:
