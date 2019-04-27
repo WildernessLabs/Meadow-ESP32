@@ -26,7 +26,7 @@ private:
      *      Possible states for the SPI transport layer.
      */
     enum SpiStates { Invalid, Idle, AcknowledgingMessageHeader,
-        WaitingForMessageBody, AcknowledingMessageBody, WantToSendMessageHeader,
+        WaitingForMessageBody, AcknowledingMessageBody, WantToSendMessageHeader, WaitingForMessageHeaderAcknowledgement,
         WantToSendMessageBody, WantToSendTransportMessage };
 
     /*
@@ -172,6 +172,11 @@ private:
      *      Implement the out-bound message header process.
      */
     void ProcessWantToSendMessageHeaderState();
+
+    /*
+     *      Implement processing of the incoming message header acknowledgement messages.
+     */
+    void ProcessWaitingForMessageHeaderAcknowledgementState();
 
     /*
      *      Implement the out-bound message body process.

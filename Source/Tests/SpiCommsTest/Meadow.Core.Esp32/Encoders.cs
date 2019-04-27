@@ -51,7 +51,7 @@ namespace Meadow.Core.Esp32
             return(startNetwork);
         }
 
-        public static byte[] EncodeSwitchAntenna(Messages.SwitchAntenna switchAntenna)
+        public static byte[] EncodeAntennaInfo(Messages.AntennaInfo antennaInfo)
         {
             int offset = 0;
             int length = 0;
@@ -65,18 +65,18 @@ namespace Meadow.Core.Esp32
             //  Now allocate a new buffer and copy the data in to the buffer.
             //
             byte[] buffer = new byte[length];
-            switchAntenna.Antenna = buffer[offset];
+            antennaInfo.Antenna = buffer[offset];
             offset += 1;
             return(buffer);
         }
 
-        public static Messages.SwitchAntenna ExtractSwitchAntenna(byte[] buffer, int offset)
+        public static Messages.AntennaInfo ExtractAntennaInfo(byte[] buffer, int offset)
         {
-            Messages.SwitchAntenna switchAntenna;
+            Messages.AntennaInfo antennaInfo;
 
-            switchAntenna.Antenna = buffer[offset];
+            antennaInfo.Antenna = buffer[offset];
             offset += 1;
-            return(switchAntenna);
+            return(antennaInfo);
         }
 
     }

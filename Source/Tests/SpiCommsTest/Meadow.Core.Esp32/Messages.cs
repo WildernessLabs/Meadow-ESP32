@@ -26,12 +26,12 @@ namespace Meadow.Core.Esp32
 
         public const UInt32 START_NETWORK_ENCODED_MESSAGE_SIZE = 8;
 
-        public struct SwitchAntenna
+        public struct AntennaInfo
         {
             public Byte Antenna;
         };
 
-        public const UInt32 SWITCH_ANTENNA_ENCODED_MESSAGE_SIZE = 1;
+        public const UInt32 ANTENNA_INFO_ENCODED_MESSAGE_SIZE = 1;
 
      }
 }
