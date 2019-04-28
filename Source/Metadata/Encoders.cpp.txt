@@ -291,7 +291,7 @@ uint8_t *Encoders::EncodeMessage(Message *message, bool header)
     offset += 4;
     if (!header & (message->PayloadLength > 0))
     {
-        memcpy(message->Payload, (uint8_t *) (buffer + offset), message->PayloadLength);
+        memcpy((uint8_t *) (buffer + offset), message->Payload, message->PayloadLength);
     }
     uint32_t crc = CRC32(buffer, bufferSize);
     EncodeUInt32(crc, buffer + CRC_OFFSET);

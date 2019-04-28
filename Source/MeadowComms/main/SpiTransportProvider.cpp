@@ -172,7 +172,10 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
     //  TODO: Remove the code below once testing is complete.
     //
     Esp32Messaging::AntennaInfo *antennaInfo = (Esp32Messaging::AntennaInfo *) pvPortMalloc(sizeof(Esp32Messaging::AntennaInfo));
+    uint8_t *antennaInfoBuffer = (uint8_t *) pvPortMalloc(Esp32Messaging::ANTENNA_INFO_ENCODED_MESSAGE_SIZE);
     antennaInfo->Antenna = Antenna::External;
+    Encoders::EncodeAntennaInfo(antennaInfo, antennaInfoBuffer, 0);
+    vPortFree(antennaInfo);
 
     Message *antennaInformationMessage = (Message *) pvPortMalloc(sizeof(Message));
     antennaInformationMessage->MessageType = PacketType::Header;
@@ -180,9 +183,6 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
     antennaInformationMessage->MessageID = 25;
     antennaInformationMessage->Function = WiFiFunction::GetAntenna;
     antennaInformationMessage->StatusCode = StatusCodes::CompletedOK;
-
-    uint8_t *antennaInfoBuffer = (uint8_t *) pvPortMalloc(Esp32Messaging::ANTENNA_INFO_ENCODED_MESSAGE_SIZE);
-    Encoders::EncodeAntennaInfo(antennaInfo, antennaInfoBuffer, 0);
     antennaInformationMessage->Payload = antennaInfoBuffer;
     antennaInformationMessage->PayloadLength = Esp32Messaging::ANTENNA_INFO_ENCODED_MESSAGE_SIZE;
 
@@ -190,7 +190,6 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
 
     _currentState = WantToSendMessageHeader;
 
-    vPortFree(antennaInfo);
     //
     //  TODO: End of remove code after testing complete.
     //
@@ -618,6 +617,8 @@ void SpiTransportProvider::ProcessWantToSendMessageHeaderState()
     if (_outboundMessage)
     {
         uint8_t *encodedMessageHeader = Encoders::EncodeMessage(_outboundMessage, true);
+        ESP_LOG_BUFFER_HEX(__func__, encodedMessageHeader, HEADER_SIZE);
+
         spi_slave_transaction_t *transaction = SetupSpiSlaveTransaction(_headerFrameSize, _headerFrameSize);
         memcpy((void *) transaction->tx_buffer, (void *) encodedMessageHeader, HEADER_SIZE);
 
@@ -699,6 +700,8 @@ void SpiTransportProvider::ProcessWantToSendMessageBodyState()
     if (_outboundMessage)
     {
         uint8_t *encodedMessageBody = Encoders::EncodeMessage(_outboundMessage, false);
+        ESP_LOG_BUFFER_HEX(__func__, encodedMessageBody, HEADER_SIZE + _outboundMessage->PayloadLength);
+
         uint32_t encodedMessageBufferSize = Encoders::CalculateSpiBufferSize(HEADER_SIZE + _outboundMessage->PayloadLength);
         spi_slave_transaction_t *transaction = SetupSpiSlaveTransaction(encodedMessageBufferSize, encodedMessageBufferSize);
         memcpy((void *) transaction->tx_buffer, (void *) encodedMessageBody, HEADER_SIZE);
