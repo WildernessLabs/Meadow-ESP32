@@ -7,7 +7,7 @@
     <OutputType>Exe</OutputType>
     <RootNamespace>BasicNetworkTest</RootNamespace>
     <AssemblyName>BasicNetworkTest</AssemblyName>
-    <TargetFrameworkVersion>v4.7</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
     <DebugSymbols>true</DebugSymbols>
@@ -46,7 +46,7 @@
     <Compile Include="Meadow.Core.Esp32\EventHandlers\MessageDispatcherErrorEventHandler.cs" />
     <Compile Include="Meadow.Core.Esp32\EventHandlers\MessageReceviedEventHandler.cs" />
     <Compile Include="Meadow.Core.Esp32\EventHandlers\TransportProviderDataReceivedEventHandler.cs" />
-    <Compile Include="Meadow.Core.Esp32\EventHandlers\TransportProviderEventHandlers.cs" />
+    <Compile Include="Meadow.Core.Esp32\EventHandlers\TransportProviderErrorEventHandlers.cs" />
     <Compile Include="Meadow.Core.Esp32\Interfaces\ITransportProvider.cs" />
     <Compile Include="BasicNetworkTestApplication.cs" />
   </ItemGroup>
