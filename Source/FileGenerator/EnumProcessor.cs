@@ -211,7 +211,7 @@ namespace FileGenerator
                             dataType = "UInt32";
                             break;
                     }
-                    OutputCommonEnumText(cFile, e, indent, dataType);
+                    OutputCommonEnumText(cFile, e, indent, dataType, "public");
                     cFile.WriteLine("");
                 }
                 OutputCSharpFileFooter(cFile);
