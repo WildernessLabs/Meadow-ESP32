@@ -6,7 +6,7 @@ namespace Meadow.Core.Esp32
     {
         event MessageDispatcherErrorEventHandler TransportError;
 
-        event TransportProviderDataReceivedEventHandler DataReceived;
+        event TransportProviderDataReceivedEventHandler MessageReceived;
         
         void QueueMessageForEsp32(Messages.Message message);
     }
