@@ -14,33 +14,6 @@ namespace Meadow.Core.Esp32
         #region Private variables.
 
         /// <summary>
-        ///     Queue of messages to be sent to the ESP32.
-        /// </summary>
-        private static Queue<Messages.Message> _messageQueue = null;
-
-        /// <summary>
-        ///     Lock for the message queue to synchronise access by the
-        ///     two threads (main application adding messages and the
-        ///     queue processing thread taking messages from the queue).
-        /// </summary>
-        private object _messageQueueLock = new object();
-
-        /// <summary>
-        ///     Handle used to synchronise the incoming messages and the task processing the messages.
-        /// </summary>
-        private EventWaitHandle _waitingForMessageHandle = new AutoResetEvent(false);
-
-        /// <summary>
-        ///     Handle used to synchronise the responses from the Uart.
-        /// </summary>
-        private EventWaitHandle _waitingForResponseHandle = new AutoResetEvent(false);
-
-        /// <summary>
-        ///     Thread processing the messages as they enter the queue.
-        /// </summary>
-        private Thread _queueHandler = null;
-
-        /// <summary>
         ///     Serial port connecting the STM32 and the ESP32 microcontrollers.
         /// </summary>
         private readonly ITransportProvider _esp32;
@@ -69,48 +42,37 @@ namespace Meadow.Core.Esp32
         /// </summary>
         public MessageDispatcher(IIODevice device, IPin stm32ReadyPin, IPin esp32ReadyPin, IPin mosi, IPin miso, IPin clock, IPin chipSelect, IPin bootPin, IPin resetPin)
         {
-            if (_messageQueue != null)
+            if (_esp32 != null)
             {
                 throw new InvalidOperationException("Only a single instance of a MessageQueue can be created.");
             }
             _esp32 = new SpiTransportProvider(device, stm32ReadyPin, esp32ReadyPin, mosi, miso, clock, chipSelect, bootPin, resetPin);
-            _esp32.DataReceived += _esp32_DataReceived;
+            _esp32.MessageReceived += _esp32_DataReceived;
             _esp32.TransportError += _esp32_TransportError;
-            _messageQueue = new Queue<Messages.Message>();
-            _queueHandler = new Thread(() =>
-            {
-                while (true)
-                {
-                    _waitingForMessageHandle.WaitOne();
-                    Messages.Message? message = null;
-                    lock (_messageQueueLock)
-                    {
-                        if (_messageQueue.Count > 0)
-                        {
-                            message = _messageQueue.Dequeue();
-                            if (message != null)
-                            {
-                                _esp32.QueueMessageForEsp32((Messages.Message) message);
-                            }
-                        }
-                    }
-                }
-            });
-            _queueHandler.Start();
         }
 
         #endregion Constructors
 
         #region Event handlers
 
+        /// <summary>
+        /// Pass on any error informaiton the the SPI layer.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void _esp32_TransportError(object sender, MessageDispatcherErrorEventArgs e)
         {
-            throw new NotImplementedException();
+            Error(this, e);
         }
 
-        private void _esp32_DataReceived(object sender, TransportProviderDataReceivedEventArgs e)
+        /// <summary>
+        /// Send the message that has been recevied to the 
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void _esp32_DataReceived(object sender, MessageReceviedEventArgs e)
         {
-            throw new NotImplementedException();
+            MessageReceived(this, e);
         }
 
         #endregion Event handlers
@@ -124,16 +86,7 @@ namespace Meadow.Core.Esp32
         [MethodImpl(MethodImplOptions.Synchronized)]
         public void Add(Messages.Message message)
         {
-            lock (_messageQueueLock)
-            {
-                _messageQueue.Enqueue(message);
-            }
-            //
-            //  Inform the task processing the messages that a new message
-            //  has been queued so there is at least one message waiting to
-            //  be sent.
-            //
-            _waitingForMessageHandle.Set();
+            _esp32.QueueMessageForEsp32(message);
         }
 
         #endregion Methods
