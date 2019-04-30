@@ -206,7 +206,7 @@ namespace Meadow.Core.Esp32
         /// <param name="message">Message to be encoded.</param>
         public static byte[] EncodeMessage(Messages.Message message)
         {
-            UInt32 bufferSize = CalculateSpiBufferSize(Messages.MESSAGE_SIZE + message.PayloadLength);
+            UInt32 bufferSize = CalculateSpiBufferSize(Messages.HEADER_SIZE + message.PayloadLength);
             byte[] buffer = new byte[bufferSize];
             int offset = 0;
 
@@ -245,7 +245,7 @@ namespace Meadow.Core.Esp32
         /// <returns>Padded header for the message.</returns>
         public static byte[] EncodeHeader(Messages.Message message)
         {
-            UInt32 bufferSize = CalculateSpiBufferSize(Messages.MESSAGE_SIZE);
+            UInt32 bufferSize = CalculateSpiBufferSize(Messages.HEADER_SIZE);
             byte[] buffer = new byte[bufferSize];
             int offset = 0;
 
@@ -282,7 +282,7 @@ namespace Meadow.Core.Esp32
         /// <param name="offset">Offset of the message into the buffer (normally this is 0).</param>
         public static Messages.Message ExtractMessage(byte[] buffer, int offset = 0)
         {
-            if (buffer.Length < Messages.MESSAGE_SIZE)
+            if (buffer.Length < Messages.HEADER_SIZE)
             {
                 //  TODO: Deal with this error.
             }

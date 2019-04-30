@@ -23,7 +23,7 @@ namespace Meadow.Core.Esp32
             public byte[] Payload;
         }
 
-        public const UInt32 MESSAGE_SIZE = 23;
+        public const UInt32 HEADER_SIZE = 23;
         public const int CRC_OFFSET = 18;
     }
 }
