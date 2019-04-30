@@ -63,17 +63,4 @@ packages
 # MAC Stuff
 .DS_Store
 *.DS_Store
-/Source/Tests/UARTTest/.vs/UARTTest/v15/Server/sqlite3/db.lock
-/Source/Tests/UARTTest/.vs/UARTTest/v15/Server/sqlite3/storage.ide
-/Source/Tests/UARTTest/.vs/UARTTest/v15/Server/sqlite3
-Source/Tests/UARTTest/.vs/UARTTest/DesignTimeBuild/.dtbcache
-/Source/MeadowComms/.vs/MeadowComms/v15/Browse.VC.db
-/Source/MeadowComms/.vs/MeadowComms/v15/Browse.VC.opendb
-Source/MeadowComms/Comms.srctrlbm
-Source/MeadowComms/Comms.srctrldb
-Source/MeadowComms/Comms.srctrlprj
-Source/Tests/SpiCommsTest/.vs/SpiCommsTest/xs/sqlite3/storage.ide-wal
-Source/Tests/SpiCommsTest/.vs/SpiCommsTest/xs/sqlite3/storage.ide
-Source/Tests/SpiCommsTest/.vs/SpiCommsTest/xs/sqlite3/db.lock
-Source/Tests/SpiCommsTest/.vs/SpiCommsTest/xs/UserPrefs.xml
-Source/Tests/SpiCommsTest/.vs/SpiCommsTest/xs/sqlite3/storage.ide-shm
+.vs/
