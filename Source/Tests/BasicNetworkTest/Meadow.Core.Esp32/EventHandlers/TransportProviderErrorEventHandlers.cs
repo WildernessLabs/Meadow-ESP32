@@ -23,11 +23,6 @@ namespace Meadow.Core.Esp32
         /// </summary>
         public StatusCodes StatusCode { get; private set; }
 
-        /// <summary>
-        ///     Indicate the error that has occurred.
-        /// </summary>
-        public TransportPacketType PacketType { get; private set; }
-
         #endregion Properties
 
         #region Constructors
@@ -42,11 +37,9 @@ namespace Meadow.Core.Esp32
         /// <summary>
         ///     Create a new UartTransportEventArgs indicating that the specified error has occurred.
         /// </summary>
-        /// <param name="packetType">PacketType that has occurred.</param>
         /// <param name="statusCode">Status code returned by the Uart.</param>
-        public TransportProviderEventArgs(TransportPacketType packetType, StatusCodes statusCode)
+        public TransportProviderEventArgs(StatusCodes statusCode)
         {
-            PacketType = packetType;
             StatusCode = statusCode;
         }
 
