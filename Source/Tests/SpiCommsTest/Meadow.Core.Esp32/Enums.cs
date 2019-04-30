@@ -17,7 +17,7 @@ using System;
 
 namespace Meadow.Core.Esp32
 {
-    enum StatusCodes : UInt32
+    public enum StatusCodes : UInt32
     {
         CompletedOK = 0,
         CRCError = 1,
@@ -35,7 +35,7 @@ namespace Meadow.Core.Esp32
         WiFiDisconnected = 13
     };
 
-    enum Esp32Interfaces : byte
+    public enum Esp32Interfaces : byte
     {
         WiFi = 0,
         BlueTooth = 1,
@@ -44,7 +44,7 @@ namespace Meadow.Core.Esp32
         Transport = 4
     };
 
-    enum SystemFunction : UInt32
+    public enum SystemFunction : UInt32
     {
         Echo = 0,
         GetConfiguration = 1,
@@ -52,7 +52,7 @@ namespace Meadow.Core.Esp32
         DeepSleep = 3
     };
 
-    enum WiFiFunction : UInt32
+    public enum WiFiFunction : UInt32
     {
         Start = 0,
         Stop = 1,
@@ -65,14 +65,14 @@ namespace Meadow.Core.Esp32
         GetAntenna = 8
     };
 
-    enum BluetoothFunction : UInt32
+    public enum BluetoothFunction : UInt32
     {
         Echo = 0,
         GetConfiguration = 1,
         SetConfiguration = 2
     };
 
-    enum PacketType : byte
+    public enum PacketType : byte
     {
         Ack = 0x00,
         Nak = 0x01,
@@ -83,7 +83,7 @@ namespace Meadow.Core.Esp32
         Data = 0x80
     };
 
-    enum WiFiAuthenticationMode : byte
+    public enum WiFiAuthenticationMode : byte
     {
         Open = 0,
         Wep = 1,
@@ -93,32 +93,32 @@ namespace Meadow.Core.Esp32
         Wpa2Enterprise = 5
     };
 
-    enum WiFiCountryPolicy
+    public enum WiFiCountryPolicy
     {
         Automatic = 0,
         Manual = 1
     };
 
-    enum WiFiSecondChannel
+    public enum WiFiSecondChannel
     {
         None = 0,
         Above = 1,
         Below = 2
     };
 
-    enum WiFiScanType
+    public enum WiFiScanType
     {
         Active = 0,
         Passive = 1
     };
 
-    enum Antenna
+    public enum Antenna
     {
         OnBoard = 0,
         External = 1
     };
 
-    enum WiFiCipherType
+    public enum WiFiCipherType
     {
         None = 0,
         Wep40 = 1,

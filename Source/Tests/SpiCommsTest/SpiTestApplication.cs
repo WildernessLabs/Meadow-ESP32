@@ -223,7 +223,7 @@ namespace SPITest
             //  Next up, the message body.
             //
             Console.WriteLine("Asking for message body.");
-            byte[] dummyMessage = new byte[Encoders.CalculateSpiBufferSize(Messages.MESSAGE_SIZE + headerMessage.PayloadLength)];
+            byte[] dummyMessage = new byte[Encoders.CalculateSpiBufferSize(Messages.HEADER_SIZE + headerMessage.PayloadLength)];
             Array.Clear(dummyMessage, 0, dummyMessage.Length);
 
             _stm32ReadyPin.State = true;

@@ -7,12 +7,25 @@
 
 #include "Logging.hpp"
 
+/*
+ * ---------------------------------------------------------------------------
+ *
+ *                         Constructors and destructor
+ *
+ * ---------------------------------------------------------------------------
+ */
 
+/*
+ *      Default constructor for the logging system.
+ */
 Logging::Logging()
 {
 
 }
 
+/*
+ *      Default destructor for the logging system.
+ */
 Logging::~Logging()
 {
 
@@ -56,4 +69,20 @@ void Logging::Setup()
     //
     gpio_pad_select_gpio(Gpio::UART0_TX_PIN);
     gpio_pad_select_gpio(Gpio::UART0_RX_PIN);
+}
+
+/*
+ *      Process the request to output an informational message to the logging system.
+ */
+void Logging::Information()
+{
+
+}
+
+/*
+ *      Process the request to output an error message to the logging system
+ */
+void Logging::Error()
+{
+
 }

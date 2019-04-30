@@ -42,10 +42,27 @@ private:
 
 
 public:
+    /*
+     *      Default constructor for the logging system.
+     */
     Logging();
+
+    /*
+     *      Default destructor for the logging system.
+     */
     ~Logging();
 
     static void Setup();
+
+    /*
+     *      Process the request to output an informational message to the logging system.
+     */
+    static void Information();
+
+    /*
+     *      Process the request to output an error message to the logging system
+     */
+    static void Error();
 };
 
 

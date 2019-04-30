@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
+    <ProjectGuid>{A1486D30-66C7-486A-8468-DE9D070254FB}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>BasicNetworkTest</RootNamespace>
+    <AssemblyName>BasicNetworkTest</AssemblyName>
+    <TargetFrameworkVersion>v4.7</TargetFrameworkVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug</OutputPath>
+    <DefineConstants>DEBUG;</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <ExternalConsole>true</ExternalConsole>
+    <PlatformTarget>x86</PlatformTarget>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release</OutputPath>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <ExternalConsole>true</ExternalConsole>
+    <PlatformTarget>x86</PlatformTarget>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="DebugHelpers.cs" />
+    <Compile Include="Meadow.Core.Esp32\Encoders.cs" />
+    <Compile Include="Meadow.Core.Esp32\EncodersBase.cs" />
+    <Compile Include="Meadow.Core.Esp32\Enums.cs" />
+    <Compile Include="Meadow.Core.Esp32\ITransportProvider.cs" />
+    <Compile Include="Meadow.Core.Esp32\Message.cs" />
+    <Compile Include="Meadow.Core.Esp32\MessageDispatcher.cs" />
+    <Compile Include="Meadow.Core.Esp32\Messages.cs" />
+    <Compile Include="Meadow.Core.Esp32\SpiTransportProvider.cs" />
+    <Compile Include="Meadow.Core.Esp32\EventHandlers\MessageDispatcherErrorEventHandler.cs" />
+    <Compile Include="Meadow.Core.Esp32\EventHandlers\MessageReceviedEventHandler.cs" />
+    <Compile Include="Meadow.Core.Esp32\EventHandlers\TransportProviderDataReceivedEventHandler.cs" />
+    <Compile Include="Meadow.Core.Esp32\EventHandlers\TransportProviderEventHandlers.cs" />
+    <Compile Include="Meadow.Core.Esp32\Interfaces\ITransportProvider.cs" />
+    <Compile Include="BasicNetworkTestApplication.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Meadow.Core\source\Meadow.Core\Meadow.Core.csproj">
+      <Project>{B13C7BDD-77F5-45F8-BDB9-6CD368C67410}</Project>
+      <Name>Meadow.Core</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+</Project>
