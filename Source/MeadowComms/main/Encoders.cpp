@@ -278,7 +278,7 @@ uint32_t Encoders::ProgressiveCRC32(uint32_t currentChecksum, uint8_t byte)
 uint8_t *Encoders::EncodeMessage(Message *message, bool header)
 {
     uint32_t messageSize = HEADER_SIZE;
-    if (!header)
+    if (!headerOnly)
     {
         messageSize += message->PayloadLength;
     }
@@ -305,9 +305,13 @@ uint8_t *Encoders::EncodeMessage(Message *message, bool header)
     //
     EncodeUInt32(0, buffer + offset);
     offset += 4;
-    if (!header & (message->PayloadLength > 0))
+    if (!headerOnly & (message->PayloadLength > 0))
     {
         memcpy((uint8_t *) (buffer + offset), message->Payload, message->PayloadLength);
+    }
+    else
+    {
+        EncodeUInt32(0, buffer, offset);
     }
     uint32_t crc = CRC32(buffer, bufferSize);
     EncodeUInt32(crc, buffer + CRC_OFFSET);
@@ -328,7 +332,7 @@ uint8_t *Encoders::EncodeMessage(Message *message, bool header)
  *          Indicate if we should extract the header information only
  *          (i.e. do not copy the payload).
  */
-Message *Encoders::ExtractMessage(uint8_t *buffer, uint32_t bufferLength, bool header)
+Message *Encoders::ExtractMessage(uint8_t *buffer, uint32_t bufferLength, bool headerOnly)
 {
     uint32_t crc = ExtractUInt32(buffer + CRC_OFFSET);
     EncodeUInt32(0, buffer + CRC_OFFSET);
@@ -353,7 +357,7 @@ Message *Encoders::ExtractMessage(uint8_t *buffer, uint32_t bufferLength, bool h
         //  Move over the last field and skip the CRC entry.
         //
         buffer += 8;
-        if (!header | (message->PayloadLength > 0))
+        if (!headerOnly | (message->PayloadLength > 0))
         {
             message->Payload = (uint8_t *) pvPortMalloc(message->PayloadLength);
             memcpy(buffer, message->Payload, message->PayloadLength);

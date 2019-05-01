@@ -165,7 +165,7 @@ namespace FileGenerator
                             DataType dt = GetDataType(me.DataType);
                             if (dt.CSharpTypeName.ToLower() == "byte")
                             {
-                                sourceFile.WriteLine($"            {variableName}.{me.Name} = buffer[offset];");
+                                sourceFile.WriteLine($"            buffer[offset] = {variableName}.{me.Name};");
                             }
                             else
                             {
