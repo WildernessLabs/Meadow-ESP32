@@ -4,7 +4,7 @@ namespace Meadow.Core.Esp32
 {
     public interface ITransportProvider
     {
-        event MessageDispatcherErrorEventHandler TransportError;
+        event TransportProviderErrorEventHandler TransportError;
 
         event TransportProviderDataReceivedEventHandler MessageReceived;
         

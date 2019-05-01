@@ -14,9 +14,14 @@ namespace Meadow.Core.Esp32
         #region Properties
 
         /// <summary>
-        ///     Enum listing possible error that can occur.
+        /// ESP32 Interface that generated the error.
         /// </summary>
-        public enum TransportPacketType { Unknown, ACK, NAK, Timeout }
+        public Esp32Interfaces Interface;
+
+        /// <summary>
+        /// ID of the message that generated the error.
+        /// </summary>
+        public UInt32 MessageId;
 
         /// <summary>
         ///     PacketType code returned by the Uart.
@@ -30,16 +35,20 @@ namespace Meadow.Core.Esp32
         /// <summary>
         ///     Default constructor is private to prevent it being used.
         /// </summary>
-        public TransportProviderEventArgs()
+        private TransportProviderEventArgs()
         {
         }
 
         /// <summary>
         ///     Create a new UartTransportEventArgs indicating that the specified error has occurred.
         /// </summary>
+        /// <param name="esp32Interface">Interface on the ESP32 that caused the problem.</param>
+        /// <param name="messageId">ID of the message that caused the error.</param>
         /// <param name="statusCode">Status code returned by the Uart.</param>
-        public TransportProviderEventArgs(StatusCodes statusCode)
+        public TransportProviderEventArgs(Esp32Interfaces esp32Interface, UInt32 messageId, StatusCodes statusCode)
         {
+            Interface = esp32Interface;
+            MessageId = messageId;
             StatusCode = statusCode;
         }
 
@@ -49,10 +58,10 @@ namespace Meadow.Core.Esp32
     #region Delegates
 
     /// <summary>
-    ///     Delegate for the Uart error event handler.
+    ///     Delegate for the SPI Transport Provider error event handler.
     /// </summary>
     /// <param name="sender">Object that is sending the error response.</param>
-    /// <param name="e">UartTransportEventArgs indicating the error condition that occurred.</param>
+    /// <param name="e">TransportProviderEventArgs indicating the error condition that occurred.</param>
     public delegate void TransportProviderErrorEventHandler(object sender, TransportProviderEventArgs e);
 
     #endregion

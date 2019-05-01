@@ -188,7 +188,7 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
 
     _outboundMessage = antennaInformationMessage;
 
-    _currentState = WantToSendMessageHeader;
+    _currentState = Idle;
 
     //
     //  TODO: End of remove code after testing complete.
@@ -793,9 +793,9 @@ void SpiTransportProvider::IncomingSpiMessageTask(void *pvParameters)
         //  We must wait until we are woken by one of the events.
         //
         ESP_LOGI(__func__, "Waiting for notification.");
+        uint32_t notificationValue = ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
         ESP_LOGI(__func__, "Notification Received, current state: %d", _currentState);
         gpio_set_level(Gpio::ESP32_READY_PIN, 1);
-        uint32_t notificationValue = ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
         switch (_currentState)
         {
             case Idle:

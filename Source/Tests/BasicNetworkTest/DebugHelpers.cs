@@ -1,7 +1,8 @@
 using System;
 using System.Text;
+using Meadow.Core.Esp32;
 
-namespace SPITest
+namespace DebugHelpers
 {
     public class DebugHelpers
     {
@@ -94,6 +95,33 @@ namespace SPITest
             {
                 result.AppendLine(line);
             }
+            return (result.ToString());
+        }
+
+        /// <summary>
+        /// Take the message and make it printable.
+        /// </summary>
+        /// <param name="message">Message to be decoded.</param>
+        /// <returns>String containing the printable version of the message.</returns>
+        public static string PrintableMessage(Messages.Message message)
+        {
+            StringBuilder result = new StringBuilder();
+
+            result.AppendLine($"Interface : {message.Interface}");
+            result.AppendLine($"Function: {message.Function}");
+            result.AppendLine($"Message ID: {message.MessageID}");
+            result.AppendLine($"Message Type: {message.MessageType}");
+            if (message.PayloadLength > 0)
+            {
+                result.AppendLine($"Payload length: {message.PayloadLength}");
+                result.AppendLine("Payload:");
+                result.AppendLine(PrintableBuffer(message.Payload));
+            }
+            else
+            {
+                result.AppendLine("Payload is empty.");
+            }
+
             return (result.ToString());
         }
 

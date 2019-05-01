@@ -116,12 +116,17 @@ namespace Meadow.Core.Esp32
         /// </summary>
         public SpiTransportProvider(IIODevice device, IPin stm32ReadyPin, IPin esp32ReadyPin, IPin mosi, IPin miso, IPin clock, IPin chipSelect, IPin bootPin, IPin resetPin)
         {
-            _stm32ReadyPin = (DigitalOutputPort)device.CreateDigitalOutputPort(stm32ReadyPin, false);
-            _esp32ReadyPin = (DigitalInputPort)device.CreateDigitalInputPort(esp32ReadyPin);
+            _stm32ReadyPin = (DigitalOutputPort) device.CreateDigitalOutputPort(stm32ReadyPin, false);
+            _esp32ReadyPin = (DigitalInputPort) device.CreateDigitalInputPort(esp32ReadyPin, interruptMode: InterruptMode.EdgeRising);
             _esp32ReadyPin.Changed += _esp32ReadyPin_Changed;
             _esp32 = new SoftwareSPIBus(device, mosi, miso, clock, chipSelect);
-            _reset = (DigitalOutputPort)device.CreateDigitalOutputPort(resetPin, true);
-            _boot = (DigitalOutputPort)device.CreateDigitalOutputPort(bootPin, true);
+            _reset = (DigitalOutputPort) device.CreateDigitalOutputPort(resetPin, true);
+            _boot = (DigitalOutputPort) device.CreateDigitalOutputPort(bootPin, true);
+
+            _boot.State = true;
+            _reset.State = false;
+            _reset.State = true;
+
             _currentState = SpiStates.Idle;
             _messageQueue = new Queue<Messages.Message>();
             _queueHandler = new Thread(() =>
@@ -138,7 +143,7 @@ namespace Meadow.Core.Esp32
         /// <summary>
         ///     Error event to allow lower level errors to bubble up to the interfaces.
         /// </summary>
-        public event MessageDispatcherErrorEventHandler TransportError = delegate { };
+        public event TransportProviderErrorEventHandler TransportError = delegate { };
 
         /// <summary>
         ///     Data received event.
@@ -160,6 +165,11 @@ namespace Meadow.Core.Esp32
         #endregion
 
         #region Methods
+
+        public void Start()
+        {
+            _waitingForStuffToDoHandle.Set();
+        }
 
         private void Run()
         {
@@ -216,17 +226,19 @@ namespace Meadow.Core.Esp32
         /// </remarks>
         private void ProcessIdleState()
         {
+            Console.WriteLine("Entering ProcessIdleState");
             lock (_messageQueueLock)
             {
                 if (_messageQueue.Count > 0)
                 {
+                    Console.WriteLine("    Extracting message.");
                     _outboundMessage = _messageQueue.Dequeue();
                     _currentState = SpiStates.WantToSendMessageHeader;
                     _stm32ReadyPin.State = true;
                 }
                 else
                 {
-
+                    //  TODO: Message queue count is zero therefore the ESP32 must be trying to grab our attention.
                 }
             }
         }
@@ -248,27 +260,84 @@ namespace Meadow.Core.Esp32
         /// </summary>
         private void ProcessWantToSendMessageHeaderState()
         {
-            byte[] encodedHeader = Encoders.EncodeHeader((Messages.Message)_outboundMessage);
+            Console.WriteLine("Entering ProcessWantToSendMessageHeaderState");
+            byte[] encodedHeader;
+            if (_outboundMessage.Value.MessageType == (byte) PacketType.Data)
+            {
+                Messages.Message headerMessage = new Messages.Message();
+                headerMessage.Interface = _outboundMessage.Value.Interface;
+                headerMessage.Function = _outboundMessage.Value.Function;
+                headerMessage.MessageID = _outboundMessage.Value.MessageID;
+                headerMessage.Payload = null;
+                headerMessage.PayloadLength = _outboundMessage.Value.PayloadLength;
+                headerMessage.StatusCode = _outboundMessage.Value.StatusCode;
+                headerMessage.MessageType = (byte) PacketType.Header;
+                encodedHeader = Encoders.EncodeMessage(headerMessage, true);
+            }
+            else
+            {
+                encodedHeader = Encoders.EncodeMessage((Messages.Message) _outboundMessage, true);
+            }
+            Console.WriteLine("Sending data:");
+            Console.WriteLine($"{DebugHelpers.DebugHelpers.PrintableBuffer(encodedHeader)}");
             _esp32.WriteBytes(encodedHeader);
             _currentState = SpiStates.WaitingForMessageHeaderAcknowledgement;
             _stm32ReadyPin.State = false;
+            _stm32ReadyPin.State = true;
         }
 
         /// <summary>
-        /// 
+        /// Process the ESP32 acknowledgement message.
         /// </summary>
+        /// <remarks>
+        /// The ESP32 should only really send an ACK or a NAK message through to
+        /// the STM32.
+        ///
+        /// NAK: Generate an error event and throw away the outbound message.
+        ///
+        /// ACK: Work out if we have a message body to send.
+        /// </remarks>
         private void ProcessWaitingForMessageHeaderAcknowledgementState()
         {
+            Console.WriteLine("Entering ProcessWaitingForMessageHeaderAcknowledgementState");
+
             byte[] dummyHeader = new byte[_headerFrameSize];
             Array.Clear(dummyHeader, 0, (int) _headerFrameSize);
             byte[] encodedAcknowledgement = _esp32.WriteRead(dummyHeader, (ushort)_headerFrameSize);
-            Messages.Message ackknowledgement = Encoders.ExtractMessage(encodedAcknowledgement);
+            Messages.Message acknowledgement = Encoders.ExtractMessage(encodedAcknowledgement);
+            Console.WriteLine("Received acknowledgement message:");
+            Console.WriteLine(DebugHelpers.DebugHelpers.PrintableMessage(acknowledgement));
             //
-            //  Now need to work out what to do, was there an error?
+            //  We can get three possible responses here:
+            //      ACK - Data received by the ESP32 is good.
+            //      NAK - There is a problem with the data, this could be a CRC error or invalid data.
             //
-            if (_outboundMessage.Value.PayloadLength > 0)
+            if (acknowledgement.MessageType == (byte) PacketType.Nak)
             {
-                _currentState = SpiStates.WantToSendMessageBody;
+                TransportProviderEventArgs args = new TransportProviderEventArgs((Esp32Interfaces) acknowledgement.Interface, acknowledgement.MessageID, (StatusCodes) acknowledgement.StatusCode);
+                TransportError(this, args);
+                _outboundMessage = null;
+                _currentState = SpiStates.Idle;
+            }
+            else
+            {
+                if ((acknowledgement.MessageID == _outboundMessage.Value.MessageID) && (acknowledgement.Interface == _outboundMessage.Value.Interface))
+                {
+                    if (_outboundMessage.Value.PayloadLength > 0)
+                    {
+                        _currentState = SpiStates.WantToSendMessageBody;
+                    }
+                    else
+                    {
+                        _outboundMessage = null;
+                        _currentState = SpiStates.Idle;
+                    }
+                }
+                else
+                {
+                    TransportProviderEventArgs args = new TransportProviderEventArgs((Esp32Interfaces)acknowledgement.Interface, acknowledgement.MessageID, StatusCodes.UnexpectedData);
+                    TransportError(this, args);
+                }
             }
             _stm32ReadyPin.State = false;
         }
