@@ -6,7 +6,7 @@ namespace BasicNetworkTest
     {
         public static void Main(string[] args)
         {
-            Console.WriteLine("Basic Netowrking Test Application for Meadow F7");
+            Console.WriteLine("Basic Networking Test Application for Meadow F7");
 
             BasicNetworkTestApplication application = new BasicNetworkTestApplication();
             application.Run();

@@ -204,9 +204,15 @@ namespace Meadow.Core.Esp32
         /// </summary>
         /// <returns>Byte array containing the encoded message.</returns>
         /// <param name="message">Message to be encoded.</param>
-        public static byte[] EncodeMessage(Messages.Message message)
+        /// <param name="header">True if we are encoding the header only, false if encoding the fill message.</param>
+        public static byte[] EncodeMessage(Messages.Message message, bool headerOnly = false)
         {
-            UInt32 bufferSize = CalculateSpiBufferSize(Messages.HEADER_SIZE + message.PayloadLength);
+            UInt32 messageSize = Messages.HEADER_SIZE;
+            if (!headerOnly)
+            {
+                messageSize += message.PayloadLength;
+            }
+            UInt32 bufferSize = CalculateSpiBufferSize(messageSize);
             byte[] buffer = new byte[bufferSize];
             int offset = 0;
 
@@ -226,9 +232,13 @@ namespace Meadow.Core.Esp32
             //
             EncodeUInt32(0, buffer, offset);
             offset += 4;
-            if (message.PayloadLength > 0)
+            if (!headerOnly & (message.PayloadLength > 0))
             {
                 Array.Copy(message.Payload, 0, buffer, offset, message.PayloadLength);
+            }
+            else
+            {
+                EncodeUInt32(0, buffer, offset);
             }
             //
             //  Now we deal with the CRC.
@@ -243,36 +253,35 @@ namespace Meadow.Core.Esp32
         /// </summary>
         /// <param name="message">Message to be used to generate the message header.</param>
         /// <returns>Padded header for the message.</returns>
-        public static byte[] EncodeHeader(Messages.Message message)
-        {
-            UInt32 bufferSize = CalculateSpiBufferSize(Messages.HEADER_SIZE);
-            byte[] buffer = new byte[bufferSize];
-            int offset = 0;
+        //public static byte[] EncodeHeader(Messages.Message message)
+        //{
+        //    UInt32 bufferSize = CalculateSpiBufferSize(Messages.HEADER_SIZE);
+        //    byte[] buffer = new byte[bufferSize];
+        //    int offset = 0;
 
-            Array.Clear(buffer, 0, buffer.Length);
-            buffer[offset++] = message.MessageType;
-            buffer[offset++] = message.Interface;
-            EncodeUInt32(message.Function, buffer, offset);
-            offset += 4;
-            EncodeUInt32(message.StatusCode, buffer, offset);
-            offset += 4;
-            EncodeUInt32(message.MessageID, buffer, offset);
-            offset += 4;
-            EncodeUInt32(message.PayloadLength, buffer, offset);
-            offset += 4;
-            //
-            //  CRC will be put in later but needs to be 0 for the calculation.
-            //
-            EncodeUInt32(0, buffer, offset);
-            offset += 4;
-            //
-            //  Now we deal with the CRC.
-            //
-            UInt32 crc = Crc32(buffer);
-            EncodeUInt32(crc, buffer, Messages.CRC_OFFSET);
-            return (buffer);
-        }
-
+        //    Array.Clear(buffer, 0, buffer.Length);
+        //    buffer[offset++] = message.MessageType;
+        //    buffer[offset++] = message.Interface;
+        //    EncodeUInt32(message.Function, buffer, offset);
+        //    offset += 4;
+        //    EncodeUInt32(message.StatusCode, buffer, offset);
+        //    offset += 4;
+        //    EncodeUInt32(message.MessageID, buffer, offset);
+        //    offset += 4;
+        //    EncodeUInt32(message.PayloadLength, buffer, offset);
+        //    offset += 4;
+        //    //
+        //    //  CRC will be put in later but needs to be 0 for the calculation.
+        //    //
+        //    EncodeUInt32(0, buffer, offset);
+        //    offset += 4;
+        //    //
+        //    //  Now we deal with the CRC.
+        //    //
+        //    UInt32 crc = Crc32(buffer);
+        //    EncodeUInt32(crc, buffer, Messages.CRC_OFFSET);
+        //    return (buffer);
+        //}
 
         /// <summary>
         ///     Extrat a message from a byte buffer and return a Message object.

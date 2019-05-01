@@ -2,7 +2,6 @@
 using Meadow;
 using Meadow.Devices;
 using Meadow.Hardware;
-using Meadow.Hardware.Communications;
 using Meadow.Core.Esp32;
 using System.Threading;
 
@@ -12,7 +11,9 @@ namespace BasicNetworkTest
     {
         private DigitalInputPort _button;
 
-        MessageDispatcher _dispatcher = null;
+        private UInt32 _counter;
+
+        MessageDispatcher _dispatcher;
 
         /// <summary>
         /// Default constructor.
@@ -35,12 +36,21 @@ namespace BasicNetworkTest
         {
             Messages.AntennaInfo antennaInfo = new Messages.AntennaInfo();
             antennaInfo.Antenna = (byte) Antenna.External;
+
             Messages.Message message = new Messages.Message();
             message.Interface = (byte) Esp32Interfaces.WiFi;
-            message.Function = (byte)WiFiFunction.GetAntenna;
-            message.MessageID = 0x54;
-            message.MessageType = (byte)PacketType.Data;
+            message.Function = (byte) WiFiFunction.GetAntenna;
+            message.MessageID = _counter++;
+            message.MessageType = (byte) PacketType.Data;
+            message.Payload = null;
+            message.PayloadLength = 0;
+            //message.Payload = Encoders.EncodeAntennaInfo(antennaInfo);
+            //message.PayloadLength = (UInt32) message.Payload.Length;
+            Console.WriteLine("Queueing message:");
+
+            Console.WriteLine(DebugHelpers.DebugHelpers.PrintableMessage(message));
             _dispatcher.Add(message);
+            //_dispatcher.Start();
         }
 
         /// <summary>

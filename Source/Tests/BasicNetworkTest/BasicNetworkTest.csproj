@@ -6,14 +6,14 @@
     <ProjectGuid>{A1486D30-66C7-486A-8468-DE9D070254FB}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <RootNamespace>BasicNetworkTest</RootNamespace>
-    <AssemblyName>BasicNetworkTest</AssemblyName>
-    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <AssemblyName>App</AssemblyName>
+    <TargetFrameworkVersion>v4.7</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\Debug</OutputPath>
+    <OutputPath>..\..\..\..\..\..\..\..\..\tmp</OutputPath>
     <DefineConstants>DEBUG;</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -22,7 +22,7 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <Optimize>true</Optimize>
-    <OutputPath>bin\Release</OutputPath>
+    <OutputPath>..\..\..\..\..\..\..\..\..\tmp</OutputPath>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <ExternalConsole>true</ExternalConsole>
@@ -38,7 +38,6 @@
     <Compile Include="Meadow.Core.Esp32\Encoders.cs" />
     <Compile Include="Meadow.Core.Esp32\EncodersBase.cs" />
     <Compile Include="Meadow.Core.Esp32\Enums.cs" />
-    <Compile Include="Meadow.Core.Esp32\ITransportProvider.cs" />
     <Compile Include="Meadow.Core.Esp32\Message.cs" />
     <Compile Include="Meadow.Core.Esp32\MessageDispatcher.cs" />
     <Compile Include="Meadow.Core.Esp32\Messages.cs" />

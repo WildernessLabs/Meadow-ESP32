@@ -44,7 +44,7 @@ namespace Meadow.Core.Esp32
         {
             if (_esp32 != null)
             {
-                throw new InvalidOperationException("Only a single instance of a MessageQueue can be created.");
+                throw new InvalidOperationException("Only a single instance of a MessageDispatcher can be created.");
             }
             _esp32 = new SpiTransportProvider(device, stm32ReadyPin, esp32ReadyPin, mosi, miso, clock, chipSelect, bootPin, resetPin);
             _esp32.MessageReceived += _esp32_DataReceived;
@@ -60,9 +60,10 @@ namespace Meadow.Core.Esp32
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        private void _esp32_TransportError(object sender, MessageDispatcherErrorEventArgs e)
+        private void _esp32_TransportError(object sender, TransportProviderEventArgs e)
         {
-            Error(this, e);
+            MessageDispatcherErrorEventArgs args = new MessageDispatcherErrorEventArgs(e.Interface, e.MessageId, e.StatusCode);
+            Error(this, args);
         }
 
         /// <summary>
@@ -78,6 +79,11 @@ namespace Meadow.Core.Esp32
         #endregion Event handlers
 
         #region Methods
+
+        public void Start()
+        {
+            ((SpiTransportProvider)_esp32).Start();
+        }
 
         /// <summary>
         ///     Add a new message to the message queue.
