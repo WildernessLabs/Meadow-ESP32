@@ -247,6 +247,9 @@ namespace Meadow.Core.Esp32
         {
         }
 
+        /// <summary>
+        /// Process an inbound message body.
+        /// </summary>
         private void ProcessWaitingForMessageBodyState()
         {
         }
@@ -302,7 +305,7 @@ namespace Meadow.Core.Esp32
             Console.WriteLine("Entering ProcessWaitingForMessageHeaderAcknowledgementState");
 
             byte[] dummyHeader = new byte[_headerFrameSize];
-            Array.Clear(dummyHeader, 0, (int) _headerFrameSize);
+            Array.Clear(dummyHeader, 0, (int)_headerFrameSize);
             byte[] encodedAcknowledgement = _esp32.WriteRead(dummyHeader, (ushort)_headerFrameSize);
             Messages.Message acknowledgement = Encoders.ExtractMessage(encodedAcknowledgement);
             Console.WriteLine("Received acknowledgement message:");
@@ -337,17 +340,71 @@ namespace Meadow.Core.Esp32
                 {
                     TransportProviderEventArgs args = new TransportProviderEventArgs((Esp32Interfaces)acknowledgement.Interface, acknowledgement.MessageID, StatusCodes.UnexpectedData);
                     TransportError(this, args);
+                    _currentState = SpiStates.Idle;
                 }
             }
             _stm32ReadyPin.State = false;
+            if (_currentState == SpiStates.WantToSendMessageBody)
+            {
+                _stm32ReadyPin.State = true;
+            }
         }
 
+        /// <summary>
+        /// Process the sending message body state.
+        /// </summary>
         private void ProcessWantToSendMessageBodyState()
         {
+            Console.WriteLine("Entering ProcessWantToSendMessageBodyState");
+            byte[] encodedMessage = Encoders.EncodeMessage((Messages.Message) _outboundMessage, false);
+            Console.WriteLine("Sending message body:");
+            Console.WriteLine($"{DebugHelpers.DebugHelpers.PrintableBuffer(encodedMessage)}");
+            _esp32.WriteBytes(encodedMessage);
+            _currentState = SpiStates.WaitingForMessageBodyAcknowledgement;
+            _stm32ReadyPin.State = false;
+            _stm32ReadyPin.State = true;
         }
 
+        /// <summary>
+        /// Process the incoming message body acknowledgement.
+        /// </summary>
         private void ProcessWaitingForMessageBodyAcknowledgementState()
         {
+            Console.WriteLine("Entering ProcessWaitingForMessageBodyAcknowledgementState");
+
+            byte[] dummyHeader = new byte[_headerFrameSize];
+            Array.Clear(dummyHeader, 0, (int)_headerFrameSize);
+            byte[] encodedAcknowledgement = _esp32.WriteRead(dummyHeader, (ushort)_headerFrameSize);
+            Messages.Message acknowledgement = Encoders.ExtractMessage(encodedAcknowledgement);
+            Console.WriteLine("Received acknowledgement message:");
+            Console.WriteLine(DebugHelpers.DebugHelpers.PrintableMessage(acknowledgement));
+            //
+            //  We can get three possible responses here:
+            //      ACK - Data received by the ESP32 is good.
+            //      NAK - There is a problem with the data, this could be a CRC error or invalid data.
+            //
+            if (acknowledgement.MessageType == (byte)PacketType.Nak)
+            {
+                TransportProviderEventArgs args = new TransportProviderEventArgs((Esp32Interfaces)acknowledgement.Interface, acknowledgement.MessageID, (StatusCodes)acknowledgement.StatusCode);
+                TransportError(this, args);
+                _outboundMessage = null;
+                _currentState = SpiStates.Idle;
+            }
+            else
+            {
+                if ((acknowledgement.MessageID == _outboundMessage.Value.MessageID) && (acknowledgement.Interface == _outboundMessage.Value.Interface))
+                {
+                    _outboundMessage = null;
+                    _currentState = SpiStates.Idle;
+                }
+                else
+                {
+                    TransportProviderEventArgs args = new TransportProviderEventArgs((Esp32Interfaces)acknowledgement.Interface, acknowledgement.MessageID, StatusCodes.UnexpectedData);
+                    TransportError(this, args);
+                }
+            }
+            _currentState = SpiStates.Idle;
+            _stm32ReadyPin.State = false;
         }
 
         private void ProcessWantToSendTransportMessageState()
