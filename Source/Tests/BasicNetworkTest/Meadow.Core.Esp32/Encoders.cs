@@ -65,7 +65,7 @@ namespace Meadow.Core.Esp32
             //  Now allocate a new buffer and copy the data in to the buffer.
             //
             byte[] buffer = new byte[length];
-            antennaInfo.Antenna = buffer[offset];
+            buffer[offset] = antennaInfo.Antenna;
             offset += 1;
             return(buffer);
         }
