@@ -21,6 +21,35 @@ namespace Meadow.Core.Esp32
             public UInt32 PayloadLength;
             public UInt32 Crc;
             public byte[] Payload;
+
+            /// <summary>
+            /// Constructor for a Message.
+            /// </summary>
+            /// <param name="messageType">Type of message to be sent <see cref="PacketType" />.</param>
+            /// <param name="esp32Interface">Interface on the ESP32 that this message is destined for (see <see cref="Esp32Interfaces" />.</param>
+            /// <param name="function">Function to be executed.</param>
+            /// <param name="messageId">Message ID for this message.</param>
+            /// <param name="statusCode">Status code for result messages.</param>
+            /// <param name="payload">Payload associated with this message.</param>
+            public Message(PacketType messageType, Esp32Interfaces esp32Interface, UInt32 function, UInt32 messageId, UInt32 statusCode, byte[] payload)
+            {
+                MessageType = (byte) messageType;
+                Interface = (byte) esp32Interface;
+                Function = function;
+                MessageID = messageId;
+                StatusCode = statusCode;
+                if (payload == null)
+                {
+                    Payload = null;
+                    PayloadLength = 0;
+                }
+                else
+                {
+                    Payload = payload;
+                    PayloadLength = (UInt32) payload.Length;
+                }
+                Crc = 0;
+            }
         }
 
         public const UInt32 HEADER_SIZE = 23;
