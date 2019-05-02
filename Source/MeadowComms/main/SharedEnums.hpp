@@ -47,11 +47,12 @@ namespace Esp32Interfaces
      */
     enum Esp32Interfaces : uint8_t
     {
-        WiFi = 0,
-        BlueTooth = 1,
-        MeshNetwork = 2,
-        System = 3,
-        Transport = 4
+        None = 0,
+        WiFi = 1,
+        BlueTooth = 2,
+        MeshNetwork = 3,
+        System = 4,
+        Transport = 5
     };
 }
 
