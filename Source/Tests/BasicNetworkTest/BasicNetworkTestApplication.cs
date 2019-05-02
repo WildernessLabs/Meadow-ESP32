@@ -42,15 +42,12 @@ namespace BasicNetworkTest
             message.Function = (byte) WiFiFunction.SetAntenna;
             message.MessageID = _counter++;
             message.MessageType = (byte) PacketType.Data;
-            message.Payload = null;
-            message.PayloadLength = 0;
             message.Payload = Encoders.EncodeAntennaInfo(antennaInfo);
             message.PayloadLength = (UInt32)message.Payload.Length;
             Console.WriteLine("Queueing message:");
 
             Console.WriteLine(DebugHelpers.DebugHelpers.PrintableMessage(message));
             _dispatcher.Add(message);
-            //_dispatcher.Start();
         }
 
         /// <summary>

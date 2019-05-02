@@ -8,8 +8,8 @@
             "BaseDataType": "UInt32",
             "EnumNames": [ 
                 "CompletedOK", "CRCError", "Restart", "Failure", "InvalidInterface", "QueueError",
-                "InvalidPacket", "InvalidHeader", "UnexpectedData", "MissingEndOfFrameMarker", "WiFiAlreadyStarted",
-                "InvalidSSID", "InvalidPassword", "WiFiDisconnected"
+                "InvalidPacket", "InvalidHeader", "UnexpectedData", "MissingEndOfFrameMarker", "HeaderBodyFieldMismatch",
+                "WiFiAlreadyStarted", "InvalidSSID", "InvalidPassword", "WiFiDisconnected"
             ]
         },
         {

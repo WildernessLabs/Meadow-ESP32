@@ -189,6 +189,7 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
     _outboundMessage = antennaInformationMessage;
 
     _currentState = Idle;
+//    _currentState = WantToSendMessageHeader;
 
     //
     //  TODO: End of remove code after testing complete.
@@ -437,19 +438,20 @@ void SpiTransportProvider::ProcessIdleState()
     if (transaction->trans_len >= (HEADER_SIZE * 8))
     {
         messageHeader = Encoders::ExtractMessage((uint8_t *) transaction->rx_buffer, _headerFrameSize, true);
-        //
-        //  TODO: message could be nullptr - deal with it.
-        //
         ClearCurrentHeader();
         if (messageHeader)
         {
             _responseCode = StatusCodes::CompletedOK;
-            _packetType = PacketType::Transport | PacketType::Ack;
+            _packetType = PacketType::Ack;
         }
         else
         {
+            //
+            //  messageHeader will only normally be nullptr if a CRC
+            //  error has been detected.
+            //
             _responseCode = StatusCodes::CRCError;
-            _packetType = PacketType::Transport | PacketType::Nak;
+            _packetType = PacketType::Nak;
 
             messageHeader = (Message *) pvPortMalloc(sizeof(Message));
             memset(messageHeader, 0, sizeof(Message));
@@ -465,7 +467,7 @@ void SpiTransportProvider::ProcessIdleState()
     else
     {
         _responseCode = StatusCodes::InvalidHeader;
-        _packetType = PacketType::Transport | PacketType::Nak;
+        _packetType = PacketType::Nak;
 
         messageHeader = (Message *) pvPortMalloc(sizeof(Message));
         memset(messageHeader, 0, sizeof(Message));
@@ -792,9 +794,8 @@ void SpiTransportProvider::IncomingSpiMessageTask(void *pvParameters)
         //
         //  We must wait until we are woken by one of the events.
         //
-        ESP_LOGI(__func__, "Waiting for notification.");
+        ESP_LOGI(__func__, "Waiting for notification, current state: %d", _currentState);
         uint32_t notificationValue = ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-        ESP_LOGI(__func__, "Notification Received, current state: %d", _currentState);
         gpio_set_level(Gpio::ESP32_READY_PIN, 1);
         switch (_currentState)
         {
