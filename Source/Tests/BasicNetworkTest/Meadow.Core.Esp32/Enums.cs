@@ -37,11 +37,12 @@ namespace Meadow.Core.Esp32
 
     public enum Esp32Interfaces : byte
     {
-        WiFi = 0,
-        BlueTooth = 1,
-        MeshNetwork = 2,
-        System = 3,
-        Transport = 4
+        None = 0,
+        WiFi = 1,
+        BlueTooth = 2,
+        MeshNetwork = 3,
+        System = 4,
+        Transport = 5
     };
 
     public enum SystemFunction : UInt32
