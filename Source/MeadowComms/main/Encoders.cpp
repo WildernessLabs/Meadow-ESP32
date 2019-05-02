@@ -275,7 +275,7 @@ uint32_t Encoders::ProgressiveCRC32(uint32_t currentChecksum, uint8_t byte)
  *      @returns
  *          byte buffer containing the encoded message.
  */
-uint8_t *Encoders::EncodeMessage(Message *message, bool header)
+uint8_t *Encoders::EncodeMessage(Message *message, bool headerOnly)
 {
     uint32_t messageSize = HEADER_SIZE;
     if (!headerOnly)
@@ -311,7 +311,7 @@ uint8_t *Encoders::EncodeMessage(Message *message, bool header)
     }
     else
     {
-        EncodeUInt32(0, buffer, offset);
+        EncodeUInt32(0, buffer + offset);
     }
     uint32_t crc = CRC32(buffer, bufferSize);
     EncodeUInt32(crc, buffer + CRC_OFFSET);

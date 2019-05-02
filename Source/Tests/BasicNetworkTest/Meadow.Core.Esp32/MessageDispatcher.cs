@@ -1,11 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using System.Threading;
-using Meadow;
-using Meadow.Devices;
 using Meadow.Hardware;
-using Meadow.Hardware.Communications;
 
 namespace Meadow.Core.Esp32
 {
@@ -79,11 +74,6 @@ namespace Meadow.Core.Esp32
         #endregion Event handlers
 
         #region Methods
-
-        public void Start()
-        {
-            ((SpiTransportProvider)_esp32).Start();
-        }
 
         /// <summary>
         ///     Add a new message to the message queue.

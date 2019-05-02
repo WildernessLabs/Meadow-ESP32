@@ -286,41 +286,50 @@ namespace Meadow.Core.Esp32
         /// <summary>
         ///     Extrat a message from a byte buffer and return a Message object.
         /// </summary>
-        /// <returns>Extract message ready for processing.</returns>
+        /// <returns>Tuple containing the extracted message (or null) and a status code.</returns>
         /// <param name="buffer">Byte buffer containing the encoded data.</param>
         /// <param name="offset">Offset of the message into the buffer (normally this is 0).</param>
-        public static Messages.Message ExtractMessage(byte[] buffer, int offset = 0)
+        public static (Messages.Message? message, StatusCodes statusCode) ExtractMessage(byte[] buffer, int offset = 0)
         {
+            StatusCodes statusCode = StatusCodes.CompletedOK;
+            Messages.Message? result = null;
+
             if (buffer.Length < Messages.HEADER_SIZE)
             {
-                //  TODO: Deal with this error.
+                statusCode = StatusCodes.InvalidPacket;
             }
-            //
-            //  Now check the CRC.
-            //
-            UInt32 crc = ExtractUInt32(buffer, Messages.CRC_OFFSET);
-            EncodeUInt32(0, buffer, Messages.CRC_OFFSET);
-            if (Crc32(buffer) != crc)
+            else
             {
-                //  TODO: Deal with this error.
+                //
+                //  Now check the CRC.
+                //
+                UInt32 crc = ExtractUInt32(buffer, Messages.CRC_OFFSET);
+                EncodeUInt32(0, buffer, Messages.CRC_OFFSET);
+                if (Crc32(buffer) != crc)
+                {
+                    statusCode = StatusCodes.CRCError;
+                }
+                else
+                {
+                    Messages.Message message = new Messages.Message();
+                    message.MessageType = buffer[offset++];
+                    message.Interface = buffer[offset++];
+                    message.Function = ExtractUInt32(buffer, offset);
+                    offset += 4;
+                    message.StatusCode = ExtractUInt32(buffer, offset);
+                    offset += 4;
+                    message.MessageID = ExtractUInt32(buffer, offset);
+                    offset += 4;
+                    message.PayloadLength = ExtractUInt32(buffer, offset);
+                    offset += 4;
+                    message.Crc = ExtractUInt32(buffer, offset);
+                    offset += 4;
+                    message.Payload = new byte[message.PayloadLength];
+                    Array.Copy(buffer, offset, message.Payload, 0, message.PayloadLength);
+                    result = message;
+                }
             }
-
-            Messages.Message message = new Messages.Message();
-            message.MessageType = buffer[offset++];
-            message.Interface = buffer[offset++];
-            message.Function = ExtractUInt32(buffer, offset);
-            offset += 4;
-            message.StatusCode = ExtractUInt32(buffer, offset);
-            offset += 4;
-            message.MessageID = ExtractUInt32(buffer, offset);
-            offset += 4;
-            message.PayloadLength = ExtractUInt32(buffer, offset);
-            offset += 4;
-            message.Crc = ExtractUInt32(buffer, offset);
-            offset += 4;
-            message.Payload = new byte[message.PayloadLength];
-            Array.Copy(buffer, offset, message.Payload, 0, message.PayloadLength);
-            return (message);
+            return (result, statusCode);
         }
     }
 }

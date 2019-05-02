@@ -29,10 +29,11 @@ namespace Meadow.Core.Esp32
         InvalidHeader = 7,
         UnexpectedData = 8,
         MissingEndOfFrameMarker = 9,
-        WiFiAlreadyStarted = 10,
-        InvalidSSID = 11,
-        InvalidPassword = 12,
-        WiFiDisconnected = 13
+        HeaderBodyFieldMismatch = 10,
+        WiFiAlreadyStarted = 11,
+        InvalidSSID = 12,
+        InvalidPassword = 13,
+        WiFiDisconnected = 14
     };
 
     public enum Esp32Interfaces : byte
