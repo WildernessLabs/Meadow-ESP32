@@ -52,7 +52,19 @@ namespace Meadow.Core.Esp32
             }
         }
 
+        /// <summary>
+        /// Size of an encoded header (in bytes).
+        /// </summary>
         public const UInt32 HEADER_SIZE = 23;
+
+        /// <summary>
+        /// Offset of the CRC in an encoded message header.
+        /// </summary>
         public const int CRC_OFFSET = 18;
+
+        /// <summary>
+        /// Message ID used to indicate an invalid (or unknown) message ID.
+        /// </summary>
+        public const UInt32 INVALID_MESSAGE_ID = 0xffffffff;
     }
 }

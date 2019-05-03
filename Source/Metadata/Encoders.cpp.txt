@@ -261,7 +261,7 @@ uint32_t Encoders::ProgressiveCRC32(uint32_t currentChecksum, uint8_t byte)
  */
 uint8_t *Encoders::EncodeMessage(Message *message, bool headerOnly)
 {
-    uint32_t messageSize = HEADER_SIZE;
+    uint32_t messageSize = Message::HEADER_SIZE;
     if (!headerOnly)
     {
         messageSize += message->PayloadLength;
@@ -295,10 +295,10 @@ uint8_t *Encoders::EncodeMessage(Message *message, bool headerOnly)
     }
     else
     {
-        EncodeUInt32(0, buffer, offset);
+        EncodeUInt32(0, buffer + offset);
     }
     uint32_t crc = CRC32(buffer, bufferSize);
-    EncodeUInt32(crc, buffer + CRC_OFFSET);
+    EncodeUInt32(crc, buffer + Message::CRC_OFFSET);
 
     return(buffer);
 }
@@ -318,8 +318,8 @@ uint8_t *Encoders::EncodeMessage(Message *message, bool headerOnly)
  */
 Message *Encoders::ExtractMessage(uint8_t *buffer, uint32_t bufferLength, bool headerOnly)
 {
-    uint32_t crc = ExtractUInt32(buffer + CRC_OFFSET);
-    EncodeUInt32(0, buffer + CRC_OFFSET);
+    uint32_t crc = ExtractUInt32(buffer + Message::CRC_OFFSET);
+    EncodeUInt32(0, buffer + Message::CRC_OFFSET);
     
     Message *message = nullptr;
     if (crc == CRC32(buffer, bufferLength))
