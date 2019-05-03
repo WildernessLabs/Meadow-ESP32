@@ -23,7 +23,7 @@ namespace Meadow.Core.Esp32
             WaitingForMessageBody, AcknowledingMessageBody,
             WantToSendMessageHeader, WaitingForMessageHeaderAcknowledgement,
             WantToSendMessageBody, WaitingForMessageBodyAcknowledgement,
-            WantToSendTransportMessage
+            CheckMessageQueue, WantToSendTransportMessage
         };
 
         #endregion
@@ -175,16 +175,35 @@ namespace Meadow.Core.Esp32
 
         #region Methods
 
-        public void Start()
-        {
-            _waitingForStuffToDoHandle.Set();
-        }
-
+        /// <summary>
+        /// Main MessageDispatcher thread.
+        /// </summary>
         private void Run()
         {
             while (true)
             {
-                _waitingForStuffToDoHandle.WaitOne();
+                //
+                //  Work out if we should wait for an incoming signal.
+                //
+                //  If we just wait then the application will process only the first
+                //  message in the queue as only one signal will be processed even if
+                //  more than one signals are raised.
+                //
+                bool wait = true;
+                if (_currentState == SpiStates.Idle)
+                {
+                    lock (_messageQueueLock)
+                    {
+                        wait = (_messageQueue.Count == 0);
+                    }
+                }
+                if (wait)
+                {
+                    _waitingForStuffToDoHandle.WaitOne();
+                }
+                //
+                //  Signals are used to transition from one state to another.
+                //
                 switch (_currentState)
                 {
                     case SpiStates.Idle:
@@ -430,33 +449,47 @@ namespace Meadow.Core.Esp32
             //      ACK - Data received by the ESP32 is good.
             //      NAK - There is a problem with the data, this could be a CRC error or invalid data.
             //
-            if (acknowledgement.Value.MessageType == (byte) PacketType.Nak)
+            if (status == StatusCodes.CompletedOK)
             {
-                TransportProviderEventArgs args = new TransportProviderEventArgs((Esp32Interfaces)acknowledgement.Value.Interface, acknowledgement.Value.MessageID, (StatusCodes) acknowledgement.Value.StatusCode);
-                TransportError(this, args);
-                _outboundMessage = null;
-                _currentState = SpiStates.Idle;
-            }
-            else
-            {
-                if ((acknowledgement.Value.MessageID == _outboundMessage.Value.MessageID) && (acknowledgement.Value.Interface == _outboundMessage.Value.Interface))
+                Console.WriteLine("Status OK");
+                if (acknowledgement == null)
                 {
-                    if (_outboundMessage.Value.PayloadLength > 0)
-                    {
-                        _currentState = SpiStates.WantToSendMessageBody;
-                    }
-                    else
-                    {
-                        _outboundMessage = null;
-                        _currentState = SpiStates.Idle;
-                    }
+                    Console.WriteLine("Acknowledgement is null");
+                }
+                if (acknowledgement.Value.MessageType == (byte)PacketType.Nak)
+                {
+                    TransportProviderEventArgs args = new TransportProviderEventArgs((Esp32Interfaces)acknowledgement.Value.Interface, acknowledgement.Value.MessageID, (StatusCodes)acknowledgement.Value.StatusCode);
+                    TransportError(this, args);
+                    _outboundMessage = null;
+                    _currentState = SpiStates.Idle;
                 }
                 else
                 {
-                    TransportProviderEventArgs args = new TransportProviderEventArgs((Esp32Interfaces)acknowledgement.Value.Interface, acknowledgement.Value.MessageID, StatusCodes.UnexpectedData);
-                    TransportError(this, args);
-                    _currentState = SpiStates.Idle;
+                    if ((acknowledgement.Value.MessageID == _outboundMessage.Value.MessageID) && (acknowledgement.Value.Interface == _outboundMessage.Value.Interface))
+                    {
+                        if (_outboundMessage.Value.PayloadLength > 0)
+                        {
+                            _currentState = SpiStates.WantToSendMessageBody;
+                        }
+                        else
+                        {
+                            _outboundMessage = null;
+                            _currentState = SpiStates.Idle;
+                        }
+                    }
+                    else
+                    {
+                        TransportProviderEventArgs args = new TransportProviderEventArgs((Esp32Interfaces)acknowledgement.Value.Interface, acknowledgement.Value.MessageID, StatusCodes.UnexpectedData);
+                        TransportError(this, args);
+                        _currentState = SpiStates.Idle;
+                    }
                 }
+            }
+            else
+            {
+                TransportProviderEventArgs args = new TransportProviderEventArgs(Esp32Interfaces.Transport, Messages.INVALID_MESSAGE_ID, status);
+                TransportError(this, args);
+                _currentState = SpiStates.Idle;
             }
             _stm32ReadyPin.State = false;
             if (_currentState == SpiStates.WantToSendMessageBody)
@@ -500,25 +533,33 @@ namespace Meadow.Core.Esp32
             //      ACK - Data received by the ESP32 is good.
             //      NAK - There is a problem with the data, this could be a CRC error or invalid data.
             //
-            if (acknowledgement.Value.MessageType == (byte)PacketType.Nak)
+            if (status == StatusCodes.CompletedOK)
             {
-                TransportProviderEventArgs args = new TransportProviderEventArgs((Esp32Interfaces)acknowledgement.Value.Interface, acknowledgement.Value.MessageID, (StatusCodes)acknowledgement.Value.StatusCode);
-                TransportError(this, args);
-                _outboundMessage = null;
-                _currentState = SpiStates.Idle;
-            }
-            else
-            {
-                if ((acknowledgement.Value.MessageID == _outboundMessage.Value.MessageID) && (acknowledgement.Value.Interface == _outboundMessage.Value.Interface))
+                if (acknowledgement.Value.MessageType == (byte)PacketType.Nak)
                 {
+                    TransportProviderEventArgs args = new TransportProviderEventArgs((Esp32Interfaces)acknowledgement.Value.Interface, acknowledgement.Value.MessageID, (StatusCodes)acknowledgement.Value.StatusCode);
+                    TransportError(this, args);
                     _outboundMessage = null;
                     _currentState = SpiStates.Idle;
                 }
                 else
                 {
-                    TransportProviderEventArgs args = new TransportProviderEventArgs((Esp32Interfaces)acknowledgement.Value.Interface, acknowledgement.Value.MessageID, StatusCodes.UnexpectedData);
-                    TransportError(this, args);
+                    if ((acknowledgement.Value.MessageID == _outboundMessage.Value.MessageID) && (acknowledgement.Value.Interface == _outboundMessage.Value.Interface))
+                    {
+                        _outboundMessage = null;
+                        _currentState = SpiStates.Idle;
+                    }
+                    else
+                    {
+                        TransportProviderEventArgs args = new TransportProviderEventArgs((Esp32Interfaces)acknowledgement.Value.Interface, acknowledgement.Value.MessageID, StatusCodes.UnexpectedData);
+                        TransportError(this, args);
+                    }
                 }
+            }
+            else
+            {
+                TransportProviderEventArgs args = new TransportProviderEventArgs(Esp32Interfaces.Transport, Messages.INVALID_MESSAGE_ID, status);
+                TransportError(this, args);
             }
             _currentState = SpiStates.Idle;
             _stm32ReadyPin.State = false;
