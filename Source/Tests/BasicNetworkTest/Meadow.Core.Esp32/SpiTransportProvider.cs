@@ -261,15 +261,13 @@ namespace Meadow.Core.Esp32
             {
                 if (_messageQueue.Count > 0)
                 {
-                    Console.WriteLine("    Extracting message.");
                     _outboundMessage = _messageQueue.Dequeue();
                     _currentState = SpiStates.WantToSendMessageHeader;
                     _stm32ReadyPin.State = true;
                 }
                 else
                 {
-                    Console.WriteLine("Sending Ready packet to ESP32.");
-                    Messages.Message readyMessage = new Messages.Message(PacketType.Ready, Esp32Interfaces.None, 0xffffffff, 0xffffffff, 0, null);
+                    Messages.Message readyMessage = new Messages.Message(PacketType.Ready, Esp32Interfaces.None, Messages.INVALID_FUNCTION, Messages.INVALID_MESSAGE_ID, 0, null);
                     byte[] encodedReadyMessage = Encoders.EncodeMessage(readyMessage, true);
 
                     _stm32ReadyPin.State = true;
@@ -415,8 +413,6 @@ namespace Meadow.Core.Esp32
             {
                 encodedHeader = Encoders.EncodeMessage((Messages.Message) _outboundMessage, true);
             }
-            Console.WriteLine("Sending data:");
-            Console.WriteLine($"{DebugHelpers.DebugHelpers.PrintableBuffer(encodedHeader)}");
             _esp32.WriteBytes(encodedHeader);
             _currentState = SpiStates.WaitingForMessageHeaderAcknowledgement;
             _stm32ReadyPin.State = false;
@@ -444,8 +440,6 @@ namespace Meadow.Core.Esp32
             StatusCodes status;
             Messages.Message? acknowledgement;
             (acknowledgement, status) = Encoders.ExtractMessage(encodedAcknowledgement);
-            Console.WriteLine("Received acknowledgement message:");
-            Console.WriteLine(DebugHelpers.DebugHelpers.PrintableMessage(acknowledgement.Value));
             //
             //  We can get three possible responses here:
             //      ACK - Data received by the ESP32 is good.
@@ -507,8 +501,6 @@ namespace Meadow.Core.Esp32
         {
             Console.WriteLine("Entering ProcessWantToSendMessageBodyState");
             byte[] encodedMessage = Encoders.EncodeMessage((Messages.Message) _outboundMessage, false);
-            Console.WriteLine("Sending message body:");
-            Console.WriteLine($"{DebugHelpers.DebugHelpers.PrintableBuffer(encodedMessage)}");
             _esp32.WriteBytes(encodedMessage);
             _currentState = SpiStates.WaitingForMessageBodyAcknowledgement;
             _stm32ReadyPin.State = false;
@@ -528,8 +520,6 @@ namespace Meadow.Core.Esp32
             StatusCodes status;
             Messages.Message? acknowledgement;
             (acknowledgement, status) = Encoders.ExtractMessage(encodedAcknowledgement);
-            Console.WriteLine("Received acknowledgement message:");
-            Console.WriteLine(DebugHelpers.DebugHelpers.PrintableMessage(acknowledgement.Value));
             //
             //  We can get three possible responses here:
             //      ACK - Data received by the ESP32 is good.
