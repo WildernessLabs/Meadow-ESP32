@@ -64,3 +64,4 @@ packages
 .DS_Store
 *.DS_Store
 .vs/
+.vscode/ipch
