@@ -139,7 +139,7 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
     /*
      *  The initial state is to wait for a message header to be sent by the STM32.
      */
-    _headerFrameSize = Encoders::CalculateSpiBufferSize(HEADER_SIZE);
+    _headerFrameSize = Encoders::CalculateSpiBufferSize(Message::HEADER_SIZE);
     _headerBuffer = (uint8_t *) heap_caps_malloc(_headerFrameSize, MALLOC_CAP_DMA);
     _transmitBuffer = (uint8_t *) heap_caps_malloc(_headerFrameSize, MALLOC_CAP_DMA);
     _transportFrameBuffer = (uint8_t *) heap_caps_malloc(_headerFrameSize, MALLOC_CAP_DMA);
@@ -250,7 +250,7 @@ spi_slave_transaction_t *SpiTransportProvider::AcknowledgeMessage(Message *messa
 {
     spi_slave_transaction_t *transaction = SetupSpiSlaveTransaction(_headerFrameSize, _headerFrameSize);
 
-    Message *copyOfMessage = CopyMessage(message, false);
+    Message *copyOfMessage = Message::CopyMessage(message, false);
     copyOfMessage->MessageType = packetType;
     copyOfMessage->StatusCode = (uint32_t) code;
     uint8_t *ackFrame = (uint8_t *) Encoders::EncodeMessage(copyOfMessage, true);
@@ -435,7 +435,7 @@ void SpiTransportProvider::ProcessIdleState()
     ESP_LOG_BUFFER_HEX(__func__, transaction->rx_buffer, dataSize);
 
     Message *messageHeader;
-    if (transaction->trans_len >= (HEADER_SIZE * 8))
+    if (transaction->trans_len >= (Message::HEADER_SIZE * 8))
     {
         messageHeader = Encoders::ExtractMessage((uint8_t *) transaction->rx_buffer, _headerFrameSize, true);
         ClearCurrentHeader();
@@ -539,7 +539,7 @@ void SpiTransportProvider::ProcessWaitingForMessageBodyState()
 {
     ESP_LOGI(__func__, "Entering Method.");
 
-    uint32_t encodedMessageBodySize = Encoders::CalculateSpiBufferSize(HEADER_SIZE + _currentHeader->PayloadLength);
+    uint32_t encodedMessageBodySize = Encoders::CalculateSpiBufferSize(Message::HEADER_SIZE + _currentHeader->PayloadLength);
     spi_slave_transaction_t *transaction = SetupSpiSlaveTransaction(encodedMessageBodySize, encodedMessageBodySize);
 
     ESP_LOGI(__func__, "Current header payload length: %d", _currentHeader->PayloadLength);
@@ -619,10 +619,10 @@ void SpiTransportProvider::ProcessWantToSendMessageHeaderState()
     if (_outboundMessage)
     {
         uint8_t *encodedMessageHeader = Encoders::EncodeMessage(_outboundMessage, true);
-        ESP_LOG_BUFFER_HEX(__func__, encodedMessageHeader, HEADER_SIZE);
+        ESP_LOG_BUFFER_HEX(__func__, encodedMessageHeader, Message::HEADER_SIZE);
 
         spi_slave_transaction_t *transaction = SetupSpiSlaveTransaction(_headerFrameSize, _headerFrameSize);
-        memcpy((void *) transaction->tx_buffer, (void *) encodedMessageHeader, HEADER_SIZE);
+        memcpy((void *) transaction->tx_buffer, (void *) encodedMessageHeader, Message::HEADER_SIZE);
 
         gpio_set_level(Gpio::ESP32_READY_PIN, 1);
         ESP_ERROR_CHECK(spi_slave_transmit(VSPI_HOST, transaction, portMAX_DELAY));
@@ -702,12 +702,12 @@ void SpiTransportProvider::ProcessWantToSendMessageBodyState()
     if (_outboundMessage)
     {
         uint8_t *encodedMessageBody = Encoders::EncodeMessage(_outboundMessage, false);
-        ESP_LOG_BUFFER_HEX(__func__, encodedMessageBody, HEADER_SIZE + _outboundMessage->PayloadLength);
+        ESP_LOG_BUFFER_HEX(__func__, encodedMessageBody, Message::HEADER_SIZE + _outboundMessage->PayloadLength);
 
-        uint32_t encodedMessageBufferSize = Encoders::CalculateSpiBufferSize(HEADER_SIZE + _outboundMessage->PayloadLength);
+        uint32_t encodedMessageBufferSize = Encoders::CalculateSpiBufferSize(Message::HEADER_SIZE + _outboundMessage->PayloadLength);
         spi_slave_transaction_t *transaction = SetupSpiSlaveTransaction(encodedMessageBufferSize, encodedMessageBufferSize);
-        memcpy((void *) transaction->tx_buffer, (void *) encodedMessageBody, HEADER_SIZE);
-        memcpy((void *) (transaction->tx_buffer + HEADER_SIZE), (void *) _outboundMessage->Payload, _outboundMessage->PayloadLength);
+        memcpy((void *) transaction->tx_buffer, (void *) encodedMessageBody, Message::HEADER_SIZE);
+        memcpy((void *) (transaction->tx_buffer + Message::HEADER_SIZE), (void *) _outboundMessage->Payload, _outboundMessage->PayloadLength);
 
         gpio_set_level(Gpio::ESP32_READY_PIN, 1);
         ESP_ERROR_CHECK(spi_slave_transmit(VSPI_HOST, transaction, portMAX_DELAY));
