@@ -23,11 +23,29 @@ struct Message
     uint32_t MessageID;
     uint32_t PayloadLength;
     uint8_t *Payload;
+
+    /*
+     *  Constructor for the Message class.
+     */
+    Message(uint8_t, uint8_t, uint32_t, uint32_t , uint32_t, uint8_t *, uint32_t);
+
+    /*
+     *  Default constructor for a Message structure.
+     */
+    Message();
+
+    /*
+     *      Make a copy of a message.
+     */
+    static Message *CopyMessage(Message *originalMessage, bool copyPayload);
+
+    /*
+     *      Create a new message on the heap with the specified values.
+     */
+    static Message *Create(uint8_t, uint8_t, uint32_t, uint32_t, uint32_t, uint8_t *, uint32_t);
 };
 
 const uint32_t HEADER_SIZE = 23;
 const uint32_t CRC_OFFSET = 18;
-
-Message *CopyMessage(Message *, bool);
 
 #endif /* _ESP32_MESSAGING_HPP_ */
