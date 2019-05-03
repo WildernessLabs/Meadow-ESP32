@@ -66,5 +66,10 @@ namespace Meadow.Core.Esp32
         /// Message ID used to indicate an invalid (or unknown) message ID.
         /// </summary>
         public const UInt32 INVALID_MESSAGE_ID = 0xffffffff;
+
+        /// <summary>
+        /// Invalid function number.
+        /// </summary>
+        public const UInt32 INVALID_FUNCTION = 0xffffffff;
     }
 }
