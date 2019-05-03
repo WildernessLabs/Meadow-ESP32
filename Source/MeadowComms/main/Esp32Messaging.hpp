@@ -16,13 +16,55 @@
  */
 struct Message
 {
+    /*
+     *      Type of message.
+     */
     uint8_t MessageType;
+
+    /*
+     *      Interface that this message is destined for.
+     */
     uint8_t Interface;
+
+    /*
+     *      Function (on the interface) to be executed.
+     */
     uint32_t Function;
+
+    /*
+     *      Status code (for returning messages) from the function.
+     */
     uint32_t StatusCode;
+
+    /*
+     *      Unique ID of this message.
+     */
     uint32_t MessageID;
-    uint32_t PayloadLength;
+
+    /*
+     *      Pointer to the payload data to be processed (or returned from) the function.
+     */
     uint8_t *Payload;
+
+    /*
+     *      Number of bytes in the payload.
+     */
+    uint32_t PayloadLength;
+
+    /*
+     *  Size of an encoded message header (in bytes).
+     */
+    static const uint32_t HEADER_SIZE = 23;
+
+    /*
+     *  Offset of the CRC in an encoded message header.
+     */
+    static const uint32_t CRC_OFFSET = 18;
+
+    /*
+     *  Message ID used to indicate an invalid (or unknown) message ID.
+     */
+    static const uint32_t INVALID_MESSAGE_ID = 0xffffffff;
 
     /*
      *  Constructor for the Message class.
@@ -44,8 +86,5 @@ struct Message
      */
     static Message *Create(uint8_t, uint8_t, uint32_t, uint32_t, uint32_t, uint8_t *, uint32_t);
 };
-
-const uint32_t HEADER_SIZE = 23;
-const uint32_t CRC_OFFSET = 18;
 
 #endif /* _ESP32_MESSAGING_HPP_ */
