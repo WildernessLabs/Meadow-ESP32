@@ -23,7 +23,7 @@ namespace Meadow.Core.Esp32
             WaitingForMessageBody, AcknowledingMessageBody,
             WantToSendMessageHeader, WaitingForMessageHeaderAcknowledgement,
             WantToSendMessageBody, WaitingForMessageBodyAcknowledgement,
-            CheckMessageQueue, WantToSendTransportMessage
+            WantToSendTransportMessage
         };
 
         #endregion
@@ -45,7 +45,14 @@ namespace Meadow.Core.Esp32
         /// </summary>
         private readonly SoftwareSPIBus _esp32;
 
+        /// <summary>
+        /// STM32 pin connected to the Reset (EN) pin on the ESP32.
+        /// </summary>
         private readonly DigitalOutputPort _reset;
+
+        /// <summary>
+        /// STM32 pin connected to the boot pin on the ESP32.
+        /// </summary>
         private readonly DigitalOutputPort _boot;
 
         /// <summary>
@@ -74,11 +81,6 @@ namespace Meadow.Core.Esp32
         ///     Handle used to synchronise the incoming messages and the task processing the messages.
         /// </summary>
         private EventWaitHandle _waitingForStuffToDoHandle = new AutoResetEvent(false);
-
-        /// <summary>
-        ///     Handle used to synchronise the responses from the Uart.
-        /// </summary>
-        private EventWaitHandle _waitingForResponseHandle = new AutoResetEvent(false);
 
         /// <summary>
         ///     Thread processing the messages as they enter the queue.
