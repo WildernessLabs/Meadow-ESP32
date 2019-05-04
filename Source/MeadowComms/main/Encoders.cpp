@@ -369,9 +369,7 @@ Message *Encoders::ExtractMessage(uint8_t *buffer, uint32_t bufferLength, bool h
     }
     else
     {
-        //
-        //  TODO: Deal with this error.
-        //
+        return (nullptr);
     }
     return(message);
 }
