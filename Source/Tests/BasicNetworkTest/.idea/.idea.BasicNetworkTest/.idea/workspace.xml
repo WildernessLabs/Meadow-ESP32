@@ -2,9 +2,11 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="aa82c735-4ca8-429a-a755-663eed97cdae" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/.idea.BasicNetworkTest/.idea/indexLayout.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/.idea.BasicNetworkTest/.idea/vcs.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../FileGenerator/MessageProcessor.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../FileGenerator/MessageProcessor.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../FileGenerator/Program.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../FileGenerator/Program.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/BasicNetworkTest.csproj" beforeDir="false" afterPath="$PROJECT_DIR$/BasicNetworkTest.csproj" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Meadow.Core.Esp32/Encoders.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Meadow.Core.Esp32/Encoders.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Meadow.Core.Esp32/EncodersBase.cs" beforeDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -13,11 +15,11 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="FileEditorManager">
-    <leaf>
+    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/BasicNetworkTestApplication.cs">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="279">
+            <state relative-caret-position="704">
               <caret line="57" column="21" selection-start-line="57" selection-start-column="21" selection-end-line="57" selection-end-column="21" />
               <folding>
                 <marker date="1556727807151" expanded="false" signature="6:121" ph="..." />
@@ -38,11 +40,11 @@
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/Meadow.Core.Esp32/SpiTransportProvider.cs">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="566">
-              <caret line="285" column="34" lean-forward="true" selection-start-line="285" selection-start-column="34" selection-end-line="285" selection-end-column="34" />
+            <state relative-caret-position="406">
+              <caret line="285" column="34" selection-start-line="285" selection-start-column="34" selection-end-line="285" selection-end-column="34" />
               <folding>
                 <marker date="1556881733595" expanded="false" signature="6:232" ph="..." />
                 <marker date="1556881733595" expanded="true" signature="261:24733" ph="{...}" />
@@ -148,6 +150,72 @@
           </provider>
         </entry>
       </file>
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/Meadow.Core.Esp32/Encoders.cs">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="518">
+              <caret line="339" column="32" lean-forward="true" selection-start-line="339" selection-start-column="32" selection-end-line="339" selection-end-column="32" />
+              <folding>
+                <marker date="1557042809825" expanded="true" signature="0:329" ph="/* Encoders.cs ... */" />
+                <marker date="1557042809825" expanded="false" signature="337:369" ph="..." />
+                <marker date="1557042809825" expanded="true" signature="398:16089" ph="{...}" />
+                <marker date="1557042809825" expanded="true" signature="426:16087" ph="{...}" />
+                <marker date="1557042809825" expanded="true" signature="441:1051" ph="/// Calculate the amount of memory that should be allocated for the receive buffer. ... " />
+                <marker date="1557042809825" expanded="true" signature="1125:2105" ph="{...}" />
+                <marker date="1557042809825" expanded="true" signature="1207:1263" ph="{...}" />
+                <marker date="1557042809825" expanded="true" signature="1276:1831" ph="/* The buffer should always be 4 bytes longer than needed.  During development it ... */" />
+                <marker date="1557042809825" expanded="true" signature="1905:1992" ph="{...}" />
+                <marker date="1557042809825" expanded="true" signature="2009:2066" ph="{...}" />
+                <marker date="1557042809825" expanded="true" signature="2115:2193" ph="/// Seed for the Crc32 algorithm. ... " />
+                <marker date="1557042809825" expanded="true" signature="2257:2479" ph="///     Calculate the 32-bit CRC for the array of bytes. ... " />
+                <marker date="1557042809825" expanded="true" signature="2530:2604" ph="{...}" />
+                <marker date="1557042809825" expanded="true" signature="2614:3012" ph="/// Calculate the 32-bit CRC for the array of bytes. ... " />
+                <marker date="1557042809825" expanded="true" signature="3084:3316" ph="{...}" />
+                <marker date="1557042809825" expanded="true" signature="3193:3279" ph="{...}" />
+                <marker date="1557042809825" expanded="true" signature="3326:3948" ph="///     Progressively calculate the Crc32 value. ... " />
+                <marker date="1557042809825" expanded="true" signature="4030:4338" ph="{...}" />
+                <marker date="1557042809825" expanded="true" signature="4162:4302" ph="{...}" />
+                <marker date="1557042809825" expanded="true" signature="4348:4679" ph="///     Take two bytes from the buffer and encode them as a 16-bit integer. ... " />
+                <marker date="1557042809825" expanded="true" signature="4753:4925" ph="{...}" />
+                <marker date="1557042809825" expanded="true" signature="4935:5305" ph="///     Encode a 16-bit integer as two bytes in the buffer.  The data is ... " />
+                <marker date="1557042809825" expanded="true" signature="5390:5525" ph="{...}" />
+                <marker date="1557042809825" expanded="true" signature="5535:5884" ph="///     Take four bytes from the buffer and encode them as a 32-bit integer. ... " />
+                <marker date="1557042809825" expanded="true" signature="5958:6248" ph="{...}" />
+                <marker date="1557042809825" expanded="true" signature="6258:6629" ph="///     Encode a 32-bit integer as four bytes in the buffer.  The data is ... " />
+                <marker date="1557042809825" expanded="true" signature="6714:6977" ph="{...}" />
+                <marker date="1557042809825" expanded="true" signature="6987:7442" ph="///     Encode a string into the buffer as a stream of bytes. ... " />
+                <marker date="1557042809825" expanded="true" signature="7525:7668" ph="{...}" />
+                <marker date="1557042809825" expanded="true" signature="7678:8160" ph="///     Extract a string from the buffer. ... " />
+                <marker date="1557042809825" expanded="true" signature="8234:8452" ph="{...}" />
+                <marker date="1557042809825" expanded="true" signature="8317:8413" ph="{...}" />
+                <marker date="1557042809825" expanded="true" signature="8462:8838" ph="///     Encode a message into a byte buffer that can be sent to the ESP32. ... " />
+                <marker date="1557042809825" expanded="true" signature="8932:10416" ph="{...}" />
+                <marker date="1557042809825" expanded="true" signature="9026:9108" ph="{...}" />
+                <marker date="1557042809825" expanded="true" signature="9770:9867" ph="/* CRC will be put in later but needs to be 0 for the calculation. ... */" />
+                <marker date="1557042809825" expanded="true" signature="9996:10111" ph="{...}" />
+                <marker date="1557042809825" expanded="true" signature="10128:10205" ph="{...}" />
+                <marker date="1557042809825" expanded="true" signature="10218:10277" ph="/* Now we deal with the CRC. ... */" />
+                <marker date="1557042809825" expanded="true" signature="10426:11858" ph="/*     Create a message header from the message. ... */" />
+                <marker date="1557042809825" expanded="true" signature="11868:12267" ph="///     Extrat a message from a byte buffer and return a Message object. ... " />
+                <marker date="1557042809825" expanded="true" signature="12387:14048" ph="{...}" />
+                <marker date="1557042809825" expanded="true" signature="12559:12643" ph="{...}" />
+                <marker date="1557042809825" expanded="true" signature="12660:13997" ph="{...}" />
+                <marker date="1557042809825" expanded="true" signature="12691:12751" ph="/* Now check the CRC. ... */" />
+                <marker date="1557042809825" expanded="true" signature="12928:13019" ph="{...}" />
+                <marker date="1557042809825" expanded="true" signature="13040:13983" ph="{...}" />
+                <marker date="1557042809825" expanded="true" signature="14133:14841" ph="{...}" />
+                <marker date="1557042809825" expanded="true" signature="14213:14285" ph="/* Calculate the amount of memory needed. ... */" />
+                <marker date="1557042809825" expanded="true" signature="14414:14509" ph="/* Now allocate a new buffer and copy the data in to the buffer. ... */" />
+                <marker date="1557042809825" expanded="true" signature="14933:15288" ph="{...}" />
+                <marker date="1557042809825" expanded="true" signature="15370:15815" ph="{...}" />
+                <marker date="1557042809825" expanded="true" signature="15450:15522" ph="/* Calculate the amount of memory needed. ... */" />
+                <marker date="1557042809825" expanded="true" signature="15561:15656" ph="/* Now allocate a new buffer and copy the data in to the buffer. ... */" />
+                <marker date="1557042809825" expanded="true" signature="15905:16080" ph="{...}" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
     </leaf>
   </component>
   <component name="Git.Settings">
@@ -156,21 +224,23 @@
   <component name="HighlightingSettingsPerFile">
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/IL/209073E8-FDF4-45C9-9620-C454D9B773EC/3e/5f7f076e/02000012pdb.il" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Meadow.Core.Esp32/SpiTransportProvider.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/BasicNetworkTestApplication.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/IL/209073E8-FDF4-45C9-9620-C454D9B773EC/3c/f64cb74b/0200001Dpdb.il" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Meadow.Core.Esp32/Encoders.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/BasicNetworkTestApplication.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../FileGenerator/MessageProcessor.cs" root0="SKIP_HIGHLIGHTING" />
   </component>
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
         <option value="$PROJECT_DIR$/BasicNetworkTest.csproj" />
+        <option value="$PROJECT_DIR$/Meadow.Core.Esp32/Encoders.cs" />
       </list>
     </option>
   </component>
-  <component name="ProjectFrameBounds">
-    <option name="x" value="2111" />
-    <option name="y" value="214" />
-    <option name="width" value="2031" />
-    <option name="height" value="1057" />
+  <component name="ProjectFrameBounds" fullScreen="true">
+    <option name="x" value="1920" />
+    <option name="width" value="2560" />
+    <option name="height" value="1440" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectView">
@@ -253,11 +323,12 @@
       <option name="presentableId" value="Default" />
       <updated>1556957291427</updated>
       <workItem from="1556957294710" duration="2469000" />
+      <workItem from="1557042685841" duration="254000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="2469000" />
+    <option name="totallyTimeSpent" value="2723000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -269,22 +340,12 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="2111" y="214" width="2031" height="1057" extended-state="0" />
+    <frame x="1920" y="0" width="2560" height="1440" extended-state="0" />
     <editor active="true" />
     <layout>
-      <window_info id="Favorites" side_tool="true" />
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.15284063" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.12192216" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
-      <window_info anchor="bottom" id="NuGet" />
-      <window_info anchor="bottom" id="Docker" show_stripe_button="false" />
-      <window_info anchor="bottom" id="Database Changes" />
-      <window_info anchor="bottom" id="Version Control" weight="0.32919708" />
-      <window_info anchor="bottom" id="Unit Tests" />
-      <window_info anchor="bottom" id="Messages" />
-      <window_info anchor="bottom" id="Terminal" />
-      <window_info anchor="bottom" id="Event Log" side_tool="true" />
-      <window_info anchor="bottom" id="Performance Profiler" />
-      <window_info anchor="bottom" id="Build" weight="0.329927" />
+      <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" />
       <window_info anchor="bottom" id="Run" order="2" />
@@ -292,17 +353,31 @@
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" />
-      <window_info anchor="right" id="IL Viewer" weight="0.26449564" />
-      <window_info anchor="right" id="Errors In Solution" />
-      <window_info anchor="right" id="Database" />
-      <window_info anchor="right" id="Unit Tests Coverage" />
+      <window_info anchor="bottom" id="NuGet" order="7" />
+      <window_info anchor="bottom" id="Performance Profiler" order="8" />
+      <window_info anchor="bottom" id="Docker" order="9" show_stripe_button="false" />
+      <window_info active="true" anchor="bottom" id="Version Control" order="10" visible="true" weight="0.32919708" />
+      <window_info anchor="bottom" id="Database Changes" order="11" />
+      <window_info anchor="bottom" id="Unit Tests" order="12" />
+      <window_info anchor="bottom" id="Terminal" order="13" />
+      <window_info anchor="bottom" id="Event Log" order="14" side_tool="true" />
+      <window_info anchor="bottom" id="Build" order="15" weight="0.329927" />
+      <window_info anchor="bottom" id="Messages" order="16" />
       <window_info anchor="right" id="Commander" order="0" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
+      <window_info anchor="right" id="Database" order="3" />
+      <window_info anchor="right" id="IL Viewer" order="4" weight="0.26449564" />
+      <window_info anchor="right" id="Errors In Solution" order="5" />
+      <window_info anchor="right" id="Unit Tests Coverage" order="6" />
     </layout>
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="1" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Removed EncodersBase class and used a template file for Encoders.cs" />
+    <option name="LAST_COMMIT_MESSAGE" value="Removed EncodersBase class and used a template file for Encoders.cs" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -315,9 +390,16 @@
     </breakpoint-manager>
   </component>
   <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/BasicNetworkTest.csproj">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="240">
+          <caret line="15" column="20" selection-start-line="15" selection-start-column="20" selection-end-line="15" selection-end-column="20" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/BasicNetworkTestApplication.cs">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="279">
+        <state relative-caret-position="704">
           <caret line="57" column="21" selection-start-line="57" selection-start-column="21" selection-end-line="57" selection-end-column="21" />
           <folding>
             <marker date="1556727807151" expanded="false" signature="6:121" ph="..." />
@@ -337,17 +419,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/BasicNetworkTest.csproj">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="240">
-          <caret line="15" column="20" selection-start-line="15" selection-start-column="20" selection-end-line="15" selection-end-column="20" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/Meadow.Core.Esp32/SpiTransportProvider.cs">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="566">
-          <caret line="285" column="34" lean-forward="true" selection-start-line="285" selection-start-column="34" selection-end-line="285" selection-end-column="34" />
+        <state relative-caret-position="406">
+          <caret line="285" column="34" selection-start-line="285" selection-start-column="34" selection-end-line="285" selection-end-column="34" />
           <folding>
             <marker date="1556881733595" expanded="false" signature="6:232" ph="..." />
             <marker date="1556881733595" expanded="true" signature="261:24733" ph="{...}" />
@@ -448,6 +523,70 @@
             <marker date="1556881733595" expanded="true" signature="24107:24253" ph="/// Queue a for sending to the ESP32. ... " />
             <marker date="1556881733595" expanded="true" signature="24320:24705" ph="{...}" />
             <marker date="1556881733595" expanded="true" signature="24456:24649" ph="/* Inform the task processing the messages that a new message ... */" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Meadow.Core.Esp32/Encoders.cs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="518">
+          <caret line="339" column="32" lean-forward="true" selection-start-line="339" selection-start-column="32" selection-end-line="339" selection-end-column="32" />
+          <folding>
+            <marker date="1557042809825" expanded="true" signature="0:329" ph="/* Encoders.cs ... */" />
+            <marker date="1557042809825" expanded="false" signature="337:369" ph="..." />
+            <marker date="1557042809825" expanded="true" signature="398:16089" ph="{...}" />
+            <marker date="1557042809825" expanded="true" signature="426:16087" ph="{...}" />
+            <marker date="1557042809825" expanded="true" signature="441:1051" ph="/// Calculate the amount of memory that should be allocated for the receive buffer. ... " />
+            <marker date="1557042809825" expanded="true" signature="1125:2105" ph="{...}" />
+            <marker date="1557042809825" expanded="true" signature="1207:1263" ph="{...}" />
+            <marker date="1557042809825" expanded="true" signature="1276:1831" ph="/* The buffer should always be 4 bytes longer than needed.  During development it ... */" />
+            <marker date="1557042809825" expanded="true" signature="1905:1992" ph="{...}" />
+            <marker date="1557042809825" expanded="true" signature="2009:2066" ph="{...}" />
+            <marker date="1557042809825" expanded="true" signature="2115:2193" ph="/// Seed for the Crc32 algorithm. ... " />
+            <marker date="1557042809825" expanded="true" signature="2257:2479" ph="///     Calculate the 32-bit CRC for the array of bytes. ... " />
+            <marker date="1557042809825" expanded="true" signature="2530:2604" ph="{...}" />
+            <marker date="1557042809825" expanded="true" signature="2614:3012" ph="/// Calculate the 32-bit CRC for the array of bytes. ... " />
+            <marker date="1557042809825" expanded="true" signature="3084:3316" ph="{...}" />
+            <marker date="1557042809825" expanded="true" signature="3193:3279" ph="{...}" />
+            <marker date="1557042809825" expanded="true" signature="3326:3948" ph="///     Progressively calculate the Crc32 value. ... " />
+            <marker date="1557042809825" expanded="true" signature="4030:4338" ph="{...}" />
+            <marker date="1557042809825" expanded="true" signature="4162:4302" ph="{...}" />
+            <marker date="1557042809825" expanded="true" signature="4348:4679" ph="///     Take two bytes from the buffer and encode them as a 16-bit integer. ... " />
+            <marker date="1557042809825" expanded="true" signature="4753:4925" ph="{...}" />
+            <marker date="1557042809825" expanded="true" signature="4935:5305" ph="///     Encode a 16-bit integer as two bytes in the buffer.  The data is ... " />
+            <marker date="1557042809825" expanded="true" signature="5390:5525" ph="{...}" />
+            <marker date="1557042809825" expanded="true" signature="5535:5884" ph="///     Take four bytes from the buffer and encode them as a 32-bit integer. ... " />
+            <marker date="1557042809825" expanded="true" signature="5958:6248" ph="{...}" />
+            <marker date="1557042809825" expanded="true" signature="6258:6629" ph="///     Encode a 32-bit integer as four bytes in the buffer.  The data is ... " />
+            <marker date="1557042809825" expanded="true" signature="6714:6977" ph="{...}" />
+            <marker date="1557042809825" expanded="true" signature="6987:7442" ph="///     Encode a string into the buffer as a stream of bytes. ... " />
+            <marker date="1557042809825" expanded="true" signature="7525:7668" ph="{...}" />
+            <marker date="1557042809825" expanded="true" signature="7678:8160" ph="///     Extract a string from the buffer. ... " />
+            <marker date="1557042809825" expanded="true" signature="8234:8452" ph="{...}" />
+            <marker date="1557042809825" expanded="true" signature="8317:8413" ph="{...}" />
+            <marker date="1557042809825" expanded="true" signature="8462:8838" ph="///     Encode a message into a byte buffer that can be sent to the ESP32. ... " />
+            <marker date="1557042809825" expanded="true" signature="8932:10416" ph="{...}" />
+            <marker date="1557042809825" expanded="true" signature="9026:9108" ph="{...}" />
+            <marker date="1557042809825" expanded="true" signature="9770:9867" ph="/* CRC will be put in later but needs to be 0 for the calculation. ... */" />
+            <marker date="1557042809825" expanded="true" signature="9996:10111" ph="{...}" />
+            <marker date="1557042809825" expanded="true" signature="10128:10205" ph="{...}" />
+            <marker date="1557042809825" expanded="true" signature="10218:10277" ph="/* Now we deal with the CRC. ... */" />
+            <marker date="1557042809825" expanded="true" signature="10426:11858" ph="/*     Create a message header from the message. ... */" />
+            <marker date="1557042809825" expanded="true" signature="11868:12267" ph="///     Extrat a message from a byte buffer and return a Message object. ... " />
+            <marker date="1557042809825" expanded="true" signature="12387:14048" ph="{...}" />
+            <marker date="1557042809825" expanded="true" signature="12559:12643" ph="{...}" />
+            <marker date="1557042809825" expanded="true" signature="12660:13997" ph="{...}" />
+            <marker date="1557042809825" expanded="true" signature="12691:12751" ph="/* Now check the CRC. ... */" />
+            <marker date="1557042809825" expanded="true" signature="12928:13019" ph="{...}" />
+            <marker date="1557042809825" expanded="true" signature="13040:13983" ph="{...}" />
+            <marker date="1557042809825" expanded="true" signature="14133:14841" ph="{...}" />
+            <marker date="1557042809825" expanded="true" signature="14213:14285" ph="/* Calculate the amount of memory needed. ... */" />
+            <marker date="1557042809825" expanded="true" signature="14414:14509" ph="/* Now allocate a new buffer and copy the data in to the buffer. ... */" />
+            <marker date="1557042809825" expanded="true" signature="14933:15288" ph="{...}" />
+            <marker date="1557042809825" expanded="true" signature="15370:15815" ph="{...}" />
+            <marker date="1557042809825" expanded="true" signature="15450:15522" ph="/* Calculate the amount of memory needed. ... */" />
+            <marker date="1557042809825" expanded="true" signature="15561:15656" ph="/* Now allocate a new buffer and copy the data in to the buffer. ... */" />
+            <marker date="1557042809825" expanded="true" signature="15905:16080" ph="{...}" />
           </folding>
         </state>
       </provider>

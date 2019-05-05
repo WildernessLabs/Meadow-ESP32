@@ -1,17 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ContentModelStore">
-    <e p="/tmp" t="ExcludeRecursive" />
     <e p="$USER_HOME$/Library/Caches/Rider2019.1/extResources" t="IncludeRecursive" />
     <e p="$USER_HOME$/Library/Caches/Rider2019.1/resharper-host/local/Transient/ReSharperHost/v191/SolutionCaches/_BasicNetworkTest.-39792423.00" t="ExcludeRecursive" />
     <e p="$PROJECT_DIR$" t="IncludeRecursive">
       <e p="BasicNetworkTest.csproj" t="IncludeRecursive" />
       <e p="BasicNetworkTest.sln" t="IncludeFlat" />
       <e p="BasicNetworkTestApplication.cs" t="Include" />
+      <e p="bin" t="ExcludeRecursive" />
       <e p="DebugHelpers.cs" t="Include" />
       <e p="Meadow.Core.Esp32" t="Include">
         <e p="Encoders.cs" t="Include" />
-        <e p="EncodersBase.cs" t="Include" />
         <e p="Enums.cs" t="Include" />
         <e p="EventHandlers" t="Include">
           <e p="MessageDispatcherErrorEventHandler.cs" t="Include" />
