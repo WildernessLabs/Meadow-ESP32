@@ -1,12 +1,8 @@
 ﻿using System;
 using System.Threading;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using Meadow;
-using Meadow.Devices;
 using Meadow.Hardware;
 using Meadow.Hardware.Communications;
-using Meadow.Core.Esp32;
 
 namespace Meadow.Core.Esp32
 {
@@ -20,7 +16,7 @@ namespace Meadow.Core.Esp32
         private enum SpiStates
         {
             Invalid, Idle, AcknowledgingMessageHeader,
-            WaitingForMessageBody, AcknowledingMessageBody,
+            WaitingForMessageBody, AcknowledgingMessageBody,
             WantToSendMessageHeader, WaitingForMessageHeaderAcknowledgement,
             WantToSendMessageBody, WaitingForMessageBodyAcknowledgement,
             WantToSendTransportMessage
@@ -217,8 +213,8 @@ namespace Meadow.Core.Esp32
                     case SpiStates.WaitingForMessageBody:
                         ProcessWaitingForMessageBodyState();
                         break;
-                    case SpiStates.AcknowledingMessageBody:
-                        ProcessAcknowledingMessageBodyState();
+                    case SpiStates.AcknowledgingMessageBody:
+                        ProcessAcknowledgingMessageBodyState();
                         break;
                     case SpiStates.WantToSendMessageHeader:
                         ProcessWantToSendMessageHeaderState();
@@ -352,7 +348,7 @@ namespace Meadow.Core.Esp32
                     _lastStatusCode = StatusCodes.CompletedOK;
                 }
             }
-            _currentState = SpiStates.AcknowledingMessageBody;
+            _currentState = SpiStates.AcknowledgingMessageBody;
             _stm32ReadyPin.State = false;
             _stm32ReadyPin.State = true;
         }
@@ -364,9 +360,9 @@ namespace Meadow.Core.Esp32
         /// If the message transmission reception is successful then the incoming message
         /// will be sent through an event to the message dispatcher.
         /// </remarks>
-        private void ProcessAcknowledingMessageBodyState()
+        private void ProcessAcknowledgingMessageBodyState()
         {
-            Console.WriteLine("Entering ProcessAcknowledingMessageBodyState");
+            Console.WriteLine("Entering ProcessAcknowledgingMessageBodyState");
             Messages.Message acknowledgementMessage;
             if (_lastStatusCode != StatusCodes.CompletedOK)
             {
