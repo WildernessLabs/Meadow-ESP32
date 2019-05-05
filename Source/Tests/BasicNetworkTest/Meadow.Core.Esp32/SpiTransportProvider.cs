@@ -6,7 +6,7 @@ using Meadow.Hardware.Communications;
 
 namespace Meadow.Core.Esp32
 {
-    public class SpiTransportProvider : ITransportProvider
+    public class SpiTransportProvider : TransportProviderBase
     {
         #region Enums
 
@@ -89,6 +89,11 @@ namespace Meadow.Core.Esp32
         private Messages.Message? _inboundMessage = null;
 
         /// <summary>
+        /// Number of times we have retried to send this message.
+        /// </summary>
+        private int _currentRetryCount;
+
+        /// <summary>
         /// Last status code for an incoming message operation.
         /// </summary>
         /// <remarks>
@@ -98,8 +103,12 @@ namespace Meadow.Core.Esp32
         private StatusCodes _lastStatusCode = StatusCodes.CompletedOK;
 
         /// <summary>
-        /// 
+        /// Current message being sent by the system.
         /// </summary>
+        /// <remarks>
+        /// This needs to be a class level variable as it is processed by a
+        /// state machine which is implemented by a number of different methods.
+        /// </remarks>
         private Messages.Message? _outboundMessage = null;
 
         /// <summary>
@@ -108,7 +117,7 @@ namespace Meadow.Core.Esp32
         private readonly UInt32 _headerFrameSize = Encoders.CalculateSpiBufferSize(Messages.HEADER_SIZE);
 
         #endregion
-
+        
         #region Constructor(s)
 
         /// <summary>
@@ -150,12 +159,12 @@ namespace Meadow.Core.Esp32
         /// <summary>
         ///     Error event to allow lower level errors to bubble up to the interfaces.
         /// </summary>
-        public event TransportProviderErrorEventHandler TransportError = delegate { };
+        public override event TransportProviderErrorEventHandler TransportError = delegate { };
 
         /// <summary>
         ///     Data received event.
         /// </summary>
-        public event TransportProviderDataReceivedEventHandler MessageReceived = delegate { };
+        public override event TransportProviderDataReceivedEventHandler MessageReceived = delegate { };
 
         /// <summary>
         /// The ESP32 is indicating that it is ready to process some data from the STM32
@@ -259,6 +268,7 @@ namespace Meadow.Core.Esp32
                 {
                     _outboundMessage = _messageQueue.Dequeue();
                     _currentState = SpiStates.WantToSendMessageHeader;
+                    _currentRetryCount = 0;
                     _stm32ReadyPin.State = true;
                 }
                 else
@@ -564,7 +574,7 @@ namespace Meadow.Core.Esp32
         /// Queue a for sending to the ESP32.
         /// </summary>
         /// <param name="message">Message to be queued.</param>
-        public void QueueMessageForEsp32(Messages.Message message)
+        public override void QueueMessageForEsp32(Messages.Message message)
         {
             lock (_messageQueueLock)
             {

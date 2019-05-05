@@ -11,7 +11,7 @@ namespace Meadow.Core.Esp32
         /// <summary>
         ///     Serial port connecting the STM32 and the ESP32 microcontrollers.
         /// </summary>
-        private readonly ITransportProvider _esp32;
+        private readonly TransportProviderBase _esp32;
 
         #endregion Private variables
 
