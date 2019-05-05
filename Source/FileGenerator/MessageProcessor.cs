@@ -31,6 +31,8 @@ namespace FileGenerator
         public string CHeaderTemplateFileName { get; set; }
 
         public string CSourceTemplateFileName { get; set; }
+        
+        public string CSharpSourceTemplateFileName { get; set; }
 
         private StringBuilder FunctionPrototypes = null;
 
@@ -123,8 +125,13 @@ namespace FileGenerator
                 OutputCSharpFileHeader(sourceFile);
                 sourceFile.WriteLine("namespace Meadow.Core.Esp32");
                 sourceFile.WriteLine("{");
-                sourceFile.WriteLine("    public class Encoders : EncodersBase");
+                sourceFile.WriteLine("    public class Encoders");
                 sourceFile.WriteLine("    {");
+                using (StreamReader templateFile = new StreamReader(CSharpSourceTemplateFileName))
+                {
+                    sourceFile.Write(templateFile.ReadToEnd());
+                }
+
                 foreach (Message m in messages)
                 {
                     if (m.MessageElements != null)

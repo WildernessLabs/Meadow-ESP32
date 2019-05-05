@@ -31,6 +31,7 @@ namespace FileGenerator
             messageProcessor.CSharpStructureFileName = $"..{Path.DirectorySeparatorChar}Tests{Path.DirectorySeparatorChar}BasicNetworkTest{Path.DirectorySeparatorChar}Meadow.Core.Esp32{Path.DirectorySeparatorChar}Messages.cs";;
             messageProcessor.CHeaderTemplateFileName = $"..{Path.DirectorySeparatorChar}Metadata{Path.DirectorySeparatorChar}Encoders.hpp.txt";
             messageProcessor.CSourceTemplateFileName = $"..{Path.DirectorySeparatorChar}Metadata{Path.DirectorySeparatorChar}Encoders.cpp.txt";
+            messageProcessor.CSharpSourceTemplateFileName = $"..{Path.DirectorySeparatorChar}Metadata{Path.DirectorySeparatorChar}Encoders.cs.txt";
             messageProcessor.ProcessFile();
         }
     }
