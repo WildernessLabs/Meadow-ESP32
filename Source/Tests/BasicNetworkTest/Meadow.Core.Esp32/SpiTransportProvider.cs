@@ -71,12 +71,12 @@ namespace Meadow.Core.Esp32
         ///     two threads (main application adding messages and the
         ///     queue processing thread taking messages from the queue).
         /// </summary>
-        private object _messageQueueLock = new object();
+        private readonly object _messageQueueLock = new object();
 
         /// <summary>
         ///     Handle used to synchronise the incoming messages and the task processing the messages.
         /// </summary>
-        private EventWaitHandle _waitingForStuffToDoHandle = new AutoResetEvent(false);
+        private readonly EventWaitHandle _waitingForStuffToDoHandle = new AutoResetEvent(false);
 
         /// <summary>
         ///     Thread processing the messages as they enter the queue.
@@ -105,7 +105,7 @@ namespace Meadow.Core.Esp32
         /// <summary>
         /// This value is used a lot so make it available as a class level variable.
         /// </summary>
-        private UInt32 _headerFrameSize = Encoders.CalculateSpiBufferSize(Messages.HEADER_SIZE);
+        private readonly UInt32 _headerFrameSize = Encoders.CalculateSpiBufferSize(Messages.HEADER_SIZE);
 
         #endregion
 
@@ -238,7 +238,7 @@ namespace Meadow.Core.Esp32
         }
 
         /// <summary>
-        /// Process the Idle state when we have recevied a signal that there is some work to do.
+        /// Process the Idle state when we have received a signal that there is some work to do.
         /// </summary>
         /// <remarks>
         /// This method really works out what to do as there are two possible scenarios:
