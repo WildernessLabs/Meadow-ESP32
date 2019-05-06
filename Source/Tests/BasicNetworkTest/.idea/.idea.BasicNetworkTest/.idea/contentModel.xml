@@ -10,6 +10,9 @@
       <e p="bin" t="ExcludeRecursive" />
       <e p="DebugHelpers.cs" t="Include" />
       <e p="Meadow.Core.Esp32" t="Include">
+        <e p="BaseClasses" t="Include">
+          <e p="TransportProviderBase.cs" t="Include" />
+        </e>
         <e p="Encoders.cs" t="Include" />
         <e p="Enums.cs" t="Include" />
         <e p="EventHandlers" t="Include">
@@ -17,9 +20,6 @@
           <e p="MessageReceviedEventHandler.cs" t="Include" />
           <e p="TransportProviderDataReceivedEventHandler.cs" t="Include" />
           <e p="TransportProviderErrorEventHandlers.cs" t="Include" />
-        </e>
-        <e p="Interfaces" t="Include">
-          <e p="ITransportProvider.cs" t="Include" />
         </e>
         <e p="Message.cs" t="Include" />
         <e p="MessageDispatcher.cs" t="Include" />
