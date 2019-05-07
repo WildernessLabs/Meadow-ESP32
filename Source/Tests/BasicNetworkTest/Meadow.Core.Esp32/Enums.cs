@@ -33,7 +33,9 @@ namespace Meadow.Core.Esp32
         WiFiAlreadyStarted = 11,
         InvalidSSID = 12,
         InvalidPassword = 13,
-        WiFiDisconnected = 14
+        WiFiDisconnected = 14,
+        InvalidAntennaData = 15,
+        InvalidAntennaValue = 16
     };
 
     public enum Esp32Interfaces : byte
@@ -80,6 +82,7 @@ namespace Meadow.Core.Esp32
         Nak = 0x01,
         Reset = 0x02,
         Ready = 0x04,
+        Response = 0x10,
         Transport = 0x20,
         Header = 0x40,
         Data = 0x80
@@ -114,10 +117,11 @@ namespace Meadow.Core.Esp32
         Passive = 1
     };
 
-    public enum Antenna
+    public enum AntennaTypes
     {
         OnBoard = 0,
-        External = 1
+        External = 1,
+        Max = 1
     };
 
     public enum WiFiCipherType

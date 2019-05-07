@@ -27,6 +27,8 @@
 #include "Esp32Messaging.hpp"
 #include "RequestHandlerBase.hpp"
 #include "SharedEnums.hpp"
+#include "Encoders.hpp"
+
 
 /*
  *      WiFi Function codes.
@@ -77,12 +79,6 @@
  */
 class WiFiRequestHandler : public RequestHandlerBase
 {
-public:
-    /*
-     *      Available antenna types.
-     */
-    enum Antenna { OnBoard, External };
-
 private:
     /*
      *      Name of the FreeRTOS task for the WiFi system.
@@ -167,7 +163,7 @@ private:
     /*
      *      Indicate which antenna is currently selected.
      */
-    Antenna _currentAntenna = OnBoard;
+    AntennaTypes::AntennaTypes _currentAntenna = AntennaTypes::OnBoard;
 
     /*
      *      Response message for the current request.
@@ -209,8 +205,8 @@ public:
     /*
      *      Getters and setters.
      */
-    Antenna GetAntenna() const;
-    void SetAntenna(Antenna newAntenna = OnBoard);
+    void GetAntenna(Message *request) const;
+    void SetAntenna(Message *);
 };
 
 #endif /* _WIFI_REQUEST_HANDLER_HPP_ */

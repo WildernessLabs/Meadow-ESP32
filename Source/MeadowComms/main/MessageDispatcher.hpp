@@ -16,6 +16,7 @@
 #include "TransportProviderBase.hpp"
 #include "SharedEnums.hpp"
 
+
 class MessageDispatcher
 {
 private:
@@ -61,7 +62,7 @@ public:
     MessageDispatcher(TransportProviderBase *);
 
     /*
-     *      Queue a message for the ESP32 object.
+     *      Queue a message for the ESP32.
      */
     bool QueueMessageForEsp32(Message *);
 

@@ -35,7 +35,7 @@ namespace BasicNetworkTest
         private void _button_Changed(object sender, DigitalInputPortEventArgs e)
         {
             Messages.AntennaInfo antennaInfo = new Messages.AntennaInfo();
-            antennaInfo.Antenna = (byte) Antenna.External;
+            antennaInfo.Antenna = (byte) AntennaTypes.External;
 
             Messages.Message message = new Messages.Message();
             message.Interface = (byte) Esp32Interfaces.WiFi;
