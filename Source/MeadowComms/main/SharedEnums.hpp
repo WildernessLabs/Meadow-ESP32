@@ -37,7 +37,9 @@ namespace StatusCodes
         WiFiAlreadyStarted = 11,
         InvalidSSID = 12,
         InvalidPassword = 13,
-        WiFiDisconnected = 14
+        WiFiDisconnected = 14,
+        InvalidAntennaData = 15,
+        InvalidAntennaValue = 16
     };
 }
 
@@ -112,6 +114,7 @@ enum PacketType : uint8_t
     Nak = 0x01,
     Reset = 0x02,
     Ready = 0x04,
+    Response = 0x10,
     Transport = 0x20,
     Header = 0x40,
     Data = 0x80
@@ -169,15 +172,16 @@ namespace WiFiScanType
     };
 }
 
-namespace Antenna
+namespace AntennaTypes
 {
     /*
      *      Types of antennas that can be selected.
      */
-    enum Antenna
+    enum AntennaTypes
     {
         OnBoard = 0,
-        External = 1
+        External = 1,
+        Max = 1
     };
 }
 

@@ -5,7 +5,6 @@
  */
 #include "WiFiRequestHandler.hpp"
 #include "Exceptions/MultipleInstancesException.hpp"
-#include "Encoders.hpp"
 
 /*
  *      Event handler for the WiFi loop.
@@ -90,30 +89,75 @@ WiFiRequestHandler::~WiFiRequestHandler()
 
 /*
  *      Get the currently selected antenna.
+ *
+ *      @param request
+ *          Original request from the STM32.
  */
-WiFiRequestHandler::Antenna WiFiRequestHandler::GetAntenna() const
+void WiFiRequestHandler::GetAntenna(Message *request) const
 {
-    return(_currentAntenna);
+    request->MessageType = PacketType::Response;
+    Esp32Messaging::AntennaInfo *antenna = (Esp32Messaging::AntennaInfo *) pvPortMalloc(sizeof(Esp32Messaging::AntennaInfo));
+    antenna->Antenna = (uint8_t) _currentAntenna;
+    request->Payload = (uint8_t *) pvPortMalloc(Esp32Messaging::ANTENNA_INFO_ENCODED_MESSAGE_SIZE);
+    Encoders::EncodeAntennaInfo(antenna, request->Payload, 0);
+    vPortFree(antenna);
+    request->PayloadLength = Esp32Messaging::ANTENNA_INFO_ENCODED_MESSAGE_SIZE;
+    request->StatusCode = StatusCodes::CompletedOK;
+//    if (!_messageDispatcher->QueueMessageForStm32(request))
+//    {
+        ESP_LOGE(__func__, "Cannot queue message for STM32.");
+//    }
 }
 
 /*
  *      Switch the current antenna.
  *
+ *      @param request
+ *          Original request from the STM32.
+ *
  *      TODO: Do we need to turn the WiFi off before switching the antenna?
  */
-void WiFiRequestHandler::SetAntenna(WiFiRequestHandler::Antenna newAntenna)
+void WiFiRequestHandler::SetAntenna(Message *request)
 {
-    if (_currentAntenna != newAntenna)
+    if (request->PayloadLength == Esp32Messaging::ANTENNA_INFO_ENCODED_MESSAGE_SIZE)
     {
-        gpio_num_t newAntennaPin = (newAntenna == OnBoard) ? ON_BOARD_ANTENNA_PIN : EXTERNAL_ANTENNA_PIN;
-        gpio_num_t oldAntennaPin = (_currentAntenna == OnBoard) ? ON_BOARD_ANTENNA_PIN : EXTERNAL_ANTENNA_PIN;
-        //
-        //  Make sure the old antenna is switched off before the new one is turned on.
-        //
-        gpio_set_level(oldAntennaPin, 0);
-        gpio_set_level(newAntennaPin, 1);
-        _currentAntenna = newAntenna;
+        Esp32Messaging::AntennaInfo *antenna = Encoders::ExtractAntennaInfo(request->Payload);
+        if (antenna->Antenna > (uint8_t ) AntennaTypes::Max)
+        {
+            request->StatusCode = StatusCodes::InvalidAntennaValue;
+        }
+        else
+        {
+            if (_currentAntenna != antenna->Antenna)
+            {
+                gpio_num_t newAntennaPin = (antenna->Antenna == AntennaTypes::OnBoard) ? ON_BOARD_ANTENNA_PIN : EXTERNAL_ANTENNA_PIN;
+                gpio_num_t oldAntennaPin = (_currentAntenna == AntennaTypes::OnBoard) ? ON_BOARD_ANTENNA_PIN : EXTERNAL_ANTENNA_PIN;
+                //
+                //  Make sure the old antenna is switched off before the new one is turned on.
+                //
+                gpio_set_level(oldAntennaPin, 0);
+                gpio_set_level(newAntennaPin, 1);
+                _currentAntenna = (AntennaTypes::AntennaTypes) antenna->Antenna;
+            }
+            request->StatusCode = StatusCodes::CompletedOK;
+        }
+        vPortFree(antenna);
     }
+    else
+    {
+        request->StatusCode = StatusCodes::InvalidAntennaData;
+    }
+    if (request->Payload)
+    {
+        vPortFree(request->Payload);
+        request->Payload = nullptr;
+    }
+    request->PayloadLength = 0;
+    request->MessageType = PacketType::Response;
+//    if (!_messageDispatcher->QueueMessageForStm32(request))
+//    {
+        ESP_LOGE(__func__, "Cannot queue message for STM32.");
+//    }
 }
 
 /*
@@ -139,7 +183,7 @@ void WiFiRequestHandler::Setup()
     //gpio_pad_select_gpio(ON_BOARD_ANTENNA);
     gpio_set_direction(ON_BOARD_ANTENNA_PIN, GPIO_MODE_OUTPUT);
     gpio_set_level(ON_BOARD_ANTENNA_PIN, 1);
-    _currentAntenna = OnBoard;
+    _currentAntenna = AntennaTypes::OnBoard;
     /*
      *      Now create the objects necessary for the WiFi tasks.
      */
@@ -176,7 +220,12 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
             ESP_LOGE(__func__, "WiFi GetConfiguration function is not implemented yet.");
             break;
         case WiFiFunction::SetAntenna:
-            ESP_LOGE(__func__, "WiFi SetAntenna function not implemented.");
+            ESP_LOGI(__func__, "SetAntenna called.");
+//            SetAntenna(request);
+            break;
+        case WiFiFunction::GetAntenna:
+            ESP_LOGI(__func__, "GetAntenna called.");
+//            GetAntenna(request);
             break;
         case WiFiFunction::GetAccessPoints:
             GetAvailableNetworks(request);

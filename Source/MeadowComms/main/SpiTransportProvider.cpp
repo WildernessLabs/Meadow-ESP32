@@ -173,7 +173,7 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
     //
     Esp32Messaging::AntennaInfo *antennaInfo = (Esp32Messaging::AntennaInfo *) pvPortMalloc(sizeof(Esp32Messaging::AntennaInfo));
     uint8_t *antennaInfoBuffer = (uint8_t *) pvPortMalloc(Esp32Messaging::ANTENNA_INFO_ENCODED_MESSAGE_SIZE);
-    antennaInfo->Antenna = Antenna::External;
+    antennaInfo->Antenna = AntennaTypes::External;
     Encoders::EncodeAntennaInfo(antennaInfo, antennaInfoBuffer, 0);
     vPortFree(antennaInfo);
 
@@ -410,6 +410,10 @@ void SpiTransportProvider::ClearCurrentHeader()
 {
     if (_currentHeader)
     {
+        if (_currentHeader->Payload)
+        {
+            vPortFree(_currentHeader->Payload);
+        }
         vPortFree(_currentHeader);
         _currentHeader = nullptr;
     }
@@ -487,19 +491,33 @@ void SpiTransportProvider::ProcessIdleState()
 
 /*
  *      Acknowledge the message header that has been received and work out the next steps.
+ *
+ *      If the header is valid then the response will be an acknowledgement and
+ *          - Messages with no payload should be queued
+ *          - Messages with payloads should enter the waiting for message body state.
+ *
+ *      If the header was corrupt then there is little we can do other than send a NAK
+ *      message and then throw away the data and wait for the sender to restart the
+ *      sequence.
+ *
+ *      Upon entry it is essential that the following variables have been set up:
+ *          _currentHeader
+ *          _responseCode
+ *          _packetType
  */
 void SpiTransportProvider::ProcessAcknowledgingMessageHeaderState()
 {
     ESP_LOGI(__func__, "Entering Method.");
 
+    ESP_LOGI(__func__, "Sending response, packet type: %d, status code: %d", _packetType, _responseCode);
     spi_slave_transaction_t *transaction = AcknowledgeMessage(_currentHeader, _responseCode, _packetType);
     int dataSize = transaction->length / 8;
     ESP_LOGI(__func__, "Received %d bytes.", dataSize);
     ESP_LOG_BUFFER_HEX(__func__, transaction->rx_buffer, dataSize);
 
-    if (_currentHeader)
+    if (_responseCode == StatusCodes::CompletedOK)
     {
-        if (_currentHeader->PayloadLength == 0)
+        if (_currentHeader->PayloadLength == 0)         // Assume _currentHeader has been set up.
         {
             //
             //  If we get here then the message is simple, i.e. no payload
@@ -509,23 +527,17 @@ void SpiTransportProvider::ProcessAcknowledgingMessageHeaderState()
             {
                 _messageDispatcher->QueueMessageForEsp32(_currentHeader);
             }
-            //
-            //
-            //
             ClearCurrentHeader();
             _currentState = Idle;
         }
         else
         {
-            //
-            //  Complex payload, we need to ask for the full message including
-            //  the message payload.
-            //
             _currentState = WaitingForMessageBody;
         }
     }
     else
     {
+        ClearCurrentHeader();
         _currentState = Idle;
     }
     FreeUpTransactionHeapStorage(transaction);
@@ -555,21 +567,21 @@ void SpiTransportProvider::ProcessWaitingForMessageBodyState()
 
     if (message)
     {
-        _responseCode = StatusCodes::CompletedOK;
-        _packetType = PacketType::Transport | PacketType::Ack;
-        if (_currentHeader->Interface != Esp32Interfaces::Transport)
+        if (message->MessageType == PacketType::Data)
         {
+            _responseCode = StatusCodes::CompletedOK;
+            _packetType = PacketType::Ack;
             _messageDispatcher->QueueMessageForEsp32(message);
         }
         else
         {
-            ClearCurrentHeader();
+            //  TODO: Deal with unexpected packet type.
         }
     }
     else
     {
         _responseCode = StatusCodes::CRCError;
-        _packetType = PacketType::Transport | PacketType::Nak;
+        _packetType = PacketType::Nak;
         ClearCurrentHeader();
     }
     FreeUpTransactionHeapStorage(transaction);

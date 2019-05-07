@@ -414,6 +414,7 @@ namespace Meadow.Core.Esp32
                 //
                 headerMessage.PayloadLength = outbound.PayloadLength;
                 encodedHeader = Encoders.EncodeMessage(headerMessage, true);
+                encodedHeader[7] = (byte)(encodedHeader[7] + 1);
             }
             else
             {
@@ -443,27 +444,19 @@ namespace Meadow.Core.Esp32
             byte[] dummyHeader = new byte[_headerFrameSize];
             Array.Clear(dummyHeader, 0, (int)_headerFrameSize);
             byte[] encodedAcknowledgement = _esp32.WriteRead(dummyHeader, (ushort)_headerFrameSize);
-            StatusCodes status;
+            StatusCodes decodeStatus;
             Messages.Message? acknowledgement;
-            (acknowledgement, status) = Encoders.ExtractMessage(encodedAcknowledgement);
+            (acknowledgement, decodeStatus) = Encoders.ExtractMessage(encodedAcknowledgement);
             //
             //  We can get three possible responses here:
             //      ACK - Data received by the ESP32 is good.
             //      NAK - There is a problem with the data, this could be a CRC error or invalid data.
             //
-            if (status == StatusCodes.CompletedOK)
+            if (decodeStatus == StatusCodes.CompletedOK)
             {
-                Console.WriteLine("Status OK");
-                if (acknowledgement == null)
+                if (acknowledgement.Value.MessageType == (byte) PacketType.Nak)
                 {
-                    Console.WriteLine("Acknowledgement is null");
-                }
-                if (acknowledgement.Value.MessageType == (byte)PacketType.Nak)
-                {
-                    TransportProviderEventArgs args = new TransportProviderEventArgs((Esp32Interfaces)acknowledgement.Value.Interface, acknowledgement.Value.MessageID, (StatusCodes)acknowledgement.Value.StatusCode);
-                    TransportError(this, args);
-                    _outboundMessage = null;
-                    _currentState = SpiStates.Idle;
+                    RetrySendingIfPossible((StatusCodes) acknowledgement.Value.StatusCode);
                 }
                 else
                 {
@@ -481,20 +474,16 @@ namespace Meadow.Core.Esp32
                     }
                     else
                     {
-                        TransportProviderEventArgs args = new TransportProviderEventArgs((Esp32Interfaces)acknowledgement.Value.Interface, acknowledgement.Value.MessageID, StatusCodes.UnexpectedData);
-                        TransportError(this, args);
-                        _currentState = SpiStates.Idle;
+                        RetrySendingIfPossible(StatusCodes.UnexpectedData);
                     }
                 }
             }
             else
             {
-                TransportProviderEventArgs args = new TransportProviderEventArgs(Esp32Interfaces.Transport, Messages.INVALID_MESSAGE_ID, status);
-                TransportError(this, args);
-                _currentState = SpiStates.Idle;
+                RetrySendingIfPossible((decodeStatus));
             }
             _stm32ReadyPin.State = false;
-            if (_currentState == SpiStates.WantToSendMessageBody)
+            if ((_currentState == SpiStates.WantToSendMessageBody) || (_currentState == SpiStates.WantToSendMessageHeader))
             {
                 _stm32ReadyPin.State = true;
             }
@@ -523,22 +512,19 @@ namespace Meadow.Core.Esp32
             byte[] dummyHeader = new byte[_headerFrameSize];
             Array.Clear(dummyHeader, 0, (int)_headerFrameSize);
             byte[] encodedAcknowledgement = _esp32.WriteRead(dummyHeader, (ushort)_headerFrameSize);
-            StatusCodes status;
+            StatusCodes decodeStatus;
             Messages.Message? acknowledgement;
-            (acknowledgement, status) = Encoders.ExtractMessage(encodedAcknowledgement);
+            (acknowledgement, decodeStatus) = Encoders.ExtractMessage(encodedAcknowledgement);
             //
             //  We can get three possible responses here:
             //      ACK - Data received by the ESP32 is good.
             //      NAK - There is a problem with the data, this could be a CRC error or invalid data.
             //
-            if (status == StatusCodes.CompletedOK)
+            if (decodeStatus == StatusCodes.CompletedOK)
             {
-                if (acknowledgement.Value.MessageType == (byte)PacketType.Nak)
+                if (acknowledgement.Value.MessageType == (byte) PacketType.Nak)
                 {
-                    TransportProviderEventArgs args = new TransportProviderEventArgs((Esp32Interfaces)acknowledgement.Value.Interface, acknowledgement.Value.MessageID, (StatusCodes)acknowledgement.Value.StatusCode);
-                    TransportError(this, args);
-                    _outboundMessage = null;
-                    _currentState = SpiStates.Idle;
+                    RetrySendingIfPossible((StatusCodes) acknowledgement.Value.StatusCode);
                 }
                 else
                 {
@@ -549,15 +535,13 @@ namespace Meadow.Core.Esp32
                     }
                     else
                     {
-                        TransportProviderEventArgs args = new TransportProviderEventArgs((Esp32Interfaces)acknowledgement.Value.Interface, acknowledgement.Value.MessageID, StatusCodes.UnexpectedData);
-                        TransportError(this, args);
+                        RetrySendingIfPossible(StatusCodes.UnexpectedData);
                     }
                 }
             }
             else
             {
-                TransportProviderEventArgs args = new TransportProviderEventArgs(Esp32Interfaces.Transport, Messages.INVALID_MESSAGE_ID, status);
-                TransportError(this, args);
+                RetrySendingIfPossible(decodeStatus);
             }
             _currentState = SpiStates.Idle;
             _stm32ReadyPin.State = false;
@@ -586,6 +570,28 @@ namespace Meadow.Core.Esp32
             //  be sent.
             //
             _waitingForStuffToDoHandle.Set();
+        }
+
+        /// <summary>
+        /// An error has been detected so check the retry count to see if we can retry sending the message.
+        /// </summary>
+        /// <param name="statusCode">Status code that should be used if an error message is generated.</param>
+        private void RetrySendingIfPossible(StatusCodes statusCode)
+        {
+            if (_currentRetryCount < MaximumRetryCount)
+            {
+                _currentRetryCount++;
+                _currentState = SpiStates.WantToSendMessageHeader;
+                Console.WriteLine($"    Retrying, count = {_currentRetryCount}");
+            }
+            else
+            {
+                TransportProviderEventArgs args = new TransportProviderEventArgs((Esp32Interfaces) _outboundMessage.Value.Interface, _outboundMessage.Value.MessageID, statusCode);
+                TransportError(this, args);
+                _outboundMessage = null;
+                _currentState = SpiStates.Idle;
+                _currentRetryCount = 0;
+            }
         }
 
         #endregion

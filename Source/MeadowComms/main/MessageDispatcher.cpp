@@ -4,8 +4,6 @@
  */
 
 #include "MessageDispatcher.hpp"
-#include "TransportProviderBase.hpp"
-#include "SharedEnums.hpp"
 
 /*
  * ---------------------------------------------------------------------------

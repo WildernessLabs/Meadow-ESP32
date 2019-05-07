@@ -9,7 +9,8 @@
             "EnumNames": [ 
                 "CompletedOK", "CRCError", "Restart", "Failure", "InvalidInterface", "QueueError",
                 "InvalidPacket", "InvalidHeader", "UnexpectedData", "MissingEndOfFrameMarker", "HeaderBodyFieldMismatch",
-                "WiFiAlreadyStarted", "InvalidSSID", "InvalidPassword", "WiFiDisconnected"
+                "WiFiAlreadyStarted", "InvalidSSID", "InvalidPassword", "WiFiDisconnected",
+                "InvalidAntennaData", "InvalidAntennaValue"
             ]
         },
         {
@@ -60,6 +61,7 @@
               { "Name": "Nak", "Value": "0x01" },
               { "Name": "Reset", "Value": "0x02" },
               { "name": "Ready", "Value": "0x04" },
+              { "Name": "Response", "Value": "0x10" },
               { "Name": "Transport", "Value": "0x20" },
               { "Name": "Header", "Value": "0x40" },
               { "Name": "Data", "Value": "0x80" }
@@ -115,14 +117,15 @@
             ]
         },
         {
-            "Name": "Antenna",
+            "Name": "AntennaTypes",
             "BaseDataType": "",
             "Namespace": "Esp32Messaging",
             "Comment": "Types of antennas that can be selected.",
             "NameValuePairs":
             [
                 { "Name": "OnBoard", "Value": "0" },
-                { "Name": "External", "Value": "1" }
+                { "Name": "External", "Value": "1" },
+                { "Name": "Max", "Value": "1" }
             ]
         },
         {
