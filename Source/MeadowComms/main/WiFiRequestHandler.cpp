@@ -95,6 +95,9 @@ WiFiRequestHandler::~WiFiRequestHandler()
  */
 void WiFiRequestHandler::GetAntenna(Message *request) const
 {
+    ESP_LOGI(__func__, "Entering method.");
+    Logging::DumpMessage(__func__, request);
+
     request->MessageType = PacketType::Response;
     Esp32Messaging::AntennaInfo *antenna = (Esp32Messaging::AntennaInfo *) pvPortMalloc(sizeof(Esp32Messaging::AntennaInfo));
     antenna->Antenna = (uint8_t) _currentAntenna;
@@ -113,12 +116,13 @@ void WiFiRequestHandler::GetAntenna(Message *request) const
  *      Switch the current antenna.
  *
  *      @param request
- *          Original request from the STM32.
+ *          Original request from the STM32.res
  *
  *      TODO: Do we need to turn the WiFi off before switching the antenna?
  */
 void WiFiRequestHandler::SetAntenna(Message *request)
 {
+    ESP_LOGI(__func__, "Entering method.");
     if (request->PayloadLength == Esp32Messaging::ANTENNA_INFO_ENCODED_MESSAGE_SIZE)
     {
         Esp32Messaging::AntennaInfo *antenna = Encoders::ExtractAntennaInfo(request->Payload);
@@ -220,13 +224,10 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
             ESP_LOGE(__func__, "WiFi GetConfiguration function is not implemented yet.");
             break;
         case WiFiFunction::SetAntenna:
-            ESP_LOGI(__func__, "SetAntenna called.");
-            Logging::DumpMessage(__func__, request);
-//            SetAntenna(request);
+            SetAntenna(request);
             break;
         case WiFiFunction::GetAntenna:
-            ESP_LOGI(__func__, "GetAntenna called.");
-//            GetAntenna(request);
+            GetAntenna(request);
             break;
         case WiFiFunction::GetAccessPoints:
             GetAvailableNetworks(request);

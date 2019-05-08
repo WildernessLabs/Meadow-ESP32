@@ -7,6 +7,7 @@
 
 #include "TransportProviderBase.hpp"
 #include "Encoders.hpp"
+#include "Logging.hpp"
 
 /*
  * ---------------------------------------------------------------------------
@@ -64,6 +65,7 @@ void TransportProviderBase::Setup(MessageDispatcher *messageDispatcher)
 bool TransportProviderBase::QueueMessageForStm32(Message *message)
 {
     bool result = true;
+
     if ((message->Interface == Esp32Interfaces::System) && (message->Function == SystemFunction::Echo))
     {
         ESP_LOGI(__func__, "Echo received: %s", (char *) message->Payload);

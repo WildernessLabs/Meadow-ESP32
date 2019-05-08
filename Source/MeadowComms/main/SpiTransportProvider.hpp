@@ -38,11 +38,6 @@ private:
     static SpiTransportProvider *_spiInstance;
 
     /*
-     *      SPI Transaction.
-     */
-//    static spi_slave_transaction_t _transaction;
-
-    /*
      *      Current state of the SPI transport layer.
      */
     static SpiStates _currentState;
@@ -86,12 +81,6 @@ private:
      *      Handle for the System request handler task.
      */
     static TaskHandle_t _taskHandle;
-
-    static QueueHandle_t _incomingMessageQueue;
-
-    static TaskHandle_t _spiMessageTaskHandle;
-
-    SemaphoreHandle_t _currentStateMutexHandle;
 
     /*
      *      Response code that will be used in any acknowledgement messages.

@@ -36,7 +36,7 @@ uint8_t *SpiTransportProvider::_headerBuffer = nullptr;
 uint8_t *SpiTransportProvider::_transmitBuffer = nullptr;
 uint8_t *SpiTransportProvider::_transportFrameBuffer = nullptr;
 uint32_t SpiTransportProvider::_headerFrameSize = 0;
-QueueHandle_t SpiTransportProvider::_incomingMessageQueue = nullptr;
+//QueueHandle_t SpiTransportProvider::_incomingMessageQueue = nullptr;
 
 /*
  *      Structure for the SPI transaction information.
@@ -47,7 +47,7 @@ QueueHandle_t SpiTransportProvider::_incomingMessageQueue = nullptr;
  *      Handle for the task handler.
  */
 TaskHandle_t SpiTransportProvider::_taskHandle = nullptr;
-TaskHandle_t SpiTransportProvider::_spiMessageTaskHandle = nullptr;
+//TaskHandle_t SpiTransportProvider::_spiMessageTaskHandle = nullptr;
 
 
 /*
@@ -148,23 +148,13 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
     memset(_transportFrameBuffer, 0, _headerFrameSize);
 
     _currentState = Idle;
-    _currentStateMutexHandle = xSemaphoreCreateMutex();
-    if (_currentStateMutexHandle == NULL)
-    {
-        ESP_LOGE(__func__, "Cannot create mutex for the current state variable.");
-    }
 
     /*
-     *  Set up the task and message queue for the incoming SPI messages.
+     *  Set up the task and that will process the SPI messages.
      *
      *  Set up the message queue first as the task will wait on the queue.
      */
-    _incomingMessageQueue = xQueueCreate(1, sizeof(spi_slave_transaction_t));
-    if (_incomingMessageQueue == NULL)
-    {
-        ESP_LOGE(__func__, "Cannot allocate SPI incoming message queue.");
-    }
-    xTaskCreate(IncomingSpiMessageTask, "IncomingSPIMessageTask", 2048 * 2, this, configMAX_PRIORITIES - 1, &SpiTransportProvider::_spiMessageTaskHandle);
+    xTaskCreate(Task, "SPIMessageTask", 2048 * 2, this, configMAX_PRIORITIES - 1, &SpiTransportProvider::_taskHandle);
 
     _outboundMessage = nullptr;
 
@@ -380,25 +370,25 @@ void SpiTransportProvider::Echo(const char *messageString)
  *          Pointer to the instance of the request handler receiving the
  *          messages for dispatch through the instance specific handler.
  */
-void SpiTransportProvider::Task(void *pvParameters)
-{
-    SpiTransportProvider *sender = (SpiTransportProvider *) pvParameters;
-    while (true)
-    {
-        Message *message;
-        BaseType_t result = xQueueReceive(sender->_queueHandle, &message, portMAX_DELAY);
-        if (result == pdTRUE)
-        {
-            //sender->DispatchRequest(message);
-        }
-    }
-    //
-    //  We should only get here if the code in the while loop generates a fault.
-    //  The documentation for FreeRTOS states that we should delete the task
-    //  should we get here.
-    //
-    vTaskDelete(sender->_taskHandle);
-}
+//void SpiTransportProvider::Task(void *pvParameters)
+//{
+//    SpiTransportProvider *sender = (SpiTransportProvider *) pvParameters;
+//    while (true)
+//    {
+//        Message *message;
+//        BaseType_t result = xQueueReceive(sender->_queueHandle, &message, portMAX_DELAY);
+//        if (result == pdTRUE)
+//        {
+//            //sender->DispatchRequest(message);
+//        }
+//    }
+//    //
+//    //  We should only get here if the code in the while loop generates a fault.
+//    //  The documentation for FreeRTOS states that we should delete the task
+//    //  should we get here.
+//    //
+//    vTaskDelete(sender->_taskHandle);
+//}
 
 /*
  *      Clear the class level variable _currentHeader.
@@ -524,7 +514,6 @@ void SpiTransportProvider::ProcessAcknowledgingMessageHeaderState()
             {
                 _messageDispatcher->QueueMessageForEsp32(_currentHeader);
             }
-            ClearCurrentHeader();
             _currentState = Idle;
         }
         else
@@ -538,7 +527,6 @@ void SpiTransportProvider::ProcessAcknowledgingMessageHeaderState()
         _currentState = Idle;
     }
     FreeUpTransactionHeapStorage(transaction);
-    vTaskDelay(50 / portTICK_PERIOD_MS);
 }
 
 /*
@@ -605,7 +593,6 @@ void SpiTransportProvider::ProcessWaitingForMessageBodyState()
     }
     FreeUpTransactionHeapStorage(transaction);
     _currentState = AcknowledingMessageBody;
-    vTaskDelay(50 / portTICK_PERIOD_MS);
 }
 
 /*
@@ -630,7 +617,6 @@ void SpiTransportProvider::ProcessAcknowledingMessageBodyState()
     FreeUpTransactionHeapStorage(transaction);
     ClearCurrentHeader();
     _currentState = Idle;
-    vTaskDelay(50 / portTICK_PERIOD_MS);
 }
 
 /*
@@ -804,7 +790,7 @@ void SpiTransportProvider::ProcessWantToSendTransportMessageState()
  *          Pointer to the instance of the request handler receiving the
  *          messages for dispatch through the instance specific handler.
  */
-void SpiTransportProvider::IncomingSpiMessageTask(void *pvParameters)
+void SpiTransportProvider::Task(void *pvParameters)
 {
     SpiTransportProvider *sender = (SpiTransportProvider *) pvParameters;
 
@@ -859,7 +845,7 @@ void SpiTransportProvider::IncomingSpiMessageTask(void *pvParameters)
     //  The documentation for FreeRTOS states that we should delete the task
     //  should we get here.
     //
-    vTaskDelete(sender->_spiMessageTaskHandle);
+    vTaskDelete(sender->_taskHandle);
 }
 
 /*
@@ -873,6 +859,6 @@ void SpiTransportProvider::IncomingSpiMessageTask(void *pvParameters)
 void SpiTransportProvider::Stm32IsrHandler(void *pvParameters)
 {
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-    vTaskNotifyGiveFromISR(_spiMessageTaskHandle, &xHigherPriorityTaskWoken);
+    vTaskNotifyGiveFromISR(_taskHandle, &xHigherPriorityTaskWoken);
     portYIELD_FROM_ISR();
 }
