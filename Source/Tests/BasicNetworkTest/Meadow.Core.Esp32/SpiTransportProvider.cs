@@ -527,7 +527,9 @@ namespace Meadow.Core.Esp32
                 }
                 else
                 {
-                    if ((acknowledgement.Value.MessageID == _outboundMessage.Value.MessageID) && (acknowledgement.Value.Interface == _outboundMessage.Value.Interface))
+                    if ((acknowledgement.Value.MessageID == _outboundMessage.Value.MessageID) && 
+                        (acknowledgement.Value.Function == _outboundMessage.Value.Function) && 
+                        (acknowledgement.Value.Interface == _outboundMessage.Value.Interface))
                     {
                         _outboundMessage = null;
                         _currentState = SpiStates.Idle;

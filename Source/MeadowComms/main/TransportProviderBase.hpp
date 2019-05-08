@@ -1,5 +1,8 @@
 /*
  *      TransportProviderBase.hpp
+ *
+ *      This class is a base class for the hardware level data transmit / receive
+ *      hardware used to connect the ESP32 and the STM32 cips.
  */
 
 #ifndef _TRANSPORT_PROVIDER_BASE_HPP_
@@ -7,14 +10,7 @@
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/queue.h"
-#include "esp_system.h"
 #include "esp_log.h"
-#include "esp_wifi.h"
-#include "esp_event_loop.h"
-#include <string.h>
-#include <stdlib.h>
-
-#include "SharedEnums.hpp"
 #include "Esp32Messaging.hpp"
 
 //

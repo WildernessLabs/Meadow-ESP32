@@ -15,8 +15,22 @@
 #include "MeshNetworkRequestHandler.hpp"
 #include "TransportProviderBase.hpp"
 #include "SharedEnums.hpp"
+#include "Esp32Messaging.hpp"
 
+/*
+ *      Forward declarations required by the compiler.
+ */
+class WiFiRequestHandler;
+class MeshNetworkRequestHandler;
+class SystemRequestHandler;
+class BluetoothRequestHandler;
 
+/*
+ *      Message dispatcher class.
+ *
+ *      This class acts as a broker between the ESP32 and the STM32
+ *      message transmit / receive mechanisms.
+ */
 class MessageDispatcher
 {
 private:
