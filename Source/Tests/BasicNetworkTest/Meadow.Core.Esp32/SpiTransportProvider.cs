@@ -495,7 +495,6 @@ namespace Meadow.Core.Esp32
         {
             Console.WriteLine("Entering ProcessWantToSendMessageBodyState");
             byte[] encodedMessage = Encoders.EncodeMessage((Messages.Message) _outboundMessage, false);
-            encodedMessage[7] = (byte) (encodedMessage[7] + 1);
             _esp32.WriteBytes(encodedMessage);
             _currentState = SpiStates.WaitingForMessageBodyAcknowledgement;
             _stm32ReadyPin.State = false;
