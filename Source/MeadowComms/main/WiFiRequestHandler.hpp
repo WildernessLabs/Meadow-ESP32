@@ -28,7 +28,7 @@
 #include "RequestHandlerBase.hpp"
 #include "SharedEnums.hpp"
 #include "Encoders.hpp"
-
+#include "Logging.hpp"
 
 /*
  *      WiFi Function codes.
