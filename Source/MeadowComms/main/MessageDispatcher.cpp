@@ -1,6 +1,8 @@
 /*
  *      MessageDispatcher.cpp
  *
+ *      Implement the methods that will allow the transmission and reception
+ *      of messages between the ESP32 and the STM32.
  */
 
 #include "MessageDispatcher.hpp"
@@ -24,7 +26,7 @@ MessageDispatcher::MessageDispatcher()
  *      Create a new instance of the message dispatcher with an associated transport provider.
  *
  *      @param transportProvider
- *          Hardware level transport provider that will deliver and receive the message frames.
+ *          Hardware level transport provider that will deliver and receive the messages.
  */
 MessageDispatcher::MessageDispatcher(TransportProviderBase *transportProvider) : MessageDispatcher()
 {

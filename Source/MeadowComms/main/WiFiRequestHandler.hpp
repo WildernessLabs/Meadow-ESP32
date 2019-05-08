@@ -24,6 +24,7 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "MessageDispatcher.hpp"
 #include "Esp32Messaging.hpp"
 #include "RequestHandlerBase.hpp"
 #include "SharedEnums.hpp"
@@ -59,6 +60,8 @@
 #define WIFI_CONNECTED_BIT              (BIT2)      /* Indicate if the ESP32 is connected to a WiFi access point.*/
 #define WIFI_RECONNECTING_BIT           (BIT3)      /* Indicate if a reconnection (as opposed to a new connection) is being made. */
 #define WIFI_INITIALISED_BIT            (BIT4)      /* Indicate if the WiFi system has been initialised. */
+
+//class MessageDispatcher;
 
 /*
  *      WiFi class
