@@ -360,7 +360,7 @@ Message *Encoders::ExtractMessage(uint8_t *buffer, uint32_t bufferLength, bool h
         if (!headerOnly | (message->PayloadLength > 0))
         {
             message->Payload = (uint8_t *) pvPortMalloc(message->PayloadLength);
-            memcpy(buffer, message->Payload, message->PayloadLength);
+            memcpy(message->Payload, buffer, message->PayloadLength);
         }
         else
         {
