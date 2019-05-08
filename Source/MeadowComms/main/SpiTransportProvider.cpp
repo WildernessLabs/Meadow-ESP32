@@ -511,9 +511,6 @@ void SpiTransportProvider::ProcessAcknowledgingMessageHeaderState()
 
     ESP_LOGI(__func__, "Sending response, packet type: %d, status code: %d", _packetType, _responseCode);
     spi_slave_transaction_t *transaction = AcknowledgeMessage(_currentHeader, _responseCode, _packetType);
-    int dataSize = transaction->length / 8;
-    ESP_LOGI(__func__, "Received %d bytes.", dataSize);
-    ESP_LOG_BUFFER_HEX(__func__, transaction->rx_buffer, dataSize);
 
     if (_responseCode == StatusCodes::CompletedOK)
     {
@@ -546,6 +543,9 @@ void SpiTransportProvider::ProcessAcknowledgingMessageHeaderState()
 
 /*
  *      Previous messages have indicated that a message body is required, request the message body.
+ *
+ *      This method will set up the response types but will leave the _currentHeader variable in place.
+ *      Memory allocated to _currentHeader must be deallocated in the Acknowledgement method.
  */
 void SpiTransportProvider::ProcessWaitingForMessageBodyState()
 {
@@ -567,32 +567,44 @@ void SpiTransportProvider::ProcessWaitingForMessageBodyState()
 
     if (message)
     {
-        if (message->MessageType == PacketType::Data)
+        if (dataSize != encodedMessageBodySize)
         {
-            _responseCode = StatusCodes::CompletedOK;
-            _packetType = PacketType::Ack;
-            _messageDispatcher->QueueMessageForEsp32(message);
+            _responseCode = StatusCodes::InvalidPacket;
+            _packetType = PacketType::Nak;
         }
         else
         {
-            //  TODO: Deal with unexpected packet type.
+            if (message->MessageType == PacketType::Data)
+            {
+                if ((message->Interface == _currentHeader->Interface) && (message->Function == _currentHeader->Function) && (message->MessageID == _currentHeader->MessageID))
+                {
+                    _responseCode = StatusCodes::CompletedOK;
+                    _packetType = PacketType::Ack;
+                    //
+                    //  TODO: Check memory leaks on heap here...
+                    //
+                    _messageDispatcher->QueueMessageForEsp32(message);
+                }
+                else
+                {
+                    _responseCode = StatusCodes::UnexpectedData;
+                    _packetType = PacketType::Nak;
+                }
+            }
+            else
+            {
+                _responseCode = StatusCodes::UnexpectedData;
+                _packetType = PacketType::Nak;
+            }
         }
     }
     else
     {
         _responseCode = StatusCodes::CRCError;
         _packetType = PacketType::Nak;
-        ClearCurrentHeader();
     }
     FreeUpTransactionHeapStorage(transaction);
-    if (_currentHeader)
-    {
-        _currentState = AcknowledingMessageBody;
-    }
-    else
-    {
-        _currentState = Idle;
-    }
+    _currentState = AcknowledingMessageBody;
     vTaskDelay(50 / portTICK_PERIOD_MS);
 }
 
