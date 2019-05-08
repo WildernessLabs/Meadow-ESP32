@@ -41,7 +41,8 @@ private:
     BluetoothRequestHandler *_bluetoothRequestHandler = nullptr;
 
     /*
-     *      WiFi object that will process WiFi messages.
+     *      Hardware transport provider object that is connected to
+     *      the STM32.
      */
     TransportProviderBase *_transportProvider = nullptr;
 
