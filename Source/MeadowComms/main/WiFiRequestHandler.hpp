@@ -31,17 +31,6 @@
 #include "Logging.hpp"
 
 /*
- *      WiFi Function codes.
- */
-#define WIFI_FUNC_START                     0
-#define WIFI_FUNC_CONNECT                   1
-#define WIFI_FUNC_DISCONNECT                2
-#define WIFI_FUNC_GET_ACCESS_POINTS         3
-#define WIFI_FUNC_DEEP_SLEEP                4
-#define WIFI_FUNC_HTTP_GET                  5
-#define WIFI_FUNC_MAX                       5
-
-/*
  *      Location of the access point information in the buffer returned
  *      following a network scan.
  */
