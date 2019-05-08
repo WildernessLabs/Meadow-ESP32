@@ -2,7 +2,7 @@
  *      TransportProviderBase.hpp
  *
  *      This class is a base class for the hardware level data transmit / receive
- *      hardware used to connect the ESP32 and the STM32 cips.
+ *      hardware used to connect the ESP32 and the STM32 chips.
  */
 
 #ifndef _TRANSPORT_PROVIDER_BASE_HPP_
