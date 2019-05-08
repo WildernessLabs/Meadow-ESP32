@@ -65,3 +65,4 @@ packages
 *.DS_Store
 .vs/
 .vscode/ipch
+Source/Tests/BasicNetworkTest/.idea/
