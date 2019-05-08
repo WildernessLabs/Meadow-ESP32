@@ -86,3 +86,41 @@ void Logging::Error()
 {
 
 }
+
+/*
+ *      Decode a message structure and output the contents as an information
+ *      message.
+ *
+ *      @param functionName
+ *          Name of the function calling the logging method.
+ *
+ *      @param message
+ *          Pointer to the message to be decoded.
+ */
+void Logging::DumpMessage(const char *functionName, const Message *message)
+{
+    if (message)
+    {
+        ESP_LOGI(functionName, "Message type: %d", message->MessageType);
+        ESP_LOGI(functionName, "ESP32 Interface: %d", message->Interface);
+        ESP_LOGI(functionName, "Message ID: %d", message->MessageID);
+        ESP_LOGI(functionName, "Function to be executed: %d", message->Function);
+        ESP_LOGI(functionName, "Status code: %d", message->StatusCode);
+        if (message->PayloadLength > 0)
+        {
+            ESP_LOGI(functionName, "Payload length: %d", message->PayloadLength);
+            if (message->Payload)
+            {
+                ESP_LOG_BUFFER_HEX(functionName, message->Payload, message->PayloadLength);
+            }
+            else
+            {
+                ESP_LOGI(functionName, "Payload has not been set.");
+            }
+        }
+    }
+    else
+    {
+        ESP_LOGI(functionName, "Message pointer is invalid.");
+    }
+}

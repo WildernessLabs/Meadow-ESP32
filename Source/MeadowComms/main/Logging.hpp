@@ -18,6 +18,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "Gpio.hpp"
+#include "Esp32Messaging.hpp"
 
 /*
  *      The Logging class provides the functionality necessary to
@@ -63,6 +64,11 @@ public:
      *      Process the request to output an error message to the logging system
      */
     static void Error();
+
+    /*
+     *      Decode the message structure and output the components.
+     */
+    static void DumpMessage(const char *, const Message *);
 };
 
 
