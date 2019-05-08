@@ -221,6 +221,7 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
             break;
         case WiFiFunction::SetAntenna:
             ESP_LOGI(__func__, "SetAntenna called.");
+            Logging::DumpMessage(__func__, request);
 //            SetAntenna(request);
             break;
         case WiFiFunction::GetAntenna:
