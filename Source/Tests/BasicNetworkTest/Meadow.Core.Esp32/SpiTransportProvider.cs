@@ -414,7 +414,6 @@ namespace Meadow.Core.Esp32
                 //
                 headerMessage.PayloadLength = outbound.PayloadLength;
                 encodedHeader = Encoders.EncodeMessage(headerMessage, true);
-                encodedHeader[7] = (byte)(encodedHeader[7] + 1);
             }
             else
             {
@@ -496,6 +495,7 @@ namespace Meadow.Core.Esp32
         {
             Console.WriteLine("Entering ProcessWantToSendMessageBodyState");
             byte[] encodedMessage = Encoders.EncodeMessage((Messages.Message) _outboundMessage, false);
+            encodedMessage[7] = (byte) (encodedMessage[7] + 1);
             _esp32.WriteBytes(encodedMessage);
             _currentState = SpiStates.WaitingForMessageBodyAcknowledgement;
             _stm32ReadyPin.State = false;
@@ -575,6 +575,11 @@ namespace Meadow.Core.Esp32
         /// <summary>
         /// An error has been detected so check the retry count to see if we can retry sending the message.
         /// </summary>
+        /// <remarks>
+        /// The system will go back to retrying to send the message header if an error has been detected.
+        /// This simplifies the restart process and guarantees that we have a valid header / message body
+        /// pair.
+        /// </remarks>
         /// <param name="statusCode">Status code that should be used if an error message is generated.</param>
         private void RetrySendingIfPossible(StatusCodes statusCode)
         {
