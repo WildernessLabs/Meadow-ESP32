@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Net.WebSockets;
+using System.Text;
+
 namespace Meadow.Core.Esp32
 {
     public partial class Messages
@@ -49,6 +52,42 @@ namespace Meadow.Core.Esp32
                     PayloadLength = (UInt32) payload.Length;
                 }
                 Crc = 0;
+            }
+
+            /// <summary>
+            /// Copy constructor = makes a copy of an existing message.
+            /// </summary>
+            /// <param name="messageToCopy">Message to make a copy of.</param>
+            public Message(Message messageToCopy) : this((PacketType) messageToCopy.MessageType, (Esp32Interfaces) messageToCopy.Interface, messageToCopy.Function, messageToCopy.MessageID, messageToCopy.StatusCode, messageToCopy.Payload)
+            {
+            }
+            
+            /// <summary>
+            /// Take the message and make it printable.
+            /// </summary>
+            /// <param name="message">Message to be decoded.</param>
+            /// <returns>String containing the printable version of the message.</returns>
+            public override string ToString()
+            {
+                StringBuilder result = new StringBuilder();
+
+                result.AppendLine($"Message Type: {MessageType}");
+                result.AppendLine($"Interface : {Interface}");
+                result.AppendLine($"Function: {Function}");
+                result.AppendLine($"Message ID: {MessageID}");
+                result.AppendLine($"StatusCode: {StatusCode}");
+                if (PayloadLength > 0)
+                {
+                    result.AppendLine($"Payload length: {PayloadLength}");
+                    result.AppendLine("Payload:");
+                    result.AppendLine(DebugHelpers.DebugHelpers.PrintableBuffer(Payload));
+                }
+                else
+                {
+                    result.AppendLine("Payload is empty.");
+                }
+
+                return (result.ToString());
             }
         }
 

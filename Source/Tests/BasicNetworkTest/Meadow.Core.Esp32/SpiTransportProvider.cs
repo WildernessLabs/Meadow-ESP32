@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Threading;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Dynamic;
 using Meadow.Hardware;
 using Meadow.Hardware.Communications;
 
@@ -100,7 +102,7 @@ namespace Meadow.Core.Esp32
         /// This variable is used to transfer status codes between the methods used
         /// for sending and receiving data.
         /// </remarks>
-        private StatusCodes _lastStatusCode = StatusCodes.CompletedOK;
+//        private StatusCodes _lastStatusCode = StatusCodes.CompletedOK;
 
         /// <summary>
         /// Current message being sent by the system.
@@ -110,6 +112,12 @@ namespace Meadow.Core.Esp32
         /// state machine which is implemented by a number of different methods.
         /// </remarks>
         private Messages.Message? _outboundMessage = null;
+
+        /// <summary>
+        /// Message used to hold the acknowledgements between message transmission states.
+        /// </summary>
+        
+        private Messages.Message _acknowledgementMessage;
 
         /// <summary>
         /// This value is used a lot so make it available as a class level variable.
@@ -138,11 +146,13 @@ namespace Meadow.Core.Esp32
             _esp32 = new SoftwareSPIBus(device, mosi, miso, clock, chipSelect);
             _reset = (DigitalOutputPort) device.CreateDigitalOutputPort(resetPin, true);
             _boot = (DigitalOutputPort) device.CreateDigitalOutputPort(bootPin, true);
-
+            
             _boot.State = true;
             _reset.State = false;
             _reset.State = true;
-
+            _boot.Dispose();
+            _boot = null;
+            
             _currentState = SpiStates.Idle;
             _messageQueue = new Queue<Messages.Message>();
             _queueHandler = new Thread(() =>
@@ -211,6 +221,7 @@ namespace Meadow.Core.Esp32
                 //
                 //  Signals are used to transition from one state to another.
                 //
+                Console.WriteLine($"Current state: {_currentState}");
                 switch (_currentState)
                 {
                     case SpiStates.Idle:
@@ -275,11 +286,22 @@ namespace Meadow.Core.Esp32
                 {
                     Messages.Message readyMessage = new Messages.Message(PacketType.Ready, Esp32Interfaces.None, Messages.INVALID_FUNCTION, Messages.INVALID_MESSAGE_ID, 0, null);
                     byte[] encodedReadyMessage = Encoders.EncodeMessage(readyMessage, true);
-
                     _stm32ReadyPin.State = true;
                     byte[] encodedIncomingHeader = _esp32.WriteRead(encodedReadyMessage, (ushort) encodedReadyMessage.Length);
-                    (_inboundMessage, _lastStatusCode) = Encoders.ExtractMessage(encodedIncomingHeader);
-                    _currentState = SpiStates.WaitingForMessageHeaderAcknowledgement;
+                    StatusCodes decodeStatus;
+                    (_inboundMessage, decodeStatus) = Encoders.ExtractMessage(encodedIncomingHeader);
+                    if (decodeStatus == StatusCodes.CompletedOK)
+                    {
+                        _acknowledgementMessage = new Messages.Message(_inboundMessage.Value);
+                        _acknowledgementMessage.MessageType = (byte) PacketType.Ack;
+                    }
+                    else
+                    {
+                        _acknowledgementMessage = new Messages.Message(PacketType.Nak, Esp32Interfaces.Transport, 0, 0, (UInt32) decodeStatus, null);
+                        _acknowledgementMessage.MessageType = (byte)PacketType.Nak;
+                    }
+                    _acknowledgementMessage.StatusCode = (UInt32) decodeStatus;
+                    _currentState = SpiStates.AcknowledgingMessageHeader;
                     _stm32ReadyPin.State = false;
                 }
             }
@@ -292,21 +314,12 @@ namespace Meadow.Core.Esp32
         private void ProcessAcknowledgingMessageHeaderState()
         {
             Console.WriteLine("Entering ProcessAcknowledgingMessageHeaderState ");
-            Messages.Message acknowledgementMessage;
-            if (_lastStatusCode != StatusCodes.CompletedOK)
-            {
-                acknowledgementMessage = new Messages.Message(PacketType.Nak, Esp32Interfaces.Transport, 0, 0, (UInt32) _lastStatusCode, null);
-            }
-            else
-            {
-                Messages.Message inbound = _inboundMessage.Value;
-                acknowledgementMessage = new Messages.Message(PacketType.Ack, (Esp32Interfaces) inbound.Interface, inbound.Function, inbound.MessageID, (UInt32) StatusCodes.CompletedOK, null);
-            }
-            byte[] encodedAcknowledgementMessage = Encoders.EncodeMessage(acknowledgementMessage);
+            byte[] encodedAcknowledgementMessage = Encoders.EncodeMessage(_acknowledgementMessage);
+            Console.WriteLine("Sending acknowledgement:");
+            Console.WriteLine(DebugHelpers.DebugHelpers.PrintableBuffer(encodedAcknowledgementMessage));
             _esp32.WriteBytes(encodedAcknowledgementMessage);
-            if (_lastStatusCode != StatusCodes.CompletedOK)
+            if ((PacketType) _acknowledgementMessage.MessageType == PacketType.Nak)
             {
-                _lastStatusCode = StatusCodes.CompletedOK;
                 _inboundMessage = null;
                 _currentState = SpiStates.Idle;
             }
@@ -320,11 +333,12 @@ namespace Meadow.Core.Esp32
                 {
                     MessageReceviedEventArgs args = new MessageReceviedEventArgs(_inboundMessage.Value);
                     MessageReceived(this, args);
+                    _inboundMessage = null;
                     _currentState = SpiStates.Idle;
                 }
             }
             _stm32ReadyPin.State = false;
-            if (_currentState == SpiStates.WantToSendMessageBody)
+            if (_currentState == SpiStates.WaitingForMessageBody)
             {
                 _stm32ReadyPin.State = true;
             }
@@ -336,26 +350,45 @@ namespace Meadow.Core.Esp32
         private void ProcessWaitingForMessageBodyState()
         {
             Console.WriteLine("Entering ProcessWaitingForMessageBodyState");
-            ushort incomingMessageLength = (ushort) (Messages.HEADER_SIZE + _inboundMessage.Value.PayloadLength);
+            
+            ushort incomingMessageLength = (ushort) Encoders.CalculateSpiBufferSize(Messages.HEADER_SIZE + _inboundMessage.Value.PayloadLength);
+            Console.WriteLine($"Asking for {incomingMessageLength} bytes.");
             byte[] encodedDummyMessage = new byte[incomingMessageLength];
+            Array.Clear(encodedDummyMessage, 0, incomingMessageLength);
             byte[] encodedInboundMessage = _esp32.WriteRead(encodedDummyMessage, incomingMessageLength);
-            StatusCodes status;
+            Console.WriteLine("Received:");
+            Console.WriteLine(DebugHelpers.DebugHelpers.PrintableBuffer(encodedInboundMessage));
+            
+            StatusCodes decodeStatus;
             Messages.Message? inboundMessage;
-            (inboundMessage, status) = Encoders.ExtractMessage(encodedInboundMessage);
-            if (status != StatusCodes.CompletedOK)
+            (inboundMessage, decodeStatus) = Encoders.ExtractMessage(encodedInboundMessage);
+            Console.WriteLine($"Decode status: {decodeStatus}");
+            if (decodeStatus != StatusCodes.CompletedOK)
             {
-                _lastStatusCode = status;
+                //
+                //    TODO: Add retry logic.
+                //
+                _acknowledgementMessage.StatusCode = (UInt32) decodeStatus;
             }
             else
             {
-                if ((inboundMessage.Value.Interface == _inboundMessage.Value.Interface) && (inboundMessage.Value.MessageID == _inboundMessage.Value.MessageID))
+                Console.WriteLine("Decoded message:");
+                Console.WriteLine(_inboundMessage.ToString());
+                if ((inboundMessage.Value.Interface == _inboundMessage.Value.Interface) && 
+                    (inboundMessage.Value.MessageID == _inboundMessage.Value.MessageID) &&
+                    (inboundMessage.Value.Function == _inboundMessage.Value.Function))
                 {
-                    _lastStatusCode = StatusCodes.HeaderBodyFieldMismatch;
+                    _inboundMessage = inboundMessage;
+                    _acknowledgementMessage.StatusCode = (UInt32) StatusCodes.CompletedOK;
+                    _acknowledgementMessage.MessageType = (byte) PacketType.Ack;
                 }
                 else
                 {
-                    _inboundMessage = inboundMessage;
-                    _lastStatusCode = StatusCodes.CompletedOK;
+                    //
+                    //    Add retry logic.
+                    //
+                    _acknowledgementMessage.StatusCode = (UInt32) StatusCodes.HeaderBodyFieldMismatch;
+                    _acknowledgementMessage.MessageType = (byte) PacketType.Ack;
                 }
             }
             _currentState = SpiStates.AcknowledgingMessageBody;
@@ -373,26 +406,15 @@ namespace Meadow.Core.Esp32
         private void ProcessAcknowledgingMessageBodyState()
         {
             Console.WriteLine("Entering ProcessAcknowledgingMessageBodyState");
-            Messages.Message acknowledgementMessage;
-            if (_lastStatusCode != StatusCodes.CompletedOK)
-            {
-                acknowledgementMessage = new Messages.Message(PacketType.Nak, Esp32Interfaces.Transport, 0, 0, (UInt32)_lastStatusCode, null);
-            }
-            else
-            {
-                Messages.Message inbound = _inboundMessage.Value;
-                acknowledgementMessage = new Messages.Message(PacketType.Ack, (Esp32Interfaces) inbound.Interface, inbound.Function, inbound.MessageID, (UInt32) StatusCodes.CompletedOK, null);
-            }
-            byte[] encodedAcknowledgementMessage = Encoders.EncodeMessage(acknowledgementMessage);
+            byte[] encodedAcknowledgementMessage = Encoders.EncodeMessage(_acknowledgementMessage);
             _esp32.WriteBytes(encodedAcknowledgementMessage);
             _currentState = SpiStates.Idle;
-            if (_lastStatusCode != StatusCodes.CompletedOK)
+            if ((StatusCodes) _acknowledgementMessage.StatusCode != StatusCodes.CompletedOK)
             {
                 MessageReceviedEventArgs args = new MessageReceviedEventArgs(_inboundMessage.Value);
                 MessageReceived(this, args);
             }
             _inboundMessage = null;
-            _lastStatusCode = StatusCodes.CompletedOK;
             _stm32ReadyPin.State = false;
         }
 
@@ -443,6 +465,8 @@ namespace Meadow.Core.Esp32
             byte[] dummyHeader = new byte[_headerFrameSize];
             Array.Clear(dummyHeader, 0, (int)_headerFrameSize);
             byte[] encodedAcknowledgement = _esp32.WriteRead(dummyHeader, (ushort)_headerFrameSize);
+            Console.WriteLine("Received:");
+            Console.WriteLine(DebugHelpers.DebugHelpers.PrintableBuffer(encodedAcknowledgement));
             StatusCodes decodeStatus;
             Messages.Message? acknowledgement;
             (acknowledgement, decodeStatus) = Encoders.ExtractMessage(encodedAcknowledgement);
@@ -453,37 +477,47 @@ namespace Meadow.Core.Esp32
             //
             if (decodeStatus == StatusCodes.CompletedOK)
             {
+                Console.WriteLine("Decoded OK.");
+                Console.WriteLine(acknowledgement.ToString());
                 if (acknowledgement.Value.MessageType == (byte) PacketType.Nak)
                 {
+                    Console.WriteLine("Received NAK.");
                     RetrySendingIfPossible((StatusCodes) acknowledgement.Value.StatusCode);
                 }
                 else
                 {
+                    Console.WriteLine("Received ACK.");
                     if ((acknowledgement.Value.MessageID == _outboundMessage.Value.MessageID) && (acknowledgement.Value.Interface == _outboundMessage.Value.Interface))
                     {
+                        Console.WriteLine("Message ID and interface match.");
                         if (_outboundMessage.Value.PayloadLength > 0)
                         {
+                            Console.WriteLine("Moving to waiting for message body.");
                             _currentState = SpiStates.WantToSendMessageBody;
                         }
                         else
                         {
+                            Console.WriteLine("Moving to idle state.");
                             _outboundMessage = null;
                             _currentState = SpiStates.Idle;
                         }
                     }
                     else
                     {
+                        Console.WriteLine("ID mismatch, checking for retry.");
                         RetrySendingIfPossible(StatusCodes.UnexpectedData);
                     }
                 }
             }
             else
             {
+                Console.WriteLine("Cannot decode message header.");
                 RetrySendingIfPossible((decodeStatus));
             }
             _stm32ReadyPin.State = false;
             if ((_currentState == SpiStates.WantToSendMessageBody) || (_currentState == SpiStates.WantToSendMessageHeader))
             {
+                Console.WriteLine("Pulsing STM32 Pin.");
                 _stm32ReadyPin.State = true;
             }
         }

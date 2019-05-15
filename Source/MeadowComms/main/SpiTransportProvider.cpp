@@ -40,7 +40,7 @@ uint32_t SpiTransportProvider::_headerFrameSize = 0;
 /*
  *      Handle for the task handler.
  */
-TaskHandle_t SpiTransportProvider::_taskHandle = nullptr;
+//TaskHandle_t SpiTransportProvider::_taskHandle = nullptr;
 
 /*
  * ---------------------------------------------------------------------------
@@ -72,10 +72,10 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
     gpio_set_level(Gpio::ESP32_READY_PIN, 0);
 
     /*
-     * Configure the STM32 Ready signal pin for interrupts.
+     *  Configure the STM32 Ready signal pin for interrupts.
      *
-     * Interrupt on rising edges on the STM32_READY_PIN.  The pin has
-     * pull-up disabled and pull-downs enabled.
+     *  Interrupt on rising edges on the STM32_READY_PIN.  The pin has
+     *  pull-up and pull-downs disabled.
      *
      */
     gpio_config_t stm32ReadyPinConfig;
@@ -139,48 +139,16 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
     memset(_transmitBuffer, 0, _headerFrameSize);
     memset(_transportFrameBuffer, 0, _headerFrameSize);
 
-    _currentState = Idle;
-
-    /*
-     *  Set up the task and that will process the SPI messages.
-     *
-     *  Set up the message queue first as the task will wait on the queue.
-     */
-    xTaskCreate(Task, "SPIMessageTask", 2048 * 2, this, configMAX_PRIORITIES - 1, &SpiTransportProvider::_taskHandle);
-
     _outboundMessage = nullptr;
 
-    //
-    //  TODO: Remove the code below once testing is complete.
-    //
-    Esp32Messaging::AntennaInfo *antennaInfo = (Esp32Messaging::AntennaInfo *) pvPortMalloc(sizeof(Esp32Messaging::AntennaInfo));
-    uint8_t *antennaInfoBuffer = (uint8_t *) pvPortMalloc(Esp32Messaging::ANTENNA_INFO_ENCODED_MESSAGE_SIZE);
-    antennaInfo->Antenna = AntennaTypes::External;
-    Encoders::EncodeAntennaInfo(antennaInfo, antennaInfoBuffer, 0);
-    vPortFree(antennaInfo);
-
-    Message *antennaInformationMessage = (Message *) pvPortMalloc(sizeof(Message));
-    antennaInformationMessage->MessageType = PacketType::Header;
-    antennaInformationMessage->Interface = Esp32Interfaces::WiFi;
-    antennaInformationMessage->MessageID = 25;
-    antennaInformationMessage->Function = WiFiFunction::GetAntenna;
-    antennaInformationMessage->StatusCode = StatusCodes::CompletedOK;
-    antennaInformationMessage->Payload = antennaInfoBuffer;
-    antennaInformationMessage->PayloadLength = Esp32Messaging::ANTENNA_INFO_ENCODED_MESSAGE_SIZE;
-
-    _outboundMessage = antennaInformationMessage;
-
     _currentState = Idle;
-//    _currentState = WantToSendMessageHeader;
 
-    //
-    //  TODO: End of remove code after testing complete.
-    //
+        /*
+     *  Set up the task and that will process the SPI messages.
+     */
+    xTaskCreate(Task, "SPIMessageTask", 2048 * 2, this, configMAX_PRIORITIES - 1, &SpiTransportProvider::_transportProviderTaskHandle);
+//    xTaskCreate(Task, "SPIMessageTask", 2048 * 2, this, configMAX_PRIORITIES - 1, &SpiTransportProvider::_taskHandle);
 
-    //
-    //  Indicate to the STM32 that we are ready to receive requests.
-    //
-//    gpio_set_level(Gpio::ESP32_READY_PIN, 1);
     gpio_set_level(Gpio::ESP32_READY_PIN, 0);
 }
 
@@ -358,17 +326,19 @@ void SpiTransportProvider::Echo(const char *messageString)
  *
  *      This method ensures that any heap storage is released and the
  *      pointer is set to the nullptr value.
+ *
+ *      @param message
+ *          Pointer to the message to be cleared.
  */
-void SpiTransportProvider::ClearCurrentHeader()
+void SpiTransportProvider::DeleteMessageAndReleaseHeapStorage(Message *message)
 {
-    if (_currentHeader)
+    if (message)
     {
-        if (_currentHeader->Payload)
+        if (message->Payload)
         {
-            vPortFree(_currentHeader->Payload);
+            vPortFree(message->Payload);
         }
-        vPortFree(_currentHeader);
-        _currentHeader = nullptr;
+        vPortFree(message);
     }
 }
 
@@ -395,7 +365,8 @@ void SpiTransportProvider::ProcessIdleState()
     if (transaction->trans_len >= (Message::HEADER_SIZE * 8))
     {
         messageHeader = Encoders::ExtractMessage((uint8_t *) transaction->rx_buffer, _headerFrameSize, true);
-        ClearCurrentHeader();
+        DeleteMessageAndReleaseHeapStorage(_incomingMessage);
+        _incomingMessage = nullptr;
         if (messageHeader)
         {
             _responseCode = StatusCodes::CompletedOK;
@@ -437,8 +408,8 @@ void SpiTransportProvider::ProcessIdleState()
         messageHeader->PayloadLength = 0;
     }
     FreeUpTransactionHeapStorage(transaction);
-    ClearCurrentHeader();
-    _currentHeader = messageHeader;
+    DeleteMessageAndReleaseHeapStorage(_incomingMessage);
+    _incomingMessage = messageHeader;
     _currentState = AcknowledgingMessageHeader;
 }
 
@@ -463,19 +434,19 @@ void SpiTransportProvider::ProcessAcknowledgingMessageHeaderState()
     ESP_LOGI(__func__, "Entering Method.");
 
     ESP_LOGI(__func__, "Sending response, packet type: %d, status code: %d", _packetType, _responseCode);
-    spi_slave_transaction_t *transaction = AcknowledgeMessage(_currentHeader, _responseCode, _packetType);
+    spi_slave_transaction_t *transaction = AcknowledgeMessage(_incomingMessage, _responseCode, _packetType);
 
     if (_responseCode == StatusCodes::CompletedOK)
     {
-        if (_currentHeader->PayloadLength == 0)         // Assume _currentHeader has been set up.
+        if (_incomingMessage->PayloadLength == 0)         // Assume _currentHeader has been set up.
         {
             //
             //  If we get here then the message is simple, i.e. no payload
             //  so we need to queue the message on the appropriate interface.
             //
-            if (_currentHeader->Interface != Esp32Interfaces::Transport)
+            if (_incomingMessage->Interface != Esp32Interfaces::Transport)
             {
-                _messageDispatcher->QueueMessageForEsp32(_currentHeader);
+                _messageDispatcher->QueueMessageForEsp32(_incomingMessage);
             }
             _currentState = Idle;
         }
@@ -486,7 +457,8 @@ void SpiTransportProvider::ProcessAcknowledgingMessageHeaderState()
     }
     else
     {
-        ClearCurrentHeader();
+        DeleteMessageAndReleaseHeapStorage(_incomingMessage);
+        _incomingMessage = nullptr;
         _currentState = Idle;
     }
     FreeUpTransactionHeapStorage(transaction);
@@ -502,10 +474,10 @@ void SpiTransportProvider::ProcessWaitingForMessageBodyState()
 {
     ESP_LOGI(__func__, "Entering Method.");
 
-    uint32_t encodedMessageBodySize = Encoders::CalculateSpiBufferSize(Message::HEADER_SIZE + _currentHeader->PayloadLength);
+    uint32_t encodedMessageBodySize = Encoders::CalculateSpiBufferSize(Message::HEADER_SIZE + _incomingMessage->PayloadLength);
     spi_slave_transaction_t *transaction = SetupSpiSlaveTransaction(encodedMessageBodySize, encodedMessageBodySize);
 
-    ESP_LOGI(__func__, "Current header payload length: %d", _currentHeader->PayloadLength);
+    ESP_LOGI(__func__, "Current header payload length: %d", _incomingMessage->PayloadLength);
     ESP_LOGI(__func__, "Message body buffer size: %d", encodedMessageBodySize);
 
     ESP_ERROR_CHECK(spi_slave_transmit(VSPI_HOST, transaction, portMAX_DELAY));
@@ -527,7 +499,7 @@ void SpiTransportProvider::ProcessWaitingForMessageBodyState()
         {
             if (message->MessageType == PacketType::Data)
             {
-                if ((message->Interface == _currentHeader->Interface) && (message->Function == _currentHeader->Function) && (message->MessageID == _currentHeader->MessageID))
+                if ((message->Interface == _incomingMessage->Interface) && (message->Function == _incomingMessage->Function) && (message->MessageID == _incomingMessage->MessageID))
                 {
                     _responseCode = StatusCodes::CompletedOK;
                     _packetType = PacketType::Ack;
@@ -572,13 +544,14 @@ void SpiTransportProvider::ProcessAcknowledingMessageBodyState()
 {
     ESP_LOGI(__func__, "Entering Method.");
 
-    spi_slave_transaction_t *transaction = AcknowledgeMessage(_currentHeader, _responseCode, _packetType);
+    spi_slave_transaction_t *transaction = AcknowledgeMessage(_incomingMessage, _responseCode, _packetType);
     int dataSize = transaction->length / 8;
     ESP_LOGI(__func__, "Received %d bytes.", dataSize);
     ESP_LOG_BUFFER_HEX(__func__, transaction->rx_buffer, dataSize);
 
     FreeUpTransactionHeapStorage(transaction);
-    ClearCurrentHeader();
+    DeleteMessageAndReleaseHeapStorage(_incomingMessage);
+    _incomingMessage = nullptr;
     _currentState = Idle;
 }
 
@@ -592,6 +565,8 @@ void SpiTransportProvider::ProcessWantToSendMessageHeaderState()
     if (_outboundMessage)
     {
         uint8_t *encodedMessageHeader = Encoders::EncodeMessage(_outboundMessage, true);
+
+        ESP_LOGI(__func__, "Want to send the following message:");
         ESP_LOG_BUFFER_HEX(__func__, encodedMessageHeader, Message::HEADER_SIZE);
 
         spi_slave_transaction_t *transaction = SetupSpiSlaveTransaction(_headerFrameSize, _headerFrameSize);
@@ -621,7 +596,6 @@ void SpiTransportProvider::ProcessWantToSendMessageHeaderState()
             //  TODO: We must have received a corrupt message (CRC error).
         }
         FreeUpTransactionHeapStorage(transaction);
-        ClearCurrentHeader();
     }
     else
     {
@@ -663,7 +637,8 @@ void SpiTransportProvider::ProcessWaitingForMessageHeaderAcknowledgementState()
         _currentState = Idle;
     }
     FreeUpTransactionHeapStorage(transaction);
-    ClearCurrentHeader();
+//    DeleteMessageAndReleaseHeapStorage(_incomingMessage);
+//    _incomingMessage = nullptr;
 }
 
 /*
@@ -679,8 +654,7 @@ void SpiTransportProvider::ProcessWantToSendMessageBodyState()
 
         uint32_t encodedMessageBufferSize = Encoders::CalculateSpiBufferSize(Message::HEADER_SIZE + _outboundMessage->PayloadLength);
         spi_slave_transaction_t *transaction = SetupSpiSlaveTransaction(encodedMessageBufferSize, encodedMessageBufferSize);
-        memcpy((void *) transaction->tx_buffer, (void *) encodedMessageBody, Message::HEADER_SIZE);
-        memcpy((void *) (transaction->tx_buffer + Message::HEADER_SIZE), (void *) _outboundMessage->Payload, _outboundMessage->PayloadLength);
+        memcpy((void *) transaction->tx_buffer, (void *) encodedMessageBody, Message::HEADER_SIZE + _outboundMessage->PayloadLength);
 
         gpio_set_level(Gpio::ESP32_READY_PIN, 1);
         ESP_ERROR_CHECK(spi_slave_transmit(VSPI_HOST, transaction, portMAX_DELAY));
@@ -694,7 +668,8 @@ void SpiTransportProvider::ProcessWantToSendMessageBodyState()
         //
         _currentState = WaitingForMessageBodyAcknowledgement;
         FreeUpTransactionHeapStorage(transaction);
-        ClearCurrentHeader();
+//        DeleteMessageAndReleaseHeapStorage(_incomingMessage);
+//        _incomingMessage = nullptr;
     }
     else
     {
@@ -724,7 +699,7 @@ void SpiTransportProvider::ProcessWaitingForMessageBodyAcknowledgementState()
         if (incomingMessage->MessageType == PacketType::Ack)
         {
             ESP_LOGI(__func__, "Acknowledgement received.");
-            _currentState = WantToSendMessageHeader;
+            _currentState = Idle;
         }
     }
     else
@@ -733,7 +708,8 @@ void SpiTransportProvider::ProcessWaitingForMessageBodyAcknowledgementState()
         _currentState = Idle;
     }
     FreeUpTransactionHeapStorage(transaction);
-    ClearCurrentHeader();
+//    DeleteMessageAndReleaseHeapStorage(_incomingMessage);
+//    _incomingMessage = nullptr;
 }
 
 /*
@@ -742,6 +718,34 @@ void SpiTransportProvider::ProcessWaitingForMessageBodyAcknowledgementState()
 void SpiTransportProvider::ProcessWantToSendTransportMessageState()
 {
     ESP_LOGI(__func__, "Entering Method.");
+}
+
+/*
+ *
+ */
+void SpiTransportProvider::WaitForNotification(SpiTransportProvider *sender)
+{
+    uint32_t notificationBits = 0;
+
+    ESP_LOGI(__func__, "Waiting for notification, current state: %d", _currentState);
+    xTaskNotifyWait(0x00000000, 0x00000000, &notificationBits, portMAX_DELAY);
+
+    if ((_currentState == SpiStates::Idle) && (notificationBits & TransportProviderBase::OUTBOUND_MESSAGE_QUEUE_NOTIFICATION_BIT))
+    {
+        if (xSemaphoreTake(_outboundMessageQueueMutex, portMAX_DELAY))
+        {
+            UBaseType_t messageCount = uxQueueMessagesWaiting(_outboundMessageQueueHandle);
+            ESP_LOGI(__func__, "Messages waiting: %d", messageCount);
+            if (messageCount > 0)
+            {
+                if (xQueueReceive(_outboundMessageQueueHandle, &sender->_outboundMessage, portMAX_DELAY) == pdTRUE)
+                {
+                    _currentState = SpiStates::WantToSendMessageHeader;
+                }
+            }
+            xSemaphoreGive(_outboundMessageQueueMutex);
+        }
+    }
 }
 
 /*
@@ -757,6 +761,15 @@ void SpiTransportProvider::Task(void *pvParameters)
 {
     SpiTransportProvider *sender = (SpiTransportProvider *) pvParameters;
 
+    //
+    //  It is important to wait for the outbound message queue to be
+    //  created before we tray and process any messages.
+    //
+    while (!_outboundMessageQueueHandle)
+    {
+        vTaskDelay(10 / portTICK_PERIOD_MS);
+    }
+
     while (true)
     {
         //
@@ -767,8 +780,34 @@ void SpiTransportProvider::Task(void *pvParameters)
         //
         //  We must wait until we are woken by one of the events.
         //
-        ESP_LOGI(__func__, "Waiting for notification, current state: %d", _currentState);
-        uint32_t notificationValue = ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+//        bool wait = true;
+//        if (_currentState == SpiStates::Idle)
+//        {
+//            if (xSemaphoreTake(_outboundMessageQueueMutex, portMAX_DELAY))
+//            {
+//                UBaseType_t messageCount = uxQueueMessagesWaiting(_outboundMessageQueueHandle);
+//                ESP_LOGI(__func__, "Messages waiting: %d", messageCount);
+//                if (messageCount > 0)
+//                {
+//                    if (xQueueReceive(_outboundMessageQueueHandle, &sender->_outboundMessage, portMAX_DELAY) == pdTRUE)
+//                    {
+//                        _currentState = SpiStates::WantToSendMessageHeader;
+//                    }
+//                    wait = false;
+//                }
+//                xSemaphoreGive(_outboundMessageQueueMutex);
+//            }
+//        }
+//        if (wait)
+//        {
+//            ESP_LOGI(__func__, "Waiting for notification, current state: %d", _currentState);
+//
+//            uint32_t notificationValue = ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+//        }
+
+        vTaskDelay(50 / portTICK_PERIOD_MS);
+        sender->WaitForNotification(sender);
+
         gpio_set_level(Gpio::ESP32_READY_PIN, 1);
         switch (_currentState)
         {
@@ -808,7 +847,7 @@ void SpiTransportProvider::Task(void *pvParameters)
     //  The documentation for FreeRTOS states that we should delete the task
     //  should we get here.
     //
-    vTaskDelete(sender->_taskHandle);
+    vTaskDelete(sender->_transportProviderTaskHandle);
 }
 
 /*
@@ -822,6 +861,7 @@ void SpiTransportProvider::Task(void *pvParameters)
 void SpiTransportProvider::Stm32IsrHandler(void *pvParameters)
 {
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-    vTaskNotifyGiveFromISR(_taskHandle, &xHigherPriorityTaskWoken);
+//    vTaskNotifyGiveFromISR(_taskHandle, &xHigherPriorityTaskWoken);
+    xTaskNotifyFromISR(_transportProviderTaskHandle, TransportProviderBase::STM32_INTERRUPT_NOTIFICATION_BIT, eSetBits, &xHigherPriorityTaskWoken);
     portYIELD_FROM_ISR();
 }

@@ -24,7 +24,7 @@ extern "C" void app_main()
     ESP_LOGI(__func__, "\n\n    ********** Starting Application (%s version %s) **********\n", applicationDescription->project_name, applicationDescription->version);
 
     /*
-     *      Set up the messaging system to use SPI hardware communications.
+     *  Set up the messaging system to use SPI hardware communications.
      */
     SpiTransportProvider *spi = new SpiTransportProvider();
     MessageDispatcher *messageDispatcher = new MessageDispatcher(spi);
