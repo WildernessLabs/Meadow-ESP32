@@ -303,6 +303,9 @@ namespace Meadow.Core.Esp32
                     offset += 4;
                     message.Crc = ExtractUInt32(buffer, offset);
                     offset += 4;
+                    //
+                    //    TODO: headerOnly field ?
+                    //
                     message.Payload = new byte[message.PayloadLength];
                     Array.Copy(buffer, offset, message.Payload, 0, message.PayloadLength);
                     result = message;

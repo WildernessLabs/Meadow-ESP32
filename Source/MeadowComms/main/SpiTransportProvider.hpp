@@ -9,6 +9,7 @@
 #define _SPI_TRANSPORT_PROVIDER_HPP_
 
 #include "freertos/FreeRTOS.h"
+#include "freertos/semphr.h"
 #include "driver/spi_slave.h"
 #include "esp_system.h"
 #include "driver/gpio.h"
@@ -63,14 +64,9 @@ private:
     static uint32_t _headerFrameSize;
 
     /*
-     *      Current message header being processed.  The STM32 will send
-     *      the message header before the message body.  This is done so
-     *      that the ESP32 can allocate enough memory for the data being
-     *      sent.
-     *
-     *      This variable holds the message header that has been sent.
+     *      Message coming in from the STM32.
      */
-    Message *_currentHeader = nullptr;
+    Message *_incomingMessage = nullptr;
 
     /*
      *      The next message to be sent to the STM32.
@@ -80,7 +76,7 @@ private:
     /*
      *      Handle for the System request handler task.
      */
-    static TaskHandle_t _taskHandle;
+//    static TaskHandle_t _taskHandle;
 
     /*
      *      Response code that will be used in any acknowledgement messages.
@@ -123,13 +119,15 @@ private:
      */
     static void Task(void *);
 
-    static void IncomingSpiMessageTask(void *);
+
+    void WaitForNotification(SpiTransportProvider *);
+//    static void IncomingSpiMessageTask(void *);
 
     /*
      *      Clear the _currentHeader variable and free any allocated
      *      heap memory.
      */
-    void ClearCurrentHeader();
+    void DeleteMessageAndReleaseHeapStorage(Message *);
 
     /*
      *      Start to process incoming messages (i.e. move from the idle state

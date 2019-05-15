@@ -1,14 +1,25 @@
 /*
- * TransportProviderBase.cpp
+ *      TransportProviderBase.cpp
  *
- *  Created on: 15 Feb 2019
- *      Author: mark
+ *      Base class for any hardware transport provider which facilitates
+ *      communication between the ESP32 and STM32 chips.
  */
 
 #include "TransportProviderBase.hpp"
 #include "Encoders.hpp"
 #include "Logging.hpp"
 
+/*
+ * ----------------------------------------------------------------------------
+ *
+ *                   Initialise class level static variables.
+ *
+ * ----------------------------------------------------------------------------
+ */
+
+QueueHandle_t TransportProviderBase::_outboundMessageQueueMutex = nullptr;
+QueueHandle_t TransportProviderBase::_outboundMessageQueueHandle = nullptr;
+TaskHandle_t TransportProviderBase::_transportProviderTaskHandle = nullptr;
 /*
  * ---------------------------------------------------------------------------
  *
@@ -22,6 +33,11 @@
  */
 TransportProviderBase::TransportProviderBase()
 {
+    _outboundMessageQueueMutex = xSemaphoreCreateMutex();
+    if (!_outboundMessageQueueMutex)
+    {
+        ESP_LOGE(__func__, "Cannot create outbound message queue mutex.");
+    }
 }
 
 /*
@@ -45,8 +61,8 @@ TransportProviderBase::~TransportProviderBase()
 void TransportProviderBase::Setup(MessageDispatcher *messageDispatcher)
 {
     _messageDispatcher = messageDispatcher;
-    _queueHandle = xQueueCreate(MAX_QUEUE_LENGTH, sizeof(Message));
-    if (_queueHandle == NULL)
+    _outboundMessageQueueHandle = xQueueCreate(MAX_QUEUE_LENGTH, sizeof(Message *));
+    if (_outboundMessageQueueHandle == NULL)
     {
         ESP_LOGE(__func__, "Cannot allocate hardware transport queue.");
     }
@@ -69,13 +85,25 @@ bool TransportProviderBase::QueueMessageForStm32(Message *message)
     if ((message->Interface == Esp32Interfaces::System) && (message->Function == SystemFunction::Echo))
     {
         ESP_LOGI(__func__, "Echo received: %s", (char *) message->Payload);
+
     }
     else
     {
-        if (xQueueSendToBack(_queueHandle, &message, 0) != pdPASS)
+        if (xSemaphoreTake(_outboundMessageQueueMutex, portMAX_DELAY))
         {
-            ESP_LOGE(__func__, "Cannot queue message.");
-            result = false;
+            if (xQueueSendToBack(_outboundMessageQueueHandle, &message, 0) != pdPASS)
+            {
+                ESP_LOGE(__func__, "Cannot queue message.");
+                result = false;
+            }
+            ESP_LOGI(__func__, "Message queued.");
+            UBaseType_t messageCount = uxQueueMessagesWaiting(_outboundMessageQueueHandle);
+            ESP_LOGI(__func__, "Messages waiting: %d", messageCount);
+            xSemaphoreGive(_outboundMessageQueueMutex);
+            if (xTaskNotify(_transportProviderTaskHandle, TransportProviderBase::OUTBOUND_MESSAGE_QUEUE_NOTIFICATION_BIT, eSetBits) != pdPASS)
+            {
+                ESP_LOGE(__func__, "Cannot send message queue notification.");
+            }
         }
     }
     return(result);

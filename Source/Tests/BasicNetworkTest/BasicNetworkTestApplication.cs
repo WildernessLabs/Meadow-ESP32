@@ -15,16 +15,39 @@ namespace BasicNetworkTest
 
         MessageDispatcher _dispatcher;
 
+        private Messages.Message _getAntennaMessage;
+
+        private Messages.AntennaInfo _antennaInfo;
+
         /// <summary>
         /// Default constructor.
         /// </summary>
         public BasicNetworkTestApplication()
         {
-            _dispatcher = new MessageDispatcher(Device, Device.Pins.ESP_UART_RX, Device.Pins.ESP_UART_TX, Device.Pins.ESP_MOSI, Device.Pins.ESP_MISO, Device.Pins.ESP_CLK, Device.Pins.ESP_CS, Device.Pins.ESP_BOOT, Device.Pins.ESP_RST);
+            _dispatcher = new MessageDispatcher(Device, stm32ReadyPin: Device.Pins.ESP_UART_RX, esp32ReadyPin: Device.Pins.ESP_UART_TX, 
+                mosi: Device.Pins.ESP_MOSI, miso: Device.Pins.ESP_MISO, clock: Device.Pins.ESP_CLK, chipSelect: Device.Pins.ESP_CS, 
+                /* Device.Pins.ESP_BOOT */ bootPin: Device.Pins.ESP_BOOT, resetPin: Device.Pins.ESP_RST);
             _dispatcher.MessageReceived += _dispatcher_MessageReceived;
             _dispatcher.Error += _dispatcher_Error;
-            _button = (DigitalInputPort) Device.CreateDigitalInputPort(Device.Pins.D15, interruptMode: InterruptMode.EdgeFalling, resistorMode: ResistorMode.PullUp, debounceDuration: 100);
+            _button = (DigitalInputPort) Device.CreateDigitalInputPort(Device.Pins.D14, interruptMode: InterruptMode.EdgeFalling, resistorMode: ResistorMode.PullUp, debounceDuration: 100);
             _button.Changed += _button_Changed;
+            
+            _antennaInfo = new Messages.AntennaInfo();
+            _antennaInfo.Antenna = (byte) AntennaTypes.External;
+
+            _getAntennaMessage = new Messages.Message();
+            _getAntennaMessage.Interface = (byte) Esp32Interfaces.WiFi;
+            _getAntennaMessage.Function = (byte) WiFiFunction.GetAntenna;
+            _getAntennaMessage.MessageID = _counter++;
+            _getAntennaMessage.MessageType = (byte) PacketType.Data;
+            _getAntennaMessage.Payload = null;
+            _getAntennaMessage.PayloadLength = 0;
+////            message.Payload = Encoders.EncodeAntennaInfo(_antennaInfo);
+////            message.PayloadLength = (UInt32) message.Payload.Length;
+
+//
+//            Console.WriteLine(_getAntennaMessage.ToString());
+//            _dispatcher.Add(_getAntennaMessage);
         }
 
         /// <summary>
@@ -34,20 +57,12 @@ namespace BasicNetworkTest
         /// <param name="e"></param>
         private void _button_Changed(object sender, DigitalInputPortEventArgs e)
         {
-            Messages.AntennaInfo antennaInfo = new Messages.AntennaInfo();
-            antennaInfo.Antenna = (byte) AntennaTypes.External;
-
-            Messages.Message message = new Messages.Message();
-            message.Interface = (byte) Esp32Interfaces.WiFi;
-            message.Function = (byte) WiFiFunction.SetAntenna;
-            message.MessageID = _counter++;
-            message.MessageType = (byte) PacketType.Data;
-            message.Payload = Encoders.EncodeAntennaInfo(antennaInfo);
-            message.PayloadLength = (UInt32)message.Payload.Length;
             Console.WriteLine("Queueing message:");
 
-            Console.WriteLine(DebugHelpers.DebugHelpers.PrintableMessage(message));
-            _dispatcher.Add(message);
+            Console.WriteLine(_getAntennaMessage.ToString());
+            _dispatcher.Add(_getAntennaMessage);
+            _counter++;
+            _getAntennaMessage.MessageID = _counter;
         }
 
         /// <summary>
@@ -67,11 +82,12 @@ namespace BasicNetworkTest
         /// <param name="e"></param>
         private void _dispatcher_MessageReceived(object sender, MessageReceviedEventArgs e)
         {
-            throw new NotImplementedException();
+            Console.WriteLine("Message received:");
+            Console.WriteLine(e.Message.ToString());
         }
 
         /// <summary>
-        /// Main programe loop.
+        /// Main program loop.
         /// </summary>
         public void Run()
         {
