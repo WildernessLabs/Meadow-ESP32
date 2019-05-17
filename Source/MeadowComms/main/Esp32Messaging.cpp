@@ -122,23 +122,16 @@ Message *Message::CreateOnHeap(uint8_t messageType, uint8_t interface, uint32_t 
  */
 Message *Message::CopyMessage(Message *originalMessage, bool copyPayload)
 {
-    Message *newMessage = new Message();
-    newMessage->MessageType = originalMessage->MessageType;
-    newMessage->Interface = originalMessage->Interface;
-    newMessage->Function = originalMessage->Function;
-    newMessage->StatusCode = originalMessage->StatusCode;
-    newMessage->MessageID = originalMessage->MessageID;
+    uint8_t *payload = nullptr;
+    uint32_t payloadLength = 0;
+
     if (copyPayload)
     {
-        newMessage->PayloadLength = originalMessage->PayloadLength;
-        newMessage->Payload = (uint8_t *) pvPortMalloc(newMessage->PayloadLength);
-        memcpy((void *) newMessage->Payload, (void *) originalMessage->Payload, (size_t) newMessage->Payload);
+        payloadLength = originalMessage->PayloadLength;
+        payload = (uint8_t *) pvPortMalloc(payloadLength);
+        memcpy((void *) payload, (void *) originalMessage->Payload, (size_t) payloadLength);
     }
-    else
-    {
-        newMessage->PayloadLength = 0;
-        newMessage->Payload = nullptr;
-    }
+    Message *newMessage = CreateOnHeap(originalMessage->MessageType, originalMessage->Interface, originalMessage->Function, originalMessage->StatusCode, originalMessage->MessageID, payload, payloadLength);
     return(newMessage);
 }
 
