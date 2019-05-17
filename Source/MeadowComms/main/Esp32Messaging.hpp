@@ -84,7 +84,7 @@ struct Message
     /*
      *      Create a new message on the heap with the specified values.
      */
-    static Message *Create(uint8_t, uint8_t, uint32_t, uint32_t, uint32_t, uint8_t *, uint32_t);
+    static Message *CreateOnHeap(uint8_t messageType, uint8_t interface, uint32_t function, uint32_t statusCode, uint32_t messageId, uint8_t *payload, uint32_t payloadLength);
 };
 
 #endif /* _ESP32_MESSAGING_HPP_ */
