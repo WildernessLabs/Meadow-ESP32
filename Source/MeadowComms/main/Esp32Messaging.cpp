@@ -67,6 +67,14 @@ Message::Message(uint8_t messageType, uint8_t interface, uint32_t function, uint
 }
 
 /*
+ * ---------------------------------------------------------------------------
+ *
+ *                                 Methods
+ *
+ * ---------------------------------------------------------------------------
+ */
+
+/*
  *  Create an instance of a message on the heap.
  *
  *  @param messageType
@@ -108,7 +116,7 @@ Message *Message::CreateOnHeap(uint8_t messageType, uint8_t interface, uint32_t 
 }
 
 /*
- *      Make a copy of a message.
+ *      Make a copy of a message (on the heap).
  *
  *      @param originalMessage
  *          Original message to copy.
