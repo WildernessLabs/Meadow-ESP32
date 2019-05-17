@@ -91,7 +91,7 @@ Message::Message(uint8_t messageType, uint8_t interface, uint32_t function, uint
  *  @param payloadLength
  *      Size (in bytes) of the payload.
  */
-Message *Message::Create(uint8_t messageType, uint8_t interface, uint32_t function, uint32_t statusCode, uint32_t messageId, uint8_t *payload, uint32_t payloadLength)
+Message *Message::CreateOnHeap(uint8_t messageType, uint8_t interface, uint32_t function, uint32_t statusCode, uint32_t messageId, uint8_t *payload, uint32_t payloadLength)
 {
     Message *result = (Message *) pvPortMalloc(sizeof(Message));
 

@@ -380,32 +380,14 @@ void SpiTransportProvider::ProcessIdleState()
             //
             _responseCode = StatusCodes::CRCError;
             _packetType = PacketType::Nak;
-
-            messageHeader = (Message *) pvPortMalloc(sizeof(Message));
-            memset(messageHeader, 0, sizeof(Message));
-            messageHeader->MessageType = _packetType;
-            messageHeader->Interface = Esp32Interfaces::Transport;
-            messageHeader->Function = 0;
-            messageHeader->MessageID = 0;
-            messageHeader->StatusCode = _responseCode;
-            messageHeader->Payload = nullptr;
-            messageHeader->PayloadLength = 0;
+            messageHeader = Message::CreateOnHeap(_packetType, Esp32Interfaces::Transport, 0, _responseCode, 0, nullptr, 0);
         }
     }
     else
     {
         _responseCode = StatusCodes::InvalidHeader;
         _packetType = PacketType::Nak;
-
-        messageHeader = (Message *) pvPortMalloc(sizeof(Message));
-        memset(messageHeader, 0, sizeof(Message));
-        messageHeader->MessageType = _packetType;
-        messageHeader->Interface = Esp32Interfaces::Transport;
-        messageHeader->Function = 0;
-        messageHeader->MessageID = 0;
-        messageHeader->StatusCode = _responseCode;
-        messageHeader->Payload = nullptr;
-        messageHeader->PayloadLength = 0;
+        messageHeader = Message::CreateOnHeap(_packetType, Esp32Interfaces::Transport, 0, _responseCode, 0, nullptr, 0);
     }
     FreeUpTransactionHeapStorage(transaction);
     DeleteMessageAndReleaseHeapStorage(_incomingMessage);
