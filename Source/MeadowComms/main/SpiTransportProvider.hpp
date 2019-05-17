@@ -74,11 +74,6 @@ private:
     Message *_outboundMessage = nullptr;
 
     /*
-     *      Handle for the System request handler task.
-     */
-//    static TaskHandle_t _taskHandle;
-
-    /*
      *      Response code that will be used in any acknowledgement messages.
      */
     StatusCodes::StatusCodes _responseCode;
@@ -86,7 +81,7 @@ private:
     /*
      *      Packet type that will be used in any acknowledgement messages.
      */
-    uint8_t _packetType;
+    uint8_t _messageType;
 
     /*
      *      Default destructor.
