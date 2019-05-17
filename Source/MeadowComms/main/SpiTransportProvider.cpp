@@ -16,6 +16,7 @@
  *
  * ----------------------------------------------------------------------------
  */
+
 /*
  *      Default state is that the class has not been fully constructed
  *      and so there is no current instance.
@@ -36,11 +37,6 @@ uint8_t *SpiTransportProvider::_headerBuffer = nullptr;
 uint8_t *SpiTransportProvider::_transmitBuffer = nullptr;
 uint8_t *SpiTransportProvider::_transportFrameBuffer = nullptr;
 uint32_t SpiTransportProvider::_headerFrameSize = 0;
-
-/*
- *      Handle for the task handler.
- */
-//TaskHandle_t SpiTransportProvider::_taskHandle = nullptr;
 
 /*
  * ---------------------------------------------------------------------------
@@ -143,11 +139,10 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
 
     _currentState = Idle;
 
-        /*
+    /*
      *  Set up the task and that will process the SPI messages.
      */
     xTaskCreate(Task, "SPIMessageTask", 2048 * 2, this, configMAX_PRIORITIES - 1, &SpiTransportProvider::_transportProviderTaskHandle);
-//    xTaskCreate(Task, "SPIMessageTask", 2048 * 2, this, configMAX_PRIORITIES - 1, &SpiTransportProvider::_taskHandle);
 
     gpio_set_level(Gpio::ESP32_READY_PIN, 0);
 }
@@ -185,7 +180,7 @@ SpiTransportProvider::~SpiTransportProvider()
  *      @param code
  *          Status code to return.
  *
- *      @param packetType
+ *      @param messageType
  *          Type of message to return.
  *
  *      @returns spi_slave_transaction_t object
@@ -196,15 +191,15 @@ SpiTransportProvider::~SpiTransportProvider()
  *          that the caller cleans up both the transaction and the buffers after they are no
  *          longer necessary.
  */
-spi_slave_transaction_t *SpiTransportProvider::AcknowledgeMessage(Message *message, StatusCodes::StatusCodes code, uint8_t packetType)
+spi_slave_transaction_t *SpiTransportProvider::AcknowledgeMessage(Message *message, StatusCodes::StatusCodes code, uint8_t messageType)
 {
     spi_slave_transaction_t *transaction = SetupSpiSlaveTransaction(_headerFrameSize, _headerFrameSize);
 
     Message *copyOfMessage = Message::CopyMessage(message, false);
-    copyOfMessage->MessageType = packetType;
+    copyOfMessage->MessageType = messageType;
     copyOfMessage->StatusCode = (uint32_t) code;
     uint8_t *ackFrame = (uint8_t *) Encoders::EncodeMessage(copyOfMessage, true);
-    vPortFree(copyOfMessage);
+    DeleteMessageAndReleaseHeapStorage(copyOfMessage);
     memcpy((void *) transaction->tx_buffer, ackFrame, _headerFrameSize);
     vPortFree(ackFrame);
 
@@ -342,6 +337,11 @@ void SpiTransportProvider::DeleteMessageAndReleaseHeapStorage(Message *message)
     }
 }
 
+void ProcessNewHeader()
+{
+
+}
+
 /*
  *      The STM32 has indicated that it has a message for the ESP32.
  *
@@ -370,7 +370,7 @@ void SpiTransportProvider::ProcessIdleState()
         if (messageHeader)
         {
             _responseCode = StatusCodes::CompletedOK;
-            _packetType = PacketType::Ack;
+            _messageType = PacketType::Ack;
         }
         else
         {
@@ -379,15 +379,15 @@ void SpiTransportProvider::ProcessIdleState()
             //  error has been detected.
             //
             _responseCode = StatusCodes::CRCError;
-            _packetType = PacketType::Nak;
-            messageHeader = Message::CreateOnHeap(_packetType, Esp32Interfaces::Transport, 0, _responseCode, 0, nullptr, 0);
+            _messageType = PacketType::Nak;
+            messageHeader = Message::CreateOnHeap(_messageType, Esp32Interfaces::Transport, 0, _responseCode, 0, nullptr, 0);
         }
     }
     else
     {
         _responseCode = StatusCodes::InvalidHeader;
-        _packetType = PacketType::Nak;
-        messageHeader = Message::CreateOnHeap(_packetType, Esp32Interfaces::Transport, 0, _responseCode, 0, nullptr, 0);
+        _messageType = PacketType::Nak;
+        messageHeader = Message::CreateOnHeap(_messageType, Esp32Interfaces::Transport, 0, _responseCode, 0, nullptr, 0);
     }
     FreeUpTransactionHeapStorage(transaction);
     DeleteMessageAndReleaseHeapStorage(_incomingMessage);
@@ -409,14 +409,14 @@ void SpiTransportProvider::ProcessIdleState()
  *      Upon entry it is essential that the following variables have been set up:
  *          _currentHeader
  *          _responseCode
- *          _packetType
+ *          _messageType
  */
 void SpiTransportProvider::ProcessAcknowledgingMessageHeaderState()
 {
     ESP_LOGI(__func__, "Entering Method.");
 
-    ESP_LOGI(__func__, "Sending response, packet type: %d, status code: %d", _packetType, _responseCode);
-    spi_slave_transaction_t *transaction = AcknowledgeMessage(_incomingMessage, _responseCode, _packetType);
+    ESP_LOGI(__func__, "Sending response, packet type: %d, status code: %d", _messageType, _responseCode);
+    spi_slave_transaction_t *transaction = AcknowledgeMessage(_incomingMessage, _responseCode, _messageType);
 
     if (_responseCode == StatusCodes::CompletedOK)
     {
@@ -475,7 +475,7 @@ void SpiTransportProvider::ProcessWaitingForMessageBodyState()
         if (dataSize != encodedMessageBodySize)
         {
             _responseCode = StatusCodes::InvalidPacket;
-            _packetType = PacketType::Nak;
+            _messageType = PacketType::Nak;
         }
         else
         {
@@ -484,7 +484,7 @@ void SpiTransportProvider::ProcessWaitingForMessageBodyState()
                 if ((message->Interface == _incomingMessage->Interface) && (message->Function == _incomingMessage->Function) && (message->MessageID == _incomingMessage->MessageID))
                 {
                     _responseCode = StatusCodes::CompletedOK;
-                    _packetType = PacketType::Ack;
+                    _messageType = PacketType::Ack;
                     //
                     //  TODO: Check memory leaks on heap here...
                     //
@@ -493,20 +493,20 @@ void SpiTransportProvider::ProcessWaitingForMessageBodyState()
                 else
                 {
                     _responseCode = StatusCodes::UnexpectedData;
-                    _packetType = PacketType::Nak;
+                    _messageType = PacketType::Nak;
                 }
             }
             else
             {
                 _responseCode = StatusCodes::UnexpectedData;
-                _packetType = PacketType::Nak;
+                _messageType = PacketType::Nak;
             }
         }
     }
     else
     {
         _responseCode = StatusCodes::CRCError;
-        _packetType = PacketType::Nak;
+        _messageType = PacketType::Nak;
     }
     FreeUpTransactionHeapStorage(transaction);
     _currentState = AcknowledingMessageBody;
@@ -520,13 +520,13 @@ void SpiTransportProvider::ProcessWaitingForMessageBodyState()
  *
  *          _currentHeader
  *          _responseCode
- *          _packetType
+ *          _messageType
  */
 void SpiTransportProvider::ProcessAcknowledingMessageBodyState()
 {
     ESP_LOGI(__func__, "Entering Method.");
 
-    spi_slave_transaction_t *transaction = AcknowledgeMessage(_incomingMessage, _responseCode, _packetType);
+    spi_slave_transaction_t *transaction = AcknowledgeMessage(_incomingMessage, _responseCode, _messageType);
     int dataSize = transaction->length / 8;
     ESP_LOGI(__func__, "Received %d bytes.", dataSize);
     ESP_LOG_BUFFER_HEX(__func__, transaction->rx_buffer, dataSize);
