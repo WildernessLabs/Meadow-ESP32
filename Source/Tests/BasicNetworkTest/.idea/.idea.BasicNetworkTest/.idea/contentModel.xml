@@ -3,7 +3,7 @@
   <component name="ContentModelStore">
     <e p="/tmp" t="ExcludeRecursive" />
     <e p="$USER_HOME$/Library/Caches/Rider2019.1/extResources" t="IncludeRecursive" />
-    <e p="$USER_HOME$/Library/Caches/Rider2019.1/resharper-host/local/Transient/ReSharperHost/v191/SolutionCaches/_BasicNetworkTest.-39792423.00" t="ExcludeRecursive" />
+    <e p="$USER_HOME$/Library/Caches/Rider2019.1/resharper-host/local/Transient/ReSharperHost/v191/SolutionCaches/_BasicNetworkTest.335644139.00" t="ExcludeRecursive" />
     <e p="$PROJECT_DIR$" t="IncludeRecursive">
       <e p="BasicNetworkTest.csproj" t="IncludeRecursive" />
       <e p="BasicNetworkTest.sln" t="IncludeFlat" />

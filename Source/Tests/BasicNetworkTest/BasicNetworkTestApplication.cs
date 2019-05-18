@@ -39,7 +39,7 @@ namespace BasicNetworkTest
             _getAntennaMessage.Interface = (byte) Esp32Interfaces.WiFi;
             _getAntennaMessage.Function = (byte) WiFiFunction.GetAntenna;
             _getAntennaMessage.MessageID = _counter++;
-            _getAntennaMessage.MessageType = (byte) PacketType.Data;
+            _getAntennaMessage.MessageType = (byte) MessageTypes.Data;
             _getAntennaMessage.Payload = null;
             _getAntennaMessage.PayloadLength = 0;
 ////            message.Payload = Encoders.EncodeAntennaInfo(_antennaInfo);

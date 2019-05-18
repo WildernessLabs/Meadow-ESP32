@@ -312,7 +312,7 @@ void SpiTransportProvider::Echo(const char *messageString)
     message->Interface = Esp32Interfaces::System;
     message->Function = SystemFunction::Echo;
     message->MessageID = 0x00;
-    message->MessageType = PacketType::Data;
+    message->MessageType = MessageTypes::Data;
     message->PayloadLength = strlen(messageString) + 1;
     char *str = (char *) pvPortMalloc(message->PayloadLength);
     strcpy(str, messageString);
@@ -374,7 +374,7 @@ void SpiTransportProvider::ProcessIdleState()
         if (messageHeader)
         {
             _responseCode = StatusCodes::CompletedOK;
-            _messageType = PacketType::Ack;
+            _messageType = MessageTypes::Ack;
         }
         else
         {
@@ -383,14 +383,14 @@ void SpiTransportProvider::ProcessIdleState()
             //  error has been detected.
             //
             _responseCode = StatusCodes::CRCError;
-            _messageType = PacketType::Nak;
+            _messageType = MessageTypes::Nak;
             messageHeader = Message::CreateOnHeap(_messageType, Esp32Interfaces::Transport, 0, _responseCode, 0, nullptr, 0);
         }
     }
     else
     {
         _responseCode = StatusCodes::InvalidHeader;
-        _messageType = PacketType::Nak;
+        _messageType = MessageTypes::Nak;
         messageHeader = Message::CreateOnHeap(_messageType, Esp32Interfaces::Transport, 0, _responseCode, 0, nullptr, 0);
     }
     FreeUpTransactionHeapStorage(transaction);
@@ -479,35 +479,35 @@ void SpiTransportProvider::ProcessWaitingForMessageBodyState()
         if (dataSize != encodedMessageBodySize)
         {
             _responseCode = StatusCodes::InvalidPacket;
-            _messageType = PacketType::Nak;
+            _messageType = MessageTypes::Nak;
         }
         else
         {
-            if (message->MessageType == PacketType::Data)
+            if (message->MessageType == MessageTypes::Data)
             {
                 if ((message->Interface == _incomingMessage->Interface) && (message->Function == _incomingMessage->Function) && (message->MessageID == _incomingMessage->MessageID))
                 {
                     _responseCode = StatusCodes::CompletedOK;
-                    _messageType = PacketType::Ack;
+                    _messageType = MessageTypes::Ack;
                     _messageDispatcher->QueueMessageForEsp32(message);
                 }
                 else
                 {
                     _responseCode = StatusCodes::UnexpectedData;
-                    _messageType = PacketType::Nak;
+                    _messageType = MessageTypes::Nak;
                 }
             }
             else
             {
                 _responseCode = StatusCodes::UnexpectedData;
-                _messageType = PacketType::Nak;
+                _messageType = MessageTypes::Nak;
             }
         }
     }
     else
     {
         _responseCode = StatusCodes::CRCError;
-        _messageType = PacketType::Nak;
+        _messageType = MessageTypes::Nak;
     }
     FreeUpTransactionHeapStorage(transaction);
     _currentState = AcknowledingMessageBody;
@@ -565,7 +565,7 @@ void SpiTransportProvider::ProcessWantToSendMessageHeaderState()
         Message *incomingMessage = Encoders::ExtractMessage((uint8_t *) transaction->rx_buffer, _headerFrameSize, true);
         if (incomingMessage)
         {
-            if (incomingMessage->MessageType & PacketType::Ready)
+            if (incomingMessage->MessageType & MessageTypes::Ready)
             {
                 _currentState = WaitingForMessageHeaderAcknowledgement;
             }
@@ -605,7 +605,7 @@ void SpiTransportProvider::ProcessWaitingForMessageHeaderAcknowledgementState()
     Message *incomingMessage = Encoders::ExtractMessage((uint8_t *) transaction->rx_buffer, _headerFrameSize, true);
     if (incomingMessage)
     {
-        if (incomingMessage->MessageType == PacketType::Ack)
+        if (incomingMessage->MessageType == MessageTypes::Ack)
         {
             ESP_LOGI(__func__, "Acknowledgement received.");
             //
@@ -675,7 +675,7 @@ void SpiTransportProvider::ProcessWaitingForMessageBodyAcknowledgementState()
     Message *incomingMessage = Encoders::ExtractMessage((uint8_t *) transaction->rx_buffer, _headerFrameSize, true);
     if (incomingMessage)
     {
-        if (incomingMessage->MessageType == PacketType::Ack)
+        if (incomingMessage->MessageType == MessageTypes::Ack)
         {
             ESP_LOGI(__func__, "Acknowledgement received.");
             DeleteMessageAndReleaseHeapStorage(_outboundMessage);

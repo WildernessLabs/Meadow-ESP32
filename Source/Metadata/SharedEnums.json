@@ -51,7 +51,7 @@
           ]
         },
         {
-            "Name": "PacketType",
+            "Name": "MessageTypes",
             "BaseDataType": "Byte",
             "Namespace": "",
             "Comment": "Possible transport packet types.",

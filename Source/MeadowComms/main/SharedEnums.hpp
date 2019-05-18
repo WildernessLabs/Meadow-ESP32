@@ -108,7 +108,7 @@ namespace BluetoothFunction
 /*
  *      Possible transport packet types.
  */
-enum PacketType : uint8_t
+enum MessageTypes : uint8_t
 {
     Ack = 0x00,
     Nak = 0x01,

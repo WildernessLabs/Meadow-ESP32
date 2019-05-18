@@ -34,7 +34,7 @@ namespace Meadow.Core.Esp32
             /// <param name="messageId">Message ID for this message.</param>
             /// <param name="statusCode">Status code for result messages.</param>
             /// <param name="payload">Payload associated with this message.</param>
-            public Message(PacketType messageType, Esp32Interfaces esp32Interface, UInt32 function, UInt32 messageId, UInt32 statusCode, byte[] payload)
+            public Message(MessageTypes messageType, Esp32Interfaces esp32Interface, UInt32 function, UInt32 messageId, UInt32 statusCode, byte[] payload)
             {
                 MessageType = (byte) messageType;
                 Interface = (byte) esp32Interface;
@@ -58,7 +58,7 @@ namespace Meadow.Core.Esp32
             /// Copy constructor = makes a copy of an existing message.
             /// </summary>
             /// <param name="messageToCopy">Message to make a copy of.</param>
-            public Message(Message messageToCopy) : this((PacketType) messageToCopy.MessageType, (Esp32Interfaces) messageToCopy.Interface, messageToCopy.Function, messageToCopy.MessageID, messageToCopy.StatusCode, messageToCopy.Payload)
+            public Message(Message messageToCopy) : this((MessageTypes) messageToCopy.MessageType, (Esp32Interfaces) messageToCopy.Interface, messageToCopy.Function, messageToCopy.MessageID, messageToCopy.StatusCode, messageToCopy.Payload)
             {
             }
             

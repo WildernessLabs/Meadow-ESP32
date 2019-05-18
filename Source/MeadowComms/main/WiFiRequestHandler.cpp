@@ -98,7 +98,7 @@ void WiFiRequestHandler::GetAntenna(Message *request) const
     ESP_LOGI(__func__, "Entering method.");
     Logging::DumpMessage(__func__, request);
 
-    request->MessageType = PacketType::Response;
+    request->MessageType = MessageTypes::Response;
     Esp32Messaging::AntennaInfo *antenna = (Esp32Messaging::AntennaInfo *) pvPortMalloc(sizeof(Esp32Messaging::AntennaInfo));
     antenna->Antenna = (uint8_t) _currentAntenna;
     request->Payload = (uint8_t *) pvPortMalloc(Esp32Messaging::ANTENNA_INFO_ENCODED_MESSAGE_SIZE);
@@ -157,7 +157,7 @@ void WiFiRequestHandler::SetAntenna(Message *request)
         request->Payload = nullptr;
     }
     request->PayloadLength = 0;
-    request->MessageType = PacketType::Response;
+    request->MessageType = MessageTypes::Response;
     if (!_messageDispatcher->QueueMessageForStm32(request))
     {
         ESP_LOGE(__func__, "Cannot queue message for STM32.");
