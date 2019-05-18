@@ -114,9 +114,11 @@ private:
      */
     static void Task(void *);
 
-
-    void WaitForNotification(SpiTransportProvider *);
-//    static void IncomingSpiMessageTask(void *);
+    /*
+     *      Wait for the interrupt or the send queue to indicate that there is
+     *      some work to do.
+     */
+    void WaitForNotification();
 
     /*
      *      Clear the _currentHeader variable and free any allocated
