@@ -2,15 +2,13 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="aa82c735-4ca8-429a-a755-663eed97cdae" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/../../MeadowComms/main/SharedEnums.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/../../MeadowComms/main/SharedEnums.hpp" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../MeadowComms/main/SpiTransportProvider.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/../../MeadowComms/main/SpiTransportProvider.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../MeadowComms/main/SpiTransportProvider.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/../../MeadowComms/main/SpiTransportProvider.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../MeadowComms/main/TransportProviderBase.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/../../MeadowComms/main/TransportProviderBase.cpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../MeadowComms/main/TransportProviderBase.hpp" beforeDir="false" afterPath="$PROJECT_DIR$/../../MeadowComms/main/TransportProviderBase.hpp" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../MeadowComms/sdkconfig" beforeDir="false" afterPath="$PROJECT_DIR$/../../MeadowComms/sdkconfig" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/.idea.BasicNetworkTest/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.BasicNetworkTest/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../MeadowComms/main/WiFiRequestHandler.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/../../MeadowComms/main/WiFiRequestHandler.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Metadata/SharedEnums.json" beforeDir="false" afterPath="$PROJECT_DIR$/../../Metadata/SharedEnums.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/BasicNetworkTestApplication.cs" beforeDir="false" afterPath="$PROJECT_DIR$/BasicNetworkTestApplication.cs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/DebugHelpers.cs" beforeDir="false" afterPath="$PROJECT_DIR$/DebugHelpers.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Meadow.Core.Esp32/Encoders.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Meadow.Core.Esp32/Encoders.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Meadow.Core.Esp32/Enums.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Meadow.Core.Esp32/Enums.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Meadow.Core.Esp32/Message.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Meadow.Core.Esp32/Message.cs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Meadow.Core.Esp32/SpiTransportProvider.cs" beforeDir="false" afterPath="$PROJECT_DIR$/Meadow.Core.Esp32/SpiTransportProvider.cs" afterDir="false" />
     </list>
@@ -29,22 +27,22 @@
         <entry file="file://$PROJECT_DIR$/BasicNetworkTestApplication.cs">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="208">
-              <caret line="18" lean-forward="true" selection-start-line="18" selection-end-line="18" />
+              <caret line="41" column="64" selection-start-line="41" selection-start-column="64" selection-end-line="41" selection-end-column="64" />
               <folding>
-                <marker date="1557919502984" expanded="false" signature="6:121" ph="..." />
-                <marker date="1557919502984" expanded="true" signature="149:3671" ph="{...}" />
-                <marker date="1557919502984" expanded="true" signature="244:3669" ph="{...}" />
-                <marker date="1557919502984" expanded="true" signature="482:551" ph="/// Default constructor. ... " />
-                <marker date="1557919502984" expanded="true" signature="596:2179" ph="{...}" />
-                <marker date="1557919502984" expanded="true" signature="1902:2169" ph="/* message.Payload = Encoders.EncodeAntennaInfo(_antennaInfo); ... */" />
-                <marker date="1557919502984" expanded="true" signature="2189:2317" ph="///  ... " />
-                <marker date="1557919502984" expanded="true" signature="2398:2659" ph="{...}" />
-                <marker date="1557919502984" expanded="true" signature="2669:2797" ph="///  ... " />
-                <marker date="1557919502984" expanded="true" signature="2886:2974" ph="{...}" />
-                <marker date="1557919502984" expanded="true" signature="2984:3112" ph="///  ... " />
-                <marker date="1557919502984" expanded="true" signature="3204:3329" ph="{...}" />
-                <marker date="1557919502984" expanded="true" signature="3339:3406" ph="/// Main program loop. ... " />
-                <marker date="1557919502984" expanded="true" signature="3432:3663" ph="{...}" />
+                <marker date="1558183955717" expanded="false" signature="6:121" ph="..." />
+                <marker date="1558183955717" expanded="true" signature="149:3673" ph="{...}" />
+                <marker date="1558183955717" expanded="true" signature="244:3671" ph="{...}" />
+                <marker date="1558183955717" expanded="true" signature="482:551" ph="/// Default constructor. ... " />
+                <marker date="1558183955717" expanded="true" signature="596:2181" ph="{...}" />
+                <marker date="1558183955717" expanded="true" signature="1904:2171" ph="/* message.Payload = Encoders.EncodeAntennaInfo(_antennaInfo); ... */" />
+                <marker date="1558183955717" expanded="true" signature="2191:2319" ph="///  ... " />
+                <marker date="1558183955717" expanded="true" signature="2400:2661" ph="{...}" />
+                <marker date="1558183955717" expanded="true" signature="2671:2799" ph="///  ... " />
+                <marker date="1558183955717" expanded="true" signature="2888:2976" ph="{...}" />
+                <marker date="1558183955717" expanded="true" signature="2986:3114" ph="///  ... " />
+                <marker date="1558183955717" expanded="true" signature="3206:3331" ph="{...}" />
+                <marker date="1558183955717" expanded="true" signature="3341:3408" ph="/// Main program loop. ... " />
+                <marker date="1558183955717" expanded="true" signature="3434:3665" ph="{...}" />
               </folding>
             </state>
           </provider>
@@ -53,113 +51,113 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/Meadow.Core.Esp32/SpiTransportProvider.cs">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="426">
-              <caret line="143" column="75" lean-forward="true" selection-start-line="143" selection-start-column="75" selection-end-line="143" selection-end-column="75" />
+            <state relative-caret-position="87">
+              <caret line="286" column="73" selection-start-line="286" selection-start-column="73" selection-end-line="286" selection-end-column="73" />
               <folding>
-                <marker date="1557923151178" expanded="true" signature="6:180" ph="..." />
-                <marker date="1557923151178" expanded="true" signature="209:27166" ph="{...}" />
-                <marker date="1557923151178" expanded="true" signature="273:27164" ph="{...}" />
-                <marker date="1557923151178" expanded="true" signature="288:757" ph="Enums" />
-                <marker date="1557923151178" expanded="true" signature="311:380" ph="/// Possible SPI states. ... " />
-                <marker date="1557923151178" expanded="true" signature="411:736" ph="{...}" />
-                <marker date="1557923151178" expanded="true" signature="767:4428" ph="Class level variables." />
-                <marker date="1557923151178" expanded="true" signature="807:895" ph="/// Pin used by the STM32 that it is ready. ... " />
-                <marker date="1557923151178" expanded="true" signature="964:1088" ph="/// Pin used by the ESP32 to indicate that it is ready to send or receive data. ... " />
-                <marker date="1557923151178" expanded="true" signature="1156:1254" ph="/// SPI interface used to communicate with the ESP32. ... " />
-                <marker date="1557923151178" expanded="true" signature="1312:1416" ph="/// STM32 pin connected to the Reset (EN) pin on the ESP32. ... " />
-                <marker date="1557923151178" expanded="true" signature="1477:1575" ph="/// STM32 pin connected to the boot pin on the ESP32. ... " />
-                <marker date="1557923151178" expanded="true" signature="1635:2018" ph="/// Current state of the SPI interface. ... " />
-                <marker date="1557923151178" expanded="true" signature="2081:2176" ph="///     Queue of messages to be sent to the ESP32. ... " />
-                <marker date="1557923151178" expanded="true" signature="2255:2506" ph="///     Lock for the message queue to synchronise access by the ... " />
-                <marker date="1557923151178" expanded="true" signature="2582:2721" ph="///     Handle used to synchronise the incoming messages and the task processing the messages. ... " />
-                <marker date="1557923151178" expanded="true" signature="2828:2936" ph="///     Thread processing the messages as they enter the queue. ... " />
-                <marker date="1557923151178" expanded="true" signature="2991:3040" ph="///  ... " />
-                <marker date="1557923151178" expanded="true" signature="3108:3210" ph="/// Number of times we have retried to send this message. ... " />
-                <marker date="1557923151178" expanded="true" signature="3260:3606" ph="/* Last status code for an incoming message operation. ... */" />
-                <marker date="1557923151178" expanded="true" signature="3616:3908" ph="/// Current message being sent by the system. ... " />
-                <marker date="1557923151178" expanded="true" signature="3977:4104" ph="/// Message used to hold the acknowledgements between message transmission states. ... " />
-                <marker date="1557923151178" expanded="true" signature="4181:4302" ph="/// This value is used a lot so make it available as a class level variable. ... " />
-                <marker date="1557923151178" expanded="true" signature="4446:5964" ph="Constructor(s)" />
-                <marker date="1557923151178" expanded="true" signature="4478:4594" ph="///     Default constructor is private to prevent it from being called. ... " />
-                <marker date="1557923151178" expanded="true" signature="4633:4653" ph="{...}" />
-                <marker date="1557923151178" expanded="true" signature="4663:4778" ph="/// Default constructor for the SPI Transport Provider implementation. ... " />
-                <marker date="1557923151178" expanded="true" signature="4952:5944" ph="{...}" />
-                <marker date="1557923151178" expanded="true" signature="5859:5897" ph="{...}" />
-                <marker date="1557923151178" expanded="true" signature="5974:6992" ph="Delegates and events" />
-                <marker date="1557923151178" expanded="true" signature="6012:6136" ph="///     Error event to allow lower level errors to bubble up to the interfaces. ... " />
-                <marker date="1557923151178" expanded="true" signature="6242:6315" ph="///     Data received event. ... " />
-                <marker date="1557923151178" expanded="true" signature="6429:6818" ph="/// The ESP32 is indicating that it is ready to process some data from the STM32 ... " />
-                <marker date="1557923151178" expanded="true" signature="6906:6972" ph="{...}" />
-                <marker date="1557923151178" expanded="true" signature="7002:27158" ph="Methods" />
-                <marker date="1557923151178" expanded="true" signature="7027:7106" ph="/// Main MessageDispatcher thread. ... " />
-                <marker date="1557923151178" expanded="true" signature="7133:9681" ph="{...}" />
-                <marker date="1557923151178" expanded="true" signature="7168:9671" ph="{...}" />
-                <marker date="1557923151178" expanded="true" signature="7199:7535" ph="/* Work out if we should wait for an incoming signal. ... */" />
-                <marker date="1557923151178" expanded="true" signature="7622:7806" ph="{...}" />
-                <marker date="1557923151178" expanded="true" signature="7832:7926" ph="{...}" />
-                <marker date="1557923151178" expanded="true" signature="7943:8042" ph="/* Signals are used to transition from one state to another. ... */" />
-                <marker date="1557923151178" expanded="true" signature="8151:9657" ph="{...}" />
-                <marker date="1557923151178" expanded="true" signature="9691:10368" ph="/// Process the Idle state when we have received a signal that there is some work to do. ... " />
-                <marker date="1557923151178" expanded="true" signature="10408:12311" ph="{...}" />
-                <marker date="1557923151178" expanded="true" signature="10574:10838" ph="{...}" />
-                <marker date="1557923151178" expanded="true" signature="10859:12287" ph="{...}" />
-                <marker date="1557923151178" expanded="true" signature="11538:11762" ph="{...}" />
-                <marker date="1557923151178" expanded="true" signature="11787:12065" ph="{...}" />
-                <marker date="1557923151178" expanded="true" signature="12321:12521" ph="/// The message header was sent by the ESP32 at the same time the STM32 ... " />
-                <marker date="1557923151178" expanded="true" signature="12583:13911" ph="{...}" />
-                <marker date="1557923151178" expanded="true" signature="13086:13202" ph="{...}" />
-                <marker date="1557923151178" expanded="true" signature="13219:13720" ph="{...}" />
-                <marker date="1557923151178" expanded="true" signature="13294:13399" ph="{...}" />
-                <marker date="1557923151178" expanded="true" signature="13420:13706" ph="{...}" />
-                <marker date="1557923151178" expanded="true" signature="13828:13901" ph="{...}" />
-                <marker date="1557923151178" expanded="true" signature="13921:14002" ph="/// Process an inbound message body. ... " />
-                <marker date="1557923151178" expanded="true" signature="14059:16454" ph="{...}" />
-                <marker date="1557923151178" expanded="true" signature="15085:15272" ph="{...}" />
-                <marker date="1557923151178" expanded="true" signature="15116:15182" ph="/* TODO: Add retry logic. ... */" />
-                <marker date="1557923151178" expanded="true" signature="15289:16297" ph="{...}" />
-                <marker date="1557923151178" expanded="true" signature="15691:15953" ph="{...}" />
-                <marker date="1557923151178" expanded="true" signature="15974:16283" ph="{...}" />
-                <marker date="1557923151178" expanded="true" signature="16013:16081" ph="/* Add retry logic. ... */" />
-                <marker date="1557923151178" expanded="true" signature="16464:16755" ph="/// Acknowledge the incoming message body. ... " />
-                <marker date="1557923151178" expanded="true" signature="16815:17466" ph="{...}" />
-                <marker date="1557923151178" expanded="true" signature="17204:17378" ph="{...}" />
-                <marker date="1557923151178" expanded="true" signature="17476:17589" ph="/// ESP32 has indicated that it is ready so send the message header. ... " />
-                <marker date="1557923151178" expanded="true" signature="17648:18894" ph="{...}" />
-                <marker date="1557923151178" expanded="true" signature="17849:18533" ph="{...}" />
-                <marker date="1557923151178" expanded="true" signature="18142:18372" ph="/* For a header we set the payload to null (which the constructor uses ... */" />
-                <marker date="1557923151178" expanded="true" signature="18550:18677" ph="{...}" />
-                <marker date="1557923151178" expanded="true" signature="18904:19307" ph="/// Process the ESP32 acknowledgement message. ... " />
-                <marker date="1557923151178" expanded="true" signature="19381:22402" ph="{...}" />
-                <marker date="1557923151178" expanded="true" signature="20047:20287" ph="/* We can get three possible responses here: ... */" />
-                <marker date="1557923151178" expanded="true" signature="20344:21927" ph="{...}" />
-                <marker date="1557923151178" expanded="true" signature="20551:20735" ph="{...}" />
-                <marker date="1557923151178" expanded="true" signature="20756:21913" ph="{...}" />
-                <marker date="1557923151178" expanded="true" signature="20998:21671" ph="{...}" />
-                <marker date="1557923151178" expanded="true" signature="21168:21383" ph="{...}" />
-                <marker date="1557923151178" expanded="true" signature="21412:21649" ph="{...}" />
-                <marker date="1557923151178" expanded="true" signature="21696:21895" ph="{...}" />
-                <marker date="1557923151178" expanded="true" signature="21944:22096" ph="{...}" />
-                <marker date="1557923151178" expanded="true" signature="22262:22392" ph="{...}" />
-                <marker date="1557923151178" expanded="true" signature="22412:22500" ph="/// Process the sending message body state. ... " />
-                <marker date="1557923151178" expanded="true" signature="22557:22964" ph="{...}" />
-                <marker date="1557923151178" expanded="true" signature="22974:23073" ph="/// Process the incoming message body acknowledgement. ... " />
-                <marker date="1557923151178" expanded="true" signature="23145:25035" ph="{...}" />
-                <marker date="1557923151178" expanded="true" signature="23667:23907" ph="/* We can get three possible responses here: ... */" />
-                <marker date="1557923151178" expanded="true" signature="23964:24840" ph="{...}" />
-                <marker date="1557923151178" expanded="true" signature="24058:24186" ph="{...}" />
-                <marker date="1557923151178" expanded="true" signature="24207:24826" ph="{...}" />
-                <marker date="1557923151178" expanded="true" signature="24514:24663" ph="{...}" />
-                <marker date="1557923151178" expanded="true" signature="24688:24808" ph="{...}" />
-                <marker date="1557923151178" expanded="true" signature="24857:24939" ph="{...}" />
-                <marker date="1557923151178" expanded="true" signature="25045:25142" ph="/// Process the Transport packet transmission state. ... " />
-                <marker date="1557923151178" expanded="true" signature="25204:25224" ph="{...}" />
-                <marker date="1557923151178" expanded="true" signature="25234:25380" ph="/// Queue a for sending to the ESP32. ... " />
-                <marker date="1557923151178" expanded="true" signature="25456:25841" ph="{...}" />
-                <marker date="1557923151178" expanded="true" signature="25592:25785" ph="/* Inform the task processing the messages that a new message ... */" />
-                <marker date="1557923151178" expanded="true" signature="25851:26381" ph="/// An error has been detected so check the retry count to see if we can retry sending the message. ... " />
-                <marker date="1557923151178" expanded="true" signature="26449:27138" ph="{...}" />
-                <marker date="1557923151178" expanded="true" signature="26515:26730" ph="{...}" />
-                <marker date="1557923151178" expanded="true" signature="26747:27128" ph="{...}" />
+                <marker date="1558183712781" expanded="false" signature="6:180" ph="..." />
+                <marker date="1558183712781" expanded="true" signature="209:27199" ph="{...}" />
+                <marker date="1558183712781" expanded="true" signature="273:27197" ph="{...}" />
+                <marker date="1558183712781" expanded="false" signature="288:757" ph="Enums" />
+                <marker date="1558183712781" expanded="true" signature="311:380" ph="/// Possible SPI states. ... " />
+                <marker date="1558183712781" expanded="true" signature="411:736" ph="{...}" />
+                <marker date="1558183712781" expanded="false" signature="767:4428" ph="Class level variables." />
+                <marker date="1558183712781" expanded="true" signature="807:895" ph="/// Pin used by the STM32 that it is ready. ... " />
+                <marker date="1558183712781" expanded="true" signature="964:1088" ph="/// Pin used by the ESP32 to indicate that it is ready to send or receive data. ... " />
+                <marker date="1558183712781" expanded="true" signature="1156:1254" ph="/// SPI interface used to communicate with the ESP32. ... " />
+                <marker date="1558183712781" expanded="true" signature="1312:1416" ph="/// STM32 pin connected to the Reset (EN) pin on the ESP32. ... " />
+                <marker date="1558183712781" expanded="true" signature="1477:1575" ph="/// STM32 pin connected to the boot pin on the ESP32. ... " />
+                <marker date="1558183712781" expanded="true" signature="1635:2018" ph="/// Current state of the SPI interface. ... " />
+                <marker date="1558183712781" expanded="true" signature="2081:2176" ph="///     Queue of messages to be sent to the ESP32. ... " />
+                <marker date="1558183712781" expanded="true" signature="2255:2506" ph="///     Lock for the message queue to synchronise access by the ... " />
+                <marker date="1558183712781" expanded="true" signature="2582:2721" ph="///     Handle used to synchronise the incoming messages and the task processing the messages. ... " />
+                <marker date="1558183712781" expanded="true" signature="2828:2936" ph="///     Thread processing the messages as they enter the queue. ... " />
+                <marker date="1558183712781" expanded="true" signature="2991:3040" ph="///  ... " />
+                <marker date="1558183712781" expanded="true" signature="3108:3210" ph="/// Number of times we have retried to send this message. ... " />
+                <marker date="1558183712781" expanded="true" signature="3260:3606" ph="/* Last status code for an incoming message operation. ... */" />
+                <marker date="1558183712781" expanded="true" signature="3616:3908" ph="/// Current message being sent by the system. ... " />
+                <marker date="1558183712781" expanded="true" signature="3977:4104" ph="/// Message used to hold the acknowledgements between message transmission states. ... " />
+                <marker date="1558183712781" expanded="true" signature="4181:4302" ph="/// This value is used a lot so make it available as a class level variable. ... " />
+                <marker date="1558183712781" expanded="true" signature="4446:5964" ph="Constructor(s)" />
+                <marker date="1558183712781" expanded="true" signature="4478:4594" ph="///     Default constructor is private to prevent it from being called. ... " />
+                <marker date="1558183712781" expanded="true" signature="4633:4653" ph="{...}" />
+                <marker date="1558183712781" expanded="true" signature="4663:4778" ph="/// Default constructor for the SPI Transport Provider implementation. ... " />
+                <marker date="1558183712781" expanded="true" signature="4952:5944" ph="{...}" />
+                <marker date="1558183712781" expanded="true" signature="5859:5897" ph="{...}" />
+                <marker date="1558183712781" expanded="false" signature="5974:6992" ph="Delegates and events" />
+                <marker date="1558183712781" expanded="true" signature="6012:6136" ph="///     Error event to allow lower level errors to bubble up to the interfaces. ... " />
+                <marker date="1558183712781" expanded="true" signature="6242:6315" ph="///     Data received event. ... " />
+                <marker date="1558183712781" expanded="true" signature="6429:6818" ph="/// The ESP32 is indicating that it is ready to process some data from the STM32 ... " />
+                <marker date="1558183712781" expanded="true" signature="6906:6972" ph="{...}" />
+                <marker date="1558183712781" expanded="true" signature="7002:27191" ph="Methods" />
+                <marker date="1558183712781" expanded="true" signature="7027:7106" ph="/// Main MessageDispatcher thread. ... " />
+                <marker date="1558183712781" expanded="true" signature="7133:9681" ph="{...}" />
+                <marker date="1558183712781" expanded="true" signature="7168:9671" ph="{...}" />
+                <marker date="1558183712781" expanded="true" signature="7199:7535" ph="/* Work out if we should wait for an incoming signal. ... */" />
+                <marker date="1558183712781" expanded="true" signature="7622:7806" ph="{...}" />
+                <marker date="1558183712781" expanded="true" signature="7832:7926" ph="{...}" />
+                <marker date="1558183712781" expanded="true" signature="7943:8042" ph="/* Signals are used to transition from one state to another. ... */" />
+                <marker date="1558183712781" expanded="true" signature="8151:9657" ph="{...}" />
+                <marker date="1558183712781" expanded="true" signature="9691:10368" ph="/// Process the Idle state when we have received a signal that there is some work to do. ... " />
+                <marker date="1558183712781" expanded="true" signature="10408:12323" ph="{...}" />
+                <marker date="1558183712781" expanded="true" signature="10574:10838" ph="{...}" />
+                <marker date="1558183712781" expanded="true" signature="10859:12299" ph="{...}" />
+                <marker date="1558183712781" expanded="true" signature="11541:11768" ph="{...}" />
+                <marker date="1558183712781" expanded="true" signature="11793:12077" ph="{...}" />
+                <marker date="1558183712781" expanded="true" signature="12333:12533" ph="/// The message header was sent by the ESP32 at the same time the STM32 ... " />
+                <marker date="1558183712781" expanded="true" signature="12595:13926" ph="{...}" />
+                <marker date="1558183712781" expanded="true" signature="13101:13217" ph="{...}" />
+                <marker date="1558183712781" expanded="true" signature="13234:13735" ph="{...}" />
+                <marker date="1558183712781" expanded="true" signature="13309:13414" ph="{...}" />
+                <marker date="1558183712781" expanded="true" signature="13435:13721" ph="{...}" />
+                <marker date="1558183712781" expanded="true" signature="13843:13916" ph="{...}" />
+                <marker date="1558183712781" expanded="true" signature="13936:14017" ph="/// Process an inbound message body. ... " />
+                <marker date="1558183712781" expanded="true" signature="14074:16475" ph="{...}" />
+                <marker date="1558183712781" expanded="true" signature="15100:15287" ph="{...}" />
+                <marker date="1558183712781" expanded="true" signature="15131:15197" ph="/* TODO: Add retry logic. ... */" />
+                <marker date="1558183712781" expanded="true" signature="15304:16318" ph="{...}" />
+                <marker date="1558183712781" expanded="true" signature="15706:15971" ph="{...}" />
+                <marker date="1558183712781" expanded="true" signature="15992:16304" ph="{...}" />
+                <marker date="1558183712781" expanded="true" signature="16031:16099" ph="/* Add retry logic. ... */" />
+                <marker date="1558183712781" expanded="true" signature="16485:16776" ph="/// Acknowledge the incoming message body. ... " />
+                <marker date="1558183712781" expanded="true" signature="16836:17487" ph="{...}" />
+                <marker date="1558183712781" expanded="true" signature="17225:17399" ph="{...}" />
+                <marker date="1558183712781" expanded="true" signature="17497:17610" ph="/// ESP32 has indicated that it is ready so send the message header. ... " />
+                <marker date="1558183712781" expanded="true" signature="17669:18921" ph="{...}" />
+                <marker date="1558183712781" expanded="true" signature="17873:18560" ph="{...}" />
+                <marker date="1558183712781" expanded="true" signature="18169:18399" ph="/* For a header we set the payload to null (which the constructor uses ... */" />
+                <marker date="1558183712781" expanded="true" signature="18577:18704" ph="{...}" />
+                <marker date="1558183712781" expanded="true" signature="18931:19334" ph="/// Process the ESP32 acknowledgement message. ... " />
+                <marker date="1558183712781" expanded="true" signature="19408:22432" ph="{...}" />
+                <marker date="1558183712781" expanded="true" signature="20074:20314" ph="/* We can get three possible responses here: ... */" />
+                <marker date="1558183712781" expanded="true" signature="20371:21957" ph="{...}" />
+                <marker date="1558183712781" expanded="true" signature="20581:20765" ph="{...}" />
+                <marker date="1558183712781" expanded="true" signature="20786:21943" ph="{...}" />
+                <marker date="1558183712781" expanded="true" signature="21028:21701" ph="{...}" />
+                <marker date="1558183712781" expanded="true" signature="21198:21413" ph="{...}" />
+                <marker date="1558183712781" expanded="true" signature="21442:21679" ph="{...}" />
+                <marker date="1558183712781" expanded="true" signature="21726:21925" ph="{...}" />
+                <marker date="1558183712781" expanded="true" signature="21974:22126" ph="{...}" />
+                <marker date="1558183712781" expanded="true" signature="22292:22422" ph="{...}" />
+                <marker date="1558183712781" expanded="true" signature="22442:22530" ph="/// Process the sending message body state. ... " />
+                <marker date="1558183712781" expanded="true" signature="22587:22994" ph="{...}" />
+                <marker date="1558183712781" expanded="true" signature="23004:23103" ph="/// Process the incoming message body acknowledgement. ... " />
+                <marker date="1558183712781" expanded="true" signature="23175:25068" ph="{...}" />
+                <marker date="1558183712781" expanded="true" signature="23697:23937" ph="/* We can get three possible responses here: ... */" />
+                <marker date="1558183712781" expanded="true" signature="23994:24873" ph="{...}" />
+                <marker date="1558183712781" expanded="true" signature="24091:24219" ph="{...}" />
+                <marker date="1558183712781" expanded="true" signature="24240:24859" ph="{...}" />
+                <marker date="1558183712781" expanded="true" signature="24547:24696" ph="{...}" />
+                <marker date="1558183712781" expanded="true" signature="24721:24841" ph="{...}" />
+                <marker date="1558183712781" expanded="true" signature="24890:24972" ph="{...}" />
+                <marker date="1558183712781" expanded="true" signature="25078:25175" ph="/// Process the Transport packet transmission state. ... " />
+                <marker date="1558183712781" expanded="true" signature="25237:25257" ph="{...}" />
+                <marker date="1558183712781" expanded="true" signature="25267:25413" ph="/// Queue a for sending to the ESP32. ... " />
+                <marker date="1558183712781" expanded="true" signature="25489:25874" ph="{...}" />
+                <marker date="1558183712781" expanded="true" signature="25625:25818" ph="/* Inform the task processing the messages that a new message ... */" />
+                <marker date="1558183712781" expanded="true" signature="25884:26414" ph="/// An error has been detected so check the retry count to see if we can retry sending the message. ... " />
+                <marker date="1558183712781" expanded="true" signature="26482:27171" ph="{...}" />
+                <marker date="1558183712781" expanded="true" signature="26548:26763" ph="{...}" />
+                <marker date="1558183712781" expanded="true" signature="26780:27161" ph="{...}" />
               </folding>
             </state>
           </provider>
@@ -168,64 +166,63 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/Meadow.Core.Esp32/Encoders.cs">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="3424">
+            <state relative-caret-position="3440">
               <caret line="228" column="54" selection-start-line="228" selection-start-column="32" selection-end-line="228" selection-end-column="54" />
               <folding>
-                <marker date="1557410842769" expanded="true" signature="0:329" ph="/* Encoders.cs ... */" />
-                <marker date="1557410842769" expanded="false" signature="337:369" ph="..." />
-                <marker date="1557410842769" expanded="true" signature="398:14745" ph="{...}" />
-                <marker date="1557410842769" expanded="true" signature="426:14743" ph="{...}" />
-                <marker date="1557410842769" expanded="true" signature="441:1051" ph="/// Calculate the amount of memory that should be allocated for the receive buffer. ... " />
-                <marker date="1557410842769" expanded="true" signature="1125:2105" ph="{...}" />
-                <marker date="1557410842769" expanded="true" signature="1207:1263" ph="{...}" />
-                <marker date="1557410842769" expanded="true" signature="1276:1831" ph="/* The buffer should always be 4 bytes longer than needed.  During development it ... */" />
-                <marker date="1557410842769" expanded="true" signature="1905:1992" ph="{...}" />
-                <marker date="1557410842769" expanded="true" signature="2009:2066" ph="{...}" />
-                <marker date="1557410842769" expanded="true" signature="2115:2193" ph="/// Seed for the Crc32 algorithm. ... " />
-                <marker date="1557410842769" expanded="true" signature="2257:2479" ph="///     Calculate the 32-bit CRC for the array of bytes. ... " />
-                <marker date="1557410842769" expanded="true" signature="2530:2604" ph="{...}" />
-                <marker date="1557410842769" expanded="true" signature="2614:3012" ph="/// Calculate the 32-bit CRC for the array of bytes. ... " />
-                <marker date="1557410842769" expanded="true" signature="3084:3316" ph="{...}" />
-                <marker date="1557410842769" expanded="true" signature="3193:3279" ph="{...}" />
-                <marker date="1557410842769" expanded="true" signature="3326:3948" ph="///     Progressively calculate the Crc32 value. ... " />
-                <marker date="1557410842769" expanded="true" signature="4030:4338" ph="{...}" />
-                <marker date="1557410842769" expanded="true" signature="4162:4302" ph="{...}" />
-                <marker date="1557410842769" expanded="true" signature="4348:4679" ph="///     Take two bytes from the buffer and encode them as a 16-bit integer. ... " />
-                <marker date="1557410842769" expanded="true" signature="4753:4925" ph="{...}" />
-                <marker date="1557410842769" expanded="true" signature="4935:5305" ph="///     Encode a 16-bit integer as two bytes in the buffer.  The data is ... " />
-                <marker date="1557410842769" expanded="true" signature="5390:5525" ph="{...}" />
-                <marker date="1557410842769" expanded="true" signature="5535:5884" ph="///     Take four bytes from the buffer and encode them as a 32-bit integer. ... " />
-                <marker date="1557410842769" expanded="true" signature="5958:6248" ph="{...}" />
-                <marker date="1557410842769" expanded="true" signature="6258:6629" ph="///     Encode a 32-bit integer as four bytes in the buffer.  The data is ... " />
-                <marker date="1557410842769" expanded="true" signature="6714:6977" ph="{...}" />
-                <marker date="1557410842769" expanded="true" signature="6987:7442" ph="///     Encode a string into the buffer as a stream of bytes. ... " />
-                <marker date="1557410842769" expanded="true" signature="7525:7668" ph="{...}" />
-                <marker date="1557410842769" expanded="true" signature="7678:8160" ph="///     Extract a string from the buffer. ... " />
-                <marker date="1557410842769" expanded="true" signature="8234:8452" ph="{...}" />
-                <marker date="1557410842769" expanded="true" signature="8317:8413" ph="{...}" />
-                <marker date="1557410842769" expanded="true" signature="8462:8838" ph="///     Encode a message into a byte buffer that can be sent to the ESP32. ... " />
-                <marker date="1557410842769" expanded="true" signature="8932:10416" ph="{...}" />
-                <marker date="1557410842769" expanded="true" signature="9026:9108" ph="{...}" />
-                <marker date="1557410842769" expanded="true" signature="9770:9867" ph="/* CRC will be put in later but needs to be 0 for the calculation. ... */" />
-                <marker date="1557410842769" expanded="true" signature="9996:10111" ph="{...}" />
-                <marker date="1557410842769" expanded="true" signature="10128:10205" ph="{...}" />
-                <marker date="1557410842769" expanded="true" signature="10218:10277" ph="/* Now we deal with the CRC. ... */" />
-                <marker date="1557410842769" expanded="true" signature="10426:10826" ph="///     Extract a message from a byte buffer and return a Message object. ... " />
-                <marker date="1557410842769" expanded="true" signature="10946:12704" ph="{...}" />
-                <marker date="1557410842769" expanded="true" signature="11118:11202" ph="{...}" />
-                <marker date="1557410842769" expanded="true" signature="11219:12653" ph="{...}" />
-                <marker date="1557410842769" expanded="true" signature="11250:11310" ph="/* Now check the CRC. ... */" />
-                <marker date="1557410842769" expanded="true" signature="11487:11578" ph="{...}" />
-                <marker date="1557410842769" expanded="true" signature="11599:12639" ph="{...}" />
-                <marker date="1557410842769" expanded="true" signature="12345:12421" ph="/* TODO: headerOnly field ? ... */" />
-                <marker date="1557410842769" expanded="true" signature="12789:13497" ph="{...}" />
-                <marker date="1557410842769" expanded="true" signature="12869:12941" ph="/* Calculate the amount of memory needed. ... */" />
-                <marker date="1557410842769" expanded="true" signature="13070:13165" ph="/* Now allocate a new buffer and copy the data in to the buffer. ... */" />
-                <marker date="1557410842769" expanded="true" signature="13589:13944" ph="{...}" />
-                <marker date="1557410842769" expanded="true" signature="14026:14471" ph="{...}" />
-                <marker date="1557410842769" expanded="true" signature="14106:14178" ph="/* Calculate the amount of memory needed. ... */" />
-                <marker date="1557410842769" expanded="true" signature="14217:14312" ph="/* Now allocate a new buffer and copy the data in to the buffer. ... */" />
-                <marker date="1557410842769" expanded="true" signature="14561:14736" ph="{...}" />
+                <marker date="1558183580430" expanded="true" signature="0:329" ph="/* Encoders.cs ... */" />
+                <marker date="1558183580430" expanded="false" signature="337:369" ph="..." />
+                <marker date="1558183580430" expanded="true" signature="398:14648" ph="{...}" />
+                <marker date="1558183580430" expanded="true" signature="426:14646" ph="{...}" />
+                <marker date="1558183580430" expanded="true" signature="441:1051" ph="/// Calculate the amount of memory that should be allocated for the receive buffer. ... " />
+                <marker date="1558183580430" expanded="true" signature="1125:2105" ph="{...}" />
+                <marker date="1558183580430" expanded="true" signature="1207:1263" ph="{...}" />
+                <marker date="1558183580430" expanded="true" signature="1276:1831" ph="/* The buffer should always be 4 bytes longer than needed.  During development it ... */" />
+                <marker date="1558183580430" expanded="true" signature="1905:1992" ph="{...}" />
+                <marker date="1558183580430" expanded="true" signature="2009:2066" ph="{...}" />
+                <marker date="1558183580430" expanded="true" signature="2115:2193" ph="/// Seed for the Crc32 algorithm. ... " />
+                <marker date="1558183580430" expanded="true" signature="2257:2479" ph="///     Calculate the 32-bit CRC for the array of bytes. ... " />
+                <marker date="1558183580430" expanded="true" signature="2530:2604" ph="{...}" />
+                <marker date="1558183580430" expanded="true" signature="2614:3012" ph="/// Calculate the 32-bit CRC for the array of bytes. ... " />
+                <marker date="1558183580430" expanded="true" signature="3084:3316" ph="{...}" />
+                <marker date="1558183580430" expanded="true" signature="3193:3279" ph="{...}" />
+                <marker date="1558183580430" expanded="true" signature="3326:3948" ph="///     Progressively calculate the Crc32 value. ... " />
+                <marker date="1558183580430" expanded="true" signature="4030:4338" ph="{...}" />
+                <marker date="1558183580430" expanded="true" signature="4162:4302" ph="{...}" />
+                <marker date="1558183580430" expanded="true" signature="4348:4679" ph="///     Take two bytes from the buffer and encode them as a 16-bit integer. ... " />
+                <marker date="1558183580430" expanded="true" signature="4753:4925" ph="{...}" />
+                <marker date="1558183580430" expanded="true" signature="4935:5305" ph="///     Encode a 16-bit integer as two bytes in the buffer.  The data is ... " />
+                <marker date="1558183580430" expanded="true" signature="5390:5525" ph="{...}" />
+                <marker date="1558183580430" expanded="true" signature="5535:5884" ph="///     Take four bytes from the buffer and encode them as a 32-bit integer. ... " />
+                <marker date="1558183580430" expanded="true" signature="5958:6248" ph="{...}" />
+                <marker date="1558183580430" expanded="true" signature="6258:6629" ph="///     Encode a 32-bit integer as four bytes in the buffer.  The data is ... " />
+                <marker date="1558183580430" expanded="true" signature="6714:6977" ph="{...}" />
+                <marker date="1558183580430" expanded="true" signature="6987:7442" ph="///     Encode a string into the buffer as a stream of bytes. ... " />
+                <marker date="1558183580430" expanded="true" signature="7525:7668" ph="{...}" />
+                <marker date="1558183580430" expanded="true" signature="7678:8160" ph="///     Extract a string from the buffer. ... " />
+                <marker date="1558183580430" expanded="true" signature="8234:8452" ph="{...}" />
+                <marker date="1558183580430" expanded="true" signature="8317:8413" ph="{...}" />
+                <marker date="1558183580430" expanded="true" signature="8462:8838" ph="///     Encode a message into a byte buffer that can be sent to the ESP32. ... " />
+                <marker date="1558183580430" expanded="true" signature="8932:10416" ph="{...}" />
+                <marker date="1558183580430" expanded="true" signature="9026:9108" ph="{...}" />
+                <marker date="1558183580430" expanded="true" signature="9770:9867" ph="/* CRC will be put in later but needs to be 0 for the calculation. ... */" />
+                <marker date="1558183580430" expanded="true" signature="9996:10111" ph="{...}" />
+                <marker date="1558183580430" expanded="true" signature="10128:10205" ph="{...}" />
+                <marker date="1558183580430" expanded="true" signature="10218:10277" ph="/* Now we deal with the CRC. ... */" />
+                <marker date="1558183580430" expanded="true" signature="10426:10826" ph="///     Extract a message from a byte buffer and return a Message object. ... " />
+                <marker date="1558183580430" expanded="true" signature="10946:12607" ph="{...}" />
+                <marker date="1558183580430" expanded="true" signature="11118:11202" ph="{...}" />
+                <marker date="1558183580430" expanded="true" signature="11219:12556" ph="{...}" />
+                <marker date="1558183580430" expanded="true" signature="11250:11310" ph="/* Now check the CRC. ... */" />
+                <marker date="1558183580430" expanded="true" signature="11487:11578" ph="{...}" />
+                <marker date="1558183580430" expanded="true" signature="11599:12542" ph="{...}" />
+                <marker date="1558183580430" expanded="true" signature="12692:13400" ph="{...}" />
+                <marker date="1558183580430" expanded="true" signature="12772:12844" ph="/* Calculate the amount of memory needed. ... */" />
+                <marker date="1558183580430" expanded="true" signature="12973:13068" ph="/* Now allocate a new buffer and copy the data in to the buffer. ... */" />
+                <marker date="1558183580430" expanded="true" signature="13492:13847" ph="{...}" />
+                <marker date="1558183580430" expanded="true" signature="13929:14374" ph="{...}" />
+                <marker date="1558183580430" expanded="true" signature="14009:14081" ph="/* Calculate the amount of memory needed. ... */" />
+                <marker date="1558183580430" expanded="true" signature="14120:14215" ph="/* Now allocate a new buffer and copy the data in to the buffer. ... */" />
+                <marker date="1558183580430" expanded="true" signature="14464:14639" ph="{...}" />
               </folding>
             </state>
           </provider>
@@ -234,15 +231,15 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/Meadow.Core.Esp32/Messages.cs">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="272">
+            <state relative-caret-position="256">
               <caret line="18" column="25" selection-start-line="18" selection-start-column="25" selection-end-line="18" selection-end-column="25" />
               <folding>
-                <marker date="1557302476335" expanded="true" signature="0:329" ph="/* Encoders.cs ... */" />
-                <marker date="1557302476335" expanded="false" signature="337:369" ph="..." />
-                <marker date="1557302476335" expanded="true" signature="398:807" ph="{...}" />
-                <marker date="1557302476335" expanded="true" signature="434:805" ph="{...}" />
-                <marker date="1557302476335" expanded="true" signature="475:570" ph="{...}" />
-                <marker date="1557302476335" expanded="true" signature="675:728" ph="{...}" />
+                <marker date="1558183580459" expanded="true" signature="0:329" ph="/* Encoders.cs ... */" />
+                <marker date="1558183580459" expanded="false" signature="337:369" ph="..." />
+                <marker date="1558183580459" expanded="true" signature="398:807" ph="{...}" />
+                <marker date="1558183580459" expanded="true" signature="434:805" ph="{...}" />
+                <marker date="1558183580459" expanded="true" signature="475:570" ph="{...}" />
+                <marker date="1558183580459" expanded="true" signature="675:728" ph="{...}" />
               </folding>
             </state>
           </provider>
@@ -251,28 +248,28 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/Meadow.Core.Esp32/Message.cs">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1200">
-              <caret line="75" column="59" lean-forward="true" selection-start-line="75" selection-start-column="59" selection-end-line="75" selection-end-column="59" />
+            <state relative-caret-position="251">
+              <caret line="68" column="65" lean-forward="true" selection-start-line="68" selection-start-column="65" selection-end-line="68" selection-end-column="65" />
               <folding>
-                <marker date="1557905183900" expanded="true" signature="6:61" ph="..." />
-                <marker date="1557905183900" expanded="true" signature="90:4518" ph="{...}" />
-                <marker date="1557905183900" expanded="true" signature="126:4516" ph="{...}" />
-                <marker date="1557905183900" expanded="true" signature="141:504" ph="///     The Message structure is the main method of sending data between the STM32 ... " />
-                <marker date="1557905183900" expanded="true" signature="534:3895" ph="{...}" />
-                <marker date="1557905183900" expanded="true" signature="848:1497" ph="/// Constructor for a Message. ... " />
-                <marker date="1557905183900" expanded="true" signature="1650:2226" ph="{...}" />
-                <marker date="1557905183900" expanded="true" signature="1919:2030" ph="{...}" />
-                <marker date="1557905183900" expanded="true" signature="2051:2187" ph="{...}" />
-                <marker date="1557905183900" expanded="true" signature="2240:2431" ph="/// Copy constructor = makes a copy of an existing message. ... " />
-                <marker date="1557905183900" expanded="true" signature="2669:2697" ph="{...}" />
-                <marker date="1557905183900" expanded="true" signature="2723:2979" ph="/// Take the message and make it printable. ... " />
-                <marker date="1557905183900" expanded="true" signature="3025:3885" ph="{...}" />
-                <marker date="1557905183900" expanded="true" signature="3456:3709" ph="{...}" />
-                <marker date="1557905183900" expanded="true" signature="3730:3826" ph="{...}" />
-                <marker date="1557905183900" expanded="true" signature="3905:3991" ph="/// Size of an encoded header (in bytes). ... " />
-                <marker date="1557905183900" expanded="true" signature="4047:4143" ph="/// Offset of the CRC in an encoded message header. ... " />
-                <marker date="1557905183900" expanded="true" signature="4195:4307" ph="/// Message ID used to indicate an invalid (or unknown) message ID. ... " />
-                <marker date="1557905183900" expanded="true" signature="4378:4451" ph="/// Invalid function number. ... " />
+                <marker date="1558183955734" expanded="false" signature="6:61" ph="..." />
+                <marker date="1558183955734" expanded="true" signature="90:4522" ph="{...}" />
+                <marker date="1558183955734" expanded="true" signature="126:4520" ph="{...}" />
+                <marker date="1558183955734" expanded="true" signature="141:504" ph="///     The Message structure is the main method of sending data between the STM32 ... " />
+                <marker date="1558183955734" expanded="true" signature="534:3899" ph="{...}" />
+                <marker date="1558183955734" expanded="true" signature="848:1497" ph="/// Constructor for a Message. ... " />
+                <marker date="1558183955734" expanded="true" signature="1652:2228" ph="{...}" />
+                <marker date="1558183955734" expanded="true" signature="1921:2032" ph="{...}" />
+                <marker date="1558183955734" expanded="true" signature="2053:2189" ph="{...}" />
+                <marker date="1558183955734" expanded="true" signature="2242:2433" ph="/// Copy constructor = makes a copy of an existing message. ... " />
+                <marker date="1558183955734" expanded="true" signature="2673:2701" ph="{...}" />
+                <marker date="1558183955734" expanded="true" signature="2727:2983" ph="/// Take the message and make it printable. ... " />
+                <marker date="1558183955734" expanded="true" signature="3029:3889" ph="{...}" />
+                <marker date="1558183955734" expanded="true" signature="3460:3713" ph="{...}" />
+                <marker date="1558183955734" expanded="true" signature="3734:3830" ph="{...}" />
+                <marker date="1558183955734" expanded="true" signature="3909:3995" ph="/// Size of an encoded header (in bytes). ... " />
+                <marker date="1558183955734" expanded="true" signature="4051:4147" ph="/// Offset of the CRC in an encoded message header. ... " />
+                <marker date="1558183955734" expanded="true" signature="4199:4311" ph="/// Message ID used to indicate an invalid (or unknown) message ID. ... " />
+                <marker date="1558183955734" expanded="true" signature="4382:4455" ph="/// Invalid function number. ... " />
               </folding>
             </state>
           </provider>
@@ -284,28 +281,28 @@
             <state relative-caret-position="1440">
               <caret line="99" column="8" selection-start-line="99" selection-start-column="8" selection-end-line="99" selection-end-column="8" />
               <folding>
-                <marker date="1557569763640" expanded="false" signature="6:57" ph="..." />
-                <marker date="1557569763640" expanded="true" signature="81:3826" ph="{...}" />
-                <marker date="1557569763640" expanded="true" signature="113:3824" ph="{...}" />
-                <marker date="1557569763640" expanded="true" signature="128:428" ph="///     Convert a byte array to a series of hexadecimal numbers ... " />
-                <marker date="1557569763640" expanded="true" signature="483:829" ph="{...}" />
-                <marker date="1557569763640" expanded="true" signature="600:789" ph="{...}" />
-                <marker date="1557569763640" expanded="true" signature="645:716" ph="{...}" />
-                <marker date="1557569763640" expanded="true" signature="839:1079" ph="///     Convert a byte into the hex representation of the value. ... " />
-                <marker date="1557569763640" expanded="true" signature="1135:1325" ph="{...}" />
-                <marker date="1557569763640" expanded="true" signature="1335:1575" ph="///     Convert a byte into hexadecimal including the &quot;0x&quot; prefix. ... " />
-                <marker date="1557569763640" expanded="true" signature="1624:1692" ph="{...}" />
-                <marker date="1557569763640" expanded="true" signature="1702:1949" ph="///     Convert an unsigned short into hexadecimal. ... " />
-                <marker date="1557569763640" expanded="true" signature="2001:2131" ph="{...}" />
-                <marker date="1557569763640" expanded="true" signature="2141:2382" ph="///     Convert an integer into hexadecimal. ... " />
-                <marker date="1557569763640" expanded="true" signature="2430:2669" ph="{...}" />
-                <marker date="1557569763640" expanded="true" signature="2679:2894" ph="///     Dump the array of bytes to the debug output in hexadecimal. ... " />
-                <marker date="1557569763640" expanded="true" signature="2954:3759" ph="{...}" />
-                <marker date="1557569763640" expanded="true" signature="3248:3602" ph="{...}" />
-                <marker date="1557569763640" expanded="true" signature="3301:3530" ph="{...}" />
-                <marker date="1557569763640" expanded="true" signature="3365:3458" ph="{...}" />
-                <marker date="1557569763640" expanded="true" signature="3640:3709" ph="{...}" />
-                <marker date="1557569763640" expanded="true" signature="3798:3818" ph="{...}" />
+                <marker date="1558159507713" expanded="false" signature="6:57" ph="..." />
+                <marker date="1558159507713" expanded="true" signature="81:3826" ph="{...}" />
+                <marker date="1558159507713" expanded="true" signature="113:3824" ph="{...}" />
+                <marker date="1558159507713" expanded="true" signature="128:428" ph="///     Convert a byte array to a series of hexadecimal numbers ... " />
+                <marker date="1558159507713" expanded="true" signature="483:829" ph="{...}" />
+                <marker date="1558159507713" expanded="true" signature="600:789" ph="{...}" />
+                <marker date="1558159507713" expanded="true" signature="645:716" ph="{...}" />
+                <marker date="1558159507713" expanded="true" signature="839:1079" ph="///     Convert a byte into the hex representation of the value. ... " />
+                <marker date="1558159507713" expanded="true" signature="1135:1325" ph="{...}" />
+                <marker date="1558159507713" expanded="true" signature="1335:1575" ph="///     Convert a byte into hexadecimal including the &quot;0x&quot; prefix. ... " />
+                <marker date="1558159507713" expanded="true" signature="1624:1692" ph="{...}" />
+                <marker date="1558159507713" expanded="true" signature="1702:1949" ph="///     Convert an unsigned short into hexadecimal. ... " />
+                <marker date="1558159507713" expanded="true" signature="2001:2131" ph="{...}" />
+                <marker date="1558159507713" expanded="true" signature="2141:2382" ph="///     Convert an integer into hexadecimal. ... " />
+                <marker date="1558159507713" expanded="true" signature="2430:2669" ph="{...}" />
+                <marker date="1558159507713" expanded="true" signature="2679:2894" ph="///     Dump the array of bytes to the debug output in hexadecimal. ... " />
+                <marker date="1558159507713" expanded="true" signature="2954:3759" ph="{...}" />
+                <marker date="1558159507713" expanded="true" signature="3248:3602" ph="{...}" />
+                <marker date="1558159507713" expanded="true" signature="3301:3530" ph="{...}" />
+                <marker date="1558159507713" expanded="true" signature="3365:3458" ph="{...}" />
+                <marker date="1558159507713" expanded="true" signature="3640:3709" ph="{...}" />
+                <marker date="1558159507713" expanded="true" signature="3798:3818" ph="{...}" />
               </folding>
             </state>
           </provider>
@@ -314,23 +311,23 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/Meadow.Core.Esp32/Enums.cs">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="416">
+            <state relative-caret-position="-532">
               <caret line="27" column="26" selection-start-line="27" selection-start-column="26" selection-end-line="27" selection-end-column="26" />
               <folding>
-                <marker date="1557302476165" expanded="true" signature="0:382" ph="/* Enums.cs ... */" />
-                <marker date="1557302476165" expanded="true" signature="426:2675" ph="{...}" />
-                <marker date="1557302476165" expanded="true" signature="465:963" ph="{...}" />
-                <marker date="1557302476165" expanded="true" signature="1004:1142" ph="{...}" />
-                <marker date="1557302476165" expanded="true" signature="1184:1296" ph="{...}" />
-                <marker date="1557302476165" expanded="true" signature="1336:1566" ph="{...}" />
-                <marker date="1557302476165" expanded="true" signature="1611:1700" ph="{...}" />
-                <marker date="1557302476165" expanded="true" signature="1736:1926" ph="{...}" />
-                <marker date="1557302476165" expanded="true" signature="1974:2113" ph="{...}" />
-                <marker date="1557302476165" expanded="true" signature="2149:2203" ph="{...}" />
-                <marker date="1557302476165" expanded="true" signature="2239:2306" ph="{...}" />
-                <marker date="1557302476165" expanded="true" signature="2337:2389" ph="{...}" />
-                <marker date="1557302476165" expanded="true" signature="2420:2491" ph="{...}" />
-                <marker date="1557302476165" expanded="true" signature="2524:2671" ph="{...}" />
+                <marker date="1558183580376" expanded="true" signature="0:382" ph="/* Enums.cs ... */" />
+                <marker date="1558183580376" expanded="true" signature="426:2677" ph="{...}" />
+                <marker date="1558183580376" expanded="true" signature="465:963" ph="{...}" />
+                <marker date="1558183580376" expanded="true" signature="1004:1142" ph="{...}" />
+                <marker date="1558183580376" expanded="true" signature="1184:1296" ph="{...}" />
+                <marker date="1558183580376" expanded="true" signature="1336:1566" ph="{...}" />
+                <marker date="1558183580376" expanded="true" signature="1611:1700" ph="{...}" />
+                <marker date="1558183580376" expanded="true" signature="1738:1928" ph="{...}" />
+                <marker date="1558183580376" expanded="true" signature="1976:2115" ph="{...}" />
+                <marker date="1558183580376" expanded="true" signature="2151:2205" ph="{...}" />
+                <marker date="1558183580376" expanded="true" signature="2241:2308" ph="{...}" />
+                <marker date="1558183580376" expanded="true" signature="2339:2391" ph="{...}" />
+                <marker date="1558183580376" expanded="true" signature="2422:2493" ph="{...}" />
+                <marker date="1558183580376" expanded="true" signature="2526:2673" ph="{...}" />
               </folding>
             </state>
           </provider>
@@ -338,45 +335,28 @@
       </file>
     </leaf>
   </component>
+  <component name="FindInProjectRecents">
+    <findStrings>
+      <find>PacketType.</find>
+    </findStrings>
+    <replaceStrings>
+      <replace>MessagesTypes.</replace>
+    </replaceStrings>
+  </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/../../.." />
   </component>
   <component name="HighlightingSettingsPerFile">
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/IL/7739463B-65F9-41A3-AF63-72748F2CA401/1f/830e21df/02000013pdb.il" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/IL/209073E8-FDF4-45C9-9620-C454D9B773EC/3e/5f7f076e/02000012pdb.il" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/IL/5AEB245C-0792-4857-AAEE-1421B6D7F631/e5/3f1d2154/02000004pdb.il" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Meadow.Core.Esp32/SpiTransportProvider.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/IL/209073E8-FDF4-45C9-9620-C454D9B773EC/3c/f64cb74b/0200001Dpdb.il" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Meadow.Core.Esp32/Enums.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/IL/31C3CFC9-ACAE-4FAA-9B82-0D46CA955730/e3/aec0899e/02000013pdb.il" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Meadow.Core.Esp32/Encoders.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../FileGenerator/MessageProcessor.cs" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/IL/31C3CFC9-ACAE-4FAA-9B82-0D46CA955730/16/f4264559/02000004pdb.il" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/IL/F692B615-1833-40F5-8846-7EF8D5CDF9C7/6b/e6da9751/02000015pdb.il" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Meadow.Core.Esp32/Message.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/Meadow.Core.Esp32/Messages.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Meadow.Core.Esp32/BaseClasses/TransportProviderBase.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/IL/697CCA92-7A30-4948-9BE5-D3F3FE216670/44/226f485b/02000004pdb.il" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/IL/F692B615-1833-40F5-8846-7EF8D5CDF9C7/c2/81cff0d3/02000003pdb.il" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/IL/697CCA92-7A30-4948-9BE5-D3F3FE216670/dd/b5c791a5/02000015pdb.il" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/IL/5E368F7A-ED2C-46E0-A250-2D77CD278C4B/fc/ce93360a/02000004pdb.il" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/IL/F692B615-1833-40F5-8846-7EF8D5CDF9C7/5f/c47456b6/02000004pdb.il" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/IL/5E368F7A-ED2C-46E0-A250-2D77CD278C4B/ab/b1b6731d/02000015pdb.il" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/IL/BFBACDBA-E77C-4558-AE0E-09C375913774/ff/062b0624/02000004pdb.il" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/B4D1A667-27F4-4BA8-88B5-4966284FABB4/76/9ea36b94/ValueType.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../FileGenerator/MessageProcessor.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Meadow.Core.Esp32/SpiTransportProvider.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Meadow.Core.Esp32/Enums.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/BasicNetworkTestApplication.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Meadow.Core.Esp32/Encoders.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Meadow.Core.Esp32/Message.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/DebugHelpers.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/IL/B4D1A667-27F4-4BA8-88B5-4966284FABB4/3f/0d0ac69a/02000261.il" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Program.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/IL/523BEEF0-6296-4261-9AE8-5A5182DF65F4/59/990a8684/02000015pdb.il" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/IL/F05B9F4B-DEE5-4A43-ACBA-D934900C0E85/44/3ddffff8/02000015pdb.il" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/IL/C383039D-6B30-45B2-89E2-F28998313993/c2/3b89392d/02000004pdb.il" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/IL/C5B81298-10D9-4BC3-9AE8-27CBC7D09FCF/95/3fc269cd/02000004pdb.il" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/IL/BE342C8A-F94F-462F-84DD-2FC990CBCE29/a6/608bb598/02000004pdb.il" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/IL/C5B81298-10D9-4BC3-9AE8-27CBC7D09FCF/c8/8ff67b52/02000015pdb.il" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/IL/5AEB245C-0792-4857-AAEE-1421B6D7F631/97/84dd5709/02000015pdb.il" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/IL/BE342C8A-F94F-462F-84DD-2FC990CBCE29/59/09d0cfc2/02000013pdb.il" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/IL/BE342C8A-F94F-462F-84DD-2FC990CBCE29/c0/25d82465/02000015pdb.il" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Meadow.Core.Esp32/Messages.cs" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
@@ -388,17 +368,17 @@
         <option value="$PROJECT_DIR$/BasicNetworkTest.csproj" />
         <option value="$PROJECT_DIR$/Meadow.Core.Esp32/Encoders.cs" />
         <option value="$PROJECT_DIR$/DebugHelpers.cs" />
-        <option value="$PROJECT_DIR$/Meadow.Core.Esp32/Message.cs" />
-        <option value="$PROJECT_DIR$/BasicNetworkTestApplication.cs" />
         <option value="$PROJECT_DIR$/Meadow.Core.Esp32/SpiTransportProvider.cs" />
+        <option value="$PROJECT_DIR$/BasicNetworkTestApplication.cs" />
+        <option value="$PROJECT_DIR$/Meadow.Core.Esp32/Message.cs" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds" fullScreen="true">
-    <option name="x" value="2008" />
-    <option name="y" value="237" />
-    <option name="width" value="2046" />
-    <option name="height" value="1116" />
+    <option name="x" value="213" />
+    <option name="y" value="132" />
+    <option name="width" value="1052" />
+    <option name="height" value="659" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectView">
@@ -406,6 +386,8 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
+      <pane id="AssemblyExplorer" />
+      <pane id="FileSystemExplorer" />
       <pane id="SolutionExplorer">
         <subPane>
           <expand>
@@ -418,13 +400,17 @@
               <item name="BasicNetworkTest" type="24d0babc:SolutionExplorerModelNode" />
               <item name="BasicNetworkTest" type="24d0babc:SolutionExplorerModelNode" />
             </path>
+            <path>
+              <item name="" type="784c90a0:SolutionExplorerRootNode" />
+              <item name="BasicNetworkTest" type="24d0babc:SolutionExplorerModelNode" />
+              <item name="BasicNetworkTest" type="24d0babc:SolutionExplorerModelNode" />
+              <item name="Meadow.Core.Esp32" type="24d0babc:SolutionExplorerModelNode" />
+            </path>
           </expand>
           <select />
         </subPane>
         <option name="show-all-files" value="false" />
       </pane>
-      <pane id="AssemblyExplorer" />
-      <pane id="FileSystemExplorer" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -462,9 +448,7 @@
       <option name="PROJECT_WORKING_DIRECTORY_TRACKING" value="1" />
       <option name="PROJECT_KIND" value="None" />
       <option name="PROJECT_TFM" value="" />
-      <method v="2">
-        <option name="Build" enabled="true" />
-      </method>
+      <method v="2" />
     </configuration>
   </component>
   <component name="StructureViewFactory">
@@ -491,6 +475,7 @@
       <workItem from="1557899258572" duration="250000" />
       <workItem from="1557900467454" duration="141000" />
       <workItem from="1557901136183" duration="10292000" />
+      <workItem from="1558183660007" duration="296000" />
     </task>
     <task id="LOCAL-00001" summary="Removed EncodersBase class and used a template file for Encoders.cs">
       <created>1557042942297</created>
@@ -545,7 +530,7 @@
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="60195000" />
+    <option name="totallyTimeSpent" value="60491000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -557,10 +542,13 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="1920" y="0" width="2560" height="1440" extended-state="0" />
+    <frame x="0" y="0" width="1440" height="900" extended-state="0" />
+    <editor active="true" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.49871245" visible="true" weight="0.1838761" />
+      <window_info id="Azure Explorer" />
+      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.49871245" visible="true" weight="0.18597998" />
       <window_info id="Favorites" order="1" sideWeight="0.5012876" side_tool="true" weight="0.17593329" />
+      <window_info anchor="bottom" id="Azure Activity Log" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" weight="0.329927" />
       <window_info anchor="bottom" id="Run" order="2" />
@@ -575,9 +563,9 @@
       <window_info anchor="bottom" id="Database Changes" order="11" />
       <window_info anchor="bottom" id="Unit Tests" order="12" />
       <window_info anchor="bottom" id="Event Log" order="13" side_tool="true" />
-      <window_info anchor="bottom" id="Build" order="14" visible="true" weight="0.2671533" />
+      <window_info active="true" anchor="bottom" id="Build" order="14" visible="true" weight="0.26626506" />
       <window_info anchor="bottom" id="Messages" order="15" />
-      <window_info active="true" anchor="bottom" auto_hide="true" id="Terminal" internal_type="SLIDING" order="16" type="SLIDING" visible="true" weight="0.4540146" />
+      <window_info anchor="bottom" auto_hide="true" id="Terminal" internal_type="SLIDING" order="16" type="SLIDING" weight="0.4540146" />
       <window_info anchor="right" id="Commander" order="0" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
@@ -585,7 +573,7 @@
       <window_info anchor="right" id="IL Viewer" order="4" weight="0.28355837" />
       <window_info anchor="right" id="Errors In Solution" order="5" />
       <window_info anchor="right" id="Unit Tests Coverage" order="6" />
-      <window_info anchor="right" id="Structure" order="7" sideWeight="0.5007299" visible="true" weight="0.21485306" />
+      <window_info anchor="right" id="Structure" order="7" sideWeight="0.5007299" visible="true" weight="0.21459228" />
     </layout>
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -650,66 +638,81 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/B4D1A667-27F4-4BA8-88B5-4966284FABB4/76/9ea36b94/ValueType.cs" />
     <entry file="file://$PROJECT_DIR$/Meadow.Core.Esp32/Encoders.cs">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="3424">
+        <state relative-caret-position="3440">
           <caret line="228" column="54" selection-start-line="228" selection-start-column="32" selection-end-line="228" selection-end-column="54" />
           <folding>
-            <marker date="1557410842769" expanded="true" signature="0:329" ph="/* Encoders.cs ... */" />
-            <marker date="1557410842769" expanded="false" signature="337:369" ph="..." />
-            <marker date="1557410842769" expanded="true" signature="398:14745" ph="{...}" />
-            <marker date="1557410842769" expanded="true" signature="426:14743" ph="{...}" />
-            <marker date="1557410842769" expanded="true" signature="441:1051" ph="/// Calculate the amount of memory that should be allocated for the receive buffer. ... " />
-            <marker date="1557410842769" expanded="true" signature="1125:2105" ph="{...}" />
-            <marker date="1557410842769" expanded="true" signature="1207:1263" ph="{...}" />
-            <marker date="1557410842769" expanded="true" signature="1276:1831" ph="/* The buffer should always be 4 bytes longer than needed.  During development it ... */" />
-            <marker date="1557410842769" expanded="true" signature="1905:1992" ph="{...}" />
-            <marker date="1557410842769" expanded="true" signature="2009:2066" ph="{...}" />
-            <marker date="1557410842769" expanded="true" signature="2115:2193" ph="/// Seed for the Crc32 algorithm. ... " />
-            <marker date="1557410842769" expanded="true" signature="2257:2479" ph="///     Calculate the 32-bit CRC for the array of bytes. ... " />
-            <marker date="1557410842769" expanded="true" signature="2530:2604" ph="{...}" />
-            <marker date="1557410842769" expanded="true" signature="2614:3012" ph="/// Calculate the 32-bit CRC for the array of bytes. ... " />
-            <marker date="1557410842769" expanded="true" signature="3084:3316" ph="{...}" />
-            <marker date="1557410842769" expanded="true" signature="3193:3279" ph="{...}" />
-            <marker date="1557410842769" expanded="true" signature="3326:3948" ph="///     Progressively calculate the Crc32 value. ... " />
-            <marker date="1557410842769" expanded="true" signature="4030:4338" ph="{...}" />
-            <marker date="1557410842769" expanded="true" signature="4162:4302" ph="{...}" />
-            <marker date="1557410842769" expanded="true" signature="4348:4679" ph="///     Take two bytes from the buffer and encode them as a 16-bit integer. ... " />
-            <marker date="1557410842769" expanded="true" signature="4753:4925" ph="{...}" />
-            <marker date="1557410842769" expanded="true" signature="4935:5305" ph="///     Encode a 16-bit integer as two bytes in the buffer.  The data is ... " />
-            <marker date="1557410842769" expanded="true" signature="5390:5525" ph="{...}" />
-            <marker date="1557410842769" expanded="true" signature="5535:5884" ph="///     Take four bytes from the buffer and encode them as a 32-bit integer. ... " />
-            <marker date="1557410842769" expanded="true" signature="5958:6248" ph="{...}" />
-            <marker date="1557410842769" expanded="true" signature="6258:6629" ph="///     Encode a 32-bit integer as four bytes in the buffer.  The data is ... " />
-            <marker date="1557410842769" expanded="true" signature="6714:6977" ph="{...}" />
-            <marker date="1557410842769" expanded="true" signature="6987:7442" ph="///     Encode a string into the buffer as a stream of bytes. ... " />
-            <marker date="1557410842769" expanded="true" signature="7525:7668" ph="{...}" />
-            <marker date="1557410842769" expanded="true" signature="7678:8160" ph="///     Extract a string from the buffer. ... " />
-            <marker date="1557410842769" expanded="true" signature="8234:8452" ph="{...}" />
-            <marker date="1557410842769" expanded="true" signature="8317:8413" ph="{...}" />
-            <marker date="1557410842769" expanded="true" signature="8462:8838" ph="///     Encode a message into a byte buffer that can be sent to the ESP32. ... " />
-            <marker date="1557410842769" expanded="true" signature="8932:10416" ph="{...}" />
-            <marker date="1557410842769" expanded="true" signature="9026:9108" ph="{...}" />
-            <marker date="1557410842769" expanded="true" signature="9770:9867" ph="/* CRC will be put in later but needs to be 0 for the calculation. ... */" />
-            <marker date="1557410842769" expanded="true" signature="9996:10111" ph="{...}" />
-            <marker date="1557410842769" expanded="true" signature="10128:10205" ph="{...}" />
-            <marker date="1557410842769" expanded="true" signature="10218:10277" ph="/* Now we deal with the CRC. ... */" />
-            <marker date="1557410842769" expanded="true" signature="10426:10826" ph="///     Extract a message from a byte buffer and return a Message object. ... " />
-            <marker date="1557410842769" expanded="true" signature="10946:12704" ph="{...}" />
-            <marker date="1557410842769" expanded="true" signature="11118:11202" ph="{...}" />
-            <marker date="1557410842769" expanded="true" signature="11219:12653" ph="{...}" />
-            <marker date="1557410842769" expanded="true" signature="11250:11310" ph="/* Now check the CRC. ... */" />
-            <marker date="1557410842769" expanded="true" signature="11487:11578" ph="{...}" />
-            <marker date="1557410842769" expanded="true" signature="11599:12639" ph="{...}" />
-            <marker date="1557410842769" expanded="true" signature="12345:12421" ph="/* TODO: headerOnly field ? ... */" />
-            <marker date="1557410842769" expanded="true" signature="12789:13497" ph="{...}" />
-            <marker date="1557410842769" expanded="true" signature="12869:12941" ph="/* Calculate the amount of memory needed. ... */" />
-            <marker date="1557410842769" expanded="true" signature="13070:13165" ph="/* Now allocate a new buffer and copy the data in to the buffer. ... */" />
-            <marker date="1557410842769" expanded="true" signature="13589:13944" ph="{...}" />
-            <marker date="1557410842769" expanded="true" signature="14026:14471" ph="{...}" />
-            <marker date="1557410842769" expanded="true" signature="14106:14178" ph="/* Calculate the amount of memory needed. ... */" />
-            <marker date="1557410842769" expanded="true" signature="14217:14312" ph="/* Now allocate a new buffer and copy the data in to the buffer. ... */" />
-            <marker date="1557410842769" expanded="true" signature="14561:14736" ph="{...}" />
+            <marker date="1558183580430" expanded="true" signature="0:329" ph="/* Encoders.cs ... */" />
+            <marker date="1558183580430" expanded="false" signature="337:369" ph="..." />
+            <marker date="1558183580430" expanded="true" signature="398:14648" ph="{...}" />
+            <marker date="1558183580430" expanded="true" signature="426:14646" ph="{...}" />
+            <marker date="1558183580430" expanded="true" signature="441:1051" ph="/// Calculate the amount of memory that should be allocated for the receive buffer. ... " />
+            <marker date="1558183580430" expanded="true" signature="1125:2105" ph="{...}" />
+            <marker date="1558183580430" expanded="true" signature="1207:1263" ph="{...}" />
+            <marker date="1558183580430" expanded="true" signature="1276:1831" ph="/* The buffer should always be 4 bytes longer than needed.  During development it ... */" />
+            <marker date="1558183580430" expanded="true" signature="1905:1992" ph="{...}" />
+            <marker date="1558183580430" expanded="true" signature="2009:2066" ph="{...}" />
+            <marker date="1558183580430" expanded="true" signature="2115:2193" ph="/// Seed for the Crc32 algorithm. ... " />
+            <marker date="1558183580430" expanded="true" signature="2257:2479" ph="///     Calculate the 32-bit CRC for the array of bytes. ... " />
+            <marker date="1558183580430" expanded="true" signature="2530:2604" ph="{...}" />
+            <marker date="1558183580430" expanded="true" signature="2614:3012" ph="/// Calculate the 32-bit CRC for the array of bytes. ... " />
+            <marker date="1558183580430" expanded="true" signature="3084:3316" ph="{...}" />
+            <marker date="1558183580430" expanded="true" signature="3193:3279" ph="{...}" />
+            <marker date="1558183580430" expanded="true" signature="3326:3948" ph="///     Progressively calculate the Crc32 value. ... " />
+            <marker date="1558183580430" expanded="true" signature="4030:4338" ph="{...}" />
+            <marker date="1558183580430" expanded="true" signature="4162:4302" ph="{...}" />
+            <marker date="1558183580430" expanded="true" signature="4348:4679" ph="///     Take two bytes from the buffer and encode them as a 16-bit integer. ... " />
+            <marker date="1558183580430" expanded="true" signature="4753:4925" ph="{...}" />
+            <marker date="1558183580430" expanded="true" signature="4935:5305" ph="///     Encode a 16-bit integer as two bytes in the buffer.  The data is ... " />
+            <marker date="1558183580430" expanded="true" signature="5390:5525" ph="{...}" />
+            <marker date="1558183580430" expanded="true" signature="5535:5884" ph="///     Take four bytes from the buffer and encode them as a 32-bit integer. ... " />
+            <marker date="1558183580430" expanded="true" signature="5958:6248" ph="{...}" />
+            <marker date="1558183580430" expanded="true" signature="6258:6629" ph="///     Encode a 32-bit integer as four bytes in the buffer.  The data is ... " />
+            <marker date="1558183580430" expanded="true" signature="6714:6977" ph="{...}" />
+            <marker date="1558183580430" expanded="true" signature="6987:7442" ph="///     Encode a string into the buffer as a stream of bytes. ... " />
+            <marker date="1558183580430" expanded="true" signature="7525:7668" ph="{...}" />
+            <marker date="1558183580430" expanded="true" signature="7678:8160" ph="///     Extract a string from the buffer. ... " />
+            <marker date="1558183580430" expanded="true" signature="8234:8452" ph="{...}" />
+            <marker date="1558183580430" expanded="true" signature="8317:8413" ph="{...}" />
+            <marker date="1558183580430" expanded="true" signature="8462:8838" ph="///     Encode a message into a byte buffer that can be sent to the ESP32. ... " />
+            <marker date="1558183580430" expanded="true" signature="8932:10416" ph="{...}" />
+            <marker date="1558183580430" expanded="true" signature="9026:9108" ph="{...}" />
+            <marker date="1558183580430" expanded="true" signature="9770:9867" ph="/* CRC will be put in later but needs to be 0 for the calculation. ... */" />
+            <marker date="1558183580430" expanded="true" signature="9996:10111" ph="{...}" />
+            <marker date="1558183580430" expanded="true" signature="10128:10205" ph="{...}" />
+            <marker date="1558183580430" expanded="true" signature="10218:10277" ph="/* Now we deal with the CRC. ... */" />
+            <marker date="1558183580430" expanded="true" signature="10426:10826" ph="///     Extract a message from a byte buffer and return a Message object. ... " />
+            <marker date="1558183580430" expanded="true" signature="10946:12607" ph="{...}" />
+            <marker date="1558183580430" expanded="true" signature="11118:11202" ph="{...}" />
+            <marker date="1558183580430" expanded="true" signature="11219:12556" ph="{...}" />
+            <marker date="1558183580430" expanded="true" signature="11250:11310" ph="/* Now check the CRC. ... */" />
+            <marker date="1558183580430" expanded="true" signature="11487:11578" ph="{...}" />
+            <marker date="1558183580430" expanded="true" signature="11599:12542" ph="{...}" />
+            <marker date="1558183580430" expanded="true" signature="12692:13400" ph="{...}" />
+            <marker date="1558183580430" expanded="true" signature="12772:12844" ph="/* Calculate the amount of memory needed. ... */" />
+            <marker date="1558183580430" expanded="true" signature="12973:13068" ph="/* Now allocate a new buffer and copy the data in to the buffer. ... */" />
+            <marker date="1558183580430" expanded="true" signature="13492:13847" ph="{...}" />
+            <marker date="1558183580430" expanded="true" signature="13929:14374" ph="{...}" />
+            <marker date="1558183580430" expanded="true" signature="14009:14081" ph="/* Calculate the amount of memory needed. ... */" />
+            <marker date="1558183580430" expanded="true" signature="14120:14215" ph="/* Now allocate a new buffer and copy the data in to the buffer. ... */" />
+            <marker date="1558183580430" expanded="true" signature="14464:14639" ph="{...}" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Meadow.Core.Esp32/Messages.cs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="256">
+          <caret line="18" column="25" selection-start-line="18" selection-start-column="25" selection-end-line="18" selection-end-column="25" />
+          <folding>
+            <marker date="1558183580459" expanded="true" signature="0:329" ph="/* Encoders.cs ... */" />
+            <marker date="1558183580459" expanded="false" signature="337:369" ph="..." />
+            <marker date="1558183580459" expanded="true" signature="398:807" ph="{...}" />
+            <marker date="1558183580459" expanded="true" signature="434:805" ph="{...}" />
+            <marker date="1558183580459" expanded="true" signature="475:570" ph="{...}" />
+            <marker date="1558183580459" expanded="true" signature="675:728" ph="{...}" />
           </folding>
         </state>
       </provider>
@@ -718,102 +721,28 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1440">
           <caret line="99" column="8" selection-start-line="99" selection-start-column="8" selection-end-line="99" selection-end-column="8" />
-          <folding>
-            <marker date="1557569763640" expanded="false" signature="6:57" ph="..." />
-            <marker date="1557569763640" expanded="true" signature="81:3826" ph="{...}" />
-            <marker date="1557569763640" expanded="true" signature="113:3824" ph="{...}" />
-            <marker date="1557569763640" expanded="true" signature="128:428" ph="///     Convert a byte array to a series of hexadecimal numbers ... " />
-            <marker date="1557569763640" expanded="true" signature="483:829" ph="{...}" />
-            <marker date="1557569763640" expanded="true" signature="600:789" ph="{...}" />
-            <marker date="1557569763640" expanded="true" signature="645:716" ph="{...}" />
-            <marker date="1557569763640" expanded="true" signature="839:1079" ph="///     Convert a byte into the hex representation of the value. ... " />
-            <marker date="1557569763640" expanded="true" signature="1135:1325" ph="{...}" />
-            <marker date="1557569763640" expanded="true" signature="1335:1575" ph="///     Convert a byte into hexadecimal including the &quot;0x&quot; prefix. ... " />
-            <marker date="1557569763640" expanded="true" signature="1624:1692" ph="{...}" />
-            <marker date="1557569763640" expanded="true" signature="1702:1949" ph="///     Convert an unsigned short into hexadecimal. ... " />
-            <marker date="1557569763640" expanded="true" signature="2001:2131" ph="{...}" />
-            <marker date="1557569763640" expanded="true" signature="2141:2382" ph="///     Convert an integer into hexadecimal. ... " />
-            <marker date="1557569763640" expanded="true" signature="2430:2669" ph="{...}" />
-            <marker date="1557569763640" expanded="true" signature="2679:2894" ph="///     Dump the array of bytes to the debug output in hexadecimal. ... " />
-            <marker date="1557569763640" expanded="true" signature="2954:3759" ph="{...}" />
-            <marker date="1557569763640" expanded="true" signature="3248:3602" ph="{...}" />
-            <marker date="1557569763640" expanded="true" signature="3301:3530" ph="{...}" />
-            <marker date="1557569763640" expanded="true" signature="3365:3458" ph="{...}" />
-            <marker date="1557569763640" expanded="true" signature="3640:3709" ph="{...}" />
-            <marker date="1557569763640" expanded="true" signature="3798:3818" ph="{...}" />
-          </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/Meadow.Core.Esp32/Enums.cs">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="416">
+        <state relative-caret-position="-532">
           <caret line="27" column="26" selection-start-line="27" selection-start-column="26" selection-end-line="27" selection-end-column="26" />
           <folding>
-            <marker date="1557302476165" expanded="true" signature="0:382" ph="/* Enums.cs ... */" />
-            <marker date="1557302476165" expanded="true" signature="426:2675" ph="{...}" />
-            <marker date="1557302476165" expanded="true" signature="465:963" ph="{...}" />
-            <marker date="1557302476165" expanded="true" signature="1004:1142" ph="{...}" />
-            <marker date="1557302476165" expanded="true" signature="1184:1296" ph="{...}" />
-            <marker date="1557302476165" expanded="true" signature="1336:1566" ph="{...}" />
-            <marker date="1557302476165" expanded="true" signature="1611:1700" ph="{...}" />
-            <marker date="1557302476165" expanded="true" signature="1736:1926" ph="{...}" />
-            <marker date="1557302476165" expanded="true" signature="1974:2113" ph="{...}" />
-            <marker date="1557302476165" expanded="true" signature="2149:2203" ph="{...}" />
-            <marker date="1557302476165" expanded="true" signature="2239:2306" ph="{...}" />
-            <marker date="1557302476165" expanded="true" signature="2337:2389" ph="{...}" />
-            <marker date="1557302476165" expanded="true" signature="2420:2491" ph="{...}" />
-            <marker date="1557302476165" expanded="true" signature="2524:2671" ph="{...}" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/decompiler/B4D1A667-27F4-4BA8-88B5-4966284FABB4/76/9ea36b94/ValueType.cs">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="685">
-          <caret line="80" column="27" selection-start-line="80" selection-start-column="27" selection-end-line="80" selection-end-column="27" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/Meadow.Core.Esp32/Messages.cs">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="272">
-          <caret line="18" column="25" selection-start-line="18" selection-start-column="25" selection-end-line="18" selection-end-column="25" />
-          <folding>
-            <marker date="1557302476335" expanded="true" signature="0:329" ph="/* Encoders.cs ... */" />
-            <marker date="1557302476335" expanded="false" signature="337:369" ph="..." />
-            <marker date="1557302476335" expanded="true" signature="398:807" ph="{...}" />
-            <marker date="1557302476335" expanded="true" signature="434:805" ph="{...}" />
-            <marker date="1557302476335" expanded="true" signature="475:570" ph="{...}" />
-            <marker date="1557302476335" expanded="true" signature="675:728" ph="{...}" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/Meadow.Core.Esp32/Message.cs">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1200">
-          <caret line="75" column="59" lean-forward="true" selection-start-line="75" selection-start-column="59" selection-end-line="75" selection-end-column="59" />
-          <folding>
-            <marker date="1557905183900" expanded="true" signature="6:61" ph="..." />
-            <marker date="1557905183900" expanded="true" signature="90:4518" ph="{...}" />
-            <marker date="1557905183900" expanded="true" signature="126:4516" ph="{...}" />
-            <marker date="1557905183900" expanded="true" signature="141:504" ph="///     The Message structure is the main method of sending data between the STM32 ... " />
-            <marker date="1557905183900" expanded="true" signature="534:3895" ph="{...}" />
-            <marker date="1557905183900" expanded="true" signature="848:1497" ph="/// Constructor for a Message. ... " />
-            <marker date="1557905183900" expanded="true" signature="1650:2226" ph="{...}" />
-            <marker date="1557905183900" expanded="true" signature="1919:2030" ph="{...}" />
-            <marker date="1557905183900" expanded="true" signature="2051:2187" ph="{...}" />
-            <marker date="1557905183900" expanded="true" signature="2240:2431" ph="/// Copy constructor = makes a copy of an existing message. ... " />
-            <marker date="1557905183900" expanded="true" signature="2669:2697" ph="{...}" />
-            <marker date="1557905183900" expanded="true" signature="2723:2979" ph="/// Take the message and make it printable. ... " />
-            <marker date="1557905183900" expanded="true" signature="3025:3885" ph="{...}" />
-            <marker date="1557905183900" expanded="true" signature="3456:3709" ph="{...}" />
-            <marker date="1557905183900" expanded="true" signature="3730:3826" ph="{...}" />
-            <marker date="1557905183900" expanded="true" signature="3905:3991" ph="/// Size of an encoded header (in bytes). ... " />
-            <marker date="1557905183900" expanded="true" signature="4047:4143" ph="/// Offset of the CRC in an encoded message header. ... " />
-            <marker date="1557905183900" expanded="true" signature="4195:4307" ph="/// Message ID used to indicate an invalid (or unknown) message ID. ... " />
-            <marker date="1557905183900" expanded="true" signature="4378:4451" ph="/// Invalid function number. ... " />
+            <marker date="1558183580376" expanded="true" signature="0:382" ph="/* Enums.cs ... */" />
+            <marker date="1558183580376" expanded="true" signature="426:2677" ph="{...}" />
+            <marker date="1558183580376" expanded="true" signature="465:963" ph="{...}" />
+            <marker date="1558183580376" expanded="true" signature="1004:1142" ph="{...}" />
+            <marker date="1558183580376" expanded="true" signature="1184:1296" ph="{...}" />
+            <marker date="1558183580376" expanded="true" signature="1336:1566" ph="{...}" />
+            <marker date="1558183580376" expanded="true" signature="1611:1700" ph="{...}" />
+            <marker date="1558183580376" expanded="true" signature="1738:1928" ph="{...}" />
+            <marker date="1558183580376" expanded="true" signature="1976:2115" ph="{...}" />
+            <marker date="1558183580376" expanded="true" signature="2151:2205" ph="{...}" />
+            <marker date="1558183580376" expanded="true" signature="2241:2308" ph="{...}" />
+            <marker date="1558183580376" expanded="true" signature="2339:2391" ph="{...}" />
+            <marker date="1558183580376" expanded="true" signature="2422:2493" ph="{...}" />
+            <marker date="1558183580376" expanded="true" signature="2526:2673" ph="{...}" />
           </folding>
         </state>
       </provider>
@@ -821,135 +750,163 @@
     <entry file="file://$PROJECT_DIR$/BasicNetworkTestApplication.cs">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="208">
-          <caret line="18" lean-forward="true" selection-start-line="18" selection-end-line="18" />
+          <caret line="41" column="64" selection-start-line="41" selection-start-column="64" selection-end-line="41" selection-end-column="64" />
           <folding>
-            <marker date="1557919502984" expanded="false" signature="6:121" ph="..." />
-            <marker date="1557919502984" expanded="true" signature="149:3671" ph="{...}" />
-            <marker date="1557919502984" expanded="true" signature="244:3669" ph="{...}" />
-            <marker date="1557919502984" expanded="true" signature="482:551" ph="/// Default constructor. ... " />
-            <marker date="1557919502984" expanded="true" signature="596:2179" ph="{...}" />
-            <marker date="1557919502984" expanded="true" signature="1902:2169" ph="/* message.Payload = Encoders.EncodeAntennaInfo(_antennaInfo); ... */" />
-            <marker date="1557919502984" expanded="true" signature="2189:2317" ph="///  ... " />
-            <marker date="1557919502984" expanded="true" signature="2398:2659" ph="{...}" />
-            <marker date="1557919502984" expanded="true" signature="2669:2797" ph="///  ... " />
-            <marker date="1557919502984" expanded="true" signature="2886:2974" ph="{...}" />
-            <marker date="1557919502984" expanded="true" signature="2984:3112" ph="///  ... " />
-            <marker date="1557919502984" expanded="true" signature="3204:3329" ph="{...}" />
-            <marker date="1557919502984" expanded="true" signature="3339:3406" ph="/// Main program loop. ... " />
-            <marker date="1557919502984" expanded="true" signature="3432:3663" ph="{...}" />
+            <marker date="1558183955717" expanded="false" signature="6:121" ph="..." />
+            <marker date="1558183955717" expanded="true" signature="149:3673" ph="{...}" />
+            <marker date="1558183955717" expanded="true" signature="244:3671" ph="{...}" />
+            <marker date="1558183955717" expanded="true" signature="482:551" ph="/// Default constructor. ... " />
+            <marker date="1558183955717" expanded="true" signature="596:2181" ph="{...}" />
+            <marker date="1558183955717" expanded="true" signature="1904:2171" ph="/* message.Payload = Encoders.EncodeAntennaInfo(_antennaInfo); ... */" />
+            <marker date="1558183955717" expanded="true" signature="2191:2319" ph="///  ... " />
+            <marker date="1558183955717" expanded="true" signature="2400:2661" ph="{...}" />
+            <marker date="1558183955717" expanded="true" signature="2671:2799" ph="///  ... " />
+            <marker date="1558183955717" expanded="true" signature="2888:2976" ph="{...}" />
+            <marker date="1558183955717" expanded="true" signature="2986:3114" ph="///  ... " />
+            <marker date="1558183955717" expanded="true" signature="3206:3331" ph="{...}" />
+            <marker date="1558183955717" expanded="true" signature="3341:3408" ph="/// Main program loop. ... " />
+            <marker date="1558183955717" expanded="true" signature="3434:3665" ph="{...}" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Meadow.Core.Esp32/Message.cs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="251">
+          <caret line="68" column="65" lean-forward="true" selection-start-line="68" selection-start-column="65" selection-end-line="68" selection-end-column="65" />
+          <folding>
+            <marker date="1558183955734" expanded="false" signature="6:61" ph="..." />
+            <marker date="1558183955734" expanded="true" signature="90:4522" ph="{...}" />
+            <marker date="1558183955734" expanded="true" signature="126:4520" ph="{...}" />
+            <marker date="1558183955734" expanded="true" signature="141:504" ph="///     The Message structure is the main method of sending data between the STM32 ... " />
+            <marker date="1558183955734" expanded="true" signature="534:3899" ph="{...}" />
+            <marker date="1558183955734" expanded="true" signature="848:1497" ph="/// Constructor for a Message. ... " />
+            <marker date="1558183955734" expanded="true" signature="1652:2228" ph="{...}" />
+            <marker date="1558183955734" expanded="true" signature="1921:2032" ph="{...}" />
+            <marker date="1558183955734" expanded="true" signature="2053:2189" ph="{...}" />
+            <marker date="1558183955734" expanded="true" signature="2242:2433" ph="/// Copy constructor = makes a copy of an existing message. ... " />
+            <marker date="1558183955734" expanded="true" signature="2673:2701" ph="{...}" />
+            <marker date="1558183955734" expanded="true" signature="2727:2983" ph="/// Take the message and make it printable. ... " />
+            <marker date="1558183955734" expanded="true" signature="3029:3889" ph="{...}" />
+            <marker date="1558183955734" expanded="true" signature="3460:3713" ph="{...}" />
+            <marker date="1558183955734" expanded="true" signature="3734:3830" ph="{...}" />
+            <marker date="1558183955734" expanded="true" signature="3909:3995" ph="/// Size of an encoded header (in bytes). ... " />
+            <marker date="1558183955734" expanded="true" signature="4051:4147" ph="/// Offset of the CRC in an encoded message header. ... " />
+            <marker date="1558183955734" expanded="true" signature="4199:4311" ph="/// Message ID used to indicate an invalid (or unknown) message ID. ... " />
+            <marker date="1558183955734" expanded="true" signature="4382:4455" ph="/// Invalid function number. ... " />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/Meadow.Core.Esp32/SpiTransportProvider.cs">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="426">
-          <caret line="143" column="75" lean-forward="true" selection-start-line="143" selection-start-column="75" selection-end-line="143" selection-end-column="75" />
+        <state relative-caret-position="87">
+          <caret line="286" column="73" selection-start-line="286" selection-start-column="73" selection-end-line="286" selection-end-column="73" />
           <folding>
-            <marker date="1557923151178" expanded="true" signature="6:180" ph="..." />
-            <marker date="1557923151178" expanded="true" signature="209:27166" ph="{...}" />
-            <marker date="1557923151178" expanded="true" signature="273:27164" ph="{...}" />
-            <marker date="1557923151178" expanded="true" signature="288:757" ph="Enums" />
-            <marker date="1557923151178" expanded="true" signature="311:380" ph="/// Possible SPI states. ... " />
-            <marker date="1557923151178" expanded="true" signature="411:736" ph="{...}" />
-            <marker date="1557923151178" expanded="true" signature="767:4428" ph="Class level variables." />
-            <marker date="1557923151178" expanded="true" signature="807:895" ph="/// Pin used by the STM32 that it is ready. ... " />
-            <marker date="1557923151178" expanded="true" signature="964:1088" ph="/// Pin used by the ESP32 to indicate that it is ready to send or receive data. ... " />
-            <marker date="1557923151178" expanded="true" signature="1156:1254" ph="/// SPI interface used to communicate with the ESP32. ... " />
-            <marker date="1557923151178" expanded="true" signature="1312:1416" ph="/// STM32 pin connected to the Reset (EN) pin on the ESP32. ... " />
-            <marker date="1557923151178" expanded="true" signature="1477:1575" ph="/// STM32 pin connected to the boot pin on the ESP32. ... " />
-            <marker date="1557923151178" expanded="true" signature="1635:2018" ph="/// Current state of the SPI interface. ... " />
-            <marker date="1557923151178" expanded="true" signature="2081:2176" ph="///     Queue of messages to be sent to the ESP32. ... " />
-            <marker date="1557923151178" expanded="true" signature="2255:2506" ph="///     Lock for the message queue to synchronise access by the ... " />
-            <marker date="1557923151178" expanded="true" signature="2582:2721" ph="///     Handle used to synchronise the incoming messages and the task processing the messages. ... " />
-            <marker date="1557923151178" expanded="true" signature="2828:2936" ph="///     Thread processing the messages as they enter the queue. ... " />
-            <marker date="1557923151178" expanded="true" signature="2991:3040" ph="///  ... " />
-            <marker date="1557923151178" expanded="true" signature="3108:3210" ph="/// Number of times we have retried to send this message. ... " />
-            <marker date="1557923151178" expanded="true" signature="3260:3606" ph="/* Last status code for an incoming message operation. ... */" />
-            <marker date="1557923151178" expanded="true" signature="3616:3908" ph="/// Current message being sent by the system. ... " />
-            <marker date="1557923151178" expanded="true" signature="3977:4104" ph="/// Message used to hold the acknowledgements between message transmission states. ... " />
-            <marker date="1557923151178" expanded="true" signature="4181:4302" ph="/// This value is used a lot so make it available as a class level variable. ... " />
-            <marker date="1557923151178" expanded="true" signature="4446:5964" ph="Constructor(s)" />
-            <marker date="1557923151178" expanded="true" signature="4478:4594" ph="///     Default constructor is private to prevent it from being called. ... " />
-            <marker date="1557923151178" expanded="true" signature="4633:4653" ph="{...}" />
-            <marker date="1557923151178" expanded="true" signature="4663:4778" ph="/// Default constructor for the SPI Transport Provider implementation. ... " />
-            <marker date="1557923151178" expanded="true" signature="4952:5944" ph="{...}" />
-            <marker date="1557923151178" expanded="true" signature="5859:5897" ph="{...}" />
-            <marker date="1557923151178" expanded="true" signature="5974:6992" ph="Delegates and events" />
-            <marker date="1557923151178" expanded="true" signature="6012:6136" ph="///     Error event to allow lower level errors to bubble up to the interfaces. ... " />
-            <marker date="1557923151178" expanded="true" signature="6242:6315" ph="///     Data received event. ... " />
-            <marker date="1557923151178" expanded="true" signature="6429:6818" ph="/// The ESP32 is indicating that it is ready to process some data from the STM32 ... " />
-            <marker date="1557923151178" expanded="true" signature="6906:6972" ph="{...}" />
-            <marker date="1557923151178" expanded="true" signature="7002:27158" ph="Methods" />
-            <marker date="1557923151178" expanded="true" signature="7027:7106" ph="/// Main MessageDispatcher thread. ... " />
-            <marker date="1557923151178" expanded="true" signature="7133:9681" ph="{...}" />
-            <marker date="1557923151178" expanded="true" signature="7168:9671" ph="{...}" />
-            <marker date="1557923151178" expanded="true" signature="7199:7535" ph="/* Work out if we should wait for an incoming signal. ... */" />
-            <marker date="1557923151178" expanded="true" signature="7622:7806" ph="{...}" />
-            <marker date="1557923151178" expanded="true" signature="7832:7926" ph="{...}" />
-            <marker date="1557923151178" expanded="true" signature="7943:8042" ph="/* Signals are used to transition from one state to another. ... */" />
-            <marker date="1557923151178" expanded="true" signature="8151:9657" ph="{...}" />
-            <marker date="1557923151178" expanded="true" signature="9691:10368" ph="/// Process the Idle state when we have received a signal that there is some work to do. ... " />
-            <marker date="1557923151178" expanded="true" signature="10408:12311" ph="{...}" />
-            <marker date="1557923151178" expanded="true" signature="10574:10838" ph="{...}" />
-            <marker date="1557923151178" expanded="true" signature="10859:12287" ph="{...}" />
-            <marker date="1557923151178" expanded="true" signature="11538:11762" ph="{...}" />
-            <marker date="1557923151178" expanded="true" signature="11787:12065" ph="{...}" />
-            <marker date="1557923151178" expanded="true" signature="12321:12521" ph="/// The message header was sent by the ESP32 at the same time the STM32 ... " />
-            <marker date="1557923151178" expanded="true" signature="12583:13911" ph="{...}" />
-            <marker date="1557923151178" expanded="true" signature="13086:13202" ph="{...}" />
-            <marker date="1557923151178" expanded="true" signature="13219:13720" ph="{...}" />
-            <marker date="1557923151178" expanded="true" signature="13294:13399" ph="{...}" />
-            <marker date="1557923151178" expanded="true" signature="13420:13706" ph="{...}" />
-            <marker date="1557923151178" expanded="true" signature="13828:13901" ph="{...}" />
-            <marker date="1557923151178" expanded="true" signature="13921:14002" ph="/// Process an inbound message body. ... " />
-            <marker date="1557923151178" expanded="true" signature="14059:16454" ph="{...}" />
-            <marker date="1557923151178" expanded="true" signature="15085:15272" ph="{...}" />
-            <marker date="1557923151178" expanded="true" signature="15116:15182" ph="/* TODO: Add retry logic. ... */" />
-            <marker date="1557923151178" expanded="true" signature="15289:16297" ph="{...}" />
-            <marker date="1557923151178" expanded="true" signature="15691:15953" ph="{...}" />
-            <marker date="1557923151178" expanded="true" signature="15974:16283" ph="{...}" />
-            <marker date="1557923151178" expanded="true" signature="16013:16081" ph="/* Add retry logic. ... */" />
-            <marker date="1557923151178" expanded="true" signature="16464:16755" ph="/// Acknowledge the incoming message body. ... " />
-            <marker date="1557923151178" expanded="true" signature="16815:17466" ph="{...}" />
-            <marker date="1557923151178" expanded="true" signature="17204:17378" ph="{...}" />
-            <marker date="1557923151178" expanded="true" signature="17476:17589" ph="/// ESP32 has indicated that it is ready so send the message header. ... " />
-            <marker date="1557923151178" expanded="true" signature="17648:18894" ph="{...}" />
-            <marker date="1557923151178" expanded="true" signature="17849:18533" ph="{...}" />
-            <marker date="1557923151178" expanded="true" signature="18142:18372" ph="/* For a header we set the payload to null (which the constructor uses ... */" />
-            <marker date="1557923151178" expanded="true" signature="18550:18677" ph="{...}" />
-            <marker date="1557923151178" expanded="true" signature="18904:19307" ph="/// Process the ESP32 acknowledgement message. ... " />
-            <marker date="1557923151178" expanded="true" signature="19381:22402" ph="{...}" />
-            <marker date="1557923151178" expanded="true" signature="20047:20287" ph="/* We can get three possible responses here: ... */" />
-            <marker date="1557923151178" expanded="true" signature="20344:21927" ph="{...}" />
-            <marker date="1557923151178" expanded="true" signature="20551:20735" ph="{...}" />
-            <marker date="1557923151178" expanded="true" signature="20756:21913" ph="{...}" />
-            <marker date="1557923151178" expanded="true" signature="20998:21671" ph="{...}" />
-            <marker date="1557923151178" expanded="true" signature="21168:21383" ph="{...}" />
-            <marker date="1557923151178" expanded="true" signature="21412:21649" ph="{...}" />
-            <marker date="1557923151178" expanded="true" signature="21696:21895" ph="{...}" />
-            <marker date="1557923151178" expanded="true" signature="21944:22096" ph="{...}" />
-            <marker date="1557923151178" expanded="true" signature="22262:22392" ph="{...}" />
-            <marker date="1557923151178" expanded="true" signature="22412:22500" ph="/// Process the sending message body state. ... " />
-            <marker date="1557923151178" expanded="true" signature="22557:22964" ph="{...}" />
-            <marker date="1557923151178" expanded="true" signature="22974:23073" ph="/// Process the incoming message body acknowledgement. ... " />
-            <marker date="1557923151178" expanded="true" signature="23145:25035" ph="{...}" />
-            <marker date="1557923151178" expanded="true" signature="23667:23907" ph="/* We can get three possible responses here: ... */" />
-            <marker date="1557923151178" expanded="true" signature="23964:24840" ph="{...}" />
-            <marker date="1557923151178" expanded="true" signature="24058:24186" ph="{...}" />
-            <marker date="1557923151178" expanded="true" signature="24207:24826" ph="{...}" />
-            <marker date="1557923151178" expanded="true" signature="24514:24663" ph="{...}" />
-            <marker date="1557923151178" expanded="true" signature="24688:24808" ph="{...}" />
-            <marker date="1557923151178" expanded="true" signature="24857:24939" ph="{...}" />
-            <marker date="1557923151178" expanded="true" signature="25045:25142" ph="/// Process the Transport packet transmission state. ... " />
-            <marker date="1557923151178" expanded="true" signature="25204:25224" ph="{...}" />
-            <marker date="1557923151178" expanded="true" signature="25234:25380" ph="/// Queue a for sending to the ESP32. ... " />
-            <marker date="1557923151178" expanded="true" signature="25456:25841" ph="{...}" />
-            <marker date="1557923151178" expanded="true" signature="25592:25785" ph="/* Inform the task processing the messages that a new message ... */" />
-            <marker date="1557923151178" expanded="true" signature="25851:26381" ph="/// An error has been detected so check the retry count to see if we can retry sending the message. ... " />
-            <marker date="1557923151178" expanded="true" signature="26449:27138" ph="{...}" />
-            <marker date="1557923151178" expanded="true" signature="26515:26730" ph="{...}" />
-            <marker date="1557923151178" expanded="true" signature="26747:27128" ph="{...}" />
+            <marker date="1558183712781" expanded="false" signature="6:180" ph="..." />
+            <marker date="1558183712781" expanded="true" signature="209:27199" ph="{...}" />
+            <marker date="1558183712781" expanded="true" signature="273:27197" ph="{...}" />
+            <marker date="1558183712781" expanded="false" signature="288:757" ph="Enums" />
+            <marker date="1558183712781" expanded="true" signature="311:380" ph="/// Possible SPI states. ... " />
+            <marker date="1558183712781" expanded="true" signature="411:736" ph="{...}" />
+            <marker date="1558183712781" expanded="false" signature="767:4428" ph="Class level variables." />
+            <marker date="1558183712781" expanded="true" signature="807:895" ph="/// Pin used by the STM32 that it is ready. ... " />
+            <marker date="1558183712781" expanded="true" signature="964:1088" ph="/// Pin used by the ESP32 to indicate that it is ready to send or receive data. ... " />
+            <marker date="1558183712781" expanded="true" signature="1156:1254" ph="/// SPI interface used to communicate with the ESP32. ... " />
+            <marker date="1558183712781" expanded="true" signature="1312:1416" ph="/// STM32 pin connected to the Reset (EN) pin on the ESP32. ... " />
+            <marker date="1558183712781" expanded="true" signature="1477:1575" ph="/// STM32 pin connected to the boot pin on the ESP32. ... " />
+            <marker date="1558183712781" expanded="true" signature="1635:2018" ph="/// Current state of the SPI interface. ... " />
+            <marker date="1558183712781" expanded="true" signature="2081:2176" ph="///     Queue of messages to be sent to the ESP32. ... " />
+            <marker date="1558183712781" expanded="true" signature="2255:2506" ph="///     Lock for the message queue to synchronise access by the ... " />
+            <marker date="1558183712781" expanded="true" signature="2582:2721" ph="///     Handle used to synchronise the incoming messages and the task processing the messages. ... " />
+            <marker date="1558183712781" expanded="true" signature="2828:2936" ph="///     Thread processing the messages as they enter the queue. ... " />
+            <marker date="1558183712781" expanded="true" signature="2991:3040" ph="///  ... " />
+            <marker date="1558183712781" expanded="true" signature="3108:3210" ph="/// Number of times we have retried to send this message. ... " />
+            <marker date="1558183712781" expanded="true" signature="3260:3606" ph="/* Last status code for an incoming message operation. ... */" />
+            <marker date="1558183712781" expanded="true" signature="3616:3908" ph="/// Current message being sent by the system. ... " />
+            <marker date="1558183712781" expanded="true" signature="3977:4104" ph="/// Message used to hold the acknowledgements between message transmission states. ... " />
+            <marker date="1558183712781" expanded="true" signature="4181:4302" ph="/// This value is used a lot so make it available as a class level variable. ... " />
+            <marker date="1558183712781" expanded="true" signature="4446:5964" ph="Constructor(s)" />
+            <marker date="1558183712781" expanded="true" signature="4478:4594" ph="///     Default constructor is private to prevent it from being called. ... " />
+            <marker date="1558183712781" expanded="true" signature="4633:4653" ph="{...}" />
+            <marker date="1558183712781" expanded="true" signature="4663:4778" ph="/// Default constructor for the SPI Transport Provider implementation. ... " />
+            <marker date="1558183712781" expanded="true" signature="4952:5944" ph="{...}" />
+            <marker date="1558183712781" expanded="true" signature="5859:5897" ph="{...}" />
+            <marker date="1558183712781" expanded="false" signature="5974:6992" ph="Delegates and events" />
+            <marker date="1558183712781" expanded="true" signature="6012:6136" ph="///     Error event to allow lower level errors to bubble up to the interfaces. ... " />
+            <marker date="1558183712781" expanded="true" signature="6242:6315" ph="///     Data received event. ... " />
+            <marker date="1558183712781" expanded="true" signature="6429:6818" ph="/// The ESP32 is indicating that it is ready to process some data from the STM32 ... " />
+            <marker date="1558183712781" expanded="true" signature="6906:6972" ph="{...}" />
+            <marker date="1558183712781" expanded="true" signature="7002:27191" ph="Methods" />
+            <marker date="1558183712781" expanded="true" signature="7027:7106" ph="/// Main MessageDispatcher thread. ... " />
+            <marker date="1558183712781" expanded="true" signature="7133:9681" ph="{...}" />
+            <marker date="1558183712781" expanded="true" signature="7168:9671" ph="{...}" />
+            <marker date="1558183712781" expanded="true" signature="7199:7535" ph="/* Work out if we should wait for an incoming signal. ... */" />
+            <marker date="1558183712781" expanded="true" signature="7622:7806" ph="{...}" />
+            <marker date="1558183712781" expanded="true" signature="7832:7926" ph="{...}" />
+            <marker date="1558183712781" expanded="true" signature="7943:8042" ph="/* Signals are used to transition from one state to another. ... */" />
+            <marker date="1558183712781" expanded="true" signature="8151:9657" ph="{...}" />
+            <marker date="1558183712781" expanded="true" signature="9691:10368" ph="/// Process the Idle state when we have received a signal that there is some work to do. ... " />
+            <marker date="1558183712781" expanded="true" signature="10408:12323" ph="{...}" />
+            <marker date="1558183712781" expanded="true" signature="10574:10838" ph="{...}" />
+            <marker date="1558183712781" expanded="true" signature="10859:12299" ph="{...}" />
+            <marker date="1558183712781" expanded="true" signature="11541:11768" ph="{...}" />
+            <marker date="1558183712781" expanded="true" signature="11793:12077" ph="{...}" />
+            <marker date="1558183712781" expanded="true" signature="12333:12533" ph="/// The message header was sent by the ESP32 at the same time the STM32 ... " />
+            <marker date="1558183712781" expanded="true" signature="12595:13926" ph="{...}" />
+            <marker date="1558183712781" expanded="true" signature="13101:13217" ph="{...}" />
+            <marker date="1558183712781" expanded="true" signature="13234:13735" ph="{...}" />
+            <marker date="1558183712781" expanded="true" signature="13309:13414" ph="{...}" />
+            <marker date="1558183712781" expanded="true" signature="13435:13721" ph="{...}" />
+            <marker date="1558183712781" expanded="true" signature="13843:13916" ph="{...}" />
+            <marker date="1558183712781" expanded="true" signature="13936:14017" ph="/// Process an inbound message body. ... " />
+            <marker date="1558183712781" expanded="true" signature="14074:16475" ph="{...}" />
+            <marker date="1558183712781" expanded="true" signature="15100:15287" ph="{...}" />
+            <marker date="1558183712781" expanded="true" signature="15131:15197" ph="/* TODO: Add retry logic. ... */" />
+            <marker date="1558183712781" expanded="true" signature="15304:16318" ph="{...}" />
+            <marker date="1558183712781" expanded="true" signature="15706:15971" ph="{...}" />
+            <marker date="1558183712781" expanded="true" signature="15992:16304" ph="{...}" />
+            <marker date="1558183712781" expanded="true" signature="16031:16099" ph="/* Add retry logic. ... */" />
+            <marker date="1558183712781" expanded="true" signature="16485:16776" ph="/// Acknowledge the incoming message body. ... " />
+            <marker date="1558183712781" expanded="true" signature="16836:17487" ph="{...}" />
+            <marker date="1558183712781" expanded="true" signature="17225:17399" ph="{...}" />
+            <marker date="1558183712781" expanded="true" signature="17497:17610" ph="/// ESP32 has indicated that it is ready so send the message header. ... " />
+            <marker date="1558183712781" expanded="true" signature="17669:18921" ph="{...}" />
+            <marker date="1558183712781" expanded="true" signature="17873:18560" ph="{...}" />
+            <marker date="1558183712781" expanded="true" signature="18169:18399" ph="/* For a header we set the payload to null (which the constructor uses ... */" />
+            <marker date="1558183712781" expanded="true" signature="18577:18704" ph="{...}" />
+            <marker date="1558183712781" expanded="true" signature="18931:19334" ph="/// Process the ESP32 acknowledgement message. ... " />
+            <marker date="1558183712781" expanded="true" signature="19408:22432" ph="{...}" />
+            <marker date="1558183712781" expanded="true" signature="20074:20314" ph="/* We can get three possible responses here: ... */" />
+            <marker date="1558183712781" expanded="true" signature="20371:21957" ph="{...}" />
+            <marker date="1558183712781" expanded="true" signature="20581:20765" ph="{...}" />
+            <marker date="1558183712781" expanded="true" signature="20786:21943" ph="{...}" />
+            <marker date="1558183712781" expanded="true" signature="21028:21701" ph="{...}" />
+            <marker date="1558183712781" expanded="true" signature="21198:21413" ph="{...}" />
+            <marker date="1558183712781" expanded="true" signature="21442:21679" ph="{...}" />
+            <marker date="1558183712781" expanded="true" signature="21726:21925" ph="{...}" />
+            <marker date="1558183712781" expanded="true" signature="21974:22126" ph="{...}" />
+            <marker date="1558183712781" expanded="true" signature="22292:22422" ph="{...}" />
+            <marker date="1558183712781" expanded="true" signature="22442:22530" ph="/// Process the sending message body state. ... " />
+            <marker date="1558183712781" expanded="true" signature="22587:22994" ph="{...}" />
+            <marker date="1558183712781" expanded="true" signature="23004:23103" ph="/// Process the incoming message body acknowledgement. ... " />
+            <marker date="1558183712781" expanded="true" signature="23175:25068" ph="{...}" />
+            <marker date="1558183712781" expanded="true" signature="23697:23937" ph="/* We can get three possible responses here: ... */" />
+            <marker date="1558183712781" expanded="true" signature="23994:24873" ph="{...}" />
+            <marker date="1558183712781" expanded="true" signature="24091:24219" ph="{...}" />
+            <marker date="1558183712781" expanded="true" signature="24240:24859" ph="{...}" />
+            <marker date="1558183712781" expanded="true" signature="24547:24696" ph="{...}" />
+            <marker date="1558183712781" expanded="true" signature="24721:24841" ph="{...}" />
+            <marker date="1558183712781" expanded="true" signature="24890:24972" ph="{...}" />
+            <marker date="1558183712781" expanded="true" signature="25078:25175" ph="/// Process the Transport packet transmission state. ... " />
+            <marker date="1558183712781" expanded="true" signature="25237:25257" ph="{...}" />
+            <marker date="1558183712781" expanded="true" signature="25267:25413" ph="/// Queue a for sending to the ESP32. ... " />
+            <marker date="1558183712781" expanded="true" signature="25489:25874" ph="{...}" />
+            <marker date="1558183712781" expanded="true" signature="25625:25818" ph="/* Inform the task processing the messages that a new message ... */" />
+            <marker date="1558183712781" expanded="true" signature="25884:26414" ph="/// An error has been detected so check the retry count to see if we can retry sending the message. ... " />
+            <marker date="1558183712781" expanded="true" signature="26482:27171" ph="{...}" />
+            <marker date="1558183712781" expanded="true" signature="26548:26763" ph="{...}" />
+            <marker date="1558183712781" expanded="true" signature="26780:27161" ph="{...}" />
           </folding>
         </state>
       </provider>

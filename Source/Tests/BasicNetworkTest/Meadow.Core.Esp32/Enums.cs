@@ -76,7 +76,7 @@ namespace Meadow.Core.Esp32
         SetConfiguration = 2
     };
 
-    public enum PacketType : byte
+    public enum MessageTypes : byte
     {
         Ack = 0x00,
         Nak = 0x01,

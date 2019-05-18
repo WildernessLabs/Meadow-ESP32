@@ -284,7 +284,7 @@ namespace Meadow.Core.Esp32
                 }
                 else
                 {
-                    Messages.Message readyMessage = new Messages.Message(PacketType.Ready, Esp32Interfaces.None, Messages.INVALID_FUNCTION, Messages.INVALID_MESSAGE_ID, 0, null);
+                    Messages.Message readyMessage = new Messages.Message(MessageTypes.Ready, Esp32Interfaces.None, Messages.INVALID_FUNCTION, Messages.INVALID_MESSAGE_ID, 0, null);
                     byte[] encodedReadyMessage = Encoders.EncodeMessage(readyMessage, true);
                     _stm32ReadyPin.State = true;
                     byte[] encodedIncomingHeader = _esp32.WriteRead(encodedReadyMessage, (ushort) encodedReadyMessage.Length);
@@ -293,12 +293,12 @@ namespace Meadow.Core.Esp32
                     if (decodeStatus == StatusCodes.CompletedOK)
                     {
                         _acknowledgementMessage = new Messages.Message(_inboundMessage.Value);
-                        _acknowledgementMessage.MessageType = (byte) PacketType.Ack;
+                        _acknowledgementMessage.MessageType = (byte) MessageTypes.Ack;
                     }
                     else
                     {
-                        _acknowledgementMessage = new Messages.Message(PacketType.Nak, Esp32Interfaces.Transport, 0, 0, (UInt32) decodeStatus, null);
-                        _acknowledgementMessage.MessageType = (byte)PacketType.Nak;
+                        _acknowledgementMessage = new Messages.Message(MessageTypes.Nak, Esp32Interfaces.Transport, 0, 0, (UInt32) decodeStatus, null);
+                        _acknowledgementMessage.MessageType = (byte)MessageTypes.Nak;
                     }
                     _acknowledgementMessage.StatusCode = (UInt32) decodeStatus;
                     _currentState = SpiStates.AcknowledgingMessageHeader;
@@ -318,7 +318,7 @@ namespace Meadow.Core.Esp32
             Console.WriteLine("Sending acknowledgement:");
             Console.WriteLine(DebugHelpers.DebugHelpers.PrintableBuffer(encodedAcknowledgementMessage));
             _esp32.WriteBytes(encodedAcknowledgementMessage);
-            if ((PacketType) _acknowledgementMessage.MessageType == PacketType.Nak)
+            if ((MessageTypes) _acknowledgementMessage.MessageType == MessageTypes.Nak)
             {
                 _inboundMessage = null;
                 _currentState = SpiStates.Idle;
@@ -380,7 +380,7 @@ namespace Meadow.Core.Esp32
                 {
                     _inboundMessage = inboundMessage;
                     _acknowledgementMessage.StatusCode = (UInt32) StatusCodes.CompletedOK;
-                    _acknowledgementMessage.MessageType = (byte) PacketType.Ack;
+                    _acknowledgementMessage.MessageType = (byte) MessageTypes.Ack;
                 }
                 else
                 {
@@ -388,7 +388,7 @@ namespace Meadow.Core.Esp32
                     //    Add retry logic.
                     //
                     _acknowledgementMessage.StatusCode = (UInt32) StatusCodes.HeaderBodyFieldMismatch;
-                    _acknowledgementMessage.MessageType = (byte) PacketType.Ack;
+                    _acknowledgementMessage.MessageType = (byte) MessageTypes.Ack;
                 }
             }
             _currentState = SpiStates.AcknowledgingMessageBody;
@@ -425,10 +425,10 @@ namespace Meadow.Core.Esp32
         {
             Console.WriteLine("Entering ProcessWantToSendMessageHeaderState");
             byte[] encodedHeader;
-            if (_outboundMessage.Value.MessageType == (byte) PacketType.Data)
+            if (_outboundMessage.Value.MessageType == (byte) MessageTypes.Data)
             {
                 Messages.Message outbound = _outboundMessage.Value;
-                Messages.Message headerMessage = new Messages.Message(PacketType.Header, (Esp32Interfaces) outbound.Interface, outbound.Function, outbound.MessageID, outbound.StatusCode, null);
+                Messages.Message headerMessage = new Messages.Message(MessageTypes.Header, (Esp32Interfaces) outbound.Interface, outbound.Function, outbound.MessageID, outbound.StatusCode, null);
                 //
                 //  For a header we set the payload to null (which the constructor uses
                 //  to set the PayloadLength to 0) so we must put the PayloadLength into
@@ -479,7 +479,7 @@ namespace Meadow.Core.Esp32
             {
                 Console.WriteLine("Decoded OK.");
                 Console.WriteLine(acknowledgement.ToString());
-                if (acknowledgement.Value.MessageType == (byte) PacketType.Nak)
+                if (acknowledgement.Value.MessageType == (byte) MessageTypes.Nak)
                 {
                     Console.WriteLine("Received NAK.");
                     RetrySendingIfPossible((StatusCodes) acknowledgement.Value.StatusCode);
@@ -555,7 +555,7 @@ namespace Meadow.Core.Esp32
             //
             if (decodeStatus == StatusCodes.CompletedOK)
             {
-                if (acknowledgement.Value.MessageType == (byte) PacketType.Nak)
+                if (acknowledgement.Value.MessageType == (byte) MessageTypes.Nak)
                 {
                     RetrySendingIfPossible((StatusCodes) acknowledgement.Value.StatusCode);
                 }
