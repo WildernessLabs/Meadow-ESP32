@@ -26,7 +26,7 @@ namespace Gpio
      *
      *      Note that this is also the same pin used to connect to Blinky.
      */
-    const gpio_num_t LOGGING_TX_PIN = GPIO_NUM_22;
+    const gpio_num_t LOGGING_TX_PIN = GPIO_NUM_3;
 
     /*
      *      UART Rx pin for the logging output.
@@ -43,12 +43,12 @@ namespace Gpio
     const gpio_num_t BOOT_PIN = GPIO_NUM_0;
 
     /*
-     *      GPIO pin connected to UART0 Tx line.
+     *      GPIO pin connected to UART0 Rx line.
      */
     const gpio_num_t UART0_RX_PIN = GPIO_NUM_3;
 
     /*
-     *      GPIO pin connected to UART0 Rx line.
+     *      GPIO pin connected to UART0 Tx line.
      */
     const gpio_num_t UART0_TX_PIN = GPIO_NUM_1;
 
@@ -58,7 +58,7 @@ namespace Gpio
      *      the STM32.
      */
 #ifdef USE_MEADOW
-    const gpio_num_t ESP32_READY_PIN = UART0_RX_PIN;
+    const gpio_num_t ESP32_READY_PIN = UART0_TX_PIN;
 #else
     const gpio_num_t ESP32_READY_PIN = GPIO_NUM_25;
 #endif
@@ -69,7 +69,7 @@ namespace Gpio
      *      the ESP32.
      */
 #ifdef USE_MEADOW
-    const gpio_num_t STM32_READY_PIN = UART0_TX_PIN;
+    const gpio_num_t STM32_READY_PIN = BOOT_PIN;
 #else
     const gpio_num_t STM32_READY_PIN = GPIO_NUM_26;
 #endif

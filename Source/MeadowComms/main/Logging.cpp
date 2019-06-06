@@ -67,7 +67,10 @@ void Logging::Setup()
     //
     //  Now allow the original UART0 pins to be used as GPIO pins.
     //
-    gpio_pad_select_gpio(Gpio::UART0_TX_PIN);
+    if (Gpio::LOGGING_TX_PIN != Gpio::UART0_TX_PIN)
+    {
+        gpio_pad_select_gpio(Gpio::UART0_TX_PIN);
+    }
     gpio_pad_select_gpio(Gpio::UART0_RX_PIN);
 }
 
