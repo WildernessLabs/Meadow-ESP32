@@ -26,8 +26,8 @@ extern "C" void app_main()
     /*
      *  Set up the messaging system to use SPI hardware communications.
      */
-//    SpiTransportProvider *spi = new SpiTransportProvider();
-//    MessageDispatcher *messageDispatcher = new MessageDispatcher(spi);
+    SpiTransportProvider *spi = new SpiTransportProvider();
+    MessageDispatcher *messageDispatcher = new MessageDispatcher(spi);
 
     esp_err_t result = nvs_flash_init();
     if ((result == ESP_ERR_NVS_NO_FREE_PAGES) || (result == ESP_ERR_NVS_NEW_VERSION_FOUND))
@@ -37,12 +37,12 @@ extern "C" void app_main()
     }
     ESP_ERROR_CHECK(result);
 
-    bool state = false;
+//    bool state = false;
     while (true)
     {
 //        spi->WaitForData();
 //        gpio_set_level(Gpio::ESP32_READY_PIN, state ? 1 : 0);
-        state = !state;
+//        state = !state;
         vTaskDelay(500 / portTICK_PERIOD_MS);
     }
 }
