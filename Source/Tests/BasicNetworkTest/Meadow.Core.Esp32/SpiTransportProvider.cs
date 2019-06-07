@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Dynamic;
 using Meadow.Hardware;
-using Meadow.Hardware.Communications;
 
 namespace Meadow.Core.Esp32
 {
@@ -41,7 +40,7 @@ namespace Meadow.Core.Esp32
         /// <summary>
         /// SPI interface used to communicate with the ESP32.
         /// </summary>
-        private readonly SoftwareSPIBus _esp32;
+        private readonly SpiPeripheral _esp32;
 
         /// <summary>
         /// STM32 pin connected to the Reset (EN) pin on the ESP32.
@@ -143,14 +142,21 @@ namespace Meadow.Core.Esp32
             _stm32ReadyPin = (DigitalOutputPort) device.CreateDigitalOutputPort(stm32ReadyPin, false);
             _esp32ReadyPin = (DigitalInputPort) device.CreateDigitalInputPort(esp32ReadyPin, interruptMode: InterruptMode.EdgeRising);
             _esp32ReadyPin.Changed += _esp32ReadyPin_Changed;
-            _esp32 = new SoftwareSPIBus(device, mosi, miso, clock, chipSelect);
+            _esp32 = new SpiPeripheral(new SoftwareSPIBus(device, mosi, miso, clock), device.CreateDigitalOutputPort(chipSelect, true));
             _reset = (DigitalOutputPort) device.CreateDigitalOutputPort(resetPin, true);
-            _boot = (DigitalOutputPort) device.CreateDigitalOutputPort(bootPin, true);
+            if (stm32ReadyPin == bootPin)
+            {
+                _boot = _stm32ReadyPin;
+            }
+            else
+            {
+                _boot = (DigitalOutputPort) device.CreateDigitalOutputPort(bootPin, true);
+            }
             
             _boot.State = true;
             _reset.State = false;
             _reset.State = true;
-            _boot.Dispose();
+//            _boot.Dispose();
             _boot = null;
             
             _currentState = SpiStates.Idle;
