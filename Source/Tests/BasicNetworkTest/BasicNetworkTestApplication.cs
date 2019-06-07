@@ -7,7 +7,7 @@ using System.Threading;
 
 namespace BasicNetworkTest
 {
-    public class BasicNetworkTestApplication : AppBase<F7Micro, BasicNetworkTestApplication>
+    public class BasicNetworkTestApplication : App<F7Micro, BasicNetworkTestApplication>
     {
         private DigitalInputPort _button;
 
@@ -24,7 +24,7 @@ namespace BasicNetworkTest
         /// </summary>
         public BasicNetworkTestApplication()
         {
-            _dispatcher = new MessageDispatcher(Device, stm32ReadyPin: Device.Pins.ESP_UART_RX, esp32ReadyPin: Device.Pins.ESP_UART_TX, 
+            _dispatcher = new MessageDispatcher(Device, stm32ReadyPin: Device.Pins.ESP_UART_RX, esp32ReadyPin: Device.Pins.ESP_BOOT, 
                 mosi: Device.Pins.ESP_MOSI, miso: Device.Pins.ESP_MISO, clock: Device.Pins.ESP_CLK, chipSelect: Device.Pins.ESP_CS, 
                 /* Device.Pins.ESP_BOOT */ bootPin: Device.Pins.ESP_BOOT, resetPin: Device.Pins.ESP_RST);
             _dispatcher.MessageReceived += _dispatcher_MessageReceived;
