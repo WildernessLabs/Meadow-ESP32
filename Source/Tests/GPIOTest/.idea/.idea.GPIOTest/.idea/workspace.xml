@@ -1,0 +1,826 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="6998eb26-18c1-41ec-b729-c97f7b9b0e43" name="Default Changelist" comment="">
+      <change beforePath="$PROJECT_DIR$/../../MeadowComms/.settings/language.settings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../../MeadowComms/.settings/language.settings.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../MeadowComms/main/AppMain.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/../../MeadowComms/main/AppMain.cpp" afterDir="false" />
+    </list>
+    <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileEditorManager">
+    <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/GPIOTest.cs">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="1106">
+              <caret line="109" selection-start-line="109" selection-end-line="109" />
+              <folding>
+                <marker date="1559815189531" expanded="true" signature="6:96" ph="..." />
+                <marker date="1559815189531" expanded="true" signature="116:3924" ph="{...}" />
+                <marker date="1559815189531" expanded="true" signature="191:3922" ph="{...}" />
+                <marker date="1559815189531" expanded="true" signature="249:337" ph="/// Pin used by the STM32 that it is ready. ... " />
+                <marker date="1559815189531" expanded="true" signature="406:530" ph="/// Pin used by the ESP32 to indicate that it is ready to send or receive data. ... " />
+                <marker date="1559815189531" expanded="true" signature="589:693" ph="/// STM32 pin connected to the Reset (EN) pin on the ESP32. ... " />
+                <marker date="1559815189531" expanded="true" signature="754:852" ph="/// STM32 pin connected to the boot pin on the ESP32. ... " />
+                <marker date="1559815189531" expanded="true" signature="1032:1101" ph="/// Default constructor. ... " />
+                <marker date="1559815189531" expanded="true" signature="1138:1977" ph="{...}" />
+                <marker date="1559815189531" expanded="true" signature="1149:1389" ph="/* _button = (DigitalInputPort) Device.CreateDigitalInputPort(Device.Pins.D14, interruptMode: InterruptMode.EdgeF ... */" />
+                <marker date="1559815189531" expanded="true" signature="2063:2286" ph="{...}" />
+                <marker date="1559815189531" expanded="true" signature="2296:2424" ph="///  ... " />
+                <marker date="1559815189531" expanded="true" signature="2505:2574" ph="{...}" />
+                <marker date="1559815189531" expanded="true" signature="2601:3393" ph="{...}" />
+                <marker date="1559815189531" expanded="true" signature="2676:3137" ph="/* _esp32ReadyPin?.Dispose(); ... */" />
+                <marker date="1559815189531" expanded="true" signature="3403:3470" ph="/// Main program loop. ... " />
+                <marker date="1559815189531" expanded="true" signature="3496:3916" ph="{...}" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/../../../../Meadow.Core/source/Meadow.Core/Devices/F7Micro.cs">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="688">
+              <caret line="52" column="39" selection-start-line="52" selection-start-column="37" selection-end-line="52" selection-end-column="41" />
+              <folding>
+                <marker date="1559730986409" expanded="false" signature="6:83" ph="..." />
+                <marker date="1559730986409" expanded="true" signature="109:4001" ph="{...}" />
+                <marker date="1559730986409" expanded="true" signature="116:312" ph="/// Represents a Meadow F7 micro device. Includes device-specific IO mapping, ... " />
+                <marker date="1559730986409" expanded="true" signature="357:3999" ph="{...}" />
+                <marker date="1559730986409" expanded="true" signature="503:603" ph="/// Gets the pins. ... " />
+                <marker date="1559730986409" expanded="true" signature="904:1322" ph="{...}" />
+                <marker date="1559730986409" expanded="true" signature="985:1131" ph="/* this.WiFiAdapters = new List&lt;WiFiAdapter&gt; ... */" />
+                <marker date="1559730986409" expanded="true" signature="1535:1636" ph="{...}" />
+                <marker date="1559730986409" expanded="true" signature="1936:2093" ph="{...}" />
+                <marker date="1559730986409" expanded="true" signature="2390:2537" ph="{...}" />
+                <marker date="1559730986409" expanded="true" signature="2658:2761" ph="{...}" />
+                <marker date="1559730986409" expanded="true" signature="2929:3028" ph="{...}" />
+                <marker date="1559730986409" expanded="true" signature="3121:3207" ph="{...}" />
+                <marker date="1559730986409" expanded="true" signature="3357:3436" ph="{...}" />
+                <marker date="1559730986409" expanded="true" signature="3516:3604" ph="{...}" />
+                <marker date="1559730986409" expanded="true" signature="3702:3780" ph="{...}" />
+                <marker date="1559730986409" expanded="true" signature="3901:3992" ph="{...}" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/../../../../Meadow.Core/source/Meadow.Core/Hardware/DigitalOutputPort.cs">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="576">
+              <caret line="41" column="103" selection-start-line="41" selection-start-column="103" selection-end-line="41" selection-end-column="103" />
+              <folding>
+                <marker date="1556712050234" expanded="false" signature="6:32" ph="..." />
+                <marker date="1556712050234" expanded="true" signature="59:3303" ph="{...}" />
+                <marker date="1556712050234" expanded="true" signature="66:166" ph="/// Represents a port that is capable of writing analog output. ... " />
+                <marker date="1556712050234" expanded="true" signature="225:3301" ph="{...}" />
+                <marker date="1556712050234" expanded="true" signature="295:466" ph="/// Gets or sets the state of the port. ... " />
+                <marker date="1556712050234" expanded="true" signature="502:684" ph="{...}" />
+                <marker date="1556712050234" expanded="true" signature="555:674" ph="{...}" />
+                <marker date="1556712050234" expanded="true" signature="717:896" ph="/// Creates a new DigitalOutputPort from a pin. ... " />
+                <marker date="1556712050234" expanded="true" signature="1116:1631" ph="{...}" />
+                <marker date="1556712050234" expanded="true" signature="1342:1528" ph="{...}" />
+                <marker date="1556712050234" expanded="true" signature="1545:1621" ph="{...}" />
+                <marker date="1556712050234" expanded="true" signature="1641:1898" ph="/// From the specified pin and initialState. ... " />
+                <marker date="1556712050234" expanded="true" signature="2035:2482" ph="{...}" />
+                <marker date="1556712050234" expanded="true" signature="2174:2325" ph="{...}" />
+                <marker date="1556712050234" expanded="true" signature="2555:2641" ph="{...}" />
+                <marker date="1556712050234" expanded="true" signature="2697:3196" ph="{...}" />
+                <marker date="1556712050234" expanded="true" signature="2720:2972" ph="/* TODO: we should consider moving this logic to the finalizer ... */" />
+                <marker date="1556712050234" expanded="true" signature="3000:3186" ph="{...}" />
+                <marker date="1556712050234" expanded="true" signature="3045:3139" ph="{...}" />
+                <marker date="1556712050234" expanded="true" signature="3247:3295" ph="{...}" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/../../../../Meadow.Core/source/Meadow.Core/Devices/Definitions/F7MicroPinDefinitions.cs">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="48">
+              <caret line="6" column="25" selection-start-line="6" selection-start-column="25" selection-end-line="6" selection-end-column="25" />
+              <folding>
+                <marker date="1559730986316" expanded="false" signature="6:70" ph="..." />
+                <marker date="1559730986316" expanded="true" signature="96:16427" ph="{...}" />
+                <marker date="1559730986316" expanded="true" signature="131:16425" ph="{...}" />
+                <marker date="1559730986316" expanded="true" signature="206:16418" ph="{...}" />
+                <marker date="1559730986316" expanded="true" signature="365:542" ph="/* OnboardLEDBlue ... */" />
+                <marker date="1559730986316" expanded="true" signature="682:829" ph="{...}" />
+                <marker date="1559730986316" expanded="true" signature="857:1057" ph="/* OnboardLEDGreen ... */" />
+                <marker date="1559730986316" expanded="true" signature="1199:1346" ph="{...}" />
+                <marker date="1559730986316" expanded="true" signature="1374:1548" ph="/* OnboardLEDRed ... */" />
+                <marker date="1559730986316" expanded="true" signature="1688:1835" ph="{...}" />
+                <marker date="1559730986316" expanded="true" signature="1864:1933" ph="/* D00 ... */" />
+                <marker date="1559730986316" expanded="true" signature="2051:2202" ph="{...}" />
+                <marker date="1559730986316" expanded="true" signature="2230:2307" ph="/* D01 ... */" />
+                <marker date="1559730986316" expanded="true" signature="2426:2632" ph="{...}" />
+                <marker date="1559730986316" expanded="true" signature="2660:2797" ph="/* D02 ... */" />
+                <marker date="1559730986316" expanded="true" signature="2915:3080" ph="{...}" />
+                <marker date="1559730986316" expanded="true" signature="3108:3264" ph="/* D03 ... */" />
+                <marker date="1559730986316" expanded="true" signature="3382:3627" ph="{...}" />
+                <marker date="1559730986316" expanded="true" signature="3655:3827" ph="/* D04 ... */" />
+                <marker date="1559730986316" expanded="true" signature="3945:4190" ph="{...}" />
+                <marker date="1559730986316" expanded="true" signature="4218:4351" ph="/* D05 ... */" />
+                <marker date="1559730986316" expanded="true" signature="4469:4634" ph="{...}" />
+                <marker date="1559730986316" expanded="true" signature="4662:4828" ph="/* D06 ... */" />
+                <marker date="1559730986316" expanded="true" signature="4946:5197" ph="{...}" />
+                <marker date="1559730986316" expanded="true" signature="5225:5329" ph="/* D07 ... */" />
+                <marker date="1559730986316" expanded="true" signature="5447:5718" ph="{...}" />
+                <marker date="1559730986316" expanded="true" signature="5746:5897" ph="/* D08 ... */" />
+                <marker date="1559730986316" expanded="true" signature="6015:6234" ph="{...}" />
+                <marker date="1559730986316" expanded="true" signature="6262:6418" ph="/* D09 ... */" />
+                <marker date="1559730986316" expanded="true" signature="6536:6732" ph="{...}" />
+                <marker date="1559730986316" expanded="true" signature="6760:6837" ph="/* D10 ... */" />
+                <marker date="1559730986316" expanded="true" signature="6956:7079" ph="{...}" />
+                <marker date="1559730986316" expanded="true" signature="7107:7250" ph="/* D11 ... */" />
+                <marker date="1559730986316" expanded="true" signature="7368:7504" ph="{...}" />
+                <marker date="1559730986316" expanded="true" signature="7532:7676" ph="/* D12 ... */" />
+                <marker date="1559730986316" expanded="true" signature="7795:8017" ph="{...}" />
+                <marker date="1559730986316" expanded="true" signature="8045:8195" ph="/* D13 ... */" />
+                <marker date="1559730986316" expanded="true" signature="8314:8535" ph="{...}" />
+                <marker date="1559730986316" expanded="true" signature="8563:8602" ph="/* D14 ... */" />
+                <marker date="1559730986316" expanded="true" signature="8720:8790" ph="{...}" />
+                <marker date="1559730986316" expanded="true" signature="8818:8877" ph="/* D15 ... */" />
+                <marker date="1559730986316" expanded="true" signature="8995:9065" ph="{...}" />
+                <marker date="1559730986316" expanded="true" signature="9094:9260" ph="/* A00 ... */" />
+                <marker date="1559730986316" expanded="true" signature="9378:9506" ph="{...}" />
+                <marker date="1559730986316" expanded="true" signature="9534:9690" ph="/* A01 ... */" />
+                <marker date="1559730986316" expanded="true" signature="9808:9936" ph="{...}" />
+                <marker date="1559730986316" expanded="true" signature="9964:10124" ph="/* A02 ... */" />
+                <marker date="1559730986316" expanded="true" signature="10242:10370" ph="{...}" />
+                <marker date="1559730986316" expanded="true" signature="10398:10578" ph="/* A03 ... */" />
+                <marker date="1559730986316" expanded="true" signature="10696:10824" ph="{...}" />
+                <marker date="1559730986316" expanded="true" signature="10852:11003" ph="/* A04 ... */" />
+                <marker date="1559730986316" expanded="true" signature="11121:11250" ph="{...}" />
+                <marker date="1559730986316" expanded="true" signature="11278:11459" ph="/* A05 ... */" />
+                <marker date="1559730986316" expanded="true" signature="11577:11706" ph="{...}" />
+                <marker date="1559730986316" expanded="true" signature="11734:11764" ph="/* SCK ... */" />
+                <marker date="1559730986316" expanded="true" signature="11883:11953" ph="{...}" />
+                <marker date="1559730986316" expanded="true" signature="11981:12013" ph="/* MOSI ... */" />
+                <marker date="1559730986316" expanded="true" signature="12133:12202" ph="{...}" />
+                <marker date="1559730986316" expanded="true" signature="12230:12262" ph="/* MISO ... */" />
+                <marker date="1559730986316" expanded="true" signature="12383:12453" ph="{...}" />
+                <marker date="1559730986316" expanded="true" signature="12634:12704" ph="{...}" />
+                <marker date="1559730986316" expanded="true" signature="12884:12954" ph="{...}" />
+                <marker date="1559730986316" expanded="true" signature="13131:13201" ph="{...}" />
+                <marker date="1559730986316" expanded="true" signature="13375:13445" ph="{...}" />
+                <marker date="1559730986316" expanded="true" signature="13626:13697" ph="{...}" />
+                <marker date="1559730986316" expanded="true" signature="13874:13944" ph="{...}" />
+                <marker date="1559730986316" expanded="true" signature="14133:14203" ph="{...}" />
+                <marker date="1559730986316" expanded="true" signature="14393:14464" ph="{...}" />
+                <marker date="1559730986316" expanded="true" signature="14654:14840" ph="{...}" />
+                <marker date="1559730986316" expanded="true" signature="14882:16407" ph="{...}" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/../../../../Meadow.Core/source/Meadow.Core/Devices/F7GPIOManager.cs">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="4176">
+              <caret line="283" column="21" selection-start-line="283" selection-start-column="21" selection-end-line="283" selection-end-column="21" />
+              <folding>
+                <marker date="1559730986346" expanded="false" signature="6:166" ph="..." />
+                <marker date="1559730986346" expanded="true" signature="192:22978" ph="{...}" />
+                <marker date="1559730986346" expanded="true" signature="249:21194" ph="{...}" />
+                <marker date="1559730986346" expanded="true" signature="564:584" ph="{...}" />
+                <marker date="1559730986346" expanded="true" signature="618:4754" ph="{...}" />
+                <marker date="1559730986346" expanded="true" signature="4764:4970" ph="/// Sets the value of a discrete (digital output) ... " />
+                <marker date="1559730986346" expanded="true" signature="5031:5185" ph="{...}" />
+                <marker date="1559730986346" expanded="true" signature="5280:6455" ph="{...}" />
+                <marker date="1559730986346" expanded="true" signature="5405:5754" ph="{...}" />
+                <marker date="1559730986346" expanded="true" signature="5494:5713" ph="{...}" />
+                <marker date="1559730986346" expanded="true" signature="5830:5908" ph="{...}" />
+                <marker date="1559730986346" expanded="true" signature="5933:6005" ph="{...}" />
+                <marker date="1559730986346" expanded="true" signature="6022:6101" ph="{...}" />
+                <marker date="1559730986346" expanded="true" signature="6115:6246" ph="/* write the register ... */" />
+                <marker date="1559730986346" expanded="true" signature="6355:6445" ph="{...}" />
+                <marker date="1559730986346" expanded="true" signature="6465:6693" ph="/// Gets the value of a discrete (digital input) ... " />
+                <marker date="1559730986346" expanded="true" signature="6735:6889" ph="{...}" />
+                <marker date="1559730986346" expanded="true" signature="6972:7225" ph="{...}" />
+                <marker date="1559730986346" expanded="true" signature="7311:9878" ph="{...}" />
+                <marker date="1559730986346" expanded="true" signature="7522:7665" ph="{...}" />
+                <marker date="1559730986346" expanded="true" signature="7697:9647" ph="{...}" />
+                <marker date="1559730986346" expanded="true" signature="9715:9802" ph="{...}" />
+                <marker date="1559730986346" expanded="true" signature="9944:10094" ph="{...}" />
+                <marker date="1559730986346" expanded="true" signature="10411:10937" ph="{...}" />
+                <marker date="1559730986346" expanded="true" signature="10554:10633" ph="{...}" />
+                <marker date="1559730986346" expanded="true" signature="10691:10771" ph="{...}" />
+                <marker date="1559730986346" expanded="true" signature="10788:10870" ph="{...}" />
+                <marker date="1559730986346" expanded="true" signature="11042:11687" ph="{...}" />
+                <marker date="1559730986346" expanded="true" signature="11236:11322" ph="{...}" />
+                <marker date="1559730986346" expanded="true" signature="11431:11515" ph="{...}" />
+                <marker date="1559730986346" expanded="true" signature="11829:11968" ph="{...}" />
+                <marker date="1559730986346" expanded="true" signature="12131:12276" ph="{...}" />
+                <marker date="1559730986346" expanded="true" signature="12425:12609" ph="{...}" />
+                <marker date="1559730986346" expanded="true" signature="12799:12994" ph="{...}" />
+                <marker date="1559730986346" expanded="true" signature="13237:18524" ph="{...}" />
+                <marker date="1559730986346" expanded="true" signature="13335:14299" ph="{...}" />
+                <marker date="1559730986346" expanded="true" signature="14313:14488" ph="/* TODO: we probably need to disable interrupts here (enter critical section) ... */" />
+                <marker date="1559730986346" expanded="true" signature="14535:14713" ph="{...}" />
+                <marker date="1559730986346" expanded="true" signature="15067:15188" ph="{...}" />
+                <marker date="1559730986346" expanded="true" signature="15205:15297" ph="{...}" />
+                <marker date="1559730986346" expanded="true" signature="15356:16488" ph="{...}" />
+                <marker date="1559730986346" expanded="true" signature="15525:15986" ph="{...}" />
+                <marker date="1559730986346" expanded="true" signature="16007:16474" ph="{...}" />
+                <marker date="1559730986346" expanded="true" signature="16644:16925" ph="{...}" />
+                <marker date="1559730986346" expanded="true" signature="17062:17213" ph="{...}" />
+                <marker date="1559730986346" expanded="true" signature="17230:17350" ph="{...}" />
+                <marker date="1559730986346" expanded="true" signature="17430:18382" ph="{...}" />
+                <marker date="1559730986346" expanded="true" signature="17537:17949" ph="{...}" />
+                <marker date="1559730986346" expanded="true" signature="17984:18210" ph="{...}" />
+                <marker date="1559730986346" expanded="true" signature="18089:18156" ph="{...}" />
+                <marker date="1559730986346" expanded="true" signature="18399:18488" ph="{...}" />
+                <marker date="1559730986346" expanded="true" signature="18590:19195" ph="{...}" />
+                <marker date="1559730986346" expanded="true" signature="18704:19111" ph="{...}" />
+                <marker date="1559730986346" expanded="true" signature="19266:19533" ph="{...}" />
+                <marker date="1559730986346" expanded="true" signature="19592:20749" ph="{...}" />
+                <marker date="1559730986346" expanded="true" signature="19863:20739" ph="{...}" />
+                <marker date="1559730986346" expanded="true" signature="20109:20725" ph="{...}" />
+                <marker date="1559730986346" expanded="true" signature="20546:20685" ph="{...}" />
+                <marker date="1559730986346" expanded="true" signature="20831:21188" ph="{...}" />
+                <marker date="1559730986346" expanded="true" signature="20951:21016" ph="{...}" />
+                <marker date="1559730986346" expanded="true" signature="21033:21099" ph="{...}" />
+                <marker date="1559730986346" expanded="true" signature="21200:22976" ph="/* ===== MEADOW GPIO PIN MAP ===== ... */" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+    </leaf>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/../../.." />
+  </component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="file://$PROJECT_DIR$/GPIOTest.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../../../Meadow.Core/source/Meadow.Core/Hardware/DigitalOutputPort.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/DebugHelpers.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../../../Meadow.Core/source/Meadow.Core/Devices/Definitions/F7MicroPinDefinitions.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Program.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/IL/9C9BE306-C75F-4C65-8414-3D6EE0C681D0/1d/e3ca44d5/02000004pdb.il" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../../../Meadow.Core/source/Meadow.Core/Devices/F7GPIOManager.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/IL/13CF9C9C-CBF4-4FA6-9197-739034565CCF/eb/d6b42c90/02000004pdb.il" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Meadow.Core.Esp32/SpiTransportProvider.cs" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/../../../../Meadow.Core/source/Meadow.Core/Devices/F7Micro.cs" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/IL/BB66BB40-6CAC-40DB-A075-64AFA4668368/52/5e35fbb0/02000004pdb.il" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/IL/F9BCA27D-175A-4556-8872-0DA7DEE9D86D/19/fd3039ec/02000004pdb.il" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/IL/F6AC8BFF-C369-4E20-A7B1-DE911ABB66BC/33/57f31a13/02000004pdb.il" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/IL/DD4EB60B-2485-4264-BD2C-AF7B3C49BBFD/b4/e53bedec/02000004pdb.il" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/IL/E424D25A-1CBF-436B-9359-5827ECA2B424/a6/5021c8ac/02000004pdb.il" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/IL/953B3E6D-9FD0-473B-90B9-878261A6F7E6/9d/26905fa7/02000004pdb.il" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/IL/A2E1441D-89DC-42F6-8048-2E3A9A1FE761/d9/0e534e80/02000004pdb.il" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/IL/104D1F9D-D57E-413A-B6FE-499DA56616D9/9c/31f9cb21/02000004pdb.il" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/IL/8AC549D6-8B91-4143-9760-5A21B8F5ADEE/a6/692b6d98/02000070pdb.il" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/IL/B079BD8F-7B45-4958-8C87-3DBF3E600AFE/10/f1deabad/02000004pdb.il" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/IL/8AC549D6-8B91-4143-9760-5A21B8F5ADEE/0d/ccb02d6c/02000013pdb.il" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$APPLICATION_CONFIG_DIR$/resharper-host/DecompilerCache/IL/9477FC4A-8908-4631-8060-33FFCB359211/c9/ea313ac6/02000004pdb.il" root0="FORCE_HIGHLIGHTING" />
+  </component>
+  <component name="IdeDocumentHistory">
+    <option name="CHANGED_PATHS">
+      <list>
+        <option value="$PROJECT_DIR$/Program.cs" />
+        <option value="$PROJECT_DIR$/DebugHelpers.cs" />
+        <option value="$PROJECT_DIR$/../../../../Meadow.Core/source/Meadow.Core/Devices/F7GPIOManager.cs" />
+        <option value="$PROJECT_DIR$/GPIOTest.cs" />
+      </list>
+    </option>
+  </component>
+  <component name="ProjectConfigurationFiles">
+    <option name="files">
+      <list>
+        <option value="$PROJECT_DIR$/.idea/.idea.GPIOTest/.idea/vcs.xml" />
+        <option value="$PROJECT_DIR$/.idea/.idea.GPIOTest/.idea/indexLayout.xml" />
+      </list>
+    </option>
+  </component>
+  <component name="ProjectFrameBounds" fullScreen="true">
+    <option name="x" value="2472" />
+    <option name="y" value="72" />
+    <option name="width" value="1888" />
+    <option name="height" value="1177" />
+  </component>
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
+  <component name="ProjectView">
+    <navigator currentView="SolutionExplorer" proportions="" version="1">
+      <foldersAlwaysOnTop value="true" />
+    </navigator>
+    <panes>
+      <pane id="AssemblyExplorer" />
+      <pane id="FileSystemExplorer" />
+      <pane id="SolutionExplorer">
+        <option name="show-all-files" value="false" />
+      </pane>
+    </panes>
+  </component>
+  <component name="PropertiesComponent">
+    <property name="Rider.DefaultBreakpoints.AreToggled" value="true" />
+    <property name="Rider.ProjectViewActivator.IsNotFirstRun" value="true" />
+    <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="nodejs_interpreter_path.stuck_in_default_project" value="undefined stuck path" />
+    <property name="nodejs_npm_path_reset_for_default_project" value="true" />
+    <property name="settings.editor.selected.configurable" value="preferences.keymap" />
+  </component>
+  <component name="RunDashboard">
+    <option name="ruleStates">
+      <list>
+        <RuleState>
+          <option name="name" value="ConfigurationTypeDashboardGroupingRule" />
+        </RuleState>
+        <RuleState>
+          <option name="name" value="StatusDashboardGroupingRule" />
+        </RuleState>
+      </list>
+    </option>
+  </component>
+  <component name="RunManager">
+    <configuration name="Default" type="DotNetProject" factoryName=".NET Project">
+      <option name="EXE_PATH" value="" />
+      <option name="PROGRAM_PARAMETERS" value="" />
+      <option name="WORKING_DIRECTORY" value="" />
+      <option name="PASS_PARENT_ENVS" value="1" />
+      <option name="USE_EXTERNAL_CONSOLE" value="0" />
+      <option name="USE_MONO" value="0" />
+      <option name="RUNTIME_ARGUMENTS" value="" />
+      <option name="PROJECT_PATH" value="" />
+      <option name="PROJECT_EXE_PATH_TRACKING" value="1" />
+      <option name="PROJECT_ARGUMENTS_TRACKING" value="1" />
+      <option name="PROJECT_WORKING_DIRECTORY_TRACKING" value="1" />
+      <option name="PROJECT_KIND" value="None" />
+      <option name="PROJECT_TFM" value="" />
+      <method v="2">
+        <option name="Build" enabled="true" />
+      </method>
+    </configuration>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="6998eb26-18c1-41ec-b729-c97f7b9b0e43" name="Default Changelist" comment="" />
+      <created>1559040041464</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1559040041464</updated>
+      <workItem from="1559040044643" duration="1291000" />
+      <workItem from="1559654658366" duration="4027000" />
+      <workItem from="1559659410003" duration="2469000" />
+      <workItem from="1559730458486" duration="14084000" />
+      <workItem from="1559809769147" duration="3471000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TimeTrackingManager">
+    <option name="totallyTimeSpent" value="25342000" />
+  </component>
+  <component name="TodoView">
+    <todo-panel id="selected-file">
+      <is-autoscroll-to-source value="true" />
+    </todo-panel>
+    <todo-panel id="all">
+      <are-packages-shown value="true" />
+      <is-autoscroll-to-source value="true" />
+    </todo-panel>
+  </component>
+  <component name="ToolWindowManager">
+    <frame x="1920" y="0" width="2560" height="1440" extended-state="0" />
+    <editor active="true" />
+    <layout>
+      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.49673203" visible="true" weight="0.16759333" />
+      <window_info id="Structure" order="1" sideWeight="0.503268" side_tool="true" visible="true" weight="0.16759333" />
+      <window_info id="Favorites" order="2" side_tool="true" />
+      <window_info anchor="bottom" id="Message" order="0" />
+      <window_info anchor="bottom" id="Find" order="1" />
+      <window_info anchor="bottom" id="Run" order="2" />
+      <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
+      <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
+      <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
+      <window_info anchor="bottom" id="TODO" order="6" />
+      <window_info anchor="bottom" id="NuGet" order="7" />
+      <window_info anchor="bottom" id="Performance Profiler" order="8" />
+      <window_info anchor="bottom" id="Docker" order="9" show_stripe_button="false" />
+      <window_info anchor="bottom" id="Version Control" order="10" weight="0.329927" />
+      <window_info anchor="bottom" id="Database Changes" order="11" />
+      <window_info anchor="bottom" id="Unit Tests" order="12" />
+      <window_info active="true" anchor="bottom" id="Terminal" order="13" visible="true" weight="0.329927" />
+      <window_info anchor="bottom" id="Event Log" order="14" side_tool="true" />
+      <window_info anchor="bottom" id="Build" order="15" weight="0.329927" />
+      <window_info anchor="right" id="Commander" order="0" weight="0.4" />
+      <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
+      <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
+      <window_info anchor="right" id="Errors In Solution" order="3" />
+      <window_info anchor="right" id="Database" order="4" />
+      <window_info anchor="right" id="Unit Tests Coverage" order="5" />
+      <window_info anchor="right" id="IL Viewer" order="6" weight="0.3415409" />
+    </layout>
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="1" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <breakpoint enabled="true" suspend="NONE" type="DotNet Exception Breakpoints">
+          <properties exception="System.Threading.ThreadAbortException" displayValue="System.Threading.ThreadAbortException" />
+          <option name="timeStamp" value="1" />
+        </breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+  </component>
+  <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/Program.cs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="256">
+          <caret line="16" lean-forward="true" selection-start-line="16" selection-end-line="16" />
+          <folding>
+            <marker date="1559040191929" expanded="true" signature="33:311" ph="{...}" />
+            <marker date="1559040191929" expanded="true" signature="55:309" ph="{...}" />
+            <marker date="1559040191929" expanded="true" signature="108:303" ph="{...}" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/DebugHelpers.cs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="16">
+          <caret line="2" selection-start-line="2" selection-end-line="2" />
+          <folding>
+            <marker date="1559040871278" expanded="true" signature="6:32" ph="..." />
+            <marker date="1559040871278" expanded="true" signature="56:3801" ph="{...}" />
+            <marker date="1559040871278" expanded="true" signature="88:3799" ph="{...}" />
+            <marker date="1559040871278" expanded="true" signature="103:403" ph="///     Convert a byte array to a series of hexadecimal numbers ... " />
+            <marker date="1559040871278" expanded="true" signature="458:804" ph="{...}" />
+            <marker date="1559040871278" expanded="true" signature="575:764" ph="{...}" />
+            <marker date="1559040871278" expanded="true" signature="620:691" ph="{...}" />
+            <marker date="1559040871278" expanded="true" signature="814:1054" ph="///     Convert a byte into the hex representation of the value. ... " />
+            <marker date="1559040871278" expanded="true" signature="1110:1300" ph="{...}" />
+            <marker date="1559040871278" expanded="true" signature="1310:1550" ph="///     Convert a byte into hexadecimal including the &quot;0x&quot; prefix. ... " />
+            <marker date="1559040871278" expanded="true" signature="1599:1667" ph="{...}" />
+            <marker date="1559040871278" expanded="true" signature="1677:1924" ph="///     Convert an unsigned short into hexadecimal. ... " />
+            <marker date="1559040871278" expanded="true" signature="1976:2106" ph="{...}" />
+            <marker date="1559040871278" expanded="true" signature="2116:2357" ph="///     Convert an integer into hexadecimal. ... " />
+            <marker date="1559040871278" expanded="true" signature="2405:2644" ph="{...}" />
+            <marker date="1559040871278" expanded="true" signature="2654:2869" ph="///     Dump the array of bytes to the debug output in hexadecimal. ... " />
+            <marker date="1559040871278" expanded="true" signature="2929:3734" ph="{...}" />
+            <marker date="1559040871278" expanded="true" signature="3223:3577" ph="{...}" />
+            <marker date="1559040871278" expanded="true" signature="3276:3505" ph="{...}" />
+            <marker date="1559040871278" expanded="true" signature="3340:3433" ph="{...}" />
+            <marker date="1559040871278" expanded="true" signature="3615:3684" ph="{...}" />
+            <marker date="1559040871278" expanded="true" signature="3773:3793" ph="{...}" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Meadow.Core.Esp32/SpiTransportProvider.cs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="544">
+          <caret line="54" selection-start-line="30" selection-end-line="54" />
+          <folding>
+            <marker date="1558615274974" expanded="true" signature="209:27190" ph="{...}" />
+            <marker date="1558615274974" expanded="true" signature="273:27188" ph="{...}" />
+            <marker date="1558615274974" expanded="false" signature="288:757" ph="Enums" />
+            <marker date="1558615274974" expanded="true" signature="311:380" ph="/// Possible SPI states. ... " />
+            <marker date="1558615274974" expanded="true" signature="411:736" ph="{...}" />
+            <marker date="1558615274974" expanded="true" signature="767:4428" ph="Class level variables." />
+            <marker date="1558615274974" expanded="true" signature="807:895" ph="/// Pin used by the STM32 that it is ready. ... " />
+            <marker date="1558615274974" expanded="true" signature="964:1088" ph="/// Pin used by the ESP32 to indicate that it is ready to send or receive data. ... " />
+            <marker date="1558615274974" expanded="true" signature="1156:1254" ph="/// SPI interface used to communicate with the ESP32. ... " />
+            <marker date="1558615274974" expanded="true" signature="1312:1416" ph="/// STM32 pin connected to the Reset (EN) pin on the ESP32. ... " />
+            <marker date="1558615274974" expanded="true" signature="1477:1575" ph="/// STM32 pin connected to the boot pin on the ESP32. ... " />
+            <marker date="1558615274974" expanded="true" signature="1635:2018" ph="/// Current state of the SPI interface. ... " />
+            <marker date="1558615274974" expanded="true" signature="2081:2176" ph="///     Queue of messages to be sent to the ESP32. ... " />
+            <marker date="1558615274974" expanded="true" signature="2255:2506" ph="///     Lock for the message queue to synchronise access by the ... " />
+            <marker date="1558615274974" expanded="true" signature="2582:2721" ph="///     Handle used to synchronise the incoming messages and the task processing the messages. ... " />
+            <marker date="1558615274974" expanded="true" signature="2828:2936" ph="///     Thread processing the messages as they enter the queue. ... " />
+            <marker date="1558615274974" expanded="true" signature="2991:3040" ph="///  ... " />
+            <marker date="1558615274974" expanded="true" signature="3108:3210" ph="/// Number of times we have retried to send this message. ... " />
+            <marker date="1558615274974" expanded="true" signature="3260:3606" ph="/* Last status code for an incoming message operation. ... */" />
+            <marker date="1558615274974" expanded="true" signature="3616:3908" ph="/// Current message being sent by the system. ... " />
+            <marker date="1558615274974" expanded="true" signature="3977:4104" ph="/// Message used to hold the acknowledgements between message transmission states. ... " />
+            <marker date="1558615274974" expanded="true" signature="4181:4302" ph="/// This value is used a lot so make it available as a class level variable. ... " />
+            <marker date="1558615274974" expanded="false" signature="4446:5964" ph="Constructor(s)" />
+            <marker date="1558615274974" expanded="true" signature="4478:4594" ph="///     Default constructor is private to prevent it from being called. ... " />
+            <marker date="1558615274974" expanded="true" signature="4633:4653" ph="{...}" />
+            <marker date="1558615274974" expanded="true" signature="4663:4778" ph="/// Default constructor for the SPI Transport Provider implementation. ... " />
+            <marker date="1558615274974" expanded="true" signature="4952:5944" ph="{...}" />
+            <marker date="1558615274974" expanded="true" signature="5859:5897" ph="{...}" />
+            <marker date="1558615274974" expanded="false" signature="5974:6992" ph="Delegates and events" />
+            <marker date="1558615274974" expanded="true" signature="6012:6136" ph="///     Error event to allow lower level errors to bubble up to the interfaces. ... " />
+            <marker date="1558615274974" expanded="true" signature="6242:6315" ph="///     Data received event. ... " />
+            <marker date="1558615274974" expanded="true" signature="6429:6818" ph="/// The ESP32 is indicating that it is ready to process some data from the STM32 ... " />
+            <marker date="1558615274974" expanded="true" signature="6906:6972" ph="{...}" />
+            <marker date="1558615274974" expanded="false" signature="7002:27182" ph="Methods" />
+            <marker date="1558615274974" expanded="true" signature="7027:7106" ph="/// Main MessageDispatcher thread. ... " />
+            <marker date="1558615274974" expanded="true" signature="7133:9681" ph="{...}" />
+            <marker date="1558615274974" expanded="true" signature="7168:9671" ph="{...}" />
+            <marker date="1558615274974" expanded="true" signature="7199:7535" ph="/* Work out if we should wait for an incoming signal. ... */" />
+            <marker date="1558615274974" expanded="true" signature="7622:7806" ph="{...}" />
+            <marker date="1558615274974" expanded="true" signature="7832:7926" ph="{...}" />
+            <marker date="1558615274974" expanded="true" signature="7943:8042" ph="/* Signals are used to transition from one state to another. ... */" />
+            <marker date="1558615274974" expanded="true" signature="8151:9657" ph="{...}" />
+            <marker date="1558615274974" expanded="true" signature="9691:10368" ph="/// Process the Idle state when we have received a signal that there is some work to do. ... " />
+            <marker date="1558615274974" expanded="true" signature="10408:12319" ph="{...}" />
+            <marker date="1558615274974" expanded="true" signature="10574:10838" ph="{...}" />
+            <marker date="1558615274974" expanded="true" signature="10859:12295" ph="{...}" />
+            <marker date="1558615274974" expanded="true" signature="11540:11766" ph="{...}" />
+            <marker date="1558615274974" expanded="true" signature="11791:12073" ph="{...}" />
+            <marker date="1558615274974" expanded="true" signature="12329:12529" ph="/// The message header was sent by the ESP32 at the same time the STM32 ... " />
+            <marker date="1558615274974" expanded="true" signature="12591:13923" ph="{...}" />
+            <marker date="1558615274974" expanded="true" signature="13098:13214" ph="{...}" />
+            <marker date="1558615274974" expanded="true" signature="13231:13732" ph="{...}" />
+            <marker date="1558615274974" expanded="true" signature="13306:13411" ph="{...}" />
+            <marker date="1558615274974" expanded="true" signature="13432:13718" ph="{...}" />
+            <marker date="1558615274974" expanded="true" signature="13840:13913" ph="{...}" />
+            <marker date="1558615274974" expanded="true" signature="13933:14014" ph="/// Process an inbound message body. ... " />
+            <marker date="1558615274974" expanded="true" signature="14071:16470" ph="{...}" />
+            <marker date="1558615274974" expanded="true" signature="15097:15284" ph="{...}" />
+            <marker date="1558615274974" expanded="true" signature="15128:15194" ph="/* TODO: Add retry logic. ... */" />
+            <marker date="1558615274974" expanded="true" signature="15301:16313" ph="{...}" />
+            <marker date="1558615274974" expanded="true" signature="15703:15967" ph="{...}" />
+            <marker date="1558615274974" expanded="true" signature="15988:16299" ph="{...}" />
+            <marker date="1558615274974" expanded="true" signature="16027:16095" ph="/* Add retry logic. ... */" />
+            <marker date="1558615274974" expanded="true" signature="16480:16771" ph="/// Acknowledge the incoming message body. ... " />
+            <marker date="1558615274974" expanded="true" signature="16831:17482" ph="{...}" />
+            <marker date="1558615274974" expanded="true" signature="17220:17394" ph="{...}" />
+            <marker date="1558615274974" expanded="true" signature="17492:17605" ph="/// ESP32 has indicated that it is ready so send the message header. ... " />
+            <marker date="1558615274974" expanded="true" signature="17664:18914" ph="{...}" />
+            <marker date="1558615274974" expanded="true" signature="17867:18553" ph="{...}" />
+            <marker date="1558615274974" expanded="true" signature="18162:18392" ph="/* For a header we set the payload to null (which the constructor uses ... */" />
+            <marker date="1558615274974" expanded="true" signature="18570:18697" ph="{...}" />
+            <marker date="1558615274974" expanded="true" signature="18924:19327" ph="/// Process the ESP32 acknowledgement message. ... " />
+            <marker date="1558615274974" expanded="true" signature="19401:22424" ph="{...}" />
+            <marker date="1558615274974" expanded="true" signature="20067:20307" ph="/* We can get three possible responses here: ... */" />
+            <marker date="1558615274974" expanded="true" signature="20364:21949" ph="{...}" />
+            <marker date="1558615274974" expanded="true" signature="20573:20757" ph="{...}" />
+            <marker date="1558615274974" expanded="true" signature="20778:21935" ph="{...}" />
+            <marker date="1558615274974" expanded="true" signature="21020:21693" ph="{...}" />
+            <marker date="1558615274974" expanded="true" signature="21190:21405" ph="{...}" />
+            <marker date="1558615274974" expanded="true" signature="21434:21671" ph="{...}" />
+            <marker date="1558615274974" expanded="true" signature="21718:21917" ph="{...}" />
+            <marker date="1558615274974" expanded="true" signature="21966:22118" ph="{...}" />
+            <marker date="1558615274974" expanded="true" signature="22284:22414" ph="{...}" />
+            <marker date="1558615274974" expanded="true" signature="22434:22522" ph="/// Process the sending message body state. ... " />
+            <marker date="1558615274974" expanded="true" signature="22579:22986" ph="{...}" />
+            <marker date="1558615274974" expanded="true" signature="22996:23095" ph="/// Process the incoming message body acknowledgement. ... " />
+            <marker date="1558615274974" expanded="true" signature="23167:25059" ph="{...}" />
+            <marker date="1558615274974" expanded="true" signature="23689:23929" ph="/* We can get three possible responses here: ... */" />
+            <marker date="1558615274974" expanded="true" signature="23986:24864" ph="{...}" />
+            <marker date="1558615274974" expanded="true" signature="24082:24210" ph="{...}" />
+            <marker date="1558615274974" expanded="true" signature="24231:24850" ph="{...}" />
+            <marker date="1558615274974" expanded="true" signature="24538:24687" ph="{...}" />
+            <marker date="1558615274974" expanded="true" signature="24712:24832" ph="{...}" />
+            <marker date="1558615274974" expanded="true" signature="24881:24963" ph="{...}" />
+            <marker date="1558615274974" expanded="true" signature="25069:25166" ph="/// Process the Transport packet transmission state. ... " />
+            <marker date="1558615274974" expanded="true" signature="25228:25248" ph="{...}" />
+            <marker date="1558615274974" expanded="true" signature="25258:25404" ph="/// Queue a for sending to the ESP32. ... " />
+            <marker date="1558615274974" expanded="true" signature="25480:25865" ph="{...}" />
+            <marker date="1558615274974" expanded="true" signature="25616:25809" ph="/* Inform the task processing the messages that a new message ... */" />
+            <marker date="1558615274974" expanded="true" signature="25875:26405" ph="/// An error has been detected so check the retry count to see if we can retry sending the message. ... " />
+            <marker date="1558615274974" expanded="true" signature="26473:27162" ph="{...}" />
+            <marker date="1558615274974" expanded="true" signature="26539:26754" ph="{...}" />
+            <marker date="1558615274974" expanded="true" signature="26771:27152" ph="{...}" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/GPIOTest.sln">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/GPIOTest.cs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1106">
+          <caret line="109" selection-start-line="109" selection-end-line="109" />
+          <folding>
+            <marker date="1559815189531" expanded="true" signature="6:96" ph="..." />
+            <marker date="1559815189531" expanded="true" signature="116:3924" ph="{...}" />
+            <marker date="1559815189531" expanded="true" signature="191:3922" ph="{...}" />
+            <marker date="1559815189531" expanded="true" signature="249:337" ph="/// Pin used by the STM32 that it is ready. ... " />
+            <marker date="1559815189531" expanded="true" signature="406:530" ph="/// Pin used by the ESP32 to indicate that it is ready to send or receive data. ... " />
+            <marker date="1559815189531" expanded="true" signature="589:693" ph="/// STM32 pin connected to the Reset (EN) pin on the ESP32. ... " />
+            <marker date="1559815189531" expanded="true" signature="754:852" ph="/// STM32 pin connected to the boot pin on the ESP32. ... " />
+            <marker date="1559815189531" expanded="true" signature="1032:1101" ph="/// Default constructor. ... " />
+            <marker date="1559815189531" expanded="true" signature="1138:1977" ph="{...}" />
+            <marker date="1559815189531" expanded="true" signature="1149:1389" ph="/* _button = (DigitalInputPort) Device.CreateDigitalInputPort(Device.Pins.D14, interruptMode: InterruptMode.EdgeF ... */" />
+            <marker date="1559815189531" expanded="true" signature="2063:2286" ph="{...}" />
+            <marker date="1559815189531" expanded="true" signature="2296:2424" ph="///  ... " />
+            <marker date="1559815189531" expanded="true" signature="2505:2574" ph="{...}" />
+            <marker date="1559815189531" expanded="true" signature="2601:3393" ph="{...}" />
+            <marker date="1559815189531" expanded="true" signature="2676:3137" ph="/* _esp32ReadyPin?.Dispose(); ... */" />
+            <marker date="1559815189531" expanded="true" signature="3403:3470" ph="/// Main program loop. ... " />
+            <marker date="1559815189531" expanded="true" signature="3496:3916" ph="{...}" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../../../../Meadow.Core/source/Meadow.Core/Devices/F7Micro.cs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="688">
+          <caret line="52" column="39" selection-start-line="52" selection-start-column="37" selection-end-line="52" selection-end-column="41" />
+          <folding>
+            <marker date="1559730986409" expanded="false" signature="6:83" ph="..." />
+            <marker date="1559730986409" expanded="true" signature="109:4001" ph="{...}" />
+            <marker date="1559730986409" expanded="true" signature="116:312" ph="/// Represents a Meadow F7 micro device. Includes device-specific IO mapping, ... " />
+            <marker date="1559730986409" expanded="true" signature="357:3999" ph="{...}" />
+            <marker date="1559730986409" expanded="true" signature="503:603" ph="/// Gets the pins. ... " />
+            <marker date="1559730986409" expanded="true" signature="904:1322" ph="{...}" />
+            <marker date="1559730986409" expanded="true" signature="985:1131" ph="/* this.WiFiAdapters = new List&lt;WiFiAdapter&gt; ... */" />
+            <marker date="1559730986409" expanded="true" signature="1535:1636" ph="{...}" />
+            <marker date="1559730986409" expanded="true" signature="1936:2093" ph="{...}" />
+            <marker date="1559730986409" expanded="true" signature="2390:2537" ph="{...}" />
+            <marker date="1559730986409" expanded="true" signature="2658:2761" ph="{...}" />
+            <marker date="1559730986409" expanded="true" signature="2929:3028" ph="{...}" />
+            <marker date="1559730986409" expanded="true" signature="3121:3207" ph="{...}" />
+            <marker date="1559730986409" expanded="true" signature="3357:3436" ph="{...}" />
+            <marker date="1559730986409" expanded="true" signature="3516:3604" ph="{...}" />
+            <marker date="1559730986409" expanded="true" signature="3702:3780" ph="{...}" />
+            <marker date="1559730986409" expanded="true" signature="3901:3992" ph="{...}" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../../../../Meadow.Core/source/Meadow.Core/Hardware/DigitalOutputPort.cs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="576">
+          <caret line="41" column="103" selection-start-line="41" selection-start-column="103" selection-end-line="41" selection-end-column="103" />
+          <folding>
+            <marker date="1556712050234" expanded="false" signature="6:32" ph="..." />
+            <marker date="1556712050234" expanded="true" signature="59:3303" ph="{...}" />
+            <marker date="1556712050234" expanded="true" signature="66:166" ph="/// Represents a port that is capable of writing analog output. ... " />
+            <marker date="1556712050234" expanded="true" signature="225:3301" ph="{...}" />
+            <marker date="1556712050234" expanded="true" signature="295:466" ph="/// Gets or sets the state of the port. ... " />
+            <marker date="1556712050234" expanded="true" signature="502:684" ph="{...}" />
+            <marker date="1556712050234" expanded="true" signature="555:674" ph="{...}" />
+            <marker date="1556712050234" expanded="true" signature="717:896" ph="/// Creates a new DigitalOutputPort from a pin. ... " />
+            <marker date="1556712050234" expanded="true" signature="1116:1631" ph="{...}" />
+            <marker date="1556712050234" expanded="true" signature="1342:1528" ph="{...}" />
+            <marker date="1556712050234" expanded="true" signature="1545:1621" ph="{...}" />
+            <marker date="1556712050234" expanded="true" signature="1641:1898" ph="/// From the specified pin and initialState. ... " />
+            <marker date="1556712050234" expanded="true" signature="2035:2482" ph="{...}" />
+            <marker date="1556712050234" expanded="true" signature="2174:2325" ph="{...}" />
+            <marker date="1556712050234" expanded="true" signature="2555:2641" ph="{...}" />
+            <marker date="1556712050234" expanded="true" signature="2697:3196" ph="{...}" />
+            <marker date="1556712050234" expanded="true" signature="2720:2972" ph="/* TODO: we should consider moving this logic to the finalizer ... */" />
+            <marker date="1556712050234" expanded="true" signature="3000:3186" ph="{...}" />
+            <marker date="1556712050234" expanded="true" signature="3045:3139" ph="{...}" />
+            <marker date="1556712050234" expanded="true" signature="3247:3295" ph="{...}" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../../../../Meadow.Core/source/Meadow.Core/Devices/Definitions/F7MicroPinDefinitions.cs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="48">
+          <caret line="6" column="25" selection-start-line="6" selection-start-column="25" selection-end-line="6" selection-end-column="25" />
+          <folding>
+            <marker date="1559730986316" expanded="false" signature="6:70" ph="..." />
+            <marker date="1559730986316" expanded="true" signature="96:16427" ph="{...}" />
+            <marker date="1559730986316" expanded="true" signature="131:16425" ph="{...}" />
+            <marker date="1559730986316" expanded="true" signature="206:16418" ph="{...}" />
+            <marker date="1559730986316" expanded="true" signature="365:542" ph="/* OnboardLEDBlue ... */" />
+            <marker date="1559730986316" expanded="true" signature="682:829" ph="{...}" />
+            <marker date="1559730986316" expanded="true" signature="857:1057" ph="/* OnboardLEDGreen ... */" />
+            <marker date="1559730986316" expanded="true" signature="1199:1346" ph="{...}" />
+            <marker date="1559730986316" expanded="true" signature="1374:1548" ph="/* OnboardLEDRed ... */" />
+            <marker date="1559730986316" expanded="true" signature="1688:1835" ph="{...}" />
+            <marker date="1559730986316" expanded="true" signature="1864:1933" ph="/* D00 ... */" />
+            <marker date="1559730986316" expanded="true" signature="2051:2202" ph="{...}" />
+            <marker date="1559730986316" expanded="true" signature="2230:2307" ph="/* D01 ... */" />
+            <marker date="1559730986316" expanded="true" signature="2426:2632" ph="{...}" />
+            <marker date="1559730986316" expanded="true" signature="2660:2797" ph="/* D02 ... */" />
+            <marker date="1559730986316" expanded="true" signature="2915:3080" ph="{...}" />
+            <marker date="1559730986316" expanded="true" signature="3108:3264" ph="/* D03 ... */" />
+            <marker date="1559730986316" expanded="true" signature="3382:3627" ph="{...}" />
+            <marker date="1559730986316" expanded="true" signature="3655:3827" ph="/* D04 ... */" />
+            <marker date="1559730986316" expanded="true" signature="3945:4190" ph="{...}" />
+            <marker date="1559730986316" expanded="true" signature="4218:4351" ph="/* D05 ... */" />
+            <marker date="1559730986316" expanded="true" signature="4469:4634" ph="{...}" />
+            <marker date="1559730986316" expanded="true" signature="4662:4828" ph="/* D06 ... */" />
+            <marker date="1559730986316" expanded="true" signature="4946:5197" ph="{...}" />
+            <marker date="1559730986316" expanded="true" signature="5225:5329" ph="/* D07 ... */" />
+            <marker date="1559730986316" expanded="true" signature="5447:5718" ph="{...}" />
+            <marker date="1559730986316" expanded="true" signature="5746:5897" ph="/* D08 ... */" />
+            <marker date="1559730986316" expanded="true" signature="6015:6234" ph="{...}" />
+            <marker date="1559730986316" expanded="true" signature="6262:6418" ph="/* D09 ... */" />
+            <marker date="1559730986316" expanded="true" signature="6536:6732" ph="{...}" />
+            <marker date="1559730986316" expanded="true" signature="6760:6837" ph="/* D10 ... */" />
+            <marker date="1559730986316" expanded="true" signature="6956:7079" ph="{...}" />
+            <marker date="1559730986316" expanded="true" signature="7107:7250" ph="/* D11 ... */" />
+            <marker date="1559730986316" expanded="true" signature="7368:7504" ph="{...}" />
+            <marker date="1559730986316" expanded="true" signature="7532:7676" ph="/* D12 ... */" />
+            <marker date="1559730986316" expanded="true" signature="7795:8017" ph="{...}" />
+            <marker date="1559730986316" expanded="true" signature="8045:8195" ph="/* D13 ... */" />
+            <marker date="1559730986316" expanded="true" signature="8314:8535" ph="{...}" />
+            <marker date="1559730986316" expanded="true" signature="8563:8602" ph="/* D14 ... */" />
+            <marker date="1559730986316" expanded="true" signature="8720:8790" ph="{...}" />
+            <marker date="1559730986316" expanded="true" signature="8818:8877" ph="/* D15 ... */" />
+            <marker date="1559730986316" expanded="true" signature="8995:9065" ph="{...}" />
+            <marker date="1559730986316" expanded="true" signature="9094:9260" ph="/* A00 ... */" />
+            <marker date="1559730986316" expanded="true" signature="9378:9506" ph="{...}" />
+            <marker date="1559730986316" expanded="true" signature="9534:9690" ph="/* A01 ... */" />
+            <marker date="1559730986316" expanded="true" signature="9808:9936" ph="{...}" />
+            <marker date="1559730986316" expanded="true" signature="9964:10124" ph="/* A02 ... */" />
+            <marker date="1559730986316" expanded="true" signature="10242:10370" ph="{...}" />
+            <marker date="1559730986316" expanded="true" signature="10398:10578" ph="/* A03 ... */" />
+            <marker date="1559730986316" expanded="true" signature="10696:10824" ph="{...}" />
+            <marker date="1559730986316" expanded="true" signature="10852:11003" ph="/* A04 ... */" />
+            <marker date="1559730986316" expanded="true" signature="11121:11250" ph="{...}" />
+            <marker date="1559730986316" expanded="true" signature="11278:11459" ph="/* A05 ... */" />
+            <marker date="1559730986316" expanded="true" signature="11577:11706" ph="{...}" />
+            <marker date="1559730986316" expanded="true" signature="11734:11764" ph="/* SCK ... */" />
+            <marker date="1559730986316" expanded="true" signature="11883:11953" ph="{...}" />
+            <marker date="1559730986316" expanded="true" signature="11981:12013" ph="/* MOSI ... */" />
+            <marker date="1559730986316" expanded="true" signature="12133:12202" ph="{...}" />
+            <marker date="1559730986316" expanded="true" signature="12230:12262" ph="/* MISO ... */" />
+            <marker date="1559730986316" expanded="true" signature="12383:12453" ph="{...}" />
+            <marker date="1559730986316" expanded="true" signature="12634:12704" ph="{...}" />
+            <marker date="1559730986316" expanded="true" signature="12884:12954" ph="{...}" />
+            <marker date="1559730986316" expanded="true" signature="13131:13201" ph="{...}" />
+            <marker date="1559730986316" expanded="true" signature="13375:13445" ph="{...}" />
+            <marker date="1559730986316" expanded="true" signature="13626:13697" ph="{...}" />
+            <marker date="1559730986316" expanded="true" signature="13874:13944" ph="{...}" />
+            <marker date="1559730986316" expanded="true" signature="14133:14203" ph="{...}" />
+            <marker date="1559730986316" expanded="true" signature="14393:14464" ph="{...}" />
+            <marker date="1559730986316" expanded="true" signature="14654:14840" ph="{...}" />
+            <marker date="1559730986316" expanded="true" signature="14882:16407" ph="{...}" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../../../../Meadow.Core/source/Meadow.Core/Devices/F7GPIOManager.cs">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="4176">
+          <caret line="283" column="21" selection-start-line="283" selection-start-column="21" selection-end-line="283" selection-end-column="21" />
+          <folding>
+            <marker date="1559730986346" expanded="false" signature="6:166" ph="..." />
+            <marker date="1559730986346" expanded="true" signature="192:22978" ph="{...}" />
+            <marker date="1559730986346" expanded="true" signature="249:21194" ph="{...}" />
+            <marker date="1559730986346" expanded="true" signature="564:584" ph="{...}" />
+            <marker date="1559730986346" expanded="true" signature="618:4754" ph="{...}" />
+            <marker date="1559730986346" expanded="true" signature="4764:4970" ph="/// Sets the value of a discrete (digital output) ... " />
+            <marker date="1559730986346" expanded="true" signature="5031:5185" ph="{...}" />
+            <marker date="1559730986346" expanded="true" signature="5280:6455" ph="{...}" />
+            <marker date="1559730986346" expanded="true" signature="5405:5754" ph="{...}" />
+            <marker date="1559730986346" expanded="true" signature="5494:5713" ph="{...}" />
+            <marker date="1559730986346" expanded="true" signature="5830:5908" ph="{...}" />
+            <marker date="1559730986346" expanded="true" signature="5933:6005" ph="{...}" />
+            <marker date="1559730986346" expanded="true" signature="6022:6101" ph="{...}" />
+            <marker date="1559730986346" expanded="true" signature="6115:6246" ph="/* write the register ... */" />
+            <marker date="1559730986346" expanded="true" signature="6355:6445" ph="{...}" />
+            <marker date="1559730986346" expanded="true" signature="6465:6693" ph="/// Gets the value of a discrete (digital input) ... " />
+            <marker date="1559730986346" expanded="true" signature="6735:6889" ph="{...}" />
+            <marker date="1559730986346" expanded="true" signature="6972:7225" ph="{...}" />
+            <marker date="1559730986346" expanded="true" signature="7311:9878" ph="{...}" />
+            <marker date="1559730986346" expanded="true" signature="7522:7665" ph="{...}" />
+            <marker date="1559730986346" expanded="true" signature="7697:9647" ph="{...}" />
+            <marker date="1559730986346" expanded="true" signature="9715:9802" ph="{...}" />
+            <marker date="1559730986346" expanded="true" signature="9944:10094" ph="{...}" />
+            <marker date="1559730986346" expanded="true" signature="10411:10937" ph="{...}" />
+            <marker date="1559730986346" expanded="true" signature="10554:10633" ph="{...}" />
+            <marker date="1559730986346" expanded="true" signature="10691:10771" ph="{...}" />
+            <marker date="1559730986346" expanded="true" signature="10788:10870" ph="{...}" />
+            <marker date="1559730986346" expanded="true" signature="11042:11687" ph="{...}" />
+            <marker date="1559730986346" expanded="true" signature="11236:11322" ph="{...}" />
+            <marker date="1559730986346" expanded="true" signature="11431:11515" ph="{...}" />
+            <marker date="1559730986346" expanded="true" signature="11829:11968" ph="{...}" />
+            <marker date="1559730986346" expanded="true" signature="12131:12276" ph="{...}" />
+            <marker date="1559730986346" expanded="true" signature="12425:12609" ph="{...}" />
+            <marker date="1559730986346" expanded="true" signature="12799:12994" ph="{...}" />
+            <marker date="1559730986346" expanded="true" signature="13237:18524" ph="{...}" />
+            <marker date="1559730986346" expanded="true" signature="13335:14299" ph="{...}" />
+            <marker date="1559730986346" expanded="true" signature="14313:14488" ph="/* TODO: we probably need to disable interrupts here (enter critical section) ... */" />
+            <marker date="1559730986346" expanded="true" signature="14535:14713" ph="{...}" />
+            <marker date="1559730986346" expanded="true" signature="15067:15188" ph="{...}" />
+            <marker date="1559730986346" expanded="true" signature="15205:15297" ph="{...}" />
+            <marker date="1559730986346" expanded="true" signature="15356:16488" ph="{...}" />
+            <marker date="1559730986346" expanded="true" signature="15525:15986" ph="{...}" />
+            <marker date="1559730986346" expanded="true" signature="16007:16474" ph="{...}" />
+            <marker date="1559730986346" expanded="true" signature="16644:16925" ph="{...}" />
+            <marker date="1559730986346" expanded="true" signature="17062:17213" ph="{...}" />
+            <marker date="1559730986346" expanded="true" signature="17230:17350" ph="{...}" />
+            <marker date="1559730986346" expanded="true" signature="17430:18382" ph="{...}" />
+            <marker date="1559730986346" expanded="true" signature="17537:17949" ph="{...}" />
+            <marker date="1559730986346" expanded="true" signature="17984:18210" ph="{...}" />
+            <marker date="1559730986346" expanded="true" signature="18089:18156" ph="{...}" />
+            <marker date="1559730986346" expanded="true" signature="18399:18488" ph="{...}" />
+            <marker date="1559730986346" expanded="true" signature="18590:19195" ph="{...}" />
+            <marker date="1559730986346" expanded="true" signature="18704:19111" ph="{...}" />
+            <marker date="1559730986346" expanded="true" signature="19266:19533" ph="{...}" />
+            <marker date="1559730986346" expanded="true" signature="19592:20749" ph="{...}" />
+            <marker date="1559730986346" expanded="true" signature="19863:20739" ph="{...}" />
+            <marker date="1559730986346" expanded="true" signature="20109:20725" ph="{...}" />
+            <marker date="1559730986346" expanded="true" signature="20546:20685" ph="{...}" />
+            <marker date="1559730986346" expanded="true" signature="20831:21188" ph="{...}" />
+            <marker date="1559730986346" expanded="true" signature="20951:21016" ph="{...}" />
+            <marker date="1559730986346" expanded="true" signature="21033:21099" ph="{...}" />
+            <marker date="1559730986346" expanded="true" signature="21200:22976" ph="/* ===== MEADOW GPIO PIN MAP ===== ... */" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+  </component>
+</project>
