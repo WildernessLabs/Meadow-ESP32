@@ -12,6 +12,8 @@
 #include "MessageDispatcher.hpp"
 #include "SpiTransportProvider.hpp"
 
+#define UNUSED(x) (void)(x)
+
 /*
  *      Main program loop for the ESP32 as specified by the FreeRTOS documentation.
  */
@@ -27,7 +29,8 @@ extern "C" void app_main()
      *  Set up the messaging system to use SPI hardware communications.
      */
     SpiTransportProvider *spi = new SpiTransportProvider();
-    MessageDispatcher *messageDispatcher = new MessageDispatcher(spi);
+
+    MessageDispatcher * __attribute__((unused)) messageDispatcher = new MessageDispatcher(spi);
 
     esp_err_t result = nvs_flash_init();
     if ((result == ESP_ERR_NVS_NO_FREE_PAGES) || (result == ESP_ERR_NVS_NEW_VERSION_FOUND))
