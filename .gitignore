@@ -65,5 +65,6 @@ packages
 *.DS_Store
 .vs/
 .vscode/ipch
-Source/Tests/BasicNetworkTest/.idea/
-Source/Tests/BasicNetworkTest/.idea/.idea.BasicNetworkTest/.idea/workspace.xml
+
+# Rider files
+.idea/
