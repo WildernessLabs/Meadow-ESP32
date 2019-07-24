@@ -58,7 +58,7 @@ namespace Gpio
      *      the STM32.
      */
 #ifdef USE_MEADOW
-    const gpio_num_t ESP32_READY_PIN = UART0_TX_PIN;
+    const gpio_num_t ESP32_READY_PIN = UART0_RX_PIN;
 #else
     const gpio_num_t ESP32_READY_PIN = GPIO_NUM_25;
 #endif
