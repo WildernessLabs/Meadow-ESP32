@@ -24,7 +24,7 @@ namespace BasicNetworkTest
         /// </summary>
         public BasicNetworkTestApplication()
         {
-            _dispatcher = new MessageDispatcher(Device, stm32ReadyPin: Device.Pins.ESP_UART_RX, esp32ReadyPin: Device.Pins.ESP_BOOT, 
+            _dispatcher = new MessageDispatcher(Device, esp32ReadyPin: Device.Pins.ESP_UART_RX, 
                 mosi: Device.Pins.ESP_MOSI, miso: Device.Pins.ESP_MISO, clock: Device.Pins.ESP_CLK, chipSelect: Device.Pins.ESP_CS, 
                 /* Device.Pins.ESP_BOOT */ bootPin: Device.Pins.ESP_BOOT, resetPin: Device.Pins.ESP_RST);
             _dispatcher.MessageReceived += _dispatcher_MessageReceived;
@@ -38,7 +38,7 @@ namespace BasicNetworkTest
             _getAntennaMessage = new Messages.Message();
             _getAntennaMessage.Interface = (byte) Esp32Interfaces.WiFi;
             _getAntennaMessage.Function = (byte) WiFiFunction.GetAntenna;
-            _getAntennaMessage.MessageID = _counter++;
+            _getAntennaMessage.MessageID = _counter;
             _getAntennaMessage.MessageType = (byte) MessageTypes.Data;
             _getAntennaMessage.Payload = null;
             _getAntennaMessage.PayloadLength = 0;
