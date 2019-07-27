@@ -26,7 +26,7 @@ namespace BasicNetworkTest
         {
             _dispatcher = new MessageDispatcher(Device, esp32ReadyPin: Device.Pins.ESP_UART_RX, 
                 mosi: Device.Pins.ESP_MOSI, miso: Device.Pins.ESP_MISO, clock: Device.Pins.ESP_CLK, chipSelect: Device.Pins.ESP_CS, 
-                /* Device.Pins.ESP_BOOT */ bootPin: Device.Pins.ESP_BOOT, resetPin: Device.Pins.ESP_RST);
+                bootPin: Device.Pins.ESP_BOOT, resetPin: Device.Pins.ESP_RST);
             _dispatcher.MessageReceived += _dispatcher_MessageReceived;
             _dispatcher.Error += _dispatcher_Error;
             _button = (DigitalInputPort) Device.CreateDigitalInputPort(Device.Pins.D14, interruptMode: InterruptMode.EdgeFalling, resistorMode: ResistorMode.PullUp, debounceDuration: 100);
@@ -42,12 +42,6 @@ namespace BasicNetworkTest
             _getAntennaMessage.MessageType = (byte) MessageTypes.Data;
             _getAntennaMessage.Payload = null;
             _getAntennaMessage.PayloadLength = 0;
-////            message.Payload = Encoders.EncodeAntennaInfo(_antennaInfo);
-////            message.PayloadLength = (UInt32) message.Payload.Length;
-
-//
-//            Console.WriteLine(_getAntennaMessage.ToString());
-//            _dispatcher.Add(_getAntennaMessage);
         }
 
         /// <summary>

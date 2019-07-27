@@ -24,6 +24,10 @@ class SpiTransportProvider : public TransportProviderBase
 {
 private:
     /*
+     *      Maximum number of retries before the system gives up.
+     */
+    const int MAXIMUM_RETRY_COUNT = 3;
+    /*
      *      Possible states for the SPI transport layer.
      */
     enum SpiStates { Invalid, Idle, AcknowledgingMessageHeader,
@@ -46,12 +50,12 @@ private:
     /*
      *      Buffer to hold a Message header worth of data.
      */
-    static uint8_t *_headerBuffer;
+    static uint8_t *_headerReceiveBuffer;
 
     /*
      *      Buffer to hold the data to be sent to the STM32.
      */
-    static uint8_t *_transmitBuffer;
+    static uint8_t *_headerTransmitBuffer;
 
     /*
      *      Buffer for the transport frame.
@@ -72,6 +76,14 @@ private:
      *      The next message to be sent to the STM32.
      */
     Message *_outboundMessage = nullptr;
+
+    /*
+     *      SPI slave transaction.
+     *
+     *      Note that it is assumed that this transaction is setup ready for
+     *      the next use of the SPI interface.
+     */
+    spi_slave_transaction_t *_spiTransaction = nullptr;
 
     /*
      *      Response code that will be used in any acknowledgement messages.
@@ -115,6 +127,11 @@ private:
     static void Task(void *);
 
     /*
+     *  Convert the current state into a string message for debugging.
+     */
+    const char *SpiStateString(SpiStates);
+
+    /*
      *      Wait for the interrupt or the send queue to indicate that there is
      *      some work to do.
      */
@@ -127,10 +144,16 @@ private:
     void DeleteMessageAndReleaseHeapStorage(Message *);
 
     /*
+     *      Process messages from either the SPI interface or the outbound
+     *      message queue.
+     */
+    void ProcessMessages();
+
+    /*
      *      Start to process incoming messages (i.e. move from the idle state
      *      into one where the ESP32 is sending or receiving data).
      */
-    void ProcessIdleState();
+    void ProcessIdleState(spi_slave_transaction_t *transaction);
 
     /*
      *      Implement the incoming message header reception process.
@@ -178,15 +201,28 @@ private:
     void ProcessWantToSendTransportMessageState();
 
     /*
+     *      Create a spi_slave_transaction_t specific to the current state.
+     */
+//    spi_slave_transaction_t *SetupTransaction(SpiStates);
+
+    /*
      *      Create a new SPI slave transmission object with zero filled
      *      buffers of the requested size.
      */
-    spi_slave_transaction_t *SetupSpiSlaveTransaction(uint32_t, uint32_t);
+    spi_slave_transaction_t *SetupSpiPayloadTransaction(uint32_t);
+
+    /*
+     *      Setup a new transaction using the _headerReceiveBuffer and
+     *      _headerTransmitBuffer.
+     */
+    spi_slave_transaction_t *SetupSpiHeaderTransaction();
+
+    void ClearBuffers(uint8_t *, uint8_t *, uint32_t);
 
     /*
      *      Free any memory allocated for the transaction and its Tx and Rx buffers.
      */
-    void FreeUpTransactionHeapStorage(spi_slave_transaction_t *);
+    void FreeUpTransactionHeapStorage(spi_slave_transaction_t *, SpiStates);
 
     /*
      *      ISR for the GPIO ISR.
