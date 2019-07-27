@@ -137,27 +137,35 @@ namespace Meadow.Core.Esp32
         /// <summary>
         /// Default constructor for the SPI Transport Provider implementation.
         /// </summary>
-        public SpiTransportProvider(IIODevice device, IPin stm32ReadyPin, IPin esp32ReadyPin, IPin mosi, IPin miso, IPin clock, IPin chipSelect, IPin bootPin, IPin resetPin)
+        public SpiTransportProvider(IIODevice device, IPin esp32ReadyPin, IPin mosi, IPin miso, IPin clock, IPin chipSelect, IPin bootPin, IPin resetPin)
         {
-            _stm32ReadyPin = (DigitalOutputPort) device.CreateDigitalOutputPort(stm32ReadyPin, false);
+            //
+            //    Create the reset pin first and hold the ESP32 in reset while the other pins are
+            //    being instanciated.  This will help prevent any "fake" messages being sent to
+            //    the ESP32.
+            //
+            _reset = (DigitalOutputPort) device.CreateDigitalOutputPort(resetPin, false);
+            
+//            _stm32ReadyPin = (DigitalOutputPort) device.CreateDigitalOutputPort(stm32ReadyPin, false);
             _esp32ReadyPin = (DigitalInputPort) device.CreateDigitalInputPort(esp32ReadyPin, interruptMode: InterruptMode.EdgeRising);
             _esp32ReadyPin.Changed += _esp32ReadyPin_Changed;
             _esp32 = new SpiPeripheral(new SoftwareSPIBus(device, mosi, miso, clock), device.CreateDigitalOutputPort(chipSelect, true));
-            _reset = (DigitalOutputPort) device.CreateDigitalOutputPort(resetPin, true);
-            if (stm32ReadyPin == bootPin)
-            {
-                _boot = _stm32ReadyPin;
-            }
-            else
-            {
+//            if (stm32ReadyPin == bootPin)
+//            {
+//                _boot = _stm32ReadyPin;
+//            }
+//            else
+//            {
                 _boot = (DigitalOutputPort) device.CreateDigitalOutputPort(bootPin, true);
-            }
-            
-            _boot.State = true;
-            _reset.State = false;
+//            }
+//            
+//            _boot.State = true;
+//            _reset.State = false;
+//            _reset.State = true;
+////            _boot.Dispose();
+//            _boot = null;
+
             _reset.State = true;
-//            _boot.Dispose();
-            _boot = null;
             
             _currentState = SpiStates.Idle;
             _messageQueue = new Queue<Messages.Message>();
@@ -205,60 +213,79 @@ namespace Meadow.Core.Esp32
         {
             while (true)
             {
-                //
-                //  Work out if we should wait for an incoming signal.
-                //
-                //  If we just wait then the application will process only the first
-                //  message in the queue as only one signal will be processed even if
-                //  more than one signals are raised.
-                //
-                bool wait = true;
-                if (_currentState == SpiStates.Idle)
-                {
-                    lock (_messageQueueLock)
-                    {
-                        wait = (_messageQueue.Count == 0);
-                    }
-                }
-                if (wait)
-                {
-                    _waitingForStuffToDoHandle.WaitOne();
-                }
+                WaitForNotification();
                 //
                 //  Signals are used to transition from one state to another.
                 //
-                Console.WriteLine($"Current state: {_currentState}");
-                switch (_currentState)
+//                Console.WriteLine($"Current state: {_currentState}");
+//                switch (_currentState)
+//                {
+//                    case SpiStates.Idle:
+//                        ProcessIdleState();
+//                        break;
+//                    case SpiStates.AcknowledgingMessageHeader:
+//                        ProcessAcknowledgingMessageHeaderState();
+//                        break;
+//                    case SpiStates.WaitingForMessageBody:
+//                        ProcessWaitingForMessageBodyState();
+//                        break;
+//                    case SpiStates.AcknowledgingMessageBody:
+//                        ProcessAcknowledgingMessageBodyState();
+//                        break;
+//                    case SpiStates.WantToSendMessageHeader:
+//                        ProcessWantToSendMessageHeaderState();
+//                        break;
+//                    case SpiStates.WaitingForMessageHeaderAcknowledgement:
+//                        ProcessWaitingForMessageHeaderAcknowledgementState();
+//                        break;
+//                    case SpiStates.WantToSendMessageBody:
+//                        ProcessWantToSendMessageBodyState();
+//                        break;
+//                    case SpiStates.WaitingForMessageBodyAcknowledgement:
+//                        ProcessWaitingForMessageBodyAcknowledgementState();
+//                        break;
+//                    case SpiStates.WantToSendTransportMessage:
+//                        ProcessWantToSendTransportMessageState();
+//                        break;
+//                    default:
+//                        break;
+//                }
+            }
+        }
+
+        /// <summary>
+        /// Wait for a message notification to come from the message queue or the ESP32.
+        /// </summary>
+        private void WaitForNotification()
+        {
+            //
+            //  Work out if we should wait for an incoming signal.
+            //
+            //  If we just wait then the application will process only the first
+            //  message in the queue as only one signal will be processed even if
+            //  more than one signals are raised.
+            //
+            bool wait = true;
+//            if (_currentState == SpiStates.Idle)
+//            {
+//                lock (_messageQueueLock)
+//                {
+//                    wait = (_messageQueue.Count == 0);
+//                }
+//            }
+            if (wait)
+            {
+                _waitingForStuffToDoHandle.WaitOne();
+                lock (_messageQueueLock)
                 {
-                    case SpiStates.Idle:
-                        ProcessIdleState();
-                        break;
-                    case SpiStates.AcknowledgingMessageHeader:
-                        ProcessAcknowledgingMessageHeaderState();
-                        break;
-                    case SpiStates.WaitingForMessageBody:
-                        ProcessWaitingForMessageBodyState();
-                        break;
-                    case SpiStates.AcknowledgingMessageBody:
-                        ProcessAcknowledgingMessageBodyState();
-                        break;
-                    case SpiStates.WantToSendMessageHeader:
-                        ProcessWantToSendMessageHeaderState();
-                        break;
-                    case SpiStates.WaitingForMessageHeaderAcknowledgement:
-                        ProcessWaitingForMessageHeaderAcknowledgementState();
-                        break;
-                    case SpiStates.WantToSendMessageBody:
-                        ProcessWantToSendMessageBodyState();
-                        break;
-                    case SpiStates.WaitingForMessageBodyAcknowledgement:
-                        ProcessWaitingForMessageBodyAcknowledgementState();
-                        break;
-                    case SpiStates.WantToSendTransportMessage:
-                        ProcessWantToSendTransportMessageState();
-                        break;
-                    default:
-                        break;
+                    if (_messageQueue.Count > 0)
+                    {
+                        Messages.Message message = _messageQueue.Dequeue();
+//                        _outboundMessage = _messageQueue.Dequeue();
+//                        _currentState = SpiStates.WantToSendMessageHeader;
+                        _currentRetryCount = 0;
+                        SendMessage(message);
+                    }
                 }
             }
         }
@@ -281,18 +308,18 @@ namespace Meadow.Core.Esp32
             Console.WriteLine("Entering ProcessIdleState");
             lock (_messageQueueLock)
             {
-                if (_messageQueue.Count > 0)
-                {
-                    _outboundMessage = _messageQueue.Dequeue();
-                    _currentState = SpiStates.WantToSendMessageHeader;
-                    _currentRetryCount = 0;
-                    _stm32ReadyPin.State = true;
-                }
-                else
+//                if (_messageQueue.Count > 0)
+//                {
+//                    _outboundMessage = _messageQueue.Dequeue();
+//                    _currentState = SpiStates.WantToSendMessageHeader;
+//                    _currentRetryCount = 0;
+////                    _stm32ReadyPin.State = true;
+//                }
+//                else
                 {
                     Messages.Message readyMessage = new Messages.Message(MessageTypes.Ready, Esp32Interfaces.None, Messages.INVALID_FUNCTION, Messages.INVALID_MESSAGE_ID, 0, null);
                     byte[] encodedReadyMessage = Encoders.EncodeMessage(readyMessage, true);
-                    _stm32ReadyPin.State = true;
+//                    _stm32ReadyPin.State = true;
                     byte[] encodedIncomingHeader = _esp32.WriteRead(encodedReadyMessage, (ushort) encodedReadyMessage.Length);
                     StatusCodes decodeStatus;
                     (_inboundMessage, decodeStatus) = Encoders.ExtractMessage(encodedIncomingHeader);
@@ -308,7 +335,7 @@ namespace Meadow.Core.Esp32
                     }
                     _acknowledgementMessage.StatusCode = (UInt32) decodeStatus;
                     _currentState = SpiStates.AcknowledgingMessageHeader;
-                    _stm32ReadyPin.State = false;
+//                    _stm32ReadyPin.State = false;
                 }
             }
         }
@@ -427,30 +454,29 @@ namespace Meadow.Core.Esp32
         /// <summary>
         /// ESP32 has indicated that it is ready so send the message header.
         /// </summary>
-        private void ProcessWantToSendMessageHeaderState()
+        private void ProcessWantToSendMessageHeaderState(Messages.Message message)
         {
             Console.WriteLine("Entering ProcessWantToSendMessageHeaderState");
             byte[] encodedHeader;
-            if (_outboundMessage.Value.MessageType == (byte) MessageTypes.Data)
+            if (message.MessageType == (byte) MessageTypes.Data)
             {
-                Messages.Message outbound = _outboundMessage.Value;
-                Messages.Message headerMessage = new Messages.Message(MessageTypes.Header, (Esp32Interfaces) outbound.Interface, outbound.Function, outbound.MessageID, outbound.StatusCode, null);
+                Messages.Message headerMessage = new Messages.Message(MessageTypes.Header, (Esp32Interfaces) message.Interface, message.Function, message.MessageID, message.StatusCode, null);
                 //
                 //  For a header we set the payload to null (which the constructor uses
                 //  to set the PayloadLength to 0) so we must put the PayloadLength into
                 //  the header.
                 //
-                headerMessage.PayloadLength = outbound.PayloadLength;
+                headerMessage.PayloadLength = message.PayloadLength;
                 encodedHeader = Encoders.EncodeMessage(headerMessage, true);
             }
             else
             {
-                encodedHeader = Encoders.EncodeMessage((Messages.Message) _outboundMessage, true);
+                encodedHeader = Encoders.EncodeMessage((Messages.Message) message, true);
             }
             _esp32.WriteBytes(encodedHeader);
-            _currentState = SpiStates.WaitingForMessageHeaderAcknowledgement;
-            _stm32ReadyPin.State = false;
-            _stm32ReadyPin.State = true;
+//            _currentState = SpiStates.WaitingForMessageHeaderAcknowledgement;
+//            _stm32ReadyPin.State = false;
+//            _stm32ReadyPin.State = true;
         }
 
         /// <summary>
@@ -464,7 +490,7 @@ namespace Meadow.Core.Esp32
         ///
         /// ACK: Work out if we have a message body to send.
         /// </remarks>
-        private void ProcessWaitingForMessageHeaderAcknowledgementState()
+        private StatusCodes ProcessWaitingForMessageHeaderAcknowledgementState(Messages.Message message)
         {
             Console.WriteLine("Entering ProcessWaitingForMessageHeaderAcknowledgementState");
 
@@ -477,7 +503,7 @@ namespace Meadow.Core.Esp32
             Messages.Message? acknowledgement;
             (acknowledgement, decodeStatus) = Encoders.ExtractMessage(encodedAcknowledgement);
             //
-            //  We can get three possible responses here:
+            //  We can get two possible responses here:
             //      ACK - Data received by the ESP32 is good.
             //      NAK - There is a problem with the data, this could be a CRC error or invalid data.
             //
@@ -488,63 +514,42 @@ namespace Meadow.Core.Esp32
                 if (acknowledgement.Value.MessageType == (byte) MessageTypes.Nak)
                 {
                     Console.WriteLine("Received NAK.");
-                    RetrySendingIfPossible((StatusCodes) acknowledgement.Value.StatusCode);
                 }
                 else
                 {
                     Console.WriteLine("Received ACK.");
-                    if ((acknowledgement.Value.MessageID == _outboundMessage.Value.MessageID) && (acknowledgement.Value.Interface == _outboundMessage.Value.Interface))
+                    if ((acknowledgement.Value.Interface != message.Interface) || (acknowledgement.Value.MessageID != message.MessageID))
                     {
-                        Console.WriteLine("Message ID and interface match.");
-                        if (_outboundMessage.Value.PayloadLength > 0)
-                        {
-                            Console.WriteLine("Moving to waiting for message body.");
-                            _currentState = SpiStates.WantToSendMessageBody;
-                        }
-                        else
-                        {
-                            Console.WriteLine("Moving to idle state.");
-                            _outboundMessage = null;
-                            _currentState = SpiStates.Idle;
-                        }
-                    }
-                    else
-                    {
-                        Console.WriteLine("ID mismatch, checking for retry.");
-                        RetrySendingIfPossible(StatusCodes.UnexpectedData);
+                        decodeStatus = StatusCodes.UnexpectedData;
                     }
                 }
             }
             else
             {
                 Console.WriteLine("Cannot decode message header.");
-                RetrySendingIfPossible((decodeStatus));
+                decodeStatus = StatusCodes.UnexpectedData;
             }
-            _stm32ReadyPin.State = false;
-            if ((_currentState == SpiStates.WantToSendMessageBody) || (_currentState == SpiStates.WantToSendMessageHeader))
-            {
-                Console.WriteLine("Pulsing STM32 Pin.");
-                _stm32ReadyPin.State = true;
-            }
+
+            return (decodeStatus);
         }
 
         /// <summary>
         /// Process the sending message body state.
         /// </summary>
-        private void ProcessWantToSendMessageBodyState()
+        private void ProcessWantToSendMessageBodyState(Messages.Message message)
         {
             Console.WriteLine("Entering ProcessWantToSendMessageBodyState");
-            byte[] encodedMessage = Encoders.EncodeMessage((Messages.Message) _outboundMessage, false);
+            byte[] encodedMessage = Encoders.EncodeMessage((Messages.Message) message, false);
             _esp32.WriteBytes(encodedMessage);
             _currentState = SpiStates.WaitingForMessageBodyAcknowledgement;
-            _stm32ReadyPin.State = false;
-            _stm32ReadyPin.State = true;
+//            _stm32ReadyPin.State = false;
+//            _stm32ReadyPin.State = true;
         }
 
         /// <summary>
         /// Process the incoming message body acknowledgement.
         /// </summary>
-        private void ProcessWaitingForMessageBodyAcknowledgementState()
+        private StatusCodes ProcessWaitingForMessageBodyAcknowledgementState(Messages.Message message)
         {
             Console.WriteLine("Entering ProcessWaitingForMessageBodyAcknowledgementState");
 
@@ -563,29 +568,78 @@ namespace Meadow.Core.Esp32
             {
                 if (acknowledgement.Value.MessageType == (byte) MessageTypes.Nak)
                 {
-                    RetrySendingIfPossible((StatusCodes) acknowledgement.Value.StatusCode);
+                    Console.WriteLine("Received NAK.");
                 }
                 else
                 {
-                    if ((acknowledgement.Value.MessageID == _outboundMessage.Value.MessageID) && 
-                        (acknowledgement.Value.Function == _outboundMessage.Value.Function) && 
-                        (acknowledgement.Value.Interface == _outboundMessage.Value.Interface))
+                    Console.WriteLine("Received ACK.");
+                    if ((acknowledgement.Value.Interface != message.Interface) || (acknowledgement.Value.MessageID != message.MessageID))
                     {
-                        _outboundMessage = null;
-                        _currentState = SpiStates.Idle;
-                    }
-                    else
-                    {
-                        RetrySendingIfPossible(StatusCodes.UnexpectedData);
+                        decodeStatus = StatusCodes.UnexpectedData;
                     }
                 }
             }
             else
             {
-                RetrySendingIfPossible(decodeStatus);
+                Console.WriteLine("Cannot decode message body.");
+                decodeStatus = StatusCodes.UnexpectedData;
             }
-            _currentState = SpiStates.Idle;
-            _stm32ReadyPin.State = false;
+
+            return (decodeStatus);
+        }
+
+        private int CheckForRetry(Messages.Message message, StatusCodes statusCode, int retryCount)
+        {
+            if (statusCode  != StatusCodes.CompletedOK)
+            {
+                if (retryCount < MaximumRetryCount)
+                {
+                    retryCount++;
+                }
+                else
+                {
+                    RaiseError(message, statusCode);
+                }
+            }
+            else
+            {
+                retryCount = 0;
+            }
+
+            return (retryCount);
+        }
+
+        private void SendMessage(Messages.Message message)
+        {
+            int retryCount = 0;
+            StatusCodes statusCode = StatusCodes.Failure;
+
+            while ((retryCount < MaximumRetryCount) && (statusCode != StatusCodes.CompletedOK))
+            {
+                ProcessWantToSendMessageHeaderState(message);
+                statusCode = ProcessWaitingForMessageHeaderAcknowledgementState(message);
+//                retryCount = CheckForRetry(message, statusCode, retryCount);
+            }
+            //
+            //    RetryCount will be equal to MaximumRetryCount here if we failed to send
+            //    the message header.  In this case we should not send the message body as
+            //    the ESP32 application will not have a large enough buffer allocated for
+            //    the body if the header was not processed correctly.
+            //
+            if (retryCount < MaximumRetryCount)
+            {
+                if (message.PayloadLength > 0)
+                {
+                    retryCount = 0;
+                    statusCode = StatusCodes.Failure;
+                    while ((retryCount < MaximumRetryCount) && (statusCode != StatusCodes.CompletedOK))
+                    {
+                        ProcessWantToSendMessageBodyState(message);
+                        statusCode = ProcessWaitingForMessageBodyAcknowledgementState(message);
+                        retryCount = CheckForRetry(message, statusCode, retryCount);
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -638,6 +692,12 @@ namespace Meadow.Core.Esp32
                 _currentState = SpiStates.Idle;
                 _currentRetryCount = 0;
             }
+        }
+
+        private void RaiseError(Messages.Message message, StatusCodes statusCode)
+        {
+            TransportProviderEventArgs args = new TransportProviderEventArgs((Esp32Interfaces) message.Interface, message.MessageID, statusCode);
+            TransportError(this, args);
         }
 
         #endregion
