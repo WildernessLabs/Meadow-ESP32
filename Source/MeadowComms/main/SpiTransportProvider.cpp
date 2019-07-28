@@ -471,13 +471,14 @@ void SpiTransportProvider::ProcessIdleState(spi_slave_transaction_t *transaction
     else
     {
         responseCode = StatusCodes::InvalidHeader;
-        _messageType = MessageTypes::Nak;
+        messageType = MessageTypes::Nak;
         messageHeader = Message::CreateOnHeap(messageType, Esp32Interfaces::Transport, 0, responseCode, 0, nullptr, 0);
     }
     FreeUpTransactionHeapStorage(transaction, Idle);
     DeleteMessageAndReleaseHeapStorage(_incomingMessage);
     _incomingMessage = messageHeader;
     _responseCode = responseCode;
+    _messageType = messageType;
 
     ESP_LOGI(__func__, "Preparing response, packet type: %d, status code: %d", messageType, responseCode);
     _spiTransaction = AcknowledgeMessage(_incomingMessage, responseCode, messageType);
@@ -523,6 +524,11 @@ void SpiTransportProvider::ProcessAcknowledgingMessageHeaderState()
         }
         else
         {
+            uint32_t encodedMessageBodySize = Encoders::CalculateSpiBufferSize(Message::HEADER_SIZE + _incomingMessage->PayloadLength);
+            _spiTransaction = SetupSpiPayloadTransaction(encodedMessageBodySize);
+
+            ESP_LOGI(__func__, "Current header payload length: %d", _incomingMessage->PayloadLength);
+            ESP_LOGI(__func__, "Message body buffer size: %d", encodedMessageBodySize);
             _currentState = WaitingForMessageBody;
         }
     }
@@ -546,19 +552,20 @@ void SpiTransportProvider::ProcessWaitingForMessageBodyState()
 {
     ESP_LOGI(__func__, "Entering Method.");
 
-    uint32_t encodedMessageBodySize = Encoders::CalculateSpiBufferSize(Message::HEADER_SIZE + _incomingMessage->PayloadLength);
-    spi_slave_transaction_t *transaction = SetupSpiPayloadTransaction(encodedMessageBodySize);
+//    uint32_t encodedMessageBodySize = Encoders::CalculateSpiBufferSize(Message::HEADER_SIZE + _incomingMessage->PayloadLength);
+//    spi_slave_transaction_t *transaction = SetupSpiPayloadTransaction(encodedMessageBodySize);
+//
+//    ESP_LOGI(__func__, "Current header payload length: %d", _incomingMessage->PayloadLength);
+//    ESP_LOGI(__func__, "Message body buffer size: %d", encodedMessageBodySize);
+//
+//    ESP_ERROR_CHECK(spi_slave_transmit(VSPI_HOST, transaction, portMAX_DELAY));
+//    gpio_set_level(Gpio::ESP32_READY_PIN, 0);
 
-    ESP_LOGI(__func__, "Current header payload length: %d", _incomingMessage->PayloadLength);
-    ESP_LOGI(__func__, "Message body buffer size: %d", encodedMessageBodySize);
-
-    ESP_ERROR_CHECK(spi_slave_transmit(VSPI_HOST, transaction, portMAX_DELAY));
-    gpio_set_level(Gpio::ESP32_READY_PIN, 0);
-
-    int dataSize = transaction->length / 8;
+    int dataSize = _spiTransaction->length / 8;
     ESP_LOGI(__func__, "Received %d bytes.", dataSize);
-    ESP_LOG_BUFFER_HEX(__func__, transaction->rx_buffer, dataSize);
-    Message *message = Encoders::ExtractMessage((uint8_t *) transaction->rx_buffer, encodedMessageBodySize, false);
+    ESP_LOG_BUFFER_HEX(__func__, _spiTransaction->rx_buffer, dataSize);
+    uint32_t encodedMessageBodySize = Message::HEADER_SIZE + _incomingMessage->PayloadLength;
+    Message *message = Encoders::ExtractMessage((uint8_t *) _spiTransaction->rx_buffer, encodedMessageBodySize, false);
 
     if (message)
     {
@@ -595,7 +602,7 @@ void SpiTransportProvider::ProcessWaitingForMessageBodyState()
         _responseCode = StatusCodes::CRCError;
         _messageType = MessageTypes::Nak;
     }
-    FreeUpTransactionHeapStorage(transaction, _currentState);
+    FreeUpTransactionHeapStorage(_spiTransaction, _currentState);
     _currentState = AcknowledingMessageBody;
 }
 
