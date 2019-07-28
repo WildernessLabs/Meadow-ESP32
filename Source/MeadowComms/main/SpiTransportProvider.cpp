@@ -49,7 +49,8 @@ uint32_t SpiTransportProvider::_headerFrameSize = 0;
 /*
  *      Default constructor for the SPI transport provider.
  */
-SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
+SpiTransportProvider::SpiTransportProvider() :
+        TransportProviderBase()
 {
     if (_spiInstance)
     {
@@ -83,7 +84,6 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
 //    ESP_ERROR_CHECK(gpio_config(&stm32ReadyPinConfig));
 //    ESP_ERROR_CHECK(gpio_install_isr_service(0));
 //    ESP_ERROR_CHECK(gpio_isr_handler_add(Gpio::STM32_READY_PIN, Stm32IsrHandler, this));
-
     /*
      *  Configure the pull-ups on the SPI pins.
      */
@@ -221,7 +221,7 @@ const char *SpiTransportProvider::SpiStateString(SpiTransportProvider::SpiStates
             stateString = "WantToSendTransportMessage";
             break;
     }
-    return(stateString);
+    return (stateString);
 }
 
 /*
@@ -280,7 +280,7 @@ spi_slave_transaction_t *SpiTransportProvider::AcknowledgeMessage(Message *messa
 //    ESP_ERROR_CHECK(spi_slave_transmit(VSPI_HOST, transaction, portMAX_DELAY));
 //    gpio_set_level(Gpio::ESP32_READY_PIN, 0);
 //
-    return(transaction);
+    return (transaction);
 }
 
 /*
@@ -298,9 +298,8 @@ spi_slave_transaction_t *SpiTransportProvider::SetupSpiHeaderTransaction()
     transaction->length = _headerFrameSize * 8;
 
     _spiTransaction = transaction;
-    return(transaction);
+    return (transaction);
 }
-
 
 /*
  *      Create a new SPI slave transmission object with zero filled
@@ -308,7 +307,7 @@ spi_slave_transaction_t *SpiTransportProvider::SetupSpiHeaderTransaction()
  *
  *      @param bufferSize
  *          Number of bytes in the receive and transmit buffers.
- * *
+ *
  *      @returns
  *          Pointer to a spi_slave_transaction_t object with the
  *          buffers set up and filled with zeroes.
@@ -327,7 +326,7 @@ spi_slave_transaction_t * SpiTransportProvider::SetupSpiPayloadTransaction(uint3
     transaction->length = bufferSize * 8;
 
     _spiTransaction = transaction;
-    return(transaction);
+    return (transaction);
 }
 
 /*
