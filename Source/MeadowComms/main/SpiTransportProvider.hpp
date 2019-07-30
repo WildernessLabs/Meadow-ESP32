@@ -119,7 +119,7 @@ private:
     /*
      *      Send an ACK or NAK with the specified code.
      */
-    spi_slave_transaction_t *AcknowledgeMessage(Message *, StatusCodes::StatusCodes, uint8_t);
+    spi_slave_transaction_t *SetupAcknowledgementTransaction(Message *, StatusCodes::StatusCodes, uint8_t);
 
     /*
      *      FreeRTOS task handler for this class.
@@ -136,6 +136,11 @@ private:
      *      some work to do.
      */
     void WaitForNotification();
+
+    /*
+     *      Delete the SPI transaction and clear up and buffers;
+     */
+    void DeleteSpiTransaction(spi_slave_transaction_t *);
 
     /*
      *      Clear the _currentHeader variable and free any allocated
@@ -222,7 +227,7 @@ private:
     /*
      *      Free any memory allocated for the transaction and its Tx and Rx buffers.
      */
-    void FreeUpTransactionHeapStorage(spi_slave_transaction_t *, SpiStates);
+    void FreeUpTransactionHeapStorage(spi_slave_transaction_t *, bool);
 
     /*
      *      ISR for the GPIO ISR.
