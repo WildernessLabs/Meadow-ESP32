@@ -17,6 +17,8 @@ namespace BasicNetworkTest
 
         private Messages.Message _getAntennaMessage;
 
+        private Messages.Message _setAntennaMessage;
+
         private Messages.AntennaInfo _antennaInfo;
 
         /// <summary>
@@ -42,6 +44,17 @@ namespace BasicNetworkTest
             _getAntennaMessage.MessageType = (byte) MessageTypes.Data;
             _getAntennaMessage.Payload = null;
             _getAntennaMessage.PayloadLength = 0;
+            
+            _setAntennaMessage = new Messages.Message();
+            _setAntennaMessage.Interface = (byte) Esp32Interfaces.WiFi;
+            _setAntennaMessage.Function = (byte) WiFiFunction.SetAntenna;
+            _setAntennaMessage.MessageID = _counter;
+            _setAntennaMessage.MessageType = (byte) MessageTypes.Data;
+
+            byte[] encodedAntenna = Encoders.EncodeAntennaInfo(_antennaInfo);
+            _setAntennaMessage.Payload = encodedAntenna;
+            _setAntennaMessage.PayloadLength = (UInt32) encodedAntenna.Length;
+            
         }
 
         /// <summary>
@@ -53,10 +66,15 @@ namespace BasicNetworkTest
         {
             Console.WriteLine("Queueing message:");
 
-            Console.WriteLine(_getAntennaMessage.ToString());
-            _dispatcher.Add(_getAntennaMessage);
+//            Console.WriteLine(_getAntennaMessage.ToString());
+//            _dispatcher.Add(_getAntennaMessage);
+//            _counter++;
+//            _getAntennaMessage.MessageID = _counter;
+
+            Console.WriteLine(_setAntennaMessage.ToString());
+            _dispatcher.Add(_setAntennaMessage);
             _counter++;
-            _getAntennaMessage.MessageID = _counter;
+            _setAntennaMessage.MessageID = _counter;
         }
 
         /// <summary>

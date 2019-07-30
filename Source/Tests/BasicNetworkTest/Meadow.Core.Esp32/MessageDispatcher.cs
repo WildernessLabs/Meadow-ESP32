@@ -62,7 +62,7 @@ namespace Meadow.Core.Esp32
         }
 
         /// <summary>
-        /// Send the message that has been recevied to the 
+        /// Send the message that has been received to the 
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>

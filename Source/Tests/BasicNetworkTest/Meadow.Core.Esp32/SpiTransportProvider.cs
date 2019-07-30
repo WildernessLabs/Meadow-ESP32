@@ -540,6 +540,8 @@ namespace Meadow.Core.Esp32
         {
             Console.WriteLine("Entering ProcessWantToSendMessageBodyState");
             byte[] encodedMessage = Encoders.EncodeMessage((Messages.Message) message, false);
+            Console.WriteLine("Sending message body:");
+            Console.WriteLine(DebugHelpers.DebugHelpers.PrintableBuffer(encodedMessage));
             _esp32.WriteBytes(encodedMessage);
             _currentState = SpiStates.WaitingForMessageBodyAcknowledgement;
 //            _stm32ReadyPin.State = false;
@@ -618,7 +620,7 @@ namespace Meadow.Core.Esp32
             {
                 ProcessWantToSendMessageHeaderState(message);
                 statusCode = ProcessWaitingForMessageHeaderAcknowledgementState(message);
-//                retryCount = CheckForRetry(message, statusCode, retryCount);
+                retryCount = CheckForRetry(message, statusCode, retryCount);
             }
             //
             //    RetryCount will be equal to MaximumRetryCount here if we failed to send
