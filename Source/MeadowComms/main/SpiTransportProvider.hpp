@@ -149,12 +149,6 @@ private:
     void DeleteMessageAndReleaseHeapStorage(Message *);
 
     /*
-     *      Process messages from either the SPI interface or the outbound
-     *      message queue.
-     */
-    void ProcessMessages();
-
-    /*
      *      Start to process incoming messages (i.e. move from the idle state
      *      into one where the ESP32 is sending or receiving data).
      */
