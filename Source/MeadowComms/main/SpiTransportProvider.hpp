@@ -27,6 +27,7 @@ private:
      *      Maximum number of retries before the system gives up.
      */
     const int MAXIMUM_RETRY_COUNT = 3;
+
     /*
      *      Possible states for the SPI transport layer.
      */
@@ -221,7 +222,13 @@ private:
     /*
      *      Free any memory allocated for the transaction and its Tx and Rx buffers.
      */
-    void DeleteTransactionAndBuffers(spi_slave_transaction_t *, bool);
+    void DeleteMessageTransaction(spi_slave_transaction_t *);
+
+    /*
+     *      Free any memory allocated for the transaction but keep the
+     *      Tx and Rx buffers.
+     */
+    void DeleteHeaderTransaction(spi_slave_transaction_t *);
 
     /*
      *      ISR for the GPIO ISR.

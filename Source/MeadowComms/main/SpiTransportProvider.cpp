@@ -328,26 +328,37 @@ spi_slave_transaction_t *SpiTransportProvider::CreateSpiPayloadTransaction(uint3
  *      Release any storage allocated on the heap associated
  *      with an SPI transaction.
  *
+ *      This should be used for message transactions where the Tx and Rx buffers are transient.
+ *
  *      @param transaction
  *          Pointer to the transaction (on the heap)
- *
- *      @param deleteBuffers
- *          Indicate if the buffers should be deleted.  This allows the fixed
- *          _headerTransmitBuffer and _headerReceiveBuffer to remain in place.
  */
-void SpiTransportProvider::DeleteTransactionAndBuffers(spi_slave_transaction_t *transaction, bool deleteBuffers)
+void SpiTransportProvider::DeleteMessageTransaction(spi_slave_transaction_t *transaction)
 {
     if (transaction)
     {
-        //
-        //  We need to delete the Rx and Tx buffers of the SPI transaction
-        //  when we are NOT using the header buffers.
-        //
-        if (deleteBuffers)
-        {
-            heap_caps_free((void *) transaction->rx_buffer);
-            heap_caps_free((void *) transaction->tx_buffer);
-        }
+        heap_caps_free((void *) transaction->rx_buffer);
+        heap_caps_free((void *) transaction->tx_buffer);
+        vPortFree(transaction);
+    }
+}
+
+/*
+ *      Release any storage associated with the SPI header transaction
+ *
+ *      This should be used for SPI transactions which use header information only
+ *      i.e. ACK / NAK / transport messages.
+ *
+ *      This method does not release the Tx and Rx buffers as these are in constant use
+ *      for header message types.
+ *
+ *      @param transaction
+ *          Pointer to the transaction (on the heap)
+ */
+void SpiTransportProvider::DeleteHeaderTransaction(spi_slave_transaction_t *transaction)
+{
+    if (transaction)
+    {
         vPortFree(transaction);
     }
 }
@@ -448,6 +459,9 @@ void SpiTransportProvider::DeleteMessageAndReleaseHeapStorage(Message *message)
  *
  *      @param transaction
  *          Current SPI transaction
+  *
+ *      @returns
+ *          New SPI transaction.
  */
 spi_slave_transaction_t *SpiTransportProvider::ProcessIdleState(spi_slave_transaction_t *transaction)
 {
@@ -476,7 +490,7 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessIdleState(spi_slave_transa
         messageType = MessageTypes::Nak;
         messageHeader = Message::CreateOnHeap(messageType, Esp32Interfaces::Transport, 0, responseCode, 0, nullptr, 0);
     }
-    DeleteTransactionAndBuffers(transaction, false);
+    DeleteHeaderTransaction(transaction);
     DeleteMessageAndReleaseHeapStorage(_incomingMessage);
     _incomingMessage = messageHeader;
     _responseCode = responseCode;
@@ -542,7 +556,7 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessAcknowledgingMessageHeader
     }
     else
     {
-        DeleteTransactionAndBuffers(_spiTransaction, true);
+        DeleteMessageTransaction(_spiTransaction);
         DeleteMessageAndReleaseHeapStorage(_incomingMessage);
         _incomingMessage = nullptr;
         newTransaction = CreateSpiHeaderTransaction();
@@ -556,6 +570,12 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessAcknowledgingMessageHeader
  *
  *      This method will set up the response types but will leave the _currentHeader variable in place.
  *      Memory allocated to _currentHeader must be deallocated in the Acknowledgement method.
+ *
+ *      @params transaction
+ *          Current SPI transaction used to get data from the STM32.
+ *
+ *      @returns
+ *          New SPI transaction.
  */
 spi_slave_transaction_t *SpiTransportProvider::ProcessWaitingForMessageBodyState(spi_slave_transaction_t *transaction)
 {
@@ -609,7 +629,7 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessWaitingForMessageBodyState
         responseCode = StatusCodes::CRCError;
         messageType = MessageTypes::Nak;
     }
-    DeleteTransactionAndBuffers(transaction, true);
+    DeleteMessageTransaction(transaction);
     _responseCode = responseCode;
     _messageType = messageType;
 
@@ -629,6 +649,12 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessWaitingForMessageBodyState
  *      This method requires the following class level variables to have
  *      been setup correctly:
  *          _responseCode
+ *
+ *      @params transaction
+ *          Current SPI transaction used to get data from the STM32.
+ *
+ *      @returns
+ *          New SPI transaction.
  */
 spi_slave_transaction_t *SpiTransportProvider::ProcessAcknowledingMessageBodyState(spi_slave_transaction_t *transaction)
 {
@@ -648,7 +674,7 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessAcknowledingMessageBodySta
 //    {
 //        DeleteTransactionAndBuffers(transaction, true);
 //    }
-    DeleteTransactionAndBuffers(transaction, false);
+    DeleteHeaderTransaction(transaction);
     spi_slave_transaction_t *newTransaction = CreateSpiHeaderTransaction();
     _currentState = Idle;
     return (newTransaction);
@@ -656,6 +682,9 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessAcknowledingMessageBodySta
 
 /*
  *      Send a message header to the STM32.
+ *
+ *      @params transaction
+ *          Current SPI transaction used to get data from the STM32.
  *
  *      @returns
  *          SPI transaction created to send the message header.
@@ -741,7 +770,7 @@ void SpiTransportProvider::ProcessWaitingForMessageHeaderAcknowledgementState()
         //  TODO: Deal with corrupt messages.
         _currentState = Idle;
     }
-    DeleteTransactionAndBuffers(transaction, true);
+    DeleteMessageTransaction(transaction);
 //    DeleteMessageAndReleaseHeapStorage(_incomingMessage);
 //    _incomingMessage = nullptr;
 }
@@ -771,7 +800,7 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessWantToSendMessageBodyState
         ESP_LOGI(__func__, "Received %d bytes.", dataSize);
         ESP_LOG_BUFFER_HEX(__func__, transaction->rx_buffer, dataSize);
         _currentState = WaitingForMessageBodyAcknowledgement;
-        DeleteTransactionAndBuffers(transaction, true);
+        DeleteMessageTransaction(transaction);
     }
     else
     {
@@ -812,7 +841,7 @@ void SpiTransportProvider::ProcessWaitingForMessageBodyAcknowledgementState()
         //  TODO: Deal with corrupt messages.
         _currentState = Idle;
     }
-    DeleteTransactionAndBuffers(transaction, true);
+    DeleteMessageTransaction(transaction);
 }
 
 /*
