@@ -158,32 +158,32 @@ private:
      *      Start to process incoming messages (i.e. move from the idle state
      *      into one where the ESP32 is sending or receiving data).
      */
-    void ProcessIdleState(spi_slave_transaction_t *transaction);
+    spi_slave_transaction_t *ProcessIdleState(spi_slave_transaction_t *);
 
     /*
      *      Implement the incoming message header reception process.
      */
-    void ProcessWaitingForMessageHeaderState();
+    spi_slave_transaction_t *ProcessWaitingForMessageHeaderState(spi_slave_transaction_t *);
 
     /*
      *      Implement the incoming message header acknowledgement process.
      */
-    void ProcessAcknowledgingMessageHeaderState();
+    spi_slave_transaction_t *ProcessAcknowledgingMessageHeaderState(spi_slave_transaction_t *);
 
     /*
      *      Implement the incoming message body reception process.
      */
-    void ProcessWaitingForMessageBodyState();
+    spi_slave_transaction_t *ProcessWaitingForMessageBodyState(spi_slave_transaction_t *);
 
     /*
      *      Implement the incoming message body acknowledgement process.
      */
-    void ProcessAcknowledingMessageBodyState();
+    spi_slave_transaction_t *ProcessAcknowledingMessageBodyState(spi_slave_transaction_t *);
 
     /*
      *      Implement the out-bound message header process.
      */
-    spi_slave_transaction_t *ProcessWantToSendMessageHeaderState();
+    spi_slave_transaction_t *ProcessWantToSendMessageHeaderState(spi_slave_transaction_t *);
 
     /*
      *      Implement processing of the incoming message header acknowledgement messages.
@@ -193,7 +193,7 @@ private:
     /*
      *      Implement the out-bound message body process.
      */
-    void ProcessWantToSendMessageBodyState();
+    spi_slave_transaction_t *ProcessWantToSendMessageBodyState(spi_slave_transaction_t *);
 
     /*
      *      Implement processing of the out-bound message body acknowledgement.
