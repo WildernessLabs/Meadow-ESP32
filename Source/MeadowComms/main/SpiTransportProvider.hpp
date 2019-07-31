@@ -119,7 +119,7 @@ private:
     /*
      *      Send an ACK or NAK with the specified code.
      */
-    spi_slave_transaction_t *SetupAcknowledgementTransaction(Message *, StatusCodes::StatusCodes, uint8_t);
+    spi_slave_transaction_t *CreateAcknowledgementTransaction(Message *, StatusCodes::StatusCodes, uint8_t);
 
     /*
      *      FreeRTOS task handler for this class.
@@ -183,7 +183,7 @@ private:
     /*
      *      Implement the out-bound message header process.
      */
-    void ProcessWantToSendMessageHeaderState();
+    spi_slave_transaction_t *ProcessWantToSendMessageHeaderState();
 
     /*
      *      Implement processing of the incoming message header acknowledgement messages.
@@ -214,20 +214,20 @@ private:
      *      Create a new SPI slave transmission object with zero filled
      *      buffers of the requested size.
      */
-    spi_slave_transaction_t *SetupSpiPayloadTransaction(uint32_t);
+    spi_slave_transaction_t *CreateSpiPayloadTransaction(uint32_t);
 
     /*
      *      Setup a new transaction using the _headerReceiveBuffer and
      *      _headerTransmitBuffer.
      */
-    spi_slave_transaction_t *SetupSpiHeaderTransaction();
+    spi_slave_transaction_t *CreateSpiHeaderTransaction();
 
-    void ClearBuffers(uint8_t *, uint8_t *, uint32_t);
+    void ClearTransmitAndReceiveBuffers(uint8_t *, uint8_t *, uint32_t);
 
     /*
      *      Free any memory allocated for the transaction and its Tx and Rx buffers.
      */
-    void FreeUpTransactionHeapStorage(spi_slave_transaction_t *, bool);
+    void DeleteTransactionAndBuffers(spi_slave_transaction_t *, bool);
 
     /*
      *      ISR for the GPIO ISR.
