@@ -113,10 +113,24 @@ void WiFiRequestHandler::GetAntenna(Message *request) const
 }
 
 /*
+ *      Convert the antenna enum into a GPIO pin number
+ *
+ *      @param antenna
+ *          Enum representing the antenna to be converted.
+ *
+ *      @returns
+ *          GPIO pin number connected to the appropriate antenna.
+ */
+gpio_num_t WiFiRequestHandler::ConvertAntennaToPin(AntennaTypes::AntennaTypes antenna)
+{
+    return((antenna == AntennaTypes::OnBoard) ? ON_BOARD_ANTENNA_PIN : EXTERNAL_ANTENNA_PIN);
+}
+
+/*
  *      Switch the current antenna.
  *
  *      @param request
- *          Original request from the STM32.res
+ *          Original request from the STM32.
  *
  *      TODO: Do we need to turn the WiFi off before switching the antenna?
  */
@@ -134,8 +148,8 @@ void WiFiRequestHandler::SetAntenna(Message *request)
         {
             if (_currentAntenna != antenna->Antenna)
             {
-                gpio_num_t newAntennaPin = (antenna->Antenna == AntennaTypes::OnBoard) ? ON_BOARD_ANTENNA_PIN : EXTERNAL_ANTENNA_PIN;
-                gpio_num_t oldAntennaPin = (_currentAntenna == AntennaTypes::OnBoard) ? ON_BOARD_ANTENNA_PIN : EXTERNAL_ANTENNA_PIN;
+                gpio_num_t newAntennaPin = ConvertAntennaToPin((AntennaTypes::AntennaTypes) antenna->Antenna);
+                gpio_num_t oldAntennaPin = ConvertAntennaToPin(_currentAntenna);
                 //
                 //  Make sure the old antenna is switched off before the new one is turned on.
                 //

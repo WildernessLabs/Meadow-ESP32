@@ -169,6 +169,12 @@ private:
     void ProcessAccessPointScanCompletion(system_event_t *);
 
     /*
+     *      Convert the Antenna enum representation of an antenna
+     *      into a GPIO pin number.
+     */
+    gpio_num_t ConvertAntennaToPin(AntennaTypes::AntennaTypes);
+
+    /*
      *      This method will dispatch incoming messages to the appropriate request handler.
      */
     void DispatchRequest(Message *);
