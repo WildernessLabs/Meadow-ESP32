@@ -311,7 +311,7 @@ spi_slave_transaction_t *SpiTransportProvider::CreateSpiHeaderTransaction()
  *          Pointer to a spi_slave_transaction_t object with the
  *          buffers set up and filled with zeroes.
  */
-spi_slave_transaction_t * SpiTransportProvider::CreateSpiPayloadTransaction(uint32_t bufferSize)
+spi_slave_transaction_t *SpiTransportProvider::CreateSpiPayloadTransaction(uint32_t bufferSize)
 {
     spi_slave_transaction_t *transaction = (spi_slave_transaction_t *) pvPortMalloc(sizeof(spi_slave_transaction_t));
 
@@ -453,7 +453,7 @@ void SpiTransportProvider::DeleteMessageAndReleaseHeapStorage(Message *message)
  *      @param transaction
  *          Current SPI transaction
  */
-void SpiTransportProvider::ProcessIdleState(spi_slave_transaction_t *transaction)
+spi_slave_transaction_t *SpiTransportProvider::ProcessIdleState(spi_slave_transaction_t *transaction)
 {
     ESP_LOGI(__func__, "Entering Method.");
 
@@ -487,8 +487,9 @@ void SpiTransportProvider::ProcessIdleState(spi_slave_transaction_t *transaction
     _messageType = messageType;
 
     ESP_LOGI(__func__, "Preparing response, packet type: %d, status code: %d", messageType, responseCode);
-    _spiTransaction = CreateAcknowledgementTransaction(_incomingMessage, responseCode, messageType);
+    spi_slave_transaction_t *newTransaction = CreateAcknowledgementTransaction(_incomingMessage, responseCode, messageType);
     _currentState = AcknowledgingMessageHeader;
+    return(newTransaction);
 }
 
 /*
@@ -506,11 +507,18 @@ void SpiTransportProvider::ProcessIdleState(spi_slave_transaction_t *transaction
  *          _incomingMessage
  *          _responseCode
  *          _messageType
+ *
+ *      @params transaction
+ *          Current SPI transaction used to get data from the STM32.
+ *
+ *      @returns
+ *          New SPI transaction.
  */
-void SpiTransportProvider::ProcessAcknowledgingMessageHeaderState()
+spi_slave_transaction_t *SpiTransportProvider::ProcessAcknowledgingMessageHeaderState(spi_slave_transaction_t *transaction)
 {
     ESP_LOGI(__func__, "Entering Method.");
 
+    spi_slave_transaction_t *newTransaction = nullptr;
     if (_responseCode == StatusCodes::CompletedOK)
     {
         if (_incomingMessage->PayloadLength == 0)         // Assume _incomingMessage has been set up.
@@ -523,13 +531,13 @@ void SpiTransportProvider::ProcessAcknowledgingMessageHeaderState()
             {
                 _messageDispatcher->QueueMessageForEsp32(_incomingMessage);
             }
-            CreateSpiHeaderTransaction();
+            newTransaction = CreateSpiHeaderTransaction();
             _currentState = Idle;
         }
         else
         {
             uint32_t encodedMessageBodySize = Encoders::CalculateSpiBufferSize(Message::HEADER_SIZE + _incomingMessage->PayloadLength);
-            _spiTransaction = CreateSpiPayloadTransaction(encodedMessageBodySize);
+            newTransaction = CreateSpiPayloadTransaction(encodedMessageBodySize);
 
             ESP_LOGI(__func__, "Current header payload length: %d", _incomingMessage->PayloadLength);
             ESP_LOGI(__func__, "Message body buffer size: %d", encodedMessageBodySize);
@@ -541,9 +549,10 @@ void SpiTransportProvider::ProcessAcknowledgingMessageHeaderState()
         DeleteTransactionAndBuffers(_spiTransaction, true);
         DeleteMessageAndReleaseHeapStorage(_incomingMessage);
         _incomingMessage = nullptr;
-        CreateSpiHeaderTransaction();
+        newTransaction = CreateSpiHeaderTransaction();
         _currentState = Idle;
     }
+    return(newTransaction);
 }
 
 /*
@@ -552,7 +561,7 @@ void SpiTransportProvider::ProcessAcknowledgingMessageHeaderState()
  *      This method will set up the response types but will leave the _currentHeader variable in place.
  *      Memory allocated to _currentHeader must be deallocated in the Acknowledgement method.
  */
-void SpiTransportProvider::ProcessWaitingForMessageBodyState()
+spi_slave_transaction_t *SpiTransportProvider::ProcessWaitingForMessageBodyState(spi_slave_transaction_t *transaction)
 {
     ESP_LOGI(__func__, "Entering Method.");
 
@@ -609,12 +618,13 @@ void SpiTransportProvider::ProcessWaitingForMessageBodyState()
     _messageType = messageType;
 
     ESP_LOGI(__func__, "Preparing response, packet type: %d, status code: %d", messageType, responseCode);
-    _spiTransaction = CreateAcknowledgementTransaction(_incomingMessage, responseCode, messageType);
+    spi_slave_transaction_t *newTransaction = CreateAcknowledgementTransaction(_incomingMessage, responseCode, messageType);
 
     DeleteMessageAndReleaseHeapStorage(_incomingMessage);
     _incomingMessage = nullptr;
 
     _currentState = AcknowledingMessageBody;
+    return(newTransaction);
 }
 
 /*
@@ -623,15 +633,15 @@ void SpiTransportProvider::ProcessWaitingForMessageBodyState()
  *      This method requires the following class level variables to have
  *      been setup correctly:
  *          _responseCode
- *          _messageType
  */
-void SpiTransportProvider::ProcessAcknowledingMessageBodyState()
+spi_slave_transaction_t *SpiTransportProvider::ProcessAcknowledingMessageBodyState(spi_slave_transaction_t *)
 {
     ESP_LOGI(__func__, "Entering Method.");
 
     int dataSize = _spiTransaction->length / 8;
     ESP_LOGI(__func__, "Received %d bytes.", dataSize);
     ESP_LOG_BUFFER_HEX(__func__, _spiTransaction->rx_buffer, dataSize);
+
     //
     //  If we received the message and body OK then we go back to expecting a header.
     //  Otherwise we go back to waiting to see if the STM32 retries the message body.
@@ -639,9 +649,10 @@ void SpiTransportProvider::ProcessAcknowledingMessageBodyState()
     if (_responseCode == StatusCodes::CompletedOK)
     {
         DeleteTransactionAndBuffers(_spiTransaction, true);
-        CreateSpiHeaderTransaction();
-        _currentState = Idle;
     }
+    spi_slave_transaction_t *newTransaction = CreateSpiHeaderTransaction();
+    _currentState = Idle;
+    return (newTransaction);
 }
 
 /*
@@ -650,12 +661,11 @@ void SpiTransportProvider::ProcessAcknowledingMessageBodyState()
  *      @returns
  *          SPI transaction created to send the message header.
  */
-spi_slave_transaction_t *SpiTransportProvider::ProcessWantToSendMessageHeaderState()
+spi_slave_transaction_t *SpiTransportProvider::ProcessWantToSendMessageHeaderState(spi_slave_transaction_t *transaction)
 {
     ESP_LOGI(__func__, "Entering Method.");
-    return nullptr;
 
-    spi_slave_transaction_t *transaction = nullptr;
+    spi_slave_transaction_t *newTransaction = nullptr;
     if (_outboundMessage)
     {
         uint8_t *encodedMessageHeader = Encoders::EncodeMessage(_outboundMessage, true);
@@ -663,10 +673,8 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessWantToSendMessageHeaderSta
         ESP_LOGI(__func__, "Want to send the following message:");
         ESP_LOG_BUFFER_HEX(__func__, encodedMessageHeader, Message::HEADER_SIZE);
 
-        spi_slave_transaction_t *transaction = CreateSpiPayloadTransaction(_headerFrameSize);
+        newTransaction = CreateSpiPayloadTransaction(_headerFrameSize);
         memcpy((void *) transaction->tx_buffer, (void *) encodedMessageHeader, Message::HEADER_SIZE);
-        _spiTransaction = transaction;
-
         _currentState = WaitingForMessageHeaderAcknowledgement;
         gpio_set_level(Gpio::ESP32_READY_PIN, 1);
 
@@ -699,7 +707,7 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessWantToSendMessageHeaderSta
         ESP_LOGE(__func__, "No message to send.");
         _currentState = Idle;
     }
-    return(transaction);
+    return(newTransaction);
 }
 
 /*
@@ -742,9 +750,10 @@ void SpiTransportProvider::ProcessWaitingForMessageHeaderAcknowledgementState()
 /*
  *      Send a message body to the STM32.
  */
-void SpiTransportProvider::ProcessWantToSendMessageBodyState()
+spi_slave_transaction_t *SpiTransportProvider::ProcessWantToSendMessageBodyState(spi_slave_transaction_t *transaction)
 {
     ESP_LOGI(__func__, "Entering Method.");
+    spi_slave_transaction_t *newTransaction = nullptr;
     if (_outboundMessage)
     {
         uint8_t *encodedMessageBody = Encoders::EncodeMessage(_outboundMessage, false);
@@ -752,7 +761,7 @@ void SpiTransportProvider::ProcessWantToSendMessageBodyState()
         ESP_LOG_BUFFER_HEX(__func__, encodedMessageBody, Message::HEADER_SIZE + _outboundMessage->PayloadLength);
 
         uint32_t encodedMessageBufferSize = Encoders::CalculateSpiBufferSize(Message::HEADER_SIZE + _outboundMessage->PayloadLength);
-        spi_slave_transaction_t *transaction = CreateSpiPayloadTransaction(encodedMessageBufferSize);
+        newTransaction = CreateSpiPayloadTransaction(encodedMessageBufferSize);
         memcpy((void *) transaction->tx_buffer, (void *) encodedMessageBody, Message::HEADER_SIZE + _outboundMessage->PayloadLength);
 
         gpio_set_level(Gpio::ESP32_READY_PIN, 1);
@@ -770,6 +779,7 @@ void SpiTransportProvider::ProcessWantToSendMessageBodyState()
         ESP_LOGE(__func__, "No message to send.");
         _currentState = Idle;
     }
+    return(newTransaction);
 }
 
 /*
@@ -851,60 +861,6 @@ void SpiTransportProvider::WaitForNotification()
  */
 void SpiTransportProvider::ProcessMessages()
 {
-//    gpio_set_level(Gpio::ESP32_READY_PIN, 1);
-
-    ESP_ERROR_CHECK(spi_slave_queue_trans(VSPI_HOST, _spiTransaction, portMAX_DELAY));
-//    ESP_ERROR_CHECK(spi_slave_transmit(VSPI_HOST, transaction, portMAX_DELAY));
-//    gpio_set_level(Gpio::ESP32_READY_PIN, 0);
-
-    //
-    //  The Task will get notified that there is something to do in two cases:
-    //      - There is at least one message in the send queue.
-    //      - SPI transmission/reception has completed.
-    //
-    //  We must wait until we are woken by one of the events.
-    //
-    WaitForNotification();
-    //
-    //  ESP-IDF documentation states that a call to spi_slave_get_trans_result
-    //  is mandatory when spi_slave_queue_trans is used.
-    //
-    ESP_ERROR_CHECK(spi_slave_get_trans_result(VSPI_HOST, &_spiTransaction, portMAX_DELAY));
-
-//    gpio_set_level(Gpio::ESP32_READY_PIN, 0);
-    switch (_currentState)
-    {
-        case Idle:
-            ProcessIdleState(_spiTransaction);
-            break;
-        case AcknowledgingMessageHeader:
-            ProcessAcknowledgingMessageHeaderState();
-            break;
-        case WaitingForMessageBody:
-            ProcessWaitingForMessageBodyState();
-            break;
-        case AcknowledingMessageBody:
-            ProcessAcknowledingMessageBodyState();
-            break;
-        case WantToSendMessageHeader:
-            ProcessWantToSendMessageHeaderState();
-            break;
-//        case WaitingForMessageHeaderAcknowledgement:
-//            ProcessWaitingForMessageHeaderAcknowledgementState();
-//            break;
-//        case WantToSendMessageBody:
-//            ProcessWantToSendMessageBodyState();
-//            break;
-//        case WaitingForMessageBodyAcknowledgement:
-//            ProcessWaitingForMessageBodyAcknowledgementState();
-//            break;
-//        case WantToSendTransportMessage:
-//            ProcessWantToSendTransportMessageState();
-//            break;
-        default:
-            ESP_LOGI(__func__, "Un-handled state: %s", SpiStateString(_currentState));
-            break;
-    }
 }
 
 /*
@@ -931,12 +887,58 @@ void SpiTransportProvider::Task(void *pvParameters)
     {
         vTaskDelay(10 / portTICK_PERIOD_MS);
     }
-    sender->CreateSpiHeaderTransaction();
+    spi_slave_transaction_t *transaction = sender->CreateSpiHeaderTransaction();
     while (true)
     {
         vTaskDelay(50 / portTICK_PERIOD_MS);
 
-        sender->ProcessMessages();
+        ESP_ERROR_CHECK(spi_slave_queue_trans(VSPI_HOST, transaction, portMAX_DELAY));
+        //
+        //  The Task will get notified that there is something to do in two cases:
+        //      - There is at least one message in the send queue.
+        //      - SPI transmission/reception has completed.
+        //
+        //  We must wait until we are woken by one of the events.
+        //
+        sender->WaitForNotification();
+        //
+        //  ESP-IDF documentation states that a call to spi_slave_get_trans_result
+        //  is mandatory when spi_slave_queue_trans is used.
+        //
+        ESP_ERROR_CHECK(spi_slave_get_trans_result(VSPI_HOST, &transaction, portMAX_DELAY));
+        switch (_currentState)
+        {
+            case Idle:
+                transaction = sender->ProcessIdleState(transaction);
+                break;
+            case AcknowledgingMessageHeader:
+                transaction = sender->ProcessAcknowledgingMessageHeaderState(transaction);
+                break;
+            case WaitingForMessageBody:
+                transaction = sender->ProcessWaitingForMessageBodyState(transaction);
+                break;
+            case AcknowledingMessageBody:
+                transaction = sender->ProcessAcknowledingMessageBodyState(transaction);
+                break;
+            case WantToSendMessageHeader:
+                transaction = sender->ProcessWantToSendMessageHeaderState(transaction);
+                break;
+    //        case WaitingForMessageHeaderAcknowledgement:
+    //            ProcessWaitingForMessageHeaderAcknowledgementState();
+    //            break;
+    //        case WantToSendMessageBody:
+    //            ProcessWantToSendMessageBodyState();
+    //            break;
+    //        case WaitingForMessageBodyAcknowledgement:
+    //            ProcessWaitingForMessageBodyAcknowledgementState();
+    //            break;
+    //        case WantToSendTransportMessage:
+    //            ProcessWantToSendTransportMessageState();
+    //            break;
+            default:
+                ESP_LOGI(__func__, "Un-handled state: %s", sender->SpiStateString(_currentState));
+                break;
+        }
     }
     //
     //  We should only get here if the code in the while loop generates a fault.
