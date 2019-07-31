@@ -295,8 +295,6 @@ spi_slave_transaction_t *SpiTransportProvider::CreateSpiHeaderTransaction()
     transaction->rx_buffer = _headerReceiveBuffer;
     transaction->tx_buffer = _headerTransmitBuffer;
     transaction->length = _headerFrameSize * 8;
-
-    _spiTransaction = transaction;
     return (transaction);
 }
 
@@ -323,8 +321,6 @@ spi_slave_transaction_t *SpiTransportProvider::CreateSpiPayloadTransaction(uint3
     transaction->rx_buffer = receiveBuffer;
     transaction->tx_buffer = transmitBuffer;
     transaction->length = bufferSize * 8;
-
-    _spiTransaction = transaction;
     return (transaction);
 }
 
@@ -565,18 +561,18 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessWaitingForMessageBodyState
 {
     ESP_LOGI(__func__, "Entering Method.");
 
-    int dataSize = _spiTransaction->length / 8;
+    int dataSize = transaction->length / 8;
     ESP_LOGI(__func__, "Received %d bytes.", dataSize);
-    ESP_LOG_BUFFER_HEX(__func__, _spiTransaction->rx_buffer, dataSize);
+    ESP_LOG_BUFFER_HEX(__func__, transaction->rx_buffer, dataSize);
     uint32_t encodedMessageBodySize = Encoders::CalculateSpiBufferSize(Message::HEADER_SIZE + _incomingMessage->PayloadLength);
     //
     //  Free up the SPI Tx buffer as soon as we can when receiving message bodies as the
     //  contents of the buffer should be 0 and are meaningless.  This is done to mitigate
     //  against running low / out of memory on the heap.
     //
-    heap_caps_free((void *) _spiTransaction->tx_buffer);
-    _spiTransaction->tx_buffer = nullptr;
-    Message *message = Encoders::ExtractMessage((uint8_t *) _spiTransaction->rx_buffer, encodedMessageBodySize, false);
+    heap_caps_free((void *) transaction->tx_buffer);
+    transaction->tx_buffer = nullptr;
+    Message *message = Encoders::ExtractMessage((uint8_t *) transaction->rx_buffer, encodedMessageBodySize, false);
 
     uint8_t messageType = MessageTypes::Ack;
     StatusCodes::StatusCodes responseCode = StatusCodes::CompletedOK;
@@ -613,7 +609,7 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessWaitingForMessageBodyState
         responseCode = StatusCodes::CRCError;
         messageType = MessageTypes::Nak;
     }
-    DeleteTransactionAndBuffers(_spiTransaction, true);
+    DeleteTransactionAndBuffers(transaction, true);
     _responseCode = responseCode;
     _messageType = messageType;
 
@@ -634,22 +630,25 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessWaitingForMessageBodyState
  *      been setup correctly:
  *          _responseCode
  */
-spi_slave_transaction_t *SpiTransportProvider::ProcessAcknowledingMessageBodyState(spi_slave_transaction_t *)
+spi_slave_transaction_t *SpiTransportProvider::ProcessAcknowledingMessageBodyState(spi_slave_transaction_t *transaction)
 {
     ESP_LOGI(__func__, "Entering Method.");
 
-    int dataSize = _spiTransaction->length / 8;
+    int dataSize = transaction->length / 8;
     ESP_LOGI(__func__, "Received %d bytes.", dataSize);
-    ESP_LOG_BUFFER_HEX(__func__, _spiTransaction->rx_buffer, dataSize);
+    ESP_LOG_BUFFER_HEX(__func__, transaction->rx_buffer, dataSize);
 
     //
     //  If we received the message and body OK then we go back to expecting a header.
     //  Otherwise we go back to waiting to see if the STM32 retries the message body.
     //
-    if (_responseCode == StatusCodes::CompletedOK)
-    {
-        DeleteTransactionAndBuffers(_spiTransaction, true);
-    }
+    //  TODO: this is not right !
+    //
+//    if (_responseCode == StatusCodes::CompletedOK)
+//    {
+//        DeleteTransactionAndBuffers(transaction, true);
+//    }
+    DeleteTransactionAndBuffers(transaction, false);
     spi_slave_transaction_t *newTransaction = CreateSpiHeaderTransaction();
     _currentState = Idle;
     return (newTransaction);
@@ -854,13 +853,6 @@ void SpiTransportProvider::WaitForNotification()
             xSemaphoreGive(_outboundMessageQueueMutex);
         }
     }
-}
-
-/*
- *      Processes messages from either the SPI interface or the outbound message queue.
- */
-void SpiTransportProvider::ProcessMessages()
-{
 }
 
 /*
