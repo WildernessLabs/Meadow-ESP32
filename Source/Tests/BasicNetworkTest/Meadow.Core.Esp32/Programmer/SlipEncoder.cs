@@ -30,7 +30,9 @@ namespace Meadow.Core.Esp32
             foreach (byte b in data)
             {
                 if ((b == 0xC0) || (b == 0xDB))
+                {
                     decodedArrayLength--;
+                }
             }
             byte[] result = new byte[decodedArrayLength];
             int currentDestinationByte = 0;
@@ -78,7 +80,9 @@ namespace Meadow.Core.Esp32
             foreach (byte b in data)
             {
                 if ((b == 0xC0) || (b == 0xDB))
+                {
                     encodedArrayLength++;
+                }
             }
 
             byte[] result = new byte[encodedArrayLength];
