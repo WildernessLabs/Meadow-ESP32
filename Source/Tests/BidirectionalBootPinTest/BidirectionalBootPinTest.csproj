@@ -34,6 +34,7 @@
   <ItemGroup>
     <Compile Include="BootPinTest.cs" />
     <Compile Include="DeepSleepTest.cs" />
+    <Compile Include="Esp32ReadyInputPort.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="BidriectionalBootPinTest.cs" />
