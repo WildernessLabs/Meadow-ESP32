@@ -902,7 +902,7 @@ void SpiTransportProvider::Task(void *pvParameters)
 
     //
     //  It is important to wait for the outbound message queue to be
-    //  created before we tray and process any messages.
+    //  created before we try to process any messages.
     //
     while (!_outboundMessageQueueHandle)
     {
