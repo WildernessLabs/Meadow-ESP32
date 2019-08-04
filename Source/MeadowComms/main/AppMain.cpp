@@ -40,12 +40,12 @@ extern "C" void app_main()
     }
     ESP_ERROR_CHECK(result);
 
-//    bool state = false;
+    bool state = false;
     while (true)
     {
 //        spi->WaitForData();
-//        gpio_set_level(Gpio::ESP32_READY_PIN, state ? 1 : 0);
-//        state = !state;
+        gpio_set_level(Gpio::ESP32_READY_PIN, state ? 1 : 0);
+        state = !state;
         vTaskDelay(500 / portTICK_PERIOD_MS);
     }
 }
