@@ -33,6 +33,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Meadow.Core.Esp32\BaseClasses\TransportProviderBase.cs" />
+    <Compile Include="Meadow.Core.Esp32\Programmer\EspLoader.cs" />
+    <Compile Include="Meadow.Core.Esp32\Programmer\FlashSizes.cs" />
+    <Compile Include="Meadow.Core.Esp32\Programmer\Programmer.cs" />
+    <Compile Include="Meadow.Core.Esp32\Programmer\SerialPort.cs" />
+    <Compile Include="Meadow.Core.Esp32\Programmer\SlipEncoder.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="DebugHelpers.cs" />
