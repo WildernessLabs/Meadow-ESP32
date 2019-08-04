@@ -8,14 +8,14 @@ namespace GPIOTest
         {
             Console.WriteLine("GPIO Port Test Application for Meadow F7");
             
-            BootPinTest application = new BootPinTest(); 
+            Esp32ReadyInputPort application = new Esp32ReadyInputPort();
             
+//            BootPinTest application = new BootPinTest(); 
 //            DeepSleepTest application = new DeepSleepTest();
 //            SimpleReset application = new SimpleReset();
 //            BidirectionalBootPinTestApplication application = new BidirectionalBootPinTestApplication();
 
             application.Run();
-            
         }
     }
 }
