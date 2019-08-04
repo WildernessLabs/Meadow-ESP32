@@ -14,85 +14,85 @@ namespace Meadow.Core.Esp32
     {
         #region Constants
         
-        public string CHIP_NAME = "Espressif device";
+        public const string CHIP_NAME = "Espressif device";
 
-        public bool IS_STUB = false;
+        public const bool IS_STUB = false;
 
         public string DEFAULT_PORT = "/dev/ttyUSB0";
 
         // Commands supported by ESP8266 ROM bootloader
-        public byte ESP_FLASH_BEGIN = 0x02;
-        public byte ESP_FLASH_DATA = 0x03;
-        public byte ESP_FLASH_END = 0x04;
-        public byte ESP_MEM_BEGIN = 0x05;
-        public byte ESP_MEM_END = 0x06;
-        public byte ESP_MEM_DATA = 0x07;
-        public byte ESP_SYNC = 0x08;
-        public byte ESP_WRITE_REG = 0x09;
-        public byte ESP_READ_REG = 0x0a;
+        public const byte ESP_FLASH_BEGIN = 0x02;
+        public const byte ESP_FLASH_DATA = 0x03;
+        public const byte ESP_FLASH_END = 0x04;
+        public const byte ESP_MEM_BEGIN = 0x05;
+        public const byte ESP_MEM_END = 0x06;
+        public const byte ESP_MEM_DATA = 0x07;
+        public const byte ESP_SYNC = 0x08;
+        public const byte ESP_WRITE_REG = 0x09;
+        public const byte ESP_READ_REG = 0x0a;
 
         // Some commands supported by ESP32 ROM bootloader (or -8266 w/ stub)
-        public byte ESP_SPI_SET_PARAMS = 0x0B;
-        public byte ESP_SPI_ATTACH = 0x0D;
-        public byte ESP_CHANGE_BAUDRATE = 0x0F;
-        public byte ESP_FLASH_DEFL_BEGIN = 0x10;
-        public byte ESP_FLASH_DEFL_DATA = 0x11;
-        public byte ESP_FLASH_DEFL_END = 0x12;
-        public byte ESP_SPI_FLASH_MD5 = 0x13;
+        public const byte ESP_SPI_SET_PARAMS = 0x0B;
+        public const byte ESP_SPI_ATTACH = 0x0D;
+        public const byte ESP_CHANGE_BAUDRATE = 0x0F;
+        public const byte ESP_FLASH_DEFL_BEGIN = 0x10;
+        public const byte ESP_FLASH_DEFL_DATA = 0x11;
+        public const byte ESP_FLASH_DEFL_END = 0x12;
+        public const byte ESP_SPI_FLASH_MD5 = 0x13;
 
         // Some commands supported by stub only
-        public byte ESP_ERASE_FLASH = 0xD0;
-        public byte ESP_ERASE_REGION = 0xD1;
-        public byte ESP_READ_FLASH = 0xD2;
-        public byte ESP_RUN_USER_CODE = 0xD3;
+        public const byte ESP_ERASE_FLASH = 0xD0;
+        public const byte ESP_ERASE_REGION = 0xD1;
+        public const byte ESP_READ_FLASH = 0xD2;
+        public const byte ESP_RUN_USER_CODE = 0xD3;
 
         /// <summary>
         /// Maximum block sized for RAM writes. 
         /// </summary>
-        public UInt16 ESP_RAM_BLOCK = 0x1800;
+        public const UInt16 ESP_RAM_BLOCK = 0x1800;
         
         /// <summary>
         /// Maximum block sized for Flash writes. 
         /// </summary>
-        public UInt16 FLASH_WRITE_SIZE = 0x400;
+        public const UInt16 FLASH_WRITE_SIZE = 0x400;
 
         // Default baudrate. The ROM auto-bauds, so we can use more or less whatever we want.
-        public int ESP_ROM_BAUD = 115200;
+        public const int ESP_ROM_BAUD = 115200;
 
         /// <summary>
         /// First byte of the application image.
         /// </summary>
-        public byte ESP_IMAGE_MAGIC = 0xe9;
+        public const byte ESP_IMAGE_MAGIC = 0xe9;
         
         /// <summary>
         /// Initial state for the checksum routine.
         /// </summary>
-        public byte ESP_CHECKSUM_MAGIC = 0xef;
+        public const byte ESP_CHECKSUM_MAGIC = 0xef;
 
         /// <summary>
         /// Flash sector size, minimum unit of erase.
         /// </summary>
-        public UInt32 FLASH_SECTOR_SIZE = 0x1000;
+        public const UInt32 FLASH_SECTOR_SIZE = 0x1000;
         
-        public UInt32 UART_DATA_REG_ADDR = 0x60000078;
+        public const UInt32 UART_DATA_REG_ADDR = 0x60000078;
         
         /// <summary>
         /// Expected contents of the ESP32 Date register
         /// </summary>
-        public UInt32 ESP32_UART_DATE_REGISTER_VALUE = 0;    // TODO: fill in this value.
+        public const UInt32 ESP32_UART_DATE_REGISTER_VALUE = 0;    // TODO: fill in this value.
 
         /// <summary>
         /// Start address of the ROM instruction memory.
         /// </summary>
-        public UInt32 IROM_MAP_START = 0x40200000;
+        public const UInt32 IROM_MAP_START = 0x40200000;
         
         /// <summary>
         /// End address of the ROM instruction memory.
         /// </summary>
-        public UInt32 IROM_MAP_END = 0x40300000;
+        public const UInt32 IROM_MAP_END = 0x40300000;
 
         // The number of bytes in the UART response that signify command status
-        public UInt32 STATUS_BYTES_LENGTH = 2;
+        public const UInt32 STATUS_BYTES_LENGTH = 2;
         
         #endregion
         
@@ -156,6 +156,22 @@ namespace Meadow.Core.Esp32
                 throw new Exception("ESP32 chip expected.");
             }
             Console.WriteLine("ESP32 chip detected.");
+        }
+
+        /// <summary>
+        /// Generate a checksum for the data.
+        /// </summary>
+        /// <param name="data">Array of bytes needing a checksum generating.</param>
+        /// <returns>Simple XOR checksum of the data.</returns>
+        public byte Checksum(byte[] data)
+        {
+            byte result = ESP_CHECKSUM_MAGIC;
+            foreach (byte b in data)
+            {
+                result ^= b;
+            }
+                
+            return (result);
         }
         
         #endregion

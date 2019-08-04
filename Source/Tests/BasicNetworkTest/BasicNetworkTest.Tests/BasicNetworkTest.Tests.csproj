@@ -42,6 +42,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Meadow.Core.Esp32\Programmer\EspLoaderTests.cs" />
     <Compile Include="Meadow.Core.Esp32\Programmer\SlipEncoderTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
