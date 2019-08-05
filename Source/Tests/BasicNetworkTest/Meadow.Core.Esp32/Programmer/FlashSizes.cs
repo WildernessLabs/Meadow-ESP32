@@ -22,25 +22,19 @@ namespace Meadow.Core.Esp32
 
             switch (FlashCode)
             {
-                case 0x12:
-                    flashSize = "256KB";
-                    break;
-                case 0x13:
-                    flashSize = "512KB";
-                    break;
-                case 0x14:
+                case 0x00:
                     flashSize = "1MB";
                     break;
-                case 0x15:
+                case 0x10:
                     flashSize = "2MB";
                     break;
-                case 0x16:
+                case 0x20:
                     flashSize = "4MB";
                     break;
-                case 0x17:
+                case 0x30:
                     flashSize = "8MB";
                     break;
-                case 0x18:
+                case 0x40:
                     flashSize = "16MB";
                     break;
             }
