@@ -13,8 +13,8 @@ namespace Meadow.Core.Esp32
     public class EspLoader
     {
         #region Constants
-        
-        public const string CHIP_NAME = "Espressif device";
+
+        public const string CHIP_NAME = "ESP32";
 
         public const bool IS_STUB = false;
 
@@ -50,7 +50,7 @@ namespace Meadow.Core.Esp32
         /// Maximum block sized for RAM writes. 
         /// </summary>
         public const UInt16 ESP_RAM_BLOCK = 0x1800;
-        
+
         /// <summary>
         /// Maximum block sized for Flash writes. 
         /// </summary>
@@ -63,7 +63,7 @@ namespace Meadow.Core.Esp32
         /// First byte of the application image.
         /// </summary>
         public const byte ESP_IMAGE_MAGIC = 0xe9;
-        
+
         /// <summary>
         /// Initial state for the checksum routine.
         /// </summary>
@@ -73,27 +73,59 @@ namespace Meadow.Core.Esp32
         /// Flash sector size, minimum unit of erase.
         /// </summary>
         public const UInt32 FLASH_SECTOR_SIZE = 0x1000;
-        
+
         public const UInt32 UART_DATA_REG_ADDR = 0x60000078;
-        
+
         /// <summary>
         /// Expected contents of the ESP32 Date register
         /// </summary>
-        public const UInt32 ESP32_UART_DATE_REGISTER_VALUE = 0;    // TODO: fill in this value.
+        public const UInt32 ESP32_UART_DATE_REGISTER_VALUE = 0; // TODO: fill in this value.
 
         /// <summary>
         /// Start address of the ROM instruction memory.
         /// </summary>
-        public const UInt32 IROM_MAP_START = 0x40200000;
-        
+        public const UInt32 IROM_MAP_START = 0x400d0000;
+
         /// <summary>
         /// End address of the ROM instruction memory.
         /// </summary>
-        public const UInt32 IROM_MAP_END = 0x40300000;
+        public const UInt32 IROM_MAP_END = 0x40400000;
 
-        // The number of bytes in the UART response that signify command status
-        public const UInt32 STATUS_BYTES_LENGTH = 2;
-        
+        /// <summary>
+        /// Start address of the ROM data memory.
+        /// </summary>
+        public const UInt32 DROM_MAP_START = 0x3F400000;
+
+        /// <summary>
+        /// End address of the ROM data memory.
+        /// </summary>
+        public const UInt32 DROM_MAP_END = 0x3F800000;
+
+        /// <summary>
+        /// Number of bytes returned by the ESP to indicate the status.
+        /// </summary>
+        public const UInt32 STATUS_BYTES_LENGTH = 4;
+
+        /// <summary>
+        /// Base address of the registers.
+        /// </summary>
+        public const UInt32 SPI_REG_BASE = 0x60002000;
+
+        /// <summary>
+        /// Base address of the fuses in memory.
+        /// </summary>
+        public const UInt32 EFUSE_REG_BASE = 0x6001a000;
+
+        public const UInt32 SPI_W0_OFFS = 0x80;
+        public const bool SPI_HAS_MOSI_DLEN_REG = true;
+
+        public const UInt32 BOOTLOADER_FLASH_OFFSET = 0x1000;
+
+        /// <summary>
+        /// SDIO Vdd choices.
+        /// </summary>
+        public string[] OVERRIDE_VDDSDIO_CHOICES = { "1.8V", "1.9V", "OFF" };
+
         #endregion
         
         #region Private Variables
@@ -144,6 +176,16 @@ namespace Meadow.Core.Esp32
         }
 
         /// <summary>
+        /// Read the contents of the specified fuse.
+        /// </summary>
+        /// <param name="fuseNumber">Fuse number to read.</param>
+        /// <returns>Contents of the fuse to be read.</returns>
+        private UInt32 ReadEFuse(UInt32 fuseNumber)
+        {
+            return (ReadRegister(EFUSE_REG_BASE + fuseNumber));
+        }
+
+        /// <summary>
         /// Detect the chip connected to the serial port.
         /// </summary>
         /// <exception cref="Exception">Thrown if an unknown chip is detected.</exception>
@@ -171,6 +213,45 @@ namespace Meadow.Core.Esp32
                 result ^= b;
             }
                 
+            return (result);
+        }
+
+        /// <summary>
+        /// Try to read the encryption key from BLOCK1 and check if it valid.
+        /// </summary>
+        /// <returns>True if the encryption key is valid, false otherwise.</returns>
+        public bool IsFlashEncryptionKeyValid()
+        {
+            bool result = true;    // Assume a valid key is present.
+            
+            //
+            //  Bit 0 of efuse_rd_disable[3:0] is mapped to BLOCK1 this bit is at
+            // position 16 in EFUSE_BLK0_RDATA0_REG
+            //
+            UInt32 word0 = ReadEFuse(0);
+            bool rdDisable = ((word0 >> 16) & 0x01) != 0x01;
+            if (rdDisable)
+            {
+                result = true;
+            }
+            else
+            {
+                //
+                //  Reading of BLOCK1 is ALLOWED so we will read and verify for non-zero.
+                //  When ESP32 has not generated AES/encryption key in BLOCK1, the contents will be readable and 0.
+                //  If the flash encryption is enable it is expected to have a valid non-zero key. We break out on
+                //  first occurence of non-zero value. 
+                //
+                for (uint fuse = 0; fuse < 7; fuse++)
+                {
+                    if (ReadEFuse(14 + fuse) != 0)
+                    {
+                        result = false;
+                        break;
+                    }
+                }
+            }
+
             return (result);
         }
         
