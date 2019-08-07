@@ -467,6 +467,8 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessIdleState(spi_slave_transa
 {
     ESP_LOGI(__func__, "Entering Method.");
 
+    gpio_set_level(Gpio::ESP32_READY_PIN, 0);
+
     int dataSize = transaction->length / 8;
     ESP_LOGI(__func__, "Received %d bytes.", dataSize);
     ESP_LOG_BUFFER_HEX(__func__, transaction->rx_buffer, dataSize);
@@ -482,6 +484,10 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessIdleState(spi_slave_transa
             responseCode = StatusCodes::CRCError;
             messageType = MessageTypes::Nak;
             messageHeader = Message::CreateOnHeap(messageType, Esp32Interfaces::Transport, 0, responseCode, 0, nullptr, 0);
+        }
+        else
+        {
+
         }
     }
     else
@@ -696,14 +702,17 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessWantToSendMessageHeaderSta
     spi_slave_transaction_t *newTransaction = nullptr;
     if (_outboundMessage)
     {
-        uint8_t *encodedMessageHeader = Encoders::EncodeMessage(_outboundMessage, true);
+        Message *responseReadyMessage = new Message(MessageTypes::Transport, Esp32Interfaces::None, TransportFunction::ResponseReady, 0, 0, nullptr, 0);
+        uint8_t *encodedMessageHeader = Encoders::EncodeMessage(responseReadyMessage, true);
+        delete(responseReadyMessage);
+//        uint8_t *encodedMessageHeader = Encoders::EncodeMessage(_outboundMessage, true);
 
         ESP_LOGI(__func__, "Want to send the following message:");
         ESP_LOG_BUFFER_HEX(__func__, encodedMessageHeader, Message::HEADER_SIZE);
 
         newTransaction = CreateSpiPayloadTransaction(_headerFrameSize);
         memcpy((void *) transaction->tx_buffer, (void *) encodedMessageHeader, Message::HEADER_SIZE);
-        _currentState = WaitingForMessageHeaderAcknowledgement;
+//        _currentState = WaitingForMessageHeaderAcknowledgement;
         gpio_set_level(Gpio::ESP32_READY_PIN, 1);
 
 //        ESP_ERROR_CHECK(spi_slave_transmit(VSPI_HOST, transaction, portMAX_DELAY));
@@ -733,8 +742,8 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessWantToSendMessageHeaderSta
     else
     {
         ESP_LOGE(__func__, "No message to send.");
-        _currentState = Idle;
     }
+    _currentState = Idle;
     return(newTransaction);
 }
 
@@ -876,6 +885,7 @@ void SpiTransportProvider::WaitForNotification()
                     if (xQueueReceive(_outboundMessageQueueHandle, &_outboundMessage, portMAX_DELAY) == pdTRUE)
                     {
                         _currentState = SpiStates::WantToSendMessageHeader;
+                        gpio_set_level(Gpio::ESP32_READY_PIN, 1);
                     }
                 }
             }
