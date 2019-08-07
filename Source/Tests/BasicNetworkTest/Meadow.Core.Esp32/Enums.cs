@@ -71,9 +71,8 @@ namespace Meadow.Core.Esp32
 
     public enum BluetoothFunction : UInt32
     {
-        Echo = 0,
-        GetConfiguration = 1,
-        SetConfiguration = 2
+        GetConfiguration = 0,
+        SetConfiguration = 1
     };
 
     public enum TransportFunction : UInt32
