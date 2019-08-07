@@ -67,11 +67,7 @@ void Logging::Setup()
     //
     //  Now allow the original UART0 pins to be used as GPIO pins.
     //
-    if (Gpio::LOGGING_TX_PIN != GPIO_NUM_3)
-    {
-        gpio_pad_select_gpio(Gpio::UART0_TX_PIN);
-    }
-    gpio_pad_select_gpio(Gpio::UART0_RX_PIN);
+    gpio_pad_select_gpio(Gpio::UART0_TX_PIN);
     ESP_LOGI(__func__, "Logging setup complete.");
 }
 
