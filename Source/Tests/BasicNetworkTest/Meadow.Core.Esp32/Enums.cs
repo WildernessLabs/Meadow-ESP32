@@ -76,6 +76,12 @@ namespace Meadow.Core.Esp32
         SetConfiguration = 2
     };
 
+    public enum TransportFunction : UInt32
+    {
+        ResponseReady = 0,
+        SendResponse = 1
+    };
+
     public enum MessageTypes : byte
     {
         Ack = 0x00,

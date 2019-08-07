@@ -51,6 +51,15 @@
           ]
         },
         {
+          "Name": "TransportFunction",
+          "Namespace": "TransportFunction",
+          "Comment": "Transport functions available on the ESP32",
+          "BaseDataType": "UInt32",
+          "EnumNames": [
+              "ResponseReady", "SendResponse"
+          ]
+        },
+        {
             "Name": "MessageTypes",
             "BaseDataType": "Byte",
             "Namespace": "",
