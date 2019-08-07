@@ -97,6 +97,15 @@ namespace DebugHelpers
             }
             return (result.ToString());
         }
+
+        /// <summary>
+        /// Display a timestamped message on the console.
+        /// </summary>
+        /// <param name="message">Message to be displayed on the console.</param>
+        public static void LogMessage(string message)
+        {
+            Console.WriteLine($"{DateTime.Now.ToString("HH:mm:ss tt")}: {message}");
+        }
         
         public DebugHelpers()
         {
