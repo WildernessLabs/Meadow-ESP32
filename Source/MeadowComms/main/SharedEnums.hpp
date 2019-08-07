@@ -105,6 +105,18 @@ namespace BluetoothFunction
     };
 }
 
+namespace TransportFunction
+{
+    /*
+     *      Transport functions available on the ESP32
+     */
+    enum TransportFunction : uint32_t
+    {
+        ResponseReady = 0,
+        SendResponse = 1
+    };
+}
+
 /*
  *      Possible transport packet types.
  */
