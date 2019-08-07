@@ -47,7 +47,7 @@
           "Comment": "Bluetooth functions available on the ESP32",
           "BaseDataType": "UInt32",
           "EnumNames": [
-              "Echo", "GetConfiguration", "SetConfiguration"
+              "GetConfiguration", "SetConfiguration"
           ]
         },
         {
