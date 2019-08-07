@@ -63,24 +63,24 @@ namespace Meadow.Core.Esp32
         SpiStates _currentState = SpiStates.Invalid;
 
         /// <summary>
-        ///     Queue of messages to be sent to the ESP32.
+        /// Queue of messages to be sent to the ESP32.
         /// </summary>
         private static Queue<Messages.Message> _messageQueue = null;
 
         /// <summary>
-        ///     Lock for the message queue to synchronise access by the
-        ///     two threads (main application adding messages and the
-        ///     queue processing thread taking messages from the queue).
+        /// Lock for the message queue to synchronise access by the
+        /// two threads (main application adding messages and the
+        /// queue processing thread taking messages from the queue).
         /// </summary>
         private readonly object _messageQueueLock = new object();
 
         /// <summary>
-        ///     Handle used to synchronise the incoming messages and the task processing the messages.
+        /// Handle used to synchronise the incoming messages and the task processing the messages.
         /// </summary>
         private readonly EventWaitHandle _waitingForStuffToDoHandle = new AutoResetEvent(false);
 
         /// <summary>
-        ///     Thread processing the messages as they enter the queue.
+        /// Thread processing the messages as they enter the queue.
         /// </summary>
         private Thread _queueHandler = null;
 
@@ -128,7 +128,7 @@ namespace Meadow.Core.Esp32
         #region Constructor(s)
 
         /// <summary>
-        ///     Default constructor is private to prevent it from being called.
+        /// Default constructor is private to prevent it from being called.
         /// </summary>
         private SpiTransportProvider()
         {
@@ -141,14 +141,12 @@ namespace Meadow.Core.Esp32
         {
             //
             //    Create the reset pin first and hold the ESP32 in reset while the other pins are
-            //    being instanciated.  This will help prevent any "fake" messages being sent to
+            //    being instantiated.  This will help prevent any "fake" messages being sent to
             //    the ESP32.
             //
             _reset = (DigitalOutputPort) device.CreateDigitalOutputPort(resetPin, false);
             
 //            _stm32ReadyPin = (DigitalOutputPort) device.CreateDigitalOutputPort(stm32ReadyPin, false);
-            _esp32ReadyPin = (DigitalInputPort) device.CreateDigitalInputPort(esp32ReadyPin, interruptMode: InterruptMode.EdgeRising);
-            _esp32ReadyPin.Changed += _esp32ReadyPin_Changed;
             _esp32 = new SpiPeripheral(new SoftwareSPIBus(device, mosi, miso, clock), device.CreateDigitalOutputPort(chipSelect, true));
 //            if (stm32ReadyPin == bootPin)
 //            {
@@ -162,10 +160,18 @@ namespace Meadow.Core.Esp32
 //            _boot.State = true;
 //            _reset.State = false;
 //            _reset.State = true;
-////            _boot.Dispose();
+////        _boot.Dispose();
 //            _boot = null;
 
             _reset.State = true;
+            _esp32ReadyPin = (DigitalInputPort) device.CreateDigitalInputPort(esp32ReadyPin, interruptMode: InterruptMode.EdgeRising);
+            //
+            //  We need to wait for 100ms after resetting the ESP32 before attaching
+            //  an interrupt as the ESP32 will be sending diagnostic information to
+            //  the UART pin.
+            //
+            Thread.Sleep(100);
+            _esp32ReadyPin.Changed += _esp32ReadyPin_Changed;
             
             _currentState = SpiStates.Idle;
             _messageQueue = new Queue<Messages.Message>();
@@ -181,12 +187,12 @@ namespace Meadow.Core.Esp32
         #region Delegates and events
 
         /// <summary>
-        ///     Error event to allow lower level errors to bubble up to the interfaces.
+        /// Error event to allow lower level errors to bubble up to the interfaces.
         /// </summary>
         public override event TransportProviderErrorEventHandler TransportError = delegate { };
 
         /// <summary>
-        ///     Data received event.
+        /// Data received event.
         /// </summary>
         public override event TransportProviderDataReceivedEventHandler MessageReceived = delegate { };
 
@@ -199,7 +205,8 @@ namespace Meadow.Core.Esp32
         /// <param name="e"></param>
         private void _esp32ReadyPin_Changed(object sender, DigitalInputPortEventArgs e)
         {
-            _waitingForStuffToDoHandle.Set();
+            DebugHelpers.DebugHelpers.LogMessage("ESP32 has generated an interrupt.");
+//            _waitingForStuffToDoHandle.Set();
         }
 
         #endregion
@@ -295,10 +302,10 @@ namespace Meadow.Core.Esp32
         /// </summary>
         /// <remarks>
         /// This method really works out what to do as there are two possible scenarios:
-        ///     - A message has arrived in the queue and the method taking the message has
-        ///       indicated so
-        ///     - The ESP32 has raised a ready signal to take the next message or to indicate
-        ///       that it is ready to process data.
+        /// - A message has arrived in the queue and the method taking the message has
+        ///   indicated so
+        /// - The ESP32 has raised a ready signal to take the next message or to indicate
+        ///   that it is ready to process data.
         ///
         /// The algorithm here is simply that outbound messages take priority over inbound
         /// messages (for the moment).
@@ -313,7 +320,7 @@ namespace Meadow.Core.Esp32
 //                    _outboundMessage = _messageQueue.Dequeue();
 //                    _currentState = SpiStates.WantToSendMessageHeader;
 //                    _currentRetryCount = 0;
-////                    _stm32ReadyPin.State = true;
+////                _stm32ReadyPin.State = true;
 //                }
 //                else
                 {
