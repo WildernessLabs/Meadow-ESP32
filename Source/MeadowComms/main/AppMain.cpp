@@ -1,7 +1,6 @@
 /*
  *      Main application for the ESP32 code for Meadow.
  */
-
 #include "freertos/FreeRTOS.h"
 #include "esp_log.h"
 #include <string.h>
@@ -11,8 +10,6 @@
 #include "Logging.hpp"
 #include "MessageDispatcher.hpp"
 #include "SpiTransportProvider.hpp"
-
-#define UNUSED(x) (void)(x)
 
 /*
  *      Main program loop for the ESP32 as specified by the FreeRTOS documentation.
@@ -40,12 +37,12 @@ extern "C" void app_main()
     }
     ESP_ERROR_CHECK(result);
 
-    bool state = false;
+//    bool state = false;
     while (true)
     {
 //        spi->WaitForData();
-        gpio_set_level(Gpio::ESP32_READY_PIN, state ? 1 : 0);
-        state = !state;
+//        gpio_set_level(Gpio::ESP32_READY_PIN, state ? 1 : 0);
+//        state = !state;
         vTaskDelay(500 / portTICK_PERIOD_MS);
     }
 }
