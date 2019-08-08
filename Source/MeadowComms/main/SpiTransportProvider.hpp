@@ -127,16 +127,12 @@ private:
      */
     static void Task(void *);
 
+    spi_slave_transaction_t *ProcessMessages(spi_slave_transaction_t *);
+
     /*
      *  Convert the current state into a string message for debugging.
      */
     const char *SpiStateString(SpiStates);
-
-    /*
-     *      Wait for the interrupt or the send queue to indicate that there is
-     *      some work to do.
-     */
-    void WaitForNotification();
 
     /*
      *      Delete the SPI transaction and clear up and buffers;
@@ -201,11 +197,6 @@ private:
     void ProcessWantToSendTransportMessageState();
 
     /*
-     *      Create a spi_slave_transaction_t specific to the current state.
-     */
-//    spi_slave_transaction_t *SetupTransaction(SpiStates);
-
-    /*
      *      Create a new SPI slave transmission object with zero filled
      *      buffers of the requested size.
      */
@@ -229,11 +220,6 @@ private:
      *      Tx and Rx buffers.
      */
     void DeleteHeaderTransaction(spi_slave_transaction_t *);
-
-    /*
-     *      ISR for the GPIO ISR.
-     */
-    static void Stm32IsrHandler(void *);
 
 public:
     /*

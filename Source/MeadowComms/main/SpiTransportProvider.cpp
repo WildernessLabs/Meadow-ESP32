@@ -862,36 +862,72 @@ void SpiTransportProvider::ProcessWantToSendTransportMessageState()
 }
 
 /*
- *  Wait for an incoming notification and work out if we should be entering a send
- *  or receive state.
+ *  Start the SPI communication and with for a signal that we have messages to process.
+ *  Process the incoming message and return a new transaction that can be used for the
+ *  next stage in the process.
+ *
+ *  @param transaction
+ *      Valid SPI transaction that can be used to communicate with the STM32.
+ *
+ *  @return
+ *      Newly setup SPI transaction that can be used in the next stage of the process.
+ *
  */
-void SpiTransportProvider::WaitForNotification()
+spi_slave_transaction_t *SpiTransportProvider::ProcessMessages(spi_slave_transaction_t *transaction)
 {
+    spi_slave_transaction_t *newTransaction = nullptr;
+
+    ESP_ERROR_CHECK(spi_slave_queue_trans(VSPI_HOST, transaction, portMAX_DELAY));
+    //
+    //  The Task will get notified that there is something to do in two cases:
+    //      - There is at least one message in the send queue.
+    //      - SPI transmission/reception has completed.
+    //
+    //  We must wait until we are woken by one of the events.
+    //
     uint32_t notificationBits = 0;
 
     ESP_LOGI(__func__, "Waiting for notification, current state: %s", SpiStateString(_currentState));
     xTaskNotifyWait(0x00000000, 0x00000000, &notificationBits, portMAX_DELAY);
-
-    if ((_currentState == SpiStates::Idle) && (notificationBits & TransportProviderBase::OUTBOUND_MESSAGE_QUEUE_NOTIFICATION_BIT))
+    //
+    //  ESP-IDF documentation states that a call to spi_slave_get_trans_result
+    //  is mandatory when spi_slave_queue_trans is used.
+    //
+    ESP_ERROR_CHECK(spi_slave_get_trans_result(VSPI_HOST, &transaction, portMAX_DELAY));
+    switch (_currentState)
     {
-        if (xSemaphoreTake(_outboundMessageQueueMutex, portMAX_DELAY))
-        {
-            UBaseType_t messageCount = uxQueueMessagesWaiting(_outboundMessageQueueHandle);
-            ESP_LOGI(__func__, "Messages waiting: %d", messageCount);
-            if (messageCount > 0)
-            {
-                if (!_outboundMessage)
-                {
-                    if (xQueueReceive(_outboundMessageQueueHandle, &_outboundMessage, portMAX_DELAY) == pdTRUE)
-                    {
-                        _currentState = SpiStates::WantToSendMessageHeader;
-                        gpio_set_level(Gpio::ESP32_READY_PIN, 1);
-                    }
-                }
-            }
-            xSemaphoreGive(_outboundMessageQueueMutex);
-        }
+        case Idle:
+            newTransaction = ProcessIdleState(transaction);
+            break;
+        case AcknowledgingMessageHeader:
+            newTransaction = ProcessAcknowledgingMessageHeaderState(transaction);
+            break;
+        case WaitingForMessageBody:
+            newTransaction = ProcessWaitingForMessageBodyState(transaction);
+            break;
+        case AcknowledingMessageBody:
+            newTransaction = ProcessAcknowledingMessageBodyState(transaction);
+            break;
+        case WantToSendMessageHeader:
+            newTransaction = ProcessWantToSendMessageHeaderState(transaction);
+            break;
+//        case WaitingForMessageHeaderAcknowledgement:
+//            ProcessWaitingForMessageHeaderAcknowledgementState();
+//            break;
+//        case WantToSendMessageBody:
+//            ProcessWantToSendMessageBodyState();
+//            break;
+//        case WaitingForMessageBodyAcknowledgement:
+//            ProcessWaitingForMessageBodyAcknowledgementState();
+//            break;
+//        case WantToSendTransportMessage:
+//            ProcessWantToSendTransportMessageState();
+//            break;
+        default:
+            ESP_LOGI(__func__, "Un-handled state: %s", SpiStateString(_currentState));
+            break;
     }
+    return(newTransaction);
 }
 
 /*
@@ -921,55 +957,9 @@ void SpiTransportProvider::Task(void *pvParameters)
     spi_slave_transaction_t *transaction = sender->CreateSpiHeaderTransaction();
     while (true)
     {
+        transaction = sender->ProcessMessages(transaction);
         vTaskDelay(50 / portTICK_PERIOD_MS);
 
-        ESP_ERROR_CHECK(spi_slave_queue_trans(VSPI_HOST, transaction, portMAX_DELAY));
-        //
-        //  The Task will get notified that there is something to do in two cases:
-        //      - There is at least one message in the send queue.
-        //      - SPI transmission/reception has completed.
-        //
-        //  We must wait until we are woken by one of the events.
-        //
-        sender->WaitForNotification();
-        //
-        //  ESP-IDF documentation states that a call to spi_slave_get_trans_result
-        //  is mandatory when spi_slave_queue_trans is used.
-        //
-        ESP_ERROR_CHECK(spi_slave_get_trans_result(VSPI_HOST, &transaction, portMAX_DELAY));
-        switch (_currentState)
-        {
-            case Idle:
-                transaction = sender->ProcessIdleState(transaction);
-                break;
-            case AcknowledgingMessageHeader:
-                transaction = sender->ProcessAcknowledgingMessageHeaderState(transaction);
-                break;
-            case WaitingForMessageBody:
-                transaction = sender->ProcessWaitingForMessageBodyState(transaction);
-                break;
-            case AcknowledingMessageBody:
-                transaction = sender->ProcessAcknowledingMessageBodyState(transaction);
-                break;
-            case WantToSendMessageHeader:
-                transaction = sender->ProcessWantToSendMessageHeaderState(transaction);
-                break;
-    //        case WaitingForMessageHeaderAcknowledgement:
-    //            ProcessWaitingForMessageHeaderAcknowledgementState();
-    //            break;
-    //        case WantToSendMessageBody:
-    //            ProcessWantToSendMessageBodyState();
-    //            break;
-    //        case WaitingForMessageBodyAcknowledgement:
-    //            ProcessWaitingForMessageBodyAcknowledgementState();
-    //            break;
-    //        case WantToSendTransportMessage:
-    //            ProcessWantToSendTransportMessageState();
-    //            break;
-            default:
-                ESP_LOGI(__func__, "Un-handled state: %s", sender->SpiStateString(_currentState));
-                break;
-        }
     }
     //
     //  We should only get here if the code in the while loop generates a fault.
@@ -977,16 +967,4 @@ void SpiTransportProvider::Task(void *pvParameters)
     //  should we get here.
     //
     vTaskDelete(sender->_transportProviderTaskHandle);
-}
-
-/*
- *      ISR for the GPIO pin indicating that the STM32 is
- *      ready to send data to the ESP32 or that it is ready
- *      to receive data from the ESP32.
- *
- *      The ESP32 ready signal is set to a low state when the
- *      SPI interface has been set up.
- */
-void SpiTransportProvider::Stm32IsrHandler(void *pvParameters)
-{
 }
