@@ -26,7 +26,6 @@ extern "C" void app_main()
      *  Set up the messaging system to use SPI hardware communications.
      */
     SpiTransportProvider *spi = new SpiTransportProvider();
-
     MessageDispatcher * __attribute__((unused)) messageDispatcher = new MessageDispatcher(spi);
 
     esp_err_t result = nvs_flash_init();

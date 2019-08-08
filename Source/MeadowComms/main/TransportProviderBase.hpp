@@ -36,8 +36,11 @@ public:
      */
     bool QueueMessageForStm32(Message *);
 
+    /*
+     *  Bit that will be used to indicate that a the STM32 has just
+     *  finished sending a message to the ESP32.
+     */
     static const uint32_t STM32_INTERRUPT_NOTIFICATION_BIT = 0x00000001;
-    static const uint32_t OUTBOUND_MESSAGE_QUEUE_NOTIFICATION_BIT = 0x00000002;
 
 private:
     /*
@@ -72,7 +75,17 @@ protected:
      */
     static SemaphoreHandle_t _outboundMessageQueueMutex;
 
+    /*
+     *  Task handle for the FreeRTOS task that will deal with the
+     *  process of sending and receiving messages between the ESP32
+     *  and the STM32 chips.
+     */
     static TaskHandle_t _transportProviderTaskHandle;
+
+    /*
+     *  Get the number of messages in the outbound message queue.
+     */
+    int OutboundMessageQueueLength();
 };
 
 #endif /* _TRANSPORT_PROVIDER_BASE_HPP_ */

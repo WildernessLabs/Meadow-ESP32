@@ -16,10 +16,10 @@
  *
  * ----------------------------------------------------------------------------
  */
-
 QueueHandle_t TransportProviderBase::_outboundMessageQueueMutex = nullptr;
 QueueHandle_t TransportProviderBase::_outboundMessageQueueHandle = nullptr;
 TaskHandle_t TransportProviderBase::_transportProviderTaskHandle = nullptr;
+
 /*
  * ---------------------------------------------------------------------------
  *
@@ -69,6 +69,27 @@ void TransportProviderBase::Setup(MessageDispatcher *messageDispatcher)
 }
 
 /*
+ *      Get the number of messages in the outbound message queue.
+ *
+ *      @returns
+ *          Number of messages in the outbound message queue.  This
+ *          method will return -1 if the number of messages cannot be
+ *          obtained.
+ */
+int TransportProviderBase::OutboundMessageQueueLength()
+{
+    int result = -1;
+    if (xSemaphoreTake(_outboundMessageQueueMutex, portMAX_DELAY))
+    {
+        UBaseType_t messageCount = uxQueueMessagesWaiting(_outboundMessageQueueHandle);
+        xSemaphoreGive(_outboundMessageQueueMutex);
+        ESP_LOGI(__func__, "Messages waiting: %d", messageCount);
+        result = (int) messageCount;
+    }
+    return(result);
+}
+
+/*
  *      Add the message to the queue of messages waiting to be sent to
  *      the STM32.
  *
@@ -96,14 +117,14 @@ bool TransportProviderBase::QueueMessageForStm32(Message *message)
                 ESP_LOGE(__func__, "Cannot queue message.");
                 result = false;
             }
-            ESP_LOGI(__func__, "Message queued.");
-            UBaseType_t messageCount = uxQueueMessagesWaiting(_outboundMessageQueueHandle);
-            ESP_LOGI(__func__, "Messages waiting: %d", messageCount);
-            xSemaphoreGive(_outboundMessageQueueMutex);
-            if (xTaskNotify(_transportProviderTaskHandle, TransportProviderBase::OUTBOUND_MESSAGE_QUEUE_NOTIFICATION_BIT, eSetBits) != pdPASS)
+            else
             {
-                ESP_LOGE(__func__, "Cannot send message queue notification.");
+                ESP_LOGI(__func__, "Message queued.");
+                gpio_set_level(Gpio::ESP32_READY_PIN, 1);
             }
+            UBaseType_t messageCount = uxQueueMessagesWaiting(_outboundMessageQueueHandle);
+            xSemaphoreGive(_outboundMessageQueueMutex);
+            ESP_LOGI(__func__, "Messages waiting: %d", messageCount);
         }
     }
     return(result);
