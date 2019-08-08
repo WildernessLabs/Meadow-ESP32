@@ -112,7 +112,8 @@ namespace TransportFunction
     enum TransportFunction : uint32_t
     {
         ResponseReady = 0,
-        SendResponse = 1
+        SendResponse = 1,
+        NoMessagesWaiting = 2
     };
 }
 
