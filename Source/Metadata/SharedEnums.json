@@ -56,7 +56,7 @@
           "Comment": "Transport functions available on the ESP32",
           "BaseDataType": "UInt32",
           "EnumNames": [
-              "ResponseReady", "SendResponse"
+              "ResponseReady", "SendResponse", "NoMessagesWaiting"
           ]
         },
         {
