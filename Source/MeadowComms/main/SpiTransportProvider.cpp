@@ -467,8 +467,6 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessIdleState(spi_slave_transa
 {
     ESP_LOGI(__func__, "Entering Method.");
 
-    gpio_set_level(Gpio::ESP32_READY_PIN, 0);
-
     int dataSize = transaction->length / 8;
     ESP_LOGI(__func__, "Received %d bytes.", dataSize);
     ESP_LOG_BUFFER_HEX(__func__, transaction->rx_buffer, dataSize);
@@ -877,13 +875,18 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessMessages(spi_slave_transac
 {
     spi_slave_transaction_t *newTransaction = nullptr;
 
+    if ((_currentState == Idle) && (OutboundMessageQueueLength() > 0))
+    {
+        gpio_set_level(Gpio::ESP32_READY_PIN, 1);
+    }
+    else
+    {
+        gpio_set_level(Gpio::ESP32_READY_PIN, 0);
+    }
+
     ESP_ERROR_CHECK(spi_slave_queue_trans(VSPI_HOST, transaction, portMAX_DELAY));
     //
-    //  The Task will get notified that there is something to do in two cases:
-    //      - There is at least one message in the send queue.
-    //      - SPI transmission/reception has completed.
-    //
-    //  We must wait until we are woken by one of the events.
+    //  The Task will get notified when the STM32 has completed a SPI transaction.
     //
     uint32_t notificationBits = 0;
 
