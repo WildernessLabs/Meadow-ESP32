@@ -35,7 +35,8 @@ namespace Meadow.Core.Esp32
         InvalidPassword = 13,
         WiFiDisconnected = 14,
         InvalidAntennaData = 15,
-        InvalidAntennaValue = 16
+        InvalidAntennaValue = 16,
+        NoMessagesWaiting = 17
     };
 
     public enum Esp32Interfaces : byte
@@ -78,8 +79,7 @@ namespace Meadow.Core.Esp32
     public enum TransportFunction : UInt32
     {
         ResponseReady = 0,
-        SendResponse = 1,
-        NoMessagesWaiting = 2
+        SendResponse = 1
     };
 
     public enum MessageTypes : byte
