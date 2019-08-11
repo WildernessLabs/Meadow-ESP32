@@ -84,7 +84,7 @@ struct Message
     /*
      *      Make a copy of a message.
      */
-    static Message *CopyMessage(Message *originalMessage, bool copyPayload);
+    static Message *CreateCopyOnHeap(Message *originalMessage, bool copyPayload);
 
     /*
      *      Create a new message on the heap with the specified values.

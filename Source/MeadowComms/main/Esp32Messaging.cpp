@@ -175,7 +175,7 @@ Message *Message::CreateOnHeap(uint8_t messageType, uint8_t interface, uint32_t 
  *      @return
  *          New copy of the message.
  */
-Message *Message::CopyMessage(Message *originalMessage, bool copyPayload)
+Message *Message::CreateCopyOnHeap(Message *originalMessage, bool copyPayload)
 {
     uint8_t *payload = nullptr;
     uint32_t payloadLength = 0;
