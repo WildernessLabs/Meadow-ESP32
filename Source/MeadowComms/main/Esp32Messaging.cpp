@@ -159,18 +159,7 @@ Message *Message::CreateOnHeap(uint8_t messageType, uint8_t interface, uint32_t 
  */
 Message *Message::CreateOnHeap(uint8_t messageType, uint8_t interface, uint32_t function, uint32_t statusCode)
 {
-    Message *result = (Message *) pvPortMalloc(sizeof(Message));
-
-    memset(result, 0, sizeof(Message));
-    result->MessageType = messageType;
-    result->Interface = interface;
-    result->Function = function;
-    result->StatusCode = statusCode;
-    result->MessageID = 0;
-    result->Payload = nullptr;
-    result->PayloadLength = 0;
-
-    return(result);
+    return(CreateOnHeap(messageType, interface, function, statusCode, 0, nullptr, 0));
 }
 
 /*
