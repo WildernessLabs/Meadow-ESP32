@@ -142,6 +142,38 @@ Message *Message::CreateOnHeap(uint8_t messageType, uint8_t interface, uint32_t 
 }
 
 /*
+ *  Create an instance of a message on the heap.
+ *
+ *  @param messageType
+ *      Type of message to send (see PacktType enum).
+ *
+ *  @param interface
+ *      Interface on the ESP that this message should be routed to.
+ *
+ *  @param function
+ *      Function to be called on the interface.
+ *
+ *  @param statusCode
+ *      Status code to be returned by the function.
+ *
+ */
+Message *Message::CreateOnHeap(uint8_t messageType, uint8_t interface, uint32_t function, uint32_t statusCode)
+{
+    Message *result = (Message *) pvPortMalloc(sizeof(Message));
+
+    memset(result, 0, sizeof(Message));
+    result->MessageType = messageType;
+    result->Interface = interface;
+    result->Function = function;
+    result->StatusCode = statusCode;
+    result->MessageID = 0;
+    result->Payload = nullptr;
+    result->PayloadLength = 0;
+
+    return(result);
+}
+
+/*
  *      Make a copy of a message (on the heap).
  *
  *      @param originalMessage
