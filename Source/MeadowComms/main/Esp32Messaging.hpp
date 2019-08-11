@@ -72,6 +72,11 @@ struct Message
     Message(uint8_t, uint8_t, uint32_t, uint32_t , uint32_t, uint8_t *, uint32_t);
 
     /*
+     *  Constructor for the Message class.
+     */
+    Message(uint8_t, uint8_t, uint32_t, uint32_t);
+
+    /*
      *  Default constructor for a Message structure.
      */
     Message();

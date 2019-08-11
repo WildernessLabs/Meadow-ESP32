@@ -67,6 +67,32 @@ Message::Message(uint8_t messageType, uint8_t interface, uint32_t function, uint
 }
 
 /*
+ *  Constructor for the Message class.
+ *
+ *  @param messageType
+ *      Type of message to send (see PacktType enum).
+ *
+ *  @param interface
+ *      Interface on the ESP that this message should be routed to.
+ *
+ *  @param function
+ *      Function to be called on the interface.
+ *
+ *  @param statusCode
+ *      Status code to be returned by the function.
+ */
+Message::Message(uint8_t messageType, uint8_t interface, uint32_t function, uint32_t statusCode)
+{
+    MessageType = messageType;
+    Interface = interface;
+    Function = function;
+    StatusCode = statusCode;
+    MessageID = 0;
+    Payload = nullptr;
+    PayloadLength = 0;
+}
+
+/*
  * ---------------------------------------------------------------------------
  *
  *                                 Methods
