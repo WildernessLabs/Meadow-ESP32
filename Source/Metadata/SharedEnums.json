@@ -10,7 +10,8 @@
                 "CompletedOK", "CRCError", "Restart", "Failure", "InvalidInterface", "QueueError",
                 "InvalidPacket", "InvalidHeader", "UnexpectedData", "MissingEndOfFrameMarker", "HeaderBodyFieldMismatch",
                 "WiFiAlreadyStarted", "InvalidSSID", "InvalidPassword", "WiFiDisconnected",
-                "InvalidAntennaData", "InvalidAntennaValue"
+                "InvalidAntennaData", "InvalidAntennaValue",
+                "NoMessagesWaiting"
             ]
         },
         {
@@ -56,7 +57,7 @@
           "Comment": "Transport functions available on the ESP32",
           "BaseDataType": "UInt32",
           "EnumNames": [
-              "ResponseReady", "SendResponse", "NoMessagesWaiting"
+              "ResponseReady", "SendResponse"
           ]
         },
         {

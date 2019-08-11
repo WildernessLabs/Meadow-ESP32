@@ -39,7 +39,8 @@ namespace StatusCodes
         InvalidPassword = 13,
         WiFiDisconnected = 14,
         InvalidAntennaData = 15,
-        InvalidAntennaValue = 16
+        InvalidAntennaValue = 16,
+        NoMessagesWaiting = 17
     };
 }
 
@@ -112,8 +113,7 @@ namespace TransportFunction
     enum TransportFunction : uint32_t
     {
         ResponseReady = 0,
-        SendResponse = 1,
-        NoMessagesWaiting = 2
+        SendResponse = 1
     };
 }
 
