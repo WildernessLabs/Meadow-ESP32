@@ -19,6 +19,8 @@ namespace BasicNetworkTest
 
         private Messages.Message _setAntennaMessage;
 
+        private Messages.Message _requestMessage;
+
         private Messages.AntennaInfo _antennaInfo;
 
         /// <summary>
@@ -55,6 +57,10 @@ namespace BasicNetworkTest
             _setAntennaMessage.Payload = encodedAntenna;
             _setAntennaMessage.PayloadLength = (UInt32) encodedAntenna.Length;
             
+            _requestMessage = new Messages.Message();
+            _requestMessage.MessageType = (byte)MessageTypes.Transport;
+            _requestMessage.Interface = (byte)Esp32Interfaces.Transport;
+            _requestMessage.Function = (UInt32)TransportFunction.SendResponse;
         }
 
         /// <summary>
@@ -71,10 +77,13 @@ namespace BasicNetworkTest
 //            _counter++;
 //            _getAntennaMessage.MessageID = _counter;
 
-            Console.WriteLine(_setAntennaMessage.ToString());
-            _dispatcher.Add(_setAntennaMessage);
-            _counter++;
-            _setAntennaMessage.MessageID = _counter;
+//            Console.WriteLine(_setAntennaMessage.ToString());
+//            _dispatcher.Add(_setAntennaMessage);
+//            _counter++;
+//            _setAntennaMessage.MessageID = _counter;
+            
+            Console.WriteLine(_requestMessage.ToString());
+            _dispatcher.Add(_requestMessage);
         }
 
         /// <summary>
