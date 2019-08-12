@@ -90,6 +90,33 @@ int TransportProviderBase::OutboundMessageQueueLength()
 }
 
 /*
+ *  Get the next message from the message queue (if there is one available).
+ *
+ *  @return
+ *      Pointer to the message that has been retrieved or nullptr if there
+ *      are no messages in the queue or there is a problem getting the next
+ *      message.
+ */
+Message *TransportProviderBase::GetOutboundMessage()
+{
+    Message *result = nullptr;
+    if (xSemaphoreTake(_outboundMessageQueueMutex, portMAX_DELAY))
+    {
+        UBaseType_t messageCount = uxQueueMessagesWaiting(_outboundMessageQueueHandle);
+        if (messageCount > 0)
+        {
+            if (xQueueReceive(_outboundMessageQueueHandle, (void *) result, portMAX_DELAY) != pdTRUE)
+            {
+                result = nullptr;
+            }
+        }
+        xSemaphoreGive(_outboundMessageQueueMutex);
+        ESP_LOGI(__func__, "Messages waiting: %d", messageCount);
+    }
+    return(result);
+}
+
+/*
  *      Add the message to the queue of messages waiting to be sent to
  *      the STM32.
  *

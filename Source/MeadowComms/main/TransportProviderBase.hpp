@@ -86,6 +86,11 @@ protected:
      *  Get the number of messages in the outbound message queue.
      */
     int OutboundMessageQueueLength();
+
+    /*
+     *  Get the next message from the outbound message queue.
+     */
+    Message *GetOutboundMessage();
 };
 
 #endif /* _TRANSPORT_PROVIDER_BASE_HPP_ */

@@ -204,7 +204,7 @@ const char *SpiTransportProvider::SpiStateString(SpiTransportProvider::SpiStates
         case AcknowledingMessageBody:
             stateString = "AcknowledingMessageBody";
             break;
-        case WantToSendMessageHeader:
+        case SendingMessageHeader:
             stateString = "WantToSendMessageHeader";
             break;
         case WaitingForMessageHeaderAcknowledgement:
@@ -268,7 +268,7 @@ spi_slave_transaction_t *SpiTransportProvider::CreateAcknowledgementTransaction(
 {
     spi_slave_transaction_t *transaction = CreateSpiHeaderTransaction();
 
-    Message *copyOfMessage = Message::CopyMessage(message, false);
+    Message *copyOfMessage = Message::CreateCopyOnHeap(message, false);
     copyOfMessage->MessageType = messageType;
     copyOfMessage->StatusCode = (uint32_t) code;
     uint8_t *ackFrame = (uint8_t *) Encoders::EncodeMessage(copyOfMessage, true);
@@ -452,6 +452,68 @@ void SpiTransportProvider::DeleteMessageAndReleaseHeapStorage(Message *message)
 }
 
 /*
+ *  Encode a header or transport only message.
+ *
+ *  @param transaction
+ *      SPI transaction that has been created to hold the message/header.
+ *
+ *  @param message
+ *      Message or header to be encoded and copied into the SPI transaction
+ *      Tx buffer.
+ */
+void SpiTransportProvider::EncodeHeaderMessage(spi_slave_transaction_t *transaction, Message *message)
+{
+    uint8_t *encodedMessageHeader = Encoders::EncodeMessage(message, true);
+    memcpy((void *) transaction->tx_buffer, (void *) encodedMessageHeader, _headerFrameSize);
+    vPortFree(encodedMessageHeader);
+}
+
+/*
+ *  Process the transport message and prepare the next transaction and
+ *  change to the appropriate state.
+ *
+ *  @return
+ *      Pointer to a new transaction.
+ */
+spi_slave_transaction_t *SpiTransportProvider::ProcessTransportMessage()
+{
+    spi_slave_transaction_t *newTransaction = nullptr;
+    switch (_incomingMessage->Function)
+    {
+        case TransportFunction::SendResponse:
+            if (!_outboundMessage)
+            {
+                _outboundMessage = GetOutboundMessage();
+            }
+            if (_outboundMessage)   // We have to check again as GetOutboundMessage() may return nullptr.
+            {
+                ESP_LOGI(__func__, "Outbound message retrieved.");
+                _responseCode = StatusCodes::CompletedOK;
+                _messageType = MessageTypes::Header;
+            }
+            else
+            {
+                ESP_LOGI(__func__, "No outbound messages queued.");
+                _responseCode = StatusCodes::NoMessagesWaiting;
+                _messageType = MessageTypes::Transport;
+                _outboundMessage = Message::CreateOnHeap(MessageTypes::Transport, Esp32Interfaces::Transport, TransportFunction::SendResponse, StatusCodes::NoMessagesWaiting);
+            }
+            newTransaction = CreateSpiHeaderTransaction();
+            EncodeHeaderMessage(newTransaction, _outboundMessage);
+            _currentState = SendingMessageHeader;
+            break;
+        default:
+            ESP_LOGI(__func__, "Transport function %d not recognised.", _incomingMessage->Function);
+            _responseCode = StatusCodes::CompletedOK;
+            _messageType = MessageTypes::Nak;
+            break;
+    }
+
+    _incomingMessage = nullptr;
+    return(newTransaction);
+}
+
+/*
  *      The STM32 has indicated that it has a message for the ESP32.
  *
  *      This method requests header information from the STM32 and starts
@@ -459,7 +521,7 @@ void SpiTransportProvider::DeleteMessageAndReleaseHeapStorage(Message *message)
  *
  *      @param transaction
  *          Current SPI transaction
-  *
+ *
  *      @returns
  *          New SPI transaction.
  */
@@ -471,38 +533,48 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessIdleState(spi_slave_transa
     ESP_LOGI(__func__, "Received %d bytes.", dataSize);
     ESP_LOG_BUFFER_HEX(__func__, transaction->rx_buffer, dataSize);
 
-    Message *messageHeader;
-    uint8_t messageType = MessageTypes::Ack;
-    StatusCodes::StatusCodes responseCode = StatusCodes::CompletedOK;
+    DeleteMessageAndReleaseHeapStorage(_incomingMessage);
+    spi_slave_transaction_t *newTransaction = nullptr;
+    _currentState = AcknowledgingMessageHeader;
     if (transaction->trans_len >= (Message::HEADER_SIZE * 8))
     {
-        messageHeader = Encoders::ExtractMessage((uint8_t *) transaction->rx_buffer, _headerFrameSize, true);
-        if (!messageHeader)             // nullptr indicates a CRC error.
+        _incomingMessage = Encoders::ExtractMessage((uint8_t *) transaction->rx_buffer, _headerFrameSize, true);
+        if (!_incomingMessage)             // nullptr indicates a CRC error.
         {
-            responseCode = StatusCodes::CRCError;
-            messageType = MessageTypes::Nak;
-            messageHeader = Message::CreateOnHeap(messageType, Esp32Interfaces::Transport, 0, responseCode, 0, nullptr, 0);
+            _responseCode = StatusCodes::CRCError;
+            _messageType = MessageTypes::Nak;
+            _incomingMessage = Message::CreateOnHeap(_messageType, Esp32Interfaces::Transport, 0, _responseCode);
         }
         else
         {
-
+            switch (_incomingMessage->MessageType)
+            {
+                case MessageTypes::Header:
+                    newTransaction = CreateAcknowledgementTransaction(_incomingMessage, _responseCode, _messageType);
+                    break;
+                case MessageTypes::Transport:
+                    newTransaction = ProcessTransportMessage();
+                    break;
+                default:
+                    ESP_LOGI(__func__, "Unexpected message type: %d", _incomingMessage->MessageType);
+                    _responseCode = StatusCodes::UnexpectedData;
+                    _messageType = MessageTypes::Nak;
+                    _incomingMessage = Message::CreateOnHeap(_messageType, Esp32Interfaces::Transport, 0, _responseCode);
+                    newTransaction = CreateAcknowledgementTransaction(_incomingMessage, _responseCode, _messageType);
+                    break;
+            }
         }
     }
     else
     {
-        responseCode = StatusCodes::InvalidHeader;
-        messageType = MessageTypes::Nak;
-        messageHeader = Message::CreateOnHeap(messageType, Esp32Interfaces::Transport, 0, responseCode, 0, nullptr, 0);
+        _responseCode = StatusCodes::InvalidHeader;
+        _messageType = MessageTypes::Nak;
+        _incomingMessage = Message::CreateOnHeap(_messageType, Esp32Interfaces::Transport, 0, _responseCode);
+        newTransaction = CreateAcknowledgementTransaction(_incomingMessage, _responseCode, _messageType);
     }
     DeleteHeaderTransaction(transaction);
-    DeleteMessageAndReleaseHeapStorage(_incomingMessage);
-    _incomingMessage = messageHeader;
-    _responseCode = responseCode;
-    _messageType = messageType;
 
-    ESP_LOGI(__func__, "Preparing response, packet type: %d, status code: %d", messageType, responseCode);
-    spi_slave_transaction_t *newTransaction = CreateAcknowledgementTransaction(_incomingMessage, responseCode, messageType);
-    _currentState = AcknowledgingMessageHeader;
+    ESP_LOGI(__func__, "Preparing response, packet type: %d, status code: %d", _messageType, _responseCode);
     return(newTransaction);
 }
 
@@ -693,7 +765,7 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessAcknowledingMessageBodySta
  *      @returns
  *          SPI transaction created to send the message header.
  */
-spi_slave_transaction_t *SpiTransportProvider::ProcessWantToSendMessageHeaderState(spi_slave_transaction_t *transaction)
+spi_slave_transaction_t *SpiTransportProvider::ProcessSendingMessageHeaderState(spi_slave_transaction_t *transaction)
 {
     ESP_LOGI(__func__, "Entering Method.");
 
@@ -911,8 +983,8 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessMessages(spi_slave_transac
         case AcknowledingMessageBody:
             newTransaction = ProcessAcknowledingMessageBodyState(transaction);
             break;
-        case WantToSendMessageHeader:
-            newTransaction = ProcessWantToSendMessageHeaderState(transaction);
+        case SendingMessageHeader:
+            newTransaction = ProcessSendingMessageHeaderState(transaction);
             break;
 //        case WaitingForMessageHeaderAcknowledgement:
 //            ProcessWaitingForMessageHeaderAcknowledgementState();

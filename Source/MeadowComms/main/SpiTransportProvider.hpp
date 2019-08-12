@@ -32,7 +32,7 @@ private:
      *      Possible states for the SPI transport layer.
      */
     enum SpiStates { Invalid, Idle, AcknowledgingMessageHeader,
-        WaitingForMessageBody, AcknowledingMessageBody, WantToSendMessageHeader, WaitingForMessageHeaderAcknowledgement,
+        WaitingForMessageBody, AcknowledingMessageBody, SendingMessageHeader, WaitingForMessageHeaderAcknowledgement,
         WantToSendMessageBody, WaitingForMessageBodyAcknowledgement, WantToSendTransportMessage };
 
     /*
@@ -123,6 +123,10 @@ private:
     spi_slave_transaction_t *CreateAcknowledgementTransaction(Message *, StatusCodes::StatusCodes, uint8_t);
 
     /*
+     *  Encode a header or transport message.
+     */
+    void EncodeHeaderMessage(spi_slave_transaction_t *, Message *);
+    /*
      *      FreeRTOS task handler for this class.
      */
     static void Task(void *);
@@ -145,6 +149,7 @@ private:
      */
     void DeleteMessageAndReleaseHeapStorage(Message *);
 
+    spi_slave_transaction_t *ProcessTransportMessage();
     /*
      *      Start to process incoming messages (i.e. move from the idle state
      *      into one where the ESP32 is sending or receiving data).
@@ -174,7 +179,7 @@ private:
     /*
      *      Implement the out-bound message header process.
      */
-    spi_slave_transaction_t *ProcessWantToSendMessageHeaderState(spi_slave_transaction_t *);
+    spi_slave_transaction_t *ProcessSendingMessageHeaderState(spi_slave_transaction_t *);
 
     /*
      *      Implement processing of the incoming message header acknowledgement messages.
