@@ -518,17 +518,22 @@ namespace Meadow.Core.Esp32
             {
                 Console.WriteLine("Decoded OK.");
                 Console.WriteLine(acknowledgement.ToString());
-                if (acknowledgement.Value.MessageType == (byte) MessageTypes.Nak)
+                switch ((MessageTypes) acknowledgement.Value.MessageType)
                 {
-                    Console.WriteLine("Received NAK.");
-                }
-                else
-                {
-                    Console.WriteLine("Received ACK.");
-                    if ((acknowledgement.Value.Interface != message.Interface) || (acknowledgement.Value.MessageID != message.MessageID))
-                    {
-                        decodeStatus = StatusCodes.UnexpectedData;
-                    }
+                    case MessageTypes.Ack:
+                        Console.WriteLine("Received ACK.");
+                        if ((acknowledgement.Value.Interface != message.Interface) || (acknowledgement.Value.MessageID != message.MessageID))
+                        {
+                            Console.WriteLine("Message IDs do not match.");
+                            decodeStatus = StatusCodes.UnexpectedData;
+                        }
+                        break;
+                    case MessageTypes.Transport:
+                        Console.WriteLine("Transport packet received.");
+                        break;
+                    case MessageTypes.Nak:
+                        Console.WriteLine("Received NAK.");
+                        break;
                 }
             }
             else
@@ -623,8 +628,11 @@ namespace Meadow.Core.Esp32
             int retryCount = 0;
             StatusCodes statusCode = StatusCodes.Failure;
 
+            Console.WriteLine("\n\n**************************************************\nSending message:");
+            Console.WriteLine(message.ToString());
             while ((retryCount < MaximumRetryCount) && (statusCode != StatusCodes.CompletedOK))
             {
+                Console.WriteLine($"Attempting to send message header (retry count: {retryCount}).");
                 ProcessWantToSendMessageHeaderState(message);
                 statusCode = ProcessWaitingForMessageHeaderAcknowledgementState(message);
                 retryCount = CheckForRetry(message, statusCode, retryCount);
@@ -647,6 +655,10 @@ namespace Meadow.Core.Esp32
                         statusCode = ProcessWaitingForMessageBodyAcknowledgementState(message);
                         retryCount = CheckForRetry(message, statusCode, retryCount);
                     }
+                }
+                else
+                {
+                    Console.WriteLine("No message payload to send.");
                 }
             }
         }
