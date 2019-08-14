@@ -201,11 +201,11 @@ const char *SpiTransportProvider::SpiStateString(SpiTransportProvider::SpiStates
         case WaitingForMessageBody:
             stateString = "WaitingForMessageBody";
             break;
-        case AcknowledingMessageBody:
+        case AcknowledgingMessageBody:
             stateString = "AcknowledingMessageBody";
             break;
         case SendingMessageHeader:
-            stateString = "WantToSendMessageHeader";
+            stateString = "SendingMessageHeader";
             break;
         case WaitingForMessageHeaderAcknowledgement:
             stateString = "WaitingForMessageHeaderAcknowledgement";
@@ -218,6 +218,9 @@ const char *SpiTransportProvider::SpiStateString(SpiTransportProvider::SpiStates
             break;
         case WantToSendTransportMessage:
             stateString = "WantToSendTransportMessage";
+            break;
+        case SendingTransportResponse:
+            stateString = "SendingTransportResponse";
             break;
     }
     return (stateString);
@@ -481,26 +484,23 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessTransportMessage()
     switch (_incomingMessage->Function)
     {
         case TransportFunction::SendResponse:
-            if (!_outboundMessage)
+            _messageType = MessageTypes::Transport;
+            if (OutboundMessageQueueLength() > 0)
             {
-                _outboundMessage = GetOutboundMessage();
-            }
-            if (_outboundMessage)   // We have to check again as GetOutboundMessage() may return nullptr.
-            {
-                ESP_LOGI(__func__, "Outbound message retrieved.");
+                ESP_LOGI(__func__, "Outbound messages waiting.");
                 _responseCode = StatusCodes::CompletedOK;
-                _messageType = MessageTypes::Header;
             }
             else
             {
                 ESP_LOGI(__func__, "No outbound messages queued.");
                 _responseCode = StatusCodes::NoMessagesWaiting;
-                _messageType = MessageTypes::Transport;
-                _outboundMessage = Message::CreateOnHeap(MessageTypes::Transport, Esp32Interfaces::Transport, TransportFunction::SendResponse, StatusCodes::NoMessagesWaiting);
             }
+            Message *message;
+            message = Message::CreateOnHeap(MessageTypes::Transport, Esp32Interfaces::Transport, TransportFunction::SendResponse, _responseCode);
             newTransaction = CreateSpiHeaderTransaction();
-            EncodeHeaderMessage(newTransaction, _outboundMessage);
-            _currentState = SendingMessageHeader;
+            EncodeHeaderMessage(newTransaction, message);
+            vPortFree((void *) message);
+            _currentState = SendingTransportResponse;
             break;
         default:
             ESP_LOGI(__func__, "Transport function %d not recognised.", _incomingMessage->Function);
@@ -550,6 +550,8 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessIdleState(spi_slave_transa
             switch (_incomingMessage->MessageType)
             {
                 case MessageTypes::Header:
+                    _messageType = MessageTypes::Ack;
+                    _responseCode = StatusCodes::CompletedOK;
                     newTransaction = CreateAcknowledgementTransaction(_incomingMessage, _responseCode, _messageType);
                     break;
                 case MessageTypes::Transport:
@@ -715,7 +717,7 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessWaitingForMessageBodyState
     DeleteMessageAndReleaseHeapStorage(_incomingMessage);
     _incomingMessage = nullptr;
 
-    _currentState = AcknowledingMessageBody;
+    _currentState = AcknowledgingMessageBody;
     return(newTransaction);
 }
 
@@ -732,24 +734,10 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessWaitingForMessageBodyState
  *      @returns
  *          New SPI transaction.
  */
-spi_slave_transaction_t *SpiTransportProvider::ProcessAcknowledingMessageBodyState(spi_slave_transaction_t *transaction)
+spi_slave_transaction_t *SpiTransportProvider::ProcessAcknowledgingMessageBodyState(spi_slave_transaction_t *transaction)
 {
     ESP_LOGI(__func__, "Entering Method.");
 
-    int dataSize = transaction->length / 8;
-    ESP_LOGI(__func__, "Received %d bytes.", dataSize);
-    ESP_LOG_BUFFER_HEX(__func__, transaction->rx_buffer, dataSize);
-
-    //
-    //  If we received the message and body OK then we go back to expecting a header.
-    //  Otherwise we go back to waiting to see if the STM32 retries the message body.
-    //
-    //  TODO: this is not right !
-    //
-//    if (_responseCode == StatusCodes::CompletedOK)
-//    {
-//        DeleteTransactionAndBuffers(transaction, true);
-//    }
     DeleteHeaderTransaction(transaction);
     spi_slave_transaction_t *newTransaction = CreateSpiHeaderTransaction();
     _currentState = Idle;
@@ -923,6 +911,34 @@ void SpiTransportProvider::ProcessWaitingForMessageBodyAcknowledgementState()
     DeleteMessageTransaction(transaction);
 }
 
+spi_slave_transaction_t *SpiTransportProvider::ProcessSendingTransportResponseState(spi_slave_transaction_t *transaction)
+{
+    ESP_LOGI(__func__, "Entering Method.");
+
+    spi_slave_transaction_t *newTransaction = CreateSpiHeaderTransaction();
+    DeleteMessageAndReleaseHeapStorage(_outboundMessage);
+    _outboundMessage = nullptr;
+    if (_responseCode == StatusCodes::CompletedOK)
+    {
+        if (OutboundMessageQueueLength() > 0)
+        {
+            _outboundMessage = GetOutboundMessage();
+            EncodeHeaderMessage(transaction, _outboundMessage);
+            _currentState = SendingMessageHeader;
+        }
+        else
+        {
+            _currentState = Idle;
+        }
+    }
+    else
+    {
+        _currentState = Idle;
+    }
+    DeleteHeaderTransaction(transaction);
+    return(newTransaction);
+}
+
 /*
  *      Start the transport message transmission process.
  */
@@ -956,14 +972,17 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessMessages(spi_slave_transac
         gpio_set_level(Gpio::ESP32_READY_PIN, 0);
     }
 
+    uint32_t notificationBits = 0;
+    ESP_LOGI(__func__, "Waiting for notification, current state: %s", SpiStateString(_currentState));
+    xTaskNotifyWait(0x00000000, 0x00000000, &notificationBits, 1 / portTICK_PERIOD_MS);
+    ESP_LOGI(__func__, "Notification bits (before SPI transaction is queued): %d", notificationBits);
+
     ESP_ERROR_CHECK(spi_slave_queue_trans(VSPI_HOST, transaction, portMAX_DELAY));
     //
     //  The Task will get notified when the STM32 has completed a SPI transaction.
     //
-    uint32_t notificationBits = 0;
-
-    ESP_LOGI(__func__, "Waiting for notification, current state: %s", SpiStateString(_currentState));
-    xTaskNotifyWait(0x00000000, 0x00000000, &notificationBits, portMAX_DELAY);
+    xTaskNotifyWait(0x00000000, ULONG_MAX, &notificationBits, portMAX_DELAY);
+    ESP_LOGI(__func__, "Notification bits (after SPI transaction queued): %d", notificationBits);
     //
     //  ESP-IDF documentation states that a call to spi_slave_get_trans_result
     //  is mandatory when spi_slave_queue_trans is used.
@@ -980,8 +999,8 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessMessages(spi_slave_transac
         case WaitingForMessageBody:
             newTransaction = ProcessWaitingForMessageBodyState(transaction);
             break;
-        case AcknowledingMessageBody:
-            newTransaction = ProcessAcknowledingMessageBodyState(transaction);
+        case AcknowledgingMessageBody:
+            newTransaction = ProcessAcknowledgingMessageBodyState(transaction);
             break;
         case SendingMessageHeader:
             newTransaction = ProcessSendingMessageHeaderState(transaction);
@@ -998,6 +1017,9 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessMessages(spi_slave_transac
 //        case WantToSendTransportMessage:
 //            ProcessWantToSendTransportMessageState();
 //            break;
+        case SendingTransportResponse:
+            newTransaction = ProcessSendingTransportResponseState(transaction);
+            break;
         default:
             ESP_LOGI(__func__, "Un-handled state: %s", SpiStateString(_currentState));
             break;
@@ -1034,7 +1056,6 @@ void SpiTransportProvider::Task(void *pvParameters)
     {
         transaction = sender->ProcessMessages(transaction);
         vTaskDelay(50 / portTICK_PERIOD_MS);
-
     }
     //
     //  We should only get here if the code in the while loop generates a fault.

@@ -33,7 +33,7 @@ namespace BasicNetworkTest
                 bootPin: Device.Pins.ESP_BOOT, resetPin: Device.Pins.ESP_RST);
             _dispatcher.MessageReceived += _dispatcher_MessageReceived;
             _dispatcher.Error += _dispatcher_Error;
-            _button = (DigitalInputPort) Device.CreateDigitalInputPort(Device.Pins.D14, interruptMode: InterruptMode.EdgeFalling, resistorMode: ResistorMode.PullUp, debounceDuration: 100);
+            _button = (DigitalInputPort) Device.CreateDigitalInputPort(Device.Pins.D14, interruptMode: InterruptMode.EdgeFalling, resistorMode: ResistorMode.PullUp, debounceDuration: 500);
             _button.Changed += _button_Changed;
             
             _antennaInfo = new Messages.AntennaInfo();
@@ -63,6 +63,20 @@ namespace BasicNetworkTest
             _requestMessage.Function = (UInt32)TransportFunction.SendResponse;
         }
 
+        private void QueueSetAntennaMessage()
+        {
+            Console.WriteLine(_setAntennaMessage.ToString());
+            _dispatcher.Add(_setAntennaMessage);
+            _counter++;
+            _setAntennaMessage.MessageID = _counter;
+        }
+
+        private void QueueRequestMessage()
+        {
+            Console.WriteLine(_requestMessage.ToString());
+            _dispatcher.Add(_requestMessage);
+        }
+
         /// <summary>
         /// 
         /// </summary>
@@ -77,13 +91,9 @@ namespace BasicNetworkTest
 //            _counter++;
 //            _getAntennaMessage.MessageID = _counter;
 
-//            Console.WriteLine(_setAntennaMessage.ToString());
-//            _dispatcher.Add(_setAntennaMessage);
-//            _counter++;
-//            _setAntennaMessage.MessageID = _counter;
-            
-            Console.WriteLine(_requestMessage.ToString());
-            _dispatcher.Add(_requestMessage);
+//            QueueSetAntennaMessage();
+
+            QueueRequestMessage();
         }
 
         /// <summary>
@@ -115,6 +125,8 @@ namespace BasicNetworkTest
             Console.WriteLine("Basic Network Communication Test.");
             Console.WriteLine();
             Console.WriteLine("Press button to start the test.");
+//            QueueSetAntennaMessage();
+            QueueRequestMessage();
             Thread.Sleep(Timeout.Infinite);
         }
     }

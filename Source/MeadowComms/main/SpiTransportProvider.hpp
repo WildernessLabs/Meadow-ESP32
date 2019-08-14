@@ -32,8 +32,8 @@ private:
      *      Possible states for the SPI transport layer.
      */
     enum SpiStates { Invalid, Idle, AcknowledgingMessageHeader,
-        WaitingForMessageBody, AcknowledingMessageBody, SendingMessageHeader, WaitingForMessageHeaderAcknowledgement,
-        WantToSendMessageBody, WaitingForMessageBodyAcknowledgement, WantToSendTransportMessage };
+        WaitingForMessageBody, AcknowledgingMessageBody, SendingMessageHeader, WaitingForMessageHeaderAcknowledgement,
+        WantToSendMessageBody, WaitingForMessageBodyAcknowledgement, WantToSendTransportMessage, SendingTransportResponse };
 
     /*
      *      Pointer to the (only) instance of the SpiTransportProvider class.
@@ -174,7 +174,7 @@ private:
     /*
      *      Implement the incoming message body acknowledgement process.
      */
-    spi_slave_transaction_t *ProcessAcknowledingMessageBodyState(spi_slave_transaction_t *);
+    spi_slave_transaction_t *ProcessAcknowledgingMessageBodyState(spi_slave_transaction_t *);
 
     /*
      *      Implement the out-bound message header process.
@@ -200,6 +200,8 @@ private:
      *      Implement the out-bound transport message process.
      */
     void ProcessWantToSendTransportMessageState();
+
+    spi_slave_transaction_t * ProcessSendingTransportResponseState(spi_slave_transaction_t *);
 
     /*
      *      Create a new SPI slave transmission object with zero filled
