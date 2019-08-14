@@ -911,6 +911,22 @@ void SpiTransportProvider::ProcessWaitingForMessageBodyAcknowledgementState()
     DeleteMessageTransaction(transaction);
 }
 
+/*
+ *  Check to see if there are any messages waiting to be sent and start the
+ *  process of sending the message if there are any queued.
+ *
+ *  When this function exists, the transaction returned will be one of:
+ *      - The message header of the first message waiting to be sent and
+ *        the state will be set to indicate that we want to send this.
+ *      - An empty message header and we will return to the idle state ready
+ *        to receive messages from the STM32.
+ *
+ *  @param transaction
+ *      Last SPI transaction that was executed.
+ *
+ *  @return
+ *      New SPI transaction with data.
+ */
 spi_slave_transaction_t *SpiTransportProvider::ProcessSendingTransportResponseState(spi_slave_transaction_t *transaction)
 {
     ESP_LOGI(__func__, "Entering Method.");
