@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Meadow.Core.Esp32
 {
@@ -9,7 +7,7 @@ namespace Meadow.Core.Esp32
     ///     success or failure of a request to send a packet of data to
     ///     the ESP32.
     /// </summary>
-    public class TransportProviderEventArgs
+    public class TransportProviderErrorEventArgs
     {
         #region Properties
 
@@ -35,7 +33,7 @@ namespace Meadow.Core.Esp32
         /// <summary>
         ///     Default constructor is private to prevent it being used.
         /// </summary>
-        private TransportProviderEventArgs()
+        private TransportProviderErrorEventArgs()
         {
         }
 
@@ -45,7 +43,7 @@ namespace Meadow.Core.Esp32
         /// <param name="esp32Interface">Interface on the ESP32 that caused the problem.</param>
         /// <param name="messageId">ID of the message that caused the error.</param>
         /// <param name="statusCode">Status code returned by the Uart.</param>
-        public TransportProviderEventArgs(Esp32Interfaces esp32Interface, UInt32 messageId, StatusCodes statusCode)
+        public TransportProviderErrorEventArgs(Esp32Interfaces esp32Interface, UInt32 messageId, StatusCodes statusCode)
         {
             Interface = esp32Interface;
             MessageId = messageId;
@@ -61,8 +59,8 @@ namespace Meadow.Core.Esp32
     ///     Delegate for the SPI Transport Provider error event handler.
     /// </summary>
     /// <param name="sender">Object that is sending the error response.</param>
-    /// <param name="e">TransportProviderEventArgs indicating the error condition that occurred.</param>
-    public delegate void TransportProviderErrorEventHandler(object sender, TransportProviderEventArgs e);
+    /// <param name="e">TransportProviderErrorEventArgs indicating the error condition that occurred.</param>
+    public delegate void TransportProviderErrorEventHandler(object sender, TransportProviderErrorEventArgs e);
 
     #endregion
 }

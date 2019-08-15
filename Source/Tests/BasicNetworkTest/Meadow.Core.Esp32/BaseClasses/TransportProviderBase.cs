@@ -29,7 +29,7 @@ namespace Meadow.Core.Esp32
         /// Event that will be raised when a message is received and correctly
         /// decoded.
         /// </summary>
-        public abstract event TransportProviderDataReceivedEventHandler MessageReceived;
+        public abstract event TransportProviderMessageReceivedEventHandler MessageReceived;
         
         #endregion
         

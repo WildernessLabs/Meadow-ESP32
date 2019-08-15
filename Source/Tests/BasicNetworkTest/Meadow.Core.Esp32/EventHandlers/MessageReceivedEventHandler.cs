@@ -44,7 +44,7 @@ namespace Meadow.Core.Esp32
     /// </summary>
     /// <param name="sender">Object that is sending the error response.</param>
     /// <param name="e">MessageReceviedEventArgs containing the information about the message received.</param>
-    public delegate void MessageReceviedEventHandler(object sender, MessageReceviedEventArgs e);
+    public delegate void MessageReceivedEventHandler(object sender, MessageReceviedEventArgs e);
 
     #endregion Delegates
 }
