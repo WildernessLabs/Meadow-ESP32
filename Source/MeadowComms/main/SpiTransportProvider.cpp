@@ -745,33 +745,38 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessAcknowledgingMessageBodySt
 }
 
 /*
- *      Send a message header to the STM32.
+ *      The message header will already have been sent, we need to get ready to
+ *      receive and ACK or NAK from the STM32.
+ *
+ *      Previous state: SendingTransportResponse
+ *      Current state: SendingMessageHeader
+ *      Next state: WaitingForMessageHeaderAcknowledgement
  *
  *      @params transaction
  *          Current SPI transaction used to get data from the STM32.
  *
  *      @returns
- *          SPI transaction created to send the message header.
+ *          SPI transaction created to receive the message acknowledgement.
  */
 spi_slave_transaction_t *SpiTransportProvider::ProcessSendingMessageHeaderState(spi_slave_transaction_t *transaction)
 {
     ESP_LOGI(__func__, "Entering Method.");
 
-    spi_slave_transaction_t *newTransaction = nullptr;
+    spi_slave_transaction_t *newTransaction = CreateSpiHeaderTransaction();
     if (_outboundMessage)
     {
-        Message *responseReadyMessage = new Message(MessageTypes::Transport, Esp32Interfaces::None, TransportFunction::ResponseReady, 0, 0, nullptr, 0);
-        uint8_t *encodedMessageHeader = Encoders::EncodeMessage(responseReadyMessage, true);
-        delete(responseReadyMessage);
+//        Message *responseReadyMessage = new Message(MessageTypes::Transport, Esp32Interfaces::None, TransportFunction::ResponseReady, 0, 0, nullptr, 0);
+//        uint8_t *encodedMessageHeader = Encoders::EncodeMessage(responseReadyMessage, true);
+//        delete(responseReadyMessage);
 //        uint8_t *encodedMessageHeader = Encoders::EncodeMessage(_outboundMessage, true);
 
-        ESP_LOGI(__func__, "Want to send the following message:");
-        ESP_LOG_BUFFER_HEX(__func__, encodedMessageHeader, Message::HEADER_SIZE);
+//        ESP_LOGI(__func__, "Want to send the following message:");
+//        ESP_LOG_BUFFER_HEX(__func__, encodedMessageHeader, Message::HEADER_SIZE);
 
-        newTransaction = CreateSpiPayloadTransaction(_headerFrameSize);
-        memcpy((void *) transaction->tx_buffer, (void *) encodedMessageHeader, Message::HEADER_SIZE);
-//        _currentState = WaitingForMessageHeaderAcknowledgement;
-        gpio_set_level(Gpio::ESP32_READY_PIN, 1);
+//        newTransaction = CreateSpiPayloadTransaction(_headerFrameSize);
+//        memcpy((void *) transaction->tx_buffer, (void *) encodedMessageHeader, Message::HEADER_SIZE);
+        _currentState = WaitingForMessageHeaderAcknowledgement;
+//        gpio_set_level(Gpio::ESP32_READY_PIN, 1);
 
 //        ESP_ERROR_CHECK(spi_slave_transmit(VSPI_HOST, transaction, portMAX_DELAY));
 //        gpio_set_level(Gpio::ESP32_READY_PIN, 0);
@@ -800,6 +805,7 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessSendingMessageHeaderState(
     else
     {
         ESP_LOGE(__func__, "No message to send.");
+
     }
     _currentState = Idle;
     return(newTransaction);
