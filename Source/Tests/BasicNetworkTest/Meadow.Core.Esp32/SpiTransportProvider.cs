@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Threading;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Dynamic;
 using Meadow.Hardware;
 
 namespace Meadow.Core.Esp32
@@ -90,15 +88,6 @@ namespace Meadow.Core.Esp32
         private int _currentRetryCount;
 
         /// <summary>
-        /// Last status code for an incoming message operation.
-        /// </summary>
-        /// <remarks>
-        /// This variable is used to transfer status codes between the methods used
-        /// for sending and receiving data.
-        /// </remarks>
-//        private StatusCodes _lastStatusCode = StatusCodes.CompletedOK;
-
-        /// <summary>
         /// Current message being sent by the system.
         /// </summary>
         /// <remarks>
@@ -141,22 +130,8 @@ namespace Meadow.Core.Esp32
             //
             _reset = (DigitalOutputPort) device.CreateDigitalOutputPort(resetPin, false);
             
-//            _stm32ReadyPin = (DigitalOutputPort) device.CreateDigitalOutputPort(stm32ReadyPin, false);
             _esp32 = new SpiPeripheral(new SoftwareSPIBus(device, mosi, miso, clock), device.CreateDigitalOutputPort(chipSelect, true));
-//            if (stm32ReadyPin == bootPin)
-//            {
-//                _boot = _stm32ReadyPin;
-//            }
-//            else
-//            {
-                _boot = (DigitalOutputPort) device.CreateDigitalOutputPort(bootPin, true);
-//            }
-//            
-//            _boot.State = true;
-//            _reset.State = false;
-//            _reset.State = true;
-////        _boot.Dispose();
-//            _boot = null;
+            _boot = (DigitalOutputPort) device.CreateDigitalOutputPort(bootPin, true);
 
             _reset.State = true;
             _esp32ReadyPin = (DigitalInputPort) device.CreateDigitalInputPort(esp32ReadyPin, interruptMode: InterruptMode.EdgeRising);
@@ -267,14 +242,7 @@ namespace Meadow.Core.Esp32
             //  message in the queue as only one signal will be processed even if
             //  more than one signals are raised.
             //
-            bool wait = true;
-//            if (_currentState == SpiStates.Idle)
-//            {
-//                lock (_messageQueueLock)
-//                {
-//                    wait = (_messageQueue.Count == 0);
-//                }
-//            }
+            bool wait = true; 
             if (wait)
             {
                 _waitingForStuffToDoHandle.WaitOne();
@@ -283,8 +251,6 @@ namespace Meadow.Core.Esp32
                     if (_messageQueue.Count > 0)
                     {
                         Messages.Message message = _messageQueue.Dequeue();
-//                        _outboundMessage = _messageQueue.Dequeue();
-//                        _currentState = SpiStates.WantToSendMessageHeader;
                         _currentRetryCount = 0;
                         SendMessage(message);
                     }
@@ -310,35 +276,23 @@ namespace Meadow.Core.Esp32
             Console.WriteLine("Entering ProcessIdleState");
             lock (_messageQueueLock)
             {
-//                if (_messageQueue.Count > 0)
-//                {
-//                    _outboundMessage = _messageQueue.Dequeue();
-//                    _currentState = SpiStates.WantToSendMessageHeader;
-//                    _currentRetryCount = 0;
-////                _stm32ReadyPin.State = true;
-//                }
-//                else
+                Messages.Message readyMessage = new Messages.Message(MessageTypes.Ready, Esp32Interfaces.None, Messages.INVALID_FUNCTION, Messages.INVALID_MESSAGE_ID, 0, null);
+                byte[] encodedReadyMessage = Encoders.EncodeMessage(readyMessage, true);
+                byte[] encodedIncomingHeader = _esp32.WriteRead(encodedReadyMessage, (ushort) encodedReadyMessage.Length);
+                StatusCodes decodeStatus;
+                (_inboundMessage, decodeStatus) = Encoders.ExtractMessage(encodedIncomingHeader);
+                if (decodeStatus == StatusCodes.CompletedOK)
                 {
-                    Messages.Message readyMessage = new Messages.Message(MessageTypes.Ready, Esp32Interfaces.None, Messages.INVALID_FUNCTION, Messages.INVALID_MESSAGE_ID, 0, null);
-                    byte[] encodedReadyMessage = Encoders.EncodeMessage(readyMessage, true);
-//                    _stm32ReadyPin.State = true;
-                    byte[] encodedIncomingHeader = _esp32.WriteRead(encodedReadyMessage, (ushort) encodedReadyMessage.Length);
-                    StatusCodes decodeStatus;
-                    (_inboundMessage, decodeStatus) = Encoders.ExtractMessage(encodedIncomingHeader);
-                    if (decodeStatus == StatusCodes.CompletedOK)
-                    {
-                        _acknowledgementMessage = new Messages.Message(_inboundMessage.Value);
-                        _acknowledgementMessage.MessageType = (byte) MessageTypes.Ack;
-                    }
-                    else
-                    {
-                        _acknowledgementMessage = new Messages.Message(MessageTypes.Nak, Esp32Interfaces.Transport, 0, 0, (UInt32) decodeStatus, null);
-                        _acknowledgementMessage.MessageType = (byte)MessageTypes.Nak;
-                    }
-                    _acknowledgementMessage.StatusCode = (UInt32) decodeStatus;
-                    _currentState = SpiStates.AcknowledgingMessageHeader;
-//                    _stm32ReadyPin.State = false;
+                    _acknowledgementMessage = new Messages.Message(_inboundMessage.Value);
+                    _acknowledgementMessage.MessageType = (byte) MessageTypes.Ack;
                 }
+                else
+                {
+                    _acknowledgementMessage = new Messages.Message(MessageTypes.Nak, Esp32Interfaces.Transport, 0, 0, (UInt32) decodeStatus, null);
+                    _acknowledgementMessage.MessageType = (byte)MessageTypes.Nak;
+                }
+                _acknowledgementMessage.StatusCode = (UInt32) decodeStatus;
+                _currentState = SpiStates.AcknowledgingMessageHeader;
             }
         }
 
@@ -468,9 +422,6 @@ namespace Meadow.Core.Esp32
                 encodedHeader = Encoders.EncodeMessage((Messages.Message) message, true);
             }
             _esp32.WriteBytes(encodedHeader);
-//            _currentState = SpiStates.WaitingForMessageHeaderAcknowledgement;
-//            _stm32ReadyPin.State = false;
-//            _stm32ReadyPin.State = true;
         }
 
         /// <summary>
@@ -544,8 +495,6 @@ namespace Meadow.Core.Esp32
             Console.WriteLine(DebugHelpers.DebugHelpers.PrintableBuffer(encodedMessage));
             _esp32.WriteBytes(encodedMessage);
             _currentState = SpiStates.WaitingForMessageBodyAcknowledgement;
-//            _stm32ReadyPin.State = false;
-//            _stm32ReadyPin.State = true;
         }
 
         /// <summary>
@@ -673,7 +622,7 @@ namespace Meadow.Core.Esp32
                 header = inboundMessage;
             }
 
-            return (header);
+            return (header); 
         }
 
         private Messages.Message? GetMessageBody()
@@ -688,23 +637,19 @@ namespace Meadow.Core.Esp32
         /// <returns>Status code indicating if this request succeeded or failed.</returns>
         private StatusCodes GetResponseFromEsp32()
         {
-            int retryCount = 0;
             StatusCodes statusCode = StatusCodes.Failure;
             Messages.Message? header = null;
             Messages.Message? message = null;
 
-            while ((retryCount < MaximumRetryCount) && (statusCode != StatusCodes.CompletedOK))
+            Console.WriteLine("Requesting header.");
+            header = GetMessageHeader();
+            if (header != null)
             {
-                Console.WriteLine("Requesting header.");
-                header = GetMessageHeader();
-                if (header != null)
-                {
-                    statusCode = StatusCodes.CompletedOK;
-                }
-                else
-                {
-                    retryCount = CheckForRetry(StatusCodes.Failure, retryCount);
-                }
+                statusCode = StatusCodes.CompletedOK;
+            }
+            else
+            {
+                //
             }
             //
             //  If we get here, we either have a valid message header and need to work out if we
@@ -712,17 +657,12 @@ namespace Meadow.Core.Esp32
             //
             if (header != null)
             {
-                retryCount = 0;
                 if (header.Value.PayloadLength > 0)
                 {
-                    while ((retryCount < MaximumRetryCount) && (statusCode != StatusCodes.CompletedOK))
+                    Console.WriteLine("Requesting body.");
+                    message = GetMessageBody();
+                    if (message == null)
                     {
-                        Console.WriteLine("Requesting body.");
-                        message = GetMessageBody();
-                        if (message == null)
-                        {
-                            retryCount = CheckForRetry(StatusCodes.Failure, retryCount);
-                        }
                     }
                 }
                 else
@@ -743,6 +683,11 @@ namespace Meadow.Core.Esp32
             }
             
             return (statusCode);
+        }
+
+        private void SendAck(Messages.Message message, StatusCodes statusCode)
+        {
+            
         }
 
         /// <summary>
@@ -766,12 +711,10 @@ namespace Meadow.Core.Esp32
                     case TransportFunction.SendResponse:
                         if ((StatusCodes) message.StatusCode == StatusCodes.CompletedOK)
                         {
-                            Console.WriteLine("Messages are ready, reading messages.");
                             statusCode = GetResponseFromEsp32();
                         }
                         else
                         {
-                            Console.WriteLine($"Error {message.StatusCode} requesting messages.");
                             statusCode = (StatusCodes) message.StatusCode;
                         }
                         break;
