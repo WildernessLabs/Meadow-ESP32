@@ -64,7 +64,7 @@ namespace DebugHelpers
         /// </summary>
         /// <param name="i">Integer to convert to hexadecimal.</param>
         /// <returns>Hexadecimal representation of the unsigned short.</returns>
-        public static string Hexadecimal(int i)
+        private static string Hexadecimal(int i)
         {
             return "0x" + HexadecimalDigits((byte)((i >> 24) & 0xff)) + HexadecimalDigits((byte)((i >> 16) & 0xff)) +
                    HexadecimalDigits((byte)((i >> 8) & 0xff)) + HexadecimalDigits((byte)(i & 0xff));
