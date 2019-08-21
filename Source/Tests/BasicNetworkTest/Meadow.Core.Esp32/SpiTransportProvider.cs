@@ -99,8 +99,12 @@ namespace Meadow.Core.Esp32
         /// <summary>
         /// Message used to hold the acknowledgements between message transmission states.
         /// </summary>
-        
         private Messages.Message _acknowledgementMessage;
+        
+        /// <summary>
+        /// This message will be used a lot so we set up an object ready for reuse.
+        /// </summary>
+        private readonly Messages.Message _requestMessage;
 
         /// <summary>
         /// This value is used a lot so make it available as a class level variable.
@@ -150,6 +154,11 @@ namespace Meadow.Core.Esp32
                 Run();
             });
             _queueHandler.Start();
+            
+            _requestMessage = new Messages.Message();
+            _requestMessage.MessageType = (byte)MessageTypes.Transport;
+            _requestMessage.Interface = (byte)Esp32Interfaces.Transport;
+            _requestMessage.Function = (UInt32)TransportFunction.SendResponse;
         }
 
         #endregion
@@ -176,7 +185,7 @@ namespace Meadow.Core.Esp32
         private void _esp32ReadyPin_Changed(object sender, DigitalInputPortEventArgs e)
         {
             DebugHelpers.DebugHelpers.LogMessage("ESP32 has generated an interrupt.");
-//            _waitingForStuffToDoHandle.Set();
+            QueueMessageForEsp32(_requestMessage);
         }
 
         #endregion
@@ -246,13 +255,23 @@ namespace Meadow.Core.Esp32
             if (wait)
             {
                 _waitingForStuffToDoHandle.WaitOne();
+                int queueLength = 0;
                 lock (_messageQueueLock)
                 {
-                    if (_messageQueue.Count > 0)
+                    queueLength = _messageQueue.Count;
+                }
+                    
+                while (queueLength > 0)
+                {
+                    Messages.Message message;
+                    lock (_messageQueueLock)
                     {
-                        Messages.Message message = _messageQueue.Dequeue();
-                        _currentRetryCount = 0;
-                        SendMessage(message);
+                        message = _messageQueue.Dequeue();
+                    }
+                    SendMessage(message);
+                    lock (_messageQueueLock)
+                    {
+                        queueLength = _messageQueue.Count;
                     }
                 }
             }
@@ -570,23 +589,15 @@ namespace Meadow.Core.Esp32
         /// <returns></returns>
         private StatusCodes SendMessageBody(Messages.Message message)
         {
-            int retryCount = 0;
+            Console.WriteLine("Entering SendMessageBody");
+
             StatusCodes statusCode = StatusCodes.Failure;
             
             if (message.PayloadLength > 0)
             {
-                retryCount = 0;
                 statusCode = StatusCodes.Failure;
-                while ((retryCount < MaximumRetryCount) && (statusCode != StatusCodes.CompletedOK))
-                {
-                    ProcessWantToSendMessageBodyState(message);
-                    statusCode = ProcessWaitingForMessageBodyAcknowledgementState(message);
-                    retryCount = CheckForRetry(statusCode, retryCount);
-                }
-                if (retryCount >= MaximumRetryCount)
-                {
-                    RaiseError(message, statusCode);
-                }
+                ProcessWantToSendMessageBodyState(message);
+                statusCode = ProcessWaitingForMessageBodyAcknowledgementState(message);
             }
             else
             {
@@ -603,6 +614,8 @@ namespace Meadow.Core.Esp32
         /// <returns>Message header if a valid header is read, null otherwise.</returns>
         private Messages.Message? GetMessageHeader()
         {
+            Console.WriteLine("Entering GetMessageHeader");
+
             Messages.Message? header = null;
             
             ushort incomingMessageLength = (ushort) Encoders.CalculateSpiBufferSize(Messages.HEADER_SIZE);
@@ -620,6 +633,11 @@ namespace Meadow.Core.Esp32
             if (decodeStatus == StatusCodes.CompletedOK)
             {
                 header = inboundMessage;
+                SendAcknowledgement(inboundMessage.Value, StatusCodes.CompletedOK);
+            }
+            else
+            {
+                //    TODO: Deal with error condition.
             }
 
             return (header); 
@@ -637,6 +655,8 @@ namespace Meadow.Core.Esp32
         /// <returns>Status code indicating if this request succeeded or failed.</returns>
         private StatusCodes GetResponseFromEsp32()
         {
+            Console.WriteLine("Entering GetResponseFromEsp32");
+
             StatusCodes statusCode = StatusCodes.Failure;
             Messages.Message? header = null;
             Messages.Message? message = null;
@@ -645,25 +665,10 @@ namespace Meadow.Core.Esp32
             header = GetMessageHeader();
             if (header != null)
             {
-                statusCode = StatusCodes.CompletedOK;
-            }
-            else
-            {
-                //
-            }
-            //
-            //  If we get here, we either have a valid message header and need to work out if we
-            //  have to request the body or we have an error.
-            //
-            if (header != null)
-            {
                 if (header.Value.PayloadLength > 0)
                 {
                     Console.WriteLine("Requesting body.");
                     message = GetMessageBody();
-                    if (message == null)
-                    {
-                    }
                 }
                 else
                 {
@@ -680,14 +685,30 @@ namespace Meadow.Core.Esp32
                 {
                     statusCode = StatusCodes.Failure;
                 }
+                statusCode = StatusCodes.CompletedOK;
             }
             
             return (statusCode);
         }
 
-        private void SendAck(Messages.Message message, StatusCodes statusCode)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="statusCode"></param>
+        private void SendAcknowledgement(Messages.Message message, StatusCodes statusCode)
         {
-            
+            Console.WriteLine("Entering SendAcknowledgement");
+
+            MessageTypes messageType = MessageTypes.Ack;
+            if (statusCode != StatusCodes.CompletedOK)
+            {
+                messageType = MessageTypes.Nak;
+            }
+
+            Messages.Message acknowledgement = new Messages.Message(messageType, (Esp32Interfaces) message.Interface, message.Function, message.MessageID, (UInt32) statusCode, null);
+            byte[] encodedMessage = Encoders.EncodeMessage(acknowledgement, false);
+            _esp32.WriteBytes(encodedMessage);
         }
 
         /// <summary>
@@ -709,17 +730,33 @@ namespace Meadow.Core.Esp32
                 switch ((TransportFunction) message.Function)
                 {
                     case TransportFunction.SendResponse:
+                        Console.WriteLine("Processing SendResponse message");
                         if ((StatusCodes) message.StatusCode == StatusCodes.CompletedOK)
                         {
+                            Console.WriteLine("There are messages waiting, request one.");
                             statusCode = GetResponseFromEsp32();
+                            if (statusCode == StatusCodes.NoMessagesWaiting)
+                            {
+                                Console.WriteLine("No messages waiting.");
+                                statusCode = StatusCodes.CompletedOK;
+                            }
                         }
                         else
                         {
-                            statusCode = (StatusCodes) message.StatusCode;
+                            if ((StatusCodes) message.StatusCode == StatusCodes.NoMessagesWaiting)
+                            {
+                                Console.WriteLine("Converting response to CompletedOK");
+                                statusCode = StatusCodes.CompletedOK;
+                            }
+                            else
+                            {
+                                Console.WriteLine($"Unknown status code: {message.StatusCode}");
+                                statusCode = (StatusCodes) message.StatusCode;
+                            }
                         }
                         break;
                     default:
-                        Console.WriteLine($"Unknown response, function: {message.Function}, status code: {message.StatusCode}");
+                        Console.WriteLine($"Unknown transport response, function: {message.Function}, status code: {message.StatusCode}");
                         break;
                 }
             }
@@ -732,41 +769,34 @@ namespace Meadow.Core.Esp32
         /// <param name="message"></param>
         private void SendMessage(Messages.Message message)
         {
-            int retryCount = 0;
+            Console.WriteLine("Entering SendMessage");
+
             StatusCodes statusCode = StatusCodes.Failure;
             Messages.Message? acknowledgement = null;
 
             Console.WriteLine("\n\n**************************************************\nSending message:");
             Console.WriteLine(message.ToString());
-            while ((retryCount < MaximumRetryCount) && (statusCode != StatusCodes.CompletedOK))
+            
+            ProcessWantToSendMessageHeaderState(message);
+            (acknowledgement,statusCode) = ProcessWaitingForMessageHeaderAcknowledgementState(message);
+            if (statusCode != StatusCodes.CompletedOK)
             {
-                ProcessWantToSendMessageHeaderState(message);
-                (acknowledgement,statusCode) = ProcessWaitingForMessageHeaderAcknowledgementState(message);
-                retryCount = CheckForRetry(statusCode, retryCount);
-                if (retryCount >= MaximumRetryCount)
-                {
-                    RaiseError(message, statusCode);
-                }
+                Console.WriteLine("Failed to send message, resubmitting message");
+                QueueMessageForEsp32(message);
             }
-
-            if (retryCount < MaximumRetryCount)
+            else
             {
                 if ((MessageTypes) message.MessageType == MessageTypes.Transport)
                 {
-                    ProcessTransportMessage(acknowledgement);
+                    statusCode = ProcessTransportMessage(acknowledgement);
                 }
                 else
                 {
-                    //
-                    //    RetryCount will be equal to MaximumRetryCount here if we failed to send
-                    //    the message header.  In this case we should not send the message body as
-                    //    the ESP32 application will not have a large enough buffer allocated for
-                    //    the body if the header was not processed correctly.
-                    //
-                    if (retryCount < MaximumRetryCount)
-                    {
-                        statusCode = SendMessageBody(message);
-                    }
+                    statusCode = SendMessageBody(message);
+                }
+                if (statusCode != StatusCodes.CompletedOK)
+                {
+                    QueueMessageForEsp32(message);
                 }
             }
         }

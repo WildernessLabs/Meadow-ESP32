@@ -91,7 +91,7 @@ namespace BasicNetworkTest
 //            _counter++;
 //            _getAntennaMessage.MessageID = _counter;
 
-//            QueueSetAntennaMessage();
+            QueueSetAntennaMessage();
 
             QueueRequestMessage();
         }
@@ -126,7 +126,7 @@ namespace BasicNetworkTest
             Console.WriteLine();
             Console.WriteLine("Press button to start the test.");
 //            QueueSetAntennaMessage();
-            QueueRequestMessage();
+//            QueueRequestMessage();
             Thread.Sleep(Timeout.Infinite);
         }
     }

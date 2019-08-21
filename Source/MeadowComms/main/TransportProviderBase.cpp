@@ -100,12 +100,12 @@ int TransportProviderBase::OutboundMessageQueueLength()
 Message *TransportProviderBase::GetOutboundMessage()
 {
     Message *result = nullptr;
+    UBaseType_t messageCount = OutboundMessageQueueLength();
     if (xSemaphoreTake(_outboundMessageQueueMutex, portMAX_DELAY))
     {
-        UBaseType_t messageCount = uxQueueMessagesWaiting(_outboundMessageQueueHandle);
         if (messageCount > 0)
         {
-            if (xQueueReceive(_outboundMessageQueueHandle, (void *) result, portMAX_DELAY) != pdTRUE)
+            if (xQueueReceive(_outboundMessageQueueHandle, (void *) &result, portMAX_DELAY) != pdTRUE)
             {
                 result = nullptr;
             }
@@ -148,6 +148,8 @@ bool TransportProviderBase::QueueMessageForStm32(Message *message)
             {
                 ESP_LOGI(__func__, "Message queued.");
                 gpio_set_level(Gpio::ESP32_READY_PIN, 1);
+                vTaskDelay(50 / portTICK_PERIOD_MS);
+                gpio_set_level(Gpio::ESP32_READY_PIN, 0);
             }
             UBaseType_t messageCount = uxQueueMessagesWaiting(_outboundMessageQueueHandle);
             xSemaphoreGive(_outboundMessageQueueMutex);
