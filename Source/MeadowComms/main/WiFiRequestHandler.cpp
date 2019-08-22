@@ -257,10 +257,10 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
     //
     //  Memory for the payload is allocated on the heap and it needs to be released.
     //
-    if (request->Payload != NULL)
-    {
-        vPortFree(request->Payload);
-    }
+//    if (request->Payload != NULL)
+//    {
+//        vPortFree(request->Payload);
+//    }
 }
 
 /*

@@ -615,8 +615,6 @@ namespace Meadow.Core.Esp32
         private Messages.Message? GetMessageHeader()
         {
             Console.WriteLine("Entering GetMessageHeader");
-
-            Messages.Message? header = null;
             
             ushort incomingMessageLength = (ushort) Encoders.CalculateSpiBufferSize(Messages.HEADER_SIZE);
             Console.WriteLine($"Asking for {incomingMessageLength} bytes.");
@@ -630,22 +628,30 @@ namespace Meadow.Core.Esp32
             Messages.Message? inboundMessage;
             (inboundMessage, decodeStatus) = Encoders.ExtractMessage(encodedInboundMessage);
             Console.WriteLine($"Decode status: {decodeStatus}");
-            if (decodeStatus == StatusCodes.CompletedOK)
-            {
-                header = inboundMessage;
-                SendAcknowledgement(inboundMessage.Value, StatusCodes.CompletedOK);
-            }
-            else
-            {
-                //    TODO: Deal with error condition.
-            }
+            SendAcknowledgement(inboundMessage.Value, StatusCodes.CompletedOK);
 
-            return (header); 
+            return (inboundMessage); 
         }
 
-        private Messages.Message? GetMessageBody()
+        private Messages.Message? GetMessageBody(Messages.Message header)
         {
-            return (null);
+            Console.WriteLine("Entering GetMessageHeader");
+
+            ushort incomingMessageLength = (ushort) Encoders.CalculateSpiBufferSize(Messages.HEADER_SIZE + header.PayloadLength);
+            Console.WriteLine($"Asking for {incomingMessageLength} bytes.");
+            byte[] encodedDummyMessage = new byte[incomingMessageLength];
+            Array.Clear(encodedDummyMessage, 0, incomingMessageLength);
+            byte[] encodedInboundMessage = _esp32.WriteRead(encodedDummyMessage, incomingMessageLength);
+            Console.WriteLine("Received:");
+            Console.WriteLine(DebugHelpers.DebugHelpers.PrintableBuffer(encodedInboundMessage));
+            
+            StatusCodes decodeStatus;
+            Messages.Message? inboundMessage;
+            (inboundMessage, decodeStatus) = Encoders.ExtractMessage(encodedInboundMessage);
+            Console.WriteLine($"Decode status: {decodeStatus}");
+            SendAcknowledgement(inboundMessage.Value, StatusCodes.CompletedOK);
+
+            return (inboundMessage);
         }
 
         /// <summary>
@@ -668,7 +674,7 @@ namespace Meadow.Core.Esp32
                 if (header.Value.PayloadLength > 0)
                 {
                     Console.WriteLine("Requesting body.");
-                    message = GetMessageBody();
+                    message = GetMessageBody(header.Value);
                 }
                 else
                 {
