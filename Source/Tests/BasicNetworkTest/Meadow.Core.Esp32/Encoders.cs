@@ -246,7 +246,7 @@ namespace Meadow.Core.Esp32
             //
             EncodeUInt32(0, buffer, offset);
             offset += 4;
-            if (!headerOnly & (message.PayloadLength > 0))
+            if (!headerOnly && (message.PayloadLength > 0))
             {
                 Array.Copy(message.Payload, 0, buffer, offset, message.PayloadLength);
             }
