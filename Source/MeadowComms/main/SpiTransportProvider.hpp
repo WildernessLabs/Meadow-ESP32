@@ -224,7 +224,7 @@ private:
     /*
      *  Implement processing of the out-bound message body acknowledgement.
      */
-    void ProcessWaitingForMessageBodyAcknowledgementState();
+    spi_slave_transaction_t *ProcessWaitingForMessageBodyAcknowledgementState(spi_slave_transaction_t *);
 
     /*
      *  Implement the out-bound transport message process.

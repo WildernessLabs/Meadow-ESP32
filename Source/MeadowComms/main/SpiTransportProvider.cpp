@@ -448,11 +448,14 @@ void SpiTransportProvider::Echo(const char *messageString)
  */
 void SpiTransportProvider::DeleteMessageAndReleaseHeapStorage(Message *message)
 {
+    ESP_LOGI(__func__, "Entering Method.");
+
     if (message)
     {
         if (message->Payload)
         {
             vPortFree(message->Payload);
+            message->Payload = nullptr;
         }
         vPortFree(message);
     }
@@ -471,6 +474,8 @@ void SpiTransportProvider::DeleteMessageAndReleaseHeapStorage(Message *message)
  */
 void SpiTransportProvider::EncodeHeaderMessage(spi_slave_transaction_t *transaction, Message *message)
 {
+    ESP_LOGI(__func__, "Entering Method.");
+
     uint8_t *encodedMessageHeader = Encoders::EncodeMessage(message, true);
     memcpy((void *) transaction->tx_buffer, (void *) encodedMessageHeader, _headerFrameSize);
     vPortFree(encodedMessageHeader);
@@ -485,6 +490,8 @@ void SpiTransportProvider::EncodeHeaderMessage(spi_slave_transaction_t *transact
  */
 spi_slave_transaction_t *SpiTransportProvider::ProcessTransportMessage()
 {
+    ESP_LOGI(__func__, "Entering Method.");
+
     spi_slave_transaction_t *newTransaction = nullptr;
     switch (_incomingMessage->Function)
     {
@@ -642,6 +649,7 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessAcknowledgingMessageHeader
             if (_incomingMessage->Interface != Esp32Interfaces::Transport)
             {
                 _messageDispatcher->QueueMessageForEsp32(_incomingMessage);
+                _incomingMessage = nullptr;
             }
             newTransaction = CreateSpiHeaderTransaction();
             _currentState = Idle;
@@ -790,42 +798,7 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessSendingMessageHeaderState(
     DeleteHeaderTransaction(transaction);
     if (_outboundMessage)
     {
-//        Message *responseReadyMessage = new Message(MessageTypes::Transport, Esp32Interfaces::None, TransportFunction::ResponseReady, 0, 0, nullptr, 0);
-//        uint8_t *encodedMessageHeader = Encoders::EncodeMessage(responseReadyMessage, true);
-//        delete(responseReadyMessage);
-//        uint8_t *encodedMessageHeader = Encoders::EncodeMessage(_outboundMessage, true);
-
-//        ESP_LOGI(__func__, "Want to send the following message:");
-//        ESP_LOG_BUFFER_HEX(__func__, encodedMessageHeader, Message::HEADER_SIZE);
-
-//        newTransaction = CreateSpiPayloadTransaction(_headerFrameSize);
-//        memcpy((void *) transaction->tx_buffer, (void *) encodedMessageHeader, Message::HEADER_SIZE);
         _currentState = WaitingForMessageHeaderAcknowledgement;
-//        gpio_set_level(Gpio::ESP32_READY_PIN, 1);
-
-//        ESP_ERROR_CHECK(spi_slave_transmit(VSPI_HOST, transaction, portMAX_DELAY));
-//        gpio_set_level(Gpio::ESP32_READY_PIN, 0);
-//
-//        int dataSize = transaction->length / 8;
-//        ESP_LOGI(__func__, "Received %d bytes.", dataSize);
-//        ESP_LOG_BUFFER_HEX(__func__, transaction->rx_buffer, dataSize);
-//        Message *incomingMessage = Encoders::ExtractMessage((uint8_t *) transaction->rx_buffer, _headerFrameSize, true);
-//        if (incomingMessage)
-//        {
-//            if (incomingMessage->MessageType & MessageTypes::Ready)
-//            {
-//                _currentState = WaitingForMessageHeaderAcknowledgement;
-//            }
-//            else
-//            {
-//                //  TODO: we are expecting a Ready message and we have received something else.
-//            }
-//        }
-//        else
-//        {
-//            //  TODO: We must have received a corrupt message (CRC error).
-//        }
-//        FreeUpTransactionHeapStorage(transaction, true);
     }
     else
     {
@@ -865,7 +838,6 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessWaitingForMessageHeaderAck
     ESP_LOGI(__func__, "Received %d bytes.", dataSize);
     ESP_LOG_BUFFER_HEX(__func__, transaction->rx_buffer, dataSize);
     Message *acknowledgement = Encoders::ExtractMessage((uint8_t *) transaction->rx_buffer, _headerFrameSize, true);
-
 
     DeleteHeaderTransaction(transaction);
     spi_slave_transaction_t *newTransaction = nullptr;
@@ -915,46 +887,20 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessWaitingForMessageHeaderAck
 spi_slave_transaction_t *SpiTransportProvider::ProcessWantToSendMessageBodyState(spi_slave_transaction_t *transaction)
 {
     ESP_LOGI(__func__, "Entering Method.");
-    spi_slave_transaction_t *newTransaction = nullptr;
-    if (_outboundMessage)
-    {
-        uint8_t *encodedMessageBody = Encoders::EncodeMessage(_outboundMessage, false);
-        ESP_LOGI(__func__, "Want to send:");
-        ESP_LOG_BUFFER_HEX(__func__, encodedMessageBody, Message::HEADER_SIZE + _outboundMessage->PayloadLength);
 
-        uint32_t encodedMessageBufferSize = Encoders::CalculateSpiBufferSize(Message::HEADER_SIZE + _outboundMessage->PayloadLength);
-        newTransaction = CreateSpiPayloadTransaction(encodedMessageBufferSize);
-        memcpy((void *) transaction->tx_buffer, (void *) encodedMessageBody, Message::HEADER_SIZE + _outboundMessage->PayloadLength);
+    DeleteMessageTransaction(transaction);
+    spi_slave_transaction_t *newTransaction = CreateSpiHeaderTransaction();
+    _currentState = WaitingForMessageBodyAcknowledgement;
 
-        gpio_set_level(Gpio::ESP32_READY_PIN, 1);
-        ESP_ERROR_CHECK(spi_slave_transmit(VSPI_HOST, transaction, portMAX_DELAY));
-        gpio_set_level(Gpio::ESP32_READY_PIN, 0);
-
-        int dataSize = transaction->length / 8;
-        ESP_LOGI(__func__, "Received %d bytes.", dataSize);
-        ESP_LOG_BUFFER_HEX(__func__, transaction->rx_buffer, dataSize);
-        _currentState = WaitingForMessageBodyAcknowledgement;
-        DeleteMessageTransaction(transaction);
-    }
-    else
-    {
-        ESP_LOGE(__func__, "No message to send.");
-        _currentState = Idle;
-    }
     return(newTransaction);
 }
 
 /*
  *  Implement processing of the out-bound message body acknowledgement.
  */
-void SpiTransportProvider::ProcessWaitingForMessageBodyAcknowledgementState()
+spi_slave_transaction_t *SpiTransportProvider::ProcessWaitingForMessageBodyAcknowledgementState(spi_slave_transaction_t *transaction)
 {
     ESP_LOGI(__func__, "Entering Method.");
-    spi_slave_transaction_t *transaction = CreateSpiPayloadTransaction(_headerFrameSize);
-
-    gpio_set_level(Gpio::ESP32_READY_PIN, 1);
-    ESP_ERROR_CHECK(spi_slave_transmit(VSPI_HOST, transaction, portMAX_DELAY));
-    gpio_set_level(Gpio::ESP32_READY_PIN, 0);
 
     int dataSize = transaction->length / 8;
     ESP_LOGI(__func__, "Received %d bytes.", dataSize);
@@ -966,16 +912,21 @@ void SpiTransportProvider::ProcessWaitingForMessageBodyAcknowledgementState()
         {
             ESP_LOGI(__func__, "Acknowledgement received.");
             DeleteMessageAndReleaseHeapStorage(_outboundMessage);
-            _outboundMessage = nullptr;
-            _currentState = Idle;
         }
+        else
+        {
+            QueueMessageForStm32(_outboundMessage);
+        }
+        vPortFree(incomingMessage);
     }
     else
     {
-        //  TODO: Deal with corrupt messages.
-        _currentState = Idle;
+        QueueMessageForStm32(_outboundMessage);
     }
+    _currentState = Idle;
+    _outboundMessage = nullptr;
     DeleteMessageTransaction(transaction);
+    return(CreateSpiHeaderTransaction());
 }
 
 /*
@@ -1117,12 +1068,12 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessMessages(spi_slave_transac
             case WaitingForMessageHeaderAcknowledgement:
                 newTransaction = ProcessWaitingForMessageHeaderAcknowledgementState(transaction);
                 break;
-    //        case SendingMessageBody:
-    //            ProcessWantToSendMessageBodyState();
-    //            break;
-    //        case WaitingForMessageBodyAcknowledgement:
-    //            ProcessWaitingForMessageBodyAcknowledgementState();
-    //            break;
+            case SendingMessageBody:
+                newTransaction = ProcessWantToSendMessageBodyState(transaction);
+                break;
+            case WaitingForMessageBodyAcknowledgement:
+                newTransaction = ProcessWaitingForMessageBodyAcknowledgementState(transaction);
+                break;
     //        case WantToSendTransportMessage:
     //            ProcessWantToSendTransportMessageState();
     //            break;

@@ -87,11 +87,11 @@ namespace BasicNetworkTest
             Console.WriteLine("Queueing message:");
 
 //            Console.WriteLine(_getAntennaMessage.ToString());
-//            _dispatcher.Add(_getAntennaMessage);
-//            _counter++;
-//            _getAntennaMessage.MessageID = _counter;
+            _dispatcher.Add(_getAntennaMessage);
+            _counter++;
+            _getAntennaMessage.MessageID = _counter;
 
-            QueueSetAntennaMessage();
+//            QueueSetAntennaMessage();
 
             QueueRequestMessage();
         }
