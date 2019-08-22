@@ -289,7 +289,7 @@ uint8_t *Encoders::EncodeMessage(Message *message, bool headerOnly)
     //
     EncodeUInt32(0, buffer + offset);
     offset += 4;
-    if (!headerOnly & (message->PayloadLength > 0))
+    if (!headerOnly && (message->PayloadLength > 0))
     {
         memcpy((uint8_t *) (buffer + offset), message->Payload, message->PayloadLength);
     }
@@ -326,6 +326,7 @@ Message *Encoders::ExtractMessage(uint8_t *buffer, uint32_t bufferLength, bool h
     {
         message = (Message *) pvPortMalloc(sizeof(Message));
 
+        memset((void *) message, 0, sizeof(Message));
         message->MessageType = *buffer;
         buffer++;
         message->Interface = *buffer;
@@ -341,7 +342,7 @@ Message *Encoders::ExtractMessage(uint8_t *buffer, uint32_t bufferLength, bool h
         //  Move over the last field and skip the CRC entry.
         //
         buffer += 8;
-        if (!headerOnly | (message->PayloadLength > 0))
+        if (!headerOnly && (message->PayloadLength > 0))
         {
             message->Payload = (uint8_t *) pvPortMalloc(message->PayloadLength);
             memcpy(message->Payload, buffer, message->PayloadLength);
