@@ -13,6 +13,7 @@
 #include "driver/spi_slave.h"
 #include "esp_system.h"
 #include "driver/gpio.h"
+#include "esp_log.h"
 
 #include "Exceptions/MultipleInstancesException.hpp"
 #include "TransportProviderBase.hpp"
