@@ -31,9 +31,13 @@ private:
     /*
      *  Possible states for the SPI transport layer.
      */
-    enum SpiStates { Invalid, Idle, AcknowledgingMessageHeader,
-        WaitingForMessageBody, AcknowledgingMessageBody, SendingMessageHeader, WaitingForMessageHeaderAcknowledgement,
-        SendingMessageBody, WaitingForMessageBodyAcknowledgement, WantToSendTransportMessage, SendingTransportResponse };
+    enum SpiStates { Invalid,
+                     WaitingForInboundMessageHeader,    AcknowledgingInboundMessageHeader,
+                     WaitingForInboundMessageBody,      AcknowledgingMessageBody,
+                     SendingMessageHeader,              WaitingForMessageHeaderAcknowledgement,
+                     SendingMessageBody,                WaitingForMessageBodyAcknowledgement,
+                     WantToSendTransportMessage,        SendingTransportResponse
+                   };
 
     /*
      *  Pointer to the (only) instance of the SpiTransportProvider class.
@@ -184,7 +188,12 @@ private:
      *  Start to process incoming messages (i.e. move from the idle state
      *  into one where the ESP32 is sending or receiving data).
      */
-    spi_slave_transaction_t *ProcessIdleState(spi_slave_transaction_t *);
+    spi_slave_transaction_t *InboundMessageHeaderReceived(spi_slave_transaction_t *);
+
+    /*
+     *  Implement the incoming message header acknowledgement process.
+     */
+    spi_slave_transaction_t *InboundMessageHeaderAcknowledged(spi_slave_transaction_t *);
 
     /*
      *  Implement the incoming message header reception process.
@@ -192,44 +201,34 @@ private:
     spi_slave_transaction_t *ProcessWaitingForMessageHeaderState(spi_slave_transaction_t *);
 
     /*
-     *  Implement the incoming message header acknowledgement process.
-     */
-    spi_slave_transaction_t *ProcessAcknowledgingMessageHeaderState(spi_slave_transaction_t *);
-
-    /*
      *  Implement the incoming message body reception process.
      */
-    spi_slave_transaction_t *ProcessWaitingForMessageBodyState(spi_slave_transaction_t *);
+    spi_slave_transaction_t *InboundMessageBodyReceived(spi_slave_transaction_t *);
 
     /*
      *  Implement the incoming message body acknowledgement process.
      */
-    spi_slave_transaction_t *ProcessAcknowledgingMessageBodyState(spi_slave_transaction_t *);
+    spi_slave_transaction_t *InboundMessageBodyAcknowledged(spi_slave_transaction_t *);
 
     /*
      *  Implement the out-bound message header process.
      */
-    spi_slave_transaction_t *ProcessSendingMessageHeaderState(spi_slave_transaction_t *);
+    spi_slave_transaction_t *OutboundMessageHeaderSent(spi_slave_transaction_t *);
 
     /*
      *  Implement processing of the incoming message header acknowledgement messages.
      */
-    spi_slave_transaction_t *ProcessWaitingForMessageHeaderAcknowledgementState(spi_slave_transaction_t *);
+    spi_slave_transaction_t *OutboundMessageHeaderAcknowledgementReceived(spi_slave_transaction_t *);
 
     /*
      *  Implement the out-bound message body process.
      */
-    spi_slave_transaction_t *ProcessWantToSendMessageBodyState(spi_slave_transaction_t *);
+    spi_slave_transaction_t *OutboundMessageBodySent(spi_slave_transaction_t *);
 
     /*
      *  Implement processing of the out-bound message body acknowledgement.
      */
-    spi_slave_transaction_t *ProcessWaitingForMessageBodyAcknowledgementState(spi_slave_transaction_t *);
-
-    /*
-     *  Implement the out-bound transport message process.
-     */
-    void ProcessWantToSendTransportMessageState();
+    spi_slave_transaction_t *OutboundMessageBodyAcknowledgementReceived(spi_slave_transaction_t *);
 
     spi_slave_transaction_t * ProcessSendingTransportResponseState(spi_slave_transaction_t *);
 
