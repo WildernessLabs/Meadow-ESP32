@@ -17,6 +17,7 @@
 #include "freertos/FreeRTOS.h"
 #include <stdlib.h>
 #include <string.h>
+#include "esp_log.h"
 #include "SharedEnums.hpp"
 #include "Esp32Messaging.hpp"
 

@@ -285,6 +285,7 @@ namespace FileGenerator
                 sourceFile.WriteLine("#include \"freertos/FreeRTOS.h\"");
                 sourceFile.WriteLine("#include <stdlib.h>");
                 sourceFile.WriteLine("#include <string.h>");
+                sourceFile.WriteLine("#include \"esp_log.h\"");
                 sourceFile.WriteLine("#include \"SharedEnums.hpp\"");
                 sourceFile.WriteLine("#include \"Esp32Messaging.hpp\"");
                 sourceFile.WriteLine();
