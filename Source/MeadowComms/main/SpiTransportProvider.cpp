@@ -9,6 +9,8 @@
 #include "Encoders.hpp"
 #include <string.h>
 
+#include "esp_heap_caps.h"
+
 /*
  * ----------------------------------------------------------------------------
  *
@@ -266,6 +268,7 @@ spi_slave_transaction_t *SpiTransportProvider::CreateAcknowledgementTransaction(
     DeleteMessageAndReleaseHeapStorage(copyOfMessage);
     memcpy((void *) transaction->tx_buffer, ackFrame, _headerFrameSize);
     vPortFree(ackFrame);
+
     return (transaction);
 }
 
@@ -283,21 +286,23 @@ spi_slave_transaction_t *SpiTransportProvider::CreateSpiHeaderTransaction()
     transaction->rx_buffer = _headerReceiveBuffer;
     transaction->tx_buffer = _headerTransmitBuffer;
     transaction->length = _headerFrameSize * 8;
+
     return (transaction);
 }
 
 spi_slave_transaction_t *SpiTransportProvider::CreateSpiMessageTransaction(Message *message)
 {
     ESP_LOGI(__func__, "Entering method.");
-    uint8_t *encodedMessageBody = Encoders::EncodeMessage(message, false);
+    uint8_t *encodedMessage = Encoders::EncodeMessage(message, false);
     ESP_LOGI(__func__, "Want to send:");
-    ESP_LOG_BUFFER_HEX(__func__, encodedMessageBody, Message::HEADER_SIZE + message->PayloadLength);
+    ESP_LOG_BUFFER_HEX(__func__, encodedMessage, Message::HEADER_SIZE + message->PayloadLength);
 
     uint32_t encodedMessageBufferSize = Encoders::CalculateSpiBufferSize(Message::HEADER_SIZE + message->PayloadLength);
-    spi_slave_transaction_t *newTransaction = CreateSpiPayloadTransaction(encodedMessageBufferSize);
-    memcpy((void *) newTransaction->tx_buffer, (void *) encodedMessageBody, Message::HEADER_SIZE + message->PayloadLength);
+    spi_slave_transaction_t *transaction = CreateSpiPayloadTransaction(encodedMessageBufferSize);
+    memcpy((void *) transaction->tx_buffer, (void *) encodedMessage, Message::HEADER_SIZE + message->PayloadLength);
+    vPortFree(encodedMessage);
 
-    return(newTransaction);
+    return(transaction);
 }
 
 /*
@@ -324,6 +329,7 @@ spi_slave_transaction_t *SpiTransportProvider::CreateSpiPayloadTransaction(uint3
     transaction->rx_buffer = receiveBuffer;
     transaction->tx_buffer = transmitBuffer;
     transaction->length = bufferSize * 8;
+
     return (transaction);
 }
 
@@ -341,10 +347,17 @@ void SpiTransportProvider::DeleteMessageTransaction(spi_slave_transaction_t *tra
     ESP_LOGI(__func__, "Entering method.");
     if (transaction)
     {
-        heap_caps_free((void *) transaction->rx_buffer);
-        heap_caps_free((void *) transaction->tx_buffer);
+        if (transaction->rx_buffer != _headerReceiveBuffer)
+        {
+            heap_caps_free((void *) transaction->rx_buffer);
+        }
+        if (transaction->tx_buffer != _headerTransmitBuffer)
+        {
+            heap_caps_free((void *) transaction->tx_buffer);
+        }
         vPortFree(transaction);
     }
+
     transaction = nullptr;
 }
 
@@ -367,6 +380,7 @@ void SpiTransportProvider::DeleteHeaderTransaction(spi_slave_transaction_t *tran
     {
         vPortFree(transaction);
     }
+
     transaction = nullptr;
 }
 
@@ -459,6 +473,7 @@ void SpiTransportProvider::DeleteMessageAndReleaseHeapStorage(Message *message)
         }
         vPortFree(message);
     }
+    heap_caps_check_integrity_all(true);
 }
 
 /*
@@ -638,6 +653,7 @@ spi_slave_transaction_t *SpiTransportProvider::InboundMessageHeaderAcknowledged(
             }
             newTransaction = CreateSpiHeaderTransaction();
             _currentState = WaitingForInboundMessageHeader;
+            _incomingMessage = nullptr;
         }
         else
         {
@@ -775,8 +791,8 @@ spi_slave_transaction_t *SpiTransportProvider::OutboundMessageHeaderSent(spi_sla
 {
     ESP_LOGI(__func__, "Entering Method.");
 
-    spi_slave_transaction_t *newTransaction = CreateSpiHeaderTransaction();
     DeleteHeaderTransaction(transaction);
+    spi_slave_transaction_t *newTransaction = CreateSpiHeaderTransaction();
     if (_outboundMessage)
     {
         _currentState = WaitingForMessageHeaderAcknowledgement;
@@ -911,6 +927,8 @@ spi_slave_transaction_t *SpiTransportProvider::OutboundMessageBodyAcknowledgemen
     ESP_LOGI(__func__, "Received %d bytes.", dataSize);
     ESP_LOG_BUFFER_HEX(__func__, transaction->rx_buffer, dataSize);
     Message *incomingMessage = Encoders::ExtractMessage((uint8_t *) transaction->rx_buffer, _headerFrameSize, true);
+    DeleteMessageTransaction(transaction);
+
     if (incomingMessage)
     {
         if (incomingMessage->MessageType == MessageTypes::Ack)
@@ -930,7 +948,7 @@ spi_slave_transaction_t *SpiTransportProvider::OutboundMessageBodyAcknowledgemen
     }
     _currentState = WaitingForInboundMessageHeader;
     _outboundMessage = nullptr;
-    DeleteMessageTransaction(transaction);
+
     return(CreateSpiHeaderTransaction());
 }
 
