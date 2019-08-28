@@ -1,17 +1,17 @@
 /*
- *      Calculate the amount of memory that should be allocated for
- *      the receive buffer.
+ *  Calculate the amount of memory that should be allocated for
+ *  the receive buffer.
  *
- *      SPI reception on the ESP32 should be on a 32-bit boundary and
- *      also a multiple of 4 bytes long (See the article linked below).
+ *  SPI reception on the ESP32 should be on a 32-bit boundary and
+ *  also a multiple of 4 bytes long (See the article linked below).
  *
- *      https://docs.espressif.com/projects/esp-idf/en/latest/api-reference/peripherals/spi_slave.html#restrictions-and-known-issues
+ *  https://docs.espressif.com/projects/esp-idf/en/latest/api-reference/peripherals/spi_slave.html#restrictions-and-known-issues
  *
- *      @param requestedSize
- *          Actual amount of data requested / to be received.
+ *  @param requestedSize
+ *      Actual amount of data requested / to be received.
  *
- *      @return
- *          Number of bytes that should be allocated.
+ *  @return
+ *      Number of bytes that should be allocated.
  */
 uint32_t Encoders::CalculateSpiBufferSize(uint32_t requestedSize)
 {
@@ -45,16 +45,16 @@ uint32_t Encoders::CalculateSpiBufferSize(uint32_t requestedSize)
 }
 
 /*
- *      Take the first two bytes from the buffer and encode them as a 16 bit integer.
+ *  Take the first two bytes from the buffer and encode them as a 16 bit integer.
  *
- *      Note that the data should be encoded as LSB first.
+ *  Note that the data should be encoded as LSB first.
  *
- *      @param buffer
- *          Pointer to the buffer holding the data that should be used to created the
- *          16-bit unsigned integer.
+ *  @param buffer
+ *      Pointer to the buffer holding the data that should be used to created the
+ *      16-bit unsigned integer.
  *
- *      @return
- *          16-bit unsigned integer value from the first two byte in the buffer.
+ *  @return
+ *      16-bit unsigned integer value from the first two byte in the buffer.
  */
 uint16_t Encoders::ExtractUInt16(uint8_t *buffer)
 {
@@ -66,16 +66,16 @@ uint16_t Encoders::ExtractUInt16(uint8_t *buffer)
 }
 
 /*
- *      Encode a 16-bit integer as two bytes in the buffer.
+ *  Encode a 16-bit integer as two bytes in the buffer.
  *
- *      Note that the data will be encoded LSB first.
+ *  Note that the data will be encoded LSB first.
  *
- *      @param value
- *          16-bit value to encode in the first two bytes of the buffer.
+ *  @param value
+ *      16-bit value to encode in the first two bytes of the buffer.
  *
- *      @param buffer
- *          Pointer to the buffer where the two bytes will be inserted
- *          from the 16-bit unsigned integer (LSB first).
+ *  @param buffer
+ *      Pointer to the buffer where the two bytes will be inserted
+ *      from the 16-bit unsigned integer (LSB first).
  */
 void Encoders::EncodeUInt16(uint16_t value, uint8_t *buffer)
 {
@@ -84,16 +84,16 @@ void Encoders::EncodeUInt16(uint16_t value, uint8_t *buffer)
 }
 
 /*
- *      Take the first four bytes from the buffer and encode them as a 32 bit integer.
+ *  Take the first four bytes from the buffer and encode them as a 32 bit integer.
  *
- *      Note that the data should be encoded as LSB first.
+ *  Note that the data should be encoded as LSB first.
  *
- *      @param buffer
- *          Pointer to the buffer where the next four bytes should be extracted
- *          and a 32-bit unsigned integer created (LSB first).
+ *  @param buffer
+ *      Pointer to the buffer where the next four bytes should be extracted
+ *      and a 32-bit unsigned integer created (LSB first).
  *
- *      @return
- *          32-bit unsigned integer extracted from the first 4 bytes in the buffer.
+ *  @return
+ *      32-bit unsigned integer extracted from the first 4 bytes in the buffer.
  */
 uint32_t Encoders::ExtractUInt32(uint8_t *buffer)
 {
@@ -107,16 +107,16 @@ uint32_t Encoders::ExtractUInt32(uint8_t *buffer)
 }
 
 /*
- *      Encode a 32-bit integer as four bytes in the buffer.
+ *  Encode a 32-bit integer as four bytes in the buffer.
  *
- *      Note that the data will be encoded LSB first.
+ *  Note that the data will be encoded LSB first.
  *
- *      @param value
- *          Unsigned 32-bit integer value to write into the buffer.
+ *  @param value
+ *      Unsigned 32-bit integer value to write into the buffer.
  *
- *      @param buffer
- *          Pointer to the buffer where 4 bytes will be replaced with the four
- *          bytes representing unsigned integer (LSB first).
+ *  @param buffer
+ *      Pointer to the buffer where 4 bytes will be replaced with the four
+ *      bytes representing unsigned integer (LSB first).
  */
 void Encoders::EncodeUInt32(uint32_t value, uint8_t *buffer)
 {
@@ -127,13 +127,13 @@ void Encoders::EncodeUInt32(uint32_t value, uint8_t *buffer)
 }
 
 /*
- *      Copy the string into the buffer.
+ *  Copy the string into the buffer.
  *
- *      @param source
- *          Block of memory containing the string.
+ *  @param source
+ *      Block of memory containing the string.
  *
- *      @param buffer
- *          Pointer to a block of memory to take the string.
+ *  @param buffer
+ *      Pointer to a block of memory to take the string.
  */
 void Encoders::EncodeString(char *source, uint8_t *buffer)
 {
@@ -141,13 +141,13 @@ void Encoders::EncodeString(char *source, uint8_t *buffer)
 }
 
 /*
- *      Extract a string (terminated by 0) from a block of memory.
+ *  Extract a string (terminated by 0) from a block of memory.
  *
- *      @param buffer
- *          Pointer to the block of memory containing the string.
+ *  @param buffer
+ *      Pointer to the block of memory containing the string.
  *
- *      @return
- *          Pointer to the extracted string.
+ *  @return
+ *      Pointer to the extracted string.
  */
 char *Encoders::ExtractString(uint8_t *buffer)
 {
@@ -166,18 +166,18 @@ char *Encoders::ExtractString(uint8_t *buffer)
 }
 
 /*
- *      Calculate the 8-bit CRC value for the specified data buffer.
+ *  Calculate the 8-bit CRC value for the specified data buffer.
  *
- *      This algorithm is loosely based upon the Dallas 1-Wire algorithm.
+ *  This algorithm is loosely based upon the Dallas 1-Wire algorithm.
  *
- *      @param data
- *          Pointer to the buffer containing the data for which the CRC should be calculated.
+ *  @param data
+ *      Pointer to the buffer containing the data for which the CRC should be calculated.
  *
- *      @param len
- *          Number of bytes in the data buffer.
+ *  @param len
+ *      Number of bytes in the data buffer.
  *
- *      @return
- *          8-bit checksum of the bytes in the buffer.
+ *  @return
+ *      8-bit checksum of the bytes in the buffer.
  */
 uint8_t Encoders::CRC8(const uint8_t *data, uint16_t len)
 {
@@ -201,16 +201,16 @@ uint8_t Encoders::CRC8(const uint8_t *data, uint16_t len)
 }
 
 /*
- *      Calculate the 32-bit CRC of the buffer of data.
+ *  Calculate the 32-bit CRC of the buffer of data.
  *
- *      @param data
- *          Pointer to the buffer containing the data for which the CRC should be calculated.
+ *  @param data
+ *      Pointer to the buffer containing the data for which the CRC should be calculated.
  *
- *      @param len
- *          Number of bytes in the data buffer.
+ *  @param len
+ *      Number of bytes in the data buffer.
  *
- *      @return
- *          32-bit checksum of the bytes in the buffer.
+ *  @return
+ *      32-bit checksum of the bytes in the buffer.
  */
 uint32_t Encoders::CRC32(const uint8_t *data, uint16_t len)
 {
@@ -224,16 +224,16 @@ uint32_t Encoders::CRC32(const uint8_t *data, uint16_t len)
 }
 
 /*
- *      Calculate the CRC32 value change for the specified byte.
+ *  Calculate the CRC32 value change for the specified byte.
  *
- *      @param currentChecksum
- *          Current value of the checksum.
+ *  @param currentChecksum
+ *      Current value of the checksum.
  *
- *      @param byte
- *          Next byte to use in the checksum calculation.
+ *  @param byte
+ *      Next byte to use in the checksum calculation.
  *
- *      @return
- *          Next checksum value.
+ *  @return
+ *      Next checksum value.
  */
 uint32_t Encoders::ProgressiveCRC32(uint32_t currentChecksum, uint8_t byte)
 {
@@ -248,16 +248,18 @@ uint32_t Encoders::ProgressiveCRC32(uint32_t currentChecksum, uint8_t byte)
 }
 
 /*
- *      Encode a message into a block of memory.
+ *  Encode a message into a block of memory.
  *
- *      @param message
- *          Message structure to encode in to the byte buffer.
+ *  @param message
+ *      Message structure to encode in to the byte buffer.
  *
- *      @param header
- *          Copy this as a header only (i.e. do not copy the payload).
+ *  @param header
+ *      Copy this as a header only (i.e. do not copy the payload).
  *
- *      @returns
- *          byte buffer containing the encoded message.
+ *  @returns
+ *      byte buffer containing the encoded message.  The storage
+ *     Will be placed on the FreeRTOS heap (use vPortFree to release the
+ *     storage).
  */
 uint8_t *Encoders::EncodeMessage(Message *message, bool headerOnly)
 {
@@ -304,17 +306,22 @@ uint8_t *Encoders::EncodeMessage(Message *message, bool headerOnly)
 }
 
 /*
- *      Extract a message from a block of memory and create a new Message object.
+ *  Extract a message from a block of memory and create a new Message object.
  *
- *      @param buffer
- *          Byte (uint8_t) array containing the encoded message.
+ *  @param buffer
+ *      Byte (uint8_t) array containing the encoded message.
  *
- *      @param bufferLength
- *          Size of the buffer.
+ *  @param bufferLength
+ *      Size of the buffer.
  *
- *      @param header
- *          Indicate if we should extract the header information only
- *          (i.e. do not copy the payload).
+ *  @param header
+ *      Indicate if we should extract the header information only
+ *      (i.e. do not copy the payload).
+ *
+ *  @return
+ *      New Message object extracted from the buffer.  The Message object
+ *     Will be placed on the FreeRTOS heap (use vPortFree to release the
+ *     storage).
  */
 Message *Encoders::ExtractMessage(uint8_t *buffer, uint32_t bufferLength, bool headerOnly)
 {
