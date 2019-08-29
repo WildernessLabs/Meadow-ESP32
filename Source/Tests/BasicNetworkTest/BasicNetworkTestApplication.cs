@@ -63,18 +63,11 @@ namespace BasicNetworkTest
             _requestMessage.Function = (UInt32)TransportFunction.SendResponse;
         }
 
-        private void QueueSetAntennaMessage()
+        private void QueueMessage(Messages.Message message)
         {
-            Console.WriteLine(_setAntennaMessage.ToString());
-            _dispatcher.Add(_setAntennaMessage);
+            message.MessageID = _counter;
             _counter++;
-            _setAntennaMessage.MessageID = _counter;
-        }
-
-        private void QueueRequestMessage()
-        {
-            Console.WriteLine(_requestMessage.ToString());
-            _dispatcher.Add(_requestMessage);
+            _dispatcher.Add(message);
         }
 
         /// <summary>
@@ -84,16 +77,13 @@ namespace BasicNetworkTest
         /// <param name="e"></param>
         private void _button_Changed(object sender, DigitalInputPortEventArgs e)
         {
-            Console.WriteLine("Queueing message:");
-
-//            Console.WriteLine(_getAntennaMessage.ToString());
-            _dispatcher.Add(_getAntennaMessage);
-            _counter++;
-            _getAntennaMessage.MessageID = _counter;
-
-//            QueueSetAntennaMessage();
-
-            QueueRequestMessage();
+            Console.WriteLine("Queueing messages");
+            QueueMessage(_getAntennaMessage);
+            QueueMessage(_requestMessage);
+            QueueMessage(_setAntennaMessage);
+            QueueMessage(_requestMessage);
+            QueueMessage(_getAntennaMessage);
+            QueueMessage(_requestMessage);
         }
 
         /// <summary>
