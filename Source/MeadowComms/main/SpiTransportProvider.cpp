@@ -334,50 +334,29 @@ spi_slave_transaction_t *SpiTransportProvider::CreateSpiPayloadTransaction(uint3
 }
 
 /*
- *  Release any storage allocated on the heap associated
- *  with an SPI transaction.
+ *  Release any storage associated with the SPI header transaction
  *
- *  This should be used for message transactions where the Tx and Rx buffers are transient.
+ *  It is important that the storage used for the rx_buffer and tx_buffer(s)
+ *  is only released if it is not the _headerReceiveBuffer and the
+ *  _headerTransmitBuffer as these two buffers are used frequently so
+ *  they need to remain in place.
  *
  *  @param transaction
  *      Pointer to the transaction (on the heap)
  */
-void SpiTransportProvider::DeleteMessageTransaction(spi_slave_transaction_t *transaction)
+void SpiTransportProvider::DeleteTransaction(spi_slave_transaction_t *transaction)
 {
     ESP_LOGI(__func__, "Entering method.");
     if (transaction)
     {
-        if (transaction->rx_buffer != _headerReceiveBuffer)
+        if (transaction->rx_buffer && (transaction->rx_buffer != _headerReceiveBuffer))
         {
             heap_caps_free((void *) transaction->rx_buffer);
         }
-        if (transaction->tx_buffer != _headerTransmitBuffer)
+        if (transaction->tx_buffer && (transaction->tx_buffer != _headerTransmitBuffer))
         {
             heap_caps_free((void *) transaction->tx_buffer);
         }
-        vPortFree(transaction);
-    }
-
-    transaction = nullptr;
-}
-
-/*
- *  Release any storage associated with the SPI header transaction
- *
- *  This should be used for SPI transactions which use header information only
- *  i.e. ACK / NAK / transport messages.
- *
- *  This method does not release the Tx and Rx buffers as these are in constant use
- *  for header message types.
- *
- *  @param transaction
- *      Pointer to the transaction (on the heap)
- */
-void SpiTransportProvider::DeleteHeaderTransaction(spi_slave_transaction_t *transaction)
-{
-    ESP_LOGI(__func__, "Entering method.");
-    if (transaction)
-    {
         vPortFree(transaction);
     }
 
@@ -602,7 +581,7 @@ spi_slave_transaction_t *SpiTransportProvider::InboundMessageHeaderReceived(spi_
         _incomingMessage = Message::CreateOnHeap(_messageType, Esp32Interfaces::Transport, 0, _responseCode);
         newTransaction = CreateAcknowledgementTransaction(_incomingMessage, _responseCode, _messageType);
     }
-    DeleteHeaderTransaction(transaction);
+    DeleteTransaction(transaction);
 
     if (_currentState != WaitingForInboundMessageHeader)
     {
@@ -667,7 +646,7 @@ spi_slave_transaction_t *SpiTransportProvider::InboundMessageHeaderAcknowledged(
     }
     else
     {
-        DeleteMessageTransaction(_spiTransaction);
+        DeleteTransaction(_spiTransaction);
         DeleteMessageAndReleaseHeapStorage(_incomingMessage);
         _incomingMessage = nullptr;
         newTransaction = CreateSpiHeaderTransaction();
@@ -740,7 +719,7 @@ spi_slave_transaction_t *SpiTransportProvider::InboundMessageBodyReceived(spi_sl
         responseCode = StatusCodes::CRCError;
         messageType = MessageTypes::Nak;
     }
-    DeleteMessageTransaction(transaction);
+    DeleteTransaction(transaction);
     _responseCode = responseCode;
     _messageType = messageType;
 
@@ -771,7 +750,7 @@ spi_slave_transaction_t *SpiTransportProvider::InboundMessageBodyAcknowledged(sp
 {
     ESP_LOGI(__func__, "Entering Method.");
 
-    DeleteHeaderTransaction(transaction);
+    DeleteTransaction(transaction);
     spi_slave_transaction_t *newTransaction = CreateSpiHeaderTransaction();
     _currentState = WaitingForInboundMessageHeader;
     return (newTransaction);
@@ -791,7 +770,7 @@ spi_slave_transaction_t *SpiTransportProvider::OutboundMessageHeaderSent(spi_sla
 {
     ESP_LOGI(__func__, "Entering Method.");
 
-    DeleteHeaderTransaction(transaction);
+    DeleteTransaction(transaction);
     spi_slave_transaction_t *newTransaction = CreateSpiHeaderTransaction();
     if (_outboundMessage)
     {
@@ -836,7 +815,7 @@ spi_slave_transaction_t *SpiTransportProvider::OutboundMessageHeaderAcknowledgem
     ESP_LOG_BUFFER_HEX(__func__, transaction->rx_buffer, dataSize);
     Message *acknowledgement = Encoders::ExtractMessage((uint8_t *) transaction->rx_buffer, _headerFrameSize, true);
 
-    DeleteHeaderTransaction(transaction);
+    DeleteTransaction(transaction);
     spi_slave_transaction_t *newTransaction = nullptr;
 
     if (acknowledgement)
@@ -896,7 +875,7 @@ spi_slave_transaction_t *SpiTransportProvider::OutboundMessageBodySent(spi_slave
 {
     ESP_LOGI(__func__, "Entering Method.");
 
-    DeleteMessageTransaction(transaction);
+    DeleteTransaction(transaction);
     spi_slave_transaction_t *newTransaction = CreateSpiHeaderTransaction();
     _currentState = WaitingForMessageBodyAcknowledgement;
 
@@ -927,7 +906,7 @@ spi_slave_transaction_t *SpiTransportProvider::OutboundMessageBodyAcknowledgemen
     ESP_LOGI(__func__, "Received %d bytes.", dataSize);
     ESP_LOG_BUFFER_HEX(__func__, transaction->rx_buffer, dataSize);
     Message *incomingMessage = Encoders::ExtractMessage((uint8_t *) transaction->rx_buffer, _headerFrameSize, true);
-    DeleteMessageTransaction(transaction);
+    DeleteTransaction(transaction);
 
     if (incomingMessage)
     {
@@ -972,7 +951,7 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessSendingTransportResponseSt
 {
     ESP_LOGI(__func__, "Entering Method.");
 
-    DeleteHeaderTransaction(transaction);
+    DeleteTransaction(transaction);
     spi_slave_transaction_t *newTransaction = CreateSpiHeaderTransaction();
     DeleteMessageAndReleaseHeapStorage(_outboundMessage);
     _outboundMessage = nullptr;

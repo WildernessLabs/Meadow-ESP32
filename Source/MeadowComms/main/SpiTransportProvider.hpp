@@ -248,15 +248,10 @@ private:
     void ClearTransmitAndReceiveBuffers(uint8_t *, uint8_t *, uint32_t);
 
     /*
-     *  Free any memory allocated for the transaction and its Tx and Rx buffers.
-     */
-    void DeleteMessageTransaction(spi_slave_transaction_t *);
-
-    /*
      *  Free any memory allocated for the transaction but keep the
      *  Tx and Rx buffers.
      */
-    void DeleteHeaderTransaction(spi_slave_transaction_t *);
+    void DeleteTransaction(spi_slave_transaction_t *);
 
 public:
     /*
