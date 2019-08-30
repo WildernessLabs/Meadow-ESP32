@@ -5,6 +5,6 @@
 
 PROJECT_NAME := MeadowComms
 
-PROJECT_VER := 0.10.08
+PROJECT_VER := 0.11.00
 
 include $(IDF_PATH)/make/project.mk

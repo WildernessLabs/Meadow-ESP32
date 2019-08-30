@@ -1,8 +1,8 @@
 /*
- *      SpiTransportProvider.hpp
+ *  SpiTransportProvider.hpp
  *
- *      Hardware transport provider for messages between the ESP32 and
- *      the STM32 using the SPI interface.
+ *  Hardware transport provider for messages between the ESP32 and
+ *  the STM32 using the SPI interface.
  */
 
 #ifndef _SPI_TRANSPORT_PROVIDER_HPP_
@@ -21,6 +21,12 @@
 #include "Esp32Messaging.hpp"
 #include "Gpio.hpp"
 
+/*****************************************************************************
+ *
+ *  The SpiTransportProvider class provides the mechanism for sending and
+ *  receiving messages between the ESP32 and the STM32.
+ *
+ *****************************************************************************/
 class SpiTransportProvider : public TransportProviderBase
 {
 private:
@@ -74,14 +80,6 @@ private:
     static uint32_t _headerFrameSize;
 
     /*
-     *  Buffer containing an empty message header.
-     *
-     *  This is required due to s fault in the SoftwareSPI signalling.
-     *  It is hoped that this can be removed when hardware SPI is used.
-     */
-    uint8_t *_emptyMessageHeader = nullptr;
-
-    /*
      *  Retry count for sending messages.
      */
     uint32_t _retryCount = 0;
@@ -126,14 +124,6 @@ private:
      *  in some C code.
      */
     static void SpiPostTransmissionCallback(spi_slave_transaction_t *);
-
-    /*
-     *  SPI Post setup callback.
-     *
-     *  Note this this method is static as it is used as a callback
-     *  in some C code.
-     */
-    static void SpiPostSetupCallback(spi_slave_transaction_t *);
 
     /*
      *  Send an ACK or NAK with the specified code.
