@@ -105,7 +105,6 @@ SpiTransportProvider::SpiTransportProvider() :
     slaveConfiguration.spics_io_num = Gpio::CHIP_SELECT_PIN;
     slaveConfiguration.queue_size = 3;
     slaveConfiguration.flags = 0;
-    slaveConfiguration.post_setup_cb = SpiPostSetupCallback;
     slaveConfiguration.post_trans_cb = SpiPostTransmissionCallback;
 
     ESP_ERROR_CHECK(spi_slave_initialize(VSPI_HOST, &spiBusConfiguration, &slaveConfiguration, 1));
@@ -121,9 +120,9 @@ SpiTransportProvider::SpiTransportProvider() :
     _headerTransmitBuffer = (uint8_t *) heap_caps_malloc(_headerFrameSize, MALLOC_CAP_DMA);
     ClearTransmitAndReceiveBuffers(_headerReceiveBuffer, _headerTransmitBuffer, _headerFrameSize);
 
-    _emptyMessageHeader = (uint8_t *) pvPortMalloc(_headerFrameSize);
-    memset((void *) _emptyMessageHeader, 0, _headerFrameSize);
-
+    /*
+     *  Set the state machine to be ready to receive messgaes.
+     */
     _currentState = WaitingForInboundMessageHeader;
 
     /*
@@ -154,6 +153,7 @@ SpiTransportProvider::~SpiTransportProvider()
     {
         vPortFree(_outboundMessage);
     }
+    _currentState = Invalid;
 }
 
 /* ---------------------------------------------------------------------------
@@ -237,7 +237,13 @@ void SpiTransportProvider::ClearTransmitAndReceiveBuffers(uint8_t *transmitBuffe
 }
 
 /*
- *  Start the acknowledgement process.
+ *  Create a new acknowledgement transaction (ACK or NAK) ready to transmit to
+ *  the STM32.
+ *
+ *  @Notes
+ *      This method allocates the transaction and two buffers on the heap.  It is essential
+ *      that the caller cleans up both the transaction and the buffers after they are no
+ *      longer necessary.
  *
  *  @param message
  *      Message to acknowledge.
@@ -248,24 +254,20 @@ void SpiTransportProvider::ClearTransmitAndReceiveBuffers(uint8_t *transmitBuffe
  *  @param messageType
  *      Type of message to return.
  *
- *  @returns spi_slave_transaction_t object
+ *  @returns pointer to spi_slave_transaction_t object
  *      This is the transaction that is returned by the ESP-IDF.
- *
- *  @Notes
- *      This method allocates the transaction and two buffers on the heap.  It is essential
- *      that the caller cleans up both the transaction and the buffers after they are no
- *      longer necessary.
  */
 spi_slave_transaction_t *SpiTransportProvider::CreateAcknowledgementTransaction(Message *message, StatusCodes::StatusCodes code, uint8_t messageType)
 {
-    ESP_LOGI(__func__, "Entering method.");
     spi_slave_transaction_t *transaction = CreateSpiHeaderTransaction();
 
     Message *copyOfMessage = Message::CreateCopyOnHeap(message, false);
     copyOfMessage->MessageType = messageType;
     copyOfMessage->StatusCode = (uint32_t) code;
+
     uint8_t *ackFrame = (uint8_t *) Encoders::EncodeMessage(copyOfMessage, true);
     DeleteMessageAndReleaseHeapStorage(copyOfMessage);
+
     memcpy((void *) transaction->tx_buffer, ackFrame, _headerFrameSize);
     vPortFree(ackFrame);
 
@@ -275,10 +277,12 @@ spi_slave_transaction_t *SpiTransportProvider::CreateAcknowledgementTransaction(
 /*
  *  Setup a new transaction using the _headerReceiveBuffer and
  *  _headerTransmitBuffer.
+ *
+ *  @returns
+ *      Pointer to a transaction that can be used to send data over SPI.
  */
 spi_slave_transaction_t *SpiTransportProvider::CreateSpiHeaderTransaction()
 {
-    ESP_LOGI(__func__, "Entering method.");
     spi_slave_transaction_t *transaction = (spi_slave_transaction_t *) pvPortMalloc(sizeof(spi_slave_transaction_t));
 
     memset(transaction, 0, sizeof(spi_slave_transaction_t));
@@ -290,12 +294,19 @@ spi_slave_transaction_t *SpiTransportProvider::CreateSpiHeaderTransaction()
     return (transaction);
 }
 
+/*
+ *  Create a new SPI transaction object that can be used to transmit the
+ *  specified message body.
+ *
+ *  @param message
+ *      The message to encode.
+ *
+ *  @returns
+ *      Pointer to a transaction that can be used to send data over SPI.
+ */
 spi_slave_transaction_t *SpiTransportProvider::CreateSpiMessageTransaction(Message *message)
 {
-    ESP_LOGI(__func__, "Entering method.");
     uint8_t *encodedMessage = Encoders::EncodeMessage(message, false);
-    ESP_LOGI(__func__, "Want to send:");
-    ESP_LOG_BUFFER_HEX(__func__, encodedMessage, Message::HEADER_SIZE + message->PayloadLength);
 
     uint32_t encodedMessageBufferSize = Encoders::CalculateSpiBufferSize(Message::HEADER_SIZE + message->PayloadLength);
     spi_slave_transaction_t *transaction = CreateSpiPayloadTransaction(encodedMessageBufferSize);
@@ -315,10 +326,11 @@ spi_slave_transaction_t *SpiTransportProvider::CreateSpiMessageTransaction(Messa
  *  @returns
  *      Pointer to a spi_slave_transaction_t object with the
  *      buffers set up and filled with zeroes.
+ *
+ *      The transaction object is on the heap.
  */
 spi_slave_transaction_t *SpiTransportProvider::CreateSpiPayloadTransaction(uint32_t bufferSize)
 {
-    ESP_LOGI(__func__, "Entering method.");
     spi_slave_transaction_t *transaction = (spi_slave_transaction_t *) pvPortMalloc(sizeof(spi_slave_transaction_t));
 
     memset(transaction, 0, sizeof(spi_slave_transaction_t));
@@ -346,7 +358,6 @@ spi_slave_transaction_t *SpiTransportProvider::CreateSpiPayloadTransaction(uint3
  */
 void SpiTransportProvider::DeleteTransaction(spi_slave_transaction_t *transaction)
 {
-    ESP_LOGI(__func__, "Entering method.");
     if (transaction)
     {
         if (transaction->rx_buffer && (transaction->rx_buffer != _headerReceiveBuffer))
@@ -366,8 +377,7 @@ void SpiTransportProvider::DeleteTransaction(spi_slave_transaction_t *transactio
 /*
  *  SPI Post Transmission callback
  *
- *  This method is called when the SPI interface has received
- *  the full data load from the STM32.
+ *  This method is called when the STM32 has ended the SPI transmission.
  *
  *  @param transaction
  *      spi_slave_transaction_t structure containing information about the
@@ -378,20 +388,6 @@ void SpiTransportProvider::SpiPostTransmissionCallback(spi_slave_transaction_t *
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
     xTaskNotifyFromISR(_transportProviderTaskHandle, TransportProviderBase::STM32_INTERRUPT_NOTIFICATION_BIT, eSetBits, &xHigherPriorityTaskWoken);
     portYIELD_FROM_ISR();
-}
-
-/*
- *  SPI Post setup callback
- *
- *  This method is called when the SPI interface has completed
- *  setup and data is ready for transmission.
- *
- *  @param transaction
- *      spi_slave_transaction_t structure containing information about the
- *      SPI transaction that has just completed.
- */
-void SpiTransportProvider::SpiPostSetupCallback(spi_slave_transaction_t *transaction)
-{
 }
 
 /*
@@ -441,8 +437,6 @@ void SpiTransportProvider::Echo(const char *messageString)
  */
 void SpiTransportProvider::DeleteMessageAndReleaseHeapStorage(Message *message)
 {
-    ESP_LOGI(__func__, "Entering Method.");
-
     if (message)
     {
         if (message->Payload)
@@ -452,7 +446,6 @@ void SpiTransportProvider::DeleteMessageAndReleaseHeapStorage(Message *message)
         }
         vPortFree(message);
     }
-    heap_caps_check_integrity_all(true);
 }
 
 /*
@@ -467,8 +460,6 @@ void SpiTransportProvider::DeleteMessageAndReleaseHeapStorage(Message *message)
  */
 void SpiTransportProvider::EncodeHeaderMessage(spi_slave_transaction_t *transaction, Message *message)
 {
-    ESP_LOGI(__func__, "Entering Method.");
-
     uint8_t *encodedMessageHeader = Encoders::EncodeMessage(message, true);
     memcpy((void *) transaction->tx_buffer, (void *) encodedMessageHeader, _headerFrameSize);
     vPortFree(encodedMessageHeader);
@@ -478,13 +469,11 @@ void SpiTransportProvider::EncodeHeaderMessage(spi_slave_transaction_t *transact
  *  Process the transport message and prepare the next transaction and
  *  change to the appropriate state.
  *
- *  @return
+ *  @returns
  *      Pointer to a new transaction.
  */
 spi_slave_transaction_t *SpiTransportProvider::ProcessTransportMessage()
 {
-    ESP_LOGI(__func__, "Entering Method.");
-
     spi_slave_transaction_t *newTransaction = nullptr;
     switch (_incomingMessage->Function)
     {
@@ -492,12 +481,10 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessTransportMessage()
             _messageType = MessageTypes::Transport;
             if (OutboundMessageQueueLength() > 0)
             {
-                ESP_LOGI(__func__, "Outbound messages waiting.");
                 _responseCode = StatusCodes::CompletedOK;
             }
             else
             {
-                ESP_LOGI(__func__, "No outbound messages queued.");
                 _responseCode = StatusCodes::NoMessagesWaiting;
             }
             Message *message;
@@ -519,23 +506,50 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessTransportMessage()
     return(newTransaction);
 }
 
-/*
- *  The STM32 has sent what is assumed to be a message header to the ESP32
+/******************************************************************************
  *
- *  @param transaction
- *      Current SPI transaction
+ * The following four methods process the incoming messages for processing  by
+ * the ESP32.
+ *
+ * The basic process is as follows:
+ *  - Header message is received
+ *  - Header is acknowledged (ACK or NAK)
+ *  - Message body is sent (optional)
+ *  - Message body is acknowledged (optional)
+ *
+ * The header message gives information about the message being transmitted
+ * with the most critical piece of information being the length of the
+ * message payload.
+ *
+ * A payload length of 0 indicates the that the message can be processed
+ * without a payload.  Actions such as GetAntenna do not need a payload to
+ * determine the action to be taken.
+ *
+ * If the payload length is non-zero then the message body will contain the
+ * parameters needed to perform the appropriate action.  In this case the
+ * message body is requested.
+ *
+ * Both message headers and message bodies contain a 32-bit CRC to verify that
+ * the data has been transmitted and received correctly.  A message ACK is
+ * sent to the STM32 if the CRC in the message matches the calculated CRC.  A
+ * NAK message is sent to the STM32 if the CRCs do not match.
+ *
+ ******************************************************************************/
+
+/*
+ *  The STM32 has sent what is assumed to be a message header to the ESP32.
+ *  Work out what is the appropriate next action.
+ *
+ *  @params transaction
+ *      Current SPI transaction used to get data from the STM32.
  *
  *  @returns
  *      New SPI transaction.
  */
 spi_slave_transaction_t *SpiTransportProvider::InboundMessageHeaderReceived(spi_slave_transaction_t *transaction)
 {
-    ESP_LOGI(__func__, "Entering Method.");
 
     int dataSize = transaction->length / 8;
-    ESP_LOGI(__func__, "Received %d bytes.", dataSize);
-    ESP_LOG_BUFFER_HEX(__func__, transaction->rx_buffer, dataSize);
-
     DeleteMessageAndReleaseHeapStorage(_incomingMessage);
     _incomingMessage = nullptr;
     spi_slave_transaction_t *newTransaction = nullptr;
@@ -545,7 +559,6 @@ spi_slave_transaction_t *SpiTransportProvider::InboundMessageHeaderReceived(spi_
         _incomingMessage = Encoders::ExtractMessage((uint8_t *) transaction->rx_buffer, _headerFrameSize, true);
         if (!_incomingMessage)             // nullptr indicates a CRC error.
         {
-            ESP_LOGI(__func__, "CRC Error");
             _responseCode = StatusCodes::CRCError;
             _messageType = MessageTypes::Nak;
             _incomingMessage = Message::CreateOnHeap(_messageType, Esp32Interfaces::Transport, 0, _responseCode);
@@ -563,7 +576,6 @@ spi_slave_transaction_t *SpiTransportProvider::InboundMessageHeaderReceived(spi_
                     newTransaction = ProcessTransportMessage();
                     break;
                 default:
-                    ESP_LOGI(__func__, "Unexpected message type: %d", _incomingMessage->MessageType);
                     _responseCode = StatusCodes::UnexpectedData;
                     _messageType = MessageTypes::Nak;
                     DeleteMessageAndReleaseHeapStorage(_incomingMessage);
@@ -575,7 +587,6 @@ spi_slave_transaction_t *SpiTransportProvider::InboundMessageHeaderReceived(spi_
     }
     else
     {
-        ESP_LOGI(__func__, "Too little data, received %d bytes, expected %d bytes", dataSize, _headerFrameSize);
         _responseCode = StatusCodes::InvalidHeader;
         _messageType = MessageTypes::Nak;
         _incomingMessage = Message::CreateOnHeap(_messageType, Esp32Interfaces::Transport, 0, _responseCode);
@@ -583,28 +594,13 @@ spi_slave_transaction_t *SpiTransportProvider::InboundMessageHeaderReceived(spi_
     }
     DeleteTransaction(transaction);
 
-    if (_currentState != WaitingForInboundMessageHeader)
-    {
-        ESP_LOGI(__func__, "Preparing response, packet type: %d, status code: %d", _messageType, _responseCode);
-    }
     return(newTransaction);
 }
 
 /*
- *  Acknowledge the message header that has been received and work out the next steps.
- *
- *  If the header is valid then the response will be an acknowledgement and
- *      - Messages with no payload should be queued
- *      - Messages with payloads should enter the waiting for message body state.
- *
- *  If the header was corrupt then there is little we can do other than send a NAK
- *  message and then throw away the data and wait for the sender to restart the
- *  sequence.
- *
- *  Upon entry it is essential that the following variables have been set up:
- *      _incomingMessage
- *      _responseCode
- *      _messageType
+ *  The inbound message has been acknowledged so work out if the message is
+ *  complete (i.e. no payload) and so can be queued or if we need to request
+ *  the full message.
  *
  *  @params transaction
  *      Current SPI transaction used to get data from the STM32.
@@ -614,8 +610,6 @@ spi_slave_transaction_t *SpiTransportProvider::InboundMessageHeaderReceived(spi_
  */
 spi_slave_transaction_t *SpiTransportProvider::InboundMessageHeaderAcknowledged(spi_slave_transaction_t *transaction)
 {
-    ESP_LOGI(__func__, "Entering Method.");
-
     spi_slave_transaction_t *newTransaction = nullptr;
     if (_responseCode == StatusCodes::CompletedOK)
     {
@@ -638,9 +632,6 @@ spi_slave_transaction_t *SpiTransportProvider::InboundMessageHeaderAcknowledged(
         {
             uint32_t encodedMessageBodySize = Encoders::CalculateSpiBufferSize(Message::HEADER_SIZE + _incomingMessage->PayloadLength);
             newTransaction = CreateSpiPayloadTransaction(encodedMessageBodySize);
-
-            ESP_LOGI(__func__, "Current header payload length: %d", _incomingMessage->PayloadLength);
-            ESP_LOGI(__func__, "Message body buffer size: %d", encodedMessageBodySize);
             _currentState = WaitingForInboundMessageBody;
         }
     }
@@ -656,10 +647,9 @@ spi_slave_transaction_t *SpiTransportProvider::InboundMessageHeaderAcknowledged(
 }
 
 /*
- *  Previous messages have indicated that a message body is required, request the message body.
- *
- *  This method will set up the response types but will leave the _currentHeader variable in place.
- *  Memory allocated to _currentHeader must be deallocated in the Acknowledgement method.
+ *  The full message has been received, work out if it is good and prepare
+ *  the appropriate response (ACK or NAK) and queue the message for processing
+ *  if the message is good.
  *
  *  @params transaction
  *      Current SPI transaction used to get data from the STM32.
@@ -669,11 +659,7 @@ spi_slave_transaction_t *SpiTransportProvider::InboundMessageHeaderAcknowledged(
  */
 spi_slave_transaction_t *SpiTransportProvider::InboundMessageBodyReceived(spi_slave_transaction_t *transaction)
 {
-    ESP_LOGI(__func__, "Entering Method.");
-
     int dataSize = transaction->length / 8;
-    ESP_LOGI(__func__, "Received %d bytes.", dataSize);
-    ESP_LOG_BUFFER_HEX(__func__, transaction->rx_buffer, dataSize);
     uint32_t encodedMessageBodySize = Encoders::CalculateSpiBufferSize(Message::HEADER_SIZE + _incomingMessage->PayloadLength);
     //
     //  Free up the SPI Tx buffer as soon as we can when receiving message bodies as the
@@ -723,7 +709,6 @@ spi_slave_transaction_t *SpiTransportProvider::InboundMessageBodyReceived(spi_sl
     _responseCode = responseCode;
     _messageType = messageType;
 
-    ESP_LOGI(__func__, "Preparing response, packet type: %d, status code: %d", messageType, responseCode);
     spi_slave_transaction_t *newTransaction = CreateAcknowledgementTransaction(_incomingMessage, responseCode, messageType);
 
     DeleteMessageAndReleaseHeapStorage(_incomingMessage);
@@ -734,11 +719,8 @@ spi_slave_transaction_t *SpiTransportProvider::InboundMessageBodyReceived(spi_sl
 }
 
 /*
- *  Acknowledge the receipt of the message body.
- *
- *  This method requires the following class level variables to have
- *  been setup correctly:
- *      _responseCode
+ *  Acknowledgement has been sent so go back to waiting for a new message
+ *  header to be sent.
  *
  *  @params transaction
  *      Current SPI transaction used to get data from the STM32.
@@ -748,13 +730,30 @@ spi_slave_transaction_t *SpiTransportProvider::InboundMessageBodyReceived(spi_sl
  */
 spi_slave_transaction_t *SpiTransportProvider::InboundMessageBodyAcknowledged(spi_slave_transaction_t *transaction)
 {
-    ESP_LOGI(__func__, "Entering Method.");
-
     DeleteTransaction(transaction);
     spi_slave_transaction_t *newTransaction = CreateSpiHeaderTransaction();
     _currentState = WaitingForInboundMessageHeader;
     return (newTransaction);
 }
+
+/******************************************************************************
+ *
+ * The following four methods process the outbound messages for processing  by
+ * the STM32.
+ *
+ * The basic process is as follows:
+ *  - Header message requested by the STM32
+ *  - Header is sent to the STM32
+ *  - Header message is acknowledged by the STM32
+ *  - Message body is sent to the STM32 (optional)
+ *  - Message body is acknowledged by the STM32 (optional)
+ *
+ * The process for message exchange is very similar to the STM32 sending
+ * messages to the ESP32 (see comment above for the inbound messages for
+ * more information).  The main difference is the fact that the process is
+ * triggered by an incoming Transport message requesting a response.
+ *
+ ******************************************************************************/
 
 /*
  *  The message header will already have been sent, we need to get ready to
@@ -768,8 +767,6 @@ spi_slave_transaction_t *SpiTransportProvider::InboundMessageBodyAcknowledged(sp
  */
 spi_slave_transaction_t *SpiTransportProvider::OutboundMessageHeaderSent(spi_slave_transaction_t *transaction)
 {
-    ESP_LOGI(__func__, "Entering Method.");
-
     DeleteTransaction(transaction);
     spi_slave_transaction_t *newTransaction = CreateSpiHeaderTransaction();
     if (_outboundMessage)
@@ -778,14 +775,13 @@ spi_slave_transaction_t *SpiTransportProvider::OutboundMessageHeaderSent(spi_sla
     }
     else
     {
-        ESP_LOGE(__func__, "No message to send.");
         _currentState = WaitingForInboundMessageHeader;
     }
     return(newTransaction);
 }
 
 /*
- *  Implement processing of the incoming message header acknowledgement messages.
+ *  Implement processing of the incoming message header acknowledgement.
  *
  *  This function can result in the ESP32 moving in one of three ways:
  *      - STM32 received a corrupt header and so the ESP32 should add the
@@ -799,20 +795,16 @@ spi_slave_transaction_t *SpiTransportProvider::OutboundMessageHeaderSent(spi_sla
  *  @param transaction
  *      SPI transaction that was used to get the message header acknowledgement.
  *
- *  @return
- *      New SPI transaction that can be used to either communicate with the STM32.
+ *  @returns
+ *      New SPI transaction that can be used to communicate with the STM32.
  *
  */
 spi_slave_transaction_t *SpiTransportProvider::OutboundMessageHeaderAcknowledgementReceived(spi_slave_transaction_t *transaction)
 {
-    ESP_LOGI(__func__, "Entering Method.");
-
     //
     //  First extract the header so that we can work out what action should be taken.
     //
     int dataSize = transaction->length / 8;
-    ESP_LOGI(__func__, "Received %d bytes.", dataSize);
-    ESP_LOG_BUFFER_HEX(__func__, transaction->rx_buffer, dataSize);
     Message *acknowledgement = Encoders::ExtractMessage((uint8_t *) transaction->rx_buffer, _headerFrameSize, true);
 
     DeleteTransaction(transaction);
@@ -822,16 +814,13 @@ spi_slave_transaction_t *SpiTransportProvider::OutboundMessageHeaderAcknowledgem
     {
         if (acknowledgement->MessageType == MessageTypes::Ack)
         {
-            ESP_LOGI(__func__, "Acknowledgement received.");
             if (_outboundMessage->PayloadLength > 0)
             {
-                ESP_LOGI(__func__, "Creating payload message.");
                 newTransaction = CreateSpiMessageTransaction(_outboundMessage);
                 _currentState = SendingMessageBody;
             }
             else
             {
-                ESP_LOGI(__func__, "No payload to send.");
                 DeleteMessageAndReleaseHeapStorage(_outboundMessage);
                 newTransaction = CreateSpiHeaderTransaction();
                 _currentState = WaitingForInboundMessageHeader;
@@ -839,7 +828,6 @@ spi_slave_transaction_t *SpiTransportProvider::OutboundMessageHeaderAcknowledgem
         }
         else
         {
-            ESP_LOGI(__func__, "NAK received.");
             QueueMessageForStm32(_outboundMessage);
             newTransaction = CreateSpiHeaderTransaction();
             _currentState = WaitingForInboundMessageHeader;
@@ -848,13 +836,11 @@ spi_slave_transaction_t *SpiTransportProvider::OutboundMessageHeaderAcknowledgem
     }
     else
     {
-        ESP_LOGI(__func__, "No acknowledgement received.");
         QueueMessageForStm32(_outboundMessage);
         newTransaction = CreateSpiHeaderTransaction();
         _currentState = WaitingForInboundMessageHeader;
     }
     _outboundMessage = nullptr;
-    ESP_LOGI(__func__, "Exiting.");
     return(newTransaction);
 }
 
@@ -868,13 +854,11 @@ spi_slave_transaction_t *SpiTransportProvider::OutboundMessageHeaderAcknowledgem
  *  @param transaction
  *      Last SPI transaction that was executed.
  *
- *  @return
+ *  @returns
  *      New SPI transaction with data.
  */
 spi_slave_transaction_t *SpiTransportProvider::OutboundMessageBodySent(spi_slave_transaction_t *transaction)
 {
-    ESP_LOGI(__func__, "Entering Method.");
-
     DeleteTransaction(transaction);
     spi_slave_transaction_t *newTransaction = CreateSpiHeaderTransaction();
     _currentState = WaitingForMessageBodyAcknowledgement;
@@ -895,16 +879,12 @@ spi_slave_transaction_t *SpiTransportProvider::OutboundMessageBodySent(spi_slave
  *  @param transaction
  *      Last SPI transaction that was executed.
  *
- *  @return
+ *  @returns
  *      New SPI transaction with data.
  */
 spi_slave_transaction_t *SpiTransportProvider::OutboundMessageBodyAcknowledgementReceived(spi_slave_transaction_t *transaction)
 {
-    ESP_LOGI(__func__, "Entering Method.");
-
     int dataSize = transaction->length / 8;
-    ESP_LOGI(__func__, "Received %d bytes.", dataSize);
-    ESP_LOG_BUFFER_HEX(__func__, transaction->rx_buffer, dataSize);
     Message *incomingMessage = Encoders::ExtractMessage((uint8_t *) transaction->rx_buffer, _headerFrameSize, true);
     DeleteTransaction(transaction);
 
@@ -912,7 +892,6 @@ spi_slave_transaction_t *SpiTransportProvider::OutboundMessageBodyAcknowledgemen
     {
         if (incomingMessage->MessageType == MessageTypes::Ack)
         {
-            ESP_LOGI(__func__, "Acknowledgement received.");
             DeleteMessageAndReleaseHeapStorage(_outboundMessage);
         }
         else
@@ -944,13 +923,11 @@ spi_slave_transaction_t *SpiTransportProvider::OutboundMessageBodyAcknowledgemen
  *  @param transaction
  *      Last SPI transaction that was executed.
  *
- *  @return
+ *  @returns
  *      New SPI transaction with data.
  */
 spi_slave_transaction_t *SpiTransportProvider::ProcessSendingTransportResponseState(spi_slave_transaction_t *transaction)
 {
-    ESP_LOGI(__func__, "Entering Method.");
-
     DeleteTransaction(transaction);
     spi_slave_transaction_t *newTransaction = CreateSpiHeaderTransaction();
     DeleteMessageAndReleaseHeapStorage(_outboundMessage);
@@ -962,12 +939,14 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessSendingTransportResponseSt
             _outboundMessage = GetOutboundMessage();
             if (_outboundMessage)
             {
-                ESP_LOGI(__func__, "Encoding response header.");
                 EncodeHeaderMessage(newTransaction, _outboundMessage);
                 _currentState = SendingMessageHeader;
             }
             else
             {
+                //
+                //  TODO: Work out what we should do here.
+                //
                 ESP_LOGI(__func__, "Failed to retrieve message from queue.");
             }
         }
@@ -1001,7 +980,7 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessSendingTransportResponseSt
  *  @param bufferLength
  *      Number of bytes in the buffer.
  *
- *  @return
+ *  @returns
  *      true if the message contains valid (i.e. non-zero bytes) data.
  *      false if the buffer is not a valid encoded message.
  */
@@ -1025,7 +1004,7 @@ bool SpiTransportProvider::MessageContainsData(uint8_t *buffer, uint32_t bufferL
  *  @param state
  *      State to check.
  *
- *  @return
+ *  @returns
  *      true if the state indicates that the ESP32 is sending data,
  *      false otherwise.
  */
@@ -1047,7 +1026,7 @@ bool SpiTransportProvider::SendingData(SpiStates state)
  *  @param transaction
  *      Valid SPI transaction that can be used to communicate with the STM32.
  *
- *  @return
+ *  @returns
  *      Newly setup SPI transaction that can be used in the next stage of the process.
  *
  */
