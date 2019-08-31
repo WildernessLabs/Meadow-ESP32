@@ -548,20 +548,21 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessTransportMessage()
  */
 spi_slave_transaction_t *SpiTransportProvider::InboundMessageHeaderReceived(spi_slave_transaction_t *transaction)
 {
-
-    int dataSize = transaction->length / 8;
     DeleteMessageAndReleaseHeapStorage(_incomingMessage);
     _incomingMessage = nullptr;
     spi_slave_transaction_t *newTransaction = nullptr;
     _currentState = AcknowledgingInboundMessageHeader;
+    int dataSize = transaction->length / 8;
     if (dataSize >= _headerFrameSize)
     {
         _incomingMessage = Encoders::ExtractMessage((uint8_t *) transaction->rx_buffer, _headerFrameSize, true);
         if (!_incomingMessage)             // nullptr indicates a CRC error.
         {
+            ESP_LOGI(__func__, "CRC Error.");
             _responseCode = StatusCodes::CRCError;
             _messageType = MessageTypes::Nak;
             _incomingMessage = Message::CreateOnHeap(_messageType, Esp32Interfaces::Transport, 0, _responseCode);
+            newTransaction = CreateAcknowledgementTransaction(_incomingMessage, _responseCode, _messageType);
         }
         else
         {
@@ -610,6 +611,7 @@ spi_slave_transaction_t *SpiTransportProvider::InboundMessageHeaderReceived(spi_
  */
 spi_slave_transaction_t *SpiTransportProvider::InboundMessageHeaderAcknowledged(spi_slave_transaction_t *transaction)
 {
+    DeleteTransaction(transaction);
     spi_slave_transaction_t *newTransaction = nullptr;
     if (_responseCode == StatusCodes::CompletedOK)
     {
@@ -622,7 +624,6 @@ spi_slave_transaction_t *SpiTransportProvider::InboundMessageHeaderAcknowledged(
             if (_incomingMessage->Interface != Esp32Interfaces::Transport)
             {
                 _messageDispatcher->QueueMessageForEsp32(_incomingMessage);
-                _incomingMessage = nullptr;
             }
             newTransaction = CreateSpiHeaderTransaction();
             _currentState = WaitingForInboundMessageHeader;
@@ -637,7 +638,6 @@ spi_slave_transaction_t *SpiTransportProvider::InboundMessageHeaderAcknowledged(
     }
     else
     {
-        DeleteTransaction(_spiTransaction);
         DeleteMessageAndReleaseHeapStorage(_incomingMessage);
         _incomingMessage = nullptr;
         newTransaction = CreateSpiHeaderTransaction();
@@ -669,6 +669,7 @@ spi_slave_transaction_t *SpiTransportProvider::InboundMessageBodyReceived(spi_sl
     heap_caps_free((void *) transaction->tx_buffer);
     transaction->tx_buffer = nullptr;
     Message *message = Encoders::ExtractMessage((uint8_t *) transaction->rx_buffer, encodedMessageBodySize, false);
+    DeleteTransaction(transaction);
 
     uint8_t messageType = MessageTypes::Ack;
     StatusCodes::StatusCodes responseCode = StatusCodes::CompletedOK;
@@ -689,12 +690,14 @@ spi_slave_transaction_t *SpiTransportProvider::InboundMessageBodyReceived(spi_sl
                 }
                 else
                 {
+                    DeleteMessageAndReleaseHeapStorage(message);
                     responseCode = StatusCodes::UnexpectedData;
                     messageType = MessageTypes::Nak;
                 }
             }
             else
             {
+                DeleteMessageAndReleaseHeapStorage(message);
                 responseCode = StatusCodes::UnexpectedData;
                 messageType = MessageTypes::Nak;
             }
@@ -705,7 +708,6 @@ spi_slave_transaction_t *SpiTransportProvider::InboundMessageBodyReceived(spi_sl
         responseCode = StatusCodes::CRCError;
         messageType = MessageTypes::Nak;
     }
-    DeleteTransaction(transaction);
     _responseCode = responseCode;
     _messageType = messageType;
 
@@ -801,10 +803,6 @@ spi_slave_transaction_t *SpiTransportProvider::OutboundMessageHeaderSent(spi_sla
  */
 spi_slave_transaction_t *SpiTransportProvider::OutboundMessageHeaderAcknowledgementReceived(spi_slave_transaction_t *transaction)
 {
-    //
-    //  First extract the header so that we can work out what action should be taken.
-    //
-    int dataSize = transaction->length / 8;
     Message *acknowledgement = Encoders::ExtractMessage((uint8_t *) transaction->rx_buffer, _headerFrameSize, true);
 
     DeleteTransaction(transaction);
@@ -884,7 +882,6 @@ spi_slave_transaction_t *SpiTransportProvider::OutboundMessageBodySent(spi_slave
  */
 spi_slave_transaction_t *SpiTransportProvider::OutboundMessageBodyAcknowledgementReceived(spi_slave_transaction_t *transaction)
 {
-    int dataSize = transaction->length / 8;
     Message *incomingMessage = Encoders::ExtractMessage((uint8_t *) transaction->rx_buffer, _headerFrameSize, true);
     DeleteTransaction(transaction);
 
@@ -1010,8 +1007,7 @@ bool SpiTransportProvider::MessageContainsData(uint8_t *buffer, uint32_t bufferL
  */
 bool SpiTransportProvider::SendingData(SpiStates state)
 {
-    return((_currentState == WaitingForInboundMessageHeader)
-            || (_currentState == AcknowledgingInboundMessageHeader)
+    return((_currentState == AcknowledgingInboundMessageHeader)
             || (_currentState == AcknowledgingMessageBody)
             || (_currentState == SendingMessageHeader)
             || (_currentState == SendingMessageBody)
@@ -1045,8 +1041,17 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessMessages(spi_slave_transac
 
     uint32_t notificationBits = 0;
     ESP_LOGI(__func__, "Waiting for notification, current state: %s", SpiStateString(_currentState));
+
+    int dataSize = transaction->length / 8;
+    ESP_LOGI(__func__, "Sending %d bytes.", dataSize);
+    ESP_LOG_BUFFER_HEX(__func__, transaction->tx_buffer, dataSize);
+
     ESP_ERROR_CHECK(spi_slave_queue_trans(VSPI_HOST, transaction, portMAX_DELAY));
     xTaskNotifyWait(0x00000000, ULONG_MAX, &notificationBits, portMAX_DELAY);
+
+    ESP_LOGI(__func__, "Received %d bytes.", dataSize);
+    ESP_LOG_BUFFER_HEX(__func__, transaction->rx_buffer, dataSize);
+
     //
     //  ESP-IDF documentation states that a call to spi_slave_get_trans_result
     //  is mandatory when spi_slave_queue_trans is used.
