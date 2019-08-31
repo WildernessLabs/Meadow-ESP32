@@ -83,7 +83,6 @@ int TransportProviderBase::OutboundMessageQueueLength()
     {
         UBaseType_t messageCount = uxQueueMessagesWaiting(_outboundMessageQueueHandle);
         xSemaphoreGive(_outboundMessageQueueMutex);
-        ESP_LOGI(__func__, "Messages waiting: %d", messageCount);
         result = (int) messageCount;
     }
     return(result);
@@ -111,7 +110,6 @@ Message *TransportProviderBase::GetOutboundMessage()
             }
         }
         xSemaphoreGive(_outboundMessageQueueMutex);
-        ESP_LOGI(__func__, "Messages waiting: %d", messageCount);
     }
     return(result);
 }
@@ -146,14 +144,11 @@ bool TransportProviderBase::QueueMessageForStm32(Message *message)
             }
             else
             {
-                ESP_LOGI(__func__, "Message queued.");
                 gpio_set_level(Gpio::ESP32_READY_PIN, 1);
                 vTaskDelay(50 / portTICK_PERIOD_MS);
                 gpio_set_level(Gpio::ESP32_READY_PIN, 0);
             }
-            UBaseType_t messageCount = uxQueueMessagesWaiting(_outboundMessageQueueHandle);
             xSemaphoreGive(_outboundMessageQueueMutex);
-            ESP_LOGI(__func__, "Messages waiting: %d", messageCount);
         }
     }
     return(result);
