@@ -53,7 +53,7 @@ namespace Meadow.Core.Esp32
         /// state and what action is expected next.  This mirrors the c code on the ESP32
         /// in order to make it obvious where complementary changes are required.
         /// </remarks>
-        SpiStates _currentState = SpiStates.Invalid;
+//        SpiStates _currentState = SpiStates.Invalid;
 
         /// <summary>
         /// Queue of messages to be sent to the ESP32.
@@ -81,11 +81,6 @@ namespace Meadow.Core.Esp32
         /// 
         /// </summary>
         private Messages.Message? _inboundMessage = null;
-
-        /// <summary>
-        /// Number of times we have retried to send this message.
-        /// </summary>
-        private int _currentRetryCount;
 
         /// <summary>
         /// Current message being sent by the system.
@@ -147,7 +142,6 @@ namespace Meadow.Core.Esp32
             Thread.Sleep(100);
             _esp32ReadyPin.Changed += _esp32ReadyPin_Changed;
             
-            _currentState = SpiStates.Idle;
             _messageQueue = new Queue<Messages.Message>();
             _queueHandler = new Thread(() =>
             {
@@ -278,147 +272,6 @@ namespace Meadow.Core.Esp32
         }
 
         /// <summary>
-        /// Process the Idle state when we have received a signal that there is some work to do.
-        /// </summary>
-        /// <remarks>
-        /// This method really works out what to do as there are two possible scenarios:
-        /// - A message has arrived in the queue and the method taking the message has
-        ///   indicated so
-        /// - The ESP32 has raised a ready signal to take the next message or to indicate
-        ///   that it is ready to process data.
-        ///
-        /// The algorithm here is simply that outbound messages take priority over inbound
-        /// messages (for the moment).
-        /// </remarks>
-        private void ProcessIdleState()
-        {
-            Console.WriteLine("Entering ProcessIdleState");
-            lock (_messageQueueLock)
-            {
-                Messages.Message readyMessage = new Messages.Message(MessageTypes.Ready, Esp32Interfaces.None, Messages.INVALID_FUNCTION, Messages.INVALID_MESSAGE_ID, 0, null);
-                byte[] encodedReadyMessage = Encoders.EncodeMessage(readyMessage, true);
-                byte[] encodedIncomingHeader = _esp32.WriteRead(encodedReadyMessage, (ushort) encodedReadyMessage.Length);
-                StatusCodes decodeStatus;
-                (_inboundMessage, decodeStatus) = Encoders.ExtractMessage(encodedIncomingHeader);
-                if (decodeStatus == StatusCodes.CompletedOK)
-                {
-                    _acknowledgementMessage = new Messages.Message(_inboundMessage.Value);
-                    _acknowledgementMessage.MessageType = (byte) MessageTypes.Ack;
-                }
-                else
-                {
-                    _acknowledgementMessage = new Messages.Message(MessageTypes.Nak, Esp32Interfaces.Transport, 0, 0, (UInt32) decodeStatus, null);
-                    _acknowledgementMessage.MessageType = (byte)MessageTypes.Nak;
-                }
-                _acknowledgementMessage.StatusCode = (UInt32) decodeStatus;
-                _currentState = SpiStates.AcknowledgingMessageHeader;
-            }
-        }
-
-        /// <summary>
-        /// The message header was sent by the ESP32 at the same time the STM32
-        /// sent the Ready packet.  Check to see if we have a valid header message.
-        /// </summary>
-        private void ProcessAcknowledgingMessageHeaderState()
-        {
-            Console.WriteLine("Entering ProcessAcknowledgingMessageHeaderState ");
-            byte[] encodedAcknowledgementMessage = Encoders.EncodeMessage(_acknowledgementMessage);
-            Console.WriteLine("Sending acknowledgement:");
-            Console.WriteLine(DebugHelpers.DebugHelpers.PrintableBuffer(encodedAcknowledgementMessage));
-            _esp32.WriteBytes(encodedAcknowledgementMessage);
-            if ((MessageTypes) _acknowledgementMessage.MessageType == MessageTypes.Nak)
-            {
-                _inboundMessage = null;
-                _currentState = SpiStates.Idle;
-            }
-            else
-            {
-                if (_inboundMessage.Value.PayloadLength > 0)
-                {
-                    _currentState = SpiStates.WaitingForMessageBody;
-                }
-                else
-                {
-                    TransportProviderMessageReceivedEventArgs args = new TransportProviderMessageReceivedEventArgs(_inboundMessage.Value);
-                    MessageReceived(this, args);
-                    _inboundMessage = null;
-                    _currentState = SpiStates.Idle;
-                }
-            }
-        }
-
-        /// <summary>
-        /// Process an inbound message body.
-        /// </summary>
-        private void ProcessWaitingForMessageBodyState()
-        {
-            Console.WriteLine("Entering ProcessWaitingForMessageBodyState");
-            
-            ushort incomingMessageLength = (ushort) Encoders.CalculateSpiBufferSize(Messages.HEADER_SIZE + _inboundMessage.Value.PayloadLength);
-            Console.WriteLine($"Asking for {incomingMessageLength} bytes.");
-            byte[] encodedDummyMessage = new byte[incomingMessageLength];
-            Array.Clear(encodedDummyMessage, 0, incomingMessageLength);
-            byte[] encodedInboundMessage = _esp32.WriteRead(encodedDummyMessage, incomingMessageLength);
-            Console.WriteLine("Received:");
-            Console.WriteLine(DebugHelpers.DebugHelpers.PrintableBuffer(encodedInboundMessage));
-            
-            StatusCodes decodeStatus;
-            Messages.Message? inboundMessage;
-            (inboundMessage, decodeStatus) = Encoders.ExtractMessage(encodedInboundMessage);
-            Console.WriteLine($"Decode status: {decodeStatus}");
-            if (decodeStatus != StatusCodes.CompletedOK)
-            {
-                //
-                //    TODO: Add retry logic.
-                //
-                _acknowledgementMessage.StatusCode = (UInt32) decodeStatus;
-            }
-            else
-            {
-                Console.WriteLine("Decoded message:");
-                Console.WriteLine(_inboundMessage.ToString());
-                if ((inboundMessage.Value.Interface == _inboundMessage.Value.Interface) && 
-                    (inboundMessage.Value.MessageID == _inboundMessage.Value.MessageID) &&
-                    (inboundMessage.Value.Function == _inboundMessage.Value.Function))
-                {
-                    _inboundMessage = inboundMessage;
-                    _acknowledgementMessage.StatusCode = (UInt32) StatusCodes.CompletedOK;
-                    _acknowledgementMessage.MessageType = (byte) MessageTypes.Ack;
-                }
-                else
-                {
-                    //
-                    //    Add retry logic.
-                    //
-                    _acknowledgementMessage.StatusCode = (UInt32) StatusCodes.HeaderBodyFieldMismatch;
-                    _acknowledgementMessage.MessageType = (byte) MessageTypes.Ack;
-                }
-            }
-            _currentState = SpiStates.AcknowledgingMessageBody;
-        }
-
-        /// <summary>
-        /// Acknowledge the incoming message body.
-        /// </summary>
-        /// <remarks>
-        /// If the message transmission reception is successful then the incoming message
-        /// will be sent through an event to the message dispatcher.
-        /// </remarks>
-        private void ProcessAcknowledgingMessageBodyState()
-        {
-            Console.WriteLine("Entering ProcessAcknowledgingMessageBodyState");
-            byte[] encodedAcknowledgementMessage = Encoders.EncodeMessage(_acknowledgementMessage);
-            _esp32.WriteBytes(encodedAcknowledgementMessage);
-            _currentState = SpiStates.Idle;
-            if ((StatusCodes) _acknowledgementMessage.StatusCode != StatusCodes.CompletedOK)
-            {
-                TransportProviderMessageReceivedEventArgs args = new TransportProviderMessageReceivedEventArgs(_inboundMessage.Value);
-                MessageReceived(this, args);
-            }
-            _inboundMessage = null;
-        }
-
-        /// <summary>
         /// ESP32 has indicated that it is ready so send the message header.
         /// </summary>
         private void ProcessWantToSendMessageHeaderState(Messages.Message message)
@@ -513,7 +366,6 @@ namespace Meadow.Core.Esp32
             Console.WriteLine("Sending message body:");
             Console.WriteLine(DebugHelpers.DebugHelpers.PrintableBuffer(encodedMessage));
             _esp32.WriteBytes(encodedMessage);
-            _currentState = SpiStates.WaitingForMessageBodyAcknowledgement;
         }
 
         /// <summary>
@@ -556,30 +408,6 @@ namespace Meadow.Core.Esp32
             }
 
             return (decodeStatus);
-        }
-
-        /// <summary>
-        /// Check if we have exceeded the maximum number of retries.
-        /// </summary>
-        /// <param name="message"></param>
-        /// <param name="statusCode">Status code returned.</param>
-        /// <param name="retryCount">Current retry count.</param>
-        /// <returns>New retry count.</returns>
-        private int CheckForRetry(StatusCodes statusCode, int retryCount)
-        {
-            if (statusCode  != StatusCodes.CompletedOK)
-            {
-                if (retryCount < MaximumRetryCount)
-                {
-                    retryCount++;
-                }
-            }
-            else
-            {
-                retryCount = 0;
-            }
-
-            return (retryCount);
         }
 
         /// <summary>
@@ -832,32 +660,6 @@ namespace Meadow.Core.Esp32
             _waitingForStuffToDoHandle.Set();
         }
 
-        /// <summary>
-        /// An error has been detected so check the retry count to see if we can retry sending the message.
-        /// </summary>
-        /// <remarks>
-        /// The system will go back to retrying to send the message header if an error has been detected.
-        /// This simplifies the restart process and guarantees that we have a valid header / message body
-        /// pair.
-        /// </remarks>
-        /// <param name="statusCode">Status code that should be used if an error message is generated.</param>
-        private void RetrySendingIfPossible(StatusCodes statusCode)
-        {
-            if (_currentRetryCount < MaximumRetryCount)
-            {
-                _currentRetryCount++;
-                _currentState = SpiStates.WantToSendMessageHeader;
-                Console.WriteLine($"    Retrying, count = {_currentRetryCount}");
-            }
-            else
-            {
-                TransportProviderErrorEventArgs args = new TransportProviderErrorEventArgs((Esp32Interfaces) _outboundMessage.Value.Interface, _outboundMessage.Value.MessageID, statusCode);
-                TransportError(this, args);
-                _outboundMessage = null;
-                _currentState = SpiStates.Idle;
-                _currentRetryCount = 0;
-            }
-        }
 
         private void RaiseError(Messages.Message message, StatusCodes statusCode)
         {
