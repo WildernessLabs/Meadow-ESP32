@@ -193,61 +193,6 @@ namespace Meadow.Core.Esp32
         {
             while (true)
             {
-                WaitForNotification();
-                //
-                //  Signals are used to transition from one state to another.
-                //
-//                Console.WriteLine($"Current state: {_currentState}");
-//                switch (_currentState)
-//                {
-//                    case SpiStates.Idle:
-//                        ProcessIdleState();
-//                        break;
-//                    case SpiStates.AcknowledgingMessageHeader:
-//                        ProcessAcknowledgingMessageHeaderState();
-//                        break;
-//                    case SpiStates.WaitingForMessageBody:
-//                        ProcessWaitingForMessageBodyState();
-//                        break;
-//                    case SpiStates.AcknowledgingMessageBody:
-//                        ProcessAcknowledgingMessageBodyState();
-//                        break;
-//                    case SpiStates.WantToSendMessageHeader:
-//                        ProcessWantToSendMessageHeaderState();
-//                        break;
-//                    case SpiStates.WaitingForMessageHeaderAcknowledgement:
-//                        ProcessWaitingForMessageHeaderAcknowledgementState();
-//                        break;
-//                    case SpiStates.WantToSendMessageBody:
-//                        ProcessWantToSendMessageBodyState();
-//                        break;
-//                    case SpiStates.WaitingForMessageBodyAcknowledgement:
-//                        ProcessWaitingForMessageBodyAcknowledgementState();
-//                        break;
-//                    case SpiStates.WantToSendTransportMessage:
-//                        ProcessWantToSendTransportMessageState();
-//                        break;
-//                    default:
-//                        break;
-//                }
-            }
-        }
-
-        /// <summary>
-        /// Wait for a message notification to come from the message queue or the ESP32.
-        /// </summary>
-        private void WaitForNotification()
-        {
-            //
-            //  Work out if we should wait for an incoming signal.
-            //
-            //  If we just wait then the application will process only the first
-            //  message in the queue as only one signal will be processed even if
-            //  more than one signals are raised.
-            //
-            bool wait = true; 
-            if (wait)
-            {
                 _waitingForStuffToDoHandle.WaitOne();
                 int queueLength = 0;
                 lock (_messageQueueLock)
