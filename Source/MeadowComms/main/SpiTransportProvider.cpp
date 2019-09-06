@@ -8,6 +8,7 @@
 #include "Esp32Messaging.hpp"
 #include "Encoders.hpp"
 #include <string.h>
+#include "DebugSettings.hpp"
 
 #include "esp_heap_caps.h"
 
@@ -548,6 +549,10 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessTransportMessage()
  */
 spi_slave_transaction_t *SpiTransportProvider::InboundMessageHeaderReceived(spi_slave_transaction_t *transaction)
 {
+#if defined(SPI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Entering method");
+#endif
+
     DeleteMessageAndReleaseHeapStorage(_incomingMessage);
     _incomingMessage = nullptr;
     spi_slave_transaction_t *newTransaction = nullptr;
@@ -611,6 +616,10 @@ spi_slave_transaction_t *SpiTransportProvider::InboundMessageHeaderReceived(spi_
  */
 spi_slave_transaction_t *SpiTransportProvider::InboundMessageHeaderAcknowledged(spi_slave_transaction_t *transaction)
 {
+#if defined(SPI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Entering method");
+#endif
+
     DeleteTransaction(transaction);
     spi_slave_transaction_t *newTransaction = nullptr;
     if (_responseCode == StatusCodes::CompletedOK)
@@ -620,6 +629,9 @@ spi_slave_transaction_t *SpiTransportProvider::InboundMessageHeaderAcknowledged(
             //
             //  If we get here then the message is simple, i.e. no payload
             //  so we need to queue the message on the appropriate interface.
+            //
+            //  We do not delete the _incomingMessage in this case as a
+            //  pointer to the message has been placed on one of the ESP32 queues.
             //
             if (_incomingMessage->Interface != Esp32Interfaces::Transport)
             {
@@ -659,6 +671,10 @@ spi_slave_transaction_t *SpiTransportProvider::InboundMessageHeaderAcknowledged(
  */
 spi_slave_transaction_t *SpiTransportProvider::InboundMessageBodyReceived(spi_slave_transaction_t *transaction)
 {
+#if defined(SPI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Entering method");
+#endif
+
     int dataSize = transaction->length / 8;
     uint32_t encodedMessageBodySize = Encoders::CalculateSpiBufferSize(Message::HEADER_SIZE + _incomingMessage->PayloadLength);
     //
@@ -732,6 +748,10 @@ spi_slave_transaction_t *SpiTransportProvider::InboundMessageBodyReceived(spi_sl
  */
 spi_slave_transaction_t *SpiTransportProvider::InboundMessageBodyAcknowledged(spi_slave_transaction_t *transaction)
 {
+#if defined(SPI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Entering method");
+#endif
+
     DeleteTransaction(transaction);
     spi_slave_transaction_t *newTransaction = CreateSpiHeaderTransaction();
     _currentState = WaitingForInboundMessageHeader;
@@ -769,6 +789,10 @@ spi_slave_transaction_t *SpiTransportProvider::InboundMessageBodyAcknowledged(sp
  */
 spi_slave_transaction_t *SpiTransportProvider::OutboundMessageHeaderSent(spi_slave_transaction_t *transaction)
 {
+#if defined(SPI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Entering method");
+#endif
+
     DeleteTransaction(transaction);
     spi_slave_transaction_t *newTransaction = CreateSpiHeaderTransaction();
     if (_outboundMessage)
@@ -803,6 +827,10 @@ spi_slave_transaction_t *SpiTransportProvider::OutboundMessageHeaderSent(spi_sla
  */
 spi_slave_transaction_t *SpiTransportProvider::OutboundMessageHeaderAcknowledgementReceived(spi_slave_transaction_t *transaction)
 {
+#if defined(SPI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Entering method");
+#endif
+
     Message *acknowledgement = Encoders::ExtractMessage((uint8_t *) transaction->rx_buffer, _headerFrameSize, true);
 
     DeleteTransaction(transaction);
@@ -857,6 +885,10 @@ spi_slave_transaction_t *SpiTransportProvider::OutboundMessageHeaderAcknowledgem
  */
 spi_slave_transaction_t *SpiTransportProvider::OutboundMessageBodySent(spi_slave_transaction_t *transaction)
 {
+#if defined(SPI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Entering method");
+#endif
+
     DeleteTransaction(transaction);
     spi_slave_transaction_t *newTransaction = CreateSpiHeaderTransaction();
     _currentState = WaitingForMessageBodyAcknowledgement;
@@ -882,6 +914,10 @@ spi_slave_transaction_t *SpiTransportProvider::OutboundMessageBodySent(spi_slave
  */
 spi_slave_transaction_t *SpiTransportProvider::OutboundMessageBodyAcknowledgementReceived(spi_slave_transaction_t *transaction)
 {
+#if defined(SPI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Entering method");
+#endif
+
     Message *incomingMessage = Encoders::ExtractMessage((uint8_t *) transaction->rx_buffer, _headerFrameSize, true);
     DeleteTransaction(transaction);
 
@@ -1042,15 +1078,19 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessMessages(spi_slave_transac
     uint32_t notificationBits = 0;
     ESP_LOGI(__func__, "Waiting for notification, current state: %s", SpiStateString(_currentState));
 
+#if defined(SPI_PACKET_LOGGING) || defined(SPI_FULL_LOGGING)
     int dataSize = transaction->length / 8;
     ESP_LOGI(__func__, "Sending %d bytes.", dataSize);
     ESP_LOG_BUFFER_HEX(__func__, transaction->tx_buffer, dataSize);
+#endif
 
     ESP_ERROR_CHECK(spi_slave_queue_trans(VSPI_HOST, transaction, portMAX_DELAY));
     xTaskNotifyWait(0x00000000, ULONG_MAX, &notificationBits, portMAX_DELAY);
 
+#if defined(SPI_PACKET_LOGGING) || defined(SPI_FULL_LOGGING)
     ESP_LOGI(__func__, "Received %d bytes.", dataSize);
     ESP_LOG_BUFFER_HEX(__func__, transaction->rx_buffer, dataSize);
+#endif
 
     //
     //  ESP-IDF documentation states that a call to spi_slave_get_trans_result
@@ -1059,6 +1099,9 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessMessages(spi_slave_transac
     ESP_ERROR_CHECK(spi_slave_get_trans_result(VSPI_HOST, &transaction, portMAX_DELAY));
     if (SendingData(_currentState) || MessageContainsData((uint8_t *) transaction->rx_buffer, transaction->length / 8))
     {
+#if defined(SPI_FULL_LOGGING)
+        ESP_LOGI(__func__, "Current state %s", SpiStateString(_currentState));
+#endif
         switch (_currentState)
         {
             case WaitingForInboundMessageHeader:
@@ -1097,7 +1140,9 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessMessages(spi_slave_transac
     }
     else
     {
+#if defined(SPI_FULL_LOGGING)
         ESP_LOGI(__func__, "Empty buffer, discarding data and staying in state %s", SpiStateString(_currentState));
+#endif
         newTransaction = transaction;
     }
     return(newTransaction);
