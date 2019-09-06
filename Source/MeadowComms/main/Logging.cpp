@@ -74,7 +74,7 @@ void Logging::Setup()
 /*
  *      Process the request to output an informational message to the logging system.
  */
-void Logging::Information()
+void Logging::Information(char *methodName, char *formatString, ...)
 {
 
 }
