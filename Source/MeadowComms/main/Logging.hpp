@@ -58,7 +58,7 @@ public:
     /*
      *      Process the request to output an informational message to the logging system.
      */
-    static void Information();
+    static void Information(char *, char *, ...);
 
     /*
      *      Process the request to output an error message to the logging system
