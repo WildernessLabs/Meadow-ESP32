@@ -1,7 +1,6 @@
 using System;
 using System.Text;
 using System.Collections;
-using Meadow.Core.Esp32;
 
 namespace DebugHelpers
 {
@@ -90,36 +89,39 @@ namespace DebugHelpers
         /// <returns>String containing the hex address and up to 16 bytes of data from the buffer.</returns>
         private static string PrintableBufferLine(int address, byte[] buffer)
         {
-            int end = address + 15;
-            string result = string.Empty;
+            int end = address + 16;
+            StringBuilder result = new StringBuilder(HEXADECIMAL_BUFFER_HEADER.Length);
 
             if (buffer.Length <= end)
             {
                 end = buffer.Length;
             }
-            result = Hexadecimal(address) + ": ";
-            for (var index = 0; index <= end; index++)
+            result.Append(Hexadecimal(address));
+            result.Append(": ");
+            for (var index = address; index < end; index++)
             {
-                result += Hexadecimal(buffer[index]) + " ";
+                result.Append(Hexadecimal(buffer[index]));
+                result.Append(" ");
             }
 
-            return (result);
+            return (result.ToString());
         }
 
         /// <summary>
-        /// Dump the array of bytes to the debug output in hexadecimal.
+        /// Convert the array of bytes into an ArrayList of strings that can be used to display a buffer
+        /// in hexadecimal.
         /// </summary>
         /// <param name="buffer">Byte array of the buffer to be converted to printable format.</param>
-        public static string PrintableBuffer(byte[] buffer)
+        /// <returns>ArrayList of printable strings, one per line.</returns>
+        public static ArrayList PrintableBuffer(byte[] buffer)
         {
-            StringBuilder result = new StringBuilder();
-            string line = string.Empty;
-            result.AppendLine(HEXADECIMAL_BUFFER_HEADER);
+            ArrayList result = new ArrayList();
+            result.Add(HEXADECIMAL_BUFFER_HEADER);
             for (var index = 0; index < buffer.Length; index += 16)
             {
-                result.AppendLine(PrintableBufferLine(index, buffer));
+                result.Add(PrintableBufferLine(index, buffer));
             }
-            return (result.ToString());
+            return(result);
         }
 
         /// <summary>
@@ -135,9 +137,9 @@ namespace DebugHelpers
         /// Display a timestamped list of string held in an array on the console.
         /// </summary>
         /// <param name="messages">Array of strings to be displayed.</param>
-        public static void LogMessage(Array messages)
+        public static void LogMessage(ArrayList lines)
         {
-            foreach (string s in messages)
+            foreach (string s in lines)
             {
                 LogMessage(s);
             }
