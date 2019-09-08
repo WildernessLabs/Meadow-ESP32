@@ -80,7 +80,10 @@ namespace Meadow.Core.Esp32
                 {
                     result.AppendLine($"Payload length: {PayloadLength}");
                     result.AppendLine("Payload:");
-                    result.AppendLine(DebugHelpers.DebugHelpers.PrintableBuffer(Payload));
+                    foreach (string s in DebugHelpers.DebugHelpers.PrintableBuffer(Payload))
+                    {
+                        result.AppendLine(s);
+                    }
                 }
                 else
                 {
