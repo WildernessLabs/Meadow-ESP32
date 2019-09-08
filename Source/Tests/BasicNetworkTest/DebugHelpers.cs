@@ -1,11 +1,23 @@
 using System;
 using System.Text;
+using System.Collections;
 using Meadow.Core.Esp32;
 
 namespace DebugHelpers
 {
     public class DebugHelpers
     {
+        #region Constants
+        
+        /// <summary>
+        /// Header string for a 16-byte buffer plus address prefix.
+        /// </summary>
+        private const string HEXADECIMAL_BUFFER_HEADER = "             0    1    2    3    4    5    6    7    8    9    a    b    c    d    e    f";
+        
+        #endregion Constants
+        
+        #region Methods
+        
         /// <summary>
         ///     Convert a byte array to a series of hexadecimal numbers
         ///     separated by a minus sign.
@@ -71,29 +83,41 @@ namespace DebugHelpers
         }
 
         /// <summary>
-        ///     Dump the array of bytes to the debug output in hexadecimal.
+        /// Generate a single line or printable output from a buffer.
+        /// </summary>
+        /// <param name="address">Offset into the buffer to start processing.</param>
+        /// <param name="buffer">Buffer to be used as a source of data.</param>
+        /// <returns>String containing the hex address and up to 16 bytes of data from the buffer.</returns>
+        private static string PrintableBufferLine(int address, byte[] buffer)
+        {
+            int end = address + 15;
+            string result = string.Empty;
+
+            if (buffer.Length <= end)
+            {
+                end = buffer.Length;
+            }
+            result = Hexadecimal(address) + ": ";
+            for (var index = 0; index <= end; index++)
+            {
+                result += Hexadecimal(buffer[index]) + " ";
+            }
+
+            return (result);
+        }
+
+        /// <summary>
+        /// Dump the array of bytes to the debug output in hexadecimal.
         /// </summary>
         /// <param name="buffer">Byte array of the buffer to be converted to printable format.</param>
         public static string PrintableBuffer(byte[] buffer)
         {
             StringBuilder result = new StringBuilder();
             string line = string.Empty;
-            result.AppendLine("             0    1    2    3    4    5    6    7    8    9    a    b    c    d    e    f");
-            for (var index = 0; index < buffer.Length; index++)
+            result.AppendLine(HEXADECIMAL_BUFFER_HEADER);
+            for (var index = 0; index < buffer.Length; index += 16)
             {
-                if ((index % 16) == 0)
-                {
-                    if (line != string.Empty)
-                    {
-                        result.AppendLine(line);
-                    }
-                    line = Hexadecimal(index) + ": ";
-                }
-                line += Hexadecimal(buffer[index]) + " ";
-            }
-            if (line != string.Empty)
-            {
-                result.AppendLine(line);
+                result.AppendLine(PrintableBufferLine(index, buffer));
             }
             return (result.ToString());
         }
@@ -106,9 +130,30 @@ namespace DebugHelpers
         {
             Console.WriteLine($"{DateTime.Now.ToString("HH:mm:ss tt")}: {message}");
         }
+
+        /// <summary>
+        /// Display a timestamped list of string held in an array on the console.
+        /// </summary>
+        /// <param name="messages">Array of strings to be displayed.</param>
+        public static void LogMessage(Array messages)
+        {
+            foreach (string s in messages)
+            {
+                LogMessage(s);
+            }
+        }
         
+        #endregion Methods
+        
+        #region Constructor(s)
+        
+        /// <summary>
+        /// Public constructor.
+        /// </summary>
         public DebugHelpers()
         {
         }
+        
+        #endregion Constructor(s)
     }
 }
