@@ -212,9 +212,9 @@ namespace Meadow.Core.Esp32
         /// <summary>
         /// ESP32 has indicated that it is ready so send the message header.
         /// </summary>
-        private void ProcessWantToSendMessageHeaderState(Messages.Message message)
+        private void SendMessageHeader(Messages.Message message)
         {
-            DebugHelpers.DebugHelpers.LogMessage("Entering ProcessWantToSendMessageHeaderState");
+            DebugHelpers.DebugHelpers.LogMessage("Entering SendMessageHeader");
             byte[] encodedHeader;
             if (message.MessageType == (byte) MessageTypes.Data)
             {
@@ -244,15 +244,17 @@ namespace Meadow.Core.Esp32
         ///
         /// ACK: Work out if we have a message body to send.
         /// </remarks>
-        private (Messages.Message?, StatusCodes) ProcessWaitingForMessageHeaderAcknowledgementState(Messages.Message message)
+        private (Messages.Message?, StatusCodes) SendMessageHeaderAcknowledgement(Messages.Message message)
         {
-            DebugHelpers.DebugHelpers.LogMessage("Entering ProcessWaitingForMessageHeaderAcknowledgementState");
+            DebugHelpers.DebugHelpers.LogMessage("Entering SendMessageHeaderAcknowledgement");
+            
             byte[] dummyHeader = new byte[_headerFrameSize];
             Array.Clear(dummyHeader, 0, (int)_headerFrameSize);
             byte[] encodedAcknowledgement = _esp32.WriteRead(dummyHeader, (ushort)_headerFrameSize);
 
             DebugHelpers.DebugHelpers.LogMessage("Received:");
             DebugHelpers.DebugHelpers.LogMessage(DebugHelpers.DebugHelpers.PrintableBuffer(encodedAcknowledgement));
+            
             StatusCodes decodeStatus;
             Messages.Message? acknowledgement;
             (acknowledgement, decodeStatus) = Encoders.ExtractMessage(encodedAcknowledgement);
@@ -313,6 +315,7 @@ namespace Meadow.Core.Esp32
             StatusCodes decodeStatus;
             Messages.Message? inboundMessage;
             (inboundMessage, decodeStatus) = Encoders.ExtractMessage(encodedInboundMessage);
+            
             DebugHelpers.DebugHelpers.LogMessage($"Decode status: {decodeStatus}");
             SendAcknowledgement(inboundMessage.Value, StatusCodes.CompletedOK);
 
@@ -332,9 +335,11 @@ namespace Meadow.Core.Esp32
 
             DebugHelpers.DebugHelpers.LogMessage("Received:");
             DebugHelpers.DebugHelpers.LogMessage(DebugHelpers.DebugHelpers.PrintableBuffer(encodedInboundMessage));
+            
             StatusCodes decodeStatus;
             Messages.Message? inboundMessage;
             (inboundMessage, decodeStatus) = Encoders.ExtractMessage(encodedInboundMessage);
+            
             DebugHelpers.DebugHelpers.LogMessage($"Decode status: {decodeStatus}");
             SendAcknowledgement(inboundMessage.Value, StatusCodes.CompletedOK);
 
@@ -466,48 +471,47 @@ namespace Meadow.Core.Esp32
             DebugHelpers.DebugHelpers.LogMessage("Entering SendMessageBody");
             StatusCodes statusCode = StatusCodes.Failure;
             
-            if (message.PayloadLength > 0)
+            byte[] encodedMessage = Encoders.EncodeMessage(message, false);
+            DebugHelpers.DebugHelpers.LogMessage("Sending message body:");
+            DebugHelpers.DebugHelpers.LogMessage(DebugHelpers.DebugHelpers.PrintableBuffer(encodedMessage));
+            _esp32.WriteBytes(encodedMessage);
+            //
+            //  TODO: The following pause is necessary to prevent an off by one bit error that can sometime appear in the acknowledgement.
+            //
+            Thread.Sleep(50);
+            
+            byte[] dummyHeader = new byte[_headerFrameSize];
+            Array.Clear(dummyHeader, 0, (int)_headerFrameSize);
+            byte[] encodedAcknowledgement = _esp32.WriteRead(dummyHeader, (ushort)_headerFrameSize);
+            DebugHelpers.DebugHelpers.LogMessage("Acknowledgement:");
+            DebugHelpers.DebugHelpers.LogMessage(DebugHelpers.DebugHelpers.PrintableBuffer(encodedAcknowledgement));
+            
+            Messages.Message? acknowledgement;
+            (acknowledgement, statusCode) = Encoders.ExtractMessage(encodedAcknowledgement);
+            //
+            //  We can get three possible responses here:
+            //      ACK - Data received by the ESP32 is good.
+            //      NAK - There is a problem with the data, this could be a CRC error or invalid data.
+            //
+            if (statusCode == StatusCodes.CompletedOK)
             {
-                byte[] encodedMessage = Encoders.EncodeMessage(message, false);
-                DebugHelpers.DebugHelpers.LogMessage("Sending message body:");
-                DebugHelpers.DebugHelpers.LogMessage(DebugHelpers.DebugHelpers.PrintableBuffer(encodedMessage));
-                _esp32.WriteBytes(encodedMessage);
-                
-                byte[] dummyHeader = new byte[_headerFrameSize];
-                Array.Clear(dummyHeader, 0, (int)_headerFrameSize);
-                byte[] encodedAcknowledgement = _esp32.WriteRead(dummyHeader, (ushort)_headerFrameSize);
-                Messages.Message? acknowledgement;
-                (acknowledgement, statusCode) = Encoders.ExtractMessage(encodedAcknowledgement);
-                //
-                //  We can get three possible responses here:
-                //      ACK - Data received by the ESP32 is good.
-                //      NAK - There is a problem with the data, this could be a CRC error or invalid data.
-                //
-                if (statusCode == StatusCodes.CompletedOK)
+                if (acknowledgement.Value.MessageType == (byte) MessageTypes.Nak)
                 {
-                    if (acknowledgement.Value.MessageType == (byte) MessageTypes.Nak)
-                    {
-                        DebugHelpers.DebugHelpers.LogMessage("Received NAK.");
-                    }
-                    else
-                    {
-                        DebugHelpers.DebugHelpers.LogMessage("Received ACK.");
-                        if ((acknowledgement.Value.Interface != message.Interface) || (acknowledgement.Value.MessageID != message.MessageID))
-                        {
-                            statusCode = StatusCodes.UnexpectedData;
-                        }
-                    }
+                    DebugHelpers.DebugHelpers.LogMessage("Received NAK.");
                 }
                 else
                 {
-                    DebugHelpers.DebugHelpers.LogMessage("Cannot decode message body.");
-                    statusCode = StatusCodes.UnexpectedData;
+                    DebugHelpers.DebugHelpers.LogMessage("Received ACK.");
+                    if ((acknowledgement.Value.Interface != message.Interface) || (acknowledgement.Value.MessageID != message.MessageID))
+                    {
+                        statusCode = StatusCodes.UnexpectedData;
+                    }
                 }
             }
             else
             {
-                DebugHelpers.DebugHelpers.LogMessage("No message payload to send.");
-                statusCode = StatusCodes.CompletedOK;
+                DebugHelpers.DebugHelpers.LogMessage("Cannot decode message body.");
+                statusCode = StatusCodes.UnexpectedData;
             }
 
             return (statusCode);
@@ -522,6 +526,9 @@ namespace Meadow.Core.Esp32
         /// <param name="message">Message to be sent to the ESP32.</param>
         private void SendMessage(Messages.Message message)
         {
+            DebugHelpers.DebugHelpers.LogMessage("");
+            DebugHelpers.DebugHelpers.LogMessage("********************************************************************************");
+            DebugHelpers.DebugHelpers.LogMessage("");
             DebugHelpers.DebugHelpers.LogMessage("Entering SendMessage");
             DebugHelpers.DebugHelpers.LogMessage("Sending message:");
             message.Log();
@@ -529,8 +536,8 @@ namespace Meadow.Core.Esp32
             StatusCodes statusCode = StatusCodes.Failure;
             Messages.Message? acknowledgement = null;
 
-            ProcessWantToSendMessageHeaderState(message);
-            (acknowledgement,statusCode) = ProcessWaitingForMessageHeaderAcknowledgementState(message);
+            SendMessageHeader(message);
+            (acknowledgement,statusCode) = SendMessageHeaderAcknowledgement(message);
             if (statusCode != StatusCodes.CompletedOK)
             {
                 DebugHelpers.DebugHelpers.LogMessage("Failed to send message, resubmitting message");
@@ -544,7 +551,10 @@ namespace Meadow.Core.Esp32
                 }
                 else
                 {
-                    statusCode = SendMessageBody(message);
+                    if (message.PayloadLength > 0)
+                    {
+                        statusCode = SendMessageBody(message);
+                    }
                 }
                 if (statusCode != StatusCodes.CompletedOK)
                 {
