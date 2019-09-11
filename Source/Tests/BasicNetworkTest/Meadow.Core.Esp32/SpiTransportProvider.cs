@@ -54,25 +54,6 @@ namespace Meadow.Core.Esp32
         private Thread _queueHandler = null;
 
         /// <summary>
-        /// 
-        /// </summary>
-        private Messages.Message? _inboundMessage = null;
-
-        /// <summary>
-        /// Current message being sent by the system.
-        /// </summary>
-        /// <remarks>
-        /// This needs to be a class level variable as it is processed by a
-        /// state machine which is implemented by a number of different methods.
-        /// </remarks>
-        private Messages.Message? _outboundMessage = null;
-
-        /// <summary>
-        /// Message used to hold the acknowledgements between message transmission states.
-        /// </summary>
-        private Messages.Message _acknowledgementMessage;
-        
-        /// <summary>
         /// This message will be used a lot so we set up an object ready for reuse.
         /// </summary>
         private readonly Messages.Message _requestMessage;
