@@ -294,63 +294,6 @@ namespace Meadow.Core.Esp32
         }
 
         /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="message"></param>
-        /// <returns></returns>
-        private StatusCodes SendMessageBody(Messages.Message message)
-        {
-            DebugHelpers.DebugHelpers.LogMessage("Entering SendMessageBody");
-            StatusCodes statusCode = StatusCodes.Failure;
-            
-            if (message.PayloadLength > 0)
-            {
-                byte[] encodedMessage = Encoders.EncodeMessage(message, false);
-                DebugHelpers.DebugHelpers.LogMessage("Sending message body:");
-                DebugHelpers.DebugHelpers.LogMessage(DebugHelpers.DebugHelpers.PrintableBuffer(encodedMessage));
-                _esp32.WriteBytes(encodedMessage);
-                
-                byte[] dummyHeader = new byte[_headerFrameSize];
-                Array.Clear(dummyHeader, 0, (int)_headerFrameSize);
-                byte[] encodedAcknowledgement = _esp32.WriteRead(dummyHeader, (ushort)_headerFrameSize);
-                Messages.Message? acknowledgement;
-                (acknowledgement, statusCode) = Encoders.ExtractMessage(encodedAcknowledgement);
-                //
-                //  We can get three possible responses here:
-                //      ACK - Data received by the ESP32 is good.
-                //      NAK - There is a problem with the data, this could be a CRC error or invalid data.
-                //
-                if (statusCode == StatusCodes.CompletedOK)
-                {
-                    if (acknowledgement.Value.MessageType == (byte) MessageTypes.Nak)
-                    {
-                        DebugHelpers.DebugHelpers.LogMessage("Received NAK.");
-                    }
-                    else
-                    {
-                        DebugHelpers.DebugHelpers.LogMessage("Received ACK.");
-                        if ((acknowledgement.Value.Interface != message.Interface) || (acknowledgement.Value.MessageID != message.MessageID))
-                        {
-                            statusCode = StatusCodes.UnexpectedData;
-                        }
-                    }
-                }
-                else
-                {
-                    DebugHelpers.DebugHelpers.LogMessage("Cannot decode message body.");
-                    statusCode = StatusCodes.UnexpectedData;
-                }
-            }
-            else
-            {
-                DebugHelpers.DebugHelpers.LogMessage("No message payload to send.");
-                statusCode = StatusCodes.CompletedOK;
-            }
-
-            return (statusCode);
-        }
-
-        /// <summary>
         /// Get a message header from the ESP32.
         /// </summary>
         /// <returns>Message header if a valid header is read, null otherwise.</returns>
@@ -510,6 +453,63 @@ namespace Meadow.Core.Esp32
                         break;
                 }
             }
+            return (statusCode);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="message"></param>
+        /// <returns></returns>
+        private StatusCodes SendMessageBody(Messages.Message message)
+        {
+            DebugHelpers.DebugHelpers.LogMessage("Entering SendMessageBody");
+            StatusCodes statusCode = StatusCodes.Failure;
+            
+            if (message.PayloadLength > 0)
+            {
+                byte[] encodedMessage = Encoders.EncodeMessage(message, false);
+                DebugHelpers.DebugHelpers.LogMessage("Sending message body:");
+                DebugHelpers.DebugHelpers.LogMessage(DebugHelpers.DebugHelpers.PrintableBuffer(encodedMessage));
+                _esp32.WriteBytes(encodedMessage);
+                
+                byte[] dummyHeader = new byte[_headerFrameSize];
+                Array.Clear(dummyHeader, 0, (int)_headerFrameSize);
+                byte[] encodedAcknowledgement = _esp32.WriteRead(dummyHeader, (ushort)_headerFrameSize);
+                Messages.Message? acknowledgement;
+                (acknowledgement, statusCode) = Encoders.ExtractMessage(encodedAcknowledgement);
+                //
+                //  We can get three possible responses here:
+                //      ACK - Data received by the ESP32 is good.
+                //      NAK - There is a problem with the data, this could be a CRC error or invalid data.
+                //
+                if (statusCode == StatusCodes.CompletedOK)
+                {
+                    if (acknowledgement.Value.MessageType == (byte) MessageTypes.Nak)
+                    {
+                        DebugHelpers.DebugHelpers.LogMessage("Received NAK.");
+                    }
+                    else
+                    {
+                        DebugHelpers.DebugHelpers.LogMessage("Received ACK.");
+                        if ((acknowledgement.Value.Interface != message.Interface) || (acknowledgement.Value.MessageID != message.MessageID))
+                        {
+                            statusCode = StatusCodes.UnexpectedData;
+                        }
+                    }
+                }
+                else
+                {
+                    DebugHelpers.DebugHelpers.LogMessage("Cannot decode message body.");
+                    statusCode = StatusCodes.UnexpectedData;
+                }
+            }
+            else
+            {
+                DebugHelpers.DebugHelpers.LogMessage("No message payload to send.");
+                statusCode = StatusCodes.CompletedOK;
+            }
+
             return (statusCode);
         }
 
