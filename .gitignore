@@ -69,3 +69,4 @@ packages
 # Rider files
 .idea/
 .settings/
+Source/Tests/BasicNetworkTest/Secrets.cs
