@@ -114,12 +114,21 @@ namespace BasicNetworkTest
         {
             DebugHelpers.DebugHelpers.LogMessage("Basic Network Communication Test.");
             DebugHelpers.DebugHelpers.LogMessage("Press button to start the test.");
-            QueueMessage(_getAntennaMessage);
-            QueueMessage(_requestMessage);
-            QueueMessage(_setAntennaMessage);
-            QueueMessage(_requestMessage);
-            QueueMessage(_getAntennaMessage);
-            QueueMessage(_requestMessage);
+            
+            Messages.StartNetwork startNetwork = new Messages.StartNetwork();
+            startNetwork.NetworkName = Secrets.WIFI_NAME;
+            startNetwork.Password = Secrets.WIFI_PASSOWRD;
+            
+            Messages.Message message = new Messages.Message();
+            message.Interface = (byte) Esp32Interfaces.WiFi;
+            message.Function = (uint) WiFiFunction.Start;
+            message.MessageID = 0x10;
+            message.MessageType = (byte) MessageTypes.Data;
+            byte[] encodedStartMessage = Encoders.EncodeStartNetwork(startNetwork);
+            message.Payload = encodedStartMessage;
+            message.PayloadLength = (uint) encodedStartMessage.Length;
+            QueueMessage(message);
+            
             Thread.Sleep(Timeout.Infinite);
         }
     }
