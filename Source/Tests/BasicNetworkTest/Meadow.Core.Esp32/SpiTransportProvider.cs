@@ -157,11 +157,10 @@ namespace Meadow.Core.Esp32
         ///
         /// Messages can either be added by the various interfaces or by the ESP32 "Ready" event.
         ///
-        /// Interfaces queue messages to inform the ESP32 of an action to be taken or as a
+        /// Interfaces queue messages inform the ESP32 of an action to be taken or as a
         /// request for information.
         ///
-        /// The "Request" message queued by the ESP32 Ready event asks the ESP32 for any waiting
-        /// messages (responses).
+        /// The "Request" message queued by the ESP32 ready interrupt.
         /// </remarks>
         private void Run()
         {
@@ -191,8 +190,12 @@ namespace Meadow.Core.Esp32
         }
 
         /// <summary>
-        /// ESP32 has indicated that it is ready so send the message header.
+        /// Send the message header to the ESP32.
         /// </summary>
+        /// <remarks>
+        /// Use the message to generate a header and send the header to the ESP32.
+        /// </remarks>
+        /// <param name="message">Message that the STM32 wants to send.</param>
         private void SendMessageHeader(Messages.Message message)
         {
             DebugHelpers.DebugHelpers.LogMessage("Entering SendMessageHeader");
@@ -215,7 +218,7 @@ namespace Meadow.Core.Esp32
         }
 
         /// <summary>
-        /// Process the ESP32 acknowledgement message.
+        /// Get the acknowledgement for the message that has just been sent to the ESP32. 
         /// </summary>
         /// <remarks>
         /// The ESP32 should only really send an ACK or a NAK message through to
@@ -224,10 +227,12 @@ namespace Meadow.Core.Esp32
         /// NAK: Generate an error event and throw away the outbound message.
         ///
         /// ACK: Work out if we have a message body to send.
+        ///
+        /// Transport Message: System message from the ESP32.
         /// </remarks>
-        private (Messages.Message?, StatusCodes) SendMessageHeaderAcknowledgement(Messages.Message message)
+        private (Messages.Message?, StatusCodes) GetMessageHeaderAcknowledgement(Messages.Message message)
         {
-            DebugHelpers.DebugHelpers.LogMessage("Entering SendMessageHeaderAcknowledgement");
+            DebugHelpers.DebugHelpers.LogMessage("Entering GetMessageHeaderAcknowledgement");
             
             byte[] dummyHeader = new byte[_headerFrameSize];
             Array.Clear(dummyHeader, 0, (int)_headerFrameSize);
@@ -239,30 +244,27 @@ namespace Meadow.Core.Esp32
             StatusCodes decodeStatus;
             Messages.Message? acknowledgement;
             (acknowledgement, decodeStatus) = Encoders.ExtractMessage(encodedAcknowledgement);
-            //
-            //  We can get two possible responses here:
-            //      ACK - Data received by the ESP32 is good.
-            //      NAK - There is a problem with the data, this could be a CRC error or invalid data.
-            //
+
             if (decodeStatus == StatusCodes.CompletedOK)
             {
-                DebugHelpers.DebugHelpers.LogMessage("Decoded OK.");
                 acknowledgement.Value.Log();
                 switch ((MessageTypes) acknowledgement.Value.MessageType)
                 {
                     case MessageTypes.Ack:
-                        DebugHelpers.DebugHelpers.LogMessage("Received ACK.");
                         if ((acknowledgement.Value.Interface != message.Interface) || (acknowledgement.Value.MessageID != message.MessageID))
                         {
-                            DebugHelpers.DebugHelpers.LogMessage("Message IDs do not match.");
                             decodeStatus = StatusCodes.UnexpectedData;
                         }
                         break;
                     case MessageTypes.Transport:
-                        DebugHelpers.DebugHelpers.LogMessage("Transport packet received.");
+                        //
+                        //  TODO: Need to process the transport messages.
+                        //
                         break;
                     case MessageTypes.Nak:
-                        DebugHelpers.DebugHelpers.LogMessage("Received NAK.");
+                        //
+                        //  TODO: Process a NAK.
+                        //
                         break;
                 }
             }
@@ -285,8 +287,6 @@ namespace Meadow.Core.Esp32
             DebugHelpers.DebugHelpers.LogMessage("Entering GetMessageHeader");
             
             ushort incomingMessageLength = (ushort) Encoders.CalculateSpiBufferSize(Messages.HEADER_SIZE);
-            DebugHelpers.DebugHelpers.LogMessage($"Asking for {incomingMessageLength} bytes.");
-            
             byte[] encodedDummyMessage = new byte[incomingMessageLength];
             Array.Clear(encodedDummyMessage, 0, incomingMessageLength);
             byte[] encodedInboundMessage = _esp32.WriteRead(encodedDummyMessage, incomingMessageLength);
@@ -303,12 +303,16 @@ namespace Meadow.Core.Esp32
             return (inboundMessage); 
         }
 
+        /// <summary>
+        /// Get the message body associated with the specified header.
+        /// </summary>
+        /// <param name="header">Message header that has been sent ot he ESP32.</param>
+        /// <returns>Message and body (or null in the case of an error).</returns>
         private Messages.Message? GetMessageBody(Messages.Message header)
         {
             DebugHelpers.DebugHelpers.LogMessage("Entering GetMessageHeader");
 
             ushort incomingMessageLength = (ushort) Encoders.CalculateSpiBufferSize(Messages.HEADER_SIZE + header.PayloadLength);
-            DebugHelpers.DebugHelpers.LogMessage($"Asking for {incomingMessageLength} bytes.");
             
             byte[] encodedDummyMessage = new byte[incomingMessageLength];
             Array.Clear(encodedDummyMessage, 0, incomingMessageLength);
@@ -371,10 +375,14 @@ namespace Meadow.Core.Esp32
         }
 
         /// <summary>
-        /// 
+        /// Create an acknowledgement message and send this to the ESP32.
         /// </summary>
-        /// <param name="message"></param>
-        /// <param name="statusCode"></param>
+        /// <remarks>
+        /// The acknowledgement can be either positive (and ACK) or a negative (NAK) acknowledgement.  The
+        /// exact type of message will be determined by the status code.
+        /// </remarks>
+        /// <param name="message">Message that has been received from the ESP32.</param>
+        /// <param name="statusCode">Status code to send in the acknowledgement.</param>
         private void SendAcknowledgement(Messages.Message message, StatusCodes statusCode)
         {
             DebugHelpers.DebugHelpers.LogMessage("Entering SendAcknowledgement");
@@ -391,32 +399,29 @@ namespace Meadow.Core.Esp32
         }
 
         /// <summary>
-        /// 
+        /// Process the transport message.
         /// </summary>
-        /// <param name="message"></param>
-        /// <returns></returns>
-        private StatusCodes ProcessTransportMessage(Messages.Message? acknowledgement)
+        /// <param name="transportMessage">Transport message to be processed.</param>
+        /// <returns>Status code indicating if the transport message was processed OK.</returns>
+        private StatusCodes ProcessTransportMessage(Messages.Message? transportMessage)
         {
             DebugHelpers.DebugHelpers.LogMessage("Entering ProcessTransportMessage");
 
             StatusCodes statusCode = StatusCodes.Failure;
             Messages.Message message;
-            if (acknowledgement != null)
+            if (transportMessage != null)
             {
-                message = acknowledgement.Value;
+                message = transportMessage.Value;
                 message.Log();
             
                 switch ((TransportFunction) message.Function)
                 {
                     case TransportFunction.SendResponse:
-                        DebugHelpers.DebugHelpers.LogMessage("Processing SendResponse message");
                         if ((StatusCodes) message.StatusCode == StatusCodes.CompletedOK)
                         {
-                            DebugHelpers.DebugHelpers.LogMessage("There are messages waiting, request one.");
                             statusCode = GetResponseFromEsp32();
                             if (statusCode == StatusCodes.NoMessagesWaiting)
                             {
-                                DebugHelpers.DebugHelpers.LogMessage("No messages waiting.");
                                 statusCode = StatusCodes.CompletedOK;
                             }
                         }
@@ -424,7 +429,6 @@ namespace Meadow.Core.Esp32
                         {
                             if ((StatusCodes) message.StatusCode == StatusCodes.NoMessagesWaiting)
                             {
-                                DebugHelpers.DebugHelpers.LogMessage("Converting response to CompletedOK");
                                 statusCode = StatusCodes.CompletedOK;
                             }
                             else
@@ -443,10 +447,10 @@ namespace Meadow.Core.Esp32
         }
 
         /// <summary>
-        /// 
+        /// Send the message body in the message to the ESP32.
         /// </summary>
-        /// <param name="message"></param>
-        /// <returns></returns>
+        /// <param name="message">Message containing the body to send to the ESP32.</param>
+        /// <returns>Status code indicating if the message body was send and acknowledged OK.</returns>
         private StatusCodes SendMessageBody(Messages.Message message)
         {
             DebugHelpers.DebugHelpers.LogMessage("Entering SendMessageBody");
@@ -478,7 +482,8 @@ namespace Meadow.Core.Esp32
             {
                 if (acknowledgement.Value.MessageType == (byte) MessageTypes.Nak)
                 {
-                    DebugHelpers.DebugHelpers.LogMessage("Received NAK.");
+                    //
+                    //  TODO: Work out how to deal with this.
                 }
                 else
                 {
@@ -501,9 +506,6 @@ namespace Meadow.Core.Esp32
         /// <summary>
         /// Send a message to the ESP32.
         /// </summary>
-        /// <remarks>
-        /// 
-        /// </remarks>
         /// <param name="message">Message to be sent to the ESP32.</param>
         private void SendMessage(Messages.Message message)
         {
@@ -518,10 +520,9 @@ namespace Meadow.Core.Esp32
             Messages.Message? acknowledgement = null;
 
             SendMessageHeader(message);
-            (acknowledgement,statusCode) = SendMessageHeaderAcknowledgement(message);
+            (acknowledgement,statusCode) = GetMessageHeaderAcknowledgement(message);
             if (statusCode != StatusCodes.CompletedOK)
             {
-                DebugHelpers.DebugHelpers.LogMessage("Failed to send message, resubmitting message");
                 QueueMessageForEsp32(message);
             }
             else
