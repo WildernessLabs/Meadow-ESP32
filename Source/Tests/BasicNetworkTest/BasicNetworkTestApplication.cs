@@ -77,7 +77,7 @@ namespace BasicNetworkTest
         /// <param name="e"></param>
         private void _button_Changed(object sender, DigitalInputPortEventArgs e)
         {
-            Console.WriteLine("Queueing messages");
+            DebugHelpers.DebugHelpers.LogMessage("Queueing messages");
             QueueMessage(_getAntennaMessage);
             QueueMessage(_requestMessage);
             QueueMessage(_setAntennaMessage);
@@ -93,7 +93,7 @@ namespace BasicNetworkTest
         /// <param name="e"></param>
         private void _dispatcher_Error(object sender, MessageDispatcherErrorEventArgs e)
         {
-            Console.WriteLine($"Dispatcher error: {e.StatusCode}");
+            DebugHelpers.DebugHelpers.LogMessage($"Dispatcher error: {e.StatusCode}");
         }
 
         /// <summary>
@@ -103,8 +103,8 @@ namespace BasicNetworkTest
         /// <param name="e"></param>
         private void _dispatcher_MessageReceived(object sender, MessageReceviedEventArgs e)
         {
-            Console.WriteLine("Message received:");
-            Console.WriteLine(e.Message.ToString());
+            DebugHelpers.DebugHelpers.LogMessage("Message received:");
+            e.Message.Value.Log();
         }
 
         /// <summary>
@@ -112,11 +112,14 @@ namespace BasicNetworkTest
         /// </summary>
         public void Run()
         {
-            Console.WriteLine("Basic Network Communication Test.");
-            Console.WriteLine();
-            Console.WriteLine("Press button to start the test.");
-//            QueueSetAntennaMessage();
-//            QueueRequestMessage();
+            DebugHelpers.DebugHelpers.LogMessage("Basic Network Communication Test.");
+            DebugHelpers.DebugHelpers.LogMessage("Press button to start the test.");
+            QueueMessage(_getAntennaMessage);
+            QueueMessage(_requestMessage);
+            QueueMessage(_setAntennaMessage);
+            QueueMessage(_requestMessage);
+            QueueMessage(_getAntennaMessage);
+            QueueMessage(_requestMessage);
             Thread.Sleep(Timeout.Infinite);
         }
     }

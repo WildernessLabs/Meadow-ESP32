@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Net.WebSockets;
 using System.Text;
 
@@ -63,37 +64,30 @@ namespace Meadow.Core.Esp32
             }
             
             /// <summary>
-            /// Take the message and make it printable.
+            /// 
             /// </summary>
-            /// <param name="message">Message to be decoded.</param>
-            /// <returns>String containing the printable version of the message.</returns>
-            public override string ToString()
+            public void Log()
             {
-                StringBuilder result = new StringBuilder();
+                StringBuilder line = new StringBuilder();
 
-                result.AppendLine($"Message Type: {MessageType}");
-                result.AppendLine($"Interface : {Interface}");
-                result.AppendLine($"Function: {Function}");
-                result.AppendLine($"Message ID: {MessageID}");
-                result.AppendLine($"StatusCode: {StatusCode}");
+                line.Append($"Message Type: {MessageType}, ");
+                line.Append($"Interface: {Interface}, ");
+                line.Append($"Function: {Function}, ");
+                line.Append($"Message ID: {MessageID}, ");
+                line.Append($"StatusCode: {StatusCode}, ");
+                line.Append($"Payload length: {PayloadLength}");
+                DebugHelpers.DebugHelpers.LogMessage(line.ToString());
                 if (PayloadLength > 0)
                 {
-                    result.AppendLine($"Payload length: {PayloadLength}");
-                    result.AppendLine("Payload:");
+                    DebugHelpers.DebugHelpers.LogMessage("Payload:");
                     foreach (string s in DebugHelpers.DebugHelpers.PrintableBuffer(Payload))
                     {
-                        result.AppendLine(s);
+                        DebugHelpers.DebugHelpers.LogMessage(s);
                     }
                 }
-                else
-                {
-                    result.AppendLine("Payload is empty.");
-                }
-
-                return (result.ToString());
             }
         }
-
+        
         /// <summary>
         /// Size of an encoded header (in bytes).
         /// </summary>
