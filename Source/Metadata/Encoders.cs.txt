@@ -167,8 +167,13 @@
         /// <param name="offset">Offset into the buffer for the first character.</param>
         public static void EncodeString(string str, byte[] buffer, int offset = 0)
         {
-            Array.Copy(str.ToCharArray(), 0, buffer, offset, str.Length);
-            buffer[offset + str.Length + 1] = 0;
+            char[] data = str.ToCharArray();
+            foreach (char c in data)
+            {
+                buffer[offset] = (byte) c;
+                offset++;
+            }
+            buffer[offset] = 0;
         }
 
         /// <summary>
