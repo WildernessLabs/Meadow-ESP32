@@ -130,7 +130,9 @@ namespace DebugHelpers
         /// <param name="message">Message to be displayed on the console.</param>
         public static void LogMessage(string message)
         {
-            Console.WriteLine($"{DateTime.Now.ToString("HH:mm:ss tt")}: {message}");
+            #if DEBUG
+            Console.WriteLine($"{DateTime.Now.ToString("HH:mm:ss")}: {message}");
+            #endif
         }
 
         /// <summary>
