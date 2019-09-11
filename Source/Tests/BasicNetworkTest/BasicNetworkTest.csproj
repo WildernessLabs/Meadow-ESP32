@@ -22,8 +22,8 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <Optimize>true</Optimize>
-    <OutputPath>/tmp</OutputPath>
     <ErrorReport>prompt</ErrorReport>
+    <OutputPath>/tmp</OutputPath>
     <WarningLevel>4</WarningLevel>
     <ExternalConsole>true</ExternalConsole>
     <PlatformTarget>x86</PlatformTarget>

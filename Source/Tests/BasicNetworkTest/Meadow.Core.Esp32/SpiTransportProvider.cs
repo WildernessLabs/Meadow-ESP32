@@ -278,7 +278,7 @@ namespace Meadow.Core.Esp32
 #if SPI_FULL_LOGGING
                 DebugHelpers.DebugHelpers.LogMessage("Decoded OK.");
 #endif
-                DebugHelpers.DebugHelpers.LogMessage(acknowledgement.ToString());
+                acknowledgement.Value.Log();
                 switch ((MessageTypes) acknowledgement.Value.MessageType)
                 {
                     case MessageTypes.Ack:
@@ -533,7 +533,7 @@ namespace Meadow.Core.Esp32
             if (acknowledgement != null)
             {
                 message = acknowledgement.Value;
-                DebugHelpers.DebugHelpers.LogMessage(message.ToString());
+                message.Log();
             
                 switch ((TransportFunction) message.Function)
                 {
@@ -594,8 +594,8 @@ namespace Meadow.Core.Esp32
         {
 #if SPI_FULL_LOGGING
             DebugHelpers.DebugHelpers.LogMessage("Entering SendMessage");
-            DebugHelpers.DebugHelpers.LogMessage("\n\n**************************************************\nSending message:");
-            DebugHelpers.DebugHelpers.LogMessage(message.ToString());
+            DebugHelpers.DebugHelpers.LogMessage("Sending message:");
+            message.Log();
 #endif
             
             StatusCodes statusCode = StatusCodes.Failure;
