@@ -18,13 +18,13 @@ namespace Meadow.Core.Esp32
 {
     public partial class Messages
     {
-        public struct StartNetwork
+        public struct WiFiCredentials
         {
             public String NetworkName;
             public String Password;
         };
 
-        public const UInt32 START_NETWORK_ENCODED_MESSAGE_SIZE = 8;
+        public const UInt32 WI_FI_CREDENTIALS_ENCODED_MESSAGE_SIZE = 8;
 
         public struct AntennaInfo
         {
