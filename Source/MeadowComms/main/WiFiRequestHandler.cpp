@@ -355,7 +355,7 @@ void WiFiRequestHandler::SendResponse(uint32_t statusCode)
 void WiFiRequestHandler::StartNetwork(Message *message)
 {
     ESP_LOGI(__func__, "Starting network.");
-    if (_wifiResponse != NULL)
+    if (_wifiResponse != nullptr)
     {
         // TODO: Deal with this error.
         vPortFree(_wifiResponse);
@@ -363,22 +363,26 @@ void WiFiRequestHandler::StartNetwork(Message *message)
     _wifiResponse = (Message *) pvPortMalloc(sizeof(Message));
     _wifiResponse->Interface = message->Interface;
     _wifiResponse->MessageID = message->MessageID;
-    _wifiResponse->Payload = NULL;
+    _wifiResponse->Payload = nullptr;
     _wifiResponse->PayloadLength = 0;
     _wifiResponse->StatusCode = 0;
 
     EventBits_t bits = xEventGroupGetBits(_xWiFiEventGroup);
     if (!(bits & WIFI_INITIALISED_BIT))
     {
-        char *ssid = Encoders::ExtractString(message->Payload);
-        if ((ssid == NULL) || (strlen(ssid) > MAXIMUM_SSID_LENGTH))
+        Esp32Messaging::WiFiCredentials *credentials = Encoders::ExtractWiFiCredentials(message->Payload);
+        uint32_t networkNameLength = 0;
+        if ((credentials->NetworkName == nullptr) || (strlen(credentials->NetworkName) > MAXIMUM_SSID_LENGTH))
         {
             SendResponse(StatusCodes::InvalidSSID);
             return;
         }
-
-        char *password = Encoders::ExtractString(message->Payload + strlen(ssid) + 1);
-        if (strlen(password) > MAXIMUM_PASSWORD_LENGTH)
+        else
+        {
+            networkNameLength = strlen(credentials->NetworkName);
+        }
+        uint32_t passwordLength = strlen(credentials->Password);
+        if (strlen(credentials->Password) > MAXIMUM_PASSWORD_LENGTH)
         {
             SendResponse(StatusCodes::InvalidPassword);
             return;
@@ -399,15 +403,15 @@ void WiFiRequestHandler::StartNetwork(Message *message)
         wifi_config.sta.sort_method = DEFAULT_SORT_METHOD;
         wifi_config.sta.threshold.rssi = DEFAULT_RSSI;
         wifi_config.sta.threshold.authmode = DEFAULT_AUTH_MODE;
-        memcpy(wifi_config.sta.ssid, ssid, strlen(ssid));
-        if (strlen(ssid) < MAXIMUM_SSID_LENGTH)
+        memcpy(wifi_config.sta.ssid, credentials->NetworkName, networkNameLength);
+        if (networkNameLength < MAXIMUM_SSID_LENGTH)
         {
-            wifi_config.sta.ssid[strlen(ssid)] = 0;
+            wifi_config.sta.ssid[networkNameLength] = 0;
         }
-        memcpy(wifi_config.sta.password, password, strlen(password));
-        if (strlen(ssid) < MAXIMUM_PASSWORD_LENGTH)
+        memcpy(wifi_config.sta.password, credentials->Password, passwordLength);
+        if (passwordLength < MAXIMUM_PASSWORD_LENGTH)
         {
-            wifi_config.sta.password[strlen(password)] = 0;
+            wifi_config.sta.password[passwordLength] = 0;
         }
         ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
         ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));
