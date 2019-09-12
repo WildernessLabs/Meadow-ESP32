@@ -154,6 +154,7 @@ void Encoders::EncodeUInt32(uint32_t value, uint8_t *buffer)
 void Encoders::EncodeString(char *source, uint8_t *buffer)
 {
     memcpy((uint8_t *) source, buffer, strlen(source));
+    buffer[strlen(source)] = 0;
 }
 
 /*
@@ -176,8 +177,8 @@ char *Encoders::ExtractString(uint8_t *buffer)
         length++;
     }
 
-    ptr = (uint8_t *) pvPortMalloc(length);
-    memcpy(buffer, ptr, length);
+    ptr = (uint8_t *) pvPortMalloc(length + 1);
+    strcpy((char *) ptr, (char *) buffer);
     return((char *) ptr);
 }
 
