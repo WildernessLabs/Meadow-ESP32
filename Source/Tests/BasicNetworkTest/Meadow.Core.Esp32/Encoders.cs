@@ -316,7 +316,7 @@ namespace Meadow.Core.Esp32
             return (result, statusCode);
         }
 
-        public static byte[] EncodeStartNetwork(Messages.StartNetwork startNetwork)
+        public static byte[] EncodeWiFiCredentials(Messages.WiFiCredentials wiFiCredentials)
         {
             int offset = 0;
             int length = 0;
@@ -324,29 +324,29 @@ namespace Meadow.Core.Esp32
             //
             //  Calculate the amount of memory needed.
             //
-            length += startNetwork.NetworkName.Length + 1;
-            length += startNetwork.Password.Length + 1;
+            length += wiFiCredentials.NetworkName.Length + 1;
+            length += wiFiCredentials.Password.Length + 1;
 
             //
             //  Now allocate a new buffer and copy the data in to the buffer.
             //
             byte[] buffer = new byte[length];
-            EncodeString(startNetwork.NetworkName, buffer, offset);
-            offset += startNetwork.NetworkName.Length + 1;
-            EncodeString(startNetwork.Password, buffer, offset);
-            offset += startNetwork.Password.Length + 1;
+            EncodeString(wiFiCredentials.NetworkName, buffer, offset);
+            offset += wiFiCredentials.NetworkName.Length + 1;
+            EncodeString(wiFiCredentials.Password, buffer, offset);
+            offset += wiFiCredentials.Password.Length + 1;
             return(buffer);
         }
 
-        public static Messages.StartNetwork ExtractStartNetwork(byte[] buffer, int offset)
+        public static Messages.WiFiCredentials ExtractWiFiCredentials(byte[] buffer, int offset)
         {
-            Messages.StartNetwork startNetwork;
+            Messages.WiFiCredentials wiFiCredentials;
 
-            startNetwork.NetworkName = ExtractString(buffer, offset);
-            offset += startNetwork.NetworkName.Length + 1;
-            startNetwork.Password = ExtractString(buffer, offset);
-            offset += startNetwork.Password.Length + 1;
-            return(startNetwork);
+            wiFiCredentials.NetworkName = ExtractString(buffer, offset);
+            offset += wiFiCredentials.NetworkName.Length + 1;
+            wiFiCredentials.Password = ExtractString(buffer, offset);
+            offset += wiFiCredentials.Password.Length + 1;
+            return(wiFiCredentials);
         }
 
         public static byte[] EncodeAntennaInfo(Messages.AntennaInfo antennaInfo)

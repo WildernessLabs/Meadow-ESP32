@@ -23,13 +23,13 @@
 
 namespace Esp32Messaging
 {
-    struct StartNetwork
+    struct WiFiCredentials
     {
         char * NetworkName;
         char * Password;
     };
 
-    const uint32_t START_NETWORK_ENCODED_MESSAGE_SIZE = 8;
+    const uint32_t WI_FI_CREDENTIALS_ENCODED_MESSAGE_SIZE = 8;
 
     struct AntennaInfo
     {
@@ -67,8 +67,8 @@ public:
     static uint32_t ProgressiveCRC32(uint32_t, uint8_t);
     static uint8_t *EncodeMessage(Message *, bool);
     static Message *ExtractMessage(uint8_t *, uint32_t, bool);
-    static void EncodeStartNetwork(Esp32Messaging::StartNetwork *, uint8_t *, int);
-    static Esp32Messaging::StartNetwork *ExtractStartNetwork(uint8_t *);
+    static void EncodeWiFiCredentials(Esp32Messaging::WiFiCredentials *, uint8_t *, int);
+    static Esp32Messaging::WiFiCredentials *ExtractWiFiCredentials(uint8_t *);
     static void EncodeAntennaInfo(Esp32Messaging::AntennaInfo *, uint8_t *, int);
     static Esp32Messaging::AntennaInfo *ExtractAntennaInfo(uint8_t *);
 

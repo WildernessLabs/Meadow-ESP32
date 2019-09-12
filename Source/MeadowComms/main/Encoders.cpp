@@ -392,23 +392,23 @@ Message *Encoders::ExtractMessage(uint8_t *buffer, uint32_t bufferLength, bool h
 
  *******************************************************************************
 */
-void Encoders::EncodeStartNetwork(Esp32Messaging::StartNetwork *startNetwork, uint8_t *buffer, int offset)
+void Encoders::EncodeWiFiCredentials(Esp32Messaging::WiFiCredentials *wiFiCredentials, uint8_t *buffer, int offset)
 {
-    EncodeString(startNetwork->NetworkName, buffer);
+    EncodeString(wiFiCredentials->NetworkName, buffer);
     buffer += 4;
-    EncodeString(startNetwork->Password, buffer);
+    EncodeString(wiFiCredentials->Password, buffer);
     buffer += 4;
 }
 
-Esp32Messaging::StartNetwork *Encoders::ExtractStartNetwork(uint8_t *buffer)
+Esp32Messaging::WiFiCredentials *Encoders::ExtractWiFiCredentials(uint8_t *buffer)
 {
-    Esp32Messaging::StartNetwork *startNetwork = (Esp32Messaging::StartNetwork *) pvPortMalloc(sizeof(Esp32Messaging::StartNetwork));
+    Esp32Messaging::WiFiCredentials *wiFiCredentials = (Esp32Messaging::WiFiCredentials *) pvPortMalloc(sizeof(Esp32Messaging::WiFiCredentials));
 
-    startNetwork->NetworkName = ExtractString(buffer);
+    wiFiCredentials->NetworkName = ExtractString(buffer);
     buffer += 4;
-    startNetwork->Password = ExtractString(buffer);
+    wiFiCredentials->Password = ExtractString(buffer);
     buffer += 4;
-    return(startNetwork);
+    return(wiFiCredentials);
 }
 
 void Encoders::EncodeAntennaInfo(Esp32Messaging::AntennaInfo *antennaInfo, uint8_t *buffer, int offset)
