@@ -137,8 +137,7 @@ void Encoders::EncodeUInt32(uint32_t value, uint8_t *buffer)
  */
 void Encoders::EncodeString(char *source, uint8_t *buffer)
 {
-    memcpy((uint8_t *) source, buffer, strlen(source));
-    buffer[strlen(source)] = 0;
+    strcpy((char *) buffer, (char *) source);
 }
 
 /*
