@@ -403,12 +403,12 @@ void WiFiRequestHandler::StartNetwork(Message *message)
         wifi_config.sta.sort_method = DEFAULT_SORT_METHOD;
         wifi_config.sta.threshold.rssi = DEFAULT_RSSI;
         wifi_config.sta.threshold.authmode = DEFAULT_AUTH_MODE;
-        memcpy(wifi_config.sta.ssid, credentials->NetworkName, networkNameLength);
+        memcpy((void *) wifi_config.sta.ssid, credentials->NetworkName, networkNameLength);
         if (networkNameLength < MAXIMUM_SSID_LENGTH)
         {
             wifi_config.sta.ssid[networkNameLength] = 0;
         }
-        memcpy(wifi_config.sta.password, credentials->Password, passwordLength);
+        memcpy((void *) wifi_config.sta.password, credentials->Password, passwordLength);
         if (passwordLength < MAXIMUM_PASSWORD_LENGTH)
         {
             wifi_config.sta.password[passwordLength] = 0;
