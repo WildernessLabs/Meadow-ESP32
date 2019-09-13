@@ -1,7 +1,7 @@
 /*
- *      BluetoothRequestHandler.hpp
+ *  BluetoothRequestHandler.hpp
  *
- *      Bluetooth request handler will deal with incoming bluetooth requests.
+ *  Bluetooth request handler will deal with incoming bluetooth requests.
  */
 
 #ifndef _BLUETOOTH_REQUEST_HANDLER_HPP_
@@ -15,42 +15,44 @@
 #include "RequestHandlerBase.hpp"
 #include "Esp32Messaging.hpp"
 
-/*
- *      Bluetooth request handler object.
+/**
+ *  @brief Bluetooth request handler object.
+ *
+ *  This class deals with dispatching Bluetooth requests.
  */
 class BluetoothRequestHandler : public RequestHandlerBase
 {
 private:
-    /*
-     *      Name of the FreeRTOS task for the Bluetooth system.
+    /**
+     *  Name of the FreeRTOS task for the Bluetooth system.
      */
     const char *_taskName = "BluetoothTask";
 
-    /*
-     *      Determine if this class is instantiated already (i.e. this should be a singleton).
+    /**
+     *  Determine if this class is instantiated already (i.e. this should be a singleton).
      */
     static bool _instantiated;
 
-    /*
-     *      This method will dispatch incoming messages to the appropriate request handler.
+    /**
+     *  This method will dispatch incoming messages to the appropriate request handler.
      */
     void DispatchRequest(Message *);
 
     /*
-     *      Private constructor and destructor.
+     *  Private constructor and destructor.
      */
     BluetoothRequestHandler();
     ~BluetoothRequestHandler();
 
 public:
     /*
-     *      Construct a new Bluetooth request handler object with reference to a
-     *      Message Dispatcher object.
+     *  Construct a new Bluetooth request handler object with reference to a
+     *  Message Dispatcher object.
      */
     BluetoothRequestHandler(MessageDispatcher *);
 
     /*
-     *      Provide and additional setup operations not covered by the constructors.
+     *  Provide and additional setup operations not covered by the constructors.
      */
     void Setup();
 };

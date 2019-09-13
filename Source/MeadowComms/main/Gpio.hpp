@@ -1,8 +1,8 @@
 /*
- *      Gpio.hpp
+ *  Gpio.hpp
  *
- *      Constants defining the pins on the ESP32 that are
- *      available to Meadow.
+ *  Constants defining the pins on the ESP32 that are
+ *  available to Meadow.
  */
 
 #ifndef _GPIO_HPP_
@@ -12,77 +12,81 @@
 
 #include "esp_system.h"
 
+/**
+ * The Gpio namespace contains the definitions of the constants that define the GPIO
+ * pins along weith their purpose.
+ */
 namespace Gpio
 {
-    /*
-     *      Blinky pin connected to the LED.
+    /**
+     *  Blinky pin connected to the LED.
      *
-     *      Note that this is also the same pin used to connect to UART0 Rx.
+     *  Note that this is also the same pin used to connect to UART0 Rx.
      */
     const gpio_num_t BLINKY_PIN = GPIO_NUM_22;
 
-    /*
-     *      UART Tx pin for the logging output.
+    /**
+     *  UART Tx pin for the logging output.
      *
-     *      Note that this is also the same pin used to connect to Blinky.
+     *  Note that this is also the same pin used to connect to Blinky.
      */
     const gpio_num_t LOGGING_TX_PIN = GPIO_NUM_3;
 
-    /*
-     *      UART Rx pin for the logging output.
+    /**
+     *  UART Rx pin for the logging output.
      *
-     *      Note that the pin used here is not actually connected to
-     *      anything but the pin is necessary to setup the logging UART.
+     *  Note that the pin used here is not actually connected to
+     *  anything but the pin is necessary to setup the logging UART.
      */
     const gpio_num_t LOGGING_RX_PIN = GPIO_NUM_21;
 
-    /*
-     *      GPIO pin used to indicate to the STM32 that there is data
-     *      waiting for transmission.
+    /**
+     *  GPIO pin used to indicate to the STM32 that there is data
+     *  waiting for transmission.
      */
     const gpio_num_t BOOT_PIN = GPIO_NUM_0;
 
-    /*
-     *      GPIO pin connected to UART0 Rx line.
+    /**
+     *  GPIO pin connected to UART0 Rx line.
      */
     const gpio_num_t UART0_RX_PIN = GPIO_NUM_3;
 
-    /*
-     *      GPIO pin connected to UART0 Tx line.
+    /**
+     *  GPIO pin connected to UART0 Tx line.
      */
     const gpio_num_t UART0_TX_PIN = GPIO_NUM_1;
 
-    /*
-     *      Pin used to indicate that the ESP32 either has data
-     *      for the STM32 or it is ready to receive data from
-     *      the STM32.
+    /**
+     *  Pin used to indicate that the ESP32 either has data
+     *  for the STM32 or it is ready to receive data from
+     *  the STM32.
      */
     const gpio_num_t ESP32_READY_PIN = UART0_TX_PIN;
 
-    /*
-     *      Pin used to by the STM32 to indicate it has data for
-     *      the ESP32 or that it is ready to receive data from
-     *      the ESP32.
+    /**
+     *  Pin used to by the STM32 to indicate it has data for
+     *  the ESP32 or that it is ready to receive data from
+     *  the ESP32.
      */
     const gpio_num_t STM32_READY_PIN = BOOT_PIN;
 
-    /*
-     *      SPI MISO pin.
+    /**
+     *  SPI MISO pin.
      */
     const gpio_num_t MISO_PIN = GPIO_NUM_19;
 
-    /*
-     *      SPI MOSI pin.
+    /**
+     *  SPI MOSI pin.
      */
     const gpio_num_t MOSI_PIN = GPIO_NUM_23;
 
-    /*
-     *      SPI Clock pin.
+    /**
+     *  SPI Clock pin.
      */
     const gpio_num_t CLOCK_PIN = GPIO_NUM_18;
 
-    /*
-     *      SPI Chip Select pin.
+    /**
+     *  SPI Chip Select pin.
      */
     const gpio_num_t CHIP_SELECT_PIN = GPIO_NUM_5;
 }

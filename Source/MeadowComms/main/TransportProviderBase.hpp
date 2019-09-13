@@ -1,8 +1,8 @@
 /*
- *      TransportProviderBase.hpp
+ *  TransportProviderBase.hpp
  *
- *      This class is a base class for the hardware level data transmit / receive
- *      hardware used to connect the ESP32 and the STM32 chips.
+ *  This class is a base class for the hardware level data transmit / receive
+ *  hardware used to connect the ESP32 and the STM32 chips.
  */
 
 #ifndef _TRANSPORT_PROVIDER_BASE_HPP_
@@ -22,6 +22,9 @@
  */
 class MessageDispatcher;
 
+/**
+ *
+ */
 class TransportProviderBase
 {
 public:
@@ -36,19 +39,42 @@ public:
      */
     bool QueueMessageForStm32(Message *);
 
-    /*
+    /**
      *  Bit that will be used to indicate that a the STM32 has just
      *  finished sending a message to the ESP32.
      */
     static const uint32_t STM32_INTERRUPT_NOTIFICATION_BIT = 0x00000001;
 
 private:
-    /*
+    /**
      *  Maximum length of the message queue.
      */
     const uint32_t MAX_QUEUE_LENGTH = 10;
 
 protected:
+    /**
+     *  Message dispatcher object used to send messages to the
+     *  various interfaces on the ESP32.
+     */
+    MessageDispatcher *_messageDispatcher = nullptr;
+
+    /**
+     *  Queue handle for the messages to be sent to the STM32.
+     */
+    static QueueHandle_t _outboundMessageQueueHandle;
+
+    /**
+     *  Mutex for the outbound message queue.
+     */
+    static SemaphoreHandle_t _outboundMessageQueueMutex;
+
+    /**
+     *  Task handle for the FreeRTOS task that will deal with the
+     *  process of sending and receiving messages between the ESP32
+     *  and the STM32 chips.
+     */
+    static TaskHandle_t _transportProviderTaskHandle;
+
     /*
      *  Default constructor.
      */
@@ -58,29 +84,6 @@ protected:
      *  Default destructor.
      */
     ~TransportProviderBase();
-
-    /*
-     *  Message dispatcher object used to send messages to the
-     *  various interfaces on the ESP32.
-     */
-    MessageDispatcher *_messageDispatcher = nullptr;
-
-    /*
-     *  Queue handle for the messages to be sent to the STM32.
-     */
-    static QueueHandle_t _outboundMessageQueueHandle;
-
-    /*
-     *  Mutex for the outbound message queue.
-     */
-    static SemaphoreHandle_t _outboundMessageQueueMutex;
-
-    /*
-     *  Task handle for the FreeRTOS task that will deal with the
-     *  process of sending and receiving messages between the ESP32
-     *  and the STM32 chips.
-     */
-    static TaskHandle_t _transportProviderTaskHandle;
 
     /*
      *  Get the number of messages in the outbound message queue.

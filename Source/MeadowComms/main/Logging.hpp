@@ -1,8 +1,8 @@
 /*
- *      Logging.hpp
+ *  Logging.hpp
  *
- *      The Logging class provides the functionality necessary to
- *      setup and run the logging system.
+ *  The Logging class provides the functionality necessary to
+ *  setup and run the logging system.
  */
 
 #ifndef MAIN_LOGGING_HPP_
@@ -21,52 +21,51 @@
 #include "Esp32Messaging.hpp"
 
 /*
- *      The Logging class provides the functionality necessary to
- *      setup and run the logging system.
+ *  @brief The Logging class provides the functionality necessary to setup and run the logging system.
  */
 class Logging
 {
 private:
-    /*
-     *      UART Port number for the logging output.
+    /**
+     *  UART Port number for the logging output.
      */
     static const uart_port_t LOGGING_UART_PORT_NUMBER = UART_NUM_0;
 
-    /*
-     *      Number of bytes in the Rx buffer.
+    /**
+     *  Number of bytes in the Rx buffer.
      */
     static const int RX_BUFFER_SIZE = 1024;
-    /*
-     *      Number of bytes in the Rx buffer.
+
+    /**
+     *  Number of bytes in the Rx buffer.
      */
     static const int TX_BUFFER_SIZE = 1024;
 
-
 public:
     /*
-     *      Default constructor for the logging system.
+     *  Default constructor for the logging system.
      */
     Logging();
 
     /*
-     *      Default destructor for the logging system.
+     *  Default destructor for the logging system.
      */
     ~Logging();
 
     static void Setup();
 
     /*
-     *      Process the request to output an informational message to the logging system.
+     *  Process the request to output an informational message to the logging system.
      */
     static void Information(char *, char *, ...);
 
     /*
-     *      Process the request to output an error message to the logging system
+     *  Process the request to output an error message to the logging system
      */
     static void Error();
 
     /*
-     *      Decode the message structure and output the components.
+     *  Decode the message structure and output the components.
      */
     static void DumpMessage(const char *, const Message *);
 };

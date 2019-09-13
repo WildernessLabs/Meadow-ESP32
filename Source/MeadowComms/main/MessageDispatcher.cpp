@@ -1,8 +1,8 @@
 /*
- *      MessageDispatcher.cpp
+ *  MessageDispatcher.cpp
  *
- *      Implement the methods that will allow the transmission and reception
- *      of messages between the ESP32 and the STM32.
+ *  Implement the methods that will allow the transmission and reception
+ *  of messages between the ESP32 and the STM32.
  */
 
 #include "MessageDispatcher.hpp"
@@ -10,23 +10,23 @@
 /*
  * ---------------------------------------------------------------------------
  *
- *                         Constructors and destructor
+ *                     Constructors and destructor
  *
  * ---------------------------------------------------------------------------
  */
 
-/*
- *      Default constructor.
+/**
+ *  Default constructor.
  */
 MessageDispatcher::MessageDispatcher()
 {
 }
 
-/*
- *      Create a new instance of the message dispatcher with an associated transport provider.
+/**
+ *  Create a new instance of the message dispatcher with an associated transport provider.
  *
- *      @param transportProvider
- *          Hardware level transport provider that will deliver and receive the messages.
+ *  @param transportProvider
+ *      Hardware level transport provider that will deliver and receive the messages.
  */
 MessageDispatcher::MessageDispatcher(TransportProviderBase *transportProvider) : MessageDispatcher()
 {
@@ -34,8 +34,8 @@ MessageDispatcher::MessageDispatcher(TransportProviderBase *transportProvider) :
     _transportProvider->Setup(this);
 }
 
-/*
- *      Default destructor.
+/**
+ *  Default destructor.
  */
 MessageDispatcher::~MessageDispatcher()
 {
@@ -43,20 +43,20 @@ MessageDispatcher::~MessageDispatcher()
 
 /* ---------------------------------------------------------------------------
  *
- *                                  Methods
+ *                              Methods
  *
  * ---------------------------------------------------------------------------
  */
 
-/*
- *      Add the specified message (request) to the appropriate interface
- *      message queue.
+/**
+ *  Add the specified message (request) to the appropriate interface
+ *  message queue.
  *
- *      @param request
- *          Request from the STM32 to the ESP32.
+ *  @param request
+ *      Request from the STM32 to the ESP32.
  *
- *      @return
- *          True if the request could be queue, false otherwise.
+ *  @return
+ *      True if the request could be queue, false otherwise.
  */
 bool MessageDispatcher::QueueMessageForEsp32(Message *request)
 {
@@ -108,15 +108,15 @@ bool MessageDispatcher::QueueMessageForEsp32(Message *request)
     return(result);
 }
 
-/*
- *      Add the response from the system to the hardware transport provider
- *      queue of messages waiting to be sent to the STM32.
+/**
+ *  Add the response from the system to the hardware transport provider
+ *  queue of messages waiting to be sent to the STM32.
  *
- *      @param response
- *          Response from the ESP32 to a request from the STM32.
+ *  @param response
+ *      Response from the ESP32 to a request from the STM32.
  *
- *      @return
- *          True if the response was queued correctly, false otherwise.
+ *  @return
+ *      True if the response was queued correctly, false otherwise.
  */
 bool MessageDispatcher::QueueMessageForStm32(Message *response)
 {

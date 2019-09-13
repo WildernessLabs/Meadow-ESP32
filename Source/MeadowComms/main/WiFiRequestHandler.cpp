@@ -1,23 +1,23 @@
 /*
- *      WiFiRequestHandler.cpp
+ *  WiFiRequestHandler.cpp
  *
- *      Implementation of the WiFi functionality.
+ *  Implementation of the WiFi functionality.
  */
 #include "WiFiRequestHandler.hpp"
 #include "Exceptions/MultipleInstancesException.hpp"
 
-/*
- *      Event handler for the WiFi loop.
+/**
+ *  Event handler for the WiFi loop.
  *
- *      This needs to be a C function prototype in order to be
- *      called from FreeRTOS.
+ *  This needs to be a C function prototype in order to be
+ *  called from FreeRTOS.
  *
- *      @param context
- *          This is the context object set up when the event handler was first registered.
- *          In this application the context has been set to the instance of the calling class.
+ *  @param context
+ *      This is the context object set up when the event handler was first registered.
+ *      In this application the context has been set to the instance of the calling class.
  *
- *      @param event
- *          Event information to be processed.
+ *  @param event
+ *      Event information to be processed.
  */
 extern "C" esp_err_t WiFiEventHandler(void *context, system_event_t *event)
 {
@@ -29,22 +29,26 @@ extern "C" esp_err_t WiFiEventHandler(void *context, system_event_t *event)
 /*
  * ----------------------------------------------------------------------------
  *
- *                   Initialise class level static variables.
+ *               Initialise class level static variables.
  *
  * ----------------------------------------------------------------------------
+ */
+
+/**
+ *  Determine if this class is instantiated already (i.e. this should be a singleton).
  */
 bool WiFiRequestHandler::_instantiated = false;
 
 /*
  * ----------------------------------------------------------------------------
  *
- *                      Constructors and destructors.
+ *                  Constructors and destructors.
  *
  * ----------------------------------------------------------------------------
  */
 
-/*
- *      Default constructor for the WiFi class.
+/**
+ *  Default constructor for the WiFi class.
  */
 WiFiRequestHandler::WiFiRequestHandler()
 {
@@ -58,22 +62,22 @@ WiFiRequestHandler::WiFiRequestHandler()
     }
 }
 
-/*
- *      Create a new object and set the message dispatcher accordingly.
+/**
+ *  Create a new object and set the message dispatcher accordingly.
  *
- *      @param messageDispatcher
- *          Message Dispatcher object that can be used to send messages to
- *          the STM32.
+ *  @param messageDispatcher
+ *      Message Dispatcher object that can be used to send messages to
+ *      the STM32.
  */
 WiFiRequestHandler::WiFiRequestHandler(MessageDispatcher *messageDispatcher) : WiFiRequestHandler()
 {
     _messageDispatcher = messageDispatcher;
 }
 
-/*
- *      Destructor for the WiFi class.
+/**
+ *  Destructor for the WiFi class.
  *
- *      Free any resources used by the class.
+ *  Free any resources used by the class.
  */
 WiFiRequestHandler::~WiFiRequestHandler()
 {
@@ -82,16 +86,16 @@ WiFiRequestHandler::~WiFiRequestHandler()
 /*
  * ----------------------------------------------------------------------------
  *
- *                          Getters and setters
+ *                      Getters and setters
  *
  * ----------------------------------------------------------------------------
  */
 
-/*
- *      Get the currently selected antenna.
+/**
+ *  Get the currently selected antenna.
  *
- *      @param request
- *          Original request from the STM32.
+ *  @param request
+ *      Original request from the STM32.
  */
 void WiFiRequestHandler::GetAntenna(Message *request) const
 {
@@ -112,27 +116,27 @@ void WiFiRequestHandler::GetAntenna(Message *request) const
     }
 }
 
-/*
- *      Convert the antenna enum into a GPIO pin number
+/**
+ *  Convert the antenna enum into a GPIO pin number
  *
- *      @param antenna
- *          Enum representing the antenna to be converted.
+ *  @param antenna
+ *      Enum representing the antenna to be converted.
  *
- *      @returns
- *          GPIO pin number connected to the appropriate antenna.
+ *  @returns
+ *      GPIO pin number connected to the appropriate antenna.
  */
 gpio_num_t WiFiRequestHandler::ConvertAntennaToPin(AntennaTypes::AntennaTypes antenna)
 {
     return((antenna == AntennaTypes::OnBoard) ? ON_BOARD_ANTENNA_PIN : EXTERNAL_ANTENNA_PIN);
 }
 
-/*
- *      Switch the current antenna.
+/**
+ *  Switch the current antenna.
  *
- *      @param request
- *          Original request from the STM32.
+ *  @param request
+ *      Original request from the STM32.
  *
- *      TODO: Do we need to turn the WiFi off before switching the antenna?
+ *  TODO: Do we need to turn the WiFi off before switching the antenna?
  */
 void WiFiRequestHandler::SetAntenna(Message *request)
 {
@@ -181,19 +185,19 @@ void WiFiRequestHandler::SetAntenna(Message *request)
 /*
  * ----------------------------------------------------------------------------
  *
- *                                 Methods
+ *                             Methods
  *
  * ----------------------------------------------------------------------------
  */
 
-/*
- *      Setup the WiFi network.
+/**
+ *  Setup the WiFi network.
  */
 void WiFiRequestHandler::Setup()
 {
     RequestHandlerBase::Setup();
     /*
-     *      Configure the antenna, by default, the on board antenna will be used.
+     *  Configure the antenna, by default, the on board antenna will be used.
      */
     //gpio_pad_select_gpio(EXTERNAL_ANTENNA);
     gpio_set_direction(EXTERNAL_ANTENNA_PIN, GPIO_MODE_OUTPUT);
@@ -203,17 +207,17 @@ void WiFiRequestHandler::Setup()
     gpio_set_level(ON_BOARD_ANTENNA_PIN, 1);
     _currentAntenna = AntennaTypes::OnBoard;
     /*
-     *      Now create the objects necessary for the WiFi tasks.
+     *  Now create the objects necessary for the WiFi tasks.
      */
     _xWiFiEventGroup = xEventGroupCreate();
     xTaskCreate(Task, _taskName, 2048 * 2, this, configMAX_PRIORITIES - 1, &_taskHandle);
 }
 
-/*
- *      Dispatch the WiFi request to the appropriate method in the class.
+/**
+ *  Dispatch the WiFi request to the appropriate method in the class.
  *
- *      @param request
- *          Data structure containing the request information from the sender.
+ *  @param request
+ *      Data structure containing the request information from the sender.
  */
 void WiFiRequestHandler::DispatchRequest(Message *request)
 {
@@ -263,13 +267,13 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
 //    }
 }
 
-/*
- *      Event handler for the WiFi system.
+/**
+ *  Event handler for the WiFi system.
  *
- *      @param ctx
- *          Context (sender object) information.
- *      @param event
- *          Information relevant to the event being raised.
+ *  @param ctx
+ *      Context (sender object) information.
+ *  @param event
+ *      Information relevant to the event being raised.
  */
 esp_err_t WiFiRequestHandler::EventHandler(void *ctx, system_event_t *event)
 {
@@ -329,11 +333,11 @@ esp_err_t WiFiRequestHandler::EventHandler(void *ctx, system_event_t *event)
     return ESP_OK;
 }
 
-/*
- *      Send the response and clean up the WiFi response object.
+/**
+ *  Send the response and clean up the WiFi response object.
  *
- *      @param statusCode
- *          Response code to be sent back to the STM32
+ *  @param statusCode
+ *      Response code to be sent back to the STM32
  */
 void WiFiRequestHandler::SendResponse(uint32_t statusCode)
 {
@@ -346,11 +350,11 @@ void WiFiRequestHandler::SendResponse(uint32_t statusCode)
     _wifiResponse = NULL;
 }
 
-/*
- *      Start the wireless hardware.
+/**
+ *  Start the wireless hardware.
  *
- *      @param message
- *          Request sent from the STM32.
+ *  @param message
+ *      Request sent from the STM32.
  */
 void WiFiRequestHandler::StartNetwork(Message *message)
 {
@@ -426,11 +430,11 @@ void WiFiRequestHandler::StartNetwork(Message *message)
     }
 }
 
-/*
- *      Process the scan results.
+/**
+ *  Process the scan results.
  *
- *      @param event
- *          Event information passed to the event loop.
+ *  @param event
+ *      Event information passed to the event loop.
  */
 void WiFiRequestHandler::ProcessAccessPointScanCompletion(system_event_t *event)
 {
@@ -480,14 +484,14 @@ void WiFiRequestHandler::ProcessAccessPointScanCompletion(system_event_t *event)
     SendResponse(StatusCodes::CompletedOK);
 }
 
-/*
- *      Get the full list of available networks.
+/**
+ *  Get the full list of available networks.
  *
- *      @pre
- *          The network must be started before this method is called.
+ *  @pre
+ *      The network must be started before this method is called.
  *
- *      @param message
- *          Request sent from the STM32.
+ *  @param message
+ *      Request sent from the STM32.
  */
 void WiFiRequestHandler::GetAvailableNetworks(Message *request)
 {

@@ -1,8 +1,8 @@
 /*
- *      TransportProviderBase.cpp
+ *  TransportProviderBase.cpp
  *
- *      Base class for any hardware transport provider which facilitates
- *      communication between the ESP32 and STM32 chips.
+ *  Base class for any hardware transport provider which facilitates
+ *  communication between the ESP32 and STM32 chips.
  */
 
 #include "TransportProviderBase.hpp"
@@ -12,7 +12,7 @@
 /*
  * ----------------------------------------------------------------------------
  *
- *                   Initialise class level static variables.
+ *               Initialise class level static variables.
  *
  * ----------------------------------------------------------------------------
  */
@@ -23,13 +23,13 @@ TaskHandle_t TransportProviderBase::_transportProviderTaskHandle = nullptr;
 /*
  * ---------------------------------------------------------------------------
  *
- *                         Constructors and destructor
+ *                     Constructors and destructor
  *
  * ---------------------------------------------------------------------------
  */
 
-/*
- *      Default constructor.
+/**
+ *  Default constructor.
  */
 TransportProviderBase::TransportProviderBase()
 {
@@ -40,8 +40,8 @@ TransportProviderBase::TransportProviderBase()
     }
 }
 
-/*
- *      Default destructor.
+/**
+ *  Default destructor.
  */
 TransportProviderBase::~TransportProviderBase()
 {
@@ -50,13 +50,13 @@ TransportProviderBase::~TransportProviderBase()
 /*
  * ----------------------------------------------------------------------------
  *
- *                                 Methods
+ *                             Methods
  *
  * ----------------------------------------------------------------------------
  */
 
-/*
- *      Setup the hardware transport provider.
+/**
+ *  Setup the hardware transport provider.
  */
 void TransportProviderBase::Setup(MessageDispatcher *messageDispatcher)
 {
@@ -68,13 +68,13 @@ void TransportProviderBase::Setup(MessageDispatcher *messageDispatcher)
     }
 }
 
-/*
- *      Get the number of messages in the outbound message queue.
+/**
+ *  Get the number of messages in the outbound message queue.
  *
- *      @returns
- *          Number of messages in the outbound message queue.  This
- *          method will return -1 if the number of messages cannot be
- *          obtained.
+ *  @returns
+ *      Number of messages in the outbound message queue.  This
+ *      method will return -1 if the number of messages cannot be
+ *      obtained.
  */
 int TransportProviderBase::OutboundMessageQueueLength()
 {
@@ -88,13 +88,13 @@ int TransportProviderBase::OutboundMessageQueueLength()
     return(result);
 }
 
-/*
+/**
  *  Get the next message from the message queue (if there is one available).
  *
  *  @return
- *      Pointer to the message that has been retrieved or nullptr if there
- *      are no messages in the queue or there is a problem getting the next
- *      message.
+ *  Pointer to the message that has been retrieved or nullptr if there
+ *  are no messages in the queue or there is a problem getting the next
+ *  message.
  */
 Message *TransportProviderBase::GetOutboundMessage()
 {
@@ -114,15 +114,15 @@ Message *TransportProviderBase::GetOutboundMessage()
     return(result);
 }
 
-/*
- *      Add the message to the queue of messages waiting to be sent to
- *      the STM32.
+/**
+ *  Add the message to the queue of messages waiting to be sent to
+ *  the STM32.
  *
- *      @param message
- *          Message to be sent to the STM32.
+ *  @param message
+ *      Message to be sent to the STM32.
  *
- *      @return
- *          true if the message was queued, false otherwise.
+ *  @return
+ *      true if the message was queued, false otherwise.
  */
 bool TransportProviderBase::QueueMessageForStm32(Message *message)
 {
