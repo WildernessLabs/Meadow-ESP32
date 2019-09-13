@@ -367,7 +367,17 @@ namespace FileGenerator
                             {
                                 sourceFile.WriteLine($"    Encode{dt.CSharpTypeName}({variableName}->{me.Name}, buffer);");
                             }
-                            sourceFile.WriteLine($"    buffer += {dt.Size};");
+                            if (dt.CTypeName == "string")
+                            {
+                                sourceFile.WriteLine($"    buffer += strlen({variableName}->{me.Name}) + 1;");
+                            }
+                            else
+                            {
+                                sourceFile.WriteLine($"    buffer += {dt.Size};");
+                            }
+                            //
+                            //  TODO: Strings really mess up this calculation.  Maybe change to a calculation method.
+                            //
                             offset += dt.Size;
                         }
                         sourceFile.WriteLine("}");
