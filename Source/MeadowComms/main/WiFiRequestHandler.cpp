@@ -490,7 +490,7 @@ void WiFiRequestHandler::ProcessAccessPointScanCompletion(system_event_t *event)
  *  @pre
  *      The network must be started before this method is called.
  *
- *  @param message
+ *  @param request
  *      Request sent from the STM32.
  */
 void WiFiRequestHandler::GetAvailableNetworks(Message *request)
