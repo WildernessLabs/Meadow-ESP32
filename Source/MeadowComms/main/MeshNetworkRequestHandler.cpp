@@ -1,7 +1,7 @@
 /*
- *      MeshNetworkRequestHandler.cpp
+ *  MeshNetworkRequestHandler.cpp
  *
- *      Provide the implemtation of the Mesh Netowrking functions.
+ *  Provide the implementation of the Mesh Networking functions.
  */
 #include "MeshNetworkRequestHandler.hpp"
 #include "freertos/FreeRTOS.h"
@@ -20,22 +20,26 @@
 /*
  * ----------------------------------------------------------------------------
  *
- *                   Initialise class level static variables.
+ *               Initialise class level static variables.
  *
  * ----------------------------------------------------------------------------
+ */
+
+/**
+ *  Determine if this class is instantiated already (i.e. this should be a singleton).
  */
 bool MeshNetworkRequestHandler::_instantiated = false;
 
 /*
  * ----------------------------------------------------------------------------
  *
- *                      Constructors and destructors.
+ *                  Constructors and destructors.
  *
  * ----------------------------------------------------------------------------
  */
 
-/*
- *      Default constructor for the mesh network.
+/**
+ *  Default constructor for the mesh network.
  */
 MeshNetworkRequestHandler::MeshNetworkRequestHandler()
 {
@@ -49,19 +53,19 @@ MeshNetworkRequestHandler::MeshNetworkRequestHandler()
     }
 }
 
-/*
- *      Create a new Mesh Network handler object.
+/**
+ *  Create a new Mesh Network handler object.
  *
- *      @param messageDispatcher
- *          Message dispatcher that will allow communication with the STM32.
+ *  @param messageDispatcher
+ *      Message dispatcher that will allow communication with the STM32.
  */
 MeshNetworkRequestHandler::MeshNetworkRequestHandler(MessageDispatcher *messageDispatcher) : MeshNetworkRequestHandler()
 {
     _messageDispatcher = messageDispatcher;
 }
 
-/*
- *      Default destructor for the mesh network class.
+/**
+ *  Default destructor for the mesh network class.
  */
 MeshNetworkRequestHandler::~MeshNetworkRequestHandler()
 {
@@ -70,13 +74,13 @@ MeshNetworkRequestHandler::~MeshNetworkRequestHandler()
 /*
  * ----------------------------------------------------------------------------
  *
- *                               Methods
+ *                           Methods
  *
  * ----------------------------------------------------------------------------
  */
 
-/*
- *      Setup the mesh network.
+/**
+ *  Setup the mesh network.
  */
 void MeshNetworkRequestHandler::Setup()
 {
@@ -84,8 +88,8 @@ void MeshNetworkRequestHandler::Setup()
     xTaskCreate(Task, _taskName, 1024 * 2, this, configMAX_PRIORITIES - 1, &_taskHandle);
 }
 
-/*
- *      Dispatch the message
+/**
+ *  Dispatch the message
  */
 void MeshNetworkRequestHandler::DispatchRequest(Message *request)
 {

@@ -1,9 +1,9 @@
 /*
- *      MessageDispatcher.hpp
+ *  MessageDispatcher.hpp
  *
- *      Message dispatcher layer.  This object separates the need for the
- *      ESP32 interface objects to know about the hardware layer used to
- *      send messages between the ESP32 and the STM32.
+ *  Message dispatcher layer.  This object separates the need for the
+ *  ESP32 interface objects to know about the hardware layer used to
+ *  send messages between the ESP32 and the STM32.
  */
 
 #ifndef _MESSAGE_DISPATCHER_HPP_
@@ -18,7 +18,7 @@
 #include "Esp32Messaging.hpp"
 
 /*
- *      Forward declarations required by the compiler.
+ *  Forward declarations required by the compiler.
  */
 class WiFiRequestHandler;
 class MeshNetworkRequestHandler;
@@ -26,63 +26,63 @@ class SystemRequestHandler;
 class BluetoothRequestHandler;
 
 /*
- *      Message dispatcher class.
+ *  @brief Message dispatcher class.
  *
- *      This class acts as a broker between the ESP32 and the STM32
- *      message transmit / receive mechanisms.
+ *  This class acts as a broker between the ESP32 and the STM32
+ *  message transmit / receive mechanisms.
  */
 class MessageDispatcher
 {
 private:
-    /*
-     *      WiFi object that will process WiFi messages.
+    /**
+     *  WiFi object that will process WiFi messages.
      */
     WiFiRequestHandler *_wifiRequestHandler = nullptr;
 
-    /*
-     *      Mesh Network object that will process Mesh Network messages.
+    /**
+     *  Mesh Network object that will process Mesh Network messages.
      */
     MeshNetworkRequestHandler *_meshNetworkRequestHandler = nullptr;
 
-    /*
-     *      System object that will process System messages.
+    /**
+     *  System object that will process System messages.
      */
     SystemRequestHandler *_systemRequestHandler = nullptr;
 
-    /*
-     *      Bluetooth object that will process Bluetooth messages.
+    /**
+     *  Bluetooth object that will process Bluetooth messages.
      */
     BluetoothRequestHandler *_bluetoothRequestHandler = nullptr;
 
-    /*
-     *      Hardware transport provider object that is connected to
-     *      the STM32.
+    /**
+     *  Hardware transport provider object that is connected to
+     *  the STM32.
      */
     TransportProviderBase *_transportProvider = nullptr;
 
     /*
-     *      Constructor for the Message Dispatcher.
+     *  Constructor for the Message Dispatcher.
      */
     MessageDispatcher();
 
     /*
-     *      Destructor for the Message Dispatcher.
+     *  Destructor for the Message Dispatcher.
      */
     ~MessageDispatcher();
 
 public:
     /*
-     *      Constructor for the Message Dispatcher.
+     *  Constructor for the Message Dispatcher.
      */
     MessageDispatcher(TransportProviderBase *);
 
     /*
-     *      Queue a message for the ESP32.
+     *  Queue a message for the ESP32.
      */
     bool QueueMessageForEsp32(Message *);
 
     /*
-     *      Queue a message for the STM32.
+     *  Queue a message for the STM32.
      */
     bool QueueMessageForStm32(Message *);
 };

@@ -1,8 +1,8 @@
 /*
  *  Logging.cpp
  *
- *      The Logging class provides the functionality necessary to
- *      setup and run the logging system.
+ *  The Logging class provides the functionality necessary to
+ *  setup and run the logging system.
  */
 
 #include "Logging.hpp"
@@ -10,42 +10,40 @@
 /*
  * ---------------------------------------------------------------------------
  *
- *                         Constructors and destructor
+ *                     Constructors and destructor
  *
  * ---------------------------------------------------------------------------
  */
 
-/*
- *      Default constructor for the logging system.
+/**
+ *  Default constructor for the logging system.
  */
 Logging::Logging()
 {
-
 }
 
-/*
- *      Default destructor for the logging system.
+/**
+ *  Default destructor for the logging system.
  */
 Logging::~Logging()
 {
-
 }
 
 /*
  * ---------------------------------------------------------------------------
  *
- *                                  Methods
+ *                              Methods
  *
  * ---------------------------------------------------------------------------
  */
 
-/*
- *      Setup the logging system.
+/**
+ *  Setup the logging system.
  *
- *      The ESP32 should be set up to use custom logging (use 'make menuconfig' to do this) with
- *      the Tx pin set to GPIO22 and the Rx pin set to some other value (21 is used at the moment).
- *      This method then sets up the UART (should be UART0) so that the logging system can output
- *      data using this port.
+ *  The ESP32 should be set up to use custom logging (use 'make menuconfig' to do this) with
+ *  the Tx pin set to GPIO22 and the Rx pin set to some other value (21 is used at the moment).
+ *  This method then sets up the UART (should be UART0) so that the logging system can output
+ *  data using this port.
  */
 void Logging::Setup()
 {
@@ -71,31 +69,30 @@ void Logging::Setup()
     ESP_LOGI(__func__, "Logging setup complete.");
 }
 
-/*
- *      Process the request to output an informational message to the logging system.
+/**
+ *  Process the request to output an informational message to the logging system.
  */
 void Logging::Information(char *methodName, char *formatString, ...)
 {
-
 }
 
-/*
- *      Process the request to output an error message to the logging system
+/**
+ *  Process the request to output an error message to the logging system
  */
 void Logging::Error()
 {
 
 }
 
-/*
- *      Decode a message structure and output the contents as an information
- *      message.
+/**
+ *  Decode a message structure and output the contents as an information
+ *  message.
  *
- *      @param functionName
- *          Name of the function calling the logging method.
+ *  @param functionName
+ *      Name of the function calling the logging method.
  *
- *      @param message
- *          Pointer to the message to be decoded.
+ *  @param message
+ *      Pointer to the message to be decoded.
  */
 void Logging::DumpMessage(const char *functionName, const Message *message)
 {

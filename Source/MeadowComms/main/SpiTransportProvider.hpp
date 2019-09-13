@@ -21,21 +21,21 @@
 #include "Esp32Messaging.hpp"
 #include "Gpio.hpp"
 
-/*****************************************************************************
- *
- *  The SpiTransportProvider class provides the mechanism for sending and
+/**
+ *  @brief The SpiTransportProvider class provides the mechanism for sending and
  *  receiving messages between the ESP32 and the STM32.
  *
- *****************************************************************************/
+ *  Detailed description goes here.
+ */
 class SpiTransportProvider : public TransportProviderBase
 {
 private:
-    /*
+    /**
      *  Maximum number of retries before the system gives up.
      */
     const int MAXIMUM_RETRY_COUNT = 3;
 
-    /*
+    /**
      *  Possible states for the SPI transport layer.
      */
     enum SpiStates { Invalid,
@@ -46,7 +46,7 @@ private:
                      WantToSendTransportMessage,        SendingTransportResponse
                    };
 
-    /*
+    /**
      *  Pointer to the (only) instance of the SpiTransportProvider class.
      *
      *  This object is needed to allow the static callbacks access to the
@@ -54,47 +54,47 @@ private:
      */
     static SpiTransportProvider *_spiInstance;
 
-    /*
+    /**
      *  Current state of the SPI transport layer.
      */
     static SpiStates _currentState;
 
-    /*
+    /**
      *  Buffer to hold a Message header worth of data.
      */
     static uint8_t *_headerReceiveBuffer;
 
-    /*
+    /**
      *  Buffer to hold the data to be sent to the STM32.
      */
     static uint8_t *_headerTransmitBuffer;
 
-    /*
+    /**
      *  Buffer for the transport frame.
      */
     static uint8_t *_transportFrameBuffer;
 
-    /*
+    /**
      *  Size of a header / transport frame.
      */
     static uint32_t _headerFrameSize;
 
-    /*
+    /**
      *  Retry count for sending messages.
      */
     uint32_t _retryCount = 0;
 
-    /*
+    /**
      *  Message coming in from the STM32.
      */
     Message *_incomingMessage = nullptr;
 
-    /*
+    /**
      *  The next message to be sent to the STM32.
      */
     Message *_outboundMessage = nullptr;
 
-    /*
+    /**
      *  SPI slave transaction.
      *
      *  Note that it is assumed that this transaction is setup ready for
@@ -102,12 +102,12 @@ private:
      */
     spi_slave_transaction_t *_spiTransaction = nullptr;
 
-    /*
+    /**
      *  Response code that will be used in any acknowledgement messages.
      */
     StatusCodes::StatusCodes _responseCode;
 
-    /*
+    /**
      *  Packet type that will be used in any acknowledgement messages.
      */
     uint8_t _messageType;

@@ -2,7 +2,7 @@
  *  Bluetooth.cpp
  *
  *  Created on: 24 Jan 2019
- *      Author: mark
+ *  Author: mark
  */
 
 #include "BluetoothRequestHandler.hpp"
@@ -22,22 +22,25 @@
 /*
  * ----------------------------------------------------------------------------
  *
- *                   Initialise class level static variables.
+ *               Initialise class level static variables.
  *
  * ----------------------------------------------------------------------------
+ */
+/**
+ *  Determine if this class is instantiated already (i.e. this should be a singleton).
  */
 bool BluetoothRequestHandler::_instantiated = false;
 
 /*
  * ----------------------------------------------------------------------------
  *
- *                      Constructors and destructors.
+ *                  Constructors and destructors.
  *
  * ----------------------------------------------------------------------------
  */
 
-/*
- *      Default constructor for the bluetooth class.
+/**
+ *  Default constructor for the bluetooth class.
  */
 BluetoothRequestHandler::BluetoothRequestHandler()
 {
@@ -51,19 +54,19 @@ BluetoothRequestHandler::BluetoothRequestHandler()
     }
 }
 
-/*
- *      Create a new BluetoothRequestHandler object.
+/**
+ *  Create a new BluetoothRequestHandler object.
  *
- *      @param messageDispatcher
- *          Message Dispatcher that can be used to send messages to the STM32.
+ *  @param messageDispatcher
+ *      Message Dispatcher that can be used to send messages to the STM32.
  */
 BluetoothRequestHandler::BluetoothRequestHandler(MessageDispatcher *messageDispatcher) : BluetoothRequestHandler()
 {
     _messageDispatcher = messageDispatcher;
 }
 
-/*
- *      Default destructor for the bluetooth class.
+/**
+ *  Default destructor for the bluetooth class.
  */
 BluetoothRequestHandler::~BluetoothRequestHandler()
 {
@@ -72,13 +75,13 @@ BluetoothRequestHandler::~BluetoothRequestHandler()
 /*
  * ----------------------------------------------------------------------------
  *
- *                               Methods
+ *                           Methods
  *
  * ----------------------------------------------------------------------------
  */
 
-/*
- *      Setup the bluetooth system.
+/**
+ *  Setup the bluetooth system.
  */
 void BluetoothRequestHandler::Setup()
 {
@@ -86,11 +89,11 @@ void BluetoothRequestHandler::Setup()
     xTaskCreate(Task, _taskName, 1024 * 2, this, configMAX_PRIORITIES - 1, &_taskHandle);
 }
 
-/*
- *      Dispatch bluetooth messages to the appropriate method.
+/**
+ *  Dispatch bluetooth messages to the appropriate method.
  *
- *      @param request
- *          Bluetooth request being made by the STM32.
+ *  @param request
+ *      Bluetooth request being made by the STM32.
  */
 void BluetoothRequestHandler::DispatchRequest(Message *request)
 {

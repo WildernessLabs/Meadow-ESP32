@@ -1,8 +1,8 @@
 /*
- *      WiFi.hpp
+ *  WiFi.hpp
  *
- *      Encapsulate the properties and methods required to provide the
- *      ability to communicate with the WiFi network.
+ *  Encapsulate the properties and methods required to provide the
+ *  ability to communicate with the WiFi network.
  */
 
 #ifndef _WIFI_REQUEST_HANDLER_HPP_
@@ -32,8 +32,8 @@
 #include "Logging.hpp"
 
 /*
- *      Location of the access point information in the buffer returned
- *      following a network scan.
+ *  Location of the access point information in the buffer returned
+ *  following a network scan.
  */
 #define BSSID_OFFSET                        (0)
 #define SSID_OFFSET                         (BSSID_OFFSET + 6)
@@ -53,7 +53,7 @@
 #define ACCESS_POINT_INFORMATION_LENGTH     (POLICY_OFFSET + 1)
 
 /*
- *      Event group bits.
+ *  Event group bits.
  */
 #define WIFI_READY_BIT                  (BIT0)      /* Indicate if the WiFi task can process another request. */
 #define WIFI_CONNECTING_BIT             (BIT1)      /* Indicate if in the process of connecting to a WiFi access point. */
@@ -64,135 +64,135 @@
 //class MessageDispatcher;
 
 /*
- *      WiFi class
+ *  @brief WiFi class
  *
- *      Encapsulate the properties and methods required to provide the
- *      ability to communicate with the WiFi network.
+ *  Encapsulate the properties and methods required to provide the
+ *  ability to communicate with the WiFi network.
  */
 class WiFiRequestHandler : public RequestHandlerBase
 {
 private:
-    /*
-     *      Name of the FreeRTOS task for the WiFi system.
+    /**
+     *  Name of the FreeRTOS task for the WiFi system.
      */
     const char *_taskName = "WiFiTask";
 
-    /*
-     *      Default scan method for WiFi networks.
+    /**
+     *  Default scan method for WiFi networks.
      */
     const wifi_scan_method_t DEFAULT_SCAN_METHOD = WIFI_FAST_SCAN;
 
-    /*
-     *      Default sort method for the WiFi networks when scanned.
+    /**
+     *  Default sort method for the WiFi networks when scanned.
      */
     const wifi_sort_method_t DEFAULT_SORT_METHOD = WIFI_CONNECT_AP_BY_SIGNAL;
 
-    /*
-     *      Default RSSI when scanning for networks.
+    /**
+     *  Default RSSI when scanning for networks.
      */
     const int DEFAULT_RSSI = -127;
 
-    /*
-     *      Default authorisation mode.
+    /**
+     *  Default authorisation mode.
      */
     const wifi_auth_mode_t DEFAULT_AUTH_MODE = WIFI_AUTH_OPEN;
 
-    /*
+    /**
      *  Default number of retires when an error is detected.
      */
     const int DEFAULT_MAXIMUM_RETRY_COUNT = 3;
 
-    /*
-     *      Maximum length of the string containing the SSID name.
+    /**
+     *  Maximum length of the string containing the SSID name.
      */
     const int MAXIMUM_SSID_LENGTH = 32;
 
-    /*
-     *      Maximum length of the password for the access point.
+    /**
+     *  Maximum length of the password for the access point.
      */
     const int MAXIMUM_PASSWORD_LENGTH = 64;
 
-    /*
-     *      GPIO Pin connected to the antenna selection switch
-     *      which will connect the on board antenna to the ESP32.
+    /**
+     *  GPIO Pin connected to the antenna selection switch
+     *  which will connect the on board antenna to the ESP32.
      */
     const gpio_num_t ON_BOARD_ANTENNA_PIN = GPIO_NUM_26;
 
-    /*
-     *      GPIO Pin connected to the antenna selection switch
-     *      which will connect the external antenna to the ESP32.
+    /**
+     *  GPIO Pin connected to the antenna selection switch
+     *  which will connect the external antenna to the ESP32.
      */
     const gpio_num_t EXTERNAL_ANTENNA_PIN = GPIO_NUM_27;
 
-    /*
-     *      Determine if this class is instantiated already (i.e. this should be a singleton).
+    /**
+     *  Determine if this class is instantiated already (i.e. this should be a singleton).
      */
     static bool _instantiated;
 
-    /*
-     *      Event group containing 24-bits used to indicate the state of the WiFi connection.
+    /**
+     *  Event group containing 24-bits used to indicate the state of the WiFi connection.
      */
     EventGroupHandle_t _xWiFiEventGroup = NULL;
 
-    /*
-     *      Current retry count.
+    /**
+     *  Current retry count.
      */
     int _currentRetryCount = 0;
 
-    /*
-     *      Maximum number of retries for a failed operation.
+    /**
+     *  Maximum number of retries for a failed operation.
      *
-     *      This can be overridden using system configuration.
+     *  This can be overridden using system configuration.
      */
     int _maximumRetryCount = DEFAULT_MAXIMUM_RETRY_COUNT;
 
-    /*
-     *      Indicate if the system should automatically reconnect to the WiFi if we
-     *      disconnect for any reason.
+    /**
+     *  Indicate if the system should automatically reconnect to the WiFi if we
+     *  disconnect for any reason.
      */
     bool _automaticReconnect = true;
 
-    /*
-     *      Indicate which antenna is currently selected.
+    /**
+     *  Indicate which antenna is currently selected.
      */
     AntennaTypes::AntennaTypes _currentAntenna = AntennaTypes::OnBoard;
 
-    /*
-     *      Response message for the current request.
+    /**
+     *  Response message for the current request.
      */
     Message *_wifiResponse = NULL;
 
     /*
-     *      Private methods.
+     *  Private methods.
      */
     void SendResponse(uint32_t);
     void ProcessAccessPointScanCompletion(system_event_t *);
 
     /*
-     *      Convert the Antenna enum representation of an antenna
-     *      into a GPIO pin number.
+     *  Convert the Antenna enum representation of an antenna
+     *  into a GPIO pin number.
      */
     gpio_num_t ConvertAntennaToPin(AntennaTypes::AntennaTypes);
 
     /*
-     *      This method will dispatch incoming messages to the appropriate request handler.
+     *  This method will dispatch incoming messages to the appropriate request handler.
      */
     void DispatchRequest(Message *);
 
     /*
-     *      Private constructor and destructor.
+     *  Private constructor and destructor.
      */
     WiFiRequestHandler();
     ~WiFiRequestHandler();
 
 public:
     /*
-     *      Constructor for the WiFi object.
+     *  Constructor for the WiFi object.
      */
     WiFiRequestHandler(MessageDispatcher *);
 
     /*
-     *      Public methods.
+     *  Public methods.
      */
     void Setup();
     esp_err_t EventHandler(void *, system_event_t *);
@@ -201,7 +201,7 @@ public:
     void HttpGet(Message *);
 
     /*
-     *      Getters and setters.
+     *  Getters and setters.
      */
     void GetAntenna(Message *request) const;
     void SetAntenna(Message *);

@@ -1,7 +1,7 @@
 /*
- *      SystemRequestHandler.hpp
+ *  SystemRequestHandler.hpp
  *
- *      System message request handler
+ *  System message request handler
  */
 
 #ifndef _SYSTEM_REQUEST_HANDLER_HPP_
@@ -20,46 +20,46 @@
 
 #include "RequestHandlerBase.hpp"
 
-/*
- *      Object to deal with system requests such as configuration settings etc.
+/**
+ *  @brief Object to deal with system requests such as configuration settings etc.
  */
 class SystemRequestHandler : public RequestHandlerBase
 {
 private:
-    /*
-     *      Name of the FreeRTOS task for the System task.
+    /**
+     *  Name of the FreeRTOS task for the System task.
      */
     const char *_taskName = "SystemTask";
 
-    /*
-     *      Determine if this class is instantiated already (i.e. this should be a singleton).
+    /**
+     *  Determine if this class is instantiated already (i.e. this should be a singleton).
      */
     static bool _instantiated;
 
     /*
-     *      This method will dispatch incoming messages to the appropriate request handler.
+     *  This method will dispatch incoming messages to the appropriate request handler.
      */
     void DispatchRequest(Message *);
 
     /*
-     *      Constructor(s) and destructor.
+     *  Constructor(s) and destructor.
      */
     SystemRequestHandler();
     ~SystemRequestHandler();
 
     /*
-     *      Echo function for testing the communication layers.
+     *  Echo function for testing the communication layers.
      */
     void Echo(Message *);
 
 public:
     /*
-     *
+     *  Public constructor.
      */
     SystemRequestHandler(MessageDispatcher *);
 
     /*
-     *      Public methods.
+     *  Public methods.
      */
     void Setup();
 };

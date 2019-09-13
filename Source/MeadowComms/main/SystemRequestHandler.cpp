@@ -1,7 +1,7 @@
 /*
- *      SystemRequestHandler.cpp
+ *  SystemRequestHandler.cpp
  *
- *      Implementation of the methods to provide the System Request Handler functionality.
+ *  Implementation of the methods to provide the System Request Handler functionality.
  */
 
 #include "freertos/FreeRTOS.h"
@@ -23,22 +23,25 @@
 /*
  * ----------------------------------------------------------------------------
  *
- *                   Initialise class level static variables.
+ *               Initialise class level static variables.
  *
  * ----------------------------------------------------------------------------
+ */
+/**
+ *  Determine if this class is instantiated already (i.e. this should be a singleton).
  */
 bool SystemRequestHandler::_instantiated = false;
 
 /*
  * ----------------------------------------------------------------------------
  *
- *                      Constructors and destructors.
+ *                  Constructors and destructors.
  *
  * ----------------------------------------------------------------------------
  */
 
-/*
- *      Default constructor for the system request handler class.
+/**
+ *  Default constructor for the system request handler class.
  */
 SystemRequestHandler::SystemRequestHandler()
 {
@@ -52,19 +55,19 @@ SystemRequestHandler::SystemRequestHandler()
     }
 }
 
-/*
- *      Initialise a new System Request handler object.
+/**
+ *  Initialise a new System Request handler object.
  *
- *      @param messageDispatcher
- *          Message dispatcher object that will deal with and communication between the ESP32 and the STM32.
+ *  @param messageDispatcher
+ *      Message dispatcher object that will deal with and communication between the ESP32 and the STM32.
  */
 SystemRequestHandler::SystemRequestHandler(MessageDispatcher *messageDispatcher) : SystemRequestHandler()
 {
     _messageDispatcher = messageDispatcher;
 }
 
-/*
- *      Default destructor for the system request handler class.
+/**
+ *  Default destructor for the system request handler class.
  */
 SystemRequestHandler::~SystemRequestHandler()
 {
@@ -73,13 +76,13 @@ SystemRequestHandler::~SystemRequestHandler()
 /*
  * ----------------------------------------------------------------------------
  *
- *                               Methods
+ *                           Methods
  *
  * ----------------------------------------------------------------------------
  */
 
-/*
- *      Setup the system request handler.
+/**
+ *  Setup the system request handler.
  */
 void SystemRequestHandler::Setup()
 {
@@ -87,13 +90,13 @@ void SystemRequestHandler::Setup()
     xTaskCreate(Task, _taskName, 2048 * 2, this, configMAX_PRIORITIES - 1, &_taskHandle);
 }
 
-/*
- *      Implement the echo function.
+/**
+ *  Implement the echo function.
  *
- *      Echo the message on the information console and then send a response back.
+ *  Echo the message on the information console and then send a response back.
  *
- *      @param request
- *          Request from the system.
+ *  @param request
+ *      Request from the system.
  */
 void SystemRequestHandler::Echo(Message *request)
 {
@@ -106,11 +109,11 @@ void SystemRequestHandler::Echo(Message *request)
     _messageDispatcher->QueueMessageForStm32(request);
 }
 
-/*
- *      Dispatch the System request to the appropriate method in the class.
+/**
+ *  Dispatch the System request to the appropriate method in the class.
  *
- *      @param request
- *          Request to be processed.
+ *  @param request
+ *      Request to be processed.
  */
 void SystemRequestHandler::DispatchRequest(Message *request)
 {
