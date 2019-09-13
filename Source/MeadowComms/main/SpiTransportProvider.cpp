@@ -540,7 +540,7 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessTransportMessage()
  *  The STM32 has sent what is assumed to be a message header to the ESP32.
  *  Work out what is the appropriate next action.
  *
- *  @params transaction
+ *  @param transaction
  *      Current SPI transaction used to get data from the STM32.
  *
  *  @returns
@@ -607,7 +607,7 @@ spi_slave_transaction_t *SpiTransportProvider::InboundMessageHeaderReceived(spi_
  *  complete (i.e. no payload) and so can be queued or if we need to request
  *  the full message.
  *
- *  @params transaction
+ *  @param transaction
  *      Current SPI transaction used to get data from the STM32.
  *
  *  @returns
@@ -662,7 +662,7 @@ spi_slave_transaction_t *SpiTransportProvider::InboundMessageHeaderAcknowledged(
  *  the appropriate response (ACK or NAK) and queue the message for processing
  *  if the message is good.
  *
- *  @params transaction
+ *  @param transaction
  *      Current SPI transaction used to get data from the STM32.
  *
  *  @returns
@@ -739,7 +739,7 @@ spi_slave_transaction_t *SpiTransportProvider::InboundMessageBodyReceived(spi_sl
  *  Acknowledgement has been sent so go back to waiting for a new message
  *  header to be sent.
  *
- *  @params transaction
+ *  @param transaction
  *      Current SPI transaction used to get data from the STM32.
  *
  *  @returns
@@ -780,7 +780,7 @@ spi_slave_transaction_t *SpiTransportProvider::InboundMessageBodyAcknowledged(sp
  *  The message header will already have been sent, we need to get ready to
  *  receive and ACK or NAK from the STM32.
  *
- *  @params transaction
+ *  @param transaction
  *      Current SPI transaction used to get data from the STM32.
  *
  *  @returns
@@ -997,14 +997,14 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessSendingTransportResponseSt
 /**
  *  Check to see if the message buffer contains any data.
  *
- *  @Note
- *      This method simply scans a buffer that should contain an encoded message
- *      to see if it contains any non-zero values.  This method is necessary
- *      because of a fault that occasionally occurs where the interrupt that
- *      indicates that the ESP32 has received data fires when it should not as
- *      there is no message.
  *
- *      A message cannot be all zeros as there must be non-zero bytes in the CRC.
+ *  This method simply scans a buffer that should contain an encoded message
+ *  to see if it contains any non-zero values.  This method is necessary
+ *  because of a fault that occasionally occurs where the interrupt that
+ *  indicates that the ESP32 has received data fires when it should not as
+ *  there is no message.
+ *
+ *  A message cannot be all zeros as there must be non-zero bytes in the CRC.
  *
  *  @param buffer
  *      Pointer to a buffer of data.
