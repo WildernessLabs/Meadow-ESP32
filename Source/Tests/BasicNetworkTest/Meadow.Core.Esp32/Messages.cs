@@ -24,14 +24,10 @@ namespace Meadow.Core.Esp32
             public String Password;
         };
 
-        public const UInt32 WI_FI_CREDENTIALS_ENCODED_MESSAGE_SIZE = 8;
-
         public struct AntennaInfo
         {
             public Byte Antenna;
         };
-
-        public const UInt32 ANTENNA_INFO_ENCODED_MESSAGE_SIZE = 1;
 
      }
 }

@@ -105,10 +105,11 @@ void WiFiRequestHandler::GetAntenna(Message *request) const
     request->MessageType = MessageTypes::Response;
     Esp32Messaging::AntennaInfo *antenna = (Esp32Messaging::AntennaInfo *) pvPortMalloc(sizeof(Esp32Messaging::AntennaInfo));
     antenna->Antenna = (uint8_t) _currentAntenna;
-    request->Payload = (uint8_t *) pvPortMalloc(Encoders::EncodedAntennaInfoBufferSize(antenna));
+    int encodedBufferLength = Encoders::EncodedAntennaInfoBufferSize(antenna);
+    request->Payload = (uint8_t *) pvPortMalloc(encodedBufferLength);
     Encoders::EncodeAntennaInfo(antenna, request->Payload);
     vPortFree(antenna);
-    request->PayloadLength = Esp32Messaging::ANTENNA_INFO_ENCODED_MESSAGE_SIZE;
+    request->PayloadLength = encodedBufferLength;
     request->StatusCode = StatusCodes::CompletedOK;
     if (!_messageDispatcher->QueueMessageForStm32(request))
     {
@@ -141,7 +142,7 @@ gpio_num_t WiFiRequestHandler::ConvertAntennaToPin(AntennaTypes::AntennaTypes an
 void WiFiRequestHandler::SetAntenna(Message *request)
 {
     ESP_LOGI(__func__, "Entering method.");
-    if (request->PayloadLength == Esp32Messaging::ANTENNA_INFO_ENCODED_MESSAGE_SIZE)
+    if (request->PayloadLength > 0)
     {
         Esp32Messaging::AntennaInfo *antenna = Encoders::ExtractAntennaInfo(request->Payload);
         if (antenna->Antenna > (uint8_t ) AntennaTypes::Max)

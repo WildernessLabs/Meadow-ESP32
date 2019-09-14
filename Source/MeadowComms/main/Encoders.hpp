@@ -29,14 +29,10 @@ namespace Esp32Messaging
         char * Password;
     };
 
-    const uint32_t WI_FI_CREDENTIALS_ENCODED_MESSAGE_SIZE = 8;
-
     struct AntennaInfo
     {
         uint8_t Antenna;
     };
-
-    const uint32_t ANTENNA_INFO_ENCODED_MESSAGE_SIZE = 1;
 
 }
 
