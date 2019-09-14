@@ -67,9 +67,11 @@ public:
     static uint32_t ProgressiveCRC32(uint32_t, uint8_t);
     static uint8_t *EncodeMessage(Message *, bool);
     static Message *ExtractMessage(uint8_t *, uint32_t, bool);
-    static void EncodeWiFiCredentials(Esp32Messaging::WiFiCredentials *, uint8_t *, int);
+    static void EncodeWiFiCredentials(Esp32Messaging::WiFiCredentials *, uint8_t *);
+    static int EncodedWiFiCredentialsBufferSize(Esp32Messaging::WiFiCredentials *);
     static Esp32Messaging::WiFiCredentials *ExtractWiFiCredentials(uint8_t *);
-    static void EncodeAntennaInfo(Esp32Messaging::AntennaInfo *, uint8_t *, int);
+    static void EncodeAntennaInfo(Esp32Messaging::AntennaInfo *, uint8_t *);
+    static int EncodedAntennaInfoBufferSize(Esp32Messaging::AntennaInfo *);
     static Esp32Messaging::AntennaInfo *ExtractAntennaInfo(uint8_t *);
 
 };

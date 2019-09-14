@@ -14,7 +14,7 @@
 
 #include "Encoders.hpp"
 
-/*
+/**
  *  Calculate the amount of memory that should be allocated for
  *  the receive buffer.
  *
@@ -26,7 +26,7 @@
  *  @param requestedSize
  *      Actual amount of data requested / to be received.
  *
- *  @return
+ *  @returns
  *      Number of bytes that should be allocated.
  */
 uint32_t Encoders::CalculateSpiBufferSize(uint32_t requestedSize)
@@ -60,7 +60,7 @@ uint32_t Encoders::CalculateSpiBufferSize(uint32_t requestedSize)
     return (result);
 }
 
-/*
+/**
  *  Take the first two bytes from the buffer and encode them as a 16 bit integer.
  *
  *  Note that the data should be encoded as LSB first.
@@ -69,7 +69,7 @@ uint32_t Encoders::CalculateSpiBufferSize(uint32_t requestedSize)
  *      Pointer to the buffer holding the data that should be used to created the
  *      16-bit unsigned integer.
  *
- *  @return
+ *  @returns
  *      16-bit unsigned integer value from the first two byte in the buffer.
  */
 uint16_t Encoders::ExtractUInt16(uint8_t *buffer)
@@ -81,7 +81,7 @@ uint16_t Encoders::ExtractUInt16(uint8_t *buffer)
     return (result);
 }
 
-/*
+/**
  *  Encode a 16-bit integer as two bytes in the buffer.
  *
  *  Note that the data will be encoded LSB first.
@@ -99,7 +99,7 @@ void Encoders::EncodeUInt16(uint16_t value, uint8_t *buffer)
     buffer[1] = ((value >> 8) & 0xff);
 }
 
-/*
+/**
  *  Take the first four bytes from the buffer and encode them as a 32 bit integer.
  *
  *  Note that the data should be encoded as LSB first.
@@ -108,7 +108,7 @@ void Encoders::EncodeUInt16(uint16_t value, uint8_t *buffer)
  *      Pointer to the buffer where the next four bytes should be extracted
  *      and a 32-bit unsigned integer created (LSB first).
  *
- *  @return
+ *  @returns
  *      32-bit unsigned integer extracted from the first 4 bytes in the buffer.
  */
 uint32_t Encoders::ExtractUInt32(uint8_t *buffer)
@@ -122,7 +122,7 @@ uint32_t Encoders::ExtractUInt32(uint8_t *buffer)
     return (result);
 }
 
-/*
+/**
  *  Encode a 32-bit integer as four bytes in the buffer.
  *
  *  Note that the data will be encoded LSB first.
@@ -142,7 +142,7 @@ void Encoders::EncodeUInt32(uint32_t value, uint8_t *buffer)
     buffer[3] = ((value >> 24) & 0xff);
 }
 
-/*
+/**
  *  Copy the string into the buffer.
  *
  *  @param source
@@ -156,13 +156,13 @@ void Encoders::EncodeString(char *source, uint8_t *buffer)
     strcpy((char *) buffer, (char *) source);
 }
 
-/*
+/**
  *  Extract a string (terminated by 0) from a block of memory.
  *
  *  @param buffer
  *      Pointer to the block of memory containing the string.
  *
- *  @return
+ *  @returns
  *      Pointer to the extracted string.
  */
 char *Encoders::ExtractString(uint8_t *buffer)
@@ -181,7 +181,7 @@ char *Encoders::ExtractString(uint8_t *buffer)
     return((char *) ptr);
 }
 
-/*
+/**
  *  Calculate the 8-bit CRC value for the specified data buffer.
  *
  *  This algorithm is loosely based upon the Dallas 1-Wire algorithm.
@@ -192,7 +192,7 @@ char *Encoders::ExtractString(uint8_t *buffer)
  *  @param len
  *      Number of bytes in the data buffer.
  *
- *  @return
+ *  @returns
  *      8-bit checksum of the bytes in the buffer.
  */
 uint8_t Encoders::CRC8(const uint8_t *data, uint16_t len)
@@ -216,7 +216,7 @@ uint8_t Encoders::CRC8(const uint8_t *data, uint16_t len)
     return(crc);
 }
 
-/*
+/**
  *  Calculate the 32-bit CRC of the buffer of data.
  *
  *  @param data
@@ -225,7 +225,7 @@ uint8_t Encoders::CRC8(const uint8_t *data, uint16_t len)
  *  @param len
  *      Number of bytes in the data buffer.
  *
- *  @return
+ *  @returns
  *      32-bit checksum of the bytes in the buffer.
  */
 uint32_t Encoders::CRC32(const uint8_t *data, uint16_t len)
@@ -239,7 +239,7 @@ uint32_t Encoders::CRC32(const uint8_t *data, uint16_t len)
     return (crc);
 }
 
-/*
+/**
  *  Calculate the CRC32 value change for the specified byte.
  *
  *  @param currentChecksum
@@ -248,7 +248,7 @@ uint32_t Encoders::CRC32(const uint8_t *data, uint16_t len)
  *  @param byte
  *      Next byte to use in the checksum calculation.
  *
- *  @return
+ *  @returns
  *      Next checksum value.
  */
 uint32_t Encoders::ProgressiveCRC32(uint32_t currentChecksum, uint8_t byte)
@@ -263,7 +263,7 @@ uint32_t Encoders::ProgressiveCRC32(uint32_t currentChecksum, uint8_t byte)
     return (crc);
 }
 
-/*
+/**
  *  Encode a message into a block of memory.
  *
  *  @param message
@@ -321,7 +321,7 @@ uint8_t *Encoders::EncodeMessage(Message *message, bool headerOnly)
     return(buffer);
 }
 
-/*
+/**
  *  Extract a message from a block of memory and create a new Message object.
  *
  *  @param buffer
@@ -334,7 +334,7 @@ uint8_t *Encoders::EncodeMessage(Message *message, bool headerOnly)
  *      Indicate if we should extract the header information only
  *      (i.e. do not copy the payload).
  *
- *  @return
+ *  @returns
  *      New Message object extracted from the buffer.  The Message object
  *     Will be placed on the FreeRTOS heap (use vPortFree to release the
  *     storage).
@@ -391,31 +391,112 @@ Message *Encoders::ExtractMessage(uint8_t *buffer, uint32_t bufferLength, bool h
 
  *******************************************************************************
 */
-void Encoders::EncodeWiFiCredentials(Esp32Messaging::WiFiCredentials *wiFiCredentials, uint8_t *buffer, int offset)
+
+/**
+ *  Convert the WiFiCredentials object into a byte stream that can be sent to the STM32.
+ *  
+ *  The amount of memory required can be obtained by calling the EncodedWiFiCredentialsBufferSize method.
+ *  
+ *  @param wiFiCredentials
+ *      WiFiCredentials object to be encoded.
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory large enough to hold the encoded WiFiCredentials object.
+ */
+void Encoders::EncodeWiFiCredentials(Esp32Messaging::WiFiCredentials *wiFiCredentials, uint8_t *buffer)
 {
     EncodeString(wiFiCredentials->NetworkName, buffer);
-    buffer += 4;
+    buffer += strlen(wiFiCredentials->NetworkName) + 1;
     EncodeString(wiFiCredentials->Password, buffer);
-    buffer += 4;
+    buffer += strlen(wiFiCredentials->Password) + 1;
 }
 
+/**
+ *  Calculate the amount of memory required to hold the given instance of the WiFiCredentials object.
+ *  
+ *  @param wiFiCredentials
+ *      WiFiCredentials object to be encoded.
+ *  
+ *  @returns
+ *      Number of bytes required to hold the encoded WiFiCredentials object.
+ */
+int Encoders::EncodedWiFiCredentialsBufferSize(Esp32Messaging::WiFiCredentials *wiFiCredentials)
+{
+    int result = 0;
+    result += strlen(wiFiCredentials->NetworkName);
+    result += strlen(wiFiCredentials->Password);
+    result += 2;
+    return(result);
+}
+
+/**
+ *  Extract the WiFiCredentials object that is encoded in the given buffer.
+ *  
+ *  Note that the returned pointer points to a block of memory on the heap and
+ *  this should eventually be released calling vPortFree(...).
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded WiFiCredentials object.
+ *  
+ *  @returns
+ *      Pointer to a WiFiCredentials object.
+ */
 Esp32Messaging::WiFiCredentials *Encoders::ExtractWiFiCredentials(uint8_t *buffer)
 {
     Esp32Messaging::WiFiCredentials *wiFiCredentials = (Esp32Messaging::WiFiCredentials *) pvPortMalloc(sizeof(Esp32Messaging::WiFiCredentials));
 
     wiFiCredentials->NetworkName = ExtractString(buffer);
-    buffer += 4;
+    buffer += strlen(wiFiCredentials->NetworkName) + 1;
     wiFiCredentials->Password = ExtractString(buffer);
-    buffer += 4;
+    buffer += strlen(wiFiCredentials->Password) + 1;
     return(wiFiCredentials);
 }
 
-void Encoders::EncodeAntennaInfo(Esp32Messaging::AntennaInfo *antennaInfo, uint8_t *buffer, int offset)
+/**
+ *  Convert the AntennaInfo object into a byte stream that can be sent to the STM32.
+ *  
+ *  The amount of memory required can be obtained by calling the EncodedAntennaInfoBufferSize method.
+ *  
+ *  @param antennaInfo
+ *      AntennaInfo object to be encoded.
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory large enough to hold the encoded AntennaInfo object.
+ */
+void Encoders::EncodeAntennaInfo(Esp32Messaging::AntennaInfo *antennaInfo, uint8_t *buffer)
 {
     *buffer = antennaInfo->Antenna;
     buffer += 1;
 }
 
+/**
+ *  Calculate the amount of memory required to hold the given instance of the AntennaInfo object.
+ *  
+ *  @param antennaInfo
+ *      AntennaInfo object to be encoded.
+ *  
+ *  @returns
+ *      Number of bytes required to hold the encoded AntennaInfo object.
+ */
+int Encoders::EncodedAntennaInfoBufferSize(Esp32Messaging::AntennaInfo *antennaInfo)
+{
+    int result = 0;
+    result += 1;
+    return(result);
+}
+
+/**
+ *  Extract the AntennaInfo object that is encoded in the given buffer.
+ *  
+ *  Note that the returned pointer points to a block of memory on the heap and
+ *  this should eventually be released calling vPortFree(...).
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded AntennaInfo object.
+ *  
+ *  @returns
+ *      Pointer to a AntennaInfo object.
+ */
 Esp32Messaging::AntennaInfo *Encoders::ExtractAntennaInfo(uint8_t *buffer)
 {
     Esp32Messaging::AntennaInfo *antennaInfo = (Esp32Messaging::AntennaInfo *) pvPortMalloc(sizeof(Esp32Messaging::AntennaInfo));
