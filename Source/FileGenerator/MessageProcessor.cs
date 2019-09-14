@@ -266,8 +266,6 @@ namespace FileGenerator
                     }
                     sourceFile.WriteLine("        };");
                     sourceFile.WriteLine();
-                    sourceFile.WriteLine($"        public const UInt32 {ConvertNameToConstantName(m.Name)}_ENCODED_MESSAGE_SIZE = {messageSize};");
-                    sourceFile.WriteLine();
                 }
                 sourceFile.WriteLine("     }");
                 sourceFile.WriteLine("}");
@@ -306,8 +304,6 @@ namespace FileGenerator
                             messageSize += GetDataType(me.DataType).Size;
                         }
                         sourceFile.WriteLine("    };");
-                        sourceFile.WriteLine();
-                        sourceFile.WriteLine($"    const uint32_t {ConvertNameToConstantName(m.Name)}_ENCODED_MESSAGE_SIZE = {messageSize};");
                         sourceFile.WriteLine();
                     }
                 }
