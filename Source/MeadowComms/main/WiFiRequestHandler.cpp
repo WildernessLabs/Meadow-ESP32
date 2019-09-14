@@ -105,8 +105,8 @@ void WiFiRequestHandler::GetAntenna(Message *request) const
     request->MessageType = MessageTypes::Response;
     Esp32Messaging::AntennaInfo *antenna = (Esp32Messaging::AntennaInfo *) pvPortMalloc(sizeof(Esp32Messaging::AntennaInfo));
     antenna->Antenna = (uint8_t) _currentAntenna;
-    request->Payload = (uint8_t *) pvPortMalloc(Esp32Messaging::ANTENNA_INFO_ENCODED_MESSAGE_SIZE);
-    Encoders::EncodeAntennaInfo(antenna, request->Payload, 0);
+    request->Payload = (uint8_t *) pvPortMalloc(Encoders::EncodedAntennaInfoBufferSize(antenna));
+    Encoders::EncodeAntennaInfo(antenna, request->Payload);
     vPortFree(antenna);
     request->PayloadLength = Esp32Messaging::ANTENNA_INFO_ENCODED_MESSAGE_SIZE;
     request->StatusCode = StatusCodes::CompletedOK;

@@ -347,15 +347,26 @@ namespace FileGenerator
                 sourceFile.WriteLine();
                 sourceFile.WriteLine(" *******************************************************************************");
                 sourceFile.WriteLine("*/");
+                sourceFile.WriteLine();
                 foreach (Message m in messages)
                 {
                     if (m.MessageElements != null)
                     {
                         string variableName = m.Name.Substring(0, 1).ToLower() + m.Name.Substring(1);
-                        sourceFile.WriteLine($"void Encoders::Encode{m.Name}(Esp32Messaging::{m.Name} *{variableName}, uint8_t *buffer, int offset)");
-                        FunctionPrototypes.AppendLine($"    static void Encode{m.Name}(Esp32Messaging::{m.Name} *, uint8_t *, int);");
+                        sourceFile.WriteLine("/**");
+                        sourceFile.WriteLine($" *  Convert the {m.Name} object into a byte stream that can be sent to the STM32.");
+                        sourceFile.WriteLine(" *  ");
+                        sourceFile.WriteLine($" *  The amount of memory required can be obtained by calling the Encoded{m.Name}BufferSize method.");
+                        sourceFile.WriteLine(" *  ");
+                        sourceFile.WriteLine($" *  @param {variableName}");
+                        sourceFile.WriteLine($" *      {m.Name} object to be encoded.");
+                        sourceFile.WriteLine(" *  ");
+                        sourceFile.WriteLine($" *  @param buffer");
+                        sourceFile.WriteLine($" *      Pointer to a block of memory large enough to hold the encoded {m.Name} object.");
+                        sourceFile.WriteLine(" */");
+                        sourceFile.WriteLine($"void Encoders::Encode{m.Name}(Esp32Messaging::{m.Name} *{variableName}, uint8_t *buffer)");
+                        FunctionPrototypes.AppendLine($"    static void Encode{m.Name}(Esp32Messaging::{m.Name} *, uint8_t *);");
                         sourceFile.WriteLine("{");
-                        int offset = 0;
                         foreach (MessageElement me in m.MessageElements)
                         {
                             DataType dt = GetDataType(me.DataType);
@@ -367,7 +378,7 @@ namespace FileGenerator
                             {
                                 sourceFile.WriteLine($"    Encode{dt.CSharpTypeName}({variableName}->{me.Name}, buffer);");
                             }
-                            if (dt.CTypeName == "string")
+                            if (dt.CTypeName.ToLower() == "char *")
                             {
                                 sourceFile.WriteLine($"    buffer += strlen({variableName}->{me.Name}) + 1;");
                             }
@@ -375,19 +386,67 @@ namespace FileGenerator
                             {
                                 sourceFile.WriteLine($"    buffer += {dt.Size};");
                             }
-                            //
-                            //  TODO: Strings really mess up this calculation.  Maybe change to a calculation method.
-                            //
-                            offset += dt.Size;
                         }
                         sourceFile.WriteLine("}");
                         sourceFile.WriteLine();
+                        //
+                        //  Now the function that calculates the amount of storage required for an encoded buffer.
+                        //
+                        sourceFile.WriteLine("/**");
+                        sourceFile.WriteLine($" *  Calculate the amount of memory required to hold the given instance of the {m.Name} object.");
+                        sourceFile.WriteLine(" *  ");
+                        sourceFile.WriteLine($" *  @param {variableName}");
+                        sourceFile.WriteLine($" *      {m.Name} object to be encoded.");
+                        sourceFile.WriteLine(" *  ");
+                        sourceFile.WriteLine($" *  @returns");
+                        sourceFile.WriteLine($" *      Number of bytes required to hold the encoded {m.Name} object.");
+                        sourceFile.WriteLine(" */");
+                        sourceFile.WriteLine($"int Encoders::Encoded{m.Name}BufferSize(Esp32Messaging::{m.Name} *{variableName})");
+                        FunctionPrototypes.AppendLine($"    static int Encoded{m.Name}BufferSize(Esp32Messaging::{m.Name} *);");
+                        sourceFile.WriteLine("{");
+                        sourceFile.WriteLine("    int result = 0;");
+                        int staticSpaceRequired = 0;
+                        foreach (MessageElement me in m.MessageElements)
+                        {
+                            DataType dt = GetDataType(me.DataType);
+
+                            if (dt.CTypeName.ToLower() == "char *")
+                            {
+                                sourceFile.WriteLine($"    result += strlen({variableName}->{me.Name});");
+                                //
+                                //  Take into account the terminating null.
+                                //
+                                staticSpaceRequired++;
+                            }
+                            else
+                            {
+                                staticSpaceRequired += dt.Size;
+                            }
+                        }
+                        sourceFile.WriteLine($"    result += {staticSpaceRequired};");
+                        sourceFile.WriteLine("    return(result);");
+                        sourceFile.WriteLine("}");
+                        sourceFile.WriteLine();
+                        //
+                        //  And now the function that extracts an encoded version of the object.
+                        //
+                        sourceFile.WriteLine("/**");
+                        sourceFile.WriteLine($" *  Extract the {m.Name} object that is encoded in the given buffer.");
+                        sourceFile.WriteLine(" *  ");
+                        sourceFile.WriteLine(" *  Note that the returned pointer points to a block of memory on the heap and");
+                        sourceFile.WriteLine(" *  this should eventually be released calling vPortFree(...).");
+                        sourceFile.WriteLine(" *  ");
+                        sourceFile.WriteLine($" *  @param buffer");
+                        sourceFile.WriteLine($" *      Pointer to a block of memory holding the encoded {m.Name} object.");
+                        sourceFile.WriteLine(" *  ");
+                        sourceFile.WriteLine(" *  @returns");
+                        sourceFile.WriteLine($" *      Pointer to a {m.Name} object.");
+                        sourceFile.WriteLine(" */");
                         sourceFile.WriteLine($"Esp32Messaging::{m.Name} *Encoders::Extract{m.Name}(uint8_t *buffer)");
                         FunctionPrototypes.AppendLine($"    static Esp32Messaging::{m.Name} *Extract{m.Name}(uint8_t *);");
                         sourceFile.WriteLine("{");
                         sourceFile.WriteLine($"    Esp32Messaging::{m.Name} *{variableName} = (Esp32Messaging::{m.Name} *) pvPortMalloc(sizeof(Esp32Messaging::{m.Name}));");
                         sourceFile.WriteLine();
-                        offset = 0;
                         foreach (MessageElement me in m.MessageElements)
                         {
                             DataType dt = GetDataType(me.DataType);
@@ -399,8 +458,14 @@ namespace FileGenerator
                             {
                                 sourceFile.WriteLine($"    {variableName}->{me.Name} = Extract{dt.CSharpTypeName}(buffer);");
                             }
-                            sourceFile.WriteLine($"    buffer += {dt.Size};");
-                            offset += dt.Size;
+                            if (dt.CTypeName.ToLower() == "char *")
+                            {
+                                sourceFile.WriteLine($"    buffer += strlen({variableName}->{me.Name}) + 1;");
+                            }
+                            else
+                            {
+                                sourceFile.WriteLine($"    buffer += {dt.Size};");
+                            }
                         }
                         sourceFile.WriteLine($"    return({variableName});");
                         sourceFile.WriteLine("}");
