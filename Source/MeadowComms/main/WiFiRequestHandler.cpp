@@ -351,6 +351,13 @@ void WiFiRequestHandler::SendResponse(uint32_t statusCode)
     _wifiResponse = NULL;
 }
 
+char *CopyString(char *original)
+{
+    char *copy = (char *) pvPortMalloc(strlen(original) + 1);
+    strcpy(copy, original);
+    return(copy);
+}
+
 /**
  *  Start the wireless hardware.
  *
@@ -403,23 +410,29 @@ void WiFiRequestHandler::StartNetwork(Message *message)
         wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
         ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 
-        wifi_config_t wifi_config;
-        wifi_config.sta.scan_method = DEFAULT_SCAN_METHOD;
-        wifi_config.sta.sort_method = DEFAULT_SORT_METHOD;
-        wifi_config.sta.threshold.rssi = DEFAULT_RSSI;
-        wifi_config.sta.threshold.authmode = DEFAULT_AUTH_MODE;
-        memcpy((void *) wifi_config.sta.ssid, credentials->NetworkName, networkNameLength);
+        if (_wifiConfig)
+        {
+            vPortFree(_wifiConfig);
+        }
+        _wifiConfig = (wifi_config_t *) pvPortMalloc(sizeof(wifi_config_t));
+        memset(_wifiConfig, 0, sizeof(wifi_config_t));
+        _wifiConfig->sta.scan_method = DEFAULT_SCAN_METHOD;
+        _wifiConfig->sta.sort_method = DEFAULT_SORT_METHOD;
+        _wifiConfig->sta.threshold.rssi = DEFAULT_RSSI;
+        _wifiConfig->sta.threshold.authmode = DEFAULT_AUTH_MODE;
+
+        memcpy((void *) _wifiConfig->sta.ssid, credentials->NetworkName, networkNameLength);
         if (networkNameLength < MAXIMUM_SSID_LENGTH)
         {
-            wifi_config.sta.ssid[networkNameLength] = 0;
+            _wifiConfig->sta.ssid[networkNameLength] = 0;
         }
-        memcpy((void *) wifi_config.sta.password, credentials->Password, passwordLength);
+        memcpy((void *) _wifiConfig->sta.password, credentials->Password, passwordLength);
         if (passwordLength < MAXIMUM_PASSWORD_LENGTH)
         {
-            wifi_config.sta.password[passwordLength] = 0;
+            _wifiConfig->sta.password[passwordLength] = 0;
         }
         ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
-        ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));
+        ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, _wifiConfig));
         ESP_ERROR_CHECK(esp_wifi_start());
         xEventGroupSetBits(_xWiFiEventGroup, WIFI_INITIALISED_BIT | WIFI_CONNECTING_BIT);
         xEventGroupClearBits(_xWiFiEventGroup, WIFI_READY_BIT);

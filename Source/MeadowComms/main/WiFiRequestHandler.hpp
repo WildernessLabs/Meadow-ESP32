@@ -132,7 +132,13 @@ private:
     /**
      *  Event group containing 24-bits used to indicate the state of the WiFi connection.
      */
-    EventGroupHandle_t _xWiFiEventGroup = NULL;
+    EventGroupHandle_t _xWiFiEventGroup = nullptr;
+
+    /**
+     *  Configuration of the WiFi network.
+     */
+    wifi_config_t *_wifiConfig = nullptr;
+
 
     /**
      *  Current retry count.
@@ -160,7 +166,7 @@ private:
     /**
      *  Response message for the current request.
      */
-    Message *_wifiResponse = NULL;
+    Message *_wifiResponse = nullptr;
 
     /*
      *  Private methods.
