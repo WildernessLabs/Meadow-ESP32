@@ -94,6 +94,9 @@ WiFiRequestHandler::~WiFiRequestHandler()
 /**
  *  Get the currently selected antenna.
  *
+ *  This method will reuse the request object and use this as the message to send the
+ *  result back to the caller.
+ *
  *  @param request
  *      Original request from the STM32.
  */
@@ -134,6 +137,11 @@ gpio_num_t WiFiRequestHandler::ConvertAntennaToPin(AntennaTypes::AntennaTypes an
 /**
  *  Switch the current antenna.
  *
+ *  This method will reuse the original request object to return the result to the caller.
+ *
+ *  The memory holding the original payload will be released and the payload set to nullptr
+ *  with a 0 byte length.
+ *
  *  @param request
  *      Original request from the STM32.
  *
@@ -145,7 +153,7 @@ void WiFiRequestHandler::SetAntenna(Message *request)
     if (request->PayloadLength > 0)
     {
         Esp32Messaging::AntennaInfo *antenna = Encoders::ExtractAntennaInfo(request->Payload);
-        if (antenna->Antenna > (uint8_t ) AntennaTypes::Max)
+        if (antenna->Antenna > (uint8_t) AntennaTypes::Max)
         {
             request->StatusCode = StatusCodes::InvalidAntennaValue;
         }
@@ -259,13 +267,6 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
             }
             break;
     }
-    //
-    //  Memory for the payload is allocated on the heap and it needs to be released.
-    //
-//    if (request->Payload != NULL)
-//    {
-//        vPortFree(request->Payload);
-//    }
 }
 
 /**
@@ -273,6 +274,7 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
  *
  *  @param ctx
  *      Context (sender object) information.
+ *
  *  @param event
  *      Information relevant to the event being raised.
  */
@@ -351,13 +353,6 @@ void WiFiRequestHandler::SendResponse(uint32_t statusCode)
     _wifiResponse = NULL;
 }
 
-char *CopyString(char *original)
-{
-    char *copy = (char *) pvPortMalloc(strlen(original) + 1);
-    strcpy(copy, original);
-    return(copy);
-}
-
 /**
  *  Start the wireless hardware.
  *
@@ -415,6 +410,7 @@ void WiFiRequestHandler::StartNetwork(Message *message)
             vPortFree(_wifiConfig);
         }
         _wifiConfig = (wifi_config_t *) pvPortMalloc(sizeof(wifi_config_t));
+        bzero(_wifiConfig, sizeof(wifi_config_t));
         memset(_wifiConfig, 0, sizeof(wifi_config_t));
         _wifiConfig->sta.scan_method = DEFAULT_SCAN_METHOD;
         _wifiConfig->sta.sort_method = DEFAULT_SORT_METHOD;
