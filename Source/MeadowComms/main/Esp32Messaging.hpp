@@ -1,8 +1,8 @@
 /*
- *      Esp32Messaging.hpp
+ *  Esp32Messaging.hpp
  *
- *      Generic messaging constants, structures and definitions used
- *      in the messaging system.
+ *  Generic messaging constants, structures and definitions used
+ *  in the messaging system.
  */
 
 #ifndef _ESP32_MESSAGING_HPP_
@@ -11,90 +11,95 @@
 #include "freertos/FreeRTOS.h"
 
 /*
- *      Messages between the ESP32 and the STM32 will be encoded and
- *      extracted through the message structure blow.
+ *  Messages between the ESP32 and the STM32 will be encoded and
+ *  extracted through the message structure blow.
  */
 struct Message
 {
-    /*
-     *      Type of message.
+    /**
+     *  Type of message.
      */
     uint8_t MessageType;
 
-    /*
-     *      Interface that this message is destined for.
+    /**
+     *  Interface that this message is destined for.
      */
     uint8_t Interface;
 
-    /*
-     *      Function (on the interface) to be executed.
+    /**
+     *  Function (on the interface) to be executed.
      */
     uint32_t Function;
 
-    /*
-     *      Status code (for returning messages) from the function.
+    /**
+     *  Status code (for returning messages) from the function.
      */
     uint32_t StatusCode;
 
-    /*
-     *      Unique ID of this message.
+    /**
+     *  Unique ID of this message.
      */
     uint32_t MessageID;
 
-    /*
-     *      Pointer to the payload data to be processed (or returned from) the function.
+    /**
+     *  Pointer to the payload data to be processed (or returned from) the function.
      */
     uint8_t *Payload;
 
-    /*
-     *      Number of bytes in the payload.
+    /**
+     *  Number of bytes in the payload.
      */
     uint32_t PayloadLength;
 
-    /*
+    /**
      *  Size of an encoded message header (in bytes).
      */
     static const uint32_t HEADER_SIZE = 23;
 
-    /*
+    /**
      *  Offset of the CRC in an encoded message header.
      */
     static const uint32_t CRC_OFFSET = 18;
 
-    /*
+    /**
      *  Message ID used to indicate an invalid (or unknown) message ID.
      */
     static const uint32_t INVALID_MESSAGE_ID = 0xffffffff;
 
-    /*
+    /**
      *  Constructor for the Message class.
      */
     Message(uint8_t, uint8_t, uint32_t, uint32_t , uint32_t, uint8_t *, uint32_t);
 
-    /*
+    /**
      *  Constructor for the Message class.
      */
     Message(uint8_t, uint8_t, uint32_t, uint32_t);
 
-    /*
+    /**
      *  Default constructor for a Message structure.
      */
     Message();
 
-    /*
-     *      Make a copy of a message.
+    /**
+     *  Make a copy of a message.
      */
     static Message *CreateCopyOnHeap(Message *originalMessage, bool copyPayload);
 
-    /*
-     *      Create a new message on the heap with the specified values.
+    /**
+     *  Create a new message on the heap with the specified values.
      */
     static Message *CreateOnHeap(uint8_t messageType, uint8_t interface, uint32_t function, uint32_t statusCode, uint32_t messageId, uint8_t *payload, uint32_t payloadLength);
 
-    /*
-     *      Create a new message on the heap with the specified values.
+    /**
+     *  Create a new message on the heap with the specified values.
      */
     static Message *CreateOnHeap(uint8_t messageType, uint8_t interface, uint32_t function, uint32_t statusCode);
+
+    /**
+     *  Delete the payload and free up heap storage.
+     */
+    void DeletePayload();
 };
 
 #endif /* _ESP32_MESSAGING_HPP_ */

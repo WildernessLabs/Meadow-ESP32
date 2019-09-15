@@ -1,8 +1,8 @@
 /*
- *      Esp32Messaging.cpp
+ *  Esp32Messaging.cpp
  *
- *      Generic messaging constants, structures and definitions used
- *      in the messaging system.
+ *  Generic messaging constants, structures and definitions used
+ *  in the messaging system.
  */
 #include <string.h>
 
@@ -11,12 +11,12 @@
 /*
  * ---------------------------------------------------------------------------
  *
- *                         Constructors and destructor
+ *                     Constructors and destructor
  *
  * ---------------------------------------------------------------------------
  */
 
-/*
+/**
  *  Default constructor for a Message structure.
  */
 Message::Message()
@@ -30,7 +30,7 @@ Message::Message()
     PayloadLength = 0;
 }
 
-/*
+/**
  *  Constructor for the Message class.
  *
  *  @param messageType
@@ -49,8 +49,8 @@ Message::Message()
  *      Unique ID of thiS message.
  *
  *  @param payload
- *      Data required by the function (or being returned by the function).
- *      Note that the payload should be on the heap.
+ *      Data required by the function (or being returned by the function).  Note
+ *      that the payload should be on the heap.
  *
  *  @param payloadLength
  *      Size (in bytes) of the payload.
@@ -66,7 +66,7 @@ Message::Message(uint8_t messageType, uint8_t interface, uint32_t function, uint
     PayloadLength = payloadLength;
 }
 
-/*
+/**
  *  Constructor for the Message class.
  *
  *  @param messageType
@@ -95,12 +95,12 @@ Message::Message(uint8_t messageType, uint8_t interface, uint32_t function, uint
 /*
  * ---------------------------------------------------------------------------
  *
- *                                 Methods
+ *                             Methods
  *
  * ---------------------------------------------------------------------------
  */
 
-/*
+/**
  *  Create an instance of a message on the heap.
  *
  *  @param messageType
@@ -119,11 +119,14 @@ Message::Message(uint8_t messageType, uint8_t interface, uint32_t function, uint
  *      Unique ID of thiS message.
  *
  *  @param payload
- *      Data required by the function (or being returned by the function).
- *      Note that the payload should be on the heap.
+ *      Data required by the function (or being returned by the function).  Note
+ *      that the payload should be on the heap.
  *
  *  @param payloadLength
  *      Size (in bytes) of the payload.
+ *
+ *  @returns
+ *      Pointer to the newly created message.
  */
 Message *Message::CreateOnHeap(uint8_t messageType, uint8_t interface, uint32_t function, uint32_t statusCode, uint32_t messageId, uint8_t *payload, uint32_t payloadLength)
 {
@@ -141,7 +144,7 @@ Message *Message::CreateOnHeap(uint8_t messageType, uint8_t interface, uint32_t 
     return(result);
 }
 
-/*
+/**
  *  Create an instance of a message on the heap.
  *
  *  @param messageType
@@ -156,24 +159,26 @@ Message *Message::CreateOnHeap(uint8_t messageType, uint8_t interface, uint32_t 
  *  @param statusCode
  *      Status code to be returned by the function.
  *
+ *  @returns
+ *      Pointer to the newly created message.
  */
 Message *Message::CreateOnHeap(uint8_t messageType, uint8_t interface, uint32_t function, uint32_t statusCode)
 {
     return(CreateOnHeap(messageType, interface, function, statusCode, 0, nullptr, 0));
 }
 
-/*
- *      Make a copy of a message (on the heap).
+/**
+ *  Make a copy of a message (on the heap).
  *
- *      @param originalMessage
- *          Original message to copy.
+ *  @param originalMessage
+ *      Original message to copy.
  *
- *      @param copyPayload
- *          Indicate if the payload should be copied as well or if we
- *          should just copy the header information.
+ *  @param copyPayload
+ *      Indicate if the payload should be copied as well or if we
+ *      should just copy the header information.
  *
- *      @return
- *          New copy of the message.
+ *  @returns
+ *      New copy of the message.
  */
 Message *Message::CreateCopyOnHeap(Message *originalMessage, bool copyPayload)
 {
@@ -188,5 +193,20 @@ Message *Message::CreateCopyOnHeap(Message *originalMessage, bool copyPayload)
     }
     Message *newMessage = CreateOnHeap(originalMessage->MessageType, originalMessage->Interface, originalMessage->Function, originalMessage->StatusCode, originalMessage->MessageID, payload, payloadLength);
     return(newMessage);
+}
+
+/**
+ *  Delete the heap storage associated with the payload.
+ *
+ *  On exit, the Payload will be set to a nullptr and the PayloadLength set to 0.
+ */
+void Message::DeletePayload()
+{
+    if (Payload)
+    {
+        vPortFree(Payload);
+    }
+    Payload = nullptr;
+    PayloadLength = 0;
 }
 
