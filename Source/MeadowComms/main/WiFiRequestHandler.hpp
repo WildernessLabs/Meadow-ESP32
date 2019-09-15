@@ -55,11 +55,34 @@
 /*
  *  Event group bits.
  */
-#define WIFI_READY_BIT                  (BIT0)      /* Indicate if the WiFi task can process another request. */
-#define WIFI_CONNECTING_BIT             (BIT1)      /* Indicate if in the process of connecting to a WiFi access point. */
-#define WIFI_CONNECTED_BIT              (BIT2)      /* Indicate if the ESP32 is connected to a WiFi access point.*/
-#define WIFI_RECONNECTING_BIT           (BIT3)      /* Indicate if a reconnection (as opposed to a new connection) is being made. */
-#define WIFI_INITIALISED_BIT            (BIT4)      /* Indicate if the WiFi system has been initialised. */
+/**
+ *  The WIFI_READY_BIT indicates if this current request has completed successfully.  It
+ *  is used to block the Task from making a second request when one is already
+ *  running.
+ *
+ *  This flag is necessary as some tasks are actually multi-stage processes.  For
+ *  instance, Connecting to a network requires a start request which will generate
+ *  two events, network start and got IP.  The request only ends when the IP address
+ *  has been granted.
+ */
+#define WIFI_READY_BIT                  (BIT0)
+/**
+ *  Indicate if the system is in the process of connecting to an access point.
+ */
+#define WIFI_CONNECTING_BIT             (BIT1)
+/**
+ *  When set, this bit indicates that we have an active WiFi connection.
+ */
+#define WIFI_CONNECTED_BIT              (BIT2)
+/**
+ *  When set, this indicates that the system has lost the WiFi connection
+ *  and is actively trying to re-establish the connection.
+ */
+#define WIFI_RECONNECTING_BIT           (BIT3)
+/**
+ *  Indicate if the WiFi system has been initialised OK.
+ */
+#define WIFI_INITIALISED_BIT            (BIT4)
 
 //class MessageDispatcher;
 
@@ -139,6 +162,7 @@ private:
      */
     wifi_config_t *_wifiConfig = nullptr;
 
+    Message *_currentRequest = nullptr;
 
     /**
      *  Current retry count.
@@ -163,16 +187,10 @@ private:
      */
     AntennaTypes::AntennaTypes _currentAntenna = AntennaTypes::OnBoard;
 
-    /**
-     *  Response message for the current request.
-     */
-    Message *_wifiResponse = nullptr;
-
     /*
      *  Private methods.
      */
-    void SendResponse(uint32_t);
-    void ProcessAccessPointScanCompletion(system_event_t *);
+    void SendResponse(Message *, uint32_t);
 
     /*
      *  Convert the Antenna enum representation of an antenna
@@ -186,10 +204,50 @@ private:
     void DispatchRequest(Message *);
 
     /*
-     *  Private constructor and destructor.
+     *  Start the network.
+     */
+    void StartNetwork(Message *);
+
+    /*
+     *  Get a list of available access points.
+     */
+    void GetAvailableNetworks(Message *);
+
+    /*
+     *  Temporary method to perform a simple HTTP get.
+     */
+    void HttpGet(Message *);
+
+    /*
+     *  Getters and setters for the antenna in use.
+     */
+    void GetAntenna(Message *) const;
+    void SetAntenna(Message *);
+
+    /*
+     *  Private constructor for the class.
      */
     WiFiRequestHandler();
+
+    /*
+     *  Private destructor for the class.
+     */
     ~WiFiRequestHandler();
+
+    /*
+     *  Process the WiFi access point scan complete event.
+     */
+    void ScanCompleteEvent(system_event_t *);
+
+    /*
+     *  Process the WiFi connecting and getting an IP address event
+     */
+    void StationGotIpEvent(system_event_t *);
+
+    /*
+     *  Processes the station disconnected event.
+     */
+    void StationDisconnectedEvent(system_event_t *);
 
 public:
     /*
@@ -201,16 +259,13 @@ public:
      *  Public methods.
      */
     void Setup();
-    esp_err_t EventHandler(void *, system_event_t *);
-    void StartNetwork(Message *);
-    void GetAvailableNetworks(Message *);
-    void HttpGet(Message *);
 
     /*
-     *  Getters and setters.
+     *  This is the event handler called by FreeRTOS.  It merely
+     *  passes the event on to an internal private event handler
+     *  within the class.
      */
-    void GetAntenna(Message *request) const;
-    void SetAntenna(Message *);
+    esp_err_t EventHandler(void *, system_event_t *);
 };
 
 #endif /* _WIFI_REQUEST_HANDLER_HPP_ */
