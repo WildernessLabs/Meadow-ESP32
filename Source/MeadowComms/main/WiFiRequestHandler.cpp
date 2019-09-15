@@ -72,7 +72,6 @@ WiFiRequestHandler::WiFiRequestHandler()
 WiFiRequestHandler::WiFiRequestHandler(MessageDispatcher *messageDispatcher) : WiFiRequestHandler()
 {
     _messageDispatcher = messageDispatcher;
-    Setup();
 }
 
 /**
@@ -381,19 +380,6 @@ void WiFiRequestHandler::StartNetwork(Message *request)
  */
 void WiFiRequestHandler::GetAvailableNetworks(Message *request)
 {
-//    if (_wifiResponse != NULL)
-//    {
-//        ESP_LOGI(__func__, "Deleting old response structure");
-//        // TODO: Deal with this error.
-//        vPortFree(_wifiResponse);
-//    }
-//    _wifiResponse = (Message *) pvPortMalloc(sizeof(Message));
-//    _wifiResponse->Interface = request->Interface;
-//    _wifiResponse->MessageID = request->MessageID;
-//    _wifiResponse->Payload = NULL;
-//    _wifiResponse->PayloadLength = 0;
-//    _wifiResponse->StatusCode = 0;
-
     wifi_scan_config_t scanConf =
     {
         .ssid = NULL,
@@ -401,7 +387,7 @@ void WiFiRequestHandler::GetAvailableNetworks(Message *request)
         .channel = 0,
         .show_hidden = true
     };
-
+    _currentRequest = request;
     ESP_ERROR_CHECK(esp_wifi_scan_start(&scanConf, true));
 }
 
@@ -535,8 +521,6 @@ void WiFiRequestHandler::HttpGet(Message *message)
  */
 esp_err_t WiFiRequestHandler::EventHandler(void *ctx, system_event_t *event)
 {
-    EventBits_t bits;
-
     switch (event->event_id)
     {
         case SYSTEM_EVENT_STA_START:
@@ -573,6 +557,7 @@ void WiFiRequestHandler::StationGotIpEvent(system_event_t *eventData)
         _currentRequest->PayloadLength = sizeof(ip4_addr_t);
         _currentRequest->Payload = (uint8_t *) pvPortMalloc(_currentRequest->PayloadLength);
         memcpy(_currentRequest->Payload, &eventData->event_info.got_ip.ip_info.ip, _currentRequest->PayloadLength);
+        _currentRequest->MessageType = MessageTypes::Response;
         _currentRequest->StatusCode = StatusCodes::CompletedOK;
         _messageDispatcher->QueueMessageForStm32(_currentRequest);
         _currentRequest = nullptr;
