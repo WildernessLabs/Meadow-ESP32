@@ -15,7 +15,7 @@ namespace FileGenerator
             new DataType("uint16", 2, "uint16_t", "UInt16"),
             new DataType("int", 4, "int32_t", "Int32"),
             new DataType("byte", 1, "uint8_t", "Byte"),
-            new DataType("pbyte", 4, "uint8_t *", "byte[]"),
+            new DataType("blob", 4, "uint8_t *", "byte[]"),
             new DataType("string", 4, "char *", "String")
         };
 
@@ -102,13 +102,22 @@ namespace FileGenerator
         {
             DataType dt = GetDataType(me.DataType);
             file.WriteLine($"{indent}Encode{dt.CSharpTypeName}({variableName}.{me.Name}, buffer, offset);");
-            if (dt.CSharpTypeName.ToLower() == "string")
+            switch (dt.Name.ToLower())
             {
-                file.WriteLine($"{indent}offset += {variableName}.{me.Name}.Length + 1;");
-            }
-            else
-            {
-                file.WriteLine($"{indent}offset += {dt.Size};");
+                case "string":
+                    file.WriteLine($"{indent}Encode{dt.CSharpTypeName}({variableName}.{me.Name}, buffer, offset);");
+                    file.WriteLine($"{indent}offset += {variableName}.{me.Name}.Length + 1;");
+                    break;
+                case "blob":
+                    file.WriteLine($"{indent}EncodeUInt32({variableName}.{me.Name}Length, buffer, offset);");
+                    file.WriteLine($"{indent}offset += 4;");
+                    file.WriteLine($"{indent}Array.Copy({variableName}.{me.Name}, 0, buffer, 0, offset);");
+                    file.WriteLine($"{indent}offset += {variableName}.{me.Name}Length;");
+                    break;
+                default:
+                    file.WriteLine($"{indent}Encode{dt.CSharpTypeName}({variableName}.{me.Name}, buffer, offset);");
+                    file.WriteLine($"{indent}offset += {dt.Size};");
+                    break;
             }
         }
 
@@ -150,13 +159,17 @@ namespace FileGenerator
                         foreach (MessageElement me in m.MessageElements)
                         {
                             DataType dt = GetDataType(me.DataType);
-                            if (dt.CSharpTypeName.ToLower() == "string")
+                            switch (dt.Name.ToLower())
                             {
-                                sourceFile.WriteLine($"            length += {variableName}.{me.Name}.Length + 1;");
-                            }
-                            else
-                            {
-                                nonStringLength += dt.Size;
+                                case "string":
+                                    sourceFile.WriteLine($"            length += {variableName}.{me.Name}.Length + 1;");
+                                    break;
+                                case "blob":
+                                    sourceFile.WriteLine($"            length += {variableName}.{me.Name}Length + 4;");
+                                    break;
+                                default:
+                                    nonStringLength += dt.Size;
+                                    break;
                             }
                         }
                         if (nonStringLength != 0)
@@ -171,21 +184,29 @@ namespace FileGenerator
                         foreach (MessageElement me in m.MessageElements)
                         {
                             DataType dt = GetDataType(me.DataType);
-                            if (dt.CSharpTypeName.ToLower() == "byte")
+                            switch (dt.Name.ToLower())
                             {
-                                sourceFile.WriteLine($"            buffer[offset] = {variableName}.{me.Name};");
-                            }
-                            else
-                            {
-                                sourceFile.WriteLine($"            Encode{dt.CSharpTypeName}({variableName}.{me.Name}, buffer, offset);");
-                            }
-                            if (dt.CSharpTypeName.ToLower() == "string")
-                            {
-                                sourceFile.WriteLine($"            offset += {variableName}.{me.Name}.Length + 1;");
-                            }
-                            else
-                            {
-                                sourceFile.WriteLine($"            offset += {dt.Size};");
+                                case "byte":
+                                    sourceFile.WriteLine($"            buffer[offset] = {variableName}.{me.Name};");
+                                    sourceFile.WriteLine($"            offset += {dt.Size};");
+                                    break;
+                                case "blob":
+                                    sourceFile.WriteLine($"            EncodeUInt32({variableName}.{me.Name}Length, buffer, offset);");
+                                    sourceFile.WriteLine($"            offset += 4;");
+                                    sourceFile.WriteLine($"            if ({variableName}.{me.Name}Length > 0)");
+                                    sourceFile.WriteLine("            {");
+                                    sourceFile.WriteLine($"                Array.Copy(buffer, offset, {variableName}.{me.Name}, buffer, {variableName}.{me.Name}Length);");
+                                    sourceFile.WriteLine($"                offset += {variableName}.{me.Name}Length + 1;");
+                                    sourceFile.WriteLine("            }");
+                                    break;
+                                case "string":
+                                    sourceFile.WriteLine($"            Encode{dt.CSharpTypeName}({variableName}.{me.Name}, buffer, offset);");
+                                    sourceFile.WriteLine($"            offset += {variableName}.{me.Name}.Length + 1;");
+                                    break;
+                                default:
+                                    sourceFile.WriteLine($"            Encode{dt.CSharpTypeName}({variableName}.{me.Name}, buffer, offset);");
+                                    sourceFile.WriteLine($"            offset += {dt.Size};");
+                                    break;
                             }
                         }
                         sourceFile.WriteLine("            return(buffer);");
@@ -198,21 +219,28 @@ namespace FileGenerator
                         foreach (MessageElement me in m.MessageElements)
                         {
                             DataType dt = GetDataType(me.DataType);
-                            if (dt.CSharpTypeName.ToLower() == "byte")
+                            switch (dt.Name.ToLower())
                             {
-                                sourceFile.WriteLine($"            {variableName}.{me.Name} = buffer[offset];");
-                            }
-                            else
-                            {
-                                sourceFile.WriteLine($"            {variableName}.{me.Name} = Extract{dt.CSharpTypeName}(buffer, offset);");
-                            }
-                            if (dt.CSharpTypeName.ToLower() == "string")
-                            {
-                                sourceFile.WriteLine($"            offset += {variableName}.{me.Name}.Length + 1;");
-                            }
-                            else
-                            {
-                                sourceFile.WriteLine($"            offset += {dt.Size};");
+                                case "byte":
+                                    sourceFile.WriteLine($"            {variableName}.{me.Name} = buffer[offset];");
+                                    break;
+                                case "blob":
+                                    sourceFile.WriteLine($"            {variableName}.{me.Name}Length = ExtractUInt32(buffer, offset);");
+                                    sourceFile.WriteLine($"            offset += 4;");
+                                    sourceFile.WriteLine($"            if ({variableName}.{me.Name}Length > 0)");
+                                    sourceFile.WriteLine("            {");
+                                    sourceFile.WriteLine($"                {variableName}.{me.Name} = new byte[{variableName}.{me.Name}Length];");
+                                    sourceFile.WriteLine($"                Array.Copy(buffer, offset, {variableName}.{me.Name}, 0, {variableName}.{me.Name}Length);");
+                                    sourceFile.WriteLine($"                offset += {variableName}.{me.Name}Length;");
+                                    sourceFile.WriteLine("            }");
+                                    break;
+                                case "string":
+                                    sourceFile.WriteLine($"            offset += {variableName}.{me.Name}.Length + 1;");
+                                    break;
+                                default:
+                                    sourceFile.WriteLine($"            {variableName}.{me.Name} = Extract{dt.CSharpTypeName}(buffer, offset);");
+                                    sourceFile.WriteLine($"            offset += {dt.Size};");
+                                    break;
                             }
                         }
                         sourceFile.WriteLine($"            return({variableName});");
@@ -252,7 +280,6 @@ namespace FileGenerator
                 sourceFile.WriteLine("    {");
                 foreach (Message m in messages)
                 {
-                    int messageSize = 0;
                     if (m.MessageElements != null)
                     {
                         string variableName = m.Name.Substring(0, 1).ToLower() + m.Name.Substring(1);
@@ -261,8 +288,16 @@ namespace FileGenerator
                         foreach (MessageElement me in m.MessageElements)
                         {
                             DataType dt = GetDataType(me.DataType);
-                            sourceFile.WriteLine($"            public {dt.CSharpTypeName} {me.Name};");
-                            messageSize += GetDataType(me.DataType).Size;
+                            switch (dt.Name.ToLower())
+                            {
+                                case "blob":
+                                    sourceFile.WriteLine($"            public UInt32 {me.Name}Length;");
+                                    sourceFile.WriteLine($"            public {dt.CSharpTypeName} {me.Name};");
+                                    break;
+                                default:
+                                    sourceFile.WriteLine($"            public {dt.CSharpTypeName} {me.Name};");
+                                    break;
+                            }
                         }
                     }
                     sourceFile.WriteLine("        };");
@@ -297,12 +332,19 @@ namespace FileGenerator
                         string variableName = m.Name.Substring(0, 1).ToLower() + m.Name.Substring(1);
                         sourceFile.WriteLine($"    struct {m.Name}");
                         sourceFile.WriteLine("    {");
-                        int messageSize = 0;
                         foreach (MessageElement me in m.MessageElements)
                         {
                             DataType dt = GetDataType(me.DataType);
-                            sourceFile.WriteLine($"        {dt.CTypeName} {me.Name};");
-                            messageSize += GetDataType(me.DataType).Size;
+                            switch (dt.Name.ToLower())
+                            {
+                                case "blob":
+                                    sourceFile.WriteLine($"        uint32_t {me.Name}Length;");
+                                    sourceFile.WriteLine($"        uint8_t *{me.Name};");
+                                    break;
+                                default:
+                                    sourceFile.WriteLine($"        {dt.CTypeName} {me.Name};");
+                                    break;
+                            }
                         }
                         sourceFile.WriteLine("    };");
                         sourceFile.WriteLine();
@@ -367,21 +409,29 @@ namespace FileGenerator
                         foreach (MessageElement me in m.MessageElements)
                         {
                             DataType dt = GetDataType(me.DataType);
-                            if (dt.CTypeName.ToLower() == ("uint8_t"))
+                            switch (dt.Name.ToLower())
                             {
-                                sourceFile.WriteLine($"    *buffer = {variableName}->{me.Name};");
-                            }
-                            else
-                            {
-                                sourceFile.WriteLine($"    Encode{dt.CSharpTypeName}({variableName}->{me.Name}, buffer);");
-                            }
-                            if (dt.CTypeName.ToLower() == "char *")
-                            {
-                                sourceFile.WriteLine($"    buffer += strlen({variableName}->{me.Name}) + 1;");
-                            }
-                            else
-                            {
-                                sourceFile.WriteLine($"    buffer += {dt.Size};");
+                                case "byte":
+                                    sourceFile.WriteLine($"    *buffer = {variableName}->{me.Name};");
+                                    sourceFile.WriteLine($"    buffer += {dt.Size};");
+                                    break;
+                                case "string":
+                                    sourceFile.WriteLine($"    Encode{dt.CSharpTypeName}({variableName}->{me.Name}, buffer);");
+                                    sourceFile.WriteLine($"    buffer += strlen({variableName}->{me.Name}) + 1;");
+                                    break;
+                                case "blob":
+                                    sourceFile.WriteLine($"    EncodeUInt32({variableName}->{me.Name}Length, buffer);");
+                                    sourceFile.WriteLine($"    buffer += 4;");
+                                    sourceFile.WriteLine($"    if ({variableName}->{me.Name}Length > 0)");
+                                    sourceFile.WriteLine("    {");
+                                    sourceFile.WriteLine($"        memcpy((void *) buffer, (void *) {variableName}->{me.Name}, {variableName}->{me.Name}Length);");
+                                    sourceFile.WriteLine($"        buffer += {variableName}->{me.Name}Length;");
+                                    sourceFile.WriteLine("    }");
+                                    break;
+                                default:
+                                    sourceFile.WriteLine($"    Encode{dt.CSharpTypeName}({variableName}->{me.Name}, buffer);");
+                                    sourceFile.WriteLine($"    buffer += {dt.Size};");
+                                    break;
                             }
                         }
                         sourceFile.WriteLine("}");
@@ -407,17 +457,19 @@ namespace FileGenerator
                         {
                             DataType dt = GetDataType(me.DataType);
 
-                            if (dt.CTypeName.ToLower() == "char *")
+                            switch (dt.Name.ToLower())
                             {
-                                sourceFile.WriteLine($"    result += strlen({variableName}->{me.Name});");
-                                //
-                                //  Take into account the terminating null.
-                                //
-                                staticSpaceRequired++;
-                            }
-                            else
-                            {
-                                staticSpaceRequired += dt.Size;
+                                case "string":
+                                    sourceFile.WriteLine($"    result += strlen({variableName}->{me.Name});");
+                                    staticSpaceRequired++;          // Terminating null.
+                                    break;
+                                case "blob":
+                                    sourceFile.WriteLine($"    result += {variableName}->{me.Name}Length;");
+                                    staticSpaceRequired += 4;       // UInt32 object containing the length.
+                                    break;
+                                default:
+                                    staticSpaceRequired += dt.Size;
+                                    break;
                             }
                         }
                         sourceFile.WriteLine($"    result += {staticSpaceRequired};");
@@ -447,21 +499,34 @@ namespace FileGenerator
                         foreach (MessageElement me in m.MessageElements)
                         {
                             DataType dt = GetDataType(me.DataType);
-                            if (dt.CTypeName.ToLower() == ("uint8_t"))
+                            switch (dt.Name.ToLower())
                             {
-                                sourceFile.WriteLine($"    {variableName}->{me.Name} = *buffer;");
-                            }
-                            else
-                            {
-                                sourceFile.WriteLine($"    {variableName}->{me.Name} = Extract{dt.CSharpTypeName}(buffer);");
-                            }
-                            if (dt.CTypeName.ToLower() == "char *")
-                            {
-                                sourceFile.WriteLine($"    buffer += strlen({variableName}->{me.Name}) + 1;");
-                            }
-                            else
-                            {
-                                sourceFile.WriteLine($"    buffer += {dt.Size};");
+                                case "byte":
+                                    sourceFile.WriteLine($"    {variableName}->{me.Name} = *buffer;");
+                                    sourceFile.WriteLine($"    buffer += {dt.Size};");
+                                    break;
+                                case "string":
+                                    sourceFile.WriteLine($"    {variableName}->{me.Name} = Extract{dt.CSharpTypeName}(buffer);");
+                                    sourceFile.WriteLine($"    buffer += strlen({variableName}->{me.Name}) + 1;");
+                                    break;
+                                case "blob":
+                                    sourceFile.WriteLine($"    {variableName}->{me.Name}Length = ExtractUInt32(buffer);");
+                                    sourceFile.WriteLine($"    buffer += 4;");
+                                    sourceFile.WriteLine($"    if ({variableName}->{me.Name}Length > 0)");
+                                    sourceFile.WriteLine("    {");
+                                    sourceFile.WriteLine($"        {variableName}->{me.Name} = (uint8_t *) pvPortMalloc({variableName}->{me.Name}Length);");
+                                    sourceFile.WriteLine($"        memcpy({variableName}->{me.Name}, buffer, {variableName}->{me.Name}Length);");
+                                    sourceFile.WriteLine($"        buffer += {variableName}->{me.Name}Length;");
+                                    sourceFile.WriteLine("    }");
+                                    sourceFile.WriteLine("    else");
+                                    sourceFile.WriteLine("    {");
+                                    sourceFile.WriteLine($"        {variableName}->{me.Name} = nullptr;");
+                                    sourceFile.WriteLine("    }");
+                                    break;
+                                default:
+                                    sourceFile.WriteLine($"    {variableName}->{me.Name} = Extract{dt.CSharpTypeName}(buffer);");
+                                    sourceFile.WriteLine($"    buffer += {dt.Size};");
+                                    break;
                             }
                         }
                         sourceFile.WriteLine($"    return({variableName});");
