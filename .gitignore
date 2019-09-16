@@ -70,3 +70,4 @@ packages
 .idea/
 .settings/
 Source/Tests/BasicNetworkTest/Secrets.cs
+Source/MeadowComms/main/Secrets.hpp
