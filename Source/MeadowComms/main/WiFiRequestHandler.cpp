@@ -465,34 +465,42 @@ void WiFiRequestHandler::HttpGet(Message *message)
         close(socketHandle);
         return;
     }
-    bool firstBlock = true;
-    int blockSize = 300;
+
+    int blockSize = 1024;
+    uint32_t sequenceNumber = 0;
     char *receiveBuffer = (char *) pvPortMalloc(blockSize);
     do
     {
         bzero(receiveBuffer, blockSize);
-        if (firstBlock)
+        r = read(socketHandle, receiveBuffer, blockSize - 1);
+        Message *response = message->CreateCopyOnHeap(false);
+        response->MessageType = MessageTypes::Response;
+
+        Esp32Messaging::HttpGetResponse *responseData = (Esp32Messaging::HttpGetResponse *) pvPortMalloc(sizeof(Esp32Messaging::HttpGetResponse));
+        responseData->SequenceNumber = sequenceNumber;
+        responseData->ResponseLength = r;
+        if (r > 0)
         {
-            r = read(socketHandle, receiveBuffer, blockSize - 1);
-            for (int i = 0; i < r; i++)
-            {
-                putchar(receiveBuffer[i]);
-            }
-            firstBlock = false;
+            responseData->Response = (uint8_t *) pvPortMalloc(r);
+            memcpy(responseData->Response, receiveBuffer, r);
         }
         else
         {
-            r = 0;
+            responseData->Response = nullptr;
         }
+        response->PayloadLength = Encoders::EncodedHttpGetResponseBufferSize(responseData);
+        response->Payload = (uint8_t *) pvPortMalloc(response->PayloadLength);
+        Encoders::EncodeHttpGetResponse(responseData, response->Payload);
+        sequenceNumber++;
+        _messageDispatcher->QueueMessageForStm32(response);
     }
     while (r > 0);
-    printf("\n");
+    vPortFree(receiveBuffer);
 
     ESP_LOGI(__func__, "    Finished reading from socket. Last read return: %d errno: %d\r\n", r, errno);
     close(socketHandle);
 
     vPortFree(request);
-//    SendResponse(ERR_COMPLETED_OK);
 }
 
 /*
