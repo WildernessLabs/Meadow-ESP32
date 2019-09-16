@@ -12,6 +12,7 @@ namespace FileGenerator
         DataType[] _dataTypes = 
         {
             new DataType("uint32", 4, "uint32_t", "UInt32"),
+            new DataType("uint16", 2, "uint16_t", "UInt16"),
             new DataType("int", 4, "int32_t", "Int32"),
             new DataType("byte", 1, "uint8_t", "Byte"),
             new DataType("pbyte", 4, "uint8_t *", "byte[]"),

@@ -29,5 +29,17 @@ namespace Meadow.Core.Esp32
             public Byte Antenna;
         };
 
+        public struct HttpGetRequest
+        {
+            public UInt16 PortNumber;
+            public String ServerName;
+            public String Uri;
+        };
+
+        public struct HttpGetResponse
+        {
+            public String Response;
+        };
+
      }
 }

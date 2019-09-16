@@ -259,6 +259,9 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
         case WiFiFunction::GetAccessPoints:
             GetAvailableNetworks(request);
             break;
+        case WiFiFunction::HttpGet:
+            HttpGet(request);
+            break;
         default:
             ESP_LOGI(__func__, "Unknown WiFi message received, function %d", request->Function);
             if (request->Payload != NULL)
@@ -393,108 +396,102 @@ void WiFiRequestHandler::GetAvailableNetworks(Message *request)
 
 void WiFiRequestHandler::HttpGet(Message *message)
 {
-//    const struct addrinfo hints = { .ai_family = AF_INET, .ai_socktype = SOCK_STREAM, };
-//    struct addrinfo *addressInformation;
-//    struct in_addr *address;
-//    int socketHandle, r;
-//    char receiveBuffer[64];
-//
-//    //
-//    //  TODO: Perform some error checking here.
-//    //
-//
-//    char portNumber[6];
-//    utoa(ExtractUInt16(message->payload), portNumber, 10);
-//    //
-//    //  The server name (e.g. google.com) follows the 16-bit port number in the payload.
-//    //
-//    char *serverName = (char *) message->payload + 2;
-//    //
-//    //  The full URI being requested follows the server name (remember there server name
-//    //  is terminated by a 0 byte.
-//    //
-//    char *uri = serverName + strlen(serverName) + 1;
-//    int maximumRequestLength = strlen(serverName) + strlen(uri) + 60;
-//    char *request = (char *) pvPortMalloc(maximumRequestLength);
-//    int actualRequestLength = snprintf(request, maximumRequestLength,  "GET %s HTTP/1.0\r\nHost: %s\r\nUser-Agent: esp-idf/1.0 esp32\r\n\r\n", uri, serverName);
-//    if (actualRequestLength > (maximumRequestLength - 1))
-//    {
-//        ESP_LOGI(__func__, "Actual request length, %d,  would be too long for the allocated buffer %d.", actualRequestLength, actualRequestLength);
-//    }
-//    ESP_LOGI(__func__, "HTTP Get Request");
-//    ESP_LOGI(__func__, "    Host: %s", serverName);
-//    ESP_LOGI(__func__, "    URI: %s", uri);
-//    ESP_LOGI(__func__, "    Request length: %d", strlen(request));
-//    ESP_LOGI(__func__, "    Request: %s", request);
+    struct addrinfo hints;
+    bzero((void *) &hints, sizeof(addrinfo));
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+    struct addrinfo *addressInformation;
+    struct in_addr *address;
+    int socketHandle, r;
 
-//    xEventGroupWaitBits(xWiFiEventGroup, WIFI_READY_BIT | WIFI_CONNECTED_BIT, false, true, portMAX_DELAY);
-//
-//    int errorCode = getaddrinfo(serverName, portNumber, &hints, &addressInformation);
-//
-//    if ((errorCode != 0) || (addressInformation == NULL))
-//    {
-//        ESP_LOGE(__func__, "    DNS lookup failed err: %d addressInformation: %p", errorCode, addressInformation);
-//        return;
-//    }
-//    //
-//    //  Perform DNS lookup.
-//    //
-//    address = &((struct sockaddr_in *) addressInformation->ai_addr)->sin_addr;
-//    socketHandle = socket(addressInformation->ai_family, addressInformation->ai_socktype, 0);
-//    if (socketHandle < 0)
-//    {
-//        ESP_LOGE(__func__, "    Failed to allocate socket.");
-//        freeaddrinfo(addressInformation);
-//        return;
-//    }
-//    if (connect(socketHandle, addressInformation->ai_addr, addressInformation->ai_addrlen) != 0)
-//    {
-//        ESP_LOGE(__func__, "    Socket connect failed errno: %d", errno);
-//        close(socketHandle);
-//        freeaddrinfo(addressInformation);
-//        return;
-//    }
-//
-//    freeaddrinfo(addressInformation);
-//
-//    if (write(socketHandle, request, strlen(request)) < 0)
-//    {
-//        ESP_LOGE(__func__, "    Socket send failed");
-//        close(socketHandle);
-//        return;
-//    }
-//
-//    struct timeval timeOut;
-//    timeOut.tv_sec = 5;
-//    timeOut.tv_usec = 0;
-//    if (setsockopt(socketHandle, SOL_SOCKET, SO_RCVTIMEO, &timeOut, sizeof(timeOut)) < 0)
-//    {
-//        ESP_LOGE(__func__, "    Failed to set socket receiving timeout");
-//        close(socketHandle);
-//        return;
-//    }
-//
-//    do
-//    {
-//        bzero(receiveBuffer, sizeof(receiveBuffer));
-//        r = read(socketHandle, receiveBuffer, sizeof(receiveBuffer) - 1);
-//        for (int i = 0; i < r; i++)
-//        {
-//            putchar(receiveBuffer[i]);
-//        }
-//    }
-//    while (r > 0);
-//    printf("\n");
-//
-//    ESP_LOGI(__func__, "    Finished reading from socket. Last read return: %d errno: %d\r\n", r, errno);
-//    close(socketHandle);
-//
-//    vPortFree(request);
-//    _wifiResponse = pvPortMalloc(sizeof(struct ApplicationResponse));
-//    _wifiResponse->interface = message->interface;
-//    _wifiResponse->messageID = message->messageID;
-//    _wifiResponse->payload = NULL;
-//    _wifiResponse->payloadLength = 0;
+    Esp32Messaging::HttpGetRequest *httpRequest = Encoders::ExtractHttpGetRequest(message->Payload);
+    char portNumber[6];
+    utoa(httpRequest->PortNumber, portNumber, 10);
+
+    int maximumRequestLength = strlen(httpRequest->Uri) +strlen(httpRequest->ServerName) + 60;
+    char *request = (char *) pvPortMalloc(maximumRequestLength);
+    int actualRequestLength = snprintf(request, maximumRequestLength,  "GET %s HTTP/1.0\r\nHost: %s\r\nUser-Agent: esp-idf/3.3 esp32\r\n\r\n", httpRequest->Uri, httpRequest->ServerName);
+    if (actualRequestLength > (maximumRequestLength - 1))
+    {
+        ESP_LOGI(__func__, "Actual request length, %d,  would be too long for the allocated buffer %d.", actualRequestLength, actualRequestLength);
+    }
+    ESP_LOGI(__func__, "HTTP Get Request");
+    ESP_LOGI(__func__, "    Host: %s", httpRequest->ServerName);
+    ESP_LOGI(__func__, "    URI: %s", httpRequest->Uri);
+    ESP_LOGI(__func__, "    Request length: %d", strlen(request));
+    ESP_LOGI(__func__, "    Request: %s", request);
+
+    int errorCode = getaddrinfo(httpRequest->ServerName, portNumber, &hints, &addressInformation);
+
+    if ((errorCode != 0) || (addressInformation == NULL))
+    {
+        ESP_LOGE(__func__, "    DNS lookup failed err: %d addressInformation: %p", errorCode, addressInformation);
+        return;
+    }
+    //
+    //  Perform DNS lookup.
+    //
+    address = &((struct sockaddr_in *) addressInformation->ai_addr)->sin_addr;
+    socketHandle = socket(addressInformation->ai_family, addressInformation->ai_socktype, 0);
+    if (socketHandle < 0)
+    {
+        ESP_LOGE(__func__, "    Failed to allocate socket.");
+        freeaddrinfo(addressInformation);
+        return;
+    }
+    if (connect(socketHandle, addressInformation->ai_addr, addressInformation->ai_addrlen) != 0)
+    {
+        ESP_LOGE(__func__, "    Socket connect failed errno: %d", errno);
+        close(socketHandle);
+        freeaddrinfo(addressInformation);
+        return;
+    }
+
+    freeaddrinfo(addressInformation);
+
+    if (write(socketHandle, request, strlen(request)) < 0)
+    {
+        ESP_LOGE(__func__, "    Socket send failed");
+        close(socketHandle);
+        return;
+    }
+
+    struct timeval timeOut;
+    timeOut.tv_sec = 5;
+    timeOut.tv_usec = 0;
+    if (setsockopt(socketHandle, SOL_SOCKET, SO_RCVTIMEO, &timeOut, sizeof(timeOut)) < 0)
+    {
+        ESP_LOGE(__func__, "    Failed to set socket receiving timeout");
+        close(socketHandle);
+        return;
+    }
+    bool firstBlock = true;
+    int blockSize = 300;
+    char *receiveBuffer = (char *) pvPortMalloc(blockSize);
+    do
+    {
+        bzero(receiveBuffer, blockSize);
+        if (firstBlock)
+        {
+            r = read(socketHandle, receiveBuffer, blockSize - 1);
+            for (int i = 0; i < r; i++)
+            {
+                putchar(receiveBuffer[i]);
+            }
+            firstBlock = false;
+        }
+        else
+        {
+            r = 0;
+        }
+    }
+    while (r > 0);
+    printf("\n");
+
+    ESP_LOGI(__func__, "    Finished reading from socket. Last read return: %d errno: %d\r\n", r, errno);
+    close(socketHandle);
+
+    vPortFree(request);
 //    SendResponse(ERR_COMPLETED_OK);
 }
 

@@ -377,5 +377,71 @@ namespace Meadow.Core.Esp32
             return(antennaInfo);
         }
 
+        public static byte[] EncodeHttpGetRequest(Messages.HttpGetRequest httpGetRequest)
+        {
+            int offset = 0;
+            int length = 0;
+
+            //
+            //  Calculate the amount of memory needed.
+            //
+            length += httpGetRequest.ServerName.Length + 1;
+            length += httpGetRequest.Uri.Length + 1;
+            length += 2;
+
+            //
+            //  Now allocate a new buffer and copy the data in to the buffer.
+            //
+            byte[] buffer = new byte[length];
+            EncodeUInt16(httpGetRequest.PortNumber, buffer, offset);
+            offset += 2;
+            EncodeString(httpGetRequest.ServerName, buffer, offset);
+            offset += httpGetRequest.ServerName.Length + 1;
+            EncodeString(httpGetRequest.Uri, buffer, offset);
+            offset += httpGetRequest.Uri.Length + 1;
+            return(buffer);
+        }
+
+        public static Messages.HttpGetRequest ExtractHttpGetRequest(byte[] buffer, int offset)
+        {
+            Messages.HttpGetRequest httpGetRequest;
+
+            httpGetRequest.PortNumber = ExtractUInt16(buffer, offset);
+            offset += 2;
+            httpGetRequest.ServerName = ExtractString(buffer, offset);
+            offset += httpGetRequest.ServerName.Length + 1;
+            httpGetRequest.Uri = ExtractString(buffer, offset);
+            offset += httpGetRequest.Uri.Length + 1;
+            return(httpGetRequest);
+        }
+
+        public static byte[] EncodeHttpGetResponse(Messages.HttpGetResponse httpGetResponse)
+        {
+            int offset = 0;
+            int length = 0;
+
+            //
+            //  Calculate the amount of memory needed.
+            //
+            length += httpGetResponse.Response.Length + 1;
+
+            //
+            //  Now allocate a new buffer and copy the data in to the buffer.
+            //
+            byte[] buffer = new byte[length];
+            EncodeString(httpGetResponse.Response, buffer, offset);
+            offset += httpGetResponse.Response.Length + 1;
+            return(buffer);
+        }
+
+        public static Messages.HttpGetResponse ExtractHttpGetResponse(byte[] buffer, int offset)
+        {
+            Messages.HttpGetResponse httpGetResponse;
+
+            httpGetResponse.Response = ExtractString(buffer, offset);
+            offset += httpGetResponse.Response.Length + 1;
+            return(httpGetResponse);
+        }
+
     }
 }

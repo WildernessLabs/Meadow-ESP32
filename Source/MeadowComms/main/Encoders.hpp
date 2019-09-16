@@ -34,6 +34,18 @@ namespace Esp32Messaging
         uint8_t Antenna;
     };
 
+    struct HttpGetRequest
+    {
+        uint16_t PortNumber;
+        char * ServerName;
+        char * Uri;
+    };
+
+    struct HttpGetResponse
+    {
+        char * Response;
+    };
+
 }
 
 /*
@@ -69,6 +81,12 @@ public:
     static void EncodeAntennaInfo(Esp32Messaging::AntennaInfo *, uint8_t *);
     static int EncodedAntennaInfoBufferSize(Esp32Messaging::AntennaInfo *);
     static Esp32Messaging::AntennaInfo *ExtractAntennaInfo(uint8_t *);
+    static void EncodeHttpGetRequest(Esp32Messaging::HttpGetRequest *, uint8_t *);
+    static int EncodedHttpGetRequestBufferSize(Esp32Messaging::HttpGetRequest *);
+    static Esp32Messaging::HttpGetRequest *ExtractHttpGetRequest(uint8_t *);
+    static void EncodeHttpGetResponse(Esp32Messaging::HttpGetResponse *, uint8_t *);
+    static int EncodedHttpGetResponseBufferSize(Esp32Messaging::HttpGetResponse *);
+    static Esp32Messaging::HttpGetResponse *ExtractHttpGetResponse(uint8_t *);
 
 };
 
