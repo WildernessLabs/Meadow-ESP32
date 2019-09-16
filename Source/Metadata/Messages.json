@@ -29,7 +29,8 @@
           "Name": "HttpGetResponse",
           "MessageElements":
           [
-              { "Name": "Response", "DataType": "string" }
+              { "Name": "SequenceNumber", "DataType": "uint32" },
+              { "Name": "Response", "DataType": "blob" }
           ]
       }
   ]

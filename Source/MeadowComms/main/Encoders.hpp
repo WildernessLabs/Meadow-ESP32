@@ -43,7 +43,9 @@ namespace Esp32Messaging
 
     struct HttpGetResponse
     {
-        char * Response;
+        uint32_t SequenceNumber;
+        uint32_t ResponseLength;
+        uint8_t *Response;
     };
 
 }

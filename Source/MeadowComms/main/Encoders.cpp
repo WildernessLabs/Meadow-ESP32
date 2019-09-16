@@ -583,8 +583,15 @@ Esp32Messaging::HttpGetRequest *Encoders::ExtractHttpGetRequest(uint8_t *buffer)
  */
 void Encoders::EncodeHttpGetResponse(Esp32Messaging::HttpGetResponse *httpGetResponse, uint8_t *buffer)
 {
-    EncodeString(httpGetResponse->Response, buffer);
-    buffer += strlen(httpGetResponse->Response) + 1;
+    EncodeUInt32(httpGetResponse->SequenceNumber, buffer);
+    buffer += 4;
+    EncodeUInt32(httpGetResponse->ResponseLength, buffer);
+    buffer += 4;
+    if (httpGetResponse->ResponseLength > 0)
+    {
+        memcpy((void *) buffer, (void *) httpGetResponse->Response, httpGetResponse->ResponseLength);
+        buffer += httpGetResponse->ResponseLength;
+    }
 }
 
 /**
@@ -599,8 +606,8 @@ void Encoders::EncodeHttpGetResponse(Esp32Messaging::HttpGetResponse *httpGetRes
 int Encoders::EncodedHttpGetResponseBufferSize(Esp32Messaging::HttpGetResponse *httpGetResponse)
 {
     int result = 0;
-    result += strlen(httpGetResponse->Response);
-    result += 1;
+    result += httpGetResponse->ResponseLength;
+    result += 8;
     return(result);
 }
 
@@ -620,8 +627,20 @@ Esp32Messaging::HttpGetResponse *Encoders::ExtractHttpGetResponse(uint8_t *buffe
 {
     Esp32Messaging::HttpGetResponse *httpGetResponse = (Esp32Messaging::HttpGetResponse *) pvPortMalloc(sizeof(Esp32Messaging::HttpGetResponse));
 
-    httpGetResponse->Response = ExtractString(buffer);
-    buffer += strlen(httpGetResponse->Response) + 1;
+    httpGetResponse->SequenceNumber = ExtractUInt32(buffer);
+    buffer += 4;
+    httpGetResponse->ResponseLength = ExtractUInt32(buffer);
+    buffer += 4;
+    if (httpGetResponse->ResponseLength > 0)
+    {
+        httpGetResponse->Response = (uint8_t *) pvPortMalloc(httpGetResponse->ResponseLength);
+        memcpy(httpGetResponse->Response, buffer, httpGetResponse->ResponseLength);
+        buffer += httpGetResponse->ResponseLength;
+    }
+    else
+    {
+        httpGetResponse->Response = nullptr;
+    }
     return(httpGetResponse);
 }
 

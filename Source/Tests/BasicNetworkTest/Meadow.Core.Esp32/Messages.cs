@@ -38,7 +38,9 @@ namespace Meadow.Core.Esp32
 
         public struct HttpGetResponse
         {
-            public String Response;
+            public UInt32 SequenceNumber;
+            public UInt32 ResponseLength;
+            public byte[] Response;
         };
 
      }
