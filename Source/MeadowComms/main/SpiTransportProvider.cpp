@@ -261,7 +261,7 @@ spi_slave_transaction_t *SpiTransportProvider::CreateAcknowledgementTransaction(
 {
     spi_slave_transaction_t *transaction = CreateSpiHeaderTransaction();
 
-    Message *copyOfMessage = Message::CreateCopyOnHeap(message, false);
+    Message *copyOfMessage = message->CreateCopyOnHeap(false);
     copyOfMessage->MessageType = messageType;
     copyOfMessage->StatusCode = (uint32_t) code;
 

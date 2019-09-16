@@ -82,9 +82,14 @@ struct Message
     Message();
 
     /**
-     *  Make a copy of a message.
+     *  Copy constructor.
      */
-    static Message *CreateCopyOnHeap(Message *originalMessage, bool copyPayload);
+    Message(const Message &);
+
+    /**
+     *  Make a copy of the message.
+     */
+    Message *CreateCopyOnHeap(bool);
 
     /**
      *  Create a new message on the heap with the specified values.
