@@ -506,4 +506,123 @@ Esp32Messaging::AntennaInfo *Encoders::ExtractAntennaInfo(uint8_t *buffer)
     return(antennaInfo);
 }
 
+/**
+ *  Convert the HttpGetRequest object into a byte stream that can be sent to the STM32.
+ *  
+ *  The amount of memory required can be obtained by calling the EncodedHttpGetRequestBufferSize method.
+ *  
+ *  @param httpGetRequest
+ *      HttpGetRequest object to be encoded.
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory large enough to hold the encoded HttpGetRequest object.
+ */
+void Encoders::EncodeHttpGetRequest(Esp32Messaging::HttpGetRequest *httpGetRequest, uint8_t *buffer)
+{
+    EncodeUInt16(httpGetRequest->PortNumber, buffer);
+    buffer += 2;
+    EncodeString(httpGetRequest->ServerName, buffer);
+    buffer += strlen(httpGetRequest->ServerName) + 1;
+    EncodeString(httpGetRequest->Uri, buffer);
+    buffer += strlen(httpGetRequest->Uri) + 1;
+}
+
+/**
+ *  Calculate the amount of memory required to hold the given instance of the HttpGetRequest object.
+ *  
+ *  @param httpGetRequest
+ *      HttpGetRequest object to be encoded.
+ *  
+ *  @returns
+ *      Number of bytes required to hold the encoded HttpGetRequest object.
+ */
+int Encoders::EncodedHttpGetRequestBufferSize(Esp32Messaging::HttpGetRequest *httpGetRequest)
+{
+    int result = 0;
+    result += strlen(httpGetRequest->ServerName);
+    result += strlen(httpGetRequest->Uri);
+    result += 4;
+    return(result);
+}
+
+/**
+ *  Extract the HttpGetRequest object that is encoded in the given buffer.
+ *  
+ *  Note that the returned pointer points to a block of memory on the heap and
+ *  this should eventually be released calling vPortFree(...).
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded HttpGetRequest object.
+ *  
+ *  @returns
+ *      Pointer to a HttpGetRequest object.
+ */
+Esp32Messaging::HttpGetRequest *Encoders::ExtractHttpGetRequest(uint8_t *buffer)
+{
+    Esp32Messaging::HttpGetRequest *httpGetRequest = (Esp32Messaging::HttpGetRequest *) pvPortMalloc(sizeof(Esp32Messaging::HttpGetRequest));
+
+    httpGetRequest->PortNumber = ExtractUInt16(buffer);
+    buffer += 2;
+    httpGetRequest->ServerName = ExtractString(buffer);
+    buffer += strlen(httpGetRequest->ServerName) + 1;
+    httpGetRequest->Uri = ExtractString(buffer);
+    buffer += strlen(httpGetRequest->Uri) + 1;
+    return(httpGetRequest);
+}
+
+/**
+ *  Convert the HttpGetResponse object into a byte stream that can be sent to the STM32.
+ *  
+ *  The amount of memory required can be obtained by calling the EncodedHttpGetResponseBufferSize method.
+ *  
+ *  @param httpGetResponse
+ *      HttpGetResponse object to be encoded.
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory large enough to hold the encoded HttpGetResponse object.
+ */
+void Encoders::EncodeHttpGetResponse(Esp32Messaging::HttpGetResponse *httpGetResponse, uint8_t *buffer)
+{
+    EncodeString(httpGetResponse->Response, buffer);
+    buffer += strlen(httpGetResponse->Response) + 1;
+}
+
+/**
+ *  Calculate the amount of memory required to hold the given instance of the HttpGetResponse object.
+ *  
+ *  @param httpGetResponse
+ *      HttpGetResponse object to be encoded.
+ *  
+ *  @returns
+ *      Number of bytes required to hold the encoded HttpGetResponse object.
+ */
+int Encoders::EncodedHttpGetResponseBufferSize(Esp32Messaging::HttpGetResponse *httpGetResponse)
+{
+    int result = 0;
+    result += strlen(httpGetResponse->Response);
+    result += 1;
+    return(result);
+}
+
+/**
+ *  Extract the HttpGetResponse object that is encoded in the given buffer.
+ *  
+ *  Note that the returned pointer points to a block of memory on the heap and
+ *  this should eventually be released calling vPortFree(...).
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded HttpGetResponse object.
+ *  
+ *  @returns
+ *      Pointer to a HttpGetResponse object.
+ */
+Esp32Messaging::HttpGetResponse *Encoders::ExtractHttpGetResponse(uint8_t *buffer)
+{
+    Esp32Messaging::HttpGetResponse *httpGetResponse = (Esp32Messaging::HttpGetResponse *) pvPortMalloc(sizeof(Esp32Messaging::HttpGetResponse));
+
+    httpGetResponse->Response = ExtractString(buffer);
+    buffer += strlen(httpGetResponse->Response) + 1;
+    return(httpGetResponse);
+}
+
 
