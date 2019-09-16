@@ -92,6 +92,23 @@ Message::Message(uint8_t messageType, uint8_t interface, uint32_t function, uint
     PayloadLength = 0;
 }
 
+/**
+ *  Copy constructor
+ *
+ *  @param original
+ *      Message to copy..
+ */
+Message::Message(const Message &original)
+{
+    MessageType = original.MessageType;
+    Interface = original.Interface;
+    Function = original.Function;
+    StatusCode = original.StatusCode;
+    MessageID = original.MessageID;
+    Payload = nullptr;
+    PayloadLength = 0;
+}
+
 /*
  * ---------------------------------------------------------------------------
  *
@@ -168,10 +185,7 @@ Message *Message::CreateOnHeap(uint8_t messageType, uint8_t interface, uint32_t 
 }
 
 /**
- *  Make a copy of a message (on the heap).
- *
- *  @param originalMessage
- *      Original message to copy.
+ *  Create a copy of this message on the heap.
  *
  *  @param copyPayload
  *      Indicate if the payload should be copied as well or if we
@@ -180,19 +194,20 @@ Message *Message::CreateOnHeap(uint8_t messageType, uint8_t interface, uint32_t 
  *  @returns
  *      New copy of the message.
  */
-Message *Message::CreateCopyOnHeap(Message *originalMessage, bool copyPayload)
+Message *Message::CreateCopyOnHeap(bool copyPayload)
 {
     uint8_t *payload = nullptr;
     uint32_t payloadLength = 0;
 
     if (copyPayload)
     {
-        payloadLength = originalMessage->PayloadLength;
+        payloadLength = PayloadLength;
         payload = (uint8_t *) pvPortMalloc(payloadLength);
-        memcpy((void *) payload, (void *) originalMessage->Payload, (size_t) payloadLength);
+        memcpy((void *) payload, (void *) Payload, (size_t) payloadLength);
     }
-    Message *newMessage = CreateOnHeap(originalMessage->MessageType, originalMessage->Interface, originalMessage->Function, originalMessage->StatusCode, originalMessage->MessageID, payload, payloadLength);
+    Message *newMessage = CreateOnHeap(MessageType, Interface, Function, StatusCode, MessageID, payload, payloadLength);
     return(newMessage);
+//    return(CreateCopyOnHeap(this, copyPayload));
 }
 
 /**
