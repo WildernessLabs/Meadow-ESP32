@@ -273,7 +273,7 @@ namespace Meadow.Core.Esp32
         /// <returns>Tuple containing the extracted message (or null) and a status code.</returns>
         /// <param name="buffer">Byte buffer containing the encoded data.</param>
         /// <param name="offset">Offset of the message into the buffer (normally this is 0).</param>
-        public static (Messages.Message? message, StatusCodes statusCode) ExtractMessage(byte[] buffer, int offset = 0, bool headerOnly)
+        public static (Messages.Message? message, StatusCodes statusCode) ExtractMessage(byte[] buffer, int offset = 0, bool headerOnly = false)
         {
             StatusCodes statusCode = StatusCodes.CompletedOK;
             Messages.Message? result = null;
