@@ -335,6 +335,7 @@ namespace Meadow.Core.Esp32
             //  Now allocate a new buffer and copy the data in to the buffer.
             //
             byte[] buffer = new byte[length];
+            Array.Clear(buffer, 0, buffer.Length);
             EncodeString(wiFiCredentials.NetworkName, buffer, offset);
             offset += wiFiCredentials.NetworkName.Length + 1;
             EncodeString(wiFiCredentials.Password, buffer, offset);
@@ -367,6 +368,7 @@ namespace Meadow.Core.Esp32
             //  Now allocate a new buffer and copy the data in to the buffer.
             //
             byte[] buffer = new byte[length];
+            Array.Clear(buffer, 0, buffer.Length);
             buffer[offset] = antennaInfo.Antenna;
             offset += 1;
             return(buffer);
@@ -396,6 +398,7 @@ namespace Meadow.Core.Esp32
             //  Now allocate a new buffer and copy the data in to the buffer.
             //
             byte[] buffer = new byte[length];
+            Array.Clear(buffer, 0, buffer.Length);
             EncodeUInt16(httpGetRequest.PortNumber, buffer, offset);
             offset += 2;
             EncodeString(httpGetRequest.ServerName, buffer, offset);
@@ -433,6 +436,7 @@ namespace Meadow.Core.Esp32
             //  Now allocate a new buffer and copy the data in to the buffer.
             //
             byte[] buffer = new byte[length];
+            Array.Clear(buffer, 0, buffer.Length);
             EncodeUInt32(httpGetResponse.SequenceNumber, buffer, offset);
             offset += 4;
             EncodeUInt32(httpGetResponse.ResponseLength, buffer, offset);
@@ -460,6 +464,105 @@ namespace Meadow.Core.Esp32
                 offset += (int) httpGetResponse.ResponseLength;
             }
             return(httpGetResponse);
+        }
+
+        public static byte[] EncodeAccessPoint(Messages.AccessPoint accessPoint)
+        {
+            int offset = 0;
+            int length = 0;
+
+            //
+            //  Calculate the amount of memory needed.
+            //
+            length += (int) 33;
+            length += 8;
+
+            //
+            //  Now allocate a new buffer and copy the data in to the buffer.
+            //
+            byte[] buffer = new byte[length];
+            Array.Clear(buffer, 0, buffer.Length);
+            int amount = accessPoint.Ssid.Length >= 33 ? 33 - 1 : accessPoint.Ssid.Length;
+            for (int index = 0; index < amount; index++)
+            {
+                buffer[index] = (byte) accessPoint.Ssid[index];
+            }
+            buffer[amount] = 0;
+            offset += (int) 33;
+            buffer[offset] = accessPoint.PrimaryChannel;
+            offset += 1;
+            buffer[offset] = accessPoint.SecondaryChannel;
+            offset += 1;
+            buffer[offset] = accessPoint.Rssi;
+            offset += 1;
+            buffer[offset] = accessPoint.AuthenticationMode;
+            offset += 1;
+            EncodeUInt32(accessPoint.Protocols, buffer, offset);
+            offset += 4;
+            return(buffer);
+        }
+
+        public static Messages.AccessPoint ExtractAccessPoint(byte[] buffer, int offset)
+        {
+            Messages.AccessPoint accessPoint = new Messages.AccessPoint();
+
+            for (int index = 0; (buffer[index + offset] != 0) && (index < (33 - 1)); index++)
+            {
+                accessPoint.Ssid += Convert.ToChar(buffer[index + offset]);
+            }
+            offset += (int) 33;
+            accessPoint.PrimaryChannel = buffer[offset];
+            accessPoint.SecondaryChannel = buffer[offset];
+            accessPoint.Rssi = buffer[offset];
+            accessPoint.AuthenticationMode = buffer[offset];
+            accessPoint.Protocols = ExtractUInt32(buffer, offset);
+            offset += 4;
+            return(accessPoint);
+        }
+
+        public static byte[] EncodeAccessPointList(Messages.AccessPointList accessPointList)
+        {
+            int offset = 0;
+            int length = 0;
+
+            //
+            //  Calculate the amount of memory needed.
+            //
+            length += (int) (accessPointList.AccessPointsLength + 4);
+            length += 4;
+
+            //
+            //  Now allocate a new buffer and copy the data in to the buffer.
+            //
+            byte[] buffer = new byte[length];
+            Array.Clear(buffer, 0, buffer.Length);
+            EncodeUInt32(accessPointList.NumberOfAccessPoints, buffer, offset);
+            offset += 4;
+            EncodeUInt32(accessPointList.AccessPointsLength, buffer, offset);
+            offset += 4;
+            if (accessPointList.AccessPointsLength > 0)
+            {
+                Array.Copy(buffer, offset, accessPointList.AccessPoints, 0, accessPointList.AccessPointsLength);
+                offset += (int) (accessPointList.AccessPointsLength + 1);
+            }
+            return(buffer);
+        }
+
+        public static Messages.AccessPointList ExtractAccessPointList(byte[] buffer, int offset)
+        {
+            Messages.AccessPointList accessPointList = new Messages.AccessPointList();
+
+            accessPointList.NumberOfAccessPoints = ExtractUInt32(buffer, offset);
+            offset += 4;
+            accessPointList.AccessPointsLength = ExtractUInt32(buffer, offset);
+            offset += 4;
+            if (accessPointList.AccessPointsLength > 0)
+            {
+                accessPointList.AccessPoints = new byte[accessPointList.AccessPointsLength];
+                Array.Copy(buffer, offset, accessPointList.AccessPoints, 0, accessPointList.AccessPointsLength);
+                offset += (int) accessPointList.AccessPointsLength;
+            }
+            return(accessPointList);
         }
 
     }

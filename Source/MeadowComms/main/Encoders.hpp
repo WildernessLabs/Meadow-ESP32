@@ -48,6 +48,23 @@ namespace Esp32Messaging
         uint8_t *Response;
     };
 
+    struct AccessPoint
+    {
+        char Ssid[33];
+        uint8_t PrimaryChannel;
+        uint8_t SecondaryChannel;
+        uint8_t Rssi;
+        uint8_t AuthenticationMode;
+        uint32_t Protocols;
+    };
+
+    struct AccessPointList
+    {
+        uint32_t NumberOfAccessPoints;
+        uint32_t AccessPointsLength;
+        uint8_t *AccessPoints;
+    };
+
 }
 
 /*
@@ -89,6 +106,12 @@ public:
     static void EncodeHttpGetResponse(Esp32Messaging::HttpGetResponse *, uint8_t *);
     static int EncodedHttpGetResponseBufferSize(Esp32Messaging::HttpGetResponse *);
     static Esp32Messaging::HttpGetResponse *ExtractHttpGetResponse(uint8_t *);
+    static void EncodeAccessPoint(Esp32Messaging::AccessPoint *, uint8_t *);
+    static int EncodedAccessPointBufferSize(Esp32Messaging::AccessPoint *);
+    static Esp32Messaging::AccessPoint *ExtractAccessPoint(uint8_t *);
+    static void EncodeAccessPointList(Esp32Messaging::AccessPointList *, uint8_t *);
+    static int EncodedAccessPointListBufferSize(Esp32Messaging::AccessPointList *);
+    static Esp32Messaging::AccessPointList *ExtractAccessPointList(uint8_t *);
 
 };
 

@@ -9,14 +9,19 @@ namespace FileGenerator
 {
     public class MessageProcessor
     {
+        /// <summary>
+        /// Known data types that this system can process.
+        /// </summary>
         DataType[] _dataTypes = 
         {
             new DataType("uint32", 4, "uint32_t", "UInt32"),
             new DataType("uint16", 2, "uint16_t", "UInt16"),
             new DataType("int", 4, "int32_t", "Int32"),
             new DataType("byte", 1, "uint8_t", "Byte"),
-            new DataType("blob", 4, "uint8_t *", "byte[]"),
-            new DataType("string", 4, "char *", "String")
+            new DataType("blob", 0, "uint8_t *", "byte[]"),
+            new DataType("string", 4, "char *", "String"),
+            new DataType("fixedbytearray", 0, "uint8_t", "Byte"),
+            new DataType("fixedchararray", 0, "char", "string")
         };
 
         public string InputFileName { get; set; }
@@ -145,6 +150,10 @@ namespace FileGenerator
                     case "string":
                         sourceFile.WriteLine($"            length += (int) ({variableName}.{me.Name}.Length + 1);");
                         break;
+                    case "fixedbytearray":
+                    case "fixedchararray":
+                        sourceFile.WriteLine($"            length += (int) {me.Length};");
+                        break;
                     case "blob":
                         sourceFile.WriteLine($"            length += (int) ({variableName}.{me.Name}Length + 4);");
                         break;
@@ -162,6 +171,7 @@ namespace FileGenerator
             sourceFile.WriteLine("            //  Now allocate a new buffer and copy the data in to the buffer.");
             sourceFile.WriteLine("            //");
             sourceFile.WriteLine($"            byte[] buffer = new byte[length];");
+            sourceFile.WriteLine($"            Array.Clear(buffer, 0, buffer.Length);");
             foreach (MessageElement me in message.MessageElements)
             {
                 DataType dt = GetDataType(me.DataType);
@@ -170,6 +180,19 @@ namespace FileGenerator
                     case "byte":
                         sourceFile.WriteLine($"            buffer[offset] = {variableName}.{me.Name};");
                         sourceFile.WriteLine($"            offset += {dt.Size};");
+                        break;
+                    case "fixedbytearray":
+                        sourceFile.WriteLine($"            Array.Copy(buffer, offset, {variableName}.{me.Name}, 0, {me.Length});");
+                        sourceFile.WriteLine($"            offset += (int) ({me.Length};");
+                        break;
+                    case "fixedchararray":
+                        sourceFile.WriteLine($"            int amount = {variableName}.{me.Name}.Length >= {me.Length} ? {me.Length} - 1 : {variableName}.{me.Name}.Length;");
+                        sourceFile.WriteLine($"            for (int index = 0; index < amount; index++)");
+                        sourceFile.WriteLine("            {");
+                        sourceFile.WriteLine($"                buffer[index] = (byte) {variableName}.{me.Name}[index];");
+                        sourceFile.WriteLine("            }");
+                        sourceFile.WriteLine($"            buffer[amount] = 0;");
+                        sourceFile.WriteLine($"            offset += (int) {me.Length};");
                         break;
                     case "blob":
                         sourceFile.WriteLine($"            EncodeUInt32({variableName}.{me.Name}Length, buffer, offset);");
@@ -214,6 +237,17 @@ namespace FileGenerator
                 {
                     case "byte":
                         sourceFile.WriteLine($"            {variableName}.{me.Name} = buffer[offset];");
+                        break;
+                    case "fixedbytearray":
+                        sourceFile.WriteLine($"            Array.Copy({variableName}.{me.Name}, 0, buffer, offset, {me.Length});");
+                        sourceFile.WriteLine($"            offset += (int) ({me.Length};");
+                        break;
+                    case "fixedchararray":
+                        sourceFile.WriteLine($"            for (int index = 0; (buffer[index + offset] != 0) && (index < ({me.Length} - 1)); index++)");
+                        sourceFile.WriteLine("            {");
+                        sourceFile.WriteLine($"                {variableName}.{me.Name} += Convert.ToChar(buffer[index + offset]);");
+                        sourceFile.WriteLine("            }");
+                        sourceFile.WriteLine($"            offset += (int) {me.Length};");
                         break;
                     case "blob":
                         sourceFile.WriteLine($"            {variableName}.{me.Name}Length = ExtractUInt32(buffer, offset);");
@@ -326,6 +360,15 @@ namespace FileGenerator
                                     sourceFile.WriteLine($"            public UInt32 {me.Name}Length;");
                                     sourceFile.WriteLine($"            public {dt.CSharpTypeName} {me.Name};");
                                     break;
+                                case "fixedchararray":
+                                    //
+                                    //  Fixed chars are actually encoded as normal strings in C#.
+                                    //
+                                    sourceFile.WriteLine($"            public {dt.CSharpTypeName} {me.Name};");
+                                    break;
+                                case "fixedbytearray":
+                                    sourceFile.WriteLine($"            public {dt.CSharpTypeName} {me.Name}[{me.Length}];");
+                                    break;
                                 default:
                                     sourceFile.WriteLine($"            public {dt.CSharpTypeName} {me.Name};");
                                     break;
@@ -376,6 +419,10 @@ namespace FileGenerator
                                 case "blob":
                                     sourceFile.WriteLine($"        uint32_t {me.Name}Length;");
                                     sourceFile.WriteLine($"        uint8_t *{me.Name};");
+                                    break;
+                                case "fixedchararray":
+                                case "fixedbytearray":
+                                    sourceFile.WriteLine($"        {dt.CTypeName} {me.Name}[{me.Length}];");
                                     break;
                                 default:
                                     sourceFile.WriteLine($"        {dt.CTypeName} {me.Name};");
@@ -435,6 +482,11 @@ namespace FileGenerator
                         sourceFile.WriteLine($"    Encode{dt.CSharpTypeName}({variableName}->{me.Name}, buffer);");
                         sourceFile.WriteLine($"    buffer += strlen({variableName}->{me.Name}) + 1;");
                         break;
+                    case "fixedchararray":
+                    case "fixedbytearray":
+                        sourceFile.WriteLine($"    memcpy((void *) buffer, (void *) {variableName}->{me.Name}, {me.Length});");
+                        sourceFile.WriteLine($"    buffer += {me.Length};");
+                        break;
                     case "blob":
                         sourceFile.WriteLine($"    EncodeUInt32({variableName}->{me.Name}Length, buffer);");
                         sourceFile.WriteLine($"    buffer += 4;");
@@ -485,6 +537,10 @@ namespace FileGenerator
                     case "string":
                         sourceFile.WriteLine($"    result += strlen({variableName}->{me.Name});");
                         staticSpaceRequired++;          // Terminating null.
+                        break;
+                    case "fixedchararray":
+                    case "fixedbytearray":
+                        staticSpaceRequired += (int) me.Length;
                         break;
                     case "blob":
                         sourceFile.WriteLine($"    result += {variableName}->{me.Name}Length;");
@@ -539,6 +595,11 @@ namespace FileGenerator
                     case "string":
                         sourceFile.WriteLine($"    {variableName}->{me.Name} = Extract{dt.CSharpTypeName}(buffer);");
                         sourceFile.WriteLine($"    buffer += strlen({variableName}->{me.Name}) + 1;");
+                        break;
+                    case "fixedchararray":
+                    case "fixedbytearray":
+                        sourceFile.WriteLine($"    memcpy((void *) {variableName}->{me.Name}, (void *) buffer, {me.Length});");
+                        sourceFile.WriteLine($"    buffer += {me.Length};");
                         break;
                     case "blob":
                         sourceFile.WriteLine($"    {variableName}->{me.Name}Length = ExtractUInt32(buffer);");

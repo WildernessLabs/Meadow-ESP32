@@ -644,4 +644,152 @@ Esp32Messaging::HttpGetResponse *Encoders::ExtractHttpGetResponse(uint8_t *buffe
     return(httpGetResponse);
 }
 
+/**
+ *  Convert the AccessPoint object into a byte stream that can be sent to the STM32.
+ *  
+ *  The amount of memory required can be obtained by calling the EncodedAccessPointBufferSize method.
+ *  
+ *  @param accessPoint
+ *      AccessPoint object to be encoded.
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory large enough to hold the encoded AccessPoint object.
+ */
+void Encoders::EncodeAccessPoint(Esp32Messaging::AccessPoint *accessPoint, uint8_t *buffer)
+{
+    memcpy((void *) buffer, (void *) accessPoint->Ssid, 33);
+    buffer += 33;
+    *buffer = accessPoint->PrimaryChannel;
+    buffer += 1;
+    *buffer = accessPoint->SecondaryChannel;
+    buffer += 1;
+    *buffer = accessPoint->Rssi;
+    buffer += 1;
+    *buffer = accessPoint->AuthenticationMode;
+    buffer += 1;
+    EncodeUInt32(accessPoint->Protocols, buffer);
+    buffer += 4;
+}
+
+/**
+ *  Calculate the amount of memory required to hold the given instance of the AccessPoint object.
+ *  
+ *  @param accessPoint
+ *      AccessPoint object to be encoded.
+ *  
+ *  @returns
+ *      Number of bytes required to hold the encoded AccessPoint object.
+ */
+int Encoders::EncodedAccessPointBufferSize(Esp32Messaging::AccessPoint *accessPoint)
+{
+    int result = 0;
+    result += 41;
+    return(result);
+}
+
+/**
+ *  Extract the AccessPoint object that is encoded in the given buffer.
+ *  
+ *  Note that the returned pointer points to a block of memory on the heap and
+ *  this should eventually be released calling vPortFree(...).
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded AccessPoint object.
+ *  
+ *  @returns
+ *      Pointer to a AccessPoint object.
+ */
+Esp32Messaging::AccessPoint *Encoders::ExtractAccessPoint(uint8_t *buffer)
+{
+    Esp32Messaging::AccessPoint *accessPoint = (Esp32Messaging::AccessPoint *) pvPortMalloc(sizeof(Esp32Messaging::AccessPoint));
+
+    memcpy((void *) accessPoint->Ssid, (void *) buffer, 33);
+    buffer += 33;
+    accessPoint->PrimaryChannel = *buffer;
+    buffer += 1;
+    accessPoint->SecondaryChannel = *buffer;
+    buffer += 1;
+    accessPoint->Rssi = *buffer;
+    buffer += 1;
+    accessPoint->AuthenticationMode = *buffer;
+    buffer += 1;
+    accessPoint->Protocols = ExtractUInt32(buffer);
+    buffer += 4;
+    return(accessPoint);
+}
+
+/**
+ *  Convert the AccessPointList object into a byte stream that can be sent to the STM32.
+ *  
+ *  The amount of memory required can be obtained by calling the EncodedAccessPointListBufferSize method.
+ *  
+ *  @param accessPointList
+ *      AccessPointList object to be encoded.
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory large enough to hold the encoded AccessPointList object.
+ */
+void Encoders::EncodeAccessPointList(Esp32Messaging::AccessPointList *accessPointList, uint8_t *buffer)
+{
+    EncodeUInt32(accessPointList->NumberOfAccessPoints, buffer);
+    buffer += 4;
+    EncodeUInt32(accessPointList->AccessPointsLength, buffer);
+    buffer += 4;
+    if (accessPointList->AccessPointsLength > 0)
+    {
+        memcpy((void *) buffer, (void *) accessPointList->AccessPoints, accessPointList->AccessPointsLength);
+        buffer += accessPointList->AccessPointsLength;
+    }
+}
+
+/**
+ *  Calculate the amount of memory required to hold the given instance of the AccessPointList object.
+ *  
+ *  @param accessPointList
+ *      AccessPointList object to be encoded.
+ *  
+ *  @returns
+ *      Number of bytes required to hold the encoded AccessPointList object.
+ */
+int Encoders::EncodedAccessPointListBufferSize(Esp32Messaging::AccessPointList *accessPointList)
+{
+    int result = 0;
+    result += accessPointList->AccessPointsLength;
+    result += 8;
+    return(result);
+}
+
+/**
+ *  Extract the AccessPointList object that is encoded in the given buffer.
+ *  
+ *  Note that the returned pointer points to a block of memory on the heap and
+ *  this should eventually be released calling vPortFree(...).
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded AccessPointList object.
+ *  
+ *  @returns
+ *      Pointer to a AccessPointList object.
+ */
+Esp32Messaging::AccessPointList *Encoders::ExtractAccessPointList(uint8_t *buffer)
+{
+    Esp32Messaging::AccessPointList *accessPointList = (Esp32Messaging::AccessPointList *) pvPortMalloc(sizeof(Esp32Messaging::AccessPointList));
+
+    accessPointList->NumberOfAccessPoints = ExtractUInt32(buffer);
+    buffer += 4;
+    accessPointList->AccessPointsLength = ExtractUInt32(buffer);
+    buffer += 4;
+    if (accessPointList->AccessPointsLength > 0)
+    {
+        accessPointList->AccessPoints = (uint8_t *) pvPortMalloc(accessPointList->AccessPointsLength);
+        memcpy(accessPointList->AccessPoints, buffer, accessPointList->AccessPointsLength);
+        buffer += accessPointList->AccessPointsLength;
+    }
+    else
+    {
+        accessPointList->AccessPoints = nullptr;
+    }
+    return(accessPointList);
+}
+
 

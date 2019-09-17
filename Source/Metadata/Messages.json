@@ -26,12 +26,32 @@
             ]
         },
         {
-          "Name": "HttpGetResponse",
-          "MessageElements":
-          [
-              { "Name": "SequenceNumber", "DataType": "uint32" },
-              { "Name": "Response", "DataType": "blob" }
-          ]
-      }
-  ]
+            "Name": "HttpGetResponse",
+            "MessageElements":
+            [
+                { "Name": "SequenceNumber", "DataType": "uint32" },
+                { "Name": "Response", "DataType": "blob" }
+            ]
+        },
+        {
+            "Name": "AccessPoint",
+            "MessageElements":
+            [
+                { "Name": "Ssid", "DataType": "fixedchararray", "Length": "33" },
+                { "Name": "PrimaryChannel", "DataType": "byte" },
+                { "Name": "SecondaryChannel", "DataType": "byte" },
+                { "Name": "Rssi", "DataType": "byte" },
+                { "Name": "AuthenticationMode", "DataType": "byte" },
+                { "Name": "Protocols", "DataType": "uint32" }
+            ]
+        },
+        {
+            "Name": "AccessPointList",
+            "MessageElements":
+            [
+                { "Name": "NumberOfAccessPoints", "DataType": "uint32" },
+                { "Name": "AccessPoints", "DataType": "blob" }
+            ]
+        }
+    ]
 }
