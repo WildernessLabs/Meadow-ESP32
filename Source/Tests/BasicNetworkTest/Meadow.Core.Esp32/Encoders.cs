@@ -324,8 +324,8 @@ namespace Meadow.Core.Esp32
             //
             //  Calculate the amount of memory needed.
             //
-            length += wiFiCredentials.NetworkName.Length + 1;
-            length += wiFiCredentials.Password.Length + 1;
+            length += (int) (wiFiCredentials.NetworkName.Length + 1);
+            length += (int) (wiFiCredentials.Password.Length + 1);
 
             //
             //  Now allocate a new buffer and copy the data in to the buffer.
@@ -340,10 +340,12 @@ namespace Meadow.Core.Esp32
 
         public static Messages.WiFiCredentials ExtractWiFiCredentials(byte[] buffer, int offset)
         {
-            Messages.WiFiCredentials wiFiCredentials;
+            Messages.WiFiCredentials wiFiCredentials = new Messages.WiFiCredentials();
 
-            offset += wiFiCredentials.NetworkName.Length + 1;
-            offset += wiFiCredentials.Password.Length + 1;
+            wiFiCredentials.NetworkName = ExtractString(buffer, offset);
+            offset += (int) (wiFiCredentials.NetworkName.Length + 1);
+            wiFiCredentials.Password = ExtractString(buffer, offset);
+            offset += (int) (wiFiCredentials.Password.Length + 1);
             return(wiFiCredentials);
         }
 
@@ -368,7 +370,7 @@ namespace Meadow.Core.Esp32
 
         public static Messages.AntennaInfo ExtractAntennaInfo(byte[] buffer, int offset)
         {
-            Messages.AntennaInfo antennaInfo;
+            Messages.AntennaInfo antennaInfo = new Messages.AntennaInfo();
 
             antennaInfo.Antenna = buffer[offset];
             return(antennaInfo);
@@ -382,8 +384,8 @@ namespace Meadow.Core.Esp32
             //
             //  Calculate the amount of memory needed.
             //
-            length += httpGetRequest.ServerName.Length + 1;
-            length += httpGetRequest.Uri.Length + 1;
+            length += (int) (httpGetRequest.ServerName.Length + 1);
+            length += (int) (httpGetRequest.Uri.Length + 1);
             length += 2;
 
             //
@@ -401,12 +403,14 @@ namespace Meadow.Core.Esp32
 
         public static Messages.HttpGetRequest ExtractHttpGetRequest(byte[] buffer, int offset)
         {
-            Messages.HttpGetRequest httpGetRequest;
+            Messages.HttpGetRequest httpGetRequest = new Messages.HttpGetRequest();
 
             httpGetRequest.PortNumber = ExtractUInt16(buffer, offset);
             offset += 2;
-            offset += httpGetRequest.ServerName.Length + 1;
-            offset += httpGetRequest.Uri.Length + 1;
+            httpGetRequest.ServerName = ExtractString(buffer, offset);
+            offset += (int) (httpGetRequest.ServerName.Length + 1);
+            httpGetRequest.Uri = ExtractString(buffer, offset);
+            offset += (int) (httpGetRequest.Uri.Length + 1);
             return(httpGetRequest);
         }
 
@@ -418,7 +422,7 @@ namespace Meadow.Core.Esp32
             //
             //  Calculate the amount of memory needed.
             //
-            length += httpGetResponse.ResponseLength + 4;
+            length += (int) (httpGetResponse.ResponseLength + 4);
             length += 4;
 
             //
@@ -431,15 +435,15 @@ namespace Meadow.Core.Esp32
             offset += 4;
             if (httpGetResponse.ResponseLength > 0)
             {
-                Array.Copy(buffer, offset, httpGetResponse.Response, buffer, httpGetResponse.ResponseLength);
-                offset += httpGetResponse.ResponseLength + 1;
+                Array.Copy(buffer, offset, httpGetResponse.Response, 0, httpGetResponse.ResponseLength);
+                offset += (int) (httpGetResponse.ResponseLength + 1);
             }
             return(buffer);
         }
 
         public static Messages.HttpGetResponse ExtractHttpGetResponse(byte[] buffer, int offset)
         {
-            Messages.HttpGetResponse httpGetResponse;
+            Messages.HttpGetResponse httpGetResponse = new Messages.HttpGetResponse();
 
             httpGetResponse.SequenceNumber = ExtractUInt32(buffer, offset);
             offset += 4;
@@ -449,7 +453,7 @@ namespace Meadow.Core.Esp32
             {
                 httpGetResponse.Response = new byte[httpGetResponse.ResponseLength];
                 Array.Copy(buffer, offset, httpGetResponse.Response, 0, httpGetResponse.ResponseLength);
-                offset += httpGetResponse.ResponseLength;
+                offset += (int) httpGetResponse.ResponseLength;
             }
             return(httpGetResponse);
         }

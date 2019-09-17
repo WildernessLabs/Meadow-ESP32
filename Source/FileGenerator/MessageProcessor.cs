@@ -162,10 +162,10 @@ namespace FileGenerator
                             switch (dt.Name.ToLower())
                             {
                                 case "string":
-                                    sourceFile.WriteLine($"            length += {variableName}.{me.Name}.Length + 1;");
+                                    sourceFile.WriteLine($"            length += (int) ({variableName}.{me.Name}.Length + 1);");
                                     break;
                                 case "blob":
-                                    sourceFile.WriteLine($"            length += {variableName}.{me.Name}Length + 4;");
+                                    sourceFile.WriteLine($"            length += (int) ({variableName}.{me.Name}Length + 4);");
                                     break;
                                 default:
                                     nonStringLength += dt.Size;
@@ -195,8 +195,8 @@ namespace FileGenerator
                                     sourceFile.WriteLine($"            offset += 4;");
                                     sourceFile.WriteLine($"            if ({variableName}.{me.Name}Length > 0)");
                                     sourceFile.WriteLine("            {");
-                                    sourceFile.WriteLine($"                Array.Copy(buffer, offset, {variableName}.{me.Name}, buffer, {variableName}.{me.Name}Length);");
-                                    sourceFile.WriteLine($"                offset += {variableName}.{me.Name}Length + 1;");
+                                    sourceFile.WriteLine($"                Array.Copy(buffer, offset, {variableName}.{me.Name}, 0, {variableName}.{me.Name}Length);");
+                                    sourceFile.WriteLine($"                offset += (int) ({variableName}.{me.Name}Length + 1);");
                                     sourceFile.WriteLine("            }");
                                     break;
                                 case "string":
@@ -214,7 +214,7 @@ namespace FileGenerator
                         sourceFile.WriteLine();
                         sourceFile.WriteLine($"        public static Messages.{m.Name} Extract{m.Name}(byte[] buffer, int offset)");
                         sourceFile.WriteLine("        {");
-                        sourceFile.WriteLine($"            Messages.{m.Name} {variableName};");
+                        sourceFile.WriteLine($"            Messages.{m.Name} {variableName} = new Messages.{m.Name}();");
                         sourceFile.WriteLine();
                         foreach (MessageElement me in m.MessageElements)
                         {
@@ -231,11 +231,12 @@ namespace FileGenerator
                                     sourceFile.WriteLine("            {");
                                     sourceFile.WriteLine($"                {variableName}.{me.Name} = new byte[{variableName}.{me.Name}Length];");
                                     sourceFile.WriteLine($"                Array.Copy(buffer, offset, {variableName}.{me.Name}, 0, {variableName}.{me.Name}Length);");
-                                    sourceFile.WriteLine($"                offset += {variableName}.{me.Name}Length;");
+                                    sourceFile.WriteLine($"                offset += (int) {variableName}.{me.Name}Length;");
                                     sourceFile.WriteLine("            }");
                                     break;
                                 case "string":
-                                    sourceFile.WriteLine($"            offset += {variableName}.{me.Name}.Length + 1;");
+                                    sourceFile.WriteLine($"            {variableName}.{me.Name} = Extract{dt.CSharpTypeName}(buffer, offset);");
+                                    sourceFile.WriteLine($"            offset += (int) ({variableName}.{me.Name}.Length + 1);");
                                     break;
                                 default:
                                     sourceFile.WriteLine($"            {variableName}.{me.Name} = Extract{dt.CSharpTypeName}(buffer, offset);");
