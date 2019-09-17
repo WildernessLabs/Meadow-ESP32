@@ -466,33 +466,41 @@ void WiFiRequestHandler::HttpGet(Message *message)
         return;
     }
 
-    int blockSize = 1024;
+    bool firstSent = false;
+    int blockSize = 200;
     uint32_t sequenceNumber = 0;
     char *receiveBuffer = (char *) pvPortMalloc(blockSize);
     do
     {
         bzero(receiveBuffer, blockSize);
         r = read(socketHandle, receiveBuffer, blockSize - 1);
-        Message *response = message->CreateCopyOnHeap(false);
-        response->MessageType = MessageTypes::Response;
 
-        Esp32Messaging::HttpGetResponse *responseData = (Esp32Messaging::HttpGetResponse *) pvPortMalloc(sizeof(Esp32Messaging::HttpGetResponse));
-        responseData->SequenceNumber = sequenceNumber;
-        responseData->ResponseLength = r;
-        if (r > 0)
+        if (!firstSent || (r == 0))
         {
-            responseData->Response = (uint8_t *) pvPortMalloc(r);
-            memcpy(responseData->Response, receiveBuffer, r);
+            firstSent = true;
+            Message *response = message->CreateCopyOnHeap(false);
+            response->MessageType = MessageTypes::Response;
+
+            Esp32Messaging::HttpGetResponse *responseData = (Esp32Messaging::HttpGetResponse *) pvPortMalloc(sizeof(Esp32Messaging::HttpGetResponse));
+            responseData->SequenceNumber = sequenceNumber;
+            responseData->ResponseLength = r;
+            if (r > 0)
+            {
+                responseData->Response = (uint8_t *) pvPortMalloc(r);
+                memcpy(responseData->Response, receiveBuffer, r);
+            }
+            else
+            {
+                responseData->Response = nullptr;
+            }
+            response->PayloadLength = Encoders::EncodedHttpGetResponseBufferSize(responseData);
+            response->Payload = (uint8_t *) pvPortMalloc(response->PayloadLength);
+            Encoders::EncodeHttpGetResponse(responseData, response->Payload);
+            vPortFree(responseData->Response);
+            vPortFree(responseData);
+            sequenceNumber++;
+            _messageDispatcher->QueueMessageForStm32(response);
         }
-        else
-        {
-            responseData->Response = nullptr;
-        }
-        response->PayloadLength = Encoders::EncodedHttpGetResponseBufferSize(responseData);
-        response->Payload = (uint8_t *) pvPortMalloc(response->PayloadLength);
-        Encoders::EncodeHttpGetResponse(responseData, response->Payload);
-        sequenceNumber++;
-        _messageDispatcher->QueueMessageForStm32(response);
     }
     while (r > 0);
     vPortFree(receiveBuffer);
