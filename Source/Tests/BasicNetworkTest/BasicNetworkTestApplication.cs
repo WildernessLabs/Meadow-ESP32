@@ -121,31 +121,38 @@ namespace BasicNetworkTest
         {
             DebugHelpers.DebugHelpers.LogMessage("Message received:");
             e.Message.Value.Log();
-//            if ((e.Message.Value.Interface == (byte)Esp32Interfaces.WiFi) &&
-//                (e.Message.Value.Function == (byte)WiFiFunction.Connect) &&
-//                (e.Message.Value.StatusCode == (UInt32)StatusCodes.CompletedOK))
-//            {
-            if (!webPageRequested)
+            switch ((WiFiFunction)e.Message.Value.Function)
             {
-                webPageRequested = true;
-                DebugHelpers.DebugHelpers.LogMessage($"Obtained IP address: {e.Message.Value.Payload[0]}.{e.Message.Value.Payload[1]}.{e.Message.Value.Payload[2]}.{e.Message.Value.Payload[3]}");
-                
-                Messages.HttpGetRequest requestData = new Messages.HttpGetRequest( );
-                requestData.PortNumber = 80;
-                requestData.ServerName = "www.google.com";
-                requestData.Uri = "/";
-                
-                Messages.Message httpGetRequest = new Messages.Message();
+                case WiFiFunction.Start:
+                    DebugHelpers.DebugHelpers.LogMessage($"Obtained IP address: {e.Message.Value.Payload[0]}.{e.Message.Value.Payload[1]}.{e.Message.Value.Payload[2]}.{e.Message.Value.Payload[3]}");
 
+                    Messages.HttpGetRequest requestData = new Messages.HttpGetRequest();
+                    requestData.PortNumber = 80;
+                    requestData.ServerName = "www.google.com";
+                    requestData.Uri = "/";
 
-                //    Message *httpGetMessage = (Message *) pvPortMalloc(sizeof(Message));
-                httpGetRequest.MessageType = (byte) MessageTypes.Data;
-                httpGetRequest.Interface = (byte) Esp32Interfaces.WiFi;
-                httpGetRequest.Function = (UInt32) WiFiFunction.HttpGet;
-                httpGetRequest.MessageID = 0x02;
-                httpGetRequest.Payload = Encoders.EncodeHttpGetRequest(requestData);
-                httpGetRequest.PayloadLength = (uint) httpGetRequest.Payload.Length;
-                QueueMessage(httpGetRequest);
+                    Messages.Message httpGetRequest = new Messages.Message();
+                    httpGetRequest.MessageType = (byte)MessageTypes.Data;
+                    httpGetRequest.Interface = (byte)Esp32Interfaces.WiFi;
+                    httpGetRequest.Function = (UInt32)WiFiFunction.HttpGet;
+                    httpGetRequest.MessageID = 0x02;
+                    httpGetRequest.Payload = Encoders.EncodeHttpGetRequest(requestData);
+                    httpGetRequest.PayloadLength = (uint)httpGetRequest.Payload.Length;
+                    QueueMessage(httpGetRequest);
+                    break;
+                case WiFiFunction.HttpGet:
+                    Messages.HttpGetResponse response = Encoders.ExtractHttpGetResponse(e.Message.Value.Payload, 0);
+                    string responseText = string.Empty;
+                    foreach (byte b in response.Response)
+                    {
+                        responseText += Convert.ToChar(b);
+                    }
+                    string[] lines = responseText.Split(new char[] {'\n', '\r'});
+                    foreach (string line in lines)
+                    {
+                        DebugHelpers.DebugHelpers.LogMessage(line);
+                    }
+                    break;
             }
         }
 
