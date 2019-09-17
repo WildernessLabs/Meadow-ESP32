@@ -295,7 +295,7 @@ namespace Meadow.Core.Esp32
             DebugHelpers.DebugHelpers.LogMessage(DebugHelpers.DebugHelpers.PrintableBuffer(encodedInboundMessage));
             StatusCodes decodeStatus;
             Messages.Message? inboundMessage;
-            (inboundMessage, decodeStatus) = Encoders.ExtractMessage(encodedInboundMessage);
+            (inboundMessage, decodeStatus) = Encoders.ExtractMessage(encodedInboundMessage, headerOnly: true);
             
             DebugHelpers.DebugHelpers.LogMessage($"Decode status: {decodeStatus}");
             SendAcknowledgement(inboundMessage.Value, StatusCodes.CompletedOK);
@@ -310,7 +310,7 @@ namespace Meadow.Core.Esp32
         /// <returns>Message and body (or null in the case of an error).</returns>
         private Messages.Message? GetMessageBody(Messages.Message header)
         {
-            DebugHelpers.DebugHelpers.LogMessage("Entering GetMessageHeader");
+            DebugHelpers.DebugHelpers.LogMessage("Entering GetMessageBody");
 
             ushort incomingMessageLength = (ushort) Encoders.CalculateSpiBufferSize(Messages.HEADER_SIZE + header.PayloadLength);
             
