@@ -32,6 +32,7 @@ MessageDispatcher::MessageDispatcher(TransportProviderBase *transportProvider) :
 {
     _transportProvider = transportProvider;
     _transportProvider->Setup(this);
+    _messageIdMutex = xSemaphoreCreateMutex();
 }
 
 /**
@@ -123,3 +124,22 @@ bool MessageDispatcher::QueueMessageForStm32(Message *response)
     return(_transportProvider->QueueMessageForStm32(response));
 }
 
+/**
+ *  Get the next message ID that can be used by the ESP32 system to send a
+ *  message to the STM32.
+ *
+ *  This method will increment the last used message ID, apply the message
+ *  ID mask and then return the Message ID.
+ *
+ *  @returns
+ *      Next message ID that can be used.
+ */
+uint32_t MessageDispatcher::GetNextMessageID()
+{
+    xSemaphoreTake(_messageIdMutex, portMAX_DELAY);
+    _lastMessageId++;
+    uint32_t messageId = _lastMessageId;
+    xSemaphoreGive(_messageIdMutex);
+    messageId |= ESP32_MESSAGE_ID_MASK;
+    return(messageId);
+}

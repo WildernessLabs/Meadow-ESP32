@@ -47,7 +47,7 @@ extern "C" void app_main()
     connectMessage->MessageType = MessageTypes::Data;
     connectMessage->Interface = Esp32Interfaces::WiFi;
     connectMessage->Function = WiFiFunction::Start;
-    connectMessage->MessageID = 0x01;
+    connectMessage->MessageID = messageDispatcher->GetNextMessageID();
 
     Esp32Messaging::WiFiCredentials wifiCredentials;
     wifiCredentials.NetworkName = (char *) NETWORK_NAME;
@@ -64,7 +64,7 @@ extern "C" void app_main()
     getAccessPointsMessage->MessageType = MessageTypes::Data;
     getAccessPointsMessage->Interface = Esp32Interfaces::WiFi;
     getAccessPointsMessage->Function = WiFiFunction::GetAccessPoints;
-    getAccessPointsMessage->MessageID = 0x02;
+    getAccessPointsMessage->MessageID = messageDispatcher->GetNextMessageID();
     getAccessPointsMessage->Payload = nullptr;
     getAccessPointsMessage->PayloadLength = 0;
     messageDispatcher->QueueMessageForEsp32(getAccessPointsMessage);

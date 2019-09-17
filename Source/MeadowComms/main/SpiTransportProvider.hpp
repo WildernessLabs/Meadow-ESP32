@@ -139,6 +139,7 @@ private:
      *  Encode a header or transport message.
      */
     void EncodeHeaderMessage(spi_slave_transaction_t *, Message *);
+
     /*
      *  FreeRTOS task handler for this class.
      */

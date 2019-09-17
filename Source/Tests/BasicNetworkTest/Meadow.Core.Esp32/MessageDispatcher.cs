@@ -6,12 +6,24 @@ namespace Meadow.Core.Esp32
 {
     public class MessageDispatcher
     {
+        #region Constants
+
+        /// <summary>
+        /// Mask used to differentiate ESP32 messages from STM32 messages.  ESP32 message will have
+        /// the top bit set, STM32 messages will have the top bit cleared. 
+        /// </summary>
+        private const UInt32 ESP32_MESSAGE_ID_MASK = 0x80000000;
+        
+        #endregion Constants
+        
         #region Private variables.
 
         /// <summary>
         ///     Serial port connecting the STM32 and the ESP32 microcontrollers.
         /// </summary>
         private readonly TransportProviderBase _esp32;
+
+        private UInt32 _lastMessageId = 0;
 
         #endregion Private variables
 
@@ -84,6 +96,21 @@ namespace Meadow.Core.Esp32
         public void Add(Messages.Message message)
         {
             _esp32.QueueMessageForEsp32(message);
+        }
+
+        /// <summary>
+        /// Get the next message ID that can be used to in a message to be sent to the
+        /// ESP32.
+        ///
+        /// This method relies upon the fact that MethodImpl(MethodImplOptions.Synchronized) will
+        /// make sure that access to _lastMessageId is thread safe.
+        /// </summary>
+        /// <returns>Valid message ID to use when sending a message from the STM32 to the ESP32.</returns>
+        [MethodImpl(MethodImplOptions.Synchronized)]
+        public UInt32 GetNextMessageID()
+        {
+            _lastMessageId++;
+            return (_lastMessageId &~ESP32_MESSAGE_ID_MASK);
         }
 
         #endregion Methods
