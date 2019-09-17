@@ -493,6 +493,7 @@ void WiFiRequestHandler::HttpGet(Message *message)
             {
                 responseData->Response = nullptr;
             }
+            response->StatusCode = StatusCodes::CompletedOK;
             response->PayloadLength = Encoders::EncodedHttpGetResponseBufferSize(responseData);
             response->Payload = (uint8_t *) pvPortMalloc(response->PayloadLength);
             Encoders::EncodeHttpGetResponse(responseData, response->Payload);
@@ -621,46 +622,53 @@ void WiFiRequestHandler::ScanCompleteEvent(system_event_t *event)
 {
     uint16_t apCount = 0;
     esp_wifi_scan_get_ap_num(&apCount);
+
     ESP_LOGI(__func__, "Number of access points found: %d\n", apCount);
+    _currentRequest->DeletePayload();
+    _currentRequest->MessageType = MessageTypes::Response;
     if (apCount == 0)
     {
-//        _wifiResponse->Payload = NULL;
-//        _wifiResponse->PayloadLength = 0;
+        _currentRequest->Payload =  nullptr;
+        _currentRequest->PayloadLength = 0;
+        _currentRequest->StatusCode = StatusCodes::CompletedOK;
     }
     else
     {
-        //
-        //  First two bytes in this payload are the number of access points.
-        //
-//        _wifiResponse->PayloadLength = (ACCESS_POINT_INFORMATION_LENGTH * apCount) + 2;
-//        _wifiResponse->Payload = (uint8_t *) pvPortMalloc(_wifiResponse->PayloadLength);
-//        Encoders::EncodeUInt16(apCount, _wifiResponse->Payload);
+        Esp32Messaging::AccessPointList *accessPointList = (Esp32Messaging::AccessPointList *) pvPortMalloc(sizeof(Esp32Messaging::AccessPointList));
+        accessPointList->NumberOfAccessPoints = apCount;
         //
         //  Now we get the access point information.
         //
         wifi_ap_record_t *accessPoints = (wifi_ap_record_t *) pvPortMalloc(apCount * sizeof(wifi_ap_record_t));
         ESP_ERROR_CHECK(esp_wifi_scan_get_ap_records(&apCount, accessPoints));
-//        uint8_t *destination = _wifiResponse->Payload + 2;
+
+        Esp32Messaging::AccessPoint *accessPoint = (Esp32Messaging::AccessPoint *) pvPortMalloc(sizeof(Esp32Messaging::AccessPoint));
+        int singleAccessPointSize = Encoders::EncodedAccessPointBufferSize(accessPoint);
+        accessPointList->AccessPointsLength = singleAccessPointSize * apCount;
+        accessPointList->AccessPoints = (uint8_t *) pvPortMalloc(accessPointList->AccessPointsLength);
+        uint8_t *currentLocation = accessPointList->AccessPoints;
         for (int index = 0; index < apCount; index++)
         {
-//            memcpy(destination + BSSID_OFFSET, &accessPoints[index].bssid, 6);
-//            memcpy(destination + SSID_OFFSET, &accessPoints[index].ssid, 33);
-//            *(destination + PRIMARY_CHANNEL_OFFSET) = accessPoints[index].primary;
-//            *(destination + SECONDARY_CHANNEL_OFFSET) = accessPoints[index].second ;
-//            *(destination + RSSI_OFFSET) = accessPoints[index].rssi;
-//            *(destination + AUTHENTICATION_MODE_OFFSET) = accessPoints[index].authmode;
-//            *(destination + PAIRWISE_CIPHER_OFFSET) = accessPoints[index].pairwise_cipher;
-//            *(destination + GROUP_CIPHER_OFFSET) = accessPoints[index].group_cipher;
-//            *(destination + ANTENNA_OFFSET) = accessPoints[index].ant;
-//            *(destination + PROTOCOLS_OFFSET) = accessPoints[index].phy_11b | accessPoints[index].phy_11g | accessPoints[index].phy_11n | accessPoints[index].phy_lr | accessPoints[index].wps;
-//            memcpy(destination + COUNTRY_CODE_OFFSET, accessPoints[index].country.cc, 3);
-//            *(destination + START_CHANNEL_OFFSET) = accessPoints[index].country.schan;
-//            *(destination + NUMBER_OF_CHANNELS_OFFSET) = accessPoints[index].country.nchan;
-//            *(destination + TX_POWER_MAXIMUM_OFFSET) = accessPoints[index].country.max_tx_power ;
-//            *(destination + POLICY_OFFSET) = accessPoints[index].country.policy;
-//            destination += ACCESS_POINT_INFORMATION_LENGTH;
+            bzero(accessPoint, sizeof(Esp32Messaging::AccessPoint));
+            memcpy(accessPoint->Ssid, &accessPoints[index].ssid, 33);
+            accessPoint->PrimaryChannel = accessPoints[index].primary;
+            accessPoint->SecondaryChannel = accessPoints[index].second;
+            accessPoint->Rssi = accessPoints[index].rssi;
+            accessPoint->AuthenticationMode = accessPoints[index].authmode;
+            accessPoint->Protocols = accessPoints[index].phy_11b | accessPoints[index].phy_11g | accessPoints[index].phy_11n | accessPoints[index].phy_lr | accessPoints[index].wps;
+            Encoders::EncodeAccessPoint(accessPoint, currentLocation);
+            currentLocation += singleAccessPointSize;
         }
+
         vPortFree(accessPoints);
+        vPortFree(accessPoint);
+        _currentRequest->StatusCode = StatusCodes::CompletedOK;
+        _currentRequest->PayloadLength = Encoders::EncodedAccessPointListBufferSize(accessPointList);
+        _currentRequest->Payload = (uint8_t *) pvPortMalloc(_currentRequest->PayloadLength);
+        Encoders::EncodeAccessPointList(accessPointList, _currentRequest->Payload);
+        vPortFree(accessPointList);
     }
-    SendResponse(_currentRequest, StatusCodes::CompletedOK);
+    _messageDispatcher->QueueMessageForStm32(_currentRequest);
+    _currentRequest = nullptr;
+    xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
 }

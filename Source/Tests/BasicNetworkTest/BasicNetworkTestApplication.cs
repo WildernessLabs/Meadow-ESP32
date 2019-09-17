@@ -131,14 +131,22 @@ namespace BasicNetworkTest
                     requestData.ServerName = "www.google.com";
                     requestData.Uri = "/";
 
-                    Messages.Message httpGetRequest = new Messages.Message();
-                    httpGetRequest.MessageType = (byte)MessageTypes.Data;
-                    httpGetRequest.Interface = (byte)Esp32Interfaces.WiFi;
-                    httpGetRequest.Function = (UInt32)WiFiFunction.HttpGet;
-                    httpGetRequest.MessageID = 0x02;
-                    httpGetRequest.Payload = Encoders.EncodeHttpGetRequest(requestData);
-                    httpGetRequest.PayloadLength = (uint)httpGetRequest.Payload.Length;
-                    QueueMessage(httpGetRequest);
+//                    Messages.Message httpGetRequest = new Messages.Message();
+//                    httpGetRequest.MessageType = (byte)MessageTypes.Data;
+//                    httpGetRequest.Interface = (byte)Esp32Interfaces.WiFi;
+//                    httpGetRequest.Function = (UInt32)WiFiFunction.HttpGet;
+//                    httpGetRequest.MessageID = 0x02;
+//                    httpGetRequest.Payload = Encoders.EncodeHttpGetRequest(requestData);
+//                    httpGetRequest.PayloadLength = (uint)httpGetRequest.Payload.Length;
+//                    QueueMessage(httpGetRequest);
+
+                    Messages.Message getAccessPointRequest = new Messages.Message();
+                    getAccessPointRequest.MessageType = (byte)MessageTypes.Data;
+                    getAccessPointRequest.Interface = (byte)Esp32Interfaces.WiFi;
+                    getAccessPointRequest.Function = (UInt32)WiFiFunction.GetAccessPoints;
+                    getAccessPointRequest.MessageID = 0x02;
+                    getAccessPointRequest.PayloadLength = 0;
+                    QueueMessage(getAccessPointRequest);
                     break;
                 case WiFiFunction.HttpGet:
                     Messages.HttpGetResponse response = Encoders.ExtractHttpGetResponse(e.Message.Value.Payload, 0);
@@ -151,6 +159,26 @@ namespace BasicNetworkTest
                     foreach (string line in lines)
                     {
                         DebugHelpers.DebugHelpers.LogMessage(line);
+                    }
+                    break;
+                case WiFiFunction.GetAccessPoints:
+                    Messages.AccessPointList accessPoints = Encoders.ExtractAccessPointList(e.Message.Value.Payload, 0);
+                    if (accessPoints.NumberOfAccessPoints > 0)
+                    {
+                        int offset = 0;
+                        DebugHelpers.DebugHelpers.LogMessage("|------------------------------------------");
+                        DebugHelpers.DebugHelpers.LogMessage("|         Network Name             | RSSI |");
+                        DebugHelpers.DebugHelpers.LogMessage("|------------------------------------------");
+                        for (int count = 0; count < accessPoints.NumberOfAccessPoints; count++)
+                        {
+                            Messages.AccessPoint accessPoint = Encoders.ExtractAccessPoint(accessPoints.AccessPoints, offset);
+                            offset += 41;
+                            DebugHelpers.DebugHelpers.LogMessage($"| {accessPoint.Ssid,-32} | {accessPoint.Rssi, 4} |");
+                        }
+                    }
+                    else
+                    {
+                        DebugHelpers.DebugHelpers.LogMessage("No access points returned.");
                     }
                     break;
             }
