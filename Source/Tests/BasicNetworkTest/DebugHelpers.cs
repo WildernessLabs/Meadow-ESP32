@@ -131,7 +131,7 @@ namespace DebugHelpers
         public static void LogMessage(string message)
         {
             #if DEBUG
-            Console.WriteLine($"{DateTime.Now.ToString("HH:mm:ss")}: {message}");
+            Console.WriteLine($"STM: {DateTime.Now.ToString("HH:mm:ss")}: {message}");
             #endif
         }
 
