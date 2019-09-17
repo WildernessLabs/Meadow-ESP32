@@ -43,5 +43,22 @@ namespace Meadow.Core.Esp32
             public byte[] Response;
         };
 
+        public struct AccessPoint
+        {
+            public string Ssid;
+            public Byte PrimaryChannel;
+            public Byte SecondaryChannel;
+            public Byte Rssi;
+            public Byte AuthenticationMode;
+            public UInt32 Protocols;
+        };
+
+        public struct AccessPointList
+        {
+            public UInt32 NumberOfAccessPoints;
+            public UInt32 AccessPointsLength;
+            public byte[] AccessPoints;
+        };
+
      }
 }
