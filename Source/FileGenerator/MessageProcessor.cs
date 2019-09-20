@@ -18,6 +18,7 @@ namespace FileGenerator
             new DataType("uint16", 2, "uint16_t", "UInt16"),
             new DataType("int", 4, "int32_t", "Int32"),
             new DataType("byte", 1, "uint8_t", "Byte"),
+            new DataType("sbyte", 1, "int8_t", "sbyte"),
             new DataType("blob", 0, "uint8_t *", "byte[]"),
             new DataType("string", 4, "char *", "String"),
             new DataType("fixedbytearray", 0, "uint8_t", "Byte"),
@@ -181,6 +182,10 @@ namespace FileGenerator
                         sourceFile.WriteLine($"            buffer[offset] = {variableName}.{me.Name};");
                         sourceFile.WriteLine($"            offset += {dt.Size};");
                         break;
+                    case "sbyte":
+                        sourceFile.WriteLine($"            buffer[offset] = (byte) {variableName}.{me.Name};");
+                        sourceFile.WriteLine($"            offset += {dt.Size};");
+                        break;
                     case "fixedbytearray":
                         sourceFile.WriteLine($"            Array.Copy(buffer, offset, {variableName}.{me.Name}, 0, {me.Length});");
                         sourceFile.WriteLine($"            offset += (int) ({me.Length};");
@@ -237,6 +242,11 @@ namespace FileGenerator
                 {
                     case "byte":
                         sourceFile.WriteLine($"            {variableName}.{me.Name} = buffer[offset];");
+                        sourceFile.WriteLine($"            offset += {dt.Size};");
+                        break;
+                    case "sbyte":
+                        sourceFile.WriteLine($"            {variableName}.{me.Name} = (sbyte) buffer[offset];");
+                        sourceFile.WriteLine($"            offset += {dt.Size};");
                         break;
                     case "fixedbytearray":
                         sourceFile.WriteLine($"            Array.Copy({variableName}.{me.Name}, 0, buffer, offset, {me.Length});");
@@ -478,6 +488,10 @@ namespace FileGenerator
                         sourceFile.WriteLine($"    *buffer = {variableName}->{me.Name};");
                         sourceFile.WriteLine($"    buffer += {dt.Size};");
                         break;
+                    case "sbyte":
+                        sourceFile.WriteLine($"    *buffer = (uint8_t) {variableName}->{me.Name};");
+                        sourceFile.WriteLine($"    buffer += {dt.Size};");
+                        break;
                     case "string":
                         sourceFile.WriteLine($"    Encode{dt.CSharpTypeName}({variableName}->{me.Name}, buffer);");
                         sourceFile.WriteLine($"    buffer += strlen({variableName}->{me.Name}) + 1;");
@@ -590,6 +604,10 @@ namespace FileGenerator
                 {
                     case "byte":
                         sourceFile.WriteLine($"    {variableName}->{me.Name} = *buffer;");
+                        sourceFile.WriteLine($"    buffer += {dt.Size};");
+                        break;
+                    case "sbyte":
+                        sourceFile.WriteLine($"    {variableName}->{me.Name} = (int8_t) *buffer;");
                         sourceFile.WriteLine($"    buffer += {dt.Size};");
                         break;
                     case "string":
