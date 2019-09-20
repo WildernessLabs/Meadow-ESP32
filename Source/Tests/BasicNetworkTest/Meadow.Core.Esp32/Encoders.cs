@@ -379,6 +379,7 @@ namespace Meadow.Core.Esp32
             Messages.AntennaInfo antennaInfo = new Messages.AntennaInfo();
 
             antennaInfo.Antenna = buffer[offset];
+            offset += 1;
             return(antennaInfo);
         }
 
@@ -512,9 +513,13 @@ namespace Meadow.Core.Esp32
             }
             offset += (int) 33;
             accessPoint.PrimaryChannel = buffer[offset];
+            offset += 1;
             accessPoint.SecondaryChannel = buffer[offset];
+            offset += 1;
             accessPoint.Rssi = buffer[offset];
+            offset += 1;
             accessPoint.AuthenticationMode = buffer[offset];
+            offset += 1;
             accessPoint.Protocols = ExtractUInt32(buffer, offset);
             offset += 4;
             return(accessPoint);
