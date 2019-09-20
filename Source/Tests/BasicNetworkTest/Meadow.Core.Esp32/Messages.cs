@@ -48,7 +48,7 @@ namespace Meadow.Core.Esp32
             public string Ssid;
             public Byte PrimaryChannel;
             public Byte SecondaryChannel;
-            public Byte Rssi;
+            public sbyte Rssi;
             public Byte AuthenticationMode;
             public UInt32 Protocols;
         };

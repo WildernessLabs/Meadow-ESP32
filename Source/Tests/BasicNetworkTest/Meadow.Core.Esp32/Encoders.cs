@@ -494,7 +494,7 @@ namespace Meadow.Core.Esp32
             offset += 1;
             buffer[offset] = accessPoint.SecondaryChannel;
             offset += 1;
-            buffer[offset] = accessPoint.Rssi;
+            buffer[offset] = (byte) accessPoint.Rssi;
             offset += 1;
             buffer[offset] = accessPoint.AuthenticationMode;
             offset += 1;
@@ -516,7 +516,7 @@ namespace Meadow.Core.Esp32
             offset += 1;
             accessPoint.SecondaryChannel = buffer[offset];
             offset += 1;
-            accessPoint.Rssi = buffer[offset];
+            accessPoint.Rssi = (sbyte) buffer[offset];
             offset += 1;
             accessPoint.AuthenticationMode = buffer[offset];
             offset += 1;

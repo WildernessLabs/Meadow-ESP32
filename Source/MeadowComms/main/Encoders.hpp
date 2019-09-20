@@ -53,7 +53,7 @@ namespace Esp32Messaging
         char Ssid[33];
         uint8_t PrimaryChannel;
         uint8_t SecondaryChannel;
-        uint8_t Rssi;
+        int8_t Rssi;
         uint8_t AuthenticationMode;
         uint32_t Protocols;
     };

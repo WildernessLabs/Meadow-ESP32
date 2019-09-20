@@ -663,7 +663,7 @@ void Encoders::EncodeAccessPoint(Esp32Messaging::AccessPoint *accessPoint, uint8
     buffer += 1;
     *buffer = accessPoint->SecondaryChannel;
     buffer += 1;
-    *buffer = accessPoint->Rssi;
+    *buffer = (uint8_t) accessPoint->Rssi;
     buffer += 1;
     *buffer = accessPoint->AuthenticationMode;
     buffer += 1;
@@ -709,7 +709,7 @@ Esp32Messaging::AccessPoint *Encoders::ExtractAccessPoint(uint8_t *buffer)
     buffer += 1;
     accessPoint->SecondaryChannel = *buffer;
     buffer += 1;
-    accessPoint->Rssi = *buffer;
+    accessPoint->Rssi = (int8_t) *buffer;
     buffer += 1;
     accessPoint->AuthenticationMode = *buffer;
     buffer += 1;
