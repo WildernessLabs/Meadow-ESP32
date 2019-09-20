@@ -40,7 +40,7 @@
                 { "Name": "Ssid", "DataType": "fixedchararray", "Length": "33" },
                 { "Name": "PrimaryChannel", "DataType": "byte" },
                 { "Name": "SecondaryChannel", "DataType": "byte" },
-                { "Name": "Rssi", "DataType": "byte" },
+                { "Name": "Rssi", "DataType": "sbyte" },
                 { "Name": "AuthenticationMode", "DataType": "byte" },
                 { "Name": "Protocols", "DataType": "uint32" }
             ]
