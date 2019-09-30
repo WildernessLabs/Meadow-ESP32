@@ -30,7 +30,7 @@ namespace Gpio
      *
      *  Note that this is also the same pin used to connect to Blinky.
      */
-    const gpio_num_t LOGGING_TX_PIN = GPIO_NUM_3;
+    const gpio_num_t LOGGING_TX_PIN = GPIO_NUM_1;
 
     /**
      *  UART Rx pin for the logging output.
@@ -61,14 +61,14 @@ namespace Gpio
      *  for the STM32 or it is ready to receive data from
      *  the STM32.
      */
-    const gpio_num_t ESP32_READY_PIN = UART0_TX_PIN;
+    const gpio_num_t ESP32_READY_PIN = BOOT_PIN;
 
     /**
      *  Pin used to by the STM32 to indicate it has data for
      *  the ESP32 or that it is ready to receive data from
      *  the ESP32.
      */
-    const gpio_num_t STM32_READY_PIN = BOOT_PIN;
+//    const gpio_num_t STM32_READY_PIN = BOOT_PIN;
 
     /**
      *  SPI MISO pin.
