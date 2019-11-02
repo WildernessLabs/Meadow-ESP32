@@ -3,8 +3,14 @@
  *
  *  Implementation of the WiFi functionality.
  */
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include "WiFiRequestHandler.hpp"
 #include "Exceptions/MultipleInstancesException.hpp"
+
+//extern "C" char* utoa(int a, char* buffer, unsigned char radix);
 
 /**
  *  Event handler for the WiFi loop.
@@ -406,7 +412,7 @@ void WiFiRequestHandler::HttpGet(Message *message)
 
     Esp32Messaging::HttpGetRequest *httpRequest = Encoders::ExtractHttpGetRequest(message->Payload);
     char portNumber[6];
-    utoa(httpRequest->PortNumber, portNumber, 10);
+    sprintf(portNumber, "%d", httpRequest->PortNumber);
 
     int maximumRequestLength = strlen(httpRequest->Uri) +strlen(httpRequest->ServerName) + 60;
     char *request = (char *) pvPortMalloc(maximumRequestLength);

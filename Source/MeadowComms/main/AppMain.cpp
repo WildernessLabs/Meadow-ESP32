@@ -43,31 +43,31 @@ extern "C" void app_main()
     //
     //  Temporary code to set up tests.
     //
-    Message *connectMessage = (Message *) pvPortMalloc(sizeof(Message));
-    connectMessage->MessageType = MessageTypes::Data;
-    connectMessage->Interface = Esp32Interfaces::WiFi;
-    connectMessage->Function = WiFiFunction::Start;
-    connectMessage->MessageID = messageDispatcher->GetNextMessageID();
+//    Message *connectMessage = (Message *) pvPortMalloc(sizeof(Message));
+//    connectMessage->MessageType = MessageTypes::Data;
+//    connectMessage->Interface = Esp32Interfaces::WiFi;
+//    connectMessage->Function = WiFiFunction::Start;
+//    connectMessage->MessageID = messageDispatcher->GetNextMessageID();
 
-    Esp32Messaging::WiFiCredentials wifiCredentials;
-    wifiCredentials.NetworkName = (char *) NETWORK_NAME;
-    wifiCredentials.Password = (char *) WIFI_PASSWORD;
-    int bufferLength = Encoders::EncodedWiFiCredentialsBufferSize(&wifiCredentials);
-    uint8_t *encodedCredentials = (uint8_t *) pvPortMalloc(bufferLength);
-    Encoders::EncodeWiFiCredentials(&wifiCredentials, encodedCredentials);
+//    Esp32Messaging::WiFiCredentials wifiCredentials;
+//    wifiCredentials.NetworkName = (char *) NETWORK_NAME;
+//    wifiCredentials.Password = (char *) WIFI_PASSWORD;
+//    int bufferLength = Encoders::EncodedWiFiCredentialsBufferSize(&wifiCredentials);
+//    uint8_t *encodedCredentials = (uint8_t *) pvPortMalloc(bufferLength);
+//    Encoders::EncodeWiFiCredentials(&wifiCredentials, encodedCredentials);
+//
+//    connectMessage->Payload = encodedCredentials;
+//    connectMessage->PayloadLength = bufferLength;
+//    messageDispatcher->QueueMessageForEsp32(connectMessage);
 
-    connectMessage->Payload = encodedCredentials;
-    connectMessage->PayloadLength = bufferLength;
-    messageDispatcher->QueueMessageForEsp32(connectMessage);
-
-    Message *getAccessPointsMessage = (Message *) pvPortMalloc(sizeof(Message));
-    getAccessPointsMessage->MessageType = MessageTypes::Data;
-    getAccessPointsMessage->Interface = Esp32Interfaces::WiFi;
-    getAccessPointsMessage->Function = WiFiFunction::GetAccessPoints;
-    getAccessPointsMessage->MessageID = messageDispatcher->GetNextMessageID();
-    getAccessPointsMessage->Payload = nullptr;
-    getAccessPointsMessage->PayloadLength = 0;
-    messageDispatcher->QueueMessageForEsp32(getAccessPointsMessage);
+//    Message *getAccessPointsMessage = (Message *) pvPortMalloc(sizeof(Message));
+//    getAccessPointsMessage->MessageType = MessageTypes::Data;
+//    getAccessPointsMessage->Interface = Esp32Interfaces::WiFi;
+//    getAccessPointsMessage->Function = WiFiFunction::GetAccessPoints;
+//    getAccessPointsMessage->MessageID = messageDispatcher->GetNextMessageID();
+//    getAccessPointsMessage->Payload = nullptr;
+//    getAccessPointsMessage->PayloadLength = 0;
+//    messageDispatcher->QueueMessageForEsp32(getAccessPointsMessage);
 
 //    Message *httpGetMessage = (Message *) pvPortMalloc(sizeof(Message));
 //    httpGetMessage->MessageType = MessageTypes::Data;

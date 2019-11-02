@@ -1,0 +1,66 @@
+<Project Sdk="Meadow.Sdk/1.0">
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>App</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\..\Meadow\Core\Esp32\Encoders.cs">
+      <Link>Meadow\Core\Esp32\Encoders.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Meadow\Core\Esp32\Message.cs">
+      <Link>Meadow\Core\Esp32\Message.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Meadow\Core\Esp32\Enums.cs">
+      <Link>Meadow\Core\Esp32\Enums.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Meadow\Core\Esp32\MessageDispatcher.cs">
+      <Link>Meadow\Core\Esp32\MessageDispatcher.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Meadow\Core\Esp32\SpiTransportProvider.cs">
+      <Link>Meadow\Core\Esp32\SpiTransportProvider.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Meadow\Core\Esp32\Messages.cs">
+      <Link>Meadow\Core\Esp32\Messages.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Meadow\Core\Esp32\BaseClasses\TransportProviderBase.cs">
+      <Link>Meadow\Core\Esp32\BaseClasses\TransportProviderBase.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Meadow\Core\Esp32\EventHandlers\TransportProviderMessageReceivedEventHandler.cs">
+      <Link>Meadow\Core\Esp32\EventHandlers\TransportProviderMessageReceivedEventHandler.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Meadow\Core\Esp32\EventHandlers\MessageReceivedEventHandler.cs">
+      <Link>Meadow\Core\Esp32\EventHandlers\MessageReceivedEventHandler.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Meadow\Core\Esp32\EventHandlers\TransportProviderDataReceivedEventHandler.cs">
+      <Link>Meadow\Core\Esp32\EventHandlers\TransportProviderDataReceivedEventHandler.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Meadow\Core\Esp32\EventHandlers\TransportProviderErrorEventHandlers.cs">
+      <Link>Meadow\Core\Esp32\EventHandlers\TransportProviderErrorEventHandlers.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Meadow\Core\Esp32\EventHandlers\MessageDispatcherErrorEventHandler.cs">
+      <Link>Meadow\Core\Esp32\EventHandlers\MessageDispatcherErrorEventHandler.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Meadow\Core\Esp32\Programmer\SerialPort.cs">
+      <Link>Meadow\Core\Esp32\Programmer\SerialPort.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Meadow\Core\Esp32\Programmer\FlashSizes.cs">
+      <Link>Meadow\Core\Esp32\Programmer\FlashSizes.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Meadow\Core\Esp32\Programmer\SlipEncoder.cs">
+      <Link>Meadow\Core\Esp32\Programmer\SlipEncoder.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Meadow\Core\Esp32\Programmer\EspLoader.cs">
+      <Link>Meadow\Core\Esp32\Programmer\EspLoader.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Meadow\Core\Esp32\Programmer\Programmer.cs">
+      <Link>Meadow\Core\Esp32\Programmer\Programmer.cs</Link>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Meadow\Network\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Meadow.Core\source\Meadow.Core\Meadow.Core.csproj" />
+  </ItemGroup>
+</Project>

@@ -4,7 +4,7 @@ using System;
 using System.Text;
 using System.Threading;
 using Meadow;
-using Meadow.Devices;
+using Meadow.Core;
 using Meadow.Hardware;
 using Meadow.Hardware.Communications;
 using Meadow.Core.Esp32;

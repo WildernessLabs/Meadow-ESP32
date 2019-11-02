@@ -2,6 +2,7 @@
 using System.Threading;
 using System.Collections.Generic;
 using Meadow.Hardware;
+using System.Collections;
 
 namespace Meadow.Core.Esp32
 {
@@ -10,16 +11,26 @@ namespace Meadow.Core.Esp32
     /// </summary>
     public class SpiTransportProvider : TransportProviderBase
     {
+        #region Constants
+
+        /// <summary>
+        /// Speed to the SPI bus.
+        /// </summary>
+        private const ushort SPI_BUS_SPEED = 1000;
+
+        #endregion Constants
+
         #region Class level variables.
 
         /// <summary>
         /// Pin used by the ESP32 to indicate that it is ready to send or receive data.
         /// </summary>
-        private readonly DigitalInputPort _esp32ReadyPin;
+//        private readonly DigitalInputPort _esp32ReadyPin;
 
         /// <summary>
         /// SPI interface used to communicate with the ESP32.
         /// </summary>
+//        private readonly SoftwareSPIBus _esp32;
         private readonly SpiPeripheral _esp32;
 
         /// <summary>
@@ -30,12 +41,12 @@ namespace Meadow.Core.Esp32
         /// <summary>
         /// STM32 pin connected to the boot pin on the ESP32.
         /// </summary>
-        private readonly DigitalOutputPort _boot;
+        private readonly BiDirectionalPort _esp32ReadyPin;
 
         /// <summary>
         /// Queue of messages to be sent to the ESP32.
         /// </summary>
-        private static Queue<Messages.Message> _messageQueue = null;
+        private static Queue _messageQueue = new Queue();
 
         /// <summary>
         /// Lock for the message queue to synchronise access by the two threads (main application
@@ -84,15 +95,25 @@ namespace Meadow.Core.Esp32
             //    being instantiated.  This will help prevent any "fake" messages being sent to
             //    the ESP32.
             //
+            Console.WriteLine("Creating Reset pin");
             _reset = (DigitalOutputPort) device.CreateDigitalOutputPort(resetPin, false);
+
+            Console.WriteLine("Creating SPI peripheral");
             
-            _esp32 = new SpiPeripheral(new SoftwareSPIBus(device, mosi, miso, clock), device.CreateDigitalOutputPort(chipSelect, true));
-            _boot = (DigitalOutputPort) device.CreateDigitalOutputPort(bootPin, true);
+//            _esp32 = new SoftwareSPIBus(device, mosi, miso, clock, chipSelect);
+
+//            SpiBus bus = device.CreateSpiBus();
+//            _esp32 = new SpiPeripheral(device.CreateSpiBus(clock, mosi, miso), device.CreateDigitalOutputPort(chipSelect, true));
+            _esp32 = new SpiPeripheral(device.CreateSpiBus(clock, mosi, miso, SPI_BUS_SPEED), device.CreateDigitalOutputPort(chipSelect, true));
+
+            Console.WriteLine("Creating Boot pin");
+            _esp32ReadyPin = (BiDirectionalPort) device.CreateBiDirectionalPort(bootPin, initialState: true, initialDirection: PortDirectionType.Output);
 
             _reset.State = true;
-            _esp32ReadyPin = (DigitalInputPort) device.CreateDigitalInputPort(esp32ReadyPin, interruptMode: InterruptMode.EdgeRising);
-            
-            _messageQueue = new Queue<Messages.Message>();
+            _esp32ReadyPin.Direction = PortDirectionType.Input;
+
+//            _esp32ReadyPin = (DigitalInputPort) device.CreateDigitalInputPort(esp32ReadyPin, interruptMode: InterruptMode.EdgeRising);
+
             _queueHandler = new Thread(() =>
             {
                 Run();
@@ -178,7 +199,7 @@ namespace Meadow.Core.Esp32
                     Messages.Message message;
                     lock (_messageQueueLock)
                     {
-                        message = _messageQueue.Dequeue();
+                        message = (Messages.Message) _messageQueue.Dequeue();
                     }
                     SendMessage(message);
                     lock (_messageQueueLock)
@@ -234,9 +255,9 @@ namespace Meadow.Core.Esp32
         {
             DebugHelpers.DebugHelpers.LogMessage("Entering GetMessageHeaderAcknowledgement");
             
-            byte[] dummyHeader = new byte[_headerFrameSize];
-            Array.Clear(dummyHeader, 0, (int)_headerFrameSize);
-            byte[] encodedAcknowledgement = _esp32.WriteRead(dummyHeader, (ushort)_headerFrameSize);
+//            byte[] dummyHeader = new byte[_headerFrameSize];
+//            Array.Clear(dummyHeader, 0, (int)_headerFrameSize);
+            byte[] encodedAcknowledgement = _esp32.ReadBytes((ushort) _headerFrameSize); // _esp32.WriteRead(dummyHeader, (ushort)_headerFrameSize);
 
             DebugHelpers.DebugHelpers.LogMessage("Received:");
             DebugHelpers.DebugHelpers.LogMessage(DebugHelpers.DebugHelpers.PrintableBuffer(encodedAcknowledgement));
@@ -287,9 +308,9 @@ namespace Meadow.Core.Esp32
             DebugHelpers.DebugHelpers.LogMessage("Entering GetMessageHeader");
             
             ushort incomingMessageLength = (ushort) Encoders.CalculateSpiBufferSize(Messages.HEADER_SIZE);
-            byte[] encodedDummyMessage = new byte[incomingMessageLength];
-            Array.Clear(encodedDummyMessage, 0, incomingMessageLength);
-            byte[] encodedInboundMessage = _esp32.WriteRead(encodedDummyMessage, incomingMessageLength);
+//            byte[] encodedDummyMessage = new byte[incomingMessageLength];
+//            Array.Clear(encodedDummyMessage, 0, incomingMessageLength);
+            byte[] encodedInboundMessage = _esp32.ReadBytes(incomingMessageLength); // _esp32.WriteRead(encodedDummyMessage, incomingMessageLength);
 
             DebugHelpers.DebugHelpers.LogMessage("Received:");
             DebugHelpers.DebugHelpers.LogMessage(DebugHelpers.DebugHelpers.PrintableBuffer(encodedInboundMessage));
@@ -314,9 +335,10 @@ namespace Meadow.Core.Esp32
 
             ushort incomingMessageLength = (ushort) Encoders.CalculateSpiBufferSize(Messages.HEADER_SIZE + header.PayloadLength);
             
-            byte[] encodedDummyMessage = new byte[incomingMessageLength];
-            Array.Clear(encodedDummyMessage, 0, incomingMessageLength);
-            byte[] encodedInboundMessage = _esp32.WriteRead(encodedDummyMessage, incomingMessageLength);
+//            byte[] encodedDummyMessage = new byte[incomingMessageLength];
+//            Array.Clear(encodedDummyMessage, 0, incomingMessageLength);
+
+            byte[] encodedInboundMessage = _esp32.ReadBytes(incomingMessageLength); // _esp32.WriteRead(encodedDummyMessage, incomingMessageLength);
 
             DebugHelpers.DebugHelpers.LogMessage("Received:");
             DebugHelpers.DebugHelpers.LogMessage(DebugHelpers.DebugHelpers.PrintableBuffer(encodedInboundMessage));
@@ -465,9 +487,10 @@ namespace Meadow.Core.Esp32
             //
             Thread.Sleep(50);
             
-            byte[] dummyHeader = new byte[_headerFrameSize];
-            Array.Clear(dummyHeader, 0, (int)_headerFrameSize);
-            byte[] encodedAcknowledgement = _esp32.WriteRead(dummyHeader, (ushort)_headerFrameSize);
+//            byte[] dummyHeader = new byte[_headerFrameSize];
+//            Array.Clear(dummyHeader, 0, (int)_headerFrameSize);
+
+            byte[] encodedAcknowledgement = _esp32.ReadBytes((ushort)_headerFrameSize); // _esp32.WriteRead(dummyHeader, (ushort)_headerFrameSize);
             DebugHelpers.DebugHelpers.LogMessage("Acknowledgement:");
             DebugHelpers.DebugHelpers.LogMessage(DebugHelpers.DebugHelpers.PrintableBuffer(encodedAcknowledgement));
             
