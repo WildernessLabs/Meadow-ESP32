@@ -10,6 +10,10 @@ namespace BasicNetworkTest
     public class NetworkTest : App<F7Micro, NetworkTest>
     {
         private DigitalInputPort _button;
+        
+        IDigitalInputPort _esp32UartRx;
+        
+        IDigitalInputPort _esp32UartTx;
 
         private UInt32 _counter;
 
@@ -25,6 +29,9 @@ namespace BasicNetworkTest
 
         public NetworkTest()
         {
+            _esp32UartRx = (IDigitalInputPort) Device.CreateDigitalInputPort(Device.Pins.ESP_UART_RX, resistorMode: ResistorMode.Disabled);
+            _esp32UartTx = (IDigitalInputPort) Device.CreateDigitalInputPort(Device.Pins.ESP_UART_TX, resistorMode: ResistorMode.Disabled);
+
 //            _dispatcher = new MessageDispatcher(Device, esp32ReadyPin: Device.Pins.ESP_UART_RX,
 //                mosi: Device.Pins.MOSI, miso: Device.Pins.MISO, clock: Device.Pins.SCK, chipSelect: Device.Pins.D00,
 //                bootPin: Device.Pins.ESP_BOOT, resetPin: Device.Pins.ESP_RST);
@@ -99,6 +106,7 @@ namespace BasicNetworkTest
             byte[] encodedStartMessage = Encoders.EncodeWiFiCredentials(startNetwork);
             message.Payload = encodedStartMessage;
             message.PayloadLength = (uint)encodedStartMessage.Length;
+            
             QueueMessage(message);
         }
 
