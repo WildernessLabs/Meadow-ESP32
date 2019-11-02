@@ -110,7 +110,7 @@ namespace Meadow.Core.Esp32
         public UInt32 GetNextMessageID()
         {
             _lastMessageId++;
-            return (_lastMessageId &~ESP32_MESSAGE_ID_MASK);
+            return (_lastMessageId & ~ESP32_MESSAGE_ID_MASK);
         }
 
         #endregion Methods
