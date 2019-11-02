@@ -1,6 +1,7 @@
 using System;
 using System.Text;
 using System.Collections;
+using System.Threading;
 
 namespace DebugHelpers
 {
@@ -132,7 +133,8 @@ namespace DebugHelpers
         {
             #if DEBUG
             Console.WriteLine($"STM: {DateTime.Now.ToString("HH:mm:ss")}: {message}");
-            #endif
+            Thread.Sleep(5);
+#endif
         }
 
         /// <summary>
