@@ -95,15 +95,7 @@ namespace Meadow.Core.Esp32
             //    being instantiated.  This will help prevent any "fake" messages being sent to
             //    the ESP32.
             //
-            Console.WriteLine("Creating Reset pin");
             _reset = (DigitalOutputPort) device.CreateDigitalOutputPort(resetPin, false);
-
-            Console.WriteLine("Creating SPI peripheral");
-            
-//            _esp32 = new SoftwareSPIBus(device, mosi, miso, clock, chipSelect);
-
-//            SpiBus bus = device.CreateSpiBus();
-//            _esp32 = new SpiPeripheral(device.CreateSpiBus(clock, mosi, miso), device.CreateDigitalOutputPort(chipSelect, true));
             _esp32 = new SpiPeripheral(device.CreateSpiBus(clock, mosi, miso, SPI_BUS_SPEED), device.CreateDigitalOutputPort(chipSelect, true));
 
             Console.WriteLine("Creating Boot pin");
@@ -111,8 +103,6 @@ namespace Meadow.Core.Esp32
 
             _reset.State = true;
             _esp32ReadyPin.Direction = PortDirectionType.Input;
-
-//            _esp32ReadyPin = (DigitalInputPort) device.CreateDigitalInputPort(esp32ReadyPin, interruptMode: InterruptMode.EdgeRising);
 
             _queueHandler = new Thread(() =>
             {
@@ -254,9 +244,6 @@ namespace Meadow.Core.Esp32
         private (Messages.Message?, StatusCodes) GetMessageHeaderAcknowledgement(Messages.Message message)
         {
             DebugHelpers.DebugHelpers.LogMessage("Entering GetMessageHeaderAcknowledgement");
-            
-//            byte[] dummyHeader = new byte[_headerFrameSize];
-//            Array.Clear(dummyHeader, 0, (int)_headerFrameSize);
             byte[] encodedAcknowledgement = _esp32.ReadBytes((ushort) _headerFrameSize); // _esp32.WriteRead(dummyHeader, (ushort)_headerFrameSize);
 
             DebugHelpers.DebugHelpers.LogMessage("Received:");
@@ -308,8 +295,6 @@ namespace Meadow.Core.Esp32
             DebugHelpers.DebugHelpers.LogMessage("Entering GetMessageHeader");
             
             ushort incomingMessageLength = (ushort) Encoders.CalculateSpiBufferSize(Messages.HEADER_SIZE);
-//            byte[] encodedDummyMessage = new byte[incomingMessageLength];
-//            Array.Clear(encodedDummyMessage, 0, incomingMessageLength);
             byte[] encodedInboundMessage = _esp32.ReadBytes(incomingMessageLength); // _esp32.WriteRead(encodedDummyMessage, incomingMessageLength);
 
             DebugHelpers.DebugHelpers.LogMessage("Received:");
@@ -334,10 +319,6 @@ namespace Meadow.Core.Esp32
             DebugHelpers.DebugHelpers.LogMessage("Entering GetMessageBody");
 
             ushort incomingMessageLength = (ushort) Encoders.CalculateSpiBufferSize(Messages.HEADER_SIZE + header.PayloadLength);
-            
-//            byte[] encodedDummyMessage = new byte[incomingMessageLength];
-//            Array.Clear(encodedDummyMessage, 0, incomingMessageLength);
-
             byte[] encodedInboundMessage = _esp32.ReadBytes(incomingMessageLength); // _esp32.WriteRead(encodedDummyMessage, incomingMessageLength);
 
             DebugHelpers.DebugHelpers.LogMessage("Received:");
@@ -487,9 +468,6 @@ namespace Meadow.Core.Esp32
             //
             Thread.Sleep(50);
             
-//            byte[] dummyHeader = new byte[_headerFrameSize];
-//            Array.Clear(dummyHeader, 0, (int)_headerFrameSize);
-
             byte[] encodedAcknowledgement = _esp32.ReadBytes((ushort)_headerFrameSize); // _esp32.WriteRead(dummyHeader, (ushort)_headerFrameSize);
             DebugHelpers.DebugHelpers.LogMessage("Acknowledgement:");
             DebugHelpers.DebugHelpers.LogMessage(DebugHelpers.DebugHelpers.PrintableBuffer(encodedAcknowledgement));
@@ -533,7 +511,7 @@ namespace Meadow.Core.Esp32
         private void SendMessage(Messages.Message message)
         {
             DebugHelpers.DebugHelpers.LogMessage("");
-            DebugHelpers.DebugHelpers.LogMessage("********************************************************************************");
+            DebugHelpers.DebugHelpers.LogMessage("****************************************************************************************************");
             DebugHelpers.DebugHelpers.LogMessage("");
             DebugHelpers.DebugHelpers.LogMessage("Entering SendMessage");
             DebugHelpers.DebugHelpers.LogMessage("Sending message:");
