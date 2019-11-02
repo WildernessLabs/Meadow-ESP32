@@ -8,7 +8,7 @@ namespace BasicNetworkTest
         static IApp application;
         public static void Main(string[] args)
         {
-            Console.WriteLine("Basic Networking Test Application for Meadow F7");
+            Console.WriteLine("Basic Networking Test Application for Meadow F7 (Version 0.12.01)");
             
             application = new NetworkTest();
         }
