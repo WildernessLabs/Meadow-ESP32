@@ -134,7 +134,7 @@ namespace DebugHelpers
             #if DEBUG
             Console.WriteLine($"STM: {DateTime.Now.ToString("HH:mm:ss")}: {message}");
             Thread.Sleep(5);
-#endif
+            #endif
         }
 
         /// <summary>
