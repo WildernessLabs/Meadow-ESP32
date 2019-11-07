@@ -125,7 +125,7 @@ SpiTransportProvider::SpiTransportProvider() :
     ClearTransmitAndReceiveBuffers(_headerReceiveBuffer, _headerTransmitBuffer, _headerFrameSize);
 
     /*
-     *  Set the state machine to be ready to receive messgaes.
+     *  Set the state machine to be ready to receive messages.
      */
     _currentState = WaitingForInboundMessageHeader;
 
