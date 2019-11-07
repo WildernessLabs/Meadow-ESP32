@@ -68,6 +68,7 @@ SpiTransportProvider::SpiTransportProvider() :
      *  Set the handshake pins to output and set the level low for
      *  the output pin and register the ISR for the input pin.
      */
+    gpio_pad_select_gpio(Gpio::ESP32_READY_PIN);
     gpio_set_direction(Gpio::ESP32_READY_PIN, GPIO_MODE_OUTPUT);
     gpio_set_level(Gpio::ESP32_READY_PIN, 0);
 
@@ -96,13 +97,15 @@ SpiTransportProvider::SpiTransportProvider() :
     spiBusConfiguration.mosi_io_num = Gpio::MOSI_PIN;
     spiBusConfiguration.miso_io_num = Gpio::MISO_PIN;
     spiBusConfiguration.sclk_io_num = Gpio::CLOCK_PIN;
+    spiBusConfiguration.quadhd_io_num = -1;
+    spiBusConfiguration.quadwp_io_num = -1;
 
     /*
      *  Configuration for the SPI slave interface.
      */
     spi_slave_interface_config_t slaveConfiguration;
     memset(&slaveConfiguration, 0, sizeof(spi_slave_interface_config_t));
-    slaveConfiguration.mode = 0;
+    slaveConfiguration.mode = 3;
     slaveConfiguration.spics_io_num = Gpio::CHIP_SELECT_PIN;
     slaveConfiguration.queue_size = 3;
     slaveConfiguration.flags = 0;
@@ -1065,14 +1068,14 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessMessages(spi_slave_transac
 {
     spi_slave_transaction_t *newTransaction = nullptr;
 
-    if ((_currentState == WaitingForInboundMessageHeader) && (OutboundMessageQueueLength() > 0))
-    {
-        gpio_set_level(Gpio::ESP32_READY_PIN, 1);
-    }
-    else
-    {
-        gpio_set_level(Gpio::ESP32_READY_PIN, 0);
-    }
+//    if ((_currentState == WaitingForInboundMessageHeader) && (OutboundMessageQueueLength() > 0))
+//    {
+//        ToggleEsp32ReadyPin();
+//    }
+//    else
+//    {
+//        gpio_set_level(Gpio::ESP32_READY_PIN, 0);
+//    }
 
     uint32_t notificationBits = 0;
     ESP_LOGI(__func__, "Waiting for notification, current state: %s", SpiStateString(_currentState));

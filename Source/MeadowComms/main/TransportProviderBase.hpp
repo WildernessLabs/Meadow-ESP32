@@ -94,6 +94,11 @@ protected:
      *  Get the next message from the outbound message queue.
      */
     Message *GetOutboundMessage();
+
+    /*
+     *  Toggle the GPIO pin that is connected to the STM32.
+     */
+    void ToggleEsp32ReadyPin();
 };
 
 #endif /* _TRANSPORT_PROVIDER_BASE_HPP_ */

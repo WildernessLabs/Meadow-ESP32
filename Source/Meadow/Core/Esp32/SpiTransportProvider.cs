@@ -16,7 +16,7 @@ namespace Meadow.Core.Esp32
         /// <summary>
         /// Speed to the SPI bus.
         /// </summary>
-        private const ushort SPI_BUS_SPEED = 1000;
+        private const ushort SPI_BUS_SPEED = 375;
 
         #endregion Constants
 
@@ -41,7 +41,9 @@ namespace Meadow.Core.Esp32
         /// <summary>
         /// STM32 pin connected to the boot pin on the ESP32.
         /// </summary>
-        private readonly BiDirectionalPort _esp32ReadyPin;
+        private readonly DigitalInputPort _esp32ReadyPin;
+
+        private readonly DigitalOutputPort _boot;
 
         /// <summary>
         /// Queue of messages to be sent to the ESP32.
@@ -88,21 +90,18 @@ namespace Meadow.Core.Esp32
         /// <summary>
         /// Default constructor for the SPI Transport Provider implementation.
         /// </summary>
-        public SpiTransportProvider(IIODevice device, IPin esp32ReadyPin, IPin mosi, IPin miso, IPin clock, IPin chipSelect, IPin bootPin, IPin resetPin)
+        public SpiTransportProvider(IIODevice device, IPin mosi, IPin miso, IPin clock, IPin chipSelect, IPin bootPin, IPin resetPin)
         {
-            //
-            //    Create the reset pin first and hold the ESP32 in reset while the other pins are
-            //    being instantiated.  This will help prevent any "fake" messages being sent to
-            //    the ESP32.
-            //
+            SpiClockConfiguration spiConfiguration = new SpiClockConfiguration(SPI_BUS_SPEED, SpiClockConfiguration.Mode.Mode3);
+            _esp32 = new SpiPeripheral(device.CreateSpiBus(clock, mosi, miso, spiConfiguration), device.CreateDigitalOutputPort(chipSelect, true));
+
+            _boot = (DigitalOutputPort) device.CreateDigitalOutputPort(bootPin, initialState: true);
+
             _reset = (DigitalOutputPort) device.CreateDigitalOutputPort(resetPin, false);
-            _esp32 = new SpiPeripheral(device.CreateSpiBus(clock, mosi, miso, SPI_BUS_SPEED), device.CreateDigitalOutputPort(chipSelect, true));
 
-            Console.WriteLine("Creating Boot pin");
-            _esp32ReadyPin = (BiDirectionalPort) device.CreateBiDirectionalPort(bootPin, initialState: true, initialDirection: PortDirectionType.Output);
-
+            Thread.Sleep(1);
             _reset.State = true;
-            _esp32ReadyPin.Direction = PortDirectionType.Input;
+            _boot.Dispose();
 
             _queueHandler = new Thread(() =>
             {
@@ -115,12 +114,7 @@ namespace Meadow.Core.Esp32
             _requestMessage.Interface = (byte)Esp32Interfaces.Transport;
             _requestMessage.Function = (UInt32)TransportFunction.SendResponse;
 
-            //
-            //  We need to wait for 100ms after resetting the ESP32 before attaching
-            //  an interrupt as the ESP32 will be sending diagnostic information to
-            //  the UART pin.
-            //
-            Thread.Sleep(100);
+            _esp32ReadyPin = (DigitalInputPort) device.CreateDigitalInputPort(bootPin, InterruptMode.EdgeRising, ResistorMode.Disabled);
             _esp32ReadyPin.Changed += _esp32ReadyPin_Changed;
         }
 

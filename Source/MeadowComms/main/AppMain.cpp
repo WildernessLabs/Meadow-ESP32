@@ -91,10 +91,13 @@ extern "C" void app_main()
     //  Main program loop.
     //
 //    bool state = false;
+//    int level = 0;
     while (true)
     {
 //        spi->WaitForData();
-//        gpio_set_level(Gpio::ESP32_READY_PIN, state ? 1 : 0);
+//        ESP_LOGI(__func__, "Toggling pin, level %d", level);
+//        level = state ? 1 : 0;
+//        gpio_set_level(Gpio::ESP32_READY_PIN, level);
 //        state = !state;
         vTaskDelay(500 / portTICK_PERIOD_MS);
     }

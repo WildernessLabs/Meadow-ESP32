@@ -38,7 +38,7 @@ namespace Gpio
      *  Note that the pin used here is not actually connected to
      *  anything but the pin is necessary to setup the logging UART.
      */
-    const gpio_num_t LOGGING_RX_PIN = GPIO_NUM_21;
+    const gpio_num_t LOGGING_RX_PIN = GPIO_NUM_3;
 
     /**
      *  GPIO pin used to indicate to the STM32 that there is data

@@ -53,7 +53,7 @@ namespace Meadow.Core.Esp32
             {
                 throw new InvalidOperationException("Only a single instance of a MessageDispatcher can be created.");
             }
-            _esp32 = new SpiTransportProvider(device, esp32ReadyPin, mosi, miso, clock, chipSelect, bootPin, resetPin);
+            _esp32 = new SpiTransportProvider(device, mosi, miso, clock, chipSelect, bootPin, resetPin);
             _esp32.MessageReceived += _esp32_DataReceived;
             _esp32.TransportError += _esp32_TransportError;
         }
