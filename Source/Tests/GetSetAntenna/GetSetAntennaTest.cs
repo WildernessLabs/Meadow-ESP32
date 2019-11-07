@@ -7,7 +7,7 @@ using Meadow.Core.Esp32;
 
 namespace BasicNetworkTest
 {
-    public class NetworkTest : App<F7Micro, NetworkTest>
+    public class GetSetAntennaTest : App<F7Micro, GetSetAntennaTest>
     {
         private DigitalInputPort _button;
         
@@ -27,7 +27,7 @@ namespace BasicNetworkTest
 
         private Messages.AntennaInfo _antennaInfo;
 
-        public NetworkTest()
+        public GetSetAntennaTest()
         {
             _esp32UartRx = (IDigitalInputPort) Device.CreateDigitalInputPort(Device.Pins.ESP_UART_RX, resistorMode: ResistorMode.Disabled);
             _esp32UartTx = (IDigitalInputPort) Device.CreateDigitalInputPort(Device.Pins.ESP_UART_TX, resistorMode: ResistorMode.Disabled);
