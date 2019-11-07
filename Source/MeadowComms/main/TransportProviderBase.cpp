@@ -157,7 +157,6 @@ bool TransportProviderBase::QueueMessageForStm32(Message *message)
  */
 void TransportProviderBase::ToggleEsp32ReadyPin()
 {
-    ESP_LOGI(__func__, "Toggling GPIO");
     gpio_set_level(Gpio::ESP32_READY_PIN, 1);
     vTaskDelay(50 / portTICK_PERIOD_MS);
     gpio_set_level(Gpio::ESP32_READY_PIN, 0);
