@@ -32,9 +32,6 @@ namespace BasicNetworkTest
             _esp32UartRx = (IDigitalInputPort) Device.CreateDigitalInputPort(Device.Pins.ESP_UART_RX, resistorMode: ResistorMode.Disabled);
             _esp32UartTx = (IDigitalInputPort) Device.CreateDigitalInputPort(Device.Pins.ESP_UART_TX, resistorMode: ResistorMode.Disabled);
 
-//            _dispatcher = new MessageDispatcher(Device, esp32ReadyPin: Device.Pins.ESP_UART_RX,
-//                mosi: Device.Pins.MOSI, miso: Device.Pins.MISO, clock: Device.Pins.SCK, chipSelect: Device.Pins.D00,
-//                bootPin: Device.Pins.ESP_BOOT, resetPin: Device.Pins.ESP_RST);
             _dispatcher = new MessageDispatcher(Device, esp32ReadyPin: Device.Pins.ESP_BOOT,
                 mosi: Device.Pins.ESP_MOSI, miso: Device.Pins.ESP_MISO, clock: Device.Pins.ESP_CLK, chipSelect: Device.Pins.ESP_CS,
                 bootPin: Device.Pins.ESP_BOOT, resetPin: Device.Pins.ESP_RST);
