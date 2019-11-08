@@ -23,14 +23,8 @@ namespace Meadow.Core.Esp32
         #region Class level variables.
 
         /// <summary>
-        /// Pin used by the ESP32 to indicate that it is ready to send or receive data.
-        /// </summary>
-//        private readonly DigitalInputPort _esp32ReadyPin;
-
-        /// <summary>
         /// SPI interface used to communicate with the ESP32.
         /// </summary>
-//        private readonly SoftwareSPIBus _esp32;
         private readonly SpiPeripheral _esp32;
 
         /// <summary>
@@ -43,7 +37,10 @@ namespace Meadow.Core.Esp32
         /// </summary>
         private readonly DigitalInputPort _esp32ReadyPin;
 
-        private readonly DigitalOutputPort _boot;
+        /// <summary>
+        /// STM32 pin connected to the boot pin of the ESP32.
+        /// </summary>
+        private readonly DigitalOutputPort _bootPin;
 
         /// <summary>
         /// Queue of messages to be sent to the ESP32.
@@ -95,13 +92,13 @@ namespace Meadow.Core.Esp32
             SpiClockConfiguration spiConfiguration = new SpiClockConfiguration(SPI_BUS_SPEED, SpiClockConfiguration.Mode.Mode3);
             _esp32 = new SpiPeripheral(device.CreateSpiBus(clock, mosi, miso, spiConfiguration), device.CreateDigitalOutputPort(chipSelect, true));
 
-            _boot = (DigitalOutputPort) device.CreateDigitalOutputPort(bootPin, initialState: true);
+            _bootPin = (DigitalOutputPort) device.CreateDigitalOutputPort(bootPin, initialState: true);
 
             _reset = (DigitalOutputPort) device.CreateDigitalOutputPort(resetPin, false);
 
             Thread.Sleep(1);
             _reset.State = true;
-            _boot.Dispose();
+            _bootPin.Dispose();
 
             _queueHandler = new Thread(() =>
             {
