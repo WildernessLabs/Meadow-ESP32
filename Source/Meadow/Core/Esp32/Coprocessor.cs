@@ -28,14 +28,19 @@ namespace Meadow.Core.Esp32
             
         }
         
-        #endregion Constructors
-
-        #region Methods
-        
+        /// <summary>
+        /// Create a new coprocessor object and specify the message dispatcher to be used to send requests
+        /// to the coprocessor.
+        /// </summary>
+        /// <param name="dispatcher">Message dispatcher to be used to send messages to the network chip.</param>
         public Coprocessor(MessageDispatcher dispatcher)
         {
             _dispatcher = dispatcher;
         }
+        
+        #endregion Constructors
+
+        #region Methods
         
         /// <summary>
         /// Get the antenna currently in use.
@@ -67,6 +72,11 @@ namespace Meadow.Core.Esp32
             return((AntennaTypes) antenna.Antenna);
         }
 
+        /// <summary>
+        /// Change the current antenna in use.
+        /// </summary>
+        /// <param name="antenna">New antenna to use.</param>
+        /// <exception cref="CoprocessorException">Exception thrown if the SetAntenna method fails.</exception>
         public void SetAntenna(AntennaTypes antenna)
         {
             Messages.Message setAntennaMessage;
