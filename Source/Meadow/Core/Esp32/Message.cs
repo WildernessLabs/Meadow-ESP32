@@ -66,25 +66,30 @@ namespace Meadow.Core.Esp32
             /// <summary>
             /// 
             /// </summary>
-            public void Log()
+            public void Log(bool outputMessage)
             {
-                StringBuilder line = new StringBuilder();
-
-                line.Append($"Message Type: {MessageType}, ");
-                line.Append($"Interface: {Interface}, ");
-                line.Append($"Function: {Function}, ");
-                line.Append($"Message ID: {MessageID}, ");
-                line.Append($"StatusCode: {StatusCode}, ");
-                line.Append($"Payload length: {PayloadLength}");
-                DebugHelpers.DebugHelpers.LogMessage(line.ToString());
-                if (PayloadLength > 0)
+                #if DEBUG
+                if (outputMessage)
                 {
-                    DebugHelpers.DebugHelpers.LogMessage("Payload:");
-                    foreach (string s in DebugHelpers.DebugHelpers.PrintableBuffer(Payload))
+                    StringBuilder line = new StringBuilder();
+
+                    line.Append($"Message Type: {MessageType}, ");
+                    line.Append($"Interface: {Interface}, ");
+                    line.Append($"Function: {Function}, ");
+                    line.Append($"Message ID: {MessageID}, ");
+                    line.Append($"StatusCode: {StatusCode}, ");
+                    line.Append($"Payload length: {PayloadLength}");
+                    DebugHelpers.DebugHelpers.LogMessage(outputMessage, line.ToString());
+                    if (PayloadLength > 0)
                     {
-                        DebugHelpers.DebugHelpers.LogMessage(s);
+                        DebugHelpers.DebugHelpers.LogMessage(outputMessage, "Payload:");
+                        foreach (string s in DebugHelpers.DebugHelpers.PrintableBuffer(Payload))
+                        {
+                            DebugHelpers.DebugHelpers.LogMessage(outputMessage, s);
+                        }
                     }
                 }
+                #endif
             }
         }
         
