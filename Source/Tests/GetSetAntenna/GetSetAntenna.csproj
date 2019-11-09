@@ -30,6 +30,18 @@
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\..\Meadow\Core\Esp32\Coprocessor.cs">
+      <Link>Meadow\Core\Esp32\Coprocessor.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Meadow\Core\Esp32\Exceptions\CoprocessorException.cs">
+      <Link>Meadow\Core\Esp32\Exceptions\CoprocessorException.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Meadow\Core\Esp32\Exceptions\CoprocessorResponseNotFoundException.cs">
+      <Link>Meadow\Core\Esp32\Exceptions\CoprocessorResponseNotFoundException.cs</Link>
+    </Compile>
+    <Compile Include="..\..\Meadow\Core\Esp32\MessageListEntry.cs">
+      <Link>Meadow\Core\Esp32\MessageListEntry.cs</Link>
+    </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="DebugHelpers.cs" />
