@@ -129,11 +129,15 @@ namespace DebugHelpers
         /// Display a timestamped message on the console.
         /// </summary>
         /// <param name="message">Message to be displayed on the console.</param>
-        public static void LogMessage(string message)
+        /// <param name="showOutput">Determine if the method should show the message.</param>
+        public static void LogMessage(bool showOutput, string message)
         {
             #if DEBUG
-            Console.WriteLine($"STM: {DateTime.Now.ToString("HH:mm:ss")}: {message}");
-            Thread.Sleep(5);
+            if (showOutput)
+            {
+                Console.WriteLine($"STM: {DateTime.Now.ToString("HH:mm:ss")}: {message}");
+                Thread.Sleep(5);
+            }
             #endif
         }
 
@@ -141,12 +145,18 @@ namespace DebugHelpers
         /// Display a timestamped list of string held in an array on the console.
         /// </summary>
         /// <param name="messages">Array of strings to be displayed.</param>
-        public static void LogMessage(ArrayList lines)
+        /// <param name="showOutput">Determine if the method should show the message.</param>
+        public static void LogMessage(bool showOutput, ArrayList lines)
         {
-            foreach (string s in lines)
+            #if DEBUG
+            if (showOutput)
             {
-                LogMessage(s);
+                foreach (string s in lines)
+                {
+                    LogMessage(showOutput, s);
+                }
             }
+            #endif
         }
         
         #endregion Methods

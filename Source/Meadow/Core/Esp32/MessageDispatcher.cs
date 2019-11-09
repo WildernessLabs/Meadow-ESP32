@@ -26,6 +26,16 @@ namespace Meadow.Core.Esp32
         
         #endregion Constants
         
+        #region Enums
+        
+        /// <summary>
+        /// Possible debug outputs.
+        /// </summary>
+        [Flags]
+        public enum DebugOptions { None = 0x00, Information = 0x01, Errors = 0x02 }
+        
+        #endregion
+        
         #region Private variables.
 
         /// <summary>
@@ -51,6 +61,15 @@ namespace Meadow.Core.Esp32
         
         #endregion Private variables
 
+        #region Properties
+        
+        /// <summary>
+        /// Determine how much debug output is generated.
+        /// </summary>
+        public DebugOptions DebugLevel { get; set; }
+        
+        #endregion Properties
+        
         #region Delegates
 
         /// <summary>
@@ -73,6 +92,7 @@ namespace Meadow.Core.Esp32
         /// </summary>
         public MessageDispatcher(IIODevice device, IPin mosi, IPin miso, IPin clock, IPin chipSelect, IPin bootPin, IPin resetPin)
         {
+            DebugLevel = DebugOptions.None;
             if (_esp32 != null)
             {
                 throw new InvalidOperationException("Only a single instance of a MessageDispatcher can be created.");
