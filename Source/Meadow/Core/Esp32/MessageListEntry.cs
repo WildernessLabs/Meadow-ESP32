@@ -27,7 +27,7 @@ namespace Meadow.Core.Esp32
         #region Constructrors
 
         /// <summary>
-        /// Default constructor (private to prevent it from being used.
+        /// Default constructor (private to prevent it from being used).
         /// </summary>
         private MessageListEntry()
         {
