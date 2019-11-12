@@ -17,7 +17,7 @@ namespace Meadow.Core.Esp32
         /// Possible debug outputs.
         /// </summary>
         [Flags]
-        public enum DebugOptions { None = 0x00, Information = 0x01, Errors = 0x02, MethodNames = 0x04, Messages = 0x08, DataPackets = 0x10 }
+        public enum DebugOptions : UInt32 { None = 0x00, Information = 0x01, Errors = 0x02, MethodNames = 0x04, Messages = 0x08, DataPackets = 0x10, Full = 0xffffffff }
         
         #endregion
         
@@ -163,7 +163,7 @@ namespace Meadow.Core.Esp32
         /// <param name="e"></param>
         private void _esp32ReadyPin_Changed(object sender, DigitalInputPortEventArgs e)
         {
-            DebugHelpers.DebugHelpers.LogMessage(DebugLevel == DebugOptions.Information,"ESP32 has generated an interrupt.");
+            DebugHelpers.DebugHelpers.LogMessage(DebugLevel.HasFlag(DebugOptions.Information),"ESP32 has generated an interrupt.");
             QueueMessageForEsp32(_requestMessage);
         }
 
@@ -306,7 +306,7 @@ namespace Meadow.Core.Esp32
             DebugHelpers.DebugHelpers.LogMessage(DebugLevel.HasFlag(DebugOptions.MethodNames), "Entering GetMessageHeader");
             
             ushort incomingMessageLength = (ushort) Encoders.CalculateSpiBufferSize(Messages.HEADER_SIZE);
-            byte[] encodedInboundMessage = _esp32.ReadBytes(incomingMessageLength); // _esp32.WriteRead(encodedDummyMessage, incomingMessageLength);
+            byte[] encodedInboundMessage = _esp32.ReadBytes(incomingMessageLength);
 
             DebugHelpers.DebugHelpers.LogMessage(DebugLevel.HasFlag(DebugOptions.DataPackets),"Received:");
             DebugHelpers.DebugHelpers.LogMessage(DebugLevel.HasFlag(DebugOptions.DataPackets), DebugHelpers.DebugHelpers.PrintableBuffer(encodedInboundMessage));
@@ -317,7 +317,7 @@ namespace Meadow.Core.Esp32
             DebugHelpers.DebugHelpers.LogMessage(DebugLevel.HasFlag(DebugOptions.Information),$"Decode status: {decodeStatus}");
             SendAcknowledgement(inboundMessage.Value, StatusCodes.CompletedOK);
 
-            return (inboundMessage); 
+            return (inboundMessage);
         }
 
         /// <summary>
@@ -330,7 +330,7 @@ namespace Meadow.Core.Esp32
             DebugHelpers.DebugHelpers.LogMessage(DebugLevel.HasFlag(DebugOptions.MethodNames), "Entering GetMessageBody");
 
             ushort incomingMessageLength = (ushort) Encoders.CalculateSpiBufferSize(Messages.HEADER_SIZE + header.PayloadLength);
-            byte[] encodedInboundMessage = _esp32.ReadBytes(incomingMessageLength); // _esp32.WriteRead(encodedDummyMessage, incomingMessageLength);
+            byte[] encodedInboundMessage = _esp32.ReadBytes(incomingMessageLength);
 
             DebugHelpers.DebugHelpers.LogMessage(DebugLevel.HasFlag(DebugOptions.DataPackets),"Received:");
             DebugHelpers.DebugHelpers.LogMessage(DebugLevel.HasFlag(DebugOptions.DataPackets), DebugHelpers.DebugHelpers.PrintableBuffer(encodedInboundMessage));
@@ -422,10 +422,9 @@ namespace Meadow.Core.Esp32
             DebugHelpers.DebugHelpers.LogMessage(DebugLevel.HasFlag(DebugOptions.MethodNames), "Entering ProcessTransportMessage");
 
             StatusCodes statusCode = StatusCodes.Failure;
-            Messages.Message message;
             if (transportMessage != null)
             {
-                message = transportMessage.Value;
+                Messages.Message message = transportMessage.Value;
                 message.Log(DebugLevel.HasFlag(DebugOptions.Messages));
             
                 switch ((TransportFunction) message.Function)
