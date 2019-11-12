@@ -310,9 +310,7 @@ namespace Meadow.Core.Esp32
 
             DebugHelpers.DebugHelpers.LogMessage(DebugLevel.HasFlag(DebugOptions.DataPackets),"Received:");
             DebugHelpers.DebugHelpers.LogMessage(DebugLevel.HasFlag(DebugOptions.DataPackets), DebugHelpers.DebugHelpers.PrintableBuffer(encodedInboundMessage));
-            StatusCodes decodeStatus;
-            Messages.Message? inboundMessage;
-            (inboundMessage, decodeStatus) = Encoders.ExtractMessage(encodedInboundMessage, headerOnly: true);
+            (Messages.Message? inboundMessage, StatusCodes decodeStatus) = Encoders.ExtractMessage(encodedInboundMessage, headerOnly: true);
             
             DebugHelpers.DebugHelpers.LogMessage(DebugLevel.HasFlag(DebugOptions.Information),$"Decode status: {decodeStatus}");
             SendAcknowledgement(inboundMessage.Value, StatusCodes.CompletedOK);
@@ -335,9 +333,7 @@ namespace Meadow.Core.Esp32
             DebugHelpers.DebugHelpers.LogMessage(DebugLevel.HasFlag(DebugOptions.DataPackets),"Received:");
             DebugHelpers.DebugHelpers.LogMessage(DebugLevel.HasFlag(DebugOptions.DataPackets), DebugHelpers.DebugHelpers.PrintableBuffer(encodedInboundMessage));
             
-            StatusCodes decodeStatus;
-            Messages.Message? inboundMessage;
-            (inboundMessage, decodeStatus) = Encoders.ExtractMessage(encodedInboundMessage);
+            (Messages.Message? inboundMessage, StatusCodes decodeStatus) = Encoders.ExtractMessage(encodedInboundMessage);
             
             DebugHelpers.DebugHelpers.LogMessage(DebugLevel.HasFlag(DebugOptions.Information),$"Decode status: {decodeStatus}");
             SendAcknowledgement(inboundMessage.Value, StatusCodes.CompletedOK);
