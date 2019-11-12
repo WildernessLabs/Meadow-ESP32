@@ -1078,9 +1078,9 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessMessages(spi_slave_transac
 //    }
 
     uint32_t notificationBits = 0;
-    ESP_LOGI(__func__, "Waiting for notification, current state: %s", SpiStateString(_currentState));
 
 #if defined(SPI_PACKET_LOGGING) || defined(SPI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Waiting for notification, current state: %s", SpiStateString(_currentState));
     int dataSize = transaction->length / 8;
     ESP_LOGI(__func__, "Sending %d bytes.", dataSize);
     ESP_LOG_BUFFER_HEX(__func__, transaction->tx_buffer, dataSize);
@@ -1101,9 +1101,6 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessMessages(spi_slave_transac
     ESP_ERROR_CHECK(spi_slave_get_trans_result(VSPI_HOST, &transaction, portMAX_DELAY));
     if (SendingData(_currentState) || MessageContainsData((uint8_t *) transaction->rx_buffer, transaction->length / 8))
     {
-#if defined(SPI_FULL_LOGGING)
-        ESP_LOGI(__func__, "Current state %s", SpiStateString(_currentState));
-#endif
         switch (_currentState)
         {
             case WaitingForInboundMessageHeader:
