@@ -69,6 +69,5 @@ packages
 # Rider files
 .idea/
 .settings/
-Source/Tests/BasicNetworkTest/Secrets.cs
-Source/MeadowComms/main/Secrets.hpp
-Source/Tests/NetworkTest/Secrets.cs
+Secrets.hpp
+Secrets.cs
