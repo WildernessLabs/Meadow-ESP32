@@ -13,7 +13,6 @@
 #include "SharedEnums.hpp"
 #include "Esp32Messaging.hpp"
 #include "Encoders.hpp"
-#include "Secrets.hpp"
 
 /*
  *      Main program loop for the ESP32 as specified by the FreeRTOS documentation.
