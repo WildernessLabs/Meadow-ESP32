@@ -35,6 +35,9 @@ namespace BasicNetworkTest
         
         #region Constructors
         
+        /// <summary>
+        /// Default constructor.
+        /// </summary>
         public GetSetAntennaTest()
         {
             //
@@ -56,7 +59,7 @@ namespace BasicNetworkTest
                 interruptMode: InterruptMode.EdgeFalling, resistorMode: ResistorMode.PullUp, debounceDuration: 500);
             _button.Changed += _button_Changed;
             //
-            //  Now run the tests.
+            //  Now run the test once.  Further tests can be run by pressing the button on D14.
             //
             RunTest();
         }

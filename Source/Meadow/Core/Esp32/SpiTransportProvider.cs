@@ -108,7 +108,7 @@ namespace Meadow.Core.Esp32
         /// </summary>
         public SpiTransportProvider(IIODevice device, IPin mosi, IPin miso, IPin clock, IPin chipSelect, IPin bootPin, IPin resetPin)
         {
-            DebugLevel = DebugOptions.None;// | DebugOptions.MethodNames;
+            DebugLevel = DebugOptions.None;
             SpiClockConfiguration spiConfiguration = new SpiClockConfiguration(SPI_BUS_SPEED, SpiClockConfiguration.Mode.Mode3);
             _esp32 = new SpiPeripheral(device.CreateSpiBus(clock, mosi, miso, spiConfiguration), device.CreateDigitalOutputPort(chipSelect, true));
 
@@ -593,7 +593,7 @@ namespace Meadow.Core.Esp32
         private byte[] ReadData(UInt32 amount)
         {
             // TODO: Find out what this delay is required.
-            Thread.Sleep(1);
+            Thread.Sleep(1000);
             return (_esp32.ReadBytes((ushort)amount));
         }
 
