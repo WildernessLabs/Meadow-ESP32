@@ -139,11 +139,112 @@ namespace Meadow.Core.Esp32
             //  Now get the response.
             //
             Messages.Message response = _dispatcher.GetResponse(setAntennaMessage.MessageID);
-            StatusCodes result = (StatusCodes)response.StatusCode;
+            StatusCodes result = (StatusCodes) response.StatusCode;
             if (result != StatusCodes.CompletedOK)
             {
                 throw new CoprocessorException(result);
             }
+        }
+
+        /// <summary>
+        /// Start the WiFi hardware and connect to the specified network.
+        /// </summary>
+        /// <param name="ssid">Name of the network to connect to.</param>
+        /// <param name="password">Password for the network.</param>
+        public NetworkInformation StartNetwork(string ssid, string password)
+        {
+            Messages.WiFiCredentials startNetwork = new Messages.WiFiCredentials();
+            startNetwork.NetworkName = ssid;
+            startNetwork.Password = password;
+
+            Messages.Message message = new Messages.Message();
+            message.Interface = (byte) Esp32Interfaces.WiFi;
+            message.Function = (uint) WiFiFunction.Start;
+            message.MessageID = _dispatcher.GetNextMessageID();
+            message.MessageType = (byte) MessageTypes.Data;
+            byte[] encodedStartMessage = Encoders.EncodeWiFiCredentials(startNetwork);
+            message.Payload = encodedStartMessage;
+            message.PayloadLength = (uint) encodedStartMessage.Length;
+
+            EventWaitHandle waitHandle = new AutoResetEvent(false);
+            //
+            //  Queue the request.
+            //
+            _dispatcher.Add(message, waitHandle);
+            //
+            //  Wait for the response to be ready.
+            //
+            waitHandle.WaitOne();
+            //
+            //  Now get the response.
+            //
+            Messages.Message response = _dispatcher.GetResponse(message.MessageID);
+            StatusCodes result = (StatusCodes) response.StatusCode;
+            if (result != StatusCodes.CompletedOK)
+            {
+                throw new CoprocessorException(result);
+            }
+            NetworkInformation networkInformation = new NetworkInformation();
+            networkInformation.ip4IpAddress[0] = response.Payload[0];
+            networkInformation.ip4IpAddress[1] = response.Payload[1];
+            networkInformation.ip4IpAddress[2] = response.Payload[2];
+            networkInformation.ip4IpAddress[3] = response.Payload[3];
+            return (networkInformation);
+        }
+
+        /// <summary>
+        /// Get the list of access points.
+        /// </summary>
+        /// <remarks>
+        /// The network must be started before this method can be called.
+        /// </remarks>
+        /// <returns>List of access points (or null if no access points can be found).</returns>
+        /// <exception cref="CoprocessorException">Coprocessor exception is throw if there was a problem on the ESp32.</exception>
+        public Messages.AccessPoint[] GetAccessPoints()
+        {
+            Messages.Message message = new Messages.Message();
+            message.MessageType = (byte)MessageTypes.Data;
+            message.Interface = (byte)Esp32Interfaces.WiFi;
+            message.Function = (UInt32)WiFiFunction.GetAccessPoints;
+            message.MessageID = 0x02;
+            message.PayloadLength = 0;
+            
+            EventWaitHandle waitHandle = new AutoResetEvent(false);
+            //
+            //  Queue the request.
+            //
+            _dispatcher.Add(message, waitHandle);
+            //
+            //  Wait for the response to be ready.
+            //
+            waitHandle.WaitOne();
+            //
+            //  Now get the response.
+            //
+            Messages.Message response = _dispatcher.GetResponse(message.MessageID);
+            StatusCodes result = (StatusCodes) response.StatusCode;
+            if (result != StatusCodes.CompletedOK)
+            {
+                throw new CoprocessorException(result);
+            }
+            //
+            //  Now get the list of access points and return the list to the application.
+            //
+            Messages.AccessPointList accessPointList = Encoders.ExtractAccessPointList(response.Payload, 0);
+            Messages.AccessPoint[] accessPoints = new Messages.AccessPoint[accessPointList.NumberOfAccessPoints]; 
+            if (accessPointList.NumberOfAccessPoints > 0)
+            {
+                accessPoints = new Messages.AccessPoint[accessPointList.NumberOfAccessPoints];
+                for (int count = 0; count < accessPointList.NumberOfAccessPoints; count++)
+                {
+                    accessPoints[count] = Encoders.ExtractAccessPoint(accessPointList.AccessPoints, count * 41);
+                }
+            }
+            else
+            {
+                accessPoints = null;
+            }
+            return (accessPoints);
         }
         
         #endregion Methods
