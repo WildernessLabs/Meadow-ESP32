@@ -9,6 +9,16 @@ namespace Meadow.Core.Esp32
 {
     public class Coprocessor
     {
+        #region Enums
+        
+        /// <summary>
+        /// Possible debug outputs.
+        /// </summary>
+        [Flags]
+        public enum DebugOptions : UInt32 { None = 0x00, Information = 0x01, Errors = 0x02, Full = 0xffffffff }
+        
+        #endregion
+
         #region Private member variables (fields)
         
         /// <summary>
@@ -17,6 +27,15 @@ namespace Meadow.Core.Esp32
         private readonly MessageDispatcher _dispatcher;
         
         #endregion Private member variables (fields)
+        
+        #region Properties
+        
+        /// <summary>
+        /// Determine how much debug output is generated.
+        /// </summary>
+        public DebugOptions DebugLevel{ get; set; }
+        
+        #endregion Properties
         
         #region Constructors
         
