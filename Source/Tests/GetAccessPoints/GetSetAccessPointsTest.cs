@@ -114,7 +114,6 @@ namespace BasicNetworkTest
             else
             {
                 DebugHelpers.DebugHelpers.LogMessage(true, $"No access points detected.");
-                
             }
         }
         
