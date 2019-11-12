@@ -116,11 +116,11 @@ namespace BasicNetworkTest
             //
             DebugHelpers.DebugHelpers.LogMessage(true, "Changing antenna in use to the external antenna");
             antenna = AntennaTypes.External;
+            _coprocessor.SetAntenna(antenna);
             //
             //  Now get the antenna information again to make sure it has changed to the external antenna.
             //
             DebugHelpers.DebugHelpers.LogMessage(true, "Requesting new antenna information.");
-            _coprocessor.SetAntenna(antenna);
             antenna = _coprocessor.GetAntenna();
             DisplayAntennaInformation(antenna);
         }

@@ -17,7 +17,7 @@ namespace Meadow.Core.Esp32
         /// Possible debug outputs.
         /// </summary>
         [Flags]
-        public enum DebugOptions : UInt32 { None = 0x00, Information = 0x01, Errors = 0x02, MethodNames = 0x04, Messages = 0x08, DataPackets = 0x10, Full = 0xffffffff }
+        public enum DebugOptions : UInt32 { None = 0x00, Information = 0x01, Errors = 0x02, MethodNames = 0x04, DataPackets = 0x08, Full = 0xffffffff }
         
         #endregion
         
@@ -108,7 +108,7 @@ namespace Meadow.Core.Esp32
         /// </summary>
         public SpiTransportProvider(IIODevice device, IPin mosi, IPin miso, IPin clock, IPin chipSelect, IPin bootPin, IPin resetPin)
         {
-            DebugLevel = DebugOptions.None;
+            DebugLevel = DebugOptions.None;// | DebugOptions.MethodNames;
             SpiClockConfiguration spiConfiguration = new SpiClockConfiguration(SPI_BUS_SPEED, SpiClockConfiguration.Mode.Mode3);
             _esp32 = new SpiPeripheral(device.CreateSpiBus(clock, mosi, miso, spiConfiguration), device.CreateDigitalOutputPort(chipSelect, true));
 
@@ -236,7 +236,11 @@ namespace Meadow.Core.Esp32
             {
                 encodedHeader = Encoders.EncodeMessage((Messages.Message) message, true);
             }
-            _esp32.WriteBytes(encodedHeader);
+
+            DebugHelpers.DebugHelpers.LogMessage(DebugLevel.HasFlag(DebugOptions.DataPackets), "Sending message header:");
+            DebugHelpers.DebugHelpers.LogMessage(DebugLevel.HasFlag(DebugOptions.DataPackets), DebugHelpers.DebugHelpers.PrintableBuffer(encodedHeader));
+
+            WriteData(encodedHeader);
         }
 
         /// <summary>
@@ -255,7 +259,7 @@ namespace Meadow.Core.Esp32
         private (Messages.Message?, StatusCodes) GetMessageHeaderAcknowledgement(Messages.Message message)
         {
             DebugHelpers.DebugHelpers.LogMessage(DebugLevel.HasFlag(DebugOptions.MethodNames), "Entering GetMessageHeaderAcknowledgement");
-            byte[] encodedAcknowledgement = _esp32.ReadBytes((ushort) _headerFrameSize); // _esp32.WriteRead(dummyHeader, (ushort)_headerFrameSize);
+            byte[] encodedAcknowledgement = ReadData(_headerFrameSize);
 
             DebugHelpers.DebugHelpers.LogMessage(DebugLevel.HasFlag(DebugOptions.DataPackets), "Received:");
             DebugHelpers.DebugHelpers.LogMessage(DebugLevel.HasFlag(DebugOptions.DataPackets), DebugHelpers.DebugHelpers.PrintableBuffer(encodedAcknowledgement));
@@ -266,7 +270,7 @@ namespace Meadow.Core.Esp32
 
             if (decodeStatus == StatusCodes.CompletedOK)
             {
-                acknowledgement.Value.Log(DebugLevel.HasFlag(DebugOptions.Messages));
+                acknowledgement.Value.Log(DebugLevel.HasFlag(DebugOptions.DataPackets));
                 switch ((MessageTypes) acknowledgement.Value.MessageType)
                 {
                     case MessageTypes.Ack:
@@ -306,7 +310,7 @@ namespace Meadow.Core.Esp32
             DebugHelpers.DebugHelpers.LogMessage(DebugLevel.HasFlag(DebugOptions.MethodNames), "Entering GetMessageHeader");
             
             ushort incomingMessageLength = (ushort) Encoders.CalculateSpiBufferSize(Messages.HEADER_SIZE);
-            byte[] encodedInboundMessage = _esp32.ReadBytes(incomingMessageLength);
+            byte[] encodedInboundMessage = ReadData(incomingMessageLength);
 
             DebugHelpers.DebugHelpers.LogMessage(DebugLevel.HasFlag(DebugOptions.DataPackets),"Received:");
             DebugHelpers.DebugHelpers.LogMessage(DebugLevel.HasFlag(DebugOptions.DataPackets), DebugHelpers.DebugHelpers.PrintableBuffer(encodedInboundMessage));
@@ -328,7 +332,7 @@ namespace Meadow.Core.Esp32
             DebugHelpers.DebugHelpers.LogMessage(DebugLevel.HasFlag(DebugOptions.MethodNames), "Entering GetMessageBody");
 
             ushort incomingMessageLength = (ushort) Encoders.CalculateSpiBufferSize(Messages.HEADER_SIZE + header.PayloadLength);
-            byte[] encodedInboundMessage = _esp32.ReadBytes(incomingMessageLength);
+            byte[] encodedInboundMessage = ReadData(incomingMessageLength);
 
             DebugHelpers.DebugHelpers.LogMessage(DebugLevel.HasFlag(DebugOptions.DataPackets),"Received:");
             DebugHelpers.DebugHelpers.LogMessage(DebugLevel.HasFlag(DebugOptions.DataPackets), DebugHelpers.DebugHelpers.PrintableBuffer(encodedInboundMessage));
@@ -352,12 +356,12 @@ namespace Meadow.Core.Esp32
 
             StatusCodes statusCode = StatusCodes.Failure;
             Messages.Message? header = null;
-            Messages.Message? message = null;
 
             DebugHelpers.DebugHelpers.LogMessage(DebugLevel.HasFlag(DebugOptions.Information), "Requesting header.");
             header = GetMessageHeader();
             if (header != null)
             {
+                Messages.Message? message = null;
                 if (header.Value.PayloadLength > 0)
                 {
                     DebugHelpers.DebugHelpers.LogMessage(DebugLevel.HasFlag(DebugOptions.Information), "Requesting body.");
@@ -378,7 +382,6 @@ namespace Meadow.Core.Esp32
                 {
                     statusCode = StatusCodes.Failure;
                 }
-                statusCode = StatusCodes.CompletedOK;
             }
             
             return (statusCode);
@@ -405,7 +408,8 @@ namespace Meadow.Core.Esp32
 
             Messages.Message acknowledgement = new Messages.Message(messageType, (Esp32Interfaces) message.Interface, message.Function, message.MessageID, (UInt32) statusCode, null);
             byte[] encodedMessage = Encoders.EncodeMessage(acknowledgement, false);
-            _esp32.WriteBytes(encodedMessage);
+
+            WriteData(encodedMessage);
         }
 
         /// <summary>
@@ -421,7 +425,7 @@ namespace Meadow.Core.Esp32
             if (transportMessage != null)
             {
                 Messages.Message message = transportMessage.Value;
-                message.Log(DebugLevel.HasFlag(DebugOptions.Messages));
+                message.Log(DebugLevel.HasFlag(DebugOptions.DataPackets));
             
                 switch ((TransportFunction) message.Function)
                 {
@@ -429,10 +433,6 @@ namespace Meadow.Core.Esp32
                         if ((StatusCodes) message.StatusCode == StatusCodes.CompletedOK)
                         {
                             statusCode = GetResponseFromEsp32();
-                            if (statusCode == StatusCodes.NoMessagesWaiting)
-                            {
-                                statusCode = StatusCodes.CompletedOK;
-                            }
                         }
                         else
                         {
@@ -466,17 +466,17 @@ namespace Meadow.Core.Esp32
             StatusCodes statusCode = StatusCodes.Failure;
             
             byte[] encodedMessage = Encoders.EncodeMessage(message, false);
-            DebugHelpers.DebugHelpers.LogMessage(DebugLevel.HasFlag(DebugOptions.Messages),"Sending message body:");
-            DebugHelpers.DebugHelpers.LogMessage(DebugLevel.HasFlag(DebugOptions.Messages), DebugHelpers.DebugHelpers.PrintableBuffer(encodedMessage));
-            _esp32.WriteBytes(encodedMessage);
+            DebugHelpers.DebugHelpers.LogMessage(DebugLevel.HasFlag(DebugOptions.DataPackets),"Sending message body:");
+            DebugHelpers.DebugHelpers.LogMessage(DebugLevel.HasFlag(DebugOptions.DataPackets), DebugHelpers.DebugHelpers.PrintableBuffer(encodedMessage));
+            WriteData(encodedMessage);
             //
             //  TODO: The following pause is necessary to prevent an off by one bit error that can sometime appear in the acknowledgement.
             //
             Thread.Sleep(50);
             
-            byte[] encodedAcknowledgement = _esp32.ReadBytes((ushort)_headerFrameSize);
-            DebugHelpers.DebugHelpers.LogMessage(DebugLevel.HasFlag(DebugOptions.Messages), "Acknowledgement:");
-            DebugHelpers.DebugHelpers.LogMessage(DebugLevel.HasFlag(DebugOptions.Messages), DebugHelpers.DebugHelpers.PrintableBuffer(encodedAcknowledgement));
+            byte[] encodedAcknowledgement = ReadData(_headerFrameSize);
+            DebugHelpers.DebugHelpers.LogMessage(DebugLevel.HasFlag(DebugOptions.DataPackets), "Acknowledgement:");
+            DebugHelpers.DebugHelpers.LogMessage(DebugLevel.HasFlag(DebugOptions.DataPackets), DebugHelpers.DebugHelpers.PrintableBuffer(encodedAcknowledgement));
             
             Messages.Message? acknowledgement;
             (acknowledgement, statusCode) = Encoders.ExtractMessage(encodedAcknowledgement);
@@ -568,6 +568,33 @@ namespace Meadow.Core.Esp32
             //  be sent.
             //
             _waitingForStuffToDoHandle.Set();
+        }
+
+        /// <summary>
+        /// Write the data buffer to the ESP32.
+        /// </summary>
+        /// <param name="data">Byte buffer of data to be written to the ESP32.</param>
+        private void WriteData(byte[] data)
+        {
+            _esp32.WriteBytes(data);
+        }
+
+        /// <summary>
+        /// Read the specified number of bytes from the ESP32.
+        /// </summary>
+        /// <remarks>
+        /// This method has been abstracted in order to allow for a small delay to be implemented
+        /// before reading a buffer of bytes from the ESP32.
+        ///
+        /// This is a temporary fix.
+        /// </remarks>
+        /// <param name="amount">Number of bytes to read.</param>
+        /// <returns>buffer containing the specified number of bytes that have been read from the ESP32.</returns>
+        private byte[] ReadData(UInt32 amount)
+        {
+            // TODO: Find out what this delay is required.
+            Thread.Sleep(1);
+            return (_esp32.ReadBytes((ushort)amount));
         }
 
         #endregion
