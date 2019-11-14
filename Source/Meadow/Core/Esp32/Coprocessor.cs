@@ -60,6 +60,28 @@ namespace Meadow.Core.Esp32
         #endregion Constructors
 
         #region Methods
+
+        /// <summary>
+        /// Send a message to the coprocessor and wait for the response.
+        /// </summary>
+        /// <param name="message">Message to be sent.</param>
+        /// <returns>Response from the coprocessor.</returns>
+        private Messages.Message SendMessageAndWaitForResponse(Messages.Message message)
+        {
+            EventWaitHandle waitHandle = new AutoResetEvent(false);
+            //
+            //  Queue the request.
+            //
+            _dispatcher.Add(message, waitHandle);
+            //
+            //  Wait for the response to be ready.
+            //
+            waitHandle.WaitOne();
+            //
+            //  Now get the response.
+            //
+            return(_dispatcher.GetResponse(message.MessageID));
+        }
         
         /// <summary>
         /// Get the antenna currently in use.
@@ -71,29 +93,16 @@ namespace Meadow.Core.Esp32
             //
             //  Prepare the request and wait object.
             //
-            Messages.Message getAntennaMessage;
-            getAntennaMessage = new Messages.Message();
-            getAntennaMessage.Interface = (byte) Esp32Interfaces.WiFi;
-            getAntennaMessage.Function = (byte) WiFiFunction.GetAntenna;
-            getAntennaMessage.MessageID = _dispatcher.GetNextMessageID();
-            getAntennaMessage.MessageType = (byte) MessageTypes.Data;
-            getAntennaMessage.Payload = null;
-            getAntennaMessage.PayloadLength = 0;
+            Messages.Message message = new Messages.Message();
+            message.Interface = (byte) Esp32Interfaces.WiFi;
+            message.Function = (byte) WiFiFunction.GetAntenna;
+            message.MessageID = _dispatcher.GetNextMessageID();
+            message.MessageType = (byte) MessageTypes.Data;
+            message.Payload = null;
+            message.PayloadLength = 0;
 
-            EventWaitHandle waitHandle = new AutoResetEvent(false);
-            //
-            //  Queue the request.
-            //
-            _dispatcher.Add(getAntennaMessage, waitHandle);
-            //
-            //  Wait for the response to be ready.
-            //
-            waitHandle.WaitOne();
-            //
-            //  Now get the response.
-            //
-            Messages.Message response = _dispatcher.GetResponse(getAntennaMessage.MessageID);
-            StatusCodes result = (StatusCodes)response.StatusCode;
+            Messages.Message response = SendMessageAndWaitForResponse(message);
+            StatusCodes result = (StatusCodes) response.StatusCode;
             if (result != StatusCodes.CompletedOK)
             {
                 throw new CoprocessorException(result);
@@ -112,33 +121,20 @@ namespace Meadow.Core.Esp32
             //
             //  Prepare the request and wait object.
             //
-            Messages.Message setAntennaMessage;
-            setAntennaMessage = new Messages.Message();
-            setAntennaMessage.Interface = (byte) Esp32Interfaces.WiFi;
-            setAntennaMessage.Function = (byte) WiFiFunction.SetAntenna;
-            setAntennaMessage.MessageID = _dispatcher.GetNextMessageID();
-            setAntennaMessage.MessageType = (byte) MessageTypes.Data;
+            Messages.Message message = new Messages.Message();
+            message.Interface = (byte) Esp32Interfaces.WiFi;
+            message.Function = (byte) WiFiFunction.SetAntenna;
+            message.MessageID = _dispatcher.GetNextMessageID();
+            message.MessageType = (byte) MessageTypes.Data;
 
             Messages.AntennaInfo antennaInfo;
             antennaInfo = new Messages.AntennaInfo();
             antennaInfo.Antenna = (byte) antenna;
             byte[] encodedAntenna = Encoders.EncodeAntennaInfo(antennaInfo);
-            setAntennaMessage.Payload = encodedAntenna;
-            setAntennaMessage.PayloadLength = (UInt32) encodedAntenna.Length;
+            message.Payload = encodedAntenna;
+            message.PayloadLength = (UInt32) encodedAntenna.Length;
             
-            EventWaitHandle waitHandle = new AutoResetEvent(false);
-            //
-            //  Queue the request.
-            //
-            _dispatcher.Add(setAntennaMessage, waitHandle);
-            //
-            //  Wait for the response to be ready.
-            //
-            waitHandle.WaitOne();
-            //
-            //  Now get the response.
-            //
-            Messages.Message response = _dispatcher.GetResponse(setAntennaMessage.MessageID);
+            Messages.Message response = SendMessageAndWaitForResponse(message);
             StatusCodes result = (StatusCodes) response.StatusCode;
             if (result != StatusCodes.CompletedOK)
             {
@@ -166,19 +162,7 @@ namespace Meadow.Core.Esp32
             message.Payload = encodedStartMessage;
             message.PayloadLength = (uint) encodedStartMessage.Length;
 
-            EventWaitHandle waitHandle = new AutoResetEvent(false);
-            //
-            //  Queue the request.
-            //
-            _dispatcher.Add(message, waitHandle);
-            //
-            //  Wait for the response to be ready.
-            //
-            waitHandle.WaitOne();
-            //
-            //  Now get the response.
-            //
-            Messages.Message response = _dispatcher.GetResponse(message.MessageID);
+            Messages.Message response = SendMessageAndWaitForResponse(message);
             StatusCodes result = (StatusCodes) response.StatusCode;
             if (result != StatusCodes.CompletedOK)
             {
@@ -208,20 +192,8 @@ namespace Meadow.Core.Esp32
             message.Function = (UInt32)WiFiFunction.GetAccessPoints;
             message.MessageID = 0x02;
             message.PayloadLength = 0;
-            
-            EventWaitHandle waitHandle = new AutoResetEvent(false);
-            //
-            //  Queue the request.
-            //
-            _dispatcher.Add(message, waitHandle);
-            //
-            //  Wait for the response to be ready.
-            //
-            waitHandle.WaitOne();
-            //
-            //  Now get the response.
-            //
-            Messages.Message response = _dispatcher.GetResponse(message.MessageID);
+
+            Messages.Message response = SendMessageAndWaitForResponse(message);
             StatusCodes result = (StatusCodes) response.StatusCode;
             if (result != StatusCodes.CompletedOK)
             {
