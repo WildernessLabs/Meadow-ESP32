@@ -124,7 +124,14 @@ namespace Meadow.Core.Esp32
                 if (_messageList.TryGetValue(e.MessageReceived.MessageID, out entry))
                 {
                     entry.Response = e.MessageReceived;
-                    entry.WaitHandle.Set();
+                    if (entry.WaitHandle != null)
+                    {
+                        entry.WaitHandle.Set();
+                    }
+                    else
+                    {
+                        // TODO: Work out how to deal with async calls.
+                    }
                 }
                 else
                 {
@@ -138,12 +145,44 @@ namespace Meadow.Core.Esp32
         #region Methods
 
         /// <summary>
+        /// Send a message to the coprocessor and wait for the response.
+        /// </summary>
+        /// <param name="message">Message to be sent.</param>
+        /// <returns>Response from the coprocessor.</returns>
+        public Messages.Message SendMessage(Messages.Message message)
+        {
+            EventWaitHandle waitHandle = new AutoResetEvent(false);
+            //
+            //  Queue the request.
+            //
+            Add(message, waitHandle);
+            //
+            //  Wait for the response to be ready.
+            //
+            waitHandle.WaitOne();
+            //
+            //  Now get the response.
+            //
+            return(GetResponse(message.MessageID));
+        }
+        
+        /// <summary>
+        /// Send a message to the coprocessor and wait for the response.
+        /// </summary>
+        /// <param name="message">Message to be sent.</param>
+        /// <returns>Response from the coprocessor.</returns>
+        public void SendMessageAsync(Messages.Message message)
+        {
+            Add(message, null);
+        }
+        
+        /// <summary>
         /// Add a new message to the message queue.
         /// </summary>
         /// <param name="message">Message to add to the queue.</param>
         /// <param name="waitHandle">Wait handle that will be used to awaken the calling thread when a result has been received from the coprocessor.</param>
         [MethodImpl(MethodImplOptions.Synchronized)]
-        public void Add(Messages.Message message, EventWaitHandle waitHandle)
+        private void Add(Messages.Message message, EventWaitHandle waitHandle)
         {
             MessageListEntry entry = new MessageListEntry(waitHandle);
             lock (_messageListLock)
