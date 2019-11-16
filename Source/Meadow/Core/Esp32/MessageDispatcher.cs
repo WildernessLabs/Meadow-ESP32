@@ -199,7 +199,7 @@ namespace Meadow.Core.Esp32
         /// </summary>
         /// <param name="messageId">ID of the message the caller wants the response to.</param>
         /// <returns>Message returned by the coprocessor.</returns>
-        public Messages.Message GetResponse(UInt32 messageId)
+        private Messages.Message GetResponse(UInt32 messageId)
         {
             Messages.Message response;
             lock (_messageListLock)
