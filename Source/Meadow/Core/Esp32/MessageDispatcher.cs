@@ -234,7 +234,7 @@ namespace Meadow.Core.Esp32
         /// </summary>
         /// <returns>Valid message ID to use when sending a message from the STM32 to the ESP32.</returns>
         [MethodImpl(MethodImplOptions.Synchronized)]
-        public UInt32 GetNextMessageID()
+        public UInt32 GetNextMessageId()
         {
             _lastMessageId++;
             return (_lastMessageId &~ESP32_MESSAGE_ID_MASK);

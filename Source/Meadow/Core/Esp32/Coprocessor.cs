@@ -74,7 +74,7 @@ namespace Meadow.Core.Esp32
             Messages.Message message = new Messages.Message();
             message.Interface = (byte) Esp32Interfaces.WiFi;
             message.Function = (byte) WiFiFunction.GetAntenna;
-            message.MessageID = _dispatcher.GetNextMessageID();
+            message.MessageID = _dispatcher.GetNextMessageId();
             message.MessageType = (byte) MessageTypes.Data;
             message.Payload = null;
             message.PayloadLength = 0;
@@ -102,7 +102,7 @@ namespace Meadow.Core.Esp32
             Messages.Message message = new Messages.Message();
             message.Interface = (byte) Esp32Interfaces.WiFi;
             message.Function = (byte) WiFiFunction.SetAntenna;
-            message.MessageID = _dispatcher.GetNextMessageID();
+            message.MessageID = _dispatcher.GetNextMessageId();
             message.MessageType = (byte) MessageTypes.Data;
 
             Messages.AntennaInfo antennaInfo;
@@ -134,7 +134,7 @@ namespace Meadow.Core.Esp32
             Messages.Message message = new Messages.Message();
             message.Interface = (byte) Esp32Interfaces.WiFi;
             message.Function = (uint) WiFiFunction.Start;
-            message.MessageID = _dispatcher.GetNextMessageID();
+            message.MessageID = _dispatcher.GetNextMessageId();
             message.MessageType = (byte) MessageTypes.Data;
             byte[] encodedStartMessage = Encoders.EncodeWiFiCredentials(startNetwork);
             message.Payload = encodedStartMessage;
