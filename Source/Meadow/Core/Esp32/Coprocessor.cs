@@ -62,28 +62,6 @@ namespace Meadow.Core.Esp32
         #region Methods
 
         /// <summary>
-        /// Send a message to the coprocessor and wait for the response.
-        /// </summary>
-        /// <param name="message">Message to be sent.</param>
-        /// <returns>Response from the coprocessor.</returns>
-        private Messages.Message SendMessageAndWaitForResponse(Messages.Message message)
-        {
-            EventWaitHandle waitHandle = new AutoResetEvent(false);
-            //
-            //  Queue the request.
-            //
-            _dispatcher.Add(message, waitHandle);
-            //
-            //  Wait for the response to be ready.
-            //
-            waitHandle.WaitOne();
-            //
-            //  Now get the response.
-            //
-            return(_dispatcher.GetResponse(message.MessageID));
-        }
-        
-        /// <summary>
         /// Get the antenna currently in use.
         /// </summary>
         /// <returns>AntennaTyes object indicating the currently selected antenna.</returns>
@@ -101,7 +79,7 @@ namespace Meadow.Core.Esp32
             message.Payload = null;
             message.PayloadLength = 0;
 
-            Messages.Message response = SendMessageAndWaitForResponse(message);
+            Messages.Message response = _dispatcher.SendMessage(message);
             StatusCodes result = (StatusCodes) response.StatusCode;
             if (result != StatusCodes.CompletedOK)
             {
@@ -134,7 +112,7 @@ namespace Meadow.Core.Esp32
             message.Payload = encodedAntenna;
             message.PayloadLength = (UInt32) encodedAntenna.Length;
             
-            Messages.Message response = SendMessageAndWaitForResponse(message);
+            Messages.Message response = _dispatcher.SendMessage(message);
             StatusCodes result = (StatusCodes) response.StatusCode;
             if (result != StatusCodes.CompletedOK)
             {
@@ -162,7 +140,7 @@ namespace Meadow.Core.Esp32
             message.Payload = encodedStartMessage;
             message.PayloadLength = (uint) encodedStartMessage.Length;
 
-            Messages.Message response = SendMessageAndWaitForResponse(message);
+            Messages.Message response = _dispatcher.SendMessage(message);
             StatusCodes result = (StatusCodes) response.StatusCode;
             if (result != StatusCodes.CompletedOK)
             {
@@ -193,7 +171,7 @@ namespace Meadow.Core.Esp32
             message.MessageID = 0x02;
             message.PayloadLength = 0;
 
-            Messages.Message response = SendMessageAndWaitForResponse(message);
+            Messages.Message response = _dispatcher.SendMessage(message);
             StatusCodes result = (StatusCodes) response.StatusCode;
             if (result != StatusCodes.CompletedOK)
             {
