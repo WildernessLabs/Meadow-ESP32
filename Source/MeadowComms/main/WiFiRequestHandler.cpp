@@ -389,12 +389,23 @@ void WiFiRequestHandler::StartNetwork(Message *request)
  */
 void WiFiRequestHandler::GetAvailableNetworks(Message *request)
 {
+    wifi_active_scan_time_t activeScanTime =
+    {
+        .min = 500,
+        .max = 1500
+    };
+    wifi_scan_time_t scanTime =
+    {
+        .active = activeScanTime
+    };
     wifi_scan_config_t scanConf =
     {
         .ssid = NULL,
         .bssid = NULL,
         .channel = 0,
-        .show_hidden = true
+        .show_hidden = true,
+        .scan_type = WIFI_SCAN_TYPE_ACTIVE,
+        .scan_time = scanTime
     };
     _currentRequest = request;
     ESP_ERROR_CHECK(esp_wifi_scan_start(&scanConf, true));
@@ -407,7 +418,7 @@ void WiFiRequestHandler::HttpGet(Message *message)
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_STREAM;
     struct addrinfo *addressInformation;
-    struct in_addr *address;
+//    struct in_addr *address;
     int socketHandle, r;
 
     Esp32Messaging::HttpGetRequest *httpRequest = Encoders::ExtractHttpGetRequest(message->Payload);
@@ -437,7 +448,7 @@ void WiFiRequestHandler::HttpGet(Message *message)
     //
     //  Perform DNS lookup.
     //
-    address = &((struct sockaddr_in *) addressInformation->ai_addr)->sin_addr;
+//    address = &((struct sockaddr_in *) addressInformation->ai_addr)->sin_addr;
     socketHandle = socket(addressInformation->ai_family, addressInformation->ai_socktype, 0);
     if (socketHandle < 0)
     {
