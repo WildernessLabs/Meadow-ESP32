@@ -8,13 +8,25 @@ namespace FileGenerator
 {
     class Program
     {
+        /// <summary>
+        /// Location of the F7Micro source directory.
+        /// </summary>
+        const string MEADOW_F7MICRO_SOURCE_DIRECTORY = "MeadowF7MicroCoporcessorSourceDirectory";
+
         static void Main(string[] args)
         {
+            string csharpDestinationDirectory = Environment.GetEnvironmentVariable(MEADOW_F7MICRO_SOURCE_DIRECTORY);
+            if (string.IsNullOrEmpty(csharpDestinationDirectory))
+            {
+                Console.WriteLine($"Please set the environment variable '{MEADOW_F7MICRO_SOURCE_DIRECTORY}' before running this application.");
+                Environment.Exit(-1);
+            }
+
             string esp32SourceDirectory = $"..{Path.DirectorySeparatorChar}MeadowComms{Path.DirectorySeparatorChar}main{Path.DirectorySeparatorChar}";
             string esp32EnumJsonFileName = $"..{Path.DirectorySeparatorChar}Metadata{Path.DirectorySeparatorChar}SharedEnums.json";
             string cEnumFileName = $"{esp32SourceDirectory}SharedEnums.hpp";
             //
-            string cSharpEnumFileName = $"..{Path.DirectorySeparatorChar}Tests{Path.DirectorySeparatorChar}BasicNetworkTest{Path.DirectorySeparatorChar}Meadow.Core.Esp32{Path.DirectorySeparatorChar}Enums.cs";
+            string cSharpEnumFileName = $"{csharpDestinationDirectory}{Path.DirectorySeparatorChar}Enums.cs";
 
             Console.WriteLine("File Generator");
 
@@ -27,8 +39,8 @@ namespace FileGenerator
             messageProcessor.InputFileName = $"..{Path.DirectorySeparatorChar}Metadata{Path.DirectorySeparatorChar}Messages.json";;
             messageProcessor.CHeaderFileName = $"{esp32SourceDirectory}Encoders.hpp";
             messageProcessor.CSourceFileName = $"{esp32SourceDirectory}Encoders.cpp";
-            messageProcessor.CSharpFileName = $"..{Path.DirectorySeparatorChar}Tests{Path.DirectorySeparatorChar}BasicNetworkTest{Path.DirectorySeparatorChar}Meadow.Core.Esp32{Path.DirectorySeparatorChar}Encoders.cs";;
-            messageProcessor.CSharpStructureFileName = $"..{Path.DirectorySeparatorChar}Tests{Path.DirectorySeparatorChar}BasicNetworkTest{Path.DirectorySeparatorChar}Meadow.Core.Esp32{Path.DirectorySeparatorChar}Messages.cs";;
+            messageProcessor.CSharpFileName = $"{csharpDestinationDirectory}{Path.DirectorySeparatorChar}Encoders.cs";;
+            messageProcessor.CSharpStructureFileName = $"{csharpDestinationDirectory}{Path.DirectorySeparatorChar}Messages.cs";;
             messageProcessor.CHeaderTemplateFileName = $"..{Path.DirectorySeparatorChar}Metadata{Path.DirectorySeparatorChar}Encoders.hpp.txt";
             messageProcessor.CSourceTemplateFileName = $"..{Path.DirectorySeparatorChar}Metadata{Path.DirectorySeparatorChar}Encoders.cpp.txt";
             messageProcessor.CSharpSourceTemplateFileName = $"..{Path.DirectorySeparatorChar}Metadata{Path.DirectorySeparatorChar}Encoders.cs.txt";

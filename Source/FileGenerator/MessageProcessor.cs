@@ -90,7 +90,7 @@ namespace FileGenerator
             outputFile.WriteLine("//");
             outputFile.WriteLine("");
             outputFile.WriteLine("using System;");
-            outputFile.WriteLine("using Meadow.Core.Esp32;");
+            outputFile.WriteLine("using Meadow.Coprocessor.F7Micro;");
             outputFile.WriteLine("");
         }
 
@@ -295,7 +295,7 @@ namespace FileGenerator
             using (StreamWriter sourceFile = new StreamWriter(CSharpFileName))
             {
                 OutputCSharpFileHeader(sourceFile);
-                sourceFile.WriteLine("namespace Meadow.Core.Esp32");
+                sourceFile.WriteLine("namespace Meadow.Coprocessor.F7Micro");
                 sourceFile.WriteLine("{");
                 sourceFile.WriteLine("    public class Encoders");
                 sourceFile.WriteLine("    {");
@@ -350,7 +350,7 @@ namespace FileGenerator
             using (StreamWriter sourceFile = new StreamWriter(CSharpStructureFileName))
             {
                 OutputCSharpFileHeader(sourceFile);
-                sourceFile.WriteLine("namespace Meadow.Core.Esp32");
+                sourceFile.WriteLine("namespace Meadow.Coprocessor.F7Micro");
                 sourceFile.WriteLine("{");
                 sourceFile.WriteLine("    public partial class Messages");
                 sourceFile.WriteLine("    {");
