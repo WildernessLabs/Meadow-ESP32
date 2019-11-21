@@ -1,6 +1,6 @@
 using System;
 
-namespace Meadow.Core.Esp32.Exceptions
+namespace Meadow.Coprocessor.F7Micro.Exceptions
 {
     /// <summary>
     /// Generic coprocessor exception thrown when the coprocessor returns an error

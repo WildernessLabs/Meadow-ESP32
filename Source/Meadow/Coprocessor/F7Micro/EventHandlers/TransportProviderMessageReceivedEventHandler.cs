@@ -1,7 +1,6 @@
 using System;
-using Meadow.Core.Esp32;
 
-namespace Meadow.Core.Esp32
+namespace Meadow.Coprocessor.F7Micro
 {
     /// <summary>
     /// 

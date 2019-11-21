@@ -1,11 +1,12 @@
 using System;
+using System.Net;
 using System.Threading;
 using Meadow;
-using Meadow.Core.Esp32.Exceptions;
+using Meadow.Coprocessor.F7Micro.Exceptions;
 using Meadow.Devices;
 using Meadow.Hardware;
 
-namespace Meadow.Core.Esp32
+namespace Meadow.Coprocessor.F7Micro
 {
     public class Coprocessor
     {
@@ -125,33 +126,30 @@ namespace Meadow.Core.Esp32
         /// </summary>
         /// <param name="ssid">Name of the network to connect to.</param>
         /// <param name="password">Password for the network.</param>
-        public NetworkInformation StartNetwork(string ssid, string password)
+        public IPAddress StartNetwork(string ssid, string password)
         {
             Messages.WiFiCredentials startNetwork = new Messages.WiFiCredentials();
             startNetwork.NetworkName = ssid;
             startNetwork.Password = password;
 
             Messages.Message message = new Messages.Message();
-            message.Interface = (byte) Esp32Interfaces.WiFi;
-            message.Function = (uint) WiFiFunction.Start;
+            message.Interface = (byte)Esp32Interfaces.WiFi;
+            message.Function = (uint)WiFiFunction.Start;
             message.MessageID = _dispatcher.GetNextMessageId();
-            message.MessageType = (byte) MessageTypes.Data;
+            message.MessageType = (byte)MessageTypes.Data;
             byte[] encodedStartMessage = Encoders.EncodeWiFiCredentials(startNetwork);
             message.Payload = encodedStartMessage;
-            message.PayloadLength = (uint) encodedStartMessage.Length;
+            message.PayloadLength = (uint)encodedStartMessage.Length;
 
             Messages.Message response = _dispatcher.SendMessage(message);
-            StatusCodes result = (StatusCodes) response.StatusCode;
+            StatusCodes result = (StatusCodes)response.StatusCode;
             if (result != StatusCodes.CompletedOK)
             {
                 throw new CoprocessorException(result);
             }
-            NetworkInformation networkInformation = new NetworkInformation();
-            networkInformation.ip4IpAddress[0] = response.Payload[0];
-            networkInformation.ip4IpAddress[1] = response.Payload[1];
-            networkInformation.ip4IpAddress[2] = response.Payload[2];
-            networkInformation.ip4IpAddress[3] = response.Payload[3];
-            return (networkInformation);
+
+            IPAddress address = new IPAddress(new Byte[] { response.Payload[0], response.Payload[1], response.Payload[2], response.Payload[3] });
+            return (address);
         }
 
         /// <summary>

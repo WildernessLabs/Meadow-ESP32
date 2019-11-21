@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Meadow.Core.Esp32
+namespace Meadow.Coprocessor.F7Micro
 {
     /// <summary>
     /// 

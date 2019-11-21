@@ -640,7 +640,7 @@ void WiFiRequestHandler::ScanCompleteEvent(system_event_t *event)
     uint16_t apCount = 0;
     esp_wifi_scan_get_ap_num(&apCount);
 
-    ESP_LOGI(__func__, "Number of access points found: %d\n", apCount);
+    ESP_LOGI(__func__, "Number of access points found: %d", apCount);
     _currentRequest->DeletePayload();
     _currentRequest->MessageType = MessageTypes::Response;
     if (apCount == 0)

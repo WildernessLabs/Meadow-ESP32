@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Meadow.Core.Esp32
+namespace Meadow.Coprocessor.F7Micro
 {
     #region Delegates
 

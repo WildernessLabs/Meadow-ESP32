@@ -1,6 +1,6 @@
 using System;
 
-namespace Meadow.Core.Esp32.Exceptions
+namespace Meadow.Coprocessor.F7Micro.Exceptions
 {
     /// <summary>
     /// Exception thrown when a response from the coprocessor could not be found

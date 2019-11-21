@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using Meadow.Hardware;
 using System.Collections;
 
-namespace Meadow.Core.Esp32
+namespace Meadow.Coprocessor.F7Micro
 {
     /// <summary>
     /// Provide services to transfer data between the STM32 and the ESP32 using the SPI bus.

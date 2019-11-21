@@ -1,7 +1,7 @@
 using System;
 using System.Threading;
 
-namespace Meadow.Core.Esp32
+namespace Meadow.Coprocessor.F7Micro
 {
     /// <summary>
     /// MessageListEntry objects are used to record the messages IDs that have been

@@ -5,7 +5,7 @@ using System.Threading;
 
 namespace DebugHelpers
 {
-    public class DebugHelpers
+    public static class DebugHelpers
     {
         #region Constants
         
@@ -160,16 +160,5 @@ namespace DebugHelpers
         }
         
         #endregion Methods
-        
-        #region Constructor(s)
-        
-        /// <summary>
-        /// Public constructor.
-        /// </summary>
-        public DebugHelpers()
-        {
-        }
-        
-        #endregion Constructor(s)
     }
 }
