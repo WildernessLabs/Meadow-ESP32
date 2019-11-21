@@ -83,9 +83,10 @@ SpiTransportProvider::SpiTransportProvider() :
      *  Configure the chip select pin for the SPI bus to allow interrupts.
      */
     gpio_config_t chipSelectConfiguration;
-    memset(&chipSelectConfiguration, 0, sizeof(gpio_config_t));
     chipSelectConfiguration.intr_type = GPIO_INTR_DISABLE;
     chipSelectConfiguration.mode = GPIO_MODE_INPUT;
+    chipSelectConfiguration.pull_down_en = GPIO_PULLDOWN_DISABLE;
+    chipSelectConfiguration.pull_up_en = GPIO_PULLUP_DISABLE;
     chipSelectConfiguration.pin_bit_mask = (1 << Gpio::CHIP_SELECT_PIN);
     gpio_config(&chipSelectConfiguration);
 
@@ -93,23 +94,24 @@ SpiTransportProvider::SpiTransportProvider() :
      *  Setup the SPI bus.
      */
     spi_bus_config_t spiBusConfiguration;
-    memset(&spiBusConfiguration, 0, sizeof(spi_bus_config_t));
     spiBusConfiguration.mosi_io_num = Gpio::MOSI_PIN;
     spiBusConfiguration.miso_io_num = Gpio::MISO_PIN;
     spiBusConfiguration.sclk_io_num = Gpio::CLOCK_PIN;
     spiBusConfiguration.quadhd_io_num = -1;
     spiBusConfiguration.quadwp_io_num = -1;
-
+    spiBusConfiguration.max_transfer_sz = 0;
+    spiBusConfiguration.flags = SPICOMMON_BUSFLAG_SLAVE;
+    spiBusConfiguration.intr_flags = 0;
     /*
      *  Configuration for the SPI slave interface.
      */
     spi_slave_interface_config_t slaveConfiguration;
-    memset(&slaveConfiguration, 0, sizeof(spi_slave_interface_config_t));
     slaveConfiguration.mode = 3;
     slaveConfiguration.spics_io_num = Gpio::CHIP_SELECT_PIN;
     slaveConfiguration.queue_size = 3;
     slaveConfiguration.flags = 0;
     slaveConfiguration.post_trans_cb = SpiPostTransmissionCallback;
+    slaveConfiguration.post_setup_cb = NULL;
 
     ESP_ERROR_CHECK(spi_slave_initialize(VSPI_HOST, &spiBusConfiguration, &slaveConfiguration, 1));
 
