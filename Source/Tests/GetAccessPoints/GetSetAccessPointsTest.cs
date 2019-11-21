@@ -30,7 +30,7 @@ namespace BasicNetworkTest
         /// <summary>
         /// Network coprocessor.
         /// </summary>
-        private readonly Coprocessor _coprocessor;
+        private readonly F7MicroCoprocessor _f7MicroCoprocessor;
         
         /// <summary>
         /// Message dispatcher responsible for sending messages to the ESP32 and also passing
@@ -58,7 +58,7 @@ namespace BasicNetworkTest
                 mosi: Device.Pins.ESP_MOSI, miso: Device.Pins.ESP_MISO, clock: Device.Pins.ESP_CLK, chipSelect: Device.Pins.ESP_CS,
                 bootPin: Device.Pins.ESP_BOOT, resetPin: Device.Pins.ESP_RST);
 
-            _coprocessor = new Coprocessor(_dispatcher);
+            _f7MicroCoprocessor = new F7MicroCoprocessor(_dispatcher);
             //
             //  Wire up the button to run the tests on demand.
             //
@@ -97,11 +97,11 @@ namespace BasicNetworkTest
         {
             DebugHelpers.DebugHelpers.LogMessage(true, "Starting network"); 
             
-            IPAddress ipAddress = _coprocessor.StartNetwork(Secrets.WIFI_NAME, Secrets.WIFI_PASSOWRD);
+            IPAddress ipAddress = _f7MicroCoprocessor.StartNetwork(Secrets.WIFI_NAME, Secrets.WIFI_PASSOWRD);
             DebugHelpers.DebugHelpers.LogMessage(true, $"Obtained IP address: {ipAddress.ToString()}");
 
             DebugHelpers.DebugHelpers.LogMessage(true, "Getting list of access points.");
-            Messages.AccessPoint[] accessPoints = _coprocessor.GetAccessPoints();
+            Messages.AccessPoint[] accessPoints = _f7MicroCoprocessor.GetAccessPoints();
             if (accessPoints != null)
             {
                 DebugHelpers.DebugHelpers.LogMessage(true, "|------------------------------------------");

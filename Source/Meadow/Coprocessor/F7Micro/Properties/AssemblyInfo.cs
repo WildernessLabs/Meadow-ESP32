@@ -4,11 +4,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Meadow.Coprocessor.F7Micro")]
+[assembly: AssemblyTitle("Meadow.F7MicroCoprocessor.F7Micro")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("Meadow.Coprocessor.F7Micro")]
+[assembly: AssemblyProduct("Meadow.F7MicroCoprocessor.F7Micro")]
 [assembly: AssemblyCopyright("Copyright ©  2019")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
