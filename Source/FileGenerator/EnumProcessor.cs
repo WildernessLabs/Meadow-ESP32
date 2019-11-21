@@ -69,7 +69,7 @@ namespace FileGenerator
             outputFile.WriteLine("");
             outputFile.WriteLine("using System;");
             outputFile.WriteLine("");
-            outputFile.WriteLine("namespace Meadow.Core.Esp32");
+            outputFile.WriteLine("namespace Meadow.Coprocessor.F7Micro");
             outputFile.WriteLine("{");
         }
 
