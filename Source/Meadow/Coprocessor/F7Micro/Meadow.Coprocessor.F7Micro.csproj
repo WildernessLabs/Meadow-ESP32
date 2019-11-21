@@ -39,9 +39,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BaseClasses\TransportProviderBase.cs" />
-    <Compile Include="Coprocessor.cs">
-      <Link>Meadow\Core\Esp32\Coprocessor.cs</Link>
+    <Compile Include="F7MicroCoprocessor.cs">
+      <Link>Meadow\Core\Esp32\F7MicroCoprocessor.cs</Link>
     </Compile>
+    <Compile Include="CoProcessor.IPosixApi.cs" />
     <Compile Include="DebugHelpers.cs" />
     <Compile Include="Encoders.cs">
       <Link>Meadow\Core\Esp32\Encoders.cs</Link>

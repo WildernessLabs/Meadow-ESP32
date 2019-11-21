@@ -5,10 +5,11 @@ using Meadow;
 using Meadow.Coprocessor.F7Micro.Exceptions;
 using Meadow.Devices;
 using Meadow.Hardware;
+using Meadow.Network;
 
 namespace Meadow.Coprocessor.F7Micro
 {
-    public class Coprocessor
+    public partial class F7MicroCoprocessor : IPosixApi
     {
         #region Enums
         
@@ -43,7 +44,7 @@ namespace Meadow.Coprocessor.F7Micro
         /// <summary>
         /// Default constructor (private to prevent it being used).
         /// </summary>
-        private Coprocessor()
+        private F7MicroCoprocessor()
         {
             
         }
@@ -53,7 +54,7 @@ namespace Meadow.Coprocessor.F7Micro
         /// to the coprocessor.
         /// </summary>
         /// <param name="dispatcher">Message dispatcher to be used to send messages to the network chip.</param>
-        public Coprocessor(MessageDispatcher dispatcher)
+        public F7MicroCoprocessor(MessageDispatcher dispatcher)
         {
             _dispatcher = dispatcher;
         }
@@ -159,7 +160,7 @@ namespace Meadow.Coprocessor.F7Micro
         /// The network must be started before this method can be called.
         /// </remarks>
         /// <returns>List of access points (or null if no access points can be found).</returns>
-        /// <exception cref="CoprocessorException">Coprocessor exception is throw if there was a problem on the ESp32.</exception>
+        /// <exception cref="CoprocessorException">F7MicroCoprocessor exception is throw if there was a problem on the ESp32.</exception>
         public Messages.AccessPoint[] GetAccessPoints()
         {
             Messages.Message message = new Messages.Message();
