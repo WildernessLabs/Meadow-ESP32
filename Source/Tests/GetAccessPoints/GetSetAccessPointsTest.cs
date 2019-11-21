@@ -1,9 +1,10 @@
 ﻿using System;
+using System.Net;
 using System.Threading;
 using Meadow;
 using Meadow.Devices;
 using Meadow.Hardware;
-using Meadow.Core.Esp32;
+using Meadow.Coprocessor.F7Micro;
 
 namespace BasicNetworkTest
 {
@@ -96,8 +97,8 @@ namespace BasicNetworkTest
         {
             DebugHelpers.DebugHelpers.LogMessage(true, "Starting network"); 
             
-            NetworkInformation networkInformation = _coprocessor.StartNetwork(Secrets.WIFI_NAME, Secrets.WIFI_PASSOWRD);
-            DebugHelpers.DebugHelpers.LogMessage(true, $"Obtained IP address: {networkInformation.ip4IpAddress[0]}.{networkInformation.ip4IpAddress[1]}.{networkInformation.ip4IpAddress[2]}.{networkInformation.ip4IpAddress[3]}");
+            IPAddress ipAddress = _coprocessor.StartNetwork(Secrets.WIFI_NAME, Secrets.WIFI_PASSOWRD);
+            DebugHelpers.DebugHelpers.LogMessage(true, $"Obtained IP address: {ipAddress.ToString()}");
 
             DebugHelpers.DebugHelpers.LogMessage(true, "Getting list of access points.");
             Messages.AccessPoint[] accessPoints = _coprocessor.GetAccessPoints();

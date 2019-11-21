@@ -30,82 +30,23 @@
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\..\Meadow\Core\Esp32\Coprocessor.cs">
-      <Link>Meadow\Core\Esp32\Coprocessor.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Meadow\Core\Esp32\Exceptions\CoprocessorException.cs">
-      <Link>Meadow\Core\Esp32\Exceptions\CoprocessorException.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Meadow\Core\Esp32\Exceptions\CoprocessorResponseNotFoundException.cs">
-      <Link>Meadow\Core\Esp32\Exceptions\CoprocessorResponseNotFoundException.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Meadow\Core\Esp32\MessageListEntry.cs">
-      <Link>Meadow\Core\Esp32\MessageListEntry.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Meadow\Core\Esp32\NetworkInformation.cs">
-      <Link>Meadow\Core\Esp32\NetworkInformation.cs</Link>
-    </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="DebugHelpers.cs" />
     <Compile Include="GetSetAccessPointsTest.cs" />
     <Compile Include="Secrets.cs" />
-    <Compile Include="..\..\Meadow\Core\Esp32\Encoders.cs">
-      <Link>Meadow\Core\Esp32\Encoders.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Meadow\Core\Esp32\Message.cs">
-      <Link>Meadow\Core\Esp32\Message.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Meadow\Core\Esp32\Enums.cs">
-      <Link>Meadow\Core\Esp32\Enums.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Meadow\Core\Esp32\MessageDispatcher.cs">
-      <Link>Meadow\Core\Esp32\MessageDispatcher.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Meadow\Core\Esp32\SpiTransportProvider.cs">
-      <Link>Meadow\Core\Esp32\SpiTransportProvider.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Meadow\Core\Esp32\Messages.cs">
-      <Link>Meadow\Core\Esp32\Messages.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Meadow\Core\Esp32\BaseClasses\TransportProviderBase.cs">
-      <Link>Meadow\Core\Esp32\BaseClasses\TransportProviderBase.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Meadow\Core\Esp32\EventHandlers\TransportProviderMessageReceivedEventHandler.cs">
-      <Link>Meadow\Core\Esp32\EventHandlers\TransportProviderMessageReceivedEventHandler.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Meadow\Core\Esp32\EventHandlers\MessageReceivedEventHandler.cs">
-      <Link>Meadow\Core\Esp32\EventHandlers\MessageReceivedEventHandler.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Meadow\Core\Esp32\EventHandlers\TransportProviderDataReceivedEventHandler.cs">
-      <Link>Meadow\Core\Esp32\EventHandlers\TransportProviderDataReceivedEventHandler.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Meadow\Core\Esp32\EventHandlers\TransportProviderErrorEventHandlers.cs">
-      <Link>Meadow\Core\Esp32\EventHandlers\TransportProviderErrorEventHandlers.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Meadow\Core\Esp32\EventHandlers\MessageDispatcherErrorEventHandler.cs">
-      <Link>Meadow\Core\Esp32\EventHandlers\MessageDispatcherErrorEventHandler.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Meadow\Core\Esp32\Programmer\SerialPort.cs">
-      <Link>Meadow\Core\Esp32\Programmer\SerialPort.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Meadow\Core\Esp32\Programmer\FlashSizes.cs">
-      <Link>Meadow\Core\Esp32\Programmer\FlashSizes.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Meadow\Core\Esp32\Programmer\SlipEncoder.cs">
-      <Link>Meadow\Core\Esp32\Programmer\SlipEncoder.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Meadow\Core\Esp32\Programmer\EspLoader.cs">
-      <Link>Meadow\Core\Esp32\Programmer\EspLoader.cs</Link>
-    </Compile>
-    <Compile Include="..\..\Meadow\Core\Esp32\Programmer\Programmer.cs">
-      <Link>Meadow\Core\Esp32\Programmer\Programmer.cs</Link>
-    </Compile>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\Meadow.Core\source\Meadow.Core\Meadow.Core.csproj">
       <Project>{5994F664-62D9-4913-9308-AF96C65B96CA}</Project>
       <Name>Meadow.Core</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Meadow\Coprocessor\F7Micro\Meadow.Coprocessor.F7Micro.csproj">
+      <Project>{d67eb669-9afb-4258-922b-2431488b6d82}</Project>
+      <Name>Meadow.Coprocessor.F7Micro</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\..\Meadow\Network\Meadow.Network.csproj">
+      <Project>{73fe4593-75ef-43f6-8596-06fab0f02e69}</Project>
+      <Name>Meadow.Network</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />

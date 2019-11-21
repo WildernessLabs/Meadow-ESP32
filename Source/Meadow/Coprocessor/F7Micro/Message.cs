@@ -3,7 +3,7 @@ using System.Collections;
 using System.Net.WebSockets;
 using System.Text;
 
-namespace Meadow.Core.Esp32
+namespace Meadow.Coprocessor.F7Micro
 {
     public partial class Messages
     {

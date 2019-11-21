@@ -12,9 +12,9 @@
 //
 
 using System;
-using Meadow.Core.Esp32;
+using Meadow.Coprocessor.F7Micro;
 
-namespace Meadow.Core.Esp32
+namespace Meadow.Coprocessor.F7Micro
 {
     public partial class Messages
     {

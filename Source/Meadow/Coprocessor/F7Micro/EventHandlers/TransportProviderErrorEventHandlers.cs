@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Meadow.Core.Esp32
+namespace Meadow.Coprocessor.F7Micro
 {
     /// <summary>
     ///     This class deals with the responses from the ESP32 indicating

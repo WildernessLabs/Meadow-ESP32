@@ -2,10 +2,11 @@
 using System.Runtime.CompilerServices;
 using System.Collections.Generic;
 using System.Threading;
-using Meadow.Core.Esp32.Exceptions;
+using Meadow.Coprocessor.F7Micro.Exceptions;
 using Meadow.Hardware;
+using Meadow.Coprocessor.F7Micro;
 
-namespace Meadow.Core.Esp32
+namespace Meadow.Coprocessor.F7Micro
 {
     /// <summary>
     /// The MessageDispatcher class is responsible for processing messages for the network
