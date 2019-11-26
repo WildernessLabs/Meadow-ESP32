@@ -71,3 +71,4 @@ packages
 .settings/
 Secrets.hpp
 Secrets.cs
+Source/Meadow/Network/_clicache
