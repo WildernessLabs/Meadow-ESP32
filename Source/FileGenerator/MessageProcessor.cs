@@ -172,7 +172,9 @@ namespace FileGenerator
             sourceFile.WriteLine("            //  Now allocate a new buffer and copy the data in to the buffer.");
             sourceFile.WriteLine("            //");
             sourceFile.WriteLine($"            byte[] buffer = new byte[length];");
+
             sourceFile.WriteLine($"            Array.Clear(buffer, 0, buffer.Length);");
+            bool amountDeclared = false;
             foreach (MessageElement me in message.MessageElements)
             {
                 DataType dt = GetDataType(me.DataType);
@@ -188,10 +190,18 @@ namespace FileGenerator
                         break;
                     case "fixedbytearray":
                         sourceFile.WriteLine($"            Array.Copy(buffer, offset, {variableName}.{me.Name}, 0, {me.Length});");
-                        sourceFile.WriteLine($"            offset += (int) ({me.Length};");
+                        sourceFile.WriteLine($"            offset += (int) {me.Length};");
                         break;
                     case "fixedchararray":
-                        sourceFile.WriteLine($"            int amount = {variableName}.{me.Name}.Length >= {me.Length} ? {me.Length} - 1 : {variableName}.{me.Name}.Length;");
+                        if (amountDeclared)
+                        {
+                            sourceFile.WriteLine($"            amount = {variableName}.{me.Name}.Length >= {me.Length} ? {me.Length} - 1 : {variableName}.{me.Name}.Length;");
+                        }
+                        else
+                        {
+                            sourceFile.WriteLine($"            int amount = {variableName}.{me.Name}.Length >= {me.Length} ? {me.Length} - 1 : {variableName}.{me.Name}.Length;");
+                            amountDeclared = true;
+                        }
                         sourceFile.WriteLine($"            for (int index = 0; index < amount; index++)");
                         sourceFile.WriteLine("            {");
                         sourceFile.WriteLine($"                buffer[index] = (byte) {variableName}.{me.Name}[index];");
@@ -249,8 +259,9 @@ namespace FileGenerator
                         sourceFile.WriteLine($"            offset += {dt.Size};");
                         break;
                     case "fixedbytearray":
+                        sourceFile.WriteLine($"            {variableName}.{me.Name} = new byte[{me.Length}];");
                         sourceFile.WriteLine($"            Array.Copy({variableName}.{me.Name}, 0, buffer, offset, {me.Length});");
-                        sourceFile.WriteLine($"            offset += (int) ({me.Length};");
+                        sourceFile.WriteLine($"            offset += (int) {me.Length};");
                         break;
                     case "fixedchararray":
                         sourceFile.WriteLine($"            for (int index = 0; (buffer[index + offset] != 0) && (index < ({me.Length} - 1)); index++)");
@@ -377,7 +388,7 @@ namespace FileGenerator
                                     sourceFile.WriteLine($"            public {dt.CSharpTypeName} {me.Name};");
                                     break;
                                 case "fixedbytearray":
-                                    sourceFile.WriteLine($"            public {dt.CSharpTypeName} {me.Name}[{me.Length}];");
+                                    sourceFile.WriteLine($"            public {dt.CSharpTypeName}[] {me.Name};");
                                     break;
                                 default:
                                     sourceFile.WriteLine($"            public {dt.CSharpTypeName} {me.Name};");
