@@ -668,6 +668,7 @@ void WiFiRequestHandler::ScanCompleteEvent(system_event_t *event)
         {
             bzero(accessPoint, sizeof(Esp32Messaging::AccessPoint));
             memcpy(accessPoint->Ssid, &accessPoints[index].ssid, 33);
+            memcpy(accessPoint->Bssid, &accessPoints[index].bssid, 6);
             accessPoint->PrimaryChannel = accessPoints[index].primary;
             accessPoint->SecondaryChannel = accessPoints[index].second;
             accessPoint->Rssi = accessPoints[index].rssi;

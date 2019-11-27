@@ -51,6 +51,7 @@ namespace Esp32Messaging
     struct AccessPoint
     {
         char Ssid[33];
+        uint8_t Bssid[6];
         uint8_t PrimaryChannel;
         uint8_t SecondaryChannel;
         int8_t Rssi;

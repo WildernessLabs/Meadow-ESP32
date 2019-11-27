@@ -38,6 +38,7 @@
             "MessageElements":
             [
                 { "Name": "Ssid", "DataType": "fixedchararray", "Length": "33" },
+                { "Name": "Bssid", "DataType": "fixedbytearray", "Length": "6" },
                 { "Name": "PrimaryChannel", "DataType": "byte" },
                 { "Name": "SecondaryChannel", "DataType": "byte" },
                 { "Name": "Rssi", "DataType": "sbyte" },

@@ -215,7 +215,7 @@ namespace FileGenerator
                         sourceFile.WriteLine($"            if ({variableName}.{me.Name}Length > 0)");
                         sourceFile.WriteLine("            {");
                         sourceFile.WriteLine($"                Array.Copy(buffer, offset, {variableName}.{me.Name}, 0, {variableName}.{me.Name}Length);");
-                        sourceFile.WriteLine($"                offset += (int) ({variableName}.{me.Name}Length + 1);");
+                        sourceFile.WriteLine($"                offset += (int) ({variableName}.{me.Name}Length);");
                         sourceFile.WriteLine("            }");
                         break;
                     case "string":
@@ -260,7 +260,7 @@ namespace FileGenerator
                         break;
                     case "fixedbytearray":
                         sourceFile.WriteLine($"            {variableName}.{me.Name} = new byte[{me.Length}];");
-                        sourceFile.WriteLine($"            Array.Copy({variableName}.{me.Name}, 0, buffer, offset, {me.Length});");
+                        sourceFile.WriteLine($"            Array.Copy(buffer, offset, {variableName}.{me.Name}, 0, {me.Length});");
                         sourceFile.WriteLine($"            offset += (int) {me.Length};");
                         break;
                     case "fixedchararray":
@@ -293,7 +293,6 @@ namespace FileGenerator
             sourceFile.WriteLine($"            return({variableName});");
             sourceFile.WriteLine("        }");
             sourceFile.WriteLine();
-
         }
 
         // <summary>

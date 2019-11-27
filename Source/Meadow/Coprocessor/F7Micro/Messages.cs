@@ -46,6 +46,7 @@ namespace Meadow.Coprocessor.F7Micro
         public struct AccessPoint
         {
             public string Ssid;
+            public Byte[] Bssid;
             public Byte PrimaryChannel;
             public Byte SecondaryChannel;
             public sbyte Rssi;

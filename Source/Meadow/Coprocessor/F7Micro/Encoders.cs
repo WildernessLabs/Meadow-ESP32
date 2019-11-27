@@ -445,7 +445,7 @@ namespace Meadow.Coprocessor.F7Micro
             if (httpGetResponse.ResponseLength > 0)
             {
                 Array.Copy(buffer, offset, httpGetResponse.Response, 0, httpGetResponse.ResponseLength);
-                offset += (int) (httpGetResponse.ResponseLength + 1);
+                offset += (int) (httpGetResponse.ResponseLength);
             }
             return(buffer);
         }
@@ -476,6 +476,7 @@ namespace Meadow.Coprocessor.F7Micro
             //  Calculate the amount of memory needed.
             //
             length += (int) 33;
+            length += (int) 6;
             length += 8;
 
             //
@@ -490,6 +491,8 @@ namespace Meadow.Coprocessor.F7Micro
             }
             buffer[amount] = 0;
             offset += (int) 33;
+            Array.Copy(buffer, offset, accessPoint.Bssid, 0, 6);
+            offset += (int) 6;
             buffer[offset] = accessPoint.PrimaryChannel;
             offset += 1;
             buffer[offset] = accessPoint.SecondaryChannel;
@@ -512,6 +515,9 @@ namespace Meadow.Coprocessor.F7Micro
                 accessPoint.Ssid += Convert.ToChar(buffer[index + offset]);
             }
             offset += (int) 33;
+            accessPoint.Bssid = new byte[6];
+            Array.Copy(buffer, offset, accessPoint.Bssid, 0, 6);
+            offset += (int) 6;
             accessPoint.PrimaryChannel = buffer[offset];
             offset += 1;
             accessPoint.SecondaryChannel = buffer[offset];
@@ -548,7 +554,7 @@ namespace Meadow.Coprocessor.F7Micro
             if (accessPointList.AccessPointsLength > 0)
             {
                 Array.Copy(buffer, offset, accessPointList.AccessPoints, 0, accessPointList.AccessPointsLength);
-                offset += (int) (accessPointList.AccessPointsLength + 1);
+                offset += (int) (accessPointList.AccessPointsLength);
             }
             return(buffer);
         }

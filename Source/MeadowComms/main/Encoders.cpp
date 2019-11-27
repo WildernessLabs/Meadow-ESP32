@@ -659,6 +659,8 @@ void Encoders::EncodeAccessPoint(Esp32Messaging::AccessPoint *accessPoint, uint8
 {
     memcpy((void *) buffer, (void *) accessPoint->Ssid, 33);
     buffer += 33;
+    memcpy((void *) buffer, (void *) accessPoint->Bssid, 6);
+    buffer += 6;
     *buffer = accessPoint->PrimaryChannel;
     buffer += 1;
     *buffer = accessPoint->SecondaryChannel;
@@ -683,7 +685,7 @@ void Encoders::EncodeAccessPoint(Esp32Messaging::AccessPoint *accessPoint, uint8
 int Encoders::EncodedAccessPointBufferSize(Esp32Messaging::AccessPoint *accessPoint)
 {
     int result = 0;
-    result += 41;
+    result += 47;
     return(result);
 }
 
@@ -705,6 +707,8 @@ Esp32Messaging::AccessPoint *Encoders::ExtractAccessPoint(uint8_t *buffer)
 
     memcpy((void *) accessPoint->Ssid, (void *) buffer, 33);
     buffer += 33;
+    memcpy((void *) accessPoint->Bssid, (void *) buffer, 6);
+    buffer += 6;
     accessPoint->PrimaryChannel = *buffer;
     buffer += 1;
     accessPoint->SecondaryChannel = *buffer;

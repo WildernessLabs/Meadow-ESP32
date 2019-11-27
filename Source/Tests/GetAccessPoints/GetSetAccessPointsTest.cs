@@ -1,10 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Threading;
 using Meadow;
 using Meadow.Devices;
 using Meadow.Hardware;
 using Meadow.Coprocessor.F7Micro;
+using Meadow.Gateway.WiFi;
 
 namespace BasicNetworkTest
 {
@@ -101,15 +103,15 @@ namespace BasicNetworkTest
             DebugHelpers.DebugHelpers.LogMessage(true, $"Obtained IP address: {ipAddress.ToString()}");
 
             DebugHelpers.DebugHelpers.LogMessage(true, "Getting list of access points.");
-            Messages.AccessPoint[] accessPoints = _f7MicroCoprocessor.GetAccessPoints();
+            List<WifiNetwork> accessPoints = _f7MicroCoprocessor.GetAccessPoints();
             if (accessPoints != null)
             {
                 DebugHelpers.DebugHelpers.LogMessage(true, "|------------------------------------------");
                 DebugHelpers.DebugHelpers.LogMessage(true, "|         Network Name             | RSSI |");
                 DebugHelpers.DebugHelpers.LogMessage(true, "|------------------------------------------");
-                foreach (Messages.AccessPoint accessPoint in accessPoints)
+                foreach (WifiNetwork accessPoint in accessPoints)
                 {
-                    DebugHelpers.DebugHelpers.LogMessage(true, $"| {accessPoint.Ssid,-32} | {accessPoint.Rssi,4} |");
+                    DebugHelpers.DebugHelpers.LogMessage(true, $"| {accessPoint.Ssid,-32} | {accessPoint.SignalDbStrength,4} |");
                 }
             }
             else

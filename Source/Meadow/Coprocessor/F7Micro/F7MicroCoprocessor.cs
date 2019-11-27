@@ -1,4 +1,6 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Net;
 using System.Threading;
 using Meadow;
@@ -6,6 +8,7 @@ using Meadow.Coprocessor.F7Micro.Exceptions;
 using Meadow.Devices;
 using Meadow.Hardware;
 using Meadow.Network;
+using Meadow.Gateway.WiFi;
 
 namespace Meadow.Coprocessor.F7Micro
 {
@@ -161,7 +164,7 @@ namespace Meadow.Coprocessor.F7Micro
         /// </remarks>
         /// <returns>List of access points (or null if no access points can be found).</returns>
         /// <exception cref="CoprocessorException">F7MicroCoprocessor exception is throw if there was a problem on the ESp32.</exception>
-        public Messages.AccessPoint[] GetAccessPoints()
+        public List<WifiNetwork> GetAccessPoints()
         {
             Messages.Message message = new Messages.Message();
             message.MessageType = (byte)MessageTypes.Data;
@@ -181,19 +184,35 @@ namespace Meadow.Coprocessor.F7Micro
             //
             Messages.AccessPointList accessPointList = Encoders.ExtractAccessPointList(response.Payload, 0);
             Messages.AccessPoint[] accessPoints = new Messages.AccessPoint[accessPointList.NumberOfAccessPoints]; 
+            List<WifiNetwork> networks = new List<WifiNetwork>();
             if (accessPointList.NumberOfAccessPoints > 0)
             {
-                accessPoints = new Messages.AccessPoint[accessPointList.NumberOfAccessPoints];
                 for (int count = 0; count < accessPointList.NumberOfAccessPoints; count++)
                 {
-                    accessPoints[count] = Encoders.ExtractAccessPoint(accessPointList.AccessPoints, count * 41);
+                    Messages.AccessPoint accessPoint = Encoders.ExtractAccessPoint(accessPointList.AccessPoints, count * 47);
+                    string bssid = "";
+                    for (int index = 0; index < accessPoint.Bssid.Length; index++)
+                    {
+                        if (index != accessPoint.Bssid.Length)
+                        {
+                            bssid += DebugHelpers.DebugHelpers.Hexadecimal(accessPoint.Bssid[index]) + ":";
+                        }
+                        else
+                        {
+                            bssid += DebugHelpers.DebugHelpers.Hexadecimal(accessPoint.Bssid[index]);
+                        }
+                    }
+                    WifiNetwork network = new WifiNetwork(accessPoint.Ssid, bssid, NetworkType.Infrastructure, PhyType.Unknown, 
+                        new NetworkSecuritySettings((NetworkAuthenticationType) accessPoint.AuthenticationMode, NetworkEncryptionType.Unknown),accessPoint.PrimaryChannel, (NetworkProtocol) accessPoint.Protocols);
+                    networks.Add(network);
                 }
             }
             else
             {
                 accessPoints = null;
             }
-            return (accessPoints);
+            
+            return (networks);
         }
         
         #endregion Methods
