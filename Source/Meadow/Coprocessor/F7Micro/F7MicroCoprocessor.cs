@@ -205,7 +205,8 @@ namespace Meadow.Coprocessor.F7Micro
                         }
                     }
                     WifiNetwork network = new WifiNetwork(accessPoint.Ssid, bssid, NetworkType.Infrastructure, PhyType.Unknown, 
-                        new NetworkSecuritySettings((NetworkAuthenticationType) accessPoint.AuthenticationMode, NetworkEncryptionType.Unknown),accessPoint.PrimaryChannel, (NetworkProtocol) accessPoint.Protocols);
+                        new NetworkSecuritySettings((NetworkAuthenticationType) accessPoint.AuthenticationMode, NetworkEncryptionType.Unknown),
+                        accessPoint.PrimaryChannel, (NetworkProtocol) accessPoint.Protocols, accessPoint.Rssi);
                     networks.Add(network);
                 }
             }
