@@ -106,12 +106,12 @@ namespace BasicNetworkTest
             List<WifiNetwork> accessPoints = _f7MicroCoprocessor.GetAccessPoints();
             if (accessPoints != null)
             {
-                DebugHelpers.DebugHelpers.LogMessage(true, "|------------------------------------------");
-                DebugHelpers.DebugHelpers.LogMessage(true, "|         Network Name             | RSSI |");
-                DebugHelpers.DebugHelpers.LogMessage(true, "|------------------------------------------");
+                DebugHelpers.DebugHelpers.LogMessage(true, "|--------------------------------------------------------------|---------|");
+                DebugHelpers.DebugHelpers.LogMessage(true, "|         Network Name             | RSSI |        BSSID       | Channel |");
+                DebugHelpers.DebugHelpers.LogMessage(true, "|--------------------------------------------------------------|---------|");
                 foreach (WifiNetwork accessPoint in accessPoints)
                 {
-                    DebugHelpers.DebugHelpers.LogMessage(true, $"| {accessPoint.Ssid,-32} | {accessPoint.SignalDbStrength,4} |");
+                    DebugHelpers.DebugHelpers.LogMessage(true, $"| {accessPoint.Ssid,-32} | {accessPoint.SignalDbStrength,4} | {accessPoint.Bssid,17} |   {accessPoint.ChannelCenterFrequency,3}   |");
                 }
             }
             else

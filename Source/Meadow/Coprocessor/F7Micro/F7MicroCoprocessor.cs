@@ -197,7 +197,8 @@ namespace Meadow.Coprocessor.F7Micro
                     {
                         if (index != accessPoint.Bssid.Length)
                         {
-                            bssid += DebugHelpers.DebugHelpers.Hexadecimal(accessPoint.Bssid[index]) + ":";
+                            string hex = DebugHelpers.DebugHelpers.Hexadecimal(accessPoint.Bssid[index]);
+                            bssid += hex.Substring(2, 2) + ":";
                         }
                         else
                         {
