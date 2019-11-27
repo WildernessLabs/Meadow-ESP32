@@ -195,14 +195,11 @@ namespace Meadow.Coprocessor.F7Micro
                     string bssid = "";
                     for (int index = 0; index < accessPoint.Bssid.Length; index++)
                     {
-                        if (index != accessPoint.Bssid.Length)
+                        string hex = DebugHelpers.DebugHelpers.Hexadecimal(accessPoint.Bssid[index]);
+                        bssid += hex.Substring(2, 2);
+                        if (index != accessPoint.Bssid.Length - 1)
                         {
-                            string hex = DebugHelpers.DebugHelpers.Hexadecimal(accessPoint.Bssid[index]);
-                            bssid += hex.Substring(2, 2) + ":";
-                        }
-                        else
-                        {
-                            bssid += DebugHelpers.DebugHelpers.Hexadecimal(accessPoint.Bssid[index]);
+                            bssid += ":";
                         }
                     }
                     WifiNetwork network = new WifiNetwork(accessPoint.Ssid, bssid, NetworkType.Infrastructure, PhyType.Unknown, 
