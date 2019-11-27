@@ -187,9 +187,11 @@ namespace Meadow.Coprocessor.F7Micro
             List<WifiNetwork> networks = new List<WifiNetwork>();
             if (accessPointList.NumberOfAccessPoints > 0)
             {
+                int accessPointOffset = 0;
                 for (int count = 0; count < accessPointList.NumberOfAccessPoints; count++)
                 {
-                    Messages.AccessPoint accessPoint = Encoders.ExtractAccessPoint(accessPointList.AccessPoints, count * 47);
+                    Messages.AccessPoint accessPoint = Encoders.ExtractAccessPoint(accessPointList.AccessPoints, accessPointOffset);
+                    accessPointOffset += Encoders.EncodedAccessPointBufferSize(accessPoint);
                     string bssid = "";
                     for (int index = 0; index < accessPoint.Bssid.Length; index++)
                     {
