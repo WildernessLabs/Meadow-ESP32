@@ -127,6 +127,52 @@ namespace FileGenerator
         }
 
         /// <summary>
+        /// Generate the function that will calculate the size of the encoded data for the specified message.
+        /// </summary>
+        /// <param name="sourceFile">Output stream for the C file that will hold the calculation method.</param>
+        /// <param name="message">Message defintion to encode.</param>
+        private void GenerateCSharpMessageEncodedBufferSizeFunction(StreamWriter sourceFile, Message message)
+        {
+            string variableName = message.Name.Substring(0, 1).ToLower() + message.Name.Substring(1);
+            sourceFile.WriteLine("        /// <summary>");
+            sourceFile.WriteLine($"        /// Calculate the amount of memory required to hold the given instance of the {message.Name} object.");
+            sourceFile.WriteLine("        /// </summary>");
+            sourceFile.WriteLine($"        /// <param name=\"{variableName}>{message.Name} object to be encoded.</param>");
+            sourceFile.WriteLine($"        /// <returns>Number of bytes required to hold the encoded {message.Name} object.</param>");
+            sourceFile.WriteLine($"        public static int Encoded{message.Name}BufferSize(Messages.{message.Name} {variableName})");
+            sourceFile.WriteLine("        {");
+            sourceFile.WriteLine("            int result = 0;");
+            int staticSpaceRequired = 0;
+            foreach (MessageElement me in message.MessageElements)
+            {
+                DataType dt = GetDataType(me.DataType);
+
+                switch (dt.Name.ToLower())
+                {
+                    case "string":
+                        sourceFile.WriteLine($"            result += (int) {variableName}.{me.Name}.Length;");
+                        staticSpaceRequired++;          // Terminating null.
+                        break;
+                    case "fixedchararray":
+                    case "fixedbytearray":
+                        staticSpaceRequired += (int) me.Length;
+                        break;
+                    case "blob":
+                        sourceFile.WriteLine($"            result += (int) {variableName}.{me.Name}Length;");
+                        staticSpaceRequired += 4;       // UInt32 object containing the length.
+                        break;
+                    default:
+                        staticSpaceRequired += dt.Size;
+                        break;
+                }
+            }
+            sourceFile.WriteLine($"            result += {staticSpaceRequired};");
+            sourceFile.WriteLine("            return(result);");
+            sourceFile.WriteLine("        }");
+            sourceFile.WriteLine();
+        }
+
+        /// <summary>
         /// Generate the method that will cencode the specified message.
         /// </summary>
         /// <param name="sourceFile">Output stream for the C# file that will hold the encoder.</param>
@@ -320,6 +366,7 @@ namespace FileGenerator
                     {
                         GenerateCSharpEncoderFunction(sourceFile, m);
                         GenerateCSharpExtractFunction(sourceFile, m);
+                        GenerateCSharpMessageEncodedBufferSizeFunction(sourceFile, m);
                     }
                 }
                 sourceFile.WriteLine("    }");
