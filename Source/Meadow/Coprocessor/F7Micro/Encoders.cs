@@ -354,6 +354,20 @@ namespace Meadow.Coprocessor.F7Micro
             return(wiFiCredentials);
         }
 
+        /// <summary>
+        /// Calculate the amount of memory required to hold the given instance of the WiFiCredentials object.
+        /// </summary>
+        /// <param name="wiFiCredentials>WiFiCredentials object to be encoded.</param>
+        /// <returns>Number of bytes required to hold the encoded WiFiCredentials object.</param>
+        public static int EncodedWiFiCredentialsBufferSize(Messages.WiFiCredentials wiFiCredentials)
+        {
+            int result = 0;
+            result += (int) wiFiCredentials.NetworkName.Length;
+            result += (int) wiFiCredentials.Password.Length;
+            result += 2;
+            return(result);
+        }
+
         public static byte[] EncodeAntennaInfo(Messages.AntennaInfo antennaInfo)
         {
             int offset = 0;
@@ -381,6 +395,18 @@ namespace Meadow.Coprocessor.F7Micro
             antennaInfo.Antenna = buffer[offset];
             offset += 1;
             return(antennaInfo);
+        }
+
+        /// <summary>
+        /// Calculate the amount of memory required to hold the given instance of the AntennaInfo object.
+        /// </summary>
+        /// <param name="antennaInfo>AntennaInfo object to be encoded.</param>
+        /// <returns>Number of bytes required to hold the encoded AntennaInfo object.</param>
+        public static int EncodedAntennaInfoBufferSize(Messages.AntennaInfo antennaInfo)
+        {
+            int result = 0;
+            result += 1;
+            return(result);
         }
 
         public static byte[] EncodeHttpGetRequest(Messages.HttpGetRequest httpGetRequest)
@@ -420,6 +446,20 @@ namespace Meadow.Coprocessor.F7Micro
             httpGetRequest.Uri = ExtractString(buffer, offset);
             offset += (int) (httpGetRequest.Uri.Length + 1);
             return(httpGetRequest);
+        }
+
+        /// <summary>
+        /// Calculate the amount of memory required to hold the given instance of the HttpGetRequest object.
+        /// </summary>
+        /// <param name="httpGetRequest>HttpGetRequest object to be encoded.</param>
+        /// <returns>Number of bytes required to hold the encoded HttpGetRequest object.</param>
+        public static int EncodedHttpGetRequestBufferSize(Messages.HttpGetRequest httpGetRequest)
+        {
+            int result = 0;
+            result += (int) httpGetRequest.ServerName.Length;
+            result += (int) httpGetRequest.Uri.Length;
+            result += 4;
+            return(result);
         }
 
         public static byte[] EncodeHttpGetResponse(Messages.HttpGetResponse httpGetResponse)
@@ -465,6 +505,19 @@ namespace Meadow.Coprocessor.F7Micro
                 offset += (int) httpGetResponse.ResponseLength;
             }
             return(httpGetResponse);
+        }
+
+        /// <summary>
+        /// Calculate the amount of memory required to hold the given instance of the HttpGetResponse object.
+        /// </summary>
+        /// <param name="httpGetResponse>HttpGetResponse object to be encoded.</param>
+        /// <returns>Number of bytes required to hold the encoded HttpGetResponse object.</param>
+        public static int EncodedHttpGetResponseBufferSize(Messages.HttpGetResponse httpGetResponse)
+        {
+            int result = 0;
+            result += (int) httpGetResponse.ResponseLength;
+            result += 8;
+            return(result);
         }
 
         public static byte[] EncodeAccessPoint(Messages.AccessPoint accessPoint)
@@ -531,6 +584,18 @@ namespace Meadow.Coprocessor.F7Micro
             return(accessPoint);
         }
 
+        /// <summary>
+        /// Calculate the amount of memory required to hold the given instance of the AccessPoint object.
+        /// </summary>
+        /// <param name="accessPoint>AccessPoint object to be encoded.</param>
+        /// <returns>Number of bytes required to hold the encoded AccessPoint object.</param>
+        public static int EncodedAccessPointBufferSize(Messages.AccessPoint accessPoint)
+        {
+            int result = 0;
+            result += 47;
+            return(result);
+        }
+
         public static byte[] EncodeAccessPointList(Messages.AccessPointList accessPointList)
         {
             int offset = 0;
@@ -574,6 +639,19 @@ namespace Meadow.Coprocessor.F7Micro
                 offset += (int) accessPointList.AccessPointsLength;
             }
             return(accessPointList);
+        }
+
+        /// <summary>
+        /// Calculate the amount of memory required to hold the given instance of the AccessPointList object.
+        /// </summary>
+        /// <param name="accessPointList>AccessPointList object to be encoded.</param>
+        /// <returns>Number of bytes required to hold the encoded AccessPointList object.</param>
+        public static int EncodedAccessPointListBufferSize(Messages.AccessPointList accessPointList)
+        {
+            int result = 0;
+            result += (int) accessPointList.AccessPointsLength;
+            result += 8;
+            return(result);
         }
 
     }
