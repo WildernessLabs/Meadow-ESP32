@@ -613,8 +613,10 @@ namespace FileGenerator
                         sourceFile.WriteLine("    }");
                         break;
                     case "structure":
+                        sourceFile.WriteLine($"            {variableName}.{me.Name} = Extract{me.CSName}(buffer, offset);");
+                        sourceFile.WriteLine($"            offset += Encoded{me.CSName}BufferSize({variableName}.{me.Name});");
                         break;
-                    case "pointer":
+                    case "pointer": 
                         sourceFile.WriteLine($"    EncodeUInt32((uint32_t) {variableName}->{me.Name}, buffer);");
                         sourceFile.WriteLine($"    buffer += 4;");
                         break;
@@ -745,6 +747,8 @@ namespace FileGenerator
                         sourceFile.WriteLine("    }");
                         break;
                     case "structure":
+                        sourceFile.WriteLine($"            {variableName}.{me.Name} = Extract{me.CSName}(buffer, offset);");
+                        sourceFile.WriteLine($"            offset += Encoded{me.CSName}BufferSize({variableName}.{me.Name});");
                         break;
                     case "pointer":
                         sourceFile.WriteLine($"    {variableName}->{me.Name} = ({me.CName} *) ExtractUInt32(buffer);");
