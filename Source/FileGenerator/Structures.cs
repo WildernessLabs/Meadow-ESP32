@@ -9,6 +9,10 @@ namespace FileGenerator
         public string DataType;
 
         public UInt32 Length = 0;
+
+        public string CName = "";
+
+        public string CSName = "";
     }
 
     public class Message
