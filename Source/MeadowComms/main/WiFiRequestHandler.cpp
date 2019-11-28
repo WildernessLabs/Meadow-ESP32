@@ -244,7 +244,7 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
         case WiFiFunction::Stop:
             ESP_LOGE(__func__, "WiFi Stop function is not implemented yet.");
             break;
-        case WiFiFunction::Connect:
+        case WiFiFunction::ConnectToAp:
             ESP_LOGE(__func__, "WiFi Connect function is not implemented yet.");
             break;
         case WiFiFunction::Disconnect:
@@ -265,8 +265,29 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
         case WiFiFunction::GetAccessPoints:
             GetAvailableNetworks(request);
             break;
-        case WiFiFunction::HttpGet:
-            HttpGet(request);
+        case WiFiFunction::Close:
+            Close(request);
+            break;
+        case WiFiFunction::Read:
+            Read(request);
+            break;
+        case WiFiFunction::SetSockOpt:
+            SetSockOpt(request);
+            break;
+        case WiFiFunction::Write:
+            Write(request);
+            break;
+        case WiFiFunction::FreeAddrInfo:
+            FreeAddrInfo(request);
+            break;
+        case WiFiFunction::Connect:
+            Connect(request);
+            break;
+        case WiFiFunction::Socket:
+            Socket(request);
+            break;
+        case WiFiFunction::GetAddrInfo:
+            GetAddrInfo(request);
             break;
         default:
             ESP_LOGI(__func__, "Unknown WiFi message received, function %d", request->Function);
@@ -409,6 +430,94 @@ void WiFiRequestHandler::GetAvailableNetworks(Message *request)
     };
     _currentRequest = request;
     ESP_ERROR_CHECK(esp_wifi_scan_start(&scanConf, true));
+}
+
+/**
+ *  @brief Expose the getaddrinfo method to the STM32.
+ *
+ *  @param message
+ *      Message structure containing the parameters for the getaddrinfo method.
+ */
+void WiFiRequestHandler::GetAddrInfo(Message * message)
+{
+
+}
+
+/**
+ *  @brief Expose the socket method to the STM32.
+ *
+ *  @param message
+ *      Message structure containing the parameters for the socket method.
+ */
+void WiFiRequestHandler::Socket(Message * message)
+{
+
+}
+
+/**
+ *  @brief Expose the connect method to the STM32.
+ *
+ *  @param message
+ *      Message structure containing the parameters for the connect method.
+ */
+void WiFiRequestHandler::Connect(Message * message)
+{
+
+}
+
+/**
+ *  @brief Expose the freeaddrinfo method to the STM32.
+ *
+ *  @param message
+ *      Message structure containing the parameters for the freeaddrinfo method.
+ */
+void WiFiRequestHandler::FreeAddrInfo(Message * message)
+{
+
+}
+
+/**
+ *  @brief Expose the write method to the STM32.
+ *
+ *  @param message
+ *      Message structure containing the parameters for the write method.
+ */
+void WiFiRequestHandler::Write(Message * message)
+{
+
+}
+
+/**
+ *  @brief Expose the setsockopt method to the STM32.
+ *
+ *  @param message
+ *      Message structure containing the parameters for the setsockopt method.
+ */
+void WiFiRequestHandler::SetSockOpt(Message * message)
+{
+
+}
+
+/**
+ *  @brief Expose the read method to the STM32.
+ *
+ *  @param message
+ *      Message structure containing the parameters for the read method.
+ */
+void WiFiRequestHandler::Read(Message * message)
+{
+
+}
+
+/**
+ *  @brief Expose the getaddrinfo method to the STM32.
+ *
+ *  @param message
+ *      Message structure containing the parameters for the getaddrinfo method.
+ */
+void WiFiRequestHandler::Close(Message * message)
+{
+
 }
 
 void WiFiRequestHandler::HttpGet(Message *message)

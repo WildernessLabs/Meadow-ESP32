@@ -185,7 +185,8 @@ namespace FileGenerator
         private void GenerateCSharpEncoderFunction(StreamWriter sourceFile, Message message)
         {
             string variableName = message.Name.Substring(0, 1).ToLower() + message.Name.Substring(1);
-            sourceFile.WriteLine($"        public static byte[] Encode{message.Name}(Messages.{message.Name} {variableName})");
+            sourceFile.WriteLine($"        public static byte[] Encode{message.Name}({message.Name} {variableName})");
+            // sourceFile.WriteLine($"        public static byte[] Encode{message.Name}(Messages.{message.Name} {variableName})");
             sourceFile.WriteLine("        {");
             sourceFile.WriteLine("            int offset = 0;");
             sourceFile.WriteLine("            int length = 0;");

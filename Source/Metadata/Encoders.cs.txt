@@ -236,9 +236,9 @@
         /// <returns>Byte array containing the encoded message.</returns>
         /// <param name="message">Message to be encoded.</param>
         /// <param name="header">True if we are encoding the header only, false if encoding the fill message.</param>
-        public static byte[] EncodeMessage(Messages.Message message, bool headerOnly = false)
+        public static byte[] EncodeMessage(Message message, bool headerOnly = false)
         {
-            UInt32 messageSize = Messages.HEADER_SIZE;
+            UInt32 messageSize = Message.HEADER_SIZE;
             if (!headerOnly)
             {
                 messageSize += message.PayloadLength;
@@ -275,7 +275,7 @@
             //  Now we deal with the CRC.
             //
             UInt32 crc = Crc32(buffer);
-            EncodeUInt32(crc, buffer, Messages.CRC_OFFSET);
+            EncodeUInt32(crc, buffer, Message.CRC_OFFSET);
             return (buffer);
         }
 
@@ -285,12 +285,12 @@
         /// <returns>Tuple containing the extracted message (or null) and a status code.</returns>
         /// <param name="buffer">Byte buffer containing the encoded data.</param>
         /// <param name="offset">Offset of the message into the buffer (normally this is 0).</param>
-        public static (Messages.Message? message, StatusCodes statusCode) ExtractMessage(byte[] buffer, int offset = 0, bool headerOnly = false)
+        public static (Message? message, StatusCodes statusCode) ExtractMessage(byte[] buffer, int offset = 0, bool headerOnly = false)
         {
             StatusCodes statusCode = StatusCodes.CompletedOK;
-            Messages.Message? result = null;
+            Message? result = null;
 
-            if (buffer.Length < Messages.HEADER_SIZE)
+            if (buffer.Length < Message.HEADER_SIZE)
             {
                 statusCode = StatusCodes.InvalidPacket;
             }
@@ -299,8 +299,8 @@
                 //
                 //  Now check the CRC.
                 //
-                UInt32 crc = ExtractUInt32(buffer, Messages.CRC_OFFSET);
-                EncodeUInt32(0, buffer, Messages.CRC_OFFSET);
+                UInt32 crc = ExtractUInt32(buffer, Message.CRC_OFFSET);
+                EncodeUInt32(0, buffer, Message.CRC_OFFSET);
                 if (Crc32(buffer) != crc)
                 {
                     statusCode = StatusCodes.CRCError;

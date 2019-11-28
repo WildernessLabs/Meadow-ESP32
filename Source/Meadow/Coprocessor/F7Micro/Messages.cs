@@ -68,6 +68,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
 
     public struct AddrInfo
     {
+        public UInt32 MyHeapAddress;
         public Int32 Flags;
         public Int32 Family;
         public Int32 SocketType;

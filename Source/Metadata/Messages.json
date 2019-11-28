@@ -67,6 +67,7 @@
             "Name": "AddrInfo",
             "MessageElements":
             [
+                { "Name": "MyHeapAddress", "DataType": "uint32" },
                 { "Name": "Flags", "DataType" : "int" },
                 { "Name": "Family", "DataType" : "int" },
                 { "Name": "SocketType", "DataType" : "int" },

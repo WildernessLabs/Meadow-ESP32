@@ -914,6 +914,8 @@ Esp32Messaging::SockAddr *Encoders::ExtractSockAddr(uint8_t *buffer)
  */
 void Encoders::EncodeAddrInfo(Esp32Messaging::AddrInfo *addrInfo, uint8_t *buffer)
 {
+    EncodeUInt32(addrInfo->MyHeapAddress, buffer);
+    buffer += 4;
     EncodeInt32(addrInfo->Flags, buffer);
     buffer += 4;
     EncodeInt32(addrInfo->Family, buffer);
@@ -945,7 +947,7 @@ int Encoders::EncodedAddrInfoBufferSize(Esp32Messaging::AddrInfo *addrInfo)
 {
     int result = 0;
     result += strlen(addrInfo->CannonName);
-    result += 29;
+    result += 33;
     return(result);
 }
 
@@ -965,6 +967,8 @@ Esp32Messaging::AddrInfo *Encoders::ExtractAddrInfo(uint8_t *buffer)
 {
     Esp32Messaging::AddrInfo *addrInfo = (Esp32Messaging::AddrInfo *) pvPortMalloc(sizeof(Esp32Messaging::AddrInfo));
 
+    addrInfo->MyHeapAddress = ExtractUInt32(buffer);
+    buffer += 4;
     addrInfo->Flags = ExtractInt32(buffer);
     buffer += 4;
     addrInfo->Family = ExtractInt32(buffer);
