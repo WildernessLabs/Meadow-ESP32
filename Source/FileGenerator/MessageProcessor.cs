@@ -22,7 +22,9 @@ namespace FileGenerator
             new DataType("blob", 0, "uint8_t *", "byte[]"),
             new DataType("string", 4, "char *", "String"),
             new DataType("fixedbytearray", 0, "uint8_t", "Byte"),
-            new DataType("fixedchararray", 0, "char", "string")
+            new DataType("fixedchararray", 0, "char", "string"),
+            new DataType("structure", 0, "", ""),
+            new DataType("pointer", 4, "", "")
         };
 
         public string InputFileName { get; set; }
@@ -137,8 +139,8 @@ namespace FileGenerator
             sourceFile.WriteLine("        /// <summary>");
             sourceFile.WriteLine($"        /// Calculate the amount of memory required to hold the given instance of the {message.Name} object.");
             sourceFile.WriteLine("        /// </summary>");
-            sourceFile.WriteLine($"        /// <param name=\"{variableName}>{message.Name} object to be encoded.</param>");
-            sourceFile.WriteLine($"        /// <returns>Number of bytes required to hold the encoded {message.Name} object.</param>");
+            sourceFile.WriteLine($"        /// <param name=\"{variableName}\">{message.Name} object to be encoded.</param>");
+            sourceFile.WriteLine($"        /// <returns>Number of bytes required to hold the encoded {message.Name} object.</returns>");
             sourceFile.WriteLine($"        public static int Encoded{message.Name}BufferSize(Messages.{message.Name} {variableName})");
             sourceFile.WriteLine("        {");
             sourceFile.WriteLine("            int result = 0;");
@@ -160,6 +162,9 @@ namespace FileGenerator
                     case "blob":
                         sourceFile.WriteLine($"            result += (int) {variableName}.{me.Name}Length;");
                         staticSpaceRequired += 4;       // UInt32 object containing the length.
+                        break;
+                    case "structure":
+                        sourceFile.WriteLine($"            result += Encoded{me.CSName}BufferSize();");
                         break;
                     default:
                         staticSpaceRequired += dt.Size;
@@ -203,6 +208,9 @@ namespace FileGenerator
                         break;
                     case "blob":
                         sourceFile.WriteLine($"            length += (int) ({variableName}.{me.Name}Length + 4);");
+                        break;
+                    case "structure":
+                        sourceFile.WriteLine($"            length += Encoded{me.Name}BufferSize();");
                         break;
                     default:
                         nonStringLength += dt.Size;
@@ -268,6 +276,14 @@ namespace FileGenerator
                         sourceFile.WriteLine($"            Encode{dt.CSharpTypeName}({variableName}.{me.Name}, buffer, offset);");
                         sourceFile.WriteLine($"            offset += {variableName}.{me.Name}.Length + 1;");
                         break;
+                    case "structure":
+                        sourceFile.WriteLine($"            Encode{me.CSName} = Encode{me.CSName}({variableName}.{me.Name}, buffer, offset);");
+                        sourceFile.WriteLine($"            offset += Encoded{me.CSName}BufferSize({variableName}.{me.Name});");
+                        break;
+                    case "pointer":
+                        sourceFile.WriteLine($"            EncodeUInt32({variableName}.{me.Name}, buffer, offset);");
+                        sourceFile.WriteLine($"            offset += 4;");
+                        break;
                     default:
                         sourceFile.WriteLine($"            Encode{dt.CSharpTypeName}({variableName}.{me.Name}, buffer, offset);");
                         sourceFile.WriteLine($"            offset += {dt.Size};");
@@ -329,6 +345,14 @@ namespace FileGenerator
                     case "string":
                         sourceFile.WriteLine($"            {variableName}.{me.Name} = Extract{dt.CSharpTypeName}(buffer, offset);");
                         sourceFile.WriteLine($"            offset += (int) ({variableName}.{me.Name}.Length + 1);");
+                        break;
+                    case "structure":
+                        sourceFile.WriteLine($"            {variableName}.{me.Name} = Extract{me.CSName}(buffer, offset);");
+                        sourceFile.WriteLine($"            offset += Encoded{me.CSName}BufferSize({variableName}.{me.Name});");
+                        break;
+                    case "pointer":
+                        sourceFile.WriteLine($"            {variableName}.{me.Name} = ExtractUInt32(buffer, offset);");
+                        sourceFile.WriteLine($"            offset += 4;");
                         break;
                     default:
                         sourceFile.WriteLine($"            {variableName}.{me.Name} = Extract{dt.CSharpTypeName}(buffer, offset);");
@@ -436,6 +460,12 @@ namespace FileGenerator
                                 case "fixedbytearray":
                                     sourceFile.WriteLine($"            public {dt.CSharpTypeName}[] {me.Name};");
                                     break;
+                                case "structure":
+                                    sourceFile.WriteLine($"            public {me.CSName} {me.Name};");
+                                    break;
+                                case "pointer":
+                                    sourceFile.WriteLine($"            public UInt32 {me.Name};");
+                                    break;
                                 default:
                                     sourceFile.WriteLine($"            public {dt.CSharpTypeName} {me.Name};");
                                     break;
@@ -463,6 +493,15 @@ namespace FileGenerator
                 sourceFile.WriteLine("#define _ENCODERS_HPP_");
                 sourceFile.WriteLine();
                 sourceFile.WriteLine("#include \"freertos/FreeRTOS.h\"");
+
+                sourceFile.WriteLine("#include \"lwip/err.h\"");
+                sourceFile.WriteLine("#include \"lwip/sys.h\"");
+                sourceFile.WriteLine("#include \"lwip/sockets.h\"");
+                sourceFile.WriteLine("#include \"lwip/netdb.h\"");
+                sourceFile.WriteLine("#include \"lwip/dns.h\"");
+                sourceFile.WriteLine("#include \"esp_system.h\"");
+                sourceFile.WriteLine("#include \"esp_wifi.h\"");
+
                 sourceFile.WriteLine("#include <stdlib.h>");
                 sourceFile.WriteLine("#include <string.h>");
                 sourceFile.WriteLine("#include \"esp_log.h\"");
@@ -490,6 +529,12 @@ namespace FileGenerator
                                 case "fixedchararray":
                                 case "fixedbytearray":
                                     sourceFile.WriteLine($"        {dt.CTypeName} {me.Name}[{me.Length}];");
+                                    break;
+                                case "structure":
+                                    sourceFile.WriteLine($"        {me.CName} {me.Name};");
+                                    break;
+                                case "pointer":
+                                    sourceFile.WriteLine($"        {me.CName} *{me.Name};");
                                     break;
                                 default:
                                     sourceFile.WriteLine($"        {dt.CTypeName} {me.Name};");
@@ -567,6 +612,12 @@ namespace FileGenerator
                         sourceFile.WriteLine($"        buffer += {variableName}->{me.Name}Length;");
                         sourceFile.WriteLine("    }");
                         break;
+                    case "structure":
+                        break;
+                    case "pointer":
+                        sourceFile.WriteLine($"    EncodeUInt32((uint32_t) {variableName}->{me.Name}, buffer);");
+                        sourceFile.WriteLine($"    buffer += 4;");
+                        break;
                     default:
                         sourceFile.WriteLine($"    Encode{dt.CSharpTypeName}({variableName}->{me.Name}, buffer);");
                         sourceFile.WriteLine($"    buffer += {dt.Size};");
@@ -616,6 +667,9 @@ namespace FileGenerator
                     case "blob":
                         sourceFile.WriteLine($"    result += {variableName}->{me.Name}Length;");
                         staticSpaceRequired += 4;       // UInt32 object containing the length.
+                        break;
+                    case "structure":
+                        sourceFile.WriteLine($"    result += Encoded{me.CSName})BufferSize();");
                         break;
                     default:
                         staticSpaceRequired += dt.Size;
@@ -689,6 +743,12 @@ namespace FileGenerator
                         sourceFile.WriteLine("    {");
                         sourceFile.WriteLine($"        {variableName}->{me.Name} = nullptr;");
                         sourceFile.WriteLine("    }");
+                        break;
+                    case "structure":
+                        break;
+                    case "pointer":
+                        sourceFile.WriteLine($"    {variableName}->{me.Name} = ({me.CName} *) ExtractUInt32(buffer);");
+                        sourceFile.WriteLine($"    buffer += {dt.Size};");
                         break;
                     default:
                         sourceFile.WriteLine($"    {variableName}->{me.Name} = Extract{dt.CSharpTypeName}(buffer);");
