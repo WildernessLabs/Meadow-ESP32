@@ -15,6 +15,13 @@
 #define _ENCODERS_HPP_
 
 #include "freertos/FreeRTOS.h"
+#include "lwip/err.h"
+#include "lwip/sys.h"
+#include "lwip/sockets.h"
+#include "lwip/netdb.h"
+#include "lwip/dns.h"
+#include "esp_system.h"
+#include "esp_wifi.h"
 #include <stdlib.h>
 #include <string.h>
 #include "esp_log.h"
@@ -66,6 +73,39 @@ namespace Esp32Messaging
         uint8_t *AccessPoints;
     };
 
+    struct SockAddr
+    {
+        uint8_t Length;
+        uint8_t Family;
+        char Data[14];
+    };
+
+    struct AddrInfo
+    {
+        int32_t Flags;
+        int32_t Family;
+        int32_t SocketType;
+        int32_t Protocol;
+        uint32_t AddrLen;
+        struct sockaddr *Addr;
+        char * CannonName;
+        struct addrinfo *Next;
+    };
+
+    struct GetAddrInfo
+    {
+        char * NodeName;
+        char * ServName;
+        struct addrinfo *Hints;
+        struct addrinfo *Result;
+    };
+
+    struct GetAddrInfoResult
+    {
+        int32_t Errno;
+        struct addrinfo *Res;
+    };
+
 }
 
 /*
@@ -88,6 +128,8 @@ public:
     static void EncodeUInt16(uint16_t, uint8_t *);
     static uint32_t ExtractUInt32(uint8_t *);
     static void EncodeUInt32(uint32_t, uint8_t *);
+    static int32_t ExtractInt32(uint8_t *);
+    static void EncodeInt32(int32_t, uint8_t *);
     static char *ExtractString(uint8_t *);
     static void EncodeString(char *, uint8_t *);
     static uint8_t CRC8(const uint8_t *, uint16_t);
@@ -113,6 +155,18 @@ public:
     static void EncodeAccessPointList(Esp32Messaging::AccessPointList *, uint8_t *);
     static int EncodedAccessPointListBufferSize(Esp32Messaging::AccessPointList *);
     static Esp32Messaging::AccessPointList *ExtractAccessPointList(uint8_t *);
+    static void EncodeSockAddr(Esp32Messaging::SockAddr *, uint8_t *);
+    static int EncodedSockAddrBufferSize(Esp32Messaging::SockAddr *);
+    static Esp32Messaging::SockAddr *ExtractSockAddr(uint8_t *);
+    static void EncodeAddrInfo(Esp32Messaging::AddrInfo *, uint8_t *);
+    static int EncodedAddrInfoBufferSize(Esp32Messaging::AddrInfo *);
+    static Esp32Messaging::AddrInfo *ExtractAddrInfo(uint8_t *);
+    static void EncodeGetAddrInfo(Esp32Messaging::GetAddrInfo *, uint8_t *);
+    static int EncodedGetAddrInfoBufferSize(Esp32Messaging::GetAddrInfo *);
+    static Esp32Messaging::GetAddrInfo *ExtractGetAddrInfo(uint8_t *);
+    static void EncodeGetAddrInfoResult(Esp32Messaging::GetAddrInfoResult *, uint8_t *);
+    static int EncodedGetAddrInfoResultBufferSize(Esp32Messaging::GetAddrInfoResult *);
+    static Esp32Messaging::GetAddrInfoResult *ExtractGetAddrInfoResult(uint8_t *);
 
 };
 

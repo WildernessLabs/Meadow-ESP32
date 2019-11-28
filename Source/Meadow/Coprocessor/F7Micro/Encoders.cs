@@ -14,7 +14,7 @@
 using System;
 using Meadow.Coprocessor.F7Micro;
 
-namespace Meadow.Coprocessor.F7Micro
+namespace Meadow.Coprocessor.F7Micro.Messages
 {
     public class Encoders
     {
@@ -145,7 +145,7 @@ namespace Meadow.Coprocessor.F7Micro
         }
 
         /// <summary>
-        ///     Take four bytes from the buffer and encode them as a 32-bit integer.
+        ///     Take four bytes from the buffer and encode them as a 32-bit unsiged integer.
         ///     Note that the data should be encoded as LSB first.
         /// </summary>
         /// <param name="buffer">Buffer holding the 32-bit value to decode.</param>
@@ -162,13 +162,45 @@ namespace Meadow.Coprocessor.F7Micro
         }
 
         /// <summary>
-        ///     Encode a 32-bit integer as four bytes in the buffer.  The data is
+        ///     Encode a 32-bit unsigned integer as four bytes in the buffer.  The data is
         ///     encoded LSB first.
         /// </summary>
         /// <param name="value">Value to encode.</param>
         /// <param name="buffer">Buffer to store the value.</param>
         /// <param name="offset">Offset into the buffer for the first byte to store.</param>
         public static void EncodeUInt32(UInt32 value, byte[] buffer, int offset = 0)
+        {
+            buffer[offset] = (byte) (value & 0xff);
+            buffer[offset + 1] = (byte) ((value >> 8) & 0xff);
+            buffer[offset + 2] = (byte) ((value >> 16) & 0xff);
+            buffer[offset + 3] = (byte) ((value >> 24) & 0xff);
+        }
+
+        /// <summary>
+        ///     Take four bytes from the buffer and encode them as a 32-bit integer.
+        ///     Note that the data should be encoded as LSB first.
+        /// </summary>
+        /// <param name="buffer">Buffer holding the 32-bit value to decode.</param>
+        /// <param name="offset">Offset of the 32-bit in the buffer.</param>
+        public static Int32 ExtractInt32(byte[] buffer, int offset = 0)
+        {
+            Int32 result;
+
+            result = buffer[offset];
+            result |= (Int32) (buffer[offset + 1] << 8);
+            result |= (Int32) (buffer[offset + 2] << 16);
+            result |= (Int32) (buffer[offset + 3] << 24);
+            return (result);
+        }
+
+        /// <summary>
+        ///     Encode a 32-bit integer as four bytes in the buffer.  The data is
+        ///     encoded LSB first.
+        /// </summary>
+        /// <param name="value">Value to encode.</param>
+        /// <param name="buffer">Buffer to store the value.</param>
+        /// <param name="offset">Offset into the buffer for the first byte to store.</param>
+        public static void EncodeInt32(Int32 value, byte[] buffer, int offset = 0)
         {
             buffer[offset] = (byte) (value & 0xff);
             buffer[offset + 1] = (byte) ((value >> 8) & 0xff);
@@ -343,9 +375,9 @@ namespace Meadow.Coprocessor.F7Micro
             return(buffer);
         }
 
-        public static Messages.WiFiCredentials ExtractWiFiCredentials(byte[] buffer, int offset)
+        public static WiFiCredentials ExtractWiFiCredentials(byte[] buffer, int offset)
         {
-            Messages.WiFiCredentials wiFiCredentials = new Messages.WiFiCredentials();
+            WiFiCredentials wiFiCredentials = new Messages.WiFiCredentials();
 
             wiFiCredentials.NetworkName = ExtractString(buffer, offset);
             offset += (int) (wiFiCredentials.NetworkName.Length + 1);
@@ -357,8 +389,8 @@ namespace Meadow.Coprocessor.F7Micro
         /// <summary>
         /// Calculate the amount of memory required to hold the given instance of the WiFiCredentials object.
         /// </summary>
-        /// <param name="wiFiCredentials>WiFiCredentials object to be encoded.</param>
-        /// <returns>Number of bytes required to hold the encoded WiFiCredentials object.</param>
+        /// <param name="wiFiCredentials">WiFiCredentials object to be encoded.</param>
+        /// <returns>Number of bytes required to hold the encoded WiFiCredentials object.</returns>
         public static int EncodedWiFiCredentialsBufferSize(Messages.WiFiCredentials wiFiCredentials)
         {
             int result = 0;
@@ -388,9 +420,9 @@ namespace Meadow.Coprocessor.F7Micro
             return(buffer);
         }
 
-        public static Messages.AntennaInfo ExtractAntennaInfo(byte[] buffer, int offset)
+        public static AntennaInfo ExtractAntennaInfo(byte[] buffer, int offset)
         {
-            Messages.AntennaInfo antennaInfo = new Messages.AntennaInfo();
+            AntennaInfo antennaInfo = new Messages.AntennaInfo();
 
             antennaInfo.Antenna = buffer[offset];
             offset += 1;
@@ -400,8 +432,8 @@ namespace Meadow.Coprocessor.F7Micro
         /// <summary>
         /// Calculate the amount of memory required to hold the given instance of the AntennaInfo object.
         /// </summary>
-        /// <param name="antennaInfo>AntennaInfo object to be encoded.</param>
-        /// <returns>Number of bytes required to hold the encoded AntennaInfo object.</param>
+        /// <param name="antennaInfo">AntennaInfo object to be encoded.</param>
+        /// <returns>Number of bytes required to hold the encoded AntennaInfo object.</returns>
         public static int EncodedAntennaInfoBufferSize(Messages.AntennaInfo antennaInfo)
         {
             int result = 0;
@@ -435,9 +467,9 @@ namespace Meadow.Coprocessor.F7Micro
             return(buffer);
         }
 
-        public static Messages.HttpGetRequest ExtractHttpGetRequest(byte[] buffer, int offset)
+        public static HttpGetRequest ExtractHttpGetRequest(byte[] buffer, int offset)
         {
-            Messages.HttpGetRequest httpGetRequest = new Messages.HttpGetRequest();
+            HttpGetRequest httpGetRequest = new Messages.HttpGetRequest();
 
             httpGetRequest.PortNumber = ExtractUInt16(buffer, offset);
             offset += 2;
@@ -451,8 +483,8 @@ namespace Meadow.Coprocessor.F7Micro
         /// <summary>
         /// Calculate the amount of memory required to hold the given instance of the HttpGetRequest object.
         /// </summary>
-        /// <param name="httpGetRequest>HttpGetRequest object to be encoded.</param>
-        /// <returns>Number of bytes required to hold the encoded HttpGetRequest object.</param>
+        /// <param name="httpGetRequest">HttpGetRequest object to be encoded.</param>
+        /// <returns>Number of bytes required to hold the encoded HttpGetRequest object.</returns>
         public static int EncodedHttpGetRequestBufferSize(Messages.HttpGetRequest httpGetRequest)
         {
             int result = 0;
@@ -490,9 +522,9 @@ namespace Meadow.Coprocessor.F7Micro
             return(buffer);
         }
 
-        public static Messages.HttpGetResponse ExtractHttpGetResponse(byte[] buffer, int offset)
+        public static HttpGetResponse ExtractHttpGetResponse(byte[] buffer, int offset)
         {
-            Messages.HttpGetResponse httpGetResponse = new Messages.HttpGetResponse();
+            HttpGetResponse httpGetResponse = new Messages.HttpGetResponse();
 
             httpGetResponse.SequenceNumber = ExtractUInt32(buffer, offset);
             offset += 4;
@@ -510,8 +542,8 @@ namespace Meadow.Coprocessor.F7Micro
         /// <summary>
         /// Calculate the amount of memory required to hold the given instance of the HttpGetResponse object.
         /// </summary>
-        /// <param name="httpGetResponse>HttpGetResponse object to be encoded.</param>
-        /// <returns>Number of bytes required to hold the encoded HttpGetResponse object.</param>
+        /// <param name="httpGetResponse">HttpGetResponse object to be encoded.</param>
+        /// <returns>Number of bytes required to hold the encoded HttpGetResponse object.</returns>
         public static int EncodedHttpGetResponseBufferSize(Messages.HttpGetResponse httpGetResponse)
         {
             int result = 0;
@@ -559,9 +591,9 @@ namespace Meadow.Coprocessor.F7Micro
             return(buffer);
         }
 
-        public static Messages.AccessPoint ExtractAccessPoint(byte[] buffer, int offset)
+        public static AccessPoint ExtractAccessPoint(byte[] buffer, int offset)
         {
-            Messages.AccessPoint accessPoint = new Messages.AccessPoint();
+            AccessPoint accessPoint = new Messages.AccessPoint();
 
             for (int index = 0; (buffer[index + offset] != 0) && (index < (33 - 1)); index++)
             {
@@ -587,8 +619,8 @@ namespace Meadow.Coprocessor.F7Micro
         /// <summary>
         /// Calculate the amount of memory required to hold the given instance of the AccessPoint object.
         /// </summary>
-        /// <param name="accessPoint>AccessPoint object to be encoded.</param>
-        /// <returns>Number of bytes required to hold the encoded AccessPoint object.</param>
+        /// <param name="accessPoint">AccessPoint object to be encoded.</param>
+        /// <returns>Number of bytes required to hold the encoded AccessPoint object.</returns>
         public static int EncodedAccessPointBufferSize(Messages.AccessPoint accessPoint)
         {
             int result = 0;
@@ -624,9 +656,9 @@ namespace Meadow.Coprocessor.F7Micro
             return(buffer);
         }
 
-        public static Messages.AccessPointList ExtractAccessPointList(byte[] buffer, int offset)
+        public static AccessPointList ExtractAccessPointList(byte[] buffer, int offset)
         {
-            Messages.AccessPointList accessPointList = new Messages.AccessPointList();
+            AccessPointList accessPointList = new Messages.AccessPointList();
 
             accessPointList.NumberOfAccessPoints = ExtractUInt32(buffer, offset);
             offset += 4;
@@ -644,12 +676,243 @@ namespace Meadow.Coprocessor.F7Micro
         /// <summary>
         /// Calculate the amount of memory required to hold the given instance of the AccessPointList object.
         /// </summary>
-        /// <param name="accessPointList>AccessPointList object to be encoded.</param>
-        /// <returns>Number of bytes required to hold the encoded AccessPointList object.</param>
+        /// <param name="accessPointList">AccessPointList object to be encoded.</param>
+        /// <returns>Number of bytes required to hold the encoded AccessPointList object.</returns>
         public static int EncodedAccessPointListBufferSize(Messages.AccessPointList accessPointList)
         {
             int result = 0;
             result += (int) accessPointList.AccessPointsLength;
+            result += 8;
+            return(result);
+        }
+
+        public static byte[] EncodeSockAddr(Messages.SockAddr sockAddr)
+        {
+            int offset = 0;
+            int length = 0;
+
+            //
+            //  Calculate the amount of memory needed.
+            //
+            length += (int) 14;
+            length += 2;
+
+            //
+            //  Now allocate a new buffer and copy the data in to the buffer.
+            //
+            byte[] buffer = new byte[length];
+            Array.Clear(buffer, 0, buffer.Length);
+            buffer[offset] = sockAddr.Length;
+            offset += 1;
+            buffer[offset] = sockAddr.Family;
+            offset += 1;
+            int amount = sockAddr.Data.Length >= 14 ? 14 - 1 : sockAddr.Data.Length;
+            for (int index = 0; index < amount; index++)
+            {
+                buffer[index] = (byte) sockAddr.Data[index];
+            }
+            buffer[amount] = 0;
+            offset += (int) 14;
+            return(buffer);
+        }
+
+        public static SockAddr ExtractSockAddr(byte[] buffer, int offset)
+        {
+            SockAddr sockAddr = new Messages.SockAddr();
+
+            sockAddr.Length = buffer[offset];
+            offset += 1;
+            sockAddr.Family = buffer[offset];
+            offset += 1;
+            for (int index = 0; (buffer[index + offset] != 0) && (index < (14 - 1)); index++)
+            {
+                sockAddr.Data += Convert.ToChar(buffer[index + offset]);
+            }
+            offset += (int) 14;
+            return(sockAddr);
+        }
+
+        /// <summary>
+        /// Calculate the amount of memory required to hold the given instance of the SockAddr object.
+        /// </summary>
+        /// <param name="sockAddr">SockAddr object to be encoded.</param>
+        /// <returns>Number of bytes required to hold the encoded SockAddr object.</returns>
+        public static int EncodedSockAddrBufferSize(Messages.SockAddr sockAddr)
+        {
+            int result = 0;
+            result += 16;
+            return(result);
+        }
+
+        public static byte[] EncodeAddrInfo(Messages.AddrInfo addrInfo)
+        {
+            int offset = 0;
+            int length = 0;
+
+            //
+            //  Calculate the amount of memory needed.
+            //
+            length += (int) (addrInfo.CannonName.Length + 1);
+            length += 28;
+
+            //
+            //  Now allocate a new buffer and copy the data in to the buffer.
+            //
+            byte[] buffer = new byte[length];
+            Array.Clear(buffer, 0, buffer.Length);
+            EncodeInt32(addrInfo.Flags, buffer, offset);
+            offset += 4;
+            EncodeInt32(addrInfo.Family, buffer, offset);
+            offset += 4;
+            EncodeInt32(addrInfo.SocketType, buffer, offset);
+            offset += 4;
+            EncodeInt32(addrInfo.Protocol, buffer, offset);
+            offset += 4;
+            EncodeUInt32(addrInfo.AddrLen, buffer, offset);
+            offset += 4;
+            EncodeUInt32(addrInfo.Addr, buffer, offset);
+            offset += 4;
+            EncodeString(addrInfo.CannonName, buffer, offset);
+            offset += addrInfo.CannonName.Length + 1;
+            EncodeUInt32(addrInfo.Next, buffer, offset);
+            offset += 4;
+            return(buffer);
+        }
+
+        public static AddrInfo ExtractAddrInfo(byte[] buffer, int offset)
+        {
+            AddrInfo addrInfo = new Messages.AddrInfo();
+
+            addrInfo.Flags = ExtractInt32(buffer, offset);
+            offset += 4;
+            addrInfo.Family = ExtractInt32(buffer, offset);
+            offset += 4;
+            addrInfo.SocketType = ExtractInt32(buffer, offset);
+            offset += 4;
+            addrInfo.Protocol = ExtractInt32(buffer, offset);
+            offset += 4;
+            addrInfo.AddrLen = ExtractUInt32(buffer, offset);
+            offset += 4;
+            addrInfo.Addr = ExtractUInt32(buffer, offset);
+            offset += 4;
+            addrInfo.CannonName = ExtractString(buffer, offset);
+            offset += (int) (addrInfo.CannonName.Length + 1);
+            addrInfo.Next = ExtractUInt32(buffer, offset);
+            offset += 4;
+            return(addrInfo);
+        }
+
+        /// <summary>
+        /// Calculate the amount of memory required to hold the given instance of the AddrInfo object.
+        /// </summary>
+        /// <param name="addrInfo">AddrInfo object to be encoded.</param>
+        /// <returns>Number of bytes required to hold the encoded AddrInfo object.</returns>
+        public static int EncodedAddrInfoBufferSize(Messages.AddrInfo addrInfo)
+        {
+            int result = 0;
+            result += (int) addrInfo.CannonName.Length;
+            result += 29;
+            return(result);
+        }
+
+        public static byte[] EncodeGetAddrInfo(Messages.GetAddrInfo getAddrInfo)
+        {
+            int offset = 0;
+            int length = 0;
+
+            //
+            //  Calculate the amount of memory needed.
+            //
+            length += (int) (getAddrInfo.NodeName.Length + 1);
+            length += (int) (getAddrInfo.ServName.Length + 1);
+            length += 8;
+
+            //
+            //  Now allocate a new buffer and copy the data in to the buffer.
+            //
+            byte[] buffer = new byte[length];
+            Array.Clear(buffer, 0, buffer.Length);
+            EncodeString(getAddrInfo.NodeName, buffer, offset);
+            offset += getAddrInfo.NodeName.Length + 1;
+            EncodeString(getAddrInfo.ServName, buffer, offset);
+            offset += getAddrInfo.ServName.Length + 1;
+            EncodeUInt32(getAddrInfo.Hints, buffer, offset);
+            offset += 4;
+            EncodeUInt32(getAddrInfo.Result, buffer, offset);
+            offset += 4;
+            return(buffer);
+        }
+
+        public static GetAddrInfo ExtractGetAddrInfo(byte[] buffer, int offset)
+        {
+            GetAddrInfo getAddrInfo = new Messages.GetAddrInfo();
+
+            getAddrInfo.NodeName = ExtractString(buffer, offset);
+            offset += (int) (getAddrInfo.NodeName.Length + 1);
+            getAddrInfo.ServName = ExtractString(buffer, offset);
+            offset += (int) (getAddrInfo.ServName.Length + 1);
+            getAddrInfo.Hints = ExtractUInt32(buffer, offset);
+            offset += 4;
+            getAddrInfo.Result = ExtractUInt32(buffer, offset);
+            offset += 4;
+            return(getAddrInfo);
+        }
+
+        /// <summary>
+        /// Calculate the amount of memory required to hold the given instance of the GetAddrInfo object.
+        /// </summary>
+        /// <param name="getAddrInfo">GetAddrInfo object to be encoded.</param>
+        /// <returns>Number of bytes required to hold the encoded GetAddrInfo object.</returns>
+        public static int EncodedGetAddrInfoBufferSize(Messages.GetAddrInfo getAddrInfo)
+        {
+            int result = 0;
+            result += (int) getAddrInfo.NodeName.Length;
+            result += (int) getAddrInfo.ServName.Length;
+            result += 10;
+            return(result);
+        }
+
+        public static byte[] EncodeGetAddrInfoResult(Messages.GetAddrInfoResult getAddrInfoResult)
+        {
+            int offset = 0;
+            int length = 0;
+
+            //
+            //  Calculate the amount of memory needed.
+            //
+            length += 8;
+
+            //
+            //  Now allocate a new buffer and copy the data in to the buffer.
+            //
+            byte[] buffer = new byte[length];
+            Array.Clear(buffer, 0, buffer.Length);
+            EncodeInt32(getAddrInfoResult.Errno, buffer, offset);
+            offset += 4;
+            EncodeUInt32(getAddrInfoResult.Res, buffer, offset);
+            offset += 4;
+            return(buffer);
+        }
+
+        public static GetAddrInfoResult ExtractGetAddrInfoResult(byte[] buffer, int offset)
+        {
+            GetAddrInfoResult getAddrInfoResult = new Messages.GetAddrInfoResult();
+
+            getAddrInfoResult.Errno = ExtractInt32(buffer, offset);
+            offset += 4;
+            getAddrInfoResult.Res = ExtractUInt32(buffer, offset);
+            offset += 4;
+            return(getAddrInfoResult);
+        }
+
+        /// <summary>
+        /// Calculate the amount of memory required to hold the given instance of the GetAddrInfoResult object.
+        /// </summary>
+        /// <param name="getAddrInfoResult">GetAddrInfoResult object to be encoded.</param>
+        /// <returns>Number of bytes required to hold the encoded GetAddrInfoResult object.</returns>
+        public static int EncodedGetAddrInfoResultBufferSize(Messages.GetAddrInfoResult getAddrInfoResult)
+        {
+            int result = 0;
             result += 8;
             return(result);
         }
