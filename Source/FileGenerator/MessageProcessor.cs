@@ -303,9 +303,9 @@ namespace FileGenerator
         {
             string variableName = message.Name.Substring(0, 1).ToLower() + message.Name.Substring(1);
             sourceFile.WriteLine();
-            sourceFile.WriteLine($"        public static Messages.{message.Name} Extract{message.Name}(byte[] buffer, int offset)");
+            sourceFile.WriteLine($"        public static {message.Name} Extract{message.Name}(byte[] buffer, int offset)");
             sourceFile.WriteLine("        {");
-            sourceFile.WriteLine($"            Messages.{message.Name} {variableName} = new Messages.{message.Name}();");
+            sourceFile.WriteLine($"            {message.Name} {variableName} = new Messages.{message.Name}();");
             sourceFile.WriteLine();
             foreach (MessageElement me in message.MessageElements)
             {
@@ -375,7 +375,7 @@ namespace FileGenerator
             using (StreamWriter sourceFile = new StreamWriter(CSharpFileName))
             {
                 OutputCSharpFileHeader(sourceFile);
-                sourceFile.WriteLine("namespace Meadow.Coprocessor.F7Micro");
+                sourceFile.WriteLine("namespace Meadow.Coprocessor.F7Micro.Messages");
                 sourceFile.WriteLine("{");
                 sourceFile.WriteLine("    public class Encoders");
                 sourceFile.WriteLine("    {");
@@ -431,51 +431,48 @@ namespace FileGenerator
             using (StreamWriter sourceFile = new StreamWriter(CSharpStructureFileName))
             {
                 OutputCSharpFileHeader(sourceFile);
-                sourceFile.WriteLine("namespace Meadow.Coprocessor.F7Micro");
+                sourceFile.WriteLine("namespace Meadow.Coprocessor.F7Micro.Messages");
                 sourceFile.WriteLine("{");
-                sourceFile.WriteLine("    public partial class Messages");
-                sourceFile.WriteLine("    {");
                 foreach (Message m in messages)
                 {
                     if (m.MessageElements != null)
                     {
                         string variableName = m.Name.Substring(0, 1).ToLower() + m.Name.Substring(1);
-                        sourceFile.WriteLine($"        public struct {m.Name}");
-                        sourceFile.WriteLine("        {");
+                        sourceFile.WriteLine($"    public struct {m.Name}");
+                        sourceFile.WriteLine("    {");
                         foreach (MessageElement me in m.MessageElements)
                         {
                             DataType dt = GetDataType(me.DataType);
                             switch (dt.Name.ToLower())
                             {
                                 case "blob":
-                                    sourceFile.WriteLine($"            public UInt32 {me.Name}Length;");
-                                    sourceFile.WriteLine($"            public {dt.CSharpTypeName} {me.Name};");
+                                    sourceFile.WriteLine($"        public UInt32 {me.Name}Length;");
+                                    sourceFile.WriteLine($"        public {dt.CSharpTypeName} {me.Name};");
                                     break;
                                 case "fixedchararray":
                                     //
                                     //  Fixed chars are actually encoded as normal strings in C#.
                                     //
-                                    sourceFile.WriteLine($"            public {dt.CSharpTypeName} {me.Name};");
+                                    sourceFile.WriteLine($"        public {dt.CSharpTypeName} {me.Name};");
                                     break;
                                 case "fixedbytearray":
-                                    sourceFile.WriteLine($"            public {dt.CSharpTypeName}[] {me.Name};");
+                                    sourceFile.WriteLine($"        public {dt.CSharpTypeName}[] {me.Name};");
                                     break;
                                 case "structure":
-                                    sourceFile.WriteLine($"            public {me.CSName} {me.Name};");
+                                    sourceFile.WriteLine($"        public {me.CSName} {me.Name};");
                                     break;
                                 case "pointer":
-                                    sourceFile.WriteLine($"            public UInt32 {me.Name};");
+                                    sourceFile.WriteLine($"        public UInt32 {me.Name};");
                                     break;
                                 default:
-                                    sourceFile.WriteLine($"            public {dt.CSharpTypeName} {me.Name};");
+                                    sourceFile.WriteLine($"        public {dt.CSharpTypeName} {me.Name};");
                                     break;
                             }
                         }
                     }
-                    sourceFile.WriteLine("        };");
+                    sourceFile.WriteLine("    };");
                     sourceFile.WriteLine();
                 }
-                sourceFile.WriteLine("     }");
                 sourceFile.WriteLine("}");
             }
         }

@@ -14,52 +14,82 @@
 using System;
 using Meadow.Coprocessor.F7Micro;
 
-namespace Meadow.Coprocessor.F7Micro
+namespace Meadow.Coprocessor.F7Micro.Messages
 {
-    public partial class Messages
+    public struct WiFiCredentials
     {
-        public struct WiFiCredentials
-        {
-            public String NetworkName;
-            public String Password;
-        };
+        public String NetworkName;
+        public String Password;
+    };
 
-        public struct AntennaInfo
-        {
-            public Byte Antenna;
-        };
+    public struct AntennaInfo
+    {
+        public Byte Antenna;
+    };
 
-        public struct HttpGetRequest
-        {
-            public UInt16 PortNumber;
-            public String ServerName;
-            public String Uri;
-        };
+    public struct HttpGetRequest
+    {
+        public UInt16 PortNumber;
+        public String ServerName;
+        public String Uri;
+    };
 
-        public struct HttpGetResponse
-        {
-            public UInt32 SequenceNumber;
-            public UInt32 ResponseLength;
-            public byte[] Response;
-        };
+    public struct HttpGetResponse
+    {
+        public UInt32 SequenceNumber;
+        public UInt32 ResponseLength;
+        public byte[] Response;
+    };
 
-        public struct AccessPoint
-        {
-            public string Ssid;
-            public Byte[] Bssid;
-            public Byte PrimaryChannel;
-            public Byte SecondaryChannel;
-            public sbyte Rssi;
-            public Byte AuthenticationMode;
-            public UInt32 Protocols;
-        };
+    public struct AccessPoint
+    {
+        public string Ssid;
+        public Byte[] Bssid;
+        public Byte PrimaryChannel;
+        public Byte SecondaryChannel;
+        public sbyte Rssi;
+        public Byte AuthenticationMode;
+        public UInt32 Protocols;
+    };
 
-        public struct AccessPointList
-        {
-            public UInt32 NumberOfAccessPoints;
-            public UInt32 AccessPointsLength;
-            public byte[] AccessPoints;
-        };
+    public struct AccessPointList
+    {
+        public UInt32 NumberOfAccessPoints;
+        public UInt32 AccessPointsLength;
+        public byte[] AccessPoints;
+    };
 
-     }
+    public struct SockAddr
+    {
+        public Byte Length;
+        public Byte Family;
+        public string Data;
+    };
+
+    public struct AddrInfo
+    {
+        public Int32 Flags;
+        public Int32 Family;
+        public Int32 SocketType;
+        public Int32 Protocol;
+        public UInt32 AddrLen;
+        public UInt32 Addr;
+        public String CannonName;
+        public UInt32 Next;
+    };
+
+    public struct GetAddrInfo
+    {
+        public String NodeName;
+        public String ServName;
+        public UInt32 Hints;
+        public UInt32 Result;
+    };
+
+    public struct GetAddrInfoResult
+    {
+        public Int32 Errno;
+        public UInt32 Res;
+    };
+
 }

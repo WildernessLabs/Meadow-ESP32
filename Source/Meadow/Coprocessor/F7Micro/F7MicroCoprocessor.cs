@@ -9,6 +9,7 @@ using Meadow.Devices;
 using Meadow.Hardware;
 using Meadow.Network;
 using Meadow.Gateway.WiFi;
+using Meadow.Coprocessor.F7Micro.Messages;
 
 namespace Meadow.Coprocessor.F7Micro
 {
@@ -217,5 +218,31 @@ namespace Meadow.Coprocessor.F7Micro
         }
         
         #endregion Methods
+        
+        #region POSIX Methods
+
+        /// <summary>
+        /// Provide a protocol-independent translation from an ANSI host name to an address
+        /// </summary>
+        /// <remarks>
+        /// This method instructs the ESP32 to call the <i>getaddrinfo</i> method which will in turn
+        /// call the equivalent LWIP method.
+        ///
+        /// See:
+        /// <a href="http://www.nongnu.org/lwip/2_0_x/group__netdbapi.html#ga558191530d91c101621b49e43bd5bbf5">getaddrinfo</a>
+        /// <a href="http://www.nongnu.org/lwip/2_0_x/lwip_2netdb_8h.html#af356989c172a51187e22b557f22d4165">lwip_getaddrinfo</a>
+        /// </remarks>
+        /// <param name="nodeName">Name of the server (node) name or numeric host address string (IP address).</param>
+        /// <param name="serverName">Service name or port number of the service.</param>
+        /// <param name="hints">AddrInfo structure that contains hints about the type of socket the caller supports.</param>
+        /// <param name="res">Pointer to a list of AddrInfo structures containing information about the host.</param>
+        /// <returns>Error code if there is a problem, 0 if successful.</returns>
+        public int GetAddrInfo(string nodeName, string serverName, object hints, out UInt32 res)
+        {
+            res = 0;
+            return (0);
+        }
+        
+        #endregion POSIX Methods
     }
 }

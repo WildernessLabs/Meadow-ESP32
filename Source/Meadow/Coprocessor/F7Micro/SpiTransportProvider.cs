@@ -3,6 +3,7 @@ using System.Threading;
 using System.Collections.Generic;
 using Meadow.Hardware;
 using System.Collections;
+using Meadow.Coprocessor.F7Micro.Messages;
 
 namespace Meadow.Coprocessor.F7Micro
 {
@@ -81,7 +82,7 @@ namespace Meadow.Coprocessor.F7Micro
         /// <summary>
         /// This value is used a lot so make it available as a class level variable.
         /// </summary>
-        private readonly UInt32 _headerFrameSize = Encoders.CalculateSpiBufferSize(Messages.HEADER_SIZE);
+        private readonly UInt32 _headerFrameSize = Encoders.CalculateSpiBufferSize(Message.HEADER_SIZE);
 
         #endregion
         
@@ -309,7 +310,7 @@ namespace Meadow.Coprocessor.F7Micro
         {
             DebugHelpers.DebugHelpers.LogMessage(DebugLevel.HasFlag(DebugOptions.MethodNames), "Entering GetMessageHeader");
             
-            ushort incomingMessageLength = (ushort) Encoders.CalculateSpiBufferSize(Messages.HEADER_SIZE);
+            ushort incomingMessageLength = (ushort) Encoders.CalculateSpiBufferSize(Message.HEADER_SIZE);
             byte[] encodedInboundMessage = ReadData(incomingMessageLength);
 
             DebugHelpers.DebugHelpers.LogMessage(DebugLevel.HasFlag(DebugOptions.DataPackets),"Received:");
@@ -327,11 +328,11 @@ namespace Meadow.Coprocessor.F7Micro
         /// </summary>
         /// <param name="header">Message header that has been sent ot he ESP32.</param>
         /// <returns>Message and body (or null in the case of an error).</returns>
-        private Messages.Message? GetMessageBody(Messages.Message header)
+        private Message? GetMessageBody(Messages.Message header)
         {
             DebugHelpers.DebugHelpers.LogMessage(DebugLevel.HasFlag(DebugOptions.MethodNames), "Entering GetMessageBody");
 
-            ushort incomingMessageLength = (ushort) Encoders.CalculateSpiBufferSize(Messages.HEADER_SIZE + header.PayloadLength);
+            ushort incomingMessageLength = (ushort) Encoders.CalculateSpiBufferSize(Message.HEADER_SIZE + header.PayloadLength);
             byte[] encodedInboundMessage = ReadData(incomingMessageLength);
 
             DebugHelpers.DebugHelpers.LogMessage(DebugLevel.HasFlag(DebugOptions.DataPackets),"Received:");
