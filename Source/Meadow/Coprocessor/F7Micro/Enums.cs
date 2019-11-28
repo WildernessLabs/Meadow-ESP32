@@ -61,14 +61,21 @@ namespace Meadow.Coprocessor.F7Micro
     {
         Start = 0,
         Stop = 1,
-        Connect = 2,
+        ConnectToAp = 2,
         Disconnect = 3,
         GetAccessPoints = 4,
         GetConfiguration = 5,
         SetConfiguration = 6,
         SetAntenna = 7,
         GetAntenna = 8,
-        HttpGet = 9
+        GetAddrInfo = 9,
+        Socket = 10,
+        Connect = 11,
+        FreeAddrInfo = 12,
+        Write = 13,
+        SetSockOpt = 14,
+        Read = 15,
+        Close = 16
     };
 
     public enum BluetoothFunction : UInt32

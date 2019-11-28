@@ -231,6 +231,49 @@ private:
      */
     void StationDisconnectedEvent(system_event_t *);
 
+    //----------------------------------------------------------------------
+    //
+    //                      POSIX Calls start here.
+    /**
+     *  Provide a mechanism for the STM32 to call the getaddrinfo method.
+     */
+    void GetAddrInfo(Message *);
+
+    /**
+     *  Provide a mechanism for the STM32 to call the socket method.
+     */
+    void Socket(Message *);
+
+    /**
+     *  Provide a mechanism for the STM32 to call the connect method.
+     */
+    void Connect(Message *);
+
+    /**
+     *  Provide a mechanism for the STM32 to call the freeaddrinfo method.
+     */
+    void FreeAddrInfo(Message *);
+
+    /**
+     *  Provide a mechanism for the STM32 to call the write method.
+     */
+    void Write(Message *);
+
+    /**
+     *  Provide a mechanism for the STM32 to call the setsockopt method.
+     */
+    void SetSockOpt(Message *);
+
+    /**
+     *  Provide a mechanism for the STM32 to call the read method.
+     */
+    void Read(Message *);
+
+    /**
+     *  Provide a mechanism for the STM32 to call the close method.
+     */
+    void Close(Message *);
+
 public:
     /*
      *  Constructor for the WiFi object.

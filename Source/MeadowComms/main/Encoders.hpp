@@ -82,6 +82,7 @@ namespace Esp32Messaging
 
     struct AddrInfo
     {
+        uint32_t MyHeapAddress;
         int32_t Flags;
         int32_t Family;
         int32_t SocketType;

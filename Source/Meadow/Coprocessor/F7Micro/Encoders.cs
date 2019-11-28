@@ -256,9 +256,9 @@ namespace Meadow.Coprocessor.F7Micro.Messages
         /// <returns>Byte array containing the encoded message.</returns>
         /// <param name="message">Message to be encoded.</param>
         /// <param name="header">True if we are encoding the header only, false if encoding the fill message.</param>
-        public static byte[] EncodeMessage(Messages.Message message, bool headerOnly = false)
+        public static byte[] EncodeMessage(Message message, bool headerOnly = false)
         {
-            UInt32 messageSize = Messages.HEADER_SIZE;
+            UInt32 messageSize = Message.HEADER_SIZE;
             if (!headerOnly)
             {
                 messageSize += message.PayloadLength;
@@ -295,7 +295,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             //  Now we deal with the CRC.
             //
             UInt32 crc = Crc32(buffer);
-            EncodeUInt32(crc, buffer, Messages.CRC_OFFSET);
+            EncodeUInt32(crc, buffer, Message.CRC_OFFSET);
             return (buffer);
         }
 
@@ -305,12 +305,12 @@ namespace Meadow.Coprocessor.F7Micro.Messages
         /// <returns>Tuple containing the extracted message (or null) and a status code.</returns>
         /// <param name="buffer">Byte buffer containing the encoded data.</param>
         /// <param name="offset">Offset of the message into the buffer (normally this is 0).</param>
-        public static (Messages.Message? message, StatusCodes statusCode) ExtractMessage(byte[] buffer, int offset = 0, bool headerOnly = false)
+        public static (Message? message, StatusCodes statusCode) ExtractMessage(byte[] buffer, int offset = 0, bool headerOnly = false)
         {
             StatusCodes statusCode = StatusCodes.CompletedOK;
-            Messages.Message? result = null;
+            Message? result = null;
 
-            if (buffer.Length < Messages.HEADER_SIZE)
+            if (buffer.Length < Message.HEADER_SIZE)
             {
                 statusCode = StatusCodes.InvalidPacket;
             }
@@ -319,8 +319,8 @@ namespace Meadow.Coprocessor.F7Micro.Messages
                 //
                 //  Now check the CRC.
                 //
-                UInt32 crc = ExtractUInt32(buffer, Messages.CRC_OFFSET);
-                EncodeUInt32(0, buffer, Messages.CRC_OFFSET);
+                UInt32 crc = ExtractUInt32(buffer, Message.CRC_OFFSET);
+                EncodeUInt32(0, buffer, Message.CRC_OFFSET);
                 if (Crc32(buffer) != crc)
                 {
                     statusCode = StatusCodes.CRCError;
@@ -352,7 +352,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             return (result, statusCode);
         }
 
-        public static byte[] EncodeWiFiCredentials(Messages.WiFiCredentials wiFiCredentials)
+        public static byte[] EncodeWiFiCredentials(WiFiCredentials wiFiCredentials)
         {
             int offset = 0;
             int length = 0;
@@ -400,7 +400,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             return(result);
         }
 
-        public static byte[] EncodeAntennaInfo(Messages.AntennaInfo antennaInfo)
+        public static byte[] EncodeAntennaInfo(AntennaInfo antennaInfo)
         {
             int offset = 0;
             int length = 0;
@@ -441,7 +441,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             return(result);
         }
 
-        public static byte[] EncodeHttpGetRequest(Messages.HttpGetRequest httpGetRequest)
+        public static byte[] EncodeHttpGetRequest(HttpGetRequest httpGetRequest)
         {
             int offset = 0;
             int length = 0;
@@ -494,7 +494,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             return(result);
         }
 
-        public static byte[] EncodeHttpGetResponse(Messages.HttpGetResponse httpGetResponse)
+        public static byte[] EncodeHttpGetResponse(HttpGetResponse httpGetResponse)
         {
             int offset = 0;
             int length = 0;
@@ -552,7 +552,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             return(result);
         }
 
-        public static byte[] EncodeAccessPoint(Messages.AccessPoint accessPoint)
+        public static byte[] EncodeAccessPoint(AccessPoint accessPoint)
         {
             int offset = 0;
             int length = 0;
@@ -628,7 +628,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             return(result);
         }
 
-        public static byte[] EncodeAccessPointList(Messages.AccessPointList accessPointList)
+        public static byte[] EncodeAccessPointList(AccessPointList accessPointList)
         {
             int offset = 0;
             int length = 0;
@@ -686,7 +686,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             return(result);
         }
 
-        public static byte[] EncodeSockAddr(Messages.SockAddr sockAddr)
+        public static byte[] EncodeSockAddr(SockAddr sockAddr)
         {
             int offset = 0;
             int length = 0;
@@ -744,7 +744,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             return(result);
         }
 
-        public static byte[] EncodeAddrInfo(Messages.AddrInfo addrInfo)
+        public static byte[] EncodeAddrInfo(AddrInfo addrInfo)
         {
             int offset = 0;
             int length = 0;
@@ -753,13 +753,15 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             //  Calculate the amount of memory needed.
             //
             length += (int) (addrInfo.CannonName.Length + 1);
-            length += 28;
+            length += 32;
 
             //
             //  Now allocate a new buffer and copy the data in to the buffer.
             //
             byte[] buffer = new byte[length];
             Array.Clear(buffer, 0, buffer.Length);
+            EncodeUInt32(addrInfo.MyHeapAddress, buffer, offset);
+            offset += 4;
             EncodeInt32(addrInfo.Flags, buffer, offset);
             offset += 4;
             EncodeInt32(addrInfo.Family, buffer, offset);
@@ -783,6 +785,8 @@ namespace Meadow.Coprocessor.F7Micro.Messages
         {
             AddrInfo addrInfo = new Messages.AddrInfo();
 
+            addrInfo.MyHeapAddress = ExtractUInt32(buffer, offset);
+            offset += 4;
             addrInfo.Flags = ExtractInt32(buffer, offset);
             offset += 4;
             addrInfo.Family = ExtractInt32(buffer, offset);
@@ -811,11 +815,11 @@ namespace Meadow.Coprocessor.F7Micro.Messages
         {
             int result = 0;
             result += (int) addrInfo.CannonName.Length;
-            result += 29;
+            result += 33;
             return(result);
         }
 
-        public static byte[] EncodeGetAddrInfo(Messages.GetAddrInfo getAddrInfo)
+        public static byte[] EncodeGetAddrInfo(GetAddrInfo getAddrInfo)
         {
             int offset = 0;
             int length = 0;
@@ -872,7 +876,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             return(result);
         }
 
-        public static byte[] EncodeGetAddrInfoResult(Messages.GetAddrInfoResult getAddrInfoResult)
+        public static byte[] EncodeGetAddrInfoResult(GetAddrInfoResult getAddrInfoResult)
         {
             int offset = 0;
             int length = 0;
