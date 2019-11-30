@@ -236,12 +236,32 @@ namespace Meadow.Coprocessor.F7Micro
         /// <param name="hints">AddrInfo structure that contains hints about the type of socket the caller supports.</param>
         /// <param name="res">Pointer to a list of AddrInfo structures containing information about the host.</param>
         /// <returns>Error code if there is a problem, 0 if successful.</returns>
-        public int GetAddrInfo(string nodeName, string serverName, object hints, out UInt32 res)
+        public int GetAddrInfo(string nodeName, string serverName, object hints, out object res)
         {
             var addrInfo = new GetAddrInfo();
+            addrInfo.NodeName = nodeName;
+            addrInfo.ServName = serverName;
+            addrInfo.Hints = 0;
+            addrInfo.Result = 0;
             
-            res = 0;
-            return (0);
+            var message = new Message();
+            message.Interface = (byte) Esp32Interfaces.WiFi;
+            message.Function = (uint) WiFiFunction.GetAddrInfo;
+            message.MessageID = _dispatcher.GetNextMessageId();
+            message.MessageType = (byte) MessageTypes.Data;
+            message.Payload = Encoders.EncodeGetAddrInfo(addrInfo);;
+            message.PayloadLength = (UInt32) message.Payload.Length;
+
+            var response = _dispatcher.SendMessage(message);
+            var result = (StatusCodes) response.StatusCode;
+            if (result != StatusCodes.CompletedOK)
+            {
+                throw new CoprocessorException(result);
+            }
+
+            var addrInfoResult = Encoders.ExtractGetAddrInfoResult(response.Payload, 0);
+            res = addrInfoResult.Res;
+            return (addrInfoResult.Errno);
         }
         
         #endregion POSIX Methods
