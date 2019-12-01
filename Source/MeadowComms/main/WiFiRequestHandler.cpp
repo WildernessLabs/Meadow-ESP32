@@ -433,17 +433,6 @@ void WiFiRequestHandler::GetAvailableNetworks(Message *request)
 }
 
 /**
- *  @brief Expose the socket method to the STM32.
- *
- *  @param message
- *      Message structure containing the parameters for the socket method.
- */
-void WiFiRequestHandler::Socket(Message *message)
-{
-
-}
-
-/**
  *  @brief Expose the connect method to the STM32.
  *
  *  @param message
@@ -522,8 +511,6 @@ void WiFiRequestHandler::Close(Message *message)
 void WiFiRequestHandler::GetAddrInfo(Message *message)
 {
     ESP_LOGI(__func__, "Getting address information (getaddrinfo).");
-    ESP_LOG_BUFFER_HEX(__func__, message->Payload, message->PayloadLength);
-
     Esp32Messaging::GetAddrInfoRequest *request = Encoders::ExtractGetAddrInfoRequest(message->Payload);
     //
     Esp32Messaging::AddrInfo *extractedHints = Encoders::ExtractAddrInfo(request->Hints);
@@ -531,9 +518,6 @@ void WiFiRequestHandler::GetAddrInfo(Message *message)
     bzero((void *) &hints, sizeof(addrinfo));
     hints.ai_family = extractedHints->Family;
     hints.ai_socktype = extractedHints->SocketType;
-
-//    hints.ai_family = AF_INET;
-//    hints.ai_socktype = SOCK_STREAM;
     vPortFree(extractedHints);
     //
     //  This will hold a pointer to a chain of one or more addrinfo structure.
@@ -544,12 +528,10 @@ void WiFiRequestHandler::GetAddrInfo(Message *message)
     //  that FreeAddrInfo is called.  FreeAddrInfo will free the allocated
     //  memory.
     //
-    ESP_LOGI(__func__, "Requesting look up of %s on port %s on socket type %d, address family %d", request->NodeName, request->ServName, hints.ai_socktype, hints.ai_family);
     struct addrinfo *addressInformation = (struct addrinfo *) pvPortMalloc(sizeof(struct addrinfo *));
     int errorCode = getaddrinfo(request->NodeName, request->ServName, &hints, &addressInformation);
     vPortFree(request);
 
-    ESP_LOGI(__func__, "getaddrinfo returned error code %d", errorCode);
     Esp32Messaging::GetAddrInfoResponse *response = (Esp32Messaging::GetAddrInfoResponse *) pvPortMalloc(sizeof(Esp32Messaging::GetAddrInfoResponse));
     response->Errno = errorCode;
     if ((errorCode == 0) || (addressInformation != NULL))
@@ -592,7 +574,34 @@ void WiFiRequestHandler::GetAddrInfo(Message *message)
     message->Payload = (uint8_t *) pvPortMalloc(message->PayloadLength);
     Encoders::EncodeGetAddrInfoResponse(response, message->Payload);
     vPortFree(response);
+    message->MessageType = MessageTypes::Response;
     _messageDispatcher->QueueMessageForStm32(message);
+    xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
+}
+
+/**
+ *  @brief Expose the socket method to the STM32.
+ *
+ *  @param message
+ *      Message structure containing the parameters for the socket method.
+ */
+void WiFiRequestHandler::Socket(Message *message)
+{
+    ESP_LOGI(__func__, "Creating socket handle (socket).");
+    Esp32Messaging::SocketRequest *request = Encoders::ExtractSocketRequest(message->Payload);
+
+    Esp32Messaging::SocketResponse response;
+    response.SocketHandle = socket(request->Domain, request->Type, request->Protocol);
+
+    vPortFree(request);
+    vPortFree(message->Payload);
+
+    message->PayloadLength = Encoders::EncodedSocketResponseBufferSize(&response);
+    message->Payload = (uint8_t *) pvPortMalloc(message->PayloadLength);
+    Encoders::EncodeSocketResponse(&response, message->Payload);
+    message->MessageType = MessageTypes::Response;
+    _messageDispatcher->QueueMessageForStm32(message);
+    xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
 }
 
 void WiFiRequestHandler::HttpGet(Message *message)

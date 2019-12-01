@@ -278,6 +278,35 @@ namespace Meadow.Coprocessor.F7Micro
 
             return (addrInfoResponse.Errno);
         }
+
+        public int Socket(int domain, int type, int protocol)
+        {
+            //
+            //    Now get the socket handle.
+            //
+            var socketRequest = new SocketRequest();
+            socketRequest.Domain = domain;
+            socketRequest.Type = type;
+            socketRequest.Protocol = protocol;
+            
+            var message = new Message();
+            message.Interface = (byte) Esp32Interfaces.WiFi;
+            message.Function = (uint) WiFiFunction.Socket;
+            message.MessageID = _dispatcher.GetNextMessageId();
+            message.MessageType = (byte) MessageTypes.Data;
+            message.Payload = Encoders.EncodeSocketRequest(socketRequest);;
+            message.PayloadLength = (UInt32) message.Payload.Length;
+            
+            var response = _dispatcher.SendMessage(message);
+            var result = (StatusCodes) response.StatusCode;
+            if (result != StatusCodes.CompletedOK)
+            {
+                throw new CoprocessorException(result);
+            }
+
+            var socketResponse = Encoders.ExtractSocketResponse(response.Payload, 0);
+            return (socketResponse.SocketHandle);
+        }
         
         #endregion POSIX Methods
     }

@@ -118,7 +118,12 @@ namespace BasicNetworkTest
                 DebugHelpers.DebugHelpers.LogMessage(true, $"Exiting test");
                 return;
             }
-            var result = (AddrInfo) res;
+            var getAddrInfoResult = (AddrInfo) res;
+            
+            DebugHelpers.DebugHelpers.LogMessage(true, "Getting socket handle");
+            int socketHandle = _f7MicroCoprocessor.Socket(getAddrInfoResult.Family, getAddrInfoResult.SocketType, 0);
+            DebugHelpers.DebugHelpers.LogMessage(true, $"    Socket handle: {socketHandle}");
+            
         }
         
         #endregion Methods

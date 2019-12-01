@@ -1178,4 +1178,124 @@ Esp32Messaging::GetAddrInfoResponse *Encoders::ExtractGetAddrInfoResponse(uint8_
     return(getAddrInfoResponse);
 }
 
+/**
+ *  Convert the SocketRequest object into a byte stream that can be sent to the STM32.
+ *  
+ *  The amount of memory required can be obtained by calling the EncodedSocketRequestBufferSize method.
+ *  
+ *  @param socketRequest
+ *      SocketRequest object to be encoded.
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory large enough to hold the encoded SocketRequest object.
+ */
+void Encoders::EncodeSocketRequest(Esp32Messaging::SocketRequest *socketRequest, uint8_t *buffer)
+{
+    EncodeUInt32((uint32_t) socketRequest->AddressInformation, buffer);
+    buffer += 4;
+    EncodeInt32(socketRequest->Domain, buffer);
+    buffer += 4;
+    EncodeInt32(socketRequest->Type, buffer);
+    buffer += 4;
+    EncodeInt32(socketRequest->Protocol, buffer);
+    buffer += 4;
+}
+
+/**
+ *  Calculate the amount of memory required to hold the given instance of the SocketRequest object.
+ *  
+ *  @param socketRequest
+ *      SocketRequest object to be encoded.
+ *  
+ *  @returns
+ *      Number of bytes required to hold the encoded SocketRequest object.
+ */
+int Encoders::EncodedSocketRequestBufferSize(Esp32Messaging::SocketRequest *socketRequest)
+{
+    int result = 0;
+    result += 16;
+    return(result);
+}
+
+/**
+ *  Extract the SocketRequest object that is encoded in the given buffer.
+ *  
+ *  Note that the returned pointer points to a block of memory on the heap and
+ *  this should eventually be released calling vPortFree(...).
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded SocketRequest object.
+ *  
+ *  @returns
+ *      Pointer to a SocketRequest object.
+ */
+Esp32Messaging::SocketRequest *Encoders::ExtractSocketRequest(uint8_t *buffer)
+{
+    Esp32Messaging::SocketRequest *socketRequest = (Esp32Messaging::SocketRequest *) pvPortMalloc(sizeof(Esp32Messaging::SocketRequest));
+
+    socketRequest->AddressInformation = (struct addrinfo *) ExtractUInt32(buffer);
+    buffer += 4;
+    socketRequest->Domain = ExtractInt32(buffer);
+    buffer += 4;
+    socketRequest->Type = ExtractInt32(buffer);
+    buffer += 4;
+    socketRequest->Protocol = ExtractInt32(buffer);
+    buffer += 4;
+    return(socketRequest);
+}
+
+/**
+ *  Convert the SocketResponse object into a byte stream that can be sent to the STM32.
+ *  
+ *  The amount of memory required can be obtained by calling the EncodedSocketResponseBufferSize method.
+ *  
+ *  @param socketResponse
+ *      SocketResponse object to be encoded.
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory large enough to hold the encoded SocketResponse object.
+ */
+void Encoders::EncodeSocketResponse(Esp32Messaging::SocketResponse *socketResponse, uint8_t *buffer)
+{
+    EncodeInt32(socketResponse->SocketHandle, buffer);
+    buffer += 4;
+}
+
+/**
+ *  Calculate the amount of memory required to hold the given instance of the SocketResponse object.
+ *  
+ *  @param socketResponse
+ *      SocketResponse object to be encoded.
+ *  
+ *  @returns
+ *      Number of bytes required to hold the encoded SocketResponse object.
+ */
+int Encoders::EncodedSocketResponseBufferSize(Esp32Messaging::SocketResponse *socketResponse)
+{
+    int result = 0;
+    result += 4;
+    return(result);
+}
+
+/**
+ *  Extract the SocketResponse object that is encoded in the given buffer.
+ *  
+ *  Note that the returned pointer points to a block of memory on the heap and
+ *  this should eventually be released calling vPortFree(...).
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded SocketResponse object.
+ *  
+ *  @returns
+ *      Pointer to a SocketResponse object.
+ */
+Esp32Messaging::SocketResponse *Encoders::ExtractSocketResponse(uint8_t *buffer)
+{
+    Esp32Messaging::SocketResponse *socketResponse = (Esp32Messaging::SocketResponse *) pvPortMalloc(sizeof(Esp32Messaging::SocketResponse));
+
+    socketResponse->SocketHandle = ExtractInt32(buffer);
+    buffer += 4;
+    return(socketResponse);
+}
+
 

@@ -111,6 +111,19 @@ namespace Esp32Messaging
         uint8_t *Res;
     };
 
+    struct SocketRequest
+    {
+        struct addrinfo *AddressInformation;
+        int32_t Domain;
+        int32_t Type;
+        int32_t Protocol;
+    };
+
+    struct SocketResponse
+    {
+        int32_t SocketHandle;
+    };
+
 }
 
 /*
@@ -172,6 +185,12 @@ public:
     static void EncodeGetAddrInfoResponse(Esp32Messaging::GetAddrInfoResponse *, uint8_t *);
     static int EncodedGetAddrInfoResponseBufferSize(Esp32Messaging::GetAddrInfoResponse *);
     static Esp32Messaging::GetAddrInfoResponse *ExtractGetAddrInfoResponse(uint8_t *);
+    static void EncodeSocketRequest(Esp32Messaging::SocketRequest *, uint8_t *);
+    static int EncodedSocketRequestBufferSize(Esp32Messaging::SocketRequest *);
+    static Esp32Messaging::SocketRequest *ExtractSocketRequest(uint8_t *);
+    static void EncodeSocketResponse(Esp32Messaging::SocketResponse *, uint8_t *);
+    static int EncodedSocketResponseBufferSize(Esp32Messaging::SocketResponse *);
+    static Esp32Messaging::SocketResponse *ExtractSocketResponse(uint8_t *);
 
 };
 
