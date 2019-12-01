@@ -244,7 +244,7 @@ namespace FileGenerator
                         sourceFile.WriteLine($"            offset += {dt.Size};");
                         break;
                     case "fixedbytearray":
-                        sourceFile.WriteLine($"            Array.Copy(buffer, offset, {variableName}.{me.Name}, 0, {me.Length});");
+                        sourceFile.WriteLine($"            Array.Copy({variableName}.{me.Name}, 0, buffer, offset, {me.Length});");
                         sourceFile.WriteLine($"            offset += (int) {me.Length};");
                         break;
                     case "fixedchararray":
@@ -269,7 +269,7 @@ namespace FileGenerator
                         sourceFile.WriteLine($"            offset += 4;");
                         sourceFile.WriteLine($"            if ({variableName}.{me.Name}Length > 0)");
                         sourceFile.WriteLine("            {");
-                        sourceFile.WriteLine($"                Array.Copy(buffer, offset, {variableName}.{me.Name}, 0, {variableName}.{me.Name}Length);");
+                        sourceFile.WriteLine($"                Array.Copy({variableName}.{me.Name}, 0, buffer, offset, {variableName}.{me.Name}Length);");
                         sourceFile.WriteLine($"                offset += (int) ({variableName}.{me.Name}Length);");
                         sourceFile.WriteLine("            }");
                         break;
