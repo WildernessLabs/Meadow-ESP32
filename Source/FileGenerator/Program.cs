@@ -11,7 +11,7 @@ namespace FileGenerator
         /// <summary>
         /// Location of the F7Micro source directory.
         /// </summary>
-        const string MEADOW_F7MICRO_SOURCE_DIRECTORY = "MeadowF7MicroCoporcessorSourceDirectory";
+        const string MEADOW_F7MICRO_SOURCE_DIRECTORY = "MeadowF7MicroCoprocessorSourceDirectory";
 
         static void Main(string[] args)
         {
