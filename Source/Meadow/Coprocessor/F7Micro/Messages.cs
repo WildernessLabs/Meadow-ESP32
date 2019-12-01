@@ -74,23 +74,27 @@ namespace Meadow.Coprocessor.F7Micro.Messages
         public Int32 SocketType;
         public Int32 Protocol;
         public UInt32 AddrLen;
-        public UInt32 Addr;
-        public String CannonName;
+        public UInt32 AddrLength;
+        public byte[] Addr;
+        public String CanonName;
         public UInt32 Next;
     };
 
-    public struct GetAddrInfo
+    public struct GetAddrInfoRequest
     {
         public String NodeName;
         public String ServName;
-        public UInt32 Hints;
-        public UInt32 Result;
+        public UInt32 HintsLength;
+        public byte[] Hints;
+        public UInt32 ResultLength;
+        public byte[] Result;
     };
 
-    public struct GetAddrInfoResult
+    public struct GetAddrInfoResponse
     {
         public Int32 Errno;
-        public UInt32 Res;
+        public UInt32 ResLength;
+        public byte[] Res;
     };
 
 }

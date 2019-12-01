@@ -5,6 +5,8 @@ namespace Meadow.Network
 {
     public interface IPosixApi
     {
-        int GetAddrInfo(string nodeName, string serverName, object hints, out UInt32 res);
+        int GetAddrInfo(string nodeName, string serviceName, object hints, out object res);
+        
+        
     }
 }

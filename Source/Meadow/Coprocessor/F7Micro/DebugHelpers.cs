@@ -19,8 +19,8 @@ namespace DebugHelpers
         #region Methods
         
         /// <summary>
-        ///     Convert a byte array to a series of hexadecimal numbers
-        ///     separated by a minus sign.
+        /// Convert a byte array to a series of hexadecimal numbers
+        /// separated by a minus sign.
         /// </summary>
         /// <param name="bytes">Array of bytes to convert.</param>
         /// <returns>series of hexadecimal bytes in the format xx-yy-zz</returns>
@@ -41,7 +41,7 @@ namespace DebugHelpers
         }
 
         /// <summary>
-        ///     Convert a byte into the hex representation of the value.
+        /// Convert a byte into the hex representation of the value.
         /// </summary>
         /// <param name="b">Value to convert.</param>
         /// <returns>Two hexadecimal digits representing the byte.</returns>
@@ -52,7 +52,7 @@ namespace DebugHelpers
         }
 
         /// <summary>
-        ///     Convert a byte into hexadecimal including the "0x" prefix.
+        /// Convert a byte into hexadecimal including the "0x" prefix.
         /// </summary>
         /// <param name="b">Value to convert.</param>
         /// <returns>Hexadecimal string including the 0x prefix.</returns>
@@ -62,7 +62,7 @@ namespace DebugHelpers
         }
 
         /// <summary>
-        ///     Convert an unsigned short into hexadecimal.
+        /// Convert an unsigned short into hexadecimal.
         /// </summary>
         /// <param name="us">Unsigned short value to convert.</param>
         /// <returns>Hexadecimal representation of the unsigned short.</returns>
@@ -72,11 +72,21 @@ namespace DebugHelpers
         }
 
         /// <summary>
-        ///     Convert an integer into hexadecimal.
+        /// Convert an integer into hexadecimal.
         /// </summary>
         /// <param name="i">Integer to convert to hexadecimal.</param>
         /// <returns>Hexadecimal representation of the unsigned short.</returns>
-        private static string Hexadecimal(int i)
+        public static string Hexadecimal(int i)
+        {
+            return Hexadecimal((uint) i);
+        }
+
+        /// <summary>
+        /// Convert an unsigned integer into hexadecimal.
+        /// </summary>
+        /// <param name="i">Unsigned integer to convert to hexadecimal.</param>
+        /// <returns>Hexadecimal representation of the unsigned short.</returns>
+        public static string Hexadecimal(uint i)
         {
             return "0x" + HexadecimalDigits((byte)((i >> 24) & 0xff)) + HexadecimalDigits((byte)((i >> 16) & 0xff)) +
                    HexadecimalDigits((byte)((i >> 8) & 0xff)) + HexadecimalDigits((byte)(i & 0xff));

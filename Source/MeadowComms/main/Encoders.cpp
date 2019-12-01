@@ -926,10 +926,15 @@ void Encoders::EncodeAddrInfo(Esp32Messaging::AddrInfo *addrInfo, uint8_t *buffe
     buffer += 4;
     EncodeUInt32(addrInfo->AddrLen, buffer);
     buffer += 4;
-    EncodeUInt32((uint32_t) addrInfo->Addr, buffer);
+    EncodeUInt32(addrInfo->AddrLength, buffer);
     buffer += 4;
-    EncodeString(addrInfo->CannonName, buffer);
-    buffer += strlen(addrInfo->CannonName) + 1;
+    if (addrInfo->AddrLength > 0)
+    {
+        memcpy((void *) buffer, (void *) addrInfo->Addr, addrInfo->AddrLength);
+        buffer += addrInfo->AddrLength;
+    }
+    EncodeString(addrInfo->CanonName, buffer);
+    buffer += strlen(addrInfo->CanonName) + 1;
     EncodeUInt32((uint32_t) addrInfo->Next, buffer);
     buffer += 4;
 }
@@ -946,7 +951,8 @@ void Encoders::EncodeAddrInfo(Esp32Messaging::AddrInfo *addrInfo, uint8_t *buffe
 int Encoders::EncodedAddrInfoBufferSize(Esp32Messaging::AddrInfo *addrInfo)
 {
     int result = 0;
-    result += strlen(addrInfo->CannonName);
+    result += addrInfo->AddrLength;
+    result += strlen(addrInfo->CanonName);
     result += 33;
     return(result);
 }
@@ -979,139 +985,197 @@ Esp32Messaging::AddrInfo *Encoders::ExtractAddrInfo(uint8_t *buffer)
     buffer += 4;
     addrInfo->AddrLen = ExtractUInt32(buffer);
     buffer += 4;
-    addrInfo->Addr = (struct sockaddr *) ExtractUInt32(buffer);
+    addrInfo->AddrLength = ExtractUInt32(buffer);
     buffer += 4;
-    addrInfo->CannonName = ExtractString(buffer);
-    buffer += strlen(addrInfo->CannonName) + 1;
+    if (addrInfo->AddrLength > 0)
+    {
+        addrInfo->Addr = (uint8_t *) pvPortMalloc(addrInfo->AddrLength);
+        memcpy(addrInfo->Addr, buffer, addrInfo->AddrLength);
+        buffer += addrInfo->AddrLength;
+    }
+    else
+    {
+        addrInfo->Addr = nullptr;
+    }
+    addrInfo->CanonName = ExtractString(buffer);
+    buffer += strlen(addrInfo->CanonName) + 1;
     addrInfo->Next = (struct addrinfo *) ExtractUInt32(buffer);
     buffer += 4;
     return(addrInfo);
 }
 
 /**
- *  Convert the GetAddrInfo object into a byte stream that can be sent to the STM32.
+ *  Convert the GetAddrInfoRequest object into a byte stream that can be sent to the STM32.
  *  
- *  The amount of memory required can be obtained by calling the EncodedGetAddrInfoBufferSize method.
+ *  The amount of memory required can be obtained by calling the EncodedGetAddrInfoRequestBufferSize method.
  *  
- *  @param getAddrInfo
- *      GetAddrInfo object to be encoded.
+ *  @param getAddrInfoRequest
+ *      GetAddrInfoRequest object to be encoded.
  *  
  *  @param buffer
- *      Pointer to a block of memory large enough to hold the encoded GetAddrInfo object.
+ *      Pointer to a block of memory large enough to hold the encoded GetAddrInfoRequest object.
  */
-void Encoders::EncodeGetAddrInfo(Esp32Messaging::GetAddrInfo *getAddrInfo, uint8_t *buffer)
+void Encoders::EncodeGetAddrInfoRequest(Esp32Messaging::GetAddrInfoRequest *getAddrInfoRequest, uint8_t *buffer)
 {
-    EncodeString(getAddrInfo->NodeName, buffer);
-    buffer += strlen(getAddrInfo->NodeName) + 1;
-    EncodeString(getAddrInfo->ServName, buffer);
-    buffer += strlen(getAddrInfo->ServName) + 1;
-    EncodeUInt32((uint32_t) getAddrInfo->Hints, buffer);
+    EncodeString(getAddrInfoRequest->NodeName, buffer);
+    buffer += strlen(getAddrInfoRequest->NodeName) + 1;
+    EncodeString(getAddrInfoRequest->ServName, buffer);
+    buffer += strlen(getAddrInfoRequest->ServName) + 1;
+    EncodeUInt32(getAddrInfoRequest->HintsLength, buffer);
     buffer += 4;
-    EncodeUInt32((uint32_t) getAddrInfo->Result, buffer);
+    if (getAddrInfoRequest->HintsLength > 0)
+    {
+        memcpy((void *) buffer, (void *) getAddrInfoRequest->Hints, getAddrInfoRequest->HintsLength);
+        buffer += getAddrInfoRequest->HintsLength;
+    }
+    EncodeUInt32(getAddrInfoRequest->ResultLength, buffer);
     buffer += 4;
+    if (getAddrInfoRequest->ResultLength > 0)
+    {
+        memcpy((void *) buffer, (void *) getAddrInfoRequest->Result, getAddrInfoRequest->ResultLength);
+        buffer += getAddrInfoRequest->ResultLength;
+    }
 }
 
 /**
- *  Calculate the amount of memory required to hold the given instance of the GetAddrInfo object.
+ *  Calculate the amount of memory required to hold the given instance of the GetAddrInfoRequest object.
  *  
- *  @param getAddrInfo
- *      GetAddrInfo object to be encoded.
+ *  @param getAddrInfoRequest
+ *      GetAddrInfoRequest object to be encoded.
  *  
  *  @returns
- *      Number of bytes required to hold the encoded GetAddrInfo object.
+ *      Number of bytes required to hold the encoded GetAddrInfoRequest object.
  */
-int Encoders::EncodedGetAddrInfoBufferSize(Esp32Messaging::GetAddrInfo *getAddrInfo)
+int Encoders::EncodedGetAddrInfoRequestBufferSize(Esp32Messaging::GetAddrInfoRequest *getAddrInfoRequest)
 {
     int result = 0;
-    result += strlen(getAddrInfo->NodeName);
-    result += strlen(getAddrInfo->ServName);
+    result += strlen(getAddrInfoRequest->NodeName);
+    result += strlen(getAddrInfoRequest->ServName);
+    result += getAddrInfoRequest->HintsLength;
+    result += getAddrInfoRequest->ResultLength;
     result += 10;
     return(result);
 }
 
 /**
- *  Extract the GetAddrInfo object that is encoded in the given buffer.
+ *  Extract the GetAddrInfoRequest object that is encoded in the given buffer.
  *  
  *  Note that the returned pointer points to a block of memory on the heap and
  *  this should eventually be released calling vPortFree(...).
  *  
  *  @param buffer
- *      Pointer to a block of memory holding the encoded GetAddrInfo object.
+ *      Pointer to a block of memory holding the encoded GetAddrInfoRequest object.
  *  
  *  @returns
- *      Pointer to a GetAddrInfo object.
+ *      Pointer to a GetAddrInfoRequest object.
  */
-Esp32Messaging::GetAddrInfo *Encoders::ExtractGetAddrInfo(uint8_t *buffer)
+Esp32Messaging::GetAddrInfoRequest *Encoders::ExtractGetAddrInfoRequest(uint8_t *buffer)
 {
-    Esp32Messaging::GetAddrInfo *getAddrInfo = (Esp32Messaging::GetAddrInfo *) pvPortMalloc(sizeof(Esp32Messaging::GetAddrInfo));
+    Esp32Messaging::GetAddrInfoRequest *getAddrInfoRequest = (Esp32Messaging::GetAddrInfoRequest *) pvPortMalloc(sizeof(Esp32Messaging::GetAddrInfoRequest));
 
-    getAddrInfo->NodeName = ExtractString(buffer);
-    buffer += strlen(getAddrInfo->NodeName) + 1;
-    getAddrInfo->ServName = ExtractString(buffer);
-    buffer += strlen(getAddrInfo->ServName) + 1;
-    getAddrInfo->Hints = (struct addrinfo *) ExtractUInt32(buffer);
+    getAddrInfoRequest->NodeName = ExtractString(buffer);
+    buffer += strlen(getAddrInfoRequest->NodeName) + 1;
+    getAddrInfoRequest->ServName = ExtractString(buffer);
+    buffer += strlen(getAddrInfoRequest->ServName) + 1;
+    getAddrInfoRequest->HintsLength = ExtractUInt32(buffer);
     buffer += 4;
-    getAddrInfo->Result = (struct addrinfo *) ExtractUInt32(buffer);
+    if (getAddrInfoRequest->HintsLength > 0)
+    {
+        getAddrInfoRequest->Hints = (uint8_t *) pvPortMalloc(getAddrInfoRequest->HintsLength);
+        memcpy(getAddrInfoRequest->Hints, buffer, getAddrInfoRequest->HintsLength);
+        buffer += getAddrInfoRequest->HintsLength;
+    }
+    else
+    {
+        getAddrInfoRequest->Hints = nullptr;
+    }
+    getAddrInfoRequest->ResultLength = ExtractUInt32(buffer);
     buffer += 4;
-    return(getAddrInfo);
+    if (getAddrInfoRequest->ResultLength > 0)
+    {
+        getAddrInfoRequest->Result = (uint8_t *) pvPortMalloc(getAddrInfoRequest->ResultLength);
+        memcpy(getAddrInfoRequest->Result, buffer, getAddrInfoRequest->ResultLength);
+        buffer += getAddrInfoRequest->ResultLength;
+    }
+    else
+    {
+        getAddrInfoRequest->Result = nullptr;
+    }
+    return(getAddrInfoRequest);
 }
 
 /**
- *  Convert the GetAddrInfoResult object into a byte stream that can be sent to the STM32.
+ *  Convert the GetAddrInfoResponse object into a byte stream that can be sent to the STM32.
  *  
- *  The amount of memory required can be obtained by calling the EncodedGetAddrInfoResultBufferSize method.
+ *  The amount of memory required can be obtained by calling the EncodedGetAddrInfoResponseBufferSize method.
  *  
- *  @param getAddrInfoResult
- *      GetAddrInfoResult object to be encoded.
+ *  @param getAddrInfoResponse
+ *      GetAddrInfoResponse object to be encoded.
  *  
  *  @param buffer
- *      Pointer to a block of memory large enough to hold the encoded GetAddrInfoResult object.
+ *      Pointer to a block of memory large enough to hold the encoded GetAddrInfoResponse object.
  */
-void Encoders::EncodeGetAddrInfoResult(Esp32Messaging::GetAddrInfoResult *getAddrInfoResult, uint8_t *buffer)
+void Encoders::EncodeGetAddrInfoResponse(Esp32Messaging::GetAddrInfoResponse *getAddrInfoResponse, uint8_t *buffer)
 {
-    EncodeInt32(getAddrInfoResult->Errno, buffer);
+    EncodeInt32(getAddrInfoResponse->Errno, buffer);
     buffer += 4;
-    EncodeUInt32((uint32_t) getAddrInfoResult->Res, buffer);
+    EncodeUInt32(getAddrInfoResponse->ResLength, buffer);
     buffer += 4;
+    if (getAddrInfoResponse->ResLength > 0)
+    {
+        memcpy((void *) buffer, (void *) getAddrInfoResponse->Res, getAddrInfoResponse->ResLength);
+        buffer += getAddrInfoResponse->ResLength;
+    }
 }
 
 /**
- *  Calculate the amount of memory required to hold the given instance of the GetAddrInfoResult object.
+ *  Calculate the amount of memory required to hold the given instance of the GetAddrInfoResponse object.
  *  
- *  @param getAddrInfoResult
- *      GetAddrInfoResult object to be encoded.
+ *  @param getAddrInfoResponse
+ *      GetAddrInfoResponse object to be encoded.
  *  
  *  @returns
- *      Number of bytes required to hold the encoded GetAddrInfoResult object.
+ *      Number of bytes required to hold the encoded GetAddrInfoResponse object.
  */
-int Encoders::EncodedGetAddrInfoResultBufferSize(Esp32Messaging::GetAddrInfoResult *getAddrInfoResult)
+int Encoders::EncodedGetAddrInfoResponseBufferSize(Esp32Messaging::GetAddrInfoResponse *getAddrInfoResponse)
 {
     int result = 0;
+    result += getAddrInfoResponse->ResLength;
     result += 8;
     return(result);
 }
 
 /**
- *  Extract the GetAddrInfoResult object that is encoded in the given buffer.
+ *  Extract the GetAddrInfoResponse object that is encoded in the given buffer.
  *  
  *  Note that the returned pointer points to a block of memory on the heap and
  *  this should eventually be released calling vPortFree(...).
  *  
  *  @param buffer
- *      Pointer to a block of memory holding the encoded GetAddrInfoResult object.
+ *      Pointer to a block of memory holding the encoded GetAddrInfoResponse object.
  *  
  *  @returns
- *      Pointer to a GetAddrInfoResult object.
+ *      Pointer to a GetAddrInfoResponse object.
  */
-Esp32Messaging::GetAddrInfoResult *Encoders::ExtractGetAddrInfoResult(uint8_t *buffer)
+Esp32Messaging::GetAddrInfoResponse *Encoders::ExtractGetAddrInfoResponse(uint8_t *buffer)
 {
-    Esp32Messaging::GetAddrInfoResult *getAddrInfoResult = (Esp32Messaging::GetAddrInfoResult *) pvPortMalloc(sizeof(Esp32Messaging::GetAddrInfoResult));
+    Esp32Messaging::GetAddrInfoResponse *getAddrInfoResponse = (Esp32Messaging::GetAddrInfoResponse *) pvPortMalloc(sizeof(Esp32Messaging::GetAddrInfoResponse));
 
-    getAddrInfoResult->Errno = ExtractInt32(buffer);
+    getAddrInfoResponse->Errno = ExtractInt32(buffer);
     buffer += 4;
-    getAddrInfoResult->Res = (struct addrinfo *) ExtractUInt32(buffer);
+    getAddrInfoResponse->ResLength = ExtractUInt32(buffer);
     buffer += 4;
-    return(getAddrInfoResult);
+    if (getAddrInfoResponse->ResLength > 0)
+    {
+        getAddrInfoResponse->Res = (uint8_t *) pvPortMalloc(getAddrInfoResponse->ResLength);
+        memcpy(getAddrInfoResponse->Res, buffer, getAddrInfoResponse->ResLength);
+        buffer += getAddrInfoResponse->ResLength;
+    }
+    else
+    {
+        getAddrInfoResponse->Res = nullptr;
+    }
+    return(getAddrInfoResponse);
 }
 
 

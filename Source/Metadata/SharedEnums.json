@@ -155,5 +155,58 @@
                 { "Name": "Unknown", "Value": "6" }
             ]
         },
+        {
+            "Name": "AddressFamilyType",
+            "BaseDataType": "",
+            "Namespace": "Esp32Messaging",
+            "Comment": "Address family types for the low level sockets..",
+            "NameValuePairs":
+            [
+                { "Name": "AfUnspec", "Value": "0" },
+                { "Name": "AfInet", "Value": "2" },
+                { "Name": "AfInet6", "Value": "10" }
+            ]
+        },
+        {
+            "Name": "ProtocolFamilyType",
+            "BaseDataType": "",
+            "Namespace": "Esp32Messaging",
+            "Comment": "Protocol family types for the low level sockets..",
+            "NameValuePairs":
+            [
+                { "Name": "PfUnspec", "Value": "0" },
+                { "Name": "PfInet", "Value": "2" },
+                { "Name": "PfInet6", "Value": "10" }
+            ]
+        },
+        {
+            "Name": "IpProtocolType",
+            "BaseDataType": "",
+            "Namespace": "Esp32Messaging",
+            "Comment": "Protocol types for the low level sockets.",
+            "NameValuePairs":
+            [
+                { "Name": "IpProtoIP", "Value": "0" },
+                { "Name": "IpProtoIcmp", "Value": "1" },
+                { "Name": "IpProtoTcp", "Value": "6" },
+                { "Name": "IpProtoUdp", "Value": "17" },
+                { "Name": "IpProtoIpV6", "Value": "41" },
+                { "Name": "IpProtoIcmpV6", "Value": "58" },
+                { "Name": "IpProtoUdpLite", "Value": "136" },
+                { "Name": "IpProtoNew", "Value": "255" }
+            ]
+        },
+        {
+            "Name": "CoketProtocolType",
+            "BaseDataType": "",
+            "Namespace": "Esp32Messaging",
+            "Comment": "Socket protocol types for the low level sockets.",
+            "NameValuePairs":
+            [
+                { "Name": "SockStream", "Value": "1" },
+                { "Name": "SockDgram", "Value": "2" },
+                { "Name": "SockRaw", "Value": "3" }
+            ]
+        },
     ]
 }

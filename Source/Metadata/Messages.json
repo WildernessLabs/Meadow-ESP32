@@ -73,27 +73,27 @@
                 { "Name": "SocketType", "DataType" : "int" },
                 { "Name": "Protocol", "DataType" : "int" },
                 { "Name": "AddrLen", "DataType" : "uint32" },
-                { "Name": "Addr", "DataType": "pointer", "CName": "struct sockaddr", "CSName": "SockAddr"},
-                { "Name": "CannonName", "DataType": "string" },
+                { "Name": "Addr", "DataType": "blob" },
+                { "Name": "CanonName", "DataType": "string" },
                 { "Name": "Next", "DataType": "pointer", "CName": "struct addrinfo", "CSName": "AddrInfo" }
             ]
         },
         {
-            "Name": "GetAddrInfo",
+            "Name": "GetAddrInfoRequest",
             "MessageElements":
             [
                 { "Name": "NodeName", "DataType": "string" },
                 { "Name": "ServName", "DataType": "string" },
-                { "Name":  "Hints", "DataType": "pointer", "CName": "struct addrinfo", "CSName": "SockAddr" },
-                { "Name":  "Result", "DataType": "pointer", "CName": "struct addrinfo", "CSName": "SockAddr" }
+                { "Name":  "Hints", "DataType": "blob" },
+                { "Name":  "Result", "DataType": "blob" }
             ]
         },
         {
-            "Name": "GetAddrInfoResult",
+            "Name": "GetAddrInfoResponse",
             "MessageElements":
             [
                 { "Name": "Errno", "DataType": "int" },
-                { "Name": "Res", "DataType": "pointer", "CName": "struct addrinfo", "CSName": "AddrInfo" }
+                { "Name": "Res", "DataType": "blob" }
             ]
         }
     ]

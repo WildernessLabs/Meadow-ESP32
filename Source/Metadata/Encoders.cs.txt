@@ -224,7 +224,7 @@
 
             while (buffer[offset] != 0)
             {
-                result += buffer[offset];
+                result += (char) buffer[offset];
                 offset++;
             }
             return (result);
