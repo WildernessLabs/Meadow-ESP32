@@ -21,13 +21,13 @@
  *  Determine if SPI packets should be output to the logging console.
  */
 #define SPI_PACKET_LOGGING 1
-//#undef SPI_PACKET_LOGGING
+#undef SPI_PACKET_LOGGING
 
 /*
  *  Log everything to do with the SPI transport layer.
  */
 #define SPI_FULL_LOGGING 1
-//#undef SPI_FULL_LOGGING
+#undef SPI_FULL_LOGGING
 
 #define SPI_TEST(expression) (expression)
 

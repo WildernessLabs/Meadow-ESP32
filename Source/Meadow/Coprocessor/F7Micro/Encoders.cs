@@ -244,7 +244,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
 
             while (buffer[offset] != 0)
             {
-                result += buffer[offset];
+                result += (char) buffer[offset];
                 offset++;
             }
             return (result);
@@ -516,7 +516,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             offset += 4;
             if (httpGetResponse.ResponseLength > 0)
             {
-                Array.Copy(buffer, offset, httpGetResponse.Response, 0, httpGetResponse.ResponseLength);
+                Array.Copy(httpGetResponse.Response, 0, buffer, offset, httpGetResponse.ResponseLength);
                 offset += (int) (httpGetResponse.ResponseLength);
             }
             return(buffer);
@@ -576,7 +576,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             }
             buffer[amount] = 0;
             offset += (int) 33;
-            Array.Copy(buffer, offset, accessPoint.Bssid, 0, 6);
+            Array.Copy(accessPoint.Bssid, 0, buffer, offset, 6);
             offset += (int) 6;
             buffer[offset] = accessPoint.PrimaryChannel;
             offset += 1;
@@ -650,7 +650,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             offset += 4;
             if (accessPointList.AccessPointsLength > 0)
             {
-                Array.Copy(buffer, offset, accessPointList.AccessPoints, 0, accessPointList.AccessPointsLength);
+                Array.Copy(accessPointList.AccessPoints, 0, buffer, offset, accessPointList.AccessPointsLength);
                 offset += (int) (accessPointList.AccessPointsLength);
             }
             return(buffer);
@@ -752,8 +752,9 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             //
             //  Calculate the amount of memory needed.
             //
-            length += (int) (addrInfo.CannonName.Length + 1);
-            length += 32;
+            length += (int) (addrInfo.AddrLength + 4);
+            length += (int) (addrInfo.CanonName.Length + 1);
+            length += 28;
 
             //
             //  Now allocate a new buffer and copy the data in to the buffer.
@@ -772,10 +773,15 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             offset += 4;
             EncodeUInt32(addrInfo.AddrLen, buffer, offset);
             offset += 4;
-            EncodeUInt32(addrInfo.Addr, buffer, offset);
+            EncodeUInt32(addrInfo.AddrLength, buffer, offset);
             offset += 4;
-            EncodeString(addrInfo.CannonName, buffer, offset);
-            offset += addrInfo.CannonName.Length + 1;
+            if (addrInfo.AddrLength > 0)
+            {
+                Array.Copy(addrInfo.Addr, 0, buffer, offset, addrInfo.AddrLength);
+                offset += (int) (addrInfo.AddrLength);
+            }
+            EncodeString(addrInfo.CanonName, buffer, offset);
+            offset += addrInfo.CanonName.Length + 1;
             EncodeUInt32(addrInfo.Next, buffer, offset);
             offset += 4;
             return(buffer);
@@ -797,10 +803,16 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             offset += 4;
             addrInfo.AddrLen = ExtractUInt32(buffer, offset);
             offset += 4;
-            addrInfo.Addr = ExtractUInt32(buffer, offset);
+            addrInfo.AddrLength = ExtractUInt32(buffer, offset);
             offset += 4;
-            addrInfo.CannonName = ExtractString(buffer, offset);
-            offset += (int) (addrInfo.CannonName.Length + 1);
+            if (addrInfo.AddrLength > 0)
+            {
+                addrInfo.Addr = new byte[addrInfo.AddrLength];
+                Array.Copy(buffer, offset, addrInfo.Addr, 0, addrInfo.AddrLength);
+                offset += (int) addrInfo.AddrLength;
+            }
+            addrInfo.CanonName = ExtractString(buffer, offset);
+            offset += (int) (addrInfo.CanonName.Length + 1);
             addrInfo.Next = ExtractUInt32(buffer, offset);
             offset += 4;
             return(addrInfo);
@@ -814,12 +826,13 @@ namespace Meadow.Coprocessor.F7Micro.Messages
         public static int EncodedAddrInfoBufferSize(Messages.AddrInfo addrInfo)
         {
             int result = 0;
-            result += (int) addrInfo.CannonName.Length;
+            result += (int) addrInfo.AddrLength;
+            result += (int) addrInfo.CanonName.Length;
             result += 33;
             return(result);
         }
 
-        public static byte[] EncodeGetAddrInfo(GetAddrInfo getAddrInfo)
+        public static byte[] EncodeGetAddrInfoRequest(GetAddrInfoRequest getAddrInfoRequest)
         {
             int offset = 0;
             int length = 0;
@@ -827,56 +840,81 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             //
             //  Calculate the amount of memory needed.
             //
-            length += (int) (getAddrInfo.NodeName.Length + 1);
-            length += (int) (getAddrInfo.ServName.Length + 1);
-            length += 8;
+            length += (int) (getAddrInfoRequest.NodeName.Length + 1);
+            length += (int) (getAddrInfoRequest.ServName.Length + 1);
+            length += (int) (getAddrInfoRequest.HintsLength + 4);
+            length += (int) (getAddrInfoRequest.ResultLength + 4);
 
             //
             //  Now allocate a new buffer and copy the data in to the buffer.
             //
             byte[] buffer = new byte[length];
             Array.Clear(buffer, 0, buffer.Length);
-            EncodeString(getAddrInfo.NodeName, buffer, offset);
-            offset += getAddrInfo.NodeName.Length + 1;
-            EncodeString(getAddrInfo.ServName, buffer, offset);
-            offset += getAddrInfo.ServName.Length + 1;
-            EncodeUInt32(getAddrInfo.Hints, buffer, offset);
+            EncodeString(getAddrInfoRequest.NodeName, buffer, offset);
+            offset += getAddrInfoRequest.NodeName.Length + 1;
+            EncodeString(getAddrInfoRequest.ServName, buffer, offset);
+            offset += getAddrInfoRequest.ServName.Length + 1;
+            EncodeUInt32(getAddrInfoRequest.HintsLength, buffer, offset);
             offset += 4;
-            EncodeUInt32(getAddrInfo.Result, buffer, offset);
+            if (getAddrInfoRequest.HintsLength > 0)
+            {
+                Array.Copy(getAddrInfoRequest.Hints, 0, buffer, offset, getAddrInfoRequest.HintsLength);
+                offset += (int) (getAddrInfoRequest.HintsLength);
+            }
+            EncodeUInt32(getAddrInfoRequest.ResultLength, buffer, offset);
             offset += 4;
+            if (getAddrInfoRequest.ResultLength > 0)
+            {
+                Array.Copy(getAddrInfoRequest.Result, 0, buffer, offset, getAddrInfoRequest.ResultLength);
+                offset += (int) (getAddrInfoRequest.ResultLength);
+            }
             return(buffer);
         }
 
-        public static GetAddrInfo ExtractGetAddrInfo(byte[] buffer, int offset)
+        public static GetAddrInfoRequest ExtractGetAddrInfoRequest(byte[] buffer, int offset)
         {
-            GetAddrInfo getAddrInfo = new Messages.GetAddrInfo();
+            GetAddrInfoRequest getAddrInfoRequest = new Messages.GetAddrInfoRequest();
 
-            getAddrInfo.NodeName = ExtractString(buffer, offset);
-            offset += (int) (getAddrInfo.NodeName.Length + 1);
-            getAddrInfo.ServName = ExtractString(buffer, offset);
-            offset += (int) (getAddrInfo.ServName.Length + 1);
-            getAddrInfo.Hints = ExtractUInt32(buffer, offset);
+            getAddrInfoRequest.NodeName = ExtractString(buffer, offset);
+            offset += (int) (getAddrInfoRequest.NodeName.Length + 1);
+            getAddrInfoRequest.ServName = ExtractString(buffer, offset);
+            offset += (int) (getAddrInfoRequest.ServName.Length + 1);
+            getAddrInfoRequest.HintsLength = ExtractUInt32(buffer, offset);
             offset += 4;
-            getAddrInfo.Result = ExtractUInt32(buffer, offset);
+            if (getAddrInfoRequest.HintsLength > 0)
+            {
+                getAddrInfoRequest.Hints = new byte[getAddrInfoRequest.HintsLength];
+                Array.Copy(buffer, offset, getAddrInfoRequest.Hints, 0, getAddrInfoRequest.HintsLength);
+                offset += (int) getAddrInfoRequest.HintsLength;
+            }
+            getAddrInfoRequest.ResultLength = ExtractUInt32(buffer, offset);
             offset += 4;
-            return(getAddrInfo);
+            if (getAddrInfoRequest.ResultLength > 0)
+            {
+                getAddrInfoRequest.Result = new byte[getAddrInfoRequest.ResultLength];
+                Array.Copy(buffer, offset, getAddrInfoRequest.Result, 0, getAddrInfoRequest.ResultLength);
+                offset += (int) getAddrInfoRequest.ResultLength;
+            }
+            return(getAddrInfoRequest);
         }
 
         /// <summary>
-        /// Calculate the amount of memory required to hold the given instance of the GetAddrInfo object.
+        /// Calculate the amount of memory required to hold the given instance of the GetAddrInfoRequest object.
         /// </summary>
-        /// <param name="getAddrInfo">GetAddrInfo object to be encoded.</param>
-        /// <returns>Number of bytes required to hold the encoded GetAddrInfo object.</returns>
-        public static int EncodedGetAddrInfoBufferSize(Messages.GetAddrInfo getAddrInfo)
+        /// <param name="getAddrInfoRequest">GetAddrInfoRequest object to be encoded.</param>
+        /// <returns>Number of bytes required to hold the encoded GetAddrInfoRequest object.</returns>
+        public static int EncodedGetAddrInfoRequestBufferSize(Messages.GetAddrInfoRequest getAddrInfoRequest)
         {
             int result = 0;
-            result += (int) getAddrInfo.NodeName.Length;
-            result += (int) getAddrInfo.ServName.Length;
+            result += (int) getAddrInfoRequest.NodeName.Length;
+            result += (int) getAddrInfoRequest.ServName.Length;
+            result += (int) getAddrInfoRequest.HintsLength;
+            result += (int) getAddrInfoRequest.ResultLength;
             result += 10;
             return(result);
         }
 
-        public static byte[] EncodeGetAddrInfoResult(GetAddrInfoResult getAddrInfoResult)
+        public static byte[] EncodeGetAddrInfoResponse(GetAddrInfoResponse getAddrInfoResponse)
         {
             int offset = 0;
             int length = 0;
@@ -884,39 +922,52 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             //
             //  Calculate the amount of memory needed.
             //
-            length += 8;
+            length += (int) (getAddrInfoResponse.ResLength + 4);
+            length += 4;
 
             //
             //  Now allocate a new buffer and copy the data in to the buffer.
             //
             byte[] buffer = new byte[length];
             Array.Clear(buffer, 0, buffer.Length);
-            EncodeInt32(getAddrInfoResult.Errno, buffer, offset);
+            EncodeInt32(getAddrInfoResponse.Errno, buffer, offset);
             offset += 4;
-            EncodeUInt32(getAddrInfoResult.Res, buffer, offset);
+            EncodeUInt32(getAddrInfoResponse.ResLength, buffer, offset);
             offset += 4;
+            if (getAddrInfoResponse.ResLength > 0)
+            {
+                Array.Copy(getAddrInfoResponse.Res, 0, buffer, offset, getAddrInfoResponse.ResLength);
+                offset += (int) (getAddrInfoResponse.ResLength);
+            }
             return(buffer);
         }
 
-        public static GetAddrInfoResult ExtractGetAddrInfoResult(byte[] buffer, int offset)
+        public static GetAddrInfoResponse ExtractGetAddrInfoResponse(byte[] buffer, int offset)
         {
-            GetAddrInfoResult getAddrInfoResult = new Messages.GetAddrInfoResult();
+            GetAddrInfoResponse getAddrInfoResponse = new Messages.GetAddrInfoResponse();
 
-            getAddrInfoResult.Errno = ExtractInt32(buffer, offset);
+            getAddrInfoResponse.Errno = ExtractInt32(buffer, offset);
             offset += 4;
-            getAddrInfoResult.Res = ExtractUInt32(buffer, offset);
+            getAddrInfoResponse.ResLength = ExtractUInt32(buffer, offset);
             offset += 4;
-            return(getAddrInfoResult);
+            if (getAddrInfoResponse.ResLength > 0)
+            {
+                getAddrInfoResponse.Res = new byte[getAddrInfoResponse.ResLength];
+                Array.Copy(buffer, offset, getAddrInfoResponse.Res, 0, getAddrInfoResponse.ResLength);
+                offset += (int) getAddrInfoResponse.ResLength;
+            }
+            return(getAddrInfoResponse);
         }
 
         /// <summary>
-        /// Calculate the amount of memory required to hold the given instance of the GetAddrInfoResult object.
+        /// Calculate the amount of memory required to hold the given instance of the GetAddrInfoResponse object.
         /// </summary>
-        /// <param name="getAddrInfoResult">GetAddrInfoResult object to be encoded.</param>
-        /// <returns>Number of bytes required to hold the encoded GetAddrInfoResult object.</returns>
-        public static int EncodedGetAddrInfoResultBufferSize(Messages.GetAddrInfoResult getAddrInfoResult)
+        /// <param name="getAddrInfoResponse">GetAddrInfoResponse object to be encoded.</param>
+        /// <returns>Number of bytes required to hold the encoded GetAddrInfoResponse object.</returns>
+        public static int EncodedGetAddrInfoResponseBufferSize(Messages.GetAddrInfoResponse getAddrInfoResponse)
         {
             int result = 0;
+            result += (int) getAddrInfoResponse.ResLength;
             result += 8;
             return(result);
         }

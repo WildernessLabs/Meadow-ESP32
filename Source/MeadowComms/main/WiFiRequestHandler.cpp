@@ -433,23 +433,12 @@ void WiFiRequestHandler::GetAvailableNetworks(Message *request)
 }
 
 /**
- *  @brief Expose the getaddrinfo method to the STM32.
- *
- *  @param message
- *      Message structure containing the parameters for the getaddrinfo method.
- */
-void WiFiRequestHandler::GetAddrInfo(Message * message)
-{
-
-}
-
-/**
  *  @brief Expose the socket method to the STM32.
  *
  *  @param message
  *      Message structure containing the parameters for the socket method.
  */
-void WiFiRequestHandler::Socket(Message * message)
+void WiFiRequestHandler::Socket(Message *message)
 {
 
 }
@@ -460,7 +449,7 @@ void WiFiRequestHandler::Socket(Message * message)
  *  @param message
  *      Message structure containing the parameters for the connect method.
  */
-void WiFiRequestHandler::Connect(Message * message)
+void WiFiRequestHandler::Connect(Message *message)
 {
 
 }
@@ -471,7 +460,7 @@ void WiFiRequestHandler::Connect(Message * message)
  *  @param message
  *      Message structure containing the parameters for the freeaddrinfo method.
  */
-void WiFiRequestHandler::FreeAddrInfo(Message * message)
+void WiFiRequestHandler::FreeAddrInfo(Message *message)
 {
 
 }
@@ -482,7 +471,7 @@ void WiFiRequestHandler::FreeAddrInfo(Message * message)
  *  @param message
  *      Message structure containing the parameters for the write method.
  */
-void WiFiRequestHandler::Write(Message * message)
+void WiFiRequestHandler::Write(Message *message)
 {
 
 }
@@ -493,7 +482,7 @@ void WiFiRequestHandler::Write(Message * message)
  *  @param message
  *      Message structure containing the parameters for the setsockopt method.
  */
-void WiFiRequestHandler::SetSockOpt(Message * message)
+void WiFiRequestHandler::SetSockOpt(Message *message)
 {
 
 }
@@ -504,7 +493,7 @@ void WiFiRequestHandler::SetSockOpt(Message * message)
  *  @param message
  *      Message structure containing the parameters for the read method.
  */
-void WiFiRequestHandler::Read(Message * message)
+void WiFiRequestHandler::Read(Message *message)
 {
 
 }
@@ -515,9 +504,95 @@ void WiFiRequestHandler::Read(Message * message)
  *  @param message
  *      Message structure containing the parameters for the getaddrinfo method.
  */
-void WiFiRequestHandler::Close(Message * message)
+void WiFiRequestHandler::Close(Message *message)
 {
 
+}
+
+/**
+ *  @brief Expose the getaddrinfo method to the STM32.
+ *
+ *  The response from this method will be the first addrinfo structure in the
+ *  chain.  This MAY need to be changed if later methods require access to
+ *  other entries in the chain.
+ *
+ *  @param message
+ *      Message structure containing the parameters for the getaddrinfo method.
+ */
+void WiFiRequestHandler::GetAddrInfo(Message *message)
+{
+    ESP_LOGI(__func__, "Getting address information (getaddrinfo).");
+    ESP_LOG_BUFFER_HEX(__func__, message->Payload, message->PayloadLength);
+
+    Esp32Messaging::GetAddrInfoRequest *request = Encoders::ExtractGetAddrInfoRequest(message->Payload);
+    //
+    Esp32Messaging::AddrInfo *extractedHints = Encoders::ExtractAddrInfo(request->Hints);
+    struct addrinfo hints;
+    bzero((void *) &hints, sizeof(addrinfo));
+    hints.ai_family = extractedHints->Family;
+    hints.ai_socktype = extractedHints->SocketType;
+
+//    hints.ai_family = AF_INET;
+//    hints.ai_socktype = SOCK_STREAM;
+    vPortFree(extractedHints);
+    //
+    //  This will hold a pointer to a chain of one or more addrinfo structure.
+    //  The pointer must go on the heap in order for it to remain available
+    //  following the getaddr call.
+    //
+    //  It is the responsibility of the calling .NET application to ensure
+    //  that FreeAddrInfo is called.  FreeAddrInfo will free the allocated
+    //  memory.
+    //
+    ESP_LOGI(__func__, "Requesting look up of %s on port %s on socket type %d, address family %d", request->NodeName, request->ServName, hints.ai_socktype, hints.ai_family);
+    struct addrinfo *addressInformation = (struct addrinfo *) pvPortMalloc(sizeof(struct addrinfo *));
+    int errorCode = getaddrinfo(request->NodeName, request->ServName, &hints, &addressInformation);
+    vPortFree(request);
+
+    ESP_LOGI(__func__, "getaddrinfo returned error code %d", errorCode);
+    Esp32Messaging::GetAddrInfoResponse *response = (Esp32Messaging::GetAddrInfoResponse *) pvPortMalloc(sizeof(Esp32Messaging::GetAddrInfoResponse));
+    response->Errno = errorCode;
+    if ((errorCode == 0) || (addressInformation != NULL))
+    {
+        Esp32Messaging::SockAddr sa;
+        Esp32Messaging::AddrInfo a;
+
+        sa.Family = addressInformation->ai_addr->sa_family;
+        sa.Length = addressInformation->ai_addr->sa_len;
+        //
+        //  We can perform a memcpy here as sa.Data is a fixed byte array
+        //  in the structure so we do not need to allocate the memory first.
+        //
+        memcpy(sa.Data, addressInformation->ai_addr->sa_data, addressInformation->ai_addr->sa_len);
+        a.AddrLength = Encoders::EncodedSockAddrBufferSize(&sa);
+        a.Addr = (uint8_t *) pvPortMalloc(a.AddrLength);
+        Encoders::EncodeSockAddr(&sa, a.Addr);
+
+        a.CanonName = strdup(addressInformation->ai_canonname);
+        a.Family = addressInformation->ai_family;
+        a.Flags = addressInformation->ai_flags;
+        a.MyHeapAddress = (uint32_t) addressInformation;
+        a.Next = addressInformation->ai_next;
+        a.Protocol = addressInformation->ai_protocol;
+        a.SocketType = addressInformation->ai_socktype;
+        a.AddrLen = addressInformation->ai_addrlen;
+
+        response->ResLength = Encoders::EncodedAddrInfoBufferSize(&a);
+        response->Res = (uint8_t *) pvPortMalloc(response->ResLength);
+        Encoders::EncodeAddrInfo(&a, response->Res);
+    }
+    else
+    {
+        response->Res = nullptr;
+        response->ResLength = 0;
+        vPortFree(addressInformation);
+    }
+    vPortFree(message->Payload);
+    message->PayloadLength = Encoders::EncodedGetAddrInfoResponseBufferSize(response);
+    message->Payload = (uint8_t *) pvPortMalloc(message->PayloadLength);
+    Encoders::EncodeGetAddrInfoResponse(response, message->Payload);
+    vPortFree(response);
+    _messageDispatcher->QueueMessageForStm32(message);
 }
 
 void WiFiRequestHandler::HttpGet(Message *message)

@@ -149,4 +149,37 @@ namespace Meadow.Coprocessor.F7Micro
         Unknown = 6
     };
 
+    public enum AddressFamilyType
+    {
+        AfUnspec = 0,
+        AfInet = 2,
+        AfInet6 = 10
+    };
+
+    public enum ProtocolFamilyType
+    {
+        PfUnspec = 0,
+        PfInet = 2,
+        PfInet6 = 10
+    };
+
+    public enum IpProtocolType
+    {
+        IpProtoIP = 0,
+        IpProtoIcmp = 1,
+        IpProtoTcp = 6,
+        IpProtoUdp = 17,
+        IpProtoIpV6 = 41,
+        IpProtoIcmpV6 = 58,
+        IpProtoUdpLite = 136,
+        IpProtoNew = 255
+    };
+
+    public enum CoketProtocolType
+    {
+        SockStream = 1,
+        SockDgram = 2,
+        SockRaw = 3
+    };
+
 }

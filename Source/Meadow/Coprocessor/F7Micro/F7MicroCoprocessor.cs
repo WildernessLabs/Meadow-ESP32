@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Net;
+using System.Net.Sockets;
 using System.Threading;
 using Meadow;
 using Meadow.Coprocessor.F7Micro.Exceptions;
@@ -236,22 +237,27 @@ namespace Meadow.Coprocessor.F7Micro
         /// <param name="hints">AddrInfo structure that contains hints about the type of socket the caller supports.</param>
         /// <param name="res">Pointer to a list of AddrInfo structures containing information about the host.</param>
         /// <returns>Error code if there is a problem, 0 if successful.</returns>
-        public int GetAddrInfo(string nodeName, string serverName, object hints, out object res)
+        public int GetAddrInfo(string nodeName, string serviceName, object hints, out object res)
         {
-            var addrInfo = new GetAddrInfo();
-            addrInfo.NodeName = nodeName;
-            addrInfo.ServName = serverName;
-            addrInfo.Hints = 0;
-            addrInfo.Result = 0;
+            var h = (AddrInfo)hints;
+            
+            var getAddrInfoRequest = new GetAddrInfoRequest();
+            getAddrInfoRequest.NodeName = nodeName;
+            getAddrInfoRequest.ServName = serviceName;
+            var ai = Encoders.EncodeAddrInfo(h);
+            getAddrInfoRequest.Hints = new byte[ai.Length];
+            Array.Copy(ai, getAddrInfoRequest.Hints, ai.Length);
+            getAddrInfoRequest.HintsLength = (UInt32) getAddrInfoRequest.Hints.Length;
+            getAddrInfoRequest.Result = null;
             
             var message = new Message();
             message.Interface = (byte) Esp32Interfaces.WiFi;
             message.Function = (uint) WiFiFunction.GetAddrInfo;
             message.MessageID = _dispatcher.GetNextMessageId();
             message.MessageType = (byte) MessageTypes.Data;
-            message.Payload = Encoders.EncodeGetAddrInfo(addrInfo);;
+            message.Payload = Encoders.EncodeGetAddrInfoRequest(getAddrInfoRequest);;
             message.PayloadLength = (UInt32) message.Payload.Length;
-
+            
             var response = _dispatcher.SendMessage(message);
             var result = (StatusCodes) response.StatusCode;
             if (result != StatusCodes.CompletedOK)
@@ -259,9 +265,18 @@ namespace Meadow.Coprocessor.F7Micro
                 throw new CoprocessorException(result);
             }
 
-            var addrInfoResult = Encoders.ExtractGetAddrInfoResult(response.Payload, 0);
-            res = addrInfoResult.Res;
-            return (addrInfoResult.Errno);
+            var addrInfoResponse = Encoders.ExtractGetAddrInfoResponse(response.Payload, 0);
+
+            if (addrInfoResponse.Errno == 0)
+            {
+                res = Encoders.ExtractAddrInfo(addrInfoResponse.Res, 0);
+            }
+            else
+            {
+                res = null;
+            }
+
+            return (addrInfoResponse.Errno);
         }
         
         #endregion POSIX Methods

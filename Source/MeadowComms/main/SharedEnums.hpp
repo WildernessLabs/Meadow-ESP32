@@ -222,6 +222,63 @@ namespace WiFiCipherType
     };
 }
 
+namespace AddressFamilyType
+{
+    /*
+     *      Address family types for the low level sockets..
+     */
+    enum AddressFamilyType
+    {
+        AfUnspec = 0,
+        AfInet = 2,
+        AfInet6 = 10
+    };
+}
+
+namespace ProtocolFamilyType
+{
+    /*
+     *      Protocol family types for the low level sockets..
+     */
+    enum ProtocolFamilyType
+    {
+        PfUnspec = 0,
+        PfInet = 2,
+        PfInet6 = 10
+    };
+}
+
+namespace IpProtocolType
+{
+    /*
+     *      Protocol types for the low level sockets.
+     */
+    enum IpProtocolType
+    {
+        IpProtoIP = 0,
+        IpProtoIcmp = 1,
+        IpProtoTcp = 6,
+        IpProtoUdp = 17,
+        IpProtoIpV6 = 41,
+        IpProtoIcmpV6 = 58,
+        IpProtoUdpLite = 136,
+        IpProtoNew = 255
+    };
+}
+
+namespace CoketProtocolType
+{
+    /*
+     *      Socket protocol types for the low level sockets.
+     */
+    enum CoketProtocolType
+    {
+        SockStream = 1,
+        SockDgram = 2,
+        SockRaw = 3
+    };
+}
+
 
 #endif /* _SHARED_ENUMS_HPP_ */
 

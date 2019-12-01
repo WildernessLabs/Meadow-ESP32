@@ -15,20 +15,21 @@ namespace FileGenerator
 
         static void Main(string[] args)
         {
+            Console.WriteLine("File Generator 1.00");
             string csharpDestinationDirectory = Environment.GetEnvironmentVariable(MEADOW_F7MICRO_SOURCE_DIRECTORY);
             if (string.IsNullOrEmpty(csharpDestinationDirectory))
             {
                 Console.WriteLine($"Please set the environment variable '{MEADOW_F7MICRO_SOURCE_DIRECTORY}' before running this application.");
                 Environment.Exit(-1);
             }
+            Console.WriteLine($"    C# source directory: {csharpDestinationDirectory}");
 
             string esp32SourceDirectory = $"..{Path.DirectorySeparatorChar}MeadowComms{Path.DirectorySeparatorChar}main{Path.DirectorySeparatorChar}";
+            Console.WriteLine($"    ESP32 source directory: {esp32SourceDirectory}");
             string esp32EnumJsonFileName = $"..{Path.DirectorySeparatorChar}Metadata{Path.DirectorySeparatorChar}SharedEnums.json";
             string cEnumFileName = $"{esp32SourceDirectory}SharedEnums.hpp";
             //
             string cSharpEnumFileName = $"{csharpDestinationDirectory}{Path.DirectorySeparatorChar}Enums.cs";
-
-            Console.WriteLine("File Generator");
 
             Console.WriteLine("    Generating enums.");
             EnumProcessor enumProcessor = new EnumProcessor(esp32EnumJsonFileName, cEnumFileName, cSharpEnumFileName);

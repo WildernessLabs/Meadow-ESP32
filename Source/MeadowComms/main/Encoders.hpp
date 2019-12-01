@@ -88,23 +88,27 @@ namespace Esp32Messaging
         int32_t SocketType;
         int32_t Protocol;
         uint32_t AddrLen;
-        struct sockaddr *Addr;
-        char * CannonName;
+        uint32_t AddrLength;
+        uint8_t *Addr;
+        char * CanonName;
         struct addrinfo *Next;
     };
 
-    struct GetAddrInfo
+    struct GetAddrInfoRequest
     {
         char * NodeName;
         char * ServName;
-        struct addrinfo *Hints;
-        struct addrinfo *Result;
+        uint32_t HintsLength;
+        uint8_t *Hints;
+        uint32_t ResultLength;
+        uint8_t *Result;
     };
 
-    struct GetAddrInfoResult
+    struct GetAddrInfoResponse
     {
         int32_t Errno;
-        struct addrinfo *Res;
+        uint32_t ResLength;
+        uint8_t *Res;
     };
 
 }
@@ -162,12 +166,12 @@ public:
     static void EncodeAddrInfo(Esp32Messaging::AddrInfo *, uint8_t *);
     static int EncodedAddrInfoBufferSize(Esp32Messaging::AddrInfo *);
     static Esp32Messaging::AddrInfo *ExtractAddrInfo(uint8_t *);
-    static void EncodeGetAddrInfo(Esp32Messaging::GetAddrInfo *, uint8_t *);
-    static int EncodedGetAddrInfoBufferSize(Esp32Messaging::GetAddrInfo *);
-    static Esp32Messaging::GetAddrInfo *ExtractGetAddrInfo(uint8_t *);
-    static void EncodeGetAddrInfoResult(Esp32Messaging::GetAddrInfoResult *, uint8_t *);
-    static int EncodedGetAddrInfoResultBufferSize(Esp32Messaging::GetAddrInfoResult *);
-    static Esp32Messaging::GetAddrInfoResult *ExtractGetAddrInfoResult(uint8_t *);
+    static void EncodeGetAddrInfoRequest(Esp32Messaging::GetAddrInfoRequest *, uint8_t *);
+    static int EncodedGetAddrInfoRequestBufferSize(Esp32Messaging::GetAddrInfoRequest *);
+    static Esp32Messaging::GetAddrInfoRequest *ExtractGetAddrInfoRequest(uint8_t *);
+    static void EncodeGetAddrInfoResponse(Esp32Messaging::GetAddrInfoResponse *, uint8_t *);
+    static int EncodedGetAddrInfoResponseBufferSize(Esp32Messaging::GetAddrInfoResponse *);
+    static Esp32Messaging::GetAddrInfoResponse *ExtractGetAddrInfoResponse(uint8_t *);
 
 };
 
