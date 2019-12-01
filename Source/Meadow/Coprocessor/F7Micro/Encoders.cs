@@ -972,5 +972,99 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             return(result);
         }
 
+        public static byte[] EncodeSocketRequest(SocketRequest socketRequest)
+        {
+            int offset = 0;
+            int length = 0;
+
+            //
+            //  Calculate the amount of memory needed.
+            //
+            length += 16;
+
+            //
+            //  Now allocate a new buffer and copy the data in to the buffer.
+            //
+            byte[] buffer = new byte[length];
+            Array.Clear(buffer, 0, buffer.Length);
+            EncodeUInt32(socketRequest.AddressInformation, buffer, offset);
+            offset += 4;
+            EncodeInt32(socketRequest.Domain, buffer, offset);
+            offset += 4;
+            EncodeInt32(socketRequest.Type, buffer, offset);
+            offset += 4;
+            EncodeInt32(socketRequest.Protocol, buffer, offset);
+            offset += 4;
+            return(buffer);
+        }
+
+        public static SocketRequest ExtractSocketRequest(byte[] buffer, int offset)
+        {
+            SocketRequest socketRequest = new Messages.SocketRequest();
+
+            socketRequest.AddressInformation = ExtractUInt32(buffer, offset);
+            offset += 4;
+            socketRequest.Domain = ExtractInt32(buffer, offset);
+            offset += 4;
+            socketRequest.Type = ExtractInt32(buffer, offset);
+            offset += 4;
+            socketRequest.Protocol = ExtractInt32(buffer, offset);
+            offset += 4;
+            return(socketRequest);
+        }
+
+        /// <summary>
+        /// Calculate the amount of memory required to hold the given instance of the SocketRequest object.
+        /// </summary>
+        /// <param name="socketRequest">SocketRequest object to be encoded.</param>
+        /// <returns>Number of bytes required to hold the encoded SocketRequest object.</returns>
+        public static int EncodedSocketRequestBufferSize(Messages.SocketRequest socketRequest)
+        {
+            int result = 0;
+            result += 16;
+            return(result);
+        }
+
+        public static byte[] EncodeSocketResponse(SocketResponse socketResponse)
+        {
+            int offset = 0;
+            int length = 0;
+
+            //
+            //  Calculate the amount of memory needed.
+            //
+            length += 4;
+
+            //
+            //  Now allocate a new buffer and copy the data in to the buffer.
+            //
+            byte[] buffer = new byte[length];
+            Array.Clear(buffer, 0, buffer.Length);
+            EncodeInt32(socketResponse.SocketHandle, buffer, offset);
+            offset += 4;
+            return(buffer);
+        }
+
+        public static SocketResponse ExtractSocketResponse(byte[] buffer, int offset)
+        {
+            SocketResponse socketResponse = new Messages.SocketResponse();
+
+            socketResponse.SocketHandle = ExtractInt32(buffer, offset);
+            offset += 4;
+            return(socketResponse);
+        }
+
+        /// <summary>
+        /// Calculate the amount of memory required to hold the given instance of the SocketResponse object.
+        /// </summary>
+        /// <param name="socketResponse">SocketResponse object to be encoded.</param>
+        /// <returns>Number of bytes required to hold the encoded SocketResponse object.</returns>
+        public static int EncodedSocketResponseBufferSize(Messages.SocketResponse socketResponse)
+        {
+            int result = 0;
+            result += 4;
+            return(result);
+        }
+
     }
 }

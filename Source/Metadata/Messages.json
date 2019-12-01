@@ -79,14 +79,14 @@
             ]
         },
         {
-            "Name": "GetAddrInfoRequest",
-            "MessageElements":
-            [
-                { "Name": "NodeName", "DataType": "string" },
-                { "Name": "ServName", "DataType": "string" },
-                { "Name":  "Hints", "DataType": "blob" },
-                { "Name":  "Result", "DataType": "blob" }
-            ]
+          "Name": "GetAddrInfoRequest",
+          "MessageElements":
+          [
+              { "Name": "NodeName", "DataType": "string" },
+              { "Name": "ServName", "DataType": "string" },
+              { "Name": "Hints", "DataType": "blob" },
+              { "Name": "Result", "DataType": "blob" }
+          ]
         },
         {
             "Name": "GetAddrInfoResponse",
@@ -94,6 +94,23 @@
             [
                 { "Name": "Errno", "DataType": "int" },
                 { "Name": "Res", "DataType": "blob" }
+            ]
+        },
+        {
+          "Name": "SocketRequest",
+          "MessageElements":
+          [
+              { "Name": "AddressInformation", "DataType": "pointer", "CName": "struct addrinfo", "CSName": "AddrInfo" },
+              { "Name": "Domain", "DataType": "int" },
+              { "Name": "Type", "DataType": "int" },
+              { "Name": "Protocol", "DataType": "int" }
+          ]
+        },
+        {
+            "Name": "SocketResponse",
+            "MessageElements":
+            [
+                { "Name": "SocketHandle", "DataType": "int" }
             ]
         }
     ]

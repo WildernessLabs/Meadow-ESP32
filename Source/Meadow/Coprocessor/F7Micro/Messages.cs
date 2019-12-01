@@ -97,4 +97,17 @@ namespace Meadow.Coprocessor.F7Micro.Messages
         public byte[] Res;
     };
 
+    public struct SocketRequest
+    {
+        public UInt32 AddressInformation;
+        public Int32 Domain;
+        public Int32 Type;
+        public Int32 Protocol;
+    };
+
+    public struct SocketResponse
+    {
+        public Int32 SocketHandle;
+    };
+
 }
