@@ -1298,4 +1298,136 @@ Esp32Messaging::SocketResponse *Encoders::ExtractSocketResponse(uint8_t *buffer)
     return(socketResponse);
 }
 
+/**
+ *  Convert the ConnectRequest object into a byte stream that can be sent to the STM32.
+ *  
+ *  The amount of memory required can be obtained by calling the EncodedConnectRequestBufferSize method.
+ *  
+ *  @param connectRequest
+ *      ConnectRequest object to be encoded.
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory large enough to hold the encoded ConnectRequest object.
+ */
+void Encoders::EncodeConnectRequest(Esp32Messaging::ConnectRequest *connectRequest, uint8_t *buffer)
+{
+    EncodeInt32(connectRequest->SocketHandle, buffer);
+    buffer += 4;
+    EncodeUInt32(connectRequest->AddrLength, buffer);
+    buffer += 4;
+    if (connectRequest->AddrLength > 0)
+    {
+        memcpy((void *) buffer, (void *) connectRequest->Addr, connectRequest->AddrLength);
+        buffer += connectRequest->AddrLength;
+    }
+    EncodeInt32(connectRequest->AddrLen, buffer);
+    buffer += 4;
+}
+
+/**
+ *  Calculate the amount of memory required to hold the given instance of the ConnectRequest object.
+ *  
+ *  @param connectRequest
+ *      ConnectRequest object to be encoded.
+ *  
+ *  @returns
+ *      Number of bytes required to hold the encoded ConnectRequest object.
+ */
+int Encoders::EncodedConnectRequestBufferSize(Esp32Messaging::ConnectRequest *connectRequest)
+{
+    int result = 0;
+    result += connectRequest->AddrLength;
+    result += 12;
+    return(result);
+}
+
+/**
+ *  Extract the ConnectRequest object that is encoded in the given buffer.
+ *  
+ *  Note that the returned pointer points to a block of memory on the heap and
+ *  this should eventually be released calling vPortFree(...).
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded ConnectRequest object.
+ *  
+ *  @returns
+ *      Pointer to a ConnectRequest object.
+ */
+Esp32Messaging::ConnectRequest *Encoders::ExtractConnectRequest(uint8_t *buffer)
+{
+    Esp32Messaging::ConnectRequest *connectRequest = (Esp32Messaging::ConnectRequest *) pvPortMalloc(sizeof(Esp32Messaging::ConnectRequest));
+
+    connectRequest->SocketHandle = ExtractInt32(buffer);
+    buffer += 4;
+    connectRequest->AddrLength = ExtractUInt32(buffer);
+    buffer += 4;
+    if (connectRequest->AddrLength > 0)
+    {
+        connectRequest->Addr = (uint8_t *) pvPortMalloc(connectRequest->AddrLength);
+        memcpy(connectRequest->Addr, buffer, connectRequest->AddrLength);
+        buffer += connectRequest->AddrLength;
+    }
+    else
+    {
+        connectRequest->Addr = nullptr;
+    }
+    connectRequest->AddrLen = ExtractInt32(buffer);
+    buffer += 4;
+    return(connectRequest);
+}
+
+/**
+ *  Convert the ConnectResponse object into a byte stream that can be sent to the STM32.
+ *  
+ *  The amount of memory required can be obtained by calling the EncodedConnectResponseBufferSize method.
+ *  
+ *  @param connectResponse
+ *      ConnectResponse object to be encoded.
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory large enough to hold the encoded ConnectResponse object.
+ */
+void Encoders::EncodeConnectResponse(Esp32Messaging::ConnectResponse *connectResponse, uint8_t *buffer)
+{
+    EncodeInt32(connectResponse->Errno, buffer);
+    buffer += 4;
+}
+
+/**
+ *  Calculate the amount of memory required to hold the given instance of the ConnectResponse object.
+ *  
+ *  @param connectResponse
+ *      ConnectResponse object to be encoded.
+ *  
+ *  @returns
+ *      Number of bytes required to hold the encoded ConnectResponse object.
+ */
+int Encoders::EncodedConnectResponseBufferSize(Esp32Messaging::ConnectResponse *connectResponse)
+{
+    int result = 0;
+    result += 4;
+    return(result);
+}
+
+/**
+ *  Extract the ConnectResponse object that is encoded in the given buffer.
+ *  
+ *  Note that the returned pointer points to a block of memory on the heap and
+ *  this should eventually be released calling vPortFree(...).
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded ConnectResponse object.
+ *  
+ *  @returns
+ *      Pointer to a ConnectResponse object.
+ */
+Esp32Messaging::ConnectResponse *Encoders::ExtractConnectResponse(uint8_t *buffer)
+{
+    Esp32Messaging::ConnectResponse *connectResponse = (Esp32Messaging::ConnectResponse *) pvPortMalloc(sizeof(Esp32Messaging::ConnectResponse));
+
+    connectResponse->Errno = ExtractInt32(buffer);
+    buffer += 4;
+    return(connectResponse);
+}
+
 

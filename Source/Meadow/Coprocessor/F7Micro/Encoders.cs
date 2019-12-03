@@ -706,12 +706,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             offset += 1;
             buffer[offset] = sockAddr.Family;
             offset += 1;
-            int amount = sockAddr.Data.Length >= 14 ? 14 - 1 : sockAddr.Data.Length;
-            for (int index = 0; index < amount; index++)
-            {
-                buffer[index] = (byte) sockAddr.Data[index];
-            }
-            buffer[amount] = 0;
+            Array.Copy(sockAddr.Data, 0, buffer, offset, 14);
             offset += (int) 14;
             return(buffer);
         }
@@ -724,10 +719,8 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             offset += 1;
             sockAddr.Family = buffer[offset];
             offset += 1;
-            for (int index = 0; (buffer[index + offset] != 0) && (index < (14 - 1)); index++)
-            {
-                sockAddr.Data += Convert.ToChar(buffer[index + offset]);
-            }
+            sockAddr.Data = new byte[14];
+            Array.Copy(buffer, offset, sockAddr.Data, 0, 14);
             offset += (int) 14;
             return(sockAddr);
         }
@@ -1060,6 +1053,109 @@ namespace Meadow.Coprocessor.F7Micro.Messages
         /// <param name="socketResponse">SocketResponse object to be encoded.</param>
         /// <returns>Number of bytes required to hold the encoded SocketResponse object.</returns>
         public static int EncodedSocketResponseBufferSize(Messages.SocketResponse socketResponse)
+        {
+            int result = 0;
+            result += 4;
+            return(result);
+        }
+
+        public static byte[] EncodeConnectRequest(ConnectRequest connectRequest)
+        {
+            int offset = 0;
+            int length = 0;
+
+            //
+            //  Calculate the amount of memory needed.
+            //
+            length += (int) (connectRequest.AddrLength + 4);
+            length += 8;
+
+            //
+            //  Now allocate a new buffer and copy the data in to the buffer.
+            //
+            byte[] buffer = new byte[length];
+            Array.Clear(buffer, 0, buffer.Length);
+            EncodeInt32(connectRequest.SocketHandle, buffer, offset);
+            offset += 4;
+            EncodeUInt32(connectRequest.AddrLength, buffer, offset);
+            offset += 4;
+            if (connectRequest.AddrLength > 0)
+            {
+                Array.Copy(connectRequest.Addr, 0, buffer, offset, connectRequest.AddrLength);
+                offset += (int) (connectRequest.AddrLength);
+            }
+            EncodeInt32(connectRequest.AddrLen, buffer, offset);
+            offset += 4;
+            return(buffer);
+        }
+
+        public static ConnectRequest ExtractConnectRequest(byte[] buffer, int offset)
+        {
+            ConnectRequest connectRequest = new Messages.ConnectRequest();
+
+            connectRequest.SocketHandle = ExtractInt32(buffer, offset);
+            offset += 4;
+            connectRequest.AddrLength = ExtractUInt32(buffer, offset);
+            offset += 4;
+            if (connectRequest.AddrLength > 0)
+            {
+                connectRequest.Addr = new byte[connectRequest.AddrLength];
+                Array.Copy(buffer, offset, connectRequest.Addr, 0, connectRequest.AddrLength);
+                offset += (int) connectRequest.AddrLength;
+            }
+            connectRequest.AddrLen = ExtractInt32(buffer, offset);
+            offset += 4;
+            return(connectRequest);
+        }
+
+        /// <summary>
+        /// Calculate the amount of memory required to hold the given instance of the ConnectRequest object.
+        /// </summary>
+        /// <param name="connectRequest">ConnectRequest object to be encoded.</param>
+        /// <returns>Number of bytes required to hold the encoded ConnectRequest object.</returns>
+        public static int EncodedConnectRequestBufferSize(Messages.ConnectRequest connectRequest)
+        {
+            int result = 0;
+            result += (int) connectRequest.AddrLength;
+            result += 12;
+            return(result);
+        }
+
+        public static byte[] EncodeConnectResponse(ConnectResponse connectResponse)
+        {
+            int offset = 0;
+            int length = 0;
+
+            //
+            //  Calculate the amount of memory needed.
+            //
+            length += 4;
+
+            //
+            //  Now allocate a new buffer and copy the data in to the buffer.
+            //
+            byte[] buffer = new byte[length];
+            Array.Clear(buffer, 0, buffer.Length);
+            EncodeInt32(connectResponse.Errno, buffer, offset);
+            offset += 4;
+            return(buffer);
+        }
+
+        public static ConnectResponse ExtractConnectResponse(byte[] buffer, int offset)
+        {
+            ConnectResponse connectResponse = new Messages.ConnectResponse();
+
+            connectResponse.Errno = ExtractInt32(buffer, offset);
+            offset += 4;
+            return(connectResponse);
+        }
+
+        /// <summary>
+        /// Calculate the amount of memory required to hold the given instance of the ConnectResponse object.
+        /// </summary>
+        /// <param name="connectResponse">ConnectResponse object to be encoded.</param>
+        /// <returns>Number of bytes required to hold the encoded ConnectResponse object.</returns>
+        public static int EncodedConnectResponseBufferSize(Messages.ConnectResponse connectResponse)
         {
             int result = 0;
             result += 4;

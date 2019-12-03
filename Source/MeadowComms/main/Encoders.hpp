@@ -77,7 +77,7 @@ namespace Esp32Messaging
     {
         uint8_t Length;
         uint8_t Family;
-        char Data[14];
+        uint8_t Data[14];
     };
 
     struct AddrInfo
@@ -122,6 +122,19 @@ namespace Esp32Messaging
     struct SocketResponse
     {
         int32_t SocketHandle;
+    };
+
+    struct ConnectRequest
+    {
+        int32_t SocketHandle;
+        uint32_t AddrLength;
+        uint8_t *Addr;
+        int32_t AddrLen;
+    };
+
+    struct ConnectResponse
+    {
+        int32_t Errno;
     };
 
 }
@@ -191,6 +204,12 @@ public:
     static void EncodeSocketResponse(Esp32Messaging::SocketResponse *, uint8_t *);
     static int EncodedSocketResponseBufferSize(Esp32Messaging::SocketResponse *);
     static Esp32Messaging::SocketResponse *ExtractSocketResponse(uint8_t *);
+    static void EncodeConnectRequest(Esp32Messaging::ConnectRequest *, uint8_t *);
+    static int EncodedConnectRequestBufferSize(Esp32Messaging::ConnectRequest *);
+    static Esp32Messaging::ConnectRequest *ExtractConnectRequest(uint8_t *);
+    static void EncodeConnectResponse(Esp32Messaging::ConnectResponse *, uint8_t *);
+    static int EncodedConnectResponseBufferSize(Esp32Messaging::ConnectResponse *);
+    static Esp32Messaging::ConnectResponse *ExtractConnectResponse(uint8_t *);
 
 };
 
