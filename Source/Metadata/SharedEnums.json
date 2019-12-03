@@ -195,18 +195,55 @@
                 { "Name": "IpProtoUdpLite", "Value": "136" },
                 { "Name": "IpProtoNew", "Value": "255" }
             ]
-        },
-        {
-            "Name": "CoketProtocolType",
-            "BaseDataType": "",
-            "Namespace": "Esp32Messaging",
-            "Comment": "Socket protocol types for the low level sockets.",
-            "NameValuePairs":
-            [
-                { "Name": "SockStream", "Value": "1" },
-                { "Name": "SockDgram", "Value": "2" },
-                { "Name": "SockRaw", "Value": "3" }
-            ]
-        },
+          },
+          {
+              "Name": "SocketProtocolType",
+              "BaseDataType": "",
+              "Namespace": "Esp32Messaging",
+              "Comment": "Socket protocol types for the low level sockets.",
+              "NameValuePairs":
+              [
+                  { "Name": "SockStream", "Value": "1" },
+                  { "Name": "SockDgram", "Value": "2" },
+                  { "Name": "SockRaw", "Value": "3" }
+              ]
+          },
+          {
+              "Name": "SocketLevelType",
+              "BaseDataType": "",
+              "Namespace": "Esp32Messaging",
+              "Comment": "Socket level types for the low level sockets.",
+              "NameValuePairs":
+              [
+                  { "Name": "SolSocket", "Value": "0xfff" }
+              ]
+          },
+          {
+              "Name": "SocketOptionType",
+              "BaseDataType": "",
+              "Namespace": "Esp32Messaging",
+              "Comment": "Socket option types for the low level sockets.",
+              "NameValuePairs":
+              [
+                  { "Name": "SoDebug", "Value": "0x0001" },
+                  { "Name": "SoAcceptConn", "Value": "0x0002" },
+                  { "Name": "SoDontRoute", "Value": "0x0010" },
+                  { "Name": "UseLoopback", "Value": "0x0040" },
+                  { "Name": "SoLinger", "Value": "0x0080" },
+                  { "Name": "SoDontLinger", "Value": "0x0080" },
+                  { "Name": "SoOobInline", "Value": "0x0100" },
+                  { "Name": "SoReusePort", "Value": "0x0200" },
+                  { "Name": "SoSndBuf", "Value": "0x1001" },
+                  { "Name": "SoRcvBuf", "Value": "0x1002" },
+                  { "Name": "SoSndLoWat", "Value": "0x1003" },
+                  { "Name": "SoSRcvLoWat", "Value": "0x1004" },
+                  { "Name": "SoSndTimeO", "Value": "0x1005" },
+                  { "Name": "SoRcvTimeO", "Value": "0x1006" },
+                  { "Name": "SoError", "Value": "0x1007" },
+                  { "Name": "SoType", "Value": "0x1008" },
+                  { "Name": "SoConTimeO", "Value": "0x1009" },
+                  { "Name": "SoNoCheck", "Value": "0x100a" }
+              ]
+          },
     ]
 }

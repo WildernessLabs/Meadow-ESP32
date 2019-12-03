@@ -594,7 +594,7 @@ namespace Meadow.Coprocessor.F7Micro
         private byte[] ReadData(UInt32 amount)
         {
             // TODO: Find out what this delay is required.
-            Thread.Sleep(1000);
+//            Thread.Sleep(100);
             return (_esp32.ReadBytes((ushort)amount));
         }
 

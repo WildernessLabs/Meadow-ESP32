@@ -112,7 +112,7 @@ namespace BasicNetworkTest
 
             DebugHelpers.DebugHelpers.LogMessage(true, "Requesting lookup for www.google.com:80");
             var errorCode = _f7MicroCoprocessor.GetAddrInfo("www.google.com", "80", hints, out var res);
-            DebugHelpers.DebugHelpers.LogMessage(true, $"GetAddrInfo returned error code {errorCode}");
+            DebugHelpers.DebugHelpers.LogMessage(true, $"    Error code {errorCode}");
             if (errorCode != 0)
             {
                 DebugHelpers.DebugHelpers.LogMessage(true, $"Exiting test");
@@ -125,7 +125,7 @@ namespace BasicNetworkTest
             DebugHelpers.DebugHelpers.LogMessage(true, $"    Socket handle: {socketHandle}");
             if (socketHandle < 0)
             {
-//                freeaddrinfo(addressInformation);
+                _f7MicroCoprocessor.FreeAddrInfo(getAddrInfoResult.MyHeapAddress);
                 DebugHelpers.DebugHelpers.LogMessage(true, $"Exiting test");
                 return;
             }
@@ -135,12 +135,15 @@ namespace BasicNetworkTest
             if (_f7MicroCoprocessor.Connect(socketHandle, sockAddr, (int) getAddrInfoResult.AddrLen) < 0)
             {
 //                close(socketHandle);
-//                freeaddrinfo(addressInformation);
+                _f7MicroCoprocessor.FreeAddrInfo(getAddrInfoResult.MyHeapAddress);
                 DebugHelpers.DebugHelpers.LogMessage(true, $"Exiting test");
                 return;
             }
             DebugHelpers.DebugHelpers.LogMessage(true, "    Connected.");
-
+            
+            DebugHelpers.DebugHelpers.LogMessage(true, "Freeing address information resources (freeaddrinfo)");
+            _f7MicroCoprocessor.FreeAddrInfo(getAddrInfoResult.MyHeapAddress);
+            DebugHelpers.DebugHelpers.LogMessage(true, "    Complete.");
         }
         
         #endregion Methods

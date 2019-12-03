@@ -1245,32 +1245,32 @@ Esp32Messaging::SocketRequest *Encoders::ExtractSocketRequest(uint8_t *buffer)
 }
 
 /**
- *  Convert the SocketResponse object into a byte stream that can be sent to the STM32.
+ *  Convert the IntegerResponse object into a byte stream that can be sent to the STM32.
  *  
- *  The amount of memory required can be obtained by calling the EncodedSocketResponseBufferSize method.
+ *  The amount of memory required can be obtained by calling the EncodedIntegerResponseBufferSize method.
  *  
- *  @param socketResponse
- *      SocketResponse object to be encoded.
+ *  @param integerResponse
+ *      IntegerResponse object to be encoded.
  *  
  *  @param buffer
- *      Pointer to a block of memory large enough to hold the encoded SocketResponse object.
+ *      Pointer to a block of memory large enough to hold the encoded IntegerResponse object.
  */
-void Encoders::EncodeSocketResponse(Esp32Messaging::SocketResponse *socketResponse, uint8_t *buffer)
+void Encoders::EncodeIntegerResponse(Esp32Messaging::IntegerResponse *integerResponse, uint8_t *buffer)
 {
-    EncodeInt32(socketResponse->SocketHandle, buffer);
+    EncodeInt32(integerResponse->Result, buffer);
     buffer += 4;
 }
 
 /**
- *  Calculate the amount of memory required to hold the given instance of the SocketResponse object.
+ *  Calculate the amount of memory required to hold the given instance of the IntegerResponse object.
  *  
- *  @param socketResponse
- *      SocketResponse object to be encoded.
+ *  @param integerResponse
+ *      IntegerResponse object to be encoded.
  *  
  *  @returns
- *      Number of bytes required to hold the encoded SocketResponse object.
+ *      Number of bytes required to hold the encoded IntegerResponse object.
  */
-int Encoders::EncodedSocketResponseBufferSize(Esp32Messaging::SocketResponse *socketResponse)
+int Encoders::EncodedIntegerResponseBufferSize(Esp32Messaging::IntegerResponse *integerResponse)
 {
     int result = 0;
     result += 4;
@@ -1278,24 +1278,24 @@ int Encoders::EncodedSocketResponseBufferSize(Esp32Messaging::SocketResponse *so
 }
 
 /**
- *  Extract the SocketResponse object that is encoded in the given buffer.
+ *  Extract the IntegerResponse object that is encoded in the given buffer.
  *  
  *  Note that the returned pointer points to a block of memory on the heap and
  *  this should eventually be released calling vPortFree(...).
  *  
  *  @param buffer
- *      Pointer to a block of memory holding the encoded SocketResponse object.
+ *      Pointer to a block of memory holding the encoded IntegerResponse object.
  *  
  *  @returns
- *      Pointer to a SocketResponse object.
+ *      Pointer to a IntegerResponse object.
  */
-Esp32Messaging::SocketResponse *Encoders::ExtractSocketResponse(uint8_t *buffer)
+Esp32Messaging::IntegerResponse *Encoders::ExtractIntegerResponse(uint8_t *buffer)
 {
-    Esp32Messaging::SocketResponse *socketResponse = (Esp32Messaging::SocketResponse *) pvPortMalloc(sizeof(Esp32Messaging::SocketResponse));
+    Esp32Messaging::IntegerResponse *integerResponse = (Esp32Messaging::IntegerResponse *) pvPortMalloc(sizeof(Esp32Messaging::IntegerResponse));
 
-    socketResponse->SocketHandle = ExtractInt32(buffer);
+    integerResponse->Result = ExtractInt32(buffer);
     buffer += 4;
-    return(socketResponse);
+    return(integerResponse);
 }
 
 /**
@@ -1377,32 +1377,32 @@ Esp32Messaging::ConnectRequest *Encoders::ExtractConnectRequest(uint8_t *buffer)
 }
 
 /**
- *  Convert the ConnectResponse object into a byte stream that can be sent to the STM32.
+ *  Convert the FreeAddrInfoRequest object into a byte stream that can be sent to the STM32.
  *  
- *  The amount of memory required can be obtained by calling the EncodedConnectResponseBufferSize method.
+ *  The amount of memory required can be obtained by calling the EncodedFreeAddrInfoRequestBufferSize method.
  *  
- *  @param connectResponse
- *      ConnectResponse object to be encoded.
+ *  @param freeAddrInfoRequest
+ *      FreeAddrInfoRequest object to be encoded.
  *  
  *  @param buffer
- *      Pointer to a block of memory large enough to hold the encoded ConnectResponse object.
+ *      Pointer to a block of memory large enough to hold the encoded FreeAddrInfoRequest object.
  */
-void Encoders::EncodeConnectResponse(Esp32Messaging::ConnectResponse *connectResponse, uint8_t *buffer)
+void Encoders::EncodeFreeAddrInfoRequest(Esp32Messaging::FreeAddrInfoRequest *freeAddrInfoRequest, uint8_t *buffer)
 {
-    EncodeInt32(connectResponse->Errno, buffer);
+    EncodeUInt32(freeAddrInfoRequest->AddrInfoAddress, buffer);
     buffer += 4;
 }
 
 /**
- *  Calculate the amount of memory required to hold the given instance of the ConnectResponse object.
+ *  Calculate the amount of memory required to hold the given instance of the FreeAddrInfoRequest object.
  *  
- *  @param connectResponse
- *      ConnectResponse object to be encoded.
+ *  @param freeAddrInfoRequest
+ *      FreeAddrInfoRequest object to be encoded.
  *  
  *  @returns
- *      Number of bytes required to hold the encoded ConnectResponse object.
+ *      Number of bytes required to hold the encoded FreeAddrInfoRequest object.
  */
-int Encoders::EncodedConnectResponseBufferSize(Esp32Messaging::ConnectResponse *connectResponse)
+int Encoders::EncodedFreeAddrInfoRequestBufferSize(Esp32Messaging::FreeAddrInfoRequest *freeAddrInfoRequest)
 {
     int result = 0;
     result += 4;
@@ -1410,24 +1410,226 @@ int Encoders::EncodedConnectResponseBufferSize(Esp32Messaging::ConnectResponse *
 }
 
 /**
- *  Extract the ConnectResponse object that is encoded in the given buffer.
+ *  Extract the FreeAddrInfoRequest object that is encoded in the given buffer.
  *  
  *  Note that the returned pointer points to a block of memory on the heap and
  *  this should eventually be released calling vPortFree(...).
  *  
  *  @param buffer
- *      Pointer to a block of memory holding the encoded ConnectResponse object.
+ *      Pointer to a block of memory holding the encoded FreeAddrInfoRequest object.
  *  
  *  @returns
- *      Pointer to a ConnectResponse object.
+ *      Pointer to a FreeAddrInfoRequest object.
  */
-Esp32Messaging::ConnectResponse *Encoders::ExtractConnectResponse(uint8_t *buffer)
+Esp32Messaging::FreeAddrInfoRequest *Encoders::ExtractFreeAddrInfoRequest(uint8_t *buffer)
 {
-    Esp32Messaging::ConnectResponse *connectResponse = (Esp32Messaging::ConnectResponse *) pvPortMalloc(sizeof(Esp32Messaging::ConnectResponse));
+    Esp32Messaging::FreeAddrInfoRequest *freeAddrInfoRequest = (Esp32Messaging::FreeAddrInfoRequest *) pvPortMalloc(sizeof(Esp32Messaging::FreeAddrInfoRequest));
 
-    connectResponse->Errno = ExtractInt32(buffer);
+    freeAddrInfoRequest->AddrInfoAddress = ExtractUInt32(buffer);
     buffer += 4;
-    return(connectResponse);
+    return(freeAddrInfoRequest);
+}
+
+/**
+ *  Convert the TimeVal object into a byte stream that can be sent to the STM32.
+ *  
+ *  The amount of memory required can be obtained by calling the EncodedTimeValBufferSize method.
+ *  
+ *  @param timeVal
+ *      TimeVal object to be encoded.
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory large enough to hold the encoded TimeVal object.
+ */
+void Encoders::EncodeTimeVal(Esp32Messaging::TimeVal *timeVal, uint8_t *buffer)
+{
+    EncodeUInt32(timeVal->TvSec, buffer);
+    buffer += 4;
+    EncodeUInt32(timeVal->TvUsec, buffer);
+    buffer += 4;
+}
+
+/**
+ *  Calculate the amount of memory required to hold the given instance of the TimeVal object.
+ *  
+ *  @param timeVal
+ *      TimeVal object to be encoded.
+ *  
+ *  @returns
+ *      Number of bytes required to hold the encoded TimeVal object.
+ */
+int Encoders::EncodedTimeValBufferSize(Esp32Messaging::TimeVal *timeVal)
+{
+    int result = 0;
+    result += 8;
+    return(result);
+}
+
+/**
+ *  Extract the TimeVal object that is encoded in the given buffer.
+ *  
+ *  Note that the returned pointer points to a block of memory on the heap and
+ *  this should eventually be released calling vPortFree(...).
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded TimeVal object.
+ *  
+ *  @returns
+ *      Pointer to a TimeVal object.
+ */
+Esp32Messaging::TimeVal *Encoders::ExtractTimeVal(uint8_t *buffer)
+{
+    Esp32Messaging::TimeVal *timeVal = (Esp32Messaging::TimeVal *) pvPortMalloc(sizeof(Esp32Messaging::TimeVal));
+
+    timeVal->TvSec = ExtractUInt32(buffer);
+    buffer += 4;
+    timeVal->TvUsec = ExtractUInt32(buffer);
+    buffer += 4;
+    return(timeVal);
+}
+
+/**
+ *  Convert the SetSockOptRequest object into a byte stream that can be sent to the STM32.
+ *  
+ *  The amount of memory required can be obtained by calling the EncodedSetSockOptRequestBufferSize method.
+ *  
+ *  @param setSockOptRequest
+ *      SetSockOptRequest object to be encoded.
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory large enough to hold the encoded SetSockOptRequest object.
+ */
+void Encoders::EncodeSetSockOptRequest(Esp32Messaging::SetSockOptRequest *setSockOptRequest, uint8_t *buffer)
+{
+    EncodeInt32(setSockOptRequest->SocketNumber, buffer);
+    buffer += 4;
+    EncodeInt32(setSockOptRequest->Level, buffer);
+    buffer += 4;
+    EncodeInt32(setSockOptRequest->OptionName, buffer);
+    buffer += 4;
+    EncodeUInt32(setSockOptRequest->OptionValueLength, buffer);
+    buffer += 4;
+    if (setSockOptRequest->OptionValueLength > 0)
+    {
+        memcpy((void *) buffer, (void *) setSockOptRequest->OptionValue, setSockOptRequest->OptionValueLength);
+        buffer += setSockOptRequest->OptionValueLength;
+    }
+    EncodeInt32(setSockOptRequest->OptionLen, buffer);
+    buffer += 4;
+}
+
+/**
+ *  Calculate the amount of memory required to hold the given instance of the SetSockOptRequest object.
+ *  
+ *  @param setSockOptRequest
+ *      SetSockOptRequest object to be encoded.
+ *  
+ *  @returns
+ *      Number of bytes required to hold the encoded SetSockOptRequest object.
+ */
+int Encoders::EncodedSetSockOptRequestBufferSize(Esp32Messaging::SetSockOptRequest *setSockOptRequest)
+{
+    int result = 0;
+    result += setSockOptRequest->OptionValueLength;
+    result += 20;
+    return(result);
+}
+
+/**
+ *  Extract the SetSockOptRequest object that is encoded in the given buffer.
+ *  
+ *  Note that the returned pointer points to a block of memory on the heap and
+ *  this should eventually be released calling vPortFree(...).
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded SetSockOptRequest object.
+ *  
+ *  @returns
+ *      Pointer to a SetSockOptRequest object.
+ */
+Esp32Messaging::SetSockOptRequest *Encoders::ExtractSetSockOptRequest(uint8_t *buffer)
+{
+    Esp32Messaging::SetSockOptRequest *setSockOptRequest = (Esp32Messaging::SetSockOptRequest *) pvPortMalloc(sizeof(Esp32Messaging::SetSockOptRequest));
+
+    setSockOptRequest->SocketNumber = ExtractInt32(buffer);
+    buffer += 4;
+    setSockOptRequest->Level = ExtractInt32(buffer);
+    buffer += 4;
+    setSockOptRequest->OptionName = ExtractInt32(buffer);
+    buffer += 4;
+    setSockOptRequest->OptionValueLength = ExtractUInt32(buffer);
+    buffer += 4;
+    if (setSockOptRequest->OptionValueLength > 0)
+    {
+        setSockOptRequest->OptionValue = (uint8_t *) pvPortMalloc(setSockOptRequest->OptionValueLength);
+        memcpy(setSockOptRequest->OptionValue, buffer, setSockOptRequest->OptionValueLength);
+        buffer += setSockOptRequest->OptionValueLength;
+    }
+    else
+    {
+        setSockOptRequest->OptionValue = nullptr;
+    }
+    setSockOptRequest->OptionLen = ExtractInt32(buffer);
+    buffer += 4;
+    return(setSockOptRequest);
+}
+
+/**
+ *  Convert the Linger object into a byte stream that can be sent to the STM32.
+ *  
+ *  The amount of memory required can be obtained by calling the EncodedLingerBufferSize method.
+ *  
+ *  @param linger
+ *      Linger object to be encoded.
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory large enough to hold the encoded Linger object.
+ */
+void Encoders::EncodeLinger(Esp32Messaging::Linger *linger, uint8_t *buffer)
+{
+    EncodeInt32(linger->LOnOff, buffer);
+    buffer += 4;
+    EncodeInt32(linger->LLinger, buffer);
+    buffer += 4;
+}
+
+/**
+ *  Calculate the amount of memory required to hold the given instance of the Linger object.
+ *  
+ *  @param linger
+ *      Linger object to be encoded.
+ *  
+ *  @returns
+ *      Number of bytes required to hold the encoded Linger object.
+ */
+int Encoders::EncodedLingerBufferSize(Esp32Messaging::Linger *linger)
+{
+    int result = 0;
+    result += 8;
+    return(result);
+}
+
+/**
+ *  Extract the Linger object that is encoded in the given buffer.
+ *  
+ *  Note that the returned pointer points to a block of memory on the heap and
+ *  this should eventually be released calling vPortFree(...).
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded Linger object.
+ *  
+ *  @returns
+ *      Pointer to a Linger object.
+ */
+Esp32Messaging::Linger *Encoders::ExtractLinger(uint8_t *buffer)
+{
+    Esp32Messaging::Linger *linger = (Esp32Messaging::Linger *) pvPortMalloc(sizeof(Esp32Messaging::Linger));
+
+    linger->LOnOff = ExtractInt32(buffer);
+    buffer += 4;
+    linger->LLinger = ExtractInt32(buffer);
+    buffer += 4;
+    return(linger);
 }
 
 

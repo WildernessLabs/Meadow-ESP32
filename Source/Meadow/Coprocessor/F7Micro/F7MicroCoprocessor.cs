@@ -304,8 +304,8 @@ namespace Meadow.Coprocessor.F7Micro
                 throw new CoprocessorException(result);
             }
 
-            var socketResponse = Encoders.ExtractSocketResponse(response.Payload, 0);
-            return (socketResponse.SocketHandle);
+            var socketResponse = Encoders.ExtractIntegerResponse(response.Payload, 0);
+            return (socketResponse.Result);
         }
 
         public int Connect(int socketHandle, SockAddr addr, int addrlen)
@@ -331,8 +331,61 @@ namespace Meadow.Coprocessor.F7Micro
                 throw new CoprocessorException(result);
             }
 
-            var connectResponse = Encoders.ExtractConnectResponse(response.Payload, 0);
-            return (connectResponse.Errno);
+            var connectResponse = Encoders.ExtractIntegerResponse(response.Payload, 0);
+            return (connectResponse.Result);
+        }
+
+        /// <summary>
+        /// Free any previously allocated addrinfo structure and pointers.
+        /// </summary>
+        /// <param name="addrInfoPointer"></param>
+        /// <exception cref="CoprocessorException"></exception>
+        public void FreeAddrInfo(UInt32 addrInfoPointer)
+        {
+            var freeAddrInfoRequest = new FreeAddrInfoRequest();
+            freeAddrInfoRequest.AddrInfoAddress = addrInfoPointer;
+            
+            var message = new Message();
+            message.Interface = (byte) Esp32Interfaces.WiFi;
+            message.Function = (uint) WiFiFunction.FreeAddrInfo;
+            message.MessageID = _dispatcher.GetNextMessageId();
+            message.MessageType = (byte) MessageTypes.Data;
+            message.Payload = Encoders.EncodeFreeAddrInfoRequest(freeAddrInfoRequest);
+            message.PayloadLength = (UInt32) message.Payload.Length;
+            
+            var response = _dispatcher.SendMessage(message);
+            var result = (StatusCodes) response.StatusCode;
+            if (result != StatusCodes.CompletedOK)
+            {
+                throw new CoprocessorException(result);
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <remarks>
+        /// The only supported socket level type is SolSocket 
+        ///
+        /// According to the ESP32 documentation, the following socket option types are NOT supported:
+        ///     - SoDebug
+        ///     - SoDontRoute
+        ///     - SoUseLoopBack
+        ///     - SoOobInline
+        ///     - SoReusePort
+        ///     - SoSndBuf
+        ///     - SoSndLoWat
+        ///     - SoRcvLoWat
+        /// </remarks>
+        /// <param name="socketHandle"></param>
+        /// <param name="level"></param>
+        /// <param name="optionName"></param>
+        /// <param name="optionValue"></param>
+        /// <param name="optionLength"></param>
+        /// <returns></returns>
+        public int SetSockOpt(int socketHandle, SocketLevelType level, SocketOptionType optionName, int optionValue, UInt32 optionLength)
+        {
+            return (0);
         }
         
         #endregion POSIX Methods

@@ -107,10 +107,10 @@
           ]
         },
         {
-            "Name": "SocketResponse",
+            "Name": "IntegerResponse",
             "MessageElements":
             [
-                { "Name": "SocketHandle", "DataType": "int" }
+                { "Name": "Result", "DataType": "int" }
             ]
         },
         {
@@ -123,11 +123,38 @@
             ]
         },
         {
-            "Name": "ConnectResponse",
+            "Name": "FreeAddrInfoRequest",
             "MessageElements":
             [
-              { "Name": "Errno", "DataType": "int" }
+                {"Name": "AddrInfoAddress", "DataType": "uint32" }
             ]
         },
+        {
+            "Name": "TimeVal",
+            "MessageElements":
+            [
+              { "Name": "TvSec", "DataType": "uint32" },
+              { "Name": "TvUsec", "DataType": "uint32" }
+            ]
+        },
+        {
+            "Name": "SetSockOptRequest",
+            "MessageElements":
+            [
+                { "Name": "SocketNumber", "DataType": "int" },
+                { "Name": "Level", "DataType": "int"},
+                { "Name": "OptionName", "DataType": "int"},
+                { "Name": "OptionValue", "DataType": "blob" },
+                { "Name": "OptionLen", "DataType": "int"}
+            ]
+        },
+        {
+            "Name": "Linger",
+            "MessageElements":
+            [
+                { "Name": "LOnOff", "DataType": "int" },
+                { "Name": "LLinger", "DataType": "int" }
+            ]
+        }
     ]
 }
