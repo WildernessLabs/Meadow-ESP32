@@ -119,11 +119,28 @@ namespace BasicNetworkTest
                 return;
             }
             var getAddrInfoResult = (AddrInfo) res;
-            
+
             DebugHelpers.DebugHelpers.LogMessage(true, "Getting socket handle");
             int socketHandle = _f7MicroCoprocessor.Socket(getAddrInfoResult.Family, getAddrInfoResult.SocketType, 0);
             DebugHelpers.DebugHelpers.LogMessage(true, $"    Socket handle: {socketHandle}");
-            
+            if (socketHandle < 0)
+            {
+//                freeaddrinfo(addressInformation);
+                DebugHelpers.DebugHelpers.LogMessage(true, $"Exiting test");
+                return;
+            }
+
+            DebugHelpers.DebugHelpers.LogMessage(true, "Opening connection (connect)");
+            SockAddr sockAddr = Encoders.ExtractSockAddr(getAddrInfoResult.Addr, 0);
+            if (_f7MicroCoprocessor.Connect(socketHandle, sockAddr, (int) getAddrInfoResult.AddrLen) < 0)
+            {
+//                close(socketHandle);
+//                freeaddrinfo(addressInformation);
+                DebugHelpers.DebugHelpers.LogMessage(true, $"Exiting test");
+                return;
+            }
+            DebugHelpers.DebugHelpers.LogMessage(true, "    Connected.");
+
         }
         
         #endregion Methods

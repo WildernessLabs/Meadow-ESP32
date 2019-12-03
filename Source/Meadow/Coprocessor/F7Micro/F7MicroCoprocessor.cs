@@ -307,6 +307,33 @@ namespace Meadow.Coprocessor.F7Micro
             var socketResponse = Encoders.ExtractSocketResponse(response.Payload, 0);
             return (socketResponse.SocketHandle);
         }
+
+        public int Connect(int socketHandle, SockAddr addr, int addrlen)
+        {
+            var connectRequest = new ConnectRequest();
+            connectRequest.SocketHandle = socketHandle;
+            connectRequest.Addr = Encoders.EncodeSockAddr(addr);
+            connectRequest.AddrLength = (UInt32) connectRequest.Addr.Length;
+            connectRequest.AddrLen = addrlen;
+            
+            var message = new Message();
+            message.Interface = (byte) Esp32Interfaces.WiFi;
+            message.Function = (uint) WiFiFunction.Connect;
+            message.MessageID = _dispatcher.GetNextMessageId();
+            message.MessageType = (byte) MessageTypes.Data;
+            message.Payload = Encoders.EncodeConnectRequest(connectRequest);
+            message.PayloadLength = (UInt32) message.Payload.Length;
+            
+            var response = _dispatcher.SendMessage(message);
+            var result = (StatusCodes) response.StatusCode;
+            if (result != StatusCodes.CompletedOK)
+            {
+                throw new CoprocessorException(result);
+            }
+
+            var connectResponse = Encoders.ExtractConnectResponse(response.Payload, 0);
+            return (connectResponse.Errno);
+        }
         
         #endregion POSIX Methods
     }

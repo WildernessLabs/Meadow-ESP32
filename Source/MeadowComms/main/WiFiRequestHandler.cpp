@@ -433,17 +433,6 @@ void WiFiRequestHandler::GetAvailableNetworks(Message *request)
 }
 
 /**
- *  @brief Expose the connect method to the STM32.
- *
- *  @param message
- *      Message structure containing the parameters for the connect method.
- */
-void WiFiRequestHandler::Connect(Message *message)
-{
-
-}
-
-/**
  *  @brief Expose the freeaddrinfo method to the STM32.
  *
  *  @param message
@@ -548,6 +537,7 @@ void WiFiRequestHandler::GetAddrInfo(Message *message)
         memcpy(sa.Data, addressInformation->ai_addr->sa_data, addressInformation->ai_addr->sa_len);
         a.AddrLength = Encoders::EncodedSockAddrBufferSize(&sa);
         a.Addr = (uint8_t *) pvPortMalloc(a.AddrLength);
+
         Encoders::EncodeSockAddr(&sa, a.Addr);
 
         a.CanonName = strdup(addressInformation->ai_canonname);
@@ -599,6 +589,42 @@ void WiFiRequestHandler::Socket(Message *message)
     message->PayloadLength = Encoders::EncodedSocketResponseBufferSize(&response);
     message->Payload = (uint8_t *) pvPortMalloc(message->PayloadLength);
     Encoders::EncodeSocketResponse(&response, message->Payload);
+    message->MessageType = MessageTypes::Response;
+    _messageDispatcher->QueueMessageForStm32(message);
+    xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
+}
+
+/**
+ *  @brief Expose the connect method to the STM32.
+ *
+ *  @param message
+ *      Message structure containing the parameters for the connect method.
+ */
+void WiFiRequestHandler::Connect(Message *message)
+{
+    ESP_LOGI(__func__, "Connecting to service (connect).");
+    Esp32Messaging::ConnectRequest *request = Encoders::ExtractConnectRequest(message->Payload);
+    Esp32Messaging::SockAddr *socketAddress = Encoders::ExtractSockAddr(request->Addr);
+
+    struct sockaddr sa;
+    bzero(&sa, sizeof(struct sockaddr));
+    sa.sa_family = socketAddress->Family;
+    sa.sa_len = socketAddress->Length;
+    memcpy(sa.sa_data, socketAddress->Data, 14);
+
+    Esp32Messaging::ConnectResponse response;
+    response.Errno = connect(request->SocketHandle, &sa, request->AddrLen);
+    if (response.Errno != 0)
+    {
+        response.Errno = errno;
+    }
+
+    vPortFree(request);
+    vPortFree(message->Payload);
+
+    message->PayloadLength = Encoders::EncodedConnectResponseBufferSize(&response);
+    message->Payload = (uint8_t *) pvPortMalloc(message->PayloadLength);
+    Encoders::EncodeConnectResponse(&response, message->Payload);
     message->MessageType = MessageTypes::Response;
     _messageDispatcher->QueueMessageForStm32(message);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);

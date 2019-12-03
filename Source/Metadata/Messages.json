@@ -60,7 +60,7 @@
             [
                 { "Name": "Length", "DataType": "byte" },
                 { "Name": "Family", "DataType": "byte" },
-                { "Name": "Data", "DataType": "fixedchararray", "Length": "14" }
+                { "Name": "Data", "DataType": "fixedbytearray", "Length": "14" }
             ]
         },
         {
@@ -112,6 +112,22 @@
             [
                 { "Name": "SocketHandle", "DataType": "int" }
             ]
-        }
+        },
+        {
+            "Name": "ConnectRequest",
+            "MessageElements":
+            [
+              { "Name": "SocketHandle", "DataType": "int" },
+              { "Name": "Addr", "DataType": "blob" },
+              { "Name": "AddrLen", "DataType": "int" }
+            ]
+        },
+        {
+            "Name": "ConnectResponse",
+            "MessageElements":
+            [
+              { "Name": "Errno", "DataType": "int" }
+            ]
+        },
     ]
 }

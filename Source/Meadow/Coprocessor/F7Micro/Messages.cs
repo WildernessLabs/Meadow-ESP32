@@ -63,7 +63,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
     {
         public Byte Length;
         public Byte Family;
-        public string Data;
+        public Byte[] Data;
     };
 
     public struct AddrInfo
@@ -108,6 +108,19 @@ namespace Meadow.Coprocessor.F7Micro.Messages
     public struct SocketResponse
     {
         public Int32 SocketHandle;
+    };
+
+    public struct ConnectRequest
+    {
+        public Int32 SocketHandle;
+        public UInt32 AddrLength;
+        public byte[] Addr;
+        public Int32 AddrLen;
+    };
+
+    public struct ConnectResponse
+    {
+        public Int32 Errno;
     };
 
 }
