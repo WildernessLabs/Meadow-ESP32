@@ -1018,7 +1018,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             return(result);
         }
 
-        public static byte[] EncodeSocketResponse(SocketResponse socketResponse)
+        public static byte[] EncodeIntegerResponse(IntegerResponse integerResponse)
         {
             int offset = 0;
             int length = 0;
@@ -1033,26 +1033,26 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             //
             byte[] buffer = new byte[length];
             Array.Clear(buffer, 0, buffer.Length);
-            EncodeInt32(socketResponse.SocketHandle, buffer, offset);
+            EncodeInt32(integerResponse.Result, buffer, offset);
             offset += 4;
             return(buffer);
         }
 
-        public static SocketResponse ExtractSocketResponse(byte[] buffer, int offset)
+        public static IntegerResponse ExtractIntegerResponse(byte[] buffer, int offset)
         {
-            SocketResponse socketResponse = new Messages.SocketResponse();
+            IntegerResponse integerResponse = new Messages.IntegerResponse();
 
-            socketResponse.SocketHandle = ExtractInt32(buffer, offset);
+            integerResponse.Result = ExtractInt32(buffer, offset);
             offset += 4;
-            return(socketResponse);
+            return(integerResponse);
         }
 
         /// <summary>
-        /// Calculate the amount of memory required to hold the given instance of the SocketResponse object.
+        /// Calculate the amount of memory required to hold the given instance of the IntegerResponse object.
         /// </summary>
-        /// <param name="socketResponse">SocketResponse object to be encoded.</param>
-        /// <returns>Number of bytes required to hold the encoded SocketResponse object.</returns>
-        public static int EncodedSocketResponseBufferSize(Messages.SocketResponse socketResponse)
+        /// <param name="integerResponse">IntegerResponse object to be encoded.</param>
+        /// <returns>Number of bytes required to hold the encoded IntegerResponse object.</returns>
+        public static int EncodedIntegerResponseBufferSize(Messages.IntegerResponse integerResponse)
         {
             int result = 0;
             result += 4;
@@ -1121,7 +1121,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             return(result);
         }
 
-        public static byte[] EncodeConnectResponse(ConnectResponse connectResponse)
+        public static byte[] EncodeFreeAddrInfoRequest(FreeAddrInfoRequest freeAddrInfoRequest)
         {
             int offset = 0;
             int length = 0;
@@ -1136,29 +1136,189 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             //
             byte[] buffer = new byte[length];
             Array.Clear(buffer, 0, buffer.Length);
-            EncodeInt32(connectResponse.Errno, buffer, offset);
+            EncodeUInt32(freeAddrInfoRequest.AddrInfoAddress, buffer, offset);
             offset += 4;
             return(buffer);
         }
 
-        public static ConnectResponse ExtractConnectResponse(byte[] buffer, int offset)
+        public static FreeAddrInfoRequest ExtractFreeAddrInfoRequest(byte[] buffer, int offset)
         {
-            ConnectResponse connectResponse = new Messages.ConnectResponse();
+            FreeAddrInfoRequest freeAddrInfoRequest = new Messages.FreeAddrInfoRequest();
 
-            connectResponse.Errno = ExtractInt32(buffer, offset);
+            freeAddrInfoRequest.AddrInfoAddress = ExtractUInt32(buffer, offset);
             offset += 4;
-            return(connectResponse);
+            return(freeAddrInfoRequest);
         }
 
         /// <summary>
-        /// Calculate the amount of memory required to hold the given instance of the ConnectResponse object.
+        /// Calculate the amount of memory required to hold the given instance of the FreeAddrInfoRequest object.
         /// </summary>
-        /// <param name="connectResponse">ConnectResponse object to be encoded.</param>
-        /// <returns>Number of bytes required to hold the encoded ConnectResponse object.</returns>
-        public static int EncodedConnectResponseBufferSize(Messages.ConnectResponse connectResponse)
+        /// <param name="freeAddrInfoRequest">FreeAddrInfoRequest object to be encoded.</param>
+        /// <returns>Number of bytes required to hold the encoded FreeAddrInfoRequest object.</returns>
+        public static int EncodedFreeAddrInfoRequestBufferSize(Messages.FreeAddrInfoRequest freeAddrInfoRequest)
         {
             int result = 0;
             result += 4;
+            return(result);
+        }
+
+        public static byte[] EncodeTimeVal(TimeVal timeVal)
+        {
+            int offset = 0;
+            int length = 0;
+
+            //
+            //  Calculate the amount of memory needed.
+            //
+            length += 8;
+
+            //
+            //  Now allocate a new buffer and copy the data in to the buffer.
+            //
+            byte[] buffer = new byte[length];
+            Array.Clear(buffer, 0, buffer.Length);
+            EncodeUInt32(timeVal.TvSec, buffer, offset);
+            offset += 4;
+            EncodeUInt32(timeVal.TvUsec, buffer, offset);
+            offset += 4;
+            return(buffer);
+        }
+
+        public static TimeVal ExtractTimeVal(byte[] buffer, int offset)
+        {
+            TimeVal timeVal = new Messages.TimeVal();
+
+            timeVal.TvSec = ExtractUInt32(buffer, offset);
+            offset += 4;
+            timeVal.TvUsec = ExtractUInt32(buffer, offset);
+            offset += 4;
+            return(timeVal);
+        }
+
+        /// <summary>
+        /// Calculate the amount of memory required to hold the given instance of the TimeVal object.
+        /// </summary>
+        /// <param name="timeVal">TimeVal object to be encoded.</param>
+        /// <returns>Number of bytes required to hold the encoded TimeVal object.</returns>
+        public static int EncodedTimeValBufferSize(Messages.TimeVal timeVal)
+        {
+            int result = 0;
+            result += 8;
+            return(result);
+        }
+
+        public static byte[] EncodeSetSockOptRequest(SetSockOptRequest setSockOptRequest)
+        {
+            int offset = 0;
+            int length = 0;
+
+            //
+            //  Calculate the amount of memory needed.
+            //
+            length += (int) (setSockOptRequest.OptionValueLength + 4);
+            length += 16;
+
+            //
+            //  Now allocate a new buffer and copy the data in to the buffer.
+            //
+            byte[] buffer = new byte[length];
+            Array.Clear(buffer, 0, buffer.Length);
+            EncodeInt32(setSockOptRequest.SocketNumber, buffer, offset);
+            offset += 4;
+            EncodeInt32(setSockOptRequest.Level, buffer, offset);
+            offset += 4;
+            EncodeInt32(setSockOptRequest.OptionName, buffer, offset);
+            offset += 4;
+            EncodeUInt32(setSockOptRequest.OptionValueLength, buffer, offset);
+            offset += 4;
+            if (setSockOptRequest.OptionValueLength > 0)
+            {
+                Array.Copy(setSockOptRequest.OptionValue, 0, buffer, offset, setSockOptRequest.OptionValueLength);
+                offset += (int) (setSockOptRequest.OptionValueLength);
+            }
+            EncodeInt32(setSockOptRequest.OptionLen, buffer, offset);
+            offset += 4;
+            return(buffer);
+        }
+
+        public static SetSockOptRequest ExtractSetSockOptRequest(byte[] buffer, int offset)
+        {
+            SetSockOptRequest setSockOptRequest = new Messages.SetSockOptRequest();
+
+            setSockOptRequest.SocketNumber = ExtractInt32(buffer, offset);
+            offset += 4;
+            setSockOptRequest.Level = ExtractInt32(buffer, offset);
+            offset += 4;
+            setSockOptRequest.OptionName = ExtractInt32(buffer, offset);
+            offset += 4;
+            setSockOptRequest.OptionValueLength = ExtractUInt32(buffer, offset);
+            offset += 4;
+            if (setSockOptRequest.OptionValueLength > 0)
+            {
+                setSockOptRequest.OptionValue = new byte[setSockOptRequest.OptionValueLength];
+                Array.Copy(buffer, offset, setSockOptRequest.OptionValue, 0, setSockOptRequest.OptionValueLength);
+                offset += (int) setSockOptRequest.OptionValueLength;
+            }
+            setSockOptRequest.OptionLen = ExtractInt32(buffer, offset);
+            offset += 4;
+            return(setSockOptRequest);
+        }
+
+        /// <summary>
+        /// Calculate the amount of memory required to hold the given instance of the SetSockOptRequest object.
+        /// </summary>
+        /// <param name="setSockOptRequest">SetSockOptRequest object to be encoded.</param>
+        /// <returns>Number of bytes required to hold the encoded SetSockOptRequest object.</returns>
+        public static int EncodedSetSockOptRequestBufferSize(Messages.SetSockOptRequest setSockOptRequest)
+        {
+            int result = 0;
+            result += (int) setSockOptRequest.OptionValueLength;
+            result += 20;
+            return(result);
+        }
+
+        public static byte[] EncodeLinger(Linger linger)
+        {
+            int offset = 0;
+            int length = 0;
+
+            //
+            //  Calculate the amount of memory needed.
+            //
+            length += 8;
+
+            //
+            //  Now allocate a new buffer and copy the data in to the buffer.
+            //
+            byte[] buffer = new byte[length];
+            Array.Clear(buffer, 0, buffer.Length);
+            EncodeInt32(linger.LOnOff, buffer, offset);
+            offset += 4;
+            EncodeInt32(linger.LLinger, buffer, offset);
+            offset += 4;
+            return(buffer);
+        }
+
+        public static Linger ExtractLinger(byte[] buffer, int offset)
+        {
+            Linger linger = new Messages.Linger();
+
+            linger.LOnOff = ExtractInt32(buffer, offset);
+            offset += 4;
+            linger.LLinger = ExtractInt32(buffer, offset);
+            offset += 4;
+            return(linger);
+        }
+
+        /// <summary>
+        /// Calculate the amount of memory required to hold the given instance of the Linger object.
+        /// </summary>
+        /// <param name="linger">Linger object to be encoded.</param>
+        /// <returns>Number of bytes required to hold the encoded Linger object.</returns>
+        public static int EncodedLingerBufferSize(Messages.Linger linger)
+        {
+            int result = 0;
+            result += 8;
             return(result);
         }
 

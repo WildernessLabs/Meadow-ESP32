@@ -119,9 +119,9 @@ namespace Esp32Messaging
         int32_t Protocol;
     };
 
-    struct SocketResponse
+    struct IntegerResponse
     {
-        int32_t SocketHandle;
+        int32_t Result;
     };
 
     struct ConnectRequest
@@ -132,9 +132,31 @@ namespace Esp32Messaging
         int32_t AddrLen;
     };
 
-    struct ConnectResponse
+    struct FreeAddrInfoRequest
     {
-        int32_t Errno;
+        uint32_t AddrInfoAddress;
+    };
+
+    struct TimeVal
+    {
+        uint32_t TvSec;
+        uint32_t TvUsec;
+    };
+
+    struct SetSockOptRequest
+    {
+        int32_t SocketNumber;
+        int32_t Level;
+        int32_t OptionName;
+        uint32_t OptionValueLength;
+        uint8_t *OptionValue;
+        int32_t OptionLen;
+    };
+
+    struct Linger
+    {
+        int32_t LOnOff;
+        int32_t LLinger;
     };
 
 }
@@ -201,15 +223,24 @@ public:
     static void EncodeSocketRequest(Esp32Messaging::SocketRequest *, uint8_t *);
     static int EncodedSocketRequestBufferSize(Esp32Messaging::SocketRequest *);
     static Esp32Messaging::SocketRequest *ExtractSocketRequest(uint8_t *);
-    static void EncodeSocketResponse(Esp32Messaging::SocketResponse *, uint8_t *);
-    static int EncodedSocketResponseBufferSize(Esp32Messaging::SocketResponse *);
-    static Esp32Messaging::SocketResponse *ExtractSocketResponse(uint8_t *);
+    static void EncodeIntegerResponse(Esp32Messaging::IntegerResponse *, uint8_t *);
+    static int EncodedIntegerResponseBufferSize(Esp32Messaging::IntegerResponse *);
+    static Esp32Messaging::IntegerResponse *ExtractIntegerResponse(uint8_t *);
     static void EncodeConnectRequest(Esp32Messaging::ConnectRequest *, uint8_t *);
     static int EncodedConnectRequestBufferSize(Esp32Messaging::ConnectRequest *);
     static Esp32Messaging::ConnectRequest *ExtractConnectRequest(uint8_t *);
-    static void EncodeConnectResponse(Esp32Messaging::ConnectResponse *, uint8_t *);
-    static int EncodedConnectResponseBufferSize(Esp32Messaging::ConnectResponse *);
-    static Esp32Messaging::ConnectResponse *ExtractConnectResponse(uint8_t *);
+    static void EncodeFreeAddrInfoRequest(Esp32Messaging::FreeAddrInfoRequest *, uint8_t *);
+    static int EncodedFreeAddrInfoRequestBufferSize(Esp32Messaging::FreeAddrInfoRequest *);
+    static Esp32Messaging::FreeAddrInfoRequest *ExtractFreeAddrInfoRequest(uint8_t *);
+    static void EncodeTimeVal(Esp32Messaging::TimeVal *, uint8_t *);
+    static int EncodedTimeValBufferSize(Esp32Messaging::TimeVal *);
+    static Esp32Messaging::TimeVal *ExtractTimeVal(uint8_t *);
+    static void EncodeSetSockOptRequest(Esp32Messaging::SetSockOptRequest *, uint8_t *);
+    static int EncodedSetSockOptRequestBufferSize(Esp32Messaging::SetSockOptRequest *);
+    static Esp32Messaging::SetSockOptRequest *ExtractSetSockOptRequest(uint8_t *);
+    static void EncodeLinger(Esp32Messaging::Linger *, uint8_t *);
+    static int EncodedLingerBufferSize(Esp32Messaging::Linger *);
+    static Esp32Messaging::Linger *ExtractLinger(uint8_t *);
 
 };
 

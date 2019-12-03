@@ -105,9 +105,9 @@ namespace Meadow.Coprocessor.F7Micro.Messages
         public Int32 Protocol;
     };
 
-    public struct SocketResponse
+    public struct IntegerResponse
     {
-        public Int32 SocketHandle;
+        public Int32 Result;
     };
 
     public struct ConnectRequest
@@ -118,9 +118,31 @@ namespace Meadow.Coprocessor.F7Micro.Messages
         public Int32 AddrLen;
     };
 
-    public struct ConnectResponse
+    public struct FreeAddrInfoRequest
     {
-        public Int32 Errno;
+        public UInt32 AddrInfoAddress;
+    };
+
+    public struct TimeVal
+    {
+        public UInt32 TvSec;
+        public UInt32 TvUsec;
+    };
+
+    public struct SetSockOptRequest
+    {
+        public Int32 SocketNumber;
+        public Int32 Level;
+        public Int32 OptionName;
+        public UInt32 OptionValueLength;
+        public byte[] OptionValue;
+        public Int32 OptionLen;
+    };
+
+    public struct Linger
+    {
+        public Int32 LOnOff;
+        public Int32 LLinger;
     };
 
 }

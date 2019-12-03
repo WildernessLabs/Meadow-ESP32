@@ -266,16 +266,55 @@ namespace IpProtocolType
     };
 }
 
-namespace CoketProtocolType
+namespace SocketProtocolType
 {
     /*
      *      Socket protocol types for the low level sockets.
      */
-    enum CoketProtocolType
+    enum SocketProtocolType
     {
         SockStream = 1,
         SockDgram = 2,
         SockRaw = 3
+    };
+}
+
+namespace SocketLevelType
+{
+    /*
+     *      Socket level types for the low level sockets.
+     */
+    enum SocketLevelType
+    {
+        SolSocket = 0xfff
+    };
+}
+
+namespace SocketOptionType
+{
+    /*
+     *      Socket option types for the low level sockets.
+     */
+    enum SocketOptionType
+    {
+        SoDebug = 0x0001,
+        SoAcceptConn = 0x0002,
+        SoDontRoute = 0x0010,
+        UseLoopback = 0x0040,
+        SoLinger = 0x0080,
+        SoDontLinger = 0x0080,
+        SoOobInline = 0x0100,
+        SoReusePort = 0x0200,
+        SoSndBuf = 0x1001,
+        SoRcvBuf = 0x1002,
+        SoSndLoWat = 0x1003,
+        SoSRcvLoWat = 0x1004,
+        SoSndTimeO = 0x1005,
+        SoRcvTimeO = 0x1006,
+        SoError = 0x1007,
+        SoType = 0x1008,
+        SoConTimeO = 0x1009,
+        SoNoCheck = 0x100a
     };
 }
 
