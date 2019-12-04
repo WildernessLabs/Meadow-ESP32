@@ -173,4 +173,9 @@ namespace Meadow.Coprocessor.F7Micro.Messages
         public Int32 Errno;
     };
 
+    public struct CloseRequest
+    {
+        public Int32 SocketHandle;
+    };
+
 }

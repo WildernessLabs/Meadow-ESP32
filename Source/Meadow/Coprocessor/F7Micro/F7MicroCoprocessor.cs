@@ -513,6 +513,29 @@ namespace Meadow.Coprocessor.F7Micro
             return(amountRead);
         }
 
+        public int Close(int socketHandle)
+        {
+            var request = new CloseRequest();
+            request.SocketHandle = socketHandle;
+            
+            var message = new Message();
+            message.Interface = (byte) Esp32Interfaces.WiFi;
+            message.Function = (uint) WiFiFunction.Close;
+            message.MessageID = _dispatcher.GetNextMessageId();
+            message.MessageType = (byte) MessageTypes.Data;
+            message.Payload = Encoders.EncodeCloseRequest(request);
+            message.PayloadLength = (UInt32) message.Payload.Length;
+            
+            var response = _dispatcher.SendMessage(message);
+            var result = (StatusCodes) response.StatusCode;
+            if (result != StatusCodes.CompletedOK)
+            {
+                throw new CoprocessorException(result);
+            }
+
+            var closeResponse = Encoders.ExtractIntegerAndErrnoResponse(response.Payload, 0);
+            return (closeResponse.Result);
+        }
 
         #endregion POSIX Methods
     }

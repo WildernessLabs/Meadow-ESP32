@@ -189,6 +189,13 @@
                 { "Name": "Result", "DataType": "int" },
                 { "Name": "Errno", "DataType": "int" }
             ]
+        },
+        {
+            "Name": "CloseRequest",
+            "MessageElements":
+            [
+                { "Name": "SocketHandle", "DataType": "int" }
+            ]
         }
     ]
 }
