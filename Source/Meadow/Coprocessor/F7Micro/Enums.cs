@@ -231,7 +231,7 @@ namespace Meadow.Coprocessor.F7Micro
         NoDev = 19,
         NotDir = 20,
         IsDir = 21,
-        NFile = 22,
+        InVal = 22,
         NFile = 23,
         MFile = 24,
         NoTty = 25,
