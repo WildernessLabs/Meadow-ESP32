@@ -433,17 +433,6 @@ void WiFiRequestHandler::GetAvailableNetworks(Message *request)
 }
 
 /**
- *  @brief Expose the write method to the STM32.
- *
- *  @param message
- *      Message structure containing the parameters for the write method.
- */
-void WiFiRequestHandler::Write(Message *message)
-{
-
-}
-
-/**
  *  @brief Expose the read method to the STM32.
  *
  *  @param message
@@ -691,6 +680,37 @@ void WiFiRequestHandler::SetSockOpt(Message *message)
 
     vPortFree(request);
     vPortFree(message->Payload);
+
+    message->PayloadLength = Encoders::EncodedIntegerAndErrnoResponseBufferSize(&response);
+    message->Payload = (uint8_t *) pvPortMalloc(message->PayloadLength);
+    Encoders::EncodeIntegerAndErrnoResponse(&response, message->Payload);
+    message->MessageType = MessageTypes::Response;
+    message->StatusCode = StatusCodes::CompletedOK;
+    _messageDispatcher->QueueMessageForStm32(message);
+    xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
+}
+
+/**
+ *  @brief Expose the write method to the STM32.
+ *
+ *  @param message
+ *      Message structure containing the parameters for the write method.
+ */
+void WiFiRequestHandler::Write(Message *message)
+{
+    ESP_LOGI(__func__, "Writing data to socket.");
+    Esp32Messaging::WriteRequest *request = Encoders::ExtractWriteRequest(message->Payload);
+    Esp32Messaging::IntegerAndErrnoResponse response;
+
+    response.Result = write(request->SocketHandle, request->Buffer, request->Count);
+    if (response.Result < 0)
+    {
+        response.Errno = errno;
+    }
+    else
+    {
+        response.Errno = 0;
+    }
 
     message->PayloadLength = Encoders::EncodedIntegerAndErrnoResponseBufferSize(&response);
     message->Payload = (uint8_t *) pvPortMalloc(message->PayloadLength);
