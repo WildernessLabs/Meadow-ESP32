@@ -272,7 +272,7 @@
                     { "Name": "NoDev", "Value": "19"},
                     { "Name": "NotDir", "Value": "20"},
                     { "Name": "IsDir", "Value": "21"},
-                    { "Name": "NFile", "Value": "22"},
+                    { "Name": "InVal", "Value": "22"},
                     { "Name": "NFile", "Value": "23"},
                     { "Name": "MFile", "Value": "24"},
                     { "Name": "NoTty", "Value": "25"},
