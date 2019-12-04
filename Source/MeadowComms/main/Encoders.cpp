@@ -1299,6 +1299,64 @@ Esp32Messaging::IntegerResponse *Encoders::ExtractIntegerResponse(uint8_t *buffe
 }
 
 /**
+ *  Convert the IntegerAndErrnoResponse object into a byte stream that can be sent to the STM32.
+ *  
+ *  The amount of memory required can be obtained by calling the EncodedIntegerAndErrnoResponseBufferSize method.
+ *  
+ *  @param integerAndErrnoResponse
+ *      IntegerAndErrnoResponse object to be encoded.
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory large enough to hold the encoded IntegerAndErrnoResponse object.
+ */
+void Encoders::EncodeIntegerAndErrnoResponse(Esp32Messaging::IntegerAndErrnoResponse *integerAndErrnoResponse, uint8_t *buffer)
+{
+    EncodeInt32(integerAndErrnoResponse->Result, buffer);
+    buffer += 4;
+    EncodeInt32(integerAndErrnoResponse->Errno, buffer);
+    buffer += 4;
+}
+
+/**
+ *  Calculate the amount of memory required to hold the given instance of the IntegerAndErrnoResponse object.
+ *  
+ *  @param integerAndErrnoResponse
+ *      IntegerAndErrnoResponse object to be encoded.
+ *  
+ *  @returns
+ *      Number of bytes required to hold the encoded IntegerAndErrnoResponse object.
+ */
+int Encoders::EncodedIntegerAndErrnoResponseBufferSize(Esp32Messaging::IntegerAndErrnoResponse *integerAndErrnoResponse)
+{
+    int result = 0;
+    result += 8;
+    return(result);
+}
+
+/**
+ *  Extract the IntegerAndErrnoResponse object that is encoded in the given buffer.
+ *  
+ *  Note that the returned pointer points to a block of memory on the heap and
+ *  this should eventually be released calling vPortFree(...).
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded IntegerAndErrnoResponse object.
+ *  
+ *  @returns
+ *      Pointer to a IntegerAndErrnoResponse object.
+ */
+Esp32Messaging::IntegerAndErrnoResponse *Encoders::ExtractIntegerAndErrnoResponse(uint8_t *buffer)
+{
+    Esp32Messaging::IntegerAndErrnoResponse *integerAndErrnoResponse = (Esp32Messaging::IntegerAndErrnoResponse *) pvPortMalloc(sizeof(Esp32Messaging::IntegerAndErrnoResponse));
+
+    integerAndErrnoResponse->Result = ExtractInt32(buffer);
+    buffer += 4;
+    integerAndErrnoResponse->Errno = ExtractInt32(buffer);
+    buffer += 4;
+    return(integerAndErrnoResponse);
+}
+
+/**
  *  Convert the ConnectRequest object into a byte stream that can be sent to the STM32.
  *  
  *  The amount of memory required can be obtained by calling the EncodedConnectRequestBufferSize method.
@@ -1630,6 +1688,84 @@ Esp32Messaging::Linger *Encoders::ExtractLinger(uint8_t *buffer)
     linger->LLinger = ExtractInt32(buffer);
     buffer += 4;
     return(linger);
+}
+
+/**
+ *  Convert the WriteRequest object into a byte stream that can be sent to the STM32.
+ *  
+ *  The amount of memory required can be obtained by calling the EncodedWriteRequestBufferSize method.
+ *  
+ *  @param writeRequest
+ *      WriteRequest object to be encoded.
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory large enough to hold the encoded WriteRequest object.
+ */
+void Encoders::EncodeWriteRequest(Esp32Messaging::WriteRequest *writeRequest, uint8_t *buffer)
+{
+    EncodeInt32(writeRequest->SocketHandle, buffer);
+    buffer += 4;
+    EncodeUInt32(writeRequest->BufferLength, buffer);
+    buffer += 4;
+    if (writeRequest->BufferLength > 0)
+    {
+        memcpy((void *) buffer, (void *) writeRequest->Buffer, writeRequest->BufferLength);
+        buffer += writeRequest->BufferLength;
+    }
+    EncodeInt32(writeRequest->Count, buffer);
+    buffer += 4;
+}
+
+/**
+ *  Calculate the amount of memory required to hold the given instance of the WriteRequest object.
+ *  
+ *  @param writeRequest
+ *      WriteRequest object to be encoded.
+ *  
+ *  @returns
+ *      Number of bytes required to hold the encoded WriteRequest object.
+ */
+int Encoders::EncodedWriteRequestBufferSize(Esp32Messaging::WriteRequest *writeRequest)
+{
+    int result = 0;
+    result += writeRequest->BufferLength;
+    result += 12;
+    return(result);
+}
+
+/**
+ *  Extract the WriteRequest object that is encoded in the given buffer.
+ *  
+ *  Note that the returned pointer points to a block of memory on the heap and
+ *  this should eventually be released calling vPortFree(...).
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded WriteRequest object.
+ *  
+ *  @returns
+ *      Pointer to a WriteRequest object.
+ */
+Esp32Messaging::WriteRequest *Encoders::ExtractWriteRequest(uint8_t *buffer)
+{
+    Esp32Messaging::WriteRequest *writeRequest = (Esp32Messaging::WriteRequest *) pvPortMalloc(sizeof(Esp32Messaging::WriteRequest));
+
+    writeRequest->SocketHandle = ExtractInt32(buffer);
+    buffer += 4;
+    writeRequest->BufferLength = ExtractUInt32(buffer);
+    buffer += 4;
+    if (writeRequest->BufferLength > 0)
+    {
+        writeRequest->Buffer = (uint8_t *) pvPortMalloc(writeRequest->BufferLength);
+        memcpy(writeRequest->Buffer, buffer, writeRequest->BufferLength);
+        buffer += writeRequest->BufferLength;
+    }
+    else
+    {
+        writeRequest->Buffer = nullptr;
+    }
+    writeRequest->Count = ExtractInt32(buffer);
+    buffer += 4;
+    return(writeRequest);
 }
 
 

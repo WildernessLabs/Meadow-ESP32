@@ -230,7 +230,7 @@
                   { "Name": "SoDontRoute", "Value": "0x0010" },
                   { "Name": "UseLoopback", "Value": "0x0040" },
                   { "Name": "SoLinger", "Value": "0x0080" },
-                  { "Name": "SoDontLinger", "Value": "0x0080" },
+                  { "Name": "SoDontLinger", "Value": "0xff7f" },
                   { "Name": "SoOobInline", "Value": "0x0100" },
                   { "Name": "SoReusePort", "Value": "0x0200" },
                   { "Name": "SoSndBuf", "Value": "0x1001" },

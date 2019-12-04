@@ -623,18 +623,12 @@ void WiFiRequestHandler::FreeAddrInfo(Message *message)
     vPortFree(request);
     vPortFree(message->Payload);
 
-//    Esp32Messaging::IntegerResponse response;
-//    response.Result = 0;
-//    message->PayloadLength = Encoders::EncodedIntegerResponseBufferSize(&response);
-//    message->Payload = (uint8_t *) pvPortMalloc(message->PayloadLength);
-//    Encoders::EncodeIntegerResponse(&response, message->Payload);
-
     message->PayloadLength = 0;
     message->Payload = nullptr;
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOK;
 
-    vTaskDelay(100 / portTICK_PERIOD_MS);
+    vTaskDelay(10 / portTICK_PERIOD_MS);
 
     _messageDispatcher->QueueMessageForStm32(message);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
@@ -650,23 +644,57 @@ void WiFiRequestHandler::SetSockOpt(Message *message)
 {
     ESP_LOGI(__func__, "Setting socket options.");
     Esp32Messaging::SetSockOptRequest *request = Encoders::ExtractSetSockOptRequest(message->Payload);
-    Esp32Messaging::IntegerResponse response;
+    Esp32Messaging::IntegerAndErrnoResponse response;
 
     void *optionValue = nullptr;
     int optionLength = 0;
+    Esp32Messaging::TimeVal *tv = nullptr;
 
-    struct timeval timeOut;
-    timeOut.tv_sec = 5;
-    timeOut.tv_usec = 0;
+    switch (request->OptionName)
+    {
+        case SO_ACCEPTCONN:     /* Socket has had listen() */
+            break;
+        case SO_LINGER:         /* Linger on close if data present */
+            break;
+        case SO_DONTLINGER:     /* Don't linger on close if data present */
+            break;
+        case SO_RCVBUF:         /* Set the receive buffer size */
+            break;
+        case SO_SNDTIMEO:       /* Set the send timeout */
+            break;
+        case SO_RCVTIMEO:       /* Set the receive timeout */
+            tv = Encoders::ExtractTimeVal(request->OptionValue);
+            struct timeval timeOut;
+            timeOut.tv_sec = tv->TvSec;
+            timeOut.tv_usec = tv->TvUsec;
+            vPortFree(tv);
+            optionValue = &timeOut;
+            optionLength = sizeof(timeOut);
+            break;
+        case SO_ERROR:          /* Get error status and clear */
+            break;
+        case SO_TYPE:           /* Get socket type */
+            break;
+        case SO_NO_CHECK:       /* Don't create UDP checksum */
+            break;
+    }
 
     response.Result = setsockopt(request->SocketNumber, request->Level, request->OptionName, optionValue, optionLength);
+    if (response.Result < 0)
+    {
+        response.Errno = errno;
+    }
+    else
+    {
+        response.Errno = 0;
+    }
 
     vPortFree(request);
     vPortFree(message->Payload);
 
-    message->PayloadLength = Encoders::EncodedIntegerResponseBufferSize(&response);
+    message->PayloadLength = Encoders::EncodedIntegerAndErrnoResponseBufferSize(&response);
     message->Payload = (uint8_t *) pvPortMalloc(message->PayloadLength);
-    Encoders::EncodeIntegerResponse(&response, message->Payload);
+    Encoders::EncodeIntegerAndErrnoResponse(&response, message->Payload);
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOK;
     _messageDispatcher->QueueMessageForStm32(message);

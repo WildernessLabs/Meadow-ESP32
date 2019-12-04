@@ -103,7 +103,9 @@ namespace BasicNetworkTest
             
             var ipAddress = _f7MicroCoprocessor.StartNetwork(Secrets.WIFI_NAME, Secrets.WIFI_PASSOWRD);
             DebugHelpers.DebugHelpers.LogMessage(true, $"Obtained IP address: {ipAddress.ToString()}");
-
+            //
+            //    getaddrinfo
+            //
             var hints = new AddrInfo();
             hints.Family = (int) AddressFamilyType.AfInet;
             hints.SocketType = (int) SocketType.Stream;
@@ -119,7 +121,9 @@ namespace BasicNetworkTest
                 return;
             }
             var getAddrInfoResult = (AddrInfo) res;
-
+            //
+            //    socket
+            //            
             DebugHelpers.DebugHelpers.LogMessage(true, "Getting socket handle");
             int socketHandle = _f7MicroCoprocessor.Socket(getAddrInfoResult.Family, getAddrInfoResult.SocketType, 0);
             DebugHelpers.DebugHelpers.LogMessage(true, $"    Socket handle: {socketHandle}");
@@ -129,7 +133,9 @@ namespace BasicNetworkTest
                 DebugHelpers.DebugHelpers.LogMessage(true, $"Exiting test");
                 return;
             }
-
+            //
+            //    connect
+            //
             DebugHelpers.DebugHelpers.LogMessage(true, "Opening connection (connect)");
             SockAddr sockAddr = Encoders.ExtractSockAddr(getAddrInfoResult.Addr, 0);
             if (_f7MicroCoprocessor.Connect(socketHandle, sockAddr, (int) getAddrInfoResult.AddrLen) < 0)
@@ -140,10 +146,26 @@ namespace BasicNetworkTest
                 return;
             }
             DebugHelpers.DebugHelpers.LogMessage(true, "    Connected.");
-            
+            //
+            //    freeaddrinfo
+            //
             DebugHelpers.DebugHelpers.LogMessage(true, "Freeing address information resources (freeaddrinfo)");
             _f7MicroCoprocessor.FreeAddrInfo(getAddrInfoResult.MyHeapAddress);
             DebugHelpers.DebugHelpers.LogMessage(true, "    Complete.");
+            //
+            //    setsockopt
+            //
+            DebugHelpers.DebugHelpers.LogMessage(true, "Setting socket options (setsockopt)");
+            var tv = new TimeVal();
+            tv.TvSec = 5;
+            tv.TvUsec = 0;
+            if (_f7MicroCoprocessor.SetSockOpt(socketHandle, SocketLevelType.SolSocket, SocketOptionType.SoRcvTimeO, tv, 0) != 0)
+            {
+//                close(socketHandle);
+                DebugHelpers.DebugHelpers.LogMessage(true, $"Exiting test");
+                return;
+            }
+            DebugHelpers.DebugHelpers.LogMessage(true, "    Timeout set for socket.");
         }
         
         #endregion Methods

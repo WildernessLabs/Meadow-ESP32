@@ -383,11 +383,69 @@ namespace Meadow.Coprocessor.F7Micro
         /// <param name="optionValue"></param>
         /// <param name="optionLength"></param>
         /// <returns></returns>
-        public int SetSockOpt(int socketHandle, SocketLevelType level, SocketOptionType optionName, int optionValue, UInt32 optionLength)
+        public int SetSockOpt(int socketHandle, SocketLevelType level, SocketOptionType optionName, object optionValue, UInt32 optionLength)
         {
-            return (0);
+            var setSockOptRequest = new SetSockOptRequest();
+            setSockOptRequest.SocketNumber = socketHandle;
+            setSockOptRequest.Level = (int) level;
+            setSockOptRequest.OptionName = (int) optionName;
+            switch (optionName)
+            {
+                case SocketOptionType.SoAcceptConn:         /* Socket has had listen() */
+                    break;
+                case SocketOptionType.SoLinger:             /* Linger on close if data present */
+                    break;
+                case SocketOptionType.SoDontLinger:         /* Don't linger on close if data present */
+                    break;
+                case SocketOptionType.SoRcvBuf:             /* Set the receive buffer size */
+                    break;
+                case SocketOptionType.SoSndTimeO:           /* Set the send timeout */
+                    break;
+                case SocketOptionType.SoRcvTimeO:           /* Set the receive timeout */
+                    TimeVal timeValue = (TimeVal) optionValue;
+                    setSockOptRequest.OptionValue = Encoders.EncodeTimeVal(timeValue);
+                    setSockOptRequest.OptionValueLength = (UInt32) setSockOptRequest.OptionValue.Length;
+                    setSockOptRequest.OptionLen = 0;        //    This will be calculated in the ESP driver.
+                    break;
+                case SocketOptionType.SoError:              /* Get error status and clear */
+                    break;
+                case SocketOptionType.SoType:               /* Get socket type */
+                    break;
+                case SocketOptionType.SoNoCheck:            /* Don't create UDP checksum */
+                    break;
+            }
+
+            var message = new Message();
+            message.Interface = (byte) Esp32Interfaces.WiFi;
+            message.Function = (uint) WiFiFunction.SetSockOpt;
+            message.MessageID = _dispatcher.GetNextMessageId();
+            message.MessageType = (byte) MessageTypes.Data;
+            message.Payload = Encoders.EncodeSetSockOptRequest(setSockOptRequest);
+            message.PayloadLength = (UInt32) message.Payload.Length;
+            
+            var response = _dispatcher.SendMessage(message);
+            var result = (StatusCodes) response.StatusCode;
+            if (result != StatusCodes.CompletedOK)
+            {
+                throw new CoprocessorException(result);
+            }
+
+            var setSockOptResponse = Encoders.ExtractIntegerAndErrnoResponse(response.Payload, 0);
+            int resultCode = setSockOptResponse.Result;
+            if (resultCode < 0)
+            {
+                resultCode = setSockOptResponse.Errno;
+            }
+            return(resultCode);
         }
-        
+
+        public int Write(int socketHandle, byte[] buffer, UInt32 count)
+        {
+            var request = new WriteRequest();
+        }
+
+
+
         #endregion POSIX Methods
     }
 }

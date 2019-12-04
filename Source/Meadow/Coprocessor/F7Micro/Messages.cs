@@ -110,6 +110,12 @@ namespace Meadow.Coprocessor.F7Micro.Messages
         public Int32 Result;
     };
 
+    public struct IntegerAndErrnoResponse
+    {
+        public Int32 Result;
+        public Int32 Errno;
+    };
+
     public struct ConnectRequest
     {
         public Int32 SocketHandle;
@@ -143,6 +149,14 @@ namespace Meadow.Coprocessor.F7Micro.Messages
     {
         public Int32 LOnOff;
         public Int32 LLinger;
+    };
+
+    public struct WriteRequest
+    {
+        public Int32 SocketHandle;
+        public UInt32 BufferLength;
+        public byte[] Buffer;
+        public Int32 Count;
     };
 
 }

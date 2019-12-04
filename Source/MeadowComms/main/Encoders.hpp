@@ -124,6 +124,12 @@ namespace Esp32Messaging
         int32_t Result;
     };
 
+    struct IntegerAndErrnoResponse
+    {
+        int32_t Result;
+        int32_t Errno;
+    };
+
     struct ConnectRequest
     {
         int32_t SocketHandle;
@@ -157,6 +163,14 @@ namespace Esp32Messaging
     {
         int32_t LOnOff;
         int32_t LLinger;
+    };
+
+    struct WriteRequest
+    {
+        int32_t SocketHandle;
+        uint32_t BufferLength;
+        uint8_t *Buffer;
+        int32_t Count;
     };
 
 }
@@ -226,6 +240,9 @@ public:
     static void EncodeIntegerResponse(Esp32Messaging::IntegerResponse *, uint8_t *);
     static int EncodedIntegerResponseBufferSize(Esp32Messaging::IntegerResponse *);
     static Esp32Messaging::IntegerResponse *ExtractIntegerResponse(uint8_t *);
+    static void EncodeIntegerAndErrnoResponse(Esp32Messaging::IntegerAndErrnoResponse *, uint8_t *);
+    static int EncodedIntegerAndErrnoResponseBufferSize(Esp32Messaging::IntegerAndErrnoResponse *);
+    static Esp32Messaging::IntegerAndErrnoResponse *ExtractIntegerAndErrnoResponse(uint8_t *);
     static void EncodeConnectRequest(Esp32Messaging::ConnectRequest *, uint8_t *);
     static int EncodedConnectRequestBufferSize(Esp32Messaging::ConnectRequest *);
     static Esp32Messaging::ConnectRequest *ExtractConnectRequest(uint8_t *);
@@ -241,6 +258,9 @@ public:
     static void EncodeLinger(Esp32Messaging::Linger *, uint8_t *);
     static int EncodedLingerBufferSize(Esp32Messaging::Linger *);
     static Esp32Messaging::Linger *ExtractLinger(uint8_t *);
+    static void EncodeWriteRequest(Esp32Messaging::WriteRequest *, uint8_t *);
+    static int EncodedWriteRequestBufferSize(Esp32Messaging::WriteRequest *);
+    static Esp32Messaging::WriteRequest *ExtractWriteRequest(uint8_t *);
 
 };
 
