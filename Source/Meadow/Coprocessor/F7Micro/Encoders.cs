@@ -1429,5 +1429,112 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             return(result);
         }
 
+        public static byte[] EncodeReadRequest(ReadRequest readRequest)
+        {
+            int offset = 0;
+            int length = 0;
+
+            //
+            //  Calculate the amount of memory needed.
+            //
+            length += 8;
+
+            //
+            //  Now allocate a new buffer and copy the data in to the buffer.
+            //
+            byte[] buffer = new byte[length];
+            Array.Clear(buffer, 0, buffer.Length);
+            EncodeInt32(readRequest.SocketHandle, buffer, offset);
+            offset += 4;
+            EncodeInt32(readRequest.Count, buffer, offset);
+            offset += 4;
+            return(buffer);
+        }
+
+        public static ReadRequest ExtractReadRequest(byte[] buffer, int offset)
+        {
+            ReadRequest readRequest = new Messages.ReadRequest();
+
+            readRequest.SocketHandle = ExtractInt32(buffer, offset);
+            offset += 4;
+            readRequest.Count = ExtractInt32(buffer, offset);
+            offset += 4;
+            return(readRequest);
+        }
+
+        /// <summary>
+        /// Calculate the amount of memory required to hold the given instance of the ReadRequest object.
+        /// </summary>
+        /// <param name="readRequest">ReadRequest object to be encoded.</param>
+        /// <returns>Number of bytes required to hold the encoded ReadRequest object.</returns>
+        public static int EncodedReadRequestBufferSize(Messages.ReadRequest readRequest)
+        {
+            int result = 0;
+            result += 8;
+            return(result);
+        }
+
+        public static byte[] EncodeReadResponse(ReadResponse readResponse)
+        {
+            int offset = 0;
+            int length = 0;
+
+            //
+            //  Calculate the amount of memory needed.
+            //
+            length += (int) (readResponse.BufferLength + 4);
+            length += 8;
+
+            //
+            //  Now allocate a new buffer and copy the data in to the buffer.
+            //
+            byte[] buffer = new byte[length];
+            Array.Clear(buffer, 0, buffer.Length);
+            EncodeUInt32(readResponse.BufferLength, buffer, offset);
+            offset += 4;
+            if (readResponse.BufferLength > 0)
+            {
+                Array.Copy(readResponse.Buffer, 0, buffer, offset, readResponse.BufferLength);
+                offset += (int) (readResponse.BufferLength);
+            }
+            EncodeInt32(readResponse.Result, buffer, offset);
+            offset += 4;
+            EncodeInt32(readResponse.Errno, buffer, offset);
+            offset += 4;
+            return(buffer);
+        }
+
+        public static ReadResponse ExtractReadResponse(byte[] buffer, int offset)
+        {
+            ReadResponse readResponse = new Messages.ReadResponse();
+
+            readResponse.BufferLength = ExtractUInt32(buffer, offset);
+            offset += 4;
+            if (readResponse.BufferLength > 0)
+            {
+                readResponse.Buffer = new byte[readResponse.BufferLength];
+                Array.Copy(buffer, offset, readResponse.Buffer, 0, readResponse.BufferLength);
+                offset += (int) readResponse.BufferLength;
+            }
+            readResponse.Result = ExtractInt32(buffer, offset);
+            offset += 4;
+            readResponse.Errno = ExtractInt32(buffer, offset);
+            offset += 4;
+            return(readResponse);
+        }
+
+        /// <summary>
+        /// Calculate the amount of memory required to hold the given instance of the ReadResponse object.
+        /// </summary>
+        /// <param name="readResponse">ReadResponse object to be encoded.</param>
+        /// <returns>Number of bytes required to hold the encoded ReadResponse object.</returns>
+        public static int EncodedReadResponseBufferSize(Messages.ReadResponse readResponse)
+        {
+            int result = 0;
+            result += (int) readResponse.BufferLength;
+            result += 12;
+            return(result);
+        }
+
     }
 }

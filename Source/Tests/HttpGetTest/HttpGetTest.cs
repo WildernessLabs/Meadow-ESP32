@@ -165,7 +165,6 @@ namespace BasicNetworkTest
                 DebugHelpers.DebugHelpers.LogMessage(true, $"Exiting test");
                 return;
             }
-
             DebugHelpers.DebugHelpers.LogMessage(true, "    Timeout set for socket.");
             //
             //    write
@@ -175,7 +174,6 @@ namespace BasicNetworkTest
             string  request = $"GET {uri} HTTP/1.0\r\nHost: {host}\r\nUser-Agent: esp-idf/3.3 esp32\r\n\r\n";
             byte[] writeBuffer = System.Text.Encoding.UTF8.GetBytes(request);
             DebugHelpers.DebugHelpers.LogMessage(true, "Sending request to server (write)");
-            DebugHelpers.DebugHelpers.LogMessage(true, $"    Request length: {writeBuffer.Length}");
             var amountWritten = _f7MicroCoprocessor.Write(socketHandle, writeBuffer, writeBuffer.Length);
             DebugHelpers.DebugHelpers.LogMessage(true, $"    {amountWritten} bytes sent to server");
             //
@@ -188,6 +186,52 @@ namespace BasicNetworkTest
                 return;
             }
             DebugHelpers.DebugHelpers.LogMessage(true, "    Request written to server.");
+            //
+            //    read
+            //
+            const int BUFFER_SIZE = 1024;
+            var readBuffer = new byte[BUFFER_SIZE];
+            int totalNumberOfBytes = 0;
+            int amountRead = 0;
+            string result = "";
+            bool firstBlock = true;
+            DebugHelpers.DebugHelpers.LogMessage(true, "Reading data from server (read)");
+            do
+            {
+                Array.Clear(readBuffer, 0, BUFFER_SIZE);
+                amountRead = _f7MicroCoprocessor.Read(socketHandle, readBuffer, BUFFER_SIZE);
+                DebugHelpers.DebugHelpers.LogMessage(true, $"    {amountRead} bytes read from server");
+                if (amountRead > 0)
+                {
+                    result += System.Text.Encoding.UTF8.GetString(readBuffer);
+                    totalNumberOfBytes += amountRead;
+                    if (firstBlock)
+                    {
+                        var lines = result.Split(new [] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+                        var numberLinesToDisplay = lines.Length > 5 ? 5 : lines.Length;
+                        DebugHelpers.DebugHelpers.LogMessage(true, $"    First {numberLinesToDisplay} lines:");
+                        for (int index = 0; index < numberLinesToDisplay; index++)
+                        {
+                            DebugHelpers.DebugHelpers.LogMessage(true, $"    Line {index + 1}: {lines[index]}");
+                        }
+                    }
+                }
+                else
+                {
+                    if (amountRead < 0)
+                    {
+                        //                close(socketHandle);
+                        DebugHelpers.DebugHelpers.LogMessage(true, $"Exiting test");
+                        return;
+                    }
+                }
+                firstBlock = false;
+            }
+            while (amountRead > 0);
+            DebugHelpers.DebugHelpers.LogMessage(true, $"    Total {totalNumberOfBytes} bytes read from server.");
+            //
+            //    close
+            //
         }
         
         #endregion Methods

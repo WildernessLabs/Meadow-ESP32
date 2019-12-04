@@ -172,6 +172,23 @@
                 { "Name": "Buffer", "DataType": "blob" },
                 { "Name": "Count", "DataType": "int" }
             ]
+        },
+        {
+            "Name": "ReadRequest",
+            "MessageElements":
+            [
+                { "Name": "SocketHandle", "DataType": "int" },
+                { "Name": "Count", "DataType": "int" }
+            ]
+        },
+        {
+            "Name": "ReadResponse",
+            "MessageElements":
+            [
+                { "Name": "Buffer", "DataType": "blob" },
+                { "Name": "Result", "DataType": "int" },
+                { "Name": "Errno", "DataType": "int" }
+            ]
         }
     ]
 }
