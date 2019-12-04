@@ -1059,6 +1059,51 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             return(result);
         }
 
+        public static byte[] EncodeIntegerAndErrnoResponse(IntegerAndErrnoResponse integerAndErrnoResponse)
+        {
+            int offset = 0;
+            int length = 0;
+
+            //
+            //  Calculate the amount of memory needed.
+            //
+            length += 8;
+
+            //
+            //  Now allocate a new buffer and copy the data in to the buffer.
+            //
+            byte[] buffer = new byte[length];
+            Array.Clear(buffer, 0, buffer.Length);
+            EncodeInt32(integerAndErrnoResponse.Result, buffer, offset);
+            offset += 4;
+            EncodeInt32(integerAndErrnoResponse.Errno, buffer, offset);
+            offset += 4;
+            return(buffer);
+        }
+
+        public static IntegerAndErrnoResponse ExtractIntegerAndErrnoResponse(byte[] buffer, int offset)
+        {
+            IntegerAndErrnoResponse integerAndErrnoResponse = new Messages.IntegerAndErrnoResponse();
+
+            integerAndErrnoResponse.Result = ExtractInt32(buffer, offset);
+            offset += 4;
+            integerAndErrnoResponse.Errno = ExtractInt32(buffer, offset);
+            offset += 4;
+            return(integerAndErrnoResponse);
+        }
+
+        /// <summary>
+        /// Calculate the amount of memory required to hold the given instance of the IntegerAndErrnoResponse object.
+        /// </summary>
+        /// <param name="integerAndErrnoResponse">IntegerAndErrnoResponse object to be encoded.</param>
+        /// <returns>Number of bytes required to hold the encoded IntegerAndErrnoResponse object.</returns>
+        public static int EncodedIntegerAndErrnoResponseBufferSize(Messages.IntegerAndErrnoResponse integerAndErrnoResponse)
+        {
+            int result = 0;
+            result += 8;
+            return(result);
+        }
+
         public static byte[] EncodeConnectRequest(ConnectRequest connectRequest)
         {
             int offset = 0;
@@ -1319,6 +1364,68 @@ namespace Meadow.Coprocessor.F7Micro.Messages
         {
             int result = 0;
             result += 8;
+            return(result);
+        }
+
+        public static byte[] EncodeWriteRequest(WriteRequest writeRequest)
+        {
+            int offset = 0;
+            int length = 0;
+
+            //
+            //  Calculate the amount of memory needed.
+            //
+            length += (int) (writeRequest.BufferLength + 4);
+            length += 8;
+
+            //
+            //  Now allocate a new buffer and copy the data in to the buffer.
+            //
+            byte[] buffer = new byte[length];
+            Array.Clear(buffer, 0, buffer.Length);
+            EncodeInt32(writeRequest.SocketHandle, buffer, offset);
+            offset += 4;
+            EncodeUInt32(writeRequest.BufferLength, buffer, offset);
+            offset += 4;
+            if (writeRequest.BufferLength > 0)
+            {
+                Array.Copy(writeRequest.Buffer, 0, buffer, offset, writeRequest.BufferLength);
+                offset += (int) (writeRequest.BufferLength);
+            }
+            EncodeInt32(writeRequest.Count, buffer, offset);
+            offset += 4;
+            return(buffer);
+        }
+
+        public static WriteRequest ExtractWriteRequest(byte[] buffer, int offset)
+        {
+            WriteRequest writeRequest = new Messages.WriteRequest();
+
+            writeRequest.SocketHandle = ExtractInt32(buffer, offset);
+            offset += 4;
+            writeRequest.BufferLength = ExtractUInt32(buffer, offset);
+            offset += 4;
+            if (writeRequest.BufferLength > 0)
+            {
+                writeRequest.Buffer = new byte[writeRequest.BufferLength];
+                Array.Copy(buffer, offset, writeRequest.Buffer, 0, writeRequest.BufferLength);
+                offset += (int) writeRequest.BufferLength;
+            }
+            writeRequest.Count = ExtractInt32(buffer, offset);
+            offset += 4;
+            return(writeRequest);
+        }
+
+        /// <summary>
+        /// Calculate the amount of memory required to hold the given instance of the WriteRequest object.
+        /// </summary>
+        /// <param name="writeRequest">WriteRequest object to be encoded.</param>
+        /// <returns>Number of bytes required to hold the encoded WriteRequest object.</returns>
+        public static int EncodedWriteRequestBufferSize(Messages.WriteRequest writeRequest)
+        {
+            int result = 0;
+            result += (int) writeRequest.BufferLength;
+            result += 12;
             return(result);
         }
 

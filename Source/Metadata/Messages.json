@@ -112,6 +112,14 @@
             [
                 { "Name": "Result", "DataType": "int" }
             ]
+          },
+          {
+            "Name": "IntegerAndErrnoResponse",
+            "MessageElements":
+            [
+                { "Name": "Result", "DataType": "int" },
+                { "Name": "Errno", "DataType": "int"}
+            ]
         },
         {
             "Name": "ConnectRequest",
@@ -154,6 +162,15 @@
             [
                 { "Name": "LOnOff", "DataType": "int" },
                 { "Name": "LLinger", "DataType": "int" }
+            ]
+        },
+        {
+            "Name": "WriteRequest",
+            "MessageElements":
+            [
+                { "Name": "SocketHandle", "DataType": "int" },
+                { "Name": "Buffer", "DataType": "blob" },
+                { "Name": "Count", "DataType": "int" }
             ]
         }
     ]

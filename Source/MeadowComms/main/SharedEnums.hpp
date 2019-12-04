@@ -302,7 +302,7 @@ namespace SocketOptionType
         SoDontRoute = 0x0010,
         UseLoopback = 0x0040,
         SoLinger = 0x0080,
-        SoDontLinger = 0x0080,
+        SoDontLinger = 0xff7f,
         SoOobInline = 0x0100,
         SoReusePort = 0x0200,
         SoSndBuf = 0x1001,
