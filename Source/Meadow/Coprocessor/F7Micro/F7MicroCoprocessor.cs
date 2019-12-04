@@ -431,7 +431,7 @@ namespace Meadow.Coprocessor.F7Micro
             }
 
             var setSockOptResponse = Encoders.ExtractIntegerAndErrnoResponse(response.Payload, 0);
-            int resultCode = setSockOptResponse.Result;
+            var resultCode = setSockOptResponse.Result;
             if (resultCode < 0)
             {
                 resultCode = setSockOptResponse.Errno;
@@ -439,9 +439,36 @@ namespace Meadow.Coprocessor.F7Micro
             return(resultCode);
         }
 
-        public int Write(int socketHandle, byte[] buffer, UInt32 count)
+        public int Write(int socketHandle, byte[] buffer, int count)
         {
             var request = new WriteRequest();
+            request.SocketHandle = socketHandle;
+            request.Buffer = buffer;
+            request.Count = count;
+            request.BufferLength = (uint) buffer.Length;
+            
+            var message = new Message();
+            message.Interface = (byte) Esp32Interfaces.WiFi;
+            message.Function = (uint) WiFiFunction.Write;
+            message.MessageID = _dispatcher.GetNextMessageId();
+            message.MessageType = (byte) MessageTypes.Data;
+            message.Payload = Encoders.EncodeWriteRequest(request);
+            message.PayloadLength = (UInt32) message.Payload.Length;
+            
+            var response = _dispatcher.SendMessage(message);
+            var result = (StatusCodes) response.StatusCode;
+            if (result != StatusCodes.CompletedOK)
+            {
+                throw new CoprocessorException(result);
+            }
+
+            var setSockOptResponse = Encoders.ExtractIntegerAndErrnoResponse(response.Payload, 0);
+            var resultCode = setSockOptResponse.Result;
+            if (resultCode < 0)
+            {
+                resultCode = setSockOptResponse.Errno;
+            }
+            return(resultCode);
         }
 
 

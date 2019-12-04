@@ -165,7 +165,29 @@ namespace BasicNetworkTest
                 DebugHelpers.DebugHelpers.LogMessage(true, $"Exiting test");
                 return;
             }
+
             DebugHelpers.DebugHelpers.LogMessage(true, "    Timeout set for socket.");
+            //
+            //    write
+            //
+            string uri = "/";
+            string host = "www.google.com";
+            string  request = $"GET {uri} HTTP/1.0\r\nHost: {host}\r\nUser-Agent: esp-idf/3.3 esp32\r\n\r\n";
+            byte[] writeBuffer = System.Text.Encoding.UTF8.GetBytes(request);
+            DebugHelpers.DebugHelpers.LogMessage(true, "Sending request to server (write)");
+            DebugHelpers.DebugHelpers.LogMessage(true, $"    Request length: {writeBuffer.Length}");
+            var amountWritten = _f7MicroCoprocessor.Write(socketHandle, writeBuffer, writeBuffer.Length);
+            DebugHelpers.DebugHelpers.LogMessage(true, $"    {amountWritten} bytes sent to server");
+            //
+            //    TODO: need to work out how to deal with errno.
+            //
+            if (amountWritten < 0)
+            {
+//                close(socketHandle);
+                DebugHelpers.DebugHelpers.LogMessage(true, $"Exiting test");
+                return;
+            }
+            DebugHelpers.DebugHelpers.LogMessage(true, "    Request written to server.");
         }
         
         #endregion Methods
