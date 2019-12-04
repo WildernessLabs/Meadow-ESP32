@@ -1768,4 +1768,140 @@ Esp32Messaging::WriteRequest *Encoders::ExtractWriteRequest(uint8_t *buffer)
     return(writeRequest);
 }
 
+/**
+ *  Convert the ReadRequest object into a byte stream that can be sent to the STM32.
+ *  
+ *  The amount of memory required can be obtained by calling the EncodedReadRequestBufferSize method.
+ *  
+ *  @param readRequest
+ *      ReadRequest object to be encoded.
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory large enough to hold the encoded ReadRequest object.
+ */
+void Encoders::EncodeReadRequest(Esp32Messaging::ReadRequest *readRequest, uint8_t *buffer)
+{
+    EncodeInt32(readRequest->SocketHandle, buffer);
+    buffer += 4;
+    EncodeInt32(readRequest->Count, buffer);
+    buffer += 4;
+}
+
+/**
+ *  Calculate the amount of memory required to hold the given instance of the ReadRequest object.
+ *  
+ *  @param readRequest
+ *      ReadRequest object to be encoded.
+ *  
+ *  @returns
+ *      Number of bytes required to hold the encoded ReadRequest object.
+ */
+int Encoders::EncodedReadRequestBufferSize(Esp32Messaging::ReadRequest *readRequest)
+{
+    int result = 0;
+    result += 8;
+    return(result);
+}
+
+/**
+ *  Extract the ReadRequest object that is encoded in the given buffer.
+ *  
+ *  Note that the returned pointer points to a block of memory on the heap and
+ *  this should eventually be released calling vPortFree(...).
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded ReadRequest object.
+ *  
+ *  @returns
+ *      Pointer to a ReadRequest object.
+ */
+Esp32Messaging::ReadRequest *Encoders::ExtractReadRequest(uint8_t *buffer)
+{
+    Esp32Messaging::ReadRequest *readRequest = (Esp32Messaging::ReadRequest *) pvPortMalloc(sizeof(Esp32Messaging::ReadRequest));
+
+    readRequest->SocketHandle = ExtractInt32(buffer);
+    buffer += 4;
+    readRequest->Count = ExtractInt32(buffer);
+    buffer += 4;
+    return(readRequest);
+}
+
+/**
+ *  Convert the ReadResponse object into a byte stream that can be sent to the STM32.
+ *  
+ *  The amount of memory required can be obtained by calling the EncodedReadResponseBufferSize method.
+ *  
+ *  @param readResponse
+ *      ReadResponse object to be encoded.
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory large enough to hold the encoded ReadResponse object.
+ */
+void Encoders::EncodeReadResponse(Esp32Messaging::ReadResponse *readResponse, uint8_t *buffer)
+{
+    EncodeUInt32(readResponse->BufferLength, buffer);
+    buffer += 4;
+    if (readResponse->BufferLength > 0)
+    {
+        memcpy((void *) buffer, (void *) readResponse->Buffer, readResponse->BufferLength);
+        buffer += readResponse->BufferLength;
+    }
+    EncodeInt32(readResponse->Result, buffer);
+    buffer += 4;
+    EncodeInt32(readResponse->Errno, buffer);
+    buffer += 4;
+}
+
+/**
+ *  Calculate the amount of memory required to hold the given instance of the ReadResponse object.
+ *  
+ *  @param readResponse
+ *      ReadResponse object to be encoded.
+ *  
+ *  @returns
+ *      Number of bytes required to hold the encoded ReadResponse object.
+ */
+int Encoders::EncodedReadResponseBufferSize(Esp32Messaging::ReadResponse *readResponse)
+{
+    int result = 0;
+    result += readResponse->BufferLength;
+    result += 12;
+    return(result);
+}
+
+/**
+ *  Extract the ReadResponse object that is encoded in the given buffer.
+ *  
+ *  Note that the returned pointer points to a block of memory on the heap and
+ *  this should eventually be released calling vPortFree(...).
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded ReadResponse object.
+ *  
+ *  @returns
+ *      Pointer to a ReadResponse object.
+ */
+Esp32Messaging::ReadResponse *Encoders::ExtractReadResponse(uint8_t *buffer)
+{
+    Esp32Messaging::ReadResponse *readResponse = (Esp32Messaging::ReadResponse *) pvPortMalloc(sizeof(Esp32Messaging::ReadResponse));
+
+    readResponse->BufferLength = ExtractUInt32(buffer);
+    buffer += 4;
+    if (readResponse->BufferLength > 0)
+    {
+        readResponse->Buffer = (uint8_t *) pvPortMalloc(readResponse->BufferLength);
+        memcpy(readResponse->Buffer, buffer, readResponse->BufferLength);
+        buffer += readResponse->BufferLength;
+    }
+    else
+    {
+        readResponse->Buffer = nullptr;
+    }
+    readResponse->Result = ExtractInt32(buffer);
+    buffer += 4;
+    readResponse->Errno = ExtractInt32(buffer);
+    buffer += 4;
+    return(readResponse);
+}
+
 

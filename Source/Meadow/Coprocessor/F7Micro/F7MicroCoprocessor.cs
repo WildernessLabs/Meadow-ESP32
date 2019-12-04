@@ -464,6 +464,9 @@ namespace Meadow.Coprocessor.F7Micro
 
             var setSockOptResponse = Encoders.ExtractIntegerAndErrnoResponse(response.Payload, 0);
             var resultCode = setSockOptResponse.Result;
+            //
+            //    TODO: Do something about errno.
+            //
             if (resultCode < 0)
             {
                 resultCode = setSockOptResponse.Errno;
@@ -471,6 +474,44 @@ namespace Meadow.Coprocessor.F7Micro
             return(resultCode);
         }
 
+        public int Read(int socketHandle, byte[] buffer, int count)
+        {
+            var request = new ReadRequest();
+            request.SocketHandle = socketHandle;
+            request.Count = count;
+            
+            var message = new Message();
+            message.Interface = (byte) Esp32Interfaces.WiFi;
+            message.Function = (uint) WiFiFunction.Read;
+            message.MessageID = _dispatcher.GetNextMessageId();
+            message.MessageType = (byte) MessageTypes.Data;
+            message.Payload = Encoders.EncodeReadRequest(request);
+            message.PayloadLength = (UInt32) message.Payload.Length;
+            
+            var response = _dispatcher.SendMessage(message);
+            var result = (StatusCodes) response.StatusCode;
+            if (result != StatusCodes.CompletedOK)
+            {
+                throw new CoprocessorException(result);
+            }
+
+            var readResponse = Encoders.ExtractReadResponse(response.Payload, 0);
+            var amountRead = readResponse.Result;
+            //
+            //    TODO: Do something about errno.
+            //
+            Array.Clear(buffer, 0, count);
+            if (amountRead > 0)
+            {
+                Array.Copy(readResponse.Buffer, buffer, amountRead);
+            }
+
+            if (amountRead < 0)
+            {
+                DebugHelpers.DebugHelpers.LogMessage(true, $"    Error number: {readResponse.Errno}");
+            }
+            return(amountRead);
+        }
 
 
         #endregion POSIX Methods

@@ -433,17 +433,6 @@ void WiFiRequestHandler::GetAvailableNetworks(Message *request)
 }
 
 /**
- *  @brief Expose the read method to the STM32.
- *
- *  @param message
- *      Message structure containing the parameters for the read method.
- */
-void WiFiRequestHandler::Read(Message *message)
-{
-
-}
-
-/**
  *  @brief Expose the getaddrinfo method to the STM32.
  *
  *  @param message
@@ -712,9 +701,52 @@ void WiFiRequestHandler::Write(Message *message)
         response.Errno = 0;
     }
 
+    vPortFree(request);
+    vPortFree(message->Payload);
+
     message->PayloadLength = Encoders::EncodedIntegerAndErrnoResponseBufferSize(&response);
     message->Payload = (uint8_t *) pvPortMalloc(message->PayloadLength);
     Encoders::EncodeIntegerAndErrnoResponse(&response, message->Payload);
+    message->MessageType = MessageTypes::Response;
+    message->StatusCode = StatusCodes::CompletedOK;
+    _messageDispatcher->QueueMessageForStm32(message);
+    xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
+}
+
+/**
+ *  @brief Expose the read method to the STM32.
+ *
+ *  @param message
+ *      Message structure containing the parameters for the read method.
+ */
+void WiFiRequestHandler::Read(Message *message)
+{
+    ESP_LOGI(__func__, "Reading data from socket.");
+    Esp32Messaging::ReadRequest *request = Encoders::ExtractReadRequest(message->Payload);
+    Esp32Messaging::ReadResponse response;
+
+    response.Buffer = (uint8_t *) pvPortMalloc(request->Count);
+    bzero(response.Buffer, request->Count);
+    response.BufferLength = request->Count;
+    response.Result = read(request->SocketHandle, response.Buffer, request->Count);
+    if (response.Result < 0)
+    {
+        response.Errno = errno;
+    }
+    else
+    {
+        response.Errno = 0;
+    }
+
+    vPortFree(request);
+    vPortFree(message->Payload);
+
+    message->PayloadLength = Encoders::EncodedReadResponseBufferSize(&response);
+    message->Payload = (uint8_t *) pvPortMalloc(message->PayloadLength);
+    Encoders::EncodeReadResponse(&response, message->Payload);
+
+    vPortFree(response.Buffer);
+
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOK;
     _messageDispatcher->QueueMessageForStm32(message);

@@ -159,4 +159,18 @@ namespace Meadow.Coprocessor.F7Micro.Messages
         public Int32 Count;
     };
 
+    public struct ReadRequest
+    {
+        public Int32 SocketHandle;
+        public Int32 Count;
+    };
+
+    public struct ReadResponse
+    {
+        public UInt32 BufferLength;
+        public byte[] Buffer;
+        public Int32 Result;
+        public Int32 Errno;
+    };
+
 }

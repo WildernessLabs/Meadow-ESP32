@@ -173,6 +173,20 @@ namespace Esp32Messaging
         int32_t Count;
     };
 
+    struct ReadRequest
+    {
+        int32_t SocketHandle;
+        int32_t Count;
+    };
+
+    struct ReadResponse
+    {
+        uint32_t BufferLength;
+        uint8_t *Buffer;
+        int32_t Result;
+        int32_t Errno;
+    };
+
 }
 
 /*
@@ -261,6 +275,12 @@ public:
     static void EncodeWriteRequest(Esp32Messaging::WriteRequest *, uint8_t *);
     static int EncodedWriteRequestBufferSize(Esp32Messaging::WriteRequest *);
     static Esp32Messaging::WriteRequest *ExtractWriteRequest(uint8_t *);
+    static void EncodeReadRequest(Esp32Messaging::ReadRequest *, uint8_t *);
+    static int EncodedReadRequestBufferSize(Esp32Messaging::ReadRequest *);
+    static Esp32Messaging::ReadRequest *ExtractReadRequest(uint8_t *);
+    static void EncodeReadResponse(Esp32Messaging::ReadResponse *, uint8_t *);
+    static int EncodedReadResponseBufferSize(Esp32Messaging::ReadResponse *);
+    static Esp32Messaging::ReadResponse *ExtractReadResponse(uint8_t *);
 
 };
 
