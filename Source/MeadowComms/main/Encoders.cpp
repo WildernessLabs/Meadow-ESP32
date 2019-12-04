@@ -1904,4 +1904,58 @@ Esp32Messaging::ReadResponse *Encoders::ExtractReadResponse(uint8_t *buffer)
     return(readResponse);
 }
 
+/**
+ *  Convert the CloseRequest object into a byte stream that can be sent to the STM32.
+ *  
+ *  The amount of memory required can be obtained by calling the EncodedCloseRequestBufferSize method.
+ *  
+ *  @param closeRequest
+ *      CloseRequest object to be encoded.
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory large enough to hold the encoded CloseRequest object.
+ */
+void Encoders::EncodeCloseRequest(Esp32Messaging::CloseRequest *closeRequest, uint8_t *buffer)
+{
+    EncodeInt32(closeRequest->SocketHandle, buffer);
+    buffer += 4;
+}
+
+/**
+ *  Calculate the amount of memory required to hold the given instance of the CloseRequest object.
+ *  
+ *  @param closeRequest
+ *      CloseRequest object to be encoded.
+ *  
+ *  @returns
+ *      Number of bytes required to hold the encoded CloseRequest object.
+ */
+int Encoders::EncodedCloseRequestBufferSize(Esp32Messaging::CloseRequest *closeRequest)
+{
+    int result = 0;
+    result += 4;
+    return(result);
+}
+
+/**
+ *  Extract the CloseRequest object that is encoded in the given buffer.
+ *  
+ *  Note that the returned pointer points to a block of memory on the heap and
+ *  this should eventually be released calling vPortFree(...).
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded CloseRequest object.
+ *  
+ *  @returns
+ *      Pointer to a CloseRequest object.
+ */
+Esp32Messaging::CloseRequest *Encoders::ExtractCloseRequest(uint8_t *buffer)
+{
+    Esp32Messaging::CloseRequest *closeRequest = (Esp32Messaging::CloseRequest *) pvPortMalloc(sizeof(Esp32Messaging::CloseRequest));
+
+    closeRequest->SocketHandle = ExtractInt32(buffer);
+    buffer += 4;
+    return(closeRequest);
+}
+
 

@@ -438,17 +438,6 @@ void WiFiRequestHandler::GetAvailableNetworks(Message *request)
  *  @param message
  *      Message structure containing the parameters for the getaddrinfo method.
  */
-void WiFiRequestHandler::Close(Message *message)
-{
-
-}
-
-/**
- *  @brief Expose the getaddrinfo method to the STM32.
- *
- *  @param message
- *      Message structure containing the parameters for the getaddrinfo method.
- */
 void WiFiRequestHandler::GetAddrInfo(Message *message)
 {
     ESP_LOGI(__func__, "Getting address information.");
@@ -741,12 +730,45 @@ void WiFiRequestHandler::Read(Message *message)
     vPortFree(request);
     vPortFree(message->Payload);
 
+    //
+    //  TODO: Optimise this by not sending an empty buffer in the case of an error.
+    //
     message->PayloadLength = Encoders::EncodedReadResponseBufferSize(&response);
     message->Payload = (uint8_t *) pvPortMalloc(message->PayloadLength);
     Encoders::EncodeReadResponse(&response, message->Payload);
 
     vPortFree(response.Buffer);
 
+    message->MessageType = MessageTypes::Response;
+    message->StatusCode = StatusCodes::CompletedOK;
+    _messageDispatcher->QueueMessageForStm32(message);
+    xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
+}
+
+/**
+ *  @brief Expose the close method to the STM32.
+ *
+ *  @param message
+ *      Message structure containing the parameters for the getaddrinfo method.
+ */
+void WiFiRequestHandler::Close(Message *message)
+{
+    ESP_LOGI(__func__, "Closing socket.");
+    Esp32Messaging::CloseRequest *request = Encoders::ExtractCloseRequest(message->Payload);
+
+    Esp32Messaging::IntegerAndErrnoResponse response;
+    response.Result = close(request->SocketHandle);
+    if (response.Result != 0)
+    {
+        response.Result = errno;
+    }
+
+    vPortFree(request);
+    vPortFree(message->Payload);
+
+    message->PayloadLength = Encoders::EncodedIntegerAndErrnoResponseBufferSize(&response);
+    message->Payload = (uint8_t *) pvPortMalloc(message->PayloadLength);
+    Encoders::EncodeIntegerAndErrnoResponse(&response, message->Payload);
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOK;
     _messageDispatcher->QueueMessageForStm32(message);

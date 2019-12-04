@@ -140,7 +140,7 @@ namespace BasicNetworkTest
             SockAddr sockAddr = Encoders.ExtractSockAddr(getAddrInfoResult.Addr, 0);
             if (_f7MicroCoprocessor.Connect(socketHandle, sockAddr, (int) getAddrInfoResult.AddrLen) < 0)
             {
-//                close(socketHandle);
+                _f7MicroCoprocessor.Close(socketHandle);
                 _f7MicroCoprocessor.FreeAddrInfo(getAddrInfoResult.MyHeapAddress);
                 DebugHelpers.DebugHelpers.LogMessage(true, $"Exiting test");
                 return;
@@ -181,7 +181,7 @@ namespace BasicNetworkTest
             //
             if (amountWritten < 0)
             {
-//                close(socketHandle);
+                _f7MicroCoprocessor.Close(socketHandle);
                 DebugHelpers.DebugHelpers.LogMessage(true, $"Exiting test");
                 return;
             }
@@ -220,7 +220,7 @@ namespace BasicNetworkTest
                 {
                     if (amountRead < 0)
                     {
-                        //                close(socketHandle);
+                        _f7MicroCoprocessor.Close(socketHandle);
                         DebugHelpers.DebugHelpers.LogMessage(true, $"Exiting test");
                         return;
                     }
@@ -232,6 +232,13 @@ namespace BasicNetworkTest
             //
             //    close
             //
+            DebugHelpers.DebugHelpers.LogMessage(true, "Closing socket (close)");
+            if (_f7MicroCoprocessor.Close(socketHandle) < 0)
+            {
+                DebugHelpers.DebugHelpers.LogMessage(true, $"Exiting test");
+                return;
+            }
+            DebugHelpers.DebugHelpers.LogMessage(true, "HTTP GET Test Complete.");
         }
         
         #endregion Methods

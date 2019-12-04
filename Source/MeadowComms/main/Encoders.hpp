@@ -187,6 +187,11 @@ namespace Esp32Messaging
         int32_t Errno;
     };
 
+    struct CloseRequest
+    {
+        int32_t SocketHandle;
+    };
+
 }
 
 /*
@@ -281,6 +286,9 @@ public:
     static void EncodeReadResponse(Esp32Messaging::ReadResponse *, uint8_t *);
     static int EncodedReadResponseBufferSize(Esp32Messaging::ReadResponse *);
     static Esp32Messaging::ReadResponse *ExtractReadResponse(uint8_t *);
+    static void EncodeCloseRequest(Esp32Messaging::CloseRequest *, uint8_t *);
+    static int EncodedCloseRequestBufferSize(Esp32Messaging::CloseRequest *);
+    static Esp32Messaging::CloseRequest *ExtractCloseRequest(uint8_t *);
 
 };
 

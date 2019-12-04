@@ -1536,5 +1536,46 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             return(result);
         }
 
+        public static byte[] EncodeCloseRequest(CloseRequest closeRequest)
+        {
+            int offset = 0;
+            int length = 0;
+
+            //
+            //  Calculate the amount of memory needed.
+            //
+            length += 4;
+
+            //
+            //  Now allocate a new buffer and copy the data in to the buffer.
+            //
+            byte[] buffer = new byte[length];
+            Array.Clear(buffer, 0, buffer.Length);
+            EncodeInt32(closeRequest.SocketHandle, buffer, offset);
+            offset += 4;
+            return(buffer);
+        }
+
+        public static CloseRequest ExtractCloseRequest(byte[] buffer, int offset)
+        {
+            CloseRequest closeRequest = new Messages.CloseRequest();
+
+            closeRequest.SocketHandle = ExtractInt32(buffer, offset);
+            offset += 4;
+            return(closeRequest);
+        }
+
+        /// <summary>
+        /// Calculate the amount of memory required to hold the given instance of the CloseRequest object.
+        /// </summary>
+        /// <param name="closeRequest">CloseRequest object to be encoded.</param>
+        /// <returns>Number of bytes required to hold the encoded CloseRequest object.</returns>
+        public static int EncodedCloseRequestBufferSize(Messages.CloseRequest closeRequest)
+        {
+            int result = 0;
+            result += 4;
+            return(result);
+        }
+
     }
 }
