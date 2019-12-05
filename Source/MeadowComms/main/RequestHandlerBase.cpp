@@ -121,6 +121,7 @@ bool RequestHandlerBase::QueueEsp32Message(Message *message)
         {
             vPortFree(message->Payload);
         }
+        vPortFree(message);
         result = false;
     }
 
