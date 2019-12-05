@@ -17,14 +17,6 @@
             ]
         },
         {
-            "Name": "HttpGetResponse",
-            "MessageElements":
-            [
-                { "Name": "SequenceNumber", "DataType": "uint32" },
-                { "Name": "Response", "DataType": "blob" }
-            ]
-        },
-        {
             "Name": "AccessPoint",
             "MessageElements":
             [

@@ -468,8 +468,7 @@ int Encoders::EncodedWiFiCredentialsBufferSize(Esp32Messaging::WiFiCredentials *
     int result = 0;
     result += strlen(wiFiCredentials->NetworkName);
     result += strlen(wiFiCredentials->Password);
-    result += 2;
-    return(result);
+    return(result + 2);
 }
 
 /**
@@ -521,11 +520,9 @@ void Encoders::EncodeAntennaInfo(Esp32Messaging::AntennaInfo *antennaInfo, uint8
  *  @returns
  *      Number of bytes required to hold the encoded AntennaInfo object.
  */
-int Encoders::EncodedAntennaInfoBufferSize(Esp32Messaging::AntennaInfo *antennaInfo)
+const int Encoders::EncodedAntennaInfoBufferSize(Esp32Messaging::AntennaInfo *antennaInfo)
 {
-    int result = 0;
-    result += 1;
-    return(result);
+    return(1);
 }
 
 /**
@@ -547,144 +544,6 @@ Esp32Messaging::AntennaInfo *Encoders::ExtractAntennaInfo(uint8_t *buffer)
     antennaInfo->Antenna = *buffer;
     buffer += 1;
     return(antennaInfo);
-}
-
-/**
- *  Convert the HttpGetRequest object into a byte stream that can be sent to the STM32.
- *  
- *  The amount of memory required can be obtained by calling the EncodedHttpGetRequestBufferSize method.
- *  
- *  @param httpGetRequest
- *      HttpGetRequest object to be encoded.
- *  
- *  @param buffer
- *      Pointer to a block of memory large enough to hold the encoded HttpGetRequest object.
- */
-void Encoders::EncodeHttpGetRequest(Esp32Messaging::HttpGetRequest *httpGetRequest, uint8_t *buffer)
-{
-    EncodeUInt16(httpGetRequest->PortNumber, buffer);
-    buffer += 2;
-    EncodeString(httpGetRequest->ServerName, buffer);
-    buffer += strlen(httpGetRequest->ServerName) + 1;
-    EncodeString(httpGetRequest->Uri, buffer);
-    buffer += strlen(httpGetRequest->Uri) + 1;
-}
-
-/**
- *  Calculate the amount of memory required to hold the given instance of the HttpGetRequest object.
- *  
- *  @param httpGetRequest
- *      HttpGetRequest object to be encoded.
- *  
- *  @returns
- *      Number of bytes required to hold the encoded HttpGetRequest object.
- */
-int Encoders::EncodedHttpGetRequestBufferSize(Esp32Messaging::HttpGetRequest *httpGetRequest)
-{
-    int result = 0;
-    result += strlen(httpGetRequest->ServerName);
-    result += strlen(httpGetRequest->Uri);
-    result += 4;
-    return(result);
-}
-
-/**
- *  Extract the HttpGetRequest object that is encoded in the given buffer.
- *  
- *  Note that the returned pointer points to a block of memory on the heap and
- *  this should eventually be released calling vPortFree(...).
- *  
- *  @param buffer
- *      Pointer to a block of memory holding the encoded HttpGetRequest object.
- *  
- *  @returns
- *      Pointer to a HttpGetRequest object.
- */
-Esp32Messaging::HttpGetRequest *Encoders::ExtractHttpGetRequest(uint8_t *buffer)
-{
-    Esp32Messaging::HttpGetRequest *httpGetRequest = (Esp32Messaging::HttpGetRequest *) pvPortMalloc(sizeof(Esp32Messaging::HttpGetRequest));
-
-    httpGetRequest->PortNumber = ExtractUInt16(buffer);
-    buffer += 2;
-    httpGetRequest->ServerName = ExtractString(buffer);
-    buffer += strlen(httpGetRequest->ServerName) + 1;
-    httpGetRequest->Uri = ExtractString(buffer);
-    buffer += strlen(httpGetRequest->Uri) + 1;
-    return(httpGetRequest);
-}
-
-/**
- *  Convert the HttpGetResponse object into a byte stream that can be sent to the STM32.
- *  
- *  The amount of memory required can be obtained by calling the EncodedHttpGetResponseBufferSize method.
- *  
- *  @param httpGetResponse
- *      HttpGetResponse object to be encoded.
- *  
- *  @param buffer
- *      Pointer to a block of memory large enough to hold the encoded HttpGetResponse object.
- */
-void Encoders::EncodeHttpGetResponse(Esp32Messaging::HttpGetResponse *httpGetResponse, uint8_t *buffer)
-{
-    EncodeUInt32(httpGetResponse->SequenceNumber, buffer);
-    buffer += 4;
-    EncodeUInt32(httpGetResponse->ResponseLength, buffer);
-    buffer += 4;
-    if (httpGetResponse->ResponseLength > 0)
-    {
-        memcpy((void *) buffer, (void *) httpGetResponse->Response, httpGetResponse->ResponseLength);
-        buffer += httpGetResponse->ResponseLength;
-    }
-}
-
-/**
- *  Calculate the amount of memory required to hold the given instance of the HttpGetResponse object.
- *  
- *  @param httpGetResponse
- *      HttpGetResponse object to be encoded.
- *  
- *  @returns
- *      Number of bytes required to hold the encoded HttpGetResponse object.
- */
-int Encoders::EncodedHttpGetResponseBufferSize(Esp32Messaging::HttpGetResponse *httpGetResponse)
-{
-    int result = 0;
-    result += httpGetResponse->ResponseLength;
-    result += 8;
-    return(result);
-}
-
-/**
- *  Extract the HttpGetResponse object that is encoded in the given buffer.
- *  
- *  Note that the returned pointer points to a block of memory on the heap and
- *  this should eventually be released calling vPortFree(...).
- *  
- *  @param buffer
- *      Pointer to a block of memory holding the encoded HttpGetResponse object.
- *  
- *  @returns
- *      Pointer to a HttpGetResponse object.
- */
-Esp32Messaging::HttpGetResponse *Encoders::ExtractHttpGetResponse(uint8_t *buffer)
-{
-    Esp32Messaging::HttpGetResponse *httpGetResponse = (Esp32Messaging::HttpGetResponse *) pvPortMalloc(sizeof(Esp32Messaging::HttpGetResponse));
-
-    httpGetResponse->SequenceNumber = ExtractUInt32(buffer);
-    buffer += 4;
-    httpGetResponse->ResponseLength = ExtractUInt32(buffer);
-    buffer += 4;
-    if (httpGetResponse->ResponseLength > 0)
-    {
-        httpGetResponse->Response = (uint8_t *) pvPortMalloc(httpGetResponse->ResponseLength);
-        memcpy(httpGetResponse->Response, buffer, httpGetResponse->ResponseLength);
-        buffer += httpGetResponse->ResponseLength;
-    }
-    else
-    {
-        httpGetResponse->Response = nullptr;
-    }
-    return(httpGetResponse);
 }
 
 /**
@@ -725,11 +584,9 @@ void Encoders::EncodeAccessPoint(Esp32Messaging::AccessPoint *accessPoint, uint8
  *  @returns
  *      Number of bytes required to hold the encoded AccessPoint object.
  */
-int Encoders::EncodedAccessPointBufferSize(Esp32Messaging::AccessPoint *accessPoint)
+const int Encoders::EncodedAccessPointBufferSize(Esp32Messaging::AccessPoint *accessPoint)
 {
-    int result = 0;
-    result += 47;
-    return(result);
+    return(47);
 }
 
 /**
@@ -802,8 +659,7 @@ int Encoders::EncodedAccessPointListBufferSize(Esp32Messaging::AccessPointList *
 {
     int result = 0;
     result += accessPointList->AccessPointsLength;
-    result += 8;
-    return(result);
+    return(result + 8);
 }
 
 /**
@@ -869,11 +725,9 @@ void Encoders::EncodeSockAddr(Esp32Messaging::SockAddr *sockAddr, uint8_t *buffe
  *  @returns
  *      Number of bytes required to hold the encoded SockAddr object.
  */
-int Encoders::EncodedSockAddrBufferSize(Esp32Messaging::SockAddr *sockAddr)
+const int Encoders::EncodedSockAddrBufferSize(Esp32Messaging::SockAddr *sockAddr)
 {
-    int result = 0;
-    result += 16;
-    return(result);
+    return(16);
 }
 
 /**
@@ -953,8 +807,7 @@ int Encoders::EncodedAddrInfoBufferSize(Esp32Messaging::AddrInfo *addrInfo)
     int result = 0;
     result += addrInfo->AddrLength;
     result += strlen(addrInfo->CanonName);
-    result += 33;
-    return(result);
+    return(result + 33);
 }
 
 /**
@@ -1053,8 +906,7 @@ int Encoders::EncodedGetAddrInfoRequestBufferSize(Esp32Messaging::GetAddrInfoReq
     result += strlen(getAddrInfoRequest->ServName);
     result += getAddrInfoRequest->HintsLength;
     result += getAddrInfoRequest->ResultLength;
-    result += 10;
-    return(result);
+    return(result + 10);
 }
 
 /**
@@ -1141,8 +993,7 @@ int Encoders::EncodedGetAddrInfoResponseBufferSize(Esp32Messaging::GetAddrInfoRe
 {
     int result = 0;
     result += getAddrInfoResponse->ResLength;
-    result += 8;
-    return(result);
+    return(result + 8);
 }
 
 /**
@@ -1210,11 +1061,9 @@ void Encoders::EncodeSocketRequest(Esp32Messaging::SocketRequest *socketRequest,
  *  @returns
  *      Number of bytes required to hold the encoded SocketRequest object.
  */
-int Encoders::EncodedSocketRequestBufferSize(Esp32Messaging::SocketRequest *socketRequest)
+const int Encoders::EncodedSocketRequestBufferSize(Esp32Messaging::SocketRequest *socketRequest)
 {
-    int result = 0;
-    result += 16;
-    return(result);
+    return(16);
 }
 
 /**
@@ -1270,11 +1119,9 @@ void Encoders::EncodeIntegerResponse(Esp32Messaging::IntegerResponse *integerRes
  *  @returns
  *      Number of bytes required to hold the encoded IntegerResponse object.
  */
-int Encoders::EncodedIntegerResponseBufferSize(Esp32Messaging::IntegerResponse *integerResponse)
+const int Encoders::EncodedIntegerResponseBufferSize(Esp32Messaging::IntegerResponse *integerResponse)
 {
-    int result = 0;
-    result += 4;
-    return(result);
+    return(4);
 }
 
 /**
@@ -1326,11 +1173,9 @@ void Encoders::EncodeIntegerAndErrnoResponse(Esp32Messaging::IntegerAndErrnoResp
  *  @returns
  *      Number of bytes required to hold the encoded IntegerAndErrnoResponse object.
  */
-int Encoders::EncodedIntegerAndErrnoResponseBufferSize(Esp32Messaging::IntegerAndErrnoResponse *integerAndErrnoResponse)
+const int Encoders::EncodedIntegerAndErrnoResponseBufferSize(Esp32Messaging::IntegerAndErrnoResponse *integerAndErrnoResponse)
 {
-    int result = 0;
-    result += 8;
-    return(result);
+    return(8);
 }
 
 /**
@@ -1395,8 +1240,7 @@ int Encoders::EncodedConnectRequestBufferSize(Esp32Messaging::ConnectRequest *co
 {
     int result = 0;
     result += connectRequest->AddrLength;
-    result += 12;
-    return(result);
+    return(result + 12);
 }
 
 /**
@@ -1460,11 +1304,9 @@ void Encoders::EncodeFreeAddrInfoRequest(Esp32Messaging::FreeAddrInfoRequest *fr
  *  @returns
  *      Number of bytes required to hold the encoded FreeAddrInfoRequest object.
  */
-int Encoders::EncodedFreeAddrInfoRequestBufferSize(Esp32Messaging::FreeAddrInfoRequest *freeAddrInfoRequest)
+const int Encoders::EncodedFreeAddrInfoRequestBufferSize(Esp32Messaging::FreeAddrInfoRequest *freeAddrInfoRequest)
 {
-    int result = 0;
-    result += 4;
-    return(result);
+    return(4);
 }
 
 /**
@@ -1516,11 +1358,9 @@ void Encoders::EncodeTimeVal(Esp32Messaging::TimeVal *timeVal, uint8_t *buffer)
  *  @returns
  *      Number of bytes required to hold the encoded TimeVal object.
  */
-int Encoders::EncodedTimeValBufferSize(Esp32Messaging::TimeVal *timeVal)
+const int Encoders::EncodedTimeValBufferSize(Esp32Messaging::TimeVal *timeVal)
 {
-    int result = 0;
-    result += 8;
-    return(result);
+    return(8);
 }
 
 /**
@@ -1589,8 +1429,7 @@ int Encoders::EncodedSetSockOptRequestBufferSize(Esp32Messaging::SetSockOptReque
 {
     int result = 0;
     result += setSockOptRequest->OptionValueLength;
-    result += 20;
-    return(result);
+    return(result + 20);
 }
 
 /**
@@ -1660,11 +1499,9 @@ void Encoders::EncodeLinger(Esp32Messaging::Linger *linger, uint8_t *buffer)
  *  @returns
  *      Number of bytes required to hold the encoded Linger object.
  */
-int Encoders::EncodedLingerBufferSize(Esp32Messaging::Linger *linger)
+const int Encoders::EncodedLingerBufferSize(Esp32Messaging::Linger *linger)
 {
-    int result = 0;
-    result += 8;
-    return(result);
+    return(8);
 }
 
 /**
@@ -1729,8 +1566,7 @@ int Encoders::EncodedWriteRequestBufferSize(Esp32Messaging::WriteRequest *writeR
 {
     int result = 0;
     result += writeRequest->BufferLength;
-    result += 12;
-    return(result);
+    return(result + 12);
 }
 
 /**
@@ -1796,11 +1632,9 @@ void Encoders::EncodeReadRequest(Esp32Messaging::ReadRequest *readRequest, uint8
  *  @returns
  *      Number of bytes required to hold the encoded ReadRequest object.
  */
-int Encoders::EncodedReadRequestBufferSize(Esp32Messaging::ReadRequest *readRequest)
+const int Encoders::EncodedReadRequestBufferSize(Esp32Messaging::ReadRequest *readRequest)
 {
-    int result = 0;
-    result += 8;
-    return(result);
+    return(8);
 }
 
 /**
@@ -1865,8 +1699,7 @@ int Encoders::EncodedReadResponseBufferSize(Esp32Messaging::ReadResponse *readRe
 {
     int result = 0;
     result += readResponse->BufferLength;
-    result += 12;
-    return(result);
+    return(result + 12);
 }
 
 /**
@@ -1930,11 +1763,9 @@ void Encoders::EncodeCloseRequest(Esp32Messaging::CloseRequest *closeRequest, ui
  *  @returns
  *      Number of bytes required to hold the encoded CloseRequest object.
  */
-int Encoders::EncodedCloseRequestBufferSize(Esp32Messaging::CloseRequest *closeRequest)
+const int Encoders::EncodedCloseRequestBufferSize(Esp32Messaging::CloseRequest *closeRequest)
 {
-    int result = 0;
-    result += 4;
-    return(result);
+    return(4);
 }
 
 /**
