@@ -74,7 +74,7 @@ public:
     /*
      *  Constructor for the RequestHandlerBase class.
      */
-    RequestHandlerBase(MessageDispatcher *);
+    explicit RequestHandlerBase(MessageDispatcher *);
 
     /*
      *  Setup the various properties for correct functioning of the request handler.

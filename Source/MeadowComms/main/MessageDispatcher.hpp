@@ -95,7 +95,7 @@ public:
     /*
      *  Constructor for the Message Dispatcher.
      */
-    MessageDispatcher(TransportProviderBase *);
+    explicit MessageDispatcher(TransportProviderBase *);
 
     /*
      *  Queue a message for the ESP32.

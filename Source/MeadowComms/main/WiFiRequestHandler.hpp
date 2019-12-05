@@ -183,7 +183,7 @@ private:
     /*
      *  This method will dispatch incoming messages to the appropriate request handler.
      */
-    void DispatchRequest(Message *);
+    void DispatchRequest(Message *) override;
 
     /*
      *  Start the network.
@@ -278,7 +278,7 @@ public:
     /*
      *  Constructor for the WiFi object.
      */
-    WiFiRequestHandler(MessageDispatcher *);
+    explicit WiFiRequestHandler(MessageDispatcher *);
 
     /*
      *  Public methods.
