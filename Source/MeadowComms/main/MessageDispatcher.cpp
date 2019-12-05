@@ -18,9 +18,8 @@
 /**
  *  Default constructor.
  */
-MessageDispatcher::MessageDispatcher()
+MessageDispatcher::MessageDispatcher() : _messageIdMutex(xSemaphoreCreateMutex())
 {
-    _messageIdMutex = xSemaphoreCreateMutex();
 }
 
 /**
