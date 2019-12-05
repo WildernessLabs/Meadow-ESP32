@@ -371,7 +371,6 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             EncodeString(wiFiCredentials.NetworkName, buffer, offset);
             offset += wiFiCredentials.NetworkName.Length + 1;
             EncodeString(wiFiCredentials.Password, buffer, offset);
-            offset += wiFiCredentials.Password.Length + 1;
             return(buffer);
         }
 
@@ -382,7 +381,6 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             wiFiCredentials.NetworkName = ExtractString(buffer, offset);
             offset += (int) (wiFiCredentials.NetworkName.Length + 1);
             wiFiCredentials.Password = ExtractString(buffer, offset);
-            offset += (int) (wiFiCredentials.Password.Length + 1);
             return(wiFiCredentials);
         }
 
@@ -396,8 +394,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             int result = 0;
             result += (int) wiFiCredentials.NetworkName.Length;
             result += (int) wiFiCredentials.Password.Length;
-            result += 2;
-            return(result);
+            return(result + 2);
         }
 
         public static byte[] EncodeAntennaInfo(AntennaInfo antennaInfo)
@@ -416,7 +413,6 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             byte[] buffer = new byte[length];
             Array.Clear(buffer, 0, buffer.Length);
             buffer[offset] = antennaInfo.Antenna;
-            offset += 1;
             return(buffer);
         }
 
@@ -425,7 +421,6 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             AntennaInfo antennaInfo = new Messages.AntennaInfo();
 
             antennaInfo.Antenna = buffer[offset];
-            offset += 1;
             return(antennaInfo);
         }
 
@@ -436,9 +431,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
         /// <returns>Number of bytes required to hold the encoded AntennaInfo object.</returns>
         public static int EncodedAntennaInfoBufferSize(Messages.AntennaInfo antennaInfo)
         {
-            int result = 0;
-            result += 1;
-            return(result);
+            return(1);
         }
 
         public static byte[] EncodeAccessPoint(AccessPoint accessPoint)
@@ -476,7 +469,6 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             buffer[offset] = accessPoint.AuthenticationMode;
             offset += 1;
             EncodeUInt32(accessPoint.Protocols, buffer, offset);
-            offset += 4;
             return(buffer);
         }
 
@@ -501,7 +493,6 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             accessPoint.AuthenticationMode = buffer[offset];
             offset += 1;
             accessPoint.Protocols = ExtractUInt32(buffer, offset);
-            offset += 4;
             return(accessPoint);
         }
 
@@ -512,9 +503,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
         /// <returns>Number of bytes required to hold the encoded AccessPoint object.</returns>
         public static int EncodedAccessPointBufferSize(Messages.AccessPoint accessPoint)
         {
-            int result = 0;
-            result += 47;
-            return(result);
+            return(47);
         }
 
         public static byte[] EncodeAccessPointList(AccessPointList accessPointList)
@@ -540,7 +529,6 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             if (accessPointList.AccessPointsLength > 0)
             {
                 Array.Copy(accessPointList.AccessPoints, 0, buffer, offset, accessPointList.AccessPointsLength);
-                offset += (int) (accessPointList.AccessPointsLength);
             }
             return(buffer);
         }
@@ -557,7 +545,6 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             {
                 accessPointList.AccessPoints = new byte[accessPointList.AccessPointsLength];
                 Array.Copy(buffer, offset, accessPointList.AccessPoints, 0, accessPointList.AccessPointsLength);
-                offset += (int) accessPointList.AccessPointsLength;
             }
             return(accessPointList);
         }
@@ -571,8 +558,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
         {
             int result = 0;
             result += (int) accessPointList.AccessPointsLength;
-            result += 8;
-            return(result);
+            return(result + 8);
         }
 
         public static byte[] EncodeSockAddr(SockAddr sockAddr)
@@ -596,7 +582,6 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             buffer[offset] = sockAddr.Family;
             offset += 1;
             Array.Copy(sockAddr.Data, 0, buffer, offset, 14);
-            offset += (int) 14;
             return(buffer);
         }
 
@@ -610,7 +595,6 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             offset += 1;
             sockAddr.Data = new byte[14];
             Array.Copy(buffer, offset, sockAddr.Data, 0, 14);
-            offset += (int) 14;
             return(sockAddr);
         }
 
@@ -621,9 +605,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
         /// <returns>Number of bytes required to hold the encoded SockAddr object.</returns>
         public static int EncodedSockAddrBufferSize(Messages.SockAddr sockAddr)
         {
-            int result = 0;
-            result += 16;
-            return(result);
+            return(16);
         }
 
         public static byte[] EncodeAddrInfo(AddrInfo addrInfo)
@@ -665,7 +647,6 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             EncodeString(addrInfo.CanonName, buffer, offset);
             offset += addrInfo.CanonName.Length + 1;
             EncodeUInt32(addrInfo.Next, buffer, offset);
-            offset += 4;
             return(buffer);
         }
 
@@ -696,7 +677,6 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             addrInfo.CanonName = ExtractString(buffer, offset);
             offset += (int) (addrInfo.CanonName.Length + 1);
             addrInfo.Next = ExtractUInt32(buffer, offset);
-            offset += 4;
             return(addrInfo);
         }
 
@@ -710,8 +690,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             int result = 0;
             result += (int) addrInfo.AddrLength;
             result += (int) addrInfo.CanonName.Length;
-            result += 33;
-            return(result);
+            return(result + 33);
         }
 
         public static byte[] EncodeGetAddrInfoRequest(GetAddrInfoRequest getAddrInfoRequest)
@@ -748,7 +727,6 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             if (getAddrInfoRequest.ResultLength > 0)
             {
                 Array.Copy(getAddrInfoRequest.Result, 0, buffer, offset, getAddrInfoRequest.ResultLength);
-                offset += (int) (getAddrInfoRequest.ResultLength);
             }
             return(buffer);
         }
@@ -775,7 +753,6 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             {
                 getAddrInfoRequest.Result = new byte[getAddrInfoRequest.ResultLength];
                 Array.Copy(buffer, offset, getAddrInfoRequest.Result, 0, getAddrInfoRequest.ResultLength);
-                offset += (int) getAddrInfoRequest.ResultLength;
             }
             return(getAddrInfoRequest);
         }
@@ -792,8 +769,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             result += (int) getAddrInfoRequest.ServName.Length;
             result += (int) getAddrInfoRequest.HintsLength;
             result += (int) getAddrInfoRequest.ResultLength;
-            result += 10;
-            return(result);
+            return(result + 10);
         }
 
         public static byte[] EncodeGetAddrInfoResponse(GetAddrInfoResponse getAddrInfoResponse)
@@ -819,7 +795,6 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             if (getAddrInfoResponse.ResLength > 0)
             {
                 Array.Copy(getAddrInfoResponse.Res, 0, buffer, offset, getAddrInfoResponse.ResLength);
-                offset += (int) (getAddrInfoResponse.ResLength);
             }
             return(buffer);
         }
@@ -836,7 +811,6 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             {
                 getAddrInfoResponse.Res = new byte[getAddrInfoResponse.ResLength];
                 Array.Copy(buffer, offset, getAddrInfoResponse.Res, 0, getAddrInfoResponse.ResLength);
-                offset += (int) getAddrInfoResponse.ResLength;
             }
             return(getAddrInfoResponse);
         }
@@ -850,8 +824,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
         {
             int result = 0;
             result += (int) getAddrInfoResponse.ResLength;
-            result += 8;
-            return(result);
+            return(result + 8);
         }
 
         public static byte[] EncodeSocketRequest(SocketRequest socketRequest)
@@ -876,7 +849,6 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             EncodeInt32(socketRequest.Type, buffer, offset);
             offset += 4;
             EncodeInt32(socketRequest.Protocol, buffer, offset);
-            offset += 4;
             return(buffer);
         }
 
@@ -891,7 +863,6 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             socketRequest.Type = ExtractInt32(buffer, offset);
             offset += 4;
             socketRequest.Protocol = ExtractInt32(buffer, offset);
-            offset += 4;
             return(socketRequest);
         }
 
@@ -902,9 +873,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
         /// <returns>Number of bytes required to hold the encoded SocketRequest object.</returns>
         public static int EncodedSocketRequestBufferSize(Messages.SocketRequest socketRequest)
         {
-            int result = 0;
-            result += 16;
-            return(result);
+            return(16);
         }
 
         public static byte[] EncodeIntegerResponse(IntegerResponse integerResponse)
@@ -923,7 +892,6 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             byte[] buffer = new byte[length];
             Array.Clear(buffer, 0, buffer.Length);
             EncodeInt32(integerResponse.Result, buffer, offset);
-            offset += 4;
             return(buffer);
         }
 
@@ -932,7 +900,6 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             IntegerResponse integerResponse = new Messages.IntegerResponse();
 
             integerResponse.Result = ExtractInt32(buffer, offset);
-            offset += 4;
             return(integerResponse);
         }
 
@@ -943,9 +910,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
         /// <returns>Number of bytes required to hold the encoded IntegerResponse object.</returns>
         public static int EncodedIntegerResponseBufferSize(Messages.IntegerResponse integerResponse)
         {
-            int result = 0;
-            result += 4;
-            return(result);
+            return(4);
         }
 
         public static byte[] EncodeIntegerAndErrnoResponse(IntegerAndErrnoResponse integerAndErrnoResponse)
@@ -966,7 +931,6 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             EncodeInt32(integerAndErrnoResponse.Result, buffer, offset);
             offset += 4;
             EncodeInt32(integerAndErrnoResponse.Errno, buffer, offset);
-            offset += 4;
             return(buffer);
         }
 
@@ -977,7 +941,6 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             integerAndErrnoResponse.Result = ExtractInt32(buffer, offset);
             offset += 4;
             integerAndErrnoResponse.Errno = ExtractInt32(buffer, offset);
-            offset += 4;
             return(integerAndErrnoResponse);
         }
 
@@ -988,9 +951,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
         /// <returns>Number of bytes required to hold the encoded IntegerAndErrnoResponse object.</returns>
         public static int EncodedIntegerAndErrnoResponseBufferSize(Messages.IntegerAndErrnoResponse integerAndErrnoResponse)
         {
-            int result = 0;
-            result += 8;
-            return(result);
+            return(8);
         }
 
         public static byte[] EncodeConnectRequest(ConnectRequest connectRequest)
@@ -1019,7 +980,6 @@ namespace Meadow.Coprocessor.F7Micro.Messages
                 offset += (int) (connectRequest.AddrLength);
             }
             EncodeInt32(connectRequest.AddrLen, buffer, offset);
-            offset += 4;
             return(buffer);
         }
 
@@ -1038,7 +998,6 @@ namespace Meadow.Coprocessor.F7Micro.Messages
                 offset += (int) connectRequest.AddrLength;
             }
             connectRequest.AddrLen = ExtractInt32(buffer, offset);
-            offset += 4;
             return(connectRequest);
         }
 
@@ -1051,8 +1010,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
         {
             int result = 0;
             result += (int) connectRequest.AddrLength;
-            result += 12;
-            return(result);
+            return(result + 12);
         }
 
         public static byte[] EncodeFreeAddrInfoRequest(FreeAddrInfoRequest freeAddrInfoRequest)
@@ -1071,7 +1029,6 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             byte[] buffer = new byte[length];
             Array.Clear(buffer, 0, buffer.Length);
             EncodeUInt32(freeAddrInfoRequest.AddrInfoAddress, buffer, offset);
-            offset += 4;
             return(buffer);
         }
 
@@ -1080,7 +1037,6 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             FreeAddrInfoRequest freeAddrInfoRequest = new Messages.FreeAddrInfoRequest();
 
             freeAddrInfoRequest.AddrInfoAddress = ExtractUInt32(buffer, offset);
-            offset += 4;
             return(freeAddrInfoRequest);
         }
 
@@ -1091,9 +1047,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
         /// <returns>Number of bytes required to hold the encoded FreeAddrInfoRequest object.</returns>
         public static int EncodedFreeAddrInfoRequestBufferSize(Messages.FreeAddrInfoRequest freeAddrInfoRequest)
         {
-            int result = 0;
-            result += 4;
-            return(result);
+            return(4);
         }
 
         public static byte[] EncodeTimeVal(TimeVal timeVal)
@@ -1114,7 +1068,6 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             EncodeUInt32(timeVal.TvSec, buffer, offset);
             offset += 4;
             EncodeUInt32(timeVal.TvUsec, buffer, offset);
-            offset += 4;
             return(buffer);
         }
 
@@ -1125,7 +1078,6 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             timeVal.TvSec = ExtractUInt32(buffer, offset);
             offset += 4;
             timeVal.TvUsec = ExtractUInt32(buffer, offset);
-            offset += 4;
             return(timeVal);
         }
 
@@ -1136,9 +1088,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
         /// <returns>Number of bytes required to hold the encoded TimeVal object.</returns>
         public static int EncodedTimeValBufferSize(Messages.TimeVal timeVal)
         {
-            int result = 0;
-            result += 8;
-            return(result);
+            return(8);
         }
 
         public static byte[] EncodeSetSockOptRequest(SetSockOptRequest setSockOptRequest)
@@ -1171,7 +1121,6 @@ namespace Meadow.Coprocessor.F7Micro.Messages
                 offset += (int) (setSockOptRequest.OptionValueLength);
             }
             EncodeInt32(setSockOptRequest.OptionLen, buffer, offset);
-            offset += 4;
             return(buffer);
         }
 
@@ -1194,7 +1143,6 @@ namespace Meadow.Coprocessor.F7Micro.Messages
                 offset += (int) setSockOptRequest.OptionValueLength;
             }
             setSockOptRequest.OptionLen = ExtractInt32(buffer, offset);
-            offset += 4;
             return(setSockOptRequest);
         }
 
@@ -1207,8 +1155,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
         {
             int result = 0;
             result += (int) setSockOptRequest.OptionValueLength;
-            result += 20;
-            return(result);
+            return(result + 20);
         }
 
         public static byte[] EncodeLinger(Linger linger)
@@ -1229,7 +1176,6 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             EncodeInt32(linger.LOnOff, buffer, offset);
             offset += 4;
             EncodeInt32(linger.LLinger, buffer, offset);
-            offset += 4;
             return(buffer);
         }
 
@@ -1240,7 +1186,6 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             linger.LOnOff = ExtractInt32(buffer, offset);
             offset += 4;
             linger.LLinger = ExtractInt32(buffer, offset);
-            offset += 4;
             return(linger);
         }
 
@@ -1251,9 +1196,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
         /// <returns>Number of bytes required to hold the encoded Linger object.</returns>
         public static int EncodedLingerBufferSize(Messages.Linger linger)
         {
-            int result = 0;
-            result += 8;
-            return(result);
+            return(8);
         }
 
         public static byte[] EncodeWriteRequest(WriteRequest writeRequest)
@@ -1282,7 +1225,6 @@ namespace Meadow.Coprocessor.F7Micro.Messages
                 offset += (int) (writeRequest.BufferLength);
             }
             EncodeInt32(writeRequest.Count, buffer, offset);
-            offset += 4;
             return(buffer);
         }
 
@@ -1301,7 +1243,6 @@ namespace Meadow.Coprocessor.F7Micro.Messages
                 offset += (int) writeRequest.BufferLength;
             }
             writeRequest.Count = ExtractInt32(buffer, offset);
-            offset += 4;
             return(writeRequest);
         }
 
@@ -1314,8 +1255,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
         {
             int result = 0;
             result += (int) writeRequest.BufferLength;
-            result += 12;
-            return(result);
+            return(result + 12);
         }
 
         public static byte[] EncodeReadRequest(ReadRequest readRequest)
@@ -1336,7 +1276,6 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             EncodeInt32(readRequest.SocketHandle, buffer, offset);
             offset += 4;
             EncodeInt32(readRequest.Count, buffer, offset);
-            offset += 4;
             return(buffer);
         }
 
@@ -1347,7 +1286,6 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             readRequest.SocketHandle = ExtractInt32(buffer, offset);
             offset += 4;
             readRequest.Count = ExtractInt32(buffer, offset);
-            offset += 4;
             return(readRequest);
         }
 
@@ -1358,9 +1296,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
         /// <returns>Number of bytes required to hold the encoded ReadRequest object.</returns>
         public static int EncodedReadRequestBufferSize(Messages.ReadRequest readRequest)
         {
-            int result = 0;
-            result += 8;
-            return(result);
+            return(8);
         }
 
         public static byte[] EncodeReadResponse(ReadResponse readResponse)
@@ -1389,7 +1325,6 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             EncodeInt32(readResponse.Result, buffer, offset);
             offset += 4;
             EncodeInt32(readResponse.Errno, buffer, offset);
-            offset += 4;
             return(buffer);
         }
 
@@ -1408,7 +1343,6 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             readResponse.Result = ExtractInt32(buffer, offset);
             offset += 4;
             readResponse.Errno = ExtractInt32(buffer, offset);
-            offset += 4;
             return(readResponse);
         }
 
@@ -1421,8 +1355,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
         {
             int result = 0;
             result += (int) readResponse.BufferLength;
-            result += 12;
-            return(result);
+            return(result + 12);
         }
 
         public static byte[] EncodeCloseRequest(CloseRequest closeRequest)
@@ -1441,7 +1374,6 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             byte[] buffer = new byte[length];
             Array.Clear(buffer, 0, buffer.Length);
             EncodeInt32(closeRequest.SocketHandle, buffer, offset);
-            offset += 4;
             return(buffer);
         }
 
@@ -1450,7 +1382,6 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             CloseRequest closeRequest = new Messages.CloseRequest();
 
             closeRequest.SocketHandle = ExtractInt32(buffer, offset);
-            offset += 4;
             return(closeRequest);
         }
 
@@ -1461,9 +1392,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
         /// <returns>Number of bytes required to hold the encoded CloseRequest object.</returns>
         public static int EncodedCloseRequestBufferSize(Messages.CloseRequest closeRequest)
         {
-            int result = 0;
-            result += 4;
-            return(result);
+            return(4);
         }
 
     }
