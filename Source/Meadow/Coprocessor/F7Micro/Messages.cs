@@ -27,20 +27,6 @@ namespace Meadow.Coprocessor.F7Micro.Messages
         public Byte Antenna;
     };
 
-    public struct HttpGetRequest
-    {
-        public UInt16 PortNumber;
-        public String ServerName;
-        public String Uri;
-    };
-
-    public struct HttpGetResponse
-    {
-        public UInt32 SequenceNumber;
-        public UInt32 ResponseLength;
-        public byte[] Response;
-    };
-
     public struct AccessPoint
     {
         public string Ssid;

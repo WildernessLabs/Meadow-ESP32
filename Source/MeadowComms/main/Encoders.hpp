@@ -41,20 +41,6 @@ namespace Esp32Messaging
         uint8_t Antenna;
     };
 
-    struct HttpGetRequest
-    {
-        uint16_t PortNumber;
-        char * ServerName;
-        char * Uri;
-    };
-
-    struct HttpGetResponse
-    {
-        uint32_t SequenceNumber;
-        uint32_t ResponseLength;
-        uint8_t *Response;
-    };
-
     struct AccessPoint
     {
         char Ssid[33];
@@ -227,22 +213,16 @@ public:
     static int EncodedWiFiCredentialsBufferSize(Esp32Messaging::WiFiCredentials *);
     static Esp32Messaging::WiFiCredentials *ExtractWiFiCredentials(uint8_t *);
     static void EncodeAntennaInfo(Esp32Messaging::AntennaInfo *, uint8_t *);
-    static int EncodedAntennaInfoBufferSize(Esp32Messaging::AntennaInfo *);
+    static const int EncodedAntennaInfoBufferSize(Esp32Messaging::AntennaInfo *);
     static Esp32Messaging::AntennaInfo *ExtractAntennaInfo(uint8_t *);
-    static void EncodeHttpGetRequest(Esp32Messaging::HttpGetRequest *, uint8_t *);
-    static int EncodedHttpGetRequestBufferSize(Esp32Messaging::HttpGetRequest *);
-    static Esp32Messaging::HttpGetRequest *ExtractHttpGetRequest(uint8_t *);
-    static void EncodeHttpGetResponse(Esp32Messaging::HttpGetResponse *, uint8_t *);
-    static int EncodedHttpGetResponseBufferSize(Esp32Messaging::HttpGetResponse *);
-    static Esp32Messaging::HttpGetResponse *ExtractHttpGetResponse(uint8_t *);
     static void EncodeAccessPoint(Esp32Messaging::AccessPoint *, uint8_t *);
-    static int EncodedAccessPointBufferSize(Esp32Messaging::AccessPoint *);
+    static const int EncodedAccessPointBufferSize(Esp32Messaging::AccessPoint *);
     static Esp32Messaging::AccessPoint *ExtractAccessPoint(uint8_t *);
     static void EncodeAccessPointList(Esp32Messaging::AccessPointList *, uint8_t *);
     static int EncodedAccessPointListBufferSize(Esp32Messaging::AccessPointList *);
     static Esp32Messaging::AccessPointList *ExtractAccessPointList(uint8_t *);
     static void EncodeSockAddr(Esp32Messaging::SockAddr *, uint8_t *);
-    static int EncodedSockAddrBufferSize(Esp32Messaging::SockAddr *);
+    static const int EncodedSockAddrBufferSize(Esp32Messaging::SockAddr *);
     static Esp32Messaging::SockAddr *ExtractSockAddr(uint8_t *);
     static void EncodeAddrInfo(Esp32Messaging::AddrInfo *, uint8_t *);
     static int EncodedAddrInfoBufferSize(Esp32Messaging::AddrInfo *);
@@ -254,40 +234,40 @@ public:
     static int EncodedGetAddrInfoResponseBufferSize(Esp32Messaging::GetAddrInfoResponse *);
     static Esp32Messaging::GetAddrInfoResponse *ExtractGetAddrInfoResponse(uint8_t *);
     static void EncodeSocketRequest(Esp32Messaging::SocketRequest *, uint8_t *);
-    static int EncodedSocketRequestBufferSize(Esp32Messaging::SocketRequest *);
+    static const int EncodedSocketRequestBufferSize(Esp32Messaging::SocketRequest *);
     static Esp32Messaging::SocketRequest *ExtractSocketRequest(uint8_t *);
     static void EncodeIntegerResponse(Esp32Messaging::IntegerResponse *, uint8_t *);
-    static int EncodedIntegerResponseBufferSize(Esp32Messaging::IntegerResponse *);
+    static const int EncodedIntegerResponseBufferSize(Esp32Messaging::IntegerResponse *);
     static Esp32Messaging::IntegerResponse *ExtractIntegerResponse(uint8_t *);
     static void EncodeIntegerAndErrnoResponse(Esp32Messaging::IntegerAndErrnoResponse *, uint8_t *);
-    static int EncodedIntegerAndErrnoResponseBufferSize(Esp32Messaging::IntegerAndErrnoResponse *);
+    static const int EncodedIntegerAndErrnoResponseBufferSize(Esp32Messaging::IntegerAndErrnoResponse *);
     static Esp32Messaging::IntegerAndErrnoResponse *ExtractIntegerAndErrnoResponse(uint8_t *);
     static void EncodeConnectRequest(Esp32Messaging::ConnectRequest *, uint8_t *);
     static int EncodedConnectRequestBufferSize(Esp32Messaging::ConnectRequest *);
     static Esp32Messaging::ConnectRequest *ExtractConnectRequest(uint8_t *);
     static void EncodeFreeAddrInfoRequest(Esp32Messaging::FreeAddrInfoRequest *, uint8_t *);
-    static int EncodedFreeAddrInfoRequestBufferSize(Esp32Messaging::FreeAddrInfoRequest *);
+    static const int EncodedFreeAddrInfoRequestBufferSize(Esp32Messaging::FreeAddrInfoRequest *);
     static Esp32Messaging::FreeAddrInfoRequest *ExtractFreeAddrInfoRequest(uint8_t *);
     static void EncodeTimeVal(Esp32Messaging::TimeVal *, uint8_t *);
-    static int EncodedTimeValBufferSize(Esp32Messaging::TimeVal *);
+    static const int EncodedTimeValBufferSize(Esp32Messaging::TimeVal *);
     static Esp32Messaging::TimeVal *ExtractTimeVal(uint8_t *);
     static void EncodeSetSockOptRequest(Esp32Messaging::SetSockOptRequest *, uint8_t *);
     static int EncodedSetSockOptRequestBufferSize(Esp32Messaging::SetSockOptRequest *);
     static Esp32Messaging::SetSockOptRequest *ExtractSetSockOptRequest(uint8_t *);
     static void EncodeLinger(Esp32Messaging::Linger *, uint8_t *);
-    static int EncodedLingerBufferSize(Esp32Messaging::Linger *);
+    static const int EncodedLingerBufferSize(Esp32Messaging::Linger *);
     static Esp32Messaging::Linger *ExtractLinger(uint8_t *);
     static void EncodeWriteRequest(Esp32Messaging::WriteRequest *, uint8_t *);
     static int EncodedWriteRequestBufferSize(Esp32Messaging::WriteRequest *);
     static Esp32Messaging::WriteRequest *ExtractWriteRequest(uint8_t *);
     static void EncodeReadRequest(Esp32Messaging::ReadRequest *, uint8_t *);
-    static int EncodedReadRequestBufferSize(Esp32Messaging::ReadRequest *);
+    static const int EncodedReadRequestBufferSize(Esp32Messaging::ReadRequest *);
     static Esp32Messaging::ReadRequest *ExtractReadRequest(uint8_t *);
     static void EncodeReadResponse(Esp32Messaging::ReadResponse *, uint8_t *);
     static int EncodedReadResponseBufferSize(Esp32Messaging::ReadResponse *);
     static Esp32Messaging::ReadResponse *ExtractReadResponse(uint8_t *);
     static void EncodeCloseRequest(Esp32Messaging::CloseRequest *, uint8_t *);
-    static int EncodedCloseRequestBufferSize(Esp32Messaging::CloseRequest *);
+    static const int EncodedCloseRequestBufferSize(Esp32Messaging::CloseRequest *);
     static Esp32Messaging::CloseRequest *ExtractCloseRequest(uint8_t *);
 
 };

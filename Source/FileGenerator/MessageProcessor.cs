@@ -645,11 +645,9 @@ namespace FileGenerator
             sourceFile.WriteLine($" *  @returns");
             sourceFile.WriteLine($" *      Number of bytes required to hold the encoded {message.Name} object.");
             sourceFile.WriteLine(" */");
-            sourceFile.WriteLine($"int Encoders::Encoded{message.Name}BufferSize(Esp32Messaging::{message.Name} *{variableName})");
-            FunctionPrototypes.AppendLine($"    static int Encoded{message.Name}BufferSize(Esp32Messaging::{message.Name} *);");
-            sourceFile.WriteLine("{");
-            sourceFile.WriteLine("    int result = 0;");
+
             int staticSpaceRequired = 0;
+            var dynamicStatements = new StringBuilder();
             foreach (MessageElement me in message.MessageElements)
             {
                 DataType dt = GetDataType(me.DataType);
@@ -657,7 +655,7 @@ namespace FileGenerator
                 switch (dt.Name.ToLower())
                 {
                     case "string":
-                        sourceFile.WriteLine($"    result += strlen({variableName}->{me.Name});");
+                        dynamicStatements.AppendLine($"    result += strlen({variableName}->{me.Name});");
                         staticSpaceRequired++;          // Terminating null.
                         break;
                     case "fixedchararray":
@@ -665,19 +663,31 @@ namespace FileGenerator
                         staticSpaceRequired += (int) me.Length;
                         break;
                     case "blob":
-                        sourceFile.WriteLine($"    result += {variableName}->{me.Name}Length;");
+                        dynamicStatements.AppendLine($"    result += {variableName}->{me.Name}Length;");
                         staticSpaceRequired += 4;       // UInt32 object containing the length.
                         break;
                     case "structure":
-                        sourceFile.WriteLine($"    result += Encoded{me.CSName})BufferSize();");
+                        dynamicStatements.AppendLine($"    result += Encoded{me.CSName})BufferSize();");
                         break;
                     default:
                         staticSpaceRequired += dt.Size;
                         break;
                 }
             }
-            sourceFile.WriteLine($"    result += {staticSpaceRequired};");
-            sourceFile.WriteLine("    return(result);");
+            string modifier = dynamicStatements.Length == 0 ? "const " : "";
+            sourceFile.WriteLine($"{modifier}int Encoders::Encoded{message.Name}BufferSize(Esp32Messaging::{message.Name} *{variableName})");
+            FunctionPrototypes.AppendLine($"    static {modifier}int Encoded{message.Name}BufferSize(Esp32Messaging::{message.Name} *);");
+            sourceFile.WriteLine("{");
+            if (dynamicStatements.Length == 0)
+            {
+                sourceFile.WriteLine($"    return({staticSpaceRequired});");
+            }
+            else
+            {
+                sourceFile.WriteLine("    int result = 0;");
+                sourceFile.Write($"{dynamicStatements}");
+                sourceFile.WriteLine($"    return(result + {staticSpaceRequired});");
+            }
             sourceFile.WriteLine("}");
             sourceFile.WriteLine();
         }
