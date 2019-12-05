@@ -23,10 +23,8 @@
 /**
  *  Constructor for the RequestHandlerBase class.
  */
-RequestHandlerBase::RequestHandlerBase()
+RequestHandlerBase::RequestHandlerBase() : _queueHandle(nullptr), _taskHandle(nullptr)
 {
-    _queueHandle = nullptr;
-    _taskHandle = nullptr;
 }
 
 /**
