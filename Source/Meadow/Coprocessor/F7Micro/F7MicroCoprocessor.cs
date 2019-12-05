@@ -78,13 +78,15 @@ namespace Meadow.Coprocessor.F7Micro
             //
             //  Prepare the request and wait object.
             //
-            var message = new Message();
-            message.Interface = (byte) Esp32Interfaces.WiFi;
-            message.Function = (byte) WiFiFunction.GetAntenna;
-            message.MessageID = _dispatcher.GetNextMessageId();
-            message.MessageType = (byte) MessageTypes.Data;
-            message.Payload = null;
-            message.PayloadLength = 0;
+            var message = new Message
+            {
+                Interface = (byte)Esp32Interfaces.WiFi,
+                Function = (byte)WiFiFunction.GetAntenna,
+                MessageID = _dispatcher.GetNextMessageId(),
+                MessageType = (byte)MessageTypes.Data,
+                Payload = null,
+                PayloadLength = 0
+            };
 
             var response = _dispatcher.SendMessage(message);
             var antenna = Encoders.ExtractAntennaInfo(response.Payload, 0);
@@ -101,19 +103,20 @@ namespace Meadow.Coprocessor.F7Micro
             //
             //  Prepare the request and wait object.
             //
-            var message = new Message();
-            message.Interface = (byte) Esp32Interfaces.WiFi;
-            message.Function = (byte) WiFiFunction.SetAntenna;
-            message.MessageID = _dispatcher.GetNextMessageId();
-            message.MessageType = (byte) MessageTypes.Data;
+            var message = new Message
+            {
+                Interface = (byte)Esp32Interfaces.WiFi,
+                Function = (byte)WiFiFunction.SetAntenna,
+                MessageID = _dispatcher.GetNextMessageId(),
+                MessageType = (byte)MessageTypes.Data
+            };
 
-            var antennaInfo = new AntennaInfo();
-            antennaInfo.Antenna = (byte) antenna;
+            var antennaInfo = new AntennaInfo { Antenna = (byte)antenna };
             var encodedAntenna = Encoders.EncodeAntennaInfo(antennaInfo);
             message.Payload = encodedAntenna;
             message.PayloadLength = (UInt32) encodedAntenna.Length;
             
-            var response = _dispatcher.SendMessage(message);
+            _dispatcher.SendMessage(message);
         }
 
         /// <summary>
@@ -123,22 +126,22 @@ namespace Meadow.Coprocessor.F7Micro
         /// <param name="password">Password for the network.</param>
         public IPAddress StartNetwork(string ssid, string password)
         {
-            var startNetwork = new WiFiCredentials();
-            startNetwork.NetworkName = ssid;
-            startNetwork.Password = password;
+            var startNetwork = new WiFiCredentials { NetworkName = ssid, Password = password };
 
-            var message = new Message();
-            message.Interface = (byte)Esp32Interfaces.WiFi;
-            message.Function = (uint)WiFiFunction.Start;
-            message.MessageID = _dispatcher.GetNextMessageId();
-            message.MessageType = (byte)MessageTypes.Data;
+            var message = new Message
+            {
+                Interface = (byte)Esp32Interfaces.WiFi,
+                Function = (uint)WiFiFunction.Start,
+                MessageID = _dispatcher.GetNextMessageId(),
+                MessageType = (byte)MessageTypes.Data
+            };
             var encodedStartMessage = Encoders.EncodeWiFiCredentials(startNetwork);
             message.Payload = encodedStartMessage;
             message.PayloadLength = (uint)encodedStartMessage.Length;
 
             var response = _dispatcher.SendMessage(message);
 
-            IPAddress address = new IPAddress(new Byte[] { response.Payload[0], response.Payload[1], response.Payload[2], response.Payload[3] });
+            var address = new IPAddress(new Byte[] { response.Payload[0], response.Payload[1], response.Payload[2], response.Payload[3] });
             return (address);
         }
 
@@ -152,12 +155,14 @@ namespace Meadow.Coprocessor.F7Micro
         /// <exception cref="CoprocessorException">F7MicroCoprocessor exception is throw if there was a problem on the ESp32.</exception>
         public List<WifiNetwork> GetAccessPoints()
         {
-            var message = new Message();
-            message.MessageType = (byte)MessageTypes.Data;
-            message.Interface = (byte)Esp32Interfaces.WiFi;
-            message.Function = (UInt32)WiFiFunction.GetAccessPoints;
-            message.MessageID = 0x02;
-            message.PayloadLength = 0;
+            var message = new Message
+            {
+                MessageType = (byte)MessageTypes.Data,
+                Interface = (byte)Esp32Interfaces.WiFi,
+                Function = (UInt32)WiFiFunction.GetAccessPoints,
+                MessageID = 0x02,
+                PayloadLength = 0
+            };
 
             var response = _dispatcher.SendMessage(message);
             //
@@ -219,7 +224,7 @@ namespace Meadow.Coprocessor.F7Micro
         /// <returns>Error code if there is a problem, 0 if successful.</returns>
         public int GetAddrInfo(string nodeName, string serviceName, object hints, out object res)
         {
-            var h = (AddrInfo)hints;
+            var h = (AddrInfo) hints;
 
             var getAddrInfoRequest = new GetAddrInfoRequest { NodeName = nodeName, ServName = serviceName };
             var ai = Encoders.EncodeAddrInfo(h);
@@ -236,7 +241,6 @@ namespace Meadow.Coprocessor.F7Micro
                 MessageType = (byte)MessageTypes.Data,
                 Payload = Encoders.EncodeGetAddrInfoRequest(getAddrInfoRequest)
             };
-            ;
             message.PayloadLength = (UInt32) message.Payload.Length;
             
             var response = _dispatcher.SendMessage(message);
