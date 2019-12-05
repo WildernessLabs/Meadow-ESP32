@@ -51,7 +51,6 @@ namespace Meadow.Coprocessor.F7Micro
         /// </summary>
         private F7MicroCoprocessor()
         {
-            
         }
         
         /// <summary>
@@ -152,7 +151,6 @@ namespace Meadow.Coprocessor.F7Micro
         /// The network must be started before this method can be called.
         /// </remarks>
         /// <returns>List of access points (or null if no access points can be found).</returns>
-        /// <exception cref="CoprocessorException">F7MicroCoprocessor exception is throw if there was a problem on the ESp32.</exception>
         public List<WifiNetwork> GetAccessPoints()
         {
             var message = new Message
@@ -218,7 +216,7 @@ namespace Meadow.Coprocessor.F7Micro
         /// <a href="http://www.nongnu.org/lwip/2_0_x/lwip_2netdb_8h.html#af356989c172a51187e22b557f22d4165">lwip_getaddrinfo</a>
         /// </remarks>
         /// <param name="nodeName">Name of the server (node) name or numeric host address string (IP address).</param>
-        /// <param name="serverName">Service name or port number of the service.</param>
+        /// <param name="serviceName">Service name or port number of the service.</param>
         /// <param name="hints">AddrInfo structure that contains hints about the type of socket the caller supports.</param>
         /// <param name="res">Pointer to a list of AddrInfo structures containing information about the host.</param>
         /// <returns>Error code if there is a problem, 0 if successful.</returns>
@@ -257,13 +255,25 @@ namespace Meadow.Coprocessor.F7Micro
             return (addrInfoResponse.Errno);
         }
 
+        /// <summary>
+        /// Create an endpoint for communication and return a socket handle (file descriptor)
+        /// for the endpoint.
+        /// </summary>
+        /// <remarks>
+        /// This method instructs the ESP32 to call the <i>socket</i> method which will in turn
+        /// call the equivalent LWIP method.
+        ///
+        /// See:
+        /// <a href="http://www.nongnu.org/lwip/2_0_x/group__socket.html#ga862d8f4070c66dddb979540ce9ba6a83">socket</a>
+        /// <a href="">socket</a>
+        /// </remarks>
+        /// <param name="domain">Specify the domain (communication protocol)</param>
+        /// <param name="type">Communication type (semantics) to be used for this endpoint.</param>
+        /// <param name="protocol">Protocol to be used.</param>
+        /// <returns>Handle for the socket if successful, -1 otherwise.</returns>
         public int Socket(int domain, int type, int protocol)
         {
-            //
-            //    Now get the socket handle.
-            //
             var socketRequest = new SocketRequest {Domain = domain, Type = type, Protocol = protocol};
-
             var message = new Message
             {
                 Interface = (byte)Esp32Interfaces.WiFi,
@@ -281,6 +291,21 @@ namespace Meadow.Coprocessor.F7Micro
             return (socketResponse.Result);
         }
 
+        /// <summary>
+        /// Connect to the specified socket.
+        /// </summary>
+        /// <remarks>
+        /// This method instructs the ESP32 to call the <i>socket</i> method which will in turn
+        /// call the equivalent LWIP method.
+        ///
+        /// See:
+        /// <a href="http://www.nongnu.org/lwip/2_0_x/group__socket.html#ga862d8f4070c66dddb979540ce9ba6a83">socket</a>
+        /// <a href="">socket</a>
+        /// </remarks>
+        /// <param name="socketHandle">ESP32 handle to the socket to connect to.</param>
+        /// <param name="addr">Socket address information for the connect call.</param>
+        /// <param name="addrlen">Size of the addr parameter.</param>
+        /// <returns>0 if successful, -1 if this call fails.</returns>
         public int Connect(int socketHandle, SockAddr addr, int addrlen)
         {
             var connectRequest = new ConnectRequest { SocketHandle = socketHandle, Addr = Encoders.EncodeSockAddr(addr) };
@@ -306,8 +331,15 @@ namespace Meadow.Coprocessor.F7Micro
         /// <summary>
         /// Free any previously allocated addrinfo structure and pointers.
         /// </summary>
-        /// <param name="addrInfoPointer"></param>
-        /// <exception cref="CoprocessorException"></exception>
+        /// <remarks>
+        /// This method instructs the ESP32 to call the <i>socket</i> method which will in turn
+        /// call the equivalent LWIP method.
+        ///
+        /// See:
+        /// <a href="http://www.nongnu.org/lwip/2_0_x/group__socket.html#ga862d8f4070c66dddb979540ce9ba6a83">socket</a>
+        /// <a href="http://www.nongnu.org/lwip/2_0_x/lwip_2netdb_8h.html#a7f65ff5982a0743849a644ef2cd15ef5">lwip_freeaddrinfo</a>
+        /// </remarks>
+        /// <param name="addrInfoPointer">UInt32 value that represents the pointer to the addrinfo object on the ESP32.</param>
         public void FreeAddrInfo(UInt32 addrInfoPointer)
         {
             var freeAddrInfoRequest = new FreeAddrInfoRequest { AddrInfoAddress = addrInfoPointer };
@@ -326,9 +358,15 @@ namespace Meadow.Coprocessor.F7Micro
         }
 
         /// <summary>
-        /// 
+        /// Set the options for the specified socket.
         /// </summary>
         /// <remarks>
+        /// This method instructs the ESP32 to call the <i>setsockopt</i> method which will in turn
+        /// call the equivalent LWIP method.
+        ///
+        /// See:
+        /// <a href="http://www.nongnu.org/lwip/2_0_x/group__socket.html#ga115d74cd1953e7bafc2e34157c697df1">setsockopt</a>
+        ///
         /// The only supported socket level type is SolSocket 
         ///
         /// According to the ESP32 documentation, the following socket option types are NOT supported:
@@ -341,12 +379,12 @@ namespace Meadow.Coprocessor.F7Micro
         ///     - SoSndLoWat
         ///     - SoRcvLoWat
         /// </remarks>
-        /// <param name="socketHandle"></param>
-        /// <param name="level"></param>
-        /// <param name="optionName"></param>
-        /// <param name="optionValue"></param>
-        /// <param name="optionLength"></param>
-        /// <returns></returns>
+        /// <param name="socketHandle">ESP32 handle for the socket to be operated on.</param>
+        /// <param name="level">Currently only SolSocket is supported for this method.</param>
+        /// <param name="optionName">Option to change (see remarks above).</param>
+        /// <param name="optionValue">Data relevant to the option name being changed.</param>
+        /// <param name="optionLength">Size of the optionValue parameter in bytes.</param>
+        /// <returns>-1 if the setsockopt call on the ESP32 fails.</returns>
         public int SetSockOpt(int socketHandle, SocketLevelType level, SocketOptionType optionName, object optionValue, UInt32 optionLength)
         {
             var setSockOptRequest = new SetSockOptRequest { SocketNumber = socketHandle, Level = (int)level, OptionName = (int)optionName };
@@ -396,6 +434,20 @@ namespace Meadow.Coprocessor.F7Micro
             return(resultCode);
         }
 
+        /// <summary>
+        /// Write the specified number of bytes to the socket.
+        /// </summary>
+        /// <remarks>
+        /// This method instructs the ESP32 to call the <i>write</i> method which will in turn
+        /// call the equivalent LWIP method.
+        ///
+        /// See:
+        /// <a href="http://www.nongnu.org/lwip/2_0_x/group__socket.html#ga0a651eb5fb5e6127f5e5153ce2251f3d">socket</a>
+        /// </remarks>
+        /// <param name="socketHandle">ESP32 handle for the socket to write the data to.</param>
+        /// <param name="buffer">Data to be written to the socket.</param>
+        /// <param name="count">Number of bytes to write to the socket.</param>
+        /// <returns>Number of bytes written to the socket.</returns>
         public int Write(int socketHandle, byte[] buffer, int count)
         {
             var request = new WriteRequest { SocketHandle = socketHandle, Buffer = buffer, Count = count, BufferLength = (uint)buffer.Length };
@@ -423,6 +475,20 @@ namespace Meadow.Coprocessor.F7Micro
             return(resultCode);
         }
 
+        /// <summary>
+        /// Read the specified number of bytes from the socket and place them in the buffer.
+        /// </summary>
+        /// <remarks>
+        /// This method instructs the ESP32 to call the <i>read</i> method which will in turn
+        /// call the equivalent LWIP method.
+        ///
+        /// See:
+        /// <a href="http://www.nongnu.org/lwip/2_0_x/group__socket.html#ga822040573319cf87bfe6758d511be57f">read</a>
+        /// </remarks>
+        /// <param name="socketHandle">ESP32 handle to the socket to be read.</param>
+        /// <param name="buffer">Buffer to hold the results of the read.</param>
+        /// <param name="count">Number of bytes in the buffer.</param>
+        /// <returns>Number of bytes read from the socket.</returns>
         public int Read(int socketHandle, byte[] buffer, int count)
         {
             var request = new ReadRequest { SocketHandle = socketHandle, Count = count };
@@ -456,6 +522,18 @@ namespace Meadow.Coprocessor.F7Micro
             return(amountRead);
         }
 
+        /// <summary>
+        /// Call the close method on the ESP32 to close the specified socket handle.
+        /// </summary>
+        /// <remarks>
+        /// This method instructs the ESP32 to call the <i>close</i> method which will in turn
+        /// call the equivalent LWIP method.
+        ///
+        /// See:
+        /// <a href="http://www.nongnu.org/lwip/2_0_x/group__socket.html#ga4ef17e85ec4d3acdcee5ce23f8ed93c4">socket</a>
+        /// </remarks>
+        /// <param name="socketHandle">ESP32 handle to the socket to be closed.</param>
+        /// <returns>0 for success, -1 for failure.</returns>
         public int Close(int socketHandle)
         {
             var request = new CloseRequest { SocketHandle = socketHandle };
