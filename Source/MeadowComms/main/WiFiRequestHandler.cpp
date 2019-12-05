@@ -616,6 +616,7 @@ void WiFiRequestHandler::SetSockOpt(Message *message)
     void *optionValue = nullptr;
     int optionLength = 0;
     Esp32Messaging::TimeVal *tv = nullptr;
+    struct timeval timeOut;
 
     switch (request->OptionName)
     {
@@ -631,7 +632,6 @@ void WiFiRequestHandler::SetSockOpt(Message *message)
             break;
         case SO_RCVTIMEO:       /* Set the receive timeout */
             tv = Encoders::ExtractTimeVal(request->OptionValue);
-            struct timeval timeOut;
             timeOut.tv_sec = tv->TvSec;
             timeOut.tv_usec = tv->TvUsec;
             vPortFree(tv);
