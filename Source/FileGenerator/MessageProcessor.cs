@@ -579,27 +579,30 @@ namespace FileGenerator
             sourceFile.WriteLine($"void Encoders::Encode{m.Name}(Esp32Messaging::{m.Name} *{variableName}, uint8_t *buffer)");
             FunctionPrototypes.AppendLine($"    static void Encode{m.Name}(Esp32Messaging::{m.Name} *, uint8_t *);");
             sourceFile.WriteLine("{");
-            foreach (MessageElement me in m.MessageElements)
+            for (int index = 0; index < m.MessageElements.Count; index++)
+            // foreach (MessageElement me in m.MessageElements)
             {
+                MessageElement me = m.MessageElements[index];
+                string sizeStatement = "";
                 DataType dt = GetDataType(me.DataType);
                 switch (dt.Name.ToLower())
                 {
                     case "byte":
                         sourceFile.WriteLine($"    *buffer = {variableName}->{me.Name};");
-                        sourceFile.WriteLine($"    buffer += {dt.Size};");
+                        sizeStatement = $"    buffer += {dt.Size};";
                         break;
                     case "sbyte":
                         sourceFile.WriteLine($"    *buffer = (uint8_t) {variableName}->{me.Name};");
-                        sourceFile.WriteLine($"    buffer += {dt.Size};");
+                        sizeStatement = $"    buffer += {dt.Size};";
                         break;
                     case "string":
                         sourceFile.WriteLine($"    Encode{dt.CSharpTypeName}({variableName}->{me.Name}, buffer);");
-                        sourceFile.WriteLine($"    buffer += strlen({variableName}->{me.Name}) + 1;");
+                        sizeStatement = $"    buffer += strlen({variableName}->{me.Name}) + 1;";
                         break;
                     case "fixedchararray":
                     case "fixedbytearray":
                         sourceFile.WriteLine($"    memcpy((void *) buffer, (void *) {variableName}->{me.Name}, {me.Length});");
-                        sourceFile.WriteLine($"    buffer += {me.Length};");
+                        sizeStatement = $"    buffer += {me.Length};";
                         break;
                     case "blob":
                         sourceFile.WriteLine($"    EncodeUInt32({variableName}->{me.Name}Length, buffer);");
@@ -607,21 +610,31 @@ namespace FileGenerator
                         sourceFile.WriteLine($"    if ({variableName}->{me.Name}Length > 0)");
                         sourceFile.WriteLine("    {");
                         sourceFile.WriteLine($"        memcpy((void *) buffer, (void *) {variableName}->{me.Name}, {variableName}->{me.Name}Length);");
-                        sourceFile.WriteLine($"        buffer += {variableName}->{me.Name}Length;");
+                        if (index != (m.MessageElements.Count - 1))
+                        {
+                            sourceFile.WriteLine($"        buffer += {variableName}->{me.Name}Length;");
+                        }
                         sourceFile.WriteLine("    }");
                         break;
                     case "structure":
                         sourceFile.WriteLine($"            {variableName}.{me.Name} = Extract{me.CSName}(buffer, offset);");
-                        sourceFile.WriteLine($"            offset += Encoded{me.CSName}BufferSize({variableName}.{me.Name});");
+                        sizeStatement = $"            offset += Encoded{me.CSName}BufferSize({variableName}.{me.Name});";
                         break;
                     case "pointer": 
                         sourceFile.WriteLine($"    EncodeUInt32((uint32_t) {variableName}->{me.Name}, buffer);");
-                        sourceFile.WriteLine($"    buffer += 4;");
+                        sizeStatement = $"    buffer += 4;";
                         break;
                     default:
                         sourceFile.WriteLine($"    Encode{dt.CSharpTypeName}({variableName}->{me.Name}, buffer);");
-                        sourceFile.WriteLine($"    buffer += {dt.Size};");
+                        sizeStatement = $"    buffer += {dt.Size};";
                         break;
+                }
+                if (index != (m.MessageElements.Count - 1))
+                {
+                    if (!string.IsNullOrEmpty(sizeStatement))
+                    {
+                        sourceFile.WriteLine(sizeStatement);
+                    }
                 }
             }
             sourceFile.WriteLine("}");
@@ -674,7 +687,8 @@ namespace FileGenerator
                         break;
                 }
             }
-            string modifier = dynamicStatements.Length == 0 ? "const " : "";
+//            string modifier = dynamicStatements.Length == 0 ? "const " : "";
+            string modifier = "";
             sourceFile.WriteLine($"{modifier}int Encoders::Encoded{message.Name}BufferSize(Esp32Messaging::{message.Name} *{variableName})");
             FunctionPrototypes.AppendLine($"    static {modifier}int Encoded{message.Name}BufferSize(Esp32Messaging::{message.Name} *);");
             sourceFile.WriteLine("{");

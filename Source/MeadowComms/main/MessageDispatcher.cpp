@@ -20,6 +20,7 @@
  */
 MessageDispatcher::MessageDispatcher()
 {
+    _messageIdMutex = xSemaphoreCreateMutex();
 }
 
 /**
@@ -32,7 +33,6 @@ MessageDispatcher::MessageDispatcher(TransportProviderBase *transportProvider) :
 {
     _transportProvider = transportProvider;
     _transportProvider->Setup(this);
-    _messageIdMutex = xSemaphoreCreateMutex();
 }
 
 /**
