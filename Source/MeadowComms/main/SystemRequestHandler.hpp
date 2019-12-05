@@ -39,7 +39,7 @@ private:
     /*
      *  This method will dispatch incoming messages to the appropriate request handler.
      */
-    void DispatchRequest(Message *);
+    void DispatchRequest(Message *) override;
 
     /*
      *  Constructor(s) and destructor.
@@ -56,7 +56,7 @@ public:
     /*
      *  Public constructor.
      */
-    SystemRequestHandler(MessageDispatcher *);
+    explicit SystemRequestHandler(MessageDispatcher *);
 
     /*
      *  Public methods.

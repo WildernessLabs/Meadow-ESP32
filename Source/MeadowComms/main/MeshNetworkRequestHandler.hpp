@@ -34,7 +34,7 @@ private:
     /*
      *  This method will dispatch incoming messages to the appropriate request handler.
      */
-    void DispatchRequest(Message *);
+    void DispatchRequest(Message *) override;
 
     /*
      *  Private constructor(s) and destructor.
@@ -46,7 +46,7 @@ public:
     /*
      *  Constructor for a Mesh Network request handler object.
      */
-    MeshNetworkRequestHandler(MessageDispatcher *);
+    explicit MeshNetworkRequestHandler(MessageDispatcher *);
 
     /*
      *  Provide and additional setup operations not covered by the constructors.

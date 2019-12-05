@@ -70,7 +70,7 @@ bool MessageDispatcher::QueueMessageForEsp32(Message *request)
                 _wifiRequestHandler = new WiFiRequestHandler(this);
                 _wifiRequestHandler->Setup();
             }
-            provider = (RequestHandlerBase *) _wifiRequestHandler;
+            provider = dynamic_cast<RequestHandlerBase *>(_wifiRequestHandler);
             break;
         case Esp32Interfaces::BlueTooth:
             if (!_bluetoothRequestHandler)
@@ -78,7 +78,7 @@ bool MessageDispatcher::QueueMessageForEsp32(Message *request)
                 _bluetoothRequestHandler = new BluetoothRequestHandler(this);
                 _bluetoothRequestHandler->Setup();
             }
-            provider = (RequestHandlerBase *) _bluetoothRequestHandler;
+            provider = dynamic_cast<RequestHandlerBase *>(_bluetoothRequestHandler);
             break;
         case Esp32Interfaces::MeshNetwork:
             if (!_meshNetworkRequestHandler)
@@ -86,7 +86,7 @@ bool MessageDispatcher::QueueMessageForEsp32(Message *request)
                 _meshNetworkRequestHandler = new MeshNetworkRequestHandler(this);
                 _meshNetworkRequestHandler->Setup();
             }
-            provider = (RequestHandlerBase *) _meshNetworkRequestHandler;
+            provider = dynamic_cast<RequestHandlerBase *>(_meshNetworkRequestHandler);
             break;
         case Esp32Interfaces::System:
             if (!_systemRequestHandler)
@@ -94,7 +94,7 @@ bool MessageDispatcher::QueueMessageForEsp32(Message *request)
                 _systemRequestHandler = new SystemRequestHandler(this);
                 _systemRequestHandler->Setup();
             }
-            provider = (RequestHandlerBase *) _systemRequestHandler;
+            provider = dynamic_cast<RequestHandlerBase *>(_systemRequestHandler);
             break;
         default:
             ESP_LOGI(__func__, "Unknown interface %d, message will not be processed.", request->Interface);

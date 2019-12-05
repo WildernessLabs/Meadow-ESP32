@@ -27,7 +27,7 @@
  */
 extern "C" esp_err_t WiFiEventHandler(void *context, system_event_t *event)
 {
-    WiFiRequestHandler *sender = (WiFiRequestHandler *) context;
+    WiFiRequestHandler *sender = static_cast<WiFiRequestHandler *>(context);
 
     return(sender->EventHandler(context, event));
 }

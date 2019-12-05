@@ -390,7 +390,7 @@ Message *Encoders::ExtractMessage(uint8_t *buffer, uint32_t bufferLength, bool h
     Message *message = nullptr;
     if (crc == CRC32(buffer, bufferLength))
     {
-        message = (Message *) pvPortMalloc(sizeof(Message));
+        message = static_cast<Message *>(pvPortMalloc(sizeof(Message)));
 
         memset((void *) message, 0, sizeof(Message));
         message->MessageType = *buffer;

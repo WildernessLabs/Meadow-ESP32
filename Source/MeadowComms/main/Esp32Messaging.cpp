@@ -147,7 +147,7 @@ Message::Message(const Message &original)
  */
 Message *Message::CreateOnHeap(uint8_t messageType, uint8_t interface, uint32_t function, uint32_t statusCode, uint32_t messageId, uint8_t *payload, uint32_t payloadLength)
 {
-    Message *result = (Message *) pvPortMalloc(sizeof(Message));
+    Message *result = static_cast<Message *>(pvPortMalloc(sizeof(Message)));
 
     memset(result, 0, sizeof(Message));
     result->MessageType = messageType;

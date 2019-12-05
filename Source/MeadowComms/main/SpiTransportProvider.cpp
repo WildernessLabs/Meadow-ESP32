@@ -375,8 +375,6 @@ void SpiTransportProvider::DeleteTransaction(spi_slave_transaction_t *transactio
         }
         vPortFree(transaction);
     }
-
-    transaction = nullptr;
 }
 
 /**
@@ -419,7 +417,7 @@ void SpiTransportProvider::Echo(const char *messageString)
 {
     Message *message;
 
-    message = (Message *) pvPortMalloc(sizeof(Message));
+    message = static_cast<Message *>(pvPortMalloc(sizeof(Message)));
     message->Interface = Esp32Interfaces::System;
     message->Function = SystemFunction::Echo;
     message->MessageID = 0x00;
@@ -1163,7 +1161,7 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessMessages(spi_slave_transac
  */
 void SpiTransportProvider::Task(void *pvParameters)
 {
-    SpiTransportProvider *sender = (SpiTransportProvider *) pvParameters;
+    SpiTransportProvider *sender = static_cast<SpiTransportProvider *>(pvParameters);
 
     //
     //  It is important to wait for the outbound message queue to be

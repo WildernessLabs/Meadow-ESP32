@@ -36,7 +36,7 @@ private:
     /**
      *  This method will dispatch incoming messages to the appropriate request handler.
      */
-    void DispatchRequest(Message *);
+    void DispatchRequest(Message *) override;
 
     /*
      *  Private constructor and destructor.
@@ -49,7 +49,7 @@ public:
      *  Construct a new Bluetooth request handler object with reference to a
      *  Message Dispatcher object.
      */
-    BluetoothRequestHandler(MessageDispatcher *);
+    explicit BluetoothRequestHandler(MessageDispatcher *);
 
     /*
      *  Provide and additional setup operations not covered by the constructors.

@@ -85,7 +85,7 @@ void RequestHandlerBase::Setup()
  */
 void RequestHandlerBase::Task(void *pvParameters)
 {
-    RequestHandlerBase *sender = (RequestHandlerBase *) pvParameters;
+    RequestHandlerBase *sender = static_cast<RequestHandlerBase *>(pvParameters);
     while (true)
     {
         Message *message;
