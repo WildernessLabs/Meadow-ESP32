@@ -451,7 +451,6 @@ void Encoders::EncodeWiFiCredentials(Esp32Messaging::WiFiCredentials *wiFiCreden
     EncodeString(wiFiCredentials->NetworkName, buffer);
     buffer += strlen(wiFiCredentials->NetworkName) + 1;
     EncodeString(wiFiCredentials->Password, buffer);
-    buffer += strlen(wiFiCredentials->Password) + 1;
 }
 
 /**
@@ -508,7 +507,6 @@ Esp32Messaging::WiFiCredentials *Encoders::ExtractWiFiCredentials(uint8_t *buffe
 void Encoders::EncodeAntennaInfo(Esp32Messaging::AntennaInfo *antennaInfo, uint8_t *buffer)
 {
     *buffer = antennaInfo->Antenna;
-    buffer += 1;
 }
 
 /**
@@ -520,7 +518,7 @@ void Encoders::EncodeAntennaInfo(Esp32Messaging::AntennaInfo *antennaInfo, uint8
  *  @returns
  *      Number of bytes required to hold the encoded AntennaInfo object.
  */
-const int Encoders::EncodedAntennaInfoBufferSize(Esp32Messaging::AntennaInfo *antennaInfo)
+int Encoders::EncodedAntennaInfoBufferSize(Esp32Messaging::AntennaInfo *antennaInfo)
 {
     return(1);
 }
@@ -572,7 +570,6 @@ void Encoders::EncodeAccessPoint(Esp32Messaging::AccessPoint *accessPoint, uint8
     *buffer = accessPoint->AuthenticationMode;
     buffer += 1;
     EncodeUInt32(accessPoint->Protocols, buffer);
-    buffer += 4;
 }
 
 /**
@@ -584,7 +581,7 @@ void Encoders::EncodeAccessPoint(Esp32Messaging::AccessPoint *accessPoint, uint8
  *  @returns
  *      Number of bytes required to hold the encoded AccessPoint object.
  */
-const int Encoders::EncodedAccessPointBufferSize(Esp32Messaging::AccessPoint *accessPoint)
+int Encoders::EncodedAccessPointBufferSize(Esp32Messaging::AccessPoint *accessPoint)
 {
     return(47);
 }
@@ -642,7 +639,6 @@ void Encoders::EncodeAccessPointList(Esp32Messaging::AccessPointList *accessPoin
     if (accessPointList->AccessPointsLength > 0)
     {
         memcpy((void *) buffer, (void *) accessPointList->AccessPoints, accessPointList->AccessPointsLength);
-        buffer += accessPointList->AccessPointsLength;
     }
 }
 
@@ -713,7 +709,6 @@ void Encoders::EncodeSockAddr(Esp32Messaging::SockAddr *sockAddr, uint8_t *buffe
     *buffer = sockAddr->Family;
     buffer += 1;
     memcpy((void *) buffer, (void *) sockAddr->Data, 14);
-    buffer += 14;
 }
 
 /**
@@ -725,7 +720,7 @@ void Encoders::EncodeSockAddr(Esp32Messaging::SockAddr *sockAddr, uint8_t *buffe
  *  @returns
  *      Number of bytes required to hold the encoded SockAddr object.
  */
-const int Encoders::EncodedSockAddrBufferSize(Esp32Messaging::SockAddr *sockAddr)
+int Encoders::EncodedSockAddrBufferSize(Esp32Messaging::SockAddr *sockAddr)
 {
     return(16);
 }
@@ -790,7 +785,6 @@ void Encoders::EncodeAddrInfo(Esp32Messaging::AddrInfo *addrInfo, uint8_t *buffe
     EncodeString(addrInfo->CanonName, buffer);
     buffer += strlen(addrInfo->CanonName) + 1;
     EncodeUInt32((uint32_t) addrInfo->Next, buffer);
-    buffer += 4;
 }
 
 /**
@@ -886,7 +880,6 @@ void Encoders::EncodeGetAddrInfoRequest(Esp32Messaging::GetAddrInfoRequest *getA
     if (getAddrInfoRequest->ResultLength > 0)
     {
         memcpy((void *) buffer, (void *) getAddrInfoRequest->Result, getAddrInfoRequest->ResultLength);
-        buffer += getAddrInfoRequest->ResultLength;
     }
 }
 
@@ -976,7 +969,6 @@ void Encoders::EncodeGetAddrInfoResponse(Esp32Messaging::GetAddrInfoResponse *ge
     if (getAddrInfoResponse->ResLength > 0)
     {
         memcpy((void *) buffer, (void *) getAddrInfoResponse->Res, getAddrInfoResponse->ResLength);
-        buffer += getAddrInfoResponse->ResLength;
     }
 }
 
@@ -1049,7 +1041,6 @@ void Encoders::EncodeSocketRequest(Esp32Messaging::SocketRequest *socketRequest,
     EncodeInt32(socketRequest->Type, buffer);
     buffer += 4;
     EncodeInt32(socketRequest->Protocol, buffer);
-    buffer += 4;
 }
 
 /**
@@ -1061,7 +1052,7 @@ void Encoders::EncodeSocketRequest(Esp32Messaging::SocketRequest *socketRequest,
  *  @returns
  *      Number of bytes required to hold the encoded SocketRequest object.
  */
-const int Encoders::EncodedSocketRequestBufferSize(Esp32Messaging::SocketRequest *socketRequest)
+int Encoders::EncodedSocketRequestBufferSize(Esp32Messaging::SocketRequest *socketRequest)
 {
     return(16);
 }
@@ -1107,7 +1098,6 @@ Esp32Messaging::SocketRequest *Encoders::ExtractSocketRequest(uint8_t *buffer)
 void Encoders::EncodeIntegerResponse(Esp32Messaging::IntegerResponse *integerResponse, uint8_t *buffer)
 {
     EncodeInt32(integerResponse->Result, buffer);
-    buffer += 4;
 }
 
 /**
@@ -1119,7 +1109,7 @@ void Encoders::EncodeIntegerResponse(Esp32Messaging::IntegerResponse *integerRes
  *  @returns
  *      Number of bytes required to hold the encoded IntegerResponse object.
  */
-const int Encoders::EncodedIntegerResponseBufferSize(Esp32Messaging::IntegerResponse *integerResponse)
+int Encoders::EncodedIntegerResponseBufferSize(Esp32Messaging::IntegerResponse *integerResponse)
 {
     return(4);
 }
@@ -1161,7 +1151,6 @@ void Encoders::EncodeIntegerAndErrnoResponse(Esp32Messaging::IntegerAndErrnoResp
     EncodeInt32(integerAndErrnoResponse->Result, buffer);
     buffer += 4;
     EncodeInt32(integerAndErrnoResponse->Errno, buffer);
-    buffer += 4;
 }
 
 /**
@@ -1173,7 +1162,7 @@ void Encoders::EncodeIntegerAndErrnoResponse(Esp32Messaging::IntegerAndErrnoResp
  *  @returns
  *      Number of bytes required to hold the encoded IntegerAndErrnoResponse object.
  */
-const int Encoders::EncodedIntegerAndErrnoResponseBufferSize(Esp32Messaging::IntegerAndErrnoResponse *integerAndErrnoResponse)
+int Encoders::EncodedIntegerAndErrnoResponseBufferSize(Esp32Messaging::IntegerAndErrnoResponse *integerAndErrnoResponse)
 {
     return(8);
 }
@@ -1224,7 +1213,6 @@ void Encoders::EncodeConnectRequest(Esp32Messaging::ConnectRequest *connectReque
         buffer += connectRequest->AddrLength;
     }
     EncodeInt32(connectRequest->AddrLen, buffer);
-    buffer += 4;
 }
 
 /**
@@ -1292,7 +1280,6 @@ Esp32Messaging::ConnectRequest *Encoders::ExtractConnectRequest(uint8_t *buffer)
 void Encoders::EncodeFreeAddrInfoRequest(Esp32Messaging::FreeAddrInfoRequest *freeAddrInfoRequest, uint8_t *buffer)
 {
     EncodeUInt32(freeAddrInfoRequest->AddrInfoAddress, buffer);
-    buffer += 4;
 }
 
 /**
@@ -1304,7 +1291,7 @@ void Encoders::EncodeFreeAddrInfoRequest(Esp32Messaging::FreeAddrInfoRequest *fr
  *  @returns
  *      Number of bytes required to hold the encoded FreeAddrInfoRequest object.
  */
-const int Encoders::EncodedFreeAddrInfoRequestBufferSize(Esp32Messaging::FreeAddrInfoRequest *freeAddrInfoRequest)
+int Encoders::EncodedFreeAddrInfoRequestBufferSize(Esp32Messaging::FreeAddrInfoRequest *freeAddrInfoRequest)
 {
     return(4);
 }
@@ -1346,7 +1333,6 @@ void Encoders::EncodeTimeVal(Esp32Messaging::TimeVal *timeVal, uint8_t *buffer)
     EncodeUInt32(timeVal->TvSec, buffer);
     buffer += 4;
     EncodeUInt32(timeVal->TvUsec, buffer);
-    buffer += 4;
 }
 
 /**
@@ -1358,7 +1344,7 @@ void Encoders::EncodeTimeVal(Esp32Messaging::TimeVal *timeVal, uint8_t *buffer)
  *  @returns
  *      Number of bytes required to hold the encoded TimeVal object.
  */
-const int Encoders::EncodedTimeValBufferSize(Esp32Messaging::TimeVal *timeVal)
+int Encoders::EncodedTimeValBufferSize(Esp32Messaging::TimeVal *timeVal)
 {
     return(8);
 }
@@ -1413,7 +1399,6 @@ void Encoders::EncodeSetSockOptRequest(Esp32Messaging::SetSockOptRequest *setSoc
         buffer += setSockOptRequest->OptionValueLength;
     }
     EncodeInt32(setSockOptRequest->OptionLen, buffer);
-    buffer += 4;
 }
 
 /**
@@ -1487,7 +1472,6 @@ void Encoders::EncodeLinger(Esp32Messaging::Linger *linger, uint8_t *buffer)
     EncodeInt32(linger->LOnOff, buffer);
     buffer += 4;
     EncodeInt32(linger->LLinger, buffer);
-    buffer += 4;
 }
 
 /**
@@ -1499,7 +1483,7 @@ void Encoders::EncodeLinger(Esp32Messaging::Linger *linger, uint8_t *buffer)
  *  @returns
  *      Number of bytes required to hold the encoded Linger object.
  */
-const int Encoders::EncodedLingerBufferSize(Esp32Messaging::Linger *linger)
+int Encoders::EncodedLingerBufferSize(Esp32Messaging::Linger *linger)
 {
     return(8);
 }
@@ -1550,7 +1534,6 @@ void Encoders::EncodeWriteRequest(Esp32Messaging::WriteRequest *writeRequest, ui
         buffer += writeRequest->BufferLength;
     }
     EncodeInt32(writeRequest->Count, buffer);
-    buffer += 4;
 }
 
 /**
@@ -1620,7 +1603,6 @@ void Encoders::EncodeReadRequest(Esp32Messaging::ReadRequest *readRequest, uint8
     EncodeInt32(readRequest->SocketHandle, buffer);
     buffer += 4;
     EncodeInt32(readRequest->Count, buffer);
-    buffer += 4;
 }
 
 /**
@@ -1632,7 +1614,7 @@ void Encoders::EncodeReadRequest(Esp32Messaging::ReadRequest *readRequest, uint8
  *  @returns
  *      Number of bytes required to hold the encoded ReadRequest object.
  */
-const int Encoders::EncodedReadRequestBufferSize(Esp32Messaging::ReadRequest *readRequest)
+int Encoders::EncodedReadRequestBufferSize(Esp32Messaging::ReadRequest *readRequest)
 {
     return(8);
 }
@@ -1683,7 +1665,6 @@ void Encoders::EncodeReadResponse(Esp32Messaging::ReadResponse *readResponse, ui
     EncodeInt32(readResponse->Result, buffer);
     buffer += 4;
     EncodeInt32(readResponse->Errno, buffer);
-    buffer += 4;
 }
 
 /**
@@ -1751,7 +1732,6 @@ Esp32Messaging::ReadResponse *Encoders::ExtractReadResponse(uint8_t *buffer)
 void Encoders::EncodeCloseRequest(Esp32Messaging::CloseRequest *closeRequest, uint8_t *buffer)
 {
     EncodeInt32(closeRequest->SocketHandle, buffer);
-    buffer += 4;
 }
 
 /**
@@ -1763,7 +1743,7 @@ void Encoders::EncodeCloseRequest(Esp32Messaging::CloseRequest *closeRequest, ui
  *  @returns
  *      Number of bytes required to hold the encoded CloseRequest object.
  */
-const int Encoders::EncodedCloseRequestBufferSize(Esp32Messaging::CloseRequest *closeRequest)
+int Encoders::EncodedCloseRequestBufferSize(Esp32Messaging::CloseRequest *closeRequest)
 {
     return(4);
 }

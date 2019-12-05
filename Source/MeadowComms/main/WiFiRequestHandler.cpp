@@ -595,7 +595,7 @@ void WiFiRequestHandler::FreeAddrInfo(Message *message)
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOK;
 
-    vTaskDelay(10 / portTICK_PERIOD_MS);
+    vTaskDelay(40 / portTICK_PERIOD_MS);
 
     _messageDispatcher->QueueMessageForStm32(message);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
