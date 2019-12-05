@@ -732,27 +732,29 @@ namespace FileGenerator
             sourceFile.WriteLine("{");
             sourceFile.WriteLine($"    Esp32Messaging::{message.Name} *{variableName} = (Esp32Messaging::{message.Name} *) pvPortMalloc(sizeof(Esp32Messaging::{message.Name}));");
             sourceFile.WriteLine();
-            foreach (MessageElement me in message.MessageElements)
+            for (var index = 0; index < message.MessageElements.Count; index++)
             {
+                MessageElement me = message.MessageElements[index];
                 DataType dt = GetDataType(me.DataType);
+                string sizeModifier = "";
                 switch (dt.Name.ToLower())
                 {
                     case "byte":
                         sourceFile.WriteLine($"    {variableName}->{me.Name} = *buffer;");
-                        sourceFile.WriteLine($"    buffer += {dt.Size};");
+                        sizeModifier = $"    buffer += {dt.Size};";
                         break;
                     case "sbyte":
                         sourceFile.WriteLine($"    {variableName}->{me.Name} = (int8_t) *buffer;");
-                        sourceFile.WriteLine($"    buffer += {dt.Size};");
+                        sizeModifier = $"    buffer += {dt.Size};";
                         break;
                     case "string":
                         sourceFile.WriteLine($"    {variableName}->{me.Name} = Extract{dt.CSharpTypeName}(buffer);");
-                        sourceFile.WriteLine($"    buffer += strlen({variableName}->{me.Name}) + 1;");
+                        sizeModifier = $"    buffer += strlen({variableName}->{me.Name}) + 1;";
                         break;
                     case "fixedchararray":
                     case "fixedbytearray":
                         sourceFile.WriteLine($"    memcpy((void *) {variableName}->{me.Name}, (void *) buffer, {me.Length});");
-                        sourceFile.WriteLine($"    buffer += {me.Length};");
+                        sizeModifier = $"    buffer += {me.Length};";
                         break;
                     case "blob":
                         sourceFile.WriteLine($"    {variableName}->{me.Name}Length = ExtractUInt32(buffer);");
@@ -761,7 +763,10 @@ namespace FileGenerator
                         sourceFile.WriteLine("    {");
                         sourceFile.WriteLine($"        {variableName}->{me.Name} = (uint8_t *) pvPortMalloc({variableName}->{me.Name}Length);");
                         sourceFile.WriteLine($"        memcpy({variableName}->{me.Name}, buffer, {variableName}->{me.Name}Length);");
-                        sourceFile.WriteLine($"        buffer += {variableName}->{me.Name}Length;");
+                        if (index < (message.MessageElements.Count - 1))
+                        {
+                            sourceFile.WriteLine($"        buffer += {variableName}->{me.Name}Length;");
+                        }
                         sourceFile.WriteLine("    }");
                         sourceFile.WriteLine("    else");
                         sourceFile.WriteLine("    {");
@@ -770,16 +775,23 @@ namespace FileGenerator
                         break;
                     case "structure":
                         sourceFile.WriteLine($"            {variableName}.{me.Name} = Extract{me.CSName}(buffer, offset);");
-                        sourceFile.WriteLine($"            offset += Encoded{me.CSName}BufferSize({variableName}.{me.Name});");
+                        sizeModifier = $"            offset += Encoded{me.CSName}BufferSize({variableName}.{me.Name});";
                         break;
                     case "pointer":
                         sourceFile.WriteLine($"    {variableName}->{me.Name} = ({me.CName} *) ExtractUInt32(buffer);");
-                        sourceFile.WriteLine($"    buffer += {dt.Size};");
+                        sizeModifier = $"    buffer += {dt.Size};";
                         break;
                     default:
                         sourceFile.WriteLine($"    {variableName}->{me.Name} = Extract{dt.CSharpTypeName}(buffer);");
-                        sourceFile.WriteLine($"    buffer += {dt.Size};");
+                        sizeModifier = $"    buffer += {dt.Size};";
                         break;
+                }
+                if (index < (message.MessageElements.Count - 1))
+                {
+                    if (!string.IsNullOrEmpty(sizeModifier))
+                    {
+                        sourceFile.WriteLine(sizeModifier);
+                    }
                 }
             }
             sourceFile.WriteLine($"    return({variableName});");

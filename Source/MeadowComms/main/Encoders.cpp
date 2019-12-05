@@ -489,7 +489,6 @@ Esp32Messaging::WiFiCredentials *Encoders::ExtractWiFiCredentials(uint8_t *buffe
     wiFiCredentials->NetworkName = ExtractString(buffer);
     buffer += strlen(wiFiCredentials->NetworkName) + 1;
     wiFiCredentials->Password = ExtractString(buffer);
-    buffer += strlen(wiFiCredentials->Password) + 1;
     return(wiFiCredentials);
 }
 
@@ -540,7 +539,6 @@ Esp32Messaging::AntennaInfo *Encoders::ExtractAntennaInfo(uint8_t *buffer)
     Esp32Messaging::AntennaInfo *antennaInfo = (Esp32Messaging::AntennaInfo *) pvPortMalloc(sizeof(Esp32Messaging::AntennaInfo));
 
     antennaInfo->Antenna = *buffer;
-    buffer += 1;
     return(antennaInfo);
 }
 
@@ -615,7 +613,6 @@ Esp32Messaging::AccessPoint *Encoders::ExtractAccessPoint(uint8_t *buffer)
     accessPoint->AuthenticationMode = *buffer;
     buffer += 1;
     accessPoint->Protocols = ExtractUInt32(buffer);
-    buffer += 4;
     return(accessPoint);
 }
 
@@ -682,7 +679,6 @@ Esp32Messaging::AccessPointList *Encoders::ExtractAccessPointList(uint8_t *buffe
     {
         accessPointList->AccessPoints = (uint8_t *) pvPortMalloc(accessPointList->AccessPointsLength);
         memcpy(accessPointList->AccessPoints, buffer, accessPointList->AccessPointsLength);
-        buffer += accessPointList->AccessPointsLength;
     }
     else
     {
@@ -746,7 +742,6 @@ Esp32Messaging::SockAddr *Encoders::ExtractSockAddr(uint8_t *buffer)
     sockAddr->Family = *buffer;
     buffer += 1;
     memcpy((void *) sockAddr->Data, (void *) buffer, 14);
-    buffer += 14;
     return(sockAddr);
 }
 
@@ -847,7 +842,6 @@ Esp32Messaging::AddrInfo *Encoders::ExtractAddrInfo(uint8_t *buffer)
     addrInfo->CanonName = ExtractString(buffer);
     buffer += strlen(addrInfo->CanonName) + 1;
     addrInfo->Next = (struct addrinfo *) ExtractUInt32(buffer);
-    buffer += 4;
     return(addrInfo);
 }
 
@@ -940,7 +934,6 @@ Esp32Messaging::GetAddrInfoRequest *Encoders::ExtractGetAddrInfoRequest(uint8_t 
     {
         getAddrInfoRequest->Result = (uint8_t *) pvPortMalloc(getAddrInfoRequest->ResultLength);
         memcpy(getAddrInfoRequest->Result, buffer, getAddrInfoRequest->ResultLength);
-        buffer += getAddrInfoRequest->ResultLength;
     }
     else
     {
@@ -1012,7 +1005,6 @@ Esp32Messaging::GetAddrInfoResponse *Encoders::ExtractGetAddrInfoResponse(uint8_
     {
         getAddrInfoResponse->Res = (uint8_t *) pvPortMalloc(getAddrInfoResponse->ResLength);
         memcpy(getAddrInfoResponse->Res, buffer, getAddrInfoResponse->ResLength);
-        buffer += getAddrInfoResponse->ResLength;
     }
     else
     {
@@ -1080,7 +1072,6 @@ Esp32Messaging::SocketRequest *Encoders::ExtractSocketRequest(uint8_t *buffer)
     socketRequest->Type = ExtractInt32(buffer);
     buffer += 4;
     socketRequest->Protocol = ExtractInt32(buffer);
-    buffer += 4;
     return(socketRequest);
 }
 
@@ -1131,7 +1122,6 @@ Esp32Messaging::IntegerResponse *Encoders::ExtractIntegerResponse(uint8_t *buffe
     Esp32Messaging::IntegerResponse *integerResponse = (Esp32Messaging::IntegerResponse *) pvPortMalloc(sizeof(Esp32Messaging::IntegerResponse));
 
     integerResponse->Result = ExtractInt32(buffer);
-    buffer += 4;
     return(integerResponse);
 }
 
@@ -1186,7 +1176,6 @@ Esp32Messaging::IntegerAndErrnoResponse *Encoders::ExtractIntegerAndErrnoRespons
     integerAndErrnoResponse->Result = ExtractInt32(buffer);
     buffer += 4;
     integerAndErrnoResponse->Errno = ExtractInt32(buffer);
-    buffer += 4;
     return(integerAndErrnoResponse);
 }
 
@@ -1262,7 +1251,6 @@ Esp32Messaging::ConnectRequest *Encoders::ExtractConnectRequest(uint8_t *buffer)
         connectRequest->Addr = nullptr;
     }
     connectRequest->AddrLen = ExtractInt32(buffer);
-    buffer += 4;
     return(connectRequest);
 }
 
@@ -1313,7 +1301,6 @@ Esp32Messaging::FreeAddrInfoRequest *Encoders::ExtractFreeAddrInfoRequest(uint8_
     Esp32Messaging::FreeAddrInfoRequest *freeAddrInfoRequest = (Esp32Messaging::FreeAddrInfoRequest *) pvPortMalloc(sizeof(Esp32Messaging::FreeAddrInfoRequest));
 
     freeAddrInfoRequest->AddrInfoAddress = ExtractUInt32(buffer);
-    buffer += 4;
     return(freeAddrInfoRequest);
 }
 
@@ -1368,7 +1355,6 @@ Esp32Messaging::TimeVal *Encoders::ExtractTimeVal(uint8_t *buffer)
     timeVal->TvSec = ExtractUInt32(buffer);
     buffer += 4;
     timeVal->TvUsec = ExtractUInt32(buffer);
-    buffer += 4;
     return(timeVal);
 }
 
@@ -1452,7 +1438,6 @@ Esp32Messaging::SetSockOptRequest *Encoders::ExtractSetSockOptRequest(uint8_t *b
         setSockOptRequest->OptionValue = nullptr;
     }
     setSockOptRequest->OptionLen = ExtractInt32(buffer);
-    buffer += 4;
     return(setSockOptRequest);
 }
 
@@ -1507,7 +1492,6 @@ Esp32Messaging::Linger *Encoders::ExtractLinger(uint8_t *buffer)
     linger->LOnOff = ExtractInt32(buffer);
     buffer += 4;
     linger->LLinger = ExtractInt32(buffer);
-    buffer += 4;
     return(linger);
 }
 
@@ -1583,7 +1567,6 @@ Esp32Messaging::WriteRequest *Encoders::ExtractWriteRequest(uint8_t *buffer)
         writeRequest->Buffer = nullptr;
     }
     writeRequest->Count = ExtractInt32(buffer);
-    buffer += 4;
     return(writeRequest);
 }
 
@@ -1638,7 +1621,6 @@ Esp32Messaging::ReadRequest *Encoders::ExtractReadRequest(uint8_t *buffer)
     readRequest->SocketHandle = ExtractInt32(buffer);
     buffer += 4;
     readRequest->Count = ExtractInt32(buffer);
-    buffer += 4;
     return(readRequest);
 }
 
@@ -1714,7 +1696,6 @@ Esp32Messaging::ReadResponse *Encoders::ExtractReadResponse(uint8_t *buffer)
     readResponse->Result = ExtractInt32(buffer);
     buffer += 4;
     readResponse->Errno = ExtractInt32(buffer);
-    buffer += 4;
     return(readResponse);
 }
 
@@ -1765,7 +1746,6 @@ Esp32Messaging::CloseRequest *Encoders::ExtractCloseRequest(uint8_t *buffer)
     Esp32Messaging::CloseRequest *closeRequest = (Esp32Messaging::CloseRequest *) pvPortMalloc(sizeof(Esp32Messaging::CloseRequest));
 
     closeRequest->SocketHandle = ExtractInt32(buffer);
-    buffer += 4;
     return(closeRequest);
 }
 
