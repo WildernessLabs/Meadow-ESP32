@@ -17,15 +17,6 @@
             ]
         },
         {
-            "Name": "HttpGetRequest",
-            "MessageElements":
-            [
-                { "Name": "PortNumber", "DataType": "uint16"},
-                { "Name": "ServerName", "DataType": "string" },
-                { "Name": "Uri", "DataType": "string" }
-            ]
-        },
-        {
             "Name": "HttpGetResponse",
             "MessageElements":
             [
