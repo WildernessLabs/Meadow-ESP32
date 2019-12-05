@@ -87,11 +87,6 @@ namespace Meadow.Coprocessor.F7Micro
             message.PayloadLength = 0;
 
             var response = _dispatcher.SendMessage(message);
-            var result = (StatusCodes) response.StatusCode;
-            if (result != StatusCodes.CompletedOK)
-            {
-                throw new CoprocessorException(result);
-            }
             var antenna = Encoders.ExtractAntennaInfo(response.Payload, 0);
             return((AntennaTypes) antenna.Antenna);
         }
@@ -119,11 +114,6 @@ namespace Meadow.Coprocessor.F7Micro
             message.PayloadLength = (UInt32) encodedAntenna.Length;
             
             var response = _dispatcher.SendMessage(message);
-            var result = (StatusCodes) response.StatusCode;
-            if (result != StatusCodes.CompletedOK)
-            {
-                throw new CoprocessorException(result);
-            }
         }
 
         /// <summary>
@@ -147,11 +137,6 @@ namespace Meadow.Coprocessor.F7Micro
             message.PayloadLength = (uint)encodedStartMessage.Length;
 
             var response = _dispatcher.SendMessage(message);
-            var result = (StatusCodes)response.StatusCode;
-            if (result != StatusCodes.CompletedOK)
-            {
-                throw new CoprocessorException(result);
-            }
 
             IPAddress address = new IPAddress(new Byte[] { response.Payload[0], response.Payload[1], response.Payload[2], response.Payload[3] });
             return (address);
@@ -175,11 +160,6 @@ namespace Meadow.Coprocessor.F7Micro
             message.PayloadLength = 0;
 
             var response = _dispatcher.SendMessage(message);
-            var result = (StatusCodes) response.StatusCode;
-            if (result != StatusCodes.CompletedOK)
-            {
-                throw new CoprocessorException(result);
-            }
             //
             //  Now get the list of access points and return the list to the application.
             //
@@ -259,14 +239,7 @@ namespace Meadow.Coprocessor.F7Micro
             message.PayloadLength = (UInt32) message.Payload.Length;
             
             var response = _dispatcher.SendMessage(message);
-            var result = (StatusCodes) response.StatusCode;
-            if (result != StatusCodes.CompletedOK)
-            {
-                throw new CoprocessorException(result);
-            }
-
             var addrInfoResponse = Encoders.ExtractGetAddrInfoResponse(response.Payload, 0);
-
             if (addrInfoResponse.Errno == 0)
             {
                 res = Encoders.ExtractAddrInfo(addrInfoResponse.Res, 0);
@@ -298,11 +271,6 @@ namespace Meadow.Coprocessor.F7Micro
             message.PayloadLength = (UInt32) message.Payload.Length;
             
             var response = _dispatcher.SendMessage(message);
-            var result = (StatusCodes) response.StatusCode;
-            if (result != StatusCodes.CompletedOK)
-            {
-                throw new CoprocessorException(result);
-            }
 
             var socketResponse = Encoders.ExtractIntegerResponse(response.Payload, 0);
             return (socketResponse.Result);
@@ -325,11 +293,6 @@ namespace Meadow.Coprocessor.F7Micro
             message.PayloadLength = (UInt32) message.Payload.Length;
             
             var response = _dispatcher.SendMessage(message);
-            var result = (StatusCodes) response.StatusCode;
-            if (result != StatusCodes.CompletedOK)
-            {
-                throw new CoprocessorException(result);
-            }
 
             var connectResponse = Encoders.ExtractIntegerResponse(response.Payload, 0);
             return (connectResponse.Result);
@@ -353,12 +316,7 @@ namespace Meadow.Coprocessor.F7Micro
             message.Payload = Encoders.EncodeFreeAddrInfoRequest(freeAddrInfoRequest);
             message.PayloadLength = (UInt32) message.Payload.Length;
             
-            var response = _dispatcher.SendMessage(message);
-            var result = (StatusCodes) response.StatusCode;
-            if (result != StatusCodes.CompletedOK)
-            {
-                throw new CoprocessorException(result);
-            }
+            _dispatcher.SendMessage(message);
         }
 
         /// <summary>
@@ -424,12 +382,6 @@ namespace Meadow.Coprocessor.F7Micro
             message.PayloadLength = (UInt32) message.Payload.Length;
             
             var response = _dispatcher.SendMessage(message);
-            var result = (StatusCodes) response.StatusCode;
-            if (result != StatusCodes.CompletedOK)
-            {
-                throw new CoprocessorException(result);
-            }
-
             var setSockOptResponse = Encoders.ExtractIntegerAndErrnoResponse(response.Payload, 0);
             var resultCode = setSockOptResponse.Result;
             if (resultCode < 0)
@@ -456,12 +408,6 @@ namespace Meadow.Coprocessor.F7Micro
             message.PayloadLength = (UInt32) message.Payload.Length;
             
             var response = _dispatcher.SendMessage(message);
-            var result = (StatusCodes) response.StatusCode;
-            if (result != StatusCodes.CompletedOK)
-            {
-                throw new CoprocessorException(result);
-            }
-
             var setSockOptResponse = Encoders.ExtractIntegerAndErrnoResponse(response.Payload, 0);
             var resultCode = setSockOptResponse.Result;
             //
@@ -489,12 +435,6 @@ namespace Meadow.Coprocessor.F7Micro
             message.PayloadLength = (UInt32) message.Payload.Length;
             
             var response = _dispatcher.SendMessage(message);
-            var result = (StatusCodes) response.StatusCode;
-            if (result != StatusCodes.CompletedOK)
-            {
-                throw new CoprocessorException(result);
-            }
-
             var readResponse = Encoders.ExtractReadResponse(response.Payload, 0);
             var amountRead = readResponse.Result;
             //
@@ -527,12 +467,6 @@ namespace Meadow.Coprocessor.F7Micro
             message.PayloadLength = (UInt32) message.Payload.Length;
             
             var response = _dispatcher.SendMessage(message);
-            var result = (StatusCodes) response.StatusCode;
-            if (result != StatusCodes.CompletedOK)
-            {
-                throw new CoprocessorException(result);
-            }
-
             var closeResponse = Encoders.ExtractIntegerAndErrnoResponse(response.Payload, 0);
             return (closeResponse.Result);
         }

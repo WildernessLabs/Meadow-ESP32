@@ -150,6 +150,7 @@ namespace Meadow.Coprocessor.F7Micro
         /// </summary>
         /// <param name="message">Message to be sent.</param>
         /// <returns>Response from the coprocessor.</returns>
+        /// <exception cref="CoprocessorException">Thrown if the message dispatching system receives an error code from the coprocessor.</exception>
         public Messages.Message SendMessage(Messages.Message message)
         {
             EventWaitHandle waitHandle = new AutoResetEvent(false);
@@ -164,7 +165,14 @@ namespace Meadow.Coprocessor.F7Micro
             //
             //  Now get the response.
             //
-            return(GetResponse(message.MessageID));
+            var response = GetResponse(message.MessageID);
+            var result = (StatusCodes) response.StatusCode;
+            if (result != StatusCodes.CompletedOK)
+            {
+                throw new CoprocessorException(result);
+            }
+
+            return (response);
         }
         
         /// <summary>
