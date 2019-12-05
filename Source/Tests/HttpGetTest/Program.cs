@@ -1,5 +1,6 @@
 ﻿using Meadow;
 using System;
+using System.Threading;
 
 namespace BasicNetworkTest
 {
@@ -11,6 +12,7 @@ namespace BasicNetworkTest
             Console.WriteLine("HttpGet Test Application for Meadow F7 (Version 0.12.01)");
             
             application = new HttpGetTest();
+            Thread.Sleep(Timeout.Infinite);
         }
     }
 }

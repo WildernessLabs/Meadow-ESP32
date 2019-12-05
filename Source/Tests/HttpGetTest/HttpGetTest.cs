@@ -42,6 +42,8 @@ namespace BasicNetworkTest
         /// </summary>
         private readonly MessageDispatcher _dispatcher;
         
+        private EventWaitHandle _waitHandle = new AutoResetEvent(false);
+
         #endregion Private member variables (fields)
         
         #region Constructors
@@ -72,14 +74,18 @@ namespace BasicNetworkTest
             //
             //  Now run the test once.  Further tests can be run by pressing the button on D14.
             //
+            DebugHelpers.DebugHelpers.LogMessage(true, "Starting network");
+            var ipAddress = _f7MicroCoprocessor.StartNetwork(Secrets.WIFI_NAME, Secrets.WIFI_PASSOWRD);
+            DebugHelpers.DebugHelpers.LogMessage(true, $"Obtained IP address: {ipAddress.ToString()}");
+
+            DebugHelpers.DebugHelpers.LogMessage(true, "Press any key to start the test.");
             RunTest();
         }
         
         #endregion Constructors
         
         #region Events
-        
-                
+
         /// <summary>
         /// Run the test when the button is pressed.
         /// </summary>
@@ -87,7 +93,7 @@ namespace BasicNetworkTest
         /// <param name="e"></param>
         private void _button_Changed(object sender, DigitalInputPortEventArgs e)
         {
-            RunTest();
+            _waitHandle.Set();
         }
 
         #endregion Events
@@ -99,146 +105,148 @@ namespace BasicNetworkTest
         /// </summary>
         private void RunTest()
         {
-            DebugHelpers.DebugHelpers.LogMessage(true, "Starting network"); 
-            
-            var ipAddress = _f7MicroCoprocessor.StartNetwork(Secrets.WIFI_NAME, Secrets.WIFI_PASSOWRD);
-            DebugHelpers.DebugHelpers.LogMessage(true, $"Obtained IP address: {ipAddress.ToString()}");
-            //
-            //    getaddrinfo
-            //
-            var hints = new AddrInfo();
-            hints.Family = (int) AddressFamilyType.AfInet;
-            hints.SocketType = (int) SocketType.Stream;
-            hints.AddrLength = 0;
-            hints.CanonName = "";
+            while (true)
+            {
+                _waitHandle.WaitOne();
+                //
+                //    getaddrinfo
+                //
+                var hints = new AddrInfo();
+                hints.Family = (int)AddressFamilyType.AfInet;
+                hints.SocketType = (int)SocketType.Stream;
+                hints.AddrLength = 0;
+                hints.CanonName = "";
 
-            DebugHelpers.DebugHelpers.LogMessage(true, "Requesting lookup for www.google.com:80");
-            var errorCode = _f7MicroCoprocessor.GetAddrInfo("www.google.com", "80", hints, out var res);
-            DebugHelpers.DebugHelpers.LogMessage(true, $"    Error code {errorCode}");
-            if (errorCode != 0)
-            {
-                DebugHelpers.DebugHelpers.LogMessage(true, $"Exiting test");
-                return;
-            }
-            var getAddrInfoResult = (AddrInfo) res;
-            //
-            //    socket
-            //            
-            DebugHelpers.DebugHelpers.LogMessage(true, "Getting socket handle");
-            int socketHandle = _f7MicroCoprocessor.Socket(getAddrInfoResult.Family, getAddrInfoResult.SocketType, 0);
-            DebugHelpers.DebugHelpers.LogMessage(true, $"    Socket handle: {socketHandle}");
-            if (socketHandle < 0)
-            {
-                _f7MicroCoprocessor.FreeAddrInfo(getAddrInfoResult.MyHeapAddress);
-                DebugHelpers.DebugHelpers.LogMessage(true, $"Exiting test");
-                return;
-            }
-            //
-            //    connect
-            //
-            DebugHelpers.DebugHelpers.LogMessage(true, "Opening connection (connect)");
-            SockAddr sockAddr = Encoders.ExtractSockAddr(getAddrInfoResult.Addr, 0);
-            if (_f7MicroCoprocessor.Connect(socketHandle, sockAddr, (int) getAddrInfoResult.AddrLen) < 0)
-            {
-                _f7MicroCoprocessor.Close(socketHandle);
-                _f7MicroCoprocessor.FreeAddrInfo(getAddrInfoResult.MyHeapAddress);
-                DebugHelpers.DebugHelpers.LogMessage(true, $"Exiting test");
-                return;
-            }
-            DebugHelpers.DebugHelpers.LogMessage(true, "    Connected.");
-            //
-            //    freeaddrinfo
-            //
-            DebugHelpers.DebugHelpers.LogMessage(true, "Freeing address information resources (freeaddrinfo)");
-            _f7MicroCoprocessor.FreeAddrInfo(getAddrInfoResult.MyHeapAddress);
-            DebugHelpers.DebugHelpers.LogMessage(true, "    Complete.");
-            //
-            //    setsockopt
-            //
-            DebugHelpers.DebugHelpers.LogMessage(true, "Setting socket options (setsockopt)");
-            var tv = new TimeVal();
-            tv.TvSec = 5;
-            tv.TvUsec = 0;
-            if (_f7MicroCoprocessor.SetSockOpt(socketHandle, SocketLevelType.SolSocket, SocketOptionType.SoRcvTimeO, tv, 0) != 0)
-            {
-//                close(socketHandle);
-                DebugHelpers.DebugHelpers.LogMessage(true, $"Exiting test");
-                return;
-            }
-            DebugHelpers.DebugHelpers.LogMessage(true, "    Timeout set for socket.");
-            //
-            //    write
-            //
-            string uri = "/";
-            string host = "www.google.com";
-            string  request = $"GET {uri} HTTP/1.0\r\nHost: {host}\r\nUser-Agent: esp-idf/3.3 esp32\r\n\r\n";
-            byte[] writeBuffer = System.Text.Encoding.UTF8.GetBytes(request);
-            DebugHelpers.DebugHelpers.LogMessage(true, "Sending request to server (write)");
-            var amountWritten = _f7MicroCoprocessor.Write(socketHandle, writeBuffer, writeBuffer.Length);
-            DebugHelpers.DebugHelpers.LogMessage(true, $"    {amountWritten} bytes sent to server");
-            //
-            //    TODO: need to work out how to deal with errno.
-            //
-            if (amountWritten < 0)
-            {
-                _f7MicroCoprocessor.Close(socketHandle);
-                DebugHelpers.DebugHelpers.LogMessage(true, $"Exiting test");
-                return;
-            }
-            DebugHelpers.DebugHelpers.LogMessage(true, "    Request written to server.");
-            //
-            //    read
-            //
-            const int BUFFER_SIZE = 1024;
-            var readBuffer = new byte[BUFFER_SIZE];
-            int totalNumberOfBytes = 0;
-            int amountRead = 0;
-            string result = "";
-            bool firstBlock = true;
-            DebugHelpers.DebugHelpers.LogMessage(true, "Reading data from server (read)");
-            do
-            {
-                Array.Clear(readBuffer, 0, BUFFER_SIZE);
-                amountRead = _f7MicroCoprocessor.Read(socketHandle, readBuffer, BUFFER_SIZE);
-                DebugHelpers.DebugHelpers.LogMessage(true, $"    {amountRead} bytes read from server");
-                if (amountRead > 0)
+                DebugHelpers.DebugHelpers.LogMessage(true, "Requesting lookup for www.google.com:80");
+                var errorCode = _f7MicroCoprocessor.GetAddrInfo("www.google.com", "80", hints, out var res);
+                DebugHelpers.DebugHelpers.LogMessage(true, $"    Error code {errorCode}");
+                if (errorCode != 0)
                 {
-                    result += System.Text.Encoding.UTF8.GetString(readBuffer);
-                    totalNumberOfBytes += amountRead;
-                    if (firstBlock)
+                    DebugHelpers.DebugHelpers.LogMessage(true, $"Exiting test");
+                    return;
+                }
+                var getAddrInfoResult = (AddrInfo)res;
+                //
+                //    socket
+                //            
+                DebugHelpers.DebugHelpers.LogMessage(true, "Getting socket handle");
+                int socketHandle = _f7MicroCoprocessor.Socket(getAddrInfoResult.Family, getAddrInfoResult.SocketType, 0);
+                DebugHelpers.DebugHelpers.LogMessage(true, $"    Socket handle: {socketHandle}");
+                if (socketHandle < 0)
+                {
+                    _f7MicroCoprocessor.FreeAddrInfo(getAddrInfoResult.MyHeapAddress);
+                    DebugHelpers.DebugHelpers.LogMessage(true, $"Exiting test");
+                    return;
+                }
+                //
+                //    connect
+                //
+                DebugHelpers.DebugHelpers.LogMessage(true, "Opening connection (connect)");
+                SockAddr sockAddr = Encoders.ExtractSockAddr(getAddrInfoResult.Addr, 0);
+                if (_f7MicroCoprocessor.Connect(socketHandle, sockAddr, (int)getAddrInfoResult.AddrLen) < 0)
+                {
+                    _f7MicroCoprocessor.Close(socketHandle);
+                    _f7MicroCoprocessor.FreeAddrInfo(getAddrInfoResult.MyHeapAddress);
+                    DebugHelpers.DebugHelpers.LogMessage(true, $"Exiting test");
+                    return;
+                }
+                DebugHelpers.DebugHelpers.LogMessage(true, "    Connected.");
+                //
+                //    freeaddrinfo
+                //
+                DebugHelpers.DebugHelpers.LogMessage(true, "Freeing address information resources (freeaddrinfo)");
+                _f7MicroCoprocessor.FreeAddrInfo(getAddrInfoResult.MyHeapAddress);
+                DebugHelpers.DebugHelpers.LogMessage(true, "    Complete.");
+                //
+                //    setsockopt
+                //
+                DebugHelpers.DebugHelpers.LogMessage(true, "Setting socket options (setsockopt)");
+                var tv = new TimeVal();
+                tv.TvSec = 5;
+                tv.TvUsec = 0;
+                if (_f7MicroCoprocessor.SetSockOpt(socketHandle, SocketLevelType.SolSocket, SocketOptionType.SoRcvTimeO, tv, 0) != 0)
+                {
+                    _f7MicroCoprocessor.Close(socketHandle);
+                    DebugHelpers.DebugHelpers.LogMessage(true, $"Exiting test");
+                    return;
+                }
+                DebugHelpers.DebugHelpers.LogMessage(true, "    Timeout set for socket.");
+                //
+                //    write
+                //
+                string uri = "/";
+                string host = "www.google.com";
+                string request = $"GET {uri} HTTP/1.0\r\nHost: {host}\r\nUser-Agent: esp-idf/3.3 esp32\r\n\r\n";
+                byte[] writeBuffer = System.Text.Encoding.UTF8.GetBytes(request);
+                DebugHelpers.DebugHelpers.LogMessage(true, "Sending request to server (write)");
+                var amountWritten = _f7MicroCoprocessor.Write(socketHandle, writeBuffer, writeBuffer.Length);
+                DebugHelpers.DebugHelpers.LogMessage(true, $"    {amountWritten} bytes sent to server");
+                //
+                //    TODO: need to work out how to deal with errno.
+                //
+                if (amountWritten < 0)
+                {
+                    _f7MicroCoprocessor.Close(socketHandle);
+                    DebugHelpers.DebugHelpers.LogMessage(true, $"Exiting test");
+                    return;
+                }
+                DebugHelpers.DebugHelpers.LogMessage(true, "    Request written to server.");
+                //
+                //    read
+                //
+                const int BUFFER_SIZE = 1024;
+                var readBuffer = new byte[BUFFER_SIZE];
+                int totalNumberOfBytes = 0;
+                int amountRead = 0;
+                string result = "";
+                bool firstBlock = true;
+                DebugHelpers.DebugHelpers.LogMessage(true, "Reading data from server (read)");
+                do
+                {
+                    Array.Clear(readBuffer, 0, BUFFER_SIZE);
+                    amountRead = _f7MicroCoprocessor.Read(socketHandle, readBuffer, BUFFER_SIZE);
+                    DebugHelpers.DebugHelpers.LogMessage(true, $"    {amountRead} bytes read from server");
+                    if (amountRead > 0)
                     {
-                        var lines = result.Split(new [] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-                        var numberLinesToDisplay = lines.Length > 5 ? 5 : lines.Length;
-                        DebugHelpers.DebugHelpers.LogMessage(true, $"    First {numberLinesToDisplay} lines:");
-                        for (int index = 0; index < numberLinesToDisplay; index++)
+                        result += System.Text.Encoding.UTF8.GetString(readBuffer);
+                        totalNumberOfBytes += amountRead;
+                        if (firstBlock)
                         {
-                            DebugHelpers.DebugHelpers.LogMessage(true, $"    Line {index + 1}: {lines[index]}");
+                            var lines = result.Split(new[] {'\r', '\n'}, StringSplitOptions.RemoveEmptyEntries);
+                            var numberLinesToDisplay = lines.Length > 5 ? 5 : lines.Length;
+                            DebugHelpers.DebugHelpers.LogMessage(true, $"    First {numberLinesToDisplay} lines:");
+                            for (int index = 0; index < numberLinesToDisplay; index++)
+                            {
+                                DebugHelpers.DebugHelpers.LogMessage(true, $"    Line {index + 1}: {lines[index]}");
+                            }
                         }
                     }
-                }
-                else
-                {
-                    if (amountRead < 0)
+                    else
                     {
-                        _f7MicroCoprocessor.Close(socketHandle);
-                        DebugHelpers.DebugHelpers.LogMessage(true, $"Exiting test");
-                        return;
+                        if (amountRead < 0)
+                        {
+                            _f7MicroCoprocessor.Close(socketHandle);
+                            DebugHelpers.DebugHelpers.LogMessage(true, $"Exiting test");
+                            return;
+                        }
                     }
+
+                    firstBlock = false;
+                } while (amountRead > 0);
+
+                DebugHelpers.DebugHelpers.LogMessage(true, $"    Total {totalNumberOfBytes} bytes read from server.");
+                //
+                //    close
+                //
+                DebugHelpers.DebugHelpers.LogMessage(true, "Closing socket (close)");
+                if (_f7MicroCoprocessor.Close(socketHandle) < 0)
+                {
+                    DebugHelpers.DebugHelpers.LogMessage(true, $"Exiting test");
+                    return;
                 }
-                firstBlock = false;
+
+                DebugHelpers.DebugHelpers.LogMessage(true, "HTTP GET Test Complete.");
             }
-            while (amountRead > 0);
-            DebugHelpers.DebugHelpers.LogMessage(true, $"    Total {totalNumberOfBytes} bytes read from server.");
-            //
-            //    close
-            //
-            DebugHelpers.DebugHelpers.LogMessage(true, "Closing socket (close)");
-            if (_f7MicroCoprocessor.Close(socketHandle) < 0)
-            {
-                DebugHelpers.DebugHelpers.LogMessage(true, $"Exiting test");
-                return;
-            }
-            DebugHelpers.DebugHelpers.LogMessage(true, "HTTP GET Test Complete.");
         }
         
         #endregion Methods
