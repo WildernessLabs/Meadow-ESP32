@@ -220,22 +220,23 @@ namespace Meadow.Coprocessor.F7Micro
         public int GetAddrInfo(string nodeName, string serviceName, object hints, out object res)
         {
             var h = (AddrInfo)hints;
-            
-            var getAddrInfoRequest = new GetAddrInfoRequest();
-            getAddrInfoRequest.NodeName = nodeName;
-            getAddrInfoRequest.ServName = serviceName;
+
+            var getAddrInfoRequest = new GetAddrInfoRequest { NodeName = nodeName, ServName = serviceName };
             var ai = Encoders.EncodeAddrInfo(h);
             getAddrInfoRequest.Hints = new byte[ai.Length];
             Array.Copy(ai, getAddrInfoRequest.Hints, ai.Length);
             getAddrInfoRequest.HintsLength = (UInt32) getAddrInfoRequest.Hints.Length;
             getAddrInfoRequest.Result = null;
-            
-            var message = new Message();
-            message.Interface = (byte) Esp32Interfaces.WiFi;
-            message.Function = (uint) WiFiFunction.GetAddrInfo;
-            message.MessageID = _dispatcher.GetNextMessageId();
-            message.MessageType = (byte) MessageTypes.Data;
-            message.Payload = Encoders.EncodeGetAddrInfoRequest(getAddrInfoRequest);;
+
+            var message = new Message
+            {
+                Interface = (byte)Esp32Interfaces.WiFi,
+                Function = (uint)WiFiFunction.GetAddrInfo,
+                MessageID = _dispatcher.GetNextMessageId(),
+                MessageType = (byte)MessageTypes.Data,
+                Payload = Encoders.EncodeGetAddrInfoRequest(getAddrInfoRequest)
+            };
+            ;
             message.PayloadLength = (UInt32) message.Payload.Length;
             
             var response = _dispatcher.SendMessage(message);
@@ -257,17 +258,17 @@ namespace Meadow.Coprocessor.F7Micro
             //
             //    Now get the socket handle.
             //
-            var socketRequest = new SocketRequest();
-            socketRequest.Domain = domain;
-            socketRequest.Type = type;
-            socketRequest.Protocol = protocol;
-            
-            var message = new Message();
-            message.Interface = (byte) Esp32Interfaces.WiFi;
-            message.Function = (uint) WiFiFunction.Socket;
-            message.MessageID = _dispatcher.GetNextMessageId();
-            message.MessageType = (byte) MessageTypes.Data;
-            message.Payload = Encoders.EncodeSocketRequest(socketRequest);;
+            var socketRequest = new SocketRequest {Domain = domain, Type = type, Protocol = protocol};
+
+            var message = new Message
+            {
+                Interface = (byte)Esp32Interfaces.WiFi,
+                Function = (uint)WiFiFunction.Socket,
+                MessageID = _dispatcher.GetNextMessageId(),
+                MessageType = (byte)MessageTypes.Data,
+                Payload = Encoders.EncodeSocketRequest(socketRequest)
+            };
+            ;
             message.PayloadLength = (UInt32) message.Payload.Length;
             
             var response = _dispatcher.SendMessage(message);
@@ -278,18 +279,18 @@ namespace Meadow.Coprocessor.F7Micro
 
         public int Connect(int socketHandle, SockAddr addr, int addrlen)
         {
-            var connectRequest = new ConnectRequest();
-            connectRequest.SocketHandle = socketHandle;
-            connectRequest.Addr = Encoders.EncodeSockAddr(addr);
+            var connectRequest = new ConnectRequest { SocketHandle = socketHandle, Addr = Encoders.EncodeSockAddr(addr) };
             connectRequest.AddrLength = (UInt32) connectRequest.Addr.Length;
             connectRequest.AddrLen = addrlen;
-            
-            var message = new Message();
-            message.Interface = (byte) Esp32Interfaces.WiFi;
-            message.Function = (uint) WiFiFunction.Connect;
-            message.MessageID = _dispatcher.GetNextMessageId();
-            message.MessageType = (byte) MessageTypes.Data;
-            message.Payload = Encoders.EncodeConnectRequest(connectRequest);
+
+            var message = new Message
+            {
+                Interface = (byte)Esp32Interfaces.WiFi,
+                Function = (uint)WiFiFunction.Connect,
+                MessageID = _dispatcher.GetNextMessageId(),
+                MessageType = (byte)MessageTypes.Data,
+                Payload = Encoders.EncodeConnectRequest(connectRequest)
+            };
             message.PayloadLength = (UInt32) message.Payload.Length;
             
             var response = _dispatcher.SendMessage(message);
@@ -305,15 +306,16 @@ namespace Meadow.Coprocessor.F7Micro
         /// <exception cref="CoprocessorException"></exception>
         public void FreeAddrInfo(UInt32 addrInfoPointer)
         {
-            var freeAddrInfoRequest = new FreeAddrInfoRequest();
-            freeAddrInfoRequest.AddrInfoAddress = addrInfoPointer;
-            
-            var message = new Message();
-            message.Interface = (byte) Esp32Interfaces.WiFi;
-            message.Function = (uint) WiFiFunction.FreeAddrInfo;
-            message.MessageID = _dispatcher.GetNextMessageId();
-            message.MessageType = (byte) MessageTypes.Data;
-            message.Payload = Encoders.EncodeFreeAddrInfoRequest(freeAddrInfoRequest);
+            var freeAddrInfoRequest = new FreeAddrInfoRequest { AddrInfoAddress = addrInfoPointer };
+
+            var message = new Message
+            {
+                Interface = (byte)Esp32Interfaces.WiFi,
+                Function = (uint)WiFiFunction.FreeAddrInfo,
+                MessageID = _dispatcher.GetNextMessageId(),
+                MessageType = (byte)MessageTypes.Data,
+                Payload = Encoders.EncodeFreeAddrInfoRequest(freeAddrInfoRequest)
+            };
             message.PayloadLength = (UInt32) message.Payload.Length;
             
             _dispatcher.SendMessage(message);
@@ -343,10 +345,7 @@ namespace Meadow.Coprocessor.F7Micro
         /// <returns></returns>
         public int SetSockOpt(int socketHandle, SocketLevelType level, SocketOptionType optionName, object optionValue, UInt32 optionLength)
         {
-            var setSockOptRequest = new SetSockOptRequest();
-            setSockOptRequest.SocketNumber = socketHandle;
-            setSockOptRequest.Level = (int) level;
-            setSockOptRequest.OptionName = (int) optionName;
+            var setSockOptRequest = new SetSockOptRequest { SocketNumber = socketHandle, Level = (int)level, OptionName = (int)optionName };
             switch (optionName)
             {
                 case SocketOptionType.SoAcceptConn:         /* Socket has had listen() */
@@ -360,7 +359,7 @@ namespace Meadow.Coprocessor.F7Micro
                 case SocketOptionType.SoSndTimeO:           /* Set the send timeout */
                     break;
                 case SocketOptionType.SoRcvTimeO:           /* Set the receive timeout */
-                    TimeVal timeValue = (TimeVal) optionValue;
+                    var timeValue = (TimeVal) optionValue;
                     setSockOptRequest.OptionValue = Encoders.EncodeTimeVal(timeValue);
                     setSockOptRequest.OptionValueLength = (UInt32) setSockOptRequest.OptionValue.Length;
                     setSockOptRequest.OptionLen = 0;        //    This will be calculated in the ESP driver.
@@ -373,12 +372,14 @@ namespace Meadow.Coprocessor.F7Micro
                     break;
             }
 
-            var message = new Message();
-            message.Interface = (byte) Esp32Interfaces.WiFi;
-            message.Function = (uint) WiFiFunction.SetSockOpt;
-            message.MessageID = _dispatcher.GetNextMessageId();
-            message.MessageType = (byte) MessageTypes.Data;
-            message.Payload = Encoders.EncodeSetSockOptRequest(setSockOptRequest);
+            var message = new Message
+            {
+                Interface = (byte)Esp32Interfaces.WiFi,
+                Function = (uint)WiFiFunction.SetSockOpt,
+                MessageID = _dispatcher.GetNextMessageId(),
+                MessageType = (byte)MessageTypes.Data,
+                Payload = Encoders.EncodeSetSockOptRequest(setSockOptRequest)
+            };
             message.PayloadLength = (UInt32) message.Payload.Length;
             
             var response = _dispatcher.SendMessage(message);
@@ -393,18 +394,16 @@ namespace Meadow.Coprocessor.F7Micro
 
         public int Write(int socketHandle, byte[] buffer, int count)
         {
-            var request = new WriteRequest();
-            request.SocketHandle = socketHandle;
-            request.Buffer = buffer;
-            request.Count = count;
-            request.BufferLength = (uint) buffer.Length;
-            
-            var message = new Message();
-            message.Interface = (byte) Esp32Interfaces.WiFi;
-            message.Function = (uint) WiFiFunction.Write;
-            message.MessageID = _dispatcher.GetNextMessageId();
-            message.MessageType = (byte) MessageTypes.Data;
-            message.Payload = Encoders.EncodeWriteRequest(request);
+            var request = new WriteRequest { SocketHandle = socketHandle, Buffer = buffer, Count = count, BufferLength = (uint)buffer.Length };
+
+            var message = new Message
+            {
+                Interface = (byte)Esp32Interfaces.WiFi,
+                Function = (uint)WiFiFunction.Write,
+                MessageID = _dispatcher.GetNextMessageId(),
+                MessageType = (byte)MessageTypes.Data,
+                Payload = Encoders.EncodeWriteRequest(request)
+            };
             message.PayloadLength = (UInt32) message.Payload.Length;
             
             var response = _dispatcher.SendMessage(message);
@@ -422,16 +421,16 @@ namespace Meadow.Coprocessor.F7Micro
 
         public int Read(int socketHandle, byte[] buffer, int count)
         {
-            var request = new ReadRequest();
-            request.SocketHandle = socketHandle;
-            request.Count = count;
-            
-            var message = new Message();
-            message.Interface = (byte) Esp32Interfaces.WiFi;
-            message.Function = (uint) WiFiFunction.Read;
-            message.MessageID = _dispatcher.GetNextMessageId();
-            message.MessageType = (byte) MessageTypes.Data;
-            message.Payload = Encoders.EncodeReadRequest(request);
+            var request = new ReadRequest { SocketHandle = socketHandle, Count = count };
+
+            var message = new Message
+            {
+                Interface = (byte)Esp32Interfaces.WiFi,
+                Function = (uint)WiFiFunction.Read,
+                MessageID = _dispatcher.GetNextMessageId(),
+                MessageType = (byte)MessageTypes.Data,
+                Payload = Encoders.EncodeReadRequest(request)
+            };
             message.PayloadLength = (UInt32) message.Payload.Length;
             
             var response = _dispatcher.SendMessage(message);
@@ -455,15 +454,16 @@ namespace Meadow.Coprocessor.F7Micro
 
         public int Close(int socketHandle)
         {
-            var request = new CloseRequest();
-            request.SocketHandle = socketHandle;
-            
-            var message = new Message();
-            message.Interface = (byte) Esp32Interfaces.WiFi;
-            message.Function = (uint) WiFiFunction.Close;
-            message.MessageID = _dispatcher.GetNextMessageId();
-            message.MessageType = (byte) MessageTypes.Data;
-            message.Payload = Encoders.EncodeCloseRequest(request);
+            var request = new CloseRequest { SocketHandle = socketHandle };
+
+            var message = new Message
+            {
+                Interface = (byte)Esp32Interfaces.WiFi,
+                Function = (uint)WiFiFunction.Close,
+                MessageID = _dispatcher.GetNextMessageId(),
+                MessageType = (byte)MessageTypes.Data,
+                Payload = Encoders.EncodeCloseRequest(request)
+            };
             message.PayloadLength = (UInt32) message.Payload.Length;
             
             var response = _dispatcher.SendMessage(message);
