@@ -17,6 +17,7 @@
 /*
  *      Main program loop for the ESP32 as specified by the FreeRTOS documentation.
  */
+// cppcheck-suppress unusedFunction symbolName=app_main
 extern "C" void app_main()
 {
     Logging::Setup();

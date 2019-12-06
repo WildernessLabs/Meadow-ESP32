@@ -56,6 +56,7 @@ uint32_t Encoders::CalculateSpiBufferSize(uint32_t requestedSize)
  *  @returns
  *      16-bit unsigned integer value from the first two byte in the buffer.
  */
+// cppcheck-suppress unusedFunction symbolName=ExtractUInt16
 uint16_t Encoders::ExtractUInt16(uint8_t *buffer)
 {
     uint16_t result;
@@ -77,6 +78,7 @@ uint16_t Encoders::ExtractUInt16(uint8_t *buffer)
  *      Pointer to the buffer where the two bytes will be inserted
  *      from the 16-bit unsigned integer (LSB first).
  */
+// cppcheck-suppress unusedFunction symbolName=EncodeUInt16
 void Encoders::EncodeUInt16(uint16_t value, uint8_t *buffer)
 {
     buffer[0] = (value & 0xff);
@@ -222,6 +224,7 @@ char *Encoders::ExtractString(uint8_t *buffer)
  *  @returns
  *      8-bit checksum of the bytes in the buffer.
  */
+// cppcheck-suppress unusedFunction symbolName=CRC8
 uint8_t Encoders::CRC8(const uint8_t *data, uint16_t len)
 {
     uint8_t crc = 0x00;
@@ -374,7 +377,7 @@ Message *Encoders::ExtractMessage(uint8_t *buffer, uint32_t bufferLength, bool h
     Message *message = nullptr;
     if (crc == CRC32(buffer, bufferLength))
     {
-        message = (Message *) pvPortMalloc(sizeof(Message));
+        message = static_cast<Message *>(pvPortMalloc(sizeof(Message)));
 
         memset((void *) message, 0, sizeof(Message));
         message->MessageType = *buffer;

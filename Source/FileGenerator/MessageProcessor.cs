@@ -194,7 +194,6 @@ namespace FileGenerator
         {
             string variableName = message.Name.Substring(0, 1).ToLower() + message.Name.Substring(1);
             sourceFile.WriteLine($"        public static byte[] Encode{message.Name}({message.Name} {variableName})");
-            // sourceFile.WriteLine($"        public static byte[] Encode{message.Name}(Messages.{message.Name} {variableName})");
             sourceFile.WriteLine("        {");
             sourceFile.WriteLine("            int offset = 0;");
             sourceFile.WriteLine("            int length = 0;");
@@ -608,6 +607,7 @@ namespace FileGenerator
             sourceFile.WriteLine($" *  @param buffer");
             sourceFile.WriteLine($" *      Pointer to a block of memory large enough to hold the encoded {m.Name} object.");
             sourceFile.WriteLine(" */");
+            sourceFile.WriteLine($"// cppcheck-suppress unusedFunction symbolName=Encode{m.Name}");
             sourceFile.WriteLine($"void Encoders::Encode{m.Name}(Esp32Messaging::{m.Name} *{variableName}, uint8_t *buffer)");
             FunctionPrototypes.AppendLine($"    static void Encode{m.Name}(Esp32Messaging::{m.Name} *, uint8_t *);");
             sourceFile.WriteLine("{");
@@ -720,6 +720,7 @@ namespace FileGenerator
                 }
             }
             string modifier = "";
+            sourceFile.WriteLine($"// cppcheck-suppress unusedFunction symbolName=Encoded{message.Name}BufferSize");
             sourceFile.WriteLine($"{modifier}int Encoders::Encoded{message.Name}BufferSize(Esp32Messaging::{message.Name} *{variableName})");
             FunctionPrototypes.AppendLine($"    static {modifier}int Encoded{message.Name}BufferSize(Esp32Messaging::{message.Name} *);");
             sourceFile.WriteLine("{");
@@ -758,6 +759,7 @@ namespace FileGenerator
             sourceFile.WriteLine(" *  @returns");
             sourceFile.WriteLine($" *      Pointer to a {message.Name} object.");
             sourceFile.WriteLine(" */");
+            sourceFile.WriteLine($"// cppcheck-suppress unusedFunction symbolName=Extract{message.Name}");
             sourceFile.WriteLine($"Esp32Messaging::{message.Name} *Encoders::Extract{message.Name}(uint8_t *buffer)");
             FunctionPrototypes.AppendLine($"    static Esp32Messaging::{message.Name} *Extract{message.Name}(uint8_t *);");
             sourceFile.WriteLine("{");
