@@ -62,7 +62,7 @@ bool MessageDispatcher::QueueMessageForEsp32(Message *request)
 {
     RequestHandlerBase *provider = nullptr;
 
-    switch ((Esp32Interfaces::Esp32Interfaces) request->Interface)
+    switch (static_cast<Esp32Interfaces::Esp32Interfaces>(request->Interface))
     {
         case Esp32Interfaces::WiFi:
             if (!_wifiRequestHandler)
