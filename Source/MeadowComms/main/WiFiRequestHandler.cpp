@@ -121,10 +121,10 @@ void WiFiRequestHandler::GetAntenna(Message *request) const
     Logging::DumpMessage(__func__, request);
 
     request->MessageType = MessageTypes::Response;
-    Esp32Messaging::AntennaInfo *antenna = (Esp32Messaging::AntennaInfo *) pvPortMalloc(sizeof(Esp32Messaging::AntennaInfo));
+    Esp32Messaging::AntennaInfo *antenna = static_cast<Esp32Messaging::AntennaInfo *>(pvPortMalloc(sizeof(Esp32Messaging::AntennaInfo)));
     antenna->Antenna = static_cast<uint8_t>(_config.Antenna);
     int encodedBufferLength = Encoders::EncodedAntennaInfoBufferSize(antenna);
-    request->Payload = (uint8_t *) pvPortMalloc(encodedBufferLength);
+    request->Payload = static_cast<uint8_t *>(pvPortMalloc(encodedBufferLength));
     Encoders::EncodeAntennaInfo(antenna, request->Payload);
     vPortFree(antenna);
     request->PayloadLength = encodedBufferLength;
@@ -155,7 +155,7 @@ void WiFiRequestHandler::SetAntenna(Message *request)
     if (request->PayloadLength > 0)
     {
         Esp32Messaging::AntennaInfo *antenna = Encoders::ExtractAntennaInfo(request->Payload);
-        if (antenna->Antenna > (uint8_t) AntennaTypes::Max)
+        if (antenna->Antenna > static_cast<uint8_t>(AntennaTypes::Max))
         {
             request->StatusCode = StatusCodes::InvalidAntennaValue;
         }
@@ -248,7 +248,7 @@ void WiFiRequestHandler::Setup()
     gpio_set_direction(ON_BOARD_ANTENNA_PIN, GPIO_MODE_OUTPUT);
     gpio_set_level(ON_BOARD_ANTENNA_PIN, 1);
 
-    if (_config.Antenna > (uint8_t) AntennaTypes::Max)
+    if (_config.Antenna > static_cast<uint8_t>(AntennaTypes::Max))
     {
         _config.Antenna = AntennaTypes::OnBoard;
     }
@@ -398,9 +398,8 @@ void WiFiRequestHandler::StartNetwork(Message *request)
         {
             vPortFree(_wifiConfig);
         }
-        _wifiConfig = (wifi_config_t *) pvPortMalloc(sizeof(wifi_config_t));
+        _wifiConfig = static_cast<wifi_config_t *>(pvPortMalloc(sizeof(wifi_config_t)));
         bzero(_wifiConfig, sizeof(wifi_config_t));
-        memset(_wifiConfig, 0, sizeof(wifi_config_t));
         _wifiConfig->sta.scan_method = DEFAULT_SCAN_METHOD;
         _wifiConfig->sta.sort_method = DEFAULT_SORT_METHOD;
         _wifiConfig->sta.threshold.rssi = DEFAULT_RSSI;
@@ -410,12 +409,12 @@ void WiFiRequestHandler::StartNetwork(Message *request)
         //  or the password are the maximum length as the terminating 0 could
         //  corrupt the byte following the appropriate array.
         //
-        memcpy((void *) _wifiConfig->sta.ssid, credentials->NetworkName, networkNameLength);
+        memcpy(static_cast<void *>(_wifiConfig->sta.ssid), credentials->NetworkName, networkNameLength);
         if (networkNameLength < MAXIMUM_SSID_LENGTH)
         {
             _wifiConfig->sta.ssid[networkNameLength] = 0;
         }
-        memcpy((void *) _wifiConfig->sta.password, credentials->Password, passwordLength);
+        memcpy(static_cast<void *>(_wifiConfig->sta.password), credentials->Password, passwordLength);
         if (passwordLength < MAXIMUM_PASSWORD_LENGTH)
         {
             _wifiConfig->sta.password[passwordLength] = 0;
@@ -480,7 +479,7 @@ void WiFiRequestHandler::GetAddrInfo(Message *message)
     //
     Esp32Messaging::AddrInfo *extractedHints = Encoders::ExtractAddrInfo(request->Hints);
     struct addrinfo hints;
-    bzero((void *) &hints, sizeof(addrinfo));
+    bzero(static_cast<void *>(&hints), sizeof(addrinfo));
     hints.ai_family = extractedHints->Family;
     hints.ai_socktype = extractedHints->SocketType;
     vPortFree(extractedHints);
@@ -497,7 +496,7 @@ void WiFiRequestHandler::GetAddrInfo(Message *message)
     int errorCode = getaddrinfo(request->NodeName, request->ServName, &hints, &addressInformation);
     vPortFree(request);
 
-    Esp32Messaging::GetAddrInfoResponse *response = (Esp32Messaging::GetAddrInfoResponse *) pvPortMalloc(sizeof(Esp32Messaging::GetAddrInfoResponse));
+    Esp32Messaging::GetAddrInfoResponse *response = static_cast<Esp32Messaging::GetAddrInfoResponse *>(pvPortMalloc(sizeof(Esp32Messaging::GetAddrInfoResponse)));
     response->Errno = errorCode;
     if ((errorCode == 0) || (addressInformation != NULL))
     {
@@ -512,21 +511,21 @@ void WiFiRequestHandler::GetAddrInfo(Message *message)
         //
         memcpy(sa.Data, addressInformation->ai_addr->sa_data, addressInformation->ai_addr->sa_len);
         a.AddrLength = Encoders::EncodedSockAddrBufferSize(&sa);
-        a.Addr = (uint8_t *) pvPortMalloc(a.AddrLength);
+        a.Addr = static_cast<uint8_t *>(pvPortMalloc(a.AddrLength));
 
         Encoders::EncodeSockAddr(&sa, a.Addr);
 
         a.CanonName = strdup(addressInformation->ai_canonname);
         a.Family = addressInformation->ai_family;
         a.Flags = addressInformation->ai_flags;
-        a.MyHeapAddress = (uint32_t) addressInformation;
+        a.MyHeapAddress = reinterpret_cast<uint32_t>(addressInformation);
         a.Next = addressInformation->ai_next;
         a.Protocol = addressInformation->ai_protocol;
         a.SocketType = addressInformation->ai_socktype;
         a.AddrLen = addressInformation->ai_addrlen;
 
         response->ResLength = Encoders::EncodedAddrInfoBufferSize(&a);
-        response->Res = (uint8_t *) pvPortMalloc(response->ResLength);
+        response->Res = static_cast<uint8_t *>(pvPortMalloc(response->ResLength));
         Encoders::EncodeAddrInfo(&a, response->Res);
     }
     else
@@ -537,7 +536,7 @@ void WiFiRequestHandler::GetAddrInfo(Message *message)
     }
     vPortFree(message->Payload);
     message->PayloadLength = Encoders::EncodedGetAddrInfoResponseBufferSize(response);
-    message->Payload = (uint8_t *) pvPortMalloc(message->PayloadLength);
+    message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
     Encoders::EncodeGetAddrInfoResponse(response, message->Payload);
     vPortFree(response);
     message->MessageType = MessageTypes::Response;
@@ -564,7 +563,7 @@ void WiFiRequestHandler::Socket(Message *message)
     vPortFree(message->Payload);
 
     message->PayloadLength = Encoders::EncodedIntegerResponseBufferSize(&response);
-    message->Payload = (uint8_t *) pvPortMalloc(message->PayloadLength);
+    message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
     Encoders::EncodeIntegerResponse(&response, message->Payload);
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOK;
@@ -601,7 +600,7 @@ void WiFiRequestHandler::Connect(Message *message)
     vPortFree(message->Payload);
 
     message->PayloadLength = Encoders::EncodedIntegerResponseBufferSize(&response);
-    message->Payload = (uint8_t *) pvPortMalloc(message->PayloadLength);
+    message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
     Encoders::EncodeIntegerResponse(&response, message->Payload);
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOK;
@@ -620,7 +619,7 @@ void WiFiRequestHandler::FreeAddrInfo(Message *message)
     ESP_LOGI(__func__, "Releasing addrinfo storage.");
     Esp32Messaging::FreeAddrInfoRequest *request = Encoders::ExtractFreeAddrInfoRequest(message->Payload);
 
-    freeaddrinfo((struct addrinfo *) request->AddrInfoAddress);
+    freeaddrinfo(reinterpret_cast<struct addrinfo *>(request->AddrInfoAddress));
 
     vPortFree(request);
     vPortFree(message->Payload);
@@ -695,7 +694,7 @@ void WiFiRequestHandler::SetSockOpt(Message *message)
     vPortFree(message->Payload);
 
     message->PayloadLength = Encoders::EncodedIntegerAndErrnoResponseBufferSize(&response);
-    message->Payload = (uint8_t *) pvPortMalloc(message->PayloadLength);
+    message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
     Encoders::EncodeIntegerAndErrnoResponse(&response, message->Payload);
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOK;
@@ -729,7 +728,7 @@ void WiFiRequestHandler::Write(Message *message)
     vPortFree(message->Payload);
 
     message->PayloadLength = Encoders::EncodedIntegerAndErrnoResponseBufferSize(&response);
-    message->Payload = (uint8_t *) pvPortMalloc(message->PayloadLength);
+    message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
     Encoders::EncodeIntegerAndErrnoResponse(&response, message->Payload);
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOK;
@@ -749,7 +748,7 @@ void WiFiRequestHandler::Read(Message *message)
     Esp32Messaging::ReadRequest *request = Encoders::ExtractReadRequest(message->Payload);
     Esp32Messaging::ReadResponse response;
 
-    response.Buffer = (uint8_t *) pvPortMalloc(request->Count);
+    response.Buffer = static_cast<uint8_t *>(pvPortMalloc(request->Count));
     bzero(response.Buffer, request->Count);
     response.BufferLength = request->Count;
     response.Result = read(request->SocketHandle, response.Buffer, request->Count);
@@ -769,7 +768,7 @@ void WiFiRequestHandler::Read(Message *message)
     //  TODO: Optimise this by not sending an empty buffer in the case of an error.
     //
     message->PayloadLength = Encoders::EncodedReadResponseBufferSize(&response);
-    message->Payload = (uint8_t *) pvPortMalloc(message->PayloadLength);
+    message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
     Encoders::EncodeReadResponse(&response, message->Payload);
 
     vPortFree(response.Buffer);
@@ -802,7 +801,7 @@ void WiFiRequestHandler::Close(Message *message)
     vPortFree(message->Payload);
 
     message->PayloadLength = Encoders::EncodedIntegerAndErrnoResponseBufferSize(&response);
-    message->Payload = (uint8_t *) pvPortMalloc(message->PayloadLength);
+    message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
     Encoders::EncodeIntegerAndErrnoResponse(&response, message->Payload);
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOK;
@@ -867,7 +866,7 @@ void WiFiRequestHandler::StationGotIpEvent(system_event_t *eventData)
     {
         _currentRequest->DeletePayload();
         _currentRequest->PayloadLength = sizeof(ip4_addr_t);
-        _currentRequest->Payload = (uint8_t *) pvPortMalloc(_currentRequest->PayloadLength);
+        _currentRequest->Payload = static_cast<uint8_t *>(pvPortMalloc(_currentRequest->PayloadLength));
         memcpy(_currentRequest->Payload, &eventData->event_info.got_ip.ip_info.ip, _currentRequest->PayloadLength);
         _currentRequest->MessageType = MessageTypes::Response;
         _currentRequest->StatusCode = StatusCodes::CompletedOK;
@@ -932,18 +931,18 @@ void WiFiRequestHandler::ScanCompleteEvent(system_event_t *event)
     }
     else
     {
-        Esp32Messaging::AccessPointList *accessPointList = (Esp32Messaging::AccessPointList *) pvPortMalloc(sizeof(Esp32Messaging::AccessPointList));
+        Esp32Messaging::AccessPointList *accessPointList = static_cast<Esp32Messaging::AccessPointList *>(pvPortMalloc(sizeof(Esp32Messaging::AccessPointList)));
         accessPointList->NumberOfAccessPoints = apCount;
         //
         //  Now we get the access point information.
         //
-        wifi_ap_record_t *accessPoints = (wifi_ap_record_t *) pvPortMalloc(apCount * sizeof(wifi_ap_record_t));
+        wifi_ap_record_t *accessPoints = static_cast<wifi_ap_record_t *>(pvPortMalloc(apCount * sizeof(wifi_ap_record_t)));
         ESP_ERROR_CHECK(esp_wifi_scan_get_ap_records(&apCount, accessPoints));
 
-        Esp32Messaging::AccessPoint *accessPoint = (Esp32Messaging::AccessPoint *) pvPortMalloc(sizeof(Esp32Messaging::AccessPoint));
+        Esp32Messaging::AccessPoint *accessPoint = static_cast<Esp32Messaging::AccessPoint *>(pvPortMalloc(sizeof(Esp32Messaging::AccessPoint)));
         int singleAccessPointSize = Encoders::EncodedAccessPointBufferSize(accessPoint);
         accessPointList->AccessPointsLength = singleAccessPointSize * apCount;
-        accessPointList->AccessPoints = (uint8_t *) pvPortMalloc(accessPointList->AccessPointsLength);
+        accessPointList->AccessPoints = static_cast<uint8_t *>(pvPortMalloc(accessPointList->AccessPointsLength));
         uint8_t *currentLocation = accessPointList->AccessPoints;
         for (int index = 0; index < apCount; index++)
         {
@@ -963,7 +962,7 @@ void WiFiRequestHandler::ScanCompleteEvent(system_event_t *event)
         vPortFree(accessPoint);
         _currentRequest->StatusCode = StatusCodes::CompletedOK;
         _currentRequest->PayloadLength = Encoders::EncodedAccessPointListBufferSize(accessPointList);
-        _currentRequest->Payload = (uint8_t *) pvPortMalloc(_currentRequest->PayloadLength);
+        _currentRequest->Payload = static_cast<uint8_t *>(pvPortMalloc(_currentRequest->PayloadLength));
         Encoders::EncodeAccessPointList(accessPointList, _currentRequest->Payload);
         vPortFree(accessPointList);
     }

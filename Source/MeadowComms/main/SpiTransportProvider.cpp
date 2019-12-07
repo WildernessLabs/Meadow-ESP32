@@ -122,8 +122,8 @@ SpiTransportProvider::SpiTransportProvider() :
      *  as they will be frequently used for header and transport packets.
      */
     _headerFrameSize = Encoders::CalculateSpiBufferSize(Message::HEADER_SIZE);
-    _headerReceiveBuffer = (uint8_t *) heap_caps_malloc(_headerFrameSize, MALLOC_CAP_DMA);
-    _headerTransmitBuffer = (uint8_t *) heap_caps_malloc(_headerFrameSize, MALLOC_CAP_DMA);
+    _headerReceiveBuffer = static_cast<uint8_t *>(heap_caps_malloc(_headerFrameSize, MALLOC_CAP_DMA));
+    _headerTransmitBuffer = static_cast<uint8_t *>(heap_caps_malloc(_headerFrameSize, MALLOC_CAP_DMA));
     ClearTransmitAndReceiveBuffers(_headerReceiveBuffer, _headerTransmitBuffer, _headerFrameSize);
 
     /*
@@ -268,12 +268,12 @@ spi_slave_transaction_t *SpiTransportProvider::CreateAcknowledgementTransaction(
 
     Message *copyOfMessage = message->CreateCopyOnHeap(false);
     copyOfMessage->MessageType = messageType;
-    copyOfMessage->StatusCode = (uint32_t) code;
+    copyOfMessage->StatusCode = static_cast<uint32_t>(code);
 
-    uint8_t *ackFrame = (uint8_t *) Encoders::EncodeMessage(copyOfMessage, true);
+    uint8_t *ackFrame = static_cast<uint8_t *>(Encoders::EncodeMessage(copyOfMessage, true));
     DeleteMessageAndReleaseHeapStorage(copyOfMessage);
 
-    memcpy((void *) transaction->tx_buffer, ackFrame, _headerFrameSize);
+    memcpy(const_cast<void *>(transaction->tx_buffer), ackFrame, _headerFrameSize);
     vPortFree(ackFrame);
 
     return (transaction);
@@ -288,7 +288,7 @@ spi_slave_transaction_t *SpiTransportProvider::CreateAcknowledgementTransaction(
  */
 spi_slave_transaction_t *SpiTransportProvider::CreateSpiHeaderTransaction()
 {
-    spi_slave_transaction_t *transaction = (spi_slave_transaction_t *) pvPortMalloc(sizeof(spi_slave_transaction_t));
+    spi_slave_transaction_t *transaction = static_cast<spi_slave_transaction_t *>(pvPortMalloc(sizeof(spi_slave_transaction_t)));
 
     memset(transaction, 0, sizeof(spi_slave_transaction_t));
     ClearTransmitAndReceiveBuffers(_headerReceiveBuffer, _headerTransmitBuffer, _headerFrameSize);
@@ -315,7 +315,7 @@ spi_slave_transaction_t *SpiTransportProvider::CreateSpiMessageTransaction(Messa
 
     uint32_t encodedMessageBufferSize = Encoders::CalculateSpiBufferSize(Message::HEADER_SIZE + message->PayloadLength);
     spi_slave_transaction_t *transaction = CreateSpiPayloadTransaction(encodedMessageBufferSize);
-    memcpy((void *) transaction->tx_buffer, (void *) encodedMessage, Message::HEADER_SIZE + message->PayloadLength);
+    memcpy(const_cast<void *>(transaction->tx_buffer), static_cast<void *>(encodedMessage), Message::HEADER_SIZE + message->PayloadLength);
     vPortFree(encodedMessage);
 
     return(transaction);
@@ -336,11 +336,11 @@ spi_slave_transaction_t *SpiTransportProvider::CreateSpiMessageTransaction(Messa
  */
 spi_slave_transaction_t *SpiTransportProvider::CreateSpiPayloadTransaction(uint32_t bufferSize)
 {
-    spi_slave_transaction_t *transaction = (spi_slave_transaction_t *) pvPortMalloc(sizeof(spi_slave_transaction_t));
+    spi_slave_transaction_t *transaction = static_cast<spi_slave_transaction_t *>(pvPortMalloc(sizeof(spi_slave_transaction_t)));
 
     memset(transaction, 0, sizeof(spi_slave_transaction_t));
-    uint8_t *transmitBuffer = (uint8_t *) heap_caps_calloc(bufferSize, 1, MALLOC_CAP_DMA);
-    uint8_t *receiveBuffer = (uint8_t *) heap_caps_calloc(bufferSize, 1, MALLOC_CAP_DMA);
+    uint8_t *transmitBuffer = static_cast<uint8_t *>(heap_caps_calloc(bufferSize, 1, MALLOC_CAP_DMA));
+    uint8_t *receiveBuffer = static_cast<uint8_t *>(heap_caps_calloc(bufferSize, 1, MALLOC_CAP_DMA));
     ClearTransmitAndReceiveBuffers(receiveBuffer, transmitBuffer, bufferSize);
 
     transaction->rx_buffer = receiveBuffer;
@@ -367,11 +367,11 @@ void SpiTransportProvider::DeleteTransaction(spi_slave_transaction_t *transactio
     {
         if (transaction->rx_buffer && (transaction->rx_buffer != _headerReceiveBuffer))
         {
-            heap_caps_free((void *) transaction->rx_buffer);
+            heap_caps_free(static_cast<void *>(transaction->rx_buffer));
         }
         if (transaction->tx_buffer && (transaction->tx_buffer != _headerTransmitBuffer))
         {
-            heap_caps_free((void *) transaction->tx_buffer);
+            heap_caps_free(const_cast<void *>(transaction->tx_buffer));
         }
         vPortFree(transaction);
     }
@@ -423,9 +423,9 @@ void SpiTransportProvider::Echo(const char *messageString)
     message->MessageID = 0x00;
     message->MessageType = MessageTypes::Data;
     message->PayloadLength = strlen(messageString) + 1;
-    char *str = (char *) pvPortMalloc(message->PayloadLength);
+    char *str = static_cast<char *>(pvPortMalloc(message->PayloadLength));
     strcpy(str, messageString);
-    message->Payload = (uint8_t *) str;
+    message->Payload = reinterpret_cast<uint8_t *>(str);
     _messageDispatcher->QueueMessageForEsp32(message);
 }
 
@@ -464,7 +464,7 @@ void SpiTransportProvider::DeleteMessageAndReleaseHeapStorage(Message *message)
 void SpiTransportProvider::EncodeHeaderMessage(spi_slave_transaction_t *transaction, Message *message)
 {
     uint8_t *encodedMessageHeader = Encoders::EncodeMessage(message, true);
-    memcpy((void *) transaction->tx_buffer, (void *) encodedMessageHeader, _headerFrameSize);
+    memcpy(const_cast<void *>(transaction->tx_buffer), static_cast<void *>(encodedMessageHeader), _headerFrameSize);
     vPortFree(encodedMessageHeader);
 }
 
@@ -494,7 +494,7 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessTransportMessage()
             message = Message::CreateOnHeap(MessageTypes::Transport, Esp32Interfaces::Transport, TransportFunction::SendResponse, _responseCode);
             newTransaction = CreateSpiHeaderTransaction();
             EncodeHeaderMessage(newTransaction, message);
-            vPortFree((void *) message);
+            vPortFree(static_cast<void *>(message));
             _currentState = SendingTransportResponse;
             break;
         default:
@@ -562,7 +562,7 @@ spi_slave_transaction_t *SpiTransportProvider::InboundMessageHeaderReceived(spi_
     int dataSize = transaction->length / 8;
     if (dataSize >= _headerFrameSize)
     {
-        _incomingMessage = Encoders::ExtractMessage((uint8_t *) transaction->rx_buffer, _headerFrameSize, true);
+        _incomingMessage = Encoders::ExtractMessage(static_cast<uint8_t *>(transaction->rx_buffer), _headerFrameSize, true);
         if (!_incomingMessage)             // nullptr indicates a CRC error.
         {
             ESP_LOGI(__func__, "CRC Error.");
@@ -684,9 +684,9 @@ spi_slave_transaction_t *SpiTransportProvider::InboundMessageBodyReceived(spi_sl
     //  contents of the buffer should be 0 and are meaningless.  This is done to mitigate
     //  against running low / out of memory on the heap.
     //
-    heap_caps_free((void *) transaction->tx_buffer);
+    heap_caps_free(const_cast<void *>(transaction->tx_buffer));
     transaction->tx_buffer = nullptr;
-    Message *message = Encoders::ExtractMessage((uint8_t *) transaction->rx_buffer, encodedMessageBodySize, false);
+    Message *message = Encoders::ExtractMessage(static_cast<uint8_t *>(transaction->rx_buffer), encodedMessageBodySize, false);
     DeleteTransaction(transaction);
 
     uint8_t messageType = MessageTypes::Ack;
@@ -833,7 +833,7 @@ spi_slave_transaction_t *SpiTransportProvider::OutboundMessageHeaderAcknowledgem
     ESP_LOGI(__func__, "Entering method");
 #endif
 
-    Message *acknowledgement = Encoders::ExtractMessage((uint8_t *) transaction->rx_buffer, _headerFrameSize, true);
+    Message *acknowledgement = Encoders::ExtractMessage(static_cast<uint8_t *>(transaction->rx_buffer), _headerFrameSize, true);
 
     DeleteTransaction(transaction);
     spi_slave_transaction_t *newTransaction = nullptr;
@@ -920,7 +920,7 @@ spi_slave_transaction_t *SpiTransportProvider::OutboundMessageBodyAcknowledgemen
     ESP_LOGI(__func__, "Entering method");
 #endif
 
-    Message *incomingMessage = Encoders::ExtractMessage((uint8_t *) transaction->rx_buffer, _headerFrameSize, true);
+    Message *incomingMessage = Encoders::ExtractMessage(static_cast<uint8_t *>(transaction->rx_buffer), _headerFrameSize, true);
     DeleteTransaction(transaction);
 
     if (incomingMessage)
@@ -1099,7 +1099,7 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessMessages(spi_slave_transac
     //  is mandatory when spi_slave_queue_trans is used.
     //
     ESP_ERROR_CHECK(spi_slave_get_trans_result(VSPI_HOST, &transaction, portMAX_DELAY));
-    if (SendingData(_currentState) || MessageContainsData((uint8_t *) transaction->rx_buffer, transaction->length / 8))
+    if (SendingData(_currentState) || MessageContainsData(static_cast<uint8_t *>(transaction->rx_buffer), transaction->length / 8))
     {
         switch (_currentState)
         {

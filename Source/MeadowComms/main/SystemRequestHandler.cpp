@@ -105,7 +105,7 @@ void SystemRequestHandler::Echo(Message *request)
     const char *str = "Response from ESP32.";
     request->PayloadLength = strlen(str) + 1;
     request->Payload = (uint8_t *) pvPortMalloc(request->PayloadLength);
-    strcpy((char *) request->Payload, str);
+    strcpy(reinterpret_cast<char *>(request->Payload), str);
     _messageDispatcher->QueueMessageForStm32(request);
 }
 
