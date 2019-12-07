@@ -30,6 +30,23 @@
 
 namespace Esp32Messaging
 {
+    struct SystemConfiguration
+    {
+        uint8_t WiFiTaskPriority;
+        uint8_t BluetoothTaskPriority;
+        uint8_t MeshNetworkTaskPriority;
+        uint8_t SystemTaskPriority;
+        uint32_t MaximumSpiMessageSize;
+    };
+
+    struct WiFiConfiguration
+    {
+        uint8_t AutomaticReconnect;
+        uint32_t MaximumRetryCount;
+        uint8_t Antenna;
+        uint8_t MaximumMessageQueueLength;
+    };
+
     struct WiFiCredentials
     {
         char * NetworkName;
@@ -209,6 +226,12 @@ public:
     static uint32_t ProgressiveCRC32(uint32_t, uint8_t);
     static uint8_t *EncodeMessage(Message *, bool);
     static Message *ExtractMessage(uint8_t *, uint32_t, bool);
+    static void EncodeSystemConfiguration(Esp32Messaging::SystemConfiguration *, uint8_t *);
+    static int EncodedSystemConfigurationBufferSize(Esp32Messaging::SystemConfiguration *);
+    static Esp32Messaging::SystemConfiguration *ExtractSystemConfiguration(uint8_t *);
+    static void EncodeWiFiConfiguration(Esp32Messaging::WiFiConfiguration *, uint8_t *);
+    static int EncodedWiFiConfigurationBufferSize(Esp32Messaging::WiFiConfiguration *);
+    static Esp32Messaging::WiFiConfiguration *ExtractWiFiConfiguration(uint8_t *);
     static void EncodeWiFiCredentials(Esp32Messaging::WiFiCredentials *, uint8_t *);
     static int EncodedWiFiCredentialsBufferSize(Esp32Messaging::WiFiCredentials *);
     static Esp32Messaging::WiFiCredentials *ExtractWiFiCredentials(uint8_t *);

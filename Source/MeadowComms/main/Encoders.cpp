@@ -439,6 +439,140 @@ Message *Encoders::ExtractMessage(uint8_t *buffer, uint32_t bufferLength, bool h
 */
 
 /**
+ *  Convert the SystemConfiguration object into a byte stream that can be sent to the STM32.
+ *  
+ *  The amount of memory required can be obtained by calling the EncodedSystemConfigurationBufferSize method.
+ *  
+ *  @param systemConfiguration
+ *      SystemConfiguration object to be encoded.
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory large enough to hold the encoded SystemConfiguration object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodeSystemConfiguration
+void Encoders::EncodeSystemConfiguration(Esp32Messaging::SystemConfiguration *systemConfiguration, uint8_t *buffer)
+{
+    *buffer = systemConfiguration->WiFiTaskPriority;
+    buffer += 1;
+    *buffer = systemConfiguration->BluetoothTaskPriority;
+    buffer += 1;
+    *buffer = systemConfiguration->MeshNetworkTaskPriority;
+    buffer += 1;
+    *buffer = systemConfiguration->SystemTaskPriority;
+    buffer += 1;
+    EncodeUInt32(systemConfiguration->MaximumSpiMessageSize, buffer);
+}
+
+/**
+ *  Calculate the amount of memory required to hold the given instance of the SystemConfiguration object.
+ *  
+ *  @param systemConfiguration
+ *      SystemConfiguration object to be encoded.
+ *  
+ *  @returns
+ *      Number of bytes required to hold the encoded SystemConfiguration object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodedSystemConfigurationBufferSize
+int Encoders::EncodedSystemConfigurationBufferSize(Esp32Messaging::SystemConfiguration *systemConfiguration)
+{
+    return(8);
+}
+
+/**
+ *  Extract the SystemConfiguration object that is encoded in the given buffer.
+ *  
+ *  Note that the returned pointer points to a block of memory on the heap and
+ *  this should eventually be released calling vPortFree(...).
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded SystemConfiguration object.
+ *  
+ *  @returns
+ *      Pointer to a SystemConfiguration object.
+ */
+// cppcheck-suppress unusedFunction symbolName=ExtractSystemConfiguration
+Esp32Messaging::SystemConfiguration *Encoders::ExtractSystemConfiguration(uint8_t *buffer)
+{
+    Esp32Messaging::SystemConfiguration *systemConfiguration = (Esp32Messaging::SystemConfiguration *) pvPortMalloc(sizeof(Esp32Messaging::SystemConfiguration));
+
+    systemConfiguration->WiFiTaskPriority = *buffer;
+    buffer += 1;
+    systemConfiguration->BluetoothTaskPriority = *buffer;
+    buffer += 1;
+    systemConfiguration->MeshNetworkTaskPriority = *buffer;
+    buffer += 1;
+    systemConfiguration->SystemTaskPriority = *buffer;
+    buffer += 1;
+    systemConfiguration->MaximumSpiMessageSize = ExtractUInt32(buffer);
+    return(systemConfiguration);
+}
+
+/**
+ *  Convert the WiFiConfiguration object into a byte stream that can be sent to the STM32.
+ *  
+ *  The amount of memory required can be obtained by calling the EncodedWiFiConfigurationBufferSize method.
+ *  
+ *  @param wiFiConfiguration
+ *      WiFiConfiguration object to be encoded.
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory large enough to hold the encoded WiFiConfiguration object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodeWiFiConfiguration
+void Encoders::EncodeWiFiConfiguration(Esp32Messaging::WiFiConfiguration *wiFiConfiguration, uint8_t *buffer)
+{
+    *buffer = wiFiConfiguration->AutomaticReconnect;
+    buffer += 1;
+    EncodeUInt32(wiFiConfiguration->MaximumRetryCount, buffer);
+    buffer += 4;
+    *buffer = wiFiConfiguration->Antenna;
+    buffer += 1;
+    *buffer = wiFiConfiguration->MaximumMessageQueueLength;
+}
+
+/**
+ *  Calculate the amount of memory required to hold the given instance of the WiFiConfiguration object.
+ *  
+ *  @param wiFiConfiguration
+ *      WiFiConfiguration object to be encoded.
+ *  
+ *  @returns
+ *      Number of bytes required to hold the encoded WiFiConfiguration object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodedWiFiConfigurationBufferSize
+int Encoders::EncodedWiFiConfigurationBufferSize(Esp32Messaging::WiFiConfiguration *wiFiConfiguration)
+{
+    return(7);
+}
+
+/**
+ *  Extract the WiFiConfiguration object that is encoded in the given buffer.
+ *  
+ *  Note that the returned pointer points to a block of memory on the heap and
+ *  this should eventually be released calling vPortFree(...).
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded WiFiConfiguration object.
+ *  
+ *  @returns
+ *      Pointer to a WiFiConfiguration object.
+ */
+// cppcheck-suppress unusedFunction symbolName=ExtractWiFiConfiguration
+Esp32Messaging::WiFiConfiguration *Encoders::ExtractWiFiConfiguration(uint8_t *buffer)
+{
+    Esp32Messaging::WiFiConfiguration *wiFiConfiguration = (Esp32Messaging::WiFiConfiguration *) pvPortMalloc(sizeof(Esp32Messaging::WiFiConfiguration));
+
+    wiFiConfiguration->AutomaticReconnect = *buffer;
+    buffer += 1;
+    wiFiConfiguration->MaximumRetryCount = ExtractUInt32(buffer);
+    buffer += 4;
+    wiFiConfiguration->Antenna = *buffer;
+    buffer += 1;
+    wiFiConfiguration->MaximumMessageQueueLength = *buffer;
+    return(wiFiConfiguration);
+}
+
+/**
  *  Convert the WiFiCredentials object into a byte stream that can be sent to the STM32.
  *  
  *  The amount of memory required can be obtained by calling the EncodedWiFiCredentialsBufferSize method.
