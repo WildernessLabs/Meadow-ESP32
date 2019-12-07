@@ -32,38 +32,6 @@
 #include "Logging.hpp"
 
 /*
- *  Event group bits.
- */
-/**
- *  The WIFI_READY_BIT indicates if this current request has completed successfully.  It
- *  is used to block the Task from making a second request when one is already
- *  running.
- *
- *  This flag is necessary as some tasks are actually multi-stage processes.  For
- *  instance, Connecting to a network requires a start request which will generate
- *  two events, network start and got IP.  The request only ends when the IP address
- *  has been granted.
- */
-#define WIFI_READY_BIT                  (BIT0)
-/**
- *  Indicate if the system is in the process of connecting to an access point.
- */
-#define WIFI_CONNECTING_BIT             (BIT1)
-/**
- *  When set, this bit indicates that we have an active WiFi connection.
- */
-#define WIFI_CONNECTED_BIT              (BIT2)
-/**
- *  When set, this indicates that the system has lost the WiFi connection
- *  and is actively trying to re-establish the connection.
- */
-#define WIFI_RECONNECTING_BIT           (BIT3)
-/**
- *  Indicate if the WiFi system has been initialised OK.
- */
-#define WIFI_INITIALISED_BIT            (BIT4)
-
-/*
  *  @brief WiFi class
  *
  *  Encapsulate the properties and methods required to provide the
@@ -76,6 +44,37 @@ private:
      *  Name of the FreeRTOS task for the WiFi system.
      */
     const char *_taskName = "WiFiTask";
+
+    /*
+     *  Event group bits.
+     *
+     *  The WIFI_READY_BIT indicates if this current request has completed successfully.  It
+     *  is used to block the Task from making a second request when one is already
+     *  running.
+     *
+     *  This flag is necessary as some tasks are actually multi-stage processes.  For
+     *  instance, Connecting to a network requires a start request which will generate
+     *  two events, network start and got IP.  The request only ends when the IP address
+     *  has been granted.
+     */
+    const int WIFI_READY_BIT = BIT0;
+    /**
+     *  Indicate if the system is in the process of connecting to an access point.
+     */
+    const int WIFI_CONNECTING_BIT = BIT1;
+    /**
+     *  When set, this bit indicates that we have an active WiFi connection.
+     */
+    const int WIFI_CONNECTED_BIT = BIT2;
+    /**
+     *  When set, this indicates that the system has lost the WiFi connection
+     *  and is actively trying to re-establish the connection.
+     */
+    const int WIFI_RECONNECTING_BIT = BIT3;
+    /**
+     *  Indicate if the WiFi system has been initialised OK.
+     */
+    const int WIFI_INITIALISED_BIT = BIT4;
 
     /**
      *  Default scan method for WiFi networks.
