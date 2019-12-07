@@ -352,6 +352,108 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             return (result, statusCode);
         }
 
+        public static byte[] EncodeSystemConfiguration(SystemConfiguration systemConfiguration)
+        {
+            int offset = 0;
+            int length = 0;
+
+            //
+            //  Calculate the amount of memory needed.
+            //
+            length += 8;
+
+            //
+            //  Now allocate a new buffer and copy the data in to the buffer.
+            //
+            byte[] buffer = new byte[length];
+            Array.Clear(buffer, 0, buffer.Length);
+            buffer[offset] = systemConfiguration.WiFiTaskPriority;
+            offset += 1;
+            buffer[offset] = systemConfiguration.BluetoothTaskPriority;
+            offset += 1;
+            buffer[offset] = systemConfiguration.MeshNetworkTaskPriority;
+            offset += 1;
+            buffer[offset] = systemConfiguration.SystemTaskPriority;
+            offset += 1;
+            EncodeUInt32(systemConfiguration.MaximumSpiMessageSize, buffer, offset);
+            return(buffer);
+        }
+
+        public static SystemConfiguration ExtractSystemConfiguration(byte[] buffer, int offset)
+        {
+            SystemConfiguration systemConfiguration = new Messages.SystemConfiguration();
+
+            systemConfiguration.WiFiTaskPriority = buffer[offset];
+            offset += 1;
+            systemConfiguration.BluetoothTaskPriority = buffer[offset];
+            offset += 1;
+            systemConfiguration.MeshNetworkTaskPriority = buffer[offset];
+            offset += 1;
+            systemConfiguration.SystemTaskPriority = buffer[offset];
+            offset += 1;
+            systemConfiguration.MaximumSpiMessageSize = ExtractUInt32(buffer, offset);
+            return(systemConfiguration);
+        }
+
+        /// <summary>
+        /// Calculate the amount of memory required to hold the given instance of the SystemConfiguration object.
+        /// </summary>
+        /// <param name="systemConfiguration">SystemConfiguration object to be encoded.</param>
+        /// <returns>Number of bytes required to hold the encoded SystemConfiguration object.</returns>
+        public static int EncodedSystemConfigurationBufferSize(Messages.SystemConfiguration systemConfiguration)
+        {
+            return(8);
+        }
+
+        public static byte[] EncodeWiFiConfiguration(WiFiConfiguration wiFiConfiguration)
+        {
+            int offset = 0;
+            int length = 0;
+
+            //
+            //  Calculate the amount of memory needed.
+            //
+            length += 7;
+
+            //
+            //  Now allocate a new buffer and copy the data in to the buffer.
+            //
+            byte[] buffer = new byte[length];
+            Array.Clear(buffer, 0, buffer.Length);
+            buffer[offset] = wiFiConfiguration.AutomaticReconnect;
+            offset += 1;
+            EncodeUInt32(wiFiConfiguration.MaximumRetryCount, buffer, offset);
+            offset += 4;
+            buffer[offset] = wiFiConfiguration.Antenna;
+            offset += 1;
+            buffer[offset] = wiFiConfiguration.MaximumMessageQueueLength;
+            return(buffer);
+        }
+
+        public static WiFiConfiguration ExtractWiFiConfiguration(byte[] buffer, int offset)
+        {
+            WiFiConfiguration wiFiConfiguration = new Messages.WiFiConfiguration();
+
+            wiFiConfiguration.AutomaticReconnect = buffer[offset];
+            offset += 1;
+            wiFiConfiguration.MaximumRetryCount = ExtractUInt32(buffer, offset);
+            offset += 4;
+            wiFiConfiguration.Antenna = buffer[offset];
+            offset += 1;
+            wiFiConfiguration.MaximumMessageQueueLength = buffer[offset];
+            return(wiFiConfiguration);
+        }
+
+        /// <summary>
+        /// Calculate the amount of memory required to hold the given instance of the WiFiConfiguration object.
+        /// </summary>
+        /// <param name="wiFiConfiguration">WiFiConfiguration object to be encoded.</param>
+        /// <returns>Number of bytes required to hold the encoded WiFiConfiguration object.</returns>
+        public static int EncodedWiFiConfigurationBufferSize(Messages.WiFiConfiguration wiFiConfiguration)
+        {
+            return(7);
+        }
+
         public static byte[] EncodeWiFiCredentials(WiFiCredentials wiFiCredentials)
         {
             int offset = 0;

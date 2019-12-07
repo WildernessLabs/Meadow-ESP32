@@ -63,8 +63,6 @@
  */
 #define WIFI_INITIALISED_BIT            (BIT4)
 
-//class MessageDispatcher;
-
 /*
  *  @brief WiFi class
  *
@@ -100,11 +98,6 @@ private:
     const wifi_auth_mode_t DEFAULT_AUTH_MODE = WIFI_AUTH_OPEN;
 
     /**
-     *  Default number of retires when an error is detected.
-     */
-    const int DEFAULT_MAXIMUM_RETRY_COUNT = 3;
-
-    /**
      *  Maximum length of the string containing the SSID name.
      */
     const int MAXIMUM_SSID_LENGTH = 32;
@@ -125,6 +118,11 @@ private:
      *  which will connect the external antenna to the ESP32.
      */
     const gpio_num_t EXTERNAL_ANTENNA_PIN = GPIO_NUM_27;
+
+    /**
+     *  Current WiFi configuration.
+     */
+    Esp32Messaging::WiFiConfiguration _config;
 
     /**
      *  Determine if this class is instantiated already (i.e. this should be a singleton).
@@ -152,22 +150,9 @@ private:
     int _currentRetryCount = 0;
 
     /**
-     *  Maximum number of retries for a failed operation.
-     *
-     *  This can be overridden using system configuration.
+     *  Read the configuration from non-volatile storage.
      */
-    int _maximumRetryCount = DEFAULT_MAXIMUM_RETRY_COUNT;
-
-    /**
-     *  Indicate if the system should automatically reconnect to the WiFi if we
-     *  disconnect for any reason.
-     */
-    bool _automaticReconnect = true;
-
-    /**
-     *  Indicate which antenna is currently selected.
-     */
-    AntennaTypes::AntennaTypes _currentAntenna = AntennaTypes::OnBoard;
+    void ReadConfigFromNonVolatileStorage();
 
     /*
      *  Private methods.
@@ -196,15 +181,15 @@ private:
     void GetAvailableNetworks(Message *);
 
     /*
-     *  Temporary method to perform a simple HTTP get.
-     */
-    void HttpGet(Message *);
-
-    /*
      *  Getters and setters for the antenna in use.
      */
     void GetAntenna(Message *) const;
     void SetAntenna(Message *);
+
+    /**
+     *  Chnage the current antenna and activate it.
+     */
+    void SwitchAntenna(AntennaTypes::AntennaTypes);
 
     /*
      *  Private constructor for the class.

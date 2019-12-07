@@ -10,7 +10,16 @@
 #include "WiFiRequestHandler.hpp"
 #include "Exceptions/MultipleInstancesException.hpp"
 
-//extern "C" char* utoa(int a, char* buffer, unsigned char radix);
+/*
+ *  Default configuration for the WiFi system.
+ */
+struct Esp32Messaging::WiFiConfiguration DefaultConfiguration =
+{
+    .AutomaticReconnect = static_cast<uint8_t>(false),
+    .MaximumRetryCount = 3,
+    .Antenna = static_cast<uint8_t>(AntennaTypes::OnBoard),
+    .MaximumMessageQueueLength = 10
+};
 
 /**
  *  Event handler for the WiFi loop.
@@ -113,7 +122,7 @@ void WiFiRequestHandler::GetAntenna(Message *request) const
 
     request->MessageType = MessageTypes::Response;
     Esp32Messaging::AntennaInfo *antenna = (Esp32Messaging::AntennaInfo *) pvPortMalloc(sizeof(Esp32Messaging::AntennaInfo));
-    antenna->Antenna = (uint8_t) _currentAntenna;
+    antenna->Antenna = static_cast<uint8_t>(_config.Antenna);
     int encodedBufferLength = Encoders::EncodedAntennaInfoBufferSize(antenna);
     request->Payload = (uint8_t *) pvPortMalloc(encodedBufferLength);
     Encoders::EncodeAntennaInfo(antenna, request->Payload);
@@ -152,16 +161,9 @@ void WiFiRequestHandler::SetAntenna(Message *request)
         }
         else
         {
-            if (_currentAntenna != antenna->Antenna)
+            if (_config.Antenna != antenna->Antenna)
             {
-                gpio_num_t newAntennaPin = ConvertAntennaToPin((AntennaTypes::AntennaTypes) antenna->Antenna);
-                gpio_num_t oldAntennaPin = ConvertAntennaToPin(_currentAntenna);
-                //
-                //  Make sure the old antenna is switched off before the new one is turned on.
-                //
-                gpio_set_level(oldAntennaPin, 0);
-                gpio_set_level(newAntennaPin, 1);
-                _currentAntenna = (AntennaTypes::AntennaTypes) antenna->Antenna;
+                SwitchAntenna((AntennaTypes::AntennaTypes) antenna->Antenna);
             }
             request->StatusCode = StatusCodes::CompletedOK;
         }
@@ -203,21 +205,54 @@ gpio_num_t WiFiRequestHandler::ConvertAntennaToPin(AntennaTypes::AntennaTypes an
 }
 
 /**
+ *  @brief Change the current antenna and actrivate it.
+ *
+ *  @param newAntenna
+ *      New antenna to use.
+ */
+void WiFiRequestHandler::SwitchAntenna(AntennaTypes::AntennaTypes newAntenna)
+{
+    //
+    // TODO: What happens to any pending requests and do we disconnect WiFi first?
+    //
+    gpio_num_t newAntennaPin = ConvertAntennaToPin(newAntenna);
+    gpio_num_t oldAntennaPin = ConvertAntennaToPin(static_cast<AntennaTypes::AntennaTypes>(_config.Antenna));
+    //
+    //  Make sure the old antenna is switched off before the new one is turned on.
+    //
+    gpio_set_level(oldAntennaPin, 0);
+    gpio_set_level(newAntennaPin, 1);
+    _config.Antenna = newAntenna;
+}
+
+/**
+ *  @brief Read the WiFi configuration from non-volatile storage (NVS).
+ *
+ *  If the configuration is not in the NVS then set the configuration to the default.
+ */
+void WiFiRequestHandler::ReadConfigFromNonVolatileStorage()
+{
+    //  TODO: Implement read from NVS.
+    memcpy(&_config, &DefaultConfiguration, sizeof(DefaultConfiguration));
+}
+
+/**
  *  Setup the WiFi network.
  */
 void WiFiRequestHandler::Setup()
 {
+    ReadConfigFromNonVolatileStorage();
     RequestHandlerBase::Setup();
-    /*
-     *  Configure the antenna, by default, the on board antenna will be used.
-     */
-    //gpio_pad_select_gpio(EXTERNAL_ANTENNA);
     gpio_set_direction(EXTERNAL_ANTENNA_PIN, GPIO_MODE_OUTPUT);
     gpio_set_level(EXTERNAL_ANTENNA_PIN, 0);
-    //gpio_pad_select_gpio(ON_BOARD_ANTENNA);
     gpio_set_direction(ON_BOARD_ANTENNA_PIN, GPIO_MODE_OUTPUT);
     gpio_set_level(ON_BOARD_ANTENNA_PIN, 1);
-    _currentAntenna = AntennaTypes::OnBoard;
+
+    if (_config.Antenna > (uint8_t) AntennaTypes::Max)
+    {
+        _config.Antenna = AntennaTypes::OnBoard;
+    }
+    SwitchAntenna(static_cast<AntennaTypes::AntennaTypes>(_config.Antenna));
     /*
      *  Now create the objects necessary for the WiFi tasks.
      */
@@ -851,10 +886,10 @@ void WiFiRequestHandler::StationGotIpEvent(system_event_t *eventData)
  */
 void WiFiRequestHandler::StationDisconnectedEvent(system_event_t *eventData)
 {
-    if (_automaticReconnect)
+    if (static_cast<bool>(_config.AutomaticReconnect))
     {
         xEventGroupClearBits(_xWiFiEventGroup, WIFI_READY_BIT | WIFI_CONNECTED_BIT | WIFI_CONNECTING_BIT | WIFI_RECONNECTING_BIT);
-        if (_currentRetryCount < _maximumRetryCount)
+        if (_currentRetryCount < _config.MaximumRetryCount)
         {
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_RECONNECTING_BIT);
             esp_wifi_connect();

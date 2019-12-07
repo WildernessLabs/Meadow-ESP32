@@ -16,6 +16,23 @@ using Meadow.Coprocessor.F7Micro;
 
 namespace Meadow.Coprocessor.F7Micro.Messages
 {
+    public struct SystemConfiguration
+    {
+        public Byte WiFiTaskPriority;
+        public Byte BluetoothTaskPriority;
+        public Byte MeshNetworkTaskPriority;
+        public Byte SystemTaskPriority;
+        public UInt32 MaximumSpiMessageSize;
+    };
+
+    public struct WiFiConfiguration
+    {
+        public Byte AutomaticReconnect;
+        public UInt32 MaximumRetryCount;
+        public Byte Antenna;
+        public Byte MaximumMessageQueueLength;
+    };
+
     public struct WiFiCredentials
     {
         public String NetworkName;

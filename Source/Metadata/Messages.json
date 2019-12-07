@@ -1,6 +1,27 @@
 {
     "Messages":
     [
+        {
+            "Name": "SystemConfiguration",
+            "MessageElements":
+            [
+                { "Name": "WiFiTaskPriority", "DataType": "byte" },
+                { "Name": "BluetoothTaskPriority", "DataType": "byte" },
+                { "Name": "MeshNetworkTaskPriority", "DataType": "byte" },
+                { "Name": "SystemTaskPriority", "DataType": "byte" },
+                { "Name": "MaximumSpiMessageSize", "DataType": "uint32" }
+            ]
+        },
+        {
+            "Name": "WiFiConfiguration",
+            "MessageElements":
+            [
+                { "Name": "AutomaticReconnect", "DataType": "byte" },
+                { "Name": "MaximumRetryCount", "DataType": "uint32" },
+                { "Name": "Antenna", "DataTYpe": "byte" },
+                { "Name": "MaximumMessageQueueLength", "DataType": "byte" }
+            ]
+        },
         { 
             "Name": "WiFiCredentials",
             "MessageElements":
