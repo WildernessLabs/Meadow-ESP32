@@ -278,19 +278,19 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
             StartNetwork(request);
             break;
         case WiFiFunction::Stop:
-            ESP_LOGE(__func__, "WiFi Stop function is not implemented yet.");
+            Stop(request);
             break;
         case WiFiFunction::ConnectToAp:
-            ESP_LOGE(__func__, "WiFi Connect function is not implemented yet.");
+            ConnectToAp(request);
             break;
         case WiFiFunction::Disconnect:
-            ESP_LOGE(__func__, "WiFi Disconnect function is not implemented yet.");
+            Disconnect(request);
             break;
         case WiFiFunction::SetConfiguration:
-            ESP_LOGE(__func__, "WiFi SetConfiguration function is not implemented yet.");
+            SetConfiguration(request);
             break;
         case WiFiFunction::GetConfiguration:
-            ESP_LOGE(__func__, "WiFi GetConfiguration function is not implemented yet.");
+            GetConfiguration(request);
             break;
         case WiFiFunction::SetAntenna:
             SetAntenna(request);
@@ -351,6 +351,66 @@ void WiFiRequestHandler::SendResponse(Message *request, uint32_t statusCode)
     request->StatusCode = statusCode;
     _messageDispatcher->QueueMessageForStm32(request);
     _currentRequest = nullptr;
+}
+
+/**
+ *  @brief Get the configuration for the WiFi subsystem.
+ *
+ *  @param message
+ *      Message containing the encoded request.
+ */
+void WiFiRequestHandler::GetConfiguration(Message *message)
+{
+    // TODO: WiFi - GetConfiguration
+    ESP_LOGE(__func__, "GetConfiguration function is not implemented yet.");
+}
+
+/**
+ *  @brief Set the configuration for the WiFi subsystem.
+ *
+ *  @param message
+ *      Message containing the encoded request.
+ */
+void WiFiRequestHandler::SetConfiguration(Message *message)
+{
+    // TODO: WiFi - SetConfiguration
+    ESP_LOGE(__func__, "SetConfiguration function is not implemented yet.");
+}
+
+/**
+ *  @brief Disconnect from any access points.
+ *
+ *  @param message
+ *      Message containing the encoded request.
+ */
+void WiFiRequestHandler::Disconnect(Message *message)
+{
+    // TODO: WiFi - Disconnect from access point.
+    ESP_LOGE(__func__, "Disconnect function is not implemented yet.");
+}
+
+/**
+ *  @brief Stop the network and release all resources associated with any active connections.
+ *
+ *  @param message
+ *      Message containing the encoded request.
+ */
+void WiFiRequestHandler::Stop(Message *message)
+{
+    // TODO: WiFi - Stop network
+    ESP_LOGE(__func__, "Stop function is not implemented yet.");
+}
+
+/**
+ *  @brief Connect to a specified access point.
+ *
+ *  @param message
+ *      Message containing the encoded request.
+ */
+void WiFiRequestHandler::ConnectToAp(Message *message)
+{
+    // TODO: WiFi - Connect to access point.
+    ESP_LOGE(__func__, "Connect to access point function is not implemented yet.");
 }
 
 /**
@@ -486,8 +546,6 @@ void WiFiRequestHandler::GetAddrInfo(Message *message)
     vPortFree(extractedHints);
     //
     //  This will hold a pointer to a chain of one or more addrinfo structure.
-    //  The pointer must go on the heap in order for it to remain available
-    //  following the getaddr call.
     //
     //  It is the responsibility of the calling .NET application to ensure
     //  that FreeAddrInfo is called.  FreeAddrInfo will free the allocated
