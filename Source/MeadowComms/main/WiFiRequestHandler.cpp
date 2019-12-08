@@ -22,7 +22,6 @@ const struct Esp32Messaging::WiFiConfiguration DEFAULT_WIFI_CONFIGURATION =
     .MaximumMessageQueueLength = 10
 };
 
-
 /**
  *  Event handler for the WiFi loop.
  *
@@ -77,7 +76,18 @@ WiFiRequestHandler::WiFiRequestHandler()
     {
         _instantiated = true;
     }
-//    _config = ConfigurationManager::GetWifiConfiguration();
+    //
+    //  Get configuration from NVS.
+    //
+    NvsManager::ErrorCodes result = NvsManager::ReadBlob(CONFIG_NAME, &_config, sizeof(_config));
+    if (result != NvsManager::ErrorCodes::Ok)
+    {
+        memcpy(static_cast<void *>(&_config), &DEFAULT_WIFI_CONFIGURATION, sizeof(DEFAULT_WIFI_CONFIGURATION));
+        if ((result == NvsManager::ErrorCodes::BufferSizeMismatch) || (result == NvsManager::ErrorCodes::NotFound))
+        {
+            NvsManager::WriteBlob(CONFIG_NAME, &_config, sizeof(_config));
+        }
+    }
 }
 
 /**
@@ -249,7 +259,7 @@ void WiFiRequestHandler::Setup()
      */
     _xWiFiEventGroup = xEventGroupCreate();
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
-    xTaskCreate(Task, _taskName, 2048 * 2, this, configMAX_PRIORITIES - 1, &_taskHandle);
+    xTaskCreate(Task, TASK_NAME, 2048 * 2, this, configMAX_PRIORITIES - 1, &_taskHandle);
 }
 
 /**

@@ -99,7 +99,7 @@ void NvsManager::Setup()
 /**
  *  Read a byte (uint8_t) from non-volatile storage.
  */
-NvsManager::ErrorCodes NvsManager::ReadUint8(char *name, uint8_t *value)
+NvsManager::ErrorCodes NvsManager::ReadUint8(const char *name, uint8_t *value)
 {
     nvs_handle nvsHandle;
     esp_err_t error;
@@ -140,7 +140,7 @@ NvsManager::ErrorCodes NvsManager::ReadUint8(char *name, uint8_t *value)
 /**
  *  Write a byte (uint8_t) to non-volatile storage.
  */
-NvsManager::ErrorCodes NvsManager::WriteUint8(char *name, uint8_t value)
+NvsManager::ErrorCodes NvsManager::WriteUint8(const char *name, uint8_t value)
 {
     nvs_handle nvsHandle;
     esp_err_t error;
@@ -189,7 +189,7 @@ NvsManager::ErrorCodes NvsManager::WriteUint8(char *name, uint8_t value)
 /**
  *  Read a boolean from non-volatile storage.
  */
-NvsManager::ErrorCodes NvsManager::ReadBoolean(char *name, bool *value)
+NvsManager::ErrorCodes NvsManager::ReadBoolean(const char *name, bool *value)
 {
     NvsManager::ErrorCodes result;
     uint8_t byte;
@@ -205,7 +205,7 @@ NvsManager::ErrorCodes NvsManager::ReadBoolean(char *name, bool *value)
 /**
  *  Write a boolean to non-volatile storage.
  */
-NvsManager::ErrorCodes NvsManager::WriteBoolean(char *name, bool value)
+NvsManager::ErrorCodes NvsManager::WriteBoolean(const char *name, bool value)
 {
     uint8_t byte;
 
@@ -226,7 +226,7 @@ NvsManager::ErrorCodes NvsManager::WriteBoolean(char *name, bool value)
  *  @returns
  *      ErroCodes object indicating the success or failure of this mehtod call.
  */
-NvsManager::ErrorCodes NvsManager::BlobSize(char *name, size_t *spaceRequired)
+NvsManager::ErrorCodes NvsManager::BlobSize(const char *name, size_t *spaceRequired)
 {
     nvs_handle nvsHandle;
     esp_err_t error;
@@ -271,7 +271,7 @@ NvsManager::ErrorCodes NvsManager::BlobSize(char *name, size_t *spaceRequired)
  *  @retruns
  *      true if successful, false otherwise.
  */
-NvsManager::ErrorCodes NvsManager::ReadBlob(char *name, void *location, size_t amount)
+NvsManager::ErrorCodes NvsManager::ReadBlob(const char *name, void *location, size_t amount)
 {
     nvs_handle nvsHandle;
     esp_err_t error;
@@ -320,7 +320,7 @@ NvsManager::ErrorCodes NvsManager::ReadBlob(char *name, void *location, size_t a
  *  @retruns
  *      Error code representing the result of the write request.
  */
-NvsManager::ErrorCodes NvsManager::WriteBlob(char *name, void *location, size_t amount)
+NvsManager::ErrorCodes NvsManager::WriteBlob(const char *name, void *location, size_t amount)
 {
     nvs_handle nvsHandle;
     esp_err_t error;

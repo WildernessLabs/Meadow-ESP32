@@ -43,7 +43,12 @@ private:
     /**
      *  Name of the FreeRTOS task for the WiFi system.
      */
-    const char *_taskName = "WiFiTask";
+    const char *TASK_NAME = "WiFiTask";
+
+    /**
+     *  Name of the WiFi configuration object in NVS.
+     */
+    const char *CONFIG_NAME = "WiFiConfig";
 
     /*
      *  Event group bits.

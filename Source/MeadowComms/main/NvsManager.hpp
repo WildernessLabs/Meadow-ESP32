@@ -75,37 +75,37 @@ public:
     /**
      *  Read a byte (uint8_t) from non-volatile storage.
      */
-    static ErrorCodes ReadUint8(char *, uint8_t *);
+    static ErrorCodes ReadUint8(const char *, uint8_t *);
 
     /**
      *  Write a byte (uint8_t) to non-volatile storage.
      */
-    static ErrorCodes WriteUint8(char *, uint8_t);
+    static ErrorCodes WriteUint8(const char *, uint8_t);
 
     /**
      *  Read a boolean from non-volatile storage.
      */
-    static ErrorCodes ReadBoolean(char *, bool *);
+    static ErrorCodes ReadBoolean(const char *, bool *);
 
     /**
      *  Write a boolean to non-volatile storage.
      */
-    static ErrorCodes WriteBoolean(char *, bool);
+    static ErrorCodes WriteBoolean(const char *, bool);
 
     /**
      *  Obtain the amount of storage used by the named blob.
      */
-    static ErrorCodes BlobSize(char *, size_t *);
+    static ErrorCodes BlobSize(const char *, size_t *);
 
     /**
      *  Read a block of memory from non-volatile storage.
      */
-    static ErrorCodes ReadBlob(char *, void *, size_t);
+    static ErrorCodes ReadBlob(const char *, void *, size_t);
 
     /**
      *  Write a block of memory to non-volatile storage.
      */
-    static ErrorCodes WriteBlob(char *, void *, size_t);
+    static ErrorCodes WriteBlob(const char *, void *, size_t);
 };
 
 #endif /* _NVS_MANAGER_HPP_ */
