@@ -7,12 +7,10 @@
 #include "nvs_flash.h"
 #include "esp_ota_ops.h"
 
+#include "NvsManager.hpp"
 #include "Logging.hpp"
 #include "MessageDispatcher.hpp"
 #include "SpiTransportProvider.hpp"
-#include "SharedEnums.hpp"
-#include "Esp32Messaging.hpp"
-#include "Encoders.hpp"
 
 /*
  *      Main program loop for the ESP32 as specified by the FreeRTOS documentation.
@@ -21,6 +19,7 @@
 extern "C" void app_main()
 {
     Logging::Setup();
+    NvsManager::Setup();
     esp_log_level_set("*", ESP_LOG_INFO);
 
     const esp_app_desc_t *applicationDescription = esp_ota_get_app_description();
@@ -31,14 +30,6 @@ extern "C" void app_main()
      */
     SpiTransportProvider *spi = new SpiTransportProvider();
     MessageDispatcher * __attribute__((unused)) messageDispatcher = new MessageDispatcher(spi);
-
-    esp_err_t result = nvs_flash_init();
-    if ((result == ESP_ERR_NVS_NO_FREE_PAGES) || (result == ESP_ERR_NVS_NEW_VERSION_FOUND))
-    {
-        ESP_ERROR_CHECK(nvs_flash_erase());
-        result = nvs_flash_init();
-    }
-    ESP_ERROR_CHECK(result);
 
     //
     //  Main program loop.

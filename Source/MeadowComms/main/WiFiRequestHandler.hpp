@@ -119,14 +119,14 @@ private:
     const gpio_num_t EXTERNAL_ANTENNA_PIN = GPIO_NUM_27;
 
     /**
-     *  Current WiFi configuration.
-     */
-    Esp32Messaging::WiFiConfiguration _config;
-
-    /**
      *  Determine if this class is instantiated already (i.e. this should be a singleton).
      */
     static bool _instantiated;
+
+    /**
+     *  WiFi configuration.
+     */
+    Esp32Messaging::WiFiConfiguration _config;
 
     /**
      *  Event group containing 24-bits used to indicate the state of the WiFi connection.
@@ -147,11 +147,6 @@ private:
      *  Current retry count.
      */
     int _currentRetryCount = 0;
-
-    /**
-     *  Read the configuration from non-volatile storage.
-     */
-    void ReadConfigFromNonVolatileStorage();
 
     /*
      *  Private methods.
