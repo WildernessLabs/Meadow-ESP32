@@ -169,6 +169,31 @@ private:
      */
     void DispatchRequest(Message *) override;
 
+    /**
+     *  Get the current WiFi configuration.
+     */
+    void GetConfiguration(Message *);
+
+    /**
+     *  Update the WiFi configuration.
+     */
+    void SetConfiguration(Message *);
+
+    /**
+     *  Disconnect from the current access point.
+     */
+    void Disconnect(Message *);
+
+    /**
+     *  Connect to an access point.
+     */
+    void ConnectToAp(Message *);
+
+    /**
+     *  Stop the WiFi and release all resources.
+     */
+    void Stop(Message *);
+
     /*
      *  Start the network.
      */
