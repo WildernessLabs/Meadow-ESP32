@@ -7,19 +7,21 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "NvsManager.hpp"
 #include "WiFiRequestHandler.hpp"
 #include "Exceptions/MultipleInstancesException.hpp"
 
-/*
+/**
  *  Default configuration for the WiFi system.
  */
-struct Esp32Messaging::WiFiConfiguration DefaultConfiguration =
+const struct Esp32Messaging::WiFiConfiguration DEFAULT_WIFI_CONFIGURATION =
 {
     .AutomaticReconnect = static_cast<uint8_t>(false),
     .MaximumRetryCount = 3,
     .Antenna = static_cast<uint8_t>(AntennaTypes::OnBoard),
     .MaximumMessageQueueLength = 10
 };
+
 
 /**
  *  Event handler for the WiFi loop.
@@ -75,6 +77,7 @@ WiFiRequestHandler::WiFiRequestHandler()
     {
         _instantiated = true;
     }
+//    _config = ConfigurationManager::GetWifiConfiguration();
 }
 
 /**
@@ -226,22 +229,10 @@ void WiFiRequestHandler::SwitchAntenna(AntennaTypes::AntennaTypes newAntenna)
 }
 
 /**
- *  @brief Read the WiFi configuration from non-volatile storage (NVS).
- *
- *  If the configuration is not in the NVS then set the configuration to the default.
- */
-void WiFiRequestHandler::ReadConfigFromNonVolatileStorage()
-{
-    //  TODO: Implement read from NVS.
-    memcpy(&_config, &DefaultConfiguration, sizeof(DefaultConfiguration));
-}
-
-/**
  *  Setup the WiFi network.
  */
 void WiFiRequestHandler::Setup()
 {
-    ReadConfigFromNonVolatileStorage();
     RequestHandlerBase::Setup();
     gpio_set_direction(EXTERNAL_ANTENNA_PIN, GPIO_MODE_OUTPUT);
     gpio_set_level(EXTERNAL_ANTENNA_PIN, 0);
