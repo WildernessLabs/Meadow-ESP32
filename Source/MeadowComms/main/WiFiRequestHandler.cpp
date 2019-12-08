@@ -713,6 +713,7 @@ void WiFiRequestHandler::SetSockOpt(Message *message)
 
     switch (request->OptionName)
     {
+        // TODO: Implement remaining setsockopt features.
         case SO_ACCEPTCONN:     /* Socket has had listen() */
             break;
         case SO_LINGER:         /* Linger on close if data present */
@@ -940,7 +941,7 @@ void WiFiRequestHandler::StationGotIpEvent(system_event_t *eventData)
  *  Process the WiFi disconnected event.
  *
  *  @param eventData
- *      Data for the Got IP event.
+ *      Data for the disconnected event.
  */
 void WiFiRequestHandler::StationDisconnectedEvent(system_event_t *eventData)
 {
@@ -972,7 +973,7 @@ void WiFiRequestHandler::StationDisconnectedEvent(system_event_t *eventData)
  *  Process the scan results.
  *
  *  @param event
- *      Event information passed to the event loop.
+ *      Event information for the scan complete event.
  */
 void WiFiRequestHandler::ScanCompleteEvent(system_event_t *event)
 {
