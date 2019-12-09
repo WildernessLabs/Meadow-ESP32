@@ -23,7 +23,7 @@
 class MessageDispatcher;
 
 /**
- *
+ *  Base class for the message system transport provider.
  */
 class TransportProviderBase
 {
@@ -44,6 +44,16 @@ public:
      *  finished sending a message to the ESP32.
      */
     static const uint32_t STM32_INTERRUPT_NOTIFICATION_BIT = 0x00000001;
+
+    /**
+     *  Get the current maximum message size.
+     */
+    virtual uint32_t GetMaximumMessageSize() const = 0;
+
+    /**
+     *  Set the maximum message size.
+     */
+    virtual bool SetMaximumMessageSize(uint32_t messageSize) = 0;
 
 private:
     /**
@@ -99,6 +109,7 @@ protected:
      *  Toggle the GPIO pin that is connected to the STM32.
      */
     void ToggleEsp32ReadyPin();
+
 };
 
 #endif /* _TRANSPORT_PROVIDER_BASE_HPP_ */

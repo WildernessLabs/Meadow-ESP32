@@ -18,11 +18,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
 {
     public struct SystemConfiguration
     {
-        public Byte WiFiTaskPriority;
-        public Byte BluetoothTaskPriority;
-        public Byte MeshNetworkTaskPriority;
-        public Byte SystemTaskPriority;
-        public UInt32 MaximumSpiMessageSize;
+        public UInt32 MessageSize;
     };
 
     public struct WiFiConfiguration

@@ -360,22 +360,14 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             //
             //  Calculate the amount of memory needed.
             //
-            length += 8;
+            length += 4;
 
             //
             //  Now allocate a new buffer and copy the data in to the buffer.
             //
             byte[] buffer = new byte[length];
             Array.Clear(buffer, 0, buffer.Length);
-            buffer[offset] = systemConfiguration.WiFiTaskPriority;
-            offset += 1;
-            buffer[offset] = systemConfiguration.BluetoothTaskPriority;
-            offset += 1;
-            buffer[offset] = systemConfiguration.MeshNetworkTaskPriority;
-            offset += 1;
-            buffer[offset] = systemConfiguration.SystemTaskPriority;
-            offset += 1;
-            EncodeUInt32(systemConfiguration.MaximumSpiMessageSize, buffer, offset);
+            EncodeUInt32(systemConfiguration.MessageSize, buffer, offset);
             return(buffer);
         }
 
@@ -383,15 +375,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
         {
             SystemConfiguration systemConfiguration = new Messages.SystemConfiguration();
 
-            systemConfiguration.WiFiTaskPriority = buffer[offset];
-            offset += 1;
-            systemConfiguration.BluetoothTaskPriority = buffer[offset];
-            offset += 1;
-            systemConfiguration.MeshNetworkTaskPriority = buffer[offset];
-            offset += 1;
-            systemConfiguration.SystemTaskPriority = buffer[offset];
-            offset += 1;
-            systemConfiguration.MaximumSpiMessageSize = ExtractUInt32(buffer, offset);
+            systemConfiguration.MessageSize = ExtractUInt32(buffer, offset);
             return(systemConfiguration);
         }
 
@@ -402,7 +386,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
         /// <returns>Number of bytes required to hold the encoded SystemConfiguration object.</returns>
         public static int EncodedSystemConfigurationBufferSize(Messages.SystemConfiguration systemConfiguration)
         {
-            return(8);
+            return(4);
         }
 
         public static byte[] EncodeWiFiConfiguration(WiFiConfiguration wiFiConfiguration)

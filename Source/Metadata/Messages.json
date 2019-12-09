@@ -5,11 +5,7 @@
             "Name": "SystemConfiguration",
             "MessageElements":
             [
-                { "Name": "WiFiTaskPriority", "DataType": "byte" },
-                { "Name": "BluetoothTaskPriority", "DataType": "byte" },
-                { "Name": "MeshNetworkTaskPriority", "DataType": "byte" },
-                { "Name": "SystemTaskPriority", "DataType": "byte" },
-                { "Name": "MaximumSpiMessageSize", "DataType": "uint32" }
+                { "Name": "MessageSize", "DataType": "uint32" }
             ]
         },
         {

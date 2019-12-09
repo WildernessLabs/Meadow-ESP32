@@ -47,10 +47,26 @@ private:
     SystemRequestHandler();
     ~SystemRequestHandler();
 
-    /*
-     *  Echo function for testing the communication layers.
+    /**
+     *  Get the system configuration.
      */
-    void Echo(Message *);
+    void GetConfiguration(Message *);
+
+    /**
+     *  Set the system configuration.
+     */
+    void SetConfiguration(Message *);
+
+    /**
+     *  Put the ESP32 into deep sleep.
+     */
+    void DeepSleep(Message *);
+
+    /**
+     *  Get the battery level.
+     */
+    void BatteryLevel(Message *);
+
 
 public:
     /*

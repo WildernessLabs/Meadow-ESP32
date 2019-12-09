@@ -51,10 +51,10 @@ namespace Meadow.Coprocessor.F7Micro
 
     public enum SystemFunction : UInt32
     {
-        Echo = 0,
-        GetConfiguration = 1,
-        SetConfiguration = 2,
-        DeepSleep = 3
+        GetConfiguration = 0,
+        SetConfiguration = 1,
+        DeepSleep = 2,
+        BatteryLevel = 3
     };
 
     public enum WiFiFunction : UInt32

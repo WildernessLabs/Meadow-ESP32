@@ -452,15 +452,7 @@ Message *Encoders::ExtractMessage(uint8_t *buffer, uint32_t bufferLength, bool h
 // cppcheck-suppress unusedFunction symbolName=EncodeSystemConfiguration
 void Encoders::EncodeSystemConfiguration(Esp32Messaging::SystemConfiguration *systemConfiguration, uint8_t *buffer)
 {
-    *buffer = systemConfiguration->WiFiTaskPriority;
-    buffer += 1;
-    *buffer = systemConfiguration->BluetoothTaskPriority;
-    buffer += 1;
-    *buffer = systemConfiguration->MeshNetworkTaskPriority;
-    buffer += 1;
-    *buffer = systemConfiguration->SystemTaskPriority;
-    buffer += 1;
-    EncodeUInt32(systemConfiguration->MaximumSpiMessageSize, buffer);
+    EncodeUInt32(systemConfiguration->MessageSize, buffer);
 }
 
 /**
@@ -475,7 +467,7 @@ void Encoders::EncodeSystemConfiguration(Esp32Messaging::SystemConfiguration *sy
 // cppcheck-suppress unusedFunction symbolName=EncodedSystemConfigurationBufferSize
 int Encoders::EncodedSystemConfigurationBufferSize(Esp32Messaging::SystemConfiguration *systemConfiguration)
 {
-    return(8);
+    return(4);
 }
 
 /**
@@ -495,15 +487,7 @@ Esp32Messaging::SystemConfiguration *Encoders::ExtractSystemConfiguration(uint8_
 {
     Esp32Messaging::SystemConfiguration *systemConfiguration = (Esp32Messaging::SystemConfiguration *) pvPortMalloc(sizeof(Esp32Messaging::SystemConfiguration));
 
-    systemConfiguration->WiFiTaskPriority = *buffer;
-    buffer += 1;
-    systemConfiguration->BluetoothTaskPriority = *buffer;
-    buffer += 1;
-    systemConfiguration->MeshNetworkTaskPriority = *buffer;
-    buffer += 1;
-    systemConfiguration->SystemTaskPriority = *buffer;
-    buffer += 1;
-    systemConfiguration->MaximumSpiMessageSize = ExtractUInt32(buffer);
+    systemConfiguration->MessageSize = ExtractUInt32(buffer);
     return(systemConfiguration);
 }
 

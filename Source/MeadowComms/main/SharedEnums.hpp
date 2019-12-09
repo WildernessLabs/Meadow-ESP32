@@ -67,10 +67,10 @@ namespace SystemFunction
      */
     enum SystemFunction : uint32_t
     {
-        Echo = 0,
-        GetConfiguration = 1,
-        SetConfiguration = 2,
-        DeepSleep = 3
+        GetConfiguration = 0,
+        SetConfiguration = 1,
+        DeepSleep = 2,
+        BatteryLevel = 3
     };
 }
 
