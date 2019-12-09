@@ -36,6 +36,11 @@ private:
     const int MAXIMUM_RETRY_COUNT = 3;
 
     /**
+     *  Maximum number of bytes that can sent over the SPI bus.
+     */
+    const uint32_t MAXIMUM_SPI_FRAME_SIZE = 4094;
+
+    /**
      *  Possible states for the SPI transport layer.
      */
     enum SpiStates { Invalid,
@@ -83,6 +88,11 @@ private:
      *  Retry count for sending messages.
      */
     uint32_t _retryCount = 0;
+
+    /**
+     *  Maximum size for a message.
+     */
+    uint32_t _maximumMessageSize = 0;
 
     /**
      *  Message coming in from the STM32.
@@ -145,6 +155,9 @@ private:
      */
     static void Task(void *);
 
+    /**
+     *  Process incoming messages.
+     */
     spi_slave_transaction_t *ProcessMessages(spi_slave_transaction_t *);
 
     /*
@@ -222,6 +235,9 @@ private:
      */
     spi_slave_transaction_t *OutboundMessageBodyAcknowledgementReceived(spi_slave_transaction_t *);
 
+    /*
+     *  Implement processing of the transport response.
+     */
     spi_slave_transaction_t * ProcessSendingTransportResponseState(spi_slave_transaction_t *);
 
     /*
@@ -255,12 +271,11 @@ public:
      */
     void Setup(MessageDispatcher *);
 
-    /*
-     *  Test method that will simply pass the string through
-     *  the MessageDispatcher to verify that the message
-     *  passing between layers is working.
+    /**
+     *  Getters and setters for the maximum message size.
      */
-    void Echo(const char *);
+    uint32_t GetMaximumMessageSize() const;
+    bool SetMaximumMessageSize(uint32_t maximumMessageSize);
 };
 
 #endif /* _SPI_TRANSPORT_PROVIDER_HPP_ */

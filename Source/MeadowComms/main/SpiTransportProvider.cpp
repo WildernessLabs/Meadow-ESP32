@@ -124,6 +124,7 @@ SpiTransportProvider::SpiTransportProvider() :
     _headerFrameSize = Encoders::CalculateSpiBufferSize(Message::HEADER_SIZE);
     _headerReceiveBuffer = static_cast<uint8_t *>(heap_caps_malloc(_headerFrameSize, MALLOC_CAP_DMA));
     _headerTransmitBuffer = static_cast<uint8_t *>(heap_caps_malloc(_headerFrameSize, MALLOC_CAP_DMA));
+    SetMaximumMessageSize(MAXIMUM_SPI_FRAME_SIZE - _headerFrameSize);
     ClearTransmitAndReceiveBuffers(_headerReceiveBuffer, _headerTransmitBuffer, _headerFrameSize);
 
     /*
@@ -160,6 +161,47 @@ SpiTransportProvider::~SpiTransportProvider()
         vPortFree(_outboundMessage);
     }
     _currentState = Invalid;
+}
+
+/*
+ * ----------------------------------------------------------------------------
+ *
+ *                      Getters and setters
+ *
+ * ----------------------------------------------------------------------------
+ */
+
+/**
+ *  @brief Get the maximum size of a message that can be sent through the transport provider.
+ *
+ *  @returns
+ *      Maximum size of a message that can be sent using the current transport provider.
+ */
+uint32_t SpiTransportProvider::GetMaximumMessageSize() const
+{
+    return(_maximumMessageSize);
+}
+
+/**
+ *  Set the maximum message size that can be sent through the transport provider.
+ *
+ *  @param messageSize
+ *      Desired maximum message size.
+ *
+ *  @returns
+ *      true if the message size is legal, false if the message size could not be set.
+ */
+bool SpiTransportProvider::SetMaximumMessageSize(uint32_t maximumMessageSize)
+{
+    uint32_t maximumSize = MAXIMUM_SPI_FRAME_SIZE - _headerFrameSize;
+    bool result = false;
+
+    if ((maximumMessageSize <= maximumSize) && (maximumMessageSize >= _headerFrameSize))
+    {
+        _maximumMessageSize = maximumMessageSize;
+        result = true;
+    }
+    return(result);
 }
 
 /* ---------------------------------------------------------------------------
@@ -403,30 +445,6 @@ void SpiTransportProvider::SpiPostTransmissionCallback(spi_slave_transaction_t *
 void SpiTransportProvider::Setup(MessageDispatcher *messageDispatcher)
 {
     TransportProviderBase::Setup(messageDispatcher);
-}
-
-/**
- *  The Echo function simply sends a message through the various communication layers.
- *  This is a test function to verify correct communication through the message
- *  stack.
- *
- *  @param messageString
- *      Message to send through the communication layers.
- */
-void SpiTransportProvider::Echo(const char *messageString)
-{
-    Message *message;
-
-    message = static_cast<Message *>(pvPortMalloc(sizeof(Message)));
-    message->Interface = Esp32Interfaces::System;
-    message->Function = SystemFunction::Echo;
-    message->MessageID = 0x00;
-    message->MessageType = MessageTypes::Data;
-    message->PayloadLength = strlen(messageString) + 1;
-    char *str = static_cast<char *>(pvPortMalloc(message->PayloadLength));
-    strcpy(str, messageString);
-    message->Payload = reinterpret_cast<uint8_t *>(str);
-    _messageDispatcher->QueueMessageForEsp32(message);
 }
 
 /**

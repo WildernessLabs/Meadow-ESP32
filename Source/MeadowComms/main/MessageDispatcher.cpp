@@ -49,6 +49,31 @@ MessageDispatcher::~MessageDispatcher()
  */
 
 /**
+ *  @brief Get the maximum size of a message that can be sent through the transport provider.
+ *
+ *  @returns
+ *      Maximum size of a message that can be sent using the current transport provider.
+ */
+uint32_t MessageDispatcher::GetMaximumMessageSize() const
+{
+    return(_transportProvider->GetMaximumMessageSize());
+}
+
+/**
+ *  Set the maximum message size that can be sent through the transport provider.
+ *
+ *  @param messageSize
+ *      Desired maximum message size.
+ *
+ *  @returns
+ *      true if the message size is legal, false if the message size could not be set.
+ */
+bool MessageDispatcher::SetMaximumMessageSize(uint32_t messageSize)
+{
+    return(_transportProvider->SetMaximumMessageSize(messageSize));
+}
+
+/**
  *  Add the specified message (request) to the appropriate interface
  *  message queue.
  *

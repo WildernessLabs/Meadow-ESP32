@@ -111,6 +111,16 @@ public:
      *  Get the next message ID.
      */
     uint32_t GetNextMessageID();
+
+    /**
+     *  Get the maximum message size that can be sent through the transport provider.
+     */
+    uint32_t GetMaximumMessageSize() const;
+
+    /**
+     *  Set the maximum message size that can be sent through the transport provider.
+     */
+    bool SetMaximumMessageSize(uint32_t);
 };
 
 #endif /* _MESSAGE_DISPATCHER_HPP_ */

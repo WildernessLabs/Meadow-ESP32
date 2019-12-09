@@ -50,6 +50,17 @@ private:
      */
     const char *CONFIG_NAME = "WiFiConfig";
 
+    /**
+     *  Default configuration for the WiFi system.
+     */
+    const struct Esp32Messaging::WiFiConfiguration DEFAULT_WIFI_CONFIGURATION =
+    {
+        .AutomaticReconnect = static_cast<uint8_t>(false),
+        .MaximumRetryCount = 3,
+        .Antenna = static_cast<uint8_t>(AntennaTypes::OnBoard),
+        .MaximumMessageQueueLength = 10
+    };
+
     /*
      *  Event group bits.
      *

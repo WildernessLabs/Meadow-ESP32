@@ -128,26 +128,18 @@ bool TransportProviderBase::QueueMessageForStm32(Message *message)
 {
     bool result = true;
 
-    if ((message->Interface == Esp32Interfaces::System) && (message->Function == SystemFunction::Echo))
+    if (xSemaphoreTake(_outboundMessageQueueMutex, portMAX_DELAY))
     {
-        ESP_LOGI(__func__, "Echo received: %s", (char *) message->Payload);
-
-    }
-    else
-    {
-        if (xSemaphoreTake(_outboundMessageQueueMutex, portMAX_DELAY))
+        if (xQueueSendToBack(_outboundMessageQueueHandle, &message, 0) != pdPASS)
         {
-            if (xQueueSendToBack(_outboundMessageQueueHandle, &message, 0) != pdPASS)
-            {
-                ESP_LOGE(__func__, "Cannot queue message.");
-                result = false;
-            }
-            else
-            {
-                ToggleEsp32ReadyPin();
-            }
-            xSemaphoreGive(_outboundMessageQueueMutex);
+            ESP_LOGE(__func__, "Cannot queue message.");
+            result = false;
         }
+        else
+        {
+            ToggleEsp32ReadyPin();
+        }
+        xSemaphoreGive(_outboundMessageQueueMutex);
     }
     return(result);
 }

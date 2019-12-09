@@ -12,17 +12,6 @@
 #include "Exceptions/MultipleInstancesException.hpp"
 
 /**
- *  Default configuration for the WiFi system.
- */
-const struct Esp32Messaging::WiFiConfiguration DEFAULT_WIFI_CONFIGURATION =
-{
-    .AutomaticReconnect = static_cast<uint8_t>(false),
-    .MaximumRetryCount = 3,
-    .Antenna = static_cast<uint8_t>(AntennaTypes::OnBoard),
-    .MaximumMessageQueueLength = 10
-};
-
-/**
  *  Event handler for the WiFi loop.
  *
  *  This needs to be a C function prototype in order to be

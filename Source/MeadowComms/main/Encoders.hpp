@@ -32,11 +32,7 @@ namespace Esp32Messaging
 {
     struct SystemConfiguration
     {
-        uint8_t WiFiTaskPriority;
-        uint8_t BluetoothTaskPriority;
-        uint8_t MeshNetworkTaskPriority;
-        uint8_t SystemTaskPriority;
-        uint32_t MaximumSpiMessageSize;
+        uint32_t MessageSize;
     };
 
     struct WiFiConfiguration

@@ -91,22 +91,54 @@ void SystemRequestHandler::Setup()
 }
 
 /**
- *  Implement the echo function.
- *
- *  Echo the message on the information console and then send a response back.
+ *  @brief Get the configuration for the system.
  *
  *  @param request
- *      Request from the system.
+ *      Message requesting the system configuration.
  */
-void SystemRequestHandler::Echo(Message *request)
+void SystemRequestHandler::GetConfiguration(Message *request)
 {
-    ESP_LOGI(__func__, "System received echo request: %s", (char *) request->Payload);
-    vPortFree(request->Payload);
-    const char *str = "Response from ESP32.";
-    request->PayloadLength = strlen(str) + 1;
-    request->Payload = (uint8_t *) pvPortMalloc(request->PayloadLength);
-    strcpy(reinterpret_cast<char *>(request->Payload), str);
-    _messageDispatcher->QueueMessageForStm32(request);
+    ESP_LOGI(__func__, "GetConfiguration not implemented");
+    //  TODO: Implement the GetConfiguration method.
+}
+
+/**
+ *  @brief Set the configuration for the system.
+ *
+ *  @param request
+ *      Message containing the system configuration.
+ */
+void SystemRequestHandler::SetConfiguration(Message *request)
+{
+    ESP_LOGI(__func__, "SetConfiguration not implemented");
+    //  TODO: Implement the SetConfiguration method.
+}
+
+/**
+ *  @brief Put the system into deep sleep.
+ *
+ *  This is one of the few messages that will not send a response to the
+ *  STM32.  The ESP32 will simply go to sleep.
+ *
+ *  @param request
+ *      Message requesting the ESP32 got to sleep.
+ */
+void SystemRequestHandler::DeepSleep(Message *request)
+{
+    ESP_LOGI(__func__, "DeepSleep not implemented");
+    //  TODO: Implement the DeepSleep method.
+}
+
+/**
+ *  @brief Get the voltage reading from the battery charging circuit.
+ *
+ *  @param request
+ *      Message requesting the battery level.
+ */
+void SystemRequestHandler::BatteryLevel(Message *request)
+{
+    ESP_LOGI(__func__, "BatteryLevel not implemented");
+    //  TODO: Implement the BatteryLevel method.
 }
 
 /**
@@ -119,8 +151,13 @@ void SystemRequestHandler::DispatchRequest(Message *request)
 {
     switch (request->Function)
     {
-        case SystemFunction::Echo:
-            Echo(request);
+        case SystemFunction::GetConfiguration:
+            break;
+        case SystemFunction::SetConfiguration:
+            break;
+        case SystemFunction::DeepSleep:
+            break;
+        case SystemFunction::BatteryLevel:
             break;
         default:
             ESP_LOGI(__func__, "Unknown System message received, function 0x%x", request->Function);
