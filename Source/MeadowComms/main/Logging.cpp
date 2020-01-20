@@ -5,6 +5,8 @@
  *  setup and run the logging system.
  */
 
+#include "esp32/rom/gpio.h"
+
 #include "Logging.hpp"
 
 /*
