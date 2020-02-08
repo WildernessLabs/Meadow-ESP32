@@ -5,6 +5,8 @@
  *  communication between the ESP32 and STM32 chips.
  */
 
+#include "driver/gpio.h"
+
 #include "TransportProviderBase.hpp"
 #include "Encoders.hpp"
 #include "Logging.hpp"

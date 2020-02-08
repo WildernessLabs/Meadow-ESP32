@@ -149,7 +149,7 @@ Message *Message::CreateOnHeap(uint8_t messageType, uint8_t interface, uint32_t 
 {
     Message *result = static_cast<Message *>(pvPortMalloc(sizeof(Message)));
 
-    memset(result, 0, sizeof(Message));
+    *result = {};
     result->MessageType = messageType;
     result->Interface = interface;
     result->Function = function;
