@@ -11,6 +11,7 @@
 #define USE_MEADOW
 
 #include "esp_system.h"
+#include "hal/gpio_types.h"
 
 /**
  * The Gpio namespace contains the definitions of the constants that define the GPIO

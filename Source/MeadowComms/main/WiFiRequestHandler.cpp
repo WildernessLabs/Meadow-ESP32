@@ -3,6 +3,7 @@
  *
  *  Implementation of the WiFi functionality.
  */
+#include "driver/gpio.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
