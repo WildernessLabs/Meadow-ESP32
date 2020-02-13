@@ -20,6 +20,43 @@
 #include "Gpio.hpp"
 #include "Esp32Messaging.hpp"
 
+//#define USE_MACRO 1
+//#undef USE_MACRO
+
+#define LOGGING_ENABLED 1
+//#undef LOGGING_ENABLED
+
+#if LOGGING_ENABLED
+    #ifdef USE_MACRO
+        #define INFORMATION_MESSAGE(condition, format, ...) ESP_LOGI(__func__, format, ##__VA_ARGS__);
+        #define INFORMATION_HEX_BUFFER(buffer, bufferLength) ESP_LOG_BUFFER_HEXDUMP(__func__, buffer, bufferLength, ESP_LOGI);
+        #define ERROR_MESSAGE(format, ...) ESP_LOGE(__func__, format, ##__VA_ARGS__);
+        #define ERROR_HEX_BUFFER(buffer, bufferLength) ESP_LOG_BUFFER_HEXDUMP(__func__, buffer, bufferLength, ESP_LOGE);
+    #else
+        #define INFORMATION_MESSAGE(condition, format, ...) \
+            do { \
+                if (condition) Logging::Information(__func__, format, ##__VA_ARGS__); \
+            } while (false)
+        #define INFORMATION_HEX_BUFFER(condition, buffer, bufferLength) \
+            do { \
+                if (condition) Logging::Information(__func__, buffer, bufferLength); \
+            } while (false)
+        #define ERROR_MESSAGE(condition, format, ...) \
+                do { \
+                    if (condition) Logging::Information(__func__, buffer, bufferLength); \
+                } while (false)
+        #define ERROR_HEX_BUFFER(condition, buffer, bufferLength) \
+                do { \
+                    if (condition) Logging::Error(__func__, buffer, bufferLength); \
+                } while (false)
+    #endif
+#else
+    #define INFORMATION_MESSAGE(format, ...);
+    #define INFORMATION_HEX_BUFFER(buffer, bufferLength);
+    #define ERROR_MESSAGE(format, ...);
+    #define ERROR_HEX_BUFFER(buffer, bufferLength);
+#endif
+
 /*
  *  @brief The Logging class provides the functionality necessary to setup and run the logging system.
  */
@@ -62,7 +99,7 @@ public:
     /*
      *  Process the request to output an error message to the logging system
      */
-    static void Error();
+    static void Error(char *, char *, ...);
 
     /*
      *  Decode the message structure and output the components.
