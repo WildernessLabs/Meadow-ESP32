@@ -78,7 +78,7 @@ namespace BasicNetworkTest
             var ipAddress = _f7MicroCoprocessor.StartNetwork(Secrets.WIFI_NAME, Secrets.WIFI_PASSOWRD);
             DebugHelpers.DebugHelpers.LogMessage(true, $"Obtained IP address: {ipAddress.ToString()}");
 
-            DebugHelpers.DebugHelpers.LogMessage(true, "Press any key to start the test.");
+            DebugHelpers.DebugHelpers.LogMessage(true, "Press the button start the test.");
             RunTest();
         }
         
