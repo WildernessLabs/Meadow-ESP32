@@ -9,7 +9,7 @@ namespace BasicNetworkTest
         static IApp application;
         public static void Main(string[] args)
         {
-            Console.WriteLine("HttpGet Test Application for Meadow F7 (Version 0.12.01)");
+            Console.WriteLine("HttpGet Test Application for Meadow F7 (Version 0.14.01)");
             
             application = new HttpGetTest();
             Thread.Sleep(Timeout.Infinite);
