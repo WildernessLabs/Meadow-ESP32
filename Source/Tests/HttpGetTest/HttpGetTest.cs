@@ -1,4 +1,10 @@
-﻿using System;
+﻿//
+// Define the USE_EXTERNAL_ESP32 variable to use the pin definitions for an externally
+// connected ESP32 development board rather than the internal ESP32 chip. 
+//
+#define USE_EXTERNAL_ESP32
+
+using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
@@ -59,10 +65,23 @@ namespace BasicNetworkTest
             //
             _esp32UartRx = (IDigitalInputPort) Device.CreateDigitalInputPort(Device.Pins.ESP_UART_RX, resistorMode: ResistorMode.Disabled);
             _esp32UartTx = (IDigitalInputPort) Device.CreateDigitalInputPort(Device.Pins.ESP_UART_TX, resistorMode: ResistorMode.Disabled);
-
+            
+            #if USE_EXTERNAL_ESP32
+            //
+            // The following _dispatcher object is set up to use an external ESP32 development board.
+            // These allow the signals on the SPI bus to be monitored by a scope / logic analyser.
+            //
+            _dispatcher = new MessageDispatcher(Device,
+                mosi: Device.Pins.MOSI, miso: Device.Pins.MISO, clock: Device.Pins.SCK, chipSelect: Device.Pins.D04,
+                bootPin: Device.Pins.D08, resetPin: Device.Pins.D06);
+            #else
+            //
+            // The following creates a _dispatcher object connected to the onboard ESP32 chip. 
+            //
             _dispatcher = new MessageDispatcher(Device,
                 mosi: Device.Pins.ESP_MOSI, miso: Device.Pins.ESP_MISO, clock: Device.Pins.ESP_CLK, chipSelect: Device.Pins.ESP_CS,
                 bootPin: Device.Pins.ESP_BOOT, resetPin: Device.Pins.ESP_RST);
+            #endif
 
             _f7MicroCoprocessor = new F7MicroCoprocessor(_dispatcher);
             //
