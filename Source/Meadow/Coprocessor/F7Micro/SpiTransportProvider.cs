@@ -109,7 +109,7 @@ namespace Meadow.Coprocessor.F7Micro
         /// </summary>
         public SpiTransportProvider(IIODevice device, IPin mosi, IPin miso, IPin clock, IPin chipSelect, IPin bootPin, IPin resetPin)
         {
-            DebugLevel = DebugOptions.None;
+            DebugLevel = DebugOptions.Full;
             SpiClockConfiguration spiConfiguration = new SpiClockConfiguration(SPI_BUS_SPEED, SpiClockConfiguration.Mode.Mode3);
             _esp32 = new SpiPeripheral(device.CreateSpiBus(clock, mosi, miso, spiConfiguration), device.CreateDigitalOutputPort(chipSelect, true));
 
