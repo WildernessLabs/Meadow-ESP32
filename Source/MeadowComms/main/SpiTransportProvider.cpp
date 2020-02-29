@@ -68,9 +68,9 @@ SpiTransportProvider::SpiTransportProvider() :
      *  Set the handshake pins to output and set the level low for
      *  the output pin and register the ISR for the input pin.
      */
-    gpio_pad_select_gpio(Gpio::ESP32_READY_PIN);
-    gpio_set_direction(Gpio::ESP32_READY_PIN, GPIO_MODE_OUTPUT);
-    gpio_set_level(Gpio::ESP32_READY_PIN, 0);
+    gpio_pad_select_gpio(Gpio::ESP32_SPI_READY_PIN);
+    gpio_set_direction(Gpio::ESP32_SPI_READY_PIN, GPIO_MODE_OUTPUT);
+    gpio_set_level(Gpio::ESP32_SPI_READY_PIN, 0);
 
     /*
      *  Configure the pull-ups on the SPI pins.
@@ -1092,7 +1092,7 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessMessages(spi_slave_transac
 //    }
 //    else
 //    {
-//        gpio_set_level(Gpio::ESP32_READY_PIN, 0);
+//        gpio_set_level(Gpio::ESP32_SPI_READY_PIN, 0);
 //    }
 
     uint32_t notificationBits = 0;

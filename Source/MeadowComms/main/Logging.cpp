@@ -67,7 +67,7 @@ void Logging::Setup()
     uart_driver_install(LOGGING_UART_PORT_NUMBER, RX_BUFFER_SIZE * 2, 0, 0, NULL, 0);
     ESP_LOGI(__func__, "Logging redirected to UART_NUM_0 on pins %d (Tx), %d (Rx)", Gpio::LOGGING_TX_PIN, Gpio::LOGGING_RX_PIN);
     //
-    //  Now allow the original UART0 pins to be used as GPIO pins.
+    //  Now allow the original UART RX pin to be used as a GPIO pin.
     //
     gpio_pad_select_gpio(Gpio::UART0_TX_PIN);
     ESP_LOGI(__func__, "Logging setup complete.");
@@ -77,7 +77,7 @@ void Logging::Setup()
  *  Process the request to output an informational message to the logging system.
  *
  *  @param methodName
- *      Name of the method that called the Inforamtion method.
+ *      Name of the method that called the Information method.
  *
  *  @param formatString
  *      Format string for the message.
@@ -90,7 +90,7 @@ void Logging::Information(char *methodName, char *formatString, ...)
  *  Process the request to output an error message to the logging system
  *
  *  @param methodName
- *      Name of the method that called the Inforamtion method.
+ *      Name of the method that called the Information method.
  *
  *  @param formatString
  *      Format string for the message.

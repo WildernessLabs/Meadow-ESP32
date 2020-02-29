@@ -58,11 +58,16 @@ namespace Gpio
     const gpio_num_t UART0_TX_PIN = GPIO_NUM_1;
 
     /**
-     *  Pin used to indicate that the ESP32 either has data
-     *  for the STM32 or it is ready to receive data from
-     *  the STM32.
+     *  Pin used to indicate that the ESP32 SPI interface is ready
+     *  to receive / transmit data.
      */
-    const gpio_num_t ESP32_READY_PIN = BOOT_PIN;
+    const gpio_num_t ESP32_SPI_READY_PIN = BOOT_PIN;
+
+    /**
+     *  Pin used to indicate that the ESP32 has a message waiting
+     * to be transmitted to the STM32.
+     */
+    const gpio_num_t ESP32_MESSAGE_WAITING_PIN = UART0_RX_PIN;
 
     /**
      *  Pin used to by the STM32 to indicate it has data for
