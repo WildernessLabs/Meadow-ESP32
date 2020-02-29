@@ -136,6 +136,14 @@ private:
     static void SpiPostTransmissionCallback(spi_slave_transaction_t *);
 
     /*
+     *  SPI Setup Complete Callback
+     *
+     *  Note this this method is static as it is used as a callback
+     *  in some C code.
+     */
+    static void SpiPostSetupCallback(spi_slave_transaction_t *);
+
+    /*
      *  Send an ACK or NAK with the specified code.
      */
     spi_slave_transaction_t *CreateAcknowledgementTransaction(Message *, StatusCodes::StatusCodes, uint8_t);

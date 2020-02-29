@@ -108,7 +108,7 @@ protected:
     /*
      *  Toggle the GPIO pin that is connected to the STM32.
      */
-    void ToggleEsp32ReadyPin();
+    void ToggleEsp32MessageWaitingPin();
 
 };
 

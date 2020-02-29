@@ -65,12 +65,21 @@ SpiTransportProvider::SpiTransportProvider() :
     _spiInstance = this;
 
     /*
-     *  Set the handshake pins to output and set the level low for
-     *  the output pin and register the ISR for the input pin.
+     *  Set the handshake pins to output and set the output level low.
+     *  
+     *  First pin is the pin indicating that the ESP32 SPI interface is ready
+     *  to send / receive data.  This is the BOOT pin on the ESP32.
+     * 
+     *  The second pin is the pin used by the ESP32 to indicate that a message
+     *  is waiting.  This should be the UART0 Rx pin.
      */
     gpio_pad_select_gpio(Gpio::ESP32_SPI_READY_PIN);
     gpio_set_direction(Gpio::ESP32_SPI_READY_PIN, GPIO_MODE_OUTPUT);
     gpio_set_level(Gpio::ESP32_SPI_READY_PIN, 0);
+    //
+    gpio_pad_select_gpio(Gpio::ESP32_MESSAGE_WAITING_PIN);
+    gpio_set_direction(Gpio::ESP32_MESSAGE_WAITING_PIN, GPIO_MODE_OUTPUT);
+    gpio_set_level(Gpio::ESP32_MESSAGE_WAITING_PIN, 0);
 
     /*
      *  Configure the pull-ups on the SPI pins.
@@ -111,7 +120,7 @@ SpiTransportProvider::SpiTransportProvider() :
     slaveConfiguration.queue_size = 3;
     slaveConfiguration.flags = 0;
     slaveConfiguration.post_trans_cb = SpiPostTransmissionCallback;
-    slaveConfiguration.post_setup_cb = NULL;
+    slaveConfiguration.post_setup_cb = SpiPostSetupCallback;
 
     ESP_ERROR_CHECK(spi_slave_initialize(VSPI_HOST, &spiBusConfiguration, &slaveConfiguration, 1));
 
@@ -431,8 +440,24 @@ void SpiTransportProvider::DeleteTransaction(spi_slave_transaction_t *transactio
 void SpiTransportProvider::SpiPostTransmissionCallback(spi_slave_transaction_t *transaction)
 {
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    gpio_set_level(Gpio::ESP32_SPI_READY_PIN, 0);
     xTaskNotifyFromISR(_transportProviderTaskHandle, TransportProviderBase::STM32_INTERRUPT_NOTIFICATION_BIT, eSetBits, &xHigherPriorityTaskWoken);
     portYIELD_FROM_ISR();
+}
+
+/**
+ *  SPI Post setup callback.
+ * 
+ *  This method is called when the SPI interface has been setup and is
+ *  ready to send / receive data.
+ * 
+ *  @param transaction
+ *      spi_slave_transaction_t structure containing information about the
+ *      SPI transaction that has just completed.
+*/
+void SpiTransportProvider::SpiPostSetupCallback(spi_slave_transaction_t *transaction)
+{
+    gpio_set_level(Gpio::ESP32_SPI_READY_PIN, 1);
 }
 
 /**
