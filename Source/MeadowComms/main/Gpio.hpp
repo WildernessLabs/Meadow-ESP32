@@ -21,8 +21,6 @@ namespace Gpio
 {
     /**
      *  UART Tx pin for the logging output.
-     *
-     *  Note that this is also the same pin used to connect to Blinky.
      */
     const gpio_num_t LOGGING_TX_PIN = GPIO_NUM_1;
 
@@ -32,7 +30,7 @@ namespace Gpio
      *  Note that the pin used here is not actually connected to
      *  anything but the pin is necessary to setup the logging UART.
      */
-    const gpio_num_t LOGGING_RX_PIN = GPIO_NUM_3;
+    const gpio_num_t LOGGING_RX_PIN = GPIO_NUM_21;
 
     /**
      *  GPIO pin used to indicate to the STM32 that there is data
