@@ -139,7 +139,7 @@ bool TransportProviderBase::QueueMessageForStm32(Message *message)
         }
         else
         {
-            ToggleEsp32ReadyPin();
+            ToggleEsp32MessageWaitingPin();
         }
         xSemaphoreGive(_outboundMessageQueueMutex);
     }
@@ -147,11 +147,11 @@ bool TransportProviderBase::QueueMessageForStm32(Message *message)
 }
 
 /**
- *  Toggle the GPIO pin connected to the STM32.
+ *  Toggle the "Message waiting" GPIO pin connected to the STM32.
  */
-void TransportProviderBase::ToggleEsp32ReadyPin()
+void TransportProviderBase::ToggleEsp32MessageWaitingPin()
 {
-    gpio_set_level(Gpio::ESP32_SPI_READY_PIN, 1);
+    gpio_set_level(Gpio::ESP32_MESSAGE_WAITING_PIN, 1);
     vTaskDelay(50 / portTICK_PERIOD_MS);
-    gpio_set_level(Gpio::ESP32_SPI_READY_PIN, 0);
+    gpio_set_level(Gpio::ESP32_MESSAGE_WAITING_PIN, 0);
 }
