@@ -33,13 +33,15 @@ namespace Gpio
     const gpio_num_t LOGGING_RX_PIN = GPIO_NUM_21;
 
     /**
-     *  GPIO pin used to indicate to the STM32 that there is data
-     *  waiting for transmission.
+     *  ESP32 Boot pin.
      */
     const gpio_num_t BOOT_PIN = GPIO_NUM_0;
 
     /**
-     *  GPIO pin connected to UART0 Rx line.
+     *  Usual GPIO UART0 Rx line.
+     * 
+     *  This pin is not used in the application for UART communication as
+     *  it is being used for signalling.
      */
     const gpio_num_t UART0_RX_PIN = GPIO_NUM_3;
 
@@ -56,16 +58,9 @@ namespace Gpio
 
     /**
      *  Pin used to indicate that the ESP32 has a message waiting
-     * to be transmitted to the STM32.
+     *  to be transmitted to the STM32.
      */
     const gpio_num_t ESP32_MESSAGE_WAITING_PIN = UART0_RX_PIN;
-
-    /**
-     *  Pin used to by the STM32 to indicate it has data for
-     *  the ESP32 or that it is ready to receive data from
-     *  the ESP32.
-     */
-//    const gpio_num_t STM32_READY_PIN = BOOT_PIN;
 
     /**
      *  SPI MISO pin.
