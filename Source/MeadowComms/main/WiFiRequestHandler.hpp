@@ -222,7 +222,7 @@ private:
     void SetAntenna(Message *);
 
     /**
-     *  Chnage the current antenna and activate it.
+     *  Change the current antenna and activate it.
      */
     void SwitchAntenna(AntennaTypes::AntennaTypes);
 
