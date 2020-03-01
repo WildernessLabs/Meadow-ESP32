@@ -1,0 +1,18 @@
+{
+    "C_Cpp.default.configurationProvider": "vector-of-bool.cmake-tools",
+    "cSpell.words": [
+        "CRCs",
+        "LOGI",
+        "MISO",
+        "MOSI",
+        "RTOS",
+        "VSPI",
+        "WIFI",
+        "bssid",
+        "quadhd",
+        "quadwp",
+        "rssi",
+        "sclk",
+        "ssid"
+    ]
+}

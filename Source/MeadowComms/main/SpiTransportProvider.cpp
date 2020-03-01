@@ -248,7 +248,7 @@ const char *SpiTransportProvider::SpiStateString(SpiTransportProvider::SpiStates
             stateString = "WaitingForMessageBody";
             break;
         case AcknowledgingMessageBody:
-            stateString = "AcknowledingMessageBody";
+            stateString = "AcknowledgingMessageBody";
             break;
         case SendingMessageHeader:
             stateString = "SendingMessageHeader";

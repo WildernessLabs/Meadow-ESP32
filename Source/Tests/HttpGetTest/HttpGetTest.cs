@@ -73,14 +73,14 @@ namespace BasicNetworkTest
             //
             _dispatcher = new MessageDispatcher(Device,
                 mosi: Device.Pins.MOSI, miso: Device.Pins.MISO, clock: Device.Pins.SCK, chipSelect: Device.Pins.D04,
-                bootPin: Device.Pins.D08, resetPin: Device.Pins.D06);
+                bootPin: Device.Pins.D08, resetPin: Device.Pins.D06, Device.Pins.D03);
             #else
             //
             // The following creates a _dispatcher object connected to the onboard ESP32 chip. 
             //
             _dispatcher = new MessageDispatcher(Device,
                 mosi: Device.Pins.ESP_MOSI, miso: Device.Pins.ESP_MISO, clock: Device.Pins.ESP_CLK, chipSelect: Device.Pins.ESP_CS,
-                bootPin: Device.Pins.ESP_BOOT, resetPin: Device.Pins.ESP_RST);
+                bootPin: Device.Pins.ESP_BOOT, resetPin: Device.Pins.ESP_RST, Device.Pins.ESP_UART_RX);
             #endif
 
             _f7MicroCoprocessor = new F7MicroCoprocessor(_dispatcher);
@@ -94,7 +94,7 @@ namespace BasicNetworkTest
             //  Now run the test once.  Further tests can be run by pressing the button on D14.
             //
             DebugHelpers.DebugHelpers.LogMessage(true, "Starting network");
-            var ipAddress = _f7MicroCoprocessor.StartNetwork(Secrets.WIFI_NAME, Secrets.WIFI_PASSOWRD);
+            var ipAddress = _f7MicroCoprocessor.StartNetwork(Secrets.WIFI_NAME, Secrets.WIFI_PASSWORD);
             DebugHelpers.DebugHelpers.LogMessage(true, $"Obtained IP address: {ipAddress.ToString()}");
 
             DebugHelpers.DebugHelpers.LogMessage(true, "Press the button start the test.");

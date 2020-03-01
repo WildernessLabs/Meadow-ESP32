@@ -221,7 +221,7 @@ NvsManager::ErrorCodes NvsManager::WriteBoolean(const char *name, bool value)
  *
  *  @param spaceRequired
  *      Pointer to a size_t object that will be used to store the space required
- *      in NVS for the anmed BLOB.
+ *      in NVS for the BLOB.
  *
  *  @returns
  *      ErroCodes object indicating the success or failure of this mehtod call.
