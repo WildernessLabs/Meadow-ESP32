@@ -15,7 +15,7 @@
 
 /**
  * The Gpio namespace contains the definitions of the constants that define the GPIO
- * pins along weith their purpose.
+ * pins along with their purpose.
  */
 namespace Gpio
 {
