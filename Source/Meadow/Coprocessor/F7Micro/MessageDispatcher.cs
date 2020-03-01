@@ -85,14 +85,14 @@ namespace Meadow.Coprocessor.F7Micro
         /// <summary>
         /// Create a new MessageQueue object and attach it to the specified COM port.
         /// </summary>
-        public MessageDispatcher(IIODevice device, IPin mosi, IPin miso, IPin clock, IPin chipSelect, IPin bootPin, IPin resetPin)
+        public MessageDispatcher(IIODevice device, IPin mosi, IPin miso, IPin clock, IPin chipSelect, IPin bootPin, IPin resetPin, IPin messageWaitingPin)
         {
             DebugLevel = DebugOptions.None;
             if (_esp32 != null)
             {
                 throw new InvalidOperationException("Only a single instance of a MessageDispatcher can be created.");
             }
-            _esp32 = new SpiTransportProvider(device, mosi, miso, clock, chipSelect, bootPin, resetPin);
+            _esp32 = new SpiTransportProvider(device, mosi, miso, clock, chipSelect, bootPin, resetPin, messageWaitingPin);
             _esp32.MessageReceived += _esp32_DataReceived;
             _esp32.TransportError += _esp32_TransportError;
         }
