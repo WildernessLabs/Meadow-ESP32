@@ -9,6 +9,8 @@ namespace FileGenerator
 {
     public class MessageProcessor
     {
+        #region Private variables
+
         /// <summary>
         /// Known data types that this system can process.
         /// </summary>
@@ -27,24 +29,77 @@ namespace FileGenerator
             new DataType("pointer", 4, "", "")
         };
 
-        public string InputFileName { get; set; }
+        /// <summary>
+        /// Hold the C / C++ function prototypes as the messages are being processed.
+        /// </summary>
+        private StringBuilder _functionPrototypes = null;
 
+
+        #endregion Private variables
+
+        #region Properties
+
+        /// <summary>
+        /// Location of the JSON file that defines the messages to be sent between the
+        /// STM32 and the ESP32.
+        /// </summary>
+        public string MessageDefinitionInputFileName { get; set; }
+
+        /// <summary>
+        /// Path (including file name) of the C++ source file.
+        /// </summary>
         public string CSourceFileName { get; set; }
 
+        /// <summary>
+        /// Path (including file name) of the C++ header file.
+        /// </summary>
         public string CHeaderFileName { get; set; }
 
+        /// <summary>
+        /// Path (including file name) of the C# encoders file.
+        /// </summary>
         public string CSharpFileName { get; set; }
 
+        /// <summary>
+        /// Path (including file name) of the C++ message structure file.
+        /// </summary>
         public string CSharpStructureFileName { get; set; }
 
-        public string CHeaderTemplateFileName { get; set; }
+        /// <summary>
+        /// Path (including file name) of the C++ header template file.
+        /// </summary>
+        /// <remarks>
+        /// This file contains the static content that is placed at the top
+        /// of the C++ message encoders headers file.
+        /// </remarks>
+        public string CHeaderTemplateFileName {get; set; }
 
+        /// <summary>
+        /// Path (including file name) of the C++ source template file.
+        /// </summary>
+        /// <remarks>
+        /// This file contains the static content that is placed at the top
+        /// of the C++ message encoders source file.
+        /// </remarks>
         public string CSourceTemplateFileName { get; set; }
         
+        /// <summary>
+        /// Path (including file name) of the C# template file.
+        /// </summary>
+        /// <remarks>
+        /// This file contains the static content that is placed at the top
+        /// of the C# message encoders source file.
+        /// </remarks>
         public string CSharpSourceTemplateFileName { get; set; }
 
-        private StringBuilder FunctionPrototypes = null;
+        /// <summary>
+        /// Location of the C output files intended to be used in the Nuttx project.
+        /// </summary>
+        public string NuttxOutputDirectory { get; set; }
 
+        #endregion Properties
+
+        #region Constructor(s)
 
         /// <summary>
         /// Public constructor.
@@ -53,24 +108,9 @@ namespace FileGenerator
         {
         }
 
-        /// <summary>
-        /// Locate the DataType definition in the list of known types.
-        /// </summary>
-        /// <param name="elementDataType">Data type name to look up.</param>
-        /// <returns>DataType object for the matching data type name.</returns>
-        private DataType GetDataType(string elementDataType)
-        {
-            DataType result = null;
+        #endregion Constructor(s)
 
-            for (int index = 0; index < _dataTypes.Length; index++)
-            {
-                if (_dataTypes[index].Name.ToLower() == elementDataType.ToLower())
-                {
-                    result = _dataTypes[index];
-                }
-            }
-            return(result);
-        }
+        #region C# file generation
 
         /// <summary>
         /// Output the header for the C# file.
@@ -104,28 +144,6 @@ namespace FileGenerator
         {
             outputFile.WriteLine("    }");
             outputFile.WriteLine("}");
-        }
-
-        /// <summary>
-        /// Output the header to the C file.
-        /// </summary>
-        /// <param name="outputFile">Stream associated with the C file.</param>
-        /// <param name="fileName">Name of the C file.</param>
-        private void OutputCHeaderFileHeader(StreamWriter outputFile, string fileName)
-        {
-            outputFile.WriteLine("/*");
-            outputFile.WriteLine($" *      {Path.GetFileName(fileName)}");
-            outputFile.WriteLine(" *");
-            outputFile.WriteLine(" *      Message encoders and decoders.");
-            outputFile.WriteLine(" *");
-            outputFile.WriteLine(" *      *************************** WARNING ***************************");
-            outputFile.WriteLine(" *");
-            outputFile.WriteLine(" *      THIS FILE IS AUTOMATICALLY GENERATED.  DO NOT EDIT THIS FILE AS");
-            outputFile.WriteLine(" *      CHANGES WILL BE OVERWRITTEN.");
-            outputFile.WriteLine(" *");
-            outputFile.WriteLine(" *      *************************** WARNING ***************************");
-            outputFile.WriteLine(" */");
-            outputFile.WriteLine();
         }
 
         /// <summary>
@@ -431,30 +449,6 @@ namespace FileGenerator
         }
 
         /// <summary>
-        /// Convert the variable name into the name of a constant. 
-        /// 
-        /// The rule is, upper case all letters and insert a '_' between a lower case letter
-        /// and a subsequent upper case letter.
-        /// </summary>
-        /// <param name="name">Variable name (in Pascal or camel case) to convert.</param>
-        /// <returns>Constant name in upper case with _'s inserted where appropriate.</returns>
-        private string ConvertNameToConstantName(string name)
-        {
-            string result = "";
-            char[] characters = name.ToCharArray();
-            for (var index = 0; index < characters.Length; index++)
-            {
-                if ((index != 0) && (Char.IsUpper(characters[index])))
-                {
-                    result += "_";
-                }
-                result += Char.ToUpper(characters[index]);
-            }
-
-            return(result);
-        }
-
-        /// <summary>
         /// Output the structure C# definitions for the list of messages.
         /// </summary>
         /// <param name="messages">List of messages to convert into structure definitions.</param>
@@ -507,6 +501,32 @@ namespace FileGenerator
                 }
                 sourceFile.WriteLine("}");
             }
+        }
+
+        #endregion C# file generation
+
+        #region C++ File generation
+
+        /// <summary>
+        /// Output the header to the C file.
+        /// </summary>
+        /// <param name="outputFile">Stream associated with the C file.</param>
+        /// <param name="fileName">Name of the C file.</param>
+        private void OutputCHeaderFileHeader(StreamWriter outputFile, string fileName)
+        {
+            outputFile.WriteLine("/*");
+            outputFile.WriteLine($" *      {Path.GetFileName(fileName)}");
+            outputFile.WriteLine(" *");
+            outputFile.WriteLine(" *      Message encoders and decoders.");
+            outputFile.WriteLine(" *");
+            outputFile.WriteLine(" *      *************************** WARNING ***************************");
+            outputFile.WriteLine(" *");
+            outputFile.WriteLine(" *      THIS FILE IS AUTOMATICALLY GENERATED.  DO NOT EDIT THIS FILE AS");
+            outputFile.WriteLine(" *      CHANGES WILL BE OVERWRITTEN.");
+            outputFile.WriteLine(" *");
+            outputFile.WriteLine(" *      *************************** WARNING ***************************");
+            outputFile.WriteLine(" */");
+            outputFile.WriteLine();
         }
 
         /// <summary>
@@ -580,7 +600,7 @@ namespace FileGenerator
                 {
                     sourceFile.Write(templateFile.ReadToEnd());
                 }
-                sourceFile.WriteLine(FunctionPrototypes.ToString());
+                sourceFile.WriteLine(_functionPrototypes.ToString());
                 sourceFile.WriteLine("};");
                 sourceFile.WriteLine();
                 sourceFile.WriteLine("  #endif /* _ENCODERS_HPP_ */");
@@ -609,7 +629,7 @@ namespace FileGenerator
             sourceFile.WriteLine(" */");
             sourceFile.WriteLine($"// cppcheck-suppress unusedFunction symbolName=Encode{m.Name}");
             sourceFile.WriteLine($"void Encoders::Encode{m.Name}(Esp32Messaging::{m.Name} *{variableName}, uint8_t *buffer)");
-            FunctionPrototypes.AppendLine($"    static void Encode{m.Name}(Esp32Messaging::{m.Name} *, uint8_t *);");
+            _functionPrototypes.AppendLine($"    static void Encode{m.Name}(Esp32Messaging::{m.Name} *, uint8_t *);");
             sourceFile.WriteLine("{");
             for (int index = 0; index < m.MessageElements.Count; index++)
             // foreach (MessageElement me in m.MessageElements)
@@ -722,7 +742,7 @@ namespace FileGenerator
             string modifier = "";
             sourceFile.WriteLine($"// cppcheck-suppress unusedFunction symbolName=Encoded{message.Name}BufferSize");
             sourceFile.WriteLine($"{modifier}int Encoders::Encoded{message.Name}BufferSize(Esp32Messaging::{message.Name} *{variableName})");
-            FunctionPrototypes.AppendLine($"    static {modifier}int Encoded{message.Name}BufferSize(Esp32Messaging::{message.Name} *);");
+            _functionPrototypes.AppendLine($"    static {modifier}int Encoded{message.Name}BufferSize(Esp32Messaging::{message.Name} *);");
             sourceFile.WriteLine("{");
             if (dynamicStatements.Length == 0)
             {
@@ -761,7 +781,7 @@ namespace FileGenerator
             sourceFile.WriteLine(" */");
             sourceFile.WriteLine($"// cppcheck-suppress unusedFunction symbolName=Extract{message.Name}");
             sourceFile.WriteLine($"Esp32Messaging::{message.Name} *Encoders::Extract{message.Name}(uint8_t *buffer)");
-            FunctionPrototypes.AppendLine($"    static Esp32Messaging::{message.Name} *Extract{message.Name}(uint8_t *);");
+            _functionPrototypes.AppendLine($"    static Esp32Messaging::{message.Name} *Extract{message.Name}(uint8_t *);");
             sourceFile.WriteLine("{");
             sourceFile.WriteLine($"    Esp32Messaging::{message.Name} *{variableName} = (Esp32Messaging::{message.Name} *) pvPortMalloc(sizeof(Esp32Messaging::{message.Name}));");
             sourceFile.WriteLine();
@@ -839,7 +859,7 @@ namespace FileGenerator
         /// <param name="messages">List of messages to process.</param>
         private void GenerateCMessagesEncoders(IList<Message> messages)
         {
-            FunctionPrototypes = new StringBuilder();
+            _functionPrototypes = new StringBuilder();
             using (StreamWriter sourceFile = new StreamWriter(CSourceFileName))
             {
                 OutputCHeaderFileHeader(sourceFile, CSourceFileName);
@@ -873,13 +893,66 @@ namespace FileGenerator
             }
         }
 
+        #endregion C++ File generation
+
+        #region C file generation
+
+        #endregion C file generation
+
+        #region Helper methods
+
+        /// <summary>
+        /// Locate the DataType definition in the list of known types.
+        /// </summary>
+        /// <param name="elementDataType">Data type name to look up.</param>
+        /// <returns>DataType object for the matching data type name.</returns>
+        private DataType GetDataType(string elementDataType)
+        {
+            DataType result = null;
+
+            for (int index = 0; index < _dataTypes.Length; index++)
+            {
+                if (_dataTypes[index].Name.ToLower() == elementDataType.ToLower())
+                {
+                    result = _dataTypes[index];
+                }
+            }
+            return(result);
+        }
+
+        /// <summary>
+        /// Convert the variable name into the name of a constant. 
+        /// 
+        /// The rule is, upper case all letters and insert a '_' between a lower case letter
+        /// and a subsequent upper case letter.
+        /// </summary>
+        /// <param name="name">Variable name (in Pascal or camel case) to convert.</param>
+        /// <returns>Constant name in upper case with _'s inserted where appropriate.</returns>
+        private string ConvertNameToConstantName(string name)
+        {
+            string result = "";
+            char[] characters = name.ToCharArray();
+            for (var index = 0; index < characters.Length; index++)
+            {
+                if ((index != 0) && (Char.IsUpper(characters[index])))
+                {
+                    result += "_";
+                }
+                result += Char.ToUpper(characters[index]);
+            }
+
+            return(result);
+        }
+
+        #endregion  Helper methods
+        
         /// <summary>
         /// Process the message definition input file and generate the C and C# files.
         /// </summary>
         public void ProcessFile()
         {
             IList<Message> messages;
-            using (StreamReader structuresFile = new StreamReader(InputFileName))
+            using (StreamReader structuresFile = new StreamReader(MessageDefinitionInputFileName))
             {
                 string fileContents = structuresFile.ReadToEnd();
                 JObject o = JObject.Parse(fileContents);
