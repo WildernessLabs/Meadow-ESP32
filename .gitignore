@@ -72,3 +72,6 @@ packages
 Secrets.hpp
 Secrets.cs
 _clicache
+
+# File generator output files.
+Output/
