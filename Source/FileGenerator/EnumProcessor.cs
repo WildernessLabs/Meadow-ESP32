@@ -234,16 +234,18 @@ namespace FileGenerator
             outputFile.WriteLine("}");
         }
 
-        private void GenerateCSharpFile(IList<EnumDataType> enums)
+        private void GenerateCSharpFile(string fileName, Language language, IList<EnumDataType> enums)
         {
-            string CSharpFileName = "";
-            using (StreamWriter cFile = new StreamWriter(CSharpFileName))
+            using (StreamWriter file = new StreamWriter(fileName))
             {
-                OutputCSharpFileHeader(cFile);
+                OutputCSharpFileHeader(file);
                 foreach (EnumDataType e in enums)
                 {
                     string indent = "    ";
                     string dataType = "";
+                    file.WriteLine($"{indent}// <summary>");
+                    file.WriteLine($"{indent}// {e.Comment}");
+                    file.WriteLine($"{indent}// </summary>");
                     switch (e.BaseDataType.ToLower())
                     {
                         case "byte":
@@ -253,10 +255,9 @@ namespace FileGenerator
                             dataType = "UInt32";
                             break;
                     }
-                    OutputCommonEnumText(cFile, Language.CSharp, e, indent, dataType, "public");
-                    cFile.WriteLine("");
+                    OutputCommonEnumText(file, Language.CSharp, e, indent, dataType, "public");
                 }
-                OutputCSharpFileFooter(cFile);
+                OutputCSharpFileFooter(file);
             }
         }
 
@@ -270,9 +271,9 @@ namespace FileGenerator
         /// <param name="fileStream">StreamWrite for the file being created.</param>
         /// <param name="language">Language being generated.</param>
         /// <param name="e">Enum objects to be translated into the destination language.</param>
-        /// <param name="indent">Any indent to be applied (purely cosmetic)</param>
-        /// <param name="dataType"></param>
-        /// <param name="accessSpecifier"></param>
+        /// <param name="indent">Any indent to be applied (purely cosmetic).</param>
+        /// <param name="dataType">Base type for the enum.</param>
+        /// <param name="accessSpecifier">C# access specifier.</param>
         private void OutputCommonEnumText(StreamWriter fileStream, Language language, EnumDataType e, string indent, string dataType = "", string accessSpecifier = "")
         {
             if (string.IsNullOrEmpty(accessSpecifier))
@@ -364,7 +365,6 @@ namespace FileGenerator
             return(result);
         }
 
-
         #endregion Helper methods
 
         public void ProcessFile()
@@ -381,7 +381,7 @@ namespace FileGenerator
             }
             GenerateCFile($"{OutputDirectory}SharedEnums.hpp", Language.Cpp, enums);
             GenerateCFile($"{OutputDirectory}SharedEnums.h", Language.C, enums);
-            // GenerateCSharpFile(enums);
+            GenerateCSharpFile($"{OutputDirectory}SharedEnums.cs", Language.CSharp, enums);
         }
     }
 }
