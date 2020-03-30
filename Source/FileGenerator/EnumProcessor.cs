@@ -8,23 +8,86 @@ namespace FileGenerator
 {
     public class EnumProcessor
     {
+        #region Enums
+
+        /// <summary>
+        /// Programming language type.
+        /// </summary>
+        private enum Language { C, Cpp, CSharp };
+
+        #endregion Enums
+
+        #region Properties
+
+        /// <summary>
+        /// Name of the input file.
+        /// </summary>
         private string InputFileName { get; set; }
 
-        private string CFileName { get; set; }
-
-        private string CSharpFileName { get; set; }
-
-        public EnumProcessor(string fileName, string cFileName, string csharpFileName)
+        /// <summary>
+        /// Directory where the generated C#, C++ and C source files should be placed.
+        /// </summary>
+        private string OutputDirectory
         {
-            InputFileName = fileName;
-            CFileName = cFileName;
-            CSharpFileName = csharpFileName;
+            get
+            {
+                return(_outputDirectory);
+            }
+            set
+            {
+                if (value.EndsWith(Path.DirectorySeparatorChar))
+                {
+                    _outputDirectory = value;
+                }
+                else
+                {
+                    _outputDirectory = value + Path.DirectorySeparatorChar;
+                }
+            }
+        }
+        private string _outputDirectory;
+
+
+        #endregion Properties
+
+        #region Constructor(s)
+
+        /// <summary>
+        /// Default constructor is private to prevent it being used.
+        /// </summary>
+        private EnumProcessor() { }
+
+        /// <summary>
+        /// Constructor for the Enum processor.
+        /// </summary>
+        /// <param name="outputDirectory">Directory where the generated files should be placed.</param>
+        /// <param name="inputFileName">Path (including file name) of the JSON file defining the enums</param>
+        public EnumProcessor(string inputFileName, string outputDirectory)
+        {
+            InputFileName = inputFileName;
+            OutputDirectory = outputDirectory;
         }
 
-        private void OutputCFileHeader(StreamWriter outputFile)
+        #endregion Constructor(s)
+
+        #region C++ file generation
+
+        /// <summary>
+        /// Output the header for the C or C++ file.
+        /// </summary>
+        /// <param name="outputFile">StreamWriter for the poutput file.</param>
+        /// <param name="language">Language for this file (only C or Cpp are valid here)</param>
+        private void OutputCFileHeader(StreamWriter outputFile, Language language)
         {
             outputFile.WriteLine("/*");
-            outputFile.WriteLine($" *      {Path.GetFileName(CFileName)}");
+            if (language == Language.Cpp)
+            {
+                outputFile.WriteLine($" *      SharedEnums.hpp");
+            }
+            else
+            {
+                outputFile.WriteLine($" *      SharedEnums.h");
+            }
             outputFile.WriteLine(" *");
             outputFile.WriteLine(" *      Global enums");
             outputFile.WriteLine(" *");
@@ -36,24 +99,117 @@ namespace FileGenerator
             outputFile.WriteLine(" *      *************************** WARNING ***************************");
             outputFile.WriteLine(" */");
             outputFile.WriteLine("");
-            outputFile.WriteLine("#ifndef _SHARED_ENUMS_HPP_");
-            outputFile.WriteLine("#define _SHARED_ENUMS_HPP_");
-            outputFile.WriteLine("");
-            outputFile.WriteLine("#include \"freertos/FreeRTOS.h\"");
+            if (language == Language.Cpp)
+            {
+                outputFile.WriteLine("#ifndef _SHARED_ENUMS_HPP");
+                outputFile.WriteLine("#define _SHARED_ENUMS_HPP");
+                outputFile.WriteLine("");
+                outputFile.WriteLine("#include \"freertos/FreeRTOS.h\"");
+            }
+            else
+            {
+                outputFile.WriteLine("#ifndef _SHARED_ENUMS_H");
+                outputFile.WriteLine("#define _SHARED_ENUMS_H");
+            }
             outputFile.WriteLine("");
         }
 
-        private void OutputCFileFooter(StreamWriter outputFile)
+        /// <summary>
+        /// Output the footer for the C or C++ file.
+        /// </summary>
+        /// <param name="outputFile">StreamWriter for the poutput file.</param>
+        /// <param name="language">Language for this file (only C or Cpp are valid here)</param>
+        private void OutputCFileFooter(StreamWriter outputFile, Language language)
         {
             outputFile.WriteLine("");
-            outputFile.WriteLine("#endif /* _SHARED_ENUMS_HPP_ */");
+            if (language == Language.Cpp)
+            {
+                outputFile.WriteLine("#endif /* _SHARED_ENUMS_HPP */");
+            }
+            else
+            {
+                outputFile.WriteLine("#endif /* _SHARED_ENUMS_H */");
+            }
             outputFile.WriteLine("");
         }
+
+        private void GenerateCFile(string fileName, Language language, IList<EnumDataType> enums)
+        {
+            using (StreamWriter file = new StreamWriter(fileName))
+            {
+                OutputCFileHeader(file, language);
+                string lastNamespace = "";
+                bool namespaceOpen = false;
+                string indent = "";
+                foreach (EnumDataType e in enums)
+                {
+                    if (!string.IsNullOrEmpty(e.Namespace))
+                    {
+                        if ((lastNamespace != e.Namespace))
+                        {
+                            if (namespaceOpen)
+                            {
+                                file.WriteLine("}");
+                                file.WriteLine();
+                            }
+                            if (language == Language.Cpp)
+                            {
+                                file.WriteLine($"namespace {e.Name}");
+                                file.WriteLine("{");
+                                indent = "    ";
+                                namespaceOpen = true;
+                            }
+                            else
+                            {
+                                indent = "";
+                                namespaceOpen = false;
+                            }
+                            lastNamespace = e.Name;
+                        }
+                    }
+                    else
+                    {
+                        if (namespaceOpen)
+                        {
+                            file.WriteLine("}");
+                            file.WriteLine();
+                        }
+                        indent = "";
+                        lastNamespace = "";
+                        namespaceOpen = false;
+                    }
+                    file.WriteLine($"{indent}/*");
+                    file.WriteLine($"{indent} *    {e.Comment}");
+                    file.WriteLine($"{indent} */");
+                    string dataType = "";
+                    switch (e.BaseDataType.ToLower())
+                    {
+                        case "byte":
+                            dataType = "uint8_t";
+                            break;
+                        case "uint32":
+                            dataType = "uint32_t";
+                            break;
+                    }
+                    OutputCommonEnumText(file, language, e, indent, dataType, "");
+                }
+                if (namespaceOpen)
+                {
+                    file.WriteLine("}");
+                    file.WriteLine();
+                }
+                OutputCFileFooter(file, language);
+            }
+        }
+
+        #endregion C++ file generation
+
+        #region C# file generation
 
         private void OutputCSharpFileHeader(StreamWriter outputFile)
         {
             outputFile.WriteLine("//");
-            outputFile.WriteLine($"//      {Path.GetFileName(CSharpFileName)}");
+            outputFile.WriteLine($"//      SharedEnums.cs");
             outputFile.WriteLine("//");
             outputFile.WriteLine("//      Global enums");
             outputFile.WriteLine("//");
@@ -78,7 +234,46 @@ namespace FileGenerator
             outputFile.WriteLine("}");
         }
 
-        public void OutputCommonEnumText(StreamWriter fileStream, EnumDataType e, string indent, string dataType = "", string accessSpecifier = "")
+        private void GenerateCSharpFile(IList<EnumDataType> enums)
+        {
+            string CSharpFileName = "";
+            using (StreamWriter cFile = new StreamWriter(CSharpFileName))
+            {
+                OutputCSharpFileHeader(cFile);
+                foreach (EnumDataType e in enums)
+                {
+                    string indent = "    ";
+                    string dataType = "";
+                    switch (e.BaseDataType.ToLower())
+                    {
+                        case "byte":
+                            dataType = "byte";
+                            break;
+                        case "uint32":
+                            dataType = "UInt32";
+                            break;
+                    }
+                    OutputCommonEnumText(cFile, Language.CSharp, e, indent, dataType, "public");
+                    cFile.WriteLine("");
+                }
+                OutputCSharpFileFooter(cFile);
+            }
+        }
+
+        #endregion C# file generation
+
+        #region Helper methods
+
+        /// <summary>
+        /// Output the enumeration values.
+        /// </summary>
+        /// <param name="fileStream">StreamWrite for the file being created.</param>
+        /// <param name="language">Language being generated.</param>
+        /// <param name="e">Enum objects to be translated into the destination language.</param>
+        /// <param name="indent">Any indent to be applied (purely cosmetic)</param>
+        /// <param name="dataType"></param>
+        /// <param name="accessSpecifier"></param>
+        private void OutputCommonEnumText(StreamWriter fileStream, Language language, EnumDataType e, string indent, string dataType = "", string accessSpecifier = "")
         {
             if (string.IsNullOrEmpty(accessSpecifier))
             {
@@ -88,13 +283,22 @@ namespace FileGenerator
             {
                 fileStream.Write($"{indent}{accessSpecifier} ");
             }
-            if (string.IsNullOrEmpty(dataType))
+            string enumName;
+            if (language == Language.C)
             {
-                fileStream.WriteLine($"enum {e.Name}");
+                enumName = "espcp_" + ConvertNameToCStyleName(e.Name);
             }
             else
             {
-                fileStream.WriteLine($"enum {e.Name} : {dataType}");
+                enumName = e.Name;
+            }
+            if (string.IsNullOrEmpty(dataType))
+            {
+                fileStream.WriteLine($"enum {enumName}");
+            }
+            else
+            {
+                fileStream.WriteLine($"enum {enumName} : {dataType}");
             }
             fileStream.Write($"{indent}");
             fileStream.WriteLine("{");
@@ -130,93 +334,38 @@ namespace FileGenerator
             }
             fileStream.Write($"{indent}");
             fileStream.WriteLine("};");
+            if (language == Language.C)
+            {
+                fileStream.WriteLine($"typedef enum {enumName} {enumName}_t;");
+            }
+            fileStream.WriteLine();
         }
 
-        private void GenerateCFile(IList<EnumDataType> enums)
+        /// <summary>
+        /// Convert the variable name into a C style name. 
+        /// 
+        /// The resultant name should be lower case with underscores used to separate words.
+        /// </summary>
+        /// <param name="name">Variable name (in Pascal or camel case) to convert.</param>
+        /// <returns>C style name in upper case with _'s inserted where appropriate.</returns>
+        private string ConvertNameToCStyleName(string name)
         {
-            using (StreamWriter cFile = new StreamWriter(CFileName))
+            string result = "";
+            char[] characters = name.ToCharArray();
+            for (var index = 0; index < characters.Length; index++)
             {
-                OutputCFileHeader(cFile);
-                string lastNamespace = "";
-                bool namespaceOpen = false;
-                string indent = "";
-                foreach (EnumDataType e in enums)
+                if ((index != 0) && (Char.IsUpper(characters[index])))
                 {
-                    if (!string.IsNullOrEmpty(e.Namespace))
-                    {
-                        if ((lastNamespace != e.Namespace))
-                        {
-                            if (namespaceOpen)
-                            {
-                                cFile.WriteLine("}");
-                                cFile.WriteLine();
-                            }
-                            cFile.WriteLine($"namespace {e.Name}");
-                            cFile.WriteLine("{");
-                            indent = "    ";
-                            namespaceOpen = true;
-                            lastNamespace = e.Name;
-                        }
-                    }
-                    else
-                    {
-                        if (namespaceOpen)
-                        {
-                            cFile.WriteLine("}");
-                            cFile.WriteLine();
-                        }
-                        indent = "";
-                        lastNamespace = "";
-                        namespaceOpen = false;
-                    }
-                    cFile.WriteLine($"{indent}/*");
-                    cFile.WriteLine($"{indent} *      {e.Comment}");
-                    cFile.WriteLine($"{indent} */");
-                    string dataType = "";
-                    switch (e.BaseDataType.ToLower())
-                    {
-                        case "byte":
-                            dataType = "uint8_t";
-                            break;
-                        case "uint32":
-                            dataType = "uint32_t";
-                            break;
-                    }
-                    OutputCommonEnumText(cFile, e, indent, dataType, "");
+                    result += "_";
                 }
-                if (namespaceOpen)
-                {
-                    cFile.WriteLine("}");
-                    cFile.WriteLine();
-                }
-                OutputCFileFooter(cFile);
+                result += Char.ToLower(characters[index]);
             }
+
+            return(result);
         }
 
-        private void GenerateCSharpFile(IList<EnumDataType> enums)
-        {
-            using (StreamWriter cFile = new StreamWriter(CSharpFileName))
-            {
-                OutputCSharpFileHeader(cFile);
-                foreach (EnumDataType e in enums)
-                {
-                    string indent = "    ";
-                    string dataType = "";
-                    switch (e.BaseDataType.ToLower())
-                    {
-                        case "byte":
-                            dataType = "byte";
-                            break;
-                        case "uint32":
-                            dataType = "UInt32";
-                            break;
-                    }
-                    OutputCommonEnumText(cFile, e, indent, dataType, "public");
-                    cFile.WriteLine("");
-                }
-                OutputCSharpFileFooter(cFile);
-            }
-        }
+
+        #endregion Helper methods
 
         public void ProcessFile()
         {
@@ -230,8 +379,9 @@ namespace FileGenerator
 
                 enums = a.ToObject<IList<EnumDataType>>();
             }
-            GenerateCFile(enums);
-            GenerateCSharpFile(enums);
+            GenerateCFile($"{OutputDirectory}SharedEnums.hpp", Language.Cpp, enums);
+            GenerateCFile($"{OutputDirectory}SharedEnums.h", Language.C, enums);
+            // GenerateCSharpFile(enums);
         }
     }
 }
