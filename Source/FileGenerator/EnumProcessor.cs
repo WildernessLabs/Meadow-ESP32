@@ -401,7 +401,7 @@ namespace FileGenerator
                 enums = a.ToObject<IList<EnumDataType>>();
             }
             GenerateCFile($"{OutputDirectory}SharedEnums.hpp", Language.Cpp, enums);
-            GenerateCFile($"{OutputDirectory}SharedEnums.h", Language.C, enums);
+            GenerateCFile($"{OutputDirectory}espcp_shared_enums.h", Language.C, enums);
             GenerateCSharpFile($"{OutputDirectory}SharedEnums.cs", enums);
         }
     }
