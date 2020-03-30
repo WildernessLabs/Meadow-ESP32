@@ -15,7 +15,7 @@ namespace FileGenerator
 
         static void Main(string[] args)
         {
-            Console.WriteLine("File Generator 1.00");
+            Console.WriteLine("File Generator 1.01");
             string csharpDestinationDirectory = Environment.GetEnvironmentVariable(MEADOW_F7MICRO_SOURCE_DIRECTORY);
             if (string.IsNullOrEmpty(csharpDestinationDirectory))
             {
@@ -23,6 +23,7 @@ namespace FileGenerator
                 Environment.Exit(-1);
             }
             Console.WriteLine($"    C# source directory: {csharpDestinationDirectory}");
+            string nuttxOutputDirectory = $".{Path.DirectorySeparatorChar}Output{Path.DirectorySeparatorChar}";
 
             string esp32SourceDirectory = $"..{Path.DirectorySeparatorChar}MeadowComms{Path.DirectorySeparatorChar}main{Path.DirectorySeparatorChar}";
             Console.WriteLine($"    ESP32 source directory: {esp32SourceDirectory}");
@@ -37,7 +38,7 @@ namespace FileGenerator
 
             Console.WriteLine("    Generating message encoders and decoders.");
             MessageProcessor messageProcessor = new MessageProcessor();
-            messageProcessor.InputFileName = $"..{Path.DirectorySeparatorChar}Metadata{Path.DirectorySeparatorChar}Messages.json";;
+            messageProcessor.MessageDefinitionInputFileName = $"..{Path.DirectorySeparatorChar}Metadata{Path.DirectorySeparatorChar}Messages.json";
             messageProcessor.CHeaderFileName = $"{esp32SourceDirectory}Encoders.hpp";
             messageProcessor.CSourceFileName = $"{esp32SourceDirectory}Encoders.cpp";
             messageProcessor.CSharpFileName = $"{csharpDestinationDirectory}{Path.DirectorySeparatorChar}Encoders.cs";;
