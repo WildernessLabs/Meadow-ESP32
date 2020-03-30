@@ -47,7 +47,6 @@ namespace FileGenerator
         }
         private string _outputDirectory;
 
-
         #endregion Properties
 
         #region Constructor(s)
@@ -133,6 +132,12 @@ namespace FileGenerator
             outputFile.WriteLine("");
         }
 
+        /// <summary>
+        /// Generate the C or C++ shared enum file.
+        /// </summary>
+        /// <param name="fileName">Name of the file to be created.</param>
+        /// <param name="language">Source file language being generated.</param>
+        /// <param name="enums">List of enums and their values.</param>
         private void GenerateCFile(string fileName, Language language, IList<EnumDataType> enums)
         {
             using (StreamWriter file = new StreamWriter(fileName))
@@ -206,6 +211,10 @@ namespace FileGenerator
 
         #region C# file generation
 
+        /// <summary>
+        /// Write the header for the C# enums file to the specified stream.
+        /// </summary>
+        /// <param name="outputFile">StreamWrite object for the file to be written to.</param>
         private void OutputCSharpFileHeader(StreamWriter outputFile)
         {
             outputFile.WriteLine("//");
@@ -229,12 +238,21 @@ namespace FileGenerator
             outputFile.WriteLine("{");
         }
 
+        /// <summary>
+        /// Write the footer to the C# enums file.
+        /// </summary>
+        /// <param name="outputFile">StreamWrite object for the file to be written to.</param>
         private void OutputCSharpFileFooter(StreamWriter outputFile)
         {
             outputFile.WriteLine("}");
         }
 
-        private void GenerateCSharpFile(string fileName, Language language, IList<EnumDataType> enums)
+        /// <summary>
+        /// Generate the C# enums file.
+        /// </summary>
+        /// <param name="fileName">Name of the file to generate.</param>
+        /// <param name="enums">List of enums and their values.</param>
+        private void GenerateCSharpFile(string fileName, IList<EnumDataType> enums)
         {
             using (StreamWriter file = new StreamWriter(fileName))
             {
@@ -367,6 +385,9 @@ namespace FileGenerator
 
         #endregion Helper methods
 
+        /// <summary>
+        /// Generate the C, C++ and C# shared enums files.
+        /// </summary>
         public void ProcessFile()
         {
             IList<EnumDataType> enums;
@@ -381,7 +402,7 @@ namespace FileGenerator
             }
             GenerateCFile($"{OutputDirectory}SharedEnums.hpp", Language.Cpp, enums);
             GenerateCFile($"{OutputDirectory}SharedEnums.h", Language.C, enums);
-            GenerateCSharpFile($"{OutputDirectory}SharedEnums.cs", Language.CSharp, enums);
+            GenerateCSharpFile($"{OutputDirectory}SharedEnums.cs", enums);
         }
     }
 }
