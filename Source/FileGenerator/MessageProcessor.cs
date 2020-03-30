@@ -34,7 +34,6 @@ namespace FileGenerator
         /// </summary>
         private StringBuilder _functionPrototypes = null;
 
-
         #endregion Private variables
 
         #region Properties
@@ -84,28 +83,69 @@ namespace FileGenerator
         public string CSourceTemplateFileName { get; set; }
         
         /// <summary>
-        /// Path (including file name) of the C# template file.
+        /// Directory containing the metadata files.
         /// </summary>
-        /// <remarks>
-        /// This file contains the static content that is placed at the top
-        /// of the C# message encoders source file.
-        /// </remarks>
-        public string CSharpSourceTemplateFileName { get; set; }
+        private string MetadataDirectory
+        {
+            get
+            {
+                return(_metadataDirectory);
+            }
+            set
+            {
+                if (value.EndsWith(Path.DirectorySeparatorChar))
+                {
+                    _metadataDirectory = value;
+                }
+                else
+                {
+                    _metadataDirectory = value + Path.DirectorySeparatorChar;
+                }
+            }
+
+        }
+        private string _metadataDirectory;
 
         /// <summary>
-        /// Location of the C output files intended to be used in the Nuttx project.
+        /// Directory where the generated C#, C++ and C source files should be placed.
         /// </summary>
-        public string NuttxOutputDirectory { get; set; }
+        public string OutputDirectory
+        {
+            get
+            {
+                return(_outputDirectory);
+            }
+            set
+            {
+                if (value.EndsWith(Path.DirectorySeparatorChar))
+                {
+                    _outputDirectory = value;
+                }
+                else
+                {
+                    _outputDirectory = value + Path.DirectorySeparatorChar;
+                }
+            }
+        }
+        private string _outputDirectory;
 
         #endregion Properties
 
         #region Constructor(s)
 
         /// <summary>
+        /// Default constructor is private to prevent it from being used.
+        /// </summary>
+        private MessageProcessor() { }
+
+        /// <summary>
         /// Public constructor.
         /// </summary>
-        public MessageProcessor()
+        /// <param name="metadataDirectory">Location of the metadata file.</param>
+        public MessageProcessor(string metadataDirectory, string outputDirectory)
         {
+            MetadataDirectory = metadataDirectory;
+            OutputDirectory = outputDirectory;
         }
 
         #endregion Constructor(s)
@@ -422,14 +462,14 @@ namespace FileGenerator
         /// <param name="messages">List of messages to process.</param>
         private void GenerateCSharpEncodersFile(IList<Message> messages)
         {
-            using (StreamWriter sourceFile = new StreamWriter(CSharpFileName))
+            using (StreamWriter sourceFile = new StreamWriter($"{OutputDirectory}Encoders.cs"))
             {
                 OutputCSharpFileHeader(sourceFile);
                 sourceFile.WriteLine("namespace Meadow.Coprocessor.F7Micro.Messages");
                 sourceFile.WriteLine("{");
                 sourceFile.WriteLine("    public class Encoders");
                 sourceFile.WriteLine("    {");
-                using (StreamReader templateFile = new StreamReader(CSharpSourceTemplateFileName))
+                using (StreamReader templateFile = new StreamReader($"{MetadataDirectory}Encoders.cs.txt"))
                 {
                     sourceFile.Write(templateFile.ReadToEnd());
                 }
@@ -454,52 +494,52 @@ namespace FileGenerator
         /// <param name="messages">List of messages to convert into structure definitions.</param>
         private void GenerateCSharpMessageStructureFile(IList<Message> messages)
         {
-            using (StreamWriter sourceFile = new StreamWriter(CSharpStructureFileName))
+            using (StreamWriter file = new StreamWriter($"{OutputDirectory}Messages.cs"))
             {
-                OutputCSharpFileHeader(sourceFile);
-                sourceFile.WriteLine("namespace Meadow.Coprocessor.F7Micro.Messages");
-                sourceFile.WriteLine("{");
+                OutputCSharpFileHeader(file);
+                file.WriteLine("namespace Meadow.Coprocessor.F7Micro.Messages");
+                file.WriteLine("{");
                 foreach (Message m in messages)
                 {
                     if (m.MessageElements != null)
                     {
                         string variableName = m.Name.Substring(0, 1).ToLower() + m.Name.Substring(1);
-                        sourceFile.WriteLine($"    public struct {m.Name}");
-                        sourceFile.WriteLine("    {");
+                        file.WriteLine($"    public struct {m.Name}");
+                        file.WriteLine("    {");
                         foreach (MessageElement me in m.MessageElements)
                         {
                             DataType dt = GetDataType(me.DataType);
                             switch (dt.Name.ToLower())
                             {
                                 case "blob":
-                                    sourceFile.WriteLine($"        public UInt32 {me.Name}Length;");
-                                    sourceFile.WriteLine($"        public {dt.CSharpTypeName} {me.Name};");
+                                    file.WriteLine($"        public UInt32 {me.Name}Length;");
+                                    file.WriteLine($"        public {dt.CSharpTypeName} {me.Name};");
                                     break;
                                 case "fixedchararray":
                                     //
                                     //  Fixed chars are actually encoded as normal strings in C#.
                                     //
-                                    sourceFile.WriteLine($"        public {dt.CSharpTypeName} {me.Name};");
+                                    file.WriteLine($"        public {dt.CSharpTypeName} {me.Name};");
                                     break;
                                 case "fixedbytearray":
-                                    sourceFile.WriteLine($"        public {dt.CSharpTypeName}[] {me.Name};");
+                                    file.WriteLine($"        public {dt.CSharpTypeName}[] {me.Name};");
                                     break;
                                 case "structure":
-                                    sourceFile.WriteLine($"        public {me.CSName} {me.Name};");
+                                    file.WriteLine($"        public {me.CSName} {me.Name};");
                                     break;
                                 case "pointer":
-                                    sourceFile.WriteLine($"        public UInt32 {me.Name};");
+                                    file.WriteLine($"        public UInt32 {me.Name};");
                                     break;
                                 default:
-                                    sourceFile.WriteLine($"        public {dt.CSharpTypeName} {me.Name};");
+                                    file.WriteLine($"        public {dt.CSharpTypeName} {me.Name};");
                                     break;
                             }
                         }
                     }
-                    sourceFile.WriteLine("    };");
-                    sourceFile.WriteLine();
+                    file.WriteLine("    };");
+                    file.WriteLine();
                 }
-                sourceFile.WriteLine("}");
+                file.WriteLine("}");
             }
         }
 
@@ -945,14 +985,14 @@ namespace FileGenerator
         }
 
         #endregion  Helper methods
-        
+
         /// <summary>
         /// Process the message definition input file and generate the C and C# files.
         /// </summary>
         public void ProcessFile()
         {
             IList<Message> messages;
-            using (StreamReader structuresFile = new StreamReader(MessageDefinitionInputFileName))
+            using (StreamReader structuresFile = new StreamReader($"{MetadataDirectory}Messages.json"))
             {
                 string fileContents = structuresFile.ReadToEnd();
                 JObject o = JObject.Parse(fileContents);
@@ -961,13 +1001,13 @@ namespace FileGenerator
 
                 messages = a.ToObject<IList<Message>>();
             }
-            GenerateCMessagesEncoders(messages);
+            // GenerateCMessagesEncoders(messages);
             //
             //  The message structure header file must be generated after the message encoders file
             //  as the prototypes are built up in the GenerateCMessagesEncoders method.  The prototypes
             //  are then added to the end of the structure file. 
             //
-            GenerateCMessageStructureFile(messages);
+            // GenerateCMessageStructureFile(messages);
             GenerateCSharpEncodersFile(messages);
             GenerateCSharpMessageStructureFile(messages);
         }
