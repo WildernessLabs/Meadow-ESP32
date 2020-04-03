@@ -658,11 +658,17 @@ namespace FileGenerator
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sourceFile"></param>
+        /// <param name="objectName"></param>
+        /// <param name="variableName"></param>
         private void OutputCFunctionHeader(StreamWriter sourceFile, string objectName, string variableName)
         {
             string cObjectName = ConvertNameToCStyleName(objectName);
             sourceFile.WriteLine("/****************************************************************************");
-            sourceFile.WriteLine("* Name: is_esp32spicomms_thread_running");
+            sourceFile.WriteLine($"* Name: espcp_encode_{cObjectName}");
             sourceFile.WriteLine("*");
             sourceFile.WriteLine("* Description:");
             sourceFile.WriteLine($"*  Convert the espcp_{cObjectName}_t object into a byte stream that can ");
@@ -682,6 +688,12 @@ namespace FileGenerator
             _functionPrototypes.AppendLine($"    void espcp_encode_{cObjectName}(espcp_{objectName}_t *, uint8_t *);");
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="sourceFile"></param>
+        /// <param name="objectName"></param>
+        /// <param name="variableName"></param>
         private void OutputCppFunctionHeader(StreamWriter sourceFile, string objectName, string variableName)
         {
             sourceFile.WriteLine("/**");
@@ -833,19 +845,47 @@ namespace FileGenerator
         /// </summary>
         /// <param name="sourceFile">Output stream for the C file that will hold the calculation method.</param>
         /// <param name="message">Message defintion to encode.</param>
-        private void GenerateCMessageEncodedBufferSizeFunction(StreamWriter sourceFile, Message message)
+        private void GenerateCMessageEncodedBufferSizeFunction(StreamWriter sourceFile, Message message, Language language)
         {
-            string variableName = message.Name.Substring(0, 1).ToLower() + message.Name.Substring(1);
-            sourceFile.WriteLine("/**");
-            sourceFile.WriteLine($" *  Calculate the amount of memory required to hold the given instance of the {message.Name} object.");
-            sourceFile.WriteLine(" *  ");
-            sourceFile.WriteLine($" *  @param {variableName}");
-            sourceFile.WriteLine($" *      {message.Name} object to be encoded.");
-            sourceFile.WriteLine(" *  ");
-            sourceFile.WriteLine($" *  @returns");
-            sourceFile.WriteLine($" *      Number of bytes required to hold the encoded {message.Name} object.");
-            sourceFile.WriteLine(" */");
-
+            string variableName;
+            string variableType;
+            if (language == Language.Cpp)
+            {
+                variableName = message.Name.Substring(0, 1).ToLower() + message.Name.Substring(1);
+                variableType = message.Name;
+                sourceFile.WriteLine("/**");
+                sourceFile.WriteLine($" *  Calculate the amount of memory required to hold the given instance of the {message.Name} object.");
+                sourceFile.WriteLine(" *  ");
+                sourceFile.WriteLine($" *  @param {variableName}");
+                sourceFile.WriteLine($" *      {message.Name} object to be encoded.");
+                sourceFile.WriteLine(" *  ");
+                sourceFile.WriteLine($" *  @returns");
+                sourceFile.WriteLine($" *      Number of bytes required to hold the encoded {message.Name} object.");
+                sourceFile.WriteLine(" */");
+            }
+            else
+            {
+                variableName = ConvertNameToCStyleName(message.Name);
+                variableType = "espcp_" + ConvertNameToCStyleName(message.Name) + "_t";
+                sourceFile.WriteLine("/****************************************************************************");
+                sourceFile.WriteLine($"* Name: espcp_encoded_{variableName}_buffer_size");
+                sourceFile.WriteLine("*");
+                sourceFile.WriteLine("* Description:");
+                sourceFile.WriteLine($"*  Calculate the amount of memory needed to store and encoded version of an");
+                sourceFile.WriteLine($"*  {variableType} object.");
+                sourceFile.WriteLine("*");
+                sourceFile.WriteLine("* Input Parameters:");
+                sourceFile.WriteLine($"*  {variableType} - object to be encoded.");
+                sourceFile.WriteLine("*");
+                sourceFile.WriteLine("* Returned Value:");
+                sourceFile.WriteLine($"*  Number of bytes required to hold the encoded {variableType} object.");
+                sourceFile.WriteLine("*");
+                sourceFile.WriteLine("* Assumptions/Limitations:");
+                sourceFile.WriteLine("*  None");
+                sourceFile.WriteLine("*");
+                sourceFile.WriteLine("****************************************************************************/");
+            }
+    
             int staticSpaceRequired = 0;
             var dynamicStatements = new StringBuilder();
             foreach (MessageElement me in message.MessageElements)
@@ -855,7 +895,14 @@ namespace FileGenerator
                 switch (dt.Name.ToLower())
                 {
                     case "string":
-                        dynamicStatements.AppendLine($"    result += strlen({variableName}->{me.Name});");
+                        if (language == Language.Cpp)
+                        {
+                            dynamicStatements.AppendLine($"    result += strlen({variableName}->{me.Name});");
+                        }
+                        else
+                        {
+                            dynamicStatements.AppendLine($"    result += strlen({variableName}->{ConvertNameToCStyleName(me.Name)});");
+                        }
                         staticSpaceRequired++;          // Terminating null.
                         break;
                     case "fixedchararray":
@@ -863,11 +910,25 @@ namespace FileGenerator
                         staticSpaceRequired += (int) me.Length;
                         break;
                     case "blob":
-                        dynamicStatements.AppendLine($"    result += {variableName}->{me.Name}Length;");
+                        if (language == Language.Cpp)
+                        {
+                            dynamicStatements.AppendLine($"    result += {variableName}->{me.Name}Length;");
+                        }
+                        else
+                        {
+                            dynamicStatements.AppendLine($"    result += {variableName}->{ConvertNameToCStyleName(me.Name)}_length;");
+                        }
                         staticSpaceRequired += 4;       // UInt32 object containing the length.
                         break;
                     case "structure":
-                        dynamicStatements.AppendLine($"    result += Encoded{me.CSName})BufferSize();");
+                        if (language == Language.Cpp)
+                        {
+                            dynamicStatements.AppendLine($"    result += Encoded{me.CSName})BufferSize();");
+                        }
+                        else
+                        {
+                            dynamicStatements.AppendLine($"    result += espcp_{ConvertNameToCStyleName(me.CSName)}_buffer_size();");
+                        }
                         break;
                     default:
                         staticSpaceRequired += dt.Size;
@@ -875,9 +936,17 @@ namespace FileGenerator
                 }
             }
             string modifier = "";
-            sourceFile.WriteLine($"// cppcheck-suppress unusedFunction symbolName=Encoded{message.Name}BufferSize");
-            sourceFile.WriteLine($"{modifier}int Encoders::Encoded{message.Name}BufferSize(Esp32Messaging::{message.Name} *{variableName})");
-            _functionPrototypes.AppendLine($"    static {modifier}int Encoded{message.Name}BufferSize(Esp32Messaging::{message.Name} *);");
+            if (language == Language.Cpp)
+            {
+                sourceFile.WriteLine($"// cppcheck-suppress unusedFunction symbolName=Encoded{message.Name}BufferSize");
+                sourceFile.WriteLine($"{modifier}int Encoders::Encoded{message.Name}BufferSize(Esp32Messaging::{message.Name} *{variableName})");
+                _functionPrototypes.AppendLine($"    static {modifier}int Encoded{message.Name}BufferSize(Esp32Messaging::{message.Name} *);");
+            }
+            else
+            {
+                sourceFile.WriteLine($"int espcp_{variableName}_buffer_size({variableType} *{variableName})");
+                _functionPrototypes.AppendLine($"int espcp_{variableName}_buffer_size({variableType} *);");
+            }
             sourceFile.WriteLine("{");
             if (dynamicStatements.Length == 0)
             {
@@ -1038,7 +1107,7 @@ namespace FileGenerator
                     if (m.MessageElements != null)
                     {
                         GenerateCMessageEncoderFunction(file, m, language);
-                        // GenerateCMessageEncodedBufferSizeFunction(file, m);
+                        GenerateCMessageEncodedBufferSizeFunction(file, m, language);
                         // GenerateCMessageExtractFunction(file, m);
                     }
                 }
