@@ -664,52 +664,48 @@ namespace FileGenerator
         /// <param name="sourceFile"></param>
         /// <param name="objectName"></param>
         /// <param name="variableName"></param>
-        private void OutputCFunctionHeader(StreamWriter sourceFile, string objectName, string variableName)
+        private void OutputCExtractFunctionHeader(StreamWriter sourceFile, string objectName, string variableName, Language language)
         {
-            string cObjectName = ConvertNameToCStyleName(objectName);
-            sourceFile.WriteLine("/****************************************************************************");
-            sourceFile.WriteLine($"* Name: espcp_encode_{cObjectName}");
-            sourceFile.WriteLine("*");
-            sourceFile.WriteLine("* Description:");
-            sourceFile.WriteLine($"*  Convert the espcp_{cObjectName}_t object into a byte stream that can ");
-            sourceFile.WriteLine("*  be sent to the ESP32.");
-            sourceFile.WriteLine("*");
-            sourceFile.WriteLine("* Input Parameters:");
-            sourceFile.WriteLine($"*  {variableName} - object to be encoded.");
-            sourceFile.WriteLine("*");
-            sourceFile.WriteLine("* Returned Value:");
-            sourceFile.WriteLine("*  None");
-            sourceFile.WriteLine("*");
-            sourceFile.WriteLine("* Assumptions/Limitations:");
-            sourceFile.WriteLine("*  None");
-            sourceFile.WriteLine("*");
-            sourceFile.WriteLine("****************************************************************************/");
-            sourceFile.WriteLine($"void espcp_encode_{cObjectName}(espcp_{cObjectName}_t *{variableName}, uint8_t *buffer)");
-            _functionPrototypes.AppendLine($"    void espcp_encode_{cObjectName}(espcp_{objectName}_t *, uint8_t *);");
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="sourceFile"></param>
-        /// <param name="objectName"></param>
-        /// <param name="variableName"></param>
-        private void OutputCppFunctionHeader(StreamWriter sourceFile, string objectName, string variableName)
-        {
-            sourceFile.WriteLine("/**");
-            sourceFile.WriteLine($" *  Convert the {objectName} object into a byte stream that can be sent to the STM32.");
-            sourceFile.WriteLine(" *  ");
-            sourceFile.WriteLine($" *  The amount of memory required can be obtained by calling the Encoded{objectName}BufferSize method.");
-            sourceFile.WriteLine(" *  ");
-            sourceFile.WriteLine($" *  @param {variableName}");
-            sourceFile.WriteLine($" *      {objectName} object to be encoded.");
-            sourceFile.WriteLine(" *  ");
-            sourceFile.WriteLine($" *  @param buffer");
-            sourceFile.WriteLine($" *      Pointer to a block of memory large enough to hold the encoded {objectName} object.");
-            sourceFile.WriteLine(" */");
-            sourceFile.WriteLine($"// cppcheck-suppress unusedFunction symbolName=Encode{objectName}");
-            sourceFile.WriteLine($"void Encoders::Encode{objectName}(Esp32Messaging::{objectName} *{variableName}, uint8_t *buffer)");
-            _functionPrototypes.AppendLine($"    static void Encode{objectName}(Esp32Messaging::{objectName} *, uint8_t *);");
+            if (language == Language.Cpp)
+            {
+                sourceFile.WriteLine("/**");
+                sourceFile.WriteLine($" *  Convert the {objectName} object into a byte stream that can be sent to the STM32.");
+                sourceFile.WriteLine(" *  ");
+                sourceFile.WriteLine($" *  The amount of memory required can be obtained by calling the Encoded{objectName}BufferSize method.");
+                sourceFile.WriteLine(" *  ");
+                sourceFile.WriteLine($" *  @param {variableName}");
+                sourceFile.WriteLine($" *      {objectName} object to be encoded.");
+                sourceFile.WriteLine(" *  ");
+                sourceFile.WriteLine($" *  @param buffer");
+                sourceFile.WriteLine($" *      Pointer to a block of memory large enough to hold the encoded {objectName} object.");
+                sourceFile.WriteLine(" */");
+                sourceFile.WriteLine($"// cppcheck-suppress unusedFunction symbolName=Encode{objectName}");
+                sourceFile.WriteLine($"void Encoders::Encode{objectName}(Esp32Messaging::{objectName} *{variableName}, uint8_t *buffer)");
+                _functionPrototypes.AppendLine($"    static void Encode{objectName}(Esp32Messaging::{objectName} *, uint8_t *);");
+            }
+            else
+            {
+                string cObjectName = ConvertNameToCStyleName(objectName);
+                sourceFile.WriteLine("/****************************************************************************");
+                sourceFile.WriteLine($"* Name: espcp_encode_{cObjectName}");
+                sourceFile.WriteLine("*");
+                sourceFile.WriteLine("* Description:");
+                sourceFile.WriteLine($"*  Convert the espcp_{cObjectName}_t object into a byte stream that can ");
+                sourceFile.WriteLine("*  be sent to the ESP32.");
+                sourceFile.WriteLine("*");
+                sourceFile.WriteLine("* Input Parameters:");
+                sourceFile.WriteLine($"*  {variableName} - object to be encoded.");
+                sourceFile.WriteLine("*");
+                sourceFile.WriteLine("* Returned Value:");
+                sourceFile.WriteLine("*  None");
+                sourceFile.WriteLine("*");
+                sourceFile.WriteLine("* Assumptions/Limitations:");
+                sourceFile.WriteLine("*  None");
+                sourceFile.WriteLine("*");
+                sourceFile.WriteLine("****************************************************************************/");
+                sourceFile.WriteLine($"void espcp_encode_{cObjectName}(espcp_{cObjectName}_t *{variableName}, uint8_t *buffer)");
+                _functionPrototypes.AppendLine($"    void espcp_encode_{cObjectName}(espcp_{objectName}_t *, uint8_t *);");
+            }
         }
 
         /// <summary>
@@ -719,17 +715,16 @@ namespace FileGenerator
         /// <param name="message">Message defintion to encode.</param>
         private void GenerateCMessageEncoderFunction(StreamWriter sourceFile, Message m, Language language)
         {
-            string variableName = m.Name.Substring(0, 1).ToLower() + m.Name.Substring(1);
+            string variableName;
             if (language == Language.Cpp)
             {
                 variableName = m.Name.Substring(0, 1).ToLower() + m.Name.Substring(1);
-                OutputCppFunctionHeader(sourceFile, m.Name, variableName);
             }
             else
             {
                 variableName = ConvertNameToCStyleName(m.Name);
-                OutputCFunctionHeader(sourceFile, m.Name, variableName);
             }
+            OutputCExtractFunctionHeader(sourceFile, m.Name, variableName, language);
             sourceFile.WriteLine("{");
             for (int index = 0; index < m.MessageElements.Count; index++)
             {
@@ -772,7 +767,15 @@ namespace FileGenerator
                         sizeStatement = $"    buffer += {me.Length};";
                         break;
                     case "blob":
-                        string lengthName = fieldName + "_length";
+                        string lengthName;;
+                        if (language == Language.Cpp)
+                        {
+                            lengthName = fieldName + "Length";
+                        }
+                        else
+                        {
+                            lengthName = fieldName + "_length";
+                        }
                         if (language == Language.Cpp)
                         {
                             sourceFile.WriteLine($"    EncodeUInt32({variableName}->{lengthName}, buffer);");
