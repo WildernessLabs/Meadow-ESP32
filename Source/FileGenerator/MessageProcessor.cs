@@ -588,8 +588,8 @@ namespace FileGenerator
             using (StreamWriter sourceFile = new StreamWriter(outputFile))
             {
                 OutputCHeaderFileHeader(sourceFile, CHeaderFileName);
-                sourceFile.WriteLine("#ifndef _ENCODERS_HPP_");
-                sourceFile.WriteLine("#define _ENCODERS_HPP_");
+                sourceFile.WriteLine("#ifndef _ENCODERS_HPP");
+                sourceFile.WriteLine("#define _ENCODERS_HPP");
                 sourceFile.WriteLine();
                 sourceFile.WriteLine("#include \"freertos/FreeRTOS.h\"");
 
@@ -653,7 +653,7 @@ namespace FileGenerator
                 sourceFile.WriteLine(_functionPrototypes.ToString());
                 sourceFile.WriteLine("};");
                 sourceFile.WriteLine();
-                sourceFile.WriteLine("  #endif /* _ENCODERS_HPP_ */");
+                sourceFile.WriteLine("  #endif /* _ENCODERS_HPP */");
                 sourceFile.WriteLine();
             }
         }
@@ -664,7 +664,7 @@ namespace FileGenerator
         /// <param name="sourceFile"></param>
         /// <param name="objectName"></param>
         /// <param name="variableName"></param>
-        private void OutputCExtractFunctionHeader(StreamWriter sourceFile, string objectName, string variableName, Language language)
+        private void OutputCEncodeFunctionHeader(StreamWriter sourceFile, string objectName, string variableName, Language language)
         {
             if (language == Language.Cpp)
             {
@@ -687,10 +687,10 @@ namespace FileGenerator
             {
                 string cObjectName = ConvertNameToCStyleName(objectName);
                 sourceFile.WriteLine("/****************************************************************************");
-                sourceFile.WriteLine($"* Name: espcp_encode_{cObjectName}");
+                sourceFile.WriteLine($"* Name: espcp_encode_{objectName}");
                 sourceFile.WriteLine("*");
                 sourceFile.WriteLine("* Description:");
-                sourceFile.WriteLine($"*  Convert the espcp_{cObjectName}_t object into a byte stream that can ");
+                sourceFile.WriteLine($"*  Convert the espcp_{objectName}_t object into a byte stream that can ");
                 sourceFile.WriteLine("*  be sent to the ESP32.");
                 sourceFile.WriteLine("*");
                 sourceFile.WriteLine("* Input Parameters:");
@@ -703,8 +703,60 @@ namespace FileGenerator
                 sourceFile.WriteLine("*  None");
                 sourceFile.WriteLine("*");
                 sourceFile.WriteLine("****************************************************************************/");
-                sourceFile.WriteLine($"void espcp_encode_{cObjectName}(espcp_{cObjectName}_t *{variableName}, uint8_t *buffer)");
-                _functionPrototypes.AppendLine($"    void espcp_encode_{cObjectName}(espcp_{objectName}_t *, uint8_t *);");
+                sourceFile.WriteLine($"void espcp_encode_{objectName}(espcp_{objectName}_t *{variableName}, uint8_t *buffer)");
+                _functionPrototypes.AppendLine($"    void espcp_encode_{objectName}(espcp_{objectName}_t *, uint8_t *);");
+            }
+        }
+
+        private void OutputCExtractFunctionHeader(StreamWriter sourceFile, string objectName, string variableName, Language language)
+        {
+            if (language == Language.Cpp)
+            {
+                sourceFile.WriteLine("/**");
+                sourceFile.WriteLine($" *  Extract the {objectName} object that is encoded in the given buffer.");
+                sourceFile.WriteLine(" *  ");
+                sourceFile.WriteLine(" *  Note that the returned pointer points to a block of memory on the heap and");
+                sourceFile.WriteLine(" *  this should eventually be released calling vPortFree(...).");
+                sourceFile.WriteLine(" *  ");
+                sourceFile.WriteLine($" *  @param buffer");
+                sourceFile.WriteLine($" *      Pointer to a block of memory holding the encoded {objectName} object.");
+                sourceFile.WriteLine(" *  ");
+                sourceFile.WriteLine(" *  @returns");
+                sourceFile.WriteLine($" *      Pointer to a {objectName} object.");
+                sourceFile.WriteLine(" */");
+                sourceFile.WriteLine($"// cppcheck-suppress unusedFunction symbolName=Extract{objectName}");
+                sourceFile.WriteLine($"Esp32Messaging::{objectName} *Encoders::Extract{objectName}(uint8_t *buffer)");
+                _functionPrototypes.AppendLine($"    static Esp32Messaging::{objectName} *Extract{objectName}(uint8_t *);");
+                sourceFile.WriteLine("{");
+                sourceFile.WriteLine($"    Esp32Messaging::{objectName} *{variableName} = (Esp32Messaging::{objectName} *) pvPortMalloc(sizeof(Esp32Messaging::{objectName}));");
+                sourceFile.WriteLine();
+            }
+            else
+            {
+                string cObjectName = ConvertNameToCStyleName(objectName);
+                sourceFile.WriteLine("/****************************************************************************");
+                sourceFile.WriteLine($"* Name: espcp_extract_{objectName}");
+                sourceFile.WriteLine(" *  ");
+                sourceFile.WriteLine("* Description:");
+                sourceFile.WriteLine($"*  Extract the espcp_{objectName}_ object that is");
+                sourceFile.WriteLine("*  encoded in the given buffer.");
+                sourceFile.WriteLine("*  ");
+                sourceFile.WriteLine("*  Note that the returned pointer points to a block of memory on the heap and");
+                sourceFile.WriteLine("*  this should eventually be released calling free(...).");
+                sourceFile.WriteLine("*  ");
+                sourceFile.WriteLine("* Input Parameters:");
+                sourceFile.WriteLine($"*  {variableName} - pointer to the buffer containing the encoded");
+                sourceFile.WriteLine($"*  espcp_{objectName}_t object.");
+                sourceFile.WriteLine("*");
+                sourceFile.WriteLine("* Returned Value:");
+                sourceFile.WriteLine("*  Pointer to the extracted espcp_{objectName}_t object.");
+                sourceFile.WriteLine("*");
+                sourceFile.WriteLine("* Assumptions/Limitations:");
+                sourceFile.WriteLine("*  None");
+                sourceFile.WriteLine("*");
+                sourceFile.WriteLine("****************************************************************************/");
+                sourceFile.WriteLine($"void espcp_extract_{objectName}(espcp_{objectName}_t *{variableName}, uint8_t *buffer)");
+                _functionPrototypes.AppendLine($"    void espcp_encode_{objectName}(espcp_{objectName}_t *, uint8_t *);");
             }
         }
 
@@ -716,15 +768,18 @@ namespace FileGenerator
         private void GenerateCMessageEncoderFunction(StreamWriter sourceFile, Message m, Language language)
         {
             string variableName;
+            string typeName;
             if (language == Language.Cpp)
             {
                 variableName = m.Name.Substring(0, 1).ToLower() + m.Name.Substring(1);
+                typeName = m.Name;
             }
             else
             {
                 variableName = ConvertNameToCStyleName(m.Name);
+                typeName = ConvertNameToCStyleName(m.Name);
             }
-            OutputCExtractFunctionHeader(sourceFile, m.Name, variableName, language);
+            OutputCEncodeFunctionHeader(sourceFile, typeName, variableName, language);
             sourceFile.WriteLine("{");
             for (int index = 0; index < m.MessageElements.Count; index++)
             {
@@ -1068,7 +1123,7 @@ namespace FileGenerator
         {
             _functionPrototypes = new StringBuilder();
             string postfix = "";
-            string sourceFileName = $"{OutputDirectory}Encoders.c{postfix}";
+            string sourceFileName;
             if (language == Language.Cpp)
             {
                 sourceFileName = $"{OutputDirectory}Encoders.cpp";
