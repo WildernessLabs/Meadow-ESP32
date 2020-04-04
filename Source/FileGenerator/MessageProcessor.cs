@@ -603,7 +603,13 @@ namespace FileGenerator
             }
             else
             {
-
+                sourceFile.WriteLine("#ifndef _ESPCP_ENCODERS_H");
+                sourceFile.WriteLine("#define _ESPCP_ENCODERS_H");
+                sourceFile.WriteLine();
+                sourceFile.WriteLine("#include <stdlib.h>");
+                sourceFile.WriteLine("#include <string.h>");
+                sourceFile.WriteLine("#include \"espcp_shared_enums.h\"");
+                sourceFile.WriteLine();
             }
         }
 
@@ -638,7 +644,16 @@ namespace FileGenerator
                     if (m.MessageElements != null)
                     {
                         string variableName = m.Name.Substring(0, 1).ToLower() + m.Name.Substring(1);
-                        sourceFile.WriteLine($"{indent}struct {m.Name}");
+                        string structureName;
+                        if (language == Language.Cpp)
+                        {
+                            structureName = m.Name;
+                        }
+                        else
+                        {
+                            structureName = "espcp_" + ConvertNameToCStyleName(m.Name);
+                        }
+                        sourceFile.WriteLine($"{indent}struct {structureName}");
                         sourceFile.WriteLine($"{indent}{{");
                         foreach (MessageElement me in m.MessageElements)
                         {
@@ -681,6 +696,10 @@ namespace FileGenerator
                             }
                         }
                         sourceFile.WriteLine($"{indent}}};");
+                        if (language == Language.C)
+                        {
+                            sourceFile.WriteLine($"typedef struct {structureName} {structureName}_t;");
+                        }
                         sourceFile.WriteLine();
                     }
                 }
