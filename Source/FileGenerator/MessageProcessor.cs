@@ -749,13 +749,16 @@ namespace FileGenerator
                 sourceFile.WriteLine($"*  espcp_{objectName}_t object.");
                 sourceFile.WriteLine("*");
                 sourceFile.WriteLine("* Returned Value:");
-                sourceFile.WriteLine("*  Pointer to the extracted espcp_{objectName}_t object.");
+                sourceFile.WriteLine($"*  Pointer to the extracted espcp_{objectName}_t object.");
                 sourceFile.WriteLine("*");
                 sourceFile.WriteLine("* Assumptions/Limitations:");
                 sourceFile.WriteLine("*  None");
                 sourceFile.WriteLine("*");
                 sourceFile.WriteLine("****************************************************************************/");
                 sourceFile.WriteLine($"void espcp_extract_{objectName}(espcp_{objectName}_t *{variableName}, uint8_t *buffer)");
+                sourceFile.WriteLine("{");
+                sourceFile.WriteLine($"    espcp_{objectName}_t *{variableName} = (espcp_{objectName}_t *) malloc(sizeof(espcp_{objectName}_t));");
+                sourceFile.WriteLine();
                 _functionPrototypes.AppendLine($"    void espcp_encode_{objectName}(espcp_{objectName}_t *, uint8_t *);");
             }
         }
@@ -1020,85 +1023,178 @@ namespace FileGenerator
             sourceFile.WriteLine();
         }
 
+        private string WriteByteExtractCode(StreamWriter sourceFile, string variableName, string fieldName, DataType dataType, Language language)
+        {
+            sourceFile.WriteLine($"    {variableName}->{fieldName} = *buffer;");
+            return($"    buffer += {dataType.Size};");
+        }
+
+        private string WriteSByteExtractCode(StreamWriter sourceFile, string variableName, string fieldName, DataType dataType, Language language)
+        {
+            sourceFile.WriteLine($"    {variableName}->{fieldName} = (int8_t) *buffer;");
+            return($"    buffer += {dataType.Size};");
+        }
+
+        private string WriteStringExtractCode(StreamWriter sourceFile, string variableName, string fieldName, DataType dataType, Language language)
+        {
+            sourceFile.WriteLine($"    {variableName}->{fieldName} = Extract{dataType.CSharpTypeName}(buffer);");
+            return($"    buffer += strlen({variableName}->{fieldName}) + 1;");
+        }
+
+        private void WriteFixedByteArrayExtractCode(StreamWriter sourceFile, string variableName, string fieldName, int length, Language language)
+        {
+            if (language == Language.Cpp)
+            {
+                sourceFile.WriteLine($"    memcpy((void *) {variableName}->{fieldName}, (void *) buffer, {length});");
+            }
+            else
+            {
+                sourceFile.WriteLine($"    memcpy((void *) {ConvertNameToCStyleName(variableName)}->{ConvertNameToCStyleName(fieldName)}, (void *) buffer, {length});");
+            }
+        }
+
+        private void WriteBlobExtractCode(StreamWriter sourceFile, string variableName, string fieldName, DataType dataType, Language language)
+        {
+            string lengthString;
+            if (language == Language.Cpp)
+            {
+                lengthString = $"{variableName}->{fieldName}Length";
+            }
+            else
+            {
+                lengthString = $"{variableName}->{fieldName}_length";
+            }
+            sourceFile.WriteLine($"    {lengthString} = ExtractUInt32(buffer);");
+            sourceFile.WriteLine($"    buffer += 4;");
+            sourceFile.WriteLine($"    if ({lengthString} > 0)");
+            sourceFile.WriteLine("    {");
+            if (language == Language.Cpp)
+            {
+                sourceFile.WriteLine($"        {variableName}->{fieldName} = (uint8_t *) pvPortMalloc({lengthString});");
+            }
+            else
+            {
+                sourceFile.WriteLine($"        {variableName}->{fieldName} = (uint8_t *) malloc({lengthString});");
+            }
+            sourceFile.WriteLine($"        memcpy({variableName}->{fieldName}, buffer, {lengthString});");
+            sourceFile.WriteLine($"        buffer += {lengthString};");
+            sourceFile.WriteLine("    }");
+            sourceFile.WriteLine("    else");
+            sourceFile.WriteLine("    {");
+            if (language == Language.Cpp)
+            {
+                sourceFile.WriteLine($"        {variableName}->{fieldName} = nullptr;");
+            }
+            else
+            {
+                sourceFile.WriteLine($"        {variableName}->{fieldName} = NULL;");
+            }
+            sourceFile.WriteLine("    }");
+        }
+
+        private string WriteStructureExtractCode(StreamWriter sourceFile, string variableName, string fieldName, string dataType, Language language)
+        {
+            string sizeModifier;
+            if (language == Language.Cpp)
+            {
+                sourceFile.WriteLine($"            {variableName}.{fieldName} = Extract{dataType}(buffer, offset);");
+                sizeModifier = $"            offset += Encoded{fieldName}BufferSize({variableName}.{fieldName});";
+            }
+            else
+            {
+                string variable = ConvertNameToCStyleName(variableName);
+                string type = ConvertNameToCStyleName(dataType);
+                string field = ConvertNameToCStyleName(dataType);
+                sourceFile.WriteLine($"            {variable}.{field} = espcp_extract_{type}(buffer, offset);");
+                sizeModifier = $"            offset += espcp_encoded_{field}_buffer_size({variable}.{field});";
+            }
+            return(sizeModifier);
+        }
+
+        private void WritePointerExtractCode(StreamWriter sourceFile, string variableName, string fieldName, string dataType, Language language)
+        {
+            if (language == Language.Cpp)
+            {
+                sourceFile.WriteLine($"    {variableName}->{fieldName} = ({dataType} *) ExtractUInt32(buffer);");
+            }
+            else
+            {
+                string variable = ConvertNameToCStyleName(variableName);
+                string type = ConvertNameToCStyleName(dataType);
+                string field = ConvertNameToCStyleName(dataType);
+                sourceFile.WriteLine($"    {variable}->{field} = (espcp_{type}_t *) espcp_extract_ uint32(buffer);");
+            }
+        }
+
+        private string WriteDefaultObjectExtractCode(StreamWriter sourceFile, string variableName, string fieldName, DataType dataType, Language language)
+        {
+            sourceFile.WriteLine($"    {variableName}->{fieldName} = Extract{dataType.CSharpTypeName}(buffer);");
+            return($"    buffer += {dataType.Size};");
+        }
+
         /// <summary>
         /// Generate the method that will extract an encoded message and place the data in
         /// the appropriate fields in the structure.
         /// </summary>
         /// <param name="sourceFile">Output stream for the C file that will hold the extract method.</param>
         /// <param name="message">Message defintion to encode.</param>
-        private void GenerateCMessageExtractFunction(StreamWriter sourceFile, Message message)
+        private void GenerateCMessageExtractFunction(StreamWriter sourceFile, Message message, Language language)
         {
-            string variableName = message.Name.Substring(0, 1).ToLower() + message.Name.Substring(1);
-            sourceFile.WriteLine("/**");
-            sourceFile.WriteLine($" *  Extract the {message.Name} object that is encoded in the given buffer.");
-            sourceFile.WriteLine(" *  ");
-            sourceFile.WriteLine(" *  Note that the returned pointer points to a block of memory on the heap and");
-            sourceFile.WriteLine(" *  this should eventually be released calling vPortFree(...).");
-            sourceFile.WriteLine(" *  ");
-            sourceFile.WriteLine($" *  @param buffer");
-            sourceFile.WriteLine($" *      Pointer to a block of memory holding the encoded {message.Name} object.");
-            sourceFile.WriteLine(" *  ");
-            sourceFile.WriteLine(" *  @returns");
-            sourceFile.WriteLine($" *      Pointer to a {message.Name} object.");
-            sourceFile.WriteLine(" */");
-            sourceFile.WriteLine($"// cppcheck-suppress unusedFunction symbolName=Extract{message.Name}");
-            sourceFile.WriteLine($"Esp32Messaging::{message.Name} *Encoders::Extract{message.Name}(uint8_t *buffer)");
-            _functionPrototypes.AppendLine($"    static Esp32Messaging::{message.Name} *Extract{message.Name}(uint8_t *);");
-            sourceFile.WriteLine("{");
-            sourceFile.WriteLine($"    Esp32Messaging::{message.Name} *{variableName} = (Esp32Messaging::{message.Name} *) pvPortMalloc(sizeof(Esp32Messaging::{message.Name}));");
-            sourceFile.WriteLine();
+            string variableName;
+            string typeName;
+            if (language == Language.Cpp)
+            {
+                variableName = message.Name.Substring(0, 1).ToLower() + message.Name.Substring(1);
+                typeName = message.Name;
+            }
+            else
+            {
+                variableName = ConvertNameToCStyleName(message.Name);
+                typeName = variableName;
+            }
+            OutputCExtractFunctionHeader(sourceFile, typeName, variableName, language);
             for (var index = 0; index < message.MessageElements.Count; index++)
             {
                 MessageElement me = message.MessageElements[index];
                 DataType dt = GetDataType(me.DataType);
                 string sizeModifier = "";
+                string fieldName;
+                if (language == Language.Cpp)
+                {
+                    fieldName = me.Name;
+                }
+                else
+                {
+                    fieldName = ConvertNameToCStyleName(me.Name);
+                }
                 switch (dt.Name.ToLower())
                 {
                     case "byte":
-                        sourceFile.WriteLine($"    {variableName}->{me.Name} = *buffer;");
-                        sizeModifier = $"    buffer += {dt.Size};";
+                        sizeModifier = WriteByteExtractCode(sourceFile, variableName, fieldName, dt, language);
                         break;
                     case "sbyte":
-                        sourceFile.WriteLine($"    {variableName}->{me.Name} = (int8_t) *buffer;");
-                        sizeModifier = $"    buffer += {dt.Size};";
+                        sizeModifier = WriteSByteExtractCode(sourceFile, variableName, fieldName, dt, language);
                         break;
                     case "string":
-                        sourceFile.WriteLine($"    {variableName}->{me.Name} = Extract{dt.CSharpTypeName}(buffer);");
-                        sizeModifier = $"    buffer += strlen({variableName}->{me.Name}) + 1;";
+                        sizeModifier = WriteStringExtractCode(sourceFile, variableName, fieldName, dt, language);
                         break;
                     case "fixedchararray":
                     case "fixedbytearray":
-                        sourceFile.WriteLine($"    memcpy((void *) {variableName}->{me.Name}, (void *) buffer, {me.Length});");
+                        WriteFixedByteArrayExtractCode(sourceFile, variableName, fieldName, (int) me.Length, language);
                         sizeModifier = $"    buffer += {me.Length};";
                         break;
                     case "blob":
-                        sourceFile.WriteLine($"    {variableName}->{me.Name}Length = ExtractUInt32(buffer);");
-                        sourceFile.WriteLine($"    buffer += 4;");
-                        sourceFile.WriteLine($"    if ({variableName}->{me.Name}Length > 0)");
-                        sourceFile.WriteLine("    {");
-                        sourceFile.WriteLine($"        {variableName}->{me.Name} = (uint8_t *) pvPortMalloc({variableName}->{me.Name}Length);");
-                        sourceFile.WriteLine($"        memcpy({variableName}->{me.Name}, buffer, {variableName}->{me.Name}Length);");
-                        if (index < (message.MessageElements.Count - 1))
-                        {
-                            sourceFile.WriteLine($"        buffer += {variableName}->{me.Name}Length;");
-                        }
-                        sourceFile.WriteLine("    }");
-                        sourceFile.WriteLine("    else");
-                        sourceFile.WriteLine("    {");
-                        sourceFile.WriteLine($"        {variableName}->{me.Name} = nullptr;");
-                        sourceFile.WriteLine("    }");
+                        WriteBlobExtractCode(sourceFile, variableName, fieldName, dt, language);
                         break;
                     case "structure":
-                        sourceFile.WriteLine($"            {variableName}.{me.Name} = Extract{me.CSName}(buffer, offset);");
-                        sizeModifier = $"            offset += Encoded{me.CSName}BufferSize({variableName}.{me.Name});";
+                        sizeModifier = WriteStructureExtractCode(sourceFile, variableName, fieldName, me.CSName, language);
                         break;
                     case "pointer":
-                        sourceFile.WriteLine($"    {variableName}->{me.Name} = ({me.CName} *) ExtractUInt32(buffer);");
+                        WritePointerExtractCode(sourceFile, variableName, fieldName, me.CSName, language);
                         sizeModifier = $"    buffer += {dt.Size};";
                         break;
                     default:
-                        sourceFile.WriteLine($"    {variableName}->{me.Name} = Extract{dt.CSharpTypeName}(buffer);");
-                        sizeModifier = $"    buffer += {dt.Size};";
+                        sizeModifier = WriteDefaultObjectExtractCode(sourceFile, variableName, fieldName, dt, language);
                         break;
                 }
                 if (index < (message.MessageElements.Count - 1))
@@ -1166,7 +1262,7 @@ namespace FileGenerator
                     {
                         GenerateCMessageEncoderFunction(file, m, language);
                         GenerateCMessageEncodedBufferSizeFunction(file, m, language);
-                        // GenerateCMessageExtractFunction(file, m);
+                        GenerateCMessageExtractFunction(file, m, language);
                     }
                 }
                 file.WriteLine();
