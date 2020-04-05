@@ -554,13 +554,14 @@ namespace FileGenerator
 
         #endregion C# file generation
 
-        #region C++ File generation
+        #region C / C++ File generation
 
         /// <summary>
         /// Output the header to the C file.
         /// </summary>
-        /// <param name="sourceFile">Stream associated with the C file.</param>
+        /// <param name="sourceFile">Existing StreamWriter object for the source file being created.</param>
         /// <param name="fileName">Name of the C file.</param>
+        /// <param name="language">Is this a C or C++ file?</param>
         private void OutputCHeaderFileHeader(StreamWriter sourceFile, string fileName, Language language)
         {
             sourceFile.WriteLine("/*");
@@ -619,6 +620,7 @@ namespace FileGenerator
         /// Output the structure C definitions for the list of messages.
         /// </summary>
         /// <param name="messages">List of messages to convert into structure definitions.</param>
+        /// <param name="language">Is this a C or C++ file?</param>
         private void GenerateCMessageStructureFile(IList<Message> messages, Language language)
         {
             string outputFileName;
@@ -750,11 +752,13 @@ namespace FileGenerator
         }
 
         /// <summary>
-        /// 
+        /// Write the comment for a C/C++ encode function.  The function header complies with
+        /// existing coding styles for the two different parts of the system.
         /// </summary>
-        /// <param name="sourceFile"></param>
-        /// <param name="objectName"></param>
-        /// <param name="variableName"></param>
+        /// <param name="sourceFile">Existing StreamWriter object for the source file being created.</param>
+        /// <param name="objectName">Object (type) being extracted.</param>
+        /// <param name="variableName">Name of the variable that will hold the object being extracted.</param>
+        /// <param name="language">Is this a C or C++ file?</param>
         private void OutputCEncodeFunctionHeader(StreamWriter sourceFile, string objectName, string variableName, Language language)
         {
             if (language == Language.Cpp)
@@ -799,6 +803,14 @@ namespace FileGenerator
             }
         }
 
+        /// <summary>
+        /// Write the comment for a C/C++ extract function.  The function header complies with
+        /// existing coding styles for the two different parts of the system.
+        /// </summary>
+        /// <param name="sourceFile">Existing StreamWriter object for the source file being created.</param>
+        /// <param name="objectName">Object (type) being extracted.</param>
+        /// <param name="variableName">Name of the variable that will hold the object being extracted.</param>
+        /// <param name="language">Is this a C or C++ file?</param>
         private void OutputCExtractFunctionHeader(StreamWriter sourceFile, string objectName, string variableName, Language language)
         {
             if (language == Language.Cpp)
@@ -857,8 +869,9 @@ namespace FileGenerator
         /// <summary>
         /// Generate the encoder function for the specified message.
         /// </summary>
-        /// <param name="sourceFile">Output stream for the C file that will hold the encoder.</param>
+        /// <param name="sourceFile">Existing StreamWriter object for the source file being created.</param>
         /// <param name="message">Message defintion to encode.</param>
+        /// <param name="language">Is this a C or C++ file?</param>
         private void GenerateCMessageEncoderFunction(StreamWriter sourceFile, Message m, Language language)
         {
             string variableName;
@@ -995,8 +1008,9 @@ namespace FileGenerator
         /// <summary>
         /// Generate the function that will calculate the size of the encoded data for the specified message.
         /// </summary>
-        /// <param name="sourceFile">Output stream for the C file that will hold the calculation method.</param>
+        /// <param name="sourceFile">Existing StreamWriter object for the source file being created.</param>
         /// <param name="message">Message defintion to encode.</param>
+        /// <param name="language">Is this a C or C++ file?</param>
         private void GenerateCMessageEncodedBufferSizeFunction(StreamWriter sourceFile, Message message, Language language)
         {
             string variableName;
@@ -1114,18 +1128,45 @@ namespace FileGenerator
             sourceFile.WriteLine();
         }
 
+        /// <summary>
+        /// Generate the code to extract a byte from a message buffer.
+        /// </summary>
+        /// <param name="sourceFile">Existing StreamWriter object for the source file being created.</param>
+        /// <param name="variableName">Variable holding the extracted message</param>
+        /// <param name="fieldName">Field / member of the message structure holding the data item.</param>
+        /// <param name="dataType">DataType object holding information about the item (field) being extracted.</param>
+        /// <param name="language">Is this a C or C++ file?</param>
+        /// <returns>String holding the code necessary to move the buffer on according to the amount of data that has been extracted.</returns>
         private string WriteByteExtractCode(StreamWriter sourceFile, string variableName, string fieldName, DataType dataType, Language language)
         {
             sourceFile.WriteLine($"    {variableName}->{fieldName} = *buffer;");
             return($"    buffer += {dataType.Size};");
         }
 
+        /// <summary>
+        /// Generate the code to extract a signed byte from a message buffer.
+        /// </summary>
+        /// <param name="sourceFile">Existing StreamWriter object for the source file being created.</param>
+        /// <param name="variableName">Variable holding the extracted message</param>
+        /// <param name="fieldName">Field / member of the message structure holding the data item.</param>
+        /// <param name="dataType">DataType object holding information about the item (field) being extracted.</param>
+        /// <param name="language">Is this a C or C++ file?</param>
+        /// <returns>String holding the code necessary to move the buffer on according to the amount of data that has been extracted.</returns>
         private string WriteSByteExtractCode(StreamWriter sourceFile, string variableName, string fieldName, DataType dataType, Language language)
         {
             sourceFile.WriteLine($"    {variableName}->{fieldName} = (int8_t) *buffer;");
             return($"    buffer += {dataType.Size};");
         }
 
+        /// <summary>
+        /// Generate the code to extract a string from a message buffer.
+        /// </summary>
+        /// <param name="sourceFile">Existing StreamWriter object for the source file being created.</param>
+        /// <param name="variableName">Variable holding the extracted message</param>
+        /// <param name="fieldName">Field / member of the message structure holding the data item.</param>
+        /// <param name="dataType">DataType object holding information about the item (field) being extracted.</param>
+        /// <param name="language">Is this a C or C++ file?</param>
+        /// <returns>String holding the code necessary to move the buffer on according to the amount of data that has been extracted.</returns>
         private string WriteStringExtractCode(StreamWriter sourceFile, string variableName, string fieldName, DataType dataType, Language language)
         {
             if (language == Language.Cpp)
@@ -1139,6 +1180,14 @@ namespace FileGenerator
             return($"    buffer += strlen({variableName}->{fieldName}) + 1;");
         }
 
+        /// <summary>
+        /// Generate the code to extract a fixed size byte array from a buffer.
+        /// </summary>
+        /// <param name="sourceFile">Existing StreamWriter object for the source file being created.</param>
+        /// <param name="variableName">Variable holding the extracted message</param>
+        /// <param name="fieldName">Field / member of the message structure holding the data item.</param>
+        /// <param name="dataType">DataType object holding information about the item (field) being extracted.</param>
+        /// <param name="language">Is this a C or C++ file?</param>
         private void WriteFixedByteArrayExtractCode(StreamWriter sourceFile, string variableName, string fieldName, int length, Language language)
         {
             if (language == Language.Cpp)
@@ -1151,6 +1200,14 @@ namespace FileGenerator
             }
         }
 
+        /// <summary>
+        /// Generate the code to extract a BLOB from a buffer.
+        /// </summary>
+        /// <param name="sourceFile">Existing StreamWriter object for the source file being created.</param>
+        /// <param name="variableName">Variable holding the extracted message</param>
+        /// <param name="fieldName">Field / member of the message structure holding the data item.</param>
+        /// <param name="dataType">DataType object holding information about the item (field) being extracted.</param>
+        /// <param name="language">Is this a C or C++ file?</param>
         private void WriteBlobExtractCode(StreamWriter sourceFile, string variableName, string fieldName, DataType dataType, Language language)
         {
             string lengthString;
@@ -1191,6 +1248,15 @@ namespace FileGenerator
             sourceFile.WriteLine("    }");
         }
 
+        /// <summary>
+        /// Generate the code to extract a data structure from a buffer.
+        /// </summary>
+        /// <param name="sourceFile">Existing StreamWriter object for the source file being created.</param>
+        /// <param name="variableName">Variable holding the extracted message</param>
+        /// <param name="fieldName">Field / member of the message structure holding the data item.</param>
+        /// <param name="dataType">DataType object holding information about the item (field) being extracted.</param>
+        /// <param name="language">Is this a C or C++ file?</param>
+        /// <returns>String holding the code necessary to move the buffer on according to the amount of data that has been extracted.</returns>
         private string WriteStructureExtractCode(StreamWriter sourceFile, string variableName, string fieldName, string dataType, Language language)
         {
             string sizeModifier;
@@ -1210,6 +1276,17 @@ namespace FileGenerator
             return(sizeModifier);
         }
 
+        /// <summary>
+        /// Generate the code to extract a pointer from a buffer.
+        /// 
+        /// It is assumed that all pointers are void * pointers and that the method
+        /// extracting the object will perform any necessary conversions.
+        /// </summary>
+        /// <param name="sourceFile">Existing StreamWriter object for the source file being created.</param>
+        /// <param name="variableName">Variable holding the extracted message</param>
+        /// <param name="fieldName">Field / member of the message structure holding the data item.</param>
+        /// <param name="dataType">DataType object holding information about the item (field) being extracted.</param>
+        /// <param name="language">Is this a C or C++ file?</param>
         private void WritePointerExtractCode(StreamWriter sourceFile, string variableName, string fieldName, string dataType, Language language)
         {
             if (language == Language.Cpp)
@@ -1225,6 +1302,15 @@ namespace FileGenerator
             }
         }
 
+        /// <summary>
+        /// Generate the code necessary to exract a filed of a built in type (UInt32 / Int32 etc.).
+        /// </summary>
+        /// <param name="sourceFile">Existing StreamWriter object for the source file being created.</param>
+        /// <param name="variableName">Variable holding the extracted message</param>
+        /// <param name="fieldName">Field / member of the message structure holding the data item.</param>
+        /// <param name="dataType">DataType object holding information about the item (field) being extracted.</param>
+        /// <param name="language">Is this a C or C++ file?</param>
+        /// <returns>String holding the code necessary to move the buffer on according to the amount of data that has been extracted.</returns>
         private string WriteDefaultObjectExtractCode(StreamWriter sourceFile, string variableName, string fieldName, DataType dataType, Language language)
         {
             if (language == Language.Cpp)
@@ -1242,8 +1328,9 @@ namespace FileGenerator
         /// Generate the method that will extract an encoded message and place the data in
         /// the appropriate fields in the structure.
         /// </summary>
-        /// <param name="sourceFile">Output stream for the C file that will hold the extract method.</param>
+        /// <param name="sourceFile">Existing StreamWriter object for the source file being created.</param>
         /// <param name="message">Message defintion to encode.</param>
+        /// <param name="language">Is this a C or C++ file?</param>
         private void GenerateCMessageExtractFunction(StreamWriter sourceFile, Message message, Language language)
         {
             string variableName;
@@ -1321,6 +1408,7 @@ namespace FileGenerator
         /// for the list of messages.
         /// </summary>
         /// <param name="messages">List of messages to process.</param>
+        /// <param name="language">Is this a C or C++ file?</param>
         private void GenerateCMessagesEncoders(IList<Message> messages, Language language)
         {
             _functionPrototypes = new StringBuilder();
@@ -1375,7 +1463,7 @@ namespace FileGenerator
             }
         }
 
-        #endregion C++ File generation
+        #endregion C / C++ File generation
 
         #region Helper methods
 
