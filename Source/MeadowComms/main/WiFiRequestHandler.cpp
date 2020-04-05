@@ -546,7 +546,7 @@ void WiFiRequestHandler::GetAddrInfo(Message *message)
     vPortFree(request);
 
     Esp32Messaging::GetAddrInfoResponse *response = static_cast<Esp32Messaging::GetAddrInfoResponse *>(pvPortMalloc(sizeof(Esp32Messaging::GetAddrInfoResponse)));
-    response->Errno = errorCode;
+    response->AddrInfoResponseErrno = errorCode;
     if ((errorCode == 0) || (addressInformation != NULL))
     {
         Esp32Messaging::SockAddr sa;
@@ -733,11 +733,11 @@ void WiFiRequestHandler::SetSockOpt(Message *message)
     response.Result = setsockopt(request->SocketNumber, request->Level, request->OptionName, optionValue, optionLength);
     if (response.Result < 0)
     {
-        response.Errno = errno;
+        response.ResponseErrno = errno;
     }
     else
     {
-        response.Errno = 0;
+        response.ResponseErrno = 0;
     }
 
     vPortFree(request);
@@ -767,11 +767,11 @@ void WiFiRequestHandler::Write(Message *message)
     response.Result = write(request->SocketHandle, request->Buffer, request->Count);
     if (response.Result < 0)
     {
-        response.Errno = errno;
+        response.ResponseErrno = errno;
     }
     else
     {
-        response.Errno = 0;
+        response.ResponseErrno = 0;
     }
 
     vPortFree(request);
@@ -801,14 +801,14 @@ void WiFiRequestHandler::Read(Message *message)
     response.Buffer = static_cast<uint8_t *>(pvPortMalloc(request->Count));
     bzero(response.Buffer, request->Count);
     response.BufferLength = request->Count;
-    response.Result = read(request->SocketHandle, response.Buffer, request->Count);
-    if (response.Result < 0)
+    response.ReadResponseResult = read(request->SocketHandle, response.Buffer, request->Count);
+    if (response.ReadResponseResult < 0)
     {
-        response.Errno = errno;
+        response.ReadResponseErrno = errno;
     }
     else
     {
-        response.Errno = 0;
+        response.ReadResponseErrno = 0;
     }
 
     vPortFree(request);
