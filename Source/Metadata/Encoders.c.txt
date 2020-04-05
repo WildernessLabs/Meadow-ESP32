@@ -13,7 +13,7 @@
  *  @returns
  *      Number of bytes that should be allocated.
  */
-uint32_t espcp_calculate_spi_bufferSize(uint32_t requestedSize)
+uint32_t espcp_calculate_spi_buffer_size(uint32_t requestedSize)
 {
     uint32_t result = requestedSize;
 
@@ -189,7 +189,7 @@ char *espcp_extract_string(uint8_t *buffer)
         length++;
     }
 
-    ptr = (uint8_t *) pvPortMalloc(length + 1);
+    ptr = (uint8_t *) malloc(length + 1);
     strcpy((char *) ptr, (char *) buffer);
     return((char *) ptr);
 }
@@ -261,7 +261,7 @@ uint32_t espcp_crc32(const uint8_t *data, uint16_t len)
 
     for (uint16_t byteCounter = 0; byteCounter < len; byteCounter++)
     {
-        crc = ProgressiveCRC32(crc, data[byteCounter]);
+        crc = espcp_progressive_crc32(crc, data[byteCounter]);
     }
     return (crc);
 }
@@ -308,33 +308,33 @@ uint32_t espcp_progressive_crc32(uint32_t currentChecksum, uint8_t byte)
  *     Will be placed on the FreeRTOS heap (use vPortFree to release the
  *     storage).
  */
-Message *espcp_extract_message(uint8_t *buffer, uint32_t bufferLength, bool headerOnly)
+espcp_message_t *espcp_extract_message(uint8_t *buffer, uint32_t bufferLength, bool headerOnly)
 {
     uint32_t crc = espcp_extract_uint32(buffer + ESPCP_CRC_OFFSET);
     espcp_encode_uint32(0, buffer + ESPCP_CRC_OFFSET);
     
-    Message *message = NULL;
-    if (crc == CRC32(buffer, bufferLength))
+    espcp_message_t *message = NULL;
+    if (crc == espcp_crc32(buffer, bufferLength))
     {
-        message = malloc(sizeof(message_t)));
+        message = (espcp_message_t *) malloc(sizeof(espcp_message_t));
 
-        memset((void *) message, 0, sizeof(message_t));
-        message->MessageType = *buffer;
+        memset((void *) message, 0, sizeof(espcp_message_t));
+        message->message_type = *buffer;
         buffer++;
-        message->Interface = *buffer;
+        message->interface = *buffer;
         buffer++;
-        message->Function = espcp_extract_uint32(buffer);
+        message->function = espcp_extract_uint32(buffer);
         buffer += 4;
-        message->StatusCode = espcp_extract_uint32(buffer);
+        message->status_code = espcp_extract_uint32(buffer);
         buffer += 4;
-        message->MessageID = espcp_extract_uint32(buffer);
+        message->message_id = espcp_extract_uint32(buffer);
         buffer += 4;
-        message->PayloadLength = espcp_extract_uint32(buffer);
+        message->payload_length = espcp_extract_uint32(buffer);
         //
         //  Move over the last field and skip the CRC entry.
         //
         buffer += 8;
-        if (!headerOnly && (message->PayloadLength > 0))
+        if (!headerOnly && (message->payload_length > 0))
         {
             message->payload = (uint8_t *) malloc(message->payload_length);
             memcpy(message->payload, buffer, message->payload_length);
@@ -346,7 +346,7 @@ Message *espcp_extract_message(uint8_t *buffer, uint32_t bufferLength, bool head
     }
     else
     {
-        return (NULL);
+        message = NULL;
     }
     return(message);
 }
@@ -365,46 +365,49 @@ Message *espcp_extract_message(uint8_t *buffer, uint32_t bufferLength, bool head
  *     Will be placed on the FreeRTOS heap (use vPortFree to release the
  *     storage).
  */
-uint8_t *espcp_encode_message(Message *message, bool headerOnly)
+uint8_t *espcp_encode_message(espcp_message_t *message, bool headerOnly)
 {
-    uint32_t messageSize = Message::HEADER_SIZE;
+    uint32_t messageSize = ESPCP_HEADER_SIZE;
     if (!headerOnly)
     {
-        messageSize += message->PayloadLength;
+        messageSize += message->payload_length;
     }
-    uint32_t bufferSize = CalculateSpiBufferSize(messageSize);
-    int offset = 0;
-    uint8_t *buffer = (uint8_t *) pvPortMalloc(bufferSize);
-    
-    memset(buffer, 0, bufferSize);
-    *buffer = message->MessageType;
-    offset++;
-    *(buffer + offset) = message->Interface;
-    offset++;
-    EncodeUInt32(message->Function, buffer + offset);
-    offset += 4;
-    EncodeUInt32(message->StatusCode, buffer + offset);
-    offset += 4;
-    EncodeUInt32(message->MessageID, buffer + offset);
-    offset += 4;
-    EncodeUInt32(message->PayloadLength, buffer + offset);
-    offset += 4;
-    //
-    //  The byte after the PayloadLength is the CRC.  This is filled in later
-    //  and so a 0 is written into the message temporarily.
-    //
-    EncodeUInt32(0, buffer + offset);
-    offset += 4;
-    if (!headerOnly && (message->PayloadLength > 0))
+    uint32_t bufferSize = espcp_calculate_spi_buffer_size(messageSize);
+    uint8_t *buffer = (uint8_t *) malloc(bufferSize);
+    if (buffer != NULL)
     {
-        memcpy((uint8_t *) (buffer + offset), message->Payload, message->PayloadLength);
+        memset(buffer, 0, bufferSize);
+
+        int offset = 0;
+        *buffer = message->message_type;
+        offset++;
+        *(buffer + offset) = message->interface;
+        offset++;
+        espcp_encode_uint32(message->function, buffer + offset);
+        offset += 4;
+        espcp_encode_uint32(message->status_code, buffer + offset);
+        offset += 4;
+        espcp_encode_uint32(message->message_id, buffer + offset);
+        offset += 4;
+        espcp_encode_uint32(message->payload_length, buffer + offset);
+        offset += 4;
+        //
+        //  The byte after the payload_length is the CRC.  This is filled in later
+        //  and so a 0 is written into the message temporarily.
+        //
+        espcp_encode_uint32(0, buffer + offset);
+        offset += 4;
+        if (!headerOnly && (message->payload_length > 0))
+        {
+            memcpy((uint8_t *) (buffer + offset), message->payload, message->payload_length);
+        }
+        else
+        {
+            espcp_encode_uint32(0, buffer + offset);
+        }
+        uint32_t crc = espcp_crc32(buffer, bufferSize);
+        espcp_encode_uint32(crc, buffer + ESPCP_CRC_OFFSET);
     }
-    else
-    {
-        EncodeUInt32(0, buffer + offset);
-    }
-    uint32_t crc = CRC32(buffer, bufferSize);
-    EncodeUInt32(crc, buffer + Message::CRC_OFFSET);
 
     return(buffer);
 }

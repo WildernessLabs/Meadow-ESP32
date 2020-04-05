@@ -609,6 +609,8 @@ namespace FileGenerator
                 sourceFile.WriteLine("#include <stdlib.h>");
                 sourceFile.WriteLine("#include <string.h>");
                 sourceFile.WriteLine("#include \"espcp_shared_enums.h\"");
+                sourceFile.WriteLine("#include \"espcp_message.h\"");
+
                 sourceFile.WriteLine();
             }
         }
@@ -645,15 +647,19 @@ namespace FileGenerator
                     {
                         string variableName = m.Name.Substring(0, 1).ToLower() + m.Name.Substring(1);
                         string structureName;
+                        string fullStructureName;
                         if (language == Language.Cpp)
                         {
                             structureName = m.Name;
+                            fullStructureName = m.Name;
                         }
                         else
                         {
-                            structureName = "espcp_" + ConvertNameToCStyleName(m.Name);
+                            structureName = $"espcp_{ConvertNameToCStyleName(m.Name)}";
+                            fullStructureName = $"espcp_{ConvertNameToCStyleName(m.Name)}_s";
+                            
                         }
-                        sourceFile.WriteLine($"{indent}struct {structureName}");
+                        sourceFile.WriteLine($"{indent}struct {fullStructureName}");
                         sourceFile.WriteLine($"{indent}{{");
                         foreach (MessageElement me in m.MessageElements)
                         {
@@ -688,7 +694,7 @@ namespace FileGenerator
                                     sourceFile.WriteLine($"{indent}    {me.CName} {fieldName};");
                                     break;
                                 case "pointer":
-                                    sourceFile.WriteLine($"{indent}    {me.CName} *{fieldName};");
+                                    sourceFile.WriteLine($"{indent}    void *{fieldName};");
                                     break;
                                 default:
                                     sourceFile.WriteLine($"{indent}    {dt.CTypeName} {fieldName};");
@@ -698,7 +704,7 @@ namespace FileGenerator
                         sourceFile.WriteLine($"{indent}}};");
                         if (language == Language.C)
                         {
-                            sourceFile.WriteLine($"typedef struct {structureName} {structureName}_t;");
+                            sourceFile.WriteLine($"typedef struct {fullStructureName} {structureName}_t;");
                         }
                         sourceFile.WriteLine();
                     }
@@ -710,7 +716,7 @@ namespace FileGenerator
                 if (language == Language.Cpp)
                 {
                     templateFileName = MetadataDirectory + "Encoders.hpp.txt";
-                sourceFile.WriteLine("}");
+                    sourceFile.WriteLine("}");
                 }
                 else
                 {
@@ -732,12 +738,12 @@ namespace FileGenerator
                 {
                     sourceFile.WriteLine("};");
                     sourceFile.WriteLine();
-                    sourceFile.WriteLine("  #endif /* _ENCODERS_HPP */");
+                    sourceFile.WriteLine("#endif /* _ENCODERS_HPP */");
                 }
                 else
                 {
                     sourceFile.WriteLine();
-                    sourceFile.WriteLine("  #endif /* _ESPCP_ENCODERS_H */");
+                    sourceFile.WriteLine("#endif /* _ESPCP_ENCODERS_H */");
                 }
                 sourceFile.WriteLine();
             }
@@ -1122,7 +1128,14 @@ namespace FileGenerator
 
         private string WriteStringExtractCode(StreamWriter sourceFile, string variableName, string fieldName, DataType dataType, Language language)
         {
-            sourceFile.WriteLine($"    {variableName}->{fieldName} = Extract{dataType.CSharpTypeName}(buffer);");
+            if (language == Language.Cpp)
+            {
+                sourceFile.WriteLine($"    {variableName}->{fieldName} = ExtractString(buffer);");
+            }
+            else
+            {
+                sourceFile.WriteLine($"    {variableName}->{fieldName} = espcp_extract_string(buffer);");
+            }
             return($"    buffer += strlen({variableName}->{fieldName}) + 1;");
         }
 
@@ -1144,12 +1157,13 @@ namespace FileGenerator
             if (language == Language.Cpp)
             {
                 lengthString = $"{variableName}->{fieldName}Length";
+                sourceFile.WriteLine($"    {lengthString} = ExtractUInt32(buffer);");
             }
             else
             {
                 lengthString = $"{variableName}->{fieldName}_length";
+                sourceFile.WriteLine($"    {lengthString} = espcp_extract_uint32(buffer);");
             }
-            sourceFile.WriteLine($"    {lengthString} = ExtractUInt32(buffer);");
             sourceFile.WriteLine($"    buffer += 4;");
             sourceFile.WriteLine($"    if ({lengthString} > 0)");
             sourceFile.WriteLine("    {");
@@ -1200,20 +1214,27 @@ namespace FileGenerator
         {
             if (language == Language.Cpp)
             {
-                sourceFile.WriteLine($"    {variableName}->{fieldName} = ({dataType} *) ExtractUInt32(buffer);");
+                sourceFile.WriteLine($"    {variableName}->{fieldName} = (void *) ExtractUInt32(buffer);");
             }
             else
             {
                 string variable = ConvertNameToCStyleName(variableName);
                 string type = ConvertNameToCStyleName(dataType);
                 string field = ConvertNameToCStyleName(dataType);
-                sourceFile.WriteLine($"    {variable}->{field} = (espcp_{type}_t *) espcp_extract_ uint32(buffer);");
+                sourceFile.WriteLine($"    {variable}->{fieldName} = (void *) espcp_extract_uint32(buffer);");
             }
         }
 
         private string WriteDefaultObjectExtractCode(StreamWriter sourceFile, string variableName, string fieldName, DataType dataType, Language language)
         {
-            sourceFile.WriteLine($"    {variableName}->{fieldName} = Extract{dataType.CSharpTypeName}(buffer);");
+            if (language == Language.Cpp)
+            {
+                sourceFile.WriteLine($"    {variableName}->{fieldName} = Extract{dataType.CSharpTypeName}(buffer);");
+            }
+            else
+            {
+                sourceFile.WriteLine($"    {variableName}->{fieldName} = espcp_extract_{ConvertNameToCStyleName(dataType.CSharpTypeName).Replace("_", "")}(buffer);");
+            }
             return($"    buffer += {dataType.Size};");
         }
 
@@ -1275,7 +1296,7 @@ namespace FileGenerator
                         sizeModifier = WriteStructureExtractCode(sourceFile, variableName, fieldName, me.CSName, language);
                         break;
                     case "pointer":
-                        WritePointerExtractCode(sourceFile, variableName, fieldName, me.CSName, language);
+                        WritePointerExtractCode(sourceFile, variableName, fieldName, me.CName, language);
                         sizeModifier = $"    buffer += {dt.Size};";
                         break;
                     default:
@@ -1312,11 +1333,11 @@ namespace FileGenerator
             }
             else
             {
-                sourceFileName = $"{OutputDirectory}espcpp_encoders.c";
+                sourceFileName = $"{OutputDirectory}espcp_encoders.c";
             }
             using (StreamWriter file = new StreamWriter(sourceFileName))
             {
-                OutputCHeaderFileHeader(file, sourceFileName, language);
+                // OutputCHeaderFileHeader(file, sourceFileName, language);
                 file.WriteLine();
                 if (language == Language.Cpp)
                 {
@@ -1324,7 +1345,7 @@ namespace FileGenerator
                 }
                 else
                 {
-                    file.WriteLine($"#include \"espcpp_encoders.h\"");
+                    file.WriteLine($"#include \"espcp_encoders.h\"");
                 }
                 file.WriteLine();
                 using (StreamReader templateFile = new StreamReader($"{MetadataDirectory}Encoders.c{postfix}.txt"))
@@ -1355,10 +1376,6 @@ namespace FileGenerator
         }
 
         #endregion C++ File generation
-
-        #region C file generation
-
-        #endregion C file generation
 
         #region Helper methods
 

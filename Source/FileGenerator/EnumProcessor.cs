@@ -317,7 +317,14 @@ namespace FileGenerator
             }
             else
             {
-                fileStream.WriteLine($"enum {enumName} : {dataType}");
+                if (language == Language.Cpp)
+                {
+                    fileStream.WriteLine($"enum {enumName} : {dataType}");
+                }
+                else
+                {
+                    fileStream.WriteLine($"enum {enumName}");
+                }
             }
             fileStream.Write($"{indent}");
             fileStream.WriteLine("{");
@@ -340,7 +347,7 @@ namespace FileGenerator
             foreach (EnumNameValuePair nvp in e.NameValuePairs)
             {
                 fileStream.Write($"{indent}");
-                fileStream.Write($"    {nvp.Name} = {nvp.Value}");
+                fileStream.Write($"    {enumName}_{nvp.Name} = {nvp.Value}");
                 counter++;
                 if (counter != e.NameValuePairs.Count)
                 {

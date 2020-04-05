@@ -11,407 +11,427 @@
  *      *************************** WARNING ***************************
  */
 
-#ifndef _SHARED_ENUMS_HPP_
-#define _SHARED_ENUMS_HPP_
+#ifndef _SHARED_ENUMS_HPP
+#define _SHARED_ENUMS_HPP
 
 #include "freertos/FreeRTOS.h"
 
 namespace StatusCodes
 {
     /*
-     *      Status and error codes for the various function calls.
+     *    Status and error codes for the various function calls.
      */
     enum StatusCodes : uint32_t
     {
-        CompletedOK = 0,
-        CRCError = 1,
-        Restart = 2,
-        Failure = 3,
-        InvalidInterface = 4,
-        QueueError = 5,
-        InvalidPacket = 6,
-        InvalidHeader = 7,
-        UnexpectedData = 8,
-        MissingEndOfFrameMarker = 9,
-        HeaderBodyFieldMismatch = 10,
-        WiFiAlreadyStarted = 11,
-        InvalidSSID = 12,
-        InvalidPassword = 13,
-        WiFiDisconnected = 14,
-        InvalidAntennaData = 15,
-        InvalidAntennaValue = 16,
-        NoMessagesWaiting = 17
+        StatusCodes_CompletedOK = 0,
+        StatusCodes_CRCError = 1,
+        StatusCodes_Restart = 2,
+        StatusCodes_Failure = 3,
+        StatusCodes_InvalidInterface = 4,
+        StatusCodes_QueueError = 5,
+        StatusCodes_InvalidPacket = 6,
+        StatusCodes_InvalidHeader = 7,
+        StatusCodes_UnexpectedData = 8,
+        StatusCodes_MissingEndOfFrameMarker = 9,
+        StatusCodes_HeaderBodyFieldMismatch = 10,
+        StatusCodes_WiFiAlreadyStarted = 11,
+        StatusCodes_InvalidSSID = 12,
+        StatusCodes_InvalidPassword = 13,
+        StatusCodes_WiFiDisconnected = 14,
+        StatusCodes_InvalidAntennaData = 15,
+        StatusCodes_InvalidAntennaValue = 16,
+        StatusCodes_NoMessagesWaiting = 17
     };
+
 }
 
 namespace Esp32Interfaces
 {
     /*
-     *      System interfaces available on the ESP32 for the various function calls.
+     *    System interfaces available on the ESP32 for the various function calls.
      */
     enum Esp32Interfaces : uint8_t
     {
-        None = 0,
-        WiFi = 1,
-        BlueTooth = 2,
-        MeshNetwork = 3,
-        System = 4,
-        Transport = 5
+        Esp32Interfaces_None = 0,
+        Esp32Interfaces_WiFi = 1,
+        Esp32Interfaces_BlueTooth = 2,
+        Esp32Interfaces_MeshNetwork = 3,
+        Esp32Interfaces_System = 4,
+        Esp32Interfaces_Transport = 5
     };
+
 }
 
 namespace SystemFunction
 {
     /*
-     *      System functions available on the ESP32
+     *    System functions available on the ESP32
      */
     enum SystemFunction : uint32_t
     {
-        GetConfiguration = 0,
-        SetConfiguration = 1,
-        DeepSleep = 2,
-        BatteryLevel = 3
+        SystemFunction_GetConfiguration = 0,
+        SystemFunction_SetConfiguration = 1,
+        SystemFunction_DeepSleep = 2,
+        SystemFunction_BatteryLevel = 3
     };
+
 }
 
 namespace WiFiFunction
 {
     /*
-     *      WiFi functions available on the ESP32
+     *    WiFi functions available on the ESP32
      */
     enum WiFiFunction : uint32_t
     {
-        Start = 0,
-        Stop = 1,
-        ConnectToAp = 2,
-        Disconnect = 3,
-        GetAccessPoints = 4,
-        GetConfiguration = 5,
-        SetConfiguration = 6,
-        SetAntenna = 7,
-        GetAntenna = 8,
-        GetAddrInfo = 9,
-        Socket = 10,
-        Connect = 11,
-        FreeAddrInfo = 12,
-        Write = 13,
-        SetSockOpt = 14,
-        Read = 15,
-        Close = 16
+        WiFiFunction_Start = 0,
+        WiFiFunction_Stop = 1,
+        WiFiFunction_ConnectToAp = 2,
+        WiFiFunction_Disconnect = 3,
+        WiFiFunction_GetAccessPoints = 4,
+        WiFiFunction_GetConfiguration = 5,
+        WiFiFunction_SetConfiguration = 6,
+        WiFiFunction_SetAntenna = 7,
+        WiFiFunction_GetAntenna = 8,
+        WiFiFunction_GetAddrInfo = 9,
+        WiFiFunction_Socket = 10,
+        WiFiFunction_Connect = 11,
+        WiFiFunction_FreeAddrInfo = 12,
+        WiFiFunction_Write = 13,
+        WiFiFunction_SetSockOpt = 14,
+        WiFiFunction_Read = 15,
+        WiFiFunction_Close = 16
     };
+
 }
 
 namespace BluetoothFunction
 {
     /*
-     *      Bluetooth functions available on the ESP32
+     *    Bluetooth functions available on the ESP32
      */
     enum BluetoothFunction : uint32_t
     {
-        GetConfiguration = 0,
-        SetConfiguration = 1
+        BluetoothFunction_GetConfiguration = 0,
+        BluetoothFunction_SetConfiguration = 1
     };
+
 }
 
 namespace TransportFunction
 {
     /*
-     *      Transport functions available on the ESP32
+     *    Transport functions available on the ESP32
      */
     enum TransportFunction : uint32_t
     {
-        ResponseReady = 0,
-        SendResponse = 1
+        TransportFunction_ResponseReady = 0,
+        TransportFunction_SendResponse = 1
     };
+
 }
 
 /*
- *      Possible transport packet types.
+ *    Possible transport packet types.
  */
 enum MessageTypes : uint8_t
 {
-    Ack = 0x00,
-    Nak = 0x01,
-    Reset = 0x02,
-    Ready = 0x04,
-    Response = 0x10,
-    Transport = 0x20,
-    Header = 0x40,
-    Data = 0x80
+    MessageTypes_Ack = 0x00,
+    MessageTypes_Nak = 0x01,
+    MessageTypes_Reset = 0x02,
+    MessageTypes_Ready = 0x04,
+    MessageTypes_Response = 0x10,
+    MessageTypes_Transport = 0x20,
+    MessageTypes_Header = 0x40,
+    MessageTypes_Data = 0x80
 };
+
 namespace WiFiAuthenticationMode
 {
     /*
-     *      Access point authentication method.
+     *    Access point authentication method.
      */
     enum WiFiAuthenticationMode : uint8_t
     {
-        Open = 0,
-        Wep = 1,
-        WpaPsk = 2,
-        Wpa2Psk = 3,
-        WpaWpa2Psk = 4,
-        Wpa2Enterprise = 5
+        WiFiAuthenticationMode_Open = 0,
+        WiFiAuthenticationMode_Wep = 1,
+        WiFiAuthenticationMode_WpaPsk = 2,
+        WiFiAuthenticationMode_Wpa2Psk = 3,
+        WiFiAuthenticationMode_WpaWpa2Psk = 4,
+        WiFiAuthenticationMode_Wpa2Enterprise = 5
     };
+
 }
 
 namespace WiFiCountryPolicy
 {
     /*
-     *      WiFi Country Policy.
+     *    WiFi Country Policy.
      */
     enum WiFiCountryPolicy
     {
-        Automatic = 0,
-        Manual = 1
+        WiFiCountryPolicy_Automatic = 0,
+        WiFiCountryPolicy_Manual = 1
     };
+
 }
 
 namespace WiFiSecondChannel
 {
     /*
-     *      Location of the secondary channel in respect to the primary channel.
+     *    Location of the secondary channel in respect to the primary channel.
      */
     enum WiFiSecondChannel
     {
-        None = 0,
-        Above = 1,
-        Below = 2
+        WiFiSecondChannel_None = 0,
+        WiFiSecondChannel_Above = 1,
+        WiFiSecondChannel_Below = 2
     };
+
 }
 
 namespace WiFiScanType
 {
     /*
-     *      WiFiScanType
+     *    WiFiScanType
      */
     enum WiFiScanType
     {
-        Active = 0,
-        Passive = 1
+        WiFiScanType_Active = 0,
+        WiFiScanType_Passive = 1
     };
+
 }
 
 namespace AntennaTypes
 {
     /*
-     *      Types of antennas that can be selected.
+     *    Types of antennas that can be selected.
      */
     enum AntennaTypes
     {
-        OnBoard = 0,
-        External = 1,
-        Max = 1
+        AntennaTypes_OnBoard = 0,
+        AntennaTypes_External = 1,
+        AntennaTypes_Max = 1
     };
+
 }
 
 namespace WiFiCipherType
 {
     /*
-     *      Encryption method used by the access point.
+     *    Encryption method used by the access point.
      */
     enum WiFiCipherType
     {
-        None = 0,
-        Wep40 = 1,
-        Wep104 = 2,
-        Tkip = 3,
-        Ccmp = 4,
-        TkipCcmp = 5,
-        Unknown = 6
+        WiFiCipherType_None = 0,
+        WiFiCipherType_Wep40 = 1,
+        WiFiCipherType_Wep104 = 2,
+        WiFiCipherType_Tkip = 3,
+        WiFiCipherType_Ccmp = 4,
+        WiFiCipherType_TkipCcmp = 5,
+        WiFiCipherType_Unknown = 6
     };
+
 }
 
 namespace AddressFamilyType
 {
     /*
-     *      Address family types for the low level sockets..
+     *    Address family types for the low level sockets..
      */
     enum AddressFamilyType
     {
-        AfUnspec = 0,
-        AfInet = 2,
-        AfInet6 = 10
+        AddressFamilyType_AfUnspec = 0,
+        AddressFamilyType_AfInet = 2,
+        AddressFamilyType_AfInet6 = 10
     };
+
 }
 
 namespace ProtocolFamilyType
 {
     /*
-     *      Protocol family types for the low level sockets..
+     *    Protocol family types for the low level sockets..
      */
     enum ProtocolFamilyType
     {
-        PfUnspec = 0,
-        PfInet = 2,
-        PfInet6 = 10
+        ProtocolFamilyType_PfUnspec = 0,
+        ProtocolFamilyType_PfInet = 2,
+        ProtocolFamilyType_PfInet6 = 10
     };
+
 }
 
 namespace IpProtocolType
 {
     /*
-     *      Protocol types for the low level sockets.
+     *    Protocol types for the low level sockets.
      */
     enum IpProtocolType
     {
-        IpProtoIP = 0,
-        IpProtoIcmp = 1,
-        IpProtoTcp = 6,
-        IpProtoUdp = 17,
-        IpProtoIpV6 = 41,
-        IpProtoIcmpV6 = 58,
-        IpProtoUdpLite = 136,
-        IpProtoNew = 255
+        IpProtocolType_IpProtoIP = 0,
+        IpProtocolType_IpProtoIcmp = 1,
+        IpProtocolType_IpProtoTcp = 6,
+        IpProtocolType_IpProtoUdp = 17,
+        IpProtocolType_IpProtoIpV6 = 41,
+        IpProtocolType_IpProtoIcmpV6 = 58,
+        IpProtocolType_IpProtoUdpLite = 136,
+        IpProtocolType_IpProtoNew = 255
     };
+
 }
 
 namespace SocketProtocolType
 {
     /*
-     *      Socket protocol types for the low level sockets.
+     *    Socket protocol types for the low level sockets.
      */
     enum SocketProtocolType
     {
-        SockStream = 1,
-        SockDgram = 2,
-        SockRaw = 3
+        SocketProtocolType_SockStream = 1,
+        SocketProtocolType_SockDgram = 2,
+        SocketProtocolType_SockRaw = 3
     };
+
 }
 
 namespace SocketLevelType
 {
     /*
-     *      Socket level types for the low level sockets.
+     *    Socket level types for the low level sockets.
      */
     enum SocketLevelType
     {
-        SolSocket = 0xfff
+        SocketLevelType_SolSocket = 0xfff
     };
+
 }
 
 namespace SocketOptionType
 {
     /*
-     *      Socket option types for the low level sockets.
+     *    Socket option types for the low level sockets.
      */
     enum SocketOptionType
     {
-        SoDebug = 0x0001,
-        SoAcceptConn = 0x0002,
-        SoDontRoute = 0x0010,
-        UseLoopback = 0x0040,
-        SoLinger = 0x0080,
-        SoDontLinger = 0xff7f,
-        SoOobInline = 0x0100,
-        SoReusePort = 0x0200,
-        SoSndBuf = 0x1001,
-        SoRcvBuf = 0x1002,
-        SoSndLoWat = 0x1003,
-        SoSRcvLoWat = 0x1004,
-        SoSndTimeO = 0x1005,
-        SoRcvTimeO = 0x1006,
-        SoError = 0x1007,
-        SoType = 0x1008,
-        SoConTimeO = 0x1009,
-        SoNoCheck = 0x100a
+        SocketOptionType_SoDebug = 0x0001,
+        SocketOptionType_SoAcceptConn = 0x0002,
+        SocketOptionType_SoDontRoute = 0x0010,
+        SocketOptionType_UseLoopback = 0x0040,
+        SocketOptionType_SoLinger = 0x0080,
+        SocketOptionType_SoDontLinger = 0xff7f,
+        SocketOptionType_SoOobInline = 0x0100,
+        SocketOptionType_SoReusePort = 0x0200,
+        SocketOptionType_SoSndBuf = 0x1001,
+        SocketOptionType_SoRcvBuf = 0x1002,
+        SocketOptionType_SoSndLoWat = 0x1003,
+        SocketOptionType_SoSRcvLoWat = 0x1004,
+        SocketOptionType_SoSndTimeO = 0x1005,
+        SocketOptionType_SoRcvTimeO = 0x1006,
+        SocketOptionType_SoError = 0x1007,
+        SocketOptionType_SoType = 0x1008,
+        SocketOptionType_SoConTimeO = 0x1009,
+        SocketOptionType_SoNoCheck = 0x100a
     };
+
 }
 
 namespace Esp32ErrorCodes
 {
     /*
-     *      ESP32 Error codes (errno).
+     *    ESP32 Error codes (errno).
      */
     enum Esp32ErrorCodes
     {
-        Perm = 1,
-        NoEnt = 2,
-        Srch = 3,
-        Intr = 4,
-        IO = 5,
-        NxIO = 6,
-        TooBig = 7,
-        NoExec = 8,
-        BadF = 9,
-        Child = 10,
-        Again = 11,
-        NoMem = 12,
-        Acces = 13,
-        Fault = 14,
-        Busy = 16,
-        Exist = 17,
-        XDev = 18,
-        NoDev = 19,
-        NotDir = 20,
-        IsDir = 21,
-        InVal = 22,
-        NFile = 23,
-        MFile = 24,
-        NoTty = 25,
-        TxtBsy = 26,
-        FBig = 27,
-        NoSpc = 28,
-        SPipe = 29,
-        RoFs = 30,
-        MLink = 31,
-        Pipe = 32,
-        Dom = 33,
-        Range = 34,
-        NoMsg = 35,
-        IdRm = 36,
-        DeadLck = 45,
-        NoLock = 46,
-        NoStr = 60,
-        NoData = 61,
-        Time = 62,
-        NoSr = 63,
-        NoLink = 67,
-        Proto = 71,
-        MultiHop = 74,
-        BadMsg = 77,
-        FType = 79,
-        NoSys = 88,
-        NotEmpty = 90,
-        NameTooLong = 91,
-        Loop = 92,
-        OpNotSupport = 95,
-        PNoSupport = 96,
-        ConnReset = 104,
-        NoBufs = 105,
-        AfNoSupport = 106,
-        ProtoType = 107,
-        NotSock = 108,
-        NoProtoOpt = 109,
-        ConnRefused = 111,
-        AddrInUse = 112,
-        ConnAborted = 113,
-        NetUnreach = 114,
-        NetDown = 115,
-        TimedOut = 116,
-        HostDown = 117,
-        HostUnreach = 118,
-        InProgress = 119,
-        Already = 120,
-        DestAddrReq = 121,
-        MsgSize = 122,
-        ProtoNoSupport = 123,
-        AddrNotAvail = 125,
-        NetReset = 126,
-        NotConn = 128,
-        TooManyRefs = 129,
-        DQuot = 132,
-        Stale = 133,
-        NotSup = 134,
-        IlSeq = 138,
-        Overflow = 139,
-        Cancelled = 140,
-        NotRecoverable = 141,
-        OwnerDead = 142,
-        WouldBlock = 11
+        Esp32ErrorCodes_Perm = 1,
+        Esp32ErrorCodes_NoEnt = 2,
+        Esp32ErrorCodes_Srch = 3,
+        Esp32ErrorCodes_Intr = 4,
+        Esp32ErrorCodes_IO = 5,
+        Esp32ErrorCodes_NxIO = 6,
+        Esp32ErrorCodes_TooBig = 7,
+        Esp32ErrorCodes_NoExec = 8,
+        Esp32ErrorCodes_BadF = 9,
+        Esp32ErrorCodes_Child = 10,
+        Esp32ErrorCodes_Again = 11,
+        Esp32ErrorCodes_NoMem = 12,
+        Esp32ErrorCodes_Acces = 13,
+        Esp32ErrorCodes_Fault = 14,
+        Esp32ErrorCodes_Busy = 16,
+        Esp32ErrorCodes_Exist = 17,
+        Esp32ErrorCodes_XDev = 18,
+        Esp32ErrorCodes_NoDev = 19,
+        Esp32ErrorCodes_NotDir = 20,
+        Esp32ErrorCodes_IsDir = 21,
+        Esp32ErrorCodes_InVal = 22,
+        Esp32ErrorCodes_NFile = 23,
+        Esp32ErrorCodes_MFile = 24,
+        Esp32ErrorCodes_NoTty = 25,
+        Esp32ErrorCodes_TxtBsy = 26,
+        Esp32ErrorCodes_FBig = 27,
+        Esp32ErrorCodes_NoSpc = 28,
+        Esp32ErrorCodes_SPipe = 29,
+        Esp32ErrorCodes_RoFs = 30,
+        Esp32ErrorCodes_MLink = 31,
+        Esp32ErrorCodes_Pipe = 32,
+        Esp32ErrorCodes_Dom = 33,
+        Esp32ErrorCodes_Range = 34,
+        Esp32ErrorCodes_NoMsg = 35,
+        Esp32ErrorCodes_IdRm = 36,
+        Esp32ErrorCodes_DeadLck = 45,
+        Esp32ErrorCodes_NoLock = 46,
+        Esp32ErrorCodes_NoStr = 60,
+        Esp32ErrorCodes_NoData = 61,
+        Esp32ErrorCodes_Time = 62,
+        Esp32ErrorCodes_NoSr = 63,
+        Esp32ErrorCodes_NoLink = 67,
+        Esp32ErrorCodes_Proto = 71,
+        Esp32ErrorCodes_MultiHop = 74,
+        Esp32ErrorCodes_BadMsg = 77,
+        Esp32ErrorCodes_FType = 79,
+        Esp32ErrorCodes_NoSys = 88,
+        Esp32ErrorCodes_NotEmpty = 90,
+        Esp32ErrorCodes_NameTooLong = 91,
+        Esp32ErrorCodes_Loop = 92,
+        Esp32ErrorCodes_OpNotSupport = 95,
+        Esp32ErrorCodes_PNoSupport = 96,
+        Esp32ErrorCodes_ConnReset = 104,
+        Esp32ErrorCodes_NoBufs = 105,
+        Esp32ErrorCodes_AfNoSupport = 106,
+        Esp32ErrorCodes_ProtoType = 107,
+        Esp32ErrorCodes_NotSock = 108,
+        Esp32ErrorCodes_NoProtoOpt = 109,
+        Esp32ErrorCodes_ConnRefused = 111,
+        Esp32ErrorCodes_AddrInUse = 112,
+        Esp32ErrorCodes_ConnAborted = 113,
+        Esp32ErrorCodes_NetUnreach = 114,
+        Esp32ErrorCodes_NetDown = 115,
+        Esp32ErrorCodes_TimedOut = 116,
+        Esp32ErrorCodes_HostDown = 117,
+        Esp32ErrorCodes_HostUnreach = 118,
+        Esp32ErrorCodes_InProgress = 119,
+        Esp32ErrorCodes_Already = 120,
+        Esp32ErrorCodes_DestAddrReq = 121,
+        Esp32ErrorCodes_MsgSize = 122,
+        Esp32ErrorCodes_ProtoNoSupport = 123,
+        Esp32ErrorCodes_AddrNotAvail = 125,
+        Esp32ErrorCodes_NetReset = 126,
+        Esp32ErrorCodes_NotConn = 128,
+        Esp32ErrorCodes_TooManyRefs = 129,
+        Esp32ErrorCodes_DQuot = 132,
+        Esp32ErrorCodes_Stale = 133,
+        Esp32ErrorCodes_NotSup = 134,
+        Esp32ErrorCodes_IlSeq = 138,
+        Esp32ErrorCodes_Overflow = 139,
+        Esp32ErrorCodes_Cancelled = 140,
+        Esp32ErrorCodes_NotRecoverable = 141,
+        Esp32ErrorCodes_OwnerDead = 142,
+        Esp32ErrorCodes_WouldBlock = 11
     };
+
 }
 
 
-#endif /* _SHARED_ENUMS_HPP_ */
+#endif /* _SHARED_ENUMS_HPP */
 

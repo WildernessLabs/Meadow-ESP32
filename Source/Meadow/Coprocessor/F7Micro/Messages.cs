@@ -1,5 +1,5 @@
 //
-//      Encoders.cs
+//      
 //
 //      Message encoders and decoders.
 //
@@ -91,7 +91,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
 
     public struct GetAddrInfoResponse
     {
-        public Int32 Errno;
+        public Int32 AddrInfoResponseErrno;
         public UInt32 ResLength;
         public byte[] Res;
     };
@@ -112,7 +112,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
     public struct IntegerAndErrnoResponse
     {
         public Int32 Result;
-        public Int32 Errno;
+        public Int32 ResponseErrno;
     };
 
     public struct ConnectRequest
@@ -168,8 +168,8 @@ namespace Meadow.Coprocessor.F7Micro.Messages
     {
         public UInt32 BufferLength;
         public byte[] Buffer;
-        public Int32 Result;
-        public Int32 Errno;
+        public Int32 ReadResponseResult;
+        public Int32 ReadResponseErrno;
     };
 
     public struct CloseRequest
