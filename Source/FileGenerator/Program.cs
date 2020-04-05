@@ -57,11 +57,6 @@ namespace FileGenerator
             //
             //  Copy the C# files.
             //
-            // string sourceFile = $"{outputDirectory}Messages.cs";
-            // string destinationFile = $"{csharpDestinationDirectory}/Messages.cs";
-            // Console.WriteLine($"Source: {sourceFile}");
-            // Console.WriteLine($"Source: {destinationFile}");
-            // Environment.Exit(-1);
             File.Copy($"{outputDirectory}Messages.cs", $"{csharpDestinationDirectory}/Messages.cs", true);
             File.Copy($"{outputDirectory}Encoders.cs", $"{csharpDestinationDirectory}/Encoders.cs", true);
             File.Copy($"{outputDirectory}SharedEnums.cs", $"{csharpDestinationDirectory}/SharedEnums.cs", true);
