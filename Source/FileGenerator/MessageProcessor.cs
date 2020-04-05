@@ -48,49 +48,10 @@ namespace FileGenerator
         #region Properties
 
         /// <summary>
-        /// Location of the JSON file that defines the messages to be sent between the
-        /// STM32 and the ESP32.
-        /// </summary>
-        public string MessageDefinitionInputFileName { get; set; }
-
-        /// <summary>
-        /// Path (including file name) of the C++ source file.
-        /// </summary>
-        public string CSourceFileName { get; set; }
-
-        /// <summary>
-        /// Path (including file name) of the C++ header file.
-        /// </summary>
-        public string CHeaderFileName { get; set; }
-
-        /// <summary>
         /// Path (including file name) of the C# encoders file.
         /// </summary>
         public string CSharpFileName { get; set; }
 
-        /// <summary>
-        /// Path (including file name) of the C++ message structure file.
-        /// </summary>
-        public string CSharpStructureFileName { get; set; }
-
-        /// <summary>
-        /// Path (including file name) of the C++ header template file.
-        /// </summary>
-        /// <remarks>
-        /// This file contains the static content that is placed at the top
-        /// of the C++ message encoders headers file.
-        /// </remarks>
-        public string CHeaderTemplateFileName {get; set; }
-
-        /// <summary>
-        /// Path (including file name) of the C++ source template file.
-        /// </summary>
-        /// <remarks>
-        /// This file contains the static content that is placed at the top
-        /// of the C++ message encoders source file.
-        /// </remarks>
-        public string CSourceTemplateFileName { get; set; }
-        
         /// <summary>
         /// Directory containing the metadata files.
         /// </summary>
