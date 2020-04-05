@@ -8,11 +8,21 @@
  */
 
 /*
-*      Seed for the 32-bit CRC calculation.
-*/
-#define ESPCP_CRC32_SEED = 0xffffffff;
+ *      Seed for the 32-bit CRC calculation.
+ */
+#define ESPCP_CRC32_SEED 0xffffffff
 
-uint32_t espcp_calculate_spi_bufferSize(uint32_t);
+/*
+ *      Offset of the CRC into the message header.
+ */
+#define ESPCP_CRC_OFFSET 18
+
+/*
+ *      Number of bytes actually used in a message header.
+ */
+#define ESPCP_HEADER_SIZE 23
+
+uint32_t espcp_calculate_spi_buffer_size(uint32_t);
 uint16_t espcp_extract_uint16(uint8_t *);
 void espcp_encode_uint16(uint16_t, uint8_t *);
 uint32_t espcp_extract_uint32(uint8_t *);

@@ -11,8 +11,8 @@
  *      *************************** WARNING ***************************
  */
 
-#ifndef _ENCODERS_HPP_
-#define _ENCODERS_HPP_
+#ifndef _ENCODERS_HPP
+#define _ENCODERS_HPP
 
 #include "freertos/FreeRTOS.h"
 #include "lwip/err.h"
@@ -90,7 +90,7 @@ namespace Esp32Messaging
         uint32_t AddrLength;
         uint8_t *Addr;
         char * CanonName;
-        struct addrinfo *Next;
+        void *Next;
     };
 
     struct GetAddrInfoRequest
@@ -105,14 +105,14 @@ namespace Esp32Messaging
 
     struct GetAddrInfoResponse
     {
-        int32_t Errno;
+        int32_t AddrInfoResponseErrno;
         uint32_t ResLength;
         uint8_t *Res;
     };
 
     struct SocketRequest
     {
-        struct addrinfo *AddressInformation;
+        void *AddressInformation;
         int32_t Domain;
         int32_t Type;
         int32_t Protocol;
@@ -126,7 +126,7 @@ namespace Esp32Messaging
     struct IntegerAndErrnoResponse
     {
         int32_t Result;
-        int32_t Errno;
+        int32_t ResponseErrno;
     };
 
     struct ConnectRequest
@@ -182,8 +182,8 @@ namespace Esp32Messaging
     {
         uint32_t BufferLength;
         uint8_t *Buffer;
-        int32_t Result;
-        int32_t Errno;
+        int32_t ReadResponseResult;
+        int32_t ReadResponseErrno;
     };
 
     struct CloseRequest
@@ -291,5 +291,5 @@ public:
 
 };
 
-  #endif /* _ENCODERS_HPP_ */
+#endif /* _ENCODERS_HPP */
 

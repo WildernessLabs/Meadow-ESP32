@@ -1,5 +1,5 @@
 //
-//      Encoders.cs
+//      
 //
 //      Message encoders and decoders.
 //
@@ -874,7 +874,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             //
             byte[] buffer = new byte[length];
             Array.Clear(buffer, 0, buffer.Length);
-            EncodeInt32(getAddrInfoResponse.Errno, buffer, offset);
+            EncodeInt32(getAddrInfoResponse.AddrInfoResponseErrno, buffer, offset);
             offset += 4;
             EncodeUInt32(getAddrInfoResponse.ResLength, buffer, offset);
             offset += 4;
@@ -889,7 +889,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
         {
             GetAddrInfoResponse getAddrInfoResponse = new Messages.GetAddrInfoResponse();
 
-            getAddrInfoResponse.Errno = ExtractInt32(buffer, offset);
+            getAddrInfoResponse.AddrInfoResponseErrno = ExtractInt32(buffer, offset);
             offset += 4;
             getAddrInfoResponse.ResLength = ExtractUInt32(buffer, offset);
             offset += 4;
@@ -1016,7 +1016,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             Array.Clear(buffer, 0, buffer.Length);
             EncodeInt32(integerAndErrnoResponse.Result, buffer, offset);
             offset += 4;
-            EncodeInt32(integerAndErrnoResponse.Errno, buffer, offset);
+            EncodeInt32(integerAndErrnoResponse.ResponseErrno, buffer, offset);
             return(buffer);
         }
 
@@ -1026,7 +1026,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
 
             integerAndErrnoResponse.Result = ExtractInt32(buffer, offset);
             offset += 4;
-            integerAndErrnoResponse.Errno = ExtractInt32(buffer, offset);
+            integerAndErrnoResponse.ResponseErrno = ExtractInt32(buffer, offset);
             return(integerAndErrnoResponse);
         }
 
@@ -1408,9 +1408,9 @@ namespace Meadow.Coprocessor.F7Micro.Messages
                 Array.Copy(readResponse.Buffer, 0, buffer, offset, readResponse.BufferLength);
                 offset += (int) (readResponse.BufferLength);
             }
-            EncodeInt32(readResponse.Result, buffer, offset);
+            EncodeInt32(readResponse.ReadResponseResult, buffer, offset);
             offset += 4;
-            EncodeInt32(readResponse.Errno, buffer, offset);
+            EncodeInt32(readResponse.ReadResponseErrno, buffer, offset);
             return(buffer);
         }
 
@@ -1426,9 +1426,9 @@ namespace Meadow.Coprocessor.F7Micro.Messages
                 Array.Copy(buffer, offset, readResponse.Buffer, 0, readResponse.BufferLength);
                 offset += (int) readResponse.BufferLength;
             }
-            readResponse.Result = ExtractInt32(buffer, offset);
+            readResponse.ReadResponseResult = ExtractInt32(buffer, offset);
             offset += 4;
-            readResponse.Errno = ExtractInt32(buffer, offset);
+            readResponse.ReadResponseErrno = ExtractInt32(buffer, offset);
             return(readResponse);
         }
 

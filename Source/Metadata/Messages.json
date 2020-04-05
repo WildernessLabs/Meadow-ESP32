@@ -92,7 +92,7 @@
             "Name": "GetAddrInfoResponse",
             "MessageElements":
             [
-                { "Name": "Errno", "DataType": "int" },
+                { "Name": "AddrInfoResponseErrno", "DataType": "int" },
                 { "Name": "Res", "DataType": "blob" }
             ]
         },
@@ -118,7 +118,7 @@
             "MessageElements":
             [
                 { "Name": "Result", "DataType": "int" },
-                { "Name": "Errno", "DataType": "int"}
+                { "Name": "ResponseErrno", "DataType": "int"}
             ]
         },
         {
@@ -186,8 +186,8 @@
             "MessageElements":
             [
                 { "Name": "Buffer", "DataType": "blob" },
-                { "Name": "Result", "DataType": "int" },
-                { "Name": "Errno", "DataType": "int" }
+                { "Name": "ReadResponseResult", "DataType": "int" },
+                { "Name": "ReadResponseErrno", "DataType": "int" }
             ]
         },
         {
