@@ -347,7 +347,14 @@ namespace FileGenerator
             foreach (EnumNameValuePair nvp in e.NameValuePairs)
             {
                 fileStream.Write($"{indent}");
-                fileStream.Write($"    {enumName}_{nvp.Name} = {nvp.Value}");
+                if (language == Language.C)
+                {
+                    fileStream.Write($"    {enumName}_{nvp.Name} = {nvp.Value}");
+                }
+                else
+                {
+                    fileStream.Write($"    {nvp.Name} = {nvp.Value}");
+                }
                 counter++;
                 if (counter != e.NameValuePairs.Count)
                 {
