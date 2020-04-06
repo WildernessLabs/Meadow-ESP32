@@ -213,6 +213,8 @@ namespace FileGenerator
             sourceFile.WriteLine();
         }
 
+        #region C# Encoder function code generation
+
         /// <summary>
         /// Generate the method that will cencode the specified message.
         /// </summary>
@@ -342,6 +344,10 @@ namespace FileGenerator
             sourceFile.WriteLine("        }");
         }
 
+        #endregion C# Encoder function code generation
+
+        #region C# extract function code generation
+
         /// <summary>
         /// Generate the method that can extract the specified message.
         /// </summary>
@@ -424,6 +430,8 @@ namespace FileGenerator
             sourceFile.WriteLine("        }");
             sourceFile.WriteLine();
         }
+
+        #endregion C# extract function code generation
 
         // <summary>
         /// Generate the C# file that will hold the C# methods for encoding and extracting
@@ -523,7 +531,7 @@ namespace FileGenerator
         /// <param name="sourceFile">Existing StreamWriter object for the source file being created.</param>
         /// <param name="fileName">Name of the C file.</param>
         /// <param name="language">Is this a C or C++ file?</param>
-        private void OutputCHeaderFileHeader(StreamWriter sourceFile, string fileName, Language language)
+        private void WriteCHeaderFileHeader(StreamWriter sourceFile, string fileName, Language language)
         {
             sourceFile.WriteLine("/*");
             sourceFile.WriteLine($" *      {Path.GetFileName(fileName)}");
@@ -595,7 +603,7 @@ namespace FileGenerator
             } 
             using (StreamWriter sourceFile = new StreamWriter(outputFileName))
             {
-                OutputCHeaderFileHeader(sourceFile, outputFileName, language);
+                WriteCHeaderFileHeader(sourceFile, outputFileName, language);
                 //
                 //  Write the structures defined in the meta data.
                 //
@@ -712,6 +720,8 @@ namespace FileGenerator
             }
         }
 
+        #region C/C++ encode code generation methods
+
         /// <summary>
         /// Write the comment for a C/C++ encode function.  The function header complies with
         /// existing coding styles for the two different parts of the system.
@@ -720,7 +730,7 @@ namespace FileGenerator
         /// <param name="objectName">Object (type) being extracted.</param>
         /// <param name="variableName">Name of the variable that will hold the object being extracted.</param>
         /// <param name="language">Is this a C or C++ file?</param>
-        private void OutputCEncodeFunctionHeader(StreamWriter sourceFile, string objectName, string variableName, Language language)
+        private void WriteCEncodeFunctionHeader(StreamWriter sourceFile, string objectName, string variableName, Language language)
         {
             if (language == Language.Cpp)
             {
@@ -765,65 +775,162 @@ namespace FileGenerator
         }
 
         /// <summary>
-        /// Write the comment for a C/C++ extract function.  The function header complies with
-        /// existing coding styles for the two different parts of the system.
+        /// Generate the code to encode a byte in a byte buffer.
         /// </summary>
         /// <param name="sourceFile">Existing StreamWriter object for the source file being created.</param>
-        /// <param name="objectName">Object (type) being extracted.</param>
-        /// <param name="variableName">Name of the variable that will hold the object being extracted.</param>
+        /// <param name="variableName">Variable holding a pointer to the byte buffer holding the encoded data.</param>
+        /// <param name="fieldName">Field / member of the message structure holding the data item.</param>
+        /// <param name="dataType">DataType object holding information about the item (field) being encoded.</param>
         /// <param name="language">Is this a C or C++ file?</param>
-        private void OutputCExtractFunctionHeader(StreamWriter sourceFile, string objectName, string variableName, Language language)
+        /// <returns>String holding the code necessary to move the buffer on according to the amount of data that has been encoded.</returns>
+        private string WriteByteEncodeCode(StreamWriter sourceFile, string variableName, string fieldName, DataType dataType, Language language)
+        {
+            sourceFile.WriteLine($"    *buffer = {variableName}->{fieldName};");
+            return($"    buffer += {dataType.Size};");
+        }
+
+        /// <summary>
+        /// Generate the code to encode a signed byte in a byte buffer.
+        /// </summary>
+        /// <param name="sourceFile">Existing StreamWriter object for the source file being created.</param>
+        /// <param name="variableName">Variable holding a pointer to the byte buffer holding the encoded data.</param>
+        /// <param name="fieldName">Field / member of the message structure holding the data item.</param>
+        /// <param name="dataType">DataType object holding information about the item (field) being encoded.</param>
+        /// <param name="language">Is this a C or C++ file?</param>
+        /// <returns>String holding the code necessary to move the buffer on according to the amount of data that has been encoded.</returns>
+        private string WriteSByteEncodeCode(StreamWriter sourceFile, string variableName, string fieldName, DataType dataType, Language language)
+        {
+            sourceFile.WriteLine($"    *buffer = (uint8_t) {variableName}->{fieldName};");
+            return($"    buffer += {dataType.Size};");
+        }
+
+        /// <summary>
+        /// Generate the code to encode a string in a byte buffer.
+        /// </summary>
+        /// <param name="sourceFile">Existing StreamWriter object for the source file being created.</param>
+        /// <param name="variableName">Variable holding a pointer to the byte buffer holding the encoded data.</param>
+        /// <param name="fieldName">Field / member of the message structure holding the data item.</param>
+        /// <param name="dataType">DataType object holding information about the item (field) being encoded.</param>
+        /// <param name="language">Is this a C or C++ file?</param>
+        /// <returns>String holding the code necessary to move the buffer on according to the amount of data that has been encoded.</returns>
+        private string WriteStringEncodeCode(StreamWriter sourceFile, string variableName, string fieldName, DataType dataType, Language language)
         {
             if (language == Language.Cpp)
             {
-                sourceFile.WriteLine("/**");
-                sourceFile.WriteLine($" *  Extract the {objectName} object that is encoded in the given buffer.");
-                sourceFile.WriteLine(" *  ");
-                sourceFile.WriteLine(" *  Note that the returned pointer points to a block of memory on the heap and");
-                sourceFile.WriteLine(" *  this should eventually be released calling vPortFree(...).");
-                sourceFile.WriteLine(" *  ");
-                sourceFile.WriteLine($" *  @param buffer");
-                sourceFile.WriteLine($" *      Pointer to a block of memory holding the encoded {objectName} object.");
-                sourceFile.WriteLine(" *  ");
-                sourceFile.WriteLine(" *  @returns");
-                sourceFile.WriteLine($" *      Pointer to a {objectName} object.");
-                sourceFile.WriteLine(" */");
-                sourceFile.WriteLine($"// cppcheck-suppress unusedFunction symbolName=Extract{objectName}");
-                sourceFile.WriteLine($"Esp32Messaging::{objectName} *Encoders::Extract{objectName}(uint8_t *buffer)");
-                _functionPrototypes.AppendLine($"    static Esp32Messaging::{objectName} *Extract{objectName}(uint8_t *);");
-                sourceFile.WriteLine("{");
-                sourceFile.WriteLine($"    Esp32Messaging::{objectName} *{variableName} = (Esp32Messaging::{objectName} *) pvPortMalloc(sizeof(Esp32Messaging::{objectName}));");
-                sourceFile.WriteLine();
+                sourceFile.WriteLine($"    Encode{dataType.CSharpTypeName}({variableName}->{fieldName}, buffer);");
             }
             else
             {
-                string cObjectName = ConvertNameToCStyleName(objectName);
-                sourceFile.WriteLine("/****************************************************************************");
-                sourceFile.WriteLine($"* Name: espcp_extract_{objectName}");
-                sourceFile.WriteLine(" *  ");
-                sourceFile.WriteLine("* Description:");
-                sourceFile.WriteLine($"*  Extract the espcp_{objectName}_ object that is");
-                sourceFile.WriteLine("*  encoded in the given buffer.");
-                sourceFile.WriteLine("*  ");
-                sourceFile.WriteLine("*  Note that the returned pointer points to a block of memory on the heap and");
-                sourceFile.WriteLine("*  this should eventually be released calling free(...).");
-                sourceFile.WriteLine("*  ");
-                sourceFile.WriteLine("* Input Parameters:");
-                sourceFile.WriteLine($"*  {variableName} - pointer to the buffer containing the encoded");
-                sourceFile.WriteLine($"*  espcp_{objectName}_t object.");
-                sourceFile.WriteLine("*");
-                sourceFile.WriteLine("* Returned Value:");
-                sourceFile.WriteLine($"*  Pointer to the extracted espcp_{objectName}_t object.");
-                sourceFile.WriteLine("*");
-                sourceFile.WriteLine("* Assumptions/Limitations:");
-                sourceFile.WriteLine("*  None");
-                sourceFile.WriteLine("*");
-                sourceFile.WriteLine("****************************************************************************/");
-                sourceFile.WriteLine($"espcp_{objectName}_t *espcp_extract_{objectName}(uint8_t *buffer)");
-                sourceFile.WriteLine("{");
-                sourceFile.WriteLine($"    espcp_{objectName}_t *{variableName} = (espcp_{objectName}_t *) malloc(sizeof(espcp_{objectName}_t));");
-                sourceFile.WriteLine();
-                _functionPrototypes.AppendLine($"espcp_{objectName}_t *espcp_extract_{objectName}(uint8_t *);");
+                sourceFile.WriteLine($"    espcp_encode_{dataType.CSharpTypeName.ToLower()}({variableName}->{fieldName}, buffer);");
+            }
+            return($"    buffer += strlen({variableName}->{fieldName}) + 1;");
+        }
+
+        /// <summary>
+        /// Generate the code to encode a fixed byte array in a byte buffer.
+        /// </summary>
+        /// <param name="sourceFile">Existing StreamWriter object for the source file being created.</param>
+        /// <param name="variableName">Variable holding a pointer to the byte buffer holding the encoded data.</param>
+        /// <param name="fieldName">Field / member of the message structure holding the data item.</param>
+        /// <param name="length">Length of the fixed byte array being copied.</param>
+        /// <param name="language">Is this a C or C++ file?</param>
+        /// <returns>String holding the code necessary to move the buffer on according to the amount of data that has been encoded.</returns>
+        private string WriteFixedByteArrayEncodeCode(StreamWriter sourceFile, string variableName, string fieldName, uint length, Language language)
+        {
+            sourceFile.WriteLine($"    memcpy((void *) buffer, (void *) {variableName}->{fieldName}, {length});");
+            return($"    buffer += {length};");
+        }
+
+        /// <summary>
+        /// Generate the code to encode a blob object in a byte buffer.
+        /// </summary>
+        /// <param name="sourceFile">Existing StreamWriter object for the source file being created.</param>
+        /// <param name="variableName">Variable holding a pointer to the byte buffer holding the encoded data.</param>
+        /// <param name="fieldName">Field / member of the message structure holding the data item.</param>
+        /// <param name="language">Is this a C or C++ file?</param>
+        /// <returns>String holding the code necessary to move the buffer on according to the amount of data that has been encoded.</returns>
+        private string WriteBlobEncodeCode(StreamWriter sourceFile, string variableName, string fieldName, Language language)
+        {
+            string lengthName;
+            if (language == Language.Cpp)
+            {
+                lengthName = fieldName + "Length";
+                sourceFile.WriteLine($"    EncodeUInt32({variableName}->{lengthName}, buffer);");
+            }
+            else
+            {
+                lengthName = fieldName + "_length";
+                sourceFile.WriteLine($"    espcp_encode_uint32({variableName}->{lengthName}, buffer);");   
+            }
+            sourceFile.WriteLine($"    buffer += 4;");
+            sourceFile.WriteLine($"    if ({variableName}->{lengthName} > 0)");
+            sourceFile.WriteLine("    {");
+            sourceFile.WriteLine($"        memcpy((void *) buffer, (void *) {variableName}->{fieldName}, {variableName}->{lengthName});");
+            return($"        buffer += {variableName}->{lengthName};");
+        }
+
+        /// <summary>
+        /// Generate the code to encode a structure object in a byte buffer.
+        /// </summary>
+        /// <param name="sourceFile">Existing StreamWriter object for the source file being created.</param>
+        /// <param name="variableName">Variable holding a pointer to the byte buffer holding the encoded data.</param>
+        /// <param name="fieldName">Field / member of the message structure holding the data item.</param>
+        /// <param name="typeName">Name of the default type to be encoded.</param>
+        /// <param name="language">Is this a C or C++ file?</param>
+        /// <returns>String holding the code necessary to move the buffer on according to the amount of data that has been encoded.</returns>
+        private string WriteStructureEncodeCode(StreamWriter sourceFile, string variableName, string fieldName, string typeName, Language language)
+        {
+            string sizeStatement;
+            if (language == Language.Cpp)
+            {
+                sourceFile.WriteLine($"            {variableName}.{fieldName} = Encode{typeName}(buffer, offset);");
+                sizeStatement = $"            offset += Encoded{typeName}({variableName}.{typeName});";
+            }
+            else
+            {
+                string cTypeName = ConvertNameToCStyleName(typeName);
+                sourceFile.WriteLine($"            {variableName}.{fieldName} = espcp_encode_{cTypeName}(buffer, offset);");
+                sizeStatement = $"            offset += espcp_encoded_{cTypeName}_buffer_size({variableName}.{fieldName});";
+            }
+            return(sizeStatement);
+        }
+
+        /// <summary>
+        /// Generate the code to encode a pointer object in a byte buffer.
+        /// </summary>
+        /// <param name="sourceFile">Existing StreamWriter object for the source file being created.</param>
+        /// <param name="variableName">Variable holding a pointer to the byte buffer holding the encoded data.</param>
+        /// <param name="fieldName">Field / member of the message structure holding the data item.</param>
+        /// <param name="language">Is this a C or C++ file?</param>
+        private void WritePointerEncodeCode(StreamWriter sourceFile, string variableName, string fieldName, Language language)
+        {
+            if (language == Language.Cpp)
+            {
+                sourceFile.WriteLine($"    EncodeUInt32((uint32_t) {variableName}->{fieldName}, buffer);");
+            }
+            else
+            {
+                sourceFile.WriteLine($"    espcp_encode_uint32((uint32_t) {variableName}->{fieldName}, buffer);");
+            }
+        }
+
+        /// <summary>
+        /// Generate the code to encode a default (built in data type) object in a byte buffer.
+        /// </summary>
+        /// <param name="sourceFile">Existing StreamWriter object for the source file being created.</param>
+        /// <param name="variableName">Variable holding a pointer to the byte buffer holding the encoded data.</param>
+        /// <param name="fieldName">Field / member of the message structure holding the data item.</param>
+        /// <param name="typeName">Name of the default type to be encoded.</param>
+        /// <param name="language">Is this a C or C++ file?</param>
+        private void WriteDefaultTypeEncodeCode(StreamWriter sourceFile, string variableName, string fieldName, string typeName, Language language)
+        {
+            if (language == Language.Cpp)
+            {
+                sourceFile.WriteLine($"    Encode{typeName}({variableName}->{fieldName}, buffer);");
+            }
+            else
+            {
+                sourceFile.WriteLine($"    espcp_encode_{typeName.ToLower()}({variableName}->{fieldName}, buffer);");
             }
         }
 
@@ -847,7 +954,7 @@ namespace FileGenerator
                 variableName = ConvertNameToCStyleName(m.Name);
                 typeName = ConvertNameToCStyleName(m.Name);
             }
-            OutputCEncodeFunctionHeader(sourceFile, typeName, variableName, language);
+            WriteCEncodeFunctionHeader(sourceFile, typeName, variableName, language);
             sourceFile.WriteLine("{");
             for (int index = 0; index < m.MessageElements.Count; index++)
             {
@@ -866,91 +973,35 @@ namespace FileGenerator
                 switch (dt.Name.ToLower())
                 {
                     case "byte":
-                        sourceFile.WriteLine($"    *buffer = {variableName}->{fieldName};");
-                        sizeStatement = $"    buffer += {dt.Size};";
+                        sizeStatement = WriteByteEncodeCode(sourceFile, variableName, fieldName, dt, language);
                         break;
                     case "sbyte":
-                        sourceFile.WriteLine($"    *buffer = (uint8_t) {variableName}->{fieldName};");
-                        sizeStatement = $"    buffer += {dt.Size};";
+                        sizeStatement = WriteSByteEncodeCode(sourceFile, variableName, fieldName, dt, language);
                         break;
                     case "string":
-                        if (language == Language.Cpp)
-                        {
-                            sourceFile.WriteLine($"    Encode{dt.CSharpTypeName}({variableName}->{fieldName}, buffer);");
-                        }
-                        else
-                        {
-                            sourceFile.WriteLine($"    espcp_encode_{dt.CSharpTypeName.ToLower()}({variableName}->{fieldName}, buffer);");
-                        }
-                        sizeStatement = $"    buffer += strlen({variableName}->{fieldName}) + 1;";
+                        sizeStatement = WriteStringEncodeCode(sourceFile, variableName, fieldName, dt, language);
                         break;
                     case "fixedchararray":
                     case "fixedbytearray":
-                        sourceFile.WriteLine($"    memcpy((void *) buffer, (void *) {variableName}->{fieldName}, {me.Length});");
-                        sizeStatement = $"    buffer += {me.Length};";
+                        sizeStatement = WriteFixedByteArrayEncodeCode(sourceFile, variableName, fieldName, me.Length, language);
                         break;
                     case "blob":
-                        string lengthName;;
-                        if (language == Language.Cpp)
-                        {
-                            lengthName = fieldName + "Length";
-                        }
-                        else
-                        {
-                            lengthName = fieldName + "_length";
-                        }
-                        if (language == Language.Cpp)
-                        {
-                            sourceFile.WriteLine($"    EncodeUInt32({variableName}->{lengthName}, buffer);");
-                        }
-                        else
-                        {
-                            sourceFile.WriteLine($"    espcp_encode_uint32({variableName}->{lengthName}, buffer);");   
-                        }
-                        sourceFile.WriteLine($"    buffer += 4;");
-                        sourceFile.WriteLine($"    if ({variableName}->{lengthName} > 0)");
-                        sourceFile.WriteLine("    {");
-                        sourceFile.WriteLine($"        memcpy((void *) buffer, (void *) {variableName}->{fieldName}, {variableName}->{lengthName});");
+                        string result = WriteBlobEncodeCode(sourceFile, variableName, fieldName, language);
                         if (index != (m.MessageElements.Count - 1))
                         {
-                            if (language == Language.Cpp)
-                            {
-                                sourceFile.WriteLine($"        buffer += {variableName}->{me.Name}Length;");
-                            }
-                            else
-                            {
-                            sourceFile.WriteLine($"        buffer += {variableName}->{lengthName};");
-                            }
+                            sourceFile.WriteLine(result);
                         }
                         sourceFile.WriteLine("    }");
                         break;
                     case "structure":
-                        //
-                        //  TODO: Check this as there maybe a bug here.
-                        //
-                        sourceFile.WriteLine($"            {variableName}.{me.Name} = Extract{me.CSName}(buffer, offset);");
-                        sizeStatement = $"            offset += Encoded{me.CSName}BufferSize({variableName}.{me.Name});";
+                        sizeStatement = WriteStructureEncodeCode(sourceFile, variableName, fieldName, me.CSName, language);
                         break;
-                    case "pointer": 
-                        if (language == Language.Cpp)
-                        {
-                            sourceFile.WriteLine($"    EncodeUInt32((uint32_t) {variableName}->{fieldName}, buffer);");
-                        }
-                        else
-                        {
-                            sourceFile.WriteLine($"    espcp_encode_uint32((uint32_t) {variableName}->{fieldName}, buffer);");
-                        }
+                    case "pointer":
+                        WritePointerEncodeCode(sourceFile, variableName, fieldName, language);
                         sizeStatement = $"    buffer += 4;";
                         break;
                     default:
-                        if (language == Language.Cpp)
-                        {
-                            sourceFile.WriteLine($"    Encode{dt.CSharpTypeName}({variableName}->{fieldName}, buffer);");
-                        }
-                        else
-                        {
-                            sourceFile.WriteLine($"    espcp_encode_{dt.CSharpTypeName.ToLower()}({variableName}->{fieldName}, buffer);");
-                        }
+                        WriteDefaultTypeEncodeCode(sourceFile, variableName, fieldName, dt.CSharpTypeName, language);
                         sizeStatement = $"    buffer += {dt.Size};";
                         break;
                 }
@@ -964,6 +1015,58 @@ namespace FileGenerator
             }
             sourceFile.WriteLine("}");
             sourceFile.WriteLine();
+        }
+
+        #endregion C/C++ encode code generation methods
+
+        #region C/C++ encoded buffer size calculation code generation
+
+        /// <summary>
+        /// Write the comment for a C/C++ function that calculate the amount of space required to hold a byte
+        /// encoded copy of the object.
+        /// 
+        /// The function header complies with existing coding styles for the two different parts of the system.
+        /// </summary>
+        /// <param name="sourceFile">Existing StreamWriter object for the source file being created.</param>
+        /// <param name="variableType">Object (type) being extracted.</param>
+        /// <param name="variableName">Name of the variable that will hold the object being extracted.</param>
+        /// <param name="language">Is this a C or C++ file?</param>
+        private void WriteCEncodedBufferSizeFunctionHeader(StreamWriter sourceFile, string variableType, string variableName, Language language)
+        {
+            if (language == Language.Cpp)
+            {
+                sourceFile.WriteLine("/**");
+                sourceFile.WriteLine($" *  Calculate the amount of memory required to hold the given instance of the {variableType} object.");
+                sourceFile.WriteLine(" *  ");
+                sourceFile.WriteLine($" *  @param {variableName}");
+                sourceFile.WriteLine($" *      {variableType} object to be encoded.");
+                sourceFile.WriteLine(" *  ");
+                sourceFile.WriteLine($" *  @returns");
+                sourceFile.WriteLine($" *      Number of bytes required to hold the encoded {variableType} object.");
+                sourceFile.WriteLine(" */");
+            }
+            else
+            {
+                variableName = ConvertNameToCStyleName(variableType);
+                variableType = "espcp_" + ConvertNameToCStyleName(variableType) + "_t";
+                sourceFile.WriteLine("/****************************************************************************");
+                sourceFile.WriteLine($"* Name: espcp_encoded_{variableName}_buffer_size");
+                sourceFile.WriteLine("*");
+                sourceFile.WriteLine("* Description:");
+                sourceFile.WriteLine($"*  Calculate the amount of memory needed to store and encoded version of an");
+                sourceFile.WriteLine($"*  {variableType} object.");
+                sourceFile.WriteLine("*");
+                sourceFile.WriteLine("* Input Parameters:");
+                sourceFile.WriteLine($"*  {variableName} - {variableType} object to be encoded.");
+                sourceFile.WriteLine("*");
+                sourceFile.WriteLine("* Returned Value:");
+                sourceFile.WriteLine($"*  Number of bytes required to hold the encoded {variableType} object.");
+                sourceFile.WriteLine("*");
+                sourceFile.WriteLine("* Assumptions/Limitations:");
+                sourceFile.WriteLine("*  None");
+                sourceFile.WriteLine("*");
+                sourceFile.WriteLine("****************************************************************************/");
+            }
         }
 
         /// <summary>
@@ -980,38 +1083,13 @@ namespace FileGenerator
             {
                 variableName = message.Name.Substring(0, 1).ToLower() + message.Name.Substring(1);
                 variableType = message.Name;
-                sourceFile.WriteLine("/**");
-                sourceFile.WriteLine($" *  Calculate the amount of memory required to hold the given instance of the {message.Name} object.");
-                sourceFile.WriteLine(" *  ");
-                sourceFile.WriteLine($" *  @param {variableName}");
-                sourceFile.WriteLine($" *      {message.Name} object to be encoded.");
-                sourceFile.WriteLine(" *  ");
-                sourceFile.WriteLine($" *  @returns");
-                sourceFile.WriteLine($" *      Number of bytes required to hold the encoded {message.Name} object.");
-                sourceFile.WriteLine(" */");
             }
             else
             {
                 variableName = ConvertNameToCStyleName(message.Name);
                 variableType = "espcp_" + ConvertNameToCStyleName(message.Name) + "_t";
-                sourceFile.WriteLine("/****************************************************************************");
-                sourceFile.WriteLine($"* Name: espcp_encoded_{variableName}_buffer_size");
-                sourceFile.WriteLine("*");
-                sourceFile.WriteLine("* Description:");
-                sourceFile.WriteLine($"*  Calculate the amount of memory needed to store and encoded version of an");
-                sourceFile.WriteLine($"*  {variableType} object.");
-                sourceFile.WriteLine("*");
-                sourceFile.WriteLine("* Input Parameters:");
-                sourceFile.WriteLine($"*  {variableType} - object to be encoded.");
-                sourceFile.WriteLine("*");
-                sourceFile.WriteLine("* Returned Value:");
-                sourceFile.WriteLine($"*  Number of bytes required to hold the encoded {variableType} object.");
-                sourceFile.WriteLine("*");
-                sourceFile.WriteLine("* Assumptions/Limitations:");
-                sourceFile.WriteLine("*  None");
-                sourceFile.WriteLine("*");
-                sourceFile.WriteLine("****************************************************************************/");
             }
+            WriteCEncodedBufferSizeFunctionHeader(sourceFile, variableType, variableName, language);
     
             int staticSpaceRequired = 0;
             var dynamicStatements = new StringBuilder();
@@ -1087,6 +1165,73 @@ namespace FileGenerator
             }
             sourceFile.WriteLine("}");
             sourceFile.WriteLine();
+        }
+
+        #endregion C/C++ encoded buffer size calculation code generation
+
+        #region C/C++ extract code generation methods.
+
+        /// <summary>
+        /// Write the comment for a C/C++ extract function.  The function header complies with
+        /// existing coding styles for the two different parts of the system.
+        /// </summary>
+        /// <param name="sourceFile">Existing StreamWriter object for the source file being created.</param>
+        /// <param name="objectName">Object (type) being extracted.</param>
+        /// <param name="variableName">Name of the variable that will hold the object being extracted.</param>
+        /// <param name="language">Is this a C or C++ file?</param>
+        private void WriteCExtractFunctionHeader(StreamWriter sourceFile, string objectName, string variableName, Language language)
+        {
+            if (language == Language.Cpp)
+            {
+                sourceFile.WriteLine("/**");
+                sourceFile.WriteLine($" *  Extract the {objectName} object that is encoded in the given buffer.");
+                sourceFile.WriteLine(" *  ");
+                sourceFile.WriteLine(" *  Note that the returned pointer points to a block of memory on the heap and");
+                sourceFile.WriteLine(" *  this should eventually be released calling vPortFree(...).");
+                sourceFile.WriteLine(" *  ");
+                sourceFile.WriteLine($" *  @param buffer");
+                sourceFile.WriteLine($" *      Pointer to a block of memory holding the encoded {objectName} object.");
+                sourceFile.WriteLine(" *  ");
+                sourceFile.WriteLine(" *  @returns");
+                sourceFile.WriteLine($" *      Pointer to a {objectName} object.");
+                sourceFile.WriteLine(" */");
+                sourceFile.WriteLine($"// cppcheck-suppress unusedFunction symbolName=Extract{objectName}");
+                sourceFile.WriteLine($"Esp32Messaging::{objectName} *Encoders::Extract{objectName}(uint8_t *buffer)");
+                _functionPrototypes.AppendLine($"    static Esp32Messaging::{objectName} *Extract{objectName}(uint8_t *);");
+                sourceFile.WriteLine("{");
+                sourceFile.WriteLine($"    Esp32Messaging::{objectName} *{variableName} = (Esp32Messaging::{objectName} *) pvPortMalloc(sizeof(Esp32Messaging::{objectName}));");
+                sourceFile.WriteLine();
+            }
+            else
+            {
+                string cObjectName = ConvertNameToCStyleName(objectName);
+                sourceFile.WriteLine("/****************************************************************************");
+                sourceFile.WriteLine($"* Name: espcp_extract_{objectName}");
+                sourceFile.WriteLine(" *  ");
+                sourceFile.WriteLine("* Description:");
+                sourceFile.WriteLine($"*  Extract the espcp_{objectName}_ object that is");
+                sourceFile.WriteLine("*  encoded in the given buffer.");
+                sourceFile.WriteLine("*  ");
+                sourceFile.WriteLine("*  Note that the returned pointer points to a block of memory on the heap and");
+                sourceFile.WriteLine("*  this should eventually be released calling free(...).");
+                sourceFile.WriteLine("*  ");
+                sourceFile.WriteLine("* Input Parameters:");
+                sourceFile.WriteLine($"*  {variableName} - pointer to the buffer containing the encoded");
+                sourceFile.WriteLine($"*  espcp_{objectName}_t object.");
+                sourceFile.WriteLine("*");
+                sourceFile.WriteLine("* Returned Value:");
+                sourceFile.WriteLine($"*  Pointer to the extracted espcp_{objectName}_t object.");
+                sourceFile.WriteLine("*");
+                sourceFile.WriteLine("* Assumptions/Limitations:");
+                sourceFile.WriteLine("*  None");
+                sourceFile.WriteLine("*");
+                sourceFile.WriteLine("****************************************************************************/");
+                sourceFile.WriteLine($"espcp_{objectName}_t *espcp_extract_{objectName}(uint8_t *buffer)");
+                sourceFile.WriteLine("{");
+                sourceFile.WriteLine($"    espcp_{objectName}_t *{variableName} = (espcp_{objectName}_t *) malloc(sizeof(espcp_{objectName}_t));");
+                sourceFile.WriteLine();
+                _functionPrototypes.AppendLine($"espcp_{objectName}_t *espcp_extract_{objectName}(uint8_t *);");
+            }
         }
 
         /// <summary>
@@ -1306,7 +1451,7 @@ namespace FileGenerator
                 variableName = ConvertNameToCStyleName(message.Name);
                 typeName = variableName;
             }
-            OutputCExtractFunctionHeader(sourceFile, typeName, variableName, language);
+            WriteCExtractFunctionHeader(sourceFile, typeName, variableName, language);
             for (var index = 0; index < message.MessageElements.Count; index++)
             {
                 MessageElement me = message.MessageElements[index];
@@ -1363,6 +1508,8 @@ namespace FileGenerator
             sourceFile.WriteLine("}");
             sourceFile.WriteLine();
         }
+
+        #endregion C/C++ extract code generation methods
 
         /// <summary>
         /// Generate the message encoders / extract and encoded message size methods
