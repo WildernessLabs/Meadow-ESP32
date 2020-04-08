@@ -349,7 +349,7 @@ namespace FileGenerator
                 fileStream.Write($"{indent}");
                 if (language == Language.C)
                 {
-                    fileStream.Write($"    {enumName}_{nvp.Name} = {nvp.Value}");
+                    fileStream.Write($"    {enumName}_{ConvertNameToCStyleName(nvp.Name)} = {nvp.Value}");
                 }
                 else
                 {
