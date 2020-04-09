@@ -105,7 +105,8 @@ namespace Meadow.Coprocessor.F7Micro
     public enum TransportFunction
     {
         ResponseReady = 0,
-        SendResponse = 1
+        SendResponse = 1,
+        KillNuttxThread = 2
     };
 
     // <summary>
