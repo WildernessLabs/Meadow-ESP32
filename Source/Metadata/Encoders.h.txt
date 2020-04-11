@@ -34,5 +34,5 @@ void espcp_encode_string(char *, uint8_t *);
 uint8_t espcp_crc8(const uint8_t *, uint16_t);
 uint32_t espcp_crc32(const uint8_t *, uint16_t);
 uint32_t espcp_progressive_crc32(uint32_t, uint8_t);
-uint8_t *espcp_encode_message(espcp_message_t *, bool);
 espcp_message_t *espcp_extract_message(uint8_t *, uint32_t, bool);
+uint8_t *espcp_encode_message(espcp_message_t *, uint32_t *, bool);
