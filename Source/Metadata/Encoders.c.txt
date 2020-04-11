@@ -351,32 +351,39 @@ espcp_message_t *espcp_extract_message(uint8_t *buffer, uint32_t bufferLength, b
     return(message);
 }
 
-/**
- *  Encode a message into a block of memory.
+/****************************************************************************
+ * Name: espcp_encode_message
  *
- *  @param message
- *      Message structure to encode in to the byte buffer.
+ * Description:
+ *  Encode a message in a byte buffer.
  *
- *  @param header
- *      Copy this as a header only (i.e. do not copy the payload).
+ * Input Parameters:
+ *  message - Message to be encoded.
+ *  buffer_length - Pointer to a uint32_t object that the contain the size of the
+ *      buffer that contains the encoded message.  This is a return
+ *      value from the method.
+ *  header_only - if true then the header will be encoded but not the
+ *      payload.
  *
- *  @returns
- *      byte buffer containing the encoded message.  The storage
- *     Will be placed on the FreeRTOS heap (use vPortFree to release the
- *     storage).
- */
-uint8_t *espcp_encode_message(espcp_message_t *message, bool headerOnly)
+ * Returned Value:
+ *  Pointer to the block of memory containing the encoded message.
+ *
+ * Assumptions/Limitations:
+ *  None
+ *
+ ****************************************************************************/
+uint8_t *espcp_encode_message(espcp_message_t *message, uint32_t *buffer_length, bool header_only)
 {
-    uint32_t messageSize = ESPCP_HEADER_SIZE;
-    if (!headerOnly)
+    uint32_t message_size = ESPCP_HEADER_SIZE;
+    if (!header_only)
     {
-        messageSize += message->payload_length;
+        message_size += message->payload_length;
     }
-    uint32_t bufferSize = espcp_calculate_spi_buffer_size(messageSize);
-    uint8_t *buffer = (uint8_t *) malloc(bufferSize);
+    uint32_t buffer_size = espcp_calculate_spi_buffer_size(message_size);
+    uint8_t *buffer = (uint8_t *) malloc(buffer_size);
     if (buffer != NULL)
     {
-        memset(buffer, 0, bufferSize);
+        memset(buffer, 0, buffer_size);
 
         int offset = 0;
         *buffer = message->message_type;
@@ -397,7 +404,7 @@ uint8_t *espcp_encode_message(espcp_message_t *message, bool headerOnly)
         //
         espcp_encode_uint32(0, buffer + offset);
         offset += 4;
-        if (!headerOnly && (message->payload_length > 0))
+        if (!header_only && (message->payload_length > 0))
         {
             memcpy((uint8_t *) (buffer + offset), message->payload, message->payload_length);
         }
@@ -405,10 +412,15 @@ uint8_t *espcp_encode_message(espcp_message_t *message, bool headerOnly)
         {
             espcp_encode_uint32(0, buffer + offset);
         }
-        uint32_t crc = espcp_crc32(buffer, bufferSize);
+        uint32_t crc = espcp_crc32(buffer, buffer_size);
         espcp_encode_uint32(crc, buffer + ESPCP_CRC_OFFSET);
     }
+    else
+    {
+        buffer_size = 0;
+    }
 
+    *buffer_length = buffer_size;
     return(buffer);
 }
 
