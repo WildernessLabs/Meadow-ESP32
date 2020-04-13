@@ -23,8 +23,8 @@ namespace StatusCodes
      */
     enum StatusCodes : uint32_t
     {
-        CompletedOK = 0,
-        CRCError = 1,
+        CompletedOk = 0,
+        CrcError = 1,
         Restart = 2,
         Failure = 3,
         InvalidInterface = 4,
@@ -35,7 +35,7 @@ namespace StatusCodes
         MissingEndOfFrameMarker = 9,
         HeaderBodyFieldMismatch = 10,
         WiFiAlreadyStarted = 11,
-        InvalidSSID = 12,
+        InvalidSsid = 12,
         InvalidPassword = 13,
         WiFiDisconnected = 14,
         InvalidAntennaData = 15,
