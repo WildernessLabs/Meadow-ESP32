@@ -1,4 +1,7 @@
-/**
+/****************************************************************************
+ * Name: espcp_calculate_spi_buffer_size
+ *
+ * Description:
  *  Calculate the amount of memory that should be allocated for
  *  the receive buffer.
  *
@@ -7,12 +10,16 @@
  *
  *  https://docs.espressif.com/projects/esp-idf/en/latest/api-reference/peripherals/spi_slave.html#restrictions-and-known-issues
  *
- *  @param requestedSize
- *      Actual amount of data requested / to be received.
+ * Input Parameters:
+ *  requestedSize - Actual amount of data requested / to be received.
  *
- *  @returns
- *      Number of bytes that should be allocated.
- */
+ * Returned Value:
+ *  Number of bytes that should be allocated.
+ *
+ * Assumptions/Limitations:
+ *  None
+ *
+ ****************************************************************************/
 uint32_t espcp_calculate_spi_buffer_size(uint32_t requestedSize)
 {
     uint32_t result = requestedSize;
@@ -44,18 +51,26 @@ uint32_t espcp_calculate_spi_buffer_size(uint32_t requestedSize)
     return (result);
 }
 
-/**
- *  Take the first two bytes from the buffer and encode them as a 16 bit integer.
+/****************************************************************************
+ * Name: espcp_extract_uint16
+ *
+ * Description:
+ *  Take the first two bytes from the buffer and encode them as a 16 bit
+ *  integer.
  *
  *  Note that the data should be encoded as LSB first.
  *
- *  @param buffer
- *      Pointer to the buffer holding the data that should be used to created the
- *      16-bit unsigned integer.
+ * Input Parameters:
+ *  buffer -  Pointer to the buffer holding the data that should be used 
+ *  to created the 16-bit unsigned integer.
  *
- *  @returns
- *      16-bit unsigned integer value from the first two byte in the buffer.
- */
+ * Returned Value:
+ *  16-bit unsigned integer value from the first two byte in the buffer.
+ *
+ * Assumptions/Limitations:
+ *  None
+ *
+ ****************************************************************************/
 uint16_t espcp_extract_uint16(uint8_t *buffer)
 {
     uint16_t result;
@@ -65,37 +80,51 @@ uint16_t espcp_extract_uint16(uint8_t *buffer)
     return (result);
 }
 
-/**
- *  Encode a 16-bit integer as two bytes in the buffer.
+/****************************************************************************
+ * Name: espcp_encode_uint16
  *
- *  Note that the data will be encoded LSB first.
+ * Description:
+ *  Extract the message that is encoded in the byte buffer..
  *
- *  @param value
- *      16-bit value to encode in the first two bytes of the buffer.
+ * Input Parameters:
+ *  value - 16-bit value to encode in the first two bytes of the buffer.
+ *  buffer - Pointer to the buffer where the two bytes will be inserted
+ *           from the 16-bit unsigned integer (LSB first).
  *
- *  @param buffer
- *      Pointer to the buffer where the two bytes will be inserted
- *      from the 16-bit unsigned integer (LSB first).
- */
+ * Returned Value:
+ *  None
+ *
+ * Assumptions/Limitations:
+ *  None
+ *
+ ****************************************************************************/
 void espcp_encode_uint16(uint16_t value, uint8_t *buffer)
 {
     buffer[0] = (value & 0xff);
     buffer[1] = ((value >> 8) & 0xff);
 }
 
-/**
- *  Take the first four bytes from the buffer and encode them as a 32 bit unsigned integer.
+/****************************************************************************
+ * Name: espcp_extract_uint32
+ *
+ * Description:
+ *  Take the first four bytes from the buffer and encode them as a 32 bit 
+ *  unsigned integer.
  *
  *  Note that the data should be encoded as LSB first.
  *
- *  @param buffer
- *      Pointer to the buffer where the next four bytes should be extracted
- *      and a 32-bit unsigned integer created (LSB first).
+ * Input Parameters:
+ *  buffer - Pointer to the buffer where the next four bytes should be
+ *  extracted and a 32-bit unsigned integer created (LSB first).
  *
- *  @returns
- *      32-bit unsigned integer extracted from the first 4 bytes in the buffer.
- */
-uint32_t espcp_extract_uint32(uint8_t *buffer)
+ * Returned Value:
+ *  32-bit unsigned integer extracted from the first 4 bytes in the buffer.
+ *
+ * Assumptions/Limitations:
+ *  None
+ *
+ ****************************************************************************/
+int32_t espcp_extract_uint32(uint8_t *buffer)
 {
     uint32_t result;
 
@@ -106,18 +135,26 @@ uint32_t espcp_extract_uint32(uint8_t *buffer)
     return (result);
 }
 
-/**
+/****************************************************************************
+ * Name: espcp_encode_uint32
+ *
+ * Description:
  *  Encode a 32-bit unsigned integer as four bytes in the buffer.
  *
  *  Note that the data will be encoded LSB first.
  *
- *  @param value
- *      Unsigned 32-bit integer value to write into the buffer.
+ * Input Parameters:
+ *  value - Unsigned 32-bit integer value to write into the buffer.
+ *  buffer -  Pointer to the buffer where 4 bytes will be replaced with 
+ *            the four bytes representing unsigned integer (LSB first).
  *
- *  @param buffer
- *      Pointer to the buffer where 4 bytes will be replaced with the four
- *      bytes representing unsigned integer (LSB first).
- */
+ * Returned Value:
+ *  None
+ *
+ * Assumptions/Limitations:
+ *  None
+ *
+ ****************************************************************************/
 void espcp_encode_uint32(uint32_t value, uint8_t *buffer)
 {
     buffer[0] = (value & 0xff);
@@ -126,18 +163,26 @@ void espcp_encode_uint32(uint32_t value, uint8_t *buffer)
     buffer[3] = ((value >> 24) & 0xff);
 }
 
-/**
- *  Take the first four bytes from the buffer and encode them as a 32 bit integer.
+/****************************************************************************
+ * Name: espcp_extract_int32
+ *
+ * Description:
+ *  Take the first four bytes from the buffer and encode them as a 32 bit
+ *  integer.
  *
  *  Note that the data should be encoded as LSB first.
  *
- *  @param buffer
- *      Pointer to the buffer where the next four bytes should be extracted
- *      and a 32-bit unsigned integer created (LSB first).
+ * Input Parameters:
+ *  buffer -  Pointer to the buffer where the next four bytes should be
+ *            extracted and a 32-bit unsigned integer created (LSB first).
  *
- *  @returns
- *      32-bit unsigned integer extracted from the first 4 bytes in the buffer.
- */
+ * Returned Value:
+ *  32-bit unsigned integer extracted from the first 4 bytes in the buffer.
+ *
+ * Assumptions/Limitations:
+ *  None
+ *
+ ****************************************************************************/
 int32_t espcp_extract_int32(uint8_t *buffer)
 {
     int32_t result;
@@ -149,18 +194,25 @@ int32_t espcp_extract_int32(uint8_t *buffer)
     return (result);
 }
 
-/**
- *  Encode a 32-bit  integer as four bytes in the buffer.
+/****************************************************************************
+ * Name: espcp_extract_message
+ *
+ * Description:
+ *  Encode a 32-bit integer as four bytes in the buffer.
  *
  *  Note that the data will be encoded LSB first.
  *
- *  @param value
- *      Unsigned 32-bit integer value to write into the buffer.
+ * Input Parameters:
+ *  value - Unsigned 32-bit integer value to write into the buffer.
+ *  buffer - Pointer to the buffer where 4 bytes will be replaced with the
+ *           four bytes representing unsigned integer (LSB first).
+ * Returned Value:
+ *  None.
  *
- *  @param buffer
- *      Pointer to the buffer where 4 bytes will be replaced with the four
- *      bytes representing unsigned integer (LSB first).
- */
+ * Assumptions/Limitations:
+ *  None
+ *
+ ****************************************************************************/
 void espcp_encode_int32(int32_t value, uint8_t *buffer)
 {
     buffer[0] = (value & 0xff);
@@ -169,15 +221,22 @@ void espcp_encode_int32(int32_t value, uint8_t *buffer)
     buffer[3] = ((value >> 24) & 0xff);
 }
 
-/**
+/****************************************************************************
+ * Name: espcp_extract_string
+ *
+ * Description:
  *  Extract a string (terminated by 0) from a block of memory.
  *
- *  @param buffer
- *      Pointer to the block of memory containing the string.
+ * Input Parameters:
+ *  buffer - Pointer to the block of memory containing the string.
  *
- *  @returns
- *      Pointer to the extracted string.
- */
+ * Returned Value:
+ *  Pointer to the extracted string.
+ *
+ * Assumptions/Limitations:
+ *  None
+ *
+ ****************************************************************************/
 char *espcp_extract_string(uint8_t *buffer)
 {
     uint32_t length = 0;
@@ -194,34 +253,48 @@ char *espcp_extract_string(uint8_t *buffer)
     return((char *) ptr);
 }
 
-/**
+/****************************************************************************
+ * Name: espcp_encode_string
+ *
+ * Description:
  *  Copy the string into the buffer.
  *
- *  @param source
- *      Block of memory containing the string.
+ * Input Parameters:
+ *  source - Block of memory containing the string.
+ *  buffer - Pointer to a block of memory to take the string.
+
+ * Returned Value:
+ *  None.
  *
- *  @param buffer
- *      Pointer to a block of memory to take the string.
- */
+ * Assumptions/Limitations:
+ *  None
+ *
+ ****************************************************************************/
 void espcp_encode_string(char *source, uint8_t *buffer)
 {
     strcpy((char *) buffer, (char *) source);
 }
 
-/**
+/****************************************************************************
+ * Name: espcp_crc8
+ *
+ * Description:
  *  Calculate the 8-bit CRC value for the specified data buffer.
  *
  *  This algorithm is loosely based upon the Dallas 1-Wire algorithm.
  *
- *  @param data
- *      Pointer to the buffer containing the data for which the CRC should be calculated.
+ * Input Parameters:
+ *  data - Pointer to the buffer containing the data for which the CRC should
+ *         be calculated.
+ *  len - Number of bytes in the data buffer.
  *
- *  @param len
- *      Number of bytes in the data buffer.
+ * Returned Value:
+ *  8-bit checksum of the bytes in the buffer.
  *
- *  @returns
- *      8-bit checksum of the bytes in the buffer.
- */
+ * Assumptions/Limitations:
+ *  None
+ *
+ ****************************************************************************/
 uint8_t espcp_crc8(const uint8_t *data, uint16_t len)
 {
     uint8_t crc = 0x00;
@@ -243,18 +316,24 @@ uint8_t espcp_crc8(const uint8_t *data, uint16_t len)
     return(crc);
 }
 
-/**
- *  Calculate the 32-bit CRC of the buffer of data.
+/****************************************************************************
+ * Name: espcp_crc32
  *
- *  @param data
- *      Pointer to the buffer containing the data for which the CRC should be calculated.
+ * Description:
+ *  Calculate the 32-bit CRC value for the specified data buffer.
  *
- *  @param len
- *      Number of bytes in the data buffer.
+ * Input Parameters:
+ *  data - Pointer to the buffer containing the data for which the CRC should
+ *         be calculated.
+ *  len - Number of bytes in the data buffer.
  *
- *  @returns
- *      32-bit checksum of the bytes in the buffer.
- */
+ * Returned Value:
+ *  32-bit checksum of the bytes in the buffer.
+ *
+ * Assumptions/Limitations:
+ *  None
+ *
+ ****************************************************************************/
 uint32_t espcp_crc32(const uint8_t *data, uint16_t len)
 {
     uint32_t crc = ESPCP_CRC32_SEED;
@@ -266,18 +345,23 @@ uint32_t espcp_crc32(const uint8_t *data, uint16_t len)
     return (crc);
 }
 
-/**
+/****************************************************************************
+ * Name: espcp_progressive_crc32
+ *
+ * Description:
  *  Calculate the CRC32 value change for the specified byte.
  *
- *  @param currentChecksum
- *      Current value of the checksum.
+ * Input Parameters:
+ *  byte - Next byte to use in the checksum calculation.
+ *  currentChecksum - Current value of the checksum.
  *
- *  @param byte
- *      Next byte to use in the checksum calculation.
+ * Returned Value:
+ *  Next checksum value.
  *
- *  @returns
- *      Next checksum value.
- */
+ * Assumptions/Limitations:
+ *  None
+ *
+ ****************************************************************************/
 uint32_t espcp_progressive_crc32(uint32_t currentChecksum, uint8_t byte)
 {
     uint32_t crc = currentChecksum;
@@ -294,10 +378,9 @@ uint32_t espcp_progressive_crc32(uint32_t currentChecksum, uint8_t byte)
  * Name: espcp_extract_message
  *
  * Description:
- *  Extract the message that is encoded in the byte buffer..
+ *  Extract the message that is encoded in the byte buffer.
  *
  * Input Parameters:
-
  *  buffer - uint8_t array of bytes containing the encoded message.
  *  buffer_length - size of the buffer holding the data to be decoded.
  *  header_only - if true then the header will be extracted but not the
