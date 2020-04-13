@@ -7,9 +7,9 @@
             "Comment": "Status and error codes for the various function calls.",
             "BaseDataType": "UInt32",
             "EnumNames": [ 
-                "CompletedOK", "CRCError", "Restart", "Failure", "InvalidInterface", "QueueError",
+                "CompletedOk", "CrcError", "Restart", "Failure", "InvalidInterface", "QueueError",
                 "InvalidPacket", "InvalidHeader", "UnexpectedData", "MissingEndOfFrameMarker", "HeaderBodyFieldMismatch",
-                "WiFiAlreadyStarted", "InvalidSSID", "InvalidPassword", "WiFiDisconnected",
+                "WiFiAlreadyStarted", "InvalidSsid", "InvalidPassword", "WiFiDisconnected",
                 "InvalidAntennaData", "InvalidAntennaValue",
                 "NoMessagesWaiting"
             ]

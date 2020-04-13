@@ -22,8 +22,8 @@ namespace Meadow.Coprocessor.F7Micro
     // </summary>
     public enum StatusCodes
     {
-        CompletedOK = 0,
-        CRCError = 1,
+        CompletedOk = 0,
+        CrcError = 1,
         Restart = 2,
         Failure = 3,
         InvalidInterface = 4,
@@ -34,7 +34,7 @@ namespace Meadow.Coprocessor.F7Micro
         MissingEndOfFrameMarker = 9,
         HeaderBodyFieldMismatch = 10,
         WiFiAlreadyStarted = 11,
-        InvalidSSID = 12,
+        InvalidSsid = 12,
         InvalidPassword = 13,
         WiFiDisconnected = 14,
         InvalidAntennaData = 15,
