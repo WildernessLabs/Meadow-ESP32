@@ -527,7 +527,7 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessTransportMessage()
             _messageType = MessageTypes::Transport;
             if (OutboundMessageQueueLength() > 0)
             {
-                _responseCode = StatusCodes::CompletedOK;
+                _responseCode = StatusCodes::CompletedOk;
             }
             else
             {
@@ -542,7 +542,7 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessTransportMessage()
             break;
         default:
             ESP_LOGI(__func__, "Transport function %d not recognised.", _incomingMessage->Function);
-            _responseCode = StatusCodes::CompletedOK;
+            _responseCode = StatusCodes::CompletedOk;
             _messageType = MessageTypes::Nak;
             break;
     }
@@ -609,7 +609,7 @@ spi_slave_transaction_t *SpiTransportProvider::InboundMessageHeaderReceived(spi_
         if (!_incomingMessage)             // nullptr indicates a CRC error.
         {
             ESP_LOGI(__func__, "CRC Error.");
-            _responseCode = StatusCodes::CRCError;
+            _responseCode = StatusCodes::CrcError;
             _messageType = MessageTypes::Nak;
             _incomingMessage = Message::CreateOnHeap(_messageType, Esp32Interfaces::Transport, 0, _responseCode);
             newTransaction = CreateAcknowledgementTransaction(_incomingMessage, _responseCode, _messageType);
@@ -620,7 +620,7 @@ spi_slave_transaction_t *SpiTransportProvider::InboundMessageHeaderReceived(spi_
             {
                 case MessageTypes::Header:
                     _messageType = MessageTypes::Ack;
-                    _responseCode = StatusCodes::CompletedOK;
+                    _responseCode = StatusCodes::CompletedOk;
                     newTransaction = CreateAcknowledgementTransaction(_incomingMessage, _responseCode, _messageType);
                     break;
                 case MessageTypes::Transport:
@@ -667,7 +667,7 @@ spi_slave_transaction_t *SpiTransportProvider::InboundMessageHeaderAcknowledged(
 
     DeleteTransaction(transaction);
     spi_slave_transaction_t *newTransaction = nullptr;
-    if (_responseCode == StatusCodes::CompletedOK)
+    if (_responseCode == StatusCodes::CompletedOk)
     {
         if (_incomingMessage->PayloadLength == 0)         // Assume _incomingMessage has been set up.
         {
@@ -733,7 +733,7 @@ spi_slave_transaction_t *SpiTransportProvider::InboundMessageBodyReceived(spi_sl
     DeleteTransaction(transaction);
 
     uint8_t messageType = MessageTypes::Ack;
-    StatusCodes::StatusCodes responseCode = StatusCodes::CompletedOK;
+    StatusCodes::StatusCodes responseCode = StatusCodes::CompletedOk;
     if (message)
     {
         if (dataSize != encodedMessageBodySize)
@@ -766,7 +766,7 @@ spi_slave_transaction_t *SpiTransportProvider::InboundMessageBodyReceived(spi_sl
     }
     else
     {
-        responseCode = StatusCodes::CRCError;
+        responseCode = StatusCodes::CrcError;
         messageType = MessageTypes::Nak;
     }
     _responseCode = responseCode;
@@ -1010,7 +1010,7 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessSendingTransportResponseSt
     spi_slave_transaction_t *newTransaction = CreateSpiHeaderTransaction();
     DeleteMessageAndReleaseHeapStorage(_outboundMessage);
     _outboundMessage = nullptr;
-    if (_responseCode == StatusCodes::CompletedOK)
+    if (_responseCode == StatusCodes::CompletedOk)
     {
         if (OutboundMessageQueueLength() > 0)
         {
