@@ -1,6 +1,6 @@
 ﻿//
 // Define the USE_EXTERNAL_ESP32 variable to use the pin definitions for an externally
-// connected ESP32 development board rather than the internal ESP32 chip. 
+// connected ESP32 development board rather than the internal ESP32 chip.
 //
 #define USE_EXTERNAL_ESP32
 
@@ -21,17 +21,17 @@ namespace BasicNetworkTest
     public class HttpGetTest : App<F7Micro, HttpGetTest>
     {
         #region Private member variables (fields)
-        
+
         /// <summary>
         /// Button that can be used to trigger a test.
         /// </summary>
         private DigitalInputPort _button;
-        
+
         /// <summary>
         /// ESP32 UART Rx port.
         /// </summary>
         IDigitalInputPort _esp32UartRx;
-        
+
         /// <summary>
         /// ESP32 UART Tx port.
         /// </summary>
@@ -41,19 +41,19 @@ namespace BasicNetworkTest
         /// Network coprocessor.
         /// </summary>
         private readonly F7MicroCoprocessor _f7MicroCoprocessor;
-        
+
         /// <summary>
         /// Message dispatcher responsible for sending messages to the ESP32 and also passing
         /// any messages from the ESP32 to the relevant interface on the STM32.
         /// </summary>
         private readonly MessageDispatcher _dispatcher;
-        
+
         private EventWaitHandle _waitHandle = new AutoResetEvent(false);
 
         #endregion Private member variables (fields)
-        
+
         #region Constructors
-        
+
         /// <summary>
         /// Default constructor.
         /// </summary>
@@ -65,18 +65,18 @@ namespace BasicNetworkTest
             //
             _esp32UartRx = (IDigitalInputPort) Device.CreateDigitalInputPort(Device.Pins.ESP_UART_RX, resistorMode: ResistorMode.Disabled);
             _esp32UartTx = (IDigitalInputPort) Device.CreateDigitalInputPort(Device.Pins.ESP_UART_TX, resistorMode: ResistorMode.Disabled);
-            
+
             #if USE_EXTERNAL_ESP32
             //
             // The following _dispatcher object is set up to use an external ESP32 development board.
             // These allow the signals on the SPI bus to be monitored by a scope / logic analyser.
             //
             _dispatcher = new MessageDispatcher(Device,
-                mosi: Device.Pins.MOSI, miso: Device.Pins.MISO, clock: Device.Pins.SCK, chipSelect: Device.Pins.D04,
-                bootPin: Device.Pins.D08, resetPin: Device.Pins.D06, Device.Pins.D03);
+                mosi: Device.Pins.MOSI, miso: Device.Pins.MISO, clock: Device.Pins.SCK, chipSelect: Device.Pins.D01,
+                bootPin: Device.Pins.D05, resetPin: Device.Pins.D04, Device.Pins.D02);
             #else
             //
-            // The following creates a _dispatcher object connected to the onboard ESP32 chip. 
+            // The following creates a _dispatcher object connected to the onboard ESP32 chip.
             //
             _dispatcher = new MessageDispatcher(Device,
                 mosi: Device.Pins.ESP_MOSI, miso: Device.Pins.ESP_MISO, clock: Device.Pins.ESP_CLK, chipSelect: Device.Pins.ESP_CS,
@@ -100,9 +100,9 @@ namespace BasicNetworkTest
             DebugHelpers.DebugHelpers.LogMessage(true, "Press the button start the test.");
             RunTest();
         }
-        
+
         #endregion Constructors
-        
+
         #region Events
 
         /// <summary>
@@ -116,7 +116,7 @@ namespace BasicNetworkTest
         }
 
         #endregion Events
-        
+
         #region Methods
 
         /// <summary>
@@ -147,7 +147,7 @@ namespace BasicNetworkTest
                 var getAddrInfoResult = (AddrInfo)res;
                 //
                 //    socket
-                //            
+                //
                 DebugHelpers.DebugHelpers.LogMessage(true, "Getting socket handle");
                 int socketHandle = _f7MicroCoprocessor.Socket(getAddrInfoResult.Family, getAddrInfoResult.SocketType, 0);
                 DebugHelpers.DebugHelpers.LogMessage(true, $"    Socket handle: {socketHandle}");
@@ -267,7 +267,7 @@ namespace BasicNetworkTest
                 DebugHelpers.DebugHelpers.LogMessage(true, "HTTP GET Test Complete.");
             }
         }
-        
+
         #endregion Methods
     }
 }
