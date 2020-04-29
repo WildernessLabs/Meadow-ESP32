@@ -131,7 +131,7 @@ void WiFiRequestHandler::GetAntenna(Message *request) const
     Encoders::EncodeAntennaInfo(antenna, request->Payload);
     vPortFree(antenna);
     request->PayloadLength = encodedBufferLength;
-    request->StatusCode = StatusCodes::CompletedOK;
+    request->StatusCode = StatusCodes::CompletedOk;
     if (!_messageDispatcher->QueueMessageForStm32(request))
     {
         ESP_LOGE(__func__, "Cannot queue message for STM32.");
@@ -168,7 +168,7 @@ void WiFiRequestHandler::SetAntenna(Message *request)
             {
                 SwitchAntenna((AntennaTypes::AntennaTypes) antenna->Antenna);
             }
-            request->StatusCode = StatusCodes::CompletedOK;
+            request->StatusCode = StatusCodes::CompletedOk;
         }
         vPortFree(antenna);
     }
@@ -420,7 +420,7 @@ void WiFiRequestHandler::StartNetwork(Message *request)
         uint32_t networkNameLength = 0;
         if ((credentials->NetworkName == nullptr) || (strlen(credentials->NetworkName) > MAXIMUM_SSID_LENGTH))
         {
-            SendResponse(request, StatusCodes::InvalidSSID);
+            SendResponse(request, StatusCodes::InvalidSsid);
             return;
         }
         else
@@ -589,7 +589,7 @@ void WiFiRequestHandler::GetAddrInfo(Message *message)
     Encoders::EncodeGetAddrInfoResponse(response, message->Payload);
     vPortFree(response);
     message->MessageType = MessageTypes::Response;
-    message->StatusCode = StatusCodes::CompletedOK;
+    message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
 }
@@ -615,7 +615,7 @@ void WiFiRequestHandler::Socket(Message *message)
     message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
     Encoders::EncodeIntegerResponse(&response, message->Payload);
     message->MessageType = MessageTypes::Response;
-    message->StatusCode = StatusCodes::CompletedOK;
+    message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
 }
@@ -652,7 +652,7 @@ void WiFiRequestHandler::Connect(Message *message)
     message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
     Encoders::EncodeIntegerResponse(&response, message->Payload);
     message->MessageType = MessageTypes::Response;
-    message->StatusCode = StatusCodes::CompletedOK;
+    message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
 }
@@ -676,7 +676,7 @@ void WiFiRequestHandler::FreeAddrInfo(Message *message)
     message->PayloadLength = 0;
     message->Payload = nullptr;
     message->MessageType = MessageTypes::Response;
-    message->StatusCode = StatusCodes::CompletedOK;
+    message->StatusCode = StatusCodes::CompletedOk;
 
     vTaskDelay(40 / portTICK_PERIOD_MS);
 
@@ -747,7 +747,7 @@ void WiFiRequestHandler::SetSockOpt(Message *message)
     message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
     Encoders::EncodeIntegerAndErrnoResponse(&response, message->Payload);
     message->MessageType = MessageTypes::Response;
-    message->StatusCode = StatusCodes::CompletedOK;
+    message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
 }
@@ -781,7 +781,7 @@ void WiFiRequestHandler::Write(Message *message)
     message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
     Encoders::EncodeIntegerAndErrnoResponse(&response, message->Payload);
     message->MessageType = MessageTypes::Response;
-    message->StatusCode = StatusCodes::CompletedOK;
+    message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
 }
@@ -824,7 +824,7 @@ void WiFiRequestHandler::Read(Message *message)
     vPortFree(response.Buffer);
 
     message->MessageType = MessageTypes::Response;
-    message->StatusCode = StatusCodes::CompletedOK;
+    message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
 }
@@ -854,7 +854,7 @@ void WiFiRequestHandler::Close(Message *message)
     message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
     Encoders::EncodeIntegerAndErrnoResponse(&response, message->Payload);
     message->MessageType = MessageTypes::Response;
-    message->StatusCode = StatusCodes::CompletedOK;
+    message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
 }
@@ -919,7 +919,7 @@ void WiFiRequestHandler::StationGotIpEvent(system_event_t *eventData)
         _currentRequest->Payload = static_cast<uint8_t *>(pvPortMalloc(_currentRequest->PayloadLength));
         memcpy(_currentRequest->Payload, &eventData->event_info.got_ip.ip_info.ip, _currentRequest->PayloadLength);
         _currentRequest->MessageType = MessageTypes::Response;
-        _currentRequest->StatusCode = StatusCodes::CompletedOK;
+        _currentRequest->StatusCode = StatusCodes::CompletedOk;
         _messageDispatcher->QueueMessageForStm32(_currentRequest);
         _currentRequest = nullptr;
     }
@@ -977,7 +977,7 @@ void WiFiRequestHandler::ScanCompleteEvent(system_event_t *event)
     {
         _currentRequest->Payload =  nullptr;
         _currentRequest->PayloadLength = 0;
-        _currentRequest->StatusCode = StatusCodes::CompletedOK;
+        _currentRequest->StatusCode = StatusCodes::CompletedOk;
     }
     else
     {
@@ -1010,7 +1010,7 @@ void WiFiRequestHandler::ScanCompleteEvent(system_event_t *event)
 
         vPortFree(accessPoints);
         vPortFree(accessPoint);
-        _currentRequest->StatusCode = StatusCodes::CompletedOK;
+        _currentRequest->StatusCode = StatusCodes::CompletedOk;
         _currentRequest->PayloadLength = Encoders::EncodedAccessPointListBufferSize(accessPointList);
         _currentRequest->Payload = static_cast<uint8_t *>(pvPortMalloc(_currentRequest->PayloadLength));
         Encoders::EncodeAccessPointList(accessPointList, _currentRequest->Payload);
