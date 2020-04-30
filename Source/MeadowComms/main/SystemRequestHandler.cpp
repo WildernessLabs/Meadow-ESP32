@@ -158,6 +158,7 @@ void SystemRequestHandler::DispatchRequest(Message *request)
         case SystemFunction::DeepSleep:
             break;
         case SystemFunction::BatteryLevel:
+            BatteryLevel(request);
             break;
         default:
             ESP_LOGI(__func__, "Unknown System message received, function 0x%x", request->Function);

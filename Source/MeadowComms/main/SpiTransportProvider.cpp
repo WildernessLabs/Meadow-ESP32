@@ -75,11 +75,9 @@ SpiTransportProvider::SpiTransportProvider() :
      */
     gpio_pad_select_gpio(Gpio::ESP32_SPI_READY_PIN);
     gpio_set_direction(Gpio::ESP32_SPI_READY_PIN, GPIO_MODE_OUTPUT);
-    gpio_set_level(Gpio::ESP32_SPI_READY_PIN, 0);
     //
     gpio_pad_select_gpio(Gpio::ESP32_MESSAGE_WAITING_PIN);
     gpio_set_direction(Gpio::ESP32_MESSAGE_WAITING_PIN, GPIO_MODE_OUTPUT);
-    gpio_set_level(Gpio::ESP32_MESSAGE_WAITING_PIN, 0);
 
     /*
      *  Configure the pull-ups on the SPI pins.
@@ -145,6 +143,14 @@ SpiTransportProvider::SpiTransportProvider() :
      *  Set up the task and that will process the SPI messages.
      */
     xTaskCreate(Task, "SPIMessageTask", 2048 * 2, this, configMAX_PRIORITIES - 1, &SpiTransportProvider::_transportProviderTaskHandle);
+
+    /*
+     *  The SPI code on the STM32 will wait for both SPI ready and
+     *  message waiting to both go low as a signal that the SPI code
+     *  has completed the initialisation process.
+     */
+    gpio_set_level(Gpio::ESP32_MESSAGE_WAITING_PIN, 0);
+    gpio_set_level(Gpio::ESP32_SPI_READY_PIN, 0);
 }
 
 /**
