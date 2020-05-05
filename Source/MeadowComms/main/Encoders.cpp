@@ -143,7 +143,7 @@ void Encoders::EncodeUInt32(uint32_t value, uint8_t *buffer)
  *  @returns
  *      32-bit unsigned integer extracted from the first 4 bytes in the buffer.
  */
-int32_t Encoders::ExtractInt32(uint8_t *buffer)
+uint32_t Encoders::ExtractInt32(uint8_t *buffer)
 {
     int32_t result;
 
@@ -1918,6 +1918,59 @@ Esp32Messaging::CloseRequest *Encoders::ExtractCloseRequest(uint8_t *buffer)
 
     closeRequest->SocketHandle = ExtractInt32(buffer);
     return(closeRequest);
+}
+
+/**
+ *  Convert the GetBatteryChargeLevelResponse object into a byte stream that can be sent to the STM32.
+ *  
+ *  The amount of memory required can be obtained by calling the EncodedGetBatteryChargeLevelResponseBufferSize method.
+ *  
+ *  @param getBatteryChargeLevelResponse
+ *      GetBatteryChargeLevelResponse object to be encoded.
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory large enough to hold the encoded GetBatteryChargeLevelResponse object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodeGetBatteryChargeLevelResponse
+void Encoders::EncodeGetBatteryChargeLevelResponse(Esp32Messaging::GetBatteryChargeLevelResponse *getBatteryChargeLevelResponse, uint8_t *buffer)
+{
+    EncodeUInt32(getBatteryChargeLevelResponse->Level, buffer);
+}
+
+/**
+ *  Calculate the amount of memory required to hold the given instance of the GetBatteryChargeLevelResponse object.
+ *  
+ *  @param getBatteryChargeLevelResponse
+ *      GetBatteryChargeLevelResponse object to be encoded.
+ *  
+ *  @returns
+ *      Number of bytes required to hold the encoded GetBatteryChargeLevelResponse object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodedGetBatteryChargeLevelResponseBufferSize
+int Encoders::EncodedGetBatteryChargeLevelResponseBufferSize(Esp32Messaging::GetBatteryChargeLevelResponse *getBatteryChargeLevelResponse)
+{
+    return(4);
+}
+
+/**
+ *  Extract the GetBatteryChargeLevelResponse object that is encoded in the given buffer.
+ *  
+ *  Note that the returned pointer points to a block of memory on the heap and
+ *  this should eventually be released calling vPortFree(...).
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded GetBatteryChargeLevelResponse object.
+ *  
+ *  @returns
+ *      Pointer to a GetBatteryChargeLevelResponse object.
+ */
+// cppcheck-suppress unusedFunction symbolName=ExtractGetBatteryChargeLevelResponse
+Esp32Messaging::GetBatteryChargeLevelResponse *Encoders::ExtractGetBatteryChargeLevelResponse(uint8_t *buffer)
+{
+    Esp32Messaging::GetBatteryChargeLevelResponse *getBatteryChargeLevelResponse = (Esp32Messaging::GetBatteryChargeLevelResponse *) pvPortMalloc(sizeof(Esp32Messaging::GetBatteryChargeLevelResponse));
+
+    getBatteryChargeLevelResponse->Level = ExtractUInt32(buffer);
+    return(getBatteryChargeLevelResponse);
 }
 
 

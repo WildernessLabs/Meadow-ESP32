@@ -196,6 +196,13 @@
             [
                 { "Name": "SocketHandle", "DataType": "int" }
             ]
+        },
+        {
+            "Name": "GetBatteryChargeLevelResponse",
+            "MessageElements":
+            [
+                {"Name": "Level", "DataType": "uint32" }
+            ]
         }
     ]
 }

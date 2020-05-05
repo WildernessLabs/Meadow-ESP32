@@ -124,7 +124,7 @@ void espcp_encode_uint16(uint16_t value, uint8_t *buffer)
  *  None
  *
  ****************************************************************************/
-int32_t espcp_extract_uint32(uint8_t *buffer)
+uint32_t espcp_extract_uint32(uint8_t *buffer)
 {
     uint32_t result;
 

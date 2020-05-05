@@ -140,7 +140,7 @@ void Encoders::EncodeUInt32(uint32_t value, uint8_t *buffer)
  *  @returns
  *      32-bit unsigned integer extracted from the first 4 bytes in the buffer.
  */
-int32_t Encoders::ExtractInt32(uint8_t *buffer)
+uint32_t Encoders::ExtractInt32(uint8_t *buffer)
 {
     int32_t result;
 

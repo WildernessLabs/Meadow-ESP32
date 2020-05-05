@@ -72,7 +72,7 @@ namespace SystemFunction
         GetConfiguration = 0,
         SetConfiguration = 1,
         DeepSleep = 2,
-        BatteryLevel = 3
+        GetBatteryChargeLevel = 3
     };
 
 }
