@@ -1481,5 +1481,42 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             return(4);
         }
 
+        public static byte[] EncodeGetBatteryChargeLevelResponse(GetBatteryChargeLevelResponse getBatteryChargeLevelResponse)
+        {
+            int offset = 0;
+            int length = 0;
+
+            //
+            //  Calculate the amount of memory needed.
+            //
+            length += 4;
+
+            //
+            //  Now allocate a new buffer and copy the data in to the buffer.
+            //
+            byte[] buffer = new byte[length];
+            Array.Clear(buffer, 0, buffer.Length);
+            EncodeUInt32(getBatteryChargeLevelResponse.Level, buffer, offset);
+            return(buffer);
+        }
+
+        public static GetBatteryChargeLevelResponse ExtractGetBatteryChargeLevelResponse(byte[] buffer, int offset)
+        {
+            GetBatteryChargeLevelResponse getBatteryChargeLevelResponse = new Messages.GetBatteryChargeLevelResponse();
+
+            getBatteryChargeLevelResponse.Level = ExtractUInt32(buffer, offset);
+            return(getBatteryChargeLevelResponse);
+        }
+
+        /// <summary>
+        /// Calculate the amount of memory required to hold the given instance of the GetBatteryChargeLevelResponse object.
+        /// </summary>
+        /// <param name="getBatteryChargeLevelResponse">GetBatteryChargeLevelResponse object to be encoded.</param>
+        /// <returns>Number of bytes required to hold the encoded GetBatteryChargeLevelResponse object.</returns>
+        public static int EncodedGetBatteryChargeLevelResponseBufferSize(Messages.GetBatteryChargeLevelResponse getBatteryChargeLevelResponse)
+        {
+            return(4);
+        }
+
     }
 }

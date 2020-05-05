@@ -177,4 +177,9 @@ namespace Meadow.Coprocessor.F7Micro.Messages
         public Int32 SocketHandle;
     };
 
+    public struct GetBatteryChargeLevelResponse
+    {
+        public UInt32 Level;
+    };
+
 }

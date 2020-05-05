@@ -191,6 +191,11 @@ namespace Esp32Messaging
         int32_t SocketHandle;
     };
 
+    struct GetBatteryChargeLevelResponse
+    {
+        uint32_t Level;
+    };
+
 }
 
 /*
@@ -288,6 +293,9 @@ public:
     static void EncodeCloseRequest(Esp32Messaging::CloseRequest *, uint8_t *);
     static int EncodedCloseRequestBufferSize(Esp32Messaging::CloseRequest *);
     static Esp32Messaging::CloseRequest *ExtractCloseRequest(uint8_t *);
+    static void EncodeGetBatteryChargeLevelResponse(Esp32Messaging::GetBatteryChargeLevelResponse *, uint8_t *);
+    static int EncodedGetBatteryChargeLevelResponseBufferSize(Esp32Messaging::GetBatteryChargeLevelResponse *);
+    static Esp32Messaging::GetBatteryChargeLevelResponse *ExtractGetBatteryChargeLevelResponse(uint8_t *);
 
 };
 
