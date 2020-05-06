@@ -218,7 +218,7 @@ public:
     static void EncodeUInt16(uint16_t, uint8_t *);
     static uint32_t ExtractUInt32(uint8_t *);
     static void EncodeUInt32(uint32_t, uint8_t *);
-    static int32_t ExtractInt32(uint8_t *);
+    static uint32_t ExtractInt32(uint8_t *);
     static void EncodeInt32(int32_t, uint8_t *);
     static char *ExtractString(uint8_t *);
     static void EncodeString(char *, uint8_t *);
