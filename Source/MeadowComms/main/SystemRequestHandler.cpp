@@ -135,10 +135,23 @@ void SystemRequestHandler::DeepSleep(Message *request)
  *  @param request
  *      Message requesting the battery level.
  */
-void SystemRequestHandler::BatteryLevel(Message *request)
+void SystemRequestHandler::GetBatteryChargeLevel(Message *message)
 {
     ESP_LOGI(__func__, "BatteryLevel not implemented");
-    //  TODO: Implement the BatteryLevel method.
+    //
+    //  TODO: Complete the implemention of the BatteryLevel method.
+    //        For the minute we'll fake it at 2.5V.
+    //
+    Esp32Messaging::IntegerResponse response;
+    response.Result = 2500;
+
+    message->PayloadLength = Encoders::EncodedIntegerResponseBufferSize(&response);
+    message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
+    Encoders::EncodeIntegerResponse(&response, message->Payload);
+
+    message->MessageType = MessageTypes::Response;
+    message->StatusCode = StatusCodes::CompletedOk;
+    _messageDispatcher->QueueMessageForStm32(message);
 }
 
 /**
@@ -157,8 +170,8 @@ void SystemRequestHandler::DispatchRequest(Message *request)
             break;
         case SystemFunction::DeepSleep:
             break;
-        case SystemFunction::BatteryLevel:
-            BatteryLevel(request);
+        case SystemFunction::GetBatteryChargeLevel:
+            GetBatteryChargeLevel(request);
             break;
         default:
             ESP_LOGI(__func__, "Unknown System message received, function 0x%x", request->Function);
@@ -167,12 +180,5 @@ void SystemRequestHandler::DispatchRequest(Message *request)
                 ESP_LOG_BUFFER_HEXDUMP(__func__, request->Payload, request->PayloadLength, ESP_LOG_INFO);
             }
             break;
-    }
-    //
-    //  Memory for the payload is allocated on the heap and it needs to be released.
-    //
-    if (request->Payload != NULL)
-    {
-        vPortFree(request->Payload);
     }
 }

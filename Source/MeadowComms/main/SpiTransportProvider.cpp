@@ -321,6 +321,10 @@ void SpiTransportProvider::ClearTransmitAndReceiveBuffers(uint8_t *transmitBuffe
  */
 spi_slave_transaction_t *SpiTransportProvider::CreateAcknowledgementTransaction(Message *message, StatusCodes::StatusCodes code, uint8_t messageType)
 {
+#if defined(SPI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Entering method");
+#endif
+
     spi_slave_transaction_t *transaction = CreateSpiHeaderTransaction();
 
     Message *copyOfMessage = message->CreateCopyOnHeap(false);
@@ -345,6 +349,10 @@ spi_slave_transaction_t *SpiTransportProvider::CreateAcknowledgementTransaction(
  */
 spi_slave_transaction_t *SpiTransportProvider::CreateSpiHeaderTransaction()
 {
+#if defined(SPI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Entering method");
+#endif
+
     spi_slave_transaction_t *transaction = static_cast<spi_slave_transaction_t *>(pvPortMalloc(sizeof(spi_slave_transaction_t)));
 
     memset(transaction, 0, sizeof(spi_slave_transaction_t));
@@ -368,6 +376,10 @@ spi_slave_transaction_t *SpiTransportProvider::CreateSpiHeaderTransaction()
  */
 spi_slave_transaction_t *SpiTransportProvider::CreateSpiMessageTransaction(Message *message)
 {
+#if defined(SPI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Entering method");
+#endif
+
     uint8_t *encodedMessage = Encoders::EncodeMessage(message, false);
 
     uint32_t encodedMessageBufferSize = Encoders::CalculateSpiBufferSize(Message::HEADER_SIZE + message->PayloadLength);
@@ -393,6 +405,10 @@ spi_slave_transaction_t *SpiTransportProvider::CreateSpiMessageTransaction(Messa
  */
 spi_slave_transaction_t *SpiTransportProvider::CreateSpiPayloadTransaction(uint32_t bufferSize)
 {
+#if defined(SPI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Entering method");
+#endif
+
     spi_slave_transaction_t *transaction = static_cast<spi_slave_transaction_t *>(pvPortMalloc(sizeof(spi_slave_transaction_t)));
 
     memset(transaction, 0, sizeof(spi_slave_transaction_t));
@@ -420,6 +436,10 @@ spi_slave_transaction_t *SpiTransportProvider::CreateSpiPayloadTransaction(uint3
  */
 void SpiTransportProvider::DeleteTransaction(spi_slave_transaction_t *transaction)
 {
+#if defined(SPI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Entering method");
+#endif
+
     if (transaction)
     {
         if (transaction->rx_buffer && (transaction->rx_buffer != _headerReceiveBuffer))
@@ -489,6 +509,10 @@ void SpiTransportProvider::Setup(MessageDispatcher *messageDispatcher)
  */
 void SpiTransportProvider::DeleteMessageAndReleaseHeapStorage(Message *message)
 {
+#if defined(SPI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Entering method");
+#endif
+
     if (message)
     {
         if (message->Payload)
@@ -512,6 +536,10 @@ void SpiTransportProvider::DeleteMessageAndReleaseHeapStorage(Message *message)
  */
 void SpiTransportProvider::EncodeHeaderMessage(spi_slave_transaction_t *transaction, Message *message)
 {
+#if defined(SPI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Entering method");
+#endif
+
     uint8_t *encodedMessageHeader = Encoders::EncodeMessage(message, true);
     memcpy(const_cast<void *>(transaction->tx_buffer), static_cast<void *>(encodedMessageHeader), _headerFrameSize);
     vPortFree(encodedMessageHeader);
@@ -526,6 +554,10 @@ void SpiTransportProvider::EncodeHeaderMessage(spi_slave_transaction_t *transact
  */
 spi_slave_transaction_t *SpiTransportProvider::ProcessTransportMessage()
 {
+#if defined(SPI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Entering method");
+#endif
+
     spi_slave_transaction_t *newTransaction = nullptr;
     switch (_incomingMessage->Function)
     {
@@ -1012,6 +1044,10 @@ spi_slave_transaction_t *SpiTransportProvider::OutboundMessageBodyAcknowledgemen
  */
 spi_slave_transaction_t *SpiTransportProvider::ProcessSendingTransportResponseState(spi_slave_transaction_t *transaction)
 {
+#if defined(SPI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Entering method");
+#endif
+
     DeleteTransaction(transaction);
     spi_slave_transaction_t *newTransaction = CreateSpiHeaderTransaction();
     DeleteMessageAndReleaseHeapStorage(_outboundMessage);
@@ -1070,6 +1106,10 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessSendingTransportResponseSt
  */
 bool SpiTransportProvider::MessageContainsData(uint8_t *buffer, uint32_t bufferLength)
 {
+#if defined(SPI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Entering method");
+#endif
+
     bool result = false;
     for (uint32_t index = 0; index < bufferLength; index++)
     {
@@ -1094,6 +1134,10 @@ bool SpiTransportProvider::MessageContainsData(uint8_t *buffer, uint32_t bufferL
  */
 bool SpiTransportProvider::SendingData(SpiStates state)
 {
+#if defined(SPI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Entering method");
+#endif
+
     return((_currentState == AcknowledgingInboundMessageHeader)
             || (_currentState == AcknowledgingMessageBody)
             || (_currentState == SendingMessageHeader)
