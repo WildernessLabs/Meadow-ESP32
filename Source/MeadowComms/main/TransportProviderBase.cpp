@@ -113,7 +113,36 @@ Message *TransportProviderBase::GetOutboundMessage()
         }
         xSemaphoreGive(_outboundMessageQueueMutex);
     }
+
     return(result);
+}
+
+/**
+ *  Dump the message at the head of the message queue (if there is one)
+ *  to as LOGI informaiton.
+ * 
+ *  This method is intended for debugging.
+ *
+ *  @return
+ *      None.
+ */
+void TransportProviderBase::DumpMessageAtHeadOfQueue()
+{
+    Message *message;
+    if (xQueuePeek( _outboundMessageQueueHandle, &( message ), ( TickType_t ) 10 ))
+    {
+        ESP_LOGI(__func__, "Message:");
+        ESP_LOG_BUFFER_HEX(__func__, message, sizeof(Message));
+        if (message->PayloadLength > 0)
+        {
+            ESP_LOGI(__func__, "Message Payload:");
+            ESP_LOG_BUFFER_HEX(__func__, message->Payload, message->PayloadLength);
+        }
+    }
+    else
+    {
+        ESP_LOGI(__func__, "Message queue is empty.");
+    }
 }
 
 /**

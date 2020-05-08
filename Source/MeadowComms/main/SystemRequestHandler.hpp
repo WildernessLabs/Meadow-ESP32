@@ -65,7 +65,7 @@ private:
     /**
      *  Get the battery level.
      */
-    void BatteryLevel(Message *);
+    void GetBatteryChargeLevel(Message *);
 
 
 public:

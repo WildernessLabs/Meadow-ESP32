@@ -110,6 +110,11 @@ protected:
      */
     void ToggleEsp32MessageWaitingPin();
 
+    /*
+     *  Method used for debugging, this will dump the message at the head
+     *  of the message queue as LOGI informaiton.
+     */
+    void DumpMessageAtHeadOfQueue();
 };
 
 #endif /* _TRANSPORT_PROVIDER_BASE_HPP_ */
