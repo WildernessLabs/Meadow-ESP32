@@ -14,5 +14,6 @@
         "rssi",
         "sclk",
         "ssid"
-    ]
+    ],
+    "cmake.configureOnOpen": false
 }
