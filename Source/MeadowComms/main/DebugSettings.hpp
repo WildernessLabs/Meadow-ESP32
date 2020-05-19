@@ -21,7 +21,7 @@
  *  Determine if SPI packets should be output to the logging console.
  */
 #define SPI_PACKET_LOGGING 1
-// #undef SPI_PACKET_LOGGING
+#undef SPI_PACKET_LOGGING
 
 /*
  *  Log everything to do with the SPI transport layer.
