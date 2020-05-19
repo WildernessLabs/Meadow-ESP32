@@ -11,6 +11,7 @@
 #include "NvsManager.hpp"
 #include "WiFiRequestHandler.hpp"
 #include "Exceptions/MultipleInstancesException.hpp"
+#include "Mapping.hpp"
 
 /**
  *  Event handler for the WiFi loop.
@@ -701,7 +702,8 @@ void WiFiRequestHandler::SetSockOpt(Message *message)
     Esp32Messaging::TimeVal *tv = nullptr;
     struct timeval timeOut;
 
-    switch (request->OptionName)
+    int32_t optionName = Mapping::GetEspValue(Mapping::SocketOptions, request->OptionName);
+    switch (optionName)
     {
         // TODO: Implement remaining setsockopt features.
         case SO_ACCEPTCONN:     /* Socket has had listen() */
@@ -730,7 +732,8 @@ void WiFiRequestHandler::SetSockOpt(Message *message)
             break;
     }
 
-    response.Result = setsockopt(request->SocketNumber, request->Level, request->OptionName, optionValue, optionLength);
+    int32_t level = Mapping::GetEspValue(Mapping::SocketLevel, request->Level);
+    response.Result = setsockopt(request->SocketNumber, level, optionName, optionValue, optionLength);
     if (response.Result < 0)
     {
         response.ResponseErrno = errno;
