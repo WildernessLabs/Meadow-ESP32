@@ -21,6 +21,7 @@
 #include "esp_log.h"
 #include "esp_wifi.h"
 #include "esp_event.h"
+#include "errno.h"
 #include <string.h>
 #include <stdlib.h>
 

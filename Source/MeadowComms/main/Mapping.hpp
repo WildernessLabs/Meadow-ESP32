@@ -28,7 +28,7 @@ public:
     /**
      *  @brief Type of mapping toable to be used.
      */
-    enum MappingTable { AddressFamily, SocketOptions, ProtocolFamilies, SocketTypes, SocketLevel };
+    enum MappingTable { AddressFamily, SocketOptions, ProtocolFamilies, SocketTypes, SocketLevel, Errno };
 
 private:
     /**
@@ -70,6 +70,11 @@ private:
      *  @brief Table of socket levels (SOL_ constants).
      */
     static int_mapping_t _socketLevels[];
+
+    /**
+     *  @brief Table of error codes used to set the errno variable.
+     */
+    static int_mapping_t _errno[];
 
     /*
      *  Get the mapped value using the MappingDirection to determine which

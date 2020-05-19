@@ -643,7 +643,7 @@ void WiFiRequestHandler::Connect(Message *message)
     response.Result = connect(request->SocketHandle, &sa, request->AddrLen);
     if (response.Result != 0)
     {
-        response.Result = errno;
+        response.Result = Mapping::GetStmValue(Mapping::Errno, errno);;
     }
 
     vPortFree(request);
@@ -736,7 +736,7 @@ void WiFiRequestHandler::SetSockOpt(Message *message)
     response.Result = setsockopt(request->SocketNumber, level, optionName, optionValue, optionLength);
     if (response.Result < 0)
     {
-        response.ResponseErrno = errno;
+        response.ResponseErrno = Mapping::GetStmValue(Mapping::Errno, errno);
     }
     else
     {
@@ -770,7 +770,7 @@ void WiFiRequestHandler::Write(Message *message)
     response.Result = write(request->SocketHandle, request->Buffer, request->Count);
     if (response.Result < 0)
     {
-        response.ResponseErrno = errno;
+        response.ResponseErrno = Mapping::GetStmValue(Mapping::Errno, errno);;
     }
     else
     {
@@ -807,7 +807,7 @@ void WiFiRequestHandler::Read(Message *message)
     response.ReadResponseResult = read(request->SocketHandle, response.Buffer, request->Count);
     if (response.ReadResponseResult < 0)
     {
-        response.ReadResponseErrno = errno;
+        response.ReadResponseErrno = Mapping::GetStmValue(Mapping::Errno, errno);;
     }
     else
     {
@@ -847,7 +847,7 @@ void WiFiRequestHandler::Close(Message *message)
     response.Result = close(request->SocketHandle);
     if (response.Result != 0)
     {
-        response.Result = errno;
+        response.Result = Mapping::GetStmValue(Mapping::Errno, errno);;
     }
 
     vPortFree(request);
