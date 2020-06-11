@@ -643,7 +643,7 @@ void WiFiRequestHandler::Connect(Message *message)
     response.Result = connect(request->SocketHandle, &sa, request->AddrLen);
     if (response.Result != 0)
     {
-        response.Result = Mapping::GetStmValue(Mapping::Errno, errno);;
+        response.Result = Mapping::GetStmValue(Mapping::Errno, errno);
     }
 
     vPortFree(request);
