@@ -76,3 +76,5 @@ _clicache
 # File generator output files.
 Output/
 Source/EncodedMessageGenerator/MessageGenerator
+
+Source/MeadowComms/.gdbinit
