@@ -918,9 +918,11 @@ void WiFiRequestHandler::StationGotIpEvent(system_event_t *eventData)
     if (bits & WIFI_CONNECTING_BIT)
     {
         _currentRequest->DeletePayload();
-        _currentRequest->PayloadLength = sizeof(ip4_addr_t);
+        _currentRequest->PayloadLength = 3 * sizeof(ip4_addr_t);
         _currentRequest->Payload = static_cast<uint8_t *>(pvPortMalloc(_currentRequest->PayloadLength));
-        memcpy(_currentRequest->Payload, &eventData->event_info.got_ip.ip_info.ip, _currentRequest->PayloadLength);
+        memcpy(_currentRequest->Payload, &eventData->event_info.got_ip.ip_info.ip, sizeof(ip4_addr_t));
+        memcpy(_currentRequest->Payload + sizeof(ip4_addr_t), &eventData->event_info.got_ip.ip_info.netmask, sizeof(ip4_addr_t));
+        memcpy(_currentRequest->Payload + 2 * (sizeof(ip4_addr_t)), &eventData->event_info.got_ip.ip_info.gw, sizeof(ip4_addr_t));
         _currentRequest->MessageType = MessageTypes::Response;
         _currentRequest->StatusCode = StatusCodes::CompletedOk;
         _messageDispatcher->QueueMessageForStm32(_currentRequest);

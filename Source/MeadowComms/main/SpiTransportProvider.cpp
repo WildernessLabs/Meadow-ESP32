@@ -353,9 +353,15 @@ spi_slave_transaction_t *SpiTransportProvider::CreateSpiHeaderTransaction()
     ESP_LOGI(__func__, "Entering method");
 #endif
 
+    vTaskDelay(500 / portTICK_PERIOD_MS);
+
     spi_slave_transaction_t *transaction = static_cast<spi_slave_transaction_t *>(pvPortMalloc(sizeof(spi_slave_transaction_t)));
 
+    ESP_LOGI(__func__, "Transaction: 0x%08x", (uint32_t) transaction);
     memset(transaction, 0, sizeof(spi_slave_transaction_t));
+    vTaskDelay(500 / portTICK_PERIOD_MS);
+
+    ESP_LOGI(__func__, "Buffer cleared.");    
     ClearTransmitAndReceiveBuffers(_headerReceiveBuffer, _headerTransmitBuffer, _headerFrameSize);
     transaction->rx_buffer = _headerReceiveBuffer;
     transaction->tx_buffer = _headerTransmitBuffer;

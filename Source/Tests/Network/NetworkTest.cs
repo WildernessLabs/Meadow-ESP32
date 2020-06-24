@@ -7,16 +7,15 @@ using Meadow;
 using Meadow.Devices;
 using Meadow.Hardware;
 using Meadow.Gateway.WiFi;
+using System.Net.Http;
+using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 
 namespace BasicNetworkTest
 {
     public class NetworkTest : App<F7Micro, NetworkTest>
     {
-        #region Private member variables (fields)
-
-        #endregion Private member variables (fields)
-
-        #region Constructors
+        static readonly HttpClient client = new HttpClient();
 
         /// <summary>
         /// Default constructor.
@@ -30,7 +29,13 @@ namespace BasicNetworkTest
             wifi.StartNetwork(Secrets.WIFI_NAME, Secrets.WIFI_PASSWORD);
         }
 
-        #endregion Constructors
+        public async Task GetWebPageAsync(string uri)
+        {
+            HttpResponseMessage response = await client.GetAsync(uri);
 
+            response.EnsureSuccessStatusCode();
+            string responseBody = await response.Content.ReadAsStringAsync();
+            Console.WriteLine(responseBody);
+        }
     }
 }

@@ -1,0 +1,24 @@
+<Project Sdk="Meadow.Sdk/1.1">
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>App</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Meadow">
+      <HintPath>..\..\..\..\Meadow\Meadow.Core\source\Meadow.Core\bin\Debug\net472\Meadow.dll</HintPath>
+    </Reference>
+    <Reference Include="mscorlib">
+      <HintPath>..\..\..\..\Meadow\Meadow.Core\source\Meadow.Core\bin\Debug\net472\mscorlib.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Core">
+      <HintPath>..\..\..\..\Meadow\Meadow.Core\source\Meadow.Core\bin\Debug\net472\System.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="System">
+      <HintPath>..\..\..\..\Meadow\Meadow.Core\source\Meadow.Core\bin\Debug\net472\System.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Net.Http">
+      <HintPath>bin\Debug\net472\System.Net.Http.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+</Project>
