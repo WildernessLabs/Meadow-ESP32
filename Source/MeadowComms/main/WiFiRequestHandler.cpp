@@ -726,6 +726,10 @@ void WiFiRequestHandler::SetSockOpt(Message *message)
             break;
         case SO_ERROR:          /* Get error status and clear */
             break;
+        case SO_REUSEADDR:
+            optionValue = request->OptionValue;
+            optionLength = request->OptionValueLength;
+            break;
         case SO_TYPE:           /* Get socket type */
             break;
         case SO_NO_CHECK:       /* Don't create UDP checksum */
