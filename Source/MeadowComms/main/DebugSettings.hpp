@@ -27,7 +27,7 @@
  *  Log everything to do with the SPI transport layer.
  */
 #define SPI_FULL_LOGGING 1
-//#undef SPI_FULL_LOGGING
+#undef SPI_FULL_LOGGING
 
 #define SPI_TEST(expression) (expression)
 
