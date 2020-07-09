@@ -196,6 +196,37 @@ namespace Esp32Messaging
         uint32_t Level;
     };
 
+    struct SendToRequest
+    {
+        int32_t SocketHandle;
+        uint32_t BufferLength;
+        uint8_t *Buffer;
+        int32_t Length;
+        int32_t Flags;
+        uint32_t DestinationAddressLength;
+        uint8_t *DestinationAddress;
+        int32_t DestinationAddressLen;
+    };
+
+    struct RecvFromRequest
+    {
+        int32_t SocketHandle;
+        int32_t Length;
+        int32_t Flags;
+        int32_t GetSourceAddress;
+    };
+
+    struct RecvFromResponse
+    {
+        uint32_t BufferLength;
+        uint8_t *Buffer;
+        int32_t Result;
+        int32_t ResponseErrno;
+        uint32_t SourceAddressLength;
+        uint8_t *SourceAddress;
+        uint32_t SourceAddressLen;
+    };
+
 }
 
 /*
@@ -296,6 +327,15 @@ public:
     static void EncodeGetBatteryChargeLevelResponse(Esp32Messaging::GetBatteryChargeLevelResponse *, uint8_t *);
     static int EncodedGetBatteryChargeLevelResponseBufferSize(Esp32Messaging::GetBatteryChargeLevelResponse *);
     static Esp32Messaging::GetBatteryChargeLevelResponse *ExtractGetBatteryChargeLevelResponse(uint8_t *);
+    static void EncodeSendToRequest(Esp32Messaging::SendToRequest *, uint8_t *);
+    static int EncodedSendToRequestBufferSize(Esp32Messaging::SendToRequest *);
+    static Esp32Messaging::SendToRequest *ExtractSendToRequest(uint8_t *);
+    static void EncodeRecvFromRequest(Esp32Messaging::RecvFromRequest *, uint8_t *);
+    static int EncodedRecvFromRequestBufferSize(Esp32Messaging::RecvFromRequest *);
+    static Esp32Messaging::RecvFromRequest *ExtractRecvFromRequest(uint8_t *);
+    static void EncodeRecvFromResponse(Esp32Messaging::RecvFromResponse *, uint8_t *);
+    static int EncodedRecvFromResponseBufferSize(Esp32Messaging::RecvFromResponse *);
+    static Esp32Messaging::RecvFromResponse *ExtractRecvFromResponse(uint8_t *);
 
 };
 
