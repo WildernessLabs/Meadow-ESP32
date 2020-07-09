@@ -381,6 +381,10 @@ int32_t Mapping::GetValue(Mapping::MappingTable mapping, MappingDirection type, 
             table = _errno;
             size = sizeof(_errno) / sizeof(int_mapping_t);
             break;
+        case MappingTable::MessageFlags:
+            table = _messageFlags;
+            size = sizeof(_messageFlags) / sizeof(int_mapping_t);
+            break;
     }
 
     if (table != NULL)
