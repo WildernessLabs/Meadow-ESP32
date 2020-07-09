@@ -295,6 +295,16 @@ private:
      */
     void Close(Message *);
 
+    /**
+     *  Provide a mechanism for the STM32 to call the sendto method.
+     */
+    void SendTo(Message *);
+
+    /**
+     *  Provide a mechanism for the STM32 to call the recvfrom method.
+     */
+    void RecvFrom(Message *);
+
 public:
     /*
      *  Constructor for the WiFi object.
