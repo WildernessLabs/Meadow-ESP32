@@ -100,7 +100,9 @@ namespace WiFiFunction
         Write = 13,
         SetSockOpt = 14,
         Read = 15,
-        Close = 16
+        Close = 16,
+        SendTo = 17,
+        RecvFrom = 18
     };
 
 }
