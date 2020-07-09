@@ -1973,4 +1973,277 @@ Esp32Messaging::GetBatteryChargeLevelResponse *Encoders::ExtractGetBatteryCharge
     return(getBatteryChargeLevelResponse);
 }
 
+/**
+ *  Convert the SendToRequest object into a byte stream that can be sent to the STM32.
+ *  
+ *  The amount of memory required can be obtained by calling the EncodedSendToRequestBufferSize method.
+ *  
+ *  @param sendToRequest
+ *      SendToRequest object to be encoded.
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory large enough to hold the encoded SendToRequest object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodeSendToRequest
+void Encoders::EncodeSendToRequest(Esp32Messaging::SendToRequest *sendToRequest, uint8_t *buffer)
+{
+    EncodeInt32(sendToRequest->SocketHandle, buffer);
+    buffer += 4;
+    EncodeUInt32(sendToRequest->BufferLength, buffer);
+    buffer += 4;
+    if (sendToRequest->BufferLength > 0)
+    {
+        memcpy((void *) buffer, (void *) sendToRequest->Buffer, sendToRequest->BufferLength);
+        buffer += sendToRequest->BufferLength;
+    }
+    EncodeInt32(sendToRequest->Length, buffer);
+    buffer += 4;
+    EncodeInt32(sendToRequest->Flags, buffer);
+    buffer += 4;
+    EncodeUInt32(sendToRequest->DestinationAddressLength, buffer);
+    buffer += 4;
+    if (sendToRequest->DestinationAddressLength > 0)
+    {
+        memcpy((void *) buffer, (void *) sendToRequest->DestinationAddress, sendToRequest->DestinationAddressLength);
+        buffer += sendToRequest->DestinationAddressLength;
+    }
+    EncodeInt32(sendToRequest->DestinationAddressLen, buffer);
+}
+
+/**
+ *  Calculate the amount of memory required to hold the given instance of the SendToRequest object.
+ *  
+ *  @param sendToRequest
+ *      SendToRequest object to be encoded.
+ *  
+ *  @returns
+ *      Number of bytes required to hold the encoded SendToRequest object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodedSendToRequestBufferSize
+int Encoders::EncodedSendToRequestBufferSize(Esp32Messaging::SendToRequest *sendToRequest)
+{
+    int result = 0;
+    result += sendToRequest->BufferLength;
+    result += sendToRequest->DestinationAddressLength;
+    return(result + 24);
+}
+
+/**
+ *  Extract the SendToRequest object that is encoded in the given buffer.
+ *  
+ *  Note that the returned pointer points to a block of memory on the heap and
+ *  this should eventually be released calling vPortFree(...).
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded SendToRequest object.
+ *  
+ *  @returns
+ *      Pointer to a SendToRequest object.
+ */
+// cppcheck-suppress unusedFunction symbolName=ExtractSendToRequest
+Esp32Messaging::SendToRequest *Encoders::ExtractSendToRequest(uint8_t *buffer)
+{
+    Esp32Messaging::SendToRequest *sendToRequest = (Esp32Messaging::SendToRequest *) pvPortMalloc(sizeof(Esp32Messaging::SendToRequest));
+
+    sendToRequest->SocketHandle = ExtractInt32(buffer);
+    buffer += 4;
+    sendToRequest->BufferLength = ExtractUInt32(buffer);
+    buffer += 4;
+    if (sendToRequest->BufferLength > 0)
+    {
+        sendToRequest->Buffer = (uint8_t *) pvPortMalloc(sendToRequest->BufferLength);
+        memcpy(sendToRequest->Buffer, buffer, sendToRequest->BufferLength);
+        buffer += sendToRequest->BufferLength;
+    }
+    else
+    {
+        sendToRequest->Buffer = nullptr;
+    }
+    sendToRequest->Length = ExtractInt32(buffer);
+    buffer += 4;
+    sendToRequest->Flags = ExtractInt32(buffer);
+    buffer += 4;
+    sendToRequest->DestinationAddressLength = ExtractUInt32(buffer);
+    buffer += 4;
+    if (sendToRequest->DestinationAddressLength > 0)
+    {
+        sendToRequest->DestinationAddress = (uint8_t *) pvPortMalloc(sendToRequest->DestinationAddressLength);
+        memcpy(sendToRequest->DestinationAddress, buffer, sendToRequest->DestinationAddressLength);
+        buffer += sendToRequest->DestinationAddressLength;
+    }
+    else
+    {
+        sendToRequest->DestinationAddress = nullptr;
+    }
+    sendToRequest->DestinationAddressLen = ExtractInt32(buffer);
+    return(sendToRequest);
+}
+
+/**
+ *  Convert the RecvFromRequest object into a byte stream that can be sent to the STM32.
+ *  
+ *  The amount of memory required can be obtained by calling the EncodedRecvFromRequestBufferSize method.
+ *  
+ *  @param recvFromRequest
+ *      RecvFromRequest object to be encoded.
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory large enough to hold the encoded RecvFromRequest object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodeRecvFromRequest
+void Encoders::EncodeRecvFromRequest(Esp32Messaging::RecvFromRequest *recvFromRequest, uint8_t *buffer)
+{
+    EncodeInt32(recvFromRequest->SocketHandle, buffer);
+    buffer += 4;
+    EncodeInt32(recvFromRequest->Length, buffer);
+    buffer += 4;
+    EncodeInt32(recvFromRequest->Flags, buffer);
+    buffer += 4;
+    EncodeInt32(recvFromRequest->GetSourceAddress, buffer);
+}
+
+/**
+ *  Calculate the amount of memory required to hold the given instance of the RecvFromRequest object.
+ *  
+ *  @param recvFromRequest
+ *      RecvFromRequest object to be encoded.
+ *  
+ *  @returns
+ *      Number of bytes required to hold the encoded RecvFromRequest object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodedRecvFromRequestBufferSize
+int Encoders::EncodedRecvFromRequestBufferSize(Esp32Messaging::RecvFromRequest *recvFromRequest)
+{
+    return(16);
+}
+
+/**
+ *  Extract the RecvFromRequest object that is encoded in the given buffer.
+ *  
+ *  Note that the returned pointer points to a block of memory on the heap and
+ *  this should eventually be released calling vPortFree(...).
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded RecvFromRequest object.
+ *  
+ *  @returns
+ *      Pointer to a RecvFromRequest object.
+ */
+// cppcheck-suppress unusedFunction symbolName=ExtractRecvFromRequest
+Esp32Messaging::RecvFromRequest *Encoders::ExtractRecvFromRequest(uint8_t *buffer)
+{
+    Esp32Messaging::RecvFromRequest *recvFromRequest = (Esp32Messaging::RecvFromRequest *) pvPortMalloc(sizeof(Esp32Messaging::RecvFromRequest));
+
+    recvFromRequest->SocketHandle = ExtractInt32(buffer);
+    buffer += 4;
+    recvFromRequest->Length = ExtractInt32(buffer);
+    buffer += 4;
+    recvFromRequest->Flags = ExtractInt32(buffer);
+    buffer += 4;
+    recvFromRequest->GetSourceAddress = ExtractInt32(buffer);
+    return(recvFromRequest);
+}
+
+/**
+ *  Convert the RecvFromResponse object into a byte stream that can be sent to the STM32.
+ *  
+ *  The amount of memory required can be obtained by calling the EncodedRecvFromResponseBufferSize method.
+ *  
+ *  @param recvFromResponse
+ *      RecvFromResponse object to be encoded.
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory large enough to hold the encoded RecvFromResponse object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodeRecvFromResponse
+void Encoders::EncodeRecvFromResponse(Esp32Messaging::RecvFromResponse *recvFromResponse, uint8_t *buffer)
+{
+    EncodeUInt32(recvFromResponse->BufferLength, buffer);
+    buffer += 4;
+    if (recvFromResponse->BufferLength > 0)
+    {
+        memcpy((void *) buffer, (void *) recvFromResponse->Buffer, recvFromResponse->BufferLength);
+        buffer += recvFromResponse->BufferLength;
+    }
+    EncodeInt32(recvFromResponse->Result, buffer);
+    buffer += 4;
+    EncodeInt32(recvFromResponse->ResponseErrno, buffer);
+    buffer += 4;
+    EncodeUInt32(recvFromResponse->SourceAddressLength, buffer);
+    buffer += 4;
+    if (recvFromResponse->SourceAddressLength > 0)
+    {
+        memcpy((void *) buffer, (void *) recvFromResponse->SourceAddress, recvFromResponse->SourceAddressLength);
+        buffer += recvFromResponse->SourceAddressLength;
+    }
+    EncodeUInt32(recvFromResponse->SourceAddressLen, buffer);
+}
+
+/**
+ *  Calculate the amount of memory required to hold the given instance of the RecvFromResponse object.
+ *  
+ *  @param recvFromResponse
+ *      RecvFromResponse object to be encoded.
+ *  
+ *  @returns
+ *      Number of bytes required to hold the encoded RecvFromResponse object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodedRecvFromResponseBufferSize
+int Encoders::EncodedRecvFromResponseBufferSize(Esp32Messaging::RecvFromResponse *recvFromResponse)
+{
+    int result = 0;
+    result += recvFromResponse->BufferLength;
+    result += recvFromResponse->SourceAddressLength;
+    return(result + 20);
+}
+
+/**
+ *  Extract the RecvFromResponse object that is encoded in the given buffer.
+ *  
+ *  Note that the returned pointer points to a block of memory on the heap and
+ *  this should eventually be released calling vPortFree(...).
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded RecvFromResponse object.
+ *  
+ *  @returns
+ *      Pointer to a RecvFromResponse object.
+ */
+// cppcheck-suppress unusedFunction symbolName=ExtractRecvFromResponse
+Esp32Messaging::RecvFromResponse *Encoders::ExtractRecvFromResponse(uint8_t *buffer)
+{
+    Esp32Messaging::RecvFromResponse *recvFromResponse = (Esp32Messaging::RecvFromResponse *) pvPortMalloc(sizeof(Esp32Messaging::RecvFromResponse));
+
+    recvFromResponse->BufferLength = ExtractUInt32(buffer);
+    buffer += 4;
+    if (recvFromResponse->BufferLength > 0)
+    {
+        recvFromResponse->Buffer = (uint8_t *) pvPortMalloc(recvFromResponse->BufferLength);
+        memcpy(recvFromResponse->Buffer, buffer, recvFromResponse->BufferLength);
+        buffer += recvFromResponse->BufferLength;
+    }
+    else
+    {
+        recvFromResponse->Buffer = nullptr;
+    }
+    recvFromResponse->Result = ExtractInt32(buffer);
+    buffer += 4;
+    recvFromResponse->ResponseErrno = ExtractInt32(buffer);
+    buffer += 4;
+    recvFromResponse->SourceAddressLength = ExtractUInt32(buffer);
+    buffer += 4;
+    if (recvFromResponse->SourceAddressLength > 0)
+    {
+        recvFromResponse->SourceAddress = (uint8_t *) pvPortMalloc(recvFromResponse->SourceAddressLength);
+        memcpy(recvFromResponse->SourceAddress, buffer, recvFromResponse->SourceAddressLength);
+        buffer += recvFromResponse->SourceAddressLength;
+    }
+    else
+    {
+        recvFromResponse->SourceAddress = nullptr;
+    }
+    recvFromResponse->SourceAddressLen = ExtractUInt32(buffer);
+    return(recvFromResponse);
+}
+
 
