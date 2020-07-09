@@ -12,6 +12,7 @@
 #include "WiFiRequestHandler.hpp"
 #include "Exceptions/MultipleInstancesException.hpp"
 #include "Mapping.hpp"
+#include "DebugSettings.hpp"
 
 /**
  *  Event handler for the WiFi loop.
@@ -331,6 +332,12 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
             break;
         case WiFiFunction::GetAddrInfo:
             GetAddrInfo(request);
+            break;
+        case WiFiFunction::SendTo:
+            SendTo(request);
+            break;
+        case WiFiFunction::RecvFrom:
+            RecvFrom(request);
             break;
         default:
             ESP_LOGI(__func__, "Unknown WiFi message received, function %d", request->Function);
@@ -698,7 +705,12 @@ void WiFiRequestHandler::Connect(Message *message)
     response.Result = connect(request->SocketHandle, &sa, request->AddrLen);
     if (response.Result != 0)
     {
-        response.Result = Mapping::GetStmValue(Mapping::Errno, errno);
+        int32_t result = 0;
+        if (Mapping::GetStmValue(Mapping::Errno, errno, &result) != 0)
+        {
+            result = Mapping::GetStmValue(Mapping::Errno, EFAULT, &result);
+        }
+        response.Result = result;
     }
 
     vPortFree(request);
@@ -764,7 +776,8 @@ void WiFiRequestHandler::SetSockOpt(Message *message)
     Esp32Messaging::TimeVal *tv = nullptr;
     struct timeval timeOut;
 
-    int32_t optionName = Mapping::GetEspValue(Mapping::SocketOptions, request->OptionName);
+    int32_t optionName;
+    Mapping::GetEspValue(Mapping::SocketOptions, request->OptionName, &optionName);
     switch (optionName)
     {
         // TODO: Implement remaining setsockopt features.
@@ -798,11 +811,17 @@ void WiFiRequestHandler::SetSockOpt(Message *message)
             break;
     }
 
-    int32_t level = Mapping::GetEspValue(Mapping::SocketLevel, request->Level);
+    int32_t level = 0;
+    Mapping::GetEspValue(Mapping::SocketLevel, request->Level, &level);
     response.Result = setsockopt(request->SocketNumber, level, optionName, optionValue, optionLength);
     if (response.Result < 0)
     {
-        response.ResponseErrno = Mapping::GetStmValue(Mapping::Errno, errno);
+        int32_t e = 0;
+        if (Mapping::GetStmValue(Mapping::Errno, errno, &e) != 0)
+        {
+            Mapping::GetStmValue(Mapping::Errno, EFAULT, &e);
+        }
+        response.ResponseErrno = e;
     }
     else
     {
@@ -839,7 +858,12 @@ void WiFiRequestHandler::Write(Message *message)
     response.Result = write(request->SocketHandle, request->Buffer, request->Count);
     if (response.Result < 0)
     {
-        response.ResponseErrno = Mapping::GetStmValue(Mapping::Errno, errno);;
+        int32_t e = 0;
+        if (Mapping::GetStmValue(Mapping::Errno, errno, &e) != 0)
+        {
+            Mapping::GetStmValue(Mapping::Errno, EFAULT, &e);
+        }
+        response.ResponseErrno = e;
     }
     else
     {
@@ -879,7 +903,12 @@ void WiFiRequestHandler::Read(Message *message)
     response.ReadResponseResult = read(request->SocketHandle, response.Buffer, request->Count);
     if (response.ReadResponseResult < 0)
     {
-        response.ReadResponseErrno = Mapping::GetStmValue(Mapping::Errno, errno);;
+        int32_t e = 0;
+        if (Mapping::GetStmValue(Mapping::Errno, errno, &e) != 0)
+        {
+            Mapping::GetStmValue(Mapping::Errno, EFAULT, &e);
+        }
+        response.ReadResponseErrno = e;
     }
     else
     {
@@ -922,7 +951,15 @@ void WiFiRequestHandler::Close(Message *message)
     response.Result = close(request->SocketHandle);
     if (response.Result != 0)
     {
-        response.Result = Mapping::GetStmValue(Mapping::Errno, errno);;
+        if (response.Result < 0)
+        {
+            int32_t e = 0;
+            if (Mapping::GetStmValue(Mapping::Errno, errno, &e) != 0)
+            {
+                Mapping::GetStmValue(Mapping::Errno, EFAULT, &e);
+            }
+            response.Result = e;
+        }
     }
 
     vPortFree(request);
@@ -931,6 +968,182 @@ void WiFiRequestHandler::Close(Message *message)
     message->PayloadLength = Encoders::EncodedIntegerAndErrnoResponseBufferSize(&response);
     message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
     Encoders::EncodeIntegerAndErrnoResponse(&response, message->Payload);
+    message->MessageType = MessageTypes::Response;
+    message->StatusCode = StatusCodes::CompletedOk;
+    _messageDispatcher->QueueMessageForStm32(message);
+    xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
+}
+
+/**
+ *  @brief Expose the sendto method to the STM32.
+ *
+ *  @param message
+ *      Message structure containing the parameters for the sendto method.
+ */
+void WiFiRequestHandler::SendTo(Message *message)
+{
+#if defined(WIFI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Entering method");
+#endif
+
+    Esp32Messaging::SendToRequest *request = Encoders::ExtractSendToRequest(message->Payload);
+
+    Esp32Messaging::IntegerAndErrnoResponse response;
+    int32_t mappedFlags = 0;
+    response.ResponseErrno = 0;
+    response.Result = Mapping::GetEspFlagValue(Mapping::MessageFlags, request->Flags, &mappedFlags);
+    if (response.Result == 0)
+    {
+        Esp32Messaging::SockAddr *socketAddress = Encoders::ExtractSockAddr(request->DestinationAddress);
+        struct sockaddr sa;
+        bzero(&sa, sizeof(struct sockaddr));
+        int32_t family = 0;
+        Mapping::GetEspValue(Mapping::AddressFamily, socketAddress->Family, &family);
+        sa.sa_family = (unsigned char) (family & 0xff);
+        sa.sa_len = socketAddress->Length;
+        memcpy(sa.sa_data, socketAddress->Data, 14);
+        vPortFree(socketAddress);
+        
+        response.Result = sendto(request->SocketHandle, request->Buffer, request->Length, mappedFlags, &sa, request->DestinationAddressLen);
+        if (response.Result < 0)
+        {
+            if (Mapping::GetStmValue(Mapping::Errno, errno, &response.ResponseErrno) != 0)
+            {
+                Mapping::GetStmValue(Mapping::Errno, EFAULT, &response.ResponseErrno);
+            }
+        }
+    }
+    else
+    {
+        Mapping::GetStmValue(Mapping::Errno, EFAULT, &response.ResponseErrno);
+    }
+
+    ESP_LOGI(__func__, "Result: %d, errno: %d", response.Result, response.ResponseErrno);
+
+    vPortFree(request);
+    vPortFree(message->Payload);
+
+    message->PayloadLength = Encoders::EncodedIntegerAndErrnoResponseBufferSize(&response);
+    message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
+    Encoders::EncodeIntegerAndErrnoResponse(&response, message->Payload);
+    message->MessageType = MessageTypes::Response;
+    message->StatusCode = StatusCodes::CompletedOk;
+    _messageDispatcher->QueueMessageForStm32(message);
+    xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
+}
+
+/**
+ *  @brief Expose the recvfrom method to the STM32.
+ *
+ *  @param message
+ *      Message structure containing the parameters for the recvfrom method.
+ */
+void WiFiRequestHandler::RecvFrom(Message *message)
+{
+#if defined(WIFI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Entering method");
+#endif
+
+    Esp32Messaging::RecvFromRequest *request = Encoders::ExtractRecvFromRequest(message->Payload);
+
+    Esp32Messaging::RecvFromResponse response;
+    int32_t mappedFlags = 0;
+    response.ResponseErrno = 0;
+    response.Result = Mapping::GetEspFlagValue(Mapping::MessageFlags, request->Flags, &mappedFlags);
+    if (response.Result == 0)
+    {
+        struct sockaddr *sa = NULL;
+        socklen_t len;
+        if (request->GetSourceAddress != 0)
+        {
+            sa = (struct sockaddr *) pvPortMalloc(sizeof(struct sockaddr));
+            len = sizeof(struct sockaddr);
+        }
+        response.Buffer = (uint8_t *) pvPortMalloc(request->Length);
+        if (response.Buffer == NULL)
+        {
+            response.Buffer = nullptr;
+            response.Result = -1;
+            errno = ENOMEM;
+        }
+        else
+        {
+            response.Result = recvfrom(request->SocketHandle, response.Buffer, request->Length, mappedFlags, sa, (sa == NULL) ? NULL : &len);
+        }    
+        
+        if (response.Result < 0)
+        {
+            if (Mapping::GetStmValue(Mapping::Errno, errno, &response.ResponseErrno) != 0)
+            {
+                Mapping::GetStmValue(Mapping::Errno, EFAULT, &response.ResponseErrno);
+            }
+        }
+        else
+        {
+            if (request->GetSourceAddress != 0)
+            {
+                Esp32Messaging::SockAddr socketAddress;
+                bzero((void *) &socketAddress, sizeof(Esp32Messaging::SockAddr));
+                int family;
+                Mapping::GetStmValue(Mapping::AddressFamily, sa->sa_family, &family);
+                socketAddress.Family = (uint8_t) (family & 0xff);
+                socketAddress.Length = len;
+                if (len > sizeof(socketAddress.Data))
+                {
+                    memcpy(socketAddress.Data, sa->sa_data, sizeof(socketAddress.Data));
+                }
+                else
+                {
+                    memcpy(socketAddress.Data, sa->sa_data, len);
+                }
+                response.SourceAddressLength = Encoders::EncodedSockAddrBufferSize(&socketAddress);
+                response.SourceAddress = (uint8_t *) pvPortMalloc(response.SourceAddressLength);
+                if (response.SourceAddress == NULL)
+                {
+                    response.SourceAddressLength = 0;
+                    response.SourceAddressLen = 0;
+                    response.Result = -1;
+                }
+                else
+                {
+                    Encoders::EncodeSockAddr(&socketAddress, response.SourceAddress);
+                }
+            }
+            else
+            {
+                response.SourceAddress = nullptr;
+                response.SourceAddressLength = 0;
+                response.SourceAddressLen = 0;
+            }
+            response.BufferLength = response.Result;
+        }
+
+        if (sa != NULL)
+        {
+            vPortFree(sa);
+        }
+    }
+    else
+    {
+        Mapping::GetStmValue(Mapping::Errno, EFAULT, &response.ResponseErrno);
+    }
+
+    ESP_LOGI(__func__, "Result: %d, errno: %d", response.Result, response.ResponseErrno);
+
+    vPortFree(request);
+    vPortFree(message->Payload);
+
+    message->PayloadLength = Encoders::EncodedRecvFromResponseBufferSize(&response);
+    message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
+    Encoders::EncodeRecvFromResponse(&response, message->Payload);
+    if (response.Buffer)
+    {
+        vPortFree(response.Buffer);
+    }
+    if (response.SourceAddress)
+    {
+        vPortFree(response.SourceAddress);
+    }
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
@@ -960,9 +1173,9 @@ void WiFiRequestHandler::Close(Message *message)
  */
 esp_err_t WiFiRequestHandler::EventHandler(void *ctx, system_event_t *event)
 {
-#if defined(WIFI_FULL_LOGGING)
-    ESP_LOGI(__func__, "Entering method");
-#endif
+// #if defined(WIFI_FULL_LOGGING)
+//     ESP_LOGI(__func__, "Entering method");
+// #endif
 
     switch (event->event_id)
     {
