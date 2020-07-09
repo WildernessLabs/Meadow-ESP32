@@ -40,7 +40,7 @@
           "EnumNames": [
               "Start", "Stop", "ConnectToAp", "Disconnect", "GetAccessPoints", "GetConfiguration", "SetConfiguration",
               "SetAntenna", "GetAntenna",
-              "GetAddrInfo", "Socket", "Connect", "FreeAddrInfo", "Write", "SetSockOpt", "Read", "Close"
+              "GetAddrInfo", "Socket", "Connect", "FreeAddrInfo", "Write", "SetSockOpt", "Read", "Close", "SendTo", "RecvFrom"
           ]
         },
         {

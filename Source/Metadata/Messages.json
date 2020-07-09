@@ -201,7 +201,40 @@
             "Name": "GetBatteryChargeLevelResponse",
             "MessageElements":
             [
-                {"Name": "Level", "DataType": "uint32" }
+                { "Name": "Level", "DataType": "uint32" }
+            ]
+        },
+        {
+            "Name": "SendToRequest",
+            "MessageElements":
+            [
+                { "Name": "SocketHandle", "DataType": "int" },
+                { "Name": "Buffer", "DataType": "blob" },
+                { "Name": "Length", "DataType": "int" },
+                { "Name": "Flags", "DataType": "int" },
+                { "Name": "DestinationAddress", "DataType": "blob" },
+                { "Name": "DestinationAddressLen", "DataType": "int" }
+            ]
+        },
+        {
+            "Name": "RecvFromRequest",
+            "MessageElements":
+            [
+                { "Name": "SocketHandle", "DataType": "int" },
+                { "Name": "Length", "DataType": "int" },
+                { "Name": "Flags", "DataType": "int" },
+                { "Name": "GetSourceAddress", "DataType": "int"}
+            ]
+        },
+        {
+            "Name": "RecvFromResponse",
+            "MessageElements":
+            [
+                { "Name": "Buffer", "DataType": "blob" },
+                { "Name": "Result", "DataType": "int" },
+                { "Name": "ResponseErrno", "DataType": "int" },
+                { "Name": "SourceAddress", "DataType": "blob" },
+                { "Name": "SourceAddressLen", "DataType": "uint32" }
             ]
         }
     ]
