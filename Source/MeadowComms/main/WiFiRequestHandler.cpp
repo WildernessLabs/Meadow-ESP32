@@ -122,7 +122,10 @@ WiFiRequestHandler::~WiFiRequestHandler()
  */
 void WiFiRequestHandler::GetAntenna(Message *request) const
 {
-    ESP_LOGI(__func__, "Entering method.");
+#if defined(WIFI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Enter");
+#endif
+
     Logging::DumpMessage(__func__, request);
 
     request->MessageType = MessageTypes::Response;
@@ -139,6 +142,10 @@ void WiFiRequestHandler::GetAntenna(Message *request) const
         ESP_LOGE(__func__, "Cannot queue message for STM32.");
     }
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
+
+#if defined(WIFI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Exit");
+#endif
 }
 
 /**
@@ -156,7 +163,10 @@ void WiFiRequestHandler::GetAntenna(Message *request) const
  */
 void WiFiRequestHandler::SetAntenna(Message *request)
 {
-    ESP_LOGI(__func__, "Entering method.");
+#if defined(WIFI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Enter");
+#endif
+
     if (request->PayloadLength > 0)
     {
         Esp32Messaging::AntennaInfo *antenna = Encoders::ExtractAntennaInfo(request->Payload);
@@ -185,6 +195,10 @@ void WiFiRequestHandler::SetAntenna(Message *request)
         ESP_LOGE(__func__, "Cannot queue message for STM32.");
     }
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
+
+#if defined(WIFI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Exit");
+#endif
 }
 
 /*
@@ -207,10 +221,14 @@ void WiFiRequestHandler::SetAntenna(Message *request)
 gpio_num_t WiFiRequestHandler::ConvertAntennaToPin(AntennaTypes::AntennaTypes antenna)
 {
 #if defined(WIFI_FULL_LOGGING)
-    ESP_LOGI(__func__, "Entering method");
+    ESP_LOGI(__func__, "Enter");
 #endif
 
     return((antenna == AntennaTypes::OnBoard) ? ON_BOARD_ANTENNA_PIN : EXTERNAL_ANTENNA_PIN);
+
+#if defined(WIFI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Exit");
+#endif
 }
 
 /**
@@ -222,7 +240,7 @@ gpio_num_t WiFiRequestHandler::ConvertAntennaToPin(AntennaTypes::AntennaTypes an
 void WiFiRequestHandler::SwitchAntenna(AntennaTypes::AntennaTypes newAntenna)
 {
 #if defined(WIFI_FULL_LOGGING)
-    ESP_LOGI(__func__, "Entering method");
+    ESP_LOGI(__func__, "Enter");
 #endif
 
     //
@@ -236,6 +254,10 @@ void WiFiRequestHandler::SwitchAntenna(AntennaTypes::AntennaTypes newAntenna)
     gpio_set_level(oldAntennaPin, 0);
     gpio_set_level(newAntennaPin, 1);
     _config.Antenna = newAntenna;
+
+#if defined(WIFI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Exit");
+#endif
 }
 
 /**
@@ -244,7 +266,7 @@ void WiFiRequestHandler::SwitchAntenna(AntennaTypes::AntennaTypes newAntenna)
 void WiFiRequestHandler::Setup()
 {
 #if defined(WIFI_FULL_LOGGING)
-    ESP_LOGI(__func__, "Entering method");
+    ESP_LOGI(__func__, "Enter");
 #endif
 
     RequestHandlerBase::Setup();
@@ -264,6 +286,10 @@ void WiFiRequestHandler::Setup()
     _xWiFiEventGroup = xEventGroupCreate();
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
     xTaskCreate(Task, TASK_NAME, 2048 * 2, this, configMAX_PRIORITIES - 1, &_taskHandle);
+
+#if defined(WIFI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Exit");
+#endif
 }
 
 /**
@@ -275,7 +301,7 @@ void WiFiRequestHandler::Setup()
 void WiFiRequestHandler::DispatchRequest(Message *request)
 {
 #if defined(WIFI_FULL_LOGGING)
-    ESP_LOGI(__func__, "Entering method");
+    ESP_LOGI(__func__, "Enter");
 #endif
 
     xEventGroupClearBits(_xWiFiEventGroup, WIFI_READY_BIT);
@@ -348,6 +374,10 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
             break;
     }
     xEventGroupWaitBits(_xWiFiEventGroup, WIFI_READY_BIT, pdTRUE, pdTRUE, portMAX_DELAY);
+
+#if defined(WIFI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Exit");
+#endif
 }
 
 /**
@@ -362,13 +392,17 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
 void WiFiRequestHandler::SendResponse(Message *request, uint32_t statusCode)
 {
 #if defined(WIFI_FULL_LOGGING)
-    ESP_LOGI(__func__, "Entering method");
+    ESP_LOGI(__func__, "Enter");
 #endif
 
     request->DeletePayload();
     request->StatusCode = statusCode;
     _messageDispatcher->QueueMessageForStm32(request);
     _currentRequest = nullptr;
+
+#if defined(WIFI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Exit");
+#endif
 }
 
 /**
@@ -380,11 +414,15 @@ void WiFiRequestHandler::SendResponse(Message *request, uint32_t statusCode)
 void WiFiRequestHandler::GetConfiguration(Message *message)
 {
 #if defined(WIFI_FULL_LOGGING)
-    ESP_LOGI(__func__, "Entering method");
+    ESP_LOGI(__func__, "Enter");
 #endif
 
     // TODO: WiFi - GetConfiguration
     ESP_LOGE(__func__, "GetConfiguration function is not implemented yet.");
+
+#if defined(WIFI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Exit");
+#endif
 }
 
 /**
@@ -396,11 +434,15 @@ void WiFiRequestHandler::GetConfiguration(Message *message)
 void WiFiRequestHandler::SetConfiguration(Message *message)
 {
 #if defined(WIFI_FULL_LOGGING)
-    ESP_LOGI(__func__, "Entering method");
+    ESP_LOGI(__func__, "Enter");
 #endif
 
     // TODO: WiFi - SetConfiguration
     ESP_LOGE(__func__, "SetConfiguration function is not implemented yet.");
+
+#if defined(WIFI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Exit");
+#endif
 }
 
 /**
@@ -412,11 +454,15 @@ void WiFiRequestHandler::SetConfiguration(Message *message)
 void WiFiRequestHandler::Disconnect(Message *message)
 {
 #if defined(WIFI_FULL_LOGGING)
-    ESP_LOGI(__func__, "Entering method");
+    ESP_LOGI(__func__, "Enter");
 #endif
 
     // TODO: WiFi - Disconnect from access point.
     ESP_LOGE(__func__, "Disconnect function is not implemented yet.");
+
+#if defined(WIFI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Exit");
+#endif
 }
 
 /**
@@ -428,11 +474,15 @@ void WiFiRequestHandler::Disconnect(Message *message)
 void WiFiRequestHandler::Stop(Message *message)
 {
 #if defined(WIFI_FULL_LOGGING)
-    ESP_LOGI(__func__, "Entering method");
+    ESP_LOGI(__func__, "Enter");
 #endif
 
     // TODO: WiFi - Stop network
     ESP_LOGE(__func__, "Stop function is not implemented yet.");
+
+#if defined(WIFI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Exit");
+#endif
 }
 
 /**
@@ -444,11 +494,15 @@ void WiFiRequestHandler::Stop(Message *message)
 void WiFiRequestHandler::ConnectToAp(Message *message)
 {
 #if defined(WIFI_FULL_LOGGING)
-    ESP_LOGI(__func__, "Entering method");
+    ESP_LOGI(__func__, "Enter");
 #endif
 
     // TODO: WiFi - Connect to access point.
     ESP_LOGE(__func__, "Connect to access point function is not implemented yet.");
+
+#if defined(WIFI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Exit");
+#endif
 }
 
 /**
@@ -460,7 +514,7 @@ void WiFiRequestHandler::ConnectToAp(Message *message)
 void WiFiRequestHandler::StartNetwork(Message *request)
 {
 #if defined(WIFI_FULL_LOGGING)
-    ESP_LOGI(__func__, "Entering method");
+    ESP_LOGI(__func__, "Enter");
 #endif
 
     EventBits_t bits = xEventGroupGetBits(_xWiFiEventGroup);
@@ -532,6 +586,10 @@ void WiFiRequestHandler::StartNetwork(Message *request)
     {
         SendResponse(request, StatusCodes::WiFiAlreadyStarted);
     }
+
+#if defined(WIFI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Exit");
+#endif
 }
 
 /**
@@ -546,7 +604,7 @@ void WiFiRequestHandler::StartNetwork(Message *request)
 void WiFiRequestHandler::GetAvailableNetworks(Message *request)
 {
 #if defined(WIFI_FULL_LOGGING)
-    ESP_LOGI(__func__, "Entering method");
+    ESP_LOGI(__func__, "Enter");
 #endif
 
     wifi_active_scan_time_t activeScanTime =
@@ -569,6 +627,10 @@ void WiFiRequestHandler::GetAvailableNetworks(Message *request)
     };
     _currentRequest = request;
     ESP_ERROR_CHECK(esp_wifi_scan_start(&scanConf, true));
+
+#if defined(WIFI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Exit");
+#endif
 }
 
 /**
@@ -580,7 +642,7 @@ void WiFiRequestHandler::GetAvailableNetworks(Message *request)
 void WiFiRequestHandler::GetAddrInfo(Message *message)
 {
 #if defined(WIFI_FULL_LOGGING)
-    ESP_LOGI(__func__, "Entering method");
+    ESP_LOGI(__func__, "Enter");
 #endif
 
     Esp32Messaging::GetAddrInfoRequest *request = Encoders::ExtractGetAddrInfoRequest(message->Payload);
@@ -649,6 +711,10 @@ void WiFiRequestHandler::GetAddrInfo(Message *message)
     message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
+
+#if defined(WIFI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Exit");
+#endif
 }
 
 /**
@@ -660,7 +726,7 @@ void WiFiRequestHandler::GetAddrInfo(Message *message)
 void WiFiRequestHandler::Socket(Message *message)
 {
 #if defined(WIFI_FULL_LOGGING)
-    ESP_LOGI(__func__, "Entering method");
+    ESP_LOGI(__func__, "Enter");
 #endif
 
     Esp32Messaging::SocketRequest *request = Encoders::ExtractSocketRequest(message->Payload);
@@ -678,6 +744,10 @@ void WiFiRequestHandler::Socket(Message *message)
     message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
+
+#if defined(WIFI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Exit");
+#endif
 }
 
 /**
@@ -689,7 +759,7 @@ void WiFiRequestHandler::Socket(Message *message)
 void WiFiRequestHandler::Connect(Message *message)
 {
 #if defined(WIFI_FULL_LOGGING)
-    ESP_LOGI(__func__, "Entering method");
+    ESP_LOGI(__func__, "Enter");
 #endif
 
     Esp32Messaging::ConnectRequest *request = Encoders::ExtractConnectRequest(message->Payload);
@@ -723,6 +793,10 @@ void WiFiRequestHandler::Connect(Message *message)
     message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
+
+#if defined(WIFI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Exit");
+#endif
 }
 
 /**
@@ -734,7 +808,7 @@ void WiFiRequestHandler::Connect(Message *message)
 void WiFiRequestHandler::FreeAddrInfo(Message *message)
 {
 #if defined(WIFI_FULL_LOGGING)
-    ESP_LOGI(__func__, "Entering method");
+    ESP_LOGI(__func__, "Enter");
 #endif
 
     ESP_LOGI(__func__, "Releasing addrinfo storage.");
@@ -754,6 +828,10 @@ void WiFiRequestHandler::FreeAddrInfo(Message *message)
 
     _messageDispatcher->QueueMessageForStm32(message);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
+
+#if defined(WIFI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Exit");
+#endif
 }
 
 /**
@@ -765,7 +843,7 @@ void WiFiRequestHandler::FreeAddrInfo(Message *message)
 void WiFiRequestHandler::SetSockOpt(Message *message)
 {
 #if defined(WIFI_FULL_LOGGING)
-    ESP_LOGI(__func__, "Entering method");
+    ESP_LOGI(__func__, "Enter");
 #endif
 
     Esp32Messaging::SetSockOptRequest *request = Encoders::ExtractSetSockOptRequest(message->Payload);
@@ -838,6 +916,10 @@ void WiFiRequestHandler::SetSockOpt(Message *message)
     message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
+
+#if defined(WIFI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Exit");
+#endif
 }
 
 /**
@@ -849,7 +931,7 @@ void WiFiRequestHandler::SetSockOpt(Message *message)
 void WiFiRequestHandler::Write(Message *message)
 {
 #if defined(WIFI_FULL_LOGGING)
-    ESP_LOGI(__func__, "Entering method");
+    ESP_LOGI(__func__, "Enter");
 #endif
 
     Esp32Messaging::WriteRequest *request = Encoders::ExtractWriteRequest(message->Payload);
@@ -880,6 +962,10 @@ void WiFiRequestHandler::Write(Message *message)
     message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
+
+#if defined(WIFI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Exit");
+#endif
 }
 
 /**
@@ -891,7 +977,7 @@ void WiFiRequestHandler::Write(Message *message)
 void WiFiRequestHandler::Read(Message *message)
 {
 #if defined(WIFI_FULL_LOGGING)
-    ESP_LOGI(__func__, "Entering method");
+    ESP_LOGI(__func__, "Enter");
 #endif
 
     Esp32Messaging::ReadRequest *request = Encoders::ExtractReadRequest(message->Payload);
@@ -931,6 +1017,10 @@ void WiFiRequestHandler::Read(Message *message)
     message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
+
+#if defined(WIFI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Exit");
+#endif
 }
 
 /**
@@ -942,7 +1032,7 @@ void WiFiRequestHandler::Read(Message *message)
 void WiFiRequestHandler::Close(Message *message)
 {
 #if defined(WIFI_FULL_LOGGING)
-    ESP_LOGI(__func__, "Entering method");
+    ESP_LOGI(__func__, "Enter");
 #endif
 
     Esp32Messaging::CloseRequest *request = Encoders::ExtractCloseRequest(message->Payload);
@@ -972,6 +1062,10 @@ void WiFiRequestHandler::Close(Message *message)
     message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
+
+#if defined(WIFI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Exit");
+#endif
 }
 
 /**
@@ -983,7 +1077,7 @@ void WiFiRequestHandler::Close(Message *message)
 void WiFiRequestHandler::SendTo(Message *message)
 {
 #if defined(WIFI_FULL_LOGGING)
-    ESP_LOGI(__func__, "Entering method");
+    ESP_LOGI(__func__, "Enter");
 #endif
 
     Esp32Messaging::SendToRequest *request = Encoders::ExtractSendToRequest(message->Payload);
@@ -1018,8 +1112,13 @@ void WiFiRequestHandler::SendTo(Message *message)
         Mapping::GetStmValue(Mapping::Errno, EFAULT, &response.ResponseErrno);
     }
 
+#if defined(WIFI_DEBUG_SENDTO_DATA) || defined(WIFI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Sent %d bytes.", request->Length);
+    ESP_LOG_BUFFER_HEX(__func__, request->Buffer, request->Length);
     ESP_LOGI(__func__, "Result: %d, errno: %d", response.Result, response.ResponseErrno);
+#endif
 
+    vPortFree(request->Buffer);
     vPortFree(request);
     vPortFree(message->Payload);
 
@@ -1030,6 +1129,10 @@ void WiFiRequestHandler::SendTo(Message *message)
     message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
+
+#if defined(WIFI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Exit");
+#endif
 }
 
 /**
@@ -1041,7 +1144,7 @@ void WiFiRequestHandler::SendTo(Message *message)
 void WiFiRequestHandler::RecvFrom(Message *message)
 {
 #if defined(WIFI_FULL_LOGGING)
-    ESP_LOGI(__func__, "Entering method");
+    ESP_LOGI(__func__, "Enter");
 #endif
 
     Esp32Messaging::RecvFromRequest *request = Encoders::ExtractRecvFromRequest(message->Payload);
@@ -1057,6 +1160,7 @@ void WiFiRequestHandler::RecvFrom(Message *message)
         if (request->GetSourceAddress != 0)
         {
             sa = (struct sockaddr *) pvPortMalloc(sizeof(struct sockaddr));
+            bzero(sa, sizeof(struct sockaddr));
             len = sizeof(struct sockaddr);
         }
         response.Buffer = (uint8_t *) pvPortMalloc(request->Length);
@@ -1127,8 +1231,11 @@ void WiFiRequestHandler::RecvFrom(Message *message)
     {
         Mapping::GetStmValue(Mapping::Errno, EFAULT, &response.ResponseErrno);
     }
-
+#if defined(WIFI_DEBUG_RECVFROM_DATA) || defined(WIFI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Received %d bytes.", response.Result);
+    ESP_LOG_BUFFER_HEX(__func__, response.Buffer, response.Result);
     ESP_LOGI(__func__, "Result: %d, errno: %d", response.Result, response.ResponseErrno);
+#endif
 
     vPortFree(request);
     vPortFree(message->Payload);
@@ -1148,6 +1255,10 @@ void WiFiRequestHandler::RecvFrom(Message *message)
     message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
+
+#if defined(WIFI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Exit");
+#endif
 }
 
 /*
@@ -1174,7 +1285,7 @@ void WiFiRequestHandler::RecvFrom(Message *message)
 esp_err_t WiFiRequestHandler::EventHandler(void *ctx, system_event_t *event)
 {
 // #if defined(WIFI_FULL_LOGGING)
-//     ESP_LOGI(__func__, "Entering method");
+//     ESP_LOGI(__func__, "Enter");
 // #endif
 
     switch (event->event_id)
@@ -1206,7 +1317,7 @@ esp_err_t WiFiRequestHandler::EventHandler(void *ctx, system_event_t *event)
 void WiFiRequestHandler::StationGotIpEvent(system_event_t *eventData)
 {
 #if defined(WIFI_FULL_LOGGING)
-    ESP_LOGI(__func__, "Entering method");
+    ESP_LOGI(__func__, "Enter");
 #endif
 
     _currentRetryCount = 0;
@@ -1226,6 +1337,10 @@ void WiFiRequestHandler::StationGotIpEvent(system_event_t *eventData)
     }
     xEventGroupClearBits(_xWiFiEventGroup, WIFI_CONNECTING_BIT | WIFI_RECONNECTING_BIT);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT | WIFI_READY_BIT);
+
+#if defined(WIFI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Exit");
+#endif
 }
 
 /**
@@ -1269,7 +1384,7 @@ void WiFiRequestHandler::StationDisconnectedEvent(system_event_t *eventData)
 void WiFiRequestHandler::ScanCompleteEvent(system_event_t *event)
 {
 #if defined(WIFI_FULL_LOGGING)
-    ESP_LOGI(__func__, "Entering method");
+    ESP_LOGI(__func__, "Enter");
 #endif
 
     uint16_t apCount = 0;
@@ -1327,4 +1442,8 @@ void WiFiRequestHandler::ScanCompleteEvent(system_event_t *event)
     _messageDispatcher->QueueMessageForStm32(_currentRequest);
     _currentRequest = nullptr;
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
+
+#if defined(WIFI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Exit");
+#endif
 }
