@@ -43,4 +43,13 @@
 #define WIFI_FULL_LOGGING 1
 //#undef WIFI_FULL_LOGGING
 
+#define WIFI_DEBUG_RECVFROM_DATA 1
+// #undef WIFI_DEBUG_RECVFROM_DATA
+
+#define WIFI_DEBUG_SENDTO_DATA 1
+// #undef WIFI_DEBUG_SENDTO_DATA
+
+extern char *enterMethodString;
+extern char *exitMethodString;
+
 #endif /*_MAIN_DEBUGSETTINGS_HPP_ */
