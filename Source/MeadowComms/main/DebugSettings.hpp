@@ -43,11 +43,20 @@
 #define WIFI_FULL_LOGGING 1
 //#undef WIFI_FULL_LOGGING
 
+#define WIFI_CONNECT 1
+// #undef WIFI_CONNECT
+
+#define WIFI_POLL 1
+// #undef WIFI_POLL
+
 #define WIFI_DEBUG_RECVFROM_DATA 1
 // #undef WIFI_DEBUG_RECVFROM_DATA
 
 #define WIFI_DEBUG_SENDTO_DATA 1
 // #undef WIFI_DEBUG_SENDTO_DATA
+
+#define WIFI_SELECT 2
+// #undef WIFI_SELECT
 
 extern char *enterMethodString;
 extern char *exitMethodString;
