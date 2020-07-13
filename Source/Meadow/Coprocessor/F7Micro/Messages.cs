@@ -60,9 +60,12 @@ namespace Meadow.Coprocessor.F7Micro.Messages
 
     public struct SockAddr
     {
-        public Byte Length;
         public Byte Family;
-        public Byte[] Data;
+        public UInt16 Port;
+        public UInt32 Ip4Address;
+        public UInt32 FlowInfo;
+        public Byte[] Ip6Address;
+        public UInt32 ScopeID;
     };
 
     public struct AddrInfo
@@ -120,7 +123,6 @@ namespace Meadow.Coprocessor.F7Micro.Messages
         public Int32 SocketHandle;
         public UInt32 AddrLength;
         public byte[] Addr;
-        public Int32 AddrLen;
     };
 
     public struct FreeAddrInfoRequest
@@ -191,7 +193,6 @@ namespace Meadow.Coprocessor.F7Micro.Messages
         public Int32 Flags;
         public UInt32 DestinationAddressLength;
         public byte[] DestinationAddress;
-        public Int32 DestinationAddressLen;
     };
 
     public struct RecvFromRequest

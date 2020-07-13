@@ -58,9 +58,12 @@
             "Name": "SockAddr",
             "MessageElements": 
             [
-                { "Name": "Length", "DataType": "byte" },
                 { "Name": "Family", "DataType": "byte" },
-                { "Name": "Data", "DataType": "fixedbytearray", "Length": "14" }
+                { "Name": "Port", "DataType": "uint16" },
+                { "Name": "Ip4Address", "DataType": "uint32" },
+                { "Name": "FlowInfo", "DataTYpe": "uint32"},
+                { "Name": "Ip6Address", "DataTYpe": "fixedbytearray", "Length": "16"},
+                { "Name": "ScopeID", "DataType": "uint32"}
             ]
         },
         {
@@ -126,8 +129,7 @@
             "MessageElements":
             [
               { "Name": "SocketHandle", "DataType": "int" },
-              { "Name": "Addr", "DataType": "blob" },
-              { "Name": "AddrLen", "DataType": "int" }
+              { "Name": "Addr", "DataType": "blob" }
             ]
         },
         {
@@ -212,8 +214,7 @@
                 { "Name": "Buffer", "DataType": "blob" },
                 { "Name": "Length", "DataType": "int" },
                 { "Name": "Flags", "DataType": "int" },
-                { "Name": "DestinationAddress", "DataType": "blob" },
-                { "Name": "DestinationAddressLen", "DataType": "int" }
+                { "Name": "DestinationAddress", "DataType": "blob" }
             ]
         },
         {

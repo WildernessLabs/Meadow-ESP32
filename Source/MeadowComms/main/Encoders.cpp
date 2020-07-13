@@ -822,11 +822,17 @@ Esp32Messaging::AccessPointList *Encoders::ExtractAccessPointList(uint8_t *buffe
 // cppcheck-suppress unusedFunction symbolName=EncodeSockAddr
 void Encoders::EncodeSockAddr(Esp32Messaging::SockAddr *sockAddr, uint8_t *buffer)
 {
-    *buffer = sockAddr->Length;
-    buffer += 1;
     *buffer = sockAddr->Family;
     buffer += 1;
-    memcpy((void *) buffer, (void *) sockAddr->Data, 14);
+    EncodeUInt16(sockAddr->Port, buffer);
+    buffer += 2;
+    EncodeUInt32(sockAddr->Ip4Address, buffer);
+    buffer += 4;
+    EncodeUInt32(sockAddr->FlowInfo, buffer);
+    buffer += 4;
+    memcpy((void *) buffer, (void *) sockAddr->Ip6Address, 16);
+    buffer += 16;
+    EncodeUInt32(sockAddr->ScopeID, buffer);
 }
 
 /**
@@ -841,7 +847,7 @@ void Encoders::EncodeSockAddr(Esp32Messaging::SockAddr *sockAddr, uint8_t *buffe
 // cppcheck-suppress unusedFunction symbolName=EncodedSockAddrBufferSize
 int Encoders::EncodedSockAddrBufferSize(Esp32Messaging::SockAddr *sockAddr)
 {
-    return(16);
+    return(31);
 }
 
 /**
@@ -861,11 +867,17 @@ Esp32Messaging::SockAddr *Encoders::ExtractSockAddr(uint8_t *buffer)
 {
     Esp32Messaging::SockAddr *sockAddr = (Esp32Messaging::SockAddr *) pvPortMalloc(sizeof(Esp32Messaging::SockAddr));
 
-    sockAddr->Length = *buffer;
-    buffer += 1;
     sockAddr->Family = *buffer;
     buffer += 1;
-    memcpy((void *) sockAddr->Data, (void *) buffer, 14);
+    sockAddr->Port = ExtractUInt16(buffer);
+    buffer += 2;
+    sockAddr->Ip4Address = ExtractUInt32(buffer);
+    buffer += 4;
+    sockAddr->FlowInfo = ExtractUInt32(buffer);
+    buffer += 4;
+    memcpy((void *) sockAddr->Ip6Address, (void *) buffer, 16);
+    buffer += 16;
+    sockAddr->ScopeID = ExtractUInt32(buffer);
     return(sockAddr);
 }
 
@@ -1344,9 +1356,7 @@ void Encoders::EncodeConnectRequest(Esp32Messaging::ConnectRequest *connectReque
     if (connectRequest->AddrLength > 0)
     {
         memcpy((void *) buffer, (void *) connectRequest->Addr, connectRequest->AddrLength);
-        buffer += connectRequest->AddrLength;
     }
-    EncodeInt32(connectRequest->AddrLen, buffer);
 }
 
 /**
@@ -1363,7 +1373,7 @@ int Encoders::EncodedConnectRequestBufferSize(Esp32Messaging::ConnectRequest *co
 {
     int result = 0;
     result += connectRequest->AddrLength;
-    return(result + 12);
+    return(result + 8);
 }
 
 /**
@@ -1397,7 +1407,6 @@ Esp32Messaging::ConnectRequest *Encoders::ExtractConnectRequest(uint8_t *buffer)
     {
         connectRequest->Addr = nullptr;
     }
-    connectRequest->AddrLen = ExtractInt32(buffer);
     return(connectRequest);
 }
 
@@ -2005,9 +2014,7 @@ void Encoders::EncodeSendToRequest(Esp32Messaging::SendToRequest *sendToRequest,
     if (sendToRequest->DestinationAddressLength > 0)
     {
         memcpy((void *) buffer, (void *) sendToRequest->DestinationAddress, sendToRequest->DestinationAddressLength);
-        buffer += sendToRequest->DestinationAddressLength;
     }
-    EncodeInt32(sendToRequest->DestinationAddressLen, buffer);
 }
 
 /**
@@ -2025,7 +2032,7 @@ int Encoders::EncodedSendToRequestBufferSize(Esp32Messaging::SendToRequest *send
     int result = 0;
     result += sendToRequest->BufferLength;
     result += sendToRequest->DestinationAddressLength;
-    return(result + 24);
+    return(result + 20);
 }
 
 /**
@@ -2075,7 +2082,6 @@ Esp32Messaging::SendToRequest *Encoders::ExtractSendToRequest(uint8_t *buffer)
     {
         sendToRequest->DestinationAddress = nullptr;
     }
-    sendToRequest->DestinationAddressLen = ExtractInt32(buffer);
     return(sendToRequest);
 }
 

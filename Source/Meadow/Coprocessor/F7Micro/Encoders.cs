@@ -655,19 +655,25 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             //
             //  Calculate the amount of memory needed.
             //
-            length += (int) 14;
-            length += 2;
+            length += (int) 16;
+            length += 15;
 
             //
             //  Now allocate a new buffer and copy the data in to the buffer.
             //
             byte[] buffer = new byte[length];
             Array.Clear(buffer, 0, buffer.Length);
-            buffer[offset] = sockAddr.Length;
-            offset += 1;
             buffer[offset] = sockAddr.Family;
             offset += 1;
-            Array.Copy(sockAddr.Data, 0, buffer, offset, 14);
+            EncodeUInt16(sockAddr.Port, buffer, offset);
+            offset += 2;
+            EncodeUInt32(sockAddr.Ip4Address, buffer, offset);
+            offset += 4;
+            EncodeUInt32(sockAddr.FlowInfo, buffer, offset);
+            offset += 4;
+            Array.Copy(sockAddr.Ip6Address, 0, buffer, offset, 16);
+            offset += (int) 16;
+            EncodeUInt32(sockAddr.ScopeID, buffer, offset);
             return(buffer);
         }
 
@@ -675,12 +681,18 @@ namespace Meadow.Coprocessor.F7Micro.Messages
         {
             SockAddr sockAddr = new Messages.SockAddr();
 
-            sockAddr.Length = buffer[offset];
-            offset += 1;
             sockAddr.Family = buffer[offset];
             offset += 1;
-            sockAddr.Data = new byte[14];
-            Array.Copy(buffer, offset, sockAddr.Data, 0, 14);
+            sockAddr.Port = ExtractUInt16(buffer, offset);
+            offset += 2;
+            sockAddr.Ip4Address = ExtractUInt32(buffer, offset);
+            offset += 4;
+            sockAddr.FlowInfo = ExtractUInt32(buffer, offset);
+            offset += 4;
+            sockAddr.Ip6Address = new byte[16];
+            Array.Copy(buffer, offset, sockAddr.Ip6Address, 0, 16);
+            offset += (int) 16;
+            sockAddr.ScopeID = ExtractUInt32(buffer, offset);
             return(sockAddr);
         }
 
@@ -691,7 +703,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
         /// <returns>Number of bytes required to hold the encoded SockAddr object.</returns>
         public static int EncodedSockAddrBufferSize(Messages.SockAddr sockAddr)
         {
-            return(16);
+            return(31);
         }
 
         public static byte[] EncodeAddrInfo(AddrInfo addrInfo)
@@ -1049,7 +1061,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             //  Calculate the amount of memory needed.
             //
             length += (int) (connectRequest.AddrLength + 4);
-            length += 8;
+            length += 4;
 
             //
             //  Now allocate a new buffer and copy the data in to the buffer.
@@ -1063,9 +1075,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             if (connectRequest.AddrLength > 0)
             {
                 Array.Copy(connectRequest.Addr, 0, buffer, offset, connectRequest.AddrLength);
-                offset += (int) (connectRequest.AddrLength);
             }
-            EncodeInt32(connectRequest.AddrLen, buffer, offset);
             return(buffer);
         }
 
@@ -1081,9 +1091,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             {
                 connectRequest.Addr = new byte[connectRequest.AddrLength];
                 Array.Copy(buffer, offset, connectRequest.Addr, 0, connectRequest.AddrLength);
-                offset += (int) connectRequest.AddrLength;
             }
-            connectRequest.AddrLen = ExtractInt32(buffer, offset);
             return(connectRequest);
         }
 
@@ -1096,7 +1104,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
         {
             int result = 0;
             result += (int) connectRequest.AddrLength;
-            return(result + 12);
+            return(result + 8);
         }
 
         public static byte[] EncodeFreeAddrInfoRequest(FreeAddrInfoRequest freeAddrInfoRequest)
@@ -1528,7 +1536,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             //
             length += (int) (sendToRequest.BufferLength + 4);
             length += (int) (sendToRequest.DestinationAddressLength + 4);
-            length += 16;
+            length += 12;
 
             //
             //  Now allocate a new buffer and copy the data in to the buffer.
@@ -1553,9 +1561,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             if (sendToRequest.DestinationAddressLength > 0)
             {
                 Array.Copy(sendToRequest.DestinationAddress, 0, buffer, offset, sendToRequest.DestinationAddressLength);
-                offset += (int) (sendToRequest.DestinationAddressLength);
             }
-            EncodeInt32(sendToRequest.DestinationAddressLen, buffer, offset);
             return(buffer);
         }
 
@@ -1583,9 +1589,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             {
                 sendToRequest.DestinationAddress = new byte[sendToRequest.DestinationAddressLength];
                 Array.Copy(buffer, offset, sendToRequest.DestinationAddress, 0, sendToRequest.DestinationAddressLength);
-                offset += (int) sendToRequest.DestinationAddressLength;
             }
-            sendToRequest.DestinationAddressLen = ExtractInt32(buffer, offset);
             return(sendToRequest);
         }
 
@@ -1599,7 +1603,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             int result = 0;
             result += (int) sendToRequest.BufferLength;
             result += (int) sendToRequest.DestinationAddressLength;
-            return(result + 24);
+            return(result + 20);
         }
 
         public static byte[] EncodeRecvFromRequest(RecvFromRequest recvFromRequest)

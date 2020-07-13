@@ -43,10 +43,10 @@
 #define WIFI_FULL_LOGGING 1
 //#undef WIFI_FULL_LOGGING
 
-#define WIFI_CONNECT 1
+#define WIFI_DEBUG_CONNECT 1
 // #undef WIFI_CONNECT
 
-#define WIFI_POLL 1
+#define WIFI_DEBUG_POLL 1
 // #undef WIFI_POLL
 
 #define WIFI_DEBUG_RECVFROM_DATA 1
