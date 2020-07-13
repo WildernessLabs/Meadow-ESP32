@@ -365,6 +365,9 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
         case WiFiFunction::RecvFrom:
             RecvFrom(request);
             break;
+        case WiFiFunction::Poll:
+            Poll(request);
+            break;
         default:
             ESP_LOGI(__func__, "Unknown WiFi message received, function %d", request->Function);
             if (request->Payload != NULL)
@@ -734,6 +737,10 @@ void WiFiRequestHandler::Socket(Message *message)
     Esp32Messaging::IntegerResponse response;
     response.Result = socket(request->Domain, request->Type, request->Protocol);
 
+#if defined(WIFI_FULL_LOGGING) || defined(WIFI_SOCKET)
+    ESP_LOGI(__func__, "Created socket %d", response.Result);
+#endif
+
     vPortFree(request);
     vPortFree(message->Payload);
 
@@ -765,30 +772,46 @@ void WiFiRequestHandler::Connect(Message *message)
     Esp32Messaging::ConnectRequest *request = Encoders::ExtractConnectRequest(message->Payload);
     Esp32Messaging::SockAddr *socketAddress = Encoders::ExtractSockAddr(request->Addr);
 
+#if defined(WIFI_FULL_LOGGING) || defined(WIFI_CONNECT)
+    ESP_LOGI(__func__, "Connecting socket: %d", request->SocketHandle);
+#endif
+
     struct sockaddr sa;
     bzero(&sa, sizeof(struct sockaddr));
-    sa.sa_family = socketAddress->Family;
+    int family;
+    Mapping::GetEspValue(Mapping::AddressFamily, socketAddress->Family, &family);
+    sa.sa_family = (uint8_t) (family & 0xff);
     sa.sa_len = socketAddress->Length;
     memcpy(sa.sa_data, socketAddress->Data, 14);
 
-    Esp32Messaging::IntegerResponse response;
+    struct sockaddr_in *ain = (struct sockaddr_in *) &sa;
+    ESP_LOGI(__func__, "IP address: %s", inet_ntoa(ain->sin_addr));
+
+    Esp32Messaging::IntegerAndErrnoResponse response;
+    response.Result = 0;
     response.Result = connect(request->SocketHandle, &sa, request->AddrLen);
     if (response.Result != 0)
     {
+        ESP_LOGI(__func__, "Error code: %s", strerror(errno));
         int32_t result = 0;
         if (Mapping::GetStmValue(Mapping::Errno, errno, &result) != 0)
         {
             result = Mapping::GetStmValue(Mapping::Errno, EFAULT, &result);
         }
-        response.Result = result;
+        response.ResponseErrno = result;
+        response.Result = -1;
     }
+
+#if defined(WIFI_FULL_LOGGING) || defined(WIFI_CONNECT)
+    ESP_LOGI(__func__, "Result (errno): %d", response.Result);
+#endif
 
     vPortFree(request);
     vPortFree(message->Payload);
 
-    message->PayloadLength = Encoders::EncodedIntegerResponseBufferSize(&response);
+    message->PayloadLength = Encoders::EncodedIntegerAndErrnoResponseBufferSize(&response);
     message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-    Encoders::EncodeIntegerResponse(&response, message->Payload);
+    Encoders::EncodeIntegerAndErrnoResponse(&response, message->Payload);
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
@@ -1251,6 +1274,57 @@ void WiFiRequestHandler::RecvFrom(Message *message)
     {
         vPortFree(response.SourceAddress);
     }
+    message->MessageType = MessageTypes::Response;
+    message->StatusCode = StatusCodes::CompletedOk;
+    _messageDispatcher->QueueMessageForStm32(message);
+    xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
+
+#if defined(WIFI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Exit");
+#endif
+}
+
+/**
+ *  @brief Expose the poll method to the STM32.
+ *
+ *  @param message
+ *      Message structure containing the parameters for the poll method.
+ */
+void WiFiRequestHandler::Poll(Message *message)
+{
+#if defined(WIFI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Enter");
+#endif
+
+    Esp32Messaging::PollRequest *request = Encoders::ExtractPollRequest(message->Payload);
+
+    struct pollfd *fds = (struct pollfd *) pvPortMalloc(sizeof(struct pollfd));
+    int event;    
+    fds->fd = request->SocketHandle;
+    event = request->Events;
+    Mapping::GetEspFlagValue(Mapping::PollEvents, request->Events, &event);
+    fds->events = (uint16_t) (event & 0xffff);
+    fds->revents = 0;
+
+#if defined(WIFI_FULL_LOGGING) || defined(WIFI_POLL)
+    ESP_LOGI(__func__, "Polling socket: %d", request->SocketHandle);
+#endif
+
+    Esp32Messaging::PollResponse response;
+    response.ResponseErrno = 0;
+    response.Result = poll(fds, 1, request->Timeout);
+    Mapping::GetStmValue(Mapping::Errno, errno, &response.ResponseErrno);
+
+    Mapping::GetStmFlagValue(Mapping::PollEvents, fds->revents, &event);
+    response.ReturnedEvents = (uint16_t) (event & 0xffff);
+
+    vPortFree(fds);
+    vPortFree(request);
+    vPortFree(message->Payload);
+
+    message->PayloadLength = Encoders::EncodedPollResponseBufferSize(&response);
+    message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
+    Encoders::EncodePollResponse(&response, message->Payload);
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
