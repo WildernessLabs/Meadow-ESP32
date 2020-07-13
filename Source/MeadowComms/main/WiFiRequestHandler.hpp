@@ -305,6 +305,11 @@ private:
      */
     void RecvFrom(Message *);
 
+    /**
+     *  Provide a mechanism for the STM32 to call the poll method.
+     */
+    void Poll(Message *);
+
 public:
     /*
      *  Constructor for the WiFi object.
