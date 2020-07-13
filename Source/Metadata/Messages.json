@@ -236,6 +236,25 @@
                 { "Name": "SourceAddress", "DataType": "blob" },
                 { "Name": "SourceAddressLen", "DataType": "uint32" }
             ]
+        },
+        {
+            "Name": "PollRequest",
+            "MessageElements":
+            [
+                { "Name": "SocketHandle", "DataType": "int" },
+                { "Name": "Events", "DataType": "uint16" },
+                { "Name": "ReturnedEvents", "DataType": "uint16" },
+                { "Name": "Timeout", "DataType": "int" }
+            ]
+        },
+        {
+            "Name": "PollResponse",
+            "MessageElements":
+            [
+                { "Name": "ReturnedEvents", "DataType": "uint16" },
+                { "Name": "Result", "DataType": "int" },
+                { "Name": "ResponseErrno", "DataType": "int"}
+            ]
         }
     ]
 }

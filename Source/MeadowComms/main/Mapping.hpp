@@ -28,7 +28,7 @@ public:
     /**
      *  @brief Type of mapping toable to be used.
      */
-    enum MappingTable { AddressFamily, SocketOptions, ProtocolFamilies, SocketTypes, SocketLevel, Errno, MessageFlags };
+    enum MappingTable { AddressFamily, SocketOptions, ProtocolFamilies, SocketTypes, SocketLevel, Errno, MessageFlags, PollEvents };
 
 private:
     /**
@@ -75,6 +75,11 @@ private:
      *  @brief Table of error codes used to set the errno variable.
      */
     static int_mapping_t _errno[];
+
+    /**
+     *  @brief Table of polling events.
+     */
+    static int_mapping_t _pollEvents[];
 
     /**
      *  @brief Table of message flags

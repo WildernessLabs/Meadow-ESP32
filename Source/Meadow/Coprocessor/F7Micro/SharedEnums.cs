@@ -89,7 +89,8 @@ namespace Meadow.Coprocessor.F7Micro
         Read = 15,
         Close = 16,
         SendTo = 17,
-        RecvFrom = 18
+        RecvFrom = 18,
+        Poll = 19
     };
 
     // <summary>
