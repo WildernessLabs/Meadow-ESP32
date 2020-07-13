@@ -227,6 +227,21 @@ namespace Esp32Messaging
         uint32_t SourceAddressLen;
     };
 
+    struct PollRequest
+    {
+        int32_t SocketHandle;
+        uint16_t Events;
+        uint16_t ReturnedEvents;
+        int32_t Timeout;
+    };
+
+    struct PollResponse
+    {
+        uint16_t ReturnedEvents;
+        int32_t Result;
+        int32_t ResponseErrno;
+    };
+
 }
 
 /*
@@ -336,6 +351,12 @@ public:
     static void EncodeRecvFromResponse(Esp32Messaging::RecvFromResponse *, uint8_t *);
     static int EncodedRecvFromResponseBufferSize(Esp32Messaging::RecvFromResponse *);
     static Esp32Messaging::RecvFromResponse *ExtractRecvFromResponse(uint8_t *);
+    static void EncodePollRequest(Esp32Messaging::PollRequest *, uint8_t *);
+    static int EncodedPollRequestBufferSize(Esp32Messaging::PollRequest *);
+    static Esp32Messaging::PollRequest *ExtractPollRequest(uint8_t *);
+    static void EncodePollResponse(Esp32Messaging::PollResponse *, uint8_t *);
+    static int EncodedPollResponseBufferSize(Esp32Messaging::PollResponse *);
+    static Esp32Messaging::PollResponse *ExtractPollResponse(uint8_t *);
 
 };
 

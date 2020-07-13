@@ -1731,5 +1731,99 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             return(result + 20);
         }
 
+        public static byte[] EncodePollRequest(PollRequest pollRequest)
+        {
+            int offset = 0;
+            int length = 0;
+
+            //
+            //  Calculate the amount of memory needed.
+            //
+            length += 12;
+
+            //
+            //  Now allocate a new buffer and copy the data in to the buffer.
+            //
+            byte[] buffer = new byte[length];
+            Array.Clear(buffer, 0, buffer.Length);
+            EncodeInt32(pollRequest.SocketHandle, buffer, offset);
+            offset += 4;
+            EncodeUInt16(pollRequest.Events, buffer, offset);
+            offset += 2;
+            EncodeUInt16(pollRequest.ReturnedEvents, buffer, offset);
+            offset += 2;
+            EncodeInt32(pollRequest.Timeout, buffer, offset);
+            return(buffer);
+        }
+
+        public static PollRequest ExtractPollRequest(byte[] buffer, int offset)
+        {
+            PollRequest pollRequest = new Messages.PollRequest();
+
+            pollRequest.SocketHandle = ExtractInt32(buffer, offset);
+            offset += 4;
+            pollRequest.Events = ExtractUInt16(buffer, offset);
+            offset += 2;
+            pollRequest.ReturnedEvents = ExtractUInt16(buffer, offset);
+            offset += 2;
+            pollRequest.Timeout = ExtractInt32(buffer, offset);
+            return(pollRequest);
+        }
+
+        /// <summary>
+        /// Calculate the amount of memory required to hold the given instance of the PollRequest object.
+        /// </summary>
+        /// <param name="pollRequest">PollRequest object to be encoded.</param>
+        /// <returns>Number of bytes required to hold the encoded PollRequest object.</returns>
+        public static int EncodedPollRequestBufferSize(Messages.PollRequest pollRequest)
+        {
+            return(12);
+        }
+
+        public static byte[] EncodePollResponse(PollResponse pollResponse)
+        {
+            int offset = 0;
+            int length = 0;
+
+            //
+            //  Calculate the amount of memory needed.
+            //
+            length += 10;
+
+            //
+            //  Now allocate a new buffer and copy the data in to the buffer.
+            //
+            byte[] buffer = new byte[length];
+            Array.Clear(buffer, 0, buffer.Length);
+            EncodeUInt16(pollResponse.ReturnedEvents, buffer, offset);
+            offset += 2;
+            EncodeInt32(pollResponse.Result, buffer, offset);
+            offset += 4;
+            EncodeInt32(pollResponse.ResponseErrno, buffer, offset);
+            return(buffer);
+        }
+
+        public static PollResponse ExtractPollResponse(byte[] buffer, int offset)
+        {
+            PollResponse pollResponse = new Messages.PollResponse();
+
+            pollResponse.ReturnedEvents = ExtractUInt16(buffer, offset);
+            offset += 2;
+            pollResponse.Result = ExtractInt32(buffer, offset);
+            offset += 4;
+            pollResponse.ResponseErrno = ExtractInt32(buffer, offset);
+            return(pollResponse);
+        }
+
+        /// <summary>
+        /// Calculate the amount of memory required to hold the given instance of the PollResponse object.
+        /// </summary>
+        /// <param name="pollResponse">PollResponse object to be encoded.</param>
+        /// <returns>Number of bytes required to hold the encoded PollResponse object.</returns>
+        public static int EncodedPollResponseBufferSize(Messages.PollResponse pollResponse)
+        {
+            return(10);
+        }
+
     }
 }

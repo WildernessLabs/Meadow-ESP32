@@ -213,4 +213,19 @@ namespace Meadow.Coprocessor.F7Micro.Messages
         public UInt32 SourceAddressLen;
     };
 
+    public struct PollRequest
+    {
+        public Int32 SocketHandle;
+        public UInt16 Events;
+        public UInt16 ReturnedEvents;
+        public Int32 Timeout;
+    };
+
+    public struct PollResponse
+    {
+        public UInt16 ReturnedEvents;
+        public Int32 Result;
+        public Int32 ResponseErrno;
+    };
+
 }

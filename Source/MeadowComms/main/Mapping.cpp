@@ -235,7 +235,7 @@ Mapping::int_mapping_t Mapping::_errno[] =
 };
 
 /*
- *  Map the STM32 massage flags to ESP32 message flags.
+ *  Map the STM32 message flags to ESP32 message flags.
  * 
  *  STM value is first, ESP value second.
  */
@@ -249,6 +249,21 @@ Mapping::int_mapping_t Mapping::_messageFlags[] =
     { 0x0002, MSG_PEEK }, 
     { 0x0020, MSG_TRUNC },
     { 0x0100, MSG_WAITALL },
+};
+
+/*
+ *  Map the STM32 mono polling event flags to ESP32 polling event flags.
+ * 
+ *  STM (Mono) value is first, ESP value second.
+ */
+Mapping::int_mapping_t Mapping::_pollEvents[] =
+{
+    { 0x01, POLLIN },
+    { 0x02, POLLPRI },
+    { 0x04, POLLOUT },
+    { 0x08, POLLERR },
+    { 0x10, POLLHUP },
+    { 0x20, POLLNVAL }
 };
 
 /*
@@ -384,6 +399,10 @@ int32_t Mapping::GetValue(Mapping::MappingTable mapping, MappingDirection type, 
         case MappingTable::MessageFlags:
             table = _messageFlags;
             size = sizeof(_messageFlags) / sizeof(int_mapping_t);
+            break;
+        case MappingTable::PollEvents:
+            table = _pollEvents;
+            size = sizeof(_pollEvents) / sizeof(int_mapping_t);
             break;
     }
 
