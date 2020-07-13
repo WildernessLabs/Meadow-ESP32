@@ -674,16 +674,10 @@ void WiFiRequestHandler::GetAddrInfo(Message *message)
         Esp32Messaging::SockAddr sa;
         Esp32Messaging::AddrInfo a;
 
-        sa.Family = addressInformation->ai_addr->sa_family;
-        sa.Length = addressInformation->ai_addr->sa_len;
-        //
-        //  We can perform a memcpy here as sa.Data is a fixed byte array
-        //  in the structure so we do not need to allocate the memory first.
-        //
-        memcpy(sa.Data, addressInformation->ai_addr->sa_data, addressInformation->ai_addr->sa_len);
-        a.AddrLength = Encoders::EncodedSockAddrBufferSize(&sa);
-        a.Addr = static_cast<uint8_t *>(pvPortMalloc(a.AddrLength));
-
+        bzero(&sa, sizeof(Esp32Messaging::SockAddr));
+        int family;
+        Mapping::GetStmValue(Mapping::AddressFamily, addressInformation->ai_addr->sa_family, &family);
+        sa.Family = (unsigned char) (family & 0xff);
         Encoders::EncodeSockAddr(&sa, a.Addr);
 
         a.CanonName = strdup(addressInformation->ai_canonname);
@@ -771,28 +765,38 @@ void WiFiRequestHandler::Connect(Message *message)
 
     Esp32Messaging::ConnectRequest *request = Encoders::ExtractConnectRequest(message->Payload);
     Esp32Messaging::SockAddr *socketAddress = Encoders::ExtractSockAddr(request->Addr);
+    Esp32Messaging::IntegerAndErrnoResponse response;
+    response.Result = 0;
 
-#if defined(WIFI_FULL_LOGGING) || defined(WIFI_CONNECT)
-    ESP_LOGI(__func__, "Connecting socket: %d", request->SocketHandle);
-#endif
-
-    struct sockaddr sa;
+    struct sockaddr_in sa;
     bzero(&sa, sizeof(struct sockaddr));
     int family;
     Mapping::GetEspValue(Mapping::AddressFamily, socketAddress->Family, &family);
-    sa.sa_family = (uint8_t) (family & 0xff);
-    sa.sa_len = socketAddress->Length;
-    memcpy(sa.sa_data, socketAddress->Data, 14);
+    if (family == AF_INET)
+    {
+        sa.sin_family = (uint8_t) (family & 0xff);
+        sa.sin_port = socketAddress->Port;
+        memcpy(&sa.sin_addr, &socketAddress->Ip4Address, sizeof(sa.sin_addr));
+        sa.sin_len = sizeof(struct sockaddr_in);
 
-    struct sockaddr_in *ain = (struct sockaddr_in *) &sa;
-    ESP_LOGI(__func__, "IP address: %s", inet_ntoa(ain->sin_addr));
+#if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_CONNECT)
+    ESP_LOGI(__func__, "Connecting socket: %d", request->SocketHandle);
+    ESP_LOGI(__func__, "Family: %d", sa.sin_family);
+    ESP_LOGI(__func__, "IP address: %s", inet_ntoa(sa.sin_addr));
+    ESP_LOGI(__func__, "Port: %d", ntohs(sa.sin_port));
 
-    Esp32Messaging::IntegerAndErrnoResponse response;
-    response.Result = 0;
-    response.Result = connect(request->SocketHandle, &sa, request->AddrLen);
+#endif
+        response.Result = connect(request->SocketHandle, (struct sockaddr *) &sa, sizeof(sa));
+    }
+    else
+    {
+        response.Result = -1;
+        errno = EFAULT;
+    }
+    
+
     if (response.Result != 0)
     {
-        ESP_LOGI(__func__, "Error code: %s", strerror(errno));
         int32_t result = 0;
         if (Mapping::GetStmValue(Mapping::Errno, errno, &result) != 0)
         {
@@ -802,8 +806,8 @@ void WiFiRequestHandler::Connect(Message *message)
         response.Result = -1;
     }
 
-#if defined(WIFI_FULL_LOGGING) || defined(WIFI_CONNECT)
-    ESP_LOGI(__func__, "Result (errno): %d", response.Result);
+#if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_CONNECT)
+    ESP_LOGI(__func__, "Error code: %d -  %s", errno, strerror(errno));
 #endif
 
     vPortFree(request);
@@ -1112,16 +1116,31 @@ void WiFiRequestHandler::SendTo(Message *message)
     if (response.Result == 0)
     {
         Esp32Messaging::SockAddr *socketAddress = Encoders::ExtractSockAddr(request->DestinationAddress);
-        struct sockaddr sa;
-        bzero(&sa, sizeof(struct sockaddr));
         int32_t family = 0;
         Mapping::GetEspValue(Mapping::AddressFamily, socketAddress->Family, &family);
-        sa.sa_family = (unsigned char) (family & 0xff);
-        sa.sa_len = socketAddress->Length;
-        memcpy(sa.sa_data, socketAddress->Data, 14);
+        ESP_LOGI(__func__, "Mapping request family %d to ESP family %d", socketAddress->Family, family);
+
+        if (family == AF_INET)
+        {
+            struct sockaddr_in sa;
+            bzero(&sa, sizeof(struct sockaddr_in));
+            sa.sin_family = (unsigned char) (family & 0xff);
+
+            sa.sin_port = socketAddress->Port;
+            memcpy(&sa.sin_addr, &socketAddress->Ip4Address, sizeof(sa.sin_addr));
+            sa.sin_len = sizeof(sa);
+
+#if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_SENDTO_DATA)
+    ESP_LOGI(__func__, "Connecting socket: %d", request->SocketHandle);
+    ESP_LOGI(__func__, "Family: %d", sa.sin_family);
+    ESP_LOGI(__func__, "IP address: %s", inet_ntoa(sa.sin_addr));
+    ESP_LOGI(__func__, "Port: %d", ntohs(sa.sin_port));
+#endif
+            response.Result = sendto(request->SocketHandle, request->Buffer, request->Length, mappedFlags, (struct sockaddr *) &sa, sizeof(sa));
+        }
+
         vPortFree(socketAddress);
         
-        response.Result = sendto(request->SocketHandle, request->Buffer, request->Length, mappedFlags, &sa, request->DestinationAddressLen);
         if (response.Result < 0)
         {
             if (Mapping::GetStmValue(Mapping::Errno, errno, &response.ResponseErrno) != 0)
@@ -1138,7 +1157,7 @@ void WiFiRequestHandler::SendTo(Message *message)
 #if defined(WIFI_DEBUG_SENDTO_DATA) || defined(WIFI_FULL_LOGGING)
     ESP_LOGI(__func__, "Sent %d bytes.", request->Length);
     ESP_LOG_BUFFER_HEX(__func__, request->Buffer, request->Length);
-    ESP_LOGI(__func__, "Result: %d, errno: %d", response.Result, response.ResponseErrno);
+    ESP_LOGI(__func__, "Result: %d, errno: %d - %s", response.Result, response.ResponseErrno, strerror(errno));
 #endif
 
     vPortFree(request->Buffer);
@@ -1178,13 +1197,13 @@ void WiFiRequestHandler::RecvFrom(Message *message)
     response.Result = Mapping::GetEspFlagValue(Mapping::MessageFlags, request->Flags, &mappedFlags);
     if (response.Result == 0)
     {
-        struct sockaddr *sa = NULL;
+        struct sockaddr_in *sa = NULL;
         socklen_t len;
         if (request->GetSourceAddress != 0)
         {
-            sa = (struct sockaddr *) pvPortMalloc(sizeof(struct sockaddr));
-            bzero(sa, sizeof(struct sockaddr));
-            len = sizeof(struct sockaddr);
+            sa = (struct sockaddr_in *) pvPortMalloc(sizeof(struct sockaddr_in));
+            bzero(sa, sizeof(struct sockaddr_in));
+            len = sizeof(struct sockaddr_in);
         }
         response.Buffer = (uint8_t *) pvPortMalloc(request->Length);
         if (response.Buffer == NULL)
@@ -1195,7 +1214,7 @@ void WiFiRequestHandler::RecvFrom(Message *message)
         }
         else
         {
-            response.Result = recvfrom(request->SocketHandle, response.Buffer, request->Length, mappedFlags, sa, (sa == NULL) ? NULL : &len);
+            response.Result = recvfrom(request->SocketHandle, response.Buffer, request->Length, mappedFlags, (struct sockaddr *) sa, (sa == NULL) ? NULL : &len);
         }    
         
         if (response.Result < 0)
@@ -1212,17 +1231,10 @@ void WiFiRequestHandler::RecvFrom(Message *message)
                 Esp32Messaging::SockAddr socketAddress;
                 bzero((void *) &socketAddress, sizeof(Esp32Messaging::SockAddr));
                 int family;
-                Mapping::GetStmValue(Mapping::AddressFamily, sa->sa_family, &family);
+                Mapping::GetStmValue(Mapping::AddressFamily, sa->sin_family, &family);
                 socketAddress.Family = (uint8_t) (family & 0xff);
-                socketAddress.Length = len;
-                if (len > sizeof(socketAddress.Data))
-                {
-                    memcpy(socketAddress.Data, sa->sa_data, sizeof(socketAddress.Data));
-                }
-                else
-                {
-                    memcpy(socketAddress.Data, sa->sa_data, len);
-                }
+                memcpy(&socketAddress.Ip4Address, &sa->sin_addr, sizeof(sa->sin_addr));
+                socketAddress.Port = sa->sin_port;
                 response.SourceAddressLength = Encoders::EncodedSockAddrBufferSize(&socketAddress);
                 response.SourceAddress = (uint8_t *) pvPortMalloc(response.SourceAddressLength);
                 if (response.SourceAddress == NULL)
@@ -1254,10 +1266,11 @@ void WiFiRequestHandler::RecvFrom(Message *message)
     {
         Mapping::GetStmValue(Mapping::Errno, EFAULT, &response.ResponseErrno);
     }
+
 #if defined(WIFI_DEBUG_RECVFROM_DATA) || defined(WIFI_FULL_LOGGING)
     ESP_LOGI(__func__, "Received %d bytes.", response.Result);
     ESP_LOG_BUFFER_HEX(__func__, response.Buffer, response.Result);
-    ESP_LOGI(__func__, "Result: %d, errno: %d", response.Result, response.ResponseErrno);
+    ESP_LOGI(__func__, "Result: %d, errno: %d - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
 #endif
 
     vPortFree(request);
@@ -1306,7 +1319,7 @@ void WiFiRequestHandler::Poll(Message *message)
     fds->events = (uint16_t) (event & 0xffff);
     fds->revents = 0;
 
-#if defined(WIFI_FULL_LOGGING) || defined(WIFI_POLL)
+#if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_POLL)
     ESP_LOGI(__func__, "Polling socket: %d", request->SocketHandle);
 #endif
 
@@ -1317,6 +1330,19 @@ void WiFiRequestHandler::Poll(Message *message)
 
     Mapping::GetStmFlagValue(Mapping::PollEvents, fds->revents, &event);
     response.ReturnedEvents = (uint16_t) (event & 0xffff);
+
+    if (response.Result < 0)
+    {
+        if (Mapping::GetStmValue(Mapping::Errno, errno, &response.ResponseErrno) != 0)
+        {
+            Mapping::GetStmValue(Mapping::Errno, EFAULT, &response.ResponseErrno);
+        }
+    }
+
+#if defined(WIFI_DEBUG_POLL) || defined(WIFI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Received events waiting: %d.", response.Result);
+    ESP_LOGI(__func__, "Result: %d, errno: %d - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
+#endif
 
     vPortFree(fds);
     vPortFree(request);

@@ -74,9 +74,12 @@ namespace Esp32Messaging
 
     struct SockAddr
     {
-        uint8_t Length;
         uint8_t Family;
-        uint8_t Data[14];
+        uint16_t Port;
+        uint32_t Ip4Address;
+        uint32_t FlowInfo;
+        uint8_t Ip6Address[16];
+        uint32_t ScopeID;
     };
 
     struct AddrInfo
@@ -134,7 +137,6 @@ namespace Esp32Messaging
         int32_t SocketHandle;
         uint32_t AddrLength;
         uint8_t *Addr;
-        int32_t AddrLen;
     };
 
     struct FreeAddrInfoRequest
@@ -205,7 +207,6 @@ namespace Esp32Messaging
         int32_t Flags;
         uint32_t DestinationAddressLength;
         uint8_t *DestinationAddress;
-        int32_t DestinationAddressLen;
     };
 
     struct RecvFromRequest
