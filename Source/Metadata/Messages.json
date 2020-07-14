@@ -151,7 +151,7 @@
             "Name": "SetSockOptRequest",
             "MessageElements":
             [
-                { "Name": "SocketNumber", "DataType": "int" },
+                { "Name": "SocketHandle", "DataType": "int" },
                 { "Name": "Level", "DataType": "int"},
                 { "Name": "OptionName", "DataType": "int"},
                 { "Name": "OptionValue", "DataType": "blob" },

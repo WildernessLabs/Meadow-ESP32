@@ -1201,7 +1201,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             //
             byte[] buffer = new byte[length];
             Array.Clear(buffer, 0, buffer.Length);
-            EncodeInt32(setSockOptRequest.SocketNumber, buffer, offset);
+            EncodeInt32(setSockOptRequest.SocketHandle, buffer, offset);
             offset += 4;
             EncodeInt32(setSockOptRequest.Level, buffer, offset);
             offset += 4;
@@ -1222,7 +1222,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
         {
             SetSockOptRequest setSockOptRequest = new Messages.SetSockOptRequest();
 
-            setSockOptRequest.SocketNumber = ExtractInt32(buffer, offset);
+            setSockOptRequest.SocketHandle = ExtractInt32(buffer, offset);
             offset += 4;
             setSockOptRequest.Level = ExtractInt32(buffer, offset);
             offset += 4;

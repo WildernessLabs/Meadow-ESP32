@@ -152,7 +152,7 @@ namespace Esp32Messaging
 
     struct SetSockOptRequest
     {
-        int32_t SocketNumber;
+        int32_t SocketHandle;
         int32_t Level;
         int32_t OptionName;
         uint32_t OptionValueLength;

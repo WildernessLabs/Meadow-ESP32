@@ -1534,7 +1534,7 @@ Esp32Messaging::TimeVal *Encoders::ExtractTimeVal(uint8_t *buffer)
 // cppcheck-suppress unusedFunction symbolName=EncodeSetSockOptRequest
 void Encoders::EncodeSetSockOptRequest(Esp32Messaging::SetSockOptRequest *setSockOptRequest, uint8_t *buffer)
 {
-    EncodeInt32(setSockOptRequest->SocketNumber, buffer);
+    EncodeInt32(setSockOptRequest->SocketHandle, buffer);
     buffer += 4;
     EncodeInt32(setSockOptRequest->Level, buffer);
     buffer += 4;
@@ -1584,7 +1584,7 @@ Esp32Messaging::SetSockOptRequest *Encoders::ExtractSetSockOptRequest(uint8_t *b
 {
     Esp32Messaging::SetSockOptRequest *setSockOptRequest = (Esp32Messaging::SetSockOptRequest *) pvPortMalloc(sizeof(Esp32Messaging::SetSockOptRequest));
 
-    setSockOptRequest->SocketNumber = ExtractInt32(buffer);
+    setSockOptRequest->SocketHandle = ExtractInt32(buffer);
     buffer += 4;
     setSockOptRequest->Level = ExtractInt32(buffer);
     buffer += 4;
