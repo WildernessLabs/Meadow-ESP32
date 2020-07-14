@@ -138,7 +138,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
 
     public struct SetSockOptRequest
     {
-        public Int32 SocketNumber;
+        public Int32 SocketHandle;
         public Int32 Level;
         public Int32 OptionName;
         public UInt32 OptionValueLength;
