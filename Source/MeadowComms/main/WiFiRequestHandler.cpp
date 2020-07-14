@@ -807,7 +807,7 @@ void WiFiRequestHandler::Connect(Message *message)
     }
 
 #if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_CONNECT)
-    ESP_LOGI(__func__, "Error code: %d -  %s", errno, strerror(errno));
+    ESP_LOGI(__func__, "Error code: %d - %s", errno, strerror(errno));
 #endif
 
     vPortFree(request);
@@ -881,44 +881,65 @@ void WiFiRequestHandler::SetSockOpt(Message *message)
     Esp32Messaging::TimeVal *tv = nullptr;
     struct timeval timeOut;
 
-    int32_t optionName;
-    Mapping::GetEspValue(Mapping::SocketOptions, request->OptionName, &optionName);
-    switch (optionName)
+    int32_t optionName = 0;
+    if (Mapping::GetEspValue(Mapping::SocketOptions, request->OptionName, &optionName) < 0)
     {
-        // TODO: Implement remaining setsockopt features.
-        case SO_ACCEPTCONN:     /* Socket has had listen() */
-            break;
-        case SO_LINGER:         /* Linger on close if data present */
-            break;
-        case SO_DONTLINGER:     /* Don't linger on close if data present */
-            break;
-        case SO_RCVBUF:         /* Set the receive buffer size */
-            break;
-        case SO_SNDTIMEO:       /* Set the send timeout */
-            break;
-        case SO_RCVTIMEO:       /* Set the receive timeout */
-            tv = Encoders::ExtractTimeVal(request->OptionValue);
-            timeOut.tv_sec = tv->TvSec;
-            timeOut.tv_usec = tv->TvUsec;
-            vPortFree(tv);
-            optionValue = &timeOut;
-            optionLength = sizeof(timeOut);
-            break;
-        case SO_ERROR:          /* Get error status and clear */
-            break;
-        case SO_REUSEADDR:
-            optionValue = request->OptionValue;
-            optionLength = request->OptionValueLength;
-            break;
-        case SO_TYPE:           /* Get socket type */
-            break;
-        case SO_NO_CHECK:       /* Don't create UDP checksum */
-            break;
+        response.Result = -1;
+        errno = ENOPROTOOPT;
     }
+    else
+    {
+        errno = 0;
+        switch (optionName)
+        {
+            case SO_SNDTIMEO:       /* Set the send timeout */
+            case SO_RCVTIMEO:       /* Set the receive timeout */
+                tv = Encoders::ExtractTimeVal(request->OptionValue);
+                timeOut.tv_sec = tv->TvSec;
+                timeOut.tv_usec = tv->TvUsec;
+                vPortFree(tv);
+                optionValue = &timeOut;
+                optionLength = sizeof(timeOut);
+                break;
+            case SO_RCVBUF:         /* Set the receive buffer size */
+            case SO_REUSEADDR:      /* Set validation rules for bind */
+                optionValue = request->OptionValue;
+                optionLength = request->OptionValueLength;
+                break;
+            case SO_LINGER:         /* Linger on close if data present */
+                ESP_LOGI(__func__, "Implement SO_LINGER");
+                break;
+            case SO_ACCEPTCONN:     /* Socket has had listen() */
+                ESP_LOGI(__func__, "Implement SO_ACCEPTCONN");
+                break;
+            case SO_DONTLINGER:     /* Don't linger on close if data present */
+                ESP_LOGI(__func__, "Implement SO_DONTLINGER");
+                break;
+            case SO_ERROR:          /* Get error status and clear */
+                ESP_LOGI(__func__, "Implement SO_ERROR");
+                break;
+            case SO_TYPE:           /* Get socket type */
+                ESP_LOGI(__func__, "Implement SO_TYPE");
+                break;
+            case SO_NO_CHECK:       /* Don't create UDP checksum */
+                ESP_LOGI(__func__, "Implement SO_NO_CHECK");
+                break;
+            default:
+                response.Result = -1;
+                errno = ENOPROTOOPT;
+                break;
+        }
+        if (errno == 0)
+        {
+            int32_t level = 0;
+            Mapping::GetEspValue(Mapping::SocketLevel, request->Level, &level);
+#if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_SETSOCKOPT)
+            ESP_LOGI(__func__, "Setting socket option level to 0x%x, option name 0x%x for socket %d", level, optionName, request->SocketHandle);
+#endif
+            response.Result = setsockopt(request->SocketHandle, level, optionName, optionValue, optionLength);
+        }
+    }    
 
-    int32_t level = 0;
-    Mapping::GetEspValue(Mapping::SocketLevel, request->Level, &level);
-    response.Result = setsockopt(request->SocketNumber, level, optionName, optionValue, optionLength);
     if (response.Result < 0)
     {
         int32_t e = 0;
@@ -932,6 +953,10 @@ void WiFiRequestHandler::SetSockOpt(Message *message)
     {
         response.ResponseErrno = 0;
     }
+
+#if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_SETSOCKOPT)
+    ESP_LOGI(__func__, "Result: %d, errno: %d - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
+#endif
 
     vPortFree(request);
     vPortFree(message->Payload);
@@ -1157,7 +1182,7 @@ void WiFiRequestHandler::SendTo(Message *message)
 #if defined(WIFI_DEBUG_SENDTO_DATA) || defined(WIFI_FULL_LOGGING)
     ESP_LOGI(__func__, "Sent %d bytes.", request->Length);
     ESP_LOG_BUFFER_HEX(__func__, request->Buffer, request->Length);
-    ESP_LOGI(__func__, "Result: %d, errno: %d - %s", response.Result, response.ResponseErrno, strerror(errno));
+    ESP_LOGI(__func__, "Result: %d, errno: %d - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
 #endif
 
     vPortFree(request->Buffer);
@@ -1326,7 +1351,6 @@ void WiFiRequestHandler::Poll(Message *message)
     Esp32Messaging::PollResponse response;
     response.ResponseErrno = 0;
     response.Result = poll(fds, 1, request->Timeout);
-    Mapping::GetStmValue(Mapping::Errno, errno, &response.ResponseErrno);
 
     Mapping::GetStmFlagValue(Mapping::PollEvents, fds->revents, &event);
     response.ReturnedEvents = (uint16_t) (event & 0xffff);
