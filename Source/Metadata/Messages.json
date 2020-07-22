@@ -207,6 +207,16 @@
             ]
         },
         {
+            "Name": "SendRequest",
+            "MessageElements":
+            [
+                { "Name": "SocketHandle", "DataType": "int" },
+                { "Name": "Buffer", "DataType": "blob" },
+                { "Name": "Length", "DataType": "int" },
+                { "Name": "Flags", "DataType": "int" }
+            ]
+        },
+        {
             "Name": "SendToRequest",
             "MessageElements":
             [
@@ -244,17 +254,20 @@
             [
                 { "Name": "SocketHandle", "DataType": "int" },
                 { "Name": "Events", "DataType": "uint16" },
-                { "Name": "ReturnedEvents", "DataType": "uint16" },
-                { "Name": "Timeout", "DataType": "int" }
+                { "Name": "Timeout", "DataType": "int" },
+                { "Name": "Setup", "DataType": "int" },
+                { "Name": "SetupMessageId", "DataType": "uint32" }
             ]
         },
         {
-            "Name": "PollResponse",
+            "Name": "InterruptPollResponse",
             "MessageElements":
             [
-                { "Name": "ReturnedEvents", "DataType": "uint16" },
+                { "Name": "SocketHandle", "DataType": "int" },
                 { "Name": "Result", "DataType": "int" },
-                { "Name": "ResponseErrno", "DataType": "int"}
+                { "Name": "ResponseErrno", "DataType": "int" },
+                { "Name": "ReturnedEvents", "DataType": "uint16" },
+                { "Name": "SetupMessageId", "DataType": "uint32" },
             ]
         }
     ]

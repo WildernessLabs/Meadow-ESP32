@@ -103,7 +103,9 @@ namespace WiFiFunction
         Close = 16,
         SendTo = 17,
         RecvFrom = 18,
-        Poll = 19
+        Poll = 19,
+        InterruptPollResponse = 20,
+        Send = 21
     };
 
 }
@@ -143,7 +145,7 @@ enum MessageTypes : uint8_t
     Ack = 0x00,
     Nak = 0x01,
     Reset = 0x02,
-    Ready = 0x04,
+    Interrupt = 0x04,
     Response = 0x10,
     Transport = 0x20,
     Header = 0x40,

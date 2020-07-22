@@ -184,6 +184,15 @@ namespace Meadow.Coprocessor.F7Micro.Messages
         public UInt32 Level;
     };
 
+    public struct SendRequest
+    {
+        public Int32 SocketHandle;
+        public UInt32 BufferLength;
+        public byte[] Buffer;
+        public Int32 Length;
+        public Int32 Flags;
+    };
+
     public struct SendToRequest
     {
         public Int32 SocketHandle;
@@ -218,15 +227,18 @@ namespace Meadow.Coprocessor.F7Micro.Messages
     {
         public Int32 SocketHandle;
         public UInt16 Events;
-        public UInt16 ReturnedEvents;
         public Int32 Timeout;
+        public Int32 Setup;
+        public UInt32 SetupMessageId;
     };
 
-    public struct PollResponse
+    public struct InterruptPollResponse
     {
-        public UInt16 ReturnedEvents;
+        public Int32 SocketHandle;
         public Int32 Result;
         public Int32 ResponseErrno;
+        public UInt16 ReturnedEvents;
+        public UInt32 SetupMessageId;
     };
 
 }
