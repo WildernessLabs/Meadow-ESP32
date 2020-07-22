@@ -1526,6 +1526,69 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             return(4);
         }
 
+        public static byte[] EncodeSendRequest(SendRequest sendRequest)
+        {
+            int offset = 0;
+            int length = 0;
+
+            //
+            //  Calculate the amount of memory needed.
+            //
+            length += (int) (sendRequest.BufferLength + 4);
+            length += 12;
+
+            //
+            //  Now allocate a new buffer and copy the data in to the buffer.
+            //
+            byte[] buffer = new byte[length];
+            Array.Clear(buffer, 0, buffer.Length);
+            EncodeInt32(sendRequest.SocketHandle, buffer, offset);
+            offset += 4;
+            EncodeUInt32(sendRequest.BufferLength, buffer, offset);
+            offset += 4;
+            if (sendRequest.BufferLength > 0)
+            {
+                Array.Copy(sendRequest.Buffer, 0, buffer, offset, sendRequest.BufferLength);
+                offset += (int) (sendRequest.BufferLength);
+            }
+            EncodeInt32(sendRequest.Length, buffer, offset);
+            offset += 4;
+            EncodeInt32(sendRequest.Flags, buffer, offset);
+            return(buffer);
+        }
+
+        public static SendRequest ExtractSendRequest(byte[] buffer, int offset)
+        {
+            SendRequest sendRequest = new Messages.SendRequest();
+
+            sendRequest.SocketHandle = ExtractInt32(buffer, offset);
+            offset += 4;
+            sendRequest.BufferLength = ExtractUInt32(buffer, offset);
+            offset += 4;
+            if (sendRequest.BufferLength > 0)
+            {
+                sendRequest.Buffer = new byte[sendRequest.BufferLength];
+                Array.Copy(buffer, offset, sendRequest.Buffer, 0, sendRequest.BufferLength);
+                offset += (int) sendRequest.BufferLength;
+            }
+            sendRequest.Length = ExtractInt32(buffer, offset);
+            offset += 4;
+            sendRequest.Flags = ExtractInt32(buffer, offset);
+            return(sendRequest);
+        }
+
+        /// <summary>
+        /// Calculate the amount of memory required to hold the given instance of the SendRequest object.
+        /// </summary>
+        /// <param name="sendRequest">SendRequest object to be encoded.</param>
+        /// <returns>Number of bytes required to hold the encoded SendRequest object.</returns>
+        public static int EncodedSendRequestBufferSize(Messages.SendRequest sendRequest)
+        {
+            int result = 0;
+            result += (int) sendRequest.BufferLength;
+            return(result + 16);
+        }
+
         public static byte[] EncodeSendToRequest(SendToRequest sendToRequest)
         {
             int offset = 0;
@@ -1743,7 +1806,7 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             //
             //  Calculate the amount of memory needed.
             //
-            length += 12;
+            length += 18;
 
             //
             //  Now allocate a new buffer and copy the data in to the buffer.
@@ -1754,9 +1817,11 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             offset += 4;
             EncodeUInt16(pollRequest.Events, buffer, offset);
             offset += 2;
-            EncodeUInt16(pollRequest.ReturnedEvents, buffer, offset);
-            offset += 2;
             EncodeInt32(pollRequest.Timeout, buffer, offset);
+            offset += 4;
+            EncodeInt32(pollRequest.Setup, buffer, offset);
+            offset += 4;
+            EncodeUInt32(pollRequest.SetupMessageId, buffer, offset);
             return(buffer);
         }
 
@@ -1768,9 +1833,11 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             offset += 4;
             pollRequest.Events = ExtractUInt16(buffer, offset);
             offset += 2;
-            pollRequest.ReturnedEvents = ExtractUInt16(buffer, offset);
-            offset += 2;
             pollRequest.Timeout = ExtractInt32(buffer, offset);
+            offset += 4;
+            pollRequest.Setup = ExtractInt32(buffer, offset);
+            offset += 4;
+            pollRequest.SetupMessageId = ExtractUInt32(buffer, offset);
             return(pollRequest);
         }
 
@@ -1781,10 +1848,10 @@ namespace Meadow.Coprocessor.F7Micro.Messages
         /// <returns>Number of bytes required to hold the encoded PollRequest object.</returns>
         public static int EncodedPollRequestBufferSize(Messages.PollRequest pollRequest)
         {
-            return(12);
+            return(18);
         }
 
-        public static byte[] EncodePollResponse(PollResponse pollResponse)
+        public static byte[] EncodeInterruptPollResponse(InterruptPollResponse interruptPollResponse)
         {
             int offset = 0;
             int length = 0;
@@ -1792,41 +1859,49 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             //
             //  Calculate the amount of memory needed.
             //
-            length += 10;
+            length += 18;
 
             //
             //  Now allocate a new buffer and copy the data in to the buffer.
             //
             byte[] buffer = new byte[length];
             Array.Clear(buffer, 0, buffer.Length);
-            EncodeUInt16(pollResponse.ReturnedEvents, buffer, offset);
-            offset += 2;
-            EncodeInt32(pollResponse.Result, buffer, offset);
+            EncodeInt32(interruptPollResponse.SocketHandle, buffer, offset);
             offset += 4;
-            EncodeInt32(pollResponse.ResponseErrno, buffer, offset);
+            EncodeInt32(interruptPollResponse.Result, buffer, offset);
+            offset += 4;
+            EncodeInt32(interruptPollResponse.ResponseErrno, buffer, offset);
+            offset += 4;
+            EncodeUInt16(interruptPollResponse.ReturnedEvents, buffer, offset);
+            offset += 2;
+            EncodeUInt32(interruptPollResponse.SetupMessageId, buffer, offset);
             return(buffer);
         }
 
-        public static PollResponse ExtractPollResponse(byte[] buffer, int offset)
+        public static InterruptPollResponse ExtractInterruptPollResponse(byte[] buffer, int offset)
         {
-            PollResponse pollResponse = new Messages.PollResponse();
+            InterruptPollResponse interruptPollResponse = new Messages.InterruptPollResponse();
 
-            pollResponse.ReturnedEvents = ExtractUInt16(buffer, offset);
-            offset += 2;
-            pollResponse.Result = ExtractInt32(buffer, offset);
+            interruptPollResponse.SocketHandle = ExtractInt32(buffer, offset);
             offset += 4;
-            pollResponse.ResponseErrno = ExtractInt32(buffer, offset);
-            return(pollResponse);
+            interruptPollResponse.Result = ExtractInt32(buffer, offset);
+            offset += 4;
+            interruptPollResponse.ResponseErrno = ExtractInt32(buffer, offset);
+            offset += 4;
+            interruptPollResponse.ReturnedEvents = ExtractUInt16(buffer, offset);
+            offset += 2;
+            interruptPollResponse.SetupMessageId = ExtractUInt32(buffer, offset);
+            return(interruptPollResponse);
         }
 
         /// <summary>
-        /// Calculate the amount of memory required to hold the given instance of the PollResponse object.
+        /// Calculate the amount of memory required to hold the given instance of the InterruptPollResponse object.
         /// </summary>
-        /// <param name="pollResponse">PollResponse object to be encoded.</param>
-        /// <returns>Number of bytes required to hold the encoded PollResponse object.</returns>
-        public static int EncodedPollResponseBufferSize(Messages.PollResponse pollResponse)
+        /// <param name="interruptPollResponse">InterruptPollResponse object to be encoded.</param>
+        /// <returns>Number of bytes required to hold the encoded InterruptPollResponse object.</returns>
+        public static int EncodedInterruptPollResponseBufferSize(Messages.InterruptPollResponse interruptPollResponse)
         {
-            return(10);
+            return(18);
         }
 
     }
