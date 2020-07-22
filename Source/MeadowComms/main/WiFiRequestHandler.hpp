@@ -31,6 +31,7 @@
 #include "SharedEnums.hpp"
 #include "Encoders.hpp"
 #include "Logging.hpp"
+#include "GenericList.hpp"
 
 /*
  *  @brief WiFi class
@@ -41,6 +42,55 @@
 class WiFiRequestHandler : public RequestHandlerBase
 {
 private:
+    /**
+     *  Structure used to hold information about a poll request.
+     */
+    struct PollRequestInformation
+    {
+        /**
+         *  List of socket handles that were used in this poll request.
+         */
+        struct pollfd *Fds;
+
+        /**
+         *  Events that this poll request is pending.
+         */
+        uint16_t Events;
+
+        /**
+         *  Result from the poll request.
+         */
+        int PollResult = 0;
+
+        /**
+         *  Keep a copy of errno from the request.
+         */
+        int PollErrno = 0;
+
+        /**
+         *  Timeout for the poll request.
+         */
+        int Timeout;
+
+        /**
+         *  Message that raised the original poll request.
+         */
+        int OriginalRequestID;
+
+        /**
+         *  Has a teardown been requested?
+         * 
+         *  This is used to distinguish between a teardown request from the
+         *  STM32 and a normal poll event being received.
+         */
+        bool Teardown;
+
+        /**
+         *  Handle for the task that is dealing with the poll request.
+         */
+        TaskHandle_t TaskHandle = nullptr;
+    };
+
     /**
      *  Name of the FreeRTOS task for the WiFi system.
      */
@@ -165,6 +215,26 @@ private:
      */
     int _currentRetryCount = 0;
 
+    /**
+     *  List of active poll requests.
+     */
+    static GenericLinkList<PollRequestInformation> *_pollRequests;
+
+    /**
+     *  Mutex for the poll request linked list.
+     */
+    static SemaphoreHandle_t _pollRequestListMutex;
+
+    /**
+     *  Handle for the completed poll requests.
+     */
+    static QueueHandle_t _completedPollRequestsQueue;
+
+    /**
+     *  Method that will deal with completed poll requests.
+     */
+    TaskHandle_t _completedPollRequestsTaskHandle;
+
     /*
      *  Private methods.
      */
@@ -180,6 +250,13 @@ private:
      *  This method will dispatch incoming messages to the appropriate request handler.
      */
     void DispatchRequest(Message *) override;
+
+    /**
+     *  Method that will compare two poll requests IDs and determine if they are the same.
+     * 
+     *  This method is used with the list of poll requests.
+     */
+    static bool ComparePollRequestMessageIds(uint32_t, PollRequestInformation *);
 
     /**
      *  Get the current WiFi configuration.
@@ -252,6 +329,16 @@ private:
      */
     void StationDisconnectedEvent(system_event_t *);
 
+    /**
+     *  Method that will deal with poll requests.
+     */
+    static void PollRequestProcessor(void *);
+
+    /**
+     *  Method that will deal with completed poll requests.
+     */
+    static void CompletedPollRequestProcessor(void *);
+
     //----------------------------------------------------------------------
     //
     //                      POSIX Calls start here.
@@ -299,6 +386,11 @@ private:
      *  Provide a mechanism for the STM32 to call the sendto method.
      */
     void SendTo(Message *);
+
+    /**
+     *  Provide a mechanism for the STM32 to call the send method.
+     */
+    void Send(Message *);
 
     /**
      *  Provide a mechanism for the STM32 to call the recvfrom method.

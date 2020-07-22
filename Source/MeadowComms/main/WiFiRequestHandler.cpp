@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "NvsManager.hpp"
 #include "WiFiRequestHandler.hpp"
@@ -47,6 +48,21 @@ extern "C" esp_err_t WiFiEventHandler(void *context, system_event_t *event)
  */
 bool WiFiRequestHandler::_instantiated = false;
 
+/**
+ *  List of active poll requests.
+ */
+GenericLinkList<WiFiRequestHandler::PollRequestInformation> *WiFiRequestHandler::_pollRequests = nullptr;
+
+/**
+ *  Mutex for the poll request linked list.
+ */
+SemaphoreHandle_t WiFiRequestHandler::_pollRequestListMutex = NULL;
+
+/**
+ *  Handle for the completed poll requests.
+ */
+QueueHandle_t WiFiRequestHandler::_completedPollRequestsQueue = NULL;
+
 /*
  * ----------------------------------------------------------------------------
  *
@@ -80,6 +96,21 @@ WiFiRequestHandler::WiFiRequestHandler()
             NvsManager::WriteBlob(CONFIG_NAME, &_config, sizeof(_config));
         }
     }
+    //
+    //  Set up the structures need to deal with poll() requests in an asynchronous manner.
+    //
+    _pollRequestListMutex = xSemaphoreCreateMutex();
+    if (_pollRequestListMutex == NULL)
+    {
+        ESP_LOGE(__func__, "Cannot create poll request list mutex.");
+    }
+    _pollRequests = new GenericLinkList<PollRequestInformation>(ComparePollRequestMessageIds);
+    _completedPollRequestsQueue = xQueueCreate(MAX_QUEUE_LENGTH, sizeof(PollRequestInformation *));
+    if (_completedPollRequestsQueue == NULL)
+    {
+        ESP_LOGE(__func__, "Cannot allocate completed poll requests queue.");
+    }
+    xTaskCreate(CompletedPollRequestProcessor, "CompletedPollRequests", 2048 * 2, NULL, configMAX_PRIORITIES - 1, &_completedPollRequestsTaskHandle);
 }
 
 /**
@@ -224,11 +255,12 @@ gpio_num_t WiFiRequestHandler::ConvertAntennaToPin(AntennaTypes::AntennaTypes an
     ESP_LOGI(__func__, "Enter");
 #endif
 
-    return((antenna == AntennaTypes::OnBoard) ? ON_BOARD_ANTENNA_PIN : EXTERNAL_ANTENNA_PIN);
 
 #if defined(WIFI_FULL_LOGGING)
     ESP_LOGI(__func__, "Exit");
 #endif
+
+    return((antenna == AntennaTypes::OnBoard) ? ON_BOARD_ANTENNA_PIN : EXTERNAL_ANTENNA_PIN);
 }
 
 /**
@@ -367,6 +399,9 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
             break;
         case WiFiFunction::Poll:
             Poll(request);
+            break;
+        case WiFiFunction::Send:
+            Send(request);
             break;
         default:
             ESP_LOGI(__func__, "Unknown WiFi message received, function %d", request->Function);
@@ -1121,6 +1156,63 @@ void WiFiRequestHandler::Close(Message *message)
 }
 
 /**
+ *  @brief Expose the send method to the STM32.
+ *
+ *  @param message
+ *      Message structure containing the parameters for the sendto method.
+ */
+void WiFiRequestHandler::Send(Message *message)
+{
+#if defined(WIFI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Enter");
+#endif
+
+    Esp32Messaging::SendRequest *request = Encoders::ExtractSendRequest(message->Payload);
+
+    Esp32Messaging::IntegerAndErrnoResponse response;
+    int32_t mappedFlags = 0;
+    response.ResponseErrno = 0;
+    response.Result = Mapping::GetEspFlagValue(Mapping::MessageFlags, request->Flags, &mappedFlags);
+    if (response.Result == 0)
+    {
+        response.Result = send(request->SocketHandle, request->Buffer, request->Length, mappedFlags);
+        if (response.Result < 0)
+        {
+            if (Mapping::GetStmValue(Mapping::Errno, errno, &response.ResponseErrno) != 0)
+            {
+                Mapping::GetStmValue(Mapping::Errno, EFAULT, &response.ResponseErrno);
+            }
+        }
+    }
+    else
+    {
+        Mapping::GetStmValue(Mapping::Errno, EFAULT, &response.ResponseErrno);
+    }
+
+#if defined(WIFI_DEBUG_SEND_DATA) || defined(WIFI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Sent %d bytes.", request->Length);
+    ESP_LOG_BUFFER_HEX(__func__, request->Buffer, request->Length);
+    ESP_LOGI(__func__, "Result: %d, errno: %d - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
+#endif
+
+    vPortFree(request->Buffer);
+    vPortFree(request);
+    vPortFree(message->Payload);
+
+    message->PayloadLength = Encoders::EncodedIntegerAndErrnoResponseBufferSize(&response);
+    message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
+    Encoders::EncodeIntegerAndErrnoResponse(&response, message->Payload);
+    message->MessageType = MessageTypes::Response;
+    message->StatusCode = StatusCodes::CompletedOk;
+    _messageDispatcher->QueueMessageForStm32(message);
+    xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
+
+#if defined(WIFI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Exit");
+#endif
+}
+
+/**
  *  @brief Expose the sendto method to the STM32.
  *
  *  @param message
@@ -1335,46 +1427,62 @@ void WiFiRequestHandler::Poll(Message *message)
 #endif
 
     Esp32Messaging::PollRequest *request = Encoders::ExtractPollRequest(message->Payload);
+    PollRequestInformation *pollRequest = static_cast<PollRequestInformation *>(pvPortMalloc(sizeof(PollRequestInformation)));
+    Esp32Messaging::IntegerAndErrnoResponse response;
 
-    struct pollfd *fds = (struct pollfd *) pvPortMalloc(sizeof(struct pollfd));
-    int event;    
-    fds->fd = request->SocketHandle;
-    event = request->Events;
-    Mapping::GetEspFlagValue(Mapping::PollEvents, request->Events, &event);
-    fds->events = (uint16_t) (event & 0xffff);
-    fds->revents = 0;
-
-#if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_POLL)
-    ESP_LOGI(__func__, "Polling socket: %d", request->SocketHandle);
-#endif
-
-    Esp32Messaging::PollResponse response;
-    response.ResponseErrno = 0;
-    response.Result = poll(fds, 1, request->Timeout);
-
-    Mapping::GetStmFlagValue(Mapping::PollEvents, fds->revents, &event);
-    response.ReturnedEvents = (uint16_t) (event & 0xffff);
-
-    if (response.Result < 0)
+    response.Result = 0;
+    errno = 0;
+    if (request->Setup)
     {
-        if (Mapping::GetStmValue(Mapping::Errno, errno, &response.ResponseErrno) != 0)
+        pollRequest->Fds = (struct pollfd *) pvPortMalloc(sizeof(struct pollfd));
+        if (pollRequest->Fds != NULL)
         {
-            Mapping::GetStmValue(Mapping::Errno, EFAULT, &response.ResponseErrno);
+            bzero(pollRequest->Fds, sizeof(struct pollfd));
+            //
+            pollRequest->Fds->fd = request->SocketHandle;
+            int event = request->Events;
+            Mapping::GetEspFlagValue(Mapping::PollEvents, request->Events, &event);
+            pollRequest->Fds->events = (uint16_t) (event & 0xffff);
+            //
+            message->DeletePayload();
+            pollRequest->OriginalRequestID = message->MessageID;
+            char taskName[30];
+            snprintf(taskName, 30, "PollRequest0x%08x", message->MessageID);
+            xTaskCreate(PollRequestProcessor, taskName, 2048 * 2, pollRequest, configMAX_PRIORITIES - 1, &pollRequest->TaskHandle);
+        }
+        else
+        {
+            response.Result = -1;
+        }
+    }
+    else
+    {
+        xSemaphoreTake(_pollRequestListMutex, portMAX_DELAY);
+        PollRequestInformation *pollRequest = _pollRequests->RemoveItem(request->SetupMessageId);
+        xSemaphoreGive(_pollRequestListMutex);
+        if (pollRequest)
+        {
+            pollRequest->Teardown = true;
+            if (xQueueSendToBack(_completedPollRequestsQueue, &pollRequest, 0) != pdPASS)
+            {
+                ESP_LOGE(__func__, "Cannot queue poll teardown request.");
+                response.Result = -1;
+            }
         }
     }
 
-#if defined(WIFI_DEBUG_POLL) || defined(WIFI_FULL_LOGGING)
-    ESP_LOGI(__func__, "Received events waiting: %d.", response.Result);
-    ESP_LOGI(__func__, "Result: %d, errno: %d - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
-#endif
+    response.ResponseErrno = errno;
+    if (errno != 0)
+    {
+        response.Result = -1;
+    }
 
-    vPortFree(fds);
     vPortFree(request);
     vPortFree(message->Payload);
 
-    message->PayloadLength = Encoders::EncodedPollResponseBufferSize(&response);
+    message->PayloadLength = Encoders::EncodedIntegerAndErrnoResponseBufferSize(&response);
     message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-    Encoders::EncodePollResponse(&response, message->Payload);
+    Encoders::EncodeIntegerAndErrnoResponse(&response, message->Payload);
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
@@ -1570,4 +1678,122 @@ void WiFiRequestHandler::ScanCompleteEvent(system_event_t *event)
 #if defined(WIFI_FULL_LOGGING)
     ESP_LOGI(__func__, "Exit");
 #endif
+}
+
+/**
+ *  @brief Compare the message ID in a message from the STM32 with the specified message ID.
+ * 
+ *  @param messageId
+ *      Message ID being looked for.
+ * 
+ *  @param event
+ *      A message from the STM32 containing the original request.
+ * 
+ *  @returns
+ *      True if the message IDs match, false otherwise.
+ */
+bool WiFiRequestHandler::ComparePollRequestMessageIds(uint32_t messageId, PollRequestInformation *request)
+{
+    return(messageId == request->OriginalRequestID);
+}
+
+/**
+ *  @brief Task that will process a poll request.
+ * 
+ *  @param parameters
+ *      Pointer to a PollRequest object containing the information about
+ *      request along with any management data to support the request.
+ */
+void WiFiRequestHandler::PollRequestProcessor(void *parameters)
+{
+#if defined(WIFI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Enter");
+#endif
+
+    PollRequestInformation *request = static_cast<PollRequestInformation *>(parameters);
+    xSemaphoreTake(_pollRequestListMutex, portMAX_DELAY);
+    _pollRequests->AddToHead(request);
+    xSemaphoreGive(_pollRequestListMutex);
+
+    request->PollResult = 0;   // Just in case we terminate the task.
+    request->PollErrno = 0;
+    request->Fds->revents = 0;
+    request->PollResult = poll(request->Fds, 1, request->Timeout);
+    if (request->PollResult < 0)
+    {
+        Mapping::GetStmValue(Mapping::Errno, errno, &request->PollErrno);
+    }
+    else
+    {
+        int event = 0;
+        Mapping::GetStmFlagValue(Mapping::PollEvents, request->Fds->revents, &event);
+        request->Fds->events = (uint16_t) (event & 0xffff);
+    }
+    request->Teardown = false;
+    if (xQueueSendToBack(_completedPollRequestsQueue, &request, 0) != pdPASS)
+    {
+        ESP_LOGE(__func__, "Cannot queue completed poll message.");
+    }
+
+    xSemaphoreTake(_pollRequestListMutex, portMAX_DELAY);
+    _pollRequests->RemoveItem(request->OriginalRequestID);
+    xSemaphoreGive(_pollRequestListMutex);
+
+#if defined(WIFI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Exit");
+#endif
+    //
+    //  This method should never exit.  It will be cleaned up from another task
+    //  using a vTaskDelete call.
+    //
+    vTaskSuspend(NULL);
+}
+
+/**
+ *  @brief Deal with completed poll requests.
+ * 
+ *  @param parameters
+ *      This should be NULL as all process information will come through
+ *      the completed poll requests queue.
+ */
+void WiFiRequestHandler::CompletedPollRequestProcessor(void *parameters)
+{
+    while (true)
+    {
+        PollRequestInformation *request;
+        BaseType_t result = xQueueReceive(_completedPollRequestsQueue, &request, portMAX_DELAY);
+        if (result == pdTRUE)
+        {
+            if (!request->Teardown)
+            {
+                //
+                //  Prepare the response payload.
+                //
+                Esp32Messaging::InterruptPollResponse response;
+                response.ReturnedEvents = request->Fds->revents;
+                response.SocketHandle = request->Fds->fd;
+                response.Result = request->PollResult;
+                response.ResponseErrno = request->PollErrno;
+                response.SetupMessageId = request->OriginalRequestID;
+                //  
+                //  Use tha original message information and queue the response.
+                //
+                Message *message = static_cast<Message *>(pvPortMalloc(sizeof(Message)));
+                message->Interface = Esp32Interfaces::WiFi;
+                message->Function = WiFiFunction::InterruptPollResponse;
+                message->MessageID = _messageDispatcher->GetNextMessageID();
+                message->PayloadLength = Encoders::EncodedInterruptPollResponseBufferSize(&response);
+                message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
+                Encoders::EncodeInterruptPollResponse(&response, message->Payload);
+                message->MessageType = MessageTypes::Interrupt;
+                message->StatusCode = StatusCodes::CompletedOk;
+                _messageDispatcher->QueueMessageForStm32(message);
+            }
+            //
+            //  Clean up.
+            //
+            vTaskDelete(request->TaskHandle);
+            vPortFree(request);
+        }
+    }
 }

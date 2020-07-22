@@ -1983,6 +1983,88 @@ Esp32Messaging::GetBatteryChargeLevelResponse *Encoders::ExtractGetBatteryCharge
 }
 
 /**
+ *  Convert the SendRequest object into a byte stream that can be sent to the STM32.
+ *  
+ *  The amount of memory required can be obtained by calling the EncodedSendRequestBufferSize method.
+ *  
+ *  @param sendRequest
+ *      SendRequest object to be encoded.
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory large enough to hold the encoded SendRequest object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodeSendRequest
+void Encoders::EncodeSendRequest(Esp32Messaging::SendRequest *sendRequest, uint8_t *buffer)
+{
+    EncodeInt32(sendRequest->SocketHandle, buffer);
+    buffer += 4;
+    EncodeUInt32(sendRequest->BufferLength, buffer);
+    buffer += 4;
+    if (sendRequest->BufferLength > 0)
+    {
+        memcpy((void *) buffer, (void *) sendRequest->Buffer, sendRequest->BufferLength);
+        buffer += sendRequest->BufferLength;
+    }
+    EncodeInt32(sendRequest->Length, buffer);
+    buffer += 4;
+    EncodeInt32(sendRequest->Flags, buffer);
+}
+
+/**
+ *  Calculate the amount of memory required to hold the given instance of the SendRequest object.
+ *  
+ *  @param sendRequest
+ *      SendRequest object to be encoded.
+ *  
+ *  @returns
+ *      Number of bytes required to hold the encoded SendRequest object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodedSendRequestBufferSize
+int Encoders::EncodedSendRequestBufferSize(Esp32Messaging::SendRequest *sendRequest)
+{
+    int result = 0;
+    result += sendRequest->BufferLength;
+    return(result + 16);
+}
+
+/**
+ *  Extract the SendRequest object that is encoded in the given buffer.
+ *  
+ *  Note that the returned pointer points to a block of memory on the heap and
+ *  this should eventually be released calling vPortFree(...).
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded SendRequest object.
+ *  
+ *  @returns
+ *      Pointer to a SendRequest object.
+ */
+// cppcheck-suppress unusedFunction symbolName=ExtractSendRequest
+Esp32Messaging::SendRequest *Encoders::ExtractSendRequest(uint8_t *buffer)
+{
+    Esp32Messaging::SendRequest *sendRequest = (Esp32Messaging::SendRequest *) pvPortMalloc(sizeof(Esp32Messaging::SendRequest));
+
+    sendRequest->SocketHandle = ExtractInt32(buffer);
+    buffer += 4;
+    sendRequest->BufferLength = ExtractUInt32(buffer);
+    buffer += 4;
+    if (sendRequest->BufferLength > 0)
+    {
+        sendRequest->Buffer = (uint8_t *) pvPortMalloc(sendRequest->BufferLength);
+        memcpy(sendRequest->Buffer, buffer, sendRequest->BufferLength);
+        buffer += sendRequest->BufferLength;
+    }
+    else
+    {
+        sendRequest->Buffer = nullptr;
+    }
+    sendRequest->Length = ExtractInt32(buffer);
+    buffer += 4;
+    sendRequest->Flags = ExtractInt32(buffer);
+    return(sendRequest);
+}
+
+/**
  *  Convert the SendToRequest object into a byte stream that can be sent to the STM32.
  *  
  *  The amount of memory required can be obtained by calling the EncodedSendToRequestBufferSize method.
@@ -2270,9 +2352,11 @@ void Encoders::EncodePollRequest(Esp32Messaging::PollRequest *pollRequest, uint8
     buffer += 4;
     EncodeUInt16(pollRequest->Events, buffer);
     buffer += 2;
-    EncodeUInt16(pollRequest->ReturnedEvents, buffer);
-    buffer += 2;
     EncodeInt32(pollRequest->Timeout, buffer);
+    buffer += 4;
+    EncodeInt32(pollRequest->Setup, buffer);
+    buffer += 4;
+    EncodeUInt32(pollRequest->SetupMessageId, buffer);
 }
 
 /**
@@ -2287,7 +2371,7 @@ void Encoders::EncodePollRequest(Esp32Messaging::PollRequest *pollRequest, uint8
 // cppcheck-suppress unusedFunction symbolName=EncodedPollRequestBufferSize
 int Encoders::EncodedPollRequestBufferSize(Esp32Messaging::PollRequest *pollRequest)
 {
-    return(12);
+    return(18);
 }
 
 /**
@@ -2311,71 +2395,81 @@ Esp32Messaging::PollRequest *Encoders::ExtractPollRequest(uint8_t *buffer)
     buffer += 4;
     pollRequest->Events = ExtractUInt16(buffer);
     buffer += 2;
-    pollRequest->ReturnedEvents = ExtractUInt16(buffer);
-    buffer += 2;
     pollRequest->Timeout = ExtractInt32(buffer);
+    buffer += 4;
+    pollRequest->Setup = ExtractInt32(buffer);
+    buffer += 4;
+    pollRequest->SetupMessageId = ExtractUInt32(buffer);
     return(pollRequest);
 }
 
 /**
- *  Convert the PollResponse object into a byte stream that can be sent to the STM32.
+ *  Convert the InterruptPollResponse object into a byte stream that can be sent to the STM32.
  *  
- *  The amount of memory required can be obtained by calling the EncodedPollResponseBufferSize method.
+ *  The amount of memory required can be obtained by calling the EncodedInterruptPollResponseBufferSize method.
  *  
- *  @param pollResponse
- *      PollResponse object to be encoded.
+ *  @param interruptPollResponse
+ *      InterruptPollResponse object to be encoded.
  *  
  *  @param buffer
- *      Pointer to a block of memory large enough to hold the encoded PollResponse object.
+ *      Pointer to a block of memory large enough to hold the encoded InterruptPollResponse object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodePollResponse
-void Encoders::EncodePollResponse(Esp32Messaging::PollResponse *pollResponse, uint8_t *buffer)
+// cppcheck-suppress unusedFunction symbolName=EncodeInterruptPollResponse
+void Encoders::EncodeInterruptPollResponse(Esp32Messaging::InterruptPollResponse *interruptPollResponse, uint8_t *buffer)
 {
-    EncodeUInt16(pollResponse->ReturnedEvents, buffer);
-    buffer += 2;
-    EncodeInt32(pollResponse->Result, buffer);
+    EncodeInt32(interruptPollResponse->SocketHandle, buffer);
     buffer += 4;
-    EncodeInt32(pollResponse->ResponseErrno, buffer);
+    EncodeInt32(interruptPollResponse->Result, buffer);
+    buffer += 4;
+    EncodeInt32(interruptPollResponse->ResponseErrno, buffer);
+    buffer += 4;
+    EncodeUInt16(interruptPollResponse->ReturnedEvents, buffer);
+    buffer += 2;
+    EncodeUInt32(interruptPollResponse->SetupMessageId, buffer);
 }
 
 /**
- *  Calculate the amount of memory required to hold the given instance of the PollResponse object.
+ *  Calculate the amount of memory required to hold the given instance of the InterruptPollResponse object.
  *  
- *  @param pollResponse
- *      PollResponse object to be encoded.
+ *  @param interruptPollResponse
+ *      InterruptPollResponse object to be encoded.
  *  
  *  @returns
- *      Number of bytes required to hold the encoded PollResponse object.
+ *      Number of bytes required to hold the encoded InterruptPollResponse object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodedPollResponseBufferSize
-int Encoders::EncodedPollResponseBufferSize(Esp32Messaging::PollResponse *pollResponse)
+// cppcheck-suppress unusedFunction symbolName=EncodedInterruptPollResponseBufferSize
+int Encoders::EncodedInterruptPollResponseBufferSize(Esp32Messaging::InterruptPollResponse *interruptPollResponse)
 {
-    return(10);
+    return(18);
 }
 
 /**
- *  Extract the PollResponse object that is encoded in the given buffer.
+ *  Extract the InterruptPollResponse object that is encoded in the given buffer.
  *  
  *  Note that the returned pointer points to a block of memory on the heap and
  *  this should eventually be released calling vPortFree(...).
  *  
  *  @param buffer
- *      Pointer to a block of memory holding the encoded PollResponse object.
+ *      Pointer to a block of memory holding the encoded InterruptPollResponse object.
  *  
  *  @returns
- *      Pointer to a PollResponse object.
+ *      Pointer to a InterruptPollResponse object.
  */
-// cppcheck-suppress unusedFunction symbolName=ExtractPollResponse
-Esp32Messaging::PollResponse *Encoders::ExtractPollResponse(uint8_t *buffer)
+// cppcheck-suppress unusedFunction symbolName=ExtractInterruptPollResponse
+Esp32Messaging::InterruptPollResponse *Encoders::ExtractInterruptPollResponse(uint8_t *buffer)
 {
-    Esp32Messaging::PollResponse *pollResponse = (Esp32Messaging::PollResponse *) pvPortMalloc(sizeof(Esp32Messaging::PollResponse));
+    Esp32Messaging::InterruptPollResponse *interruptPollResponse = (Esp32Messaging::InterruptPollResponse *) pvPortMalloc(sizeof(Esp32Messaging::InterruptPollResponse));
 
-    pollResponse->ReturnedEvents = ExtractUInt16(buffer);
-    buffer += 2;
-    pollResponse->Result = ExtractInt32(buffer);
+    interruptPollResponse->SocketHandle = ExtractInt32(buffer);
     buffer += 4;
-    pollResponse->ResponseErrno = ExtractInt32(buffer);
-    return(pollResponse);
+    interruptPollResponse->Result = ExtractInt32(buffer);
+    buffer += 4;
+    interruptPollResponse->ResponseErrno = ExtractInt32(buffer);
+    buffer += 4;
+    interruptPollResponse->ReturnedEvents = ExtractUInt16(buffer);
+    buffer += 2;
+    interruptPollResponse->SetupMessageId = ExtractUInt32(buffer);
+    return(interruptPollResponse);
 }
 
 

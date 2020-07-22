@@ -198,6 +198,15 @@ namespace Esp32Messaging
         uint32_t Level;
     };
 
+    struct SendRequest
+    {
+        int32_t SocketHandle;
+        uint32_t BufferLength;
+        uint8_t *Buffer;
+        int32_t Length;
+        int32_t Flags;
+    };
+
     struct SendToRequest
     {
         int32_t SocketHandle;
@@ -232,15 +241,18 @@ namespace Esp32Messaging
     {
         int32_t SocketHandle;
         uint16_t Events;
-        uint16_t ReturnedEvents;
         int32_t Timeout;
+        int32_t Setup;
+        uint32_t SetupMessageId;
     };
 
-    struct PollResponse
+    struct InterruptPollResponse
     {
-        uint16_t ReturnedEvents;
+        int32_t SocketHandle;
         int32_t Result;
         int32_t ResponseErrno;
+        uint16_t ReturnedEvents;
+        uint32_t SetupMessageId;
     };
 
 }
@@ -343,6 +355,9 @@ public:
     static void EncodeGetBatteryChargeLevelResponse(Esp32Messaging::GetBatteryChargeLevelResponse *, uint8_t *);
     static int EncodedGetBatteryChargeLevelResponseBufferSize(Esp32Messaging::GetBatteryChargeLevelResponse *);
     static Esp32Messaging::GetBatteryChargeLevelResponse *ExtractGetBatteryChargeLevelResponse(uint8_t *);
+    static void EncodeSendRequest(Esp32Messaging::SendRequest *, uint8_t *);
+    static int EncodedSendRequestBufferSize(Esp32Messaging::SendRequest *);
+    static Esp32Messaging::SendRequest *ExtractSendRequest(uint8_t *);
     static void EncodeSendToRequest(Esp32Messaging::SendToRequest *, uint8_t *);
     static int EncodedSendToRequestBufferSize(Esp32Messaging::SendToRequest *);
     static Esp32Messaging::SendToRequest *ExtractSendToRequest(uint8_t *);
@@ -355,9 +370,9 @@ public:
     static void EncodePollRequest(Esp32Messaging::PollRequest *, uint8_t *);
     static int EncodedPollRequestBufferSize(Esp32Messaging::PollRequest *);
     static Esp32Messaging::PollRequest *ExtractPollRequest(uint8_t *);
-    static void EncodePollResponse(Esp32Messaging::PollResponse *, uint8_t *);
-    static int EncodedPollResponseBufferSize(Esp32Messaging::PollResponse *);
-    static Esp32Messaging::PollResponse *ExtractPollResponse(uint8_t *);
+    static void EncodeInterruptPollResponse(Esp32Messaging::InterruptPollResponse *, uint8_t *);
+    static int EncodedInterruptPollResponseBufferSize(Esp32Messaging::InterruptPollResponse *);
+    static Esp32Messaging::InterruptPollResponse *ExtractInterruptPollResponse(uint8_t *);
 
 };
 
