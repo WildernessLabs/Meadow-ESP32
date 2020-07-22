@@ -46,7 +46,7 @@ protected:
      *  Object that will be used to send messages to the STM32
      *  from the ESP32.
      */
-    MessageDispatcher *_messageDispatcher = nullptr;
+    static MessageDispatcher *_messageDispatcher;
 
     /*
      *  Task that will be used to retrieve and dispatch

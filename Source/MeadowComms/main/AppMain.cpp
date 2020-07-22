@@ -12,6 +12,8 @@
 #include "MessageDispatcher.hpp"
 #include "SpiTransportProvider.hpp"
 
+#include "GenericList.hpp"
+
 /*
  *      Main program loop for the ESP32 as specified by the FreeRTOS documentation.
  */

@@ -41,10 +41,10 @@
  *  Log everything to do with the WiFi tasks.
  */
 #define WIFI_FULL_LOGGING 1
-//#undef WIFI_FULL_LOGGING
+// #undef WIFI_FULL_LOGGING
 
 #define WIFI_DEBUG_CONNECT 1
-// #undef WIFI_CONNECT
+#undef WIFI_CONNECT
 
 #define WIFI_DEBUG_POLL 1
 // #undef WIFI_POLL
@@ -52,11 +52,20 @@
 #define WIFI_DEBUG_RECVFROM_DATA 1
 // #undef WIFI_DEBUG_RECVFROM_DATA
 
+#define WIFI_DEBUG_SETSOCKOPT 1
+#undef WIFI_DEBUG_SETSOCKOPT_DATA
+
+#define WIFI_DEBUG_SEND_DATA 1
+// #undef WIFI_DEBUG_SEND_DATA
+
 #define WIFI_DEBUG_SENDTO_DATA 1
 // #undef WIFI_DEBUG_SENDTO_DATA
 
 #define WIFI_SELECT 2
 // #undef WIFI_SELECT
+
+#define WIFI_SOCKET 2
+// #undef WIFI_SOCKET
 
 extern char *enterMethodString;
 extern char *exitMethodString;
