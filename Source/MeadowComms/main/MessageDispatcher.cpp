@@ -164,6 +164,6 @@ uint32_t MessageDispatcher::GetNextMessageID()
     _lastMessageId++;
     uint32_t messageId = _lastMessageId;
     xSemaphoreGive(_messageIdMutex);
-    messageId |= ESP32_MESSAGE_ID_MASK;
+    messageId &= ~ESP32_MESSAGE_ID_MASK;
     return(messageId);
 }
