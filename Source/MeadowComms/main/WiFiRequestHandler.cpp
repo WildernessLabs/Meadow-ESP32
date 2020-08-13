@@ -757,7 +757,7 @@ void WiFiRequestHandler::GetAddrInfo(Message *message)
  */
 void WiFiRequestHandler::Socket(Message *message)
 {
-#if defined(WIFI_FULL_LOGGING)
+#if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_SOCKET)
     ESP_LOGI(__func__, "Enter");
 #endif
 
@@ -766,7 +766,7 @@ void WiFiRequestHandler::Socket(Message *message)
     Esp32Messaging::IntegerResponse response;
     response.Result = socket(request->Domain, request->Type, request->Protocol);
 
-#if defined(WIFI_FULL_LOGGING) || defined(WIFI_SOCKET)
+#if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_SOCKET)
     ESP_LOGI(__func__, "Created socket %d", response.Result);
 #endif
 
@@ -781,7 +781,7 @@ void WiFiRequestHandler::Socket(Message *message)
     _messageDispatcher->QueueMessageForStm32(message);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
 
-#if defined(WIFI_FULL_LOGGING)
+#if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_SOCKET)
     ESP_LOGI(__func__, "Exit");
 #endif
 }
@@ -794,7 +794,7 @@ void WiFiRequestHandler::Socket(Message *message)
  */
 void WiFiRequestHandler::Connect(Message *message)
 {
-#if defined(WIFI_FULL_LOGGING)
+#if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_CONNECT)
     ESP_LOGI(__func__, "Enter");
 #endif
 
@@ -856,7 +856,7 @@ void WiFiRequestHandler::Connect(Message *message)
     _messageDispatcher->QueueMessageForStm32(message);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
 
-#if defined(WIFI_FULL_LOGGING)
+#if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_CONNECT)
     ESP_LOGI(__func__, "Exit");
 #endif
 }
@@ -904,7 +904,7 @@ void WiFiRequestHandler::FreeAddrInfo(Message *message)
  */
 void WiFiRequestHandler::SetSockOpt(Message *message)
 {
-#if defined(WIFI_FULL_LOGGING)
+#if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_SETSOCKOPT)
     ESP_LOGI(__func__, "Enter");
 #endif
 
@@ -1004,7 +1004,7 @@ void WiFiRequestHandler::SetSockOpt(Message *message)
     _messageDispatcher->QueueMessageForStm32(message);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
 
-#if defined(WIFI_FULL_LOGGING)
+#if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_SETSOCKOPT)
     ESP_LOGI(__func__, "Exit");
 #endif
 }
@@ -1220,7 +1220,7 @@ void WiFiRequestHandler::Send(Message *message)
  */
 void WiFiRequestHandler::SendTo(Message *message)
 {
-#if defined(WIFI_FULL_LOGGING)
+#if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_SENDTO)
     ESP_LOGI(__func__, "Enter");
 #endif
 
@@ -1247,7 +1247,7 @@ void WiFiRequestHandler::SendTo(Message *message)
             memcpy(&sa.sin_addr, &socketAddress->Ip4Address, sizeof(sa.sin_addr));
             sa.sin_len = sizeof(sa);
 
-#if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_SENDTO_DATA)
+#if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_SENDTO)
     ESP_LOGI(__func__, "Connecting socket: %d", request->SocketHandle);
     ESP_LOGI(__func__, "Family: %d", sa.sin_family);
     ESP_LOGI(__func__, "IP address: %s", inet_ntoa(sa.sin_addr));
@@ -1289,7 +1289,7 @@ void WiFiRequestHandler::SendTo(Message *message)
     _messageDispatcher->QueueMessageForStm32(message);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
 
-#if defined(WIFI_FULL_LOGGING)
+#if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_SENDTO)
     ESP_LOGI(__func__, "Exit");
 #endif
 }
