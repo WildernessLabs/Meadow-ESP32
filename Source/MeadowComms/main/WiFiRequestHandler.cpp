@@ -1232,34 +1232,48 @@ void WiFiRequestHandler::SendTo(Message *message)
     response.Result = Mapping::GetEspFlagValue(Mapping::MessageFlags, request->Flags, &mappedFlags);
     if (response.Result == 0)
     {
-        Esp32Messaging::SockAddr *socketAddress = Encoders::ExtractSockAddr(request->DestinationAddress);
+        Esp32Messaging::SockAddr *socketAddress = NULL;
         int32_t family = 0;
-        Mapping::GetEspValue(Mapping::AddressFamily, socketAddress->Family, &family);
+        if (request->DestinationAddress)
+        {
+            socketAddress = Encoders::ExtractSockAddr(request->DestinationAddress);
+            Mapping::GetEspValue(Mapping::AddressFamily, socketAddress->Family, &family);
 
 #if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_SENDTO)
-        ESP_LOGI(__func__, "Mapping request family %d to ESP family %d", socketAddress->Family, family);
+            ESP_LOGI(__func__, "Mapping request family %d to ESP family %d", socketAddress->Family, family);
 #endif
+        }
 
         if (family == AF_INET)
         {
             struct sockaddr_in sa;
-            bzero(&sa, sizeof(struct sockaddr_in));
-            sa.sin_family = (unsigned char) (family & 0xff);
+            struct sockaddr *psa = NULL;
+            size_t lenSa = 0;
+            if (request->DestinationAddress)
+            {
+                bzero(&sa, sizeof(struct sockaddr_in));
+                sa.sin_family = (unsigned char) (family & 0xff);
 
-            sa.sin_port = socketAddress->Port;
-            memcpy(&sa.sin_addr, &socketAddress->Ip4Address, sizeof(sa.sin_addr));
-            sa.sin_len = sizeof(sa);
+                sa.sin_port = socketAddress->Port;
+                memcpy(&sa.sin_addr, &socketAddress->Ip4Address, sizeof(sa.sin_addr));
+                sa.sin_len = sizeof(sa);
+                psa = (struct sockaddr *) &sa;
+                lenSa = sizeof(sa);
+            }
 
 #if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_SENDTO)
     ESP_LOGI(__func__, "Connecting socket: %d", request->SocketHandle);
-    ESP_LOGI(__func__, "Family: %d", sa.sin_family);
-    ESP_LOGI(__func__, "IP address: %s", inet_ntoa(sa.sin_addr));
-    ESP_LOGI(__func__, "Port: %d", ntohs(sa.sin_port));
+    ESP_LOGI(__func__, "Family: %d", (psa == NULL) ? 0 : sa.sin_family);
+    ESP_LOGI(__func__, "IP address: %s", (psa == NULL) ? "NULL" : inet_ntoa(sa.sin_addr));
+    ESP_LOGI(__func__, "Port: %d", (psa == NULL) ? 0 : ntohs(sa.sin_port));
 #endif
-            response.Result = sendto(request->SocketHandle, request->Buffer, request->Length, mappedFlags, (struct sockaddr *) &sa, sizeof(sa));
+            response.Result = sendto(request->SocketHandle, request->Buffer, request->Length, mappedFlags, psa, lenSa);
         }
 
-        vPortFree(socketAddress);
+        if (socketAddress != NULL)
+        {
+            vPortFree(socketAddress);
+        }
         
         if (response.Result < 0)
         {
