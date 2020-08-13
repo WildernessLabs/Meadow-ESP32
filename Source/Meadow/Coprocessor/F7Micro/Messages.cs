@@ -232,6 +232,13 @@ namespace Meadow.Coprocessor.F7Micro.Messages
         public UInt32 SetupMessageId;
     };
 
+    public struct PollResponse
+    {
+        public UInt16 ReturnedEvents;
+        public Int32 Result;
+        public Int32 ResponseErrno;
+    };
+
     public struct InterruptPollResponse
     {
         public Int32 SocketHandle;

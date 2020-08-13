@@ -2404,6 +2404,67 @@ Esp32Messaging::PollRequest *Encoders::ExtractPollRequest(uint8_t *buffer)
 }
 
 /**
+ *  Convert the PollResponse object into a byte stream that can be sent to the STM32.
+ *  
+ *  The amount of memory required can be obtained by calling the EncodedPollResponseBufferSize method.
+ *  
+ *  @param pollResponse
+ *      PollResponse object to be encoded.
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory large enough to hold the encoded PollResponse object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodePollResponse
+void Encoders::EncodePollResponse(Esp32Messaging::PollResponse *pollResponse, uint8_t *buffer)
+{
+    EncodeUInt16(pollResponse->ReturnedEvents, buffer);
+    buffer += 2;
+    EncodeInt32(pollResponse->Result, buffer);
+    buffer += 4;
+    EncodeInt32(pollResponse->ResponseErrno, buffer);
+}
+
+/**
+ *  Calculate the amount of memory required to hold the given instance of the PollResponse object.
+ *  
+ *  @param pollResponse
+ *      PollResponse object to be encoded.
+ *  
+ *  @returns
+ *      Number of bytes required to hold the encoded PollResponse object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodedPollResponseBufferSize
+int Encoders::EncodedPollResponseBufferSize(Esp32Messaging::PollResponse *pollResponse)
+{
+    return(10);
+}
+
+/**
+ *  Extract the PollResponse object that is encoded in the given buffer.
+ *  
+ *  Note that the returned pointer points to a block of memory on the heap and
+ *  this should eventually be released calling vPortFree(...).
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded PollResponse object.
+ *  
+ *  @returns
+ *      Pointer to a PollResponse object.
+ */
+// cppcheck-suppress unusedFunction symbolName=ExtractPollResponse
+Esp32Messaging::PollResponse *Encoders::ExtractPollResponse(uint8_t *buffer)
+{
+    Esp32Messaging::PollResponse *pollResponse = (Esp32Messaging::PollResponse *) pvPortMalloc(sizeof(Esp32Messaging::PollResponse));
+
+    pollResponse->ReturnedEvents = ExtractUInt16(buffer);
+    buffer += 2;
+    pollResponse->Result = ExtractInt32(buffer);
+    buffer += 4;
+    pollResponse->ResponseErrno = ExtractInt32(buffer);
+    return(pollResponse);
+}
+
+/**
  *  Convert the InterruptPollResponse object into a byte stream that can be sent to the STM32.
  *  
  *  The amount of memory required can be obtained by calling the EncodedInterruptPollResponseBufferSize method.
