@@ -1235,7 +1235,10 @@ void WiFiRequestHandler::SendTo(Message *message)
         Esp32Messaging::SockAddr *socketAddress = Encoders::ExtractSockAddr(request->DestinationAddress);
         int32_t family = 0;
         Mapping::GetEspValue(Mapping::AddressFamily, socketAddress->Family, &family);
+
+#if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_SENDTO)
         ESP_LOGI(__func__, "Mapping request family %d to ESP family %d", socketAddress->Family, family);
+#endif
 
         if (family == AF_INET)
         {
