@@ -1851,6 +1851,51 @@ namespace Meadow.Coprocessor.F7Micro.Messages
             return(18);
         }
 
+        public static byte[] EncodePollResponse(PollResponse pollResponse)
+        {
+            int offset = 0;
+            int length = 0;
+
+            //
+            //  Calculate the amount of memory needed.
+            //
+            length += 10;
+
+            //
+            //  Now allocate a new buffer and copy the data in to the buffer.
+            //
+            byte[] buffer = new byte[length];
+            Array.Clear(buffer, 0, buffer.Length);
+            EncodeUInt16(pollResponse.ReturnedEvents, buffer, offset);
+            offset += 2;
+            EncodeInt32(pollResponse.Result, buffer, offset);
+            offset += 4;
+            EncodeInt32(pollResponse.ResponseErrno, buffer, offset);
+            return(buffer);
+        }
+
+        public static PollResponse ExtractPollResponse(byte[] buffer, int offset)
+        {
+            PollResponse pollResponse = new Messages.PollResponse();
+
+            pollResponse.ReturnedEvents = ExtractUInt16(buffer, offset);
+            offset += 2;
+            pollResponse.Result = ExtractInt32(buffer, offset);
+            offset += 4;
+            pollResponse.ResponseErrno = ExtractInt32(buffer, offset);
+            return(pollResponse);
+        }
+
+        /// <summary>
+        /// Calculate the amount of memory required to hold the given instance of the PollResponse object.
+        /// </summary>
+        /// <param name="pollResponse">PollResponse object to be encoded.</param>
+        /// <returns>Number of bytes required to hold the encoded PollResponse object.</returns>
+        public static int EncodedPollResponseBufferSize(Messages.PollResponse pollResponse)
+        {
+            return(10);
+        }
+
         public static byte[] EncodeInterruptPollResponse(InterruptPollResponse interruptPollResponse)
         {
             int offset = 0;

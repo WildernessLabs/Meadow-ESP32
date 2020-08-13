@@ -1163,7 +1163,7 @@ void WiFiRequestHandler::Close(Message *message)
  */
 void WiFiRequestHandler::Send(Message *message)
 {
-#if defined(WIFI_FULL_LOGGING)
+#if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_SEND_DATA)
     ESP_LOGI(__func__, "Enter");
 #endif
 
@@ -1189,7 +1189,7 @@ void WiFiRequestHandler::Send(Message *message)
         Mapping::GetStmValue(Mapping::Errno, EFAULT, &response.ResponseErrno);
     }
 
-#if defined(WIFI_DEBUG_SEND_DATA) || defined(WIFI_FULL_LOGGING)
+#if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_SEND_DATA)
     ESP_LOGI(__func__, "Sent %d bytes.", request->Length);
     ESP_LOG_BUFFER_HEX(__func__, request->Buffer, request->Length);
     ESP_LOGI(__func__, "Result: %d, errno: %d - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
@@ -1207,7 +1207,7 @@ void WiFiRequestHandler::Send(Message *message)
     _messageDispatcher->QueueMessageForStm32(message);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
 
-#if defined(WIFI_FULL_LOGGING)
+#if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_SEND_DATA)
     ESP_LOGI(__func__, "Exit");
 #endif
 }
@@ -1309,6 +1309,7 @@ void WiFiRequestHandler::RecvFrom(Message *message)
     Esp32Messaging::RecvFromRequest *request = Encoders::ExtractRecvFromRequest(message->Payload);
 
     Esp32Messaging::RecvFromResponse response;
+    bzero(&response, sizeof(Esp32Messaging::RecvFromResponse));
     int32_t mappedFlags = 0;
     response.ResponseErrno = 0;
     response.Result = Mapping::GetEspFlagValue(Mapping::MessageFlags, request->Flags, &mappedFlags);
@@ -1427,62 +1428,95 @@ void WiFiRequestHandler::Poll(Message *message)
 #endif
 
     Esp32Messaging::PollRequest *request = Encoders::ExtractPollRequest(message->Payload);
-    PollRequestInformation *pollRequest = static_cast<PollRequestInformation *>(pvPortMalloc(sizeof(PollRequestInformation)));
-    Esp32Messaging::IntegerAndErrnoResponse response;
+    // PollRequestInformation *pollRequest = static_cast<PollRequestInformation *>(pvPortMalloc(sizeof(PollRequestInformation)));
+    Esp32Messaging::PollResponse response;
 
+    bzero(&response, sizeof(Esp32Messaging::PollResponse));
     response.Result = 0;
     errno = 0;
-    if (request->Setup)
+    int event = 0;
+    if (request->Setup == 2)
     {
-        pollRequest->Fds = (struct pollfd *) pvPortMalloc(sizeof(struct pollfd));
-        if (pollRequest->Fds != NULL)
+        struct pollfd fds;
+        bzero(&fds, sizeof(pollfd));
+        fds.fd = request->SocketHandle;
+        Mapping::GetEspFlagValue(Mapping::PollEvents, request->Events, &event);
+        ESP_LOGI(__func__, "Requested Nuttx events 0x%04d maps to ESP events 0x%04d", request->Events, event);
+        fds.events = (uint16_t) (event & 0xffff);
+
+        response.Result = poll(&fds, 1, request->Timeout);
+        // response.Result = poll(&fds, 1, request->Timeout);
+        ESP_LOGI(__func__, "Returned value: %d", response.Result);
+        if (response.Result > 0)
         {
-            bzero(pollRequest->Fds, sizeof(struct pollfd));
-            //
-            pollRequest->Fds->fd = request->SocketHandle;
-            int event = request->Events;
-            Mapping::GetEspFlagValue(Mapping::PollEvents, request->Events, &event);
-            pollRequest->Fds->events = (uint16_t) (event & 0xffff);
-            //
-            message->DeletePayload();
-            pollRequest->OriginalRequestID = message->MessageID;
-            char taskName[30];
-            snprintf(taskName, 30, "PollRequest0x%08x", message->MessageID);
-            xTaskCreate(PollRequestProcessor, taskName, 2048 * 2, pollRequest, configMAX_PRIORITIES - 1, &pollRequest->TaskHandle);
+            Mapping::GetStmFlagValue(Mapping::PollEvents, fds.revents, &event);
+            response.ReturnedEvents = (uint16_t) (event & 0xffff);
         }
-        else
-        {
-            response.Result = -1;
-        }
+        ESP_LOGI(__func__, "Returned ESP32 events 0x%04d maps to NuttX events 0x%04d", fds.revents, event);
     }
     else
     {
-        xSemaphoreTake(_pollRequestListMutex, portMAX_DELAY);
-        PollRequestInformation *pollRequest = _pollRequests->RemoveItem(request->SetupMessageId);
-        xSemaphoreGive(_pollRequestListMutex);
-        if (pollRequest)
-        {
-            pollRequest->Teardown = true;
-            if (xQueueSendToBack(_completedPollRequestsQueue, &pollRequest, 0) != pdPASS)
-            {
-                ESP_LOGE(__func__, "Cannot queue poll teardown request.");
-                response.Result = -1;
-            }
-        }
+        ESP_LOGI(__func__, "Poll request not supported.");
+        errno = EFAULT;
+        // if (request->Setup)
+        // {
+        //     ESP_LOGI(__func__, "Setting up poll request for socket %d (request ID 0x%08x)", request->SocketHandle, message->MessageID);
+        //     pollRequest->Fds = (struct pollfd *) pvPortMalloc(sizeof(struct pollfd));
+        //     if (pollRequest->Fds != NULL)
+        //     {
+        //         bzero(pollRequest->Fds, sizeof(struct pollfd));
+        //         //
+        //         pollRequest->Fds->fd = request->SocketHandle;
+        //         Mapping::GetEspFlagValue(Mapping::PollEvents, request->Events, &event);
+        //         pollRequest->Fds->events = (uint16_t) (event & 0xffff);
+        //         ESP_LOGI(__func__, "Requested Nuttx events 0x%04d maps to ESP events 0x%04d", request->Events, event);
+        //         //
+        //         message->DeletePayload();
+        //         pollRequest->OriginalRequestID = message->MessageID;
+        //         char taskName[30];
+        //         snprintf(taskName, 30, "PollRequest0x%08x", message->MessageID);
+        //         xTaskCreate(PollRequestProcessor, taskName, 2048 * 2, pollRequest, configMAX_PRIORITIES - 1, &pollRequest->TaskHandle);
+        //     }
+        //     else
+        //     {
+        //         response.Result = -1;
+        //     }
+        // }
+        // else
+        // {
+        //     ESP_LOGI(__func__, "Tearing down poll request for request ID 0x%08x", request->SetupMessageId);
+        //     xSemaphoreTake(_pollRequestListMutex, portMAX_DELAY);
+        //     PollRequestInformation *pollRequest = _pollRequests->RemoveItem(request->SetupMessageId);
+        //     xSemaphoreGive(_pollRequestListMutex);
+        //     if (pollRequest)
+        //     {
+        //         pollRequest->Teardown = true;
+        //         if (xQueueSendToBack(_completedPollRequestsQueue, &pollRequest, 0) != pdPASS)
+        //         {
+        //             ESP_LOGE(__func__, "Cannot queue poll teardown request.");
+        //             response.Result = -1;
+        //         }
+        //     }
+        //     else
+        //     {
+        //         ESP_LOGI(__func__, "Cannot find poll request ID 0x%08x", request->SetupMessageId);
+        //     }
+        // }
     }
-
+    
     response.ResponseErrno = errno;
     if (errno != 0)
     {
+        Mapping::GetStmValue(Mapping::Errno, errno, &response.ResponseErrno);
         response.Result = -1;
     }
 
     vPortFree(request);
     vPortFree(message->Payload);
 
-    message->PayloadLength = Encoders::EncodedIntegerAndErrnoResponseBufferSize(&response);
+    message->PayloadLength = Encoders::EncodedPollResponseBufferSize(&response);
     message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-    Encoders::EncodeIntegerAndErrnoResponse(&response, message->Payload);
+    Encoders::EncodePollResponse(&response, message->Payload);
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
@@ -1727,7 +1761,8 @@ void WiFiRequestHandler::PollRequestProcessor(void *parameters)
     {
         int event = 0;
         Mapping::GetStmFlagValue(Mapping::PollEvents, request->Fds->revents, &event);
-        request->Fds->events = (uint16_t) (event & 0xffff);
+        ESP_LOGI(__func__, "Mapping ESP returned events 0x%04x to Nuttx returned events 0x%04x", request->Fds->revents, event);
+        request->Fds->revents = (uint16_t) (event & 0xffff);
     }
     request->Teardown = false;
     if (xQueueSendToBack(_completedPollRequestsQueue, &request, 0) != pdPASS)
@@ -1766,6 +1801,7 @@ void WiFiRequestHandler::CompletedPollRequestProcessor(void *parameters)
         {
             if (!request->Teardown)
             {
+                ESP_LOGI(__func__, "Queuing response for poll task 0x%08x", request->OriginalRequestID);
                 //
                 //  Prepare the response payload.
                 //
@@ -1792,6 +1828,7 @@ void WiFiRequestHandler::CompletedPollRequestProcessor(void *parameters)
             //
             //  Clean up.
             //
+            ESP_LOGI(__func__, "Terminating poll task 0x%08x", request->OriginalRequestID);
             vTaskDelete(request->TaskHandle);
             vPortFree(request);
         }

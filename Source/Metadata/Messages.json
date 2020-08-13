@@ -260,6 +260,15 @@
             ]
         },
         {
+            "Name": "PollResponse",
+            "MessageElements":
+            [
+                { "Name": "ReturnedEvents", "DataType": "uint16" },
+                { "Name": "Result", "DataType": "int" },
+                { "Name": "ResponseErrno", "DataType": "int" }
+            ]
+        },
+        {
             "Name": "InterruptPollResponse",
             "MessageElements":
             [
@@ -267,7 +276,7 @@
                 { "Name": "Result", "DataType": "int" },
                 { "Name": "ResponseErrno", "DataType": "int" },
                 { "Name": "ReturnedEvents", "DataType": "uint16" },
-                { "Name": "SetupMessageId", "DataType": "uint32" },
+                { "Name": "SetupMessageId", "DataType": "uint32" }
             ]
         }
     ]
