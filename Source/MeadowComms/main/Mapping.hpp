@@ -28,7 +28,8 @@ public:
     /**
      *  @brief Type of mapping toable to be used.
      */
-    enum MappingTable { AddressFamily, SocketOptions, ProtocolFamilies, SocketTypes, SocketLevel, Errno, MessageFlags, PollEvents };
+    enum MappingTable { AddressFamily, SocketOptions, ProtocolFamilies, SocketTypes, SocketLevel, Errno, MessageFlags, PollEvents,
+                        SocketShutdownType };
 
 private:
     /**
@@ -85,6 +86,11 @@ private:
      *  @brief Table of message flags
      */
     static int_mapping_t _messageFlags[];
+
+    /**
+     *  @brief Table of socket shutdown types.
+     */
+    static int_mapping_t _socketShutdownType[];
 
     /*
      *  Get the mapped value using the MappingDirection to determine which

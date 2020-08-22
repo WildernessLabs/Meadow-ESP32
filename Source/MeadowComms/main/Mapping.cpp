@@ -267,6 +267,18 @@ Mapping::int_mapping_t Mapping::_pollEvents[] =
 };
 
 /*
+ *  Map the STM32 socket shutdown types.
+ * 
+ *  STM value is first, ESP value second.
+ */
+Mapping::int_mapping_t Mapping::_socketShutdownType[] = 
+{
+    { 1, SHUT_RD },
+    { 2, SHUT_WR },
+    { 3, SHUT_RDWR }
+};
+
+/*
  * ---------------------------------------------------------------------------
  *
  *                     Constructors and destructor
@@ -403,6 +415,10 @@ int32_t Mapping::GetValue(Mapping::MappingTable mapping, MappingDirection type, 
         case MappingTable::PollEvents:
             table = _pollEvents;
             size = sizeof(_pollEvents) / sizeof(int_mapping_t);
+            break;
+        case MappingTable::SocketShutdownType:
+            table = _socketShutdownType;
+            size = sizeof(_socketShutdownType) / sizeof(int_mapping_t);
             break;
     }
 
