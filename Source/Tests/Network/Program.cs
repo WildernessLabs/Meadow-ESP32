@@ -12,19 +12,29 @@ namespace BasicNetworkTest
 
         public static async Task Main(string[] args)
         {
-            Console.WriteLine("Network Connection Meadow F7 (Version 0.14.03)");
+            Console.WriteLine("Network Connection Meadow F7 (Version 0.14.04)");
 
             application = new NetworkTest();
 
-            NetworkInterface[] adapters = NetworkInterface.GetAllNetworkInterfaces();
+            //NetworkInterface[] adapters = NetworkInterface.GetAllNetworkInterfaces();
 
-            Console.WriteLine($"{adapters.Length} network adapters found.");
-            if (adapters.Length > 0)
-            {
-                Console.WriteLine($"Adapter description: {adapters[0].Description}");
-            }
+            //Console.WriteLine($"{adapters.Length} network adapters found.");
+            //if (adapters.Length > 0)
+            //{
+            //    Console.WriteLine($"Adapter description: {adapters[0].Description}");
+            //}
 
-            await application.GetWebPageAsync("http://www.google.com");
+            //await application.GetWebPageAsync("http://www.google.com");
+
+            //application.PostData("http://io.adafruit.com/api/v2/nevyn/feeds/airtemperature/data", 23.2F);
+
+
+            //await application.PostDataAsync("http://io.adafruit.com/api/v2/nevyn/feeds/airtemperature/data");
+            //Thread.Sleep(Timeout.Infinite);
+
+            application.WebSocketPost();
+
+            //application.StartListening();
             Thread.Sleep(Timeout.Infinite);
         }
     }
