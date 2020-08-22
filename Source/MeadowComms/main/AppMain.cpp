@@ -14,6 +14,15 @@
 
 #include "GenericList.hpp"
 
+#ifdef CONFIG_HEAP_TRACING_STANDALONE
+
+#include "esp_heap_trace.h"
+
+#define NUM_RECORDS 100
+static heap_trace_record_t trace_records[NUM_RECORDS];
+
+#endif
+
 /*
  *      Main program loop for the ESP32 as specified by the FreeRTOS documentation.
  */
@@ -23,6 +32,10 @@ extern "C" void app_main()
     Logging::Setup();
     NvsManager::Setup();
     esp_log_level_set("*", ESP_LOG_INFO);
+
+#ifdef CONFIG_HEAP_TRACING_STANDALONE
+    ESP_ERROR_CHECK(heap_trace_init_standalone(trace_records, NUM_RECORDS));
+#endif
 
     const esp_app_desc_t *applicationDescription = esp_ota_get_app_description();
     ESP_LOGI(__func__, "\n\n    ********** Starting Application (%s version %s) **********\n", applicationDescription->project_name, applicationDescription->version);
