@@ -1,6 +1,4 @@
-﻿using Meadow;
-using System;
-using System.Net.NetworkInformation;
+﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -12,7 +10,7 @@ namespace BasicNetworkTest
 
         public static async Task Main(string[] args)
         {
-            Console.WriteLine("Network Connection Meadow F7 (Version 0.14.04)");
+            Console.WriteLine("Network Connection Meadow F7 (Version 0.14.05)");
 
             application = new NetworkTest();
 
