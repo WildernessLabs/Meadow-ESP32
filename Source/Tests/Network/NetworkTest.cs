@@ -1,19 +1,16 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Net;
 using System.IO;
+using System.Net;
+using System.Net.Http;
 using System.Net.Sockets;
+using System.Text;
 using System.Threading;
+using System.Threading.Tasks;
 using Meadow;
 using Meadow.Devices;
-using Meadow.Hardware;
-using Meadow.Gateway.WiFi;
-using System.Net.Http;
-using System.Runtime.CompilerServices;
-using System.Threading.Tasks;
-using System.Text;
 using Meadow.Foundation.Sensors.Atmospheric;
-
+using Meadow.Gateway.WiFi;
+using Meadow.Hardware;
 
 namespace BasicNetworkTest
 {
@@ -21,22 +18,25 @@ namespace BasicNetworkTest
     {
         static HttpClient client;
 
-        static Bme280 bme280;
+        //static Bme280 bme280;
+        static WiFiAdapter wifi;
 
         /// <summary>
         /// Default constructor.
         /// </summary>
         public NetworkTest()
         {
-            var i2c = Device.CreateI2cBus();
-            bme280 = new Bme280(i2c, Bme280.I2cAddress.Adddress0x77);
-            bme280.StartUpdating();
+            //var i2c = Device.CreateI2cBus();
+            //bme280 = new Bme280(i2c, Bme280.I2cAddress.Adddress0x77);
+            //bme280.StartUpdating();
 
-            WifiNetwork wifi = new WifiNetwork(Secrets.WIFI_NAME, Secrets.WIFI_PASSWORD, NetworkType.Any, PhyType.Unknown,
-                new NetworkSecuritySettings(NetworkAuthenticationType.Wpa2Psk, NetworkEncryptionType.None),
-                6, NetworkProtocol.Protocol11G, -76);
-
-            wifi.StartNetwork(Secrets.WIFI_NAME, Secrets.WIFI_PASSWORD);
+            //WifiNetwork wifi = new WifiNetwork(Secrets.WIFI_NAME, Secrets.WIFI_PASSWORD, NetworkType.Any, PhyType.Unknown,
+            //    new NetworkSecuritySettings(NetworkAuthenticationType.Wpa2Psk, NetworkEncryptionType.None),
+            //    6, NetworkProtocol.Protocol11G, -76);
+            Console.WriteLine("Connecting to network.");
+            wifi = new WiFiAdapter(new Esp32Coprocessor());
+            wifi.Connect(Secrets.WIFI_NAME, Secrets.WIFI_PASSWORD);
+            Console.WriteLine("Connection request completed.");
         }
 
         public async Task GetWebPageAsync(string uri)
@@ -79,26 +79,26 @@ namespace BasicNetworkTest
 
         public async Task PostDataAsync(string uri)
         {
-            while (true)
-            {
-                client = new HttpClient();
-                client.DefaultRequestHeaders.Add("X-AIO-Key", Secrets.APIO_KEY);
-                client.Timeout = TimeSpan.FromMinutes(10);
+            //while (true)
+            //{
+            //    client = new HttpClient();
+            //    client.DefaultRequestHeaders.Add("X-AIO-Key", Secrets.APIO_KEY);
+            //    client.Timeout = TimeSpan.FromMinutes(10);
 
-                string temperature = bme280.Temperature.ToString("F2");
-                Log($"Writing temperature {temperature}C to Adafruit IO.");
+            //    string temperature = bme280.Temperature.ToString("F2");
+            //    Log($"Writing temperature {temperature}C to Adafruit IO.");
 
-                string data = "{\"value\":\"" + temperature + "\"}";
-                var content = new StringContent(data, Encoding.UTF8, "application/json");
-                var result = client.PostAsync(uri, content).Result;
+            //    string data = "{\"value\":\"" + temperature + "\"}";
+            //    var content = new StringContent(data, Encoding.UTF8, "application/json");
+            //    var result = client.PostAsync(uri, content).Result;
 
-                client.Dispose();
-                client = null;
+            //    client.Dispose();
+            //    client = null;
 
-                //Log("Response:");
-                //Log(result);
-                Log($"Data sent.");
-            }
+            //    //Log("Response:");
+            //    //Log(result);
+            //    Log($"Data sent.");
+            //}
         }
 
         /// <summary>
@@ -121,12 +121,13 @@ namespace BasicNetworkTest
                 Log($"IP address of server: {ipAddress.ToString()}");
                 IPEndPoint remoteEP = new IPEndPoint(ipAddress, 80);
 
-                string header = "POST /api/v2/nevyn/feeds/airtemperature/data HTTP/1.1\r\n";
+                string header = "POST /api/v2/nevyn/feeds/test/data HTTP/1.1\r\n";
                 header += $"X-AIO-Key: {Secrets.APIO_KEY}\r\n";
                 header += "Content-Type: application/json; charset=utf-8\r\n";
                 header += "Content-Length: 17\r\n";
                 header += "Host: io.adafruit.com\r\n";
                 header += "\r\n";
+                TestData testData = new TestData();
 
                 while (true)
                 {
@@ -141,7 +142,7 @@ namespace BasicNetworkTest
                         sender.Connect(remoteEP);
 
                         byte[] encodedHeader = Encoding.ASCII.GetBytes(header);
-                        string temperature = bme280.Temperature.ToString("F2");
+                        string temperature = testData.GetNext().ToString("F2");
                         Log($"Sending temperature {temperature}C to Adatfruit IO.");
 
                         string data = "{\"value\":\"" + temperature + "\"}";
@@ -161,7 +162,7 @@ namespace BasicNetworkTest
                         Log("Closing the socket.");
                         sender.Close();
 
-                        Thread.Sleep(900000);
+                        //Thread.Sleep(900000);
                     }
                     catch (ArgumentNullException ane)
                     {
@@ -175,7 +176,7 @@ namespace BasicNetworkTest
                     {
                         Log($"Unexpected exception : {e.ToString()}");
                     }
-                    Thread.Sleep(120000);
+                    //Thread.Sleep(120000);
                 }
 
             }
