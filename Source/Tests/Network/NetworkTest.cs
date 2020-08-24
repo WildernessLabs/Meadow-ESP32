@@ -11,6 +11,7 @@ using Meadow.Devices;
 using Meadow.Foundation.Sensors.Atmospheric;
 using Meadow.Gateway.WiFi;
 using Meadow.Hardware;
+using System.Collections.ObjectModel;
 
 namespace BasicNetworkTest
 {
@@ -176,7 +177,6 @@ namespace BasicNetworkTest
                     {
                         Log($"Unexpected exception : {e.ToString()}");
                     }
-                    //Thread.Sleep(120000);
                 }
 
             }
@@ -234,7 +234,30 @@ namespace BasicNetworkTest
             {
                 Console.WriteLine(e.ToString());
             }
+        }
 
+        public void ScanForAccessPoints()
+        {
+            while (true)
+            {
+                Log("Getting list of access points.");
+                wifi.Scan();
+                if (wifi.Networks.Count > 0)
+                {
+                    Log("|-------------------------------------------------------------|---------|");
+                    Log("|         Network Name             | RSSI |       BSSID       | Channel |");
+                    Log("|-------------------------------------------------------------|---------|");
+                    foreach (WifiNetwork accessPoint in wifi.Networks)
+                    {
+                        Log($"| {accessPoint.Ssid,-32} | {accessPoint.SignalDbStrength,4} | {accessPoint.Bssid,17} |   {accessPoint.ChannelCenterFrequency,3}   |");
+                    }
+                }
+                else
+                {
+                    Log($"No access points detected.");
+                }
+                Thread.Sleep(15000);
+            }
         }
     }
 }
