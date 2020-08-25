@@ -18,7 +18,9 @@ The fields in the message header are:
 * Interface ID
 * Function
 * Message ID
+* Status code
 * Payload length
+* CRC
 
 ### Interface ID
 
@@ -43,11 +45,19 @@ The Message ID field should be unique for each interface.  The presence of this 
 
 The message ID field is a 32-bit unsigned integer.  This allows for over 4 billion messages and this will wrap around to 0.
 
+### Status Code
+
+The status code indicates the success or failure of the ESP32 system / message processing system.  This is not the same as the result of a method call (for instance `sendto`).  This can indicate the result of the request to start the network or the ability of the system to 
+
 ### Payload Length
 
 The payload length indicates the number of bytes in the message payload.  This is the number of bytes in the final message.  As we shall see later, the number of bytes used to send the payload may be more than the number of bytes in the payload due to the error checking requirements.
 
-The payload length is indicated by a 16-bit unsigned integer.  This puts an upper limit of 64 KBytes for the payload.
+The payload length is indicated by a 16-bit unsigned integer.  The maximum length of a payload is limited to 4,000 bytes.  This limitation is derived from the hardware restriction in the SPI implementation on the ESP32.
+
+### CRC
+
+Each message sent has a 32-bit CRC value.  This is filled with 0 when the CRC is calculated and thn populated with the 32-bit value before the message is sent.
 
 ## Message Payload
 
