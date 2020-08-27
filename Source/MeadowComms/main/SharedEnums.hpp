@@ -132,7 +132,8 @@ namespace TransportFunction
     {
         ResponseReady = 0,
         SendResponse = 1,
-        KillNuttxThread = 2
+        KillNuttxThread = 2,
+        ResetEsp32 = 3
     };
 
 }

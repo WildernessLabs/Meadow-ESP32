@@ -111,7 +111,8 @@ namespace Meadow.Coprocessor.F7Micro
     {
         ResponseReady = 0,
         SendResponse = 1,
-        KillNuttxThread = 2
+        KillNuttxThread = 2,
+        ResetEsp32 = 3
     };
 
     // <summary>
