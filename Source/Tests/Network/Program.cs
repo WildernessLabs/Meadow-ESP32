@@ -30,7 +30,7 @@ namespace BasicNetworkTest
             //await application.PostDataAsync("http://io.adafruit.com/api/v2/nevyn/feeds/airtemperature/data");
             //Thread.Sleep(Timeout.Infinite);
 
-            // application.WebSocketPost();
+            //application.WebSocketPost();
 
             application.ScanForAccessPoints();
 
