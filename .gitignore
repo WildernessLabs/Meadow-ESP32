@@ -79,3 +79,5 @@ Source/EncodedMessageGenerator/MessageGenerator
 
 Source/MeadowComms/.gdbinit
 Source/OpenOCD/
+
+Source/.vscode/
