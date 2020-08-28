@@ -27,10 +27,6 @@ namespace BasicNetworkTest
         /// </summary>
         public NetworkTest()
         {
-            var i2c = Device.CreateI2cBus();
-            bme280 = new Bme280(i2c, Bme280.I2cAddress.Adddress0x77);
-            bme280.StartUpdating();
-
             //WifiNetwork wifi = new WifiNetwork(Secrets.WIFI_NAME, Secrets.WIFI_PASSWORD, NetworkType.Any, PhyType.Unknown,
             //    new NetworkSecuritySettings(NetworkAuthenticationType.Wpa2Psk, NetworkEncryptionType.None),
             //    6, NetworkProtocol.Protocol11G, -76);
@@ -105,10 +101,13 @@ namespace BasicNetworkTest
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="uri"></param>
         public void WebSocketPost()
         {
             byte[] bytes = new byte[2048];
+
+            var i2c = Device.CreateI2cBus();
+            bme280 = new Bme280(i2c, Bme280.I2cAddress.Adddress0x77);
+            bme280.StartUpdating();
 
             Log($"Memory available: {GC.GetTotalMemory(false)}");
 
@@ -192,6 +191,81 @@ namespace BasicNetworkTest
                         sender.Close();
 
                         Thread.Sleep(840000);
+                    }
+                    catch (ArgumentNullException ane)
+                    {
+                        Log($"ArgumentNullException : {ane.ToString()}");
+                    }
+                    catch (SocketException se)
+                    {
+                        Log($"SocketException : {se.ToString()}");
+                    }
+                    catch (Exception e)
+                    {
+                        Log($"Unexpected exception : {e.ToString()}");
+                    }
+                }
+
+            }
+            catch (Exception e)
+            {
+                Log(e.ToString());
+            }
+
+        }
+
+        public void WebSocketPostTestData()
+        {
+            byte[] bytes = new byte[2048];
+
+            try
+            {
+                Log("Looking up server IP address.");
+                IPHostEntry ipHostInfo = Dns.GetHostEntry("io.adafruit.com");
+
+                IPAddress ipAddress = ipHostInfo.AddressList[0];
+
+                Log($"IP address of server: {ipAddress.ToString()}");
+                IPEndPoint remoteEP = new IPEndPoint(ipAddress, 80);
+
+                TestData testData = new TestData();
+
+                while (true)
+                {
+                    try
+                    {
+                        Log("Creating socket.");
+                        Socket sender = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                        sender.SendTimeout = 3000;
+                        sender.ReceiveTimeout = 3000;
+
+                        Log("Connecting to endpoint.");
+                        sender.Connect(remoteEP);
+
+                        string temperature = testData.GetNext().ToString("F2");
+                        Log($"Sending data to Adatfruit IO.");
+                        int bytesSent;
+                        int bytesReceived;
+                        Log("Sending temperature data.");
+                        string temperatureData = "{\"value\":\"" + temperature + "\"}";
+                        string temperatureHeader = "POST /api/v2/nevyn/feeds/test/data HTTP/1.1\r\n";
+                        temperatureHeader += $"X-AIO-Key: {Secrets.APIO_KEY}\r\n";
+                        temperatureHeader += "Content-Type: application/json; charset=utf-8\r\n";
+                        temperatureHeader += $"Content-Length: {temperatureData.Length}\r\n";
+                        temperatureHeader += "Host: io.adafruit.com\r\n";
+                        temperatureHeader += "\r\n";
+                        bytesSent = sender.Send(Encoding.ASCII.GetBytes(temperatureHeader));
+                        bytesSent += sender.Send(Encoding.ASCII.GetBytes(temperatureData));
+                        bytesReceived = sender.Receive(bytes);
+
+                        Log($"Memory available: {GC.GetTotalMemory(false)}");
+                        Log("Shutting down the socket.");
+                        sender.Shutdown(SocketShutdown.Both);
+
+                        Log("Closing the socket.");
+                        sender.Close();
+
+                        Thread.Sleep(15000);
                     }
                     catch (ArgumentNullException ane)
                     {

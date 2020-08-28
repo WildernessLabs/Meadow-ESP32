@@ -32,7 +32,9 @@ namespace BasicNetworkTest
 
             //application.WebSocketPost();
 
-            application.ScanForAccessPoints();
+            application.WebSocketPostTestData();
+
+            //application.ScanForAccessPoints();
 
             //application.StartListening();
             Thread.Sleep(Timeout.Infinite);
