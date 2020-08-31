@@ -503,10 +503,7 @@ void SpiTransportProvider::Setup(MessageDispatcher *messageDispatcher)
 }
 
 /**
- *  Clear the class level variable _currentHeader.
- *
- *  This method ensures that any heap storage is released and the
- *  pointer is set to the nullptr value.
+ *  Release the heap storage allocated for the message and any payload.
  *
  *  @param message
  *      Pointer to the message to be cleared.
