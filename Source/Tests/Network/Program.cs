@@ -27,12 +27,11 @@ namespace BasicNetworkTest
             //application.PostData("http://io.adafruit.com/api/v2/nevyn/feeds/airtemperature/data", 23.2F);
 
 
-            //await application.PostDataAsync("http://io.adafruit.com/api/v2/nevyn/feeds/airtemperature/data");
-            //Thread.Sleep(Timeout.Infinite);
+            await application.PostDataAsync("http://io.adafruit.com/api/v2/nevyn/feeds/test/data");
 
             //application.WebSocketPost();
 
-            application.WebSocketPostTestData();
+            //application.WebSocketPostTestData();
 
             //application.ScanForAccessPoints();
 
