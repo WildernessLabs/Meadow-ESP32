@@ -11,7 +11,7 @@
                 "InvalidPacket", "InvalidHeader", "UnexpectedData", "MissingEndOfFrameMarker", "HeaderBodyFieldMismatch",
                 "WiFiAlreadyStarted", "InvalidSsid", "InvalidPassword", "WiFiDisconnected",
                 "InvalidAntennaData", "InvalidAntennaValue",
-                "NoMessagesWaiting"
+                "NoMessagesWaiting", "CoprocessorNotResponding"
             ]
         },
         {

@@ -39,7 +39,8 @@ namespace Meadow.Coprocessor.F7Micro
         WiFiDisconnected = 14,
         InvalidAntennaData = 15,
         InvalidAntennaValue = 16,
-        NoMessagesWaiting = 17
+        NoMessagesWaiting = 17,
+        CoprocessorNotResponding = 18
     };
 
     // <summary>
