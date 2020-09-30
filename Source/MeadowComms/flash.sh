@@ -61,5 +61,6 @@ check_command_status() {
 
 OCD=true
 printf "Flashing ESP32 binaries using OpenOCD... "
-run_command "$scriptdir/OpenOCD/bin/openocd -s $scriptdir/OpenOCD/share/openocd/scripts -f $scriptdir/flash.cfg"
+
+run_command "$IDF_TOOLS_PATH/tools/openocd-esp32/v0.10.0-esp32-20191114/openocd-esp32/bin/openocd -s share/openocd/scripts -f $scriptdir/flash.gdbinit"
 check_command_status
