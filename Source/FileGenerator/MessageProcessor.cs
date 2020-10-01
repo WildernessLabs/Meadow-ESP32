@@ -140,9 +140,7 @@ namespace FileGenerator
             outputFile.WriteLine("//");
             outputFile.WriteLine("//      *************************** WARNING ***************************");
             outputFile.WriteLine("//");
-            outputFile.WriteLine("");
             outputFile.WriteLine("using System;");
-            outputFile.WriteLine("using Meadow.Coprocessor.F7Micro;");
             outputFile.WriteLine("");
         }
 
@@ -169,7 +167,7 @@ namespace FileGenerator
             sourceFile.WriteLine("        /// </summary>");
             sourceFile.WriteLine($"        /// <param name=\"{variableName}\">{message.Name} object to be encoded.</param>");
             sourceFile.WriteLine($"        /// <returns>Number of bytes required to hold the encoded {message.Name} object.</returns>");
-            sourceFile.WriteLine($"        public static int Encoded{message.Name}BufferSize(Messages.{message.Name} {variableName})");
+            sourceFile.WriteLine($"        public static int Encoded{message.Name}BufferSize(MessagePayloads.{message.Name} {variableName})");
             sourceFile.WriteLine("        {");
             int staticSpaceRequired = 0;
             var dynamicStatements = new StringBuilder();
@@ -223,7 +221,12 @@ namespace FileGenerator
         private void GenerateCSharpEncoderFunction(StreamWriter sourceFile, Message message)
         {
             string variableName = message.Name.Substring(0, 1).ToLower() + message.Name.Substring(1);
-            sourceFile.WriteLine($"        public static byte[] Encode{message.Name}({message.Name} {variableName})");
+            sourceFile.WriteLine("        /// <summary>");
+            sourceFile.WriteLine($"        /// Encode a {message.Name} object and return a byte array containing the encoded message.");
+            sourceFile.WriteLine("        /// </summary>");
+            sourceFile.WriteLine($"        /// <param name=\"{variableName}\">{message.Name} object to be encoded.</param>");
+            sourceFile.WriteLine($"        /// <returns>Byte array containing the encoded {message.Name} object.</returns>");
+            sourceFile.WriteLine($"        public static byte[] Encode{message.Name}(MessagePayloads.{message.Name} {variableName})");
             sourceFile.WriteLine("        {");
             sourceFile.WriteLine("            int offset = 0;");
             sourceFile.WriteLine("            int length = 0;");
@@ -357,9 +360,14 @@ namespace FileGenerator
         {
             string variableName = message.Name.Substring(0, 1).ToLower() + message.Name.Substring(1);
             sourceFile.WriteLine();
-            sourceFile.WriteLine($"        public static {message.Name} Extract{message.Name}(byte[] buffer, int offset)");
+            sourceFile.WriteLine("        /// <summary>");
+            sourceFile.WriteLine($"        /// Extract a {message.Name} object from a byte array.");
+            sourceFile.WriteLine("        /// </summary>");
+            sourceFile.WriteLine($"        /// <param name=\"{variableName}\">Byte array containing the object to the extracted.</param>");
+            sourceFile.WriteLine($"        /// <returns>{message.Name} object.</returns>");
+            sourceFile.WriteLine($"        public static MessagePayloads.{message.Name} Extract{message.Name}(byte[] buffer, int offset)");
             sourceFile.WriteLine("        {");
-            sourceFile.WriteLine($"            {message.Name} {variableName} = new Messages.{message.Name}();");
+            sourceFile.WriteLine($"            {message.Name} {variableName} = new MessagePayloads.{message.Name}();");
             sourceFile.WriteLine();
             for (var index = 0; index < message.MessageElements.Count; index++)
             {
@@ -443,9 +451,9 @@ namespace FileGenerator
             using (StreamWriter sourceFile = new StreamWriter($"{OutputDirectory}Encoders.cs"))
             {
                 OutputCSharpFileHeader(sourceFile);
-                sourceFile.WriteLine("namespace Meadow.Coprocessor.F7Micro.Messages");
+                sourceFile.WriteLine("namespace Meadow.Devices.Esp32.MessagePayloads");
                 sourceFile.WriteLine("{");
-                sourceFile.WriteLine("    public class Encoders");
+                sourceFile.WriteLine("    public static class Encoders");
                 sourceFile.WriteLine("    {");
                 using (StreamReader templateFile = new StreamReader($"{MetadataDirectory}Encoders.cs.txt"))
                 {
@@ -475,7 +483,7 @@ namespace FileGenerator
             using (StreamWriter file = new StreamWriter($"{OutputDirectory}Messages.cs"))
             {
                 OutputCSharpFileHeader(file);
-                file.WriteLine("namespace Meadow.Coprocessor.F7Micro.Messages");
+                file.WriteLine("namespace Meadow.Devices.Esp32.MessagePayloads");
                 file.WriteLine("{");
                 foreach (Message m in messages)
                 {
