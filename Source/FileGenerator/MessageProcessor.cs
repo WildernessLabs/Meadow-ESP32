@@ -823,15 +823,19 @@ namespace FileGenerator
         /// <returns>String holding the code necessary to move the buffer on according to the amount of data that has been encoded.</returns>
         private string WriteStringEncodeCode(StreamWriter sourceFile, string variableName, string fieldName, DataType dataType, Language language)
         {
+            string result;
+
             if (language == Language.Cpp)
             {
                 sourceFile.WriteLine($"    Encode{dataType.CSharpTypeName}({variableName}->{fieldName}, buffer);");
+                result = $"    buffer += StringLength({variableName}->{fieldName}) + 1;";
             }
             else
             {
                 sourceFile.WriteLine($"    espcp_encode_{dataType.CSharpTypeName.ToLower()}({variableName}->{fieldName}, buffer);");
+                result = $"    buffer += espcp_string_length({variableName}->{fieldName}) + 1;";
             }
-            return($"    buffer += strlen({variableName}->{fieldName}) + 1;");
+            return(result);
         }
 
         /// <summary>
@@ -1110,11 +1114,11 @@ namespace FileGenerator
                     case "string":
                         if (language == Language.Cpp)
                         {
-                            dynamicStatements.AppendLine($"    result += strlen({variableName}->{me.Name});");
+                            dynamicStatements.AppendLine($"    result += Encoders::StringLength({variableName}->{me.Name});");
                         }
                         else
                         {
-                            dynamicStatements.AppendLine($"    result += strlen({variableName}->{ConvertNameToCStyleName(me.Name)});");
+                            dynamicStatements.AppendLine($"    result += espcp_string_length({variableName}->{ConvertNameToCStyleName(me.Name)});");
                         }
                         staticSpaceRequired++;          // Terminating null.
                         break;
@@ -1283,15 +1287,19 @@ namespace FileGenerator
         /// <returns>String holding the code necessary to move the buffer on according to the amount of data that has been extracted.</returns>
         private string WriteStringExtractCode(StreamWriter sourceFile, string variableName, string fieldName, DataType dataType, Language language)
         {
+            string result;
+
             if (language == Language.Cpp)
             {
                 sourceFile.WriteLine($"    {variableName}->{fieldName} = ExtractString(buffer);");
+                result = $"    buffer += Encoders::StringLength({variableName}->{fieldName}) + 1;";
             }
             else
             {
                 sourceFile.WriteLine($"    {variableName}->{fieldName} = espcp_extract_string(buffer);");
+                result = $"    buffer += espcp_string_length({variableName}->{fieldName}) + 1;";
             }
-            return($"    buffer += strlen({variableName}->{fieldName}) + 1;");
+            return(result);
         }
 
         /// <summary>

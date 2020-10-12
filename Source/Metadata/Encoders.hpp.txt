@@ -22,6 +22,7 @@ public:
     static void EncodeInt32(int32_t, uint8_t *);
     static char *ExtractString(uint8_t *);
     static void EncodeString(char *, uint8_t *);
+    static uint32_t StringLength(char *);
     static uint8_t CRC8(const uint8_t *, uint16_t);
     static uint32_t CRC32(const uint8_t *, uint16_t);
     static uint32_t ProgressiveCRC32(uint32_t, uint8_t);

@@ -71,9 +71,8 @@ namespace SystemFunction
     enum SystemFunction : uint32_t
     {
         GetConfiguration = 0,
-        SetConfiguration = 1,
-        DeepSleep = 2,
-        GetBatteryChargeLevel = 3
+        DeepSleep = 1,
+        GetBatteryChargeLevel = 2
     };
 
 }

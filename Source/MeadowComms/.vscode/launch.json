@@ -12,8 +12,10 @@
 				"target remote :3333",
 				"mon reset halt",
 				"mon program_esp ./build/${workspaceFolderBasename}.bin 0x10000 verify",
+				"mon esp appimage_offset 0x10000",
 				"mon reset halt",
 				"flushregs",
+				"set remote hardware-watchpoint-limit 2",
 				"thb app_main",
 				"c"
 			],
@@ -28,7 +30,9 @@
 			"autorun": [
 				"target remote :3333",
 				"mon reset halt",
+				"mon esp appimage_offset 0x10000",
 				"flushregs",
+				"set remote hardware-watchpoint-limit 2",
 				"thb app_main",
 				"c"
 			],

@@ -35,31 +35,6 @@ NvsManager::~NvsManager()
  * ----------------------------------------------------------------------------
  */
 /**
- *  Name of the namespace in NVS used to store Meadow data.
- */
-const char *NvsManager::STORAGE_NAMESPACE_NAME = "Meadow";
-
-/**
- *  Name of the area in the NVS that holds the system configuration.
- */
-const char *SYSTEM_CONFIG_NAME = "SysConfig";
-
-/**
- *  Name of the area in the NVS that holds the WiFi configuration.
- */
-const char *WIFI_CONFIG_NAME = "WiFiConfig";
-
-/**
- *  Name of the area in the NVS that holds the bluetooth configuration.
- */
-const char *BLUETOOTH_CONFIG_NAME = "BTConfig";
-
-/**
- *  Name of the area in the NVS that holds the mesh network configuration.
- */
-const char *MESH_NETWORK_CONFIG_NAME = "MeshConfig";
-
-/**
  *  Determine if this object has been created already.
  */
 bool NvsManager::_nvsAvailable = false;
@@ -97,9 +72,71 @@ void NvsManager::Setup()
 }
 
 /**
- *  Read a byte (uint8_t) from non-volatile storage.
+ *  @brief Get a string value.
+ * 
+ *  Get a value from NVS.  If a value with the specified name cannot be found
+ *  then the default value is returned and the default value is written to
+ *  NVS.
+ * 
+ *  @param nameSpace
+ *      Name of the namespace to read the value from.
+ * 
+ *  @param name
+ *      Name of the value to read from NVS.
+ * 
+ *  @param defaultValue
+ *      Default value to be used if the value is not found.
+ * 
+ *  @returns
+ *      Current boolean value or the default value if a value could not be found.
  */
-NvsManager::ErrorCodes NvsManager::ReadUint8(const char *name, uint8_t *value)
+char * NvsManager::GetValue(const char *nameSpace, const char *name, const char *defaultValue)
+{
+    nvs_handle nvsHandle;
+    esp_err_t error;
+    char *result = const_cast<char *>(defaultValue);
+
+    if (_nvsAvailable)
+    {
+        error = nvs_open(nameSpace, NVS_READONLY, &nvsHandle);
+        if (error == ESP_OK)
+        {
+            size_t length = 0;
+            if (nvs_get_str(nvsHandle, name, NULL, &length) == ESP_OK)
+            {
+                result = static_cast<char *>(pvPortMalloc(length));
+                if (result != NULL)
+                {
+                    if (nvs_get_str(nvsHandle, name, result, &length) != ESP_OK)
+                    {
+                        vPortFree(result);
+                        result = const_cast<char *>(defaultValue);
+                    }
+                }
+            }
+            nvs_close(nvsHandle);
+        }
+    }
+
+    return(result);
+}
+
+/**
+ *  @brief Write string value into NVS.
+ * 
+ *  @param nameSpace
+ *      Name of the namespace to write to.
+ * 
+ *  @param name
+ *      Name of the value to be written to NVS.
+ * 
+ *  @param value
+ *      Value to be set.
+ * 
+ *  @returns
+ *      Error code indicating success or failure.
+ */
+NvsManager::ErrorCodes NvsManager::SetValue(const char *nameSpace, const char *name, const char *value)
 {
     nvs_handle nvsHandle;
     esp_err_t error;
@@ -107,14 +144,14 @@ NvsManager::ErrorCodes NvsManager::ReadUint8(const char *name, uint8_t *value)
 
     if (_nvsAvailable)
     {
-        error = nvs_open(STORAGE_NAMESPACE_NAME, NVS_READONLY, &nvsHandle);
+        error = nvs_open(nameSpace, NVS_READWRITE, &nvsHandle);
         if (error != ESP_OK)
         {
             result = ErrorCodes::Error;
         }
         else
         {
-            error = nvs_get_u8(nvsHandle, name, value);
+            error = nvs_set_str(nvsHandle, name, value);
             if (error == ESP_ERR_NVS_NOT_FOUND)
             {
                 result = ErrorCodes::NotFound;
@@ -126,8 +163,16 @@ NvsManager::ErrorCodes NvsManager::ReadUint8(const char *name, uint8_t *value)
                     result = ErrorCodes::Error;
                 }
             }
+            if (result == ErrorCodes::Ok)
+            {
+                error = nvs_commit(nvsHandle);
+                if (error != ESP_OK)
+                {
+                    result = ErrorCodes::Error;
+                }
+            }
+            nvs_close(nvsHandle);
         }
-        nvs_close(nvsHandle);
     }
     else
     {
@@ -138,9 +183,59 @@ NvsManager::ErrorCodes NvsManager::ReadUint8(const char *name, uint8_t *value)
 }
 
 /**
- *  Write a byte (uint8_t) to non-volatile storage.
+ *  @brief Get an unsigned integer value.
+ * 
+ *  Get a value from NVS.  If a value with the specified name cannot be found
+ *  then the default value is returned and the default value is written to
+ *  NVS.
+ * 
+ *  @param nameSpace
+ *      Name of the namespace to read the value from.
+ * 
+ *  @param name
+ *      Name of the value to read from NVS.
+ * 
+ *  @param defaultValue
+ *      Default value to be used if the value is not found.
+ * 
+ *  @returns
+ *      Current boolean value or the default value if a value could not be found.
  */
-NvsManager::ErrorCodes NvsManager::WriteUint8(const char *name, uint8_t value)
+uint32_t NvsManager::GetValue(const char *nameSpace, const char *name, const uint32_t defaultValue)
+{
+    nvs_handle nvsHandle;
+    esp_err_t error;
+    uint32_t result = defaultValue;
+
+    if (_nvsAvailable)
+    {
+        esp_err_t err = nvs_flash_init();
+        error = nvs_open(nameSpace, NVS_READWRITE, &nvsHandle);
+        if (error == ESP_OK)
+        {
+            nvs_get_u32(nvsHandle, name, &result);      // Result is not changed if there is an error.
+            nvs_close(nvsHandle);
+        }
+    }
+    return(result);
+}
+
+/**
+ *  @brief Write an unsigned integer (32-bits) value into NVS.
+ * 
+ *  @param nameSpace
+ *      Name of the namespace to write to.
+ * 
+ *  @param name
+ *      Name of the value to be written to NVS.
+ * 
+ *  @param value
+ *      Value to be set.
+ * 
+ *  @returns
+ *      Error code indicating success or failure.
+ */
+NvsManager::ErrorCodes NvsManager::SetValue(const char *nameSpace, const char *name, const uint32_t value)
 {
     nvs_handle nvsHandle;
     esp_err_t error;
@@ -148,7 +243,150 @@ NvsManager::ErrorCodes NvsManager::WriteUint8(const char *name, uint8_t value)
 
     if (_nvsAvailable)
     {
-        error = nvs_open(STORAGE_NAMESPACE_NAME, NVS_READONLY, &nvsHandle);
+        error = nvs_open(nameSpace, NVS_READWRITE, &nvsHandle);
+        if (error != ESP_OK)
+        {
+            result = ErrorCodes::Error;
+        }
+        else
+        {
+            error = nvs_set_u32(nvsHandle, name, value);
+            if (error == ESP_ERR_NVS_NOT_FOUND)
+            {
+                result = ErrorCodes::NotFound;
+            }
+            else
+            {
+                if (error != ESP_OK)
+                {
+                    result = ErrorCodes::Error;
+                }
+            }
+            if (result == ErrorCodes::Ok)
+            {
+                error = nvs_commit(nvsHandle);
+                if (error != ESP_OK)
+                {
+                    result = ErrorCodes::Error;
+                }
+            }
+            nvs_close(nvsHandle);
+        }
+    }
+    else
+    {
+        result = ErrorCodes::NotAvailable;
+    }
+
+    return(result);
+}
+
+/**
+ *  @brief Get an integer value.
+ * 
+ *  Get a value from NVS.  If a value with the specified name cannot be found
+ *  then the default value is returned and the default value is written to
+ *  NVS.
+ * 
+ *  @param nameSpace
+ *      Name of the namespace to read the value from.
+ * 
+ *  @param name
+ *      Name of the value to read from NVS.
+ * 
+ *  @param defaultValue
+ *      Default value to be used if the value is not found.
+ * 
+ *  @returns
+ *      Current boolean value or the default value if a value could not be found.
+ */
+int32_t NvsManager::GetValue(const char *nameSpace, const char *name, const int32_t defaultValue)
+{
+    return((int) GetValue(nameSpace, name, (uint32_t) defaultValue));
+}
+
+/**
+ *  @brief Write an signed integer (32-bits) value into NVS.
+ * 
+ *  @param nameSpace
+ *      Name of the namespace to write to.
+ * 
+ *  @param name
+ *      Name of the value to be written to NVS.
+ * 
+ *  @param value
+ *      Value to be set.
+ * 
+ *  @returns
+ *      Error code indicating success or failure.
+ */
+NvsManager::ErrorCodes NvsManager::SetValue(const char *nameSpace, const char *name, const int32_t value)
+{
+    return(SetValue(nameSpace, name, (uint32_t) value));
+}
+
+/**
+ *  @brief Get a byte value.
+ * 
+ *  Get a value from NVS.  If a value with the specified name cannot be found
+ *  then the default value is returned and the default value is written to
+ *  NVS.
+ * 
+ *  @param nameSpace
+ *      Name of the namespace to read the value from.
+ * 
+ *  @param name
+ *      Name of the value to read from NVS.
+ * 
+ *  @param defaultValue
+ *      Default value to be used if the value is not found.
+ * 
+ *  @returns
+ *      Current boolean value or the default value if a value could not be found.
+ */
+uint8_t NvsManager::GetValue(const char *nameSpace, const char *name, const uint8_t defaultValue)
+{
+    nvs_handle nvsHandle;
+    esp_err_t error;
+    uint8_t result = defaultValue;
+
+    if (_nvsAvailable)
+    {
+        error = nvs_open(nameSpace, NVS_READONLY, &nvsHandle);
+        if (error == ESP_OK)
+        {
+            nvs_get_u8(nvsHandle, name, &result);   // Result is not changed if there is an error.
+            nvs_close(nvsHandle);
+        }
+    }
+
+    return(result);
+}
+
+/**
+ *  @brief Write a byte value into NVS.
+ * 
+ *  @param nameSpace
+ *      Name of the namespace to write to.
+ * 
+ *  @param name
+ *      Name of the value to be written to NVS.
+ * 
+ *  @param value
+ *      Value to be set.
+ * 
+ *  @returns
+ *      Error code indicating success or failure.
+ */
+NvsManager::ErrorCodes NvsManager::SetValue(const char *nameSpace, const char *name, const uint8_t value)
+{
+    nvs_handle nvsHandle;
+    esp_err_t error;
+    NvsManager::ErrorCodes result = ErrorCodes::Ok;
+
+    if (_nvsAvailable)
+    {
+        error = nvs_open(nameSpace, NVS_READWRITE, &nvsHandle);
         if (error != ESP_OK)
         {
             result = ErrorCodes::Error;
@@ -175,8 +413,8 @@ NvsManager::ErrorCodes NvsManager::WriteUint8(const char *name, uint8_t value)
                     result = ErrorCodes::Error;
                 }
             }
+            nvs_close(nvsHandle);
         }
-        nvs_close(nvsHandle);
     }
     else
     {
@@ -187,182 +425,45 @@ NvsManager::ErrorCodes NvsManager::WriteUint8(const char *name, uint8_t value)
 }
 
 /**
- *  Read a boolean from non-volatile storage.
- */
-NvsManager::ErrorCodes NvsManager::ReadBoolean(const char *name, bool *value)
-{
-    NvsManager::ErrorCodes result;
-    uint8_t byte;
-
-    result = ReadUint8(name, &byte);
-    if (result == ErrorCodes::Ok)
-    {
-        *value = (byte == 0) ? false : true;
-    }
-    return(result);
-}
-
-/**
- *  Write a boolean to non-volatile storage.
- */
-NvsManager::ErrorCodes NvsManager::WriteBoolean(const char *name, bool value)
-{
-    uint8_t byte;
-
-    byte = value ? 1 : 0;
-    return(WriteUint8(name, byte));
-}
-
-/**
- *  @brief Obtain the amount of storage (in NVS) used by the named BLOB.
- *
+ *  @brief Get a boolean value.
+ * 
+ *  Get a value from NVS.  If a value with the specified name cannot be found
+ *  then the default value is returned and the default value is written to
+ *  NVS.
+ * 
+ *  @param nameSpace
+ *      Name of the namespace to read the value from.
+ * 
  *  @param name
- *      Name of the BLOB stored in NVS.
- *
- *  @param spaceRequired
- *      Pointer to a size_t object that will be used to store the space required
- *      in NVS for the BLOB.
- *
+ *      Name of the value to read from NVS.
+ * 
+ *  @param defaultValue
+ *      Default value to be used if the value is not found.
+ * 
  *  @returns
- *      ErroCodes object indicating the success or failure of this mehtod call.
+ *      Current boolean value or the default value if a value could not be found.
  */
-NvsManager::ErrorCodes NvsManager::BlobSize(const char *name, size_t *spaceRequired)
+bool NvsManager::GetValue(const char *nameSpace, const char *name, const bool defaultValue)
 {
-    nvs_handle nvsHandle;
-    esp_err_t error;
-
-    if (_nvsAvailable)
-    {
-        return(ErrorCodes::NotAvailable);
-    }
-
-    error = nvs_open(STORAGE_NAMESPACE_NAME, NVS_READONLY, &nvsHandle);
-    if (error != ESP_OK)
-    {
-        return(ErrorCodes::Error);
-    }
-    //
-    //  First work out how much space is required.
-    //
-    error = nvs_get_blob(nvsHandle, name, NULL, spaceRequired);
-    if (error == ESP_ERR_NVS_NOT_FOUND)
-    {
-        nvs_close(nvsHandle);
-        return(ErrorCodes::NotFound);
-    }
-    if (error != ESP_OK)
-    {
-        nvs_close(nvsHandle);
-        return(ErrorCodes::Error);
-    }
-    nvs_close(nvsHandle);
-    return(ErrorCodes::Ok);
+    return(GetValue(nameSpace, name, (uint8_t) (defaultValue ? 1 : 0)) == 1);
 }
 
 /**
- *  @brief Read a block of memory from non-volatile storage.
- *
- *  @param location
- *      Block of memory to populate with the data from non-volatile storage.
- *
- *  @param amount
- *      Number of bytes to read.
- *
- *  @retruns
- *      true if successful, false otherwise.
+ *  @brief Write a boolean value into NVS.
+ * 
+ *  @param nameSpace
+ *      Name of the namespace to write to.
+ * 
+ *  @param name
+ *      Name of the value to be written to NVS.
+ * 
+ *  @param value
+ *      Value to be set.
+ * 
+ *  @returns
+ *      Error code indicating success or failure.
  */
-NvsManager::ErrorCodes NvsManager::ReadBlob(const char *name, void *location, size_t amount)
+NvsManager::ErrorCodes NvsManager::SetValue(const char *nameSpace, const char *name, const bool value)
 {
-    nvs_handle nvsHandle;
-    esp_err_t error;
-    ErrorCodes result;
-
-    if (_nvsAvailable)
-    {
-        return(ErrorCodes::NotAvailable);
-    }
-    //
-    //  First work out how much space is required.
-    //
-    size_t spaceRequired = 0;
-    result = BlobSize(name, &spaceRequired);
-    if (result != ErrorCodes::Ok)
-    {
-        return(result);
-    }
-    if (amount != spaceRequired)
-    {
-        return(ErrorCodes::BufferSizeMismatch);
-    }
-    //
-    //  We know we have enough storage so read the BLOB.
-    //
-    error = nvs_open(STORAGE_NAMESPACE_NAME, NVS_READONLY, &nvsHandle);
-    if (error != ESP_OK)
-    {
-        return(ErrorCodes::Error);
-    }
-    error = nvs_get_blob(nvsHandle, name, location, &spaceRequired);
-    nvs_close(nvsHandle);
-
-    return((error == ESP_OK) ? ErrorCodes::Ok : ErrorCodes::Error);
+    return(SetValue(nameSpace, name, (uint8_t) (value ? 1 : 0)));
 }
-
-/**
- *  @brief Read a block of memory from non-volatile storage.
- *
- *  @param location
- *      Block of memory to write to non-volatile storage.
- *
- *  @param amount
- *      Number of bytes to write.
- *
- *  @retruns
- *      Error code representing the result of the write request.
- */
-NvsManager::ErrorCodes NvsManager::WriteBlob(const char *name, void *location, size_t amount)
-{
-    nvs_handle nvsHandle;
-    esp_err_t error;
-    NvsManager::ErrorCodes result = ErrorCodes::Ok;
-
-    if (_nvsAvailable)
-    {
-        error = nvs_open(STORAGE_NAMESPACE_NAME, NVS_READONLY, &nvsHandle);
-        if (error != ESP_OK)
-        {
-            result = ErrorCodes::Error;
-        }
-        else
-        {
-            error = nvs_set_blob(nvsHandle, name, location, amount);
-            if (error == ESP_ERR_NVS_NOT_FOUND)
-            {
-                result = ErrorCodes::NotFound;
-            }
-            else
-            {
-                if (error != ESP_OK)
-                {
-                    result = ErrorCodes::Error;
-                }
-            }
-            if (result == ErrorCodes::Ok)
-            {
-                error = nvs_commit(nvsHandle);
-                if (error != ESP_OK)
-                {
-                    result = ErrorCodes::Error;
-                }
-            }
-        }
-        nvs_close(nvsHandle);
-    }
-    else
-    {
-        result = ErrorCodes::NotAvailable;
-    }
-
-    return(result);
-}
-

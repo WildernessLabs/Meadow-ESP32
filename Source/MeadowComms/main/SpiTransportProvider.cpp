@@ -513,9 +513,9 @@ void SpiTransportProvider::DeleteMessageAndReleaseHeapStorage(Message *message)
 #if defined(SPI_FULL_LOGGING)
     ESP_LOGI(__func__, "Entering method");
 #endif
-
     if (message)
     {
+        ESP_LOGI(__func__, "Deleting message 0x%08x with Payload 0x%08x", (uint32_t) message, (uint32_t) message->Payload);
         if (message->Payload)
         {
             vPortFree(message->Payload);
@@ -523,6 +523,10 @@ void SpiTransportProvider::DeleteMessageAndReleaseHeapStorage(Message *message)
         }
         vPortFree(message);
     }
+    else
+    {
+        ESP_LOGI(__func__, "No message to delete 0x%08x", (uint32_t) message);
+    }    
 }
 
 /**
