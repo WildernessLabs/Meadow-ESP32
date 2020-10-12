@@ -5,17 +5,21 @@
             "Name": "SystemConfiguration",
             "MessageElements":
             [
-                { "Name": "MessageSize", "DataType": "uint32" }
-            ]
-        },
-        {
-            "Name": "WiFiConfiguration",
-            "MessageElements":
-            [
-                { "Name": "AutomaticReconnect", "DataType": "byte" },
+                { "Name": "SoftwareVersion", "DataType": "string" },
+                { "Name": "MaximumMessageQueueLength", "DataType": "byte" },
+                { "Name": "AutomaticallyStartNetwork", "DataType": "byte" },
+                { "Name": "AutomaticallyReconnect", "DataType": "byte" },
                 { "Name": "MaximumRetryCount", "DataType": "uint32" },
-                { "Name": "Antenna", "DataTYpe": "byte" },
-                { "Name": "MaximumMessageQueueLength", "DataType": "byte" }
+                { "Name": "Antenna", "DataType": "byte" },
+                { "Name": "MacAddress", "DataType": "fixedbytearray", "Length": "6" },
+                { "Name": "DeviceName", "DataType": "string" },
+                { "Name": "DefaultAccessPoint", "DataType": "string" },
+                { "Name": "NtpServer", "DataType": "string" },
+                { "Name": "GetTimeAtStartup", "DataType": "int" },
+                { "Name": "UseDhcp", "DataType": "byte" },
+                { "Name": "StaticIpAddress", "DataType": "uint32" },
+                { "Name": "DnsServer", "DataType": "uint32" },
+                { "Name": "DefaultGateway", "DataType": "uint32" }
             ]
         },
         { 
@@ -61,8 +65,8 @@
                 { "Name": "Family", "DataType": "byte" },
                 { "Name": "Port", "DataType": "uint16" },
                 { "Name": "Ip4Address", "DataType": "uint32" },
-                { "Name": "FlowInfo", "DataTYpe": "uint32"},
-                { "Name": "Ip6Address", "DataTYpe": "fixedbytearray", "Length": "16"},
+                { "Name": "FlowInfo", "DataType": "uint32"},
+                { "Name": "Ip6Address", "DataType": "fixedbytearray", "Length": "16"},
                 { "Name": "ScopeID", "DataType": "uint32"}
             ]
         },

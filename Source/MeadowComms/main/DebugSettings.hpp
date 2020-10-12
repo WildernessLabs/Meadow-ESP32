@@ -37,11 +37,11 @@
  *
  ******************************************************************************/
 
-/*
- *  Log everything to do with the WiFi tasks.
+/**
+ *  Log events related to the WiFi system.
  */
 #define WIFI_FULL_LOGGING 1
-#undef WIFI_FULL_LOGGING
+// #undef WIFI_FULL_LOGGING
 
 #define WIFI_DEBUG_CONNECT 1
 #undef WIFI_DEBUG_CONNECT
@@ -67,6 +67,21 @@
 #define WIFI_DEBUG_SOCKET 2
 #undef WIFI_DEBUG_SOCKET
 
+/******************************************************************************
+ *
+ *                              System Settings
+ *
+ ******************************************************************************/
+
+/**
+ *  Log events related to the system.
+ */
+#define SYSTEM_FULL_LOGGING
+#undef SYSTEM_FULL_LOGGING
+
+/**
+ * 
+ */
 extern char *enterMethodString;
 extern char *exitMethodString;
 

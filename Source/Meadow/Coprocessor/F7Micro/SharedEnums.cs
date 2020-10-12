@@ -15,7 +15,7 @@
 
 using System;
 
-namespace Meadow.Coprocessor.F7Micro
+namespace Meadow.Devices.Esp32.MessagePayloads
 {
     // <summary>
     // Status and error codes for the various function calls.
@@ -62,9 +62,8 @@ namespace Meadow.Coprocessor.F7Micro
     public enum SystemFunction
     {
         GetConfiguration = 0,
-        SetConfiguration = 1,
-        DeepSleep = 2,
-        GetBatteryChargeLevel = 3
+        DeepSleep = 1,
+        GetBatteryChargeLevel = 2
     };
 
     // <summary>

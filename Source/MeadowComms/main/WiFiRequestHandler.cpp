@@ -15,6 +15,20 @@
 #include "Mapping.hpp"
 #include "DebugSettings.hpp"
 
+#if defined(CONFIG_HEAP_TRACING_STANDALONE) || defined(CONFIG_HEAP_TRACING_TOHOST)
+
+#include "esp_heap_trace.h"
+
+#endif
+
+#if defined(CONFIG_HEAP_TRACING_STANDALONE)
+
+#define NUM_RECORDS 100
+extern heap_trace_record_t *trace_records;
+
+#endif
+
+
 /**
  *  Event handler for the WiFi loop.
  *
@@ -63,6 +77,130 @@ SemaphoreHandle_t WiFiRequestHandler::_pollRequestListMutex = NULL;
  */
 QueueHandle_t WiFiRequestHandler::_completedPollRequestsQueue = NULL;
 
+/**
+ *  Current antenna in use.  Default to the on board antenna at startup.
+ */
+AntennaTypes::AntennaTypes WiFiRequestHandler::_currentAntenna = AntennaTypes::OnBoard;
+
+/**
+ *  Name of the NVS storage holding the _currentAntenna value.
+ */
+ const char *WiFiRequestHandler::ANTENNA_TYPE_NAME = "Antenna";
+
+/**
+ *  Should the system automatically reconnect to an access point should there
+ *  be a problem and the current connection is dropped.
+ */
+bool WiFiRequestHandler::_automaticReconnect = false;
+
+/**
+ *  Name of the NVS storage holding the _automaticReconnect value.
+ */
+const char *WiFiRequestHandler::AUTOMATIC_RECONNECT_NAME = "AutoReconnect";
+
+/**
+ *  Maximum number of times a failed event should retry before raising an error.
+ */
+uint32_t WiFiRequestHandler::_maximumRetryCount = 3;
+
+/**
+ *  Name of the NVS storage holding the _maximumRetryCount value.
+ */
+const char *WiFiRequestHandler::MAXIMUM_RETRY_COUNT_NAME = "MaxRetry";
+
+/**
+ *  Indicate if the network should start automatically at start up.
+ */
+bool WiFiRequestHandler:: _automaticallyStartNetwork = false;
+
+/**
+ *  Name of the NVS storage holding the _automaticallyStartNetwork value.
+ */
+const char *WiFiRequestHandler::AUTOMATICALLY_START_NETWORK_NAME = "AutoStartNet";
+
+/**
+ *  Indicate if the system should connect to a time server and get the
+ *  current time at startup.
+ */
+bool WiFiRequestHandler::_getTimeAtStartup = false;
+
+/**
+ *  Name fo the storage in NVS that holds the value indicating that the
+ *  system should get the time at startup. 
+ */
+const char *WiFiRequestHandler::GET_TIME_AT_STARTUP_NAME = "GetTime";
+
+/**
+ *  Indicate if we should use DHCP.
+ */
+bool WiFiRequestHandler::_useDhcp = false;
+
+/**
+ *  Name of the storage holding the _useDhcp configuration setting.
+ */
+const char *WiFiRequestHandler::USE_DHCP_NAME = "UseDHCP";
+
+/**
+ *  Defaut access [oint to be used when automatically connecting.
+ */
+char *WiFiRequestHandler::_defaultAccessPoint = nullptr;
+
+/**
+ *  Name of the storage in NVS holding the default access point.
+ */
+const char *WiFiRequestHandler::DEFAULT_ACCESS_POINT_NAME = "DefaultAP";
+
+/**
+ *  Password for the access point.
+ */
+char *WiFiRequestHandler::_password = nullptr;
+
+/**
+ *  Name of the storage in NVS holding the password for the access point.
+ */
+const char *WiFiRequestHandler::PASSWORD_NAME = "Password";
+
+/**
+ *  Name of the NTP server to be used when using NTP to set the time
+ *  when the board starts.
+ */
+char *WiFiRequestHandler::_ntpServer = nullptr;
+
+/**
+ *  Name of the storage space in NVS holding the NTP server information.
+ */
+const char *WiFiRequestHandler::NTP_SERVER_NAME = "NtpServer";
+
+/**
+ *  Static IP address when not using DHCP.
+ */
+uint32_t WiFiRequestHandler::_staticIpAddress;
+
+/**
+ *  Name of the storage space holding the static IP address.
+ */
+const char *WiFiRequestHandler::STATIC_IP_ADDRESS_NAME = "IpAddress";
+
+/**
+ *  DNS server when not using DHCP.
+ */
+uint32_t WiFiRequestHandler::_dnsServer;
+
+/**
+ *  Name of the storage in NVS holding the DNS server IP address.
+ */
+const char *WiFiRequestHandler::DNS_SERVER_NAME = "DnsServer";
+
+/**
+ *  IP address of the default gateway when not using DHCP.
+ */
+uint32_t WiFiRequestHandler::_defaultGateway;
+
+/**
+ *  Name of the storage space holding the IP address of the default gateway.
+ */
+const char *WiFiRequestHandler::DEFAULT_GATEWAY_NAME = "Gateway";
+
 /*
  * ----------------------------------------------------------------------------
  *
@@ -87,18 +225,23 @@ WiFiRequestHandler::WiFiRequestHandler()
     //
     //  Get configuration from NVS.
     //
-    NvsManager::ErrorCodes result = NvsManager::ReadBlob(CONFIG_NAME, &_config, sizeof(_config));
-    if (result != NvsManager::ErrorCodes::Ok)
-    {
-        memcpy(static_cast<void *>(&_config), &DEFAULT_WIFI_CONFIGURATION, sizeof(DEFAULT_WIFI_CONFIGURATION));
-        if ((result == NvsManager::ErrorCodes::BufferSizeMismatch) || (result == NvsManager::ErrorCodes::NotFound))
-        {
-            NvsManager::WriteBlob(CONFIG_NAME, &_config, sizeof(_config));
-        }
-    }
+    _maximumRetryCount = SystemRequestHandler::GetConfigurationValue(MAXIMUM_RETRY_COUNT_NAME, _maximumRetryCount);
+    _automaticReconnect = SystemRequestHandler::GetConfigurationValue(AUTOMATIC_RECONNECT_NAME, _automaticReconnect);
+    uint8_t antenna = static_cast<uint8_t>(_currentAntenna);
+    _currentAntenna = static_cast<AntennaTypes::AntennaTypes>(SystemRequestHandler::GetConfigurationValue(ANTENNA_TYPE_NAME, antenna));
+    _automaticallyStartNetwork = SystemRequestHandler::GetConfigurationValue(AUTOMATICALLY_START_NETWORK_NAME, _automaticallyStartNetwork);
+    _getTimeAtStartup = SystemRequestHandler::GetConfigurationValue(GET_TIME_AT_STARTUP_NAME, _getTimeAtStartup);
+    _useDhcp = SystemRequestHandler::GetConfigurationValue(USE_DHCP_NAME, _useDhcp);
+    _defaultAccessPoint = SystemRequestHandler::GetConfigurationValue(DEFAULT_ACCESS_POINT_NAME, _defaultAccessPoint);
+    _password = SystemRequestHandler::GetConfigurationValue(PASSWORD_NAME, _password);
+    _ntpServer = SystemRequestHandler::GetConfigurationValue(NTP_SERVER_NAME, _ntpServer);
+    _staticIpAddress = SystemRequestHandler::GetConfigurationValue(STATIC_IP_ADDRESS_NAME, _staticIpAddress);
+    _dnsServer = SystemRequestHandler::GetConfigurationValue(DNS_SERVER_NAME, _dnsServer);
+    _defaultGateway = SystemRequestHandler::GetConfigurationValue(DEFAULT_GATEWAY_NAME, _defaultGateway);
     //
     //  Set up the structures need to deal with poll() requests in an asynchronous manner.
     //
+    _maximumRetryCount = SystemRequestHandler::GetConfigurationValue(MAXIMUM_RETRY_COUNT_NAME, _maximumRetryCount);
     _pollRequestListMutex = xSemaphoreCreateMutex();
     if (_pollRequestListMutex == NULL)
     {
@@ -143,6 +286,289 @@ WiFiRequestHandler::~WiFiRequestHandler()
  */
 
 /**
+ *  @brief Get the automatic maximum retry count value.
+ */
+uint32_t WiFiRequestHandler::GetMaximumRetryCount()
+{
+    return(_maximumRetryCount);
+}
+
+/**
+ *  @brief Set the maximum retry count value.
+ *
+ *  @param value
+ *      New maximum retry count value.
+ */
+void WiFiRequestHandler::SetMaximumRetryCount(uint32_t value)
+{
+    if (value != _maximumRetryCount)
+    {
+        if (SystemRequestHandler::SetConfigurationValue(MAXIMUM_RETRY_COUNT_NAME, value) == NvsManager::ErrorCodes::Ok)
+        {
+            _maximumRetryCount = value;
+        }
+    }
+}
+
+/**
+ *  @brief Get the automatic reconnect value.
+ */
+bool WiFiRequestHandler::GetAutomaticReconnect()
+{
+    return(_automaticReconnect);
+}
+
+/**
+ *  @brief Set the automatic reconnect value.
+ *
+ *  @param value
+ *      New automatic reconnection value.
+ */
+void WiFiRequestHandler::SetAutomaticReconnect(bool value)
+{
+    if (value != _automaticReconnect)
+    {
+        if (SystemRequestHandler::SetConfigurationValue(AUTOMATIC_RECONNECT_NAME, value) == NvsManager::ErrorCodes::Ok)
+        {
+            _automaticReconnect = value;
+        }
+    }
+}
+
+/**
+ *  @brief Get the automatically start network value.
+ */
+bool WiFiRequestHandler::GetAutomaticallyStartNetwork()
+{
+    return(_automaticallyStartNetwork);
+}
+
+/**
+ *  @brief Set the automatic start network value.
+ *
+ *  @param value
+ *      New automatic start network value.
+ */
+void WiFiRequestHandler::SetAutomaticallyStartNetwork(bool value)
+{
+    if (value != _automaticallyStartNetwork)
+    {
+        if (SystemRequestHandler::SetConfigurationValue(AUTOMATICALLY_START_NETWORK_NAME, value) == NvsManager::ErrorCodes::Ok)
+        {
+            _automaticallyStartNetwork = value;
+        }
+    }
+}
+
+/**
+ *  @brief Get the get time at startup value.
+ */
+bool WiFiRequestHandler::GetGetTimeAtStartup()
+{
+    return(_getTimeAtStartup);
+}
+
+/**
+ *  @brief Set the get time at startup value.
+ *
+ *  @param value
+ *      New get time at startup value.
+ */
+void WiFiRequestHandler::SetGetTinmeAtStartup(bool value)
+{
+    if (value != _getTimeAtStartup)
+    {
+        if (SystemRequestHandler::SetConfigurationValue(GET_TIME_AT_STARTUP_NAME, value) == NvsManager::ErrorCodes::Ok)
+        {
+            _getTimeAtStartup = value;
+        }
+    }
+}
+
+/**
+ *  @brief Get the get time at startup value.
+ */
+bool WiFiRequestHandler::GetUseDhcp()
+{
+    return(_useDhcp);
+}
+
+/**
+ *  @brief Set the get time at startup value.
+ *
+ *  @param value
+ *      New use DHCP value.
+ */
+void WiFiRequestHandler::SetUseDhcp(bool value)
+{
+    if (value != _useDhcp)
+    {
+        if (SystemRequestHandler::SetConfigurationValue(USE_DHCP_NAME, value) == NvsManager::ErrorCodes::Ok)
+        {
+            _useDhcp = value;
+        }
+    }
+}
+
+/**
+ *  @brief Get the NTP server.
+ */
+char *WiFiRequestHandler::GetNtpServer()
+{
+    return(_ntpServer);
+}
+
+/**
+ *  @brief Set NTP server.
+ *
+ *  @param value
+ *      New NTP server value.
+ */
+void WiFiRequestHandler::SetNtpServer(char *value)
+{
+    if (strcmp(value, _ntpServer) != 0)
+    {
+        if (SystemRequestHandler::SetConfigurationValue(NTP_SERVER_NAME, value) == NvsManager::ErrorCodes::Ok)
+        {
+            _ntpServer = strdup(value);
+        }
+    }
+}
+
+/**
+ *  @brief Get the default access point.
+ */
+char *WiFiRequestHandler::GetDefaultAccessPoint()
+{
+    return(_defaultAccessPoint);
+}
+
+/**
+ *  @brief Set default access point.
+ *
+ *  @param value
+ *      New default access point value.
+ */
+void WiFiRequestHandler::SetFefaultAccessPoint(char *value)
+{
+    if (strcmp(value, _defaultAccessPoint) != 0)
+    {
+        if (SystemRequestHandler::SetConfigurationValue(DEFAULT_ACCESS_POINT_NAME, value) == NvsManager::ErrorCodes::Ok)
+        {
+            _defaultAccessPoint = strdup(value);
+        }
+    }
+}
+
+/**
+ *  @brief Get the password for the default access point.
+ */
+char *WiFiRequestHandler::GetPassword()
+{
+    return(_password);
+}
+
+/**
+ *  @brief Set password for the default access point.
+ *
+ *  @param value
+ *      New password value.
+ */
+void WiFiRequestHandler::SetPassword(char *value)
+{
+    if (strcmp(value, _password) != 0)
+    {
+        if (SystemRequestHandler::SetConfigurationValue(PASSWORD_NAME, value) == NvsManager::ErrorCodes::Ok)
+        {
+            _password = strdup(value);
+        }
+    }
+}
+
+/**
+ *  @brief Get the static IP address value.
+ */
+uint32_t WiFiRequestHandler::GetIpAddress()
+{
+    return(_staticIpAddress);
+}
+
+/**
+ *  @brief Set the static IP address value.
+ *
+ *  @param value
+ *      New static IP address value.
+ */
+void WiFiRequestHandler::SetIpAddress(uint32_t value)
+{
+    if (value != _staticIpAddress)
+    {
+        if (SystemRequestHandler::SetConfigurationValue(STATIC_IP_ADDRESS_NAME, value) == NvsManager::ErrorCodes::Ok)
+        {
+            _staticIpAddress = value;
+        }
+    }
+}
+
+/**
+ *  @brief Get the static DNS server value.
+ */
+uint32_t WiFiRequestHandler::GetDnsServer()
+{
+    return(_dnsServer);
+}
+
+/**
+ *  @brief Set the static DNS address value.
+ *
+ *  @param value
+ *      New static DNS address value.
+ */
+void WiFiRequestHandler::SetDnsServer(uint32_t value)
+{
+    if (value != _dnsServer)
+    {
+        if (SystemRequestHandler::SetConfigurationValue(DNS_SERVER_NAME, value) == NvsManager::ErrorCodes::Ok)
+        {
+            _dnsServer = value;
+        }
+    }
+}
+
+/**
+ *  @brief Get the static default gateway value.
+ */
+uint32_t WiFiRequestHandler::GetDefaultGateway()
+{
+    return(_defaultGateway);
+}
+
+/**
+ *  @brief Set the static default gateway value.
+ *
+ *  @param value
+ *      New static DNS address value.
+ */
+void WiFiRequestHandler::SetDefaultGateway(uint32_t value)
+{
+    if (value != _defaultGateway)
+    {
+        if (SystemRequestHandler::SetConfigurationValue(DEFAULT_GATEWAY_NAME, value) == NvsManager::ErrorCodes::Ok)
+        {
+            _defaultGateway = value;
+        }
+    }
+}
+
+/*
+ * ----------------------------------------------------------------------------
+ *
+ *                             Methods
+ *
+ * ----------------------------------------------------------------------------
+ */
+
+/**
  *  Get the currently selected antenna.
  *
  *  This method will reuse the request object and use this as the message to send the
@@ -161,7 +587,7 @@ void WiFiRequestHandler::GetAntenna(Message *request) const
 
     request->MessageType = MessageTypes::Response;
     Esp32Messaging::AntennaInfo *antenna = static_cast<Esp32Messaging::AntennaInfo *>(pvPortMalloc(sizeof(Esp32Messaging::AntennaInfo)));
-    antenna->Antenna = static_cast<uint8_t>(_config.Antenna);
+    antenna->Antenna = static_cast<uint8_t>(_currentAntenna);
     int encodedBufferLength = Encoders::EncodedAntennaInfoBufferSize(antenna);
     request->Payload = static_cast<uint8_t *>(pvPortMalloc(encodedBufferLength));
     Encoders::EncodeAntennaInfo(antenna, request->Payload);
@@ -207,7 +633,7 @@ void WiFiRequestHandler::SetAntenna(Message *request)
         }
         else
         {
-            if (_config.Antenna != antenna->Antenna)
+            if (_currentAntenna != antenna->Antenna)
             {
                 SwitchAntenna((AntennaTypes::AntennaTypes) antenna->Antenna);
             }
@@ -231,14 +657,6 @@ void WiFiRequestHandler::SetAntenna(Message *request)
     ESP_LOGI(__func__, "Exit");
 #endif
 }
-
-/*
- * ----------------------------------------------------------------------------
- *
- *                             Methods
- *
- * ----------------------------------------------------------------------------
- */
 
 /**
  *  Convert the antenna enum into a GPIO pin number
@@ -279,13 +697,13 @@ void WiFiRequestHandler::SwitchAntenna(AntennaTypes::AntennaTypes newAntenna)
     // TODO: What happens to any pending requests and do we disconnect WiFi first?
     //
     gpio_num_t newAntennaPin = ConvertAntennaToPin(newAntenna);
-    gpio_num_t oldAntennaPin = ConvertAntennaToPin(static_cast<AntennaTypes::AntennaTypes>(_config.Antenna));
+    gpio_num_t oldAntennaPin = ConvertAntennaToPin(static_cast<AntennaTypes::AntennaTypes>(_currentAntenna));
     //
     //  Make sure the old antenna is switched off before the new one is turned on.
     //
     gpio_set_level(oldAntennaPin, 0);
     gpio_set_level(newAntennaPin, 1);
-    _config.Antenna = newAntenna;
+    _currentAntenna = newAntenna;
 
 #if defined(WIFI_FULL_LOGGING)
     ESP_LOGI(__func__, "Exit");
@@ -307,11 +725,11 @@ void WiFiRequestHandler::Setup()
     gpio_set_direction(ON_BOARD_ANTENNA_PIN, GPIO_MODE_OUTPUT);
     gpio_set_level(ON_BOARD_ANTENNA_PIN, 1);
 
-    if (_config.Antenna > static_cast<uint8_t>(AntennaTypes::Max))
+    if (_currentAntenna > static_cast<uint8_t>(AntennaTypes::Max))
     {
-        _config.Antenna = AntennaTypes::OnBoard;
+        _currentAntenna = AntennaTypes::OnBoard;
     }
-    SwitchAntenna(static_cast<AntennaTypes::AntennaTypes>(_config.Antenna));
+    SwitchAntenna(static_cast<AntennaTypes::AntennaTypes>(_currentAntenna));
     /*
      *  Now create the objects necessary for the WiFi tasks.
      */
@@ -449,7 +867,7 @@ void WiFiRequestHandler::SendResponse(Message *request, uint32_t statusCode)
  *  @param message
  *      Message containing the encoded request.
  */
-void WiFiRequestHandler::GetConfiguration(Message *message)
+void WiFiRequestHandler::GetConfiguration(Message *request)
 {
 #if defined(WIFI_FULL_LOGGING)
     ESP_LOGI(__func__, "Enter");
@@ -469,7 +887,7 @@ void WiFiRequestHandler::GetConfiguration(Message *message)
  *  @param message
  *      Message containing the encoded request.
  */
-void WiFiRequestHandler::SetConfiguration(Message *message)
+void WiFiRequestHandler::SetConfiguration(Message *request)
 {
 #if defined(WIFI_FULL_LOGGING)
     ESP_LOGI(__func__, "Enter");
@@ -489,7 +907,7 @@ void WiFiRequestHandler::SetConfiguration(Message *message)
  *  @param message
  *      Message containing the encoded request.
  */
-void WiFiRequestHandler::Disconnect(Message *message)
+void WiFiRequestHandler::Disconnect(Message *request)
 {
 #if defined(WIFI_FULL_LOGGING)
     ESP_LOGI(__func__, "Enter");
@@ -509,7 +927,7 @@ void WiFiRequestHandler::Disconnect(Message *message)
  *  @param message
  *      Message containing the encoded request.
  */
-void WiFiRequestHandler::Stop(Message *message)
+void WiFiRequestHandler::Stop(Message *request)
 {
 #if defined(WIFI_FULL_LOGGING)
     ESP_LOGI(__func__, "Enter");
@@ -529,7 +947,7 @@ void WiFiRequestHandler::Stop(Message *message)
  *  @param message
  *      Message containing the encoded request.
  */
-void WiFiRequestHandler::ConnectToAp(Message *message)
+void WiFiRequestHandler::ConnectToAp(Message *request)
 {
 #if defined(WIFI_FULL_LOGGING)
     ESP_LOGI(__func__, "Enter");
@@ -763,6 +1181,10 @@ void WiFiRequestHandler::Socket(Message *message)
 
     Esp32Messaging::SocketRequest *request = Encoders::ExtractSocketRequest(message->Payload);
 
+#if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_SOCKET)
+    ESP_LOGI(__func__, "Creating socket on domain %d, type %d and protocol %d", request->Domain, request->Type, request->Protocol);
+#endif
+
     Esp32Messaging::IntegerResponse response;
     response.Result = socket(request->Domain, request->Type, request->Protocol);
 
@@ -807,6 +1229,7 @@ void WiFiRequestHandler::Connect(Message *message)
     bzero(&sa, sizeof(struct sockaddr));
     int family;
     Mapping::GetEspValue(Mapping::AddressFamily, socketAddress->Family, &family);
+    errno = 0;
     if (family == AF_INET)
     {
         sa.sin_family = (uint8_t) (family & 0xff);
@@ -828,18 +1251,22 @@ void WiFiRequestHandler::Connect(Message *message)
         response.Result = -1;
         errno = EFAULT;
     }
-    
 
     if (response.Result != 0)
     {
         int32_t result = 0;
         if (Mapping::GetStmValue(Mapping::Errno, errno, &result) != 0)
         {
-            result = Mapping::GetStmValue(Mapping::Errno, EFAULT, &result);
+            Mapping::GetStmValue(Mapping::Errno, EFAULT, &result);
         }
         response.ResponseErrno = result;
         response.Result = -1;
     }
+    else
+    {
+        response.ResponseErrno = 0;
+    }
+    
 
 #if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_CONNECT)
     ESP_LOGI(__func__, "Error code: %d - %s", errno, strerror(errno));
@@ -1150,6 +1577,15 @@ void WiFiRequestHandler::Close(Message *message)
     _messageDispatcher->QueueMessageForStm32(message);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
 
+#if defined(CONFIG_HEAP_TRACING_STANDALONE) || defined(CONFIG_HEAP_TRACING_TOHOST)
+    ESP_ERROR_CHECK(heap_trace_stop());
+#endif
+
+#if defined(CONFIG_HEAP_TRACING_STANDALONE)
+    heap_trace_dump();
+    ESP_ERROR_CHECK(heap_trace_start(HEAP_TRACE_LEAKS));
+#endif
+
 #if defined(WIFI_FULL_LOGGING)
     ESP_LOGI(__func__, "Exit");
 #endif
@@ -1165,9 +1601,11 @@ void WiFiRequestHandler::Send(Message *message)
 {
 #if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_SEND_DATA)
     ESP_LOGI(__func__, "Enter");
+    ESP_LOGI(__func__, "Heap size: %d", xPortGetFreeHeapSize());
 #endif
 
     Esp32Messaging::SendRequest *request = Encoders::ExtractSendRequest(message->Payload);
+    vPortFree(message->Payload);
 
     Esp32Messaging::IntegerAndErrnoResponse response;
     int32_t mappedFlags = 0;
@@ -1197,7 +1635,6 @@ void WiFiRequestHandler::Send(Message *message)
 
     vPortFree(request->Buffer);
     vPortFree(request);
-    vPortFree(message->Payload);
 
     message->PayloadLength = Encoders::EncodedIntegerAndErrnoResponseBufferSize(&response);
     message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
@@ -1208,6 +1645,7 @@ void WiFiRequestHandler::Send(Message *message)
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
 
 #if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_SEND_DATA)
+    ESP_LOGI(__func__, "Heap size: %d", xPortGetFreeHeapSize());
     ESP_LOGI(__func__, "Exit");
 #endif
 }
@@ -1222,6 +1660,7 @@ void WiFiRequestHandler::SendTo(Message *message)
 {
 #if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_SENDTO)
     ESP_LOGI(__func__, "Enter");
+    ESP_LOGI(__func__, "Heap size: %d", xPortGetFreeHeapSize());
 #endif
 
     Esp32Messaging::SendToRequest *request = Encoders::ExtractSendToRequest(message->Payload);
@@ -1307,6 +1746,7 @@ void WiFiRequestHandler::SendTo(Message *message)
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
 
 #if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_SENDTO)
+    ESP_LOGI(__func__, "Heap size: %d", xPortGetFreeHeapSize());
     ESP_LOGI(__func__, "Exit");
 #endif
 }
@@ -1321,6 +1761,7 @@ void WiFiRequestHandler::RecvFrom(Message *message)
 {
 #if defined(WIFI_FULL_LOGGING)
     ESP_LOGI(__func__, "Enter");
+    ESP_LOGI(__func__, "Heap size: %d", xPortGetFreeHeapSize());
 #endif
 
     Esp32Messaging::RecvFromRequest *request = Encoders::ExtractRecvFromRequest(message->Payload);
@@ -1404,7 +1845,10 @@ void WiFiRequestHandler::RecvFrom(Message *message)
 
 #if defined(WIFI_DEBUG_RECVFROM_DATA) || defined(WIFI_FULL_LOGGING)
     ESP_LOGI(__func__, "Received %d bytes.", response.Result);
-    ESP_LOG_BUFFER_HEX(__func__, response.Buffer, response.Result);
+    if (response.Buffer)
+    {
+        ESP_LOG_BUFFER_HEX(__func__, response.Buffer, response.Result);
+    }
     ESP_LOGI(__func__, "Result: %d, errno: %d - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
 #endif
 
@@ -1428,6 +1872,7 @@ void WiFiRequestHandler::RecvFrom(Message *message)
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
 
 #if defined(WIFI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Heap size: %d", xPortGetFreeHeapSize());
     ESP_LOGI(__func__, "Exit");
 #endif
 }
@@ -1634,10 +2079,10 @@ void WiFiRequestHandler::StationGotIpEvent(system_event_t *eventData)
  */
 void WiFiRequestHandler::StationDisconnectedEvent(system_event_t *eventData)
 {
-    if (static_cast<bool>(_config.AutomaticReconnect))
+    if (static_cast<bool>(_automaticReconnect))
     {
         xEventGroupClearBits(_xWiFiEventGroup, WIFI_READY_BIT | WIFI_CONNECTED_BIT | WIFI_CONNECTING_BIT | WIFI_RECONNECTING_BIT);
-        if (_currentRetryCount < _config.MaximumRetryCount)
+        if (_currentRetryCount < _maximumRetryCount)
         {
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_RECONNECTING_BIT);
             esp_wifi_connect();

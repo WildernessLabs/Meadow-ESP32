@@ -10,23 +10,27 @@
 //
 //      *************************** WARNING ***************************
 //
-
 using System;
-using Meadow.Coprocessor.F7Micro;
 
-namespace Meadow.Coprocessor.F7Micro.Messages
+namespace Meadow.Devices.Esp32.MessagePayloads
 {
     public struct SystemConfiguration
     {
-        public UInt32 MessageSize;
-    };
-
-    public struct WiFiConfiguration
-    {
-        public Byte AutomaticReconnect;
+        public String SoftwareVersion;
+        public Byte MaximumMessageQueueLength;
+        public Byte AutomaticallyStartNetwork;
+        public Byte AutomaticallyReconnect;
         public UInt32 MaximumRetryCount;
         public Byte Antenna;
-        public Byte MaximumMessageQueueLength;
+        public Byte[] MacAddress;
+        public String DeviceName;
+        public String DefaultAccessPoint;
+        public String NtpServer;
+        public Int32 GetTimeAtStartup;
+        public Byte UseDhcp;
+        public UInt32 StaticIpAddress;
+        public UInt32 DnsServer;
+        public UInt32 DefaultGateway;
     };
 
     public struct WiFiCredentials

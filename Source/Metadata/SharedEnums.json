@@ -29,7 +29,7 @@
           "Comment": "System functions available on the ESP32",
           "BaseDataType": "UInt32",
           "EnumNames": [
-              "GetConfiguration", "SetConfiguration", "DeepSleep", "GetBatteryChargeLevel"
+              "GetConfiguration", "DeepSleep", "GetBatteryChargeLevel"
           ]
         },
         {

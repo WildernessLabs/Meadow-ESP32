@@ -13,12 +13,17 @@
 #include "SpiTransportProvider.hpp"
 
 #include "GenericList.hpp"
+#include "NvsManager.hpp"
 
-#ifdef CONFIG_HEAP_TRACING_STANDALONE
+#if defined(CONFIG_HEAP_TRACING_STANDALONE) || defined(CONFIG_HEAP_TRACING_TOHOST)
 
 #include "esp_heap_trace.h"
 
-#define NUM_RECORDS 100
+#endif
+
+#ifdef CONFIG_HEAP_TRACING_STANDALONE
+
+#define NUM_RECORDS 400
 static heap_trace_record_t trace_records[NUM_RECORDS];
 
 #endif
@@ -33,8 +38,18 @@ extern "C" void app_main()
     NvsManager::Setup();
     esp_log_level_set("*", ESP_LOG_INFO);
 
+#ifdef CONFIG_HEAP_TRACING_TOHOST
+    #warning "Heap tracing to host turned on."
+
+    ESP_ERROR_CHECK(heap_trace_init_tohost());
+    heap_trace_start(HEAP_TRACE_ALL);
+#endif
+
 #ifdef CONFIG_HEAP_TRACING_STANDALONE
+    #warning "Standalone heap tracing turned on."
+
     ESP_ERROR_CHECK(heap_trace_init_standalone(trace_records, NUM_RECORDS));
+    ESP_ERROR_CHECK(heap_trace_start(HEAP_TRACE_LEAKS));
 #endif
 
     const esp_app_desc_t *applicationDescription = esp_ota_get_app_description();

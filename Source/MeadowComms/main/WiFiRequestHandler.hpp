@@ -96,22 +96,6 @@ private:
      */
     const char *TASK_NAME = "WiFiTask";
 
-    /**
-     *  Name of the WiFi configuration object in NVS.
-     */
-    const char *CONFIG_NAME = "WiFiConfig";
-
-    /**
-     *  Default configuration for the WiFi system.
-     */
-    const struct Esp32Messaging::WiFiConfiguration DEFAULT_WIFI_CONFIGURATION =
-    {
-        .AutomaticReconnect = static_cast<uint8_t>(false),
-        .MaximumRetryCount = 3,
-        .Antenna = static_cast<uint8_t>(AntennaTypes::OnBoard),
-        .MaximumMessageQueueLength = 10
-    };
-
     /*
      *  Event group bits.
      *
@@ -191,11 +175,6 @@ private:
     static bool _instantiated;
 
     /**
-     *  WiFi configuration.
-     */
-    Esp32Messaging::WiFiConfiguration _config;
-
-    /**
      *  Event group containing 24-bits used to indicate the state of the WiFi connection.
      */
     EventGroupHandle_t _xWiFiEventGroup = nullptr;
@@ -214,6 +193,130 @@ private:
      *  Current retry count.
      */
     int _currentRetryCount = 0;
+
+    /**
+     *  Current antenna in use.  Default to the on board antenna at startup.
+     */
+    static AntennaTypes::AntennaTypes _currentAntenna;
+
+    /**
+     *  Name of the NVS storage holding the _currentAntenna value.
+     */
+    static const char *ANTENNA_TYPE_NAME;
+
+    /**
+     *  Should the system automatically reconnect to an access point should there
+     *  be a problem and the current connection is dropped.
+     */
+    static bool _automaticReconnect;
+
+    /**
+     *  Name of the NVS storage holding the _automaticReconnect value.
+     */
+    static const char *AUTOMATIC_RECONNECT_NAME;
+
+    /**
+     *  Indicate if the network should start automatically on reboot.
+     */
+    static bool _automaticallyStartNetwork;
+
+    /**
+     *  Name of the NVS storage holding the _automaticallyStartNetwork value.
+     */
+    static const char *AUTOMATICALLY_START_NETWORK_NAME;
+
+    /**
+     *  Maximum number of times a failed event should retry before raising an error.
+     */
+    static uint32_t _maximumRetryCount;
+
+    /**
+     *  Name of the NVS storage holding the _maximumRetryCount value.
+     */
+    static const char *MAXIMUM_RETRY_COUNT_NAME;
+
+    /**
+     *  Indicate if the system should connect to a time server and get the
+     *  current time at startup.
+     */
+    static bool _getTimeAtStartup;
+
+    /**
+     *  Name fo the storage in NVS that holds the value indicating that the
+     *  system should get the time at startup. 
+     */
+    static const char *GET_TIME_AT_STARTUP_NAME;
+
+    /**
+     *  Indicate if we should use DHCP.
+     */
+    static bool _useDhcp;
+
+    /**
+     *  Name of the storage holding the _useDhcp configuration setting.
+     */
+    static const char *USE_DHCP_NAME;
+
+    /**
+     *  Defaut access [oint to be used when automatically connecting.
+     */
+    static char *_defaultAccessPoint;
+
+    /**
+     *  Name of the storage in NVS holding the default access point.
+     */
+    static const char *DEFAULT_ACCESS_POINT_NAME;
+
+    /**
+     *  Password for the access point.
+     */
+    static char *_password;
+
+    /**
+     *  Name of the storage in NVS holding the password for the access point.
+     */
+    static const char *PASSWORD_NAME;
+
+    /**
+     *  Name of the NTP server to be used when using NTP to set the time
+     *  when the board starts.
+     */
+    static char *_ntpServer;
+
+    /**
+     *  Name of the storage space in NVS holding the NTP server information.
+     */
+    static const char *NTP_SERVER_NAME;
+
+    /**
+     *  Static IP address when not using DHCP.
+     */
+    static uint32_t _staticIpAddress;
+
+    /**
+     *  Name of the storage space holding the static IP address.
+     */
+    static const char *STATIC_IP_ADDRESS_NAME;
+
+    /**
+     *  DNS server when not using DHCP.
+     */
+    static uint32_t _dnsServer;
+
+    /**
+     *  Name of the storage in NVS holding the DNS server IP address.
+     */
+    static const char *DNS_SERVER_NAME;
+
+    /**
+     *  IP address of the default gateway when not using DHCP.
+     */
+    static uint32_t _defaultGateway;
+
+    /**
+     *  Name of the storage space holding the IP address of the default gateway.
+     */
+    static const char *DEFAULT_GATEWAY_NAME;
 
     /**
      *  List of active poll requests.
@@ -419,6 +522,74 @@ public:
      *  within the class.
      */
     esp_err_t EventHandler(void *, system_event_t *);
+
+    /**
+     *  Get / Set the maximum number of retry attempts.
+     */
+    static uint32_t GetMaximumRetryCount();
+    static void SetMaximumRetryCount(uint32_t);
+
+    /**
+     *  Get / Set the automatic reconnect property.
+     */
+    static bool GetAutomaticReconnect();
+    static void SetAutomaticReconnect(bool);
+
+    /**
+     *  Get / Set the automatically start network property.
+     */
+    static bool GetAutomaticallyStartNetwork();
+    static void SetAutomaticallyStartNetwork(bool);
+
+    /**
+     *  Get / Set the get time a startup configuration value.
+     */
+    static bool GetGetTimeAtStartup();
+    static void SetGetTinmeAtStartup(bool);
+
+    /**
+     *  Get / Set the get time a startup configuration value.
+     */
+    static bool GetUseDhcp();
+    static void SetUseDhcp(bool);
+
+    /**
+     *  Get / Set the NTP server to be used when getting the time
+     *  at startup.
+     */
+    static char *GetNtpServer();
+    static void SetNtpServer(char *);
+    
+    /**
+     *  Get / Set the name of the default access point to be used when
+     *  the board starts.
+     */
+    static char *GetDefaultAccessPoint();
+    static void SetFefaultAccessPoint(char *);
+
+    /**
+     *  Get / Set the password for the default access point.
+     */
+    static char *GetPassword();
+    static void SetPassword(char *);
+
+    /**
+     *  Get / set the default IP address when not using DHCP.
+     */
+    static uint32_t GetIpAddress();
+    static void SetIpAddress(uint32_t);
+
+    /**
+     *  Get / set the IP address of the DNS server to be used when not using DHCP.
+     */
+    static uint32_t GetDnsServer();
+    static void SetDnsServer(uint32_t);
+
+    /**
+     *  Get / set the IP address of the default gateway.
+     */
+    static uint32_t GetDefaultGateway();
+    static void SetDefaultGateway(uint32_t);
 };
 
 #endif /* _WIFI_REQUEST_HANDLER_HPP_ */
