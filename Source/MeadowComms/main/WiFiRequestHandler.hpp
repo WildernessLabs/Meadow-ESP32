@@ -590,6 +590,12 @@ public:
      */
     static uint32_t GetDefaultGateway();
     static void SetDefaultGateway(uint32_t);
+
+    /**
+     *  Get / Set the MAC address of the interface.
+     */
+    static void GetMacAddress(uint8_t *);
+    static void SetMacAddress(uint8_t *);
 };
 
 #endif /* _WIFI_REQUEST_HANDLER_HPP_ */
