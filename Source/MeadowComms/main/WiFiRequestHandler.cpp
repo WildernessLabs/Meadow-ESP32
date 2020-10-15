@@ -560,6 +560,35 @@ void WiFiRequestHandler::SetDefaultGateway(uint32_t value)
     }
 }
 
+/**
+ *  @brief Get the MAC address of the board.
+ *
+ *  @param macAddress
+ *      Pointer to the buffer to hold the MAC address.
+ */
+void WiFiRequestHandler::GetMacAddress(uint8_t *macAddress)
+{
+    if (esp_wifi_get_mac(WIFI_IF_STA, macAddress) != ESP_OK)
+    {
+        for (int index = 0; index < 6; index++)
+        {
+            *macAddress = 0;
+            macAddress++;
+        }
+    }
+}
+
+/**
+ *  @brief Set the MAC address of the board.
+ *
+ *  @param macAddress
+ *      New MAC address.
+ */
+void WiFiRequestHandler::SetMacAddress(uint8_t *macAddress)
+{
+
+}
+
 /*
  * ----------------------------------------------------------------------------
  *

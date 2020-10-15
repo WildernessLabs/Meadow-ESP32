@@ -352,6 +352,7 @@ void SystemRequestHandler::GetConfiguration(Message *request)
     config.DnsServer = WiFiRequestHandler::GetDnsServer();
     config.DefaultGateway = WiFiRequestHandler::GetDefaultGateway();
     config.DeviceName = nullptr;
+    WiFiRequestHandler::GetMacAddress(config.MacAddress);
 
     request->PayloadLength = Encoders::EncodedSystemConfigurationBufferSize(&config);
     request->Payload = static_cast<uint8_t *>(pvPortMalloc(request->PayloadLength));
