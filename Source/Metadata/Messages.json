@@ -11,7 +11,8 @@
                 { "Name": "AutomaticallyReconnect", "DataType": "byte" },
                 { "Name": "MaximumRetryCount", "DataType": "uint32" },
                 { "Name": "Antenna", "DataType": "byte" },
-                { "Name": "MacAddress", "DataType": "fixedbytearray", "Length": "6" },
+                { "Name": "BoardMacAddress", "DataType": "fixedbytearray", "Length": "6" },
+                { "Name": "SoftApMacAddress", "DataType": "fixedbytearray", "Length": "6" },
                 { "Name": "DeviceName", "DataType": "string" },
                 { "Name": "DefaultAccessPoint", "DataType": "string" },
                 { "Name": "NtpServer", "DataType": "string" },
@@ -20,6 +21,14 @@
                 { "Name": "StaticIpAddress", "DataType": "uint32" },
                 { "Name": "DnsServer", "DataType": "uint32" },
                 { "Name": "DefaultGateway", "DataType": "uint32" }
+            ]
+        },
+        {
+            "Name": "ConfigurationValue",
+            "MessageElements":
+            [
+                { "Name": "Item", "DataType": "uint32" },
+                { "Name": "Value", "DataType": "blob" }
             ]
         },
         { 
