@@ -13,6 +13,7 @@
 #include "esp_wifi.h"
 #include "esp_event.h"
 #include "esp_ota_ops.h"
+#include "esp_wifi.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -352,7 +353,8 @@ void SystemRequestHandler::GetConfiguration(Message *request)
     config.DnsServer = WiFiRequestHandler::GetDnsServer();
     config.DefaultGateway = WiFiRequestHandler::GetDefaultGateway();
     config.DeviceName = nullptr;
-    WiFiRequestHandler::GetMacAddress(config.MacAddress);
+    WiFiRequestHandler::GetMacAddress(config.BoardMacAddress, WIFI_IF_STA);
+    WiFiRequestHandler::GetMacAddress(config.SoftApMacAddress, WIFI_IF_AP);
 
     request->PayloadLength = Encoders::EncodedSystemConfigurationBufferSize(&config);
     request->Payload = static_cast<uint8_t *>(pvPortMalloc(request->PayloadLength));

@@ -22,7 +22,8 @@ namespace Meadow.Devices.Esp32.MessagePayloads
         public Byte AutomaticallyReconnect;
         public UInt32 MaximumRetryCount;
         public Byte Antenna;
-        public Byte[] MacAddress;
+        public Byte[] BoardMacAddress;
+        public Byte[] SoftApMacAddress;
         public String DeviceName;
         public String DefaultAccessPoint;
         public String NtpServer;
@@ -31,6 +32,13 @@ namespace Meadow.Devices.Esp32.MessagePayloads
         public UInt32 StaticIpAddress;
         public UInt32 DnsServer;
         public UInt32 DefaultGateway;
+    };
+
+    public struct ConfigurationValue
+    {
+        public UInt32 Item;
+        public UInt32 ValueLength;
+        public byte[] Value;
     };
 
     public struct WiFiCredentials

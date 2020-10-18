@@ -263,6 +263,7 @@ namespace Meadow.Devices.Esp32.MessagePayloads
             //
             length += (int) (systemConfiguration.SoftwareVersion.Length + 1);
             length += (int) 6;
+            length += (int) 6;
             length += (int) (systemConfiguration.DeviceName.Length + 1);
             length += (int) (systemConfiguration.DefaultAccessPoint.Length + 1);
             length += (int) (systemConfiguration.NtpServer.Length + 1);
@@ -285,7 +286,9 @@ namespace Meadow.Devices.Esp32.MessagePayloads
             offset += 4;
             buffer[offset] = systemConfiguration.Antenna;
             offset += 1;
-            Array.Copy(systemConfiguration.MacAddress, 0, buffer, offset, 6);
+            Array.Copy(systemConfiguration.BoardMacAddress, 0, buffer, offset, 6);
+            offset += (int) 6;
+            Array.Copy(systemConfiguration.SoftApMacAddress, 0, buffer, offset, 6);
             offset += (int) 6;
             EncodeString(systemConfiguration.DeviceName, buffer, offset);
             offset += systemConfiguration.DeviceName.Length + 1;
@@ -326,8 +329,11 @@ namespace Meadow.Devices.Esp32.MessagePayloads
             offset += 4;
             systemConfiguration.Antenna = buffer[offset];
             offset += 1;
-            systemConfiguration.MacAddress = new byte[6];
-            Array.Copy(buffer, offset, systemConfiguration.MacAddress, 0, 6);
+            systemConfiguration.BoardMacAddress = new byte[6];
+            Array.Copy(buffer, offset, systemConfiguration.BoardMacAddress, 0, 6);
+            offset += (int) 6;
+            systemConfiguration.SoftApMacAddress = new byte[6];
+            Array.Copy(buffer, offset, systemConfiguration.SoftApMacAddress, 0, 6);
             offset += (int) 6;
             systemConfiguration.DeviceName = ExtractString(buffer, offset);
             offset += (int) (systemConfiguration.DeviceName.Length + 1);
@@ -359,7 +365,72 @@ namespace Meadow.Devices.Esp32.MessagePayloads
             result += (int) systemConfiguration.DeviceName.Length;
             result += (int) systemConfiguration.DefaultAccessPoint.Length;
             result += (int) systemConfiguration.NtpServer.Length;
-            return(result + 35);
+            return(result + 41);
+        }
+
+        /// <summary>
+        /// Encode a ConfigurationValue object and return a byte array containing the encoded message.
+        /// </summary>
+        /// <param name="configurationValue">ConfigurationValue object to be encoded.</param>
+        /// <returns>Byte array containing the encoded ConfigurationValue object.</returns>
+        public static byte[] EncodeConfigurationValue(MessagePayloads.ConfigurationValue configurationValue)
+        {
+            int offset = 0;
+            int length = 0;
+
+            //
+            //  Calculate the amount of memory needed.
+            //
+            length += (int) (configurationValue.ValueLength + 4);
+            length += 4;
+
+            //
+            //  Now allocate a new buffer and copy the data in to the buffer.
+            //
+            byte[] buffer = new byte[length];
+            Array.Clear(buffer, 0, buffer.Length);
+            EncodeUInt32(configurationValue.Item, buffer, offset);
+            offset += 4;
+            EncodeUInt32(configurationValue.ValueLength, buffer, offset);
+            offset += 4;
+            if (configurationValue.ValueLength > 0)
+            {
+                Array.Copy(configurationValue.Value, 0, buffer, offset, configurationValue.ValueLength);
+            }
+            return(buffer);
+        }
+
+        /// <summary>
+        /// Extract a ConfigurationValue object from a byte array.
+        /// </summary>
+        /// <param name="configurationValue">Byte array containing the object to the extracted.</param>
+        /// <returns>ConfigurationValue object.</returns>
+        public static MessagePayloads.ConfigurationValue ExtractConfigurationValue(byte[] buffer, int offset)
+        {
+            ConfigurationValue configurationValue = new MessagePayloads.ConfigurationValue();
+
+            configurationValue.Item = ExtractUInt32(buffer, offset);
+            offset += 4;
+            configurationValue.ValueLength = ExtractUInt32(buffer, offset);
+            offset += 4;
+            if (configurationValue.ValueLength > 0)
+            {
+                configurationValue.Value = new byte[configurationValue.ValueLength];
+                Array.Copy(buffer, offset, configurationValue.Value, 0, configurationValue.ValueLength);
+            }
+            return(configurationValue);
+        }
+
+        /// <summary>
+        /// Calculate the amount of memory required to hold the given instance of the ConfigurationValue object.
+        /// </summary>
+        /// <param name="configurationValue">ConfigurationValue object to be encoded.</param>
+        /// <returns>Number of bytes required to hold the encoded ConfigurationValue object.</returns>
+        public static int EncodedConfigurationValueBufferSize(MessagePayloads.ConfigurationValue configurationValue)
+        {
+            int result = 0;
+            result += (int) configurationValue.ValueLength;
+            return(result + 8);
         }
 
         /// <summary>

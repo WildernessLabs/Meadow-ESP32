@@ -565,17 +565,22 @@ void WiFiRequestHandler::SetDefaultGateway(uint32_t value)
  *
  *  @param macAddress
  *      Pointer to the buffer to hold the MAC address.
+ * 
+ *  @param interface
+ *      ESP interface to get the MAC address.  Valid values:
+ *          WIFI_IF_STA     Board MAC address
+ *          WIFI_IF_AP      Software access point MAC address
  */
-void WiFiRequestHandler::GetMacAddress(uint8_t *macAddress)
+void WiFiRequestHandler::GetMacAddress(uint8_t *macAddress, esp_interface_t interface)
 {
-    if (esp_wifi_get_mac(WIFI_IF_STA, macAddress) != ESP_OK)
+    if (esp_wifi_get_mac(interface, macAddress) != ESP_OK)
     {
         for (int index = 0; index < 6; index++)
         {
             *macAddress = 0;
             macAddress++;
         }
-    }
+    }    
 }
 
 /**
@@ -583,8 +588,13 @@ void WiFiRequestHandler::GetMacAddress(uint8_t *macAddress)
  *
  *  @param macAddress
  *      New MAC address.
+ * 
+ *  @param interface
+ *      Interface the MAC address refers to.  Valid values:
+ *          WIFI_IF_STA     Board MAC address
+ *          WIFI_IF_AP      Software access point MAC address
  */
-void WiFiRequestHandler::SetMacAddress(uint8_t *macAddress)
+void WiFiRequestHandler::SetMacAddress(uint8_t *macAddress, esp_interface_t interface)
 {
 
 }
