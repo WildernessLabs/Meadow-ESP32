@@ -62,8 +62,9 @@ namespace Meadow.Devices.Esp32.MessagePayloads
     public enum SystemFunction
     {
         GetConfiguration = 0,
-        DeepSleep = 1,
-        GetBatteryChargeLevel = 2
+        SetConfigurationItem = 1,
+        DeepSleep = 2,
+        GetBatteryChargeLevel = 3
     };
 
     // <summary>
@@ -128,6 +129,28 @@ namespace Meadow.Devices.Esp32.MessagePayloads
         Transport = 0x20,
         Header = 0x40,
         Data = 0x80
+    };
+
+    // <summary>
+    // Name of items that can be configured (changed by the code on the STM32) on the ESP32.
+    // </summary>
+    public enum ConfigurationItems
+    {
+        MaximumMessageQueueLength = 0,
+        AutomaticallyStartNetwork = 1,
+        AutomaticallyReconnect = 2,
+        MaximumRetryCount = 3,
+        DeviceName = 4,
+        DefaultApAndPassword = 5,
+        NtpServer = 6,
+        GetTimeAtStartup = 7,
+        UseDhcp = 8,
+        StaticIpAddress = 9,
+        DnsServer = 10,
+        DefaultGateway = 11,
+        Antenna = 12,
+        BoardMacAddress = 13,
+        SoftApMacAddress = 14
     };
 
     // <summary>

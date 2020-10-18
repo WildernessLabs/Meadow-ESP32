@@ -38,7 +38,8 @@ namespace Esp32Messaging
         uint8_t AutomaticallyReconnect;
         uint32_t MaximumRetryCount;
         uint8_t Antenna;
-        uint8_t MacAddress[6];
+        uint8_t BoardMacAddress[6];
+        uint8_t SoftApMacAddress[6];
         char * DeviceName;
         char * DefaultAccessPoint;
         char * NtpServer;
@@ -47,6 +48,13 @@ namespace Esp32Messaging
         uint32_t StaticIpAddress;
         uint32_t DnsServer;
         uint32_t DefaultGateway;
+    };
+
+    struct ConfigurationValue
+    {
+        uint32_t Item;
+        uint32_t ValueLength;
+        uint8_t *Value;
     };
 
     struct WiFiCredentials
@@ -303,6 +311,9 @@ public:
     static void EncodeSystemConfiguration(Esp32Messaging::SystemConfiguration *, uint8_t *);
     static int EncodedSystemConfigurationBufferSize(Esp32Messaging::SystemConfiguration *);
     static Esp32Messaging::SystemConfiguration *ExtractSystemConfiguration(uint8_t *);
+    static void EncodeConfigurationValue(Esp32Messaging::ConfigurationValue *, uint8_t *);
+    static int EncodedConfigurationValueBufferSize(Esp32Messaging::ConfigurationValue *);
+    static Esp32Messaging::ConfigurationValue *ExtractConfigurationValue(uint8_t *);
     static void EncodeWiFiCredentials(Esp32Messaging::WiFiCredentials *, uint8_t *);
     static int EncodedWiFiCredentialsBufferSize(Esp32Messaging::WiFiCredentials *);
     static Esp32Messaging::WiFiCredentials *ExtractWiFiCredentials(uint8_t *);

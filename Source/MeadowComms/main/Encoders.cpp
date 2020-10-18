@@ -486,7 +486,9 @@ void Encoders::EncodeSystemConfiguration(Esp32Messaging::SystemConfiguration *sy
     buffer += 4;
     *buffer = systemConfiguration->Antenna;
     buffer += 1;
-    memcpy((void *) buffer, (void *) systemConfiguration->MacAddress, 6);
+    memcpy((void *) buffer, (void *) systemConfiguration->BoardMacAddress, 6);
+    buffer += 6;
+    memcpy((void *) buffer, (void *) systemConfiguration->SoftApMacAddress, 6);
     buffer += 6;
     EncodeString(systemConfiguration->DeviceName, buffer);
     buffer += StringLength(systemConfiguration->DeviceName) + 1;
@@ -522,7 +524,7 @@ int Encoders::EncodedSystemConfigurationBufferSize(Esp32Messaging::SystemConfigu
     result += Encoders::StringLength(systemConfiguration->DeviceName);
     result += Encoders::StringLength(systemConfiguration->DefaultAccessPoint);
     result += Encoders::StringLength(systemConfiguration->NtpServer);
-    return(result + 35);
+    return(result + 41);
 }
 
 /**
@@ -554,7 +556,9 @@ Esp32Messaging::SystemConfiguration *Encoders::ExtractSystemConfiguration(uint8_
     buffer += 4;
     systemConfiguration->Antenna = *buffer;
     buffer += 1;
-    memcpy((void *) systemConfiguration->MacAddress, (void *) buffer, 6);
+    memcpy((void *) systemConfiguration->BoardMacAddress, (void *) buffer, 6);
+    buffer += 6;
+    memcpy((void *) systemConfiguration->SoftApMacAddress, (void *) buffer, 6);
     buffer += 6;
     systemConfiguration->DeviceName = ExtractString(buffer);
     buffer += Encoders::StringLength(systemConfiguration->DeviceName) + 1;
@@ -572,6 +576,81 @@ Esp32Messaging::SystemConfiguration *Encoders::ExtractSystemConfiguration(uint8_
     buffer += 4;
     systemConfiguration->DefaultGateway = ExtractUInt32(buffer);
     return(systemConfiguration);
+}
+
+/**
+ *  Convert the ConfigurationValue object into a byte stream that can be sent to the STM32.
+ *  
+ *  The amount of memory required can be obtained by calling the EncodedConfigurationValueBufferSize method.
+ *  
+ *  @param configurationValue
+ *      ConfigurationValue object to be encoded.
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory large enough to hold the encoded ConfigurationValue object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodeConfigurationValue
+void Encoders::EncodeConfigurationValue(Esp32Messaging::ConfigurationValue *configurationValue, uint8_t *buffer)
+{
+    EncodeUInt32(configurationValue->Item, buffer);
+    buffer += 4;
+    EncodeUInt32(configurationValue->ValueLength, buffer);
+    buffer += 4;
+    if (configurationValue->ValueLength > 0)
+    {
+        memcpy((void *) buffer, (void *) configurationValue->Value, configurationValue->ValueLength);
+    }
+}
+
+/**
+ *  Calculate the amount of memory required to hold the given instance of the ConfigurationValue object.
+ *  
+ *  @param configurationValue
+ *      ConfigurationValue object to be encoded.
+ *  
+ *  @returns
+ *      Number of bytes required to hold the encoded ConfigurationValue object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodedConfigurationValueBufferSize
+int Encoders::EncodedConfigurationValueBufferSize(Esp32Messaging::ConfigurationValue *configurationValue)
+{
+    int result = 0;
+    result += configurationValue->ValueLength;
+    return(result + 8);
+}
+
+/**
+ *  Extract the ConfigurationValue object that is encoded in the given buffer.
+ *  
+ *  Note that the returned pointer points to a block of memory on the heap and
+ *  this should eventually be released calling vPortFree(...).
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded ConfigurationValue object.
+ *  
+ *  @returns
+ *      Pointer to a ConfigurationValue object.
+ */
+// cppcheck-suppress unusedFunction symbolName=ExtractConfigurationValue
+Esp32Messaging::ConfigurationValue *Encoders::ExtractConfigurationValue(uint8_t *buffer)
+{
+    Esp32Messaging::ConfigurationValue *configurationValue = (Esp32Messaging::ConfigurationValue *) pvPortMalloc(sizeof(Esp32Messaging::ConfigurationValue));
+
+    configurationValue->Item = ExtractUInt32(buffer);
+    buffer += 4;
+    configurationValue->ValueLength = ExtractUInt32(buffer);
+    buffer += 4;
+    if (configurationValue->ValueLength > 0)
+    {
+        configurationValue->Value = (uint8_t *) pvPortMalloc(configurationValue->ValueLength);
+        memcpy(configurationValue->Value, buffer, configurationValue->ValueLength);
+        buffer += configurationValue->ValueLength;
+    }
+    else
+    {
+        configurationValue->Value = nullptr;
+    }
+    return(configurationValue);
 }
 
 /**

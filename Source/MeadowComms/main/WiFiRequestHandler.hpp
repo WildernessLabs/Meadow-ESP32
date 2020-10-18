@@ -594,8 +594,8 @@ public:
     /**
      *  Get / Set the MAC address of the interface.
      */
-    static void GetMacAddress(uint8_t *);
-    static void SetMacAddress(uint8_t *);
+    static void GetMacAddress(uint8_t *, esp_interface_t);
+    static void SetMacAddress(uint8_t *, esp_interface_t);
 };
 
 #endif /* _WIFI_REQUEST_HANDLER_HPP_ */
