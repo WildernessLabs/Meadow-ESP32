@@ -28,7 +28,6 @@ extern heap_trace_record_t *trace_records;
 
 #endif
 
-
 /**
  *  Event handler for the WiFi loop.
  *
@@ -1616,15 +1615,6 @@ void WiFiRequestHandler::Close(Message *message)
     _messageDispatcher->QueueMessageForStm32(message);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
 
-#if defined(CONFIG_HEAP_TRACING_STANDALONE) || defined(CONFIG_HEAP_TRACING_TOHOST)
-    ESP_ERROR_CHECK(heap_trace_stop());
-#endif
-
-#if defined(CONFIG_HEAP_TRACING_STANDALONE)
-    heap_trace_dump();
-    ESP_ERROR_CHECK(heap_trace_start(HEAP_TRACE_LEAKS));
-#endif
-
 #if defined(WIFI_FULL_LOGGING)
     ESP_LOGI(__func__, "Exit");
 #endif
@@ -1640,7 +1630,6 @@ void WiFiRequestHandler::Send(Message *message)
 {
 #if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_SEND_DATA)
     ESP_LOGI(__func__, "Enter");
-    ESP_LOGI(__func__, "Heap size: %d", xPortGetFreeHeapSize());
 #endif
 
     Esp32Messaging::SendRequest *request = Encoders::ExtractSendRequest(message->Payload);
@@ -1684,7 +1673,6 @@ void WiFiRequestHandler::Send(Message *message)
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
 
 #if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_SEND_DATA)
-    ESP_LOGI(__func__, "Heap size: %d", xPortGetFreeHeapSize());
     ESP_LOGI(__func__, "Exit");
 #endif
 }
@@ -1699,7 +1687,6 @@ void WiFiRequestHandler::SendTo(Message *message)
 {
 #if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_SENDTO)
     ESP_LOGI(__func__, "Enter");
-    ESP_LOGI(__func__, "Heap size: %d", xPortGetFreeHeapSize());
 #endif
 
     Esp32Messaging::SendToRequest *request = Encoders::ExtractSendToRequest(message->Payload);
@@ -1785,7 +1772,6 @@ void WiFiRequestHandler::SendTo(Message *message)
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
 
 #if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_SENDTO)
-    ESP_LOGI(__func__, "Heap size: %d", xPortGetFreeHeapSize());
     ESP_LOGI(__func__, "Exit");
 #endif
 }
@@ -1800,7 +1786,6 @@ void WiFiRequestHandler::RecvFrom(Message *message)
 {
 #if defined(WIFI_FULL_LOGGING)
     ESP_LOGI(__func__, "Enter");
-    ESP_LOGI(__func__, "Heap size: %d", xPortGetFreeHeapSize());
 #endif
 
     Esp32Messaging::RecvFromRequest *request = Encoders::ExtractRecvFromRequest(message->Payload);
@@ -1911,7 +1896,6 @@ void WiFiRequestHandler::RecvFrom(Message *message)
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
 
 #if defined(WIFI_FULL_LOGGING)
-    ESP_LOGI(__func__, "Heap size: %d", xPortGetFreeHeapSize());
     ESP_LOGI(__func__, "Exit");
 #endif
 }
