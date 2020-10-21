@@ -358,7 +358,7 @@ void SystemRequestHandler::GetConfiguration(Message *request)
 
     request->PayloadLength = Encoders::EncodedSystemConfigurationBufferSize(&config);
     request->Payload = static_cast<uint8_t *>(pvPortMalloc(request->PayloadLength));
-    Encoders::EncodeSystemConfiguration( &config, request->Payload);
+    Encoders::EncodeSystemConfiguration(&config, request->Payload);
     request->MessageType = MessageTypes::Interrupt;
     request->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(request);
