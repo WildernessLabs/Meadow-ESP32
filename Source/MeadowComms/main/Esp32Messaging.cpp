@@ -4,6 +4,9 @@
  *  Generic messaging constants, structures and definitions used
  *  in the messaging system.
  */
+#include "freertos/FreeRTOS.h"
+#include "esp_system.h"
+#include "esp_log.h"
 #include <string.h>
 
 #include "Esp32Messaging.hpp"
@@ -158,6 +161,7 @@ Message *Message::CreateOnHeap(uint8_t messageType, uint8_t interface, uint32_t 
     result->Payload = payload;
     result->PayloadLength = payloadLength;
 
+    ESP_LOGI(__func__, "Creating message, new message address: 0x%08x", (uint32_t) result);
     return(result);
 }
 
@@ -207,7 +211,6 @@ Message *Message::CreateCopyOnHeap(bool copyPayload)
     }
     Message *newMessage = CreateOnHeap(MessageType, Interface, Function, StatusCode, MessageID, payload, payloadLength);
     return(newMessage);
-//    return(CreateCopyOnHeap(this, copyPayload));
 }
 
 /**
@@ -223,5 +226,24 @@ void Message::DeletePayload()
     }
     Payload = nullptr;
     PayloadLength = 0;
+}
+
+/**
+ *  Release the heap storage allocated for the message and any payload.
+ *
+ *  @param message
+ *      Pointer to the message to be cleared.
+ */
+void Message::DeleteMessage(Message *message)
+{
+    if (message)
+    {
+        if (message->Payload != NULL)
+        {
+            vPortFree(message->Payload);
+            message->Payload = nullptr;
+        }
+        vPortFree(message);
+    }
 }
 
