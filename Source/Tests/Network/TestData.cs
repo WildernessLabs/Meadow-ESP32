@@ -1761,7 +1761,7 @@
 
         25.60, 24.73, 24.37, 24.21, 24.18 };
 
-        private int index = 0;
+        private static int index = 0;
 
         public double GetNext()
         {
