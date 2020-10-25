@@ -105,6 +105,11 @@ struct Message
      *  Delete the payload and free up heap storage.
      */
     void DeletePayload();
+
+    /**
+     *  Delete the message and payload releassing heap storage.
+     */
+    static void DeleteMessage(Message *);
 };
 
 #endif /* _ESP32_MESSAGING_HPP_ */

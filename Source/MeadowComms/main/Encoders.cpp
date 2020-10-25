@@ -194,8 +194,15 @@ char *Encoders::ExtractString(uint8_t *buffer)
         length++;
     }
 
-    ptr = (uint8_t *) pvPortMalloc(length + 1);
-    strcpy((char *) ptr, (char *) buffer);
+    if (length == 0)
+    {
+        ptr = nullptr;
+    }
+    else
+    {
+        ptr = (uint8_t *) pvPortMalloc(length + 1);
+        strcpy((char *) ptr, (char *) buffer);
+    }
     return((char *) ptr);
 }
 
@@ -210,7 +217,35 @@ char *Encoders::ExtractString(uint8_t *buffer)
  */
 void Encoders::EncodeString(char *source, uint8_t *buffer)
 {
-    strcpy((char *) buffer, (char *) source);
+    if ((source == nullptr) || (source == NULL))
+    {
+        *buffer = 0;
+    }
+    else
+    {
+        strcpy((char *) buffer, (char *) source);
+    }
+}
+
+/**
+ *  Get the length of a string taking into consideration the
+ *  fact that the string could be nullptr or NULL.
+ *
+ *  @param str
+ *      Block of memory containing the string.
+ *  
+ *  @returns
+ *      Length of the string.
+ */
+uint32_t Encoders::StringLength(char *str)
+{
+    uint32_t length = 0;
+
+    if ((str != nullptr) || (str != NULL))
+    {
+        length = strlen(str);
+    }
+    return(length);
 }
 
 /**
@@ -439,7 +474,37 @@ uint8_t *Encoders::EncodeMessage(Message *message, bool headerOnly)
 // cppcheck-suppress unusedFunction symbolName=EncodeSystemConfiguration
 void Encoders::EncodeSystemConfiguration(Esp32Messaging::SystemConfiguration *systemConfiguration, uint8_t *buffer)
 {
-    EncodeUInt32(systemConfiguration->MessageSize, buffer);
+    EncodeString(systemConfiguration->SoftwareVersion, buffer);
+    buffer += StringLength(systemConfiguration->SoftwareVersion) + 1;
+    *buffer = systemConfiguration->MaximumMessageQueueLength;
+    buffer += 1;
+    *buffer = systemConfiguration->AutomaticallyStartNetwork;
+    buffer += 1;
+    *buffer = systemConfiguration->AutomaticallyReconnect;
+    buffer += 1;
+    EncodeUInt32(systemConfiguration->MaximumRetryCount, buffer);
+    buffer += 4;
+    *buffer = systemConfiguration->Antenna;
+    buffer += 1;
+    memcpy((void *) buffer, (void *) systemConfiguration->BoardMacAddress, 6);
+    buffer += 6;
+    memcpy((void *) buffer, (void *) systemConfiguration->SoftApMacAddress, 6);
+    buffer += 6;
+    EncodeString(systemConfiguration->DeviceName, buffer);
+    buffer += StringLength(systemConfiguration->DeviceName) + 1;
+    EncodeString(systemConfiguration->DefaultAccessPoint, buffer);
+    buffer += StringLength(systemConfiguration->DefaultAccessPoint) + 1;
+    EncodeString(systemConfiguration->NtpServer, buffer);
+    buffer += StringLength(systemConfiguration->NtpServer) + 1;
+    EncodeInt32(systemConfiguration->GetTimeAtStartup, buffer);
+    buffer += 4;
+    *buffer = systemConfiguration->UseDhcp;
+    buffer += 1;
+    EncodeUInt32(systemConfiguration->StaticIpAddress, buffer);
+    buffer += 4;
+    EncodeUInt32(systemConfiguration->DnsServer, buffer);
+    buffer += 4;
+    EncodeUInt32(systemConfiguration->DefaultGateway, buffer);
 }
 
 /**
@@ -454,7 +519,12 @@ void Encoders::EncodeSystemConfiguration(Esp32Messaging::SystemConfiguration *sy
 // cppcheck-suppress unusedFunction symbolName=EncodedSystemConfigurationBufferSize
 int Encoders::EncodedSystemConfigurationBufferSize(Esp32Messaging::SystemConfiguration *systemConfiguration)
 {
-    return(4);
+    int result = 0;
+    result += Encoders::StringLength(systemConfiguration->SoftwareVersion);
+    result += Encoders::StringLength(systemConfiguration->DeviceName);
+    result += Encoders::StringLength(systemConfiguration->DefaultAccessPoint);
+    result += Encoders::StringLength(systemConfiguration->NtpServer);
+    return(result + 41);
 }
 
 /**
@@ -474,73 +544,113 @@ Esp32Messaging::SystemConfiguration *Encoders::ExtractSystemConfiguration(uint8_
 {
     Esp32Messaging::SystemConfiguration *systemConfiguration = (Esp32Messaging::SystemConfiguration *) pvPortMalloc(sizeof(Esp32Messaging::SystemConfiguration));
 
-    systemConfiguration->MessageSize = ExtractUInt32(buffer);
+    systemConfiguration->SoftwareVersion = ExtractString(buffer);
+    buffer += Encoders::StringLength(systemConfiguration->SoftwareVersion) + 1;
+    systemConfiguration->MaximumMessageQueueLength = *buffer;
+    buffer += 1;
+    systemConfiguration->AutomaticallyStartNetwork = *buffer;
+    buffer += 1;
+    systemConfiguration->AutomaticallyReconnect = *buffer;
+    buffer += 1;
+    systemConfiguration->MaximumRetryCount = ExtractUInt32(buffer);
+    buffer += 4;
+    systemConfiguration->Antenna = *buffer;
+    buffer += 1;
+    memcpy((void *) systemConfiguration->BoardMacAddress, (void *) buffer, 6);
+    buffer += 6;
+    memcpy((void *) systemConfiguration->SoftApMacAddress, (void *) buffer, 6);
+    buffer += 6;
+    systemConfiguration->DeviceName = ExtractString(buffer);
+    buffer += Encoders::StringLength(systemConfiguration->DeviceName) + 1;
+    systemConfiguration->DefaultAccessPoint = ExtractString(buffer);
+    buffer += Encoders::StringLength(systemConfiguration->DefaultAccessPoint) + 1;
+    systemConfiguration->NtpServer = ExtractString(buffer);
+    buffer += Encoders::StringLength(systemConfiguration->NtpServer) + 1;
+    systemConfiguration->GetTimeAtStartup = ExtractInt32(buffer);
+    buffer += 4;
+    systemConfiguration->UseDhcp = *buffer;
+    buffer += 1;
+    systemConfiguration->StaticIpAddress = ExtractUInt32(buffer);
+    buffer += 4;
+    systemConfiguration->DnsServer = ExtractUInt32(buffer);
+    buffer += 4;
+    systemConfiguration->DefaultGateway = ExtractUInt32(buffer);
     return(systemConfiguration);
 }
 
 /**
- *  Convert the WiFiConfiguration object into a byte stream that can be sent to the STM32.
+ *  Convert the ConfigurationValue object into a byte stream that can be sent to the STM32.
  *  
- *  The amount of memory required can be obtained by calling the EncodedWiFiConfigurationBufferSize method.
+ *  The amount of memory required can be obtained by calling the EncodedConfigurationValueBufferSize method.
  *  
- *  @param wiFiConfiguration
- *      WiFiConfiguration object to be encoded.
+ *  @param configurationValue
+ *      ConfigurationValue object to be encoded.
  *  
  *  @param buffer
- *      Pointer to a block of memory large enough to hold the encoded WiFiConfiguration object.
+ *      Pointer to a block of memory large enough to hold the encoded ConfigurationValue object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodeWiFiConfiguration
-void Encoders::EncodeWiFiConfiguration(Esp32Messaging::WiFiConfiguration *wiFiConfiguration, uint8_t *buffer)
+// cppcheck-suppress unusedFunction symbolName=EncodeConfigurationValue
+void Encoders::EncodeConfigurationValue(Esp32Messaging::ConfigurationValue *configurationValue, uint8_t *buffer)
 {
-    *buffer = wiFiConfiguration->AutomaticReconnect;
-    buffer += 1;
-    EncodeUInt32(wiFiConfiguration->MaximumRetryCount, buffer);
+    EncodeUInt32(configurationValue->Item, buffer);
     buffer += 4;
-    *buffer = wiFiConfiguration->Antenna;
-    buffer += 1;
-    *buffer = wiFiConfiguration->MaximumMessageQueueLength;
+    EncodeUInt32(configurationValue->ValueLength, buffer);
+    buffer += 4;
+    if (configurationValue->ValueLength > 0)
+    {
+        memcpy((void *) buffer, (void *) configurationValue->Value, configurationValue->ValueLength);
+    }
 }
 
 /**
- *  Calculate the amount of memory required to hold the given instance of the WiFiConfiguration object.
+ *  Calculate the amount of memory required to hold the given instance of the ConfigurationValue object.
  *  
- *  @param wiFiConfiguration
- *      WiFiConfiguration object to be encoded.
+ *  @param configurationValue
+ *      ConfigurationValue object to be encoded.
  *  
  *  @returns
- *      Number of bytes required to hold the encoded WiFiConfiguration object.
+ *      Number of bytes required to hold the encoded ConfigurationValue object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodedWiFiConfigurationBufferSize
-int Encoders::EncodedWiFiConfigurationBufferSize(Esp32Messaging::WiFiConfiguration *wiFiConfiguration)
+// cppcheck-suppress unusedFunction symbolName=EncodedConfigurationValueBufferSize
+int Encoders::EncodedConfigurationValueBufferSize(Esp32Messaging::ConfigurationValue *configurationValue)
 {
-    return(7);
+    int result = 0;
+    result += configurationValue->ValueLength;
+    return(result + 8);
 }
 
 /**
- *  Extract the WiFiConfiguration object that is encoded in the given buffer.
+ *  Extract the ConfigurationValue object that is encoded in the given buffer.
  *  
  *  Note that the returned pointer points to a block of memory on the heap and
  *  this should eventually be released calling vPortFree(...).
  *  
  *  @param buffer
- *      Pointer to a block of memory holding the encoded WiFiConfiguration object.
+ *      Pointer to a block of memory holding the encoded ConfigurationValue object.
  *  
  *  @returns
- *      Pointer to a WiFiConfiguration object.
+ *      Pointer to a ConfigurationValue object.
  */
-// cppcheck-suppress unusedFunction symbolName=ExtractWiFiConfiguration
-Esp32Messaging::WiFiConfiguration *Encoders::ExtractWiFiConfiguration(uint8_t *buffer)
+// cppcheck-suppress unusedFunction symbolName=ExtractConfigurationValue
+Esp32Messaging::ConfigurationValue *Encoders::ExtractConfigurationValue(uint8_t *buffer)
 {
-    Esp32Messaging::WiFiConfiguration *wiFiConfiguration = (Esp32Messaging::WiFiConfiguration *) pvPortMalloc(sizeof(Esp32Messaging::WiFiConfiguration));
+    Esp32Messaging::ConfigurationValue *configurationValue = (Esp32Messaging::ConfigurationValue *) pvPortMalloc(sizeof(Esp32Messaging::ConfigurationValue));
 
-    wiFiConfiguration->AutomaticReconnect = *buffer;
-    buffer += 1;
-    wiFiConfiguration->MaximumRetryCount = ExtractUInt32(buffer);
+    configurationValue->Item = ExtractUInt32(buffer);
     buffer += 4;
-    wiFiConfiguration->Antenna = *buffer;
-    buffer += 1;
-    wiFiConfiguration->MaximumMessageQueueLength = *buffer;
-    return(wiFiConfiguration);
+    configurationValue->ValueLength = ExtractUInt32(buffer);
+    buffer += 4;
+    if (configurationValue->ValueLength > 0)
+    {
+        configurationValue->Value = (uint8_t *) pvPortMalloc(configurationValue->ValueLength);
+        memcpy(configurationValue->Value, buffer, configurationValue->ValueLength);
+        buffer += configurationValue->ValueLength;
+    }
+    else
+    {
+        configurationValue->Value = nullptr;
+    }
+    return(configurationValue);
 }
 
 /**
@@ -558,7 +668,7 @@ Esp32Messaging::WiFiConfiguration *Encoders::ExtractWiFiConfiguration(uint8_t *b
 void Encoders::EncodeWiFiCredentials(Esp32Messaging::WiFiCredentials *wiFiCredentials, uint8_t *buffer)
 {
     EncodeString(wiFiCredentials->NetworkName, buffer);
-    buffer += strlen(wiFiCredentials->NetworkName) + 1;
+    buffer += StringLength(wiFiCredentials->NetworkName) + 1;
     EncodeString(wiFiCredentials->Password, buffer);
 }
 
@@ -575,8 +685,8 @@ void Encoders::EncodeWiFiCredentials(Esp32Messaging::WiFiCredentials *wiFiCreden
 int Encoders::EncodedWiFiCredentialsBufferSize(Esp32Messaging::WiFiCredentials *wiFiCredentials)
 {
     int result = 0;
-    result += strlen(wiFiCredentials->NetworkName);
-    result += strlen(wiFiCredentials->Password);
+    result += Encoders::StringLength(wiFiCredentials->NetworkName);
+    result += Encoders::StringLength(wiFiCredentials->Password);
     return(result + 2);
 }
 
@@ -598,7 +708,7 @@ Esp32Messaging::WiFiCredentials *Encoders::ExtractWiFiCredentials(uint8_t *buffe
     Esp32Messaging::WiFiCredentials *wiFiCredentials = (Esp32Messaging::WiFiCredentials *) pvPortMalloc(sizeof(Esp32Messaging::WiFiCredentials));
 
     wiFiCredentials->NetworkName = ExtractString(buffer);
-    buffer += strlen(wiFiCredentials->NetworkName) + 1;
+    buffer += Encoders::StringLength(wiFiCredentials->NetworkName) + 1;
     wiFiCredentials->Password = ExtractString(buffer);
     return(wiFiCredentials);
 }
@@ -915,7 +1025,7 @@ void Encoders::EncodeAddrInfo(Esp32Messaging::AddrInfo *addrInfo, uint8_t *buffe
         buffer += addrInfo->AddrLength;
     }
     EncodeString(addrInfo->CanonName, buffer);
-    buffer += strlen(addrInfo->CanonName) + 1;
+    buffer += StringLength(addrInfo->CanonName) + 1;
     EncodeUInt32((uint32_t) addrInfo->Next, buffer);
 }
 
@@ -933,7 +1043,7 @@ int Encoders::EncodedAddrInfoBufferSize(Esp32Messaging::AddrInfo *addrInfo)
 {
     int result = 0;
     result += addrInfo->AddrLength;
-    result += strlen(addrInfo->CanonName);
+    result += Encoders::StringLength(addrInfo->CanonName);
     return(result + 33);
 }
 
@@ -979,7 +1089,7 @@ Esp32Messaging::AddrInfo *Encoders::ExtractAddrInfo(uint8_t *buffer)
         addrInfo->Addr = nullptr;
     }
     addrInfo->CanonName = ExtractString(buffer);
-    buffer += strlen(addrInfo->CanonName) + 1;
+    buffer += Encoders::StringLength(addrInfo->CanonName) + 1;
     addrInfo->Next = (void *) ExtractUInt32(buffer);
     return(addrInfo);
 }
@@ -999,9 +1109,9 @@ Esp32Messaging::AddrInfo *Encoders::ExtractAddrInfo(uint8_t *buffer)
 void Encoders::EncodeGetAddrInfoRequest(Esp32Messaging::GetAddrInfoRequest *getAddrInfoRequest, uint8_t *buffer)
 {
     EncodeString(getAddrInfoRequest->NodeName, buffer);
-    buffer += strlen(getAddrInfoRequest->NodeName) + 1;
+    buffer += StringLength(getAddrInfoRequest->NodeName) + 1;
     EncodeString(getAddrInfoRequest->ServName, buffer);
-    buffer += strlen(getAddrInfoRequest->ServName) + 1;
+    buffer += StringLength(getAddrInfoRequest->ServName) + 1;
     EncodeUInt32(getAddrInfoRequest->HintsLength, buffer);
     buffer += 4;
     if (getAddrInfoRequest->HintsLength > 0)
@@ -1030,8 +1140,8 @@ void Encoders::EncodeGetAddrInfoRequest(Esp32Messaging::GetAddrInfoRequest *getA
 int Encoders::EncodedGetAddrInfoRequestBufferSize(Esp32Messaging::GetAddrInfoRequest *getAddrInfoRequest)
 {
     int result = 0;
-    result += strlen(getAddrInfoRequest->NodeName);
-    result += strlen(getAddrInfoRequest->ServName);
+    result += Encoders::StringLength(getAddrInfoRequest->NodeName);
+    result += Encoders::StringLength(getAddrInfoRequest->ServName);
     result += getAddrInfoRequest->HintsLength;
     result += getAddrInfoRequest->ResultLength;
     return(result + 10);
@@ -1055,9 +1165,9 @@ Esp32Messaging::GetAddrInfoRequest *Encoders::ExtractGetAddrInfoRequest(uint8_t 
     Esp32Messaging::GetAddrInfoRequest *getAddrInfoRequest = (Esp32Messaging::GetAddrInfoRequest *) pvPortMalloc(sizeof(Esp32Messaging::GetAddrInfoRequest));
 
     getAddrInfoRequest->NodeName = ExtractString(buffer);
-    buffer += strlen(getAddrInfoRequest->NodeName) + 1;
+    buffer += Encoders::StringLength(getAddrInfoRequest->NodeName) + 1;
     getAddrInfoRequest->ServName = ExtractString(buffer);
-    buffer += strlen(getAddrInfoRequest->ServName) + 1;
+    buffer += Encoders::StringLength(getAddrInfoRequest->ServName) + 1;
     getAddrInfoRequest->HintsLength = ExtractUInt32(buffer);
     buffer += 4;
     if (getAddrInfoRequest->HintsLength > 0)

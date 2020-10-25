@@ -29,7 +29,7 @@
           "Comment": "System functions available on the ESP32",
           "BaseDataType": "UInt32",
           "EnumNames": [
-              "GetConfiguration", "SetConfiguration", "DeepSleep", "GetBatteryChargeLevel"
+              "GetConfiguration", "SetConfigurationItem", "DeepSleep", "GetBatteryChargeLevel"
           ]
         },
         {
@@ -76,6 +76,17 @@
               { "Name": "Transport", "Value": "0x20" },
               { "Name": "Header", "Value": "0x40" },
               { "Name": "Data", "Value": "0x80" }
+            ]
+        },
+        {
+            "Name": "ConfigurationItems",
+            "Namespace": "ConfigurationItems",
+            "Comment": "Name of items that can be configured (changed by the code on the STM32) on the ESP32.",
+            "BaseDataType": "UInt32",
+            "EnumNames": [
+                "MaximumMessageQueueLength", "AutomaticallyStartNetwork", "AutomaticallyReconnect", "MaximumRetryCount",
+                "DeviceName", "DefaultApAndPassword", "NtpServer", "GetTimeAtStartup", "UseDhcp", "StaticIpAddress", 
+                "DnsServer", "DefaultGateway", "Antenna", "BoardMacAddress", "SoftApMacAddress"
             ]
         },
         {

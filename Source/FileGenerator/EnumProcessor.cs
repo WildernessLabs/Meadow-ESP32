@@ -234,7 +234,7 @@ namespace FileGenerator
             outputFile.WriteLine("");
             outputFile.WriteLine("using System;");
             outputFile.WriteLine("");
-            outputFile.WriteLine("namespace Meadow.Coprocessor.F7Micro");
+            outputFile.WriteLine("namespace Meadow.Devices.Esp32.MessagePayloads");
             outputFile.WriteLine("{");
         }
 

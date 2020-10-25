@@ -7,6 +7,6 @@ halt
 
 set image build/MeadowComms.bin 
 
-program_esp32 $image 0x10000 verify 
+program_esp $image 0x10000 verify 
 
 shutdown

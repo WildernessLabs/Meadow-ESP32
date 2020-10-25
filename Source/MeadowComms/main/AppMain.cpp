@@ -13,12 +13,17 @@
 #include "SpiTransportProvider.hpp"
 
 #include "GenericList.hpp"
+#include "NvsManager.hpp"
 
-#ifdef CONFIG_HEAP_TRACING_STANDALONE
+#if defined(CONFIG_HEAP_TRACING_STANDALONE) || defined(CONFIG_HEAP_TRACING_TOHOST)
 
 #include "esp_heap_trace.h"
 
-#define NUM_RECORDS 100
+#endif
+
+#if defined(CONFIG_HEAP_TRACING_STANDALONE)
+
+#define NUM_RECORDS 400
 static heap_trace_record_t trace_records[NUM_RECORDS];
 
 #endif
@@ -33,8 +38,18 @@ extern "C" void app_main()
     NvsManager::Setup();
     esp_log_level_set("*", ESP_LOG_INFO);
 
+#ifdef CONFIG_HEAP_TRACING_TOHOST
+    #warning "Heap tracing to host turned on."
+
+    ESP_ERROR_CHECK(heap_trace_init_tohost());
+    heap_trace_start(HEAP_TRACE_ALL);
+#endif
+
 #ifdef CONFIG_HEAP_TRACING_STANDALONE
+    #warning "Standalone heap tracing turned on."
+
     ESP_ERROR_CHECK(heap_trace_init_standalone(trace_records, NUM_RECORDS));
+    ESP_ERROR_CHECK(heap_trace_start(HEAP_TRACE_LEAKS));
 #endif
 
     const esp_app_desc_t *applicationDescription = esp_ota_get_app_description();
@@ -45,6 +60,29 @@ extern "C" void app_main()
      */
     SpiTransportProvider *spi = new SpiTransportProvider();
     MessageDispatcher * __attribute__((unused)) messageDispatcher = new MessageDispatcher(spi);
+
+    // WiFiRequestHandler *wifi = new WiFiRequestHandler(nullptr);
+    // wifi->Setup();
+    // wifi->StartNetworkInterface();
+
+    // Message message = {};
+
+    // message.MessageType = MessageTypes::Header;
+    // message.Interface = Esp32Interfaces::System;
+    // message.Function = SystemFunction::SetConfigurationItem;
+
+    // Esp32Messaging::ConfigurationValue configurationValue;
+    // configurationValue.Item = ConfigurationItems::AutomaticallyReconnect;
+    // configurationValue.ValueLength = 1;
+    // uint8_t value[1];
+    // value[0] = 1;
+    // configurationValue.Value = value;
+
+    // message.PayloadLength = Encoders::EncodedConfigurationValueBufferSize(&configurationValue);
+    // message.Payload = (uint8_t *) pvPortMalloc(message.PayloadLength);
+    // Encoders::EncodeConfigurationValue(&configurationValue, message.Payload);
+
+    // messageDispatcher->QueueMessageForEsp32(&message);
 
     //
     //  Main program loop.
