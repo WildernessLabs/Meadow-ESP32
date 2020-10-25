@@ -33,8 +33,6 @@ namespace BasicNetworkTest
             //    6, NetworkProtocol.Protocol11G, -76);
             Console.WriteLine("Connecting to network.");
             _esp = new Esp32Coprocessor();
-            _esp.Reset();
-            Thread.Sleep(5000);
             wifi = new WiFiAdapter(_esp);
             if (wifi.Connect(Secrets.WIFI_NAME, Secrets.WIFI_PASSWORD).ConnectionStatus != ConnectionStatus.Success)
             {
@@ -45,6 +43,7 @@ namespace BasicNetworkTest
 
         public async Task GetWebPageAsync(string uri)
         {
+            client = new HttpClient();
             HttpResponseMessage response = await client.GetAsync(uri);
 
             response.EnsureSuccessStatusCode();
@@ -77,8 +76,10 @@ namespace BasicNetworkTest
 
         public void Log(string message)
         {
-            Console.WriteLine(message);
-            //Log(DateTime.Now.ToString("HH:mm:ss") + $": {message}");
+            string output = DateTime.Now.ToString("HH:mm:ss");
+            output += ": ";
+            output += message;
+            Console.WriteLine(output);
         }
 
         public async Task PostDataAsync(string uri)
