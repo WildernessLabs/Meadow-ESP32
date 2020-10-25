@@ -10,6 +10,19 @@
 #include <string.h>
 #include "DebugSettings.hpp"
 
+#if defined(CONFIG_HEAP_TRACING_STANDALONE) || defined(CONFIG_HEAP_TRACING_TOHOST)
+
+#include "esp_heap_trace.h"
+
+#endif
+
+#if defined(CONFIG_HEAP_TRACING_STANDALONE)
+
+#define NUM_RECORDS 100
+extern heap_trace_record_t *trace_records;
+
+#endif
+
 #include "esp_heap_caps.h"
 
 /*
@@ -169,11 +182,11 @@ SpiTransportProvider::~SpiTransportProvider()
     }
     if (_incomingMessage)
     {
-        vPortFree(_incomingMessage);
+        Message::DeleteMessage(_incomingMessage);
     }
     if (_outboundMessage)
     {
-        vPortFree(_outboundMessage);
+        Message::DeleteMessage(_outboundMessage);
     }
     _currentState = Invalid;
 }
@@ -332,7 +345,7 @@ spi_slave_transaction_t *SpiTransportProvider::CreateAcknowledgementTransaction(
     copyOfMessage->StatusCode = static_cast<uint32_t>(code);
 
     uint8_t *ackFrame = static_cast<uint8_t *>(Encoders::EncodeMessage(copyOfMessage, true));
-    DeleteMessageAndReleaseHeapStorage(copyOfMessage);
+    Message::DeleteMessage(copyOfMessage);
 
     memcpy(const_cast<void *>(transaction->tx_buffer), ackFrame, _headerFrameSize);
     vPortFree(ackFrame);
@@ -503,29 +516,6 @@ void SpiTransportProvider::Setup(MessageDispatcher *messageDispatcher)
 }
 
 /**
- *  Release the heap storage allocated for the message and any payload.
- *
- *  @param message
- *      Pointer to the message to be cleared.
- */
-void SpiTransportProvider::DeleteMessageAndReleaseHeapStorage(Message *message)
-{
-#if defined(SPI_FULL_LOGGING)
-    ESP_LOGI(__func__, "Entering method");
-#endif
-
-    if (message)
-    {
-        if (message->Payload)
-        {
-            vPortFree(message->Payload);
-            message->Payload = nullptr;
-        }
-        vPortFree(message);
-    }
-}
-
-/**
  *  Encode a header or transport only message.
  *
  *  @param transaction
@@ -549,18 +539,21 @@ void SpiTransportProvider::EncodeHeaderMessage(spi_slave_transaction_t *transact
 /**
  *  Process the transport message and prepare the next transaction and
  *  change to the appropriate state.
+ * 
+ *  @param request
+ *      Inbound request from the STM32.
  *
  *  @returns
  *      Pointer to a new transaction.
  */
-spi_slave_transaction_t *SpiTransportProvider::ProcessTransportMessage()
+spi_slave_transaction_t *SpiTransportProvider::ProcessTransportMessage(Message *request)
 {
 #if defined(SPI_FULL_LOGGING)
     ESP_LOGI(__func__, "Entering method");
 #endif
 
     spi_slave_transaction_t *newTransaction = nullptr;
-    switch (_incomingMessage->Function)
+    switch (request->Function)
     {
         case TransportFunction::SendResponse:
             _messageType = MessageTypes::Transport;
@@ -576,18 +569,16 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessTransportMessage()
             message = Message::CreateOnHeap(MessageTypes::Transport, Esp32Interfaces::Transport, TransportFunction::SendResponse, _responseCode);
             newTransaction = CreateSpiHeaderTransaction();
             EncodeHeaderMessage(newTransaction, message);
-            vPortFree(static_cast<void *>(message));
+            Message::DeleteMessage(message);
             _currentState = SendingTransportResponse;
             break;
         default:
-            ESP_LOGI(__func__, "Transport function %d not recognised.", _incomingMessage->Function);
+            ESP_LOGI(__func__, "Transport function %d not recognised.", request->Function);
             _responseCode = StatusCodes::CompletedOk;
             _messageType = MessageTypes::Nak;
             break;
     }
 
-    DeleteMessageAndReleaseHeapStorage(_incomingMessage);
-    _incomingMessage = nullptr;
     return(newTransaction);
 }
 
@@ -637,8 +628,11 @@ spi_slave_transaction_t *SpiTransportProvider::InboundMessageHeaderReceived(spi_
     ESP_LOGI(__func__, "Entering method");
 #endif
 
-    DeleteMessageAndReleaseHeapStorage(_incomingMessage);
-    _incomingMessage = nullptr;
+    if (_incomingMessage)
+    {
+        Message::DeleteMessage(_incomingMessage);
+        _incomingMessage = nullptr;
+    }
     spi_slave_transaction_t *newTransaction = nullptr;
     _currentState = AcknowledgingInboundMessageHeader;
     int dataSize = transaction->length / 8;
@@ -663,12 +657,14 @@ spi_slave_transaction_t *SpiTransportProvider::InboundMessageHeaderReceived(spi_
                     newTransaction = CreateAcknowledgementTransaction(_incomingMessage, _responseCode, _messageType);
                     break;
                 case MessageTypes::Transport:
-                    newTransaction = ProcessTransportMessage();
+                    newTransaction = ProcessTransportMessage(_incomingMessage);
+                    Message::DeleteMessage(_incomingMessage);
+                    _incomingMessage = nullptr;
                     break;
                 default:
                     _responseCode = StatusCodes::UnexpectedData;
                     _messageType = MessageTypes::Nak;
-                    DeleteMessageAndReleaseHeapStorage(_incomingMessage);
+                    Message::DeleteMessage(_incomingMessage);
                     _incomingMessage = Message::CreateOnHeap(_messageType, Esp32Interfaces::Transport, 0, _responseCode);
                     newTransaction = CreateAcknowledgementTransaction(_incomingMessage, _responseCode, _messageType);
                     break;
@@ -734,7 +730,7 @@ spi_slave_transaction_t *SpiTransportProvider::InboundMessageHeaderAcknowledged(
     }
     else
     {
-        DeleteMessageAndReleaseHeapStorage(_incomingMessage);
+        Message::DeleteMessage(_incomingMessage);
         _incomingMessage = nullptr;
         newTransaction = CreateSpiHeaderTransaction();
         _currentState = WaitingForInboundMessageHeader;
@@ -790,14 +786,14 @@ spi_slave_transaction_t *SpiTransportProvider::InboundMessageBodyReceived(spi_sl
                 }
                 else
                 {
-                    DeleteMessageAndReleaseHeapStorage(message);
+                    Message::DeleteMessage(message);
                     responseCode = StatusCodes::UnexpectedData;
                     messageType = MessageTypes::Nak;
                 }
             }
             else
             {
-                DeleteMessageAndReleaseHeapStorage(message);
+                Message::DeleteMessage(message);
                 responseCode = StatusCodes::UnexpectedData;
                 messageType = MessageTypes::Nak;
             }
@@ -813,7 +809,7 @@ spi_slave_transaction_t *SpiTransportProvider::InboundMessageBodyReceived(spi_sl
 
     spi_slave_transaction_t *newTransaction = CreateAcknowledgementTransaction(_incomingMessage, responseCode, messageType);
 
-    DeleteMessageAndReleaseHeapStorage(_incomingMessage);
+    Message::DeleteMessage(_incomingMessage);
     _incomingMessage = nullptr;
 
     _currentState = AcknowledgingMessageBody;
@@ -931,26 +927,28 @@ spi_slave_transaction_t *SpiTransportProvider::OutboundMessageHeaderAcknowledgem
             }
             else
             {
-                DeleteMessageAndReleaseHeapStorage(_outboundMessage);
+                Message::DeleteMessage(_outboundMessage);
                 newTransaction = CreateSpiHeaderTransaction();
                 _currentState = WaitingForInboundMessageHeader;
+                _outboundMessage = nullptr;
             }
         }
         else
         {
             QueueMessageForStm32(_outboundMessage);
+            _outboundMessage = nullptr;
             newTransaction = CreateSpiHeaderTransaction();
             _currentState = WaitingForInboundMessageHeader;
         }
-        vPortFree(acknowledgement);
+        Message::DeleteMessage(acknowledgement);
     }
     else
     {
         QueueMessageForStm32(_outboundMessage);
         newTransaction = CreateSpiHeaderTransaction();
         _currentState = WaitingForInboundMessageHeader;
+        _outboundMessage = nullptr;
     }
-    _outboundMessage = nullptr;
     return(newTransaction);
 }
 
@@ -1004,25 +1002,38 @@ spi_slave_transaction_t *SpiTransportProvider::OutboundMessageBodyAcknowledgemen
 
     Message *incomingMessage = Encoders::ExtractMessage(static_cast<uint8_t *>(transaction->rx_buffer), _headerFrameSize, true);
     DeleteTransaction(transaction);
-
+    bool dumpHeapData = false;
     if (incomingMessage)
     {
         if (incomingMessage->MessageType == MessageTypes::Ack)
         {
-            DeleteMessageAndReleaseHeapStorage(_outboundMessage);
+            Message::DeleteMessage(_outboundMessage);
+            dumpHeapData = true;
         }
         else
         {
             QueueMessageForStm32(_outboundMessage);
         }
-        vPortFree(incomingMessage);
     }
     else
     {
         QueueMessageForStm32(_outboundMessage);
     }
+    Message::DeleteMessage(incomingMessage);
     _currentState = WaitingForInboundMessageHeader;
     _outboundMessage = nullptr;
+
+    if (dumpHeapData)
+    {
+        #if defined(CONFIG_HEAP_TRACING_STANDALONE) || defined(CONFIG_HEAP_TRACING_TOHOST)
+        ESP_ERROR_CHECK(heap_trace_stop());
+        #endif
+
+        #if defined(CONFIG_HEAP_TRACING_STANDALONE)
+        heap_trace_dump();
+        ESP_ERROR_CHECK(heap_trace_start(HEAP_TRACE_LEAKS));
+        #endif
+    }
 
     return(CreateSpiHeaderTransaction());
 }
@@ -1051,7 +1062,7 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessSendingTransportResponseSt
 
     DeleteTransaction(transaction);
     spi_slave_transaction_t *newTransaction = CreateSpiHeaderTransaction();
-    DeleteMessageAndReleaseHeapStorage(_outboundMessage);
+    Message::DeleteMessage(_outboundMessage);
     _outboundMessage = nullptr;
     if (_responseCode == StatusCodes::CompletedOk)
     {

@@ -191,8 +191,15 @@ char *Encoders::ExtractString(uint8_t *buffer)
         length++;
     }
 
-    ptr = (uint8_t *) pvPortMalloc(length + 1);
-    strcpy((char *) ptr, (char *) buffer);
+    if (length == 0)
+    {
+        ptr = nullptr;
+    }
+    else
+    {
+        ptr = (uint8_t *) pvPortMalloc(length + 1);
+        strcpy((char *) ptr, (char *) buffer);
+    }
     return((char *) ptr);
 }
 
@@ -207,7 +214,35 @@ char *Encoders::ExtractString(uint8_t *buffer)
  */
 void Encoders::EncodeString(char *source, uint8_t *buffer)
 {
-    strcpy((char *) buffer, (char *) source);
+    if ((source == nullptr) || (source == NULL))
+    {
+        *buffer = 0;
+    }
+    else
+    {
+        strcpy((char *) buffer, (char *) source);
+    }
+}
+
+/**
+ *  Get the length of a string taking into consideration the
+ *  fact that the string could be nullptr or NULL.
+ *
+ *  @param str
+ *      Block of memory containing the string.
+ *  
+ *  @returns
+ *      Length of the string.
+ */
+uint32_t Encoders::StringLength(char *str)
+{
+    uint32_t length = 0;
+
+    if ((str != nullptr) || (str != NULL))
+    {
+        length = strlen(str);
+    }
+    return(length);
 }
 
 /**

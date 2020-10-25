@@ -71,7 +71,7 @@ namespace SystemFunction
     enum SystemFunction : uint32_t
     {
         GetConfiguration = 0,
-        SetConfiguration = 1,
+        SetConfigurationItem = 1,
         DeepSleep = 2,
         GetBatteryChargeLevel = 3
     };
@@ -153,6 +153,32 @@ enum MessageTypes : uint8_t
     Header = 0x40,
     Data = 0x80
 };
+
+namespace ConfigurationItems
+{
+    /*
+     *    Name of items that can be configured (changed by the code on the STM32) on the ESP32.
+     */
+    enum ConfigurationItems : uint32_t
+    {
+        MaximumMessageQueueLength = 0,
+        AutomaticallyStartNetwork = 1,
+        AutomaticallyReconnect = 2,
+        MaximumRetryCount = 3,
+        DeviceName = 4,
+        DefaultApAndPassword = 5,
+        NtpServer = 6,
+        GetTimeAtStartup = 7,
+        UseDhcp = 8,
+        StaticIpAddress = 9,
+        DnsServer = 10,
+        DefaultGateway = 11,
+        Antenna = 12,
+        BoardMacAddress = 13,
+        SoftApMacAddress = 14
+    };
+
+}
 
 namespace WiFiAuthenticationMode
 {

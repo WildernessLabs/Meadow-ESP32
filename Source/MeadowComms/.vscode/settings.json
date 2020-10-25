@@ -1,19 +1,12 @@
 {
-    "C_Cpp.default.configurationProvider": "vector-of-bool.cmake-tools",
-    "cSpell.words": [
-        "CRCs",
-        "LOGI",
-        "MISO",
-        "MOSI",
-        "RTOS",
-        "VSPI",
-        "WIFI",
-        "bssid",
-        "quadhd",
-        "quadwp",
-        "rssi",
-        "sclk",
-        "ssid"
-    ],
-    "cmake.configureOnOpen": false
+  "C_Cpp.clang_format_style": "Visual Studio",
+  "editor.formatOnSave": false,
+  "[cpp]": {
+    "editor.quickSuggestions": true
+  },
+  "[c]": {
+    "editor.quickSuggestions": true
+  },
+  "C_Cpp.intelliSenseEngineFallback": "Enabled",
+  "cmake.configureOnOpen": false
 }

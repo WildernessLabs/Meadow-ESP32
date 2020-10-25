@@ -196,7 +196,11 @@ private:
      */
     void DeleteMessageAndReleaseHeapStorage(Message *);
 
-    spi_slave_transaction_t *ProcessTransportMessage();
+    /**
+     *  Process an inbound transport request.
+     */
+    spi_slave_transaction_t *ProcessTransportMessage(Message *);
+
     /*
      *  Start to process incoming messages (i.e. move from the idle state
      *  into one where the ESP32 is sending or receiving data).

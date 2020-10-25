@@ -248,8 +248,15 @@ char *espcp_extract_string(uint8_t *buffer)
         length++;
     }
 
-    ptr = (uint8_t *) malloc(length + 1);
-    strcpy((char *) ptr, (char *) buffer);
+    if (length == 0)
+    {
+        ptr = NULL;
+    }
+    else
+    {
+        ptr = (uint8_t *) malloc(length + 1);
+        strcpy((char *) ptr, (char *) buffer);
+    }
     return((char *) ptr);
 }
 
@@ -262,7 +269,7 @@ char *espcp_extract_string(uint8_t *buffer)
  * Input Parameters:
  *  source - Block of memory containing the string.
  *  buffer - Pointer to a block of memory to take the string.
-
+ *
  * Returned Value:
  *  None.
  *
@@ -272,7 +279,42 @@ char *espcp_extract_string(uint8_t *buffer)
  ****************************************************************************/
 void espcp_encode_string(char *source, uint8_t *buffer)
 {
-    strcpy((char *) buffer, (char *) source);
+    if (source == NULL)
+    {
+        *buffer = 0;
+    }
+    else
+    {
+        strcpy((char *) buffer, (char *) source);
+    }
+}
+
+/****************************************************************************
+ * Name: espcp_string_length
+ *
+ * Description:
+ *  Get the length of a string taking into account that the string pointer
+ *  may be NULL.
+ *
+ * Input Parameters:
+ *  string - Block of memory containing the string.
+ *
+ * Returned Value:
+ *  None.
+ *
+ * Assumptions/Limitations:
+ *  None
+ *
+ ****************************************************************************/
+uint32_t espcp_string_length(char *string)
+{
+    uint32_t result = 0;
+
+    if (string != NULL)
+    {
+        result = strlen(string);
+    }
+    return(result);
 }
 
 /****************************************************************************

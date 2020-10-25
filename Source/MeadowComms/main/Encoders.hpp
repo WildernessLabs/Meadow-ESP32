@@ -32,15 +32,29 @@ namespace Esp32Messaging
 {
     struct SystemConfiguration
     {
-        uint32_t MessageSize;
-    };
-
-    struct WiFiConfiguration
-    {
-        uint8_t AutomaticReconnect;
+        char * SoftwareVersion;
+        uint8_t MaximumMessageQueueLength;
+        uint8_t AutomaticallyStartNetwork;
+        uint8_t AutomaticallyReconnect;
         uint32_t MaximumRetryCount;
         uint8_t Antenna;
-        uint8_t MaximumMessageQueueLength;
+        uint8_t BoardMacAddress[6];
+        uint8_t SoftApMacAddress[6];
+        char * DeviceName;
+        char * DefaultAccessPoint;
+        char * NtpServer;
+        int32_t GetTimeAtStartup;
+        uint8_t UseDhcp;
+        uint32_t StaticIpAddress;
+        uint32_t DnsServer;
+        uint32_t DefaultGateway;
+    };
+
+    struct ConfigurationValue
+    {
+        uint32_t Item;
+        uint32_t ValueLength;
+        uint8_t *Value;
     };
 
     struct WiFiCredentials
@@ -288,6 +302,7 @@ public:
     static void EncodeInt32(int32_t, uint8_t *);
     static char *ExtractString(uint8_t *);
     static void EncodeString(char *, uint8_t *);
+    static uint32_t StringLength(char *);
     static uint8_t CRC8(const uint8_t *, uint16_t);
     static uint32_t CRC32(const uint8_t *, uint16_t);
     static uint32_t ProgressiveCRC32(uint32_t, uint8_t);
@@ -296,9 +311,9 @@ public:
     static void EncodeSystemConfiguration(Esp32Messaging::SystemConfiguration *, uint8_t *);
     static int EncodedSystemConfigurationBufferSize(Esp32Messaging::SystemConfiguration *);
     static Esp32Messaging::SystemConfiguration *ExtractSystemConfiguration(uint8_t *);
-    static void EncodeWiFiConfiguration(Esp32Messaging::WiFiConfiguration *, uint8_t *);
-    static int EncodedWiFiConfigurationBufferSize(Esp32Messaging::WiFiConfiguration *);
-    static Esp32Messaging::WiFiConfiguration *ExtractWiFiConfiguration(uint8_t *);
+    static void EncodeConfigurationValue(Esp32Messaging::ConfigurationValue *, uint8_t *);
+    static int EncodedConfigurationValueBufferSize(Esp32Messaging::ConfigurationValue *);
+    static Esp32Messaging::ConfigurationValue *ExtractConfigurationValue(uint8_t *);
     static void EncodeWiFiCredentials(Esp32Messaging::WiFiCredentials *, uint8_t *);
     static int EncodedWiFiCredentialsBufferSize(Esp32Messaging::WiFiCredentials *);
     static Esp32Messaging::WiFiCredentials *ExtractWiFiCredentials(uint8_t *);
