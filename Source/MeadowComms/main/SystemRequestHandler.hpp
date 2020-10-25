@@ -50,7 +50,7 @@ private:
     /**
      *  Name of the NVS storage holding the _maximumMessagequeueLength value.
      */
-    const char *MAXIMUM_MESSAGE_QUEUE_LENGTH_NAME = "MaxQueueLen";
+    static const char *MAXIMUM_MESSAGE_QUEUE_LENGTH_NAME;
 
     /**
      *  This method will dispatch incoming messages to the appropriate request handler.
@@ -120,9 +120,10 @@ public:
     static bool GetConfigurationValue(const char *, const bool);
 
     /**
-     *  Get the maximum message queue length.
+     *  Get / Set the maximum message queue length.
      */
     static uint32_t GetMaximumMessageQueueLength();
+    static StatusCodes::StatusCodes SetMaximumMessageQueueLength(uint32_t);
 
     /**
      *  Set a string configuration value.
@@ -148,11 +149,6 @@ public:
      *  Set a boolean configuration value.
      */
     static NvsManager::ErrorCodes SetConfigurationValue(const char *, const bool);
-
-    /**
-     *  Set the maximum message queue length.
-     */
-    static int SetMaximumMessageQueueLength();
 };
 
 #endif /* _SYSTEM_REQUEST_HANDLER_HPP_ */

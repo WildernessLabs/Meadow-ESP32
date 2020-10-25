@@ -4,6 +4,9 @@
  *  Implementation of the WiFi functionality.
  */
 #include "driver/gpio.h"
+#include "esp_system.h"
+#include "esp_wifi.h"
+#include "esp_event.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -297,16 +300,25 @@ uint32_t WiFiRequestHandler::GetMaximumRetryCount()
  *
  *  @param value
  *      New maximum retry count value.
+ * 
+ *  @returns
+ *      StatusCodes::Completed on success, StatusCodes::Failure if there is a problem.
  */
-void WiFiRequestHandler::SetMaximumRetryCount(uint32_t value)
+StatusCodes::StatusCodes WiFiRequestHandler::SetMaximumRetryCount(uint32_t value)
 {
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
     if (value != _maximumRetryCount)
     {
         if (SystemRequestHandler::SetConfigurationValue(MAXIMUM_RETRY_COUNT_NAME, value) == NvsManager::ErrorCodes::Ok)
         {
             _maximumRetryCount = value;
         }
+        else
+        {
+            result = StatusCodes::Failure;
+        }
     }
+    return(result);
 }
 
 /**
@@ -322,9 +334,13 @@ bool WiFiRequestHandler::GetAutomaticReconnect()
  *
  *  @param value
  *      New automatic reconnection value.
+ * 
+ *  @returns
+ *      StatusCodes::Completed on success, StatusCodes::Failure if there is a problem.
  */
-void WiFiRequestHandler::SetAutomaticReconnect(bool value)
+StatusCodes::StatusCodes WiFiRequestHandler::SetAutomaticReconnect(bool value)
 {
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
     if (value != _automaticReconnect)
     {
         if (SystemRequestHandler::SetConfigurationValue(AUTOMATIC_RECONNECT_NAME, value) == NvsManager::ErrorCodes::Ok)
@@ -332,6 +348,7 @@ void WiFiRequestHandler::SetAutomaticReconnect(bool value)
             _automaticReconnect = value;
         }
     }
+    return(result);
 }
 
 /**
@@ -347,9 +364,13 @@ bool WiFiRequestHandler::GetAutomaticallyStartNetwork()
  *
  *  @param value
  *      New automatic start network value.
+ * 
+ *  @returns
+ *      StatusCodes::Completed on success, StatusCodes::Failure if there is a problem.
  */
-void WiFiRequestHandler::SetAutomaticallyStartNetwork(bool value)
+StatusCodes::StatusCodes WiFiRequestHandler::SetAutomaticallyStartNetwork(bool value)
 {
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
     if (value != _automaticallyStartNetwork)
     {
         if (SystemRequestHandler::SetConfigurationValue(AUTOMATICALLY_START_NETWORK_NAME, value) == NvsManager::ErrorCodes::Ok)
@@ -357,6 +378,7 @@ void WiFiRequestHandler::SetAutomaticallyStartNetwork(bool value)
             _automaticallyStartNetwork = value;
         }
     }
+    return(result);
 }
 
 /**
@@ -372,9 +394,13 @@ bool WiFiRequestHandler::GetGetTimeAtStartup()
  *
  *  @param value
  *      New get time at startup value.
+ * 
+ *  @returns
+ *      StatusCodes::Completed on success, StatusCodes::Failure if there is a problem.
  */
-void WiFiRequestHandler::SetGetTinmeAtStartup(bool value)
+StatusCodes::StatusCodes WiFiRequestHandler::SetGetTimeAtStartup(bool value)
 {
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
     if (value != _getTimeAtStartup)
     {
         if (SystemRequestHandler::SetConfigurationValue(GET_TIME_AT_STARTUP_NAME, value) == NvsManager::ErrorCodes::Ok)
@@ -382,6 +408,7 @@ void WiFiRequestHandler::SetGetTinmeAtStartup(bool value)
             _getTimeAtStartup = value;
         }
     }
+    return(result);
 }
 
 /**
@@ -397,9 +424,13 @@ bool WiFiRequestHandler::GetUseDhcp()
  *
  *  @param value
  *      New use DHCP value.
+ * 
+ *  @returns
+ *      StatusCodes::Completed on success, StatusCodes::Failure if there is a problem.
  */
-void WiFiRequestHandler::SetUseDhcp(bool value)
+StatusCodes::StatusCodes WiFiRequestHandler::SetUseDhcp(bool value)
 {
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
     if (value != _useDhcp)
     {
         if (SystemRequestHandler::SetConfigurationValue(USE_DHCP_NAME, value) == NvsManager::ErrorCodes::Ok)
@@ -407,6 +438,7 @@ void WiFiRequestHandler::SetUseDhcp(bool value)
             _useDhcp = value;
         }
     }
+    return(result);
 }
 
 /**
@@ -422,9 +454,13 @@ char *WiFiRequestHandler::GetNtpServer()
  *
  *  @param value
  *      New NTP server value.
+ * 
+ *  @returns
+ *      StatusCodes::Completed on success, StatusCodes::Failure if there is a problem.
  */
-void WiFiRequestHandler::SetNtpServer(char *value)
+StatusCodes::StatusCodes WiFiRequestHandler::SetNtpServer(char *value)
 {
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
     if (strcmp(value, _ntpServer) != 0)
     {
         if (SystemRequestHandler::SetConfigurationValue(NTP_SERVER_NAME, value) == NvsManager::ErrorCodes::Ok)
@@ -432,6 +468,7 @@ void WiFiRequestHandler::SetNtpServer(char *value)
             _ntpServer = strdup(value);
         }
     }
+    return(result);
 }
 
 /**
@@ -447,9 +484,13 @@ char *WiFiRequestHandler::GetDefaultAccessPoint()
  *
  *  @param value
  *      New default access point value.
+ * 
+ *  @returns
+ *      StatusCodes::Completed on success, StatusCodes::Failure if there is a problem.
  */
-void WiFiRequestHandler::SetFefaultAccessPoint(char *value)
+StatusCodes::StatusCodes WiFiRequestHandler::SetDefaultAccessPoint(char *value)
 {
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
     if (strcmp(value, _defaultAccessPoint) != 0)
     {
         if (SystemRequestHandler::SetConfigurationValue(DEFAULT_ACCESS_POINT_NAME, value) == NvsManager::ErrorCodes::Ok)
@@ -457,6 +498,7 @@ void WiFiRequestHandler::SetFefaultAccessPoint(char *value)
             _defaultAccessPoint = strdup(value);
         }
     }
+    return(result);
 }
 
 /**
@@ -472,9 +514,13 @@ char *WiFiRequestHandler::GetPassword()
  *
  *  @param value
  *      New password value.
+ * 
+ *  @returns
+ *      StatusCodes::Completed on success, StatusCodes::Failure if there is a problem.
  */
-void WiFiRequestHandler::SetPassword(char *value)
+StatusCodes::StatusCodes WiFiRequestHandler::SetPassword(char *value)
 {
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
     if (strcmp(value, _password) != 0)
     {
         if (SystemRequestHandler::SetConfigurationValue(PASSWORD_NAME, value) == NvsManager::ErrorCodes::Ok)
@@ -482,6 +528,37 @@ void WiFiRequestHandler::SetPassword(char *value)
             _password = strdup(value);
         }
     }
+    return(result);
+}
+
+/**
+ *  @brief Get the device name.
+ */
+char *WiFiRequestHandler::GetDeviceName()
+{
+    return(_password);
+}
+
+/**
+ *  @brief Set the device name.
+ *
+ *  @param value
+ *      New name for the device.
+ * 
+ *  @returns
+ *      StatusCodes::Completed on success, StatusCodes::Failure if there is a problem.
+ */
+StatusCodes::StatusCodes WiFiRequestHandler::SetDeviceName(char *value)
+{
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
+    if (strcmp(value, _password) != 0)
+    {
+        if (SystemRequestHandler::SetConfigurationValue(PASSWORD_NAME, value) == NvsManager::ErrorCodes::Ok)
+        {
+            _password = strdup(value);
+        }
+    }
+    return(result);
 }
 
 /**
@@ -497,9 +574,13 @@ uint32_t WiFiRequestHandler::GetIpAddress()
  *
  *  @param value
  *      New static IP address value.
+ * 
+ *  @returns
+ *      StatusCodes::Completed on success, StatusCodes::Failure if there is a problem.
  */
-void WiFiRequestHandler::SetIpAddress(uint32_t value)
+StatusCodes::StatusCodes WiFiRequestHandler::SetIpAddress(uint32_t value)
 {
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
     if (value != _staticIpAddress)
     {
         if (SystemRequestHandler::SetConfigurationValue(STATIC_IP_ADDRESS_NAME, value) == NvsManager::ErrorCodes::Ok)
@@ -507,6 +588,7 @@ void WiFiRequestHandler::SetIpAddress(uint32_t value)
             _staticIpAddress = value;
         }
     }
+    return(result);
 }
 
 /**
@@ -522,9 +604,13 @@ uint32_t WiFiRequestHandler::GetDnsServer()
  *
  *  @param value
  *      New static DNS address value.
+ * 
+ *  @returns
+ *      StatusCodes::Completed on success, StatusCodes::Failure if there is a problem.
  */
-void WiFiRequestHandler::SetDnsServer(uint32_t value)
+StatusCodes::StatusCodes WiFiRequestHandler::SetDnsServer(uint32_t value)
 {
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
     if (value != _dnsServer)
     {
         if (SystemRequestHandler::SetConfigurationValue(DNS_SERVER_NAME, value) == NvsManager::ErrorCodes::Ok)
@@ -532,6 +618,7 @@ void WiFiRequestHandler::SetDnsServer(uint32_t value)
             _dnsServer = value;
         }
     }
+    return(result);
 }
 
 /**
@@ -547,9 +634,13 @@ uint32_t WiFiRequestHandler::GetDefaultGateway()
  *
  *  @param value
  *      New static DNS address value.
+ * 
+ *  @returns
+ *      StatusCodes::Completed on success, StatusCodes::Failure if there is a problem.
  */
-void WiFiRequestHandler::SetDefaultGateway(uint32_t value)
+StatusCodes::StatusCodes WiFiRequestHandler::SetDefaultGateway(uint32_t value)
 {
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
     if (value != _defaultGateway)
     {
         if (SystemRequestHandler::SetConfigurationValue(DEFAULT_GATEWAY_NAME, value) == NvsManager::ErrorCodes::Ok)
@@ -557,6 +648,7 @@ void WiFiRequestHandler::SetDefaultGateway(uint32_t value)
             _defaultGateway = value;
         }
     }
+    return(result);
 }
 
 /**
@@ -592,10 +684,14 @@ void WiFiRequestHandler::GetMacAddress(uint8_t *macAddress, esp_interface_t inte
  *      Interface the MAC address refers to.  Valid values:
  *          WIFI_IF_STA     Board MAC address
  *          WIFI_IF_AP      Software access point MAC address
+ * 
+ *  @returns
+ *      StatusCodes::Completed on success, StatusCodes::Failure if there is a problem.
  */
-void WiFiRequestHandler::SetMacAddress(uint8_t *macAddress, esp_interface_t interface)
+StatusCodes::StatusCodes WiFiRequestHandler::SetMacAddress(uint8_t *macAddress, esp_interface_t interface)
 {
-
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
+    return(result);
 }
 
 /*
@@ -997,6 +1093,80 @@ void WiFiRequestHandler::ConnectToAp(Message *request)
 #if defined(WIFI_FULL_LOGGING)
     ESP_LOGI(__func__, "Exit");
 #endif
+}
+
+void WiFiRequestHandler::event_handler(void* arg, esp_event_base_t event_base,
+                                int32_t event_id, void* event_data)
+{
+    // switch (event_base)
+    // {
+    //     case WIFI_EVENT:
+    //         break;
+    //     case IP_EVENT:
+    //         break;
+    // }
+}
+
+/**
+ *  @brief Start the network interface.
+ * 
+ *  Start the network interface ready for the device to be configured
+ *  as either an access point (softAP) or as a network device (station).
+ * 
+ *  @return
+ *      ESP_OK if the interface is initialised correctly, an error code otherwise.
+ */
+esp_err_t WiFiRequestHandler::StartNetworkInterface()
+{
+#if defined(WIFI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Enter");
+#endif
+
+    esp_err_t result = ESP_OK;
+
+    xEventGroupSetBits(_xWiFiEventGroup, WIFI_CONNECTING_BIT);
+
+    result = esp_netif_init();
+    if (result == ESP_OK)
+    {
+        result = esp_event_loop_create_default();
+    }
+    
+    if (result == ESP_OK)
+    {
+        _stationNetIfHandle = NULL;
+        _stationNetIfHandle = esp_netif_create_default_wifi_sta();
+        if (_stationNetIfHandle == NULL)
+        {
+            result = ESP_FAIL;
+        }
+    }
+
+    if (result == ESP_OK)
+    {
+        wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+        result = esp_wifi_init(&cfg);
+    }
+
+    uint8_t mac[6];
+    esp_wifi_get_mac(WIFI_IF_STA, mac);
+    ESP_LOGI(__func__, "MAC Address - %02x:%02x:%02x:%02x:%02x:%02x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+
+    if (result == ESP_OK)
+    {
+        result = esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &WiFiRequestHandler::event_handler, this);
+    }
+    
+    if (result == ESP_OK)
+    {
+        result = esp_event_handler_register(IP_EVENT, ESP_EVENT_ANY_ID, &WiFiRequestHandler::event_handler, this);    
+    }
+    
+#if defined(WIFI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Exit");
+#endif
+
+    return(result);
 }
 
 /**
