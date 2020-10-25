@@ -195,6 +195,18 @@ private:
     int _currentRetryCount = 0;
 
     /**
+     *  Network Interface Handle for the board when running in station mode
+     *  i.e. as a device connected to an access point.
+     */
+    esp_netif_t *_stationNetIfHandle;
+
+    /**
+     *  Network Interface Handle for the board when it is acting as a soft
+     *  access point.
+     */
+    esp_netif_t *_softApNetIfHandle;
+
+    /**
      *  Current antenna in use.  Default to the on board antenna at startup.
      */
     static AntennaTypes::AntennaTypes _currentAntenna;
@@ -505,6 +517,8 @@ private:
      */
     void Poll(Message *);
 
+    static void event_handler(void *, esp_event_base_t, int32_t, void *);
+
 public:
     /*
      *  Constructor for the WiFi object.
@@ -515,6 +529,12 @@ public:
      *  Public methods.
      */
     void Setup();
+
+    /**
+     *  Start the network interface ready for the device to be configured
+     *  as either an access point (softAP) or as a network device (station).
+     */
+    esp_err_t StartNetworkInterface();
 
     /*
      *  This is the event handler called by FreeRTOS.  It merely
@@ -527,75 +547,81 @@ public:
      *  Get / Set the maximum number of retry attempts.
      */
     static uint32_t GetMaximumRetryCount();
-    static void SetMaximumRetryCount(uint32_t);
+    static StatusCodes::StatusCodes SetMaximumRetryCount(uint32_t);
 
     /**
      *  Get / Set the automatic reconnect property.
      */
     static bool GetAutomaticReconnect();
-    static void SetAutomaticReconnect(bool);
+    static StatusCodes::StatusCodes SetAutomaticReconnect(bool);
 
     /**
      *  Get / Set the automatically start network property.
      */
     static bool GetAutomaticallyStartNetwork();
-    static void SetAutomaticallyStartNetwork(bool);
+    static StatusCodes::StatusCodes SetAutomaticallyStartNetwork(bool);
 
     /**
      *  Get / Set the get time a startup configuration value.
      */
     static bool GetGetTimeAtStartup();
-    static void SetGetTinmeAtStartup(bool);
+    static StatusCodes::StatusCodes SetGetTimeAtStartup(bool);
 
     /**
      *  Get / Set the get time a startup configuration value.
      */
     static bool GetUseDhcp();
-    static void SetUseDhcp(bool);
+    static StatusCodes::StatusCodes SetUseDhcp(bool);
 
     /**
      *  Get / Set the NTP server to be used when getting the time
      *  at startup.
      */
     static char *GetNtpServer();
-    static void SetNtpServer(char *);
+    static StatusCodes::StatusCodes SetNtpServer(char *);
+
+    /**
+     *  Get / Set the name of the device on the network.
+     */
+    static char *GetDeviceName();
+    static StatusCodes::StatusCodes SetDeviceName(char *);
     
     /**
      *  Get / Set the name of the default access point to be used when
      *  the board starts.
      */
     static char *GetDefaultAccessPoint();
-    static void SetFefaultAccessPoint(char *);
+    static StatusCodes::StatusCodes SetDefaultAccessPoint(char *);
 
     /**
      *  Get / Set the password for the default access point.
      */
     static char *GetPassword();
-    static void SetPassword(char *);
+    static StatusCodes::StatusCodes SetPassword(char *);
 
     /**
      *  Get / set the default IP address when not using DHCP.
      */
     static uint32_t GetIpAddress();
-    static void SetIpAddress(uint32_t);
+    static StatusCodes::StatusCodes SetIpAddress(uint32_t);
 
     /**
      *  Get / set the IP address of the DNS server to be used when not using DHCP.
      */
     static uint32_t GetDnsServer();
-    static void SetDnsServer(uint32_t);
+    static StatusCodes::StatusCodes SetDnsServer(uint32_t);
 
     /**
      *  Get / set the IP address of the default gateway.
      */
     static uint32_t GetDefaultGateway();
-    static void SetDefaultGateway(uint32_t);
+    static StatusCodes::StatusCodes SetDefaultGateway(uint32_t);
 
     /**
      *  Get / Set the MAC address of the interface.
      */
     static void GetMacAddress(uint8_t *, esp_interface_t);
-    static void SetMacAddress(uint8_t *, esp_interface_t);
+    static StatusCodes::StatusCodes SetMacAddress(uint8_t *, esp_interface_t);
 };
 
 #endif /* _WIFI_REQUEST_HANDLER_HPP_ */

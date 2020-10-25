@@ -39,14 +39,19 @@
 bool SystemRequestHandler::_instantiated = false;
 
 /**
- *  
+ *  Default value for _maximumMessageQueueLength.
  */
 uint32_t SystemRequestHandler::_maximumMessageQueueLength = 10;
 
 /**
- * 
+ *  Name of the NVS namespace holding the configuration values.
  */
 const char *SystemRequestHandler::_configurationName = "Meadow";
+
+/**
+ *  Name of the key holding the _maximumMessageQueueLength value.
+ */
+const char *SystemRequestHandler::MAXIMUM_MESSAGE_QUEUE_LENGTH_NAME = "MaxQueueLen";
 
 /*
  * ----------------------------------------------------------------------------
@@ -102,11 +107,36 @@ SystemRequestHandler::~SystemRequestHandler()
  */
 
 /**
- * Get the maximum length of a message queue.
+ *  @brief Get the maximum length of a message queue.
+ * 
+ *  @return
+ *      Current value for the maximum length of the message queues.
  */
 uint32_t SystemRequestHandler::GetMaximumMessageQueueLength()
 {
     return(_maximumMessageQueueLength);
+}
+
+/**
+ *  @brief Set the maximum length of the message queues.
+ * 
+ *  Note that changes to this value will not take place until the next
+ *  time the board is restarted.
+ * 
+ *  @param value
+ *      New length for the message queues.
+ */
+StatusCodes::StatusCodes SystemRequestHandler::SetMaximumMessageQueueLength(uint32_t value)
+{
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
+    if (_maximumMessageQueueLength != value)
+    {
+        if (SetConfigurationValue(MAXIMUM_MESSAGE_QUEUE_LENGTH_NAME, value) == NvsManager::ErrorCodes::Ok)
+        {
+            _maximumMessageQueueLength = value;
+        }
+    }
+    return(result);
 }
 
 /*
@@ -369,6 +399,81 @@ void SystemRequestHandler::GetConfiguration(Message *request)
 }
 
 /**
+ *  @brief Set a single configuration value.
+ *
+ *  @param request
+ *      Message requesting the system configuration.
+ */
+void SystemRequestHandler::SetConfiguration(Message *request)
+{
+#if defined(SYSTEM_FULL_LOGGING)
+    ESP_LOGI(__func__, "Enter")
+#endif
+
+    Esp32Messaging::ConfigurationValue *value = Encoders::ExtractConfigurationValue(request->Payload);
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
+    switch (value->Item)
+    {
+        case ConfigurationItems::Antenna:
+            break;
+        case ConfigurationItems::AutomaticallyReconnect:
+            result = WiFiRequestHandler::SetAutomaticReconnect((uint8_t) (*value->Value) == 1);
+            break;
+        case ConfigurationItems::AutomaticallyStartNetwork:
+            result = WiFiRequestHandler::SetAutomaticallyStartNetwork((uint8_t) (*value->Value) == 1);
+            break;
+        case ConfigurationItems::BoardMacAddress:
+            result = WiFiRequestHandler::SetMacAddress(value->Value, WIFI_IF_STA);
+            break;
+        case ConfigurationItems::SoftApMacAddress:
+            result = WiFiRequestHandler::SetMacAddress(value->Value, WIFI_IF_AP);
+            break;
+        case ConfigurationItems::DefaultApAndPassword:
+            result = WiFiRequestHandler::SetDefaultAccessPoint((char *) value->Value);
+            if (result == StatusCodes::CompletedOk)
+            {
+                result = WiFiRequestHandler::SetPassword((char *) (value->Value + strlen((char *) value->Value) + 1));
+            }
+            break;
+        case ConfigurationItems::DeviceName:
+            result = WiFiRequestHandler::SetDeviceName((char *) value->Value);
+            break;
+        case ConfigurationItems::DnsServer:
+            result = WiFiRequestHandler::SetDnsServer((uint32_t) (*value->Value));
+            break;
+        case ConfigurationItems::StaticIpAddress:
+            result = WiFiRequestHandler::SetIpAddress((uint32_t) (*value->Value));
+            break;
+        case ConfigurationItems::DefaultGateway:
+            result = WiFiRequestHandler::SetDefaultGateway((uint32_t) (*value->Value));
+            break;
+        case ConfigurationItems::GetTimeAtStartup:
+            result = WiFiRequestHandler::SetGetTimeAtStartup((uint8_t) (*value->Value) == 1);
+            break;
+        case ConfigurationItems::MaximumMessageQueueLength:
+            result = SetMaximumMessageQueueLength((uint32_t) (*value->Value));
+            break;
+        case ConfigurationItems::MaximumRetryCount:
+            result = WiFiRequestHandler::SetMaximumRetryCount((uint32_t) (*value->Value));
+            break;
+        case ConfigurationItems::NtpServer:
+            result = WiFiRequestHandler::SetNtpServer((char *) value->Value);
+            break;
+        case ConfigurationItems::UseDhcp:
+            result = WiFiRequestHandler::SetUseDhcp((uint8_t) (*value->Value) == 1);
+            break;
+    }
+    request->DeletePayload();
+    request->MessageType = MessageTypes::Response;
+    request->StatusCode = result;
+    _messageDispatcher->QueueMessageForStm32(request);
+
+#if defined(SYSTEM_FULL_LOGGING)
+    ESP_LOGI(__func__, "Exit")
+#endif
+}
+
+/**
  *  @brief Put the system into deep sleep.
  *
  *  This is one of the few messages that will not send a response to the
@@ -439,6 +544,9 @@ void SystemRequestHandler::DispatchRequest(Message *request)
     {
         case SystemFunction::GetConfiguration:
             GetConfiguration(request);
+            break;
+        case SystemFunction::SetConfigurationItem:
+            SetConfiguration(request);
             break;
         case SystemFunction::DeepSleep:
             break;
