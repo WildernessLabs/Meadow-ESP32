@@ -137,6 +137,11 @@ private:
     const int WIFI_INTERFACE_STARTED_BIT = BIT5;
 
     /**
+     *  Indicate if the scan for access points has completed.
+     */
+    const int WIFI_SCAN_COMPLETE_BIT = BIT6;
+
+    /**
      *  Default scan method for WiFi networks.
      */
     const wifi_scan_method_t DEFAULT_SCAN_METHOD = WIFI_FAST_SCAN;
@@ -369,6 +374,11 @@ private:
      */
     void DispatchRequest(Message *) override;
 
+    /*
+     *  Instance helper method for the static EventHandler method.
+     */
+    void EventHandlerHelper(esp_event_base_t, int32_t, void *);
+
     /**
      *  Method that will compare two poll requests IDs and determine if they are the same.
      * 
@@ -432,7 +442,9 @@ private:
      */
     void StationGotIpEvent();
 
-
+    /*
+     *  Connect to the specified access point starting the network interface if necessary.
+     */
     void ConnectToAccessPoint(char *, char *);
 
     /*
@@ -535,8 +547,8 @@ public:
      *  passes the event on to an internal private event handler
      *  within the class.
      */
-    // esp_err_t EventHandler(void *, system_event_t *);
     static void EventHandler(void *, esp_event_base_t, int32_t, void *);
+
     /**
      *  Get / Set the maximum number of retry attempts.
      */

@@ -808,6 +808,133 @@ void WiFiRequestHandler::Setup()
 }
 
 /**
+ *  @brief Event loop for the IDF WiFi system.
+ * 
+ *  Perform the actual event loop handling on behalf of the static method set up for the
+ *  IDF event handler.
+ * 
+ *  See the notes for the WiFiRequestHandler::EventHandler for more information as to why this
+ *  method is necessary.
+ * 
+ *  @param eventBase
+ *      Subsystem that created the event.  This will be one of WIFI_EVENT or IP_EVENT.
+ * 
+ *  @param eventId
+ *      Type of event that has occurred.  This will vary depending upon the subsystem
+ *      that generated the event.
+ * 
+ *  @param eventData
+ *      Data specifi to the event that has occurred.
+ */
+void WiFiRequestHandler::EventHandlerHelper(esp_event_base_t eventBase, int32_t eventId, void *eventData)
+{
+#if defined(WIFI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Enter");
+#endif
+
+    if (eventBase == WIFI_EVENT)
+    {
+        switch (eventId)
+        {
+            case WIFI_EVENT_WIFI_READY:
+                ESP_LOGI(__func__, "WiFi Ready");
+                break;
+            case WIFI_EVENT_SCAN_DONE:
+                ESP_LOGI(__func__, "Scan for access points complete");
+                ScanCompleteEvent(nullptr);
+                break;
+            case WIFI_EVENT_STA_START:
+                ESP_LOGI(__func__, "Station started");
+                // ESP_ERROR_CHECK(esp_wifi_connect());
+                break;
+            case WIFI_EVENT_STA_STOP:
+                ESP_LOGI(__func__, "Station stopped");
+                break;
+            case WIFI_EVENT_STA_CONNECTED:
+                ESP_LOGI(__func__, "Station connected to access point");
+                break;
+            case WIFI_EVENT_STA_DISCONNECTED:
+                StationDisconnectedEvent(nullptr);
+                break;
+        }
+    }
+    else 
+    {
+        if (eventBase == IP_EVENT)
+        {
+            switch (eventId)
+            {
+                case IP_EVENT_STA_GOT_IP:
+                    StationGotIpEvent();
+                    break;
+                case IP_EVENT_STA_LOST_IP:
+                    ESP_LOGI(__func__, "IP_EVENT_STA_LOST_IP");
+                    break;
+                case IP_EVENT_AP_STAIPASSIGNED:
+                    ESP_LOGI(__func__, "IP_EVENT_STA_LOST_IP");
+                    break;
+                case IP_EVENT_GOT_IP6:
+                    ESP_LOGI(__func__, "IP_EVENT_GOT_IP6");
+                    break;
+                case IP_EVENT_ETH_GOT_IP:
+                    ESP_LOGI(__func__, "IP_EVENT_ETH_GOT_IP");
+                    break;
+                case IP_EVENT_PPP_GOT_IP:
+                    ESP_LOGI(__func__, "IP_EVENT_PPP_GOT_IP");
+                    break;
+                case IP_EVENT_PPP_LOST_IP:
+                    ESP_LOGI(__func__, "IP_EVENT_PPP_LOST_IP");
+                    break;
+            }
+        }
+    }
+
+#if defined(WIFI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Exit");
+#endif
+}
+
+/**
+ *  @brief Event loop for the IDF WiFi system.
+ * 
+ *  Event loop (handler) for the WiFi and IP events as discussed in the following ESP-IDF document:
+ * 
+ *  https://docs.espressif.com/projects/esp-idf/en/release-v4.1/api-reference/system/esp_event.html
+ * 
+ *  This method passes the data on to an instance helper method.  This is done for convenience as it
+ *  allows access to the member variables and methods without having to use the sender context or
+ *  convert methods / variables / constants to static members.
+ * 
+ *  @param arg
+ *      Argument data specified when the event loop was first registered with
+ *      esp_event_handler_register.  arg should point to the instance of the WiFiRequestHandler
+ *      that registered the event loop.
+ * 
+ *  @param eventBase
+ *      Subsystem that created the event.  This will be one of WIFI_EVENT or IP_EVENT.
+ * 
+ *  @param eventId
+ *      Type of event that has occurred.  This will vary depending upon the subsystem
+ *      that generated the event.
+ * 
+ *  @param eventData
+ *      Data specifi to the event that has occurred.
+ */
+void WiFiRequestHandler::EventHandler(void *arg, esp_event_base_t eventBase, int32_t eventId, void *eventData)
+{
+#if defined(WIFI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Enter");
+#endif
+
+    WiFiRequestHandler *sender = (WiFiRequestHandler *) arg;
+    sender->EventHandlerHelper(eventBase, eventId, eventData);
+
+#if defined(WIFI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Exit");
+#endif
+}
+
+/**
  *  @brief Dispatch the WiFi request to the appropriate method in the class.
  *
  *  @param request
@@ -991,7 +1118,7 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *request)
             }
             else
             {
-                result = StatusCodes::CannotConnectToAccessPoint;
+                result = StatusCodes::Timeout;
             }
         }        
     }
@@ -1001,97 +1128,6 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *request)
     request->StatusCode = result;
     _messageDispatcher->QueueMessageForStm32(request);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
-
-#if defined(WIFI_FULL_LOGGING)
-    ESP_LOGI(__func__, "Exit");
-#endif
-}
-
-/**
- *  @brief Event loop for the IDF WiFi system.
- * 
- *  Event loop (handler) for the WiFi and IP events as discussed in the following ESP-IDF document:
- * 
- *  https://docs.espressif.com/projects/esp-idf/en/release-v4.1/api-reference/system/esp_event.html
- * 
- *  @param arg
- *      Argument data specified when the event loop was first registered with
- *      esp_event_handler_register.  arg should point to the instance of the WiFiRequestHandler
- *      that registered the event loop.
- * 
- *  @param eventBase
- *      Subsystem that created the event.  This will be one of WIFI_EVENT or IP_EVENT.
- * 
- *  @param eventId
- *      Type of event that has occurred.  This will vary depending upon the subsystem
- *      that generated the event.
- * 
- *  @param eventData
- *      Data specifi to the event that has occurred.
- */
-void WiFiRequestHandler::EventHandler(void *arg, esp_event_base_t eventBase, int32_t eventId, void *eventData)
-{
-#if defined(WIFI_FULL_LOGGING)
-    ESP_LOGI(__func__, "Enter");
-#endif
-
-    WiFiRequestHandler *sender = (WiFiRequestHandler *) arg;
-
-    if (eventBase == WIFI_EVENT)
-    {
-        switch (eventId)
-        {
-            case WIFI_EVENT_WIFI_READY:
-                ESP_LOGI(__func__, "WiFi Ready");
-                break;
-            case WIFI_EVENT_SCAN_DONE:
-                ESP_LOGI(__func__, "Scan for access points complete");
-                sender->ScanCompleteEvent(nullptr);
-                break;
-            case WIFI_EVENT_STA_START:
-                ESP_ERROR_CHECK(esp_wifi_connect());
-                break;
-            case WIFI_EVENT_STA_STOP:
-                ESP_LOGI(__func__, "Station stopped");
-                break;
-            case WIFI_EVENT_STA_CONNECTED:
-                ESP_LOGI(__func__, "Station connected to access point");
-                break;
-            case WIFI_EVENT_STA_DISCONNECTED:
-                sender->StationDisconnectedEvent(nullptr);
-                break;
-        }
-    }
-    else 
-    {
-        if (eventBase == IP_EVENT)
-        {
-            switch (eventId)
-            {
-                case IP_EVENT_STA_GOT_IP:
-                    sender->StationGotIpEvent();
-                    break;
-                case IP_EVENT_STA_LOST_IP:
-                    ESP_LOGI(__func__, "IP_EVENT_STA_LOST_IP");
-                    break;
-                case IP_EVENT_AP_STAIPASSIGNED:
-                    ESP_LOGI(__func__, "IP_EVENT_STA_LOST_IP");
-                    break;
-                case IP_EVENT_GOT_IP6:
-                    ESP_LOGI(__func__, "IP_EVENT_GOT_IP6");
-                    break;
-                case IP_EVENT_ETH_GOT_IP:
-                    ESP_LOGI(__func__, "IP_EVENT_ETH_GOT_IP");
-                    break;
-                case IP_EVENT_PPP_GOT_IP:
-                    ESP_LOGI(__func__, "IP_EVENT_PPP_GOT_IP");
-                    break;
-                case IP_EVENT_PPP_LOST_IP:
-                    ESP_LOGI(__func__, "IP_EVENT_PPP_LOST_IP");
-                    break;
-            }
-        }
-    }
 
 #if defined(WIFI_FULL_LOGGING)
     ESP_LOGI(__func__, "Exit");
@@ -1212,30 +1248,86 @@ void WiFiRequestHandler::GetAvailableNetworks(Message *request)
     ESP_LOGI(__func__, "Enter");
 #endif
 
-    wifi_active_scan_time_t activeScanTime =
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
+
+    _currentRetryCount = 0;
+    EventBits_t bits = xEventGroupGetBits(_xWiFiEventGroup);
+    if (!(bits & WIFI_INTERFACE_STARTED_BIT))
     {
-        .min = 500,
-        .max = 1500
-    };
-    wifi_scan_time_t scanTime =
+        if (StartWiFiInterface() != ESP_OK)
+        {
+            result = StatusCodes::CannotStartNetworkInterface;
+        }
+    }
+
+    if (result == StatusCodes::CompletedOk)
     {
-        .active = activeScanTime
-    };
-    wifi_scan_config_t scanConf =
-    {
-        .ssid = NULL,
-        .bssid = NULL,
-        .channel = 0,
-        .show_hidden = true,
-        .scan_type = WIFI_SCAN_TYPE_ACTIVE,
-        .scan_time = scanTime
-    };
-    _currentRequest = request;
-    ESP_ERROR_CHECK(esp_wifi_scan_start(&scanConf, true));
+        #define MAX_AP 20
+        uint16_t number = MAX_AP;
+        wifi_ap_record_t *ap_info = (wifi_ap_record_t *) pvPortMalloc(MAX_AP * sizeof(wifi_ap_record_t));
+        uint16_t ap_count = 0;
+        bzero(ap_info, MAX_AP * sizeof(wifi_ap_record_t));
+
+        ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+        ESP_ERROR_CHECK(esp_wifi_start());
+        ESP_ERROR_CHECK(esp_wifi_scan_start(NULL, true));
+        ESP_ERROR_CHECK(esp_wifi_scan_get_ap_records(&number, ap_info));
+
+        bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_SCAN_COMPLETE_BIT, pdFALSE, pdFALSE, 10000 / portTICK_PERIOD_MS);
+        if (bits & WIFI_SCAN_COMPLETE_BIT)
+        {
+            ESP_ERROR_CHECK(esp_wifi_scan_get_ap_num(&ap_count));
+            ESP_LOGI(__func__, "Total APs scanned = %u", ap_count);
+            for (int i = 0; (i < MAX_AP) && (i < ap_count); i++)
+            {
+                ESP_LOGI(__func__, "SSID \t\t%s", ap_info[i].ssid);
+                ESP_LOGI(__func__, "RSSI \t\t%d", ap_info[i].rssi);
+                ESP_LOGI(__func__, "Channel \t\t%d\n", ap_info[i].primary);
+            }
+        }
+        else
+        {
+            ESP_LOGI(__func__, "Scan timeout.");
+            result = StatusCodes::Timeout;
+        }
+    }
+
+    request->MessageType = MessageTypes::Response;
+    request->StatusCode = result;
+    _messageDispatcher->QueueMessageForStm32(request);
+    xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
 
 #if defined(WIFI_FULL_LOGGING)
     ESP_LOGI(__func__, "Exit");
 #endif
+// #if defined(WIFI_FULL_LOGGING)
+//     ESP_LOGI(__func__, "Enter");
+// #endif
+
+//     wifi_active_scan_time_t activeScanTime =
+//     {
+//         .min = 500,
+//         .max = 1500
+//     };
+//     wifi_scan_time_t scanTime =
+//     {
+//         .active = activeScanTime
+//     };
+//     wifi_scan_config_t scanConf =
+//     {
+//         .ssid = NULL,
+//         .bssid = NULL,
+//         .channel = 0,
+//         .show_hidden = true,
+//         .scan_type = WIFI_SCAN_TYPE_ACTIVE,
+//         .scan_time = scanTime
+//     };
+//     _currentRequest = request;
+//     ESP_ERROR_CHECK(esp_wifi_scan_start(&scanConf, true));
+
+// #if defined(WIFI_FULL_LOGGING)
+//     ESP_LOGI(__func__, "Exit");
+// #endif
 }
 
 /**
@@ -2194,6 +2286,9 @@ void WiFiRequestHandler::ScanCompleteEvent(system_event_t *event)
 #if defined(WIFI_FULL_LOGGING)
     ESP_LOGI(__func__, "Enter");
 #endif
+
+    xEventGroupSetBits(_xWiFiEventGroup, WIFI_SCAN_COMPLETE_BIT);
+    return;
 
     uint16_t apCount = 0;
     esp_wifi_scan_get_ap_num(&apCount);
