@@ -44,12 +44,12 @@ extern heap_trace_record_t *trace_records;
  *  @param event
  *      Event information to be processed.
  */
-extern "C" esp_err_t WiFiEventHandler(void *context, system_event_t *event)
-{
-    WiFiRequestHandler *sender = static_cast<WiFiRequestHandler *>(context);
+// extern "C" esp_err_t WiFiEventHandler(void *context, system_event_t *event)
+// {
+//     WiFiRequestHandler *sender = static_cast<WiFiRequestHandler *>(context);
 
-    return(sender->EventHandler(context, event));
-}
+//     return(sender->EventHandler(context, event));
+// }
 
 /*
  * ----------------------------------------------------------------------------
@@ -892,23 +892,17 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
     _currentRequest = nullptr;
     switch (request->Function)
     {
-        case WiFiFunction::Start:
+        case WiFiFunction::StartNetwork:
             StartNetwork(request);
             break;
         case WiFiFunction::Stop:
             Stop(request);
             break;
-        case WiFiFunction::ConnectToAp:
-            ConnectToAp(request);
+        case WiFiFunction::ConnectToAccessPoint:
+            ConnectToAccessPoint(request);
             break;
-        case WiFiFunction::Disconnect:
-            Disconnect(request);
-            break;
-        case WiFiFunction::SetConfiguration:
-            SetConfiguration(request);
-            break;
-        case WiFiFunction::GetConfiguration:
-            GetConfiguration(request);
+        case WiFiFunction::DisconnectFromAccessPoint:
+            DisconnectFromAccessPoint(request);
             break;
         case WiFiFunction::SetAntenna:
             SetAntenna(request);
@@ -971,77 +965,12 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
 }
 
 /**
- *  Send the response and clean up the WiFi request object.
- *
- *  @param request
- *      Message containing the request being processed.
- *
- *  @param statusCode
- *      Response code to be sent back to the STM32
- */
-void WiFiRequestHandler::SendResponse(Message *request, uint32_t statusCode)
-{
-#if defined(WIFI_FULL_LOGGING)
-    ESP_LOGI(__func__, "Enter");
-#endif
-
-    request->DeletePayload();
-    request->StatusCode = statusCode;
-    _messageDispatcher->QueueMessageForStm32(request);
-    _currentRequest = nullptr;
-
-#if defined(WIFI_FULL_LOGGING)
-    ESP_LOGI(__func__, "Exit");
-#endif
-}
-
-/**
- *  @brief Get the configuration for the WiFi subsystem.
- *
- *  @param message
- *      Message containing the encoded request.
- */
-void WiFiRequestHandler::GetConfiguration(Message *request)
-{
-#if defined(WIFI_FULL_LOGGING)
-    ESP_LOGI(__func__, "Enter");
-#endif
-
-    // TODO: WiFi - GetConfiguration
-    ESP_LOGE(__func__, "GetConfiguration function is not implemented yet.");
-
-#if defined(WIFI_FULL_LOGGING)
-    ESP_LOGI(__func__, "Exit");
-#endif
-}
-
-/**
- *  @brief Set the configuration for the WiFi subsystem.
- *
- *  @param message
- *      Message containing the encoded request.
- */
-void WiFiRequestHandler::SetConfiguration(Message *request)
-{
-#if defined(WIFI_FULL_LOGGING)
-    ESP_LOGI(__func__, "Enter");
-#endif
-
-    // TODO: WiFi - SetConfiguration
-    ESP_LOGE(__func__, "SetConfiguration function is not implemented yet.");
-
-#if defined(WIFI_FULL_LOGGING)
-    ESP_LOGI(__func__, "Exit");
-#endif
-}
-
-/**
  *  @brief Disconnect from any access points.
  *
  *  @param message
  *      Message containing the encoded request.
  */
-void WiFiRequestHandler::Disconnect(Message *request)
+void WiFiRequestHandler::DisconnectFromAccessPoint(Message *request)
 {
 #if defined(WIFI_FULL_LOGGING)
     ESP_LOGI(__func__, "Enter");
@@ -1058,7 +987,7 @@ void WiFiRequestHandler::Disconnect(Message *request)
 /**
  *  @brief Stop the network and release all resources associated with any active connections.
  *
- *  @param message
+ *  @param request
  *      Message containing the encoded request.
  */
 void WiFiRequestHandler::Stop(Message *request)
@@ -1081,42 +1010,179 @@ void WiFiRequestHandler::Stop(Message *request)
  *  @param message
  *      Message containing the encoded request.
  */
-void WiFiRequestHandler::ConnectToAp(Message *request)
+void WiFiRequestHandler::ConnectToAccessPoint(Message *request)
 {
 #if defined(WIFI_FULL_LOGGING)
     ESP_LOGI(__func__, "Enter");
 #endif
 
-    // TODO: WiFi - Connect to access point.
-    ESP_LOGE(__func__, "Connect to access point function is not implemented yet.");
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
+
+    _currentRetryCount = 0;
+    EventBits_t bits = xEventGroupGetBits(_xWiFiEventGroup);
+    if (!(bits & WIFI_INTERFACE_STARTED_BIT))
+    {
+        if (StartWiFiInterface() != ESP_OK)
+        {
+            result = StatusCodes::CannotStartNetworkInterface;
+        }
+    }
+
+    Esp32Messaging::WiFiCredentials *credentials = Encoders::ExtractWiFiCredentials(request->Payload);
+    request->DeletePayload();
+    if (result == StatusCodes::CompletedOk)
+    {
+        _currentRetryCount = 0;
+        if ((strlen(credentials->NetworkName) > MAXIMUM_SSID_LENGTH) || (strlen(credentials->Password) > MAXIMUM_PASSWORD_LENGTH))
+        {
+            result = StatusCodes::InvalidWiFiCredentials;
+            ESP_LOGI(__func__, "Invalid credentials");
+        }
+        else
+        {
+            wifi_config_t wifi_config = {};
+            wifi_config.sta.threshold.authmode = WIFI_AUTH_WPA2_PSK;
+            wifi_config.sta.pmf_cfg =
+            {
+                .capable = true,
+                .required = false
+            };
+            memcpy(wifi_config.sta.ssid, credentials->NetworkName, strlen(credentials->NetworkName));
+            memcpy(wifi_config.sta.password, credentials->Password, strlen(credentials->Password));
+            ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+            ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));
+            ESP_ERROR_CHECK(esp_wifi_start());
+
+            bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT, pdFALSE, pdFALSE, 10000 / portTICK_PERIOD_MS);
+            if (bits & WIFI_CONNECTED_BIT)
+            {
+                esp_netif_ip_info_t ipInfo;
+                ESP_ERROR_CHECK(esp_netif_get_ip_info(_stationNetIfHandle, &ipInfo));
+                request->PayloadLength = 3 * sizeof(esp_ip4_addr_t);
+                request->Payload = static_cast<uint8_t *>(pvPortMalloc(request->PayloadLength));
+                memcpy(request->Payload, (void *) &ipInfo.ip, sizeof(esp_ip4_addr_t));
+                memcpy(request->Payload + sizeof(esp_ip4_addr_t), (void *) &ipInfo.netmask, sizeof(esp_ip4_addr_t));
+                memcpy(request->Payload + 2 * (sizeof(esp_ip4_addr_t)), (void *) &ipInfo.gw, sizeof(esp_ip4_addr_t));
+            }
+            else
+            {
+                result = StatusCodes::CannotConnectToAccessPoint;
+            }
+        }        
+    }
+    vPortFree(credentials);
+
+    request->MessageType = MessageTypes::Response;
+    request->StatusCode = result;
+    _messageDispatcher->QueueMessageForStm32(request);
+    xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
 
 #if defined(WIFI_FULL_LOGGING)
     ESP_LOGI(__func__, "Exit");
 #endif
 }
 
-void WiFiRequestHandler::event_handler(void* arg, esp_event_base_t event_base,
-                                int32_t event_id, void* event_data)
+/**
+ *  @brief Event loop for the IDF WiFi system.
+ * 
+ *  Event loop (handler) for the WiFi and IP events as discussed in the following ESP-IDF document:
+ * 
+ *  https://docs.espressif.com/projects/esp-idf/en/release-v4.1/api-reference/system/esp_event.html
+ * 
+ *  @param arg
+ *      Argument data specified when the event loop was first registered with
+ *      esp_event_handler_register.  arg should point to the instance of the WiFiRequestHandler
+ *      that registered the event loop.
+ * 
+ *  @param eventBase
+ *      Subsystem that created the event.  This will be one of WIFI_EVENT or IP_EVENT.
+ * 
+ *  @param eventId
+ *      Type of event that has occurred.  This will vary depending upon the subsystem
+ *      that generated the event.
+ * 
+ *  @param eventData
+ *      Data specifi to the event that has occurred.
+ */
+void WiFiRequestHandler::EventHandler(void *arg, esp_event_base_t eventBase, int32_t eventId, void *eventData)
 {
-    // switch (event_base)
-    // {
-    //     case WIFI_EVENT:
-    //         break;
-    //     case IP_EVENT:
-    //         break;
-    // }
+#if defined(WIFI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Enter");
+#endif
+
+    WiFiRequestHandler *sender = (WiFiRequestHandler *) arg;
+
+    if (eventBase == WIFI_EVENT)
+    {
+        switch (eventId)
+        {
+            case WIFI_EVENT_WIFI_READY:
+                ESP_LOGI(__func__, "WiFi Ready");
+                break;
+            case WIFI_EVENT_SCAN_DONE:
+                ESP_LOGI(__func__, "Scan for access points complete");
+                sender->ScanCompleteEvent(nullptr);
+                break;
+            case WIFI_EVENT_STA_START:
+                ESP_ERROR_CHECK(esp_wifi_connect());
+                break;
+            case WIFI_EVENT_STA_STOP:
+                ESP_LOGI(__func__, "Station stopped");
+                break;
+            case WIFI_EVENT_STA_CONNECTED:
+                ESP_LOGI(__func__, "Station connected to access point");
+                break;
+            case WIFI_EVENT_STA_DISCONNECTED:
+                sender->StationDisconnectedEvent(nullptr);
+                break;
+        }
+    }
+    else 
+    {
+        if (eventBase == IP_EVENT)
+        {
+            switch (eventId)
+            {
+                case IP_EVENT_STA_GOT_IP:
+                    sender->StationGotIpEvent();
+                    break;
+                case IP_EVENT_STA_LOST_IP:
+                    ESP_LOGI(__func__, "IP_EVENT_STA_LOST_IP");
+                    break;
+                case IP_EVENT_AP_STAIPASSIGNED:
+                    ESP_LOGI(__func__, "IP_EVENT_STA_LOST_IP");
+                    break;
+                case IP_EVENT_GOT_IP6:
+                    ESP_LOGI(__func__, "IP_EVENT_GOT_IP6");
+                    break;
+                case IP_EVENT_ETH_GOT_IP:
+                    ESP_LOGI(__func__, "IP_EVENT_ETH_GOT_IP");
+                    break;
+                case IP_EVENT_PPP_GOT_IP:
+                    ESP_LOGI(__func__, "IP_EVENT_PPP_GOT_IP");
+                    break;
+                case IP_EVENT_PPP_LOST_IP:
+                    ESP_LOGI(__func__, "IP_EVENT_PPP_LOST_IP");
+                    break;
+            }
+        }
+    }
+
+#if defined(WIFI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Exit");
+#endif
 }
 
 /**
  *  @brief Start the network interface.
  * 
- *  Start the network interface ready for the device to be configured
+ *  Start the WiFi network interface ready for the device to be configured
  *  as either an access point (softAP) or as a network device (station).
  * 
  *  @return
  *      ESP_OK if the interface is initialised correctly, an error code otherwise.
  */
-esp_err_t WiFiRequestHandler::StartNetworkInterface()
+esp_err_t WiFiRequestHandler::StartWiFiInterface()
 {
 #if defined(WIFI_FULL_LOGGING)
     ESP_LOGI(__func__, "Enter");
@@ -1124,42 +1190,47 @@ esp_err_t WiFiRequestHandler::StartNetworkInterface()
 
     esp_err_t result = ESP_OK;
 
-    xEventGroupSetBits(_xWiFiEventGroup, WIFI_CONNECTING_BIT);
-
-    result = esp_netif_init();
-    if (result == ESP_OK)
+    EventBits_t bits = xEventGroupGetBits(_xWiFiEventGroup);
+    if (!(bits & WIFI_INTERFACE_STARTED_BIT))
     {
-        result = esp_event_loop_create_default();
-    }
-    
-    if (result == ESP_OK)
-    {
-        _stationNetIfHandle = NULL;
-        _stationNetIfHandle = esp_netif_create_default_wifi_sta();
-        if (_stationNetIfHandle == NULL)
+        xEventGroupSetBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTING_BIT);
+        result = esp_netif_init();
+        if (result == ESP_OK)
         {
-            result = ESP_FAIL;
+            result = esp_event_loop_create_default();
         }
-    }
+        
+        if (result == ESP_OK)
+        {
+            _stationNetIfHandle = NULL;
+            _stationNetIfHandle = esp_netif_create_default_wifi_sta();
+            if (_stationNetIfHandle == NULL)
+            {
+                result = ESP_FAIL;
+            }
+        }
 
-    if (result == ESP_OK)
-    {
-        wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-        result = esp_wifi_init(&cfg);
-    }
+        if (result == ESP_OK)
+        {
+            wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+            result = esp_wifi_init(&cfg);
+        }
 
-    uint8_t mac[6];
-    esp_wifi_get_mac(WIFI_IF_STA, mac);
-    ESP_LOGI(__func__, "MAC Address - %02x:%02x:%02x:%02x:%02x:%02x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+        if (result == ESP_OK)
+        {
+            result = esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &WiFiRequestHandler::EventHandler, this);
+        }
+        
+        if (result == ESP_OK)
+        {
+            result = esp_event_handler_register(IP_EVENT, ESP_EVENT_ANY_ID, &WiFiRequestHandler::EventHandler, this);    
+        }
 
-    if (result == ESP_OK)
-    {
-        result = esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &WiFiRequestHandler::event_handler, this);
-    }
-    
-    if (result == ESP_OK)
-    {
-        result = esp_event_handler_register(IP_EVENT, ESP_EVENT_ANY_ID, &WiFiRequestHandler::event_handler, this);    
+        if (result == ESP_OK)
+        {
+            xEventGroupSetBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTED_BIT);
+        }
+        xEventGroupClearBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTING_BIT);
     }
     
 #if defined(WIFI_FULL_LOGGING)
@@ -1170,7 +1241,10 @@ esp_err_t WiFiRequestHandler::StartNetworkInterface()
 }
 
 /**
- *  Start the wireless hardware.
+ *  @brief Process the request to start the WiFi network interface.
+ * 
+ *  This will only start the WiFi interface, it will not connect to an access
+ *  point.  Also, this will only operate in station mode at the moment.
  *
  *  @param request
  *      Request sent from the STM32.
@@ -1181,75 +1255,17 @@ void WiFiRequestHandler::StartNetwork(Message *request)
     ESP_LOGI(__func__, "Enter");
 #endif
 
-    EventBits_t bits = xEventGroupGetBits(_xWiFiEventGroup);
-    if (!(bits & WIFI_INITIALISED_BIT))
+    request->MessageType = MessageTypes::Response;
+    if (StartWiFiInterface() == ESP_OK)
     {
-        Esp32Messaging::WiFiCredentials *credentials = Encoders::ExtractWiFiCredentials(request->Payload);
-        uint32_t networkNameLength = 0;
-        if ((credentials->NetworkName == nullptr) || (strlen(credentials->NetworkName) > MAXIMUM_SSID_LENGTH))
-        {
-            SendResponse(request, StatusCodes::InvalidSsid);
-            return;
-        }
-        else
-        {
-            networkNameLength = strlen(credentials->NetworkName);
-        }
-        uint32_t passwordLength = strlen(credentials->Password);
-        if (strlen(credentials->Password) > MAXIMUM_PASSWORD_LENGTH)
-        {
-            SendResponse(request, StatusCodes::InvalidPassword);
-            return;
-        }
-        _currentRequest = request;
-        xEventGroupSetBits(_xWiFiEventGroup, WIFI_CONNECTING_BIT);
-        tcpip_adapter_init();
-        //
-        //  The second parameter in the call to esp_event_loop_init is set to 'this'
-        //  and will be passed as the context parameter to the WiFiEventHandler
-        //  event handler.
-        //
-        ESP_ERROR_CHECK(esp_event_loop_init(WiFiEventHandler, this));
-        wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-        ESP_ERROR_CHECK(esp_wifi_init(&cfg));
-
-        if (_wifiConfig)
-        {
-            vPortFree(_wifiConfig);
-        }
-        _wifiConfig = static_cast<wifi_config_t *>(pvPortMalloc(sizeof(wifi_config_t)));
-        bzero(_wifiConfig, sizeof(wifi_config_t));
-        _wifiConfig->sta.scan_method = DEFAULT_SCAN_METHOD;
-        _wifiConfig->sta.sort_method = DEFAULT_SORT_METHOD;
-        _wifiConfig->sta.threshold.rssi = DEFAULT_RSSI;
-        _wifiConfig->sta.threshold.authmode = DEFAULT_AUTH_MODE;
-        //
-        //  Don't use strcpy for the following two copies in case the SSID
-        //  or the password are the maximum length as the terminating 0 could
-        //  corrupt the byte following the appropriate array.
-        //
-        memcpy(static_cast<void *>(_wifiConfig->sta.ssid), credentials->NetworkName, networkNameLength);
-        if (networkNameLength < MAXIMUM_SSID_LENGTH)
-        {
-            _wifiConfig->sta.ssid[networkNameLength] = 0;
-        }
-        memcpy(static_cast<void *>(_wifiConfig->sta.password), credentials->Password, passwordLength);
-        if (passwordLength < MAXIMUM_PASSWORD_LENGTH)
-        {
-            _wifiConfig->sta.password[passwordLength] = 0;
-        }
-
-        ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
-        ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, _wifiConfig));
-        ESP_ERROR_CHECK(esp_wifi_start());
-        xEventGroupSetBits(_xWiFiEventGroup, WIFI_INITIALISED_BIT | WIFI_CONNECTING_BIT);
-        xEventGroupClearBits(_xWiFiEventGroup, WIFI_READY_BIT);
-        ESP_LOGI(__func__, "Network started.");
+        request->StatusCode = StatusCodes::CompletedOk;
     }
     else
     {
-        SendResponse(request, StatusCodes::WiFiAlreadyStarted);
+        request->StatusCode = StatusCodes::Failure;
     }
+    _messageDispatcher->QueueMessageForStm32(request);
+    xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
 
 #if defined(WIFI_FULL_LOGGING)
     ESP_LOGI(__func__, "Exit");
@@ -2191,73 +2207,17 @@ void WiFiRequestHandler::Poll(Message *message)
  */
 
 /**
- *  Event handler for the WiFi system.
- *
- *  @param ctx
- *      Context (sender object) information.
- *
- *  @param event
- *      Information relevant to the event being raised.
- *
- *  @returns
- *      Always returns a success code and problems are dealt with by
- *      retrying or sending messages to the STM32.
- */
-esp_err_t WiFiRequestHandler::EventHandler(void *ctx, system_event_t *event)
-{
-// #if defined(WIFI_FULL_LOGGING)
-//     ESP_LOGI(__func__, "Enter");
-// #endif
-
-    switch (event->event_id)
-    {
-        case SYSTEM_EVENT_STA_START:
-            esp_wifi_connect();
-            break;
-        case SYSTEM_EVENT_STA_GOT_IP:
-            StationGotIpEvent(event);
-            break;
-        case SYSTEM_EVENT_STA_DISCONNECTED:
-            StationDisconnectedEvent(event);
-            break;
-        case SYSTEM_EVENT_SCAN_DONE:
-            ScanCompleteEvent(event);
-            break;
-        default:
-            break;
-    }
-    return ESP_OK;
-}
-
-/**
  *  The access point has just given the ESP32 an IP address.
- *
- *  @param eventData
- *      Data for the Got IP event.
  */
-void WiFiRequestHandler::StationGotIpEvent(system_event_t *eventData)
+void WiFiRequestHandler::StationGotIpEvent()
 {
 #if defined(WIFI_FULL_LOGGING)
     ESP_LOGI(__func__, "Enter");
 #endif
 
     _currentRetryCount = 0;
-    EventBits_t bits = xEventGroupGetBits(_xWiFiEventGroup);
-    if (bits & WIFI_CONNECTING_BIT)
-    {
-        _currentRequest->DeletePayload();
-        _currentRequest->PayloadLength = 3 * sizeof(ip4_addr_t);
-        _currentRequest->Payload = static_cast<uint8_t *>(pvPortMalloc(_currentRequest->PayloadLength));
-        memcpy(_currentRequest->Payload, &eventData->event_info.got_ip.ip_info.ip, sizeof(ip4_addr_t));
-        memcpy(_currentRequest->Payload + sizeof(ip4_addr_t), &eventData->event_info.got_ip.ip_info.netmask, sizeof(ip4_addr_t));
-        memcpy(_currentRequest->Payload + 2 * (sizeof(ip4_addr_t)), &eventData->event_info.got_ip.ip_info.gw, sizeof(ip4_addr_t));
-        _currentRequest->MessageType = MessageTypes::Response;
-        _currentRequest->StatusCode = StatusCodes::CompletedOk;
-        _messageDispatcher->QueueMessageForStm32(_currentRequest);
-        _currentRequest = nullptr;
-    }
     xEventGroupClearBits(_xWiFiEventGroup, WIFI_CONNECTING_BIT | WIFI_RECONNECTING_BIT);
-    xEventGroupSetBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT | WIFI_READY_BIT);
+    xEventGroupSetBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT);
 
 #if defined(WIFI_FULL_LOGGING)
     ESP_LOGI(__func__, "Exit");
@@ -2272,7 +2232,7 @@ void WiFiRequestHandler::StationGotIpEvent(system_event_t *eventData)
  */
 void WiFiRequestHandler::StationDisconnectedEvent(system_event_t *eventData)
 {
-    if (static_cast<bool>(_automaticReconnect))
+    if (_automaticReconnect)
     {
         xEventGroupClearBits(_xWiFiEventGroup, WIFI_READY_BIT | WIFI_CONNECTED_BIT | WIFI_CONNECTING_BIT | WIFI_RECONNECTING_BIT);
         if (_currentRetryCount < _maximumRetryCount)
