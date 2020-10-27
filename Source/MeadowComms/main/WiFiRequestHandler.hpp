@@ -170,13 +170,13 @@ private:
      *  GPIO Pin connected to the antenna selection switch
      *  which will connect the on board antenna to the ESP32.
      */
-    const gpio_num_t ON_BOARD_ANTENNA_PIN = GPIO_NUM_26;
+    static const gpio_num_t ON_BOARD_ANTENNA_PIN;
 
     /**
      *  GPIO Pin connected to the antenna selection switch
      *  which will connect the external antenna to the ESP32.
      */
-    const gpio_num_t EXTERNAL_ANTENNA_PIN = GPIO_NUM_27;
+    static const gpio_num_t EXTERNAL_ANTENNA_PIN;
 
     /**
      *  Determine if this class is instantiated already (i.e. this should be a singleton).
@@ -362,13 +362,7 @@ private:
     /*
      *  Private methods.
      */
-    void SendResponse(Message *, uint32_t);
-
-    /*
-     *  Convert the Antenna enum representation of an antenna
-     *  into a GPIO pin number.
-     */
-    gpio_num_t ConvertAntennaToPin(AntennaTypes::AntennaTypes);
+    // void SendResponse(Message *, uint32_t);
 
     /*
      *  This method will dispatch incoming messages to the appropriate request handler.
@@ -407,16 +401,16 @@ private:
      */
     void GetAvailableNetworks(Message *);
 
-    /*
-     *  Getters and setters for the antenna in use.
+    /**
+     *  Convert the Antenna enum representation of an antenna
+     *  into a GPIO pin number.
      */
-    void GetAntenna(Message *) const;
-    void SetAntenna(Message *);
+    static gpio_num_t ConvertAntennaToPin(AntennaTypes::AntennaTypes);
 
     /**
      *  Change the current antenna and activate it.
      */
-    void SwitchAntenna(AntennaTypes::AntennaTypes);
+    static void SwitchAntenna(AntennaTypes::AntennaTypes);
 
     /*
      *  Private constructor for the class.
@@ -437,6 +431,9 @@ private:
      *  Process the WiFi connecting and getting an IP address event
      */
     void StationGotIpEvent();
+
+
+    void ConnectToAccessPoint(char *, char *);
 
     /*
      *  Processes the station disconnected event.
@@ -620,7 +617,11 @@ public:
     static void GetMacAddress(uint8_t *, esp_interface_t);
     static StatusCodes::StatusCodes SetMacAddress(uint8_t *, esp_interface_t);
 
-    void ConnectToAccessPoint(char *, char *);
+    /**
+     *  Get / Set the current antenna in use.
+     */
+    static uint8_t GetAntenna();
+    static StatusCodes::StatusCodes SetAntenna(uint8_t);
 };
 
 #endif /* _WIFI_REQUEST_HANDLER_HPP_ */

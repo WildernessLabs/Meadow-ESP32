@@ -714,59 +714,6 @@ Esp32Messaging::WiFiCredentials *Encoders::ExtractWiFiCredentials(uint8_t *buffe
 }
 
 /**
- *  Convert the AntennaInfo object into a byte stream that can be sent to the STM32.
- *  
- *  The amount of memory required can be obtained by calling the EncodedAntennaInfoBufferSize method.
- *  
- *  @param antennaInfo
- *      AntennaInfo object to be encoded.
- *  
- *  @param buffer
- *      Pointer to a block of memory large enough to hold the encoded AntennaInfo object.
- */
-// cppcheck-suppress unusedFunction symbolName=EncodeAntennaInfo
-void Encoders::EncodeAntennaInfo(Esp32Messaging::AntennaInfo *antennaInfo, uint8_t *buffer)
-{
-    *buffer = antennaInfo->Antenna;
-}
-
-/**
- *  Calculate the amount of memory required to hold the given instance of the AntennaInfo object.
- *  
- *  @param antennaInfo
- *      AntennaInfo object to be encoded.
- *  
- *  @returns
- *      Number of bytes required to hold the encoded AntennaInfo object.
- */
-// cppcheck-suppress unusedFunction symbolName=EncodedAntennaInfoBufferSize
-int Encoders::EncodedAntennaInfoBufferSize(Esp32Messaging::AntennaInfo *antennaInfo)
-{
-    return(1);
-}
-
-/**
- *  Extract the AntennaInfo object that is encoded in the given buffer.
- *  
- *  Note that the returned pointer points to a block of memory on the heap and
- *  this should eventually be released calling vPortFree(...).
- *  
- *  @param buffer
- *      Pointer to a block of memory holding the encoded AntennaInfo object.
- *  
- *  @returns
- *      Pointer to a AntennaInfo object.
- */
-// cppcheck-suppress unusedFunction symbolName=ExtractAntennaInfo
-Esp32Messaging::AntennaInfo *Encoders::ExtractAntennaInfo(uint8_t *buffer)
-{
-    Esp32Messaging::AntennaInfo *antennaInfo = (Esp32Messaging::AntennaInfo *) pvPortMalloc(sizeof(Esp32Messaging::AntennaInfo));
-
-    antennaInfo->Antenna = *buffer;
-    return(antennaInfo);
-}
-
-/**
  *  Convert the AccessPoint object into a byte stream that can be sent to the STM32.
  *  
  *  The amount of memory required can be obtained by calling the EncodedAccessPointBufferSize method.
