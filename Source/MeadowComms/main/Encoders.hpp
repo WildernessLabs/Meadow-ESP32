@@ -63,11 +63,6 @@ namespace Esp32Messaging
         char * Password;
     };
 
-    struct AntennaInfo
-    {
-        uint8_t Antenna;
-    };
-
     struct AccessPoint
     {
         char Ssid[33];
@@ -317,9 +312,6 @@ public:
     static void EncodeWiFiCredentials(Esp32Messaging::WiFiCredentials *, uint8_t *);
     static int EncodedWiFiCredentialsBufferSize(Esp32Messaging::WiFiCredentials *);
     static Esp32Messaging::WiFiCredentials *ExtractWiFiCredentials(uint8_t *);
-    static void EncodeAntennaInfo(Esp32Messaging::AntennaInfo *, uint8_t *);
-    static int EncodedAntennaInfoBufferSize(Esp32Messaging::AntennaInfo *);
-    static Esp32Messaging::AntennaInfo *ExtractAntennaInfo(uint8_t *);
     static void EncodeAccessPoint(Esp32Messaging::AccessPoint *, uint8_t *);
     static int EncodedAccessPointBufferSize(Esp32Messaging::AccessPoint *);
     static Esp32Messaging::AccessPoint *ExtractAccessPoint(uint8_t *);

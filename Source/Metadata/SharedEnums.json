@@ -38,8 +38,8 @@
           "Comment": "WiFi functions available on the ESP32",
           "BaseDataType": "UInt32",
           "EnumNames": [
-              "StartNetwork", "Stop", "ConnectToAccessPoint", "DisconnectFromAccessPoint", "GetAccessPoints", "SetAntenna",
-              "GetAntenna", "GetAddrInfo", "Socket", "Connect", "FreeAddrInfo", "Write", "SetSockOpt", "Read",
+              "StartNetwork", "Stop", "ConnectToAccessPoint", "DisconnectFromAccessPoint", "GetAccessPoints",
+              "GetAddrInfo", "Socket", "Connect", "FreeAddrInfo", "Write", "SetSockOpt", "Read",
               "Close", "SendTo", "RecvFrom", "Poll", "InterruptPollResponse", "Send"
           ]
         },

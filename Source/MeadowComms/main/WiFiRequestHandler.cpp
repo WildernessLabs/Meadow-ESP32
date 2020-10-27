@@ -80,12 +80,19 @@ SemaphoreHandle_t WiFiRequestHandler::_pollRequestListMutex = NULL;
 QueueHandle_t WiFiRequestHandler::_completedPollRequestsQueue = NULL;
 
 /**
- *  Current antenna in use.  Default to the on board antenna at startup.
+ *  GPIO Pin connected to the antenna selection switch
+ *  which will connect the on board antenna to the ESP32.
  */
-AntennaTypes::AntennaTypes WiFiRequestHandler::_currentAntenna = AntennaTypes::OnBoard;
+const gpio_num_t WiFiRequestHandler::ON_BOARD_ANTENNA_PIN = GPIO_NUM_26;
 
 /**
- *  Name of the NVS storage holding the _currentAntenna value.
+ *  GPIO Pin connected to the antenna selection switch
+ *  which will connect the external antenna to the ESP32.
+ */
+const gpio_num_t WiFiRequestHandler::EXTERNAL_ANTENNA_PIN = GPIO_NUM_27;
+
+/**
+ *  Name of the NVS storage holding the current antenna value.
  */
  const char *WiFiRequestHandler::ANTENNA_TYPE_NAME = "Antenna";
 
@@ -229,8 +236,6 @@ WiFiRequestHandler::WiFiRequestHandler()
     //
     _maximumRetryCount = SystemRequestHandler::GetConfigurationValue(MAXIMUM_RETRY_COUNT_NAME, _maximumRetryCount);
     _automaticReconnect = SystemRequestHandler::GetConfigurationValue(AUTOMATIC_RECONNECT_NAME, _automaticReconnect);
-    uint8_t antenna = static_cast<uint8_t>(_currentAntenna);
-    _currentAntenna = static_cast<AntennaTypes::AntennaTypes>(SystemRequestHandler::GetConfigurationValue(ANTENNA_TYPE_NAME, antenna));
     _automaticallyStartNetwork = SystemRequestHandler::GetConfigurationValue(AUTOMATICALLY_START_NETWORK_NAME, _automaticallyStartNetwork);
     _getTimeAtStartup = SystemRequestHandler::GetConfigurationValue(GET_TIME_AT_STARTUP_NAME, _getTimeAtStartup);
     _useDhcp = SystemRequestHandler::GetConfigurationValue(USE_DHCP_NAME, _useDhcp);
@@ -240,6 +245,8 @@ WiFiRequestHandler::WiFiRequestHandler()
     _staticIpAddress = SystemRequestHandler::GetConfigurationValue(STATIC_IP_ADDRESS_NAME, _staticIpAddress);
     _dnsServer = SystemRequestHandler::GetConfigurationValue(DNS_SERVER_NAME, _dnsServer);
     _defaultGateway = SystemRequestHandler::GetConfigurationValue(DEFAULT_GATEWAY_NAME, _defaultGateway);
+    _stationNetIfHandle = nullptr;
+    _softApNetIfHandle = nullptr;
     //
     //  Set up the structures need to deal with poll() requests in an asynchronous manner.
     //
@@ -694,6 +701,41 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetMacAddress(uint8_t *macAddress, 
     return(result);
 }
 
+/**
+ *  @brief Get the currently selected antenna.
+ * 
+ *  @return
+ *      Current Antenna in use as an unsigned 8-bit integer.
+ */
+uint8_t WiFiRequestHandler::GetAntenna()
+{
+    return(SystemRequestHandler::GetConfigurationValue(ANTENNA_TYPE_NAME, static_cast<uint8_t>(AntennaTypes::OnBoard)));
+}
+
+/**
+ *  @brief Set the value for the current Antenna.
+ * 
+ *  @param antenna
+ *      New antenna to use.
+ *
+ *  TODO: Do we need to turn the WiFi off before switching the antenna?
+ */
+StatusCodes::StatusCodes WiFiRequestHandler::SetAntenna(uint8_t antenna)
+{
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
+    if (antenna > static_cast<uint8_t>(AntennaTypes::Max))
+    {
+        result = StatusCodes::InvalidAntennaValue;
+    }
+    else
+    {
+        SystemRequestHandler::SetConfigurationValue(ANTENNA_TYPE_NAME, antenna);
+        SwitchAntenna(static_cast<AntennaTypes::AntennaTypes>(antenna));
+    }
+
+    return(result);
+}
+
 /*
  * ----------------------------------------------------------------------------
  *
@@ -701,96 +743,6 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetMacAddress(uint8_t *macAddress, 
  *
  * ----------------------------------------------------------------------------
  */
-
-/**
- *  Get the currently selected antenna.
- *
- *  This method will reuse the request object and use this as the message to send the
- *  result back to the caller.
- *
- *  @param request
- *      Original request from the STM32.
- */
-void WiFiRequestHandler::GetAntenna(Message *request) const
-{
-#if defined(WIFI_FULL_LOGGING)
-    ESP_LOGI(__func__, "Enter");
-#endif
-
-    Logging::DumpMessage(__func__, request);
-
-    request->MessageType = MessageTypes::Response;
-    Esp32Messaging::AntennaInfo *antenna = static_cast<Esp32Messaging::AntennaInfo *>(pvPortMalloc(sizeof(Esp32Messaging::AntennaInfo)));
-    antenna->Antenna = static_cast<uint8_t>(_currentAntenna);
-    int encodedBufferLength = Encoders::EncodedAntennaInfoBufferSize(antenna);
-    request->Payload = static_cast<uint8_t *>(pvPortMalloc(encodedBufferLength));
-    Encoders::EncodeAntennaInfo(antenna, request->Payload);
-    vPortFree(antenna);
-    request->PayloadLength = encodedBufferLength;
-    request->StatusCode = StatusCodes::CompletedOk;
-    if (!_messageDispatcher->QueueMessageForStm32(request))
-    {
-        ESP_LOGE(__func__, "Cannot queue message for STM32.");
-    }
-    xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
-
-#if defined(WIFI_FULL_LOGGING)
-    ESP_LOGI(__func__, "Exit");
-#endif
-}
-
-/**
- *  Switch the current antenna.
- *
- *  This method will reuse the original request object to return the result to the caller.
- *
- *  The memory holding the original payload will be released and the payload set to nullptr
- *  with a 0 byte length.
- *
- *  @param request
- *      Original request from the STM32.
- *
- *  TODO: Do we need to turn the WiFi off before switching the antenna?
- */
-void WiFiRequestHandler::SetAntenna(Message *request)
-{
-#if defined(WIFI_FULL_LOGGING)
-    ESP_LOGI(__func__, "Enter");
-#endif
-
-    if (request->PayloadLength > 0)
-    {
-        Esp32Messaging::AntennaInfo *antenna = Encoders::ExtractAntennaInfo(request->Payload);
-        if (antenna->Antenna > static_cast<uint8_t>(AntennaTypes::Max))
-        {
-            request->StatusCode = StatusCodes::InvalidAntennaValue;
-        }
-        else
-        {
-            if (_currentAntenna != antenna->Antenna)
-            {
-                SwitchAntenna((AntennaTypes::AntennaTypes) antenna->Antenna);
-            }
-            request->StatusCode = StatusCodes::CompletedOk;
-        }
-        vPortFree(antenna);
-    }
-    else
-    {
-        request->StatusCode = StatusCodes::InvalidAntennaData;
-    }
-    request->DeletePayload();
-    request->MessageType = MessageTypes::Response;
-    if (!_messageDispatcher->QueueMessageForStm32(request))
-    {
-        ESP_LOGE(__func__, "Cannot queue message for STM32.");
-    }
-    xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
-
-#if defined(WIFI_FULL_LOGGING)
-    ESP_LOGI(__func__, "Exit");
-#endif
-}
 
 /**
  *  Convert the antenna enum into a GPIO pin number
@@ -812,11 +764,15 @@ gpio_num_t WiFiRequestHandler::ConvertAntennaToPin(AntennaTypes::AntennaTypes an
     ESP_LOGI(__func__, "Exit");
 #endif
 
-    return((antenna == AntennaTypes::OnBoard) ? ON_BOARD_ANTENNA_PIN : EXTERNAL_ANTENNA_PIN);
+    return((antenna == AntennaTypes::OnBoard) ? WiFiRequestHandler::ON_BOARD_ANTENNA_PIN : WiFiRequestHandler::EXTERNAL_ANTENNA_PIN);
 }
 
 /**
- *  @brief Change the current antenna and actrivate it.
+ *  @brief Chnage the current antenna in use.
+ * 
+ *  Note that this does not change the actual default antenna in use, it just switches to a new one.
+ *  Use SetAntenna followed by SwitchAntenna in order to change antenna that will be used as
+ *  a default at startup.
  *
  *  @param newAntenna
  *      New antenna to use.
@@ -831,13 +787,12 @@ void WiFiRequestHandler::SwitchAntenna(AntennaTypes::AntennaTypes newAntenna)
     // TODO: What happens to any pending requests and do we disconnect WiFi first?
     //
     gpio_num_t newAntennaPin = ConvertAntennaToPin(newAntenna);
-    gpio_num_t oldAntennaPin = ConvertAntennaToPin(static_cast<AntennaTypes::AntennaTypes>(_currentAntenna));
+    gpio_num_t oldAntennaPin = ConvertAntennaToPin(static_cast<AntennaTypes::AntennaTypes>(GetAntenna()));
     //
     //  Make sure the old antenna is switched off before the new one is turned on.
     //
     gpio_set_level(oldAntennaPin, 0);
     gpio_set_level(newAntennaPin, 1);
-    _currentAntenna = newAntenna;
 
 #if defined(WIFI_FULL_LOGGING)
     ESP_LOGI(__func__, "Exit");
@@ -854,16 +809,12 @@ void WiFiRequestHandler::Setup()
 #endif
 
     RequestHandlerBase::Setup();
-    gpio_set_direction(EXTERNAL_ANTENNA_PIN, GPIO_MODE_OUTPUT);
-    gpio_set_level(EXTERNAL_ANTENNA_PIN, 0);
-    gpio_set_direction(ON_BOARD_ANTENNA_PIN, GPIO_MODE_OUTPUT);
-    gpio_set_level(ON_BOARD_ANTENNA_PIN, 1);
+    gpio_set_direction(WiFiRequestHandler::EXTERNAL_ANTENNA_PIN, GPIO_MODE_OUTPUT);
+    gpio_set_level(WiFiRequestHandler::EXTERNAL_ANTENNA_PIN, 0);
+    gpio_set_direction(WiFiRequestHandler::ON_BOARD_ANTENNA_PIN, GPIO_MODE_OUTPUT);
+    gpio_set_level(WiFiRequestHandler::ON_BOARD_ANTENNA_PIN, 1);
 
-    if (_currentAntenna > static_cast<uint8_t>(AntennaTypes::Max))
-    {
-        _currentAntenna = AntennaTypes::OnBoard;
-    }
-    SwitchAntenna(static_cast<AntennaTypes::AntennaTypes>(_currentAntenna));
+    SwitchAntenna(static_cast<AntennaTypes::AntennaTypes>(GetAntenna()));
     /*
      *  Now create the objects necessary for the WiFi tasks.
      */
@@ -904,12 +855,12 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
         case WiFiFunction::DisconnectFromAccessPoint:
             DisconnectFromAccessPoint(request);
             break;
-        case WiFiFunction::SetAntenna:
-            SetAntenna(request);
-            break;
-        case WiFiFunction::GetAntenna:
-            GetAntenna(request);
-            break;
+        // case WiFiFunction::SetAntenna:
+        //     SetAntenna(request);
+        //     break;
+        // case WiFiFunction::GetAntenna:
+        //     GetAntenna(request);
+        //     break;
         case WiFiFunction::GetAccessPoints:
             GetAvailableNetworks(request);
             break;

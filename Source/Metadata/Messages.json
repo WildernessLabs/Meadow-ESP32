@@ -40,13 +40,6 @@
             ]
         },
         {
-            "Name": "AntennaInfo",
-            "MessageElements":
-            [
-                { "Name": "Antenna", "DataType": "Byte" }
-            ]
-        },
-        {
             "Name": "AccessPoint",
             "MessageElements":
             [
