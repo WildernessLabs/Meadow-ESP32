@@ -31,26 +31,6 @@ extern heap_trace_record_t *trace_records;
 
 #endif
 
-/**
- *  Event handler for the WiFi loop.
- *
- *  This needs to be a C function prototype in order to be
- *  called from FreeRTOS.
- *
- *  @param context
- *      This is the context object set up when the event handler was first registered.
- *      In this application the context has been set to the instance of the calling class.
- *
- *  @param event
- *      Event information to be processed.
- */
-// extern "C" esp_err_t WiFiEventHandler(void *context, system_event_t *event)
-// {
-//     WiFiRequestHandler *sender = static_cast<WiFiRequestHandler *>(context);
-
-//     return(sender->EventHandler(context, event));
-// }
-
 /*
  * ----------------------------------------------------------------------------
  *
@@ -800,7 +780,7 @@ void WiFiRequestHandler::SwitchAntenna(AntennaTypes::AntennaTypes newAntenna)
 }
 
 /**
- *  Setup the WiFi network.
+ *  @brief Setup the WiFi network.
  */
 void WiFiRequestHandler::Setup()
 {
@@ -828,7 +808,7 @@ void WiFiRequestHandler::Setup()
 }
 
 /**
- *  Dispatch the WiFi request to the appropriate method in the class.
+ *  @brief Dispatch the WiFi request to the appropriate method in the class.
  *
  *  @param request
  *      Data structure containing the request information from the sender.
@@ -855,12 +835,6 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
         case WiFiFunction::DisconnectFromAccessPoint:
             DisconnectFromAccessPoint(request);
             break;
-        // case WiFiFunction::SetAntenna:
-        //     SetAntenna(request);
-        //     break;
-        // case WiFiFunction::GetAntenna:
-        //     GetAntenna(request);
-        //     break;
         case WiFiFunction::GetAccessPoints:
             GetAvailableNetworks(request);
             break;
@@ -1174,7 +1148,7 @@ esp_err_t WiFiRequestHandler::StartWiFiInterface()
         
         if (result == ESP_OK)
         {
-            result = esp_event_handler_register(IP_EVENT, ESP_EVENT_ANY_ID, &WiFiRequestHandler::EventHandler, this);    
+            result = esp_event_handler_register(IP_EVENT, ESP_EVENT_ANY_ID, &WiFiRequestHandler::EventHandler, this);
         }
 
         if (result == ESP_OK)
@@ -1224,7 +1198,7 @@ void WiFiRequestHandler::StartNetwork(Message *request)
 }
 
 /**
- *  Get the full list of available networks.
+ *  @brief Get the full list of available networks.
  *
  *  @pre
  *      The network must be started before this method is called.
@@ -2158,7 +2132,9 @@ void WiFiRequestHandler::Poll(Message *message)
  */
 
 /**
- *  The access point has just given the ESP32 an IP address.
+ *  @brief The access point has just given the ESP32 an IP address.
+ * 
+ *  This event indicates that we have successfully connected to the access point.
  */
 void WiFiRequestHandler::StationGotIpEvent()
 {
@@ -2176,7 +2152,7 @@ void WiFiRequestHandler::StationGotIpEvent()
 }
 
 /**
- *  Process the WiFi disconnected event.
+ *  @brief Process the WiFi disconnected event.
  *
  *  @param eventData
  *      Data for the disconnected event.
@@ -2208,7 +2184,7 @@ void WiFiRequestHandler::StationDisconnectedEvent(system_event_t *eventData)
 }
 
 /**
- *  Process the scan results.
+ *  @brief Process the scan results.
  *
  *  @param event
  *      Event information for the scan complete event.
@@ -2279,6 +2255,14 @@ void WiFiRequestHandler::ScanCompleteEvent(system_event_t *event)
     ESP_LOGI(__func__, "Exit");
 #endif
 }
+
+/*
+ * ----------------------------------------------------------------------------
+ *
+ *                     Poll Request Task Related Methods
+ *
+ * ----------------------------------------------------------------------------
+ */
 
 /**
  *  @brief Compare the message ID in a message from the STM32 with the specified message ID.
