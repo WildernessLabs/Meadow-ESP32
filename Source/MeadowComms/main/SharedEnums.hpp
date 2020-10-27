@@ -35,13 +35,14 @@ namespace StatusCodes
         MissingEndOfFrameMarker = 9,
         HeaderBodyFieldMismatch = 10,
         WiFiAlreadyStarted = 11,
-        InvalidSsid = 12,
-        InvalidPassword = 13,
-        WiFiDisconnected = 14,
-        InvalidAntennaData = 15,
-        InvalidAntennaValue = 16,
-        NoMessagesWaiting = 17,
-        CoprocessorNotResponding = 18
+        InvalidWiFiCredentials = 12,
+        WiFiDisconnected = 13,
+        CannotStartNetworkInterface = 14,
+        CannotConnectToAccessPoint = 15,
+        InvalidAntennaData = 16,
+        InvalidAntennaValue = 17,
+        NoMessagesWaiting = 18,
+        CoprocessorNotResponding = 19
     };
 
 }
@@ -85,28 +86,26 @@ namespace WiFiFunction
      */
     enum WiFiFunction : uint32_t
     {
-        Start = 0,
+        StartNetwork = 0,
         Stop = 1,
-        ConnectToAp = 2,
-        Disconnect = 3,
+        ConnectToAccessPoint = 2,
+        DisconnectFromAccessPoint = 3,
         GetAccessPoints = 4,
-        GetConfiguration = 5,
-        SetConfiguration = 6,
-        SetAntenna = 7,
-        GetAntenna = 8,
-        GetAddrInfo = 9,
-        Socket = 10,
-        Connect = 11,
-        FreeAddrInfo = 12,
-        Write = 13,
-        SetSockOpt = 14,
-        Read = 15,
-        Close = 16,
-        SendTo = 17,
-        RecvFrom = 18,
-        Poll = 19,
-        InterruptPollResponse = 20,
-        Send = 21
+        SetAntenna = 5,
+        GetAntenna = 6,
+        GetAddrInfo = 7,
+        Socket = 8,
+        Connect = 9,
+        FreeAddrInfo = 10,
+        Write = 11,
+        SetSockOpt = 12,
+        Read = 13,
+        Close = 14,
+        SendTo = 15,
+        RecvFrom = 16,
+        Poll = 17,
+        InterruptPollResponse = 18,
+        Send = 19
     };
 
 }

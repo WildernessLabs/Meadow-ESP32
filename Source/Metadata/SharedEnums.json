@@ -9,7 +9,7 @@
             "EnumNames": [ 
                 "CompletedOk", "CrcError", "Restart", "Failure", "InvalidInterface", "QueueError",
                 "InvalidPacket", "InvalidHeader", "UnexpectedData", "MissingEndOfFrameMarker", "HeaderBodyFieldMismatch",
-                "WiFiAlreadyStarted", "InvalidSsid", "InvalidPassword", "WiFiDisconnected",
+                "WiFiAlreadyStarted", "InvalidWiFiCredentials", "WiFiDisconnected", "CannotStartNetworkInterface", "CannotConnectToAccessPoint",
                 "InvalidAntennaData", "InvalidAntennaValue",
                 "NoMessagesWaiting", "CoprocessorNotResponding"
             ]
@@ -38,7 +38,7 @@
           "Comment": "WiFi functions available on the ESP32",
           "BaseDataType": "UInt32",
           "EnumNames": [
-              "Start", "Stop", "ConnectToAp", "Disconnect", "GetAccessPoints", "GetConfiguration", "SetConfiguration", "SetAntenna",
+              "StartNetwork", "Stop", "ConnectToAccessPoint", "DisconnectFromAccessPoint", "GetAccessPoints", "SetAntenna",
               "GetAntenna", "GetAddrInfo", "Socket", "Connect", "FreeAddrInfo", "Write", "SetSockOpt", "Read",
               "Close", "SendTo", "RecvFrom", "Poll", "InterruptPollResponse", "Send"
           ]
