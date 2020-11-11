@@ -21,22 +21,17 @@ namespace BasicNetworkTest
 
         static Bme280 bme280;
         static WiFiAdapter wifi;
-        static Esp32Coprocessor _esp;
 
         /// <summary>
         /// Default constructor.
         /// </summary>
         public NetworkTest()
         {
-            //WifiNetwork wifi = new WifiNetwork(Secrets.WIFI_NAME, Secrets.WIFI_PASSWORD, NetworkType.Any, PhyType.Unknown,
-            //    new NetworkSecuritySettings(NetworkAuthenticationType.Wpa2Psk, NetworkEncryptionType.None),
-            //    6, NetworkProtocol.Protocol11G, -76);
             Console.WriteLine("Connecting to network.");
-            _esp = new Esp32Coprocessor();
-            wifi = new WiFiAdapter(_esp);
-            if (wifi.Connect(Secrets.WIFI_NAME, Secrets.WIFI_PASSWORD).ConnectionStatus != ConnectionStatus.Success)
+            Device.InitWiFiAdapter().Wait();
+            if (Device.WiFiAdapter.Connect(Secrets.WIFI_NAME, Secrets.WIFI_PASSWORD).ConnectionStatus != ConnectionStatus.Success)
             {
-                throw new Exception("Cannot connect to network, applicaiton halted.");
+                throw new Exception("Cannot connect to network, application halted.");
             }
             Console.WriteLine("Connection request completed.");
         }
@@ -108,7 +103,7 @@ namespace BasicNetworkTest
         }
 
         /// <summary>
-        /// 
+        ///
         /// </summary>
         public void WebSocketPost()
         {
@@ -129,7 +124,6 @@ namespace BasicNetworkTest
             {
                 if ((currentReadingCount == MAXIMUM_READING_COUNT) || errorEncountered)
                 {
-                    _esp.Reset();
                     Thread.Sleep(5000);
                     if (wifi.Connect(Secrets.WIFI_NAME, Secrets.WIFI_PASSWORD).ConnectionStatus != ConnectionStatus.Success)
                     {
@@ -243,12 +237,12 @@ namespace BasicNetworkTest
                         sender.Connect(remoteEP);
 
                         string temperature = testData.GetNext().ToString("F2");
-                        Log($"Sending data to Adatfruit IO.");
+                        Log($"Sending data to Adafruit IO.");
                         int bytesSent;
                         int bytesReceived;
                         Log("Sending temperature data.");
                         string temperatureData = "{\"value\":\"" + temperature + "\"}";
-                        string temperatureHeader = "POST /api/v2/nevyn/feeds/test/data HTTP/1.1\r\n";
+                        string temperatureHeader = "POST /v2/MarkAtWildernessLabs/feeds/temperaturetest HTTP/1.1\r\n";
                         temperatureHeader += $"X-AIO-Key: {Secrets.APIO_KEY}\r\n";
                         temperatureHeader += "Content-Type: application/json; charset=utf-8\r\n";
                         temperatureHeader += $"Content-Length: {temperatureData.Length}\r\n";
@@ -289,7 +283,7 @@ namespace BasicNetworkTest
 
         }
 
-        // Incoming data from the client.  
+        // Incoming data from the client.
         public static string data = null;
 
         public void StartListening()
