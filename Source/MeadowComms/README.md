@@ -44,9 +44,13 @@ Both of these ports can be accessed through the [ESP-Prog board](https://github.
 
 #### JTAG
 
-JTAG communication takes place over the 10 pin headers on the ESP-Prog and the Meadow pogo board.  This has been comprehensively tested on the Revision A of the pogo board and requires a 10-pin IDC cable.
+JTAG communication takes place over the 10 pin headers on the ESP-Prog and the Meadow pogo board.
 
 Deployment using the JTAG interface is available through the `flash.sh` script.
+
+Revions A of the pogo board has been comprehensively tested and can be connected to the ESP_PROG board using a standard 10 pin (2 x 5) 0.1" pitch IDC cable.
+
+Revsion B of the pogo board has the signal and the power pins connected to the wrong pins and the JTAG header will not work unless the pins on each row are swapped (i.e. pin 1 & 2 are swapped, 3 & 4 etc.).
 
 #### Serial
 
