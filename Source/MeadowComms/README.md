@@ -48,7 +48,7 @@ JTAG communication takes place over the 10 pin headers on the ESP-Prog and the M
 
 Deployment using the JTAG interface is available through the `flash.sh` script.
 
-Revions A of the pogo board has been comprehensively tested and can be connected to the ESP_PROG board using a standard 10 pin (2 x 5) 0.1" pitch IDC cable.
+Revions A of the pogo board has been comprehensively tested and can be connected to the ESP-PROG board using a standard 10 pin (2 x 5) 0.1" pitch IDC cable.
 
 Revsion B of the pogo board has the signal and the power pins connected to the wrong pins and the JTAG header will not work unless the pins on each row are swapped (i.e. pin 1 & 2 are swapped, 3 & 4 etc.).
 
