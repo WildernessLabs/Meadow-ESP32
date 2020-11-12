@@ -142,6 +142,11 @@ private:
     const int WIFI_SCAN_COMPLETE_BIT = BIT6;
 
     /**
+     *  Indicate that the WiFi station has started successfully.
+     */
+    const int WIFI_STATION_STARTED_BIT = BIT7;
+
+    /**
      *  Default scan method for WiFi networks.
      */
     const wifi_scan_method_t DEFAULT_SCAN_METHOD = WIFI_FAST_SCAN;

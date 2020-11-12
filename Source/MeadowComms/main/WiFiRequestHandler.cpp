@@ -845,7 +845,7 @@ void WiFiRequestHandler::EventHandlerHelper(esp_event_base_t eventBase, int32_t 
                 break;
             case WIFI_EVENT_STA_START:
                 ESP_LOGI(__func__, "Station started");
-                // ESP_ERROR_CHECK(esp_wifi_connect());
+                xEventGroupSetBits(_xWiFiEventGroup, WIFI_STATION_STARTED_BIT);
                 break;
             case WIFI_EVENT_STA_STOP:
                 ESP_LOGI(__func__, "Station stopped");
@@ -1105,16 +1105,26 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *request)
             ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));
             ESP_ERROR_CHECK(esp_wifi_start());
 
-            bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT, pdFALSE, pdFALSE, 10000 / portTICK_PERIOD_MS);
-            if (bits & WIFI_CONNECTED_BIT)
+            bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_STATION_STARTED_BIT, pdFALSE, pdFALSE, 30000 / portTICK_PERIOD_MS);
+            if (bits & WIFI_STATION_STARTED_BIT)
             {
-                esp_netif_ip_info_t ipInfo;
-                ESP_ERROR_CHECK(esp_netif_get_ip_info(_stationNetIfHandle, &ipInfo));
-                request->PayloadLength = 3 * sizeof(esp_ip4_addr_t);
-                request->Payload = static_cast<uint8_t *>(pvPortMalloc(request->PayloadLength));
-                memcpy(request->Payload, (void *) &ipInfo.ip, sizeof(esp_ip4_addr_t));
-                memcpy(request->Payload + sizeof(esp_ip4_addr_t), (void *) &ipInfo.netmask, sizeof(esp_ip4_addr_t));
-                memcpy(request->Payload + 2 * (sizeof(esp_ip4_addr_t)), (void *) &ipInfo.gw, sizeof(esp_ip4_addr_t));
+                ESP_ERROR_CHECK(esp_wifi_connect());
+
+                bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT, pdFALSE, pdFALSE, 30000 / portTICK_PERIOD_MS);
+                if (bits & WIFI_CONNECTED_BIT)
+                {
+                    esp_netif_ip_info_t ipInfo;
+                    ESP_ERROR_CHECK(esp_netif_get_ip_info(_stationNetIfHandle, &ipInfo));
+                    request->PayloadLength = 3 * sizeof(esp_ip4_addr_t);
+                    request->Payload = static_cast<uint8_t *>(pvPortMalloc(request->PayloadLength));
+                    memcpy(request->Payload, (void *) &ipInfo.ip, sizeof(esp_ip4_addr_t));
+                    memcpy(request->Payload + sizeof(esp_ip4_addr_t), (void *) &ipInfo.netmask, sizeof(esp_ip4_addr_t));
+                    memcpy(request->Payload + 2 * (sizeof(esp_ip4_addr_t)), (void *) &ipInfo.gw, sizeof(esp_ip4_addr_t));
+                }
+                else
+                {
+                    result = StatusCodes::Timeout;
+                }
             }
             else
             {
