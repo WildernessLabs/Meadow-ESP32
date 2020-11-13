@@ -1275,25 +1275,60 @@ void WiFiRequestHandler::GetAvailableNetworks(Message *request)
         #define MAX_AP 20
         uint16_t number = MAX_AP;
         wifi_ap_record_t *ap_info = (wifi_ap_record_t *) pvPortMalloc(MAX_AP * sizeof(wifi_ap_record_t));
-        uint16_t ap_count = 0;
         bzero(ap_info, MAX_AP * sizeof(wifi_ap_record_t));
 
         ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
         ESP_ERROR_CHECK(esp_wifi_start());
         ESP_ERROR_CHECK(esp_wifi_scan_start(NULL, true));
-        ESP_ERROR_CHECK(esp_wifi_scan_get_ap_records(&number, ap_info));
+        // ESP_ERROR_CHECK(esp_wifi_scan_get_ap_records(&number, ap_info));
 
         bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_SCAN_COMPLETE_BIT, pdFALSE, pdFALSE, 10000 / portTICK_PERIOD_MS);
         if (bits & WIFI_SCAN_COMPLETE_BIT)
         {
-            ESP_ERROR_CHECK(esp_wifi_scan_get_ap_num(&ap_count));
-            ESP_LOGI(__func__, "Total APs scanned = %u", ap_count);
-            for (int i = 0; (i < MAX_AP) && (i < ap_count); i++)
+            uint16_t apCount = 0;
+            esp_wifi_scan_get_ap_num(&apCount);
+
+#if defined(WIFI_FULL_LOGGING)
+            ESP_LOGI(__func__, "Number of access points found: %d", apCount);
+#endif
+
+            if (apCount != 0)
             {
-                ESP_LOGI(__func__, "SSID \t\t%s", ap_info[i].ssid);
-                ESP_LOGI(__func__, "RSSI \t\t%d", ap_info[i].rssi);
-                ESP_LOGI(__func__, "Channel \t\t%d\n", ap_info[i].primary);
+                Esp32Messaging::AccessPointList *accessPointList = static_cast<Esp32Messaging::AccessPointList *>(pvPortMalloc(sizeof(Esp32Messaging::AccessPointList)));
+                accessPointList->NumberOfAccessPoints = apCount;
+                //
+                //  Now we get the access point information.
+                //
+                wifi_ap_record_t *accessPoints = static_cast<wifi_ap_record_t *>(pvPortMalloc(apCount * sizeof(wifi_ap_record_t)));
+                ESP_ERROR_CHECK(esp_wifi_scan_get_ap_records(&number, accessPoints));
+
+                Esp32Messaging::AccessPoint *accessPoint = static_cast<Esp32Messaging::AccessPoint *>(pvPortMalloc(sizeof(Esp32Messaging::AccessPoint)));
+                int singleAccessPointSize = Encoders::EncodedAccessPointBufferSize(accessPoint);
+                accessPointList->AccessPointsLength = singleAccessPointSize * apCount;
+                accessPointList->AccessPoints = static_cast<uint8_t *>(pvPortMalloc(accessPointList->AccessPointsLength));
+                uint8_t *currentLocation = accessPointList->AccessPoints;
+                for (int index = 0; index < apCount; index++)
+                {
+                    bzero(accessPoint, sizeof(Esp32Messaging::AccessPoint));
+                    memcpy(accessPoint->Ssid, &accessPoints[index].ssid, 33);
+                    memcpy(accessPoint->Bssid, &accessPoints[index].bssid, 6);
+                    accessPoint->PrimaryChannel = accessPoints[index].primary;
+                    accessPoint->SecondaryChannel = accessPoints[index].second;
+                    accessPoint->Rssi = accessPoints[index].rssi;
+                    accessPoint->AuthenticationMode = accessPoints[index].authmode;
+                    accessPoint->Protocols = accessPoints[index].phy_11b | accessPoints[index].phy_11g | accessPoints[index].phy_11n | accessPoints[index].phy_lr | accessPoints[index].wps;
+                    Encoders::EncodeAccessPoint(accessPoint, currentLocation);
+                    currentLocation += singleAccessPointSize;
+                }
+                vPortFree(accessPoints);
+                vPortFree(accessPoint);
+
+                request->PayloadLength = Encoders::EncodedAccessPointListBufferSize(accessPointList);
+                request->Payload = static_cast<uint8_t *>(pvPortMalloc(request->PayloadLength));
+                Encoders::EncodeAccessPointList(accessPointList, request->Payload);
+                vPortFree(accessPointList);
             }
+            result = StatusCodes::CompletedOk;
         }
         else
         {
@@ -1310,34 +1345,6 @@ void WiFiRequestHandler::GetAvailableNetworks(Message *request)
 #if defined(WIFI_FULL_LOGGING)
     ESP_LOGI(__func__, "Exit");
 #endif
-// #if defined(WIFI_FULL_LOGGING)
-//     ESP_LOGI(__func__, "Enter");
-// #endif
-
-//     wifi_active_scan_time_t activeScanTime =
-//     {
-//         .min = 500,
-//         .max = 1500
-//     };
-//     wifi_scan_time_t scanTime =
-//     {
-//         .active = activeScanTime
-//     };
-//     wifi_scan_config_t scanConf =
-//     {
-//         .ssid = NULL,
-//         .bssid = NULL,
-//         .channel = 0,
-//         .show_hidden = true,
-//         .scan_type = WIFI_SCAN_TYPE_ACTIVE,
-//         .scan_time = scanTime
-//     };
-//     _currentRequest = request;
-//     ESP_ERROR_CHECK(esp_wifi_scan_start(&scanConf, true));
-
-// #if defined(WIFI_FULL_LOGGING)
-//     ESP_LOGI(__func__, "Exit");
-// #endif
 }
 
 /**
