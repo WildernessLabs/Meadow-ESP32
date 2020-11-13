@@ -438,11 +438,6 @@ private:
     ~WiFiRequestHandler();
 
     /*
-     *  Process the WiFi access point scan complete event.
-     */
-    void ScanCompleteEvent(system_event_t *);
-
-    /*
      *  Process the WiFi connecting and getting an IP address event
      */
     void StationGotIpEvent();

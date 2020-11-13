@@ -841,7 +841,7 @@ void WiFiRequestHandler::EventHandlerHelper(esp_event_base_t eventBase, int32_t 
                 break;
             case WIFI_EVENT_SCAN_DONE:
                 ESP_LOGI(__func__, "Scan for access points complete");
-                ScanCompleteEvent(nullptr);
+                xEventGroupSetBits(_xWiFiEventGroup, WIFI_SCAN_COMPLETE_BIT);
                 break;
             case WIFI_EVENT_STA_START:
                 ESP_LOGI(__func__, "Station started");
@@ -1280,7 +1280,6 @@ void WiFiRequestHandler::GetAvailableNetworks(Message *request)
         ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
         ESP_ERROR_CHECK(esp_wifi_start());
         ESP_ERROR_CHECK(esp_wifi_scan_start(NULL, true));
-        // ESP_ERROR_CHECK(esp_wifi_scan_get_ap_records(&number, ap_info));
 
         bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_SCAN_COMPLETE_BIT, pdFALSE, pdFALSE, 10000 / portTICK_PERIOD_MS);
         if (bits & WIFI_SCAN_COMPLETE_BIT)
@@ -2290,82 +2289,6 @@ void WiFiRequestHandler::StationDisconnectedEvent(system_event_t *eventData)
         xEventGroupClearBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT | WIFI_CONNECTING_BIT | WIFI_RECONNECTING_BIT);
         xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
     }
-}
-
-/**
- *  @brief Process the scan results.
- *
- *  @param event
- *      Event information for the scan complete event.
- */
-void WiFiRequestHandler::ScanCompleteEvent(system_event_t *event)
-{
-#if defined(WIFI_FULL_LOGGING)
-    ESP_LOGI(__func__, "Enter");
-#endif
-
-    xEventGroupSetBits(_xWiFiEventGroup, WIFI_SCAN_COMPLETE_BIT);
-    return;
-
-    uint16_t apCount = 0;
-    esp_wifi_scan_get_ap_num(&apCount);
-
-#if defined(WIFI_FULL_LOGGING)
-    ESP_LOGI(__func__, "Number of access points found: %d", apCount);
-#endif
-
-    _currentRequest->DeletePayload();
-    _currentRequest->MessageType = MessageTypes::Response;
-    if (apCount == 0)
-    {
-        _currentRequest->Payload =  nullptr;
-        _currentRequest->PayloadLength = 0;
-        _currentRequest->StatusCode = StatusCodes::CompletedOk;
-    }
-    else
-    {
-        Esp32Messaging::AccessPointList *accessPointList = static_cast<Esp32Messaging::AccessPointList *>(pvPortMalloc(sizeof(Esp32Messaging::AccessPointList)));
-        accessPointList->NumberOfAccessPoints = apCount;
-        //
-        //  Now we get the access point information.
-        //
-        wifi_ap_record_t *accessPoints = static_cast<wifi_ap_record_t *>(pvPortMalloc(apCount * sizeof(wifi_ap_record_t)));
-        ESP_ERROR_CHECK(esp_wifi_scan_get_ap_records(&apCount, accessPoints));
-
-        Esp32Messaging::AccessPoint *accessPoint = static_cast<Esp32Messaging::AccessPoint *>(pvPortMalloc(sizeof(Esp32Messaging::AccessPoint)));
-        int singleAccessPointSize = Encoders::EncodedAccessPointBufferSize(accessPoint);
-        accessPointList->AccessPointsLength = singleAccessPointSize * apCount;
-        accessPointList->AccessPoints = static_cast<uint8_t *>(pvPortMalloc(accessPointList->AccessPointsLength));
-        uint8_t *currentLocation = accessPointList->AccessPoints;
-        for (int index = 0; index < apCount; index++)
-        {
-            bzero(accessPoint, sizeof(Esp32Messaging::AccessPoint));
-            memcpy(accessPoint->Ssid, &accessPoints[index].ssid, 33);
-            memcpy(accessPoint->Bssid, &accessPoints[index].bssid, 6);
-            accessPoint->PrimaryChannel = accessPoints[index].primary;
-            accessPoint->SecondaryChannel = accessPoints[index].second;
-            accessPoint->Rssi = accessPoints[index].rssi;
-            accessPoint->AuthenticationMode = accessPoints[index].authmode;
-            accessPoint->Protocols = accessPoints[index].phy_11b | accessPoints[index].phy_11g | accessPoints[index].phy_11n | accessPoints[index].phy_lr | accessPoints[index].wps;
-            Encoders::EncodeAccessPoint(accessPoint, currentLocation);
-            currentLocation += singleAccessPointSize;
-        }
-
-        vPortFree(accessPoints);
-        vPortFree(accessPoint);
-        _currentRequest->StatusCode = StatusCodes::CompletedOk;
-        _currentRequest->PayloadLength = Encoders::EncodedAccessPointListBufferSize(accessPointList);
-        _currentRequest->Payload = static_cast<uint8_t *>(pvPortMalloc(_currentRequest->PayloadLength));
-        Encoders::EncodeAccessPointList(accessPointList, _currentRequest->Payload);
-        vPortFree(accessPointList);
-    }
-    _messageDispatcher->QueueMessageForStm32(_currentRequest);
-    _currentRequest = nullptr;
-    xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
-
-#if defined(WIFI_FULL_LOGGING)
-    ESP_LOGI(__func__, "Exit");
-#endif
 }
 
 /*
