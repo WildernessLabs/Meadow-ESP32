@@ -47,11 +47,6 @@ namespace Meadow.Devices.Esp32.MessagePayloads
         public String Password;
     };
 
-    public struct AntennaInfo
-    {
-        public Byte Antenna;
-    };
-
     public struct AccessPoint
     {
         public string Ssid;

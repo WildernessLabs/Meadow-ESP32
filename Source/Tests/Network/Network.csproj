@@ -28,6 +28,9 @@
     <ExternalConsole>true</ExternalConsole>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Meadow, Version=0.17.0.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>bin\Debug\Meadow.dll</HintPath>
+    </Reference>
     <Reference Include="Meadow.Foundation">
       <HintPath>packages\Meadow.Foundation.0.17.0\lib\net472\Meadow.Foundation.dll</HintPath>
     </Reference>

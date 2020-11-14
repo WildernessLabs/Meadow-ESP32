@@ -61,26 +61,10 @@ extern "C" void app_main()
     SpiTransportProvider *spi = new SpiTransportProvider();
     MessageDispatcher * __attribute__((unused)) messageDispatcher = new MessageDispatcher(spi);
 
-    // WiFiRequestHandler *wifi = new WiFiRequestHandler(nullptr);
-    // wifi->Setup();
-    // wifi->StartNetworkInterface();
-
     // Message message = {};
-
     // message.MessageType = MessageTypes::Header;
-    // message.Interface = Esp32Interfaces::System;
-    // message.Function = SystemFunction::SetConfigurationItem;
-
-    // Esp32Messaging::ConfigurationValue configurationValue;
-    // configurationValue.Item = ConfigurationItems::AutomaticallyReconnect;
-    // configurationValue.ValueLength = 1;
-    // uint8_t value[1];
-    // value[0] = 1;
-    // configurationValue.Value = value;
-
-    // message.PayloadLength = Encoders::EncodedConfigurationValueBufferSize(&configurationValue);
-    // message.Payload = (uint8_t *) pvPortMalloc(message.PayloadLength);
-    // Encoders::EncodeConfigurationValue(&configurationValue, message.Payload);
+    // message.Interface = Esp32Interfaces::WiFi;
+    // message.Function = WiFiFunction::GetAccessPoints;
 
     // messageDispatcher->QueueMessageForEsp32(&message);
 

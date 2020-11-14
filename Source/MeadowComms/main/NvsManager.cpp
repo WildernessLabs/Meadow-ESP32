@@ -209,7 +209,6 @@ uint32_t NvsManager::GetValue(const char *nameSpace, const char *name, const uin
 
     if (_nvsAvailable)
     {
-        esp_err_t err = nvs_flash_init();
         error = nvs_open(nameSpace, NVS_READWRITE, &nvsHandle);
         if (error == ESP_OK)
         {

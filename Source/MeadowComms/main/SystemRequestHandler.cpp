@@ -372,6 +372,7 @@ void SystemRequestHandler::GetConfiguration(Message *request)
     bzero(&config, sizeof(config));
     const esp_app_desc_t *applicationDescription = esp_ota_get_app_description();
     config.SoftwareVersion = const_cast<char *>(applicationDescription->version);
+    config.Antenna = WiFiRequestHandler::GetAntenna();
     config.MaximumRetryCount = WiFiRequestHandler::GetMaximumRetryCount();
     config.AutomaticallyReconnect = WiFiRequestHandler::GetAutomaticReconnect();
     config.AutomaticallyStartNetwork = WiFiRequestHandler::GetAutomaticallyStartNetwork();
@@ -415,6 +416,7 @@ void SystemRequestHandler::SetConfiguration(Message *request)
     switch (value->Item)
     {
         case ConfigurationItems::Antenna:
+            WiFiRequestHandler::SetAntenna(*value->Value);
             break;
         case ConfigurationItems::AutomaticallyReconnect:
             result = WiFiRequestHandler::SetAutomaticReconnect((uint8_t) (*value->Value) == 1);
