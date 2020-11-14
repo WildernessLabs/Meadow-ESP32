@@ -29,19 +29,21 @@ namespace StatusCodes
         Failure = 3,
         InvalidInterface = 4,
         QueueError = 5,
-        InvalidPacket = 6,
-        InvalidHeader = 7,
-        UnexpectedData = 8,
-        MissingEndOfFrameMarker = 9,
-        HeaderBodyFieldMismatch = 10,
-        WiFiAlreadyStarted = 11,
-        InvalidSsid = 12,
-        InvalidPassword = 13,
+        Timeout = 6,
+        InvalidPacket = 7,
+        InvalidHeader = 8,
+        UnexpectedData = 9,
+        MissingEndOfFrameMarker = 10,
+        HeaderBodyFieldMismatch = 11,
+        WiFiAlreadyStarted = 12,
+        InvalidWiFiCredentials = 13,
         WiFiDisconnected = 14,
-        InvalidAntennaData = 15,
-        InvalidAntennaValue = 16,
-        NoMessagesWaiting = 17,
-        CoprocessorNotResponding = 18
+        CannotStartNetworkInterface = 15,
+        CannotConnectToAccessPoint = 16,
+        InvalidAntennaData = 17,
+        InvalidAntennaValue = 18,
+        NoMessagesWaiting = 19,
+        CoprocessorNotResponding = 20
     };
 
 }
@@ -85,28 +87,24 @@ namespace WiFiFunction
      */
     enum WiFiFunction : uint32_t
     {
-        Start = 0,
+        StartNetwork = 0,
         Stop = 1,
-        ConnectToAp = 2,
-        Disconnect = 3,
+        ConnectToAccessPoint = 2,
+        DisconnectFromAccessPoint = 3,
         GetAccessPoints = 4,
-        GetConfiguration = 5,
-        SetConfiguration = 6,
-        SetAntenna = 7,
-        GetAntenna = 8,
-        GetAddrInfo = 9,
-        Socket = 10,
-        Connect = 11,
-        FreeAddrInfo = 12,
-        Write = 13,
-        SetSockOpt = 14,
-        Read = 15,
-        Close = 16,
-        SendTo = 17,
-        RecvFrom = 18,
-        Poll = 19,
-        InterruptPollResponse = 20,
-        Send = 21
+        GetAddrInfo = 5,
+        Socket = 6,
+        Connect = 7,
+        FreeAddrInfo = 8,
+        Write = 9,
+        SetSockOpt = 10,
+        Read = 11,
+        Close = 12,
+        SendTo = 13,
+        RecvFrom = 14,
+        Poll = 15,
+        InterruptPollResponse = 16,
+        Send = 17
     };
 
 }

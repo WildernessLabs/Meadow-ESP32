@@ -109,23 +109,42 @@ private:
      *  has been granted.
      */
     const int WIFI_READY_BIT = BIT0;
+
     /**
      *  Indicate if the system is in the process of connecting to an access point.
      */
     const int WIFI_CONNECTING_BIT = BIT1;
+
     /**
      *  When set, this bit indicates that we have an active WiFi connection.
      */
     const int WIFI_CONNECTED_BIT = BIT2;
+
     /**
      *  When set, this indicates that the system has lost the WiFi connection
      *  and is actively trying to re-establish the connection.
      */
     const int WIFI_RECONNECTING_BIT = BIT3;
+
     /**
      *  Indicate if the WiFi system has been initialised OK.
      */
-    const int WIFI_INITIALISED_BIT = BIT4;
+    const int WIFI_INTERFACE_STARTING_BIT = BIT4;
+
+    /**
+     *  Indicate if the WiFi system has been initialised OK.
+     */
+    const int WIFI_INTERFACE_STARTED_BIT = BIT5;
+
+    /**
+     *  Indicate if the scan for access points has completed.
+     */
+    const int WIFI_SCAN_COMPLETE_BIT = BIT6;
+
+    /**
+     *  Indicate that the WiFi station has started successfully.
+     */
+    const int WIFI_STATION_STARTED_BIT = BIT7;
 
     /**
      *  Default scan method for WiFi networks.
@@ -161,13 +180,13 @@ private:
      *  GPIO Pin connected to the antenna selection switch
      *  which will connect the on board antenna to the ESP32.
      */
-    const gpio_num_t ON_BOARD_ANTENNA_PIN = GPIO_NUM_26;
+    static const gpio_num_t ON_BOARD_ANTENNA_PIN;
 
     /**
      *  GPIO Pin connected to the antenna selection switch
      *  which will connect the external antenna to the ESP32.
      */
-    const gpio_num_t EXTERNAL_ANTENNA_PIN = GPIO_NUM_27;
+    static const gpio_num_t EXTERNAL_ANTENNA_PIN;
 
     /**
      *  Determine if this class is instantiated already (i.e. this should be a singleton).
@@ -353,18 +372,17 @@ private:
     /*
      *  Private methods.
      */
-    void SendResponse(Message *, uint32_t);
-
-    /*
-     *  Convert the Antenna enum representation of an antenna
-     *  into a GPIO pin number.
-     */
-    gpio_num_t ConvertAntennaToPin(AntennaTypes::AntennaTypes);
+    // void SendResponse(Message *, uint32_t);
 
     /*
      *  This method will dispatch incoming messages to the appropriate request handler.
      */
     void DispatchRequest(Message *) override;
+
+    /*
+     *  Instance helper method for the static EventHandler method.
+     */
+    void EventHandlerHelper(esp_event_base_t, int32_t, void *);
 
     /**
      *  Method that will compare two poll requests IDs and determine if they are the same.
@@ -374,24 +392,14 @@ private:
     static bool ComparePollRequestMessageIds(uint32_t, PollRequestInformation *);
 
     /**
-     *  Get the current WiFi configuration.
-     */
-    void GetConfiguration(Message *);
-
-    /**
-     *  Update the WiFi configuration.
-     */
-    void SetConfiguration(Message *);
-
-    /**
      *  Disconnect from the current access point.
      */
-    void Disconnect(Message *);
+    void DisconnectFromAccessPoint(Message *);
 
     /**
      *  Connect to an access point.
      */
-    void ConnectToAp(Message *);
+    void ConnectToAccessPoint(Message *);
 
     /**
      *  Stop the WiFi and release all resources.
@@ -408,16 +416,16 @@ private:
      */
     void GetAvailableNetworks(Message *);
 
-    /*
-     *  Getters and setters for the antenna in use.
+    /**
+     *  Convert the Antenna enum representation of an antenna
+     *  into a GPIO pin number.
      */
-    void GetAntenna(Message *) const;
-    void SetAntenna(Message *);
+    static gpio_num_t ConvertAntennaToPin(AntennaTypes::AntennaTypes);
 
     /**
      *  Change the current antenna and activate it.
      */
-    void SwitchAntenna(AntennaTypes::AntennaTypes);
+    static void SwitchAntenna(AntennaTypes::AntennaTypes);
 
     /*
      *  Private constructor for the class.
@@ -430,14 +438,14 @@ private:
     ~WiFiRequestHandler();
 
     /*
-     *  Process the WiFi access point scan complete event.
-     */
-    void ScanCompleteEvent(system_event_t *);
-
-    /*
      *  Process the WiFi connecting and getting an IP address event
      */
-    void StationGotIpEvent(system_event_t *);
+    void StationGotIpEvent();
+
+    /*
+     *  Connect to the specified access point starting the network interface if necessary.
+     */
+    void ConnectToAccessPoint(char *, char *);
 
     /*
      *  Processes the station disconnected event.
@@ -517,8 +525,6 @@ private:
      */
     void Poll(Message *);
 
-    static void event_handler(void *, esp_event_base_t, int32_t, void *);
-
 public:
     /*
      *  Constructor for the WiFi object.
@@ -534,14 +540,14 @@ public:
      *  Start the network interface ready for the device to be configured
      *  as either an access point (softAP) or as a network device (station).
      */
-    esp_err_t StartNetworkInterface();
+    esp_err_t StartWiFiInterface();
 
     /*
      *  This is the event handler called by FreeRTOS.  It merely
      *  passes the event on to an internal private event handler
      *  within the class.
      */
-    esp_err_t EventHandler(void *, system_event_t *);
+    static void EventHandler(void *, esp_event_base_t, int32_t, void *);
 
     /**
      *  Get / Set the maximum number of retry attempts.
@@ -622,6 +628,12 @@ public:
      */
     static void GetMacAddress(uint8_t *, esp_interface_t);
     static StatusCodes::StatusCodes SetMacAddress(uint8_t *, esp_interface_t);
+
+    /**
+     *  Get / Set the current antenna in use.
+     */
+    static uint8_t GetAntenna();
+    static StatusCodes::StatusCodes SetAntenna(uint8_t);
 };
 
 #endif /* _WIFI_REQUEST_HANDLER_HPP_ */
