@@ -10,7 +10,7 @@ Additional documentation is availble for the following items (click on the heade
 
 Requests, responses and interrupts transfer data between the tw chips through a series of messages.  The maximum amount of data that can be transferred is restricted to 4,000 bytes due to a hardware limit on the ESP32.
 
-## [Communication Process Overview](Documentation/CommunicationOverview.md)
+## [Communication Process Overview](Documentation/CommunicationsOverview.md)
 
 Communication between the two microcontrollers is achieved using a single SPI bus and two GPIO lines to signal system readiness.
 
