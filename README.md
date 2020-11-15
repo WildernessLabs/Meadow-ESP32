@@ -10,11 +10,11 @@ Additional documentation is availble for the following items (click on the heade
 
 Requests, responses and interrupts transfer data between the tw chips through a series of messages.  The maximum amount of data that can be transferred is restricted to 4,000 bytes due to a hardware limit on the ESP32.
 
-## [Communication Process Overview](Documentation/CommunicationProcess.md)
+## [Communication Process Overview](Documentation/CommunicationOverview.md)
 
 Communication between the two microcontrollers is achieved using a single SPI bus and two GPIO lines to signal system readiness.
 
-## [ESP32 Development Tools](Development/Tools.md)
+## [ESP32 Development Tools](Documentation/Tools.md)
 
 The ESP32 runs FreeRTOS and the ESP-IDF to provide a multitasking environment that can communicate with the various hardware subsystems.  The development tools document provides information about the setup of the tools for development and building the ESP32 software.
 
