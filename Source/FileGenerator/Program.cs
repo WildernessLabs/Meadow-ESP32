@@ -9,24 +9,18 @@ namespace FileGenerator
     class Program
     {
         /// <summary>
-        /// Location of the F7Micro source directory.
-        /// </summary>
-        const string MEADOW_F7MICRO_SOURCE_DIRECTORY = "MeadowF7MicroCoprocessorSourceDirectory";
-
-        /// <summary>
         /// Location of the ESP32 Coprocessor code for the STM32.
         /// </summary>
         const string ESP32_COPROCESSOR_SOURCE_DIRECTORY = "EspcpSourceDirectory";
 
+        /// <summary>
+        /// Location of the ESP32 coprocessor Meadow.Core source files.
+        /// </summary>
+        const string MEADOW_CORE_SOURCE_DIRECTORY = "MeadowCoreSourceDirectory";
+
         static void Main(string[] args)
         {
             Console.WriteLine("File Generator 1.01");
-            string csharpDestinationDirectory = Environment.GetEnvironmentVariable(MEADOW_F7MICRO_SOURCE_DIRECTORY);
-            if (string.IsNullOrEmpty(csharpDestinationDirectory))
-            {
-                Console.WriteLine($"ERROR: Please set the environment variable '{MEADOW_F7MICRO_SOURCE_DIRECTORY}' before running this application.");
-                Environment.Exit(-1);
-            }
             //
             string stm32DestinationDirectory = Environment.GetEnvironmentVariable(ESP32_COPROCESSOR_SOURCE_DIRECTORY);
             if (string.IsNullOrEmpty(stm32DestinationDirectory))
@@ -34,8 +28,18 @@ namespace FileGenerator
                 Console.WriteLine($"ERROR: Please set the environment variable '{ESP32_COPROCESSOR_SOURCE_DIRECTORY}' before running this application.");
                 Environment.Exit(-1);
             }
+            string meadowCoreSourceDirectory = Environment.GetEnvironmentVariable(MEADOW_CORE_SOURCE_DIRECTORY);
+            if (string.IsNullOrEmpty(meadowCoreSourceDirectory))
+            {
+                Console.WriteLine($"ERROR: Please set the environment variable '{MEADOW_CORE_SOURCE_DIRECTORY}' before running this application.");
+                Environment.Exit(-1);
+            }
             //
             string outputDirectory = $".{Path.DirectorySeparatorChar}Output{Path.DirectorySeparatorChar}";
+            if (!Directory.Exists(outputDirectory))
+            {
+                Directory.CreateDirectory(outputDirectory);
+            }
             //
             //  Generate the enum files.
             //
@@ -57,9 +61,9 @@ namespace FileGenerator
             //
             //  Copy the C# files.
             //
-            File.Copy($"{outputDirectory}Messages.cs", $"{csharpDestinationDirectory}/Messages.cs", true);
-            File.Copy($"{outputDirectory}Encoders.cs", $"{csharpDestinationDirectory}/Encoders.cs", true);
-            File.Copy($"{outputDirectory}SharedEnums.cs", $"{csharpDestinationDirectory}/SharedEnums.cs", true);
+            File.Copy($"{outputDirectory}Messages.cs", $"{meadowCoreSourceDirectory}/Messages.cs", true);
+            File.Copy($"{outputDirectory}Encoders.cs", $"{meadowCoreSourceDirectory}/Encoders.cs", true);
+            File.Copy($"{outputDirectory}SharedEnums.cs", $"{meadowCoreSourceDirectory}/SharedEnums.cs", true);
             //
             //  Copy the ESP32 files.
             //
