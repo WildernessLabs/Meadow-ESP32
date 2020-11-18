@@ -18,6 +18,10 @@ Communication between the two microcontrollers is achieved using a single SPI bu
 
 The ESP32 runs FreeRTOS and the ESP-IDF to provide a multitasking environment that can communicate with the various hardware subsystems.  The development tools document provides information about the setup of the tools for development and building the ESP32 software.
 
+Documentation for ESP-IDF is available through the [Espressif documentation site](https://github.com/WildernessLabs/Meadow-ESP32).
+
+ESP-IDF repository containing source code and examples is available on [GitHub](https://github.com/espressif/esp-idf).
+
 ## [File Generator](Documentation/FileGenerator.md)
 
 Three languages are used to facilitate communication between the various subsystems, namely, C#, C and C++.
