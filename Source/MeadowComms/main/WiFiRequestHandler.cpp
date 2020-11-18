@@ -824,7 +824,7 @@ void WiFiRequestHandler::Setup()
  *      that generated the event.
  * 
  *  @param eventData
- *      Data specifi to the event that has occurred.
+ *      Data specific to the event that has occurred.
  */
 void WiFiRequestHandler::EventHandlerHelper(esp_event_base_t eventBase, int32_t eventId, void *eventData)
 {
@@ -918,7 +918,7 @@ void WiFiRequestHandler::EventHandlerHelper(esp_event_base_t eventBase, int32_t 
  *      that generated the event.
  * 
  *  @param eventData
- *      Data specifi to the event that has occurred.
+ *      Data specific to the event that has occurred.
  */
 void WiFiRequestHandler::EventHandler(void *arg, esp_event_base_t eventBase, int32_t eventId, void *eventData)
 {
@@ -926,7 +926,7 @@ void WiFiRequestHandler::EventHandler(void *arg, esp_event_base_t eventBase, int
     ESP_LOGI(__func__, "Enter");
 #endif
 
-    WiFiRequestHandler *sender = (WiFiRequestHandler *) arg;
+    WiFiRequestHandler *sender = static_cast<WiFiRequestHandler *>(arg);
     sender->EventHandlerHelper(eventBase, eventId, eventData);
 
 #if defined(WIFI_FULL_LOGGING)
