@@ -48,3 +48,8 @@ Where possible the processing of the requests has followed the same formula for 
 * Use the original request header and add the response payload
 * Free any heap resources that are no longer needed used in processing the request
 * Queue the response
+
+
+## `DispatchRequest` Method
+
+`DispatchRequest` is the main entry point for requests from the STM32.  This is required as it is a pure virtual function on the `RequestHandlerBase` base class.
