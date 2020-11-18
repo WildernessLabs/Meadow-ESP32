@@ -79,6 +79,18 @@
 #define SYSTEM_FULL_LOGGING
 #undef SYSTEM_FULL_LOGGING
 
+/******************************************************************************
+ *
+ *                              Bluetooth Settings
+ *
+ ******************************************************************************/
+
+/**
+ *  Log events related to the Bluetooth system.
+ */
+#define BT_FULL_LOGGING
+#undef BT_FULL_LOGGING
+
 /**
  * 
  */
