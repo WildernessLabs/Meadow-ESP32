@@ -4,7 +4,7 @@ This repository contains the code that will run on the ESP32 that will support t
 
 Services are provided to the STM32 through the SPI interface connected to the STM32 and the ESP32 chips.
 
-Additional documentation is availble for the following items (click on the header to follow the link to the appropriate document).
+Additional documentation is available for the following items (click on the header to follow the link to the appropriate document).
 
 ## [Message Format](Documentation/MessageFormat.md)
 
@@ -26,10 +26,22 @@ Three languages are used to facilitate communication between the various subsyst
 * NuttX is developed using C
 * Code on the ESP32 uses both C and C++
 
-The `FileGenerator` application uses two metadata files to generate message definitions, encoders and constants for all three languages.  This ensures consistency between the three envoronments.
+The `FileGenerator` application uses two metadata files to generate message definitions, encoders and constants for all three languages.  This ensures consistency between the three environments.
 
 ## [Diagnostics](Documentation/Diagnostics.md)
 
 At the basic level, the ESP32 provides serial output to facilitate basic `printf` debugging.
 
 Heap debugging tools are also available along with deferred debug output through application tracing.
+
+## [Configuration Values](Documentation/StoringConfiguration.md)
+
+The ESP32 allows the storage of data that can survive resets and power loss.  The Non-Volatile Storage (NVS) is defined in the partition table at the time the chip is flashed.  It is recommended that any data stored should be small discrete values as the system is optimised for these types of values.  Strings and BLOBs can be stored but it is not recommended.
+
+## [Mapping Values](Documentation/MappingValues.md)
+
+The `SharedEnums.*` files cater for the consistent use of application defined values between the various components of the system but there are some values that are defined in the SDKs on the various systems (Nuttx and ESP-IDF).  Values such as the error codes, socket options values are examples of these types of values.  The `Mapping` class facilitates these mappings.
+
+## [Hints and Tips](Documentation/HintsAndTips.md)
+
+A number of hints and tips for development and debugging have been recorded over time in order to assist new development.
