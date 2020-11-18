@@ -1499,7 +1499,6 @@ void WiFiRequestHandler::Connect(Message *message)
     ESP_LOGI(__func__, "Family: %d", sa.sin_family);
     ESP_LOGI(__func__, "IP address: %s", inet_ntoa(sa.sin_addr));
     ESP_LOGI(__func__, "Port: %d", ntohs(sa.sin_port));
-
 #endif
         response.Result = connect(request->SocketHandle, (struct sockaddr *) &sa, sizeof(sa));
     }
