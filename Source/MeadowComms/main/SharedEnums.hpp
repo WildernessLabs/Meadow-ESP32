@@ -104,7 +104,11 @@ namespace WiFiFunction
         RecvFrom = 14,
         Poll = 15,
         InterruptPollResponse = 16,
-        Send = 17
+        Send = 17,
+        Bind = 18,
+        Listen = 19,
+        Accept = 20,
+        Ioctl = 21
     };
 
 }

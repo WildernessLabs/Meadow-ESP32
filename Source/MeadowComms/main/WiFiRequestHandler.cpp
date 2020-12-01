@@ -163,7 +163,7 @@ const char *WiFiRequestHandler::NTP_SERVER_NAME = "NtpServer";
 /**
  *  Static IP address when not using DHCP.
  */
-uint32_t WiFiRequestHandler::_staticIpAddress;
+uint32_t WiFiRequestHandler::_staticIpAddress = 0;
 
 /**
  *  Name of the storage space holding the static IP address.
@@ -173,7 +173,7 @@ const char *WiFiRequestHandler::STATIC_IP_ADDRESS_NAME = "IpAddress";
 /**
  *  DNS server when not using DHCP.
  */
-uint32_t WiFiRequestHandler::_dnsServer;
+uint32_t WiFiRequestHandler::_dnsServer = 0;
 
 /**
  *  Name of the storage in NVS holding the DNS server IP address.
@@ -183,12 +183,22 @@ const char *WiFiRequestHandler::DNS_SERVER_NAME = "DnsServer";
 /**
  *  IP address of the default gateway when not using DHCP.
  */
-uint32_t WiFiRequestHandler::_defaultGateway;
+uint32_t WiFiRequestHandler::_defaultGateway = 0;
 
 /**
  *  Name of the storage space holding the IP address of the default gateway.
  */
 const char *WiFiRequestHandler::DEFAULT_GATEWAY_NAME = "Gateway";
+
+/**
+ *  Default value for the WiFi timeout.
+ */
+uint32_t WiFiRequestHandler::_wifiTimeout = 30000;
+
+/**
+ *  Name of the storage space holding the default WiFi timeout.
+ */
+const char *WiFiRequestHandler::DEFAULT_WIFI_TIMEOUT_NAME = "WiFiTimeout";
 
 /*
  * ----------------------------------------------------------------------------
@@ -225,6 +235,7 @@ WiFiRequestHandler::WiFiRequestHandler()
     _staticIpAddress = SystemRequestHandler::GetConfigurationValue(STATIC_IP_ADDRESS_NAME, _staticIpAddress);
     _dnsServer = SystemRequestHandler::GetConfigurationValue(DNS_SERVER_NAME, _dnsServer);
     _defaultGateway = SystemRequestHandler::GetConfigurationValue(DEFAULT_GATEWAY_NAME, _defaultGateway);
+    _wifiTimeout = SystemRequestHandler::GetConfigurationValue(DEFAULT_WIFI_TIMEOUT_NAME, _wifiTimeout);
     _stationNetIfHandle = nullptr;
     _softApNetIfHandle = nullptr;
     //
@@ -716,6 +727,40 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetAntenna(uint8_t antenna)
     return(result);
 }
 
+/**
+ *  @brief Get the automatic maximum retry count value.
+ */
+uint32_t WiFiRequestHandler::GetWiFiTimeout()
+{
+    return(_wifiTimeout);
+}
+
+/**
+ *  @brief Set the maximum retry count value.
+ *
+ *  @param value
+ *      New maximum retry count value.
+ * 
+ *  @returns
+ *      StatusCodes::Completed on success, StatusCodes::Failure if there is a problem.
+ */
+StatusCodes::StatusCodes WiFiRequestHandler::SetWiFiTimeout(uint32_t value)
+{
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
+    if (value != _wifiTimeout)
+    {
+        if (SystemRequestHandler::SetConfigurationValue(DEFAULT_WIFI_TIMEOUT_NAME, value) == NvsManager::ErrorCodes::Ok)
+        {
+            _wifiTimeout = value;
+        }
+        else
+        {
+            result = StatusCodes::Failure;
+        }
+    }
+    return(result);
+}
+
 /*
  * ----------------------------------------------------------------------------
  *
@@ -1001,6 +1046,18 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
         case WiFiFunction::Send:
             Send(request);
             break;
+        case WiFiFunction::Accept:
+            Accept(request);
+            break;
+        case WiFiFunction::Bind:
+            Bind(request);
+            break;
+        case WiFiFunction::Listen:
+            Listen(request);
+            break;
+        case WiFiFunction::Ioctl:
+            Ioctl(request);
+            break;
         default:
             ESP_LOGI(__func__, "Unknown WiFi message received, function %d", request->Function);
             if (request->Payload != NULL)
@@ -1272,7 +1329,11 @@ void WiFiRequestHandler::GetAvailableNetworks(Message *request)
 
     if (result == StatusCodes::CompletedOk)
     {
-        #define MAX_AP 20
+        //
+        //  The maximum packet size is 4,000 bytes for SPI and a single access point contains 47 bytes
+        //  of data (say 50) which gives space for about 80 access points in the packet.
+        //
+        #define MAX_AP 80
         uint16_t number = MAX_AP;
         wifi_ap_record_t *ap_info = (wifi_ap_record_t *) pvPortMalloc(MAX_AP * sizeof(wifi_ap_record_t));
         bzero(ap_info, MAX_AP * sizeof(wifi_ap_record_t));
@@ -1529,6 +1590,7 @@ void WiFiRequestHandler::Connect(Message *message)
 #endif
 
     vPortFree(request);
+    vPortFree(socketAddress);
     vPortFree(message->Payload);
 
     message->PayloadLength = Encoders::EncodedIntegerAndErrnoResponseBufferSize(&response);
@@ -1602,6 +1664,7 @@ void WiFiRequestHandler::SetSockOpt(Message *message)
     int32_t optionName = 0;
     if (Mapping::GetEspValue(Mapping::SocketOptions, request->OptionName, &optionName) < 0)
     {
+        ESP_LOGI(__func__, "Unknown option: %d", request->OptionName);
         response.Result = -1;
         errno = ENOPROTOOPT;
     }
@@ -2114,6 +2177,243 @@ void WiFiRequestHandler::RecvFrom(Message *message)
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
 
 #if defined(WIFI_FULL_LOGGING)
+    ESP_LOGI(__func__, "Exit");
+#endif
+}
+
+/**
+ *  @brief Expose the POSIX bind method to the STM32.
+ *
+ *  @param message
+ *      Message structure containing the parameters for the bind method.
+ */
+void WiFiRequestHandler::Bind(Message *message)
+{
+#if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_BIND)
+    ESP_LOGI(__func__, "Enter");
+#endif
+
+    Esp32Messaging::BindRequest *request = Encoders::ExtractBindRequest(message->Payload);
+    Esp32Messaging::SockAddr *socketAddress = Encoders::ExtractSockAddr(request->Addr);
+    Esp32Messaging::IntegerAndErrnoResponse response;
+    response.Result = 0;
+
+    struct sockaddr_in sa;
+    bzero(&sa, sizeof(struct sockaddr));
+    int family;
+    Mapping::GetEspValue(Mapping::AddressFamily, socketAddress->Family, &family);
+    errno = 0;
+    if (family == AF_INET)
+    {
+        sa.sin_family = socketAddress->Family;
+        sa.sin_port = socketAddress->Port;
+        memcpy(&sa.sin_addr, &socketAddress->Ip4Address, sizeof(socketAddress->Ip4Address));
+
+#if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_BIND)
+    ESP_LOGI(__func__, "Socket handle: %d", request->SocketHandle);
+    ESP_LOGI(__func__, "Family: %d", sa.sin_family);
+    ESP_LOGI(__func__, "IP address: %s", inet_ntoa(sa.sin_addr));
+    ESP_LOGI(__func__, "Port: %d", ntohs(sa.sin_port));
+#endif
+        response.Result = bind(request->SocketHandle, (struct sockaddr *) &sa, sizeof(sa));
+    }
+    else
+    {
+        response.Result = -1;
+        errno = EFAULT;
+    }
+
+    if (response.Result != 0)
+    {
+        int32_t result = 0;
+        if (Mapping::GetStmValue(Mapping::Errno, errno, &result) != 0)
+        {
+            Mapping::GetStmValue(Mapping::Errno, EFAULT, &result);
+        }
+        response.ResponseErrno = result;
+        response.Result = -1;
+    }
+    else
+    {
+        response.ResponseErrno = 0;
+    }
+
+#if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_BIND)
+    ESP_LOGI(__func__, "Error code: %d - %s", errno, strerror(errno));
+#endif
+
+    vPortFree(request);
+    vPortFree(socketAddress);
+    vPortFree(message->Payload);
+
+    message->PayloadLength = Encoders::EncodedIntegerAndErrnoResponseBufferSize(&response);
+    message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
+    Encoders::EncodeIntegerAndErrnoResponse(&response, message->Payload);
+    message->MessageType = MessageTypes::Response;
+    message->StatusCode = StatusCodes::CompletedOk;
+    _messageDispatcher->QueueMessageForStm32(message);
+    xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
+
+#if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_BIND)
+    ESP_LOGI(__func__, "Exit");
+#endif
+}
+
+/**
+ *  @brief Expose the POSIX listen method to the STM32.
+ *
+ *  @param message
+ *      Message structure containing the parameters for the listen method.
+ */
+void WiFiRequestHandler::Listen(Message *message)
+{
+#if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_LISTEN)
+    ESP_LOGI(__func__, "Enter");
+#endif
+
+    Esp32Messaging::ListenRequest *request = Encoders::ExtractListenRequest(message->Payload);
+    Esp32Messaging::IntegerAndErrnoResponse response;
+
+    response.Result = listen(request->SocketHandle, request->BackLog);
+    response.ResponseErrno = (response.Result == 0) ? 0 : errno;
+
+    vPortFree(request);
+
+    Encoders::EncodeIntegerAndErrnoResponse(&response, message->Payload);
+    message->MessageType = MessageTypes::Response;
+    message->StatusCode = StatusCodes::CompletedOk;
+    _messageDispatcher->QueueMessageForStm32(message);
+    xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
+
+#if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_LISTEN)
+    ESP_LOGI(__func__, "Exit");
+#endif
+}
+
+/**
+ *  @brief Expose the POSIX accept method to the STM32.
+ *
+ *  @param message
+ *      Message structure containing the parameters for the accept method.
+ */
+void WiFiRequestHandler::Accept(Message *message)
+{
+#if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_ACCEPT)
+    ESP_LOGI(__func__, "Enter");
+#endif
+
+    Esp32Messaging::ListenRequest *request = Encoders::ExtractListenRequest(message->Payload);
+    Esp32Messaging::AcceptResponse response;
+
+    struct sockaddr sa;
+    bzero(&sa, sizeof(struct sockaddr));
+    socklen_t saLen = sizeof(sa);
+    response.Result = accept(request->SocketHandle, &sa, &saLen);
+    if (response.Result > 0)
+    {
+        Esp32Messaging::SockAddr *sockAddr = static_cast<Esp32Messaging::SockAddr *>(pvPortMalloc(saLen));
+        int family;
+        Mapping::GetStmValue(Mapping::AddressFamily, sa.sa_family, &family);
+        sockAddr->Family = (uint8_t) (family & 0xff);
+        struct sockaddr_in *sin = (struct sockaddr_in *) &sa;
+        memcpy(&sockAddr->Ip4Address, &sin->sin_addr, sizeof(sin->sin_addr));
+        response.AddrLength = Encoders::EncodedSockAddrBufferSize(sockAddr);
+        response.Addr = static_cast<uint8_t *>(pvPortMalloc(response.AddrLength));
+        Encoders::EncodeSockAddr(sockAddr, response.Addr);
+        vPortFree(sockAddr);
+        response.ResponseErrno = 0;
+
+#if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_ACCEPT)
+    ESP_LOGI(__func__, "Socket handle: %d", response.Result);
+    ESP_LOGI(__func__, "Family: %d", sin->sin_family);
+    ESP_LOGI(__func__, "IP address: %s", inet_ntoa(sin->sin_addr));
+    ESP_LOGI(__func__, "Port: %d", ntohs(sin->sin_port));
+#endif
+    }
+    else
+    {
+        response.AddrLength = 0;
+        response.Addr = nullptr;
+        int32_t result = 0;
+        if (Mapping::GetStmValue(Mapping::Errno, errno, &result) != 0)
+        {
+            Mapping::GetStmValue(Mapping::Errno, EFAULT, &result);
+        }
+        response.ResponseErrno = result;
+    }
+
+    vPortFree(request);
+
+    Encoders::EncodeAcceptResponse(&response, message->Payload);
+    message->MessageType = MessageTypes::Response;
+    message->StatusCode = StatusCodes::CompletedOk;
+    _messageDispatcher->QueueMessageForStm32(message);
+    xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
+
+#if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_ACCEPT)
+    ESP_LOGI(__func__, "Exit");
+#endif
+}
+
+/**
+ *  @brief Expose the simulation of the POSIX ioctl method to the STM32.
+ *
+ *  @param message
+ *      Message structure containing the parameters for the ioctl method.
+ */
+void WiFiRequestHandler::Ioctl(Message *message)
+{
+#if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_IOCTL)
+    ESP_LOGI(__func__, "Enter");
+#endif
+
+    Esp32Messaging::IoctlRequest *request = Encoders::ExtractIoctlRequest(message->Payload);
+    vPortFree(message->Payload);
+    message->PayloadLength = 0;
+
+    Esp32Messaging::IoctlResponse response;
+    switch (request->Command)
+    {
+        case SIOCGIFCONF:
+            esp_netif_ip_info_t ipInfo;
+            if (esp_netif_get_ip_info(_stationNetIfHandle, &ipInfo) == ESP_OK)
+            {
+                Esp32Messaging::SockAddr sa;
+
+                bzero(&sa, sizeof(Esp32Messaging::SockAddr));
+                int family;
+                Mapping::GetStmValue(Mapping::AddressFamily, AF_INET, &family);
+                sa.Family = (unsigned char) (family & 0xff);
+                memcpy(&sa.Ip4Address, &ipInfo.ip, sizeof(ipInfo.ip));
+                response.AddrLength = Encoders::EncodedSockAddrBufferSize(&sa);
+                response.Addr = static_cast<uint8_t *>(pvPortMalloc(response.AddrLength));
+                Encoders::EncodeSockAddr(&sa, response.Addr);
+            }
+            break;
+        case SIOCGIFFLAGS:
+            if (esp_netif_get_ip_info(_stationNetIfHandle, &ipInfo) == ESP_OK)
+            {
+                response.Flags = IFF_UP;
+            }
+            else
+            {
+                response.Flags = IFF_DOWN;
+            }
+            response.AddrLength = 0;
+            response.Addr = nullptr;
+            break;
+    }
+    vPortFree(request);
+
+    message->PayloadLength = Encoders::EncodedIoctlResponseBufferSize(&response);
+    message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
+    Encoders::EncodeIoctlResponse(&response, message->Payload);
+    message->MessageType = MessageTypes::Response;
+    message->StatusCode = StatusCodes::CompletedOk;
+    _messageDispatcher->QueueMessageForStm32(message);
+    xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
+
+#if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_IOCTL)
     ESP_LOGI(__func__, "Exit");
 #endif
 }

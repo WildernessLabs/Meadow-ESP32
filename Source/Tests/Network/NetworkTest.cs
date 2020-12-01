@@ -299,12 +299,12 @@ namespace BasicNetworkTest
             try
             {
                 listener.Bind(localEndPoint);
-                //    listener.Listen(10);
+                listener.Listen(10);
 
-                //    while (true)
-                //    {
-                //        Console.WriteLine("Waiting for a connection...");
-                //        Socket handler = listener.Accept();
+                while (true)
+                {
+                    Console.WriteLine("Waiting for a connection...");
+                    Socket handler = listener.Accept();
                 //        data = null;
 
                 //        while (true)
@@ -323,8 +323,7 @@ namespace BasicNetworkTest
                 //        handler.Send(msg);
                 //        handler.Shutdown(SocketShutdown.Both);
                 //        handler.Close();
-                //    }
-
+                }
             }
             catch (Exception e)
             {

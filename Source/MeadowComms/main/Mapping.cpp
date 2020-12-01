@@ -8,6 +8,7 @@
  */
 #include <sys/socket.h>
 #include "errno.h"
+#include <sys/ioctl.h>
 #include "Mapping.hpp"
 
 /*

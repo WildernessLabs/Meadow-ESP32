@@ -61,11 +61,23 @@
 #define WIFI_DEBUG_SENDTO_DATA 1
 #undef WIFI_DEBUG_SENDTO_DATA
 
-#define WIFI_DEBUG_SELECT 2
+#define WIFI_DEBUG_SELECT 1
 #undef WIFI_DEBUG_SELECT
 
-#define WIFI_DEBUG_SOCKET 2
+#define WIFI_DEBUG_SOCKET 1
 #undef WIFI_DEBUG_SOCKET
+
+#define WIFI_DEBUG_BIND 1
+#undef WIFI_DEBUG_BIND
+
+#define WIFI_DEBUG_LISTEN 1
+#undef WIFI_DEBUG_LISTEN
+
+#define WIFI_DEBUG_ACCEPT 1
+#undef WIFI_DEBUG_ACCEPT
+
+#define WIFI_DEBUG_IOCTL 1
+#undef WIFI_DEBUG_IOCTL
 
 /******************************************************************************
  *
