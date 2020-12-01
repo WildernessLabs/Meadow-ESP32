@@ -33,9 +33,9 @@ namespace BasicNetworkTest
 
             // application.WebSocketPostTestData();
 
-            application.ScanForAccessPoints();
+            // application.ScanForAccessPoints();
 
-            //application.StartListening();
+            application.StartListening();
             Thread.Sleep(Timeout.Infinite);
         }
     }
