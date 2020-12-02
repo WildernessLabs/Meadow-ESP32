@@ -284,6 +284,53 @@
                 { "Name": "ReturnedEvents", "DataType": "uint16" },
                 { "Name": "SetupMessageId", "DataType": "uint32" }
             ]
+        },
+        {
+            "Name": "ListenRequest",
+            "MessageElements":
+            [
+                { "Name": "SocketHandle", "DataType": "int" },
+                { "Name": "BackLog", "DataType": "int" }
+            ]
+        },
+        {
+            "Name": "BindRequest",
+            "MessageElements":
+            [
+              { "Name": "SocketHandle", "DataType": "int" },
+              { "Name": "Addr", "DataType": "blob" }
+            ]
+        },
+        {
+            "Name": "AcceptRequest",
+            "MessageElements":
+            [
+                { "Name": "SocketHandle", "DataType": "int" }
+            ]
+        },
+        {
+            "Name": "AcceptResponse",
+            "MessageElements":
+            [
+                { "Name": "Addr", "DataType": "blob" },
+                { "Name": "Result", "DataType": "int" },
+                { "Name": "ResponseErrno", "DataType": "int" }
+            ]
+        },
+        {
+            "Name": "IoctlRequest",
+            "MessageElements":
+            [
+                { "Name": "Command", "DataType": "int" }
+            ]
+        },
+        {
+            "Name": "IoctlResponse",
+            "MessageElements":
+            [
+                { "Name": "Addr", "DataType": "blob" },
+                { "Name": "Flags", "DataType": "int" }
+            ]
         }
     ]
 }

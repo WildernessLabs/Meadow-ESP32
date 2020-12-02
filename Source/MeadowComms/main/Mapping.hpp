@@ -92,46 +92,46 @@ private:
      */
     static int_mapping_t _socketShutdownType[];
 
-    /*
-     *  Get the mapped value using the MappingDirection to determine which
+    /**
+     *  @brief Get the mapped value using the MappingDirection to determine which
      *  value should be retrieved.
      */
     static int32_t GetFlagValue(Mapping::MappingTable, MappingDirection, int32_t, int32_t *);
 
-    /*
-     *  Get the mapped flags using the MappingDirection to determine which
+    /**
+     *  @brief Get the mapped flags using the MappingDirection to determine which
      *  value should be retrieved.
      */
     static int32_t GetValue(Mapping::MappingTable, MappingDirection, int32_t, int32_t *);
 
 public:
-    /*
-     *  Default constructor for the logging system.
+    /**
+     *  @brief Default constructor for the logging system.
      */
     Mapping();
 
-    /*
-     *  Default destructor for the logging system.
+    /**
+     *  @brief Default destructor for the logging system.
      */
     ~Mapping();
 
-    /*
-     *  Get the integer ESP32 value equivalent to the specified STM32 value.
+    /**
+     *  @brief Get the integer ESP32 value equivalent to the specified STM32 value.
      */
     static int32_t GetEspValue(MappingTable, int32_t, int32_t *);
 
-    /*
-     *  Get the integer STM32 value equivalent to the specified ESP32 value.
+    /**
+     *  @brief Get the integer STM32 value equivalent to the specified ESP32 value.
      */
     static int32_t GetStmValue(MappingTable, int32_t, int32_t *);
 
-    /*
-     *  Get the integer ESP32 value equivalent to the specified STM32 value.
+    /**
+     *  @brief Get the integer ESP32 value equivalent to the specified STM32 value.
      */
     static int32_t GetEspFlagValue(MappingTable, int32_t, int32_t *);
 
-    /*
-     *  Get the integer STM32 value equivalent to the specified ESP32 value.
+    /**
+     *  @brief Get the integer STM32 value equivalent to the specified ESP32 value.
      */
     static int32_t GetStmFlagValue(MappingTable, int32_t, int32_t *);
 };

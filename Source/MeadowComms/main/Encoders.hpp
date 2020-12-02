@@ -271,6 +271,44 @@ namespace Esp32Messaging
         uint32_t SetupMessageId;
     };
 
+    struct ListenRequest
+    {
+        int32_t SocketHandle;
+        int32_t BackLog;
+    };
+
+    struct BindRequest
+    {
+        int32_t SocketHandle;
+        uint32_t AddrLength;
+        uint8_t *Addr;
+    };
+
+    struct AcceptRequest
+    {
+        int32_t SocketHandle;
+    };
+
+    struct AcceptResponse
+    {
+        uint32_t AddrLength;
+        uint8_t *Addr;
+        int32_t Result;
+        int32_t ResponseErrno;
+    };
+
+    struct IoctlRequest
+    {
+        int32_t Command;
+    };
+
+    struct IoctlResponse
+    {
+        uint32_t AddrLength;
+        uint8_t *Addr;
+        int32_t Flags;
+    };
+
 }
 
 /*
@@ -390,6 +428,24 @@ public:
     static void EncodeInterruptPollResponse(Esp32Messaging::InterruptPollResponse *, uint8_t *);
     static int EncodedInterruptPollResponseBufferSize(Esp32Messaging::InterruptPollResponse *);
     static Esp32Messaging::InterruptPollResponse *ExtractInterruptPollResponse(uint8_t *);
+    static void EncodeListenRequest(Esp32Messaging::ListenRequest *, uint8_t *);
+    static int EncodedListenRequestBufferSize(Esp32Messaging::ListenRequest *);
+    static Esp32Messaging::ListenRequest *ExtractListenRequest(uint8_t *);
+    static void EncodeBindRequest(Esp32Messaging::BindRequest *, uint8_t *);
+    static int EncodedBindRequestBufferSize(Esp32Messaging::BindRequest *);
+    static Esp32Messaging::BindRequest *ExtractBindRequest(uint8_t *);
+    static void EncodeAcceptRequest(Esp32Messaging::AcceptRequest *, uint8_t *);
+    static int EncodedAcceptRequestBufferSize(Esp32Messaging::AcceptRequest *);
+    static Esp32Messaging::AcceptRequest *ExtractAcceptRequest(uint8_t *);
+    static void EncodeAcceptResponse(Esp32Messaging::AcceptResponse *, uint8_t *);
+    static int EncodedAcceptResponseBufferSize(Esp32Messaging::AcceptResponse *);
+    static Esp32Messaging::AcceptResponse *ExtractAcceptResponse(uint8_t *);
+    static void EncodeIoctlRequest(Esp32Messaging::IoctlRequest *, uint8_t *);
+    static int EncodedIoctlRequestBufferSize(Esp32Messaging::IoctlRequest *);
+    static Esp32Messaging::IoctlRequest *ExtractIoctlRequest(uint8_t *);
+    static void EncodeIoctlResponse(Esp32Messaging::IoctlResponse *, uint8_t *);
+    static int EncodedIoctlResponseBufferSize(Esp32Messaging::IoctlResponse *);
+    static Esp32Messaging::IoctlResponse *ExtractIoctlResponse(uint8_t *);
 
 };
 
