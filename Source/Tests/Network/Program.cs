@@ -10,7 +10,7 @@ namespace BasicNetworkTest
 
         public static async Task Main(string[] args)
         {
-            Console.WriteLine("Network Connection Meadow F7 (Version 0.14.06)");
+            Console.WriteLine("Network Connection Meadow F7 (Version 0.14.07)");
 
             application = new NetworkTest();
 
@@ -33,9 +33,12 @@ namespace BasicNetworkTest
 
             // application.WebSocketPostTestData();
 
-            application.ScanForAccessPoints();
+            // application.ScanForAccessPoints();
 
-            //application.StartListening();
+            // application.StartListeningUsingSockets();
+
+            application.StartHttpServer();
+            
             Thread.Sleep(Timeout.Infinite);
         }
     }

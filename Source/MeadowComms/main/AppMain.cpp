@@ -61,12 +61,20 @@ extern "C" void app_main()
     SpiTransportProvider *spi = new SpiTransportProvider();
     MessageDispatcher * __attribute__((unused)) messageDispatcher = new MessageDispatcher(spi);
 
-    // Message message = {};
-    // message.MessageType = MessageTypes::Header;
-    // message.Interface = Esp32Interfaces::WiFi;
-    // message.Function = WiFiFunction::GetAccessPoints;
+//     Message message = {};
+//     message.MessageType = MessageTypes::Header;
+//     message.Interface = Esp32Interfaces::WiFi;
+//     message.Function = WiFiFunction::Ioctl;
+//     Esp32Messaging::IoctlRequest request;
 
-    // messageDispatcher->QueueMessageForEsp32(&message);
+// #include "WiFiRequestHandler.hpp"
+
+//     request.Command = SIOCGIFFLAGS;
+//     message.PayloadLength = Encoders::EncodedIoctlRequestBufferSize(&request);
+//     message.Payload = static_cast<uint8_t *>(pvPortMalloc(message.PayloadLength));
+//     Encoders::EncodeIoctlRequest(&request, message.Payload);
+
+//     messageDispatcher->QueueMessageForEsp32(&message);
 
     //
     //  Main program loop.

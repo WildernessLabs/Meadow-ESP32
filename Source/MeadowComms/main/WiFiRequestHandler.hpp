@@ -33,6 +33,30 @@
 #include "Logging.hpp"
 #include "GenericList.hpp"
 
+/**
+ *  The following definitions are copied from the NuttX system as they
+ *  have no analogy in ESP-IDF and hence no mapping is needed but we need
+ *  a copy of these defintions in order to implement some of the networking
+ *  functionality.
+ */
+
+/* Interface flag bits (for ioctl) */
+
+#define IFF_DOWN           (1 << 0) /* Interface is down */
+#define IFF_UP             (1 << 1) /* Interface is up */
+#define IFF_RUNNING        (1 << 2) /* Carrier is available */
+#define IFF_IPv6           (1 << 3) /* Configured for IPv6 packet (vs ARP or IPv4) */
+#define IFF_NOARP          (1 << 7) /* ARP is not required for this packet */
+
+/* Socket definitions (for ioctl) */
+
+#define _SIOCBASE           (0x0700)            /* Socket ioctl commands */
+#define _IOC(type,nr)       ((type)|(nr))
+#define _SIOC(nr)           _IOC(_SIOCBASE,nr)
+
+#define SIOCGIFCONF         _SIOC(0x0018)       /* Return an interface list (IPv4) */
+#define SIOCGIFFLAGS        _SIOC(0x001b)       /* Gets the interface flags */
+
 /*
  *  @brief WiFi class
  *
@@ -350,6 +374,16 @@ private:
     static const char *DEFAULT_GATEWAY_NAME;
 
     /**
+     *  Default value for the WiFi timeout.
+     */
+    static uint32_t _wifiTimeout;
+
+    /**
+     *  Name of the storage space holding the default WiFi timeout.
+     */
+    static const char *DEFAULT_WIFI_TIMEOUT_NAME;
+
+    /**
      *  List of active poll requests.
      */
     static GenericLinkList<PollRequestInformation> *_pollRequests;
@@ -525,6 +559,26 @@ private:
      */
     void Poll(Message *);
 
+    /**
+     * Provide a mechanism for the STM32 to call the bind method.
+     */
+    void Bind(Message *);
+
+    /**
+     * Provide a mechanism for the STM32 to call the listen method.
+     */
+    void Listen(Message *);
+
+    /**
+     * Provide a mechanism for the STM32 to call the accept method.
+     */
+    void Accept(Message *);
+
+    /**
+     * Provide a mechanism for the STM32 to call the simulated ioctl method.
+     */
+    void Ioctl(Message *);
+
 public:
     /*
      *  Constructor for the WiFi object.
@@ -634,6 +688,12 @@ public:
      */
     static uint8_t GetAntenna();
     static StatusCodes::StatusCodes SetAntenna(uint8_t);
+
+    /**
+     *  Get / Set the WiFi timeout value.
+     */
+    static uint32_t GetWiFiTimeout();
+    static StatusCodes::StatusCodes SetWiFiTimeout(uint32_t);
 };
 
 #endif /* _WIFI_REQUEST_HANDLER_HPP_ */
