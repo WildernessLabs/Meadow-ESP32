@@ -294,35 +294,39 @@ namespace BasicNetworkTest
             IPAddress ipAddress = ipHostInfo.AddressList[0];
             IPEndPoint localEndPoint = new IPEndPoint(ipAddress, 11000);
 
+            Console.WriteLine("Creating socket.");
             Socket listener = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
 
             try
             {
+                Console.WriteLine("Binding socket.");
                 listener.Bind(localEndPoint);
+                Console.WriteLine("Listening for connections.");
                 listener.Listen(10);
 
                 while (true)
                 {
-                    Console.WriteLine("Waiting for a connection...");
+                    Console.WriteLine("Accepting connection.");
                     Socket handler = listener.Accept();
-                //        data = null;
+                    data = null;
 
-                //        while (true)
-                //        {
-                //            int bytesRec = handler.Receive(bytes);
-                //            data += Encoding.ASCII.GetString(bytes, 0, bytesRec);
-                //            if (data.IndexOf("<EOF>") > -1)
-                //            {
-                //                break;
-                //            }
-                //        }
+                    while (true)
+                    {
+                        Console.WriteLine("Receiving data.");
+                        int bytesRec = handler.Receive(bytes);
+                        data += Encoding.ASCII.GetString(bytes, 0, bytesRec);
+                        if (data.IndexOf("<EOF>") > -1)
+                        {
+                            break;
+                        }
+                    }
 
-                //        Console.WriteLine("Text received : {0}", data);
-                //        byte[] msg = Encoding.ASCII.GetBytes(data);
-
-                //        handler.Send(msg);
-                //        handler.Shutdown(SocketShutdown.Both);
-                //        handler.Close();
+                    Console.WriteLine("Text received : {0}", data);
+                    
+                    Console.WriteLine("Shutting down the socket.");
+                    handler.Shutdown(SocketShutdown.Both);
+                    Console.WriteLine("Closing socket.");
+                    handler.Close();
                 }
             }
             catch (Exception e)
