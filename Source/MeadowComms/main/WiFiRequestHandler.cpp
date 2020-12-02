@@ -2152,7 +2152,10 @@ void WiFiRequestHandler::RecvFrom(Message *message)
     ESP_LOGI(__func__, "Received %d bytes.", response.Result);
     if (response.Buffer)
     {
-        ESP_LOG_BUFFER_HEX(__func__, response.Buffer, response.Result);
+        if (response.BufferLength > 0)
+        {
+            ESP_LOG_BUFFER_HEX(__func__, response.Buffer, response.Result);
+        }
     }
     ESP_LOGI(__func__, "Result: %d, errno: %d - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
 #endif
@@ -2303,6 +2306,7 @@ void WiFiRequestHandler::Accept(Message *message)
 #endif
 
     Esp32Messaging::ListenRequest *request = Encoders::ExtractListenRequest(message->Payload);
+    free(message->Payload);
     Esp32Messaging::AcceptResponse response;
 
     struct sockaddr sa;
@@ -2311,11 +2315,13 @@ void WiFiRequestHandler::Accept(Message *message)
     response.Result = accept(request->SocketHandle, &sa, &saLen);
     if (response.Result > 0)
     {
-        Esp32Messaging::SockAddr *sockAddr = static_cast<Esp32Messaging::SockAddr *>(pvPortMalloc(saLen));
+        Esp32Messaging::SockAddr *sockAddr = static_cast<Esp32Messaging::SockAddr *>(pvPortMalloc(sizeof(Esp32Messaging::SockAddr)));
+        bzero(sockAddr, sizeof(Esp32Messaging::SockAddr));
         int family;
         Mapping::GetStmValue(Mapping::AddressFamily, sa.sa_family, &family);
         sockAddr->Family = (uint8_t) (family & 0xff);
         struct sockaddr_in *sin = (struct sockaddr_in *) &sa;
+        sockAddr->Port = sin->sin_port;
         memcpy(&sockAddr->Ip4Address, &sin->sin_addr, sizeof(sin->sin_addr));
         response.AddrLength = Encoders::EncodedSockAddrBufferSize(sockAddr);
         response.Addr = static_cast<uint8_t *>(pvPortMalloc(response.AddrLength));
@@ -2341,9 +2347,10 @@ void WiFiRequestHandler::Accept(Message *message)
         }
         response.ResponseErrno = result;
     }
-
     vPortFree(request);
 
+    message->PayloadLength = Encoders::EncodedAcceptResponseBufferSize(&response);
+    message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
     Encoders::EncodeAcceptResponse(&response, message->Payload);
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOk;
