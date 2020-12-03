@@ -579,6 +579,11 @@ private:
      */
     void Ioctl(Message *);
 
+    /**
+     * Provide a mechanism for the STM32 to call the simulated getsockname method.
+     */
+    void GetSockName(Message *);
+
 public:
     /*
      *  Constructor for the WiFi object.

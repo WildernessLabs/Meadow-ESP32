@@ -2980,4 +2980,135 @@ Esp32Messaging::IoctlResponse *Encoders::ExtractIoctlResponse(uint8_t *buffer)
     return(ioctlResponse);
 }
 
+/**
+ *  Convert the GetSockNameRequest object into a byte stream that can be sent to the STM32.
+ *  
+ *  The amount of memory required can be obtained by calling the EncodedGetSockNameRequestBufferSize method.
+ *  
+ *  @param getSockNameRequest
+ *      GetSockNameRequest object to be encoded.
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory large enough to hold the encoded GetSockNameRequest object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodeGetSockNameRequest
+void Encoders::EncodeGetSockNameRequest(Esp32Messaging::GetSockNameRequest *getSockNameRequest, uint8_t *buffer)
+{
+    EncodeInt32(getSockNameRequest->SocketHandle, buffer);
+}
+
+/**
+ *  Calculate the amount of memory required to hold the given instance of the GetSockNameRequest object.
+ *  
+ *  @param getSockNameRequest
+ *      GetSockNameRequest object to be encoded.
+ *  
+ *  @returns
+ *      Number of bytes required to hold the encoded GetSockNameRequest object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodedGetSockNameRequestBufferSize
+int Encoders::EncodedGetSockNameRequestBufferSize(Esp32Messaging::GetSockNameRequest *getSockNameRequest)
+{
+    return(4);
+}
+
+/**
+ *  Extract the GetSockNameRequest object that is encoded in the given buffer.
+ *  
+ *  Note that the returned pointer points to a block of memory on the heap and
+ *  this should eventually be released calling vPortFree(...).
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded GetSockNameRequest object.
+ *  
+ *  @returns
+ *      Pointer to a GetSockNameRequest object.
+ */
+// cppcheck-suppress unusedFunction symbolName=ExtractGetSockNameRequest
+Esp32Messaging::GetSockNameRequest *Encoders::ExtractGetSockNameRequest(uint8_t *buffer)
+{
+    Esp32Messaging::GetSockNameRequest *getSockNameRequest = (Esp32Messaging::GetSockNameRequest *) pvPortMalloc(sizeof(Esp32Messaging::GetSockNameRequest));
+
+    getSockNameRequest->SocketHandle = ExtractInt32(buffer);
+    return(getSockNameRequest);
+}
+
+/**
+ *  Convert the GetSockNameResponse object into a byte stream that can be sent to the STM32.
+ *  
+ *  The amount of memory required can be obtained by calling the EncodedGetSockNameResponseBufferSize method.
+ *  
+ *  @param getSockNameResponse
+ *      GetSockNameResponse object to be encoded.
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory large enough to hold the encoded GetSockNameResponse object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodeGetSockNameResponse
+void Encoders::EncodeGetSockNameResponse(Esp32Messaging::GetSockNameResponse *getSockNameResponse, uint8_t *buffer)
+{
+    EncodeUInt32(getSockNameResponse->AddrLength, buffer);
+    buffer += 4;
+    if (getSockNameResponse->AddrLength > 0)
+    {
+        memcpy((void *) buffer, (void *) getSockNameResponse->Addr, getSockNameResponse->AddrLength);
+        buffer += getSockNameResponse->AddrLength;
+    }
+    EncodeInt32(getSockNameResponse->Result, buffer);
+    buffer += 4;
+    EncodeInt32(getSockNameResponse->ResponseErrno, buffer);
+}
+
+/**
+ *  Calculate the amount of memory required to hold the given instance of the GetSockNameResponse object.
+ *  
+ *  @param getSockNameResponse
+ *      GetSockNameResponse object to be encoded.
+ *  
+ *  @returns
+ *      Number of bytes required to hold the encoded GetSockNameResponse object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodedGetSockNameResponseBufferSize
+int Encoders::EncodedGetSockNameResponseBufferSize(Esp32Messaging::GetSockNameResponse *getSockNameResponse)
+{
+    int result = 0;
+    result += getSockNameResponse->AddrLength;
+    return(result + 12);
+}
+
+/**
+ *  Extract the GetSockNameResponse object that is encoded in the given buffer.
+ *  
+ *  Note that the returned pointer points to a block of memory on the heap and
+ *  this should eventually be released calling vPortFree(...).
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded GetSockNameResponse object.
+ *  
+ *  @returns
+ *      Pointer to a GetSockNameResponse object.
+ */
+// cppcheck-suppress unusedFunction symbolName=ExtractGetSockNameResponse
+Esp32Messaging::GetSockNameResponse *Encoders::ExtractGetSockNameResponse(uint8_t *buffer)
+{
+    Esp32Messaging::GetSockNameResponse *getSockNameResponse = (Esp32Messaging::GetSockNameResponse *) pvPortMalloc(sizeof(Esp32Messaging::GetSockNameResponse));
+
+    getSockNameResponse->AddrLength = ExtractUInt32(buffer);
+    buffer += 4;
+    if (getSockNameResponse->AddrLength > 0)
+    {
+        getSockNameResponse->Addr = (uint8_t *) pvPortMalloc(getSockNameResponse->AddrLength);
+        memcpy(getSockNameResponse->Addr, buffer, getSockNameResponse->AddrLength);
+        buffer += getSockNameResponse->AddrLength;
+    }
+    else
+    {
+        getSockNameResponse->Addr = nullptr;
+    }
+    getSockNameResponse->Result = ExtractInt32(buffer);
+    buffer += 4;
+    getSockNameResponse->ResponseErrno = ExtractInt32(buffer);
+    return(getSockNameResponse);
+}
+
 
