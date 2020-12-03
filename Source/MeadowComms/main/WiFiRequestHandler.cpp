@@ -1058,6 +1058,9 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
         case WiFiFunction::Ioctl:
             Ioctl(request);
             break;
+        case WiFiFunction::GetSockName:
+            GetSockName(request);
+            break;
         default:
             ESP_LOGI(__func__, "Unknown WiFi message received, function %d", request->Function);
             if (request->Payload != NULL)
@@ -2305,7 +2308,7 @@ void WiFiRequestHandler::Accept(Message *message)
     ESP_LOGI(__func__, "Enter");
 #endif
 
-    Esp32Messaging::ListenRequest *request = Encoders::ExtractListenRequest(message->Payload);
+    Esp32Messaging::AcceptRequest *request = Encoders::ExtractAcceptRequest(message->Payload);
     free(message->Payload);
     Esp32Messaging::AcceptResponse response;
 
@@ -2426,6 +2429,75 @@ void WiFiRequestHandler::Ioctl(Message *message)
 }
 
 /**
+ *  @brief Expose the POSIX getsockname method to the STM32.
+ *
+ *  @param message
+ *      Message structure containing the parameters for the accept method.
+ */
+void WiFiRequestHandler::GetSockName(Message *message)
+{
+#if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_GETSOCKNAME)
+    ESP_LOGI(__func__, "Enter");
+#endif
+
+    Esp32Messaging::GetSockNameRequest *request = Encoders::ExtractGetSockNameRequest(message->Payload);
+    free(message->Payload);
+    Esp32Messaging::GetSockNameResponse response;
+
+    struct sockaddr sa;
+    bzero(&sa, sizeof(struct sockaddr));
+    socklen_t saLen = sizeof(sa);
+    response.Result = getsockname(request->SocketHandle, &sa, &saLen);
+    if (response.Result > 0)
+    {
+        Esp32Messaging::SockAddr *sockAddr = static_cast<Esp32Messaging::SockAddr *>(pvPortMalloc(sizeof(Esp32Messaging::SockAddr)));
+        bzero(sockAddr, sizeof(Esp32Messaging::SockAddr));
+        int family;
+        Mapping::GetStmValue(Mapping::AddressFamily, sa.sa_family, &family);
+        sockAddr->Family = (uint8_t) (family & 0xff);
+        struct sockaddr_in *sin = (struct sockaddr_in *) &sa;
+        sockAddr->Port = sin->sin_port;
+        memcpy(&sockAddr->Ip4Address, &sin->sin_addr, sizeof(sin->sin_addr));
+        response.AddrLength = Encoders::EncodedSockAddrBufferSize(sockAddr);
+        response.Addr = static_cast<uint8_t *>(pvPortMalloc(response.AddrLength));
+        Encoders::EncodeSockAddr(sockAddr, response.Addr);
+        vPortFree(sockAddr);
+        response.ResponseErrno = 0;
+
+#if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_GETSOCKNAME)
+    ESP_LOGI(__func__, "Socket handle: %d", response.Result);
+    ESP_LOGI(__func__, "Family: %d", sin->sin_family);
+    ESP_LOGI(__func__, "IP address: %s", inet_ntoa(sin->sin_addr));
+    ESP_LOGI(__func__, "Port: %d", ntohs(sin->sin_port));
+#endif
+    }
+    else
+    {
+        response.AddrLength = 0;
+        response.Addr = nullptr;
+        int32_t result = 0;
+        if (Mapping::GetStmValue(Mapping::Errno, errno, &result) != 0)
+        {
+            Mapping::GetStmValue(Mapping::Errno, EFAULT, &result);
+        }
+        response.ResponseErrno = result;
+    }
+    vPortFree(request);
+
+    message->PayloadLength = Encoders::EncodedGetSockNameResponseBufferSize(&response);
+    message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
+    Encoders::EncodeGetSockNameResponse(&response, message->Payload);
+    message->MessageType = MessageTypes::Response;
+    message->StatusCode = StatusCodes::CompletedOk;
+    _messageDispatcher->QueueMessageForStm32(message);
+    xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
+
+#if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_GETSOCKNAME)
+    ESP_LOGI(__func__, "Exit");
+#endif
+}
+
+/**
  *  @brief Expose the poll method to the STM32.
  *
  *  @param message
@@ -2468,50 +2540,6 @@ void WiFiRequestHandler::Poll(Message *message)
     {
         ESP_LOGI(__func__, "Poll request not supported.");
         errno = EFAULT;
-        // if (request->Setup)
-        // {
-        //     ESP_LOGI(__func__, "Setting up poll request for socket %d (request ID 0x%08x)", request->SocketHandle, message->MessageID);
-        //     pollRequest->Fds = (struct pollfd *) pvPortMalloc(sizeof(struct pollfd));
-        //     if (pollRequest->Fds != NULL)
-        //     {
-        //         bzero(pollRequest->Fds, sizeof(struct pollfd));
-        //         //
-        //         pollRequest->Fds->fd = request->SocketHandle;
-        //         Mapping::GetEspFlagValue(Mapping::PollEvents, request->Events, &event);
-        //         pollRequest->Fds->events = (uint16_t) (event & 0xffff);
-        //         ESP_LOGI(__func__, "Requested Nuttx events 0x%04d maps to ESP events 0x%04d", request->Events, event);
-        //         //
-        //         message->DeletePayload();
-        //         pollRequest->OriginalRequestID = message->MessageID;
-        //         char taskName[30];
-        //         snprintf(taskName, 30, "PollRequest0x%08x", message->MessageID);
-        //         xTaskCreate(PollRequestProcessor, taskName, 2048 * 2, pollRequest, configMAX_PRIORITIES - 1, &pollRequest->TaskHandle);
-        //     }
-        //     else
-        //     {
-        //         response.Result = -1;
-        //     }
-        // }
-        // else
-        // {
-        //     ESP_LOGI(__func__, "Tearing down poll request for request ID 0x%08x", request->SetupMessageId);
-        //     xSemaphoreTake(_pollRequestListMutex, portMAX_DELAY);
-        //     PollRequestInformation *pollRequest = _pollRequests->RemoveItem(request->SetupMessageId);
-        //     xSemaphoreGive(_pollRequestListMutex);
-        //     if (pollRequest)
-        //     {
-        //         pollRequest->Teardown = true;
-        //         if (xQueueSendToBack(_completedPollRequestsQueue, &pollRequest, 0) != pdPASS)
-        //         {
-        //             ESP_LOGE(__func__, "Cannot queue poll teardown request.");
-        //             response.Result = -1;
-        //         }
-        //     }
-        //     else
-        //     {
-        //         ESP_LOGI(__func__, "Cannot find poll request ID 0x%08x", request->SetupMessageId);
-        //     }
-        // }
     }
     
     response.ResponseErrno = errno;
