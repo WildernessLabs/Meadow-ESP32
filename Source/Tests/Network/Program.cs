@@ -37,7 +37,11 @@ namespace BasicNetworkTest
 
             // application.StartListeningUsingSockets();
 
-            application.StartHttpServer();
+            // application.StartHttpServer();
+
+            // application.TestTcpListener();
+            
+            application.TestUdpListener();
             
             Thread.Sleep(Timeout.Infinite);
         }
