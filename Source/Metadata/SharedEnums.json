@@ -40,7 +40,8 @@
           "EnumNames": [
               "StartNetwork", "Stop", "ConnectToAccessPoint", "DisconnectFromAccessPoint", "GetAccessPoints",
               "GetAddrInfo", "Socket", "Connect", "FreeAddrInfo", "Write", "SetSockOpt", "Read",
-              "Close", "SendTo", "RecvFrom", "Poll", "InterruptPollResponse", "Send", "Bind", "Listen", "Accept", "Ioctl"
+              "Close", "SendTo", "RecvFrom", "Poll", "InterruptPollResponse", "Send", "Bind", "Listen", "Accept", "Ioctl",
+              "GetSockName"
           ]
         },
         {

@@ -331,6 +331,22 @@
                 { "Name": "Addr", "DataType": "blob" },
                 { "Name": "Flags", "DataType": "int" }
             ]
+        },
+        {
+            "Name": "GetSockNameRequest",
+            "MessageElements":
+            [
+                { "Name": "SocketHandle", "DataType": "int" }
+            ]
+        },
+        {
+            "Name": "GetSockNameResponse",
+            "MessageElements":
+            [
+                { "Name": "Addr", "DataType": "blob" },
+                { "Name": "Result", "DataType": "int" },
+                { "Name": "ResponseErrno", "DataType": "int" }
+            ]
         }
     ]
 }

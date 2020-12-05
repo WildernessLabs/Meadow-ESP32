@@ -33,11 +33,13 @@ namespace BasicNetworkTest
             {
                 throw new Exception("Cannot connect to network, application halted.");
             }
-            Console.WriteLine("Connection request completed.");
+            Console.WriteLine("WiFi connection completed.");
         }
 
         public async Task GetWebPageAsync(string uri)
         {
+            Console.WriteLine("********** GetWebPageAsync **********");
+            
             client = new HttpClient();
             HttpResponseMessage response = await client.GetAsync(uri);
 
@@ -48,6 +50,8 @@ namespace BasicNetworkTest
 
         public void PostData(string uri, float temperature)
         {
+            Console.WriteLine("********** PostData **********");
+            
             Log($"Connecting to '{uri}'");
             var httpWebRequest = (HttpWebRequest) WebRequest.Create(uri);
             httpWebRequest.ContentType = "application/json";
@@ -79,6 +83,8 @@ namespace BasicNetworkTest
 
         public async Task PostDataAsync(string uri)
         {
+            Console.WriteLine("********** PostDataAsync **********");
+            
             while (true)
             {
                 client = new HttpClient();
@@ -107,6 +113,8 @@ namespace BasicNetworkTest
         /// </summary>
         public void WebSocketPost()
         {
+            Console.WriteLine("********** WebSocketPost **********");
+            
             byte[] bytes = new byte[2048];
 
             var i2c = Device.CreateI2cBus();
@@ -210,6 +218,8 @@ namespace BasicNetworkTest
 
         public void WebSocketPostTestData()
         {
+            Console.WriteLine("********** WebSocketPostTestData **********");
+            
             byte[] bytes = new byte[2048];
 
             try
@@ -288,6 +298,8 @@ namespace BasicNetworkTest
 
         public void StartListeningUsingSockets()
         {
+            Console.WriteLine("********** StartListeningUsingSockets **********");
+            
             byte[] bytes = new Byte[1024];
 
             IPHostEntry ipHostInfo = Dns.GetHostEntry(Dns.GetHostName());
@@ -338,7 +350,7 @@ namespace BasicNetworkTest
         public static int pageViews = 0;
         public static int requestCount = 0;
         public static HttpListener listener;
-        public string url = "http://localhost/";
+        public string url = "http://192.168.1.200/";
 
 
         public static string pageData =
@@ -404,23 +416,115 @@ namespace BasicNetworkTest
 
         public void StartHttpServer()
         {
+            Console.WriteLine("********** StartHttpServer **********");
+            
+            if (!HttpListener.IsSupported)
+            {
+                Console.WriteLine ("HttpListener class is not supported.");
+                return;
+            }
+            
             // Create a Http server and start listening for incoming connections
             listener = new HttpListener();
             listener.Prefixes.Add(url);
             listener.Start();
             Console.WriteLine("Listening for connections on {0}", url);
 
-            // Handle requests
-            Task listenTask = HandleIncomingConnections();
-            listenTask.GetAwaiter().GetResult();
+            Console.WriteLine("Getting listener context.");
+            HttpListenerContext context = listener.GetContext();
 
-            // Close the listener
-            listener.Close();
+            Console.WriteLine("Getting request from the context.");
+            HttpListenerRequest request = context.Request;
+
+            Console.WriteLine("Getting response from the context context.");
+            HttpListenerResponse response = context.Response;
+
+            Console.WriteLine("Getting listener context.");
+            string responseString = "<HTML><BODY> Hello world!</BODY></HTML>";
+            byte[] buffer = System.Text.Encoding.UTF8.GetBytes(responseString);
+            response.ContentLength64 = buffer.Length;
+            System.IO.Stream output = response.OutputStream;
+
+            Console.WriteLine("Writing response.");
+            output.Write(buffer,0,buffer.Length);
+
+            Console.WriteLine("Closing the output stream.");
+            output.Close();
+
+            Console.WriteLine("Getting stopping the listener.");
+            listener.Stop();
+        }
+        
+        /// <summary>
+        /// Code based upon issue 116 (https://github.com/WildernessLabs/Meadow_Issues/issues/116)
+        /// reported 12 Oct 2020.
+        /// </summary>
+        public void TestTcpListener()
+        {
+            IPEndPoint ipLocalEP = new IPEndPoint(IPAddress.Parse(Secrets.IP_ADDRESS), 11000);
+            TcpListener server = new TcpListener(ipLocalEP);
+            try
+            {
+                Console.WriteLine("Starting tcp listener");
+                server.Start();
+                Console.WriteLine("Listener started.");
+                TcpClient client = server.AcceptTcpClient();
+                Console.WriteLine("Connected!");
+
+                Byte[] bytes = new Byte[256];
+                string data = null;
+
+                Console.WriteLine("Getting network stream.");
+                NetworkStream stream = client.GetStream();
+                int i;
+
+                while ((i = stream.Read(bytes, 0, bytes.Length)) != 0)
+                {
+                    data = System.Text.Encoding.ASCII.GetString(bytes, 0, i);
+                    Console.WriteLine("Received: {0}", data);
+                }
+                Console.WriteLine("Closing connection.");
+                client.Close();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Error starting TCPListener {e.Message}");
+                throw;
+            }
+        }
+
+        public void TestUdpListener()
+        {
+            int port = 11000;
             
+            UdpClient listener = new UdpClient(port);
+            IPEndPoint groupEP = new IPEndPoint(IPAddress.Any, port);
+
+            try
+            {
+                while (true)
+                {
+                    Console.WriteLine("Waiting for broadcast");
+                    byte[] bytes = listener.Receive(ref groupEP);
+
+                    Console.WriteLine($"Received broadcast from {groupEP} :");
+                    Console.WriteLine($" {Encoding.ASCII.GetString(bytes, 0, bytes.Length)}");
+                }
+            }
+            catch (SocketException e)
+            {
+                Console.WriteLine(e);
+            }
+            finally
+            {
+                listener.Close();
+            }        
         }
 
         public void ScanForAccessPoints()
         {
+            Console.WriteLine("********** ScanForAccessPoints **********");
+            
             while (true)
             {
                 Log("Getting list of access points.");

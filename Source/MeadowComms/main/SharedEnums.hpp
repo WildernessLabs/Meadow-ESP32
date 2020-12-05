@@ -108,7 +108,8 @@ namespace WiFiFunction
         Bind = 18,
         Listen = 19,
         Accept = 20,
-        Ioctl = 21
+        Ioctl = 21,
+        GetSockName = 22
     };
 
 }
