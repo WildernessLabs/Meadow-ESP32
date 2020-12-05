@@ -309,6 +309,19 @@ namespace Esp32Messaging
         int32_t Flags;
     };
 
+    struct GetSockNameRequest
+    {
+        int32_t SocketHandle;
+    };
+
+    struct GetSockNameResponse
+    {
+        uint32_t AddrLength;
+        uint8_t *Addr;
+        int32_t Result;
+        int32_t ResponseErrno;
+    };
+
 }
 
 /*
@@ -446,6 +459,12 @@ public:
     static void EncodeIoctlResponse(Esp32Messaging::IoctlResponse *, uint8_t *);
     static int EncodedIoctlResponseBufferSize(Esp32Messaging::IoctlResponse *);
     static Esp32Messaging::IoctlResponse *ExtractIoctlResponse(uint8_t *);
+    static void EncodeGetSockNameRequest(Esp32Messaging::GetSockNameRequest *, uint8_t *);
+    static int EncodedGetSockNameRequestBufferSize(Esp32Messaging::GetSockNameRequest *);
+    static Esp32Messaging::GetSockNameRequest *ExtractGetSockNameRequest(uint8_t *);
+    static void EncodeGetSockNameResponse(Esp32Messaging::GetSockNameResponse *, uint8_t *);
+    static int EncodedGetSockNameResponseBufferSize(Esp32Messaging::GetSockNameResponse *);
+    static Esp32Messaging::GetSockNameResponse *ExtractGetSockNameResponse(uint8_t *);
 
 };
 

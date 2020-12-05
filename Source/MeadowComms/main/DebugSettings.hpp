@@ -79,6 +79,9 @@
 #define WIFI_DEBUG_IOCTL 1
 #undef WIFI_DEBUG_IOCTL
 
+#define WIFI_DEBUG_GETSOCKNAME 1
+#undef WIFI_DEBUG_GETSOCKNAME
+
 /******************************************************************************
  *
  *                              System Settings
