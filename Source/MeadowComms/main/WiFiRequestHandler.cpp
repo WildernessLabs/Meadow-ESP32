@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include "lwip/apps/sntp.h"
 
 #include "NvsManager.hpp"
 #include "WiFiRequestHandler.hpp"
@@ -75,6 +76,16 @@ const gpio_num_t WiFiRequestHandler::EXTERNAL_ANTENNA_PIN = GPIO_NUM_27;
  *  Name of the NVS storage holding the current antenna value.
  */
  const char *WiFiRequestHandler::ANTENNA_TYPE_NAME = "Antenna";
+
+/**
+ *  Name of the device on the network.
+ */
+char *WiFiRequestHandler::_deviceName = (char *) "MeadowF7";
+
+/**
+ *  Name of the storage in NVS holding the device name on the network.
+ */
+const char *WiFiRequestHandler::DEVICE_NAME_NAME = "DeviceName";
 
 /**
  *  Should the system automatically reconnect to an access point should there
@@ -153,12 +164,22 @@ const char *WiFiRequestHandler::PASSWORD_NAME = "Password";
  *  Name of the NTP server to be used when using NTP to set the time
  *  when the board starts.
  */
-char *WiFiRequestHandler::_ntpServer = nullptr;
+char *WiFiRequestHandler::_ntpServer = (char *) "pool.ntp.org";
 
 /**
  *  Name of the storage space in NVS holding the NTP server information.
  */
 const char *WiFiRequestHandler::NTP_SERVER_NAME = "NtpServer";
+
+/**
+ *  Name of the storage space in NVS holding the timezone information.
+ */
+const char *WiFiRequestHandler::TIMEZONE_NAME = "Timezone";
+
+/**
+ *  Timezone to be used when the ESP32 starts.  Default will be UTC.
+ */
+char *WiFiRequestHandler::_timezone = (char *) "UTC";
 
 /**
  *  Static IP address when not using DHCP.
@@ -224,6 +245,7 @@ WiFiRequestHandler::WiFiRequestHandler()
     //
     //  Get configuration from NVS.
     //
+    _deviceName = SystemRequestHandler::GetConfigurationValue(DEVICE_NAME_NAME, _deviceName);
     _maximumRetryCount = SystemRequestHandler::GetConfigurationValue(MAXIMUM_RETRY_COUNT_NAME, _maximumRetryCount);
     _automaticReconnect = SystemRequestHandler::GetConfigurationValue(AUTOMATIC_RECONNECT_NAME, _automaticReconnect);
     _automaticallyStartNetwork = SystemRequestHandler::GetConfigurationValue(AUTOMATICALLY_START_NETWORK_NAME, _automaticallyStartNetwork);
@@ -232,12 +254,18 @@ WiFiRequestHandler::WiFiRequestHandler()
     _defaultAccessPoint = SystemRequestHandler::GetConfigurationValue(DEFAULT_ACCESS_POINT_NAME, _defaultAccessPoint);
     _password = SystemRequestHandler::GetConfigurationValue(PASSWORD_NAME, _password);
     _ntpServer = SystemRequestHandler::GetConfigurationValue(NTP_SERVER_NAME, _ntpServer);
+    _timezone = SystemRequestHandler::GetConfigurationValue(TIMEZONE_NAME, _timezone);
     _staticIpAddress = SystemRequestHandler::GetConfigurationValue(STATIC_IP_ADDRESS_NAME, _staticIpAddress);
     _dnsServer = SystemRequestHandler::GetConfigurationValue(DNS_SERVER_NAME, _dnsServer);
     _defaultGateway = SystemRequestHandler::GetConfigurationValue(DEFAULT_GATEWAY_NAME, _defaultGateway);
     _wifiTimeout = SystemRequestHandler::GetConfigurationValue(DEFAULT_WIFI_TIMEOUT_NAME, _wifiTimeout);
     _stationNetIfHandle = nullptr;
     _softApNetIfHandle = nullptr;
+    //
+    //  Setup the timezones ready for when we get the time from a timeserver.
+    //
+    setenv("TZ", "", 1);
+    tzset();
     //
     //  Set up the structures need to deal with poll() requests in an asynchronous manner.
     //
@@ -470,6 +498,38 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetNtpServer(char *value)
 }
 
 /**
+ *  @brief Get the timezone.
+ */
+char *WiFiRequestHandler::GetTimezone()
+{
+    return(_timezone);
+}
+
+/**
+ *  @brief Set timezone.
+ *
+ *  @param value
+ *      New NTP server value.
+ * 
+ *  @returns
+ *      StatusCodes::Completed on success, StatusCodes::Failure if there is a problem.
+ */
+StatusCodes::StatusCodes WiFiRequestHandler::SetTimezone(char *value)
+{
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
+    if (strcmp(value, _timezone) != 0)
+    {
+        if (SystemRequestHandler::SetConfigurationValue(TIMEZONE_NAME, value) == NvsManager::ErrorCodes::Ok)
+        {
+            _timezone = strdup(value);
+            setenv("TZ", value, 1);
+            tzset();
+        }
+    }
+    return(result);
+}
+
+/**
  *  @brief Get the default access point.
  */
 char *WiFiRequestHandler::GetDefaultAccessPoint()
@@ -534,7 +594,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetPassword(char *value)
  */
 char *WiFiRequestHandler::GetDeviceName()
 {
-    return(_password);
+    return(_deviceName);
 }
 
 /**
@@ -551,9 +611,9 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetDeviceName(char *value)
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
     if (strcmp(value, _password) != 0)
     {
-        if (SystemRequestHandler::SetConfigurationValue(PASSWORD_NAME, value) == NvsManager::ErrorCodes::Ok)
+        if (SystemRequestHandler::SetConfigurationValue(DEVICE_NAME_NAME, value) == NvsManager::ErrorCodes::Ok)
         {
-            _password = strdup(value);
+            _deviceName = strdup(value);
         }
     }
     return(result);
@@ -890,6 +950,7 @@ void WiFiRequestHandler::EventHandlerHelper(esp_event_base_t eventBase, int32_t 
                 break;
             case WIFI_EVENT_STA_START:
                 ESP_LOGI(__func__, "Station started");
+                tcpip_adapter_set_hostname(TCPIP_ADAPTER_IF_STA, GetDeviceName());
                 xEventGroupSetBits(_xWiFiEventGroup, WIFI_STATION_STARTED_BIT);
                 break;
             case WIFI_EVENT_STA_STOP:
@@ -1180,6 +1241,32 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *request)
                     memcpy(request->Payload, (void *) &ipInfo.ip, sizeof(esp_ip4_addr_t));
                     memcpy(request->Payload + sizeof(esp_ip4_addr_t), (void *) &ipInfo.netmask, sizeof(esp_ip4_addr_t));
                     memcpy(request->Payload + 2 * (sizeof(esp_ip4_addr_t)), (void *) &ipInfo.gw, sizeof(esp_ip4_addr_t));
+                    if (GetGetTimeAtStartup())
+                    {
+                        //
+                        //  Note that we only need to get the time here.  The timezone is set when this
+                        //  class is instanciated or when the SetTimezone method is successfully called.
+                        //
+                        sntp_setoperatingmode(SNTP_OPMODE_POLL);
+                        sntp_setservername(0, GetNtpServer());
+                        sntp_set_sync_mode(SNTP_SYNC_MODE_IMMED);
+                        sntp_init();
+                        bool gettingTime = true;
+                        int gettingTimeCount = 0;
+                        while (gettingTime)
+                        {
+                            gettingTimeCount++;
+                            if (gettingTimeCount == 10)     // Restrict number of tries to 1 second.
+                            {
+                                gettingTimeCount = false;
+                            }
+                            else
+                            {
+                                vTaskDelay(100 / portTICK_PERIOD_MS);
+                                gettingTime = (sntp_get_sync_status() != SNTP_SYNC_STATUS_COMPLETED);
+                            }
+                        }
+                    }
                 }
                 else
                 {

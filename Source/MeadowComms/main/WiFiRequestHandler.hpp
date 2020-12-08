@@ -250,6 +250,16 @@ private:
     esp_netif_t *_softApNetIfHandle;
 
     /**
+     *  Name of the device on the network.
+     */
+    static char *_deviceName;
+
+    /**
+     *  Name of the storage in NVS holding the name of the device.
+     */
+    static const char *DEVICE_NAME_NAME;
+
+    /**
      *  Current antenna in use.  Default to the on board antenna at startup.
      */
     static AntennaTypes::AntennaTypes _currentAntenna;
@@ -337,6 +347,16 @@ private:
      *  when the board starts.
      */
     static char *_ntpServer;
+
+    /**
+     *  Name of the storage space in NVS holding the timezone information.
+     */
+    static const char *TIMEZONE_NAME;
+
+    /**
+     *  Timezone to be used when the ESP32 starts.  Default will be UTC.
+     */
+    static char *_timezone;
 
     /**
      *  Name of the storage space in NVS holding the NTP server information.
@@ -644,6 +664,12 @@ public:
      */
     static char *GetNtpServer();
     static StatusCodes::StatusCodes SetNtpServer(char *);
+
+    /**
+     *  Get / Set the timezone for the system.
+     */
+    static char *GetTimezone();
+    static StatusCodes::StatusCodes SetTimezone(char *);
 
     /**
      *  Get / Set the name of the device on the network.
