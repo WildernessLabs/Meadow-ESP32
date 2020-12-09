@@ -22,14 +22,14 @@
  */
 
 /**
- *  Default constructor.
+ *  @brief Default constructor.
  */
 MessageDispatcher::MessageDispatcher() : _messageIdMutex(xSemaphoreCreateMutex())
 {
 }
 
 /**
- *  Create a new instance of the message dispatcher with an associated transport provider.
+ *  @brief Create a new instance of the message dispatcher with an associated transport provider.
  *
  *  @param transportProvider
  *      Hardware level transport provider that will deliver and receive the messages.
@@ -41,7 +41,7 @@ MessageDispatcher::MessageDispatcher(TransportProviderBase *transportProvider) :
 }
 
 /**
- *  Default destructor.
+ *  @brief Default destructor.
  */
 MessageDispatcher::~MessageDispatcher()
 {
@@ -66,7 +66,7 @@ uint32_t MessageDispatcher::GetMaximumMessageSize() const
 }
 
 /**
- *  Set the maximum message size that can be sent through the transport provider.
+ *  @brief Set the maximum message size that can be sent through the transport provider.
  *
  *  @param messageSize
  *      Desired maximum message size.
@@ -80,8 +80,7 @@ bool MessageDispatcher::SetMaximumMessageSize(uint32_t messageSize)
 }
 
 /**
- *  Add the specified message (request) to the appropriate interface
- *  message queue.
+ *  @brief Add the specified message (request) to the appropriate interface message queue.
  *
  *  @param request
  *      Request from the STM32 to the ESP32.
@@ -140,7 +139,7 @@ bool MessageDispatcher::QueueMessageForEsp32(Message *request)
 }
 
 /**
- *  Add the response from the system to the hardware transport provider
+ *  @brief Add the response from the system to the hardware transport provider
  *  queue of messages waiting to be sent to the STM32.
  *
  *  @param response
@@ -155,7 +154,7 @@ bool MessageDispatcher::QueueMessageForStm32(Message *response)
 }
 
 /**
- *  Get the next message ID that can be used by the ESP32 system to send a
+ *  @brief Get the next message ID that can be used by the ESP32 system to send a
  *  message to the STM32.
  *
  *  This method will increment the last used message ID, apply the message

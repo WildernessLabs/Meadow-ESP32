@@ -26,7 +26,7 @@
  */
 
 /**
- *  Determine if this class is instantiated already (i.e. this should be a singleton).
+ *  @brief Determine if this class is instantiated already (i.e. this should be a singleton).
  */
 bool MeshNetworkRequestHandler::_instantiated = false;
 
@@ -39,7 +39,7 @@ bool MeshNetworkRequestHandler::_instantiated = false;
  */
 
 /**
- *  Default constructor for the mesh network.
+ *  @brief Default constructor for the mesh network.
  */
 MeshNetworkRequestHandler::MeshNetworkRequestHandler()
 {
@@ -54,7 +54,7 @@ MeshNetworkRequestHandler::MeshNetworkRequestHandler()
 }
 
 /**
- *  Create a new Mesh Network handler object.
+ *  @brief Create a new Mesh Network handler object.
  *
  *  @param messageDispatcher
  *      Message dispatcher that will allow communication with the STM32.
@@ -80,7 +80,7 @@ MeshNetworkRequestHandler::~MeshNetworkRequestHandler()
  */
 
 /**
- *  Setup the mesh network.
+ *  @brief Setup the mesh network.
  */
 void MeshNetworkRequestHandler::Setup()
 {
@@ -89,7 +89,10 @@ void MeshNetworkRequestHandler::Setup()
 }
 
 /**
- *  Dispatch the message
+ *  @brief Dispatch the message
+ * 
+ *  @param
+ *      Message containing the data for the request.
  */
 void MeshNetworkRequestHandler::DispatchRequest(Message *request)
 {

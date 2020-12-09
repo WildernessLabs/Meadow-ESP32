@@ -19,13 +19,13 @@
 class MessageDispatcher;
 
 /**
- *
+ *  @brief Base class for any request handlers.
  */
 class RequestHandlerBase
 {
 private:
     /**
-     *  Dispatch messages.
+     *  @brief Dispatch messages.
      *
      *  This method is unique to each specific interface.
      */
@@ -33,60 +33,56 @@ private:
 
 protected:
     /**
-     *  Handle for the System messages to be processed by the System task.
+     *  @brief Handle for the System messages to be processed by the System task.
      */
     QueueHandle_t _queueHandle = nullptr;
 
     /**
-     *  Handle for the System request handler task.
+     *  @brief Handle for the System request handler task.
      */
     TaskHandle_t _taskHandle = nullptr;
 
     /**
-     *  Object that will be used to send messages to the STM32
-     *  from the ESP32.
+     *  @brief Object that will be used to send messages to the STM32 from the ESP32.
      */
     static MessageDispatcher *_messageDispatcher;
 
-    /*
-     *  Task that will be used to retrieve and dispatch
-     *  messages to the appropriate method.
+    /**
+     *  @brief Task that will be used to retrieve and dispatch messages to the appropriate method.
      */
     static void Task(void *);
 
-    /*
-     *  Constructor for the RequestHandlerBase class.
+    /**
+     *  @brief Constructor for the RequestHandlerBase class.
      */
     RequestHandlerBase();
 
-    /*
-     *  Destructor for the RequestHandlerBase class.
+    /**
+     *  @brief Destructor for the RequestHandlerBase class.
      */
     ~RequestHandlerBase();
 
 
 public:
     /**
-     *  Maximum length of a message queue.
+     *  @brief Maximum length of a message queue.
      */
     const uint32_t MAX_QUEUE_LENGTH = 10;
 
-    /*
-     *  Constructor for the RequestHandlerBase class.
+    /**
+     *  @brief Constructor for the RequestHandlerBase class.
      */
     explicit RequestHandlerBase(MessageDispatcher *);
 
-    /*
-     *  Setup the various properties for correct functioning of the request handler.
+    /**
+     *  @brief Setup the various properties for correct functioning of the request handler.
      */
     void Setup();
 
-    /*
-     *  Add the message to the queue of messages waiting to be
-     *  processed by the interface object.
+    /**
+     *  @brief Add the message to the queue of messages waiting to be processed by the interface object.
      */
     bool QueueEsp32Message(Message *);
 };
-
 
 #endif /* _REQUEST_HANDLER_BASE_HPP_ */

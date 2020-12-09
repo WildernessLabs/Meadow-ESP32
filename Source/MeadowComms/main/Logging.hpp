@@ -57,7 +57,7 @@
     #define ERROR_HEX_BUFFER(buffer, bufferLength);
 #endif
 
-/*
+/**
  *  @brief The Logging class provides the functionality necessary to setup and run the logging system.
  */
 class Logging

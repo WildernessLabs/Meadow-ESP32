@@ -31,17 +31,17 @@ class SpiTransportProvider : public TransportProviderBase
 {
 private:
     /**
-     *  Maximum number of retries before the system gives up.
+     *  @brief Maximum number of retries before the system gives up.
      */
     const int MAXIMUM_RETRY_COUNT = 3;
 
     /**
-     *  Maximum number of bytes that can sent over the SPI bus.
+     *  @brief Maximum number of bytes that can sent over the SPI bus.
      */
     const uint32_t MAXIMUM_SPI_FRAME_SIZE = 4094;
 
     /**
-     *  Possible states for the SPI transport layer.
+     *  @brief Possible states for the SPI transport layer.
      */
     enum SpiStates { Invalid,
                      WaitingForInboundMessageHeader,    AcknowledgingInboundMessageHeader,
@@ -52,7 +52,7 @@ private:
                    };
 
     /**
-     *  Pointer to the (only) instance of the SpiTransportProvider class.
+     *  @brief Pointer to the (only) instance of the SpiTransportProvider class.
      *
      *  This object is needed to allow the static callbacks access to the
      *  instance level variables and constants.
@@ -60,52 +60,52 @@ private:
     static SpiTransportProvider *_spiInstance;
 
     /**
-     *  Current state of the SPI transport layer.
+     *  @brief Current state of the SPI transport layer.
      */
     static SpiStates _currentState;
 
     /**
-     *  Buffer to hold a Message header worth of data.
+     *  @brief Buffer to hold a Message header worth of data.
      */
     static uint8_t *_headerReceiveBuffer;
 
     /**
-     *  Buffer to hold the data to be sent to the STM32.
+     *  @brief Buffer to hold the data to be sent to the STM32.
      */
     static uint8_t *_headerTransmitBuffer;
 
     /**
-     *  Buffer for the transport frame.
+     *  @brief Buffer for the transport frame.
      */
     static uint8_t *_transportFrameBuffer;
 
     /**
-     *  Size of a header / transport frame.
+     *  @brief Size of a header / transport frame.
      */
     static uint32_t _headerFrameSize;
 
     /**
-     *  Retry count for sending messages.
+     *  @brief Retry count for sending messages.
      */
     uint32_t _retryCount = 0;
 
     /**
-     *  Maximum size for a message.
+     *  @brief Maximum size for a message.
      */
     uint32_t _maximumMessageSize = 0;
 
     /**
-     *  Message coming in from the STM32.
+     *  @brief Message coming in from the STM32.
      */
     Message *_incomingMessage = nullptr;
 
     /**
-     *  The next message to be sent to the STM32.
+     *  @brief The next message to be sent to the STM32.
      */
     Message *_outboundMessage = nullptr;
 
     /**
-     *  SPI slave transaction.
+     *  @brief SPI slave transaction.
      *
      *  Note that it is assumed that this transaction is setup ready for
      *  the next use of the SPI interface.
@@ -113,178 +113,180 @@ private:
     spi_slave_transaction_t *_spiTransaction = nullptr;
 
     /**
-     *  Response code that will be used in any acknowledgement messages.
+     *  @brief Response code that will be used in any acknowledgement messages.
      */
     StatusCodes::StatusCodes _responseCode;
 
     /**
-     *  Packet type that will be used in any acknowledgement messages.
+     *  @brief Packet type that will be used in any acknowledgement messages.
      */
     uint8_t _messageType;
 
-    /*
-     *  Default destructor.
+    /**
+     *  @brief Default destructor.
      */
     ~SpiTransportProvider();
 
-    /*
-     *  SPI Post Transmission callback
+    /**
+     *  @brief SPI Post Transmission callback
      *
      *  Note this this method is static as it is used as a callback
      *  in some C code.
      */
     static void SpiPostTransmissionCallback(spi_slave_transaction_t *);
 
-    /*
-     *  SPI Setup Complete Callback
+    /**
+     *  @brief SPI Setup Complete Callback
      *
      *  Note this this method is static as it is used as a callback
      *  in some C code.
      */
     static void SpiPostSetupCallback(spi_slave_transaction_t *);
 
-    /*
-     *  Send an ACK or NAK with the specified code.
+    /**
+     *  @brief Send an ACK or NAK with the specified code.
      */
     spi_slave_transaction_t *CreateAcknowledgementTransaction(Message *, StatusCodes::StatusCodes, uint8_t);
 
-    /*
-     *  Create a new SPI transaction that will send the message body.
+    /**
+     *  @brief Create a new SPI transaction that will send the message body.
      */
     spi_slave_transaction_t *CreateSpiMessageTransaction(Message *);
 
-    /*
-     *  Encode a header or transport message.
+    /**
+     *  @brief Encode a header or transport message.
      */
     void EncodeHeaderMessage(spi_slave_transaction_t *, Message *);
 
-    /*
-     *  FreeRTOS task handler for this class.
+    /**
+     *  @brief FreeRTOS task handler for this class.
      */
     static void Task(void *);
 
     /**
-     *  Process incoming messages.
+     *  @brief Process incoming messages.
      */
     spi_slave_transaction_t *ProcessMessages(spi_slave_transaction_t *);
 
-    /*
-     *  Convert the current state into a string message for debugging.
+    /**
+     *  @brief Convert the current state into a string message for debugging.
      */
     const char *SpiStateString(SpiStates);
 
-    /*
-     *  Delete the SPI transaction and clear up and buffers;
+    /**
+     *  @brief Delete the SPI transaction and clear up and buffers;
      */
     void DeleteSpiTransaction(spi_slave_transaction_t *);
 
-    /*
-     *  Check to see if the specified buffer looks to contain valid
+    /**
+     *  @brief Check to see if the specified buffer looks to contain valid
      *  (non-zero) data.
      */
     bool MessageContainsData(uint8_t *, uint32_t);
 
-    /*
-     *  Check to see if the state we are in indicates that we should be
+    /**
+     *  @brief Check to see if the state we are in indicates that we should be
      *  receiving data from the STM32.
      */
     bool SendingData(SpiStates);
 
-    /*
-     *  Clear the _currentHeader variable and free any allocated
-     *  heap memory.
+    /**
+     *  @brief Clear the _currentHeader variable and free any allocated heap memory.
      */
     void DeleteMessageAndReleaseHeapStorage(Message *);
 
     /**
-     *  Process an inbound transport request.
+     *  @brief Process an inbound transport request.
      */
     spi_slave_transaction_t *ProcessTransportMessage(Message *);
 
-    /*
-     *  Start to process incoming messages (i.e. move from the idle state
+    /**
+     *  @brief Start to process incoming messages (i.e. move from the idle state
      *  into one where the ESP32 is sending or receiving data).
      */
     spi_slave_transaction_t *InboundMessageHeaderReceived(spi_slave_transaction_t *);
 
-    /*
-     *  Implement the incoming message header acknowledgement process.
+    /**
+     *  @brief Implement the incoming message header acknowledgement process.
      */
     spi_slave_transaction_t *InboundMessageHeaderAcknowledged(spi_slave_transaction_t *);
 
-    /*
-     *  Implement the incoming message header reception process.
+    /**
+     *  @brief Implement the incoming message header reception process.
      */
     spi_slave_transaction_t *ProcessWaitingForMessageHeaderState(spi_slave_transaction_t *);
 
-    /*
-     *  Implement the incoming message body reception process.
+    /**
+     *  @brief Implement the incoming message body reception process.
      */
     spi_slave_transaction_t *InboundMessageBodyReceived(spi_slave_transaction_t *);
 
-    /*
-     *  Implement the incoming message body acknowledgement process.
+    /**
+     *  @brief Implement the incoming message body acknowledgement process.
      */
     spi_slave_transaction_t *InboundMessageBodyAcknowledged(spi_slave_transaction_t *);
 
-    /*
-     *  Implement the out-bound message header process.
+    /**
+     *  @brief Implement the out-bound message header process.
      */
     spi_slave_transaction_t *OutboundMessageHeaderSent(spi_slave_transaction_t *);
 
-    /*
-     *  Implement processing of the incoming message header acknowledgement messages.
+    /**
+     *  @brief Implement processing of the incoming message header acknowledgement messages.
      */
     spi_slave_transaction_t *OutboundMessageHeaderAcknowledgementReceived(spi_slave_transaction_t *);
 
-    /*
-     *  Implement the out-bound message body process.
+    /**
+     *  @brief Implement the out-bound message body process.
      */
     spi_slave_transaction_t *OutboundMessageBodySent(spi_slave_transaction_t *);
 
-    /*
-     *  Implement processing of the out-bound message body acknowledgement.
+    /**
+     *  @brief Implement processing of the out-bound message body acknowledgement.
      */
     spi_slave_transaction_t *OutboundMessageBodyAcknowledgementReceived(spi_slave_transaction_t *);
 
-    /*
-     *  Implement processing of the transport response.
+    /**
+     *  @brief Implement processing of the transport response.
      */
     spi_slave_transaction_t * ProcessSendingTransportResponseState(spi_slave_transaction_t *);
 
-    /*
-     *  Create a new SPI slave transmission object with zero filled
+    /**
+     *  @brief Create a new SPI slave transmission object with zero filled
      *  buffers of the requested size.
      */
     spi_slave_transaction_t *CreateSpiPayloadTransaction(uint32_t);
 
-    /*
-     *  Setup a new transaction using the _headerReceiveBuffer and
+    /**
+     *  @brief Setup a new transaction using the _headerReceiveBuffer and
      *  _headerTransmitBuffer.
      */
     spi_slave_transaction_t *CreateSpiHeaderTransaction();
 
+    /**
+     *  @brief Clear the data buffers used to send and receive data.
+     */
     void ClearTransmitAndReceiveBuffers(uint8_t *, uint8_t *, uint32_t);
 
-    /*
-     *  Free any memory allocated for the transaction but keep the
+    /**
+     *  @brief Free any memory allocated for the transaction but keep the
      *  Tx and Rx buffers.
      */
     void DeleteTransaction(spi_slave_transaction_t *);
 
 public:
-    /*
-     *  Default constructor.
+    /**
+     *  @brief Default constructor.
      */
     SpiTransportProvider();
 
     /*
-     *  Setup the SPI transport class.
+     *  @brief Setup the SPI transport class.
      */
     void Setup(MessageDispatcher *);
 
     /**
-     *  Getters and setters for the maximum message size.
+     *  @brief Getters and setters for the maximum message size.
      */
     uint32_t GetMaximumMessageSize() const;
     bool SetMaximumMessageSize(uint32_t maximumMessageSize);

@@ -19,10 +19,16 @@
  * ----------------------------------------------------------------------------
  */
 
+/**
+ *  @brief Default constructor for the NVS manager class.
+ */
 NvsManager::NvsManager()
 {
 }
 
+/**
+ * @brief Destructor for the NVS manager class.
+ */
 NvsManager::~NvsManager()
 {
 }
@@ -34,8 +40,9 @@ NvsManager::~NvsManager()
  *
  * ----------------------------------------------------------------------------
  */
+
 /**
- *  Determine if this object has been created already.
+ *  @brief Determine if this object has been created already.
  */
 bool NvsManager::_nvsAvailable = false;
 

@@ -14,8 +14,8 @@
 #include <stdint.h>
 
 
-/*
- *  Class holding a generic item in the linked list class.
+/**
+ *  @brief Class holding a generic item in the linked list class.
  */
 template <typename T>
 class LinkListItem
@@ -37,15 +37,15 @@ public:
     T *_data;
 };
 
-/*
- *  
+/**
+ *  @brief Generic linked list capable of storing generic objects of type T. 
  */
 template <typename T>
 class GenericLinkList
 {
 public:
-    /*
-    *  Function that can be used to find a data item in the linked list
+    /**
+    *  @brief Function that can be used to find a data item in the linked list
     *  with the matching uint32_t key.
     * 
     *  uint32_t - key to find.
@@ -56,70 +56,67 @@ public:
     typedef bool (*comparison_function_t)(uint32_t, T *);
 
 private:
-    /*
-     *  Head of the linked list.  
+    /**
+     *  @brief Head of the linked list.  
      */
     LinkListItem<T> *_head;
 
-    /*
-     *  Tail of the list.
+    /**
+     *  @brief Tail of the list.
      */
     LinkListItem<T> *_tail;
 
-    /*
-     *  Default constructor.
+    /**
+     *  @brief Default constructor.
      */
     GenericLinkList();
 
-    /*
-     *  Method used to compare a key with the one stored in a list item.
+    /**
+     *  @brief Method used to compare a key with the one stored in a list item.
      */
     comparison_function_t _comparisonFunction;
 
 public:
-    /*
-     *  Constructor.
+    /**
+     *  @brief Constructor.
      */
     explicit GenericLinkList(comparison_function_t comparisonFunction);
 
-    /*
-     *  Determine if the linked list is empty.
+    /**
+     *  @brief Determine if the linked list is empty.
      */
     bool IsEmpty();
 
-    /*
-     *  Use the comparison to find an item in the linked list.
+    /**
+     *  @brief Use the comparison to find an item in the linked list.
      */
     T *FindItem(uint32_t);
 
-    /*
-     *  Remove (and return a pointer to) the first item in the list.
+    /**
+     *  @brief Remove (and return a pointer to) the first item in the list.
      */
     T *RemoveItemAtHead();
 
-    /*
-     *  Remove the specified item (specified by the key) from the list.
+    /**
+     *  @brief Remove the specified item (specified by the key) from the list.
      */
     T *RemoveItem(uint32_t);
 
-    /*
-     *  Add an item to the head of the list.
+    /**
+     *  @brief Add an item to the head of the list.
      */
     bool AddToHead(T *);
 
-    /*
-     *  Add an item to the tail of the list.
+    /**
+     *  *Add an item to the tail of the list.
      */
     bool AddToTail(T *);
 };
 
-/****************************************************************************
- * @brief Constructor
+/**
+ *  @brief Create a new object with no comparison method.
  *
- * Description:
- *  Create a new object with no comparison method.
- *
- ****************************************************************************/
+ */
 template <typename T>
 GenericLinkList<T>::GenericLinkList()
 {
@@ -128,13 +125,13 @@ GenericLinkList<T>::GenericLinkList()
     _comparisonFunction = nullptr;
 }
 
-/****************************************************************************
- * @brief Constructor
+/**
+ *  @brief Create a new object with the specified comparison method.
+ * 
+ *  @param comparisonFunction
+ *      Method with can be used to compare two values of type T.
  *
- * Description:
- *  Create a new object with the specified comparison method.
- *
- ****************************************************************************/
+ */
 template <typename T>
 GenericLinkList<T>::GenericLinkList(comparison_function_t comparisonFunction) : GenericLinkList()
 {
@@ -142,36 +139,36 @@ GenericLinkList<T>::GenericLinkList(comparison_function_t comparisonFunction) : 
 }
 
 
-/****************************************************************************
- * @brief IsEmpty
+/**
+ *  @brief Check to see if the list is empty.
  *
- * Description:
- *  Check to see if the list is empty.
+ *  @returns
+ *      true if the list is empty, false otherwise.
  *
- * Returned Value:
- *  true if the list is empty, false otherwise.
+ *  Assumptions/Limitations:
+ *      None
  *
- ****************************************************************************/
+ */
 template <typename T>
 bool GenericLinkList<T>::IsEmpty()
 {
     return(!_head);
 }
 
-/****************************************************************************
- * @brief FindItem
+/**
+ *  @brief Search the list for a data item with the specified uint32_t key.
  *
- * Description:
- *  Search the list for a data item with the specified uint32_t key.
+ *  @param key
+ *      key value to search for.
  *
- * Input Parameters:
- *  key - key value to search for.
+ *  @returns
+ *      Pointer to the data item (as a void *) if a matching key was found,
+ *      nullptr if no match was found.
  *
- * Returned Value:
- *  Pointer to the data item (as a void *) if a matching key was found,
- *  nullptr if no match was found.
+ *  Assumptions/Limitations:
+ *      None
  *
- ****************************************************************************/
+ */
 template <typename T>
 T *GenericLinkList<T>::FindItem(uint32_t key)
 {
@@ -188,25 +185,25 @@ T *GenericLinkList<T>::FindItem(uint32_t key)
     return(nullptr);
 }
 
-/****************************************************************************
- * @brief RemoveItem
+/**
+ *  @brief Search the list and remove the item with the specified key if it exists.
  *
- * Description:
- *  Search the list for a data item with the specified uint32_t key.  If the
- *  item is found then unlink it from the list and return a pointer to the
- *  data item.
+ *  Description:
+ *      Search the list for a data item with the specified uint32_t key.  If the
+ *      item is found then unlink it from the list and return a pointer to the
+ *      data item.
  *
- * Input Parameters:
- *  key - key value to search for.
+ *  @param key
+ *      Key value to search for.
  *
- * Returned Value:
- *  Pointer to the data item (as a void *) if a matching key was found,
- *  nullptr if no match was found.
+ *  @returns
+ *      Pointer to the data item (as a void *) if a matching key was found,
+ *      nullptr if no match was found.
  *
- * Assumptions/Limitations:
- *  None
+ *  Assumptions/Limitations:
+ *      None
  *
- ****************************************************************************/
+ */
 template <typename T>
 T *GenericLinkList<T>::RemoveItem(uint32_t key)
 {
@@ -280,24 +277,21 @@ T *GenericLinkList<T>::RemoveItem(uint32_t key)
 }
 
 
-/****************************************************************************
- * @brief RemoveItemAtHead
+/**
+ *  @brief Remove the item at the head of the linked list.
  *
- * Description:
- *  Remove the item at the head of the linked list.
+ *  Input Parameters:
+ *      None.
  *
- * Input Parameters:
- *  None.
- *
- * Returned Value:
- *  Pointer (as held in the linked list structure) to the data item at the
- *  head of the list.  This is a generic void * pointer and it is the
- *  responsibility of the calling application to cast the pointer to the
- *  correct type.
+ *  @returns
+ *      Pointer (as held in the linked list structure) to the data item at the
+ *      head of the list.  This is a generic void * pointer and it is the
+ *      responsibility of the calling application to cast the pointer to the
+ *      correct type.
  * 
- *  nullptr will be returned if the list is empty.
+ *      nullptr will be returned if the list is empty.
  *
- ****************************************************************************/
+ */
 template <typename T>
 T *GenericLinkList<T>::RemoveItemAtHead()
 {
@@ -325,20 +319,20 @@ T *GenericLinkList<T>::RemoveItemAtHead()
     return(result);
 }
 
-/****************************************************************************
- * @brief AddToHead
+/**
+ *  @brief Add the item to the head of the list.
  *
- * Description:
- *  Add a data item to the head of the list.  The current head of the list
- *  will become a child of the newly created linked list entry,
+ *  Description:
+ *      Add a data item to the head of the list.  The current head of the list
+ *      will become a child of the newly created linked list entry,
  *
- * Input Parameters:
- *  data - data item to add to the linked list.
+ *  @param data
+ *      Data item to add to the linked list.
  *
- * Returned Value:
- *  true if the item is added successfully, false otherwise.
+ *  @returns
+ *      true if the item is added successfully, false otherwise.
  *
- ****************************************************************************/
+ */
 template <typename T>
 bool GenericLinkList<T>::AddToHead(T *data)
 {
@@ -368,20 +362,20 @@ bool GenericLinkList<T>::AddToHead(T *data)
     return(true);
 }
 
-/****************************************************************************
- * @brief AddToTail
+/**
+ *  @brief Add the item to the tail of the list.
  *
- * Description:
- *  Add a data item to the tail of the list.  The current tail item of the list
- *  will become a parent of the newly created linked list entry,
+ *  Description:
+ *      Add a data item to the tail of the list.  The current tail item of the list
+ *      will become a parent of the newly created linked list entry,
  *
- * Input Parameters:
- *  data - data item to add to the linked list.
+ *  @param data
+ *      Data item to add to the linked list.
  *
- * Returned Value:
- *  true if the item could be added to the end of the list, false otherwise.
+ *  @returns
+ *      true if the item could be added to the end of the list, false otherwise.
  *
- ****************************************************************************/
+ */
 template <typename T>
 bool GenericLinkList<T>::AddToTail(T *data)
 {

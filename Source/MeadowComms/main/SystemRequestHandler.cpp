@@ -34,22 +34,22 @@
  * ----------------------------------------------------------------------------
  */
 /**
- *  Determine if this class is instantiated already (i.e. this should be a singleton).
+ *  @brief Determine if this class is instantiated already (i.e. this should be a singleton).
  */
 bool SystemRequestHandler::_instantiated = false;
 
 /**
- *  Default value for _maximumMessageQueueLength.
+ *  @brief Default value for _maximumMessageQueueLength.
  */
 uint32_t SystemRequestHandler::_maximumMessageQueueLength = 10;
 
 /**
- *  Name of the NVS namespace holding the configuration values.
+ *  @brief Name of the NVS namespace holding the configuration values.
  */
 const char *SystemRequestHandler::_configurationName = "Meadow";
 
 /**
- *  Name of the key holding the _maximumMessageQueueLength value.
+ *  @brief Name of the key holding the _maximumMessageQueueLength value.
  */
 const char *SystemRequestHandler::MAXIMUM_MESSAGE_QUEUE_LENGTH_NAME = "MaxQueueLen";
 
@@ -62,7 +62,7 @@ const char *SystemRequestHandler::MAXIMUM_MESSAGE_QUEUE_LENGTH_NAME = "MaxQueueL
  */
 
 /**
- *  Default constructor for the system request handler class.
+ *  @brief Default constructor for the system request handler class.
  */
 SystemRequestHandler::SystemRequestHandler()
 {
@@ -77,7 +77,7 @@ SystemRequestHandler::SystemRequestHandler()
 }
 
 /**
- *  Initialise a new System Request handler object.
+ *  @brief Initialise a new System Request handler object.
  *
  *  @param messageDispatcher
  *      Message dispatcher object that will deal with and communication between the ESP32 and the STM32.
@@ -92,7 +92,7 @@ SystemRequestHandler::SystemRequestHandler(MessageDispatcher *messageDispatcher)
 }
 
 /**
- *  Default destructor for the system request handler class.
+ *  @brief Default destructor for the system request handler class.
  */
 SystemRequestHandler::~SystemRequestHandler()
 {
@@ -148,7 +148,7 @@ StatusCodes::StatusCodes SystemRequestHandler::SetMaximumMessageQueueLength(uint
  */
 
 /**
- *  Setup the system request handler.
+ *  @brief Setup the system request handler.
  */
 void SystemRequestHandler::Setup()
 {

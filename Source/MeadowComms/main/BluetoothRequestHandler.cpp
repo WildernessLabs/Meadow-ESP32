@@ -26,6 +26,7 @@
  *
  * ----------------------------------------------------------------------------
  */
+
 /**
  *  Determine if this class is instantiated already (i.e. this should be a singleton).
  */
@@ -40,7 +41,7 @@ bool BluetoothRequestHandler::_instantiated = false;
  */
 
 /**
- *  Default constructor for the bluetooth class.
+ *  @brief Default constructor for the BluetoothRequestHandler class.
  */
 BluetoothRequestHandler::BluetoothRequestHandler()
 {
@@ -55,7 +56,7 @@ BluetoothRequestHandler::BluetoothRequestHandler()
 }
 
 /**
- *  Create a new BluetoothRequestHandler object.
+ *  @brief Create a new BluetoothRequestHandler object.
  *
  *  @param messageDispatcher
  *      Message Dispatcher that can be used to send messages to the STM32.
@@ -66,7 +67,7 @@ BluetoothRequestHandler::BluetoothRequestHandler(MessageDispatcher *messageDispa
 }
 
 /**
- *  Default destructor for the bluetooth class.
+ *  @brief Default destructor for the bluetooth class.
  */
 BluetoothRequestHandler::~BluetoothRequestHandler()
 {

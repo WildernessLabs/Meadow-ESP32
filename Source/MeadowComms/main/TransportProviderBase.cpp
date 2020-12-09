@@ -31,7 +31,7 @@ TaskHandle_t TransportProviderBase::_transportProviderTaskHandle = nullptr;
  */
 
 /**
- *  Default constructor.
+ *  @brief Default constructor.
  */
 TransportProviderBase::TransportProviderBase()
 {
@@ -43,7 +43,7 @@ TransportProviderBase::TransportProviderBase()
 }
 
 /**
- *  Default destructor.
+ *  @brief Default destructor.
  */
 TransportProviderBase::~TransportProviderBase()
 {
@@ -58,7 +58,7 @@ TransportProviderBase::~TransportProviderBase()
  */
 
 /**
- *  Setup the hardware transport provider.
+ *  @brief Setup the hardware transport provider.
  */
 void TransportProviderBase::Setup(MessageDispatcher *messageDispatcher)
 {
@@ -71,7 +71,7 @@ void TransportProviderBase::Setup(MessageDispatcher *messageDispatcher)
 }
 
 /**
- *  Get the number of messages in the outbound message queue.
+ *  @brief Get the number of messages in the outbound message queue.
  *
  *  @returns
  *      Number of messages in the outbound message queue.  This
@@ -91,7 +91,7 @@ int TransportProviderBase::OutboundMessageQueueLength()
 }
 
 /**
- *  Get the next message from the message queue (if there is one available).
+ *  @brief Get the next message from the message queue (if there is one available).
  *
  *  @return
  *  Pointer to the message that has been retrieved or nullptr if there
@@ -118,7 +118,7 @@ Message *TransportProviderBase::GetOutboundMessage()
 }
 
 /**
- *  Dump the message at the head of the message queue (if there is one)
+ *  @brief Dump the message at the head of the message queue (if there is one)
  *  to as LOGI informaiton.
  * 
  *  This method is intended for debugging.
@@ -146,7 +146,7 @@ void TransportProviderBase::DumpMessageAtHeadOfQueue()
 }
 
 /**
- *  Add the message to the queue of messages waiting to be sent to
+ *  @brief Add the message to the queue of messages waiting to be sent to
  *  the STM32.
  *
  *  @param message
@@ -176,7 +176,7 @@ bool TransportProviderBase::QueueMessageForStm32(Message *message)
 }
 
 /**
- *  Toggle the "Message waiting" GPIO pin connected to the STM32.
+ *  @brief Toggle the "Message waiting" GPIO pin connected to the STM32.
  */
 void TransportProviderBase::ToggleEsp32MessageWaitingPin()
 {
