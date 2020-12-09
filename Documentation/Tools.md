@@ -54,9 +54,9 @@ Revsion B of the pogo board has the signal and the power pins connected to the w
 
 #### Serial
 
-> Note: At the time of writing there is a problem with `pyserial` on  MacOS Bug Sur.  This causes issues with the build and deployment process.  The work around is to set the environment variable `ESPTOOL_PORT` to the location of the serial port on the Mac.  For example, `export ESPTOOL_PORT='/dev/tty.serial-1434101'`
+Serial deployment is possible using the 6-pin headers on the ESP-Prog board.  The connection between the ESP-Prog and the pogo board varies between the two revisions of the board.
 
-Serial deployment is possible using the 6-pin headers on the ESP-Prog board.  The connection between the ESP-Prog and the pogo board varies between the two revisions of the board.  
+Serial deployment on MacOS, Big Sur, requires version 3.5 of `pyserial` in order to function correctly.
 
 Revision A of the pogo board has the two serial lines crossed and requires a modified IDC cable or a manual connection using female-female Dupont cables.  If a manual connection is made then use the diagram on the [Communication Interface](https://github.com/espressif/esp-iot-solution/blob/master/documents/evaluation_boards/ESP-Prog_guide_en.md#322-communication-interface) page as a guide.  Make a 1-1 connection between the pins on the ESP-Prog and the pogo board **except** pins 3 and 5.  These should be crossed, pin 3 on the ESP-Prog to pin 5 on the pogo board.
 
