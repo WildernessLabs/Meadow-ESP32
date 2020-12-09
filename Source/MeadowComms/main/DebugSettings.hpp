@@ -41,7 +41,7 @@
  *  Log events related to the WiFi system.
  */
 #define WIFI_FULL_LOGGING 1
-// #undef WIFI_FULL_LOGGING
+#undef WIFI_FULL_LOGGING
 
 #define WIFI_DEBUG_CONNECT 1
 #undef WIFI_DEBUG_CONNECT
