@@ -15,41 +15,41 @@
 #include "RequestHandlerBase.hpp"
 #include "Esp32Messaging.hpp"
 
-/*
+/**
  *  @brief Mesh network request handler
  */
 class MeshNetworkRequestHandler : public RequestHandlerBase
 {
 private:
     /**
-     *  Name of the FreeRTOS task for the WiFi system.
+     *  @brief Name of the FreeRTOS task for the WiFi system.
      */
     const char *_taskName = "MeshNetworkTask";
 
     /**
-     *  Determine if this class is instantiated already (i.e. this should be a singleton).
+     *  @brief Determine if this class is instantiated already (i.e. this should be a singleton).
      */
     static bool _instantiated;
 
-    /*
-     *  This method will dispatch incoming messages to the appropriate request handler.
+    /**
+     *  @brief This method will dispatch incoming messages to the appropriate request handler.
      */
     void DispatchRequest(Message *) override;
 
-    /*
+    /**
      *  Private constructor(s) and destructor.
      */
     MeshNetworkRequestHandler();
     ~MeshNetworkRequestHandler();
 
 public:
-    /*
-     *  Constructor for a Mesh Network request handler object.
+    /**
+     *  @brief Constructor for a Mesh Network request handler object.
      */
     explicit MeshNetworkRequestHandler(MessageDispatcher *);
 
-    /*
-     *  Provide and additional setup operations not covered by the constructors.
+    /**
+     *  @brief Provide and additional setup operations not covered by the constructors.
      */
     void Setup();
 };

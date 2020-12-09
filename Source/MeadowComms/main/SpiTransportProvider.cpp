@@ -34,19 +34,19 @@ extern heap_trace_record_t *trace_records;
  */
 
 /**
- *  Default state is that the class has not been fully constructed
+ *  @brief Default state is that the class has not been fully constructed
  *  and so there is no current instance.
  */
 SpiTransportProvider *SpiTransportProvider::_spiInstance = nullptr;
 
 /**
- *  Initial state of the system is Invalid.  The constructor will set
+ *  @brief Initial state of the system is Invalid.  The constructor will set
  *  up the SPI interface and then move the state to one where we can
  *  receive data.
  */
 SpiTransportProvider::SpiStates SpiTransportProvider::_currentState = Invalid;
 
-/*
+/**
  *  Buffers will be allocated as needed and so they are initially null.
  */
 uint8_t *SpiTransportProvider::_headerReceiveBuffer = nullptr;
@@ -63,10 +63,9 @@ uint32_t SpiTransportProvider::_headerFrameSize = 0;
  */
 
 /**
- *  Default constructor for the SPI transport provider.
+ *  @brief Default constructor for the SPI transport provider.
  */
-SpiTransportProvider::SpiTransportProvider() :
-        TransportProviderBase()
+SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
 {
     if (_spiInstance)
     {
@@ -167,7 +166,7 @@ SpiTransportProvider::SpiTransportProvider() :
 }
 
 /**
- *  Default destructor for the SPI transport provider.
+ *  @brief Default destructor for the SPI transport provider.
  */
 SpiTransportProvider::~SpiTransportProvider()
 {
@@ -240,7 +239,7 @@ bool SpiTransportProvider::SetMaximumMessageSize(uint32_t maximumMessageSize)
  */
 
 /**
- *  Convert a state into a meaningful message for debugging.
+ *  @brief Convert a state into a meaningful message for debugging.
  *
  *  @param state
  *      State to be decoded.
@@ -292,7 +291,7 @@ const char *SpiTransportProvider::SpiStateString(SpiTransportProvider::SpiStates
 }
 
 /**
- *  Clear the transaction receive and transmit buffers.
+ *  @brief Clear the transaction receive and transmit buffers.
  *
  *  Note that it is assumed that the receive and transmit buffers are the
  *  same size.
@@ -313,8 +312,7 @@ void SpiTransportProvider::ClearTransmitAndReceiveBuffers(uint8_t *transmitBuffe
 }
 
 /**
- *  Create a new acknowledgement transaction (ACK or NAK) ready to transmit to
- *  the STM32.
+ *  @brief Create a new acknowledgement transaction (ACK or NAK) ready to transmit to the STM32.
  *
  *  This method allocates the transaction and two buffers on the heap.  It is essential
  *  that the caller cleans up both the transaction and the buffers after they are no
@@ -354,8 +352,7 @@ spi_slave_transaction_t *SpiTransportProvider::CreateAcknowledgementTransaction(
 }
 
 /**
- *  Setup a new transaction using the _headerReceiveBuffer and
- *  _headerTransmitBuffer.
+ *  @brief Setup a new transaction using the _headerReceiveBuffer and _headerTransmitBuffer.
  *
  *  @returns
  *      Pointer to a transaction that can be used to send data over SPI.
@@ -382,8 +379,7 @@ spi_slave_transaction_t *SpiTransportProvider::CreateSpiHeaderTransaction()
 }
 
 /**
- *  Create a new SPI transaction object that can be used to transmit the
- *  specified message body.
+ *  @brief Create a new SPI transaction object that can be used to transmit the specified message body.
  *
  *  @param message
  *      The message to encode.
@@ -408,8 +404,7 @@ spi_slave_transaction_t *SpiTransportProvider::CreateSpiMessageTransaction(Messa
 }
 
 /**
- *  Create a new SPI slave transmission object with zero filled
- *  buffers of the requested size.
+ *  @brief Create a new SPI slave transmission object with zero filled buffers of the requested size.
  *
  *  @param bufferSize
  *      Number of bytes in the receive and transmit buffers.
@@ -441,7 +436,7 @@ spi_slave_transaction_t *SpiTransportProvider::CreateSpiPayloadTransaction(uint3
 }
 
 /**
- *  Release any storage associated with the SPI header transaction
+ *  @brief Release any storage associated with the SPI header transaction.
  *
  *  It is important that the storage used for the rx_buffer and tx_buffer(s)
  *  is only released if it is not the _headerReceiveBuffer and the
@@ -472,7 +467,7 @@ void SpiTransportProvider::DeleteTransaction(spi_slave_transaction_t *transactio
 }
 
 /**
- *  SPI Post Transmission callback
+ *  @brief SPI Post Transmission callback
  *
  *  This method is called when the STM32 has ended the SPI transmission.
  *
@@ -489,7 +484,7 @@ void SpiTransportProvider::SpiPostTransmissionCallback(spi_slave_transaction_t *
 }
 
 /**
- *  SPI Post setup callback.
+ *  @brief SPI Post setup callback.
  * 
  *  This method is called when the SPI interface has been setup and is
  *  ready to send / receive data.
@@ -504,7 +499,7 @@ void SpiTransportProvider::SpiPostSetupCallback(spi_slave_transaction_t *transac
 }
 
 /**
- *  Setup the SPI transport provider.
+ *  @brief Setup the SPI transport provider.
  *
  *  @param messageDispatcher
  *      MessageDispatcher object used to send messages from the SPI
@@ -516,7 +511,7 @@ void SpiTransportProvider::Setup(MessageDispatcher *messageDispatcher)
 }
 
 /**
- *  Encode a header or transport only message.
+ *  @brief Encode a header or transport only message.
  *
  *  @param transaction
  *      SPI transaction that has been created to hold the message/header.
@@ -537,7 +532,7 @@ void SpiTransportProvider::EncodeHeaderMessage(spi_slave_transaction_t *transact
 }
 
 /**
- *  Process the transport message and prepare the next transaction and
+ *  @brief Process the transport message and prepare the next transaction and
  *  change to the appropriate state.
  * 
  *  @param request
@@ -613,7 +608,7 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessTransportMessage(Message *
  ******************************************************************************/
 
 /**
- *  The STM32 has sent what is assumed to be a message header to the ESP32.
+ *  @brief The STM32 has sent what is assumed to be a message header to the ESP32.
  *  Work out what is the appropriate next action.
  *
  *  @param transaction
@@ -684,7 +679,7 @@ spi_slave_transaction_t *SpiTransportProvider::InboundMessageHeaderReceived(spi_
 }
 
 /**
- *  The inbound message has been acknowledged so work out if the message is
+ *  @brief The inbound message has been acknowledged so work out if the message is
  *  complete (i.e. no payload) and so can be queued or if we need to request
  *  the full message.
  *
@@ -739,7 +734,7 @@ spi_slave_transaction_t *SpiTransportProvider::InboundMessageHeaderAcknowledged(
 }
 
 /**
- *  The full message has been received, work out if it is good and prepare
+ *  @brief The full message has been received, work out if it is good and prepare
  *  the appropriate response (ACK or NAK) and queue the message for processing
  *  if the message is good.
  *
@@ -817,7 +812,7 @@ spi_slave_transaction_t *SpiTransportProvider::InboundMessageBodyReceived(spi_sl
 }
 
 /**
- *  Acknowledgement has been sent so go back to waiting for a new message
+ *  @brief Acknowledgement has been sent so go back to waiting for a new message
  *  header to be sent.
  *
  *  @param transaction
@@ -858,7 +853,7 @@ spi_slave_transaction_t *SpiTransportProvider::InboundMessageBodyAcknowledged(sp
  ******************************************************************************/
 
 /**
- *  The message header will already have been sent, we need to get ready to
+ *  @brief The message header will already have been sent, we need to get ready to
  *  receive and ACK or NAK from the STM32.
  *
  *  @param transaction
@@ -887,7 +882,7 @@ spi_slave_transaction_t *SpiTransportProvider::OutboundMessageHeaderSent(spi_sla
 }
 
 /**
- *  Implement processing of the incoming message header acknowledgement.
+ *  @brief Implement processing of the incoming message header acknowledgement.
  *
  *  This function can result in the ESP32 moving in one of three ways:
  *      - STM32 received a corrupt header and so the ESP32 should add the
@@ -953,7 +948,7 @@ spi_slave_transaction_t *SpiTransportProvider::OutboundMessageHeaderAcknowledgem
 }
 
 /**
- *  The message body has been sent, we should now prepare to receive the message
+ *  @brief The message body has been sent, we should now prepare to receive the message
  *  body acknowledgement.
  *
  *  The message acknowledgement (ACK / NAK) will determine if the STM32 has received
@@ -979,7 +974,7 @@ spi_slave_transaction_t *SpiTransportProvider::OutboundMessageBodySent(spi_slave
 }
 
 /**
- *  Implement processing of the out-bound message body acknowledgement.
+ *  @brief Implement processing of the out-bound message body acknowledgement.
  *
  *  The message body should have been sent and the STM32 will have responded
  *  with an ACK or NAK.  If the message has failed (i.e. corrupt) then the
@@ -1039,7 +1034,7 @@ spi_slave_transaction_t *SpiTransportProvider::OutboundMessageBodyAcknowledgemen
 }
 
 /**
- *  Check to see if there are any messages waiting to be sent and start the
+ *  @brief Check to see if there are any messages waiting to be sent and start the
  *  process of sending the message if there are any queued.
  *
  *  When this function exists, the transaction returned will be one of:
@@ -1095,7 +1090,7 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessSendingTransportResponseSt
 }
 
 /**
- *  Check to see if the message buffer contains any data.
+ *  @brief Check to see if the message buffer contains any data.
  *
  *
  *  This method simply scans a buffer that should contain an encoded message
@@ -1135,7 +1130,7 @@ bool SpiTransportProvider::MessageContainsData(uint8_t *buffer, uint32_t bufferL
 }
 
 /**
- *  Check to see if the ESP32 is sending data.
+ *  @brief Check to see if the ESP32 is sending data.
  *
  *  @param state
  *      State to check.
@@ -1158,7 +1153,7 @@ bool SpiTransportProvider::SendingData(SpiStates state)
 }
 
 /**
- *  Start the SPI communication and with for a signal that we have messages to process.
+ *  @brief Start the SPI communication and with for a signal that we have messages to process.
  *  Process the incoming message and return a new transaction that can be used for the
  *  next stage in the process.
  *
@@ -1253,7 +1248,7 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessMessages(spi_slave_transac
 }
 
 /**
- *  Process any messages for the controller.
+ *  @brief Process any messages for the controller.
  *
  *  The messages will be generated by the incoming SPI interface.
  *

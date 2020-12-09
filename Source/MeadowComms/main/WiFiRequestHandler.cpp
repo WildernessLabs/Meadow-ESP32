@@ -41,183 +41,183 @@ extern heap_trace_record_t *trace_records;
  */
 
 /**
- *  Determine if this class is instantiated already (i.e. this should be a singleton).
+ *  @brief Determine if this class is instantiated already (i.e. this should be a singleton).
  */
 bool WiFiRequestHandler::_instantiated = false;
 
 /**
- *  List of active poll requests.
+ *  @brief List of active poll requests.
  */
 GenericLinkList<WiFiRequestHandler::PollRequestInformation> *WiFiRequestHandler::_pollRequests = nullptr;
 
 /**
- *  Mutex for the poll request linked list.
+ *  @brief Mutex for the poll request linked list.
  */
 SemaphoreHandle_t WiFiRequestHandler::_pollRequestListMutex = NULL;
 
 /**
- *  Handle for the completed poll requests.
+ *  @brief Handle for the completed poll requests.
  */
 QueueHandle_t WiFiRequestHandler::_completedPollRequestsQueue = NULL;
 
 /**
- *  GPIO Pin connected to the antenna selection switch
+ *  @brief GPIO Pin connected to the antenna selection switch
  *  which will connect the on board antenna to the ESP32.
  */
 const gpio_num_t WiFiRequestHandler::ON_BOARD_ANTENNA_PIN = GPIO_NUM_26;
 
 /**
- *  GPIO Pin connected to the antenna selection switch
+ *  @brief GPIO Pin connected to the antenna selection switch
  *  which will connect the external antenna to the ESP32.
  */
 const gpio_num_t WiFiRequestHandler::EXTERNAL_ANTENNA_PIN = GPIO_NUM_27;
 
 /**
- *  Name of the NVS storage holding the current antenna value.
+ *  @brief Name of the NVS storage holding the current antenna value.
  */
  const char *WiFiRequestHandler::ANTENNA_TYPE_NAME = "Antenna";
 
 /**
- *  Name of the device on the network.
+ *  @brief Name of the device on the network.
  */
 char *WiFiRequestHandler::_deviceName = (char *) "MeadowF7";
 
 /**
- *  Name of the storage in NVS holding the device name on the network.
+ *  @brief Name of the storage in NVS holding the device name on the network.
  */
 const char *WiFiRequestHandler::DEVICE_NAME_NAME = "DeviceName";
 
 /**
- *  Should the system automatically reconnect to an access point should there
+ *  @brief Should the system automatically reconnect to an access point should there
  *  be a problem and the current connection is dropped.
  */
 bool WiFiRequestHandler::_automaticReconnect = false;
 
 /**
- *  Name of the NVS storage holding the _automaticReconnect value.
+ *  @brief Name of the NVS storage holding the _automaticReconnect value.
  */
 const char *WiFiRequestHandler::AUTOMATIC_RECONNECT_NAME = "AutoReconnect";
 
 /**
- *  Maximum number of times a failed event should retry before raising an error.
+ *  @brief Maximum number of times a failed event should retry before raising an error.
  */
 uint32_t WiFiRequestHandler::_maximumRetryCount = 3;
 
 /**
- *  Name of the NVS storage holding the _maximumRetryCount value.
+ *  @brief Name of the NVS storage holding the _maximumRetryCount value.
  */
 const char *WiFiRequestHandler::MAXIMUM_RETRY_COUNT_NAME = "MaxRetry";
 
 /**
- *  Indicate if the network should start automatically at start up.
+ *  @brief Indicate if the network should start automatically at start up.
  */
 bool WiFiRequestHandler:: _automaticallyStartNetwork = false;
 
 /**
- *  Name of the NVS storage holding the _automaticallyStartNetwork value.
+ *  @brief Name of the NVS storage holding the _automaticallyStartNetwork value.
  */
 const char *WiFiRequestHandler::AUTOMATICALLY_START_NETWORK_NAME = "AutoStartNet";
 
 /**
- *  Indicate if the system should connect to a time server and get the
+ *  @brief Indicate if the system should connect to a time server and get the
  *  current time at startup.
  */
 bool WiFiRequestHandler::_getTimeAtStartup = false;
 
 /**
- *  Name fo the storage in NVS that holds the value indicating that the
+ *  @brief Name fo the storage in NVS that holds the value indicating that the
  *  system should get the time at startup. 
  */
 const char *WiFiRequestHandler::GET_TIME_AT_STARTUP_NAME = "GetTime";
 
 /**
- *  Indicate if we should use DHCP.
+ *  @brief Indicate if we should use DHCP.
  */
 bool WiFiRequestHandler::_useDhcp = false;
 
 /**
- *  Name of the storage holding the _useDhcp configuration setting.
+ *  @brief Name of the storage holding the _useDhcp configuration setting.
  */
 const char *WiFiRequestHandler::USE_DHCP_NAME = "UseDHCP";
 
 /**
- *  Defaut access [oint to be used when automatically connecting.
+ *  @brief Defaut access [oint to be used when automatically connecting.
  */
 char *WiFiRequestHandler::_defaultAccessPoint = nullptr;
 
 /**
- *  Name of the storage in NVS holding the default access point.
+ *  @brief Name of the storage in NVS holding the default access point.
  */
 const char *WiFiRequestHandler::DEFAULT_ACCESS_POINT_NAME = "DefaultAP";
 
 /**
- *  Password for the access point.
+ *  @brief Password for the access point.
  */
 char *WiFiRequestHandler::_password = nullptr;
 
 /**
- *  Name of the storage in NVS holding the password for the access point.
+ *  @brief Name of the storage in NVS holding the password for the access point.
  */
 const char *WiFiRequestHandler::PASSWORD_NAME = "Password";
 
 /**
- *  Name of the NTP server to be used when using NTP to set the time
+ *  @brief Name of the NTP server to be used when using NTP to set the time
  *  when the board starts.
  */
 char *WiFiRequestHandler::_ntpServer = (char *) "pool.ntp.org";
 
 /**
- *  Name of the storage space in NVS holding the NTP server information.
+ *  @brief Name of the storage space in NVS holding the NTP server information.
  */
 const char *WiFiRequestHandler::NTP_SERVER_NAME = "NtpServer";
 
 /**
- *  Name of the storage space in NVS holding the timezone information.
+ *  @brief Name of the storage space in NVS holding the timezone information.
  */
 const char *WiFiRequestHandler::TIMEZONE_NAME = "Timezone";
 
 /**
- *  Timezone to be used when the ESP32 starts.  Default will be UTC.
+ *  @brief Timezone to be used when the ESP32 starts.  Default will be UTC.
  */
 char *WiFiRequestHandler::_timezone = (char *) "UTC";
 
 /**
- *  Static IP address when not using DHCP.
+ *  @brief Static IP address when not using DHCP.
  */
 uint32_t WiFiRequestHandler::_staticIpAddress = 0;
 
 /**
- *  Name of the storage space holding the static IP address.
+ *  @brief Name of the storage space holding the static IP address.
  */
 const char *WiFiRequestHandler::STATIC_IP_ADDRESS_NAME = "IpAddress";
 
 /**
- *  DNS server when not using DHCP.
+ *  @brief DNS server when not using DHCP.
  */
 uint32_t WiFiRequestHandler::_dnsServer = 0;
 
 /**
- *  Name of the storage in NVS holding the DNS server IP address.
+ *  @brief Name of the storage in NVS holding the DNS server IP address.
  */
 const char *WiFiRequestHandler::DNS_SERVER_NAME = "DnsServer";
 
 /**
- *  IP address of the default gateway when not using DHCP.
+ *  @brief IP address of the default gateway when not using DHCP.
  */
 uint32_t WiFiRequestHandler::_defaultGateway = 0;
 
 /**
- *  Name of the storage space holding the IP address of the default gateway.
+ *  @brief Name of the storage space holding the IP address of the default gateway.
  */
 const char *WiFiRequestHandler::DEFAULT_GATEWAY_NAME = "Gateway";
 
 /**
- *  Default value for the WiFi timeout.
+ *  @brief Default value for the WiFi timeout.
  */
 uint32_t WiFiRequestHandler::_wifiTimeout = 30000;
 
 /**
- *  Name of the storage space holding the default WiFi timeout.
+ *  @brief Name of the storage space holding the default WiFi timeout.
  */
 const char *WiFiRequestHandler::DEFAULT_WIFI_TIMEOUT_NAME = "WiFiTimeout";
 
@@ -230,7 +230,7 @@ const char *WiFiRequestHandler::DEFAULT_WIFI_TIMEOUT_NAME = "WiFiTimeout";
  */
 
 /**
- *  Default constructor for the WiFi class.
+ *  @brief Default constructor for the WiFi class.
  */
 WiFiRequestHandler::WiFiRequestHandler()
 {
@@ -264,7 +264,7 @@ WiFiRequestHandler::WiFiRequestHandler()
     //
     //  Setup the timezones ready for when we get the time from a timeserver.
     //
-    setenv("TZ", "", 1);
+    setenv("TZ", _timezone, 1);
     tzset();
     //
     //  Set up the structures need to deal with poll() requests in an asynchronous manner.
@@ -285,7 +285,7 @@ WiFiRequestHandler::WiFiRequestHandler()
 }
 
 /**
- *  Create a new object and set the message dispatcher accordingly.
+ *  @brief Create a new object and set the message dispatcher accordingly.
  *
  *  @param messageDispatcher
  *      Message Dispatcher object that can be used to send messages to
@@ -297,7 +297,7 @@ WiFiRequestHandler::WiFiRequestHandler(MessageDispatcher *messageDispatcher) : W
 }
 
 /**
- *  Destructor for the WiFi class.
+ *  @brief Destructor for the WiFi class.
  *
  *  Free any resources used by the class.
  */
@@ -357,7 +357,7 @@ bool WiFiRequestHandler::GetAutomaticReconnect()
 
 /**
  *  @brief Set the automatic reconnect value.
- *
+ * 
  *  @param value
  *      New automatic reconnection value.
  * 
@@ -408,7 +408,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetAutomaticallyStartNetwork(bool v
 }
 
 /**
- *  @brief Get the get time at startup value.
+ *  @brief Get the "get time at startup" value.
  */
 bool WiFiRequestHandler::GetGetTimeAtStartup()
 {
@@ -416,7 +416,7 @@ bool WiFiRequestHandler::GetGetTimeAtStartup()
 }
 
 /**
- *  @brief Set the get time at startup value.
+ *  @brief Set the "get time at startup" value.
  *
  *  @param value
  *      New get time at startup value.
@@ -438,7 +438,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetGetTimeAtStartup(bool value)
 }
 
 /**
- *  @brief Get the get time at startup value.
+ *  @brief Get the use DHCP value.
  */
 bool WiFiRequestHandler::GetUseDhcp()
 {
@@ -446,7 +446,7 @@ bool WiFiRequestHandler::GetUseDhcp()
 }
 
 /**
- *  @brief Set the get time at startup value.
+ *  @brief Set the use DHCP value.
  *
  *  @param value
  *      New use DHCP value.
@@ -788,7 +788,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetAntenna(uint8_t antenna)
 }
 
 /**
- *  @brief Get the automatic maximum retry count value.
+ *  @brief Get the WiFi timeout value (milliseconds).
  */
 uint32_t WiFiRequestHandler::GetWiFiTimeout()
 {
@@ -796,10 +796,10 @@ uint32_t WiFiRequestHandler::GetWiFiTimeout()
 }
 
 /**
- *  @brief Set the maximum retry count value.
+ *  @brief Set the WiFi timeout value (milliseconds).
  *
  *  @param value
- *      New maximum retry count value.
+ *      New WiFi timeout value.
  * 
  *  @returns
  *      StatusCodes::Completed on success, StatusCodes::Failure if there is a problem.
@@ -830,7 +830,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetWiFiTimeout(uint32_t value)
  */
 
 /**
- *  Convert the antenna enum into a GPIO pin number
+ *  @brief Convert the antenna enum into a GPIO pin number
  *
  *  @param antenna
  *      Enum representing the antenna to be converted.
@@ -853,7 +853,7 @@ gpio_num_t WiFiRequestHandler::ConvertAntennaToPin(AntennaTypes::AntennaTypes an
 }
 
 /**
- *  @brief Chnage the current antenna in use.
+ *  @brief Change the current antenna in use.
  * 
  *  Note that this does not change the actual default antenna in use, it just switches to a new one.
  *  Use SetAntenna followed by SwitchAntenna in order to change antenna that will be used as
@@ -885,7 +885,7 @@ void WiFiRequestHandler::SwitchAntenna(AntennaTypes::AntennaTypes newAntenna)
 }
 
 /**
- *  @brief Setup the WiFi network.
+ *  @brief Setup the WiFi network class.
  */
 void WiFiRequestHandler::Setup()
 {
@@ -1143,7 +1143,7 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
  *  @param message
  *      Message containing the encoded request.
  */
-void WiFiRequestHandler::DisconnectFromAccessPoint(Message *request)
+void WiFiRequestHandler::DisconnectFromAccessPoint(Message *message)
 {
 #if defined(WIFI_FULL_LOGGING)
     ESP_LOGI(__func__, "Enter");
@@ -1160,10 +1160,10 @@ void WiFiRequestHandler::DisconnectFromAccessPoint(Message *request)
 /**
  *  @brief Stop the network and release all resources associated with any active connections.
  *
- *  @param request
+ *  @param message
  *      Message containing the encoded request.
  */
-void WiFiRequestHandler::Stop(Message *request)
+void WiFiRequestHandler::Stop(Message *message)
 {
 #if defined(WIFI_FULL_LOGGING)
     ESP_LOGI(__func__, "Enter");
@@ -1183,7 +1183,7 @@ void WiFiRequestHandler::Stop(Message *request)
  *  @param message
  *      Message containing the encoded request.
  */
-void WiFiRequestHandler::ConnectToAccessPoint(Message *request)
+void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
 {
 #if defined(WIFI_FULL_LOGGING)
     ESP_LOGI(__func__, "Enter");
@@ -1201,8 +1201,8 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *request)
         }
     }
 
-    Esp32Messaging::WiFiCredentials *credentials = Encoders::ExtractWiFiCredentials(request->Payload);
-    request->DeletePayload();
+    Esp32Messaging::WiFiCredentials *credentials = Encoders::ExtractWiFiCredentials(message->Payload);
+    message->DeletePayload();
     if (result == StatusCodes::CompletedOk)
     {
         _currentRetryCount = 0;
@@ -1236,11 +1236,11 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *request)
                 {
                     esp_netif_ip_info_t ipInfo;
                     ESP_ERROR_CHECK(esp_netif_get_ip_info(_stationNetIfHandle, &ipInfo));
-                    request->PayloadLength = 3 * sizeof(esp_ip4_addr_t);
-                    request->Payload = static_cast<uint8_t *>(pvPortMalloc(request->PayloadLength));
-                    memcpy(request->Payload, (void *) &ipInfo.ip, sizeof(esp_ip4_addr_t));
-                    memcpy(request->Payload + sizeof(esp_ip4_addr_t), (void *) &ipInfo.netmask, sizeof(esp_ip4_addr_t));
-                    memcpy(request->Payload + 2 * (sizeof(esp_ip4_addr_t)), (void *) &ipInfo.gw, sizeof(esp_ip4_addr_t));
+                    message->PayloadLength = 3 * sizeof(esp_ip4_addr_t);
+                    message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
+                    memcpy(message->Payload, (void *) &ipInfo.ip, sizeof(esp_ip4_addr_t));
+                    memcpy(message->Payload + sizeof(esp_ip4_addr_t), (void *) &ipInfo.netmask, sizeof(esp_ip4_addr_t));
+                    memcpy(message->Payload + 2 * (sizeof(esp_ip4_addr_t)), (void *) &ipInfo.gw, sizeof(esp_ip4_addr_t));
                     if (GetGetTimeAtStartup())
                     {
                         //
@@ -1281,9 +1281,9 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *request)
     }
     vPortFree(credentials);
 
-    request->MessageType = MessageTypes::Response;
-    request->StatusCode = result;
-    _messageDispatcher->QueueMessageForStm32(request);
+    message->MessageType = MessageTypes::Response;
+    message->StatusCode = result;
+    _messageDispatcher->QueueMessageForStm32(message);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
 
 #if defined(WIFI_FULL_LOGGING)
@@ -1364,25 +1364,25 @@ esp_err_t WiFiRequestHandler::StartWiFiInterface()
  *  This will only start the WiFi interface, it will not connect to an access
  *  point.  Also, this will only operate in station mode at the moment.
  *
- *  @param request
+ *  @param message
  *      Request sent from the STM32.
  */
-void WiFiRequestHandler::StartNetwork(Message *request)
+void WiFiRequestHandler::StartNetwork(Message *message)
 {
 #if defined(WIFI_FULL_LOGGING)
     ESP_LOGI(__func__, "Enter");
 #endif
 
-    request->MessageType = MessageTypes::Response;
+    message->MessageType = MessageTypes::Response;
     if (StartWiFiInterface() == ESP_OK)
     {
-        request->StatusCode = StatusCodes::CompletedOk;
+        message->StatusCode = StatusCodes::CompletedOk;
     }
     else
     {
-        request->StatusCode = StatusCodes::Failure;
+        message->StatusCode = StatusCodes::Failure;
     }
-    _messageDispatcher->QueueMessageForStm32(request);
+    _messageDispatcher->QueueMessageForStm32(message);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
 
 #if defined(WIFI_FULL_LOGGING)
@@ -1394,12 +1394,14 @@ void WiFiRequestHandler::StartNetwork(Message *request)
  *  @brief Get the full list of available networks.
  *
  *  @pre
- *      The network must be started before this method is called.
+ *      The network interfce must be started before this method is called.
+ *      It is not necessary to connected to an access pint but the interface
+ *      must be started.
  *
- *  @param request
+ *  @param message
  *      Request sent from the STM32.
  */
-void WiFiRequestHandler::GetAvailableNetworks(Message *request)
+void WiFiRequestHandler::GetAvailableNetworks(Message *message)
 {
 #if defined(WIFI_FULL_LOGGING)
     ESP_LOGI(__func__, "Enter");
@@ -1473,9 +1475,9 @@ void WiFiRequestHandler::GetAvailableNetworks(Message *request)
                 vPortFree(accessPoints);
                 vPortFree(accessPoint);
 
-                request->PayloadLength = Encoders::EncodedAccessPointListBufferSize(accessPointList);
-                request->Payload = static_cast<uint8_t *>(pvPortMalloc(request->PayloadLength));
-                Encoders::EncodeAccessPointList(accessPointList, request->Payload);
+                message->PayloadLength = Encoders::EncodedAccessPointListBufferSize(accessPointList);
+                message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
+                Encoders::EncodeAccessPointList(accessPointList, message->Payload);
                 vPortFree(accessPointList);
             }
             result = StatusCodes::CompletedOk;
@@ -1487,9 +1489,9 @@ void WiFiRequestHandler::GetAvailableNetworks(Message *request)
         }
     }
 
-    request->MessageType = MessageTypes::Response;
-    request->StatusCode = result;
-    _messageDispatcher->QueueMessageForStm32(request);
+    message->MessageType = MessageTypes::Response;
+    message->StatusCode = result;
+    _messageDispatcher->QueueMessageForStm32(message);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
 
 #if defined(WIFI_FULL_LOGGING)
@@ -1498,7 +1500,7 @@ void WiFiRequestHandler::GetAvailableNetworks(Message *request)
 }
 
 /**
- *  @brief Expose the getaddrinfo method to the STM32.
+ *  @brief Expose the POSIX getaddrinfo method to the STM32.
  *
  *  @param message
  *      Message structure containing the parameters for the getaddrinfo method.
@@ -1576,7 +1578,7 @@ void WiFiRequestHandler::GetAddrInfo(Message *message)
 }
 
 /**
- *  @brief Expose the socket method to the STM32.
+ *  @brief Expose the POSIX socket method to the STM32.
  *
  *  @param message
  *      Message structure containing the parameters for the socket method.
@@ -1617,7 +1619,7 @@ void WiFiRequestHandler::Socket(Message *message)
 }
 
 /**
- *  @brief Expose the connect method to the STM32.
+ *  @brief Expose the POSIX connect method to the STM32.
  *
  *  @param message
  *      Message structure containing the parameters for the connect method.
@@ -1697,7 +1699,7 @@ void WiFiRequestHandler::Connect(Message *message)
 }
 
 /**
- *  @brief Expose the freeaddrinfo method to the STM32.
+ *  @brief Expose the POSIX freeaddrinfo method to the STM32.
  *
  *  @param message
  *      Message structure containing the parameters for the freeaddrinfo method.
@@ -1732,7 +1734,7 @@ void WiFiRequestHandler::FreeAddrInfo(Message *message)
 }
 
 /**
- *  @brief Expose the setsockopt method to the STM32.
+ *  @brief Expose the POSIX setsockopt method to the STM32.
  *
  *  @param message
  *      Message structure containing the parameters for the setsockopt method.
@@ -1846,7 +1848,7 @@ void WiFiRequestHandler::SetSockOpt(Message *message)
 }
 
 /**
- *  @brief Expose the write method to the STM32.
+ *  @brief Expose the POSIX write method to the STM32.
  *
  *  @param message
  *      Message structure containing the parameters for the write method.
@@ -1892,7 +1894,7 @@ void WiFiRequestHandler::Write(Message *message)
 }
 
 /**
- *  @brief Expose the read method to the STM32.
+ *  @brief Expose the POSIX read method to the STM32.
  *
  *  @param message
  *      Message structure containing the parameters for the read method.
@@ -1947,10 +1949,10 @@ void WiFiRequestHandler::Read(Message *message)
 }
 
 /**
- *  @brief Expose the close method to the STM32.
+ *  @brief Expose the POSIX close method to the STM32.
  *
  *  @param message
- *      Message structure containing the parameters for the getaddrinfo method.
+ *      Message structure containing the parameters for the close method.
  */
 void WiFiRequestHandler::Close(Message *message)
 {
@@ -1992,10 +1994,10 @@ void WiFiRequestHandler::Close(Message *message)
 }
 
 /**
- *  @brief Expose the send method to the STM32.
+ *  @brief Expose the POSIX send method to the STM32.
  *
  *  @param message
- *      Message structure containing the parameters for the sendto method.
+ *      Message structure containing the parameters for the send method.
  */
 void WiFiRequestHandler::Send(Message *message)
 {
@@ -2049,7 +2051,7 @@ void WiFiRequestHandler::Send(Message *message)
 }
 
 /**
- *  @brief Expose the sendto method to the STM32.
+ *  @brief Expose the POSIX sendto method to the STM32.
  *
  *  @param message
  *      Message structure containing the parameters for the sendto method.
@@ -2148,7 +2150,7 @@ void WiFiRequestHandler::SendTo(Message *message)
 }
 
 /**
- *  @brief Expose the recvfrom method to the STM32.
+ *  @brief Expose the POSIX recvfrom method to the STM32.
  *
  *  @param message
  *      Message structure containing the parameters for the recvfrom method.
@@ -2454,6 +2456,9 @@ void WiFiRequestHandler::Accept(Message *message)
 
 /**
  *  @brief Expose the simulation of the POSIX ioctl method to the STM32.
+ * 
+ *  This is a simulation of the ioctl method as this is not supported by the
+ *  ESP-IDF framework.
  *
  *  @param message
  *      Message structure containing the parameters for the ioctl method.
@@ -2519,7 +2524,7 @@ void WiFiRequestHandler::Ioctl(Message *message)
  *  @brief Expose the POSIX getsockname method to the STM32.
  *
  *  @param message
- *      Message structure containing the parameters for the accept method.
+ *      Message structure containing the parameters for the getsockname method.
  */
 void WiFiRequestHandler::GetSockName(Message *message)
 {

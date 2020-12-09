@@ -11,8 +11,8 @@
 #include <sys/ioctl.h>
 #include "Mapping.hpp"
 
-/*
- *  Map the STM32 address family codes to ESP32 address family code.
+/**
+ *  @brief Map the STM32 address family codes to ESP32 address family code.
  * 
  *  STM value is first, ESP value second.
  */
@@ -28,8 +28,8 @@ Mapping::int_mapping_t Mapping::_addressFamilies[] =
 #endif
 };
 
-/*
- *  Map the STM32 socket options to ESP32 socket options.
+/**
+ *  @brief Map the STM32 socket options to ESP32 socket options.
  * 
  *  STM value is first, ESP value second.
  */
@@ -53,8 +53,8 @@ Mapping::int_mapping_t Mapping::_socketOptions[] =
     { 15, SO_TYPE }
 };
 
-/*
- *  Map the STM32 protocol family codes to ESP32 protocol family code.
+/**
+ *  @brief Map the STM32 protocol family codes to ESP32 protocol family code.
  * 
  *  STM value is first, ESP value second.
  */
@@ -65,8 +65,8 @@ Mapping::int_mapping_t Mapping::_protocolFamilies[] =
     { 1, PF_UNSPEC }
 };
 
-/*
- *  Map the STM32 socket types to ESP32 socket types.
+/**
+ *  @brief Map the STM32 socket types to ESP32 socket types.
  * 
  *  STM value is first, ESP value second.
  */
@@ -77,8 +77,8 @@ Mapping::int_mapping_t Mapping::_socketTypes[] =
     { 3, SOCK_RAW }
 };
 
-/*
- *  Map the STM32 socket types to ESP32 socket types.
+/**
+ *  @brief Map the STM32 socket types to ESP32 socket types.
  * 
  *  STM value is first, ESP value second.
  */
@@ -87,8 +87,8 @@ Mapping::int_mapping_t Mapping::_socketLevels[] =
     { 0, SOL_SOCKET }
 };
 
-/*
- *  Map the STM32 error codes to ESP32 error codes.
+/**
+ *  @brief Map the STM32 error codes to ESP32 error codes.
  * 
  *  STM value is first, ESP value second.
  */
@@ -235,8 +235,8 @@ Mapping::int_mapping_t Mapping::_errno[] =
     // { 143, ESTRPIPE }
 };
 
-/*
- *  Map the STM32 message flags to ESP32 message flags.
+/**
+ *  @brief Map the STM32 message flags to ESP32 message flags.
  * 
  *  STM value is first, ESP value second.
  */
@@ -252,8 +252,8 @@ Mapping::int_mapping_t Mapping::_messageFlags[] =
     { 0x0100, MSG_WAITALL },
 };
 
-/*
- *  Map the STM32 mono polling event flags to ESP32 polling event flags.
+/**
+ *  @brief Map the STM32 mono polling event flags to ESP32 polling event flags.
  * 
  *  STM (Mono) value is first, ESP value second.
  */
@@ -267,8 +267,8 @@ Mapping::int_mapping_t Mapping::_pollEvents[] =
     { 0x20, POLLNVAL }
 };
 
-/*
- *  Map the STM32 socket shutdown types.
+/**
+ *  @brief Map the STM32 socket shutdown types.
  * 
  *  STM value is first, ESP value second.
  */
@@ -288,14 +288,14 @@ Mapping::int_mapping_t Mapping::_socketShutdownType[] =
  */
 
 /**
- *  Default constructor for the mapping system.
+ *  @brief Default constructor for the mapping system.
  */
 Mapping::Mapping()
 {
 }
 
 /**
- *  Default destructor for the mapping system.
+ *  @brief Default destructor for the mapping system.
  */
 Mapping::~Mapping()
 {
@@ -449,7 +449,7 @@ int32_t Mapping::GetValue(Mapping::MappingTable mapping, MappingDirection type, 
 }
 
 /**
- *  Get the ESP constant given the value of the STM constant.
+ *  @brief Get the ESP constant given the value of the STM constant.
  *
  *  @param mapping
  *      Which type of mapping should be used (i.e. which mapping table).
@@ -469,7 +469,7 @@ int32_t Mapping::GetEspValue(Mapping::MappingTable mapping, int32_t value, int32
 }
 
 /**
- *  Get the STM constant given the specified ESP constant.
+ *  @brief Get the STM constant given the specified ESP constant.
  *
  *  @param mapping
  *      Which type of mapping should be used (i.e. which mapping table).

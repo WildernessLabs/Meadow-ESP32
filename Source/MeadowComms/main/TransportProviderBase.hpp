@@ -23,95 +23,95 @@
 class MessageDispatcher;
 
 /**
- *  Base class for the message system transport provider.
+ *  @brief Base class for the message system transport provider.
  */
 class TransportProviderBase
 {
 public:
-    /*
-     *  Setup the transport provider.
+    /**
+     *  @brief Setup the transport provider.
      */
     void Setup(MessageDispatcher *);
 
-    /*
-     *  Add the message given to the queue of messages waiting
+    /**
+     *  @brief Add the message given to the queue of messages waiting
      *  for transmission to the STM32.
      */
     bool QueueMessageForStm32(Message *);
 
     /**
-     *  Bit that will be used to indicate that a the STM32 has just
+     *  @brief Bit that will be used to indicate that a the STM32 has just
      *  finished sending a message to the ESP32.
      */
     static const uint32_t STM32_INTERRUPT_NOTIFICATION_BIT = 0x00000001;
 
     /**
-     *  Get the current maximum message size.
+     *  @brief Get the current maximum message size.
      */
     virtual uint32_t GetMaximumMessageSize() const = 0;
 
     /**
-     *  Set the maximum message size.
+     *  @brief Set the maximum message size.
      */
     virtual bool SetMaximumMessageSize(uint32_t messageSize) = 0;
 
 private:
     /**
-     *  Maximum length of the message queue.
+     *  @brief Maximum length of the message queue.
      */
     const uint32_t MAX_QUEUE_LENGTH = 10;
 
 protected:
     /**
-     *  Message dispatcher object used to send messages to the
+     *  @brief Message dispatcher object used to send messages to the
      *  various interfaces on the ESP32.
      */
     MessageDispatcher *_messageDispatcher = nullptr;
 
     /**
-     *  Queue handle for the messages to be sent to the STM32.
+     *  @brief Queue handle for the messages to be sent to the STM32.
      */
     static QueueHandle_t _outboundMessageQueueHandle;
 
     /**
-     *  Mutex for the outbound message queue.
+     *  @brief Mutex for the outbound message queue.
      */
     static SemaphoreHandle_t _outboundMessageQueueMutex;
 
     /**
-     *  Task handle for the FreeRTOS task that will deal with the
+     *  @brief Task handle for the FreeRTOS task that will deal with the
      *  process of sending and receiving messages between the ESP32
      *  and the STM32 chips.
      */
     static TaskHandle_t _transportProviderTaskHandle;
 
-    /*
-     *  Default constructor.
+    /**
+     *  @brief Default constructor.
      */
     TransportProviderBase();
 
-    /*
-     *  Default destructor.
+    /**
+     *  @brief Default destructor.
      */
     ~TransportProviderBase();
 
-    /*
-     *  Get the number of messages in the outbound message queue.
+    /**
+     *  @brief Get the number of messages in the outbound message queue.
      */
     int OutboundMessageQueueLength();
 
-    /*
-     *  Get the next message from the outbound message queue.
+    /**
+     *  @brief Get the next message from the outbound message queue.
      */
     Message *GetOutboundMessage();
 
-    /*
-     *  Toggle the GPIO pin that is connected to the STM32.
+    /**
+     *  @brief Toggle the GPIO pin that is connected to the STM32.
      */
     void ToggleEsp32MessageWaitingPin();
 
-    /*
-     *  Method used for debugging, this will dump the message at the head
+    /**
+     *  @brief Method used for debugging, this will dump the message at the head
      *  of the message queue as LOGI informaiton.
      */
     void DumpMessageAtHeadOfQueue();

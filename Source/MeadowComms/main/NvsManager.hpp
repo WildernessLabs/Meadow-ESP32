@@ -12,93 +12,96 @@
 #include "Encoders.hpp"
 #include "Logging.hpp"
 
+/**
+ *  @brief Manage the non-volatile storage.
+ */
 class NvsManager
 {
 public:
     /**
-     *  Error codes for the configuration manager.
+     *  @brief Error codes for the configuration manager.
      */
     enum ErrorCodes { Ok, Error, NotAvailable, NotFound, BufferSizeMismatch };
 
 private:
     /**
-     *  Indicate if the NVS memory can be used.
+     *  @brief Indicate if the NVS memory can be used.
      */
     static bool _nvsAvailable;
 
 public:
     /**
-     *  Default constructor.
+     *  D@brief efault constructor.
      */
     NvsManager();
 
     /**
-     *  Destructor.
+     *  @brief Destructor.
      */
     virtual ~NvsManager();
 
     /**
-     *  Setup the non-volatile storage.
+     *  @brief Setup the non-volatile storage.
      */
     static void Setup();
 
     /**
-     *  Read a byte (uint8_t) from non-volatile storage.
+     *  @brief Read a byte (uint8_t) from non-volatile storage.
      */
     static ErrorCodes ReadUint8(const char *, uint8_t *);
 
     /**
-     *  Write a byte (uint8_t) to non-volatile storage.
+     *  @brief Write a byte (uint8_t) to non-volatile storage.
      */
     static ErrorCodes WriteUint8(const char *, uint8_t);
 
     /**
-     *  Get a string value.
+     *  @brief Get a string value.
      */
     static char *GetValue(const char *, const char *, const char *);
 
     /**
-     *  Set a string value.
+     *  @brief Set a string value.
      */
     static ErrorCodes SetValue(const char *, const char *, const char *);
 
     /**
-     *  Get an unsigned integer value.
+     *  @brief Get an unsigned integer value.
      */
     static uint32_t GetValue(const char *, const char *, const uint32_t);
 
     /**
-     *  Set an unsigned integer value.
+     *  @brief Set an unsigned integer value.
      */
     static ErrorCodes SetValue(const char *, const char *, const uint32_t);
 
     /**
-     *  Get an integer value.
+     *  @brief Get an integer value.
      */
     static int32_t GetValue(const char *, const char *, const int32_t);
 
     /**
-     *  Set an integer value.
+     *  @brief Set an integer value.
      */
     static ErrorCodes SetValue(const char *, const char *, const int);
 
     /**
-     *  Get a byte value.
+     *  @brief Get a byte value.
      */
     static uint8_t GetValue(const char *, const char *, const uint8_t);
 
     /**
-     *  Set a byte value.
+     *  @brief Set a byte value.
      */
     static ErrorCodes SetValue(const char *, const char *, const uint8_t);
 
     /**
-     *  Get a boolean value.
+     *  @brief Get a boolean value.
      */
     static bool GetValue(const char *, const char *, const bool);
 
     /**
-     *  Set a boolean value.
+     *  @brief Set a boolean value.
      */
     static ErrorCodes SetValue(const char *, const char *, const bool);
 };

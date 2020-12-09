@@ -28,125 +28,125 @@ class SystemRequestHandler : public RequestHandlerBase
 {
 private:
     /**
-     *  Name of the FreeRTOS task for the System task.
+     *  @brief Name of the FreeRTOS task for the System task.
      */
     const char *_taskName = "SystemTask";
 
     /**
-     *  Name of the NVS store holding the system configuration.
+     *  @brief Name of the NVS store holding the system configuration.
      */
     static const char *_configurationName;
 
     /**
-     *  Determine if this class is instantiated already (i.e. this should be a singleton).
+     *  @brief Determine if this class is instantiated already (i.e. this should be a singleton).
      */
     static bool _instantiated;
 
     /**
-     *  Maximum length of a message queue.
+     *  @brief Maximum length of a message queue.
      */
     static uint32_t _maximumMessageQueueLength;
 
     /**
-     *  Name of the NVS storage holding the _maximumMessagequeueLength value.
+     *  @brief Name of the NVS storage holding the _maximumMessagequeueLength value.
      */
     static const char *MAXIMUM_MESSAGE_QUEUE_LENGTH_NAME;
 
     /**
-     *  This method will dispatch incoming messages to the appropriate request handler.
+     *  T@brief his method will dispatch incoming messages to the appropriate request handler.
      */
     void DispatchRequest(Message *) override;
 
     /**
-     *  Constructor(s) and destructor.
+     *  @brief Constructor(s) and destructor.
      */
     SystemRequestHandler();
     ~SystemRequestHandler();
 
     /**
-     *  Get the system configuration.
+     *  @brief Get the system configuration.
      */
     void GetConfiguration(Message *);
 
     /**
-     *  Set the system configuration.
+     *  @brief Set the system configuration.
      */
     void SetConfiguration(Message *);
 
     /**
-     *  Put the ESP32 into deep sleep.
+     *  @brief Put the ESP32 into deep sleep.
      */
     void DeepSleep(Message *);
 
     /**
-     *  Get the battery level.
+     *  @brief Get the battery level.
      */
     void GetBatteryChargeLevel(Message *);
 
 public:
     /**
-     *  Public constructor.
+     *  @brief Public constructor.
      */
     explicit SystemRequestHandler(MessageDispatcher *);
 
     /**
-     *  Public methods.
+     *  @brief Perform any class level setup.
      */
     void Setup();
 
     /**
-     *  Get a string configuration value.
+     *  @brief Get a string configuration value.
      */
     static char *GetConfigurationValue(const char *, const char *);
 
     /**
-     *  Get an unsigned integer configuration value.
+     *  @brief Get an unsigned integer configuration value.
      */
     static uint32_t GetConfigurationValue(const char *, const uint32_t);
 
     /**
-     *  Get an integer configuration value.
+     *  @brief Get an integer configuration value.
      */
     static int GetConfigurationValue(const char *, const int32_t);
 
     /**
-     *  Get a byte configuration value.
+     *  @brief Get a byte configuration value.
      */
     static uint8_t GetConfigurationValue(const char *, const uint8_t);
 
     /**
-     *  Get a boolean configuration value.
+     *  @brief Get a boolean configuration value.
      */
     static bool GetConfigurationValue(const char *, const bool);
 
     /**
-     *  Get / Set the maximum message queue length.
+     *  @brief Get / Set the maximum message queue length.
      */
     static uint32_t GetMaximumMessageQueueLength();
     static StatusCodes::StatusCodes SetMaximumMessageQueueLength(uint32_t);
 
     /**
-     *  Set a string configuration value.
+     *  @brief Set a string configuration value.
      */
     static NvsManager::ErrorCodes SetConfigurationValue(const char *, const char *);
 
     /**
-     *  Set an unsigned integer configuration value.
+     *  @brief Set an unsigned integer configuration value.
      */
     static NvsManager::ErrorCodes SetConfigurationValue(const char *, const uint32_t);
 
     /**
-     *  Set an integer configuration value.
+     *  @brief Set an integer configuration value.
      */
     static NvsManager::ErrorCodes SetConfigurationValue(const char *, const int32_t);
 
     /**
-     *  Set a byte configuration value.
+     *  @brief Set a byte configuration value.
      */
     static NvsManager::ErrorCodes SetConfigurationValue(const char *, const uint8_t);
 
     /**
-     *  Set a boolean configuration value.
+     *  @brief Set a boolean configuration value.
      */
     static NvsManager::ErrorCodes SetConfigurationValue(const char *, const bool);
 };
