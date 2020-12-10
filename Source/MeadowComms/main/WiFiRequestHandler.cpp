@@ -1514,8 +1514,7 @@ void WiFiRequestHandler::GetAddrInfo(Message *message)
     Esp32Messaging::GetAddrInfoRequest *request = Encoders::ExtractGetAddrInfoRequest(message->Payload);
     //
     Esp32Messaging::AddrInfo *extractedHints = Encoders::ExtractAddrInfo(request->Hints);
-    struct addrinfo hints;
-    bzero(static_cast<void *>(&hints), sizeof(addrinfo));
+    struct addrinfo hints = {};
     hints.ai_family = extractedHints->Family;
     hints.ai_socktype = extractedHints->SocketType;
     vPortFree(extractedHints);
@@ -1534,10 +1533,9 @@ void WiFiRequestHandler::GetAddrInfo(Message *message)
     response->AddrInfoResponseErrno = errorCode;
     if ((errorCode == 0) || (addressInformation != NULL))
     {
-        Esp32Messaging::SockAddr sa;
-        Esp32Messaging::AddrInfo a;
+        Esp32Messaging::SockAddr sa = {};
+        Esp32Messaging::AddrInfo a = {};
 
-        bzero(&sa, sizeof(Esp32Messaging::SockAddr));
         int family;
         Mapping::GetStmValue(Mapping::AddressFamily, addressInformation->ai_addr->sa_family, &family);
         sa.Family = (unsigned char) (family & 0xff);
@@ -1635,8 +1633,7 @@ void WiFiRequestHandler::Connect(Message *message)
     Esp32Messaging::IntegerAndErrnoResponse response;
     response.Result = 0;
 
-    struct sockaddr_in sa;
-    bzero(&sa, sizeof(struct sockaddr));
+    struct sockaddr_in sa = {};
     int family;
     Mapping::GetEspValue(Mapping::AddressFamily, socketAddress->Family, &family);
     errno = 0;
@@ -2084,12 +2081,11 @@ void WiFiRequestHandler::SendTo(Message *message)
 
         if (family == AF_INET)
         {
-            struct sockaddr_in sa;
+            struct sockaddr_in sa = {};
             struct sockaddr *psa = NULL;
             size_t lenSa = 0;
             if (request->DestinationAddress)
             {
-                bzero(&sa, sizeof(struct sockaddr_in));
                 sa.sin_family = (unsigned char) (family & 0xff);
 
                 sa.sin_port = socketAddress->Port;
@@ -2163,8 +2159,7 @@ void WiFiRequestHandler::RecvFrom(Message *message)
 
     Esp32Messaging::RecvFromRequest *request = Encoders::ExtractRecvFromRequest(message->Payload);
 
-    Esp32Messaging::RecvFromResponse response;
-    bzero(&response, sizeof(Esp32Messaging::RecvFromResponse));
+    Esp32Messaging::RecvFromResponse response = {};
     int32_t mappedFlags = 0;
     response.ResponseErrno = 0;
     response.Result = Mapping::GetEspFlagValue(Mapping::MessageFlags, request->Flags, &mappedFlags);
@@ -2201,8 +2196,7 @@ void WiFiRequestHandler::RecvFrom(Message *message)
         {
             if (request->GetSourceAddress != 0)
             {
-                Esp32Messaging::SockAddr socketAddress;
-                bzero((void *) &socketAddress, sizeof(Esp32Messaging::SockAddr));
+                Esp32Messaging::SockAddr socketAddress = {};
                 int family;
                 Mapping::GetStmValue(Mapping::AddressFamily, sa->sin_family, &family);
                 socketAddress.Family = (uint8_t) (family & 0xff);
@@ -2293,8 +2287,7 @@ void WiFiRequestHandler::Bind(Message *message)
     Esp32Messaging::IntegerAndErrnoResponse response;
     response.Result = 0;
 
-    struct sockaddr_in sa;
-    bzero(&sa, sizeof(struct sockaddr));
+    struct sockaddr_in sa = {};
     int family;
     Mapping::GetEspValue(Mapping::AddressFamily, socketAddress->Family, &family);
     errno = 0;
@@ -2401,8 +2394,7 @@ void WiFiRequestHandler::Accept(Message *message)
     free(message->Payload);
     Esp32Messaging::AcceptResponse response;
 
-    struct sockaddr sa;
-    bzero(&sa, sizeof(struct sockaddr));
+    struct sockaddr sa = {};
     socklen_t saLen = sizeof(sa);
     response.Result = accept(request->SocketHandle, &sa, &saLen);
     if (response.Result > 0)
@@ -2480,10 +2472,9 @@ void WiFiRequestHandler::Ioctl(Message *message)
             esp_netif_ip_info_t ipInfo;
             if (esp_netif_get_ip_info(_stationNetIfHandle, &ipInfo) == ESP_OK)
             {
-                Esp32Messaging::SockAddr sa;
-
-                bzero(&sa, sizeof(Esp32Messaging::SockAddr));
+                Esp32Messaging::SockAddr sa = {};
                 int family;
+
                 Mapping::GetStmValue(Mapping::AddressFamily, AF_INET, &family);
                 sa.Family = (unsigned char) (family & 0xff);
                 memcpy(&sa.Ip4Address, &ipInfo.ip, sizeof(ipInfo.ip));
@@ -2536,8 +2527,7 @@ void WiFiRequestHandler::GetSockName(Message *message)
     free(message->Payload);
     Esp32Messaging::GetSockNameResponse response;
 
-    struct sockaddr sa;
-    bzero(&sa, sizeof(struct sockaddr));
+    struct sockaddr sa = {};
     socklen_t saLen = sizeof(sa);
     response.Result = getsockname(request->SocketHandle, &sa, &saLen);
     if (response.Result > 0)
@@ -2611,8 +2601,7 @@ void WiFiRequestHandler::Poll(Message *message)
     int event = 0;
     if (request->Setup == 2)
     {
-        struct pollfd fds;
-        bzero(&fds, sizeof(pollfd));
+        struct pollfd fds = {};
         fds.fd = request->SocketHandle;
         Mapping::GetEspFlagValue(Mapping::PollEvents, request->Events, &event);
         ESP_LOGI(__func__, "Requested Nuttx events 0x%04d maps to ESP events 0x%04d", request->Events, event);

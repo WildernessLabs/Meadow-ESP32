@@ -368,8 +368,7 @@ void SystemRequestHandler::GetConfiguration(Message *request)
     ESP_LOGI(__func__, "Enter")
 #endif
 
-    Esp32Messaging::SystemConfiguration config;
-    bzero(&config, sizeof(config));
+    Esp32Messaging::SystemConfiguration config = {};
     const esp_app_desc_t *applicationDescription = esp_ota_get_app_description();
     config.SoftwareVersion = const_cast<char *>(applicationDescription->version);
     config.Antenna = WiFiRequestHandler::GetAntenna();
