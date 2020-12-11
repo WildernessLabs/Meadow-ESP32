@@ -1124,7 +1124,7 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
             break;
         default:
             ESP_LOGI(__func__, "Unknown WiFi message received, function %d", request->Function);
-            if (request->Payload != NULL)
+            if ((request->Payload != NULL) && (request->PayloadLength > 0))
             {
                 ESP_LOG_BUFFER_HEXDUMP(__func__, request->Payload, request->PayloadLength, ESP_LOG_INFO);
             }
@@ -2027,7 +2027,10 @@ void WiFiRequestHandler::Send(Message *message)
 
 #if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_SEND_DATA)
     ESP_LOGI(__func__, "Sent %d bytes.", request->Length);
-    ESP_LOG_BUFFER_HEX(__func__, request->Buffer, request->Length);
+    if (request->Buffer && (request->Length > 0))
+    {
+        ESP_LOG_BUFFER_HEX(__func__, request->Buffer, request->Length);
+    }
     ESP_LOGI(__func__, "Result: %d, errno: %d - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
 #endif
 
@@ -2124,7 +2127,10 @@ void WiFiRequestHandler::SendTo(Message *message)
 
 #if defined(WIFI_DEBUG_SENDTO_DATA) || defined(WIFI_FULL_LOGGING)
     ESP_LOGI(__func__, "Sent %d bytes.", request->Length);
-    ESP_LOG_BUFFER_HEX(__func__, request->Buffer, request->Length);
+    if (request->Buffer && (request->Length > 0))
+    {
+        ESP_LOG_BUFFER_HEX(__func__, request->Buffer, request->Length);
+    }
     ESP_LOGI(__func__, "Result: %d, errno: %d - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
 #endif
 
@@ -2236,12 +2242,9 @@ void WiFiRequestHandler::RecvFrom(Message *message)
 
 #if defined(WIFI_DEBUG_RECVFROM_DATA) || defined(WIFI_FULL_LOGGING)
     ESP_LOGI(__func__, "Received %d bytes.", response.Result);
-    if (response.Buffer)
+    if (response.Buffer && (response.BufferLength > 0))
     {
-        if (response.BufferLength > 0)
-        {
-            ESP_LOG_BUFFER_HEX(__func__, response.Buffer, response.Result);
-        }
+        ESP_LOG_BUFFER_HEX(__func__, response.Buffer, response.Result);
     }
     ESP_LOGI(__func__, "Result: %d, errno: %d - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
 #endif
