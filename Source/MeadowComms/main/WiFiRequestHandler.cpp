@@ -1226,12 +1226,12 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
             ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));
             ESP_ERROR_CHECK(esp_wifi_start());
 
-            bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_STATION_STARTED_BIT, pdFALSE, pdFALSE, 30000 / portTICK_PERIOD_MS);
+            bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_STATION_STARTED_BIT, pdFALSE, pdFALSE, GetWiFiTimeout() / portTICK_PERIOD_MS);
             if (bits & WIFI_STATION_STARTED_BIT)
             {
                 ESP_ERROR_CHECK(esp_wifi_connect());
 
-                bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT, pdFALSE, pdFALSE, 30000 / portTICK_PERIOD_MS);
+                bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT, pdFALSE, pdFALSE, GetWiFiTimeout() / portTICK_PERIOD_MS);
                 if (bits & WIFI_CONNECTED_BIT)
                 {
                     esp_netif_ip_info_t ipInfo;
@@ -1434,7 +1434,7 @@ void WiFiRequestHandler::GetAvailableNetworks(Message *message)
         ESP_ERROR_CHECK(esp_wifi_start());
         ESP_ERROR_CHECK(esp_wifi_scan_start(NULL, true));
 
-        bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_SCAN_COMPLETE_BIT, pdFALSE, pdFALSE, 10000 / portTICK_PERIOD_MS);
+        bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_SCAN_COMPLETE_BIT, pdFALSE, pdFALSE, GetWiFiTimeout() / portTICK_PERIOD_MS);
         if (bits & WIFI_SCAN_COMPLETE_BIT)
         {
             uint16_t apCount = 0;
