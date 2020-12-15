@@ -1428,65 +1428,74 @@ void WiFiRequestHandler::GetAvailableNetworks(Message *message)
         #define MAX_AP 80
         uint16_t number = MAX_AP;
         wifi_ap_record_t *ap_info = (wifi_ap_record_t *) pvPortMalloc(MAX_AP * sizeof(wifi_ap_record_t));
-        bzero(ap_info, MAX_AP * sizeof(wifi_ap_record_t));
-
-        ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
-        ESP_ERROR_CHECK(esp_wifi_start());
-        ESP_ERROR_CHECK(esp_wifi_scan_start(NULL, true));
-
-        bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_SCAN_COMPLETE_BIT, pdFALSE, pdFALSE, GetWiFiTimeout() / portTICK_PERIOD_MS);
-        if (bits & WIFI_SCAN_COMPLETE_BIT)
+        if (ap_info == NULL)
         {
-            uint16_t apCount = 0;
-            esp_wifi_scan_get_ap_num(&apCount);
-
-#if defined(WIFI_FULL_LOGGING)
-            ESP_LOGI(__func__, "Number of access points found: %d", apCount);
-#endif
-
-            if (apCount != 0)
-            {
-                Esp32Messaging::AccessPointList *accessPointList = static_cast<Esp32Messaging::AccessPointList *>(pvPortMalloc(sizeof(Esp32Messaging::AccessPointList)));
-                accessPointList->NumberOfAccessPoints = apCount;
-                //
-                //  Now we get the access point information.
-                //
-                wifi_ap_record_t *accessPoints = static_cast<wifi_ap_record_t *>(pvPortMalloc(apCount * sizeof(wifi_ap_record_t)));
-                ESP_ERROR_CHECK(esp_wifi_scan_get_ap_records(&number, accessPoints));
-
-                Esp32Messaging::AccessPoint *accessPoint = static_cast<Esp32Messaging::AccessPoint *>(pvPortMalloc(sizeof(Esp32Messaging::AccessPoint)));
-                int singleAccessPointSize = Encoders::EncodedAccessPointBufferSize(accessPoint);
-                accessPointList->AccessPointsLength = singleAccessPointSize * apCount;
-                accessPointList->AccessPoints = static_cast<uint8_t *>(pvPortMalloc(accessPointList->AccessPointsLength));
-                uint8_t *currentLocation = accessPointList->AccessPoints;
-                for (int index = 0; index < apCount; index++)
-                {
-                    bzero(accessPoint, sizeof(Esp32Messaging::AccessPoint));
-                    memcpy(accessPoint->Ssid, &accessPoints[index].ssid, 33);
-                    memcpy(accessPoint->Bssid, &accessPoints[index].bssid, 6);
-                    accessPoint->PrimaryChannel = accessPoints[index].primary;
-                    accessPoint->SecondaryChannel = accessPoints[index].second;
-                    accessPoint->Rssi = accessPoints[index].rssi;
-                    accessPoint->AuthenticationMode = accessPoints[index].authmode;
-                    accessPoint->Protocols = accessPoints[index].phy_11b | accessPoints[index].phy_11g | accessPoints[index].phy_11n | accessPoints[index].phy_lr | accessPoints[index].wps;
-                    Encoders::EncodeAccessPoint(accessPoint, currentLocation);
-                    currentLocation += singleAccessPointSize;
-                }
-                vPortFree(accessPoints);
-                vPortFree(accessPoint);
-
-                message->PayloadLength = Encoders::EncodedAccessPointListBufferSize(accessPointList);
-                message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-                Encoders::EncodeAccessPointList(accessPointList, message->Payload);
-                vPortFree(accessPointList);
-            }
-            result = StatusCodes::CompletedOk;
+            result = StatusCodes::Failure;
         }
         else
         {
-            ESP_LOGI(__func__, "Scan timeout.");
-            result = StatusCodes::Timeout;
+            bzero(ap_info, MAX_AP * sizeof(wifi_ap_record_t));
+
+            ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
+            ESP_ERROR_CHECK(esp_wifi_start());
+            ESP_ERROR_CHECK(esp_wifi_scan_start(NULL, true));
+
+            bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_SCAN_COMPLETE_BIT, pdFALSE, pdFALSE, GetWiFiTimeout() / portTICK_PERIOD_MS);
+            if (bits & WIFI_SCAN_COMPLETE_BIT)
+            {
+                uint16_t apCount = 0;
+                esp_wifi_scan_get_ap_num(&apCount);
+
+#if defined(WIFI_FULL_LOGGING)
+                ESP_LOGI(__func__, "Number of access points found: %d", apCount);
+#endif
+
+                if (apCount != 0)
+                {
+                    Esp32Messaging::AccessPointList *accessPointList = static_cast<Esp32Messaging::AccessPointList *>(pvPortMalloc(sizeof(Esp32Messaging::AccessPointList)));
+                    accessPointList->NumberOfAccessPoints = apCount;
+                    //
+                    //  Now we get the access point information.
+                    //
+                    wifi_ap_record_t *accessPoints = static_cast<wifi_ap_record_t *>(pvPortMalloc(apCount * sizeof(wifi_ap_record_t)));
+                    ESP_ERROR_CHECK(esp_wifi_scan_get_ap_records(&number, accessPoints));
+
+                    Esp32Messaging::AccessPoint *accessPoint = static_cast<Esp32Messaging::AccessPoint *>(pvPortMalloc(sizeof(Esp32Messaging::AccessPoint)));
+                    int singleAccessPointSize = Encoders::EncodedAccessPointBufferSize(accessPoint);
+                    accessPointList->AccessPointsLength = singleAccessPointSize * apCount;
+                    accessPointList->AccessPoints = static_cast<uint8_t *>(pvPortMalloc(accessPointList->AccessPointsLength));
+                    uint8_t *currentLocation = accessPointList->AccessPoints;
+                    for (int index = 0; index < apCount; index++)
+                    {
+                        bzero(accessPoint, sizeof(Esp32Messaging::AccessPoint));
+                        memcpy(accessPoint->Ssid, &accessPoints[index].ssid, 33);
+                        memcpy(accessPoint->Bssid, &accessPoints[index].bssid, 6);
+                        accessPoint->PrimaryChannel = accessPoints[index].primary;
+                        accessPoint->SecondaryChannel = accessPoints[index].second;
+                        accessPoint->Rssi = accessPoints[index].rssi;
+                        accessPoint->AuthenticationMode = accessPoints[index].authmode;
+                        accessPoint->Protocols = accessPoints[index].phy_11b | accessPoints[index].phy_11g | accessPoints[index].phy_11n | accessPoints[index].phy_lr | accessPoints[index].wps;
+                        Encoders::EncodeAccessPoint(accessPoint, currentLocation);
+                        currentLocation += singleAccessPointSize;
+                    }
+                    vPortFree(accessPoints);
+                    vPortFree(accessPoint);
+
+                    message->PayloadLength = Encoders::EncodedAccessPointListBufferSize(accessPointList);
+                    message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
+                    Encoders::EncodeAccessPointList(accessPointList, message->Payload);
+                    vPortFree(accessPointList);
+                }
+                result = StatusCodes::CompletedOk;
+            }
+            else
+            {
+                ESP_LOGI(__func__, "Scan timeout.");
+                result = StatusCodes::Timeout;
+            }
+            vPortFree(ap_info);
         }
+        
     }
 
     message->MessageType = MessageTypes::Response;
