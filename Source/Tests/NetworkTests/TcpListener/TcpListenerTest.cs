@@ -7,12 +7,12 @@ using Meadow.Gateway.WiFi;
 
 namespace MeadowApp
 {
-    public class NetworkTest : App<F7Micro, NetworkTest>
+    public class TcpListenerTest : App<F7Micro, TcpListenerTest>
     {
         /// <summary>
         /// Default constructor.
         /// </summary>
-        public NetworkTest()
+        public TcpListenerTest()
         {
             Log("Connecting to network.");
             Device.InitWiFiAdapter().Wait();
@@ -35,7 +35,7 @@ namespace MeadowApp
         /// Code based upon issue 116 (https://github.com/WildernessLabs/Meadow_Issues/issues/116)
         /// reported 12 Oct 2020.
         /// </summary>
-        public void TestTcpListener()
+        public void RunTest()
         {
             IPEndPoint ipLocalEP = new IPEndPoint(IPAddress.Parse(Secrets.IP_ADDRESS), 11000);
             TcpListener server = new TcpListener(ipLocalEP);
