@@ -122,7 +122,6 @@ namespace BasicNetworkTest
             bme280.StartUpdating();
             const int MAXIMUM_READING_COUNT = 12;
             int currentReadingCount = 0;
-            bool errorEncountered = false;
 
             IPHostEntry ipHostInfo = Dns.GetHostEntry("io.adafruit.com");
             IPAddress ipAddress = ipHostInfo.AddressList[0];
@@ -130,16 +129,6 @@ namespace BasicNetworkTest
 
             while (true)
             {
-                if ((currentReadingCount == MAXIMUM_READING_COUNT) || errorEncountered)
-                {
-                    Thread.Sleep(5000);
-                    if (wifi.Connect(Secrets.WIFI_NAME, Secrets.WIFI_PASSWORD).ConnectionStatus != ConnectionStatus.Success)
-                    {
-                        throw new Exception("Cannot connect to network, applicaiton halted.");
-                    }
-                    currentReadingCount = 0;
-                }
-                errorEncountered = false;
                 currentReadingCount++;
                 Console.WriteLine($"Logging dataset {currentReadingCount}");
                 try
@@ -159,7 +148,7 @@ namespace BasicNetworkTest
                     //  Temperature
                     //
                     Log("Sending temperature data.");
-                    string temperatureData = "{\"value\":\"" + bme280.Temperature.ToString("F2") + "\"}";
+                    string temperatureData = "{\"value\":\"" + (bme280.Temperature - 2.0).ToString("F2") + "\"}";
                     string temperatureHeader = "POST /api/v2/nevyn/feeds/airtemperature/data HTTP/1.1\r\n";
                     temperatureHeader += $"X-AIO-Key: {Secrets.APIO_KEY}\r\n";
                     temperatureHeader += "Content-Type: application/json; charset=utf-8\r\n";
@@ -211,86 +200,8 @@ namespace BasicNetworkTest
                 catch (Exception e)
                 {
                     Log($"Unexpected exception : {e.ToString()}");
-                    errorEncountered = true;
                 }
             }
-        }
-
-        public void WebSocketPostTestData()
-        {
-            Console.WriteLine("********** WebSocketPostTestData **********");
-            
-            byte[] bytes = new byte[2048];
-
-            try
-            {
-                Log("Looking up server IP address.");
-                IPHostEntry ipHostInfo = Dns.GetHostEntry("io.adafruit.com");
-
-                IPAddress ipAddress = ipHostInfo.AddressList[0];
-
-                Log($"IP address of server: {ipAddress.ToString()}");
-                IPEndPoint remoteEP = new IPEndPoint(ipAddress, 80);
-
-                TestData testData = new TestData();
-
-                while (true)
-                {
-                    try
-                    {
-                        Log("Creating socket.");
-                        Socket sender = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-                        sender.SendTimeout = 3000;
-                        sender.ReceiveTimeout = 3000;
-
-                        Log("Connecting to endpoint.");
-                        sender.Connect(remoteEP);
-
-                        string temperature = testData.GetNext().ToString("F2");
-                        Log($"Sending data to Adafruit IO.");
-                        int bytesSent;
-                        int bytesReceived;
-                        Log("Sending temperature data.");
-                        string temperatureData = "{\"value\":\"" + temperature + "\"}";
-                        string temperatureHeader = "POST /v2/MarkAtWildernessLabs/feeds/temperaturetest HTTP/1.1\r\n";
-                        temperatureHeader += $"X-AIO-Key: {Secrets.APIO_KEY}\r\n";
-                        temperatureHeader += "Content-Type: application/json; charset=utf-8\r\n";
-                        temperatureHeader += $"Content-Length: {temperatureData.Length}\r\n";
-                        temperatureHeader += "Host: io.adafruit.com\r\n";
-                        temperatureHeader += "\r\n";
-                        bytesSent = sender.Send(Encoding.ASCII.GetBytes(temperatureHeader));
-                        bytesSent += sender.Send(Encoding.ASCII.GetBytes(temperatureData));
-                        bytesReceived = sender.Receive(bytes);
-
-                        Log($"Memory available: {GC.GetTotalMemory(false)}");
-                        Log("Shutting down the socket.");
-                        sender.Shutdown(SocketShutdown.Both);
-
-                        Log("Closing the socket.");
-                        sender.Close();
-
-                        Thread.Sleep(15000);
-                    }
-                    catch (ArgumentNullException ane)
-                    {
-                        Log($"ArgumentNullException : {ane.ToString()}");
-                    }
-                    catch (SocketException se)
-                    {
-                        Log($"SocketException : {se.ToString()}");
-                    }
-                    catch (Exception e)
-                    {
-                        Log($"Unexpected exception : {e.ToString()}");
-                    }
-                }
-
-            }
-            catch (Exception e)
-            {
-                Log(e.ToString());
-            }
-
         }
 
         // Incoming data from the client.
@@ -453,98 +364,6 @@ namespace BasicNetworkTest
 
             Console.WriteLine("Getting stopping the listener.");
             listener.Stop();
-        }
-        
-        /// <summary>
-        /// Code based upon issue 116 (https://github.com/WildernessLabs/Meadow_Issues/issues/116)
-        /// reported 12 Oct 2020.
-        /// </summary>
-        public void TestTcpListener()
-        {
-            IPEndPoint ipLocalEP = new IPEndPoint(IPAddress.Parse(Secrets.IP_ADDRESS), 11000);
-            TcpListener server = new TcpListener(ipLocalEP);
-            try
-            {
-                Console.WriteLine("Starting tcp listener");
-                server.Start();
-                Console.WriteLine("Listener started.");
-                TcpClient client = server.AcceptTcpClient();
-                Console.WriteLine("Connected!");
-
-                Byte[] bytes = new Byte[256];
-                string data = null;
-
-                Console.WriteLine("Getting network stream.");
-                NetworkStream stream = client.GetStream();
-                int i;
-
-                while ((i = stream.Read(bytes, 0, bytes.Length)) != 0)
-                {
-                    data = System.Text.Encoding.ASCII.GetString(bytes, 0, i);
-                    Console.WriteLine("Received: {0}", data);
-                }
-                Console.WriteLine("Closing connection.");
-                client.Close();
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine($"Error starting TCPListener {e.Message}");
-                throw;
-            }
-        }
-
-        public void TestUdpListener()
-        {
-            int port = 11000;
-            
-            UdpClient listener = new UdpClient(port);
-            IPEndPoint groupEP = new IPEndPoint(IPAddress.Any, port);
-
-            try
-            {
-                while (true)
-                {
-                    Console.WriteLine("Waiting for broadcast");
-                    byte[] bytes = listener.Receive(ref groupEP);
-
-                    Console.WriteLine($"Received broadcast from {groupEP} :");
-                    Console.WriteLine($" {Encoding.ASCII.GetString(bytes, 0, bytes.Length)}");
-                }
-            }
-            catch (SocketException e)
-            {
-                Console.WriteLine(e);
-            }
-            finally
-            {
-                listener.Close();
-            }        
-        }
-
-        public void ScanForAccessPoints()
-        {
-            Console.WriteLine("********** ScanForAccessPoints **********");
-            
-            while (true)
-            {
-                Log("Getting list of access points.");
-                Device.WiFiAdapter.Scan();
-                if (Device.WiFiAdapter.Networks.Count > 0)
-                {
-                    Log("|-------------------------------------------------------------|---------|");
-                    Log("|         Network Name             | RSSI |       BSSID       | Channel |");
-                    Log("|-------------------------------------------------------------|---------|");
-                    foreach (WifiNetwork accessPoint in Device.WiFiAdapter.Networks)
-                    {
-                        Log($"| {accessPoint.Ssid,-32} | {accessPoint.SignalDbStrength,4} | {accessPoint.Bssid,17} |   {accessPoint.ChannelCenterFrequency,3}   |");
-                    }
-                }
-                else
-                {
-                    Log($"No access points detected.");
-                }
-                Thread.Sleep(15000);
-            }
         }
     }
 }
