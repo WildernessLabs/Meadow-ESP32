@@ -10,7 +10,7 @@ namespace BasicNetworkTest
 
         public static async Task Main(string[] args)
         {
-            Console.WriteLine("Network Connection Meadow F7 (Version 0.14.07)");
+            Console.WriteLine("Network Connection Meadow F7 (Version 0.14.08)");
 
             application = new NetworkTest();
 
@@ -29,20 +29,12 @@ namespace BasicNetworkTest
 
             //await application.PostDataAsync("http://io.adafruit.com/MarkAtWildernessLabs/feeds/temperaturetest");
 
-            //application.WebSocketPost();
-
-            // application.WebSocketPostTestData();
-
-            // application.ScanForAccessPoints();
+            application.WebSocketPost();
 
             // application.StartListeningUsingSockets();
 
             // application.StartHttpServer();
 
-            // application.TestTcpListener();
-            
-            application.TestUdpListener();
-            
             Thread.Sleep(Timeout.Infinite);
         }
     }
