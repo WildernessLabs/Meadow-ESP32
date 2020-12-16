@@ -1,4 +1,4 @@
-﻿namespace BasicNetworkTest
+﻿namespace MeadowApp
 {
     public class TestData
     {
