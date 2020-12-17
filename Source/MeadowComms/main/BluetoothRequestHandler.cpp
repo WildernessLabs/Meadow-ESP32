@@ -11,6 +11,7 @@
 #include "freertos/queue.h"
 #include "esp_system.h"
 #include "esp_log.h"
+#include "esp_bt.h"
 #include "driver/uart.h"
 #include "soc/uart_struct.h"
 #include <string.h>
@@ -95,6 +96,9 @@ void BluetoothRequestHandler::Setup()
     _xBtEventGroup = xEventGroupCreate();
     xEventGroupSetBits(_xBtEventGroup, BT_READY_BIT);
     xTaskCreate(Task, _taskName, 1024 * 2, this, configMAX_PRIORITIES - 1, &_taskHandle);
+
+    esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
+    ESP_ERROR_CHECK(esp_bt_controller_init(&bt_cfg));
 
 #if defined(BT_FULL_LOGGING)
     ESP_LOGI(__func__, "Exit");
