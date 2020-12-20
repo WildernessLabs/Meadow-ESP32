@@ -11,7 +11,6 @@
 #include "freertos/queue.h"
 #include "esp_system.h"
 #include "esp_log.h"
-#include "esp_bt.h"
 #include "driver/uart.h"
 #include "soc/uart_struct.h"
 #include <string.h>
@@ -121,6 +120,12 @@ void BluetoothRequestHandler::DispatchRequest(Message *request)
     xEventGroupClearBits(_xBtEventGroup, BT_READY_BIT);
     switch (request->Function)
     {
+        case BluetoothFunction::Start:
+            StartStack(request);
+            break;
+        case BluetoothFunction::Stop:
+            TeardownStack(request);
+            break;
         //
         //  Sample from the WiFi class.
         //
@@ -159,13 +164,18 @@ void BluetoothRequestHandler::DispatchRequest(Message *request)
  *      that generated the event.
  * 
  *  @param eventData
- *      Data specifi to the event that has occurred.
+ *      Data specific to the event that has occurred.
  */
 void BluetoothRequestHandler::EventHandlerHelper(esp_event_base_t eventBase, int32_t eventId, void *eventData)
 {
 #if defined(BT_FULL_LOGGING)
-    ESP_LOGI(__func__, "Enter");
+    ESP_LOGI(__func__, "Enter with base %s and id 0x%x", eventBase, eventId);
 #endif
+
+    //     {
+    //         case WIFI_EVENT_WIFI_READY:
+    //             ESP_LOGI(__func__, "WiFi Ready");
+    //             break;
 
     // if (eventBase == WIFI_EVENT)
     // {
@@ -239,3 +249,66 @@ void BluetoothRequestHandler::EventHandler(void *arg, esp_event_base_t eventBase
 #endif
 }
 
+void BluetoothRequestHandler::StartStack(Message *msg)
+{
+#if defined(BT_FULL_LOGGING)
+    ESP_LOGI(__func__, "Enter");
+#endif
+
+    esp_err_t ret;
+
+    esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
+
+    ret = esp_bt_controller_init(&bt_cfg);
+    if (ret) {
+        ESP_LOGE(__func__, "esp_bt_controller_init failed %i\n", ret);
+        return;
+    }
+
+    ret = esp_bt_controller_enable(ESP_BT_MODE_BLE);
+    if (ret) {
+        ESP_LOGE(__func__, "esp_bt_controller_enable failed %i\n", ret);
+        return;
+    }
+/*    
+    ret = esp_bluedroid_init();
+    if (ret) {
+        ESP_LOGE(__func__, "esp_bluedroid_init failed %i\n", ret);
+        return;
+    }
+
+    ret = esp_bluedroid_enable();
+    if (ret) {
+//        ESP_LOGE(GATTS_TAG, "%s enable bluetooth failed\n", __func__);
+        return;
+    }
+    */    
+#if defined(BT_FULL_LOGGING)
+    ESP_LOGI(__func__, "Exit");
+#endif
+}
+
+void BluetoothRequestHandler::TeardownStack(Message *msg)
+{
+#if defined(BT_FULL_LOGGING)
+    ESP_LOGI(__func__, "Enter");
+#endif
+
+    esp_err_t ret;
+
+    ret = esp_bt_controller_disable();
+    if (ret) {
+        ESP_LOGE(__func__, "esp_bt_controller_disable failed %i\n", ret);
+        return;
+    }
+
+    ret = esp_bt_controller_deinit();
+    if (ret) {
+        ESP_LOGE(__func__, "esp_bt_controller failed %i\n", ret);
+        return;
+    }
+#if defined(BT_FULL_LOGGING)
+    ESP_LOGI(__func__, "Exit");
+#endif
+
+}
