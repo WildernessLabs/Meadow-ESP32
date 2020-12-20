@@ -15,8 +15,16 @@
 #include "esp_event.h"
 #include "stdlib.h"
 
+#include "esp_bt.h"
+#include "esp_gap_ble_api.h"
+#include "esp_gatts_api.h"
+#include "esp_bt_defs.h"
+#include "esp_bt_main.h"
+
 #include "RequestHandlerBase.hpp"
 #include "Esp32Messaging.hpp"
+
+#define BT_FULL_LOGGING
 
 /**
  *  @brief Bluetooth request handler object.
@@ -72,6 +80,8 @@ private:
     BluetoothRequestHandler();
     ~BluetoothRequestHandler();
 
+    void StartStack(Message *msg);
+    void TeardownStack(Message *msg);
 public:
     /*
      *  Construct a new Bluetooth request handler object with reference to a

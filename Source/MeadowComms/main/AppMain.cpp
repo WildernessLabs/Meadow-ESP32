@@ -28,6 +28,8 @@ static heap_trace_record_t trace_records[NUM_RECORDS];
 
 #endif
 
+void SendTestMessage(MessageDispatcher *dispatcher);
+
 /*
  *      Main program loop for the ESP32 as specified by the FreeRTOS documentation.
  */
@@ -61,20 +63,7 @@ extern "C" void app_main()
     SpiTransportProvider *spi = new SpiTransportProvider();
     MessageDispatcher * __attribute__((unused)) messageDispatcher = new MessageDispatcher(spi);
 
-//     Message message = {};
-//     message.MessageType = MessageTypes::Header;
-//     message.Interface = Esp32Interfaces::WiFi;
-//     message.Function = WiFiFunction::Ioctl;
-//     Esp32Messaging::IoctlRequest request;
-
-// #include "WiFiRequestHandler.hpp"
-
-//     request.Command = SIOCGIFFLAGS;
-//     message.PayloadLength = Encoders::EncodedIoctlRequestBufferSize(&request);
-//     message.Payload = static_cast<uint8_t *>(pvPortMalloc(message.PayloadLength));
-//     Encoders::EncodeIoctlRequest(&request, message.Payload);
-
-//     messageDispatcher->QueueMessageForEsp32(&message);
+    SendTestMessage(messageDispatcher);
 
     //
     //  Main program loop.
@@ -83,4 +72,26 @@ extern "C" void app_main()
     {
         vTaskDelay(500 / portTICK_PERIOD_MS);
     }
+}
+
+void SendTestMessage(MessageDispatcher *messageDispatcher)
+{
+    ESP_LOGI(__func__, "Exit");
+
+     Message message = {};
+     message.MessageType = MessageTypes::Header;
+     message.Interface = Esp32Interfaces::BlueTooth;
+     message.Function = BluetoothFunction::Start;
+     Esp32Messaging::IoctlRequest request;
+
+// #include "WiFiRequestHandler.hpp"
+
+//     request.Command = SIOCGIFFLAGS;
+//     message.PayloadLength = Encoders::EncodedIoctlRequestBufferSize(&request);
+//     message.Payload = static_cast<uint8_t *>(pvPortMalloc(message.PayloadLength));
+//     Encoders::EncodeIoctlRequest(&request, message.Payload);
+
+     messageDispatcher->QueueMessageForEsp32(&message);
+
+    ESP_LOGI(__func__, "Exit");
 }

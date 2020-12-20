@@ -121,8 +121,8 @@ namespace BluetoothFunction
      */
     enum BluetoothFunction : uint32_t
     {
-        GetConfiguration = 0,
-        SetConfiguration = 1
+        Start = 0,
+        Stop = 1
     };
 
 }

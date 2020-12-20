@@ -1,0 +1,91 @@
+# Getting Started with ESP32 Development
+
+This document is intended to get you started developing Meadow ESP32 code.
+
+## Hardware
+
+Development hardware used:
+- Macbook running MacOS Catalina (10.15.6)
+- Meadow F7 running Beta 4
+- V1 pogo bed
+
+## Software
+
+Described in-depth in the [tools readme](Tools.md), but the summary:
+- [ESP IDF tool chain](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/get-started/index.html#get-started-get-esp-idf)
+- Python 3.9
+- 
+- VS Code v 1.39
+- VS Code Espressif IDF Extension
+
+
+## Config
+
+I had to add the following to ~/.bash_profile
+
+```
+alias python=python3
+alias get_idf='. $HOME/esp/esp-idf/export.sh'
+```
+
+Determine serial port.  Run this twice, once without and once with the programmer plugged in to get the port name
+
+```
+$ ls /dev/cu.*
+/dev/cu.Bluetooth-Incoming-Port	/dev/cu.usbserial-14300		/dev/cu.usbserial-14301
+```
+
+Test comms.  Second device seems to be mine;
+
+```
+$ screen /dev/cu.usbserial-14301 115200
+...
+rst:0x10 (RTCWDT_RTC_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
+flash read err, 1000
+ets_main.c 371 
+ets Jun  8 2016 00:22:57
+...
+```
+
+To detach `screen` from the port use `<ctrl-A>.` then close with `<ctrl-a>k`
+
+
+
+
+I (295) spi_flash: detected chip: gd
+I (298) spi_flash: flash io: dio
+W (302) spi_flash: Detected size(4096k) larger than the size in the binary image header(2048k). Using the size in the binary image header.
+I (316) cpu_start: Starting scheduler on PRO CPU.
+I (0) cpu_start: Starting scheduler on APP CPU.
+Hello world!
+This is esp32 chip with 2 CPU core(s), WiFi/BT/BLE, silicon revision 1, 2MB embedded flash
+Minimum free heap size: 295916 bytes
+
+## Pushing code to the Meadow
+
+- Run VSCode
+- Open Workspace
+- Open Terminal
+- $ get_idf
+- $ idf.py build flash monitor
+
+To exit the `monitor` use `<ctrl-]>`
+
+
+
+
+
+## Troubleshooting
+
+1. I try to build and it fails with:
+
+```
+> Executing task in folder MeadowComms: /usr/bin/python ${env:IDF_PATH}/tools/idf.py build <
+
+/System/Library/Frameworks/Python.framework/Versions/2.7/Resources/Python.app/Contents/MacOS/Python: can't open file '/tools/idf.py': [Errno 2] No such file or directory
+The terminal process terminated with exit code: 2
+```
+
+2. IDF Onboarding in VS Code list no git or python version
+
+<no idea how to fix this yet>
