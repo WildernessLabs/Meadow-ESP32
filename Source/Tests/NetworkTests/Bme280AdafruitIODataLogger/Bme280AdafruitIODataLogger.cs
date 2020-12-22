@@ -73,24 +73,24 @@ namespace MeadowApp
             StringBuilder temperatureData = new StringBuilder();
             StringBuilder humidityData = new StringBuilder();
             StringBuilder pressureData = new StringBuilder();
-            while (true)
+            try
             {
-                dataSetCount++;
-                Log($"Logging dataset {dataSetCount}");
-                try
+                Socket sender = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                sender.SendTimeout = 3000;
+                sender.ReceiveTimeout = 3000;
+                sender.Connect(remoteEP);
+
+                #region Send data.
+
+                int bytesSent;
+                int bytesReceived;
+                //
+                //  Temperature
+                //
+                while (true)
                 {
-                    Socket sender = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-                    sender.SendTimeout = 3000;
-                    sender.ReceiveTimeout = 3000;
-                    sender.Connect(remoteEP);
-
-                    #region Send data.
-
-                    int bytesSent;
-                    int bytesReceived;
-                    //
-                    //  Temperature
-                    //
+                    dataSetCount++;
+                    Log($"Logging dataset {dataSetCount}");
                     Log("Sending temperature data.");
                     temperatureData.Append("{\"value\":\"");
                     temperatureData.AppendFormat("{0:F2}", bme280.Temperature - 2.0F);
@@ -137,19 +137,16 @@ namespace MeadowApp
                     #endregion
 
                     Log($"Memory available: {GC.GetTotalMemory(false)}");
-
-                    sender.Shutdown(SocketShutdown.Both);
-                    sender.Close();
                 }
-                catch (Exception e)
-                {
-                    Log($"Unexpected exception : {e.ToString()}");
-                    Console.WriteLine("Stack trace:");
-                    Console.WriteLine(e.StackTrace.ToString());
-                    Console.WriteLine("Inner ecxeption:");
-                    Console.WriteLine(e.InnerException.ToString());
-                    Environment.Exit(-1);
-                }
+            }
+            catch (Exception e)
+            {
+                Log($"Unexpected exception : {e.ToString()}");
+                Console.WriteLine("Stack trace:");
+                Console.WriteLine(e.StackTrace.ToString());
+                Console.WriteLine("Inner ecxeption:");
+                Console.WriteLine(e.InnerException.ToString());
+                Environment.Exit(-1);
             }
         }
     }
