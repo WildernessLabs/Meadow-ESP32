@@ -10,7 +10,7 @@ namespace MeadowApp
 
         static void Main(string[] args)
         {
-            Console.WriteLine("BME280 Adafruit IO Data Logger");
+            Console.WriteLine("BME280 Adafruit IO Data Logger (v1.1)");
 
             application = new Bme280AdafruitIODataLogger();
             
