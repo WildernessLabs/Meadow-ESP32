@@ -95,8 +95,18 @@ void BluetoothRequestHandler::Setup()
     _xBtEventGroup = xEventGroupCreate();
     xEventGroupSetBits(_xBtEventGroup, BT_READY_BIT);
 
+
+    ESP_LOGI(__func__, "mem release BT controller...");
+
+    ESP_ERROR_CHECK(esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT));
+
     esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
-    ESP_ERROR_CHECK(esp_bt_controller_init(&bt_cfg));
+    ESP_LOGI(__func__, "enable BT controller...");
+    esp_err_t ret = esp_bt_controller_init(&bt_cfg);
+    if (ret) {
+        ESP_LOGI(__func__, "%s enable controller failed: %s", __func__, esp_err_to_name(ret));
+        return;
+    }
 
     xTaskCreate(Task, _taskName, 1024 * 2, this, configMAX_PRIORITIES - 1, &_taskHandle);
 
@@ -249,6 +259,16 @@ void BluetoothRequestHandler::EventHandler(void *arg, esp_event_base_t eventBase
 #endif
 }
 
+static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param)
+{
+    ESP_LOGI(__func__, "GAP event");
+}
+
+static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param)
+{
+    ESP_LOGI(__func__, "GATTS event");
+}
+
 void BluetoothRequestHandler::StartStack(Message *msg)
 {
 #if defined(BT_FULL_LOGGING)
@@ -257,20 +277,14 @@ void BluetoothRequestHandler::StartStack(Message *msg)
 
     esp_err_t ret;
 
-    esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
-
-    ret = esp_bt_controller_init(&bt_cfg);
-    if (ret) {
-        ESP_LOGE(__func__, "esp_bt_controller_init failed %i\n", ret);
-        return;
-    }
+    ESP_LOGI(__func__, "Enabling BT controller...");
 
     ret = esp_bt_controller_enable(ESP_BT_MODE_BLE);
     if (ret) {
         ESP_LOGE(__func__, "esp_bt_controller_enable failed %i\n", ret);
         return;
     }
-/*    
+
     ret = esp_bluedroid_init();
     if (ret) {
         ESP_LOGE(__func__, "esp_bluedroid_init failed %i\n", ret);
@@ -279,10 +293,31 @@ void BluetoothRequestHandler::StartStack(Message *msg)
 
     ret = esp_bluedroid_enable();
     if (ret) {
-//        ESP_LOGE(GATTS_TAG, "%s enable bluetooth failed\n", __func__);
+        ESP_LOGE(__func__, "%s enable bluetooth failed: %s\n", __func__, esp_err_to_name(ret));
         return;
     }
-    */    
+
+    ret = esp_ble_gatts_register_callback(gatts_event_handler);
+    if (ret){
+        ESP_LOGE(__func__, "gatts register error, error code = %x", ret);
+        return;
+    }
+    ret = esp_ble_gap_register_callback(gap_event_handler);
+    if (ret){
+        ESP_LOGE(__func__, "gap register error, error code = %x", ret);
+        return;
+    }
+    ret = esp_ble_gatts_app_register(TEST_PROFILE_APP_ID);
+    if (ret){
+        ESP_LOGE(__func__, "gatts app register error, error code = %x", ret);
+        return;
+    }
+
+    esp_err_t local_mtu_ret = esp_ble_gatt_set_local_mtu(BT_GATT_MTU);
+    if (local_mtu_ret){
+        ESP_LOGE(__func__, "set local  MTU failed, error code = %x", local_mtu_ret);
+    }
+
 #if defined(BT_FULL_LOGGING)
     ESP_LOGI(__func__, "Exit");
 #endif
@@ -302,11 +337,6 @@ void BluetoothRequestHandler::TeardownStack(Message *msg)
         return;
     }
 
-    ret = esp_bt_controller_deinit();
-    if (ret) {
-        ESP_LOGE(__func__, "esp_bt_controller failed %i\n", ret);
-        return;
-    }
 #if defined(BT_FULL_LOGGING)
     ESP_LOGI(__func__, "Exit");
 #endif

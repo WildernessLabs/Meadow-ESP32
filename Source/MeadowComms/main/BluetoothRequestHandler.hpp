@@ -20,6 +20,7 @@
 #include "esp_gatts_api.h"
 #include "esp_bt_defs.h"
 #include "esp_bt_main.h"
+#include "esp_gatt_common_api.h"
 
 #include "RequestHandlerBase.hpp"
 #include "Esp32Messaging.hpp"
@@ -41,7 +42,7 @@ private:
      *  system.  They effectively convert asynchronous requests and responses into synchronous
      *  method calls.
      */
-
+    
     /**
      *  BT_READY_BIT indicates if the Bluetooth processing system can process a
      *  request.  It is used to synchronise requests
@@ -73,6 +74,9 @@ private:
      *  EventLoop method.
      */
     void EventHandlerHelper(esp_event_base_t, int32_t, void *);
+
+    const int BT_GATT_MTU = 500;
+    const int TEST_PROFILE_APP_ID = 0;
 
     /*
      *  Private constructor and destructor.
