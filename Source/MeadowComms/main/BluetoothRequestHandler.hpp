@@ -76,7 +76,7 @@ private:
     void EventHandlerHelper(esp_event_base_t, int32_t, void *);
 
     const int BT_GATT_MTU = 500;
-    const int TEST_PROFILE_APP_ID = 0;
+    const int MEADOW_PROFILE_APP_ID = 0;
 
     /*
      *  Private constructor and destructor.
