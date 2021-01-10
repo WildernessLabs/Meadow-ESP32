@@ -29,8 +29,6 @@ namespace BasicNetworkTest
 
             //await application.PostDataAsync("http://io.adafruit.com/MarkAtWildernessLabs/feeds/temperaturetest");
 
-            application.WebSocketPost();
-
             // application.StartListeningUsingSockets();
 
             // application.StartHttpServer();
