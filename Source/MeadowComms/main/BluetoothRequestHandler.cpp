@@ -348,7 +348,7 @@ void BluetoothRequestHandler::TeardownStack(Message *msg)
 
 // unknown if there is meaning in this value - pulled from espressif code
 #define GATTS_SERVICE_UUID_MEADOW   0x00FF
-//#define GATTS_CHAR_UUID_TEST_A      0xFF01
+#define GATTS_CHARACTERISTIC_UUID_MEADOW      0xFF01
 //#define GATTS_DESCR_UUID_TEST_A     0x3333
 #define GATTS_NUM_HANDLE_MEADOW     4
 
@@ -435,6 +435,18 @@ static esp_ble_adv_params_t advertising_params = {
 static bool advertising_data_configured = false;
 static bool response_data_configured = false;
 
+// --- test property stuff. We'll modify this when managed starts integrating
+#define GATTS_CHAR_VAL_LEN_MAX 0x40 // not sure if this is a BT thing, or just arbitrary. Assuming arbitrary for now
+static esp_gatt_char_prop_t test_property;
+static uint8_t default_characteristic_data[] = {0x48,0x45,0x4C, 0x4C, 0x4F}; // HELLO
+
+static esp_attr_value_t gatts_test_attribute =
+{
+    .attr_max_len = GATTS_CHAR_VAL_LEN_MAX,
+    .attr_len     = sizeof(default_characteristic_data),
+    .attr_value   = default_characteristic_data,
+};
+
 static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param)
 {
     ESP_LOGI(__func__, "GAP event %i\n", event);
@@ -472,39 +484,115 @@ static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_
     switch(event)
     {
         case ESP_GATTS_REG_EVT:
+        {
+            // first event to come in.  Configure our advertising params.
+            meadow_profile.service_id.is_primary = true;
+            meadow_profile.service_id.id.inst_id = 0x00;
+            meadow_profile.service_id.id.uuid.len = ESP_UUID_LEN_16;
+            meadow_profile.service_id.id.uuid.uuid.uuid16 = GATTS_SERVICE_UUID_MEADOW;
+
+            // TODO: we likely should add a unique id here
+            esp_err_t set_dev_name_ret = esp_ble_gap_set_device_name("CHRIS' MEADOW");
+            if (set_dev_name_ret)
             {
-                // first event to come in.  Configure our advertising params.
-                meadow_profile.service_id.is_primary = true;
-                meadow_profile.service_id.id.inst_id = 0x00;
-                meadow_profile.service_id.id.uuid.len = ESP_UUID_LEN_16;
-                meadow_profile.service_id.id.uuid.uuid.uuid16 = GATTS_SERVICE_UUID_MEADOW;
-
-                // TODO: we likely should add a unique id here
-                esp_err_t set_dev_name_ret = esp_ble_gap_set_device_name("CHRIS' MEADOW");
-                if (set_dev_name_ret)
-                {
-                    ESP_LOGE(__func__, "set device name failed, error code = %x", set_dev_name_ret);
-                }
-
-                //configure our advertising data
-                esp_err_t ret = esp_ble_gap_config_adv_data(&advertising_data);
-                if (ret)
-                {
-                    ESP_LOGE(__func__, "config adv data failed, error code = %x", ret);
-                }
-                advertising_data_configured = true;
-
-                //configure scan response data - it's the same structure as advertising, but can have different params
-                ret = esp_ble_gap_config_adv_data(&scan_response_data);
-                if (ret)
-                {
-                    ESP_LOGE(__func__, "config scan response data failed, error code = %x", ret);
-                }
-                response_data_configured = true;
-
-                // create our service
-                esp_ble_gatts_create_service(gatts_if, &meadow_profile.service_id, GATTS_NUM_HANDLE_MEADOW);
+                ESP_LOGE(__func__, "set device name failed, error code = %x", set_dev_name_ret);
             }
+
+            //configure our advertising data
+            esp_err_t ret = esp_ble_gap_config_adv_data(&advertising_data);
+            if (ret)
+            {
+                ESP_LOGE(__func__, "config adv data failed, error code = %x", ret);
+            }
+            advertising_data_configured = true;
+
+            //configure scan response data - it's the same structure as advertising, but can have different params
+            ret = esp_ble_gap_config_adv_data(&scan_response_data);
+            if (ret)
+            {
+                ESP_LOGE(__func__, "config scan response data failed, error code = %x", ret);
+            }
+            response_data_configured = true;
+
+            // create our service
+            esp_ble_gatts_create_service(gatts_if, &meadow_profile.service_id, GATTS_NUM_HANDLE_MEADOW);
+        }
+        break;
+        case ESP_GATTS_CREATE_EVT:
+        {
+            // the service has been created successfully (from ESP_GATTS_REG_EVT).  Start it and add characteristics
+            meadow_profile.service_handle = param->create.service_handle;
+            meadow_profile.char_uuid.len = ESP_UUID_LEN_16;
+            meadow_profile.char_uuid.uuid.uuid16 = GATTS_CHARACTERISTIC_UUID_MEADOW;
+
+            esp_ble_gatts_start_service(meadow_profile.service_handle); // this generates an event, handled below
+
+            // create and add a characteristic - this will come from mananged eventually
+            // we'll make it a read/write.  The notify bit means we want to handle read and write manually (through events) so we can marshal those
+            // requests to the managed side
+            esp_err_t add_char_ret = esp_ble_gatts_add_char(
+                                        meadow_profile.service_handle,  
+                                        &meadow_profile.char_uuid,  
+                                        ESP_GATT_PERM_READ | ESP_GATT_PERM_WRITE,  // <- permissions, different than the prop which is sent to the client
+                                        ESP_GATT_CHAR_PROP_BIT_READ | ESP_GATT_CHAR_PROP_BIT_WRITE | ESP_GATT_CHAR_PROP_BIT_NOTIFY, // <- properties
+                                        &gatts_test_attribute,  
+                                        NULL);
+                                        // this triggers an ESP_GATTS_ADD_CHAR_EVT event
+            if (add_char_ret)
+            {
+                ESP_LOGE(__func__, "add characteristic failed, error code =%x", add_char_ret);
+            }
+        }
+        break;
+        case ESP_GATTS_START_EVT:
+            // the service has successfully started (from ESP_GATTS_CREATE_EVT) 
+            ESP_LOGI(__func__, "The GATTS service has started sucessfully");
+            break;
+        case ESP_GATTS_ADD_CHAR_EVT:
+        {
+            // a characteristic has been successfully added  (from ESP_GATTS_CREATE_EVT)
+            uint16_t length = 0;
+            const uint8_t *prf_char;
+
+            ESP_LOGI(__func__, "ADD_CHAR_EVT, status %d,  attr_handle %d, service_handle %d\n",
+                param->add_char.status, param->add_char.attr_handle, param->add_char.service_handle);
+
+            // store the handle
+            meadow_profile.char_handle = param->add_char.attr_handle;
+            meadow_profile.descr_uuid.len = ESP_UUID_LEN_16;  
+            meadow_profile.descr_uuid.uuid.uuid16 = ESP_GATT_UUID_CHAR_CLIENT_CONFIG;
+            // read the length and value from the BT stack
+            esp_err_t get_attr_ret = esp_ble_gatts_get_attr_value(param->add_char.attr_handle, &length, &prf_char);         
+            if (get_attr_ret == ESP_FAIL){  
+                ESP_LOGE(__func__, "ILLEGAL HANDLE");
+            }
+
+            ESP_LOGI(__func__, "the gatts characteristic length = %x\n", length);
+            for(int i = 0; i < length; i++)
+            {
+                ESP_LOGI(__func__, "prf_char[%x] = %x\n",i,prf_char[i]);
+            }
+        
+            // set the initial value for the characteristic desriptor.
+            // we pass null meaning we'll respond to them via event rather than the stack auto-responding
+            esp_err_t add_descr_ret = esp_ble_gatts_add_char_descr(  
+                                meadow_profile.service_handle,  
+                                &meadow_profile.descr_uuid,  
+                                ESP_GATT_PERM_READ | ESP_GATT_PERM_WRITE,  
+                                NULL, NULL);
+            if (add_descr_ret)
+            {
+                ESP_LOGE(__func__, "add characteristic descriptor failed, error code = %x", add_descr_ret);
+            }
+        }
+        break;
+        case ESP_GATTS_ADD_CHAR_DESCR_EVT:
+            // a characteristic descriptor was added (in ESP_GATTS_ADD_CHAR_EVT)
+            // store the handle
+            meadow_profile.descr_handle = param->add_char_descr.attr_handle;
+
+            ESP_LOGI(__func__, "ADD_DESCR_EVT, status %d, attr_handle %d, service_handle %d\n",
+                param->add_char_descr.status, param->add_char_descr.attr_handle, param->add_char_descr.service_handle);                 
             break;
             /*
         case ESP_GATTS_READ_EVT:
@@ -517,17 +605,9 @@ static void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_
             break;
         case ESP_GATTS_UNREG_EVT:
             break;
-        case ESP_GATTS_CREATE_EVT:
-            break;
         case ESP_GATTS_ADD_INCL_SRVC_EVT:
             break;
-        case ESP_GATTS_ADD_CHAR_EVT:
-            break;
-        case ESP_GATTS_ADD_CHAR_DESCR_EVT:
-            break;
         case ESP_GATTS_DELETE_EVT:
-            break;
-        case ESP_GATTS_START_EVT:
             break;
         case ESP_GATTS_STOP_EVT:
             break;
