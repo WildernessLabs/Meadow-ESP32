@@ -12,7 +12,7 @@ namespace GetFromHttpListener
         {
             try
             {
-                string server = "http://192.168.1.200";
+                string server = "http://192.168.1.208";
                 Int32 port = 80;
                 //TcpClient client = new TcpClient(server, port);
 
@@ -49,6 +49,7 @@ namespace GetFromHttpListener
                 //client.Close();
 
                 HttpWebRequest webRequest = (HttpWebRequest) WebRequest.Create(server);
+                webRequest.Timeout = Timeout.Infinite;
                 WebResponse response = webRequest.GetResponse();
                 Stream stream = webRequest.GetRequestStream();
 
