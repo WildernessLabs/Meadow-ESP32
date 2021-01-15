@@ -19,8 +19,24 @@
  * 
  *  Ths is not intended to be called by the user.
  */
-Thread::Thread()
+Thread::Thread() : _mutex(xSemaphoreCreateMutex()), _executeMethod(xSemaphoreCreateMutex())
 {
+    _method = nullptr;
+    _parameter = nullptr;
+    if (_mutex == NULL)
+    {
+        throw new ThreadPoolException("Cannot create mutex for thread.");
+    }
+    if (_executeMethod == NULL)
+    {
+        throw new ThreadPoolException("Cannot create execute mutex.");
+    }
+    //
+    //  We take the execution semaphore before starting the task as the first thing the
+    //  task will do is to try and take the semaphore.  Once it has taken the semaphore
+    //  the task will start to execute the method.
+    //
+    TakeExecutionSemaphore();
 }
 
 /**
@@ -37,24 +53,6 @@ Thread::Thread(char *name, task_completed_method_t taskCompletedMethod) : Thread
 {
     _name = name;
     _taskCompletedMethod = taskCompletedMethod;
-    _mutex = xSemaphoreCreateMutex();
-    if (_mutex == NULL)
-    {
-        throw new ThreadPoolException("Cannot create mutex for thread.");
-    }
-
-    ESP_LOGI(__func__, "Creating %s", name);
-    //
-    //  We take the execution semaphore before starting the task as the first thing the
-    //  task will do is to try and take the semaphore.  Once it has taken the semaphore
-    //  the task will start to execute the method.
-    //
-    _executeMethod = xSemaphoreCreateMutex();
-    if (_executeMethod == NULL)
-    {
-        throw new ThreadPoolException("Cannot create execute mutex.");
-    }
-    TakeExecutionSemaphore();
     if (xTaskCreate(Thread::Task, _name, 2048 * 2, this, configMAX_PRIORITIES - 1, &_taskHandle) != pdPASS)
     {
         throw new ThreadPoolException("Cannot create task.");
@@ -193,6 +191,8 @@ void Thread::TaskCompleted()
     if (xSemaphoreTake(_mutex, portMAX_DELAY) == pdTRUE)
     {
         _isBusy = false;
+        _method = nullptr;
+        _parameter = nullptr;
         xSemaphoreGive(_mutex);
     }
     if (_taskCompletedMethod != NULL)
@@ -215,11 +215,7 @@ void Thread::Task(void *taskParameters)
     while (true)
     {
         sender->TakeExecutionSemaphore();
-        char *parameter = (char *) sender->GetParameter();
-        ESP_LOGI(__func__, "Thread %s executing method %s.", sender->GetTaskName(), parameter);
         (sender->GetMethod())(sender->GetParameter());
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
-        ESP_LOGI(__func__, "Task %s execution of %s complete.", sender->GetTaskName(), parameter);
         sender->TaskCompleted();
     }
 }
