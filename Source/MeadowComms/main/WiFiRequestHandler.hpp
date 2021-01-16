@@ -32,6 +32,7 @@
 #include "Encoders.hpp"
 #include "Logging.hpp"
 #include "GenericList.hpp"
+#include "ThreadPool.hpp"
 
 /**
  *  The following definitions are copied from the NuttX system as they
@@ -245,13 +246,13 @@ private:
      *  @brief Network Interface Handle for the board when running in station mode
      *  i.e. as a device connected to an access point.
      */
-    esp_netif_t *_stationNetIfHandle;
+    static esp_netif_t *_stationNetIfHandle;
 
     /**
      *  @brief Network Interface Handle for the board when it is acting as a soft
      *  access point.
      */
-    esp_netif_t *_softApNetIfHandle;
+    static esp_netif_t *_softApNetIfHandle;
 
     /**
      *  @brief Name of the device on the network.
@@ -427,6 +428,11 @@ private:
      */
     TaskHandle_t _completedPollRequestsTaskHandle;
 
+    /**
+     *  @brief ThreadPool used to execute the asynchronous methods.
+     */
+    ThreadPool *_threadPool = NULL;
+
     /*
      *  Private methods.
      */
@@ -525,87 +531,87 @@ private:
     /**
      *  @brief Provide a mechanism for the STM32 to call the getaddrinfo method.
      */
-    void GetAddrInfo(Message *);
+    static void GetAddrInfo(void *);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the socket method.
      */
-    void Socket(Message *);
+    static void Socket(void *);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the connect method.
      */
-    void Connect(Message *);
+    static void Connect(void *);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the freeaddrinfo method.
      */
-    void FreeAddrInfo(Message *);
+    static void FreeAddrInfo(void *);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the write method.
      */
-    void Write(Message *);
+    static void Write(void *);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the setsockopt method.
      */
-    void SetSockOpt(Message *);
+    static void SetSockOpt(void *);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the read method.
      */
-    void Read(Message *);
+    static void Read(void *);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the close method.
      */
-    void Close(Message *);
+    static void Close(void *);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the sendto method.
      */
-    void SendTo(Message *);
+    static void SendTo(void *);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the send method.
      */
-    void Send(Message *);
+    static void Send(void *);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the recvfrom method.
      */
-    void RecvFrom(Message *);
+    static void RecvFrom(void *);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the poll method.
      */
-    void Poll(Message *);
+    static void Poll(void *);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the bind method.
      */
-    void Bind(Message *);
+    static void Bind(void *);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the listen method.
      */
-    void Listen(Message *);
+    static void Listen(void *);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the accept method.
      */
-    void Accept(Message *);
+    static void Accept(void *);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the simulated ioctl method.
      */
-    void Ioctl(Message *);
+    static void Ioctl(void *);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the simulated getsockname method.
      */
-    void GetSockName(Message *);
+    static void GetSockName(void *);
 
 public:
     /**
