@@ -233,11 +233,6 @@ private:
     wifi_config_t *_wifiConfig = nullptr;
 
     /**
-     *  @brief Request currently being processed by the WiFi system.
-     */
-    Message *_currentRequest = nullptr;
-
-    /**
      *  @brief Current retry count.
      */
     int _currentRetryCount = 0;

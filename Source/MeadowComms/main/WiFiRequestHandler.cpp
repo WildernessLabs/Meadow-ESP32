@@ -1068,7 +1068,6 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
 #endif
 
     xEventGroupClearBits(_xWiFiEventGroup, WIFI_READY_BIT);
-    _currentRequest = nullptr;
     switch (request->Function)
     {
         case WiFiFunction::StartNetwork:
