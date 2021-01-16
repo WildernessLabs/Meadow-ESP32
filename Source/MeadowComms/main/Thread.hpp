@@ -14,7 +14,7 @@
 /**
  *  @brief Type definition for the method that will be called by the Task method.
  */
-typedef void (*method_t)(void * /* Put parameter types in here */);
+typedef void (*method_t)(void *);
 
 /**
  *  @brief ThreadPool method that will be called to indicate that this Thread has completed the execution of the method.

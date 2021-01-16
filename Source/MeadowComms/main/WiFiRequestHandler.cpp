@@ -73,9 +73,18 @@ const gpio_num_t WiFiRequestHandler::ON_BOARD_ANTENNA_PIN = GPIO_NUM_26;
 const gpio_num_t WiFiRequestHandler::EXTERNAL_ANTENNA_PIN = GPIO_NUM_27;
 
 /**
+ *  @brief Network Interface Handle for the board when running in station mode i.e. as a device connected to an access point.
+ */
+esp_netif_t *WiFiRequestHandler::_stationNetIfHandle;
+
+/**
+ *  @brief Network Interface Handle for the board when it is acting as a soft access point.
+ */
+esp_netif_t *WiFiRequestHandler::_softApNetIfHandle;
+/**
  *  @brief Name of the NVS storage holding the current antenna value.
  */
- const char *WiFiRequestHandler::ANTENNA_TYPE_NAME = "Antenna";
+const char *WiFiRequestHandler::ANTENNA_TYPE_NAME = "Antenna";
 
 /**
  *  @brief Name of the device on the network.
@@ -282,6 +291,11 @@ WiFiRequestHandler::WiFiRequestHandler()
         ESP_LOGE(__func__, "Cannot allocate completed poll requests queue.");
     }
     xTaskCreate(CompletedPollRequestProcessor, "CompletedPollRequests", 2048 * 2, NULL, configMAX_PRIORITIES - 1, &_completedPollRequestsTaskHandle);
+    //
+    //  All of the requests should be handled through the ThreadPool to allow for multiple
+    //  requests (upto 10 in this case) to be processed simultaneously.
+    //
+    _threadPool = new ThreadPool(10);       // cppcheck-suppress [ noOperatorEq, noCopyConstructor ]
 }
 
 /**
@@ -303,6 +317,7 @@ WiFiRequestHandler::WiFiRequestHandler(MessageDispatcher *messageDispatcher) : W
  */
 WiFiRequestHandler::~WiFiRequestHandler()
 {
+    delete _threadPool;
 }
 
 /*
@@ -1057,6 +1072,7 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
     switch (request->Function)
     {
         case WiFiFunction::StartNetwork:
+            // _threadPool->Execute(WiFiRequestHandler::StartNetwork, (void *) request);
             StartNetwork(request);
             break;
         case WiFiFunction::Stop:
@@ -1072,55 +1088,72 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
             GetAvailableNetworks(request);
             break;
         case WiFiFunction::Close:
-            Close(request);
+            _threadPool->Execute(Close, (void *) request);
+            xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
             break;
         case WiFiFunction::Read:
-            Read(request);
+            _threadPool->Execute(Read, (void *) request);
+            xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
             break;
         case WiFiFunction::SetSockOpt:
-            SetSockOpt(request);
+            _threadPool->Execute(SetSockOpt, (void *) request);
+            xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
             break;
         case WiFiFunction::Write:
-            Write(request);
+            _threadPool->Execute(Write, (void *) request);
+            xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
             break;
         case WiFiFunction::FreeAddrInfo:
-            FreeAddrInfo(request);
+            _threadPool->Execute(FreeAddrInfo, (void *) request);
+            xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
             break;
         case WiFiFunction::Connect:
-            Connect(request);
+            _threadPool->Execute(Connect, (void *) request);
+            xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
             break;
         case WiFiFunction::Socket:
-            Socket(request);
+            _threadPool->Execute(Socket, (void *) request);
+            xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
             break;
         case WiFiFunction::GetAddrInfo:
-            GetAddrInfo(request);
+            _threadPool->Execute(GetAddrInfo, (void *) request);
+            xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
             break;
         case WiFiFunction::SendTo:
-            SendTo(request);
+            _threadPool->Execute(SendTo, (void *) request);
+            xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
             break;
         case WiFiFunction::RecvFrom:
-            RecvFrom(request);
+            _threadPool->Execute(RecvFrom, (void *) request);
+            xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
             break;
         case WiFiFunction::Poll:
-            Poll(request);
+            _threadPool->Execute(Poll, (void *) request);
+            xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
             break;
         case WiFiFunction::Send:
-            Send(request);
+            _threadPool->Execute(Send, (void *) request);
+            xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
             break;
         case WiFiFunction::Accept:
-            Accept(request);
+            _threadPool->Execute(Accept, (void *) request);
+            xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
             break;
         case WiFiFunction::Bind:
-            Bind(request);
+            _threadPool->Execute(Bind, (void *) request);
+            xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
             break;
         case WiFiFunction::Listen:
-            Listen(request);
+            _threadPool->Execute(Listen, (void *) request);
+            xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
             break;
         case WiFiFunction::Ioctl:
-            Ioctl(request);
+            _threadPool->Execute(Ioctl, (void *) request);
+            xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
             break;
         case WiFiFunction::GetSockName:
-            GetSockName(request);
+            _threadPool->Execute(GetSockName, (void *) request);
+            xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
             break;
         default:
             ESP_LOGI(__func__, "Unknown WiFi message received, function %d", request->Function);
@@ -1367,12 +1400,13 @@ esp_err_t WiFiRequestHandler::StartWiFiInterface()
  *  @param message
  *      Request sent from the STM32.
  */
+// void WiFiRequestHandler::StartNetwork(void *m)
 void WiFiRequestHandler::StartNetwork(Message *message)
 {
 #if defined(WIFI_FULL_LOGGING)
     ESP_LOGI(__func__, "Enter");
 #endif
-
+    // Message *message = static_cast<Message *>(m);
     message->MessageType = MessageTypes::Response;
     if (StartWiFiInterface() == ESP_OK)
     {
@@ -1514,12 +1548,13 @@ void WiFiRequestHandler::GetAvailableNetworks(Message *message)
  *  @param message
  *      Message structure containing the parameters for the getaddrinfo method.
  */
-void WiFiRequestHandler::GetAddrInfo(Message *message)
+void WiFiRequestHandler::GetAddrInfo(void *vpMessage)
 {
 #if defined(WIFI_FULL_LOGGING)
     ESP_LOGI(__func__, "Enter");
 #endif
 
+    Message *message = static_cast<Message *>(vpMessage);
     Esp32Messaging::GetAddrInfoRequest *request = Encoders::ExtractGetAddrInfoRequest(message->Payload);
     //
     Esp32Messaging::AddrInfo *extractedHints = Encoders::ExtractAddrInfo(request->Hints);
@@ -1577,7 +1612,6 @@ void WiFiRequestHandler::GetAddrInfo(Message *message)
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
-    xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
 
 #if defined(WIFI_FULL_LOGGING)
     ESP_LOGI(__func__, "Exit");
@@ -1590,12 +1624,13 @@ void WiFiRequestHandler::GetAddrInfo(Message *message)
  *  @param message
  *      Message structure containing the parameters for the socket method.
  */
-void WiFiRequestHandler::Socket(Message *message)
+void WiFiRequestHandler::Socket(void *vpMessage)
 {
 #if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_SOCKET)
     ESP_LOGI(__func__, "Enter");
 #endif
 
+    Message *message = static_cast<Message *>(vpMessage);
     Esp32Messaging::SocketRequest *request = Encoders::ExtractSocketRequest(message->Payload);
 
 #if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_SOCKET)
@@ -1618,7 +1653,6 @@ void WiFiRequestHandler::Socket(Message *message)
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
-    xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
 
 #if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_SOCKET)
     ESP_LOGI(__func__, "Exit");
@@ -1631,12 +1665,13 @@ void WiFiRequestHandler::Socket(Message *message)
  *  @param message
  *      Message structure containing the parameters for the connect method.
  */
-void WiFiRequestHandler::Connect(Message *message)
+void WiFiRequestHandler::Connect(void *vpMessage)
 {
 #if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_CONNECT)
     ESP_LOGI(__func__, "Enter");
 #endif
 
+    Message *message = static_cast<Message *>(vpMessage);
     Esp32Messaging::ConnectRequest *request = Encoders::ExtractConnectRequest(message->Payload);
     Esp32Messaging::SockAddr *socketAddress = Encoders::ExtractSockAddr(request->Addr);
     Esp32Messaging::IntegerAndErrnoResponse response;
@@ -1697,7 +1732,6 @@ void WiFiRequestHandler::Connect(Message *message)
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
-    xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
 
 #if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_CONNECT)
     ESP_LOGI(__func__, "Exit");
@@ -1710,12 +1744,13 @@ void WiFiRequestHandler::Connect(Message *message)
  *  @param message
  *      Message structure containing the parameters for the freeaddrinfo method.
  */
-void WiFiRequestHandler::FreeAddrInfo(Message *message)
+void WiFiRequestHandler::FreeAddrInfo(void  *vpMessage)
 {
 #if defined(WIFI_FULL_LOGGING)
     ESP_LOGI(__func__, "Enter");
 #endif
 
+    Message *message = static_cast<Message *>(vpMessage);
     ESP_LOGI(__func__, "Releasing addrinfo storage.");
     Esp32Messaging::FreeAddrInfoRequest *request = Encoders::ExtractFreeAddrInfoRequest(message->Payload);
 
@@ -1732,7 +1767,6 @@ void WiFiRequestHandler::FreeAddrInfo(Message *message)
     vTaskDelay(40 / portTICK_PERIOD_MS);
 
     _messageDispatcher->QueueMessageForStm32(message);
-    xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
 
 #if defined(WIFI_FULL_LOGGING)
     ESP_LOGI(__func__, "Exit");
@@ -1745,12 +1779,13 @@ void WiFiRequestHandler::FreeAddrInfo(Message *message)
  *  @param message
  *      Message structure containing the parameters for the setsockopt method.
  */
-void WiFiRequestHandler::SetSockOpt(Message *message)
+void WiFiRequestHandler::SetSockOpt(void *vpMessage)
 {
 #if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_SETSOCKOPT)
     ESP_LOGI(__func__, "Enter");
 #endif
 
+    Message *message = static_cast<Message *>(vpMessage);
     Esp32Messaging::SetSockOptRequest *request = Encoders::ExtractSetSockOptRequest(message->Payload);
     Esp32Messaging::IntegerAndErrnoResponse response;
 
@@ -1762,7 +1797,9 @@ void WiFiRequestHandler::SetSockOpt(Message *message)
     int32_t optionName = 0;
     if (Mapping::GetEspValue(Mapping::SocketOptions, request->OptionName, &optionName) < 0)
     {
+#if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_SETSOCKOPT)
         ESP_LOGI(__func__, "Unknown option: %d", request->OptionName);
+#endif
         response.Result = -1;
         errno = ENOPROTOOPT;
     }
@@ -1846,7 +1883,6 @@ void WiFiRequestHandler::SetSockOpt(Message *message)
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
-    xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
 
 #if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_SETSOCKOPT)
     ESP_LOGI(__func__, "Exit");
@@ -1859,12 +1895,13 @@ void WiFiRequestHandler::SetSockOpt(Message *message)
  *  @param message
  *      Message structure containing the parameters for the write method.
  */
-void WiFiRequestHandler::Write(Message *message)
+void WiFiRequestHandler::Write(void *vpMessage)
 {
 #if defined(WIFI_FULL_LOGGING)
     ESP_LOGI(__func__, "Enter");
 #endif
 
+    Message *message = static_cast<Message *>(vpMessage);
     Esp32Messaging::WriteRequest *request = Encoders::ExtractWriteRequest(message->Payload);
     Esp32Messaging::IntegerAndErrnoResponse response;
 
@@ -1892,7 +1929,6 @@ void WiFiRequestHandler::Write(Message *message)
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
-    xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
 
 #if defined(WIFI_FULL_LOGGING)
     ESP_LOGI(__func__, "Exit");
@@ -1905,12 +1941,13 @@ void WiFiRequestHandler::Write(Message *message)
  *  @param message
  *      Message structure containing the parameters for the read method.
  */
-void WiFiRequestHandler::Read(Message *message)
+void WiFiRequestHandler::Read(void *vpMessage)
 {
 #if defined(WIFI_FULL_LOGGING)
     ESP_LOGI(__func__, "Enter");
 #endif
 
+    Message *message = static_cast<Message *>(vpMessage);
     Esp32Messaging::ReadRequest *request = Encoders::ExtractReadRequest(message->Payload);
     Esp32Messaging::ReadResponse response;
 
@@ -1947,7 +1984,6 @@ void WiFiRequestHandler::Read(Message *message)
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
-    xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
 
 #if defined(WIFI_FULL_LOGGING)
     ESP_LOGI(__func__, "Exit");
@@ -1960,12 +1996,13 @@ void WiFiRequestHandler::Read(Message *message)
  *  @param message
  *      Message structure containing the parameters for the close method.
  */
-void WiFiRequestHandler::Close(Message *message)
+void WiFiRequestHandler::Close(void *vpMessage)
 {
 #if defined(WIFI_FULL_LOGGING)
     ESP_LOGI(__func__, "Enter");
 #endif
 
+    Message *message = static_cast<Message *>(vpMessage);
     Esp32Messaging::CloseRequest *request = Encoders::ExtractCloseRequest(message->Payload);
 
     Esp32Messaging::IntegerAndErrnoResponse response;
@@ -1992,7 +2029,6 @@ void WiFiRequestHandler::Close(Message *message)
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
-    xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
 
 #if defined(WIFI_FULL_LOGGING)
     ESP_LOGI(__func__, "Exit");
@@ -2005,12 +2041,13 @@ void WiFiRequestHandler::Close(Message *message)
  *  @param message
  *      Message structure containing the parameters for the send method.
  */
-void WiFiRequestHandler::Send(Message *message)
+void WiFiRequestHandler::Send(void *vpMessage)
 {
 #if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_SEND_DATA)
     ESP_LOGI(__func__, "Enter");
 #endif
 
+    Message *message = static_cast<Message *>(vpMessage);
     Esp32Messaging::SendRequest *request = Encoders::ExtractSendRequest(message->Payload);
     vPortFree(message->Payload);
 
@@ -2052,7 +2089,6 @@ void WiFiRequestHandler::Send(Message *message)
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
-    xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
 
 #if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_SEND_DATA)
     ESP_LOGI(__func__, "Exit");
@@ -2065,12 +2101,13 @@ void WiFiRequestHandler::Send(Message *message)
  *  @param message
  *      Message structure containing the parameters for the sendto method.
  */
-void WiFiRequestHandler::SendTo(Message *message)
+void WiFiRequestHandler::SendTo(void *vpMessage)
 {
 #if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_SENDTO)
     ESP_LOGI(__func__, "Enter");
 #endif
 
+    Message *message = static_cast<Message *>(vpMessage);
     Esp32Messaging::SendToRequest *request = Encoders::ExtractSendToRequest(message->Payload);
 
     Esp32Messaging::IntegerAndErrnoResponse response;
@@ -2153,7 +2190,6 @@ void WiFiRequestHandler::SendTo(Message *message)
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
-    xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
 
 #if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_SENDTO)
     ESP_LOGI(__func__, "Exit");
@@ -2166,12 +2202,13 @@ void WiFiRequestHandler::SendTo(Message *message)
  *  @param message
  *      Message structure containing the parameters for the recvfrom method.
  */
-void WiFiRequestHandler::RecvFrom(Message *message)
+void WiFiRequestHandler::RecvFrom(void *vpMessage)
 {
 #if defined(WIFI_FULL_LOGGING)
     ESP_LOGI(__func__, "Enter");
 #endif
 
+    Message *message = static_cast<Message *>(vpMessage);
     Esp32Messaging::RecvFromRequest *request = Encoders::ExtractRecvFromRequest(message->Payload);
 
     Esp32Messaging::RecvFromResponse response = {};
@@ -2275,7 +2312,6 @@ void WiFiRequestHandler::RecvFrom(Message *message)
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
-    xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
 
 #if defined(WIFI_FULL_LOGGING)
     ESP_LOGI(__func__, "Exit");
@@ -2288,12 +2324,13 @@ void WiFiRequestHandler::RecvFrom(Message *message)
  *  @param message
  *      Message structure containing the parameters for the bind method.
  */
-void WiFiRequestHandler::Bind(Message *message)
+void WiFiRequestHandler::Bind(void *vpMessage)
 {
 #if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_BIND)
     ESP_LOGI(__func__, "Enter");
 #endif
 
+    Message *message = static_cast<Message *>(vpMessage);
     Esp32Messaging::BindRequest *request = Encoders::ExtractBindRequest(message->Payload);
     Esp32Messaging::SockAddr *socketAddress = Encoders::ExtractSockAddr(request->Addr);
     Esp32Messaging::IntegerAndErrnoResponse response;
@@ -2352,7 +2389,6 @@ void WiFiRequestHandler::Bind(Message *message)
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
-    xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
 
 #if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_BIND)
     ESP_LOGI(__func__, "Exit");
@@ -2365,12 +2401,13 @@ void WiFiRequestHandler::Bind(Message *message)
  *  @param message
  *      Message structure containing the parameters for the listen method.
  */
-void WiFiRequestHandler::Listen(Message *message)
+void WiFiRequestHandler::Listen(void *vpMessage)
 {
 #if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_LISTEN)
     ESP_LOGI(__func__, "Enter");
 #endif
 
+    Message *message = static_cast<Message *>(vpMessage);
     Esp32Messaging::ListenRequest *request = Encoders::ExtractListenRequest(message->Payload);
     Esp32Messaging::IntegerAndErrnoResponse response;
 
@@ -2383,7 +2420,6 @@ void WiFiRequestHandler::Listen(Message *message)
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
-    xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
 
 #if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_LISTEN)
     ESP_LOGI(__func__, "Exit");
@@ -2396,12 +2432,13 @@ void WiFiRequestHandler::Listen(Message *message)
  *  @param message
  *      Message structure containing the parameters for the accept method.
  */
-void WiFiRequestHandler::Accept(Message *message)
+void WiFiRequestHandler::Accept(void *vpMessage)
 {
 #if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_ACCEPT)
     ESP_LOGI(__func__, "Enter");
 #endif
 
+    Message *message = static_cast<Message *>(vpMessage);
     Esp32Messaging::AcceptRequest *request = Encoders::ExtractAcceptRequest(message->Payload);
     free(message->Payload);
     Esp32Messaging::AcceptResponse response;
@@ -2451,7 +2488,6 @@ void WiFiRequestHandler::Accept(Message *message)
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
-    xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
 
 #if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_ACCEPT)
     ESP_LOGI(__func__, "Exit");
@@ -2467,12 +2503,13 @@ void WiFiRequestHandler::Accept(Message *message)
  *  @param message
  *      Message structure containing the parameters for the ioctl method.
  */
-void WiFiRequestHandler::Ioctl(Message *message)
+void WiFiRequestHandler::Ioctl(void *vpMessage)
 {
 #if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_IOCTL)
     ESP_LOGI(__func__, "Enter");
 #endif
 
+    Message *message = static_cast<Message *>(vpMessage);
     Esp32Messaging::IoctlRequest *request = Encoders::ExtractIoctlRequest(message->Payload);
     vPortFree(message->Payload);
     message->PayloadLength = 0;
@@ -2516,7 +2553,6 @@ void WiFiRequestHandler::Ioctl(Message *message)
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
-    xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
 
 #if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_IOCTL)
     ESP_LOGI(__func__, "Exit");
@@ -2529,12 +2565,13 @@ void WiFiRequestHandler::Ioctl(Message *message)
  *  @param message
  *      Message structure containing the parameters for the getsockname method.
  */
-void WiFiRequestHandler::GetSockName(Message *message)
+void WiFiRequestHandler::GetSockName(void *vpMessage)
 {
 #if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_GETSOCKNAME)
     ESP_LOGI(__func__, "Enter");
 #endif
 
+    Message *message = static_cast<Message *>(vpMessage);
     Esp32Messaging::GetSockNameRequest *request = Encoders::ExtractGetSockNameRequest(message->Payload);
     free(message->Payload);
     Esp32Messaging::GetSockNameResponse response;
@@ -2584,7 +2621,6 @@ void WiFiRequestHandler::GetSockName(Message *message)
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
-    xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
 
 #if defined(WIFI_FULL_LOGGING) || defined(WIFI_DEBUG_GETSOCKNAME)
     ESP_LOGI(__func__, "Exit");
@@ -2597,12 +2633,13 @@ void WiFiRequestHandler::GetSockName(Message *message)
  *  @param message
  *      Message structure containing the parameters for the poll method.
  */
-void WiFiRequestHandler::Poll(Message *message)
+void WiFiRequestHandler::Poll(void *vpMessage)
 {
 #if defined(WIFI_FULL_LOGGING)
     ESP_LOGI(__func__, "Enter");
 #endif
 
+    Message *message = static_cast<Message *>(vpMessage);
     Esp32Messaging::PollRequest *request = Encoders::ExtractPollRequest(message->Payload);
     // PollRequestInformation *pollRequest = static_cast<PollRequestInformation *>(pvPortMalloc(sizeof(PollRequestInformation)));
     Esp32Messaging::PollResponse response;
@@ -2651,7 +2688,6 @@ void WiFiRequestHandler::Poll(Message *message)
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
-    xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
 
 #if defined(WIFI_FULL_LOGGING)
     ESP_LOGI(__func__, "Exit");
