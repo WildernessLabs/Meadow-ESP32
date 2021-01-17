@@ -76,7 +76,7 @@ private:
     void EventHandlerHelper(esp_event_base_t, int32_t, void *);
 
     const int BT_GATT_MTU = 500;
-    const int MEADOW_PROFILE_APP_ID = 0;
+    const int MEADOW_PROFILE_APP_ID = 0x55;
 
     /*
      *  Private constructor and destructor.
@@ -107,6 +107,8 @@ public:
      *  have access to the class level variables, not just the static variable.
      */
     static void EventHandler(void *, esp_event_base_t, int32_t, void *);
+
+    static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param);
 };
 
 #endif /* _BLUETOOTH_REQUEST_HANDLER_HPP_ */
