@@ -1,4 +1,6 @@
-idf_component_register(SRCS "Mapping.cpp"
+idf_component_register(SRCS "ThreadPool.cpp"
+                            "Thread.cpp"
+                            "Mapping.cpp"
                             "BluetoothRequestHandler.cpp"
                             "Encoders.cpp"
                             "Esp32Messaging.cpp"
@@ -12,4 +14,5 @@ idf_component_register(SRCS "Mapping.cpp"
                             "TransportProviderBase.cpp"
                             "WiFiRequestHandler.cpp"
                             "AppMain.cpp"
+                            "Exceptions/ThreadPoolException.cpp"
                     INCLUDE_DIRS "")
