@@ -101,7 +101,48 @@ public:
      */
     static void Error(char *, char *, ...);
 
-    /*
+    /**
+     *  Convert a message type into a meaningful string.
+     */
+    static char *MessageTypeName(uint8_t);
+
+    /**
+     *  Convert the interface enum (Esp32Interfaces) from an interface type into a string name.
+     */
+    static char *InterfaceName(uint32_t);
+
+    /**
+     *  Convert the request enum into a WiFi message name.
+     */
+    static char *WiFiFunctionName(uint32_t);
+
+    /**
+     *  Convert the request enum into a System message name.
+     */
+    static char *SystemFunctionName(uint32_t);
+
+    /**
+     *  Convert the request enum into a Bluetooth message name.
+     */
+    static char *BluetoothFunctionName(uint32_t);
+
+    /**
+     *  Convert the request enum into a Transport message name.
+     */
+    static char *TransportFunctionName(uint32_t);
+
+    /**
+     *  Convert the specified function ID into a string name.  The function name will
+     *  vary between the interfaces.
+     */
+    static char *FunctionName(uint32_t, uint32_t);
+
+    /**
+     *  Convert a status code into a meaningful name.
+     */
+    static char *StatusCodeName(uint32_t);
+
+    /**
      *  Decode the message structure and output the components.
      */
     static void DumpMessage(const char *, const Message *);
