@@ -26,6 +26,11 @@
  */
 
 /**
+ *  @brief Name of the FreeRTOS component / task for the mesh network system.
+ */
+const char *MeshNetworkRequestHandler::COMPONENT_NAME = "MeshNetworkTask";
+
+/**
  *  @brief Determine if this class is instantiated already (i.e. this should be a singleton).
  */
 bool MeshNetworkRequestHandler::_instantiated = false;
@@ -85,7 +90,7 @@ MeshNetworkRequestHandler::~MeshNetworkRequestHandler()
 void MeshNetworkRequestHandler::Setup()
 {
     RequestHandlerBase::Setup();
-    xTaskCreate(Task, _taskName, 1024 * 2, this, configMAX_PRIORITIES - 1, &_taskHandle);
+    xTaskCreate(Task, COMPONENT_NAME, 1024 * 2, this, configMAX_PRIORITIES - 1, &_taskHandle);
 }
 
 /**
@@ -96,13 +101,13 @@ void MeshNetworkRequestHandler::Setup()
  */
 void MeshNetworkRequestHandler::DispatchRequest(Message *request)
 {
-    ESP_LOGI(_taskName, "Message handling not implemented, message will be deleted");
+    ESP_LOGI(COMPONENT_NAME, "Message handling not implemented, message will be deleted");
     //
     //  Memory for the payload is allocated on the heap and it needs to be released.
     //
     if(request->Payload != NULL)
     {
-        ESP_LOG_BUFFER_HEXDUMP(_taskName, request->Payload, request->PayloadLength, ESP_LOG_INFO);
+        ESP_LOG_BUFFER_HEXDUMP(COMPONENT_NAME, request->Payload, request->PayloadLength, ESP_LOG_INFO);
         vPortFree(request->Payload);
     }
 }

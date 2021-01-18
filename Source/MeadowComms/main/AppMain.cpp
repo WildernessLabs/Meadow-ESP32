@@ -15,6 +15,9 @@
 #include "GenericList.hpp"
 #include "NvsManager.hpp"
 
+#include "WiFiRequestHandler.hpp"
+#include "SpiTransportProvider.hpp"
+
 #if defined(CONFIG_HEAP_TRACING_STANDALONE) || defined(CONFIG_HEAP_TRACING_TOHOST)
 
 #include "esp_heap_trace.h"
@@ -28,15 +31,48 @@ static heap_trace_record_t trace_records[NUM_RECORDS];
 
 #endif
 
+#define APP_MAIN_COMPONENT_NAME "AppMain"
+
 /*
  *      Main program loop for the ESP32 as specified by the FreeRTOS documentation.
  */
 // cppcheck-suppress unusedFunction symbolName=app_main
 extern "C" void app_main()
 {
+    esp_log_level_set("*", ESP_LOG_NONE);
+
+#if defined(DEBUG) || defined(WIFI_DEBUG) || defined(SPI_DEBUG) || defined(THREAD_DEBUG) || defined(SYSTEM_DEBUG)
+    #warning "Debug is enabled."
+    esp_log_level_set(APP_MAIN_COMPONENT_NAME, ESP_LOG_INFO);
+#endif
+
+#ifdef WIFI_DEBUG
+    #warning "WIFI debugging is enabled."
+    esp_log_level_set(WiFiRequestHandler::COMPONENT_NAME, ESP_LOG_INFO);
+#endif
+
+#ifdef SPI_DEBUG
+    #warning "SPI debugging is enabled."
+    esp_log_level_set(SpiTransportProvider::COMPONENT_NAME, ESP_LOG_INFO);
+#endif
+
+#ifdef THREAD_DEBUG
+    #warning "ThreadPool debugging is enabled."
+    esp_log_level_set(Thread::COMPONENT_NAME, ESP_LOG_INFO);
+#endif
+
+#ifdef BT_DEBUG
+    #warning "Bluetooth debugging is enabled."
+    esp_log_level_set(Thread::COMPONENT_NAME, ESP_LOG_INFO);
+#endif
+
+#ifdef SYSTEM_DEBUG
+    #warning "System debugging is enabled."
+    esp_log_level_set(SystemRequestHandler::COMPONENT_NAME, ESP_LOG_INFO);
+#endif
+
     Logging::Setup();
     NvsManager::Setup();
-    esp_log_level_set("*", ESP_LOG_INFO);
 
 #ifdef CONFIG_HEAP_TRACING_TOHOST
     #warning "Heap tracing to host turned on."
@@ -53,7 +89,7 @@ extern "C" void app_main()
 #endif
 
     const esp_app_desc_t *applicationDescription = esp_ota_get_app_description();
-    ESP_LOGI(__func__, "\n\n    ********** Starting Application (%s version %s) **********\n", applicationDescription->project_name, applicationDescription->version);
+    ESP_LOGI(APP_MAIN_COMPONENT_NAME, "\n\n    ********** Starting Application (%s version %s) **********\n", applicationDescription->project_name, applicationDescription->version);
 
     /*
      *  Set up the messaging system to use SPI hardware communications.

@@ -28,11 +28,6 @@ class SystemRequestHandler : public RequestHandlerBase
 {
 private:
     /**
-     *  @brief Name of the FreeRTOS task for the System task.
-     */
-    const char *_taskName = "SystemTask";
-
-    /**
      *  @brief Name of the NVS store holding the system configuration.
      */
     static const char *_configurationName;
@@ -84,6 +79,11 @@ private:
     void GetBatteryChargeLevel(Message *);
 
 public:
+    /**
+     *  @brief Name of the FreeRTOS component / task for the System task.
+     */
+    static const char *COMPONENT_NAME;
+
     /**
      *  @brief Public constructor.
      */

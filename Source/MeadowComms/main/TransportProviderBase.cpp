@@ -18,6 +18,12 @@
  *
  * ----------------------------------------------------------------------------
  */
+
+/**
+ *  @brief Name of this component / task.
+ */
+const char *COMPONENT_NAME = "TransportProviderBase";
+
 QueueHandle_t TransportProviderBase::_outboundMessageQueueMutex = nullptr;
 QueueHandle_t TransportProviderBase::_outboundMessageQueueHandle = nullptr;
 TaskHandle_t TransportProviderBase::_transportProviderTaskHandle = nullptr;

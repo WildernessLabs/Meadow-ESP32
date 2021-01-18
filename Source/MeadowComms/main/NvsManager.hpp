@@ -31,7 +31,12 @@ private:
 
 public:
     /**
-     *  D@brief efault constructor.
+     *  @brief Name of the component / task.
+     */
+    static const char *COMPONENT_NAME;
+
+    /**
+     *  @brief Default constructor.
      */
     NvsManager();
 

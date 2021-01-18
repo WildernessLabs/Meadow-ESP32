@@ -6,6 +6,22 @@ if (DEBUG EQUAL 1)
     add_compile_definitions(DEBUG)
 endif()
 
+if (WIFI_DEBUG EQUAL 1)
+    add_compile_definitions(WIFI_DEBUG)
+endif()
+
+if (SYSTEM_DEBUG EQUAL 1)
+    add_compile_definitions(SYSTEM_DEBUG)
+endif()
+
+if (BT_DEBUG EQUAL 1)
+    add_compile_definitions(BT_DEBUG)
+endif()
+
+if (THREAD_DEBUG EQUAL 1)
+    add_compile_definitions(THREAD_DEBUG)
+endif()
+
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 
 project("MeadowComms")

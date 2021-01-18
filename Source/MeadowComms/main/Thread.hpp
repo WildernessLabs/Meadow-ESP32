@@ -79,6 +79,11 @@ private:
 
 public:
     /**
+     *  @brief Name of the componet / task for the Thread class.
+     */
+    static const char *COMPONENT_NAME;
+
+    /**
      *  @brief Constructor that should be used by the application.
      */
     explicit Thread(char *, task_completed_method_t);

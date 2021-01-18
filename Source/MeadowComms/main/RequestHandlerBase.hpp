@@ -65,6 +65,11 @@ protected:
 
 public:
     /**
+     *  @brief Name of this component / task.
+     */
+    static const char *COMPONENT_NAME;
+
+    /**
      *  @brief Maximum length of a message queue.
      */
     const uint32_t MAX_QUEUE_LENGTH = 10;

@@ -11,6 +11,7 @@
 
 #include "Encoders.hpp"
 #include "RequestHandlerBase.hpp"
+#include "Logging.hpp"
 
 /*
  * ---------------------------------------------------------------------------
@@ -19,6 +20,11 @@
  *
  * ---------------------------------------------------------------------------
  */
+
+/**
+ *  @brief Name of this component / task.
+ */
+const char *RequestHandlerBase::COMPONENT_NAME = "RequestHandlerBase";
 
 /**
  *  @brief MessageDispatcher object that ensure that messages are delivered to 
@@ -84,7 +90,7 @@ void RequestHandlerBase::Setup()
     _queueHandle = xQueueCreate(MAX_QUEUE_LENGTH, sizeof(Message *));
     if (_queueHandle == NULL)
     {
-        ESP_LOGE(__func__, "Cannot allocate ESP32 handler queue.");
+        ESP_LOGE(COMPONENT_NAME, "Cannot allocate ESP32 handler queue.");
     }
 }
 
@@ -129,6 +135,7 @@ void RequestHandlerBase::Task(void *pvParameters)
 bool RequestHandlerBase::QueueEsp32Message(Message *message)
 {
     bool result = true;
+    Logging::DumpMessage(COMPONENT_NAME, message);
     if (xQueueSendToBack(_queueHandle, &message, 0) != pdPASS)
     {
         if (message->Payload != NULL)

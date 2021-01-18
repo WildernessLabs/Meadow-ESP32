@@ -95,6 +95,11 @@ private:
 
 public:
     /**
+     *  @brief Name of the message dispatcher task.
+     */
+    static const char *COMPONENT_NAME;
+
+    /**
      *  @brief Constructor for the Message Dispatcher.
      */
     explicit MessageDispatcher(TransportProviderBase *);

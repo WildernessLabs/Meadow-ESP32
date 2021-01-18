@@ -276,6 +276,11 @@ private:
 
 public:
     /**
+     *  @brief Name of this component / task.
+     */
+    static const char *COMPONENT_NAME;
+
+    /**
      *  @brief Default constructor.
      */
     SpiTransportProvider();
