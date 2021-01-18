@@ -49,6 +49,11 @@ private:
 
 public:
     /**
+     *  @brief Name of the componet / task for the ThreadPool.
+     */
+    static const char *COMPONENT_NAME;
+
+    /**
      *  @brief Create a ThreadPool of the specified size.
      */
     explicit ThreadPool(uint32_t);

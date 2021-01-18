@@ -116,11 +116,6 @@ private:
         TaskHandle_t TaskHandle = nullptr;
     };
 
-    /**
-     *  @brief Name of the FreeRTOS task for the WiFi system.
-     */
-    const char *TASK_NAME = "WiFiTask";
-
     /*
      *  Event group bits.
      */
@@ -609,6 +604,11 @@ private:
     static void GetSockName(void *);
 
 public:
+    /**
+     *  @brief Name of the componet / task for the WiFi system.
+     */
+    static const char *COMPONENT_NAME;
+
     /**
      *  @brief Constructor for the WiFi object.
      */

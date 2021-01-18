@@ -15,6 +15,11 @@
  */
 
 /**
+ *  @brief Name of the componet / task for the ThreadPool.
+ */
+const char *ThreadPool::COMPONENT_NAME = "ThreadPool";
+
+/**
  *  @brief Counting semaphore used to indicate if there are any thread available.
  */
 SemaphoreHandle_t ThreadPool::_threadsAvailable = NULL;
@@ -111,6 +116,7 @@ ThreadPool::~ThreadPool()
  */
 void ThreadPool::Execute(method_t method, void *parameter)
 {
+    ESP_LOGI(COMPONENT_NAME, "Execute: Enter");
     if (xSemaphoreTake(_threadsAvailable, portMAX_DELAY) == pdTRUE)
     {
         for (uint32_t index = 0; index < _threadPoolSize; index++)
@@ -126,6 +132,7 @@ void ThreadPool::Execute(method_t method, void *parameter)
     {
         throw new ThreadPoolException("Cannot obtain access to threads.");
     }
+    ESP_LOGI(COMPONENT_NAME, "Execute: Exit");
 }
 
 /**

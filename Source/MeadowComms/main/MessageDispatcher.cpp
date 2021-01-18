@@ -14,6 +14,19 @@
 #endif
 
 /*
+ * ----------------------------------------------------------------------------
+ *
+ *               Initialise class level static variables.
+ *
+ * ----------------------------------------------------------------------------
+ */
+
+/**
+ *  @brief Name of the message dispatcher task.
+ */
+const char *MessageDispatcher::COMPONENT_NAME = "MessageDispatcher";
+
+/*
  * ---------------------------------------------------------------------------
  *
  *                     Constructors and destructor
@@ -90,6 +103,7 @@ bool MessageDispatcher::SetMaximumMessageSize(uint32_t messageSize)
  */
 bool MessageDispatcher::QueueMessageForEsp32(Message *request)
 {
+    ESP_LOGI(COMPONENT_NAME, "QueueMessageForEsp32: Enter");
     RequestHandlerBase *provider = nullptr;
 
     switch (static_cast<Esp32Interfaces::Esp32Interfaces>(request->Interface))
@@ -127,7 +141,7 @@ bool MessageDispatcher::QueueMessageForEsp32(Message *request)
             provider = dynamic_cast<RequestHandlerBase *>(_systemRequestHandler);
             break;
         default:
-            ESP_LOGI(__func__, "Unknown interface %d, message will not be processed.", request->Interface);
+            ESP_LOGE(COMPONENT_NAME, "QueueMessageForEsp32: Unknown interface %d, message will not be processed.", request->Interface);
             break;
     }
     bool result = false;
@@ -135,6 +149,7 @@ bool MessageDispatcher::QueueMessageForEsp32(Message *request)
     {
         result = provider->QueueEsp32Message(request);
     }
+    ESP_LOGI(COMPONENT_NAME, "QueueMessageForEsp32: Enter");
     return(result);
 }
 

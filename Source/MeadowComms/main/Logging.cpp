@@ -13,13 +13,15 @@
 /*
  * ---------------------------------------------------------------------------
  *
- *                     Global Data
+ *                     Initialise static data.
  *
  * ---------------------------------------------------------------------------
  */
 
-char *enterMethodString = (char *) "Enter";
-char *exitMethodString = (char *) "Exit";
+/**
+ *  @brief Name of the component / task.
+ */
+const char *Logging::COMPONENT_NAME = "Logging";
 
 /*
  * ---------------------------------------------------------------------------
@@ -30,14 +32,14 @@ char *exitMethodString = (char *) "Exit";
  */
 
 /**
- *  Default constructor for the logging system.
+ *  @brief Default constructor for the logging system.
  */
 Logging::Logging()
 {
 }
 
 /**
- *  Default destructor for the logging system.
+ *  @brief Default destructor for the logging system.
  */
 Logging::~Logging()
 {
@@ -52,7 +54,7 @@ Logging::~Logging()
  */
 
 /**
- *  Setup the logging system.
+ *  @brief Setup the logging system.
  *
  *  The ESP32 should be set up to use custom logging (use 'make menuconfig' to do this) with
  *  the Tx pin set to GPIO22 and the Rx pin set to some other value (21 is used at the moment).
@@ -77,12 +79,12 @@ void Logging::Setup()
     //  We won't use a buffer for sending data.
     //
     uart_driver_install(LOGGING_UART_PORT_NUMBER, RX_BUFFER_SIZE * 2, 0, 0, NULL, 0);
-    ESP_LOGI(__func__, "Logging redirected to UART_NUM_0 on pins %d (Tx), %d (Rx)", Gpio::LOGGING_TX_PIN, Gpio::LOGGING_RX_PIN);
-    ESP_LOGI(__func__, "Logging setup complete.");
+    ESP_LOGI(COMPONENT_NAME, "Logging redirected to UART_NUM_0 on pins %d (Tx), %d (Rx)", Gpio::LOGGING_TX_PIN, Gpio::LOGGING_RX_PIN);
+    ESP_LOGI(COMPONENT_NAME, "Logging setup complete.");
 }
 
 /**
- *  Process the request to output an informational message to the logging system.
+ *  @brief Process the request to output an informational message to the logging system.
  *
  *  @param methodName
  *      Name of the method that called the Information method.
@@ -95,7 +97,7 @@ void Logging::Information(char *methodName, char *formatString, ...)
 }
 
 /**
- *  Process the request to output an error message to the logging system
+ *  @brief Process the request to output an error message to the logging system
  *
  *  @param methodName
  *      Name of the method that called the Information method.
@@ -474,39 +476,38 @@ char *Logging::StatusCodeName(uint32_t code)
 }
 
 /**
- *  Decode a message structure and output the contents as an information
- *  message.
+ *  @brief Decode a message structure and output the contents as an information message.
  *
- *  @param functionName
- *      Name of the function calling the logging method.
+ *  @param componentName
+ *      Name of the component where the call originated.
  *
  *  @param message
  *      Pointer to the message to be decoded.
  */
-void Logging::DumpMessage(const char *functionName, const Message *message)
+void Logging::DumpMessage(const char *componentName, const Message *message)
 {
     if (message)
     {
-        ESP_LOGI(functionName, "Message type: 0x%02x (%s)", message->MessageType, MessageTypeName(message->MessageType));
-        ESP_LOGI(functionName, "ESP32 Interface: 0x%02x (%s)", message->Interface, InterfaceName(message->Interface));
-        ESP_LOGI(functionName, "Message ID: 0x%08x", message->MessageID);
-        ESP_LOGI(functionName, "Function to be executed: 0x%08x (%s)", message->Function, FunctionName(message->Interface, message->Function));
-        ESP_LOGI(functionName, "Status code: 0x%08x (%s)", message->StatusCode, StatusCodeName(message->StatusCode));
+        ESP_LOGI(componentName, "Message type: 0x%02x (%s)", message->MessageType, MessageTypeName(message->MessageType));
+        ESP_LOGI(componentName, "ESP32 Interface: 0x%02x (%s)", message->Interface, InterfaceName(message->Interface));
+        ESP_LOGI(componentName, "Message ID: 0x%08x", message->MessageID);
+        ESP_LOGI(componentName, "Function to be executed: 0x%08x (%s)", message->Function, FunctionName(message->Interface, message->Function));
+        ESP_LOGI(componentName, "Status code: 0x%08x (%s)", message->StatusCode, StatusCodeName(message->StatusCode));
         if (message->PayloadLength > 0)
         {
-            ESP_LOGI(functionName, "Payload length: %d", message->PayloadLength);
+            ESP_LOGI(componentName, "Payload length: %d", message->PayloadLength);
             if (message->Payload)
             {
-                ESP_LOG_BUFFER_HEX(functionName, message->Payload, message->PayloadLength);
+                ESP_LOG_BUFFER_HEX(componentName, message->Payload, message->PayloadLength);
             }
             else
             {
-                ESP_LOGI(functionName, "Payload has not been set.");
+                ESP_LOGI(componentName, "Payload has not been set.");
             }
         }
     }
     else
     {
-        ESP_LOGI(functionName, "Message pointer is invalid.");
+        ESP_LOGI(componentName, "Message pointer is invalid.");
     }
 }

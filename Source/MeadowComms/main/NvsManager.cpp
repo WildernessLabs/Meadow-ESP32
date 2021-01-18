@@ -14,6 +14,24 @@
 /*
  * ----------------------------------------------------------------------------
  *
+ *               Initialise class level static variables.
+ *
+ * ----------------------------------------------------------------------------
+ */
+
+/**
+ *  @brief Name of the component / task.
+ */
+const char *NvsManager::COMPONENT_NAME = "NvsManager";
+
+/**
+ *  @brief Determine if this object has been created already.
+ */
+bool NvsManager::_nvsAvailable = false;
+
+/*
+ * ----------------------------------------------------------------------------
+ *
  *                  Constructors and destructors.
  *
  * ----------------------------------------------------------------------------
@@ -32,19 +50,6 @@ NvsManager::NvsManager()
 NvsManager::~NvsManager()
 {
 }
-
-/*
- * ----------------------------------------------------------------------------
- *
- *               Initialise class level static variables.
- *
- * ----------------------------------------------------------------------------
- */
-
-/**
- *  @brief Determine if this object has been created already.
- */
-bool NvsManager::_nvsAvailable = false;
 
 /*
  * ----------------------------------------------------------------------------
