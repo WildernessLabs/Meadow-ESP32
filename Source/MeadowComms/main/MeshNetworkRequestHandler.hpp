@@ -22,11 +22,6 @@ class MeshNetworkRequestHandler : public RequestHandlerBase
 {
 private:
     /**
-     *  @brief Name of the FreeRTOS task for the WiFi system.
-     */
-    const char *_taskName = "MeshNetworkTask";
-
-    /**
      *  @brief Determine if this class is instantiated already (i.e. this should be a singleton).
      */
     static bool _instantiated;
@@ -43,6 +38,11 @@ private:
     ~MeshNetworkRequestHandler();
 
 public:
+    /**
+     *  @brief Name of the FreeRTOS component / task for the WiFi system.
+     */
+    static const char *COMPONENT_NAME;
+
     /**
      *  @brief Constructor for a Mesh Network request handler object.
      */

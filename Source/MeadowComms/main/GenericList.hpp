@@ -13,7 +13,6 @@
 #include <string.h>
 #include <stdint.h>
 
-
 /**
  *  @brief Class holding a generic item in the linked list class.
  */

@@ -115,6 +115,12 @@ protected:
      *  of the message queue as LOGI informaiton.
      */
     void DumpMessageAtHeadOfQueue();
+
+public:
+    /**
+     *  @brief Name of this component / task.
+     */
+    static const char *COMPONENT_NAME;
 };
 
 #endif /* _TRANSPORT_PROVIDER_BASE_HPP_ */
