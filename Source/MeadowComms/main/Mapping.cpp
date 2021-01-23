@@ -11,6 +11,14 @@
 #include <sys/ioctl.h>
 #include "Mapping.hpp"
 
+/*
+ * ---------------------------------------------------------------------------
+ *
+ *                     Initialise static data.
+ *
+ * ---------------------------------------------------------------------------
+ */
+
 /**
  *  @brief Map the STM32 address family codes to ESP32 address family code.
  * 

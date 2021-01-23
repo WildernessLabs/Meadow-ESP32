@@ -33,6 +33,12 @@
  *
  * ----------------------------------------------------------------------------
  */
+
+/**
+ *  @brief Name of the FreeRTOS component / task for the System task.
+ */
+const char *SystemRequestHandler::COMPONENT_NAME = "SystemTask";
+
 /**
  *  @brief Determine if this class is instantiated already (i.e. this should be a singleton).
  */
@@ -153,7 +159,7 @@ StatusCodes::StatusCodes SystemRequestHandler::SetMaximumMessageQueueLength(uint
 void SystemRequestHandler::Setup()
 {
     RequestHandlerBase::Setup();
-    xTaskCreate(Task, _taskName, 2048 * 2, this, configMAX_PRIORITIES - 1, &_taskHandle);
+    xTaskCreate(Task, COMPONENT_NAME, 2048 * 2, this, configMAX_PRIORITIES - 1, &_taskHandle);
 }
 
 /**
@@ -364,10 +370,7 @@ NvsManager::ErrorCodes SystemRequestHandler::SetConfigurationValue(const char *n
  */
 void SystemRequestHandler::GetConfiguration(Message *request)
 {
-#if defined(SYSTEM_FULL_LOGGING)
-    ESP_LOGI(__func__, "Enter")
-#endif
-
+    ESP_LOGI(COMPONENT_NAME, "GetConfiguration: Enter");
     Esp32Messaging::SystemConfiguration config = {};
     const esp_app_desc_t *applicationDescription = esp_ota_get_app_description();
     config.SoftwareVersion = const_cast<char *>(applicationDescription->version);
@@ -392,10 +395,7 @@ void SystemRequestHandler::GetConfiguration(Message *request)
     request->MessageType = MessageTypes::Interrupt;
     request->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(request);
-
-#if defined(SYSTEM_FULL_LOGGING)
-    ESP_LOGI(__func__, "Exit")
-#endif
+    ESP_LOGI(COMPONENT_NAME, "GetConfiguration: Exit");
 }
 
 /**
@@ -406,10 +406,7 @@ void SystemRequestHandler::GetConfiguration(Message *request)
  */
 void SystemRequestHandler::SetConfiguration(Message *request)
 {
-#if defined(SYSTEM_FULL_LOGGING)
-    ESP_LOGI(__func__, "Enter")
-#endif
-
+    ESP_LOGI(COMPONENT_NAME, "SetConfiguration: Enter");
     Esp32Messaging::ConfigurationValue *value = Encoders::ExtractConfigurationValue(request->Payload);
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
     switch (value->Item)
@@ -468,10 +465,7 @@ void SystemRequestHandler::SetConfiguration(Message *request)
     request->MessageType = MessageTypes::Response;
     request->StatusCode = result;
     _messageDispatcher->QueueMessageForStm32(request);
-
-#if defined(SYSTEM_FULL_LOGGING)
-    ESP_LOGI(__func__, "Exit")
-#endif
+    ESP_LOGI(COMPONENT_NAME, "SetConfiguration: Exit");
 }
 
 /**
@@ -485,15 +479,9 @@ void SystemRequestHandler::SetConfiguration(Message *request)
  */
 void SystemRequestHandler::DeepSleep(Message *request)
 {
-#if defined(SYSTEM_FULL_LOGGING)
-    ESP_LOGI(__func__, "Enter")
-#endif
-    
-    ESP_LOGI(__func__, "DeepSleep not implemented");
-
-#if defined(SYSTEM_FULL_LOGGING)
-    ESP_LOGI(__func__, "Exit")
-#endif
+    ESP_LOGI(COMPONENT_NAME, "DeepSleep: Enter");
+    ESP_LOGI(COMPONENT_NAME, "DeepSleep not implemented");
+    ESP_LOGI(COMPONENT_NAME, "DeepSleep: Exit");
 }
 
 /**
@@ -504,11 +492,8 @@ void SystemRequestHandler::DeepSleep(Message *request)
  */
 void SystemRequestHandler::GetBatteryChargeLevel(Message *message)
 {
-#if defined(SYSTEM_FULL_LOGGING)
-    ESP_LOGI(__func__, "Enter")
-#endif
-
-    ESP_LOGI(__func__, "BatteryLevel not implemented");
+    ESP_LOGI(COMPONENT_NAME, "DeepSleep: Enter");
+    ESP_LOGI(COMPONENT_NAME, "BatteryLevel not implemented");
     //
     //  TODO: Complete the implemention of the BatteryLevel method.
     //        For the minute we'll fake it at 2.5V.
@@ -523,10 +508,7 @@ void SystemRequestHandler::GetBatteryChargeLevel(Message *message)
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
-
-#if defined(SYSTEM_FULL_LOGGING)
-    ESP_LOGI(__func__, "Exit")
-#endif
+    ESP_LOGI(COMPONENT_NAME, "DeepSleep: Exit");
 }
 
 /**
@@ -537,10 +519,7 @@ void SystemRequestHandler::GetBatteryChargeLevel(Message *message)
  */
 void SystemRequestHandler::DispatchRequest(Message *request)
 {
-#if defined(SYSTEM_FULL_LOGGING)
-    ESP_LOGI(__func__, "Enter")
-#endif
-
+    ESP_LOGI(COMPONENT_NAME, "DeepSleep: Enter");
     switch (request->Function)
     {
         case SystemFunction::GetConfiguration:
@@ -555,15 +534,12 @@ void SystemRequestHandler::DispatchRequest(Message *request)
             GetBatteryChargeLevel(request);
             break;
         default:
-            ESP_LOGI(__func__, "Unknown System message received, function 0x%x", request->Function);
+            ESP_LOGI(COMPONENT_NAME, "DeepSleep: Unknown System message received, function 0x%x", request->Function);
             if (request->Payload != NULL)
             {
                 ESP_LOG_BUFFER_HEXDUMP(__func__, request->Payload, request->PayloadLength, ESP_LOG_INFO);
             }
             break;
     }
-
-#if defined(SYSTEM_FULL_LOGGING)
-    ESP_LOGI(__func__, "Exit")
-#endif
+    ESP_LOGI(COMPONENT_NAME, "DeepSleep: Exit");
 }
