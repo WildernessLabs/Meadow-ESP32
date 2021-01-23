@@ -24,6 +24,7 @@
 
 #include "RequestHandlerBase.hpp"
 #include "Esp32Messaging.hpp"
+#include "BluetoothConfig.hpp"
 
 #define BT_FULL_LOGGING
 
@@ -109,6 +110,9 @@ public:
     static void EventHandler(void *, esp_event_base_t, int32_t, void *);
 
     static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param);
+
+    static BluetoothConfig Config;
+
 };
 
 #endif /* _BLUETOOTH_REQUEST_HANDLER_HPP_ */

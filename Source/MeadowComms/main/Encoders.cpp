@@ -3112,3 +3112,43 @@ Esp32Messaging::GetSockNameResponse *Encoders::ExtractGetSockNameResponse(uint8_
 }
 
 
+
+
+/**
+ *  Extract the WiFiCredentials object that is encoded in the given buffer.
+ *  
+ *  Note that the returned pointer points to a block of memory on the heap and
+ *  this should eventually be released calling vPortFree(...).
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded BTServicesDescription object.
+ *  
+ *  @returns
+ *      Pointer to a BTServicesDescription object.
+ */
+// cppcheck-suppress unusedFunction symbolName=ExtractWiFiCredentials
+Esp32Messaging::BTServicesDescription *Encoders::ExtractBTServicesDescription(uint8_t *buffer)
+{
+    Esp32Messaging::BTServicesDescription *description = (Esp32Messaging::BTServicesDescription *) pvPortMalloc(sizeof(Esp32Messaging::BTServicesDescription));
+
+    description->DeviceName = ExtractString(buffer);
+    buffer += Encoders::StringLength(description->DeviceName) + 1;
+    description->PrimaryService = ExtractString(buffer);
+    return(description);
+}
+
+int Encoders::BTServicesDescriptionBufferSize(Esp32Messaging::BTServicesDescription *desc)
+{
+    int size = (StringLength(desc->DeviceName) + 1);
+    size += (StringLength(desc->PrimaryService) + 1);
+    size += 2; // null for each element
+    return size;
+}
+
+void Encoders::EncodeBTServicesDescription(Esp32Messaging::BTServicesDescription *desc, uint8_t *buffer)
+{
+    EncodeString(desc->DeviceName, buffer);
+    buffer += (StringLength(desc->DeviceName) + 1);
+    EncodeString(desc->PrimaryService, buffer);
+}
+

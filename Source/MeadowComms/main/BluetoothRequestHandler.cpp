@@ -35,6 +35,7 @@ static void gatts_profile_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_
  *  Determine if this class is instantiated already (i.e. this should be a singleton).
  */
 bool BluetoothRequestHandler::_instantiated = false;
+BluetoothConfig BluetoothRequestHandler::Config;
 
 /*
  * ----------------------------------------------------------------------------
@@ -269,9 +270,13 @@ void BluetoothRequestHandler::StartStack(Message *msg)
     ESP_LOGI(__func__, "Enter");
 #endif
 
+    // copy over all parameters
+    Esp32Messaging::BTServicesDescription *description = Encoders::ExtractBTServicesDescription(msg->Payload);
+    Config.SetDeviceName(description->DeviceName);
+
     esp_err_t ret;
 
-    ESP_LOGI(__func__, "Enabling BT controller...");
+    ESP_LOGI(__func__, "Enabling BT controller for '%s' with primary service '%s'", description->DeviceName, description->PrimaryService);
 
     ret = esp_bt_controller_enable(ESP_BT_MODE_BLE);
     if (ret) {
@@ -400,7 +405,7 @@ static uint8_t adv_service_uuid[16] = {
     0xfb, 0x34, 0x9b, 0x5f, 0x80, 0x00, 0x00, 0x80, 0x00, 0x10, 0x00, 0x00, 0xEE, 0x00, 0x00, 0x00,
 };
 
-static uint8_t meadow_manufacturer[3]={'W', 'I', 'L'};
+static uint8_t meadow_manufacturer[10]={'W', 'I', 'L', 'D', 'E', 'R', 'N', 'E', 'S', 'S'};
 
 // The length of adv data must be less than 31 bytes
 // this is what we send out for advertising
@@ -431,14 +436,6 @@ static esp_ble_adv_data_t scan_response_data =
     .p_manufacturer_data = meadow_manufacturer,
 };
 
-/*
-static struct gatts_profile_inst meadow_profile =
-{
-    .gatts_cb = gatts_event_handler,
-    .gatts_if = ESP_GATT_IF_NONE // no interface assigned yet, though it will be 0 when we initialize at ESP_GATTS_REG_EVT   
-};
-*/
-
 static esp_ble_adv_params_t advertising_params = {
     .adv_int_min        = 0x20, // this is the minimum advertising interval.  We might need to slow this down for wifi
     .adv_int_max        = 0x40, // this is the maximum advertising interval.  We might need to slow this down for wifi
@@ -455,20 +452,10 @@ static bool response_data_configured = false;
 
 // --- test property stuff. We'll modify this when managed starts integrating
 #define GATTS_CHAR_VAL_LEN_MAX 0x40 // not sure if this is a BT thing, or just arbitrary. Assuming arbitrary for now
-//static esp_gatt_char_prop_t test_property;
-//static uint8_t default_characteristic_data[] = {0x48,0x45,0x4C, 0x4C, 0x4F}; // HELLO
 
-/*
-static esp_attr_value_t gatts_test_attribute =
-{
-    .attr_max_len = GATTS_CHAR_VAL_LEN_MAX,
-    .attr_len     = sizeof(default_characteristic_data),
-    .attr_value   = default_characteristic_data,
-};
-*/
 #define CHAR_DECLARATION_SIZE   (sizeof(uint8_t))
 static const uint16_t primary_service_uuid = ESP_GATT_UUID_PRI_SERVICE;
-static const uint16_t character_declaration_uuid = ESP_GATT_UUID_CHAR_DECLARE;
+static const uint16_t characteristic_declaration_uuid = ESP_GATT_UUID_CHAR_DECLARE;
 static const uint16_t character_client_config_uuid = ESP_GATT_UUID_CHAR_CLIENT_CONFIG;
 static const uint8_t char_prop_notify = ESP_GATT_CHAR_PROP_BIT_NOTIFY;
 static const uint8_t char_prop_read = ESP_GATT_CHAR_PROP_BIT_READ;
@@ -490,61 +477,19 @@ static const uint8_t heart_ctrl_point[1] = {0x00};
 
 #define HRPS_HT_MEAS_MAX_LEN            (13)
 
-/*
-static char *esp_key_type_to_str(esp_ble_key_type_t key_type)
-{
-   char *key_str = NULL;
-   switch(key_type) {
-    case ESP_LE_KEY_NONE:
-        key_str = "ESP_LE_KEY_NONE";
-        break;
-    case ESP_LE_KEY_PENC:
-        key_str = "ESP_LE_KEY_PENC";
-        break;
-    case ESP_LE_KEY_PID:
-        key_str = "ESP_LE_KEY_PID";
-        break;
-    case ESP_LE_KEY_PCSRK:
-        key_str = "ESP_LE_KEY_PCSRK";
-        break;
-    case ESP_LE_KEY_PLK:
-        key_str = "ESP_LE_KEY_PLK";
-        break;
-    case ESP_LE_KEY_LLK:
-        key_str = "ESP_LE_KEY_LLK";
-        break;
-    case ESP_LE_KEY_LENC:
-        key_str = "ESP_LE_KEY_LENC";
-        break;
-    case ESP_LE_KEY_LID:
-        key_str = "ESP_LE_KEY_LID";
-        break;
-    case ESP_LE_KEY_LCSRK:
-        key_str = "ESP_LE_KEY_LCSRK";
-        break;
-    default:
-        key_str = "INVALID BLE KEY TYPE";
-        break;
-
-   }
-
-   return key_str;
-}
-*/
-
 static const esp_gatts_attr_db_t meadow_attribute_list[8] =
 {
-    // Heart Rate Service Declaration
+    // Service Declaration - all services present the UUID
     [0]                    =
     {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&primary_service_uuid, ESP_GATT_PERM_READ,
       sizeof(uint16_t), sizeof(adv_service_uuid), (uint8_t *)&adv_service_uuid}},
 
-    // Heart Rate Measurement Characteristic Declaration
+    // Characteristic Declaration
     [1]            =
-    {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&character_declaration_uuid, ESP_GATT_PERM_READ,
-      CHAR_DECLARATION_SIZE,CHAR_DECLARATION_SIZE, (uint8_t *)&char_prop_notify}},
+    {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&characteristic_declaration_uuid, ESP_GATT_PERM_READ,
+      CHAR_DECLARATION_SIZE, CHAR_DECLARATION_SIZE, (uint8_t *)&char_prop_notify}},
 
-    // Heart Rate Measurement Characteristic Value
+    // Characteristic Value
     [2]             =
     {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&heart_rate_meas_uuid, ESP_GATT_PERM_READ,
       HRPS_HT_MEAS_MAX_LEN, 0, NULL}},
@@ -556,17 +501,17 @@ static const esp_gatts_attr_db_t meadow_attribute_list[8] =
 
     // Body Sensor Location Characteristic Declaration
     [4]  =
-    {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&character_declaration_uuid, ESP_GATT_PERM_READ,
+    {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&characteristic_declaration_uuid, ESP_GATT_PERM_READ,
       CHAR_DECLARATION_SIZE,CHAR_DECLARATION_SIZE, (uint8_t *)&char_prop_read}},
 
     // Sensor Location Characteristic Value
     [5]   =
     {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&sensor_location_uuid, ESP_GATT_PERM_READ_ENCRYPTED,
-      sizeof(uint8_t), sizeof(body_sensor_loc_val), (uint8_t *)sensor_loc_val}},
+      sizeof(uint8_t), sizeof(sensor_loc_val), (uint8_t *)sensor_loc_val}},
 
     // Heart Rate Control Point Characteristic Declaration
     [6]          =
-    {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&character_declaration_uuid, ESP_GATT_PERM_READ,
+    {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&characteristic_declaration_uuid, ESP_GATT_PERM_READ,
       CHAR_DECLARATION_SIZE,CHAR_DECLARATION_SIZE, (uint8_t *)&char_prop_read_write}},
 
     // Heart Rate Control Point Characteristic Value
@@ -600,7 +545,7 @@ void BluetoothRequestHandler::gap_event_handler(esp_gap_ble_cb_event_t event, es
             {
                 ESP_LOGE(__func__, "Advertising start failed\n");
             }
-            ESP_LOGE(__func__, "Advertising start success\n");
+            ESP_LOGI(__func__, "Advertising start success\n");
             break;
         case ESP_GAP_BLE_PASSKEY_REQ_EVT:
             /* passkey request event */
@@ -710,7 +655,7 @@ static void gatts_profile_event_handler(esp_gatts_cb_event_t event,
     {
         case ESP_GATTS_REG_EVT:
         {
-            esp_ble_gap_set_device_name("MY MEADOW");
+            esp_ble_gap_set_device_name(BluetoothRequestHandler::Config.GetDeviceName());
             //generate a resolvable random address
             esp_ble_gap_config_local_privacy(true);
             esp_ble_gatts_create_attr_tab(meadow_attribute_list, gatts_if, 8, 0);
