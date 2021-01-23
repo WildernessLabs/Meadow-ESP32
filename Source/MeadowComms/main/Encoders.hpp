@@ -322,6 +322,12 @@ namespace Esp32Messaging
         int32_t ResponseErrno;
     };
 
+    struct BTServicesDescription
+    {
+        char * DeviceName;
+        char * PrimaryService;
+    };
+
 }
 
 /*
@@ -466,6 +472,9 @@ public:
     static int EncodedGetSockNameResponseBufferSize(Esp32Messaging::GetSockNameResponse *);
     static Esp32Messaging::GetSockNameResponse *ExtractGetSockNameResponse(uint8_t *);
 
+    static void EncodeBTServicesDescription(Esp32Messaging::BTServicesDescription *, uint8_t *);
+    static int BTServicesDescriptionBufferSize(Esp32Messaging::BTServicesDescription *);
+    static Esp32Messaging::BTServicesDescription *ExtractBTServicesDescription(uint8_t *buffer);
 };
 
 #endif /* _ENCODERS_HPP */

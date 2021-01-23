@@ -74,15 +74,25 @@ extern "C" void app_main()
     }
 }
 
+
 void SendTestMessage(MessageDispatcher *messageDispatcher)
 {
     ESP_LOGI(__func__, "Exit");
 
-     Message message = {};
-     message.MessageType = MessageTypes::Header;
-     message.Interface = Esp32Interfaces::BlueTooth;
-     message.Function = BluetoothFunction::Start;
-     Esp32Messaging::IoctlRequest request;
+    Esp32Messaging::BTServicesDescription desc;
+    desc.DeviceName = (char*)"Meadow ABCD";
+    desc.PrimaryService = (char*)"Meadow Svc";
+
+    Message message = {};
+    message.MessageType = MessageTypes::Header;
+    message.Interface = Esp32Interfaces::BlueTooth;
+    message.Function = BluetoothFunction::Start;
+    
+    message.PayloadLength = Encoders::BTServicesDescriptionBufferSize(&desc);
+    message.Payload = (uint8_t *) pvPortMalloc(message.PayloadLength);
+    Encoders::EncodeBTServicesDescription(&desc, message.Payload);
+
+    Esp32Messaging::IoctlRequest request;
 
 // #include "WiFiRequestHandler.hpp"
 

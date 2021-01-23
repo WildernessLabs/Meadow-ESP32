@@ -1,4 +1,4 @@
-idf_component_register(SRCS "Mapping.cpp"
+idf_component_register(SRCS "BluetoothConfig.cpp" "Mapping.cpp"
                             "BluetoothRequestHandler.cpp"
                             "Encoders.cpp"
                             "Esp32Messaging.cpp"
