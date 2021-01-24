@@ -20,7 +20,7 @@ namespace FileGenerator
 
         static void Main(string[] args)
         {
-            Console.WriteLine("File Generator 1.01");
+            Console.WriteLine("File Generator 1.02");
             //
             string stm32DestinationDirectory = Environment.GetEnvironmentVariable(ESP32_COPROCESSOR_SOURCE_DIRECTORY);
             if (string.IsNullOrEmpty(stm32DestinationDirectory))
@@ -34,16 +34,33 @@ namespace FileGenerator
                 Console.WriteLine($"ERROR: Please set the environment variable '{MEADOW_CORE_SOURCE_DIRECTORY}' before running this application.");
                 Environment.Exit(-1);
             }
+            if(!Directory.Exists(meadowCoreSourceDirectory))
+            {
+                Console.WriteLine($"Creating output folder for Meadow.Core files at '{MEADOW_CORE_SOURCE_DIRECTORY}'...");
+                Directory.CreateDirectory(meadowCoreSourceDirectory);
+            }
             //
             string outputDirectory = $".{Path.DirectorySeparatorChar}Output{Path.DirectorySeparatorChar}";
             if (!Directory.Exists(outputDirectory))
             {
                 Directory.CreateDirectory(outputDirectory);
             }
+
+            // find the source folder for the JSON files.  Start at the parent of the current, and walk up.
+            var esp32SourceRoot = AppDomain.CurrentDomain.BaseDirectory;
+            var metaPath = Path.Combine(esp32SourceRoot, "Metadata");
+            while(!Directory.Exists(metaPath))
+            {
+                esp32SourceRoot = Directory.GetParent(esp32SourceRoot).FullName;
+                metaPath = Path.Combine(esp32SourceRoot, "Metadata");
+            }
+            Console.WriteLine($"Using JSON files from {metaPath}");
+
             //
             //  Generate the enum files.
             //
-            string enumJsonFileName = $"..{Path.DirectorySeparatorChar}Metadata{Path.DirectorySeparatorChar}SharedEnums.json";
+            var enumJsonFileName = Path.Combine(metaPath,"SharedEnums.json");
+
             Console.WriteLine("    Generating enums.");
             EnumProcessor enumProcessor = new EnumProcessor(enumJsonFileName, outputDirectory);
             enumProcessor.ProcessFile();
@@ -51,8 +68,7 @@ namespace FileGenerator
             //  Generate the message processor (structure, encoders & extract) methods and structure defintions.
             //
             Console.WriteLine("    Generating message encoders and decoders.");
-            string metadataDirectory = $"..{Path.DirectorySeparatorChar}Metadata{Path.DirectorySeparatorChar}";
-            MessageProcessor messageProcessor = new MessageProcessor(metadataDirectory, outputDirectory);
+            var messageProcessor = new MessageProcessor(metaPath, outputDirectory);
             messageProcessor.ProcessFile();
             //
             //  Now copy the files into the right locations.
@@ -67,9 +83,10 @@ namespace FileGenerator
             //
             //  Copy the ESP32 files.
             //
-            File.Copy($"{outputDirectory}Encoders.cpp", "../MeadowComms/Main/Encoders.cpp", true);
-            File.Copy($"{outputDirectory}Encoders.hpp", "../MeadowComms/Main/Encoders.hpp", true);
-            File.Copy($"{outputDirectory}SharedEnums.hpp", "../MeadowComms/Main/SharedEnums.hpp", true);
+            var meadowCommsFolder = Path.Combine(esp32SourceRoot, "MeadowComms/Main");
+            File.Copy($"{outputDirectory}Encoders.cpp", Path.Combine(meadowCommsFolder, "Encoders.cpp"), true);
+            File.Copy($"{outputDirectory}Encoders.hpp", Path.Combine(meadowCommsFolder, "Encoders.hpp"), true);
+            File.Copy($"{outputDirectory}SharedEnums.hpp", Path.Combine(meadowCommsFolder, "SharedEnums.hpp"), true);
             //
             //  Copy the STM32 files.
             //

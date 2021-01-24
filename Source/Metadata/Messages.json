@@ -347,6 +347,14 @@
                 { "Name": "Result", "DataType": "int" },
                 { "Name": "ResponseErrno", "DataType": "int" }
             ]
+        },
+        {
+            "Name": "BTServicesDescription",
+            "MessageElements":
+            [
+                { "Name": "DeviceName", "DataType": "string" },
+                { "Name": "PrimaryService", "DataType": "string" }
+            ]
         }
     ]
 }

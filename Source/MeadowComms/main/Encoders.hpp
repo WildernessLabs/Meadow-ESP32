@@ -471,10 +471,10 @@ public:
     static void EncodeGetSockNameResponse(Esp32Messaging::GetSockNameResponse *, uint8_t *);
     static int EncodedGetSockNameResponseBufferSize(Esp32Messaging::GetSockNameResponse *);
     static Esp32Messaging::GetSockNameResponse *ExtractGetSockNameResponse(uint8_t *);
-
     static void EncodeBTServicesDescription(Esp32Messaging::BTServicesDescription *, uint8_t *);
-    static int BTServicesDescriptionBufferSize(Esp32Messaging::BTServicesDescription *);
-    static Esp32Messaging::BTServicesDescription *ExtractBTServicesDescription(uint8_t *buffer);
+    static int EncodedBTServicesDescriptionBufferSize(Esp32Messaging::BTServicesDescription *);
+    static Esp32Messaging::BTServicesDescription *ExtractBTServicesDescription(uint8_t *);
+
 };
 
 #endif /* _ENCODERS_HPP */

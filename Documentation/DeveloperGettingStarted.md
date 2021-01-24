@@ -71,6 +71,27 @@ Minimum free heap size: 295916 bytes
 
 To exit the `monitor` use `<ctrl-]>`
 
+## Building New STM<-->ESP Comms
+
+If you need to add a message for comms between the STM and the ESP, this is the general roadmap.
+
+0. Do *not* modify the `Encoders` files.
+1. Modify the `./Source/Metadata/Messages.json` and `./Source/Metadata/SharedEnums.json` to represent the data you'll pass and the messages used to pass them.
+2. Add a couple environment variables to define where your source files are:
+```
+export EspcpSourceDirectory=/Users/christophertacke/repos/wilderness/Meadow/Meadow.OS/nuttx/configs/stm32f777zit6-meadow/src/espcp
+export MeadowCoreSourceDirectory=/Users/christophertacke/repos/wilderness/Meadow/Meadow.Core/source/Meadow.Core/Devices/Esp32Coprocessor
+```
+3. Build the `FileGenerator`
+> NOTE: This requires the .NET 5.0 SDK be installed
+```
+$ cd ./Meadow-ESP32/Source/FileGeneratorFileGenerator/
+$ dotnet build
+```
+4. Run the File Generator
+```
+$ dotnet bin/Debug/netcoreapp5.0/FileGenerator.dll
+```
 
 
 
