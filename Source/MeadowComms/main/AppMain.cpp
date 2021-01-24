@@ -124,7 +124,7 @@ void SendTestMessage(MessageDispatcher *messageDispatcher)
     message.Interface = Esp32Interfaces::BlueTooth;
     message.Function = BluetoothFunction::Start;
     
-    message.PayloadLength = Encoders::BTServicesDescriptionBufferSize(&desc);
+    message.PayloadLength = Encoders::EncodedBTServicesDescriptionBufferSize(&desc);
     message.Payload = (uint8_t *) pvPortMalloc(message.PayloadLength);
     Encoders::EncodeBTServicesDescription(&desc, message.Payload);
 
