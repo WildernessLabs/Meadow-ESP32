@@ -59,6 +59,16 @@ const char *SystemRequestHandler::_configurationName = "Meadow";
  */
 const char *SystemRequestHandler::MAXIMUM_MESSAGE_QUEUE_LENGTH_NAME = "MaxQueueLen";
 
+/**
+ *  @brief Name of the device on the network.
+ */
+char *SystemRequestHandler::_deviceName = (char *) "MeadowF7";
+
+/**
+ *  @brief Name of the storage in NVS holding the device name on the network.
+ */
+const char *SystemRequestHandler::DEVICE_NAME_NAME = "DeviceName";
+
 /*
  * ----------------------------------------------------------------------------
  *
@@ -140,6 +150,36 @@ StatusCodes::StatusCodes SystemRequestHandler::SetMaximumMessageQueueLength(uint
         if (SetConfigurationValue(MAXIMUM_MESSAGE_QUEUE_LENGTH_NAME, value) == NvsManager::ErrorCodes::Ok)
         {
             _maximumMessageQueueLength = value;
+        }
+    }
+    return(result);
+}
+
+/**
+ *  @brief Get the device name.
+ */
+char *SystemRequestHandler::GetDeviceName()
+{
+    return(_deviceName);
+}
+
+/**
+ *  @brief Set the device name.
+ *
+ *  @param value
+ *      New name for the device.
+ * 
+ *  @returns
+ *      StatusCodes::Completed on success, StatusCodes::Failure if there is a problem.
+ */
+StatusCodes::StatusCodes SystemRequestHandler::SetDeviceName(char *value)
+{
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
+    if (strcmp(value, _deviceName) != 0)
+    {
+        if (SystemRequestHandler::SetConfigurationValue(DEVICE_NAME_NAME, value) == NvsManager::ErrorCodes::Ok)
+        {
+            _deviceName = strdup(value);
         }
     }
     return(result);
@@ -434,7 +474,7 @@ void SystemRequestHandler::SetConfiguration(Message *request)
             }
             break;
         case ConfigurationItems::DeviceName:
-            result = WiFiRequestHandler::SetDeviceName((char *) value->Value);
+            result = SetDeviceName((char *) value->Value);
             break;
         case ConfigurationItems::DnsServer:
             result = WiFiRequestHandler::SetDnsServer((uint32_t) (*value->Value));

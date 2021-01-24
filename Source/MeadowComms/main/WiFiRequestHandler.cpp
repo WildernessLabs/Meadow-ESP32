@@ -89,16 +89,6 @@ esp_netif_t *WiFiRequestHandler::_softApNetIfHandle;
 const char *WiFiRequestHandler::ANTENNA_TYPE_NAME = "Antenna";
 
 /**
- *  @brief Name of the device on the network.
- */
-char *WiFiRequestHandler::_deviceName = (char *) "MeadowF7";
-
-/**
- *  @brief Name of the storage in NVS holding the device name on the network.
- */
-const char *WiFiRequestHandler::DEVICE_NAME_NAME = "DeviceName";
-
-/**
  *  @brief Should the system automatically reconnect to an access point should there
  *  be a problem and the current connection is dropped.
  */
@@ -256,7 +246,6 @@ WiFiRequestHandler::WiFiRequestHandler()
     //
     //  Get configuration from NVS.
     //
-    _deviceName = SystemRequestHandler::GetConfigurationValue(DEVICE_NAME_NAME, _deviceName);
     _maximumRetryCount = SystemRequestHandler::GetConfigurationValue(MAXIMUM_RETRY_COUNT_NAME, _maximumRetryCount);
     _automaticReconnect = SystemRequestHandler::GetConfigurationValue(AUTOMATIC_RECONNECT_NAME, _automaticReconnect);
     _automaticallyStartNetwork = SystemRequestHandler::GetConfigurationValue(AUTOMATICALLY_START_NETWORK_NAME, _automaticallyStartNetwork);
@@ -607,36 +596,6 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetPassword(char *value)
 }
 
 /**
- *  @brief Get the device name.
- */
-char *WiFiRequestHandler::GetDeviceName()
-{
-    return(_deviceName);
-}
-
-/**
- *  @brief Set the device name.
- *
- *  @param value
- *      New name for the device.
- * 
- *  @returns
- *      StatusCodes::Completed on success, StatusCodes::Failure if there is a problem.
- */
-StatusCodes::StatusCodes WiFiRequestHandler::SetDeviceName(char *value)
-{
-    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    if (strcmp(value, _password) != 0)
-    {
-        if (SystemRequestHandler::SetConfigurationValue(DEVICE_NAME_NAME, value) == NvsManager::ErrorCodes::Ok)
-        {
-            _deviceName = strdup(value);
-        }
-    }
-    return(result);
-}
-
-/**
  *  @brief Get the static IP address value.
  */
 uint32_t WiFiRequestHandler::GetIpAddress()
@@ -946,7 +905,7 @@ void WiFiRequestHandler::EventHandlerHelper(esp_event_base_t eventBase, int32_t 
                 break;
             case WIFI_EVENT_STA_START:
                 ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: Station started");
-                tcpip_adapter_set_hostname(TCPIP_ADAPTER_IF_STA, GetDeviceName());
+                tcpip_adapter_set_hostname(TCPIP_ADAPTER_IF_STA, SystemRequestHandler::GetDeviceName());
                 xEventGroupSetBits(_xWiFiEventGroup, WIFI_STATION_STARTED_BIT);
                 break;
             case WIFI_EVENT_STA_STOP:
