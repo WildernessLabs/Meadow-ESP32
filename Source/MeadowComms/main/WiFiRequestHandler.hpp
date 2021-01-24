@@ -245,16 +245,6 @@ private:
     static esp_netif_t *_softApNetIfHandle;
 
     /**
-     *  @brief Name of the device on the network.
-     */
-    static char *_deviceName;
-
-    /**
-     *  @brief Name of the storage in NVS holding the name of the device.
-     */
-    static const char *DEVICE_NAME_NAME;
-
-    /**
      *  @brief Current antenna in use.  Default to the on board antenna at startup.
      */
     static AntennaTypes::AntennaTypes _currentAntenna;
@@ -676,12 +666,6 @@ public:
     static char *GetTimezone();
     static StatusCodes::StatusCodes SetTimezone(char *);
 
-    /**
-     *  @brief Get / Set the name of the device on the network.
-     */
-    static char *GetDeviceName();
-    static StatusCodes::StatusCodes SetDeviceName(char *);
-    
     /**
      *  @brief Get / Set the name of the default access point to be used when
      *  the board starts.
