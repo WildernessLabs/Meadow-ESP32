@@ -43,6 +43,16 @@ private:
     static uint32_t _maximumMessageQueueLength;
 
     /**
+     *  @brief Name of the device on the network.
+     */
+    static char *_deviceName;
+
+    /**
+     *  @brief Name of the storage in NVS holding the name of the device.
+     */
+    static const char *DEVICE_NAME_NAME;
+
+    /**
      *  @brief Name of the NVS storage holding the _maximumMessagequeueLength value.
      */
     static const char *MAXIMUM_MESSAGE_QUEUE_LENGTH_NAME;
@@ -149,6 +159,13 @@ public:
      *  @brief Set a boolean configuration value.
      */
     static NvsManager::ErrorCodes SetConfigurationValue(const char *, const bool);
+
+    /**
+     *  @brief Get / Set the name of the device on the network.
+     */
+    static char *GetDeviceName();
+    static StatusCodes::StatusCodes SetDeviceName(char *);
+    
 };
 
 #endif /* _SYSTEM_REQUEST_HANDLER_HPP_ */

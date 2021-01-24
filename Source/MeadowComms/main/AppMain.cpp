@@ -48,27 +48,27 @@ extern "C" void app_main()
     esp_log_level_set(APP_MAIN_COMPONENT_NAME, ESP_LOG_INFO);
 #endif
 
-#ifdef WIFI_DEBUG
+#if defined(WIFI_DEBUG)
     #warning "WIFI debugging is enabled."
     esp_log_level_set(WiFiRequestHandler::COMPONENT_NAME, ESP_LOG_INFO);
 #endif
 
-#ifdef SPI_DEBUG
+#if defined(SPI_DEBUG)
     #warning "SPI debugging is enabled."
     esp_log_level_set(SpiTransportProvider::COMPONENT_NAME, ESP_LOG_INFO);
 #endif
 
-#ifdef THREAD_DEBUG
+#if defined(THREAD_DEBUG)
     #warning "ThreadPool debugging is enabled."
     esp_log_level_set(Thread::COMPONENT_NAME, ESP_LOG_INFO);
 #endif
 
-#ifdef BT_DEBUG
+#if defined(BT_DEBUG)
     #warning "Bluetooth debugging is enabled."
     esp_log_level_set(Thread::COMPONENT_NAME, ESP_LOG_INFO);
 #endif
 
-#ifdef SYSTEM_DEBUG
+#if defined(SYSTEM_DEBUG)
     #warning "System debugging is enabled."
     esp_log_level_set(SystemRequestHandler::COMPONENT_NAME, ESP_LOG_INFO);
 #endif
