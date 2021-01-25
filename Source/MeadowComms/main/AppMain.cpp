@@ -99,7 +99,7 @@ extern "C" void app_main()
     SpiTransportProvider *spi = new SpiTransportProvider();
     MessageDispatcher * __attribute__((unused)) messageDispatcher = new MessageDispatcher(spi);
 
-    SendTestMessage(messageDispatcher);
+//    SendTestMessage(messageDispatcher);
 
     //
     //  Main program loop.
