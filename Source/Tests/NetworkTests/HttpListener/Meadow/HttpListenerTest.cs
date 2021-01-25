@@ -6,6 +6,7 @@ using System.Text;
 using Meadow;
 using Meadow.Devices;
 using Meadow.Gateway.WiFi;
+using System.Threading;
 
 namespace MeadowApp
 {
@@ -17,12 +18,28 @@ namespace MeadowApp
         public HttpListenerTest()
         {
             Console.WriteLine("Connecting to network.");
+            MeadowOS.WatchdogEnable(25000);
+            StartWatchdog(20000);
             Device.InitWiFiAdapter().Wait();
             if (Device.WiFiAdapter.Connect(Secrets.WIFI_NAME, Secrets.WIFI_PASSWORD).ConnectionStatus != ConnectionStatus.Success)
             {
                 throw new Exception("Cannot connect to network, application halted.");
             }
             Console.WriteLine("WiFi connection completed.");
+        }
+
+        void StartWatchdog(int interval)
+        {
+            // just for good measure, let's reset the watchdog to begin with
+            MeadowOS.WatchdogReset();
+            // start a thread that pets it
+            Thread t = new Thread(() => {
+                while (true) {
+                    Thread.Sleep(interval);
+                    MeadowOS.WatchdogReset();
+                }
+            });
+            t.Start();
         }
 
         public void RunTest()
