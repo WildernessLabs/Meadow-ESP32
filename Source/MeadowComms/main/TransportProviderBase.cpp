@@ -174,6 +174,10 @@ bool TransportProviderBase::QueueMessageForStm32(Message *message)
         }
         else
         {
+            #if defined(PERFORMANCE_LOGGING)
+            PERFORMANCE_LOGGING_EXIT();
+            Logging::AddPerformanceCounterEntry(Logging::MessageSummary(message), message->PerformanceLoggingStart, performance_logging_end);
+            #endif
             ToggleEsp32MessageWaitingPin();
         }
         xSemaphoreGive(_outboundMessageQueueMutex);
@@ -187,6 +191,5 @@ bool TransportProviderBase::QueueMessageForStm32(Message *message)
 void TransportProviderBase::ToggleEsp32MessageWaitingPin()
 {
     gpio_set_level(Gpio::ESP32_MESSAGE_WAITING_PIN, 1);
-    vTaskDelay(50 / portTICK_PERIOD_MS);
     gpio_set_level(Gpio::ESP32_MESSAGE_WAITING_PIN, 0);
 }

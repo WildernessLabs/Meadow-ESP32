@@ -145,6 +145,9 @@ bool MessageDispatcher::QueueMessageForEsp32(Message *request)
             break;
     }
     bool result = false;
+    #if defined(PERFORMANCE_LOGGING)
+    request->PerformanceLoggingStart = esp_timer_get_time();
+    #endif
     if (provider)
     {
         result = provider->QueueEsp32Message(request);

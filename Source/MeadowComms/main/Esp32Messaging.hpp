@@ -51,6 +51,11 @@ struct Message
      */
     uint32_t PayloadLength;
 
+#if defined(PERFORMANCE_LOGGING)
+    int64_t PerformanceLoggingStart;
+#endif
+
+
     /**
      *  Size of an encoded message header (in bytes).
      */
