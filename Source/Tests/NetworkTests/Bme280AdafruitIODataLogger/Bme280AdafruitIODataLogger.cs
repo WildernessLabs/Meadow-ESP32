@@ -21,8 +21,8 @@ namespace MeadowApp
         public Bme280AdafruitIODataLogger()
         {
             Log("Starting watchdog.");
-            MeadowOS.WatchdogEnable(20000);
-            StartWatchdogThread(15000);
+            //MeadowOS.WatchdogEnable(20000);
+            //StartWatchdogThread(15000);
 
             Log("Connecting to network.");
             Device.InitWiFiAdapter().Wait();
@@ -61,6 +61,7 @@ namespace MeadowApp
             byte[] bytes = new byte[2048];
             Bme280 bme280;
 
+            //MeadowOS.WatchdogReset();
             var i2c = Device.CreateI2cBus();
             bme280 = new Bme280(i2c, Bme280.I2cAddress.Adddress0x77);
             bme280.StartUpdating();
@@ -107,6 +108,7 @@ namespace MeadowApp
             //
             while (true)
             {
+                //MeadowOS.WatchdogReset();
                 dataSetCount++;
                 Log($"Logging dataset {dataSetCount}");
                 Log("Sending temperature data.");
@@ -151,6 +153,8 @@ namespace MeadowApp
                 bytesReceived = sender.Receive(bytes);
                 data.Clear();
                 pressureData.Clear();
+
+                Thread.Sleep(10000);
 
                 #endregion
 

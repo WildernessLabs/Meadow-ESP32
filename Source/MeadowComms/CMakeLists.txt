@@ -22,6 +22,10 @@ if (THREAD_DEBUG EQUAL 1)
     add_compile_definitions(THREAD_DEBUG)
 endif()
 
+if (PERFORMANCE_LOGGING EQUAL 1)
+    add_compile_definitions(PERFORMANCE_LOGGING)
+endif()
+
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 
 project("MeadowComms")
