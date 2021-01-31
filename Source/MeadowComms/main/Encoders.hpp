@@ -325,7 +325,14 @@ namespace Esp32Messaging
     struct BTServicesDescription
     {
         char * DeviceName;
-        char * PrimaryService;
+    };
+
+    struct BTCharacteristicDesc
+    {
+        char * ServiceDescription;
+        uint8_t ServiceUUID[16];
+        uint8_t CharacteristicUUID[16];
+        int32_t CharacteristicProperties;
     };
 
 }
@@ -474,6 +481,9 @@ public:
     static void EncodeBTServicesDescription(Esp32Messaging::BTServicesDescription *, uint8_t *);
     static int EncodedBTServicesDescriptionBufferSize(Esp32Messaging::BTServicesDescription *);
     static Esp32Messaging::BTServicesDescription *ExtractBTServicesDescription(uint8_t *);
+    static void EncodeBTCharacteristicDesc(Esp32Messaging::BTCharacteristicDesc *, uint8_t *);
+    static int EncodedBTCharacteristicDescBufferSize(Esp32Messaging::BTCharacteristicDesc *);
+    static Esp32Messaging::BTCharacteristicDesc *ExtractBTCharacteristicDesc(uint8_t *);
 
 };
 

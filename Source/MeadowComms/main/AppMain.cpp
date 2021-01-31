@@ -32,6 +32,8 @@ static heap_trace_record_t trace_records[NUM_RECORDS];
 #endif
 
 #define APP_MAIN_COMPONENT_NAME "AppMain"
+#define BT_FULL_LOGGING
+#define BT_DEBUG
 
 void SendTestMessage(MessageDispatcher *dispatcher);
 
@@ -43,7 +45,7 @@ extern "C" void app_main()
 {
     esp_log_level_set("*", ESP_LOG_NONE);
 
-#if defined(DEBUG) || defined(WIFI_DEBUG) || defined(SPI_DEBUG) || defined(THREAD_DEBUG) || defined(SYSTEM_DEBUG)
+#if defined(DEBUG) || defined(WIFI_DEBUG) || defined(SPI_DEBUG) || defined(THREAD_DEBUG) || defined(SYSTEM_DEBUG) || defined(BT_DEBUG)
     #warning "Debug is enabled."
     esp_log_level_set(APP_MAIN_COMPONENT_NAME, ESP_LOG_INFO);
 #endif
@@ -65,7 +67,7 @@ extern "C" void app_main()
 
 #if defined(BT_DEBUG)
     #warning "Bluetooth debugging is enabled."
-    esp_log_level_set(Thread::COMPONENT_NAME, ESP_LOG_INFO);
+    esp_log_level_set(BluetoothRequestHandler::COMPONENT_NAME, ESP_LOG_INFO);
 #endif
 
 #if defined(SYSTEM_DEBUG)
@@ -93,15 +95,20 @@ extern "C" void app_main()
 
     const esp_app_desc_t *applicationDescription = esp_ota_get_app_description();
     printf("********** Starting Application (%s version %s) **********\n", applicationDescription->project_name, applicationDescription->version);
+ESP_LOGI(__func__, "CP-1");
     ESP_LOGI(APP_MAIN_COMPONENT_NAME, "\n\n     ********** Starting Application (%s version %s) **********\n", applicationDescription->project_name, applicationDescription->version);
 
     /*
      *  Set up the messaging system to use SPI hardware communications.
      */
+ESP_LOGI(APP_MAIN_COMPONENT_NAME, "CP0");
     SpiTransportProvider *spi = new SpiTransportProvider();
+ESP_LOGI(APP_MAIN_COMPONENT_NAME, "CP1");
     MessageDispatcher * __attribute__((unused)) messageDispatcher = new MessageDispatcher(spi);
 
-//    SendTestMessage(messageDispatcher);
+ESP_LOGI(APP_MAIN_COMPONENT_NAME, "CP2");
+    SendTestMessage(messageDispatcher);
+ESP_LOGI(APP_MAIN_COMPONENT_NAME, "CP3");
 
     //
     //  Main program loop.
@@ -115,11 +122,11 @@ extern "C" void app_main()
 
 void SendTestMessage(MessageDispatcher *messageDispatcher)
 {
-    ESP_LOGI(__func__, "Exit");
+    ESP_LOGI(APP_MAIN_COMPONENT_NAME, "Message A");
 
+    // fire up the BT stack
     Esp32Messaging::BTServicesDescription desc;
     desc.DeviceName = (char*)"Meadow ABCD";
-    desc.PrimaryService = (char*)"Meadow Svc";
 
     Message message = {};
     message.MessageType = MessageTypes::Header;
@@ -130,16 +137,53 @@ void SendTestMessage(MessageDispatcher *messageDispatcher)
     message.Payload = (uint8_t *) pvPortMalloc(message.PayloadLength);
     Encoders::EncodeBTServicesDescription(&desc, message.Payload);
 
-    Esp32Messaging::IoctlRequest request;
+    messageDispatcher->QueueMessageForEsp32(&message);
+
+/*
+    static const uint8_t generic_gap_uuid[16] = {
+    // LSB <--------------------------------------------------------------------------------> MSB 
+    //this is "generic GAP service" as defined by the BLE SIG
+    0xfb, 0x34, 0x9b, 0x5f, 0x80, 0x00, 0x00, 0x80, 0x00, 0x10, 0x00, 0x00, 0x00, 0x18, 0x00, 0x00
+    };
+    static const uint8_t appearance_characteristic_uuid[16] = {
+    //00002a01-0000-1000-8000-00805f9b34fb
+    //this is "generic GAP service" as defined by the BLE SIG
+    0xfb, 0x34, 0x9b, 0x5f, 0x80, 0x00, 0x00, 0x80, 0x00, 0x10, 0x00, 0x00, 0x01, 0x2a, 0x00, 0x00
+    };
+
+
+
+    ESP_LOGI(__func__, "Message B");
+
+    // we'll add a characteristic.  They must be part of a Service, so that will get created underneath as well
+    Esp32Messaging::BTCharacteristicDesc cdesc;
+    memcpy(cdesc.ServiceUUID, generic_gap_uuid, sizeof(generic_gap_uuid));
+    cdesc.ServiceDescription = (char*)"Meadow Generic Service";
+    memcpy(cdesc.CharacteristicUUID, appearance_characteristic_uuid, sizeof(appearance_characteristic_uuid));
+    cdesc.CharacteristicProperties = ESP_GATT_CHAR_PROP_BIT_WRITE|ESP_GATT_CHAR_PROP_BIT_READ;
+    
+    Message message2 = {};
+    message2.MessageType = MessageTypes::Header;
+    message2.Interface = Esp32Interfaces::BlueTooth;
+    message2.Function = BluetoothFunction::AddCharacteristic;
+    
+    message2.PayloadLength = Encoders::EncodedBTCharacteristicDescBufferSize(&cdesc);
+    message2.Payload = (uint8_t *) pvPortMalloc(message2.PayloadLength);
+    Encoders::EncodeBTCharacteristicDesc(&cdesc, message2.Payload);
+
+    messageDispatcher->QueueMessageForEsp32(&message2);
+*/
+    // now send a message that describes an attribute to add
+
 
 // #include "WiFiRequestHandler.hpp"
 
+//    Esp32Messaging::IoctlRequest request;
 //     request.Command = SIOCGIFFLAGS;
 //     message.PayloadLength = Encoders::EncodedIoctlRequestBufferSize(&request);
 //     message.Payload = static_cast<uint8_t *>(pvPortMalloc(message.PayloadLength));
 //     Encoders::EncodeIoctlRequest(&request, message.Payload);
 
-     messageDispatcher->QueueMessageForEsp32(&message);
 
-    ESP_LOGI(__func__, "Exit");
+    ESP_LOGI(APP_MAIN_COMPONENT_NAME, "Exit");
 }

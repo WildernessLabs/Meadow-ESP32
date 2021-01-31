@@ -352,8 +352,17 @@
             "Name": "BTServicesDescription",
             "MessageElements":
             [
-                { "Name": "DeviceName", "DataType": "string" },
-                { "Name": "PrimaryService", "DataType": "string" }
+                { "Name": "DeviceName", "DataType": "string" }
+            ]
+        },
+        {
+            "Name": "BTCharacteristicDesc",
+            "MessageElements":
+            [
+                { "Name": "ServiceDescription", "DataType": "string" },
+                { "Name": "ServiceUUID", "DataType": "fixedbytearray", "Length": "16"},
+                { "Name": "CharacteristicUUID", "DataType": "fixedbytearray", "Length": "16"},
+                { "Name": "CharacteristicProperties", "DataType": "int"}
             ]
         }
     ]
