@@ -87,6 +87,10 @@ private:
 
     void StartStack(Message *msg);
     void TeardownStack(Message *msg);
+
+    // this will add a characteristic ,and if required its containing service 
+    void AddCharacteristic(Message *msg);
+
 public:
     /*
      *  Construct a new Bluetooth request handler object with reference to a
@@ -110,6 +114,7 @@ public:
     static void EventHandler(void *, esp_event_base_t, int32_t, void *);
 
     static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param);
+    static void gatts_profile_event_handler(esp_gatts_cb_event_t, esp_gatt_if_t, esp_ble_gatts_cb_param_t *);
 
     static BluetoothConfig Config;
 

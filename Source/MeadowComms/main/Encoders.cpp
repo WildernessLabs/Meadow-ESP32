@@ -3126,8 +3126,6 @@ Esp32Messaging::GetSockNameResponse *Encoders::ExtractGetSockNameResponse(uint8_
 void Encoders::EncodeBTServicesDescription(Esp32Messaging::BTServicesDescription *bTServicesDescription, uint8_t *buffer)
 {
     EncodeString(bTServicesDescription->DeviceName, buffer);
-    buffer += StringLength(bTServicesDescription->DeviceName) + 1;
-    EncodeString(bTServicesDescription->PrimaryService, buffer);
 }
 
 /**
@@ -3144,8 +3142,7 @@ int Encoders::EncodedBTServicesDescriptionBufferSize(Esp32Messaging::BTServicesD
 {
     int result = 0;
     result += Encoders::StringLength(bTServicesDescription->DeviceName);
-    result += Encoders::StringLength(bTServicesDescription->PrimaryService);
-    return(result + 2);
+    return(result + 1);
 }
 
 /**
@@ -3166,9 +3163,74 @@ Esp32Messaging::BTServicesDescription *Encoders::ExtractBTServicesDescription(ui
     Esp32Messaging::BTServicesDescription *bTServicesDescription = (Esp32Messaging::BTServicesDescription *) pvPortMalloc(sizeof(Esp32Messaging::BTServicesDescription));
 
     bTServicesDescription->DeviceName = ExtractString(buffer);
-    buffer += Encoders::StringLength(bTServicesDescription->DeviceName) + 1;
-    bTServicesDescription->PrimaryService = ExtractString(buffer);
     return(bTServicesDescription);
+}
+
+/**
+ *  Convert the BTCharacteristicDesc object into a byte stream that can be sent to the STM32.
+ *  
+ *  The amount of memory required can be obtained by calling the EncodedBTCharacteristicDescBufferSize method.
+ *  
+ *  @param bTCharacteristicDesc
+ *      BTCharacteristicDesc object to be encoded.
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory large enough to hold the encoded BTCharacteristicDesc object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodeBTCharacteristicDesc
+void Encoders::EncodeBTCharacteristicDesc(Esp32Messaging::BTCharacteristicDesc *bTCharacteristicDesc, uint8_t *buffer)
+{
+    EncodeString(bTCharacteristicDesc->ServiceDescription, buffer);
+    buffer += StringLength(bTCharacteristicDesc->ServiceDescription) + 1;
+    memcpy((void *) buffer, (void *) bTCharacteristicDesc->ServiceUUID, 16);
+    buffer += 16;
+    memcpy((void *) buffer, (void *) bTCharacteristicDesc->CharacteristicUUID, 16);
+    buffer += 16;
+    EncodeInt32(bTCharacteristicDesc->CharacteristicProperties, buffer);
+}
+
+/**
+ *  Calculate the amount of memory required to hold the given instance of the BTCharacteristicDesc object.
+ *  
+ *  @param bTCharacteristicDesc
+ *      BTCharacteristicDesc object to be encoded.
+ *  
+ *  @returns
+ *      Number of bytes required to hold the encoded BTCharacteristicDesc object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodedBTCharacteristicDescBufferSize
+int Encoders::EncodedBTCharacteristicDescBufferSize(Esp32Messaging::BTCharacteristicDesc *bTCharacteristicDesc)
+{
+    int result = 0;
+    result += Encoders::StringLength(bTCharacteristicDesc->ServiceDescription);
+    return(result + 37);
+}
+
+/**
+ *  Extract the BTCharacteristicDesc object that is encoded in the given buffer.
+ *  
+ *  Note that the returned pointer points to a block of memory on the heap and
+ *  this should eventually be released calling vPortFree(...).
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded BTCharacteristicDesc object.
+ *  
+ *  @returns
+ *      Pointer to a BTCharacteristicDesc object.
+ */
+// cppcheck-suppress unusedFunction symbolName=ExtractBTCharacteristicDesc
+Esp32Messaging::BTCharacteristicDesc *Encoders::ExtractBTCharacteristicDesc(uint8_t *buffer)
+{
+    Esp32Messaging::BTCharacteristicDesc *bTCharacteristicDesc = (Esp32Messaging::BTCharacteristicDesc *) pvPortMalloc(sizeof(Esp32Messaging::BTCharacteristicDesc));
+
+    bTCharacteristicDesc->ServiceDescription = ExtractString(buffer);
+    buffer += Encoders::StringLength(bTCharacteristicDesc->ServiceDescription) + 1;
+    memcpy((void *) bTCharacteristicDesc->ServiceUUID, (void *) buffer, 16);
+    buffer += 16;
+    memcpy((void *) bTCharacteristicDesc->CharacteristicUUID, (void *) buffer, 16);
+    buffer += 16;
+    bTCharacteristicDesc->CharacteristicProperties = ExtractInt32(buffer);
+    return(bTCharacteristicDesc);
 }
 
 

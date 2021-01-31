@@ -122,7 +122,8 @@ namespace BluetoothFunction
     enum BluetoothFunction : uint32_t
     {
         Start = 0,
-        Stop = 1
+        Stop = 1,
+        AddCharacteristic = 2
     };
 
 }
