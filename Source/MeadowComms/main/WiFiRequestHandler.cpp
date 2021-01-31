@@ -1630,8 +1630,6 @@ void WiFiRequestHandler::FreeAddrInfo(void  *vpMessage)
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOk;
 
-    vTaskDelay(40 / portTICK_PERIOD_MS);
-
     _messageDispatcher->QueueMessageForStm32(message);
 
     PERFORMANCE_LOGGING_EXIT();

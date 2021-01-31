@@ -106,6 +106,9 @@ bool MessageDispatcher::QueueMessageForEsp32(Message *request)
     ESP_LOGI(COMPONENT_NAME, "QueueMessageForEsp32: Enter");
     RequestHandlerBase *provider = nullptr;
 
+    #if defined(PERFORMANCE_LOGGING)
+    request->PerformanceLoggingStart = esp_timer_get_time();
+    #endif
     switch (static_cast<Esp32Interfaces::Esp32Interfaces>(request->Interface))
     {
         case Esp32Interfaces::WiFi:
@@ -145,9 +148,6 @@ bool MessageDispatcher::QueueMessageForEsp32(Message *request)
             break;
     }
     bool result = false;
-    #if defined(PERFORMANCE_LOGGING)
-    request->PerformanceLoggingStart = esp_timer_get_time();
-    #endif
     if (provider)
     {
         result = provider->QueueEsp32Message(request);
