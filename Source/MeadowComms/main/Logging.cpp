@@ -6,9 +6,16 @@
  */
 
 #include "esp32/rom/gpio.h"
+#include <limits.h>
 
 #include "SharedEnums.hpp"
 #include "Logging.hpp"
+
+#if defined(PERFORMANCE_LOGGING)
+
+#warning "Performance logging is enabled."
+
+#endif
 
 /*
  * ---------------------------------------------------------------------------
@@ -23,6 +30,25 @@
  */
 const char *Logging::COMPONENT_NAME = "Logging";
 
+#if defined(PERFORMANCE_LOGGING)
+
+/**
+ *  @brief Next performance counter entry to use.
+ */
+int Logging::_nextPerformanceCounterEntry = 0;
+
+/**
+ *  @brief Number of performance counter slots in the circular buffer.
+ */
+int Logging::_numberOfPerformanceCounterSlots = MAX_PERFORMANCE_COUNTERS;
+
+/**
+ *  @brief Table to hold the performance counters;
+ */
+Logging::PerformanceCounterEntry *Logging::_performanceCounters[MAX_PERFORMANCE_COUNTERS];
+
+#endif
+
 /*
  * ---------------------------------------------------------------------------
  *
@@ -36,6 +62,14 @@ const char *Logging::COMPONENT_NAME = "Logging";
  */
 Logging::Logging()
 {
+    esp_log_level_set(Logging::COMPONENT_NAME, ESP_LOG_INFO);
+
+#if defined(PERFORMANCE_LOGGING)
+    for (int index = 0; index < _numberOfPerformanceCounterSlots; index++)
+    {
+        _performanceCounters[index] = NULL;
+    }
+#endif
 }
 
 /**
@@ -511,3 +545,81 @@ void Logging::DumpMessage(const char *componentName, const Message *message)
         ESP_LOGI(componentName, "Message pointer is invalid.");
     }
 }
+
+/**
+ *  @brief Generate a single line summary of the message.
+ * 
+ *  @param message
+ *      Message to be summarised.
+ * 
+ *  @return
+ *      Pointer to a string contianing the message ID, interface and function requested.
+ */
+char *Logging::MessageSummary(const Message *message)
+{
+    char buffer[200];
+
+    snprintf(buffer, 200, "ID: 0x%08x Interface: %s Function: %s", message->MessageID, InterfaceName(message->Interface), FunctionName(message->Interface, message->Function));
+    return(strdup(buffer));
+}
+
+#if defined(PERFORMANCE_LOGGING)
+
+/**
+ *  @brief Add an entry to the table of performance counters.
+ * 
+ *  @param method
+ *      Name of the method (or event) being recorded.
+ * 
+ *  @param start
+ *      Time since the chip started in microseconds of the start of the event.
+ * 
+ *  @param end
+ *      Time since the chip started in microseconds of the end of the event.
+ */
+void Logging::AddPerformanceCounterEntry(const char *method, int64_t start, int64_t end)
+{
+    uint64_t duration;
+    if (start < end)        // Check if the counter has wrapped around.
+    {
+        duration = end - start;
+    }
+    else
+    {
+        duration = LONG_LONG_MAX - start + end;
+    }
+    int pd = duration & 0xffffffff;
+    PerformanceCounterEntry *pce = static_cast<PerformanceCounterEntry *>(pvPortMalloc(sizeof(PerformanceCounterEntry)));
+
+    pce->timestamp = esp_log_timestamp();
+    pce->method = method;
+    pce->duration = pd;
+    if (_performanceCounters[_nextPerformanceCounterEntry] != NULL)
+    {
+        vPortFree(_performanceCounters[_nextPerformanceCounterEntry]);
+    }
+    _performanceCounters[_nextPerformanceCounterEntry] = pce;
+    _nextPerformanceCounterEntry++;
+    if (_nextPerformanceCounterEntry >= _numberOfPerformanceCounterSlots)
+    {
+        _nextPerformanceCounterEntry = 0;
+    }
+}
+
+/**
+ *  @brief Dump the table of performance counters.
+ */
+void Logging::DumpPerformanceCounters()
+{
+    printf("Timestamp,Method,Duration\n");
+    for (int index = 0; index < _numberOfPerformanceCounterSlots; index++)
+    {
+        if (_performanceCounters[index] != NULL)
+        {
+            PerformanceCounterEntry *pce = _performanceCounters[index];
+            printf("%u,%s,%u\n", pce->timestamp, pce->method, pce->duration);
+        }
+    }
+}
+
+#endif

@@ -73,6 +73,7 @@ extern "C" void app_main()
     esp_log_level_set(SystemRequestHandler::COMPONENT_NAME, ESP_LOG_INFO);
 #endif
 
+    esp_log_level_set(Logging::COMPONENT_NAME, ESP_LOG_INFO);
     Logging::Setup();
     NvsManager::Setup();
 
@@ -91,7 +92,8 @@ extern "C" void app_main()
 #endif
 
     const esp_app_desc_t *applicationDescription = esp_ota_get_app_description();
-    ESP_LOGI(APP_MAIN_COMPONENT_NAME, "\n\n    ********** Starting Application (%s version %s) **********\n", applicationDescription->project_name, applicationDescription->version);
+    printf("********** Starting Application (%s version %s) **********\n", applicationDescription->project_name, applicationDescription->version);
+    ESP_LOGI(APP_MAIN_COMPONENT_NAME, "\n\n     ********** Starting Application (%s version %s) **********\n", applicationDescription->project_name, applicationDescription->version);
 
     /*
      *  Set up the messaging system to use SPI hardware communications.
