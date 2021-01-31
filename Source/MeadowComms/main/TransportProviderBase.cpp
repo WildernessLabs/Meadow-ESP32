@@ -174,10 +174,6 @@ bool TransportProviderBase::QueueMessageForStm32(Message *message)
         }
         else
         {
-            #if defined(PERFORMANCE_LOGGING)
-            PERFORMANCE_LOGGING_EXIT();
-            Logging::AddPerformanceCounterEntry(Logging::MessageSummary(message), message->PerformanceLoggingStart, performance_logging_end);
-            #endif
             ToggleEsp32MessageWaitingPin();
         }
         xSemaphoreGive(_outboundMessageQueueMutex);

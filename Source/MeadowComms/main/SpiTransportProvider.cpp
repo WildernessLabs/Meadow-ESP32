@@ -362,12 +362,10 @@ spi_slave_transaction_t *SpiTransportProvider::CreateAcknowledgementTransaction(
 spi_slave_transaction_t *SpiTransportProvider::CreateSpiHeaderTransaction()
 {
     ESP_LOGI(COMPONENT_NAME, "CreateSpiHeaderTransaction: Enter");
-    vTaskDelay(500 / portTICK_PERIOD_MS);
 
     spi_slave_transaction_t *transaction = static_cast<spi_slave_transaction_t *>(pvPortMalloc(sizeof(spi_slave_transaction_t)));
 
     memset(transaction, 0, sizeof(spi_slave_transaction_t));
-    vTaskDelay(500 / portTICK_PERIOD_MS);
 
     ClearTransmitAndReceiveBuffers(_headerReceiveBuffer, _headerTransmitBuffer, _headerFrameSize);
     transaction->rx_buffer = _headerReceiveBuffer;
@@ -971,6 +969,10 @@ spi_slave_transaction_t *SpiTransportProvider::OutboundMessageBodyAcknowledgemen
     {
         if (incomingMessage->MessageType == MessageTypes::Ack)
         {
+            #if defined(PERFORMANCE_LOGGING)
+            PERFORMANCE_LOGGING_EXIT();
+            Logging::AddPerformanceCounterEntry(Logging::MessageSummary(_outboundMessage), _outboundMessage->PerformanceLoggingStart, performance_logging_end);
+            #endif
             Message::DeleteMessage(_outboundMessage);
             dumpHeapData = true;
         }
@@ -1221,7 +1223,6 @@ void SpiTransportProvider::Task(void *pvParameters)
     while (true)
     {
         transaction = sender->ProcessMessages(transaction);
-        vTaskDelay(50 / portTICK_PERIOD_MS);
     }
     //
     //  We should only get here if the code in the while loop generates a fault.
