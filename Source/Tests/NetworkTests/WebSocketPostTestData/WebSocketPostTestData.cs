@@ -51,20 +51,22 @@ namespace MeadowApp
                 int dataPoint = 0;
 
                 string feedPost = $"POST /api/v2/{Secrets.APIO_USER_NAME}/feeds/{Secrets.APIO_FEED_NAME}/data HTTP/1.1\r\n";
-                while (true)
+
+                Socket sender = null;
+                try
                 {
-                    try
+                    sender = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                    sender.SendTimeout = 3000;
+                    sender.ReceiveTimeout = 3000;
+
+                    Log("Connecting to endpoint.");
+                    sender.Connect(remoteEP);
+
+                    while (true)
                     {
                         dataPoint++;
                         Log($"Sending data point {dataPoint}");
                         Log("Creating socket.");
-                        Socket sender = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-                        sender.SendTimeout = 3000;
-                        sender.ReceiveTimeout = 3000;
-
-                        Log("Connecting to endpoint.");
-                        sender.Connect(remoteEP);
-
                         string temperature = testData.GetNext().ToString("F2");
                         Log($"Sending data to Adafruit IO.");
                         int bytesSent;
@@ -81,25 +83,31 @@ namespace MeadowApp
                         bytesSent += sender.Send(Encoding.ASCII.GetBytes(temperatureData));
                         bytesReceived = sender.Receive(bytes);
 
-                        Log($"Memory allocated: {GC.GetTotalMemory(false)}");
-                        Log("Shutting down the socket.");
-                        sender.Shutdown(SocketShutdown.Both);
+                        //string result = Encoding.UTF8.GetString(bytes);
+                        //Console.WriteLine(result);
 
-                        Log("Closing the socket.");
-                        sender.Close();
+                        Log($"Memory allocated: {GC.GetTotalMemory(false)}");
                     }
-                    catch (ArgumentNullException ane)
-                    {
-                        Log($"ArgumentNullException : {ane.ToString()}");
-                    }
-                    catch (SocketException se)
-                    {
-                        Log($"SocketException : {se.ToString()}");
-                    }
-                    catch (Exception e)
-                    {
-                        Log($"Unexpected exception : {e.ToString()}");
-                    }
+                }
+                catch (ArgumentNullException ane)
+                {
+                    Log($"ArgumentNullException : {ane.ToString()}");
+                }
+                catch (SocketException se)
+                {
+                    Log($"SocketException : {se.ToString()}");
+                }
+                catch (Exception e)
+                {
+                    Log($"Unexpected exception : {e.ToString()}");
+                }
+                finally
+                {
+                    Log("Shutting down the socket.");
+                    sender.Shutdown(SocketShutdown.Both);
+
+                    Log("Closing the socket.");
+                    sender.Close();
                 }
 
             }

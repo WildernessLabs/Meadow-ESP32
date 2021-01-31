@@ -1434,6 +1434,8 @@ void WiFiRequestHandler::GetAvailableNetworks(Message *message)
 void WiFiRequestHandler::GetAddrInfo(void *vpMessage)
 {
     ESP_LOGI(COMPONENT_NAME, "GetAddrInfo: Enter");
+    PERFORMANCE_LOGGING_ENTER();
+
     Message *message = static_cast<Message *>(vpMessage);
     Esp32Messaging::GetAddrInfoRequest *request = Encoders::ExtractGetAddrInfoRequest(message->Payload);
     //
@@ -1492,6 +1494,9 @@ void WiFiRequestHandler::GetAddrInfo(void *vpMessage)
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
+
+    PERFORMANCE_LOGGING_EXIT();
+    PERFORMANCE_LOGGING_ADD_ENTRY();
     ESP_LOGI(COMPONENT_NAME, "GetAddrInfo: Exit");
 }
 
@@ -1504,6 +1509,8 @@ void WiFiRequestHandler::GetAddrInfo(void *vpMessage)
 void WiFiRequestHandler::Socket(void *vpMessage)
 {
     ESP_LOGI(COMPONENT_NAME, "Socket: Enter");
+    PERFORMANCE_LOGGING_ENTER();
+
     Message *message = static_cast<Message *>(vpMessage);
     Esp32Messaging::SocketRequest *request = Encoders::ExtractSocketRequest(message->Payload);
     ESP_LOGI(COMPONENT_NAME, "Socket: Creating socket on domain %d, type %d and protocol %d", request->Domain, request->Type, request->Protocol);
@@ -1521,6 +1528,9 @@ void WiFiRequestHandler::Socket(void *vpMessage)
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
+
+    PERFORMANCE_LOGGING_EXIT();
+    PERFORMANCE_LOGGING_ADD_ENTRY();
     ESP_LOGI(COMPONENT_NAME, "Socket: Exit");
 }
 
@@ -1533,6 +1543,8 @@ void WiFiRequestHandler::Socket(void *vpMessage)
 void WiFiRequestHandler::Connect(void *vpMessage)
 {
     ESP_LOGI(COMPONENT_NAME, "Connect: Enter");
+    PERFORMANCE_LOGGING_ENTER();
+
     Message *message = static_cast<Message *>(vpMessage);
     Esp32Messaging::ConnectRequest *request = Encoders::ExtractConnectRequest(message->Payload);
     Esp32Messaging::SockAddr *socketAddress = Encoders::ExtractSockAddr(request->Addr);
@@ -1564,6 +1576,7 @@ void WiFiRequestHandler::Connect(void *vpMessage)
     if (response.Result != 0)
     {
         int32_t result = 0;
+        ESP_LOGI(COMPONENT_NAME, "Connect: Error code: %d - %s", errno, strerror(errno));
         if (Mapping::GetStmValue(Mapping::Errno, errno, &result) != 0)
         {
             Mapping::GetStmValue(Mapping::Errno, EFAULT, &result);
@@ -1575,7 +1588,6 @@ void WiFiRequestHandler::Connect(void *vpMessage)
     {
         response.ResponseErrno = 0;
     }
-        ESP_LOGI(COMPONENT_NAME, "Connect: Error code: %d - %s", errno, strerror(errno));
 
     vPortFree(request);
     vPortFree(socketAddress);
@@ -1587,6 +1599,9 @@ void WiFiRequestHandler::Connect(void *vpMessage)
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
+
+    PERFORMANCE_LOGGING_EXIT();
+    PERFORMANCE_LOGGING_ADD_ENTRY();
     ESP_LOGI(COMPONENT_NAME, "Connect: Exit");
 }
 
@@ -1599,6 +1614,8 @@ void WiFiRequestHandler::Connect(void *vpMessage)
 void WiFiRequestHandler::FreeAddrInfo(void  *vpMessage)
 {
     ESP_LOGI(COMPONENT_NAME, "FreeAddrInfo: Enter");
+    PERFORMANCE_LOGGING_ENTER();
+
     Message *message = static_cast<Message *>(vpMessage);
     ESP_LOGI(COMPONENT_NAME, "FreeAddrInfo: Releasing addrinfo storage.");
     Esp32Messaging::FreeAddrInfoRequest *request = Encoders::ExtractFreeAddrInfoRequest(message->Payload);
@@ -1613,9 +1630,10 @@ void WiFiRequestHandler::FreeAddrInfo(void  *vpMessage)
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOk;
 
-    vTaskDelay(40 / portTICK_PERIOD_MS);
-
     _messageDispatcher->QueueMessageForStm32(message);
+
+    PERFORMANCE_LOGGING_EXIT();
+    PERFORMANCE_LOGGING_ADD_ENTRY();
     ESP_LOGI(COMPONENT_NAME, "FreeAddrInfo: Exit");
 }
 
@@ -1628,6 +1646,8 @@ void WiFiRequestHandler::FreeAddrInfo(void  *vpMessage)
 void WiFiRequestHandler::SetSockOpt(void *vpMessage)
 {
     ESP_LOGI(COMPONENT_NAME, "SetSockOpt: Enter");
+    PERFORMANCE_LOGGING_ENTER();
+
     Message *message = static_cast<Message *>(vpMessage);
     Esp32Messaging::SetSockOptRequest *request = Encoders::ExtractSetSockOptRequest(message->Payload);
     Esp32Messaging::IntegerAndErrnoResponse response;
@@ -1719,6 +1739,9 @@ void WiFiRequestHandler::SetSockOpt(void *vpMessage)
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
+
+    PERFORMANCE_LOGGING_EXIT();
+    PERFORMANCE_LOGGING_ADD_ENTRY();
     ESP_LOGI(COMPONENT_NAME, "SetSockOpt: Exit");
 }
 
@@ -1731,6 +1754,8 @@ void WiFiRequestHandler::SetSockOpt(void *vpMessage)
 void WiFiRequestHandler::Write(void *vpMessage)
 {
     ESP_LOGI(COMPONENT_NAME, "Write: Enter");
+    PERFORMANCE_LOGGING_ENTER();
+
     Message *message = static_cast<Message *>(vpMessage);
     Esp32Messaging::WriteRequest *request = Encoders::ExtractWriteRequest(message->Payload);
     Esp32Messaging::IntegerAndErrnoResponse response;
@@ -1759,6 +1784,9 @@ void WiFiRequestHandler::Write(void *vpMessage)
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
+
+    PERFORMANCE_LOGGING_EXIT();
+    PERFORMANCE_LOGGING_ADD_ENTRY();
     ESP_LOGI(COMPONENT_NAME, "Write: Exit");
 }
 
@@ -1771,6 +1799,8 @@ void WiFiRequestHandler::Write(void *vpMessage)
 void WiFiRequestHandler::Read(void *vpMessage)
 {
     ESP_LOGI(COMPONENT_NAME, "Read: Enter");
+    PERFORMANCE_LOGGING_ENTER();
+
     Message *message = static_cast<Message *>(vpMessage);
     Esp32Messaging::ReadRequest *request = Encoders::ExtractReadRequest(message->Payload);
     Esp32Messaging::ReadResponse response;
@@ -1808,6 +1838,9 @@ void WiFiRequestHandler::Read(void *vpMessage)
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
+
+    PERFORMANCE_LOGGING_EXIT();
+    PERFORMANCE_LOGGING_ADD_ENTRY();
     ESP_LOGI(COMPONENT_NAME, "Read: Exit");
 }
 
@@ -1820,6 +1853,8 @@ void WiFiRequestHandler::Read(void *vpMessage)
 void WiFiRequestHandler::Close(void *vpMessage)
 {
     ESP_LOGI(COMPONENT_NAME, "Close: Enter");
+    PERFORMANCE_LOGGING_ENTER();
+
     Message *message = static_cast<Message *>(vpMessage);
     Esp32Messaging::CloseRequest *request = Encoders::ExtractCloseRequest(message->Payload);
 
@@ -1847,6 +1882,9 @@ void WiFiRequestHandler::Close(void *vpMessage)
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
+
+    PERFORMANCE_LOGGING_EXIT();
+    PERFORMANCE_LOGGING_ADD_ENTRY();
     ESP_LOGI(COMPONENT_NAME, "Close: Exit");
 }
 
@@ -1859,6 +1897,8 @@ void WiFiRequestHandler::Close(void *vpMessage)
 void WiFiRequestHandler::Send(void *vpMessage)
 {
     ESP_LOGI(COMPONENT_NAME, "Send: Enter");
+    PERFORMANCE_LOGGING_ENTER();
+
     Message *message = static_cast<Message *>(vpMessage);
     Esp32Messaging::SendRequest *request = Encoders::ExtractSendRequest(message->Payload);
     vPortFree(message->Payload);
@@ -1899,6 +1939,9 @@ void WiFiRequestHandler::Send(void *vpMessage)
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
+
+    PERFORMANCE_LOGGING_EXIT();
+    PERFORMANCE_LOGGING_ADD_ENTRY();
     ESP_LOGI(COMPONENT_NAME, "Send: Exit");
 }
 
@@ -1911,6 +1954,8 @@ void WiFiRequestHandler::Send(void *vpMessage)
 void WiFiRequestHandler::SendTo(void *vpMessage)
 {
     ESP_LOGI(COMPONENT_NAME, "SendTo: Enter");
+    PERFORMANCE_LOGGING_ENTER();
+
     Message *message = static_cast<Message *>(vpMessage);
     Esp32Messaging::SendToRequest *request = Encoders::ExtractSendToRequest(message->Payload);
 
@@ -1986,6 +2031,9 @@ void WiFiRequestHandler::SendTo(void *vpMessage)
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
+
+    PERFORMANCE_LOGGING_EXIT();
+    PERFORMANCE_LOGGING_ADD_ENTRY();
     ESP_LOGI(COMPONENT_NAME, "SendTo: Exit");
 }
 
@@ -1998,6 +2046,8 @@ void WiFiRequestHandler::SendTo(void *vpMessage)
 void WiFiRequestHandler::RecvFrom(void *vpMessage)
 {
     ESP_LOGI(COMPONENT_NAME, "RecvFrom: Enter");
+    PERFORMANCE_LOGGING_ENTER();
+
     Message *message = static_cast<Message *>(vpMessage);
     Esp32Messaging::RecvFromRequest *request = Encoders::ExtractRecvFromRequest(message->Payload);
 
@@ -2099,6 +2149,9 @@ void WiFiRequestHandler::RecvFrom(void *vpMessage)
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
+
+    PERFORMANCE_LOGGING_EXIT();
+    PERFORMANCE_LOGGING_ADD_ENTRY();
     ESP_LOGI(COMPONENT_NAME, "RecvFrom: Exit");
 }
 
@@ -2111,6 +2164,8 @@ void WiFiRequestHandler::RecvFrom(void *vpMessage)
 void WiFiRequestHandler::Bind(void *vpMessage)
 {
     ESP_LOGI(COMPONENT_NAME, "Bind: Enter");
+    PERFORMANCE_LOGGING_ENTER();
+
     Message *message = static_cast<Message *>(vpMessage);
     Esp32Messaging::BindRequest *request = Encoders::ExtractBindRequest(message->Payload);
     Esp32Messaging::SockAddr *socketAddress = Encoders::ExtractSockAddr(request->Addr);
@@ -2163,6 +2218,9 @@ void WiFiRequestHandler::Bind(void *vpMessage)
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
+
+    PERFORMANCE_LOGGING_EXIT();
+    PERFORMANCE_LOGGING_ADD_ENTRY();
     ESP_LOGI(COMPONENT_NAME, "Bind: Exit");
 }
 
@@ -2175,6 +2233,8 @@ void WiFiRequestHandler::Bind(void *vpMessage)
 void WiFiRequestHandler::Listen(void *vpMessage)
 {
     ESP_LOGI(COMPONENT_NAME, "Listen: Enter");
+    PERFORMANCE_LOGGING_ENTER();
+
     Message *message = static_cast<Message *>(vpMessage);
     Esp32Messaging::ListenRequest *request = Encoders::ExtractListenRequest(message->Payload);
     Esp32Messaging::IntegerAndErrnoResponse response;
@@ -2188,6 +2248,10 @@ void WiFiRequestHandler::Listen(void *vpMessage)
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
+
+    PERFORMANCE_LOGGING_EXIT();
+    PERFORMANCE_LOGGING_ADD_ENTRY();
+    PERFORMANCE_LOGGING_DUMP_RESULTS();
     ESP_LOGI(COMPONENT_NAME, "Listen: Exit");
 }
 
@@ -2200,6 +2264,8 @@ void WiFiRequestHandler::Listen(void *vpMessage)
 void WiFiRequestHandler::Accept(void *vpMessage)
 {
     ESP_LOGI(COMPONENT_NAME, "Accept: Enter");
+    PERFORMANCE_LOGGING_ENTER();
+
     Message *message = static_cast<Message *>(vpMessage);
     Esp32Messaging::AcceptRequest *request = Encoders::ExtractAcceptRequest(message->Payload);
     free(message->Payload);
@@ -2247,6 +2313,9 @@ void WiFiRequestHandler::Accept(void *vpMessage)
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
+
+    PERFORMANCE_LOGGING_EXIT();
+    PERFORMANCE_LOGGING_ADD_ENTRY();
     ESP_LOGI(COMPONENT_NAME, "Accept: Exit");
 }
 
@@ -2262,6 +2331,8 @@ void WiFiRequestHandler::Accept(void *vpMessage)
 void WiFiRequestHandler::Ioctl(void *vpMessage)
 {
     ESP_LOGI(COMPONENT_NAME, "Ioctl: Enter");
+    PERFORMANCE_LOGGING_ENTER();
+
     Message *message = static_cast<Message *>(vpMessage);
     Esp32Messaging::IoctlRequest *request = Encoders::ExtractIoctlRequest(message->Payload);
     vPortFree(message->Payload);
@@ -2306,6 +2377,9 @@ void WiFiRequestHandler::Ioctl(void *vpMessage)
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
+
+    PERFORMANCE_LOGGING_EXIT();
+    PERFORMANCE_LOGGING_ADD_ENTRY();
     ESP_LOGI(COMPONENT_NAME, "Ioctl: Exit");
 }
 
@@ -2318,6 +2392,8 @@ void WiFiRequestHandler::Ioctl(void *vpMessage)
 void WiFiRequestHandler::GetSockName(void *vpMessage)
 {
     ESP_LOGI(COMPONENT_NAME, "GetSockName: Enter");
+    PERFORMANCE_LOGGING_ENTER();
+
     Message *message = static_cast<Message *>(vpMessage);
     Esp32Messaging::GetSockNameRequest *request = Encoders::ExtractGetSockNameRequest(message->Payload);
     free(message->Payload);
@@ -2365,6 +2441,9 @@ void WiFiRequestHandler::GetSockName(void *vpMessage)
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
+
+    PERFORMANCE_LOGGING_EXIT();
+    PERFORMANCE_LOGGING_ADD_ENTRY();
     ESP_LOGI(COMPONENT_NAME, "GetSockName: Exit");
 }
 

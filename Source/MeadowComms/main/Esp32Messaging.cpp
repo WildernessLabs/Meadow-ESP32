@@ -10,6 +10,7 @@
 #include <string.h>
 
 #include "Esp32Messaging.hpp"
+#include "Logging.hpp"
 
 /*
  * ---------------------------------------------------------------------------
@@ -161,7 +162,6 @@ Message *Message::CreateOnHeap(uint8_t messageType, uint8_t interface, uint32_t 
     result->Payload = payload;
     result->PayloadLength = payloadLength;
 
-    // ESP_LOGI(__func__, "Creating message, new message address: 0x%08x", (uint32_t) result);
     return(result);
 }
 

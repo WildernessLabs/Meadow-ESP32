@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">anycpu</Platform>
+    <ProjectGuid>{289164B0-A8AE-4FBF-BF68-17E52FBF9472}</ProjectGuid>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>GetSetAccessPoints</RootNamespace>
+    <AssemblyName>App</AssemblyName>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <LangVersion>8</LangVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|anycpu' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug</OutputPath>
+    <DefineConstants>DEBUG;</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <ExternalConsole>true</ExternalConsole>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|anycpu' ">
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Debug</OutputPath>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <ExternalConsole>true</ExternalConsole>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Program.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SocketSoakTest.cs" />
+    <Compile Include="Secrets.cs" />
+    <Compile Include="TestData.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="Mono.Security">
+      <HintPath>bin\Debug\Mono.Security.dll</HintPath>
+    </Reference>
+    <Reference Include="mscorlib">
+      <HintPath>bin\Debug\mscorlib.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Core">
+      <HintPath>bin\Debug\System.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="System">
+      <HintPath>bin\Debug\System.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Net.Http">
+      <HintPath>bin\Debug\System.Net.Http.dll</HintPath>
+    </Reference>
+    <Reference Include="Meadow">
+      <HintPath>bin\Debug\Meadow.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
+</Project>
