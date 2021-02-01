@@ -425,14 +425,14 @@ void SystemRequestHandler::GetConfiguration(Message *request)
     config.StaticIpAddress = WiFiRequestHandler::GetIpAddress();
     config.DnsServer = WiFiRequestHandler::GetDnsServer();
     config.DefaultGateway = WiFiRequestHandler::GetDefaultGateway();
-    config.DeviceName = nullptr;
+    config.DeviceName = GetDeviceName();
     WiFiRequestHandler::GetMacAddress(config.BoardMacAddress, WIFI_IF_STA);
     WiFiRequestHandler::GetMacAddress(config.SoftApMacAddress, WIFI_IF_AP);
 
     request->PayloadLength = Encoders::EncodedSystemConfigurationBufferSize(&config);
     request->Payload = static_cast<uint8_t *>(pvPortMalloc(request->PayloadLength));
     Encoders::EncodeSystemConfiguration(&config, request->Payload);
-    request->MessageType = MessageTypes::Interrupt;
+    request->MessageType = MessageTypes::Response;
     request->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(request);
     ESP_LOGI(COMPONENT_NAME, "GetConfiguration: Exit");
