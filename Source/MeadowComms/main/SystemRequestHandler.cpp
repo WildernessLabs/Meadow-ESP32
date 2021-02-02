@@ -442,7 +442,7 @@ void SystemRequestHandler::GetConfiguration(Message *request)
  *  @brief Set a single configuration value.
  *
  *  @param request
- *      Message requesting the system configuration.
+ *      Message containing the new configuration value.
  */
 void SystemRequestHandler::SetConfiguration(Message *request)
 {
