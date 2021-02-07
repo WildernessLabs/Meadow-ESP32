@@ -403,6 +403,59 @@ NvsManager::ErrorCodes SystemRequestHandler::SetConfigurationValue(const char *n
 }
 
 /**
+ *  @brief Populate the config object with system configuration data.
+ * 
+ *  @param config
+ *      Pointer to the Esp32Messaging::SystemConfiguration to be populated.
+ */
+void SystemRequestHandler::PopulateConfiguration(Esp32Messaging::SystemConfiguration *config)
+{
+    ESP_LOGI(COMPONENT_NAME, "PopulateConfiguration: Enter");
+    const esp_app_desc_t *applicationDescription = esp_ota_get_app_description();
+    config->SoftwareVersion = const_cast<char *>(applicationDescription->version);
+    config->Antenna = WiFiRequestHandler::GetAntenna();
+    config->MaximumRetryCount = WiFiRequestHandler::GetMaximumRetryCount();
+    config->AutomaticallyReconnect = WiFiRequestHandler::GetAutomaticReconnect();
+    config->AutomaticallyStartNetwork = WiFiRequestHandler::GetAutomaticallyStartNetwork();
+    config->GetTimeAtStartup = WiFiRequestHandler::GetGetTimeAtStartup();
+    config->UseDhcp = WiFiRequestHandler::GetUseDhcp();
+    config->NtpServer = WiFiRequestHandler::GetNtpServer();
+    config->DefaultAccessPoint = WiFiRequestHandler::GetDefaultAccessPoint();
+    config->StaticIpAddress = WiFiRequestHandler::GetIpAddress();
+    config->DnsServer = WiFiRequestHandler::GetDnsServer();
+    config->DefaultGateway = WiFiRequestHandler::GetDefaultGateway();
+    config->DeviceName = GetDeviceName();
+    WiFiRequestHandler::GetMacAddress(config->BoardMacAddress, WIFI_IF_STA);
+    WiFiRequestHandler::GetMacAddress(config->SoftApMacAddress, WIFI_IF_AP);
+    ESP_LOGI(COMPONENT_NAME, "PopulateConfiguration: Exit");
+}
+
+/**
+ *  @brief Send the current system configuration as an interrupt message.
+ * 
+ *  This method allows the system to send its configuration to the STM32 when the
+ *  system first starts.
+ */
+void SystemRequestHandler::SendConfigurationAsInterruptMessage()
+{
+    ESP_LOGI(COMPONENT_NAME, "SendConfigurationAsInterruptMessage: Enter");
+
+    Esp32Messaging::SystemConfiguration config = {};
+    PopulateConfiguration(&config);
+
+    Message *message = static_cast<Message *>(pvPortMalloc(sizeof(Message)));
+    message->Interface = Esp32Interfaces::System;
+    message->MessageType = MessageTypes::Interrupt;
+    message->MessageID = _messageDispatcher->GetNextMessageID();
+    message->StatusCode = StatusCodes::CompletedOk;
+    message->PayloadLength = Encoders::EncodedSystemConfigurationBufferSize(&config);
+    message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
+    Encoders::EncodeSystemConfiguration(&config, message->Payload);
+    _messageDispatcher->QueueMessageForStm32(message);
+    ESP_LOGI(COMPONENT_NAME, "SendConfigurationAsInterruptMessage: Exit");
+}
+
+/**
  *  @brief Get the configuration for the system.
  *
  *  @param request
@@ -412,22 +465,7 @@ void SystemRequestHandler::GetConfiguration(Message *request)
 {
     ESP_LOGI(COMPONENT_NAME, "GetConfiguration: Enter");
     Esp32Messaging::SystemConfiguration config = {};
-    const esp_app_desc_t *applicationDescription = esp_ota_get_app_description();
-    config.SoftwareVersion = const_cast<char *>(applicationDescription->version);
-    config.Antenna = WiFiRequestHandler::GetAntenna();
-    config.MaximumRetryCount = WiFiRequestHandler::GetMaximumRetryCount();
-    config.AutomaticallyReconnect = WiFiRequestHandler::GetAutomaticReconnect();
-    config.AutomaticallyStartNetwork = WiFiRequestHandler::GetAutomaticallyStartNetwork();
-    config.GetTimeAtStartup = WiFiRequestHandler::GetGetTimeAtStartup();
-    config.UseDhcp = WiFiRequestHandler::GetUseDhcp();
-    config.NtpServer = WiFiRequestHandler::GetNtpServer();
-    config.DefaultAccessPoint = WiFiRequestHandler::GetDefaultAccessPoint();
-    config.StaticIpAddress = WiFiRequestHandler::GetIpAddress();
-    config.DnsServer = WiFiRequestHandler::GetDnsServer();
-    config.DefaultGateway = WiFiRequestHandler::GetDefaultGateway();
-    config.DeviceName = GetDeviceName();
-    WiFiRequestHandler::GetMacAddress(config.BoardMacAddress, WIFI_IF_STA);
-    WiFiRequestHandler::GetMacAddress(config.SoftApMacAddress, WIFI_IF_AP);
+    PopulateConfiguration(&config);
 
     request->PayloadLength = Encoders::EncodedSystemConfigurationBufferSize(&config);
     request->Payload = static_cast<uint8_t *>(pvPortMalloc(request->PayloadLength));
@@ -446,7 +484,7 @@ void SystemRequestHandler::GetConfiguration(Message *request)
  */
 void SystemRequestHandler::SetConfiguration(Message *request)
 {
-    ESP_LOGI(COMPONENT_NAME, "SetConfiguration: Enter");
+    ESP_LOGI(COMPONENT_NAME, "SetConfigurationItem: Enter");
     Esp32Messaging::ConfigurationValue *value = Encoders::ExtractConfigurationValue(request->Payload);
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
     switch (value->Item)
@@ -505,7 +543,7 @@ void SystemRequestHandler::SetConfiguration(Message *request)
     request->MessageType = MessageTypes::Response;
     request->StatusCode = result;
     _messageDispatcher->QueueMessageForStm32(request);
-    ESP_LOGI(COMPONENT_NAME, "SetConfiguration: Exit");
+    ESP_LOGI(COMPONENT_NAME, "SetConfigurationItem: Exit");
 }
 
 /**
@@ -532,7 +570,7 @@ void SystemRequestHandler::DeepSleep(Message *request)
  */
 void SystemRequestHandler::GetBatteryChargeLevel(Message *message)
 {
-    ESP_LOGI(COMPONENT_NAME, "DeepSleep: Enter");
+    ESP_LOGI(COMPONENT_NAME, "GetBatteryChargeLevel: Enter");
     ESP_LOGI(COMPONENT_NAME, "BatteryLevel not implemented");
     //
     //  TODO: Complete the implemention of the BatteryLevel method.
@@ -548,7 +586,7 @@ void SystemRequestHandler::GetBatteryChargeLevel(Message *message)
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
-    ESP_LOGI(COMPONENT_NAME, "DeepSleep: Exit");
+    ESP_LOGI(COMPONENT_NAME, "GetBatteryChargeLevel: Exit");
 }
 
 /**
