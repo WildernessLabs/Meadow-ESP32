@@ -1154,7 +1154,10 @@ void WiFiRequestHandler::DisconnectFromAccessPoint(Message *message)
     message->MessageType = MessageTypes::Response;
     _messageDispatcher->QueueMessageForStm32(message);
 
-    RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::DisconnectEvent, sc);
+    if (sc == StatusCodes::CompletedOk)
+    {
+        RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::DisconnectEvent, sc);
+    }
 
     ESP_LOGI(COMPONENT_NAME, "DisconnectFromAccessPoint: Exit");
 }
@@ -1194,7 +1197,7 @@ void WiFiRequestHandler::Stop(Message *message)
 
     if (raiseEvent)
     {
-        // Stop event?
+        RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::StopInterfaceEvent, sc);
     }
 
     ESP_LOGI(COMPONENT_NAME, "Stop: Exit");

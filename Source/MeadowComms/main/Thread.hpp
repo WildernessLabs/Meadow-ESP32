@@ -75,7 +75,7 @@ private:
     /**
      *  @brief Task that is spawned off into the FreeRTOS task that will execute methods.
      */
-    static void Task(void *);
+    static void Task(void *taskParameters);
 
 public:
     /**
@@ -86,7 +86,7 @@ public:
     /**
      *  @brief Constructor that should be used by the application.
      */
-    explicit Thread(char *, task_completed_method_t);
+    explicit Thread(char *name, task_completed_method_t taskCompletedMethod);
 
     /**
      *  @brief Destructor for the thread.
@@ -96,7 +96,7 @@ public:
     /**
      *  @brief Execute a method on this threads task passing the required parameters
      */
-    void Execute(method_t, void *);
+    void Execute(method_t method, void *parameter);
 
     /**
      *  @brief Indicate if this thread is busy.

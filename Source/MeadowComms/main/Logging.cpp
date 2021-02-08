@@ -303,6 +303,18 @@ char *Logging::WiFiFunctionName(uint32_t function)
         case WiFiFunction::SetTimeOfDayEvent:
             return((char *) "SetTimeOfDayEvent");
             break;
+        case WiFiFunction::StartInterfaceEvent:
+            return((char *) "StartInterfaceEvent");
+            break;
+        case WiFiFunction::StopInterfaceEvent:
+            return((char *) "StopInterfaceEvent");
+            break;
+        case WiFiFunction::ConnectEvent:
+            return((char *) "ConnectEvent");
+            break;
+        case WiFiFunction::DisconnectEvent:
+            return((char *) "DisconnectEvent");
+            break;
         default:
             return((char *) "Unknown");
             break;
