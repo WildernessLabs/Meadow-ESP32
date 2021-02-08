@@ -1122,6 +1122,25 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
 
 /**
  *  @brief Disconnect from any access points.
+ */
+StatusCodes::StatusCodes WiFiRequestHandler::DisconnectFromAccessPoint()
+{
+    StatusCodes::StatusCodes sc = StatusCodes::CompletedOk;
+
+    esp_err_t result = esp_wifi_disconnect();
+    if ((result == ESP_OK) || (result == ESP_ERR_WIFI_NOT_STARTED) || (result == ESP_ERR_WIFI_NOT_INIT))
+    {
+        xEventGroupClearBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT);
+    }
+    else
+    {
+        sc = StatusCodes::Failure;
+    }
+    return(sc);
+}
+
+/**
+ *  @brief Disconnect from any access points.
  *
  *  @param message
  *      Message containing the encoded request.
@@ -1129,8 +1148,11 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
 void WiFiRequestHandler::DisconnectFromAccessPoint(Message *message)
 {
     ESP_LOGI(COMPONENT_NAME, "DisconnectFromAccessPoint: Enter");
-    // TODO: WiFi - Disconnect from access point.
-    ESP_LOGE(COMPONENT_NAME, "DisconnectFromAccessPoint: Disconnect function is not implemented yet.");
+
+    message->StatusCode = DisconnectFromAccessPoint();
+    message->MessageType = MessageTypes::Response;
+    _messageDispatcher->QueueMessageForStm32(message);
+
     ESP_LOGI(COMPONENT_NAME, "DisconnectFromAccessPoint: Exit");
 }
 
@@ -1143,8 +1165,28 @@ void WiFiRequestHandler::DisconnectFromAccessPoint(Message *message)
 void WiFiRequestHandler::Stop(Message *message)
 {
     ESP_LOGI(COMPONENT_NAME, "Stop: Enter");
-    // TODO: WiFi - Stop network
-    ESP_LOGE(COMPONENT_NAME, "Stop: Stop function is not implemented yet.");
+
+    StatusCodes::StatusCodes sc = StatusCodes::CompletedOk;
+    EventBits_t bits = xEventGroupGetBits(_xWiFiEventGroup);
+    if (bits & WIFI_CONNECTED_BIT)
+    {
+        sc = DisconnectFromAccessPoint();
+    }
+    if (sc == StatusCodes::CompletedOk)
+    {
+        if (esp_wifi_stop() == ESP_OK)
+        {
+            xEventGroupClearBits(_xWiFiEventGroup, WIFI_STATION_STARTED_BIT);
+        }
+        else
+        {
+            sc = StatusCodes::Failure;
+        }
+    }
+    message->StatusCode = sc;
+    message->MessageType = MessageTypes::Response;
+    _messageDispatcher->QueueMessageForStm32(message);
+
     ESP_LOGI(COMPONENT_NAME, "Stop: Exit");
 }
 
