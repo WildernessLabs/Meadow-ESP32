@@ -113,7 +113,9 @@ namespace WiFiFunction
         GetSockName = 22,
         SetTimeOfDayEvent = 23,
         ConnectEvent = 24,
-        DisconnectEvent = 25
+        DisconnectEvent = 25,
+        StartInterfaceEvent = 26,
+        StopInterfaceEvent = 27
     };
 
 }
