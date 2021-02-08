@@ -43,7 +43,7 @@
               "GetAddrInfo", "Socket", "Connect", "FreeAddrInfo", "Write", "SetSockOpt", "Read",
               "Close", "SendTo", "RecvFrom", "Poll", "InterruptPollResponse", "Send", "Bind", "Listen", "Accept", "Ioctl",
               "GetSockName",
-              "SetTimeOfDayEvent", "ConnectEvent", "DisconnectEvent"
+              "SetTimeOfDayEvent", "ConnectEvent", "DisconnectEvent", "StartInterfaceEvent", "StopInterfaceEvent"
           ]
         },
         {
