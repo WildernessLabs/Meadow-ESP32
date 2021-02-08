@@ -435,6 +435,11 @@ private:
     static bool ComparePollRequestMessageIds(uint32_t, PollRequestInformation *);
 
     /**
+     *  @brief Disconnect from any access points.
+     */
+    StatusCodes::StatusCodes DisconnectFromAccessPoint();
+
+    /**
      *  @brief Disconnect from the current access point.
      */
     void DisconnectFromAccessPoint(Message *);
