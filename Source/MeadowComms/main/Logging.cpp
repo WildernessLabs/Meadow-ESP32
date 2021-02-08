@@ -165,8 +165,8 @@ char *Logging::MessageTypeName(uint8_t type)
         case MessageTypes::Reset:
             return((char *) "Reset");
             break;
-        case MessageTypes::Interrupt:
-            return((char *) "Interrupt");
+        case MessageTypes::Event:
+            return((char *) "Event");
             break;
         case MessageTypes::Response:
             return((char *) "Response");
@@ -299,6 +299,9 @@ char *Logging::WiFiFunctionName(uint32_t function)
             break;
         case WiFiFunction::GetSockName:
             return((char *) "GetSockName");
+            break;
+        case WiFiFunction::SetTimeOfDayEvent:
+            return((char *) "SetTimeOfDayEvent");
             break;
         default:
             return((char *) "Unknown");

@@ -62,6 +62,10 @@ protected:
      */
     ~RequestHandlerBase();
 
+    /**
+     *  @brief Create a new event message and add to the outbound message queue.
+     */
+    void RaiseEvent(uint8_t, uint32_t, uint32_t, uint8_t *, uint32_t);
 
 public:
     /**

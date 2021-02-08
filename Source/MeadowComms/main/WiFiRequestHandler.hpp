@@ -440,6 +440,11 @@ private:
     void DisconnectFromAccessPoint(Message *);
 
     /**
+     *  @brief Connect to an access point using the specified credentials.
+     */
+    void ConnectToAccessPoint(const char *, const char *);
+
+    /**
      *  @brief Connect to an access point.
      */
     void ConnectToAccessPoint(Message *);
@@ -592,6 +597,11 @@ private:
      *  @brief Provide a mechanism for the STM32 to call the simulated getsockname method.
      */
     static void GetSockName(void *);
+
+    /**
+     *  @brief Method called when the time server has supplied updated time information.
+     */
+    static void NtpServerCallback(struct timeval *);
 
 public:
     /**
