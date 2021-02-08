@@ -1130,7 +1130,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::DisconnectFromAccessPoint()
     esp_err_t result = esp_wifi_disconnect();
     if ((result == ESP_OK) || (result == ESP_ERR_WIFI_NOT_STARTED) || (result == ESP_ERR_WIFI_NOT_INIT))
     {
-        xEventGroupClearBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT);
+        xEventGroupClearBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT | WIFI_RECONNECTING_BIT);
     }
     else
     {
@@ -1149,9 +1149,12 @@ void WiFiRequestHandler::DisconnectFromAccessPoint(Message *message)
 {
     ESP_LOGI(COMPONENT_NAME, "DisconnectFromAccessPoint: Enter");
 
-    message->StatusCode = DisconnectFromAccessPoint();
+    StatusCodes::StatusCodes sc = DisconnectFromAccessPoint();
+    message->StatusCode = sc;
     message->MessageType = MessageTypes::Response;
     _messageDispatcher->QueueMessageForStm32(message);
+
+    RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::DisconnectEvent, sc);
 
     ESP_LOGI(COMPONENT_NAME, "DisconnectFromAccessPoint: Exit");
 }
@@ -1166,6 +1169,7 @@ void WiFiRequestHandler::Stop(Message *message)
 {
     ESP_LOGI(COMPONENT_NAME, "Stop: Enter");
 
+    bool raiseEvent = false;
     StatusCodes::StatusCodes sc = StatusCodes::CompletedOk;
     EventBits_t bits = xEventGroupGetBits(_xWiFiEventGroup);
     if (bits & WIFI_CONNECTED_BIT)
@@ -1176,7 +1180,8 @@ void WiFiRequestHandler::Stop(Message *message)
     {
         if (esp_wifi_stop() == ESP_OK)
         {
-            xEventGroupClearBits(_xWiFiEventGroup, WIFI_STATION_STARTED_BIT);
+            xEventGroupClearBits(_xWiFiEventGroup, WIFI_STATION_STARTED_BIT | WIFI_INTERFACE_STARTING_BIT);
+            raiseEvent = true;
         }
         else
         {
@@ -1186,6 +1191,11 @@ void WiFiRequestHandler::Stop(Message *message)
     message->StatusCode = sc;
     message->MessageType = MessageTypes::Response;
     _messageDispatcher->QueueMessageForStm32(message);
+
+    if (raiseEvent)
+    {
+        // Stop event?
+    }
 
     ESP_LOGI(COMPONENT_NAME, "Stop: Exit");
 }
