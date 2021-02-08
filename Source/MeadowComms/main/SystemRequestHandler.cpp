@@ -445,7 +445,7 @@ void SystemRequestHandler::SendConfigurationAsInterruptMessage()
 
     Message *message = static_cast<Message *>(pvPortMalloc(sizeof(Message)));
     message->Interface = Esp32Interfaces::System;
-    message->MessageType = MessageTypes::Interrupt;
+    message->MessageType = MessageTypes::Event;
     message->MessageID = _messageDispatcher->GetNextMessageID();
     message->StatusCode = StatusCodes::CompletedOk;
     message->PayloadLength = Encoders::EncodedSystemConfigurationBufferSize(&config);

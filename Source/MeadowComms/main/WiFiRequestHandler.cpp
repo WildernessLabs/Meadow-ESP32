@@ -18,6 +18,7 @@
 #include "Exceptions/MultipleInstancesException.hpp"
 #include "Mapping.hpp"
 #include "DebugSettings.hpp"
+#include "Logging.hpp"
 
 #if defined(CONFIG_HEAP_TRACING_STANDALONE) || defined(CONFIG_HEAP_TRACING_TOHOST)
 
@@ -806,6 +807,30 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetWiFiTimeout(uint32_t value)
  */
 
 /**
+ *  @brief Callback to be executed when the NTP time server has provided updated time information.
+ * 
+ *  @param tv
+ *      New time information from the time server.
+ */
+void WiFiRequestHandler::NtpServerCallback(struct timeval *tv)
+{
+    ESP_LOGI(COMPONENT_NAME, "NtpServerCallback: Enter");
+    settimeofday(tv, NULL);
+
+    ESP_LOGI(COMPONENT_NAME, "Setting time to %d", (int) tv->tv_sec);
+
+    Esp32Messaging::IntegerResponse ir;
+    ir.Result = (uint32_t) tv->tv_sec;
+    uint32_t payloadLength = Encoders::EncodedIntegerResponseBufferSize(&ir);
+    uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
+    Encoders::EncodeIntegerResponse(&ir, payload);
+    uint32_t id = _messageDispatcher->GetNextMessageID();
+    Message *timeMessage = Message::CreateOnHeap((uint8_t) MessageTypes::Event, (uint8_t) Esp32Interfaces::WiFi, (uint32_t) WiFiFunction::SetTimeOfDayEvent, 0, id, payload, payloadLength);
+    _messageDispatcher->QueueMessageForStm32(timeMessage);
+    ESP_LOGI(COMPONENT_NAME, "NtpServerCallback: Exit");
+}
+
+/**
  *  @brief Convert the antenna enum into a GPIO pin number
  *
  *  @param antenna
@@ -915,6 +940,7 @@ void WiFiRequestHandler::EventHandlerHelper(esp_event_base_t eventBase, int32_t 
                 ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: Station connected to access point");
                 break;
             case WIFI_EVENT_STA_DISCONNECTED:
+                ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: Station disconnected.");
                 StationDisconnectedEvent(nullptr);
                 break;
         }
@@ -1125,6 +1151,20 @@ void WiFiRequestHandler::Stop(Message *message)
 /**
  *  @brief Connect to a specified access point.
  *
+ *  @param ssid
+ *      SSID of the access point.
+ * 
+ *  @param password
+ *      Password for the access point.
+ */
+void WiFiRequestHandler::ConnectToAccessPoint(const char *ssid, const char *password)
+{
+    
+}
+
+/**
+ *  @brief Connect to a specified access point.
+ *
  *  @param message
  *      Message containing the encoded request.
  */
@@ -1189,25 +1229,12 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
                         //  Note that we only need to get the time here.  The timezone is set when this
                         //  class is instanciated or when the SetTimezone method is successfully called.
                         //
+                        ESP_LOGI(COMPONENT_NAME, "Getting time from %s", GetNtpServer());
                         sntp_setoperatingmode(SNTP_OPMODE_POLL);
                         sntp_setservername(0, GetNtpServer());
-                        sntp_set_sync_mode(SNTP_SYNC_MODE_IMMED);
+                        sntp_set_sync_mode(SNTP_SYNC_MODE_SMOOTH);
+                        sntp_set_time_sync_notification_cb(NtpServerCallback);
                         sntp_init();
-                        bool gettingTime = true;
-                        int gettingTimeCount = 0;
-                        while (gettingTime)
-                        {
-                            gettingTimeCount++;
-                            if (gettingTimeCount == 10)     // Restrict number of tries to 1 second.
-                            {
-                                gettingTimeCount = false;
-                            }
-                            else
-                            {
-                                vTaskDelay(100 / portTICK_PERIOD_MS);
-                                gettingTime = (sntp_get_sync_status() != SNTP_SYNC_STATUS_COMPLETED);
-                            }
-                        }
                     }
                 }
                 else
@@ -2671,7 +2698,7 @@ void WiFiRequestHandler::CompletedPollRequestProcessor(void *parameters)
                 message->PayloadLength = Encoders::EncodedInterruptPollResponseBufferSize(&response);
                 message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
                 Encoders::EncodeInterruptPollResponse(&response, message->Payload);
-                message->MessageType = MessageTypes::Interrupt;
+                message->MessageType = MessageTypes::Event;
                 message->StatusCode = StatusCodes::CompletedOk;
                 _messageDispatcher->QueueMessageForStm32(message);
             }
