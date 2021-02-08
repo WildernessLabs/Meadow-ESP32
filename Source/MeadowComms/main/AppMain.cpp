@@ -99,6 +99,8 @@ extern "C" void app_main()
     SpiTransportProvider *spi = new SpiTransportProvider();
     MessageDispatcher * __attribute__((unused)) messageDispatcher = new MessageDispatcher(spi);
 
+    SystemRequestHandler::SendConfigurationAsInterruptMessage();
+
 //     Message message = {};
 //     message.MessageType = MessageTypes::Header;
 //     message.Interface = Esp32Interfaces::WiFi;
