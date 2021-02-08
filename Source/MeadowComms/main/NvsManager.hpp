@@ -51,16 +51,6 @@ public:
     static void Setup();
 
     /**
-     *  @brief Read a byte (uint8_t) from non-volatile storage.
-     */
-    // static ErrorCodes ReadUint8(const char *, uint8_t *);
-
-    /**
-     *  @brief Write a byte (uint8_t) to non-volatile storage.
-     */
-    // static ErrorCodes WriteUint8(const char *, uint8_t);
-
-    /**
      *  @brief Get a string value.
      */
     static char *GetValue(const char *nameSpace, const char *name, const char *defaultValue);
