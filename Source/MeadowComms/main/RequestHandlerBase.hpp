@@ -50,7 +50,7 @@ protected:
     /**
      *  @brief Task that will be used to retrieve and dispatch messages to the appropriate method.
      */
-    static void Task(void *);
+    static void Task(void *pvParameters);
 
     /**
      *  @brief Constructor for the RequestHandlerBase class.
@@ -66,7 +66,7 @@ protected:
      *  @brief Create a new event message and add to the outbound message queue.
      */
     void RaiseEvent(uint8_t interface, uint32_t eventType, uint32_t statusCode, uint8_t *payload, uint32_t payloadLength);
-    
+
     /**
      *  @brief Create a new event message and add to the outbound message queue.
      */
@@ -86,7 +86,7 @@ public:
     /**
      *  @brief Constructor for the RequestHandlerBase class.
      */
-    explicit RequestHandlerBase(MessageDispatcher *);
+    explicit RequestHandlerBase(MessageDispatcher *message);
 
     /**
      *  @brief Setup the various properties for correct functioning of the request handler.
@@ -96,7 +96,7 @@ public:
     /**
      *  @brief Add the message to the queue of messages waiting to be processed by the interface object.
      */
-    bool QueueEsp32Message(Message *);
+    bool QueueEsp32Message(Message *message);
 };
 
 #endif /* _REQUEST_HANDLER_BASE_HPP_ */
