@@ -173,3 +173,20 @@ void RequestHandlerBase::RaiseEvent(uint8_t interface, uint32_t eventType, uint3
     Message *message = Message::CreateOnHeap(MessageTypes::Event, interface, eventType, statusCode, _messageDispatcher->GetNextMessageID(), payload, payloadLength);
     _messageDispatcher->QueueMessageForStm32(message);
 }
+
+/**
+ *  @brief Create a new interrupt message and add it to the outbond message queue.
+ * 
+ *  @param interface
+ *      Interface to sent the event to.
+ * 
+ *  @param eventType
+ *      Type of event being raised.
+ * 
+ *  @param statusCode
+ *      Status code.
+ */
+void RequestHandlerBase::RaiseEvent(uint8_t interface, uint32_t eventType, uint32_t statusCode)
+{
+    RaiseEvent(interface, eventType, statusCode, nullptr, 0);
+}

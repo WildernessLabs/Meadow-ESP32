@@ -65,7 +65,12 @@ protected:
     /**
      *  @brief Create a new event message and add to the outbound message queue.
      */
-    void RaiseEvent(uint8_t, uint32_t, uint32_t, uint8_t *, uint32_t);
+    void RaiseEvent(uint8_t interface, uint32_t eventType, uint32_t statusCode, uint8_t *payload, uint32_t payloadLength);
+    
+    /**
+     *  @brief Create a new event message and add to the outbound message queue.
+     */
+    void RaiseEvent(uint8_t interface, uint32_t eventType, uint32_t statusCode);
 
 public:
     /**
