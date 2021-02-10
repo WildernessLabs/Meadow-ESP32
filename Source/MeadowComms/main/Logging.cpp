@@ -11,6 +11,13 @@
 #include "SharedEnums.hpp"
 #include "Logging.hpp"
 
+#include "NvsManager.hpp"
+#include "MessageDispatcher.hpp"
+#include "SpiTransportProvider.hpp"
+#include "WiFiRequestHandler.hpp"
+#include "SpiTransportProvider.hpp"
+
+
 #if defined(PERFORMANCE_LOGGING)
 
 #warning "Performance logging is enabled."
@@ -97,6 +104,45 @@ Logging::~Logging()
  */
 void Logging::Setup()
 {
+    esp_log_level_set("*", ESP_LOG_NONE);
+
+#if defined(DEBUG) || defined(WIFI_DEBUG) || defined(SPI_DEBUG) || defined(THREAD_DEBUG) || defined(SYSTEM_DEBUG)
+    #warning "Debug is enabled."
+    esp_log_level_set("AppMain", ESP_LOG_INFO);
+#endif
+
+#if defined(WIFI_DEBUG) || defined(SYSTEM_DEBUG)
+    //
+    //  We enable the RequestHandlerBase as it is the base class for the WiFi, System etc. request handlers.
+    //
+    esp_log_level_set(RequestHandlerBase::COMPONENT_NAME, ESP_LOG_INFO);    
+#endif
+
+#if defined(WIFI_DEBUG)
+    #warning "WIFI debugging is enabled."
+    esp_log_level_set(WiFiRequestHandler::COMPONENT_NAME, ESP_LOG_INFO);
+#endif
+
+#if defined(SPI_DEBUG)
+    #warning "SPI debugging is enabled."
+    esp_log_level_set(SpiTransportProvider::COMPONENT_NAME, ESP_LOG_INFO);
+#endif
+
+#if defined(THREAD_DEBUG)
+    #warning "ThreadPool debugging is enabled."
+    esp_log_level_set(Thread::COMPONENT_NAME, ESP_LOG_INFO);
+#endif
+
+#if defined(BT_DEBUG)
+    #warning "Bluetooth debugging is enabled."
+    esp_log_level_set(Thread::COMPONENT_NAME, ESP_LOG_INFO);
+#endif
+
+#if defined(SYSTEM_DEBUG)
+    #warning "System debugging is enabled."
+    esp_log_level_set(SystemRequestHandler::COMPONENT_NAME, ESP_LOG_INFO);
+#endif
+
     const uart_config_t loggingUARTConfig =
     {
         .baud_rate = 115200,
