@@ -932,16 +932,20 @@ void WiFiRequestHandler::EventHandlerHelper(esp_event_base_t eventBase, int32_t 
                 ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: Station started");
                 tcpip_adapter_set_hostname(TCPIP_ADAPTER_IF_STA, SystemRequestHandler::GetDeviceName());
                 xEventGroupSetBits(_xWiFiEventGroup, WIFI_STATION_STARTED_BIT);
+                RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::StartInterfaceEvent);
                 break;
             case WIFI_EVENT_STA_STOP:
                 ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: Station stopped");
+                RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::StopInterfaceEvent);
                 break;
             case WIFI_EVENT_STA_CONNECTED:
                 ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: Station connected to access point");
+                RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::ConnectEvent);
                 break;
             case WIFI_EVENT_STA_DISCONNECTED:
                 ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: Station disconnected.");
                 StationDisconnectedEvent(nullptr);
+                RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::DisconnectEvent);
                 break;
         }
     }
