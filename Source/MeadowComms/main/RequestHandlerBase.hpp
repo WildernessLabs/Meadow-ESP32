@@ -72,6 +72,11 @@ protected:
      */
     void RaiseEvent(uint8_t interface, uint32_t eventType, uint32_t statusCode);
 
+    /**
+     *  @brief Create a new event message and add to the outbound message queue.
+     */
+    void RaiseEvent(uint8_t interface, uint32_t eventType);
+
 public:
     /**
      *  @brief Name of this component / task.
