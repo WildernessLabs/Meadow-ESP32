@@ -95,14 +95,20 @@ extern "C" void app_main()
 
     const esp_app_desc_t *applicationDescription = esp_ota_get_app_description();
     printf("********** Starting Application (%s version %s) **********\n", applicationDescription->project_name, applicationDescription->version);
-ESP_LOGI(__func__, "CP-1");
-    ESP_LOGI(APP_MAIN_COMPONENT_NAME, "\n\n     ********** Starting Application (%s version %s) **********\n", applicationDescription->project_name, applicationDescription->version);
 
     /*
      *  Set up the messaging system to use SPI hardware communications.
      */
     SpiTransportProvider *spi = new SpiTransportProvider();
     MessageDispatcher * __attribute__((unused)) messageDispatcher = new MessageDispatcher(spi);
+
+    SystemRequestHandler::SendConfigurationAsInterruptMessage();
+
+//     Message message = {};
+//     message.MessageType = MessageTypes::Header;
+//     message.Interface = Esp32Interfaces::WiFi;
+//     message.Function = WiFiFunction::Ioctl;
+//     Esp32Messaging::IoctlRequest request;
 
     SendTestMessage(messageDispatcher);
 
@@ -170,18 +176,6 @@ void SendTestMessage(MessageDispatcher *messageDispatcher)
 
     ESP_LOGI(APP_MAIN_COMPONENT_NAME, "QueueMessageForEsp32");
     messageDispatcher->QueueMessageForEsp32(&message2);
-
-    // now send a message that describes an attribute to add
-
-
-// #include "WiFiRequestHandler.hpp"
-
-//    Esp32Messaging::IoctlRequest request;
-//     request.Command = SIOCGIFFLAGS;
-//     message.PayloadLength = Encoders::EncodedIoctlRequestBufferSize(&request);
-//     message.Payload = static_cast<uint8_t *>(pvPortMalloc(message.PayloadLength));
-//     Encoders::EncodeIoctlRequest(&request, message.Payload);
-
 
     ESP_LOGI(APP_MAIN_COMPONENT_NAME, "Exit");
 }

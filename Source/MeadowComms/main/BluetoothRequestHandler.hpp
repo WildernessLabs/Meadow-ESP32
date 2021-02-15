@@ -27,6 +27,7 @@
 #include "BluetoothConfig.hpp"
 
 #include <vector>
+#include <string>
 
 #define BT_FULL_LOGGING
 

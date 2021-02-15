@@ -51,6 +51,17 @@ MessageDispatcher::MessageDispatcher(TransportProviderBase *transportProvider) :
 {
     _transportProvider = transportProvider;
     _transportProvider->Setup(this);
+    //
+    //  Instantiate all of the request handlers.
+    //
+    _wifiRequestHandler = new WiFiRequestHandler(this);     // cppcheck-suppress noCopyConstructor
+    _wifiRequestHandler->Setup();
+    _bluetoothRequestHandler = new BluetoothRequestHandler(this);
+    _bluetoothRequestHandler->Setup();
+    _meshNetworkRequestHandler = new MeshNetworkRequestHandler(this);
+    _meshNetworkRequestHandler->Setup();
+    _systemRequestHandler = new SystemRequestHandler(this);
+    _systemRequestHandler->Setup();
 }
 
 /**
@@ -112,39 +123,20 @@ bool MessageDispatcher::QueueMessageForEsp32(Message *request)
     switch (static_cast<Esp32Interfaces::Esp32Interfaces>(request->Interface))
     {
         case Esp32Interfaces::WiFi:
-            if (!_wifiRequestHandler)
-            {
-                _wifiRequestHandler = new WiFiRequestHandler(this);
-                _wifiRequestHandler->Setup();
-            }
             provider = dynamic_cast<RequestHandlerBase *>(_wifiRequestHandler);
             break;
         case Esp32Interfaces::BlueTooth:
-            if (!_bluetoothRequestHandler)
-            {
-                _bluetoothRequestHandler = new BluetoothRequestHandler(this);
-                _bluetoothRequestHandler->Setup();
-            }
             provider = dynamic_cast<RequestHandlerBase *>(_bluetoothRequestHandler);
             break;
         case Esp32Interfaces::MeshNetwork:
-            if (!_meshNetworkRequestHandler)
-            {
-                _meshNetworkRequestHandler = new MeshNetworkRequestHandler(this);
-                _meshNetworkRequestHandler->Setup();
-            }
             provider = dynamic_cast<RequestHandlerBase *>(_meshNetworkRequestHandler);
             break;
         case Esp32Interfaces::System:
-            if (!_systemRequestHandler)
-            {
-                _systemRequestHandler = new SystemRequestHandler(this);
-                _systemRequestHandler->Setup();
-            }
             provider = dynamic_cast<RequestHandlerBase *>(_systemRequestHandler);
             break;
         default:
             ESP_LOGE(COMPONENT_NAME, "QueueMessageForEsp32: Unknown interface %d, message will not be processed.", request->Interface);
+            Message::DeleteMessage(request);
             break;
     }
     bool result = false;
@@ -152,7 +144,7 @@ bool MessageDispatcher::QueueMessageForEsp32(Message *request)
     {
         result = provider->QueueEsp32Message(request);
     }
-    ESP_LOGI(COMPONENT_NAME, "QueueMessageForEsp32: Enter");
+    ESP_LOGI(COMPONENT_NAME, "QueueMessageForEsp32: Exit");
     return(result);
 }
 

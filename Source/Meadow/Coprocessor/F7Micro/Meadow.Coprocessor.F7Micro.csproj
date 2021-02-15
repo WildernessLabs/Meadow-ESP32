@@ -81,10 +81,6 @@
       <Project>{5994f664-62d9-4913-9308-af96c65b96ca}</Project>
       <Name>Meadow.Core</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\Network\Meadow.Network.csproj">
-      <Project>{73fe4593-75ef-43f6-8596-06fab0f02e69}</Project>
-      <Name>Meadow.Network</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
