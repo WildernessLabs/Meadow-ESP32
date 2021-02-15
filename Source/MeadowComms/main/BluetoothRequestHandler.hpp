@@ -26,7 +26,11 @@
 #include "Esp32Messaging.hpp"
 #include "BluetoothConfig.hpp"
 
+#include <vector>
+
 #define BT_FULL_LOGGING
+
+using namespace std;
 
 /**
  *  @brief Bluetooth request handler object.
@@ -36,6 +40,31 @@
 class BluetoothRequestHandler : public RequestHandlerBase
 {
 private:
+    struct Uuid16
+    {
+        uint8_t data[16];
+    };
+
+    struct BluetoothService
+    {
+        std::string Name;
+        Uuid16 Uuid;
+    };
+
+    struct BluetoothCharacteristic
+    {
+        std::string Name;
+
+    };
+
+    struct BluetoothDescriptor
+    {
+        std::string Name;
+        
+    };
+
+    vector<BluetoothService> _services;
+
     /**
      *  Event group bits.
      * 
@@ -89,9 +118,16 @@ private:
     void TeardownStack(Message *msg);
 
     // this will add a characteristic ,and if required its containing service 
+    int _attribute_database_length = 0;
+    esp_gatts_attr_db_t *_attribute_database;
     void AddCharacteristic(Message *msg);
 
 public:
+    /**
+     *  @brief Name of the component / task for the Bluetooth system.
+     */
+    static const char *COMPONENT_NAME;
+
     /*
      *  Construct a new Bluetooth request handler object with reference to a
      *  Message Dispatcher object.

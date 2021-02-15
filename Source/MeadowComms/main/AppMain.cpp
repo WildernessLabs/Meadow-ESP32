@@ -101,14 +101,10 @@ ESP_LOGI(__func__, "CP-1");
     /*
      *  Set up the messaging system to use SPI hardware communications.
      */
-ESP_LOGI(APP_MAIN_COMPONENT_NAME, "CP0");
     SpiTransportProvider *spi = new SpiTransportProvider();
-ESP_LOGI(APP_MAIN_COMPONENT_NAME, "CP1");
     MessageDispatcher * __attribute__((unused)) messageDispatcher = new MessageDispatcher(spi);
 
-ESP_LOGI(APP_MAIN_COMPONENT_NAME, "CP2");
     SendTestMessage(messageDispatcher);
-ESP_LOGI(APP_MAIN_COMPONENT_NAME, "CP3");
 
     //
     //  Main program loop.
@@ -122,6 +118,7 @@ ESP_LOGI(APP_MAIN_COMPONENT_NAME, "CP3");
 
 void SendTestMessage(MessageDispatcher *messageDispatcher)
 {
+    /*
     ESP_LOGI(APP_MAIN_COMPONENT_NAME, "Message A");
 
     // fire up the BT stack
@@ -138,8 +135,8 @@ void SendTestMessage(MessageDispatcher *messageDispatcher)
     Encoders::EncodeBTServicesDescription(&desc, message.Payload);
 
     messageDispatcher->QueueMessageForEsp32(&message);
-
-/*
+    */
+   
     static const uint8_t generic_gap_uuid[16] = {
     // LSB <--------------------------------------------------------------------------------> MSB 
     //this is "generic GAP service" as defined by the BLE SIG
@@ -153,7 +150,7 @@ void SendTestMessage(MessageDispatcher *messageDispatcher)
 
 
 
-    ESP_LOGI(__func__, "Message B");
+    ESP_LOGI(APP_MAIN_COMPONENT_NAME, "Message B");
 
     // we'll add a characteristic.  They must be part of a Service, so that will get created underneath as well
     Esp32Messaging::BTCharacteristicDesc cdesc;
@@ -171,8 +168,9 @@ void SendTestMessage(MessageDispatcher *messageDispatcher)
     message2.Payload = (uint8_t *) pvPortMalloc(message2.PayloadLength);
     Encoders::EncodeBTCharacteristicDesc(&cdesc, message2.Payload);
 
+    ESP_LOGI(APP_MAIN_COMPONENT_NAME, "QueueMessageForEsp32");
     messageDispatcher->QueueMessageForEsp32(&message2);
-*/
+
     // now send a message that describes an attribute to add
 
 

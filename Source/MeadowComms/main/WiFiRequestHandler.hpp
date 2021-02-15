@@ -595,7 +595,7 @@ private:
 
 public:
     /**
-     *  @brief Name of the componet / task for the WiFi system.
+     *  @brief Name of the component / task for the WiFi system.
      */
     static const char *COMPONENT_NAME;
 
