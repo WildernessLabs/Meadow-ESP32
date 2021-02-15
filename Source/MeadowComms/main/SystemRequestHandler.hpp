@@ -88,6 +88,11 @@ private:
      */
     void GetBatteryChargeLevel(Message *);
 
+    /**
+     *  @brief Populate the configuration object with the current configuration.
+     */
+    static void PopulateConfiguration(Esp32Messaging::SystemConfiguration *);
+
 public:
     /**
      *  @brief Name of the FreeRTOS component / task for the System task.
@@ -165,6 +170,11 @@ public:
      */
     static char *GetDeviceName();
     static StatusCodes::StatusCodes SetDeviceName(char *);
+
+    /**
+     *  @brief Send the configuration data as an interrupt message.
+     */
+    static void SendConfigurationAsInterruptMessage();
     
 };
 
