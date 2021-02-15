@@ -19,9 +19,7 @@
 #include "Encoders.hpp"
 #include "Exceptions/MultipleInstancesException.hpp"
 
-// static callback methods for now - we'll look to move them into the class once things are working
-//static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param);
-//static void gatts_profile_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param);
+#define CHAR_DECLARATION_SIZE   (sizeof(uint8_t))
 
 /*
  * ----------------------------------------------------------------------------
@@ -36,6 +34,8 @@
  */
 bool BluetoothRequestHandler::_instantiated = false;
 BluetoothConfig BluetoothRequestHandler::Config;
+
+const char *BluetoothRequestHandler::COMPONENT_NAME = "BTTask";
 
 /*
  * ----------------------------------------------------------------------------
@@ -141,12 +141,9 @@ void BluetoothRequestHandler::DispatchRequest(Message *request)
         case BluetoothFunction::Stop:
             TeardownStack(request);
             break;
-        //
-        //  Sample from the WiFi class.
-        //
-        // case WiFiFunction::StartNetwork:
-        //     StartNetwork(request);
-        //     break;
+        case BluetoothFunction::AddCharacteristic:
+            AddCharacteristic(request);
+            break;
         default:
             ESP_LOGI(__func__, "Unknown Bluetooth message received, function %d", request->Function);
             if (request->Payload != NULL)
@@ -346,6 +343,8 @@ void BluetoothRequestHandler::StartStack(Message *msg)
     esp_ble_gap_set_security_param(ESP_BLE_SM_SET_INIT_KEY, &init_key, sizeof(uint8_t));
     esp_ble_gap_set_security_param(ESP_BLE_SM_SET_RSP_KEY, &rsp_key, sizeof(uint8_t));
 
+    xEventGroupSetBits(_xBtEventGroup, BT_READY_BIT);
+
 #if defined(BT_FULL_LOGGING)
     ESP_LOGI(__func__, "Exit");
 #endif
@@ -371,12 +370,82 @@ void BluetoothRequestHandler::TeardownStack(Message *msg)
 
 }
 
+static const uint16_t characteristic_declaration_uuid = ESP_GATT_UUID_CHAR_DECLARE;
+static const uint16_t primary_service_uuid = ESP_GATT_UUID_PRI_SERVICE;
+static const uint16_t character_client_config_uuid = ESP_GATT_UUID_CHAR_CLIENT_CONFIG;
+static const uint8_t char_prop_notify = ESP_GATT_CHAR_PROP_BIT_NOTIFY;
+static const uint8_t char_prop_read = ESP_GATT_CHAR_PROP_BIT_READ;
+static const uint8_t char_prop_read_write = ESP_GATT_CHAR_PROP_BIT_WRITE|ESP_GATT_CHAR_PROP_BIT_READ;
+
 void BluetoothRequestHandler::AddCharacteristic(Message *msg)
 {
+    ESP_LOGI(COMPONENT_NAME, "+AddCharacteristic");
+    
     // copy over all parameters
-    Esp32Messaging::BTServicesDescription *description = Encoders::ExtractBTServicesDescription(msg->Payload);
-    Config.SetDeviceName(description->DeviceName);
+    Esp32Messaging::BTCharacteristicDesc *description = Encoders::ExtractBTCharacteristicDesc(msg->Payload);
+
+    Config.SetDeviceName(description->ServiceDescription);
+
+    _attribute_database_length+=2;
+
+    if(_attribute_database_length == 2)
+    {
+        // first allocation
+        _attribute_database = (esp_gatts_attr_db_t*)malloc(_attribute_database_length * sizeof(esp_gatts_attr_db_t));
+    }
+    else
+    {
+        // appending
+        esp_gatts_attr_db_t *temp = (esp_gatts_attr_db_t*)realloc(_attribute_database, _attribute_database_length * sizeof(esp_gatts_attr_db_t));
+        if (temp) 
+        {
+            _attribute_database = temp;
+        } 
+        else 
+        {
+            ESP_LOGE(COMPONENT_NAME, "MEMORY ALLOCATION FAILURE");
+            return;
+        }        
+    }
+
+    ESP_LOGI(COMPONENT_NAME, "Memory Allocated");
+
+    // create the declaration
+
+    // create the value
+
+
+    // Characteristic Declaration
+    _attribute_database[_attribute_database_length - 2] = 
+    { 
+        { ESP_GATT_RSP_BY_APP },                            // auto response by GATT
+        { ESP_UUID_LEN_16,                                  // UUID LENGTH (it is 16-bytes)
+            (uint8_t *)&characteristic_declaration_uuid,    // UUID VALUE (this is a characteristic declaration)
+            ESP_GATT_PERM_READ,                             // PREMISSIONS (it is readable)
+            CHAR_DECLARATION_SIZE,                          // MAX LENGTH (one byte long)
+            CHAR_DECLARATION_SIZE,                          // CURRENT LENGTH (one byte)
+            (uint8_t *)&char_prop_notify                    // VALUE (it's a NOTIFY property)
+        }
+    }; 
+
+    // Characteristic Value (these need to come from the caller)
+    _attribute_database[_attribute_database_length - 1] = 
+    { 
+        { ESP_GATT_RSP_BY_APP },                            // auto response by GATT
+        { ESP_UUID_LEN_16,                                  // UUID LENGTH (it is 16-bytes)
+            (uint8_t *)&description->CharacteristicUUID,    // UUID VALUE (this is a characteristic declaration)
+            ESP_GATT_PERM_READ,                             // PREMISSIONS (it is readable)
+            CHAR_DECLARATION_SIZE,                          // MAX LENGTH (one byte long)
+            0,                                              // CURRENT LENGTH (empty)
+            NULL                                            // VALUE (it's null)
+        }
+    }; 
+
+    // we ned to tear-down and re-build?
+
+//    esp_ble_gatts_create_service(gatts_if, &gl_profile_tab[PROFILE_A_APP_ID].service_id, GATTS_NUM_HANDLE_TEST_A);
 }
+
 
 //////////////////////////
 //////////////////////////
@@ -469,13 +538,7 @@ static bool response_data_configured = false;
 // --- test property stuff. We'll modify this when managed starts integrating
 #define GATTS_CHAR_VAL_LEN_MAX 0x40 // not sure if this is a BT thing, or just arbitrary. Assuming arbitrary for now
 
-#define CHAR_DECLARATION_SIZE   (sizeof(uint8_t))
-static const uint16_t primary_service_uuid = ESP_GATT_UUID_PRI_SERVICE;
-static const uint16_t characteristic_declaration_uuid = ESP_GATT_UUID_CHAR_DECLARE;
-static const uint16_t character_client_config_uuid = ESP_GATT_UUID_CHAR_CLIENT_CONFIG;
-static const uint8_t char_prop_notify = ESP_GATT_CHAR_PROP_BIT_NOTIFY;
-static const uint8_t char_prop_read = ESP_GATT_CHAR_PROP_BIT_READ;
-static const uint8_t char_prop_read_write = ESP_GATT_CHAR_PROP_BIT_WRITE|ESP_GATT_CHAR_PROP_BIT_READ;
+
 
 /// Sensor Service - Heart Rate Measurement Characteristic, notify
 static const uint16_t heart_rate_meas_uuid = ESP_GATT_HEART_RATE_MEAS;
@@ -673,7 +736,7 @@ void BluetoothRequestHandler::gatts_profile_event_handler(esp_gatts_cb_event_t e
             esp_ble_gap_set_device_name(BluetoothRequestHandler::Config.GetDeviceName());
             //generate a resolvable random address
             esp_ble_gap_config_local_privacy(true);
-            esp_ble_gatts_create_attr_tab(meadow_attribute_list, gatts_if, 8, 0);
+//            esp_ble_gatts_create_attr_tab(meadow_attribute_list, gatts_if, 8, 0);
         }
             break;
         case ESP_GATTS_READ_EVT:
@@ -724,6 +787,7 @@ void BluetoothRequestHandler::gatts_profile_event_handler(esp_gatts_cb_event_t e
             break;
         case ESP_GATTS_CREAT_ATTR_TAB_EVT: 
         {
+            /*
             ESP_LOGI(COMPONENT_NAME, "The number handle = %x",param->add_attr_tab.num_handle);
             if (param->create.status == ESP_GATT_OK)
             {
@@ -743,6 +807,7 @@ void BluetoothRequestHandler::gatts_profile_event_handler(esp_gatts_cb_event_t e
             {
                 ESP_LOGE(COMPONENT_NAME, " Create attribute table failed, error code = %x", param->create.status);
             }
+            */
         }
         break;
         default:
