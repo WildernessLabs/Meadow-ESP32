@@ -347,6 +347,17 @@
                 { "Name": "Result", "DataType": "int" },
                 { "Name": "ResponseErrno", "DataType": "int" }
             ]
+        },
+        {
+            "Name": "EventData",
+            "MessageElements":
+            [
+                { "Name": "Interface", "DataType": "byte" },
+                { "Name": "Function", "DataType": "uint32" },
+                { "Name": "StatusCode", "DataType": "uint32" },
+                { "Name": "Payload", "DataType": "uint32" },
+                { "Name": "PayloadLength", "DataType": "uint32" }
+            ]
         }
     ]
 }
