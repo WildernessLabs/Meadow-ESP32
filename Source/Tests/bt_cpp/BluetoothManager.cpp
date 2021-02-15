@@ -1,5 +1,6 @@
 #include "BluetoothManager.hpp"
 
+/*
 BluetoothService& BluetoothManager::AddService(BluetoothService *service)
 {
     // do we already know about this service?  If so, ignore 
@@ -47,3 +48,4 @@ BluetoothService* BluetoothManager::FindService(Uuid128 uuid)
 
     return NULL;
 }
+*/

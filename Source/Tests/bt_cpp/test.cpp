@@ -23,26 +23,35 @@ int main()
     BluetoothService service2("Service 2", service_uuid2);
 
     manager
-        .AddService(
+        .Services
+        .Add(
             new BluetoothService("Service 1", service_uuid1)
         )
         .AddCharacteristic(
             new BluetoothCharacteristic(0x2a56, CharacteristicPermission::ReadEncrypted, CharacteristicProperty::Notify)
         ); 
-    
+
     // try re-adding the same service - no action should happen
+    manager
+        .Services
+        .Add(
+            new BluetoothService("Service 1", service_uuid1)
+        );
+
+
+    auto existing = manager.Services.Find(service_uuid1);
+
 
     // try re-adding the service, with the same characteristic - no action should happen
 
     // try re-adding the service, with a new characteristic
 
-    auto existing = manager.FindService(service_uuid1);
 
 //        .AddCharacteristic(
 //            new BluetoothCharacteristic("Characteristic A", 0x2a56)
 //        );
 
-    manager.AddService(&service2);
+    manager.Services.Add(&service2);
 
 //    BluetoothCharacteristic heartRate()
 
