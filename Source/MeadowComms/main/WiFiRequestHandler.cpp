@@ -2432,7 +2432,7 @@ void WiFiRequestHandler::GetSockName(void *vpMessage)
             Mapping::GetStmValue(Mapping::Errno, EFAULT, &result);
         }
         response.ResponseErrno = result;
-        ESP_LOGI(COMPONENT_NAME, "Failure: Result code %d (%s), errno %d (%s)", response.Result, esp_err_to_name(response.Result), errno, strerror(errno));
+        ESP_LOGE(COMPONENT_NAME, "Failure: Result code %d (%s), errno %d (%s)", response.Result, esp_err_to_name(response.Result), errno, strerror(errno));
     }
     vPortFree(request);
 
