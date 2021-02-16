@@ -17,15 +17,22 @@ namespace MeadowApp
         /// </summary>
         public HttpListenerTest()
         {
-            Console.WriteLine("Connecting to network.");
+            Console.WriteLine("Creating HttpListenerTest object.");
             MeadowOS.WatchdogEnable(25000);
             StartWatchdog(20000);
             Device.InitWiFiAdapter().Wait();
+            Device.WiFiAdapter.ConnectionCompleted += WiFiAdapter_ConnectionCompleted;
+            Console.WriteLine("Connecting to access point.");
             if (Device.WiFiAdapter.Connect(Secrets.WIFI_NAME, Secrets.WIFI_PASSWORD).ConnectionStatus != ConnectionStatus.Success)
             {
                 throw new Exception("Cannot connect to network, application halted.");
             }
             Console.WriteLine("WiFi connection completed.");
+        }
+
+        private void WiFiAdapter_ConnectionCompleted(object sender, EventArgs e)
+        {
+            Console.WriteLine("WiFiAdapter_ConnectionCompleted: connected to access point.");
         }
 
         void StartWatchdog(int interval)
@@ -45,7 +52,7 @@ namespace MeadowApp
         public void RunTest()
         {
             HttpListener listener;
-            string url = "http://192.168.1.208/";
+            string url = "http://192.168.1.211/";
 
             if (!HttpListener.IsSupported)
             {
