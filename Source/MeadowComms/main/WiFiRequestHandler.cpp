@@ -2402,7 +2402,7 @@ void WiFiRequestHandler::GetSockName(void *vpMessage)
     struct sockaddr sa = {};
     socklen_t saLen = sizeof(sa);
     response.Result = getsockname(request->SocketHandle, &sa, &saLen);
-    if (response.Result > 0)
+    if (response.Result == 0)
     {
         Esp32Messaging::SockAddr *sockAddr = static_cast<Esp32Messaging::SockAddr *>(pvPortMalloc(sizeof(Esp32Messaging::SockAddr)));
         bzero(sockAddr, sizeof(Esp32Messaging::SockAddr));
@@ -2432,6 +2432,7 @@ void WiFiRequestHandler::GetSockName(void *vpMessage)
             Mapping::GetStmValue(Mapping::Errno, EFAULT, &result);
         }
         response.ResponseErrno = result;
+        ESP_LOGI(COMPONENT_NAME, "Failure: Result code %d (%s), errno %d (%s)", response.Result, esp_err_to_name(response.Result), errno, strerror(errno));
     }
     vPortFree(request);
 
