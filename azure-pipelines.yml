@@ -14,17 +14,12 @@ variables:
 pool:
   vmImage: ubuntu-latest
 
-container: espressif/idf:release-v4.2
-
-
+container: 
+  image: espressif/idf:release-v4.2
+  options: -v $(System.DefaultWorkingDirectory)/Meadow-ESP32/Source/MeadowComms:/project -w /project
 
 steps:
-  - task: DockerInstaller@0
-    displayName: Docker Installer
-    inputs:
-      dockerVersion: 17.09.0-ce
-      releaseType: stable
-  - script: docker run --rm -w /project idf.py build
+  - script: idf.py build
 
 # stages:
 # - stage: Build
