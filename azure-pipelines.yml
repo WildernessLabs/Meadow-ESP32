@@ -16,7 +16,7 @@ pool:
 
 container: 
   image: espressif/idf:release-v4.2
-  options: -v "$(System.DefaultWorkingDirectory)/Meadow-ESP32/Source/MeadowComms":"/project" -w "/project"
+  options: -v "$[ variables['System.DefaultWorkingDirectory'] ]/Meadow-ESP32/Source/MeadowComms":"/project" -w "/project"
 
 steps:
   - script: idf.py
