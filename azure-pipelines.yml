@@ -19,7 +19,7 @@ container:
   options: -v "$(System.DefaultWorkingDirectory)/Meadow-ESP32/Source/MeadowComms":"/project" -w "/project"
 
 steps:
-  - script: idf.py build
+  - script: idf.py
 
 # stages:
 # - stage: Build
