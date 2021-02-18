@@ -22,7 +22,7 @@ steps:
     inputs:
       dockerVersion: 17.09.0-ce
       releaseType: stable
-  - script: docker run --rm -v $PWD:/project -w /project espressif/idf:release-v4.2 idf.py build
+  - script: docker run --rm -v Meadow-ESP32/Source/MeadowComms/project -w /project espressif/idf:release-v4.2 idf.py build
 
 # stages:
 # - stage: Build
