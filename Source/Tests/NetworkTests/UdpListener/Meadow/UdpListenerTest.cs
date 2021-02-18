@@ -16,6 +16,7 @@ namespace MeadowApp
         /// </summary>
         public UdpListenerTest()
         {
+            Console.WriteLine($"Machine name: {Environment.MachineName}");
             Console.WriteLine("Connecting to network.");
             Device.InitWiFiAdapter().Wait();
             if (Device.WiFiAdapter.Connect(Secrets.WIFI_NAME, Secrets.WIFI_PASSWORD).ConnectionStatus != ConnectionStatus.Success)
