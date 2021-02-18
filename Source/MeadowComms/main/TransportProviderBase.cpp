@@ -22,7 +22,7 @@
 /**
  *  @brief Name of this component / task.
  */
-const char *COMPONENT_NAME = "TransportProviderBase";
+const char *TransportProviderBase::COMPONENT_NAME = "TransportProviderBase";
 
 QueueHandle_t TransportProviderBase::_outboundMessageQueueMutex = nullptr;
 QueueHandle_t TransportProviderBase::_outboundMessageQueueHandle = nullptr;
@@ -174,6 +174,7 @@ bool TransportProviderBase::QueueMessageForStm32(Message *message)
         }
         else
         {
+            Logging::DumpMessage(COMPONENT_NAME, message);
             ToggleEsp32MessageWaitingPin();
         }
         xSemaphoreGive(_outboundMessageQueueMutex);
