@@ -115,7 +115,8 @@ void Logging::Setup()
     //
     //  We enable the RequestHandlerBase as it is the base class for the WiFi, System etc. request handlers.
     //
-    esp_log_level_set(RequestHandlerBase::COMPONENT_NAME, ESP_LOG_INFO);    
+    esp_log_level_set(RequestHandlerBase::COMPONENT_NAME, ESP_LOG_INFO);
+    esp_log_level_set(TransportProviderBase::COMPONENT_NAME, ESP_LOG_INFO);
 #endif
 
 #if defined(WIFI_DEBUG)
