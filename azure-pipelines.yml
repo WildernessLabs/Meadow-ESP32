@@ -11,19 +11,25 @@ resources:
 variables:
   tag: '$(Build.BuildId)'
 
-stages:
-- stage: Build
-  displayName: Build image
-  jobs:
-  - job: Build
-    displayName: Build
-    pool:
-      vmImage: ubuntu-latest
-    container:
-      image: espressif/idf:release-v4.2
-      endpoint: 'Docker Hub'
-    steps:
-    - task: Docker@2
-      displayName: Build an image
-    - script: |
-        docker run --rm -v $PWD:/project -w /project espressif/idf:release-v4.2 idf.py build
+pool:
+  vmImage: ubuntu-latest
+
+container: espressif/idf:release-v4.2
+
+steps:
+  - script: docker run --rm -v $PWD:/project -w /project espressif/idf:release-v4.2 idf.py build
+
+# stages:
+# - stage: Build
+#   displayName: Build image
+#   jobs:
+#   - job: Build
+#     displayName: Build
+
+#     container:
+#       image: espressif/idf:release-v4.2
+#     steps:
+#     - task: Docker@2
+#       displayName: Build an image
+#     - script: |
+        
