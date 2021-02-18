@@ -14,7 +14,7 @@ variables:
 pool:
   vmImage: ubuntu-latest
 
-container:
+container: espressif/idf:release-v4.2
 
 
 
@@ -24,7 +24,7 @@ steps:
     inputs:
       dockerVersion: 17.09.0-ce
       releaseType: stable
-  - script: docker run --rm  -w /project espressif/idf:release-v4.2 idf.py build
+  - script: docker run --rm -w /project idf.py build
 
 # stages:
 # - stage: Build
