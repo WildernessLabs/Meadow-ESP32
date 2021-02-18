@@ -22,8 +22,5 @@ stages:
     steps:
     - task: Docker@2
       displayName: Build an image
-      inputs:
-        command: docker run --rm -v $PWD:/project -w /project espressif/idf:release-v4.2 idf.py build
-        #dockerfile: '**/Dockerfile'
-        tags: |
-          $(tag)
+    - script: |
+        docker run --rm -v $PWD:/project -w /project espressif/idf:release-v4.2 idf.py build
