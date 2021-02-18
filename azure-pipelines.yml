@@ -17,7 +17,12 @@ pool:
 container: espressif/idf:release-v4.2
 
 steps:
-  - script: /usr/bin/docker run --rm -v $PWD:/project -w /project espressif/idf:release-v4.2 idf.py build
+  - task: DockerInstaller@0
+    displayName: Docker Installer
+    inputs:
+      dockerVersion: 17.09.0-ce
+      releaseType: stable
+  - script: docker run --rm -v $PWD:/project -w /project espressif/idf:release-v4.2 idf.py build
 
 # stages:
 # - stage: Build
