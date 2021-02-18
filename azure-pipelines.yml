@@ -16,7 +16,7 @@ pool:
 
 container: 
   image: espressif/idf:release-v4.2
-  options: -v /home/vsts/work/1/Meadow-ESP32/Source/MeadowComms:/projec" -w /project
+  options: -v /home/vsts/work/1/Meadow-ESP32/Source/MeadowComms:/project -w /project
 
 steps:
   - script: idf.py build
