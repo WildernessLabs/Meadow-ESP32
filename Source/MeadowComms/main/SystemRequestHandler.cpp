@@ -14,6 +14,8 @@
 #include "esp_event.h"
 #include "esp_ota_ops.h"
 #include "esp_wifi.h"
+#include "driver/adc.h"
+#include "esp_adc_cal.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -571,13 +573,33 @@ void SystemRequestHandler::DeepSleep(Message *request)
 void SystemRequestHandler::GetBatteryChargeLevel(Message *message)
 {
     ESP_LOGI(COMPONENT_NAME, "GetBatteryChargeLevel: Enter");
-    ESP_LOGI(COMPONENT_NAME, "BatteryLevel not implemented");
-    //
-    //  TODO: Complete the implemention of the BatteryLevel method.
-    //        For the minute we'll fake it at 2.5V.
-    //
+
+    const adc_channel_t channel = ADC_CHANNEL_7;
+    const adc_atten_t attenuation = ADC_ATTEN_DB_11;
+    const adc_unit_t unit = ADC_UNIT_1;
+    const uint32_t vref = 1100;
+    const uint32_t numberOfSamples = 64;
+
+    esp_adc_cal_characteristics_t *adc_chars;
+    uint32_t adc_reading = 0;
+
+    adc1_config_width(ADC_WIDTH_BIT_12);
+    adc1_config_channel_atten((adc1_channel_t) channel, attenuation);
+    adc_chars = (esp_adc_cal_characteristics_t *) calloc(1, sizeof(esp_adc_cal_characteristics_t));
+    esp_adc_cal_characterize(unit, attenuation, ADC_WIDTH_BIT_12, vref, adc_chars);
+
+    for (int i = 0; i < numberOfSamples; i++)
+    {
+        adc_reading += adc1_get_raw((adc1_channel_t) channel);
+    }
+    adc_reading /= numberOfSamples;
     Esp32Messaging::IntegerResponse response;
-    response.Result = 2500;
+    //
+    //  The battery voltage will be twice the actual reading as the output from the battery is passed
+    //  through a voltage divider diving it in half.  This is necessary as the voltage can go as high
+    //  as 4.2V which exceeds the tolerance of the ADC pins on the ESP32.
+    //
+    response.Result = 2 * esp_adc_cal_raw_to_voltage(adc_reading, adc_chars);
 
     message->PayloadLength = Encoders::EncodedIntegerResponseBufferSize(&response);
     message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
