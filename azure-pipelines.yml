@@ -13,6 +13,7 @@ steps:
       Source/MeadowComms/build/bootloader/bootloader.bin
       Source/MeadowComms/build/partition_table/partition-table.bin
     targetFolder: '$(Build.ArtifactStagingDirectory)'
+    flattenFolders: true
 - task: PublishBuildArtifacts@1
   inputs:
     pathtoPublish: '$(Build.ArtifactStagingDirectory)'
