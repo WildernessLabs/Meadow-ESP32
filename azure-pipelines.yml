@@ -5,8 +5,7 @@ pool: WL-Linux
 
 steps:
 - script: git clean -xfd
-- script: cd Source/MeadowComms
-- script: pwd && docker run --rm -v $PWD:/project -w /project espressif/idf:release-v4.2 idf.py build
+- script: cd Source/MeadowComms && docker run --rm -v $PWD:/project -w /project espressif/idf:release-v4.2 idf.py build
 - task: CopyFiles@2
   inputs:
     contents: |
