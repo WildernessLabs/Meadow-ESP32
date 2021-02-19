@@ -9,9 +9,9 @@ steps:
 - task: CopyFiles@2
   inputs:
     contents: |
-      build/MeadowComms.bin
-      build/bootloader/bootloader.bin
-      build/partition_table/partition-table.bin
+      Source/MeadowComms/build/MeadowComms.bin
+      Source/MeadowComms/build/bootloader/bootloader.bin
+      Source/MeadowComms/build/partition_table/partition-table.bin
     targetFolder: '$(Build.ArtifactStagingDirectory)'
 - task: PublishBuildArtifacts@1
   inputs:
