@@ -322,6 +322,15 @@ namespace Esp32Messaging
         int32_t ResponseErrno;
     };
 
+    struct EventData
+    {
+        uint8_t Interface;
+        uint32_t Function;
+        uint32_t StatusCode;
+        uint32_t Payload;
+        uint32_t PayloadLength;
+    };
+
 }
 
 /*
@@ -465,6 +474,9 @@ public:
     static void EncodeGetSockNameResponse(Esp32Messaging::GetSockNameResponse *, uint8_t *);
     static int EncodedGetSockNameResponseBufferSize(Esp32Messaging::GetSockNameResponse *);
     static Esp32Messaging::GetSockNameResponse *ExtractGetSockNameResponse(uint8_t *);
+    static void EncodeEventData(Esp32Messaging::EventData *, uint8_t *);
+    static int EncodedEventDataBufferSize(Esp32Messaging::EventData *);
+    static Esp32Messaging::EventData *ExtractEventData(uint8_t *);
 
 };
 

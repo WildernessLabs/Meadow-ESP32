@@ -29,7 +29,7 @@ private:
     /**
      *  @brief This method will dispatch incoming messages to the appropriate request handler.
      */
-    void DispatchRequest(Message *) override;
+    void DispatchRequest(Message *request) override;
 
     /**
      *  Private constructor(s) and destructor.
@@ -46,7 +46,7 @@ public:
     /**
      *  @brief Constructor for a Mesh Network request handler object.
      */
-    explicit MeshNetworkRequestHandler(MessageDispatcher *);
+    explicit MeshNetworkRequestHandler(MessageDispatcher *messageDispatcher);
 
     /**
      *  @brief Provide and additional setup operations not covered by the constructors.

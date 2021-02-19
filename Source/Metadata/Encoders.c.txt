@@ -479,6 +479,28 @@ espcp_message_t *espcp_extract_message(uint8_t *buffer, uint32_t bufferLength, b
 }
 
 /****************************************************************************
+ * Name: espcp_message_buffer_size
+ *
+ * Description:
+ *  Get the amount of memory needed to store an encoded message.
+ *
+ * Input Parameters:
+ *   message - Message to be encoded.
+ *
+ *   headerOnly - Will the buffer hold the full message or just the header?
+ *
+ ****************************************************************************/
+uint32_t espcp_message_buffer_size(espcp_message_t *message, bool header_only)
+{
+    uint32_t message_size = ESPCP_HEADER_SIZE;
+    if (!header_only)
+    {
+        message_size += message->payload_length;
+    }
+    return(message_size);
+}
+
+/****************************************************************************
  * Name: espcp_encode_message
  *
  * Description:
@@ -501,11 +523,7 @@ espcp_message_t *espcp_extract_message(uint8_t *buffer, uint32_t bufferLength, b
  ****************************************************************************/
 uint8_t *espcp_encode_message(espcp_message_t *message, uint32_t *buffer_length, bool header_only)
 {
-    uint32_t message_size = ESPCP_HEADER_SIZE;
-    if (!header_only)
-    {
-        message_size += message->payload_length;
-    }
+    uint32_t message_size = espcp_message_buffer_size(message, header_only);
     uint32_t buffer_size = espcp_calculate_spi_buffer_size(message_size);
     uint8_t *buffer = (uint8_t *) malloc(buffer_size);
     if (buffer != NULL)
@@ -550,4 +568,3 @@ uint8_t *espcp_encode_message(espcp_message_t *message, uint32_t *buffer_length,
     *buffer_length = buffer_size;
     return(buffer);
 }
-

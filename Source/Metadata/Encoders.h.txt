@@ -37,3 +37,8 @@ uint32_t espcp_crc32(const uint8_t *, uint16_t);
 uint32_t espcp_progressive_crc32(uint32_t, uint8_t);
 espcp_message_t *espcp_extract_message(uint8_t *, uint32_t, bool);
 uint8_t *espcp_encode_message(espcp_message_t *, uint32_t *, bool);
+uint32_t espcp_message_buffer_size(espcp_message_t *, bool);
+/*
+ *      Automatically generated message prototypes start here.
+ */
+

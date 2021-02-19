@@ -31,13 +31,13 @@ public:
     /**
      *  @brief Setup the transport provider.
      */
-    void Setup(MessageDispatcher *);
+    void Setup(MessageDispatcher *messageDispatcher);
 
     /**
      *  @brief Add the message given to the queue of messages waiting
      *  for transmission to the STM32.
      */
-    bool QueueMessageForStm32(Message *);
+    bool QueueMessageForStm32(Message *message);
 
     /**
      *  @brief Bit that will be used to indicate that a the STM32 has just

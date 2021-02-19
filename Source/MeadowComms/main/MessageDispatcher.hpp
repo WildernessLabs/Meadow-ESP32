@@ -102,17 +102,17 @@ public:
     /**
      *  @brief Constructor for the Message Dispatcher.
      */
-    explicit MessageDispatcher(TransportProviderBase *);
+    explicit MessageDispatcher(TransportProviderBase *transportProvider);
 
     /**
      *  @brief Queue a message for the ESP32.
      */
-    bool QueueMessageForEsp32(Message *);
+    bool QueueMessageForEsp32(Message *request);
 
     /**
      *  @brief Queue a message for the STM32.
      */
-    bool QueueMessageForStm32(Message *);
+    bool QueueMessageForStm32(Message *response);
 
     /**
      *  @brief Get the next message ID.
@@ -127,7 +127,7 @@ public:
     /**
      *  @brief Set the maximum message size that can be sent through the transport provider.
      */
-    bool SetMaximumMessageSize(uint32_t);
+    bool SetMaximumMessageSize(uint32_t messageSize);
 };
 
 #endif /* _MESSAGE_DISPATCHER_HPP_ */
