@@ -18,6 +18,7 @@
 #include "Exceptions/MultipleInstancesException.hpp"
 #include "Mapping.hpp"
 #include "DebugSettings.hpp"
+#include "Logging.hpp"
 
 #if defined(CONFIG_HEAP_TRACING_STANDALONE) || defined(CONFIG_HEAP_TRACING_TOHOST)
 
@@ -806,6 +807,30 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetWiFiTimeout(uint32_t value)
  */
 
 /**
+ *  @brief Callback to be executed when the NTP time server has provided updated time information.
+ * 
+ *  @param tv
+ *      New time information from the time server.
+ */
+void WiFiRequestHandler::NtpServerCallback(struct timeval *tv)
+{
+    ESP_LOGI(COMPONENT_NAME, "NtpServerCallback: Enter");
+    settimeofday(tv, NULL);
+
+    ESP_LOGI(COMPONENT_NAME, "Setting time to %d", (int) tv->tv_sec);
+
+    Esp32Messaging::IntegerResponse ir;
+    ir.Result = (uint32_t) tv->tv_sec;
+    uint32_t payloadLength = Encoders::EncodedIntegerResponseBufferSize(&ir);
+    uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
+    Encoders::EncodeIntegerResponse(&ir, payload);
+    uint32_t id = _messageDispatcher->GetNextMessageID();
+    Message *timeMessage = Message::CreateOnHeap((uint8_t) MessageTypes::Event, (uint8_t) Esp32Interfaces::WiFi, (uint32_t) WiFiFunction::SetTimeOfDayEvent, 0, id, payload, payloadLength);
+    _messageDispatcher->QueueMessageForStm32(timeMessage);
+    ESP_LOGI(COMPONENT_NAME, "NtpServerCallback: Exit");
+}
+
+/**
  *  @brief Convert the antenna enum into a GPIO pin number
  *
  *  @param antenna
@@ -907,15 +932,20 @@ void WiFiRequestHandler::EventHandlerHelper(esp_event_base_t eventBase, int32_t 
                 ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: Station started");
                 tcpip_adapter_set_hostname(TCPIP_ADAPTER_IF_STA, SystemRequestHandler::GetDeviceName());
                 xEventGroupSetBits(_xWiFiEventGroup, WIFI_STATION_STARTED_BIT);
+                RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::StartInterfaceEvent);
                 break;
             case WIFI_EVENT_STA_STOP:
                 ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: Station stopped");
+                RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::StopInterfaceEvent);
                 break;
             case WIFI_EVENT_STA_CONNECTED:
                 ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: Station connected to access point");
+                RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::ConnectEvent);
                 break;
             case WIFI_EVENT_STA_DISCONNECTED:
+                ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: Station disconnected.");
                 StationDisconnectedEvent(nullptr);
+                RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::DisconnectEvent);
                 break;
         }
     }
@@ -1096,6 +1126,25 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
 
 /**
  *  @brief Disconnect from any access points.
+ */
+StatusCodes::StatusCodes WiFiRequestHandler::DisconnectFromAccessPoint()
+{
+    StatusCodes::StatusCodes sc = StatusCodes::CompletedOk;
+
+    esp_err_t result = esp_wifi_disconnect();
+    if ((result == ESP_OK) || (result == ESP_ERR_WIFI_NOT_STARTED) || (result == ESP_ERR_WIFI_NOT_INIT))
+    {
+        xEventGroupClearBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT | WIFI_RECONNECTING_BIT);
+    }
+    else
+    {
+        sc = StatusCodes::Failure;
+    }
+    return(sc);
+}
+
+/**
+ *  @brief Disconnect from any access points.
  *
  *  @param message
  *      Message containing the encoded request.
@@ -1103,8 +1152,17 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
 void WiFiRequestHandler::DisconnectFromAccessPoint(Message *message)
 {
     ESP_LOGI(COMPONENT_NAME, "DisconnectFromAccessPoint: Enter");
-    // TODO: WiFi - Disconnect from access point.
-    ESP_LOGE(COMPONENT_NAME, "DisconnectFromAccessPoint: Disconnect function is not implemented yet.");
+
+    StatusCodes::StatusCodes sc = DisconnectFromAccessPoint();
+    message->StatusCode = sc;
+    message->MessageType = MessageTypes::Response;
+    _messageDispatcher->QueueMessageForStm32(message);
+
+    if (sc == StatusCodes::CompletedOk)
+    {
+        RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::DisconnectEvent, sc);
+    }
+
     ESP_LOGI(COMPONENT_NAME, "DisconnectFromAccessPoint: Exit");
 }
 
@@ -1117,9 +1175,50 @@ void WiFiRequestHandler::DisconnectFromAccessPoint(Message *message)
 void WiFiRequestHandler::Stop(Message *message)
 {
     ESP_LOGI(COMPONENT_NAME, "Stop: Enter");
-    // TODO: WiFi - Stop network
-    ESP_LOGE(COMPONENT_NAME, "Stop: Stop function is not implemented yet.");
+
+    bool raiseEvent = false;
+    StatusCodes::StatusCodes sc = StatusCodes::CompletedOk;
+    EventBits_t bits = xEventGroupGetBits(_xWiFiEventGroup);
+    if (bits & WIFI_CONNECTED_BIT)
+    {
+        sc = DisconnectFromAccessPoint();
+    }
+    if (sc == StatusCodes::CompletedOk)
+    {
+        if (esp_wifi_stop() == ESP_OK)
+        {
+            xEventGroupClearBits(_xWiFiEventGroup, WIFI_STATION_STARTED_BIT | WIFI_INTERFACE_STARTING_BIT);
+            raiseEvent = true;
+        }
+        else
+        {
+            sc = StatusCodes::Failure;
+        }
+    }
+    message->StatusCode = sc;
+    message->MessageType = MessageTypes::Response;
+    _messageDispatcher->QueueMessageForStm32(message);
+
+    if (raiseEvent)
+    {
+        RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::StopInterfaceEvent, sc);
+    }
+
     ESP_LOGI(COMPONENT_NAME, "Stop: Exit");
+}
+
+/**
+ *  @brief Connect to a specified access point.
+ *
+ *  @param ssid
+ *      SSID of the access point.
+ * 
+ *  @param password
+ *      Password for the access point.
+ */
+void WiFiRequestHandler::ConnectToAccessPoint(const char *ssid, const char *password)
+{
+    
 }
 
 /**
@@ -1189,25 +1288,12 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
                         //  Note that we only need to get the time here.  The timezone is set when this
                         //  class is instanciated or when the SetTimezone method is successfully called.
                         //
+                        ESP_LOGI(COMPONENT_NAME, "Getting time from %s", GetNtpServer());
                         sntp_setoperatingmode(SNTP_OPMODE_POLL);
                         sntp_setservername(0, GetNtpServer());
-                        sntp_set_sync_mode(SNTP_SYNC_MODE_IMMED);
+                        sntp_set_sync_mode(SNTP_SYNC_MODE_SMOOTH);
+                        sntp_set_time_sync_notification_cb(NtpServerCallback);
                         sntp_init();
-                        bool gettingTime = true;
-                        int gettingTimeCount = 0;
-                        while (gettingTime)
-                        {
-                            gettingTimeCount++;
-                            if (gettingTimeCount == 10)     // Restrict number of tries to 1 second.
-                            {
-                                gettingTimeCount = false;
-                            }
-                            else
-                            {
-                                vTaskDelay(100 / portTICK_PERIOD_MS);
-                                gettingTime = (sntp_get_sync_status() != SNTP_SYNC_STATUS_COMPLETED);
-                            }
-                        }
                     }
                 }
                 else
@@ -2402,7 +2488,7 @@ void WiFiRequestHandler::GetSockName(void *vpMessage)
     struct sockaddr sa = {};
     socklen_t saLen = sizeof(sa);
     response.Result = getsockname(request->SocketHandle, &sa, &saLen);
-    if (response.Result > 0)
+    if (response.Result == 0)
     {
         Esp32Messaging::SockAddr *sockAddr = static_cast<Esp32Messaging::SockAddr *>(pvPortMalloc(sizeof(Esp32Messaging::SockAddr)));
         bzero(sockAddr, sizeof(Esp32Messaging::SockAddr));
@@ -2432,6 +2518,7 @@ void WiFiRequestHandler::GetSockName(void *vpMessage)
             Mapping::GetStmValue(Mapping::Errno, EFAULT, &result);
         }
         response.ResponseErrno = result;
+        ESP_LOGE(COMPONENT_NAME, "Failure: Result code %d (%s), errno %d (%s)", response.Result, esp_err_to_name(response.Result), errno, strerror(errno));
     }
     vPortFree(request);
 
@@ -2671,7 +2758,7 @@ void WiFiRequestHandler::CompletedPollRequestProcessor(void *parameters)
                 message->PayloadLength = Encoders::EncodedInterruptPollResponseBufferSize(&response);
                 message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
                 Encoders::EncodeInterruptPollResponse(&response, message->Payload);
-                message->MessageType = MessageTypes::Interrupt;
+                message->MessageType = MessageTypes::Event;
                 message->StatusCode = StatusCodes::CompletedOk;
                 _messageDispatcher->QueueMessageForStm32(message);
             }

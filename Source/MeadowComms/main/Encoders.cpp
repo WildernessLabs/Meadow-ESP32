@@ -3111,4 +3111,73 @@ Esp32Messaging::GetSockNameResponse *Encoders::ExtractGetSockNameResponse(uint8_
     return(getSockNameResponse);
 }
 
+/**
+ *  Convert the EventData object into a byte stream that can be sent to the STM32.
+ *  
+ *  The amount of memory required can be obtained by calling the EncodedEventDataBufferSize method.
+ *  
+ *  @param eventData
+ *      EventData object to be encoded.
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory large enough to hold the encoded EventData object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodeEventData
+void Encoders::EncodeEventData(Esp32Messaging::EventData *eventData, uint8_t *buffer)
+{
+    *buffer = eventData->Interface;
+    buffer += 1;
+    EncodeUInt32(eventData->Function, buffer);
+    buffer += 4;
+    EncodeUInt32(eventData->StatusCode, buffer);
+    buffer += 4;
+    EncodeUInt32(eventData->Payload, buffer);
+    buffer += 4;
+    EncodeUInt32(eventData->PayloadLength, buffer);
+}
+
+/**
+ *  Calculate the amount of memory required to hold the given instance of the EventData object.
+ *  
+ *  @param eventData
+ *      EventData object to be encoded.
+ *  
+ *  @returns
+ *      Number of bytes required to hold the encoded EventData object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodedEventDataBufferSize
+int Encoders::EncodedEventDataBufferSize(Esp32Messaging::EventData *eventData)
+{
+    return(17);
+}
+
+/**
+ *  Extract the EventData object that is encoded in the given buffer.
+ *  
+ *  Note that the returned pointer points to a block of memory on the heap and
+ *  this should eventually be released calling vPortFree(...).
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded EventData object.
+ *  
+ *  @returns
+ *      Pointer to a EventData object.
+ */
+// cppcheck-suppress unusedFunction symbolName=ExtractEventData
+Esp32Messaging::EventData *Encoders::ExtractEventData(uint8_t *buffer)
+{
+    Esp32Messaging::EventData *eventData = (Esp32Messaging::EventData *) pvPortMalloc(sizeof(Esp32Messaging::EventData));
+
+    eventData->Interface = *buffer;
+    buffer += 1;
+    eventData->Function = ExtractUInt32(buffer);
+    buffer += 4;
+    eventData->StatusCode = ExtractUInt32(buffer);
+    buffer += 4;
+    eventData->Payload = ExtractUInt32(buffer);
+    buffer += 4;
+    eventData->PayloadLength = ExtractUInt32(buffer);
+    return(eventData);
+}
+
 

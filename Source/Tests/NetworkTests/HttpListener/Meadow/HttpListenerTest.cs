@@ -17,15 +17,22 @@ namespace MeadowApp
         /// </summary>
         public HttpListenerTest()
         {
-            Console.WriteLine("Connecting to network.");
+            Console.WriteLine("Creating HttpListenerTest object.");
             MeadowOS.WatchdogEnable(25000);
             StartWatchdog(20000);
             Device.InitWiFiAdapter().Wait();
+            Device.WiFiAdapter.ConnectionCompleted += WiFiAdapter_ConnectionCompleted;
+            Console.WriteLine("Connecting to access point.");
             if (Device.WiFiAdapter.Connect(Secrets.WIFI_NAME, Secrets.WIFI_PASSWORD).ConnectionStatus != ConnectionStatus.Success)
             {
                 throw new Exception("Cannot connect to network, application halted.");
             }
             Console.WriteLine("WiFi connection completed.");
+        }
+
+        private void WiFiAdapter_ConnectionCompleted(object sender, EventArgs e)
+        {
+            Console.WriteLine("WiFiAdapter_ConnectionCompleted: connected to access point.");
         }
 
         void StartWatchdog(int interval)
@@ -45,7 +52,8 @@ namespace MeadowApp
         public void RunTest()
         {
             HttpListener listener;
-            string url = "http://192.168.1.208/";
+            string url = "http://192.168.1.211/";
+            int connectionNumber = 0;
 
             if (!HttpListener.IsSupported)
             {
@@ -59,26 +67,31 @@ namespace MeadowApp
             listener.Start();
             Console.WriteLine("Listening for connections on {0}", url);
 
-            Console.WriteLine("Getting listener context.");
-            HttpListenerContext context = listener.GetContext();
+            while (true)
+            {
+                Console.WriteLine("Getting listener context.");
+                HttpListenerContext context = listener.GetContext();
 
-            Console.WriteLine("Getting request from the context.");
-            HttpListenerRequest request = context.Request;
+                Console.WriteLine("Getting request from the context.");
+                HttpListenerRequest request = context.Request;
 
-            Console.WriteLine("Getting response from the context context.");
-            HttpListenerResponse response = context.Response;
+                Console.WriteLine("Getting response from the context context.");
+                HttpListenerResponse response = context.Response;
 
-            Console.WriteLine("Getting listener context.");
-            string responseString = "<HTML><BODY> Hello world!</BODY></HTML>";
-            byte[] buffer = System.Text.Encoding.UTF8.GetBytes(responseString);
-            response.ContentLength64 = buffer.Length;
-            System.IO.Stream output = response.OutputStream;
+                Console.WriteLine("Getting listener context.");
 
-            Console.WriteLine("Writing response.");
-            output.Write(buffer, 0, buffer.Length);
+                connectionNumber++;
+                string responseString = $"<HTML><BODY><h1>Hello world!</h1><p>Connection {connectionNumber}</p></BODY></HTML>";
+                byte[] buffer = System.Text.Encoding.UTF8.GetBytes(responseString);
+                response.ContentLength64 = buffer.Length;
+                System.IO.Stream output = response.OutputStream;
 
-            Console.WriteLine("Closing the output stream.");
-            output.Close();
+                Console.WriteLine("Writing response.");
+                output.Write(buffer, 0, buffer.Length);
+
+                Console.WriteLine("Closing the output stream.");
+                output.Close();
+            }
 
             Console.WriteLine("Getting stopping the listener.");
             listener.Stop();
