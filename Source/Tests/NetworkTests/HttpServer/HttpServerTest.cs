@@ -14,7 +14,6 @@ namespace MeadowApp
     public class HttpServerTest : App<F7Micro, HttpServerTest>
     {
         public static HttpListener listener;
-        public static string url = "http://192.168.1.211:80/";
         public static int pageViews = 0;
         public static int requestCount = 0;
         public static string pageData =
@@ -37,8 +36,13 @@ namespace MeadowApp
         public HttpServerTest()
         {
             Console.WriteLine("Creating HttpListenerTest object.");
+
+            //
+            //  Commenting out the following two lines will allow the application to run.
+            //
             MeadowOS.WatchdogEnable(25000);
             StartWatchdog(20000);
+
             Device.InitWiFiAdapter().Wait();
             Device.WiFiAdapter.WiFiConnected += WiFiAdapter_WiFiConnected;
             Console.WriteLine("Connecting to access point.");
@@ -114,9 +118,10 @@ namespace MeadowApp
         public void RunTest()
         {
             listener = new HttpListener();
+            string url = $"http://{Device.WiFiAdapter.IpAddress.ToString()}/";
             listener.Prefixes.Add(url);
             listener.Start();
-            Console.WriteLine("Listening for connections on {0}", url);
+            Console.WriteLine($"Listening for connections on {url}");
 
             // Handle requests
             Task listenTask = HandleIncomingConnections();
