@@ -6,8 +6,14 @@
 
 #include "Uuid.hpp"
 #include "BluetoothCharacteristic.hpp"
+#include "BluetoothHandleManager.hpp"
 
 using namespace std;
+
+typedef std::function<void(BluetoothService *)> ServiceAdded;
+typedef std::function<void(BluetoothCharacteristic *)> CharacteristicAdded;
+
+class BluetoothHandleManager;
 
 class BluetoothService
 {
@@ -18,11 +24,16 @@ class BluetoothService
         BluetoothService(char* name, uint8_t* uuid);
         BluetoothCharacteristic& AddCharacteristic(BluetoothCharacteristic *characteristic);
 
+        CharacteristicAdded OnCharacteristicAdded = NULL;
+
         std::string Name;
         Uuid128 Uuid;
+        unsigned short Handle;
 
+        void SetHandleManager(BluetoothHandleManager *handleManager) { _handleManager = handleManager; }
     private:
         vector<BluetoothCharacteristic*> _characteristics;
+        BluetoothHandleManager* _handleManager;
 };
 
 #endif
