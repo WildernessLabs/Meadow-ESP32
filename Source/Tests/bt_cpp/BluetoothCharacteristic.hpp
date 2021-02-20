@@ -14,10 +14,8 @@ class BluetoothService;
 
 class BluetoothCharacteristic
 {
-    private:
-        BluetoothService *ParentService;
-
     public:
+        BluetoothService *ParentService;
 
         BluetoothCharacteristic(uint16_t uuid, CharacteristicPermission permission, CharacteristicProperty property);
 
