@@ -1,0 +1,20 @@
+trigger:
+- develop
+
+pool: WL-Linux
+
+steps:
+- script: git clean -xfd
+- script: cd Source/MeadowComms && docker run --rm -v $PWD:/project -w /project espressif/idf:release-v4.2 idf.py build
+- task: CopyFiles@2
+  inputs:
+    contents: |
+      Source/MeadowComms/build/MeadowComms.bin
+      Source/MeadowComms/build/bootloader/bootloader.bin
+      Source/MeadowComms/build/partition_table/partition-table.bin
+    targetFolder: '$(Build.ArtifactStagingDirectory)'
+    flattenFolders: true
+- task: PublishBuildArtifacts@1
+  inputs:
+    pathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    artifactName: network

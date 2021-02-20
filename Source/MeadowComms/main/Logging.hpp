@@ -127,62 +127,62 @@ public:
     /**
      *  @brief Process the request to output an informational message to the logging system.
      */
-    static void Information(char *, char *, ...);
+    static void Information(char *methodName, char *formatString, ...);
 
     /**
      *  @brief Process the request to output an error message to the logging system
      */
-    static void Error(char *, char *, ...);
+    static void Error(char *methodName, char *formatString, ...);
 
     /**
      *  @brief Convert a message type into a meaningful string.
      */
-    static char *MessageTypeName(uint8_t);
+    static char *MessageTypeName(uint8_t type);
 
     /**
      *  @brief Convert the interface enum (Esp32Interfaces) from an interface type into a string name.
      */
-    static char *InterfaceName(uint32_t);
+    static char *InterfaceName(uint32_t interface);
 
     /**
      *  @brief Convert the request enum into a WiFi message name.
      */
-    static char *WiFiFunctionName(uint32_t);
+    static char *WiFiFunctionName(uint32_t function);
 
     /**
      *  @brief Convert the request enum into a System message name.
      */
-    static char *SystemFunctionName(uint32_t);
+    static char *SystemFunctionName(uint32_t function);
 
     /**
      *  @brief Convert the request enum into a Bluetooth message name.
      */
-    static char *BluetoothFunctionName(uint32_t);
+    static char *BluetoothFunctionName(uint32_t function);
 
     /**
      *  @brief Convert the request enum into a Transport message name.
      */
-    static char *TransportFunctionName(uint32_t);
+    static char *TransportFunctionName(uint32_t function);
 
     /**
      *  @brief Convert the specified function ID into a string name.  The function name will vary between the interfaces.
      */
-    static char *FunctionName(uint32_t, uint32_t);
+    static char *FunctionName(uint32_t interface, uint32_t function);
 
     /**
      *  @brief Convert a status code into a meaningful name.
      */
-    static char *StatusCodeName(uint32_t);
+    static char *StatusCodeName(uint32_t code);
 
     /**
      *  @brief Decode the message structure and output the components.
      */
-    static void DumpMessage(const char *, const Message *);
+    static void DumpMessage(const char *componentName, const Message *message);
 
     /**
      *  @brief Add an entry to the table of performance counters.
      */
-    static void AddPerformanceCounterEntry(const char *, int64_t, int64_t);
+    static void AddPerformanceCounterEntry(const char *method, int64_t start, int64_t end);
 
     /**
      *  @brief Dump the table of performance counters.
@@ -192,7 +192,7 @@ public:
     /**
      *  @brief Generate a single line summary of the message.
      */
-    static char *MessageSummary(const Message *);
+    static char *MessageSummary(const Message *message);
 };
 
 

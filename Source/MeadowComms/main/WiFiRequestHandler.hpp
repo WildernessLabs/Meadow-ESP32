@@ -420,54 +420,64 @@ private:
     /**
      *  @brief This method will dispatch incoming messages to the appropriate request handler.
      */
-    void DispatchRequest(Message *) override;
+    void DispatchRequest(Message *request) override;
 
     /**
      *  @brief Instance helper method for the static EventHandler method.
      */
-    void EventHandlerHelper(esp_event_base_t, int32_t, void *);
+    void EventHandlerHelper(esp_event_base_t eventBase, int32_t eventId, void *eventData);
 
     /**
      * @brief  Method that will compare two poll requests IDs and determine if they are the same.
      * 
      *  This method is used with the list of poll requests.
      */
-    static bool ComparePollRequestMessageIds(uint32_t, PollRequestInformation *);
+    static bool ComparePollRequestMessageIds(uint32_t messageId, PollRequestInformation *request);
+
+    /**
+     *  @brief Disconnect from any access points.
+     */
+    StatusCodes::StatusCodes DisconnectFromAccessPoint();
 
     /**
      *  @brief Disconnect from the current access point.
      */
-    void DisconnectFromAccessPoint(Message *);
+    void DisconnectFromAccessPoint(Message *message);
+
+    /**
+     *  @brief Connect to the specified access point starting the network interface if necessary.
+     */
+    void ConnectToAccessPoint(const char *ssid, const char *password);
 
     /**
      *  @brief Connect to an access point.
      */
-    void ConnectToAccessPoint(Message *);
+    void ConnectToAccessPoint(Message *message);
 
     /**
      *  @brief Stop the WiFi and release all resources.
      */
-    void Stop(Message *);
+    void Stop(Message *message);
 
     /**
      *  @brief Start the network.
      */
-    void StartNetwork(Message *);
+    void StartNetwork(Message *message);
 
     /**
      *  @brief Get a list of available access points.
      */
-    void GetAvailableNetworks(Message *);
+    void GetAvailableNetworks(Message *message);
 
     /**
      *  @brief Convert the Antenna enum representation of an antenna into a GPIO pin number.
      */
-    static gpio_num_t ConvertAntennaToPin(AntennaTypes::AntennaTypes);
+    static gpio_num_t ConvertAntennaToPin(AntennaTypes::AntennaTypes antenna);
 
     /**
      *  @brief Change the current antenna and activate it.
      */
-    static void SwitchAntenna(AntennaTypes::AntennaTypes);
+    static void SwitchAntenna(AntennaTypes::AntennaTypes newAntenna);
 
     /**
      *  @brief Private constructor for the class.
@@ -485,24 +495,19 @@ private:
     void StationGotIpEvent();
 
     /**
-     *  @brief Connect to the specified access point starting the network interface if necessary.
-     */
-    void ConnectToAccessPoint(char *, char *);
-
-    /**
      *  @brief Processes the station disconnected event.
      */
-    void StationDisconnectedEvent(system_event_t *);
+    void StationDisconnectedEvent(system_event_t *eventData);
 
     /**
      *  @brief Method that will deal with poll requests.
      */
-    static void PollRequestProcessor(void *);
+    static void PollRequestProcessor(void *parameters);
 
     /**
      *  @brief Method that will deal with completed poll requests.
      */
-    static void CompletedPollRequestProcessor(void *);
+    static void CompletedPollRequestProcessor(void *parameters);
 
     //----------------------------------------------------------------------
     //
@@ -511,87 +516,92 @@ private:
     /**
      *  @brief Provide a mechanism for the STM32 to call the getaddrinfo method.
      */
-    static void GetAddrInfo(void *);
+    static void GetAddrInfo(void *vpMessage);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the socket method.
      */
-    static void Socket(void *);
+    static void Socket(void *vpMessage);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the connect method.
      */
-    static void Connect(void *);
+    static void Connect(void *vpMessage);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the freeaddrinfo method.
      */
-    static void FreeAddrInfo(void *);
+    static void FreeAddrInfo(void *vpMessage);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the write method.
      */
-    static void Write(void *);
+    static void Write(void *vpMessage);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the setsockopt method.
      */
-    static void SetSockOpt(void *);
+    static void SetSockOpt(void *vpMessage);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the read method.
      */
-    static void Read(void *);
+    static void Read(void *vpMessage);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the close method.
      */
-    static void Close(void *);
+    static void Close(void *vpMessage);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the sendto method.
      */
-    static void SendTo(void *);
+    static void SendTo(void *vpMessage);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the send method.
      */
-    static void Send(void *);
+    static void Send(void *vpMessage);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the recvfrom method.
      */
-    static void RecvFrom(void *);
+    static void RecvFrom(void *vpMessage);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the poll method.
      */
-    static void Poll(void *);
+    static void Poll(void *vpMessage);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the bind method.
      */
-    static void Bind(void *);
+    static void Bind(void *vpMessage);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the listen method.
      */
-    static void Listen(void *);
+    static void Listen(void *vpMessage);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the accept method.
      */
-    static void Accept(void *);
+    static void Accept(void *vpMessage);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the simulated ioctl method.
      */
-    static void Ioctl(void *);
+    static void Ioctl(void *vpMessage);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the simulated getsockname method.
      */
-    static void GetSockName(void *);
+    static void GetSockName(void *vpMessage);
+
+    /**
+     *  @brief Method called when the time server has supplied updated time information.
+     */
+    static void NtpServerCallback(struct timeval *tv);
 
 public:
     /**
@@ -602,7 +612,7 @@ public:
     /**
      *  @brief Constructor for the WiFi object.
      */
-    explicit WiFiRequestHandler(MessageDispatcher *);
+    explicit WiFiRequestHandler(MessageDispatcher *messageDispatcher);
 
     /**
      *  @brief Perform and class level setup required before an instance can be used.
@@ -621,99 +631,99 @@ public:
      *  It merely passes the event on to an internal private event handler
      *  within the class.
      */
-    static void EventHandler(void *, esp_event_base_t, int32_t, void *);
+    static void EventHandler(void *arg, esp_event_base_t eventBase, int32_t eventId, void *eventData);
 
     /**
      *  @brief Get / Set the maximum number of retry attempts.
      */
     static uint32_t GetMaximumRetryCount();
-    static StatusCodes::StatusCodes SetMaximumRetryCount(uint32_t);
+    static StatusCodes::StatusCodes SetMaximumRetryCount(uint32_t value);
 
     /**
      *  @brief Get / Set the automatic reconnect property.
      */
     static bool GetAutomaticReconnect();
-    static StatusCodes::StatusCodes SetAutomaticReconnect(bool);
+    static StatusCodes::StatusCodes SetAutomaticReconnect(bool value);
 
     /**
      *  @brief Get / Set the automatically start network property.
      */
     static bool GetAutomaticallyStartNetwork();
-    static StatusCodes::StatusCodes SetAutomaticallyStartNetwork(bool);
+    static StatusCodes::StatusCodes SetAutomaticallyStartNetwork(bool value);
 
     /**
      *  @brief Get / Set the get time a startup configuration value.
      */
     static bool GetGetTimeAtStartup();
-    static StatusCodes::StatusCodes SetGetTimeAtStartup(bool);
+    static StatusCodes::StatusCodes SetGetTimeAtStartup(bool value);
 
     /**
      *  @brief Get / Set the get time a startup configuration value.
      */
     static bool GetUseDhcp();
-    static StatusCodes::StatusCodes SetUseDhcp(bool);
+    static StatusCodes::StatusCodes SetUseDhcp(bool value);
 
     /**
      *  @brief Get / Set the NTP server to be used when getting the time
      *  at startup.
      */
     static char *GetNtpServer();
-    static StatusCodes::StatusCodes SetNtpServer(char *);
+    static StatusCodes::StatusCodes SetNtpServer(char *value);
 
     /**
      *  @brief Get / Set the timezone for the system.
      */
     static char *GetTimezone();
-    static StatusCodes::StatusCodes SetTimezone(char *);
+    static StatusCodes::StatusCodes SetTimezone(char *value);
 
     /**
      *  @brief Get / Set the name of the default access point to be used when
      *  the board starts.
      */
     static char *GetDefaultAccessPoint();
-    static StatusCodes::StatusCodes SetDefaultAccessPoint(char *);
+    static StatusCodes::StatusCodes SetDefaultAccessPoint(char *value);
 
     /**
      *  @brief Get / Set the password for the default access point.
      */
     static char *GetPassword();
-    static StatusCodes::StatusCodes SetPassword(char *);
+    static StatusCodes::StatusCodes SetPassword(char *value);
 
     /**
      *  @brief Get / set the default IP address when not using DHCP.
      */
     static uint32_t GetIpAddress();
-    static StatusCodes::StatusCodes SetIpAddress(uint32_t);
+    static StatusCodes::StatusCodes SetIpAddress(uint32_t value);
 
     /**
      *  @brief Get / set the IP address of the DNS server to be used when not using DHCP.
      */
     static uint32_t GetDnsServer();
-    static StatusCodes::StatusCodes SetDnsServer(uint32_t);
+    static StatusCodes::StatusCodes SetDnsServer(uint32_t value);
 
     /**
      *  @brief Get / set the IP address of the default gateway.
      */
     static uint32_t GetDefaultGateway();
-    static StatusCodes::StatusCodes SetDefaultGateway(uint32_t);
+    static StatusCodes::StatusCodes SetDefaultGateway(uint32_t value);
 
     /**
      *  @brief Get / Set the MAC address of the interface.
      */
-    static void GetMacAddress(uint8_t *, esp_interface_t);
-    static StatusCodes::StatusCodes SetMacAddress(uint8_t *, esp_interface_t);
+    static void GetMacAddress(uint8_t *macAddress, esp_interface_t interface);
+    static StatusCodes::StatusCodes SetMacAddress(uint8_t *macAddress, esp_interface_t interface);
 
     /**
      *  @brief Get / Set the current antenna in use.
      */
     static uint8_t GetAntenna();
-    static StatusCodes::StatusCodes SetAntenna(uint8_t);
+    static StatusCodes::StatusCodes SetAntenna(uint8_t antenna);
 
     /**
      *  @brief Get / Set the WiFi timeout value.
      */
     static uint32_t GetWiFiTimeout();
-    static StatusCodes::StatusCodes SetWiFiTimeout(uint32_t);
+    static StatusCodes::StatusCodes SetWiFiTimeout(uint32_t value);
 };
 
 #endif /* _WIFI_REQUEST_HANDLER_HPP_ */

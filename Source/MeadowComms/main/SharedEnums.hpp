@@ -75,7 +75,8 @@ namespace SystemFunction
         GetConfiguration = 0,
         SetConfigurationItem = 1,
         DeepSleep = 2,
-        GetBatteryChargeLevel = 3
+        GetBatteryChargeLevel = 3,
+        ErrorEvent = 4
     };
 
 }
@@ -109,7 +110,12 @@ namespace WiFiFunction
         Listen = 19,
         Accept = 20,
         Ioctl = 21,
-        GetSockName = 22
+        GetSockName = 22,
+        SetTimeOfDayEvent = 23,
+        ConnectEvent = 24,
+        DisconnectEvent = 25,
+        StartInterfaceEvent = 26,
+        StopInterfaceEvent = 27
     };
 
 }
@@ -151,7 +157,7 @@ enum MessageTypes : uint8_t
     Ack = 0x00,
     Nak = 0x01,
     Reset = 0x02,
-    Interrupt = 0x04,
+    Event = 0x04,
     Response = 0x10,
     Transport = 0x20,
     Header = 0x40,

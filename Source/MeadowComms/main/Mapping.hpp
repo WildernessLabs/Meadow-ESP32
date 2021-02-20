@@ -96,13 +96,13 @@ private:
      *  @brief Get the mapped value using the MappingDirection to determine which
      *  value should be retrieved.
      */
-    static int32_t GetFlagValue(Mapping::MappingTable, MappingDirection, int32_t, int32_t *);
+    static int32_t GetFlagValue(Mapping::MappingTable mapping, MappingDirection type, int32_t value, int32_t *mappedValue);
 
     /**
      *  @brief Get the mapped flags using the MappingDirection to determine which
      *  value should be retrieved.
      */
-    static int32_t GetValue(Mapping::MappingTable, MappingDirection, int32_t, int32_t *);
+    static int32_t GetValue(Mapping::MappingTable mapping, MappingDirection type, int32_t value, int32_t *result);
 
 public:
     /**
@@ -118,22 +118,22 @@ public:
     /**
      *  @brief Get the integer ESP32 value equivalent to the specified STM32 value.
      */
-    static int32_t GetEspValue(MappingTable, int32_t, int32_t *);
+    static int32_t GetEspValue(Mapping::MappingTable mapping, int32_t value, int32_t *result);
 
     /**
      *  @brief Get the integer STM32 value equivalent to the specified ESP32 value.
      */
-    static int32_t GetStmValue(MappingTable, int32_t, int32_t *);
+    static int32_t GetStmValue(Mapping::MappingTable mapping, int32_t value, int32_t *result);
 
     /**
      *  @brief Get the integer ESP32 value equivalent to the specified STM32 value.
      */
-    static int32_t GetEspFlagValue(MappingTable, int32_t, int32_t *);
+    static int32_t GetEspFlagValue(Mapping::MappingTable mapping, int32_t value, int32_t *result);
 
     /**
      *  @brief Get the integer STM32 value equivalent to the specified ESP32 value.
      */
-    static int32_t GetStmFlagValue(MappingTable, int32_t, int32_t *);
+    static int32_t GetStmFlagValue(Mapping::MappingTable mapping, int32_t value, int32_t *result);
 };
 
 #endif /* MAIN_MAPPING_HPP */

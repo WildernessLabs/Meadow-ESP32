@@ -56,7 +56,7 @@ public:
     /**
      *  @brief Create a ThreadPool of the specified size.
      */
-    explicit ThreadPool(uint32_t);
+    explicit ThreadPool(uint32_t numberOfThreads);
 
     /**
      *  @brief Destructor.
@@ -66,7 +66,7 @@ public:
     /**
      *  @brief Use of the the thread to execute a method.
      */
-    void Execute(method_t, void *);
+    void Execute(method_t method, void *parameter);
 
     /**
      *  @brief A call back method to allow a thread to inform the ThreadPool that is has completed a task an is available.
