@@ -16,6 +16,9 @@ static const uint16_t characteristic_declaration_uuid = 0x2803;
 
 int main()
 {
+    // if you're reading this and wondering "why didn't he use a unit test framework?"
+    // go take a look at the 50-steps required to use a C++ test framework in VS Code for Mac
+
     printf("Starting...\r\n");
     BluetoothManager manager;
 
@@ -31,6 +34,9 @@ int main()
             new BluetoothCharacteristic(0x2a56, CharacteristicPermission::ReadEncrypted, CharacteristicProperty::Notify)
         ); 
 
+    // service count should be 1
+    auto count = manager.Services.Count();
+
     // try re-adding the same service - no action should happen
     manager
         .Services
@@ -38,14 +44,19 @@ int main()
             new BluetoothService("Service 1", service_uuid1)
         );
 
+    // service count should STILL be 1
+    count = manager.Services.Count();
 
     auto existing = manager.Services.Find(service_uuid1);
 
 
     // try re-adding the service, with the same characteristic - no action should happen
+    manager.Services.Add(existing);
 
     // try re-adding the service, with a new characteristic
-
+    existing->AddCharacteristic(
+            new BluetoothCharacteristic(0x2a57, CharacteristicPermission::ReadEncrypted, CharacteristicProperty::Notify)
+    );
 
 //        .AddCharacteristic(
 //            new BluetoothCharacteristic("Characteristic A", 0x2a56)

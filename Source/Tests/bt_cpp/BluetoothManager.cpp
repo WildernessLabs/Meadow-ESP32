@@ -1,51 +1,18 @@
 #include "BluetoothManager.hpp"
 
-/*
-BluetoothService& BluetoothManager::AddService(BluetoothService *service)
+BluetoothManager::BluetoothManager()
+    : Services(&this->_handleManager)
 {
-    // do we already know about this service?  If so, ignore 
-    bool exists = false;
-
-    for (auto it = _services.begin() ; it != _services.end(); ++it) {
-        auto svc = (BluetoothService*)*it;
-
-        if(svc->Uuid == service->Uuid) {
-            printf("Already exists.  Skipping\n");
-            exists = true;
-            break;
-        }
-    }
-
-    if(!exists) {
-        printf("Adding service...\n");
-        // TODO: make a callback so this can be added to the stack
-        _services.push_back(service);
-    }
-
-    printf("%i services known\n", _services.size());
-
-    return *service;
+    Services.OnServiceAdded = &BluetoothManager::HandleServiceAdded;
+    Services.OnCharacteristicAdded = &BluetoothManager::HandleCharacteristicAdded;
 }
 
-BluetoothService* BluetoothManager::FindService(uint8_t *uuid)
+void BluetoothManager::HandleServiceAdded(BluetoothService *service)
 {
-    return FindService(Uuid128(uuid));    
+    printf("New Service: 0x%04X (%s)\n", service->Handle,  service->Name.c_str());
 }
 
-BluetoothService* BluetoothManager::FindService(Uuid128 uuid)
+void BluetoothManager::HandleCharacteristicAdded(BluetoothCharacteristic *characteristic)
 {
-    // do we already know about this service?  If so, ignore 
-    bool exists = false;
-
-    for (auto it = _services.begin() ; it != _services.end(); ++it) {
-        auto svc = (BluetoothService*)*it;
-
-        if(svc->Uuid == uuid) {
-            printf("Found service with matching UUID\n");
-            return svc;
-        }
-    }
-
-    return NULL;
+    printf("New Characteristic: declaration @ 0x%04X value @ 0x%04X\n", characteristic->Declaration->Handle,  characteristic->Value->Handle);
 }
-*/

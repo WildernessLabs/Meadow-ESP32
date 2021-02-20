@@ -16,14 +16,32 @@ BluetoothService& BluetoothServiceCollection::Add(BluetoothService *service)
     }
 
     if(!exists) {
-        printf("Adding service...\n");
-        // TODO: make a callback so this can be added to the stack
+        //printf("Adding service...\n");
         _services.push_back(service);
+        service->SetHandleManager(this->_handleManager);
+        _handleManager->Assign(service);
+
+        // instance method callback binding.  Yay, c++!
+        service->OnCharacteristicAdded = std::bind(&BluetoothServiceCollection::HandleServiceCharacteristicAdded, this, std::placeholders::_1);
+
+        if(OnServiceAdded != NULL)
+        {
+            OnServiceAdded(service);
+        }
     }
 
     printf("%i services known\n", _services.size());
 
     return *service;
+}
+
+void BluetoothServiceCollection::HandleServiceCharacteristicAdded(BluetoothCharacteristic *characteristic)
+{
+    // pass the event upstream
+    if(OnCharacteristicAdded)
+    {
+        OnCharacteristicAdded(characteristic);
+    }
 }
 
 BluetoothService* BluetoothServiceCollection::Find(uint8_t *uuid)
