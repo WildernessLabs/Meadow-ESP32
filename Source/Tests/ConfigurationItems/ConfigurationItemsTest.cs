@@ -27,6 +27,16 @@ namespace BasicNetworkTest
 
         #region Methods
 
+        private void Log(string message)
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.Clear();
+            sb.Append(DateTime.Now.ToString("HH:mm:ss"));
+            sb.Append(" - ");
+            sb.Append(message);
+            Console.WriteLine(sb.ToString());
+        }
+
         /// <summary>
         /// Convert a MAC address into a series of bytes separated by colns.
         /// </summary>
@@ -56,6 +66,8 @@ namespace BasicNetworkTest
         public void RunTest()
         {
             Console.WriteLine("Getting ESP32 Configuration.");
+            string date = DateTime.Now.ToString("dd MMM yyyy HH:mm:ss");
+            Console.WriteLine($"Current time; {date}");
             Console.WriteLine($"Device name: {Device.WiFiAdapter.DeviceName}");
             Console.WriteLine($"Get network time at startup: {Device.WiFiAdapter.GetNetworkTimeAtStartup}");
             Console.WriteLine($"NTP Server: {Device.WiFiAdapter.NtpServer}");

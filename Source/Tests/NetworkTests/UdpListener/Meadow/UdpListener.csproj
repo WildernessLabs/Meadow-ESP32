@@ -28,9 +28,6 @@
     <ExternalConsole>true</ExternalConsole>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Meadow, Version=0.18.0.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>bin\Debug\Meadow.dll</HintPath>
-    </Reference>
     <Reference Include="Meadow.Foundation">
       <HintPath>packages\Meadow.Foundation.0.17.0\lib\net472\Meadow.Foundation.dll</HintPath>
     </Reference>
@@ -51,6 +48,9 @@
     </Reference>
     <Reference Include="System.Net.Http">
       <HintPath>packages\WildernessLabs.Meadow.Assemblies.0.3.0\lib\net472\System.Net.Http.dll</HintPath>
+    </Reference>
+    <Reference Include="Meadow">
+      <HintPath>bin\Debug\Meadow.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>

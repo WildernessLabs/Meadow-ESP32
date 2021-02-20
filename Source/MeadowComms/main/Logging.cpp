@@ -11,6 +11,13 @@
 #include "SharedEnums.hpp"
 #include "Logging.hpp"
 
+#include "NvsManager.hpp"
+#include "MessageDispatcher.hpp"
+#include "SpiTransportProvider.hpp"
+#include "WiFiRequestHandler.hpp"
+#include "SpiTransportProvider.hpp"
+
+
 #if defined(PERFORMANCE_LOGGING)
 
 #warning "Performance logging is enabled."
@@ -97,6 +104,46 @@ Logging::~Logging()
  */
 void Logging::Setup()
 {
+    esp_log_level_set("*", ESP_LOG_NONE);
+
+#if defined(DEBUG) || defined(WIFI_DEBUG) || defined(SPI_DEBUG) || defined(THREAD_DEBUG) || defined(SYSTEM_DEBUG)
+    #warning "Debug is enabled."
+    esp_log_level_set("AppMain", ESP_LOG_INFO);
+#endif
+
+#if defined(WIFI_DEBUG) || defined(SYSTEM_DEBUG)
+    //
+    //  We enable the RequestHandlerBase as it is the base class for the WiFi, System etc. request handlers.
+    //
+    esp_log_level_set(RequestHandlerBase::COMPONENT_NAME, ESP_LOG_INFO);
+    esp_log_level_set(TransportProviderBase::COMPONENT_NAME, ESP_LOG_INFO);
+#endif
+
+#if defined(WIFI_DEBUG)
+    #warning "WIFI debugging is enabled."
+    esp_log_level_set(WiFiRequestHandler::COMPONENT_NAME, ESP_LOG_INFO);
+#endif
+
+#if defined(SPI_DEBUG)
+    #warning "SPI debugging is enabled."
+    esp_log_level_set(SpiTransportProvider::COMPONENT_NAME, ESP_LOG_INFO);
+#endif
+
+#if defined(THREAD_DEBUG)
+    #warning "ThreadPool debugging is enabled."
+    esp_log_level_set(Thread::COMPONENT_NAME, ESP_LOG_INFO);
+#endif
+
+#if defined(BT_DEBUG)
+    #warning "Bluetooth debugging is enabled."
+    esp_log_level_set(Thread::COMPONENT_NAME, ESP_LOG_INFO);
+#endif
+
+#if defined(SYSTEM_DEBUG)
+    #warning "System debugging is enabled."
+    esp_log_level_set(SystemRequestHandler::COMPONENT_NAME, ESP_LOG_INFO);
+#endif
+
     const uart_config_t loggingUARTConfig =
     {
         .baud_rate = 115200,
@@ -165,8 +212,8 @@ char *Logging::MessageTypeName(uint8_t type)
         case MessageTypes::Reset:
             return((char *) "Reset");
             break;
-        case MessageTypes::Interrupt:
-            return((char *) "Interrupt");
+        case MessageTypes::Event:
+            return((char *) "Event");
             break;
         case MessageTypes::Response:
             return((char *) "Response");
@@ -299,6 +346,21 @@ char *Logging::WiFiFunctionName(uint32_t function)
             break;
         case WiFiFunction::GetSockName:
             return((char *) "GetSockName");
+            break;
+        case WiFiFunction::SetTimeOfDayEvent:
+            return((char *) "SetTimeOfDayEvent");
+            break;
+        case WiFiFunction::StartInterfaceEvent:
+            return((char *) "StartInterfaceEvent");
+            break;
+        case WiFiFunction::StopInterfaceEvent:
+            return((char *) "StopInterfaceEvent");
+            break;
+        case WiFiFunction::ConnectEvent:
+            return((char *) "ConnectEvent");
+            break;
+        case WiFiFunction::DisconnectEvent:
+            return((char *) "DisconnectEvent");
             break;
         default:
             return((char *) "Unknown");

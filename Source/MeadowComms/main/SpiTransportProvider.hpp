@@ -133,7 +133,7 @@ private:
      *  Note this this method is static as it is used as a callback
      *  in some C code.
      */
-    static void SpiPostTransmissionCallback(spi_slave_transaction_t *);
+    static void SpiPostTransmissionCallback(spi_slave_transaction_t *transaction);
 
     /**
      *  @brief SPI Setup Complete Callback
@@ -146,17 +146,17 @@ private:
     /**
      *  @brief Send an ACK or NAK with the specified code.
      */
-    spi_slave_transaction_t *CreateAcknowledgementTransaction(Message *, StatusCodes::StatusCodes, uint8_t);
+    spi_slave_transaction_t *CreateAcknowledgementTransaction(Message *message, StatusCodes::StatusCodes code, uint8_t messageType);
 
     /**
      *  @brief Create a new SPI transaction that will send the message body.
      */
-    spi_slave_transaction_t *CreateSpiMessageTransaction(Message *);
+    spi_slave_transaction_t *CreateSpiMessageTransaction(Message *message);
 
     /**
      *  @brief Encode a header or transport message.
      */
-    void EncodeHeaderMessage(spi_slave_transaction_t *, Message *);
+    void EncodeHeaderMessage(spi_slave_transaction_t *transaction, Message *message);
 
     /**
      *  @brief FreeRTOS task handler for this class.
@@ -171,7 +171,7 @@ private:
     /**
      *  @brief Convert the current state into a string message for debugging.
      */
-    const char *SpiStateString(SpiStates);
+    const char *SpiStateString(SpiStates state);
 
     /**
      *  @brief Delete the SPI transaction and clear up and buffers;
@@ -198,64 +198,64 @@ private:
     /**
      *  @brief Process an inbound transport request.
      */
-    spi_slave_transaction_t *ProcessTransportMessage(Message *);
+    spi_slave_transaction_t *ProcessTransportMessage(Message *request);
 
     /**
      *  @brief Start to process incoming messages (i.e. move from the idle state
      *  into one where the ESP32 is sending or receiving data).
      */
-    spi_slave_transaction_t *InboundMessageHeaderReceived(spi_slave_transaction_t *);
+    spi_slave_transaction_t *InboundMessageHeaderReceived(spi_slave_transaction_t *transaction);
 
     /**
      *  @brief Implement the incoming message header acknowledgement process.
      */
-    spi_slave_transaction_t *InboundMessageHeaderAcknowledged(spi_slave_transaction_t *);
+    spi_slave_transaction_t *InboundMessageHeaderAcknowledged(spi_slave_transaction_t *transaction);
 
     /**
      *  @brief Implement the incoming message header reception process.
      */
-    spi_slave_transaction_t *ProcessWaitingForMessageHeaderState(spi_slave_transaction_t *);
+    spi_slave_transaction_t *ProcessWaitingForMessageHeaderState(spi_slave_transaction_t *transaction);
 
     /**
      *  @brief Implement the incoming message body reception process.
      */
-    spi_slave_transaction_t *InboundMessageBodyReceived(spi_slave_transaction_t *);
+    spi_slave_transaction_t *InboundMessageBodyReceived(spi_slave_transaction_t *transaction);
 
     /**
      *  @brief Implement the incoming message body acknowledgement process.
      */
-    spi_slave_transaction_t *InboundMessageBodyAcknowledged(spi_slave_transaction_t *);
+    spi_slave_transaction_t *InboundMessageBodyAcknowledged(spi_slave_transaction_t *transaction);
 
     /**
      *  @brief Implement the out-bound message header process.
      */
-    spi_slave_transaction_t *OutboundMessageHeaderSent(spi_slave_transaction_t *);
+    spi_slave_transaction_t *OutboundMessageHeaderSent(spi_slave_transaction_t *transaction);
 
     /**
      *  @brief Implement processing of the incoming message header acknowledgement messages.
      */
-    spi_slave_transaction_t *OutboundMessageHeaderAcknowledgementReceived(spi_slave_transaction_t *);
+    spi_slave_transaction_t *OutboundMessageHeaderAcknowledgementReceived(spi_slave_transaction_t *transaction);
 
     /**
      *  @brief Implement the out-bound message body process.
      */
-    spi_slave_transaction_t *OutboundMessageBodySent(spi_slave_transaction_t *);
+    spi_slave_transaction_t *OutboundMessageBodySent(spi_slave_transaction_t *transaction);
 
     /**
      *  @brief Implement processing of the out-bound message body acknowledgement.
      */
-    spi_slave_transaction_t *OutboundMessageBodyAcknowledgementReceived(spi_slave_transaction_t *);
+    spi_slave_transaction_t *OutboundMessageBodyAcknowledgementReceived(spi_slave_transaction_t *transaction);
 
     /**
      *  @brief Implement processing of the transport response.
      */
-    spi_slave_transaction_t * ProcessSendingTransportResponseState(spi_slave_transaction_t *);
+    spi_slave_transaction_t * ProcessSendingTransportResponseState(spi_slave_transaction_t *transaction);
 
     /**
      *  @brief Create a new SPI slave transmission object with zero filled
      *  buffers of the requested size.
      */
-    spi_slave_transaction_t *CreateSpiPayloadTransaction(uint32_t);
+    spi_slave_transaction_t *CreateSpiPayloadTransaction(uint32_t bufferSize);
 
     /**
      *  @brief Setup a new transaction using the _headerReceiveBuffer and
@@ -266,13 +266,13 @@ private:
     /**
      *  @brief Clear the data buffers used to send and receive data.
      */
-    void ClearTransmitAndReceiveBuffers(uint8_t *, uint8_t *, uint32_t);
+    void ClearTransmitAndReceiveBuffers(uint8_t *transmitBuffer, uint8_t *receiveBuffer, uint32_t bufferSize);
 
     /**
      *  @brief Free any memory allocated for the transaction but keep the
      *  Tx and Rx buffers.
      */
-    void DeleteTransaction(spi_slave_transaction_t *);
+    void DeleteTransaction(spi_slave_transaction_t *transaction);
 
 public:
     /**
@@ -288,7 +288,7 @@ public:
     /*
      *  @brief Setup the SPI transport class.
      */
-    void Setup(MessageDispatcher *);
+    void Setup(MessageDispatcher *messageDispatcher);
 
     /**
      *  @brief Getters and setters for the maximum message size.

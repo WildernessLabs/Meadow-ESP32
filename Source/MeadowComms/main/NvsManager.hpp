@@ -51,64 +51,54 @@ public:
     static void Setup();
 
     /**
-     *  @brief Read a byte (uint8_t) from non-volatile storage.
-     */
-    static ErrorCodes ReadUint8(const char *, uint8_t *);
-
-    /**
-     *  @brief Write a byte (uint8_t) to non-volatile storage.
-     */
-    static ErrorCodes WriteUint8(const char *, uint8_t);
-
-    /**
      *  @brief Get a string value.
      */
-    static char *GetValue(const char *, const char *, const char *);
+    static char *GetValue(const char *nameSpace, const char *name, const char *defaultValue);
 
     /**
      *  @brief Set a string value.
      */
-    static ErrorCodes SetValue(const char *, const char *, const char *);
+    static ErrorCodes SetValue(const char *nameSpace, const char *name, const char *value);
 
     /**
      *  @brief Get an unsigned integer value.
      */
-    static uint32_t GetValue(const char *, const char *, const uint32_t);
+    static uint32_t GetValue(const char *nameSpace, const char *name, const uint32_t defaultValue);
 
     /**
      *  @brief Set an unsigned integer value.
      */
-    static ErrorCodes SetValue(const char *, const char *, const uint32_t);
+    static ErrorCodes SetValue(const char *nameSpace, const char *name, const uint32_t value);
 
     /**
      *  @brief Get an integer value.
      */
-    static int32_t GetValue(const char *, const char *, const int32_t);
+    static int32_t GetValue(const char *nameSpace, const char *name, const int32_t defaultValue);
 
     /**
      *  @brief Set an integer value.
      */
-    static ErrorCodes SetValue(const char *, const char *, const int);
+    static ErrorCodes SetValue(const char *nameSpace, const char *name, const int32_t value);
 
     /**
      *  @brief Get a byte value.
      */
-    static uint8_t GetValue(const char *, const char *, const uint8_t);
+    static uint8_t GetValue(const char *nameSpace, const char *name, const uint8_t defaultValue);
 
     /**
      *  @brief Set a byte value.
      */
-    static ErrorCodes SetValue(const char *, const char *, const uint8_t);
+    static ErrorCodes SetValue(const char *nameSpace, const char *name, const uint8_t value);
 
     /**
      *  @brief Get a boolean value.
      */
-    static bool GetValue(const char *, const char *, const bool);
+    static bool GetValue(const char *nameSpace, const char *name, const bool defaultValue);
 
     /**
      *  @brief Set a boolean value.
      */
-    static ErrorCodes SetValue(const char *, const char *, const bool);
+    static ErrorCodes SetValue(const char *nameSpace, const char *name, const bool value);
 };
 
 #endif /* _NVS_MANAGER_HPP_ */

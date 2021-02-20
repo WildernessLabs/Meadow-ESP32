@@ -12,6 +12,7 @@
 #include "Encoders.hpp"
 #include "RequestHandlerBase.hpp"
 #include "Logging.hpp"
+#include "MessageDispatcher.hpp"
 
 /*
  * ---------------------------------------------------------------------------
@@ -147,4 +148,60 @@ bool RequestHandlerBase::QueueEsp32Message(Message *message)
     }
 
     return(result);
+}
+
+/**
+ *  @brief Create a new interrupt message and add it to the outbond message queue.
+ * 
+ *  @param interface
+ *      Interface to sent the event to.
+ * 
+ *  @param eventType
+ *      Type of event being raised.
+ * 
+ *  @param statusCode
+ *      Status code.
+ * 
+ *  @param payload
+ *      Event payload.
+ * 
+ *  @param payloadLength
+ *      Amount of data in the payload.
+ */
+void RequestHandlerBase::RaiseEvent(uint8_t interface, uint32_t eventType, uint32_t statusCode, uint8_t *payload, uint32_t payloadLength)
+{
+    ESP_LOGI(COMPONENT_NAME, "Raising event %s", Logging::FunctionName(interface, eventType));
+    Message *message = Message::CreateOnHeap(MessageTypes::Event, interface, eventType, statusCode, _messageDispatcher->GetNextMessageID(), payload, payloadLength);
+    _messageDispatcher->QueueMessageForStm32(message);
+}
+
+/**
+ *  @brief Create a new interrupt message and add it to the outbond message queue.
+ * 
+ *  @param interface
+ *      Interface to sent the event to.
+ * 
+ *  @param eventType
+ *      Type of event being raised.
+ * 
+ *  @param statusCode
+ *      Status code.
+ */
+void RequestHandlerBase::RaiseEvent(uint8_t interface, uint32_t eventType, uint32_t statusCode)
+{
+    RaiseEvent(interface, eventType, statusCode, nullptr, 0);
+}
+
+/**
+ *  @brief Create a new interrupt message and add it to the outbond message queue.
+ * 
+ *  @param interface
+ *      Interface to sent the event to.
+ * 
+ *  @param eventType
+ *      Type of event being raised.
+ */
+void RequestHandlerBase::RaiseEvent(uint8_t interface, uint32_t eventType)
+{
+    RaiseEvent(interface, eventType, StatusCodes::CompletedOk, nullptr, 0);
 }
