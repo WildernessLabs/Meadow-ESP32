@@ -27,15 +27,6 @@ BluetoothCharacteristic& BluetoothService::AddCharacteristic(BluetoothCharacteri
     // do we already know about this characteristic?  If so, ignore 
     bool exists = false;
 
-    if(characteristic->Declaration->Handle == 0)
-    {
-        _handleManager->Assign(characteristic->Declaration);
-    }
-    if(characteristic->Value->Handle == 0)
-    {
-        _handleManager->Assign(characteristic->Value);
-    }
-
     for (auto it = _characteristics.begin() ; it != _characteristics.end(); ++it) {
         auto chr = (BluetoothCharacteristic*)*it;
 
@@ -47,6 +38,22 @@ BluetoothCharacteristic& BluetoothService::AddCharacteristic(BluetoothCharacteri
     }
 
     if(!exists) {
+        // make sure handles are set
+        if(characteristic->Declaration->Handle == 0)
+        {
+            _handleManager->Assign(characteristic->Declaration);
+        }
+        if(characteristic->Value->Handle == 0)
+        {
+            _handleManager->Assign(characteristic->Value);
+        }
+
+        // cross reference handles
+        characteristic->Declaration->ValueHandle = characteristic->Value->Handle;
+
+        // set the parent
+        characteristic->ParentService = this;
+
         _characteristics.push_back(characteristic);
 
         if(OnCharacteristicAdded)
