@@ -596,8 +596,8 @@ void SystemRequestHandler::GetBatteryChargeLevel(Message *message)
     Esp32Messaging::IntegerResponse response;
     //
     //  The battery voltage will be twice the actual reading as the output from the battery is passed
-    //  through a voltage divider diving it in half.  This is necessary as the voltage can go as high
-    //  as 4.2V which exceeds the tolerance of the ADC pins on the ESP32.
+    //  through a voltage divider.  This is necessary as the voltage can go as high as 4.2V which 
+    //  exceeds the tolerance of the ADC pins on the ESP32.
     //
     response.Result = 2 * esp_adc_cal_raw_to_voltage(adc_reading, adc_chars);
 
@@ -619,7 +619,7 @@ void SystemRequestHandler::GetBatteryChargeLevel(Message *message)
  */
 void SystemRequestHandler::DispatchRequest(Message *request)
 {
-    ESP_LOGI(COMPONENT_NAME, "DeepSleep: Enter");
+    ESP_LOGI(COMPONENT_NAME, "DispatchRequest: Enter");
     switch (request->Function)
     {
         case SystemFunction::GetConfiguration:
@@ -641,5 +641,5 @@ void SystemRequestHandler::DispatchRequest(Message *request)
             }
             break;
     }
-    ESP_LOGI(COMPONENT_NAME, "DeepSleep: Exit");
+    ESP_LOGI(COMPONENT_NAME, "DispatchRequest: Exit");
 }
