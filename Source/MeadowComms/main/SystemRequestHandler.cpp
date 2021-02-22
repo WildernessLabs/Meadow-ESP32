@@ -634,10 +634,10 @@ void SystemRequestHandler::DispatchRequest(Message *request)
             GetBatteryChargeLevel(request);
             break;
         default:
-            ESP_LOGI(COMPONENT_NAME, "DeepSleep: Unknown System message received, function 0x%x", request->Function);
+            ESP_LOGI(COMPONENT_NAME, "DispatchRequest: Unknown System message received, function 0x%x", request->Function);
             if (request->Payload != NULL)
             {
-                ESP_LOG_BUFFER_HEXDUMP(__func__, request->Payload, request->PayloadLength, ESP_LOG_INFO);
+                ESP_LOG_BUFFER_HEXDUMP(COMPONENT_NAME, request->Payload, request->PayloadLength, ESP_LOG_INFO);
             }
             break;
     }
