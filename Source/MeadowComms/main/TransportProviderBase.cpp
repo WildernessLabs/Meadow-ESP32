@@ -178,6 +178,10 @@ bool TransportProviderBase::QueueMessageForStm32(Message *message)
 
 /**
  *  @brief Toggle the "Message waiting" GPIO pin connected to the STM32.
+ * 
+ *  There may be a problem with this method if the clock frequency on the ESP32
+ *  is increased to 240 MHz.  It appears that the messages going to the STM32
+ *  stop being received.
  */
 void TransportProviderBase::ToggleEsp32MessageWaitingPin()
 {
