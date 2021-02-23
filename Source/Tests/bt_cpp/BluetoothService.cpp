@@ -62,7 +62,7 @@ BluetoothCharacteristic& BluetoothService::AddCharacteristic(BluetoothCharacteri
         }
     }
 
-    printf("%i characteristics known\n", _characteristics.size());
+    printf("%i characteristics known\n", (int)_characteristics.size());
 
     return *characteristic;
 }

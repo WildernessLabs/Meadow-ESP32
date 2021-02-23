@@ -30,7 +30,7 @@ BluetoothService& BluetoothServiceCollection::Add(BluetoothService *service)
         }
     }
 
-    printf("%i services known\n", _services.size());
+    printf("%i services known\n", (int)_services.size());
 
     return *service;
 }

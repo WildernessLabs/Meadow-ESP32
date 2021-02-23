@@ -17,12 +17,17 @@ class BluetoothCharacteristic
     public:
         BluetoothService *ParentService;
 
-        BluetoothCharacteristic(uint16_t uuid, CharacteristicPermission permission, CharacteristicProperty property);
+        BluetoothCharacteristic(uint16_t uuid, CharacteristicPermission permission, CharacteristicProperty property, int maxValueLength);
 
         BluetoothCharacteristicDeclaration *Declaration;
         BluetoothCharacteristicValue * Value;
 
-        vector<BluetoothDescriptor> Descriptors;
+        void AddDescriptor(BluetoothDescriptor *descriptor);
+    
+        void SetValue(uint8_t *data, int dataLength);
+
+    private:
+        vector<BluetoothDescriptor*> _descriptors;
 };
 
 #endif
