@@ -31,7 +31,7 @@ int main()
             new BluetoothService("Service 1", service_uuid1)
         )
         .AddCharacteristic(
-            new BluetoothCharacteristic(0x2a56, CharacteristicPermission::ReadEncrypted, CharacteristicProperty::Notify)
+            new BluetoothCharacteristic(0x2a56, CharacteristicPermission::ReadEncrypted, CharacteristicProperty::Notify, 1)
         ); 
 
     // service count should be 1
@@ -55,7 +55,7 @@ int main()
 
     // try re-adding the service, with a new characteristic
     existing->AddCharacteristic(
-            new BluetoothCharacteristic(0x2a57, CharacteristicPermission::ReadEncrypted, CharacteristicProperty::Notify)
+            new BluetoothCharacteristic(0x2a57, CharacteristicPermission::ReadEncrypted, CharacteristicProperty::Notify, 1)
     );
 
 //        .AddCharacteristic(

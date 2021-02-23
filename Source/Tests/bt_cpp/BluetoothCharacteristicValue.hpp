@@ -10,18 +10,19 @@ using namespace std;
 
 class BluetoothCharacteristicValue : public BluetoothAttribute
 {
+    private:
+        uint8_t *_value;
+
     public:
-        byte *Value;
+        
+        int MaxLength;
+        int CurrentLength;
         uint16_t Uuid;
 
-        BluetoothCharacteristicValue(uint16_t uuid, CharacteristicPermission permission)
-        {
-            // TODO: where does the handle come from?  Is it passed in, or generated?
-            
-            Uuid = uuid;
-            Permission = permission;
-            Value = NULL;
-        }
+        BluetoothCharacteristicValue(uint16_t uuid, CharacteristicPermission permission, int maxValueLength);
+        ~BluetoothCharacteristicValue();
+        bool WriteValue(uint8_t* source, int length);
+        bool ReadValue(uint8_t* dest, int length);
 };
 
 #endif
