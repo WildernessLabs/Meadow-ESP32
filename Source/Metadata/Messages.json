@@ -358,6 +358,23 @@
                 { "Name": "Payload", "DataType": "uint32" },
                 { "Name": "PayloadLength", "DataType": "uint32" }
             ]
-        }
-    ]
+        },
+        {
+            "Name": "BTServicesDescription",
+            "MessageElements":
+            [
+                { "Name": "DeviceName", "DataType": "string" }
+            ]
+        },
+        {
+            "Name": "BTCharacteristicDesc",
+            "MessageElements":
+            [
+                { "Name": "ServiceDescription", "DataType": "string" },
+                { "Name": "ServiceUUID", "DataType": "fixedbytearray", "Length": "16"},
+                { "Name": "CharacteristicUUID", "DataType": "fixedbytearray", "Length": "16"},
+                { "Name": "CharacteristicProperties", "DataType": "int"}
+            ]
+        }    
+    ]    
 }

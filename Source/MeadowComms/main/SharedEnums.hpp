@@ -129,7 +129,11 @@ namespace BluetoothFunction
     {
         Start = 0,
         Stop = 1,
-        AddCharacteristic = 2
+        AddService = 2,
+        AddCharacteristic = 3,
+        AddDescriptor = 4,
+        WriteValue = 5,
+        ReadValue = 6
     };
 
 }

@@ -267,7 +267,7 @@ void BluetoothRequestHandler::StartStack(Message *msg)
     ESP_LOGI(__func__, "Enter");
 #endif
 
-    // copy over all parameters
+    // copy over all parameters    
     Esp32Messaging::BTServicesDescription *description = Encoders::ExtractBTServicesDescription(msg->Payload);
     Config.SetDeviceName(description->DeviceName);
 
@@ -380,7 +380,7 @@ static const uint8_t char_prop_read_write = ESP_GATT_CHAR_PROP_BIT_WRITE|ESP_GAT
 void BluetoothRequestHandler::AddCharacteristic(Message *msg)
 {
     ESP_LOGI(COMPONENT_NAME, "+AddCharacteristic");
-    
+
     // copy over all parameters
     Esp32Messaging::BTCharacteristicDesc *description = Encoders::ExtractBTCharacteristicDesc(msg->Payload);
 
