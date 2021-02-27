@@ -6,6 +6,9 @@
 
 class BluetoothDescriptor : public BluetoothAttribute
 {
+    private:
+        BluetoothCharacteristic *_parent;
+        
     public: 
         std::string Name;
         Uuid16 Uuid;    

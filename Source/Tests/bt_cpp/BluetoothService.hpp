@@ -10,10 +10,6 @@
 
 using namespace std;
 
-typedef std::function<void(BluetoothService *)> ServiceAdded;
-typedef std::function<void(BluetoothCharacteristic *)> CharacteristicAdded;
-typedef std::function<void(BluetoothCharacteristic *)> ValueChanged;
-
 class BluetoothHandleManager;
 
 class BluetoothService

@@ -16,3 +16,13 @@ void BluetoothManager::HandleCharacteristicAdded(BluetoothCharacteristic *charac
 {
     printf("New Characteristic: declaration @ 0x%04X value @ 0x%04X\n", characteristic->Declaration->Handle,  characteristic->Value->Handle);
 }
+
+void BluetoothManager::HandleValueChanged(BluetoothCharacteristic *characteristic)
+{
+    printf("New Characteristic Value: value @ 0x%04X is %i bytes\n", characteristic->Value->Handle, characteristic->Value->CurrentLength);
+}
+
+void BluetoothManager::HandleDescriptorAdded(BluetoothDescriptor *)
+{
+    
+}

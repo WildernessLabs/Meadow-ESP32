@@ -4,13 +4,20 @@
 #include <string>
 #include <vector>
 
+class BluetoothService;
+class BluetoothCharacteristic;
+class BluetoothCharacteristicValue;
+
 #include "BluetoothDescriptor.hpp"
 #include "BluetoothCharacteristicDeclaration.hpp"
 #include "BluetoothCharacteristicValue.hpp"
 
 using namespace std;
 
-class BluetoothService;
+typedef std::function<void(BluetoothService *)> ServiceAdded;
+typedef std::function<void(BluetoothCharacteristic *)> CharacteristicAdded;
+typedef std::function<void(BluetoothCharacteristic *)> ValueChanged;
+typedef std::function<void(BluetoothDescriptor *)> DescriptorAdded;
 
 class BluetoothCharacteristic
 {
@@ -23,11 +30,14 @@ class BluetoothCharacteristic
         BluetoothCharacteristicValue * Value;
 
         void AddDescriptor(BluetoothDescriptor *descriptor);
-    
-        void SetValue(uint8_t *data, int dataLength);
 
+        ValueChanged OnValueChanged = NULL;
+        DescriptorAdded OnDescriptorAdded = NULL;
+
+    
     private:
         vector<BluetoothDescriptor*> _descriptors;
 };
+
 
 #endif

@@ -1,6 +1,8 @@
 #include "BluetoothCharacteristicValue.hpp"
-BluetoothCharacteristicValue::BluetoothCharacteristicValue(uint16_t uuid, CharacteristicPermission permission, int maxValueLength)
+
+BluetoothCharacteristicValue::BluetoothCharacteristicValue(BluetoothCharacteristic *parent, uint16_t uuid, CharacteristicPermission permission, int maxValueLength)
 {
+    _parent = parent;
     Uuid = uuid;
     Permission = permission;
     _value = new uint8_t[maxValueLength];
@@ -24,7 +26,10 @@ bool BluetoothCharacteristicValue::WriteValue(uint8_t* source, int length)
     {
         memcpy(_value, source, length);
 
-        // TODO: callback
+        if(_parent->OnValueChanged)
+        {
+            _parent->OnValueChanged(this->_parent);
+        }
     }
 
     return true;
