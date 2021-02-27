@@ -15,10 +15,14 @@ class BluetoothManager
 
         static void HandleServiceAdded(BluetoothService *);
         static void HandleCharacteristicAdded(BluetoothCharacteristic *);
+        static void HandleValueChanged(BluetoothCharacteristic *);
+        static void HandleDescriptorAdded(BluetoothDescriptor *);
 
     public:
         BluetoothManager();
         BluetoothServiceCollection Services;
+
+        // TODO: add high-level graph handler so consumer only uses this instance to manage all BT stuff
 };
 
 #endif

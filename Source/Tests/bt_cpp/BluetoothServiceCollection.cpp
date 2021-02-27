@@ -38,9 +38,19 @@ BluetoothService& BluetoothServiceCollection::Add(BluetoothService *service)
 void BluetoothServiceCollection::HandleServiceCharacteristicAdded(BluetoothCharacteristic *characteristic)
 {
     // pass the event upstream
+    characteristic->OnValueChanged = std::bind(&BluetoothServiceCollection::HandleServiceValueChanged, this, std::placeholders::_1);
+
     if(OnCharacteristicAdded)
     {
         OnCharacteristicAdded(characteristic);
+    }
+}
+
+void BluetoothServiceCollection::HandleServiceValueChanged(BluetoothCharacteristic *characteristic)
+{
+    if(OnValueChanged)
+    {
+        OnValueChanged(characteristic);
     }
 }
 

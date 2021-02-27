@@ -13,7 +13,7 @@ BluetoothCharacteristic::BluetoothCharacteristic(uint16_t uuid, CharacteristicPe
     // create the value attribute
     // TODO: it's permission might differ from the declaration?  Ugh.
     // TODO: allow a default value to be passed in
-    Value = new BluetoothCharacteristicValue(uuid, permission, maxValueLength);
+    Value = new BluetoothCharacteristicValue(this, uuid, permission, maxValueLength);
 
     // update the declaration to point to the value
     Declaration->ValueHandle = Value->Handle;
@@ -25,16 +25,13 @@ void BluetoothCharacteristic::AddDescriptor(BluetoothDescriptor *descriptor)
 
     // TODO: does it have a handle?
 
-    // TODO: callback that it was added to the graph
-
+    // TODO: set the parent
+    
     _descriptors.push_back(descriptor);
-}
 
-void BluetoothCharacteristic::SetValue(uint8_t *data, int dataLength)
-{
-    // TODO: will the value fit?
-
-    // TODO: set the value
-
-    // TODO: CALLBACK
+    // callback that it was added to the graph
+    if(OnDescriptorAdded)
+    {
+        OnDescriptorAdded(descriptor);
+    }
 }

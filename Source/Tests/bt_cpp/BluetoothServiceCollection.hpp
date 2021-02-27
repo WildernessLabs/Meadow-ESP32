@@ -18,6 +18,7 @@ class BluetoothServiceCollection
         BluetoothHandleManager* _handleManager;
 
         void HandleServiceCharacteristicAdded(BluetoothCharacteristic *);
+        void HandleServiceValueChanged(BluetoothCharacteristic *characteristic);
 
     public:
         BluetoothServiceCollection(BluetoothHandleManager *handleManager)
@@ -27,6 +28,7 @@ class BluetoothServiceCollection
 
         ServiceAdded OnServiceAdded = NULL;
         CharacteristicAdded OnCharacteristicAdded = NULL;
+        ValueChanged OnValueChanged = NULL;
 
         BluetoothService& Add(BluetoothService *service);
         BluetoothService* Find(uint8_t *uuid);
