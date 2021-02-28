@@ -3181,58 +3181,111 @@ Esp32Messaging::EventData *Encoders::ExtractEventData(uint8_t *buffer)
 }
 
 /**
- *  Convert the BTServicesDescription object into a byte stream that can be sent to the STM32.
+ *  Convert the BTStackConfig object into a byte stream that can be sent to the STM32.
  *  
- *  The amount of memory required can be obtained by calling the EncodedBTServicesDescriptionBufferSize method.
+ *  The amount of memory required can be obtained by calling the EncodedBTStackConfigBufferSize method.
  *  
- *  @param bTServicesDescription
- *      BTServicesDescription object to be encoded.
+ *  @param bTStackConfig
+ *      BTStackConfig object to be encoded.
  *  
  *  @param buffer
- *      Pointer to a block of memory large enough to hold the encoded BTServicesDescription object.
+ *      Pointer to a block of memory large enough to hold the encoded BTStackConfig object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodeBTServicesDescription
-void Encoders::EncodeBTServicesDescription(Esp32Messaging::BTServicesDescription *bTServicesDescription, uint8_t *buffer)
+// cppcheck-suppress unusedFunction symbolName=EncodeBTStackConfig
+void Encoders::EncodeBTStackConfig(Esp32Messaging::BTStackConfig *bTStackConfig, uint8_t *buffer)
 {
-    EncodeString(bTServicesDescription->DeviceName, buffer);
+    EncodeString(bTStackConfig->DeviceName, buffer);
 }
 
 /**
- *  Calculate the amount of memory required to hold the given instance of the BTServicesDescription object.
+ *  Calculate the amount of memory required to hold the given instance of the BTStackConfig object.
  *  
- *  @param bTServicesDescription
- *      BTServicesDescription object to be encoded.
+ *  @param bTStackConfig
+ *      BTStackConfig object to be encoded.
  *  
  *  @returns
- *      Number of bytes required to hold the encoded BTServicesDescription object.
+ *      Number of bytes required to hold the encoded BTStackConfig object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodedBTServicesDescriptionBufferSize
-int Encoders::EncodedBTServicesDescriptionBufferSize(Esp32Messaging::BTServicesDescription *bTServicesDescription)
+// cppcheck-suppress unusedFunction symbolName=EncodedBTStackConfigBufferSize
+int Encoders::EncodedBTStackConfigBufferSize(Esp32Messaging::BTStackConfig *bTStackConfig)
 {
     int result = 0;
-    result += Encoders::StringLength(bTServicesDescription->DeviceName);
+    result += Encoders::StringLength(bTStackConfig->DeviceName);
     return(result + 1);
 }
 
 /**
- *  Extract the BTServicesDescription object that is encoded in the given buffer.
+ *  Extract the BTStackConfig object that is encoded in the given buffer.
  *  
  *  Note that the returned pointer points to a block of memory on the heap and
  *  this should eventually be released calling vPortFree(...).
  *  
  *  @param buffer
- *      Pointer to a block of memory holding the encoded BTServicesDescription object.
+ *      Pointer to a block of memory holding the encoded BTStackConfig object.
  *  
  *  @returns
- *      Pointer to a BTServicesDescription object.
+ *      Pointer to a BTStackConfig object.
  */
-// cppcheck-suppress unusedFunction symbolName=ExtractBTServicesDescription
-Esp32Messaging::BTServicesDescription *Encoders::ExtractBTServicesDescription(uint8_t *buffer)
+// cppcheck-suppress unusedFunction symbolName=ExtractBTStackConfig
+Esp32Messaging::BTStackConfig *Encoders::ExtractBTStackConfig(uint8_t *buffer)
 {
-    Esp32Messaging::BTServicesDescription *bTServicesDescription = (Esp32Messaging::BTServicesDescription *) pvPortMalloc(sizeof(Esp32Messaging::BTServicesDescription));
+    Esp32Messaging::BTStackConfig *bTStackConfig = (Esp32Messaging::BTStackConfig *) pvPortMalloc(sizeof(Esp32Messaging::BTStackConfig));
 
-    bTServicesDescription->DeviceName = ExtractString(buffer);
-    return(bTServicesDescription);
+    bTStackConfig->DeviceName = ExtractString(buffer);
+    return(bTStackConfig);
+}
+
+/**
+ *  Convert the BTServiceDescription object into a byte stream that can be sent to the STM32.
+ *  
+ *  The amount of memory required can be obtained by calling the EncodedBTServiceDescriptionBufferSize method.
+ *  
+ *  @param bTServiceDescription
+ *      BTServiceDescription object to be encoded.
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory large enough to hold the encoded BTServiceDescription object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodeBTServiceDescription
+void Encoders::EncodeBTServiceDescription(Esp32Messaging::BTServiceDescription *bTServiceDescription, uint8_t *buffer)
+{
+    EncodeUInt16(bTServiceDescription->ServiceUUID, buffer);
+}
+
+/**
+ *  Calculate the amount of memory required to hold the given instance of the BTServiceDescription object.
+ *  
+ *  @param bTServiceDescription
+ *      BTServiceDescription object to be encoded.
+ *  
+ *  @returns
+ *      Number of bytes required to hold the encoded BTServiceDescription object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodedBTServiceDescriptionBufferSize
+int Encoders::EncodedBTServiceDescriptionBufferSize(Esp32Messaging::BTServiceDescription *bTServiceDescription)
+{
+    return(2);
+}
+
+/**
+ *  Extract the BTServiceDescription object that is encoded in the given buffer.
+ *  
+ *  Note that the returned pointer points to a block of memory on the heap and
+ *  this should eventually be released calling vPortFree(...).
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded BTServiceDescription object.
+ *  
+ *  @returns
+ *      Pointer to a BTServiceDescription object.
+ */
+// cppcheck-suppress unusedFunction symbolName=ExtractBTServiceDescription
+Esp32Messaging::BTServiceDescription *Encoders::ExtractBTServiceDescription(uint8_t *buffer)
+{
+    Esp32Messaging::BTServiceDescription *bTServiceDescription = (Esp32Messaging::BTServiceDescription *) pvPortMalloc(sizeof(Esp32Messaging::BTServiceDescription));
+
+    bTServiceDescription->ServiceUUID = ExtractUInt16(buffer);
+    return(bTServiceDescription);
 }
 
 /**

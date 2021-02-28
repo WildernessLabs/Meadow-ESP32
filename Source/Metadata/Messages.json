@@ -360,10 +360,17 @@
             ]
         },
         {
-            "Name": "BTServicesDescription",
+            "Name": "BTStackConfig",
             "MessageElements":
             [
                 { "Name": "DeviceName", "DataType": "string" }
+            ]
+        },
+        {
+            "Name": "BTServiceDescription",
+            "MessageElements":
+            [
+                { "Name": "ServiceUUID", "DataType": "uint16" }
             ]
         },
         {

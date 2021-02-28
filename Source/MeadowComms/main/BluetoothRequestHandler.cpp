@@ -56,6 +56,8 @@ BluetoothRequestHandler::BluetoothRequestHandler()
     }
     else
     {
+        _manager = new BluetoothManager();
+
         _instantiated = true;
     }
 }
@@ -76,6 +78,11 @@ BluetoothRequestHandler::BluetoothRequestHandler(MessageDispatcher *messageDispa
  */
 BluetoothRequestHandler::~BluetoothRequestHandler()
 {
+        if(_manager)
+        {
+            delete _manager;
+            _manager = NULL;
+        }
 }
 
 /*
@@ -141,8 +148,20 @@ void BluetoothRequestHandler::DispatchRequest(Message *request)
         case BluetoothFunction::Stop:
             TeardownStack(request);
             break;
+        case BluetoothFunction::AddService:
+            AddService(request);
+            break;
         case BluetoothFunction::AddCharacteristic:
-            AddCharacteristic(request);
+            // TODO:
+            break;
+        case BluetoothFunction::AddDescriptor:
+            // TODO:
+            break;
+        case BluetoothFunction::WriteValue:
+            // TODO:
+            break;
+        case BluetoothFunction::ReadValue:
+            // TODO:
             break;
         default:
             ESP_LOGI(__func__, "Unknown Bluetooth message received, function %d", request->Function);
@@ -268,12 +287,12 @@ void BluetoothRequestHandler::StartStack(Message *msg)
 #endif
 
     // copy over all parameters    
-    Esp32Messaging::BTServicesDescription *description = Encoders::ExtractBTServicesDescription(msg->Payload);
-    Config.SetDeviceName(description->DeviceName);
+    Esp32Messaging::BTStackConfig *config = Encoders::ExtractBTStackConfig(msg->Payload);
+    Config.SetDeviceName(config->DeviceName);
 
     esp_err_t ret;
 
-    ESP_LOGI(COMPONENT_NAME, "Enabling BT controller for '%s'", description->DeviceName);
+    ESP_LOGI(COMPONENT_NAME, "Enabling BT controller for '%s'", config->DeviceName);
 
     ret = esp_bt_controller_enable(ESP_BT_MODE_BLE);
     if (ret) {
@@ -368,6 +387,44 @@ void BluetoothRequestHandler::TeardownStack(Message *msg)
     ESP_LOGI(__func__, "Exit");
 #endif
 
+}
+
+void BluetoothRequestHandler::AddService(Message *message)
+{
+    ESP_LOGI(COMPONENT_NAME, "+AddService");
+    // extract the incoming message (from the STM32)
+    Esp32Messaging::BTServiceDescription *serviceDescription = Encoders::ExtractBTServiceDescription(message->Payload);
+
+    // create the service (or just find the existing)
+    esp_gatt_srvc_id_t service_id;
+    service_id.is_primary = true; // we only support primary services;
+    service_id.id.inst_id = 0x00; // for now, we support only 1 instance as well.
+    service_id.id.uuid.len = 16;  // for now we support only 16-bit UUIDs
+    service_id.id.uuid.uuid.uuid16 = serviceDescription->ServiceUUID;
+
+    // call the ESP API.  This is async, so we have to wait for a result. Not fun
+
+//    auto service = _manager->AddService(service_id);
+
+    // create a response with the service info
+//    Esp32Messaging::IntegerResponse response;
+//    response.Result = service.Handle;
+
+//    ESP_LOGI(COMPONENT_NAME, "BT: Service Handle %d", response.Result);
+
+    // free the incoming message
+    vPortFree(message->Payload);
+
+    // now wrap the response in an envelope
+//    message->PayloadLength = Encoders::EncodedIntegerResponseBufferSize(&response);
+//    message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
+//    Encoders::EncodeIntegerResponse(&response, message->Payload);
+//    message->MessageType = MessageTypes::Response;
+//    message->StatusCode = StatusCodes::CompletedOk;
+    
+//    _messageDispatcher->QueueMessageForStm32(message);
+
+    ESP_LOGI(COMPONENT_NAME, "-AddService");
 }
 
 static const uint16_t characteristic_declaration_uuid = ESP_GATT_UUID_CHAR_DECLARE;

@@ -26,6 +26,8 @@
 #include "Esp32Messaging.hpp"
 #include "BluetoothConfig.hpp"
 
+#include "bluetooth/BluetoothManager.hpp"
+
 #include <vector>
 #include <string>
 
@@ -41,30 +43,6 @@ using namespace std;
 class BluetoothRequestHandler : public RequestHandlerBase
 {
 private:
-    struct Uuid16
-    {
-        uint8_t data[16];
-    };
-
-    struct BluetoothService
-    {
-        std::string Name;
-        Uuid16 Uuid;
-    };
-
-    struct BluetoothCharacteristic
-    {
-        std::string Name;
-
-    };
-
-    struct BluetoothDescriptor
-    {
-        std::string Name;
-        
-    };
-
-    vector<BluetoothService> _services;
 
     /**
      *  Event group bits.
@@ -115,13 +93,17 @@ private:
     BluetoothRequestHandler();
     ~BluetoothRequestHandler();
 
+    BluetoothManager *_manager;
+
     void StartStack(Message *msg);
     void TeardownStack(Message *msg);
 
     // this will add a characteristic ,and if required its containing service 
     int _attribute_database_length = 0;
     esp_gatts_attr_db_t *_attribute_database;
-    void AddCharacteristic(Message *msg);
+
+    void AddCharacteristic(Message *message);
+    void AddService(Message *message);
 
 public:
     /**
