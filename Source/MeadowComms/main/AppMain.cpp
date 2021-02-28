@@ -30,6 +30,8 @@ static heap_trace_record_t trace_records[NUM_RECORDS];
 
 #define APP_MAIN_COMPONENT_NAME "AppMain"
 
+void TestBluetoothMessage(MessageDispatcher *dispatcher);
+
 /*
  *      Main program loop for the ESP32 as specified by the FreeRTOS documentation.
  */
@@ -64,6 +66,8 @@ extern "C" void app_main()
 
     SystemRequestHandler::SendConfigurationAsInterruptMessage();
 
+    TestBluetoothMessage(messageDispatcher);
+
 //     Message message = {};
 //     message.MessageType = MessageTypes::Header;
 //     message.Interface = Esp32Interfaces::WiFi;
@@ -86,4 +90,82 @@ extern "C" void app_main()
     {
         vTaskDelay(500 / portTICK_PERIOD_MS);
     }
+}
+
+void TestBluetoothMessage(MessageDispatcher *dispatcher)
+{
+    // -- start the stack
+    Esp32Messaging::BTStackConfig stackConfig;
+    stackConfig.DeviceName = (char*)"MEADOW TEST";
+    Message startMessage = {};
+    startMessage.MessageType = MessageTypes::Header;
+    startMessage.Interface = Esp32Interfaces::BlueTooth;
+    startMessage.Function = BluetoothFunction::Start;
+    startMessage.PayloadLength = Encoders::EncodedBTStackConfigBufferSize(&stackConfig);
+    startMessage.Payload = (uint8_t *) pvPortMalloc(startMessage.PayloadLength);
+    Encoders::EncodeBTStackConfig(&stackConfig, startMessage.Payload);
+    dispatcher->QueueMessageForEsp32(&startMessage);
+
+    // -- create a service
+    static const uint8_t generic_gap_uuid[16] = {
+    /* LSB <--------------------------------------------------------------------------------> MSB */
+    //this is "generic GAP service" as defined by the BLE SIG
+    0xfb, 0x34, 0x9b, 0x5f, 0x80, 0x00, 0x00, 0x80, 0x00, 0x10, 0x00, 0x00, 0x00, 0x18, 0x00, 0x00
+    };
+
+    // build the message payload
+    Esp32Messaging::BTServiceDescription serviceDescription;
+    serviceDescription.ServiceUUID = 0x00EE; // just a test UUID
+
+    // build the envelope that carries said payload
+    Message message = {};
+    startMessage.MessageType = MessageTypes::Header;
+    startMessage.Interface = Esp32Interfaces::BlueTooth;
+    startMessage.Function = BluetoothFunction::AddService;
+    message.PayloadLength = Encoders::EncodedBTServiceDescriptionBufferSize(&serviceDescription);
+    message.Payload = (uint8_t *) pvPortMalloc(message.PayloadLength);
+    Encoders::EncodeBTServiceDescription(&serviceDescription, message.Payload);
+
+    // queue it - this is synchronous as we want to send a handle back to the caller
+    dispatcher->QueueMessageForEsp32(&message);
+
+
+    
+    // add a characteristic
+
+    // add another characteristic
+
+    // set the characteristic value
+
+    // read the characteristic value
+
+    static const uint8_t appearance_characteristic_uuid[16] = {
+    //00002a01-0000-1000-8000-00805f9b34fb
+    //this is "generic GAP service" as defined by the BLE SIG
+    0xfb, 0x34, 0x9b, 0x5f, 0x80, 0x00, 0x00, 0x80, 0x00, 0x10, 0x00, 0x00, 0x01, 0x2a, 0x00, 0x00
+    };
+
+
+
+    ESP_LOGI(__func__, "Message B");
+
+    // we'll add a characteristic.  They must be part of a Service, so that will get created underneath as well
+    Esp32Messaging::BTCharacteristicDesc cdesc;
+    memcpy(cdesc.ServiceUUID, generic_gap_uuid, sizeof(generic_gap_uuid));
+    cdesc.ServiceDescription = (char*)"Meadow Generic Service";
+    memcpy(cdesc.CharacteristicUUID, appearance_characteristic_uuid, sizeof(appearance_characteristic_uuid));
+    cdesc.CharacteristicProperties = ESP_GATT_CHAR_PROP_BIT_WRITE|ESP_GATT_CHAR_PROP_BIT_READ;
+    
+    Message message2 = {};
+    message2.MessageType = MessageTypes::Header;
+    message2.Interface = Esp32Interfaces::BlueTooth;
+    message2.Function = BluetoothFunction::AddCharacteristic;
+    
+    message2.PayloadLength = Encoders::EncodedBTCharacteristicDescBufferSize(&cdesc);
+    message2.Payload = (uint8_t *) pvPortMalloc(message2.PayloadLength);
+    Encoders::EncodeBTCharacteristicDesc(&cdesc, message2.Payload);
+
+    dispatcher->QueueMessageForEsp32(&message2);
+
+    // now send a message that describes an attribute to add
 }

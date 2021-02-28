@@ -22,6 +22,9 @@ class BluetoothManager
         BluetoothManager();
         BluetoothServiceCollection Services;
 
+        // creates a service, returns its handle
+        unsigned short CreateService();
+
         // TODO: add high-level graph handler so consumer only uses this instance to manage all BT stuff
 };
 

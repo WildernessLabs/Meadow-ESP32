@@ -5,6 +5,7 @@ BluetoothManager::BluetoothManager()
 {
     Services.OnServiceAdded = &BluetoothManager::HandleServiceAdded;
     Services.OnCharacteristicAdded = &BluetoothManager::HandleCharacteristicAdded;
+    Services.OnValueChanged = &BluetoothManager::HandleValueChanged;
 }
 
 void BluetoothManager::HandleServiceAdded(BluetoothService *service)

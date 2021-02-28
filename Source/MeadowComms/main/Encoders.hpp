@@ -331,9 +331,14 @@ namespace Esp32Messaging
         uint32_t PayloadLength;
     };
 
-    struct BTServicesDescription
+    struct BTStackConfig
     {
         char * DeviceName;
+    };
+
+    struct BTServiceDescription
+    {
+        uint16_t ServiceUUID;
     };
 
     struct BTCharacteristicDesc
@@ -490,9 +495,12 @@ public:
     static void EncodeEventData(Esp32Messaging::EventData *, uint8_t *);
     static int EncodedEventDataBufferSize(Esp32Messaging::EventData *);
     static Esp32Messaging::EventData *ExtractEventData(uint8_t *);
-    static void EncodeBTServicesDescription(Esp32Messaging::BTServicesDescription *, uint8_t *);
-    static int EncodedBTServicesDescriptionBufferSize(Esp32Messaging::BTServicesDescription *);
-    static Esp32Messaging::BTServicesDescription *ExtractBTServicesDescription(uint8_t *);
+    static void EncodeBTStackConfig(Esp32Messaging::BTStackConfig *, uint8_t *);
+    static int EncodedBTStackConfigBufferSize(Esp32Messaging::BTStackConfig *);
+    static Esp32Messaging::BTStackConfig *ExtractBTStackConfig(uint8_t *);
+    static void EncodeBTServiceDescription(Esp32Messaging::BTServiceDescription *, uint8_t *);
+    static int EncodedBTServiceDescriptionBufferSize(Esp32Messaging::BTServiceDescription *);
+    static Esp32Messaging::BTServiceDescription *ExtractBTServiceDescription(uint8_t *);
     static void EncodeBTCharacteristicDesc(Esp32Messaging::BTCharacteristicDesc *, uint8_t *);
     static int EncodedBTCharacteristicDescBufferSize(Esp32Messaging::BTCharacteristicDesc *);
     static Esp32Messaging::BTCharacteristicDesc *ExtractBTCharacteristicDesc(uint8_t *);
