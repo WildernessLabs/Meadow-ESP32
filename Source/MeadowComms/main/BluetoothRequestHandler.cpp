@@ -403,7 +403,14 @@ void BluetoothRequestHandler::AddService(Message *message)
     service_id.id.uuid.uuid.uuid16 = serviceDescription->ServiceUUID;
 
     // call the ESP API.  This is async, so we have to wait for a result. Not fun
+    // parameters required:
+    // 1) the interface number.  This is our profile number (I think).  If not, it also comes from the interface registration (at stack bring-up)
+    // 2) the `esp_gatt_srvc_id_t` that holds the UUID (created above)
+    // 3) the number of handles the service wants (again, ESP API, thou sucketh)
+    //    for now I'm passing in "16" just because.  Certainly it will bite me.
+    esp_ble_gatts_create_service(MEADOW_PROFILE_APP_ID, &service_id, 16);
 
+    // TODO: on success, we need to add to the graph
 //    auto service = _manager->AddService(service_id);
 
     // create a response with the service info
