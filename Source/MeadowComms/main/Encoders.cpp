@@ -3180,4 +3180,61 @@ Esp32Messaging::EventData *Encoders::ExtractEventData(uint8_t *buffer)
     return(eventData);
 }
 
+/**
+ *  Convert the SetAntennaRequest object into a byte stream that can be sent to the STM32.
+ *  
+ *  The amount of memory required can be obtained by calling the EncodedSetAntennaRequestBufferSize method.
+ *  
+ *  @param setAntennaRequest
+ *      SetAntennaRequest object to be encoded.
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory large enough to hold the encoded SetAntennaRequest object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodeSetAntennaRequest
+void Encoders::EncodeSetAntennaRequest(Esp32Messaging::SetAntennaRequest *setAntennaRequest, uint8_t *buffer)
+{
+    *buffer = setAntennaRequest->Antenna;
+    buffer += 1;
+    *buffer = setAntennaRequest->Persist;
+}
+
+/**
+ *  Calculate the amount of memory required to hold the given instance of the SetAntennaRequest object.
+ *  
+ *  @param setAntennaRequest
+ *      SetAntennaRequest object to be encoded.
+ *  
+ *  @returns
+ *      Number of bytes required to hold the encoded SetAntennaRequest object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodedSetAntennaRequestBufferSize
+int Encoders::EncodedSetAntennaRequestBufferSize(Esp32Messaging::SetAntennaRequest *setAntennaRequest)
+{
+    return(2);
+}
+
+/**
+ *  Extract the SetAntennaRequest object that is encoded in the given buffer.
+ *  
+ *  Note that the returned pointer points to a block of memory on the heap and
+ *  this should eventually be released calling vPortFree(...).
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded SetAntennaRequest object.
+ *  
+ *  @returns
+ *      Pointer to a SetAntennaRequest object.
+ */
+// cppcheck-suppress unusedFunction symbolName=ExtractSetAntennaRequest
+Esp32Messaging::SetAntennaRequest *Encoders::ExtractSetAntennaRequest(uint8_t *buffer)
+{
+    Esp32Messaging::SetAntennaRequest *setAntennaRequest = (Esp32Messaging::SetAntennaRequest *) pvPortMalloc(sizeof(Esp32Messaging::SetAntennaRequest));
+
+    setAntennaRequest->Antenna = *buffer;
+    buffer += 1;
+    setAntennaRequest->Persist = *buffer;
+    return(setAntennaRequest);
+}
+
 

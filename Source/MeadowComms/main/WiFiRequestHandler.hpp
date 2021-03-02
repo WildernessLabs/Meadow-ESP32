@@ -435,6 +435,11 @@ private:
     static bool ComparePollRequestMessageIds(uint32_t messageId, PollRequestInformation *request);
 
     /**
+     *  Process the request from the managed code to change the antenna.
+     */
+    void SetAntennaRequest(Message *);
+
+    /**
      *  @brief Disconnect from any access points.
      */
     StatusCodes::StatusCodes DisconnectFromAccessPoint();

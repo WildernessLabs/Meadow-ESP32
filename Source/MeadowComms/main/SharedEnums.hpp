@@ -111,11 +111,12 @@ namespace WiFiFunction
         Accept = 20,
         Ioctl = 21,
         GetSockName = 22,
-        SetTimeOfDayEvent = 23,
-        ConnectEvent = 24,
-        DisconnectEvent = 25,
-        StartInterfaceEvent = 26,
-        StopInterfaceEvent = 27
+        SetAntenna = 23,
+        SetTimeOfDayEvent = 24,
+        ConnectEvent = 25,
+        DisconnectEvent = 26,
+        StartInterfaceEvent = 27,
+        StopInterfaceEvent = 28
     };
 
 }

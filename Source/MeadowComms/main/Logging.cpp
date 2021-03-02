@@ -362,6 +362,9 @@ char *Logging::WiFiFunctionName(uint32_t function)
         case WiFiFunction::DisconnectEvent:
             return((char *) "DisconnectEvent");
             break;
+        case WiFiFunction::SetAntenna:
+            return((char *) "SetAntenna");
+            break;
         default:
             return((char *) "Unknown");
             break;
