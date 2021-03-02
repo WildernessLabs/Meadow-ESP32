@@ -331,6 +331,12 @@ namespace Esp32Messaging
         uint32_t PayloadLength;
     };
 
+    struct SetAntennaRequest
+    {
+        uint8_t Antenna;
+        uint8_t Persist;
+    };
+
 }
 
 /*
@@ -477,6 +483,9 @@ public:
     static void EncodeEventData(Esp32Messaging::EventData *, uint8_t *);
     static int EncodedEventDataBufferSize(Esp32Messaging::EventData *);
     static Esp32Messaging::EventData *ExtractEventData(uint8_t *);
+    static void EncodeSetAntennaRequest(Esp32Messaging::SetAntennaRequest *, uint8_t *);
+    static int EncodedSetAntennaRequestBufferSize(Esp32Messaging::SetAntennaRequest *);
+    static Esp32Messaging::SetAntennaRequest *ExtractSetAntennaRequest(uint8_t *);
 
 };
 

@@ -1044,6 +1044,9 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
         case WiFiFunction::GetAccessPoints:
             GetAvailableNetworks(request);
             break;
+        case WiFiFunction::SetAntenna:
+            SetAntennaRequest(request);
+            break;
         case WiFiFunction::Close:
             _threadPool->Execute(Close, (void *) request);
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
@@ -1164,6 +1167,38 @@ void WiFiRequestHandler::DisconnectFromAccessPoint(Message *message)
     }
 
     ESP_LOGI(COMPONENT_NAME, "DisconnectFromAccessPoint: Exit");
+}
+
+/**
+ *  @brief Change the antenna.
+ *
+ *  @param message
+ *      Message containing the encoded request.
+ */
+void WiFiRequestHandler::SetAntennaRequest(Message *message)
+{
+    ESP_LOGI(COMPONENT_NAME, "SetAntennaRequest: Enter");
+
+    Esp32Messaging::SetAntennaRequest *request = Encoders::ExtractSetAntennaRequest(message->Payload);
+    vPortFree(message->Payload);
+    message->Payload = nullptr;
+    message->PayloadLength = 0;
+
+    if (request->Persist)
+    {
+        SetAntenna(request->Antenna);   // This method also switches the antenna.
+    }
+    else
+    {
+        SwitchAntenna(static_cast<AntennaTypes::AntennaTypes>(request->Antenna));
+    }
+
+    vPortFree(request);
+    message->StatusCode = StatusCodes::CompletedOk;
+    message->MessageType = MessageTypes::Response;
+    _messageDispatcher->QueueMessageForStm32(message);
+
+    ESP_LOGI(COMPONENT_NAME, "SetAntennaRequest: Exit");
 }
 
 /**
