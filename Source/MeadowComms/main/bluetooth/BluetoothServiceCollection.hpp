@@ -35,6 +35,8 @@ class BluetoothServiceCollection
         BluetoothService* Find(uint8_t *uuid);
         BluetoothService* Find(Uuid128 uuid);
         int Count();
+
+        vector<BluetoothService*> GetServiceDefinitions();
 };
 
 #endif
