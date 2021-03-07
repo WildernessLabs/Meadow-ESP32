@@ -6,6 +6,14 @@
 #include "BluetoothHandleManager.hpp"
 #include <vector>
 
+#include "esp_bt.h"
+#include "esp_gap_ble_api.h"
+#include "esp_gatts_api.h"
+#include "esp_bt_defs.h"
+#include "esp_bt_main.h"
+#include "esp_gatt_common_api.h"
+
+
 using namespace std;
 
 class BluetoothManager 
@@ -18,12 +26,13 @@ class BluetoothManager
         static void HandleValueChanged(BluetoothCharacteristic *);
         static void HandleDescriptorAdded(BluetoothDescriptor *);
 
+        esp_gatts_attr_db_t* _attribute_table;
+
     public:
         BluetoothManager();
         BluetoothServiceCollection Services;
 
-        // creates a service, returns its handle
-        unsigned short CreateService();
+        void GenerateAttributeTable();
 
         // TODO: add high-level graph handler so consumer only uses this instance to manage all BT stuff
 };

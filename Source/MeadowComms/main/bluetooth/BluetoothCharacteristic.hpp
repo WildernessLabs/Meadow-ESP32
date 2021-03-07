@@ -35,6 +35,7 @@ class BluetoothCharacteristic
         ValueChanged OnValueChanged = NULL;
         DescriptorAdded OnDescriptorAdded = NULL;
 
+        vector<BluetoothDescriptor*> GetDescriptorDefinitions() { return _descriptors; }
     
     private:
         vector<BluetoothDescriptor*> _descriptors;

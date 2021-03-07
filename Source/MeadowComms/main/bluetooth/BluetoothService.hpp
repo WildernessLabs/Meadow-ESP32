@@ -28,6 +28,9 @@ class BluetoothService
         unsigned short Handle;
 
         void SetHandleManager(BluetoothHandleManager *handleManager) { _handleManager = handleManager; }
+
+        vector<BluetoothCharacteristic*> GetCharacteristicDefinitions() { return _characteristics; }
+
     private:
         vector<BluetoothCharacteristic*> _characteristics;
         BluetoothHandleManager* _handleManager;

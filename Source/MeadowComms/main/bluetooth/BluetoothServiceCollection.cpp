@@ -35,6 +35,12 @@ BluetoothService& BluetoothServiceCollection::Add(BluetoothService *service)
     return *service;
 }
 
+vector<BluetoothService*> BluetoothServiceCollection::GetServiceDefinitions() 
+{ 
+    return _services; 
+    }
+
+
 void BluetoothServiceCollection::HandleServiceCharacteristicAdded(BluetoothCharacteristic *characteristic)
 {
     // pass the event upstream

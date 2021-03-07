@@ -11,7 +11,12 @@ class BluetoothDescriptor : public BluetoothAttribute
         
     public: 
         std::string Name;
-        Uuid16 Uuid;    
+        Uuid16 Uuid;
+
+        uint16_t MaxLength;
+        uint16_t CurrentLength;
+        uint8_t *Value;
+
 };
 
 

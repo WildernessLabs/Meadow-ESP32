@@ -19,8 +19,8 @@ class BluetoothCharacteristicValue : public BluetoothAttribute
 
     public:
         
-        int MaxLength;
-        int CurrentLength;
+        uint16_t MaxLength;
+        uint16_t CurrentLength;
         uint16_t Uuid;
         BluetoothCharacteristic *Parent;
 
