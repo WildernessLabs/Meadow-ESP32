@@ -93,17 +93,11 @@ private:
     BluetoothRequestHandler();
     ~BluetoothRequestHandler();
 
-    BluetoothManager *_manager;
+    static BluetoothManager _manager;
 
     void StartStack(Message *msg);
     void TeardownStack(Message *msg);
 
-    // this will add a characteristic ,and if required its containing service 
-    int _attribute_database_length = 0;
-    esp_gatts_attr_db_t *_attribute_database;
-
-    void AddCharacteristic(Message *message);
-    void AddService(Message *message);
 
 public:
     /**

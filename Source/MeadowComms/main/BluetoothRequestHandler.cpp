@@ -34,6 +34,7 @@
  */
 bool BluetoothRequestHandler::_instantiated = false;
 BluetoothConfig BluetoothRequestHandler::Config;
+BluetoothManager  BluetoothRequestHandler::_manager;
 
 const char *BluetoothRequestHandler::COMPONENT_NAME = "BTTask";
 
@@ -56,8 +57,6 @@ BluetoothRequestHandler::BluetoothRequestHandler()
     }
     else
     {
-        _manager = new BluetoothManager();
-
         _instantiated = true;
     }
 }
@@ -78,11 +77,6 @@ BluetoothRequestHandler::BluetoothRequestHandler(MessageDispatcher *messageDispa
  */
 BluetoothRequestHandler::~BluetoothRequestHandler()
 {
-        if(_manager)
-        {
-            delete _manager;
-            _manager = NULL;
-        }
 }
 
 /*
@@ -149,7 +143,6 @@ void BluetoothRequestHandler::DispatchRequest(Message *request)
             TeardownStack(request);
             break;
         case BluetoothFunction::AddService:
-            AddService(request);
             break;
         case BluetoothFunction::AddCharacteristic:
             // TODO:
@@ -388,51 +381,128 @@ void BluetoothRequestHandler::TeardownStack(Message *msg)
 #endif
 
 }
+//////////////////////////
+// BELOW HERE IS THE IMPLEMENTATION OF THE ESP GATT SERVER
+//////////////////////////
+#define INSTANCE_ID 0
 
-void BluetoothRequestHandler::AddService(Message *message)
+void BluetoothRequestHandler::gatts_profile_event_handler(esp_gatts_cb_event_t event,
+                                        esp_gatt_if_t gatts_if, 
+                                        esp_ble_gatts_cb_param_t *param)
 {
-    ESP_LOGI(COMPONENT_NAME, "+AddService");
-    // extract the incoming message (from the STM32)
-    Esp32Messaging::BTServiceDescription *serviceDescription = Encoders::ExtractBTServiceDescription(message->Payload);
+    ESP_LOGD(__func__, "event = %x\n", event);
+    switch (event) 
+    {
+        case ESP_GATTS_REG_EVT:
+        {
+            // set the device name
+            esp_ble_gap_set_device_name(BluetoothRequestHandler::Config.GetDeviceName());
 
-    // create the service (or just find the existing)
-    esp_gatt_srvc_id_t service_id;
-    service_id.is_primary = true; // we only support primary services;
-    service_id.id.inst_id = 0x00; // for now, we support only 1 instance as well.
-    service_id.id.uuid.len = 16;  // for now we support only 16-bit UUIDs
-    service_id.id.uuid.uuid.uuid16 = serviceDescription->ServiceUUID;
+            // turn on some security
+            esp_ble_gap_config_local_privacy(true);
 
-    // call the ESP API.  This is async, so we have to wait for a result. Not fun
-    // parameters required:
-    // 1) the interface number.  This is our profile number (I think).  If not, it also comes from the interface registration (at stack bring-up)
-    // 2) the `esp_gatt_srvc_id_t` that holds the UUID (created above)
-    // 3) the number of handles the service wants (again, ESP API, thou sucketh)
-    //    for now I'm passing in "16" just because.  Certainly it will bite me.
-    esp_ble_gatts_create_service(MEADOW_PROFILE_APP_ID, &service_id, 16);
+            // configure the advertising data
+            esp_err_t ret = esp_ble_gap_config_adv_data(_manager.GetAdvertisingData());
+            if (ret)
+            {
+                ESP_LOGE(COMPONENT_NAME, "config adv data failed, error code = %x", ret);
+            }
+//            adv_config_done |= ADV_CONFIG_FLAG;
 
-    // TODO: on success, we need to add to the graph
-//    auto service = _manager->AddService(service_id);
-
-    // create a response with the service info
-//    Esp32Messaging::IntegerResponse response;
-//    response.Result = service.Handle;
-
-//    ESP_LOGI(COMPONENT_NAME, "BT: Service Handle %d", response.Result);
-
-    // free the incoming message
-    vPortFree(message->Payload);
-
-    // now wrap the response in an envelope
-//    message->PayloadLength = Encoders::EncodedIntegerResponseBufferSize(&response);
-//    message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-//    Encoders::EncodeIntegerResponse(&response, message->Payload);
-//    message->MessageType = MessageTypes::Response;
-//    message->StatusCode = StatusCodes::CompletedOk;
-    
-//    _messageDispatcher->QueueMessageForStm32(message);
-
-    ESP_LOGI(COMPONENT_NAME, "-AddService");
+            // configure our BLE scan response
+            ret = esp_ble_gap_config_adv_data(_manager.GetScanResponseData());
+            if (ret){
+                ESP_LOGE(COMPONENT_NAME, "config scan response data failed, error code = %x", ret);
+            }
+//            adv_config_done |= SCAN_RSP_CONFIG_FLAG;
+            
+            // set the attribute table - this requires the services be already-defined in the Manager
+            esp_err_t create_attr_ret = esp_ble_gatts_create_attr_tab(_manager.GetAttributeTable(), gatts_if, _manager.GetAttributeTableLength(), INSTANCE_ID);
+            if (create_attr_ret){
+                ESP_LOGE(COMPONENT_NAME, "create attr table failed, error code = %x", create_attr_ret);
+            }            
+        }
+            break;
+        case ESP_GATTS_READ_EVT:
+            break;
+        case ESP_GATTS_WRITE_EVT:
+        {
+            ESP_LOGI(COMPONENT_NAME, "ESP_GATTS_WRITE_EVT, write value:");
+            esp_log_buffer_hex(__func__, param->write.value, param->write.len);
+        }
+            break;
+        case ESP_GATTS_EXEC_WRITE_EVT:
+            break;
+        case ESP_GATTS_MTU_EVT:
+            break;
+        case ESP_GATTS_CONF_EVT:
+            break;
+        case ESP_GATTS_UNREG_EVT:
+            break;
+        case ESP_GATTS_DELETE_EVT:
+            break;
+        case ESP_GATTS_START_EVT:
+            break;
+        case ESP_GATTS_STOP_EVT:
+            break;
+        case ESP_GATTS_CONNECT_EVT:
+        {
+            ESP_LOGI(COMPONENT_NAME, "ESP_GATTS_CONNECT_EVT");
+            /* start security connect with peer device when receive the connect event sent by the master */
+            esp_ble_set_encryption(param->connect.remote_bda, ESP_BLE_SEC_ENCRYPT_MITM);
+        }
+            break;
+        case ESP_GATTS_DISCONNECT_EVT:
+        {
+            ESP_LOGI(COMPONENT_NAME, "ESP_GATTS_DISCONNECT_EVT, disconnect reason 0x%x", param->disconnect.reason);
+            /* start advertising again when missing the connect */
+            esp_ble_gap_start_advertising(_manager.GetAdvertisingParameters());
+        }
+            break;
+        case ESP_GATTS_OPEN_EVT:
+            break;
+        case ESP_GATTS_CANCEL_OPEN_EVT:
+            break;
+        case ESP_GATTS_CLOSE_EVT:
+            break;
+        case ESP_GATTS_LISTEN_EVT:
+            break;
+        case ESP_GATTS_CONGEST_EVT:
+            break;
+        case ESP_GATTS_CREAT_ATTR_TAB_EVT: 
+        {
+            /*
+            ESP_LOGI(COMPONENT_NAME, "The number handle = %x",param->add_attr_tab.num_handle);
+            if (param->create.status == ESP_GATT_OK)
+            {
+                if(param->add_attr_tab.num_handle == 8) 
+                {
+                    memcpy(attribute_handle_table, param->add_attr_tab.handles,
+                    sizeof(attribute_handle_table));
+                    esp_ble_gatts_start_service(attribute_handle_table[0]);
+                }
+                else
+                {
+                    ESP_LOGE(COMPONENT_NAME, "Create attribute table abnormally, num_handle (%d) doesn't equal to HRS_IDX_NB(%d)",
+                         param->add_attr_tab.num_handle, 8);
+                }
+            }
+            else
+            {
+                ESP_LOGE(COMPONENT_NAME, " Create attribute table failed, error code = %x", param->create.status);
+            }
+            */
+        }
+        break;
+        default:
+        break;
+    }
 }
+
+//////////////////////////
+//////////////////////////
+// BELOW HERE IS reference stuff that needs deleting
+//////////////////////////
 
 static const uint16_t characteristic_declaration_uuid = ESP_GATT_UUID_CHAR_DECLARE;
 static const uint16_t primary_service_uuid = ESP_GATT_UUID_PRI_SERVICE;
@@ -440,80 +510,6 @@ static const uint16_t character_client_config_uuid = ESP_GATT_UUID_CHAR_CLIENT_C
 static const uint8_t char_prop_notify = ESP_GATT_CHAR_PROP_BIT_NOTIFY;
 static const uint8_t char_prop_read = ESP_GATT_CHAR_PROP_BIT_READ;
 static const uint8_t char_prop_read_write = ESP_GATT_CHAR_PROP_BIT_WRITE|ESP_GATT_CHAR_PROP_BIT_READ;
-
-void BluetoothRequestHandler::AddCharacteristic(Message *msg)
-{
-    ESP_LOGI(COMPONENT_NAME, "+AddCharacteristic");
-
-    // copy over all parameters
-    Esp32Messaging::BTCharacteristicDesc *description = Encoders::ExtractBTCharacteristicDesc(msg->Payload);
-
-    Config.SetDeviceName(description->ServiceDescription);
-
-    _attribute_database_length+=2;
-
-    if(_attribute_database_length == 2)
-    {
-        // first allocation
-        _attribute_database = (esp_gatts_attr_db_t*)malloc(_attribute_database_length * sizeof(esp_gatts_attr_db_t));
-    }
-    else
-    {
-        // appending
-        esp_gatts_attr_db_t *temp = (esp_gatts_attr_db_t*)realloc(_attribute_database, _attribute_database_length * sizeof(esp_gatts_attr_db_t));
-        if (temp) 
-        {
-            _attribute_database = temp;
-        } 
-        else 
-        {
-            ESP_LOGE(COMPONENT_NAME, "MEMORY ALLOCATION FAILURE");
-            return;
-        }        
-    }
-
-    ESP_LOGI(COMPONENT_NAME, "Memory Allocated");
-
-    // create the declaration
-
-    // create the value
-
-
-    // Characteristic Declaration
-    _attribute_database[_attribute_database_length - 2] = 
-    { 
-        { ESP_GATT_RSP_BY_APP },                            // auto response by GATT
-        { ESP_UUID_LEN_16,                                  // UUID LENGTH (it is 16-bytes)
-            (uint8_t *)&characteristic_declaration_uuid,    // UUID VALUE (this is a characteristic declaration)
-            ESP_GATT_PERM_READ,                             // PREMISSIONS (it is readable)
-            CHAR_DECLARATION_SIZE,                          // MAX LENGTH (one byte long)
-            CHAR_DECLARATION_SIZE,                          // CURRENT LENGTH (one byte)
-            (uint8_t *)&char_prop_notify                    // VALUE (it's a NOTIFY property)
-        }
-    }; 
-
-    // Characteristic Value (these need to come from the caller)
-    _attribute_database[_attribute_database_length - 1] = 
-    { 
-        { ESP_GATT_RSP_BY_APP },                            // auto response by GATT
-        { ESP_UUID_LEN_16,                                  // UUID LENGTH (it is 16-bytes)
-            (uint8_t *)&description->CharacteristicUUID,    // UUID VALUE (this is a characteristic declaration)
-            ESP_GATT_PERM_READ,                             // PREMISSIONS (it is readable)
-            CHAR_DECLARATION_SIZE,                          // MAX LENGTH (one byte long)
-            0,                                              // CURRENT LENGTH (empty)
-            NULL                                            // VALUE (it's null)
-        }
-    }; 
-
-    // we ned to tear-down and re-build?
-
-//    esp_ble_gatts_create_service(gatts_if, &gl_profile_tab[PROFILE_A_APP_ID].service_id, GATTS_NUM_HANDLE_TEST_A);
-}
-
-
-//////////////////////////
-//////////////////////////
-//////////////////////////
 
 
 // we need a profile array
@@ -783,98 +779,5 @@ void BluetoothRequestHandler::gap_event_handler(esp_gap_ble_cb_event_t event, es
             break;
         default:
             break;
-    }
-}
-
-static uint16_t attribute_handle_table[8];
-
-void BluetoothRequestHandler::gatts_profile_event_handler(esp_gatts_cb_event_t event,
-                                        esp_gatt_if_t gatts_if, 
-                                        esp_ble_gatts_cb_param_t *param)
-{
-    ESP_LOGD(__func__, "event = %x\n", event);
-    switch (event) 
-    {
-        case ESP_GATTS_REG_EVT:
-        {
-            esp_ble_gap_set_device_name(BluetoothRequestHandler::Config.GetDeviceName());
-            //generate a resolvable random address
-            esp_ble_gap_config_local_privacy(true);
-//            esp_ble_gatts_create_attr_tab(meadow_attribute_list, gatts_if, 8, 0);
-        }
-            break;
-        case ESP_GATTS_READ_EVT:
-            break;
-        case ESP_GATTS_WRITE_EVT:
-        {
-            ESP_LOGI(COMPONENT_NAME, "ESP_GATTS_WRITE_EVT, write value:");
-            esp_log_buffer_hex(__func__, param->write.value, param->write.len);
-        }
-            break;
-        case ESP_GATTS_EXEC_WRITE_EVT:
-            break;
-        case ESP_GATTS_MTU_EVT:
-            break;
-        case ESP_GATTS_CONF_EVT:
-            break;
-        case ESP_GATTS_UNREG_EVT:
-            break;
-        case ESP_GATTS_DELETE_EVT:
-            break;
-        case ESP_GATTS_START_EVT:
-            break;
-        case ESP_GATTS_STOP_EVT:
-            break;
-        case ESP_GATTS_CONNECT_EVT:
-        {
-            ESP_LOGI(COMPONENT_NAME, "ESP_GATTS_CONNECT_EVT");
-            /* start security connect with peer device when receive the connect event sent by the master */
-            esp_ble_set_encryption(param->connect.remote_bda, ESP_BLE_SEC_ENCRYPT_MITM);
-        }
-            break;
-        case ESP_GATTS_DISCONNECT_EVT:
-        {
-            ESP_LOGI(COMPONENT_NAME, "ESP_GATTS_DISCONNECT_EVT, disconnect reason 0x%x", param->disconnect.reason);
-            /* start advertising again when missing the connect */
-            esp_ble_gap_start_advertising(&advertising_params);
-        }
-            break;
-        case ESP_GATTS_OPEN_EVT:
-            break;
-        case ESP_GATTS_CANCEL_OPEN_EVT:
-            break;
-        case ESP_GATTS_CLOSE_EVT:
-            break;
-        case ESP_GATTS_LISTEN_EVT:
-            break;
-        case ESP_GATTS_CONGEST_EVT:
-            break;
-        case ESP_GATTS_CREAT_ATTR_TAB_EVT: 
-        {
-            /*
-            ESP_LOGI(COMPONENT_NAME, "The number handle = %x",param->add_attr_tab.num_handle);
-            if (param->create.status == ESP_GATT_OK)
-            {
-                if(param->add_attr_tab.num_handle == 8) 
-                {
-                    memcpy(attribute_handle_table, param->add_attr_tab.handles,
-                    sizeof(attribute_handle_table));
-                    esp_ble_gatts_start_service(attribute_handle_table[0]);
-                }
-                else
-                {
-                    ESP_LOGE(COMPONENT_NAME, "Create attribute table abnormally, num_handle (%d) doesn't equal to HRS_IDX_NB(%d)",
-                         param->add_attr_tab.num_handle, 8);
-                }
-            }
-            else
-            {
-                ESP_LOGE(COMPONENT_NAME, " Create attribute table failed, error code = %x", param->create.status);
-            }
-            */
-        }
-        break;
-        default:
-        break;
     }
 }
