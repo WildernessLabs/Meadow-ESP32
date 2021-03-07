@@ -31,6 +31,74 @@ void BluetoothManager::HandleDescriptorAdded(BluetoothDescriptor *)
     
 }
 
+void BluetoothManager::GenerateAdvertisingData()
+{
+    uint8_t manufacturer_data[10]={'W', 'I', 'L', 'D', 'E', 'R', 'N', 'E', 'S', 'S'};
+
+    // NOTE: unknown if this specific value has meaning.  Pulled directly from espressif.
+    uint8_t advertising_service_uuid[16] = {
+        /* LSB <--------------------------------------------------------------------------------> MSB */
+        //first uuid, 16bit, [12],[13] is the value
+        0xfb, 0x34, 0x9b, 0x5f, 0x80, 0x00, 0x00, 0x80, 0x00, 0x10, 0x00, 0x00, 0xFF, 0x00, 0x00, 0x00,
+    };
+
+    /* The length of adv data must be less than 31 bytes */
+    _advertisingData.set_scan_rsp = false;
+    _advertisingData.include_name = true;
+    _advertisingData.include_txpower = true;
+    _advertisingData.min_interval = 0x0006; //slave connection min interval, Time = min_interval * 1.25 msec
+    _advertisingData.max_interval = 0x0010; //slave connection max interval, Time = max_interval * 1.25 msec
+    _advertisingData.appearance = 0x00;
+    _advertisingData.manufacturer_len = sizeof(manufacturer_data);
+    _advertisingData.p_manufacturer_data = manufacturer_data;
+    _advertisingData.service_data_len = 0;
+    _advertisingData.p_service_data = NULL;
+    _advertisingData.service_uuid_len = sizeof(advertising_service_uuid);
+    _advertisingData.p_service_uuid = advertising_service_uuid;
+    _advertisingData.flag = (ESP_BLE_ADV_FLAG_GEN_DISC | ESP_BLE_ADV_FLAG_BREDR_NOT_SPT);
+
+    // scan response data
+    _scanResponseData.set_scan_rsp = true;
+    _scanResponseData.include_name = true;
+    _scanResponseData.include_txpower = true;
+    _scanResponseData.manufacturer_len = sizeof(manufacturer_data);
+    _scanResponseData.p_manufacturer_data = manufacturer_data;
+
+    // advertising parameters
+    _advertisingParameters.adv_int_min         = 0x20;
+    _advertisingParameters.adv_int_max         = 0x40;
+    _advertisingParameters.adv_type            = ADV_TYPE_IND;
+    _advertisingParameters.own_addr_type       = BLE_ADDR_TYPE_PUBLIC;
+    _advertisingParameters.channel_map         = ADV_CHNL_ALL;
+    _advertisingParameters.adv_filter_policy   = ADV_FILTER_ALLOW_SCAN_ANY_CON_ANY;
+}
+
+esp_gatts_attr_db_t* BluetoothManager::GetAttributeTable()
+{
+    return _attribute_table;
+}
+
+esp_ble_adv_data_t* BluetoothManager::GetAdvertisingData()
+{
+    return &_advertisingData;
+}
+
+esp_ble_adv_params_t* BluetoothManager::GetAdvertisingParameters()
+{
+    return &_advertisingParameters;
+}
+
+
+esp_ble_adv_data_t* BluetoothManager::GetScanResponseData()
+{
+    return &_scanResponseData;
+}
+
+uint16_t BluetoothManager::GetAttributeTableLength()
+{
+    return _attributeTableLength;
+}
+
 void BluetoothManager::GenerateAttributeTable()
 {
     // TODO: how many attributes are we going to need?
@@ -60,6 +128,7 @@ void BluetoothManager::GenerateAttributeTable()
     }
 
     _attribute_table = new esp_gatts_attr_db_t[count];
+    _attributeTableLength = count;
 
     auto index = 0;
     for (const auto& svc : Services.GetServiceDefinitions())
