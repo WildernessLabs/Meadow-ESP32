@@ -13,30 +13,44 @@ namespace GetSetAntenna
     {
         public GetSetAntennaTest()
         {
-            Console.WriteLine("initialising WiFi Adapter object.");
+            Console.WriteLine("Initialising WiFi Adapter object.");
 
             Device.InitWiFiAdapter().Wait();
         }
 
+        public void DisplayAntenna(AntennaType antenna)
+        {
+            switch (antenna)
+            {
+                case AntennaType.External:
+                    Console.WriteLine("Current antenna: External.");
+                    break;
+                case AntennaType.OnBoard:
+                    Console.WriteLine("Current antenna: OnBoard.");
+                    break;
+            }
+        }
+
         public void RunTest()
         {
-            AntennaType antenna = Device.WiFiAdapter.Antenna;
             AntennaType newAntenna = AntennaType.OnBoard;
+            AntennaType antenna = Device.WiFiAdapter.Antenna;
+            DisplayAntenna(antenna);
 
             switch (antenna)
             {
                 case AntennaType.External:
                     newAntenna = AntennaType.OnBoard;
-                    Console.WriteLine("Current antenna: External.");
                     break;
                 case AntennaType.OnBoard:
                     newAntenna = AntennaType.External;
-                    Console.WriteLine("Current antenna: onboard.");
                     break;
             }
 
             Device.WiFiAdapter.SetAntenna(newAntenna, true);
             Console.WriteLine("Default antenna changed.");
+            antenna = Device.WiFiAdapter.Antenna;
+            DisplayAntenna(antenna);
         }
     }
 }
