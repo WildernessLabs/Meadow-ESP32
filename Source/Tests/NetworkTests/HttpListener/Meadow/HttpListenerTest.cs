@@ -21,16 +21,13 @@ namespace MeadowApp
             MeadowOS.WatchdogEnable(25000);
             StartWatchdog(20000);
             Device.InitWiFiAdapter().Wait();
-            Device.WiFiAdapter.ConnectionCompleted += WiFiAdapter_ConnectionCompleted;
+            Device.WiFiAdapter.WiFiConnected += WiFiAdapter_WiFiConnected;
             Console.WriteLine("Connecting to access point.");
-            if (Device.WiFiAdapter.Connect(Secrets.WIFI_NAME, Secrets.WIFI_PASSWORD).ConnectionStatus != ConnectionStatus.Success)
-            {
-                throw new Exception("Cannot connect to network, application halted.");
-            }
+            Device.WiFiAdapter.Connect(Secrets.WIFI_NAME, Secrets.WIFI_PASSWORD).Wait();
             Console.WriteLine("WiFi connection completed.");
         }
 
-        private void WiFiAdapter_ConnectionCompleted(object sender, EventArgs e)
+        private void WiFiAdapter_WiFiConnected(object sender, EventArgs e)
         {
             Console.WriteLine("WiFiAdapter_ConnectionCompleted: connected to access point.");
         }
