@@ -568,6 +568,39 @@ char *Logging::StatusCodeName(uint32_t code)
         case StatusCodes::CoprocessorNotResponding:
             return((char *) "CoprocessorNotResponding");
             break;
+        case StatusCodes::EspWiFiNotStarted:
+            return((char *) "EspWiFiNotStarted");
+            break;
+        case StatusCodes::EspOutOfMemory:
+            return((char *) "EspOutOfMemory");
+            break;
+        case StatusCodes::EspWiFiInvalidSsid:
+            return((char *) "EspWiFiInvalidSsid");
+            break;
+        case StatusCodes::AccessPointNotFound:
+            return((char *) "AccessPointNotFound");
+            break;
+        case StatusCodes::BeaconTimeout:
+            return((char *) "BeaconTimeout");
+            break;
+        case StatusCodes::AuthenticationFailed:
+            return((char *) "AuthenticationFailed");
+            break;
+        case StatusCodes::AssociationFailed:
+            return((char *) "AssociationFailed");
+            break;
+        case StatusCodes::HandshakeTimeout:
+            return((char *) "HandshakeTimeout");
+            break;
+        case StatusCodes::ConnectionFailed:
+            return((char *) "ConnectionFailed");
+            break;
+        case StatusCodes::ApTsfReset:
+            return((char *) "ApTsfReset");
+            break;
+        case StatusCodes::UnmappedErrorCode:
+            return((char *) "UnmappedErrorCode");
+            break;
         default:
             return((char *) "Unknown");
             break;
