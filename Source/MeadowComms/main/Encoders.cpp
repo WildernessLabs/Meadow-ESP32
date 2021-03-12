@@ -714,6 +714,91 @@ Esp32Messaging::WiFiCredentials *Encoders::ExtractWiFiCredentials(uint8_t *buffe
 }
 
 /**
+ *  Convert the ConnectDisconnectData object into a byte stream that can be sent to the STM32.
+ *  
+ *  The amount of memory required can be obtained by calling the EncodedConnectDisconnectDataBufferSize method.
+ *  
+ *  @param connectDisconnectData
+ *      ConnectDisconnectData object to be encoded.
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory large enough to hold the encoded ConnectDisconnectData object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodeConnectDisconnectData
+void Encoders::EncodeConnectDisconnectData(Esp32Messaging::ConnectDisconnectData *connectDisconnectData, uint8_t *buffer)
+{
+    EncodeUInt32(connectDisconnectData->IpAddress, buffer);
+    buffer += 4;
+    EncodeUInt32(connectDisconnectData->SubnetMask, buffer);
+    buffer += 4;
+    EncodeUInt32(connectDisconnectData->Gateway, buffer);
+    buffer += 4;
+    memcpy((void *) buffer, (void *) connectDisconnectData->Ssid, 33);
+    buffer += 33;
+    memcpy((void *) buffer, (void *) connectDisconnectData->Bssid, 6);
+    buffer += 6;
+    *buffer = connectDisconnectData->Channel;
+    buffer += 1;
+    *buffer = connectDisconnectData->AuthenticationMode;
+    buffer += 1;
+    *buffer = connectDisconnectData->Connect;
+    buffer += 1;
+    EncodeUInt32(connectDisconnectData->Reason, buffer);
+}
+
+/**
+ *  Calculate the amount of memory required to hold the given instance of the ConnectDisconnectData object.
+ *  
+ *  @param connectDisconnectData
+ *      ConnectDisconnectData object to be encoded.
+ *  
+ *  @returns
+ *      Number of bytes required to hold the encoded ConnectDisconnectData object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodedConnectDisconnectDataBufferSize
+int Encoders::EncodedConnectDisconnectDataBufferSize(Esp32Messaging::ConnectDisconnectData *connectDisconnectData)
+{
+    return(58);
+}
+
+/**
+ *  Extract the ConnectDisconnectData object that is encoded in the given buffer.
+ *  
+ *  Note that the returned pointer points to a block of memory on the heap and
+ *  this should eventually be released calling vPortFree(...).
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded ConnectDisconnectData object.
+ *  
+ *  @returns
+ *      Pointer to a ConnectDisconnectData object.
+ */
+// cppcheck-suppress unusedFunction symbolName=ExtractConnectDisconnectData
+Esp32Messaging::ConnectDisconnectData *Encoders::ExtractConnectDisconnectData(uint8_t *buffer)
+{
+    Esp32Messaging::ConnectDisconnectData *connectDisconnectData = (Esp32Messaging::ConnectDisconnectData *) pvPortMalloc(sizeof(Esp32Messaging::ConnectDisconnectData));
+
+    connectDisconnectData->IpAddress = ExtractUInt32(buffer);
+    buffer += 4;
+    connectDisconnectData->SubnetMask = ExtractUInt32(buffer);
+    buffer += 4;
+    connectDisconnectData->Gateway = ExtractUInt32(buffer);
+    buffer += 4;
+    memcpy((void *) connectDisconnectData->Ssid, (void *) buffer, 33);
+    buffer += 33;
+    memcpy((void *) connectDisconnectData->Bssid, (void *) buffer, 6);
+    buffer += 6;
+    connectDisconnectData->Channel = *buffer;
+    buffer += 1;
+    connectDisconnectData->AuthenticationMode = *buffer;
+    buffer += 1;
+    connectDisconnectData->Connect = *buffer;
+    buffer += 1;
+    connectDisconnectData->Reason = ExtractUInt32(buffer);
+    return(connectDisconnectData);
+}
+
+/**
  *  Convert the AccessPoint object into a byte stream that can be sent to the STM32.
  *  
  *  The amount of memory required can be obtained by calling the EncodedAccessPointBufferSize method.
