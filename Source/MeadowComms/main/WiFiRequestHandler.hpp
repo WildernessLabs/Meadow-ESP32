@@ -171,6 +171,13 @@ private:
     const int WIFI_STATION_STARTED_BIT = BIT7;
 
     /**
+     *  @brief Indicate that some sort of error has occurred.
+     * 
+     *  This will ususally be problems with connections, getting the system started etc.
+     */
+    const int WIFI_ERROR_BIT = BIT8;
+
+    /**
      *  @brief Default scan method for WiFi networks.
      */
     const wifi_scan_method_t DEFAULT_SCAN_METHOD = WIFI_FAST_SCAN;
@@ -231,6 +238,39 @@ private:
      *  @brief Current retry count.
      */
     int _currentRetryCount = 0;
+
+    /**
+     *  @brief Last error code from a call into the ESP IDF.
+     * 
+     *  This can be used to track errors when using events.
+     */
+    esp_err_t _lastIdfErrorCode;
+
+    /**
+     *  @brief Information about the access point that we have connected to.
+     * 
+     *  This will be filled with 0 at startup and when the device disconnects from an access point.
+     */
+    wifi_event_sta_connected_t _apInformation;
+
+    /**
+     *  @brief Information about the disconnect reason.
+     * 
+     *  This will be filled with 0 at startup and should only be populated following a disconnect event.
+     */
+    wifi_event_sta_disconnected_t _disconnectData;
+
+    /**
+     *  @brief Current IP information (IP address, subnet mask and gateway).
+     * 
+     *  This will be filled with 0 at startup and when the device disconnects from an access point.
+     */
+    esp_netif_ip_info_t _ipInformation;
+
+    /**
+     *  @brief Indicate if the IP address information has changed.
+     */
+    bool _ipChanged;
 
     /**
      *  @brief Network Interface Handle for the board when running in station mode
@@ -495,14 +535,34 @@ private:
     ~WiFiRequestHandler();
 
     /**
-     *  @brief Process the WiFi connecting and getting an IP address event
+     *  @brief Process the station started event (WIFI_EVENT_STA_START).
      */
-    void StationGotIpEvent();
+    void StationStartedEvent();
 
     /**
-     *  @brief Processes the station disconnected event.
+     *  @brief Process the WiFi connecting and getting an IP address event
      */
-    void StationDisconnectedEvent(system_event_t *eventData);
+    void StationGotIpEvent(ip_event_got_ip_t *);
+
+    /**
+     *  @brief Process the station connected to access point event (WIFI_EVENT_STA_CONNECTED).
+     */
+    void StationConnectedEvent(wifi_event_sta_connected_t *);
+
+    /**
+     *  @brief Processes the station disconnected event (WIFI_EVENT_STA_DISCONNECTED).
+     */
+    void StationDisconnectedEvent(wifi_event_sta_disconnected_t *);
+
+    /**
+     *  @brief Scan for access points has completed (WIFI_EVENT_SCAN_DONE).
+     */
+    void ScanCompletEvent(wifi_event_sta_scan_done_t *);
+
+    /**
+     *  @brief Process the change in authentication mode event (WIFI_EVENT_STA_AUTHMODE_CHANGE).
+     */
+    void AuthenticationModeChangedEvent(wifi_event_sta_authmode_change_t *);
 
     /**
      *  @brief Method that will deal with poll requests.

@@ -23,7 +23,7 @@ namespace MeadowApp
             {
                 message.Clear();
                 message.Append(DateTime.Now.ToString("U"));
-                message.Append($" - Battery level: {Device.Coprocessor.BatteryLevel}");
+                message.Append($" - Battery level: {Device.GetBatteryLevel()}");
                 Console.WriteLine(message.ToString());
                 Thread.Sleep(1000);
             }
