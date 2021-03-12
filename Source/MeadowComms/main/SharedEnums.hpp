@@ -43,7 +43,18 @@ namespace StatusCodes
         InvalidAntennaData = 17,
         InvalidAntennaValue = 18,
         NoMessagesWaiting = 19,
-        CoprocessorNotResponding = 20
+        CoprocessorNotResponding = 20,
+        EspWiFiNotStarted = 21,
+        EspOutOfMemory = 22,
+        EspWiFiInvalidSsid = 23,
+        AccessPointNotFound = 24,
+        BeaconTimeout = 25,
+        AuthenticationFailed = 26,
+        AssociationFailed = 27,
+        HandshakeTimeout = 28,
+        ConnectionFailed = 29,
+        ApTsfReset = 30,
+        UnmappedErrorCode = 31
     };
 
 }
@@ -190,6 +201,48 @@ namespace ConfigurationItems
 
 }
 
+namespace WiFiReasons
+{
+    /*
+     *    WiFi reason codes
+     */
+    enum WiFiReasons : uint8_t
+    {
+        Unspecified = 1,
+        AuthenticationExpired = 2,
+        AuthenticationLeave = 3,
+        AssociationExpired = 4,
+        AssociationTooMany = 5,
+        NotAuthenticated = 6,
+        NotAssociated = 7,
+        AssociationLeave = 8,
+        AssociationNotAuthorized = 9,
+        DisassociatedPowerCapabilityBad = 10,
+        DisassociatedSupplementaryChannelBad = 11,
+        InvalidElement = 13,
+        MessageIntegrityCodeFailure = 14,
+        FourWayHandshakeTimeout = 15,
+        GroupKeyUpdateTimeout = 16,
+        InvalidElementInFourWayHandshake = 17,
+        InvalidGroupCipher = 18,
+        InvalidPairwiseCipher = 19,
+        InvalidAkmp = 20,
+        UnsupportedRsneVersion = 21,
+        InvalidRsneCapabilities = 22,
+        Authentication801Failed = 23,
+        CipherSuiteRejected = 24,
+        InvalidPmkid = 53,
+        BeaconTimeout = 200,
+        NoAccessPointFound = 201,
+        AuthenticationFailed = 202,
+        AssociationFailed = 203,
+        HandshakeTimeout = 204,
+        ConnectionFailed = 205,
+        TsfReset = 206
+    };
+
+}
+
 namespace WiFiAuthenticationMode
 {
     /*
@@ -202,7 +255,9 @@ namespace WiFiAuthenticationMode
         WpaPsk = 2,
         Wpa2Psk = 3,
         WpaWpa2Psk = 4,
-        Wpa2Enterprise = 5
+        Wpa2Enterprise = 5,
+        Wpa3Psk = 6,
+        Wpa2Wpa3Psk = 7
     };
 
 }

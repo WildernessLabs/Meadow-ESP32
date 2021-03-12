@@ -9,7 +9,12 @@
 #include <sys/socket.h>
 #include "errno.h"
 #include <sys/ioctl.h>
+
+#include <esp_wifi.h>
+
 #include "Mapping.hpp"
+#include "SharedEnums.hpp"
+#include "SystemRequestHandler.hpp"
 
 /*
  * ---------------------------------------------------------------------------
@@ -287,6 +292,19 @@ Mapping::int_mapping_t Mapping::_socketShutdownType[] =
     { 3, SHUT_RDWR }
 };
 
+/**
+ *  @brief Map of the ESP IDF error codes (esp_err_t) to StatusCodes.
+ */
+Mapping::int_mapping_t Mapping::_espErrorCodes[] = 
+{
+    { StatusCodes::CompletedOk, ESP_OK },
+    { StatusCodes::EspOutOfMemory, ESP_ERR_NO_MEM },
+    { StatusCodes::CannotConnectToAccessPoint, ESP_ERR_WIFI_CONN },
+    { StatusCodes::EspWiFiInvalidSsid, ESP_ERR_WIFI_SSID },
+    { StatusCodes::EspWiFiNotStarted, ESP_ERR_WIFI_NOT_STARTED },
+    { StatusCodes::EspWiFiNotStarted, ESP_ERR_WIFI_NOT_INIT }
+};
+
 /*
  * ---------------------------------------------------------------------------
  *
@@ -395,41 +413,46 @@ int32_t Mapping::GetValue(Mapping::MappingTable mapping, MappingDirection type, 
     {
         case MappingTable::AddressFamily:
             table = _addressFamilies;
-            size = sizeof(_addressFamilies) / sizeof(int_mapping_t);
+            size = sizeof(_addressFamilies);
             break;
         case MappingTable::SocketOptions:
             table = _socketOptions;
-            size = sizeof(_socketOptions) / sizeof(int_mapping_t);
+            size = sizeof(_socketOptions);
             break;
         case MappingTable::ProtocolFamilies:
             table = _protocolFamilies;
-            size = sizeof(_protocolFamilies) / sizeof(int_mapping_t);
+            size = sizeof(_protocolFamilies);
             break;
         case MappingTable::SocketTypes:
             table = _socketTypes;
-            size = sizeof(_socketTypes) / sizeof(int_mapping_t);
+            size = sizeof(_socketTypes);
             break;
         case MappingTable::SocketLevel:
             table = _socketLevels;
-            size = sizeof(_socketLevels) / sizeof(int_mapping_t);
+            size = sizeof(_socketLevels);
             break;
         case MappingTable::Errno:
             table = _errno;
-            size = sizeof(_errno) / sizeof(int_mapping_t);
+            size = sizeof(_errno);
             break;
         case MappingTable::MessageFlags:
             table = _messageFlags;
-            size = sizeof(_messageFlags) / sizeof(int_mapping_t);
+            size = sizeof(_messageFlags);
             break;
         case MappingTable::PollEvents:
             table = _pollEvents;
-            size = sizeof(_pollEvents) / sizeof(int_mapping_t);
+            size = sizeof(_pollEvents);
             break;
         case MappingTable::SocketShutdownType:
             table = _socketShutdownType;
-            size = sizeof(_socketShutdownType) / sizeof(int_mapping_t);
+            size = sizeof(_socketShutdownType);
+            break;
+        case MappingTable::EspErrorCodes:
+            table = _espErrorCodes;
+            size = sizeof(_espErrorCodes);
             break;
     }
+    size /= sizeof(int_mapping_t);
 
     if (table != NULL)
     {
@@ -538,4 +561,24 @@ int32_t Mapping::GetEspFlagValue(Mapping::MappingTable mapping, int32_t value, i
 int32_t Mapping::GetStmFlagValue(Mapping::MappingTable mapping, int32_t value, int32_t *result)
 {
     return(GetFlagValue(mapping, Mapping::EspToStm, value, result));
+}
+
+/**
+ *  @brief Map and ESP IDF error code into a StatusCodes value.
+ * 
+ *  @param error
+ *      ESP IDF error code (type esp_err_t).
+ * 
+ *  @returns
+ *      StatusCodes value equivalent to the ESP IDF error code or UnmappedErrorCode if the
+ *      ESP value cannot be found.
+ */
+StatusCodes::StatusCodes Mapping::GetStatusCode(esp_err_t error)
+{
+    int32_t result;
+    if (GetStmValue(Mapping::EspErrorCodes, error, &result) < 0)
+    {
+        result = (int32_t) StatusCodes::UnmappedErrorCode;
+    }
+    return((StatusCodes::StatusCodes) result);
 }
