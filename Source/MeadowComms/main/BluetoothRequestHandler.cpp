@@ -138,6 +138,9 @@ void BluetoothRequestHandler::DispatchRequest(Message *request)
     {
         case BluetoothFunction::Start:
             StartStack(request);
+
+            CreateAttributeGraph(request);
+
             break;
         case BluetoothFunction::Stop:
             TeardownStack(request);
@@ -381,10 +384,32 @@ void BluetoothRequestHandler::TeardownStack(Message *msg)
 #endif
 
 }
+
+void BluetoothRequestHandler::CreateAttributeGraph(Message *msg)
+{
+    // TODO: pass in parameters from the incoming message (i.e. the entire graph)
+    auto serviceName = "MyService";
+    auto svc = new BluetoothService((char*)serviceName, Uuid16(0x00FF));
+    svc->AddCharacteristic(
+            new BluetoothCharacteristic(0x2a56, CharacteristicPermission::ReadEncrypted, CharacteristicProperty::Notify, 2)
+        );
+    svc->AddCharacteristic(
+            new BluetoothCharacteristic(0x2a58, CharacteristicPermission::ReadEncrypted, CharacteristicProperty::Notify, 2)
+        ); 
+    _manager.Services.Add(svc);
+    
+
+    _manager.GenerateAdvertisingData();
+    _manager.GenerateAttributeTable();
+}
+
 //////////////////////////
 // BELOW HERE IS THE IMPLEMENTATION OF THE ESP GATT SERVER
 //////////////////////////
 #define INSTANCE_ID 0
+
+static bool advertising_data_configured = false;
+static bool response_data_configured = false;
 
 void BluetoothRequestHandler::gatts_profile_event_handler(esp_gatts_cb_event_t event,
                                         esp_gatt_if_t gatts_if, 
@@ -399,7 +424,7 @@ void BluetoothRequestHandler::gatts_profile_event_handler(esp_gatts_cb_event_t e
             esp_ble_gap_set_device_name(BluetoothRequestHandler::Config.GetDeviceName());
 
             // turn on some security
-            esp_ble_gap_config_local_privacy(true);
+//            esp_ble_gap_config_local_privacy(true);
 
             // configure the advertising data
             esp_err_t ret = esp_ble_gap_config_adv_data(_manager.GetAdvertisingData());
@@ -407,23 +432,26 @@ void BluetoothRequestHandler::gatts_profile_event_handler(esp_gatts_cb_event_t e
             {
                 ESP_LOGE(COMPONENT_NAME, "config adv data failed, error code = %x", ret);
             }
-//            adv_config_done |= ADV_CONFIG_FLAG;
+            advertising_data_configured = true;
 
             // configure our BLE scan response
             ret = esp_ble_gap_config_adv_data(_manager.GetScanResponseData());
             if (ret){
                 ESP_LOGE(COMPONENT_NAME, "config scan response data failed, error code = %x", ret);
             }
-//            adv_config_done |= SCAN_RSP_CONFIG_FLAG;
+            response_data_configured = true;
             
+            ESP_LOGI(COMPONENT_NAME, "BLE advertising configured.  Creating attribtes...");
+
             // set the attribute table - this requires the services be already-defined in the Manager
             esp_err_t create_attr_ret = esp_ble_gatts_create_attr_tab(_manager.GetAttributeTable(), gatts_if, _manager.GetAttributeTableLength(), INSTANCE_ID);
             if (create_attr_ret){
                 ESP_LOGE(COMPONENT_NAME, "create attr table failed, error code = %x", create_attr_ret);
             }            
         }
-            break;
+        break;
         case ESP_GATTS_READ_EVT:
+            ESP_LOGI(COMPONENT_NAME, "ESP_GATTS_READ_EVT");
             break;
         case ESP_GATTS_WRITE_EVT:
         {
@@ -432,26 +460,43 @@ void BluetoothRequestHandler::gatts_profile_event_handler(esp_gatts_cb_event_t e
         }
             break;
         case ESP_GATTS_EXEC_WRITE_EVT:
+            ESP_LOGI(COMPONENT_NAME, "ESP_GATTS_EXEC_WRITE_EVT");
             break;
         case ESP_GATTS_MTU_EVT:
+            ESP_LOGI(COMPONENT_NAME, "ESP_GATTS_MTU_EVT");
             break;
         case ESP_GATTS_CONF_EVT:
+            ESP_LOGI(COMPONENT_NAME, "ESP_GATTS_CONF_EVT");
             break;
         case ESP_GATTS_UNREG_EVT:
+            ESP_LOGI(COMPONENT_NAME, "ESP_GATTS_UNREG_EVT");
             break;
         case ESP_GATTS_DELETE_EVT:
+            ESP_LOGI(COMPONENT_NAME, "ESP_GATTS_DELETE_EVT");
             break;
         case ESP_GATTS_START_EVT:
+            ESP_LOGI(COMPONENT_NAME, "ESP_GATTS_START_EVT");
             break;
         case ESP_GATTS_STOP_EVT:
+            ESP_LOGI(COMPONENT_NAME, "ESP_GATTS_STOP_EVT");
             break;
         case ESP_GATTS_CONNECT_EVT:
         {
             ESP_LOGI(COMPONENT_NAME, "ESP_GATTS_CONNECT_EVT");
             /* start security connect with peer device when receive the connect event sent by the master */
-            esp_ble_set_encryption(param->connect.remote_bda, ESP_BLE_SEC_ENCRYPT_MITM);
+//            esp_ble_set_encryption(param->connect.remote_bda, ESP_BLE_SEC_ENCRYPT_MITM);
+
+            esp_ble_conn_update_params_t conn_params = {0};
+            memcpy(conn_params.bda, param->connect.remote_bda, sizeof(esp_bd_addr_t));
+            /* For the iOS system, please refer to Apple official documents about the BLE connection parameters restrictions. */
+            conn_params.latency = 0;
+            conn_params.max_int = 0x20;    // max_int = 0x20*1.25ms = 40ms
+            conn_params.min_int = 0x10;    // min_int = 0x10*1.25ms = 20ms
+            conn_params.timeout = 400;    // timeout = 400*10ms = 4000ms
+            //start sent the update connection parameters to the peer device.
+            esp_ble_gap_update_conn_params(&conn_params);
         }
-            break;
+        break;
         case ESP_GATTS_DISCONNECT_EVT:
         {
             ESP_LOGI(COMPONENT_NAME, "ESP_GATTS_DISCONNECT_EVT, disconnect reason 0x%x", param->disconnect.reason);
@@ -471,31 +516,155 @@ void BluetoothRequestHandler::gatts_profile_event_handler(esp_gatts_cb_event_t e
             break;
         case ESP_GATTS_CREAT_ATTR_TAB_EVT: 
         {
-            /*
-            ESP_LOGI(COMPONENT_NAME, "The number handle = %x",param->add_attr_tab.num_handle);
-            if (param->create.status == ESP_GATT_OK)
+            if (param->add_attr_tab.status != ESP_GATT_OK)
             {
-                if(param->add_attr_tab.num_handle == 8) 
-                {
-                    memcpy(attribute_handle_table, param->add_attr_tab.handles,
-                    sizeof(attribute_handle_table));
-                    esp_ble_gatts_start_service(attribute_handle_table[0]);
-                }
-                else
-                {
-                    ESP_LOGE(COMPONENT_NAME, "Create attribute table abnormally, num_handle (%d) doesn't equal to HRS_IDX_NB(%d)",
-                         param->add_attr_tab.num_handle, 8);
-                }
+                ESP_LOGE(COMPONENT_NAME, "create attribute table failed, error code=0x%x", param->add_attr_tab.status);
             }
-            else
+            else if (param->add_attr_tab.num_handle != _manager.GetAttributeTableLength())
             {
-                ESP_LOGE(COMPONENT_NAME, " Create attribute table failed, error code = %x", param->create.status);
+                ESP_LOGE(COMPONENT_NAME, "create attribute table abnormally, num_handle (%d) \
+                        doesn't equal to HRS_IDX_NB(%d)", param->add_attr_tab.num_handle, _manager.GetAttributeTableLength());
             }
-            */
+            else 
+            {
+                ESP_LOGI(COMPONENT_NAME, "create attribute table successfully, handle count = %d\n",param->add_attr_tab.num_handle);
+                // the assigned handles with be in param->add_attr_tab.handles - copy them off
+                _manager.SetHandles(param->add_attr_tab.handles, param->add_attr_tab.num_handle);
+                // now fire up the service (which is the first attribute in the attribute table) by handle.
+                // TODO: right now we're cheating
+                ESP_LOGI(COMPONENT_NAME, "starting service with handle 0x%4x", param->add_attr_tab.handles[0]);
+                esp_ble_gatts_start_service(param->add_attr_tab.handles[0]);
+            }
         }
         break;
         default:
         break;
+    }
+}
+
+void BluetoothRequestHandler::gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param)
+{
+    ESP_LOGI(COMPONENT_NAME, "GAP event %i", event);
+    switch (event)
+    {
+        case ESP_GAP_BLE_SCAN_RSP_DATA_SET_COMPLETE_EVT: // 1
+            if (advertising_data_configured)
+            {
+                ESP_LOGI(COMPONENT_NAME, "Scan data set.  Starting advertising...");
+                esp_ble_gap_start_advertising(_manager.GetAdvertisingParameters());
+            }
+        break;
+        case ESP_GAP_BLE_ADV_DATA_SET_COMPLETE_EVT: // 0
+            // triggered by the gatts_event_handler for ESP_GATTS_REG_EVT where we set the advertising data
+            if (advertising_data_configured)
+            {
+                ESP_LOGI(COMPONENT_NAME, "Advertising data set.  Starting advertising...");
+                esp_ble_gap_start_advertising(_manager.GetAdvertisingParameters());
+            }
+            break;
+        case ESP_GAP_BLE_ADV_START_COMPLETE_EVT: // 6
+            // advertising has started (well, unless an error is set, so check for that)
+            if (param->adv_start_cmpl.status != ESP_BT_STATUS_SUCCESS) 
+            {
+                ESP_LOGE(COMPONENT_NAME, "Advertising start failed");
+            }
+            ESP_LOGI(COMPONENT_NAME, "Advertising start success");
+            break;
+        case ESP_GAP_BLE_PASSKEY_REQ_EVT: // 12
+            /* passkey request event */
+            ESP_LOGI(COMPONENT_NAME, "ESP_GAP_BLE_PASSKEY_REQ_EVT");
+            /* Call the following function to input the passkey which is displayed on the remote device */
+            //esp_ble_passkey_reply(heart_rate_profile_tab[HEART_PROFILE_APP_IDX].remote_bda, true, 0x00);
+            break;
+        case ESP_GAP_BLE_OOB_REQ_EVT: // 13
+        {
+            ESP_LOGI(COMPONENT_NAME, "ESP_GAP_BLE_OOB_REQ_EVT");
+            uint8_t tk[16] = {1}; //If you paired with OOB, both devices need to use the same tk
+            esp_ble_oob_req_reply(param->ble_security.ble_req.bd_addr, tk, sizeof(tk));
+        }
+        break;
+        case ESP_GAP_BLE_LOCAL_IR_EVT:                               /* BLE local IR event */
+            ESP_LOGI(COMPONENT_NAME, "ESP_GAP_BLE_LOCAL_IR_EVT");
+            break;
+        case ESP_GAP_BLE_LOCAL_ER_EVT:                               /* BLE local ER event */
+            ESP_LOGI(COMPONENT_NAME, "ESP_GAP_BLE_LOCAL_ER_EVT");
+            break;
+        case ESP_GAP_BLE_NC_REQ_EVT: // 16
+            /* The app will receive this evt when the IO has DisplayYesNO capability and the peer device IO also has DisplayYesNo capability.
+            show the passkey number to the user to confirm it with the number displayed by peer device. */
+            esp_ble_confirm_reply(param->ble_security.ble_req.bd_addr, true);
+            ESP_LOGI(COMPONENT_NAME, "ESP_GAP_BLE_NC_REQ_EVT, the passkey Notify number:%d", param->ble_security.key_notif.passkey);
+            break;
+        case ESP_GAP_BLE_SEC_REQ_EVT: // 10
+            // security request 
+            esp_ble_gap_security_rsp(param->ble_security.ble_req.bd_addr, true);
+            break;
+        case ESP_GAP_BLE_PASSKEY_NOTIF_EVT: // 11
+            ///the app will receive this evt when the IO  has Output capability and the peer device IO has Input capability.
+            ///show the passkey number to the user to input it in the peer device.
+            ESP_LOGI(COMPONENT_NAME, "The passkey Notify number:%d", param->ble_security.key_notif.passkey);
+            break;
+        case ESP_GAP_BLE_KEY_EVT: // 9
+            //shows the ble key info share with peer device to the user.
+            ESP_LOGI(COMPONENT_NAME, "key type = %d", param->ble_security.ble_key.key_type);
+            break;
+        case ESP_GAP_BLE_AUTH_CMPL_EVT: // 8
+        {
+            // auth complete
+            if(param->ble_security.auth_cmpl.success) 
+            {
+                ESP_LOGI(COMPONENT_NAME, "Auth success. mode = %d", param->ble_security.auth_cmpl.auth_mode);
+            }
+            else
+            {
+                ESP_LOGE(COMPONENT_NAME, "Auth failed. reason = 0x%x",param->ble_security.auth_cmpl.fail_reason);
+            }
+        }
+        break;
+        case ESP_GAP_BLE_REMOVE_BOND_DEV_COMPLETE_EVT: // 23
+        {
+            ESP_LOGD(COMPONENT_NAME, "ESP_GAP_BLE_REMOVE_BOND_DEV_COMPLETE_EVT status = %d", param->remove_bond_dev_cmpl.status);
+            ESP_LOGI(COMPONENT_NAME, "ESP_GAP_BLE_REMOVE_BOND_DEV");
+            ESP_LOGI(COMPONENT_NAME, "-----ESP_GAP_BLE_REMOVE_BOND_DEV----");
+            esp_log_buffer_hex(COMPONENT_NAME, (void *)param->remove_bond_dev_cmpl.bd_addr, sizeof(esp_bd_addr_t));
+            ESP_LOGI(COMPONENT_NAME, "------------------------------------");
+            break;
+        }
+        case ESP_GAP_BLE_SET_LOCAL_PRIVACY_COMPLETE_EVT: // 22
+        {
+            if (param->local_privacy_cmpl.status != ESP_BT_STATUS_SUCCESS)
+            {
+                ESP_LOGE(COMPONENT_NAME, "config local privacy failed, error status = %x", param->local_privacy_cmpl.status);
+                break;
+            }
+
+            ESP_LOGI(COMPONENT_NAME, "GAP 22: local privacy set. Configuring advertising");
+            esp_err_t ret = esp_ble_gap_config_adv_data(_manager.GetAdvertisingData());
+            if (ret)
+            {
+                ESP_LOGE(COMPONENT_NAME, "config adv data failed, error code = %x", ret);
+            }
+            else
+            {
+                advertising_data_configured = true;
+            }
+
+            ret = esp_ble_gap_config_adv_data(_manager.GetScanResponseData());
+            if (ret)
+            {
+                ESP_LOGE(COMPONENT_NAME, "config adv data failed, error code = %x", ret);
+            }
+            else
+            {
+                response_data_configured = true;
+            }
+        }
+        break;
+        case ESP_GAP_BLE_UPDATE_CONN_PARAMS_EVT: // 20
+            ESP_LOGI(COMPONENT_NAME, "GAP connection parameters successfully changed\n");
+            break;
+        default:
+            break;
     }
 }
 
@@ -571,6 +740,7 @@ static esp_ble_adv_data_t advertising_data =
     .flag = (ESP_BLE_ADV_FLAG_GEN_DISC | ESP_BLE_ADV_FLAG_BREDR_NOT_SPT),
 };
 
+/*
 // this is what we respond with when scanned - mostly the same as above but no power or intervals
 static esp_ble_adv_data_t scan_response_data =
 {
@@ -591,9 +761,7 @@ static esp_ble_adv_params_t advertising_params = {
     .channel_map        = ADV_CHNL_ALL,
     .adv_filter_policy = ADV_FILTER_ALLOW_SCAN_ANY_CON_ANY,
 };
-
-static bool advertising_data_configured = false;
-static bool response_data_configured = false;
+*/
 
 // --- test property stuff. We'll modify this when managed starts integrating
 #define GATTS_CHAR_VAL_LEN_MAX 0x40 // not sure if this is a BT thing, or just arbitrary. Assuming arbitrary for now
@@ -616,6 +784,7 @@ static const uint8_t heart_ctrl_point[1] = {0x00};
 
 #define HRPS_HT_MEAS_MAX_LEN            (13)
 
+/*
 static const esp_gatts_attr_db_t meadow_attribute_list[8] =
 {
     // Service Declaration - all services present the UUID
@@ -658,126 +827,4 @@ static const esp_gatts_attr_db_t meadow_attribute_list[8] =
     {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&heart_rate_ctrl_point, ESP_GATT_PERM_WRITE_ENCRYPTED|ESP_GATT_PERM_READ_ENCRYPTED,
       sizeof(uint8_t), sizeof(heart_ctrl_point), (uint8_t *)heart_ctrl_point}},
 };
-
-void BluetoothRequestHandler::gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param)
-{
-    ESP_LOGI(COMPONENT_NAME, "GAP event %i", event);
-    switch (event)
-    {
-        case ESP_GAP_BLE_SCAN_RSP_DATA_SET_COMPLETE_EVT:
-            if (advertising_data_configured)
-            {
-                esp_ble_gap_start_advertising(&advertising_params);
-            }
-        break;
-        case ESP_GAP_BLE_ADV_DATA_SET_COMPLETE_EVT: // 0
-            // triggered by the gatts_event_handler for ESP_GATTS_REG_EVT where we set the advertising data
-            if (advertising_data_configured)
-            {
-                esp_ble_gap_start_advertising(&advertising_params);
-            }
-            break;
-        case ESP_GAP_BLE_ADV_START_COMPLETE_EVT: // 6
-            // advertising has started (well, unless an error is set, so check for that)
-            if (param->adv_start_cmpl.status != ESP_BT_STATUS_SUCCESS) 
-            {
-                ESP_LOGE(COMPONENT_NAME, "Advertising start failed\n");
-            }
-            ESP_LOGI(COMPONENT_NAME, "Advertising start success\n");
-            break;
-        case ESP_GAP_BLE_PASSKEY_REQ_EVT:
-            /* passkey request event */
-            ESP_LOGI(COMPONENT_NAME, "ESP_GAP_BLE_PASSKEY_REQ_EVT");
-            /* Call the following function to input the passkey which is displayed on the remote device */
-            //esp_ble_passkey_reply(heart_rate_profile_tab[HEART_PROFILE_APP_IDX].remote_bda, true, 0x00);
-            break;
-        case ESP_GAP_BLE_OOB_REQ_EVT:
-        {
-            ESP_LOGI(COMPONENT_NAME, "ESP_GAP_BLE_OOB_REQ_EVT");
-            uint8_t tk[16] = {1}; //If you paired with OOB, both devices need to use the same tk
-            esp_ble_oob_req_reply(param->ble_security.ble_req.bd_addr, tk, sizeof(tk));
-        }
-        break;
-        case ESP_GAP_BLE_LOCAL_IR_EVT:                               /* BLE local IR event */
-            ESP_LOGI(COMPONENT_NAME, "ESP_GAP_BLE_LOCAL_IR_EVT");
-            break;
-        case ESP_GAP_BLE_LOCAL_ER_EVT:                               /* BLE local ER event */
-            ESP_LOGI(COMPONENT_NAME, "ESP_GAP_BLE_LOCAL_ER_EVT");
-            break;
-        case ESP_GAP_BLE_NC_REQ_EVT: // 16
-            /* The app will receive this evt when the IO has DisplayYesNO capability and the peer device IO also has DisplayYesNo capability.
-            show the passkey number to the user to confirm it with the number displayed by peer device. */
-            esp_ble_confirm_reply(param->ble_security.ble_req.bd_addr, true);
-            ESP_LOGI(COMPONENT_NAME, "ESP_GAP_BLE_NC_REQ_EVT, the passkey Notify number:%d", param->ble_security.key_notif.passkey);
-            break;
-        case ESP_GAP_BLE_SEC_REQ_EVT: // 10
-            // security request 
-            esp_ble_gap_security_rsp(param->ble_security.ble_req.bd_addr, true);
-            break;
-        case ESP_GAP_BLE_PASSKEY_NOTIF_EVT: // 11
-            ///the app will receive this evt when the IO  has Output capability and the peer device IO has Input capability.
-            ///show the passkey number to the user to input it in the peer device.
-            ESP_LOGI(COMPONENT_NAME, "The passkey Notify number:%d", param->ble_security.key_notif.passkey);
-            break;
-        case ESP_GAP_BLE_KEY_EVT: // 9
-            //shows the ble key info share with peer device to the user.
-            ESP_LOGI(COMPONENT_NAME, "key type = %d", param->ble_security.ble_key.key_type);
-            break;
-        case ESP_GAP_BLE_AUTH_CMPL_EVT: // 8
-        {
-            // auth complete
-            if(param->ble_security.auth_cmpl.success) 
-            {
-                ESP_LOGI(COMPONENT_NAME, "Auth success. mode = %d", param->ble_security.auth_cmpl.auth_mode);
-            }
-            else
-            {
-                ESP_LOGE(COMPONENT_NAME, "Auth failed. reason = 0x%x",param->ble_security.auth_cmpl.fail_reason);
-            }
-        }
-        break;
-        case ESP_GAP_BLE_REMOVE_BOND_DEV_COMPLETE_EVT: 
-        {
-            ESP_LOGD(COMPONENT_NAME, "ESP_GAP_BLE_REMOVE_BOND_DEV_COMPLETE_EVT status = %d", param->remove_bond_dev_cmpl.status);
-            ESP_LOGI(COMPONENT_NAME, "ESP_GAP_BLE_REMOVE_BOND_DEV");
-            ESP_LOGI(COMPONENT_NAME, "-----ESP_GAP_BLE_REMOVE_BOND_DEV----");
-            esp_log_buffer_hex(COMPONENT_NAME, (void *)param->remove_bond_dev_cmpl.bd_addr, sizeof(esp_bd_addr_t));
-            ESP_LOGI(COMPONENT_NAME, "------------------------------------");
-            break;
-        }
-        case ESP_GAP_BLE_SET_LOCAL_PRIVACY_COMPLETE_EVT: // 22
-        {
-            if (param->local_privacy_cmpl.status != ESP_BT_STATUS_SUCCESS)
-            {
-                ESP_LOGE(COMPONENT_NAME, "config local privacy failed, error status = %x", param->local_privacy_cmpl.status);
-                break;
-            }
-
-            esp_err_t ret = esp_ble_gap_config_adv_data(&advertising_data);
-            if (ret)
-            {
-                ESP_LOGE(COMPONENT_NAME, "config adv data failed, error code = %x", ret);
-            }
-            else
-            {
-                advertising_data_configured = true;
-            }
-
-            ret = esp_ble_gap_config_adv_data(&scan_response_data);
-            if (ret)
-            {
-                ESP_LOGE(COMPONENT_NAME, "config adv data failed, error code = %x", ret);
-            }
-            else
-            {
-                response_data_configured = true;
-            }
-        }
-        break;
-        case ESP_GAP_BLE_UPDATE_CONN_PARAMS_EVT: // 20
-            ESP_LOGI(COMPONENT_NAME, "GAP connection parameters successfully changed\n");
-            break;
-        default:
-            break;
-    }
-}
+*/

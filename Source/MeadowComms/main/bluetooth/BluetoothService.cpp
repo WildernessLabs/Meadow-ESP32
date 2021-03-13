@@ -4,19 +4,7 @@ BluetoothService::BluetoothService()
 {
 }
 
-BluetoothService::BluetoothService(std::string name, Uuid128 uuid)
-{
-    Name.assign(name);
-    Uuid = uuid;
-}
-
-BluetoothService::BluetoothService(char* name, Uuid128 uuid)
-{
-    Name.assign(name);
-    Uuid = uuid;
-}
-
-BluetoothService::BluetoothService(char* name, uint8_t* uuid)
+BluetoothService::BluetoothService(char* name, Uuid16 uuid)
 {
     Name.assign(name);
     Uuid = uuid;
@@ -27,17 +15,23 @@ BluetoothCharacteristic& BluetoothService::AddCharacteristic(BluetoothCharacteri
     // do we already know about this characteristic?  If so, ignore 
     bool exists = false;
 
-    for (auto it = _characteristics.begin() ; it != _characteristics.end(); ++it) {
+    /*
+    for (auto it = _characteristics.begin() ; it != _characteristics.end(); ++it) 
+    {
         auto chr = (BluetoothCharacteristic*)*it;
 
-        if(chr->Declaration->Handle == characteristic->Declaration->Handle) {
+        // only check non-zero handles since the handle will be zero when we generate the graph
+        if((characteristic->Declaration->Handle != 0) && (chr->Declaration->Handle == characteristic->Declaration->Handle)) 
+        {
             printf("Already exists.  Skipping\n");
             exists = true;
             break;
         }
     }
-
+    */
+   
     if(!exists) {
+        /*
         // make sure handles are set
         if(characteristic->Declaration->Handle == 0)
         {
@@ -51,9 +45,11 @@ BluetoothCharacteristic& BluetoothService::AddCharacteristic(BluetoothCharacteri
         // cross reference handles
         characteristic->Declaration->ValueHandle = characteristic->Value->Handle;
 
+        */
+
         // set the parent
         characteristic->ParentService = this;
-
+       
         _characteristics.push_back(characteristic);
 
         if(OnCharacteristicAdded)
