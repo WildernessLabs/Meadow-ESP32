@@ -1,16 +1,16 @@
-﻿using Meadow;
-using System;
+﻿using System;
 
-namespace BasicNetworkTest
+namespace GetSetAntenna
 {
     class Program
     {
-        static IApp application;
+        static GetSetAntennaTest application;
         public static void Main(string[] args)
         {
-            Console.WriteLine("GetAntenna Test Application for Meadow F7 (Version 0.12.01)");
+            Console.WriteLine("GetAntenna Test Application.");
             
             application = new GetSetAntennaTest();
+            application.RunTest();
         }
     }
 }

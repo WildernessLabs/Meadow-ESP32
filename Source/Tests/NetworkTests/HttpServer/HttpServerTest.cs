@@ -35,7 +35,7 @@ namespace MeadowApp
         /// </summary>
         public HttpServerTest()
         {
-            Console.WriteLine("Creating HttpListenerTest object.");
+            Console.WriteLine("Creating HttpServerTest object.");
 
             //
             //  Commenting out the following two lines will allow the application to run.
@@ -117,6 +117,7 @@ namespace MeadowApp
 
         public void RunTest()
         {
+            Console.WriteLine("Starting server.");
             listener = new HttpListener();
             string url = $"http://{Device.WiFiAdapter.IpAddress.ToString()}/";
             listener.Prefixes.Add(url);

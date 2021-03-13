@@ -63,6 +63,19 @@ namespace Esp32Messaging
         char * Password;
     };
 
+    struct ConnectDisconnectData
+    {
+        uint32_t IpAddress;
+        uint32_t SubnetMask;
+        uint32_t Gateway;
+        char Ssid[33];
+        uint8_t Bssid[6];
+        uint8_t Channel;
+        uint8_t AuthenticationMode;
+        uint8_t Connect;
+        uint32_t Reason;
+    };
+
     struct AccessPoint
     {
         char Ssid[33];
@@ -331,6 +344,12 @@ namespace Esp32Messaging
         uint32_t PayloadLength;
     };
 
+    struct SetAntennaRequest
+    {
+        uint8_t Antenna;
+        uint8_t Persist;
+    };
+
     struct BTStackConfig
     {
         char * DeviceName;
@@ -390,6 +409,9 @@ public:
     static void EncodeWiFiCredentials(Esp32Messaging::WiFiCredentials *, uint8_t *);
     static int EncodedWiFiCredentialsBufferSize(Esp32Messaging::WiFiCredentials *);
     static Esp32Messaging::WiFiCredentials *ExtractWiFiCredentials(uint8_t *);
+    static void EncodeConnectDisconnectData(Esp32Messaging::ConnectDisconnectData *, uint8_t *);
+    static int EncodedConnectDisconnectDataBufferSize(Esp32Messaging::ConnectDisconnectData *);
+    static Esp32Messaging::ConnectDisconnectData *ExtractConnectDisconnectData(uint8_t *);
     static void EncodeAccessPoint(Esp32Messaging::AccessPoint *, uint8_t *);
     static int EncodedAccessPointBufferSize(Esp32Messaging::AccessPoint *);
     static Esp32Messaging::AccessPoint *ExtractAccessPoint(uint8_t *);
@@ -495,6 +517,9 @@ public:
     static void EncodeEventData(Esp32Messaging::EventData *, uint8_t *);
     static int EncodedEventDataBufferSize(Esp32Messaging::EventData *);
     static Esp32Messaging::EventData *ExtractEventData(uint8_t *);
+    static void EncodeSetAntennaRequest(Esp32Messaging::SetAntennaRequest *, uint8_t *);
+    static int EncodedSetAntennaRequestBufferSize(Esp32Messaging::SetAntennaRequest *);
+    static Esp32Messaging::SetAntennaRequest *ExtractSetAntennaRequest(uint8_t *);
     static void EncodeBTStackConfig(Esp32Messaging::BTStackConfig *, uint8_t *);
     static int EncodedBTStackConfigBufferSize(Esp32Messaging::BTStackConfig *);
     static Esp32Messaging::BTStackConfig *ExtractBTStackConfig(uint8_t *);
