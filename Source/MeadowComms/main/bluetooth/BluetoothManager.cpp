@@ -30,6 +30,15 @@ void BluetoothManager::HandleDescriptorAdded(BluetoothDescriptor *)
 {
     
 }
+void BluetoothManager::SetHandles(uint16_t* handles, uint16_t count)
+{
+    printf("Handles: \n");
+    for(int i = 0 ; i < count ; i++)
+    {
+        printf("0x%04x ", handles[i]);
+    }
+    printf("\n");
+}
 
 void BluetoothManager::GenerateAdvertisingData()
 {
@@ -127,19 +136,24 @@ void BluetoothManager::GenerateAttributeTable()
         }
     }
 
+    printf("ATTRIBUTE TABLE LENGTH = %d\n", count);
+
     _attribute_table = new esp_gatts_attr_db_t[count];
     _attributeTableLength = count;
 
     auto index = 0;
     for (const auto& svc : Services.GetServiceDefinitions())
     {
+        printf("ATTRIBUTE TABLE SERVICE AT %d ", index);
         // service attribute - all services are primary for now        
         _attribute_table[index++] =
             {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&primary_service_uuid, ESP_GATT_PERM_READ,
             sizeof(uint16_t), sizeof(svc->Uuid), (uint8_t *)&svc->Uuid}};
 
+        printf("CONTAINS %d CHARACTERISTICS\n", svc->GetCharacteristicDefinitions().size());
         for (const auto& characteristic : svc->GetCharacteristicDefinitions())
         {
+            printf("ATTRIBUTE TABLE DECLARATION AT %d\n", index);
             // declaration attribute
             /*
                 [1]            =
@@ -150,6 +164,7 @@ void BluetoothManager::GenerateAttributeTable()
                 {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&characteristic->Declaration->Uuid, (uint16_t)characteristic->Declaration->Permission,
                 CHAR_DECLARATION_SIZE, CHAR_DECLARATION_SIZE, (uint8_t *)&characteristic->Declaration->Properties}};
 
+            printf("ATTRIBUTE TABLE VALUE AT %d\n", index);
             // value attribute
             /*
                 [2]             =
@@ -162,6 +177,7 @@ void BluetoothManager::GenerateAttributeTable()
 
             for (const auto& descriptor : characteristic->GetDescriptorDefinitions())
             {
+                printf("ATTRIBUTE TABLE DESCRIPTOR AT %d\n", index);
                 // descriptor attribute
                 /*
                     // Heart Rate Measurement Characteristic - Client Characteristic Configuration Descriptor

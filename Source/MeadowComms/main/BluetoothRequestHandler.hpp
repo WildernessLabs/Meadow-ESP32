@@ -98,6 +98,8 @@ private:
     void StartStack(Message *msg);
     void TeardownStack(Message *msg);
 
+    void CreateAttributeGraph(Message *msg);
+
 
 public:
     /**

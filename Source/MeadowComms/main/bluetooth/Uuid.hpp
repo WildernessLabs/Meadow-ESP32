@@ -55,6 +55,11 @@ struct Uuid16
         memcpy((void*)data, &value, 2);
     }
 
+    Uuid16(uint8_t *other)
+    {
+        memcpy((void*)data, other, 2);
+    }
+
     bool operator==(const Uuid16  &other) const
     {
         return memcmp(data, other.data, 2) == 0;

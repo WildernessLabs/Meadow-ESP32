@@ -16,15 +16,13 @@ class BluetoothService
 {
     public:
         BluetoothService();
-        BluetoothService(std::string name, Uuid128 uuid);
-        BluetoothService(char* name, Uuid128 uuid);
-        BluetoothService(char* name, uint8_t* uuid);
+        BluetoothService(char* name, Uuid16 uuid);
         BluetoothCharacteristic& AddCharacteristic(BluetoothCharacteristic *characteristic);
 
         CharacteristicAdded OnCharacteristicAdded = NULL;
 
         std::string Name;
-        Uuid128 Uuid;
+        Uuid16 Uuid;
         unsigned short Handle;
 
         void SetHandleManager(BluetoothHandleManager *handleManager) { _handleManager = handleManager; }

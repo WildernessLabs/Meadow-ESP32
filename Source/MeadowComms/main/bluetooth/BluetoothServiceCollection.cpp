@@ -38,7 +38,7 @@ BluetoothService& BluetoothServiceCollection::Add(BluetoothService *service)
 vector<BluetoothService*> BluetoothServiceCollection::GetServiceDefinitions() 
 { 
     return _services; 
-    }
+}
 
 
 void BluetoothServiceCollection::HandleServiceCharacteristicAdded(BluetoothCharacteristic *characteristic)
@@ -62,10 +62,10 @@ void BluetoothServiceCollection::HandleServiceValueChanged(BluetoothCharacterist
 
 BluetoothService* BluetoothServiceCollection::Find(uint8_t *uuid)
 {
-    return Find(Uuid128(uuid));    
+    return Find(Uuid16(uuid));    
 }
 
-BluetoothService* BluetoothServiceCollection::Find(Uuid128 uuid)
+BluetoothService* BluetoothServiceCollection::Find(Uuid16 uuid)
 {
     // do we already know about this service?  If so, ignore 
     bool exists = false;

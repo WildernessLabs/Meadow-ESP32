@@ -39,6 +39,7 @@ class BluetoothManager
 
         void GenerateAttributeTable();
         void GenerateAdvertisingData();
+        void SetHandles(uint16_t* handles, uint16_t count);
 
         esp_gatts_attr_db_t* GetAttributeTable();
         esp_ble_adv_data_t *GetAdvertisingData();
