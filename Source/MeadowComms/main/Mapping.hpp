@@ -19,6 +19,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "SharedEnums.hpp"
+
 /**
  *  @brief The Mapping class provides a mechanism to map STM32 constants to ESP32 constants and vice versa.
  */
@@ -29,7 +31,7 @@ public:
      *  @brief Type of mapping toable to be used.
      */
     enum MappingTable { AddressFamily, SocketOptions, ProtocolFamilies, SocketTypes, SocketLevel, Errno, MessageFlags, PollEvents,
-                        SocketShutdownType };
+                        SocketShutdownType, EspErrorCodes };
 
 private:
     /**
@@ -93,6 +95,11 @@ private:
     static int_mapping_t _socketShutdownType[];
 
     /**
+     *  @brief Table of the ESP Error codes mapping to the StatusCodes.
+     */
+    static int_mapping_t _espErrorCodes[];
+
+    /**
      *  @brief Get the mapped value using the MappingDirection to determine which
      *  value should be retrieved.
      */
@@ -134,6 +141,11 @@ public:
      *  @brief Get the integer STM32 value equivalent to the specified ESP32 value.
      */
     static int32_t GetStmFlagValue(Mapping::MappingTable mapping, int32_t value, int32_t *result);
+
+    /**
+     *  @brief Map the ESP error codes to a StatusCode value.
+     */
+    static StatusCodes::StatusCodes GetStatusCode(esp_err_t);
 };
 
 #endif /* MAIN_MAPPING_HPP */

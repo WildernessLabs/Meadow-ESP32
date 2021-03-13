@@ -11,7 +11,10 @@
                 "InvalidPacket", "InvalidHeader", "UnexpectedData", "MissingEndOfFrameMarker", "HeaderBodyFieldMismatch",
                 "WiFiAlreadyStarted", "InvalidWiFiCredentials", "WiFiDisconnected", "CannotStartNetworkInterface", "CannotConnectToAccessPoint",
                 "InvalidAntennaData", "InvalidAntennaValue",
-                "NoMessagesWaiting", "CoprocessorNotResponding"
+                "NoMessagesWaiting", "CoprocessorNotResponding",
+                "EspWiFiNotStarted", "EspOutOfMemory", "EspWiFiInvalidSsid", "AccessPointNotFound", "BeaconTimeout", "AuthenticationFailed",
+                "AssociationFailed", "HandshakeTimeout", "ConnectionFailed", "ApTsfReset",
+                "UnmappedErrorCode"
             ]
         },
         {
@@ -42,7 +45,7 @@
               "StartNetwork", "Stop", "ConnectToAccessPoint", "DisconnectFromAccessPoint", "GetAccessPoints",
               "GetAddrInfo", "Socket", "Connect", "FreeAddrInfo", "Write", "SetSockOpt", "Read",
               "Close", "SendTo", "RecvFrom", "Poll", "InterruptPollResponse", "Send", "Bind", "Listen", "Accept", "Ioctl",
-              "GetSockName",
+              "GetSockName", "SetAntenna",
               "SetTimeOfDayEvent", "ConnectEvent", "DisconnectEvent", "StartInterfaceEvent", "StopInterfaceEvent"
           ]
         },
@@ -93,6 +96,46 @@
             ]
         },
         {
+            "Name": "WiFiReasons",
+            "BaseDataType": "Byte",
+            "Namespace": "Esp32Messaging",
+            "Comment": "WiFi reason codes",
+            "NameValuePairs":
+            [
+                { "Name": "Unspecified", "Value": "1" },
+                { "Name": "AuthenticationExpired", "Value": "2" },
+                { "Name": "AuthenticationLeave", "Value": "3" },
+                { "Name": "AssociationExpired", "Value": "4" },
+                { "Name": "AssociationTooMany", "Value": "5" },
+                { "Name": "NotAuthenticated", "Value": "6" },
+                { "Name": "NotAssociated", "Value": "7" },
+                { "Name": "AssociationLeave", "Value": "8" },
+                { "Name": "AssociationNotAuthorized", "Value": "9" },
+                { "Name": "DisassociatedPowerCapabilityBad", "Value": "10" },
+                { "Name": "DisassociatedSupplementaryChannelBad", "Value": "11" },
+                { "Name": "InvalidElement", "Value": "13" },
+                { "Name": "MessageIntegrityCodeFailure", "Value": "14" },
+                { "Name": "FourWayHandshakeTimeout", "Value": "15" },
+                { "Name": "GroupKeyUpdateTimeout", "Value": "16" },
+                { "Name": "InvalidElementInFourWayHandshake", "Value": "17" },
+                { "Name": "InvalidGroupCipher", "Value": "18" },
+                { "Name": "InvalidPairwiseCipher", "Value": "19" },
+                { "Name": "InvalidAkmp", "Value": "20" },
+                { "Name": "UnsupportedRsneVersion", "Value": "21" },
+                { "Name": "InvalidRsneCapabilities", "Value": "22" },
+                { "Name": "Authentication801Failed", "Value": "23" },
+                { "Name": "CipherSuiteRejected", "Value": "24" },
+                { "Name": "InvalidPmkid", "Value": "53" },
+                { "Name": "BeaconTimeout", "Value": "200" },
+                { "Name": "NoAccessPointFound", "Value": "201" },
+                { "Name": "AuthenticationFailed", "Value": "202" },
+                { "Name": "AssociationFailed", "Value": "203" },
+                { "Name": "HandshakeTimeout", "Value": "204" },
+                { "Name": "ConnectionFailed", "Value": "205" },
+                { "Name": "TsfReset", "Value": "206" }
+            ]
+        },
+        {
             "Name": "WiFiAuthenticationMode",
             "BaseDataType": "Byte",
             "Namespace": "Esp32Messaging",
@@ -104,7 +147,9 @@
                 { "Name": "WpaPsk", "Value": "2" },
                 { "Name": "Wpa2Psk", "Value": "3" },
                 { "Name": "WpaWpa2Psk", "Value": "4" },
-                { "Name": "Wpa2Enterprise", "Value": "5" }
+                { "Name": "Wpa2Enterprise", "Value": "5" },
+                { "Name": "Wpa3Psk", "Value": "6" },
+                { "Name": "Wpa2Wpa3Psk", "Value": "7" }
             ]
         },
         {

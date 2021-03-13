@@ -260,6 +260,7 @@ WiFiRequestHandler::WiFiRequestHandler()
     _dnsServer = SystemRequestHandler::GetConfigurationValue(DNS_SERVER_NAME, _dnsServer);
     _defaultGateway = SystemRequestHandler::GetConfigurationValue(DEFAULT_GATEWAY_NAME, _defaultGateway);
     _wifiTimeout = SystemRequestHandler::GetConfigurationValue(DEFAULT_WIFI_TIMEOUT_NAME, _wifiTimeout);
+    _maximumRetryCount = SystemRequestHandler::GetConfigurationValue(MAXIMUM_RETRY_COUNT_NAME, _maximumRetryCount);
     _stationNetIfHandle = nullptr;
     _softApNetIfHandle = nullptr;
     //
@@ -270,7 +271,6 @@ WiFiRequestHandler::WiFiRequestHandler()
     //
     //  Set up the structures need to deal with poll() requests in an asynchronous manner.
     //
-    _maximumRetryCount = SystemRequestHandler::GetConfigurationValue(MAXIMUM_RETRY_COUNT_NAME, _maximumRetryCount);
     _pollRequestListMutex = xSemaphoreCreateMutex();
     if (_pollRequestListMutex == NULL)
     {
@@ -288,6 +288,12 @@ WiFiRequestHandler::WiFiRequestHandler()
     //  requests (upto 10 in this case) to be processed simultaneously.
     //
     _threadPool = new ThreadPool(10);       // cppcheck-suppress [ noOperatorEq, noCopyConstructor ]
+    //
+    //  Finally set some default values for private fields.
+    //
+    bzero((void *) &_ipInformation, sizeof(esp_netif_ip_info_t));
+    bzero((void *) &_apInformation, sizeof(wifi_event_sta_connected_t));
+    _lastIdfErrorCode = ESP_OK;
 }
 
 /**
@@ -929,23 +935,20 @@ void WiFiRequestHandler::EventHandlerHelper(esp_event_base_t eventBase, int32_t 
                 xEventGroupSetBits(_xWiFiEventGroup, WIFI_SCAN_COMPLETE_BIT);
                 break;
             case WIFI_EVENT_STA_START:
-                ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: Station started");
-                tcpip_adapter_set_hostname(TCPIP_ADAPTER_IF_STA, SystemRequestHandler::GetDeviceName());
-                xEventGroupSetBits(_xWiFiEventGroup, WIFI_STATION_STARTED_BIT);
-                RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::StartInterfaceEvent);
+                StationStartedEvent();
                 break;
             case WIFI_EVENT_STA_STOP:
                 ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: Station stopped");
                 RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::StopInterfaceEvent);
                 break;
             case WIFI_EVENT_STA_CONNECTED:
-                ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: Station connected to access point");
-                RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::ConnectEvent);
+                StationConnectedEvent((wifi_event_sta_connected_t *) eventData);
                 break;
             case WIFI_EVENT_STA_DISCONNECTED:
-                ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: Station disconnected.");
-                StationDisconnectedEvent(nullptr);
-                RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::DisconnectEvent);
+                StationDisconnectedEvent((wifi_event_sta_disconnected_t *) eventData);
+                break;
+            case WIFI_EVENT_STA_AUTHMODE_CHANGE:
+                ESP_LOGI(COMPONENT_NAME, "Authentication mode changed.");
                 break;
         }
     }
@@ -956,13 +959,13 @@ void WiFiRequestHandler::EventHandlerHelper(esp_event_base_t eventBase, int32_t 
             switch (eventId)
             {
                 case IP_EVENT_STA_GOT_IP:
-                    StationGotIpEvent();
+                    StationGotIpEvent((ip_event_got_ip_t *) eventData);
                     break;
                 case IP_EVENT_STA_LOST_IP:
                     ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: IP_EVENT_STA_LOST_IP");
                     break;
                 case IP_EVENT_AP_STAIPASSIGNED:
-                    ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: IP_EVENT_STA_LOST_IP");
+                    ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: IP_EVENT_AP_STAIPASSIGNED");
                     break;
                 case IP_EVENT_GOT_IP6:
                     ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: IP_EVENT_GOT_IP6");
@@ -1043,6 +1046,9 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
             break;
         case WiFiFunction::GetAccessPoints:
             GetAvailableNetworks(request);
+            break;
+        case WiFiFunction::SetAntenna:
+            SetAntennaRequest(request);
             break;
         case WiFiFunction::Close:
             _threadPool->Execute(Close, (void *) request);
@@ -1167,6 +1173,38 @@ void WiFiRequestHandler::DisconnectFromAccessPoint(Message *message)
 }
 
 /**
+ *  @brief Change the antenna.
+ *
+ *  @param message
+ *      Message containing the encoded request.
+ */
+void WiFiRequestHandler::SetAntennaRequest(Message *message)
+{
+    ESP_LOGI(COMPONENT_NAME, "SetAntennaRequest: Enter");
+
+    Esp32Messaging::SetAntennaRequest *request = Encoders::ExtractSetAntennaRequest(message->Payload);
+    vPortFree(message->Payload);
+    message->Payload = nullptr;
+    message->PayloadLength = 0;
+
+    if (request->Persist)
+    {
+        SetAntenna(request->Antenna);   // This method also switches the antenna.
+    }
+    else
+    {
+        SwitchAntenna(static_cast<AntennaTypes::AntennaTypes>(request->Antenna));
+    }
+
+    vPortFree(request);
+    message->StatusCode = StatusCodes::CompletedOk;
+    message->MessageType = MessageTypes::Response;
+    _messageDispatcher->QueueMessageForStm32(message);
+
+    ESP_LOGI(COMPONENT_NAME, "SetAntennaRequest: Exit");
+}
+
+/**
  *  @brief Stop the network and release all resources associated with any active connections.
  *
  *  @param message
@@ -1233,6 +1271,7 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
 
     _currentRetryCount = 0;
+    _lastIdfErrorCode = ESP_OK;
     EventBits_t bits = xEventGroupGetBits(_xWiFiEventGroup);
     if (!(bits & WIFI_INTERFACE_STARTED_BIT))
     {
@@ -1263,38 +1302,45 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
             };
             memcpy(wifi_config.sta.ssid, credentials->NetworkName, strlen(credentials->NetworkName));
             memcpy(wifi_config.sta.password, credentials->Password, strlen(credentials->Password));
-            ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
-            ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));
-            ESP_ERROR_CHECK(esp_wifi_start());
-
-            bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_STATION_STARTED_BIT, pdFALSE, pdFALSE, GetWiFiTimeout() / portTICK_PERIOD_MS);
-            if (bits & WIFI_STATION_STARTED_BIT)
+            _lastIdfErrorCode = esp_wifi_set_mode(WIFI_MODE_STA);
+            if (_lastIdfErrorCode == ESP_OK)
             {
-                ESP_ERROR_CHECK(esp_wifi_connect());
-
-                bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT, pdFALSE, pdFALSE, GetWiFiTimeout() / portTICK_PERIOD_MS);
-                if (bits & WIFI_CONNECTED_BIT)
+                _lastIdfErrorCode = esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config);
+            }
+            if (_lastIdfErrorCode == ESP_OK)
+            {
+                _lastIdfErrorCode = esp_wifi_start();
+            }
+            if (_lastIdfErrorCode == ESP_OK)
+            {
+                bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT | WIFI_ERROR_BIT, pdFALSE, pdFALSE, GetWiFiTimeout() / portTICK_PERIOD_MS);
+                if ((bits & WIFI_CONNECTED_BIT) || (bits & WIFI_ERROR_BIT))
                 {
-                    esp_netif_ip_info_t ipInfo;
-                    ESP_ERROR_CHECK(esp_netif_get_ip_info(_stationNetIfHandle, &ipInfo));
-                    message->PayloadLength = 3 * sizeof(esp_ip4_addr_t);
-                    message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-                    memcpy(message->Payload, (void *) &ipInfo.ip, sizeof(esp_ip4_addr_t));
-                    memcpy(message->Payload + sizeof(esp_ip4_addr_t), (void *) &ipInfo.netmask, sizeof(esp_ip4_addr_t));
-                    memcpy(message->Payload + 2 * (sizeof(esp_ip4_addr_t)), (void *) &ipInfo.gw, sizeof(esp_ip4_addr_t));
-                    if (GetGetTimeAtStartup())
+                    Esp32Messaging::ConnectDisconnectData data = { };
+                    if (bits & WIFI_CONNECTED_BIT)
                     {
-                        //
-                        //  Note that we only need to get the time here.  The timezone is set when this
-                        //  class is instanciated or when the SetTimezone method is successfully called.
-                        //
-                        ESP_LOGI(COMPONENT_NAME, "Getting time from %s", GetNtpServer());
-                        sntp_setoperatingmode(SNTP_OPMODE_POLL);
-                        sntp_setservername(0, GetNtpServer());
-                        sntp_set_sync_mode(SNTP_SYNC_MODE_SMOOTH);
-                        sntp_set_time_sync_notification_cb(NtpServerCallback);
-                        sntp_init();
+                        memcpy((void *) &data.IpAddress, (void *) &_ipInformation.ip, sizeof(data.IpAddress));
+                        memcpy((void *) &data.SubnetMask, (void *) &_ipInformation.netmask, sizeof(data.SubnetMask));
+                        memcpy((void *) &data.Gateway, (void *) &_ipInformation.gw, sizeof(data.Gateway));
+                        memcpy((void *) data.Ssid, (void *) _apInformation.ssid, _apInformation.ssid_len);
+                        memcpy((void *) data.Bssid, (void *) _apInformation.bssid, sizeof(data.Bssid));
+                        data.Channel = _apInformation.channel;
+                        data.AuthenticationMode = (uint8_t) _apInformation.authmode;
+                        data.Connect = 1;
                     }
+                    else
+                    {
+                        memcpy((void *) data.Ssid, (void *) _disconnectData.ssid, _disconnectData.ssid_len);
+                        memcpy((void *) data.Bssid, (void *) _disconnectData.bssid, sizeof(data.Bssid));
+                        data.Reason = _disconnectData.reason;
+                        data.Connect = 0;
+                        bzero((void *) &_disconnectData, sizeof(_disconnectData));
+                        result = StatusCodes::WiFiDisconnected;
+                        _lastIdfErrorCode = ESP_OK;
+                    }
+                    message->PayloadLength = Encoders::EncodedConnectDisconnectDataBufferSize(&data);
+                    message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
+                    Encoders::EncodeConnectDisconnectData(&data, message->Payload);
                 }
                 else
                 {
@@ -2604,17 +2650,78 @@ void WiFiRequestHandler::Poll(void *vpMessage)
  */
 
 /**
+ *  @brief Process the station started event.
+ */
+void WiFiRequestHandler::StationStartedEvent()
+{
+    ESP_LOGI(COMPONENT_NAME, "StationStartedEvent: Enter");
+    _lastIdfErrorCode = tcpip_adapter_set_hostname(TCPIP_ADAPTER_IF_STA, SystemRequestHandler::GetDeviceName());
+    if (_lastIdfErrorCode == ESP_OK)
+    {
+        _lastIdfErrorCode = esp_wifi_connect();
+    }
+    if (_lastIdfErrorCode != ESP_OK)
+    {
+        xEventGroupSetBits(_xWiFiEventGroup, WIFI_ERROR_BIT);
+    }
+    if (_lastIdfErrorCode != ESP_OK)
+    {
+        xEventGroupClearBits(_xWiFiEventGroup, WIFI_CONNECTING_BIT | WIFI_RECONNECTING_BIT);
+        xEventGroupSetBits(_xWiFiEventGroup, WIFI_ERROR_BIT);
+    }
+    RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::StartInterfaceEvent);
+    ESP_LOGI(COMPONENT_NAME, "StationStartedEvent: Exit");
+}
+
+/**
  *  @brief The access point has just given the ESP32 an IP address.
  * 
- *  This event indicates that we have successfully connected to the access point.
+ *  This event indicates that we have successfully obtained an IP address.  It is at this
+ *  point that we really consider the device to be connected to the access point as we can
+ *  start to perform network access operations.
+ * 
+ *  @param eventData
+ *      Data for the IP event.
  */
-void WiFiRequestHandler::StationGotIpEvent()
+void WiFiRequestHandler::StationGotIpEvent(ip_event_got_ip_t *eventData)
 {
     ESP_LOGI(COMPONENT_NAME, "StationGotIpEvent: Enter");
     _currentRetryCount = 0;
+    memcpy((void *) &_ipInformation, (void *) &eventData->ip_info, sizeof(esp_netif_ip_info_t));
+    _ipChanged = eventData->ip_changed;
+
+    if (GetGetTimeAtStartup())
+    {
+        //
+        //  Note that we only need to get the time here.  The timezone is set when this
+        //  class is instanciated or when the SetTimezone method is successfully called.
+        //
+        ESP_LOGI(COMPONENT_NAME, "Getting time from %s", GetNtpServer());
+        sntp_setoperatingmode(SNTP_OPMODE_POLL);
+        sntp_setservername(0, GetNtpServer());
+        sntp_set_sync_mode(SNTP_SYNC_MODE_SMOOTH);
+        sntp_set_time_sync_notification_cb(NtpServerCallback);
+        sntp_init();
+    }
+
     xEventGroupClearBits(_xWiFiEventGroup, WIFI_CONNECTING_BIT | WIFI_RECONNECTING_BIT);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT);
+    RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::ConnectEvent);
     ESP_LOGI(COMPONENT_NAME, "StationGotIpEvent: Exit");
+}
+/**
+ *  @brief Process the WiFi station connect event.
+ * 
+ *  This event will fire when the ESP has successfully connected to an access point.
+ *
+ *  @param eventData
+ *      Data for the connection event.
+ */
+void WiFiRequestHandler::StationConnectedEvent(wifi_event_sta_connected_t *eventData)
+{
+    ESP_LOGI(COMPONENT_NAME, "StationConnectedEvent: Enter");
+    memcpy((void *) &_apInformation, (void *) eventData, sizeof(wifi_event_sta_connected_t));
+    ESP_LOGI(COMPONENT_NAME, "StationConnectedEvent: Exit");
 }
 
 /**
@@ -2623,30 +2730,31 @@ void WiFiRequestHandler::StationGotIpEvent()
  *  @param eventData
  *      Data for the disconnected event.
  */
-void WiFiRequestHandler::StationDisconnectedEvent(system_event_t *eventData)
+void WiFiRequestHandler::StationDisconnectedEvent(wifi_event_sta_disconnected_t *eventData)
 {
+    ESP_LOGI(COMPONENT_NAME, "StationDisconnectedEvent: Enter");
+
+    bool reallyDisconnect = true;
+    xEventGroupClearBits(_xWiFiEventGroup, WIFI_READY_BIT | WIFI_CONNECTED_BIT | WIFI_CONNECTING_BIT);
     if (_automaticReconnect)
     {
-        xEventGroupClearBits(_xWiFiEventGroup, WIFI_READY_BIT | WIFI_CONNECTED_BIT | WIFI_CONNECTING_BIT | WIFI_RECONNECTING_BIT);
         if (_currentRetryCount < _maximumRetryCount)
         {
-            xEventGroupSetBits(_xWiFiEventGroup, WIFI_RECONNECTING_BIT);
+            xEventGroupSetBits(_xWiFiEventGroup, WIFI_RECONNECTING_BIT | WIFI_CONNECTING_BIT);
             esp_wifi_connect();
             _currentRetryCount++;
-        }
-        else
-        {
-            //    TODO: Deal with retry counts exceeded in automatic reconnect mode.
+            reallyDisconnect = false;
         }
     }
-    else
+    if (reallyDisconnect)
     {
-        //
-        //  TODO: Send disconnect message ?
-        //
-        xEventGroupClearBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT | WIFI_CONNECTING_BIT | WIFI_RECONNECTING_BIT);
-        xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
+        bzero((void *) &_ipInformation, sizeof(esp_netif_ip_info_t));
+        bzero((void *) &_apInformation, sizeof(wifi_event_sta_connected_t));
+        memcpy((void *) &_disconnectData, (void *) eventData, sizeof(_disconnectData));
+        RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::DisconnectEvent);
+        xEventGroupSetBits(_xWiFiEventGroup, WIFI_ERROR_BIT);
     }
+    ESP_LOGI(COMPONENT_NAME, "StationDisconnectedEvent: Exit");
 }
 
 /*

@@ -40,6 +40,21 @@
             ]
         },
         {
+            "Name": "ConnectDisconnectData",
+            "MessageElements":
+            [
+                { "Name": "IpAddress", "DataType": "uint32" },
+                { "Name": "SubnetMask", "DataType": "uint32" },
+                { "Name": "Gateway", "DataType": "uint32" },
+                { "Name": "Ssid", "DataType": "fixedchararray", "Length": "33" },
+                { "Name": "Bssid", "DataType": "fixedbytearray", "Length": "6" },
+                { "Name": "Channel", "DataType": "byte" },
+                { "Name": "AuthenticationMode", "DataType": "byte" },
+                { "Name": "Connect", "DataType": "byte" },
+                { "Name": "Reason", "DataType": "uint32" }
+            ]
+        },
+        {
             "Name": "AccessPoint",
             "MessageElements":
             [
@@ -359,6 +374,14 @@
                 { "Name": "PayloadLength", "DataType": "uint32" }
             ]
         },
+        { 
+            "Name": "SetAntennaRequest",
+            "MessageElements":
+            [
+                { "Name": "Antenna", "DataType": "byte" },
+                { "Name": "Persist", "DataType": "byte" }
+            ]
+        },
         {
             "Name": "BTStackConfig",
             "MessageElements":
@@ -382,6 +405,6 @@
                 { "Name": "CharacteristicUUID", "DataType": "fixedbytearray", "Length": "16"},
                 { "Name": "CharacteristicProperties", "DataType": "int"}
             ]
-        }    
-    ]    
+        }                
+    ]
 }

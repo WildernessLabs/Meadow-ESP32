@@ -137,17 +137,11 @@ void TransportProviderBase::DumpMessageAtHeadOfQueue()
     Message *message;
     if (xQueuePeek( _outboundMessageQueueHandle, &( message ), ( TickType_t ) 10 ))
     {
-        ESP_LOGI(__func__, "Message:");
-        ESP_LOG_BUFFER_HEX(__func__, message, sizeof(Message));
-        if (message->PayloadLength > 0)
-        {
-            ESP_LOGI(__func__, "Message Payload:");
-            ESP_LOG_BUFFER_HEX(__func__, message->Payload, message->PayloadLength);
-        }
+        Logging::DumpMessage(COMPONENT_NAME, message);
     }
     else
     {
-        ESP_LOGI(__func__, "Message queue is empty.");
+        ESP_LOGI(COMPONENT_NAME, "Message queue is empty.");
     }
 }
 
@@ -169,7 +163,7 @@ bool TransportProviderBase::QueueMessageForStm32(Message *message)
     {
         if (xQueueSendToBack(_outboundMessageQueueHandle, &message, 0) != pdPASS)
         {
-            ESP_LOGE(__func__, "Cannot queue message.");
+            ESP_LOGE(COMPONENT_NAME, "Cannot queue message.");
             result = false;
         }
         else
@@ -184,6 +178,10 @@ bool TransportProviderBase::QueueMessageForStm32(Message *message)
 
 /**
  *  @brief Toggle the "Message waiting" GPIO pin connected to the STM32.
+ * 
+ *  There may be a problem with this method if the clock frequency on the ESP32
+ *  is increased to 240 MHz.  It appears that the messages going to the STM32
+ *  stop being received.
  */
 void TransportProviderBase::ToggleEsp32MessageWaitingPin()
 {
