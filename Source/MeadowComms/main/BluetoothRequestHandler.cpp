@@ -18,6 +18,7 @@
 
 #include "Encoders.hpp"
 #include "Exceptions/MultipleInstancesException.hpp"
+#include "json/json.hpp"
 
 #define CHAR_DECLARATION_SIZE   (sizeof(uint8_t))
 
@@ -33,7 +34,6 @@
  *  Determine if this class is instantiated already (i.e. this should be a singleton).
  */
 bool BluetoothRequestHandler::_instantiated = false;
-BluetoothConfig BluetoothRequestHandler::Config;
 BluetoothManager  BluetoothRequestHandler::_manager;
 
 const char *BluetoothRequestHandler::COMPONENT_NAME = "BTTask";
@@ -137,8 +137,6 @@ void BluetoothRequestHandler::DispatchRequest(Message *request)
     switch (request->Function)
     {
         case BluetoothFunction::Start:
-            StartStack(request);
-
             CreateAttributeGraph(request);
 
             break;
@@ -276,19 +274,15 @@ void BluetoothRequestHandler::EventHandler(void *arg, esp_event_base_t eventBase
 #endif
 }
 
-void BluetoothRequestHandler::StartStack(Message *msg)
+void BluetoothRequestHandler::StartStack()
 {
 #if defined(BT_FULL_LOGGING)
     ESP_LOGI(__func__, "Enter");
 #endif
 
-    // copy over all parameters    
-    Esp32Messaging::BTStackConfig *config = Encoders::ExtractBTStackConfig(msg->Payload);
-    Config.SetDeviceName(config->DeviceName);
-
     esp_err_t ret;
 
-    ESP_LOGI(COMPONENT_NAME, "Enabling BT controller for '%s'", config->DeviceName);
+    ESP_LOGI(COMPONENT_NAME, "Enabling BT controller");
 
     ret = esp_bt_controller_enable(ESP_BT_MODE_BLE);
     if (ret) {
@@ -360,6 +354,8 @@ void BluetoothRequestHandler::StartStack(Message *msg)
 
     xEventGroupSetBits(_xBtEventGroup, BT_READY_BIT);
 
+    ESP_LOGI(COMPONENT_NAME, "BT controller enabled");
+
 #if defined(BT_FULL_LOGGING)
     ESP_LOGI(__func__, "Exit");
 #endif
@@ -387,7 +383,13 @@ void BluetoothRequestHandler::TeardownStack(Message *msg)
 
 void BluetoothRequestHandler::CreateAttributeGraph(Message *msg)
 {
-    // TODO: pass in parameters from the incoming message (i.e. the entire graph)
+    ESP_LOGI(COMPONENT_NAME, "CreateAttributeGraph. payload len = %i", msg->PayloadLength);
+
+    Esp32Messaging::BTStackConfig *config = Encoders::ExtractBTStackConfig(msg->Payload);
+
+    _manager.BuildGraphFromJson(config->Config);
+
+    /*
     auto serviceName = "MyService";
     auto svc = new BluetoothService((char*)serviceName, Uuid16(0x00FF));
     svc->AddCharacteristic(
@@ -397,10 +399,12 @@ void BluetoothRequestHandler::CreateAttributeGraph(Message *msg)
             new BluetoothCharacteristic(0x2a58, CharacteristicPermission::ReadEncrypted, CharacteristicProperty::Notify, 2)
         ); 
     _manager.Services.Add(svc);
-    
+    */
 
     _manager.GenerateAdvertisingData();
     _manager.GenerateAttributeTable();
+
+    StartStack();
 }
 
 //////////////////////////
@@ -421,7 +425,7 @@ void BluetoothRequestHandler::gatts_profile_event_handler(esp_gatts_cb_event_t e
         case ESP_GATTS_REG_EVT:
         {
             // set the device name
-            esp_ble_gap_set_device_name(BluetoothRequestHandler::Config.GetDeviceName());
+            esp_ble_gap_set_device_name(_manager.DeviceName);
 
             // turn on some security
 //            esp_ble_gap_config_local_privacy(true);

@@ -1,0 +1,23 @@
+{
+    "deviceName":"MY MEADOW",
+    "services": [
+        {
+            "name": "Service A",
+            "uuid": 254,
+            "characteristics": [
+                {
+                    "uuid": 10753,
+                    "permission": 17,
+                    "props": 10,
+                    "len": 4
+                },
+                {
+                    "uuid": 10755,
+                    "permission": 2,
+                    "props": 16,
+                    "len": 4
+                }
+            ]
+        }
+    ]
+}
