@@ -47,7 +47,9 @@ class BluetoothManager
         esp_ble_adv_params_t *GetAdvertisingParameters();
         uint16_t GetAttributeTableLength();
 
-        // TODO: add high-level graph handler so consumer only uses this instance to manage all BT stuff
+        void GetCurrentValueForAttributeHandle(uint16_t handle, uint8_t* pData, uint16_t* pLen);
+        void SetCurrentValueForAttributeHandle(uint16_t handle, uint8_t* pData, uint16_t len);
+
 };
 
 #endif

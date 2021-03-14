@@ -30,6 +30,7 @@ void BluetoothManager::HandleDescriptorAdded(BluetoothDescriptor *)
 {
     
 }
+
 void BluetoothManager::SetHandles(uint16_t* handles, uint16_t count)
 {
     printf("Handles: \n");
@@ -38,6 +39,32 @@ void BluetoothManager::SetHandles(uint16_t* handles, uint16_t count)
         printf("0x%04x ", handles[i]);
     }
     printf("\n");
+
+    int index = 0;
+
+    for (const auto& svc : Services.GetServiceDefinitions())
+    {
+        svc->Handle = handles[index++];
+        printf("ATTRIBUTE TABLE SERVICE HANDLE = 0x%04x\n", svc->Handle);
+
+        for (const auto& characteristic : svc->GetCharacteristicDefinitions())
+        {
+            characteristic->Declaration->Handle = handles[index++];
+            printf("ATTRIBUTE TABLE DECLARATION HANDLE = 0x%04x\n", characteristic->Declaration->Handle);
+
+            characteristic->Value->Handle = handles[index++];
+            printf("ATTRIBUTE TABLE VALUE HANDLE = 0x%04x\n", characteristic->Value->Handle);
+
+            // cross reference handles
+            characteristic->Declaration->ValueHandle = characteristic->Value->Handle;
+
+            for (const auto& descriptor : characteristic->GetDescriptorDefinitions())
+            {
+                descriptor->Handle = handles[index++];
+                printf("ATTRIBUTE TABLE DESCRIPTOR HANDLE = 0x%04x\n", descriptor->Handle);
+            }
+        }
+    }        
 }
 
 void BluetoothManager::GenerateAdvertisingData()
@@ -108,6 +135,25 @@ uint16_t BluetoothManager::GetAttributeTableLength()
     return _attributeTableLength;
 }
 
+static int test_value = 0;
+
+void BluetoothManager::GetCurrentValueForAttributeHandle(uint16_t handle, uint8_t* pData, uint16_t* pLen)
+{
+    // TODO: go get the data from the STM - for now we just increment to test the data is changing
+    test_value++;
+    memcpy(pData, &test_value, 4);
+    *pLen = 4;
+}
+
+void BluetoothManager::SetCurrentValueForAttributeHandle(uint16_t handle, uint8_t* pData, uint16_t len)
+{
+    printf("Received %i bytes of data for attribute handle 0x%04x: ", len, handle);
+    for (size_t i = 0; i < len; i++) {
+        printf("%*x ", 3, pData[i]);
+    }
+    printf("\n");    
+}
+
 void BluetoothManager::GenerateAttributeTable()
 {
     // TODO: how many attributes are we going to need?
@@ -159,7 +205,8 @@ void BluetoothManager::GenerateAttributeTable()
                 [1]            =
                 {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&characteristic_declaration_uuid, ESP_GATT_PERM_READ,
                 CHAR_DECLARATION_SIZE, CHAR_DECLARATION_SIZE, (uint8_t *)&char_prop_notify}},
-            */            
+            */
+
             _attribute_table[index++] =
                 {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&characteristic->Declaration->Uuid, (uint16_t)characteristic->Declaration->Permission,
                 CHAR_DECLARATION_SIZE, CHAR_DECLARATION_SIZE, (uint8_t *)&characteristic->Declaration->Properties}};
@@ -171,8 +218,10 @@ void BluetoothManager::GenerateAttributeTable()
                 {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&heart_rate_meas_uuid, ESP_GATT_PERM_READ,
                 HRPS_HT_MEAS_MAX_LEN, 0, NULL}},
             */
+           // the first param here (ESP_GATT_RSP_BY_APP) means that we'll handle the request for data manually rather than allowing the API to respond with
+           // data in the parameter database.  We need to call to the STM for data, so this is sensible.
             _attribute_table[index++] =
-                {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&characteristic->Value->Uuid, (uint16_t)characteristic->Value->Permission,
+                {{ESP_GATT_RSP_BY_APP}, {ESP_UUID_LEN_16, (uint8_t *)&characteristic->Value->Uuid, (uint16_t)characteristic->Value->Permission,
                 characteristic->Value->MaxLength, 0, NULL}}; // <- 0, NULL means "current value length is 0, current value data is null"
 
             for (const auto& descriptor : characteristic->GetDescriptorDefinitions())
