@@ -14,6 +14,10 @@ enum class CharacteristicProperty : unsigned char {
     ExtendedProp = 1 << 7
 };
 
+inline CharacteristicProperty operator|(CharacteristicProperty a, CharacteristicProperty b)
+{
+    return static_cast<CharacteristicProperty>(static_cast<int>(a) | static_cast<int>(b));
+}
 
 enum class CharacteristicPermission : unsigned short {
     Read = 1 << 0,
@@ -26,6 +30,11 @@ enum class CharacteristicPermission : unsigned short {
     WriteSigned = 1 << 7,
     WriteSignedMITM = 1 << 8
 };
+
+inline CharacteristicPermission operator|(CharacteristicPermission a, CharacteristicPermission b)
+{
+    return static_cast<CharacteristicPermission>(static_cast<int>(a) | static_cast<int>(b));
+}
 
 class BluetoothAttribute
 {

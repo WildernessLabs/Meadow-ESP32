@@ -391,7 +391,7 @@ void BluetoothRequestHandler::CreateAttributeGraph(Message *msg)
     auto serviceName = "MyService";
     auto svc = new BluetoothService((char*)serviceName, Uuid16(0x00FF));
     svc->AddCharacteristic(
-            new BluetoothCharacteristic(0x2a56, CharacteristicPermission::ReadEncrypted, CharacteristicProperty::Notify, 2)
+            new BluetoothCharacteristic(0x2a56, CharacteristicPermission::Read | CharacteristicPermission::Write , CharacteristicProperty::Read | CharacteristicProperty::Write, 4)
         );
     svc->AddCharacteristic(
             new BluetoothCharacteristic(0x2a58, CharacteristicPermission::ReadEncrypted, CharacteristicProperty::Notify, 2)
@@ -451,14 +451,42 @@ void BluetoothRequestHandler::gatts_profile_event_handler(esp_gatts_cb_event_t e
         }
         break;
         case ESP_GATTS_READ_EVT:
-            ESP_LOGI(COMPONENT_NAME, "ESP_GATTS_READ_EVT");
-            break;
+        {
+            ESP_LOGI(COMPONENT_NAME, "ESP_GATTS_READ_EVT, reading handle 0x%04x need response=%i", param->read.handle, param->read.need_rsp);
+
+            if(param->read.need_rsp)
+            {
+                // the app needs to build a response - this is (currently) set for Characteristic Values - so call to the manager to get the value for the handle
+                esp_gatt_rsp_t rsp;
+                memset(&rsp, 0, sizeof(esp_gatt_rsp_t));
+
+                rsp.attr_value.handle = param->read.handle;
+
+                _manager.GetCurrentValueForAttributeHandle(param->read.handle, rsp.attr_value.value, &rsp.attr_value.len);
+
+                esp_err_t ret = esp_ble_gatts_send_response(gatts_if, param->read.conn_id, param->read.trans_id, ESP_GATT_OK, &rsp);
+
+                if (ret){
+                    ESP_LOGE(COMPONENT_NAME, "esp_ble_gatts_send_response failed, error code = %x", ret);
+                }
+
+            }
+        }
+        break;
         case ESP_GATTS_WRITE_EVT:
         {
-            ESP_LOGI(COMPONENT_NAME, "ESP_GATTS_WRITE_EVT, write value:");
-            esp_log_buffer_hex(__func__, param->write.value, param->write.len);
+            ESP_LOGI(COMPONENT_NAME, "ESP_GATTS_WRITE_EVT, write handle 0x%04x", param->write.handle);
+            if(param->write.need_rsp)
+            {
+                _manager.SetCurrentValueForAttributeHandle(param->write.handle, param->write.value, param->write.len);
+
+                esp_err_t ret = esp_ble_gatts_send_response(gatts_if, param->write.conn_id, param->write.trans_id, ESP_GATT_OK, NULL);
+                if (ret){
+                    ESP_LOGE(COMPONENT_NAME, "esp_ble_gatts_send_response failed, error code = %x", ret);
+                }
+            }
         }
-            break;
+        break;
         case ESP_GATTS_EXEC_WRITE_EVT:
             ESP_LOGI(COMPONENT_NAME, "ESP_GATTS_EXEC_WRITE_EVT");
             break;
