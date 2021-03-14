@@ -33,6 +33,8 @@ class BluetoothManager
         esp_ble_adv_data_t _scanResponseData;
         
     public:
+        char DeviceName[256];
+
         BluetoothManager();
         BluetoothServiceCollection Services;
 
@@ -49,6 +51,9 @@ class BluetoothManager
 
         void GetCurrentValueForAttributeHandle(uint16_t handle, uint8_t* pData, uint16_t* pLen);
         void SetCurrentValueForAttributeHandle(uint16_t handle, uint8_t* pData, uint16_t len);
+
+        void BuildGraphFromJson(char *cfg_json);
+
 
 };
 

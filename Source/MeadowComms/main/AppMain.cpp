@@ -92,13 +92,39 @@ extern "C" void app_main()
     }
 }
 
+const char* json_test = R"(
+{
+    "deviceName":"MY MEADOW",
+    "services": [
+        {
+            "name": "Service A",
+            "uuid": 254,
+            "characteristics": [
+                {
+                    "uuid": 10753,
+                    "permission": 17,
+                    "props": 10,
+                    "len": 4
+                },
+                {
+                    "uuid": 10755,
+                    "permission": 2,
+                    "props": 16,
+                    "len": 4
+                }
+            ]
+        }
+    ]
+})";
+
 void TestBluetoothMessage(MessageDispatcher *dispatcher)
 {
     // for now we'll use one message that starts and sets up everything.  
     // We'll need to separate this and actually have data going in, but this is a baby step toward that
     
     Esp32Messaging::BTStackConfig stackConfig;
-    stackConfig.DeviceName = (char*)"MEADOW TEST";
+    stackConfig.Config = (char*)json_test;
+
     Message startMessage = {};
     startMessage.MessageType = MessageTypes::Header;
     startMessage.Interface = Esp32Interfaces::BlueTooth;

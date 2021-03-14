@@ -1,4 +1,7 @@
 #include "BluetoothManager.hpp"
+#include "../json/json.hpp"
+
+using json = nlohmann::json;
 
 static const uint16_t primary_service_uuid = ESP_GATT_UUID_PRI_SERVICE;
 #define CHAR_DECLARATION_SIZE   (sizeof(uint8_t))
@@ -152,6 +155,57 @@ void BluetoothManager::SetCurrentValueForAttributeHandle(uint16_t handle, uint8_
         printf("%*x ", 3, pData[i]);
     }
     printf("\n");    
+}
+
+void BluetoothManager::BuildGraphFromJson(char *cfg_json)
+{
+    printf("parsing config json...\n");
+
+    auto j = json::parse(cfg_json);
+    printf("json elements = %i\n", j.size());
+
+    strcpy(DeviceName, j["deviceName"].get<std::string>().c_str());
+    printf("Device Name = %s\n", DeviceName);
+
+    auto services = j["services"];
+    for(auto it = services.begin() ; it != services.end(); it++)
+    {
+        auto svc = it.value();
+
+        auto svc_uuid = svc["uuid"].get<int>();
+        printf("service uuid = 0x%04x\n", svc_uuid);
+
+        auto bt_svc = new BluetoothService("FOO", Uuid16(svc_uuid));
+
+        auto characteristics = svc["characteristics"];
+
+        for(auto chr_it = characteristics.begin(); chr_it != characteristics.end(); chr_it++)
+        {
+            auto chr = chr_it.value();
+
+            printf("characteristic ");
+            auto chr_uuid = (uint16_t)chr["uuid"].get<int>();
+            printf("uuid = 0x%04x\n", chr_uuid);
+            auto chr_perm = (uint16_t)chr["permission"].get<int>();
+            printf(" permission = 0x%04x\n", chr_perm);
+            auto chr_props = (uint16_t)chr["props"].get<int>();
+            printf(" props = 0x%04x\n", chr_props);
+            auto chr_len = (uint16_t)chr["len"].get<int>();
+            printf(" len = 0x%04x\n", chr_len);
+
+            auto bt_characteristic = new BluetoothCharacteristic(
+                chr_uuid, 
+                (CharacteristicPermission)chr_perm, 
+                (CharacteristicProperty)chr_props, 
+                chr_len);
+
+            bt_svc->AddCharacteristic(bt_characteristic);
+        }
+
+        Services.Add(bt_svc);
+    }
+
+    printf("parsing json complete!\n");
 }
 
 void BluetoothManager::GenerateAttributeTable()

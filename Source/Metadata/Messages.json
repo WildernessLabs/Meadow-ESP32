@@ -386,25 +386,8 @@
             "Name": "BTStackConfig",
             "MessageElements":
             [
-                { "Name": "DeviceName", "DataType": "string" }
+                { "Name": "Config", "DataType": "string" }
             ]
-        },
-        {
-            "Name": "BTServiceDescription",
-            "MessageElements":
-            [
-                { "Name": "ServiceUUID", "DataType": "uint16" }
-            ]
-        },
-        {
-            "Name": "BTCharacteristicDesc",
-            "MessageElements":
-            [
-                { "Name": "ServiceDescription", "DataType": "string" },
-                { "Name": "ServiceUUID", "DataType": "fixedbytearray", "Length": "16"},
-                { "Name": "CharacteristicUUID", "DataType": "fixedbytearray", "Length": "16"},
-                { "Name": "CharacteristicProperties", "DataType": "int"}
-            ]
-        }                
+        }
     ]
 }

@@ -352,20 +352,7 @@ namespace Esp32Messaging
 
     struct BTStackConfig
     {
-        char * DeviceName;
-    };
-
-    struct BTServiceDescription
-    {
-        uint16_t ServiceUUID;
-    };
-
-    struct BTCharacteristicDesc
-    {
-        char * ServiceDescription;
-        uint8_t ServiceUUID[16];
-        uint8_t CharacteristicUUID[16];
-        int32_t CharacteristicProperties;
+        char * Config;
     };
 
 }
@@ -523,12 +510,6 @@ public:
     static void EncodeBTStackConfig(Esp32Messaging::BTStackConfig *, uint8_t *);
     static int EncodedBTStackConfigBufferSize(Esp32Messaging::BTStackConfig *);
     static Esp32Messaging::BTStackConfig *ExtractBTStackConfig(uint8_t *);
-    static void EncodeBTServiceDescription(Esp32Messaging::BTServiceDescription *, uint8_t *);
-    static int EncodedBTServiceDescriptionBufferSize(Esp32Messaging::BTServiceDescription *);
-    static Esp32Messaging::BTServiceDescription *ExtractBTServiceDescription(uint8_t *);
-    static void EncodeBTCharacteristicDesc(Esp32Messaging::BTCharacteristicDesc *, uint8_t *);
-    static int EncodedBTCharacteristicDescBufferSize(Esp32Messaging::BTCharacteristicDesc *);
-    static Esp32Messaging::BTCharacteristicDesc *ExtractBTCharacteristicDesc(uint8_t *);
 
 };
 
