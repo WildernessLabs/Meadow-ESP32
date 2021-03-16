@@ -18,8 +18,8 @@ namespace MeadowApp
         public HttpListenerTest()
         {
             Console.WriteLine("Creating HttpListenerTest object.");
-            MeadowOS.WatchdogEnable(25000);
-            StartWatchdog(20000);
+            //MeadowOS.WatchdogEnable(25000);
+            //StartWatchdog(20000);
             Device.InitWiFiAdapter().Wait();
             Device.WiFiAdapter.WiFiConnected += WiFiAdapter_WiFiConnected;
             Console.WriteLine("Connecting to access point.");
@@ -49,7 +49,8 @@ namespace MeadowApp
         public void RunTest()
         {
             HttpListener listener;
-            string url = "http://192.168.1.211/";
+            
+            string url = $"http://{Device.WiFiAdapter.IpAddress}/";
             int connectionNumber = 0;
 
             if (!HttpListener.IsSupported)
