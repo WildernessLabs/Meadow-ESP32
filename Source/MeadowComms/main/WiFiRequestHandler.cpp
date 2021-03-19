@@ -1313,6 +1313,10 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
             }
             if (_lastIdfErrorCode == ESP_OK)
             {
+                _lastIdfErrorCode = esp_wifi_connect();
+            }
+            if (_lastIdfErrorCode == ESP_OK)
+            {
                 bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT | WIFI_ERROR_BIT, pdFALSE, pdFALSE, GetWiFiTimeout() / portTICK_PERIOD_MS);
                 if ((bits & WIFI_CONNECTED_BIT) || (bits & WIFI_ERROR_BIT))
                 {
@@ -1414,9 +1418,22 @@ esp_err_t WiFiRequestHandler::StartWiFiInterface()
 
         if (result == ESP_OK)
         {
-            xEventGroupSetBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTED_BIT);
+            result = esp_wifi_start();
         }
-        xEventGroupClearBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTING_BIT);
+
+        if (result == ESP_OK)
+        {
+            xEventGroupClearBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTING_BIT);
+            bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTED_BIT | WIFI_ERROR_BIT, pdFALSE, pdFALSE, GetWiFiTimeout() / portTICK_PERIOD_MS);
+            if (bits & WIFI_INTERFACE_STARTED_BIT)
+            {
+                result = ESP_OK;
+            }
+            else
+            {
+                result = ESP_ERR_WIFI_NOT_STARTED;
+            }
+        }
     }
     ESP_LOGI(COMPONENT_NAME, "StartWiFiInterface: Exit");
     return(result);
@@ -1469,6 +1486,7 @@ void WiFiRequestHandler::GetAvailableNetworks(Message *message)
     EventBits_t bits = xEventGroupGetBits(_xWiFiEventGroup);
     if (!(bits & WIFI_INTERFACE_STARTED_BIT))
     {
+        ESP_LOGI(COMPONENT_NAME, "Starting network");
         if (StartWiFiInterface() != ESP_OK)
         {
             result = StatusCodes::CannotStartNetworkInterface;
@@ -1494,60 +1512,68 @@ void WiFiRequestHandler::GetAvailableNetworks(Message *message)
 
             ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
             ESP_ERROR_CHECK(esp_wifi_start());
-            ESP_ERROR_CHECK(esp_wifi_scan_start(NULL, true));
-
-            bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_SCAN_COMPLETE_BIT, pdFALSE, pdFALSE, GetWiFiTimeout() / portTICK_PERIOD_MS);
-            if (bits & WIFI_SCAN_COMPLETE_BIT)
+            bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_STATION_STARTED_BIT, pdFALSE, pdFALSE, GetWiFiTimeout() / portTICK_PERIOD_MS);
+            if (bits && WIFI_STATION_STARTED_BIT)
             {
-                uint16_t apCount = 0;
-                esp_wifi_scan_get_ap_num(&apCount);
-                ESP_LOGI(COMPONENT_NAME, "GetAvailableNetworks: Number of access points found: %d", apCount);
-                if (apCount != 0)
+                ESP_ERROR_CHECK(esp_wifi_scan_start(NULL, true));
+
+                bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_SCAN_COMPLETE_BIT, pdFALSE, pdFALSE, GetWiFiTimeout() / portTICK_PERIOD_MS);
+                if (bits & WIFI_SCAN_COMPLETE_BIT)
                 {
-                    Esp32Messaging::AccessPointList *accessPointList = static_cast<Esp32Messaging::AccessPointList *>(pvPortMalloc(sizeof(Esp32Messaging::AccessPointList)));
-                    accessPointList->NumberOfAccessPoints = apCount;
-                    //
-                    //  Now we get the access point information.
-                    //
-                    wifi_ap_record_t *accessPoints = static_cast<wifi_ap_record_t *>(pvPortMalloc(apCount * sizeof(wifi_ap_record_t)));
-                    ESP_ERROR_CHECK(esp_wifi_scan_get_ap_records(&number, accessPoints));
-
-                    Esp32Messaging::AccessPoint *accessPoint = static_cast<Esp32Messaging::AccessPoint *>(pvPortMalloc(sizeof(Esp32Messaging::AccessPoint)));
-                    int singleAccessPointSize = Encoders::EncodedAccessPointBufferSize(accessPoint);
-                    accessPointList->AccessPointsLength = singleAccessPointSize * apCount;
-                    accessPointList->AccessPoints = static_cast<uint8_t *>(pvPortMalloc(accessPointList->AccessPointsLength));
-                    uint8_t *currentLocation = accessPointList->AccessPoints;
-                    for (int index = 0; index < apCount; index++)
+                    uint16_t apCount = 0;
+                    esp_wifi_scan_get_ap_num(&apCount);
+                    ESP_LOGI(COMPONENT_NAME, "GetAvailableNetworks: Number of access points found: %d", apCount);
+                    if (apCount != 0)
                     {
-                        bzero(accessPoint, sizeof(Esp32Messaging::AccessPoint));
-                        memcpy(accessPoint->Ssid, &accessPoints[index].ssid, 33);
-                        memcpy(accessPoint->Bssid, &accessPoints[index].bssid, 6);
-                        accessPoint->PrimaryChannel = accessPoints[index].primary;
-                        accessPoint->SecondaryChannel = accessPoints[index].second;
-                        accessPoint->Rssi = accessPoints[index].rssi;
-                        accessPoint->AuthenticationMode = accessPoints[index].authmode;
-                        accessPoint->Protocols = accessPoints[index].phy_11b | accessPoints[index].phy_11g | accessPoints[index].phy_11n | accessPoints[index].phy_lr | accessPoints[index].wps;
-                        Encoders::EncodeAccessPoint(accessPoint, currentLocation);
-                        currentLocation += singleAccessPointSize;
-                    }
-                    vPortFree(accessPoints);
-                    vPortFree(accessPoint);
+                        Esp32Messaging::AccessPointList *accessPointList = static_cast<Esp32Messaging::AccessPointList *>(pvPortMalloc(sizeof(Esp32Messaging::AccessPointList)));
+                        accessPointList->NumberOfAccessPoints = apCount;
+                        //
+                        //  Now we get the access point information.
+                        //
+                        wifi_ap_record_t *accessPoints = static_cast<wifi_ap_record_t *>(pvPortMalloc(apCount * sizeof(wifi_ap_record_t)));
+                        ESP_ERROR_CHECK(esp_wifi_scan_get_ap_records(&number, accessPoints));
 
-                    message->PayloadLength = Encoders::EncodedAccessPointListBufferSize(accessPointList);
-                    message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-                    Encoders::EncodeAccessPointList(accessPointList, message->Payload);
-                    vPortFree(accessPointList);
+                        Esp32Messaging::AccessPoint *accessPoint = static_cast<Esp32Messaging::AccessPoint *>(pvPortMalloc(sizeof(Esp32Messaging::AccessPoint)));
+                        int singleAccessPointSize = Encoders::EncodedAccessPointBufferSize(accessPoint);
+                        accessPointList->AccessPointsLength = singleAccessPointSize * apCount;
+                        accessPointList->AccessPoints = static_cast<uint8_t *>(pvPortMalloc(accessPointList->AccessPointsLength));
+                        uint8_t *currentLocation = accessPointList->AccessPoints;
+                        for (int index = 0; index < apCount; index++)
+                        {
+                            bzero(accessPoint, sizeof(Esp32Messaging::AccessPoint));
+                            memcpy(accessPoint->Ssid, &accessPoints[index].ssid, 33);
+                            memcpy(accessPoint->Bssid, &accessPoints[index].bssid, 6);
+                            accessPoint->PrimaryChannel = accessPoints[index].primary;
+                            accessPoint->SecondaryChannel = accessPoints[index].second;
+                            accessPoint->Rssi = accessPoints[index].rssi;
+                            accessPoint->AuthenticationMode = accessPoints[index].authmode;
+                            accessPoint->Protocols = accessPoints[index].phy_11b | accessPoints[index].phy_11g | accessPoints[index].phy_11n | accessPoints[index].phy_lr | accessPoints[index].wps;
+                            Encoders::EncodeAccessPoint(accessPoint, currentLocation);
+                            currentLocation += singleAccessPointSize;
+                        }
+                        vPortFree(accessPoints);
+                        vPortFree(accessPoint);
+
+                        message->PayloadLength = Encoders::EncodedAccessPointListBufferSize(accessPointList);
+                        message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
+                        Encoders::EncodeAccessPointList(accessPointList, message->Payload);
+                        vPortFree(accessPointList);
+                    }
+                    result = StatusCodes::CompletedOk;
                 }
-                result = StatusCodes::CompletedOk;
+                else
+                {
+                    ESP_LOGI(COMPONENT_NAME, "GetAvailableNetworks: Scan timeout.");
+                    result = StatusCodes::Timeout;
+                }
+                vPortFree(ap_info);
             }
             else
             {
                 ESP_LOGI(COMPONENT_NAME, "GetAvailableNetworks: Scan timeout.");
                 result = StatusCodes::Timeout;
             }
-            vPortFree(ap_info);
-        }
-        
+        }        
     }
 
     message->MessageType = MessageTypes::Response;
@@ -1680,7 +1706,7 @@ void WiFiRequestHandler::Connect(void *vpMessage)
     Message *message = static_cast<Message *>(vpMessage);
     Esp32Messaging::ConnectRequest *request = Encoders::ExtractConnectRequest(message->Payload);
     Esp32Messaging::SockAddr *socketAddress = Encoders::ExtractSockAddr(request->Addr);
-    Esp32Messaging::IntegerAndErrnoResponse response;
+    Esp32Messaging::IntegerAndErrnoResponse response = { };
     response.Result = 0;
 
     struct sockaddr_in sa = {};
@@ -1782,7 +1808,7 @@ void WiFiRequestHandler::SetSockOpt(void *vpMessage)
 
     Message *message = static_cast<Message *>(vpMessage);
     Esp32Messaging::SetSockOptRequest *request = Encoders::ExtractSetSockOptRequest(message->Payload);
-    Esp32Messaging::IntegerAndErrnoResponse response;
+    Esp32Messaging::IntegerAndErrnoResponse response = { };
 
     void *optionValue = nullptr;
     int optionLength = 0;
@@ -1890,7 +1916,7 @@ void WiFiRequestHandler::Write(void *vpMessage)
 
     Message *message = static_cast<Message *>(vpMessage);
     Esp32Messaging::WriteRequest *request = Encoders::ExtractWriteRequest(message->Payload);
-    Esp32Messaging::IntegerAndErrnoResponse response;
+    Esp32Messaging::IntegerAndErrnoResponse response = { };
 
     response.Result = write(request->SocketHandle, request->Buffer, request->Count);
     if (response.Result < 0)
@@ -1990,7 +2016,7 @@ void WiFiRequestHandler::Close(void *vpMessage)
     Message *message = static_cast<Message *>(vpMessage);
     Esp32Messaging::CloseRequest *request = Encoders::ExtractCloseRequest(message->Payload);
 
-    Esp32Messaging::IntegerAndErrnoResponse response;
+    Esp32Messaging::IntegerAndErrnoResponse response = { };
     response.Result = close(request->SocketHandle);
     if (response.Result != 0)
     {
@@ -2035,7 +2061,7 @@ void WiFiRequestHandler::Send(void *vpMessage)
     Esp32Messaging::SendRequest *request = Encoders::ExtractSendRequest(message->Payload);
     vPortFree(message->Payload);
 
-    Esp32Messaging::IntegerAndErrnoResponse response;
+    Esp32Messaging::IntegerAndErrnoResponse response = { };
     int32_t mappedFlags = 0;
     response.ResponseErrno = 0;
     response.Result = Mapping::GetEspFlagValue(Mapping::MessageFlags, request->Flags, &mappedFlags);
@@ -2091,7 +2117,7 @@ void WiFiRequestHandler::SendTo(void *vpMessage)
     Message *message = static_cast<Message *>(vpMessage);
     Esp32Messaging::SendToRequest *request = Encoders::ExtractSendToRequest(message->Payload);
 
-    Esp32Messaging::IntegerAndErrnoResponse response;
+    Esp32Messaging::IntegerAndErrnoResponse response = { };
     int32_t mappedFlags = 0;
     response.ResponseErrno = 0;
     response.Result = Mapping::GetEspFlagValue(Mapping::MessageFlags, request->Flags, &mappedFlags);
@@ -2183,7 +2209,7 @@ void WiFiRequestHandler::RecvFrom(void *vpMessage)
     Message *message = static_cast<Message *>(vpMessage);
     Esp32Messaging::RecvFromRequest *request = Encoders::ExtractRecvFromRequest(message->Payload);
 
-    Esp32Messaging::RecvFromResponse response = {};
+    Esp32Messaging::RecvFromResponse response = { };
     int32_t mappedFlags = 0;
     response.ResponseErrno = 0;
     response.Result = Mapping::GetEspFlagValue(Mapping::MessageFlags, request->Flags, &mappedFlags);
@@ -2301,7 +2327,7 @@ void WiFiRequestHandler::Bind(void *vpMessage)
     Message *message = static_cast<Message *>(vpMessage);
     Esp32Messaging::BindRequest *request = Encoders::ExtractBindRequest(message->Payload);
     Esp32Messaging::SockAddr *socketAddress = Encoders::ExtractSockAddr(request->Addr);
-    Esp32Messaging::IntegerAndErrnoResponse response;
+    Esp32Messaging::IntegerAndErrnoResponse response =  { };
     response.Result = 0;
 
     struct sockaddr_in sa = {};
@@ -2369,7 +2395,7 @@ void WiFiRequestHandler::Listen(void *vpMessage)
 
     Message *message = static_cast<Message *>(vpMessage);
     Esp32Messaging::ListenRequest *request = Encoders::ExtractListenRequest(message->Payload);
-    Esp32Messaging::IntegerAndErrnoResponse response;
+    Esp32Messaging::IntegerAndErrnoResponse response = { };
 
     response.Result = listen(request->SocketHandle, request->BackLog);
     response.ResponseErrno = (response.Result == 0) ? 0 : errno;
@@ -2656,20 +2682,22 @@ void WiFiRequestHandler::StationStartedEvent()
 {
     ESP_LOGI(COMPONENT_NAME, "StationStartedEvent: Enter");
     _lastIdfErrorCode = tcpip_adapter_set_hostname(TCPIP_ADAPTER_IF_STA, SystemRequestHandler::GetDeviceName());
-    if (_lastIdfErrorCode == ESP_OK)
-    {
-        _lastIdfErrorCode = esp_wifi_connect();
-    }
+    // if (_lastIdfErrorCode == ESP_OK)
+    // {
+    //     _lastIdfErrorCode = esp_wifi_connect();
+    // }
     if (_lastIdfErrorCode != ESP_OK)
     {
+        xEventGroupClearBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTED_BIT | WIFI_INTERFACE_STARTING_BIT | WIFI_CONNECTING_BIT | WIFI_RECONNECTING_BIT);
         xEventGroupSetBits(_xWiFiEventGroup, WIFI_ERROR_BIT);
+        RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::StartInterfaceEvent, StatusCodes::Failure);
     }
-    if (_lastIdfErrorCode != ESP_OK)
+    else
     {
-        xEventGroupClearBits(_xWiFiEventGroup, WIFI_CONNECTING_BIT | WIFI_RECONNECTING_BIT);
-        xEventGroupSetBits(_xWiFiEventGroup, WIFI_ERROR_BIT);
+        xEventGroupClearBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTING_BIT);
+        xEventGroupSetBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTED_BIT);
+        RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::StartInterfaceEvent);
     }
-    RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::StartInterfaceEvent);
     ESP_LOGI(COMPONENT_NAME, "StationStartedEvent: Exit");
 }
 
