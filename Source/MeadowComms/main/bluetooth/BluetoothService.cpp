@@ -4,7 +4,7 @@ BluetoothService::BluetoothService()
 {
 }
 
-BluetoothService::BluetoothService(char* name, Uuid16 uuid)
+BluetoothService::BluetoothService(const char* name, Uuid16 uuid)
 {
     Name.assign(name);
     Uuid = uuid;
@@ -29,7 +29,7 @@ BluetoothCharacteristic& BluetoothService::AddCharacteristic(BluetoothCharacteri
         }
     }
     */
-   
+
     if(!exists) {
         /*
         // make sure handles are set

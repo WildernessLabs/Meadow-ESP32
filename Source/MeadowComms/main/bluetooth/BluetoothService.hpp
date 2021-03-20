@@ -16,7 +16,7 @@ class BluetoothService
 {
     public:
         BluetoothService();
-        BluetoothService(char* name, Uuid16 uuid);
+        BluetoothService(const char* name, Uuid16 uuid);
         BluetoothCharacteristic& AddCharacteristic(BluetoothCharacteristic *characteristic);
 
         CharacteristicAdded OnCharacteristicAdded = NULL;

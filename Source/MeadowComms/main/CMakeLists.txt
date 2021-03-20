@@ -23,4 +23,4 @@ idf_component_register(SRCS "ThreadPool.cpp"
                             "bluetooth/BluetoothServiceCollection.cpp"
                             "bluetooth/Uuid.cpp"
                             "bluetooth/BluetoothManager.cpp"
-                    INCLUDE_DIRS "")
+                    INCLUDE_DIRS "rapidjson")
