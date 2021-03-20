@@ -1,7 +1,13 @@
 #include "BluetoothManager.hpp"
-#include "../json/json.hpp"
 
-using json = nlohmann::json;
+#include "../rapidjson/document.h"
+//#include "rapidjson/writer.h"
+//#include "rapidjson/stringbuffer.h"
+
+//#include "../json/json.hpp"
+//using json = nlohmann::json;
+
+using namespace rapidjson;
 
 static const uint16_t primary_service_uuid = ESP_GATT_UUID_PRI_SERVICE;
 #define CHAR_DECLARATION_SIZE   (sizeof(uint8_t))
@@ -161,36 +167,38 @@ void BluetoothManager::BuildGraphFromJson(char *cfg_json)
 {
     printf("parsing config json...\n");
 
-    auto j = json::parse(cfg_json);
-    printf("json elements = %i\n", j.size());
+    Document doc;
+    doc.Parse(cfg_json);
 
-    strcpy(DeviceName, j["deviceName"].get<std::string>().c_str());
+    Value& deviceName = doc["deviceName"];
+    strcpy(DeviceName, deviceName.GetString());
     printf("Device Name = %s\n", DeviceName);
 
-    auto services = j["services"];
-    for(auto it = services.begin() ; it != services.end(); it++)
+    const Value& svc_list = doc["services"];
+    for (auto i = 0; i < svc_list.Size(); i++) 
     {
-        auto svc = it.value();
+        auto svc = svc_list[i].GetObject();
+        auto svc_uuid = svc["uuid"].GetInt();
+        auto svc_name = svc["name"].GetString();
+        printf("service %s uuid = 0x%04x\n", svc_name, svc_uuid);
 
-        auto svc_uuid = svc["uuid"].get<int>();
-        printf("service uuid = 0x%04x\n", svc_uuid);
+        auto bt_svc = new BluetoothService(svc_name, Uuid16(svc_uuid));
 
-        auto bt_svc = new BluetoothService("FOO", Uuid16(svc_uuid));
-
-        auto characteristics = svc["characteristics"];
-
-        for(auto chr_it = characteristics.begin(); chr_it != characteristics.end(); chr_it++)
+        const Value& char_list = svc["characteristics"];
+        printf("service has %i characteristics\n", char_list.Size());
+        for (auto i = 0; i < char_list.Size(); i++) 
         {
-            auto chr = chr_it.value();
-
             printf("characteristic ");
-            auto chr_uuid = (uint16_t)chr["uuid"].get<int>();
-            printf("uuid = 0x%04x\n", chr_uuid);
-            auto chr_perm = (uint16_t)chr["permission"].get<int>();
+            auto characteristic = char_list[i].GetObject();
+
+            auto chr_uuid = (uint16_t)characteristic["uuid"].GetInt();
+            auto chr_perm = (uint16_t)characteristic["permission"].GetInt();
+            auto chr_props = (uint16_t)characteristic["props"].GetInt();
+            auto chr_len = (uint16_t)characteristic["len"].GetInt();
+
+            printf(" uuid = 0x%04x\n", chr_uuid);
             printf(" permission = 0x%04x\n", chr_perm);
-            auto chr_props = (uint16_t)chr["props"].get<int>();
             printf(" props = 0x%04x\n", chr_props);
-            auto chr_len = (uint16_t)chr["len"].get<int>();
             printf(" len = 0x%04x\n", chr_len);
 
             auto bt_characteristic = new BluetoothCharacteristic(
@@ -199,7 +207,40 @@ void BluetoothManager::BuildGraphFromJson(char *cfg_json)
                 (CharacteristicProperty)chr_props, 
                 chr_len);
 
+            if(characteristic.HasMember("descriptors"))
+            {
+                printf("attribute has descriptors node\n");
+                const Value& desc_list = characteristic["descriptors"];
+                if(desc_list.Size() > 0)
+                {
+                    printf("characteristic has %i descriptors\n", desc_list.Size());
+                    for (auto d = 0; d < desc_list.Size(); d++) 
+                    {
+                        auto descriptor = desc_list[d].GetObject();
+                        auto desc_uuid = (uint16_t)descriptor["uuid"].GetInt();
+                        auto desc_perm = (uint16_t)descriptor["permission"].GetInt();
+                        auto desc_len = (uint16_t)descriptor["len"].GetInt();
+                        auto desc_value = (uint16_t)descriptor["value"].GetInt();
+
+                        printf("   uuid = 0x%04x\n", desc_uuid);
+                        printf("   permission = 0x%04x\n", desc_perm);
+                        printf("   len = 0x%04x\n", desc_len);
+
+                        auto bt_descriptor = new BluetoothDescriptor(
+                            bt_characteristic, 
+                            desc_uuid, 
+                            (CharacteristicPermission)desc_perm, 
+                            desc_len);
+                        
+                        printf("bt_descriptor created\n");
+                        bt_characteristic->AddDescriptor(bt_descriptor);
+                        printf("bt_descriptor added\n");
+                    }
+                }
+            }
+
             bt_svc->AddCharacteristic(bt_characteristic);
+            printf("bt_characteristic added\n");
         }
 
         Services.Add(bt_svc);
@@ -283,6 +324,7 @@ void BluetoothManager::GenerateAttributeTable()
                 printf("ATTRIBUTE TABLE DESCRIPTOR AT %d\n", index);
                 // descriptor attribute
                 /*
+                character_client_config_uuid = ESP_GATT_UUID_CHAR_CLIENT_CONFIG
                     // Heart Rate Measurement Characteristic - Client Characteristic Configuration Descriptor
                     [3]        =
                     {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&character_client_config_uuid, ESP_GATT_PERM_READ|ESP_GATT_PERM_WRITE,

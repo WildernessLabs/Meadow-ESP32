@@ -18,7 +18,6 @@
 
 #include "Encoders.hpp"
 #include "Exceptions/MultipleInstancesException.hpp"
-#include "json/json.hpp"
 
 #define CHAR_DECLARATION_SIZE   (sizeof(uint8_t))
 
@@ -114,7 +113,7 @@ void BluetoothRequestHandler::Setup()
         return;
     }
 
-    xTaskCreate(Task, _taskName, 1024 * 2, this, configMAX_PRIORITIES - 1, &_taskHandle);
+    xTaskCreate(Task, _taskName, 4096, this, configMAX_PRIORITIES - 1, &_taskHandle);
 
 #if defined(BT_FULL_LOGGING)
     ESP_LOGI(__func__, "Exit");
@@ -388,18 +387,6 @@ void BluetoothRequestHandler::CreateAttributeGraph(Message *msg)
     Esp32Messaging::BTStackConfig *config = Encoders::ExtractBTStackConfig(msg->Payload);
 
     _manager.BuildGraphFromJson(config->Config);
-
-    /*
-    auto serviceName = "MyService";
-    auto svc = new BluetoothService((char*)serviceName, Uuid16(0x00FF));
-    svc->AddCharacteristic(
-            new BluetoothCharacteristic(0x2a56, CharacteristicPermission::Read | CharacteristicPermission::Write , CharacteristicProperty::Read | CharacteristicProperty::Write, 4)
-        );
-    svc->AddCharacteristic(
-            new BluetoothCharacteristic(0x2a58, CharacteristicPermission::ReadEncrypted, CharacteristicProperty::Notify, 2)
-        ); 
-    _manager.Services.Add(svc);
-    */
 
     _manager.GenerateAdvertisingData();
     _manager.GenerateAttributeTable();
