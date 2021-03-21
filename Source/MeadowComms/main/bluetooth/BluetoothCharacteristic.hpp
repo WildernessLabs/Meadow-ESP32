@@ -25,7 +25,8 @@ class BluetoothCharacteristic
     public:
         BluetoothService *ParentService;
 
-        BluetoothCharacteristic(uint16_t uuid, CharacteristicPermission permission, CharacteristicProperty property, int maxValueLength);
+        BluetoothCharacteristic(Uuid16 uuid, CharacteristicPermission permission, CharacteristicProperty property, int maxValueLength);
+        BluetoothCharacteristic(Uuid128 uuid, CharacteristicPermission permission, CharacteristicProperty property, int maxValueLength);
 
         BluetoothCharacteristicDeclaration *Declaration;
         BluetoothCharacteristicValue * Value;

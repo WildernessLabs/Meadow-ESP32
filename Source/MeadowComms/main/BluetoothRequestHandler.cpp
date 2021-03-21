@@ -455,6 +455,7 @@ void BluetoothRequestHandler::gatts_profile_event_handler(esp_gatts_cb_event_t e
 
                 _manager.GetCurrentValueForAttributeHandle(param->read.handle, rsp.attr_value.value, &rsp.attr_value.len);
 
+                ESP_LOGI(COMPONENT_NAME, "  Sending read response of %i bytes", rsp.attr_value.len);
                 esp_err_t ret = esp_ble_gatts_send_response(gatts_if, param->read.conn_id, param->read.trans_id, ESP_GATT_OK, &rsp);
 
                 if (ret){

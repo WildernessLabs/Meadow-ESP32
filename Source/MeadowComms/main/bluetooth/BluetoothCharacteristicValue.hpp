@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 
+#include "Uuid.hpp"
 #include "BluetoothAttribute.hpp"
 #include "BluetoothCharacteristic.hpp"
 
@@ -14,6 +15,7 @@ class BluetoothCharacteristic;
 class BluetoothCharacteristicValue : public BluetoothAttribute
 {
     private:
+        bool _is128 = false;
         uint8_t *_value;
         BluetoothCharacteristic *_parent;
 
@@ -21,13 +23,17 @@ class BluetoothCharacteristicValue : public BluetoothAttribute
         
         uint16_t MaxLength;
         uint16_t CurrentLength;
-        uint16_t Uuid;
+        Uuid16 uuid16;
+        Uuid128 uuid128;
         BluetoothCharacteristic *Parent;
 
-        BluetoothCharacteristicValue(BluetoothCharacteristic *, uint16_t uuid, CharacteristicPermission permission, int maxValueLength);
+        BluetoothCharacteristicValue(BluetoothCharacteristic *c, Uuid16 uuid, CharacteristicPermission permission, int maxValueLength);
+        BluetoothCharacteristicValue(BluetoothCharacteristic *c, Uuid128 uuid, CharacteristicPermission permission, int maxValueLength);
         ~BluetoothCharacteristicValue();
         bool WriteValue(uint8_t* source, int length);
         bool ReadValue(uint8_t* dest, int length);
+
+        bool Is128() { return _is128; }
 };
 
 #endif

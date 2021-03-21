@@ -101,7 +101,7 @@ const char* json_test = R"(
             "uuid": 254,
             "characteristics": [
                 {
-                    "uuid": 10753,
+                    "uuid": "017e99d6-8a61-11eb-8dcd-0242ac130003",
                     "permission": 17,
                     "props": 10,
                     "len": 4,
