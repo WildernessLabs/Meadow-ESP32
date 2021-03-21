@@ -1,11 +1,6 @@
 #include "BluetoothManager.hpp"
 
 #include "../rapidjson/document.h"
-//#include "rapidjson/writer.h"
-//#include "rapidjson/stringbuffer.h"
-
-//#include "../json/json.hpp"
-//using json = nlohmann::json;
 
 using namespace rapidjson;
 
@@ -150,13 +145,14 @@ void BluetoothManager::GetCurrentValueForAttributeHandle(uint16_t handle, uint8_
 {
     // TODO: go get the data from the STM - for now we just increment to test the data is changing
     test_value++;
+    printf("Reply with test value of %i\n", test_value);
     memcpy(pData, &test_value, 4);
     *pLen = 4;
 }
 
 void BluetoothManager::SetCurrentValueForAttributeHandle(uint16_t handle, uint8_t* pData, uint16_t len)
 {
-    printf("Received %i bytes of data for attribute handle 0x%04x: ", len, handle);
+    printf("Received %i bytes of data for attribute handle 0x%04x\n", len, handle);
     for (size_t i = 0; i < len; i++) {
         printf("%*x ", 3, pData[i]);
     }
@@ -191,22 +187,50 @@ void BluetoothManager::BuildGraphFromJson(char *cfg_json)
             printf("characteristic ");
             auto characteristic = char_list[i].GetObject();
 
-            auto chr_uuid = (uint16_t)characteristic["uuid"].GetInt();
+            // this might be a ushort, might be a guid
+
+            Uuid16 chr_uuid16;
+            Uuid128 chr_uuid128;
+            auto is128 = false;
+
+            if(characteristic["uuid"].IsInt())
+            {
+                chr_uuid16 = Uuid16(characteristic["uuid"].GetInt());
+                printf(" uuid = 0x%04x\n", (uint16_t)chr_uuid16);
+            }
+            else
+            {
+                chr_uuid128 = Uuid128(characteristic["uuid"].GetString());
+                printf(" uuid = %s\n", chr_uuid128.ToString().c_str());
+                is128 = true;
+            }
+            
             auto chr_perm = (uint16_t)characteristic["permission"].GetInt();
             auto chr_props = (uint16_t)characteristic["props"].GetInt();
             auto chr_len = (uint16_t)characteristic["len"].GetInt();
 
-            printf(" uuid = 0x%04x\n", chr_uuid);
             printf(" permission = 0x%04x\n", chr_perm);
             printf(" props = 0x%04x\n", chr_props);
             printf(" len = 0x%04x\n", chr_len);
 
-            auto bt_characteristic = new BluetoothCharacteristic(
-                chr_uuid, 
-                (CharacteristicPermission)chr_perm, 
-                (CharacteristicProperty)chr_props, 
-                chr_len);
-
+            BluetoothCharacteristic *bt_characteristic;
+            if(is128)
+            {
+                bt_characteristic = new BluetoothCharacteristic(
+                    chr_uuid128, 
+                    (CharacteristicPermission)chr_perm, 
+                    (CharacteristicProperty)chr_props, 
+                    chr_len);
+            }
+            else
+            {
+                bt_characteristic = new BluetoothCharacteristic(
+                    chr_uuid16, 
+                    (CharacteristicPermission)chr_perm, 
+                    (CharacteristicProperty)chr_props, 
+                    chr_len);                
+            }
+            
             if(characteristic.HasMember("descriptors"))
             {
                 printf("attribute has descriptors node\n");
@@ -301,7 +325,7 @@ void BluetoothManager::GenerateAttributeTable()
                 {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&characteristic_declaration_uuid, ESP_GATT_PERM_READ,
                 CHAR_DECLARATION_SIZE, CHAR_DECLARATION_SIZE, (uint8_t *)&char_prop_notify}},
             */
-
+            
             _attribute_table[index++] =
                 {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&characteristic->Declaration->Uuid, (uint16_t)characteristic->Declaration->Permission,
                 CHAR_DECLARATION_SIZE, CHAR_DECLARATION_SIZE, (uint8_t *)&characteristic->Declaration->Properties}};
@@ -313,11 +337,20 @@ void BluetoothManager::GenerateAttributeTable()
                 {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&heart_rate_meas_uuid, ESP_GATT_PERM_READ,
                 HRPS_HT_MEAS_MAX_LEN, 0, NULL}},
             */
-           // the first param here (ESP_GATT_RSP_BY_APP) means that we'll handle the request for data manually rather than allowing the API to respond with
-           // data in the parameter database.  We need to call to the STM for data, so this is sensible.
-            _attribute_table[index++] =
-                {{ESP_GATT_RSP_BY_APP}, {ESP_UUID_LEN_16, (uint8_t *)&characteristic->Value->Uuid, (uint16_t)characteristic->Value->Permission,
-                characteristic->Value->MaxLength, 0, NULL}}; // <- 0, NULL means "current value length is 0, current value data is null"
+            // the first param here (ESP_GATT_RSP_BY_APP) means that we'll handle the request for data manually rather than allowing the API to respond with
+            // data in the parameter database.  We need to call to the STM for data, so this is sensible.
+            if(characteristic->Value->Is128())
+            {
+                _attribute_table[index++] =
+                    {{ESP_GATT_RSP_BY_APP}, {ESP_UUID_LEN_128, (uint8_t *)&characteristic->Value->uuid128, (uint16_t)characteristic->Value->Permission,
+                    characteristic->Value->MaxLength, 0, NULL}}; // <- 0, NULL means "current value length is 0, current value data is null"
+            }
+            else
+            {
+                _attribute_table[index++] =
+                    {{ESP_GATT_RSP_BY_APP}, {ESP_UUID_LEN_16, (uint8_t *)&characteristic->Value->uuid16, (uint16_t)characteristic->Value->Permission,
+                    characteristic->Value->MaxLength, 0, NULL}}; // <- 0, NULL means "current value length is 0, current value data is null"
+            }
 
             for (const auto& descriptor : characteristic->GetDescriptorDefinitions())
             {

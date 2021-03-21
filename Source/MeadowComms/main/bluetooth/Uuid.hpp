@@ -4,6 +4,8 @@
 #include "string.h"
 #include "bt_compat.hpp"
 
+#include <string>
+
 /*
 128-bit UUID (GUID)
 */
@@ -11,15 +13,11 @@ struct Uuid128
 {
     uint8_t data[16];
 
-    Uuid128()
-    {
-        
-    }
+    Uuid128(const char *);
+    Uuid128();
+    Uuid128(uint8_t *other);
     
-    Uuid128(uint8_t *other)
-    {
-        memcpy((void*)data, other, 16);
-    }
+    std::string ToString() const;
 
     bool operator==(const Uuid128  &other) const
     {
@@ -46,19 +44,14 @@ struct Uuid16
 {
     uint8_t data[2];
 
-    Uuid16()
-    {
+    operator uint16_t() const 
+    { 
+        return (uint16_t)*data; 
     }
 
-    Uuid16(uint16_t value)
-    {
-        memcpy((void*)data, &value, 2);
-    }
-
-    Uuid16(uint8_t *other)
-    {
-        memcpy((void*)data, other, 2);
-    }
+    Uuid16();
+    Uuid16(uint16_t value);
+    Uuid16(uint8_t *other);
 
     bool operator==(const Uuid16  &other) const
     {

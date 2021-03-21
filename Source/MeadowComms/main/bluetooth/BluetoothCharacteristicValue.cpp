@@ -1,11 +1,20 @@
 #include "BluetoothCharacteristicValue.hpp"
 
-BluetoothCharacteristicValue::BluetoothCharacteristicValue(BluetoothCharacteristic *parent, uint16_t uuid, CharacteristicPermission permission, int maxValueLength)
+BluetoothCharacteristicValue::BluetoothCharacteristicValue(BluetoothCharacteristic *parent, Uuid16 uuid, CharacteristicPermission permission, int maxValueLength)
 {
     _parent = parent;
-    Uuid = uuid;
+    uuid16 = uuid;
     Permission = permission;
     _value = new uint8_t[maxValueLength];
+}
+
+BluetoothCharacteristicValue::BluetoothCharacteristicValue(BluetoothCharacteristic *parent, Uuid128 uuid, CharacteristicPermission permission, int maxValueLength)
+{
+    _parent = parent;
+    uuid128 = uuid;
+    Permission = permission;
+    _value = new uint8_t[maxValueLength];
+    _is128 = true;
 }
 
 BluetoothCharacteristicValue::~BluetoothCharacteristicValue()
