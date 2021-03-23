@@ -10,6 +10,10 @@ if (WIFI_DEBUG EQUAL 1)
     add_compile_definitions(WIFI_DEBUG)
 endif()
 
+if (SPI_DEBUG EQUAL 1)
+    add_compile_definitions(SPI_DEBUG)
+endif()
+
 if (SYSTEM_DEBUG EQUAL 1)
     add_compile_definitions(SYSTEM_DEBUG)
 endif()
