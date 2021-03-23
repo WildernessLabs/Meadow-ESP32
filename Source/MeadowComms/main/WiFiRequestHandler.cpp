@@ -935,6 +935,7 @@ void WiFiRequestHandler::EventHandlerHelper(esp_event_base_t eventBase, int32_t 
                 xEventGroupSetBits(_xWiFiEventGroup, WIFI_SCAN_COMPLETE_BIT);
                 break;
             case WIFI_EVENT_STA_START:
+                ESP_LOGI(COMPONENT_NAME, "Station started event");
                 StationStartedEvent();
                 break;
             case WIFI_EVENT_STA_STOP:
@@ -950,15 +951,49 @@ void WiFiRequestHandler::EventHandlerHelper(esp_event_base_t eventBase, int32_t 
             case WIFI_EVENT_STA_AUTHMODE_CHANGE:
                 ESP_LOGI(COMPONENT_NAME, "Authentication mode changed.");
                 break;
+            case WIFI_EVENT_STA_WPS_ER_SUCCESS:
+                ESP_LOGI(COMPONENT_NAME, "WiFi Event: WIFI_EVENT_STA_WPS_ER_SUCCESS");
+                break;
+            case WIFI_EVENT_STA_WPS_ER_FAILED:
+                ESP_LOGI(COMPONENT_NAME, "WiFi Event: WIFI_EVENT_STA_WPS_ER_FAILED");
+                break;
+            case WIFI_EVENT_STA_WPS_ER_TIMEOUT:
+                ESP_LOGI(COMPONENT_NAME, "WiFi Event: WIFI_EVENT_STA_WPS_ER_TIMEOUT");
+                break;
+            case WIFI_EVENT_STA_WPS_ER_PIN:
+                ESP_LOGI(COMPONENT_NAME, "WiFi Event: WIFI_EVENT_STA_WPS_ER_PIN");
+                break;
+            case WIFI_EVENT_STA_WPS_ER_PBC_OVERLAP:
+                ESP_LOGI(COMPONENT_NAME, "WiFi Event: WIFI_EVENT_STA_WPS_ER_PBC_OVERLAP");
+                break;
+            case WIFI_EVENT_AP_START:
+                ESP_LOGI(COMPONENT_NAME, "WiFi Event: WIFI_EVENT_AP_START");
+                break;
+            case WIFI_EVENT_AP_STOP:
+                ESP_LOGI(COMPONENT_NAME, "WiFi Event: WIFI_EVENT_AP_STOP");
+                break;
+            case WIFI_EVENT_AP_STACONNECTED:
+                ESP_LOGI(COMPONENT_NAME, "WiFi Event: WIFI_EVENT_AP_STACONNECTED");
+                break;
+            case WIFI_EVENT_AP_STADISCONNECTED:
+                ESP_LOGI(COMPONENT_NAME, "WiFi Event: WIFI_EVENT_AP_STADISCONNECTED");
+                break;
+            case WIFI_EVENT_AP_PROBEREQRECVED:
+                ESP_LOGI(COMPONENT_NAME, "WiFi Event: WIFI_EVENT_AP_PROBEREQRECVED");
+                break;
+            default:
+                ESP_LOGI(COMPONENT_NAME, "Unhandled WiFi Event ID %d", eventId);
+                break;
         }
     }
-    else 
+    else
     {
         if (eventBase == IP_EVENT)
         {
             switch (eventId)
             {
                 case IP_EVENT_STA_GOT_IP:
+                    ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: IP_EVENT_STA_GOT_IP");
                     StationGotIpEvent((ip_event_got_ip_t *) eventData);
                     break;
                 case IP_EVENT_STA_LOST_IP:
@@ -978,6 +1013,9 @@ void WiFiRequestHandler::EventHandlerHelper(esp_event_base_t eventBase, int32_t 
                     break;
                 case IP_EVENT_PPP_LOST_IP:
                     ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: IP_EVENT_PPP_LOST_IP");
+                    break;
+                default:
+                    ESP_LOGI(COMPONENT_NAME, "Unhandled IP Event ID %d", eventId);
                     break;
             }
         }
@@ -1416,24 +1454,25 @@ esp_err_t WiFiRequestHandler::StartWiFiInterface()
             result = esp_event_handler_register(IP_EVENT, ESP_EVENT_ANY_ID, &WiFiRequestHandler::EventHandler, this);
         }
 
-        if (result == ESP_OK)
-        {
-            result = esp_wifi_start();
-        }
+        // if (result == ESP_OK)
+        // {
+        //     result = esp_wifi_start();
+        // }
 
         if (result == ESP_OK)
         {
-            xEventGroupClearBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTING_BIT);
-            bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTED_BIT | WIFI_ERROR_BIT, pdFALSE, pdFALSE, GetWiFiTimeout() / portTICK_PERIOD_MS);
-            if (bits & WIFI_INTERFACE_STARTED_BIT)
-            {
-                result = ESP_OK;
-            }
-            else
-            {
-                result = ESP_ERR_WIFI_NOT_STARTED;
-            }
+            xEventGroupSetBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTED_BIT);
+            // bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTED_BIT | WIFI_ERROR_BIT, pdFALSE, pdFALSE, GetWiFiTimeout() / portTICK_PERIOD_MS);
+            // if (bits & WIFI_INTERFACE_STARTED_BIT)
+            // {
+            //     result = ESP_OK;
+            // }
+            // else
+            // {
+            //     result = ESP_ERR_WIFI_NOT_STARTED;
+            // }
         }
+        xEventGroupClearBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTING_BIT);
     }
     ESP_LOGI(COMPONENT_NAME, "StartWiFiInterface: Exit");
     return(result);
