@@ -1281,7 +1281,7 @@ void SpiTransportProvider::SynchronisationTask(void *pvParameters)
     //  It is important to wait for the outbound message queue to be
     //  created before we try to process any messages.
     //
-    while (xSemaphoreTake(sender->_synchronisationSemaphore, pdMS_TO_TICKS(500)) != pdTRUE)
+    while (xSemaphoreTake(sender->_synchronisationSemaphore, pdMS_TO_TICKS(2000)) != pdTRUE)
     {
         ESP_LOGI(sender->COMPONENT_NAME, "Sending synchronisation pulse to STM32.");
         sender->ToggleEsp32MessageWaitingPin();
