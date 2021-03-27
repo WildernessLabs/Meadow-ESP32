@@ -57,7 +57,7 @@ extern "C" void app_main()
 
     const esp_app_desc_t *applicationDescription = esp_ota_get_app_description();
     printf("********** Starting Application (%s version %s) **********\n", applicationDescription->project_name, applicationDescription->version);
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
+
     /*
      *  Set up the messaging system to use SPI hardware communications.
      */

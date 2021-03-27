@@ -123,6 +123,16 @@ private:
     uint8_t _messageType;
 
     /**
+     *  @brief Handle to the synchronisation task.
+     */
+    static TaskHandle_t _synchronisationTaskHandle;
+
+    /**
+     *  @brief Sempahore inticating if the system is trying to synchronise with the STM32.
+     */
+    SemaphoreHandle_t _synchronisationSemaphore = NULL;
+
+    /**
      *  @brief Default destructor.
      */
     ~SpiTransportProvider();
@@ -162,6 +172,11 @@ private:
      *  @brief FreeRTOS task handler for this class.
      */
     static void Task(void *);
+
+    /**
+     *  @brief FreeRTOS task handler for the synchronisation task.
+     */
+    static void SynchronisationTask(void *);
 
     /**
      *  @brief Process incoming messages.
