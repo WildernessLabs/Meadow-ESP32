@@ -355,6 +355,13 @@ namespace Esp32Messaging
         char * Config;
     };
 
+    struct BTDataWriteRequest
+    {
+        uint16_t Handle;
+        uint32_t DataLength;
+        uint8_t *Data;
+    };
+
 }
 
 /*
@@ -510,6 +517,9 @@ public:
     static void EncodeBTStackConfig(Esp32Messaging::BTStackConfig *, uint8_t *);
     static int EncodedBTStackConfigBufferSize(Esp32Messaging::BTStackConfig *);
     static Esp32Messaging::BTStackConfig *ExtractBTStackConfig(uint8_t *);
+    static void EncodeBTDataWriteRequest(Esp32Messaging::BTDataWriteRequest *, uint8_t *);
+    static int EncodedBTDataWriteRequestBufferSize(Esp32Messaging::BTDataWriteRequest *);
+    static Esp32Messaging::BTDataWriteRequest *ExtractBTDataWriteRequest(uint8_t *);
 
 };
 

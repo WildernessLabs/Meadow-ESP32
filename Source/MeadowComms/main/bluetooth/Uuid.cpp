@@ -73,15 +73,15 @@ std::string Uuid128::ToString() const
 	char one[10], two[6], three[6], four[6], five[14];
 
 	snprintf(one, 10, "%02x%02x%02x%02x",
-		data[0], data[1], data[2], data[3]);
+		data[15], data[14], data[13], data[12]);
 	snprintf(two, 6, "%02x%02x",
-		data[4], data[5]);
+		data[11], data[10]);
 	snprintf(three, 6, "%02x%02x",
-		data[6], data[7]);
+		data[9], data[8]);
 	snprintf(four, 6, "%02x%02x",
-		data[8], data[9]);
+		data[7], data[6]);
 	snprintf(five, 14, "%02x%02x%02x%02x%02x%02x",
-		data[10], data[11], data[12], data[13], data[14], data[15]);
+		data[5], data[4], data[3], data[2], data[1], data[0]);
 	const std::string sep("-");
 	std::string out(one);
 
@@ -92,6 +92,7 @@ std::string Uuid128::ToString() const
 
 	return out;
 }
+
 // create a guid from string
 Uuid128::Uuid128(const char* fromString)
 {
@@ -102,7 +103,7 @@ Uuid128::Uuid128(const char* fromString)
 
     auto len = strlen(fromString);
 
-	for (int i = 0 ; i < len ; i++)
+	for (int i = len - 1 ; i >= 0 ; i--)
 	{
         char ch = fromString[i];
 
@@ -124,7 +125,7 @@ Uuid128::Uuid128(const char* fromString)
 		else
 		{
 			charTwo = ch;
-			auto byte = hexPairToChar(charOne, charTwo);
+			auto byte = hexPairToChar(charTwo, charOne);
 			data[nextByte++] = byte;
 			lookingForFirstChar = true;
 		}

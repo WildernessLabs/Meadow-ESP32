@@ -388,6 +388,14 @@
             [
                 { "Name": "Config", "DataType": "string" }
             ]
-        }
+        },
+        {
+            "Name": "BTDataWriteRequest",
+            "MessageElements":
+            [
+                { "Name": "Handle", "DataType": "uint16" },
+                { "Name": "Data", "DataType": "blob" }
+            ]
+        },
     ]
 }

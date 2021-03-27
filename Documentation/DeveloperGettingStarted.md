@@ -85,7 +85,7 @@ export MeadowCoreSourceDirectory=/Users/christophertacke/repos/wilderness/Meadow
 3. Build the `FileGenerator`
 > NOTE: This requires the .NET 5.0 SDK be installed
 ```
-$ cd ./Meadow-ESP32/Source/FileGeneratorFileGenerator/
+$ cd ./Meadow-ESP32/Source/FileGenerator/
 $ dotnet build
 ```
 4. Run the File Generator

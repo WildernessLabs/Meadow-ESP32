@@ -3377,4 +3377,79 @@ Esp32Messaging::BTStackConfig *Encoders::ExtractBTStackConfig(uint8_t *buffer)
     return(bTStackConfig);
 }
 
+/**
+ *  Convert the BTDataWriteRequest object into a byte stream that can be sent to the STM32.
+ *  
+ *  The amount of memory required can be obtained by calling the EncodedBTDataWriteRequestBufferSize method.
+ *  
+ *  @param bTDataWriteRequest
+ *      BTDataWriteRequest object to be encoded.
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory large enough to hold the encoded BTDataWriteRequest object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodeBTDataWriteRequest
+void Encoders::EncodeBTDataWriteRequest(Esp32Messaging::BTDataWriteRequest *bTDataWriteRequest, uint8_t *buffer)
+{
+    EncodeUInt16(bTDataWriteRequest->Handle, buffer);
+    buffer += 2;
+    EncodeUInt32(bTDataWriteRequest->DataLength, buffer);
+    buffer += 4;
+    if (bTDataWriteRequest->DataLength > 0)
+    {
+        memcpy((void *) buffer, (void *) bTDataWriteRequest->Data, bTDataWriteRequest->DataLength);
+    }
+}
+
+/**
+ *  Calculate the amount of memory required to hold the given instance of the BTDataWriteRequest object.
+ *  
+ *  @param bTDataWriteRequest
+ *      BTDataWriteRequest object to be encoded.
+ *  
+ *  @returns
+ *      Number of bytes required to hold the encoded BTDataWriteRequest object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodedBTDataWriteRequestBufferSize
+int Encoders::EncodedBTDataWriteRequestBufferSize(Esp32Messaging::BTDataWriteRequest *bTDataWriteRequest)
+{
+    int result = 0;
+    result += bTDataWriteRequest->DataLength;
+    return(result + 6);
+}
+
+/**
+ *  Extract the BTDataWriteRequest object that is encoded in the given buffer.
+ *  
+ *  Note that the returned pointer points to a block of memory on the heap and
+ *  this should eventually be released calling vPortFree(...).
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded BTDataWriteRequest object.
+ *  
+ *  @returns
+ *      Pointer to a BTDataWriteRequest object.
+ */
+// cppcheck-suppress unusedFunction symbolName=ExtractBTDataWriteRequest
+Esp32Messaging::BTDataWriteRequest *Encoders::ExtractBTDataWriteRequest(uint8_t *buffer)
+{
+    Esp32Messaging::BTDataWriteRequest *bTDataWriteRequest = (Esp32Messaging::BTDataWriteRequest *) pvPortMalloc(sizeof(Esp32Messaging::BTDataWriteRequest));
+
+    bTDataWriteRequest->Handle = ExtractUInt16(buffer);
+    buffer += 2;
+    bTDataWriteRequest->DataLength = ExtractUInt32(buffer);
+    buffer += 4;
+    if (bTDataWriteRequest->DataLength > 0)
+    {
+        bTDataWriteRequest->Data = (uint8_t *) pvPortMalloc(bTDataWriteRequest->DataLength);
+        memcpy(bTDataWriteRequest->Data, buffer, bTDataWriteRequest->DataLength);
+        buffer += bTDataWriteRequest->DataLength;
+    }
+    else
+    {
+        bTDataWriteRequest->Data = nullptr;
+    }
+    return(bTDataWriteRequest);
+}
+
 
