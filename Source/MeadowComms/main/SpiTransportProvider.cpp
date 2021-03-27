@@ -51,6 +51,8 @@ SpiTransportProvider *SpiTransportProvider::_spiInstance = nullptr;
  */
 SpiTransportProvider::SpiStates SpiTransportProvider::_currentState = Invalid;
 
+TaskHandle_t SpiTransportProvider::_synchronisationTaskHandle = NULL;
+
 /**
  *  Buffers will be allocated as needed and so they are initially null.
  */
@@ -58,6 +60,7 @@ uint8_t *SpiTransportProvider::_headerReceiveBuffer = nullptr;
 uint8_t *SpiTransportProvider::_headerTransmitBuffer = nullptr;
 uint8_t *SpiTransportProvider::_transportFrameBuffer = nullptr;
 uint32_t SpiTransportProvider::_headerFrameSize = 0;
+
 
 /*
  * ---------------------------------------------------------------------------
@@ -159,6 +162,21 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
     /*
      *  Set up the task and that will process the SPI messages.
      */
+    _synchronisationSemaphore = xSemaphoreCreateBinary();
+    //
+    //  FreeRTOS documentation states that a binary semaphore must be given after creation as it is created "empty".
+    //  For more information, see https://www.freertos.org/xSemaphoreCreateBinary.html
+    //
+    xSemaphoreGive(_synchronisationSemaphore);
+    if (xSemaphoreTake(_synchronisationSemaphore, pdMS_TO_TICKS(500)) != pdTRUE)
+    {
+        ESP_LOGE(COMPONENT_NAME, "Cannot take the synchronisation semaphore.");
+    }
+    xTaskCreate(SynchronisationTask, "SPISyncTask", 2048 * 2, this, configMAX_PRIORITIES - 1, &SpiTransportProvider::_synchronisationTaskHandle);
+
+    /*
+     *  Set up the task and that will process the SPI messages.
+     */
     xTaskCreate(Task, COMPONENT_NAME, 2048 * 2, this, configMAX_PRIORITIES - 1, &SpiTransportProvider::_transportProviderTaskHandle);
 
     /*
@@ -168,6 +186,7 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
      */
     gpio_set_level(Gpio::ESP32_MESSAGE_WAITING_PIN, 0);
     gpio_set_level(Gpio::ESP32_SPI_READY_PIN, 0);
+
 }
 
 /**
@@ -469,6 +488,10 @@ void SpiTransportProvider::SpiPostTransmissionCallback(spi_slave_transaction_t *
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
     gpio_set_level(Gpio::ESP32_SPI_READY_PIN, 0);
     xTaskNotifyFromISR(_transportProviderTaskHandle, TransportProviderBase::STM32_INTERRUPT_NOTIFICATION_BIT, eSetBits, &xHigherPriorityTaskWoken);
+    if (_spiInstance->_synchronisationSemaphore != NULL)
+    {
+        xSemaphoreGiveFromISR(_spiInstance->_synchronisationSemaphore, &xHigherPriorityTaskWoken);
+    }
     portYIELD_FROM_ISR();
 }
 
@@ -1231,4 +1254,44 @@ void SpiTransportProvider::Task(void *pvParameters)
     //  should we get here.
     //
     vTaskDelete(sender->_transportProviderTaskHandle);
+}
+
+/**
+ *  @brief Task to send synchronisation pulses to the STM32.
+ *
+ *  There can sometimes be a problem with the synchronisation between the ESP32 and the
+ *  STM32.  This arises due to the real-time nature of the startup process.  So the signal
+ *  the STM32 indicating the readiness of the ESP32 may be missed as the interrupt
+ *  handler on the STM32 is not set up when the ESP32 sends the "Message waiting"
+ *  signal to the STM32.
+ * 
+ *  To overcome this, this task will send the message waiting signal to the STM32 every 500ms.
+ *  The binary synchronisation semaphore indicates if the request has been made or not.
+ *
+ *  Note that this method is static in order to allow the C methods in
+ *  FreeRTOS to call the method.
+ *
+ *  @param pvParameters
+ *      Pointer to the instance of the request handler.
+ */
+void SpiTransportProvider::SynchronisationTask(void *pvParameters)
+{
+    SpiTransportProvider *sender = static_cast<SpiTransportProvider *>(pvParameters);
+    ESP_LOGI(sender->COMPONENT_NAME, "Synchronising with the STM32.");
+    //
+    //  It is important to wait for the outbound message queue to be
+    //  created before we try to process any messages.
+    //
+    while (xSemaphoreTake(sender->_synchronisationSemaphore, pdMS_TO_TICKS(2000)) != pdTRUE)
+    {
+        ESP_LOGI(sender->COMPONENT_NAME, "Sending synchronisation pulse to STM32.");
+        sender->ToggleEsp32MessageWaitingPin();
+    }
+    vSemaphoreDelete(sender->_synchronisationSemaphore);
+    sender->_synchronisationSemaphore = NULL;
+
+    ESP_LOGI(sender->COMPONENT_NAME, "Synchronisation complete.");
+
+    vTaskDelete(sender->_synchronisationTaskHandle);
+    sender->_synchronisationTaskHandle = NULL;
 }
