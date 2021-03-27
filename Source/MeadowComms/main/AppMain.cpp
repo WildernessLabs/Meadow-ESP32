@@ -66,7 +66,7 @@ extern "C" void app_main()
 
     SystemRequestHandler::SendConfigurationAsInterruptMessage();
 
-    TestBluetoothMessage(messageDispatcher);
+//    TestBluetoothMessage(messageDispatcher);
 
 //     Message message = {};
 //     message.MessageType = MessageTypes::Header;
@@ -93,6 +93,31 @@ extern "C" void app_main()
 }
 
 const char* json_test = R"(
+{
+    "deviceName":"MY MEADOW",
+    "services": [
+        {
+            "name": "Service A",
+            "uuid": 254,
+            "characteristics": [
+                {
+                    "uuid": "017e99d6-8a61-11eb-8dcd-0242ac130003",
+                    "permission": 17,
+                    "props": 10,
+                    "len": 4
+                },
+                {
+                    "uuid": 10755,
+                    "permission": 2,
+                    "props": 16,
+                    "len": 4
+                }
+            ]
+        }
+    ]
+})";
+
+const char* json_test2 = R"(
 {
     "deviceName":"MY MEADOW",
     "services": [

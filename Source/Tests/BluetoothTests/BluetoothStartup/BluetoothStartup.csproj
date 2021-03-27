@@ -1,0 +1,18 @@
+<Project Sdk="Meadow.Sdk/1.1.0">
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <AssemblyName>App</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\..\Meadow\Meadow.Core\source\Meadow.Core\Meadow.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Remove="config.json" />
+    <None Remove="config %28copy%29.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="config.json" />
+    <EmbeddedResource Include="config %28copy%29.json" />
+  </ItemGroup>
+</Project>

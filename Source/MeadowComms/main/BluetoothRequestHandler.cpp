@@ -34,6 +34,7 @@
  */
 bool BluetoothRequestHandler::_instantiated = false;
 BluetoothManager  BluetoothRequestHandler::_manager;
+BluetoothRequestHandler* BluetoothRequestHandler::_instance = NULL;
 
 const char *BluetoothRequestHandler::COMPONENT_NAME = "BTTask";
 
@@ -58,6 +59,22 @@ BluetoothRequestHandler::BluetoothRequestHandler()
     {
         _instantiated = true;
     }
+}
+
+BluetoothRequestHandler* BluetoothRequestHandler::GetInstance() 
+{ 
+    return _instance; 
+}
+
+BluetoothRequestHandler* BluetoothRequestHandler::GetInstance(MessageDispatcher *d)
+{
+    if(!_instance)
+    {
+        _instance = new BluetoothRequestHandler(d);
+        _instance->Setup();
+    }
+
+    return _instance; 
 }
 
 /**
@@ -141,20 +158,6 @@ void BluetoothRequestHandler::DispatchRequest(Message *request)
             break;
         case BluetoothFunction::Stop:
             TeardownStack(request);
-            break;
-        case BluetoothFunction::AddService:
-            break;
-        case BluetoothFunction::AddCharacteristic:
-            // TODO:
-            break;
-        case BluetoothFunction::AddDescriptor:
-            // TODO:
-            break;
-        case BluetoothFunction::WriteValue:
-            // TODO:
-            break;
-        case BluetoothFunction::ReadValue:
-            // TODO:
             break;
         default:
             ESP_LOGI(__func__, "Unknown Bluetooth message received, function %d", request->Function);
@@ -302,14 +305,14 @@ void BluetoothRequestHandler::StartStack()
     }
 
     // register for GATTS events
-    ret = esp_ble_gatts_register_callback(this->gatts_profile_event_handler);
+    ret = esp_ble_gatts_register_callback(this->GATTSProfileEventHandler);
     if (ret){
         ESP_LOGE(COMPONENT_NAME, "gatts register error, error code = %x", ret);
         return;
     }
 
     // register for GAP events
-    ret = esp_ble_gap_register_callback(this->gap_event_handler);
+    ret = esp_ble_gap_register_callback(this->GAPEventHandler);
     if (ret){
         ESP_LOGE(COMPONENT_NAME, "gap register error, error code = %x", ret);
         return;
@@ -380,6 +383,34 @@ void BluetoothRequestHandler::TeardownStack(Message *msg)
 
 }
 
+void BluetoothRequestHandler::OnDataReadRequest(uint16_t handle)
+{
+    ESP_LOGI(COMPONENT_NAME, "OnDataReadRequest: Enter");
+
+
+    xEventGroupSetBits(_xBtEventGroup , BT_READING_BIT);
+    
+    RaiseEvent(Esp32Interfaces::WiFi, BluetoothFunction::ReadRequestEvent, 0, (uint8_t*)&handle, sizeof(handle));
+
+    ESP_LOGI(COMPONENT_NAME, "OnDataReadRequest: Exit");
+}
+
+void BluetoothRequestHandler::OnDataWriteRequest(uint16_t handle, uint8_t* data, uint16_t dataLength)
+{
+    ESP_LOGI(COMPONENT_NAME, "OnDataWriteRequest: Enter");
+
+
+    Esp32Messaging::BTDataWriteRequest request;
+    request.Handle = handle;
+    request.DataLength = dataLength;
+    request.Data = data;
+
+    xEventGroupSetBits(GetInstance()->_xBtEventGroup , BT_WRITING_BIT);
+    GetInstance()->RaiseEvent(Esp32Interfaces::WiFi, BluetoothFunction::WriteRequestEvent, 0, (uint8_t*)&request, dataLength + 6);
+
+    ESP_LOGI(COMPONENT_NAME, "OnDataWriteRequest: Exit");
+}
+
 void BluetoothRequestHandler::CreateAttributeGraph(Message *msg)
 {
     ESP_LOGI(COMPONENT_NAME, "CreateAttributeGraph. payload len = %i", msg->PayloadLength);
@@ -402,7 +433,7 @@ void BluetoothRequestHandler::CreateAttributeGraph(Message *msg)
 static bool advertising_data_configured = false;
 static bool response_data_configured = false;
 
-void BluetoothRequestHandler::gatts_profile_event_handler(esp_gatts_cb_event_t event,
+void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t event,
                                         esp_gatt_if_t gatts_if, 
                                         esp_ble_gatts_cb_param_t *param)
 {
@@ -432,13 +463,19 @@ void BluetoothRequestHandler::gatts_profile_event_handler(esp_gatts_cb_event_t e
             }
             response_data_configured = true;
             
-            ESP_LOGI(COMPONENT_NAME, "BLE advertising configured.  Creating attribtes...");
+            ESP_LOGI(COMPONENT_NAME, "BLE advertising configured.  Creating attributes...");
 
             // set the attribute table - this requires the services be already-defined in the Manager
             esp_err_t create_attr_ret = esp_ble_gatts_create_attr_tab(_manager.GetAttributeTable(), gatts_if, _manager.GetAttributeTableLength(), INSTANCE_ID);
-            if (create_attr_ret){
+            if (create_attr_ret)
+            {
                 ESP_LOGE(COMPONENT_NAME, "create attr table failed, error code = %x", create_attr_ret);
-            }            
+            }
+            else
+            {
+                ESP_LOGI(COMPONENT_NAME, "BLE attribute table created");
+            }
+                   
         }
         break;
         case ESP_GATTS_READ_EVT:
@@ -470,6 +507,9 @@ void BluetoothRequestHandler::gatts_profile_event_handler(esp_gatts_cb_event_t e
             ESP_LOGI(COMPONENT_NAME, "ESP_GATTS_WRITE_EVT, write handle 0x%04x", param->write.handle);
             if(param->write.need_rsp)
             {
+                
+                OnDataWriteRequest(param->write.handle, param->write.value, param->write.len);
+
                 _manager.SetCurrentValueForAttributeHandle(param->write.handle, param->write.value, param->write.len);
 
                 esp_err_t ret = esp_ble_gatts_send_response(gatts_if, param->write.conn_id, param->write.trans_id, ESP_GATT_OK, NULL);
@@ -562,7 +602,7 @@ void BluetoothRequestHandler::gatts_profile_event_handler(esp_gatts_cb_event_t e
     }
 }
 
-void BluetoothRequestHandler::gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param)
+void BluetoothRequestHandler::GAPEventHandler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param)
 {
     ESP_LOGI(COMPONENT_NAME, "GAP event %i", event);
     switch (event)
@@ -687,164 +727,3 @@ void BluetoothRequestHandler::gap_event_handler(esp_gap_ble_cb_event_t event, es
             break;
     }
 }
-
-//////////////////////////
-//////////////////////////
-// BELOW HERE IS reference stuff that needs deleting
-//////////////////////////
-
-static const uint16_t characteristic_declaration_uuid = ESP_GATT_UUID_CHAR_DECLARE;
-static const uint16_t primary_service_uuid = ESP_GATT_UUID_PRI_SERVICE;
-static const uint16_t character_client_config_uuid = ESP_GATT_UUID_CHAR_CLIENT_CONFIG;
-static const uint8_t char_prop_notify = ESP_GATT_CHAR_PROP_BIT_NOTIFY;
-static const uint8_t char_prop_read = ESP_GATT_CHAR_PROP_BIT_READ;
-static const uint8_t char_prop_read_write = ESP_GATT_CHAR_PROP_BIT_WRITE|ESP_GATT_CHAR_PROP_BIT_READ;
-
-
-// we need a profile array
-
-// each profile contains 1 service
-
-// each service contains N chacratcteristics
-
-
-
-// unknown if there is meaning in this value - pulled from espressif code
-#define GATTS_SERVICE_UUID_MEADOW   0x00FF
-#define GATTS_CHARACTERISTIC_UUID_MEADOW      0xFF01
-//#define GATTS_DESCR_UUID_TEST_A     0x3333
-#define GATTS_NUM_HANDLE_MEADOW     4
-
-// define a struct to hold profile info
-// really we'll only use one profile for meadow, but it's a convenient container
-struct gatts_profile_inst {
-    esp_gatts_cb_t gatts_cb;
-    uint16_t gatts_if;
-    uint16_t app_id;
-    uint16_t conn_id;
-    uint16_t service_handle;
-    esp_gatt_srvc_id_t service_id;
-    uint16_t char_handle;
-    esp_bt_uuid_t char_uuid;
-    esp_gatt_perm_t perm;
-    esp_gatt_char_prop_t property;
-    uint16_t descr_handle;
-    esp_bt_uuid_t descr_uuid;
-};
-
-// NOTE: unknown if this specific value has meaning.  Pulled directly from espressif.
-static uint8_t adv_service_uuid[16] = {
-    /* LSB <--------------------------------------------------------------------------------> MSB */
-    //first uuid, 16bit, [12],[13] is the value
-    0xfb, 0x34, 0x9b, 0x5f, 0x80, 0x00, 0x00, 0x80, 0x00, 0x10, 0x00, 0x00, 0xEE, 0x00, 0x00, 0x00,
-};
-
-static uint8_t meadow_manufacturer[10]={'W', 'I', 'L', 'D', 'E', 'R', 'N', 'E', 'S', 'S'};
-
-// The length of adv data must be less than 31 bytes
-// this is what we send out for advertising
-static esp_ble_adv_data_t advertising_data = 
-{
-    .set_scan_rsp = false,
-    .include_name = true,
-    .include_txpower = true,
-    .min_interval = 0x0006, //slave connection min interval, Time = min_interval * 1.25 msec
-    .max_interval = 0x0010, //slave connection max interval, Time = max_interval * 1.25 msec
-    .appearance = 0x00,
-    .manufacturer_len = 0,
-    .p_manufacturer_data =  NULL,
-    .service_data_len = 0,
-    .p_service_data = NULL,
-    .service_uuid_len = sizeof(adv_service_uuid),
-    .p_service_uuid = adv_service_uuid,
-    .flag = (ESP_BLE_ADV_FLAG_GEN_DISC | ESP_BLE_ADV_FLAG_BREDR_NOT_SPT),
-};
-
-/*
-// this is what we respond with when scanned - mostly the same as above but no power or intervals
-static esp_ble_adv_data_t scan_response_data =
-{
-    .set_scan_rsp = true,
-    .include_name = true,
-    .include_txpower = true,
-    .manufacturer_len = sizeof(meadow_manufacturer),
-    .p_manufacturer_data = meadow_manufacturer,
-};
-
-static esp_ble_adv_params_t advertising_params = {
-    .adv_int_min        = 0x20, // this is the minimum advertising interval.  We might need to slow this down for wifi
-    .adv_int_max        = 0x40, // this is the maximum advertising interval.  We might need to slow this down for wifi
-    .adv_type           = ADV_TYPE_IND,
-    .own_addr_type      = BLE_ADDR_TYPE_RANDOM, // BLE_ADDR_TYPE_PUBLIC,
-    //.peer_addr            =
-    //.peer_addr_type       =
-    .channel_map        = ADV_CHNL_ALL,
-    .adv_filter_policy = ADV_FILTER_ALLOW_SCAN_ANY_CON_ANY,
-};
-*/
-
-// --- test property stuff. We'll modify this when managed starts integrating
-#define GATTS_CHAR_VAL_LEN_MAX 0x40 // not sure if this is a BT thing, or just arbitrary. Assuming arbitrary for now
-
-
-
-/// Sensor Service - Heart Rate Measurement Characteristic, notify
-static const uint16_t heart_rate_meas_uuid = ESP_GATT_HEART_RATE_MEAS;
-static const uint8_t heart_measurement_ccc[2] ={ 0x00, 0x00};
-
-
-/// Sensor Service - Sensor Location characteristic, read
-static const uint16_t sensor_location_uuid = ESP_GATT_UUID_SENSOR_LOCATION;
-static const uint8_t sensor_loc_val[1] = {0x00};
-
-
-/// Heart Rate Sensor Service - Heart Rate Control Point characteristic, write&read
-static const uint16_t heart_rate_ctrl_point = ESP_GATT_HEART_RATE_CNTL_POINT;
-static const uint8_t heart_ctrl_point[1] = {0x00};
-
-#define HRPS_HT_MEAS_MAX_LEN            (13)
-
-/*
-static const esp_gatts_attr_db_t meadow_attribute_list[8] =
-{
-    // Service Declaration - all services present the UUID
-    [0]                    =
-    {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&primary_service_uuid, ESP_GATT_PERM_READ,
-      sizeof(uint16_t), sizeof(adv_service_uuid), (uint8_t *)&adv_service_uuid}},
-
-    // Characteristic Declaration
-    [1]            =
-    {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&characteristic_declaration_uuid, ESP_GATT_PERM_READ,
-      CHAR_DECLARATION_SIZE, CHAR_DECLARATION_SIZE, (uint8_t *)&char_prop_notify}},
-
-    // Characteristic Value
-    [2]             =
-    {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&heart_rate_meas_uuid, ESP_GATT_PERM_READ,
-      HRPS_HT_MEAS_MAX_LEN, 0, NULL}},
-
-    // Heart Rate Measurement Characteristic - Client Characteristic Configuration Descriptor
-    [3]        =
-    {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&character_client_config_uuid, ESP_GATT_PERM_READ|ESP_GATT_PERM_WRITE,
-      sizeof(uint16_t),sizeof(heart_measurement_ccc), (uint8_t *)heart_measurement_ccc}},
-
-    // Body Sensor Location Characteristic Declaration
-    [4]  =
-    {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&characteristic_declaration_uuid, ESP_GATT_PERM_READ,
-      CHAR_DECLARATION_SIZE,CHAR_DECLARATION_SIZE, (uint8_t *)&char_prop_read}},
-
-    // Sensor Location Characteristic Value
-    [5]   =
-    {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&sensor_location_uuid, ESP_GATT_PERM_READ_ENCRYPTED,
-      sizeof(uint8_t), sizeof(sensor_loc_val), (uint8_t *)sensor_loc_val}},
-
-    // Heart Rate Control Point Characteristic Declaration
-    [6]          =
-    {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&characteristic_declaration_uuid, ESP_GATT_PERM_READ,
-      CHAR_DECLARATION_SIZE,CHAR_DECLARATION_SIZE, (uint8_t *)&char_prop_read_write}},
-
-    // Heart Rate Control Point Characteristic Value
-    [7]             =
-    {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&heart_rate_ctrl_point, ESP_GATT_PERM_WRITE_ENCRYPTED|ESP_GATT_PERM_READ_ENCRYPTED,
-      sizeof(uint8_t), sizeof(heart_ctrl_point), (uint8_t *)heart_ctrl_point}},
-};
-*/

@@ -56,8 +56,7 @@ MessageDispatcher::MessageDispatcher(TransportProviderBase *transportProvider) :
     //
     _wifiRequestHandler = new WiFiRequestHandler(this);     // cppcheck-suppress noCopyConstructor
     _wifiRequestHandler->Setup();
-    _bluetoothRequestHandler = new BluetoothRequestHandler(this);
-    _bluetoothRequestHandler->Setup();
+    _bluetoothRequestHandler = BluetoothRequestHandler::GetInstance(this);
     _meshNetworkRequestHandler = new MeshNetworkRequestHandler(this);
     _meshNetworkRequestHandler->Setup();
     _systemRequestHandler = new SystemRequestHandler(this);

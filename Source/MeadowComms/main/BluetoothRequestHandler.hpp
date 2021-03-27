@@ -56,7 +56,9 @@ private:
      *  BT_READY_BIT indicates if the Bluetooth processing system can process a
      *  request.  It is used to synchronise requests
      */
-    const int BT_READY_BIT = BIT0;
+    static const int BT_READY_BIT = BIT0;
+    static const int BT_READING_BIT = BIT1;
+    static const int BT_WRITING_BIT = BIT1;
 
     /**
      *  Event group containing 24-bits used to indicate the state of the WiFi connection.
@@ -93,25 +95,30 @@ private:
     BluetoothRequestHandler();
     ~BluetoothRequestHandler();
 
-    static BluetoothManager _manager;
-
     void StartStack();
     void TeardownStack(Message *msg);
 
     void CreateAttributeGraph(Message *msg);
-
-
-public:
-    /**
-     *  @brief Name of the component / task for the Bluetooth system.
-     */
-    static const char *COMPONENT_NAME;
+    void OnDataReadRequest(uint16_t handle);
+    static void OnDataWriteRequest(uint16_t handle, uint8_t* data, uint16_t dataLength);
 
     /*
      *  Construct a new Bluetooth request handler object with reference to a
      *  Message Dispatcher object.
      */
     explicit BluetoothRequestHandler(MessageDispatcher *);
+
+    static BluetoothRequestHandler *GetInstance();
+public:
+    static BluetoothManager _manager;
+    static BluetoothRequestHandler *_instance;
+    
+    static BluetoothRequestHandler *GetInstance(MessageDispatcher *d);
+
+    /**
+     *  @brief Name of the component / task for the Bluetooth system.
+     */
+    static const char *COMPONENT_NAME;
 
     /*
      *  Provide and additional setup operations not covered by the constructors.
@@ -128,8 +135,8 @@ public:
      */
     static void EventHandler(void *, esp_event_base_t, int32_t, void *);
 
-    static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param);
-    static void gatts_profile_event_handler(esp_gatts_cb_event_t, esp_gatt_if_t, esp_ble_gatts_cb_param_t *);
+    static void GAPEventHandler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param);
+    static void GATTSProfileEventHandler(esp_gatts_cb_event_t, esp_gatt_if_t, esp_ble_gatts_cb_param_t *);
 };
 
 #endif /* _BLUETOOTH_REQUEST_HANDLER_HPP_ */
