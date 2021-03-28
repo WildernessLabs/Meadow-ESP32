@@ -364,6 +364,7 @@ namespace Esp32Messaging
 
     struct BTGetHandlesResponse
     {
+        uint16_t HandleCount;
         uint32_t HandlesLength;
         uint8_t *Handles;
     };
