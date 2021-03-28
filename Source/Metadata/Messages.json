@@ -401,7 +401,7 @@
             "Name": "BTGetHandlesResponse",
             "MessageElements":
             [
-                { "Name": "Count", "DataType": "uint16" },
+                { "Name": "HandleCount", "DataType": "uint16" },
                 { "Name": "Handles", "DataType": "blob" }
             ]
         }

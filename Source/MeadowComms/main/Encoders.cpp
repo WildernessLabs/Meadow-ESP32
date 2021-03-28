@@ -3466,6 +3466,8 @@ Esp32Messaging::BTDataWriteRequest *Encoders::ExtractBTDataWriteRequest(uint8_t 
 // cppcheck-suppress unusedFunction symbolName=EncodeBTGetHandlesResponse
 void Encoders::EncodeBTGetHandlesResponse(Esp32Messaging::BTGetHandlesResponse *bTGetHandlesResponse, uint8_t *buffer)
 {
+    EncodeUInt16(bTGetHandlesResponse->HandleCount, buffer);
+    buffer += 2;
     EncodeUInt32(bTGetHandlesResponse->HandlesLength, buffer);
     buffer += 4;
     if (bTGetHandlesResponse->HandlesLength > 0)
@@ -3488,7 +3490,7 @@ int Encoders::EncodedBTGetHandlesResponseBufferSize(Esp32Messaging::BTGetHandles
 {
     int result = 0;
     result += bTGetHandlesResponse->HandlesLength;
-    return(result + 4);
+    return(result + 6);
 }
 
 /**
@@ -3508,6 +3510,8 @@ Esp32Messaging::BTGetHandlesResponse *Encoders::ExtractBTGetHandlesResponse(uint
 {
     Esp32Messaging::BTGetHandlesResponse *bTGetHandlesResponse = (Esp32Messaging::BTGetHandlesResponse *) pvPortMalloc(sizeof(Esp32Messaging::BTGetHandlesResponse));
 
+    bTGetHandlesResponse->HandleCount = ExtractUInt16(buffer);
+    buffer += 2;
     bTGetHandlesResponse->HandlesLength = ExtractUInt32(buffer);
     buffer += 4;
     if (bTGetHandlesResponse->HandlesLength > 0)
