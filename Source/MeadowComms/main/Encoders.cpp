@@ -3452,4 +3452,75 @@ Esp32Messaging::BTDataWriteRequest *Encoders::ExtractBTDataWriteRequest(uint8_t 
     return(bTDataWriteRequest);
 }
 
+/**
+ *  Convert the BTGetHandlesResponse object into a byte stream that can be sent to the STM32.
+ *  
+ *  The amount of memory required can be obtained by calling the EncodedBTGetHandlesResponseBufferSize method.
+ *  
+ *  @param bTGetHandlesResponse
+ *      BTGetHandlesResponse object to be encoded.
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory large enough to hold the encoded BTGetHandlesResponse object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodeBTGetHandlesResponse
+void Encoders::EncodeBTGetHandlesResponse(Esp32Messaging::BTGetHandlesResponse *bTGetHandlesResponse, uint8_t *buffer)
+{
+    EncodeUInt32(bTGetHandlesResponse->HandlesLength, buffer);
+    buffer += 4;
+    if (bTGetHandlesResponse->HandlesLength > 0)
+    {
+        memcpy((void *) buffer, (void *) bTGetHandlesResponse->Handles, bTGetHandlesResponse->HandlesLength);
+    }
+}
+
+/**
+ *  Calculate the amount of memory required to hold the given instance of the BTGetHandlesResponse object.
+ *  
+ *  @param bTGetHandlesResponse
+ *      BTGetHandlesResponse object to be encoded.
+ *  
+ *  @returns
+ *      Number of bytes required to hold the encoded BTGetHandlesResponse object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodedBTGetHandlesResponseBufferSize
+int Encoders::EncodedBTGetHandlesResponseBufferSize(Esp32Messaging::BTGetHandlesResponse *bTGetHandlesResponse)
+{
+    int result = 0;
+    result += bTGetHandlesResponse->HandlesLength;
+    return(result + 4);
+}
+
+/**
+ *  Extract the BTGetHandlesResponse object that is encoded in the given buffer.
+ *  
+ *  Note that the returned pointer points to a block of memory on the heap and
+ *  this should eventually be released calling vPortFree(...).
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded BTGetHandlesResponse object.
+ *  
+ *  @returns
+ *      Pointer to a BTGetHandlesResponse object.
+ */
+// cppcheck-suppress unusedFunction symbolName=ExtractBTGetHandlesResponse
+Esp32Messaging::BTGetHandlesResponse *Encoders::ExtractBTGetHandlesResponse(uint8_t *buffer)
+{
+    Esp32Messaging::BTGetHandlesResponse *bTGetHandlesResponse = (Esp32Messaging::BTGetHandlesResponse *) pvPortMalloc(sizeof(Esp32Messaging::BTGetHandlesResponse));
+
+    bTGetHandlesResponse->HandlesLength = ExtractUInt32(buffer);
+    buffer += 4;
+    if (bTGetHandlesResponse->HandlesLength > 0)
+    {
+        bTGetHandlesResponse->Handles = (uint8_t *) pvPortMalloc(bTGetHandlesResponse->HandlesLength);
+        memcpy(bTGetHandlesResponse->Handles, buffer, bTGetHandlesResponse->HandlesLength);
+        buffer += bTGetHandlesResponse->HandlesLength;
+    }
+    else
+    {
+        bTGetHandlesResponse->Handles = nullptr;
+    }
+    return(bTGetHandlesResponse);
+}
+
 

@@ -35,6 +35,27 @@ void BluetoothManager::HandleDescriptorAdded(BluetoothDescriptor *)
     
 }
 
+void BluetoothManager::GetHandles(uint16_t* handles)
+{
+    int index = 0;
+
+    for (const auto& svc : Services.GetServiceDefinitions())
+    {
+        handles[index++] = svc->Handle;
+
+        for (const auto& characteristic : svc->GetCharacteristicDefinitions())
+        {
+            handles[index++] = characteristic->Declaration->Handle;
+            handles[index++] = characteristic->Value->Handle;
+
+            for (const auto& descriptor : characteristic->GetDescriptorDefinitions())
+            {
+                handles[index++] = descriptor->Handle;
+            }
+        }
+    }        
+}
+
 void BluetoothManager::SetHandles(uint16_t* handles, uint16_t count)
 {
     printf("Handles: \n");

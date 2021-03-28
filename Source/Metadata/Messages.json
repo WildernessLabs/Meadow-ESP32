@@ -397,5 +397,13 @@
                 { "Name": "Data", "DataType": "blob" }
             ]
         },
+        {
+            "Name": "BTGetHandlesResponse",
+            "MessageElements":
+            [
+                { "Name": "Count", "DataType": "uint16" },
+                { "Name": "Handles", "DataType": "blob" }
+            ]
+        }
     ]
 }

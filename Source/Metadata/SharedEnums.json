@@ -55,7 +55,7 @@
           "Comment": "Bluetooth functions available on the ESP32",
           "BaseDataType": "UInt32",
           "EnumNames": [
-              "Start", "Stop", "ReadRequestEvent", "WriteRequestEvent"
+              "Start", "Stop", "GetHandles", "ReadRequestEvent", "WriteRequestEvent"
           ]
         },
         {

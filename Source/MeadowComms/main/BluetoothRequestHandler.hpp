@@ -26,6 +26,7 @@
 #include "Esp32Messaging.hpp"
 #include "BluetoothConfig.hpp"
 #include "Encoders.hpp"
+#include "MessageDispatcher.hpp"
 
 #include "bluetooth/BluetoothManager.hpp"
 
@@ -97,6 +98,7 @@ private:
     ~BluetoothRequestHandler();
 
     void StartStack();
+    void GetHandles(Message *request);
     void TeardownStack(Message *msg);
 
     void CreateAttributeGraph(Message *msg);
