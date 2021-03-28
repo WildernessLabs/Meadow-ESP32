@@ -27,7 +27,13 @@ namespace MeadowApp
                 Thread.Sleep(1000);
             }
 
+            Console.WriteLine("Starting BT stack");
             Device.BluetoothAdapter.StartBluetoothStack(config);
+
+            Thread.Sleep(100);
+
+            Console.WriteLine("Getting BT handles");
+            var handles = Device.BluetoothAdapter.GetGraphHandles();
         }
 
         private string LoadConfigResource(string filename)

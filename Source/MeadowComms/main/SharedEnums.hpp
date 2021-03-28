@@ -141,8 +141,9 @@ namespace BluetoothFunction
     {
         Start = 0,
         Stop = 1,
-        ReadRequestEvent = 2,
-        WriteRequestEvent = 3
+        GetHandles = 2,
+        ReadRequestEvent = 3,
+        WriteRequestEvent = 4
     };
 
 }

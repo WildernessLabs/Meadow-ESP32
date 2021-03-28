@@ -137,6 +137,22 @@ void BluetoothRequestHandler::Setup()
 #endif
 }
 
+void BluetoothRequestHandler::GetHandles(Message *request)
+{    
+    Esp32Messaging::BTGetHandlesResponse response;
+    response.HandlesLength = _manager.GetHandleCount();
+    response.Handles = static_cast<uint8_t *>(pvPortMalloc(response.HandlesLength * 2));
+    _manager.GetHandles((uint16_t*)response.Handles);
+
+    request->PayloadLength = Encoders::EncodedBTGetHandlesResponseBufferSize(&response);
+    request->Payload = static_cast<uint8_t *>(pvPortMalloc(request->PayloadLength));
+    Encoders::EncodeBTGetHandlesResponse(&response, request->Payload);
+    request->MessageType = MessageTypes::Response;
+    request->StatusCode = StatusCodes::CompletedOk;
+
+    _messageDispatcher->QueueMessageForStm32(request);    
+}
+
 /**
  *  @brief Dispatch bluetooth messages to the appropriate method.
  *
@@ -155,6 +171,15 @@ void BluetoothRequestHandler::DispatchRequest(Message *request)
         case BluetoothFunction::Start:
             CreateAttributeGraph(request);
 
+            request->PayloadLength = 0;
+            request->MessageType = MessageTypes::Response;
+            request->StatusCode = StatusCodes::CompletedOk;
+
+            _messageDispatcher->QueueMessageForStm32(request);    
+
+            break;
+        case BluetoothFunction::GetHandles:
+            GetHandles(request);
             break;
         case BluetoothFunction::Stop:
             TeardownStack(request);

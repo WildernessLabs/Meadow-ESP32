@@ -362,6 +362,12 @@ namespace Esp32Messaging
         uint8_t *Data;
     };
 
+    struct BTGetHandlesResponse
+    {
+        uint32_t HandlesLength;
+        uint8_t *Handles;
+    };
+
 }
 
 /*
@@ -520,6 +526,9 @@ public:
     static void EncodeBTDataWriteRequest(Esp32Messaging::BTDataWriteRequest *, uint8_t *);
     static int EncodedBTDataWriteRequestBufferSize(Esp32Messaging::BTDataWriteRequest *);
     static Esp32Messaging::BTDataWriteRequest *ExtractBTDataWriteRequest(uint8_t *);
+    static void EncodeBTGetHandlesResponse(Esp32Messaging::BTGetHandlesResponse *, uint8_t *);
+    static int EncodedBTGetHandlesResponseBufferSize(Esp32Messaging::BTGetHandlesResponse *);
+    static Esp32Messaging::BTGetHandlesResponse *ExtractBTGetHandlesResponse(uint8_t *);
 
 };
 
