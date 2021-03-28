@@ -395,18 +395,28 @@ void BluetoothRequestHandler::OnDataReadRequest(uint16_t handle)
     ESP_LOGI(COMPONENT_NAME, "OnDataReadRequest: Exit");
 }
 
+Esp32Messaging::BTDataWriteRequest *BluetoothRequestHandler::_writeRequest;
+
 void BluetoothRequestHandler::OnDataWriteRequest(uint16_t handle, uint8_t* data, uint16_t dataLength)
 {
     ESP_LOGI(COMPONENT_NAME, "OnDataWriteRequest: Enter");
 
+    if(_writeRequest)
+    {
+        ESP_LOGI(COMPONENT_NAME, "_writeRequest already exists.  We just leaked.");
+        // delete _writeRequest; // this causes a panic, so figure out some other way
+    }
 
-    Esp32Messaging::BTDataWriteRequest request;
-    request.Handle = handle;
-    request.DataLength = dataLength;
-    request.Data = data;
+    ESP_LOGI(COMPONENT_NAME, "creating _writeRequest for 0x%04x with %i bytes", handle, dataLength);
+
+    _writeRequest = new Esp32Messaging::BTDataWriteRequest();
+    _writeRequest->Handle = handle;
+    _writeRequest->DataLength = dataLength;
+    _writeRequest->Data = static_cast<uint8_t *>(pvPortMalloc(dataLength));
+    memcpy(_writeRequest->Data, data, dataLength);
 
     xEventGroupSetBits(GetInstance()->_xBtEventGroup , BT_WRITING_BIT);
-    GetInstance()->RaiseEvent(Esp32Interfaces::WiFi, BluetoothFunction::WriteRequestEvent, 0, (uint8_t*)&request, dataLength + 6);
+    GetInstance()->RaiseEvent(Esp32Interfaces::BlueTooth, BluetoothFunction::WriteRequestEvent, 0, (uint8_t*) _writeRequest, dataLength + 6);
 
     ESP_LOGI(COMPONENT_NAME, "OnDataWriteRequest: Exit");
 }
@@ -513,8 +523,13 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
                 _manager.SetCurrentValueForAttributeHandle(param->write.handle, param->write.value, param->write.len);
 
                 esp_err_t ret = esp_ble_gatts_send_response(gatts_if, param->write.conn_id, param->write.trans_id, ESP_GATT_OK, NULL);
-                if (ret){
+                if (ret)
+                {
                     ESP_LOGE(COMPONENT_NAME, "esp_ble_gatts_send_response failed, error code = %x", ret);
+                }
+                else
+                {
+                    ESP_LOGI(COMPONENT_NAME, "esp_ble_gatts_send_response succeeded");
                 }
             }
         }

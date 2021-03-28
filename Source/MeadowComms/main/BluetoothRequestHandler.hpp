@@ -25,6 +25,7 @@
 #include "RequestHandlerBase.hpp"
 #include "Esp32Messaging.hpp"
 #include "BluetoothConfig.hpp"
+#include "Encoders.hpp"
 
 #include "bluetooth/BluetoothManager.hpp"
 
@@ -109,6 +110,9 @@ private:
     explicit BluetoothRequestHandler(MessageDispatcher *);
 
     static BluetoothRequestHandler *GetInstance();
+
+    static Esp32Messaging::BTDataWriteRequest* _writeRequest;
+
 public:
     static BluetoothManager _manager;
     static BluetoothRequestHandler *_instance;
