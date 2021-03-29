@@ -421,28 +421,19 @@ void BluetoothRequestHandler::OnDataReadRequest(uint16_t handle)
     ESP_LOGI(COMPONENT_NAME, "OnDataReadRequest: Exit");
 }
 
-Esp32Messaging::BTDataWriteRequest *BluetoothRequestHandler::_writeRequest;
-
 void BluetoothRequestHandler::OnDataWriteRequest(uint16_t handle, uint8_t* data, uint16_t dataLength)
 {
-    ESP_LOGI(COMPONENT_NAME, "OnDataWriteRequest: Enter");
-
-    if(_writeRequest)
-    {
-        ESP_LOGI(COMPONENT_NAME, "_writeRequest already exists.  We just leaked.");
-        // delete _writeRequest; // this causes a panic, so figure out some other way
-    }
-
     ESP_LOGI(COMPONENT_NAME, "creating _writeRequest for 0x%04x with %i bytes", handle, dataLength);
 
-    _writeRequest = new Esp32Messaging::BTDataWriteRequest();
-    _writeRequest->Handle = handle;
-    _writeRequest->DataLength = dataLength;
-    _writeRequest->Data = static_cast<uint8_t *>(pvPortMalloc(dataLength));
-    memcpy(_writeRequest->Data, data, dataLength);
-
-    xEventGroupSetBits(GetInstance()->_xBtEventGroup , BT_WRITING_BIT);
-    GetInstance()->RaiseEvent(Esp32Interfaces::BlueTooth, BluetoothFunction::WriteRequestEvent, 0, (uint8_t*) _writeRequest, dataLength + 6);
+    Esp32Messaging::BTDataWriteRequest *response = static_cast<Esp32Messaging::BTDataWriteRequest *>(pvPortMalloc(6 + dataLength));
+    response->Handle = handle;
+    response->DataLength = dataLength;
+    memcpy(response->Data, data, dataLength);
+    int payload_length = Encoders::EncodedBTDataWriteRequestBufferSize(response);
+    uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payload_length));
+    Encoders::EncodeBTDataWriteRequest(response, payload);
+    vPortFree(response);   // We don't need it anymore as the data is in the encoded payload.
+    GetInstance()->RaiseEvent(Esp32Interfaces::BlueTooth, BluetoothFunction::WriteRequestEvent, 0, payload, payload_length);
 
     ESP_LOGI(COMPONENT_NAME, "OnDataWriteRequest: Exit");
 }
