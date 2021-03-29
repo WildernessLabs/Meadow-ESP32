@@ -1,17 +1,23 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Threading;
 using Meadow;
+using Meadow.Bluetooth;
 using Meadow.Devices;
 
 namespace MeadowApp
 {
     class BluetoothStartupTest : App<F7Micro, BluetoothStartupTest>
     {
+        private Definition _definition;
+
+        public bool LoadFromFile { get; set; }
+
         public BluetoothStartupTest()
         {
-
+            LoadFromFile = false;
         }
 
         public void Startup()
@@ -19,15 +25,40 @@ namespace MeadowApp
 
             Device.InitBluetoothAdapter();
 
-            var config = LoadConfigResource("config.json");
-
             while (Device.BluetoothAdapter == null)
             {
                 Console.WriteLine("!!! BluetoothAdapter is NULL");
                 Thread.Sleep(1000);
             }
 
+            string config;
+
+            if (LoadFromFile)
+            {
+                config = LoadConfigResource("config.json");
+            }
+            else
+            {
+                _definition = new Definition(
+                    "MY MEADOW",
+                    new Service(
+                        name: "ServiceA",
+                        uuid: 253,
+                        characteristics:
+                            new Characteristic(
+                                uuid: "017e99d6-8a61-11eb-8dcd-0242ac1300aa",
+                                permissions: CharacteristicPermission.Write | CharacteristicPermission.Read,
+                                properties: CharacteristicProperty.Write | CharacteristicProperty.Read,
+                                maxLength: 4
+                                )
+                            )
+                    );
+
+                config = _definition.ToJson();
+            }
+
             Console.WriteLine("Starting BT stack");
+
             Device.BluetoothAdapter.StartBluetoothStack(config);
 
             Thread.Sleep(100);
