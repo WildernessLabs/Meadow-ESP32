@@ -425,14 +425,18 @@ void BluetoothRequestHandler::OnDataWriteRequest(uint16_t handle, uint8_t* data,
 {
     ESP_LOGI(COMPONENT_NAME, "creating _writeRequest for 0x%04x with %i bytes", handle, dataLength);
 
-    Esp32Messaging::BTDataWriteRequest *response = static_cast<Esp32Messaging::BTDataWriteRequest *>(pvPortMalloc(6 + dataLength));
-    response->Handle = handle;
-    response->DataLength = dataLength;
-    memcpy(response->Data, data, dataLength);
-    int payload_length = Encoders::EncodedBTDataWriteRequestBufferSize(response);
+    Esp32Messaging::BTDataWriteRequest *request = static_cast<Esp32Messaging::BTDataWriteRequest *>(pvPortMalloc(10));
+    ESP_LOGI(COMPONENT_NAME, "request allocated with %i bytes", 6 + dataLength);
+    request->Handle = handle;
+    request->DataLength = dataLength;
+    request->Data = data;
+    int payload_length = Encoders::EncodedBTDataWriteRequestBufferSize(request);
+    ESP_LOGI(COMPONENT_NAME, "I think payload_length should be %i bytes", payload_length);
     uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payload_length));
-    Encoders::EncodeBTDataWriteRequest(response, payload);
-    vPortFree(response);   // We don't need it anymore as the data is in the encoded payload.
+    Encoders::EncodeBTDataWriteRequest(request, payload);    
+    vPortFree(request);   // We don't need it anymore as the data is in the encoded payload.
+    
+    ESP_LOGI(COMPONENT_NAME, "Sending event data. payload[6] should be 0x%02x", payload[6]);
     GetInstance()->RaiseEvent(Esp32Interfaces::BlueTooth, BluetoothFunction::WriteRequestEvent, 0, payload, payload_length);
 
     ESP_LOGI(COMPONENT_NAME, "OnDataWriteRequest: Exit");
@@ -537,7 +541,7 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
                 
                 OnDataWriteRequest(param->write.handle, param->write.value, param->write.len);
 
-                _manager.SetCurrentValueForAttributeHandle(param->write.handle, param->write.value, param->write.len);
+//                _manager.SetCurrentValueForAttributeHandle(param->write.handle, param->write.value, param->write.len);
 
                 esp_err_t ret = esp_ble_gatts_send_response(gatts_if, param->write.conn_id, param->write.trans_id, ESP_GATT_OK, NULL);
                 if (ret)
