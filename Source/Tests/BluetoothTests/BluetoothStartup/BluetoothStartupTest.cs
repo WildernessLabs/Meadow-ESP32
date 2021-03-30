@@ -4,8 +4,8 @@ using System.IO;
 using System.Reflection;
 using System.Threading;
 using Meadow;
-using Meadow.Bluetooth;
 using Meadow.Devices;
+using Meadow.Gateways.Bluetooth;
 
 namespace MeadowApp
 {
@@ -31,11 +31,13 @@ namespace MeadowApp
                 Thread.Sleep(1000);
             }
 
-            string config;
-
             if (LoadFromFile)
             {
-                config = LoadConfigResource("config.json");
+                var config = LoadConfigResource("config.json");
+
+                Console.WriteLine("Starting BT stack");
+                // no longer supported.  We need objects for events.
+//                Device.BluetoothAdapter.StartBluetoothStack(config);
             }
             else
             {
@@ -46,6 +48,7 @@ namespace MeadowApp
                         uuid: 253,
                         characteristics:
                             new Characteristic(
+                                "My LED",
                                 uuid: "017e99d6-8a61-11eb-8dcd-0242ac1300aa",
                                 permissions: CharacteristicPermission.Write | CharacteristicPermission.Read,
                                 properties: CharacteristicProperty.Write | CharacteristicProperty.Read,
@@ -54,17 +57,15 @@ namespace MeadowApp
                             )
                     );
 
-                config = _definition.ToJson();
+                _definition.Services[0].Characteristics[0].OnDataSet += (s, d) =>
+                {
+                    Console.WriteLine($"HEY, I JUST GOT THIS BLE DATA: {BitConverter.ToString(d)}");
+                };
+
+                Console.WriteLine("Starting BT stack");
+                Device.BluetoothAdapter.StartBluetoothStack(_definition);
             }
 
-            Console.WriteLine("Starting BT stack");
-
-            Device.BluetoothAdapter.StartBluetoothStack(config);
-
-            Thread.Sleep(100);
-
-            Console.WriteLine("Getting BT handles");
-            var handles = Device.BluetoothAdapter.GetGraphHandles();
         }
 
         private string LoadConfigResource(string filename)
