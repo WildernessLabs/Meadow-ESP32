@@ -411,12 +411,19 @@ void BluetoothRequestHandler::TeardownStack(Message *msg)
 
 void BluetoothRequestHandler::OnDataReadRequest(uint16_t handle)
 {
-    ESP_LOGI(COMPONENT_NAME, "OnDataReadRequest: Enter");
+    ESP_LOGI(COMPONENT_NAME, "creating _readRequest for 0x%04x", handle);
 
-
-    xEventGroupSetBits(_xBtEventGroup , BT_READING_BIT);
+    // yes, this is all a bit much for 2 bytes.  It can be simplified if we find the message itself doesn't grow with implementation
+    Esp32Messaging::BTDataReadRequest *request = static_cast<Esp32Messaging::BTDataReadRequest*>(pvPortMalloc(2));
+    ESP_LOGI(COMPONENT_NAME, "request allocated with %i bytes", 2);
+    request->Handle = handle;
+    int payload_length = Encoders::EncodedBTDataReadRequestBufferSize(request);
+    uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payload_length));    
+    Encoders::EncodeBTDataReadRequest(request, payload);    
+    vPortFree(request);   // We don't need it anymore as the data is in the encoded payload.
     
-    RaiseEvent(Esp32Interfaces::WiFi, BluetoothFunction::ReadRequestEvent, 0, (uint8_t*)&handle, sizeof(handle));
+    ESP_LOGI(COMPONENT_NAME, "Sending event data. payload[6] should be 0x%02x", payload[6]);
+    GetInstance()->RaiseEvent(Esp32Interfaces::BlueTooth, BluetoothFunction::ReadRequestEvent, 0, payload, payload_length);
 
     ESP_LOGI(COMPONENT_NAME, "OnDataReadRequest: Exit");
 }
@@ -521,6 +528,9 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
 
                 rsp.attr_value.handle = param->read.handle;
 
+                // tell the managed side we've had a request for data
+                OnDataReadRequest(param->read.handle);
+
                 _manager.GetCurrentValueForAttributeHandle(param->read.handle, rsp.attr_value.value, &rsp.attr_value.len);
 
                 ESP_LOGI(COMPONENT_NAME, "  Sending read response of %i bytes", rsp.attr_value.len);
@@ -537,11 +547,8 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
         {
             ESP_LOGI(COMPONENT_NAME, "ESP_GATTS_WRITE_EVT, write handle 0x%04x", param->write.handle);
             if(param->write.need_rsp)
-            {
-                
+            {                
                 OnDataWriteRequest(param->write.handle, param->write.value, param->write.len);
-
-//                _manager.SetCurrentValueForAttributeHandle(param->write.handle, param->write.value, param->write.len);
 
                 esp_err_t ret = esp_ble_gatts_send_response(gatts_if, param->write.conn_id, param->write.trans_id, ESP_GATT_OK, NULL);
                 if (ret)

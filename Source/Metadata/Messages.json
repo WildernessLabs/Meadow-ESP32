@@ -404,6 +404,21 @@
                 { "Name": "HandleCount", "DataType": "uint16" },
                 { "Name": "Handles", "DataType": "blob" }
             ]
+        },
+        {
+            "Name": "BTDataReadRequest",
+            "MessageElements":
+            [
+                { "Name": "Handle", "DataType": "uint16" }
+            ]
+        },
+        {
+            "Name": "BTDataReadResponse",
+            "MessageElements":
+            [
+                { "Name": "Handle", "DataType": "uint16" },
+                { "Name": "Data", "DataType": "blob" }
+            ]
         }
     ]
 }

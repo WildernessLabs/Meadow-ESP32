@@ -41,6 +41,11 @@ namespace MeadowApp
                         uuid: "017e99d6-8a61-11eb-8dcd-0242ac1300aa",
                         permissions: CharacteristicPermission.Write | CharacteristicPermission.Read,
                         properties: CharacteristicProperty.Write | CharacteristicProperty.Read,
+                        readFunction: () =>
+                        {
+                            Console.WriteLine("Read LED has been called");
+                            return new byte[] { 1, 2, 3, 4 };
+                        },
                         descriptors:
                             new Descriptor(
                                 uuid: "00002901-0000-1000-8000-00805f9b34fb", // well-known BT description

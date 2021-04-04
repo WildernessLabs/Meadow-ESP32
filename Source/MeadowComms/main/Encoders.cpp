@@ -3527,4 +3527,132 @@ Esp32Messaging::BTGetHandlesResponse *Encoders::ExtractBTGetHandlesResponse(uint
     return(bTGetHandlesResponse);
 }
 
+/**
+ *  Convert the BTDataReadRequest object into a byte stream that can be sent to the STM32.
+ *  
+ *  The amount of memory required can be obtained by calling the EncodedBTDataReadRequestBufferSize method.
+ *  
+ *  @param bTDataReadRequest
+ *      BTDataReadRequest object to be encoded.
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory large enough to hold the encoded BTDataReadRequest object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodeBTDataReadRequest
+void Encoders::EncodeBTDataReadRequest(Esp32Messaging::BTDataReadRequest *bTDataReadRequest, uint8_t *buffer)
+{
+    EncodeUInt16(bTDataReadRequest->Handle, buffer);
+}
+
+/**
+ *  Calculate the amount of memory required to hold the given instance of the BTDataReadRequest object.
+ *  
+ *  @param bTDataReadRequest
+ *      BTDataReadRequest object to be encoded.
+ *  
+ *  @returns
+ *      Number of bytes required to hold the encoded BTDataReadRequest object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodedBTDataReadRequestBufferSize
+int Encoders::EncodedBTDataReadRequestBufferSize(Esp32Messaging::BTDataReadRequest *bTDataReadRequest)
+{
+    return(2);
+}
+
+/**
+ *  Extract the BTDataReadRequest object that is encoded in the given buffer.
+ *  
+ *  Note that the returned pointer points to a block of memory on the heap and
+ *  this should eventually be released calling vPortFree(...).
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded BTDataReadRequest object.
+ *  
+ *  @returns
+ *      Pointer to a BTDataReadRequest object.
+ */
+// cppcheck-suppress unusedFunction symbolName=ExtractBTDataReadRequest
+Esp32Messaging::BTDataReadRequest *Encoders::ExtractBTDataReadRequest(uint8_t *buffer)
+{
+    Esp32Messaging::BTDataReadRequest *bTDataReadRequest = (Esp32Messaging::BTDataReadRequest *) pvPortMalloc(sizeof(Esp32Messaging::BTDataReadRequest));
+
+    bTDataReadRequest->Handle = ExtractUInt16(buffer);
+    return(bTDataReadRequest);
+}
+
+/**
+ *  Convert the BTDataReadResponse object into a byte stream that can be sent to the STM32.
+ *  
+ *  The amount of memory required can be obtained by calling the EncodedBTDataReadResponseBufferSize method.
+ *  
+ *  @param bTDataReadResponse
+ *      BTDataReadResponse object to be encoded.
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory large enough to hold the encoded BTDataReadResponse object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodeBTDataReadResponse
+void Encoders::EncodeBTDataReadResponse(Esp32Messaging::BTDataReadResponse *bTDataReadResponse, uint8_t *buffer)
+{
+    EncodeUInt16(bTDataReadResponse->Handle, buffer);
+    buffer += 2;
+    EncodeUInt32(bTDataReadResponse->DataLength, buffer);
+    buffer += 4;
+    if (bTDataReadResponse->DataLength > 0)
+    {
+        memcpy((void *) buffer, (void *) bTDataReadResponse->Data, bTDataReadResponse->DataLength);
+    }
+}
+
+/**
+ *  Calculate the amount of memory required to hold the given instance of the BTDataReadResponse object.
+ *  
+ *  @param bTDataReadResponse
+ *      BTDataReadResponse object to be encoded.
+ *  
+ *  @returns
+ *      Number of bytes required to hold the encoded BTDataReadResponse object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodedBTDataReadResponseBufferSize
+int Encoders::EncodedBTDataReadResponseBufferSize(Esp32Messaging::BTDataReadResponse *bTDataReadResponse)
+{
+    int result = 0;
+    result += bTDataReadResponse->DataLength;
+    return(result + 6);
+}
+
+/**
+ *  Extract the BTDataReadResponse object that is encoded in the given buffer.
+ *  
+ *  Note that the returned pointer points to a block of memory on the heap and
+ *  this should eventually be released calling vPortFree(...).
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded BTDataReadResponse object.
+ *  
+ *  @returns
+ *      Pointer to a BTDataReadResponse object.
+ */
+// cppcheck-suppress unusedFunction symbolName=ExtractBTDataReadResponse
+Esp32Messaging::BTDataReadResponse *Encoders::ExtractBTDataReadResponse(uint8_t *buffer)
+{
+    Esp32Messaging::BTDataReadResponse *bTDataReadResponse = (Esp32Messaging::BTDataReadResponse *) pvPortMalloc(sizeof(Esp32Messaging::BTDataReadResponse));
+
+    bTDataReadResponse->Handle = ExtractUInt16(buffer);
+    buffer += 2;
+    bTDataReadResponse->DataLength = ExtractUInt32(buffer);
+    buffer += 4;
+    if (bTDataReadResponse->DataLength > 0)
+    {
+        bTDataReadResponse->Data = (uint8_t *) pvPortMalloc(bTDataReadResponse->DataLength);
+        memcpy(bTDataReadResponse->Data, buffer, bTDataReadResponse->DataLength);
+        buffer += bTDataReadResponse->DataLength;
+    }
+    else
+    {
+        bTDataReadResponse->Data = nullptr;
+    }
+    return(bTDataReadResponse);
+}
+
 
