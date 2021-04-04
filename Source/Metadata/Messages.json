@@ -406,14 +406,7 @@
             ]
         },
         {
-            "Name": "BTDataReadRequest",
-            "MessageElements":
-            [
-                { "Name": "Handle", "DataType": "uint16" }
-            ]
-        },
-        {
-            "Name": "BTDataReadResponse",
+            "Name": "BTServerDataSet",
             "MessageElements":
             [
                 { "Name": "Handle", "DataType": "uint16" },

@@ -3528,131 +3528,78 @@ Esp32Messaging::BTGetHandlesResponse *Encoders::ExtractBTGetHandlesResponse(uint
 }
 
 /**
- *  Convert the BTDataReadRequest object into a byte stream that can be sent to the STM32.
+ *  Convert the BTServerDataSet object into a byte stream that can be sent to the STM32.
  *  
- *  The amount of memory required can be obtained by calling the EncodedBTDataReadRequestBufferSize method.
+ *  The amount of memory required can be obtained by calling the EncodedBTServerDataSetBufferSize method.
  *  
- *  @param bTDataReadRequest
- *      BTDataReadRequest object to be encoded.
- *  
- *  @param buffer
- *      Pointer to a block of memory large enough to hold the encoded BTDataReadRequest object.
- */
-// cppcheck-suppress unusedFunction symbolName=EncodeBTDataReadRequest
-void Encoders::EncodeBTDataReadRequest(Esp32Messaging::BTDataReadRequest *bTDataReadRequest, uint8_t *buffer)
-{
-    EncodeUInt16(bTDataReadRequest->Handle, buffer);
-}
-
-/**
- *  Calculate the amount of memory required to hold the given instance of the BTDataReadRequest object.
- *  
- *  @param bTDataReadRequest
- *      BTDataReadRequest object to be encoded.
- *  
- *  @returns
- *      Number of bytes required to hold the encoded BTDataReadRequest object.
- */
-// cppcheck-suppress unusedFunction symbolName=EncodedBTDataReadRequestBufferSize
-int Encoders::EncodedBTDataReadRequestBufferSize(Esp32Messaging::BTDataReadRequest *bTDataReadRequest)
-{
-    return(2);
-}
-
-/**
- *  Extract the BTDataReadRequest object that is encoded in the given buffer.
- *  
- *  Note that the returned pointer points to a block of memory on the heap and
- *  this should eventually be released calling vPortFree(...).
+ *  @param bTServerDataSet
+ *      BTServerDataSet object to be encoded.
  *  
  *  @param buffer
- *      Pointer to a block of memory holding the encoded BTDataReadRequest object.
- *  
- *  @returns
- *      Pointer to a BTDataReadRequest object.
+ *      Pointer to a block of memory large enough to hold the encoded BTServerDataSet object.
  */
-// cppcheck-suppress unusedFunction symbolName=ExtractBTDataReadRequest
-Esp32Messaging::BTDataReadRequest *Encoders::ExtractBTDataReadRequest(uint8_t *buffer)
+// cppcheck-suppress unusedFunction symbolName=EncodeBTServerDataSet
+void Encoders::EncodeBTServerDataSet(Esp32Messaging::BTServerDataSet *bTServerDataSet, uint8_t *buffer)
 {
-    Esp32Messaging::BTDataReadRequest *bTDataReadRequest = (Esp32Messaging::BTDataReadRequest *) pvPortMalloc(sizeof(Esp32Messaging::BTDataReadRequest));
-
-    bTDataReadRequest->Handle = ExtractUInt16(buffer);
-    return(bTDataReadRequest);
-}
-
-/**
- *  Convert the BTDataReadResponse object into a byte stream that can be sent to the STM32.
- *  
- *  The amount of memory required can be obtained by calling the EncodedBTDataReadResponseBufferSize method.
- *  
- *  @param bTDataReadResponse
- *      BTDataReadResponse object to be encoded.
- *  
- *  @param buffer
- *      Pointer to a block of memory large enough to hold the encoded BTDataReadResponse object.
- */
-// cppcheck-suppress unusedFunction symbolName=EncodeBTDataReadResponse
-void Encoders::EncodeBTDataReadResponse(Esp32Messaging::BTDataReadResponse *bTDataReadResponse, uint8_t *buffer)
-{
-    EncodeUInt16(bTDataReadResponse->Handle, buffer);
+    EncodeUInt16(bTServerDataSet->Handle, buffer);
     buffer += 2;
-    EncodeUInt32(bTDataReadResponse->DataLength, buffer);
+    EncodeUInt32(bTServerDataSet->DataLength, buffer);
     buffer += 4;
-    if (bTDataReadResponse->DataLength > 0)
+    if (bTServerDataSet->DataLength > 0)
     {
-        memcpy((void *) buffer, (void *) bTDataReadResponse->Data, bTDataReadResponse->DataLength);
+        memcpy((void *) buffer, (void *) bTServerDataSet->Data, bTServerDataSet->DataLength);
     }
 }
 
 /**
- *  Calculate the amount of memory required to hold the given instance of the BTDataReadResponse object.
+ *  Calculate the amount of memory required to hold the given instance of the BTServerDataSet object.
  *  
- *  @param bTDataReadResponse
- *      BTDataReadResponse object to be encoded.
+ *  @param bTServerDataSet
+ *      BTServerDataSet object to be encoded.
  *  
  *  @returns
- *      Number of bytes required to hold the encoded BTDataReadResponse object.
+ *      Number of bytes required to hold the encoded BTServerDataSet object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodedBTDataReadResponseBufferSize
-int Encoders::EncodedBTDataReadResponseBufferSize(Esp32Messaging::BTDataReadResponse *bTDataReadResponse)
+// cppcheck-suppress unusedFunction symbolName=EncodedBTServerDataSetBufferSize
+int Encoders::EncodedBTServerDataSetBufferSize(Esp32Messaging::BTServerDataSet *bTServerDataSet)
 {
     int result = 0;
-    result += bTDataReadResponse->DataLength;
+    result += bTServerDataSet->DataLength;
     return(result + 6);
 }
 
 /**
- *  Extract the BTDataReadResponse object that is encoded in the given buffer.
+ *  Extract the BTServerDataSet object that is encoded in the given buffer.
  *  
  *  Note that the returned pointer points to a block of memory on the heap and
  *  this should eventually be released calling vPortFree(...).
  *  
  *  @param buffer
- *      Pointer to a block of memory holding the encoded BTDataReadResponse object.
+ *      Pointer to a block of memory holding the encoded BTServerDataSet object.
  *  
  *  @returns
- *      Pointer to a BTDataReadResponse object.
+ *      Pointer to a BTServerDataSet object.
  */
-// cppcheck-suppress unusedFunction symbolName=ExtractBTDataReadResponse
-Esp32Messaging::BTDataReadResponse *Encoders::ExtractBTDataReadResponse(uint8_t *buffer)
+// cppcheck-suppress unusedFunction symbolName=ExtractBTServerDataSet
+Esp32Messaging::BTServerDataSet *Encoders::ExtractBTServerDataSet(uint8_t *buffer)
 {
-    Esp32Messaging::BTDataReadResponse *bTDataReadResponse = (Esp32Messaging::BTDataReadResponse *) pvPortMalloc(sizeof(Esp32Messaging::BTDataReadResponse));
+    Esp32Messaging::BTServerDataSet *bTServerDataSet = (Esp32Messaging::BTServerDataSet *) pvPortMalloc(sizeof(Esp32Messaging::BTServerDataSet));
 
-    bTDataReadResponse->Handle = ExtractUInt16(buffer);
+    bTServerDataSet->Handle = ExtractUInt16(buffer);
     buffer += 2;
-    bTDataReadResponse->DataLength = ExtractUInt32(buffer);
+    bTServerDataSet->DataLength = ExtractUInt32(buffer);
     buffer += 4;
-    if (bTDataReadResponse->DataLength > 0)
+    if (bTServerDataSet->DataLength > 0)
     {
-        bTDataReadResponse->Data = (uint8_t *) pvPortMalloc(bTDataReadResponse->DataLength);
-        memcpy(bTDataReadResponse->Data, buffer, bTDataReadResponse->DataLength);
-        buffer += bTDataReadResponse->DataLength;
+        bTServerDataSet->Data = (uint8_t *) pvPortMalloc(bTServerDataSet->DataLength);
+        memcpy(bTServerDataSet->Data, buffer, bTServerDataSet->DataLength);
+        buffer += bTServerDataSet->DataLength;
     }
     else
     {
-        bTDataReadResponse->Data = nullptr;
+        bTServerDataSet->Data = nullptr;
     }
-    return(bTDataReadResponse);
+    return(bTServerDataSet);
 }
 
 

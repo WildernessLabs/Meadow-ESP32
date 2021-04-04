@@ -179,6 +179,17 @@ void BluetoothRequestHandler::DispatchRequest(Message *request)
             _messageDispatcher->QueueMessageForStm32(request);    
 
             break;
+        case BluetoothFunction::ServerDataWrite:
+            Esp32Messaging::BTServerDataSet *ds = Encoders::ExtractBTServerDataSet(request->Payload);
+
+            // update the local 
+            _manager.SetCurrentValueForAttributeHandle(ds->Handle, ds->Data, ds->DataLength);
+
+            request->PayloadLength = 0;
+            request->MessageType = MessageTypes::Response;
+            request->StatusCode = StatusCodes::CompletedOk;
+
+            _messageDispatcher->QueueMessageForStm32(request);    
         case BluetoothFunction::GetHandles:
             GetHandles(request);
             break;
