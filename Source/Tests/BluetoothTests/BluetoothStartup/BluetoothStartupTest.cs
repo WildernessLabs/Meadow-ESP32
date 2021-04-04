@@ -34,23 +34,42 @@ namespace MeadowApp
             _definition = new Definition(
                 "WTF MEADOW",
                 new Service(
-                    name: "ServiceA",
-                    uuid: 253,
-                    characteristics:
-                        new Characteristic(
-                            "My LED",
-                            uuid: "017e99d6-8a61-11eb-8dcd-0242ac1300aa",
-                            permissions: CharacteristicPermission.Write | CharacteristicPermission.Read,
-                            properties: CharacteristicProperty.Write | CharacteristicProperty.Read,
-                            maxLength: 4
-                            )
+                    "ServiceA",
+                    253,
+                    new CharacteristicBool(
+                        "My LED",
+                        uuid: "017e99d6-8a61-11eb-8dcd-0242ac1300aa",
+                        permissions: CharacteristicPermission.Write | CharacteristicPermission.Read,
+                        properties: CharacteristicProperty.Write | CharacteristicProperty.Read,
+                        descriptors:
+                            new Descriptor(
+                                uuid: "00002901-0000-1000-8000-00805f9b34fb", // well-known BT description
+                                value: 22
+                                )
+                        ),
+                    new CharacteristicInt32(
+                        "My Number",
+                        uuid: "017e99d6-8a61-11eb-8dcd-0242ac1300bb",
+                        permissions: CharacteristicPermission.Write | CharacteristicPermission.Read,
+                        properties: CharacteristicProperty.Write | CharacteristicProperty.Read
+                        ),
+                    new CharacteristicString(
+                        "My Text",
+                        uuid: "017e99d6-8a61-11eb-8dcd-0242ac1300cc",
+                        maxLength: 20,
+                        permissions: CharacteristicPermission.Write | CharacteristicPermission.Read,
+                        properties: CharacteristicProperty.Write | CharacteristicProperty.Read
                         )
+                    )
                 );
 
-            _definition.Services[0].Characteristics[0].OnDataSet += (s, d) =>
+            foreach (var c in _definition.Services[0].Characteristics)
             {
-                Console.WriteLine($"HEY, I JUST GOT THIS BLE DATA: {BitConverter.ToString(d)}");
-            };
+                c.ValueSet += (s, d) =>
+                {
+                    Console.WriteLine($"HEY, I JUST GOT THIS BLE DATA of type {d.GetType().Name}: {d}");
+                };
+            }
 
             Console.WriteLine("Starting BT stack");
             Device.BluetoothAdapter.StartBluetoothStack(_definition);            
@@ -89,9 +108,9 @@ namespace MeadowApp
                       ""descriptors"": [
                         {
                           ""uuid"": 10498,
-                          ""permission"": 1,
+                          ""permission"": 9,
                           ""len"": 2,
-                          ""value"": 0
+                          ""value"": 00
                         }
                       ]
                     },

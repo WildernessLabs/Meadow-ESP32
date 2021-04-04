@@ -216,7 +216,7 @@ void BluetoothManager::BuildGraphFromJson(char *cfg_json)
 
             if(characteristic["uuid"].IsInt())
             {
-                chr_uuid16 = Uuid16(characteristic["uuid"].GetInt());
+                chr_uuid16 = Uuid16((uint16_t)characteristic["uuid"].GetInt());
                 printf(" uuid = 0x%04x\n", (uint16_t)chr_uuid16);
             }
             else
@@ -261,21 +261,52 @@ void BluetoothManager::BuildGraphFromJson(char *cfg_json)
                     printf("characteristic has %i descriptors\n", desc_list.Size());
                     for (auto d = 0; d < desc_list.Size(); d++) 
                     {
+                        Uuid16 desc_uuid16;
+                        Uuid128 desc_uuid128;
+                        auto is128d = false;
                         auto descriptor = desc_list[d].GetObject();
-                        auto desc_uuid = (uint16_t)descriptor["uuid"].GetInt();
-                        auto desc_perm = (uint16_t)descriptor["permission"].GetInt();
-                        auto desc_len = (uint16_t)descriptor["len"].GetInt();
-                        auto desc_value = (uint16_t)descriptor["value"].GetInt();
 
-                        printf("   uuid = 0x%04x\n", desc_uuid);
+                        if(descriptor["uuid"].IsInt())
+                        {
+                            desc_uuid16 = Uuid16((uint16_t)descriptor["uuid"].GetInt());
+                            printf(" uuid = 0x%04x\n", (uint16_t)desc_uuid16);
+                        }
+                        else
+                        {
+                            desc_uuid128 = Uuid128(descriptor["uuid"].GetString());
+                            printf(" uuid = %s\n", desc_uuid128.ToString().c_str());
+                            is128d = true;
+                        }
+
+                        auto desc_perm = (uint16_t)descriptor["permission"].GetInt();
                         printf("   permission = 0x%04x\n", desc_perm);
+                        auto desc_len = (uint16_t)descriptor["len"].GetInt();
                         printf("   len = 0x%04x\n", desc_len);
 
-                        auto bt_descriptor = new BluetoothDescriptor(
-                            bt_characteristic, 
-                            desc_uuid, 
-                            (CharacteristicPermission)desc_perm, 
-                            desc_len);
+                        auto desc_value = (uint16_t)descriptor["value"].GetInt();
+                        printf("   value = 0x%04x\n", desc_value);
+
+
+                        BluetoothDescriptor *bt_descriptor;
+
+                        if(is128d)
+                        {
+                            bt_descriptor = new BluetoothDescriptor(
+                                bt_characteristic, 
+                                desc_uuid128, 
+                                (CharacteristicPermission)desc_perm, 
+                                desc_len);
+                        }
+                        else
+                        {
+                            bt_descriptor = new BluetoothDescriptor(
+                                bt_characteristic, 
+                                desc_uuid16, 
+                                (CharacteristicPermission)desc_perm, 
+                                desc_len);
+                        }
+                        
+                        bt_descriptor->SetValue(desc_value);
                         
                         printf("bt_descriptor created\n");
                         bt_characteristic->AddDescriptor(bt_descriptor);
@@ -385,9 +416,19 @@ void BluetoothManager::GenerateAttributeTable()
                     sizeof(uint16_t),sizeof(heart_measurement_ccc), (uint8_t *)heart_measurement_ccc}},
 
                 */
-                _attribute_table[index++] =
-                    {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&descriptor->Uuid, (uint16_t)descriptor->Permission,
-                    descriptor->MaxLength, descriptor->CurrentLength, (uint8_t *)descriptor->Value}};
+               if(descriptor->Is128())
+               {
+                    _attribute_table[index++] =
+                        {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_128, (uint8_t *)&descriptor->uuid128, (uint16_t)descriptor->Permission,
+                        descriptor->MaxLength, descriptor->CurrentLength, (uint8_t *)descriptor->Value}};
+               }
+               else
+               {
+                    _attribute_table[index++] =
+                        {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *)&descriptor->uuid16, (uint16_t)descriptor->Permission,
+                        descriptor->MaxLength, descriptor->CurrentLength, (uint8_t *)descriptor->Value}};
+               }
+               
             }
         }
     }        
