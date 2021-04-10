@@ -105,7 +105,6 @@ private:
 
     // these are static because they are called from a C callback handler
     static void OnDataWriteRequest(uint16_t handle, uint8_t* data, uint16_t dataLength);
-    static void OnDataReadRequest(uint16_t handle);
 
     /*
      *  Construct a new Bluetooth request handler object with reference to a

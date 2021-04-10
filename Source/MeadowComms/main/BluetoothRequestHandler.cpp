@@ -166,6 +166,8 @@ void BluetoothRequestHandler::DispatchRequest(Message *request)
     ESP_LOGI(__func__, "Enter");
 #endif
 
+    ESP_LOGI(COMPONENT_NAME, "BT Message: function %i", request->Function);
+
     xEventGroupClearBits(_xBtEventGroup, BT_READY_BIT);
     switch (request->Function)
     {
@@ -180,16 +182,21 @@ void BluetoothRequestHandler::DispatchRequest(Message *request)
 
             break;
         case BluetoothFunction::ServerDataWrite:
-            Esp32Messaging::BTServerDataSet *ds = Encoders::ExtractBTServerDataSet(request->Payload);
+            {
+                Esp32Messaging::BTServerDataSet *ds = Encoders::ExtractBTServerDataSet(request->Payload);
 
-            // update the local 
-            _manager.SetCurrentValueForAttributeHandle(ds->Handle, ds->Data, ds->DataLength);
+                ESP_LOGI(COMPONENT_NAME, "Server wrote %i bytes to 0x%04x", ds->DataLength, ds->Handle);
 
-            request->PayloadLength = 0;
-            request->MessageType = MessageTypes::Response;
-            request->StatusCode = StatusCodes::CompletedOk;
+                // update the local 
+                _manager.SetCurrentValueForAttributeHandle(ds->Handle, ds->Data, ds->DataLength);
 
-            _messageDispatcher->QueueMessageForStm32(request);    
+                request->PayloadLength = 0;
+                request->MessageType = MessageTypes::Response;
+                request->StatusCode = StatusCodes::CompletedOk;
+
+                _messageDispatcher->QueueMessageForStm32(request);
+            }
+            break;
         case BluetoothFunction::GetHandles:
             GetHandles(request);
             break;
@@ -420,25 +427,6 @@ void BluetoothRequestHandler::TeardownStack(Message *msg)
 
 }
 
-void BluetoothRequestHandler::OnDataReadRequest(uint16_t handle)
-{
-    ESP_LOGI(COMPONENT_NAME, "creating _readRequest for 0x%04x", handle);
-
-    // yes, this is all a bit much for 2 bytes.  It can be simplified if we find the message itself doesn't grow with implementation
-    Esp32Messaging::BTDataReadRequest *request = static_cast<Esp32Messaging::BTDataReadRequest*>(pvPortMalloc(2));
-    ESP_LOGI(COMPONENT_NAME, "request allocated with %i bytes", 2);
-    request->Handle = handle;
-    int payload_length = Encoders::EncodedBTDataReadRequestBufferSize(request);
-    uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payload_length));    
-    Encoders::EncodeBTDataReadRequest(request, payload);    
-    vPortFree(request);   // We don't need it anymore as the data is in the encoded payload.
-    
-    ESP_LOGI(COMPONENT_NAME, "Sending event data. payload[6] should be 0x%02x", payload[6]);
-    GetInstance()->RaiseEvent(Esp32Interfaces::BlueTooth, BluetoothFunction::ReadRequestEvent, 0, payload, payload_length);
-
-    ESP_LOGI(COMPONENT_NAME, "OnDataReadRequest: Exit");
-}
-
 void BluetoothRequestHandler::OnDataWriteRequest(uint16_t handle, uint8_t* data, uint16_t dataLength)
 {
     ESP_LOGI(COMPONENT_NAME, "creating _writeRequest for 0x%04x with %i bytes", handle, dataLength);
@@ -455,7 +443,7 @@ void BluetoothRequestHandler::OnDataWriteRequest(uint16_t handle, uint8_t* data,
     vPortFree(request);   // We don't need it anymore as the data is in the encoded payload.
     
     ESP_LOGI(COMPONENT_NAME, "Sending event data. payload[6] should be 0x%02x", payload[6]);
-    GetInstance()->RaiseEvent(Esp32Interfaces::BlueTooth, BluetoothFunction::WriteRequestEvent, 0, payload, payload_length);
+    GetInstance()->RaiseEvent(Esp32Interfaces::BlueTooth, BluetoothFunction::ClientWriteRequestEvent, 0, payload, payload_length);
 
     ESP_LOGI(COMPONENT_NAME, "OnDataWriteRequest: Exit");
 }
@@ -539,9 +527,7 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
 
                 rsp.attr_value.handle = param->read.handle;
 
-                // tell the managed side we've had a request for data
-                OnDataReadRequest(param->read.handle);
-
+                // go get the currently known value from the manager
                 _manager.GetCurrentValueForAttributeHandle(param->read.handle, rsp.attr_value.value, &rsp.attr_value.len);
 
                 ESP_LOGI(COMPONENT_NAME, "  Sending read response of %i bytes", rsp.attr_value.len);
@@ -600,7 +586,7 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
             /* start security connect with peer device when receive the connect event sent by the master */
 //            esp_ble_set_encryption(param->connect.remote_bda, ESP_BLE_SEC_ENCRYPT_MITM);
 
-            esp_ble_conn_update_params_t conn_params = {0};
+            esp_ble_conn_update_params_t conn_params;
             memcpy(conn_params.bda, param->connect.remote_bda, sizeof(esp_bd_addr_t));
             /* For the iOS system, please refer to Apple official documents about the BLE connection parameters restrictions. */
             conn_params.latency = 0;

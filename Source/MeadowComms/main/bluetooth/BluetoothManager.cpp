@@ -78,7 +78,16 @@ void BluetoothManager::SetHandles(uint16_t* handles, uint16_t count)
             printf("ATTRIBUTE TABLE DECLARATION HANDLE = 0x%04x\n", characteristic->Declaration->Handle);
 
             characteristic->Value->Handle = handles[index++];
-            printf("ATTRIBUTE TABLE VALUE HANDLE = 0x%04x\n", characteristic->Value->Handle);
+            printf("ATTRIBUTE TABLE VALUE HANDLE = 0x%04x | max length = %i\n", characteristic->Value->Handle, characteristic->Value->MaxLength);
+            auto val = length_val 
+                { 
+                    .length = characteristic->Value->MaxLength, 
+                    .value = new uint8_t[characteristic->Value->MaxLength]
+                };
+
+            printf("Request for data for handle 0x%04x\n", characteristic->Value->Handle);
+
+            _valueMap.insert( { characteristic->Value->Handle, val } );
 
             // cross reference handles
             characteristic->Declaration->ValueHandle = characteristic->Value->Handle;
@@ -165,19 +174,44 @@ static int test_value = 0;
 void BluetoothManager::GetCurrentValueForAttributeHandle(uint16_t handle, uint8_t* pData, uint16_t* pLen)
 {
     // TODO: go get the data from the STM - for now we just increment to test the data is changing
-    test_value++;
-    printf("Reply with test value of %i\n", test_value);
-    memcpy(pData, &test_value, 4);
-    *pLen = 4;
+    auto existing = _valueMap.find(handle);
+
+    if(existing != _valueMap.end())
+    {
+        printf("Request for data for handle 0x%04x\n", handle);
+        printf(" known length = %i\n", existing->second.length);
+
+        memcpy(pData, existing->second.value, existing->second.length);
+        *pLen = existing->second.length;
+    }
+    else
+    {
+        printf("Request for data with unknown handle 0x%04x\n", handle);
+        *pLen = 0;
+        pData = NULL;
+    }
 }
 
 void BluetoothManager::SetCurrentValueForAttributeHandle(uint16_t handle, uint8_t* pData, uint16_t len)
 {
     printf("Received %i bytes of data for attribute handle 0x%04x\n", len, handle);
-    for (size_t i = 0; i < len; i++) {
-        printf("%*x ", 3, pData[i]);
+
+    auto existing = _valueMap.find(handle);
+
+    if(existing != _valueMap.end())
+    {
+        // clear and write
+        memset(existing->second.value, 0, existing->second.length);
+        // only write *up to* the defined max length
+        size_t length_to_write = existing->second.length < len ? existing->second.length : len;
+        memcpy(existing->second.value, pData, length_to_write);
     }
-    printf("\n");    
+    else
+    {
+        // unknown handle
+        // this should *never* happen, but best to be safe
+        printf("value received with unknown handle 0x%04x\n", test_value);
+    }    
 }
 
 void BluetoothManager::BuildGraphFromJson(char *cfg_json)
@@ -348,6 +382,7 @@ void BluetoothManager::GenerateAttributeTable()
 
             for (const auto& descriptor : characteristic->GetDescriptorDefinitions())
             {
+                (void)descriptor; // squash the warning about unused variable
                 count ++; // +1 for the decriptor
             }
         }

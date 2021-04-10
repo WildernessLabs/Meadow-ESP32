@@ -20,6 +20,11 @@ namespace MeadowApp
             LoadFromFile = false;
         }
 
+        public void SetIntValue(int value)
+        {
+            _definition.Services[0].Characteristics[1].SetValue(value);
+
+        }
         public void Startup()
         {
 
