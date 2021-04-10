@@ -13,7 +13,14 @@ namespace MeadowApp
             var app = new BluetoothStartupTest();
             app.Startup();
 
-            Thread.Sleep(Timeout.Infinite);
+            var i = 0;
+
+            while (true)
+            {
+                app.SetIntValue(i++);
+                Console.WriteLine($"{i}");
+                Thread.Sleep(2000);
+            }
         }
     }
 }

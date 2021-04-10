@@ -5,6 +5,7 @@
 #include "BluetoothAttribute.hpp"
 #include "BluetoothHandleManager.hpp"
 #include <vector>
+#include <map>
 
 #include "esp_bt.h"
 #include "esp_gap_ble_api.h"
@@ -19,7 +20,14 @@ using namespace std;
 class BluetoothManager 
 {
     private:
+        struct length_val
+        {
+            uint16_t length;
+            uint8_t* value;
+        };
+
         BluetoothHandleManager _handleManager;
+        std::map<uint16_t, length_val> _valueMap;
 
         static void HandleServiceAdded(BluetoothService *);
         static void HandleCharacteristicAdded(BluetoothCharacteristic *);

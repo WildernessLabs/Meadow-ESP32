@@ -6,6 +6,7 @@ BluetoothCharacteristicValue::BluetoothCharacteristicValue(BluetoothCharacterist
     uuid16 = uuid;
     Permission = permission;
     _value = new uint8_t[maxValueLength];
+    MaxLength = maxValueLength;
 }
 
 BluetoothCharacteristicValue::BluetoothCharacteristicValue(BluetoothCharacteristic *parent, Uuid128 uuid, CharacteristicPermission permission, int maxValueLength)
@@ -14,6 +15,7 @@ BluetoothCharacteristicValue::BluetoothCharacteristicValue(BluetoothCharacterist
     uuid128 = uuid;
     Permission = permission;
     _value = new uint8_t[maxValueLength];
+    MaxLength = maxValueLength;
     _is128 = true;
 }
 
