@@ -181,14 +181,14 @@ void BluetoothRequestHandler::DispatchRequest(Message *request)
             _messageDispatcher->QueueMessageForStm32(request);    
 
             break;
-        case BluetoothFunction::ServerDataWrite:
+        case BluetoothFunction::ServerDataSet:
             {
                 Esp32Messaging::BTServerDataSet *ds = Encoders::ExtractBTServerDataSet(request->Payload);
 
-                ESP_LOGI(COMPONENT_NAME, "Server wrote %i bytes to 0x%04x", ds->DataLength, ds->Handle);
+                ESP_LOGI(COMPONENT_NAME, "Server wrote %i bytes to 0x%04x", ds->SetDataLength, ds->Handle);
 
                 // update the local 
-                _manager.SetCurrentValueForAttributeHandle(ds->Handle, ds->Data, ds->DataLength);
+                _manager.SetCurrentValueForAttributeHandle(ds->Handle, ds->SetData, ds->SetDataLength);
 
                 request->PayloadLength = 0;
                 request->MessageType = MessageTypes::Response;

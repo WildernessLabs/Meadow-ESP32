@@ -3543,11 +3543,11 @@ void Encoders::EncodeBTServerDataSet(Esp32Messaging::BTServerDataSet *bTServerDa
 {
     EncodeUInt16(bTServerDataSet->Handle, buffer);
     buffer += 2;
-    EncodeUInt32(bTServerDataSet->DataLength, buffer);
+    EncodeUInt32(bTServerDataSet->SetDataLength, buffer);
     buffer += 4;
-    if (bTServerDataSet->DataLength > 0)
+    if (bTServerDataSet->SetDataLength > 0)
     {
-        memcpy((void *) buffer, (void *) bTServerDataSet->Data, bTServerDataSet->DataLength);
+        memcpy((void *) buffer, (void *) bTServerDataSet->SetData, bTServerDataSet->SetDataLength);
     }
 }
 
@@ -3564,7 +3564,7 @@ void Encoders::EncodeBTServerDataSet(Esp32Messaging::BTServerDataSet *bTServerDa
 int Encoders::EncodedBTServerDataSetBufferSize(Esp32Messaging::BTServerDataSet *bTServerDataSet)
 {
     int result = 0;
-    result += bTServerDataSet->DataLength;
+    result += bTServerDataSet->SetDataLength;
     return(result + 6);
 }
 
@@ -3587,17 +3587,17 @@ Esp32Messaging::BTServerDataSet *Encoders::ExtractBTServerDataSet(uint8_t *buffe
 
     bTServerDataSet->Handle = ExtractUInt16(buffer);
     buffer += 2;
-    bTServerDataSet->DataLength = ExtractUInt32(buffer);
+    bTServerDataSet->SetDataLength = ExtractUInt32(buffer);
     buffer += 4;
-    if (bTServerDataSet->DataLength > 0)
+    if (bTServerDataSet->SetDataLength > 0)
     {
-        bTServerDataSet->Data = (uint8_t *) pvPortMalloc(bTServerDataSet->DataLength);
-        memcpy(bTServerDataSet->Data, buffer, bTServerDataSet->DataLength);
-        buffer += bTServerDataSet->DataLength;
+        bTServerDataSet->SetData = (uint8_t *) pvPortMalloc(bTServerDataSet->SetDataLength);
+        memcpy(bTServerDataSet->SetData, buffer, bTServerDataSet->SetDataLength);
+        buffer += bTServerDataSet->SetDataLength;
     }
     else
     {
-        bTServerDataSet->Data = nullptr;
+        bTServerDataSet->SetData = nullptr;
     }
     return(bTServerDataSet);
 }

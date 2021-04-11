@@ -372,8 +372,8 @@ namespace Esp32Messaging
     struct BTServerDataSet
     {
         uint16_t Handle;
-        uint32_t DataLength;
-        uint8_t *Data;
+        uint32_t SetDataLength;
+        uint8_t *SetData;
     };
 
 }

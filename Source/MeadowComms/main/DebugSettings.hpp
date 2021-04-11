@@ -23,4 +23,6 @@
 #define BT_FULL_LOGGING
 #undef BT_FULL_LOGGING
 
+#define SPI_DEBUG
+
 #endif /*_MAIN_DEBUGSETTINGS_HPP_ */

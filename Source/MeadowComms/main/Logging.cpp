@@ -19,6 +19,7 @@
 
 
 #define BT_DEBUG
+//#define SPI_DEBUG
 
 #if defined(PERFORMANCE_LOGGING)
 
