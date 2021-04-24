@@ -211,7 +211,7 @@ void BluetoothRequestHandler::DispatchRequest(Message *request)
             }
             break;
     }
-    xEventGroupWaitBits(_xBtEventGroup, BT_READY_BIT, pdTRUE, pdTRUE, portMAX_DELAY);
+//    xEventGroupWaitBits(_xBtEventGroup, BT_READY_BIT, pdTRUE, pdTRUE, portMAX_DELAY);
 
 #if defined(BT_FULL_LOGGING)
     ESP_LOGI(__func__, "Exit");
