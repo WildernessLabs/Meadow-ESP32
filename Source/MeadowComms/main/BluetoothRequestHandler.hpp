@@ -33,7 +33,7 @@
 #include <vector>
 #include <string>
 
-#define BT_FULL_LOGGING
+//#define BT_FULL_LOGGING
 
 using namespace std;
 

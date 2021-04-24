@@ -18,7 +18,7 @@
 #include "SpiTransportProvider.hpp"
 
 
-#define BT_DEBUG
+//#define BT_DEBUG
 //#define SPI_DEBUG
 
 #if defined(PERFORMANCE_LOGGING)
