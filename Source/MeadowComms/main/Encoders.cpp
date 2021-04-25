@@ -3322,4 +3322,284 @@ Esp32Messaging::SetAntennaRequest *Encoders::ExtractSetAntennaRequest(uint8_t *b
     return(setAntennaRequest);
 }
 
+/**
+ *  Convert the BTStackConfig object into a byte stream that can be sent to the STM32.
+ *  
+ *  The amount of memory required can be obtained by calling the EncodedBTStackConfigBufferSize method.
+ *  
+ *  @param bTStackConfig
+ *      BTStackConfig object to be encoded.
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory large enough to hold the encoded BTStackConfig object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodeBTStackConfig
+void Encoders::EncodeBTStackConfig(Esp32Messaging::BTStackConfig *bTStackConfig, uint8_t *buffer)
+{
+    EncodeString(bTStackConfig->Config, buffer);
+}
+
+/**
+ *  Calculate the amount of memory required to hold the given instance of the BTStackConfig object.
+ *  
+ *  @param bTStackConfig
+ *      BTStackConfig object to be encoded.
+ *  
+ *  @returns
+ *      Number of bytes required to hold the encoded BTStackConfig object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodedBTStackConfigBufferSize
+int Encoders::EncodedBTStackConfigBufferSize(Esp32Messaging::BTStackConfig *bTStackConfig)
+{
+    int result = 0;
+    result += Encoders::StringLength(bTStackConfig->Config);
+    return(result + 1);
+}
+
+/**
+ *  Extract the BTStackConfig object that is encoded in the given buffer.
+ *  
+ *  Note that the returned pointer points to a block of memory on the heap and
+ *  this should eventually be released calling vPortFree(...).
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded BTStackConfig object.
+ *  
+ *  @returns
+ *      Pointer to a BTStackConfig object.
+ */
+// cppcheck-suppress unusedFunction symbolName=ExtractBTStackConfig
+Esp32Messaging::BTStackConfig *Encoders::ExtractBTStackConfig(uint8_t *buffer)
+{
+    Esp32Messaging::BTStackConfig *bTStackConfig = (Esp32Messaging::BTStackConfig *) pvPortMalloc(sizeof(Esp32Messaging::BTStackConfig));
+
+    bTStackConfig->Config = ExtractString(buffer);
+    return(bTStackConfig);
+}
+
+/**
+ *  Convert the BTDataWriteRequest object into a byte stream that can be sent to the STM32.
+ *  
+ *  The amount of memory required can be obtained by calling the EncodedBTDataWriteRequestBufferSize method.
+ *  
+ *  @param bTDataWriteRequest
+ *      BTDataWriteRequest object to be encoded.
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory large enough to hold the encoded BTDataWriteRequest object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodeBTDataWriteRequest
+void Encoders::EncodeBTDataWriteRequest(Esp32Messaging::BTDataWriteRequest *bTDataWriteRequest, uint8_t *buffer)
+{
+    EncodeUInt16(bTDataWriteRequest->Handle, buffer);
+    buffer += 2;
+    EncodeUInt32(bTDataWriteRequest->DataLength, buffer);
+    buffer += 4;
+    if (bTDataWriteRequest->DataLength > 0)
+    {
+        memcpy((void *) buffer, (void *) bTDataWriteRequest->Data, bTDataWriteRequest->DataLength);
+    }
+}
+
+/**
+ *  Calculate the amount of memory required to hold the given instance of the BTDataWriteRequest object.
+ *  
+ *  @param bTDataWriteRequest
+ *      BTDataWriteRequest object to be encoded.
+ *  
+ *  @returns
+ *      Number of bytes required to hold the encoded BTDataWriteRequest object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodedBTDataWriteRequestBufferSize
+int Encoders::EncodedBTDataWriteRequestBufferSize(Esp32Messaging::BTDataWriteRequest *bTDataWriteRequest)
+{
+    int result = 0;
+    result += bTDataWriteRequest->DataLength;
+    return(result + 6);
+}
+
+/**
+ *  Extract the BTDataWriteRequest object that is encoded in the given buffer.
+ *  
+ *  Note that the returned pointer points to a block of memory on the heap and
+ *  this should eventually be released calling vPortFree(...).
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded BTDataWriteRequest object.
+ *  
+ *  @returns
+ *      Pointer to a BTDataWriteRequest object.
+ */
+// cppcheck-suppress unusedFunction symbolName=ExtractBTDataWriteRequest
+Esp32Messaging::BTDataWriteRequest *Encoders::ExtractBTDataWriteRequest(uint8_t *buffer)
+{
+    Esp32Messaging::BTDataWriteRequest *bTDataWriteRequest = (Esp32Messaging::BTDataWriteRequest *) pvPortMalloc(sizeof(Esp32Messaging::BTDataWriteRequest));
+
+    bTDataWriteRequest->Handle = ExtractUInt16(buffer);
+    buffer += 2;
+    bTDataWriteRequest->DataLength = ExtractUInt32(buffer);
+    buffer += 4;
+    if (bTDataWriteRequest->DataLength > 0)
+    {
+        bTDataWriteRequest->Data = (uint8_t *) pvPortMalloc(bTDataWriteRequest->DataLength);
+        memcpy(bTDataWriteRequest->Data, buffer, bTDataWriteRequest->DataLength);
+        buffer += bTDataWriteRequest->DataLength;
+    }
+    else
+    {
+        bTDataWriteRequest->Data = nullptr;
+    }
+    return(bTDataWriteRequest);
+}
+
+/**
+ *  Convert the BTGetHandlesResponse object into a byte stream that can be sent to the STM32.
+ *  
+ *  The amount of memory required can be obtained by calling the EncodedBTGetHandlesResponseBufferSize method.
+ *  
+ *  @param bTGetHandlesResponse
+ *      BTGetHandlesResponse object to be encoded.
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory large enough to hold the encoded BTGetHandlesResponse object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodeBTGetHandlesResponse
+void Encoders::EncodeBTGetHandlesResponse(Esp32Messaging::BTGetHandlesResponse *bTGetHandlesResponse, uint8_t *buffer)
+{
+    EncodeUInt16(bTGetHandlesResponse->HandleCount, buffer);
+    buffer += 2;
+    EncodeUInt32(bTGetHandlesResponse->HandlesLength, buffer);
+    buffer += 4;
+    if (bTGetHandlesResponse->HandlesLength > 0)
+    {
+        memcpy((void *) buffer, (void *) bTGetHandlesResponse->Handles, bTGetHandlesResponse->HandlesLength);
+    }
+}
+
+/**
+ *  Calculate the amount of memory required to hold the given instance of the BTGetHandlesResponse object.
+ *  
+ *  @param bTGetHandlesResponse
+ *      BTGetHandlesResponse object to be encoded.
+ *  
+ *  @returns
+ *      Number of bytes required to hold the encoded BTGetHandlesResponse object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodedBTGetHandlesResponseBufferSize
+int Encoders::EncodedBTGetHandlesResponseBufferSize(Esp32Messaging::BTGetHandlesResponse *bTGetHandlesResponse)
+{
+    int result = 0;
+    result += bTGetHandlesResponse->HandlesLength;
+    return(result + 6);
+}
+
+/**
+ *  Extract the BTGetHandlesResponse object that is encoded in the given buffer.
+ *  
+ *  Note that the returned pointer points to a block of memory on the heap and
+ *  this should eventually be released calling vPortFree(...).
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded BTGetHandlesResponse object.
+ *  
+ *  @returns
+ *      Pointer to a BTGetHandlesResponse object.
+ */
+// cppcheck-suppress unusedFunction symbolName=ExtractBTGetHandlesResponse
+Esp32Messaging::BTGetHandlesResponse *Encoders::ExtractBTGetHandlesResponse(uint8_t *buffer)
+{
+    Esp32Messaging::BTGetHandlesResponse *bTGetHandlesResponse = (Esp32Messaging::BTGetHandlesResponse *) pvPortMalloc(sizeof(Esp32Messaging::BTGetHandlesResponse));
+
+    bTGetHandlesResponse->HandleCount = ExtractUInt16(buffer);
+    buffer += 2;
+    bTGetHandlesResponse->HandlesLength = ExtractUInt32(buffer);
+    buffer += 4;
+    if (bTGetHandlesResponse->HandlesLength > 0)
+    {
+        bTGetHandlesResponse->Handles = (uint8_t *) pvPortMalloc(bTGetHandlesResponse->HandlesLength);
+        memcpy(bTGetHandlesResponse->Handles, buffer, bTGetHandlesResponse->HandlesLength);
+        buffer += bTGetHandlesResponse->HandlesLength;
+    }
+    else
+    {
+        bTGetHandlesResponse->Handles = nullptr;
+    }
+    return(bTGetHandlesResponse);
+}
+
+/**
+ *  Convert the BTServerDataSet object into a byte stream that can be sent to the STM32.
+ *  
+ *  The amount of memory required can be obtained by calling the EncodedBTServerDataSetBufferSize method.
+ *  
+ *  @param bTServerDataSet
+ *      BTServerDataSet object to be encoded.
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory large enough to hold the encoded BTServerDataSet object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodeBTServerDataSet
+void Encoders::EncodeBTServerDataSet(Esp32Messaging::BTServerDataSet *bTServerDataSet, uint8_t *buffer)
+{
+    EncodeUInt16(bTServerDataSet->Handle, buffer);
+    buffer += 2;
+    EncodeUInt32(bTServerDataSet->SetDataLength, buffer);
+    buffer += 4;
+    if (bTServerDataSet->SetDataLength > 0)
+    {
+        memcpy((void *) buffer, (void *) bTServerDataSet->SetData, bTServerDataSet->SetDataLength);
+    }
+}
+
+/**
+ *  Calculate the amount of memory required to hold the given instance of the BTServerDataSet object.
+ *  
+ *  @param bTServerDataSet
+ *      BTServerDataSet object to be encoded.
+ *  
+ *  @returns
+ *      Number of bytes required to hold the encoded BTServerDataSet object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodedBTServerDataSetBufferSize
+int Encoders::EncodedBTServerDataSetBufferSize(Esp32Messaging::BTServerDataSet *bTServerDataSet)
+{
+    int result = 0;
+    result += bTServerDataSet->SetDataLength;
+    return(result + 6);
+}
+
+/**
+ *  Extract the BTServerDataSet object that is encoded in the given buffer.
+ *  
+ *  Note that the returned pointer points to a block of memory on the heap and
+ *  this should eventually be released calling vPortFree(...).
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded BTServerDataSet object.
+ *  
+ *  @returns
+ *      Pointer to a BTServerDataSet object.
+ */
+// cppcheck-suppress unusedFunction symbolName=ExtractBTServerDataSet
+Esp32Messaging::BTServerDataSet *Encoders::ExtractBTServerDataSet(uint8_t *buffer)
+{
+    Esp32Messaging::BTServerDataSet *bTServerDataSet = (Esp32Messaging::BTServerDataSet *) pvPortMalloc(sizeof(Esp32Messaging::BTServerDataSet));
+
+    bTServerDataSet->Handle = ExtractUInt16(buffer);
+    buffer += 2;
+    bTServerDataSet->SetDataLength = ExtractUInt32(buffer);
+    buffer += 4;
+    if (bTServerDataSet->SetDataLength > 0)
+    {
+        bTServerDataSet->SetData = (uint8_t *) pvPortMalloc(bTServerDataSet->SetDataLength);
+        memcpy(bTServerDataSet->SetData, buffer, bTServerDataSet->SetDataLength);
+        buffer += bTServerDataSet->SetDataLength;
+    }
+    else
+    {
+        bTServerDataSet->SetData = nullptr;
+    }
+    return(bTServerDataSet);
+}
+
 

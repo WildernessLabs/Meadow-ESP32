@@ -18,6 +18,9 @@
 #include "SpiTransportProvider.hpp"
 
 
+//#define BT_DEBUG
+//#define SPI_DEBUG
+
 #if defined(PERFORMANCE_LOGGING)
 
 #warning "Performance logging is enabled."
@@ -106,7 +109,7 @@ void Logging::Setup()
 {
     esp_log_level_set("*", ESP_LOG_NONE);
 
-#if defined(DEBUG) || defined(WIFI_DEBUG) || defined(SPI_DEBUG) || defined(THREAD_DEBUG) || defined(SYSTEM_DEBUG)
+#if defined(DEBUG) || defined(WIFI_DEBUG) || defined(SPI_DEBUG) || defined(THREAD_DEBUG) || defined(SYSTEM_DEBUG) || defined(BT_DEBUG)
     #warning "Debug is enabled."
     esp_log_level_set("AppMain", ESP_LOG_INFO);
 #endif
@@ -136,7 +139,7 @@ void Logging::Setup()
 
 #if defined(BT_DEBUG)
     #warning "Bluetooth debugging is enabled."
-    esp_log_level_set(Thread::COMPONENT_NAME, ESP_LOG_INFO);
+    esp_log_level_set(BluetoothRequestHandler::COMPONENT_NAME, ESP_LOG_INFO);
 #endif
 
 #if defined(SYSTEM_DEBUG)
@@ -415,11 +418,11 @@ char *Logging::BluetoothFunctionName(uint32_t function)
 {
     switch (function)
     {
-        case BluetoothFunction::GetConfiguration:
-            return((char *) "GetConfiguration");
+        case BluetoothFunction::Start:
+            return((char *) "Start");
             break;
-        case BluetoothFunction::SetConfiguration:
-            return((char *) "SetConfiguration");
+        case BluetoothFunction::Stop:
+            return((char *) "Stop");
             break;
         default:
             return((char *) "Unknown");

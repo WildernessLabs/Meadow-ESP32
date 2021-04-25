@@ -49,3 +49,7 @@ The `SharedEnums.*` files cater for the consistent use of application defined va
 ## [Hints and Tips](Documentation/HintsAndTips.md)
 
 A number of hints and tips for development and debugging have been recorded over time in order to assist new development.
+
+## Getting Started - Developer Edition
+
+If you're just getting started developing for the ESP32, [start with this page](Documentation/DeveloperGettingStarted.md)

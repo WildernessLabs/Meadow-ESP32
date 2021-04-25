@@ -30,6 +30,8 @@ static heap_trace_record_t trace_records[NUM_RECORDS];
 
 #define APP_MAIN_COMPONENT_NAME "AppMain"
 
+void TestBluetoothMessage(MessageDispatcher *dispatcher);
+
 /*
  *      Main program loop for the ESP32 as specified by the FreeRTOS documentation.
  */
@@ -64,6 +66,8 @@ extern "C" void app_main()
 
     SystemRequestHandler::SendConfigurationAsInterruptMessage();
 
+//    TestBluetoothMessage(messageDispatcher);
+
 //     Message message = {};
 //     message.MessageType = MessageTypes::Header;
 //     message.Interface = Esp32Interfaces::WiFi;
@@ -86,4 +90,81 @@ extern "C" void app_main()
     {
         vTaskDelay(500 / portTICK_PERIOD_MS);
     }
+}
+
+const char* json_test = R"(
+{
+    "deviceName":"MY MEADOW",
+    "services": [
+        {
+            "name": "Service A",
+            "uuid": 254,
+            "characteristics": [
+                {
+                    "uuid": "017e99d6-8a61-11eb-8dcd-0242ac130003",
+                    "permission": 17,
+                    "props": 10,
+                    "len": 4
+                },
+                {
+                    "uuid": 10755,
+                    "permission": 2,
+                    "props": 16,
+                    "len": 4
+                }
+            ]
+        }
+    ]
+})";
+
+const char* json_test2 = R"(
+{
+    "deviceName":"MY MEADOW",
+    "services": [
+        {
+            "name": "Service A",
+            "uuid": 254,
+            "characteristics": [
+                {
+                    "uuid": "017e99d6-8a61-11eb-8dcd-0242ac130003",
+                    "permission": 17,
+                    "props": 10,
+                    "len": 4,
+                    "descriptors": [
+                        {
+                        "uuid": 10498,
+                        "permission": 1,
+                        "len": 2,
+                        "value": 0
+                        }
+                    ]
+                },
+                {
+                    "uuid": 10755,
+                    "permission": 2,
+                    "props": 16,
+                    "len": 4
+                }
+            ]
+        }
+    ]
+})";
+
+void TestBluetoothMessage(MessageDispatcher *dispatcher)
+{
+    // for now we'll use one message that starts and sets up everything.  
+    // We'll need to separate this and actually have data going in, but this is a baby step toward that
+    
+    Esp32Messaging::BTStackConfig stackConfig;
+    stackConfig.Config = (char*)json_test;
+
+    Message startMessage = {};
+    startMessage.MessageType = MessageTypes::Header;
+    startMessage.Interface = Esp32Interfaces::BlueTooth;
+    startMessage.Function = BluetoothFunction::Start;
+    startMessage.PayloadLength = Encoders::EncodedBTStackConfigBufferSize(&stackConfig);
+    startMessage.Payload = (uint8_t *) pvPortMalloc(startMessage.PayloadLength);
+    Encoders::EncodeBTStackConfig(&stackConfig, startMessage.Payload);
+    dispatcher->QueueMessageForEsp32(&startMessage);
+
 }
