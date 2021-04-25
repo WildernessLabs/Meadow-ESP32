@@ -350,6 +350,32 @@ namespace Esp32Messaging
         uint8_t Persist;
     };
 
+    struct BTStackConfig
+    {
+        char * Config;
+    };
+
+    struct BTDataWriteRequest
+    {
+        uint16_t Handle;
+        uint32_t DataLength;
+        uint8_t *Data;
+    };
+
+    struct BTGetHandlesResponse
+    {
+        uint16_t HandleCount;
+        uint32_t HandlesLength;
+        uint8_t *Handles;
+    };
+
+    struct BTServerDataSet
+    {
+        uint16_t Handle;
+        uint32_t SetDataLength;
+        uint8_t *SetData;
+    };
+
 }
 
 /*
@@ -502,6 +528,18 @@ public:
     static void EncodeSetAntennaRequest(Esp32Messaging::SetAntennaRequest *, uint8_t *);
     static int EncodedSetAntennaRequestBufferSize(Esp32Messaging::SetAntennaRequest *);
     static Esp32Messaging::SetAntennaRequest *ExtractSetAntennaRequest(uint8_t *);
+    static void EncodeBTStackConfig(Esp32Messaging::BTStackConfig *, uint8_t *);
+    static int EncodedBTStackConfigBufferSize(Esp32Messaging::BTStackConfig *);
+    static Esp32Messaging::BTStackConfig *ExtractBTStackConfig(uint8_t *);
+    static void EncodeBTDataWriteRequest(Esp32Messaging::BTDataWriteRequest *, uint8_t *);
+    static int EncodedBTDataWriteRequestBufferSize(Esp32Messaging::BTDataWriteRequest *);
+    static Esp32Messaging::BTDataWriteRequest *ExtractBTDataWriteRequest(uint8_t *);
+    static void EncodeBTGetHandlesResponse(Esp32Messaging::BTGetHandlesResponse *, uint8_t *);
+    static int EncodedBTGetHandlesResponseBufferSize(Esp32Messaging::BTGetHandlesResponse *);
+    static Esp32Messaging::BTGetHandlesResponse *ExtractBTGetHandlesResponse(uint8_t *);
+    static void EncodeBTServerDataSet(Esp32Messaging::BTServerDataSet *, uint8_t *);
+    static int EncodedBTServerDataSetBufferSize(Esp32Messaging::BTServerDataSet *);
+    static Esp32Messaging::BTServerDataSet *ExtractBTServerDataSet(uint8_t *);
 
 };
 

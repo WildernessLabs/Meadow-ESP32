@@ -381,6 +381,37 @@
                 { "Name": "Antenna", "DataType": "byte" },
                 { "Name": "Persist", "DataType": "byte" }
             ]
+        },
+        {
+            "Name": "BTStackConfig",
+            "MessageElements":
+            [
+                { "Name": "Config", "DataType": "string" }
+            ]
+        },
+        {
+            "Name": "BTDataWriteRequest",
+            "MessageElements":
+            [
+                { "Name": "Handle", "DataType": "uint16" },
+                { "Name": "Data", "DataType": "blob" }
+            ]
+        },
+        {
+            "Name": "BTGetHandlesResponse",
+            "MessageElements":
+            [
+                { "Name": "HandleCount", "DataType": "uint16" },
+                { "Name": "Handles", "DataType": "blob" }
+            ]
+        },
+        {
+            "Name": "BTServerDataSet",
+            "MessageElements":
+            [
+                { "Name": "Handle", "DataType": "uint16" },
+                { "Name": "SetData", "DataType": "blob" }
+            ]
         }
     ]
 }
