@@ -24,7 +24,6 @@
 
 #include "RequestHandlerBase.hpp"
 #include "Esp32Messaging.hpp"
-#include "BluetoothConfig.hpp"
 #include "Encoders.hpp"
 #include "MessageDispatcher.hpp"
 
