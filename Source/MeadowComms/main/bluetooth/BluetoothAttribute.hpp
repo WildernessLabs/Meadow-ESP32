@@ -3,6 +3,10 @@
 
 #include "bt_compat.hpp"
 
+#define LOG_COMPONENT_NAME "BTTask"
+
+//const char *BluetoothAttribute::COMPONENT_NAME = "BTTask";
+
 enum class CharacteristicProperty : unsigned char {
     Broadcast = 1 << 0,
     Read = 1 << 1,
@@ -37,7 +41,7 @@ inline CharacteristicPermission operator|(CharacteristicPermission a, Characteri
 }
 
 class BluetoothAttribute
-{
+{    
     public:
         CharacteristicPermission Permission;
         uint16_t Handle;

@@ -1,4 +1,5 @@
 #include "BluetoothServiceCollection.hpp"
+#include "esp_log.h"
 
 BluetoothService& BluetoothServiceCollection::Add(BluetoothService *service)
 {
@@ -9,14 +10,13 @@ BluetoothService& BluetoothServiceCollection::Add(BluetoothService *service)
         auto svc = (BluetoothService*)*it;
 
         if(svc->Uuid == service->Uuid) {
-            printf("Already exists.  Skipping\n");
+            ESP_LOGI(LOG_COMPONENT_NAME, "Already exists.  Skipping\n");
             exists = true;
             break;
         }
     }
 
     if(!exists) {
-        //printf("Adding service...\n");
         _services.push_back(service);
         service->SetHandleManager(this->_handleManager);
         _handleManager->Assign(service);
@@ -30,7 +30,7 @@ BluetoothService& BluetoothServiceCollection::Add(BluetoothService *service)
         }
     }
 
-    printf("%i services known\n", (int)_services.size());
+    ESP_LOGI(LOG_COMPONENT_NAME, "%i services known\n", (int)_services.size());
 
     return *service;
 }
@@ -67,14 +67,11 @@ BluetoothService* BluetoothServiceCollection::Find(uint8_t *uuid)
 
 BluetoothService* BluetoothServiceCollection::Find(Uuid16 uuid)
 {
-    // do we already know about this service?  If so, ignore 
-    bool exists = false;
-
     for (auto it = _services.begin() ; it != _services.end(); ++it) {
         auto svc = (BluetoothService*)*it;
 
         if(svc->Uuid == uuid) {
-            printf("Found service with matching UUID\n");
+            ESP_LOGI(LOG_COMPONENT_NAME, "Found service with matching UUID\n");
             return svc;
         }
     }
