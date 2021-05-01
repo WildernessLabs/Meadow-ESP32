@@ -1,4 +1,5 @@
 #include "BluetoothService.hpp"
+#include "esp_log.h"
 
 BluetoothService::BluetoothService()
 {
@@ -58,7 +59,7 @@ BluetoothCharacteristic& BluetoothService::AddCharacteristic(BluetoothCharacteri
         }
     }
 
-    printf("%i characteristics known\n", (int)_characteristics.size());
+    ESP_LOGI(LOG_COMPONENT_NAME, "%i characteristics known\n", (int)_characteristics.size());
 
     return *characteristic;
 }
