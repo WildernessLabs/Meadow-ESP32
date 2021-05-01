@@ -184,12 +184,14 @@ void BluetoothRequestHandler::DispatchRequest(Message *request)
         case BluetoothFunction::ServerDataSet:
             {
                 Esp32Messaging::BTServerDataSet *ds = Encoders::ExtractBTServerDataSet(request->Payload);
+                vPortFree(request->Payload);
+                request->Payload = NULL; // we're re-using the message.  We free this, but we *must* null it, else the receiver when we send back will try to free it again
 
                 ESP_LOGI(COMPONENT_NAME, "Server wrote %i bytes to 0x%04x", ds->SetDataLength, ds->Handle);
 
                 // update the local 
                 _manager.SetCurrentValueForAttributeHandle(ds->Handle, ds->SetData, ds->SetDataLength);
-
+                
                 request->PayloadLength = 0;
                 request->MessageType = MessageTypes::Response;
                 request->StatusCode = StatusCodes::CompletedOk;
@@ -453,6 +455,8 @@ void BluetoothRequestHandler::CreateAttributeGraph(Message *msg)
     ESP_LOGI(COMPONENT_NAME, "CreateAttributeGraph. payload len = %i", msg->PayloadLength);
 
     Esp32Messaging::BTStackConfig *config = Encoders::ExtractBTStackConfig(msg->Payload);
+    vPortFree(msg->Payload);    
+    msg->Payload = NULL;
 
     _manager.BuildGraphFromJson(config->Config);
 
