@@ -350,6 +350,9 @@ char *Logging::WiFiFunctionName(uint32_t function)
         case WiFiFunction::GetSockName:
             return((char *) "GetSockName");
             break;
+        case WiFiFunction::GetPeerName:
+            return((char *) "GetPeerName");
+            break;
         case WiFiFunction::SetTimeOfDayEvent:
             return((char *) "SetTimeOfDayEvent");
             break;
