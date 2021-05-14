@@ -348,14 +348,14 @@
             ]
         },
         {
-            "Name": "GetSockNameRequest",
+            "Name": "GetSockPeerNameRequest",
             "MessageElements":
             [
                 { "Name": "SocketHandle", "DataType": "int" }
             ]
         },
         {
-            "Name": "GetSockNameResponse",
+            "Name": "GetSockPeerNameResponse",
             "MessageElements":
             [
                 { "Name": "Addr", "DataType": "blob" },
