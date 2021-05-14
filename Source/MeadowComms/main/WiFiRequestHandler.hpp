@@ -659,9 +659,19 @@ private:
     static void Ioctl(void *vpMessage);
 
     /**
+     *  @brief Provide a mechanism to call the getsockname or getpeername.
+     */
+    static void GetSockPeerName(void *vpMessage, WiFiFunction::WiFiFunction request);
+
+    /**
      *  @brief Provide a mechanism for the STM32 to call the simulated getsockname method.
      */
     static void GetSockName(void *vpMessage);
+
+    /**
+     *  @brief Provide a mechanism for the STM32 to call the simulated getpeername method.
+     */
+    static void GetPeerName(void *vpMessage);
 
     /**
      *  @brief Method called when the time server has supplied updated time information.

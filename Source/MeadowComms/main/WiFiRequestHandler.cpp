@@ -1156,6 +1156,10 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
             _threadPool->Execute(GetSockName, (void *) request);
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
             break;
+        case WiFiFunction::GetPeerName:
+            _threadPool->Execute(GetPeerName, (void *) request);
+            xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
+            break;
         default:
             ESP_LOGI(COMPONENT_NAME, "DispatchRequest: Unknown WiFi message received, function %d", request->Function);
             if ((request->Payload != NULL) && (request->PayloadLength > 0))
@@ -2585,20 +2589,30 @@ void WiFiRequestHandler::Ioctl(void *vpMessage)
  *
  *  @param message
  *      Message structure containing the parameters for the getsockname method.
+ * 
+ *  @param methodToCall
+ *      Which method should be called, getsockname or getpeername?
  */
-void WiFiRequestHandler::GetSockName(void *vpMessage)
+void WiFiRequestHandler::GetSockPeerName(void *vpMessage, WiFiFunction::WiFiFunction methodToCall)
 {
-    ESP_LOGI(COMPONENT_NAME, "GetSockName: Enter");
+    ESP_LOGI(COMPONENT_NAME, "GetSockPeerName: Enter");
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
-    Esp32Messaging::GetSockNameRequest *request = Encoders::ExtractGetSockNameRequest(message->Payload);
+    Esp32Messaging::GetSockPeerNameRequest *request = Encoders::ExtractGetSockPeerNameRequest(message->Payload);
     free(message->Payload);
-    Esp32Messaging::GetSockNameResponse response;
+    Esp32Messaging::GetSockPeerNameResponse response;
 
     struct sockaddr sa = {};
     socklen_t saLen = sizeof(sa);
-    response.Result = getsockname(request->SocketHandle, &sa, &saLen);
+    if (methodToCall == WiFiFunction::GetSockName)
+    {
+        response.Result = getsockname(request->SocketHandle, &sa, &saLen);
+    }
+    else
+    {
+        response.Result = getpeername(request->SocketHandle, &sa, &saLen);
+    }
     if (response.Result == 0)
     {
         Esp32Messaging::SockAddr *sockAddr = static_cast<Esp32Messaging::SockAddr *>(pvPortMalloc(sizeof(Esp32Messaging::SockAddr)));
@@ -2614,10 +2628,10 @@ void WiFiRequestHandler::GetSockName(void *vpMessage)
         Encoders::EncodeSockAddr(sockAddr, response.Addr);
         vPortFree(sockAddr);
         response.ResponseErrno = 0;
-        ESP_LOGI(COMPONENT_NAME, "GetSockName: Socket handle: %d", response.Result);
-        ESP_LOGI(COMPONENT_NAME, "GetSockName: Family: %d", sin->sin_family);
-        ESP_LOGI(COMPONENT_NAME, "GetSockName: IP address: %s", inet_ntoa(sin->sin_addr));
-        ESP_LOGI(COMPONENT_NAME, "GetSockName: Port: %d", ntohs(sin->sin_port));
+        ESP_LOGI(COMPONENT_NAME, "GetSockPeerName: Socket handle: %d", response.Result);
+        ESP_LOGI(COMPONENT_NAME, "GetSockPeerName: Family: %d", sin->sin_family);
+        ESP_LOGI(COMPONENT_NAME, "GetSockPeerName: IP address: %s", inet_ntoa(sin->sin_addr));
+        ESP_LOGI(COMPONENT_NAME, "GetSockPeerName: Port: %d", ntohs(sin->sin_port));
     }
     else
     {
@@ -2633,16 +2647,42 @@ void WiFiRequestHandler::GetSockName(void *vpMessage)
     }
     vPortFree(request);
 
-    message->PayloadLength = Encoders::EncodedGetSockNameResponseBufferSize(&response);
+    message->PayloadLength = Encoders::EncodedGetSockPeerNameResponseBufferSize(&response);
     message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-    Encoders::EncodeGetSockNameResponse(&response, message->Payload);
+    Encoders::EncodeGetSockPeerNameResponse(&response, message->Payload);
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
 
     PERFORMANCE_LOGGING_EXIT();
     PERFORMANCE_LOGGING_ADD_ENTRY();
+    ESP_LOGI(COMPONENT_NAME, "GetSockPeerName: Exit");
+}
+
+/**
+ *  @brief Expose the POSIX getsockname method to the STM32.
+ *
+ *  @param message
+ *      Message structure containing the parameters for the getsockname method.
+ */
+void WiFiRequestHandler::GetSockName(void *vpMessage)
+{
+    ESP_LOGI(COMPONENT_NAME, "GetSockName: Enter");
+    GetSockPeerName(vpMessage, WiFiFunction::GetSockName);
     ESP_LOGI(COMPONENT_NAME, "GetSockName: Exit");
+}
+
+/**
+ *  @brief Expose the POSIX getpeername method to the STM32.
+ *
+ *  @param message
+ *      Message structure containing the parameters for the getpeername method.
+ */
+void WiFiRequestHandler::GetPeerName(void *vpMessage)
+{
+    ESP_LOGI(COMPONENT_NAME, "GetPeerName: Enter");
+    GetSockPeerName(vpMessage, WiFiFunction::GetPeerName);
+    ESP_LOGI(COMPONENT_NAME, "GetPeerName: Exit");
 }
 
 /**

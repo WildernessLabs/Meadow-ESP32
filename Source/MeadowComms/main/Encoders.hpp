@@ -322,12 +322,12 @@ namespace Esp32Messaging
         int32_t Flags;
     };
 
-    struct GetSockNameRequest
+    struct GetSockPeerNameRequest
     {
         int32_t SocketHandle;
     };
 
-    struct GetSockNameResponse
+    struct GetSockPeerNameResponse
     {
         uint32_t AddrLength;
         uint8_t *Addr;
@@ -516,12 +516,12 @@ public:
     static void EncodeIoctlResponse(Esp32Messaging::IoctlResponse *, uint8_t *);
     static int EncodedIoctlResponseBufferSize(Esp32Messaging::IoctlResponse *);
     static Esp32Messaging::IoctlResponse *ExtractIoctlResponse(uint8_t *);
-    static void EncodeGetSockNameRequest(Esp32Messaging::GetSockNameRequest *, uint8_t *);
-    static int EncodedGetSockNameRequestBufferSize(Esp32Messaging::GetSockNameRequest *);
-    static Esp32Messaging::GetSockNameRequest *ExtractGetSockNameRequest(uint8_t *);
-    static void EncodeGetSockNameResponse(Esp32Messaging::GetSockNameResponse *, uint8_t *);
-    static int EncodedGetSockNameResponseBufferSize(Esp32Messaging::GetSockNameResponse *);
-    static Esp32Messaging::GetSockNameResponse *ExtractGetSockNameResponse(uint8_t *);
+    static void EncodeGetSockPeerNameRequest(Esp32Messaging::GetSockPeerNameRequest *, uint8_t *);
+    static int EncodedGetSockPeerNameRequestBufferSize(Esp32Messaging::GetSockPeerNameRequest *);
+    static Esp32Messaging::GetSockPeerNameRequest *ExtractGetSockPeerNameRequest(uint8_t *);
+    static void EncodeGetSockPeerNameResponse(Esp32Messaging::GetSockPeerNameResponse *, uint8_t *);
+    static int EncodedGetSockPeerNameResponseBufferSize(Esp32Messaging::GetSockPeerNameResponse *);
+    static Esp32Messaging::GetSockPeerNameResponse *ExtractGetSockPeerNameResponse(uint8_t *);
     static void EncodeEventData(Esp32Messaging::EventData *, uint8_t *);
     static int EncodedEventDataBufferSize(Esp32Messaging::EventData *);
     static Esp32Messaging::EventData *ExtractEventData(uint8_t *);
