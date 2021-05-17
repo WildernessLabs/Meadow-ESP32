@@ -1716,16 +1716,30 @@ void WiFiRequestHandler::Socket(void *vpMessage)
     Esp32Messaging::SocketRequest *request = Encoders::ExtractSocketRequest(message->Payload);
     ESP_LOGI(COMPONENT_NAME, "Socket: Creating socket on domain %d, type %d and protocol %d", request->Domain, request->Type, request->Protocol);
 
-    Esp32Messaging::IntegerResponse response;
+    Esp32Messaging::IntegerAndErrnoResponse response;
     response.Result = socket(request->Domain, request->Type, request->Protocol);
-    ESP_LOGI(COMPONENT_NAME, "Socket: Created socket %d", response.Result);
+    if (response.Result < 0)
+    {
+        int32_t result = 0;
+        ESP_LOGI(COMPONENT_NAME, "Socket: Error code: %d - %s", errno, strerror(errno));
+        if (Mapping::GetStmValue(Mapping::Errno, errno, &result) != 0)
+        {
+            Mapping::GetStmValue(Mapping::Errno, EFAULT, &result);
+        }
+        response.ResponseErrno = result;
+    }
+    else
+    {
+        ESP_LOGI(COMPONENT_NAME, "Socket: Created socket %d", response.Result);
+        response.ResponseErrno = 0;
+    }
 
     vPortFree(request);
     vPortFree(message->Payload);
 
-    message->PayloadLength = Encoders::EncodedIntegerResponseBufferSize(&response);
+    message->PayloadLength = Encoders::EncodedIntegerAndErrnoResponseBufferSize(&response);
     message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-    Encoders::EncodeIntegerResponse(&response, message->Payload);
+    Encoders::EncodeIntegerAndErrnoResponse(&response, message->Payload);
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
