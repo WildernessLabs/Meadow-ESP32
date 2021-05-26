@@ -11,6 +11,7 @@ using Meadow.Devices;
 using Meadow.Foundation.Sensors.Atmospheric;
 using Meadow.Gateway.WiFi;
 
+
 namespace MeadowApp
 {
     public class Bme280AdafruitIODataLogger : App<F7Micro, Bme280AdafruitIODataLogger>
@@ -21,12 +22,12 @@ namespace MeadowApp
         public Bme280AdafruitIODataLogger()
         {
             Log("Starting watchdog.");
-            //MeadowOS.WatchdogEnable(20000);
+            MeadowOS.WatchdogEnable(20000);
             //StartWatchdogThread(15000);
 
             Log("Connecting to network.");
             Device.InitWiFiAdapter().Wait();
-            if (Device.WiFiAdapter.Connect(Secrets.WIFI_NAME, Secrets.WIFI_PASSWORD).ConnectionStatus != ConnectionStatus.Success)
+            if (Device.WiFiAdapter.Connect(Secrets.WIFI_NAME, Secrets.WIFI_PASSWORD).Result.ConnectionStatus != ConnectionStatus.Success)
             {
                 throw new Exception("Cannot connect to network, application halted.");
             }
@@ -61,7 +62,7 @@ namespace MeadowApp
             byte[] bytes = new byte[2048];
             Bme280 bme280;
 
-            //MeadowOS.WatchdogReset();
+            MeadowOS.WatchdogReset();
             var i2c = Device.CreateI2cBus();
             bme280 = new Bme280(i2c, Bme280.I2cAddress.Adddress0x77);
             bme280.StartUpdating();
@@ -108,12 +109,12 @@ namespace MeadowApp
             //
             while (true)
             {
-                //MeadowOS.WatchdogReset();
+                MeadowOS.WatchdogReset();
                 dataSetCount++;
                 Log($"Logging dataset {dataSetCount}");
                 Log("Sending temperature data.");
                 temperatureData.Append("{\"value\":\"");
-                temperatureData.AppendFormat("{0:F2}", bme280.Temperature - 2.0F);
+                temperatureData.AppendFormat("{0:F2}", bme280.Temperature.Value.Celsius - 2.0F);
                 temperatureData.Append("\"}");
                 data.Append(temperaturePreamble);
                 data.AppendFormat("Content-Length: {0}\r\n", temperatureData.Length);
@@ -128,7 +129,7 @@ namespace MeadowApp
                 //
                 Log("Sending humidity data.");
                 humidityData.Append("{\"value\":\"");
-                humidityData.AppendFormat("{0:F2}", bme280.Humidity);
+                humidityData.AppendFormat("{0:F2}", bme280.Humidity.Value.Percent);
                 humidityData.Append("\"}");
                 data.Append(humidityPreamble);
                 data.AppendFormat("Content-Length: {0}\r\n", humidityData.Length);
@@ -143,7 +144,7 @@ namespace MeadowApp
                 //
                 Log("Sending air pressure data.");
                 pressureData.Append("{\"value\":\"");
-                pressureData.AppendFormat("{0:F0}", bme280.Pressure);
+                pressureData.AppendFormat("{0:F0}", bme280.Pressure.Value.Hectopascal);
                 pressureData.Append("\"}");
                 data.Append(presurePreamble);
                 data.AppendFormat("Content-Length: {0}\r\n", pressureData.Length);
@@ -154,11 +155,11 @@ namespace MeadowApp
                 data.Clear();
                 pressureData.Clear();
 
-                Thread.Sleep(10000);
+                Thread.Sleep(6000);
 
                 #endregion
 
-                Log($"Memory available: {GC.GetTotalMemory(false)}");
+                Log($"Memory consumed: {GC.GetTotalMemory(false)}");
             }
         }
     }
