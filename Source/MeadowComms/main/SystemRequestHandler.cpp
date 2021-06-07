@@ -600,6 +600,7 @@ void SystemRequestHandler::GetBatteryChargeLevel(Message *message)
     //  exceeds the tolerance of the ADC pins on the ESP32.
     //
     response.Result = 2 * esp_adc_cal_raw_to_voltage(adc_reading, adc_chars);
+    free(adc_chars);
 
     message->PayloadLength = Encoders::EncodedIntegerResponseBufferSize(&response);
     message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
