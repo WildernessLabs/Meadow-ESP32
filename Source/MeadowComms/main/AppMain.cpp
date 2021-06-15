@@ -83,6 +83,30 @@ extern "C" void app_main()
 
 //     messageDispatcher->QueueMessageForEsp32(&message);
 
+#if defined(HEAP_SIZE)
+
+    printf("Constraining heap to %d bytes", HEAP_SIZE * 1024);
+    size_t heap_free = heap_caps_get_free_size(MALLOC_CAP_8BIT);
+    uint8_t *memory_to_hold = NULL;
+    printf("Heap free before initialisation: %d\n", heap_free);
+    if (heap_free > HEAP_SIZE)
+    {
+        size_t amount_to_consume = heap_free - (HEAP_SIZE * 1024);
+        if (amount_to_consume > 0)
+        {
+            printf("Allocating %d bytes\n", amount_to_consume);
+            memory_to_hold = (uint8_t *) malloc(amount_to_consume);
+            if (memory_to_hold == NULL)
+            {
+                printf("Memory allocation failed.\n");
+            }
+        }
+    }
+    heap_free = heap_caps_get_free_size(MALLOC_CAP_8BIT);
+    printf("Heap free after initialisation: %d\n", heap_free);
+
+#endif
+
     //
     //  Main program loop.
     //
