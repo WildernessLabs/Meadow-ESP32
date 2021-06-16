@@ -39,7 +39,8 @@ DEBUG=false
 MENUCONFIG=false
 HELP=false
 DEBUG_THIS_SCRIPT=false
-IDF_FLAGS="build"
+NO_BUILD=false
+IDF_FLAGS=""
 IDF_DEFINES=""
 
 #
@@ -75,6 +76,9 @@ case $i in
     -m|--monitor)
     IDF_FLAGS+=" monitor"
     ;;
+    -n|--nobuild)
+    NO_BUILD=true
+    ;;
     -h|--help)
     HELP=true
     ;;
@@ -87,12 +91,15 @@ done
 if $HELP; then
     echo "$0: Build the ESP code for Meadow"
     echo ""
+    echo "Default action: Build the ESP application in release mode."
+    echo ""
     echo "Options:"
     echo "-h | --help          Display this message"
+    echo "-n | --nobuild       Do not build the system"
     # echo "--debug              Compile with debugging turned on"
     echo "-c | --clean         Perform a clean build"
     echo "--fullclean          Perform a full clean followed by a build"
-    echo "-v --verbose         Display commands as they are executed"
+    echo "-v | --verbose       Display commands as they are executed"
     echo "-d | --coredump      Add core dump functionality to the application"
     echo "-m | --menuconfig    Enter the menu configuration system overwriting sdkconfig.defaults"
     echo "--debugscript        Debug this script (do not execute commands)"
@@ -165,5 +172,12 @@ fi
 #
 #   If we get here then we have stuff to do so fire up the build system.
 #
-run_command "idf.py $IDF_DEFINES $IDF_FLAGS"
-printf "Build finished!\n"
+if ! $NO_BUILD; then
+    IDF_FLAGS="build $IDF_FLAGS"
+fi
+if [[ ! -z $IDF_FLAGS ]]; then
+    run_command "idf.py $IDF_DEFINES $IDF_FLAGS"
+    echo "Build finished!"
+else
+    echo "Nothing more to do."
+fi
