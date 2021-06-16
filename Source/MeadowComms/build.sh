@@ -38,7 +38,7 @@ HEAP=false
 DEBUG=false
 MENUCONFIG=false
 HELP=false
-DEBUG_THIS_SCRIPT=false
+DRYRUN=false
 NO_BUILD=false
 IDF_FLAGS=""
 IDF_DEFINES=""
@@ -67,8 +67,8 @@ case $i in
     --debug)
     DEBUG=true
     ;;
-    --debugscript)
-    DEBUG_THIS_SCRIPT=true
+    --dryrun)
+    DRYRUN=true
     ;;
     -f|--flash)
     IDF_FLAGS+=" flash"
@@ -102,19 +102,19 @@ if $HELP; then
     echo "-v | --verbose       Display commands as they are executed"
     echo "-d | --coredump      Add core dump functionality to the application"
     echo "-m | --menuconfig    Enter the menu configuration system overwriting sdkconfig.defaults"
-    echo "--debugscript        Debug this script (do not execute commands)"
+    echo "--dryrun             Perform a dry run (do not execute commands)"
     echo ""
     exit 0
 fi
 
 run_command() {
-  if $VERBOSE || $DEBUG_THIS_SCRIPT; then
+  if $VERBOSE || $DRYRUN; then
     echo "Executing command: $1"
-    if ! $DEBUG_THIS_SCRIPT; then
+    if ! $DRYRUN; then
         $1
     fi
   else
-    if ! $DEBUG_THIS_SCRIPT; then
+    if ! $DRYRUN; then
         $1 &>/dev/null
     fi
   fi
