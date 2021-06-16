@@ -2,6 +2,26 @@
 # CMakeLists in this exact order for cmake to work correctly
 cmake_minimum_required(VERSION 3.5)
 
+macro(print_all_variables)
+    message(STATUS "print_all_variables------------------------------------------{")
+    get_cmake_property(_variableNames VARIABLES)
+    foreach (_variableName ${_variableNames})
+        message(STATUS "${_variableName}=${${_variableName}}")
+    endforeach()
+    message(STATUS "print_all_variables------------------------------------------}")
+endmacro()
+
+
+#
+#   Work out what we want the sdkconfig file to contain.
+#
+file(REMOVE sdkconfig)
+set(SDKCONFIG_FILES "sdkconfig.defaults")
+if (COREDUMP EQUAL 1)
+    list(APPEND SDKCONFIG_FILES "\;sdkconfig-coredump")
+endif()
+set(SDKCONFIG_DEFAULTS ${SDKCONFIG_FILES})
+
 if (DEBUG EQUAL 1)
     add_compile_definitions(DEBUG)
 endif()
