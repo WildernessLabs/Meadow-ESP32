@@ -1,11 +1,13 @@
 /*
  *      Main application for the ESP32 code for Meadow.
  */
+#include "../build/config/sdkconfig.h"
 #include "freertos/FreeRTOS.h"
 #include "esp_log.h"
 #include <string.h>
 #include "nvs_flash.h"
 #include "esp_ota_ops.h"
+#include "esp_heap_caps.h"
 
 #include "NvsManager.hpp"
 #include "Logging.hpp"
@@ -32,12 +34,39 @@ static heap_trace_record_t trace_records[NUM_RECORDS];
 
 void TestBluetoothMessage(MessageDispatcher *dispatcher);
 
+/**
+ *  @brief Callback for the heap allocation failures.
+ * 
+ *  The method prints some information about the method that caused the problem.
+ *  It then waits for a while for the message to be output and then generates an
+ *  exception to force a core dump (if enabled) and a restart.
+ *
+ *  @param requestedSize
+ *      Amount of space requested.
+ * 
+ *  @param caps
+ *      Capability requested.
+ * 
+ *  @param functionName
+ *      Method that requested the memory.
+ */
+void heap_caps_alloc_failed_hook(size_t requestedSize, uint32_t caps, const char *functionName)
+{
+    printf("%s was called but failed to allocate %d bytes with 0x%X capabilities. \n", functionName, requestedSize, caps);
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
+    char *ptr = NULL;
+    *ptr = 0;
+}
+
 /*
  *      Main program loop for the ESP32 as specified by the FreeRTOS documentation.
  */
 // cppcheck-suppress unusedFunction symbolName=app_main
 extern "C" void app_main()
 {
+    esp_err_t error = heap_caps_register_failed_alloc_callback(heap_caps_alloc_failed_hook);
+    ESP_ERROR_CHECK(error);
+
     Logging::Setup();
     NvsManager::Setup();
 
