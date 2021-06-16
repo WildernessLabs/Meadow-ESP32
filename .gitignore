@@ -85,3 +85,5 @@ Source/.vscode/
 *.srctrlbm
 
 *.srctrldb
+
+Source/MeadowComms/sdkconfig
