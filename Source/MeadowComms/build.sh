@@ -42,6 +42,7 @@ DRYRUN=false
 NO_BUILD=false
 IDF_FLAGS=""
 IDF_DEFINES=""
+DEBUG_SELECTIONS=""
 
 #
 #   Work out which options are on the command line.
@@ -58,7 +59,7 @@ case $i in
     --fullclean)
     FULLCLEAN=true
     ;;
-    -d|--coredump)
+    --coredump)
     IDF_DEFINES+=" -DCOREDUMP=1"
     ;;
     --MENUCONFIG)
@@ -79,6 +80,9 @@ case $i in
     -n|--nobuild)
     NO_BUILD=true
     ;;
+    -d=*|--debug=*)
+    DEBUG_SELECTIONS="${i#*=}"
+    ;;
     -h|--help)
     HELP=true
     ;;
@@ -96,13 +100,13 @@ if $HELP; then
     echo "Options:"
     echo "-h | --help          Display this message"
     echo "-n | --nobuild       Do not build the system"
-    # echo "--debug              Compile with debugging turned on"
     echo "-c | --clean         Perform a clean build"
     echo "--fullclean          Perform a full clean followed by a build"
     echo "-v | --verbose       Display commands as they are executed"
-    echo "-d | --coredump      Add core dump functionality to the application"
+    echo "--coredump           Add core dump functionality to the application"
     echo "-m | --menuconfig    Enter the menu configuration system overwriting sdkconfig.defaults"
     echo "--dryrun             Perform a dry run (do not execute commands)"
+    echo "-d=* | --debug=*     Turn on debug for selected system(s). Valid values (comma separated): WIFI, SPI, BT, SYSTEM."
     echo ""
     exit 0
 fi
@@ -148,6 +152,36 @@ if $MENUCONFIG; then
     run_command "idf.py menuconfig"
     run_command "mv $SDKCONFIG $DEFAULT_SDKCONFIG"
     exit 0
+fi
+
+#
+#   Work out if we need to add any defintions to enable logging.
+#
+if [ ! -z "$DEBUG_SELECTIONS" ]; then
+    subsystems=$(echo $DEBUG_SELECTIONS | tr "," "\n")
+    for subsystem in $subsystems
+    do
+        case $subsystem in
+            wifi)
+            IDF_DEFINES+=" -DWIFI_DEBUG=1"
+            ;;
+            spi)
+            IDF_DEFINES+=" -DSPI_DEBUG=1"
+            ;;
+            system)
+            IDF_DEFINES+=" -DSYSTEM_DEBUG=1"
+            ;;
+            bt)
+            IDF_DEFINES+=" -DBT_DEBUG=1"
+            ;;
+            thread)
+            IDF_DEFINES+=" -DTHREAD_DEBUG=1"
+            ;;    
+            *)
+            # Unknown subsystem
+            ;;
+        esac
+    done
 fi
 
 #
