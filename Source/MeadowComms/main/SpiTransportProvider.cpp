@@ -49,7 +49,6 @@ uint8_t *SpiTransportProvider::_headerTransmitBuffer = nullptr;
 uint8_t *SpiTransportProvider::_transportFrameBuffer = nullptr;
 uint32_t SpiTransportProvider::_headerFrameSize = 0;
 
-
 /*
  * ---------------------------------------------------------------------------
  *
@@ -976,7 +975,7 @@ spi_slave_transaction_t *SpiTransportProvider::OutboundMessageBodyAcknowledgemen
     ESP_LOGI(COMPONENT_NAME, "OutboundMessageBodyAcknowledgementReceived: Enter");
     Message *incomingMessage = Encoders::ExtractMessage(static_cast<uint8_t *>(transaction->rx_buffer), _headerFrameSize, true);
     DeleteTransaction(transaction);
-    bool dumpHeapData = false;
+    bool dumpData = false;
     if (incomingMessage)
     {
         if (incomingMessage->MessageType == MessageTypes::Ack)
@@ -985,8 +984,15 @@ spi_slave_transaction_t *SpiTransportProvider::OutboundMessageBodyAcknowledgemen
             PERFORMANCE_LOGGING_EXIT();
             Logging::AddPerformanceCounterEntry(Logging::MessageSummary(_outboundMessage), _outboundMessage->PerformanceLoggingStart, performance_logging_end);
             #endif
+
+            // if (_outboundMessage->Interface == Esp32Interfaces::WiFi)
+            // {
+            //     if (_outboundMessage->Function == WiFiFunction::Close)
+            //     {
+            //         dumpData = true;
+            //     }
+            // }
             Message::DeleteMessage(_outboundMessage);
-            dumpHeapData = true;
         }
         else
         {
@@ -1001,17 +1007,11 @@ spi_slave_transaction_t *SpiTransportProvider::OutboundMessageBodyAcknowledgemen
     _currentState = WaitingForInboundMessageHeader;
     _outboundMessage = nullptr;
 
-    if (dumpHeapData)
-    {
-        #if defined(CONFIG_HEAP_TRACING_STANDALONE) || defined(CONFIG_HEAP_TRACING_TOHOST)
-        ESP_ERROR_CHECK(heap_trace_stop());
-        #endif
+    // if (dumpData)
+    // {
+    //     Logging::DumpStandaloneHeapTraceData();
+    // }
 
-        #if defined(CONFIG_HEAP_TRACING_STANDALONE)
-        heap_trace_dump();
-        ESP_ERROR_CHECK(heap_trace_start(HEAP_TRACE_LEAKS));
-        #endif
-    }
     ESP_LOGI(COMPONENT_NAME, "OutboundMessageBodyAcknowledgementReceived: Exit");
     return(CreateSpiHeaderTransaction());
 }

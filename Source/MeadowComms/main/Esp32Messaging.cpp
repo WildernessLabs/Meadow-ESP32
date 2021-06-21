@@ -222,7 +222,7 @@ Message *Message::CreateCopyOnHeap(bool copyPayload)
  */
 void Message::DeletePayload()
 {
-    if (Payload)
+    if (Payload != NULL)
     {
         vPortFree(Payload);
     }
@@ -238,7 +238,7 @@ void Message::DeletePayload()
  */
 void Message::DeleteMessage(Message *message)
 {
-    if (message)
+    if (message != NULL)
     {
         if (message->Payload != NULL)
         {

@@ -1420,6 +1420,9 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
     _messageDispatcher->QueueMessageForStm32(message);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
     ESP_LOGI(COMPONENT_NAME, "ConnectToAccessPoint: Exit");
+
+    // Logging::StandaloneHeapTracingStart();
+
 }
 
 /**
@@ -1777,6 +1780,13 @@ void WiFiRequestHandler::Connect(void *vpMessage)
     Message *message = static_cast<Message *>(vpMessage);
     Esp32Messaging::ConnectRequest *request = Encoders::ExtractConnectRequest(message->Payload);
     Esp32Messaging::SockAddr *socketAddress = Encoders::ExtractSockAddr(request->Addr);
+    if (request->AddrLength > 0)
+    {
+        if (request->Addr)
+        {
+            vPortFree(request->Addr);
+        }
+    }
     Esp32Messaging::IntegerAndErrnoResponse response = { };
     response.Result = 0;
 
@@ -1959,6 +1969,13 @@ void WiFiRequestHandler::SetSockOpt(void *vpMessage)
     }
     ESP_LOGI(COMPONENT_NAME, "SetSockOpt: Result: %d, errno: %d - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
 
+    if (request->OptionValueLength > 0)
+    {
+        if (request->OptionValue)
+        {
+            vPortFree(request->OptionValue);
+        }
+    }
     vPortFree(request);
     vPortFree(message->Payload);
 
@@ -2004,7 +2021,15 @@ void WiFiRequestHandler::Write(void *vpMessage)
         response.ResponseErrno = 0;
     }
 
+    if (request->BufferLength > 0)
+    {
+        if (request->Buffer)
+        {
+            vPortFree(request->Buffer);
+        }
+    }
     vPortFree(request);
+
     vPortFree(message->Payload);
 
     message->PayloadLength = Encoders::EncodedIntegerAndErrnoResponseBufferSize(&response);
@@ -2398,6 +2423,14 @@ void WiFiRequestHandler::Bind(void *vpMessage)
     Message *message = static_cast<Message *>(vpMessage);
     Esp32Messaging::BindRequest *request = Encoders::ExtractBindRequest(message->Payload);
     Esp32Messaging::SockAddr *socketAddress = Encoders::ExtractSockAddr(request->Addr);
+    if (request->AddrLength > 0)
+    {
+        if (request->Addr)
+        {
+            vPortFree(request->Addr);
+            request->Addr = nullptr;
+        }
+    }
     Esp32Messaging::IntegerAndErrnoResponse response =  { };
     response.Result = 0;
 
@@ -2410,8 +2443,8 @@ void WiFiRequestHandler::Bind(void *vpMessage)
         sa.sin_family = socketAddress->Family;
         sa.sin_port = socketAddress->Port;
         memcpy(&sa.sin_addr, &socketAddress->Ip4Address, sizeof(socketAddress->Ip4Address));
-        ESP_LOGI(COMPONENT_NAME, "SBind: ocket handle: %d", request->SocketHandle);
-        ESP_LOGI(COMPONENT_NAME, "FBind: amily: %d", sa.sin_family);
+        ESP_LOGI(COMPONENT_NAME, "Bind: Socket handle: %d", request->SocketHandle);
+        ESP_LOGI(COMPONENT_NAME, "Bind: Family: %d", sa.sin_family);
         ESP_LOGI(COMPONENT_NAME, "Bind: IP address: %s", inet_ntoa(sa.sin_addr));
         ESP_LOGI(COMPONENT_NAME, "Bind: Port: %d", ntohs(sa.sin_port));
         response.Result = bind(request->SocketHandle, (struct sockaddr *) &sa, sizeof(sa));
