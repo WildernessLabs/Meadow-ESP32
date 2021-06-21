@@ -4,6 +4,7 @@
  *  The Logging class provides the functionality necessary to
  *  setup and run the logging system.
  */
+#include "../build/config/sdkconfig.h"
 
 #include "esp32/rom/gpio.h"
 #include <limits.h>
@@ -11,6 +12,7 @@
 #include "SharedEnums.hpp"
 #include "Logging.hpp"
 
+#include "AppMain.hpp"
 #include "NvsManager.hpp"
 #include "MessageDispatcher.hpp"
 #include "SpiTransportProvider.hpp"
@@ -58,6 +60,25 @@ int Logging::_numberOfPerformanceCounterSlots = MAX_PERFORMANCE_COUNTERS;
 Logging::PerformanceCounterEntry *Logging::_performanceCounters[MAX_PERFORMANCE_COUNTERS];
 
 #endif
+
+
+/**
+ *  @brief Has standalone heap tracing been started?
+ */
+bool Logging::_isStandaloneHeapTracingActive = false;
+
+/**
+ *  @brief Number of events remaining before we dump the standalone heap trace data.
+ */
+uint32_t Logging::_heapEventsRemaining = 0;
+
+/**
+ *  @brief Number of events that can occur before the system dumps the trace data.
+ * 
+ *  This value is used to reset the _heapEventsRemaining counter.
+ */
+uint32_t Logging::_heapEventCounterResetValue = 10;
+
 
 /*
  * ---------------------------------------------------------------------------
@@ -111,7 +132,7 @@ void Logging::Setup()
 
 #if defined(DEBUG) || defined(WIFI_DEBUG) || defined(SPI_DEBUG) || defined(THREAD_DEBUG) || defined(SYSTEM_DEBUG) || defined(BT_DEBUG)
     #warning "Debug is enabled."
-    esp_log_level_set("AppMain", ESP_LOG_INFO);
+    esp_log_level_set(APP_MAIN_COMPONENT_NAME, ESP_LOG_INFO);
 #endif
 
 #if defined(WIFI_DEBUG) || defined(SYSTEM_DEBUG)
@@ -723,6 +744,77 @@ void Logging::DumpPerformanceCounters()
             PerformanceCounterEntry *pce = _performanceCounters[index];
             printf("%u,%s,%u\n", pce->timestamp, pce->method, pce->duration);
         }
+    }
+}
+
+#endif
+
+#if defined(CONFIG_HEAP_TRACING_STANDALONE)
+
+/**
+ *  @brief Start standalone heap tracing.
+ */
+void Logging::StandaloneHeapTracingStart()
+{
+    ESP_ERROR_CHECK(heap_trace_init_standalone(_heapTraceRecords, NUMBER_OF_HEAP_TRACE_RECORDS));
+    ESP_ERROR_CHECK(heap_trace_start(HEAP_TRACE_LEAKS));
+    _isStandaloneHeapTracingActive = true;
+    _heapEventsRemaining = _heapEventCounterResetValue;
+}
+
+/**
+ *  @brief Stop standalone heap tracing.
+ */
+void Logging::StandaloneHeapTracingStop()
+{
+    ESP_ERROR_CHECK(heap_trace_stop());
+    _isStandaloneHeapTracingActive = false;
+}
+
+/**
+ *  @brief Dump the standalone heap tracing data to the serial port.
+ */
+void Logging::DumpStandaloneHeapTraceData()
+{
+    heap_trace_dump();
+}
+
+/**
+ *  @brief Is heap tracing active?
+ */
+bool Logging::IsStandaloneHeapTracingActive()
+{
+    return(_isStandaloneHeapTracingActive);
+}
+
+/**
+ *  @brief Register a heap event (used to allow a number of events to occur before we dump the trace data.)
+ */
+void Logging::RegisterHeapEvent()
+{
+    _heapEventsRemaining--;
+    StandaloneHeapEventCheck();
+}
+
+/**
+ *  @brief Set the number of events we will let happen before we dump the trace data.
+ */
+void Logging::SetStandaloneHeapEventResetCounter(uint32_t eventCount)
+{
+    _heapEventCounterResetValue = eventCount;
+    _heapEventsRemaining = eventCount;
+}
+
+/**
+ *  @brief Check the number of heap events that have happened and dump the trace data (and reset) if necessary.
+ */
+void Logging::StandaloneHeapEventCheck()
+{
+    if (_heapEventsRemaining == 0)
+    {
+        StandaloneHeapTracingStop();
+        DumpStandaloneHeapTraceData();
+        StandaloneHeapTracingStart();
     }
 }
 

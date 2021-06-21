@@ -63,13 +63,14 @@ namespace MeadowApp
             Bme280 bme280;
 
             MeadowOS.WatchdogReset();
-            var i2c = Device.CreateI2cBus();
-            bme280 = new Bme280(i2c, Bme280.I2cAddress.Adddress0x77);
-            bme280.StartUpdating();
+            //var i2c = Device.CreateI2cBus();
+            //bme280 = new Bme280(i2c, Bme280.I2cAddress.Adddress0x77);
+            //bme280.StartUpdating();
 
             Log("Looking up DNS.");
-            IPHostEntry ipHostInfo = Dns.GetHostEntry("io.adafruit.com");
-            IPAddress ipAddress = ipHostInfo.AddressList[0];
+            //IPHostEntry ipHostInfo = Dns.GetHostEntry("io.adafruit.com");
+            //IPAddress ipAddress = ipHostInfo.AddressList[0];
+            IPAddress ipAddress = new IPAddress(0xc501a8c0);
             IPEndPoint remoteEP = new IPEndPoint(ipAddress, 80);
 
             int dataSetCount = 0;
@@ -94,11 +95,11 @@ namespace MeadowApp
             StringBuilder humidityData = new StringBuilder();
             StringBuilder pressureData = new StringBuilder();
 
-            Log("Creating socket with server");
-            Socket sender = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-            sender.SendTimeout = 3000;
-            sender.ReceiveTimeout = 3000;
-            sender.Connect(remoteEP);
+            //Log("Creating socket with server");
+            //Socket sender = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+            //sender.SendTimeout = 3000;
+            //sender.ReceiveTimeout = 3000;
+            //sender.Connect(remoteEP);
 
             #region Send data.
 
@@ -114,48 +115,57 @@ namespace MeadowApp
                 Log($"Logging dataset {dataSetCount}");
                 Log("Sending temperature data.");
                 temperatureData.Append("{\"value\":\"");
-                temperatureData.AppendFormat("{0:F2}", bme280.Temperature.Value.Celsius - 2.0F);
+                temperatureData.Append(dataSetCount.ToString());
                 temperatureData.Append("\"}");
                 data.Append(temperaturePreamble);
                 data.AppendFormat("Content-Length: {0}\r\n", temperatureData.Length);
                 data.Append(host);
                 data.Append(temperatureData);
+
+                Socket sender = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                sender.SendTimeout = 3000;
+                sender.ReceiveTimeout = 3000;
+                sender.Connect(remoteEP);
+
                 bytesSent = sender.Send(Encoding.ASCII.GetBytes(data.ToString()));
                 bytesReceived = sender.Receive(bytes);
+
+                sender.Close();
+
                 data.Clear();
                 temperatureData.Clear();
                 //
                 //  Humidity
                 //
-                Log("Sending humidity data.");
-                humidityData.Append("{\"value\":\"");
-                humidityData.AppendFormat("{0:F2}", bme280.Humidity.Value.Percent);
-                humidityData.Append("\"}");
-                data.Append(humidityPreamble);
-                data.AppendFormat("Content-Length: {0}\r\n", humidityData.Length);
-                data.Append(host);
-                data.Append(humidityData);
-                bytesSent = sender.Send(Encoding.ASCII.GetBytes(data.ToString()));
-                bytesReceived = sender.Receive(bytes);
-                data.Clear();
-                humidityData.Clear();
+                //Log("Sending humidity data.");
+                //humidityData.Append("{\"value\":\"");
+                //humidityData.AppendFormat("{0:F2}", bme280.Humidity.Value.Percent);
+                //humidityData.Append("\"}");
+                //data.Append(humidityPreamble);
+                //data.AppendFormat("Content-Length: {0}\r\n", humidityData.Length);
+                //data.Append(host);
+                //data.Append(humidityData);
+                //bytesSent = sender.Send(Encoding.ASCII.GetBytes(data.ToString()));
+                //bytesReceived = sender.Receive(bytes);
+                //data.Clear();
+                //humidityData.Clear();
                 //
                 //  Air pressure
                 //
-                Log("Sending air pressure data.");
-                pressureData.Append("{\"value\":\"");
-                pressureData.AppendFormat("{0:F0}", bme280.Pressure.Value.Hectopascal);
-                pressureData.Append("\"}");
-                data.Append(presurePreamble);
-                data.AppendFormat("Content-Length: {0}\r\n", pressureData.Length);
-                data.Append(host);
-                data.Append(pressureData);
-                bytesSent = sender.Send(Encoding.ASCII.GetBytes(data.ToString()));
-                bytesReceived = sender.Receive(bytes);
-                data.Clear();
-                pressureData.Clear();
+                //Log("Sending air pressure data.");
+                //pressureData.Append("{\"value\":\"");
+                //pressureData.AppendFormat("{0:F0}", bme280.Pressure.Value.Hectopascal);
+                //pressureData.Append("\"}");
+                //data.Append(presurePreamble);
+                //data.AppendFormat("Content-Length: {0}\r\n", pressureData.Length);
+                //data.Append(host);
+                //data.Append(pressureData);
+                //bytesSent = sender.Send(Encoding.ASCII.GetBytes(data.ToString()));
+                //bytesReceived = sender.Receive(bytes);
+                //data.Clear();
+                //pressureData.Clear();
 
-                Thread.Sleep(6000);
+                //Thread.Sleep(6000);
 
                 #endregion
 

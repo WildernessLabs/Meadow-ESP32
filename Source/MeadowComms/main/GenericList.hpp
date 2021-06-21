@@ -7,6 +7,8 @@
 #ifndef __GENERIC_LIST_HPP__
 #define __GENERIC_LIST_HPP__
 
+#include "../build/config/sdkconfig.h"
+
 #include "freertos/FreeRTOS.h"
 
 #include <stdlib.h>

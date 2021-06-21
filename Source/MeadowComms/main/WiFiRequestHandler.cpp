@@ -3,6 +3,8 @@
  *
  *  Implementation of the WiFi functionality.
  */
+#include "../build/config/sdkconfig.h"
+
 #include "driver/gpio.h"
 #include "esp_system.h"
 #include "esp_wifi.h"
@@ -17,7 +19,6 @@
 #include "WiFiRequestHandler.hpp"
 #include "Exceptions/MultipleInstancesException.hpp"
 #include "Mapping.hpp"
-#include "DebugSettings.hpp"
 #include "Logging.hpp"
 
 #if defined(CONFIG_HEAP_TRACING_STANDALONE) || defined(CONFIG_HEAP_TRACING_TOHOST)
@@ -1285,6 +1286,19 @@ void WiFiRequestHandler::Stop(Message *message)
     }
 
     ESP_LOGI(COMPONENT_NAME, "Stop: Exit");
+}
+
+/**
+ *  @brief Indicate if we have a valid WiFi connection.
+ * 
+ *  @returns
+ *      True if the WiFi connection is active, false otherwise.
+ */
+bool WiFiRequestHandler::Connected()
+{
+    EventBits_t bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT | WIFI_ERROR_BIT, pdFALSE, pdFALSE, 10 / portTICK_PERIOD_MS);
+
+    return((bits && WIFI_CONNECTED_BIT) == WIFI_CONNECTED_BIT);
 }
 
 /**

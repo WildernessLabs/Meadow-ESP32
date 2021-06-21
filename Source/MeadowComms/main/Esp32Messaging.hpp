@@ -8,6 +8,8 @@
 #ifndef _ESP32_MESSAGING_HPP_
 #define _ESP32_MESSAGING_HPP_
 
+#include "../build/config/sdkconfig.h"
+
 #include "freertos/FreeRTOS.h"
 
 /*
@@ -54,7 +56,6 @@ struct Message
 #if defined(PERFORMANCE_LOGGING)
     int64_t PerformanceLoggingStart;
 #endif
-
 
     /**
      *  Size of an encoded message header (in bytes).

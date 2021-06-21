@@ -6,6 +6,8 @@
 #ifndef _THREAD_POOL_HPP_
 #define _THREAD_POOL_HPP_
 
+#include "../build/config/sdkconfig.h"
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 

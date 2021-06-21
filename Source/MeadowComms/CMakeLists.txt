@@ -27,6 +27,10 @@ if (COREDUMP EQUAL 1)
     message(STATUS "Enabling COREDUMP functionality.")
     list(APPEND SDKCONFIG_FILES "\;sdkconfig-coredump")
 endif()
+if (HEAPTRACING EQUAL 1)
+    message(STATUS "Enabling heap tracing.")
+    list(APPEND SDKCONFIG_FILES "\;sdkconfig-heaptracing")
+endif()
 set(SDKCONFIG_DEFAULTS ${SDKCONFIG_FILES})
 
 #

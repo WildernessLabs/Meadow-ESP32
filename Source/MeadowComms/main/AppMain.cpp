@@ -2,6 +2,7 @@
  *      Main application for the ESP32 code for Meadow.
  */
 #include "../build/config/sdkconfig.h"
+
 #include "freertos/FreeRTOS.h"
 #include "esp_log.h"
 #include <string.h>
@@ -9,6 +10,7 @@
 #include "esp_ota_ops.h"
 #include "esp_heap_caps.h"
 
+#include "AppMain.hpp"
 #include "NvsManager.hpp"
 #include "Logging.hpp"
 #include "MessageDispatcher.hpp"
@@ -17,20 +19,13 @@
 #include "WiFiRequestHandler.hpp"
 #include "SpiTransportProvider.hpp"
 
-#if defined(CONFIG_HEAP_TRACING_STANDALONE) || defined(CONFIG_HEAP_TRACING_TOHOST)
 
-#include "esp_heap_trace.h"
-
-#endif
-
+//
+//  Work out if we have heap tracing enabled and issue a warning..
+//
 #if defined(CONFIG_HEAP_TRACING_STANDALONE)
-
-#define NUM_RECORDS 400
-static heap_trace_record_t trace_records[NUM_RECORDS];
-
+    #warning "Standalone heap tracing turned on."
 #endif
-
-#define APP_MAIN_COMPONENT_NAME "AppMain"
 
 void TestBluetoothMessage(MessageDispatcher *dispatcher);
 
@@ -70,20 +65,6 @@ extern "C" void app_main()
     Logging::Setup();
     NvsManager::Setup();
 
-#ifdef CONFIG_HEAP_TRACING_TOHOST
-    #warning "Heap tracing to host turned on."
-
-    ESP_ERROR_CHECK(heap_trace_init_tohost());
-    heap_trace_start(HEAP_TRACE_ALL);
-#endif
-
-#ifdef CONFIG_HEAP_TRACING_STANDALONE
-    #warning "Standalone heap tracing turned on."
-
-    ESP_ERROR_CHECK(heap_trace_init_standalone(trace_records, NUM_RECORDS));
-    ESP_ERROR_CHECK(heap_trace_start(HEAP_TRACE_LEAKS));
-#endif
-
     const esp_app_desc_t *applicationDescription = esp_ota_get_app_description();
     printf("********** Starting Application (%s version %s) **********\n", applicationDescription->project_name, applicationDescription->version);
 
@@ -111,30 +92,6 @@ extern "C" void app_main()
 //     Encoders::EncodeIoctlRequest(&request, message.Payload);
 
 //     messageDispatcher->QueueMessageForEsp32(&message);
-
-#if defined(HEAP_SIZE)
-
-    printf("Constraining heap to %d bytes", HEAP_SIZE * 1024);
-    size_t heap_free = heap_caps_get_free_size(MALLOC_CAP_8BIT);
-    uint8_t *memory_to_hold = NULL;
-    printf("Heap free before initialisation: %d\n", heap_free);
-    if (heap_free > HEAP_SIZE)
-    {
-        size_t amount_to_consume = heap_free - (HEAP_SIZE * 1024);
-        if (amount_to_consume > 0)
-        {
-            printf("Allocating %d bytes\n", amount_to_consume);
-            memory_to_hold = (uint8_t *) malloc(amount_to_consume);
-            if (memory_to_hold == NULL)
-            {
-                printf("Memory allocation failed.\n");
-            }
-        }
-    }
-    heap_free = heap_caps_get_free_size(MALLOC_CAP_8BIT);
-    printf("Heap free after initialisation: %d\n", heap_free);
-
-#endif
 
     //
     //  Main program loop.

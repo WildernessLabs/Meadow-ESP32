@@ -5,6 +5,8 @@
  *  Author: mark
  */
 
+#include "../build/config/sdkconfig.h"
+
 #include "BluetoothRequestHandler.hpp"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"

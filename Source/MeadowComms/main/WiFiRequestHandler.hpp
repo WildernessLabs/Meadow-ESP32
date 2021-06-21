@@ -8,6 +8,8 @@
 #ifndef _WIFI_REQUEST_HANDLER_HPP_
 #define _WIFI_REQUEST_HANDLER_HPP_
 
+#include "../build/config/sdkconfig.h"
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
@@ -677,6 +679,11 @@ private:
      *  @brief Method called when the time server has supplied updated time information.
      */
     static void NtpServerCallback(struct timeval *tv);
+
+    /**
+     *  @brief Indicate if we have a valid WiFi connection.
+     */
+    bool Connected();
 
 public:
     /**
