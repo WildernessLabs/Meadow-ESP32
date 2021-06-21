@@ -79,6 +79,11 @@ uint32_t Logging::_heapEventsRemaining = 0;
  */
 uint32_t Logging::_heapEventCounterResetValue = 10;
 
+/**
+ *  @brief Array holding the heap trace records.
+ */
+heap_trace_record_t Logging::_heapTraceRecords[Logging::NUMBER_OF_HEAP_TRACE_RECORDS];
+
 
 /*
  * ---------------------------------------------------------------------------
