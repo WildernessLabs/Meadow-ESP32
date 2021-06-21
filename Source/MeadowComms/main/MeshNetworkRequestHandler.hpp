@@ -7,6 +7,8 @@
 #ifndef _MESH_NETWORK_REQUEST_HANDLER_HPP_
 #define _MESH_NETWORK_REQUEST_HANDLER_HPP_
 
+#include "../build/config/sdkconfig.h"
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"

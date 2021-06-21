@@ -5,13 +5,9 @@
  *  of messages between the ESP32 and the STM32.
  */
 
+#include "../build/config/sdkconfig.h"
+
 #include "MessageDispatcher.hpp"
-
-#if defined(CONFIG_HEAP_TRACING_STANDALONE) || defined(CONFIG_HEAP_TRACING_TOHOST)
-
-#include "esp_heap_trace.h"
-
-#endif
 
 /*
  * ----------------------------------------------------------------------------

@@ -30,16 +30,14 @@ if [[ $- == *i* ]]; then
   reset=`tput sgr0`
 fi
 
-VERBOSE=false
+VERBOSE=true
 CLEAN=false
 FULLCLEAN=false
 COREDUMP=false
-HEAP=false
-DEBUG=false
 MENUCONFIG=false
 HELP=false
 DRYRUN=false
-NO_BUILD=false
+HEAPTRACING=false
 IDF_FLAGS=""
 IDF_DEFINES=""
 DEBUG_SELECTIONS=""
@@ -53,6 +51,12 @@ case $i in
     -v|--verbose)
     VERBOSE=true
     ;;
+    -s|--silent)
+    VERBOSE=false
+    ;;
+    -b|--build)
+    IDF_FLAGS+=" build"
+    ;;
     -c|--clean)
     IDF_FLAGS+=" clean"
     ;;
@@ -61,6 +65,9 @@ case $i in
     ;;
     --coredump)
     IDF_DEFINES+=" -DCOREDUMP=1"
+    ;;
+    -t|--heaptracing)
+    IDF_DEFINES+=" -DHEAPTRACING=1"
     ;;
     --MENUCONFIG)
     MENUCONFIG=true
@@ -76,9 +83,6 @@ case $i in
     ;;
     -m|--monitor)
     IDF_FLAGS+=" monitor"
-    ;;
-    -n|--nobuild)
-    NO_BUILD=true
     ;;
     -d=*|--debug=*)
     DEBUG_SELECTIONS="${i#*=}"
@@ -99,11 +103,12 @@ if $HELP; then
     echo ""
     echo "Options:"
     echo "-h | --help          Display this message"
-    echo "-n | --nobuild       Do not build the system"
     echo "-c | --clean         Perform a clean build"
     echo "--fullclean          Perform a full clean followed by a build"
-    echo "-v | --verbose       Display commands as they are executed"
+    echo "-v | --verbose       Display commands as they are executed (default)"
+    echo "-s | --silent        Execute commands silently"
     echo "--coredump           Add core dump functionality to the application"
+    echo "-t | --heaptracing   Enable heap tracing."
     echo "-m | --menuconfig    Enter the menu configuration system overwriting sdkconfig.defaults"
     echo "--dryrun             Perform a dry run (do not execute commands)"
     echo "-d=* | --debug=*     Turn on debug for selected system(s). Valid values (comma separated): WIFI, SPI, BT, SYSTEM."
@@ -185,22 +190,12 @@ if [ ! -z "$DEBUG_SELECTIONS" ]; then
 fi
 
 #
-#   There are sometimes some problems with old configuration in the build directory
+#   There are sometimes problems with old configuration in the build directory
 #   so this removes the build directory before executing the full clean.
 #
 if $FULLCLEAN; then
     run_command "rm -R build"
     run_command "idf.py fullclean"
-fi
-
-if $DEBUG; then
-    echo "--debug is not implemented"
-    exit 0
-fi
-
-if $HEAP; then
-    echo "Heap tracing functionality is not integrated into this script at the moment."
-    exit 0
 fi
 
 #

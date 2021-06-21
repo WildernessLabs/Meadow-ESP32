@@ -3,6 +3,8 @@
  *
  *  Provide the implementation of the Mesh Networking functions.
  */
+#include "../build/config/sdkconfig.h"
+
 #include "MeshNetworkRequestHandler.hpp"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"

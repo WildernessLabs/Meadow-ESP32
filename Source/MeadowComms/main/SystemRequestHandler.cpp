@@ -3,6 +3,7 @@
  *
  *  Implementation of the methods to provide the System Request Handler functionality.
  */
+#include "../build/config/sdkconfig.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -26,7 +27,6 @@
 #include "SystemRequestHandler.hpp"
 #include "MessageDispatcher.hpp"
 #include "Exceptions/MultipleInstancesException.hpp"
-#include "DebugSettings.hpp"
 
 /*
  * ----------------------------------------------------------------------------

@@ -3,6 +3,8 @@
  * 
  *  Implementation of the methods for the Thread class as used by the ThreadPool class.
  */
+#include "../build/config/sdkconfig.h"
+
 #include "Thread.hpp"
 #include "Exceptions/ThreadPoolException.hpp"
 

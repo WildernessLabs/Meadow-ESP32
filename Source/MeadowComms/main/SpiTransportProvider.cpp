@@ -4,24 +4,12 @@
  *  Hardware transport provider for messages between the ESP32 and
  *  the STM32 using the SPI interface.
  */
+#include "../build/config/sdkconfig.h"
+
 #include "SpiTransportProvider.hpp"
 #include "Esp32Messaging.hpp"
 #include "Encoders.hpp"
 #include <string.h>
-#include "DebugSettings.hpp"
-
-#if defined(CONFIG_HEAP_TRACING_STANDALONE) || defined(CONFIG_HEAP_TRACING_TOHOST)
-
-#include "esp_heap_trace.h"
-
-#endif
-
-#if defined(CONFIG_HEAP_TRACING_STANDALONE)
-
-#define NUM_RECORDS 100
-extern heap_trace_record_t *trace_records;
-
-#endif
 
 #include "esp_heap_caps.h"
 
