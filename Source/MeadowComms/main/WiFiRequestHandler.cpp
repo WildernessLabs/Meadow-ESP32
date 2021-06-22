@@ -1658,6 +1658,8 @@ void WiFiRequestHandler::GetAddrInfo(void *vpMessage)
     Esp32Messaging::GetAddrInfoRequest *request = Encoders::ExtractGetAddrInfoRequest(message->Payload);
     //
     Esp32Messaging::AddrInfo *extractedHints = Encoders::ExtractAddrInfo(request->Hints);
+    vPortFree(request->Hints);
+    
     struct addrinfo hints = {};
     hints.ai_family = extractedHints->Family;
     hints.ai_socktype = extractedHints->SocketType;
@@ -2275,6 +2277,10 @@ void WiFiRequestHandler::SendTo(void *vpMessage)
     }
     ESP_LOGI(COMPONENT_NAME, "SendTo: Result: %d, errno: %d - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
 
+    if (request->DestinationAddress)
+    {
+        vPortFree(request->DestinationAddress);
+    }
     vPortFree(request->Buffer);
     vPortFree(request);
     vPortFree(message->Payload);
@@ -2661,7 +2667,7 @@ void WiFiRequestHandler::GetSockPeerName(void *vpMessage, WiFiFunction::WiFiFunc
 
     Message *message = static_cast<Message *>(vpMessage);
     Esp32Messaging::GetSockPeerNameRequest *request = Encoders::ExtractGetSockPeerNameRequest(message->Payload);
-    free(message->Payload);
+    vPortFree(message->Payload);
     Esp32Messaging::GetSockPeerNameResponse response;
 
     struct sockaddr sa = {};
