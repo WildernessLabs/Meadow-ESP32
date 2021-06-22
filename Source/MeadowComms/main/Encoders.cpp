@@ -1149,13 +1149,6 @@ void Encoders::EncodeGetAddrInfoRequest(Esp32Messaging::GetAddrInfoRequest *getA
     if (getAddrInfoRequest->HintsLength > 0)
     {
         memcpy((void *) buffer, (void *) getAddrInfoRequest->Hints, getAddrInfoRequest->HintsLength);
-        buffer += getAddrInfoRequest->HintsLength;
-    }
-    EncodeUInt32(getAddrInfoRequest->ResultLength, buffer);
-    buffer += 4;
-    if (getAddrInfoRequest->ResultLength > 0)
-    {
-        memcpy((void *) buffer, (void *) getAddrInfoRequest->Result, getAddrInfoRequest->ResultLength);
     }
 }
 
@@ -1175,8 +1168,7 @@ int Encoders::EncodedGetAddrInfoRequestBufferSize(Esp32Messaging::GetAddrInfoReq
     result += Encoders::StringLength(getAddrInfoRequest->NodeName);
     result += Encoders::StringLength(getAddrInfoRequest->ServName);
     result += getAddrInfoRequest->HintsLength;
-    result += getAddrInfoRequest->ResultLength;
-    return(result + 10);
+    return(result + 6);
 }
 
 /**
@@ -1211,18 +1203,6 @@ Esp32Messaging::GetAddrInfoRequest *Encoders::ExtractGetAddrInfoRequest(uint8_t 
     else
     {
         getAddrInfoRequest->Hints = nullptr;
-    }
-    getAddrInfoRequest->ResultLength = ExtractUInt32(buffer);
-    buffer += 4;
-    if (getAddrInfoRequest->ResultLength > 0)
-    {
-        getAddrInfoRequest->Result = (uint8_t *) pvPortMalloc(getAddrInfoRequest->ResultLength);
-        memcpy(getAddrInfoRequest->Result, buffer, getAddrInfoRequest->ResultLength);
-        buffer += getAddrInfoRequest->ResultLength;
-    }
-    else
-    {
-        getAddrInfoRequest->Result = nullptr;
     }
     return(getAddrInfoRequest);
 }
