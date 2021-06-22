@@ -975,7 +975,7 @@ spi_slave_transaction_t *SpiTransportProvider::OutboundMessageBodyAcknowledgemen
     ESP_LOGI(COMPONENT_NAME, "OutboundMessageBodyAcknowledgementReceived: Enter");
     Message *incomingMessage = Encoders::ExtractMessage(static_cast<uint8_t *>(transaction->rx_buffer), _headerFrameSize, true);
     DeleteTransaction(transaction);
-    bool dumpData = false;
+    // bool dumpData = false;
     if (incomingMessage)
     {
         if (incomingMessage->MessageType == MessageTypes::Ack)
