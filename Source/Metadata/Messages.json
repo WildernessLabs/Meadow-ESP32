@@ -108,8 +108,7 @@
           [
               { "Name": "NodeName", "DataType": "string" },
               { "Name": "ServName", "DataType": "string" },
-              { "Name": "Hints", "DataType": "blob" },
-              { "Name": "Result", "DataType": "blob" }
+              { "Name": "Hints", "DataType": "blob" }
           ]
         },
         {

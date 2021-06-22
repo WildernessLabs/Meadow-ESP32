@@ -124,8 +124,6 @@ namespace Esp32Messaging
         char * ServName;
         uint32_t HintsLength;
         uint8_t *Hints;
-        uint32_t ResultLength;
-        uint8_t *Result;
     };
 
     struct GetAddrInfoResponse
