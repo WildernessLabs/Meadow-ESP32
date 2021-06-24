@@ -61,6 +61,7 @@ Logging::PerformanceCounterEntry *Logging::_performanceCounters[MAX_PERFORMANCE_
 
 #endif
 
+#if defined(CONFIG_HEAP_TRACING_STANDALONE)
 
 /**
  *  @brief Has standalone heap tracing been started?
@@ -84,6 +85,7 @@ uint32_t Logging::_heapEventCounterResetValue = 10;
  */
 heap_trace_record_t Logging::_heapTraceRecords[Logging::NUMBER_OF_HEAP_TRACE_RECORDS];
 
+#endif
 
 /*
  * ---------------------------------------------------------------------------

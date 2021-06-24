@@ -17,10 +17,15 @@
 #include "esp_log.h"
 #include "driver/uart.h"
 #include "soc/uart_struct.h"
-#include "esp_heap_trace.h"
 #include <string.h>
 #include <stdlib.h>
 #include "Gpio.hpp"
+
+#if defined(CONFIG_HEAP_TRACING_STANDALONE)
+
+#include "esp_heap_trace.h"
+
+#endif
 
 #include "Esp32Messaging.hpp"
 
@@ -110,6 +115,8 @@ private:
     static PerformanceCounterEntry *_performanceCounters[MAX_PERFORMANCE_COUNTERS];
 #endif
 
+#if defined(CONFIG_HEAP_TRACING_STANDALONE)
+
 public:
     /**
      *  Number of heap trace records.
@@ -138,6 +145,8 @@ private:
      *  This value is used to reset the _heapEventsRemaining counter.
      */
     static uint32_t _heapEventCounterResetValue;
+
+#endif 
 
 public:
     /**
