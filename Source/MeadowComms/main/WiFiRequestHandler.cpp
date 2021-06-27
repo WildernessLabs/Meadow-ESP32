@@ -764,8 +764,8 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetAntenna(uint8_t antenna)
     }
     else
     {
-        SystemRequestHandler::SetConfigurationValue(ANTENNA_TYPE_NAME, antenna);
         SwitchAntenna(static_cast<AntennaTypes::AntennaTypes>(antenna));
+        SystemRequestHandler::SetConfigurationValue(ANTENNA_TYPE_NAME, antenna);
     }
 
     return(result);
@@ -875,6 +875,7 @@ void WiFiRequestHandler::SwitchAntenna(AntennaTypes::AntennaTypes newAntenna)
     //
     //  Make sure the old antenna is switched off before the new one is turned on.
     //
+    ESP_LOGI(COMPONENT_NAME, "Switching from antenna %d to %d", oldAntennaPin, newAntennaPin);
     gpio_set_level(oldAntennaPin, 0);
     gpio_set_level(newAntennaPin, 1);
     ESP_LOGI(COMPONENT_NAME, "SwitchAntenna; Exit");
@@ -1230,6 +1231,8 @@ void WiFiRequestHandler::SetAntennaRequest(Message *message)
     message->Payload = nullptr;
     message->PayloadLength = 0;
 
+    ESP_LOGI(COMPONENT_NAME, "Switching antenna to %d with persist set to %d", request->Antenna, request->Persist);
+
     if (request->Persist)
     {
         SetAntenna(request->Antenna);   // This method also switches the antenna.
@@ -1294,7 +1297,7 @@ void WiFiRequestHandler::Stop(Message *message)
  *  @returns
  *      True if the WiFi connection is active, false otherwise.
  */
-bool WiFiRequestHandler::Connected()
+bool WiFiRequestHandler::IsConnected()
 {
     EventBits_t bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT | WIFI_ERROR_BIT, pdFALSE, pdFALSE, 10 / portTICK_PERIOD_MS);
 
@@ -1310,20 +1313,8 @@ bool WiFiRequestHandler::Connected()
  *  @param password
  *      Password for the access point.
  */
-void WiFiRequestHandler::ConnectToAccessPoint(const char *ssid, const char *password)
+StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const char *ssid, const char *password)
 {
-    
-}
-
-/**
- *  @brief Connect to a specified access point.
- *
- *  @param message
- *      Message containing the encoded request.
- */
-void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
-{
-    ESP_LOGI(COMPONENT_NAME, "ConnectToAccessPoint: Enter");
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
 
     _currentRetryCount = 0;
@@ -1336,28 +1327,26 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
             result = StatusCodes::CannotStartNetworkInterface;
         }
     }
-
-    Esp32Messaging::WiFiCredentials *credentials = Encoders::ExtractWiFiCredentials(message->Payload);
-    message->DeletePayload();
+    
     if (result == StatusCodes::CompletedOk)
     {
         _currentRetryCount = 0;
-        if ((strlen(credentials->NetworkName) > MAXIMUM_SSID_LENGTH) || (strlen(credentials->Password) > MAXIMUM_PASSWORD_LENGTH))
+        if ((strlen(ssid) > MAXIMUM_SSID_LENGTH) || (strlen(password) > MAXIMUM_PASSWORD_LENGTH))
         {
             result = StatusCodes::InvalidWiFiCredentials;
             ESP_LOGI(COMPONENT_NAME, "ConnectToAccessPoint: Invalid credentials");
         }
         else
         {
-            wifi_config_t wifi_config = {};
+            wifi_config_t wifi_config = { };
             wifi_config.sta.threshold.authmode = WIFI_AUTH_WPA2_PSK;
             wifi_config.sta.pmf_cfg =
             {
                 .capable = true,
                 .required = false
             };
-            memcpy(wifi_config.sta.ssid, credentials->NetworkName, strlen(credentials->NetworkName));
-            memcpy(wifi_config.sta.password, credentials->Password, strlen(credentials->Password));
+            memcpy(wifi_config.sta.ssid, ssid, strlen(ssid));
+            memcpy(wifi_config.sta.password, password, strlen(password));
             _lastIdfErrorCode = esp_wifi_set_mode(WIFI_MODE_STA);
             if (_lastIdfErrorCode == ESP_OK)
             {
@@ -1374,35 +1363,7 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
             if (_lastIdfErrorCode == ESP_OK)
             {
                 bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT | WIFI_ERROR_BIT, pdFALSE, pdFALSE, GetWiFiTimeout() / portTICK_PERIOD_MS);
-                if ((bits & WIFI_CONNECTED_BIT) || (bits & WIFI_ERROR_BIT))
-                {
-                    Esp32Messaging::ConnectDisconnectData data = { };
-                    if (bits & WIFI_CONNECTED_BIT)
-                    {
-                        memcpy((void *) &data.IpAddress, (void *) &_ipInformation.ip, sizeof(data.IpAddress));
-                        memcpy((void *) &data.SubnetMask, (void *) &_ipInformation.netmask, sizeof(data.SubnetMask));
-                        memcpy((void *) &data.Gateway, (void *) &_ipInformation.gw, sizeof(data.Gateway));
-                        memcpy((void *) data.Ssid, (void *) _apInformation.ssid, _apInformation.ssid_len);
-                        memcpy((void *) data.Bssid, (void *) _apInformation.bssid, sizeof(data.Bssid));
-                        data.Channel = _apInformation.channel;
-                        data.AuthenticationMode = (uint8_t) _apInformation.authmode;
-                        data.Connect = 1;
-                    }
-                    else
-                    {
-                        memcpy((void *) data.Ssid, (void *) _disconnectData.ssid, _disconnectData.ssid_len);
-                        memcpy((void *) data.Bssid, (void *) _disconnectData.bssid, sizeof(data.Bssid));
-                        data.Reason = _disconnectData.reason;
-                        data.Connect = 0;
-                        bzero((void *) &_disconnectData, sizeof(_disconnectData));
-                        result = StatusCodes::WiFiDisconnected;
-                        _lastIdfErrorCode = ESP_OK;
-                    }
-                    message->PayloadLength = Encoders::EncodedConnectDisconnectDataBufferSize(&data);
-                    message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-                    Encoders::EncodeConnectDisconnectData(&data, message->Payload);
-                }
-                else
+                if (!((bits & WIFI_CONNECTED_BIT) || (bits & WIFI_ERROR_BIT)))
                 {
                     result = StatusCodes::Timeout;
                 }
@@ -1413,6 +1374,29 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
             }
         }        
     }
+    return(result);
+}
+
+/**
+ *  @brief Connect to a specified access point.
+ *
+ *  @param message
+ *      Message containing the encoded request.
+ */
+void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
+{
+    ESP_LOGI(COMPONENT_NAME, "ConnectToAccessPoint: Enter");
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
+
+    Esp32Messaging::WiFiCredentials *credentials = Encoders::ExtractWiFiCredentials(message->Payload);
+    message->DeletePayload();
+
+    result = ConnectToAccessPoint(credentials->NetworkName, credentials->Password);
+    if (result == StatusCodes::CompletedOk)
+    {
+
+    }
+
     vPortFree(credentials);
 
     message->MessageType = MessageTypes::Response;
