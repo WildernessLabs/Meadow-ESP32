@@ -494,7 +494,7 @@ private:
     /**
      *  @brief Connect to the specified access point starting the network interface if necessary.
      */
-    void ConnectToAccessPoint(const char *ssid, const char *password);
+    StatusCodes::StatusCodes ConnectToAccessPoint(const char *ssid, const char *password);
 
     /**
      *  @brief Connect to an access point.
@@ -683,7 +683,7 @@ private:
     /**
      *  @brief Indicate if we have a valid WiFi connection.
      */
-    bool Connected();
+    bool IsConnected();
 
 public:
     /**
