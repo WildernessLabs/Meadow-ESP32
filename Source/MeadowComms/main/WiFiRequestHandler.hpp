@@ -134,50 +134,56 @@ private:
      *  two events, network start and got IP.  The request only ends when the IP address
      *  has been granted.
      */
-    const int WIFI_READY_BIT = BIT0;
+    static const int WIFI_READY_BIT = BIT0;
 
     /**
      *  @brief Indicate if the system is in the process of connecting to an access point.
      */
-    const int WIFI_CONNECTING_BIT = BIT1;
+    static const int WIFI_CONNECTING_BIT = BIT1;
 
     /**
      *  @brief When set, this bit indicates that we have an active WiFi connection.
      */
-    const int WIFI_CONNECTED_BIT = BIT2;
+    static const int WIFI_CONNECTED_BIT = BIT2;
 
     /**
      *  @brief When set, this indicates that the system has lost the WiFi connection
      *  and is actively trying to re-establish the connection.
      */
-    const int WIFI_RECONNECTING_BIT = BIT3;
+    static const int WIFI_RECONNECTING_BIT = BIT3;
+
+    /**
+     *  @brief When set, this indicates that the system has lost the WiFi connection
+     *  and is actively trying to re-establish the connection.
+     */
+    static const int WIFI_DISCONNECTING_BIT = BIT4;
 
     /**
      *  @brief Indicate if the WiFi system has been initialised OK.
      */
-    const int WIFI_INTERFACE_STARTING_BIT = BIT4;
+    static const int WIFI_INTERFACE_STARTING_BIT = BIT5;
 
     /**
      *  @brief Indicate if the WiFi system has been initialised OK.
      */
-    const int WIFI_INTERFACE_STARTED_BIT = BIT5;
+    static const int WIFI_INTERFACE_STARTED_BIT = BIT6;
 
     /**
      *  @brief Indicate if the scan for access points has completed.
      */
-    const int WIFI_SCAN_COMPLETE_BIT = BIT6;
+    static const int WIFI_SCAN_COMPLETE_BIT = BIT7;
 
     /**
      *  @brief Indicate that the WiFi station has started successfully.
      */
-    const int WIFI_STATION_STARTED_BIT = BIT7;
+    static const int WIFI_STATION_STARTED_BIT = BIT8;
 
     /**
      *  @brief Indicate that some sort of error has occurred.
      * 
      *  This will ususally be problems with connections, getting the system started etc.
      */
-    const int WIFI_ERROR_BIT = BIT8;
+    static const int WIFI_ERROR_BIT = BIT23;
 
     /**
      *  @brief Default scan method for WiFi networks.
@@ -229,7 +235,7 @@ private:
     /**
      *  @brief Event group containing 24-bits used to indicate the state of the WiFi connection.
      */
-    EventGroupHandle_t _xWiFiEventGroup = nullptr;
+    static EventGroupHandle_t _xWiFiEventGroup;
 
     /**
      *  @brief Configuration of the WiFi network.
@@ -482,6 +488,16 @@ private:
     void SetAntennaRequest(Message *);
 
     /**
+     *  @brief Stop the WiFi Adapter.
+     */
+    StatusCodes::StatusCodes StopWiFIAdapter();
+
+    /**
+     *  @brief Stop the WiFi Adapter.
+     */
+    void StopWiFIAdapter(Message *message);
+
+    /**
      *  @brief Disconnect from any access points.
      */
     StatusCodes::StatusCodes DisconnectFromAccessPoint();
@@ -683,7 +699,12 @@ private:
     /**
      *  @brief Indicate if we have a valid WiFi connection.
      */
-    bool IsConnected();
+    static bool IsConnected();
+
+    /**
+     *  @brief Map the errno variable from an ESP to a STM32 value.
+     */
+    static int32_t MapErrno(int32_t);
 
 public:
     /**
