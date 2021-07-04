@@ -104,6 +104,7 @@ if $HELP; then
     echo "Options:"
     echo "-h | --help          Display this message"
     echo "-c | --clean         Perform a clean build"
+    echo "-f | --flash         Flash the ESP32 with the bootloader, partition table and application code"
     echo "--fullclean          Perform a full clean followed by a build"
     echo "-v | --verbose       Display commands as they are executed (default)"
     echo "-s | --silent        Execute commands silently"
