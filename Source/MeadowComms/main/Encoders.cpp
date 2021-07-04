@@ -714,6 +714,59 @@ Esp32Messaging::WiFiCredentials *Encoders::ExtractWiFiCredentials(uint8_t *buffe
 }
 
 /**
+ *  Convert the DisconnectFromAccessPointRequest object into a byte stream that can be sent to the STM32.
+ *  
+ *  The amount of memory required can be obtained by calling the EncodedDisconnectFromAccessPointRequestBufferSize method.
+ *  
+ *  @param disconnectFromAccessPointRequest
+ *      DisconnectFromAccessPointRequest object to be encoded.
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory large enough to hold the encoded DisconnectFromAccessPointRequest object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodeDisconnectFromAccessPointRequest
+void Encoders::EncodeDisconnectFromAccessPointRequest(Esp32Messaging::DisconnectFromAccessPointRequest *disconnectFromAccessPointRequest, uint8_t *buffer)
+{
+    *buffer = disconnectFromAccessPointRequest->TurnOffWiFiInterface;
+}
+
+/**
+ *  Calculate the amount of memory required to hold the given instance of the DisconnectFromAccessPointRequest object.
+ *  
+ *  @param disconnectFromAccessPointRequest
+ *      DisconnectFromAccessPointRequest object to be encoded.
+ *  
+ *  @returns
+ *      Number of bytes required to hold the encoded DisconnectFromAccessPointRequest object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodedDisconnectFromAccessPointRequestBufferSize
+int Encoders::EncodedDisconnectFromAccessPointRequestBufferSize(Esp32Messaging::DisconnectFromAccessPointRequest *disconnectFromAccessPointRequest)
+{
+    return(1);
+}
+
+/**
+ *  Extract the DisconnectFromAccessPointRequest object that is encoded in the given buffer.
+ *  
+ *  Note that the returned pointer points to a block of memory on the heap and
+ *  this should eventually be released calling vPortFree(...).
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded DisconnectFromAccessPointRequest object.
+ *  
+ *  @returns
+ *      Pointer to a DisconnectFromAccessPointRequest object.
+ */
+// cppcheck-suppress unusedFunction symbolName=ExtractDisconnectFromAccessPointRequest
+Esp32Messaging::DisconnectFromAccessPointRequest *Encoders::ExtractDisconnectFromAccessPointRequest(uint8_t *buffer)
+{
+    Esp32Messaging::DisconnectFromAccessPointRequest *disconnectFromAccessPointRequest = (Esp32Messaging::DisconnectFromAccessPointRequest *) pvPortMalloc(sizeof(Esp32Messaging::DisconnectFromAccessPointRequest));
+
+    disconnectFromAccessPointRequest->TurnOffWiFiInterface = *buffer;
+    return(disconnectFromAccessPointRequest);
+}
+
+/**
  *  Convert the ConnectDisconnectData object into a byte stream that can be sent to the STM32.
  *  
  *  The amount of memory required can be obtained by calling the EncodedConnectDisconnectDataBufferSize method.
@@ -2993,6 +3046,8 @@ void Encoders::EncodeIoctlResponse(Esp32Messaging::IoctlResponse *ioctlResponse,
         buffer += ioctlResponse->AddrLength;
     }
     EncodeInt32(ioctlResponse->Flags, buffer);
+    buffer += 4;
+    EncodeInt32(ioctlResponse->ResponseErrno, buffer);
 }
 
 /**
@@ -3009,7 +3064,7 @@ int Encoders::EncodedIoctlResponseBufferSize(Esp32Messaging::IoctlResponse *ioct
 {
     int result = 0;
     result += ioctlResponse->AddrLength;
-    return(result + 8);
+    return(result + 12);
 }
 
 /**
@@ -3042,6 +3097,8 @@ Esp32Messaging::IoctlResponse *Encoders::ExtractIoctlResponse(uint8_t *buffer)
         ioctlResponse->Addr = nullptr;
     }
     ioctlResponse->Flags = ExtractInt32(buffer);
+    buffer += 4;
+    ioctlResponse->ResponseErrno = ExtractInt32(buffer);
     return(ioctlResponse);
 }
 
