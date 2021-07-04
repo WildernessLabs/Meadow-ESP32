@@ -29,7 +29,6 @@
 
 #if defined(CONFIG_HEAP_TRACING_STANDALONE)
 
-#define NUM_RECORDS 100
 extern heap_trace_record_t *trace_records;
 
 #endif
@@ -48,6 +47,11 @@ const char *WiFiRequestHandler::COMPONENT_NAME = "WiFiTask";
  *  @brief Determine if this class is instantiated already (i.e. this should be a singleton).
  */
 bool WiFiRequestHandler::_instantiated = false;
+
+/**
+ *  @brief Event group containing 24-bits used to indicate the state of the WiFi connection.
+ */
+EventGroupHandle_t WiFiRequestHandler::_xWiFiEventGroup = nullptr;
 
 /**
  *  @brief List of active poll requests.
@@ -814,6 +818,19 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetWiFiTimeout(uint32_t value)
  */
 
 /**
+ *  @brief Map the errno variable from an ESP to a STM32 value.
+ */
+int32_t WiFiRequestHandler::MapErrno(int e)
+{
+    int32_t result = 0;
+    if (Mapping::GetStmValue(Mapping::Errno, e, &result) != 0)
+    {
+        Mapping::GetStmValue(Mapping::Errno, EFAULT, &result);
+    }
+    return(result);
+}
+
+/**
  *  @brief Callback to be executed when the NTP time server has provided updated time information.
  * 
  *  @param tv
@@ -942,7 +959,7 @@ void WiFiRequestHandler::EventHandlerHelper(esp_event_base_t eventBase, int32_t 
                 break;
             case WIFI_EVENT_STA_STOP:
                 ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: Station stopped");
-                RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::StopInterfaceEvent);
+                RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::StopWiFiInterfaceEvent);
                 break;
             case WIFI_EVENT_STA_CONNECTED:
                 StationConnectedEvent((wifi_event_sta_connected_t *) eventData);
@@ -1071,11 +1088,11 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
     xEventGroupClearBits(_xWiFiEventGroup, WIFI_READY_BIT);
     switch (request->Function)
     {
-        case WiFiFunction::StartNetwork:
+        case WiFiFunction::StartWiFiInterface:
             // _threadPool->Execute(WiFiRequestHandler::StartNetwork, (void *) request);
             StartNetwork(request);
             break;
-        case WiFiFunction::Stop:
+        case WiFiFunction::StopWiFiInterface:
             Stop(request);
             break;
         case WiFiFunction::ConnectToAccessPoint:
@@ -1175,6 +1192,48 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
 }
 
 /**
+ *  @brief Stop the WiFi adapter.
+ */
+StatusCodes::StatusCodes WiFiRequestHandler::StopWiFIAdapter()
+{
+    StatusCodes::StatusCodes sc = StatusCodes::CompletedOk;
+
+    // esp_err_t result = esp_wifi_disconnect();
+    // if ((result == ESP_OK) || (result == ESP_ERR_WIFI_NOT_STARTED) || (result == ESP_ERR_WIFI_NOT_INIT))
+    // {
+    //     xEventGroupClearBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT | WIFI_RECONNECTING_BIT);
+    // }
+    // else
+    // {
+    //     sc = StatusCodes::Failure;
+    // }
+    return(sc);
+}
+
+/**
+ *  @brief Stop the WiFi adapter.
+ *
+ *  @param message
+ *      Message containing the encoded request.
+ */
+void WiFiRequestHandler::StopWiFIAdapter(Message *message)
+{
+    ESP_LOGI(COMPONENT_NAME, "StopWiFIAdapter: Enter");
+
+    // StatusCodes::StatusCodes sc = StopWiFIAdapter();
+    // message->StatusCode = sc;
+    // message->MessageType = MessageTypes::Response;
+    // _messageDispatcher->QueueMessageForStm32(message);
+
+    // if (sc == StatusCodes::CompletedOk)
+    // {
+    //     RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::DisconnectEvent, sc);
+    // }
+
+    ESP_LOGI(COMPONENT_NAME, "StopWiFIAdapter: Exit");
+}
+
+/**
  *  @brief Disconnect from any access points.
  */
 StatusCodes::StatusCodes WiFiRequestHandler::DisconnectFromAccessPoint()
@@ -1210,7 +1269,7 @@ void WiFiRequestHandler::DisconnectFromAccessPoint(Message *message)
 
     if (sc == StatusCodes::CompletedOk)
     {
-        RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::DisconnectEvent, sc);
+        RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::DisconnectFromAccessPointEvent, sc);
     }
 
     ESP_LOGI(COMPONENT_NAME, "DisconnectFromAccessPoint: Exit");
@@ -1285,7 +1344,7 @@ void WiFiRequestHandler::Stop(Message *message)
 
     if (raiseEvent)
     {
-        RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::StopInterfaceEvent, sc);
+        RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::StopWiFiInterfaceEvent, sc);
     }
 
     ESP_LOGI(COMPONENT_NAME, "Stop: Exit");
@@ -1301,7 +1360,7 @@ bool WiFiRequestHandler::IsConnected()
 {
     EventBits_t bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT | WIFI_ERROR_BIT, pdFALSE, pdFALSE, 10 / portTICK_PERIOD_MS);
 
-    return((bits && WIFI_CONNECTED_BIT) == WIFI_CONNECTED_BIT);
+    return((bits & WIFI_CONNECTED_BIT) == WIFI_CONNECTED_BIT);
 }
 
 /**
@@ -1379,6 +1438,8 @@ StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const char *ss
 
 /**
  *  @brief Connect to a specified access point.
+ * 
+ *  Note: Contains HEAPCODE for heap tracing / debugging.
  *
  *  @param message
  *      Message containing the encoded request.
@@ -1392,10 +1453,31 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
     message->DeletePayload();
 
     result = ConnectToAccessPoint(credentials->NetworkName, credentials->Password);
+    Esp32Messaging::ConnectDisconnectData data = { };
     if (result == StatusCodes::CompletedOk)
     {
-
+        memcpy((void *) &data.IpAddress, (void *) &_ipInformation.ip, sizeof(data.IpAddress));
+        memcpy((void *) &data.SubnetMask, (void *) &_ipInformation.netmask, sizeof(data.SubnetMask));
+        memcpy((void *) &data.Gateway, (void *) &_ipInformation.gw, sizeof(data.Gateway));
+        memcpy((void *) data.Ssid, (void *) _apInformation.ssid, _apInformation.ssid_len);
+        memcpy((void *) data.Bssid, (void *) _apInformation.bssid, sizeof(data.Bssid));
+        data.Channel = _apInformation.channel;
+        data.AuthenticationMode = (uint8_t) _apInformation.authmode;
+        data.Connect = 1;
     }
+    else
+    {
+        memcpy((void *) data.Ssid, (void *) _disconnectData.ssid, _disconnectData.ssid_len);
+        memcpy((void *) data.Bssid, (void *) _disconnectData.bssid, sizeof(data.Bssid));
+        data.Reason = _disconnectData.reason;
+        data.Connect = 0;
+        bzero((void *) &_disconnectData, sizeof(_disconnectData));
+        result = StatusCodes::WiFiDisconnected;
+        _lastIdfErrorCode = ESP_OK;
+    }
+    message->PayloadLength = Encoders::EncodedConnectDisconnectDataBufferSize(&data);
+    message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
+    Encoders::EncodeConnectDisconnectData(&data, message->Payload);
 
     vPortFree(credentials);
 
@@ -1405,7 +1487,7 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
     ESP_LOGI(COMPONENT_NAME, "ConnectToAccessPoint: Exit");
 
-    // Logging::StandaloneHeapTracingStart();
+    Logging::StandaloneHeapTracingStart();
 
 }
 
@@ -1639,58 +1721,67 @@ void WiFiRequestHandler::GetAddrInfo(void *vpMessage)
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
-    Esp32Messaging::GetAddrInfoRequest *request = Encoders::ExtractGetAddrInfoRequest(message->Payload);
-    //
-    Esp32Messaging::AddrInfo *extractedHints = Encoders::ExtractAddrInfo(request->Hints);
-    vPortFree(request->Hints);
-    
-    struct addrinfo hints = {};
-    hints.ai_family = extractedHints->Family;
-    hints.ai_socktype = extractedHints->SocketType;
-    vPortFree(extractedHints);
-    //
-    //  This will hold a pointer to a chain of one or more addrinfo structure.
-    //
-    //  It is the responsibility of the calling .NET application to ensure
-    //  that FreeAddrInfo is called.  FreeAddrInfo will free the allocated
-    //  memory.
-    //
-    struct addrinfo *addressInformation;
-    int errorCode = getaddrinfo(request->NodeName, request->ServName, &hints, &addressInformation);
-    vPortFree(request);
-
     Esp32Messaging::GetAddrInfoResponse *response = static_cast<Esp32Messaging::GetAddrInfoResponse *>(pvPortMalloc(sizeof(Esp32Messaging::GetAddrInfoResponse)));
-    response->AddrInfoResponseErrno = errorCode;
-    if ((errorCode == 0) || (addressInformation != NULL))
+
+    if (IsConnected())
     {
-        Esp32Messaging::SockAddr sa = {};
-        Esp32Messaging::AddrInfo a = {};
+        Esp32Messaging::GetAddrInfoRequest *request = Encoders::ExtractGetAddrInfoRequest(message->Payload);
+        //
+        Esp32Messaging::AddrInfo *extractedHints = Encoders::ExtractAddrInfo(request->Hints);
+        vPortFree(request->Hints);
+        
+        struct addrinfo hints = {};
+        hints.ai_family = extractedHints->Family;
+        hints.ai_socktype = extractedHints->SocketType;
+        vPortFree(extractedHints);
+        //
+        //  This will hold a pointer to a chain of one or more addrinfo structure.
+        //
+        //  It is the responsibility of the calling .NET application to ensure
+        //  that FreeAddrInfo is called.  FreeAddrInfo will free the allocated
+        //  memory.
+        //
+        struct addrinfo *addressInformation;
+        int errorCode = getaddrinfo(request->NodeName, request->ServName, &hints, &addressInformation);
+        vPortFree(request);
 
-        int family;
-        Mapping::GetStmValue(Mapping::AddressFamily, addressInformation->ai_addr->sa_family, &family);
-        sa.Family = (unsigned char) (family & 0xff);
-        Encoders::EncodeSockAddr(&sa, a.Addr);
+        response->AddrInfoResponseErrno = MapErrno(errorCode);
+        if ((errorCode == 0) || (addressInformation != NULL))
+        {
+            Esp32Messaging::SockAddr sa = {};
+            Esp32Messaging::AddrInfo a = {};
 
-        a.CanonName = strdup(addressInformation->ai_canonname);
-        a.Family = addressInformation->ai_family;
-        a.Flags = addressInformation->ai_flags;
-        a.MyHeapAddress = reinterpret_cast<uint32_t>(addressInformation);
-        a.Next = addressInformation->ai_next;
-        a.Protocol = addressInformation->ai_protocol;
-        a.SocketType = addressInformation->ai_socktype;
-        a.AddrLen = addressInformation->ai_addrlen;
+            int family;
+            Mapping::GetStmValue(Mapping::AddressFamily, addressInformation->ai_addr->sa_family, &family);
+            sa.Family = (unsigned char) (family & 0xff);
+            Encoders::EncodeSockAddr(&sa, a.Addr);
 
-        response->ResLength = Encoders::EncodedAddrInfoBufferSize(&a);
-        response->Res = static_cast<uint8_t *>(pvPortMalloc(response->ResLength));
-        Encoders::EncodeAddrInfo(&a, response->Res);
+            a.CanonName = strdup(addressInformation->ai_canonname);
+            a.Family = addressInformation->ai_family;
+            a.Flags = addressInformation->ai_flags;
+            a.MyHeapAddress = reinterpret_cast<uint32_t>(addressInformation);
+            a.Next = addressInformation->ai_next;
+            a.Protocol = addressInformation->ai_protocol;
+            a.SocketType = addressInformation->ai_socktype;
+            a.AddrLen = addressInformation->ai_addrlen;
+
+            response->ResLength = Encoders::EncodedAddrInfoBufferSize(&a);
+            response->Res = static_cast<uint8_t *>(pvPortMalloc(response->ResLength));
+            Encoders::EncodeAddrInfo(&a, response->Res);
+        }
+        else
+        {
+            response->AddrInfoResponseErrno = MapErrno(errno);
+            vPortFree(addressInformation);
+        }
     }
     else
     {
-        response->Res = nullptr;
-        response->ResLength = 0;
-        vPortFree(addressInformation);
+        response->AddrInfoResponseErrno = MapErrno(ENETDOWN);
     }
+
     vPortFree(message->Payload);
+
     message->PayloadLength = Encoders::EncodedGetAddrInfoResponseBufferSize(response);
     message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
     Encoders::EncodeGetAddrInfoResponse(response, message->Payload);
@@ -1716,28 +1807,33 @@ void WiFiRequestHandler::Socket(void *vpMessage)
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
-    Esp32Messaging::SocketRequest *request = Encoders::ExtractSocketRequest(message->Payload);
-    ESP_LOGI(COMPONENT_NAME, "Socket: Creating socket on domain %d, type %d and protocol %d", request->Domain, request->Type, request->Protocol);
+    Esp32Messaging::IntegerAndErrnoResponse response = { };
 
-    Esp32Messaging::IntegerAndErrnoResponse response;
-    response.Result = socket(request->Domain, request->Type, request->Protocol);
-    if (response.Result < 0)
+    if (IsConnected())
     {
-        int32_t result = 0;
-        ESP_LOGI(COMPONENT_NAME, "Socket: Error code: %d - %s", errno, strerror(errno));
-        if (Mapping::GetStmValue(Mapping::Errno, errno, &result) != 0)
+        Esp32Messaging::SocketRequest *request = Encoders::ExtractSocketRequest(message->Payload);
+        ESP_LOGI(COMPONENT_NAME, "Socket: Creating socket on domain %d, type %d and protocol %d", request->Domain, request->Type, request->Protocol);
+
+        response.Result = socket(request->Domain, request->Type, request->Protocol);
+        if (response.Result < 0)
         {
-            Mapping::GetStmValue(Mapping::Errno, EFAULT, &result);
+            ESP_LOGI(COMPONENT_NAME, "Socket: Error code: %d - %s", errno, strerror(errno));
+            response.ResponseErrno = MapErrno(errno);
         }
-        response.ResponseErrno = result;
+        else
+        {
+            ESP_LOGI(COMPONENT_NAME, "Socket: Created socket %d", response.Result);
+            response.ResponseErrno = 0;
+        }
+
+        vPortFree(request);
     }
     else
     {
-        ESP_LOGI(COMPONENT_NAME, "Socket: Created socket %d", response.Result);
-        response.ResponseErrno = 0;
+        response.Result = -1;
+        response.ResponseErrno = MapErrno(ENETDOWN);
     }
 
-    vPortFree(request);
     vPortFree(message->Payload);
 
     message->PayloadLength = Encoders::EncodedIntegerAndErrnoResponseBufferSize(&response);
@@ -1764,58 +1860,62 @@ void WiFiRequestHandler::Connect(void *vpMessage)
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
-    Esp32Messaging::ConnectRequest *request = Encoders::ExtractConnectRequest(message->Payload);
-    Esp32Messaging::SockAddr *socketAddress = Encoders::ExtractSockAddr(request->Addr);
-    if (request->AddrLength > 0)
-    {
-        if (request->Addr)
-        {
-            vPortFree(request->Addr);
-        }
-    }
     Esp32Messaging::IntegerAndErrnoResponse response = { };
-    response.Result = 0;
 
-    struct sockaddr_in sa = {};
-    int family;
-    Mapping::GetEspValue(Mapping::AddressFamily, socketAddress->Family, &family);
-    errno = 0;
-    if (family == AF_INET)
+    if (IsConnected())
     {
-        sa.sin_family = (uint8_t) (family & 0xff);
-        sa.sin_port = socketAddress->Port;
-        memcpy(&sa.sin_addr, &socketAddress->Ip4Address, sizeof(sa.sin_addr));
-        sa.sin_len = sizeof(struct sockaddr_in);
-        ESP_LOGI(COMPONENT_NAME, "Connect: Connecting socket: %d", request->SocketHandle);
-        ESP_LOGI(COMPONENT_NAME, "Connect: Family: %d", sa.sin_family);
-        ESP_LOGI(COMPONENT_NAME, "Connect: IP address: %s", inet_ntoa(sa.sin_addr));
-        ESP_LOGI(COMPONENT_NAME, "Connect: Port: %d", ntohs(sa.sin_port));
-        response.Result = connect(request->SocketHandle, (struct sockaddr *) &sa, sizeof(sa));
-    }
-    else
-    {
-        response.Result = -1;
-        errno = EFAULT;
-    }
-
-    if (response.Result != 0)
-    {
-        int32_t result = 0;
-        ESP_LOGI(COMPONENT_NAME, "Connect: Error code: %d - %s", errno, strerror(errno));
-        if (Mapping::GetStmValue(Mapping::Errno, errno, &result) != 0)
+        Esp32Messaging::ConnectRequest *request = Encoders::ExtractConnectRequest(message->Payload);
+        Esp32Messaging::SockAddr *socketAddress = Encoders::ExtractSockAddr(request->Addr);
+        if (request->AddrLength > 0)
         {
-            Mapping::GetStmValue(Mapping::Errno, EFAULT, &result);
+            if (request->Addr)
+            {
+                vPortFree(request->Addr);
+            }
         }
-        response.ResponseErrno = result;
-        response.Result = -1;
+
+        struct sockaddr_in sa = {};
+        int family;
+        Mapping::GetEspValue(Mapping::AddressFamily, socketAddress->Family, &family);
+        errno = 0;
+        if (family == AF_INET)
+        {
+            sa.sin_family = (uint8_t) (family & 0xff);
+            sa.sin_port = socketAddress->Port;
+            memcpy(&sa.sin_addr, &socketAddress->Ip4Address, sizeof(sa.sin_addr));
+            sa.sin_len = sizeof(struct sockaddr_in);
+            ESP_LOGI(COMPONENT_NAME, "Connect: Connecting socket: %d", request->SocketHandle);
+            ESP_LOGI(COMPONENT_NAME, "Connect: Family: %d", sa.sin_family);
+            ESP_LOGI(COMPONENT_NAME, "Connect: IP address: %s", inet_ntoa(sa.sin_addr));
+            ESP_LOGI(COMPONENT_NAME, "Connect: Port: %d", ntohs(sa.sin_port));
+            response.Result = connect(request->SocketHandle, (struct sockaddr *) &sa, sizeof(sa));
+        }
+        else
+        {
+            response.Result = -1;
+            errno = EFAULT;
+        }
+
+        if (response.Result != 0)
+        {
+            response.Result = -1;
+            ESP_LOGI(COMPONENT_NAME, "Connect: Error code: %d - %s", errno, strerror(errno));
+            response.ResponseErrno = MapErrno(errno);
+        }
+        else
+        {
+            response.ResponseErrno = 0;
+        }
+
+        vPortFree(request);
+        vPortFree(socketAddress);
     }
     else
     {
-        response.ResponseErrno = 0;
+        response.Result = -1;
+        response.ResponseErrno = MapErrno(ENETDOWN);
     }
 
-    vPortFree(request);
-    vPortFree(socketAddress);
     vPortFree(message->Payload);
 
     message->PayloadLength = Encoders::EncodedIntegerAndErrnoResponseBufferSize(&response);
@@ -1877,92 +1977,94 @@ void WiFiRequestHandler::SetSockOpt(void *vpMessage)
     Esp32Messaging::SetSockOptRequest *request = Encoders::ExtractSetSockOptRequest(message->Payload);
     Esp32Messaging::IntegerAndErrnoResponse response = { };
 
-    void *optionValue = nullptr;
-    int optionLength = 0;
-    Esp32Messaging::TimeVal *tv = nullptr;
-    struct timeval timeOut;
-
-    int32_t optionName = 0;
-    if (Mapping::GetEspValue(Mapping::SocketOptions, request->OptionName, &optionName) < 0)
+    if (IsConnected())
     {
-        ESP_LOGI(COMPONENT_NAME, "SetSockOpt: Unknown option: %d", request->OptionName);
+        void *optionValue = nullptr;
+        int optionLength = 0;
+        Esp32Messaging::TimeVal *tv = nullptr;
+        struct timeval timeOut;
+        int32_t errorCode = 0;
+
+        int32_t optionName = 0;
+        if (Mapping::GetEspValue(Mapping::SocketOptions, request->OptionName, &optionName) < 0)
+        {
+            ESP_LOGI(COMPONENT_NAME, "SetSockOpt: Unknown option: %d", request->OptionName);
+            errorCode = ENOPROTOOPT;
+        }
+        else
+        {
+            errno = 0;
+            switch (optionName)
+            {
+                case SO_SNDTIMEO:       /* Set the send timeout */
+                case SO_RCVTIMEO:       /* Set the receive timeout */
+                    tv = Encoders::ExtractTimeVal(request->OptionValue);
+                    timeOut.tv_sec = tv->TvSec;
+                    timeOut.tv_usec = tv->TvUsec;
+                    vPortFree(tv);
+                    optionValue = &timeOut;
+                    optionLength = sizeof(timeOut);
+                    break;
+                case SO_RCVBUF:         /* Set the receive buffer size */
+                case SO_REUSEADDR:      /* Set validation rules for bind */
+                    optionValue = request->OptionValue;
+                    optionLength = request->OptionValueLength;
+                    break;
+                case SO_LINGER:         /* Linger on close if data present */
+                    ESP_LOGI(COMPONENT_NAME, "SetSockOpt: Implement SO_LINGER");
+                    break;
+                case SO_ACCEPTCONN:     /* Socket has had listen() */
+                    ESP_LOGI(COMPONENT_NAME, "SetSockOpt: Implement SO_ACCEPTCONN");
+                    break;
+                case SO_DONTLINGER:     /* Don't linger on close if data present */
+                    ESP_LOGI(COMPONENT_NAME, "SetSockOpt: Implement SO_DONTLINGER");
+                    break;
+                case SO_ERROR:          /* Get error status and clear */
+                    ESP_LOGI(COMPONENT_NAME, "SetSockOpt: Implement SO_ERROR");
+                    break;
+                case SO_TYPE:           /* Get socket type */
+                    ESP_LOGI(COMPONENT_NAME, "SetSockOpt: Implement SO_TYPE");
+                    break;
+                case SO_NO_CHECK:       /* Don't create UDP checksum */
+                    ESP_LOGI(COMPONENT_NAME, "SetSockOpt: Implement SO_NO_CHECK");
+                    break;
+                default:
+                    response.Result = -1;
+                    errorCode = ENOPROTOOPT;
+                    break;
+            }
+            if (errorCode == 0)
+            {
+                int32_t level = 0;
+                Mapping::GetEspValue(Mapping::SocketLevel, request->Level, &level);
+                ESP_LOGI(COMPONENT_NAME, "SetSockOpt: Setting socket option level to 0x%x, option name 0x%x for socket %d", level, optionName, request->SocketHandle);
+                response.Result = setsockopt(request->SocketHandle, level, optionName, optionValue, optionLength);
+                errorCode = errno;
+            }
+        }    
+
+        if (errorCode != 0)
+        {
+            response.Result = -1;
+            response.ResponseErrno = MapErrno(errorCode);
+        }
+        ESP_LOGI(COMPONENT_NAME, "SetSockOpt: Result: %d, errno: %d - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
+
+        if (request->OptionValueLength > 0)
+        {
+            if (request->OptionValue)
+            {
+                vPortFree(request->OptionValue);
+            }
+        }
+        vPortFree(request);
+    }
+    else
+    {
         response.Result = -1;
-        errno = ENOPROTOOPT;
+        response.ResponseErrno = MapErrno(ENETDOWN);
     }
-    else
-    {
-        errno = 0;
-        switch (optionName)
-        {
-            case SO_SNDTIMEO:       /* Set the send timeout */
-            case SO_RCVTIMEO:       /* Set the receive timeout */
-                tv = Encoders::ExtractTimeVal(request->OptionValue);
-                timeOut.tv_sec = tv->TvSec;
-                timeOut.tv_usec = tv->TvUsec;
-                vPortFree(tv);
-                optionValue = &timeOut;
-                optionLength = sizeof(timeOut);
-                break;
-            case SO_RCVBUF:         /* Set the receive buffer size */
-            case SO_REUSEADDR:      /* Set validation rules for bind */
-                optionValue = request->OptionValue;
-                optionLength = request->OptionValueLength;
-                break;
-            case SO_LINGER:         /* Linger on close if data present */
-                ESP_LOGI(COMPONENT_NAME, "SetSockOpt: Implement SO_LINGER");
-                break;
-            case SO_ACCEPTCONN:     /* Socket has had listen() */
-                ESP_LOGI(COMPONENT_NAME, "SetSockOpt: Implement SO_ACCEPTCONN");
-                break;
-            case SO_DONTLINGER:     /* Don't linger on close if data present */
-                ESP_LOGI(COMPONENT_NAME, "SetSockOpt: Implement SO_DONTLINGER");
-                break;
-            case SO_ERROR:          /* Get error status and clear */
-                ESP_LOGI(COMPONENT_NAME, "SetSockOpt: Implement SO_ERROR");
-                break;
-            case SO_TYPE:           /* Get socket type */
-                ESP_LOGI(COMPONENT_NAME, "SetSockOpt: Implement SO_TYPE");
-                break;
-            case SO_NO_CHECK:       /* Don't create UDP checksum */
-                ESP_LOGI(COMPONENT_NAME, "SetSockOpt: Implement SO_NO_CHECK");
-                break;
-            default:
-                response.Result = -1;
-                errno = ENOPROTOOPT;
-                break;
-        }
-        if (errno == 0)
-        {
-            int32_t level = 0;
-            Mapping::GetEspValue(Mapping::SocketLevel, request->Level, &level);
-            ESP_LOGI(COMPONENT_NAME, "SetSockOpt: Setting socket option level to 0x%x, option name 0x%x for socket %d", level, optionName, request->SocketHandle);
-            response.Result = setsockopt(request->SocketHandle, level, optionName, optionValue, optionLength);
-        }
-    }    
 
-    if (response.Result < 0)
-    {
-        int32_t e = 0;
-        if (Mapping::GetStmValue(Mapping::Errno, errno, &e) != 0)
-        {
-            Mapping::GetStmValue(Mapping::Errno, EFAULT, &e);
-        }
-        response.ResponseErrno = e;
-    }
-    else
-    {
-        response.ResponseErrno = 0;
-    }
-    ESP_LOGI(COMPONENT_NAME, "SetSockOpt: Result: %d, errno: %d - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
-
-    if (request->OptionValueLength > 0)
-    {
-        if (request->OptionValue)
-        {
-            vPortFree(request->OptionValue);
-        }
-    }
-    vPortFree(request);
     vPortFree(message->Payload);
 
     message->PayloadLength = Encoders::EncodedIntegerAndErrnoResponseBufferSize(&response);
@@ -1992,29 +2094,28 @@ void WiFiRequestHandler::Write(void *vpMessage)
     Esp32Messaging::WriteRequest *request = Encoders::ExtractWriteRequest(message->Payload);
     Esp32Messaging::IntegerAndErrnoResponse response = { };
 
-    response.Result = write(request->SocketHandle, request->Buffer, request->Count);
-    if (response.Result < 0)
+    if (IsConnected())
     {
-        int32_t e = 0;
-        if (Mapping::GetStmValue(Mapping::Errno, errno, &e) != 0)
+        response.Result = write(request->SocketHandle, request->Buffer, request->Count);
+        if (response.Result < 0)
         {
-            Mapping::GetStmValue(Mapping::Errno, EFAULT, &e);
+            response.ResponseErrno = MapErrno(errno);;
         }
-        response.ResponseErrno = e;
+
+        if (request->BufferLength > 0)
+        {
+            if (request->Buffer)
+            {
+                vPortFree(request->Buffer);
+            }
+        }
+        vPortFree(request);
     }
     else
     {
-        response.ResponseErrno = 0;
+        response.Result = -1;
+        response.ResponseErrno = MapErrno(ENETDOWN);
     }
-
-    if (request->BufferLength > 0)
-    {
-        if (request->Buffer)
-        {
-            vPortFree(request->Buffer);
-        }
-    }
-    vPortFree(request);
 
     vPortFree(message->Payload);
 
@@ -2042,28 +2143,28 @@ void WiFiRequestHandler::Read(void *vpMessage)
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
-    Esp32Messaging::ReadRequest *request = Encoders::ExtractReadRequest(message->Payload);
-    Esp32Messaging::ReadResponse response;
+    Esp32Messaging::ReadResponse response = { };
+    response.Buffer = nullptr;
 
-    response.Buffer = static_cast<uint8_t *>(pvPortMalloc(request->Count));
-    bzero(response.Buffer, request->Count);
-    response.BufferLength = request->Count;
-    response.ReadResponseResult = read(request->SocketHandle, response.Buffer, request->Count);
-    if (response.ReadResponseResult < 0)
+    if (IsConnected())
     {
-        int32_t e = 0;
-        if (Mapping::GetStmValue(Mapping::Errno, errno, &e) != 0)
+        Esp32Messaging::ReadRequest *request = Encoders::ExtractReadRequest(message->Payload);
+        response.Buffer = static_cast<uint8_t *>(pvPortMalloc(request->Count));
+        bzero(response.Buffer, request->Count);
+        response.BufferLength = request->Count;
+        response.ReadResponseResult = read(request->SocketHandle, response.Buffer, request->Count);
+        if (response.ReadResponseResult < 0)
         {
-            Mapping::GetStmValue(Mapping::Errno, EFAULT, &e);
+            response.ReadResponseErrno = MapErrno(errno);
         }
-        response.ReadResponseErrno = e;
+        vPortFree(request);
     }
     else
     {
-        response.ReadResponseErrno = 0;
+        response.ReadResponseResult = -1;
+        response.ReadResponseErrno = MapErrno(ENETDOWN)        ;
     }
 
-    vPortFree(request);
     vPortFree(message->Payload);
 
     //
@@ -2073,7 +2174,10 @@ void WiFiRequestHandler::Read(void *vpMessage)
     message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
     Encoders::EncodeReadResponse(&response, message->Payload);
 
-    vPortFree(response.Buffer);
+    if (response.Buffer)
+    {
+        vPortFree(response.Buffer);
+    }
 
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOk;
@@ -2096,24 +2200,29 @@ void WiFiRequestHandler::Close(void *vpMessage)
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
-    Esp32Messaging::CloseRequest *request = Encoders::ExtractCloseRequest(message->Payload);
-
     Esp32Messaging::IntegerAndErrnoResponse response = { };
-    response.Result = close(request->SocketHandle);
-    if (response.Result != 0)
+
+    if (IsConnected())
     {
-        if (response.Result < 0)
+        Esp32Messaging::CloseRequest *request = Encoders::ExtractCloseRequest(message->Payload);
+
+        response.Result = close(request->SocketHandle);
+        if (response.Result != 0)
         {
-            int32_t e = 0;
-            if (Mapping::GetStmValue(Mapping::Errno, errno, &e) != 0)
+            if (response.Result < 0)
             {
-                Mapping::GetStmValue(Mapping::Errno, EFAULT, &e);
+                response.Result = MapErrno(errno);
             }
-            response.Result = e;
         }
+
+        vPortFree(request);
+    }
+    else
+    {
+        response.Result = -1;
+        response.ResponseErrno = MapErrno(ENETDOWN);
     }
 
-    vPortFree(request);
     vPortFree(message->Payload);
 
     message->PayloadLength = Encoders::EncodedIntegerAndErrnoResponseBufferSize(&response);
@@ -2140,38 +2249,44 @@ void WiFiRequestHandler::Send(void *vpMessage)
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
-    Esp32Messaging::SendRequest *request = Encoders::ExtractSendRequest(message->Payload);
-    vPortFree(message->Payload);
-
     Esp32Messaging::IntegerAndErrnoResponse response = { };
-    int32_t mappedFlags = 0;
-    response.ResponseErrno = 0;
-    response.Result = Mapping::GetEspFlagValue(Mapping::MessageFlags, request->Flags, &mappedFlags);
-    if (response.Result == 0)
+
+    if (IsConnected())
     {
-        response.Result = send(request->SocketHandle, request->Buffer, request->Length, mappedFlags);
-        if (response.Result < 0)
+        Esp32Messaging::SendRequest *request = Encoders::ExtractSendRequest(message->Payload);
+        int32_t mappedFlags = 0;
+        response.ResponseErrno = 0;
+        response.Result = Mapping::GetEspFlagValue(Mapping::MessageFlags, request->Flags, &mappedFlags);
+        if (response.Result == 0)
         {
-            if (Mapping::GetStmValue(Mapping::Errno, errno, &response.ResponseErrno) != 0)
+            response.Result = send(request->SocketHandle, request->Buffer, request->Length, mappedFlags);
+            if (response.Result < 0)
             {
-                Mapping::GetStmValue(Mapping::Errno, EFAULT, &response.ResponseErrno);
+                response.ResponseErrno = MapErrno(errno);
             }
         }
+        else
+        {
+            response.ResponseErrno = MapErrno(EFAULT);
+        }
+
+        ESP_LOGI(COMPONENT_NAME, "Send: Sent %d bytes.", request->Length);
+        if (request->Buffer && (request->Length > 0))
+        {
+            ESP_LOG_BUFFER_HEX(COMPONENT_NAME, request->Buffer, request->Length);
+        }
+        ESP_LOGI(COMPONENT_NAME, "Send: Result: %d, errno: %d - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
+
+        vPortFree(request->Buffer);
+        vPortFree(request);
     }
     else
     {
-        Mapping::GetStmValue(Mapping::Errno, EFAULT, &response.ResponseErrno);
+        response.Result = -1;
+        response.ResponseErrno = MapErrno(ENETDOWN);
     }
 
-    ESP_LOGI(COMPONENT_NAME, "Send: Sent %d bytes.", request->Length);
-    if (request->Buffer && (request->Length > 0))
-    {
-        ESP_LOG_BUFFER_HEX(COMPONENT_NAME, request->Buffer, request->Length);
-    }
-    ESP_LOGI(COMPONENT_NAME, "Send: Result: %d, errno: %d - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
-
-    vPortFree(request->Buffer);
-    vPortFree(request);
+    vPortFree(message->Payload);
 
     message->PayloadLength = Encoders::EncodedIntegerAndErrnoResponseBufferSize(&response);
     message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
@@ -2197,76 +2312,82 @@ void WiFiRequestHandler::SendTo(void *vpMessage)
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
-    Esp32Messaging::SendToRequest *request = Encoders::ExtractSendToRequest(message->Payload);
-
     Esp32Messaging::IntegerAndErrnoResponse response = { };
-    int32_t mappedFlags = 0;
-    response.ResponseErrno = 0;
-    response.Result = Mapping::GetEspFlagValue(Mapping::MessageFlags, request->Flags, &mappedFlags);
-    if (response.Result == 0)
-    {
-        Esp32Messaging::SockAddr *socketAddress = NULL;
-        int32_t family = 0;
-        if (request->DestinationAddress)
-        {
-            socketAddress = Encoders::ExtractSockAddr(request->DestinationAddress);
-            Mapping::GetEspValue(Mapping::AddressFamily, socketAddress->Family, &family);
-            ESP_LOGI(COMPONENT_NAME, "SendTo: Mapping request family %d to ESP family %d", socketAddress->Family, family);
-        }
 
-        if (family == AF_INET)
+    if (IsConnected())
+    {
+        Esp32Messaging::SendToRequest *request = Encoders::ExtractSendToRequest(message->Payload);
+
+        int32_t mappedFlags = 0;
+        response.ResponseErrno = 0;
+        response.Result = Mapping::GetEspFlagValue(Mapping::MessageFlags, request->Flags, &mappedFlags);
+        if (response.Result == 0)
         {
-            struct sockaddr_in sa = {};
-            struct sockaddr *psa = NULL;
-            size_t lenSa = 0;
+            Esp32Messaging::SockAddr *socketAddress = NULL;
+            int32_t family = 0;
             if (request->DestinationAddress)
             {
-                sa.sin_family = (unsigned char) (family & 0xff);
-
-                sa.sin_port = socketAddress->Port;
-                memcpy(&sa.sin_addr, &socketAddress->Ip4Address, sizeof(sa.sin_addr));
-                sa.sin_len = sizeof(sa);
-                psa = (struct sockaddr *) &sa;
-                lenSa = sizeof(sa);
+                socketAddress = Encoders::ExtractSockAddr(request->DestinationAddress);
+                Mapping::GetEspValue(Mapping::AddressFamily, socketAddress->Family, &family);
+                ESP_LOGI(COMPONENT_NAME, "SendTo: Mapping request family %d to ESP family %d", socketAddress->Family, family);
             }
-            ESP_LOGI(COMPONENT_NAME, "SendTo: Connecting socket: %d", request->SocketHandle);
-            ESP_LOGI(COMPONENT_NAME, "SendTo: Family: %d", (psa == NULL) ? 0 : sa.sin_family);
-            ESP_LOGI(COMPONENT_NAME, "SendTo: IP address: %s", (psa == NULL) ? "NULL" : inet_ntoa(sa.sin_addr));
-            ESP_LOGI(COMPONENT_NAME, "SendTo: Port: %d", (psa == NULL) ? 0 : ntohs(sa.sin_port));
-            response.Result = sendto(request->SocketHandle, request->Buffer, request->Length, mappedFlags, psa, lenSa);
-        }
 
-        if (socketAddress != NULL)
-        {
-            vPortFree(socketAddress);
-        }
-        
-        if (response.Result < 0)
-        {
-            if (Mapping::GetStmValue(Mapping::Errno, errno, &response.ResponseErrno) != 0)
+            if (family == AF_INET)
             {
-                Mapping::GetStmValue(Mapping::Errno, EFAULT, &response.ResponseErrno);
+                struct sockaddr_in sa = {};
+                struct sockaddr *psa = NULL;
+                size_t lenSa = 0;
+                if (request->DestinationAddress)
+                {
+                    sa.sin_family = (unsigned char) (family & 0xff);
+
+                    sa.sin_port = socketAddress->Port;
+                    memcpy(&sa.sin_addr, &socketAddress->Ip4Address, sizeof(sa.sin_addr));
+                    sa.sin_len = sizeof(sa);
+                    psa = (struct sockaddr *) &sa;
+                    lenSa = sizeof(sa);
+                }
+                ESP_LOGI(COMPONENT_NAME, "SendTo: Connecting socket: %d", request->SocketHandle);
+                ESP_LOGI(COMPONENT_NAME, "SendTo: Family: %d", (psa == NULL) ? 0 : sa.sin_family);
+                ESP_LOGI(COMPONENT_NAME, "SendTo: IP address: %s", (psa == NULL) ? "NULL" : inet_ntoa(sa.sin_addr));
+                ESP_LOGI(COMPONENT_NAME, "SendTo: Port: %d", (psa == NULL) ? 0 : ntohs(sa.sin_port));
+                response.Result = sendto(request->SocketHandle, request->Buffer, request->Length, mappedFlags, psa, lenSa);
+            }
+
+            if (socketAddress != NULL)
+            {
+                vPortFree(socketAddress);
+            }
+            
+            if (response.Result < 0)
+            {
+                response.ResponseErrno = MapErrno(errno);
             }
         }
+        else
+        {
+            response.ResponseErrno = MapErrno(EFAULT);
+        }
+
+        ESP_LOGI(COMPONENT_NAME, "SendTo: Sent %d bytes.", request->Length);
+        if (request->Buffer && (request->Length > 0))
+        {
+            ESP_LOG_BUFFER_HEX(COMPONENT_NAME, request->Buffer, request->Length);
+        }
+        ESP_LOGI(COMPONENT_NAME, "SendTo: Result: %d, errno: %d - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
+
+        if (request->DestinationAddress)
+        {
+            vPortFree(request->DestinationAddress);
+        }
+        vPortFree(request->Buffer);
+        vPortFree(request);
     }
     else
     {
-        Mapping::GetStmValue(Mapping::Errno, EFAULT, &response.ResponseErrno);
+        response.Result = -1;
+        response.ResponseErrno = MapErrno(ENETDOWN);
     }
-
-    ESP_LOGI(COMPONENT_NAME, "SendTo: Sent %d bytes.", request->Length);
-    if (request->Buffer && (request->Length > 0))
-    {
-        ESP_LOG_BUFFER_HEX(COMPONENT_NAME, request->Buffer, request->Length);
-    }
-    ESP_LOGI(COMPONENT_NAME, "SendTo: Result: %d, errno: %d - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
-
-    if (request->DestinationAddress)
-    {
-        vPortFree(request->DestinationAddress);
-    }
-    vPortFree(request->Buffer);
-    vPortFree(request);
     vPortFree(message->Payload);
 
     message->PayloadLength = Encoders::EncodedIntegerAndErrnoResponseBufferSize(&response);
@@ -2293,90 +2414,95 @@ void WiFiRequestHandler::RecvFrom(void *vpMessage)
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
-    Esp32Messaging::RecvFromRequest *request = Encoders::ExtractRecvFromRequest(message->Payload);
-
     Esp32Messaging::RecvFromResponse response = { };
-    int32_t mappedFlags = 0;
-    response.ResponseErrno = 0;
-    response.Result = Mapping::GetEspFlagValue(Mapping::MessageFlags, request->Flags, &mappedFlags);
-    if (response.Result == 0)
+
+    if (IsConnected())
     {
-        struct sockaddr_in *sa = NULL;
-        socklen_t len;
-        if (request->GetSourceAddress != 0)
+        Esp32Messaging::RecvFromRequest *request = Encoders::ExtractRecvFromRequest(message->Payload);
+        int32_t mappedFlags = 0;
+        response.Result = Mapping::GetEspFlagValue(Mapping::MessageFlags, request->Flags, &mappedFlags);
+        if (response.Result == 0)
         {
-            sa = (struct sockaddr_in *) pvPortMalloc(sizeof(struct sockaddr_in));
-            bzero(sa, sizeof(struct sockaddr_in));
-            len = sizeof(struct sockaddr_in);
-        }
-        response.Buffer = (uint8_t *) pvPortMalloc(request->Length);
-        if (response.Buffer == NULL)
-        {
-            response.Buffer = nullptr;
-            response.Result = -1;
-            errno = ENOMEM;
-        }
-        else
-        {
-            response.Result = recvfrom(request->SocketHandle, response.Buffer, request->Length, mappedFlags, (struct sockaddr *) sa, (sa == NULL) ? NULL : &len);
-        }    
-        
-        if (response.Result < 0)
-        {
-            if (Mapping::GetStmValue(Mapping::Errno, errno, &response.ResponseErrno) != 0)
-            {
-                Mapping::GetStmValue(Mapping::Errno, EFAULT, &response.ResponseErrno);
-            }
-        }
-        else
-        {
+            struct sockaddr_in *sa = NULL;
+            socklen_t len;
             if (request->GetSourceAddress != 0)
             {
-                Esp32Messaging::SockAddr socketAddress = {};
-                int family;
-                Mapping::GetStmValue(Mapping::AddressFamily, sa->sin_family, &family);
-                socketAddress.Family = (uint8_t) (family & 0xff);
-                memcpy(&socketAddress.Ip4Address, &sa->sin_addr, sizeof(sa->sin_addr));
-                socketAddress.Port = sa->sin_port;
-                response.SourceAddressLength = Encoders::EncodedSockAddrBufferSize(&socketAddress);
-                response.SourceAddress = (uint8_t *) pvPortMalloc(response.SourceAddressLength);
-                if (response.SourceAddress == NULL)
-                {
-                    response.SourceAddressLength = 0;
-                    response.SourceAddressLen = 0;
-                    response.Result = -1;
-                }
-                else
-                {
-                    Encoders::EncodeSockAddr(&socketAddress, response.SourceAddress);
-                }
+                sa = (struct sockaddr_in *) pvPortMalloc(sizeof(struct sockaddr_in));
+                bzero(sa, sizeof(struct sockaddr_in));
+                len = sizeof(struct sockaddr_in);
+            }
+            response.Buffer = (uint8_t *) pvPortMalloc(request->Length);
+            if (response.Buffer == NULL)
+            {
+                response.Buffer = nullptr;
+                response.Result = -1;
+                errno = ENOMEM;
             }
             else
             {
-                response.SourceAddress = nullptr;
-                response.SourceAddressLength = 0;
-                response.SourceAddressLen = 0;
+                response.Result = recvfrom(request->SocketHandle, response.Buffer, request->Length, mappedFlags, (struct sockaddr *) sa, (sa == NULL) ? NULL : &len);
+            }    
+            
+            if (response.Result < 0)
+            {
+                response.ResponseErrno = MapErrno(errno);
             }
-            response.BufferLength = response.Result;
-        }
+            else
+            {
+                if (request->GetSourceAddress != 0)
+                {
+                    Esp32Messaging::SockAddr socketAddress = {};
+                    int family;
+                    Mapping::GetStmValue(Mapping::AddressFamily, sa->sin_family, &family);
+                    socketAddress.Family = (uint8_t) (family & 0xff);
+                    memcpy(&socketAddress.Ip4Address, &sa->sin_addr, sizeof(sa->sin_addr));
+                    socketAddress.Port = sa->sin_port;
+                    response.SourceAddressLength = Encoders::EncodedSockAddrBufferSize(&socketAddress);
+                    response.SourceAddress = (uint8_t *) pvPortMalloc(response.SourceAddressLength);
+                    if (response.SourceAddress == NULL)
+                    {
+                        response.SourceAddressLength = 0;
+                        response.SourceAddressLen = 0;
+                        response.Result = -1;
+                    }
+                    else
+                    {
+                        Encoders::EncodeSockAddr(&socketAddress, response.SourceAddress);
+                    }
+                }
+                else
+                {
+                    response.SourceAddress = nullptr;
+                    response.SourceAddressLength = 0;
+                    response.SourceAddressLen = 0;
+                }
+                response.BufferLength = response.Result;
+            }
 
-        if (sa != NULL)
-        {
-            vPortFree(sa);
+            if (sa != NULL)
+            {
+                vPortFree(sa);
+            }
         }
+        else
+        {
+            response.ResponseErrno = MapErrno(EFAULT);
+        }
+        ESP_LOGI(COMPONENT_NAME, "RecvFrom: Received %d bytes.", response.Result);
+        if (response.Buffer && (response.BufferLength > 0))
+        {
+            ESP_LOG_BUFFER_HEX(COMPONENT_NAME, response.Buffer, response.Result);
+        }
+        ESP_LOGI(COMPONENT_NAME, "RecvFrom: Result: %d, errno: %d - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
+
+        vPortFree(request);
     }
     else
     {
-        Mapping::GetStmValue(Mapping::Errno, EFAULT, &response.ResponseErrno);
+        response.Result = -1;
+        response.ResponseErrno = MapErrno(ENETDOWN);
     }
-    ESP_LOGI(COMPONENT_NAME, "RecvFrom: Received %d bytes.", response.Result);
-    if (response.Buffer && (response.BufferLength > 0))
-    {
-        ESP_LOG_BUFFER_HEX(COMPONENT_NAME, response.Buffer, response.Result);
-    }
-    ESP_LOGI(COMPONENT_NAME, "RecvFrom: Result: %d, errno: %d - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
 
-    vPortFree(request);
     vPortFree(message->Payload);
 
     message->PayloadLength = Encoders::EncodedRecvFromResponseBufferSize(&response);
@@ -2411,57 +2537,61 @@ void WiFiRequestHandler::Bind(void *vpMessage)
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
-    Esp32Messaging::BindRequest *request = Encoders::ExtractBindRequest(message->Payload);
-    Esp32Messaging::SockAddr *socketAddress = Encoders::ExtractSockAddr(request->Addr);
-    if (request->AddrLength > 0)
-    {
-        if (request->Addr)
-        {
-            vPortFree(request->Addr);
-            request->Addr = nullptr;
-        }
-    }
     Esp32Messaging::IntegerAndErrnoResponse response =  { };
-    response.Result = 0;
 
-    struct sockaddr_in sa = {};
-    int family;
-    Mapping::GetEspValue(Mapping::AddressFamily, socketAddress->Family, &family);
-    errno = 0;
-    if (family == AF_INET)
+    if (IsConnected())
     {
-        sa.sin_family = socketAddress->Family;
-        sa.sin_port = socketAddress->Port;
-        memcpy(&sa.sin_addr, &socketAddress->Ip4Address, sizeof(socketAddress->Ip4Address));
-        ESP_LOGI(COMPONENT_NAME, "Bind: Socket handle: %d", request->SocketHandle);
-        ESP_LOGI(COMPONENT_NAME, "Bind: Family: %d", sa.sin_family);
-        ESP_LOGI(COMPONENT_NAME, "Bind: IP address: %s", inet_ntoa(sa.sin_addr));
-        ESP_LOGI(COMPONENT_NAME, "Bind: Port: %d", ntohs(sa.sin_port));
-        response.Result = bind(request->SocketHandle, (struct sockaddr *) &sa, sizeof(sa));
-    }
-    else
-    {
-        response.Result = -1;
-        errno = EFAULT;
-    }
-
-    if (response.Result != 0)
-    {
-        int32_t result = 0;
-        if (Mapping::GetStmValue(Mapping::Errno, errno, &result) != 0)
+        Esp32Messaging::BindRequest *request = Encoders::ExtractBindRequest(message->Payload);
+        Esp32Messaging::SockAddr *socketAddress = Encoders::ExtractSockAddr(request->Addr);
+        if (request->AddrLength > 0)
         {
-            Mapping::GetStmValue(Mapping::Errno, EFAULT, &result);
+            if (request->Addr)
+            {
+                vPortFree(request->Addr);
+                request->Addr = nullptr;
+            }
         }
-        response.ResponseErrno = result;
-        response.Result = -1;
+
+        struct sockaddr_in sa = { };
+        int family;
+        Mapping::GetEspValue(Mapping::AddressFamily, socketAddress->Family, &family);
+        errno = 0;
+        if (family == AF_INET)
+        {
+            sa.sin_family = socketAddress->Family;
+            sa.sin_port = socketAddress->Port;
+            memcpy(&sa.sin_addr, &socketAddress->Ip4Address, sizeof(socketAddress->Ip4Address));
+            ESP_LOGI(COMPONENT_NAME, "Bind: Socket handle: %d", request->SocketHandle);
+            ESP_LOGI(COMPONENT_NAME, "Bind: Family: %d", sa.sin_family);
+            ESP_LOGI(COMPONENT_NAME, "Bind: IP address: %s", inet_ntoa(sa.sin_addr));
+            ESP_LOGI(COMPONENT_NAME, "Bind: Port: %d", ntohs(sa.sin_port));
+            response.Result = bind(request->SocketHandle, (struct sockaddr *) &sa, sizeof(sa));
+        }
+        else
+        {
+            response.Result = -1;
+            errno = EFAULT;
+        }
+
+        if (response.Result != 0)
+        {
+            response.ResponseErrno = MapErrno(errno);
+            response.Result = -1;
+        }
+        else
+        {
+            response.ResponseErrno = 0;
+        }
+        ESP_LOGI(COMPONENT_NAME, "Bind: Error code: %d - %s", errno, strerror(errno));
+        vPortFree(request);
+        vPortFree(socketAddress);
     }
     else
     {
-        response.ResponseErrno = 0;
+        response.Result = -1;
+        response.ResponseErrno = MapErrno(ENETDOWN);
     }
-    ESP_LOGI(COMPONENT_NAME, "Bind: Error code: %d - %s", errno, strerror(errno));
-    vPortFree(request);
-    vPortFree(socketAddress);
+
     vPortFree(message->Payload);
 
     message->PayloadLength = Encoders::EncodedIntegerAndErrnoResponseBufferSize(&response);
@@ -2488,14 +2618,25 @@ void WiFiRequestHandler::Listen(void *vpMessage)
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
-    Esp32Messaging::ListenRequest *request = Encoders::ExtractListenRequest(message->Payload);
     Esp32Messaging::IntegerAndErrnoResponse response = { };
 
-    response.Result = listen(request->SocketHandle, request->BackLog);
-    response.ResponseErrno = (response.Result == 0) ? 0 : errno;
+    if (IsConnected())
+    {
+        Esp32Messaging::ListenRequest *request = Encoders::ExtractListenRequest(message->Payload);
+        response.Result = listen(request->SocketHandle, request->BackLog);
+        response.ResponseErrno = (response.Result == 0) ? 0 : MapErrno(errno);
+        vPortFree(request);
+    }
+    else
+    {
+        response.Result = -1;
+        response.ResponseErrno = MapErrno(ENETDOWN);
+    }
 
-    vPortFree(request);
+    vPortFree(message->Payload);
 
+    message->PayloadLength = Encoders::EncodedIntegerAndErrnoResponseBufferSize(&response);
+    message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
     Encoders::EncodeIntegerAndErrnoResponse(&response, message->Payload);
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOk;
@@ -2517,47 +2658,51 @@ void WiFiRequestHandler::Accept(void *vpMessage)
 {
     ESP_LOGI(COMPONENT_NAME, "Accept: Enter");
     PERFORMANCE_LOGGING_ENTER();
-
+    Esp32Messaging::AcceptResponse response = { };
     Message *message = static_cast<Message *>(vpMessage);
-    Esp32Messaging::AcceptRequest *request = Encoders::ExtractAcceptRequest(message->Payload);
-    free(message->Payload);
-    Esp32Messaging::AcceptResponse response;
 
-    struct sockaddr sa = {};
-    socklen_t saLen = sizeof(sa);
-    response.Result = accept(request->SocketHandle, &sa, &saLen);
-    if (response.Result > 0)
+    if (IsConnected())
     {
-        Esp32Messaging::SockAddr *sockAddr = static_cast<Esp32Messaging::SockAddr *>(pvPortMalloc(sizeof(Esp32Messaging::SockAddr)));
-        bzero(sockAddr, sizeof(Esp32Messaging::SockAddr));
-        int family;
-        Mapping::GetStmValue(Mapping::AddressFamily, sa.sa_family, &family);
-        sockAddr->Family = (uint8_t) (family & 0xff);
-        struct sockaddr_in *sin = (struct sockaddr_in *) &sa;
-        sockAddr->Port = sin->sin_port;
-        memcpy(&sockAddr->Ip4Address, &sin->sin_addr, sizeof(sin->sin_addr));
-        response.AddrLength = Encoders::EncodedSockAddrBufferSize(sockAddr);
-        response.Addr = static_cast<uint8_t *>(pvPortMalloc(response.AddrLength));
-        Encoders::EncodeSockAddr(sockAddr, response.Addr);
-        vPortFree(sockAddr);
-        response.ResponseErrno = 0;
-        ESP_LOGI(COMPONENT_NAME, "Accept: Socket handle: %d", response.Result);
-        ESP_LOGI(COMPONENT_NAME, "Accept: Family: %d", sin->sin_family);
-        ESP_LOGI(COMPONENT_NAME, "Accept: IP address: %s", inet_ntoa(sin->sin_addr));
-        ESP_LOGI(COMPONENT_NAME, "Accept: Port: %d", ntohs(sin->sin_port));
+        Esp32Messaging::AcceptRequest *request = Encoders::ExtractAcceptRequest(message->Payload);
+
+        struct sockaddr sa = {};
+        socklen_t saLen = sizeof(sa);
+        response.Result = accept(request->SocketHandle, &sa, &saLen);
+        if (response.Result > 0)
+        {
+            Esp32Messaging::SockAddr *sockAddr = static_cast<Esp32Messaging::SockAddr *>(pvPortMalloc(sizeof(Esp32Messaging::SockAddr)));
+            bzero(sockAddr, sizeof(Esp32Messaging::SockAddr));
+            int family;
+            Mapping::GetStmValue(Mapping::AddressFamily, sa.sa_family, &family);
+            sockAddr->Family = (uint8_t) (family & 0xff);
+            struct sockaddr_in *sin = (struct sockaddr_in *) &sa;
+            sockAddr->Port = sin->sin_port;
+            memcpy(&sockAddr->Ip4Address, &sin->sin_addr, sizeof(sin->sin_addr));
+            response.AddrLength = Encoders::EncodedSockAddrBufferSize(sockAddr);
+            response.Addr = static_cast<uint8_t *>(pvPortMalloc(response.AddrLength));
+            Encoders::EncodeSockAddr(sockAddr, response.Addr);
+            vPortFree(sockAddr);
+            response.ResponseErrno = 0;
+            ESP_LOGI(COMPONENT_NAME, "Accept: Socket handle: %d", response.Result);
+            ESP_LOGI(COMPONENT_NAME, "Accept: Family: %d", sin->sin_family);
+            ESP_LOGI(COMPONENT_NAME, "Accept: IP address: %s", inet_ntoa(sin->sin_addr));
+            ESP_LOGI(COMPONENT_NAME, "Accept: Port: %d", ntohs(sin->sin_port));
+        }
+        else
+        {
+            response.AddrLength = 0;
+            response.Addr = nullptr;
+            response.ResponseErrno = MapErrno(errno);
+        }
+        vPortFree(request);
     }
     else
     {
-        response.AddrLength = 0;
-        response.Addr = nullptr;
-        int32_t result = 0;
-        if (Mapping::GetStmValue(Mapping::Errno, errno, &result) != 0)
-        {
-            Mapping::GetStmValue(Mapping::Errno, EFAULT, &result);
-        }
-        response.ResponseErrno = result;
+        response.Result = -1;
+        response.ResponseErrno = MapErrno(ENETDOWN);
     }
-    vPortFree(request);
+
+    vPortFree(message->Payload);
 
     message->PayloadLength = Encoders::EncodedAcceptResponseBufferSize(&response);
     message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
@@ -2587,8 +2732,6 @@ void WiFiRequestHandler::Ioctl(void *vpMessage)
 
     Message *message = static_cast<Message *>(vpMessage);
     Esp32Messaging::IoctlRequest *request = Encoders::ExtractIoctlRequest(message->Payload);
-    vPortFree(message->Payload);
-    message->PayloadLength = 0;
 
     Esp32Messaging::IoctlResponse response;
     switch (request->Command)
@@ -2623,6 +2766,8 @@ void WiFiRequestHandler::Ioctl(void *vpMessage)
     }
     vPortFree(request);
 
+    vPortFree(message->Payload);
+
     message->PayloadLength = Encoders::EncodedIoctlResponseBufferSize(&response);
     message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
     Encoders::EncodeIoctlResponse(&response, message->Payload);
@@ -2650,53 +2795,58 @@ void WiFiRequestHandler::GetSockPeerName(void *vpMessage, WiFiFunction::WiFiFunc
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
-    Esp32Messaging::GetSockPeerNameRequest *request = Encoders::ExtractGetSockPeerNameRequest(message->Payload);
-    vPortFree(message->Payload);
-    Esp32Messaging::GetSockPeerNameResponse response;
+    Esp32Messaging::GetSockPeerNameResponse response = { };
 
-    struct sockaddr sa = {};
-    socklen_t saLen = sizeof(sa);
-    if (methodToCall == WiFiFunction::GetSockName)
+    if (IsConnected())
     {
-        response.Result = getsockname(request->SocketHandle, &sa, &saLen);
-    }
-    else
-    {
-        response.Result = getpeername(request->SocketHandle, &sa, &saLen);
-    }
-    if (response.Result == 0)
-    {
-        Esp32Messaging::SockAddr *sockAddr = static_cast<Esp32Messaging::SockAddr *>(pvPortMalloc(sizeof(Esp32Messaging::SockAddr)));
-        bzero(sockAddr, sizeof(Esp32Messaging::SockAddr));
-        int family;
-        Mapping::GetStmValue(Mapping::AddressFamily, sa.sa_family, &family);
-        sockAddr->Family = (uint8_t) (family & 0xff);
-        struct sockaddr_in *sin = (struct sockaddr_in *) &sa;
-        sockAddr->Port = sin->sin_port;
-        memcpy(&sockAddr->Ip4Address, &sin->sin_addr, sizeof(sin->sin_addr));
-        response.AddrLength = Encoders::EncodedSockAddrBufferSize(sockAddr);
-        response.Addr = static_cast<uint8_t *>(pvPortMalloc(response.AddrLength));
-        Encoders::EncodeSockAddr(sockAddr, response.Addr);
-        vPortFree(sockAddr);
-        response.ResponseErrno = 0;
-        ESP_LOGI(COMPONENT_NAME, "GetSockPeerName: Socket handle: %d", response.Result);
-        ESP_LOGI(COMPONENT_NAME, "GetSockPeerName: Family: %d", sin->sin_family);
-        ESP_LOGI(COMPONENT_NAME, "GetSockPeerName: IP address: %s", inet_ntoa(sin->sin_addr));
-        ESP_LOGI(COMPONENT_NAME, "GetSockPeerName: Port: %d", ntohs(sin->sin_port));
-    }
-    else
-    {
-        response.AddrLength = 0;
-        response.Addr = nullptr;
-        int32_t result = 0;
-        if (Mapping::GetStmValue(Mapping::Errno, errno, &result) != 0)
+        Esp32Messaging::GetSockPeerNameRequest *request = Encoders::ExtractGetSockPeerNameRequest(message->Payload);
+
+        struct sockaddr sa = { };
+        socklen_t saLen = sizeof(sa);
+        if (methodToCall == WiFiFunction::GetSockName)
         {
-            Mapping::GetStmValue(Mapping::Errno, EFAULT, &result);
+            response.Result = getsockname(request->SocketHandle, &sa, &saLen);
         }
-        response.ResponseErrno = result;
-        ESP_LOGE(COMPONENT_NAME, "Failure: Result code %d (%s), errno %d (%s)", response.Result, esp_err_to_name(response.Result), errno, strerror(errno));
+        else
+        {
+            response.Result = getpeername(request->SocketHandle, &sa, &saLen);
+        }
+        if (response.Result == 0)
+        {
+            Esp32Messaging::SockAddr *sockAddr = static_cast<Esp32Messaging::SockAddr *>(pvPortMalloc(sizeof(Esp32Messaging::SockAddr)));
+            bzero(sockAddr, sizeof(Esp32Messaging::SockAddr));
+            int family;
+            Mapping::GetStmValue(Mapping::AddressFamily, sa.sa_family, &family);
+            sockAddr->Family = (uint8_t) (family & 0xff);
+            struct sockaddr_in *sin = (struct sockaddr_in *) &sa;
+            sockAddr->Port = sin->sin_port;
+            memcpy(&sockAddr->Ip4Address, &sin->sin_addr, sizeof(sin->sin_addr));
+            response.AddrLength = Encoders::EncodedSockAddrBufferSize(sockAddr);
+            response.Addr = static_cast<uint8_t *>(pvPortMalloc(response.AddrLength));
+            Encoders::EncodeSockAddr(sockAddr, response.Addr);
+            vPortFree(sockAddr);
+            response.ResponseErrno = 0;
+            ESP_LOGI(COMPONENT_NAME, "GetSockPeerName: Socket handle: %d", response.Result);
+            ESP_LOGI(COMPONENT_NAME, "GetSockPeerName: Family: %d", sin->sin_family);
+            ESP_LOGI(COMPONENT_NAME, "GetSockPeerName: IP address: %s", inet_ntoa(sin->sin_addr));
+            ESP_LOGI(COMPONENT_NAME, "GetSockPeerName: Port: %d", ntohs(sin->sin_port));
+        }
+        else
+        {
+            response.AddrLength = 0;
+            response.Addr = nullptr;
+            response.ResponseErrno = MapErrno(errno);
+            ESP_LOGE(COMPONENT_NAME, "Failure: Result code %d (%s), errno %d (%s)", response.Result, esp_err_to_name(response.Result), errno, strerror(errno));
+        }
+        vPortFree(request);
     }
-    vPortFree(request);
+    else
+    {
+        response.Result = -1;
+        response.ResponseErrno = MapErrno(ENETDOWN);
+    }
+
+    vPortFree(message->Payload);
 
     message->PayloadLength = Encoders::EncodedGetSockPeerNameResponseBufferSize(&response);
     message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
@@ -2756,7 +2906,7 @@ void WiFiRequestHandler::Poll(void *vpMessage)
     int event = 0;
     if (request->Setup == 2)
     {
-        struct pollfd fds = {};
+        struct pollfd fds = { };
         fds.fd = request->SocketHandle;
         Mapping::GetEspFlagValue(Mapping::PollEvents, request->Events, &event);
         ESP_LOGI(COMPONENT_NAME, "Poll: Requested Nuttx events 0x%04d maps to ESP events 0x%04d", request->Events, event);
@@ -2778,11 +2928,10 @@ void WiFiRequestHandler::Poll(void *vpMessage)
         errno = EFAULT;
     }
     
-    response.ResponseErrno = errno;
     if (errno != 0)
     {
-        Mapping::GetStmValue(Mapping::Errno, errno, &response.ResponseErrno);
         response.Result = -1;
+        response.ResponseErrno = MapErrno(errno);
     }
 
     vPortFree(request);
@@ -2820,13 +2969,13 @@ void WiFiRequestHandler::StationStartedEvent()
     {
         xEventGroupClearBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTED_BIT | WIFI_INTERFACE_STARTING_BIT | WIFI_CONNECTING_BIT | WIFI_RECONNECTING_BIT);
         xEventGroupSetBits(_xWiFiEventGroup, WIFI_ERROR_BIT);
-        RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::StartInterfaceEvent, StatusCodes::Failure);
+        RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::StartWiFiInterfaceEvent, StatusCodes::Failure);
     }
     else
     {
         xEventGroupClearBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTING_BIT);
         xEventGroupSetBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTED_BIT);
-        RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::StartInterfaceEvent);
+        RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::StartWiFiInterfaceEvent);
     }
     ESP_LOGI(COMPONENT_NAME, "StationStartedEvent: Exit");
 }
@@ -2864,7 +3013,7 @@ void WiFiRequestHandler::StationGotIpEvent(ip_event_got_ip_t *eventData)
 
     xEventGroupClearBits(_xWiFiEventGroup, WIFI_CONNECTING_BIT | WIFI_RECONNECTING_BIT);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT);
-    RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::ConnectEvent);
+    RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::ConnectToAccessPointEvent);
     ESP_LOGI(COMPONENT_NAME, "StationGotIpEvent: Exit");
 }
 /**
@@ -2909,7 +3058,7 @@ void WiFiRequestHandler::StationDisconnectedEvent(wifi_event_sta_disconnected_t 
         bzero((void *) &_ipInformation, sizeof(esp_netif_ip_info_t));
         bzero((void *) &_apInformation, sizeof(wifi_event_sta_connected_t));
         memcpy((void *) &_disconnectData, (void *) eventData, sizeof(_disconnectData));
-        RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::DisconnectEvent);
+        RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::DisconnectFromAccessPointEvent);
         xEventGroupSetBits(_xWiFiEventGroup, WIFI_ERROR_BIT);
     }
     ESP_LOGI(COMPONENT_NAME, "StationDisconnectedEvent: Exit");
@@ -2961,7 +3110,7 @@ void WiFiRequestHandler::PollRequestProcessor(void *parameters)
     request->PollResult = poll(request->Fds, 1, request->Timeout);
     if (request->PollResult < 0)
     {
-        Mapping::GetStmValue(Mapping::Errno, errno, &request->PollErrno);
+        request->PollErrno = MapErrno(errno);
     }
     else
     {
