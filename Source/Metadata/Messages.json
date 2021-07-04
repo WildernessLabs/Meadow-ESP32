@@ -39,6 +39,13 @@
                 { "Name": "Password", "DataType": "string" }
             ]
         },
+        { 
+            "Name": "DisconnectFromAccessPointRequest",
+            "MessageElements":
+            [
+                { "Name": "TurnOffWiFiInterface", "DataType": "byte" }
+            ]
+        },
         {
             "Name": "ConnectDisconnectData",
             "MessageElements":
@@ -343,7 +350,8 @@
             "MessageElements":
             [
                 { "Name": "Addr", "DataType": "blob" },
-                { "Name": "Flags", "DataType": "int" }
+                { "Name": "Flags", "DataType": "int" },
+                { "Name": "ResponseErrno", "DataType": "int" }
             ]
         },
         {

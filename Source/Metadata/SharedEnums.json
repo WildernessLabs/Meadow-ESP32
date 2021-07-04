@@ -42,11 +42,10 @@
           "Comment": "WiFi functions available on the ESP32",
           "BaseDataType": "UInt32",
           "EnumNames": [
-              "StartNetwork", "Stop", "ConnectToAccessPoint", "DisconnectFromAccessPoint", "GetAccessPoints",
-              "GetAddrInfo", "Socket", "Connect", "FreeAddrInfo", "Write", "SetSockOpt", "Read",
-              "Close", "SendTo", "RecvFrom", "Poll", "InterruptPollResponse", "Send", "Bind", "Listen", "Accept", "Ioctl",
-              "GetSockName", "GetPeerName", "SetAntenna",
-              "SetTimeOfDayEvent", "ConnectEvent", "DisconnectEvent", "StartInterfaceEvent", "StopInterfaceEvent"
+              "StartWiFiInterface", "StopWiFiInterface", "ConnectToAccessPoint", "DisconnectFromAccessPoint", "GetAccessPoints", "SetAntenna",
+              "Socket", "Connect", "Write", "SetSockOpt", "Read", "Close", "SendTo", "RecvFrom", "Poll", "InterruptPollResponse", "Send", "Bind", "Listen", "Accept", "Ioctl",
+              "GetSockName", "GetPeerName", "FreeAddrInfo", "GetAddrInfo",
+              "StartWiFiInterfaceEvent", "StopWiFiInterfaceEvent", "ConnectToAccessPointEvent", "DisconnectFromAccessPointEvent", "SetTimeOfDayEvent"
           ]
         },
         {
