@@ -312,11 +312,11 @@ char *Logging::WiFiFunctionName(uint32_t function)
 {
     switch (function)
     {
-        case WiFiFunction::StartNetwork:
-            return((char *) "StartNetwork");
+        case WiFiFunction::StartWiFiInterface:
+            return((char *) "StartWiFiInterface");
             break;
-        case WiFiFunction::Stop:
-            return((char *) "Stop");
+        case WiFiFunction::StopWiFiInterface:
+            return((char *) "StopWiFiInterface");
             break;
         case WiFiFunction::ConnectToAccessPoint:
             return((char *) "ConnectToAccessPoint");
@@ -384,16 +384,16 @@ char *Logging::WiFiFunctionName(uint32_t function)
         case WiFiFunction::SetTimeOfDayEvent:
             return((char *) "SetTimeOfDayEvent");
             break;
-        case WiFiFunction::StartInterfaceEvent:
+        case WiFiFunction::StartWiFiInterfaceEvent:
             return((char *) "StartInterfaceEvent");
             break;
-        case WiFiFunction::StopInterfaceEvent:
+        case WiFiFunction::StopWiFiInterfaceEvent:
             return((char *) "StopInterfaceEvent");
             break;
-        case WiFiFunction::ConnectEvent:
+        case WiFiFunction::ConnectToAccessPointEvent:
             return((char *) "ConnectEvent");
             break;
-        case WiFiFunction::DisconnectEvent:
+        case WiFiFunction::DisconnectFromAccessPointEvent:
             return((char *) "DisconnectEvent");
             break;
         case WiFiFunction::SetAntenna:
@@ -763,6 +763,11 @@ void Logging::DumpPerformanceCounters()
  */
 void Logging::StandaloneHeapTracingStart()
 {
+    ESP_LOGI(APP_MAIN_COMPONENT_NAME, " ");
+    ESP_LOGI(APP_MAIN_COMPONENT_NAME, "************************************************************");
+    ESP_LOGI(APP_MAIN_COMPONENT_NAME, "                 Heap Logging Turned On");
+    ESP_LOGI(APP_MAIN_COMPONENT_NAME, "************************************************************");
+    ESP_LOGI(APP_MAIN_COMPONENT_NAME, " ");
     ESP_ERROR_CHECK(heap_trace_init_standalone(_heapTraceRecords, NUMBER_OF_HEAP_TRACE_RECORDS));
     ESP_ERROR_CHECK(heap_trace_start(HEAP_TRACE_LEAKS));
     _isStandaloneHeapTracingActive = true;
@@ -783,7 +788,15 @@ void Logging::StandaloneHeapTracingStop()
  */
 void Logging::DumpStandaloneHeapTraceData()
 {
+    vTaskDelay(2000 / portTICK_PERIOD_MS);
+    ESP_LOGI(APP_MAIN_COMPONENT_NAME, " ");
+    ESP_LOGI(APP_MAIN_COMPONENT_NAME, "************************************************************");
+    ESP_LOGI(APP_MAIN_COMPONENT_NAME, "                   Heap Logging Dump");
+
     heap_trace_dump();
+
+    ESP_LOGI(APP_MAIN_COMPONENT_NAME, "************************************************************");
+    ESP_LOGI(APP_MAIN_COMPONENT_NAME, " ");
 }
 
 /**
