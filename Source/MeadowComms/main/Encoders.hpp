@@ -63,6 +63,11 @@ namespace Esp32Messaging
         char * Password;
     };
 
+    struct DisconnectFromAccessPointRequest
+    {
+        uint8_t TurnOffWiFiInterface;
+    };
+
     struct ConnectDisconnectData
     {
         uint32_t IpAddress;
@@ -318,6 +323,7 @@ namespace Esp32Messaging
         uint32_t AddrLength;
         uint8_t *Addr;
         int32_t Flags;
+        int32_t ResponseErrno;
     };
 
     struct GetSockPeerNameRequest
@@ -415,6 +421,9 @@ public:
     static void EncodeWiFiCredentials(Esp32Messaging::WiFiCredentials *, uint8_t *);
     static int EncodedWiFiCredentialsBufferSize(Esp32Messaging::WiFiCredentials *);
     static Esp32Messaging::WiFiCredentials *ExtractWiFiCredentials(uint8_t *);
+    static void EncodeDisconnectFromAccessPointRequest(Esp32Messaging::DisconnectFromAccessPointRequest *, uint8_t *);
+    static int EncodedDisconnectFromAccessPointRequestBufferSize(Esp32Messaging::DisconnectFromAccessPointRequest *);
+    static Esp32Messaging::DisconnectFromAccessPointRequest *ExtractDisconnectFromAccessPointRequest(uint8_t *);
     static void EncodeConnectDisconnectData(Esp32Messaging::ConnectDisconnectData *, uint8_t *);
     static int EncodedConnectDisconnectDataBufferSize(Esp32Messaging::ConnectDisconnectData *);
     static Esp32Messaging::ConnectDisconnectData *ExtractConnectDisconnectData(uint8_t *);
