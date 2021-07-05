@@ -3047,6 +3047,8 @@ void Encoders::EncodeIoctlResponse(Esp32Messaging::IoctlResponse *ioctlResponse,
     }
     EncodeInt32(ioctlResponse->Flags, buffer);
     buffer += 4;
+    EncodeInt32(ioctlResponse->Result, buffer);
+    buffer += 4;
     EncodeInt32(ioctlResponse->ResponseErrno, buffer);
 }
 
@@ -3064,7 +3066,7 @@ int Encoders::EncodedIoctlResponseBufferSize(Esp32Messaging::IoctlResponse *ioct
 {
     int result = 0;
     result += ioctlResponse->AddrLength;
-    return(result + 12);
+    return(result + 16);
 }
 
 /**
@@ -3097,6 +3099,8 @@ Esp32Messaging::IoctlResponse *Encoders::ExtractIoctlResponse(uint8_t *buffer)
         ioctlResponse->Addr = nullptr;
     }
     ioctlResponse->Flags = ExtractInt32(buffer);
+    buffer += 4;
+    ioctlResponse->Result = ExtractInt32(buffer);
     buffer += 4;
     ioctlResponse->ResponseErrno = ExtractInt32(buffer);
     return(ioctlResponse);
