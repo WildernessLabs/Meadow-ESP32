@@ -2731,40 +2731,53 @@ void WiFiRequestHandler::Ioctl(void *vpMessage)
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
-    Esp32Messaging::IoctlRequest *request = Encoders::ExtractIoctlRequest(message->Payload);
-
-    Esp32Messaging::IoctlResponse response;
-    switch (request->Command)
+    Esp32Messaging::IoctlResponse response = { };
+    
+    if (IsConnected())
     {
-        case SIOCGIFCONF:
-            esp_netif_ip_info_t ipInfo;
-            if (esp_netif_get_ip_info(_stationNetIfHandle, &ipInfo) == ESP_OK)
-            {
-                Esp32Messaging::SockAddr sa = {};
-                int family;
+        Esp32Messaging::IoctlRequest *request = Encoders::ExtractIoctlRequest(message->Payload);
 
-                Mapping::GetStmValue(Mapping::AddressFamily, AF_INET, &family);
-                sa.Family = (unsigned char) (family & 0xff);
-                memcpy(&sa.Ip4Address, &ipInfo.ip, sizeof(ipInfo.ip));
-                response.AddrLength = Encoders::EncodedSockAddrBufferSize(&sa);
-                response.Addr = static_cast<uint8_t *>(pvPortMalloc(response.AddrLength));
-                Encoders::EncodeSockAddr(&sa, response.Addr);
-            }
-            break;
-        case SIOCGIFFLAGS:
-            if (esp_netif_get_ip_info(_stationNetIfHandle, &ipInfo) == ESP_OK)
-            {
-                response.Flags = IFF_UP;
-            }
-            else
-            {
-                response.Flags = IFF_DOWN;
-            }
-            response.AddrLength = 0;
-            response.Addr = nullptr;
-            break;
+        switch (request->Command)
+        {
+            case SIOCGIFCONF:
+                esp_netif_ip_info_t ipInfo;
+                if (esp_netif_get_ip_info(_stationNetIfHandle, &ipInfo) == ESP_OK)
+                {
+                    Esp32Messaging::SockAddr sa = { };
+                    int family;
+
+                    Mapping::GetStmValue(Mapping::AddressFamily, AF_INET, &family);
+                    sa.Family = (unsigned char) (family & 0xff);
+                    memcpy(&sa.Ip4Address, &ipInfo.ip, sizeof(ipInfo.ip));
+                    response.AddrLength = Encoders::EncodedSockAddrBufferSize(&sa);
+                    response.Addr = static_cast<uint8_t *>(pvPortMalloc(response.AddrLength));
+                    Encoders::EncodeSockAddr(&sa, response.Addr);
+                }
+                break;
+            case SIOCGIFFLAGS:
+                if (esp_netif_get_ip_info(_stationNetIfHandle, &ipInfo) == ESP_OK)
+                {
+                    response.Flags = IFF_UP;
+                }
+                else
+                {
+                    response.Flags = IFF_DOWN;
+                }
+                response.AddrLength = 0;
+                response.Addr = nullptr;
+                break;
+            default:
+                response.Result = -1;
+                response.ResponseErrno = MapErrno(EINVAL);
+                break;
+        }
+        vPortFree(request);
     }
-    vPortFree(request);
+    else
+    {
+        response.Result = -1;
+        response.ResponseErrno = MapErrno(ENETDOWN);
+    }
 
     vPortFree(message->Payload);
 
