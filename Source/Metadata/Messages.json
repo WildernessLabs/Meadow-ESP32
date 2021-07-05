@@ -351,6 +351,7 @@
             [
                 { "Name": "Addr", "DataType": "blob" },
                 { "Name": "Flags", "DataType": "int" },
+                { "Name": "Result", "DataType": "int" },
                 { "Name": "ResponseErrno", "DataType": "int" }
             ]
         },

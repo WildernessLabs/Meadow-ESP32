@@ -323,6 +323,7 @@ namespace Esp32Messaging
         uint32_t AddrLength;
         uint8_t *Addr;
         int32_t Flags;
+        int32_t Result;
         int32_t ResponseErrno;
     };
 
