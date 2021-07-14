@@ -47,10 +47,13 @@ void TestBluetoothMessage(MessageDispatcher *dispatcher);
  */
 void heap_caps_alloc_failed_hook(size_t requestedSize, uint32_t caps, const char *functionName)
 {
-    printf("%s was called but failed to allocate %d bytes with 0x%X capabilities. \n", functionName, requestedSize, caps);
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
-    char *ptr = NULL;
-    *ptr = 0;
+    if (requestedSize != 0)
+    {
+        printf("%s was called but failed to allocate %d bytes with 0x%X capabilities. \n", functionName, requestedSize, caps);
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        char *ptr = NULL;
+        *ptr = 0;
+    }
 }
 
 /*
@@ -59,8 +62,10 @@ void heap_caps_alloc_failed_hook(size_t requestedSize, uint32_t caps, const char
 // cppcheck-suppress unusedFunction symbolName=app_main
 extern "C" void app_main()
 {
+#if defined(DEBUG)
     esp_err_t error = heap_caps_register_failed_alloc_callback(heap_caps_alloc_failed_hook);
     ESP_ERROR_CHECK(error);
+#endif
 
     Logging::Setup();
     NvsManager::Setup();
