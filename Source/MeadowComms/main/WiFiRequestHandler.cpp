@@ -947,61 +947,63 @@ void WiFiRequestHandler::EventHandlerHelper(esp_event_base_t eventBase, int32_t 
         switch (eventId)
         {
             case WIFI_EVENT_WIFI_READY:
-                ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: WiFi Ready");
+                ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_WIFI_READY");
                 break;
             case WIFI_EVENT_SCAN_DONE:
-                ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: Scan for access points complete");
+                ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_SCAN_DONE");
                 xEventGroupSetBits(_xWiFiEventGroup, WIFI_SCAN_COMPLETE_BIT);
                 break;
             case WIFI_EVENT_STA_START:
-                ESP_LOGI(COMPONENT_NAME, "Station started event");
+                ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_STA_START");
                 StationStartedEvent();
                 break;
             case WIFI_EVENT_STA_STOP:
-                ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: Station stopped");
+                ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_STA_STOP");
                 RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::StopWiFiInterfaceEvent);
                 break;
             case WIFI_EVENT_STA_CONNECTED:
+                ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_STA_CONNECTED");
                 StationConnectedEvent((wifi_event_sta_connected_t *) eventData);
                 break;
             case WIFI_EVENT_STA_DISCONNECTED:
+                ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_STA_DISCONNECTED");
                 StationDisconnectedEvent((wifi_event_sta_disconnected_t *) eventData);
                 break;
             case WIFI_EVENT_STA_AUTHMODE_CHANGE:
-                ESP_LOGI(COMPONENT_NAME, "Authentication mode changed.");
+                ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_STA_AUTHMODE_CHANGE");
                 break;
             case WIFI_EVENT_STA_WPS_ER_SUCCESS:
-                ESP_LOGI(COMPONENT_NAME, "WiFi Event: WIFI_EVENT_STA_WPS_ER_SUCCESS");
+                ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper:  WIFI_EVENT_STA_WPS_ER_SUCCESS");
                 break;
             case WIFI_EVENT_STA_WPS_ER_FAILED:
-                ESP_LOGI(COMPONENT_NAME, "WiFi Event: WIFI_EVENT_STA_WPS_ER_FAILED");
+                ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_STA_WPS_ER_FAILED");
                 break;
             case WIFI_EVENT_STA_WPS_ER_TIMEOUT:
-                ESP_LOGI(COMPONENT_NAME, "WiFi Event: WIFI_EVENT_STA_WPS_ER_TIMEOUT");
+                ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_STA_WPS_ER_TIMEOUT");
                 break;
             case WIFI_EVENT_STA_WPS_ER_PIN:
-                ESP_LOGI(COMPONENT_NAME, "WiFi Event: WIFI_EVENT_STA_WPS_ER_PIN");
+                ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_STA_WPS_ER_PIN");
                 break;
             case WIFI_EVENT_STA_WPS_ER_PBC_OVERLAP:
-                ESP_LOGI(COMPONENT_NAME, "WiFi Event: WIFI_EVENT_STA_WPS_ER_PBC_OVERLAP");
+                ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_STA_WPS_ER_PBC_OVERLAP");
                 break;
             case WIFI_EVENT_AP_START:
-                ESP_LOGI(COMPONENT_NAME, "WiFi Event: WIFI_EVENT_AP_START");
+                ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_AP_START");
                 break;
             case WIFI_EVENT_AP_STOP:
-                ESP_LOGI(COMPONENT_NAME, "WiFi Event: WIFI_EVENT_AP_STOP");
+                ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_AP_STOP");
                 break;
             case WIFI_EVENT_AP_STACONNECTED:
-                ESP_LOGI(COMPONENT_NAME, "WiFi Event: WIFI_EVENT_AP_STACONNECTED");
+                ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_AP_STACONNECTED");
                 break;
             case WIFI_EVENT_AP_STADISCONNECTED:
-                ESP_LOGI(COMPONENT_NAME, "WiFi Event: WIFI_EVENT_AP_STADISCONNECTED");
+                ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_AP_STADISCONNECTED");
                 break;
             case WIFI_EVENT_AP_PROBEREQRECVED:
-                ESP_LOGI(COMPONENT_NAME, "WiFi Event: WIFI_EVENT_AP_PROBEREQRECVED");
+                ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_AP_PROBEREQRECVED");
                 break;
             default:
-                ESP_LOGI(COMPONENT_NAME, "Unhandled WiFi Event ID %d", eventId);
+                ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: Unhandled WiFi Event ID %d", eventId);
                 break;
         }
     }
@@ -1034,7 +1036,7 @@ void WiFiRequestHandler::EventHandlerHelper(esp_event_base_t eventBase, int32_t 
                     ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: IP_EVENT_PPP_LOST_IP");
                     break;
                 default:
-                    ESP_LOGI(COMPONENT_NAME, "Unhandled IP Event ID %d", eventId);
+                    ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: Unhandled IP Event ID %d", eventId);
                     break;
             }
         }
@@ -1253,7 +1255,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::DisconnectFromAccessPoint()
 }
 
 /**
- *  @brief Disconnect from any access points.
+ *  @brief Disconnect from the current access point.
  *
  *  @param message
  *      Message containing the encoded request.
@@ -1262,15 +1264,27 @@ void WiFiRequestHandler::DisconnectFromAccessPoint(Message *message)
 {
     ESP_LOGI(COMPONENT_NAME, "DisconnectFromAccessPoint: Enter");
 
-    StatusCodes::StatusCodes sc = DisconnectFromAccessPoint();
+    StatusCodes::StatusCodes sc = StatusCodes::CompletedOk;
+    if (IsConnected())
+    {
+        sc = DisconnectFromAccessPoint();
+    }
+    if (sc == StatusCodes::CompletedOk)
+    {
+        Esp32Messaging::DisconnectFromAccessPointRequest *request = Encoders::ExtractDisconnectFromAccessPointRequest(message->Payload);
+
+        if (request->TurnOffWiFiInterface == 1)
+        {
+            sc = StopWiFIAdapter();
+        }
+        vPortFree(request);
+    }
+
     message->StatusCode = sc;
     message->MessageType = MessageTypes::Response;
     _messageDispatcher->QueueMessageForStm32(message);
 
-    if (sc == StatusCodes::CompletedOk)
-    {
-        RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::DisconnectFromAccessPointEvent, sc);
-    }
+    RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::DisconnectFromAccessPointEvent, sc);
 
     ESP_LOGI(COMPONENT_NAME, "DisconnectFromAccessPoint: Exit");
 }
@@ -1487,7 +1501,7 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
     ESP_LOGI(COMPONENT_NAME, "ConnectToAccessPoint: Exit");
 
-    Logging::StandaloneHeapTracingStart();
+    // Logging::StandaloneHeapTracingStart();
 
 }
 
@@ -1574,7 +1588,6 @@ esp_err_t WiFiRequestHandler::StartWiFiInterface()
  *  @param message
  *      Request sent from the STM32.
  */
-// void WiFiRequestHandler::StartNetwork(void *m)
 void WiFiRequestHandler::StartNetwork(Message *message)
 {
     ESP_LOGI(COMPONENT_NAME, "StartNetwork: Enter");

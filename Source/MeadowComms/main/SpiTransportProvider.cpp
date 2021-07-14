@@ -963,6 +963,8 @@ spi_slave_transaction_t *SpiTransportProvider::OutboundMessageBodySent(spi_slave
  *
  *  If the body was received then free up any memory used and prepare to
  *  receive the next message header.
+ * 
+ *  Note: Contains HEAPCODE for heap tracing / debugging.
  *
  *  @param transaction
  *      Last SPI transaction that was executed.
