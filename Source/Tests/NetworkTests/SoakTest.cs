@@ -27,7 +27,7 @@ namespace MeadowApp
             Device.InitWiFiAdapter().Wait();
         }
         
-        public async void RunTest()
+        public async void RunTest(int iterations)
         {
             Console.WriteLine($"Connecting to WiFi Network {Secrets.WIFI_NAME}");
             var connectionResult = await Device.WiFiAdapter.Connect(Secrets.WIFI_NAME, Secrets.WIFI_PASSWORD);
@@ -40,7 +40,7 @@ namespace MeadowApp
             {
                 int count = 0;
                 client.Timeout = new TimeSpan(0, 1, 0);
-                while (true)
+                while (count < iterations)
                 {
                     count++;
                     Console.WriteLine($"Current request: {count}");
@@ -63,6 +63,7 @@ namespace MeadowApp
                     }
                 }
             }
+            Console.WriteLine("Tests complete.");
         }
     }
 }

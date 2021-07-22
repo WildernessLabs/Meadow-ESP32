@@ -8,10 +8,16 @@ namespace MeadowApp
         // static MeadowApp app;
         public static void Main(string[] args)
         {
-            OauthTest app = new OauthTest();
-            app.RunTest();
+            // OauthTest app = new OauthTest();
+            // app.RunTest();
 
             // DeviceInfo app = new DeviceInfo();
+
+            // OutOfMemoryTest app = new OutOfMemoryTest();
+            // app.RunAsync().Wait();
+
+            SoakTest app = new SoakTest();
+            app.RunTest(10);
 
             Thread.Sleep(Timeout.Infinite);
         }
