@@ -915,7 +915,7 @@ void WiFiRequestHandler::Setup()
      *  Now create the objects necessary for the WiFi tasks.
      */
     _xWiFiEventGroup = xEventGroupCreate();
-    xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
+    xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
     xTaskCreate(Task, COMPONENT_NAME, 2048 * 2, this, configMAX_PRIORITIES - 1, &_taskHandle);
     ESP_LOGI(COMPONENT_NAME, "Setup: Exit");
 }
@@ -1080,6 +1080,13 @@ void WiFiRequestHandler::EventHandler(void *arg, esp_event_base_t eventBase, int
 
 /**
  *  @brief Dispatch the WiFi request to the appropriate method in the class.
+ * 
+ *  Some of the method calls in the switch statement below are followed by a call to
+ *  xEventGroupSetBits and some are not.  The basic principle is that the POSIX calls
+ *  that are executed through the thread pool need to have the 
+ *  WIFI_READY_FOR_NEXT_COMMAND_BIT set here as the thread pool does not know about
+ *  the WiFi event group.  The other methods (in this class) have this set in the
+ *  method call itself.
  *
  *  @param request
  *      Data structure containing the request information from the sender.
@@ -1087,15 +1094,14 @@ void WiFiRequestHandler::EventHandler(void *arg, esp_event_base_t eventBase, int
 void WiFiRequestHandler::DispatchRequest(Message *request)
 {
     ESP_LOGI(COMPONENT_NAME, "DispatchRequest: Enter");
-    xEventGroupClearBits(_xWiFiEventGroup, WIFI_READY_BIT);
+    xEventGroupClearBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
     switch (request->Function)
     {
         case WiFiFunction::StartWiFiInterface:
-            // _threadPool->Execute(WiFiRequestHandler::StartNetwork, (void *) request);
-            StartNetwork(request);
+            StartWiFiInterface(request);
             break;
         case WiFiFunction::StopWiFiInterface:
-            Stop(request);
+            StopWiFIAdapter(request);
             break;
         case WiFiFunction::ConnectToAccessPoint:
             ConnectToAccessPoint(request);
@@ -1111,75 +1117,75 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
             break;
         case WiFiFunction::Close:
             _threadPool->Execute(Close, (void *) request);
-            xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
+            xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
         case WiFiFunction::Read:
             _threadPool->Execute(Read, (void *) request);
-            xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
+            xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
         case WiFiFunction::SetSockOpt:
             _threadPool->Execute(SetSockOpt, (void *) request);
-            xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
+            xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
         case WiFiFunction::Write:
             _threadPool->Execute(Write, (void *) request);
-            xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
+            xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
         case WiFiFunction::FreeAddrInfo:
             _threadPool->Execute(FreeAddrInfo, (void *) request);
-            xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
+            xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
         case WiFiFunction::Connect:
             _threadPool->Execute(Connect, (void *) request);
-            xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
+            xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
         case WiFiFunction::Socket:
             _threadPool->Execute(Socket, (void *) request);
-            xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
+            xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
         case WiFiFunction::GetAddrInfo:
             _threadPool->Execute(GetAddrInfo, (void *) request);
-            xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
+            xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
         case WiFiFunction::SendTo:
             _threadPool->Execute(SendTo, (void *) request);
-            xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
+            xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
         case WiFiFunction::RecvFrom:
             _threadPool->Execute(RecvFrom, (void *) request);
-            xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
+            xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
         case WiFiFunction::Poll:
             _threadPool->Execute(Poll, (void *) request);
-            xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
+            xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
         case WiFiFunction::Send:
             _threadPool->Execute(Send, (void *) request);
-            xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
+            xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
         case WiFiFunction::Accept:
             _threadPool->Execute(Accept, (void *) request);
-            xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
+            xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
         case WiFiFunction::Bind:
             _threadPool->Execute(Bind, (void *) request);
-            xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
+            xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
         case WiFiFunction::Listen:
             _threadPool->Execute(Listen, (void *) request);
-            xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
+            xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
         case WiFiFunction::Ioctl:
             _threadPool->Execute(Ioctl, (void *) request);
-            xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
+            xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
         case WiFiFunction::GetSockName:
             _threadPool->Execute(GetSockName, (void *) request);
-            xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
+            xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
         case WiFiFunction::GetPeerName:
             _threadPool->Execute(GetPeerName, (void *) request);
-            xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
+            xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
         default:
             ESP_LOGI(COMPONENT_NAME, "DispatchRequest: Unknown WiFi message received, function %d", request->Function);
@@ -1189,7 +1195,7 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
             }
             break;
     }
-    xEventGroupWaitBits(_xWiFiEventGroup, WIFI_READY_BIT, pdTRUE, pdTRUE, portMAX_DELAY);
+    xEventGroupWaitBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT, pdTRUE, pdTRUE, portMAX_DELAY);
     ESP_LOGI(COMPONENT_NAME, "DispatchRequest: Exit");
 }
 
@@ -1222,15 +1228,33 @@ void WiFiRequestHandler::StopWiFIAdapter(Message *message)
 {
     ESP_LOGI(COMPONENT_NAME, "StopWiFIAdapter: Enter");
 
-    // StatusCodes::StatusCodes sc = StopWiFIAdapter();
-    // message->StatusCode = sc;
-    // message->MessageType = MessageTypes::Response;
-    // _messageDispatcher->QueueMessageForStm32(message);
+    bool raiseEvent = false;
+    StatusCodes::StatusCodes sc = StatusCodes::CompletedOk;
+    EventBits_t bits = xEventGroupGetBits(_xWiFiEventGroup);
+    if (bits & WIFI_CONNECTED_BIT)
+    {
+        sc = DisconnectFromAccessPoint();
+    }
+    if (sc == StatusCodes::CompletedOk)
+    {
+        if (esp_wifi_stop() == ESP_OK)
+        {
+            xEventGroupClearBits(_xWiFiEventGroup, WIFI_STATION_STARTED_BIT | WIFI_INTERFACE_STARTING_BIT);
+            raiseEvent = true;
+        }
+        else
+        {
+            sc = StatusCodes::Failure;
+        }
+    }
+    message->StatusCode = sc;
+    message->MessageType = MessageTypes::Response;
+    _messageDispatcher->QueueMessageForStm32(message);
 
-    // if (sc == StatusCodes::CompletedOk)
-    // {
-    //     RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::DisconnectEvent, sc);
-    // }
+    if (raiseEvent)
+    {
+        RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::StopWiFiInterfaceEvent, sc);
+    }
 
     ESP_LOGI(COMPONENT_NAME, "StopWiFIAdapter: Exit");
 }
@@ -1320,48 +1344,9 @@ void WiFiRequestHandler::SetAntennaRequest(Message *message)
     message->MessageType = MessageTypes::Response;
     _messageDispatcher->QueueMessageForStm32(message);
 
+    xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
+
     ESP_LOGI(COMPONENT_NAME, "SetAntennaRequest: Exit");
-}
-
-/**
- *  @brief Stop the network and release all resources associated with any active connections.
- *
- *  @param message
- *      Message containing the encoded request.
- */
-void WiFiRequestHandler::Stop(Message *message)
-{
-    ESP_LOGI(COMPONENT_NAME, "Stop: Enter");
-
-    bool raiseEvent = false;
-    StatusCodes::StatusCodes sc = StatusCodes::CompletedOk;
-    EventBits_t bits = xEventGroupGetBits(_xWiFiEventGroup);
-    if (bits & WIFI_CONNECTED_BIT)
-    {
-        sc = DisconnectFromAccessPoint();
-    }
-    if (sc == StatusCodes::CompletedOk)
-    {
-        if (esp_wifi_stop() == ESP_OK)
-        {
-            xEventGroupClearBits(_xWiFiEventGroup, WIFI_STATION_STARTED_BIT | WIFI_INTERFACE_STARTING_BIT);
-            raiseEvent = true;
-        }
-        else
-        {
-            sc = StatusCodes::Failure;
-        }
-    }
-    message->StatusCode = sc;
-    message->MessageType = MessageTypes::Response;
-    _messageDispatcher->QueueMessageForStm32(message);
-
-    if (raiseEvent)
-    {
-        RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::StopWiFiInterfaceEvent, sc);
-    }
-
-    ESP_LOGI(COMPONENT_NAME, "Stop: Exit");
 }
 
 /**
@@ -1498,7 +1483,7 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
     message->MessageType = MessageTypes::Response;
     message->StatusCode = result;
     _messageDispatcher->QueueMessageForStm32(message);
-    xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
+    xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
     ESP_LOGI(COMPONENT_NAME, "ConnectToAccessPoint: Exit");
 
     // Logging::StandaloneHeapTracingStart();
@@ -1588,7 +1573,7 @@ esp_err_t WiFiRequestHandler::StartWiFiInterface()
  *  @param message
  *      Request sent from the STM32.
  */
-void WiFiRequestHandler::StartNetwork(Message *message)
+void WiFiRequestHandler::StartWiFiInterface(Message *message)
 {
     ESP_LOGI(COMPONENT_NAME, "StartNetwork: Enter");
     message->MessageType = MessageTypes::Response;
@@ -1601,7 +1586,7 @@ void WiFiRequestHandler::StartNetwork(Message *message)
         message->StatusCode = StatusCodes::Failure;
     }
     _messageDispatcher->QueueMessageForStm32(message);
-    xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
+    xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
     ESP_LOGI(COMPONENT_NAME, "StartNetwork: Exit");
 }
 
@@ -1718,7 +1703,7 @@ void WiFiRequestHandler::GetAvailableNetworks(Message *message)
     message->MessageType = MessageTypes::Response;
     message->StatusCode = result;
     _messageDispatcher->QueueMessageForStm32(message);
-    xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_BIT);
+    xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
     ESP_LOGI(COMPONENT_NAME, "GetAvailableNetworks: Exit");
 }
 
@@ -3068,7 +3053,7 @@ void WiFiRequestHandler::StationDisconnectedEvent(wifi_event_sta_disconnected_t 
     ESP_LOGI(COMPONENT_NAME, "StationDisconnectedEvent: Enter");
 
     bool reallyDisconnect = true;
-    xEventGroupClearBits(_xWiFiEventGroup, WIFI_READY_BIT | WIFI_CONNECTED_BIT | WIFI_CONNECTING_BIT);
+    xEventGroupClearBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT | WIFI_CONNECTED_BIT | WIFI_CONNECTING_BIT);
     if (_automaticReconnect)
     {
         if (_currentRetryCount < _maximumRetryCount)

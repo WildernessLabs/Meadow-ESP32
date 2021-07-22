@@ -125,7 +125,7 @@ private:
     /**
      *  @brief Indicate if the WiFi interface can accept a new request.
      * 
-     *  The WIFI_READY_BIT indicates if this current request has completed successfully.  It
+     *  The WIFI_READY_FOR_NEXT_COMMAND_BIT indicates if this current request has completed successfully.  It
      *  is used to block the Task from making a second request when one is already
      *  running.
      *
@@ -134,7 +134,7 @@ private:
      *  two events, network start and got IP.  The request only ends when the IP address
      *  has been granted.
      */
-    static const int WIFI_READY_BIT = BIT0;
+    static const int WIFI_READY_FOR_NEXT_COMMAND_BIT = BIT0;
 
     /**
      *  @brief Indicate if the system is in the process of connecting to an access point.
@@ -518,14 +518,16 @@ private:
     void ConnectToAccessPoint(Message *message);
 
     /**
-     *  @brief Stop the WiFi and release all resources.
+     *  @brief Start the network interface ready for the device to be configured
+     *  as either an access point (softAP) or as a network device (station).
      */
-    void Stop(Message *message);
+    esp_err_t StartWiFiInterface();
 
     /**
-     *  @brief Start the network.
+     *  @brief Start the network interface ready for the device to be configured
+     *  as either an access point (softAP) or as a network device (station).
      */
-    void StartNetwork(Message *message);
+    void StartWiFiInterface(Message *message);
 
     /**
      *  @brief Get a list of available access points.
@@ -721,12 +723,6 @@ public:
      *  @brief Perform and class level setup required before an instance can be used.
      */
     void Setup();
-
-    /**
-     *  @brief Start the network interface ready for the device to be configured
-     *  as either an access point (softAP) or as a network device (station).
-     */
-    esp_err_t StartWiFiInterface();
 
     /**
      *  @brief This is the event handler called by FreeRTOS.
