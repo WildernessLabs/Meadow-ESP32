@@ -9,7 +9,7 @@
                 { "Name": "MaximumMessageQueueLength", "DataType": "byte" },
                 { "Name": "AutomaticallyStartNetwork", "DataType": "byte" },
                 { "Name": "AutomaticallyReconnect", "DataType": "byte" },
-                { "Name": "MaximumRetryCount", "DataType": "uint32" },
+                { "Name": "MaximumRetryCount", "DataType": "int" },
                 { "Name": "Antenna", "DataType": "byte" },
                 { "Name": "BoardMacAddress", "DataType": "fixedbytearray", "Length": "6" },
                 { "Name": "SoftApMacAddress", "DataType": "fixedbytearray", "Length": "6" },
@@ -47,7 +47,7 @@
             ]
         },
         {
-            "Name": "ConnectDisconnectData",
+            "Name": "ConnectEventData",
             "MessageElements":
             [
                 { "Name": "IpAddress", "DataType": "uint32" },
@@ -57,7 +57,15 @@
                 { "Name": "Bssid", "DataType": "fixedbytearray", "Length": "6" },
                 { "Name": "Channel", "DataType": "byte" },
                 { "Name": "AuthenticationMode", "DataType": "byte" },
-                { "Name": "Connect", "DataType": "byte" },
+                { "Name": "Reason", "DataType": "uint32" }
+            ]
+        },
+        {
+            "Name": "DisconnectEventData",
+            "MessageElements":
+            [
+                { "Name": "Retrying", "DataType": "byte" },
+                { "Name": "RetriesRemaining", "DataType": "int" },
                 { "Name": "Reason", "DataType": "uint32" }
             ]
         },

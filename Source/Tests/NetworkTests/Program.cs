@@ -16,8 +16,11 @@ namespace MeadowApp
             // OutOfMemoryTest app = new OutOfMemoryTest();
             // app.RunAsync().Wait();
 
-            SoakTest app = new SoakTest();
-            app.RunTest(10);
+            // SoakTest app = new SoakTest();
+            // app.RunTest(10);
+
+            WiFiInterfaceControl app = new WiFiInterfaceControl();
+            app.RunTest();
 
             Thread.Sleep(Timeout.Infinite);
         }

@@ -169,11 +169,9 @@ bool RequestHandlerBase::QueueEsp32Message(Message *message)
  */
 void RequestHandlerBase::RaiseEvent(uint8_t interface, uint32_t eventType, uint32_t statusCode, uint8_t *payload, uint32_t payloadLength)
 {
-#if RAISE_EVENTS > 0
     ESP_LOGI(COMPONENT_NAME, "Raising event %s", Logging::FunctionName(interface, eventType));
     Message *message = Message::CreateOnHeap(MessageTypes::Event, interface, eventType, statusCode, _messageDispatcher->GetNextMessageID(), payload, payloadLength);
     _messageDispatcher->QueueMessageForStm32(message);
-#endif
 }
 
 /**
