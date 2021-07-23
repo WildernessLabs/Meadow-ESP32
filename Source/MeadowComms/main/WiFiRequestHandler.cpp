@@ -1452,7 +1452,7 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
     message->DeletePayload();
 
     result = ConnectToAccessPoint(credentials->NetworkName, credentials->Password);
-    Esp32Messaging::ConnectDisconnectData data = { };
+    Esp32Messaging::ConnectEventData data = { };
     if (result == StatusCodes::CompletedOk)
     {
         memcpy((void *) &data.IpAddress, (void *) &_ipInformation.ip, sizeof(data.IpAddress));
@@ -1462,21 +1462,19 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
         memcpy((void *) data.Bssid, (void *) _apInformation.bssid, sizeof(data.Bssid));
         data.Channel = _apInformation.channel;
         data.AuthenticationMode = (uint8_t) _apInformation.authmode;
-        data.Connect = 1;
     }
     else
     {
         memcpy((void *) data.Ssid, (void *) _disconnectData.ssid, _disconnectData.ssid_len);
         memcpy((void *) data.Bssid, (void *) _disconnectData.bssid, sizeof(data.Bssid));
         data.Reason = _disconnectData.reason;
-        data.Connect = 0;
         bzero((void *) &_disconnectData, sizeof(_disconnectData));
         result = StatusCodes::WiFiDisconnected;
         _lastIdfErrorCode = ESP_OK;
     }
-    message->PayloadLength = Encoders::EncodedConnectDisconnectDataBufferSize(&data);
+    message->PayloadLength = Encoders::EncodedConnectEventDataBufferSize(&data);
     message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-    Encoders::EncodeConnectDisconnectData(&data, message->Payload);
+    Encoders::EncodeConnectEventData(&data, message->Payload);
 
     vPortFree(credentials);
 
@@ -1540,23 +1538,9 @@ esp_err_t WiFiRequestHandler::StartWiFiInterface()
             result = esp_event_handler_register(IP_EVENT, ESP_EVENT_ANY_ID, &WiFiRequestHandler::EventHandler, this);
         }
 
-        // if (result == ESP_OK)
-        // {
-        //     result = esp_wifi_start();
-        // }
-
         if (result == ESP_OK)
         {
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTED_BIT);
-            // bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTED_BIT | WIFI_ERROR_BIT, pdFALSE, pdFALSE, GetWiFiTimeout() / portTICK_PERIOD_MS);
-            // if (bits & WIFI_INTERFACE_STARTED_BIT)
-            // {
-            //     result = ESP_OK;
-            // }
-            // else
-            // {
-            //     result = ESP_ERR_WIFI_NOT_STARTED;
-            // }
         }
         xEventGroupClearBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTING_BIT);
     }
@@ -1577,16 +1561,17 @@ void WiFiRequestHandler::StartWiFiInterface(Message *message)
 {
     ESP_LOGI(COMPONENT_NAME, "StartNetwork: Enter");
     message->MessageType = MessageTypes::Response;
-    if (StartWiFiInterface() == ESP_OK)
-    {
-        message->StatusCode = StatusCodes::CompletedOk;
-    }
-    else
+    StatusCodes::StatusCodes sc = StatusCodes::CompletedOk;
+    if (StartWiFiInterface() != ESP_OK)
     {
         message->StatusCode = StatusCodes::Failure;
     }
+    message->StatusCode = sc;
     _messageDispatcher->QueueMessageForStm32(message);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
+
+    RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::StartWiFiInterfaceEvent, sc);
+    
     ESP_LOGI(COMPONENT_NAME, "StartNetwork: Exit");
 }
 

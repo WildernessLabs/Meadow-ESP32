@@ -489,11 +489,13 @@ private:
 
     /**
      *  @brief Stop the WiFi Adapter.
+     * 
+     *  This request could come from an explicit stop request of from a disconnect request.
      */
     StatusCodes::StatusCodes StopWiFIAdapter();
 
     /**
-     *  @brief Stop the WiFi Adapter.
+     *  @brief Stop the WiFi Adapter in response to a request from a .NET application.
      */
     void StopWiFIAdapter(Message *message);
 

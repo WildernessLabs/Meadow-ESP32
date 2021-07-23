@@ -44,7 +44,7 @@ namespace MeadowApp
                 {
                     count++;
                     Console.WriteLine($"Current request: {count}");
-                    HttpResponseMessage response = await client.GetAsync($"http://{Secrets.SOAK_TEST_IP_ADDRESS}");
+                    HttpResponseMessage response = await client.GetAsync($"http://{Secrets.LOCAL_WEB_SERVER_NAME}/SimplePage.html");
                     try
                     {
                         response.EnsureSuccessStatusCode();
