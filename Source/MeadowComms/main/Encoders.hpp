@@ -351,8 +351,14 @@ namespace Esp32Messaging
         uint8_t Interface;
         uint32_t Function;
         uint32_t StatusCode;
-        uint32_t Payload;
+        uint32_t MessageId;
+    };
+
+    struct EventDataPayload
+    {
+        uint32_t MessageId;
         uint32_t PayloadLength;
+        uint8_t *Payload;
     };
 
     struct SetAntennaRequest
@@ -542,6 +548,9 @@ public:
     static void EncodeEventData(Esp32Messaging::EventData *, uint8_t *);
     static int EncodedEventDataBufferSize(Esp32Messaging::EventData *);
     static Esp32Messaging::EventData *ExtractEventData(uint8_t *);
+    static void EncodeEventDataPayload(Esp32Messaging::EventDataPayload *, uint8_t *);
+    static int EncodedEventDataPayloadBufferSize(Esp32Messaging::EventDataPayload *);
+    static Esp32Messaging::EventDataPayload *ExtractEventDataPayload(uint8_t *);
     static void EncodeSetAntennaRequest(Esp32Messaging::SetAntennaRequest *, uint8_t *);
     static int EncodedSetAntennaRequestBufferSize(Esp32Messaging::SetAntennaRequest *);
     static Esp32Messaging::SetAntennaRequest *ExtractSetAntennaRequest(uint8_t *);

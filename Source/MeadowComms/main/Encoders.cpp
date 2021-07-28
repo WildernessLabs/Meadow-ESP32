@@ -3314,9 +3314,7 @@ void Encoders::EncodeEventData(Esp32Messaging::EventData *eventData, uint8_t *bu
     buffer += 4;
     EncodeUInt32(eventData->StatusCode, buffer);
     buffer += 4;
-    EncodeUInt32(eventData->Payload, buffer);
-    buffer += 4;
-    EncodeUInt32(eventData->PayloadLength, buffer);
+    EncodeUInt32(eventData->MessageId, buffer);
 }
 
 /**
@@ -3331,7 +3329,7 @@ void Encoders::EncodeEventData(Esp32Messaging::EventData *eventData, uint8_t *bu
 // cppcheck-suppress unusedFunction symbolName=EncodedEventDataBufferSize
 int Encoders::EncodedEventDataBufferSize(Esp32Messaging::EventData *eventData)
 {
-    return(17);
+    return(13);
 }
 
 /**
@@ -3357,10 +3355,83 @@ Esp32Messaging::EventData *Encoders::ExtractEventData(uint8_t *buffer)
     buffer += 4;
     eventData->StatusCode = ExtractUInt32(buffer);
     buffer += 4;
-    eventData->Payload = ExtractUInt32(buffer);
-    buffer += 4;
-    eventData->PayloadLength = ExtractUInt32(buffer);
+    eventData->MessageId = ExtractUInt32(buffer);
     return(eventData);
+}
+
+/**
+ *  Convert the EventDataPayload object into a byte stream that can be sent to the STM32.
+ *  
+ *  The amount of memory required can be obtained by calling the EncodedEventDataPayloadBufferSize method.
+ *  
+ *  @param eventDataPayload
+ *      EventDataPayload object to be encoded.
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory large enough to hold the encoded EventDataPayload object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodeEventDataPayload
+void Encoders::EncodeEventDataPayload(Esp32Messaging::EventDataPayload *eventDataPayload, uint8_t *buffer)
+{
+    EncodeUInt32(eventDataPayload->MessageId, buffer);
+    buffer += 4;
+    EncodeUInt32(eventDataPayload->PayloadLength, buffer);
+    buffer += 4;
+    if (eventDataPayload->PayloadLength > 0)
+    {
+        memcpy((void *) buffer, (void *) eventDataPayload->Payload, eventDataPayload->PayloadLength);
+    }
+}
+
+/**
+ *  Calculate the amount of memory required to hold the given instance of the EventDataPayload object.
+ *  
+ *  @param eventDataPayload
+ *      EventDataPayload object to be encoded.
+ *  
+ *  @returns
+ *      Number of bytes required to hold the encoded EventDataPayload object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodedEventDataPayloadBufferSize
+int Encoders::EncodedEventDataPayloadBufferSize(Esp32Messaging::EventDataPayload *eventDataPayload)
+{
+    int result = 0;
+    result += eventDataPayload->PayloadLength;
+    return(result + 8);
+}
+
+/**
+ *  Extract the EventDataPayload object that is encoded in the given buffer.
+ *  
+ *  Note that the returned pointer points to a block of memory on the heap and
+ *  this should eventually be released calling vPortFree(...).
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded EventDataPayload object.
+ *  
+ *  @returns
+ *      Pointer to a EventDataPayload object.
+ */
+// cppcheck-suppress unusedFunction symbolName=ExtractEventDataPayload
+Esp32Messaging::EventDataPayload *Encoders::ExtractEventDataPayload(uint8_t *buffer)
+{
+    Esp32Messaging::EventDataPayload *eventDataPayload = (Esp32Messaging::EventDataPayload *) pvPortMalloc(sizeof(Esp32Messaging::EventDataPayload));
+
+    eventDataPayload->MessageId = ExtractUInt32(buffer);
+    buffer += 4;
+    eventDataPayload->PayloadLength = ExtractUInt32(buffer);
+    buffer += 4;
+    if (eventDataPayload->PayloadLength > 0)
+    {
+        eventDataPayload->Payload = (uint8_t *) pvPortMalloc(eventDataPayload->PayloadLength);
+        memcpy(eventDataPayload->Payload, buffer, eventDataPayload->PayloadLength);
+        buffer += eventDataPayload->PayloadLength;
+    }
+    else
+    {
+        eventDataPayload->Payload = nullptr;
+    }
+    return(eventDataPayload);
 }
 
 /**

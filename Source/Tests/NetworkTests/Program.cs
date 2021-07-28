@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using Meadow;
 
 namespace MeadowApp
@@ -20,8 +21,10 @@ namespace MeadowApp
             // app.RunTest(10);
 
             WiFiInterfaceControl app = new WiFiInterfaceControl();
-            app.RunTest();
+            //app.RunTest();
+            app.RunAsyncTest().Wait();
 
+            Console.WriteLine("Test complete.");
             Thread.Sleep(Timeout.Infinite);
         }
     }

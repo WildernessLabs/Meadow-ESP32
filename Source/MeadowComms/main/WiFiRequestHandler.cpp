@@ -921,6 +921,66 @@ void WiFiRequestHandler::Setup()
 }
 
 /**
+ *  @brief Copy the IP and access point structure into the connection event data structure.
+ * 
+ *  @param ed
+ *    Pointer to the connection event data structure to be populated.
+ */
+void WiFiRequestHandler::PopulateConnectionEventDataStructure(Esp32Messaging::ConnectEventData *ed)
+{
+    ESP_LOGI(COMPONENT_NAME, "PopulateConnectionEventDataStructure: Enter");
+
+    bzero((void *) ed, sizeof(Esp32Messaging::ConnectEventData));
+    //
+    //  IP information.
+    //
+    memcpy((void *) &ed->IpAddress, (void *) &_ipInformation.ip.addr, sizeof(ed->IpAddress));
+    memcpy((void *) &ed->SubnetMask, (void *) &_ipInformation.netmask.addr, sizeof(ed->SubnetMask));
+    memcpy((void *) &ed->Gateway, (void *) &_ipInformation.gw.addr, sizeof(ed->Gateway));
+    //
+    //  Access point information.
+    //
+    memcpy((void *) &ed->Ssid, _apInformation.ssid, _apInformation.ssid_len);
+    memcpy((void *) &ed->Bssid, _apInformation.bssid, sizeof(ed->Bssid));
+    ed->Channel = _apInformation.channel;
+    Mapping::GetStmValue(Mapping::NetworkAuthenticationType, _apInformation.authmode, (int8_t *) &ed->AuthenticationMode);
+    
+    ESP_LOGI(COMPONENT_NAME, "PopulateConnectionEventDataStructure: Exit");
+}
+
+/**
+ *  @brief Raise the ConnectToAccessPointEvent for the managed code.
+ */
+void WiFiRequestHandler::RaiseConnectToAccessPointEvent()
+{
+    ESP_LOGI(COMPONENT_NAME, "RaiseConnectToAccessPointEvent: Enter");
+
+    Esp32Messaging::ConnectEventData *ed = static_cast<Esp32Messaging::ConnectEventData *>( pvPortMalloc(sizeof(Esp32Messaging::ConnectEventData)));
+    if (ed != NULL)
+    {
+        PopulateConnectionEventDataStructure(ed);
+        uint32_t payloadLength = Encoders::EncodedConnectEventDataBufferSize(ed);
+        uint8_t *payload = static_cast<uint8_t *> (pvPortMalloc(payloadLength));
+        if (payload != NULL)
+        {
+            Encoders::EncodeConnectEventData(ed, payload);
+            vPortFree(ed);
+            RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::ConnectToAccessPointEvent, StatusCodes::CompletedOk, payload, payloadLength);
+        }
+        else
+        {
+            ESP_LOGE(COMPONENT_NAME, "Failed to allocate memory for ConnectEventData payload.");
+        }
+    }
+    else
+    {
+        ESP_LOGE(COMPONENT_NAME, "Failed to allocate memory for ConnectEventData");
+    }
+    
+    ESP_LOGI(COMPONENT_NAME, "RaiseConnectToAccessPointEvent: Exit");
+}
+
+/**
  *  @brief Event loop for the IDF WiFi system.
  * 
  *  Perform the actual event loop handling on behalf of the static method set up for the
@@ -1250,6 +1310,7 @@ void WiFiRequestHandler::StopWiFIAdapter(Message *message)
     message->StatusCode = sc;
     message->MessageType = MessageTypes::Response;
     _messageDispatcher->QueueMessageForStm32(message);
+    xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
 
     if (raiseEvent)
     {
@@ -1377,6 +1438,8 @@ StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const char *ss
 
     _currentRetryCount = 0;
     _lastIdfErrorCode = ESP_OK;
+    bzero((void *) &_disconnectData, sizeof(_disconnectData));
+    bzero((void *) &_ipInformation, sizeof(_ipInformation));
     EventBits_t bits = xEventGroupGetBits(_xWiFiEventGroup);
     if (!(bits & WIFI_INTERFACE_STARTED_BIT))
     {
@@ -1406,21 +1469,26 @@ StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const char *ss
             memcpy(wifi_config.sta.ssid, ssid, strlen(ssid));
             memcpy(wifi_config.sta.password, password, strlen(password));
             _lastIdfErrorCode = esp_wifi_set_mode(WIFI_MODE_STA);
+            ESP_ERROR_CHECK(_lastIdfErrorCode);
             if (_lastIdfErrorCode == ESP_OK)
             {
                 _lastIdfErrorCode = esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config);
             }
+            ESP_ERROR_CHECK(_lastIdfErrorCode);
             if (_lastIdfErrorCode == ESP_OK)
             {
                 _lastIdfErrorCode = esp_wifi_start();
             }
+            ESP_ERROR_CHECK(_lastIdfErrorCode);
             if (_lastIdfErrorCode == ESP_OK)
             {
                 _lastIdfErrorCode = esp_wifi_connect();
             }
+            ESP_ERROR_CHECK(_lastIdfErrorCode);
             if (_lastIdfErrorCode == ESP_OK)
             {
-                bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT | WIFI_ERROR_BIT, pdFALSE, pdFALSE, GetWiFiTimeout() / portTICK_PERIOD_MS);
+                bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT | WIFI_ERROR_BIT, pdFALSE, pdFALSE, 600000 / portTICK_PERIOD_MS);
+                // bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT | WIFI_ERROR_BIT, pdFALSE, pdFALSE, GetWiFiTimeout() / portTICK_PERIOD_MS);
                 if (!((bits & WIFI_CONNECTED_BIT) || (bits & WIFI_ERROR_BIT)))
                 {
                     result = StatusCodes::Timeout;
@@ -1453,15 +1521,10 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
 
     result = ConnectToAccessPoint(credentials->NetworkName, credentials->Password);
     Esp32Messaging::ConnectEventData data = { };
+
     if (result == StatusCodes::CompletedOk)
     {
-        memcpy((void *) &data.IpAddress, (void *) &_ipInformation.ip, sizeof(data.IpAddress));
-        memcpy((void *) &data.SubnetMask, (void *) &_ipInformation.netmask, sizeof(data.SubnetMask));
-        memcpy((void *) &data.Gateway, (void *) &_ipInformation.gw, sizeof(data.Gateway));
-        memcpy((void *) data.Ssid, (void *) _apInformation.ssid, _apInformation.ssid_len);
-        memcpy((void *) data.Bssid, (void *) _apInformation.bssid, sizeof(data.Bssid));
-        data.Channel = _apInformation.channel;
-        data.AuthenticationMode = (uint8_t) _apInformation.authmode;
+        PopulateConnectionEventDataStructure(&data);
     }
     else
     {
@@ -1469,6 +1532,7 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
         memcpy((void *) data.Bssid, (void *) _disconnectData.bssid, sizeof(data.Bssid));
         data.Reason = _disconnectData.reason;
         bzero((void *) &_disconnectData, sizeof(_disconnectData));
+        bzero((void *) &_ipInformation, sizeof(_ipInformation));
         result = StatusCodes::WiFiDisconnected;
         _lastIdfErrorCode = ESP_OK;
     }
@@ -1480,8 +1544,17 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
 
     message->MessageType = MessageTypes::Response;
     message->StatusCode = result;
+
+    Logging::DumpMessage(COMPONENT_NAME, message);
+
     _messageDispatcher->QueueMessageForStm32(message);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
+
+    if (result == StatusCodes::CompletedOk)
+    {
+        RaiseConnectToAccessPointEvent();
+    }
+
     ESP_LOGI(COMPONENT_NAME, "ConnectToAccessPoint: Exit");
 
     // Logging::StandaloneHeapTracingStart();
@@ -3009,9 +3082,9 @@ void WiFiRequestHandler::StationGotIpEvent(ip_event_got_ip_t *eventData)
 
     xEventGroupClearBits(_xWiFiEventGroup, WIFI_CONNECTING_BIT | WIFI_RECONNECTING_BIT);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT);
-    RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::ConnectToAccessPointEvent);
     ESP_LOGI(COMPONENT_NAME, "StationGotIpEvent: Exit");
 }
+
 /**
  *  @brief Process the WiFi station connect event.
  * 
@@ -3024,6 +3097,14 @@ void WiFiRequestHandler::StationConnectedEvent(wifi_event_sta_connected_t *event
 {
     ESP_LOGI(COMPONENT_NAME, "StationConnectedEvent: Enter");
     memcpy((void *) &_apInformation, (void *) eventData, sizeof(wifi_event_sta_connected_t));
+
+    EventBits_t bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_RECONNECTING_BIT , pdFALSE, pdFALSE, GetWiFiTimeout() / portTICK_PERIOD_MS);
+
+    if (bits & WIFI_RECONNECTING_BIT)
+    {
+        RaiseConnectToAccessPointEvent();
+    }
+
     ESP_LOGI(COMPONENT_NAME, "StationConnectedEvent: Exit");
 }
 
@@ -3057,6 +3138,7 @@ void WiFiRequestHandler::StationDisconnectedEvent(wifi_event_sta_disconnected_t 
         RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::DisconnectFromAccessPointEvent);
         xEventGroupSetBits(_xWiFiEventGroup, WIFI_ERROR_BIT);
     }
+
     ESP_LOGI(COMPONENT_NAME, "StationDisconnectedEvent: Exit");
 }
 

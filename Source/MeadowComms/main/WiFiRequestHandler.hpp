@@ -476,7 +476,7 @@ private:
     void EventHandlerHelper(esp_event_base_t eventBase, int32_t eventId, void *eventData);
 
     /**
-     * @brief  Method that will compare two poll requests IDs and determine if they are the same.
+     * @brief Method that will compare two poll requests IDs and determine if they are the same.
      * 
      *  This method is used with the list of poll requests.
      */
@@ -486,6 +486,16 @@ private:
      *  Process the request from the managed code to change the antenna.
      */
     void SetAntennaRequest(Message *);
+
+    /**
+     *  @brief Copy the IP and access point structure into the connection event data structure.
+     */
+    void PopulateConnectionEventDataStructure(Esp32Messaging::ConnectEventData *ed);
+
+    /**
+     *  @brief Raise the ConnectToAccessPointEvent for the managed code.
+     */
+    void RaiseConnectToAccessPointEvent();
 
     /**
      *  @brief Stop the WiFi Adapter.
