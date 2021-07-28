@@ -33,7 +33,7 @@ public:
      *  @brief Type of mapping toable to be used.
      */
     enum MappingTable { AddressFamily, SocketOptions, ProtocolFamilies, SocketTypes, SocketLevel, Errno, MessageFlags, PollEvents,
-                        SocketShutdownType, EspErrorCodes };
+                        SocketShutdownType, EspErrorCodes, NetworkAuthenticationType };
 
 private:
     /**
@@ -102,16 +102,27 @@ private:
     static int_mapping_t _espErrorCodes[];
 
     /**
-     *  @brief Get the mapped value using the MappingDirection to determine which
-     *  value should be retrieved.
+     *  @brief Table of he ESP32 network authentication types mapping to the NetworkAuthenticationType enum.
      */
-    static int32_t GetFlagValue(Mapping::MappingTable mapping, MappingDirection type, int32_t value, int32_t *mappedValue);
+    static int_mapping_t _networkAuthenticationType[];
 
     /**
      *  @brief Get the mapped flags using the MappingDirection to determine which
      *  value should be retrieved.
      */
+    static int32_t GetFlagValue(Mapping::MappingTable mapping, MappingDirection type, int32_t value, int32_t *mappedValue);
+
+    /**
+     *  @brief Get the mapped value using the MappingDirection to determine which
+     *  value should be retrieved.
+     */
     static int32_t GetValue(Mapping::MappingTable mapping, MappingDirection type, int32_t value, int32_t *result);
+
+    /**
+     *  @brief Get the mapped value using the MappingDirection to determine which
+     *  value should be retrieved.
+     */
+    static int32_t GetValue(Mapping::MappingTable mapping, MappingDirection type, int32_t value, int8_t *result);
 
 public:
     /**
@@ -123,6 +134,16 @@ public:
      *  @brief Default destructor for the logging system.
      */
     ~Mapping();
+
+    /**
+     *  @brief Get the integer ESP32 value equivalent to the specified STM32 value.
+     */
+    static int32_t GetEspValue(Mapping::MappingTable mapping, int32_t value, int8_t *result);
+
+    /**
+     *  @brief Get the integer STM32 value equivalent to the specified ESP32 value.
+     */
+    static int32_t GetStmValue(Mapping::MappingTable mapping, int32_t value, int8_t *result);
 
     /**
      *  @brief Get the integer ESP32 value equivalent to the specified STM32 value.
