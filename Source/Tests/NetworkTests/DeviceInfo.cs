@@ -30,7 +30,7 @@ namespace MeadowApp
             Console.WriteLine($"Processor type: {information.ProcessorType}");
             Console.WriteLine($"Product: {information.Product}");
             Console.WriteLine($"Build date: {information.BuildDate}");
-            Console.WriteLine($"Coprocessor  type: {information.CoprocessorType}");
+            Console.WriteLine($"Coprocessor type: {information.CoprocessorType}");
             Console.WriteLine($"Coprocessor firmware version: {information.CoprocessorFirmwareVersion}");
         }
     }
