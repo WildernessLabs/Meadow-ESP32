@@ -36,7 +36,7 @@ namespace Esp32Messaging
         uint8_t MaximumMessageQueueLength;
         uint8_t AutomaticallyStartNetwork;
         uint8_t AutomaticallyReconnect;
-        uint32_t MaximumRetryCount;
+        int32_t MaximumRetryCount;
         uint8_t Antenna;
         uint8_t BoardMacAddress[6];
         uint8_t SoftApMacAddress[6];
@@ -68,7 +68,7 @@ namespace Esp32Messaging
         uint8_t TurnOffWiFiInterface;
     };
 
-    struct ConnectDisconnectData
+    struct ConnectEventData
     {
         uint32_t IpAddress;
         uint32_t SubnetMask;
@@ -77,7 +77,13 @@ namespace Esp32Messaging
         uint8_t Bssid[6];
         uint8_t Channel;
         uint8_t AuthenticationMode;
-        uint8_t Connect;
+        uint32_t Reason;
+    };
+
+    struct DisconnectEventData
+    {
+        uint8_t Retrying;
+        int32_t RetriesRemaining;
         uint32_t Reason;
     };
 
@@ -345,8 +351,14 @@ namespace Esp32Messaging
         uint8_t Interface;
         uint32_t Function;
         uint32_t StatusCode;
-        uint32_t Payload;
+        uint32_t MessageId;
+    };
+
+    struct EventDataPayload
+    {
+        uint32_t MessageId;
         uint32_t PayloadLength;
+        uint8_t *Payload;
     };
 
     struct SetAntennaRequest
@@ -425,9 +437,12 @@ public:
     static void EncodeDisconnectFromAccessPointRequest(Esp32Messaging::DisconnectFromAccessPointRequest *, uint8_t *);
     static int EncodedDisconnectFromAccessPointRequestBufferSize(Esp32Messaging::DisconnectFromAccessPointRequest *);
     static Esp32Messaging::DisconnectFromAccessPointRequest *ExtractDisconnectFromAccessPointRequest(uint8_t *);
-    static void EncodeConnectDisconnectData(Esp32Messaging::ConnectDisconnectData *, uint8_t *);
-    static int EncodedConnectDisconnectDataBufferSize(Esp32Messaging::ConnectDisconnectData *);
-    static Esp32Messaging::ConnectDisconnectData *ExtractConnectDisconnectData(uint8_t *);
+    static void EncodeConnectEventData(Esp32Messaging::ConnectEventData *, uint8_t *);
+    static int EncodedConnectEventDataBufferSize(Esp32Messaging::ConnectEventData *);
+    static Esp32Messaging::ConnectEventData *ExtractConnectEventData(uint8_t *);
+    static void EncodeDisconnectEventData(Esp32Messaging::DisconnectEventData *, uint8_t *);
+    static int EncodedDisconnectEventDataBufferSize(Esp32Messaging::DisconnectEventData *);
+    static Esp32Messaging::DisconnectEventData *ExtractDisconnectEventData(uint8_t *);
     static void EncodeAccessPoint(Esp32Messaging::AccessPoint *, uint8_t *);
     static int EncodedAccessPointBufferSize(Esp32Messaging::AccessPoint *);
     static Esp32Messaging::AccessPoint *ExtractAccessPoint(uint8_t *);
@@ -533,6 +548,9 @@ public:
     static void EncodeEventData(Esp32Messaging::EventData *, uint8_t *);
     static int EncodedEventDataBufferSize(Esp32Messaging::EventData *);
     static Esp32Messaging::EventData *ExtractEventData(uint8_t *);
+    static void EncodeEventDataPayload(Esp32Messaging::EventDataPayload *, uint8_t *);
+    static int EncodedEventDataPayloadBufferSize(Esp32Messaging::EventDataPayload *);
+    static Esp32Messaging::EventDataPayload *ExtractEventDataPayload(uint8_t *);
     static void EncodeSetAntennaRequest(Esp32Messaging::SetAntennaRequest *, uint8_t *);
     static int EncodedSetAntennaRequestBufferSize(Esp32Messaging::SetAntennaRequest *);
     static Esp32Messaging::SetAntennaRequest *ExtractSetAntennaRequest(uint8_t *);

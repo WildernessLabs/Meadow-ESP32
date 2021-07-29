@@ -476,7 +476,7 @@ private:
     void EventHandlerHelper(esp_event_base_t eventBase, int32_t eventId, void *eventData);
 
     /**
-     * @brief  Method that will compare two poll requests IDs and determine if they are the same.
+     * @brief Method that will compare two poll requests IDs and determine if they are the same.
      * 
      *  This method is used with the list of poll requests.
      */
@@ -488,12 +488,24 @@ private:
     void SetAntennaRequest(Message *);
 
     /**
+     *  @brief Copy the IP and access point structure into the connection event data structure.
+     */
+    void PopulateConnectionEventDataStructure(Esp32Messaging::ConnectEventData *ed);
+
+    /**
+     *  @brief Raise the ConnectToAccessPointEvent for the managed code.
+     */
+    void RaiseConnectToAccessPointEvent();
+
+    /**
      *  @brief Stop the WiFi Adapter.
+     * 
+     *  This request could come from an explicit stop request of from a disconnect request.
      */
     StatusCodes::StatusCodes StopWiFIAdapter();
 
     /**
-     *  @brief Stop the WiFi Adapter.
+     *  @brief Stop the WiFi Adapter in response to a request from a .NET application.
      */
     void StopWiFIAdapter(Message *message);
 

@@ -482,7 +482,7 @@ void Encoders::EncodeSystemConfiguration(Esp32Messaging::SystemConfiguration *sy
     buffer += 1;
     *buffer = systemConfiguration->AutomaticallyReconnect;
     buffer += 1;
-    EncodeUInt32(systemConfiguration->MaximumRetryCount, buffer);
+    EncodeInt32(systemConfiguration->MaximumRetryCount, buffer);
     buffer += 4;
     *buffer = systemConfiguration->Antenna;
     buffer += 1;
@@ -552,7 +552,7 @@ Esp32Messaging::SystemConfiguration *Encoders::ExtractSystemConfiguration(uint8_
     buffer += 1;
     systemConfiguration->AutomaticallyReconnect = *buffer;
     buffer += 1;
-    systemConfiguration->MaximumRetryCount = ExtractUInt32(buffer);
+    systemConfiguration->MaximumRetryCount = ExtractInt32(buffer);
     buffer += 4;
     systemConfiguration->Antenna = *buffer;
     buffer += 1;
@@ -767,88 +767,145 @@ Esp32Messaging::DisconnectFromAccessPointRequest *Encoders::ExtractDisconnectFro
 }
 
 /**
- *  Convert the ConnectDisconnectData object into a byte stream that can be sent to the STM32.
+ *  Convert the ConnectEventData object into a byte stream that can be sent to the STM32.
  *  
- *  The amount of memory required can be obtained by calling the EncodedConnectDisconnectDataBufferSize method.
+ *  The amount of memory required can be obtained by calling the EncodedConnectEventDataBufferSize method.
  *  
- *  @param connectDisconnectData
- *      ConnectDisconnectData object to be encoded.
+ *  @param connectEventData
+ *      ConnectEventData object to be encoded.
  *  
  *  @param buffer
- *      Pointer to a block of memory large enough to hold the encoded ConnectDisconnectData object.
+ *      Pointer to a block of memory large enough to hold the encoded ConnectEventData object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodeConnectDisconnectData
-void Encoders::EncodeConnectDisconnectData(Esp32Messaging::ConnectDisconnectData *connectDisconnectData, uint8_t *buffer)
+// cppcheck-suppress unusedFunction symbolName=EncodeConnectEventData
+void Encoders::EncodeConnectEventData(Esp32Messaging::ConnectEventData *connectEventData, uint8_t *buffer)
 {
-    EncodeUInt32(connectDisconnectData->IpAddress, buffer);
+    EncodeUInt32(connectEventData->IpAddress, buffer);
     buffer += 4;
-    EncodeUInt32(connectDisconnectData->SubnetMask, buffer);
+    EncodeUInt32(connectEventData->SubnetMask, buffer);
     buffer += 4;
-    EncodeUInt32(connectDisconnectData->Gateway, buffer);
+    EncodeUInt32(connectEventData->Gateway, buffer);
     buffer += 4;
-    memcpy((void *) buffer, (void *) connectDisconnectData->Ssid, 33);
+    memcpy((void *) buffer, (void *) connectEventData->Ssid, 33);
     buffer += 33;
-    memcpy((void *) buffer, (void *) connectDisconnectData->Bssid, 6);
+    memcpy((void *) buffer, (void *) connectEventData->Bssid, 6);
     buffer += 6;
-    *buffer = connectDisconnectData->Channel;
+    *buffer = connectEventData->Channel;
     buffer += 1;
-    *buffer = connectDisconnectData->AuthenticationMode;
+    *buffer = connectEventData->AuthenticationMode;
     buffer += 1;
-    *buffer = connectDisconnectData->Connect;
-    buffer += 1;
-    EncodeUInt32(connectDisconnectData->Reason, buffer);
+    EncodeUInt32(connectEventData->Reason, buffer);
 }
 
 /**
- *  Calculate the amount of memory required to hold the given instance of the ConnectDisconnectData object.
+ *  Calculate the amount of memory required to hold the given instance of the ConnectEventData object.
  *  
- *  @param connectDisconnectData
- *      ConnectDisconnectData object to be encoded.
+ *  @param connectEventData
+ *      ConnectEventData object to be encoded.
  *  
  *  @returns
- *      Number of bytes required to hold the encoded ConnectDisconnectData object.
+ *      Number of bytes required to hold the encoded ConnectEventData object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodedConnectDisconnectDataBufferSize
-int Encoders::EncodedConnectDisconnectDataBufferSize(Esp32Messaging::ConnectDisconnectData *connectDisconnectData)
+// cppcheck-suppress unusedFunction symbolName=EncodedConnectEventDataBufferSize
+int Encoders::EncodedConnectEventDataBufferSize(Esp32Messaging::ConnectEventData *connectEventData)
 {
-    return(58);
+    return(57);
 }
 
 /**
- *  Extract the ConnectDisconnectData object that is encoded in the given buffer.
+ *  Extract the ConnectEventData object that is encoded in the given buffer.
  *  
  *  Note that the returned pointer points to a block of memory on the heap and
  *  this should eventually be released calling vPortFree(...).
  *  
  *  @param buffer
- *      Pointer to a block of memory holding the encoded ConnectDisconnectData object.
+ *      Pointer to a block of memory holding the encoded ConnectEventData object.
  *  
  *  @returns
- *      Pointer to a ConnectDisconnectData object.
+ *      Pointer to a ConnectEventData object.
  */
-// cppcheck-suppress unusedFunction symbolName=ExtractConnectDisconnectData
-Esp32Messaging::ConnectDisconnectData *Encoders::ExtractConnectDisconnectData(uint8_t *buffer)
+// cppcheck-suppress unusedFunction symbolName=ExtractConnectEventData
+Esp32Messaging::ConnectEventData *Encoders::ExtractConnectEventData(uint8_t *buffer)
 {
-    Esp32Messaging::ConnectDisconnectData *connectDisconnectData = (Esp32Messaging::ConnectDisconnectData *) pvPortMalloc(sizeof(Esp32Messaging::ConnectDisconnectData));
+    Esp32Messaging::ConnectEventData *connectEventData = (Esp32Messaging::ConnectEventData *) pvPortMalloc(sizeof(Esp32Messaging::ConnectEventData));
 
-    connectDisconnectData->IpAddress = ExtractUInt32(buffer);
+    connectEventData->IpAddress = ExtractUInt32(buffer);
     buffer += 4;
-    connectDisconnectData->SubnetMask = ExtractUInt32(buffer);
+    connectEventData->SubnetMask = ExtractUInt32(buffer);
     buffer += 4;
-    connectDisconnectData->Gateway = ExtractUInt32(buffer);
+    connectEventData->Gateway = ExtractUInt32(buffer);
     buffer += 4;
-    memcpy((void *) connectDisconnectData->Ssid, (void *) buffer, 33);
+    memcpy((void *) connectEventData->Ssid, (void *) buffer, 33);
     buffer += 33;
-    memcpy((void *) connectDisconnectData->Bssid, (void *) buffer, 6);
+    memcpy((void *) connectEventData->Bssid, (void *) buffer, 6);
     buffer += 6;
-    connectDisconnectData->Channel = *buffer;
+    connectEventData->Channel = *buffer;
     buffer += 1;
-    connectDisconnectData->AuthenticationMode = *buffer;
+    connectEventData->AuthenticationMode = *buffer;
     buffer += 1;
-    connectDisconnectData->Connect = *buffer;
+    connectEventData->Reason = ExtractUInt32(buffer);
+    return(connectEventData);
+}
+
+/**
+ *  Convert the DisconnectEventData object into a byte stream that can be sent to the STM32.
+ *  
+ *  The amount of memory required can be obtained by calling the EncodedDisconnectEventDataBufferSize method.
+ *  
+ *  @param disconnectEventData
+ *      DisconnectEventData object to be encoded.
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory large enough to hold the encoded DisconnectEventData object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodeDisconnectEventData
+void Encoders::EncodeDisconnectEventData(Esp32Messaging::DisconnectEventData *disconnectEventData, uint8_t *buffer)
+{
+    *buffer = disconnectEventData->Retrying;
     buffer += 1;
-    connectDisconnectData->Reason = ExtractUInt32(buffer);
-    return(connectDisconnectData);
+    EncodeInt32(disconnectEventData->RetriesRemaining, buffer);
+    buffer += 4;
+    EncodeUInt32(disconnectEventData->Reason, buffer);
+}
+
+/**
+ *  Calculate the amount of memory required to hold the given instance of the DisconnectEventData object.
+ *  
+ *  @param disconnectEventData
+ *      DisconnectEventData object to be encoded.
+ *  
+ *  @returns
+ *      Number of bytes required to hold the encoded DisconnectEventData object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodedDisconnectEventDataBufferSize
+int Encoders::EncodedDisconnectEventDataBufferSize(Esp32Messaging::DisconnectEventData *disconnectEventData)
+{
+    return(9);
+}
+
+/**
+ *  Extract the DisconnectEventData object that is encoded in the given buffer.
+ *  
+ *  Note that the returned pointer points to a block of memory on the heap and
+ *  this should eventually be released calling vPortFree(...).
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded DisconnectEventData object.
+ *  
+ *  @returns
+ *      Pointer to a DisconnectEventData object.
+ */
+// cppcheck-suppress unusedFunction symbolName=ExtractDisconnectEventData
+Esp32Messaging::DisconnectEventData *Encoders::ExtractDisconnectEventData(uint8_t *buffer)
+{
+    Esp32Messaging::DisconnectEventData *disconnectEventData = (Esp32Messaging::DisconnectEventData *) pvPortMalloc(sizeof(Esp32Messaging::DisconnectEventData));
+
+    disconnectEventData->Retrying = *buffer;
+    buffer += 1;
+    disconnectEventData->RetriesRemaining = ExtractInt32(buffer);
+    buffer += 4;
+    disconnectEventData->Reason = ExtractUInt32(buffer);
+    return(disconnectEventData);
 }
 
 /**
@@ -3257,9 +3314,7 @@ void Encoders::EncodeEventData(Esp32Messaging::EventData *eventData, uint8_t *bu
     buffer += 4;
     EncodeUInt32(eventData->StatusCode, buffer);
     buffer += 4;
-    EncodeUInt32(eventData->Payload, buffer);
-    buffer += 4;
-    EncodeUInt32(eventData->PayloadLength, buffer);
+    EncodeUInt32(eventData->MessageId, buffer);
 }
 
 /**
@@ -3274,7 +3329,7 @@ void Encoders::EncodeEventData(Esp32Messaging::EventData *eventData, uint8_t *bu
 // cppcheck-suppress unusedFunction symbolName=EncodedEventDataBufferSize
 int Encoders::EncodedEventDataBufferSize(Esp32Messaging::EventData *eventData)
 {
-    return(17);
+    return(13);
 }
 
 /**
@@ -3300,10 +3355,83 @@ Esp32Messaging::EventData *Encoders::ExtractEventData(uint8_t *buffer)
     buffer += 4;
     eventData->StatusCode = ExtractUInt32(buffer);
     buffer += 4;
-    eventData->Payload = ExtractUInt32(buffer);
-    buffer += 4;
-    eventData->PayloadLength = ExtractUInt32(buffer);
+    eventData->MessageId = ExtractUInt32(buffer);
     return(eventData);
+}
+
+/**
+ *  Convert the EventDataPayload object into a byte stream that can be sent to the STM32.
+ *  
+ *  The amount of memory required can be obtained by calling the EncodedEventDataPayloadBufferSize method.
+ *  
+ *  @param eventDataPayload
+ *      EventDataPayload object to be encoded.
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory large enough to hold the encoded EventDataPayload object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodeEventDataPayload
+void Encoders::EncodeEventDataPayload(Esp32Messaging::EventDataPayload *eventDataPayload, uint8_t *buffer)
+{
+    EncodeUInt32(eventDataPayload->MessageId, buffer);
+    buffer += 4;
+    EncodeUInt32(eventDataPayload->PayloadLength, buffer);
+    buffer += 4;
+    if (eventDataPayload->PayloadLength > 0)
+    {
+        memcpy((void *) buffer, (void *) eventDataPayload->Payload, eventDataPayload->PayloadLength);
+    }
+}
+
+/**
+ *  Calculate the amount of memory required to hold the given instance of the EventDataPayload object.
+ *  
+ *  @param eventDataPayload
+ *      EventDataPayload object to be encoded.
+ *  
+ *  @returns
+ *      Number of bytes required to hold the encoded EventDataPayload object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodedEventDataPayloadBufferSize
+int Encoders::EncodedEventDataPayloadBufferSize(Esp32Messaging::EventDataPayload *eventDataPayload)
+{
+    int result = 0;
+    result += eventDataPayload->PayloadLength;
+    return(result + 8);
+}
+
+/**
+ *  Extract the EventDataPayload object that is encoded in the given buffer.
+ *  
+ *  Note that the returned pointer points to a block of memory on the heap and
+ *  this should eventually be released calling vPortFree(...).
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded EventDataPayload object.
+ *  
+ *  @returns
+ *      Pointer to a EventDataPayload object.
+ */
+// cppcheck-suppress unusedFunction symbolName=ExtractEventDataPayload
+Esp32Messaging::EventDataPayload *Encoders::ExtractEventDataPayload(uint8_t *buffer)
+{
+    Esp32Messaging::EventDataPayload *eventDataPayload = (Esp32Messaging::EventDataPayload *) pvPortMalloc(sizeof(Esp32Messaging::EventDataPayload));
+
+    eventDataPayload->MessageId = ExtractUInt32(buffer);
+    buffer += 4;
+    eventDataPayload->PayloadLength = ExtractUInt32(buffer);
+    buffer += 4;
+    if (eventDataPayload->PayloadLength > 0)
+    {
+        eventDataPayload->Payload = (uint8_t *) pvPortMalloc(eventDataPayload->PayloadLength);
+        memcpy(eventDataPayload->Payload, buffer, eventDataPayload->PayloadLength);
+        buffer += eventDataPayload->PayloadLength;
+    }
+    else
+    {
+        eventDataPayload->Payload = nullptr;
+    }
+    return(eventDataPayload);
 }
 
 /**

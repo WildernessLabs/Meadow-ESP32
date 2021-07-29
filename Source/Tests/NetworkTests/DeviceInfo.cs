@@ -18,6 +18,7 @@ namespace MeadowApp
 
         public void RunTest()
         {
+            Console.WriteLine("Getting device information.");
             F7Micro.DeviceInformation information = Device.GetDeviceInformation();
 
             Console.WriteLine($"Device name: {information.DeviceName}");
@@ -29,8 +30,8 @@ namespace MeadowApp
             Console.WriteLine($"Processor type: {information.ProcessorType}");
             Console.WriteLine($"Product: {information.Product}");
             Console.WriteLine($"Build date: {information.BuildDate}");
+            Console.WriteLine($"Coprocessor type: {information.CoprocessorType}");
             Console.WriteLine($"Coprocessor firmware version: {information.CoprocessorFirmwareVersion}");
-            Console.WriteLine($"Coprocessor firmware type: {information.CoprocessorType}");
         }
     }
 }

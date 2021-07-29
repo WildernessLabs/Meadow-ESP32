@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using Meadow;
 
 namespace MeadowApp
@@ -11,14 +12,20 @@ namespace MeadowApp
             // OauthTest app = new OauthTest();
             // app.RunTest();
 
-            // DeviceInfo app = new DeviceInfo();
+            DeviceInfo app = new DeviceInfo();
+            app.RunTest();
 
             // OutOfMemoryTest app = new OutOfMemoryTest();
             // app.RunAsync().Wait();
 
-            SoakTest app = new SoakTest();
-            app.RunTest(10);
+            // SoakTest app = new SoakTest();
+            // app.RunTest(10);
 
+            //WiFiInterfaceControl app = new WiFiInterfaceControl();
+            //app.RunTest();
+            //app.RunAsyncTest().Wait();
+
+            Console.WriteLine("Test complete.");
             Thread.Sleep(Timeout.Infinite);
         }
     }

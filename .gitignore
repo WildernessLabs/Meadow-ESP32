@@ -87,3 +87,5 @@ Source/.vscode/
 *.srctrldb
 
 Source/MeadowComms/sdkconfig
+
+*.pdb
