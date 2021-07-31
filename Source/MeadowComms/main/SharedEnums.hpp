@@ -87,7 +87,9 @@ namespace SystemFunction
         SetConfigurationItem = 1,
         DeepSleep = 2,
         GetBatteryChargeLevel = 3,
-        ErrorEvent = 4
+        ErrorEvent = 4,
+        StartHeapTrace = 5,
+        StopHeapTrace = 6
     };
 
 }
