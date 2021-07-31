@@ -430,6 +430,12 @@ char *Logging::SystemFunctionName(uint32_t function)
         case SystemFunction::GetBatteryChargeLevel:
             return((char *) "GetBatteryChargeLevel");
             break;
+        case SystemFunction::StartHeapTrace:
+            return((char *) "StartHeapTrace");
+            break;
+        case SystemFunction::StopHeapTrace:
+            return((char *) "StopHeapTrace");
+            break;
         default:
             return((char *) "Unknown");
             break;
