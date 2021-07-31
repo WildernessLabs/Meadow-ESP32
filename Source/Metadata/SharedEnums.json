@@ -33,7 +33,7 @@
           "BaseDataType": "UInt32",
           "EnumNames": [
               "GetConfiguration", "SetConfigurationItem", "DeepSleep", "GetBatteryChargeLevel",
-              "ErrorEvent"
+              "ErrorEvent", "StartHeapTrace", "StopHeapTrace"
           ]
         },
         {
