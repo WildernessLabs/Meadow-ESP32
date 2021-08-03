@@ -51,6 +51,23 @@
 
 #endif
 
+//
+//  Trace and debug output macros.
+//
+#if defined(DEBUG)
+
+#define TRACE_MESSAGE(component_name, format, ...) ESP_LOGI(component_name, format, ##__VA_ARGS__)
+#define DEBUG_MESSAGE(component_name, format, ...) ESP_LOGD(component_name, format, ##__VA_ARGS__)
+#define ERROR_MESSAGE(component_name, format, ...) ESP_LOGE(component_name, format, ##__VA_ARGS__)
+
+#else
+
+#define TRACE_MESSAGE(component_name, format, ...)
+#define DEBUG_MESSAGE(component_name, format, ...)
+#define ERROR_MESSAGE(component_name, format, ...)
+
+#endif
+
 /**
  *  @brief The Logging class provides the functionality necessary to setup and run the logging system.
  */

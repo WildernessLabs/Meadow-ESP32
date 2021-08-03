@@ -1859,7 +1859,8 @@ void WiFiRequestHandler::GetAddrInfo(void *vpMessage)
  */
 void WiFiRequestHandler::Socket(void *vpMessage)
 {
-    ESP_LOGI(COMPONENT_NAME, "Socket: Enter");
+    TRACE_MESSAGE(COMPONENT_NAME, "Socket: Enter");
+//    ESP_LOGI(COMPONENT_NAME, "Socket: Enter");
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
