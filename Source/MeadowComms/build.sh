@@ -71,7 +71,7 @@ case $i in
     ;;
     --MENUCONFIG)
     MENUCONFIG=true
-    ;;    
+    ;;
     --debug)
     DEBUG=true
     ;;
@@ -182,7 +182,10 @@ if [ ! -z "$DEBUG_SELECTIONS" ]; then
             ;;
             thread)
             IDF_DEFINES+=" -DTHREAD_DEBUG=1"
-            ;;    
+            ;;
+            tracemessages)
+            IDF_DEFINES+=" -DTRACE_MESSAGES=1"
+            ;;
             *)
             # Unknown subsystem
             ;;

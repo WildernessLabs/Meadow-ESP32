@@ -54,7 +54,9 @@
 //
 //  Trace and debug output macros.
 //
-#if defined(DEBUG)
+#if defined(TRACE_MESSAGES)
+
+#warning "Trace message output is enabled - turn this feature off for release builds."
 
 #define TRACE_MESSAGE(component_name, format, ...) ESP_LOGI(component_name, format, ##__VA_ARGS__)
 #define DEBUG_MESSAGE(component_name, format, ...) ESP_LOGD(component_name, format, ##__VA_ARGS__)
