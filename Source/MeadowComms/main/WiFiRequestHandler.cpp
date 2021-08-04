@@ -133,7 +133,7 @@ bool WiFiRequestHandler::_getTimeAtStartup = false;
 
 /**
  *  @brief Name fo the storage in NVS that holds the value indicating that the
- *  system should get the time at startup. 
+ *  system should get the time at startup.
  */
 const char *WiFiRequestHandler::GET_TIME_AT_STARTUP_NAME = "GetTime";
 
@@ -344,7 +344,7 @@ uint32_t WiFiRequestHandler::GetMaximumRetryCount()
  *
  *  @param value
  *      New maximum retry count value.
- * 
+ *
  *  @returns
  *      StatusCodes::Completed on success, StatusCodes::Failure if there is a problem.
  */
@@ -375,10 +375,10 @@ bool WiFiRequestHandler::GetAutomaticReconnect()
 
 /**
  *  @brief Set the automatic reconnect value.
- * 
+ *
  *  @param value
  *      New automatic reconnection value.
- * 
+ *
  *  @returns
  *      StatusCodes::Completed on success, StatusCodes::Failure if there is a problem.
  */
@@ -408,7 +408,7 @@ bool WiFiRequestHandler::GetAutomaticallyStartNetwork()
  *
  *  @param value
  *      New automatic start network value.
- * 
+ *
  *  @returns
  *      StatusCodes::Completed on success, StatusCodes::Failure if there is a problem.
  */
@@ -438,7 +438,7 @@ bool WiFiRequestHandler::GetGetTimeAtStartup()
  *
  *  @param value
  *      New get time at startup value.
- * 
+ *
  *  @returns
  *      StatusCodes::Completed on success, StatusCodes::Failure if there is a problem.
  */
@@ -468,7 +468,7 @@ bool WiFiRequestHandler::GetUseDhcp()
  *
  *  @param value
  *      New use DHCP value.
- * 
+ *
  *  @returns
  *      StatusCodes::Completed on success, StatusCodes::Failure if there is a problem.
  */
@@ -498,7 +498,7 @@ char *WiFiRequestHandler::GetNtpServer()
  *
  *  @param value
  *      New NTP server value.
- * 
+ *
  *  @returns
  *      StatusCodes::Completed on success, StatusCodes::Failure if there is a problem.
  */
@@ -528,7 +528,7 @@ char *WiFiRequestHandler::GetTimezone()
  *
  *  @param value
  *      New NTP server value.
- * 
+ *
  *  @returns
  *      StatusCodes::Completed on success, StatusCodes::Failure if there is a problem.
  */
@@ -560,7 +560,7 @@ char *WiFiRequestHandler::GetDefaultAccessPoint()
  *
  *  @param value
  *      New default access point value.
- * 
+ *
  *  @returns
  *      StatusCodes::Completed on success, StatusCodes::Failure if there is a problem.
  */
@@ -590,7 +590,7 @@ char *WiFiRequestHandler::GetPassword()
  *
  *  @param value
  *      New password value.
- * 
+ *
  *  @returns
  *      StatusCodes::Completed on success, StatusCodes::Failure if there is a problem.
  */
@@ -620,7 +620,7 @@ uint32_t WiFiRequestHandler::GetIpAddress()
  *
  *  @param value
  *      New static IP address value.
- * 
+ *
  *  @returns
  *      StatusCodes::Completed on success, StatusCodes::Failure if there is a problem.
  */
@@ -650,7 +650,7 @@ uint32_t WiFiRequestHandler::GetDnsServer()
  *
  *  @param value
  *      New static DNS address value.
- * 
+ *
  *  @returns
  *      StatusCodes::Completed on success, StatusCodes::Failure if there is a problem.
  */
@@ -680,7 +680,7 @@ uint32_t WiFiRequestHandler::GetDefaultGateway()
  *
  *  @param value
  *      New static DNS address value.
- * 
+ *
  *  @returns
  *      StatusCodes::Completed on success, StatusCodes::Failure if there is a problem.
  */
@@ -702,7 +702,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetDefaultGateway(uint32_t value)
  *
  *  @param macAddress
  *      Pointer to the buffer to hold the MAC address.
- * 
+ *
  *  @param interface
  *      ESP interface to get the MAC address.  Valid values:
  *          WIFI_IF_STA     Board MAC address
@@ -717,7 +717,7 @@ void WiFiRequestHandler::GetMacAddress(uint8_t *macAddress, esp_interface_t inte
             *macAddress = 0;
             macAddress++;
         }
-    }    
+    }
 }
 
 /**
@@ -725,12 +725,12 @@ void WiFiRequestHandler::GetMacAddress(uint8_t *macAddress, esp_interface_t inte
  *
  *  @param macAddress
  *      New MAC address.
- * 
+ *
  *  @param interface
  *      Interface the MAC address refers to.  Valid values:
  *          WIFI_IF_STA     Board MAC address
  *          WIFI_IF_AP      Software access point MAC address
- * 
+ *
  *  @returns
  *      StatusCodes::Completed on success, StatusCodes::Failure if there is a problem.
  */
@@ -742,7 +742,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetMacAddress(uint8_t *macAddress, 
 
 /**
  *  @brief Get the currently selected antenna.
- * 
+ *
  *  @return
  *      Current Antenna in use as an unsigned 8-bit integer.
  */
@@ -753,7 +753,7 @@ uint8_t WiFiRequestHandler::GetAntenna()
 
 /**
  *  @brief Set the value for the current Antenna.
- * 
+ *
  *  @param antenna
  *      New antenna to use.
  *
@@ -788,7 +788,7 @@ uint32_t WiFiRequestHandler::GetWiFiTimeout()
  *
  *  @param value
  *      New WiFi timeout value.
- * 
+ *
  *  @returns
  *      StatusCodes::Completed on success, StatusCodes::Failure if there is a problem.
  */
@@ -832,16 +832,16 @@ int32_t WiFiRequestHandler::MapErrno(int e)
 
 /**
  *  @brief Callback to be executed when the NTP time server has provided updated time information.
- * 
+ *
  *  @param tv
  *      New time information from the time server.
  */
 void WiFiRequestHandler::NtpServerCallback(struct timeval *tv)
 {
-    ESP_LOGI(COMPONENT_NAME, "NtpServerCallback: Enter");
+    TRACE_MESSAGE(COMPONENT_NAME, "NtpServerCallback: Enter");
     settimeofday(tv, NULL);
 
-    ESP_LOGI(COMPONENT_NAME, "Setting time to %d", (int) tv->tv_sec);
+    TRACE_MESSAGE(COMPONENT_NAME, "Setting time to %d", (int) tv->tv_sec);
 
     Esp32Messaging::IntegerResponse ir;
     ir.Result = (uint32_t) tv->tv_sec;
@@ -851,7 +851,7 @@ void WiFiRequestHandler::NtpServerCallback(struct timeval *tv)
     uint32_t id = _messageDispatcher->GetNextMessageID();
     Message *timeMessage = Message::CreateOnHeap((uint8_t) MessageTypes::Event, (uint8_t) Esp32Interfaces::WiFi, (uint32_t) WiFiFunction::SetTimeOfDayEvent, 0, id, payload, payloadLength);
     _messageDispatcher->QueueMessageForStm32(timeMessage);
-    ESP_LOGI(COMPONENT_NAME, "NtpServerCallback: Exit");
+    TRACE_MESSAGE(COMPONENT_NAME, "NtpServerCallback: Exit");
 }
 
 /**
@@ -865,15 +865,15 @@ void WiFiRequestHandler::NtpServerCallback(struct timeval *tv)
  */
 gpio_num_t WiFiRequestHandler::ConvertAntennaToPin(AntennaTypes::AntennaTypes antenna)
 {
-    ESP_LOGI(COMPONENT_NAME, "ConvertAntennaToPin: Enter");
-    ESP_LOGI(COMPONENT_NAME, "ConvertAntennaToPin: Exit");
+    TRACE_MESSAGE(COMPONENT_NAME, "ConvertAntennaToPin: Enter");
+    TRACE_MESSAGE(COMPONENT_NAME, "ConvertAntennaToPin: Exit");
 
     return((antenna == AntennaTypes::OnBoard) ? WiFiRequestHandler::ON_BOARD_ANTENNA_PIN : WiFiRequestHandler::EXTERNAL_ANTENNA_PIN);
 }
 
 /**
  *  @brief Change the current antenna in use.
- * 
+ *
  *  Note that this does not change the actual default antenna in use, it just switches to a new one.
  *  Use SetAntenna followed by SwitchAntenna in order to change antenna that will be used as
  *  a default at startup.
@@ -883,7 +883,7 @@ gpio_num_t WiFiRequestHandler::ConvertAntennaToPin(AntennaTypes::AntennaTypes an
  */
 void WiFiRequestHandler::SwitchAntenna(AntennaTypes::AntennaTypes newAntenna)
 {
-    ESP_LOGI(COMPONENT_NAME, "SwitchAntenna: Enter");
+    TRACE_MESSAGE(COMPONENT_NAME, "SwitchAntenna: Enter");
     //
     // TODO: What happens to any pending requests and do we disconnect WiFi first?
     //
@@ -892,10 +892,10 @@ void WiFiRequestHandler::SwitchAntenna(AntennaTypes::AntennaTypes newAntenna)
     //
     //  Make sure the old antenna is switched off before the new one is turned on.
     //
-    ESP_LOGI(COMPONENT_NAME, "Switching from antenna %d to %d", oldAntennaPin, newAntennaPin);
+    TRACE_MESSAGE(COMPONENT_NAME, "Switching from antenna %d to %d", oldAntennaPin, newAntennaPin);
     gpio_set_level(oldAntennaPin, 0);
     gpio_set_level(newAntennaPin, 1);
-    ESP_LOGI(COMPONENT_NAME, "SwitchAntenna; Exit");
+    TRACE_MESSAGE(COMPONENT_NAME, "SwitchAntenna; Exit");
 }
 
 /**
@@ -903,7 +903,7 @@ void WiFiRequestHandler::SwitchAntenna(AntennaTypes::AntennaTypes newAntenna)
  */
 void WiFiRequestHandler::Setup()
 {
-    ESP_LOGI(COMPONENT_NAME, "Setup: Enter");
+    TRACE_MESSAGE(COMPONENT_NAME, "Setup: Enter");
     RequestHandlerBase::Setup();
     gpio_set_direction(WiFiRequestHandler::EXTERNAL_ANTENNA_PIN, GPIO_MODE_OUTPUT);
     gpio_set_level(WiFiRequestHandler::EXTERNAL_ANTENNA_PIN, 0);
@@ -917,18 +917,18 @@ void WiFiRequestHandler::Setup()
     _xWiFiEventGroup = xEventGroupCreate();
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
     xTaskCreate(Task, COMPONENT_NAME, 2048 * 2, this, configMAX_PRIORITIES - 1, &_taskHandle);
-    ESP_LOGI(COMPONENT_NAME, "Setup: Exit");
+    TRACE_MESSAGE(COMPONENT_NAME, "Setup: Exit");
 }
 
 /**
  *  @brief Copy the IP and access point structure into the connection event data structure.
- * 
+ *
  *  @param ed
  *    Pointer to the connection event data structure to be populated.
  */
 void WiFiRequestHandler::PopulateConnectionEventDataStructure(Esp32Messaging::ConnectEventData *ed)
 {
-    ESP_LOGI(COMPONENT_NAME, "PopulateConnectionEventDataStructure: Enter");
+    TRACE_MESSAGE(COMPONENT_NAME, "PopulateConnectionEventDataStructure: Enter");
 
     bzero((void *) ed, sizeof(Esp32Messaging::ConnectEventData));
     //
@@ -944,8 +944,8 @@ void WiFiRequestHandler::PopulateConnectionEventDataStructure(Esp32Messaging::Co
     memcpy((void *) &ed->Bssid, _apInformation.bssid, sizeof(ed->Bssid));
     ed->Channel = _apInformation.channel;
     Mapping::GetStmValue(Mapping::NetworkAuthenticationType, _apInformation.authmode, (int8_t *) &ed->AuthenticationMode);
-    
-    ESP_LOGI(COMPONENT_NAME, "PopulateConnectionEventDataStructure: Exit");
+
+    TRACE_MESSAGE(COMPONENT_NAME, "PopulateConnectionEventDataStructure: Exit");
 }
 
 /**
@@ -953,7 +953,7 @@ void WiFiRequestHandler::PopulateConnectionEventDataStructure(Esp32Messaging::Co
  */
 void WiFiRequestHandler::RaiseConnectToAccessPointEvent()
 {
-    ESP_LOGI(COMPONENT_NAME, "RaiseConnectToAccessPointEvent: Enter");
+    TRACE_MESSAGE(COMPONENT_NAME, "RaiseConnectToAccessPointEvent: Enter");
 
     Esp32Messaging::ConnectEventData *ed = static_cast<Esp32Messaging::ConnectEventData *>( pvPortMalloc(sizeof(Esp32Messaging::ConnectEventData)));
     if (ed != NULL)
@@ -976,94 +976,94 @@ void WiFiRequestHandler::RaiseConnectToAccessPointEvent()
     {
         ESP_LOGE(COMPONENT_NAME, "Failed to allocate memory for ConnectEventData");
     }
-    
-    ESP_LOGI(COMPONENT_NAME, "RaiseConnectToAccessPointEvent: Exit");
+
+    TRACE_MESSAGE(COMPONENT_NAME, "RaiseConnectToAccessPointEvent: Exit");
 }
 
 /**
  *  @brief Event loop for the IDF WiFi system.
- * 
+ *
  *  Perform the actual event loop handling on behalf of the static method set up for the
  *  IDF event handler.
- * 
+ *
  *  See the notes for the WiFiRequestHandler::EventHandler for more information as to why this
  *  method is necessary.
- * 
+ *
  *  @param eventBase
  *      Subsystem that created the event.  This will be one of WIFI_EVENT or IP_EVENT.
- * 
+ *
  *  @param eventId
  *      Type of event that has occurred.  This will vary depending upon the subsystem
  *      that generated the event.
- * 
+ *
  *  @param eventData
  *      Data specific to the event that has occurred.
  */
 void WiFiRequestHandler::EventHandlerHelper(esp_event_base_t eventBase, int32_t eventId, void *eventData)
 {
-    ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: Enter");
+    TRACE_MESSAGE(COMPONENT_NAME, "EventHandlerHelper: Enter");
     if (eventBase == WIFI_EVENT)
     {
         switch (eventId)
         {
             case WIFI_EVENT_WIFI_READY:
-                ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_WIFI_READY");
+                TRACE_MESSAGE(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_WIFI_READY");
                 break;
             case WIFI_EVENT_SCAN_DONE:
-                ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_SCAN_DONE");
+                TRACE_MESSAGE(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_SCAN_DONE");
                 xEventGroupSetBits(_xWiFiEventGroup, WIFI_SCAN_COMPLETE_BIT);
                 break;
             case WIFI_EVENT_STA_START:
-                ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_STA_START");
+                TRACE_MESSAGE(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_STA_START");
                 StationStartedEvent();
                 break;
             case WIFI_EVENT_STA_STOP:
-                ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_STA_STOP");
+                TRACE_MESSAGE(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_STA_STOP");
                 RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::StopWiFiInterfaceEvent);
                 break;
             case WIFI_EVENT_STA_CONNECTED:
-                ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_STA_CONNECTED");
+                TRACE_MESSAGE(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_STA_CONNECTED");
                 StationConnectedEvent((wifi_event_sta_connected_t *) eventData);
                 break;
             case WIFI_EVENT_STA_DISCONNECTED:
-                ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_STA_DISCONNECTED");
+                TRACE_MESSAGE(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_STA_DISCONNECTED");
                 StationDisconnectedEvent((wifi_event_sta_disconnected_t *) eventData);
                 break;
             case WIFI_EVENT_STA_AUTHMODE_CHANGE:
-                ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_STA_AUTHMODE_CHANGE");
+                TRACE_MESSAGE(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_STA_AUTHMODE_CHANGE");
                 break;
             case WIFI_EVENT_STA_WPS_ER_SUCCESS:
-                ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper:  WIFI_EVENT_STA_WPS_ER_SUCCESS");
+                TRACE_MESSAGE(COMPONENT_NAME, "EventHandlerHelper:  WIFI_EVENT_STA_WPS_ER_SUCCESS");
                 break;
             case WIFI_EVENT_STA_WPS_ER_FAILED:
-                ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_STA_WPS_ER_FAILED");
+                TRACE_MESSAGE(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_STA_WPS_ER_FAILED");
                 break;
             case WIFI_EVENT_STA_WPS_ER_TIMEOUT:
-                ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_STA_WPS_ER_TIMEOUT");
+                TRACE_MESSAGE(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_STA_WPS_ER_TIMEOUT");
                 break;
             case WIFI_EVENT_STA_WPS_ER_PIN:
-                ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_STA_WPS_ER_PIN");
+                TRACE_MESSAGE(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_STA_WPS_ER_PIN");
                 break;
             case WIFI_EVENT_STA_WPS_ER_PBC_OVERLAP:
-                ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_STA_WPS_ER_PBC_OVERLAP");
+                TRACE_MESSAGE(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_STA_WPS_ER_PBC_OVERLAP");
                 break;
             case WIFI_EVENT_AP_START:
-                ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_AP_START");
+                TRACE_MESSAGE(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_AP_START");
                 break;
             case WIFI_EVENT_AP_STOP:
-                ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_AP_STOP");
+                TRACE_MESSAGE(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_AP_STOP");
                 break;
             case WIFI_EVENT_AP_STACONNECTED:
-                ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_AP_STACONNECTED");
+                TRACE_MESSAGE(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_AP_STACONNECTED");
                 break;
             case WIFI_EVENT_AP_STADISCONNECTED:
-                ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_AP_STADISCONNECTED");
+                TRACE_MESSAGE(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_AP_STADISCONNECTED");
                 break;
             case WIFI_EVENT_AP_PROBEREQRECVED:
-                ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_AP_PROBEREQRECVED");
+                TRACE_MESSAGE(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_AP_PROBEREQRECVED");
                 break;
             default:
-                ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: Unhandled WiFi Event ID %d", eventId);
+                TRACE_MESSAGE(COMPONENT_NAME, "EventHandlerHelper: Unhandled WiFi Event ID %d", eventId);
                 break;
         }
     }
@@ -1074,76 +1074,76 @@ void WiFiRequestHandler::EventHandlerHelper(esp_event_base_t eventBase, int32_t 
             switch (eventId)
             {
                 case IP_EVENT_STA_GOT_IP:
-                    ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: IP_EVENT_STA_GOT_IP");
+                    TRACE_MESSAGE(COMPONENT_NAME, "EventHandlerHelper: IP_EVENT_STA_GOT_IP");
                     StationGotIpEvent((ip_event_got_ip_t *) eventData);
                     break;
                 case IP_EVENT_STA_LOST_IP:
-                    ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: IP_EVENT_STA_LOST_IP");
+                    TRACE_MESSAGE(COMPONENT_NAME, "EventHandlerHelper: IP_EVENT_STA_LOST_IP");
                     break;
                 case IP_EVENT_AP_STAIPASSIGNED:
-                    ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: IP_EVENT_AP_STAIPASSIGNED");
+                    TRACE_MESSAGE(COMPONENT_NAME, "EventHandlerHelper: IP_EVENT_AP_STAIPASSIGNED");
                     break;
                 case IP_EVENT_GOT_IP6:
-                    ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: IP_EVENT_GOT_IP6");
+                    TRACE_MESSAGE(COMPONENT_NAME, "EventHandlerHelper: IP_EVENT_GOT_IP6");
                     break;
                 case IP_EVENT_ETH_GOT_IP:
-                    ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: IP_EVENT_ETH_GOT_IP");
+                    TRACE_MESSAGE(COMPONENT_NAME, "EventHandlerHelper: IP_EVENT_ETH_GOT_IP");
                     break;
                 case IP_EVENT_PPP_GOT_IP:
-                    ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: IP_EVENT_PPP_GOT_IP");
+                    TRACE_MESSAGE(COMPONENT_NAME, "EventHandlerHelper: IP_EVENT_PPP_GOT_IP");
                     break;
                 case IP_EVENT_PPP_LOST_IP:
-                    ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: IP_EVENT_PPP_LOST_IP");
+                    TRACE_MESSAGE(COMPONENT_NAME, "EventHandlerHelper: IP_EVENT_PPP_LOST_IP");
                     break;
                 default:
-                    ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: Unhandled IP Event ID %d", eventId);
+                    TRACE_MESSAGE(COMPONENT_NAME, "EventHandlerHelper: Unhandled IP Event ID %d", eventId);
                     break;
             }
         }
     }
-    ESP_LOGI(COMPONENT_NAME, "EventHandlerHelper: Exit");
+    TRACE_MESSAGE(COMPONENT_NAME, "EventHandlerHelper: Exit");
 }
 
 /**
  *  @brief Event loop for the IDF WiFi system.
- * 
+ *
  *  Event loop (handler) for the WiFi and IP events as discussed in the following ESP-IDF document:
- * 
+ *
  *  https://docs.espressif.com/projects/esp-idf/en/release-v4.1/api-reference/system/esp_event.html
- * 
+ *
  *  This method passes the data on to an instance helper method.  This is done for convenience as it
  *  allows access to the member variables and methods without having to use the sender context or
  *  convert methods / variables / constants to static members.
- * 
+ *
  *  @param arg
  *      Argument data specified when the event loop was first registered with
  *      esp_event_handler_register.  arg should point to the instance of the WiFiRequestHandler
  *      that registered the event loop.
- * 
+ *
  *  @param eventBase
  *      Subsystem that created the event.  This will be one of WIFI_EVENT or IP_EVENT.
- * 
+ *
  *  @param eventId
  *      Type of event that has occurred.  This will vary depending upon the subsystem
  *      that generated the event.
- * 
+ *
  *  @param eventData
  *      Data specific to the event that has occurred.
  */
 void WiFiRequestHandler::EventHandler(void *arg, esp_event_base_t eventBase, int32_t eventId, void *eventData)
 {
-    ESP_LOGI(COMPONENT_NAME, "EventHandler: Enter");
+    TRACE_MESSAGE(COMPONENT_NAME, "EventHandler: Enter");
     WiFiRequestHandler *sender = static_cast<WiFiRequestHandler *>(arg);
     sender->EventHandlerHelper(eventBase, eventId, eventData);
-    ESP_LOGI(COMPONENT_NAME, "EventHandler: Exit");
+    TRACE_MESSAGE(COMPONENT_NAME, "EventHandler: Exit");
 }
 
 /**
  *  @brief Dispatch the WiFi request to the appropriate method in the class.
- * 
+ *
  *  Some of the method calls in the switch statement below are followed by a call to
  *  xEventGroupSetBits and some are not.  The basic principle is that the POSIX calls
- *  that are executed through the thread pool need to have the 
+ *  that are executed through the thread pool need to have the
  *  WIFI_READY_FOR_NEXT_COMMAND_BIT set here as the thread pool does not know about
  *  the WiFi event group.  The other methods (in this class) have this set in the
  *  method call itself.
@@ -1153,7 +1153,7 @@ void WiFiRequestHandler::EventHandler(void *arg, esp_event_base_t eventBase, int
  */
 void WiFiRequestHandler::DispatchRequest(Message *request)
 {
-    ESP_LOGI(COMPONENT_NAME, "DispatchRequest: Enter");
+    TRACE_MESSAGE(COMPONENT_NAME, "DispatchRequest: Enter");
     xEventGroupClearBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
     switch (request->Function)
     {
@@ -1248,7 +1248,7 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
         default:
-            ESP_LOGI(COMPONENT_NAME, "DispatchRequest: Unknown WiFi message received, function %d", request->Function);
+            TRACE_MESSAGE(COMPONENT_NAME, "DispatchRequest: Unknown WiFi message received, function %d", request->Function);
             if ((request->Payload != NULL) && (request->PayloadLength > 0))
             {
                 ESP_LOG_BUFFER_HEXDUMP(COMPONENT_NAME, request->Payload, request->PayloadLength, ESP_LOG_INFO);
@@ -1256,7 +1256,7 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
             break;
     }
     xEventGroupWaitBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT, pdTRUE, pdTRUE, portMAX_DELAY);
-    ESP_LOGI(COMPONENT_NAME, "DispatchRequest: Exit");
+    TRACE_MESSAGE(COMPONENT_NAME, "DispatchRequest: Exit");
 }
 
 /**
@@ -1286,7 +1286,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::StopWiFIAdapter()
  */
 void WiFiRequestHandler::StopWiFIAdapter(Message *message)
 {
-    ESP_LOGI(COMPONENT_NAME, "StopWiFIAdapter: Enter");
+    TRACE_MESSAGE(COMPONENT_NAME, "StopWiFIAdapter: Enter");
 
     bool raiseEvent = false;
     StatusCodes::StatusCodes sc = StatusCodes::CompletedOk;
@@ -1317,7 +1317,7 @@ void WiFiRequestHandler::StopWiFIAdapter(Message *message)
         RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::StopWiFiInterfaceEvent, sc);
     }
 
-    ESP_LOGI(COMPONENT_NAME, "StopWiFIAdapter: Exit");
+    TRACE_MESSAGE(COMPONENT_NAME, "StopWiFIAdapter: Exit");
 }
 
 /**
@@ -1347,7 +1347,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::DisconnectFromAccessPoint()
  */
 void WiFiRequestHandler::DisconnectFromAccessPoint(Message *message)
 {
-    ESP_LOGI(COMPONENT_NAME, "DisconnectFromAccessPoint: Enter");
+    TRACE_MESSAGE(COMPONENT_NAME, "DisconnectFromAccessPoint: Enter");
 
     StatusCodes::StatusCodes sc = StatusCodes::CompletedOk;
     if (IsConnected())
@@ -1371,7 +1371,7 @@ void WiFiRequestHandler::DisconnectFromAccessPoint(Message *message)
 
     RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::DisconnectFromAccessPointEvent, sc);
 
-    ESP_LOGI(COMPONENT_NAME, "DisconnectFromAccessPoint: Exit");
+    TRACE_MESSAGE(COMPONENT_NAME, "DisconnectFromAccessPoint: Exit");
 }
 
 /**
@@ -1382,14 +1382,14 @@ void WiFiRequestHandler::DisconnectFromAccessPoint(Message *message)
  */
 void WiFiRequestHandler::SetAntennaRequest(Message *message)
 {
-    ESP_LOGI(COMPONENT_NAME, "SetAntennaRequest: Enter");
+    TRACE_MESSAGE(COMPONENT_NAME, "SetAntennaRequest: Enter");
 
     Esp32Messaging::SetAntennaRequest *request = Encoders::ExtractSetAntennaRequest(message->Payload);
     vPortFree(message->Payload);
     message->Payload = nullptr;
     message->PayloadLength = 0;
 
-    ESP_LOGI(COMPONENT_NAME, "Switching antenna to %d with persist set to %d", request->Antenna, request->Persist);
+    TRACE_MESSAGE(COMPONENT_NAME, "Switching antenna to %d with persist set to %d", request->Antenna, request->Persist);
 
     if (request->Persist)
     {
@@ -1407,12 +1407,12 @@ void WiFiRequestHandler::SetAntennaRequest(Message *message)
 
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
 
-    ESP_LOGI(COMPONENT_NAME, "SetAntennaRequest: Exit");
+    TRACE_MESSAGE(COMPONENT_NAME, "SetAntennaRequest: Exit");
 }
 
 /**
  *  @brief Indicate if we have a valid WiFi connection.
- * 
+ *
  *  @returns
  *      True if the WiFi connection is active, false otherwise.
  */
@@ -1428,7 +1428,7 @@ bool WiFiRequestHandler::IsConnected()
  *
  *  @param ssid
  *      SSID of the access point.
- * 
+ *
  *  @param password
  *      Password for the access point.
  */
@@ -1448,14 +1448,14 @@ StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const char *ss
             result = StatusCodes::CannotStartNetworkInterface;
         }
     }
-    
+
     if (result == StatusCodes::CompletedOk)
     {
         _currentRetryCount = 0;
         if ((strlen(ssid) > MAXIMUM_SSID_LENGTH) || (strlen(password) > MAXIMUM_PASSWORD_LENGTH))
         {
             result = StatusCodes::InvalidWiFiCredentials;
-            ESP_LOGI(COMPONENT_NAME, "ConnectToAccessPoint: Invalid credentials");
+            TRACE_MESSAGE(COMPONENT_NAME, "ConnectToAccessPoint: Invalid credentials");
         }
         else
         {
@@ -1498,14 +1498,14 @@ StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const char *ss
             {
                 result = StatusCodes::Timeout;
             }
-        }        
+        }
     }
     return(result);
 }
 
 /**
  *  @brief Connect to a specified access point.
- * 
+ *
  *  Note: Contains HEAPCODE for heap tracing / debugging.
  *
  *  @param message
@@ -1513,7 +1513,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const char *ss
  */
 void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
 {
-    ESP_LOGI(COMPONENT_NAME, "ConnectToAccessPoint: Enter");
+    TRACE_MESSAGE(COMPONENT_NAME, "ConnectToAccessPoint: Enter");
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
 
     Esp32Messaging::WiFiCredentials *credentials = Encoders::ExtractWiFiCredentials(message->Payload);
@@ -1555,7 +1555,7 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
         RaiseConnectToAccessPointEvent();
     }
 
-    ESP_LOGI(COMPONENT_NAME, "ConnectToAccessPoint: Exit");
+    TRACE_MESSAGE(COMPONENT_NAME, "ConnectToAccessPoint: Exit");
 
     // Logging::StandaloneHeapTracingStart();
 
@@ -1563,16 +1563,16 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
 
 /**
  *  @brief Start the network interface.
- * 
+ *
  *  Start the WiFi network interface ready for the device to be configured
  *  as either an access point (softAP) or as a network device (station).
- * 
+ *
  *  @return
  *      ESP_OK if the interface is initialised correctly, an error code otherwise.
  */
 esp_err_t WiFiRequestHandler::StartWiFiInterface()
 {
-    ESP_LOGI(COMPONENT_NAME, "StartWiFiInterface: Enter");
+    TRACE_MESSAGE(COMPONENT_NAME, "StartWiFiInterface: Enter");
     esp_err_t result = ESP_OK;
 
     EventBits_t bits = xEventGroupGetBits(_xWiFiEventGroup);
@@ -1584,7 +1584,7 @@ esp_err_t WiFiRequestHandler::StartWiFiInterface()
         {
             result = esp_event_loop_create_default();
         }
-        
+
         if (result == ESP_OK)
         {
             _stationNetIfHandle = NULL;
@@ -1605,7 +1605,7 @@ esp_err_t WiFiRequestHandler::StartWiFiInterface()
         {
             result = esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, &WiFiRequestHandler::EventHandler, this);
         }
-        
+
         if (result == ESP_OK)
         {
             result = esp_event_handler_register(IP_EVENT, ESP_EVENT_ANY_ID, &WiFiRequestHandler::EventHandler, this);
@@ -1617,13 +1617,13 @@ esp_err_t WiFiRequestHandler::StartWiFiInterface()
         }
         xEventGroupClearBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTING_BIT);
     }
-    ESP_LOGI(COMPONENT_NAME, "StartWiFiInterface: Exit");
+    TRACE_MESSAGE(COMPONENT_NAME, "StartWiFiInterface: Exit");
     return(result);
 }
 
 /**
  *  @brief Process the request to start the WiFi network interface.
- * 
+ *
  *  This will only start the WiFi interface, it will not connect to an access
  *  point.  Also, this will only operate in station mode at the moment.
  *
@@ -1632,7 +1632,7 @@ esp_err_t WiFiRequestHandler::StartWiFiInterface()
  */
 void WiFiRequestHandler::StartWiFiInterface(Message *message)
 {
-    ESP_LOGI(COMPONENT_NAME, "StartNetwork: Enter");
+    TRACE_MESSAGE(COMPONENT_NAME, "StartNetwork: Enter");
     message->MessageType = MessageTypes::Response;
     StatusCodes::StatusCodes sc = StatusCodes::CompletedOk;
     if (StartWiFiInterface() != ESP_OK)
@@ -1644,8 +1644,8 @@ void WiFiRequestHandler::StartWiFiInterface(Message *message)
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
 
     RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::StartWiFiInterfaceEvent, sc);
-    
-    ESP_LOGI(COMPONENT_NAME, "StartNetwork: Exit");
+
+    TRACE_MESSAGE(COMPONENT_NAME, "StartNetwork: Exit");
 }
 
 /**
@@ -1661,14 +1661,14 @@ void WiFiRequestHandler::StartWiFiInterface(Message *message)
  */
 void WiFiRequestHandler::GetAvailableNetworks(Message *message)
 {
-    ESP_LOGI(COMPONENT_NAME, "GetAvailableNetworks: Enter");
+    TRACE_MESSAGE(COMPONENT_NAME, "GetAvailableNetworks: Enter");
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
 
     _currentRetryCount = 0;
     EventBits_t bits = xEventGroupGetBits(_xWiFiEventGroup);
     if (!(bits & WIFI_INTERFACE_STARTED_BIT))
     {
-        ESP_LOGI(COMPONENT_NAME, "Starting network");
+        TRACE_MESSAGE(COMPONENT_NAME, "Starting network");
         if (StartWiFiInterface() != ESP_OK)
         {
             result = StatusCodes::CannotStartNetworkInterface;
@@ -1704,7 +1704,7 @@ void WiFiRequestHandler::GetAvailableNetworks(Message *message)
                 {
                     uint16_t apCount = 0;
                     esp_wifi_scan_get_ap_num(&apCount);
-                    ESP_LOGI(COMPONENT_NAME, "GetAvailableNetworks: Number of access points found: %d", apCount);
+                    TRACE_MESSAGE(COMPONENT_NAME, "GetAvailableNetworks: Number of access points found: %d", apCount);
                     if (apCount != 0)
                     {
                         Esp32Messaging::AccessPointList *accessPointList = static_cast<Esp32Messaging::AccessPointList *>(pvPortMalloc(sizeof(Esp32Messaging::AccessPointList)));
@@ -1745,24 +1745,24 @@ void WiFiRequestHandler::GetAvailableNetworks(Message *message)
                 }
                 else
                 {
-                    ESP_LOGI(COMPONENT_NAME, "GetAvailableNetworks: Scan timeout.");
+                    TRACE_MESSAGE(COMPONENT_NAME, "GetAvailableNetworks: Scan timeout.");
                     result = StatusCodes::Timeout;
                 }
                 vPortFree(ap_info);
             }
             else
             {
-                ESP_LOGI(COMPONENT_NAME, "GetAvailableNetworks: Scan timeout.");
+                TRACE_MESSAGE(COMPONENT_NAME, "GetAvailableNetworks: Scan timeout.");
                 result = StatusCodes::Timeout;
             }
-        }        
+        }
     }
 
     message->MessageType = MessageTypes::Response;
     message->StatusCode = result;
     _messageDispatcher->QueueMessageForStm32(message);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
-    ESP_LOGI(COMPONENT_NAME, "GetAvailableNetworks: Exit");
+    TRACE_MESSAGE(COMPONENT_NAME, "GetAvailableNetworks: Exit");
 }
 
 /**
@@ -1773,7 +1773,7 @@ void WiFiRequestHandler::GetAvailableNetworks(Message *message)
  */
 void WiFiRequestHandler::GetAddrInfo(void *vpMessage)
 {
-    ESP_LOGI(COMPONENT_NAME, "GetAddrInfo: Enter");
+    TRACE_MESSAGE(COMPONENT_NAME, "GetAddrInfo: Enter");
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
@@ -1785,7 +1785,7 @@ void WiFiRequestHandler::GetAddrInfo(void *vpMessage)
         //
         Esp32Messaging::AddrInfo *extractedHints = Encoders::ExtractAddrInfo(request->Hints);
         vPortFree(request->Hints);
-        
+
         struct addrinfo hints = {};
         hints.ai_family = extractedHints->Family;
         hints.ai_socktype = extractedHints->SocketType;
@@ -1848,7 +1848,7 @@ void WiFiRequestHandler::GetAddrInfo(void *vpMessage)
 
     PERFORMANCE_LOGGING_EXIT();
     PERFORMANCE_LOGGING_ADD_ENTRY();
-    ESP_LOGI(COMPONENT_NAME, "GetAddrInfo: Exit");
+    TRACE_MESSAGE(COMPONENT_NAME, "GetAddrInfo: Exit");
 }
 
 /**
@@ -1860,7 +1860,7 @@ void WiFiRequestHandler::GetAddrInfo(void *vpMessage)
 void WiFiRequestHandler::Socket(void *vpMessage)
 {
     TRACE_MESSAGE(COMPONENT_NAME, "Socket: Enter");
-//    ESP_LOGI(COMPONENT_NAME, "Socket: Enter");
+//    TRACE_MESSAGE(COMPONENT_NAME, "Socket: Enter");
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
@@ -1869,17 +1869,17 @@ void WiFiRequestHandler::Socket(void *vpMessage)
     if (IsConnected())
     {
         Esp32Messaging::SocketRequest *request = Encoders::ExtractSocketRequest(message->Payload);
-        ESP_LOGI(COMPONENT_NAME, "Socket: Creating socket on domain %d, type %d and protocol %d", request->Domain, request->Type, request->Protocol);
+        TRACE_MESSAGE(COMPONENT_NAME, "Socket: Creating socket on domain %d, type %d and protocol %d", request->Domain, request->Type, request->Protocol);
 
         response.Result = socket(request->Domain, request->Type, request->Protocol);
         if (response.Result < 0)
         {
-            ESP_LOGI(COMPONENT_NAME, "Socket: Error code: %d - %s", errno, strerror(errno));
+            TRACE_MESSAGE(COMPONENT_NAME, "Socket: Error code: %d - %s", errno, strerror(errno));
             response.ResponseErrno = MapErrno(errno);
         }
         else
         {
-            ESP_LOGI(COMPONENT_NAME, "Socket: Created socket %d", response.Result);
+            TRACE_MESSAGE(COMPONENT_NAME, "Socket: Created socket %d", response.Result);
             response.ResponseErrno = 0;
         }
 
@@ -1902,7 +1902,7 @@ void WiFiRequestHandler::Socket(void *vpMessage)
 
     PERFORMANCE_LOGGING_EXIT();
     PERFORMANCE_LOGGING_ADD_ENTRY();
-    ESP_LOGI(COMPONENT_NAME, "Socket: Exit");
+    TRACE_MESSAGE(COMPONENT_NAME, "Socket: Exit");
 }
 
 /**
@@ -1913,7 +1913,7 @@ void WiFiRequestHandler::Socket(void *vpMessage)
  */
 void WiFiRequestHandler::Connect(void *vpMessage)
 {
-    ESP_LOGI(COMPONENT_NAME, "Connect: Enter");
+    TRACE_MESSAGE(COMPONENT_NAME, "Connect: Enter");
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
@@ -1941,10 +1941,10 @@ void WiFiRequestHandler::Connect(void *vpMessage)
             sa.sin_port = socketAddress->Port;
             memcpy(&sa.sin_addr, &socketAddress->Ip4Address, sizeof(sa.sin_addr));
             sa.sin_len = sizeof(struct sockaddr_in);
-            ESP_LOGI(COMPONENT_NAME, "Connect: Connecting socket: %d", request->SocketHandle);
-            ESP_LOGI(COMPONENT_NAME, "Connect: Family: %d", sa.sin_family);
-            ESP_LOGI(COMPONENT_NAME, "Connect: IP address: %s", inet_ntoa(sa.sin_addr));
-            ESP_LOGI(COMPONENT_NAME, "Connect: Port: %d", ntohs(sa.sin_port));
+            TRACE_MESSAGE(COMPONENT_NAME, "Connect: Connecting socket: %d", request->SocketHandle);
+            TRACE_MESSAGE(COMPONENT_NAME, "Connect: Family: %d", sa.sin_family);
+            TRACE_MESSAGE(COMPONENT_NAME, "Connect: IP address: %s", inet_ntoa(sa.sin_addr));
+            TRACE_MESSAGE(COMPONENT_NAME, "Connect: Port: %d", ntohs(sa.sin_port));
             response.Result = connect(request->SocketHandle, (struct sockaddr *) &sa, sizeof(sa));
         }
         else
@@ -1956,7 +1956,7 @@ void WiFiRequestHandler::Connect(void *vpMessage)
         if (response.Result != 0)
         {
             response.Result = -1;
-            ESP_LOGI(COMPONENT_NAME, "Connect: Error code: %d - %s", errno, strerror(errno));
+            TRACE_MESSAGE(COMPONENT_NAME, "Connect: Error code: %d - %s", errno, strerror(errno));
             response.ResponseErrno = MapErrno(errno);
         }
         else
@@ -1984,7 +1984,7 @@ void WiFiRequestHandler::Connect(void *vpMessage)
 
     PERFORMANCE_LOGGING_EXIT();
     PERFORMANCE_LOGGING_ADD_ENTRY();
-    ESP_LOGI(COMPONENT_NAME, "Connect: Exit");
+    TRACE_MESSAGE(COMPONENT_NAME, "Connect: Exit");
 }
 
 /**
@@ -1995,11 +1995,11 @@ void WiFiRequestHandler::Connect(void *vpMessage)
  */
 void WiFiRequestHandler::FreeAddrInfo(void  *vpMessage)
 {
-    ESP_LOGI(COMPONENT_NAME, "FreeAddrInfo: Enter");
+    TRACE_MESSAGE(COMPONENT_NAME, "FreeAddrInfo: Enter");
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
-    ESP_LOGI(COMPONENT_NAME, "FreeAddrInfo: Releasing addrinfo storage.");
+    TRACE_MESSAGE(COMPONENT_NAME, "FreeAddrInfo: Releasing addrinfo storage.");
     Esp32Messaging::FreeAddrInfoRequest *request = Encoders::ExtractFreeAddrInfoRequest(message->Payload);
 
     freeaddrinfo(reinterpret_cast<struct addrinfo *>(request->AddrInfoAddress));
@@ -2016,7 +2016,7 @@ void WiFiRequestHandler::FreeAddrInfo(void  *vpMessage)
 
     PERFORMANCE_LOGGING_EXIT();
     PERFORMANCE_LOGGING_ADD_ENTRY();
-    ESP_LOGI(COMPONENT_NAME, "FreeAddrInfo: Exit");
+    TRACE_MESSAGE(COMPONENT_NAME, "FreeAddrInfo: Exit");
 }
 
 /**
@@ -2027,7 +2027,7 @@ void WiFiRequestHandler::FreeAddrInfo(void  *vpMessage)
  */
 void WiFiRequestHandler::SetSockOpt(void *vpMessage)
 {
-    ESP_LOGI(COMPONENT_NAME, "SetSockOpt: Enter");
+    TRACE_MESSAGE(COMPONENT_NAME, "SetSockOpt: Enter");
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
@@ -2045,7 +2045,7 @@ void WiFiRequestHandler::SetSockOpt(void *vpMessage)
         int32_t optionName = 0;
         if (Mapping::GetEspValue(Mapping::SocketOptions, request->OptionName, &optionName) < 0)
         {
-            ESP_LOGI(COMPONENT_NAME, "SetSockOpt: Unknown option: %d", request->OptionName);
+            TRACE_MESSAGE(COMPONENT_NAME, "SetSockOpt: Unknown option: %d", request->OptionName);
             errorCode = ENOPROTOOPT;
         }
         else
@@ -2068,22 +2068,22 @@ void WiFiRequestHandler::SetSockOpt(void *vpMessage)
                     optionLength = request->OptionValueLength;
                     break;
                 case SO_LINGER:         /* Linger on close if data present */
-                    ESP_LOGI(COMPONENT_NAME, "SetSockOpt: Implement SO_LINGER");
+                    TRACE_MESSAGE(COMPONENT_NAME, "SetSockOpt: Implement SO_LINGER");
                     break;
                 case SO_ACCEPTCONN:     /* Socket has had listen() */
-                    ESP_LOGI(COMPONENT_NAME, "SetSockOpt: Implement SO_ACCEPTCONN");
+                    TRACE_MESSAGE(COMPONENT_NAME, "SetSockOpt: Implement SO_ACCEPTCONN");
                     break;
                 case SO_DONTLINGER:     /* Don't linger on close if data present */
-                    ESP_LOGI(COMPONENT_NAME, "SetSockOpt: Implement SO_DONTLINGER");
+                    TRACE_MESSAGE(COMPONENT_NAME, "SetSockOpt: Implement SO_DONTLINGER");
                     break;
                 case SO_ERROR:          /* Get error status and clear */
-                    ESP_LOGI(COMPONENT_NAME, "SetSockOpt: Implement SO_ERROR");
+                    TRACE_MESSAGE(COMPONENT_NAME, "SetSockOpt: Implement SO_ERROR");
                     break;
                 case SO_TYPE:           /* Get socket type */
-                    ESP_LOGI(COMPONENT_NAME, "SetSockOpt: Implement SO_TYPE");
+                    TRACE_MESSAGE(COMPONENT_NAME, "SetSockOpt: Implement SO_TYPE");
                     break;
                 case SO_NO_CHECK:       /* Don't create UDP checksum */
-                    ESP_LOGI(COMPONENT_NAME, "SetSockOpt: Implement SO_NO_CHECK");
+                    TRACE_MESSAGE(COMPONENT_NAME, "SetSockOpt: Implement SO_NO_CHECK");
                     break;
                 default:
                     response.Result = -1;
@@ -2094,18 +2094,18 @@ void WiFiRequestHandler::SetSockOpt(void *vpMessage)
             {
                 int32_t level = 0;
                 Mapping::GetEspValue(Mapping::SocketLevel, request->Level, &level);
-                ESP_LOGI(COMPONENT_NAME, "SetSockOpt: Setting socket option level to 0x%x, option name 0x%x for socket %d", level, optionName, request->SocketHandle);
+                TRACE_MESSAGE(COMPONENT_NAME, "SetSockOpt: Setting socket option level to 0x%x, option name 0x%x for socket %d", level, optionName, request->SocketHandle);
                 response.Result = setsockopt(request->SocketHandle, level, optionName, optionValue, optionLength);
                 errorCode = errno;
             }
-        }    
+        }
 
         if (errorCode != 0)
         {
             response.Result = -1;
             response.ResponseErrno = MapErrno(errorCode);
         }
-        ESP_LOGI(COMPONENT_NAME, "SetSockOpt: Result: %d, errno: %d - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
+        TRACE_MESSAGE(COMPONENT_NAME, "SetSockOpt: Result: %d, errno: %d - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
 
         if (request->OptionValueLength > 0)
         {
@@ -2133,7 +2133,7 @@ void WiFiRequestHandler::SetSockOpt(void *vpMessage)
 
     PERFORMANCE_LOGGING_EXIT();
     PERFORMANCE_LOGGING_ADD_ENTRY();
-    ESP_LOGI(COMPONENT_NAME, "SetSockOpt: Exit");
+    TRACE_MESSAGE(COMPONENT_NAME, "SetSockOpt: Exit");
 }
 
 /**
@@ -2144,7 +2144,7 @@ void WiFiRequestHandler::SetSockOpt(void *vpMessage)
  */
 void WiFiRequestHandler::Write(void *vpMessage)
 {
-    ESP_LOGI(COMPONENT_NAME, "Write: Enter");
+    TRACE_MESSAGE(COMPONENT_NAME, "Write: Enter");
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
@@ -2185,7 +2185,7 @@ void WiFiRequestHandler::Write(void *vpMessage)
 
     PERFORMANCE_LOGGING_EXIT();
     PERFORMANCE_LOGGING_ADD_ENTRY();
-    ESP_LOGI(COMPONENT_NAME, "Write: Exit");
+    TRACE_MESSAGE(COMPONENT_NAME, "Write: Exit");
 }
 
 /**
@@ -2196,7 +2196,7 @@ void WiFiRequestHandler::Write(void *vpMessage)
  */
 void WiFiRequestHandler::Read(void *vpMessage)
 {
-    ESP_LOGI(COMPONENT_NAME, "Read: Enter");
+    TRACE_MESSAGE(COMPONENT_NAME, "Read: Enter");
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
@@ -2242,7 +2242,7 @@ void WiFiRequestHandler::Read(void *vpMessage)
 
     PERFORMANCE_LOGGING_EXIT();
     PERFORMANCE_LOGGING_ADD_ENTRY();
-    ESP_LOGI(COMPONENT_NAME, "Read: Exit");
+    TRACE_MESSAGE(COMPONENT_NAME, "Read: Exit");
 }
 
 /**
@@ -2253,7 +2253,7 @@ void WiFiRequestHandler::Read(void *vpMessage)
  */
 void WiFiRequestHandler::Close(void *vpMessage)
 {
-    ESP_LOGI(COMPONENT_NAME, "Close: Enter");
+    TRACE_MESSAGE(COMPONENT_NAME, "Close: Enter");
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
@@ -2291,7 +2291,7 @@ void WiFiRequestHandler::Close(void *vpMessage)
 
     PERFORMANCE_LOGGING_EXIT();
     PERFORMANCE_LOGGING_ADD_ENTRY();
-    ESP_LOGI(COMPONENT_NAME, "Close: Exit");
+    TRACE_MESSAGE(COMPONENT_NAME, "Close: Exit");
 }
 
 /**
@@ -2302,7 +2302,7 @@ void WiFiRequestHandler::Close(void *vpMessage)
  */
 void WiFiRequestHandler::Send(void *vpMessage)
 {
-    ESP_LOGI(COMPONENT_NAME, "Send: Enter");
+    TRACE_MESSAGE(COMPONENT_NAME, "Send: Enter");
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
@@ -2327,12 +2327,12 @@ void WiFiRequestHandler::Send(void *vpMessage)
             response.ResponseErrno = MapErrno(EFAULT);
         }
 
-        ESP_LOGI(COMPONENT_NAME, "Send: Sent %d bytes.", request->Length);
+        TRACE_MESSAGE(COMPONENT_NAME, "Send: Sent %d bytes.", request->Length);
         if (request->Buffer && (request->Length > 0))
         {
             ESP_LOG_BUFFER_HEX(COMPONENT_NAME, request->Buffer, request->Length);
         }
-        ESP_LOGI(COMPONENT_NAME, "Send: Result: %d, errno: %d - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
+        TRACE_MESSAGE(COMPONENT_NAME, "Send: Result: %d, errno: %d - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
 
         vPortFree(request->Buffer);
         vPortFree(request);
@@ -2354,7 +2354,7 @@ void WiFiRequestHandler::Send(void *vpMessage)
 
     PERFORMANCE_LOGGING_EXIT();
     PERFORMANCE_LOGGING_ADD_ENTRY();
-    ESP_LOGI(COMPONENT_NAME, "Send: Exit");
+    TRACE_MESSAGE(COMPONENT_NAME, "Send: Exit");
 }
 
 /**
@@ -2365,7 +2365,7 @@ void WiFiRequestHandler::Send(void *vpMessage)
  */
 void WiFiRequestHandler::SendTo(void *vpMessage)
 {
-    ESP_LOGI(COMPONENT_NAME, "SendTo: Enter");
+    TRACE_MESSAGE(COMPONENT_NAME, "SendTo: Enter");
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
@@ -2386,7 +2386,7 @@ void WiFiRequestHandler::SendTo(void *vpMessage)
             {
                 socketAddress = Encoders::ExtractSockAddr(request->DestinationAddress);
                 Mapping::GetEspValue(Mapping::AddressFamily, socketAddress->Family, &family);
-                ESP_LOGI(COMPONENT_NAME, "SendTo: Mapping request family %d to ESP family %d", socketAddress->Family, family);
+                TRACE_MESSAGE(COMPONENT_NAME, "SendTo: Mapping request family %d to ESP family %d", socketAddress->Family, family);
             }
 
             if (family == AF_INET)
@@ -2404,10 +2404,10 @@ void WiFiRequestHandler::SendTo(void *vpMessage)
                     psa = (struct sockaddr *) &sa;
                     lenSa = sizeof(sa);
                 }
-                ESP_LOGI(COMPONENT_NAME, "SendTo: Connecting socket: %d", request->SocketHandle);
-                ESP_LOGI(COMPONENT_NAME, "SendTo: Family: %d", (psa == NULL) ? 0 : sa.sin_family);
-                ESP_LOGI(COMPONENT_NAME, "SendTo: IP address: %s", (psa == NULL) ? "NULL" : inet_ntoa(sa.sin_addr));
-                ESP_LOGI(COMPONENT_NAME, "SendTo: Port: %d", (psa == NULL) ? 0 : ntohs(sa.sin_port));
+                TRACE_MESSAGE(COMPONENT_NAME, "SendTo: Connecting socket: %d", request->SocketHandle);
+                TRACE_MESSAGE(COMPONENT_NAME, "SendTo: Family: %d", (psa == NULL) ? 0 : sa.sin_family);
+                TRACE_MESSAGE(COMPONENT_NAME, "SendTo: IP address: %s", (psa == NULL) ? "NULL" : inet_ntoa(sa.sin_addr));
+                TRACE_MESSAGE(COMPONENT_NAME, "SendTo: Port: %d", (psa == NULL) ? 0 : ntohs(sa.sin_port));
                 response.Result = sendto(request->SocketHandle, request->Buffer, request->Length, mappedFlags, psa, lenSa);
             }
 
@@ -2415,7 +2415,7 @@ void WiFiRequestHandler::SendTo(void *vpMessage)
             {
                 vPortFree(socketAddress);
             }
-            
+
             if (response.Result < 0)
             {
                 response.ResponseErrno = MapErrno(errno);
@@ -2426,12 +2426,12 @@ void WiFiRequestHandler::SendTo(void *vpMessage)
             response.ResponseErrno = MapErrno(EFAULT);
         }
 
-        ESP_LOGI(COMPONENT_NAME, "SendTo: Sent %d bytes.", request->Length);
+        TRACE_MESSAGE(COMPONENT_NAME, "SendTo: Sent %d bytes.", request->Length);
         if (request->Buffer && (request->Length > 0))
         {
             ESP_LOG_BUFFER_HEX(COMPONENT_NAME, request->Buffer, request->Length);
         }
-        ESP_LOGI(COMPONENT_NAME, "SendTo: Result: %d, errno: %d - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
+        TRACE_MESSAGE(COMPONENT_NAME, "SendTo: Result: %d, errno: %d - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
 
         if (request->DestinationAddress)
         {
@@ -2456,7 +2456,7 @@ void WiFiRequestHandler::SendTo(void *vpMessage)
 
     PERFORMANCE_LOGGING_EXIT();
     PERFORMANCE_LOGGING_ADD_ENTRY();
-    ESP_LOGI(COMPONENT_NAME, "SendTo: Exit");
+    TRACE_MESSAGE(COMPONENT_NAME, "SendTo: Exit");
 }
 
 /**
@@ -2467,7 +2467,7 @@ void WiFiRequestHandler::SendTo(void *vpMessage)
  */
 void WiFiRequestHandler::RecvFrom(void *vpMessage)
 {
-    ESP_LOGI(COMPONENT_NAME, "RecvFrom: Enter");
+    TRACE_MESSAGE(COMPONENT_NAME, "RecvFrom: Enter");
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
@@ -2498,8 +2498,8 @@ void WiFiRequestHandler::RecvFrom(void *vpMessage)
             else
             {
                 response.Result = recvfrom(request->SocketHandle, response.Buffer, request->Length, mappedFlags, (struct sockaddr *) sa, (sa == NULL) ? NULL : &len);
-            }    
-            
+            }
+
             if (response.Result < 0)
             {
                 response.ResponseErrno = MapErrno(errno);
@@ -2545,12 +2545,12 @@ void WiFiRequestHandler::RecvFrom(void *vpMessage)
         {
             response.ResponseErrno = MapErrno(EFAULT);
         }
-        ESP_LOGI(COMPONENT_NAME, "RecvFrom: Received %d bytes.", response.Result);
+        TRACE_MESSAGE(COMPONENT_NAME, "RecvFrom: Received %d bytes.", response.Result);
         if (response.Buffer && (response.BufferLength > 0))
         {
             ESP_LOG_BUFFER_HEX(COMPONENT_NAME, response.Buffer, response.Result);
         }
-        ESP_LOGI(COMPONENT_NAME, "RecvFrom: Result: %d, errno: %d - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
+        TRACE_MESSAGE(COMPONENT_NAME, "RecvFrom: Result: %d, errno: %d - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
 
         vPortFree(request);
     }
@@ -2579,7 +2579,7 @@ void WiFiRequestHandler::RecvFrom(void *vpMessage)
 
     PERFORMANCE_LOGGING_EXIT();
     PERFORMANCE_LOGGING_ADD_ENTRY();
-    ESP_LOGI(COMPONENT_NAME, "RecvFrom: Exit");
+    TRACE_MESSAGE(COMPONENT_NAME, "RecvFrom: Exit");
 }
 
 /**
@@ -2590,7 +2590,7 @@ void WiFiRequestHandler::RecvFrom(void *vpMessage)
  */
 void WiFiRequestHandler::Bind(void *vpMessage)
 {
-    ESP_LOGI(COMPONENT_NAME, "Bind: Enter");
+    TRACE_MESSAGE(COMPONENT_NAME, "Bind: Enter");
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
@@ -2618,10 +2618,10 @@ void WiFiRequestHandler::Bind(void *vpMessage)
             sa.sin_family = socketAddress->Family;
             sa.sin_port = socketAddress->Port;
             memcpy(&sa.sin_addr, &socketAddress->Ip4Address, sizeof(socketAddress->Ip4Address));
-            ESP_LOGI(COMPONENT_NAME, "Bind: Socket handle: %d", request->SocketHandle);
-            ESP_LOGI(COMPONENT_NAME, "Bind: Family: %d", sa.sin_family);
-            ESP_LOGI(COMPONENT_NAME, "Bind: IP address: %s", inet_ntoa(sa.sin_addr));
-            ESP_LOGI(COMPONENT_NAME, "Bind: Port: %d", ntohs(sa.sin_port));
+            TRACE_MESSAGE(COMPONENT_NAME, "Bind: Socket handle: %d", request->SocketHandle);
+            TRACE_MESSAGE(COMPONENT_NAME, "Bind: Family: %d", sa.sin_family);
+            TRACE_MESSAGE(COMPONENT_NAME, "Bind: IP address: %s", inet_ntoa(sa.sin_addr));
+            TRACE_MESSAGE(COMPONENT_NAME, "Bind: Port: %d", ntohs(sa.sin_port));
             response.Result = bind(request->SocketHandle, (struct sockaddr *) &sa, sizeof(sa));
         }
         else
@@ -2639,7 +2639,7 @@ void WiFiRequestHandler::Bind(void *vpMessage)
         {
             response.ResponseErrno = 0;
         }
-        ESP_LOGI(COMPONENT_NAME, "Bind: Error code: %d - %s", errno, strerror(errno));
+        TRACE_MESSAGE(COMPONENT_NAME, "Bind: Error code: %d - %s", errno, strerror(errno));
         vPortFree(request);
         vPortFree(socketAddress);
     }
@@ -2660,7 +2660,7 @@ void WiFiRequestHandler::Bind(void *vpMessage)
 
     PERFORMANCE_LOGGING_EXIT();
     PERFORMANCE_LOGGING_ADD_ENTRY();
-    ESP_LOGI(COMPONENT_NAME, "Bind: Exit");
+    TRACE_MESSAGE(COMPONENT_NAME, "Bind: Exit");
 }
 
 /**
@@ -2671,7 +2671,7 @@ void WiFiRequestHandler::Bind(void *vpMessage)
  */
 void WiFiRequestHandler::Listen(void *vpMessage)
 {
-    ESP_LOGI(COMPONENT_NAME, "Listen: Enter");
+    TRACE_MESSAGE(COMPONENT_NAME, "Listen: Enter");
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
@@ -2702,7 +2702,7 @@ void WiFiRequestHandler::Listen(void *vpMessage)
     PERFORMANCE_LOGGING_EXIT();
     PERFORMANCE_LOGGING_ADD_ENTRY();
     PERFORMANCE_LOGGING_DUMP_RESULTS();
-    ESP_LOGI(COMPONENT_NAME, "Listen: Exit");
+    TRACE_MESSAGE(COMPONENT_NAME, "Listen: Exit");
 }
 
 /**
@@ -2713,7 +2713,7 @@ void WiFiRequestHandler::Listen(void *vpMessage)
  */
 void WiFiRequestHandler::Accept(void *vpMessage)
 {
-    ESP_LOGI(COMPONENT_NAME, "Accept: Enter");
+    TRACE_MESSAGE(COMPONENT_NAME, "Accept: Enter");
     PERFORMANCE_LOGGING_ENTER();
     Esp32Messaging::AcceptResponse response = { };
     Message *message = static_cast<Message *>(vpMessage);
@@ -2740,10 +2740,10 @@ void WiFiRequestHandler::Accept(void *vpMessage)
             Encoders::EncodeSockAddr(sockAddr, response.Addr);
             vPortFree(sockAddr);
             response.ResponseErrno = 0;
-            ESP_LOGI(COMPONENT_NAME, "Accept: Socket handle: %d", response.Result);
-            ESP_LOGI(COMPONENT_NAME, "Accept: Family: %d", sin->sin_family);
-            ESP_LOGI(COMPONENT_NAME, "Accept: IP address: %s", inet_ntoa(sin->sin_addr));
-            ESP_LOGI(COMPONENT_NAME, "Accept: Port: %d", ntohs(sin->sin_port));
+            TRACE_MESSAGE(COMPONENT_NAME, "Accept: Socket handle: %d", response.Result);
+            TRACE_MESSAGE(COMPONENT_NAME, "Accept: Family: %d", sin->sin_family);
+            TRACE_MESSAGE(COMPONENT_NAME, "Accept: IP address: %s", inet_ntoa(sin->sin_addr));
+            TRACE_MESSAGE(COMPONENT_NAME, "Accept: Port: %d", ntohs(sin->sin_port));
         }
         else
         {
@@ -2770,12 +2770,12 @@ void WiFiRequestHandler::Accept(void *vpMessage)
 
     PERFORMANCE_LOGGING_EXIT();
     PERFORMANCE_LOGGING_ADD_ENTRY();
-    ESP_LOGI(COMPONENT_NAME, "Accept: Exit");
+    TRACE_MESSAGE(COMPONENT_NAME, "Accept: Exit");
 }
 
 /**
  *  @brief Expose the simulation of the POSIX ioctl method to the STM32.
- * 
+ *
  *  This is a simulation of the ioctl method as this is not supported by the
  *  ESP-IDF framework.
  *
@@ -2784,12 +2784,12 @@ void WiFiRequestHandler::Accept(void *vpMessage)
  */
 void WiFiRequestHandler::Ioctl(void *vpMessage)
 {
-    ESP_LOGI(COMPONENT_NAME, "Ioctl: Enter");
+    TRACE_MESSAGE(COMPONENT_NAME, "Ioctl: Enter");
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
     Esp32Messaging::IoctlResponse response = { };
-    
+
     if (IsConnected())
     {
         Esp32Messaging::IoctlRequest *request = Encoders::ExtractIoctlRequest(message->Payload);
@@ -2847,7 +2847,7 @@ void WiFiRequestHandler::Ioctl(void *vpMessage)
 
     PERFORMANCE_LOGGING_EXIT();
     PERFORMANCE_LOGGING_ADD_ENTRY();
-    ESP_LOGI(COMPONENT_NAME, "Ioctl: Exit");
+    TRACE_MESSAGE(COMPONENT_NAME, "Ioctl: Exit");
 }
 
 /**
@@ -2855,13 +2855,13 @@ void WiFiRequestHandler::Ioctl(void *vpMessage)
  *
  *  @param message
  *      Message structure containing the parameters for the getsockname method.
- * 
+ *
  *  @param methodToCall
  *      Which method should be called, getsockname or getpeername?
  */
 void WiFiRequestHandler::GetSockPeerName(void *vpMessage, WiFiFunction::WiFiFunction methodToCall)
 {
-    ESP_LOGI(COMPONENT_NAME, "GetSockPeerName: Enter");
+    TRACE_MESSAGE(COMPONENT_NAME, "GetSockPeerName: Enter");
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
@@ -2896,10 +2896,10 @@ void WiFiRequestHandler::GetSockPeerName(void *vpMessage, WiFiFunction::WiFiFunc
             Encoders::EncodeSockAddr(sockAddr, response.Addr);
             vPortFree(sockAddr);
             response.ResponseErrno = 0;
-            ESP_LOGI(COMPONENT_NAME, "GetSockPeerName: Socket handle: %d", response.Result);
-            ESP_LOGI(COMPONENT_NAME, "GetSockPeerName: Family: %d", sin->sin_family);
-            ESP_LOGI(COMPONENT_NAME, "GetSockPeerName: IP address: %s", inet_ntoa(sin->sin_addr));
-            ESP_LOGI(COMPONENT_NAME, "GetSockPeerName: Port: %d", ntohs(sin->sin_port));
+            TRACE_MESSAGE(COMPONENT_NAME, "GetSockPeerName: Socket handle: %d", response.Result);
+            TRACE_MESSAGE(COMPONENT_NAME, "GetSockPeerName: Family: %d", sin->sin_family);
+            TRACE_MESSAGE(COMPONENT_NAME, "GetSockPeerName: IP address: %s", inet_ntoa(sin->sin_addr));
+            TRACE_MESSAGE(COMPONENT_NAME, "GetSockPeerName: Port: %d", ntohs(sin->sin_port));
         }
         else
         {
@@ -2927,7 +2927,7 @@ void WiFiRequestHandler::GetSockPeerName(void *vpMessage, WiFiFunction::WiFiFunc
 
     PERFORMANCE_LOGGING_EXIT();
     PERFORMANCE_LOGGING_ADD_ENTRY();
-    ESP_LOGI(COMPONENT_NAME, "GetSockPeerName: Exit");
+    TRACE_MESSAGE(COMPONENT_NAME, "GetSockPeerName: Exit");
 }
 
 /**
@@ -2938,9 +2938,9 @@ void WiFiRequestHandler::GetSockPeerName(void *vpMessage, WiFiFunction::WiFiFunc
  */
 void WiFiRequestHandler::GetSockName(void *vpMessage)
 {
-    ESP_LOGI(COMPONENT_NAME, "GetSockName: Enter");
+    TRACE_MESSAGE(COMPONENT_NAME, "GetSockName: Enter");
     GetSockPeerName(vpMessage, WiFiFunction::GetSockName);
-    ESP_LOGI(COMPONENT_NAME, "GetSockName: Exit");
+    TRACE_MESSAGE(COMPONENT_NAME, "GetSockName: Exit");
 }
 
 /**
@@ -2951,9 +2951,9 @@ void WiFiRequestHandler::GetSockName(void *vpMessage)
  */
 void WiFiRequestHandler::GetPeerName(void *vpMessage)
 {
-    ESP_LOGI(COMPONENT_NAME, "GetPeerName: Enter");
+    TRACE_MESSAGE(COMPONENT_NAME, "GetPeerName: Enter");
     GetSockPeerName(vpMessage, WiFiFunction::GetPeerName);
-    ESP_LOGI(COMPONENT_NAME, "GetPeerName: Exit");
+    TRACE_MESSAGE(COMPONENT_NAME, "GetPeerName: Exit");
 }
 
 /**
@@ -2964,7 +2964,7 @@ void WiFiRequestHandler::GetPeerName(void *vpMessage)
  */
 void WiFiRequestHandler::Poll(void *vpMessage)
 {
-    ESP_LOGI(COMPONENT_NAME, "Poll: Enter");
+    TRACE_MESSAGE(COMPONENT_NAME, "Poll: Enter");
     Message *message = static_cast<Message *>(vpMessage);
     Esp32Messaging::PollRequest *request = Encoders::ExtractPollRequest(message->Payload);
     // PollRequestInformation *pollRequest = static_cast<PollRequestInformation *>(pvPortMalloc(sizeof(PollRequestInformation)));
@@ -2979,25 +2979,25 @@ void WiFiRequestHandler::Poll(void *vpMessage)
         struct pollfd fds = { };
         fds.fd = request->SocketHandle;
         Mapping::GetEspFlagValue(Mapping::PollEvents, request->Events, &event);
-        ESP_LOGI(COMPONENT_NAME, "Poll: Requested Nuttx events 0x%04d maps to ESP events 0x%04d", request->Events, event);
+        TRACE_MESSAGE(COMPONENT_NAME, "Poll: Requested Nuttx events 0x%04d maps to ESP events 0x%04d", request->Events, event);
         fds.events = (uint16_t) (event & 0xffff);
 
         response.Result = poll(&fds, 1, request->Timeout);
         // response.Result = poll(&fds, 1, request->Timeout);
-        ESP_LOGI(COMPONENT_NAME, "Poll: Returned value: %d", response.Result);
+        TRACE_MESSAGE(COMPONENT_NAME, "Poll: Returned value: %d", response.Result);
         if (response.Result > 0)
         {
             Mapping::GetStmFlagValue(Mapping::PollEvents, fds.revents, &event);
             response.ReturnedEvents = (uint16_t) (event & 0xffff);
         }
-        ESP_LOGI(COMPONENT_NAME, "Poll: Returned ESP32 events 0x%04d maps to NuttX events 0x%04d", fds.revents, event);
+        TRACE_MESSAGE(COMPONENT_NAME, "Poll: Returned ESP32 events 0x%04d maps to NuttX events 0x%04d", fds.revents, event);
     }
     else
     {
-        ESP_LOGI(COMPONENT_NAME, "Poll: Poll request not supported.");
+        TRACE_MESSAGE(COMPONENT_NAME, "Poll: Poll request not supported.");
         errno = EFAULT;
     }
-    
+
     if (errno != 0)
     {
         response.Result = -1;
@@ -3013,7 +3013,7 @@ void WiFiRequestHandler::Poll(void *vpMessage)
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
-    ESP_LOGI(COMPONENT_NAME, "Poll: Exit");
+    TRACE_MESSAGE(COMPONENT_NAME, "Poll: Exit");
 }
 
 /*
@@ -3029,7 +3029,7 @@ void WiFiRequestHandler::Poll(void *vpMessage)
  */
 void WiFiRequestHandler::StationStartedEvent()
 {
-    ESP_LOGI(COMPONENT_NAME, "StationStartedEvent: Enter");
+    TRACE_MESSAGE(COMPONENT_NAME, "StationStartedEvent: Enter");
     _lastIdfErrorCode = tcpip_adapter_set_hostname(TCPIP_ADAPTER_IF_STA, SystemRequestHandler::GetDeviceName());
     // if (_lastIdfErrorCode == ESP_OK)
     // {
@@ -3047,22 +3047,22 @@ void WiFiRequestHandler::StationStartedEvent()
         xEventGroupSetBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTED_BIT);
         RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::StartWiFiInterfaceEvent);
     }
-    ESP_LOGI(COMPONENT_NAME, "StationStartedEvent: Exit");
+    TRACE_MESSAGE(COMPONENT_NAME, "StationStartedEvent: Exit");
 }
 
 /**
  *  @brief The access point has just given the ESP32 an IP address.
- * 
+ *
  *  This event indicates that we have successfully obtained an IP address.  It is at this
  *  point that we really consider the device to be connected to the access point as we can
  *  start to perform network access operations.
- * 
+ *
  *  @param eventData
  *      Data for the IP event.
  */
 void WiFiRequestHandler::StationGotIpEvent(ip_event_got_ip_t *eventData)
 {
-    ESP_LOGI(COMPONENT_NAME, "StationGotIpEvent: Enter");
+    TRACE_MESSAGE(COMPONENT_NAME, "StationGotIpEvent: Enter");
     _currentRetryCount = 0;
     memcpy((void *) &_ipInformation, (void *) &eventData->ip_info, sizeof(esp_netif_ip_info_t));
     _ipChanged = eventData->ip_changed;
@@ -3073,7 +3073,7 @@ void WiFiRequestHandler::StationGotIpEvent(ip_event_got_ip_t *eventData)
         //  Note that we only need to get the time here.  The timezone is set when this
         //  class is instanciated or when the SetTimezone method is successfully called.
         //
-        ESP_LOGI(COMPONENT_NAME, "Getting time from %s", GetNtpServer());
+        TRACE_MESSAGE(COMPONENT_NAME, "Getting time from %s", GetNtpServer());
         sntp_setoperatingmode(SNTP_OPMODE_POLL);
         sntp_setservername(0, GetNtpServer());
         sntp_set_sync_mode(SNTP_SYNC_MODE_SMOOTH);
@@ -3083,12 +3083,12 @@ void WiFiRequestHandler::StationGotIpEvent(ip_event_got_ip_t *eventData)
 
     xEventGroupClearBits(_xWiFiEventGroup, WIFI_CONNECTING_BIT | WIFI_RECONNECTING_BIT);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT);
-    ESP_LOGI(COMPONENT_NAME, "StationGotIpEvent: Exit");
+    TRACE_MESSAGE(COMPONENT_NAME, "StationGotIpEvent: Exit");
 }
 
 /**
  *  @brief Process the WiFi station connect event.
- * 
+ *
  *  This event will fire when the ESP has successfully connected to an access point.
  *
  *  @param eventData
@@ -3096,7 +3096,7 @@ void WiFiRequestHandler::StationGotIpEvent(ip_event_got_ip_t *eventData)
  */
 void WiFiRequestHandler::StationConnectedEvent(wifi_event_sta_connected_t *eventData)
 {
-    ESP_LOGI(COMPONENT_NAME, "StationConnectedEvent: Enter");
+    TRACE_MESSAGE(COMPONENT_NAME, "StationConnectedEvent: Enter");
     memcpy((void *) &_apInformation, (void *) eventData, sizeof(wifi_event_sta_connected_t));
 
     EventBits_t bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_RECONNECTING_BIT , pdFALSE, pdFALSE, GetWiFiTimeout() / portTICK_PERIOD_MS);
@@ -3106,7 +3106,7 @@ void WiFiRequestHandler::StationConnectedEvent(wifi_event_sta_connected_t *event
         RaiseConnectToAccessPointEvent();
     }
 
-    ESP_LOGI(COMPONENT_NAME, "StationConnectedEvent: Exit");
+    TRACE_MESSAGE(COMPONENT_NAME, "StationConnectedEvent: Exit");
 }
 
 /**
@@ -3117,7 +3117,7 @@ void WiFiRequestHandler::StationConnectedEvent(wifi_event_sta_connected_t *event
  */
 void WiFiRequestHandler::StationDisconnectedEvent(wifi_event_sta_disconnected_t *eventData)
 {
-    ESP_LOGI(COMPONENT_NAME, "StationDisconnectedEvent: Enter");
+    TRACE_MESSAGE(COMPONENT_NAME, "StationDisconnectedEvent: Enter");
 
     bool reallyDisconnect = true;
     xEventGroupClearBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT | WIFI_CONNECTED_BIT | WIFI_CONNECTING_BIT);
@@ -3140,7 +3140,7 @@ void WiFiRequestHandler::StationDisconnectedEvent(wifi_event_sta_disconnected_t 
         xEventGroupSetBits(_xWiFiEventGroup, WIFI_ERROR_BIT);
     }
 
-    ESP_LOGI(COMPONENT_NAME, "StationDisconnectedEvent: Exit");
+    TRACE_MESSAGE(COMPONENT_NAME, "StationDisconnectedEvent: Exit");
 }
 
 /*
@@ -3153,13 +3153,13 @@ void WiFiRequestHandler::StationDisconnectedEvent(wifi_event_sta_disconnected_t 
 
 /**
  *  @brief Compare the message ID in a message from the STM32 with the specified message ID.
- * 
+ *
  *  @param messageId
  *      Message ID being looked for.
- * 
+ *
  *  @param event
  *      A message from the STM32 containing the original request.
- * 
+ *
  *  @returns
  *      True if the message IDs match, false otherwise.
  */
@@ -3170,14 +3170,14 @@ bool WiFiRequestHandler::ComparePollRequestMessageIds(uint32_t messageId, PollRe
 
 /**
  *  @brief Task that will process a poll request.
- * 
+ *
  *  @param parameters
  *      Pointer to a PollRequest object containing the information about
  *      request along with any management data to support the request.
  */
 void WiFiRequestHandler::PollRequestProcessor(void *parameters)
 {
-    ESP_LOGI(COMPONENT_NAME, "PollRequestProcessor: Enter");
+    TRACE_MESSAGE(COMPONENT_NAME, "PollRequestProcessor: Enter");
     PollRequestInformation *request = static_cast<PollRequestInformation *>(parameters);
     xSemaphoreTake(_pollRequestListMutex, portMAX_DELAY);
     _pollRequests->AddToHead(request);
@@ -3195,7 +3195,7 @@ void WiFiRequestHandler::PollRequestProcessor(void *parameters)
     {
         int event = 0;
         Mapping::GetStmFlagValue(Mapping::PollEvents, request->Fds->revents, &event);
-        ESP_LOGI(COMPONENT_NAME, "PollRequestProcessor: Mapping ESP returned events 0x%04x to Nuttx returned events 0x%04x", request->Fds->revents, event);
+        TRACE_MESSAGE(COMPONENT_NAME, "PollRequestProcessor: Mapping ESP returned events 0x%04x to Nuttx returned events 0x%04x", request->Fds->revents, event);
         request->Fds->revents = (uint16_t) (event & 0xffff);
     }
     request->Teardown = false;
@@ -3207,7 +3207,7 @@ void WiFiRequestHandler::PollRequestProcessor(void *parameters)
     xSemaphoreTake(_pollRequestListMutex, portMAX_DELAY);
     _pollRequests->RemoveItem(request->OriginalRequestID);
     xSemaphoreGive(_pollRequestListMutex);
-    ESP_LOGI(COMPONENT_NAME, "PollRequestProcessor: Exit");
+    TRACE_MESSAGE(COMPONENT_NAME, "PollRequestProcessor: Exit");
     //
     //  This method should never exit.  It will be cleaned up from another task
     //  using a vTaskDelete call.
@@ -3217,7 +3217,7 @@ void WiFiRequestHandler::PollRequestProcessor(void *parameters)
 
 /**
  *  @brief Deal with completed poll requests.
- * 
+ *
  *  @param parameters
  *      This should be NULL as all process information will come through
  *      the completed poll requests queue.
@@ -3232,7 +3232,7 @@ void WiFiRequestHandler::CompletedPollRequestProcessor(void *parameters)
         {
             if (!request->Teardown)
             {
-                ESP_LOGI(COMPONENT_NAME, "CompletedPollRequestProcessor: Queuing response for poll task 0x%08x", request->OriginalRequestID);
+                TRACE_MESSAGE(COMPONENT_NAME, "CompletedPollRequestProcessor: Queuing response for poll task 0x%08x", request->OriginalRequestID);
                 //
                 //  Prepare the response payload.
                 //
@@ -3242,7 +3242,7 @@ void WiFiRequestHandler::CompletedPollRequestProcessor(void *parameters)
                 response.Result = request->PollResult;
                 response.ResponseErrno = request->PollErrno;
                 response.SetupMessageId = request->OriginalRequestID;
-                //  
+                //
                 //  Use tha original message information and queue the response.
                 //
                 Message *message = static_cast<Message *>(pvPortMalloc(sizeof(Message)));
@@ -3259,7 +3259,7 @@ void WiFiRequestHandler::CompletedPollRequestProcessor(void *parameters)
             //
             //  Clean up.
             //
-            ESP_LOGI(COMPONENT_NAME, "CompletedPollRequestProcessor: Terminating poll task 0x%08x", request->OriginalRequestID);
+            TRACE_MESSAGE(COMPONENT_NAME, "CompletedPollRequestProcessor: Terminating poll task 0x%08x", request->OriginalRequestID);
             vTaskDelete(request->TaskHandle);
             vPortFree(request);
         }

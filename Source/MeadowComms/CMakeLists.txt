@@ -41,6 +41,10 @@ if (DEBUG EQUAL 1)
     add_compile_definitions(DEBUG)
 endif()
 
+if (TRACE_MESSAGES EQUAL 1)
+    add_compile_definitions(TRACE_MESSAGES)
+endif()
+
 if (WIFI_DEBUG EQUAL 1)
     add_compile_definitions(WIFI_DEBUG)
 endif()
