@@ -1,6 +1,6 @@
 /**
  *  Thread.cpp
- * 
+ *
  *  Implementation of the methods for the Thread class as used by the ThreadPool class.
  */
 #include "../build/config/sdkconfig.h"
@@ -23,7 +23,7 @@ const char *Thread::COMPONENT_NAME = "Thread";
 
 /**
  *  @brief Default constructor.
- * 
+ *
  *  Ths is not intended to be called by the user.
  */
 Thread::Thread() : _mutex(xSemaphoreCreateMutex()), _executeMethod(xSemaphoreCreateMutex())
@@ -48,12 +48,12 @@ Thread::Thread() : _mutex(xSemaphoreCreateMutex()), _executeMethod(xSemaphoreCre
 
 /**
  *  @brief Constructor for the Thread class.
- * 
+ *
  *  @param name
  *      Name of the thread.  This allows the thread to be easily identified.
- * 
+ *
  *  @param taskCompletedMethod
- *      Pointer to the method that should be called when the task has completed and the 
+ *      Pointer to the method that should be called when the task has completed and the
  *      thread is ready to run a new task.
  */
 Thread::Thread(char *name, task_completed_method_t taskCompletedMethod) : Thread()
@@ -86,7 +86,7 @@ Thread::~Thread()
 
 /**
  *  @brief Get the name of this task.
- * 
+ *
  *  Note that a mutex is not required to guard access to the backing variable as
  *  this is only set up in the constructor.
  */
@@ -117,7 +117,7 @@ method_t Thread::GetMethod()
 void *Thread::GetParameter()
 {
     void *parameter = NULL;
-    
+
     if (xSemaphoreTake(_mutex, portMAX_DELAY) == pdTRUE)
     {
         parameter = _parameter;
@@ -152,10 +152,10 @@ bool Thread::IsBusy()
 
 /**
  *  @brief Execute the specified method in this thread.
- * 
+ *
  *  @param method
  *      Pointer to the method that should be executed.
- * 
+ *
  *  @param parameter
  *      Parameter to be passed to the method.
  */
@@ -179,7 +179,7 @@ void Thread::Execute(method_t method, void *parameter)
 
 /**
  *  @brief Take the execution semaphore.
- * 
+ *
  *  Taking the semaphore is used to put the FreeRTOS task in a waiting state.
  */
 void Thread::TakeExecutionSemaphore()
@@ -216,7 +216,7 @@ void Thread::TaskCompleted()
 
 /**
  *  @brief FreeRTOS task that will execute the methods passed to it.
- * 
+ *
  *  @param taskParameters
  *      Parameters passed to the task when it is created by xCreateTask.
  *      This should be set to be a pointer to the instantiated class that

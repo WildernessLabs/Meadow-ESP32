@@ -1,6 +1,6 @@
 /**
  *  ThreadPool.hpp
- * 
+ *
  *  Define the methods in the ThreadPool class.
  */
 #ifndef _THREAD_POOL_HPP_

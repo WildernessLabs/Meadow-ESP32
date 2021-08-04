@@ -126,7 +126,7 @@ SystemRequestHandler::~SystemRequestHandler()
 
 /**
  *  @brief Get the maximum length of a message queue.
- * 
+ *
  *  @return
  *      Current value for the maximum length of the message queues.
  */
@@ -137,10 +137,10 @@ uint32_t SystemRequestHandler::GetMaximumMessageQueueLength()
 
 /**
  *  @brief Set the maximum length of the message queues.
- * 
+ *
  *  Note that changes to this value will not take place until the next
  *  time the board is restarted.
- * 
+ *
  *  @param value
  *      New length for the message queues.
  */
@@ -170,7 +170,7 @@ char *SystemRequestHandler::GetDeviceName()
  *
  *  @param value
  *      New name for the device.
- * 
+ *
  *  @returns
  *      StatusCodes::Completed on success, StatusCodes::Failure if there is a problem.
  */
@@ -206,17 +206,17 @@ void SystemRequestHandler::Setup()
 
 /**
  *  @brief Get a string configuration value.
- * 
+ *
  *  Get a value from NVS.  If a value with the specified name cannot be found
  *  then the default value is returned and the default value is written to
  *  NVS.
- * 
+ *
  *  @param name
  *      Name of the configuration value to read from NVS.
- * 
+ *
  *  @param defaultValue
  *      Default value to be used if the value is not found.
- * 
+ *
  *  @returns
  *      Current boolean value or the default value if a value could not be found.
  */
@@ -227,15 +227,15 @@ char *SystemRequestHandler::GetConfigurationValue(const char *name, const char *
 
 /**
  *  @brief Set a string configuration value.
- * 
+ *
  *  Store a string value in NVS
- * 
+ *
  *  @param name
  *      Name of the configuration value to set in NVS.
- * 
+ *
  *  @param value
  *      Value to be stored.
- * 
+ *
  *  @returns
  *      Error code indicating success or failure status.
  */
@@ -246,17 +246,17 @@ NvsManager::ErrorCodes SystemRequestHandler::SetConfigurationValue(const char *n
 
 /**
  *  @brief Get an unsigned integer configuration value.
- * 
+ *
  *  Get a value from NVS.  If a value with the specified name cannot be found
  *  then the default value is returned and the default value is written to
  *  NVS.
- * 
+ *
  *  @param name
  *      Name of the configuration value to read from NVS.
- * 
+ *
  *  @param value
  *      Default value to be used if the value is not found.
- * 
+ *
  *  @returns
  *      Current boolean value or the default value if a value could not be found.
  */
@@ -267,15 +267,15 @@ uint32_t SystemRequestHandler::GetConfigurationValue(const char *name, const uin
 
 /**
  *  @brief Set an unsigned integer configuration value.
- * 
+ *
  *  Set an unsigned integer value in NVS
- * 
+ *
  *  @param name
  *      Name of the configuration value to set in NVS.
- * 
+ *
  *  @param value
  *      Value to be set.
- * 
+ *
  *  @returns
  *      Error code indicating success or failure status.
  */
@@ -286,17 +286,17 @@ NvsManager::ErrorCodes SystemRequestHandler::SetConfigurationValue(const char *n
 
 /**
  *  @brief Get an integer configuration value.
- * 
+ *
  *  Get a value from NVS.  If a value with the specified name cannot be found
  *  then the default value is returned and the default value is written to
  *  NVS.
- * 
+ *
  *  @param name
  *      Name of the configuration value to read from NVS.
- * 
+ *
  *  @param defaultValue
  *      Default value to be used if the value is not found.
- * 
+ *
  *  @returns
  *      Current boolean value or the default value if a value could not be found.
  */
@@ -307,15 +307,15 @@ int SystemRequestHandler::GetConfigurationValue(const char *name, const int32_t 
 
 /**
  *  @brief Set an integer configuration value.
- * 
+ *
  *  Set an integer value in NVS
- * 
+ *
  *  @param name
  *      Name of the configuration value to set in NVS.
- * 
+ *
  *  @param value
  *      Value to be set.
- * 
+ *
  *  @returns
  *      Error code indicating success or failure status.
  */
@@ -326,17 +326,17 @@ NvsManager::ErrorCodes SystemRequestHandler::SetConfigurationValue(const char *n
 
 /**
  *  @brief Get a byte configuration value.
- * 
+ *
  *  Get a value from NVS.  If a value with the specified name cannot be found
  *  then the default value is returned and the default value is written to
  *  NVS.
- * 
+ *
  *  @param name
  *      Name of the configuration value to read from NVS.
- * 
+ *
  *  @param defaultValue
  *      Default value to be used if the value is not found.
- * 
+ *
  *  @returns
  *      Current boolean value or the default value if a value could not be found.
  */
@@ -347,15 +347,15 @@ uint8_t SystemRequestHandler::GetConfigurationValue(const char *name, const uint
 
 /**
  *  @brief Set a byte configuration value.
- * 
+ *
  *  Set a byte value in NVS
- * 
+ *
  *  @param name
  *      Name of the configuration value to set in NVS.
- * 
+ *
  *  @param value
  *      Value to be set.
- * 
+ *
  *  @returns
  *      Error code indicating success or failure status.
 */
@@ -366,17 +366,17 @@ NvsManager::ErrorCodes SystemRequestHandler::SetConfigurationValue(const char *n
 
 /**
  *  @brief Get a boolean configuration value.
- * 
+ *
  *  Get a value from NVS.  If a value with the specified name cannot be found
  *  then the default value is returned and the default value is written to
  *  NVS.
- * 
+ *
  *  @param name
  *      Name of the configuration value to read from NVS.
- * 
+ *
  *  @param defaultValue
  *      Default value to be used if the value is not found.
- * 
+ *
  *  @returns
  *      Current boolean value or the default value if a value could not be found.
  */
@@ -387,15 +387,15 @@ bool SystemRequestHandler::GetConfigurationValue(const char *name, const bool de
 
 /**
  *  @brief Set a boolean configuration value.
- * 
+ *
  *  Set a boolean value in NVS
- * 
+ *
  *  @param name
  *      Name of the configuration value to set in NVS.
- * 
+ *
  *  @param value
  *      Value to be set.
- * 
+ *
  *  @returns
  *      Error code indicating success or failure status.
  */
@@ -406,7 +406,7 @@ NvsManager::ErrorCodes SystemRequestHandler::SetConfigurationValue(const char *n
 
 /**
  *  @brief Populate the config object with system configuration data.
- * 
+ *
  *  @param config
  *      Pointer to the Esp32Messaging::SystemConfiguration to be populated.
  */
@@ -434,7 +434,7 @@ void SystemRequestHandler::PopulateConfiguration(Esp32Messaging::SystemConfigura
 
 /**
  *  @brief Send the current system configuration as an interrupt message.
- * 
+ *
  *  This method allows the system to send its configuration to the STM32 when the
  *  system first starts.
  */
@@ -596,7 +596,7 @@ void SystemRequestHandler::GetBatteryChargeLevel(Message *message)
     Esp32Messaging::IntegerResponse response;
     //
     //  The battery voltage will be twice the actual reading as the output from the battery is passed
-    //  through a voltage divider.  This is necessary as the voltage can go as high as 4.2V which 
+    //  through a voltage divider.  This is necessary as the voltage can go as high as 4.2V which
     //  exceeds the tolerance of the ADC pins on the ESP32.
     //
     response.Result = 2 * esp_adc_cal_raw_to_voltage(adc_reading, adc_chars);

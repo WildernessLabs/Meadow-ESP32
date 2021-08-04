@@ -31,17 +31,17 @@ void TestBluetoothMessage(MessageDispatcher *dispatcher);
 
 /**
  *  @brief Callback for the heap allocation failures.
- * 
+ *
  *  The method prints some information about the method that caused the problem.
  *  It then waits for a while for the message to be output and then generates an
  *  exception to force a core dump (if enabled) and a restart.
  *
  *  @param requestedSize
  *      Amount of space requested.
- * 
+ *
  *  @param caps
  *      Capability requested.
- * 
+ *
  *  @param functionName
  *      Method that requested the memory.
  */
@@ -167,9 +167,9 @@ const char* json_test2 = R"(
 
 void TestBluetoothMessage(MessageDispatcher *dispatcher)
 {
-    // for now we'll use one message that starts and sets up everything.  
+    // for now we'll use one message that starts and sets up everything.
     // We'll need to separate this and actually have data going in, but this is a baby step toward that
-    
+
     Esp32Messaging::BTStackConfig stackConfig;
     stackConfig.Config = (char*)json_test;
 

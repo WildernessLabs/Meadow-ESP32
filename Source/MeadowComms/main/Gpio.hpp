@@ -41,7 +41,7 @@ namespace Gpio
 
     /**
      *  Usual GPIO UART0 Rx line.
-     * 
+     *
      *  This pin is not used in the application for UART communication as
      *  it is being used for signalling.
      */

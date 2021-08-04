@@ -3,7 +3,7 @@
  *
  *  Define the class that will allow the mapping of values on the STM32 to
  *  those on the ESP32 and vice-versa.
- * 
+ *
  *  This file also contains the mappings.
  */
 #include "../build/config/sdkconfig.h"
@@ -28,7 +28,7 @@
 
 /**
  *  @brief Map the STM32 address family codes to ESP32 address family code.
- * 
+ *
  *  STM value is first, ESP value second.
  */
 Mapping::int_mapping_t Mapping::_addressFamilies[] =
@@ -45,10 +45,10 @@ Mapping::int_mapping_t Mapping::_addressFamilies[] =
 
 /**
  *  @brief Map the STM32 socket options to ESP32 socket options.
- * 
+ *
  *  STM value is first, ESP value second.
  */
-Mapping::int_mapping_t Mapping::_socketOptions[] = 
+Mapping::int_mapping_t Mapping::_socketOptions[] =
 {
     { 0, SO_ACCEPTCONN },
     { 1, SO_BROADCAST },
@@ -70,10 +70,10 @@ Mapping::int_mapping_t Mapping::_socketOptions[] =
 
 /**
  *  @brief Map the STM32 protocol family codes to ESP32 protocol family code.
- * 
+ *
  *  STM value is first, ESP value second.
  */
-Mapping::int_mapping_t Mapping::_protocolFamilies[] = 
+Mapping::int_mapping_t Mapping::_protocolFamilies[] =
 {
     { 2, PF_INET },
     { 10, PF_INET6 },
@@ -82,10 +82,10 @@ Mapping::int_mapping_t Mapping::_protocolFamilies[] =
 
 /**
  *  @brief Map the STM32 socket types to ESP32 socket types.
- * 
+ *
  *  STM value is first, ESP value second.
  */
-Mapping::int_mapping_t Mapping::_socketTypes[] = 
+Mapping::int_mapping_t Mapping::_socketTypes[] =
 {
     { 1, SOCK_STREAM },
     { 2, SOCK_DGRAM },
@@ -94,20 +94,20 @@ Mapping::int_mapping_t Mapping::_socketTypes[] =
 
 /**
  *  @brief Map the STM32 socket types to ESP32 socket types.
- * 
+ *
  *  STM value is first, ESP value second.
  */
-Mapping::int_mapping_t Mapping::_socketLevels[] = 
+Mapping::int_mapping_t Mapping::_socketLevels[] =
 {
     { 0, SOL_SOCKET }
 };
 
 /**
  *  @brief Map the STM32 error codes to ESP32 error codes.
- * 
+ *
  *  STM value is first, ESP value second.
  */
-Mapping::int_mapping_t Mapping::_errno[] = 
+Mapping::int_mapping_t Mapping::_errno[] =
 {
     { 1, EPERM },
     { 2, ENOENT },
@@ -252,24 +252,24 @@ Mapping::int_mapping_t Mapping::_errno[] =
 
 /**
  *  @brief Map the STM32 message flags to ESP32 message flags.
- * 
+ *
  *  STM value is first, ESP value second.
  */
-Mapping::int_mapping_t Mapping::_messageFlags[] = 
+Mapping::int_mapping_t Mapping::_messageFlags[] =
 {
     { 0x0008, MSG_CTRUNC },
     { 0x0040, MSG_DONTWAIT },
     { 0x8000, MSG_MORE },
     { 0x4000, MSG_NOSIGNAL },
     { 0x0001, MSG_OOB },
-    { 0x0002, MSG_PEEK }, 
+    { 0x0002, MSG_PEEK },
     { 0x0020, MSG_TRUNC },
     { 0x0100, MSG_WAITALL },
 };
 
 /**
  *  @brief Map the STM32 mono polling event flags to ESP32 polling event flags.
- * 
+ *
  *  STM (Mono) value is first, ESP value second.
  */
 Mapping::int_mapping_t Mapping::_pollEvents[] =
@@ -284,10 +284,10 @@ Mapping::int_mapping_t Mapping::_pollEvents[] =
 
 /**
  *  @brief Map the STM32 socket shutdown types.
- * 
+ *
  *  STM value is first, ESP value second.
  */
-Mapping::int_mapping_t Mapping::_socketShutdownType[] = 
+Mapping::int_mapping_t Mapping::_socketShutdownType[] =
 {
     { 1, SHUT_RD },
     { 2, SHUT_WR },
@@ -297,7 +297,7 @@ Mapping::int_mapping_t Mapping::_socketShutdownType[] =
 /**
  *  @brief Map of the ESP IDF error codes (esp_err_t) to StatusCodes.
  */
-Mapping::int_mapping_t Mapping::_espErrorCodes[] = 
+Mapping::int_mapping_t Mapping::_espErrorCodes[] =
 {
     { StatusCodes::CompletedOk, ESP_OK },
     { StatusCodes::EspOutOfMemory, ESP_ERR_NO_MEM },
@@ -310,7 +310,7 @@ Mapping::int_mapping_t Mapping::_espErrorCodes[] =
 /**
  *  @brief Map of the ESP32 authentication types to the NetworkAuthenticationType enum in Meadow.Core
  */
-Mapping::int_mapping_t Mapping::_networkAuthenticationType[] = 
+Mapping::int_mapping_t Mapping::_networkAuthenticationType[] =
 {
     { 0, WIFI_AUTH_OPEN },
     { 1, WIFI_AUTH_WEP },
@@ -354,7 +354,7 @@ Mapping::~Mapping()
 
 /**
  *  @brief Convert the specified value for the specified platform.
- * 
+ *
  *  This method will take a STM constant and convert it into the correspnding ESP
  *  constant (or the reverse depending upon the requested direction).
  *
@@ -400,10 +400,10 @@ int32_t Mapping::GetFlagValue(Mapping::MappingTable mapping, MappingDirection ty
 
 /**
  *  @brief Convert the specified flags for the specified platform.
- * 
+ *
  *  This method will take a STM flags and convert it into the correspnding ESP
  *  flags (or the reverse depending upon the requested direction).
- * 
+ *
  *  Note that this is different from mapping a value as the flags could be an ORed
  *  combination of values.
  *
@@ -415,7 +415,7 @@ int32_t Mapping::GetFlagValue(Mapping::MappingTable mapping, MappingDirection ty
  *
  *  @param value
  *      Value to map.
- * 
+ *
  *  @param result
  *      Mapped value if successful.
  *
@@ -436,10 +436,10 @@ int32_t Mapping::GetValue(Mapping::MappingTable mapping, MappingDirection type, 
 
 /**
  *  @brief Convert the specified flags for the specified platform.
- * 
+ *
  *  This method will take a STM flags and convert it into the correspnding ESP
  *  flags (or the reverse depending upon the requested direction).
- * 
+ *
  *  Note that this is different from mapping a value as the flags could be an ORed
  *  combination of values.
  *
@@ -451,7 +451,7 @@ int32_t Mapping::GetValue(Mapping::MappingTable mapping, MappingDirection type, 
  *
  *  @param value
  *      Value to map.
- * 
+ *
  *  @param result
  *      Mapped value if successful.
  *
@@ -530,7 +530,7 @@ int32_t Mapping::GetValue(Mapping::MappingTable mapping, MappingDirection type, 
                     *result = table[index].stm;
                     return(0);
                 }
-            }            
+            }
         }
     }
     return(-1);
@@ -544,7 +544,7 @@ int32_t Mapping::GetValue(Mapping::MappingTable mapping, MappingDirection type, 
  *
  *  @param value
  *      Value to look for.
- * 
+ *
  *  @param result
  *      Pointer to the memory location to hold the mapped value.
  *
@@ -565,7 +565,7 @@ int32_t Mapping::GetEspValue(Mapping::MappingTable mapping, int32_t value, int8_
  *
  *  @param value
  *      Value to look for.
- * 
+ *
  *  @param result
  *      Pointer to the memory location to hold the mapped value.
  *
@@ -619,7 +619,7 @@ int32_t Mapping::GetStmValue(Mapping::MappingTable mapping, int32_t value, int32
 
 /**
  *  @brief Get the ESP flags from the STM flags.
- * 
+ *
  *  Note that the flags could be made up from multiple ORed flags.
  *
  *  @param mapping
@@ -627,7 +627,7 @@ int32_t Mapping::GetStmValue(Mapping::MappingTable mapping, int32_t value, int32
  *
  *  @param value
  *      Value to look for.
- * 
+ *
  *  @param result
  *      Pointer to the memory location to hold the mapped value.
  *
@@ -641,7 +641,7 @@ int32_t Mapping::GetEspFlagValue(Mapping::MappingTable mapping, int32_t value, i
 
 /**
  *  @brief Get the STM flags from the ESP flags.
- * 
+ *
  *  Note that the flags could be made up from multiple ORed flags.
  *
  *  @param mapping
@@ -663,10 +663,10 @@ int32_t Mapping::GetStmFlagValue(Mapping::MappingTable mapping, int32_t value, i
 
 /**
  *  @brief Map and ESP IDF error code into a StatusCodes value.
- * 
+ *
  *  @param error
  *      ESP IDF error code (type esp_err_t).
- * 
+ *
  *  @returns
  *      StatusCodes value equivalent to the ESP IDF error code or UnmappedErrorCode if the
  *      ESP value cannot be found.

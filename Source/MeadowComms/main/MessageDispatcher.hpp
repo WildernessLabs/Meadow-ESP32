@@ -40,7 +40,7 @@ class MessageDispatcher
 private:
     /**
      *  @brief Mask for the message IDs for outbound messages.
-     * 
+     *
      *  This mask is applied to message IDs to make sure that they are all
      *  above 0x7fffffff.  This identifies them as originating from the
      *  ESP32 rather than the STM32.
