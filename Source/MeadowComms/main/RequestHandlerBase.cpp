@@ -31,7 +31,7 @@
 const char *RequestHandlerBase::COMPONENT_NAME = "RequestHandlerBase";
 
 /**
- *  @brief MessageDispatcher object that ensure that messages are delivered to 
+ *  @brief MessageDispatcher object that ensure that messages are delivered to
  *  the correct part of the system.
  */
 MessageDispatcher *RequestHandlerBase::_messageDispatcher = nullptr;
@@ -151,19 +151,19 @@ bool RequestHandlerBase::QueueEsp32Message(Message *message)
 
 /**
  *  @brief Create a new interrupt message and add it to the outbond message queue.
- * 
+ *
  *  @param interface
  *      Interface to sent the event to.
- * 
+ *
  *  @param eventType
  *      Type of event being raised.
- * 
+ *
  *  @param statusCode
  *      Status code.
- * 
+ *
  *  @param payload
  *      Event payload.
- * 
+ *
  *  @param payloadLength
  *      Amount of data in the payload.
  */
@@ -176,13 +176,13 @@ void RequestHandlerBase::RaiseEvent(uint8_t interface, uint32_t eventType, uint3
 
 /**
  *  @brief Create a new interrupt message and add it to the outbond message queue.
- * 
+ *
  *  @param interface
  *      Interface to sent the event to.
- * 
+ *
  *  @param eventType
  *      Type of event being raised.
- * 
+ *
  *  @param statusCode
  *      Status code.
  */
@@ -193,10 +193,10 @@ void RequestHandlerBase::RaiseEvent(uint8_t interface, uint32_t eventType, uint3
 
 /**
  *  @brief Create a new interrupt message and add it to the outbond message queue.
- * 
+ *
  *  @param interface
  *      Interface to sent the event to.
- * 
+ *
  *  @param eventType
  *      Type of event being raised.
  */

@@ -177,7 +177,7 @@ public:
      *  @brief Send the configuration data as an interrupt message.
      */
     static void SendConfigurationAsInterruptMessage();
-    
+
 };
 
 #endif /* _SYSTEM_REQUEST_HANDLER_HPP_ */

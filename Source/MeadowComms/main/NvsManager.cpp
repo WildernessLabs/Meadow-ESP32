@@ -87,20 +87,20 @@ void NvsManager::Setup()
 
 /**
  *  @brief Get a string value.
- * 
+ *
  *  Get a value from NVS.  If a value with the specified name cannot be found
  *  then the default value is returned and the default value is written to
  *  NVS.
- * 
+ *
  *  @param nameSpace
  *      Name of the namespace to read the value from.
- * 
+ *
  *  @param name
  *      Name of the value to read from NVS.
- * 
+ *
  *  @param defaultValue
  *      Default value to be used if the value is not found.
- * 
+ *
  *  @returns
  *      Current boolean value or the default value if a value could not be found.
  */
@@ -137,16 +137,16 @@ char * NvsManager::GetValue(const char *nameSpace, const char *name, const char 
 
 /**
  *  @brief Write string value into NVS.
- * 
+ *
  *  @param nameSpace
  *      Name of the namespace to write to.
- * 
+ *
  *  @param name
  *      Name of the value to be written to NVS.
- * 
+ *
  *  @param value
  *      Value to be set.
- * 
+ *
  *  @returns
  *      Error code indicating success or failure.
  */
@@ -198,20 +198,20 @@ NvsManager::ErrorCodes NvsManager::SetValue(const char *nameSpace, const char *n
 
 /**
  *  @brief Get an unsigned integer value.
- * 
+ *
  *  Get a value from NVS.  If a value with the specified name cannot be found
  *  then the default value is returned and the default value is written to
  *  NVS.
- * 
+ *
  *  @param nameSpace
  *      Name of the namespace to read the value from.
- * 
+ *
  *  @param name
  *      Name of the value to read from NVS.
- * 
+ *
  *  @param defaultValue
  *      Default value to be used if the value is not found.
- * 
+ *
  *  @returns
  *      Current boolean value or the default value if a value could not be found.
  */
@@ -235,16 +235,16 @@ uint32_t NvsManager::GetValue(const char *nameSpace, const char *name, const uin
 
 /**
  *  @brief Write an unsigned integer (32-bits) value into NVS.
- * 
+ *
  *  @param nameSpace
  *      Name of the namespace to write to.
- * 
+ *
  *  @param name
  *      Name of the value to be written to NVS.
- * 
+ *
  *  @param value
  *      Value to be set.
- * 
+ *
  *  @returns
  *      Error code indicating success or failure.
  */
@@ -296,20 +296,20 @@ NvsManager::ErrorCodes NvsManager::SetValue(const char *nameSpace, const char *n
 
 /**
  *  @brief Get an integer value.
- * 
+ *
  *  Get a value from NVS.  If a value with the specified name cannot be found
  *  then the default value is returned and the default value is written to
  *  NVS.
- * 
+ *
  *  @param nameSpace
  *      Name of the namespace to read the value from.
- * 
+ *
  *  @param name
  *      Name of the value to read from NVS.
- * 
+ *
  *  @param defaultValue
  *      Default value to be used if the value is not found.
- * 
+ *
  *  @returns
  *      Current boolean value or the default value if a value could not be found.
  */
@@ -320,16 +320,16 @@ int32_t NvsManager::GetValue(const char *nameSpace, const char *name, const int3
 
 /**
  *  @brief Write an signed integer (32-bits) value into NVS.
- * 
+ *
  *  @param nameSpace
  *      Name of the namespace to write to.
- * 
+ *
  *  @param name
  *      Name of the value to be written to NVS.
- * 
+ *
  *  @param value
  *      Value to be set.
- * 
+ *
  *  @returns
  *      Error code indicating success or failure.
  */
@@ -340,20 +340,20 @@ NvsManager::ErrorCodes NvsManager::SetValue(const char *nameSpace, const char *n
 
 /**
  *  @brief Get a byte value.
- * 
+ *
  *  Get a value from NVS.  If a value with the specified name cannot be found
  *  then the default value is returned and the default value is written to
  *  NVS.
- * 
+ *
  *  @param nameSpace
  *      Name of the namespace to read the value from.
- * 
+ *
  *  @param name
  *      Name of the value to read from NVS.
- * 
+ *
  *  @param defaultValue
  *      Default value to be used if the value is not found.
- * 
+ *
  *  @returns
  *      Current boolean value or the default value if a value could not be found.
  */
@@ -378,16 +378,16 @@ uint8_t NvsManager::GetValue(const char *nameSpace, const char *name, const uint
 
 /**
  *  @brief Write a byte value into NVS.
- * 
+ *
  *  @param nameSpace
  *      Name of the namespace to write to.
- * 
+ *
  *  @param name
  *      Name of the value to be written to NVS.
- * 
+ *
  *  @param value
  *      Value to be set.
- * 
+ *
  *  @returns
  *      Error code indicating success or failure.
  */
@@ -439,20 +439,20 @@ NvsManager::ErrorCodes NvsManager::SetValue(const char *nameSpace, const char *n
 
 /**
  *  @brief Get a boolean value.
- * 
+ *
  *  Get a value from NVS.  If a value with the specified name cannot be found
  *  then the default value is returned and the default value is written to
  *  NVS.
- * 
+ *
  *  @param nameSpace
  *      Name of the namespace to read the value from.
- * 
+ *
  *  @param name
  *      Name of the value to read from NVS.
- * 
+ *
  *  @param defaultValue
  *      Default value to be used if the value is not found.
- * 
+ *
  *  @returns
  *      Current boolean value or the default value if a value could not be found.
  */
@@ -463,16 +463,16 @@ bool NvsManager::GetValue(const char *nameSpace, const char *name, const bool de
 
 /**
  *  @brief Write a boolean value into NVS.
- * 
+ *
  *  @param nameSpace
  *      Name of the namespace to write to.
- * 
+ *
  *  @param name
  *      Name of the value to be written to NVS.
- * 
+ *
  *  @param value
  *      Value to be set.
- * 
+ *
  *  @returns
  *      Error code indicating success or failure.
  */

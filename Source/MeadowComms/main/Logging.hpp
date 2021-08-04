@@ -158,12 +158,12 @@ private:
 
     /**
      *  @brief Number of events that can occur before the system dumps the trace data.
-     * 
+     *
      *  This value is used to reset the _heapEventsRemaining counter.
      */
     static uint32_t _heapEventCounterResetValue;
 
-#endif 
+#endif
 
 public:
     /**

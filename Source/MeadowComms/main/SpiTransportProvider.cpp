@@ -73,10 +73,10 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
 
     /*
      *  Set the handshake pins to output and set the output level low.
-     *  
+     *
      *  First pin is the pin indicating that the ESP32 SPI interface is ready
      *  to send / receive data.  This is the BOOT pin on the ESP32.
-     * 
+     *
      *  The second pin is the pin used by the ESP32 to indicate that a message
      *  is waiting.  This should be the UART0 Rx pin.
      */
@@ -484,10 +484,10 @@ void SpiTransportProvider::SpiPostTransmissionCallback(spi_slave_transaction_t *
 
 /**
  *  @brief SPI Post setup callback.
- * 
+ *
  *  This method is called when the SPI interface has been setup and is
  *  ready to send / receive data.
- * 
+ *
  *  @param transaction
  *      spi_slave_transaction_t structure containing information about the
  *      SPI transaction that has just completed.
@@ -533,7 +533,7 @@ void SpiTransportProvider::EncodeHeaderMessage(spi_slave_transaction_t *transact
 /**
  *  @brief Process the transport message and prepare the next transaction and
  *  change to the appropriate state.
- * 
+ *
  *  @param request
  *      Inbound request from the STM32.
  *
@@ -624,7 +624,7 @@ spi_slave_transaction_t *SpiTransportProvider::InboundMessageHeaderReceived(spi_
     spi_slave_transaction_t *newTransaction = nullptr;
     _currentState = AcknowledgingInboundMessageHeader;
     int dataSize = transaction->length / 8;
-    if (dataSize >= _headerFrameSize) 
+    if (dataSize >= _headerFrameSize)
     {
         _incomingMessage = Encoders::ExtractMessage(static_cast<uint8_t *>(transaction->rx_buffer), _headerFrameSize, true);
         if (!_incomingMessage)             // nullptr indicates a CRC error.
@@ -962,7 +962,7 @@ spi_slave_transaction_t *SpiTransportProvider::OutboundMessageBodySent(spi_slave
  *
  *  If the body was received then free up any memory used and prepare to
  *  receive the next message header.
- * 
+ *
  *  Note: Contains HEAPCODE for heap tracing / debugging.
  *
  *  @param transaction
@@ -1253,7 +1253,7 @@ void SpiTransportProvider::Task(void *pvParameters)
  *  the STM32 indicating the readiness of the ESP32 may be missed as the interrupt
  *  handler on the STM32 is not set up when the ESP32 sends the "Message waiting"
  *  signal to the STM32.
- * 
+ *
  *  To overcome this, this task will send the message waiting signal to the STM32 every 500ms.
  *  The binary synchronisation semaphore indicates if the request has been made or not.
  *

@@ -3,7 +3,7 @@
  *
  *  Define the class that will allow the mapping of values on the STM32 to
  *  those on the ESP32 and vice-versa.
- * 
+ *
  *  This file also contains the mappings.
  */
 #ifndef MAIN_MAPPING_HPP

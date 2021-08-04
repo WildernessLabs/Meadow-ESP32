@@ -128,7 +128,7 @@ Message *TransportProviderBase::GetOutboundMessage()
 /**
  *  @brief Dump the message at the head of the message queue (if there is one)
  *  to as LOGI informaiton.
- * 
+ *
  *  This method is intended for debugging.
  *
  *  @return
@@ -180,7 +180,7 @@ bool TransportProviderBase::QueueMessageForStm32(Message *message)
 
 /**
  *  @brief Toggle the "Message waiting" GPIO pin connected to the STM32.
- * 
+ *
  *  There may be a problem with this method if the clock frequency on the ESP32
  *  is increased to 240 MHz.  It appears that the messages going to the STM32
  *  stop being received.

@@ -1,6 +1,6 @@
 /**
  *  Thread.hpp
- * 
+ *
  *  Outline the Thread class used by the ThreadPool.
  */
 #ifndef _THREAD_HPP_

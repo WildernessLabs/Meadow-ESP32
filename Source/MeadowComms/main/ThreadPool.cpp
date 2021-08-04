@@ -1,6 +1,6 @@
 /**
  *  ThreadPool.cpp
- * 
+ *
  *  Implement the methods in the ThreadPool class.
  */
 #include "../build/config/sdkconfig.h"
@@ -43,7 +43,7 @@ ThreadPool::ThreadPool()
 
 /**
  *  @brief Constructor for the ThreadPool.
- * 
+ *
  *  @param numberOfThreads
  *      Number of threads that should be created in this thread pool.
  */
@@ -55,7 +55,7 @@ ThreadPool::ThreadPool(uint32_t numberOfThreads) : ThreadPool()
     {
         throw new ThreadPoolException("Cannot allocate memory for threads.");
     }
-        
+
     _threadsAvailable = xSemaphoreCreateCounting(_threadPoolSize, 0);
     if (_threadsAvailable == NULL)
     {
@@ -109,10 +109,10 @@ ThreadPool::~ThreadPool()
 
 /**
  *  @brief Execute the specified method in the thread pool.
- * 
+ *
  *  @param method
  *      Pointer to the method that should be executed.
- * 
+ *
  *  @param parameter
  *      Parameter to be passed to the method.
  */
