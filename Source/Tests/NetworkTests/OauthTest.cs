@@ -40,7 +40,7 @@ namespace MeadowApp
         /// <summary>
         /// Run the test.
         /// </summary>
-        public async void RunTest()
+        public async Task RunTest()
         {
             Console.WriteLine($"Connecting to WiFi Network {Secrets.WIFI_NAME}");
             var connectionResult = await Device.WiFiAdapter.Connect(Secrets.WIFI_NAME, Secrets.WIFI_PASSWORD);
@@ -49,8 +49,7 @@ namespace MeadowApp
                 throw new Exception($"Cannot connect to network: {connectionResult.ConnectionStatus}");
             }
 
-            //Console.WriteLine(Dns.GetHostEntry("random.dog").AddressList[0]);
-            //Console.WriteLine(Dns.GetHostEntry("login.microsoftonline.com").AddressList[0]);
+            Console.WriteLine("Getting data.");
 
             var deviceAuthorizationRequestContent = new Dictionary<string, string>();
             deviceAuthorizationRequestContent.Add("client_id", "6731de76-14a6-49ae-97bc-6eba6914391e");
@@ -63,16 +62,21 @@ namespace MeadowApp
             deviceAuthorizationRequestContent.Add("code_challenge_method", "S256");
             var deviceAuthorizationRequestUri = $"https://login.microsoftonline.com/common/oauth2/v2.0/authorize";
 
-            //var deviceAuthorizationRequestUri = "https://login.microsoftonline.com/common/oauth2/v2.0/authorize?client_id=6731de76-14a6-49ae-97bc-6eba6914391e&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%2Fmyapp%2F&response_mode=query&scope=openid%20offline_access%20https%3A%2F%2Fgraph.microsoft.com%2Fmail.read&state=12345";
-
             var authFormEncodedContent = new FormUrlEncodedContent(deviceAuthorizationRequestContent);
 
             using (HttpClient client = new HttpClient())
             {
                 client.Timeout = new TimeSpan(0, 5, 0);
+                Console.WriteLine("Preparing content.");
                 var content = new StringContent(authFormEncodedContent.ReadAsStringAsync().Result, Encoding.UTF8, "application/json");
+
+                Console.WriteLine("Posting request.");
                 var response = client.PostAsync(deviceAuthorizationRequestUri, content).Result;
+
+                Console.WriteLine("Checking response code.");
                 response.EnsureSuccessStatusCode();
+
+                Console.WriteLine("Reading response as string.");
                 Console.WriteLine(response.Content.ReadAsStringAsync().Result);
             }
         }

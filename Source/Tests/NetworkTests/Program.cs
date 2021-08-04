@@ -9,11 +9,11 @@ namespace MeadowApp
         // static MeadowApp app;
         public static void Main(string[] args)
         {
-            // OauthTest app = new OauthTest();
-            // app.RunTest();
+            OauthTest app = new OauthTest();
+            app.RunTest().Wait();
 
-            DeviceInfo app = new DeviceInfo();
-            app.RunTest();
+            //DeviceInfo app = new DeviceInfo();
+            //app.RunTest();
 
             // OutOfMemoryTest app = new OutOfMemoryTest();
             // app.RunAsync().Wait();
