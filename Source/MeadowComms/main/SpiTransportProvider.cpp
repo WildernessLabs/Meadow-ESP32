@@ -630,7 +630,6 @@ spi_slave_transaction_t *SpiTransportProvider::InboundMessageHeaderReceived(spi_
         if (!_incomingMessage)             // nullptr indicates a CRC error.
         {
             ESP_LOGE(COMPONENT_NAME, "InboundMessageHeaderReceived: CRC Error.");
-            printf( "InboundMessageHeaderReceived: CRC Error.");
             _responseCode = StatusCodes::CrcError;
             _messageType = MessageTypes::Nak;
             _incomingMessage = Message::CreateOnHeap(_messageType, Esp32Interfaces::Transport, 0, _responseCode);
