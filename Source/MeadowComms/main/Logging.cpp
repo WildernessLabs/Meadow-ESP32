@@ -191,8 +191,8 @@ void Logging::Setup()
     //  We won't use a buffer for sending data.
     //
     uart_driver_install(LOGGING_UART_PORT_NUMBER, RX_BUFFER_SIZE * 2, 0, 0, NULL, 0);
-    ESP_LOGI(COMPONENT_NAME, "Logging redirected to UART_NUM_0 on pins %d (Tx), %d (Rx)", Gpio::LOGGING_TX_PIN, Gpio::LOGGING_RX_PIN);
-    ESP_LOGI(COMPONENT_NAME, "Logging setup complete.");
+    TRACE_MESSAGE("Logging redirected to UART_NUM_0 on pins %d (Tx), %d (Rx)", Gpio::LOGGING_TX_PIN, Gpio::LOGGING_RX_PIN);
+    TRACE_MESSAGE("Logging setup complete.");
 }
 
 /**
@@ -660,27 +660,27 @@ void Logging::DumpMessage(const char *componentName, const Message *message)
 {
     if (message)
     {
-        ESP_LOGI(componentName, "Message type: 0x%02x (%s)", message->MessageType, MessageTypeName(message->MessageType));
-        ESP_LOGI(componentName, "ESP32 Interface: 0x%02x (%s)", message->Interface, InterfaceName(message->Interface));
-        ESP_LOGI(componentName, "Message ID: 0x%08x", message->MessageID);
-        ESP_LOGI(componentName, "Function to be executed: 0x%08x (%s)", message->Function, FunctionName(message->Interface, message->Function));
-        ESP_LOGI(componentName, "Status code: 0x%08x (%s)", message->StatusCode, StatusCodeName(message->StatusCode));
+        TRACE_MESSAGE_SPECIFY_COMPONENT(componentName, "Message type: 0x%02x (%s)", message->MessageType, MessageTypeName(message->MessageType));
+        TRACE_MESSAGE_SPECIFY_COMPONENT(componentName, "ESP32 Interface: 0x%02x (%s)", message->Interface, InterfaceName(message->Interface));
+        TRACE_MESSAGE_SPECIFY_COMPONENT(componentName, "Message ID: 0x%08x", message->MessageID);
+        TRACE_MESSAGE_SPECIFY_COMPONENT(componentName, "Function to be executed: 0x%08x (%s)", message->Function, FunctionName(message->Interface, message->Function));
+        TRACE_MESSAGE_SPECIFY_COMPONENT(componentName, "Status code: 0x%08x (%s)", message->StatusCode, StatusCodeName(message->StatusCode));
         if (message->PayloadLength > 0)
         {
-            ESP_LOGI(componentName, "Payload length: %d", message->PayloadLength);
+            TRACE_MESSAGE_SPECIFY_COMPONENT(componentName, "Payload length: %d", message->PayloadLength);
             if (message->Payload)
             {
-                ESP_LOG_BUFFER_HEX(componentName, message->Payload, message->PayloadLength);
+                TRACE_HEX_BUFFER_SPECIFY_COMPONENT(componentName, message->Payload, message->PayloadLength);
             }
             else
             {
-                ESP_LOGI(componentName, "Payload has not been set.");
+                TRACE_MESSAGE_SPECIFY_COMPONENT(componentName, "Payload has not been set.");
             }
         }
     }
     else
     {
-        ESP_LOGI(componentName, "Message pointer is invalid.");
+        TRACE_MESSAGE_SPECIFY_COMPONENT(componentName, "Message pointer is invalid.");
     }
 }
 
@@ -769,11 +769,10 @@ void Logging::DumpPerformanceCounters()
  */
 void Logging::StandaloneHeapTracingStart()
 {
-    ESP_LOGI(APP_MAIN_COMPONENT_NAME, " ");
-    ESP_LOGI(APP_MAIN_COMPONENT_NAME, "************************************************************");
-    ESP_LOGI(APP_MAIN_COMPONENT_NAME, "                 Heap Logging Turned On");
-    ESP_LOGI(APP_MAIN_COMPONENT_NAME, "************************************************************");
-    ESP_LOGI(APP_MAIN_COMPONENT_NAME, " ");
+    TRACE_MESSAGE_SPECIFY_COMPONENT(APP_MAIN_SPECIFY_COMPONENT, " ");
+    TRACE_MESSAGE_SPECIFY_COMPONENT(APP_MAIN_SPECIFY_COMPONENT, "************************************************************");
+    TRACE_MESSAGE_SPECIFY_COMPONENT(APP_MAIN_SPECIFY_COMPONENT, "                 Heap Logging Turned On");
+    TRACE_MESSAGE_SPECIFY_COMPONENT(APP_MAIN_SPECIFY_COMPONENT, "************************************************************");
     ESP_ERROR_CHECK(heap_trace_init_standalone(_heapTraceRecords, NUMBER_OF_HEAP_TRACE_RECORDS));
     ESP_ERROR_CHECK(heap_trace_start(HEAP_TRACE_LEAKS));
     _isStandaloneHeapTracingActive = true;
@@ -795,14 +794,14 @@ void Logging::StandaloneHeapTracingStop()
 void Logging::DumpStandaloneHeapTraceData()
 {
     vTaskDelay(2000 / portTICK_PERIOD_MS);
-    ESP_LOGI(APP_MAIN_COMPONENT_NAME, " ");
-    ESP_LOGI(APP_MAIN_COMPONENT_NAME, "************************************************************");
-    ESP_LOGI(APP_MAIN_COMPONENT_NAME, "                   Heap Logging Dump");
+    TRACE_MESSAGE_SPECIFY_COMPONENT(APP_MAIN_SPECIFY_COMPONENT, " ");
+    TRACE_MESSAGE_SPECIFY_COMPONENT(APP_MAIN_SPECIFY_COMPONENT, "************************************************************");
+    TRACE_MESSAGE_SPECIFY_COMPONENT(APP_MAIN_SPECIFY_COMPONENT, "                   Heap Logging Dump");
 
     heap_trace_dump();
 
-    ESP_LOGI(APP_MAIN_COMPONENT_NAME, "************************************************************");
-    ESP_LOGI(APP_MAIN_COMPONENT_NAME, " ");
+    TRACE_MESSAGE_SPECIFY_COMPONENT(APP_MAIN_SPECIFY_COMPONENT, "************************************************************");
+    TRACE_MESSAGE_SPECIFY_COMPONENT(APP_MAIN_SPECIFY_COMPONENT, " ");
 }
 
 /**

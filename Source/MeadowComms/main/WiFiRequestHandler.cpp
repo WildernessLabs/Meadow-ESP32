@@ -279,13 +279,13 @@ WiFiRequestHandler::WiFiRequestHandler()
     _pollRequestListMutex = xSemaphoreCreateMutex();
     if (_pollRequestListMutex == NULL)
     {
-        ESP_LOGE(COMPONENT_NAME, "WiFiRequestHandler: Cannot create poll request list mutex.");
+        ERROR_MESSAGE("WiFiRequestHandler: Cannot create poll request list mutex.");
     }
     _pollRequests = new GenericLinkList<PollRequestInformation>(ComparePollRequestMessageIds);
     _completedPollRequestsQueue = xQueueCreate(MAX_QUEUE_LENGTH, sizeof(PollRequestInformation *));
     if (_completedPollRequestsQueue == NULL)
     {
-        ESP_LOGE(COMPONENT_NAME, "WiFiRequestHandler: Cannot allocate completed poll requests queue.");
+        ERROR_MESSAGE("WiFiRequestHandler: Cannot allocate completed poll requests queue.");
     }
     xTaskCreate(CompletedPollRequestProcessor, "CompletedPollRequests", 2048 * 2, NULL, configMAX_PRIORITIES - 1, &_completedPollRequestsTaskHandle);
     //
@@ -838,10 +838,10 @@ int32_t WiFiRequestHandler::MapErrno(int e)
  */
 void WiFiRequestHandler::NtpServerCallback(struct timeval *tv)
 {
-    TRACE_MESSAGE(COMPONENT_NAME, "NtpServerCallback: Enter");
+    TRACE_MESSAGE("NtpServerCallback: Enter");
     settimeofday(tv, NULL);
 
-    TRACE_MESSAGE(COMPONENT_NAME, "Setting time to %d", (int) tv->tv_sec);
+    TRACE_MESSAGE("Setting time to %d", (int) tv->tv_sec);
 
     Esp32Messaging::IntegerResponse ir;
     ir.Result = (uint32_t) tv->tv_sec;
@@ -851,7 +851,7 @@ void WiFiRequestHandler::NtpServerCallback(struct timeval *tv)
     uint32_t id = _messageDispatcher->GetNextMessageID();
     Message *timeMessage = Message::CreateOnHeap((uint8_t) MessageTypes::Event, (uint8_t) Esp32Interfaces::WiFi, (uint32_t) WiFiFunction::SetTimeOfDayEvent, 0, id, payload, payloadLength);
     _messageDispatcher->QueueMessageForStm32(timeMessage);
-    TRACE_MESSAGE(COMPONENT_NAME, "NtpServerCallback: Exit");
+    TRACE_MESSAGE("NtpServerCallback: Exit");
 }
 
 /**
@@ -865,8 +865,8 @@ void WiFiRequestHandler::NtpServerCallback(struct timeval *tv)
  */
 gpio_num_t WiFiRequestHandler::ConvertAntennaToPin(AntennaTypes::AntennaTypes antenna)
 {
-    TRACE_MESSAGE(COMPONENT_NAME, "ConvertAntennaToPin: Enter");
-    TRACE_MESSAGE(COMPONENT_NAME, "ConvertAntennaToPin: Exit");
+    TRACE_MESSAGE("ConvertAntennaToPin: Enter");
+    TRACE_MESSAGE("ConvertAntennaToPin: Exit");
 
     return((antenna == AntennaTypes::OnBoard) ? WiFiRequestHandler::ON_BOARD_ANTENNA_PIN : WiFiRequestHandler::EXTERNAL_ANTENNA_PIN);
 }
@@ -883,7 +883,7 @@ gpio_num_t WiFiRequestHandler::ConvertAntennaToPin(AntennaTypes::AntennaTypes an
  */
 void WiFiRequestHandler::SwitchAntenna(AntennaTypes::AntennaTypes newAntenna)
 {
-    TRACE_MESSAGE(COMPONENT_NAME, "SwitchAntenna: Enter");
+    TRACE_MESSAGE("SwitchAntenna: Enter");
     //
     // TODO: What happens to any pending requests and do we disconnect WiFi first?
     //
@@ -892,10 +892,10 @@ void WiFiRequestHandler::SwitchAntenna(AntennaTypes::AntennaTypes newAntenna)
     //
     //  Make sure the old antenna is switched off before the new one is turned on.
     //
-    TRACE_MESSAGE(COMPONENT_NAME, "Switching from antenna %d to %d", oldAntennaPin, newAntennaPin);
+    TRACE_MESSAGE("Switching from antenna %d to %d", oldAntennaPin, newAntennaPin);
     gpio_set_level(oldAntennaPin, 0);
     gpio_set_level(newAntennaPin, 1);
-    TRACE_MESSAGE(COMPONENT_NAME, "SwitchAntenna; Exit");
+    TRACE_MESSAGE("SwitchAntenna; Exit");
 }
 
 /**
@@ -903,7 +903,7 @@ void WiFiRequestHandler::SwitchAntenna(AntennaTypes::AntennaTypes newAntenna)
  */
 void WiFiRequestHandler::Setup()
 {
-    TRACE_MESSAGE(COMPONENT_NAME, "Setup: Enter");
+    TRACE_MESSAGE("Setup: Enter");
     RequestHandlerBase::Setup();
     gpio_set_direction(WiFiRequestHandler::EXTERNAL_ANTENNA_PIN, GPIO_MODE_OUTPUT);
     gpio_set_level(WiFiRequestHandler::EXTERNAL_ANTENNA_PIN, 0);
@@ -917,7 +917,7 @@ void WiFiRequestHandler::Setup()
     _xWiFiEventGroup = xEventGroupCreate();
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
     xTaskCreate(Task, COMPONENT_NAME, 2048 * 2, this, configMAX_PRIORITIES - 1, &_taskHandle);
-    TRACE_MESSAGE(COMPONENT_NAME, "Setup: Exit");
+    TRACE_MESSAGE("Setup: Exit");
 }
 
 /**
@@ -928,7 +928,7 @@ void WiFiRequestHandler::Setup()
  */
 void WiFiRequestHandler::PopulateConnectionEventDataStructure(Esp32Messaging::ConnectEventData *ed)
 {
-    TRACE_MESSAGE(COMPONENT_NAME, "PopulateConnectionEventDataStructure: Enter");
+    TRACE_MESSAGE("PopulateConnectionEventDataStructure: Enter");
 
     bzero((void *) ed, sizeof(Esp32Messaging::ConnectEventData));
     //
@@ -945,7 +945,7 @@ void WiFiRequestHandler::PopulateConnectionEventDataStructure(Esp32Messaging::Co
     ed->Channel = _apInformation.channel;
     Mapping::GetStmValue(Mapping::NetworkAuthenticationType, _apInformation.authmode, (int8_t *) &ed->AuthenticationMode);
 
-    TRACE_MESSAGE(COMPONENT_NAME, "PopulateConnectionEventDataStructure: Exit");
+    TRACE_MESSAGE("PopulateConnectionEventDataStructure: Exit");
 }
 
 /**
@@ -953,7 +953,7 @@ void WiFiRequestHandler::PopulateConnectionEventDataStructure(Esp32Messaging::Co
  */
 void WiFiRequestHandler::RaiseConnectToAccessPointEvent()
 {
-    TRACE_MESSAGE(COMPONENT_NAME, "RaiseConnectToAccessPointEvent: Enter");
+    TRACE_MESSAGE("RaiseConnectToAccessPointEvent: Enter");
 
     Esp32Messaging::ConnectEventData *ed = static_cast<Esp32Messaging::ConnectEventData *>( pvPortMalloc(sizeof(Esp32Messaging::ConnectEventData)));
     if (ed != NULL)
@@ -969,15 +969,15 @@ void WiFiRequestHandler::RaiseConnectToAccessPointEvent()
         }
         else
         {
-            ESP_LOGE(COMPONENT_NAME, "Failed to allocate memory for ConnectEventData payload.");
+            ERROR_MESSAGE("Failed to allocate memory for ConnectEventData payload.");
         }
     }
     else
     {
-        ESP_LOGE(COMPONENT_NAME, "Failed to allocate memory for ConnectEventData");
+        ERROR_MESSAGE("Failed to allocate memory for ConnectEventData");
     }
 
-    TRACE_MESSAGE(COMPONENT_NAME, "RaiseConnectToAccessPointEvent: Exit");
+    TRACE_MESSAGE("RaiseConnectToAccessPointEvent: Exit");
 }
 
 /**
@@ -1001,69 +1001,69 @@ void WiFiRequestHandler::RaiseConnectToAccessPointEvent()
  */
 void WiFiRequestHandler::EventHandlerHelper(esp_event_base_t eventBase, int32_t eventId, void *eventData)
 {
-    TRACE_MESSAGE(COMPONENT_NAME, "EventHandlerHelper: Enter");
+    TRACE_MESSAGE("EventHandlerHelper: Enter");
     if (eventBase == WIFI_EVENT)
     {
         switch (eventId)
         {
             case WIFI_EVENT_WIFI_READY:
-                TRACE_MESSAGE(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_WIFI_READY");
+                TRACE_MESSAGE("EventHandlerHelper: WIFI_EVENT_WIFI_READY");
                 break;
             case WIFI_EVENT_SCAN_DONE:
-                TRACE_MESSAGE(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_SCAN_DONE");
+                TRACE_MESSAGE("EventHandlerHelper: WIFI_EVENT_SCAN_DONE");
                 xEventGroupSetBits(_xWiFiEventGroup, WIFI_SCAN_COMPLETE_BIT);
                 break;
             case WIFI_EVENT_STA_START:
-                TRACE_MESSAGE(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_STA_START");
+                TRACE_MESSAGE("EventHandlerHelper: WIFI_EVENT_STA_START");
                 StationStartedEvent();
                 break;
             case WIFI_EVENT_STA_STOP:
-                TRACE_MESSAGE(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_STA_STOP");
+                TRACE_MESSAGE("EventHandlerHelper: WIFI_EVENT_STA_STOP");
                 RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::StopWiFiInterfaceEvent);
                 break;
             case WIFI_EVENT_STA_CONNECTED:
-                TRACE_MESSAGE(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_STA_CONNECTED");
+                TRACE_MESSAGE("EventHandlerHelper: WIFI_EVENT_STA_CONNECTED");
                 StationConnectedEvent((wifi_event_sta_connected_t *) eventData);
                 break;
             case WIFI_EVENT_STA_DISCONNECTED:
-                TRACE_MESSAGE(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_STA_DISCONNECTED");
+                TRACE_MESSAGE("EventHandlerHelper: WIFI_EVENT_STA_DISCONNECTED");
                 StationDisconnectedEvent((wifi_event_sta_disconnected_t *) eventData);
                 break;
             case WIFI_EVENT_STA_AUTHMODE_CHANGE:
-                TRACE_MESSAGE(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_STA_AUTHMODE_CHANGE");
+                TRACE_MESSAGE("EventHandlerHelper: WIFI_EVENT_STA_AUTHMODE_CHANGE");
                 break;
             case WIFI_EVENT_STA_WPS_ER_SUCCESS:
-                TRACE_MESSAGE(COMPONENT_NAME, "EventHandlerHelper:  WIFI_EVENT_STA_WPS_ER_SUCCESS");
+                TRACE_MESSAGE("EventHandlerHelper:  WIFI_EVENT_STA_WPS_ER_SUCCESS");
                 break;
             case WIFI_EVENT_STA_WPS_ER_FAILED:
-                TRACE_MESSAGE(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_STA_WPS_ER_FAILED");
+                TRACE_MESSAGE("EventHandlerHelper: WIFI_EVENT_STA_WPS_ER_FAILED");
                 break;
             case WIFI_EVENT_STA_WPS_ER_TIMEOUT:
-                TRACE_MESSAGE(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_STA_WPS_ER_TIMEOUT");
+                TRACE_MESSAGE("EventHandlerHelper: WIFI_EVENT_STA_WPS_ER_TIMEOUT");
                 break;
             case WIFI_EVENT_STA_WPS_ER_PIN:
-                TRACE_MESSAGE(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_STA_WPS_ER_PIN");
+                TRACE_MESSAGE("EventHandlerHelper: WIFI_EVENT_STA_WPS_ER_PIN");
                 break;
             case WIFI_EVENT_STA_WPS_ER_PBC_OVERLAP:
-                TRACE_MESSAGE(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_STA_WPS_ER_PBC_OVERLAP");
+                TRACE_MESSAGE("EventHandlerHelper: WIFI_EVENT_STA_WPS_ER_PBC_OVERLAP");
                 break;
             case WIFI_EVENT_AP_START:
-                TRACE_MESSAGE(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_AP_START");
+                TRACE_MESSAGE("EventHandlerHelper: WIFI_EVENT_AP_START");
                 break;
             case WIFI_EVENT_AP_STOP:
-                TRACE_MESSAGE(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_AP_STOP");
+                TRACE_MESSAGE("EventHandlerHelper: WIFI_EVENT_AP_STOP");
                 break;
             case WIFI_EVENT_AP_STACONNECTED:
-                TRACE_MESSAGE(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_AP_STACONNECTED");
+                TRACE_MESSAGE("EventHandlerHelper: WIFI_EVENT_AP_STACONNECTED");
                 break;
             case WIFI_EVENT_AP_STADISCONNECTED:
-                TRACE_MESSAGE(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_AP_STADISCONNECTED");
+                TRACE_MESSAGE("EventHandlerHelper: WIFI_EVENT_AP_STADISCONNECTED");
                 break;
             case WIFI_EVENT_AP_PROBEREQRECVED:
-                TRACE_MESSAGE(COMPONENT_NAME, "EventHandlerHelper: WIFI_EVENT_AP_PROBEREQRECVED");
+                TRACE_MESSAGE("EventHandlerHelper: WIFI_EVENT_AP_PROBEREQRECVED");
                 break;
             default:
-                TRACE_MESSAGE(COMPONENT_NAME, "EventHandlerHelper: Unhandled WiFi Event ID %d", eventId);
+                TRACE_MESSAGE("EventHandlerHelper: Unhandled WiFi Event ID %d", eventId);
                 break;
         }
     }
@@ -1074,34 +1074,34 @@ void WiFiRequestHandler::EventHandlerHelper(esp_event_base_t eventBase, int32_t 
             switch (eventId)
             {
                 case IP_EVENT_STA_GOT_IP:
-                    TRACE_MESSAGE(COMPONENT_NAME, "EventHandlerHelper: IP_EVENT_STA_GOT_IP");
+                    TRACE_MESSAGE("EventHandlerHelper: IP_EVENT_STA_GOT_IP");
                     StationGotIpEvent((ip_event_got_ip_t *) eventData);
                     break;
                 case IP_EVENT_STA_LOST_IP:
-                    TRACE_MESSAGE(COMPONENT_NAME, "EventHandlerHelper: IP_EVENT_STA_LOST_IP");
+                    TRACE_MESSAGE("EventHandlerHelper: IP_EVENT_STA_LOST_IP");
                     break;
                 case IP_EVENT_AP_STAIPASSIGNED:
-                    TRACE_MESSAGE(COMPONENT_NAME, "EventHandlerHelper: IP_EVENT_AP_STAIPASSIGNED");
+                    TRACE_MESSAGE("EventHandlerHelper: IP_EVENT_AP_STAIPASSIGNED");
                     break;
                 case IP_EVENT_GOT_IP6:
-                    TRACE_MESSAGE(COMPONENT_NAME, "EventHandlerHelper: IP_EVENT_GOT_IP6");
+                    TRACE_MESSAGE("EventHandlerHelper: IP_EVENT_GOT_IP6");
                     break;
                 case IP_EVENT_ETH_GOT_IP:
-                    TRACE_MESSAGE(COMPONENT_NAME, "EventHandlerHelper: IP_EVENT_ETH_GOT_IP");
+                    TRACE_MESSAGE("EventHandlerHelper: IP_EVENT_ETH_GOT_IP");
                     break;
                 case IP_EVENT_PPP_GOT_IP:
-                    TRACE_MESSAGE(COMPONENT_NAME, "EventHandlerHelper: IP_EVENT_PPP_GOT_IP");
+                    TRACE_MESSAGE("EventHandlerHelper: IP_EVENT_PPP_GOT_IP");
                     break;
                 case IP_EVENT_PPP_LOST_IP:
-                    TRACE_MESSAGE(COMPONENT_NAME, "EventHandlerHelper: IP_EVENT_PPP_LOST_IP");
+                    TRACE_MESSAGE("EventHandlerHelper: IP_EVENT_PPP_LOST_IP");
                     break;
                 default:
-                    TRACE_MESSAGE(COMPONENT_NAME, "EventHandlerHelper: Unhandled IP Event ID %d", eventId);
+                    TRACE_MESSAGE("EventHandlerHelper: Unhandled IP Event ID %d", eventId);
                     break;
             }
         }
     }
-    TRACE_MESSAGE(COMPONENT_NAME, "EventHandlerHelper: Exit");
+    TRACE_MESSAGE("EventHandlerHelper: Exit");
 }
 
 /**
@@ -1132,10 +1132,10 @@ void WiFiRequestHandler::EventHandlerHelper(esp_event_base_t eventBase, int32_t 
  */
 void WiFiRequestHandler::EventHandler(void *arg, esp_event_base_t eventBase, int32_t eventId, void *eventData)
 {
-    TRACE_MESSAGE(COMPONENT_NAME, "EventHandler: Enter");
+    TRACE_MESSAGE("EventHandler: Enter");
     WiFiRequestHandler *sender = static_cast<WiFiRequestHandler *>(arg);
     sender->EventHandlerHelper(eventBase, eventId, eventData);
-    TRACE_MESSAGE(COMPONENT_NAME, "EventHandler: Exit");
+    TRACE_MESSAGE("EventHandler: Exit");
 }
 
 /**
@@ -1153,7 +1153,7 @@ void WiFiRequestHandler::EventHandler(void *arg, esp_event_base_t eventBase, int
  */
 void WiFiRequestHandler::DispatchRequest(Message *request)
 {
-    TRACE_MESSAGE(COMPONENT_NAME, "DispatchRequest: Enter");
+    TRACE_MESSAGE("DispatchRequest: Enter");
     xEventGroupClearBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
     switch (request->Function)
     {
@@ -1248,15 +1248,15 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
         default:
-            TRACE_MESSAGE(COMPONENT_NAME, "DispatchRequest: Unknown WiFi message received, function %d", request->Function);
+            TRACE_MESSAGE("DispatchRequest: Unknown WiFi message received, function %d", request->Function);
             if ((request->Payload != NULL) && (request->PayloadLength > 0))
             {
-                ESP_LOG_BUFFER_HEXDUMP(COMPONENT_NAME, request->Payload, request->PayloadLength, ESP_LOG_INFO);
+                TRACE_HEX_BUFFER(request->Payload, request->PayloadLength);
             }
             break;
     }
     xEventGroupWaitBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT, pdTRUE, pdTRUE, portMAX_DELAY);
-    TRACE_MESSAGE(COMPONENT_NAME, "DispatchRequest: Exit");
+    TRACE_MESSAGE("DispatchRequest: Exit");
 }
 
 /**
@@ -1286,7 +1286,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::StopWiFIAdapter()
  */
 void WiFiRequestHandler::StopWiFIAdapter(Message *message)
 {
-    TRACE_MESSAGE(COMPONENT_NAME, "StopWiFIAdapter: Enter");
+    TRACE_MESSAGE("StopWiFIAdapter: Enter");
 
     bool raiseEvent = false;
     StatusCodes::StatusCodes sc = StatusCodes::CompletedOk;
@@ -1317,7 +1317,7 @@ void WiFiRequestHandler::StopWiFIAdapter(Message *message)
         RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::StopWiFiInterfaceEvent, sc);
     }
 
-    TRACE_MESSAGE(COMPONENT_NAME, "StopWiFIAdapter: Exit");
+    TRACE_MESSAGE("StopWiFIAdapter: Exit");
 }
 
 /**
@@ -1347,7 +1347,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::DisconnectFromAccessPoint()
  */
 void WiFiRequestHandler::DisconnectFromAccessPoint(Message *message)
 {
-    TRACE_MESSAGE(COMPONENT_NAME, "DisconnectFromAccessPoint: Enter");
+    TRACE_MESSAGE("DisconnectFromAccessPoint: Enter");
 
     StatusCodes::StatusCodes sc = StatusCodes::CompletedOk;
     if (IsConnected())
@@ -1371,7 +1371,7 @@ void WiFiRequestHandler::DisconnectFromAccessPoint(Message *message)
 
     RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::DisconnectFromAccessPointEvent, sc);
 
-    TRACE_MESSAGE(COMPONENT_NAME, "DisconnectFromAccessPoint: Exit");
+    TRACE_MESSAGE("DisconnectFromAccessPoint: Exit");
 }
 
 /**
@@ -1382,14 +1382,14 @@ void WiFiRequestHandler::DisconnectFromAccessPoint(Message *message)
  */
 void WiFiRequestHandler::SetAntennaRequest(Message *message)
 {
-    TRACE_MESSAGE(COMPONENT_NAME, "SetAntennaRequest: Enter");
+    TRACE_MESSAGE("SetAntennaRequest: Enter");
 
     Esp32Messaging::SetAntennaRequest *request = Encoders::ExtractSetAntennaRequest(message->Payload);
     vPortFree(message->Payload);
     message->Payload = nullptr;
     message->PayloadLength = 0;
 
-    TRACE_MESSAGE(COMPONENT_NAME, "Switching antenna to %d with persist set to %d", request->Antenna, request->Persist);
+    TRACE_MESSAGE("Switching antenna to %d with persist set to %d", request->Antenna, request->Persist);
 
     if (request->Persist)
     {
@@ -1407,7 +1407,7 @@ void WiFiRequestHandler::SetAntennaRequest(Message *message)
 
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
 
-    TRACE_MESSAGE(COMPONENT_NAME, "SetAntennaRequest: Exit");
+    TRACE_MESSAGE("SetAntennaRequest: Exit");
 }
 
 /**
@@ -1455,7 +1455,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const char *ss
         if ((strlen(ssid) > MAXIMUM_SSID_LENGTH) || (strlen(password) > MAXIMUM_PASSWORD_LENGTH))
         {
             result = StatusCodes::InvalidWiFiCredentials;
-            TRACE_MESSAGE(COMPONENT_NAME, "ConnectToAccessPoint: Invalid credentials");
+            TRACE_MESSAGE("ConnectToAccessPoint: Invalid credentials");
         }
         else
         {
@@ -1513,7 +1513,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const char *ss
  */
 void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
 {
-    TRACE_MESSAGE(COMPONENT_NAME, "ConnectToAccessPoint: Enter");
+    TRACE_MESSAGE("ConnectToAccessPoint: Enter");
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
 
     Esp32Messaging::WiFiCredentials *credentials = Encoders::ExtractWiFiCredentials(message->Payload);
@@ -1555,7 +1555,7 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
         RaiseConnectToAccessPointEvent();
     }
 
-    TRACE_MESSAGE(COMPONENT_NAME, "ConnectToAccessPoint: Exit");
+    TRACE_MESSAGE("ConnectToAccessPoint: Exit");
 
     // Logging::StandaloneHeapTracingStart();
 
@@ -1572,7 +1572,7 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
  */
 esp_err_t WiFiRequestHandler::StartWiFiInterface()
 {
-    TRACE_MESSAGE(COMPONENT_NAME, "StartWiFiInterface: Enter");
+    TRACE_MESSAGE("StartWiFiInterface: Enter");
     esp_err_t result = ESP_OK;
 
     EventBits_t bits = xEventGroupGetBits(_xWiFiEventGroup);
@@ -1617,7 +1617,7 @@ esp_err_t WiFiRequestHandler::StartWiFiInterface()
         }
         xEventGroupClearBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTING_BIT);
     }
-    TRACE_MESSAGE(COMPONENT_NAME, "StartWiFiInterface: Exit");
+    TRACE_MESSAGE("StartWiFiInterface: Exit");
     return(result);
 }
 
@@ -1632,7 +1632,7 @@ esp_err_t WiFiRequestHandler::StartWiFiInterface()
  */
 void WiFiRequestHandler::StartWiFiInterface(Message *message)
 {
-    TRACE_MESSAGE(COMPONENT_NAME, "StartNetwork: Enter");
+    TRACE_MESSAGE("StartNetwork: Enter");
     message->MessageType = MessageTypes::Response;
     StatusCodes::StatusCodes sc = StatusCodes::CompletedOk;
     if (StartWiFiInterface() != ESP_OK)
@@ -1645,7 +1645,7 @@ void WiFiRequestHandler::StartWiFiInterface(Message *message)
 
     RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::StartWiFiInterfaceEvent, sc);
 
-    TRACE_MESSAGE(COMPONENT_NAME, "StartNetwork: Exit");
+    TRACE_MESSAGE("StartNetwork: Exit");
 }
 
 /**
@@ -1661,14 +1661,14 @@ void WiFiRequestHandler::StartWiFiInterface(Message *message)
  */
 void WiFiRequestHandler::GetAvailableNetworks(Message *message)
 {
-    TRACE_MESSAGE(COMPONENT_NAME, "GetAvailableNetworks: Enter");
+    TRACE_MESSAGE("GetAvailableNetworks: Enter");
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
 
     _currentRetryCount = 0;
     EventBits_t bits = xEventGroupGetBits(_xWiFiEventGroup);
     if (!(bits & WIFI_INTERFACE_STARTED_BIT))
     {
-        TRACE_MESSAGE(COMPONENT_NAME, "Starting network");
+        TRACE_MESSAGE("Starting network");
         if (StartWiFiInterface() != ESP_OK)
         {
             result = StatusCodes::CannotStartNetworkInterface;
@@ -1704,7 +1704,7 @@ void WiFiRequestHandler::GetAvailableNetworks(Message *message)
                 {
                     uint16_t apCount = 0;
                     esp_wifi_scan_get_ap_num(&apCount);
-                    TRACE_MESSAGE(COMPONENT_NAME, "GetAvailableNetworks: Number of access points found: %d", apCount);
+                    TRACE_MESSAGE("GetAvailableNetworks: Number of access points found: %d", apCount);
                     if (apCount != 0)
                     {
                         Esp32Messaging::AccessPointList *accessPointList = static_cast<Esp32Messaging::AccessPointList *>(pvPortMalloc(sizeof(Esp32Messaging::AccessPointList)));
@@ -1745,14 +1745,14 @@ void WiFiRequestHandler::GetAvailableNetworks(Message *message)
                 }
                 else
                 {
-                    TRACE_MESSAGE(COMPONENT_NAME, "GetAvailableNetworks: Scan timeout.");
+                    TRACE_MESSAGE("GetAvailableNetworks: Scan timeout.");
                     result = StatusCodes::Timeout;
                 }
                 vPortFree(ap_info);
             }
             else
             {
-                TRACE_MESSAGE(COMPONENT_NAME, "GetAvailableNetworks: Scan timeout.");
+                TRACE_MESSAGE("GetAvailableNetworks: Scan timeout.");
                 result = StatusCodes::Timeout;
             }
         }
@@ -1762,7 +1762,7 @@ void WiFiRequestHandler::GetAvailableNetworks(Message *message)
     message->StatusCode = result;
     _messageDispatcher->QueueMessageForStm32(message);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
-    TRACE_MESSAGE(COMPONENT_NAME, "GetAvailableNetworks: Exit");
+    TRACE_MESSAGE("GetAvailableNetworks: Exit");
 }
 
 /**
@@ -1773,7 +1773,7 @@ void WiFiRequestHandler::GetAvailableNetworks(Message *message)
  */
 void WiFiRequestHandler::GetAddrInfo(void *vpMessage)
 {
-    TRACE_MESSAGE(COMPONENT_NAME, "GetAddrInfo: Enter");
+    TRACE_MESSAGE("GetAddrInfo: Enter");
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
@@ -1848,7 +1848,7 @@ void WiFiRequestHandler::GetAddrInfo(void *vpMessage)
 
     PERFORMANCE_LOGGING_EXIT();
     PERFORMANCE_LOGGING_ADD_ENTRY();
-    TRACE_MESSAGE(COMPONENT_NAME, "GetAddrInfo: Exit");
+    TRACE_MESSAGE("GetAddrInfo: Exit");
 }
 
 /**
@@ -1859,8 +1859,8 @@ void WiFiRequestHandler::GetAddrInfo(void *vpMessage)
  */
 void WiFiRequestHandler::Socket(void *vpMessage)
 {
-    TRACE_MESSAGE(COMPONENT_NAME, "Socket: Enter");
-//    TRACE_MESSAGE(COMPONENT_NAME, "Socket: Enter");
+    TRACE_MESSAGE("Socket: Enter");
+//    TRACE_MESSAGE("Socket: Enter");
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
@@ -1869,17 +1869,17 @@ void WiFiRequestHandler::Socket(void *vpMessage)
     if (IsConnected())
     {
         Esp32Messaging::SocketRequest *request = Encoders::ExtractSocketRequest(message->Payload);
-        TRACE_MESSAGE(COMPONENT_NAME, "Socket: Creating socket on domain %d, type %d and protocol %d", request->Domain, request->Type, request->Protocol);
+        TRACE_MESSAGE("Socket: Creating socket on domain %d, type %d and protocol %d", request->Domain, request->Type, request->Protocol);
 
         response.Result = socket(request->Domain, request->Type, request->Protocol);
         if (response.Result < 0)
         {
-            TRACE_MESSAGE(COMPONENT_NAME, "Socket: Error code: %d - %s", errno, strerror(errno));
+            TRACE_MESSAGE("Socket: Error code: %d - %s", errno, strerror(errno));
             response.ResponseErrno = MapErrno(errno);
         }
         else
         {
-            TRACE_MESSAGE(COMPONENT_NAME, "Socket: Created socket %d", response.Result);
+            TRACE_MESSAGE("Socket: Created socket %d", response.Result);
             response.ResponseErrno = 0;
         }
 
@@ -1902,7 +1902,7 @@ void WiFiRequestHandler::Socket(void *vpMessage)
 
     PERFORMANCE_LOGGING_EXIT();
     PERFORMANCE_LOGGING_ADD_ENTRY();
-    TRACE_MESSAGE(COMPONENT_NAME, "Socket: Exit");
+    TRACE_MESSAGE("Socket: Exit");
 }
 
 /**
@@ -1913,7 +1913,7 @@ void WiFiRequestHandler::Socket(void *vpMessage)
  */
 void WiFiRequestHandler::Connect(void *vpMessage)
 {
-    TRACE_MESSAGE(COMPONENT_NAME, "Connect: Enter");
+    TRACE_MESSAGE("Connect: Enter");
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
@@ -1941,10 +1941,10 @@ void WiFiRequestHandler::Connect(void *vpMessage)
             sa.sin_port = socketAddress->Port;
             memcpy(&sa.sin_addr, &socketAddress->Ip4Address, sizeof(sa.sin_addr));
             sa.sin_len = sizeof(struct sockaddr_in);
-            TRACE_MESSAGE(COMPONENT_NAME, "Connect: Connecting socket: %d", request->SocketHandle);
-            TRACE_MESSAGE(COMPONENT_NAME, "Connect: Family: %d", sa.sin_family);
-            TRACE_MESSAGE(COMPONENT_NAME, "Connect: IP address: %s", inet_ntoa(sa.sin_addr));
-            TRACE_MESSAGE(COMPONENT_NAME, "Connect: Port: %d", ntohs(sa.sin_port));
+            TRACE_MESSAGE("Connect: Connecting socket: %d", request->SocketHandle);
+            TRACE_MESSAGE("Connect: Family: %d", sa.sin_family);
+            TRACE_MESSAGE("Connect: IP address: %s", inet_ntoa(sa.sin_addr));
+            TRACE_MESSAGE("Connect: Port: %d", ntohs(sa.sin_port));
             response.Result = connect(request->SocketHandle, (struct sockaddr *) &sa, sizeof(sa));
         }
         else
@@ -1956,7 +1956,7 @@ void WiFiRequestHandler::Connect(void *vpMessage)
         if (response.Result != 0)
         {
             response.Result = -1;
-            TRACE_MESSAGE(COMPONENT_NAME, "Connect: Error code: %d - %s", errno, strerror(errno));
+            TRACE_MESSAGE("Connect: Error code: %d - %s", errno, strerror(errno));
             response.ResponseErrno = MapErrno(errno);
         }
         else
@@ -1984,7 +1984,7 @@ void WiFiRequestHandler::Connect(void *vpMessage)
 
     PERFORMANCE_LOGGING_EXIT();
     PERFORMANCE_LOGGING_ADD_ENTRY();
-    TRACE_MESSAGE(COMPONENT_NAME, "Connect: Exit");
+    TRACE_MESSAGE("Connect: Exit");
 }
 
 /**
@@ -1995,11 +1995,11 @@ void WiFiRequestHandler::Connect(void *vpMessage)
  */
 void WiFiRequestHandler::FreeAddrInfo(void  *vpMessage)
 {
-    TRACE_MESSAGE(COMPONENT_NAME, "FreeAddrInfo: Enter");
+    TRACE_MESSAGE("FreeAddrInfo: Enter");
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
-    TRACE_MESSAGE(COMPONENT_NAME, "FreeAddrInfo: Releasing addrinfo storage.");
+    TRACE_MESSAGE("FreeAddrInfo: Releasing addrinfo storage.");
     Esp32Messaging::FreeAddrInfoRequest *request = Encoders::ExtractFreeAddrInfoRequest(message->Payload);
 
     freeaddrinfo(reinterpret_cast<struct addrinfo *>(request->AddrInfoAddress));
@@ -2016,7 +2016,7 @@ void WiFiRequestHandler::FreeAddrInfo(void  *vpMessage)
 
     PERFORMANCE_LOGGING_EXIT();
     PERFORMANCE_LOGGING_ADD_ENTRY();
-    TRACE_MESSAGE(COMPONENT_NAME, "FreeAddrInfo: Exit");
+    TRACE_MESSAGE("FreeAddrInfo: Exit");
 }
 
 /**
@@ -2027,7 +2027,7 @@ void WiFiRequestHandler::FreeAddrInfo(void  *vpMessage)
  */
 void WiFiRequestHandler::SetSockOpt(void *vpMessage)
 {
-    TRACE_MESSAGE(COMPONENT_NAME, "SetSockOpt: Enter");
+    TRACE_MESSAGE("SetSockOpt: Enter");
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
@@ -2045,7 +2045,7 @@ void WiFiRequestHandler::SetSockOpt(void *vpMessage)
         int32_t optionName = 0;
         if (Mapping::GetEspValue(Mapping::SocketOptions, request->OptionName, &optionName) < 0)
         {
-            TRACE_MESSAGE(COMPONENT_NAME, "SetSockOpt: Unknown option: %d", request->OptionName);
+            TRACE_MESSAGE("SetSockOpt: Unknown option: %d", request->OptionName);
             errorCode = ENOPROTOOPT;
         }
         else
@@ -2068,22 +2068,22 @@ void WiFiRequestHandler::SetSockOpt(void *vpMessage)
                     optionLength = request->OptionValueLength;
                     break;
                 case SO_LINGER:         /* Linger on close if data present */
-                    TRACE_MESSAGE(COMPONENT_NAME, "SetSockOpt: Implement SO_LINGER");
+                    TRACE_MESSAGE("SetSockOpt: Implement SO_LINGER");
                     break;
                 case SO_ACCEPTCONN:     /* Socket has had listen() */
-                    TRACE_MESSAGE(COMPONENT_NAME, "SetSockOpt: Implement SO_ACCEPTCONN");
+                    TRACE_MESSAGE("SetSockOpt: Implement SO_ACCEPTCONN");
                     break;
                 case SO_DONTLINGER:     /* Don't linger on close if data present */
-                    TRACE_MESSAGE(COMPONENT_NAME, "SetSockOpt: Implement SO_DONTLINGER");
+                    TRACE_MESSAGE("SetSockOpt: Implement SO_DONTLINGER");
                     break;
                 case SO_ERROR:          /* Get error status and clear */
-                    TRACE_MESSAGE(COMPONENT_NAME, "SetSockOpt: Implement SO_ERROR");
+                    TRACE_MESSAGE("SetSockOpt: Implement SO_ERROR");
                     break;
                 case SO_TYPE:           /* Get socket type */
-                    TRACE_MESSAGE(COMPONENT_NAME, "SetSockOpt: Implement SO_TYPE");
+                    TRACE_MESSAGE("SetSockOpt: Implement SO_TYPE");
                     break;
                 case SO_NO_CHECK:       /* Don't create UDP checksum */
-                    TRACE_MESSAGE(COMPONENT_NAME, "SetSockOpt: Implement SO_NO_CHECK");
+                    TRACE_MESSAGE("SetSockOpt: Implement SO_NO_CHECK");
                     break;
                 default:
                     response.Result = -1;
@@ -2094,7 +2094,7 @@ void WiFiRequestHandler::SetSockOpt(void *vpMessage)
             {
                 int32_t level = 0;
                 Mapping::GetEspValue(Mapping::SocketLevel, request->Level, &level);
-                TRACE_MESSAGE(COMPONENT_NAME, "SetSockOpt: Setting socket option level to 0x%x, option name 0x%x for socket %d", level, optionName, request->SocketHandle);
+                TRACE_MESSAGE("SetSockOpt: Setting socket option level to 0x%x, option name 0x%x for socket %d", level, optionName, request->SocketHandle);
                 response.Result = setsockopt(request->SocketHandle, level, optionName, optionValue, optionLength);
                 errorCode = errno;
             }
@@ -2105,7 +2105,7 @@ void WiFiRequestHandler::SetSockOpt(void *vpMessage)
             response.Result = -1;
             response.ResponseErrno = MapErrno(errorCode);
         }
-        TRACE_MESSAGE(COMPONENT_NAME, "SetSockOpt: Result: %d, errno: %d - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
+        TRACE_MESSAGE("SetSockOpt: Result: %d, errno: %d - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
 
         if (request->OptionValueLength > 0)
         {
@@ -2133,7 +2133,7 @@ void WiFiRequestHandler::SetSockOpt(void *vpMessage)
 
     PERFORMANCE_LOGGING_EXIT();
     PERFORMANCE_LOGGING_ADD_ENTRY();
-    TRACE_MESSAGE(COMPONENT_NAME, "SetSockOpt: Exit");
+    TRACE_MESSAGE("SetSockOpt: Exit");
 }
 
 /**
@@ -2144,7 +2144,7 @@ void WiFiRequestHandler::SetSockOpt(void *vpMessage)
  */
 void WiFiRequestHandler::Write(void *vpMessage)
 {
-    TRACE_MESSAGE(COMPONENT_NAME, "Write: Enter");
+    TRACE_MESSAGE("Write: Enter");
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
@@ -2185,7 +2185,7 @@ void WiFiRequestHandler::Write(void *vpMessage)
 
     PERFORMANCE_LOGGING_EXIT();
     PERFORMANCE_LOGGING_ADD_ENTRY();
-    TRACE_MESSAGE(COMPONENT_NAME, "Write: Exit");
+    TRACE_MESSAGE("Write: Exit");
 }
 
 /**
@@ -2196,7 +2196,7 @@ void WiFiRequestHandler::Write(void *vpMessage)
  */
 void WiFiRequestHandler::Read(void *vpMessage)
 {
-    TRACE_MESSAGE(COMPONENT_NAME, "Read: Enter");
+    TRACE_MESSAGE("Read: Enter");
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
@@ -2242,7 +2242,7 @@ void WiFiRequestHandler::Read(void *vpMessage)
 
     PERFORMANCE_LOGGING_EXIT();
     PERFORMANCE_LOGGING_ADD_ENTRY();
-    TRACE_MESSAGE(COMPONENT_NAME, "Read: Exit");
+    TRACE_MESSAGE("Read: Exit");
 }
 
 /**
@@ -2253,7 +2253,7 @@ void WiFiRequestHandler::Read(void *vpMessage)
  */
 void WiFiRequestHandler::Close(void *vpMessage)
 {
-    TRACE_MESSAGE(COMPONENT_NAME, "Close: Enter");
+    TRACE_MESSAGE("Close: Enter");
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
@@ -2291,7 +2291,7 @@ void WiFiRequestHandler::Close(void *vpMessage)
 
     PERFORMANCE_LOGGING_EXIT();
     PERFORMANCE_LOGGING_ADD_ENTRY();
-    TRACE_MESSAGE(COMPONENT_NAME, "Close: Exit");
+    TRACE_MESSAGE("Close: Exit");
 }
 
 /**
@@ -2302,7 +2302,7 @@ void WiFiRequestHandler::Close(void *vpMessage)
  */
 void WiFiRequestHandler::Send(void *vpMessage)
 {
-    TRACE_MESSAGE(COMPONENT_NAME, "Send: Enter");
+    TRACE_MESSAGE("Send: Enter");
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
@@ -2327,12 +2327,12 @@ void WiFiRequestHandler::Send(void *vpMessage)
             response.ResponseErrno = MapErrno(EFAULT);
         }
 
-        TRACE_MESSAGE(COMPONENT_NAME, "Send: Sent %d bytes.", request->Length);
+        TRACE_MESSAGE("Send: Sent %d bytes.", request->Length);
         if (request->Buffer && (request->Length > 0))
         {
-            ESP_LOG_BUFFER_HEX(COMPONENT_NAME, request->Buffer, request->Length);
+            TRACE_HEX_BUFFER(request->Buffer, request->Length);
         }
-        TRACE_MESSAGE(COMPONENT_NAME, "Send: Result: %d, errno: %d - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
+        TRACE_MESSAGE("Send: Result: %d, errno: %d - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
 
         vPortFree(request->Buffer);
         vPortFree(request);
@@ -2354,7 +2354,7 @@ void WiFiRequestHandler::Send(void *vpMessage)
 
     PERFORMANCE_LOGGING_EXIT();
     PERFORMANCE_LOGGING_ADD_ENTRY();
-    TRACE_MESSAGE(COMPONENT_NAME, "Send: Exit");
+    TRACE_MESSAGE("Send: Exit");
 }
 
 /**
@@ -2365,7 +2365,7 @@ void WiFiRequestHandler::Send(void *vpMessage)
  */
 void WiFiRequestHandler::SendTo(void *vpMessage)
 {
-    TRACE_MESSAGE(COMPONENT_NAME, "SendTo: Enter");
+    TRACE_MESSAGE("SendTo: Enter");
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
@@ -2386,7 +2386,7 @@ void WiFiRequestHandler::SendTo(void *vpMessage)
             {
                 socketAddress = Encoders::ExtractSockAddr(request->DestinationAddress);
                 Mapping::GetEspValue(Mapping::AddressFamily, socketAddress->Family, &family);
-                TRACE_MESSAGE(COMPONENT_NAME, "SendTo: Mapping request family %d to ESP family %d", socketAddress->Family, family);
+                TRACE_MESSAGE("SendTo: Mapping request family %d to ESP family %d", socketAddress->Family, family);
             }
 
             if (family == AF_INET)
@@ -2404,10 +2404,10 @@ void WiFiRequestHandler::SendTo(void *vpMessage)
                     psa = (struct sockaddr *) &sa;
                     lenSa = sizeof(sa);
                 }
-                TRACE_MESSAGE(COMPONENT_NAME, "SendTo: Connecting socket: %d", request->SocketHandle);
-                TRACE_MESSAGE(COMPONENT_NAME, "SendTo: Family: %d", (psa == NULL) ? 0 : sa.sin_family);
-                TRACE_MESSAGE(COMPONENT_NAME, "SendTo: IP address: %s", (psa == NULL) ? "NULL" : inet_ntoa(sa.sin_addr));
-                TRACE_MESSAGE(COMPONENT_NAME, "SendTo: Port: %d", (psa == NULL) ? 0 : ntohs(sa.sin_port));
+                TRACE_MESSAGE("SendTo: Connecting socket: %d", request->SocketHandle);
+                TRACE_MESSAGE("SendTo: Family: %d", (psa == NULL) ? 0 : sa.sin_family);
+                TRACE_MESSAGE("SendTo: IP address: %s", (psa == NULL) ? "NULL" : inet_ntoa(sa.sin_addr));
+                TRACE_MESSAGE("SendTo: Port: %d", (psa == NULL) ? 0 : ntohs(sa.sin_port));
                 response.Result = sendto(request->SocketHandle, request->Buffer, request->Length, mappedFlags, psa, lenSa);
             }
 
@@ -2426,12 +2426,12 @@ void WiFiRequestHandler::SendTo(void *vpMessage)
             response.ResponseErrno = MapErrno(EFAULT);
         }
 
-        TRACE_MESSAGE(COMPONENT_NAME, "SendTo: Sent %d bytes.", request->Length);
+        TRACE_MESSAGE("SendTo: Sent %d bytes.", request->Length);
         if (request->Buffer && (request->Length > 0))
         {
-            ESP_LOG_BUFFER_HEX(COMPONENT_NAME, request->Buffer, request->Length);
+            TRACE_HEX_BUFFER(request->Buffer, request->Length);
         }
-        TRACE_MESSAGE(COMPONENT_NAME, "SendTo: Result: %d, errno: %d - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
+        TRACE_MESSAGE("SendTo: Result: %d, errno: %d - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
 
         if (request->DestinationAddress)
         {
@@ -2456,7 +2456,7 @@ void WiFiRequestHandler::SendTo(void *vpMessage)
 
     PERFORMANCE_LOGGING_EXIT();
     PERFORMANCE_LOGGING_ADD_ENTRY();
-    TRACE_MESSAGE(COMPONENT_NAME, "SendTo: Exit");
+    TRACE_MESSAGE("SendTo: Exit");
 }
 
 /**
@@ -2467,7 +2467,7 @@ void WiFiRequestHandler::SendTo(void *vpMessage)
  */
 void WiFiRequestHandler::RecvFrom(void *vpMessage)
 {
-    TRACE_MESSAGE(COMPONENT_NAME, "RecvFrom: Enter");
+    TRACE_MESSAGE("RecvFrom: Enter");
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
@@ -2545,12 +2545,12 @@ void WiFiRequestHandler::RecvFrom(void *vpMessage)
         {
             response.ResponseErrno = MapErrno(EFAULT);
         }
-        TRACE_MESSAGE(COMPONENT_NAME, "RecvFrom: Received %d bytes.", response.Result);
+        TRACE_MESSAGE("RecvFrom: Received %d bytes.", response.Result);
         if (response.Buffer && (response.BufferLength > 0))
         {
-            ESP_LOG_BUFFER_HEX(COMPONENT_NAME, response.Buffer, response.Result);
+            TRACE_HEX_BUFFER(response.Buffer, response.Result);
         }
-        TRACE_MESSAGE(COMPONENT_NAME, "RecvFrom: Result: %d, errno: %d - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
+        TRACE_MESSAGE("RecvFrom: Result: %d, errno: %d - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
 
         vPortFree(request);
     }
@@ -2579,7 +2579,7 @@ void WiFiRequestHandler::RecvFrom(void *vpMessage)
 
     PERFORMANCE_LOGGING_EXIT();
     PERFORMANCE_LOGGING_ADD_ENTRY();
-    TRACE_MESSAGE(COMPONENT_NAME, "RecvFrom: Exit");
+    TRACE_MESSAGE("RecvFrom: Exit");
 }
 
 /**
@@ -2590,7 +2590,7 @@ void WiFiRequestHandler::RecvFrom(void *vpMessage)
  */
 void WiFiRequestHandler::Bind(void *vpMessage)
 {
-    TRACE_MESSAGE(COMPONENT_NAME, "Bind: Enter");
+    TRACE_MESSAGE("Bind: Enter");
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
@@ -2618,10 +2618,10 @@ void WiFiRequestHandler::Bind(void *vpMessage)
             sa.sin_family = socketAddress->Family;
             sa.sin_port = socketAddress->Port;
             memcpy(&sa.sin_addr, &socketAddress->Ip4Address, sizeof(socketAddress->Ip4Address));
-            TRACE_MESSAGE(COMPONENT_NAME, "Bind: Socket handle: %d", request->SocketHandle);
-            TRACE_MESSAGE(COMPONENT_NAME, "Bind: Family: %d", sa.sin_family);
-            TRACE_MESSAGE(COMPONENT_NAME, "Bind: IP address: %s", inet_ntoa(sa.sin_addr));
-            TRACE_MESSAGE(COMPONENT_NAME, "Bind: Port: %d", ntohs(sa.sin_port));
+            TRACE_MESSAGE("Bind: Socket handle: %d", request->SocketHandle);
+            TRACE_MESSAGE("Bind: Family: %d", sa.sin_family);
+            TRACE_MESSAGE("Bind: IP address: %s", inet_ntoa(sa.sin_addr));
+            TRACE_MESSAGE("Bind: Port: %d", ntohs(sa.sin_port));
             response.Result = bind(request->SocketHandle, (struct sockaddr *) &sa, sizeof(sa));
         }
         else
@@ -2639,7 +2639,7 @@ void WiFiRequestHandler::Bind(void *vpMessage)
         {
             response.ResponseErrno = 0;
         }
-        TRACE_MESSAGE(COMPONENT_NAME, "Bind: Error code: %d - %s", errno, strerror(errno));
+        TRACE_MESSAGE("Bind: Error code: %d - %s", errno, strerror(errno));
         vPortFree(request);
         vPortFree(socketAddress);
     }
@@ -2660,7 +2660,7 @@ void WiFiRequestHandler::Bind(void *vpMessage)
 
     PERFORMANCE_LOGGING_EXIT();
     PERFORMANCE_LOGGING_ADD_ENTRY();
-    TRACE_MESSAGE(COMPONENT_NAME, "Bind: Exit");
+    TRACE_MESSAGE("Bind: Exit");
 }
 
 /**
@@ -2671,7 +2671,7 @@ void WiFiRequestHandler::Bind(void *vpMessage)
  */
 void WiFiRequestHandler::Listen(void *vpMessage)
 {
-    TRACE_MESSAGE(COMPONENT_NAME, "Listen: Enter");
+    TRACE_MESSAGE("Listen: Enter");
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
@@ -2702,7 +2702,7 @@ void WiFiRequestHandler::Listen(void *vpMessage)
     PERFORMANCE_LOGGING_EXIT();
     PERFORMANCE_LOGGING_ADD_ENTRY();
     PERFORMANCE_LOGGING_DUMP_RESULTS();
-    TRACE_MESSAGE(COMPONENT_NAME, "Listen: Exit");
+    TRACE_MESSAGE("Listen: Exit");
 }
 
 /**
@@ -2713,7 +2713,7 @@ void WiFiRequestHandler::Listen(void *vpMessage)
  */
 void WiFiRequestHandler::Accept(void *vpMessage)
 {
-    TRACE_MESSAGE(COMPONENT_NAME, "Accept: Enter");
+    TRACE_MESSAGE("Accept: Enter");
     PERFORMANCE_LOGGING_ENTER();
     Esp32Messaging::AcceptResponse response = { };
     Message *message = static_cast<Message *>(vpMessage);
@@ -2740,10 +2740,10 @@ void WiFiRequestHandler::Accept(void *vpMessage)
             Encoders::EncodeSockAddr(sockAddr, response.Addr);
             vPortFree(sockAddr);
             response.ResponseErrno = 0;
-            TRACE_MESSAGE(COMPONENT_NAME, "Accept: Socket handle: %d", response.Result);
-            TRACE_MESSAGE(COMPONENT_NAME, "Accept: Family: %d", sin->sin_family);
-            TRACE_MESSAGE(COMPONENT_NAME, "Accept: IP address: %s", inet_ntoa(sin->sin_addr));
-            TRACE_MESSAGE(COMPONENT_NAME, "Accept: Port: %d", ntohs(sin->sin_port));
+            TRACE_MESSAGE("Accept: Socket handle: %d", response.Result);
+            TRACE_MESSAGE("Accept: Family: %d", sin->sin_family);
+            TRACE_MESSAGE("Accept: IP address: %s", inet_ntoa(sin->sin_addr));
+            TRACE_MESSAGE("Accept: Port: %d", ntohs(sin->sin_port));
         }
         else
         {
@@ -2770,7 +2770,7 @@ void WiFiRequestHandler::Accept(void *vpMessage)
 
     PERFORMANCE_LOGGING_EXIT();
     PERFORMANCE_LOGGING_ADD_ENTRY();
-    TRACE_MESSAGE(COMPONENT_NAME, "Accept: Exit");
+    TRACE_MESSAGE("Accept: Exit");
 }
 
 /**
@@ -2784,7 +2784,7 @@ void WiFiRequestHandler::Accept(void *vpMessage)
  */
 void WiFiRequestHandler::Ioctl(void *vpMessage)
 {
-    TRACE_MESSAGE(COMPONENT_NAME, "Ioctl: Enter");
+    TRACE_MESSAGE("Ioctl: Enter");
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
@@ -2847,7 +2847,7 @@ void WiFiRequestHandler::Ioctl(void *vpMessage)
 
     PERFORMANCE_LOGGING_EXIT();
     PERFORMANCE_LOGGING_ADD_ENTRY();
-    TRACE_MESSAGE(COMPONENT_NAME, "Ioctl: Exit");
+    TRACE_MESSAGE("Ioctl: Exit");
 }
 
 /**
@@ -2861,7 +2861,7 @@ void WiFiRequestHandler::Ioctl(void *vpMessage)
  */
 void WiFiRequestHandler::GetSockPeerName(void *vpMessage, WiFiFunction::WiFiFunction methodToCall)
 {
-    TRACE_MESSAGE(COMPONENT_NAME, "GetSockPeerName: Enter");
+    TRACE_MESSAGE("GetSockPeerName: Enter");
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
@@ -2896,17 +2896,17 @@ void WiFiRequestHandler::GetSockPeerName(void *vpMessage, WiFiFunction::WiFiFunc
             Encoders::EncodeSockAddr(sockAddr, response.Addr);
             vPortFree(sockAddr);
             response.ResponseErrno = 0;
-            TRACE_MESSAGE(COMPONENT_NAME, "GetSockPeerName: Socket handle: %d", response.Result);
-            TRACE_MESSAGE(COMPONENT_NAME, "GetSockPeerName: Family: %d", sin->sin_family);
-            TRACE_MESSAGE(COMPONENT_NAME, "GetSockPeerName: IP address: %s", inet_ntoa(sin->sin_addr));
-            TRACE_MESSAGE(COMPONENT_NAME, "GetSockPeerName: Port: %d", ntohs(sin->sin_port));
+            TRACE_MESSAGE("GetSockPeerName: Socket handle: %d", response.Result);
+            TRACE_MESSAGE("GetSockPeerName: Family: %d", sin->sin_family);
+            TRACE_MESSAGE("GetSockPeerName: IP address: %s", inet_ntoa(sin->sin_addr));
+            TRACE_MESSAGE("GetSockPeerName: Port: %d", ntohs(sin->sin_port));
         }
         else
         {
             response.AddrLength = 0;
             response.Addr = nullptr;
             response.ResponseErrno = MapErrno(errno);
-            ESP_LOGE(COMPONENT_NAME, "Failure: Result code %d (%s), errno %d (%s)", response.Result, esp_err_to_name(response.Result), errno, strerror(errno));
+            ERROR_MESSAGE("Failure: Result code %d (%s), errno %d (%s)", response.Result, esp_err_to_name(response.Result), errno, strerror(errno));
         }
         vPortFree(request);
     }
@@ -2927,7 +2927,7 @@ void WiFiRequestHandler::GetSockPeerName(void *vpMessage, WiFiFunction::WiFiFunc
 
     PERFORMANCE_LOGGING_EXIT();
     PERFORMANCE_LOGGING_ADD_ENTRY();
-    TRACE_MESSAGE(COMPONENT_NAME, "GetSockPeerName: Exit");
+    TRACE_MESSAGE("GetSockPeerName: Exit");
 }
 
 /**
@@ -2938,9 +2938,9 @@ void WiFiRequestHandler::GetSockPeerName(void *vpMessage, WiFiFunction::WiFiFunc
  */
 void WiFiRequestHandler::GetSockName(void *vpMessage)
 {
-    TRACE_MESSAGE(COMPONENT_NAME, "GetSockName: Enter");
+    TRACE_MESSAGE("GetSockName: Enter");
     GetSockPeerName(vpMessage, WiFiFunction::GetSockName);
-    TRACE_MESSAGE(COMPONENT_NAME, "GetSockName: Exit");
+    TRACE_MESSAGE("GetSockName: Exit");
 }
 
 /**
@@ -2951,9 +2951,9 @@ void WiFiRequestHandler::GetSockName(void *vpMessage)
  */
 void WiFiRequestHandler::GetPeerName(void *vpMessage)
 {
-    TRACE_MESSAGE(COMPONENT_NAME, "GetPeerName: Enter");
+    TRACE_MESSAGE("GetPeerName: Enter");
     GetSockPeerName(vpMessage, WiFiFunction::GetPeerName);
-    TRACE_MESSAGE(COMPONENT_NAME, "GetPeerName: Exit");
+    TRACE_MESSAGE("GetPeerName: Exit");
 }
 
 /**
@@ -2964,7 +2964,7 @@ void WiFiRequestHandler::GetPeerName(void *vpMessage)
  */
 void WiFiRequestHandler::Poll(void *vpMessage)
 {
-    TRACE_MESSAGE(COMPONENT_NAME, "Poll: Enter");
+    TRACE_MESSAGE("Poll: Enter");
     Message *message = static_cast<Message *>(vpMessage);
     Esp32Messaging::PollRequest *request = Encoders::ExtractPollRequest(message->Payload);
     // PollRequestInformation *pollRequest = static_cast<PollRequestInformation *>(pvPortMalloc(sizeof(PollRequestInformation)));
@@ -2979,22 +2979,22 @@ void WiFiRequestHandler::Poll(void *vpMessage)
         struct pollfd fds = { };
         fds.fd = request->SocketHandle;
         Mapping::GetEspFlagValue(Mapping::PollEvents, request->Events, &event);
-        TRACE_MESSAGE(COMPONENT_NAME, "Poll: Requested Nuttx events 0x%04d maps to ESP events 0x%04d", request->Events, event);
+        TRACE_MESSAGE("Poll: Requested Nuttx events 0x%04d maps to ESP events 0x%04d", request->Events, event);
         fds.events = (uint16_t) (event & 0xffff);
 
         response.Result = poll(&fds, 1, request->Timeout);
         // response.Result = poll(&fds, 1, request->Timeout);
-        TRACE_MESSAGE(COMPONENT_NAME, "Poll: Returned value: %d", response.Result);
+        TRACE_MESSAGE("Poll: Returned value: %d", response.Result);
         if (response.Result > 0)
         {
             Mapping::GetStmFlagValue(Mapping::PollEvents, fds.revents, &event);
             response.ReturnedEvents = (uint16_t) (event & 0xffff);
         }
-        TRACE_MESSAGE(COMPONENT_NAME, "Poll: Returned ESP32 events 0x%04d maps to NuttX events 0x%04d", fds.revents, event);
+        TRACE_MESSAGE("Poll: Returned ESP32 events 0x%04d maps to NuttX events 0x%04d", fds.revents, event);
     }
     else
     {
-        TRACE_MESSAGE(COMPONENT_NAME, "Poll: Poll request not supported.");
+        TRACE_MESSAGE("Poll: Poll request not supported.");
         errno = EFAULT;
     }
 
@@ -3013,7 +3013,7 @@ void WiFiRequestHandler::Poll(void *vpMessage)
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
-    TRACE_MESSAGE(COMPONENT_NAME, "Poll: Exit");
+    TRACE_MESSAGE("Poll: Exit");
 }
 
 /*
@@ -3029,7 +3029,7 @@ void WiFiRequestHandler::Poll(void *vpMessage)
  */
 void WiFiRequestHandler::StationStartedEvent()
 {
-    TRACE_MESSAGE(COMPONENT_NAME, "StationStartedEvent: Enter");
+    TRACE_MESSAGE("StationStartedEvent: Enter");
     _lastIdfErrorCode = tcpip_adapter_set_hostname(TCPIP_ADAPTER_IF_STA, SystemRequestHandler::GetDeviceName());
     // if (_lastIdfErrorCode == ESP_OK)
     // {
@@ -3047,7 +3047,7 @@ void WiFiRequestHandler::StationStartedEvent()
         xEventGroupSetBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTED_BIT);
         RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::StartWiFiInterfaceEvent);
     }
-    TRACE_MESSAGE(COMPONENT_NAME, "StationStartedEvent: Exit");
+    TRACE_MESSAGE("StationStartedEvent: Exit");
 }
 
 /**
@@ -3062,7 +3062,7 @@ void WiFiRequestHandler::StationStartedEvent()
  */
 void WiFiRequestHandler::StationGotIpEvent(ip_event_got_ip_t *eventData)
 {
-    TRACE_MESSAGE(COMPONENT_NAME, "StationGotIpEvent: Enter");
+    TRACE_MESSAGE("StationGotIpEvent: Enter");
     _currentRetryCount = 0;
     memcpy((void *) &_ipInformation, (void *) &eventData->ip_info, sizeof(esp_netif_ip_info_t));
     _ipChanged = eventData->ip_changed;
@@ -3073,7 +3073,7 @@ void WiFiRequestHandler::StationGotIpEvent(ip_event_got_ip_t *eventData)
         //  Note that we only need to get the time here.  The timezone is set when this
         //  class is instanciated or when the SetTimezone method is successfully called.
         //
-        TRACE_MESSAGE(COMPONENT_NAME, "Getting time from %s", GetNtpServer());
+        TRACE_MESSAGE("Getting time from %s", GetNtpServer());
         sntp_setoperatingmode(SNTP_OPMODE_POLL);
         sntp_setservername(0, GetNtpServer());
         sntp_set_sync_mode(SNTP_SYNC_MODE_SMOOTH);
@@ -3083,7 +3083,7 @@ void WiFiRequestHandler::StationGotIpEvent(ip_event_got_ip_t *eventData)
 
     xEventGroupClearBits(_xWiFiEventGroup, WIFI_CONNECTING_BIT | WIFI_RECONNECTING_BIT);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT);
-    TRACE_MESSAGE(COMPONENT_NAME, "StationGotIpEvent: Exit");
+    TRACE_MESSAGE("StationGotIpEvent: Exit");
 }
 
 /**
@@ -3096,7 +3096,7 @@ void WiFiRequestHandler::StationGotIpEvent(ip_event_got_ip_t *eventData)
  */
 void WiFiRequestHandler::StationConnectedEvent(wifi_event_sta_connected_t *eventData)
 {
-    TRACE_MESSAGE(COMPONENT_NAME, "StationConnectedEvent: Enter");
+    TRACE_MESSAGE("StationConnectedEvent: Enter");
     memcpy((void *) &_apInformation, (void *) eventData, sizeof(wifi_event_sta_connected_t));
 
     EventBits_t bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_RECONNECTING_BIT , pdFALSE, pdFALSE, GetWiFiTimeout() / portTICK_PERIOD_MS);
@@ -3106,7 +3106,7 @@ void WiFiRequestHandler::StationConnectedEvent(wifi_event_sta_connected_t *event
         RaiseConnectToAccessPointEvent();
     }
 
-    TRACE_MESSAGE(COMPONENT_NAME, "StationConnectedEvent: Exit");
+    TRACE_MESSAGE("StationConnectedEvent: Exit");
 }
 
 /**
@@ -3117,7 +3117,7 @@ void WiFiRequestHandler::StationConnectedEvent(wifi_event_sta_connected_t *event
  */
 void WiFiRequestHandler::StationDisconnectedEvent(wifi_event_sta_disconnected_t *eventData)
 {
-    TRACE_MESSAGE(COMPONENT_NAME, "StationDisconnectedEvent: Enter");
+    TRACE_MESSAGE("StationDisconnectedEvent: Enter");
 
     bool reallyDisconnect = true;
     xEventGroupClearBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT | WIFI_CONNECTED_BIT | WIFI_CONNECTING_BIT);
@@ -3140,7 +3140,7 @@ void WiFiRequestHandler::StationDisconnectedEvent(wifi_event_sta_disconnected_t 
         xEventGroupSetBits(_xWiFiEventGroup, WIFI_ERROR_BIT);
     }
 
-    TRACE_MESSAGE(COMPONENT_NAME, "StationDisconnectedEvent: Exit");
+    TRACE_MESSAGE("StationDisconnectedEvent: Exit");
 }
 
 /*
@@ -3177,7 +3177,7 @@ bool WiFiRequestHandler::ComparePollRequestMessageIds(uint32_t messageId, PollRe
  */
 void WiFiRequestHandler::PollRequestProcessor(void *parameters)
 {
-    TRACE_MESSAGE(COMPONENT_NAME, "PollRequestProcessor: Enter");
+    TRACE_MESSAGE("PollRequestProcessor: Enter");
     PollRequestInformation *request = static_cast<PollRequestInformation *>(parameters);
     xSemaphoreTake(_pollRequestListMutex, portMAX_DELAY);
     _pollRequests->AddToHead(request);
@@ -3195,19 +3195,19 @@ void WiFiRequestHandler::PollRequestProcessor(void *parameters)
     {
         int event = 0;
         Mapping::GetStmFlagValue(Mapping::PollEvents, request->Fds->revents, &event);
-        TRACE_MESSAGE(COMPONENT_NAME, "PollRequestProcessor: Mapping ESP returned events 0x%04x to Nuttx returned events 0x%04x", request->Fds->revents, event);
+        TRACE_MESSAGE("PollRequestProcessor: Mapping ESP returned events 0x%04x to Nuttx returned events 0x%04x", request->Fds->revents, event);
         request->Fds->revents = (uint16_t) (event & 0xffff);
     }
     request->Teardown = false;
     if (xQueueSendToBack(_completedPollRequestsQueue, &request, 0) != pdPASS)
     {
-        ESP_LOGE(COMPONENT_NAME, "PollRequestProcessor: Cannot queue completed poll message.");
+        ERROR_MESSAGE("PollRequestProcessor: Cannot queue completed poll message.");
     }
 
     xSemaphoreTake(_pollRequestListMutex, portMAX_DELAY);
     _pollRequests->RemoveItem(request->OriginalRequestID);
     xSemaphoreGive(_pollRequestListMutex);
-    TRACE_MESSAGE(COMPONENT_NAME, "PollRequestProcessor: Exit");
+    TRACE_MESSAGE("PollRequestProcessor: Exit");
     //
     //  This method should never exit.  It will be cleaned up from another task
     //  using a vTaskDelete call.
@@ -3232,7 +3232,7 @@ void WiFiRequestHandler::CompletedPollRequestProcessor(void *parameters)
         {
             if (!request->Teardown)
             {
-                TRACE_MESSAGE(COMPONENT_NAME, "CompletedPollRequestProcessor: Queuing response for poll task 0x%08x", request->OriginalRequestID);
+                TRACE_MESSAGE("CompletedPollRequestProcessor: Queuing response for poll task 0x%08x", request->OriginalRequestID);
                 //
                 //  Prepare the response payload.
                 //
@@ -3259,7 +3259,7 @@ void WiFiRequestHandler::CompletedPollRequestProcessor(void *parameters)
             //
             //  Clean up.
             //
-            TRACE_MESSAGE(COMPONENT_NAME, "CompletedPollRequestProcessor: Terminating poll task 0x%08x", request->OriginalRequestID);
+            TRACE_MESSAGE("CompletedPollRequestProcessor: Terminating poll task 0x%08x", request->OriginalRequestID);
             vTaskDelete(request->TaskHandle);
             vPortFree(request);
         }

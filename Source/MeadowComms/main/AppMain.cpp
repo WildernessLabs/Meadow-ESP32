@@ -19,6 +19,11 @@
 #include "WiFiRequestHandler.hpp"
 #include "SpiTransportProvider.hpp"
 
+//
+//  This definition is required for the trace message macros.
+//  See Logging.hpp for more information on the trace message macros
+//
+#define COMPONENT_NAME APP_MAIN_COMPONENT_NAME
 
 //
 //  Work out if we have heap tracing enabled and issue a warning..

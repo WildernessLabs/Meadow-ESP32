@@ -58,15 +58,39 @@
 
 #warning "Trace message output is enabled - turn this feature off for release builds."
 
-#define TRACE_MESSAGE(component_name, format, ...) ESP_LOGI(component_name, format, ##__VA_ARGS__)
-#define DEBUG_MESSAGE(component_name, format, ...) ESP_LOGD(component_name, format, ##__VA_ARGS__)
-#define ERROR_MESSAGE(component_name, format, ...) ESP_LOGE(component_name, format, ##__VA_ARGS__)
+#define TRACE_MESSAGE(format, ...) ESP_LOGI(COMPONENT_NAME, format, ##__VA_ARGS__)
+#define DEBUG_MESSAGE(format, ...) ESP_LOGD(COMPONENT_NAME, format, ##__VA_ARGS__)
+#define ERROR_MESSAGE(format, ...) ESP_LOGE(COMPONENT_NAME, format, ##__VA_ARGS__)
+
+#define TRACE_MESSAGE_SPECIFY_COMPONENT(component_name, format, ...) ESP_LOGI(component_name, format, ##__VA_ARGS__)
+#define DEBUG_MESSAGE_SPECIFY_COMPONENT(component_name, format, ...) ESP_LOGD(component_name, format, ##__VA_ARGS__)
+#define ERROR_MESSAGE_SPECIFY_COMPONENT(component_name, format, ...) ESP_LOGE(component_name, format, ##__VA_ARGS__)
+
+#define TRACE_HEX_BUFFER(buffer, length) ESP_LOG_BUFFER_HEX_LEVEL(COMPONENT_NAME, buffer, length, ESP_LOG_INFO)
+#define DEBUG_HEX_BUFFER(buffer, length) ESP_LOG_BUFFER_HEX_LEVEL(COMPONENT_NAME, buffer, length, ESP_LOG_DEBUG)
+#define ERROR_HEX_BUFFER(buffer, length) ESP_LOG_BUFFER_HEX_LEVEL(COMPONENT_NAME, buffer, length, ESP_LOG_ERROR)
+
+#define TRACE_HEX_BUFFER_SPECIFY_COMPONENT(component_name, buffer, length) ESP_LOG_BUFFER_HEX_LEVEL(component_name, buffer, length, ESP_LOG_INFO)
+#define DEBUG_HEX_BUFFER_SPECIFY_COMPONENT(component_name, buffer, length) ESP_LOG_BUFFER_HEX_LEVEL(component_name, buffer, length, ESP_LOG_DEBUG)
+#define ERROR_HEX_BUFFER_SPECIFY_COMPONENT(component_name, buffer, length) ESP_LOG_BUFFER_HEX_LEVEL(component_name, buffer, length, ESP_LOG_ERROR)
 
 #else
 
-#define TRACE_MESSAGE(component_name, format, ...)
-#define DEBUG_MESSAGE(component_name, format, ...)
-#define ERROR_MESSAGE(component_name, format, ...)
+#define TRACE_MESSAGE(format, ...)
+#define DEBUG_MESSAGE(format, ...)
+#define ERROR_MESSAGE(format, ...)
+
+#define TRACE_MESSAGE_SPECIFY_COMPONENT(component_name, format, ...)
+#define DEBUG_MESSAGE_SPECIFY_COMPONENT(component_name, format, ...)
+#define ERROR_MESSAGE_SPECIFY_COMPONENT(component_name, format, ...)
+
+#define TRACE_HEX_BUFFER(buffer, length)
+#define DEBUG_HEX_BUFFER(buffer, length)
+#define ERROR_HEX_BUFFER(buffer, length)
+
+#define TRACE_HEX_BUFFER_SPECIFY_COMPONENT(component_name, buffer, length)
+#define DEBUG_HEX_BUFFER_SPECIFY_COMPONENT(component_name, buffer, length)
+#define ERROR_HEX_BUFFER_SPECIFY_COMPONENT(component_name, buffer, length)
 
 #endif
 

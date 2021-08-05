@@ -18,6 +18,7 @@
 
 #include "Encoders.hpp"
 #include "Exceptions/MultipleInstancesException.hpp"
+#include "Logging.hpp"
 
 /*
  * ----------------------------------------------------------------------------
@@ -109,7 +110,7 @@ void MeshNetworkRequestHandler::DispatchRequest(Message *request)
     //
     if(request->Payload != NULL)
     {
-        ESP_LOG_BUFFER_HEXDUMP(COMPONENT_NAME, request->Payload, request->PayloadLength, ESP_LOG_INFO);
+        TRACE_HEX_BUFFER(request->Payload, request->PayloadLength);
         vPortFree(request->Payload);
     }
 }

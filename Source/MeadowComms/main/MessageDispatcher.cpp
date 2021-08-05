@@ -7,6 +7,7 @@
 
 #include "../build/config/sdkconfig.h"
 
+#include "Logging.hpp"
 #include "MessageDispatcher.hpp"
 
 /*
@@ -109,7 +110,7 @@ bool MessageDispatcher::SetMaximumMessageSize(uint32_t messageSize)
  */
 bool MessageDispatcher::QueueMessageForEsp32(Message *request)
 {
-    ESP_LOGI(COMPONENT_NAME, "QueueMessageForEsp32: Enter");
+    TRACE_MESSAGE("QueueMessageForEsp32: Enter");
     RequestHandlerBase *provider = nullptr;
 
     #if defined(PERFORMANCE_LOGGING)
@@ -130,7 +131,7 @@ bool MessageDispatcher::QueueMessageForEsp32(Message *request)
             provider = dynamic_cast<RequestHandlerBase *>(_systemRequestHandler);
             break;
         default:
-            ESP_LOGE(COMPONENT_NAME, "QueueMessageForEsp32: Unknown interface %d, message will not be processed.", request->Interface);
+            DEBUG_MESSAGE("QueueMessageForEsp32: Unknown interface %d, message will not be processed.", request->Interface);
             Message::DeleteMessage(request);
             break;
     }
@@ -139,7 +140,7 @@ bool MessageDispatcher::QueueMessageForEsp32(Message *request)
     {
         result = provider->QueueEsp32Message(request);
     }
-    ESP_LOGI(COMPONENT_NAME, "QueueMessageForEsp32: Exit");
+    TRACE_MESSAGE("QueueMessageForEsp32: Exit");
     return(result);
 }
 

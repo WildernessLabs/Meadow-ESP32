@@ -412,7 +412,7 @@ NvsManager::ErrorCodes SystemRequestHandler::SetConfigurationValue(const char *n
  */
 void SystemRequestHandler::PopulateConfiguration(Esp32Messaging::SystemConfiguration *config)
 {
-    ESP_LOGI(COMPONENT_NAME, "PopulateConfiguration: Enter");
+    TRACE_MESSAGE("PopulateConfiguration: Enter");
     const esp_app_desc_t *applicationDescription = esp_ota_get_app_description();
     config->SoftwareVersion = const_cast<char *>(applicationDescription->version);
     config->Antenna = WiFiRequestHandler::GetAntenna();
@@ -429,7 +429,7 @@ void SystemRequestHandler::PopulateConfiguration(Esp32Messaging::SystemConfigura
     config->DeviceName = GetDeviceName();
     WiFiRequestHandler::GetMacAddress(config->BoardMacAddress, WIFI_IF_STA);
     WiFiRequestHandler::GetMacAddress(config->SoftApMacAddress, WIFI_IF_AP);
-    ESP_LOGI(COMPONENT_NAME, "PopulateConfiguration: Exit");
+    TRACE_MESSAGE("PopulateConfiguration: Exit");
 }
 
 /**
@@ -440,7 +440,7 @@ void SystemRequestHandler::PopulateConfiguration(Esp32Messaging::SystemConfigura
  */
 void SystemRequestHandler::SendConfigurationAsInterruptMessage()
 {
-    ESP_LOGI(COMPONENT_NAME, "SendConfigurationAsInterruptMessage: Enter");
+    TRACE_MESSAGE("SendConfigurationAsInterruptMessage: Enter");
 
     Esp32Messaging::SystemConfiguration config = {};
     PopulateConfiguration(&config);
@@ -454,7 +454,7 @@ void SystemRequestHandler::SendConfigurationAsInterruptMessage()
     message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
     Encoders::EncodeSystemConfiguration(&config, message->Payload);
     _messageDispatcher->QueueMessageForStm32(message);
-    ESP_LOGI(COMPONENT_NAME, "SendConfigurationAsInterruptMessage: Exit");
+    TRACE_MESSAGE("SendConfigurationAsInterruptMessage: Exit");
 }
 
 /**
@@ -465,7 +465,7 @@ void SystemRequestHandler::SendConfigurationAsInterruptMessage()
  */
 void SystemRequestHandler::GetConfiguration(Message *request)
 {
-    ESP_LOGI(COMPONENT_NAME, "GetConfiguration: Enter");
+    TRACE_MESSAGE("GetConfiguration: Enter");
     Esp32Messaging::SystemConfiguration config = {};
     PopulateConfiguration(&config);
 
@@ -475,7 +475,7 @@ void SystemRequestHandler::GetConfiguration(Message *request)
     request->MessageType = MessageTypes::Response;
     request->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(request);
-    ESP_LOGI(COMPONENT_NAME, "GetConfiguration: Exit");
+    TRACE_MESSAGE("GetConfiguration: Exit");
 }
 
 /**
@@ -486,7 +486,7 @@ void SystemRequestHandler::GetConfiguration(Message *request)
  */
 void SystemRequestHandler::SetConfiguration(Message *request)
 {
-    ESP_LOGI(COMPONENT_NAME, "SetConfigurationItem: Enter");
+    TRACE_MESSAGE("SetConfigurationItem: Enter");
     Esp32Messaging::ConfigurationValue *value = Encoders::ExtractConfigurationValue(request->Payload);
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
     switch (value->Item)
@@ -545,7 +545,7 @@ void SystemRequestHandler::SetConfiguration(Message *request)
     request->MessageType = MessageTypes::Response;
     request->StatusCode = result;
     _messageDispatcher->QueueMessageForStm32(request);
-    ESP_LOGI(COMPONENT_NAME, "SetConfigurationItem: Exit");
+    TRACE_MESSAGE("SetConfigurationItem: Exit");
 }
 
 /**
@@ -559,9 +559,9 @@ void SystemRequestHandler::SetConfiguration(Message *request)
  */
 void SystemRequestHandler::DeepSleep(Message *request)
 {
-    ESP_LOGI(COMPONENT_NAME, "DeepSleep: Enter");
-    ESP_LOGI(COMPONENT_NAME, "DeepSleep not implemented");
-    ESP_LOGI(COMPONENT_NAME, "DeepSleep: Exit");
+    TRACE_MESSAGE("DeepSleep: Enter");
+    TRACE_MESSAGE("DeepSleep not implemented");
+    TRACE_MESSAGE("DeepSleep: Exit");
 }
 
 /**
@@ -572,7 +572,7 @@ void SystemRequestHandler::DeepSleep(Message *request)
  */
 void SystemRequestHandler::GetBatteryChargeLevel(Message *message)
 {
-    ESP_LOGI(COMPONENT_NAME, "GetBatteryChargeLevel: Enter");
+    TRACE_MESSAGE("GetBatteryChargeLevel: Enter");
 
     const adc_channel_t channel = ADC_CHANNEL_7;
     const adc_atten_t attenuation = ADC_ATTEN_DB_11;
@@ -609,7 +609,7 @@ void SystemRequestHandler::GetBatteryChargeLevel(Message *message)
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
-    ESP_LOGI(COMPONENT_NAME, "GetBatteryChargeLevel: Exit");
+    TRACE_MESSAGE("GetBatteryChargeLevel: Exit");
 }
 
 /**
@@ -620,7 +620,7 @@ void SystemRequestHandler::GetBatteryChargeLevel(Message *message)
  */
 void SystemRequestHandler::DispatchRequest(Message *request)
 {
-    ESP_LOGI(COMPONENT_NAME, "DispatchRequest: Enter");
+    TRACE_MESSAGE("DispatchRequest: Enter");
     switch (request->Function)
     {
         case SystemFunction::GetConfiguration:
@@ -635,12 +635,12 @@ void SystemRequestHandler::DispatchRequest(Message *request)
             GetBatteryChargeLevel(request);
             break;
         default:
-            ESP_LOGI(COMPONENT_NAME, "DispatchRequest: Unknown System message received, function 0x%x", request->Function);
+            TRACE_MESSAGE("DispatchRequest: Unknown System message received, function 0x%x", request->Function);
             if (request->Payload != NULL)
             {
-                ESP_LOG_BUFFER_HEXDUMP(COMPONENT_NAME, request->Payload, request->PayloadLength, ESP_LOG_INFO);
+                TRACE_HEX_BUFFER(request->Payload, request->PayloadLength);
             }
             break;
     }
-    ESP_LOGI(COMPONENT_NAME, "DispatchRequest: Exit");
+    TRACE_MESSAGE("DispatchRequest: Exit");
 }
