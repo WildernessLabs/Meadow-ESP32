@@ -66,8 +66,11 @@ case $i in
     --coredump)
     IDF_DEFINES+=" -DCOREDUMP=1"
     ;;
-    -t|--heaptracing)
+    -th|--heaptracing)
     IDF_DEFINES+=" -DHEAPTRACING=1"
+    ;;
+    -tm|--tracemessages)
+    IDF_DEFINES+=" -DTRACE_MESSAGES=1"
     ;;
     --MENUCONFIG)
     MENUCONFIG=true
@@ -91,7 +94,9 @@ case $i in
     HELP=true
     ;;
     *)
-    # unknown option
+    printf "Uknown command line option ($i)."
+    printf "Run build.sh --help for information on valid options."
+    exit 1
     ;;
 esac
 done
@@ -102,17 +107,19 @@ if $HELP; then
     echo "Default action: Build the ESP application in release mode."
     echo ""
     echo "Options:"
-    echo "-h | --help          Display this message"
-    echo "-c | --clean         Perform a clean build"
-    echo "-f | --flash         Flash the ESP32 with the bootloader, partition table and application code"
-    echo "--fullclean          Perform a full clean followed by a build"
-    echo "-v | --verbose       Display commands as they are executed (default)"
-    echo "-s | --silent        Execute commands silently"
-    echo "--coredump           Add core dump functionality to the application"
-    echo "-t | --heaptracing   Enable heap tracing."
-    echo "-m | --menuconfig    Enter the menu configuration system overwriting sdkconfig.defaults"
-    echo "--dryrun             Perform a dry run (do not execute commands)"
-    echo "-d=* | --debug=*     Turn on debug for selected system(s). Valid values (comma separated): WIFI, SPI, BT, SYSTEM."
+    echo "-h | --help             Display this message"
+    echo "-c | --clean            Perform a clean build"
+    echo "-f | --flash            Flash the ESP32 with the bootloader, partition table and application code"
+    echo "-m | --monitor          Connect to the serial port for application monitoring"
+    echo "--fullclean             Perform a full clean followed by a build"
+    echo "-v | --verbose          Display commands as they are executed (default)"
+    echo "-s | --silent           Execute commands silently"
+    echo "--coredump              Add core dump functionality to the application"
+    echo "-th | --heaptracing     Enable heap tracing."
+    echo "-tm | --tracemessages   Enable heap tracing."
+    echo "--menuconfig            Enter the menu configuration system overwriting sdkconfig.defaults"
+    echo "--dryrun                Perform a dry run (do not execute commands)"
+    echo "-d=* | --debug=*        Turn on debug for selected system(s). Valid values (comma separated): WIFI, SPI, BT, SYSTEM."
     echo ""
     exit 0
 fi
@@ -183,11 +190,10 @@ if [ ! -z "$DEBUG_SELECTIONS" ]; then
             thread)
             IDF_DEFINES+=" -DTHREAD_DEBUG=1"
             ;;
-            tracemessages)
-            IDF_DEFINES+=" -DTRACE_MESSAGES=1"
-            ;;
             *)
-            # Unknown subsystem
+            printf "Uknown debug subsystem $subsystem."
+            printf "Run build.sh --help for information on valid options."
+            exit 1
             ;;
         esac
     done

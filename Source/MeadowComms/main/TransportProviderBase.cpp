@@ -46,7 +46,7 @@ TransportProviderBase::TransportProviderBase()
     _outboundMessageQueueMutex = xSemaphoreCreateMutex();
     if (!_outboundMessageQueueMutex)
     {
-        ESP_LOGE(__func__, "Cannot create outbound message queue mutex.");
+        ERROR_MESSAGE("Cannot create outbound message queue mutex.");
     }
 }
 
@@ -74,7 +74,7 @@ void TransportProviderBase::Setup(MessageDispatcher *messageDispatcher)
     _outboundMessageQueueHandle = xQueueCreate(MAX_QUEUE_LENGTH, sizeof(Message *));
     if (_outboundMessageQueueHandle == NULL)
     {
-        ESP_LOGE(__func__, "Cannot allocate hardware transport queue.");
+        ERROR_MESSAGE("Cannot allocate hardware transport queue.");
     }
 }
 
@@ -143,7 +143,7 @@ void TransportProviderBase::DumpMessageAtHeadOfQueue()
     }
     else
     {
-        ESP_LOGI(COMPONENT_NAME, "Message queue is empty.");
+        TRACE_MESSAGE("Message queue is empty.");
     }
 }
 
@@ -165,7 +165,7 @@ bool TransportProviderBase::QueueMessageForStm32(Message *message)
     {
         if (xQueueSendToBack(_outboundMessageQueueHandle, &message, 0) != pdPASS)
         {
-            ESP_LOGE(COMPONENT_NAME, "Cannot queue message.");
+            ERROR_MESSAGE("Cannot queue message.");
             result = false;
         }
         else

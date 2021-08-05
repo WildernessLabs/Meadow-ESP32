@@ -5,6 +5,7 @@
  */
 #include "../build/config/sdkconfig.h"
 
+#include "Logging.hpp"
 #include "ThreadPool.hpp"
 #include "Exceptions/ThreadPoolException.hpp"
 
@@ -118,7 +119,7 @@ ThreadPool::~ThreadPool()
  */
 void ThreadPool::Execute(method_t method, void *parameter)
 {
-    ESP_LOGI(COMPONENT_NAME, "Execute: Enter");
+    TRACE_MESSAGE("Execute: Enter");
     if (xSemaphoreTake(_threadsAvailable, portMAX_DELAY) == pdTRUE)
     {
         for (uint32_t index = 0; index < _threadPoolSize; index++)
@@ -134,7 +135,7 @@ void ThreadPool::Execute(method_t method, void *parameter)
     {
         throw new ThreadPoolException("Cannot obtain access to threads.");
     }
-    ESP_LOGI(COMPONENT_NAME, "Execute: Exit");
+    TRACE_MESSAGE("Execute: Exit");
 }
 
 /**

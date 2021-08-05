@@ -5,6 +5,7 @@
  */
 #include "../build/config/sdkconfig.h"
 
+#include "Logging.hpp"
 #include "Thread.hpp"
 #include "Exceptions/ThreadPoolException.hpp"
 
@@ -58,14 +59,14 @@ Thread::Thread() : _mutex(xSemaphoreCreateMutex()), _executeMethod(xSemaphoreCre
  */
 Thread::Thread(char *name, task_completed_method_t taskCompletedMethod) : Thread()
 {
-    ESP_LOGI(COMPONENT_NAME, "Thread: Enter creating thread %s", name);
+    TRACE_MESSAGE("Thread: Enter creating thread %s", name);
     _name = name;
     _taskCompletedMethod = taskCompletedMethod;
     if (xTaskCreate(Thread::Task, _name, 2048 * 2, this, configMAX_PRIORITIES - 1, &_taskHandle) != pdPASS)
     {
         throw new ThreadPoolException("Cannot create task.");
     }
-    ESP_LOGI(COMPONENT_NAME, "Thread: Exit creating thread %s", name);
+    TRACE_MESSAGE("Thread: Exit creating thread %s", name);
 }
 
 /**
@@ -161,7 +162,7 @@ bool Thread::IsBusy()
  */
 void Thread::Execute(method_t method, void *parameter)
 {
-    ESP_LOGI(COMPONENT_NAME, "Execute: Thread %s Enter", _name);
+    TRACE_MESSAGE("Execute: Thread %s Enter", _name);
     if (xSemaphoreTake(_mutex, portMAX_DELAY) == pdTRUE)
     {
         if (_isBusy)
@@ -174,7 +175,7 @@ void Thread::Execute(method_t method, void *parameter)
         xSemaphoreGive(_mutex);
         xSemaphoreGive(_executeMethod);
     }
-    ESP_LOGI(COMPONENT_NAME, "Execute: Thread %s Exit", _name);
+    TRACE_MESSAGE("Execute: Thread %s Exit", _name);
 }
 
 /**
@@ -199,7 +200,7 @@ void Thread::TakeExecutionSemaphore()
  */
 void Thread::TaskCompleted()
 {
-    ESP_LOGI(COMPONENT_NAME, "TaskCompleted: Thread %s Enter", _name);
+    TRACE_MESSAGE("TaskCompleted: Thread %s Enter", _name);
     if (xSemaphoreTake(_mutex, portMAX_DELAY) == pdTRUE)
     {
         _isBusy = false;
@@ -211,7 +212,7 @@ void Thread::TaskCompleted()
     {
         (_taskCompletedMethod());
     }
-    ESP_LOGI(COMPONENT_NAME, "TaskCompleted: Thread %s Exit", _name);
+    TRACE_MESSAGE("TaskCompleted: Thread %s Exit", _name);
 }
 
 /**

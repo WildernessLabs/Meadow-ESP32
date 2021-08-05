@@ -15,8 +15,6 @@
 #include "Logging.hpp"
 #include "MessageDispatcher.hpp"
 
-#define RAISE_EVENTS    1
-
 /*
  * ---------------------------------------------------------------------------
  *
@@ -94,7 +92,7 @@ void RequestHandlerBase::Setup()
     _queueHandle = xQueueCreate(MAX_QUEUE_LENGTH, sizeof(Message *));
     if (_queueHandle == NULL)
     {
-        ESP_LOGE(COMPONENT_NAME, "Cannot allocate ESP32 handler queue.");
+        ERROR_MESSAGE("Cannot allocate ESP32 handler queue.");
     }
 }
 
@@ -169,7 +167,7 @@ bool RequestHandlerBase::QueueEsp32Message(Message *message)
  */
 void RequestHandlerBase::RaiseEvent(uint8_t interface, uint32_t eventType, uint32_t statusCode, uint8_t *payload, uint32_t payloadLength)
 {
-    ESP_LOGI(COMPONENT_NAME, "Raising event %s", Logging::FunctionName(interface, eventType));
+    TRACE_MESSAGE("Raising event %s", Logging::FunctionName(interface, eventType));
     Message *message = Message::CreateOnHeap(MessageTypes::Event, interface, eventType, statusCode, _messageDispatcher->GetNextMessageID(), payload, payloadLength);
     _messageDispatcher->QueueMessageForStm32(message);
 }
