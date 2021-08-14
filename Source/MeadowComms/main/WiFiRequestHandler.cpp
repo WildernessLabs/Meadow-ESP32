@@ -299,6 +299,7 @@ WiFiRequestHandler::WiFiRequestHandler()
     bzero((void *) &_ipInformation, sizeof(esp_netif_ip_info_t));
     bzero((void *) &_apInformation, sizeof(wifi_event_sta_connected_t));
     _lastIdfErrorCode = ESP_OK;
+    _ipChanged = false;
 }
 
 /**
@@ -350,6 +351,7 @@ uint32_t WiFiRequestHandler::GetMaximumRetryCount()
  */
 StatusCodes::StatusCodes WiFiRequestHandler::SetMaximumRetryCount(uint32_t value)
 {
+    TRACE_MESSAGE("WiFiRequestHandler::SetMaximumRetryCount: %d", value);
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
     if (value != _maximumRetryCount)
     {
@@ -384,6 +386,7 @@ bool WiFiRequestHandler::GetAutomaticReconnect()
  */
 StatusCodes::StatusCodes WiFiRequestHandler::SetAutomaticReconnect(bool value)
 {
+    TRACE_MESSAGE("WiFiRequestHandler::SetAutomaticReconnect: %d", value ? 1 : 0);
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
     if (value != _automaticReconnect)
     {
@@ -414,6 +417,7 @@ bool WiFiRequestHandler::GetAutomaticallyStartNetwork()
  */
 StatusCodes::StatusCodes WiFiRequestHandler::SetAutomaticallyStartNetwork(bool value)
 {
+    TRACE_MESSAGE("WiFiRequestHandler::SetAutomaticallyStartNetwork %d", value ? 1 : 0);
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
     if (value != _automaticallyStartNetwork)
     {
@@ -567,12 +571,19 @@ char *WiFiRequestHandler::GetDefaultAccessPoint()
 StatusCodes::StatusCodes WiFiRequestHandler::SetDefaultAccessPoint(char *value)
 {
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    if (strcmp(value, _defaultAccessPoint) != 0)
+    if (_defaultAccessPoint != NULL)
     {
-        if (SystemRequestHandler::SetConfigurationValue(DEFAULT_ACCESS_POINT_NAME, value) == NvsManager::ErrorCodes::Ok)
+        if (strcmp(value, _defaultAccessPoint) != 0)
         {
-            _defaultAccessPoint = strdup(value);
+            if (SystemRequestHandler::SetConfigurationValue(DEFAULT_ACCESS_POINT_NAME, value) == NvsManager::ErrorCodes::Ok)
+            {
+                _defaultAccessPoint = strdup(value);
+            }
         }
+    }
+    else
+    {
+        _defaultAccessPoint = strdup(value);
     }
     return(result);
 }
@@ -597,12 +608,19 @@ char *WiFiRequestHandler::GetPassword()
 StatusCodes::StatusCodes WiFiRequestHandler::SetPassword(char *value)
 {
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    if (strcmp(value, _password) != 0)
+    if (_password != NULL)
     {
-        if (SystemRequestHandler::SetConfigurationValue(PASSWORD_NAME, value) == NvsManager::ErrorCodes::Ok)
+        if (strcmp(value, _password) != 0)
         {
-            _password = strdup(value);
+            if (SystemRequestHandler::SetConfigurationValue(PASSWORD_NAME, value) == NvsManager::ErrorCodes::Ok)
+            {
+                _password = strdup(value);
+            }
         }
+    }
+    else
+    {
+        _password = strdup(value);
     }
     return(result);
 }
@@ -915,6 +933,7 @@ void WiFiRequestHandler::Setup()
      *  Now create the objects necessary for the WiFi tasks.
      */
     _xWiFiEventGroup = xEventGroupCreate();
+    xEventGroupClearBits(_xWiFiEventGroup, 0x008fffff);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
     xTaskCreate(Task, COMPONENT_NAME, 2048 * 2, this, configMAX_PRIORITIES - 1, &_taskHandle);
     TRACE_MESSAGE("Setup: Exit");
@@ -1447,6 +1466,10 @@ StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const char *ss
         {
             result = StatusCodes::CannotStartNetworkInterface;
         }
+        else
+        {
+            TRACE_MESSAGE("WiFi interface started OK.");
+        }
     }
 
     if (result == StatusCodes::CompletedOk)
@@ -1459,6 +1482,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const char *ss
         }
         else
         {
+            xEventGroupSetBits(_xWiFiEventGroup, WIFI_CONNECTING_BIT);
             wifi_config_t wifi_config = { };
             wifi_config.sta.threshold.authmode = WIFI_AUTH_WPA2_PSK;
             wifi_config.sta.pmf_cfg =
@@ -1488,10 +1512,20 @@ StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const char *ss
             if (_lastIdfErrorCode == ESP_OK)
             {
                 bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT | WIFI_ERROR_BIT, pdFALSE, pdFALSE, 600000 / portTICK_PERIOD_MS);
-                // bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT | WIFI_ERROR_BIT, pdFALSE, pdFALSE, GetWiFiTimeout() / portTICK_PERIOD_MS);
-                if (!((bits & WIFI_CONNECTED_BIT) || (bits & WIFI_ERROR_BIT)))
+                if (bits & WIFI_ERROR_BIT)
                 {
-                    result = StatusCodes::Timeout;
+                    result = StatusCodes::CannotConnectToAccessPoint;
+                }
+                else
+                {
+                    if (bits & WIFI_CONNECTED_BIT)
+                    {
+                        result = StatusCodes::CompletedOk;
+                    }
+                    else
+                    {
+                        result = StatusCodes::Timeout;
+                    }
                 }
             }
             else
@@ -1500,6 +1534,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const char *ss
             }
         }
     }
+    TRACE_MESSAGE("Result %d", result);
     return(result);
 }
 
@@ -1530,6 +1565,7 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
     {
         memcpy((void *) data.Ssid, (void *) _disconnectData.ssid, _disconnectData.ssid_len);
         memcpy((void *) data.Bssid, (void *) _disconnectData.bssid, sizeof(data.Bssid));
+        TRACE_MESSAGE("Failed to connect to access point, code: %d", _disconnectData.reason);
         data.Reason = _disconnectData.reason;
         bzero((void *) &_disconnectData, sizeof(_disconnectData));
         bzero((void *) &_ipInformation, sizeof(_ipInformation));
@@ -3119,25 +3155,46 @@ void WiFiRequestHandler::StationDisconnectedEvent(wifi_event_sta_disconnected_t 
 {
     TRACE_MESSAGE("StationDisconnectedEvent: Enter");
 
-    bool reallyDisconnect = true;
-    xEventGroupClearBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT | WIFI_CONNECTED_BIT | WIFI_CONNECTING_BIT);
-    if (_automaticReconnect)
+    EventBits_t bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_RECONNECTING_BIT | WIFI_CONNECTED_BIT, pdFALSE, pdFALSE, 0);
+    if ((bits | WIFI_CONNECTED_BIT) || (bits | WIFI_RECONNECTING_BIT))
     {
-        if (_currentRetryCount < _maximumRetryCount)
+        if (bits | WIFI_RECONNECTING_BIT)
         {
-            xEventGroupSetBits(_xWiFiEventGroup, WIFI_RECONNECTING_BIT | WIFI_CONNECTING_BIT);
-            esp_wifi_connect();
-            _currentRetryCount++;
-            reallyDisconnect = false;
+            TRACE_MESSAGE("Reconnecting bit set.");
+        }
+        if (bits | WIFI_CONNECTED_BIT)
+        {
+            TRACE_MESSAGE("Connected bit set.");
+        }
+
+        //
+        //  We can sometimes get a disconnect event when starting the adapter or when incorrect WiFi credentials 
+        //  have been supplied.  We should only get here if a connection was lost or a connection is being attempted.
+        //
+        xEventGroupClearBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT | WIFI_CONNECTED_BIT | WIFI_CONNECTING_BIT);
+        bool reallyDisconnect = true;
+        if (_automaticReconnect)
+        {
+            if (_currentRetryCount < _maximumRetryCount)
+            {
+                xEventGroupSetBits(_xWiFiEventGroup, WIFI_RECONNECTING_BIT);
+                esp_wifi_connect();
+                _currentRetryCount++;
+                reallyDisconnect = false;
+            }
+        }
+        if (reallyDisconnect)
+        {
+            bzero((void *) &_ipInformation, sizeof(esp_netif_ip_info_t));
+            bzero((void *) &_apInformation, sizeof(wifi_event_sta_connected_t));
+            memcpy((void *) &_disconnectData, (void *) eventData, sizeof(_disconnectData));
+            RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::DisconnectFromAccessPointEvent);
+            xEventGroupSetBits(_xWiFiEventGroup, WIFI_ERROR_BIT);
         }
     }
-    if (reallyDisconnect)
+    else
     {
-        bzero((void *) &_ipInformation, sizeof(esp_netif_ip_info_t));
-        bzero((void *) &_apInformation, sizeof(wifi_event_sta_connected_t));
-        memcpy((void *) &_disconnectData, (void *) eventData, sizeof(_disconnectData));
-        RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::DisconnectFromAccessPointEvent);
-        xEventGroupSetBits(_xWiFiEventGroup, WIFI_ERROR_BIT);
+        TRACE_MESSAGE("StationDisconnectedEvent: Not connected / connecting, ignoring event.");
     }
 
     TRACE_MESSAGE("StationDisconnectedEvent: Exit");
