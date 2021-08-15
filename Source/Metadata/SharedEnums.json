@@ -14,7 +14,7 @@
                 "NoMessagesWaiting", "CoprocessorNotResponding",
                 "EspWiFiNotStarted", "EspOutOfMemory", "EspWiFiInvalidSsid", "AccessPointNotFound", "BeaconTimeout", "AuthenticationFailed",
                 "AssociationFailed", "HandshakeTimeout", "ConnectionFailed", "ApTsfReset",
-                "UnmappedErrorCode"
+                "UnmappedErrorCode", "UnknownConfigurationItem"
             ]
         },
         {
@@ -42,7 +42,7 @@
           "Comment": "WiFi functions available on the ESP32",
           "BaseDataType": "UInt32",
           "EnumNames": [
-              "StartWiFiInterface", "StopWiFiInterface", "ConnectToAccessPoint", "DisconnectFromAccessPoint", "GetAccessPoints", "SetAntenna",
+              "StartWiFiInterface", "StopWiFiInterface", "ConnectToAccessPoint", "ConnectToDefaultAccessPoint", "DisconnectFromAccessPoint", "GetAccessPoints", "SetAntenna",
               "Socket", "Connect", "Write", "SetSockOpt", "Read", "Close", "SendTo", "RecvFrom", "Poll", "InterruptPollResponse", "Send", "Bind", "Listen", "Accept", "Ioctl",
               "GetSockName", "GetPeerName", "FreeAddrInfo", "GetAddrInfo",
               "StartWiFiInterfaceEvent", "StopWiFiInterfaceEvent", "ConnectToAccessPointEvent", "DisconnectFromAccessPointEvent", "SetTimeOfDayEvent"
