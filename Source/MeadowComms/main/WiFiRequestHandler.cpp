@@ -448,6 +448,7 @@ bool WiFiRequestHandler::GetGetTimeAtStartup()
  */
 StatusCodes::StatusCodes WiFiRequestHandler::SetGetTimeAtStartup(bool value)
 {
+    TRACE_MESSAGE("WiFiRequestHandler::SetGetTimeAtStartup %d", value ? 1 : 0);
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
     if (value != _getTimeAtStartup)
     {
@@ -478,6 +479,7 @@ bool WiFiRequestHandler::GetUseDhcp()
  */
 StatusCodes::StatusCodes WiFiRequestHandler::SetUseDhcp(bool value)
 {
+    TRACE_MESSAGE("WiFiRequestHandler::SetUseDhcp %d", value ? 1 : 0);
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
     if (value != _useDhcp)
     {
@@ -508,6 +510,7 @@ char *WiFiRequestHandler::GetNtpServer()
  */
 StatusCodes::StatusCodes WiFiRequestHandler::SetNtpServer(char *value)
 {
+    TRACE_MESSAGE("WiFiRequestHandler::SetNtpServer %s", value);
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
     if (strcmp(value, _ntpServer) != 0)
     {
@@ -538,6 +541,7 @@ char *WiFiRequestHandler::GetTimezone()
  */
 StatusCodes::StatusCodes WiFiRequestHandler::SetTimezone(char *value)
 {
+    TRACE_MESSAGE("WiFiRequestHandler::SetTimezone %s", value);
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
     if (strcmp(value, _timezone) != 0)
     {
@@ -570,20 +574,26 @@ char *WiFiRequestHandler::GetDefaultAccessPoint()
  */
 StatusCodes::StatusCodes WiFiRequestHandler::SetDefaultAccessPoint(char *value)
 {
+    TRACE_MESSAGE("WiFiRequestHandler::SetDefaultAccessPoint %s", value);
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    if (_defaultAccessPoint != NULL)
+    char emptyAp = '\0';
+
+    if (value == NULL)
     {
-        if (strcmp(value, _defaultAccessPoint) != 0)
-        {
-            if (SystemRequestHandler::SetConfigurationValue(DEFAULT_ACCESS_POINT_NAME, value) == NvsManager::ErrorCodes::Ok)
-            {
-                _defaultAccessPoint = strdup(value);
-            }
-        }
+        value = &emptyAp;
     }
-    else
+    if (!_defaultAccessPoint)
     {
-        _defaultAccessPoint = strdup(value);
+        _defaultAccessPoint = strdup(&emptyAp);
+    }
+
+    if (strcmp(value, _defaultAccessPoint) != 0)
+    {
+        if (SystemRequestHandler::SetConfigurationValue(DEFAULT_ACCESS_POINT_NAME, value) == NvsManager::ErrorCodes::Ok)
+        {
+            free(_defaultAccessPoint);
+            _defaultAccessPoint = strdup(value);
+        }
     }
     return(result);
 }
@@ -608,19 +618,24 @@ char *WiFiRequestHandler::GetPassword()
 StatusCodes::StatusCodes WiFiRequestHandler::SetPassword(char *value)
 {
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    if (_password != NULL)
+    char emptyPassword = '\0';
+
+    if (value == NULL)
     {
-        if (strcmp(value, _password) != 0)
-        {
-            if (SystemRequestHandler::SetConfigurationValue(PASSWORD_NAME, value) == NvsManager::ErrorCodes::Ok)
-            {
-                _password = strdup(value);
-            }
-        }
+        value = &emptyPassword;
     }
-    else
+    if (!_password)
     {
-        _password = strdup(value);
+        _password = strdup(&emptyPassword);
+    }
+
+    if (strcmp(value, _password) != 0)
+    {
+        if (SystemRequestHandler::SetConfigurationValue(PASSWORD_NAME, value) == NvsManager::ErrorCodes::Ok)
+        {
+            free(_password);
+            _password = strdup(value);
+        }
     }
     return(result);
 }
@@ -969,8 +984,11 @@ void WiFiRequestHandler::PopulateConnectionEventDataStructure(Esp32Messaging::Co
 
 /**
  *  @brief Raise the ConnectToAccessPointEvent for the managed code.
+ * 
+ *  @param status
+ *     Status code to send back to the STM32.
  */
-void WiFiRequestHandler::RaiseConnectToAccessPointEvent()
+void WiFiRequestHandler::RaiseConnectToAccessPointEvent(StatusCodes::StatusCodes status)
 {
     TRACE_MESSAGE("RaiseConnectToAccessPointEvent: Enter");
 
@@ -984,7 +1002,7 @@ void WiFiRequestHandler::RaiseConnectToAccessPointEvent()
         {
             Encoders::EncodeConnectEventData(ed, payload);
             vPortFree(ed);
-            RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::ConnectToAccessPointEvent, StatusCodes::CompletedOk, payload, payloadLength);
+            RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::ConnectToAccessPointEvent, status, payload, payloadLength);
         }
         else
         {
@@ -1184,6 +1202,9 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
             break;
         case WiFiFunction::ConnectToAccessPoint:
             ConnectToAccessPoint(request);
+            break;
+        case WiFiFunction::ConnectToDefaultAccessPoint:
+            ConnectToDefaultAccessPoint(request);
             break;
         case WiFiFunction::DisconnectFromAccessPoint:
             DisconnectFromAccessPoint(request);
@@ -1588,13 +1609,46 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
 
     if (result == StatusCodes::CompletedOk)
     {
-        RaiseConnectToAccessPointEvent();
+        RaiseConnectToAccessPointEvent(result);
     }
 
     TRACE_MESSAGE("ConnectToAccessPoint: Exit");
 
     // Logging::StandaloneHeapTracingStart();
 
+}
+
+/**
+ *  @brief Connect to the default access point.
+ *
+ *  Note: This is a non-blocking call and will generate the connection event
+ *        with the status code set accordingly. 
+ *
+ *  @param message
+ *      Message containing the encoded request.
+ */
+void WiFiRequestHandler::ConnectToDefaultAccessPoint(Message *message)
+{
+    TRACE_MESSAGE("ConnectToDefaultAccessPoint: Enter");
+    StatusCodes::StatusCodes result = StatusCodes::WiFiDisconnected;
+
+    message->DeleteMessage(message);
+
+    char *access_point = GetDefaultAccessPoint();
+    if (GetAutomaticallyStartNetwork() && (access_point != NULL))
+    {
+        result = ConnectToAccessPoint(access_point, GetPassword());
+    }
+    else
+    {
+        result = StatusCodes::WiFiDisconnected;
+    }
+
+    xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
+
+    RaiseConnectToAccessPointEvent(result);
+
+    TRACE_MESSAGE("ConnectToDefaultAccessPoint: Exit");
 }
 
 /**
@@ -3139,7 +3193,7 @@ void WiFiRequestHandler::StationConnectedEvent(wifi_event_sta_connected_t *event
 
     if (bits & WIFI_RECONNECTING_BIT)
     {
-        RaiseConnectToAccessPointEvent();
+        RaiseConnectToAccessPointEvent(StatusCodes::CompletedOk);
     }
 
     TRACE_MESSAGE("StationConnectedEvent: Exit");

@@ -495,7 +495,7 @@ private:
     /**
      *  @brief Raise the ConnectToAccessPointEvent for the managed code.
      */
-    void RaiseConnectToAccessPointEvent();
+    void RaiseConnectToAccessPointEvent(StatusCodes::StatusCodes);
 
     /**
      *  @brief Stop the WiFi Adapter.
@@ -528,6 +528,11 @@ private:
      *  @brief Connect to an access point.
      */
     void ConnectToAccessPoint(Message *message);
+
+    /**
+     *  @brief Connect to the default access point.
+     */
+    void ConnectToDefaultAccessPoint(Message *message);
 
     /**
      *  @brief Start the network interface ready for the device to be configured
