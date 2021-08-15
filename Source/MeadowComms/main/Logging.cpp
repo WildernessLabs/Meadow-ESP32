@@ -321,6 +321,9 @@ char *Logging::WiFiFunctionName(uint32_t function)
         case WiFiFunction::ConnectToAccessPoint:
             return((char *) "ConnectToAccessPoint");
             break;
+        case WiFiFunction::ConnectToDefaultAccessPoint:
+            return((char *) "ConnectToDefaultAccessPoint");
+            break;
         case WiFiFunction::DisconnectFromAccessPoint:
             return((char *) "DisconnectFromAccessPoint");
             break;
@@ -640,6 +643,9 @@ char *Logging::StatusCodeName(uint32_t code)
             break;
         case StatusCodes::UnmappedErrorCode:
             return((char *) "UnmappedErrorCode");
+            break;
+        case StatusCodes::UnknownConfigurationItem:
+            return((char *) "UnknownConfigurationItem");
             break;
         default:
             return((char *) "Unknown");
