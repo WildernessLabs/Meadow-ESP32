@@ -64,7 +64,7 @@ const char *SystemRequestHandler::MAXIMUM_MESSAGE_QUEUE_LENGTH_NAME = "MaxQueueL
 /**
  *  @brief Name of the device on the network.
  */
-char *SystemRequestHandler::_deviceName = (char *) "MeadowF7";
+char *SystemRequestHandler::_deviceName = nullptr;
 
 /**
  *  @brief Name of the storage in NVS holding the device name on the network.
@@ -106,6 +106,7 @@ SystemRequestHandler::SystemRequestHandler(MessageDispatcher *messageDispatcher)
     //  Get configuration from NVS.
     //
     _maximumMessageQueueLength = GetConfigurationValue(MAXIMUM_MESSAGE_QUEUE_LENGTH_NAME, _maximumMessageQueueLength);
+    _deviceName = GetConfigurationValue(DEVICE_NAME_NAME, (char *) "MeadowF7");
     _messageDispatcher = messageDispatcher;
 }
 
@@ -539,6 +540,9 @@ void SystemRequestHandler::SetConfiguration(Message *request)
             break;
         case ConfigurationItems::UseDhcp:
             result = WiFiRequestHandler::SetUseDhcp((uint8_t) (*value->Value) == 1);
+            break;
+        default:
+            result = StatusCodes::UnknownConfigurationItem;
             break;
     }
     request->DeletePayload();
