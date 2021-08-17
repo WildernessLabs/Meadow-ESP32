@@ -1374,6 +1374,7 @@ void WiFiRequestHandler::StopWiFIAdapter(Message *message)
  */
 StatusCodes::StatusCodes WiFiRequestHandler::DisconnectFromAccessPoint()
 {
+    TRACE_MESSAGE("DisconnectFromAccessPoint(): Enter");
     StatusCodes::StatusCodes sc = StatusCodes::CompletedOk;
 
     esp_err_t result = esp_wifi_disconnect();
@@ -1389,6 +1390,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::DisconnectFromAccessPoint()
     bzero((void *) &_disconnectData, sizeof(_disconnectData));
     bzero((void *) &_ipInformation, sizeof(_ipInformation));
 
+    TRACE_MESSAGE("DisconnectFromAccessPoint(): Exit");
     return(sc);
 }
 
@@ -1400,7 +1402,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::DisconnectFromAccessPoint()
  */
 void WiFiRequestHandler::DisconnectFromAccessPoint(Message *message)
 {
-    TRACE_MESSAGE("DisconnectFromAccessPoint: Enter");
+    TRACE_MESSAGE("DisconnectFromAccessPoint(Message): Enter");
 
     StatusCodes::StatusCodes sc = StatusCodes::CompletedOk;
     if (IsConnected())
@@ -1425,10 +1427,11 @@ void WiFiRequestHandler::DisconnectFromAccessPoint(Message *message)
     message->StatusCode = sc;
     message->MessageType = MessageTypes::Response;
     _messageDispatcher->QueueMessageForStm32(message);
+    xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
 
     RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::DisconnectFromAccessPointEvent, sc);
 
-    TRACE_MESSAGE("DisconnectFromAccessPoint: Exit");
+    TRACE_MESSAGE("DisconnectFromAccessPoint(Message): Exit");
 }
 
 /**
@@ -3257,7 +3260,12 @@ void WiFiRequestHandler::StationDisconnectedEvent(wifi_event_sta_disconnected_t 
         //  We can sometimes get a disconnect event when starting the adapter or when incorrect WiFi credentials 
         //  have been supplied.  We should only get here if a connection was lost or a connection is being attempted.
         //
-        xEventGroupClearBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT | WIFI_CONNECTED_BIT | WIFI_CONNECTING_BIT);
+        // xEventGroupClearBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT | WIFI_CONNECTED_BIT | WIFI_CONNECTING_BIT);
+
+        //
+        //  Work on reconnecting needed here.
+        //
+        xEventGroupClearBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT | WIFI_CONNECTING_BIT);
         bool reallyDisconnect = true;
         if (_automaticReconnect)
         {
