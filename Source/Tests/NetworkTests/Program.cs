@@ -9,8 +9,8 @@ namespace MeadowApp
         // static MeadowApp app;
         public static void Main(string[] args)
         {
-            OauthTest app = new OauthTest();
-            app.RunTest().Wait();
+            //OauthTest app = new OauthTest();
+            //app.RunTest().Wait();
 
             //DeviceInfo app = new DeviceInfo();
             //app.RunTest();
@@ -18,8 +18,11 @@ namespace MeadowApp
             // OutOfMemoryTest app = new OutOfMemoryTest();
             // app.RunAsync().Wait();
 
-            // SoakTest app = new SoakTest();
-            // app.RunTest(10);
+            DisconnectTest app = new DisconnectTest();
+            app.RunTest().Wait();
+
+            //SoakTest app = new SoakTest();
+            //app.RunTest(10).Wait();
 
             //WiFiInterfaceControl app = new WiFiInterfaceControl();
             //app.RunTest();

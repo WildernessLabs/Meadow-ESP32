@@ -19,6 +19,9 @@ namespace MeadowApp
         public void RunTest()
         {
             Console.WriteLine("Getting device information.");
+
+            Console.WriteLine($"Machine name: {Environment.MachineName}");
+
             F7Micro.DeviceInformation information = Device.GetDeviceInformation();
 
             Console.WriteLine($"Device name: {information.DeviceName}");
