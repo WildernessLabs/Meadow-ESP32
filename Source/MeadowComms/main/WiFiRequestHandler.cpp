@@ -1304,17 +1304,20 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
  */
 StatusCodes::StatusCodes WiFiRequestHandler::StopWiFIAdapter()
 {
+    TRACE_MESSAGE("StopWiFIAdapter(): Enter");
     StatusCodes::StatusCodes sc = StatusCodes::CompletedOk;
 
-    // esp_err_t result = esp_wifi_disconnect();
-    // if ((result == ESP_OK) || (result == ESP_ERR_WIFI_NOT_STARTED) || (result == ESP_ERR_WIFI_NOT_INIT))
-    // {
-    //     xEventGroupClearBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT | WIFI_RECONNECTING_BIT);
-    // }
-    // else
-    // {
-    //     sc = StatusCodes::Failure;
-    // }
+    if (esp_wifi_stop() == ESP_OK)
+    {
+        xEventGroupClearBits(_xWiFiEventGroup, WIFI_STATION_STARTED_BIT | WIFI_INTERFACE_STARTING_BIT);
+    }
+    else
+    {
+        xEventGroupSetBits(_xWiFiEventGroup, WIFI_ERROR_BIT);
+        sc = StatusCodes::Failure;
+    }
+
+    TRACE_MESSAGE("StopWiFIAdapter(): Exit");
     return(sc);
 }
 
@@ -1326,7 +1329,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::StopWiFIAdapter()
  */
 void WiFiRequestHandler::StopWiFIAdapter(Message *message)
 {
-    TRACE_MESSAGE("StopWiFIAdapter: Enter");
+    TRACE_MESSAGE("StopWiFIAdapter(Message): Enter");
 
     bool raiseEvent = false;
     StatusCodes::StatusCodes sc = StatusCodes::CompletedOk;
@@ -1337,16 +1340,22 @@ void WiFiRequestHandler::StopWiFIAdapter(Message *message)
     }
     if (sc == StatusCodes::CompletedOk)
     {
-        if (esp_wifi_stop() == ESP_OK)
+        sc = StopWiFIAdapter();
+        if (sc == StatusCodes::CompletedOk)
         {
             xEventGroupClearBits(_xWiFiEventGroup, WIFI_STATION_STARTED_BIT | WIFI_INTERFACE_STARTING_BIT);
             raiseEvent = true;
         }
         else
         {
-            sc = StatusCodes::Failure;
+            xEventGroupSetBits(_xWiFiEventGroup, WIFI_ERROR_BIT);
         }
     }
+    else
+    {
+        xEventGroupSetBits(_xWiFiEventGroup, WIFI_ERROR_BIT);
+    }
+
     message->StatusCode = sc;
     message->MessageType = MessageTypes::Response;
     _messageDispatcher->QueueMessageForStm32(message);
@@ -1357,7 +1366,7 @@ void WiFiRequestHandler::StopWiFIAdapter(Message *message)
         RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::StopWiFiInterfaceEvent, sc);
     }
 
-    TRACE_MESSAGE("StopWiFIAdapter: Exit");
+    TRACE_MESSAGE("StopWiFIAdapter(Message): Exit");
 }
 
 /**
@@ -1374,8 +1383,12 @@ StatusCodes::StatusCodes WiFiRequestHandler::DisconnectFromAccessPoint()
     }
     else
     {
+        xEventGroupSetBits(_xWiFiEventGroup, WIFI_ERROR_BIT);
         sc = StatusCodes::Failure;
     }
+    bzero((void *) &_disconnectData, sizeof(_disconnectData));
+    bzero((void *) &_ipInformation, sizeof(_ipInformation));
+
     return(sc);
 }
 
@@ -1404,6 +1417,10 @@ void WiFiRequestHandler::DisconnectFromAccessPoint(Message *message)
         }
         vPortFree(request);
     }
+
+    vPortFree(message->Payload);
+    message->Payload = NULL;
+    message->PayloadLength = 0;
 
     message->StatusCode = sc;
     message->MessageType = MessageTypes::Response;
