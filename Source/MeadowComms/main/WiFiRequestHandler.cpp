@@ -1475,6 +1475,12 @@ bool WiFiRequestHandler::IsConnected()
 StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const char *ssid, const char *password)
 {
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
+    EventBits_t bits = xEventGroupGetBits(_xWiFiEventGroup);
+
+    if (bits & WIFI_CONNECTED_BIT)
+    {
+        return(StatusCodes::WiFiAlreadyStarted);
+    }
 
     if ((ssid == nullptr) ||(strlen(ssid) == 0))
     {
@@ -1485,7 +1491,6 @@ StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const char *ss
     _lastIdfErrorCode = ESP_OK;
     bzero((void *) &_disconnectData, sizeof(_disconnectData));
     bzero((void *) &_ipInformation, sizeof(_ipInformation));
-    EventBits_t bits = xEventGroupGetBits(_xWiFiEventGroup);
     if (!(bits & WIFI_INTERFACE_STARTED_BIT))
     {
         if (StartWiFiInterface() != ESP_OK)
@@ -1600,7 +1605,7 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
         data.Reason = _disconnectData.reason;
         bzero((void *) &_disconnectData, sizeof(_disconnectData));
         bzero((void *) &_ipInformation, sizeof(_ipInformation));
-        result = StatusCodes::WiFiDisconnected;
+        // result = StatusCodes::WiFiDisconnected;
         _lastIdfErrorCode = ESP_OK;
     }
     message->PayloadLength = Encoders::EncodedConnectEventDataBufferSize(&data);
