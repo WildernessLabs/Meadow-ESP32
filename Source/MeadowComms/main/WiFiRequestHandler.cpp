@@ -1476,6 +1476,11 @@ StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const char *ss
 {
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
 
+    if ((ssid == nullptr) ||(strlen(ssid) == 0))
+    {
+        return (StatusCodes::InvalidWiFiCredentials);
+    }
+
     _currentRetryCount = 0;
     _lastIdfErrorCode = ESP_OK;
     bzero((void *) &_disconnectData, sizeof(_disconnectData));
@@ -1496,6 +1501,11 @@ StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const char *ss
     if (result == StatusCodes::CompletedOk)
     {
         _currentRetryCount = 0;
+        char zeroLengthString[1] = { 0 };
+        if (password == nullptr)
+        {
+            password = zeroLengthString;
+        }
         if ((strlen(ssid) > MAXIMUM_SSID_LENGTH) || (strlen(password) > MAXIMUM_PASSWORD_LENGTH))
         {
             result = StatusCodes::InvalidWiFiCredentials;
