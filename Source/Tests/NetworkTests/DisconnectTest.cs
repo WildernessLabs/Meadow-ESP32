@@ -50,6 +50,9 @@ namespace MeadowApp
                 Console.WriteLine("Network disconnection successful.");
             }
 
+            Thread.Sleep(2000);
+
+            Console.WriteLine("Attempting second disconnect.");
             connectionResult = await Device.WiFiAdapter.Disconnect(true);
             if (connectionResult.ConnectionStatus != ConnectionStatus.Success)
             {
