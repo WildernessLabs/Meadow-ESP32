@@ -46,7 +46,7 @@ const char *WiFiRequestHandler::COMPONENT_NAME = "WiFiTask";
 /**
  *  @brief Determine if this class is instantiated already (i.e. this should be a singleton).
  */
-bool WiFiRequestHandler::_instantiated = false;
+WiFiRequestHandler *WiFiRequestHandler::_instance = nullptr;
 
 /**
  *  @brief Event group containing 24-bits used to indicate the state of the WiFi connection.
@@ -241,13 +241,13 @@ const char *WiFiRequestHandler::DEFAULT_WIFI_TIMEOUT_NAME = "WiFiTimeout";
  */
 WiFiRequestHandler::WiFiRequestHandler()
 {
-    if (_instantiated)
+    if (_instance != nullptr)
     {
         throw new MultipleInstancesException();
     }
     else
     {
-        _instantiated = true;
+        _instance = this;
     }
     //
     //  Get configuration from NVS.
@@ -296,7 +296,7 @@ WiFiRequestHandler::WiFiRequestHandler()
     //
     //  Finally set some default values for private fields.
     //
-    bzero((void *) &_ipInformation, sizeof(esp_netif_ip_info_t));
+    ClearIpAndDisconnectData();
     bzero((void *) &_apInformation, sizeof(wifi_event_sta_connected_t));
     _lastIdfErrorCode = ESP_OK;
     _ipChanged = false;
@@ -851,6 +851,15 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetWiFiTimeout(uint32_t value)
  */
 
 /**
+ *  @brief Clear the IP and disconnect data.
+ */
+void WiFiRequestHandler::ClearIpAndDisconnectData()
+{
+    bzero((void *) &_instance->_disconnectData, sizeof(_disconnectData));
+    bzero((void *) &_instance->_ipInformation, sizeof(_ipInformation));
+}
+
+/**
  *  @brief Map the errno variable from an ESP to a STM32 value.
  */
 int32_t WiFiRequestHandler::MapErrno(int e)
@@ -1191,7 +1200,7 @@ void WiFiRequestHandler::EventHandler(void *arg, esp_event_base_t eventBase, int
 void WiFiRequestHandler::DispatchRequest(Message *request)
 {
     TRACE_MESSAGE("DispatchRequest: Enter");
-    xEventGroupClearBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
+    xEventGroupClearBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT | WIFI_ERROR_BIT);
     switch (request->Function)
     {
         case WiFiFunction::StartWiFiInterface:
@@ -1309,7 +1318,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::StopWiFIAdapter()
 
     if (esp_wifi_stop() == ESP_OK)
     {
-        xEventGroupClearBits(_xWiFiEventGroup, WIFI_STATION_STARTED_BIT | WIFI_INTERFACE_STARTING_BIT);
+        xEventGroupClearBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTED_BIT | WIFI_INTERFACE_STARTING_BIT);
     }
     else
     {
@@ -1343,7 +1352,7 @@ void WiFiRequestHandler::StopWiFIAdapter(Message *message)
         sc = StopWiFIAdapter();
         if (sc == StatusCodes::CompletedOk)
         {
-            xEventGroupClearBits(_xWiFiEventGroup, WIFI_STATION_STARTED_BIT | WIFI_INTERFACE_STARTING_BIT);
+            xEventGroupClearBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTED_BIT | WIFI_INTERFACE_STARTING_BIT);
             raiseEvent = true;
         }
         else
@@ -1387,8 +1396,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::DisconnectFromAccessPoint()
         xEventGroupSetBits(_xWiFiEventGroup, WIFI_ERROR_BIT);
         sc = StatusCodes::Failure;
     }
-    bzero((void *) &_disconnectData, sizeof(_disconnectData));
-    bzero((void *) &_ipInformation, sizeof(_ipInformation));
+    ClearIpAndDisconnectData();
 
     TRACE_MESSAGE("DisconnectFromAccessPoint(): Exit");
     return(sc);
@@ -1509,8 +1517,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const char *ss
 
     _currentRetryCount = 0;
     _lastIdfErrorCode = ESP_OK;
-    bzero((void *) &_disconnectData, sizeof(_disconnectData));
-    bzero((void *) &_ipInformation, sizeof(_ipInformation));
+    ClearIpAndDisconnectData();
     if (!(bits & WIFI_INTERFACE_STARTED_BIT))
     {
         if (StartWiFiInterface() != ESP_OK)
@@ -1549,22 +1556,18 @@ StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const char *ss
             memcpy(wifi_config.sta.ssid, ssid, strlen(ssid));
             memcpy(wifi_config.sta.password, password, strlen(password));
             _lastIdfErrorCode = esp_wifi_set_mode(WIFI_MODE_STA);
-            ESP_ERROR_CHECK(_lastIdfErrorCode);
             if (_lastIdfErrorCode == ESP_OK)
             {
                 _lastIdfErrorCode = esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config);
             }
-            ESP_ERROR_CHECK(_lastIdfErrorCode);
             if (_lastIdfErrorCode == ESP_OK)
             {
                 _lastIdfErrorCode = esp_wifi_start();
             }
-            ESP_ERROR_CHECK(_lastIdfErrorCode);
             if (_lastIdfErrorCode == ESP_OK)
             {
                 _lastIdfErrorCode = esp_wifi_connect();
             }
-            ESP_ERROR_CHECK(_lastIdfErrorCode);
             if (_lastIdfErrorCode == ESP_OK)
             {
                 bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT | WIFI_ERROR_BIT, pdFALSE, pdFALSE, 600000 / portTICK_PERIOD_MS);
@@ -1623,9 +1626,7 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
         memcpy((void *) data.Bssid, (void *) _disconnectData.bssid, sizeof(data.Bssid));
         TRACE_MESSAGE("Failed to connect to access point, code: %d", _disconnectData.reason);
         data.Reason = _disconnectData.reason;
-        bzero((void *) &_disconnectData, sizeof(_disconnectData));
-        bzero((void *) &_ipInformation, sizeof(_ipInformation));
-        // result = StatusCodes::WiFiDisconnected;
+        ClearIpAndDisconnectData();
         _lastIdfErrorCode = ESP_OK;
     }
     message->PayloadLength = Encoders::EncodedConnectEventDataBufferSize(&data);
@@ -1759,11 +1760,7 @@ void WiFiRequestHandler::StartWiFiInterface(Message *message)
 {
     TRACE_MESSAGE("StartNetwork: Enter");
     message->MessageType = MessageTypes::Response;
-    StatusCodes::StatusCodes sc = StatusCodes::CompletedOk;
-    if (StartWiFiInterface() != ESP_OK)
-    {
-        message->StatusCode = StatusCodes::Failure;
-    }
+    StatusCodes::StatusCodes sc = (StartWiFiInterface() == ESP_OK) ? StatusCodes::CompletedOk : StatusCodes::Failure;
     message->StatusCode = sc;
     _messageDispatcher->QueueMessageForStm32(message);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
@@ -1819,8 +1816,8 @@ void WiFiRequestHandler::GetAvailableNetworks(Message *message)
 
             ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
             ESP_ERROR_CHECK(esp_wifi_start());
-            bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_STATION_STARTED_BIT, pdFALSE, pdFALSE, GetWiFiTimeout() / portTICK_PERIOD_MS);
-            if (bits && WIFI_STATION_STARTED_BIT)
+            bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTED_BIT, pdFALSE, pdFALSE, GetWiFiTimeout() / portTICK_PERIOD_MS);
+            if (bits & WIFI_INTERFACE_STARTED_BIT)
             {
                 ESP_ERROR_CHECK(esp_wifi_scan_start(NULL, true));
 
@@ -1911,7 +1908,7 @@ void WiFiRequestHandler::GetAddrInfo(void *vpMessage)
         Esp32Messaging::AddrInfo *extractedHints = Encoders::ExtractAddrInfo(request->Hints);
         vPortFree(request->Hints);
 
-        struct addrinfo hints = {};
+        struct addrinfo hints = { };
         hints.ai_family = extractedHints->Family;
         hints.ai_socktype = extractedHints->SocketType;
         vPortFree(extractedHints);
@@ -1929,8 +1926,8 @@ void WiFiRequestHandler::GetAddrInfo(void *vpMessage)
         response->AddrInfoResponseErrno = MapErrno(errorCode);
         if ((errorCode == 0) || (addressInformation != NULL))
         {
-            Esp32Messaging::SockAddr sa = {};
-            Esp32Messaging::AddrInfo a = {};
+            Esp32Messaging::SockAddr sa = { };
+            Esp32Messaging::AddrInfo a = { };
 
             int family;
             Mapping::GetStmValue(Mapping::AddressFamily, addressInformation->ai_addr->sa_family, &family);
@@ -2056,7 +2053,7 @@ void WiFiRequestHandler::Connect(void *vpMessage)
             }
         }
 
-        struct sockaddr_in sa = {};
+        struct sockaddr_in sa = { };
         int family;
         Mapping::GetEspValue(Mapping::AddressFamily, socketAddress->Family, &family);
         errno = 0;
@@ -2516,7 +2513,7 @@ void WiFiRequestHandler::SendTo(void *vpMessage)
 
             if (family == AF_INET)
             {
-                struct sockaddr_in sa = {};
+                struct sockaddr_in sa = { };
                 struct sockaddr *psa = NULL;
                 size_t lenSa = 0;
                 if (request->DestinationAddress)
@@ -2633,7 +2630,7 @@ void WiFiRequestHandler::RecvFrom(void *vpMessage)
             {
                 if (request->GetSourceAddress != 0)
                 {
-                    Esp32Messaging::SockAddr socketAddress = {};
+                    Esp32Messaging::SockAddr socketAddress = { };
                     int family;
                     Mapping::GetStmValue(Mapping::AddressFamily, sa->sin_family, &family);
                     socketAddress.Family = (uint8_t) (family & 0xff);
@@ -2847,7 +2844,7 @@ void WiFiRequestHandler::Accept(void *vpMessage)
     {
         Esp32Messaging::AcceptRequest *request = Encoders::ExtractAcceptRequest(message->Payload);
 
-        struct sockaddr sa = {};
+        struct sockaddr sa = { };
         socklen_t saLen = sizeof(sa);
         response.Result = accept(request->SocketHandle, &sa, &saLen);
         if (response.Result > 0)
@@ -3279,9 +3276,8 @@ void WiFiRequestHandler::StationDisconnectedEvent(wifi_event_sta_disconnected_t 
         }
         if (reallyDisconnect)
         {
-            bzero((void *) &_ipInformation, sizeof(esp_netif_ip_info_t));
+            ClearIpAndDisconnectData();
             bzero((void *) &_apInformation, sizeof(wifi_event_sta_connected_t));
-            memcpy((void *) &_disconnectData, (void *) eventData, sizeof(_disconnectData));
             RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::DisconnectFromAccessPointEvent);
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_ERROR_BIT);
         }
