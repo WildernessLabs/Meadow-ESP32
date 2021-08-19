@@ -18,10 +18,7 @@
 #include "SpiTransportProvider.hpp"
 #include "WiFiRequestHandler.hpp"
 #include "SpiTransportProvider.hpp"
-
-
-//#define BT_DEBUG
-//#define SPI_DEBUG
+#include "Mapping.hpp"
 
 #if defined(PERFORMANCE_LOGGING)
 
@@ -232,36 +229,7 @@ void Logging::Error(char *methodName, char *formatString, ...)
  */
 char *Logging::MessageTypeName(uint8_t type)
 {
-    switch (type)
-    {
-        case MessageTypes::Ack:
-            return((char *) "Ack");
-            break;
-        case MessageTypes::Nak:
-            return((char *) "Nak");
-            break;
-        case MessageTypes::Reset:
-            return((char *) "Reset");
-            break;
-        case MessageTypes::Event:
-            return((char *) "Event");
-            break;
-        case MessageTypes::Response:
-            return((char *) "Response");
-            break;
-        case MessageTypes::Transport:
-            return((char *) "Transport");
-            break;
-        case MessageTypes::Header:
-            return((char *) "Header");
-            break;
-        case MessageTypes::Data:
-            return((char *) "Data");
-            break;
-        default:
-            return((char *) "Unknown");
-            break;
-    }
+    return(Mapping::GetStringValue(Mapping::MessageTypes, type));    
 }
 
 /**
@@ -275,28 +243,7 @@ char *Logging::MessageTypeName(uint8_t type)
  */
 char *Logging::InterfaceName(uint32_t interface)
 {
-    switch (interface)
-    {
-        case Esp32Interfaces::WiFi:
-            return((char *) "WiFi");
-            break;
-        case Esp32Interfaces::BlueTooth:
-            return((char *) "Bluetooth");
-            break;
-        case Esp32Interfaces::MeshNetwork:
-            return((char *) "Mesh Network");
-            break;
-        case Esp32Interfaces::System:
-            return((char *) "System");
-            break;
-        case Esp32Interfaces::Transport:
-            return((char *) "Transport");
-            break;
-        case Esp32Interfaces::None:
-        default:
-            return((char *) "Unknown");
-            break;
-    }
+    return(Mapping::GetStringValue(Mapping::Interfaces, interface));
 }
 
 /**
@@ -310,102 +257,7 @@ char *Logging::InterfaceName(uint32_t interface)
  */
 char *Logging::WiFiFunctionName(uint32_t function)
 {
-    switch (function)
-    {
-        case WiFiFunction::StartWiFiInterface:
-            return((char *) "StartWiFiInterface");
-            break;
-        case WiFiFunction::StopWiFiInterface:
-            return((char *) "StopWiFiInterface");
-            break;
-        case WiFiFunction::ConnectToAccessPoint:
-            return((char *) "ConnectToAccessPoint");
-            break;
-        case WiFiFunction::ConnectToDefaultAccessPoint:
-            return((char *) "ConnectToDefaultAccessPoint");
-            break;
-        case WiFiFunction::DisconnectFromAccessPoint:
-            return((char *) "DisconnectFromAccessPoint");
-            break;
-        case WiFiFunction::GetAccessPoints:
-            return((char *) "GetAccessPoints");
-            break;
-        case WiFiFunction::GetAddrInfo:
-            return((char *) "GetAddrInfo");
-            break;
-        case WiFiFunction::Socket:
-            return((char *) "Socket");
-            break;
-        case WiFiFunction::Connect:
-            return((char *) "Connect");
-            break;
-        case WiFiFunction::Write:
-            return((char *) "Write");
-            break;
-        case WiFiFunction::SetSockOpt:
-            return((char *) "SetSockOpt");
-            break;
-        case WiFiFunction::Read:
-            return((char *) "Read");
-            break;
-        case WiFiFunction::Close:
-            return((char *) "Close");
-            break;
-        case WiFiFunction::SendTo:
-            return((char *) "SendTo");
-            break;
-        case WiFiFunction::RecvFrom:
-            return((char *) "RecvFrom");
-            break;
-        case WiFiFunction::Poll:
-            return((char *) "Poll");
-            break;
-        case WiFiFunction::InterruptPollResponse:
-            return((char *) "InterruptPollResponse");
-            break;
-        case WiFiFunction::Send:
-            return((char *) "Send");
-            break;
-        case WiFiFunction::Bind:
-            return((char *) "Bind");
-            break;
-        case WiFiFunction::Listen:
-            return((char *) "Listen");
-            break;
-        case WiFiFunction::Accept:
-            return((char *) "Accept");
-            break;
-        case WiFiFunction::Ioctl:
-            return((char *) "Ioctl");
-            break;
-        case WiFiFunction::GetSockName:
-            return((char *) "GetSockName");
-            break;
-        case WiFiFunction::GetPeerName:
-            return((char *) "GetPeerName");
-            break;
-        case WiFiFunction::SetTimeOfDayEvent:
-            return((char *) "SetTimeOfDayEvent");
-            break;
-        case WiFiFunction::StartWiFiInterfaceEvent:
-            return((char *) "StartInterfaceEvent");
-            break;
-        case WiFiFunction::StopWiFiInterfaceEvent:
-            return((char *) "StopInterfaceEvent");
-            break;
-        case WiFiFunction::ConnectToAccessPointEvent:
-            return((char *) "ConnectEvent");
-            break;
-        case WiFiFunction::DisconnectFromAccessPointEvent:
-            return((char *) "DisconnectEvent");
-            break;
-        case WiFiFunction::SetAntenna:
-            return((char *) "SetAntenna");
-            break;
-        default:
-            return((char *) "Unknown");
-            break;
-    }
+    return(Mapping::GetStringValue(Mapping::WiFiFunctions, function));
 }
 
 /**
@@ -419,30 +271,7 @@ char *Logging::WiFiFunctionName(uint32_t function)
  */
 char *Logging::SystemFunctionName(uint32_t function)
 {
-    switch (function)
-    {
-        case SystemFunction::GetConfiguration:
-            return((char *) "GetConfiguration");
-            break;
-        case SystemFunction::SetConfigurationItem:
-            return((char *) "SetConfigurationItem");
-            break;
-        case SystemFunction::DeepSleep:
-            return((char *) "DeepSleep");
-            break;
-        case SystemFunction::GetBatteryChargeLevel:
-            return((char *) "GetBatteryChargeLevel");
-            break;
-        case SystemFunction::StartHeapTrace:
-            return((char *) "StartHeapTrace");
-            break;
-        case SystemFunction::StopHeapTrace:
-            return((char *) "StopHeapTrace");
-            break;
-        default:
-            return((char *) "Unknown");
-            break;
-    }
+    return(Mapping::GetStringValue(Mapping::SystemFunctions, function));
 }
 
 /**
@@ -456,18 +285,7 @@ char *Logging::SystemFunctionName(uint32_t function)
  */
 char *Logging::BluetoothFunctionName(uint32_t function)
 {
-    switch (function)
-    {
-        case BluetoothFunction::Start:
-            return((char *) "Start");
-            break;
-        case BluetoothFunction::Stop:
-            return((char *) "Stop");
-            break;
-        default:
-            return((char *) "Unknown");
-            break;
-    }
+    return(Mapping::GetStringValue(Mapping::BluetoothFunctions, function));
 }
 
 /**
@@ -481,24 +299,7 @@ char *Logging::BluetoothFunctionName(uint32_t function)
  */
 char *Logging::TransportFunctionName(uint32_t function)
 {
-    switch (function)
-    {
-        case TransportFunction::ResponseReady:
-            return((char *) "ResponseReady");
-            break;
-        case TransportFunction::SendResponse:
-            return((char *) "SendResponse");
-            break;
-        case TransportFunction::KillNuttxThread:
-            return((char *) "KillNuttxThread");
-            break;
-        case TransportFunction::ResetEsp32:
-            return((char *) "ResetEsp32");
-            break;
-        default:
-            return((char *) "Unknown");
-            break;
-    }
+    return(Mapping::GetStringValue(Mapping::TransportFunctions, function));
 }
 
 /**
@@ -546,111 +347,7 @@ char *Logging::FunctionName(uint32_t interface, uint32_t function)
  */
 char *Logging::StatusCodeName(uint32_t code)
 {
-    switch (code)
-    {
-        case StatusCodes::CompletedOk:
-            return((char *) "CompletedOk");
-            break;
-        case StatusCodes::CrcError:
-            return((char *) "CrcError");
-            break;
-        case StatusCodes::Restart:
-            return((char *) "Restart");
-            break;
-        case StatusCodes::Failure:
-            return((char *) "Failure");
-            break;
-        case StatusCodes::InvalidInterface:
-            return((char *) "InvalidInterface");
-            break;
-        case StatusCodes::QueueError:
-            return((char *) "QueueError");
-            break;
-        case StatusCodes::Timeout:
-            return((char *) "Timeout");
-            break;
-        case StatusCodes::InvalidPacket:
-            return((char *) "InvalidPacket");
-            break;
-        case StatusCodes::InvalidHeader:
-            return((char *) "InvalidHeader");
-            break;
-        case StatusCodes::UnexpectedData:
-            return((char *) "UnexpectedData");
-            break;
-        case StatusCodes::MissingEndOfFrameMarker:
-            return((char *) "MissingEndOfFrameMarker");
-            break;
-        case StatusCodes::HeaderBodyFieldMismatch:
-            return((char *) "HeaderBodyFieldMismatch");
-            break;
-        case StatusCodes::WiFiAlreadyStarted:
-            return((char *) "WiFiAlreadyStarted");
-            break;
-        case StatusCodes::InvalidWiFiCredentials:
-            return((char *) "InvalidWiFiCredentials");
-            break;
-        case StatusCodes::WiFiDisconnected:
-            return((char *) "WiFiDisconnected");
-            break;
-        case StatusCodes::CannotStartNetworkInterface:
-            return((char *) "CannotStartNetworkInterface");
-            break;
-        case StatusCodes::CannotConnectToAccessPoint:
-            return((char *) "CannotConnectToAccessPoint");
-            break;
-        case StatusCodes::InvalidAntennaData:
-            return((char *) "InvalidAntennaData");
-            break;
-        case StatusCodes::InvalidAntennaValue:
-            return((char *) "InvalidAntennaValue");
-            break;
-        case StatusCodes::NoMessagesWaiting:
-            return((char *) "NoMessagesWaiting");
-            break;
-        case StatusCodes::CoprocessorNotResponding:
-            return((char *) "CoprocessorNotResponding");
-            break;
-        case StatusCodes::EspWiFiNotStarted:
-            return((char *) "EspWiFiNotStarted");
-            break;
-        case StatusCodes::EspOutOfMemory:
-            return((char *) "EspOutOfMemory");
-            break;
-        case StatusCodes::EspWiFiInvalidSsid:
-            return((char *) "EspWiFiInvalidSsid");
-            break;
-        case StatusCodes::AccessPointNotFound:
-            return((char *) "AccessPointNotFound");
-            break;
-        case StatusCodes::BeaconTimeout:
-            return((char *) "BeaconTimeout");
-            break;
-        case StatusCodes::AuthenticationFailed:
-            return((char *) "AuthenticationFailed");
-            break;
-        case StatusCodes::AssociationFailed:
-            return((char *) "AssociationFailed");
-            break;
-        case StatusCodes::HandshakeTimeout:
-            return((char *) "HandshakeTimeout");
-            break;
-        case StatusCodes::ConnectionFailed:
-            return((char *) "ConnectionFailed");
-            break;
-        case StatusCodes::ApTsfReset:
-            return((char *) "ApTsfReset");
-            break;
-        case StatusCodes::UnmappedErrorCode:
-            return((char *) "UnmappedErrorCode");
-            break;
-        case StatusCodes::UnknownConfigurationItem:
-            return((char *) "UnknownConfigurationItem");
-            break;
-        default:
-            return((char *) "Unknown");
-            break;
-    }
+    return(Mapping::GetStringValue(Mapping::StatusCodes, code));
 }
 
 /**
