@@ -27,6 +27,11 @@
  */
 
 /**
+ *  Static string to be used if a string mapping cannot be found.
+ */
+static char *_unknown = (char *) "Unknown";
+
+/**
  *  @brief Map the STM32 address family codes to ESP32 address family code.
  *
  *  STM value is first, ESP value second.
@@ -322,6 +327,143 @@ Mapping::int_mapping_t Mapping::_networkAuthenticationType[] =
     { 14, WIFI_AUTH_WPA2_WPA3_PSK }
 };
 
+/**
+ *  @brief Map of the status codes to their string representations.
+ */
+Mapping::str_mapping_t Mapping::_statusCodes[] = 
+{
+    { StatusCodes::CompletedOk, (char *) "CompletedOk" },
+    { StatusCodes::CrcError, (char *) "CrcError" },
+    { StatusCodes::Restart, (char *) "Restarting" },
+    { StatusCodes::Failure, (char *) "Failure" },
+    { StatusCodes::InvalidInterface, (char *) "InvalidInterface" },
+    { StatusCodes::QueueError, (char *) "QueueError" },
+    { StatusCodes::Timeout, (char *) "Timeout" },
+    { StatusCodes::InvalidPacket, (char *) "InvalidPacket" }, 
+    { StatusCodes::InvalidHeader, (char *) "InvalidHeader" },
+    { StatusCodes::UnexpectedData, (char *) "UnexpectedData" },
+    { StatusCodes::MissingEndOfFrameMarker, (char *) "MissingEndOfFrameMarker" },
+    { StatusCodes::HeaderBodyFieldMismatch, (char *) "HeaderBodyFieldMismatch" },
+    { StatusCodes::WiFiAlreadyStarted, (char *) "WiFiAlreadyStarted" },
+    { StatusCodes::InvalidWiFiCredentials, (char *) "InvalidWiFiCredentials" },
+    { StatusCodes::WiFiDisconnected, (char *) "WiFiDisconnected" },
+    { StatusCodes::CannotStartNetworkInterface, (char *) "CannotStartNetworkInterface" },
+    { StatusCodes::CannotConnectToAccessPoint, (char *) "CannotConnectToAccessPoint" },
+    { StatusCodes::InvalidAntennaData, (char *) "InvalidAntennaData" },
+    { StatusCodes::InvalidAntennaValue, (char *) "InvalidAntennaValue" },
+    { StatusCodes::NoMessagesWaiting, (char *) "NoMessagesWaiting" },
+    { StatusCodes::CoprocessorNotResponding, (char *) "CoprocessorNotResponding" },
+    { StatusCodes::EspWiFiNotStarted, (char *) "EspWiFiNotStarted" },
+    { StatusCodes::EspOutOfMemory, (char *) "EspOutOfMemory" },
+    { StatusCodes::EspWiFiInvalidSsid, (char *) "EspWiFiInvalidSsid" },
+    { StatusCodes::AccessPointNotFound, (char *) "AccessPointNotFound" },
+    { StatusCodes::BeaconTimeout, (char *) "BeaconTimeout" },
+    { StatusCodes::AuthenticationFailed, (char *) "AuthenticationFailed" },
+    { StatusCodes::AssociationFailed, (char *) "AssociationFailed" },
+    { StatusCodes::HandshakeTimeout, (char *) "HandshakeTimeout" },
+    { StatusCodes::ConnectionFailed, (char *) "ConnectionFailed" },
+    { StatusCodes::ApTsfReset, (char *) "ApTsfReset" },
+    { StatusCodes::UnmappedErrorCode, (char *) "UnmappedErrorCode" },
+    { StatusCodes::UnknownConfigurationItem, (char *) "UnknownConfigurationItem" }
+};
+
+/**
+ *  @brief Map of the message types to their string representations.
+ */
+Mapping::str_mapping_t Mapping::_messageTypeNames[] =
+{
+    { MessageTypes::Ack, (char *) "Ack" },
+    { MessageTypes::Nak, (char *) "Nak" },
+    { MessageTypes::Reset, (char *) "Reset" },
+    { MessageTypes::Event, (char *) "Event" },
+    { MessageTypes::Response, (char *) "Response" },
+    { MessageTypes::Transport, (char *) "Transport" },
+    { MessageTypes::Header, (char *) "Header" },
+    { MessageTypes::Data, (char *) "Data" }
+};
+
+/**
+ *  @brief Map if the interface IDs to their names.
+ */
+Mapping::str_mapping_t Mapping::_interfaceNames[] =
+{
+    { Esp32Interfaces::WiFi, (char *) "WiFi" },
+    { Esp32Interfaces::BlueTooth, (char *) "Bluetooth" },
+    { Esp32Interfaces::MeshNetwork, (char *) "MeshNetwork" },
+    { Esp32Interfaces::System, (char *) "System" },
+    { Esp32Interfaces::Transport, (char *) "Transport" }
+};
+
+/**
+ *  @brief Map of the system function IDs to their names.
+ */
+Mapping::str_mapping_t Mapping::_systemFunctionNames[] =
+{
+    { SystemFunction::GetConfiguration, (char *) "GetConfiguration" },
+    { SystemFunction::SetConfigurationItem, (char *) "SetConfigurationItem" },
+    { SystemFunction::DeepSleep, (char *) "DeepSleep" },
+    { SystemFunction::GetBatteryChargeLevel, (char *) "GetBatteryChargeLevel" },
+    { SystemFunction::StartHeapTrace, (char *) "StartHeapTrace" },
+    { SystemFunction::StopHeapTrace, (char *) "StopHeapTrace" }
+};
+
+/**
+ *  @brief Map of the bluetooth function IDs to their names.
+ */
+Mapping::str_mapping_t Mapping::_bluetoothFunctionNames[] =
+{
+    { BluetoothFunction::Start, (char *) "Start" },
+    { BluetoothFunction::Stop, (char *) "Stop" }
+};
+
+/**
+ *  @brief Map of the transport function IDs to their names.
+ */
+Mapping::str_mapping_t Mapping::_transportFunctionNames[] =
+{
+    { TransportFunction::ResponseReady, (char *) "ResponseReady" },
+    { TransportFunction::SendResponse, (char *) "SendResponse" },
+    { TransportFunction::KillNuttxThread, (char *) "KillNuttxThread" },
+    { TransportFunction::ResetEsp32, (char *) "ResetEsp32" }
+};
+
+/**
+ *  @brief Map of the WiFi function ID to their names.
+ */
+Mapping::str_mapping_t Mapping::_wifiFunctionNames[] =
+{
+    { WiFiFunction::StartWiFiInterface, (char *) "StartWiFiInterface" },
+    { WiFiFunction::StopWiFiInterface, (char *) "StopWiFiInterface" },
+    { WiFiFunction::ConnectToAccessPoint, (char *) "ConnectToAccessPoint" },
+    { WiFiFunction::ConnectToDefaultAccessPoint, (char *) "ConnectToDefaultAccessPoint" },
+    { WiFiFunction::DisconnectFromAccessPoint, (char *) "DisconnectFromAccessPoint" },
+    { WiFiFunction::GetAccessPoints, (char *) "GetAccessPoints" },
+    { WiFiFunction::GetAddrInfo, (char *) "GetAddrInfo" },
+    { WiFiFunction::Socket, (char *) "Socket" },
+    { WiFiFunction::Connect, (char *) "Connect" },
+    { WiFiFunction::Write, (char *) "Write" },
+    { WiFiFunction::SetSockOpt, (char *) "SetSockOpt" },
+    { WiFiFunction::Read, (char *) "Read" },
+    { WiFiFunction::Close, (char *) "Close" },
+    { WiFiFunction::SendTo, (char *) "SendTo" },
+    { WiFiFunction::RecvFrom, (char *) "RecvFrom" },
+    { WiFiFunction::Poll, (char *) "Poll" },
+    { WiFiFunction::InterruptPollResponse, (char *) "InterruptPollResponse" },
+    { WiFiFunction::Send, (char *) "Send" },
+    { WiFiFunction::Bind, (char *) "Bind" },
+    { WiFiFunction::Listen, (char *) "Listen" },
+    { WiFiFunction::Accept, (char *) "Accept" },
+    { WiFiFunction::Ioctl, (char *) "Ioctl" },
+    { WiFiFunction::GetSockName, (char *) "GetSockName" },
+    { WiFiFunction::GetPeerName, (char *) "GetPeerName" },
+    { WiFiFunction::SetTimeOfDayEvent, (char *) "SetTimeOfDayEvent" },
+    { WiFiFunction::StartWiFiInterfaceEvent, (char *) "StartWiFiInterfaceEvent" },
+    { WiFiFunction::StopWiFiInterfaceEvent, (char *) "StopWiFiInterfaceEvent" },
+    { WiFiFunction::ConnectToAccessPointEvent, (char *) "ConnectToAccessPointEvent" },
+    { WiFiFunction::DisconnectFromAccessPointEvent, (char *) "DisconnectFromAccessPointEvent" },
+    { WiFiFunction::SetAntenna, (char *) "SetAntenna" }
+};
+
 /*
  * ---------------------------------------------------------------------------
  *
@@ -556,7 +698,6 @@ int32_t Mapping::GetEspValue(Mapping::MappingTable mapping, int32_t value, int8_
     return(GetValue(mapping, Mapping::StmToEsp, value, result));
 }
 
-
 /**
  *  @brief Get the ESP constant given the value of the STM constant.
  *
@@ -679,4 +820,69 @@ StatusCodes::StatusCodes Mapping::GetStatusCode(esp_err_t error)
         result = (int32_t) StatusCodes::UnmappedErrorCode;
     }
     return((StatusCodes::StatusCodes) result);
+}
+
+/**
+ *  @brief Get the string value represented by the key.
+ * 
+ *  @param mapping
+ *      Table to use for the translation.
+ * 
+ *  @param key
+ *      Value to look up.
+ * 
+ *  @returns
+ *      String representing the specified value, NULL if the value
+ *      could not be found.
+ */
+char * Mapping::GetStringValue(Mapping::StringMappingTable mapping, int32_t key)
+{
+    str_mapping_t *table = NULL;
+    size_t size = 0;
+    char *result = (char *) _unknown;
+    switch (mapping)
+    {
+        case StringMappingTable::StatusCodes:
+            table = _statusCodes;
+            size = sizeof(_statusCodes) / sizeof(str_mapping_t);
+            break;
+        case StringMappingTable::MessageTypes:
+            table = _messageTypeNames;
+            size = sizeof(_messageTypeNames) / sizeof(str_mapping_t);
+            break;
+        case StringMappingTable::Interfaces:
+            table = _interfaceNames;
+            size = sizeof(_interfaceNames) / sizeof(str_mapping_t);
+            break;
+        case StringMappingTable::BluetoothFunctions:
+            table = _bluetoothFunctionNames;
+            size = sizeof(_bluetoothFunctionNames) / sizeof(str_mapping_t);
+            break;
+        case StringMappingTable::SystemFunctions:
+            table = _systemFunctionNames;
+            size = sizeof(_systemFunctionNames) / sizeof(str_mapping_t);
+            break;
+        case StringMappingTable::TransportFunctions:
+            table = _transportFunctionNames;
+            size = sizeof(_transportFunctionNames) / sizeof(str_mapping_t);
+            break;
+        case StringMappingTable::WiFiFunctions:
+            table = _wifiFunctionNames;
+            size = sizeof(_wifiFunctionNames) / sizeof(str_mapping_t);
+            break;
+    }
+
+    if (table != NULL)
+    {
+        for (int index = 0; index < size; index++)
+        {
+            if (key == table[index].key)
+            {
+                result = table[index].value;
+                break;
+            }
+        }
+    }
+
+    return(result);
 }
