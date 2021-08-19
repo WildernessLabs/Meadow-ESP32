@@ -1503,8 +1503,8 @@ bool WiFiRequestHandler::IsConnected()
 StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const char *ssid, const char *password)
 {
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    EventBits_t bits = xEventGroupGetBits(_xWiFiEventGroup);
 
+    EventBits_t bits = xEventGroupGetBits(_xWiFiEventGroup);
     if (bits & WIFI_CONNECTED_BIT)
     {
         return(StatusCodes::WiFiAlreadyStarted);
@@ -1589,7 +1589,8 @@ StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const char *ss
             }
             else
             {
-                result = StatusCodes::Timeout;
+                int32_t found;
+                result = (StatusCodes::StatusCodes) Mapping::GetStmValue(Mapping::EspErrorCodes, (int32_t) _lastIdfErrorCode, &found);
             }
         }
     }
@@ -1614,6 +1615,8 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
     message->DeletePayload();
 
     result = ConnectToAccessPoint(credentials->NetworkName, credentials->Password);
+    vPortFree(credentials);
+
     Esp32Messaging::ConnectEventData data = { };
 
     if (result == StatusCodes::CompletedOk)
@@ -1632,8 +1635,6 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
     message->PayloadLength = Encoders::EncodedConnectEventDataBufferSize(&data);
     message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
     Encoders::EncodeConnectEventData(&data, message->Payload);
-
-    vPortFree(credentials);
 
     message->MessageType = MessageTypes::Response;
     message->StatusCode = result;
@@ -1740,6 +1741,10 @@ esp_err_t WiFiRequestHandler::StartWiFiInterface()
         if (result == ESP_OK)
         {
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTED_BIT);
+        }
+        else
+        {
+            xEventGroupSetBits(_xWiFiEventGroup, WIFI_ERROR_BIT);
         }
         xEventGroupClearBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTING_BIT);
     }
@@ -3153,10 +3158,6 @@ void WiFiRequestHandler::StationStartedEvent()
 {
     TRACE_MESSAGE("StationStartedEvent: Enter");
     _lastIdfErrorCode = tcpip_adapter_set_hostname(TCPIP_ADAPTER_IF_STA, SystemRequestHandler::GetDeviceName());
-    // if (_lastIdfErrorCode == ESP_OK)
-    // {
-    //     _lastIdfErrorCode = esp_wifi_connect();
-    // }
     if (_lastIdfErrorCode != ESP_OK)
     {
         xEventGroupClearBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTED_BIT | WIFI_INTERFACE_STARTING_BIT | WIFI_CONNECTING_BIT | WIFI_RECONNECTING_BIT);
