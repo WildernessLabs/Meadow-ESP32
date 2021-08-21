@@ -153,10 +153,9 @@ private:
     static const int WIFI_RECONNECTING_BIT = BIT3;
 
     /**
-     *  @brief When set, this indicates that the system has lost the WiFi connection
-     *  and is actively trying to re-establish the connection.
+     *  @brief Indicate if an explicit disconnect has been requested.
      */
-    static const int WIFI_DISCONNECTING_BIT = BIT4;
+    static const int WIFI_DISCONNECT_REQUESTED_BIT = BIT4;
 
     /**
      *  @brief Indicate if the WiFi system has been initialised OK.
@@ -179,14 +178,9 @@ private:
     static const int WIFI_SCAN_COMPLETE_BIT = BIT8;
 
     /**
-     *  @brief Indicate if an explicit disconnect has been requested.
-     */
-    static const int WIFI_DISCONNECT_REQUESTED_BIT = BIT9;
-
-    /**
      *  @brief Indicate a reset of the WiFi interface has been requested.
      */
-    static const int WIFI_RESET_BIT = BIT10;
+    static const int WIFI_RESET_BIT = BIT9;
 
     /**
      *  @brief Indicate that some sort of error has occurred.

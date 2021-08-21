@@ -337,7 +337,7 @@ WiFiRequestHandler::~WiFiRequestHandler()
  */
 uint32_t WiFiRequestHandler::GetMaximumRetryCount()
 {
-    return(_maximumRetryCount);
+    return(_maximumRetryCount == 0 ? 3 : _maximumRetryCount);
 }
 
 /**
@@ -1314,20 +1314,37 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
 StatusCodes::StatusCodes WiFiRequestHandler::StopWiFIAdapter()
 {
     TRACE_MESSAGE("StopWiFIAdapter(): Enter");
-    StatusCodes::StatusCodes sc = StatusCodes::CompletedOk;
 
-    if (esp_wifi_stop() == ESP_OK)
+    esp_err_t result = esp_wifi_stop();
+
+    //
+    //  Strictly speaking we do not need to unregister the event handlers as registering
+    //  the handlers again will overwrite the previous handlers.
+    //
+    if (result == ESP_OK)
     {
-        xEventGroupClearBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTED_BIT | WIFI_INTERFACE_STARTING_BIT);
+        result = esp_event_handler_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, &WiFiRequestHandler::EventHandler);
     }
-    else
+
+    if (result == ESP_OK)
+    {
+        result = esp_event_handler_unregister(IP_EVENT, ESP_EVENT_ANY_ID, &WiFiRequestHandler::EventHandler);
+    }
+
+    if (result == ESP_OK)
+    {
+        result = esp_wifi_deinit();
+    }
+
+    if (result != ESP_OK)
     {
         xEventGroupSetBits(_xWiFiEventGroup, WIFI_ERROR_BIT);
-        sc = StatusCodes::Failure;
     }
 
-    TRACE_MESSAGE("StopWiFIAdapter(): Exit");
-    return(sc);
+    xEventGroupClearBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTED_BIT | WIFI_INTERFACE_STARTING_BIT);    if (result != ESP_OK)
+
+    TRACE_MESSAGE("StopWiFIAdapter(): Exit, ESP error code %d (%s)", result, esp_err_to_name(result));
+    return(Mapping::GetStatusCode(result));
 }
 
 /**
@@ -1412,6 +1429,8 @@ void WiFiRequestHandler::DisconnectFromAccessPoint(Message *message)
 {
     TRACE_MESSAGE("DisconnectFromAccessPoint(Message): Enter");
 
+    xEventGroupSetBits(_xWiFiEventGroup, WIFI_DISCONNECT_REQUESTED_BIT);
+
     StatusCodes::StatusCodes sc = StatusCodes::CompletedOk;
     if (IsConnected())
     {
@@ -1438,6 +1457,8 @@ void WiFiRequestHandler::DisconnectFromAccessPoint(Message *message)
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
 
     RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::DisconnectFromAccessPointEvent, sc);
+
+    xEventGroupClearBits(_xWiFiEventGroup, WIFI_DISCONNECT_REQUESTED_BIT);
 
     TRACE_MESSAGE("DisconnectFromAccessPoint(Message): Exit");
 }
@@ -3242,50 +3263,44 @@ void WiFiRequestHandler::StationDisconnectedEvent(wifi_event_sta_disconnected_t 
 {
     TRACE_MESSAGE("StationDisconnectedEvent: Enter");
 
-    EventBits_t bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_RECONNECTING_BIT | WIFI_CONNECTED_BIT, pdFALSE, pdFALSE, 0);
-    if ((bits | WIFI_CONNECTED_BIT) || (bits | WIFI_RECONNECTING_BIT))
+    EventBits_t bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_RECONNECTING_BIT | WIFI_CONNECTED_BIT | WIFI_CONNECTING_BIT, pdFALSE, pdFALSE, 0);
+    if (bits & WIFI_DISCONNECT_REQUESTED_BIT)
     {
-        if (bits | WIFI_RECONNECTING_BIT)
-        {
-            TRACE_MESSAGE("Reconnecting bit set.");
-        }
-        if (bits | WIFI_CONNECTED_BIT)
-        {
-            TRACE_MESSAGE("Connected bit set.");
-        }
+        return;
+    }
 
-        //
-        //  We can sometimes get a disconnect event when starting the adapter or when incorrect WiFi credentials 
-        //  have been supplied.  We should only get here if a connection was lost or a connection is being attempted.
-        //
-        // xEventGroupClearBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT | WIFI_CONNECTED_BIT | WIFI_CONNECTING_BIT);
-
-        //
-        //  Work on reconnecting needed here.
-        //
-        xEventGroupClearBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT | WIFI_CONNECTING_BIT);
-        bool reallyDisconnect = true;
-        if (_automaticReconnect)
+    uint32_t maximumRetryCount = GetMaximumRetryCount();
+    if (bits & (WIFI_CONNECTED_BIT | WIFI_RECONNECTING_BIT | WIFI_CONNECTING_BIT))
+    {
+        bool raiseEvent = true;
+        if (bits & (WIFI_CONNECTED_BIT | WIFI_RECONNECTING_BIT))
         {
-            if (_currentRetryCount < _maximumRetryCount)
+            xEventGroupClearBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT);
+            if (_automaticReconnect && (_currentRetryCount < maximumRetryCount))
             {
                 xEventGroupSetBits(_xWiFiEventGroup, WIFI_RECONNECTING_BIT);
                 esp_wifi_connect();
                 _currentRetryCount++;
-                reallyDisconnect = false;
+                raiseEvent = false;
             }
         }
-        if (reallyDisconnect)
+        else
+        {
+            if (_currentRetryCount < maximumRetryCount)
+            {
+                esp_wifi_connect();
+                _currentRetryCount++;
+                raiseEvent = false;
+            }
+        }
+        if (raiseEvent)
         {
             ClearIpAndDisconnectData();
             bzero((void *) &_apInformation, sizeof(wifi_event_sta_connected_t));
             RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::DisconnectFromAccessPointEvent);
+            xEventGroupClearBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT | WIFI_RECONNECTING_BIT | WIFI_CONNECTING_BIT);
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_ERROR_BIT);
         }
-    }
-    else
-    {
-        TRACE_MESSAGE("StationDisconnectedEvent: Not connected / connecting, ignoring event.");
     }
 
     TRACE_MESSAGE("StationDisconnectedEvent: Exit");
