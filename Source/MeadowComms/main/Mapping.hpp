@@ -30,10 +30,16 @@ class Mapping
 {
 public:
     /**
-     *  @brief Type of mapping toable to be used.
+     *  @brief Type of mapping table to be used.
      */
     enum MappingTable { AddressFamily, SocketOptions, ProtocolFamilies, SocketTypes, SocketLevel, Errno, MessageFlags, PollEvents,
                         SocketShutdownType, EspErrorCodes, NetworkAuthenticationType };
+
+    /**
+     *  @brief String mapping tables.
+     */
+    enum StringMappingTable { StatusCodes, MessageTypes, Interfaces, WiFiFunctions, SystemFunctions, BluetoothFunctions,
+                              TransportFunctions };
 
 private:
     /**
@@ -50,6 +56,16 @@ private:
         int32_t esp;
     };
     typedef struct int_mapping_s int_mapping_t;
+
+    /**
+     *  @brief Hold an integer key and the string value representing the key.
+     */
+    struct str_mapping_s
+    {
+        int32_t key;
+        char *value;
+    };
+    typedef struct str_mapping_s str_mapping_t;
 
     /**
      *  @brief Table of address families (AF_ constants).
@@ -105,6 +121,41 @@ private:
      *  @brief Table of he ESP32 network authentication types mapping to the NetworkAuthenticationType enum.
      */
     static int_mapping_t _networkAuthenticationType[];
+
+    /**
+     *  @brief Table of the strings representing the StatusCodes.
+     */
+    static str_mapping_t _statusCodes[];
+
+    /**
+     *  @brief Message type mappings.
+     */
+    static str_mapping_t _messageTypeNames[];
+
+    /**
+     *  @brief Interface name mappings.
+     */
+    static str_mapping_t _interfaceNames[];
+
+    /**
+     *  @brief WiFi function mappings.
+     */
+    static str_mapping_t _wifiFunctionNames[];
+
+    /**
+     *  @brief System function mappings.
+     */
+    static str_mapping_t _systemFunctionNames[];
+
+    /**
+     *  @brief Bluetooth function mappings.
+     */
+    static str_mapping_t _bluetoothFunctionNames[];
+
+    /**
+     *  @brief Transport function mappings.
+     */
+    static str_mapping_t _transportFunctionNames[];
 
     /**
      *  @brief Get the mapped flags using the MappingDirection to determine which
@@ -164,6 +215,11 @@ public:
      *  @brief Get the integer STM32 value equivalent to the specified ESP32 value.
      */
     static int32_t GetStmFlagValue(Mapping::MappingTable mapping, int32_t value, int32_t *result);
+
+    /**
+     *  @brief Get the string value for the given key.
+     */
+    static char *GetStringValue(Mapping::StringMappingTable mapping, int32_t key);
 
     /**
      *  @brief Map the ESP error codes to a StatusCode value.

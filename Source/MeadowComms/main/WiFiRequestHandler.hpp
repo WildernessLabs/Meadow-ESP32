@@ -153,10 +153,9 @@ private:
     static const int WIFI_RECONNECTING_BIT = BIT3;
 
     /**
-     *  @brief When set, this indicates that the system has lost the WiFi connection
-     *  and is actively trying to re-establish the connection.
+     *  @brief Indicate if an explicit disconnect has been requested.
      */
-    static const int WIFI_DISCONNECTING_BIT = BIT4;
+    static const int WIFI_DISCONNECT_REQUESTED_BIT = BIT4;
 
     /**
      *  @brief Indicate if the WiFi system has been initialised OK.
@@ -169,14 +168,19 @@ private:
     static const int WIFI_INTERFACE_STARTED_BIT = BIT6;
 
     /**
-     *  @brief Indicate if the scan for access points has completed.
+     *  @brief Indicate if the a request to stop the WiFi interface has been made.
      */
-    static const int WIFI_SCAN_COMPLETE_BIT = BIT7;
+    static const int WIFI_INTERFACE_STOP_REQUESTED_BIT = BIT7;
 
     /**
-     *  @brief Indicate that the WiFi station has started successfully.
+     *  @brief Indicate if the scan for access points has completed.
      */
-    static const int WIFI_STATION_STARTED_BIT = BIT8;
+    static const int WIFI_SCAN_COMPLETE_BIT = BIT8;
+
+    /**
+     *  @brief Indicate a reset of the WiFi interface has been requested.
+     */
+    static const int WIFI_RESET_BIT = BIT9;
 
     /**
      *  @brief Indicate that some sort of error has occurred.
@@ -228,9 +232,9 @@ private:
     static const gpio_num_t EXTERNAL_ANTENNA_PIN;
 
     /**
-     *  @brief Determine if this class is instantiated already (i.e. this should be a singleton).
+     *  @brief Pointer to the single instance of the WiFiRequestHandler.
      */
-    static bool _instantiated;
+    static WiFiRequestHandler *_instance;
 
     /**
      *  @brief Event group containing 24-bits used to indicate the state of the WiFi connection.
@@ -481,6 +485,11 @@ private:
      *  This method is used with the list of poll requests.
      */
     static bool ComparePollRequestMessageIds(uint32_t messageId, PollRequestInformation *request);
+
+    /**
+     *  @brief Clear the _ipInformation and _disconnectData structures.
+     */
+    static void ClearIpAndDisconnectData();
 
     /**
      *  Process the request from the managed code to change the antenna.

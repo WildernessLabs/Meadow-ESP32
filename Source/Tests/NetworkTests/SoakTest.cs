@@ -27,7 +27,7 @@ namespace MeadowApp
             Device.InitWiFiAdapter().Wait();
         }
         
-        public async void RunTest(int iterations)
+        public async Task RunTest(int iterations)
         {
             Console.WriteLine($"Connecting to WiFi Network {Secrets.WIFI_NAME}");
             var connectionResult = await Device.WiFiAdapter.Connect(Secrets.WIFI_NAME, Secrets.WIFI_PASSWORD);
@@ -44,7 +44,8 @@ namespace MeadowApp
                 {
                     count++;
                     Console.WriteLine($"Current request: {count}");
-                    HttpResponseMessage response = await client.GetAsync($"http://{Secrets.LOCAL_WEB_SERVER_NAME}/SimplePage.html");
+                    HttpResponseMessage response = await client.GetAsync($"http://www.google.com");
+                    //HttpResponseMessage response = await client.GetAsync($"http://{Secrets.LOCAL_WEB_SERVER_NAME}/SimplePage.html");
                     try
                     {
                         response.EnsureSuccessStatusCode();
@@ -63,7 +64,6 @@ namespace MeadowApp
                     }
                 }
             }
-            Console.WriteLine("Tests complete.");
         }
     }
 }
