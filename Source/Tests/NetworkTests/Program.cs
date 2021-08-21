@@ -18,15 +18,15 @@ namespace MeadowApp
             // OutOfMemoryTest app = new OutOfMemoryTest();
             // app.RunAsync().Wait();
 
-            DisconnectTest app = new DisconnectTest();
-            app.RunTest().Wait();
+            //DisconnectTest app = new DisconnectTest();
+            //app.RunTest().Wait();
 
             //SoakTest app = new SoakTest();
             //app.RunTest(10).Wait();
 
-            //WiFiInterfaceControl app = new WiFiInterfaceControl();
+            WiFiInterfaceControl app = new WiFiInterfaceControl();
             //app.RunTest();
-            //app.RunAsyncTest().Wait();
+            app.RunAsyncTest().Wait();
 
             Console.WriteLine("Test complete.");
             Thread.Sleep(Timeout.Infinite);
