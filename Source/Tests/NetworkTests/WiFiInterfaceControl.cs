@@ -13,6 +13,7 @@ namespace MeadowApp
     {
         public WiFiInterfaceControl()
         {
+            Console.WriteLine("WiFiInterfaceControl Test");
             if (!Device.InitWiFiAdapter().Result)
             {
                 throw new Exception("Could not initialise the WiFi adapter.");
@@ -24,6 +25,7 @@ namespace MeadowApp
             Device.WiFiAdapter.WiFiInterfaceStarted += WiFiAdapter_WiFiInterfaceStarted;
             Device.WiFiAdapter.WiFiInterfaceStopped += WiFiAdapter_WiFiInterfaceStopped;
             Device.WiFiAdapter.WiFiConnected += WiFiAdapter_WiFiConnected;
+            Device.WiFiAdapter.WiFiDisconnected += WiFiAdapter_WiFiDisconnected;
 
             Console.WriteLine("Starting WiFi interface.");
             if (Device.WiFiAdapter.StartWiFiInterface())
@@ -51,6 +53,7 @@ namespace MeadowApp
             Device.WiFiAdapter.WiFiInterfaceStarted += WiFiAdapter_WiFiInterfaceStarted;
             Device.WiFiAdapter.WiFiInterfaceStopped += WiFiAdapter_WiFiInterfaceStopped;
             Device.WiFiAdapter.WiFiConnected += WiFiAdapter_WiFiConnected;
+            Device.WiFiAdapter.WiFiDisconnected += WiFiAdapter_WiFiDisconnected;
 
             var connectionResult = await Device.WiFiAdapter.Connect(Secrets.WIFI_NAME, Secrets.WIFI_PASSWORD);
             Console.WriteLine($"Connect to access point result: {connectionResult.ConnectionStatus}");
@@ -58,6 +61,12 @@ namespace MeadowApp
             {
                 throw new Exception($"Cannot connect to network: {connectionResult.ConnectionStatus}");
             }
+        }
+
+        private void WiFiAdapter_WiFiDisconnected(object sender, EventArgs e)
+        {
+            WiFiDisconnectEventArgs ea = (WiFiDisconnectEventArgs) e;
+            Console.WriteLine($"WiFiDisconnected event raised at {ea.When.ToString("HH:mm:ss")}, status code: {ea.StatusCode}");
         }
 
         private void WiFiAdapter_WiFiConnected(object sender, EventArgs e)

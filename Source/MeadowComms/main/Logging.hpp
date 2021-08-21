@@ -21,6 +21,8 @@
 #include <stdlib.h>
 #include "Gpio.hpp"
 
+#include "SharedEnums.hpp"
+
 #if defined(CONFIG_HEAP_TRACING_STANDALONE)
 
 #include "esp_heap_trace.h"
@@ -221,6 +223,11 @@ public:
      *  @brief Process the request to output an error message to the logging system
      */
     static void Error(char *methodName, char *formatString, ...);
+
+    /**
+     *  @brief Translate the ESP-IDF error codes into StatusCodes.
+     */
+    static StatusCodes::StatusCodes TranslateEspErrorCode(esp_err_t);
 
     /**
      *  @brief Convert a message type into a meaningful string.
