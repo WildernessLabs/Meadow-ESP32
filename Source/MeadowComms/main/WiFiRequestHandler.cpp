@@ -1341,7 +1341,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::StopWiFIAdapter()
         xEventGroupSetBits(_xWiFiEventGroup, WIFI_ERROR_BIT);
     }
 
-    xEventGroupClearBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTED_BIT | WIFI_INTERFACE_STARTING_BIT);    if (result != ESP_OK)
+    xEventGroupClearBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTED_BIT | WIFI_INTERFACE_STARTING_BIT);
 
     TRACE_MESSAGE("StopWiFIAdapter(): Exit, ESP error code %d (%s)", result, esp_err_to_name(result));
     return(Mapping::GetStatusCode(result));
