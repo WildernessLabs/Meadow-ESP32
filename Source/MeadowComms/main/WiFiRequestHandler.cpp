@@ -1671,9 +1671,6 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
     }
 
     TRACE_MESSAGE("ConnectToAccessPoint: Exit");
-
-    // Logging::StandaloneHeapTracingStart();
-
 }
 
 /**
@@ -1690,18 +1687,22 @@ void WiFiRequestHandler::ConnectToDefaultAccessPoint(Message *message)
     TRACE_MESSAGE("ConnectToDefaultAccessPoint: Enter");
     StatusCodes::StatusCodes result = StatusCodes::WiFiDisconnected;
 
-    message->DeleteMessage(message);
-
     char *access_point = GetDefaultAccessPoint();
-    if (GetAutomaticallyStartNetwork() && (access_point != NULL))
+    if (access_point != NULL)
     {
         result = ConnectToAccessPoint(access_point, GetPassword());
     }
     else
     {
-        result = StatusCodes::WiFiDisconnected;
+        result = StatusCodes::DefaultAccessPointNotConfigured;
     }
 
+    message->MessageType = MessageTypes::Response;
+    message->StatusCode = result;
+
+    Logging::DumpMessage(COMPONENT_NAME, message);
+
+    _messageDispatcher->QueueMessageForStm32(message);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
 
     RaiseConnectToAccessPointEvent(result);
