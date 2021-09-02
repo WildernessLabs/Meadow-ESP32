@@ -91,6 +91,16 @@ private:
     void GetBatteryChargeLevel(Message *);
 
     /**
+     *  @brief Start heap tracing.
+     */
+    static void StartHeapTrace(Message *);
+
+    /**
+     *  @brief Stop heap tracing.
+     */
+    void StopHeapTrace(Message *);
+
+    /**
      *  @brief Populate the configuration object with the current configuration.
      */
     static void PopulateConfiguration(Esp32Messaging::SystemConfiguration *);
