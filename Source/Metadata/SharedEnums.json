@@ -9,7 +9,7 @@
             "EnumNames": [ 
                 "CompletedOk", "CrcError", "Restart", "Failure", "InvalidInterface", "QueueError", "Timeout",
                 "InvalidPacket", "InvalidHeader", "UnexpectedData", "MissingEndOfFrameMarker", "HeaderBodyFieldMismatch",
-                "WiFiAlreadyStarted", "InvalidWiFiCredentials", "WiFiDisconnected", "CannotStartNetworkInterface", "CannotConnectToAccessPoint",
+                "WiFiAlreadyStarted", "InvalidWiFiCredentials", "WiFiDisconnected", "CannotStartNetworkInterface", "CannotConnectToAccessPoint", "DefaultAccessPointNotConfigured",
                 "InvalidAntennaData", "InvalidAntennaValue",
                 "NoMessagesWaiting", "CoprocessorNotResponding",
                 "EspWiFiNotStarted", "EspOutOfMemory", "EspWiFiInvalidSsid", "AccessPointNotFound", "BeaconTimeout", "AuthenticationFailed",
