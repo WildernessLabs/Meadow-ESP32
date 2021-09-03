@@ -544,6 +544,11 @@ private:
     void ConnectToDefaultAccessPoint(Message *message);
 
     /**
+     *  @brief Process the result of the connect to access point request.
+     */
+    void ProcessConnectionResult(Message *, StatusCodes::StatusCodes, bool);
+
+    /**
      *  @brief Start the network interface ready for the device to be configured
      *  as either an access point (softAP) or as a network device (station).
      */
