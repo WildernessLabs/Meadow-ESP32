@@ -743,12 +743,18 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetDefaultGateway(uint32_t value)
  */
 void WiFiRequestHandler::GetMacAddress(uint8_t *macAddress, esp_interface_t interface)
 {
-    if (esp_wifi_get_mac(interface, macAddress) != ESP_OK)
+    if (interface == WIFI_IF_STA)
     {
-        for (int index = 0; index < 6; index++)
+        if (esp_efuse_mac_get_default(macAddress) != ESP_OK)
         {
-            *macAddress = 0;
-            macAddress++;
+            bzero(macAddress, 6);
+        }
+    }
+    else
+    {
+        if (esp_wifi_get_mac(WIFI_IF_AP, macAddress) != ESP_OK)
+        {
+            bzero(macAddress, 6);
         }
     }
 }
@@ -1622,8 +1628,6 @@ StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const char *ss
 /**
  *  @brief Connect to a specified access point.
  *
- *  Note: Contains HEAPCODE for heap tracing / debugging.
- *
  *  @param message
  *      Message containing the encoded request.
  */
@@ -1659,7 +1663,6 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
 
     message->MessageType = MessageTypes::Response;
     message->StatusCode = result;
-
     Logging::DumpMessage(COMPONENT_NAME, message);
 
     _messageDispatcher->QueueMessageForStm32(message);
@@ -1685,27 +1688,20 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
 void WiFiRequestHandler::ConnectToDefaultAccessPoint(Message *message)
 {
     TRACE_MESSAGE("ConnectToDefaultAccessPoint: Enter");
-    StatusCodes::StatusCodes result = StatusCodes::WiFiDisconnected;
+    StatusCodes::StatusCodes result = StatusCodes::DefaultAccessPointNotConfigured;
 
     char *access_point = GetDefaultAccessPoint();
     if (access_point != NULL)
     {
         result = ConnectToAccessPoint(access_point, GetPassword());
     }
-    else
-    {
-        result = StatusCodes::DefaultAccessPointNotConfigured;
-    }
 
-    message->MessageType = MessageTypes::Response;
-    message->StatusCode = result;
-
-    Logging::DumpMessage(COMPONENT_NAME, message);
-
-    _messageDispatcher->QueueMessageForStm32(message);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
 
-    RaiseConnectToAccessPointEvent(result);
+    if (result == StatusCodes::CompletedOk)
+    {
+        RaiseConnectToAccessPointEvent(result);
+    }
 
     TRACE_MESSAGE("ConnectToDefaultAccessPoint: Exit");
 }
