@@ -976,7 +976,6 @@ spi_slave_transaction_t *SpiTransportProvider::OutboundMessageBodyAcknowledgemen
     TRACE_MESSAGE("OutboundMessageBodyAcknowledgementReceived: Enter");
     Message *incomingMessage = Encoders::ExtractMessage(static_cast<uint8_t *>(transaction->rx_buffer), _headerFrameSize, true);
     DeleteTransaction(transaction);
-    // bool dumpData = false;
     if (incomingMessage)
     {
         if (incomingMessage->MessageType == MessageTypes::Ack)
@@ -986,13 +985,6 @@ spi_slave_transaction_t *SpiTransportProvider::OutboundMessageBodyAcknowledgemen
             Logging::AddPerformanceCounterEntry(Logging::MessageSummary(_outboundMessage), _outboundMessage->PerformanceLoggingStart, performance_logging_end);
             #endif
 
-            // if (_outboundMessage->Interface == Esp32Interfaces::WiFi)
-            // {
-            //     if (_outboundMessage->Function == WiFiFunction::Close)
-            //     {
-            //         dumpData = true;
-            //     }
-            // }
             Message::DeleteMessage(_outboundMessage);
         }
         else
@@ -1007,11 +999,6 @@ spi_slave_transaction_t *SpiTransportProvider::OutboundMessageBodyAcknowledgemen
     Message::DeleteMessage(incomingMessage);
     _currentState = WaitingForInboundMessageHeader;
     _outboundMessage = nullptr;
-
-    // if (dumpData)
-    // {
-    //     Logging::DumpStandaloneHeapTraceData();
-    // }
 
     TRACE_MESSAGE("OutboundMessageBodyAcknowledgementReceived: Exit");
     return(CreateSpiHeaderTransaction());
@@ -1148,7 +1135,7 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessMessages(spi_slave_transac
     uint32_t notificationBits = 0;
 
     TRACE_MESSAGE("ProcessMessages: Waiting for notification, current state: %s", SpiStateString(_currentState));
-    int dataSize = transaction->length / 8;
+    int __attribute__((unused)) dataSize = transaction->length / 8;
     TRACE_MESSAGE("ProcessMessages: Sending %d bytes.", dataSize);
     TRACE_HEX_BUFFER(transaction->tx_buffer, dataSize);
     ESP_ERROR_CHECK(spi_slave_queue_trans(VSPI_HOST, transaction, portMAX_DELAY));

@@ -413,7 +413,10 @@ Mapping::str_mapping_t Mapping::_systemFunctionNames[] =
 Mapping::str_mapping_t Mapping::_bluetoothFunctionNames[] =
 {
     { BluetoothFunction::Start, (char *) "Start" },
-    { BluetoothFunction::Stop, (char *) "Stop" }
+    { BluetoothFunction::Stop, (char *) "Stop" },
+    { BluetoothFunction::GetHandles, (char *) "GetHandles" },
+    { BluetoothFunction::ServerDataSet, (char *) "ServerDataSet" },
+    { BluetoothFunction::ClientWriteRequestEvent, (char *) "ClientWriteRequestEvent" }
 };
 
 /**
