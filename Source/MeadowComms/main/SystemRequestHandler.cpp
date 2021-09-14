@@ -443,7 +443,7 @@ void SystemRequestHandler::SendConfigurationAsInterruptMessage()
 {
     TRACE_MESSAGE("SendConfigurationAsInterruptMessage: Enter");
 
-    Esp32Messaging::SystemConfiguration config = {};
+    Esp32Messaging::SystemConfiguration config = { };
     PopulateConfiguration(&config);
 
     Message *message = static_cast<Message *>(pvPortMalloc(sizeof(Message)));
@@ -617,6 +617,39 @@ void SystemRequestHandler::GetBatteryChargeLevel(Message *message)
 }
 
 /**
+ *  @brief Turn heap tracing on.
+ *
+ *  @param request
+ *      Message requesting heap tracing to be turned on.
+ */
+void SystemRequestHandler::StartHeapTrace(Message *message)
+{
+#if defined(CONFIG_HEAP_TRACING_STANDALONE)
+    message->DeleteMessage(message);
+    Logging::StandaloneHeapTracingStart();
+#else
+    ESP_LOGE(COMPONENT_NAME, "Heap tracing cannot start as it is disabled, update menuconfig.");
+#endif
+}
+
+/**
+ *  @brief Turn heap tracing off.
+ *
+ *  @param request
+ *      Message requesting that heap tracing is turned off.
+ */
+void SystemRequestHandler::StopHeapTrace(Message *message)
+{
+#if defined(CONFIG_HEAP_TRACING_STANDALONE)
+    message->DeleteMessage(message);
+    Logging::StandaloneHeapTracingStop();
+    Logging::DumpStandaloneHeapTraceData();
+#else
+    ESP_LOGE(COMPONENT_NAME, "Heap tracing cannot be stopped as it is disabled, update menuconfig.");
+#endif
+}
+
+/**
  *  Dispatch the System request to the appropriate method in the class.
  *
  *  @param request
@@ -637,6 +670,12 @@ void SystemRequestHandler::DispatchRequest(Message *request)
             break;
         case SystemFunction::GetBatteryChargeLevel:
             GetBatteryChargeLevel(request);
+            break;
+        case SystemFunction::StartHeapTrace:
+            StartHeapTrace(request);
+            break;
+        case SystemFunction::StopHeapTrace:
+            StopHeapTrace(request);
             break;
         default:
             TRACE_MESSAGE("DispatchRequest: Unknown System message received, function 0x%x", request->Function);
