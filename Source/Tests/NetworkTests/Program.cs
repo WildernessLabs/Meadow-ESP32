@@ -12,8 +12,8 @@ namespace MeadowApp
             //OauthTest app = new OauthTest();
             //app.RunTest().Wait();
 
-            DeviceInfo app = new DeviceInfo();
-            app.RunTest();
+            // DeviceInfo app = new DeviceInfo();
+            // app.RunTest();
 
             // OutOfMemoryTest app = new OutOfMemoryTest();
             // app.RunAsync().Wait();
@@ -27,6 +27,12 @@ namespace MeadowApp
             //WiFiInterfaceControl app = new WiFiInterfaceControl();
             //app.RunTest();
             //app.RunAsyncTest().Wait();
+
+            // EasySocketTest app = new EasySocketTest();
+            // app.RunTest();
+
+            HttpsTest app = new HttpsTest();
+            app.RunAsyncTest().Wait();
 
             Console.WriteLine("Test complete.");
             Thread.Sleep(Timeout.Infinite);
