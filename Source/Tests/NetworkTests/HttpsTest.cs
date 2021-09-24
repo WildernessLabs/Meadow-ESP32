@@ -45,7 +45,7 @@ namespace MeadowApp
                 await Device.InitWiFiAdapter()
                     .ConfigureAwait(false);
 
-                if (Device.WiFiAdapter == null)./bu
+                if (Device.WiFiAdapter == null)
                     throw new InvalidOperationException("WIFI null");
 
                 // this works with latest OS version (caused connection failure on earlier version)

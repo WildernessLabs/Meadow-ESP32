@@ -31,8 +31,14 @@ namespace MeadowApp
             // EasySocketTest app = new EasySocketTest();
             // app.RunTest();
 
-            HttpsTest app = new HttpsTest();
-            app.RunAsyncTest().Wait();
+            // HttpsTest app = new HttpsTest();
+            // app.RunAsyncTest().Wait();
+
+            // DnsTest app = new DnsTest();
+            // app.RunAsync().Wait();
+
+            NtpTest app = new NtpTest();
+            app.RunAsync().Wait();
 
             Console.WriteLine("Test complete.");
             Thread.Sleep(Timeout.Infinite);
