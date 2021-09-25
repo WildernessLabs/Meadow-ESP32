@@ -2647,7 +2647,7 @@ void WiFiRequestHandler::RecvFrom(void *vpMessage)
 
             if (response.Result < 0)
             {
-                response.ResponseErrno = MapErrno(errno);
+                response.ResponseErrno = errno;
             }
             else
             {
@@ -2688,7 +2688,7 @@ void WiFiRequestHandler::RecvFrom(void *vpMessage)
         }
         else
         {
-            response.ResponseErrno = MapErrno(EFAULT);
+            response.ResponseErrno = EFAULT;
         }
         TRACE_MESSAGE("RecvFrom: Received %d bytes.", response.Result);
         if (response.Buffer && (response.BufferLength > 0))
@@ -2696,6 +2696,10 @@ void WiFiRequestHandler::RecvFrom(void *vpMessage)
             TRACE_HEX_BUFFER(response.Buffer, response.Result);
         }
         TRACE_MESSAGE("RecvFrom: Result: %d, errno: %d - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
+        if (response.ResponseErrno != 0)
+        {
+            response.ResponseErrno = MapErrno(response.ResponseErrno);
+        }
 
         vPortFree(request);
     }
