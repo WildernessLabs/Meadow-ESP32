@@ -89,3 +89,5 @@ Source/.vscode/
 Source/MeadowComms/sdkconfig
 
 *.pdb
+
+__pycache__/
