@@ -12,8 +12,8 @@ namespace MeadowApp
             //OauthTest app = new OauthTest();
             //app.RunTest().Wait();
 
-            // DeviceInfo app = new DeviceInfo();
-            // app.RunTest();
+            DeviceInfo app = new DeviceInfo();
+            app.RunTest();
 
             // OutOfMemoryTest app = new OutOfMemoryTest();
             // app.RunAsync().Wait();
@@ -37,8 +37,8 @@ namespace MeadowApp
             // DnsTest app = new DnsTest();
             // app.RunAsync().Wait();
 
-            NtpTest app = new NtpTest();
-            app.RunAsync().Wait();
+            // NtpTest app = new NtpTest();
+            // app.RunAsync().Wait();
 
             Console.WriteLine("Test complete.");
             Thread.Sleep(Timeout.Infinite);

@@ -31,10 +31,10 @@ namespace MeadowApp
             string time = String.Empty;
             while ((time == String.Empty) || time.StartsWith("01 January 1970"))
             {
-                Thread.Sleep(5000);
                 counter++;
                 time = DateTime.Now.ToString("dd MMMM yyyy HH:mm:ss");
                 Console.WriteLine($"Attempt {counter}, current time: {time}");
+                Thread.Sleep(1000);
             }
         }
     }
