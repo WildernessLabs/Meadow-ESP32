@@ -459,7 +459,6 @@ Mapping::str_mapping_t Mapping::_wifiFunctionNames[] =
     { WiFiFunction::Ioctl, (char *) "Ioctl" },
     { WiFiFunction::GetSockName, (char *) "GetSockName" },
     { WiFiFunction::GetPeerName, (char *) "GetPeerName" },
-    { WiFiFunction::SetTimeOfDayEvent, (char *) "SetTimeOfDayEvent" },
     { WiFiFunction::StartWiFiInterfaceEvent, (char *) "StartWiFiInterfaceEvent" },
     { WiFiFunction::StopWiFiInterfaceEvent, (char *) "StopWiFiInterfaceEvent" },
     { WiFiFunction::ConnectToAccessPointEvent, (char *) "ConnectToAccessPointEvent" },

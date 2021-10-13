@@ -887,18 +887,11 @@ int32_t WiFiRequestHandler::MapErrno(int e)
 void WiFiRequestHandler::NtpServerCallback(struct timeval *tv)
 {
     TRACE_MESSAGE("NtpServerCallback: Enter");
-    settimeofday(tv, NULL);
 
     TRACE_MESSAGE("Setting time to %d", (int) tv->tv_sec);
 
-    Esp32Messaging::IntegerResponse ir;
-    ir.Result = (uint32_t) tv->tv_sec;
-    uint32_t payloadLength = Encoders::EncodedIntegerResponseBufferSize(&ir);
-    uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
-    Encoders::EncodeIntegerResponse(&ir, payload);
-    uint32_t id = _messageDispatcher->GetNextMessageID();
-    Message *timeMessage = Message::CreateOnHeap((uint8_t) MessageTypes::Event, (uint8_t) Esp32Interfaces::WiFi, (uint32_t) WiFiFunction::SetTimeOfDayEvent, 0, id, payload, payloadLength);
-    _messageDispatcher->QueueMessageForStm32(timeMessage);
+    settimeofday(tv, NULL);
+    
     TRACE_MESSAGE("NtpServerCallback: Exit");
 }
 
