@@ -1,7 +1,7 @@
 {
     "Enums":
     [
-        { 
+        {
             "Name": "StatusCodes",
             "Namespace": "StatusCodes",
             "Comment": "Status and error codes for the various function calls.",
@@ -45,7 +45,7 @@
               "StartWiFiInterface", "StopWiFiInterface", "ConnectToAccessPoint", "ConnectToDefaultAccessPoint", "DisconnectFromAccessPoint", "GetAccessPoints", "SetAntenna",
               "Socket", "Connect", "Write", "SetSockOpt", "Read", "Close", "SendTo", "RecvFrom", "Poll", "InterruptPollResponse", "Send", "Bind", "Listen", "Accept", "Ioctl",
               "GetSockName", "GetPeerName", "FreeAddrInfo", "GetAddrInfo",
-              "StartWiFiInterfaceEvent", "StopWiFiInterfaceEvent", "ConnectToAccessPointEvent", "DisconnectFromAccessPointEvent", "SetTimeOfDayEvent"
+              "StartWiFiInterfaceEvent", "StopWiFiInterfaceEvent", "ConnectToAccessPointEvent", "DisconnectFromAccessPointEvent", "NtpUpdateEvent", "ErrorEvent"
           ]
         },
         {
