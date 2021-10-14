@@ -16,7 +16,6 @@ class MeadowTestBase:
         Setup the board and environment for the test.
         '''
         self.controller.reset_meadow()
-        time.sleep(1.0)
         self.controller.execute_command('meadow mono enable -f')
         self.controller.wait_for_meadow_to_be_ready()
 
@@ -42,7 +41,7 @@ class MeadowTestBase:
                         self.controller.log(f'    {line}', True)
                 if f'{test_name} End' in line:
                     done = True
-                if line.startswith('LOG:') or self.controller.verbose:
+                if line.startswith('LOG:') or line.startswith('EXCEPTION:') or self.controller.verbose:
                     self.controller.log(f'    {line}', True)
             else:
                 time.sleep(0.1)

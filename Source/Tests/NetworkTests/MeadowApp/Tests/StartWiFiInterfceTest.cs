@@ -139,7 +139,7 @@ namespace MeadowApp
         /// <returns>true if successful, false otherwise.</returns>
         public bool Execute()
         {
-            int timeout = 60;
+            int timeout = 90;
 
             bool started = false;
             _device.WiFiAdapter.StartWiFiInterface();
@@ -148,7 +148,7 @@ namespace MeadowApp
             if (started)
             {
                 _device.WiFiAdapter.StopWiFiInterface();
-                CheckEventVariable(ref _interfaceStoppedEventFired, true, timeout);
+                stopped = CheckEventVariable(ref _interfaceStoppedEventFired, true, timeout);
                 if (!stopped)
                 {
                     _messageDispatcher.SendMessage($"LOG: Could not stop network interface within {timeout} seconds.");

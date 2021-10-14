@@ -120,7 +120,6 @@ namespace MeadowApp
         {
             bool result = false;
 
-            Console.WriteLine($"Connecting to WiFi Network {Secrets.WIFI_NAME}");
             var connectionResult = await _device.WiFiAdapter.Connect(Secrets.WIFI_NAME, Secrets.WIFI_PASSWORD);
             if (connectionResult.ConnectionStatus != ConnectionStatus.Success)
             {
@@ -130,12 +129,13 @@ namespace MeadowApp
             {
                 try
                 {
-                    using var client = new HttpClient();
-                    using var response = await client.GetAsync("http://postman-echo.com/get?foo1=bar1&foo2=bar2").ConfigureAwait(false);
-                    result = true;
+                    HttpClient client = new HttpClient();
+                    string responseBody = await client.GetStringAsync("http://testserver");
+                    result = responseBody.ToLower().Contains("hello, world!"!);
                 }
-                catch
+                catch (HttpRequestException e)
                 {
+                    _messageDispatcher.SendExceptionMessage(e.Message);
                     result = false;
                 }
             }

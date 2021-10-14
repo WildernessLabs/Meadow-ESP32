@@ -107,7 +107,6 @@ namespace MeadowApp
             {
                 _interfaceStoppedEventFired = true;
             }
-            _messageDispatcher.SendMessage($"LOG: WiFiAdapter_WiFiInterfaceStopped");
         }
 
         /// <summary>
@@ -189,7 +188,7 @@ namespace MeadowApp
         /// <returns>true if successful, false otherwise.</returns>
         public async Task<bool> ExecuteAsync()
         {
-            int timeout = 60;
+            int timeout = 90;
 
             Console.WriteLine($"Connecting to WiFi Network {Secrets.WIFI_NAME}");
             var connectionResult = await _device.WiFiAdapter.Connect(Secrets.WIFI_NAME, Secrets.WIFI_PASSWORD);
@@ -210,7 +209,6 @@ namespace MeadowApp
                     connected = CheckEventVariable(ref _connectedEventFired, true, timeout);
                     if (connected)
                     {
-                        _messageDispatcher.SendMessage("LOG: Disconnecting.");
                         Thread.Sleep(10000);
                         _device.WiFiAdapter.Disconnect(true).Wait();
                         disconnected = CheckEventVariable(ref _disconnectedEventFired, true, timeout);

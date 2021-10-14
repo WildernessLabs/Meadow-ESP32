@@ -42,8 +42,6 @@ try:
             test_controller.run_tests(arguments.tests)
         else:
             test_controller.run_script_file(f'Scripts/{arguments.file[0]}')
-        test_controller.execute_command('meadow mono disable')
-        test_controller.log(f'Test end: {datetime.now().strftime("%d %B %Y %H:%M:%S")}', True)
     else:
         print('Cannot create test controller.')
     hours, remainder = divmod((datetime.now() - start).seconds, 3600)
@@ -52,11 +50,11 @@ try:
         test_controller.log(f'Elapsed time: {hours} hours {minutes} minutes {seconds} seconds', True)
     else:
         test_controller.log(f'Elapsed time: {minutes} minutes {seconds} seconds', True)
-    test_controller = None
 except KeyboardInterrupt:
     print('\nExecution aborted by user')
-    try:
-        sys.exit(0)
-    except SystemExit:
-        pass
+finally:
+    test_controller.reset_meadow()
+    test_controller.execute_command('meadow mono disable')
+    test_controller.log(f'Test end: {datetime.now().strftime("%d %B %Y %H:%M:%S")}', True)
+    test_controller = None
 

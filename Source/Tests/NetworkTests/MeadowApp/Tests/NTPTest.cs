@@ -28,6 +28,11 @@ namespace MeadowApp
         private object _lock = new object();
 
         /// <summary>
+        /// Indicate that the NtpTimeChanged event has been raised.
+        /// </summary>
+        private bool _timeChangedEventRaised = false;
+
+        /// <summary>
         /// Indicate that this is an asynchronous test.
         ///
         /// The value of the test indicates which Execute method should be run:
@@ -68,7 +73,19 @@ namespace MeadowApp
         /// <returns>true if successful, false otherwise.</returns>
         public bool Setup()
         {
+            _device.WiFiAdapter.NtpTimeChanged += WiFiAdapter_NtpTimeChanged;
             return(true);
+        }
+
+        /// <summary>
+        /// Capture the NtpTimeChanged event indicating that the system has a new time.
+        /// </summary>
+        private void WiFiAdapter_NtpTimeChanged(object sender, EventArgs e)
+        {
+            lock (_lock)
+            {
+                _timeChangedEventRaised = true;
+            }
         }
 
         /// <summary>
@@ -131,14 +148,12 @@ namespace MeadowApp
             }
             else
             {
-                int count = 0;
-                while ((count < 60) && ((time == String.Empty) || time.StartsWith("01 January 1970")))
+                result = CheckEventVariable(ref _timeChangedEventRaised, true, 120);
+                if (result)
                 {
-                    count++;
-                    time = DateTime.Now.ToString("dd MMMM yyyy HH:mm:ss");
-                    Thread.Sleep(1000);
+                    time = DateTime.Now.ToString("dd MMM yyyy HH:mm:ss");
+                    result = (time != String.Empty) && !time.StartsWith("01 January 1970");
                 }
-                result = !((time == String.Empty) || time.StartsWith("01 January 1970"));
             }
 
             return (result);
@@ -150,6 +165,7 @@ namespace MeadowApp
         /// <returns>true if successful, false otherwise.</returns>
         public bool Teardown()
         {
+            _device.WiFiAdapter.NtpTimeChanged -= WiFiAdapter_NtpTimeChanged;
             return(true);
         }
     }

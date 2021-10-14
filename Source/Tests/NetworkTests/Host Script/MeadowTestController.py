@@ -6,12 +6,14 @@ import sys
 import subprocess
 import shlex
 import platform
+import serial.tools.list_ports
+
 from MessageDispatcher import MessageDispatcher
 from MeadowTests import MeadowTests
 
 class MeadowTestController:
     '''
-    Run one or more tests on the Meadow board.        
+    Run one or more tests on the Meadow board.
     '''
 
     def __init__(self, port_name = None, verbose = False, log_file = None):
@@ -39,6 +41,25 @@ class MeadowTestController:
 
     def execute_command(self, command):
         '''Execute an OS command to control the Meadow upload process.'''
+        if command.startswith('meadow'):
+            #
+            #   When the Meadow board is rebooted it can sometimes present
+            #   itself as a new serial port.  The loop below works out which port
+            #   the board is connected to and adds this to the command to ensure
+            #   that we can always control the board.
+            #
+            checking_for_port = True
+            count = 0
+            while checking_for_port:
+                ports = [tuple(p) for p in list(serial.tools.list_ports.comports())]
+                meadow_port = [port for port in ports if 'Meadow' in port[1]]
+                if len(meadow_port) == 0:
+                    count += 1
+                    time.sleep(0.1)
+                else:
+                    checking_for_port = False
+            command = f'{command} -s {meadow_port[0][0]}'
+        #
         if self.verbose:
             print(f'Executing command: {command}')
         output = subprocess.check_output(shlex.split(command))
@@ -61,7 +82,7 @@ class MeadowTestController:
 
     def reset_meadow(self):
         '''Reset the Meadow board by:
-        
+
         Pi: Pulling the reset GPIO low for 100ms
         MacOS: Use STM32 Cube Programmer to reset the board through a connected ST-Link.
 
@@ -79,7 +100,7 @@ class MeadowTestController:
 
     def setup_log_file(self, enable_logging, log_file_name):
         '''Setup the log file if required.
-        
+
         Parameters
         ----------
         enable_logging : bool
@@ -181,13 +202,13 @@ class MeadowTestController:
         the number of times the test should be executed.
 
         e.g.
-        
+
         # This is a comment.
         # The following line contains a test that should be run once:
         Test1
         # The following line contains a test that should be run five times:
         Test2 5
-        
+
         Parameters
         ----------
         file_name : str
@@ -209,7 +230,7 @@ class MeadowTestController:
                         try:
                             amount = int(actions[1])
                         except:
-                            amount = 1                    
+                            amount = 1           
                     test = tests.find_test(actions[0])
                     if test is not None:
                         for run in range(amount):
