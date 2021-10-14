@@ -27,6 +27,7 @@ namespace MeadowApp
             _tests.Add(nameof(NtpTest), new NtpTest(Device, _messageDispatcher));
             _tests.Add(nameof(HttpRequestTest), new HttpRequestTest(Device, _messageDispatcher));
             _tests.Add(nameof(HttpsRequestTest), new HttpsRequestTest(Device, _messageDispatcher));
+            _tests.Add(nameof(PiSoakTest10000), new PiSoakTest10000(Device, _messageDispatcher));
         }
     }
 }

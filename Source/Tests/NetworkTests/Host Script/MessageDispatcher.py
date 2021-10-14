@@ -46,6 +46,7 @@ class MessageDispatcher:
         if (self.has_serial_port() or self.arguments.dryrun):
             if (self.has_serial_port):
                 self.meadow.write(data.encode())
+                self.meadow.flushOutput()
             else:
                 print(f'    Sending data: {data}')
 

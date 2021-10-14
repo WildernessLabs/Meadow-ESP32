@@ -92,7 +92,7 @@ namespace MeadowApp
         /// <param name="message">Exception message to be sent to the host computer.</param>
         public void SendExceptionMessage(string message)
         {
-            SendMessage($"Exception: {message}");
+            SendMessage($"EXCEPTION: {message}");
         }
 
         /// <summary>

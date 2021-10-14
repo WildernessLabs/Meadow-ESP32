@@ -143,7 +143,7 @@ namespace MeadowApp
         /// <returns>true if successful, false otherwise.</returns>
         public bool Execute()
         {
-            int timeout = 60;
+            int timeout = 90;
             int count;
 
             _device.WiFiAdapter.Connect(Secrets.WIFI_NAME, Secrets.WIFI_PASSWORD);
