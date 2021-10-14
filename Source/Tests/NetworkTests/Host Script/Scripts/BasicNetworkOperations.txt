@@ -1,0 +1,11 @@
+#
+#   Tests to be executed along with any optional number of runs.
+#
+StartWiFiInterfaceTest
+ConnectToAccessPointTest
+ConnectToAccessPointEventsTest
+NtpTest
+OauthTest
+HttpsRequestTest
+HttpRequestTest
+DisconnectFromAccessPointEventsTest

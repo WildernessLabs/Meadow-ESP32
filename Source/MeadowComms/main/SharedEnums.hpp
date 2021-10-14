@@ -133,7 +133,8 @@ namespace WiFiFunction
         StopWiFiInterfaceEvent = 27,
         ConnectToAccessPointEvent = 28,
         DisconnectFromAccessPointEvent = 29,
-        SetTimeOfDayEvent = 30
+        NtpUpdateEvent = 30,
+        ErrorEvent = 31
     };
 
 }

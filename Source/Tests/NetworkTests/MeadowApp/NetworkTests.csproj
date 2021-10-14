@@ -4,6 +4,7 @@
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <OutputType>Exe</OutputType>
     <AssemblyName>App</AssemblyName>
+    <LangVersion>9</LangVersion>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Meadow.Foundation" Version="0.*" />
