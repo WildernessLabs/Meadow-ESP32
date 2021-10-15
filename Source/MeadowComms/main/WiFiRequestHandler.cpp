@@ -1337,6 +1337,8 @@ StatusCodes::StatusCodes WiFiRequestHandler::StopWiFIAdapter()
 
     if (result != ESP_OK)
     {
+        _stationNetIfHandle = nullptr;
+        _softApNetIfHandle = nullptr;
         xEventGroupSetBits(_xWiFiEventGroup, WIFI_ERROR_BIT);
     }
 
