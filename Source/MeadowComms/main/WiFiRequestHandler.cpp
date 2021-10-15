@@ -1064,7 +1064,7 @@ void WiFiRequestHandler::EventHandlerHelper(esp_event_base_t eventBase, int32_t 
                 break;
             case WIFI_EVENT_STA_STOP:
                 TRACE_MESSAGE("EventHandlerHelper: WIFI_EVENT_STA_STOP");
-                RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::StopWiFiInterfaceEvent);
+                StationStoppedEvent();
                 break;
             case WIFI_EVENT_STA_CONNECTED:
                 TRACE_MESSAGE("EventHandlerHelper: WIFI_EVENT_STA_CONNECTED");
@@ -1094,9 +1094,11 @@ void WiFiRequestHandler::EventHandlerHelper(esp_event_base_t eventBase, int32_t 
                 break;
             case WIFI_EVENT_AP_START:
                 TRACE_MESSAGE("EventHandlerHelper: WIFI_EVENT_AP_START");
+                AccessPointStartedEvent();
                 break;
             case WIFI_EVENT_AP_STOP:
                 TRACE_MESSAGE("EventHandlerHelper: WIFI_EVENT_AP_STOP");
+                AccessPointStoppedEvent();
                 break;
             case WIFI_EVENT_AP_STACONNECTED:
                 TRACE_MESSAGE("EventHandlerHelper: WIFI_EVENT_AP_STACONNECTED");
@@ -1337,8 +1339,6 @@ StatusCodes::StatusCodes WiFiRequestHandler::StopWiFIAdapter()
 
     if (result != ESP_OK)
     {
-        _stationNetIfHandle = nullptr;
-        _softApNetIfHandle = nullptr;
         xEventGroupSetBits(_xWiFiEventGroup, WIFI_ERROR_BIT);
     }
 
@@ -3188,6 +3188,41 @@ void WiFiRequestHandler::StationStartedEvent()
         RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::StartWiFiInterfaceEvent);
     }
     TRACE_MESSAGE("StationStartedEvent: Exit");
+}
+
+/**
+ *  @brief Process the station stopped event.
+ */
+void WiFiRequestHandler::StationStoppedEvent()
+{
+    TRACE_MESSAGE("StationStoppedEvent: Enter");
+ 
+    _stationNetIfHandle = nullptr;
+    RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::StopWiFiInterfaceEvent);
+
+    TRACE_MESSAGE("StationStoppedEvent: Exit");
+}
+
+/**
+ *  @brief Process the access point started event.
+ */
+void WiFiRequestHandler::AccessPointStartedEvent()
+{
+    TRACE_MESSAGE("AccessPointStartedEvent: Enter");
+
+    TRACE_MESSAGE("AccessPointStartedEvent: Exit");
+}
+
+/**
+ *  @brief Process the access point stopped event.
+ */
+void WiFiRequestHandler::AccessPointStoppedEvent()
+{
+    TRACE_MESSAGE("AccessPointStoppedEvent: Enter");
+
+    _softApNetIfHandle = nullptr;
+
+    TRACE_MESSAGE("AccessPointStoppedEvent: Exit");
 }
 
 /**

@@ -591,6 +591,21 @@ private:
     void StationStartedEvent();
 
     /**
+     *  @brief Process the station stopped event (WIFI_EVENT_STA_STOP).
+     */
+    void StationStoppedEvent();
+
+    /**
+     *  @brief Process the access point stopped event (WIFI_EVENT_AP_START).
+     */
+    void  AccessPointStartedEvent();
+
+    /**
+     *  @brief Process the access point stopped event (WIFI_EVENT_AP_STOP).
+     */
+    void AccessPointStoppedEvent();
+
+    /**
      *  @brief Process the WiFi connecting and getting an IP address event
      */
     void StationGotIpEvent(ip_event_got_ip_t *);
