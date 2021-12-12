@@ -27,6 +27,7 @@
 #include "SystemRequestHandler.hpp"
 #include "MessageDispatcher.hpp"
 #include "Exceptions/MultipleInstancesException.hpp"
+#include "Mapping.hpp"
 
 /*
  * ----------------------------------------------------------------------------
@@ -405,6 +406,8 @@ NvsManager::ErrorCodes SystemRequestHandler::SetConfigurationValue(const char *n
     return(NvsManager::SetValue(_configurationName, name, value));
 }
 
+
+
 /**
  *  @brief Populate the config object with system configuration data.
  *
@@ -414,6 +417,10 @@ NvsManager::ErrorCodes SystemRequestHandler::SetConfigurationValue(const char *n
 void SystemRequestHandler::PopulateConfiguration(Esp32Messaging::SystemConfiguration *config)
 {
     TRACE_MESSAGE("PopulateConfiguration: Enter");
+
+    memset(config, 0, sizeof(Esp32Messaging::SystemConfiguration));
+    esp_reset_reason_t resetReason = esp_reset_reason();
+    Mapping::GetStmValue(Mapping::ResetReasons, resetReason, (int8_t *) &config->ResetReason);
     const esp_app_desc_t *applicationDescription = esp_ota_get_app_description();
     config->SoftwareVersion = const_cast<char *>(applicationDescription->version);
     config->Antenna = WiFiRequestHandler::GetAntenna();
@@ -430,6 +437,7 @@ void SystemRequestHandler::PopulateConfiguration(Esp32Messaging::SystemConfigura
     config->DeviceName = GetDeviceName();
     WiFiRequestHandler::GetMacAddress(config->BoardMacAddress, WIFI_IF_STA);
     WiFiRequestHandler::GetMacAddress(config->SoftApMacAddress, WIFI_IF_AP);
+    
     TRACE_MESSAGE("PopulateConfiguration: Exit");
 }
 

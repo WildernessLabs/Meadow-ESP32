@@ -675,6 +675,11 @@ private:
     static void SetSockOpt(void *vpMessage);
 
     /**
+     *  @brief Provide a mechanism for the STM32 to call the getsockopt method.
+     */
+    static void GetSockOpt(void *vpMessage);
+
+    /**
      *  @brief Provide a mechanism for the STM32 to call the read method.
      */
     static void Read(void *vpMessage);
