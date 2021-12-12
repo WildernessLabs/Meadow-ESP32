@@ -5,6 +5,7 @@
             "Name": "SystemConfiguration",
             "MessageElements":
             [
+                { "Name": "ResetReason", "DataType": "byte"},
                 { "Name": "SoftwareVersion", "DataType": "string" },
                 { "Name": "MaximumMessageQueueLength", "DataType": "byte" },
                 { "Name": "AutomaticallyStartNetwork", "DataType": "byte" },
@@ -29,6 +30,15 @@
             [
                 { "Name": "Item", "DataType": "uint32" },
                 { "Name": "Value", "DataType": "blob" }
+            ]
+        },
+        {
+            "Name": "ErrorEvent",
+            "MessageElements":
+            [
+                { "Name": "ErrorCode", "DataType": "uint32" },
+                { "Name": "Interface", "DataType": "byte" },
+                { "Name": "ErrorData", "DataType": "blob" }
             ]
         },
         { 
@@ -189,6 +199,25 @@
                 { "Name": "SocketHandle", "DataType": "int" },
                 { "Name": "Level", "DataType": "int"},
                 { "Name": "OptionName", "DataType": "int"},
+                { "Name": "OptionValue", "DataType": "blob" },
+                { "Name": "OptionLen", "DataType": "int"}
+            ]
+        },
+        {
+            "Name": "GetSockOptRequest",
+            "MessageElements":
+            [
+                { "Name": "SocketHandle", "DataType": "int" },
+                { "Name": "Level", "DataType": "int"},
+                { "Name": "OptionName", "DataType": "int"}
+            ]
+        },
+        {
+            "Name": "GetSockOptResponse",
+            "MessageElements":
+            [
+                { "Name": "Result", "DataType": "int"},
+                { "Name": "ResponseErrno", "DataType": "int"},
                 { "Name": "OptionValue", "DataType": "blob" },
                 { "Name": "OptionLen", "DataType": "int"}
             ]

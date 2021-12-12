@@ -1237,6 +1237,10 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
             _threadPool->Execute(SetSockOpt, (void *) request);
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
+        case WiFiFunction::GetSockOpt:
+            _threadPool->Execute(GetSockOpt, (void *) request);
+            xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
+            break;
         case WiFiFunction::Write:
             _threadPool->Execute(Write, (void *) request);
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
@@ -2160,6 +2164,174 @@ void WiFiRequestHandler::FreeAddrInfo(void  *vpMessage)
 }
 
 /**
+ *  @brief Expose the POSIX getsockopt method to the STM32.
+ *
+ *  @param message
+ *      Message structure containing the parameters for the getsockopt method.
+ */
+void WiFiRequestHandler::GetSockOpt(void *vpMessage)
+{
+    TRACE_MESSAGE("GetSockOpt: Enter");
+    PERFORMANCE_LOGGING_ENTER();
+
+    Message *message = static_cast<Message *>(vpMessage);
+    Esp32Messaging::GetSockOptRequest *request = Encoders::ExtractGetSockOptRequest(message->Payload);
+    Esp32Messaging::GetSockOptResponse response = { };
+
+    if (IsConnected())
+    {
+        int32_t errorCode = 0;
+        struct timeval timeOut = { };
+        struct linger lingerOut = { };
+        int intVal = 0;
+        int32_t optionName = 0;
+        void *optionValue = nullptr;
+        socklen_t optionLength = 0;
+
+        if (Mapping::GetEspValue(Mapping::SocketOptions, request->OptionName, &optionName) < 0)
+        {
+            TRACE_MESSAGE("GetSockOpt: Unknown option: %d", request->OptionName);
+            errorCode = ENOPROTOOPT;
+        }
+        else
+        {
+            errno = 0;
+            switch (optionName)
+            {
+                case SO_SNDTIMEO:       /* Get the send timeout */
+                case SO_RCVTIMEO:       /* Get the receive timeout */
+                    optionValue = &timeOut;
+                    optionLength = sizeof(struct timeval);
+                    break;
+                case SO_LINGER:         /* Linger on close if data present */
+                    optionValue = &lingerOut;
+                    optionLength = sizeof(struct linger);
+                    break;
+                case SO_RCVBUF:         /* Get the receive buffer size */
+                    optionValue = &intVal;
+                    optionLength = sizeof(intVal);
+                    break;
+                case SO_ACCEPTCONN:     /* Socket has had listen() */
+                    TRACE_MESSAGE("GetSockOpt: Implement SO_ACCEPTCONN");
+                    break;
+                case SO_DONTLINGER:     /* Don't linger on close if data present */
+                    TRACE_MESSAGE("GetSockOpt: Implement SO_DONTLINGER");
+                    break;
+                case SO_ERROR:          /* Get error status and clear */
+                    TRACE_MESSAGE("GetSockOpt: Implement SO_ERROR");
+                    break;
+                case SO_TYPE:           /* Get socket type */
+                    TRACE_MESSAGE("GetSockOpt: Implement SO_TYPE");
+                    break;
+                case SO_NO_CHECK:       /* Don't create UDP checksum */
+                    TRACE_MESSAGE("GetSockOpt: Implement SO_NO_CHECK");
+                    break;
+                default:
+                    response.Result = -1;
+                    errorCode = ENOPROTOOPT;
+                    break;
+            }
+            if (errorCode == 0)
+            {
+                int32_t level = 0;
+                Mapping::GetEspValue(Mapping::SocketLevel, request->Level, &level);
+                TRACE_MESSAGE("GetSockOpt: Getting socket option level 0x%x, option name 0x%x for socket %d", level, optionName, request->SocketHandle);
+                response.Result = getsockopt(request->SocketHandle, level, optionName, (void *) optionValue, &optionLength);
+                errorCode = errno;
+            }
+        }
+        if (errorCode == 0)
+        {
+            response.Result = 0;
+            response.ResponseErrno = 0;
+            response.OptionValue = NULL;
+            Esp32Messaging::TimeVal esp_tv = { };
+            Esp32Messaging::Linger esp_lv = { };
+            Esp32Messaging::IntegerResponse esp_iv = { };
+            switch (optionName)
+            {
+                case SO_SNDTIMEO:       /* Set the send timeout */
+                case SO_RCVTIMEO:       /* Set the receive timeout */
+                    esp_tv.TvSec = timeOut.tv_sec;
+                    esp_tv.TvUsec = timeOut.tv_usec;
+                    response.OptionValueLength = Encoders::EncodedTimeValBufferSize(&esp_tv);
+                    response.OptionValue = static_cast<uint8_t *>(malloc(response.OptionValueLength));
+                    if (response.OptionValue == NULL)
+                    {
+                        response.ResponseErrno = MapErrno(ENOMEM);
+                        response.Result = -1;
+                        response.OptionValueLength = 0;
+                    }
+                    else
+                    {
+                        Encoders::EncodeTimeVal(&esp_tv, response.OptionValue);
+                    }
+                    break;
+                case SO_LINGER:         /* Linger on close if data present */
+                    esp_lv.LLinger = lingerOut.l_linger;
+                    esp_lv.LOnOff = lingerOut.l_onoff;
+                    response.OptionValueLength = Encoders::EncodedLingerBufferSize(&esp_lv);
+                    response.OptionValue = static_cast<uint8_t *>(malloc(response.OptionValueLength));
+                    if (response.OptionValue == NULL)
+                    {
+                        response.ResponseErrno = MapErrno(ENOMEM);
+                        response.Result = -1;
+                        response.OptionValueLength = 0;
+                    }
+                    else
+                    {
+                        Encoders::EncodeLinger(&esp_lv, response.OptionValue);
+                    }
+                    break;
+                case SO_RCVBUF:
+                    esp_iv.Result = *((int *) optionValue);
+                    response.OptionValueLength = Encoders::EncodedIntegerResponseBufferSize(&esp_iv);
+                    response.OptionValue = static_cast<uint8_t *>(malloc(response.OptionValueLength));
+                    if (response.OptionValue == NULL)
+                    {
+                        response.ResponseErrno = MapErrno(ENOMEM);
+                        response.Result = -1;
+                        response.OptionValueLength = 0;
+                    }
+                    else
+                    {
+                        Encoders::EncodeIntegerResponse(&esp_iv, response.OptionValue);
+                    }
+                    break;
+            }
+        }
+        else
+        {
+            response.Result = -1;
+            response.ResponseErrno = MapErrno(errorCode);
+        }
+        TRACE_MESSAGE("GetSockOpt: Result: %d, errno: %d - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
+
+        vPortFree(request);
+    }
+    else
+    {
+        response.Result = -1;
+        response.ResponseErrno = MapErrno(ENETDOWN);
+    }
+
+    message->PayloadLength = Encoders::EncodedGetSockOptResponseBufferSize(&response);
+    message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
+    Encoders::EncodeGetSockOptResponse(&response, message->Payload);
+    if (response.OptionValue != NULL)
+    {
+        free(response.OptionValue);
+    }
+    message->MessageType = MessageTypes::Response;
+    message->StatusCode = StatusCodes::CompletedOk;
+    _messageDispatcher->QueueMessageForStm32(message);
+
+    PERFORMANCE_LOGGING_EXIT();
+    PERFORMANCE_LOGGING_ADD_ENTRY();
+    TRACE_MESSAGE("GetSockOpt: Exit");
+}
+
+/**
  *  @brief Expose the POSIX setsockopt method to the STM32.
  *
  *  @param message
@@ -2178,14 +2350,14 @@ void WiFiRequestHandler::SetSockOpt(void *vpMessage)
     {
         void *optionValue = nullptr;
         int optionLength = 0;
-        Esp32Messaging::TimeVal *tv = nullptr;
         struct timeval timeOut;
+        int intVal = 0;
         int32_t errorCode = 0;
 
         int32_t optionName = 0;
         if (Mapping::GetEspValue(Mapping::SocketOptions, request->OptionName, &optionName) < 0)
         {
-            TRACE_MESSAGE("SetSockOpt: Unknown option: %d", request->OptionName);
+            TRACE_MESSAGE("SetSockOpt: Unknown option: 0x%x", request->OptionName);
             errorCode = ENOPROTOOPT;
         }
         else
@@ -2195,17 +2367,23 @@ void WiFiRequestHandler::SetSockOpt(void *vpMessage)
             {
                 case SO_SNDTIMEO:       /* Set the send timeout */
                 case SO_RCVTIMEO:       /* Set the receive timeout */
-                    tv = Encoders::ExtractTimeVal(request->OptionValue);
-                    timeOut.tv_sec = tv->TvSec;
-                    timeOut.tv_usec = tv->TvUsec;
-                    vPortFree(tv);
-                    optionValue = &timeOut;
-                    optionLength = sizeof(timeOut);
+                    {
+                        Esp32Messaging::TimeVal *tv = Encoders::ExtractTimeVal(request->OptionValue);
+                        timeOut.tv_sec = tv->TvSec;
+                        timeOut.tv_usec = tv->TvUsec;
+                        vPortFree(tv);
+                        optionValue = &timeOut;
+                        optionLength = sizeof(timeOut);
+                    }
                     break;
                 case SO_RCVBUF:         /* Set the receive buffer size */
-                case SO_REUSEADDR:      /* Set validation rules for bind */
-                    optionValue = request->OptionValue;
-                    optionLength = request->OptionValueLength;
+                    {
+                        Esp32Messaging::IntegerResponse *iv = Encoders::ExtractIntegerResponse(request->OptionValue);
+                        intVal = iv->Result;
+                        vPortFree(iv);
+                        optionValue = &intVal;
+                        optionLength = sizeof(intVal);
+                    }
                     break;
                 case SO_LINGER:         /* Linger on close if data present */
                     TRACE_MESSAGE("SetSockOpt: Implement SO_LINGER");

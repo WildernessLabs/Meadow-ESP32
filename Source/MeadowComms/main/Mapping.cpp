@@ -11,6 +11,7 @@
 #include <sys/socket.h>
 #include "errno.h"
 #include <sys/ioctl.h>
+#include <esp_system.h>
 
 #include <esp_wifi.h>
 
@@ -368,6 +369,24 @@ Mapping::str_mapping_t Mapping::_statusCodes[] =
 };
 
 /**
+ *  @brief Table to reset codes.
+ */
+Mapping::int_mapping_t Mapping::_resetReasons[] = 
+{
+    { Esp32ResetCodes::Unknown, ESP_RST_UNKNOWN },
+    { Esp32ResetCodes::PowerOn, ESP_RST_POWERON },
+    { Esp32ResetCodes::ExternalGpio, ESP_RST_EXT },
+    { Esp32ResetCodes::Software, ESP_RST_SW },
+    { Esp32ResetCodes::Panic, ESP_RST_PANIC },
+    { Esp32ResetCodes::InterruptWatchdog, ESP_RST_INT_WDT },
+    { Esp32ResetCodes::TaskWatchdog, ESP_RST_TASK_WDT },
+    { Esp32ResetCodes::OtherWatchdog, ESP_RST_WDT },
+    { Esp32ResetCodes::DeepSleep, ESP_RST_DEEPSLEEP },
+    { Esp32ResetCodes::Brownout, ESP_RST_BROWNOUT },
+    { Esp32ResetCodes::SDIO, ESP_RST_SDIO }
+};
+
+/**
  *  @brief Map of the message types to their string representations.
  */
 Mapping::str_mapping_t Mapping::_messageTypeNames[] =
@@ -651,6 +670,10 @@ int32_t Mapping::GetValue(Mapping::MappingTable mapping, MappingDirection type, 
         case MappingTable::NetworkAuthenticationType:
             table = _networkAuthenticationType;
             size = sizeof(_networkAuthenticationType);
+            break;
+        case MappingTable::ResetReasons:
+            table = _resetReasons;
+            size = sizeof(_resetReasons);
             break;
     }
     size /= sizeof(int_mapping_t);
