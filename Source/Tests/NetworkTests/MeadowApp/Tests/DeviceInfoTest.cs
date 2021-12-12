@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using Meadow;
 using Meadow.Devices;
 
 namespace MeadowApp
@@ -70,18 +71,17 @@ namespace MeadowApp
         public bool Execute()
         {
             _messageDispatcher.SendMessage($"MachineName: {Environment.MachineName}");
-            F7Micro.DeviceInformation information = _device.GetDeviceInformation();
-            _messageDispatcher.SendMessage($"DeviceName: {information.DeviceName}");
-            _messageDispatcher.SendMessage($"OsVersion: {information.OsVersion}");
-            _messageDispatcher.SendMessage($"MicrocontrollerSerialNumber: {information.SerialNumber}");
-            _messageDispatcher.SendMessage($"MicrocontrollerId: {information.UniqueId}");
-            _messageDispatcher.SendMessage($"Model: {information.Model}");
-            _messageDispatcher.SendMessage($"MonoVersion: {information.MonoVersion}");
-            _messageDispatcher.SendMessage($"ProcessorType: {information.ProcessorType}");
-            _messageDispatcher.SendMessage($"Product: {information.Product}");
-            _messageDispatcher.SendMessage($"BuildDate: {information.BuildDate}");
-            _messageDispatcher.SendMessage($"CoprocessorType: {information.CoprocessorType}");
-            _messageDispatcher.SendMessage($"CoprocessorFirmwareVersion: {information.CoprocessorFirmwareVersion}");
+            _messageDispatcher.SendMessage($"DeviceName: {_device.Information.DeviceName}");
+            _messageDispatcher.SendMessage($"OsVersion: {MeadowOS.SystemInformation.OSVersion}");
+            _messageDispatcher.SendMessage($"MicrocontrollerSerialNumber: {_device.Information.ProcessorSerialNumber}");
+            _messageDispatcher.SendMessage($"MicrocontrollerId: {_device.Information.ChipID}");
+            _messageDispatcher.SendMessage($"Model: {_device.Information.Model}");
+            _messageDispatcher.SendMessage($"MonoVersion: {MeadowOS.SystemInformation.MonoVersion}");
+            _messageDispatcher.SendMessage($"ProcessorType: {_device.Information.ProcessorType}");
+            _messageDispatcher.SendMessage($"Product: {_device.Information.Model}");
+            _messageDispatcher.SendMessage($"BuildDate: {MeadowOS.SystemInformation.OSBuildDate}");
+            _messageDispatcher.SendMessage($"CoprocessorType: {_device.Information.CoprocessorType}");
+            _messageDispatcher.SendMessage($"CoprocessorFirmwareVersion: {_device.Information.CoprocessorOSVersion}");
             _messageDispatcher.SendMessage($"MacAddress: {Utilities.MacAddressString(_device.WiFiAdapter.MacAddress)}");
 
             return(true);

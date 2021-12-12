@@ -33,7 +33,7 @@ public:
      *  @brief Type of mapping table to be used.
      */
     enum MappingTable { AddressFamily, SocketOptions, ProtocolFamilies, SocketTypes, SocketLevel, Errno, MessageFlags, PollEvents,
-                        SocketShutdownType, EspErrorCodes, NetworkAuthenticationType };
+                        SocketShutdownType, EspErrorCodes, NetworkAuthenticationType, ResetReasons };
 
     /**
      *  @brief String mapping tables.
@@ -126,6 +126,11 @@ private:
      *  @brief Table of the strings representing the StatusCodes.
      */
     static str_mapping_t _statusCodes[];
+
+    /**
+     *  @brief Table to reset codes.
+     */
+    static int_mapping_t _resetReasons[];
 
     /**
      *  @brief Message type mappings.

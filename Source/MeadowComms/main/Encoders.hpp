@@ -32,6 +32,7 @@ namespace Esp32Messaging
 {
     struct SystemConfiguration
     {
+        uint8_t ResetReason;
         char * SoftwareVersion;
         uint8_t MaximumMessageQueueLength;
         uint8_t AutomaticallyStartNetwork;
@@ -55,6 +56,14 @@ namespace Esp32Messaging
         uint32_t Item;
         uint32_t ValueLength;
         uint8_t *Value;
+    };
+
+    struct ErrorEvent
+    {
+        uint32_t ErrorCode;
+        uint8_t Interface;
+        uint32_t ErrorDataLength;
+        uint8_t *ErrorData;
     };
 
     struct WiFiCredentials
@@ -186,6 +195,22 @@ namespace Esp32Messaging
         int32_t SocketHandle;
         int32_t Level;
         int32_t OptionName;
+        uint32_t OptionValueLength;
+        uint8_t *OptionValue;
+        int32_t OptionLen;
+    };
+
+    struct GetSockOptRequest
+    {
+        int32_t SocketHandle;
+        int32_t Level;
+        int32_t OptionName;
+    };
+
+    struct GetSockOptResponse
+    {
+        int32_t Result;
+        int32_t ResponseErrno;
         uint32_t OptionValueLength;
         uint8_t *OptionValue;
         int32_t OptionLen;
@@ -431,6 +456,9 @@ public:
     static void EncodeConfigurationValue(Esp32Messaging::ConfigurationValue *, uint8_t *);
     static int EncodedConfigurationValueBufferSize(Esp32Messaging::ConfigurationValue *);
     static Esp32Messaging::ConfigurationValue *ExtractConfigurationValue(uint8_t *);
+    static void EncodeErrorEvent(Esp32Messaging::ErrorEvent *, uint8_t *);
+    static int EncodedErrorEventBufferSize(Esp32Messaging::ErrorEvent *);
+    static Esp32Messaging::ErrorEvent *ExtractErrorEvent(uint8_t *);
     static void EncodeWiFiCredentials(Esp32Messaging::WiFiCredentials *, uint8_t *);
     static int EncodedWiFiCredentialsBufferSize(Esp32Messaging::WiFiCredentials *);
     static Esp32Messaging::WiFiCredentials *ExtractWiFiCredentials(uint8_t *);
@@ -482,6 +510,12 @@ public:
     static void EncodeSetSockOptRequest(Esp32Messaging::SetSockOptRequest *, uint8_t *);
     static int EncodedSetSockOptRequestBufferSize(Esp32Messaging::SetSockOptRequest *);
     static Esp32Messaging::SetSockOptRequest *ExtractSetSockOptRequest(uint8_t *);
+    static void EncodeGetSockOptRequest(Esp32Messaging::GetSockOptRequest *, uint8_t *);
+    static int EncodedGetSockOptRequestBufferSize(Esp32Messaging::GetSockOptRequest *);
+    static Esp32Messaging::GetSockOptRequest *ExtractGetSockOptRequest(uint8_t *);
+    static void EncodeGetSockOptResponse(Esp32Messaging::GetSockOptResponse *, uint8_t *);
+    static int EncodedGetSockOptResponseBufferSize(Esp32Messaging::GetSockOptResponse *);
+    static Esp32Messaging::GetSockOptResponse *ExtractGetSockOptResponse(uint8_t *);
     static void EncodeLinger(Esp32Messaging::Linger *, uint8_t *);
     static int EncodedLingerBufferSize(Esp32Messaging::Linger *);
     static Esp32Messaging::Linger *ExtractLinger(uint8_t *);
