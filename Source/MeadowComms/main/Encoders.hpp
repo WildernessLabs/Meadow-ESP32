@@ -32,7 +32,6 @@ namespace Esp32Messaging
 {
     struct SystemConfiguration
     {
-        uint8_t ResetReason;
         char * SoftwareVersion;
         uint8_t MaximumMessageQueueLength;
         uint8_t AutomaticallyStartNetwork;
@@ -49,6 +48,7 @@ namespace Esp32Messaging
         uint32_t StaticIpAddress;
         uint32_t DnsServer;
         uint32_t DefaultGateway;
+        uint8_t ResetReason;
     };
 
     struct ConfigurationValue

@@ -5,7 +5,6 @@
             "Name": "SystemConfiguration",
             "MessageElements":
             [
-                { "Name": "ResetReason", "DataType": "byte"},
                 { "Name": "SoftwareVersion", "DataType": "string" },
                 { "Name": "MaximumMessageQueueLength", "DataType": "byte" },
                 { "Name": "AutomaticallyStartNetwork", "DataType": "byte" },
@@ -21,7 +20,8 @@
                 { "Name": "UseDhcp", "DataType": "byte" },
                 { "Name": "StaticIpAddress", "DataType": "uint32" },
                 { "Name": "DnsServer", "DataType": "uint32" },
-                { "Name": "DefaultGateway", "DataType": "uint32" }
+                { "Name": "DefaultGateway", "DataType": "uint32" },
+                { "Name": "ResetReason", "DataType": "byte"}
             ]
         },
         {

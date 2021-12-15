@@ -474,8 +474,6 @@ uint8_t *Encoders::EncodeMessage(Message *message, bool headerOnly)
 // cppcheck-suppress unusedFunction symbolName=EncodeSystemConfiguration
 void Encoders::EncodeSystemConfiguration(Esp32Messaging::SystemConfiguration *systemConfiguration, uint8_t *buffer)
 {
-    *buffer = systemConfiguration->ResetReason;
-    buffer += 1;
     EncodeString(systemConfiguration->SoftwareVersion, buffer);
     buffer += StringLength(systemConfiguration->SoftwareVersion) + 1;
     *buffer = systemConfiguration->MaximumMessageQueueLength;
@@ -507,6 +505,8 @@ void Encoders::EncodeSystemConfiguration(Esp32Messaging::SystemConfiguration *sy
     EncodeUInt32(systemConfiguration->DnsServer, buffer);
     buffer += 4;
     EncodeUInt32(systemConfiguration->DefaultGateway, buffer);
+    buffer += 4;
+    *buffer = systemConfiguration->ResetReason;
 }
 
 /**
@@ -546,8 +546,6 @@ Esp32Messaging::SystemConfiguration *Encoders::ExtractSystemConfiguration(uint8_
 {
     Esp32Messaging::SystemConfiguration *systemConfiguration = (Esp32Messaging::SystemConfiguration *) pvPortMalloc(sizeof(Esp32Messaging::SystemConfiguration));
 
-    systemConfiguration->ResetReason = *buffer;
-    buffer += 1;
     systemConfiguration->SoftwareVersion = ExtractString(buffer);
     buffer += Encoders::StringLength(systemConfiguration->SoftwareVersion) + 1;
     systemConfiguration->MaximumMessageQueueLength = *buffer;
@@ -579,6 +577,8 @@ Esp32Messaging::SystemConfiguration *Encoders::ExtractSystemConfiguration(uint8_
     systemConfiguration->DnsServer = ExtractUInt32(buffer);
     buffer += 4;
     systemConfiguration->DefaultGateway = ExtractUInt32(buffer);
+    buffer += 4;
+    systemConfiguration->ResetReason = *buffer;
     return(systemConfiguration);
 }
 
