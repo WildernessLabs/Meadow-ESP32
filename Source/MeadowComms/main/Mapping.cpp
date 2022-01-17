@@ -482,7 +482,8 @@ Mapping::str_mapping_t Mapping::_wifiFunctionNames[] =
     { WiFiFunction::StopWiFiInterfaceEvent, (char *) "StopWiFiInterfaceEvent" },
     { WiFiFunction::ConnectToAccessPointEvent, (char *) "ConnectToAccessPointEvent" },
     { WiFiFunction::DisconnectFromAccessPointEvent, (char *) "DisconnectFromAccessPointEvent" },
-    { WiFiFunction::SetAntenna, (char *) "SetAntenna" }
+    { WiFiFunction::SetAntenna, (char *) "SetAntenna" },
+    { WiFiFunction::ClearDefaultAccessPoint, (char *) "ClearDefaultAccessPoint" }
 };
 
 /*
