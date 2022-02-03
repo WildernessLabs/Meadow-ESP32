@@ -252,20 +252,8 @@ WiFiRequestHandler::WiFiRequestHandler()
     //
     //  Get configuration from NVS.
     //
-    _maximumRetryCount = SystemRequestHandler::GetConfigurationValue(MAXIMUM_RETRY_COUNT_NAME, _maximumRetryCount);
-    _automaticReconnect = SystemRequestHandler::GetConfigurationValue(AUTOMATIC_RECONNECT_NAME, _automaticReconnect);
-    _automaticallyStartNetwork = SystemRequestHandler::GetConfigurationValue(AUTOMATICALLY_START_NETWORK_NAME, _automaticallyStartNetwork);
-    _getTimeAtStartup = SystemRequestHandler::GetConfigurationValue(GET_TIME_AT_STARTUP_NAME, _getTimeAtStartup);
-    _useDhcp = SystemRequestHandler::GetConfigurationValue(USE_DHCP_NAME, _useDhcp);
     _defaultAccessPoint = SystemRequestHandler::GetConfigurationValue(DEFAULT_ACCESS_POINT_NAME, _defaultAccessPoint);
     _password = SystemRequestHandler::GetConfigurationValue(PASSWORD_NAME, _password);
-    _ntpServer = SystemRequestHandler::GetConfigurationValue(NTP_SERVER_NAME, _ntpServer);
-    _timezone = SystemRequestHandler::GetConfigurationValue(TIMEZONE_NAME, _timezone);
-    _staticIpAddress = SystemRequestHandler::GetConfigurationValue(STATIC_IP_ADDRESS_NAME, _staticIpAddress);
-    _dnsServer = SystemRequestHandler::GetConfigurationValue(DNS_SERVER_NAME, _dnsServer);
-    _defaultGateway = SystemRequestHandler::GetConfigurationValue(DEFAULT_GATEWAY_NAME, _defaultGateway);
-    _wifiTimeout = SystemRequestHandler::GetConfigurationValue(DEFAULT_WIFI_TIMEOUT_NAME, _wifiTimeout);
-    _maximumRetryCount = SystemRequestHandler::GetConfigurationValue(MAXIMUM_RETRY_COUNT_NAME, _maximumRetryCount);
     _stationNetIfHandle = nullptr;
     _softApNetIfHandle = nullptr;
     //
@@ -352,19 +340,8 @@ uint32_t WiFiRequestHandler::GetMaximumRetryCount()
 StatusCodes::StatusCodes WiFiRequestHandler::SetMaximumRetryCount(uint32_t value)
 {
     TRACE_MESSAGE("WiFiRequestHandler::SetMaximumRetryCount: %d", value);
-    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    if (value != _maximumRetryCount)
-    {
-        if (SystemRequestHandler::SetConfigurationValue(MAXIMUM_RETRY_COUNT_NAME, value) == NvsManager::ErrorCodes::Ok)
-        {
-            _maximumRetryCount = value;
-        }
-        else
-        {
-            result = StatusCodes::Failure;
-        }
-    }
-    return(result);
+    _maximumRetryCount = value;
+    return(StatusCodes::CompletedOk);
 }
 
 /**
@@ -387,15 +364,8 @@ bool WiFiRequestHandler::GetAutomaticReconnect()
 StatusCodes::StatusCodes WiFiRequestHandler::SetAutomaticReconnect(bool value)
 {
     TRACE_MESSAGE("WiFiRequestHandler::SetAutomaticReconnect: %d", value ? 1 : 0);
-    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    if (value != _automaticReconnect)
-    {
-        if (SystemRequestHandler::SetConfigurationValue(AUTOMATIC_RECONNECT_NAME, value) == NvsManager::ErrorCodes::Ok)
-        {
-            _automaticReconnect = value;
-        }
-    }
-    return(result);
+    _automaticReconnect = value;
+    return(StatusCodes::CompletedOk);
 }
 
 /**
@@ -418,15 +388,8 @@ bool WiFiRequestHandler::GetAutomaticallyStartNetwork()
 StatusCodes::StatusCodes WiFiRequestHandler::SetAutomaticallyStartNetwork(bool value)
 {
     TRACE_MESSAGE("WiFiRequestHandler::SetAutomaticallyStartNetwork %d", value ? 1 : 0);
-    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    if (value != _automaticallyStartNetwork)
-    {
-        if (SystemRequestHandler::SetConfigurationValue(AUTOMATICALLY_START_NETWORK_NAME, value) == NvsManager::ErrorCodes::Ok)
-        {
-            _automaticallyStartNetwork = value;
-        }
-    }
-    return(result);
+    _automaticallyStartNetwork = value;
+    return(StatusCodes::CompletedOk);
 }
 
 /**
@@ -449,15 +412,8 @@ bool WiFiRequestHandler::GetGetTimeAtStartup()
 StatusCodes::StatusCodes WiFiRequestHandler::SetGetTimeAtStartup(bool value)
 {
     TRACE_MESSAGE("WiFiRequestHandler::SetGetTimeAtStartup %d", value ? 1 : 0);
-    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    if (value != _getTimeAtStartup)
-    {
-        if (SystemRequestHandler::SetConfigurationValue(GET_TIME_AT_STARTUP_NAME, value) == NvsManager::ErrorCodes::Ok)
-        {
-            _getTimeAtStartup = value;
-        }
-    }
-    return(result);
+    _getTimeAtStartup = value;
+    return(StatusCodes::CompletedOk);
 }
 
 /**
@@ -480,15 +436,8 @@ bool WiFiRequestHandler::GetUseDhcp()
 StatusCodes::StatusCodes WiFiRequestHandler::SetUseDhcp(bool value)
 {
     TRACE_MESSAGE("WiFiRequestHandler::SetUseDhcp %d", value ? 1 : 0);
-    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    if (value != _useDhcp)
-    {
-        if (SystemRequestHandler::SetConfigurationValue(USE_DHCP_NAME, value) == NvsManager::ErrorCodes::Ok)
-        {
-            _useDhcp = value;
-        }
-    }
-    return(result);
+    _useDhcp = value;
+    return(StatusCodes::CompletedOk);
 }
 
 /**
@@ -511,15 +460,8 @@ char *WiFiRequestHandler::GetNtpServer()
 StatusCodes::StatusCodes WiFiRequestHandler::SetNtpServer(char *value)
 {
     TRACE_MESSAGE("WiFiRequestHandler::SetNtpServer %s", value);
-    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    if (strcmp(value, _ntpServer) != 0)
-    {
-        if (SystemRequestHandler::SetConfigurationValue(NTP_SERVER_NAME, value) == NvsManager::ErrorCodes::Ok)
-        {
-            _ntpServer = strdup(value);
-        }
-    }
-    return(result);
+    _ntpServer = strdup(value);
+    return(StatusCodes::CompletedOk);
 }
 
 /**
@@ -542,17 +484,10 @@ char *WiFiRequestHandler::GetTimezone()
 StatusCodes::StatusCodes WiFiRequestHandler::SetTimezone(char *value)
 {
     TRACE_MESSAGE("WiFiRequestHandler::SetTimezone %s", value);
-    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    if (strcmp(value, _timezone) != 0)
-    {
-        if (SystemRequestHandler::SetConfigurationValue(TIMEZONE_NAME, value) == NvsManager::ErrorCodes::Ok)
-        {
-            _timezone = strdup(value);
-            setenv("TZ", value, 1);
-            tzset();
-        }
-    }
-    return(result);
+    _timezone = strdup(value);
+    setenv("TZ", value, 1);
+    tzset();
+    return(StatusCodes::CompletedOk);
 }
 
 /**
@@ -574,7 +509,7 @@ char *WiFiRequestHandler::GetDefaultAccessPoint()
  */
 StatusCodes::StatusCodes WiFiRequestHandler::SetDefaultAccessPoint(char *value)
 {
-    TRACE_MESSAGE("WiFiRequestHandler::SetDefaultAccessPoint %s", value);
+    TRACE_MESSAGE("WiFiRequestHandler::SetDefaultAccessPoint %s", (value == NULL) ? "NULL" : value);
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
     char emptyAp = '\0';
 
@@ -617,6 +552,7 @@ char *WiFiRequestHandler::GetPassword()
  */
 StatusCodes::StatusCodes WiFiRequestHandler::SetPassword(char *value)
 {
+    TRACE_MESSAGE("WiFiRequestHandler::SetPassword %s", (value == NULL) ? "NULL" : value);
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
     char emptyPassword = '\0';
 
@@ -659,15 +595,8 @@ uint32_t WiFiRequestHandler::GetIpAddress()
  */
 StatusCodes::StatusCodes WiFiRequestHandler::SetIpAddress(uint32_t value)
 {
-    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    if (value != _staticIpAddress)
-    {
-        if (SystemRequestHandler::SetConfigurationValue(STATIC_IP_ADDRESS_NAME, value) == NvsManager::ErrorCodes::Ok)
-        {
-            _staticIpAddress = value;
-        }
-    }
-    return(result);
+    _staticIpAddress = value;
+    return(StatusCodes::CompletedOk);
 }
 
 /**
@@ -689,15 +618,8 @@ uint32_t WiFiRequestHandler::GetDnsServer()
  */
 StatusCodes::StatusCodes WiFiRequestHandler::SetDnsServer(uint32_t value)
 {
-    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    if (value != _dnsServer)
-    {
-        if (SystemRequestHandler::SetConfigurationValue(DNS_SERVER_NAME, value) == NvsManager::ErrorCodes::Ok)
-        {
-            _dnsServer = value;
-        }
-    }
-    return(result);
+    _dnsServer = value;
+    return(StatusCodes::CompletedOk);
 }
 
 /**
@@ -719,15 +641,8 @@ uint32_t WiFiRequestHandler::GetDefaultGateway()
  */
 StatusCodes::StatusCodes WiFiRequestHandler::SetDefaultGateway(uint32_t value)
 {
-    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    if (value != _defaultGateway)
-    {
-        if (SystemRequestHandler::SetConfigurationValue(DEFAULT_GATEWAY_NAME, value) == NvsManager::ErrorCodes::Ok)
-        {
-            _defaultGateway = value;
-        }
-    }
-    return(result);
+    _defaultGateway = value;
+    return(StatusCodes::CompletedOk);
 }
 
 /**
@@ -775,8 +690,7 @@ void WiFiRequestHandler::GetMacAddress(uint8_t *macAddress, esp_interface_t inte
  */
 StatusCodes::StatusCodes WiFiRequestHandler::SetMacAddress(uint8_t *macAddress, esp_interface_t interface)
 {
-    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    return(result);
+    return(StatusCodes::CompletedOk);
 }
 
 /**
@@ -833,19 +747,8 @@ uint32_t WiFiRequestHandler::GetWiFiTimeout()
  */
 StatusCodes::StatusCodes WiFiRequestHandler::SetWiFiTimeout(uint32_t value)
 {
-    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    if (value != _wifiTimeout)
-    {
-        if (SystemRequestHandler::SetConfigurationValue(DEFAULT_WIFI_TIMEOUT_NAME, value) == NvsManager::ErrorCodes::Ok)
-        {
-            _wifiTimeout = value;
-        }
-        else
-        {
-            result = StatusCodes::Failure;
-        }
-    }
-    return(result);
+    _wifiTimeout = value;
+    return(StatusCodes::CompletedOk);
 }
 
 /*
@@ -916,8 +819,6 @@ gpio_num_t WiFiRequestHandler::ConvertAntennaToPin(AntennaTypes::AntennaTypes an
  *  @brief Change the current antenna in use.
  *
  *  Note that this does not change the actual default antenna in use, it just switches to a new one.
- *  Use SetAntenna followed by SwitchAntenna in order to change antenna that will be used as
- *  a default at startup.
  *
  *  @param newAntenna
  *      New antenna to use.
@@ -1221,6 +1122,9 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
             break;
         case WiFiFunction::GetAccessPoints:
             GetAvailableNetworks(request);
+            break;
+        case WiFiFunction::ClearDefaultAccessPoint:
+            ClearDefaultAccessPointAndPassword(request);
             break;
         case WiFiFunction::SetAntenna:
             SetAntennaRequest(request);
@@ -1703,6 +1607,26 @@ void WiFiRequestHandler::ConnectToDefaultAccessPoint(Message *message)
     }
 
     TRACE_MESSAGE("ConnectToDefaultAccessPoint: Exit");
+}
+
+/**
+ *  @brief Clear the default access point and password from NVS.
+ * 
+ *  @param message
+ *      Message containing the encoded request.
+ */
+void WiFiRequestHandler::ClearDefaultAccessPointAndPassword(Message *message)
+{
+    TRACE_MESSAGE("ClearDefaultAccessPointAndPassword: Enter");
+
+    message->MessageType = MessageTypes::Response;
+    StatusCodes::StatusCodes sc = SetDefaultAccessPoint(NULL);
+    StatusCodes::StatusCodes sc1 = SetPassword(NULL);
+    message->StatusCode = (sc == StatusCodes::CompletedOk) && (sc1 == StatusCodes::CompletedOk) ? StatusCodes::CompletedOk : StatusCodes::Failure;
+    _messageDispatcher->QueueMessageForStm32(message);
+    xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
+
+    TRACE_MESSAGE("ClearDefaultAccessPointAndPassword: Exit");
 }
 
 /**
