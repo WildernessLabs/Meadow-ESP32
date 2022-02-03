@@ -566,6 +566,11 @@ private:
     void GetAvailableNetworks(Message *message);
 
     /**
+     *  @brief Clear the default access point and password from NVS.
+     */
+    void ClearDefaultAccessPointAndPassword(Message *message);
+
+    /**
      *  @brief Convert the Antenna enum representation of an antenna into a GPIO pin number.
      */
     static gpio_num_t ConvertAntennaToPin(AntennaTypes::AntennaTypes antenna);
