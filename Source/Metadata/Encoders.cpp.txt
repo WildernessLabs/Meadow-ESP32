@@ -198,7 +198,14 @@ char *Encoders::ExtractString(uint8_t *buffer)
     else
     {
         ptr = (uint8_t *) pvPortMalloc(length + 1);
-        strcpy((char *) ptr, (char *) buffer);
+        if (ptr != NULL)
+        {
+            strcpy((char *) ptr, (char *) buffer);
+        }
+        else
+        {
+            ptr = nullptr;
+        }
     }
     return((char *) ptr);
 }
