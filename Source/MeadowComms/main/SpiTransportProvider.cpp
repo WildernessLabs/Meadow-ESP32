@@ -44,8 +44,8 @@ TaskHandle_t SpiTransportProvider::_synchronisationTaskHandle = NULL;
 /**
  *  Buffers will be allocated as needed and so they are initially null.
  */
-uint8_t *SpiTransportProvider::_headerReceiveBuffer = nullptr;
-uint8_t *SpiTransportProvider::_headerTransmitBuffer = nullptr;
+uint8_t *SpiTransportProvider::_rxBuffer = nullptr;
+uint8_t *SpiTransportProvider::_txBuffer = nullptr;
 uint8_t *SpiTransportProvider::_transportFrameBuffer = nullptr;
 uint32_t SpiTransportProvider::_headerFrameSize = 0;
 
@@ -132,14 +132,14 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
     /*
      *  The initial state is to wait for a message header to be sent by the STM32.
      *
-     *  The _headerReceiveBuffer and _headerTransmitBuffer are permanently allocated
+     *  The _rxBuffer and _txBuffer are permanently allocated
      *  as they will be frequently used for header and transport packets.
      */
     _headerFrameSize = Encoders::CalculateSpiBufferSize(Message::HEADER_SIZE);
-    _headerReceiveBuffer = static_cast<uint8_t *>(heap_caps_malloc(_headerFrameSize, MALLOC_CAP_DMA));
-    _headerTransmitBuffer = static_cast<uint8_t *>(heap_caps_malloc(_headerFrameSize, MALLOC_CAP_DMA));
+    _txBuffer = static_cast<uint8_t *>(heap_caps_calloc(MAXIMUM_SPI_FRAME_SIZE, 1, MALLOC_CAP_DMA));
+    _rxBuffer = static_cast<uint8_t *>(heap_caps_calloc(MAXIMUM_SPI_FRAME_SIZE, 1, MALLOC_CAP_DMA));
     SetMaximumMessageSize(MAXIMUM_SPI_FRAME_SIZE - _headerFrameSize);
-    ClearTransmitAndReceiveBuffers(_headerReceiveBuffer, _headerTransmitBuffer, _headerFrameSize);
+    ClearTransmitAndReceiveBuffers();
 
     /*
      *  Set the state machine to be ready to receive messages.
@@ -182,13 +182,13 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
 SpiTransportProvider::~SpiTransportProvider()
 {
     spi_slave_free(VSPI_HOST);
-    if (_headerReceiveBuffer)
+    if (_rxBuffer)
     {
-        vPortFree(_headerReceiveBuffer);
+        vPortFree(_rxBuffer);
     }
-    if (_headerTransmitBuffer)
+    if (_txBuffer)
     {
-        vPortFree(_headerTransmitBuffer);
+        vPortFree(_txBuffer);
     }
     if (_incomingMessage)
     {
@@ -307,19 +307,11 @@ const char *SpiTransportProvider::SpiStateString(SpiTransportProvider::SpiStates
  *  Note that it is assumed that the receive and transmit buffers are the
  *  same size.
  *
- *  @param receiveBuffer
- *      Pointer to the buffer that will hold the data that will be received.
- *
- *  @param transmitBuffer
- *      Pointer to the buffer that will hold the data to be sent.
- *
- *  @param bufferSize
- *      Number of bytes in the receive and transmit buffers.
  */
-void SpiTransportProvider::ClearTransmitAndReceiveBuffers(uint8_t *transmitBuffer, uint8_t *receiveBuffer, uint32_t bufferSize)
+void SpiTransportProvider::ClearTransmitAndReceiveBuffers()
 {
-    memset(transmitBuffer, 0, bufferSize);
-    memset(receiveBuffer, 0, bufferSize);
+    memset(_rxBuffer, 0, MAXIMUM_SPI_FRAME_SIZE);
+    memset(_txBuffer, 0, MAXIMUM_SPI_FRAME_SIZE);
 }
 
 /**
@@ -350,17 +342,15 @@ spi_slave_transaction_t *SpiTransportProvider::CreateAcknowledgementTransaction(
     copyOfMessage->MessageType = messageType;
     copyOfMessage->StatusCode = static_cast<uint32_t>(code);
 
-    uint8_t *ackFrame = static_cast<uint8_t *>(Encoders::EncodeMessage(copyOfMessage, true));
+    Encoders::EncodeMessage(copyOfMessage, _txBuffer, true);
     Message::DeleteMessage(copyOfMessage);
 
-    memcpy(const_cast<void *>(transaction->tx_buffer), ackFrame, _headerFrameSize);
-    vPortFree(ackFrame);
     TRACE_MESSAGE("CreateAcknowledgementTransaction: Exit");
     return (transaction);
 }
 
 /**
- *  @brief Setup a new transaction using the _headerReceiveBuffer and _headerTransmitBuffer.
+ *  @brief Setup a new transaction using the _rxBuffer and _txBuffer.
  *
  *  @returns
  *      Pointer to a transaction that can be used to send data over SPI.
@@ -373,9 +363,9 @@ spi_slave_transaction_t *SpiTransportProvider::CreateSpiHeaderTransaction()
 
     memset(transaction, 0, sizeof(spi_slave_transaction_t));
 
-    ClearTransmitAndReceiveBuffers(_headerReceiveBuffer, _headerTransmitBuffer, _headerFrameSize);
-    transaction->rx_buffer = _headerReceiveBuffer;
-    transaction->tx_buffer = _headerTransmitBuffer;
+    ClearTransmitAndReceiveBuffers();
+    transaction->rx_buffer = _rxBuffer;
+    transaction->tx_buffer = _txBuffer;
     transaction->length = _headerFrameSize * 8;
     TRACE_MESSAGE("CreateSpiHeaderTransaction: Exit");
     return (transaction);
@@ -393,12 +383,10 @@ spi_slave_transaction_t *SpiTransportProvider::CreateSpiHeaderTransaction()
 spi_slave_transaction_t *SpiTransportProvider::CreateSpiMessageTransaction(Message *message)
 {
     TRACE_MESSAGE("CreateSpiMessageTransaction: Enter");
-    uint8_t *encodedMessage = Encoders::EncodeMessage(message, false);
+    Encoders::EncodeMessage(message, _txBuffer, false);
 
     uint32_t encodedMessageBufferSize = Encoders::CalculateSpiBufferSize(Message::HEADER_SIZE + message->PayloadLength);
     spi_slave_transaction_t *transaction = CreateSpiPayloadTransaction(encodedMessageBufferSize);
-    memcpy(const_cast<void *>(transaction->tx_buffer), static_cast<void *>(encodedMessage), Message::HEADER_SIZE + message->PayloadLength);
-    vPortFree(encodedMessage);
     TRACE_MESSAGE("CreateSpiMessageTransaction: Exit");
     return(transaction);
 }
@@ -421,12 +409,10 @@ spi_slave_transaction_t *SpiTransportProvider::CreateSpiPayloadTransaction(uint3
     spi_slave_transaction_t *transaction = static_cast<spi_slave_transaction_t *>(pvPortMalloc(sizeof(spi_slave_transaction_t)));
 
     memset(transaction, 0, sizeof(spi_slave_transaction_t));
-    uint8_t *transmitBuffer = static_cast<uint8_t *>(heap_caps_calloc(bufferSize, 1, MALLOC_CAP_DMA));
-    uint8_t *receiveBuffer = static_cast<uint8_t *>(heap_caps_calloc(bufferSize, 1, MALLOC_CAP_DMA));
-    ClearTransmitAndReceiveBuffers(receiveBuffer, transmitBuffer, bufferSize);
+    ClearTransmitAndReceiveBuffers();
 
-    transaction->rx_buffer = receiveBuffer;
-    transaction->tx_buffer = transmitBuffer;
+    transaction->rx_buffer = _rxBuffer;
+    transaction->tx_buffer = _txBuffer;
     transaction->length = bufferSize * 8;
     TRACE_MESSAGE("CreateSpiPayloadTransaction: Exit");
     return (transaction);
@@ -436,8 +422,8 @@ spi_slave_transaction_t *SpiTransportProvider::CreateSpiPayloadTransaction(uint3
  *  @brief Release any storage associated with the SPI header transaction.
  *
  *  It is important that the storage used for the rx_buffer and tx_buffer(s)
- *  is only released if it is not the _headerReceiveBuffer and the
- *  _headerTransmitBuffer as these two buffers are used frequently so
+ *  is only released if it is not the _rxBuffer and the
+ *  _txBuffer as these two buffers are used frequently so
  *  they need to remain in place.
  *
  *  @param transaction
@@ -448,11 +434,11 @@ void SpiTransportProvider::DeleteTransaction(spi_slave_transaction_t *transactio
     TRACE_MESSAGE("DeleteTransaction: Enter");
     if (transaction)
     {
-        if (transaction->rx_buffer && (transaction->rx_buffer != _headerReceiveBuffer))
+        if (transaction->rx_buffer && (transaction->rx_buffer != _rxBuffer))
         {
             heap_caps_free(static_cast<void *>(transaction->rx_buffer));
         }
-        if (transaction->tx_buffer && (transaction->tx_buffer != _headerTransmitBuffer))
+        if (transaction->tx_buffer && (transaction->tx_buffer != _txBuffer))
         {
             heap_caps_free(const_cast<void *>(transaction->tx_buffer));
         }
@@ -524,9 +510,8 @@ void SpiTransportProvider::Setup(MessageDispatcher *messageDispatcher)
 void SpiTransportProvider::EncodeHeaderMessage(spi_slave_transaction_t *transaction, Message *message)
 {
     TRACE_MESSAGE("EncodeHeaderMessage: Enter");
-    uint8_t *encodedMessageHeader = Encoders::EncodeMessage(message, true);
-    memcpy(const_cast<void *>(transaction->tx_buffer), static_cast<void *>(encodedMessageHeader), _headerFrameSize);
-    vPortFree(encodedMessageHeader);
+    Encoders::EncodeMessage(message, _txBuffer, true);
+    memcpy(const_cast<void *>(transaction->tx_buffer), static_cast<void *>(_txBuffer), _headerFrameSize);
     TRACE_MESSAGE("EncodeHeaderMessage: Exit");
 }
 
@@ -1155,35 +1140,36 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessMessages(spi_slave_transac
         {
             case WaitingForInboundMessageHeader:
                 newTransaction = InboundMessageHeaderReceived(transaction);
+                TRACE_MESSAGE("Inbound header received.");
                 break;
-            case AcknowledgingInboundMessageHeader:
-                newTransaction = InboundMessageHeaderAcknowledged(transaction);
-                break;
-            case WaitingForInboundMessageBody:
-                newTransaction = InboundMessageBodyReceived(transaction);
-                break;
-            case AcknowledgingMessageBody:
-                newTransaction = InboundMessageBodyAcknowledged(transaction);
-                break;
+            // case AcknowledgingInboundMessageHeader:
+            //     newTransaction = InboundMessageHeaderAcknowledged(transaction);
+            //     break;
+            // case WaitingForInboundMessageBody:
+            //     newTransaction = InboundMessageBodyReceived(transaction);
+            //     break;
+            // case AcknowledgingMessageBody:
+            //     newTransaction = InboundMessageBodyAcknowledged(transaction);
+            //     break;
 
-            case SendingMessageHeader:
-                newTransaction = OutboundMessageHeaderSent(transaction);
-                break;
-            case WaitingForMessageHeaderAcknowledgement:
-                newTransaction = OutboundMessageHeaderAcknowledgementReceived(transaction);
-                break;
-            case SendingMessageBody:
-                newTransaction = OutboundMessageBodySent(transaction);
-                break;
-            case WaitingForMessageBodyAcknowledgement:
-                newTransaction = OutboundMessageBodyAcknowledgementReceived(transaction);
-                break;
+            // case SendingMessageHeader:
+            //     newTransaction = OutboundMessageHeaderSent(transaction);
+            //     break;
+            // case WaitingForMessageHeaderAcknowledgement:
+            //     newTransaction = OutboundMessageHeaderAcknowledgementReceived(transaction);
+            //     break;
+            // case SendingMessageBody:
+            //     newTransaction = OutboundMessageBodySent(transaction);
+            //     break;
+            // case WaitingForMessageBodyAcknowledgement:
+            //     newTransaction = OutboundMessageBodyAcknowledgementReceived(transaction);
+            //     break;
 
-            case SendingTransportResponse:
-                newTransaction = ProcessSendingTransportResponseState(transaction);
-                break;
+            // case SendingTransportResponse:
+            //     newTransaction = ProcessSendingTransportResponseState(transaction);
+            //     break;
             default:
-                ERROR_MESSAGE("ProcessMessages: Unhandled state: %s", SpiStateString(_currentState));
+                // ERROR_MESSAGE("ProcessMessages: Unhandled state: %s", SpiStateString(_currentState));
                 break;
         }
     }

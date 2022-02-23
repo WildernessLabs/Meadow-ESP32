@@ -40,7 +40,7 @@ private:
     /**
      *  @brief Maximum number of bytes that can sent over the SPI bus.
      */
-    const uint32_t MAXIMUM_SPI_FRAME_SIZE = 4094;
+    const uint32_t MAXIMUM_SPI_FRAME_SIZE = 4092;
 
     /**
      *  @brief Possible states for the SPI transport layer.
@@ -69,12 +69,12 @@ private:
     /**
      *  @brief Buffer to hold a Message header worth of data.
      */
-    static uint8_t *_headerReceiveBuffer;
+    static uint8_t *_rxBuffer;
 
     /**
      *  @brief Buffer to hold the data to be sent to the STM32.
      */
-    static uint8_t *_headerTransmitBuffer;
+    static uint8_t *_txBuffer;
 
     /**
      *  @brief Buffer for the transport frame.
@@ -283,7 +283,7 @@ private:
     /**
      *  @brief Clear the data buffers used to send and receive data.
      */
-    void ClearTransmitAndReceiveBuffers(uint8_t *transmitBuffer, uint8_t *receiveBuffer, uint32_t bufferSize);
+    void ClearTransmitAndReceiveBuffers();
 
     /**
      *  @brief Free any memory allocated for the transaction but keep the
