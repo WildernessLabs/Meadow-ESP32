@@ -60,13 +60,17 @@ struct Message
     /**
      *  Size of an encoded message header (in bytes).
      */
-    static const uint32_t HEADER_SIZE = 23;
+    static const uint32_t HEADER_SIZE = 25;
 
     /**
      *  Offset of the CRC in an encoded message header.
      */
-    static const uint32_t CRC_OFFSET = 18;
+    static const uint32_t CRC_OFFSET = 1;
 
+    /*
+    *  Current protocol number.
+    */
+    static const uint8_t PROTOCOL_NUMBER = 1;
     /**
      *  Message ID used to indicate an invalid (or unknown) message ID.
      */
