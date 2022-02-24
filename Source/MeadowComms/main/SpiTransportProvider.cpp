@@ -366,7 +366,7 @@ spi_slave_transaction_t *SpiTransportProvider::CreateSpiHeaderTransaction()
     ClearTransmitAndReceiveBuffers();
     transaction->rx_buffer = _rxBuffer;
     transaction->tx_buffer = _txBuffer;
-    transaction->length = _headerFrameSize * 8;
+    transaction->length = MAXIMUM_SPI_FRAME_SIZE * 8;
     TRACE_MESSAGE("CreateSpiHeaderTransaction: Exit");
     return (transaction);
 }
@@ -606,12 +606,15 @@ spi_slave_transaction_t *SpiTransportProvider::InboundMessageHeaderReceived(spi_
         Message::DeleteMessage(_incomingMessage);
         _incomingMessage = nullptr;
     }
+
     spi_slave_transaction_t *newTransaction = nullptr;
     _currentState = AcknowledgingInboundMessageHeader;
-    int dataSize = transaction->length / 8;
+    int dataSize = transaction->trans_len / 8;
+    TRACE_MESSAGE("InboundMessageHeaderReceived: Received %d bytes.", dataSize);
+    TRACE_HEX_BUFFER(transaction->rx_buffer, dataSize);
     if (dataSize >= _headerFrameSize)
     {
-        _incomingMessage = Encoders::ExtractMessage(static_cast<uint8_t *>(transaction->rx_buffer), _headerFrameSize, true);
+        _incomingMessage = Encoders::ExtractMessage(static_cast<uint8_t *>(transaction->rx_buffer), dataSize, false);
         if (!_incomingMessage)             // nullptr indicates a CRC error.
         {
             ERROR_MESSAGE("InboundMessageHeaderReceived: CRC Error.");
@@ -1120,14 +1123,13 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessMessages(spi_slave_transac
     uint32_t notificationBits = 0;
 
     TRACE_MESSAGE("ProcessMessages: Waiting for notification, current state: %s", SpiStateString(_currentState));
-    int __attribute__((unused)) dataSize = transaction->length / 8;
-    TRACE_MESSAGE("ProcessMessages: Sending %d bytes.", dataSize);
-    TRACE_HEX_BUFFER(transaction->tx_buffer, dataSize);
     ESP_ERROR_CHECK(spi_slave_queue_trans(VSPI_HOST, transaction, portMAX_DELAY));
-    xTaskNotifyWait(0x00000000, ULONG_MAX, &notificationBits, portMAX_DELAY);
 
-    TRACE_MESSAGE("ProcessMessages: Received %d bytes.", dataSize);
-    TRACE_HEX_BUFFER(transaction->rx_buffer, dataSize);
+    // int __attribute__((unused)) dataSize = transaction->trans_len / 8;
+    // TRACE_MESSAGE("ProcessMessages: Transferred %d bytes.", dataSize);
+    // TRACE_HEX_BUFFER(transaction->tx_buffer, dataSize);
+    
+    xTaskNotifyWait(0x00000000, ULONG_MAX, &notificationBits, portMAX_DELAY);
 
     //
     //  ESP-IDF documentation states that a call to spi_slave_get_trans_result
@@ -1140,11 +1142,13 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessMessages(spi_slave_transac
         {
             case WaitingForInboundMessageHeader:
                 newTransaction = InboundMessageHeaderReceived(transaction);
-                TRACE_MESSAGE("Inbound header received.");
                 break;
-            // case AcknowledgingInboundMessageHeader:
-            //     newTransaction = InboundMessageHeaderAcknowledged(transaction);
-            //     break;
+            case AcknowledgingInboundMessageHeader:
+                newTransaction = CreateSpiHeaderTransaction();
+                _currentState = WaitingForInboundMessageHeader;
+                _incomingMessage = nullptr;
+                // newTransaction = InboundMessageHeaderAcknowledged(transaction);
+                break;
             // case WaitingForInboundMessageBody:
             //     newTransaction = InboundMessageBodyReceived(transaction);
             //     break;
