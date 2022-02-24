@@ -628,6 +628,14 @@ spi_slave_transaction_t *SpiTransportProvider::InboundMessageHeaderReceived(spi_
             switch (_incomingMessage->MessageType)
             {
                 case MessageTypes::Header:
+                    if (_incomingMessage->Interface != Esp32Interfaces::Transport)
+                    {
+                        _messageDispatcher->QueueMessageForEsp32(_incomingMessage);
+                    }
+                    else
+                    {
+                        // Process Transport message.
+                    }
                     _messageType = MessageTypes::Ack;
                     _responseCode = StatusCodes::CompletedOk;
                     newTransaction = CreateAcknowledgementTransaction(_incomingMessage, _responseCode, _messageType);
