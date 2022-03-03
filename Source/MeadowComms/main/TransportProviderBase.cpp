@@ -109,10 +109,10 @@ int TransportProviderBase::OutboundMessageQueueLength()
 Message *TransportProviderBase::GetOutboundMessage()
 {
     Message *result = nullptr;
-    UBaseType_t messageCount = OutboundMessageQueueLength();
+    // UBaseType_t messageCount = OutboundMessageQueueLength();
     if (xSemaphoreTake(_outboundMessageQueueMutex, portMAX_DELAY))
     {
-        if (messageCount > 0)
+        if (uxQueueMessagesWaiting(_outboundMessageQueueHandle) > 0)
         {
             if (xQueueReceive(_outboundMessageQueueHandle, (void *) &result, portMAX_DELAY) != pdTRUE)
             {

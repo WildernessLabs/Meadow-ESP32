@@ -364,6 +364,7 @@ Message *Encoders::ExtractMessage(uint8_t *buffer, uint32_t bufferLength, bool h
         message = static_cast<Message *>(pvPortMalloc(sizeof(Message)));
 
         memset((void *) message, 0, sizeof(Message));
+        buffer += 9;                                        // Skip the protocol, CRC, packet number and number of packets.
         message->MessageType = *buffer;
         buffer++;
         message->Interface = *buffer;
@@ -410,7 +411,7 @@ Message *Encoders::ExtractMessage(uint8_t *buffer, uint32_t bufferLength, bool h
  *     Will be placed on the FreeRTOS heap (use vPortFree to release the
  *     storage).
  */
-uint8_t *Encoders::EncodeMessage(Message *message, bool headerOnly)
+void Encoders::EncodeMessage(Message *message, uint8_t *buffer, bool headerOnly)
 {
     uint32_t messageSize = Message::HEADER_SIZE;
     if (!headerOnly)
@@ -418,39 +419,39 @@ uint8_t *Encoders::EncodeMessage(Message *message, bool headerOnly)
         messageSize += message->PayloadLength;
     }
     uint32_t bufferSize = Encoders::CalculateSpiBufferSize(messageSize);
-    int offset = 0;
-    uint8_t *buffer = (uint8_t *) pvPortMalloc(bufferSize);
+    uint8_t *next_location = buffer;
     
     memset(buffer, 0, bufferSize);
-    *buffer = message->MessageType;
-    offset++;
-    *(buffer + offset) = message->Interface;
-    offset++;
-    EncodeUInt32(message->Function, buffer + offset);
-    offset += 4;
-    EncodeUInt32(message->StatusCode, buffer + offset);
-    offset += 4;
-    EncodeUInt32(message->MessageID, buffer + offset);
-    offset += 4;
-    EncodeUInt32(message->PayloadLength, buffer + offset);
-    offset += 4;
+    *next_location = Message::PROTOCOL_NUMBER;
+    next_location++;
+    EncodeUInt32(0, next_location);
+    next_location += 4;
+    *next_location = 1;                         // Packet number.
+    next_location++;
+    *next_location = 1;                         // Number of packets.
+    next_location++;
+    EncodeUInt16(0, next_location);             // Size of the payload in this packet.
+    next_location += 2;
+    *next_location = message->MessageType;
+    next_location++;
+    *next_location = message->Interface;
+    next_location++;
+    EncodeUInt32(message->Function, next_location);
+    next_location += 4;
+    EncodeUInt32(message->StatusCode, next_location);
+    next_location += 4;
+    EncodeUInt32(message->MessageID, next_location);
+    next_location += 4;
+    EncodeUInt32(message->PayloadLength, next_location);
+    next_location += 4;
     //
     //  The byte after the PayloadLength is the CRC.  This is filled in later
     //  and so a 0 is written into the message temporarily.
     //
-    EncodeUInt32(0, buffer + offset);
-    offset += 4;
     if (!headerOnly && (message->PayloadLength > 0))
     {
-        memcpy((uint8_t *) (buffer + offset), message->Payload, message->PayloadLength);
-    }
-    else
-    {
-        EncodeUInt32(0, buffer + offset);
+        memcpy(next_location, message->Payload, message->PayloadLength);
     }
     uint32_t crc = CRC32(buffer, bufferSize);
     EncodeUInt32(crc, buffer + Message::CRC_OFFSET);
-
-    return(buffer);
 }
-

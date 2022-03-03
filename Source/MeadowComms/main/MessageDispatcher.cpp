@@ -82,6 +82,7 @@ MessageDispatcher::~MessageDispatcher()
  */
 uint32_t MessageDispatcher::GetMaximumMessageSize() const
 {
+    // TODO: Change this.
     return(_transportProvider->GetMaximumMessageSize());
 }
 

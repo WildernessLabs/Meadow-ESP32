@@ -367,7 +367,7 @@ Message *Encoders::ExtractMessage(uint8_t *buffer, uint32_t bufferLength, bool h
         message = static_cast<Message *>(pvPortMalloc(sizeof(Message)));
 
         memset((void *) message, 0, sizeof(Message));
-        buffer += 7;                                        // Skip the protocol, CRC, packet number and number of packets.
+        buffer += 9;                                        // Skip the protocol, CRC, packet number and number of packets.
         message->MessageType = *buffer;
         buffer++;
         message->Interface = *buffer;
@@ -429,10 +429,12 @@ void Encoders::EncodeMessage(Message *message, uint8_t *buffer, bool headerOnly)
     next_location++;
     EncodeUInt32(0, next_location);
     next_location += 4;
-    *next_location = 1;                        // Packet number.
+    *next_location = 1;                         // Packet number.
     next_location++;
-    *next_location = 1;                        //  Number of packets.
+    *next_location = 1;                         // Number of packets.
     next_location++;
+    EncodeUInt16(0, next_location);             // Size of the payload in this packet.
+    next_location += 2;
     *next_location = message->MessageType;
     next_location++;
     *next_location = message->Interface;
