@@ -144,7 +144,7 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
     /*
      *  Set the state machine to be ready to receive messages.
      */
-    _currentState = WaitingForInboundMessageHeader;
+    _currentState = WaitingForMessage;
 
     /*
      *  Set up the task and that will process the SPI messages.
@@ -267,35 +267,20 @@ const char *SpiTransportProvider::SpiStateString(SpiTransportProvider::SpiStates
         case Invalid:
             stateString = "Invalid";
             break;
-        case WaitingForInboundMessageHeader:
-            stateString = "WaitingForInboundMessageHeader";
+        case WaitingForMessage:
+            stateString = "WaitingFoMessage";
             break;
-        case AcknowledgingInboundMessageHeader:
-            stateString = "AcknowledgingInboundMessageHeader";
+        case AcknowledgingMessage:
+            stateString = "AcknowledgingMessage";
             break;
-        case WaitingForInboundMessageBody:
-            stateString = "WaitingForMessageBody";
+        case SendingMessageDetails:
+            stateString = "SendingMessageDetails";
             break;
-        case AcknowledgingMessageBody:
-            stateString = "AcknowledgingMessageBody";
+        case SendingMessage:
+            stateString = "SendingMessage";
             break;
-        case SendingMessageHeader:
-            stateString = "SendingMessageHeader";
-            break;
-        case WaitingForMessageHeaderAcknowledgement:
-            stateString = "WaitingForMessageHeaderAcknowledgement";
-            break;
-        case SendingMessageBody:
-            stateString = "SendingMessageBody";
-            break;
-        case WaitingForMessageBodyAcknowledgement:
-            stateString = "WaitingForMessageBodyAcknowledgement";
-            break;
-        case WantToSendTransportMessage:
-            stateString = "WantToSendTransportMessage";
-            break;
-        case SendingTransportResponse:
-            stateString = "SendingTransportResponse";
+        case WaitingForMessageAcknowledgement:
+            stateString = "WaitingForMessageAcknowledgement";
             break;
     }
     return (stateString);
@@ -383,10 +368,10 @@ spi_slave_transaction_t *SpiTransportProvider::CreateSpiHeaderTransaction()
 spi_slave_transaction_t *SpiTransportProvider::CreateSpiMessageTransaction(Message *message)
 {
     TRACE_MESSAGE("CreateSpiMessageTransaction: Enter");
-    Encoders::EncodeMessage(message, _txBuffer, false);
 
     uint32_t encodedMessageBufferSize = Encoders::CalculateSpiBufferSize(Message::HEADER_SIZE + message->PayloadLength);
     spi_slave_transaction_t *transaction = CreateSpiPayloadTransaction(encodedMessageBufferSize);
+    Encoders::EncodeMessage(message, _txBuffer, false);
     TRACE_MESSAGE("CreateSpiMessageTransaction: Exit");
     return(transaction);
 }
@@ -406,6 +391,7 @@ spi_slave_transaction_t *SpiTransportProvider::CreateSpiMessageTransaction(Messa
 spi_slave_transaction_t *SpiTransportProvider::CreateSpiPayloadTransaction(uint32_t bufferSize)
 {
     TRACE_MESSAGE("CreateSpiPayloadTransaction: Enter");
+    TRACE_MESSAGE("CreateSpiPayloadTransaction: Creating transaction for %d bytes", bufferSize);
     spi_slave_transaction_t *transaction = static_cast<spi_slave_transaction_t *>(pvPortMalloc(sizeof(spi_slave_transaction_t)));
 
     memset(transaction, 0, sizeof(spi_slave_transaction_t));
@@ -532,21 +518,27 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessTransportMessage(Message *
     switch (request->Function)
     {
         case TransportFunction::SendResponse:
-            _messageType = MessageTypes::Transport;
+            Message *message;
+            message = Message::CreateOnHeap(MessageTypes::Transport | MessageTypes::Ack, Esp32Interfaces::Transport, TransportFunction::SendResponse, StatusCodes::CompletedOk);
+            message->MessageID = request->MessageID;
             if (OutboundMessageQueueLength() > 0)
             {
                 _responseCode = StatusCodes::CompletedOk;
+                _outboundMessage = GetOutboundMessage();
+                if (_outboundMessage)
+                {
+                    _currentState = SendingMessageDetails;
+                    message->PayloadLength = _outboundMessage->PayloadLength;
+                }
             }
             else
             {
-                _responseCode = StatusCodes::NoMessagesWaiting;
+                message->StatusCode = StatusCodes::NoMessagesWaiting;
             }
-            Message *message;
-            message = Message::CreateOnHeap(MessageTypes::Transport, Esp32Interfaces::Transport, TransportFunction::SendResponse, _responseCode);
             newTransaction = CreateSpiHeaderTransaction();
             EncodeHeaderMessage(newTransaction, message);
             Message::DeleteMessage(message);
-            _currentState = SendingTransportResponse;
+            _currentState = SendingMessageDetails;
             break;
         default:
             TRACE_MESSAGE("ProcessTransportMessage: Transport function %d not recognised.", request->Function);
@@ -598,9 +590,9 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessTransportMessage(Message *
  *  @returns
  *      New SPI transaction.
  */
-spi_slave_transaction_t *SpiTransportProvider::InboundMessageHeaderReceived(spi_slave_transaction_t *transaction)
+spi_slave_transaction_t *SpiTransportProvider::MessageReceived(spi_slave_transaction_t *transaction)
 {
-    TRACE_MESSAGE("InboundMessageHeaderReceived: Entering method");
+    TRACE_MESSAGE("InboundMessageReceived: Entering method");
     if (_incomingMessage)
     {
         Message::DeleteMessage(_incomingMessage);
@@ -608,16 +600,16 @@ spi_slave_transaction_t *SpiTransportProvider::InboundMessageHeaderReceived(spi_
     }
 
     spi_slave_transaction_t *newTransaction = nullptr;
-    _currentState = AcknowledgingInboundMessageHeader;
+    _currentState = AcknowledgingMessage;
     int dataSize = transaction->trans_len / 8;
-    TRACE_MESSAGE("InboundMessageHeaderReceived: Received %d bytes.", dataSize);
+    TRACE_MESSAGE("InboundMessageReceived: Received %d bytes.", dataSize);
     TRACE_HEX_BUFFER(transaction->rx_buffer, dataSize);
     if (dataSize >= _headerFrameSize)
     {
         _incomingMessage = Encoders::ExtractMessage(static_cast<uint8_t *>(transaction->rx_buffer), dataSize, false);
         if (!_incomingMessage)             // nullptr indicates a CRC error.
         {
-            ERROR_MESSAGE("InboundMessageHeaderReceived: CRC Error.");
+            ERROR_MESSAGE("InboundMessageReceived: CRC Error.");
             _responseCode = StatusCodes::CrcError;
             _messageType = MessageTypes::Nak;
             _incomingMessage = Message::CreateOnHeap(_messageType, Esp32Interfaces::Transport, 0, _responseCode);
@@ -631,10 +623,6 @@ spi_slave_transaction_t *SpiTransportProvider::InboundMessageHeaderReceived(spi_
                     if (_incomingMessage->Interface != Esp32Interfaces::Transport)
                     {
                         _messageDispatcher->QueueMessageForEsp32(_incomingMessage);
-                    }
-                    else
-                    {
-                        // Process Transport message.
                     }
                     _messageType = MessageTypes::Ack;
                     _responseCode = StatusCodes::CompletedOk;
@@ -663,7 +651,7 @@ spi_slave_transaction_t *SpiTransportProvider::InboundMessageHeaderReceived(spi_
         newTransaction = CreateAcknowledgementTransaction(_incomingMessage, _responseCode, _messageType);
     }
     DeleteTransaction(transaction);
-    TRACE_MESSAGE("InboundMessageHeaderReceived: Exit");
+    TRACE_MESSAGE("InboundMessageReceived: Exit");
     return(newTransaction);
 }
 
@@ -678,142 +666,17 @@ spi_slave_transaction_t *SpiTransportProvider::InboundMessageHeaderReceived(spi_
  *  @returns
  *      New SPI transaction.
  */
-spi_slave_transaction_t *SpiTransportProvider::InboundMessageHeaderAcknowledged(spi_slave_transaction_t *transaction)
+spi_slave_transaction_t *SpiTransportProvider::MessageAcknowledged(spi_slave_transaction_t *transaction)
 {
-    TRACE_MESSAGE("InboundMessageHeaderAcknowledged: Entering method");
-    DeleteTransaction(transaction);
-    spi_slave_transaction_t *newTransaction = nullptr;
-    if (_responseCode == StatusCodes::CompletedOk)
-    {
-        if (_incomingMessage->PayloadLength == 0)         // Assume _incomingMessage has been set up.
-        {
-            //
-            //  If we get here then the message is simple, i.e. no payload
-            //  so we need to queue the message on the appropriate interface.
-            //
-            //  We do not delete the _incomingMessage in this case as a
-            //  pointer to the message has been placed on one of the ESP32 queues.
-            //
-            if (_incomingMessage->Interface != Esp32Interfaces::Transport)
-            {
-                _messageDispatcher->QueueMessageForEsp32(_incomingMessage);
-            }
-            newTransaction = CreateSpiHeaderTransaction();
-            _currentState = WaitingForInboundMessageHeader;
-            _incomingMessage = nullptr;
-        }
-        else
-        {
-            uint32_t encodedMessageBodySize = Encoders::CalculateSpiBufferSize(Message::HEADER_SIZE + _incomingMessage->PayloadLength);
-            newTransaction = CreateSpiPayloadTransaction(encodedMessageBodySize);
-            _currentState = WaitingForInboundMessageBody;
-        }
-    }
-    else
-    {
-        Message::DeleteMessage(_incomingMessage);
-        _incomingMessage = nullptr;
-        newTransaction = CreateSpiHeaderTransaction();
-        _currentState = WaitingForInboundMessageHeader;
-    }
-    TRACE_MESSAGE("InboundMessageHeaderAcknowledged: Exit");
-    return(newTransaction);
-}
+    TRACE_MESSAGE("MessageAcknowledged: Entering method");
 
-/**
- *  @brief The full message has been received, work out if it is good and prepare
- *  the appropriate response (ACK or NAK) and queue the message for processing
- *  if the message is good.
- *
- *  @param transaction
- *      Current SPI transaction used to get data from the STM32.
- *
- *  @returns
- *      New SPI transaction.
- */
-spi_slave_transaction_t *SpiTransportProvider::InboundMessageBodyReceived(spi_slave_transaction_t *transaction)
-{
-    TRACE_MESSAGE("InboundMessageBodyReceived: Entering method");
-    int dataSize = transaction->length / 8;
-    uint32_t encodedMessageBodySize = Encoders::CalculateSpiBufferSize(Message::HEADER_SIZE + _incomingMessage->PayloadLength);
-    //
-    //  Free up the SPI Tx buffer as soon as we can when receiving message bodies as the
-    //  contents of the buffer should be 0 and are meaningless.  This is done to mitigate
-    //  against running low / out of memory on the heap.
-    //
-    heap_caps_free(const_cast<void *>(transaction->tx_buffer));
-    transaction->tx_buffer = nullptr;
-    Message *message = Encoders::ExtractMessage(static_cast<uint8_t *>(transaction->rx_buffer), encodedMessageBodySize, false);
-    DeleteTransaction(transaction);
-
-    uint8_t messageType = MessageTypes::Ack;
-    StatusCodes::StatusCodes responseCode = StatusCodes::CompletedOk;
-    if (message)
-    {
-        if (dataSize != encodedMessageBodySize)
-        {
-            responseCode = StatusCodes::InvalidPacket;
-            messageType = MessageTypes::Nak;
-        }
-        else
-        {
-            if (message->MessageType == MessageTypes::Data)
-            {
-                if ((message->Interface == _incomingMessage->Interface) && (message->Function == _incomingMessage->Function) && (message->MessageID == _incomingMessage->MessageID))
-                {
-                    _messageDispatcher->QueueMessageForEsp32(message);
-                }
-                else
-                {
-                    Message::DeleteMessage(message);
-                    responseCode = StatusCodes::UnexpectedData;
-                    messageType = MessageTypes::Nak;
-                }
-            }
-            else
-            {
-                Message::DeleteMessage(message);
-                responseCode = StatusCodes::UnexpectedData;
-                messageType = MessageTypes::Nak;
-            }
-        }
-    }
-    else
-    {
-        responseCode = StatusCodes::CrcError;
-        messageType = MessageTypes::Nak;
-    }
-    _responseCode = responseCode;
-    _messageType = messageType;
-
-    spi_slave_transaction_t *newTransaction = CreateAcknowledgementTransaction(_incomingMessage, responseCode, messageType);
-
-    Message::DeleteMessage(_incomingMessage);
-    _incomingMessage = nullptr;
-
-    _currentState = AcknowledgingMessageBody;
-    TRACE_MESSAGE("InboundMessageBodyReceived: Exit");
-    return(newTransaction);
-}
-
-/**
- *  @brief Acknowledgement has been sent so go back to waiting for a new message
- *  header to be sent.
- *
- *  @param transaction
- *      Current SPI transaction used to get data from the STM32.
- *
- *  @returns
- *      New SPI transaction.
- */
-spi_slave_transaction_t *SpiTransportProvider::InboundMessageBodyAcknowledged(spi_slave_transaction_t *transaction)
-{
-    TRACE_MESSAGE("InboundMessageBodyAcknowledged: Enter");
     DeleteTransaction(transaction);
     spi_slave_transaction_t *newTransaction = CreateSpiHeaderTransaction();
-    _currentState = WaitingForInboundMessageHeader;
-    TRACE_MESSAGE("InboundMessageBodyAcknowledged: Exit");
-    return (newTransaction);
+    _incomingMessage = nullptr;
+    _currentState = WaitingForMessage;
+    
+    TRACE_MESSAGE("MessageAcknowledged: Exit");
+    return(newTransaction);
 }
 
 /******************************************************************************
@@ -845,20 +708,25 @@ spi_slave_transaction_t *SpiTransportProvider::InboundMessageBodyAcknowledged(sp
  *  @returns
  *      SPI transaction created to receive the message acknowledgement.
  */
-spi_slave_transaction_t *SpiTransportProvider::OutboundMessageHeaderSent(spi_slave_transaction_t *transaction)
+spi_slave_transaction_t *SpiTransportProvider::SendMessage(spi_slave_transaction_t *transaction)
 {
-    TRACE_MESSAGE("OutboundMessageHeaderSent: Enter");
+    TRACE_MESSAGE("MessageDetailsSent: Enter");
     DeleteTransaction(transaction);
-    spi_slave_transaction_t *newTransaction = CreateSpiHeaderTransaction();
+    //
+    //  TODO: Deal with errors (outbound message is null etc.)
+    //
+    spi_slave_transaction_t *newTransaction = nullptr;
     if (_outboundMessage)
     {
-        _currentState = WaitingForMessageHeaderAcknowledgement;
+        TRACE_MESSAGE("Sending outbound message");
+        newTransaction = CreateSpiMessageTransaction(_outboundMessage);
+        _currentState = SendingMessage;
     }
     else
     {
-        _currentState = WaitingForInboundMessageHeader;
+        TRACE_MESSAGE("Outbound message is null");
     }
-    TRACE_MESSAGE("OutboundMessageHeaderSent: Exit");
+    TRACE_MESSAGE("MessageDetailsSent: Exit");
     return(newTransaction);
 }
 
@@ -881,71 +749,53 @@ spi_slave_transaction_t *SpiTransportProvider::OutboundMessageHeaderSent(spi_sla
  *      New SPI transaction that can be used to communicate with the STM32.
  *
  */
-spi_slave_transaction_t *SpiTransportProvider::OutboundMessageHeaderAcknowledgementReceived(spi_slave_transaction_t *transaction)
+spi_slave_transaction_t *SpiTransportProvider::MessageSent(spi_slave_transaction_t *transaction)
 {
-    TRACE_MESSAGE("OutboundMessageHeaderAcknowledgementReceived: Enter");
-    Message *acknowledgement = Encoders::ExtractMessage(static_cast<uint8_t *>(transaction->rx_buffer), _headerFrameSize, true);
+    TRACE_MESSAGE("MessageSent: Enter");
+    // Message *acknowledgement = Encoders::ExtractMessage(static_cast<uint8_t *>(transaction->rx_buffer), _headerFrameSize, true);
 
     DeleteTransaction(transaction);
     spi_slave_transaction_t *newTransaction = nullptr;
 
-    if (acknowledgement)
-    {
-        if (acknowledgement->MessageType == MessageTypes::Ack)
-        {
-            if (_outboundMessage->PayloadLength > 0)
-            {
+    // if (acknowledgement)
+    // {
+        // TRACE_MESSAGE("MessageSent: Acknowledgement OK");
+        // if (acknowledgement->MessageType == MessageTypes::Ack)
+        // {
+            TRACE_MESSAGE("MessageSent: Preparing message transaction.");
+            // if (_outboundMessage->PayloadLength > 0)
+            // {
                 newTransaction = CreateSpiMessageTransaction(_outboundMessage);
-                _currentState = SendingMessageBody;
-            }
-            else
-            {
-                Message::DeleteMessage(_outboundMessage);
-                newTransaction = CreateSpiHeaderTransaction();
-                _currentState = WaitingForInboundMessageHeader;
-                _outboundMessage = nullptr;
-            }
-        }
-        else
-        {
-            QueueMessageForStm32(_outboundMessage);
-            _outboundMessage = nullptr;
-            newTransaction = CreateSpiHeaderTransaction();
-            _currentState = WaitingForInboundMessageHeader;
-        }
-        Message::DeleteMessage(acknowledgement);
-    }
-    else
-    {
-        QueueMessageForStm32(_outboundMessage);
-        newTransaction = CreateSpiHeaderTransaction();
-        _currentState = WaitingForInboundMessageHeader;
-        _outboundMessage = nullptr;
-    }
-    TRACE_MESSAGE("OutboundMessageHeaderAcknowledgementReceived: Exit");
-    return(newTransaction);
-}
-
-/**
- *  @brief The message body has been sent, we should now prepare to receive the message
- *  body acknowledgement.
- *
- *  The message acknowledgement (ACK / NAK) will determine if the STM32 has received
- *  the message body.
- *
- *  @param transaction
- *      Last SPI transaction that was executed.
- *
- *  @returns
- *      New SPI transaction with data.
- */
-spi_slave_transaction_t *SpiTransportProvider::OutboundMessageBodySent(spi_slave_transaction_t *transaction)
-{
-    TRACE_MESSAGE("OutboundMessageBodySent: Enter");
-    DeleteTransaction(transaction);
-    spi_slave_transaction_t *newTransaction = CreateSpiHeaderTransaction();
-    _currentState = WaitingForMessageBodyAcknowledgement;
-    TRACE_MESSAGE("OutboundMessageBodySent: Exit");
+                _currentState = WaitingForMessageAcknowledgement;
+            // }
+            // else
+            // {
+            //     TRACE_MESSAGE("Payload length > 0");
+            //     Message::DeleteMessage(_outboundMessage);
+            //     newTransaction = CreateSpiHeaderTransaction();
+            //     _currentState = WaitingForMessage;
+            //     _outboundMessage = nullptr;
+            // }
+        // }
+        // else
+        // {
+        //     TRACE_MESSAGE("Not an ACK.");
+        //     QueueMessageForStm32(_outboundMessage);
+        //     _outboundMessage = nullptr;
+        //     newTransaction = CreateSpiHeaderTransaction();
+        //     _currentState = WaitingForMessage;
+        // }
+        // Message::DeleteMessage(acknowledgement);
+    // }
+    // else
+    // {
+    //     TRACE_MESSAGE("MessageSent: Acknowledgement is null");
+    //     QueueMessageForStm32(_outboundMessage);
+    //     newTransaction = CreateSpiHeaderTransaction();
+    //     _currentState = WaitingForMessage;
+    //     _outboundMessage = nullptr;
+    // }
+    TRACE_MESSAGE("MessageSent: Exit");
     return(newTransaction);
 }
 
@@ -967,9 +817,9 @@ spi_slave_transaction_t *SpiTransportProvider::OutboundMessageBodySent(spi_slave
  *  @returns
  *      New SPI transaction with data.
  */
-spi_slave_transaction_t *SpiTransportProvider::OutboundMessageBodyAcknowledgementReceived(spi_slave_transaction_t *transaction)
+spi_slave_transaction_t *SpiTransportProvider::AcknowledgementReceived(spi_slave_transaction_t *transaction)
 {
-    TRACE_MESSAGE("OutboundMessageBodyAcknowledgementReceived: Enter");
+    TRACE_MESSAGE("AcknowledgementReceived: Enter");
     Message *incomingMessage = Encoders::ExtractMessage(static_cast<uint8_t *>(transaction->rx_buffer), _headerFrameSize, true);
     DeleteTransaction(transaction);
     if (incomingMessage)
@@ -982,21 +832,24 @@ spi_slave_transaction_t *SpiTransportProvider::OutboundMessageBodyAcknowledgemen
             #endif
 
             Message::DeleteMessage(_outboundMessage);
+            TRACE_MESSAGE("Message request processed.");
         }
         else
         {
+            TRACE_MESSAGE("Message is not ACK %02x", incomingMessage->MessageType);
             QueueMessageForStm32(_outboundMessage);
         }
     }
     else
     {
+        TRACE_MESSAGE("Incoming message cannot be decoded.");
         QueueMessageForStm32(_outboundMessage);
     }
     Message::DeleteMessage(incomingMessage);
-    _currentState = WaitingForInboundMessageHeader;
+    _currentState = WaitingForMessage;
     _outboundMessage = nullptr;
 
-    TRACE_MESSAGE("OutboundMessageBodyAcknowledgementReceived: Exit");
+    TRACE_MESSAGE("AcknowledgementReceived: Exit");
     return(CreateSpiHeaderTransaction());
 }
 
@@ -1031,7 +884,7 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessSendingTransportResponseSt
             if (_outboundMessage)
             {
                 EncodeHeaderMessage(newTransaction, _outboundMessage);
-                _currentState = SendingMessageHeader;
+                _currentState = SendingMessageDetails;
             }
             else
             {
@@ -1043,12 +896,12 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessSendingTransportResponseSt
         }
         else
         {
-            _currentState = WaitingForInboundMessageHeader;
+            _currentState = WaitingForMessage;
         }
     }
     else
     {
-        _currentState = WaitingForInboundMessageHeader;
+        _currentState = WaitingForMessage;
     }
     TRACE_MESSAGE("ProcessSendingTransportResponseState: Exit");
     return(newTransaction);
@@ -1106,11 +959,9 @@ bool SpiTransportProvider::SendingData(SpiStates state)
 {
     TRACE_MESSAGE("SendingData: Enter");
     TRACE_MESSAGE("SendingData: Exit");
-    return((_currentState == AcknowledgingInboundMessageHeader)
-            || (_currentState == AcknowledgingMessageBody)
-            || (_currentState == SendingMessageHeader)
-            || (_currentState == SendingMessageBody)
-            || (_currentState == SendingTransportResponse));
+    return((_currentState == AcknowledgingMessage)
+            || (_currentState == SendingMessageDetails)
+            || (_currentState == SendingMessage));
 }
 
 /**
@@ -1132,11 +983,6 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessMessages(spi_slave_transac
 
     TRACE_MESSAGE("ProcessMessages: Waiting for notification, current state: %s", SpiStateString(_currentState));
     ESP_ERROR_CHECK(spi_slave_queue_trans(VSPI_HOST, transaction, portMAX_DELAY));
-
-    // int __attribute__((unused)) dataSize = transaction->trans_len / 8;
-    // TRACE_MESSAGE("ProcessMessages: Transferred %d bytes.", dataSize);
-    // TRACE_HEX_BUFFER(transaction->tx_buffer, dataSize);
-    
     xTaskNotifyWait(0x00000000, ULONG_MAX, &notificationBits, portMAX_DELAY);
 
     //
@@ -1148,40 +994,25 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessMessages(spi_slave_transac
     {
         switch (_currentState)
         {
-            case WaitingForInboundMessageHeader:
-                newTransaction = InboundMessageHeaderReceived(transaction);
+            case WaitingForMessage:
+                newTransaction = MessageReceived(transaction);
                 break;
-            case AcknowledgingInboundMessageHeader:
-                newTransaction = CreateSpiHeaderTransaction();
-                _currentState = WaitingForInboundMessageHeader;
-                _incomingMessage = nullptr;
-                // newTransaction = InboundMessageHeaderAcknowledged(transaction);
+            case AcknowledgingMessage:
+                newTransaction = MessageAcknowledged(transaction);
                 break;
-            // case WaitingForInboundMessageBody:
-            //     newTransaction = InboundMessageBodyReceived(transaction);
-            //     break;
-            // case AcknowledgingMessageBody:
-            //     newTransaction = InboundMessageBodyAcknowledged(transaction);
-            //     break;
 
-            // case SendingMessageHeader:
-            //     newTransaction = OutboundMessageHeaderSent(transaction);
-            //     break;
-            // case WaitingForMessageHeaderAcknowledgement:
-            //     newTransaction = OutboundMessageHeaderAcknowledgementReceived(transaction);
-            //     break;
-            // case SendingMessageBody:
-            //     newTransaction = OutboundMessageBodySent(transaction);
-            //     break;
-            // case WaitingForMessageBodyAcknowledgement:
-            //     newTransaction = OutboundMessageBodyAcknowledgementReceived(transaction);
-            //     break;
+            case SendingMessageDetails:
+                newTransaction = SendMessage(transaction);
+                break;
+            case SendingMessage:
+                newTransaction = MessageSent(transaction);
+                break;
+            case WaitingForMessageAcknowledgement:
+                newTransaction = AcknowledgementReceived(transaction);
+                break;
 
-            // case SendingTransportResponse:
-            //     newTransaction = ProcessSendingTransportResponseState(transaction);
-            //     break;
             default:
-                // ERROR_MESSAGE("ProcessMessages: Unhandled state: %s", SpiStateString(_currentState));
+                ERROR_MESSAGE("ProcessMessages: Unhandled state: %s", SpiStateString(_currentState));
                 break;
         }
     }

@@ -43,14 +43,16 @@ private:
     const uint32_t MAXIMUM_SPI_FRAME_SIZE = 4092;
 
     /**
+     *  @brief Maximum number of bytes in a frames payload.
+     */
+    const uint32_t MAXIMUM_FRAME_PAYLOAD_SIZE = MAXIMUM_SPI_FRAME_SIZE - Message::HEADER_SIZE;
+
+    /**
      *  @brief Possible states for the SPI transport layer.
      */
-    enum SpiStates { Invalid,
-                     WaitingForInboundMessageHeader,    AcknowledgingInboundMessageHeader,
-                     WaitingForInboundMessageBody,      AcknowledgingMessageBody,
-                     SendingMessageHeader,              WaitingForMessageHeaderAcknowledgement,
-                     SendingMessageBody,                WaitingForMessageBodyAcknowledgement,
-                     WantToSendTransportMessage,        SendingTransportResponse
+    enum SpiStates { Invalid, 
+                     WaitingForMessage, AcknowledgingMessage,
+                     SendingMessageDetails, SendingMessage, WaitingForMessageAcknowledgement
                    };
 
     /**
@@ -221,12 +223,12 @@ private:
      *  @brief Start to process incoming messages (i.e. move from the idle state
      *  into one where the ESP32 is sending or receiving data).
      */
-    spi_slave_transaction_t *InboundMessageHeaderReceived(spi_slave_transaction_t *transaction);
+    spi_slave_transaction_t *MessageReceived(spi_slave_transaction_t *transaction);
 
     /**
      *  @brief Implement the incoming message header acknowledgement process.
      */
-    spi_slave_transaction_t *InboundMessageHeaderAcknowledged(spi_slave_transaction_t *transaction);
+    spi_slave_transaction_t *MessageAcknowledged(spi_slave_transaction_t *transaction);
 
     /**
      *  @brief Implement the incoming message header reception process.
@@ -234,34 +236,19 @@ private:
     spi_slave_transaction_t *ProcessWaitingForMessageHeaderState(spi_slave_transaction_t *transaction);
 
     /**
-     *  @brief Implement the incoming message body reception process.
+     *  @brief Implement the out-bound message details process.
      */
-    spi_slave_transaction_t *InboundMessageBodyReceived(spi_slave_transaction_t *transaction);
-
-    /**
-     *  @brief Implement the incoming message body acknowledgement process.
-     */
-    spi_slave_transaction_t *InboundMessageBodyAcknowledged(spi_slave_transaction_t *transaction);
-
-    /**
-     *  @brief Implement the out-bound message header process.
-     */
-    spi_slave_transaction_t *OutboundMessageHeaderSent(spi_slave_transaction_t *transaction);
+    spi_slave_transaction_t *SendMessage(spi_slave_transaction_t *transaction);
 
     /**
      *  @brief Implement processing of the incoming message header acknowledgement messages.
      */
-    spi_slave_transaction_t *OutboundMessageHeaderAcknowledgementReceived(spi_slave_transaction_t *transaction);
-
-    /**
-     *  @brief Implement the out-bound message body process.
-     */
-    spi_slave_transaction_t *OutboundMessageBodySent(spi_slave_transaction_t *transaction);
+    spi_slave_transaction_t *MessageSent(spi_slave_transaction_t *transaction);
 
     /**
      *  @brief Implement processing of the out-bound message body acknowledgement.
      */
-    spi_slave_transaction_t *OutboundMessageBodyAcknowledgementReceived(spi_slave_transaction_t *transaction);
+    spi_slave_transaction_t *AcknowledgementReceived(spi_slave_transaction_t *transaction);
 
     /**
      *  @brief Implement processing of the transport response.
