@@ -854,60 +854,6 @@ spi_slave_transaction_t *SpiTransportProvider::AcknowledgementReceived(spi_slave
 }
 
 /**
- *  @brief Check to see if there are any messages waiting to be sent and start the
- *  process of sending the message if there are any queued.
- *
- *  When this function exists, the transaction returned will be one of:
- *  - The message header of the first message waiting to be sent and
- *    the state will be set to indicate that we want to send this.
- *  - An empty message header and we will return to the idle state ready
- *    to receive messages from the STM32.
- *
- *  @param transaction
- *      Last SPI transaction that was executed.
- *
- *  @returns
- *      New SPI transaction with data.
- */
-spi_slave_transaction_t *SpiTransportProvider::ProcessSendingTransportResponseState(spi_slave_transaction_t *transaction)
-{
-    TRACE_MESSAGE("ProcessSendingTransportResponseState: Enter");
-    DeleteTransaction(transaction);
-    spi_slave_transaction_t *newTransaction = CreateSpiHeaderTransaction();
-    Message::DeleteMessage(_outboundMessage);
-    _outboundMessage = nullptr;
-    if (_responseCode == StatusCodes::CompletedOk)
-    {
-        if (OutboundMessageQueueLength() > 0)
-        {
-            _outboundMessage = GetOutboundMessage();
-            if (_outboundMessage)
-            {
-                EncodeHeaderMessage(newTransaction, _outboundMessage);
-                _currentState = SendingMessageDetails;
-            }
-            else
-            {
-                //
-                //  TODO: Work out what we should do here.
-                //
-                TRACE_MESSAGE("ProcessSendingTransportResponseState: Failed to retrieve message from queue.");
-            }
-        }
-        else
-        {
-            _currentState = WaitingForMessage;
-        }
-    }
-    else
-    {
-        _currentState = WaitingForMessage;
-    }
-    TRACE_MESSAGE("ProcessSendingTransportResponseState: Exit");
-    return(newTransaction);
-}
-
-/**
  *  @brief Check to see if the message buffer contains any data.
  *
  *

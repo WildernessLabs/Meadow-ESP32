@@ -376,10 +376,7 @@ Message *Encoders::ExtractMessage(uint8_t *buffer, uint32_t bufferLength, bool h
         message->MessageID = ExtractUInt32(buffer);
         buffer += 4;
         message->PayloadLength = ExtractUInt32(buffer);
-        //
-        //  Move over the last field and skip the CRC entry.
-        //
-        buffer += 8;
+        buffer += 4;
         if (!headerOnly && (message->PayloadLength > 0))
         {
             message->Payload = (uint8_t *) pvPortMalloc(message->PayloadLength);

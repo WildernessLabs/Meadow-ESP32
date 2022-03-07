@@ -193,11 +193,6 @@ private:
     const char *SpiStateString(SpiStates state);
 
     /**
-     *  @brief Delete the SPI transaction and clear up and buffers;
-     */
-    void DeleteSpiTransaction(spi_slave_transaction_t *);
-
-    /**
      *  @brief Check to see if the specified buffer looks to contain valid
      *  (non-zero) data.
      */
@@ -208,11 +203,6 @@ private:
      *  receiving data from the STM32.
      */
     bool SendingData(SpiStates);
-
-    /**
-     *  @brief Clear the _currentHeader variable and free any allocated heap memory.
-     */
-    void DeleteMessageAndReleaseHeapStorage(Message *);
 
     /**
      *  @brief Process an inbound transport request.
@@ -231,11 +221,6 @@ private:
     spi_slave_transaction_t *MessageAcknowledged(spi_slave_transaction_t *transaction);
 
     /**
-     *  @brief Implement the incoming message header reception process.
-     */
-    spi_slave_transaction_t *ProcessWaitingForMessageHeaderState(spi_slave_transaction_t *transaction);
-
-    /**
      *  @brief Implement the out-bound message details process.
      */
     spi_slave_transaction_t *SendMessage(spi_slave_transaction_t *transaction);
@@ -249,11 +234,6 @@ private:
      *  @brief Implement processing of the out-bound message body acknowledgement.
      */
     spi_slave_transaction_t *AcknowledgementReceived(spi_slave_transaction_t *transaction);
-
-    /**
-     *  @brief Implement processing of the transport response.
-     */
-    spi_slave_transaction_t * ProcessSendingTransportResponseState(spi_slave_transaction_t *transaction);
 
     /**
      *  @brief Create a new SPI slave transmission object with zero filled
