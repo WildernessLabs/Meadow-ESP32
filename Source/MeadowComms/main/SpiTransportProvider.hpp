@@ -196,7 +196,7 @@ private:
      *  @brief Check to see if the specified buffer looks to contain valid
      *  (non-zero) data.
      */
-    bool MessageContainsData(uint8_t *, uint32_t);
+    bool MessageContainsData(const uint8_t *, uint32_t);
 
     /**
      *  @brief Check to see if the state we are in indicates that we should be
