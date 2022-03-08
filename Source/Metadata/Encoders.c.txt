@@ -532,7 +532,6 @@ void espcp_encode_message(espcp_message_t *message, uint8_t *buffer, uint32_t *b
         memset(buffer, 0, buffer_size);
         uint8_t *next_location = buffer;
 
-
         *next_location = PROTOCOL_NUMBER;                               // 0: Protocol
         next_location++;
         espcp_encode_uint32(0, next_location);                          // 1 - 4: CRC (filled in later)
