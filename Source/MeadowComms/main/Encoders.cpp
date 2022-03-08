@@ -456,7 +456,6 @@ void Encoders::EncodeMessage(Message *message, uint8_t *buffer, bool headerOnly)
     EncodeUInt32(crc, buffer + Message::CRC_OFFSET);
 }
 
-
 /*
  *******************************************************************************
 
