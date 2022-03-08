@@ -406,8 +406,6 @@ NvsManager::ErrorCodes SystemRequestHandler::SetConfigurationValue(const char *n
     return(NvsManager::SetValue(_configurationName, name, value));
 }
 
-
-
 /**
  *  @brief Populate the config object with system configuration data.
  *
@@ -422,6 +420,11 @@ void SystemRequestHandler::PopulateConfiguration(Esp32Messaging::SystemConfigura
     esp_reset_reason_t resetReason = esp_reset_reason();
     Mapping::GetStmValue(Mapping::ResetReasons, resetReason, (int8_t *) &config->ResetReason);
     const esp_app_desc_t *applicationDescription = esp_ota_get_app_description();
+    //
+    //  TODO: Future enhancement - send this data to the STM32.
+    //
+    // const char *compiledAt = applicationDescription->time;
+    // const char *compiledOn = applicationDescription->date;
     config->SoftwareVersion = const_cast<char *>(applicationDescription->version);
     config->Antenna = WiFiRequestHandler::GetAntenna();
     config->MaximumRetryCount = WiFiRequestHandler::GetMaximumRetryCount();
