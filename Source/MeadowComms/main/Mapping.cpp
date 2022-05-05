@@ -397,7 +397,7 @@ Mapping::str_mapping_t Mapping::_messageTypeNames[] =
     { MessageTypes::Event, (char *) "Event" },
     { MessageTypes::Response, (char *) "Response" },
     { MessageTypes::Transport, (char *) "Transport" },
-    { MessageTypes::Header, (char *) "Header" },
+    { MessageTypes::Header, (char *) "Request" },
     { MessageTypes::Data, (char *) "Data" }
 };
 
