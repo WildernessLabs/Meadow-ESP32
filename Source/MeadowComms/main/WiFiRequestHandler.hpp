@@ -57,8 +57,15 @@
 #define _IOC(type,nr)       ((type)|(nr))
 #define _SIOC(nr)           _IOC(_SIOCBASE,nr)
 
+#define SIOCGIFADDR         _SIOC(0x0001)       /* Get IP address */
+#define SIOCGIFDSTADDR      _SIOC(0x0003)       /* Get P-to-P address */
+#define SIOCGIFBRDADDR      _SIOC(0x0005)       /* Get broadcast IP address */
+#define SIOCGIFNETMASK      _SIOC(0x0007)       /* Get network mask */
+#define SIOCGIFHWADDR       _SIOC(0x0014)       /* Get hardware address */
+
 #define SIOCGIFCONF         _SIOC(0x0018)       /* Return an interface list (IPv4) */
 #define SIOCGIFFLAGS        _SIOC(0x001b)       /* Gets the interface flags */
+#define SIOCGIFNAME         _SIOC(0x002A)       /* Get interface name string */
 
 /**
  *  @brief WiFi class
