@@ -660,7 +660,7 @@ void WiFiRequestHandler::GetMacAddress(uint8_t *macAddress, esp_interface_t inte
 {
     if (interface == WIFI_IF_STA)
     {
-        if (esp_efuse_mac_get_default(macAddress) != ESP_OK)
+        if (esp_read_mac(macAddress, ESP_MAC_WIFI_STA) != ESP_OK)
         {
             bzero(macAddress, 6);
         }
@@ -1928,7 +1928,6 @@ void WiFiRequestHandler::GetAddrInfo(void *vpMessage)
 void WiFiRequestHandler::Socket(void *vpMessage)
 {
     TRACE_MESSAGE("Socket: Enter");
-//    TRACE_MESSAGE("Socket: Enter");
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
@@ -2300,14 +2299,11 @@ void WiFiRequestHandler::SetSockOpt(void *vpMessage)
                         optionLength = sizeof(timeOut);
                     }
                     break;
+                case SO_REUSEADDR:      /* Reuse local addresses when binding */
                 case SO_RCVBUF:         /* Set the receive buffer size */
-                    {
-                        Esp32Messaging::IntegerResponse *iv = Encoders::ExtractIntegerResponse(request->OptionValue);
-                        intVal = iv->Result;
-                        vPortFree(iv);
-                        optionValue = &intVal;
-                        optionLength = sizeof(intVal);
-                    }
+                    intVal = Encoders::ExtractInt32(request->OptionValue);
+                    optionValue = &intVal;
+                    optionLength = sizeof(intVal);
                     break;
                 case SO_LINGER:         /* Linger on close if data present */
                     TRACE_MESSAGE("SetSockOpt: Implement SO_LINGER");
@@ -2326,6 +2322,12 @@ void WiFiRequestHandler::SetSockOpt(void *vpMessage)
                     break;
                 case SO_NO_CHECK:       /* Don't create UDP checksum */
                     TRACE_MESSAGE("SetSockOpt: Implement SO_NO_CHECK");
+                    break;
+                case SO_BROADCAST:
+                    TRACE_MESSAGE("SetSockOpt: Implement SO_BROADCAST");
+                    break;
+                case SO_KEEPALIVE:
+                    TRACE_MESSAGE("SetSockOpt: Implement SO_KEEPALIVE");
                     break;
                 default:
                     response.Result = -1;
@@ -3040,24 +3042,42 @@ void WiFiRequestHandler::Ioctl(void *vpMessage)
     {
         Esp32Messaging::IoctlRequest *request = Encoders::ExtractIoctlRequest(message->Payload);
 
+        esp_netif_ip_info_t ipInfo;
+        Esp32Messaging::SockAddr sa = { };
+        int family;
+
+        Mapping::GetStmValue(Mapping::AddressFamily, AF_INET, &family);
+        sa.Family = (unsigned char) (family & 0xff);
+        response.AddrLength = 0;
+        response.Addr = nullptr;
+
         switch (request->Command)
         {
-            case SIOCGIFCONF:
-                esp_netif_ip_info_t ipInfo;
+            case SIOCGIFNETMASK:    /* Get network mask */
                 if (esp_netif_get_ip_info(_stationNetIfHandle, &ipInfo) == ESP_OK)
                 {
-                    Esp32Messaging::SockAddr sa = { };
-                    int family;
-
-                    Mapping::GetStmValue(Mapping::AddressFamily, AF_INET, &family);
-                    sa.Family = (unsigned char) (family & 0xff);
+                    memcpy(&sa.Ip4Address, &ipInfo.netmask, sizeof(ipInfo.netmask));
+                    response.AddrLength = Encoders::EncodedSockAddrBufferSize(&sa);
+                    response.Addr = static_cast<uint8_t *>(pvPortMalloc(response.AddrLength));
+                    Encoders::EncodeSockAddr(&sa, response.Addr);
+                }
+                break;
+            case SIOCGIFHWADDR:     /* Get hardware address */
+                response.AddrLength = 6;
+                response.Addr = static_cast<uint8_t *>(pvPortMalloc(6));
+                GetMacAddress(response.Addr, WIFI_IF_STA);
+                break;
+            case SIOCGIFADDR:       /* Get IP address */
+            case SIOCGIFCONF:       /* Return an interface list (IPv4) */
+                if (esp_netif_get_ip_info(_stationNetIfHandle, &ipInfo) == ESP_OK)
+                {
                     memcpy(&sa.Ip4Address, &ipInfo.ip, sizeof(ipInfo.ip));
                     response.AddrLength = Encoders::EncodedSockAddrBufferSize(&sa);
                     response.Addr = static_cast<uint8_t *>(pvPortMalloc(response.AddrLength));
                     Encoders::EncodeSockAddr(&sa, response.Addr);
                 }
                 break;
-            case SIOCGIFFLAGS:
+            case SIOCGIFFLAGS:      /* Gets the interface flags */
                 if (esp_netif_get_ip_info(_stationNetIfHandle, &ipInfo) == ESP_OK)
                 {
                     response.Flags = IFF_UP;
@@ -3066,12 +3086,11 @@ void WiFiRequestHandler::Ioctl(void *vpMessage)
                 {
                     response.Flags = IFF_DOWN;
                 }
-                response.AddrLength = 0;
-                response.Addr = nullptr;
                 break;
             default:
                 response.Result = -1;
                 response.ResponseErrno = MapErrno(EINVAL);
+                TRACE_MESSAGE("Unknown ioctl request %04x", request->Command);
                 break;
         }
         vPortFree(request);
@@ -3087,6 +3106,10 @@ void WiFiRequestHandler::Ioctl(void *vpMessage)
     message->PayloadLength = Encoders::EncodedIoctlResponseBufferSize(&response);
     message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
     Encoders::EncodeIoctlResponse(&response, message->Payload);
+    if (response.Addr)
+    {
+        vPortFree(response.Addr);
+    }
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
