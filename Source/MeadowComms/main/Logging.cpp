@@ -135,11 +135,10 @@ void Logging::Setup()
     esp_log_level_set("*", ESP_LOG_NONE);
 
 #if defined(DEBUG) || defined(WIFI_DEBUG) || defined(SPI_DEBUG) || defined(THREAD_DEBUG) || defined(SYSTEM_DEBUG) || defined(BT_DEBUG)
-    #warning "Debug is enabled."
     esp_log_level_set(APP_MAIN_COMPONENT_NAME, ESP_LOG_INFO);
 #endif
 
-#if defined(WIFI_DEBUG) || defined(SYSTEM_DEBUG)
+#if defined(MESSAGE_DEBUG)
     //
     //  We enable the RequestHandlerBase as it is the base class for the WiFi, System etc. request handlers.
     //

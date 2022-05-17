@@ -20,6 +20,21 @@
 #include "SpiTransportProvider.hpp"
 
 //
+//  Checks to see if TRACE or DEBUG is turned on and issues a warning if they are.
+//
+//  These checks are included in here so that they are processed only once.
+//
+#if defined(TRACE_MESSAGES)
+
+#warning "Trace message output is enabled - turn this feature off for release builds."
+
+#endif
+
+#if defined(DEBUG) || defined(WIFI_DEBUG) || defined(SPI_DEBUG) || defined(THREAD_DEBUG) || defined(SYSTEM_DEBUG) || defined(BT_DEBUG) || defined(MESSAGES_DEBUG)
+    #warning "Debug is enabled."
+#endif
+
+//
 //  This definition is required for the trace message macros.
 //  See Logging.hpp for more information on the trace message macros
 //

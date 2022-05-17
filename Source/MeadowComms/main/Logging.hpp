@@ -58,8 +58,6 @@
 //
 #if defined(TRACE_MESSAGES)
 
-#warning "Trace message output is enabled - turn this feature off for release builds."
-
 #define TRACE_MESSAGE(format, ...) ESP_LOGI(COMPONENT_NAME, format, ##__VA_ARGS__)
 #define DEBUG_MESSAGE(format, ...) ESP_LOGD(COMPONENT_NAME, format, ##__VA_ARGS__)
 #define ERROR_MESSAGE(format, ...) ESP_LOGE(COMPONENT_NAME, format, ##__VA_ARGS__)

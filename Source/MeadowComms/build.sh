@@ -184,6 +184,9 @@ if [ ! -z "$DEBUG_SELECTIONS" ]; then
             system)
             IDF_DEFINES+=" -DSYSTEM_DEBUG=1"
             ;;
+            messages)
+            IDF_DEFINES+=" -DMESSAGES_DEBUG=1"
+            ;;
             bt)
             IDF_DEFINES+=" -DBT_DEBUG=1"
             ;;
