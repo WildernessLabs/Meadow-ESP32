@@ -57,6 +57,10 @@ if (SYSTEM_DEBUG EQUAL 1)
     add_compile_definitions(SYSTEM_DEBUG)
 endif()
 
+if (MESSAGES_DEBUG EQUAL 1)
+    add_compile_definitions(MESSAGES_DEBUG)
+endif()
+
 if (BT_DEBUG EQUAL 1)
     add_compile_definitions(BT_DEBUG)
 endif()
