@@ -3433,10 +3433,12 @@ void WiFiRequestHandler::PollSocket(void *requestId)
             if (it != _pollRequests.end())
             {
                 int32_t events;
-                Mapping::GetStmFlagValue(Mapping::PollEvents, fds[0].revents, &events);
+                Mapping::GetStmFlagValue(Mapping::PollEvents, fds[POLL_FD_INDEX].revents, &events);
                 response.ReturnedEvents = (uint16_t) (events & 0xffff);
-                TRACE_MESSAGE("Poll: Returned ESP32 events 0x%04x maps to NuttX events 0x%04x", fds[0].revents, events);
+                TRACE_MESSAGE("Poll: Returned ESP32 events 0x%04x maps to NuttX events 0x%04x", fds[POLL_FD_INDEX].revents, events);
                 response.SetupMessageId = (uint32_t) requestId;
+                close(fds[POLL_DUMMY_FD_INDEX].fd);
+                vPortFree(fds);
                 _pollRequests.erase(it);
             }
             else
