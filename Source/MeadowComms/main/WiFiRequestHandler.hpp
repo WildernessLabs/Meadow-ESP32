@@ -26,6 +26,8 @@
 #include "errno.h"
 #include <string.h>
 #include <stdlib.h>
+#include <map>
+#include <iterator>
 
 #include "MessageDispatcher.hpp"
 #include "Esp32Messaging.hpp"
@@ -33,7 +35,6 @@
 #include "SharedEnums.hpp"
 #include "Encoders.hpp"
 #include "Logging.hpp"
-#include "GenericList.hpp"
 #include "ThreadPool.hpp"
 
 /**
@@ -77,53 +78,14 @@ class WiFiRequestHandler : public RequestHandlerBase
 {
 private:
     /**
-     *  @brief Structure used to hold information about a poll request.
+     *  @brief Hold the information about the originating poll request and the pollfd's.
      */
-    struct PollRequestInformation
+    struct poll_request_s
     {
-        /**
-         *  @brief List of socket handles that were used in this poll request.
-         */
-        struct pollfd *Fds;
-
-        /**
-         *  @brief Events that this poll request is pending.
-         */
-        uint16_t Events;
-
-        /**
-         *  @brief Result from the poll request.
-         */
-        int PollResult = 0;
-
-        /**
-         *  @brief Keep a copy of errno from the request.
-         */
-        int PollErrno = 0;
-
-        /**
-         *  @brief Timeout for the poll request.
-         */
-        int Timeout;
-
-        /**
-         *  @brief Message that raised the original poll request.
-         */
-        int OriginalRequestID;
-
-        /**
-         *  @brief Has a teardown been requested?
-         * 
-         *  This is used to distinguish between a teardown request from the
-         *  STM32 and a normal poll event being received.
-         */
-        bool Teardown;
-
-        /**
-         *  @brief Handle for the task that is dealing with the poll request.
-         */
-        TaskHandle_t TaskHandle = nullptr;
+        struct pollfd *fd;      /* Pointer to the pollfd structure of the original request. */
+        uint32_t request_id;    /* ID of the message sent to the ESP32. */
     };
+    typedef struct poll_request_s poll_request_t;
 
     /*
      *  Event group bits.
@@ -237,6 +199,16 @@ private:
      *  which will connect the external antenna to the ESP32.
      */
     static const gpio_num_t EXTERNAL_ANTENNA_PIN;
+
+    /**
+     *  @brief Index of the dummy socket file descriptor in poll request.
+     */
+    static const int POLL_DUMMY_FD_INDEX;
+
+    /**
+     *  @brief Index of the actual socket file descriptor in poll request.
+     */
+    static const int POLL_FD_INDEX;
 
     /**
      *  @brief Pointer to the single instance of the WiFiRequestHandler.
@@ -450,7 +422,8 @@ private:
     /**
      *  @brief List of active poll requests.
      */
-    static GenericLinkList<PollRequestInformation> *_pollRequests;
+    // static GenericLinkList<struct pollfd> *_pollRequests;
+    static std::map<uint32_t, struct pollfd *> _pollRequests;
 
     /**
      *  @brief Mutex for the poll request linked list.
@@ -487,11 +460,14 @@ private:
     void EventHandlerHelper(esp_event_base_t eventBase, int32_t eventId, void *eventData);
 
     /**
-     * @brief Method that will compare two poll requests IDs and determine if they are the same.
-     * 
-     *  This method is used with the list of poll requests.
+     *  @brief Lock the _pollRequests object.
      */
-    static bool ComparePollRequestMessageIds(uint32_t messageId, PollRequestInformation *request);
+    static inline void LockPollRequests();
+
+    /**
+     *  @brief Unlock the _pollRequests object.
+     */
+    static inline void UnlockPollRequests();
 
     /**
      *  @brief Clear the _ipInformation and _disconnectData structures.
@@ -645,12 +621,12 @@ private:
     /**
      *  @brief Method that will deal with poll requests.
      */
-    static void PollRequestProcessor(void *parameters);
+    // static void PollRequestProcessor(void *parameters);
 
     /**
      *  @brief Method that will deal with completed poll requests.
      */
-    static void CompletedPollRequestProcessor(void *parameters);
+    // static void CompletedPollRequestProcessor(void *parameters);
 
     //----------------------------------------------------------------------
     //
@@ -717,9 +693,34 @@ private:
     static void RecvFrom(void *vpMessage);
 
     /**
+     *  @brief Setup a poll request an assign it to a thread in the thread pool.
+     */
+    static int PollSetup(WiFiRequestHandler *sender, void *vpMessage);
+
+    /**
+     *  @brief Teardown a poll request that has previously been setup by PollSetup.
+     */
+    static int PollTeardown(void *pvMessage);
+
+    /**
+     *  @brief Execute the actual request to poll a socket.
+     */
+    static void PollSocket(void *pvMessage);
+
+    /**
+     *  @brief Open a dummy socket to be used by the Poll methods to terminate a poll request.
+     */
+    static int OpenDummySocket();
+
+    /**
+     *  @brief Debug method to dump all of the active poll requests.
+     */
+    static void DumpActivePollRequests();
+
+    /**
      *  @brief Provide a mechanism for the STM32 to call the poll method.
      */
-    static void Poll(void *vpMessage);
+    static void Poll(WiFiRequestHandler *sender, void *vpMessage);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the bind method.
