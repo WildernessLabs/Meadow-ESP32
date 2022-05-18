@@ -15,7 +15,6 @@
 #include "Logging.hpp"
 #include "MessageDispatcher.hpp"
 #include "SpiTransportProvider.hpp"
-#include "GenericList.hpp"
 #include "WiFiRequestHandler.hpp"
 #include "SpiTransportProvider.hpp"
 
