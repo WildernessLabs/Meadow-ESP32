@@ -58,6 +58,11 @@ uint32_t SystemRequestHandler::_maximumMessageQueueLength = 10;
 const char *SystemRequestHandler::_configurationName = "Meadow";
 
 /**
+ *  @brief Private instance of the shared threadpool.
+ */
+ThreadPool *SystemRequestHandler::_threadPool = new ThreadPool(10);
+
+/**
  *  @brief Name of the key holding the _maximumMessageQueueLength value.
  */
 const char *SystemRequestHandler::MAXIMUM_MESSAGE_QUEUE_LENGTH_NAME = "MaxQueueLen";
@@ -135,6 +140,14 @@ SystemRequestHandler::~SystemRequestHandler()
 uint32_t SystemRequestHandler::GetMaximumMessageQueueLength()
 {
     return(_maximumMessageQueueLength);
+}
+
+/**
+ *  @brief Get a pointer to the shared threadpool.
+ */
+ThreadPool *SystemRequestHandler::SharedThreadPool()
+{
+    return(_threadPool);
 }
 
 /**

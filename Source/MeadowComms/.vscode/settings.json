@@ -10,7 +10,12 @@
   "C_Cpp.intelliSenseEngineFallback": "Enabled",
   "cmake.configureOnOpen": false,
   "cSpell.words": [
-    "LOGI"
+    "LOGI",
+    "Nutt",
+    "Nuttx"
   ],
-  "idf.adapterTargetName": "esp32"
+  "idf.adapterTargetName": "esp32",
+  "files.associations": {
+    "new": "cpp"
+  }
 }
