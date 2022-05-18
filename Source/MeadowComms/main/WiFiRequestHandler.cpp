@@ -282,12 +282,6 @@ WiFiRequestHandler::WiFiRequestHandler()
     }
 
     //
-    //  All of the requests should be handled through the ThreadPool to allow for multiple
-    //  requests (upto 10 in this case) to be processed simultaneously.
-    //
-    _threadPool = new ThreadPool(10);       // cppcheck-suppress [ noOperatorEq, noCopyConstructor ]
-
-    //
     //  Finally set some default values for private fields.
     //
     ClearIpAndDisconnectData();
@@ -315,7 +309,6 @@ WiFiRequestHandler::WiFiRequestHandler(MessageDispatcher *messageDispatcher) : W
  */
 WiFiRequestHandler::~WiFiRequestHandler()
 {
-    delete _threadPool;
 }
 
 /*
@@ -1136,80 +1129,79 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
             SetAntennaRequest(request);
             break;
         case WiFiFunction::Close:
-            _threadPool->Execute(Close, (void *) request);
+            SystemRequestHandler::SharedThreadPool()->Execute(Close, (void *) request);
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
         case WiFiFunction::Read:
-            _threadPool->Execute(Read, (void *) request);
+            SystemRequestHandler::SharedThreadPool()->Execute(Read, (void *) request);
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
         case WiFiFunction::SetSockOpt:
-            _threadPool->Execute(SetSockOpt, (void *) request);
+            SystemRequestHandler::SharedThreadPool()->Execute(SetSockOpt, (void *) request);
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
         case WiFiFunction::GetSockOpt:
-            _threadPool->Execute(GetSockOpt, (void *) request);
+            SystemRequestHandler::SharedThreadPool()->Execute(GetSockOpt, (void *) request);
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
         case WiFiFunction::Write:
-            _threadPool->Execute(Write, (void *) request);
+            SystemRequestHandler::SharedThreadPool()->Execute(Write, (void *) request);
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
         case WiFiFunction::FreeAddrInfo:
-            _threadPool->Execute(FreeAddrInfo, (void *) request);
+            SystemRequestHandler::SharedThreadPool()->Execute(FreeAddrInfo, (void *) request);
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
         case WiFiFunction::Connect:
-            _threadPool->Execute(Connect, (void *) request);
+            SystemRequestHandler::SharedThreadPool()->Execute(Connect, (void *) request);
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
         case WiFiFunction::Socket:
-            _threadPool->Execute(Socket, (void *) request);
+            SystemRequestHandler::SharedThreadPool()->Execute(Socket, (void *) request);
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
         case WiFiFunction::GetAddrInfo:
-            _threadPool->Execute(GetAddrInfo, (void *) request);
+            SystemRequestHandler::SharedThreadPool()->Execute(GetAddrInfo, (void *) request);
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
         case WiFiFunction::SendTo:
-            _threadPool->Execute(SendTo, (void *) request);
+            SystemRequestHandler::SharedThreadPool()->Execute(SendTo, (void *) request);
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
         case WiFiFunction::RecvFrom:
-            _threadPool->Execute(RecvFrom, (void *) request);
+            SystemRequestHandler::SharedThreadPool()->Execute(RecvFrom, (void *) request);
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
         case WiFiFunction::Poll:
-            Poll(this, (void *) request);
-            // _threadPool->Execute(Poll, (void *) request);
+            Poll((void *) request);
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
         case WiFiFunction::Send:
-            _threadPool->Execute(Send, (void *) request);
+            SystemRequestHandler::SharedThreadPool()->Execute(Send, (void *) request);
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
         case WiFiFunction::Accept:
-            _threadPool->Execute(Accept, (void *) request);
+            SystemRequestHandler::SharedThreadPool()->Execute(Accept, (void *) request);
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
         case WiFiFunction::Bind:
-            _threadPool->Execute(Bind, (void *) request);
+            SystemRequestHandler::SharedThreadPool()->Execute(Bind, (void *) request);
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
         case WiFiFunction::Listen:
-            _threadPool->Execute(Listen, (void *) request);
+            SystemRequestHandler::SharedThreadPool()->Execute(Listen, (void *) request);
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
         case WiFiFunction::Ioctl:
-            _threadPool->Execute(Ioctl, (void *) request);
+            SystemRequestHandler::SharedThreadPool()->Execute(Ioctl, (void *) request);
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
         case WiFiFunction::GetSockName:
-            _threadPool->Execute(GetSockName, (void *) request);
+            SystemRequestHandler::SharedThreadPool()->Execute(GetSockName, (void *) request);
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
         case WiFiFunction::GetPeerName:
-            _threadPool->Execute(GetPeerName, (void *) request);
+            SystemRequestHandler::SharedThreadPool()->Execute(GetPeerName, (void *) request);
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
         default:
@@ -3304,7 +3296,7 @@ void WiFiRequestHandler::DumpActivePollRequests()
  *  @param message
  *      Message structure containing the parameters for the poll method.
  */
-int WiFiRequestHandler::PollSetup(WiFiRequestHandler *sender, void *vpMessage)
+int WiFiRequestHandler::PollSetup(void *vpMessage)
 {
     TRACE_MESSAGE("PollSetup: Enter");
 
@@ -3346,7 +3338,7 @@ int WiFiRequestHandler::PollSetup(WiFiRequestHandler *sender, void *vpMessage)
         DumpActivePollRequests();
     #endif
 
-    sender->_threadPool->Execute(PollSocket, (void *) request->SetupMessageId);
+    SystemRequestHandler::SharedThreadPool()->Execute(PollSocket, (void *) request->SetupMessageId);
 
     TRACE_MESSAGE("PollSetup: Exit, result %d", result);
 
@@ -3472,7 +3464,7 @@ void WiFiRequestHandler::PollSocket(void *requestId)
  *  @param message
  *      Message structure containing the parameters for the poll method.
  */
-void WiFiRequestHandler::Poll(WiFiRequestHandler *sender, void *vpMessage)
+void WiFiRequestHandler::Poll(void *vpMessage)
 {
     TRACE_MESSAGE("Poll: Enter");
     Message *message = static_cast<Message *>(vpMessage);
@@ -3481,7 +3473,7 @@ void WiFiRequestHandler::Poll(WiFiRequestHandler *sender, void *vpMessage)
 
     if (request->Setup == 1)
     {
-        response.Result = PollSetup(sender, (void *) request);
+        response.Result = PollSetup((void *) request);
     }
     else
     {

@@ -22,6 +22,7 @@
 
 #include "RequestHandlerBase.hpp"
 #include "NvsManager.hpp"
+#include "ThreadPool.hpp"
 
 /**
  *  @brief Object to deal with system requests such as configuration settings etc.
@@ -48,6 +49,11 @@ private:
      *  @brief Name of the device on the network.
      */
     static char *_deviceName;
+
+    /**
+     *  @brief Private instance fo the sheared thread pool.
+     */
+    static ThreadPool *_threadPool;
 
     /**
      *  @brief Name of the storage in NVS holding the name of the device.
@@ -187,6 +193,8 @@ public:
      *  @brief Send the configuration data as an interrupt message.
      */
     static void SendConfigurationAsInterruptMessage();
+
+    static ThreadPool *SharedThreadPool();
 
 };
 
