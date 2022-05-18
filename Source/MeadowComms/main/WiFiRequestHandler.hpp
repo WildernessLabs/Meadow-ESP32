@@ -35,7 +35,6 @@
 #include "SharedEnums.hpp"
 #include "Encoders.hpp"
 #include "Logging.hpp"
-#include "ThreadPool.hpp"
 
 /**
  *  The following definitions are copied from the NuttX system as they
@@ -422,7 +421,6 @@ private:
     /**
      *  @brief List of active poll requests.
      */
-    // static GenericLinkList<struct pollfd> *_pollRequests;
     static std::map<uint32_t, struct pollfd *> _pollRequests;
 
     /**
@@ -439,11 +437,6 @@ private:
      *  @brief Method that will deal with completed poll requests.
      */
     TaskHandle_t _completedPollRequestsTaskHandle;
-
-    /**
-     *  @brief ThreadPool used to execute the asynchronous methods.
-     */
-    ThreadPool *_threadPool = NULL;
 
     /*
      *  Private methods.
@@ -618,16 +611,6 @@ private:
      */
     void AuthenticationModeChangedEvent(wifi_event_sta_authmode_change_t *);
 
-    /**
-     *  @brief Method that will deal with poll requests.
-     */
-    // static void PollRequestProcessor(void *parameters);
-
-    /**
-     *  @brief Method that will deal with completed poll requests.
-     */
-    // static void CompletedPollRequestProcessor(void *parameters);
-
     //----------------------------------------------------------------------
     //
     //                      POSIX Calls start here.
@@ -695,7 +678,7 @@ private:
     /**
      *  @brief Setup a poll request an assign it to a thread in the thread pool.
      */
-    static int PollSetup(WiFiRequestHandler *sender, void *vpMessage);
+    static int PollSetup(void *vpMessage);
 
     /**
      *  @brief Teardown a poll request that has previously been setup by PollSetup.
@@ -720,7 +703,7 @@ private:
     /**
      *  @brief Provide a mechanism for the STM32 to call the poll method.
      */
-    static void Poll(WiFiRequestHandler *sender, void *vpMessage);
+    static void Poll(void *vpMessage);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the bind method.
