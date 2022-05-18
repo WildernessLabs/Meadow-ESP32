@@ -3294,9 +3294,6 @@ void WiFiRequestHandler::DumpActivePollRequests()
 /**
  *  @brief Setup a poll request an assign it to a thread in the thread pool.
  * 
- *  @param sender
- *      Instance of the class that is making the request.
- *
  *  @param message
  *      Message structure containing the parameters for the poll method.
  */
