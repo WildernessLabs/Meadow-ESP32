@@ -3279,7 +3279,11 @@ void WiFiRequestHandler::DumpActivePollRequests()
     std::map<uint32_t, struct pollfd *>::iterator it = _pollRequests.begin();
     while (it != _pollRequests.end())
     {
-        struct pollfd *fds = static_cast<struct pollfd *>(it->second);
+        //
+        //  fds is marked as unused as in debug mode the TRACE_MESSAGE results in the usage being thrown away.
+        //  Basically, we are trying to keep the compiler happy and not generate misleading warnings.
+        //
+        __attribute__ ((unused)) struct pollfd *fds = static_cast<struct pollfd *>(it->second);
         TRACE_MESSAGE("DumpActiveRequests: Key %08x, socket %d, dummy socket %d", it->first, fds[POLL_FD_INDEX].fd, fds[POLL_DUMMY_FD_INDEX].fd);
         it++;
     }
