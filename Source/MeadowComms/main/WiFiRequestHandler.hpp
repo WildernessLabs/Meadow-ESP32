@@ -153,7 +153,7 @@ private:
     /**
      *  @brief Indicate that some sort of error has occurred.
      * 
-     *  This will ususally be problems with connections, getting the system started etc.
+     *  This will usually be problems with connections, getting the system started etc.
      */
     static const int WIFI_ERROR_BIT = BIT23;
 
@@ -800,27 +800,8 @@ public:
     /**
      *  @brief Get / Set the get time a startup configuration value.
      */
-    static bool GetGetTimeAtStartup();
-    static StatusCodes::StatusCodes SetGetTimeAtStartup(bool value);
-
-    /**
-     *  @brief Get / Set the get time a startup configuration value.
-     */
     static bool GetUseDhcp();
     static StatusCodes::StatusCodes SetUseDhcp(bool value);
-
-    /**
-     *  @brief Get / Set the NTP server to be used when getting the time
-     *  at startup.
-     */
-    static char *GetNtpServer();
-    static StatusCodes::StatusCodes SetNtpServer(char *value);
-
-    /**
-     *  @brief Get / Set the timezone for the system.
-     */
-    static char *GetTimezone();
-    static StatusCodes::StatusCodes SetTimezone(char *value);
 
     /**
      *  @brief Get / Set the name of the default access point to be used when
@@ -856,8 +837,8 @@ public:
     /**
      *  @brief Get / Set the MAC address of the interface.
      */
-    static void GetMacAddress(uint8_t *macAddress, esp_interface_t interface);
-    static StatusCodes::StatusCodes SetMacAddress(uint8_t *macAddress, esp_interface_t interface);
+    static void GetMacAddress(uint8_t *macAddress, wifi_interface_t interface);
+    static StatusCodes::StatusCodes SetMacAddress(uint8_t *macAddress, wifi_interface_t interface);
 
     /**
      *  @brief Get / Set the current antenna in use.

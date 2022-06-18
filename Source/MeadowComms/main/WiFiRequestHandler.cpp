@@ -56,7 +56,6 @@ EventGroupHandle_t WiFiRequestHandler::_xWiFiEventGroup = nullptr;
 /**
  *  @brief List of active poll requests.
  */
-// GenericLinkList<struct pollfd *> *WiFiRequestHandler::_pollRequests = nullptr;
 std::map<uint32_t, struct pollfd *> WiFiRequestHandler::_pollRequests;
 
 /**
@@ -392,30 +391,6 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetAutomaticallyStartNetwork(bool v
 }
 
 /**
- *  @brief Get the "get time at startup" value.
- */
-bool WiFiRequestHandler::GetGetTimeAtStartup()
-{
-    return(_getTimeAtStartup);
-}
-
-/**
- *  @brief Set the "get time at startup" value.
- *
- *  @param value
- *      New get time at startup value.
- *
- *  @returns
- *      StatusCodes::Completed on success, StatusCodes::Failure if there is a problem.
- */
-StatusCodes::StatusCodes WiFiRequestHandler::SetGetTimeAtStartup(bool value)
-{
-    TRACE_MESSAGE("WiFiRequestHandler::SetGetTimeAtStartup %d", value ? 1 : 0);
-    _getTimeAtStartup = value;
-    return(StatusCodes::CompletedOk);
-}
-
-/**
  *  @brief Get the use DHCP value.
  */
 bool WiFiRequestHandler::GetUseDhcp()
@@ -436,56 +411,6 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetUseDhcp(bool value)
 {
     TRACE_MESSAGE("WiFiRequestHandler::SetUseDhcp %d", value ? 1 : 0);
     _useDhcp = value;
-    return(StatusCodes::CompletedOk);
-}
-
-/**
- *  @brief Get the NTP server.
- */
-char *WiFiRequestHandler::GetNtpServer()
-{
-    return(_ntpServer);
-}
-
-/**
- *  @brief Set NTP server.
- *
- *  @param value
- *      New NTP server value.
- *
- *  @returns
- *      StatusCodes::Completed on success, StatusCodes::Failure if there is a problem.
- */
-StatusCodes::StatusCodes WiFiRequestHandler::SetNtpServer(char *value)
-{
-    TRACE_MESSAGE("WiFiRequestHandler::SetNtpServer %s", value);
-    _ntpServer = strdup(value);
-    return(StatusCodes::CompletedOk);
-}
-
-/**
- *  @brief Get the timezone.
- */
-char *WiFiRequestHandler::GetTimezone()
-{
-    return(_timezone);
-}
-
-/**
- *  @brief Set timezone.
- *
- *  @param value
- *      New NTP server value.
- *
- *  @returns
- *      StatusCodes::Completed on success, StatusCodes::Failure if there is a problem.
- */
-StatusCodes::StatusCodes WiFiRequestHandler::SetTimezone(char *value)
-{
-    TRACE_MESSAGE("WiFiRequestHandler::SetTimezone %s", value);
-    _timezone = strdup(value);
-    setenv("TZ", value, 1);
-    tzset();
     return(StatusCodes::CompletedOk);
 }
 
@@ -655,7 +580,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetDefaultGateway(uint32_t value)
  *          WIFI_IF_STA     Board MAC address
  *          WIFI_IF_AP      Software access point MAC address
  */
-void WiFiRequestHandler::GetMacAddress(uint8_t *macAddress, esp_interface_t interface)
+void WiFiRequestHandler::GetMacAddress(uint8_t *macAddress, wifi_interface_t interface)
 {
     if (interface == WIFI_IF_STA)
     {
@@ -687,7 +612,7 @@ void WiFiRequestHandler::GetMacAddress(uint8_t *macAddress, esp_interface_t inte
  *  @returns
  *      StatusCodes::Completed on success, StatusCodes::Failure if there is a problem.
  */
-StatusCodes::StatusCodes WiFiRequestHandler::SetMacAddress(uint8_t *macAddress, esp_interface_t interface)
+StatusCodes::StatusCodes WiFiRequestHandler::SetMacAddress(uint8_t *macAddress, wifi_interface_t interface)
 {
     return(StatusCodes::CompletedOk);
 }
@@ -793,7 +718,7 @@ void WiFiRequestHandler::NtpServerCallback(struct timeval *tv)
     TRACE_MESSAGE("Setting time to %d", (int) tv->tv_sec);
 
     settimeofday(tv, NULL);
-    
+
     TRACE_MESSAGE("NtpServerCallback: Exit");
 }
 
@@ -892,7 +817,7 @@ void WiFiRequestHandler::PopulateConnectionEventDataStructure(Esp32Messaging::Co
 
 /**
  *  @brief Raise the ConnectToAccessPointEvent for the managed code.
- * 
+ *
  *  @param status
  *     Status code to send back to the STM32.
  */
@@ -900,7 +825,7 @@ void WiFiRequestHandler::RaiseConnectToAccessPointEvent(StatusCodes::StatusCodes
 {
     TRACE_MESSAGE("RaiseConnectToAccessPointEvent: Enter");
 
-    Esp32Messaging::ConnectEventData *ed = static_cast<Esp32Messaging::ConnectEventData *>( pvPortMalloc(sizeof(Esp32Messaging::ConnectEventData)));
+    Esp32Messaging::ConnectEventData *ed = static_cast<Esp32Messaging::ConnectEventData *>(pvPortMalloc(sizeof(Esp32Messaging::ConnectEventData)));
     if (ed != NULL)
     {
         PopulateConnectionEventDataStructure(ed);
@@ -961,6 +886,7 @@ void WiFiRequestHandler::EventHandlerHelper(esp_event_base_t eventBase, int32_t 
             case WIFI_EVENT_STA_START:
                 TRACE_MESSAGE("EventHandlerHelper: WIFI_EVENT_STA_START");
                 StationStartedEvent();
+                esp_wifi_connect();
                 break;
             case WIFI_EVENT_STA_STOP:
                 TRACE_MESSAGE("EventHandlerHelper: WIFI_EVENT_STA_STOP");
@@ -1439,7 +1365,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const char *ss
         return(StatusCodes::WiFiAlreadyStarted);
     }
 
-    if ((ssid == nullptr) ||(strlen(ssid) == 0))
+    if ((ssid == nullptr) || (strlen(ssid) == 0))
     {
         return (StatusCodes::InvalidWiFiCredentials);
     }
@@ -1487,15 +1413,11 @@ StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const char *ss
             _lastIdfErrorCode = esp_wifi_set_mode(WIFI_MODE_STA);
             if (_lastIdfErrorCode == ESP_OK)
             {
-                _lastIdfErrorCode = esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config);
+                _lastIdfErrorCode = esp_wifi_set_config(WIFI_IF_STA, &wifi_config);
             }
             if (_lastIdfErrorCode == ESP_OK)
             {
                 _lastIdfErrorCode = esp_wifi_start();
-            }
-            if (_lastIdfErrorCode == ESP_OK)
-            {
-                _lastIdfErrorCode = esp_wifi_connect();
             }
             if (_lastIdfErrorCode == ESP_OK)
             {
@@ -1582,7 +1504,7 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
  *  @brief Connect to the default access point.
  *
  *  Note: This is a non-blocking call and will generate the connection event
- *        with the status code set accordingly. 
+ *        with the status code set accordingly.
  *
  *  @param message
  *      Message containing the encoded request.
@@ -1719,7 +1641,7 @@ void WiFiRequestHandler::StartWiFiInterface(Message *message)
  *  @brief Get the full list of available networks.
  *
  *  @pre
- *      The network interfce must be started before this method is called.
+ *      The network interface must be started before this method is called.
  *      It is not necessary to connected to an access pint but the interface
  *      must be started.
  *
@@ -3428,6 +3350,10 @@ void WiFiRequestHandler::PollSocket(void *requestId)
                 int32_t events;
                 Mapping::GetStmFlagValue(Mapping::PollEvents, fds[POLL_FD_INDEX].revents, &events);
                 response.ReturnedEvents = (uint16_t) (events & 0xffff);
+                if (response.ReturnedEvents != 0)
+                {
+                    response.Result = 1;
+                }
                 TRACE_MESSAGE("Poll: Returned ESP32 events 0x%04x maps to NuttX events 0x%04x", fds[POLL_FD_INDEX].revents, events);
                 response.SetupMessageId = (uint32_t) requestId;
                 close(fds[POLL_DUMMY_FD_INDEX].fd);
@@ -3442,7 +3368,7 @@ void WiFiRequestHandler::PollSocket(void *requestId)
             UnlockPollRequests();
         }
     }
-    TRACE_MESSAGE("Poll: Returned value: %d", response.Result);
+    TRACE_MESSAGE("PollSocket: Return value from poll: %d", response.Result);
 
     Message *message = static_cast<Message *>(pvPortMalloc(sizeof(Message)));
     message->Interface = Esp32Interfaces::WiFi;
@@ -3534,7 +3460,7 @@ void WiFiRequestHandler::StationStartedEvent()
 void WiFiRequestHandler::StationStoppedEvent()
 {
     TRACE_MESSAGE("StationStoppedEvent: Enter");
- 
+
     _stationNetIfHandle = nullptr;
     RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::StopWiFiInterfaceEvent);
 
@@ -3580,20 +3506,6 @@ void WiFiRequestHandler::StationGotIpEvent(ip_event_got_ip_t *eventData)
     memcpy((void *) &_ipInformation, (void *) &eventData->ip_info, sizeof(esp_netif_ip_info_t));
     _ipChanged = eventData->ip_changed;
 
-    if (GetGetTimeAtStartup())
-    {
-        //
-        //  Note that we only need to get the time here.  The timezone is set when this
-        //  class is instanciated or when the SetTimezone method is successfully called.
-        //
-        TRACE_MESSAGE("Getting time from %s", GetNtpServer());
-        sntp_setoperatingmode(SNTP_OPMODE_POLL);
-        sntp_setservername(0, GetNtpServer());
-        sntp_set_sync_mode(SNTP_SYNC_MODE_SMOOTH);
-        sntp_set_time_sync_notification_cb(NtpServerCallback);
-        sntp_init();
-    }
-
     xEventGroupClearBits(_xWiFiEventGroup, WIFI_CONNECTING_BIT | WIFI_RECONNECTING_BIT);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT);
     TRACE_MESSAGE("StationGotIpEvent: Exit");
@@ -3612,12 +3524,7 @@ void WiFiRequestHandler::StationConnectedEvent(wifi_event_sta_connected_t *event
     TRACE_MESSAGE("StationConnectedEvent: Enter");
     memcpy((void *) &_apInformation, (void *) eventData, sizeof(wifi_event_sta_connected_t));
 
-    EventBits_t bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_RECONNECTING_BIT , pdFALSE, pdFALSE, GetWiFiTimeout() / portTICK_PERIOD_MS);
-
-    if (bits & WIFI_RECONNECTING_BIT)
-    {
-        RaiseConnectToAccessPointEvent(StatusCodes::CompletedOk);
-    }
+    RaiseConnectToAccessPointEvent(StatusCodes::CompletedOk);
 
     TRACE_MESSAGE("StationConnectedEvent: Exit");
 }
