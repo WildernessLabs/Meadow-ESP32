@@ -1,41 +1,10 @@
 {
-	"version": "0.1.0",
-	"configurations": [	
-		{
-			"name": "Flash + Debug",
-			"type": "gdb",
-			"request": "launch",
-			"target": "./build/${workspaceFolderBasename}.elf",
-			"cwd": "${workspaceFolder}",
-			"gdbpath": "xtensa-esp32-elf-gdb",
-			"autorun": [
-				"target remote :3333",
-				"mon reset halt",
-				"mon program_esp ./build/${workspaceFolderBasename}.bin 0x10000 verify",
-				"mon esp appimage_offset 0x10000",
-				"mon reset halt",
-				"flushregs",
-				"set remote hardware-watchpoint-limit 2",
-				"thb app_main",
-				"c"
-			],
-		},
-		{
-			"name": "Debug",
-			"type": "gdb",
-			"request": "launch",
-			"target": "./build/${workspaceFolderBasename}.elf",
-			"cwd": "${workspaceFolder}",
-			"gdbpath": "xtensa-esp32-elf-gdb",
-			"autorun": [
-				"target remote :3333",
-				"mon reset halt",
-				"mon esp appimage_offset 0x10000",
-				"flushregs",
-				"set remote hardware-watchpoint-limit 2",
-				"thb app_main",
-				"c"
-			],
-		}
+	"version": "0.2.0",
+	"configurations": [
+	  {
+		"type": "espidf",
+		"name": "Launch",
+		"request": "launch"
+	  }
 	]
-}
+  }
