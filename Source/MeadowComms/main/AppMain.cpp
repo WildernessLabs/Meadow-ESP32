@@ -46,6 +46,14 @@
     #warning "Standalone heap tracing turned on."
 #endif
 
+#if !defined(CONFIG_WIFI_SSID)
+#define CONFIG_WIFI_SSID "SSID"
+#endif
+
+#if !defined(CONFIG_WIFI_PASSWORD)
+#define CONFIG_WIFI_SSID "PASSWORD"
+#endif
+
 void TestBluetoothMessage(MessageDispatcher *dispatcher);
 
 /**
@@ -98,20 +106,27 @@ extern "C" void app_main()
 
 //    TestBluetoothMessage(messageDispatcher);
 
-//     Message message = {};
-//     message.MessageType = MessageTypes::Header;
-//     message.Interface = Esp32Interfaces::WiFi;
-//     message.Function = WiFiFunction::Ioctl;
-//     Esp32Messaging::IoctlRequest request;
+    // Message *message = static_cast<Message *>(pvPortMalloc(sizeof(Message)));
+    // message->MessageType = MessageTypes::Header;
+    // message->Interface = Esp32Interfaces::WiFi;
+    // message->Function = WiFiFunction::ConnectToAccessPoint;
+    
+    // Esp32Messaging::WiFiCredentials request;
 
-// #include "WiFiRequestHandler.hpp"
+    // #include "WiFiRequestHandler.hpp"
 
-//     request.Command = SIOCGIFFLAGS;
-//     message.PayloadLength = Encoders::EncodedIoctlRequestBufferSize(&request);
-//     message.Payload = static_cast<uint8_t *>(pvPortMalloc(message.PayloadLength));
-//     Encoders::EncodeIoctlRequest(&request, message.Payload);
+    // request.NetworkName = (char *) CONFIG_WIFI_SSID;
+    // request.Password = (char *) CONFIG_WIFI_PASSWORD;
+    // message->PayloadLength = Encoders::EncodedWiFiCredentialsBufferSize(&request);
+    // message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
+    // Encoders::EncodeWiFiCredentials(&request, message->Payload);
 
-//     messageDispatcher->QueueMessageForEsp32(&message);
+    // messageDispatcher->QueueMessageForEsp32(message);
+
+    //
+    //  We suspend this task as the message processing is performed by the objects created above.
+    //
+    // vTaskSuspend(NULL);
 
     //
     //  Main program loop.
