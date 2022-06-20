@@ -539,7 +539,7 @@ private:
     /**
      *  @brief Get a list of available access points.
      */
-    void GetAvailableNetworks(Message *message);
+    void ScanForAccessPoints(Message *message);
 
     /**
      *  @brief Clear the default access point and password from NVS.

@@ -1046,7 +1046,7 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
             DisconnectFromAccessPoint(request);
             break;
         case WiFiFunction::GetAccessPoints:
-            GetAvailableNetworks(request);
+            ScanForAccessPoints(request);
             break;
         case WiFiFunction::ClearDefaultAccessPoint:
             ClearDefaultAccessPointAndPassword(request);
@@ -1648,9 +1648,9 @@ void WiFiRequestHandler::StartWiFiInterface(Message *message)
  *  @param message
  *      Request sent from the STM32.
  */
-void WiFiRequestHandler::GetAvailableNetworks(Message *message)
+void WiFiRequestHandler::ScanForAccessPoints(Message *message)
 {
-    TRACE_MESSAGE("GetAvailableNetworks: Enter");
+    TRACE_MESSAGE("ScanForAccessPoints: Enter");
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
 
     _currentRetryCount = 0;
@@ -1693,7 +1693,7 @@ void WiFiRequestHandler::GetAvailableNetworks(Message *message)
                 {
                     uint16_t apCount = 0;
                     esp_wifi_scan_get_ap_num(&apCount);
-                    TRACE_MESSAGE("GetAvailableNetworks: Number of access points found: %d", apCount);
+                    TRACE_MESSAGE("ScanForAccessPoints: Number of access points found: %d", apCount);
                     if (apCount != 0)
                     {
                         Esp32Messaging::AccessPointList *accessPointList = static_cast<Esp32Messaging::AccessPointList *>(pvPortMalloc(sizeof(Esp32Messaging::AccessPointList)));
@@ -1734,14 +1734,14 @@ void WiFiRequestHandler::GetAvailableNetworks(Message *message)
                 }
                 else
                 {
-                    TRACE_MESSAGE("GetAvailableNetworks: Scan timeout.");
+                    TRACE_MESSAGE("ScanForAccessPoints: Scan timeout.");
                     result = StatusCodes::Timeout;
                 }
                 vPortFree(ap_info);
             }
             else
             {
-                TRACE_MESSAGE("GetAvailableNetworks: Scan timeout.");
+                TRACE_MESSAGE("ScanForAccessPoints: Scan timeout.");
                 result = StatusCodes::Timeout;
             }
         }
@@ -1751,7 +1751,7 @@ void WiFiRequestHandler::GetAvailableNetworks(Message *message)
     message->StatusCode = result;
     _messageDispatcher->QueueMessageForStm32(message);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
-    TRACE_MESSAGE("GetAvailableNetworks: Exit");
+    TRACE_MESSAGE("ScanForAccessPoints: Exit");
 }
 
 /**
