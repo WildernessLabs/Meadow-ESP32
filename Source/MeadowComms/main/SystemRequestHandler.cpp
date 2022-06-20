@@ -60,7 +60,7 @@ const char *SystemRequestHandler::_configurationName = "Meadow";
 /**
  *  @brief Private instance of the shared threadpool.
  */
-ThreadPool *SystemRequestHandler::_threadPool = new ThreadPool(10);
+ThreadPool *SystemRequestHandler::_threadPool = new ThreadPool(4);
 
 /**
  *  @brief Name of the key holding the _maximumMessageQueueLength value.
@@ -443,9 +443,9 @@ void SystemRequestHandler::PopulateConfiguration(Esp32Messaging::SystemConfigura
     config->MaximumRetryCount = WiFiRequestHandler::GetMaximumRetryCount();
     config->AutomaticallyReconnect = WiFiRequestHandler::GetAutomaticReconnect();
     config->AutomaticallyStartNetwork = WiFiRequestHandler::GetAutomaticallyStartNetwork();
-    config->GetTimeAtStartup = WiFiRequestHandler::GetGetTimeAtStartup();
+    // config->GetTimeAtStartup = WiFiRequestHandler::GetGetTimeAtStartup();
     config->UseDhcp = WiFiRequestHandler::GetUseDhcp();
-    config->NtpServer = WiFiRequestHandler::GetNtpServer();
+    // config->NtpServer = WiFiRequestHandler::GetNtpServer();
     config->DefaultAccessPoint = WiFiRequestHandler::GetDefaultAccessPoint();
     config->StaticIpAddress = WiFiRequestHandler::GetIpAddress();
     config->DnsServer = WiFiRequestHandler::GetDnsServer();
@@ -550,18 +550,18 @@ void SystemRequestHandler::SetConfiguration(Message *request)
         case ConfigurationItems::DefaultGateway:
             result = WiFiRequestHandler::SetDefaultGateway((uint32_t) (*value->Value));
             break;
-        case ConfigurationItems::GetTimeAtStartup:
-            result = WiFiRequestHandler::SetGetTimeAtStartup((uint8_t) (*value->Value) == 1);
-            break;
+        // case ConfigurationItems::GetTimeAtStartup:
+        //     result = WiFiRequestHandler::SetGetTimeAtStartup((uint8_t) (*value->Value) == 1);
+        //     break;
         case ConfigurationItems::MaximumMessageQueueLength:
             result = SetMaximumMessageQueueLength((uint32_t) (*value->Value));
             break;
         case ConfigurationItems::MaximumRetryCount:
             result = WiFiRequestHandler::SetMaximumRetryCount((uint32_t) (*value->Value));
             break;
-        case ConfigurationItems::NtpServer:
-            result = WiFiRequestHandler::SetNtpServer((char *) value->Value);
-            break;
+        // case ConfigurationItems::NtpServer:
+        //     result = WiFiRequestHandler::SetNtpServer((char *) value->Value);
+        //     break;
         case ConfigurationItems::UseDhcp:
             result = WiFiRequestHandler::SetUseDhcp((uint8_t) (*value->Value) == 1);
             break;
