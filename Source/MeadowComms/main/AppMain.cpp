@@ -126,15 +126,15 @@ extern "C" void app_main()
     //
     //  We suspend this task as the message processing is performed by the objects created above.
     //
-    // vTaskSuspend(NULL);
+    vTaskSuspend(NULL);
 
     //
     //  Main program loop.
     //
-    while (true)
-    {
-        vTaskDelay(500 / portTICK_PERIOD_MS);
-    }
+    // while (true)
+    // {
+    //     vTaskDelay(500 / portTICK_PERIOD_MS);
+    // }
 }
 
 const char* json_test = R"(
