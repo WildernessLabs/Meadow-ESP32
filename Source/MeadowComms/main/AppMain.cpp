@@ -51,7 +51,7 @@
 #endif
 
 #if !defined(CONFIG_WIFI_PASSWORD)
-#define CONFIG_WIFI_SSID "PASSWORD"
+#define CONFIG_WIFI_PASSWORD "PASSWORD"
 #endif
 
 void TestBluetoothMessage(MessageDispatcher *dispatcher);
