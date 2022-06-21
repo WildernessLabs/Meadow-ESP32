@@ -118,7 +118,7 @@ private:
      *  @brief When set, this indicates that the system has lost the WiFi connection
      *  and is actively trying to re-establish the connection.
      */
-    // static const int WIFI_RECONNECTING_BIT = BIT3;
+    static const int WIFI_HAVE_IP_BIT = BIT3;
 
     /**
      *  @brief Indicate if an explicit disconnect has been requested.
