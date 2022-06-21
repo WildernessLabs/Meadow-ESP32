@@ -1431,7 +1431,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const char *ss
                 }
                 else
                 {
-                    if (bits & WIFI_CONNECTED_BIT)
+                    if (bits & WIFI_HAVE_IP_BIT)
                     {
                         result = StatusCodes::CompletedOk;
                     }
