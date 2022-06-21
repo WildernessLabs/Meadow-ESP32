@@ -1424,7 +1424,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const char *ss
             }
             if (_lastIdfErrorCode == ESP_OK)
             {
-                bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT | WIFI_ERROR_BIT, pdFALSE, pdFALSE, 600000 / portTICK_PERIOD_MS);
+                bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_HAVE_IP_BIT | WIFI_ERROR_BIT, pdFALSE, pdFALSE, 600000 / portTICK_PERIOD_MS);
                 if (bits & WIFI_ERROR_BIT)
                 {
                     result = StatusCodes::CannotConnectToAccessPoint;
