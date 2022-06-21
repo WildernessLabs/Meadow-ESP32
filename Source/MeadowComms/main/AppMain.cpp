@@ -109,6 +109,12 @@ extern "C" void app_main()
     // Message *message = static_cast<Message *>(pvPortMalloc(sizeof(Message)));
     // message->MessageType = MessageTypes::Header;
     // message->Interface = Esp32Interfaces::WiFi;
+    // message->Function = WiFiFunction::GetAccessPoints;
+
+
+    // Message *message = static_cast<Message *>(pvPortMalloc(sizeof(Message)));
+    // message->MessageType = MessageTypes::Header;
+    // message->Interface = Esp32Interfaces::WiFi;
     // message->Function = WiFiFunction::ConnectToAccessPoint;
     
     // Esp32Messaging::WiFiCredentials request;
