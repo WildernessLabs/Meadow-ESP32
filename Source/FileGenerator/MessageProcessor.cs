@@ -162,9 +162,9 @@ namespace FileGenerator
         private void GenerateCSharpMessageEncodedBufferSizeFunction(StreamWriter sourceFile, Message message)
         {
             string variableName = message.Name.Substring(0, 1).ToLower() + message.Name.Substring(1);
-            sourceFile.WriteLine("        /// <summary>");
+            sourceFile.WriteLine("         /// <summary>");
             sourceFile.WriteLine($"        /// Calculate the amount of memory required to hold the given instance of the {message.Name} object.");
-            sourceFile.WriteLine("        /// </summary>");
+            sourceFile.WriteLine("         /// </summary>");
             sourceFile.WriteLine($"        /// <param name=\"{variableName}\">{message.Name} object to be encoded.</param>");
             sourceFile.WriteLine($"        /// <returns>Number of bytes required to hold the encoded {message.Name} object.</returns>");
             sourceFile.WriteLine($"        public static int Encoded{message.Name}BufferSize(MessagePayloads.{message.Name} {variableName})");
@@ -363,7 +363,8 @@ namespace FileGenerator
             sourceFile.WriteLine("        /// <summary>");
             sourceFile.WriteLine($"        /// Extract a {message.Name} object from a byte array.");
             sourceFile.WriteLine("        /// </summary>");
-            sourceFile.WriteLine($"        /// <param name=\"{variableName}\">Byte array containing the object to the extracted.</param>");
+            sourceFile.WriteLine($"        /// <param name=\"buffer\">Byte array containing the encoded data.</param>");
+            sourceFile.WriteLine($"        /// <param name=\"offset\">Offset into the buffer where the encoded data can be found.</param>");
             sourceFile.WriteLine($"        /// <returns>{message.Name} object.</returns>");
             sourceFile.WriteLine($"        public static MessagePayloads.{message.Name} Extract{message.Name}(byte[] buffer, int offset)");
             sourceFile.WriteLine("        {");
@@ -490,15 +491,31 @@ namespace FileGenerator
                     if (m.MessageElements != null)
                     {
                         string variableName = m.Name.Substring(0, 1).ToLower() + m.Name.Substring(1);
+                        file.WriteLine($"    /// <summary>");
+                        file.WriteLine($"    /// Structure to hold {m.Name} data.");
+                        file.WriteLine($"    /// </summary>");
                         file.WriteLine($"    public struct {m.Name}");
                         file.WriteLine("    {");
                         foreach (MessageElement me in m.MessageElements)
                         {
                             DataType dt = GetDataType(me.DataType);
+                            file.WriteLine($"        /// <summary>");
+                            if (dt.Name.ToLower() == "blob")
+                            {
+                                file.WriteLine($"        /// {me.Name} element length.");
+                            }
+                            else
+                            {
+                                file.WriteLine($"        /// {me.Name} element.");
+                            }
+                            file.WriteLine($"        /// </summary>");
                             switch (dt.Name.ToLower())
                             {
                                 case "blob":
                                     file.WriteLine($"        public UInt32 {me.Name}Length;");
+                                    file.WriteLine($"        /// <summary>");
+                                    file.WriteLine($"        /// {me.Name} element.");
+                                    file.WriteLine($"        /// </summary>");
                                     file.WriteLine($"        public {dt.CSharpTypeName} {me.Name};");
                                     break;
                                 case "fixedchararray":

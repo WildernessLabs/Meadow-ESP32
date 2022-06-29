@@ -1,0 +1,5 @@
+#
+#   Tests to be executed along with any optional number of runs.
+#
+#HttpRequestTest 1000 http://postman-echo.com/get?foo1=bar1&foo2=bar2
+HttpRequestTest 1000 http://192.168.4.1

@@ -441,15 +441,7 @@ void SystemRequestHandler::PopulateConfiguration(Esp32Messaging::SystemConfigura
     config->SoftwareVersion = const_cast<char *>(applicationDescription->version);
     config->Antenna = WiFiRequestHandler::GetAntenna();
     config->MaximumRetryCount = WiFiRequestHandler::GetMaximumRetryCount();
-    config->AutomaticallyReconnect = WiFiRequestHandler::GetAutomaticReconnect();
-    config->AutomaticallyStartNetwork = WiFiRequestHandler::GetAutomaticallyStartNetwork();
-    // config->GetTimeAtStartup = WiFiRequestHandler::GetGetTimeAtStartup();
-    config->UseDhcp = WiFiRequestHandler::GetUseDhcp();
-    // config->NtpServer = WiFiRequestHandler::GetNtpServer();
     config->DefaultAccessPoint = WiFiRequestHandler::GetDefaultAccessPoint();
-    config->StaticIpAddress = WiFiRequestHandler::GetIpAddress();
-    config->DnsServer = WiFiRequestHandler::GetDnsServer();
-    config->DefaultGateway = WiFiRequestHandler::GetDefaultGateway();
     config->DeviceName = GetDeviceName();
     WiFiRequestHandler::GetMacAddress(config->BoardMacAddress, WIFI_IF_STA);
     WiFiRequestHandler::GetMacAddress(config->SoftApMacAddress, WIFI_IF_AP);

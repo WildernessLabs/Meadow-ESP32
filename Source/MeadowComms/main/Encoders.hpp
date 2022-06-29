@@ -34,20 +34,12 @@ namespace Esp32Messaging
     {
         char * SoftwareVersion;
         uint8_t MaximumMessageQueueLength;
-        uint8_t AutomaticallyStartNetwork;
-        uint8_t AutomaticallyReconnect;
         int32_t MaximumRetryCount;
         uint8_t Antenna;
         uint8_t BoardMacAddress[6];
         uint8_t SoftApMacAddress[6];
         char * DeviceName;
         char * DefaultAccessPoint;
-        char * NtpServer;
-        int32_t GetTimeAtStartup;
-        uint8_t UseDhcp;
-        uint32_t StaticIpAddress;
-        uint32_t DnsServer;
-        uint32_t DefaultGateway;
         uint8_t ResetReason;
     };
 
