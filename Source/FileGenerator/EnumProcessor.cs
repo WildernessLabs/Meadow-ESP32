@@ -261,9 +261,9 @@ namespace FileGenerator
                 {
                     string indent = "    ";
                     string dataType = "";
-                    file.WriteLine($"{indent}// <summary>");
-                    file.WriteLine($"{indent}// {e.Comment}");
-                    file.WriteLine($"{indent}// </summary>");
+                    file.WriteLine($"{indent}/// <summary>");
+                    file.WriteLine($"{indent}/// {e.Comment}");
+                    file.WriteLine($"{indent}/// </summary>");
                     switch (e.BaseDataType.ToLower())
                     {
                         case "byte":
@@ -294,14 +294,6 @@ namespace FileGenerator
         /// <param name="accessSpecifier">C# access specifier.</param>
         private void OutputCommonEnumText(StreamWriter fileStream, Language language, EnumDataType e, string indent, string dataType = "", string accessSpecifier = "")
         {
-            if (string.IsNullOrEmpty(accessSpecifier))
-            {
-                fileStream.Write($"{indent}");
-            }
-            else
-            {
-                fileStream.Write($"{indent}{accessSpecifier} ");
-            }
             string enumName;
             if (language == Language.C)
             {
@@ -310,6 +302,14 @@ namespace FileGenerator
             else
             {
                 enumName = e.Name;
+            }
+            if (string.IsNullOrEmpty(accessSpecifier))
+            {
+                fileStream.Write($"{indent}");
+            }
+            else
+            {
+                fileStream.Write($"{indent}{accessSpecifier} ");
             }
             if (string.IsNullOrEmpty(dataType))
             {
@@ -353,7 +353,10 @@ namespace FileGenerator
                 }
                 else
                 {
-                    fileStream.Write($"    {nvp.Name} = {nvp.Value}");
+                    fileStream.WriteLine($"    /// <summary>");
+                    fileStream.WriteLine($"{indent}    /// {enumName} - {nvp.Name}");
+                    fileStream.WriteLine($"{indent}    /// </summary>");
+                    fileStream.Write($"{indent}    {nvp.Name} = {nvp.Value}");
                 }
                 counter++;
                 if (counter != e.NameValuePairs.Count)
