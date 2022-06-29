@@ -7,20 +7,12 @@
             [
                 { "Name": "SoftwareVersion", "DataType": "string" },
                 { "Name": "MaximumMessageQueueLength", "DataType": "byte" },
-                { "Name": "AutomaticallyStartNetwork", "DataType": "byte" },
-                { "Name": "AutomaticallyReconnect", "DataType": "byte" },
                 { "Name": "MaximumRetryCount", "DataType": "int" },
                 { "Name": "Antenna", "DataType": "byte" },
                 { "Name": "BoardMacAddress", "DataType": "fixedbytearray", "Length": "6" },
                 { "Name": "SoftApMacAddress", "DataType": "fixedbytearray", "Length": "6" },
                 { "Name": "DeviceName", "DataType": "string" },
                 { "Name": "DefaultAccessPoint", "DataType": "string" },
-                { "Name": "NtpServer", "DataType": "string" },
-                { "Name": "GetTimeAtStartup", "DataType": "int" },
-                { "Name": "UseDhcp", "DataType": "byte" },
-                { "Name": "StaticIpAddress", "DataType": "uint32" },
-                { "Name": "DnsServer", "DataType": "uint32" },
-                { "Name": "DefaultGateway", "DataType": "uint32" },
                 { "Name": "ResetReason", "DataType": "byte"}
             ]
         },
