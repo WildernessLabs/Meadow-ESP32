@@ -483,10 +483,6 @@ void Encoders::EncodeSystemConfiguration(Esp32Messaging::SystemConfiguration *sy
     buffer += StringLength(systemConfiguration->SoftwareVersion) + 1;
     *buffer = systemConfiguration->MaximumMessageQueueLength;
     buffer += 1;
-    *buffer = systemConfiguration->AutomaticallyStartNetwork;
-    buffer += 1;
-    *buffer = systemConfiguration->AutomaticallyReconnect;
-    buffer += 1;
     EncodeInt32(systemConfiguration->MaximumRetryCount, buffer);
     buffer += 4;
     *buffer = systemConfiguration->Antenna;
@@ -499,18 +495,6 @@ void Encoders::EncodeSystemConfiguration(Esp32Messaging::SystemConfiguration *sy
     buffer += StringLength(systemConfiguration->DeviceName) + 1;
     EncodeString(systemConfiguration->DefaultAccessPoint, buffer);
     buffer += StringLength(systemConfiguration->DefaultAccessPoint) + 1;
-    EncodeString(systemConfiguration->NtpServer, buffer);
-    buffer += StringLength(systemConfiguration->NtpServer) + 1;
-    EncodeInt32(systemConfiguration->GetTimeAtStartup, buffer);
-    buffer += 4;
-    *buffer = systemConfiguration->UseDhcp;
-    buffer += 1;
-    EncodeUInt32(systemConfiguration->StaticIpAddress, buffer);
-    buffer += 4;
-    EncodeUInt32(systemConfiguration->DnsServer, buffer);
-    buffer += 4;
-    EncodeUInt32(systemConfiguration->DefaultGateway, buffer);
-    buffer += 4;
     *buffer = systemConfiguration->ResetReason;
 }
 
@@ -530,8 +514,7 @@ int Encoders::EncodedSystemConfigurationBufferSize(Esp32Messaging::SystemConfigu
     result += Encoders::StringLength(systemConfiguration->SoftwareVersion);
     result += Encoders::StringLength(systemConfiguration->DeviceName);
     result += Encoders::StringLength(systemConfiguration->DefaultAccessPoint);
-    result += Encoders::StringLength(systemConfiguration->NtpServer);
-    return(result + 42);
+    return(result + 22);
 }
 
 /**
@@ -555,10 +538,6 @@ Esp32Messaging::SystemConfiguration *Encoders::ExtractSystemConfiguration(uint8_
     buffer += Encoders::StringLength(systemConfiguration->SoftwareVersion) + 1;
     systemConfiguration->MaximumMessageQueueLength = *buffer;
     buffer += 1;
-    systemConfiguration->AutomaticallyStartNetwork = *buffer;
-    buffer += 1;
-    systemConfiguration->AutomaticallyReconnect = *buffer;
-    buffer += 1;
     systemConfiguration->MaximumRetryCount = ExtractInt32(buffer);
     buffer += 4;
     systemConfiguration->Antenna = *buffer;
@@ -571,18 +550,6 @@ Esp32Messaging::SystemConfiguration *Encoders::ExtractSystemConfiguration(uint8_
     buffer += Encoders::StringLength(systemConfiguration->DeviceName) + 1;
     systemConfiguration->DefaultAccessPoint = ExtractString(buffer);
     buffer += Encoders::StringLength(systemConfiguration->DefaultAccessPoint) + 1;
-    systemConfiguration->NtpServer = ExtractString(buffer);
-    buffer += Encoders::StringLength(systemConfiguration->NtpServer) + 1;
-    systemConfiguration->GetTimeAtStartup = ExtractInt32(buffer);
-    buffer += 4;
-    systemConfiguration->UseDhcp = *buffer;
-    buffer += 1;
-    systemConfiguration->StaticIpAddress = ExtractUInt32(buffer);
-    buffer += 4;
-    systemConfiguration->DnsServer = ExtractUInt32(buffer);
-    buffer += 4;
-    systemConfiguration->DefaultGateway = ExtractUInt32(buffer);
-    buffer += 4;
     systemConfiguration->ResetReason = *buffer;
     return(systemConfiguration);
 }
