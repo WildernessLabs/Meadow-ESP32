@@ -158,7 +158,7 @@ namespace FileGenerator
         /// Generate the function that will calculate the size of the encoded data for the specified message.
         /// </summary>
         /// <param name="sourceFile">Output stream for the C file that will hold the calculation method.</param>
-        /// <param name="message">Message defintion to encode.</param>
+        /// <param name="message">Message definition to encode.</param>
         private void GenerateCSharpMessageEncodedBufferSizeFunction(StreamWriter sourceFile, Message message)
         {
             string variableName = message.Name.Substring(0, 1).ToLower() + message.Name.Substring(1);
@@ -214,10 +214,10 @@ namespace FileGenerator
         #region C# Encoder function code generation
 
         /// <summary>
-        /// Generate the method that will cencode the specified message.
+        /// Generate the method that will encode the specified message.
         /// </summary>
         /// <param name="sourceFile">Output stream for the C# file that will hold the encoder.</param>
-        /// <param name="message">Message defintion to encode.</param>
+        /// <param name="message">Message definition to encode.</param>
         private void GenerateCSharpEncoderFunction(StreamWriter sourceFile, Message message)
         {
             string variableName = message.Name.Substring(0, 1).ToLower() + message.Name.Substring(1);
@@ -355,7 +355,7 @@ namespace FileGenerator
         /// Generate the method that can extract the specified message.
         /// </summary>
         /// <param name="sourceFile">Output stream for the C# file that will hold the extract method.</param>
-        /// <param name="message">Message defintion to be extracted.</param>
+        /// <param name="message">Message definition to be extracted.</param>
         private void GenerateCSharpExtractFunction(StreamWriter sourceFile, Message message)
         {
             string variableName = message.Name.Substring(0, 1).ToLower() + message.Name.Substring(1);
@@ -454,6 +454,9 @@ namespace FileGenerator
                 OutputCSharpFileHeader(sourceFile);
                 sourceFile.WriteLine("namespace Meadow.Devices.Esp32.MessagePayloads");
                 sourceFile.WriteLine("{");
+                sourceFile.WriteLine("    /// <summary>");
+                sourceFile.WriteLine("    /// Encapsulate the various message encoder and extract methods.");
+                sourceFile.WriteLine("    /// </summary>");
                 sourceFile.WriteLine("    public static class Encoders");
                 sourceFile.WriteLine("    {");
                 using (StreamReader templateFile = new StreamReader($"{MetadataDirectory}Encoders.cs.txt"))
