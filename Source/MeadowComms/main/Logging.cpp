@@ -138,10 +138,11 @@ void Logging::Setup()
     esp_log_level_set(APP_MAIN_COMPONENT_NAME, ESP_LOG_INFO);
 #endif
 
-#if defined(MESSAGE_DEBUG)
+#if defined(MESSAGES_DEBUG)
     //
     //  We enable the RequestHandlerBase as it is the base class for the WiFi, System etc. request handlers.
     //
+    #warning "Message (TransportProviderBase and RequestHandlerBase) debugging is enabled."
     esp_log_level_set(RequestHandlerBase::COMPONENT_NAME, ESP_LOG_INFO);
     esp_log_level_set(TransportProviderBase::COMPONENT_NAME, ESP_LOG_INFO);
 #endif
