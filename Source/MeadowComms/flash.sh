@@ -13,10 +13,14 @@ fi
 VERBOSE=true
 FORCE=false
 ESP=false
+script=$scriptdir/flash-app.cfg
 
 for i in "$@"
 do
 case $i in
+    -a|--all)
+    script=$scriptdir/flash-all.cfg
+    ;;
     -v|--verbose)
     VERBOSE=true
     ;;
@@ -62,5 +66,5 @@ check_command_status() {
 OCD=true
 printf "Flashing ESP32 binaries using OpenOCD... "
 
-run_command "$IDF_TOOLS_PATH/tools/openocd-esp32/v0.10.0-esp32-20191114/openocd-esp32/bin/openocd -s share/openocd/scripts -f $scriptdir/flash.gdbinit"
+run_command "openocd -s share/openocd/scripts -f $script"
 check_command_status
