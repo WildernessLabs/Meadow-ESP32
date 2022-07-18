@@ -41,6 +41,7 @@ HEAPTRACING=false
 IDF_FLAGS=""
 IDF_DEFINES=""
 DEBUG_SELECTIONS=""
+FLASH=false
 
 #
 #   Work out which options are on the command line.
@@ -82,7 +83,8 @@ case $i in
     DRYRUN=true
     ;;
     -f|--flash)
-    IDF_FLAGS+=" flash"
+    # IDF_FLAGS+=" flash"
+    FLASH=true
     ;;
     -m|--monitor)
     IDF_FLAGS+=" monitor"
@@ -222,4 +224,8 @@ if [[ ! -z $IDF_FLAGS ]]; then
     echo "Build finished!"
 else
     echo "Nothing more to do."
+fi
+
+if $FLASH; then
+  $scriptdir/flash.sh
 fi
