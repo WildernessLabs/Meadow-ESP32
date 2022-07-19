@@ -44,6 +44,16 @@ struct Message
     uint32_t MessageID;
 
     /**
+     *  @brief Offset of the packet in the full message.
+     */
+    uint16_t PacketOffset;
+
+    /**
+     *  @brief Number of bytes in the packet.
+     */
+    uint16_t PacketLength;
+
+    /**
      *  Pointer to the payload data to be processed (or returned from) the function.
      */
     uint8_t *Payload;
@@ -58,66 +68,80 @@ struct Message
 #endif
 
     /**
-     *  Size of an encoded message header (in bytes).
+     *  @brief Size of an encoded message header (in bytes).
      */
-    static const uint32_t HEADER_SIZE = 27;
+    static const uint32_t HEADER_SIZE = 31;
 
     /**
-     *  Offset of the CRC in an encoded message header.
+     *  @brief Offset of the CRC in an encoded message header.
      */
     static const uint32_t CRC_OFFSET = 1;
 
     /*
-    *  Current protocol number.
-    */
+     *  @brief Current protocol number.
+     */
     static const uint8_t PROTOCOL_NUMBER = 1;
+
     /**
-     *  Message ID used to indicate an invalid (or unknown) message ID.
+     *  @brief Maximum number of bytes in an SPI frame.
+     * 
+     *  This is determined by a bug in the ESP where the maximum number of bytes in a SPI
+     *  data transmission is 4092 bytes.
+     */
+    static const uint16_t MAXIMUM_SPI_FRAME_SIZE = 4092;
+
+    /**
+     *  @brief Maximum number of payload bytes in a payload frame (packet).
+     */
+    static const uint16_t MAXIMUM_PACKET_SIZE = (MAXIMUM_SPI_FRAME_SIZE - HEADER_SIZE);
+
+    /**
+     *  @brief Message ID used to indicate an invalid (or unknown) message ID.
      */
     static const uint32_t INVALID_MESSAGE_ID = 0xffffffff;
 
     /**
-     *  Constructor for the Message class.
+     *  @brief Constructor for the Message class.
      */
     Message(uint8_t, uint8_t, uint32_t, uint32_t , uint32_t, uint8_t *, uint32_t);
 
     /**
-     *  Constructor for the Message class.
+     *  @brief Constructor for the Message class.
      */
     Message(uint8_t, uint8_t, uint32_t, uint32_t);
 
     /**
-     *  Default constructor for a Message structure.
+     *  @brief Default constructor for a Message structure.
      */
     Message();
 
     /**
-     *  Copy constructor.
+     *  @brief Copy constructor.
      */
     Message(const Message &);
 
     /**
-     *  Make a copy of the message.
+     *  @brief Make a copy of the message.
      */
     Message *CreateCopyOnHeap(bool);
 
     /**
-     *  Create a new message on the heap with the specified values.
+     *  @brief Create a new message on the heap with the specified values.
      */
     static Message *CreateOnHeap(uint8_t messageType, uint8_t interface, uint32_t function, uint32_t statusCode, uint32_t messageId, uint8_t *payload, uint32_t payloadLength);
 
     /**
-     *  Create a new message on the heap with the specified values.
+     *  @brief Create a new message on the heap with the specified values.
      */
     static Message *CreateOnHeap(uint8_t messageType, uint8_t interface, uint32_t function, uint32_t statusCode);
 
     /**
-     *  Delete the payload and free up heap storage.
+     *  @brief Delete the payload and free up heap storage.
      */
     void DeletePayload();
 
     /**
-     *  Delete the message and payload releassing heap storage.
+     *  @brief Delete the message and payload releassing heap storage.
      */
     static void DeleteMessage(Message *);
 };
