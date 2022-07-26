@@ -70,7 +70,7 @@ struct Message
     /**
      *  @brief Size of an encoded message header (in bytes).
      */
-    static const uint32_t HEADER_SIZE = 31;
+    static const uint32_t HEADER_SIZE = 27;
 
     /**
      *  @brief Offset of the CRC in an encoded message header.

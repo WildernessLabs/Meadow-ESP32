@@ -23,7 +23,7 @@
  */
 
 /**
- *  Default constructor for a Message structure.
+ *  @brief Default constructor for a Message structure.
  */
 Message::Message()
 {
@@ -32,12 +32,14 @@ Message::Message()
     Function = 0;
     StatusCode = 0;
     MessageID = 0;
+    PacketOffset = 0;
+    PacketLength = 0;
     Payload = nullptr;
     PayloadLength = 0;
 }
 
 /**
- *  Constructor for the Message class.
+ *  C@brief onstructor for the Message class.
  *
  *  @param messageType
  *      Type of message to send (see PacketType enum).
@@ -68,12 +70,14 @@ Message::Message(uint8_t messageType, uint8_t interface, uint32_t function, uint
     Function = function;
     StatusCode = statusCode;
     MessageID = messageId;
+    PacketOffset = 0;
+    PacketLength = 0;
     Payload = payload;
     PayloadLength = payloadLength;
 }
 
 /**
- *  Constructor for the Message class.
+ *  @brief Constructor for the Message class.
  *
  *  @param messageType
  *      Type of message to send (see PacketType enum).
@@ -94,15 +98,17 @@ Message::Message(uint8_t messageType, uint8_t interface, uint32_t function, uint
     Function = function;
     StatusCode = statusCode;
     MessageID = 0;
+    PacketOffset = 0;
+    PacketLength = 0;
     Payload = nullptr;
     PayloadLength = 0;
 }
 
 /**
- *  Copy constructor
+ *  @brief Copy constructor
  *
  *  @param original
- *      Message to copy..
+ *      Message to copy.
  */
 Message::Message(const Message &original)
 {
@@ -111,6 +117,8 @@ Message::Message(const Message &original)
     Function = original.Function;
     StatusCode = original.StatusCode;
     MessageID = original.MessageID;
+    PacketOffset = 0;
+    PacketLength = 0;
     Payload = nullptr;
     PayloadLength = 0;
 }
@@ -124,7 +132,7 @@ Message::Message(const Message &original)
  */
 
 /**
- *  Create an instance of a message on the heap.
+ *  @brief Create an instance of a message on the heap.
  *
  *  @param messageType
  *      Type of message to send (see PacketType enum).
@@ -155,7 +163,7 @@ Message *Message::CreateOnHeap(uint8_t messageType, uint8_t interface, uint32_t 
 {
     Message *result = static_cast<Message *>(pvPortMalloc(sizeof(Message)));
 
-    *result = {};
+    *result = { };
     result->MessageType = messageType;
     result->Interface = interface;
     result->Function = function;
@@ -191,7 +199,7 @@ Message *Message::CreateOnHeap(uint8_t messageType, uint8_t interface, uint32_t 
 }
 
 /**
- *  Create a copy of this message on the heap.
+ *  @brief Create a copy of this message on the heap.
  *
  *  @param copyPayload
  *      Indicate if the payload should be copied as well or if we
@@ -208,15 +216,15 @@ Message *Message::CreateCopyOnHeap(bool copyPayload)
     if (copyPayload)
     {
         payloadLength = PayloadLength;
-        payload = (uint8_t *) pvPortMalloc(payloadLength);
-        memcpy((void *) payload, (void *) Payload, (size_t) payloadLength);
+        payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
+        memcpy(static_cast<void *>(payload), static_cast<void *>(Payload), static_cast<size_t>(payloadLength));
     }
     Message *newMessage = CreateOnHeap(MessageType, Interface, Function, StatusCode, MessageID, payload, payloadLength);
     return(newMessage);
 }
 
 /**
- *  Delete the heap storage associated with the payload.
+ *  @brief Delete the heap storage associated with the payload.
  *
  *  On exit, the Payload will be set to a nullptr and the PayloadLength set to 0.
  */
@@ -231,7 +239,7 @@ void Message::DeletePayload()
 }
 
 /**
- *  Release the heap storage allocated for the message and any payload.
+ *  @brief Release the heap storage allocated for the message and any payload.
  *
  *  @param message
  *      Pointer to the message to be cleared.
