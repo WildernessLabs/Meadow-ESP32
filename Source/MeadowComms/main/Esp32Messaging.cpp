@@ -40,7 +40,7 @@ Message::Message()
  *  Constructor for the Message class.
  *
  *  @param messageType
- *      Type of message to send (see PacktType enum).
+ *      Type of message to send (see PacketType enum).
  *
  *  @param interface
  *      Interface on the ESP that this message should be routed to.
@@ -76,7 +76,7 @@ Message::Message(uint8_t messageType, uint8_t interface, uint32_t function, uint
  *  Constructor for the Message class.
  *
  *  @param messageType
- *      Type of message to send (see PacktType enum).
+ *      Type of message to send (see PacketType enum).
  *
  *  @param interface
  *      Interface on the ESP that this message should be routed to.
@@ -127,7 +127,7 @@ Message::Message(const Message &original)
  *  Create an instance of a message on the heap.
  *
  *  @param messageType
- *      Type of message to send (see PacktType enum).
+ *      Type of message to send (see PacketType enum).
  *
  *  @param interface
  *      Interface on the ESP that this message should be routed to.
@@ -171,7 +171,7 @@ Message *Message::CreateOnHeap(uint8_t messageType, uint8_t interface, uint32_t 
  *  Create an instance of a message on the heap.
  *
  *  @param messageType
- *      Type of message to send (see PacktType enum).
+ *      Type of message to send (see PacketType enum).
  *
  *  @param interface
  *      Interface on the ESP that this message should be routed to.
