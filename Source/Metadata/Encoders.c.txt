@@ -497,7 +497,7 @@ espcp_message_t *espcp_extract_message(uint8_t *buffer, uint32_t bufferLength, b
  ****************************************************************************/
 uint32_t espcp_message_buffer_size(espcp_message_t *message, bool header_only)
 {
-    uint32_t message_size = ESPCP_HEADER_SIZE;
+    uint32_t message_size = ESPCP_MESSAGE_HEADER_SIZE;
     if (!header_only)
     {
         message_size += message->payload_length;
