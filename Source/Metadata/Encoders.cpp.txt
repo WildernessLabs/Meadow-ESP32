@@ -336,7 +336,7 @@ uint32_t Encoders::ProgressiveCRC32(uint32_t currentChecksum, uint8_t byte)
 }
 
 /**
- *  Extract a message from a block of memory and create a new Message object.
+ *  @brief Extract a message from a block of memory and create a new Message object.
  *
  *  @param buffer
  *      Byte (uint8_t) array containing the encoded message.
@@ -363,8 +363,12 @@ Message *Encoders::ExtractMessage(uint8_t *buffer, uint32_t bufferLength, bool h
     {
         message = static_cast<Message *>(pvPortMalloc(sizeof(Message)));
 
-        memset((void *) message, 0, sizeof(Message));
-        buffer += 9;                                        // Skip the protocol, CRC, packet number and number of packets.
+        memset(static_cast<void *>(message), 0, sizeof(Message));
+        buffer += 5;                                        // Skip the protocol and CRC.
+        message->PacketOffset = ExtractUInt16(buffer);
+        buffer += 2;
+        message->PacketLength = ExtractUInt16(buffer);
+        buffer += 2;
         message->MessageType = *buffer;
         buffer++;
         message->Interface = *buffer;
@@ -379,23 +383,27 @@ Message *Encoders::ExtractMessage(uint8_t *buffer, uint32_t bufferLength, bool h
         buffer += 4;
         if (!headerOnly && (message->PayloadLength > 0))
         {
-            message->Payload = (uint8_t *) pvPortMalloc(message->PayloadLength);
-            memcpy(message->Payload, buffer, message->PayloadLength);
+            message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
+            if (message->Payload == NULL)
+            {
+                vPortFree(message);
+                message = nullptr;
+            }
+            else
+            {
+                memcpy(message->Payload, buffer, message->PayloadLength);
+            }
         }
         else
         {
             message->Payload = nullptr;
         }
     }
-    else
-    {
-        return (nullptr);
-    }
     return(message);
 }
 
 /**
- *  Encode a message into a block of memory.
+ *  @brief Encode a message into a block of memory.
  *
  *  @param message
  *      Message structure to encode in to the byte buffer.
@@ -404,7 +412,7 @@ Message *Encoders::ExtractMessage(uint8_t *buffer, uint32_t bufferLength, bool h
  *      Copy this as a header only (i.e. do not copy the payload).
  *
  *  @returns
- *      byte buffer containing the encoded message.  The storage
+ *     Byte buffer containing the encoded message.  The storage
  *     Will be placed on the FreeRTOS heap (use vPortFree to release the
  *     storage).
  */
@@ -423,11 +431,9 @@ void Encoders::EncodeMessage(Message *message, uint8_t *buffer, bool headerOnly)
     next_location++;
     EncodeUInt32(0, next_location);
     next_location += 4;
-    *next_location = 1;                         // Packet number.
-    next_location++;
-    *next_location = 1;                         // Number of packets.
-    next_location++;
-    EncodeUInt16(0, next_location);             // Size of the payload in this packet.
+    EncodeUInt16(message->PacketOffset, next_location);
+    next_location += 2;
+    EncodeUInt16(message->PacketLength, next_location);
     next_location += 2;
     *next_location = message->MessageType;
     next_location++;
