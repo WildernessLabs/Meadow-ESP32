@@ -551,6 +551,36 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessTransportMessage(Message *
 }
 
 /**
+ *  @brief Process the newly received packet of data and return transaction to be used as the response.
+ * 
+ *  @param currentMessage
+ *      Message currently being processed, note that this could be nullptr.
+ * 
+ *  @param packet
+ *      Packet of data that has just been received.
+ */
+spi_slave_transaction_t *SpiTransportProvider::ProcessInboundPacket(Message *currentMessage, Message *packet)
+{
+    TRACE_MESSAGE("ProcessInboundPacket: Enter");
+
+    spi_slave_transaction_t *result;
+
+    StatusCodes::StatusCodes responseCode;
+    uint8_t messageType;
+    if (packet->Interface != Esp32Interfaces::Transport)
+    {
+        _messageDispatcher->QueueMessageForEsp32(packet);
+    }
+    messageType = MessageTypes::Ack;
+    responseCode = StatusCodes::CompletedOk;
+    result = CreateAcknowledgementTransaction(packet, responseCode, messageType);
+
+    TRACE_MESSAGE("ProcessInboundPacket: Exit");
+
+    return(result);
+}
+
+/**
  *  @brief The STM32 has sent a request (message to the ESP32) so work out what is the appropriate next action.
  *
  *  @param transaction
@@ -562,62 +592,54 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessTransportMessage(Message *
 spi_slave_transaction_t *SpiTransportProvider::MessageReceived(spi_slave_transaction_t *transaction)
 {
     TRACE_MESSAGE("InboundMessageReceived: Entering method");
-    if (_incomingMessage)
-    {
-        Message::DeleteMessage(_incomingMessage);
-        _incomingMessage = nullptr;
-    }
 
-    spi_slave_transaction_t *newTransaction = nullptr;
-    _currentState = AcknowledgingMessage;
     int dataSize = transaction->trans_len / 8;
     TRACE_MESSAGE("InboundMessageReceived: Received %d bytes.", dataSize);
     TRACE_HEX_BUFFER(transaction->rx_buffer, dataSize);
+    
+    spi_slave_transaction_t *newTransaction = nullptr;
+    _currentState = AcknowledgingMessage;
+    StatusCodes::StatusCodes responseCode;
+    uint8_t messageType;
+
     if (dataSize >= _headerFrameSize)
     {
-        _incomingMessage = Encoders::ExtractMessage(static_cast<uint8_t *>(transaction->rx_buffer), dataSize, false);
-        if (!_incomingMessage)             // nullptr indicates a CRC error.
+        Message *incomingPacket = Encoders::ExtractMessage(static_cast<uint8_t *>(transaction->rx_buffer), dataSize, false);
+        if (!incomingPacket)             // nullptr indicates a CRC error.
         {
             ERROR_MESSAGE("InboundMessageReceived: CRC Error.");
-            _responseCode = StatusCodes::CrcError;
-            _messageType = MessageTypes::Nak;
-            _incomingMessage = Message::CreateOnHeap(_messageType, Esp32Interfaces::Transport, 0, _responseCode);
-            newTransaction = CreateAcknowledgementTransaction(_incomingMessage, _responseCode, _messageType);
+            responseCode = StatusCodes::CrcError;
+            messageType = MessageTypes::Nak;
+            _outboundMessage = Message::CreateOnHeap(messageType, Esp32Interfaces::Transport, 0, responseCode);
+            newTransaction = CreateAcknowledgementTransaction(_outboundMessage, responseCode, messageType);
         }
         else
         {
-            switch (_incomingMessage->MessageType)
+            switch (incomingPacket->MessageType)
             {
                 case MessageTypes::Header:
-                    if (_incomingMessage->Interface != Esp32Interfaces::Transport)
-                    {
-                        _messageDispatcher->QueueMessageForEsp32(_incomingMessage);
-                    }
-                    _messageType = MessageTypes::Ack;
-                    _responseCode = StatusCodes::CompletedOk;
-                    newTransaction = CreateAcknowledgementTransaction(_incomingMessage, _responseCode, _messageType);
+                    newTransaction = ProcessInboundPacket(_incomingMessage, incomingPacket);
                     break;
                 case MessageTypes::Transport:
-                    newTransaction = ProcessTransportMessage(_incomingMessage);
-                    Message::DeleteMessage(_incomingMessage);
-                    _incomingMessage = nullptr;
+                    newTransaction = ProcessTransportMessage(incomingPacket);
+                    Message::DeleteMessage(incomingPacket);
                     break;
                 default:
-                    _responseCode = StatusCodes::UnexpectedData;
-                    _messageType = MessageTypes::Nak;
-                    Message::DeleteMessage(_incomingMessage);
-                    _incomingMessage = Message::CreateOnHeap(_messageType, Esp32Interfaces::Transport, 0, _responseCode);
-                    newTransaction = CreateAcknowledgementTransaction(_incomingMessage, _responseCode, _messageType);
+                    responseCode = StatusCodes::UnexpectedData;
+                    messageType = MessageTypes::Nak;
+                    Message::DeleteMessage(incomingPacket);
+                    _outboundMessage = Message::CreateOnHeap(messageType, Esp32Interfaces::Transport, 0, responseCode);
+                    newTransaction = CreateAcknowledgementTransaction(_outboundMessage, responseCode, messageType);
                     break;
             }
         }
     }
     else
     {
-        _responseCode = StatusCodes::InvalidHeader;
-        _messageType = MessageTypes::Nak;
-        _incomingMessage = Message::CreateOnHeap(_messageType, Esp32Interfaces::Transport, 0, _responseCode);
-        newTransaction = CreateAcknowledgementTransaction(_incomingMessage, _responseCode, _messageType);
+        responseCode = StatusCodes::InvalidHeader;
+        messageType = MessageTypes::Nak;
+        _outboundMessage = Message::CreateOnHeap(messageType, Esp32Interfaces::Transport, 0, responseCode);
+        newTransaction = CreateAcknowledgementTransaction(_outboundMessage, responseCode, messageType);
     }
     DeleteTransaction(transaction);
     TRACE_MESSAGE("InboundMessageReceived: Exit");
@@ -639,7 +661,8 @@ spi_slave_transaction_t *SpiTransportProvider::MessageAcknowledged(spi_slave_tra
 
     DeleteTransaction(transaction);
     spi_slave_transaction_t *newTransaction = CreateSpiHeaderTransaction();
-    _incomingMessage = nullptr;
+    Message::DeleteMessage(_outboundMessage);
+    _outboundMessage = nullptr;
     _currentState = WaitingForMessage;
     
     TRACE_MESSAGE("MessageAcknowledged: Exit");
