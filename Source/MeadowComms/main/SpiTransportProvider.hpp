@@ -132,7 +132,7 @@ private:
     static TaskHandle_t _synchronisationTaskHandle;
 
     /**
-     *  @brief Sempahore inticating if the system is trying to synchronise with the STM32.
+     *  @brief Semaphore indicating if the system is trying to synchronise with the STM32.
      */
     SemaphoreHandle_t _synchronisationSemaphore = NULL;
 
@@ -208,6 +208,11 @@ private:
      *  @brief Process an inbound transport request.
      */
     spi_slave_transaction_t *ProcessTransportMessage(Message *request);
+
+    /**
+     *  @brief Process the newly received packet of data and return transaction to be used as the response.
+     */
+    spi_slave_transaction_t *ProcessInboundPacket(Message *currentMessage, Message *packet);
 
     /**
      *  @brief Start to process incoming messages (i.e. move from the idle state
