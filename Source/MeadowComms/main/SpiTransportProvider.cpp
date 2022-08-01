@@ -553,27 +553,92 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessTransportMessage(Message *
 /**
  *  @brief Process the newly received packet of data and return transaction to be used as the response.
  * 
- *  @param currentMessage
- *      Message currently being processed, note that this could be nullptr.
- * 
  *  @param packet
  *      Packet of data that has just been received.
  */
-spi_slave_transaction_t *SpiTransportProvider::ProcessInboundPacket(Message *currentMessage, Message *packet)
+spi_slave_transaction_t *SpiTransportProvider::ProcessInboundPacket(Message *packet)
 {
     TRACE_MESSAGE("ProcessInboundPacket: Enter");
 
     spi_slave_transaction_t *result;
-
-    StatusCodes::StatusCodes responseCode;
-    uint8_t messageType;
-    if (packet->Interface != Esp32Interfaces::Transport)
+    StatusCodes::StatusCodes responseCode = StatusCodes::CompletedOk;       //  We will assume success as this is what will happen most of the time.
+    uint8_t messageType = MessageTypes::Ack;
+    bool deletePacket;
+    bool queuePacket;
+    if (_incomingMessage)
+    {
+        if (_incomingMessage->MessageID == packet->MessageID)
+        {
+            if ((packet->PacketOffset + packet->PacketLength) <= _incomingMessage->PayloadLength)
+            {
+                memcpy(static_cast<void *>(_incomingMessage->Payload + packet->PacketOffset), static_cast<const void *>(packet->Payload), packet->PacketLength);
+                if ((packet->PacketOffset + packet->PacketLength) == _incomingMessage->PayloadLength)
+                {
+                    //
+                    //  We have received the last packet in the message so hand it over to the system for processing.
+                    //
+                    _messageDispatcher->QueueMessageForEsp32(_incomingMessage);
+                    _incomingMessage = nullptr;
+                }
+            }
+            else
+            {
+                messageType = MessageTypes::Nak;
+                responseCode = StatusCodes::InvalidPacket;
+                Message::DeleteMessage(_incomingMessage);
+                _incomingMessage = nullptr;
+            }
+        }
+        else
+        {
+            responseCode = StatusCodes::InvalidPacket;
+            messageType = MessageTypes::Nak;
+            Message::DeleteMessage(_incomingMessage);
+            _incomingMessage = nullptr;
+        }
+        queuePacket = false;
+        deletePacket = true;
+    }
+    else
+    {
+        if (packet->PacketLength == packet->PayloadLength)
+        {
+            //
+            //  If packet length and payload length are the same then we have a simple message and we just hand it
+            //  over to the system for processing.
+            //
+            queuePacket = true;
+            deletePacket = false;
+        }
+        else
+        {
+            //
+            //  We are expecting a multi-packet message and this is the first packet.  This means that the payload memory
+            //  represents the size of the packet and not the final payload.  We must therefore create a new buffer large
+            //  enough to hold the full payload, copy the packet into the new buffer, release the current payload buffer
+            //  and replace it with the new, larger, buffer.
+            //
+            uint8_t *payloadBuffer = static_cast<uint8_t *>(pvPortMalloc(packet->PayloadLength));
+            memcpy(static_cast<void *>(payloadBuffer), static_cast<const void *>(packet->Payload), packet->PacketLength);
+            vPortFree(packet->Payload);
+            packet->Payload = payloadBuffer;
+            _incomingMessage = packet;
+            //
+            //  We don't want to queue the message (packet) as we are expecting more data.
+            //
+            queuePacket = false;
+            deletePacket = false;
+        }
+    }
+    result = CreateAcknowledgementTransaction(packet, responseCode, messageType);
+    if (deletePacket)
+    {
+        Message::DeleteMessage(packet);
+    }
+    if (queuePacket)
     {
         _messageDispatcher->QueueMessageForEsp32(packet);
     }
-    messageType = MessageTypes::Ack;
-    responseCode = StatusCodes::CompletedOk;
-    result = CreateAcknowledgementTransaction(packet, responseCode, messageType);
 
     TRACE_MESSAGE("ProcessInboundPacket: Exit");
 
@@ -608,6 +673,15 @@ spi_slave_transaction_t *SpiTransportProvider::MessageReceived(spi_slave_transac
         if (!incomingPacket)             // nullptr indicates a CRC error.
         {
             ERROR_MESSAGE("InboundMessageReceived: CRC Error.");
+            //
+            //  If we are part way through a message then we abandon what we have on an error and
+            //  the STM will requeue the message for later tranmission.
+            //
+            if (_incomingMessage)
+            {
+                Message::DeleteMessage(_incomingMessage);
+                _incomingMessage = nullptr;
+            }
             responseCode = StatusCodes::CrcError;
             messageType = MessageTypes::Nak;
             _outboundMessage = Message::CreateOnHeap(messageType, Esp32Interfaces::Transport, 0, responseCode);
@@ -618,7 +692,7 @@ spi_slave_transaction_t *SpiTransportProvider::MessageReceived(spi_slave_transac
             switch (incomingPacket->MessageType)
             {
                 case MessageTypes::Header:
-                    newTransaction = ProcessInboundPacket(_incomingMessage, incomingPacket);
+                    newTransaction = ProcessInboundPacket(incomingPacket);
                     break;
                 case MessageTypes::Transport:
                     newTransaction = ProcessTransportMessage(incomingPacket);
