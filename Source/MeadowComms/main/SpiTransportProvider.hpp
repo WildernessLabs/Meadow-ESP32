@@ -212,7 +212,7 @@ private:
     /**
      *  @brief Process the newly received packet of data and return transaction to be used as the response.
      */
-    spi_slave_transaction_t *ProcessInboundPacket(Message *currentMessage, Message *packet);
+    spi_slave_transaction_t *ProcessInboundPacket(Message *packet);
 
     /**
      *  @brief Start to process incoming messages (i.e. move from the idle state

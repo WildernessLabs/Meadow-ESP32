@@ -386,7 +386,7 @@ Message *Encoders::ExtractMessage(uint8_t *buffer, uint32_t bufferLength, bool h
         buffer += 4;
         if (!headerOnly && (message->PayloadLength > 0))
         {
-            message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
+            message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PacketLength));
             if (message->Payload == NULL)
             {
                 vPortFree(message);
@@ -394,7 +394,7 @@ Message *Encoders::ExtractMessage(uint8_t *buffer, uint32_t bufferLength, bool h
             }
             else
             {
-                memcpy(message->Payload, buffer, message->PayloadLength);
+                memcpy(message->Payload, buffer, message->PacketLength);
             }
         }
         else
