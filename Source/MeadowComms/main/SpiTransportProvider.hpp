@@ -51,8 +51,8 @@ private:
      *  @brief Possible states for the SPI transport layer.
      */
     enum SpiStates { Invalid, 
-                     WaitingForMessage, AcknowledgingMessage,
-                     SendingMessageDetails, SendingMessage, WaitingForMessageAcknowledgement
+                     WaitingForPacket, AcknowledgingPacket,
+                     SendingPacketDetails, SendingPacket, WaitingForPacketAcknowledgement
                    };
 
     /**
@@ -115,16 +115,6 @@ private:
      *  the next use of the SPI interface.
      */
     spi_slave_transaction_t *_spiTransaction = nullptr;
-
-    /**
-     *  @brief Response code that will be used in any acknowledgement messages.
-     */
-    StatusCodes::StatusCodes _responseCode;
-
-    /**
-     *  @brief Packet type that will be used in any acknowledgement messages.
-     */
-    uint8_t _messageType;
 
     /**
      *  @brief Handle to the synchronisation task.
@@ -218,40 +208,31 @@ private:
      *  @brief Start to process incoming messages (i.e. move from the idle state
      *  into one where the ESP32 is sending or receiving data).
      */
-    spi_slave_transaction_t *MessageReceived(spi_slave_transaction_t *transaction);
+    spi_slave_transaction_t *PacketReceived(spi_slave_transaction_t *transaction);
 
     /**
      *  @brief Implement the incoming message header acknowledgement process.
      */
-    spi_slave_transaction_t *MessageAcknowledged(spi_slave_transaction_t *transaction);
+    spi_slave_transaction_t *PacketAcknowledged(spi_slave_transaction_t *transaction);
 
     /**
      *  @brief Implement the out-bound message details process.
      */
-    spi_slave_transaction_t *MessageDetailsSent(spi_slave_transaction_t *transaction);
+    spi_slave_transaction_t *PacketDetailsSent(spi_slave_transaction_t *transaction);
 
     /**
      *  @brief Implement processing of the incoming message header acknowledgement messages.
      */
-    spi_slave_transaction_t *MessageSent(spi_slave_transaction_t *transaction);
+    spi_slave_transaction_t *PacketSent(spi_slave_transaction_t *transaction);
 
     /**
      *  @brief Implement processing of the out-bound message body acknowledgement.
      */
-    spi_slave_transaction_t *MessageAcknowledgementReceived(spi_slave_transaction_t *transaction);
+    spi_slave_transaction_t *PacketAcknowledgementReceived(spi_slave_transaction_t *transaction);
 
     /**
-     *  @brief Create a new SPI slave transmission object with zero filled
-     *  buffers of the requested size.
+     *  @brief Setup a new transaction using the information in the message.
      */
-    // spi_slave_transaction_t *CreateSpiPayloadTransaction(uint32_t bufferSize);
-
-    /**
-     *  @brief Setup a new transaction using the _headerReceiveBuffer and
-     *  _headerTransmitBuffer.
-     */
-    // spi_slave_transaction_t *CreateSpiHeaderTransaction();
-
     spi_slave_transaction_t *CreateSpiTransaction(Message *message);
 
     /**
@@ -264,6 +245,11 @@ private:
      *  Tx and Rx buffers.
      */
     void DeleteTransaction(spi_slave_transaction_t *transaction);
+
+    /**
+     *  @brief Update the packet information in the message to prepare the message for the next transmission.
+     */
+    void UpdatePacketInformation(Message *message);
 
 public:
     /**
