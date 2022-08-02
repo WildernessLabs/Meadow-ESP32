@@ -422,9 +422,13 @@ Message *Encoders::ExtractMessage(uint8_t *buffer, uint32_t bufferLength, bool h
 void Encoders::EncodeMessage(Message *message, uint8_t *buffer, bool headerOnly)
 {
     uint32_t messageSize = Message::HEADER_SIZE;
+    // if (!headerOnly)
+    // {
+    //     messageSize += message->PayloadLength;
+    // }
     if (!headerOnly)
     {
-        messageSize += message->PayloadLength;
+        messageSize += message->PacketLength;
     }
     uint32_t bufferSize = Encoders::CalculateSpiBufferSize(messageSize);
     uint8_t *next_location = buffer;
@@ -454,9 +458,13 @@ void Encoders::EncodeMessage(Message *message, uint8_t *buffer, bool headerOnly)
     //  The byte after the PayloadLength is the CRC.  This is filled in later
     //  and so a 0 is written into the message temporarily.
     //
-    if (!headerOnly && (message->PayloadLength > 0))
+    // if (!headerOnly && (message->PayloadLength > 0))
+    // {
+    //     memcpy(next_location, message->Payload, message->PayloadLength);
+    // }
+    if (!headerOnly && (message->PacketLength > 0))
     {
-        memcpy(next_location, message->Payload, message->PayloadLength);
+        memcpy(next_location, message->Payload, message->PacketLength);
     }
     uint32_t crc = CRC32(buffer, bufferSize);
     EncodeUInt32(crc, buffer + Message::CRC_OFFSET);
