@@ -169,6 +169,8 @@ Message *Message::CreateOnHeap(uint8_t messageType, uint8_t interface, uint32_t 
     result->Function = function;
     result->StatusCode = statusCode;
     result->MessageID = messageId;
+    result->PacketOffset = 0;
+    result->PacketLength = 0;
     result->Payload = payload;
     result->PayloadLength = payloadLength;
 
