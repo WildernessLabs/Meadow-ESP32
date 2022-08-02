@@ -64,6 +64,9 @@ case $i in
     --fullclean)
     FULLCLEAN=true
     ;;
+    --flash)
+    FLASH=true
+    ;;
     --coredump)
     IDF_DEFINES+=" -DCOREDUMP=1"
     ;;
@@ -220,12 +223,13 @@ if ! $NO_BUILD; then
     IDF_FLAGS="build $IDF_FLAGS"
 fi
 if [[ ! -z $IDF_FLAGS ]]; then
-    run_command "idf.py $IDF_DEFINES $IDF_FLAGS"
-    echo "Build finished!"
-else
-    echo "Nothing more to do."
+    idf.py $IDF_DEFINES $IDF_FLAGS
 fi
 
-if $FLASH; then
-  $scriptdir/flash.sh
+if [ $? -eq 0 ]; then
+  if $FLASH; then
+    $scriptdir/flash.sh
+  fi
 fi
+
+echo "Build finished!"
