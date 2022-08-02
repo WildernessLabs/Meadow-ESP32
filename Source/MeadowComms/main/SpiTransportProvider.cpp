@@ -733,6 +733,8 @@ spi_slave_transaction_t *SpiTransportProvider::MessageDetailsSent(spi_slave_tran
     if (_outboundMessage)
     {
         TRACE_MESSAGE("Sending outbound message");
+        _outboundMessage->PacketOffset = 0;
+        _outboundMessage->PacketLength = _outboundMessage->PayloadLength;
         newTransaction = CreateSpiTransaction(_outboundMessage);
         _currentState = SendingMessage;
     }
