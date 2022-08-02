@@ -320,13 +320,11 @@ void SpiTransportProvider::ClearTransmitAndReceiveBuffers()
 spi_slave_transaction_t *SpiTransportProvider::CreateAcknowledgementTransaction(Message *message, StatusCodes::StatusCodes code, uint8_t messageType)
 {
     TRACE_MESSAGE("CreateAcknowledgementTransaction: Enter");
-    spi_slave_transaction_t *transaction = CreateSpiHeaderTransaction();
 
     Message *copyOfMessage = message->CreateCopyOnHeap(false);
     copyOfMessage->MessageType = messageType;
     copyOfMessage->StatusCode = static_cast<uint32_t>(code);
-
-    Encoders::EncodeMessage(copyOfMessage, _txBuffer, true);
+    spi_slave_transaction_t *transaction = CreateSpiTransaction(copyOfMessage);
     Message::DeleteMessage(copyOfMessage);
 
     TRACE_MESSAGE("CreateAcknowledgementTransaction: Exit");
@@ -334,74 +332,41 @@ spi_slave_transaction_t *SpiTransportProvider::CreateAcknowledgementTransaction(
 }
 
 /**
- *  @brief Setup a new transaction using the _rxBuffer and _txBuffer.
+ *  @brief Create a new SPI transaction.
  *
- *  @returns
- *      Pointer to a transaction that can be used to send data over SPI.
+ *  This method allocates the transaction and two buffers on the heap.  It is essential
+ *  that the caller cleans up both the transaction and the buffers after they are no
+ *  longer necessary.
+ * 
+ *  @param message
+ *      Message to send, this can be set to nullptr.  If this parameter is not nullptr
+ *      then the Tx buffer will contain an encoded version of the message ready for
+ *      transmission to the STM32.
+ *
+ *  @return pointer to spi_slave_transaction_t object
+ *      This is the transaction that is returned by the ESP-IDF.
  */
-spi_slave_transaction_t *SpiTransportProvider::CreateSpiHeaderTransaction()
+spi_slave_transaction_t *SpiTransportProvider::CreateSpiTransaction(Message *message)
 {
-    TRACE_MESSAGE("CreateSpiHeaderTransaction: Enter");
-
+    TRACE_MESSAGE("CreateSpiTransaction: Enter");
     spi_slave_transaction_t *transaction = static_cast<spi_slave_transaction_t *>(pvPortMalloc(sizeof(spi_slave_transaction_t)));
 
     memset(transaction, 0, sizeof(spi_slave_transaction_t));
-
     ClearTransmitAndReceiveBuffers();
+    if (message)
+    {
+        Encoders::EncodeMessage(message, _txBuffer, false);
+    }
     transaction->rx_buffer = _rxBuffer;
     transaction->tx_buffer = _txBuffer;
     transaction->length = MAXIMUM_SPI_FRAME_SIZE * 8;
-    TRACE_MESSAGE("CreateSpiHeaderTransaction: Exit");
+
+    TRACE_MESSAGE("CreateSpiTransaction: Exit");
     return (transaction);
 }
 
-/**
- *  @brief Create a new SPI transaction object that can be used to transmit the specified message body.
- *
- *  @param message
- *      The message to encode.
- *
- *  @returns
- *      Pointer to a transaction that can be used to send data over SPI.
- */
-spi_slave_transaction_t *SpiTransportProvider::CreateSpiMessageTransaction(Message *message)
-{
-    TRACE_MESSAGE("CreateSpiMessageTransaction: Enter");
 
-    uint32_t encodedMessageBufferSize = Encoders::CalculateSpiBufferSize(Message::HEADER_SIZE + message->PayloadLength);
-    spi_slave_transaction_t *transaction = CreateSpiPayloadTransaction(encodedMessageBufferSize);
-    Encoders::EncodeMessage(message, _txBuffer, false);
-    TRACE_MESSAGE("CreateSpiMessageTransaction: Exit");
-    return(transaction);
-}
 
-/**
- *  @brief Create a new SPI slave transmission object with zero filled buffers of the requested size.
- *
- *  @param bufferSize
- *      Number of bytes in the receive and transmit buffers.
- *
- *  @returns
- *      Pointer to a spi_slave_transaction_t object with the
- *      buffers set up and filled with zeroes.
- *
- *      The transaction object is on the heap.
- */
-spi_slave_transaction_t *SpiTransportProvider::CreateSpiPayloadTransaction(uint32_t bufferSize)
-{
-    TRACE_MESSAGE("CreateSpiPayloadTransaction: Enter");
-    TRACE_MESSAGE("CreateSpiPayloadTransaction: Creating transaction for %d bytes", bufferSize);
-    spi_slave_transaction_t *transaction = static_cast<spi_slave_transaction_t *>(pvPortMalloc(sizeof(spi_slave_transaction_t)));
-
-    memset(transaction, 0, sizeof(spi_slave_transaction_t));
-    ClearTransmitAndReceiveBuffers();
-
-    transaction->rx_buffer = _rxBuffer;
-    transaction->tx_buffer = _txBuffer;
-    transaction->length = bufferSize * 8;
-    TRACE_MESSAGE("CreateSpiPayloadTransaction: Exit");
-    return (transaction);
-}
 
 /**
  *  @brief Release any storage associated with the SPI header transaction.
@@ -527,6 +492,11 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessTransportMessage(Message *
                 _outboundMessage = GetOutboundMessage();
                 if (_outboundMessage)
                 {
+                    TRACE_MESSAGE("");
+                    TRACE_MESSAGE("Preparing to send message:");
+                    Logging::DumpMessage(COMPONENT_NAME, _outboundMessage);
+                    TRACE_MESSAGE("");
+
                     _currentState = SendingMessageDetails;
                     message->PayloadLength = _outboundMessage->PayloadLength;
                 }
@@ -535,7 +505,7 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessTransportMessage(Message *
             {
                 message->StatusCode = StatusCodes::NoMessagesWaiting;
             }
-            newTransaction = CreateSpiHeaderTransaction();
+            newTransaction = CreateSpiTransaction(nullptr);
             EncodeHeaderMessage(newTransaction, message);
             Message::DeleteMessage(message);
             _currentState = SendingMessageDetails;
@@ -734,7 +704,7 @@ spi_slave_transaction_t *SpiTransportProvider::MessageAcknowledged(spi_slave_tra
     TRACE_MESSAGE("MessageAcknowledged: Entering method");
 
     DeleteTransaction(transaction);
-    spi_slave_transaction_t *newTransaction = CreateSpiHeaderTransaction();
+    spi_slave_transaction_t *newTransaction = CreateSpiTransaction(nullptr);
     Message::DeleteMessage(_outboundMessage);
     _outboundMessage = nullptr;
     _currentState = WaitingForMessage;
@@ -752,7 +722,7 @@ spi_slave_transaction_t *SpiTransportProvider::MessageAcknowledged(spi_slave_tra
  *  @returns
  *      SPI transaction created to receive the message acknowledgement.
  */
-spi_slave_transaction_t *SpiTransportProvider::SendMessage(spi_slave_transaction_t *transaction)
+spi_slave_transaction_t *SpiTransportProvider::MessageDetailsSent(spi_slave_transaction_t *transaction)
 {
     TRACE_MESSAGE("MessageDetailsSent: Enter");
     DeleteTransaction(transaction);
@@ -763,7 +733,7 @@ spi_slave_transaction_t *SpiTransportProvider::SendMessage(spi_slave_transaction
     if (_outboundMessage)
     {
         TRACE_MESSAGE("Sending outbound message");
-        newTransaction = CreateSpiMessageTransaction(_outboundMessage);
+        newTransaction = CreateSpiTransaction(_outboundMessage);
         _currentState = SendingMessage;
     }
     else
@@ -792,7 +762,7 @@ spi_slave_transaction_t *SpiTransportProvider::MessageSent(spi_slave_transaction
     spi_slave_transaction_t *newTransaction = nullptr;
 
     TRACE_MESSAGE("MessageSent: Preparing message transaction.");
-    newTransaction = CreateSpiMessageTransaction(_outboundMessage);
+    newTransaction = CreateSpiTransaction(_outboundMessage);
     _currentState = WaitingForMessageAcknowledgement;
     TRACE_MESSAGE("MessageSent: Exit");
     return(newTransaction);
@@ -807,9 +777,9 @@ spi_slave_transaction_t *SpiTransportProvider::MessageSent(spi_slave_transaction
  *  @returns
  *      New SPI transaction with data.
  */
-spi_slave_transaction_t *SpiTransportProvider::AcknowledgementReceived(spi_slave_transaction_t *transaction)
+spi_slave_transaction_t *SpiTransportProvider::MessageAcknowledgementReceived(spi_slave_transaction_t *transaction)
 {
-    TRACE_MESSAGE("AcknowledgementReceived: Enter");
+    TRACE_MESSAGE("MessageAcknowledgementReceived: Enter");
     Message *incomingMessage = Encoders::ExtractMessage(static_cast<uint8_t *>(transaction->rx_buffer), _headerFrameSize, true);
     DeleteTransaction(transaction);
     if (incomingMessage)
@@ -839,8 +809,8 @@ spi_slave_transaction_t *SpiTransportProvider::AcknowledgementReceived(spi_slave
     _currentState = WaitingForMessage;
     _outboundMessage = nullptr;
 
-    TRACE_MESSAGE("AcknowledgementReceived: Exit");
-    return(CreateSpiHeaderTransaction());
+    TRACE_MESSAGE("MessageAcknowledgementReceived: Exit");
+    return(CreateSpiTransaction(nullptr));
 }
 
 /**
@@ -936,13 +906,13 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessMessages(spi_slave_transac
             //  STM asking for the result of a request or event data.
             //
             case SendingMessageDetails:
-                newTransaction = SendMessage(transaction);
+                newTransaction = MessageDetailsSent(transaction);
                 break;
             case SendingMessage:
                 newTransaction = MessageSent(transaction);
                 break;
             case WaitingForMessageAcknowledgement:
-                newTransaction = AcknowledgementReceived(transaction);
+                newTransaction = MessageAcknowledgementReceived(transaction);
                 break;
 
             default:
@@ -982,9 +952,12 @@ void SpiTransportProvider::Task(void *pvParameters)
     {
         vTaskDelay(10 / portTICK_PERIOD_MS);
     }
-    spi_slave_transaction_t *transaction = sender->CreateSpiHeaderTransaction();
+    spi_slave_transaction_t *transaction = sender->CreateSpiTransaction(nullptr);
     while (true)
     {
+        TRACE_MESSAGE("");
+        TRACE_MESSAGE("****************************** New State ******************************");
+        TRACE_MESSAGE("");        
         transaction = sender->ProcessMessages(transaction);
     }
     //

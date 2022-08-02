@@ -165,7 +165,7 @@ private:
     /**
      *  @brief Create a new SPI transaction that will send the message body.
      */
-    spi_slave_transaction_t *CreateSpiMessageTransaction(Message *message);
+    // spi_slave_transaction_t *CreateSpiMessageTransaction(Message *message);
 
     /**
      *  @brief Encode a header or transport message.
@@ -228,7 +228,7 @@ private:
     /**
      *  @brief Implement the out-bound message details process.
      */
-    spi_slave_transaction_t *SendMessage(spi_slave_transaction_t *transaction);
+    spi_slave_transaction_t *MessageDetailsSent(spi_slave_transaction_t *transaction);
 
     /**
      *  @brief Implement processing of the incoming message header acknowledgement messages.
@@ -238,19 +238,21 @@ private:
     /**
      *  @brief Implement processing of the out-bound message body acknowledgement.
      */
-    spi_slave_transaction_t *AcknowledgementReceived(spi_slave_transaction_t *transaction);
+    spi_slave_transaction_t *MessageAcknowledgementReceived(spi_slave_transaction_t *transaction);
 
     /**
      *  @brief Create a new SPI slave transmission object with zero filled
      *  buffers of the requested size.
      */
-    spi_slave_transaction_t *CreateSpiPayloadTransaction(uint32_t bufferSize);
+    // spi_slave_transaction_t *CreateSpiPayloadTransaction(uint32_t bufferSize);
 
     /**
      *  @brief Setup a new transaction using the _headerReceiveBuffer and
      *  _headerTransmitBuffer.
      */
-    spi_slave_transaction_t *CreateSpiHeaderTransaction();
+    // spi_slave_transaction_t *CreateSpiHeaderTransaction();
+
+    spi_slave_transaction_t *CreateSpiTransaction(Message *message);
 
     /**
      *  @brief Clear the data buffers used to send and receive data.
