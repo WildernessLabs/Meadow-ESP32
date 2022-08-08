@@ -153,16 +153,6 @@ private:
     spi_slave_transaction_t *CreateAcknowledgementTransaction(Message *message, StatusCodes::StatusCodes code, uint8_t messageType);
 
     /**
-     *  @brief Create a new SPI transaction that will send the message body.
-     */
-    // spi_slave_transaction_t *CreateSpiMessageTransaction(Message *message);
-
-    /**
-     *  @brief Encode a header or transport message.
-     */
-    void EncodeHeaderMessage(spi_slave_transaction_t *transaction, Message *message);
-
-    /**
      *  @brief FreeRTOS task handler for this class.
      */
     static void Task(void *);

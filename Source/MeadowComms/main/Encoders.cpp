@@ -1,5 +1,7 @@
 
 #include "Encoders.hpp"
+#include "Logging.hpp"
+#include "SpiTransportProvider.hpp"
 
 /**
  *  Calculate the amount of memory that should be allocated for
@@ -24,18 +26,7 @@ uint32_t Encoders::CalculateSpiBufferSize(uint32_t requestedSize)
     {
         result = 8;
     }
-    //
-    //  The buffer should always be 4 bytes longer than needed.  During development it
-    //  was found that the last four bytes of any transmission were being discarded.
-    //  Empirical tests proved this for 24, 32 and 40 byte packets.
-    //
-    //  The work around is to increase the packet size by 4 and have dummy data in the
-    //  last four bytes and discard the bytes.
-    //
-    //
-    //  See support post: https://esp32.com/viewtopic.php?f=13&t=10117
-    //
-    requestedSize += 4;
+    requestedSize += Message::SPI_MESSAGE_OVERHEAD;
     if ((requestedSize & 3) != 0)
     {
         result = (requestedSize & 0xfffffffc) + 4;
@@ -347,7 +338,7 @@ uint32_t Encoders::ProgressiveCRC32(uint32_t currentChecksum, uint8_t byte)
  *  @param bufferLength
  *      Size of the buffer.
  *
- *  @param header
+ *  @param headerOnly
  *      Indicate if we should extract the header information only
  *      (i.e. do not copy the payload).
  *
@@ -410,8 +401,11 @@ Message *Encoders::ExtractMessage(uint8_t *buffer, uint32_t bufferLength, bool h
  *
  *  @param message
  *      Message structure to encode in to the byte buffer.
+ * 
+ *  @param buffer
+ *      Pointer to the block of memory that will contain the encoded message.
  *
- *  @param header
+ *  @param headerOnly
  *      Copy this as a header only (i.e. do not copy the payload).
  *
  *  @returns
@@ -422,15 +416,12 @@ Message *Encoders::ExtractMessage(uint8_t *buffer, uint32_t bufferLength, bool h
 void Encoders::EncodeMessage(Message *message, uint8_t *buffer, bool headerOnly)
 {
     uint32_t messageSize = Message::HEADER_SIZE;
-    // if (!headerOnly)
-    // {
-    //     messageSize += message->PayloadLength;
-    // }
     if (!headerOnly)
     {
         messageSize += message->PacketLength;
     }
     uint32_t bufferSize = Encoders::CalculateSpiBufferSize(messageSize);
+    TRACE_MESSAGE_SPECIFY_COMPONENT(SpiTransportProvider::COMPONENT_NAME, "Encoding %d bytes as a %d byte packet", messageSize, bufferSize);
     uint8_t *next_location = buffer;
     
     memset(buffer, 0, bufferSize);
@@ -458,13 +449,9 @@ void Encoders::EncodeMessage(Message *message, uint8_t *buffer, bool headerOnly)
     //  The byte after the PayloadLength is the CRC.  This is filled in later
     //  and so a 0 is written into the message temporarily.
     //
-    // if (!headerOnly && (message->PayloadLength > 0))
-    // {
-    //     memcpy(next_location, message->Payload, message->PayloadLength);
-    // }
     if (!headerOnly && (message->PacketLength > 0))
     {
-        memcpy(next_location, message->Payload, message->PacketLength);
+        memcpy(next_location, message->Payload + message->PacketOffset, message->PacketLength);
     }
     uint32_t crc = CRC32(buffer, bufferSize);
     EncodeUInt32(crc, buffer + Message::CRC_OFFSET);
