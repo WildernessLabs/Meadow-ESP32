@@ -375,6 +375,9 @@ spi_slave_transaction_t *SpiTransportProvider::CreateSpiTransaction(Message *mes
  */
 void SpiTransportProvider::UpdatePacketInformation(Message *message)
 {
+    TRACE_MESSAGE("%s: Enter", __func__);
+
+    TRACE_MESSAGE("Initial offset %d, length %d", message->PacketOffset, message->PacketLength);
     message->PacketOffset += message->PacketLength;
     uint16_t amountRemaining = message->PayloadLength - message->PacketOffset;
     if (amountRemaining <= MAXIMUM_FRAME_PAYLOAD_SIZE)
@@ -385,6 +388,9 @@ void SpiTransportProvider::UpdatePacketInformation(Message *message)
     {
         message->PacketLength = MAXIMUM_FRAME_PAYLOAD_SIZE;
     }
+    TRACE_MESSAGE("New offset %d, length %d", message->PacketOffset, message->PacketLength);
+
+    TRACE_MESSAGE("%s: Exit", __func__);
 }
 
 /**
@@ -465,27 +471,6 @@ void SpiTransportProvider::Setup(MessageDispatcher *messageDispatcher)
 }
 
 /**
- *  @brief Encode a header or transport only message.
- *
- *  @param transaction
- *      SPI transaction that has been created to hold the message/header.
- *
- *  @param message
- *      Message or header to be encoded and copied into the SPI transaction
- *      Tx buffer.
- */
-void SpiTransportProvider::EncodeHeaderMessage(spi_slave_transaction_t *transaction, Message *message)
-{
-    TRACE_MESSAGE("EncodeHeaderMessage: Enter");
-    Encoders::EncodeMessage(message, _txBuffer, true);
-    if (transaction->tx_buffer != _txBuffer)
-    {
-        memcpy(const_cast<void *>(transaction->tx_buffer), static_cast<void *>(_txBuffer), _headerFrameSize);
-    }
-    TRACE_MESSAGE("EncodeHeaderMessage: Exit");
-}
-
-/**
  *  @brief Process the transport message and prepare the next transaction and
  *  change to the appropriate state.
  *
@@ -512,6 +497,7 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessTransportMessage(Message *
                 {
                     _outboundMessage->PacketOffset = 0;             // Initial state for the packet.
                     _outboundMessage->PacketLength = 0;
+                    // UpdatePacketInformation(_outboundMessage);
 
                     TRACE_MESSAGE("");
                     TRACE_MESSAGE("Preparing to send message:");
@@ -527,7 +513,8 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessTransportMessage(Message *
                 message->StatusCode = StatusCodes::NoMessagesWaiting;
             }
             newTransaction = CreateSpiTransaction(nullptr);
-            EncodeHeaderMessage(newTransaction, message);
+            Encoders::EncodeMessage(message, _txBuffer, true);
+            // EncodeHeaderMessage(newTransaction, message);
             Message::DeleteMessage(message);
             _currentState = SendingPacketDetails;
             break;
@@ -753,6 +740,8 @@ spi_slave_transaction_t *SpiTransportProvider::PacketDetailsSent(spi_slave_trans
     {
         TRACE_MESSAGE("Sending outbound message");
         UpdatePacketInformation(_outboundMessage);
+        ClearTransmitAndReceiveBuffers();
+        Encoders::EncodeMessage(_outboundMessage, _txBuffer, false);
         newTransaction = CreateSpiTransaction(_outboundMessage);
         _currentState = SendingPacket;
     }
