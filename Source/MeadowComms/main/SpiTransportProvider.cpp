@@ -497,7 +497,6 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessTransportMessage(Message *
                 {
                     _outboundMessage->PacketOffset = 0;             // Initial state for the packet.
                     _outboundMessage->PacketLength = 0;
-                    // UpdatePacketInformation(_outboundMessage);
 
                     TRACE_MESSAGE("");
                     TRACE_MESSAGE("Preparing to send message:");
@@ -514,7 +513,6 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessTransportMessage(Message *
             }
             newTransaction = CreateSpiTransaction(nullptr);
             Encoders::EncodeMessage(message, _txBuffer, true);
-            // EncodeHeaderMessage(newTransaction, message);
             Message::DeleteMessage(message);
             _currentState = SendingPacketDetails;
             break;
@@ -790,8 +788,15 @@ spi_slave_transaction_t *SpiTransportProvider::PacketSent(spi_slave_transaction_
 spi_slave_transaction_t *SpiTransportProvider::PacketAcknowledgementReceived(spi_slave_transaction_t *transaction)
 {
     TRACE_MESSAGE("PacketAcknowledgementReceived: Enter");
+
     Message *incomingMessage = Encoders::ExtractMessage(static_cast<uint8_t *>(transaction->rx_buffer), _headerFrameSize, true);
     DeleteTransaction(transaction);
+    spi_slave_transaction_t *newTransaction = nullptr;
+    //
+    //  Assume that this is the last packet in the message so we prepare to process the next message
+    //  unless the state is changed.
+    //
+    _currentState = WaitingForPacket;
     if (incomingMessage)
     {
         if (incomingMessage->MessageType == MessageTypes::Ack)
@@ -801,8 +806,20 @@ spi_slave_transaction_t *SpiTransportProvider::PacketAcknowledgementReceived(spi
             Logging::AddPerformanceCounterEntry(Logging::MessageSummary(_outboundMessage), _outboundMessage->PerformanceLoggingStart, performance_logging_end);
             #endif
 
-            Message::DeleteMessage(_outboundMessage);
-            TRACE_MESSAGE("Message request processed.");
+            UpdatePacketInformation(_outboundMessage);
+            if (_outboundMessage->PacketLength == 0)
+            {
+                Message::DeleteMessage(_outboundMessage);
+                TRACE_MESSAGE("Final packet sent.");
+            }
+            else
+            {
+                TRACE_MESSAGE("Preparing next packet.");
+                ClearTransmitAndReceiveBuffers();
+                Encoders::EncodeMessage(_outboundMessage, _txBuffer, false);
+                newTransaction = CreateSpiTransaction(_outboundMessage);
+                _currentState = SendingPacket;
+            }
         }
         else
         {
@@ -816,11 +833,14 @@ spi_slave_transaction_t *SpiTransportProvider::PacketAcknowledgementReceived(spi
         QueueMessageForStm32(_outboundMessage);
     }
     Message::DeleteMessage(incomingMessage);
-    _currentState = WaitingForPacket;
-    _outboundMessage = nullptr;
+    if (_currentState == WaitingForPacket)
+    {
+        _outboundMessage = nullptr;
+        newTransaction = CreateSpiTransaction(nullptr);
+    }
 
     TRACE_MESSAGE("PacketAcknowledgementReceived: Exit");
-    return(CreateSpiTransaction(nullptr));
+    return(newTransaction);
 }
 
 /**
