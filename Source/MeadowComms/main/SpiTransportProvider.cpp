@@ -136,6 +136,7 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
      *  as they will be frequently used for header and transport packets.
      */
     _headerFrameSize = Encoders::CalculateSpiBufferSize(Message::HEADER_SIZE);
+    TRACE_MESSAGE("Header frame size: %d", _headerFrameSize);
     _txBuffer = static_cast<uint8_t *>(heap_caps_calloc(MAXIMUM_SPI_FRAME_SIZE, 1, MALLOC_CAP_DMA));
     _rxBuffer = static_cast<uint8_t *>(heap_caps_calloc(MAXIMUM_SPI_FRAME_SIZE, 1, MALLOC_CAP_DMA));
     SetMaximumMessageSize(MAXIMUM_SPI_FRAME_SIZE - _headerFrameSize);
@@ -321,6 +322,7 @@ spi_slave_transaction_t *SpiTransportProvider::CreateAcknowledgementTransaction(
 {
     TRACE_MESSAGE("CreateAcknowledgementTransaction: Enter");
 
+    TRACE_MESSAGE("Message type: 0x%02x", messageType);
     Message *copyOfMessage = message->CreateCopyOnHeap(false);
     copyOfMessage->MessageType = messageType;
     copyOfMessage->StatusCode = static_cast<uint32_t>(code);

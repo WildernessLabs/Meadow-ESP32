@@ -26,16 +26,44 @@ uint32_t Encoders::CalculateSpiBufferSize(uint32_t requestedSize)
     {
         result = 8;
     }
-    requestedSize += Message::SPI_MESSAGE_OVERHEAD;
     if ((requestedSize & 3) != 0)
     {
         result = (requestedSize & 0xfffffffc) + 4;
     }
-    else
-    {
-        result += 4;
-    }
+    //
+    //  There is an issue with the SPI interface that can corrupt the last
+    //  few bytes of a message to pad this message out and we will ignore
+    //  the last few bytes when encoding / decoding.
+    //
+    result += Message::SPI_MESSAGE_OVERHEAD;
     return (result);
+}
+
+/**
+ *  Calculate the minimum amount of space needed to store an encoded message.
+ * 
+ *  Assumptions:
+ *      1 - The packet information has been set up correctly.
+ * 
+ *  @param message
+ *      Message to be encoded.
+ * 
+ *  @param headerOnly
+ *      Are we just sending the header?
+ * 
+ *  @returns
+ *      Number of bytes needed to contain the message.
+ */
+uint32_t Encoders::EncodedPacketSize(Message *message, bool headerOnly)
+{
+    uint32_t result = Message::HEADER_SIZE;
+
+    if (!headerOnly)
+    {
+        result += message->PacketLength;
+    }
+
+    return(result);
 }
 
 /**
@@ -332,6 +360,12 @@ uint32_t Encoders::ProgressiveCRC32(uint32_t currentChecksum, uint8_t byte)
 /**
  *  @brief Extract a message from a block of memory and create a new Message object.
  *
+ *  Note:
+ *  There are four bytes at the end of the message that may be corrupted so
+ *  we will pad out the message with four additional bytes and ignore these
+ *  four bytes when calculating CRCs (we do not know what they will contain
+ *  post transmission).
+ * 
  *  @param buffer
  *      Byte (uint8_t) array containing the encoded message.
  *
@@ -353,7 +387,7 @@ Message *Encoders::ExtractMessage(uint8_t *buffer, uint32_t bufferLength, bool h
     EncodeUInt32(0, buffer + Message::CRC_OFFSET);
     
     Message *message = nullptr;
-    if (crc == CRC32(buffer, bufferLength))
+    if (crc == CRC32(buffer, bufferLength - 4))             // See note in comment above.
     {
         message = static_cast<Message *>(pvPortMalloc(sizeof(Message)));
 
@@ -415,46 +449,46 @@ Message *Encoders::ExtractMessage(uint8_t *buffer, uint32_t bufferLength, bool h
  */
 void Encoders::EncodeMessage(Message *message, uint8_t *buffer, bool headerOnly)
 {
-    uint32_t messageSize = Message::HEADER_SIZE;
-    if (!headerOnly)
-    {
-        messageSize += message->PacketLength;
-    }
+    uint32_t messageSize = EncodedPacketSize(message, headerOnly);
     uint32_t bufferSize = Encoders::CalculateSpiBufferSize(messageSize);
     TRACE_MESSAGE_SPECIFY_COMPONENT(SpiTransportProvider::COMPONENT_NAME, "Encoding %d bytes as a %d byte packet", messageSize, bufferSize);
-    uint8_t *next_location = buffer;
-    
-    memset(buffer, 0, bufferSize);
-    *next_location = Message::PROTOCOL_NUMBER;
-    next_location++;
-    EncodeUInt32(0, next_location);
-    next_location += 4;
-    EncodeUInt16(message->PacketOffset, next_location);
-    next_location += 2;
-    EncodeUInt16(message->PacketLength, next_location);
-    next_location += 2;
-    *next_location = message->MessageType;
-    next_location++;
-    *next_location = message->Interface;
-    next_location++;
-    EncodeUInt32(message->Function, next_location);
-    next_location += 4;
-    EncodeUInt32(message->StatusCode, next_location);
-    next_location += 4;
-    EncodeUInt32(message->MessageID, next_location);
-    next_location += 4;
-    EncodeUInt32(message->PayloadLength, next_location);
-    next_location += 4;
-    //
-    //  The byte after the PayloadLength is the CRC.  This is filled in later
-    //  and so a 0 is written into the message temporarily.
-    //
-    if (!headerOnly && (message->PacketLength > 0))
+
+    if (buffer)
     {
-        memcpy(next_location, message->Payload + message->PacketOffset, message->PacketLength);
+        uint8_t *next_location = buffer;
+        
+        memset(buffer, 0, bufferSize);
+        *next_location = Message::PROTOCOL_NUMBER;
+        next_location++;
+        EncodeUInt32(0, next_location);
+        next_location += 4;
+        EncodeUInt16(message->PacketOffset, next_location);
+        next_location += 2;
+        EncodeUInt16(message->PacketLength, next_location);
+        next_location += 2;
+        *next_location = message->MessageType;
+        next_location++;
+        *next_location = message->Interface;
+        next_location++;
+        EncodeUInt32(message->Function, next_location);
+        next_location += 4;
+        EncodeUInt32(message->StatusCode, next_location);
+        next_location += 4;
+        EncodeUInt32(message->MessageID, next_location);
+        next_location += 4;
+        EncodeUInt32(message->PayloadLength, next_location);
+        next_location += 4;
+        //
+        //  The byte after the PayloadLength is the CRC.  This is filled in later
+        //  and so a 0 is written into the message temporarily.
+        //
+        if (!headerOnly && (message->PacketLength > 0))
+        {
+            memcpy(next_location, message->Payload + message->PacketOffset, message->PacketLength);
+        }
+        uint32_t crc = CRC32(buffer, bufferSize - 4);
+        EncodeUInt32(crc, buffer + Message::CRC_OFFSET);
     }
-    uint32_t crc = CRC32(buffer, bufferSize);
-    EncodeUInt32(crc, buffer + Message::CRC_OFFSET);
 }
 
 /*
