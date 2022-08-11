@@ -2656,6 +2656,7 @@ void WiFiRequestHandler::RecvFrom(void *vpMessage)
         response.Result = Mapping::GetEspFlagValue(Mapping::MessageFlags, request->Flags, &mappedFlags);
         if (response.Result == 0)
         {
+            TRACE_MESSAGE("Requesting %d bytes from socket handle %d", request->Length, request->SocketHandle);
             struct sockaddr_in *sa = NULL;
             socklen_t len;
             if (request->GetSourceAddress != 0)
@@ -2664,7 +2665,7 @@ void WiFiRequestHandler::RecvFrom(void *vpMessage)
                 bzero(sa, sizeof(struct sockaddr_in));
                 len = sizeof(struct sockaddr_in);
             }
-            response.Buffer = (uint8_t *) pvPortMalloc(request->Length);
+            response.Buffer = static_cast<uint8_t *>(pvPortMalloc(request->Length));
             if (response.Buffer == NULL)
             {
                 response.Buffer = nullptr;
@@ -2691,7 +2692,7 @@ void WiFiRequestHandler::RecvFrom(void *vpMessage)
                     memcpy(&socketAddress.Ip4Address, &sa->sin_addr, sizeof(sa->sin_addr));
                     socketAddress.Port = sa->sin_port;
                     response.SourceAddressLength = Encoders::EncodedSockAddrBufferSize(&socketAddress);
-                    response.SourceAddress = (uint8_t *) pvPortMalloc(response.SourceAddressLength);
+                    response.SourceAddress = static_cast<uint8_t *>(pvPortMalloc(response.SourceAddressLength));
                     if (response.SourceAddress == NULL)
                     {
                         response.SourceAddressLength = 0;
@@ -2727,7 +2728,7 @@ void WiFiRequestHandler::RecvFrom(void *vpMessage)
             TRACE_HEX_BUFFER(response.Buffer, response.Result);
         }
         TRACE_MESSAGE("RecvFrom: Result: %d, errno: %d - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
-        if (response.ResponseErrno != 0)
+        if (response.Result < 0)
         {
             response.ResponseErrno = MapErrno(response.ResponseErrno);
         }

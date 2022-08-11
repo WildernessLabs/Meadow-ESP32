@@ -428,6 +428,7 @@ public:
      */
     static const uint32_t CRC32_SEED = 0xffffffff;
     static uint32_t CalculateSpiBufferSize(uint32_t);
+    static uint32_t EncodedPacketSize(Message *, bool);
     static uint16_t ExtractUInt16(uint8_t *);
     static void EncodeUInt16(uint16_t, uint8_t *);
     static uint32_t ExtractUInt32(uint8_t *);

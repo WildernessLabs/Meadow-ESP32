@@ -120,16 +120,6 @@ public:
      *  @brief Get the next message ID.
      */
     uint32_t GetNextMessageID();
-
-    /**
-     *  @brief Get the maximum message size that can be sent through the transport provider.
-     */
-    uint32_t GetMaximumMessageSize() const;
-
-    /**
-     *  @brief Set the maximum message size that can be sent through the transport provider.
-     */
-    bool SetMaximumMessageSize(uint32_t messageSize);
 };
 
 #endif /* _MESSAGE_DISPATCHER_HPP_ */

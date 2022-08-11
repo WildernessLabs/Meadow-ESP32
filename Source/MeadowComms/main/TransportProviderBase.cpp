@@ -188,5 +188,6 @@ bool TransportProviderBase::QueueMessageForStm32(Message *message)
 void TransportProviderBase::ToggleEsp32MessageWaitingPin()
 {
     gpio_set_level(Gpio::ESP32_MESSAGE_WAITING_PIN, 1);
+    vTaskDelay(50 / portTICK_PERIOD_MS);
     gpio_set_level(Gpio::ESP32_MESSAGE_WAITING_PIN, 0);
 }
