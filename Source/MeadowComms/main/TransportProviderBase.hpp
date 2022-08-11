@@ -47,16 +47,6 @@ public:
      */
     static const uint32_t STM32_INTERRUPT_NOTIFICATION_BIT = 0x00000001;
 
-    /**
-     *  @brief Get the current maximum message size.
-     */
-    virtual uint32_t GetMaximumMessageSize() const = 0;
-
-    /**
-     *  @brief Set the maximum message size.
-     */
-    virtual bool SetMaximumMessageSize(uint32_t messageSize) = 0;
-
 private:
     /**
      *  @brief Maximum length of the message queue.
