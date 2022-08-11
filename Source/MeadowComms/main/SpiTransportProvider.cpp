@@ -137,9 +137,8 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
      */
     _headerFrameSize = Encoders::CalculateSpiBufferSize(Message::HEADER_SIZE);
     TRACE_MESSAGE("Header frame size: %d", _headerFrameSize);
-    _txBuffer = static_cast<uint8_t *>(heap_caps_calloc(MAXIMUM_SPI_FRAME_SIZE, 1, MALLOC_CAP_DMA));
-    _rxBuffer = static_cast<uint8_t *>(heap_caps_calloc(MAXIMUM_SPI_FRAME_SIZE, 1, MALLOC_CAP_DMA));
-    SetMaximumMessageSize(MAXIMUM_SPI_FRAME_SIZE - _headerFrameSize);
+    _txBuffer = static_cast<uint8_t *>(heap_caps_calloc(Message::MAXIMUM_SPI_FRAME_SIZE, 1, MALLOC_CAP_DMA));
+    _rxBuffer = static_cast<uint8_t *>(heap_caps_calloc(Message::MAXIMUM_SPI_FRAME_SIZE, 1, MALLOC_CAP_DMA));
     ClearTransmitAndReceiveBuffers();
 
     /*
@@ -210,39 +209,6 @@ SpiTransportProvider::~SpiTransportProvider()
  * ----------------------------------------------------------------------------
  */
 
-/**
- *  @brief Get the maximum size of a message that can be sent through the transport provider.
- *
- *  @returns
- *      Maximum size of a message that can be sent using the current transport provider.
- */
-uint32_t SpiTransportProvider::GetMaximumMessageSize() const
-{
-    return(_maximumMessageSize);
-}
-
-/**
- *  Set the maximum message size that can be sent through the transport provider.
- *
- *  @param messageSize
- *      Desired maximum message size.
- *
- *  @returns
- *      true if the message size is legal, false if the message size could not be set.
- */
-bool SpiTransportProvider::SetMaximumMessageSize(uint32_t maximumMessageSize)
-{
-    uint32_t maximumSize = MAXIMUM_SPI_FRAME_SIZE - _headerFrameSize;
-    bool result = false;
-
-    if ((maximumMessageSize <= maximumSize) && (maximumMessageSize >= _headerFrameSize))
-    {
-        _maximumMessageSize = maximumMessageSize;
-        result = true;
-    }
-    return(result);
-}
-
 /* ---------------------------------------------------------------------------
  *
  *                              Methods
@@ -295,8 +261,8 @@ const char *SpiTransportProvider::SpiStateString(SpiTransportProvider::SpiStates
  */
 void SpiTransportProvider::ClearTransmitAndReceiveBuffers()
 {
-    memset(_rxBuffer, 0, MAXIMUM_SPI_FRAME_SIZE);
-    memset(_txBuffer, 0, MAXIMUM_SPI_FRAME_SIZE);
+    memset(_rxBuffer, 0, Message::MAXIMUM_SPI_FRAME_SIZE);
+    memset(_txBuffer, 0, Message::MAXIMUM_SPI_FRAME_SIZE);
 }
 
 /**
@@ -361,7 +327,7 @@ spi_slave_transaction_t *SpiTransportProvider::CreateSpiTransaction(Message *mes
     }
     transaction->rx_buffer = _rxBuffer;
     transaction->tx_buffer = _txBuffer;
-    transaction->length = MAXIMUM_SPI_FRAME_SIZE * 8;
+    transaction->length = Message::MAXIMUM_SPI_FRAME_SIZE * 8;
 
     TRACE_MESSAGE("CreateSpiTransaction: Exit");
     return (transaction);
@@ -382,13 +348,13 @@ void SpiTransportProvider::UpdatePacketInformation(Message *message)
     TRACE_MESSAGE("Initial offset %d, length %d", message->PacketOffset, message->PacketLength);
     message->PacketOffset += message->PacketLength;
     uint16_t amountRemaining = message->PayloadLength - message->PacketOffset;
-    if (amountRemaining <= MAXIMUM_FRAME_PAYLOAD_SIZE)
+    if (amountRemaining <= Message::MAXIMUM_PACKET_SIZE)
     {
         message->PacketLength = amountRemaining;
     }
     else
     {
-        message->PacketLength = MAXIMUM_FRAME_PAYLOAD_SIZE;
+        message->PacketLength = Message::MAXIMUM_PACKET_SIZE;
     }
     TRACE_MESSAGE("New offset %d, length %d", message->PacketOffset, message->PacketLength);
 
@@ -543,13 +509,17 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessInboundPacket(Message *pac
     bool queuePacket;
     if (_incomingMessage)
     {
+        TRACE_MESSAGE("Top up packet received, offset %d bytes, length %d bytes", packet->PacketOffset, packet->PacketLength);
         if (_incomingMessage->MessageID == packet->MessageID)
         {
+            TRACE_MESSAGE("Packet matches incoming packet");
             if ((packet->PacketOffset + packet->PacketLength) <= _incomingMessage->PayloadLength)
             {
+                TRACE_MESSAGE("Copying data.");
                 memcpy(static_cast<void *>(_incomingMessage->Payload + packet->PacketOffset), static_cast<const void *>(packet->Payload), packet->PacketLength);
                 if ((packet->PacketOffset + packet->PacketLength) == _incomingMessage->PayloadLength)
                 {
+                    TRACE_MESSAGE("Full message received, sending to queue.");
                     //
                     //  We have received the last packet in the message so hand it over to the system for processing.
                     //
@@ -594,6 +564,7 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessInboundPacket(Message *pac
             //  enough to hold the full payload, copy the packet into the new buffer, release the current payload buffer
             //  and replace it with the new, larger, buffer.
             //
+            TRACE_MESSAGE("First packet in a multipacket message, expecting %d bytes, received %d bytes", packet->PayloadLength, packet->PacketLength);
             uint8_t *payloadBuffer = static_cast<uint8_t *>(pvPortMalloc(packet->PayloadLength));
             memcpy(static_cast<void *>(payloadBuffer), static_cast<const void *>(packet->Payload), packet->PacketLength);
             vPortFree(packet->Payload);

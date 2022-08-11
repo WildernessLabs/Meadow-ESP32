@@ -38,16 +38,6 @@ private:
     const int MAXIMUM_RETRY_COUNT = 3;
 
     /**
-     *  @brief Maximum number of bytes that can sent over the SPI bus.
-     */
-    const uint32_t MAXIMUM_SPI_FRAME_SIZE = 4092;
-
-    /**
-     *  @brief Maximum number of bytes in a frames payload.
-     */
-    const uint32_t MAXIMUM_FRAME_PAYLOAD_SIZE = MAXIMUM_SPI_FRAME_SIZE - Message::HEADER_SIZE;
-
-    /**
      *  @brief Possible states for the SPI transport layer.
      */
     enum SpiStates { Invalid, 
@@ -92,11 +82,6 @@ private:
      *  @brief Retry count for sending messages.
      */
     uint32_t _retryCount = 0;
-
-    /**
-     *  @brief Maximum size for a message.
-     */
-    uint32_t _maximumMessageSize = 0;
 
     /**
      *  @brief Message coming in from the STM32.
@@ -256,12 +241,6 @@ public:
      *  @brief Setup the SPI transport class.
      */
     void Setup(MessageDispatcher *messageDispatcher);
-
-    /**
-     *  @brief Getters and setters for the maximum message size.
-     */
-    uint32_t GetMaximumMessageSize() const;
-    bool SetMaximumMessageSize(uint32_t maximumMessageSize);
 };
 
 #endif /* _SPI_TRANSPORT_PROVIDER_HPP_ */
