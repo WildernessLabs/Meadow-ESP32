@@ -18,9 +18,13 @@
   "C_Cpp.intelliSenseEngineFallback": "Enabled",
   "cmake.configureOnOpen": false,
   "cSpell.words": [
+    "BUSFLAG",
     "LOGI",
+    "mosi",
     "Nutt",
-    "Nuttx"
+    "Nuttx",
+    "quadhd",
+    "VSPI"
   ],
   "idf.adapterTargetName": "esp32",
   "files.associations": {

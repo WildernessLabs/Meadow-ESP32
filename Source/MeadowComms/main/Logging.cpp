@@ -331,7 +331,7 @@ char *Logging::FunctionName(uint32_t interface, uint32_t function)
             return(TransportFunctionName(function));
             break;
         default:
-            return((char *) "Not implemented");
+            return(static_cast<const char *>("Not implemented"));
             break;
     }
 }
@@ -366,6 +366,7 @@ void Logging::DumpMessage(const char *componentName, const Message *message)
         TRACE_MESSAGE_SPECIFY_COMPONENT(componentName, "Message type: 0x%02x (%s)", message->MessageType, MessageTypeName(message->MessageType));
         TRACE_MESSAGE_SPECIFY_COMPONENT(componentName, "ESP32 Interface: 0x%02x (%s)", message->Interface, InterfaceName(message->Interface));
         TRACE_MESSAGE_SPECIFY_COMPONENT(componentName, "Message ID: 0x%08x", message->MessageID);
+        TRACE_MESSAGE_SPECIFY_COMPONENT(componentName, "Packet offset (length): %d (%d) bytes", message->PacketOffset, message->PacketLength);
         TRACE_MESSAGE_SPECIFY_COMPONENT(componentName, "Function to be executed: 0x%08x (%s)", message->Function, FunctionName(message->Interface, message->Function));
         TRACE_MESSAGE_SPECIFY_COMPONENT(componentName, "Status code: 0x%08x (%s)", message->StatusCode, StatusCodeName(message->StatusCode));
         if (message->PayloadLength > 0)
@@ -394,7 +395,7 @@ void Logging::DumpMessage(const char *componentName, const Message *message)
  *      Message to be summarised.
  * 
  *  @return
- *      Pointer to a string contianing the message ID, interface and function requested.
+ *      Pointer to a string containing the message ID, interface and function requested.
  */
 char *Logging::MessageSummary(const Message *message)
 {

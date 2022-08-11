@@ -38,21 +38,11 @@ private:
     const int MAXIMUM_RETRY_COUNT = 3;
 
     /**
-     *  @brief Maximum number of bytes that can sent over the SPI bus.
-     */
-    const uint32_t MAXIMUM_SPI_FRAME_SIZE = 4092;
-
-    /**
-     *  @brief Maximum number of bytes in a frames payload.
-     */
-    const uint32_t MAXIMUM_FRAME_PAYLOAD_SIZE = MAXIMUM_SPI_FRAME_SIZE - Message::HEADER_SIZE;
-
-    /**
      *  @brief Possible states for the SPI transport layer.
      */
     enum SpiStates { Invalid, 
-                     WaitingForMessage, AcknowledgingMessage,
-                     SendingMessageDetails, SendingMessage, WaitingForMessageAcknowledgement
+                     WaitingForPacket, AcknowledgingPacket,
+                     SendingPacketDetails, SendingPacket, WaitingForPacketAcknowledgement
                    };
 
     /**
@@ -94,11 +84,6 @@ private:
     uint32_t _retryCount = 0;
 
     /**
-     *  @brief Maximum size for a message.
-     */
-    uint32_t _maximumMessageSize = 0;
-
-    /**
      *  @brief Message coming in from the STM32.
      */
     Message *_incomingMessage = nullptr;
@@ -117,22 +102,12 @@ private:
     spi_slave_transaction_t *_spiTransaction = nullptr;
 
     /**
-     *  @brief Response code that will be used in any acknowledgement messages.
-     */
-    StatusCodes::StatusCodes _responseCode;
-
-    /**
-     *  @brief Packet type that will be used in any acknowledgement messages.
-     */
-    uint8_t _messageType;
-
-    /**
      *  @brief Handle to the synchronisation task.
      */
     static TaskHandle_t _synchronisationTaskHandle;
 
     /**
-     *  @brief Sempahore inticating if the system is trying to synchronise with the STM32.
+     *  @brief Semaphore indicating if the system is trying to synchronise with the STM32.
      */
     SemaphoreHandle_t _synchronisationSemaphore = NULL;
 
@@ -161,16 +136,6 @@ private:
      *  @brief Send an ACK or NAK with the specified code.
      */
     spi_slave_transaction_t *CreateAcknowledgementTransaction(Message *message, StatusCodes::StatusCodes code, uint8_t messageType);
-
-    /**
-     *  @brief Create a new SPI transaction that will send the message body.
-     */
-    spi_slave_transaction_t *CreateSpiMessageTransaction(Message *message);
-
-    /**
-     *  @brief Encode a header or transport message.
-     */
-    void EncodeHeaderMessage(spi_slave_transaction_t *transaction, Message *message);
 
     /**
      *  @brief FreeRTOS task handler for this class.
@@ -210,42 +175,40 @@ private:
     spi_slave_transaction_t *ProcessTransportMessage(Message *request);
 
     /**
+     *  @brief Process the newly received packet of data and return transaction to be used as the response.
+     */
+    spi_slave_transaction_t *ProcessInboundPacket(Message *packet);
+
+    /**
      *  @brief Start to process incoming messages (i.e. move from the idle state
      *  into one where the ESP32 is sending or receiving data).
      */
-    spi_slave_transaction_t *MessageReceived(spi_slave_transaction_t *transaction);
+    spi_slave_transaction_t *PacketReceived(spi_slave_transaction_t *transaction);
 
     /**
      *  @brief Implement the incoming message header acknowledgement process.
      */
-    spi_slave_transaction_t *MessageAcknowledged(spi_slave_transaction_t *transaction);
+    spi_slave_transaction_t *PacketAcknowledged(spi_slave_transaction_t *transaction);
 
     /**
      *  @brief Implement the out-bound message details process.
      */
-    spi_slave_transaction_t *SendMessage(spi_slave_transaction_t *transaction);
+    spi_slave_transaction_t *PacketDetailsSent(spi_slave_transaction_t *transaction);
 
     /**
      *  @brief Implement processing of the incoming message header acknowledgement messages.
      */
-    spi_slave_transaction_t *MessageSent(spi_slave_transaction_t *transaction);
+    spi_slave_transaction_t *PacketSent(spi_slave_transaction_t *transaction);
 
     /**
      *  @brief Implement processing of the out-bound message body acknowledgement.
      */
-    spi_slave_transaction_t *AcknowledgementReceived(spi_slave_transaction_t *transaction);
+    spi_slave_transaction_t *PacketAcknowledgementReceived(spi_slave_transaction_t *transaction);
 
     /**
-     *  @brief Create a new SPI slave transmission object with zero filled
-     *  buffers of the requested size.
+     *  @brief Setup a new transaction using the information in the message.
      */
-    spi_slave_transaction_t *CreateSpiPayloadTransaction(uint32_t bufferSize);
-
-    /**
-     *  @brief Setup a new transaction using the _headerReceiveBuffer and
-     *  _headerTransmitBuffer.
-     */
-    spi_slave_transaction_t *CreateSpiHeaderTransaction();
+    spi_slave_transaction_t *CreateSpiTransaction(Message *message);
 
     /**
      *  @brief Clear the data buffers used to send and receive data.
@@ -257,6 +220,11 @@ private:
      *  Tx and Rx buffers.
      */
     void DeleteTransaction(spi_slave_transaction_t *transaction);
+
+    /**
+     *  @brief Update the packet information in the message to prepare the message for the next transmission.
+     */
+    void UpdatePacketInformation(Message *message);
 
 public:
     /**
@@ -273,12 +241,6 @@ public:
      *  @brief Setup the SPI transport class.
      */
     void Setup(MessageDispatcher *messageDispatcher);
-
-    /**
-     *  @brief Getters and setters for the maximum message size.
-     */
-    uint32_t GetMaximumMessageSize() const;
-    bool SetMaximumMessageSize(uint32_t maximumMessageSize);
 };
 
 #endif /* _SPI_TRANSPORT_PROVIDER_HPP_ */
