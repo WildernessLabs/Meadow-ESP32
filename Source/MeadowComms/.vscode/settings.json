@@ -19,6 +19,7 @@
   "cmake.configureOnOpen": false,
   "cSpell.words": [
     "BUSFLAG",
+    "cppcheck",
     "LOGI",
     "mosi",
     "Nutt",
