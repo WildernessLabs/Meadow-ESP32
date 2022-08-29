@@ -18,7 +18,7 @@
  */
 
 /**
- *  @brief Name of the componet / task for the ThreadPool.
+ *  @brief Name of the component / task for the ThreadPool.
  */
 const char *ThreadPool::COMPONENT_NAME = "ThreadPool";
 
@@ -51,7 +51,7 @@ ThreadPool::ThreadPool()
 ThreadPool::ThreadPool(uint32_t numberOfThreads) : ThreadPool()
 {
     _threadPoolSize = numberOfThreads > MAX_THREADS ? MAX_THREADS : numberOfThreads;
-    _threads = (Thread **) pvPortMalloc(_threadPoolSize * sizeof(Thread *));
+    _threads = static_cast<Thread **>(pvPortMalloc(_threadPoolSize * sizeof(Thread *)));
     if (_threads == NULL)
     {
         throw new ThreadPoolException("Cannot allocate memory for threads.");
@@ -65,7 +65,7 @@ ThreadPool::ThreadPool(uint32_t numberOfThreads) : ThreadPool()
 
     for (uint32_t index = 0; index < _threadPoolSize; index++)
     {
-        char *name = (char *) pvPortMalloc(15);
+        char *name = static_cast<char *>(pvPortMalloc(15));
         if (name != NULL)
         {
             snprintf(name, 15, "Thread-%02u", index);

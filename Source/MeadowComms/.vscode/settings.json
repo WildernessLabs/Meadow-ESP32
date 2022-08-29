@@ -18,13 +18,17 @@
   "C_Cpp.intelliSenseEngineFallback": "Enabled",
   "cmake.configureOnOpen": false,
   "cSpell.words": [
+    "Bssid",
     "BUSFLAG",
     "cppcheck",
     "LOGI",
     "mosi",
+    "netif",
     "Nutt",
     "Nuttx",
     "quadhd",
+    "ssid",
+    "threadpool",
     "VSPI"
   ],
   "idf.adapterTargetName": "esp32",

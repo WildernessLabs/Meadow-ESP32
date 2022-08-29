@@ -797,7 +797,8 @@ void WiFiRequestHandler::PopulateConnectionEventDataStructure(Esp32Messaging::Co
 {
     TRACE_MESSAGE("PopulateConnectionEventDataStructure: Enter");
 
-    bzero((void *) ed, sizeof(Esp32Messaging::ConnectEventData));
+    *ed = { };
+    // bzero((void *) ed, sizeof(Esp32Messaging::ConnectEventData));
     //
     //  IP information.
     //
@@ -893,11 +894,11 @@ void WiFiRequestHandler::EventHandlerHelper(esp_event_base_t eventBase, int32_t 
                 break;
             case WIFI_EVENT_STA_CONNECTED:
                 TRACE_MESSAGE("EventHandlerHelper: WIFI_EVENT_STA_CONNECTED");
-                StationConnectedEvent((wifi_event_sta_connected_t *) eventData);
+                StationConnectedEvent(static_cast<wifi_event_sta_connected_t *>(eventData));
                 break;
             case WIFI_EVENT_STA_DISCONNECTED:
                 TRACE_MESSAGE("EventHandlerHelper: WIFI_EVENT_STA_DISCONNECTED");
-                StationDisconnectedEvent((wifi_event_sta_disconnected_t *) eventData);
+                StationDisconnectedEvent(static_cast<wifi_event_sta_disconnected_t *>(eventData));
                 break;
             case WIFI_EVENT_STA_AUTHMODE_CHANGE:
                 TRACE_MESSAGE("EventHandlerHelper: WIFI_EVENT_STA_AUTHMODE_CHANGE");
@@ -947,7 +948,7 @@ void WiFiRequestHandler::EventHandlerHelper(esp_event_base_t eventBase, int32_t 
             {
                 case IP_EVENT_STA_GOT_IP:
                     TRACE_MESSAGE("EventHandlerHelper: IP_EVENT_STA_GOT_IP");
-                    StationGotIpEvent((ip_event_got_ip_t *) eventData);
+                    StationGotIpEvent(static_cast<ip_event_got_ip_t *>(eventData));
                     break;
                 case IP_EVENT_STA_LOST_IP:
                     TRACE_MESSAGE("EventHandlerHelper: IP_EVENT_STA_LOST_IP");
@@ -1054,47 +1055,47 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
             SetAntennaRequest(request);
             break;
         case WiFiFunction::Close:
-            SystemRequestHandler::SharedThreadPool()->Execute(Close, (void *) request);
+            SystemRequestHandler::SharedThreadPool()->Execute(Close, static_cast<void *>(request));
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
         case WiFiFunction::Read:
-            SystemRequestHandler::SharedThreadPool()->Execute(Read, (void *) request);
+            SystemRequestHandler::SharedThreadPool()->Execute(Read, static_cast<void *>(request));
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
         case WiFiFunction::SetSockOpt:
-            SystemRequestHandler::SharedThreadPool()->Execute(SetSockOpt, (void *) request);
+            SystemRequestHandler::SharedThreadPool()->Execute(SetSockOpt, static_cast<void *>(request));
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
         case WiFiFunction::GetSockOpt:
-            SystemRequestHandler::SharedThreadPool()->Execute(GetSockOpt, (void *) request);
+            SystemRequestHandler::SharedThreadPool()->Execute(GetSockOpt, static_cast<void *>(request));
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
         case WiFiFunction::Write:
-            SystemRequestHandler::SharedThreadPool()->Execute(Write, (void *) request);
+            SystemRequestHandler::SharedThreadPool()->Execute(Write, static_cast<void *>(request));
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
         case WiFiFunction::FreeAddrInfo:
-            SystemRequestHandler::SharedThreadPool()->Execute(FreeAddrInfo, (void *) request);
+            SystemRequestHandler::SharedThreadPool()->Execute(FreeAddrInfo, static_cast<void *>(request));
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
         case WiFiFunction::Connect:
-            SystemRequestHandler::SharedThreadPool()->Execute(Connect, (void *) request);
+            SystemRequestHandler::SharedThreadPool()->Execute(Connect, static_cast<void *>(request));
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
         case WiFiFunction::Socket:
-            SystemRequestHandler::SharedThreadPool()->Execute(Socket, (void *) request);
+            SystemRequestHandler::SharedThreadPool()->Execute(Socket,static_cast<void *>(request));
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
         case WiFiFunction::GetAddrInfo:
-            SystemRequestHandler::SharedThreadPool()->Execute(GetAddrInfo, (void *) request);
+            SystemRequestHandler::SharedThreadPool()->Execute(GetAddrInfo, static_cast<void *>(request));
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
         case WiFiFunction::SendTo:
-            SystemRequestHandler::SharedThreadPool()->Execute(SendTo, (void *) request);
+            SystemRequestHandler::SharedThreadPool()->Execute(SendTo, static_cast<void *>(request));
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
         case WiFiFunction::RecvFrom:
-            SystemRequestHandler::SharedThreadPool()->Execute(RecvFrom, (void *) request);
+            SystemRequestHandler::SharedThreadPool()->Execute(RecvFrom, static_cast<void *>(request));
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
         case WiFiFunction::Poll:
@@ -1102,31 +1103,31 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
         case WiFiFunction::Send:
-            SystemRequestHandler::SharedThreadPool()->Execute(Send, (void *) request);
+            SystemRequestHandler::SharedThreadPool()->Execute(Send, static_cast<void *>(request));
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
         case WiFiFunction::Accept:
-            SystemRequestHandler::SharedThreadPool()->Execute(Accept, (void *) request);
+            SystemRequestHandler::SharedThreadPool()->Execute(Accept, static_cast<void *>(request));
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
         case WiFiFunction::Bind:
-            SystemRequestHandler::SharedThreadPool()->Execute(Bind, (void *) request);
+            SystemRequestHandler::SharedThreadPool()->Execute(Bind, static_cast<void *>(request));
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
         case WiFiFunction::Listen:
-            SystemRequestHandler::SharedThreadPool()->Execute(Listen, (void *) request);
+            SystemRequestHandler::SharedThreadPool()->Execute(Listen, static_cast<void *>(request));
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
         case WiFiFunction::Ioctl:
-            SystemRequestHandler::SharedThreadPool()->Execute(Ioctl, (void *) request);
+            SystemRequestHandler::SharedThreadPool()->Execute(Ioctl, static_cast<void *>(request));
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
         case WiFiFunction::GetSockName:
-            SystemRequestHandler::SharedThreadPool()->Execute(GetSockName, (void *) request);
+            SystemRequestHandler::SharedThreadPool()->Execute(GetSockName, static_cast<void *>(request));
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
         case WiFiFunction::GetPeerName:
-            SystemRequestHandler::SharedThreadPool()->Execute(GetPeerName, (void *) request);
+            SystemRequestHandler::SharedThreadPool()->Execute(GetPeerName, static_cast<void *>(request));
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
             break;
         default:
@@ -1477,8 +1478,8 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
     }
     else
     {
-        memcpy((void *) data.Ssid, (void *) _disconnectData.ssid, _disconnectData.ssid_len);
-        memcpy((void *) data.Bssid, (void *) _disconnectData.bssid, sizeof(data.Bssid));
+        memcpy(static_cast<void *>(data.Ssid), static_cast<void *>(_disconnectData.ssid), _disconnectData.ssid_len);
+        memcpy(static_cast<void *>(data.Bssid), static_cast<void *>(_disconnectData.bssid), sizeof(data.Bssid));
         TRACE_MESSAGE("Failed to connect to access point, code: %d", _disconnectData.reason);
         data.Reason = _disconnectData.reason;
         ClearIpAndDisconnectData();
@@ -1680,7 +1681,7 @@ void WiFiRequestHandler::ScanForAccessPoints(Message *message)
         //
         #define MAX_AP 80
         uint16_t number = MAX_AP;
-        wifi_ap_record_t *ap_info = (wifi_ap_record_t *) pvPortMalloc(MAX_AP * sizeof(wifi_ap_record_t));
+        wifi_ap_record_t *ap_info = static_cast<wifi_ap_record_t *>(pvPortMalloc(MAX_AP * sizeof(wifi_ap_record_t)));
         if (ap_info == NULL)
         {
             result = StatusCodes::Failure;
@@ -2088,15 +2089,15 @@ void WiFiRequestHandler::GetSockOpt(void *vpMessage)
                 int32_t level = 0;
                 Mapping::GetEspValue(Mapping::SocketLevel, request->Level, &level);
                 TRACE_MESSAGE("GetSockOpt: Getting socket option level 0x%x, option name 0x%x for socket %d", level, optionName, request->SocketHandle);
-                response.Result = getsockopt(request->SocketHandle, level, optionName, (void *) optionValue, &optionLength);
+                response.Result = getsockopt(request->SocketHandle, level, optionName, static_cast<void *>(optionValue), &optionLength);
                 errorCode = errno;
             }
         }
         if (errorCode == 0)
         {
-            response.Result = 0;
-            response.ResponseErrno = 0;
-            response.OptionValue = NULL;
+            // response.Result = 0;
+            // response.ResponseErrno = 0;
+            // response.OptionValue = NULL;
             Esp32Messaging::TimeVal esp_tv = { };
             Esp32Messaging::Linger esp_lv = { };
             Esp32Messaging::IntegerResponse esp_iv = { };
@@ -2136,7 +2137,7 @@ void WiFiRequestHandler::GetSockOpt(void *vpMessage)
                     }
                     break;
                 case SO_RCVBUF:
-                    esp_iv.Result = *((int *) optionValue);
+                    esp_iv.Result = *(static_cast<int *>(optionValue));
                     response.OptionValueLength = Encoders::EncodedIntegerResponseBufferSize(&esp_iv);
                     response.OptionValue = static_cast<uint8_t *>(malloc(response.OptionValueLength));
                     if (response.OptionValue == NULL)
@@ -2201,7 +2202,6 @@ void WiFiRequestHandler::SetSockOpt(void *vpMessage)
     if (IsConnected())
     {
         void *optionValue = nullptr;
-        int optionLength = 0;
         struct timeval timeOut;
         int intVal = 0;
         int32_t errorCode = 0;
@@ -2214,6 +2214,7 @@ void WiFiRequestHandler::SetSockOpt(void *vpMessage)
         }
         else
         {
+            int optionLength = 0;
             errno = 0;
             switch (optionName)
             {
@@ -2661,7 +2662,7 @@ void WiFiRequestHandler::RecvFrom(void *vpMessage)
             socklen_t len;
             if (request->GetSourceAddress != 0)
             {
-                sa = (struct sockaddr_in *) pvPortMalloc(sizeof(struct sockaddr_in));
+                sa = static_cast<struct sockaddr_in *>(pvPortMalloc(sizeof(struct sockaddr_in)));
                 bzero(sa, sizeof(struct sockaddr_in));
                 len = sizeof(struct sockaddr_in);
             }
@@ -2674,7 +2675,7 @@ void WiFiRequestHandler::RecvFrom(void *vpMessage)
             }
             else
             {
-                response.Result = recvfrom(request->SocketHandle, response.Buffer, request->Length, mappedFlags, (struct sockaddr *) sa, (sa == NULL) ? NULL : &len);
+                response.Result = recvfrom(request->SocketHandle, response.Buffer, request->Length, mappedFlags, reinterpret_cast<struct sockaddr *>(sa), (sa == NULL) ? NULL : &len);
             }
 
             if (response.Result < 0)
@@ -3214,6 +3215,7 @@ void WiFiRequestHandler::DumpActivePollRequests()
         //  fds is marked as unused as in debug mode the TRACE_MESSAGE results in the usage being thrown away.
         //  Basically, we are trying to keep the compiler happy and not generate misleading warnings.
         //
+        // cppcheck-suppress unreadVariable symbolName=fds
         __attribute__ ((unused)) struct pollfd *fds = static_cast<struct pollfd *>(it->second);
         TRACE_MESSAGE("DumpActiveRequests: Key %08x, socket %d, dummy socket %d", it->first, fds[POLL_FD_INDEX].fd, fds[POLL_DUMMY_FD_INDEX].fd);
         it++;
@@ -3270,7 +3272,7 @@ int WiFiRequestHandler::PollSetup(void *vpMessage)
         DumpActivePollRequests();
     #endif
 
-    SystemRequestHandler::SharedThreadPool()->Execute(PollSocket, (void *) request->SetupMessageId);
+    SystemRequestHandler::SharedThreadPool()->Execute(PollSocket, reinterpret_cast<void *>(request->SetupMessageId));
 
     TRACE_MESSAGE("PollSetup: Exit, result %d", result);
 
@@ -3344,7 +3346,7 @@ void WiFiRequestHandler::PollSocket(void *requestId)
     UnlockPollRequests();
     if (it != _pollRequests.end())
     {
-        struct pollfd *fds = (struct pollfd *) it->second;
+        struct pollfd *fds = static_cast<struct pollfd *>(it->second);
         response.Result = poll(fds, 2, -1);
         if (response.Result < 0)
         {
@@ -3353,7 +3355,7 @@ void WiFiRequestHandler::PollSocket(void *requestId)
         else
         {
             LockPollRequests();
-            it = _pollRequests.find((uint32_t) requestId);      // Get again in cse anything has changed.
+            it = _pollRequests.find((uint32_t) requestId);      // Get again in case anything has changed.
             if (it != _pollRequests.end())
             {
                 int32_t events;
@@ -3380,6 +3382,7 @@ void WiFiRequestHandler::PollSocket(void *requestId)
     TRACE_MESSAGE("PollSocket: Return value from poll: %d", response.Result);
 
     Message *message = static_cast<Message *>(pvPortMalloc(sizeof(Message)));
+    *message = { };
     message->Interface = Esp32Interfaces::WiFi;
     message->Function = WiFiFunction::InterruptPollResponse;
     message->MessageID = _messageDispatcher->GetNextMessageID();
@@ -3409,11 +3412,11 @@ void WiFiRequestHandler::Poll(void *vpMessage)
 
     if (request->Setup == 1)
     {
-        response.Result = PollSetup((void *) request);
+        response.Result = PollSetup(static_cast<void *>(request));
     }
     else
     {
-        response.Result = PollTeardown((void *) request);
+        response.Result = PollTeardown(static_cast<void *>(request));
     }
 
     if (response.Result < 0)
