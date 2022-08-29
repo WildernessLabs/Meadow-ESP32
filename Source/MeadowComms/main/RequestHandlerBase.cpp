@@ -148,7 +148,7 @@ bool RequestHandlerBase::QueueEsp32Message(Message *message)
 }
 
 /**
- *  @brief Create a new interrupt message and add it to the outbond message queue.
+ *  @brief Create a new interrupt message and add it to the outbound message queue.
  *
  *  @param interface
  *      Interface to sent the event to.
@@ -173,7 +173,7 @@ void RequestHandlerBase::RaiseEvent(uint8_t interface, uint32_t eventType, uint3
 }
 
 /**
- *  @brief Create a new interrupt message and add it to the outbond message queue.
+ *  @brief Create a new interrupt message and add it to the outbound message queue.
  *
  *  @param interface
  *      Interface to sent the event to.
@@ -190,7 +190,7 @@ void RequestHandlerBase::RaiseEvent(uint8_t interface, uint32_t eventType, uint3
 }
 
 /**
- *  @brief Create a new interrupt message and add it to the outbond message queue.
+ *  @brief Create a new interrupt message and add it to the outbound message queue.
  *
  *  @param interface
  *      Interface to sent the event to.

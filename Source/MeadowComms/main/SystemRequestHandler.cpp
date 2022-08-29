@@ -112,7 +112,7 @@ SystemRequestHandler::SystemRequestHandler(MessageDispatcher *messageDispatcher)
     //  Get configuration from NVS.
     //
     _maximumMessageQueueLength = GetConfigurationValue(MAXIMUM_MESSAGE_QUEUE_LENGTH_NAME, _maximumMessageQueueLength);
-    _deviceName = GetConfigurationValue(DEVICE_NAME_NAME, (char *) "MeadowF7");
+    _deviceName = GetConfigurationValue(DEVICE_NAME_NAME, const_cast<char *>("MeadowF7"));
     _messageDispatcher = messageDispatcher;
 }
 
@@ -525,14 +525,14 @@ void SystemRequestHandler::SetConfiguration(Message *request)
             result = WiFiRequestHandler::SetMacAddress(value->Value, WIFI_IF_AP);
             break;
         case ConfigurationItems::DefaultApAndPassword:
-            result = WiFiRequestHandler::SetDefaultAccessPoint((char *) value->Value);
+            result = WiFiRequestHandler::SetDefaultAccessPoint(reinterpret_cast<char *>(value->Value));
             if (result == StatusCodes::CompletedOk)
             {
-                result = WiFiRequestHandler::SetPassword((char *) (value->Value + strlen((char *) value->Value) + 1));
+                result = WiFiRequestHandler::SetPassword(reinterpret_cast<char *>((value->Value + strlen(reinterpret_cast<char *>(value->Value)) + 1)));
             }
             break;
         case ConfigurationItems::DeviceName:
-            result = SetDeviceName((char *) value->Value);
+            result = SetDeviceName(reinterpret_cast<char *>(value->Value));
             break;
         case ConfigurationItems::DnsServer:
             result = WiFiRequestHandler::SetDnsServer((uint32_t) (*value->Value));
@@ -543,18 +543,12 @@ void SystemRequestHandler::SetConfiguration(Message *request)
         case ConfigurationItems::DefaultGateway:
             result = WiFiRequestHandler::SetDefaultGateway((uint32_t) (*value->Value));
             break;
-        // case ConfigurationItems::GetTimeAtStartup:
-        //     result = WiFiRequestHandler::SetGetTimeAtStartup((uint8_t) (*value->Value) == 1);
-        //     break;
         case ConfigurationItems::MaximumMessageQueueLength:
             result = SetMaximumMessageQueueLength((uint32_t) (*value->Value));
             break;
         case ConfigurationItems::MaximumRetryCount:
             result = WiFiRequestHandler::SetMaximumRetryCount((uint32_t) (*value->Value));
             break;
-        // case ConfigurationItems::NtpServer:
-        //     result = WiFiRequestHandler::SetNtpServer((char *) value->Value);
-        //     break;
         case ConfigurationItems::UseDhcp:
             result = WiFiRequestHandler::SetUseDhcp((uint8_t) (*value->Value) == 1);
             break;
@@ -606,7 +600,7 @@ void SystemRequestHandler::GetBatteryChargeLevel(Message *message)
 
     adc1_config_width(ADC_WIDTH_BIT_12);
     adc1_config_channel_atten((adc1_channel_t) channel, attenuation);
-    adc_chars = (esp_adc_cal_characteristics_t *) calloc(1, sizeof(esp_adc_cal_characteristics_t));
+    adc_chars = static_cast<esp_adc_cal_characteristics_t *>(calloc(1, sizeof(esp_adc_cal_characteristics_t)));
     esp_adc_cal_characterize(unit, attenuation, ADC_WIDTH_BIT_12, vref, adc_chars);
 
     for (int i = 0; i < numberOfSamples; i++)
