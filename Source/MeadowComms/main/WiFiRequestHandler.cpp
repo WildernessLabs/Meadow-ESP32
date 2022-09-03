@@ -1609,15 +1609,6 @@ esp_err_t WiFiRequestHandler::StartWiFiInterface()
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_ERROR_BIT);
             xEventGroupClearBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTING_BIT);
         }
-        // if (result == ESP_OK)
-        // {
-        //     xEventGroupSetBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTED_BIT);
-        // }
-        // else
-        // {
-        //     xEventGroupSetBits(_xWiFiEventGroup, WIFI_ERROR_BIT);
-        // }
-        // xEventGroupClearBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTING_BIT);
     }
     TRACE_MESSAGE("StartWiFiInterface: Exit");
     return(result);
@@ -3300,7 +3291,7 @@ int WiFiRequestHandler::PollTeardown(void *vpMessage)
     std::map<uint32_t, struct pollfd *>::iterator it = _pollRequests.find(request->SetupMessageId);
     if (it != _pollRequests.end())
     {
-        TRACE_MESSAGE("PollTeardown: Found socket handle for request %08x", request->SetupMessageId);
+        TRACE_MESSAGE("PollTeardown: Found socket handle for request 0x%08x", request->SetupMessageId);
         struct pollfd *fds = static_cast<struct pollfd *>(it->second);
         result = write(fds[WiFiRequestHandler::POLL_DUMMY_FD_INDEX].fd, "E", 1);      // Writing to the dummy file descriptor should end the poll request.
         if (close(fds[WiFiRequestHandler::POLL_DUMMY_FD_INDEX].fd) < 0)
@@ -3539,7 +3530,6 @@ void WiFiRequestHandler::StationConnectedEvent(wifi_event_sta_connected_t *event
 
     xEventGroupClearBits(_xWiFiEventGroup, WIFI_CONNECTING_BIT);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT);
-    RaiseConnectToAccessPointEvent(StatusCodes::CompletedOk);
 
     TRACE_MESSAGE("StationConnectedEvent: Exit");
 }
