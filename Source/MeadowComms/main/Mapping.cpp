@@ -519,7 +519,7 @@ Mapping::~Mapping()
 /**
  *  @brief Convert the specified value for the specified platform.
  *
- *  This method will take a STM constant and convert it into the correspnding ESP
+ *  This method will take a STM constant and convert it into the corresponding ESP
  *  constant (or the reverse depending upon the requested direction).
  *
  *  @param mapping
@@ -565,7 +565,7 @@ int32_t Mapping::GetFlagValue(Mapping::MappingTable mapping, MappingDirection ty
 /**
  *  @brief Convert the specified flags for the specified platform.
  *
- *  This method will take a STM flags and convert it into the correspnding ESP
+ *  This method will take a STM flags and convert it into the corresponding ESP
  *  flags (or the reverse depending upon the requested direction).
  *
  *  Note that this is different from mapping a value as the flags could be an ORed
@@ -601,7 +601,7 @@ int32_t Mapping::GetValue(Mapping::MappingTable mapping, MappingDirection type, 
 /**
  *  @brief Convert the specified flags for the specified platform.
  *
- *  This method will take a STM flags and convert it into the correspnding ESP
+ *  This method will take a STM flags and convert it into the corresponding ESP
  *  flags (or the reverse depending upon the requested direction).
  *
  *  Note that this is different from mapping a value as the flags could be an ORed
@@ -865,7 +865,7 @@ char * Mapping::GetStringValue(Mapping::StringMappingTable mapping, int32_t key)
 {
     str_mapping_t *table = NULL;
     size_t size = 0;
-    char *result = (char *) _unknown;
+    char *result = static_cast<char *>(_unknown);
     switch (mapping)
     {
         case StringMappingTable::StatusCodes:
