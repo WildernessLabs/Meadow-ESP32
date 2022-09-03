@@ -18,7 +18,7 @@
  */
 
 /**
- *  @brief Name of the componet / task for the Thread class.
+ *  @brief Name of the component / task for the Thread class.
  */
 const char *Thread::COMPONENT_NAME = "Thread";
 
