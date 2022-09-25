@@ -3090,7 +3090,7 @@ void WiFiRequestHandler::GetSockPeerName(void *vpMessage, WiFiFunction::WiFiFunc
             Encoders::EncodeSockAddr(sockAddr, response.Addr);
             vPortFree(sockAddr);
             response.ResponseErrno = 0;
-            TRACE_MESSAGE("GetSockPeerName: Socket handle: %d", response.Result);
+            TRACE_MESSAGE("GetSockPeerName: Socket handle: %d", request->SocketHandle);
             TRACE_MESSAGE("GetSockPeerName: Family: %d", sin->sin_family);
             TRACE_MESSAGE("GetSockPeerName: IP address: %s", inet_ntoa(sin->sin_addr));
             TRACE_MESSAGE("GetSockPeerName: Port: %d", ntohs(sin->sin_port));
