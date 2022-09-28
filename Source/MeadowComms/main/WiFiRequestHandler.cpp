@@ -3398,23 +3398,31 @@ void WiFiRequestHandler::Poll(void *vpMessage)
 {
     TRACE_MESSAGE("Poll: Enter");
     Message *message = static_cast<Message *>(vpMessage);
-    Esp32Messaging::PollRequest *request = Encoders::ExtractPollRequest(message->Payload);
     Esp32Messaging::IntegerAndErrnoResponse response = { };
 
-    if (request->Setup == 1)
+    if (IsConnected())
     {
-        response.Result = PollSetup(static_cast<void *>(request));
+        Esp32Messaging::PollRequest *request = Encoders::ExtractPollRequest(message->Payload);
+        if (request->Setup == 1)
+        {
+            response.Result = PollSetup(static_cast<void *>(request));
+        }
+        else
+        {
+            response.Result = PollTeardown(static_cast<void *>(request));
+        }
+
+        if (response.Result < 0)
+        {
+            response.ResponseErrno = MapErrno(errno);
+        }
+        vPortFree(request);
     }
     else
     {
-        response.Result = PollTeardown(static_cast<void *>(request));
-    }
-
-    if (response.Result < 0)
-    {
-        response.ResponseErrno = MapErrno(errno);
-    }
-    vPortFree(request);
+        response.Result = -1;
+        response.ResponseErrno = MapErrno(ENETDOWN);
+    }   
     vPortFree(message->Payload);
 
     message->PayloadLength = Encoders::EncodedIntegerAndErrnoResponseBufferSize(&response);
