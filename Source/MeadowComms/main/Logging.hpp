@@ -173,6 +173,10 @@ public:
 
 private:
     /**
+     * @brief Has the heap tracing system already setup?
+     */
+    static bool _isStandaloneHeapTracingSetup;
+    /**
      *  @brief Has standalone heap tracing been started?
      */
     static bool _isStandaloneHeapTracingActive;
