@@ -61,6 +61,11 @@ Logging::PerformanceCounterEntry *Logging::_performanceCounters[MAX_PERFORMANCE_
 #if defined(CONFIG_HEAP_TRACING_STANDALONE)
 
 /**
+ * @brief Has the heap tracing system already setup?
+ */
+bool Logging::_isStandaloneHeapTracingSetup = false;
+
+/**
  *  @brief Has standalone heap tracing been started?
  */
 bool Logging::_isStandaloneHeapTracingActive = false;
@@ -473,11 +478,15 @@ void Logging::DumpPerformanceCounters()
  */
 void Logging::StandaloneHeapTracingStart()
 {
-    TRACE_MESSAGE_SPECIFY_COMPONENT(APP_MAIN_SPECIFY_COMPONENT, " ");
-    TRACE_MESSAGE_SPECIFY_COMPONENT(APP_MAIN_SPECIFY_COMPONENT, "************************************************************");
-    TRACE_MESSAGE_SPECIFY_COMPONENT(APP_MAIN_SPECIFY_COMPONENT, "                 Heap Logging Turned On");
-    TRACE_MESSAGE_SPECIFY_COMPONENT(APP_MAIN_SPECIFY_COMPONENT, "************************************************************");
-    ESP_ERROR_CHECK(heap_trace_init_standalone(_heapTraceRecords, NUMBER_OF_HEAP_TRACE_RECORDS));
+    TRACE_MESSAGE_SPECIFY_COMPONENT(APP_MAIN_COMPONENT_NAME, " ");
+    TRACE_MESSAGE_SPECIFY_COMPONENT(APP_MAIN_COMPONENT_NAME, "************************************************************");
+    TRACE_MESSAGE_SPECIFY_COMPONENT(APP_MAIN_COMPONENT_NAME, "                 Heap Logging Turned On");
+    TRACE_MESSAGE_SPECIFY_COMPONENT(APP_MAIN_COMPONENT_NAME, "************************************************************");
+    if (!_isStandaloneHeapTracingSetup)
+    {
+        ESP_ERROR_CHECK(heap_trace_init_standalone(_heapTraceRecords, NUMBER_OF_HEAP_TRACE_RECORDS));
+        _isStandaloneHeapTracingSetup = true;
+    }
     ESP_ERROR_CHECK(heap_trace_start(HEAP_TRACE_LEAKS));
     _isStandaloneHeapTracingActive = true;
     _heapEventsRemaining = _heapEventCounterResetValue;
@@ -498,14 +507,14 @@ void Logging::StandaloneHeapTracingStop()
 void Logging::DumpStandaloneHeapTraceData()
 {
     vTaskDelay(2000 / portTICK_PERIOD_MS);
-    TRACE_MESSAGE_SPECIFY_COMPONENT(APP_MAIN_SPECIFY_COMPONENT, " ");
-    TRACE_MESSAGE_SPECIFY_COMPONENT(APP_MAIN_SPECIFY_COMPONENT, "************************************************************");
-    TRACE_MESSAGE_SPECIFY_COMPONENT(APP_MAIN_SPECIFY_COMPONENT, "                   Heap Logging Dump");
+    TRACE_MESSAGE_SPECIFY_COMPONENT(APP_MAIN_COMPONENT_NAME, " ");
+    TRACE_MESSAGE_SPECIFY_COMPONENT(APP_MAIN_COMPONENT_NAME, "************************************************************");
+    TRACE_MESSAGE_SPECIFY_COMPONENT(APP_MAIN_COMPONENT_NAME, "                   Heap Logging Dump");
 
     heap_trace_dump();
 
-    TRACE_MESSAGE_SPECIFY_COMPONENT(APP_MAIN_SPECIFY_COMPONENT, "************************************************************");
-    TRACE_MESSAGE_SPECIFY_COMPONENT(APP_MAIN_SPECIFY_COMPONENT, " ");
+    TRACE_MESSAGE_SPECIFY_COMPONENT(APP_MAIN_COMPONENT_NAME, "************************************************************");
+    TRACE_MESSAGE_SPECIFY_COMPONENT(APP_MAIN_COMPONENT_NAME, " ");
 }
 
 /**
