@@ -1500,7 +1500,7 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
     {
         RaiseConnectToAccessPointEvent(result);
     }
-
+    
     TRACE_MESSAGE("ConnectToAccessPoint: Exit");
 }
 
@@ -3186,6 +3186,7 @@ int WiFiRequestHandler::OpenDummySocket()
     if (getaddrinfo("localhost", "80", &hints, &res) >= 0)
     {
         dummy_socket_fd = socket(res->ai_family, res->ai_socktype, 0);
+        freeaddrinfo(res);
     }
     TRACE_MESSAGE("OpenDummySocket: Exit, result %d", dummy_socket_fd);
 
