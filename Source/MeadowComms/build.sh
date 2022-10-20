@@ -192,8 +192,9 @@ generate_build_info() {
   VERSION_MAJOR=${BUILD_VERSION[0]}
   VERSION_MINOR=${BUILD_VERSION[1]}
   VERSION_REVISION=${BUILD_VERSION[2]}
+  VERSION_BUILD=${BUILD_VERSION[3]}
 
-  VERSION_BUILD=$(get_version_change_distance $1)
+  # VERSION_BUILD=$(get_version_change_distance $1)
 
   echo Calculated version: ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_REVISION}.${VERSION_BUILD} '('${BUILD_GIT_HASH:0-8}/${BUILD_GIT_REF}')'
 
@@ -311,4 +312,5 @@ fi
 git checkout HEAD $scriptdir/main/version.h
 rm $scriptdir/main/version.h.bak
 
+now=$(date +"%T")
 printf "Build of version $VERSION_MAJOR.$VERSION_MINOR.$VERSION_REVISION.$VERSION_BUILD (${BUILD_GIT_HASH:0-8}/$BUILD_GIT_REF) finished at $now\n"
