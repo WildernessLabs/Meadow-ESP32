@@ -197,8 +197,7 @@ generate_build_info() {
 
   echo Calculated version: ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_REVISION}.${VERSION_BUILD} '('${BUILD_GIT_HASH:0-8}/${BUILD_GIT_REF}')'
 
-  git checkout HEAD $scriptdir/nuttx/configs/stm32f777zit6-meadow/scripts/user-space.ld
-  git checkout HEAD $scriptdir/nuttx/include/meadow/hcom_nuttx_shared.h
+  git checkout HEAD $scriptdir/main/version.h
 
   #
   # Get the date / time components in UTC format.
@@ -229,6 +228,8 @@ generate_build_info() {
 
   printf " ${green}success${reset}\n"
 }
+
+generate_build_info
 
 #
 #   Enter the configuration system for the application.  This takes care
