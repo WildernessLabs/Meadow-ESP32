@@ -39,7 +39,7 @@ struct meadow_version_s
     uint8_t year;
     uint8_t hour;
     uint8_t minute;
-    uint8_t year;
+    uint8_t secod;
     uint32_t hash;
     char *branch_name;
 };
