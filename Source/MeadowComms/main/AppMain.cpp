@@ -28,14 +28,14 @@ meadow_version_t g_application_version =
     .minor = VERSION_MINOR,
     .revision = VERSION_REVISION,
     .build = VERSION_BUILD,
-    .dey = VERSION_DAY,
-    .month = VERSION_MONTH,
-    .year = VERSION_YEAR,
-    .hour = VERSION_HOUR,
-    .minute = VERSION_MONTH,
-    .second = VERSION_SECOND,
+    .day = VERSION_BUILD_DAY,
+    .month = VERSION_BUILD_MONTH,
+    .year = VERSION_BUILD_YEAR,
+    .hour = VERSION_BUILD_HOUR,
+    .minute = VERSION_BUILD_MONTH,
+    .second = VERSION_BUILD_SECOND,
     .hash = VERSION_BUILD_HASH_NUMBER,
-    .branch_name = VERSION_GIT_REF
+    .branch_name = (char *) VERSION_GIT_REF
 };
 
 //

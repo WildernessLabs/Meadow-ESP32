@@ -28,19 +28,74 @@
 #define VERSION_FORMAT_STRING "%d.%d.%d.%d, built %02d %s 20%02d %02d:%02d:%02d UTC (0x%08x/%s)"
 #define VERSION_FULL_OS_VERSION "###VERSION_MAJOR###.###VERSION_MINOR###.###VERSION_REVISION###.###VERSION_BUILD### built ###BUILD_TWO_DIGIT_DAY### ###BUILD_MONTH_NAME### 20###BUILD_YEAR### ###BUILD_TWO_DIGIT_HOUR###:###BUILD_TWO_DIGIT_MINUTE###:###BUILD_TWO_DIGIT_SECOND### UTC (###BUILD_HASH###/###BUILD_GIT_REF###)"
 
+/**
+ * @brief Structure to hold the version information for the system.
+ * 
+ * Build number is of the format:
+ * 
+ *      major.minor.revision.build built dd MMM yyy hh:MM:ss UTC (git hash/branch)
+ */
 struct meadow_version_s
 {
+    /**
+     * @brief Major part of the build number.
+     * 
+     */
     uint32_t major;
+
+    /**
+     * @brief Minor part of the version number.
+     */
     uint32_t minor;
+
+    /**
+     * @brief Revision part of the version number.
+     */
     uint32_t revision;
+
+    /**
+     * @brief Build component of the version number.
+     */
     uint32_t build;
+
+    /**
+     * @brief Day part of the build time.
+     */
     uint8_t day;
+
+    /**
+     * @brief Month part of the build time.
+     */
     uint8_t month;
+
+    /**
+     * @brief Year part of the build time.
+     */
     uint8_t year;
+
+    /**
+     * @brief Hour part of the build time.
+     */
     uint8_t hour;
+
+    /**
+     * @brief Minute part of the build time.
+     */
     uint8_t minute;
+
+    /**
+     * @brief Second part of the build time.
+     */
     uint8_t second;
+
+    /**
+     * @brief Has of the current commit.
+     */
     uint32_t hash;
+
+    /**
+     * @brief Name of the branch for this build.
+     */
     char *branch_name;
 };
 typedef struct meadow_version_s meadow_version_t;
