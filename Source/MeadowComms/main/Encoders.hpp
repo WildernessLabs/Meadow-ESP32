@@ -32,15 +32,27 @@ namespace Esp32Messaging
 {
     struct SystemConfiguration
     {
-        char * SoftwareVersion;
         uint8_t MaximumMessageQueueLength;
         int32_t MaximumRetryCount;
         uint8_t Antenna;
         uint8_t BoardMacAddress[6];
         uint8_t SoftApMacAddress[6];
+        uint8_t BluetoothMacAddress[6];
         char * DeviceName;
         char * DefaultAccessPoint;
         uint8_t ResetReason;
+        uint32_t VersionMajor;
+        uint32_t VersionMinor;
+        uint32_t VersionRevision;
+        uint32_t VersionBuild;
+        uint8_t BuildDay;
+        uint8_t BuildMonth;
+        uint8_t BuildYear;
+        uint8_t BuildHour;
+        uint8_t BuildMinute;
+        uint8_t BuildSecond;
+        uint32_t BuildHash;
+        char * BuildBranchName;
     };
 
     struct ConfigurationValue
