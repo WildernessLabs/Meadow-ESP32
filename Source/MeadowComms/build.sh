@@ -296,6 +296,11 @@ fi
 #
 #   If we get here then we have stuff to do so fire up the build system.
 #
+#   First thing, delete the object file containing the version information so
+#   we always get an updated version number and build time.
+#
+find . -name "AppMain.*.obj" -exec rm {} \;
+
 if ! $NO_BUILD; then
     IDF_FLAGS="build $IDF_FLAGS"
 fi

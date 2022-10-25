@@ -1,5 +1,8 @@
 
 #include "Encoders.hpp"
+
+
+#include "Encoders.hpp"
 #include "Logging.hpp"
 #include "SpiTransportProvider.hpp"
 
@@ -514,8 +517,6 @@ void Encoders::EncodeMessage(Message *message, uint8_t *buffer, bool headerOnly)
 // cppcheck-suppress unusedFunction symbolName=EncodeSystemConfiguration
 void Encoders::EncodeSystemConfiguration(Esp32Messaging::SystemConfiguration *systemConfiguration, uint8_t *buffer)
 {
-    EncodeString(systemConfiguration->SoftwareVersion, buffer);
-    buffer += StringLength(systemConfiguration->SoftwareVersion) + 1;
     *buffer = systemConfiguration->MaximumMessageQueueLength;
     buffer += 1;
     EncodeInt32(systemConfiguration->MaximumRetryCount, buffer);
@@ -526,11 +527,37 @@ void Encoders::EncodeSystemConfiguration(Esp32Messaging::SystemConfiguration *sy
     buffer += 6;
     memcpy((void *) buffer, (void *) systemConfiguration->SoftApMacAddress, 6);
     buffer += 6;
+    memcpy((void *) buffer, (void *) systemConfiguration->BluetoothMacAddress, 6);
+    buffer += 6;
     EncodeString(systemConfiguration->DeviceName, buffer);
     buffer += StringLength(systemConfiguration->DeviceName) + 1;
     EncodeString(systemConfiguration->DefaultAccessPoint, buffer);
     buffer += StringLength(systemConfiguration->DefaultAccessPoint) + 1;
     *buffer = systemConfiguration->ResetReason;
+    buffer += 1;
+    EncodeUInt32(systemConfiguration->VersionMajor, buffer);
+    buffer += 4;
+    EncodeUInt32(systemConfiguration->VersionMinor, buffer);
+    buffer += 4;
+    EncodeUInt32(systemConfiguration->VersionRevision, buffer);
+    buffer += 4;
+    EncodeUInt32(systemConfiguration->VersionBuild, buffer);
+    buffer += 4;
+    *buffer = systemConfiguration->BuildDay;
+    buffer += 1;
+    *buffer = systemConfiguration->BuildMonth;
+    buffer += 1;
+    *buffer = systemConfiguration->BuildYear;
+    buffer += 1;
+    *buffer = systemConfiguration->BuildHour;
+    buffer += 1;
+    *buffer = systemConfiguration->BuildMinute;
+    buffer += 1;
+    *buffer = systemConfiguration->BuildSecond;
+    buffer += 1;
+    EncodeUInt32(systemConfiguration->BuildHash, buffer);
+    buffer += 4;
+    EncodeString(systemConfiguration->BuildBranchName, buffer);
 }
 
 /**
@@ -546,10 +573,10 @@ void Encoders::EncodeSystemConfiguration(Esp32Messaging::SystemConfiguration *sy
 int Encoders::EncodedSystemConfigurationBufferSize(Esp32Messaging::SystemConfiguration *systemConfiguration)
 {
     int result = 0;
-    result += Encoders::StringLength(systemConfiguration->SoftwareVersion);
     result += Encoders::StringLength(systemConfiguration->DeviceName);
     result += Encoders::StringLength(systemConfiguration->DefaultAccessPoint);
-    return(result + 22);
+    result += Encoders::StringLength(systemConfiguration->BuildBranchName);
+    return(result + 54);
 }
 
 /**
@@ -569,8 +596,6 @@ Esp32Messaging::SystemConfiguration *Encoders::ExtractSystemConfiguration(uint8_
 {
     Esp32Messaging::SystemConfiguration *systemConfiguration = (Esp32Messaging::SystemConfiguration *) pvPortMalloc(sizeof(Esp32Messaging::SystemConfiguration));
 
-    systemConfiguration->SoftwareVersion = ExtractString(buffer);
-    buffer += Encoders::StringLength(systemConfiguration->SoftwareVersion) + 1;
     systemConfiguration->MaximumMessageQueueLength = *buffer;
     buffer += 1;
     systemConfiguration->MaximumRetryCount = ExtractInt32(buffer);
@@ -581,11 +606,37 @@ Esp32Messaging::SystemConfiguration *Encoders::ExtractSystemConfiguration(uint8_
     buffer += 6;
     memcpy((void *) systemConfiguration->SoftApMacAddress, (void *) buffer, 6);
     buffer += 6;
+    memcpy((void *) systemConfiguration->BluetoothMacAddress, (void *) buffer, 6);
+    buffer += 6;
     systemConfiguration->DeviceName = ExtractString(buffer);
     buffer += Encoders::StringLength(systemConfiguration->DeviceName) + 1;
     systemConfiguration->DefaultAccessPoint = ExtractString(buffer);
     buffer += Encoders::StringLength(systemConfiguration->DefaultAccessPoint) + 1;
     systemConfiguration->ResetReason = *buffer;
+    buffer += 1;
+    systemConfiguration->VersionMajor = ExtractUInt32(buffer);
+    buffer += 4;
+    systemConfiguration->VersionMinor = ExtractUInt32(buffer);
+    buffer += 4;
+    systemConfiguration->VersionRevision = ExtractUInt32(buffer);
+    buffer += 4;
+    systemConfiguration->VersionBuild = ExtractUInt32(buffer);
+    buffer += 4;
+    systemConfiguration->BuildDay = *buffer;
+    buffer += 1;
+    systemConfiguration->BuildMonth = *buffer;
+    buffer += 1;
+    systemConfiguration->BuildYear = *buffer;
+    buffer += 1;
+    systemConfiguration->BuildHour = *buffer;
+    buffer += 1;
+    systemConfiguration->BuildMinute = *buffer;
+    buffer += 1;
+    systemConfiguration->BuildSecond = *buffer;
+    buffer += 1;
+    systemConfiguration->BuildHash = ExtractUInt32(buffer);
+    buffer += 4;
+    systemConfiguration->BuildBranchName = ExtractString(buffer);
     return(systemConfiguration);
 }
 

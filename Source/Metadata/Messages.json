@@ -5,15 +5,27 @@
             "Name": "SystemConfiguration",
             "MessageElements":
             [
-                { "Name": "SoftwareVersion", "DataType": "string" },
                 { "Name": "MaximumMessageQueueLength", "DataType": "byte" },
                 { "Name": "MaximumRetryCount", "DataType": "int" },
                 { "Name": "Antenna", "DataType": "byte" },
                 { "Name": "BoardMacAddress", "DataType": "fixedbytearray", "Length": "6" },
                 { "Name": "SoftApMacAddress", "DataType": "fixedbytearray", "Length": "6" },
+                { "Name": "BluetoothMacAddress", "DataType": "fixedbytearray", "Length": "6" },
                 { "Name": "DeviceName", "DataType": "string" },
                 { "Name": "DefaultAccessPoint", "DataType": "string" },
-                { "Name": "ResetReason", "DataType": "byte"}
+                { "Name": "ResetReason", "DataType": "byte"},
+                { "Name": "VersionMajor", "DataType": "uint32" },
+                { "Name": "VersionMinor", "DataType": "uint32" },
+                { "Name": "VersionRevision", "DataType": "uint32" },
+                { "Name": "VersionBuild", "DataType": "uint32" },
+                { "Name": "BuildDay", "DataType": "byte" },
+                { "Name": "BuildMonth", "DataType": "byte" },
+                { "Name": "BuildYear", "DataType": "byte" },
+                { "Name": "BuildHour", "DataType": "byte" },
+                { "Name": "BuildMinute", "DataType": "byte" },
+                { "Name": "BuildSecond", "DataType": "byte" },
+                { "Name": "BuildHash", "DataType": "uint32" },
+                { "Name": "BuildBranchName", "DataType": "string" }
             ]
         },
         {
