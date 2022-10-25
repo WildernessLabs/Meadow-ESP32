@@ -11,21 +11,38 @@
 
 #include <stdlib.h>
 
-#define VERSION_MAJOR VERSION_MAJOR_VALUE
-#define VERSION_MINOR VERSION_MINOR_VALUE
-#define VERSION_REVISION VERSION_REVISION_VALUE
-#define VERSION_BUILD VERSION_BUILD_VALUE
-#define VERSION_BUILD_DAY BUILD_DAY_VALUE
-#define VERSION_BUILD_MONTH BUILD_MONTH_VALUE
-#define VERSION_BUILD_MONTH_NAME "BUILD_MONTH_NAME_VALUE"
-#define VERSION_BUILD_YEAR BUILD_YEAR_VALUE
-#define VERSION_BUILD_HOUR BUILD_HOUR_VALUE
-#define VERSION_BUILD_MINUTE BUILD_MINUTE_VALUE
-#define VERSION_BUILD_SECOND BUILD_SECOND_VALUE
-#define VERSION_BUILD_HASH "BUILD_HASH_VALUE"
-#define VERSION_BUILD_HASH_NUMBER BUILD_HASH_VALUE
-#define VERSION_GIT_REF "BUILD_GIT_REF_VALUE"
-#define VERSION_FORMAT_STRING "%d.%d.%d.%d, built %02d %s 20%02d %02d:%02d:%02d UTC (0x%08x/%s)"
+
+// #define VERSION_MAJOR               ###VERSION_MAJOR###
+// #define VERSION_MINOR               ###VERSION_MINOR###
+// #define VERSION_REVISION            ###VERSION_REVISION###
+// #define VERSION_BUILD               ###VERSION_BUILD###
+// #define VERSION_BUILD_DAY           ###BUILD_DAY###
+// #define VERSION_BUILD_MONTH         ###BUILD_MONTH###
+// #define VERSION_BUILD_MONTH_NAME    "###BUILD_MONTH_NAME###"
+// #define VERSION_BUILD_YEAR          ###BUILD_YEAR###
+// #define VERSION_BUILD_HOUR          ###BUILD_HOUR###
+// #define VERSION_BUILD_MINUTE        ###BUILD_MINUTE###
+// #define VERSION_BUILD_SECOND        ###BUILD_SECOND###
+// #define VERSION_BUILD_HASH          "###BUILD_HASH###"
+// #define VERSION_BUILD_HASH_NUMBER   ###BUILD_HASH###
+// #define VERSION_GIT_REF             "###BUILD_GIT_REF###"
+
+
+#define VERSION_MAJOR               ###VERSION_MAJOR###
+#define VERSION_MINOR               ###VERSION_MINOR###
+#define VERSION_REVISION            ###VERSION_REVISION###
+#define VERSION_BUILD               ###VERSION_BUILD###
+#define VERSION_BUILD_DAY           ###BUILD_DAY###
+#define VERSION_BUILD_MONTH         ###BUILD_MONTH###
+#define VERSION_BUILD_MONTH_NAME    "###BUILD_MONTH_NAME###"
+#define VERSION_BUILD_YEAR          ###BUILD_YEAR###
+#define VERSION_BUILD_HOUR          ###BUILD_HOUR###
+#define VERSION_BUILD_MINUTE        ###BUILD_MINUTE###
+#define VERSION_BUILD_SECOND        ###BUILD_SECOND###
+#define VERSION_BUILD_HASH          "###BUILD_HASH###"
+#define VERSION_BUILD_HASH_NUMBER   ###BUILD_HASH###
+#define VERSION_GIT_REF             "###BUILD_GIT_REF###"
+#define VERSION_FORMAT_STRING       "%d.%d.%d.%d, built %02d %s 20%02d %02d:%02d:%02d UTC (0x%08x/%s)"
 
 /**
  * @brief Structure to hold the version information for the system.
