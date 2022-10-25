@@ -13,6 +13,7 @@
 #define ESPCP_CRC32_SEED 0xffffffff
 
 uint32_t espcp_calculate_spi_buffer_size(uint32_t);
+uint32_t espcp_encoded_packet_size(espcp_message_t *, bool);
 uint16_t espcp_extract_uint16(uint8_t *);
 void espcp_encode_uint16(uint16_t, uint8_t *);
 uint32_t espcp_extract_uint32(uint8_t *);

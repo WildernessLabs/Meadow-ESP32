@@ -9,6 +9,7 @@
 #include "nvs_flash.h"
 #include "esp_ota_ops.h"
 #include "esp_heap_caps.h"
+#include "version.h"
 
 #include "AppMain.hpp"
 #include "NvsManager.hpp"
@@ -17,6 +18,25 @@
 #include "SpiTransportProvider.hpp"
 #include "WiFiRequestHandler.hpp"
 #include "SpiTransportProvider.hpp"
+
+/**
+ * @brief global variable holding the system build information.
+ */
+meadow_version_t g_application_version = 
+{
+    .major = VERSION_MAJOR,
+    .minor = VERSION_MINOR,
+    .revision = VERSION_REVISION,
+    .build = VERSION_BUILD,
+    .day = VERSION_BUILD_DAY,
+    .month = VERSION_BUILD_MONTH,
+    .year = VERSION_BUILD_YEAR,
+    .hour = VERSION_BUILD_HOUR,
+    .minute = VERSION_BUILD_MINUTE,
+    .second = VERSION_BUILD_SECOND,
+    .hash = VERSION_BUILD_HASH_NUMBER,
+    .branch_name = (char *) VERSION_GIT_REF
+};
 
 //
 //  Checks to see if TRACE or DEBUG is turned on and issues a warning if they are.

@@ -155,6 +155,83 @@ check_command_status() {
   fi
 }
 
+get_git_commit_hash() {
+  REPO_PATH=$1
+  echo `git -C $REPO_PATH rev-parse HEAD`
+}
+
+get_git_branch_or_tag() {
+  REPO_PATH=$1
+  echo `git -C $REPO_PATH describe --tags --exact-match 2> /dev/null || git -C $REPO_PATH symbolic-ref -q --short HEAD`
+}
+
+get_version_change_distance() {
+  REPO_PATH=$1
+  origin=$(git log -n 1 --oneline $scriptdir/version.txt  | cut -f 1 -d " ")
+  distance=$(git log --oneline ${origin}..HEAD | wc -l)
+  echo $distance
+}
+
+inject_value() {
+  KEY=$1
+  VALUE=$(eval echo '${'$KEY'}')
+  FILE=$2
+  sed -i.bak 's/###'${KEY}'###/'${VALUE}'/g' $FILE
+}
+
+generate_build_info() {
+  printf "Generating build info..."
+
+  BUILD_GIT_HASH=$(get_git_commit_hash $scriptdir)
+  BUILD_GIT_REF=$(get_git_branch_or_tag $scriptdir)
+
+  git checkout HEAD $scriptdir/version.txt
+
+  read -r BUILD_VERSION_STRING<$scriptdir/version.txt || true
+  IFS='.' read -ra BUILD_VERSION <<< "$BUILD_VERSION_STRING"
+  VERSION_MAJOR=${BUILD_VERSION[0]}
+  VERSION_MINOR=${BUILD_VERSION[1]}
+  VERSION_REVISION=${BUILD_VERSION[2]}
+  VERSION_BUILD=${BUILD_VERSION[3]}
+
+  # VERSION_BUILD=$(get_version_change_distance $1)
+
+  echo Calculated version: ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_REVISION}.${VERSION_BUILD} '('${BUILD_GIT_HASH:0-8}/${BUILD_GIT_REF}')'
+
+  git checkout HEAD $scriptdir/main/version.h
+
+  #
+  # Get the date / time components in UTC format.
+  #
+  # These macros may look odd but the date foramtting can return date componets in the form
+  # 00, 01, 02 etc and these when compiled are taken as octal numbers.  This means 09 is an
+  # invalid number for the compiler so it it is necessary to remove the leading 0 and put it
+  # back when formatting the date/time output for the user.
+  #
+  BUILD_DAY=$((10#`date -u +"%d"`))
+  BUILD_TWO_DIGIT_DAY=`date -u +"%d"`
+  BUILD_MONTH=$((10#`date -u +"%m"`))
+  BUILD_TWO_DIGIT_MONTH=`date -u +"%m"`
+  BUILD_MONTH_NAME=`date -u +"%b"`
+  BUILD_YEAR=$((10#`date -u +"%y"`))
+  BUILD_HOUR=$((10#`date -u +"%H"`))
+  BUILD_TWO_DIGIT_HOUR=`date -u +"%H"`
+  BUILD_MINUTE=$((10#`date -u +"%M"`))
+  BUILD_TWO_DIGIT_MINUTE=`date -u +"%M"`
+  BUILD_SECOND=$((10#`date -u +"%S"`))
+  BUILD_TWO_DIGIT_SECOND=`date -u +"%S"`
+  BUILD_HASH="0x${BUILD_GIT_HASH:0-8}"
+
+  for s in $(echo VERSION_MAJOR VERSION_MINOR VERSION_REVISION VERSION_BUILD BUILD_DAY BUILD_TWO_DIGIT_DAY BUILD_MONTH BUILD_TWO_DIGIT_MONTH BUILD_MONTH_NAME BUILD_YEAR BUILD_HOUR BUILD_TWO_DIGIT_HOUR HOUR BUILD_MINUTE BUILD_TWO_DIGIT_MINUTE BUILD_SECOND BUILD_TWO_DIGIT_SECOND BUILD_HASH BUILD_GIT_REF)
+  do
+    inject_value $s $scriptdir/main/version.h
+  done
+
+  printf " ${green}success${reset}\n"
+}
+
+generate_build_info
+
 #
 #   Enter the configuration system for the application.  This takes care
 #   of the fact that we have a default configuration system and makes sure
@@ -219,6 +296,11 @@ fi
 #
 #   If we get here then we have stuff to do so fire up the build system.
 #
+#   First thing, delete the object file containing the version information so
+#   we always get an updated version number and build time.
+#
+find . -name "AppMain.*.obj" -exec rm {} \;
+
 if ! $NO_BUILD; then
     IDF_FLAGS="build $IDF_FLAGS"
 fi
@@ -232,4 +314,8 @@ if [ $? -eq 0 ]; then
   fi
 fi
 
-echo "Build finished!"
+git checkout HEAD $scriptdir/main/version.h
+rm $scriptdir/main/version.h.bak
+
+now=$(date +"%T")
+printf "Build of version $VERSION_MAJOR.$VERSION_MINOR.$VERSION_REVISION.$VERSION_BUILD (${BUILD_GIT_HASH:0-8}/$BUILD_GIT_REF) finished at $now\n"
