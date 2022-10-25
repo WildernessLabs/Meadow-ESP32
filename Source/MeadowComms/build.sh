@@ -176,7 +176,7 @@ inject_value() {
   KEY=$1
   VALUE=$(eval echo '${'$KEY'}')
   FILE=$2
-  sed -i.bak 's/###'${KEY}'###/'${VALUE}'/g' $FILE
+  sed -i.bak 's/'${KEY}'_VALUE/'${VALUE}'/g' $FILE
 }
 
 generate_build_info() {
