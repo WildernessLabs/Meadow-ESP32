@@ -28,6 +28,7 @@
 #include "MessageDispatcher.hpp"
 #include "Exceptions/MultipleInstancesException.hpp"
 #include "Mapping.hpp"
+#include "version.h"
 
 /*
  * ----------------------------------------------------------------------------
@@ -432,19 +433,27 @@ void SystemRequestHandler::PopulateConfiguration(Esp32Messaging::SystemConfigura
     memset(config, 0, sizeof(Esp32Messaging::SystemConfiguration));
     esp_reset_reason_t resetReason = esp_reset_reason();
     Mapping::GetStmValue(Mapping::ResetReasons, resetReason, (int8_t *) &config->ResetReason);
-    const esp_app_desc_t *applicationDescription = esp_ota_get_app_description();
-    //
-    //  TODO: Future enhancement - send this data to the STM32.
-    //
-    // const char *compiledAt = applicationDescription->time;
-    // const char *compiledOn = applicationDescription->date;
-    config->SoftwareVersion = const_cast<char *>(applicationDescription->version);
     config->Antenna = WiFiRequestHandler::GetAntenna();
     config->MaximumRetryCount = WiFiRequestHandler::GetMaximumRetryCount();
     config->DefaultAccessPoint = WiFiRequestHandler::GetDefaultAccessPoint();
     config->DeviceName = GetDeviceName();
+    config->VersionMajor = g_application_version.major;
+    config->VersionMinor = g_application_version.minor;
+    config->VersionRevision = g_application_version.revision;
+    config->VersionBuild = g_application_version.build;
+    config->BuildDay = g_application_version.day;
+    config->BuildMonth = g_application_version.month;
+    config->BuildYear = g_application_version.year;
+    config->BuildHour = g_application_version.hour;
+    config->BuildMinute = g_application_version.minute;
+    config->BuildSecond = g_application_version.second;
+    config->BuildHash = g_application_version.hash;
+    config->BuildBranchName = g_application_version.branch_name;
     WiFiRequestHandler::GetMacAddress(config->BoardMacAddress, WIFI_IF_STA);
     WiFiRequestHandler::GetMacAddress(config->SoftApMacAddress, WIFI_IF_AP);
+    //
+    //  Bluetooth MAC address will be zeroed from the memset above.
+    //
     
     TRACE_MESSAGE("PopulateConfiguration: Exit");
 }
