@@ -5,7 +5,7 @@ pool: WL-Linux
 
 steps:
 - script: git clean -xfd
-- script: docker run --rm -v $PWD:/project -w /project espressif/idf:release-v4.2 idf.py ./build.sh --build
+- script: docker run --rm -v $PWD:/project -w /project espressif/idf:release-v4.2 ./build.sh --build
 - task: CopyFiles@2
   inputs:
     contents: |
