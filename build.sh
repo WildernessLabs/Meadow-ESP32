@@ -230,8 +230,9 @@ generate_build_info() {
 
   for s in $(echo VERSION_MAJOR VERSION_MINOR VERSION_REVISION VERSION_BUILD BUILD_DAY BUILD_TWO_DIGIT_DAY BUILD_MONTH BUILD_TWO_DIGIT_MONTH BUILD_MONTH_NAME BUILD_YEAR BUILD_HOUR BUILD_TWO_DIGIT_HOUR HOUR BUILD_MINUTE BUILD_TWO_DIGIT_MINUTE BUILD_SECOND BUILD_TWO_DIGIT_SECOND BUILD_HASH BUILD_GIT_REF)
   do
-    inject_value $s $scriptdir/Source/MeadowComms/main/version.h
+    inject_value $s $scriptdir/Source/MeadowComms/main/build_info.template
   done
+   cp $scriptdir/Source/MeadowComms/main/build_info.template $scriptdir/Source/MeadowComms/main/build_info.h
 
   printf " ${green}success${reset}\n"
 }
@@ -320,8 +321,8 @@ if [ $? -eq 0 ]; then
   fi
 fi
 
-git checkout HEAD $scriptdir/Source/MeadowComms/main/version.h
-rm $scriptdir/Source/MeadowComms/main/version.h.bak
+git checkout HEAD $scriptdir/Source/MeadowComms/main/build_info.template
+rm $scriptdir/Source/MeadowComms/main/build_info.template.bak
 
 now=$(date +"%T")
 printf "Build of version $VERSION_MAJOR.$VERSION_MINOR.$VERSION_REVISION.$VERSION_BUILD (${BUILD_GIT_HASH:0-8}:$BUILD_GIT_REF) finished at $now\n"
