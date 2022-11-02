@@ -684,6 +684,18 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetWiFiTimeout(uint32_t value)
  */
 
 /**
+ * @brief Get a pointer to this instance of the WiFiRequest Handler object.
+ * 
+ *  Note: There should be only one instance of this object in the system.
+ * 
+ * @return Pointer the this instance of the WiFiRequest handler.
+ */
+WiFiRequestHandler *WiFiRequestHandler::GetInstance()
+{
+    return(_instance);
+}
+
+/**
  *  @brief Clear the IP and disconnect data.
  */
 void WiFiRequestHandler::ClearIpAndDisconnectData()
@@ -885,12 +897,10 @@ void WiFiRequestHandler::EventHandlerHelper(esp_event_base_t eventBase, int32_t 
                 xEventGroupSetBits(_xWiFiEventGroup, WIFI_SCAN_COMPLETE_BIT);
                 break;
             case WIFI_EVENT_STA_START:
-                TRACE_MESSAGE("EventHandlerHelper: WIFI_EVENT_STA_START");
-                StationStartedEvent();
+                TRACE_MESSAGE("EventHandlerHelper: WIFI_EVENT_STA_START - No action taken");
                 break;
             case WIFI_EVENT_STA_STOP:
-                TRACE_MESSAGE("EventHandlerHelper: WIFI_EVENT_STA_STOP");
-                StationStoppedEvent();
+                TRACE_MESSAGE("EventHandlerHelper: WIFI_EVENT_STA_STOP - No action taken");
                 break;
             case WIFI_EVENT_STA_CONNECTED:
                 TRACE_MESSAGE("EventHandlerHelper: WIFI_EVENT_STA_CONNECTED");
@@ -1143,6 +1153,24 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
 }
 
 /**
+ * @brief Prepare the WiFi interface for deep sleep.
+ */
+StatusCodes::StatusCodes WiFiRequestHandler::PrepareForDeepSleep()
+{
+    TRACE_MESSAGE("PrepareForDeepSleep(): Enter");
+
+    WiFiRequestHandler *wifiHandler = WiFiRequestHandler::GetInstance();
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
+    if (wifiHandler != NULL)
+    {
+        result = wifiHandler->StopWiFIAdapter();
+    }
+    return(result);
+
+    TRACE_MESSAGE("PrepareForDeepSleep(): Enter");
+}
+
+/**
  *  @brief Stop the WiFi adapter.
  */
 StatusCodes::StatusCodes WiFiRequestHandler::StopWiFIAdapter()
@@ -1357,6 +1385,8 @@ bool WiFiRequestHandler::IsConnected()
  */
 StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const char *ssid, const char *password)
 {
+    TRACE_MESSAGE("ConnectToAccessPoint: access point %s, password %s", ssid, password);
+
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
 
     EventBits_t bits = xEventGroupGetBits(_xWiFiEventGroup);
@@ -1449,7 +1479,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const char *ss
             }
         }
     }
-    TRACE_MESSAGE("Result %d", result);
+    TRACE_MESSAGE("%s: result %d", __func__, result);
     return(result);
 }
 
