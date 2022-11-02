@@ -91,3 +91,4 @@ Source/MeadowComms/sdkconfig
 *.pdb
 
 __pycache__/
+Source/MeadowComms/main/build_info.h
