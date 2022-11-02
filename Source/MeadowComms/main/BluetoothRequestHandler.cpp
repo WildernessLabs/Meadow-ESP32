@@ -20,6 +20,7 @@
 
 #include "Logging.hpp"
 #include "Encoders.hpp"
+#include "Mapping.hpp"
 #include "Exceptions/MultipleInstancesException.hpp"
 
 #define CHAR_DECLARATION_SIZE   (sizeof(uint8_t))
@@ -239,38 +240,6 @@ void BluetoothRequestHandler::EventHandlerHelper(esp_event_base_t eventBase, int
 {
     TRACE_MESSAGE("EventHandlerHelper: Enter with base %s and id 0x%x", eventBase, eventId);
 
-    //     {
-    //         case WIFI_EVENT_WIFI_READY:
-    //             ESP_LOGI(__func__, "WiFi Ready");
-    //             break;
-
-    // if (eventBase == WIFI_EVENT)
-    // {
-    //     switch (eventId)
-    //     {
-    //         case WIFI_EVENT_WIFI_READY:
-    //             ESP_LOGI(__func__, "WiFi Ready");
-    //             break;
-    //         case WIFI_EVENT_SCAN_DONE:
-    //             ESP_LOGI(__func__, "Scan for access points complete");
-    //             xEventGroupSetBits(_xWiFiEventGroup, WIFI_SCAN_COMPLETE_BIT);
-    //             break;
-    //         case WIFI_EVENT_STA_START:
-    //             ESP_LOGI(__func__, "Station started");
-    //             xEventGroupSetBits(_xWiFiEventGroup, WIFI_STATION_STARTED_BIT);
-    //             break;
-    //         case WIFI_EVENT_STA_STOP:
-    //             ESP_LOGI(__func__, "Station stopped");
-    //             break;
-    //         case WIFI_EVENT_STA_CONNECTED:
-    //             ESP_LOGI(__func__, "Station connected to access point");
-    //             break;
-    //         case WIFI_EVENT_STA_DISCONNECTED:
-    //             StationDisconnectedEvent(nullptr);
-    //             break;
-    //     }
-    // }
-
     TRACE_MESSAGE("EventHandlerHelper: Exit");
 }
 
@@ -308,6 +277,24 @@ void BluetoothRequestHandler::EventHandler(void *arg, esp_event_base_t eventBase
     sender->EventHandlerHelper(eventBase, eventId, eventData);
 
     TRACE_MESSAGE("EventHandler: Exit");
+}
+
+/**
+ * @brief Prepare the Bluetooth interface for deep sleep.
+ */
+StatusCodes::StatusCodes BluetoothRequestHandler::PrepareForDeepSleep()
+{
+    TRACE_MESSAGE("PrepareForDeepSleep(): Enter");
+
+    BluetoothRequestHandler *bluetoothHandler = BluetoothRequestHandler::GetInstance();
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
+    if (bluetoothHandler != NULL)
+    {
+        result = bluetoothHandler->TeardownStack(nullptr);
+    }
+    return(result);
+
+    TRACE_MESSAGE("PrepareForDeepSleep(): Enter");
 }
 
 void BluetoothRequestHandler::StartStack()
@@ -400,20 +387,23 @@ void BluetoothRequestHandler::StartStack()
     TRACE_MESSAGE("StartStack: Exit");
 }
 
-void BluetoothRequestHandler::TeardownStack(Message *msg)
+/**
+ * @brief Teardown the bluetooth stack by turning off the bluetooth adapter.
+ * 
+ * @param msg
+ * 
+ * @return StatusCodes::StatusCodes
+ *          Result of turning off the bluetooth stack.
+ */
+StatusCodes::StatusCodes BluetoothRequestHandler::TeardownStack(Message *msg)
 {
     TRACE_MESSAGE("TeardownStack: Enter");
 
-    esp_err_t ret;
+    esp_err_t result = esp_bt_controller_disable();
 
-    ret = esp_bt_controller_disable();
-    if (ret)
-    {
-        ERROR_MESSAGE("esp_bt_controller_disable failed %i\n", ret);
-        return;
-    }
+    TRACE_MESSAGE("TeardownStack(): Exit, ESP error code %d (%s)", result, esp_err_to_name(result));
 
-    TRACE_MESSAGE("TeardownStack: Exit");
+    return(Mapping::GetStatusCode(result));
 }
 
 void BluetoothRequestHandler::OnDataWriteRequest(uint16_t handle, uint8_t* data, uint16_t dataLength)
