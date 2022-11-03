@@ -172,11 +172,17 @@ get_version_change_distance() {
   echo $distance
 }
 
+sedFriendly() {
+  result=$(echo $1 | sed -r 's/([\$\.\*\/\[\\^])/\\\1/g'|sed 's/[]]/\[]]/g')
+  echo $result
+}
+
 inject_value() {
   KEY=$1
   VALUE=$(eval echo '${'$KEY'}')
+  REPLACEMENT=$(sedFriendly $VALUE)
   FILE=$2
-  sed -i.bak 's/###'${KEY}'###/'${VALUE}'/g' $FILE
+  sed -i.bak 's/###'${KEY}'###/'${REPLACEMENT}'/g' $FILE
 }
 
 generate_build_info() {
@@ -196,7 +202,7 @@ generate_build_info() {
 
   # VERSION_BUILD=$(get_version_change_distance $1)
 
-  echo Calculated version: ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_REVISION}.${VERSION_BUILD} '('${BUILD_GIT_HASH:0-8}/${BUILD_GIT_REF}')'
+  echo Calculated version: ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_REVISION}.${VERSION_BUILD} '('${BUILD_GIT_HASH:0-8}:${BUILD_GIT_REF}')'
 
   git checkout HEAD $scriptdir/Source/MeadowComms/main/version.h
 
@@ -224,8 +230,9 @@ generate_build_info() {
 
   for s in $(echo VERSION_MAJOR VERSION_MINOR VERSION_REVISION VERSION_BUILD BUILD_DAY BUILD_TWO_DIGIT_DAY BUILD_MONTH BUILD_TWO_DIGIT_MONTH BUILD_MONTH_NAME BUILD_YEAR BUILD_HOUR BUILD_TWO_DIGIT_HOUR HOUR BUILD_MINUTE BUILD_TWO_DIGIT_MINUTE BUILD_SECOND BUILD_TWO_DIGIT_SECOND BUILD_HASH BUILD_GIT_REF)
   do
-    inject_value $s $scriptdir/Source/MeadowComms/main/version.h
+    inject_value $s $scriptdir/Source/MeadowComms/main/build_info.template
   done
+   cp $scriptdir/Source/MeadowComms/main/build_info.template $scriptdir/Source/MeadowComms/main/build_info.h
 
   printf " ${green}success${reset}\n"
 }
@@ -314,8 +321,8 @@ if [ $? -eq 0 ]; then
   fi
 fi
 
-git checkout HEAD $scriptdir/Source/MeadowComms/main/version.h
-rm $scriptdir/Source/MeadowComms/main/version.h.bak
+git checkout HEAD $scriptdir/Source/MeadowComms/main/build_info.template
+rm $scriptdir/Source/MeadowComms/main/build_info.template.bak
 
 now=$(date +"%T")
-printf "Build of version $VERSION_MAJOR.$VERSION_MINOR.$VERSION_REVISION.$VERSION_BUILD (${BUILD_GIT_HASH:0-8}/$BUILD_GIT_REF) finished at $now\n"
+printf "Build of version $VERSION_MAJOR.$VERSION_MINOR.$VERSION_REVISION.$VERSION_BUILD (${BUILD_GIT_HASH:0-8}:$BUILD_GIT_REF) finished at $now\n"
