@@ -82,9 +82,9 @@ private:
     void GetConfiguration(Message *);
 
     /**
-     *  @brief Set the system configuration.
+     *  @brief Set a system configuration item.
      */
-    void SetConfiguration(Message *);
+    void SetConfigurationItem(Message *);
 
     /**
      *  @brief Put the ESP32 into deep sleep.

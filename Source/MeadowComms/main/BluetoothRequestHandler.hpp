@@ -26,6 +26,7 @@
 #include "Esp32Messaging.hpp"
 #include "Encoders.hpp"
 #include "MessageDispatcher.hpp"
+#include "SharedEnums.hpp"
 
 #include "bluetooth/BluetoothManager.hpp"
 
@@ -98,7 +99,8 @@ private:
 
     void StartStack();
     void GetHandles(Message *request);
-    void TeardownStack(Message *msg);
+
+    StatusCodes::StatusCodes TeardownStack(Message *msg);
 
     void CreateAttributeGraph(Message *msg);
 
@@ -140,6 +142,11 @@ public:
      *  have access to the class level variables, not just the static variable.
      */
     static void EventHandler(void *, esp_event_base_t, int32_t, void *);
+
+    /**
+     * @brief Prepare the Bluetooth interface for deep sleep.
+     */
+    static StatusCodes::StatusCodes PrepareForDeepSleep();
 
     static void GAPEventHandler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param);
     static void GATTSProfileEventHandler(esp_gatts_cb_event_t, esp_gatt_if_t, esp_ble_gatts_cb_param_t *);

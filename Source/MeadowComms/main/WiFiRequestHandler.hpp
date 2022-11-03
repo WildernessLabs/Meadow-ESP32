@@ -443,6 +443,13 @@ private:
      */
 
     /**
+     * @brief Get the _instance object
+     * 
+     * @return WiFiRequestHandler* 
+     */
+    static WiFiRequestHandler *GetInstance();
+
+    /**
      *  @brief This method will dispatch incoming messages to the appropriate request handler.
      */
     void DispatchRequest(Message *request) override;
@@ -600,11 +607,6 @@ private:
      *  @brief Processes the station disconnected event (WIFI_EVENT_STA_DISCONNECTED).
      */
     void StationDisconnectedEvent(wifi_event_sta_disconnected_t *);
-
-    /**
-     *  @brief Scan for access points has completed (WIFI_EVENT_SCAN_DONE).
-     */
-    void ScanCompletEvent(wifi_event_sta_scan_done_t *);
 
     /**
      *  @brief Process the change in authentication mode event (WIFI_EVENT_STA_AUTHMODE_CHANGE).
@@ -778,6 +780,11 @@ public:
      *  within the class.
      */
     static void EventHandler(void *arg, esp_event_base_t eventBase, int32_t eventId, void *eventData);
+
+    /**
+     * @brief Prepare the WiFi interface for deep sleep.
+     */
+    static StatusCodes::StatusCodes PrepareForDeepSleep();
 
     /**
      *  @brief Get / Set the maximum number of retry attempts.

@@ -17,6 +17,7 @@
 #include "esp_wifi.h"
 #include "driver/adc.h"
 #include "esp_adc_cal.h"
+#include "esp_sleep.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -27,6 +28,8 @@
 #include "SystemRequestHandler.hpp"
 #include "MessageDispatcher.hpp"
 #include "Exceptions/MultipleInstancesException.hpp"
+#include "WiFiRequestHandler.hpp"
+#include "BluetoothRequestHandler.hpp"
 #include "Mapping.hpp"
 #include "version.h"
 
@@ -511,7 +514,7 @@ void SystemRequestHandler::GetConfiguration(Message *request)
  *  @param request
  *      Message containing the new configuration value.
  */
-void SystemRequestHandler::SetConfiguration(Message *request)
+void SystemRequestHandler::SetConfigurationItem(Message *request)
 {
     TRACE_MESSAGE("SetConfigurationItem: Enter");
     Esp32Messaging::ConfigurationValue *value = Encoders::ExtractConfigurationValue(request->Payload);
@@ -576,7 +579,9 @@ void SystemRequestHandler::SetConfiguration(Message *request)
  *  @brief Put the system into deep sleep.
  *
  *  This is one of the few messages that will not send a response to the
- *  STM32.  The ESP32 will simply go to sleep.
+ *  STM32.  The ESP32 will simply go to sleep with no wakeup sources and
+ *  so the only way to wake up the ESP32 will be to reset the chip hence
+ *  no need to dispose of any data in memory.
  *
  *  @param request
  *      Message requesting the ESP32 got to sleep.
@@ -584,7 +589,14 @@ void SystemRequestHandler::SetConfiguration(Message *request)
 void SystemRequestHandler::DeepSleep(Message *request)
 {
     TRACE_MESSAGE("DeepSleep: Enter");
-    TRACE_MESSAGE("DeepSleep not implemented");
+
+    TRACE_MESSAGE("Turning off wireless devices.");
+    WiFiRequestHandler::PrepareForDeepSleep();
+    BluetoothRequestHandler::PrepareForDeepSleep();
+
+    TRACE_MESSAGE("Entering deep sleep");
+    esp_deep_sleep_start();
+
     TRACE_MESSAGE("DeepSleep: Exit");
 }
 
@@ -684,9 +696,10 @@ void SystemRequestHandler::DispatchRequest(Message *request)
             GetConfiguration(request);
             break;
         case SystemFunction::SetConfigurationItem:
-            SetConfiguration(request);
+            SetConfigurationItem(request);
             break;
         case SystemFunction::DeepSleep:
+            DeepSleep(request);
             break;
         case SystemFunction::GetBatteryChargeLevel:
             GetBatteryChargeLevel(request);
