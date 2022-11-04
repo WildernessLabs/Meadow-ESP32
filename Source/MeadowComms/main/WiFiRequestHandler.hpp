@@ -497,11 +497,6 @@ private:
     StatusCodes::StatusCodes StopWiFIAdapter();
 
     /**
-     *  @brief Stop the WiFi Adapter in response to a request from a .NET application.
-     */
-    void StopWiFIAdapter(Message *message);
-
-    /**
      *  @brief Disconnect from any access points.
      */
     StatusCodes::StatusCodes DisconnectFromAccessPoint();
@@ -536,12 +531,6 @@ private:
      *  as either an access point (softAP) or as a network device (station).
      */
     esp_err_t StartWiFiInterface();
-
-    /**
-     *  @brief Start the network interface ready for the device to be configured
-     *  as either an access point (softAP) or as a network device (station).
-     */
-    void StartWiFiInterface(Message *message);
 
     /**
      *  @brief Get a list of available access points.
