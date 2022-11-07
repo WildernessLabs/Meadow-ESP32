@@ -897,10 +897,12 @@ void WiFiRequestHandler::EventHandlerHelper(esp_event_base_t eventBase, int32_t 
                 xEventGroupSetBits(_xWiFiEventGroup, WIFI_SCAN_COMPLETE_BIT);
                 break;
             case WIFI_EVENT_STA_START:
-                TRACE_MESSAGE("EventHandlerHelper: WIFI_EVENT_STA_START - No action taken");
+                TRACE_MESSAGE("EventHandlerHelper: WIFI_EVENT_STA_START");
+                StationStartedEvent();
                 break;
             case WIFI_EVENT_STA_STOP:
-                TRACE_MESSAGE("EventHandlerHelper: WIFI_EVENT_STA_STOP - No action taken");
+                TRACE_MESSAGE("EventHandlerHelper: WIFI_EVENT_STA_STOP");
+                StationStoppedEvent();
                 break;
             case WIFI_EVENT_STA_CONNECTED:
                 TRACE_MESSAGE("EventHandlerHelper: WIFI_EVENT_STA_CONNECTED");
@@ -3462,6 +3464,39 @@ void WiFiRequestHandler::StationGotIpEvent(ip_event_got_ip_t *eventData)
     xEventGroupClearBits(_xWiFiEventGroup, WIFI_CONNECTING_BIT | WIFI_INTERFACE_STARTING_BIT);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_HAVE_IP_BIT);
     TRACE_MESSAGE("StationGotIpEvent: Exit");
+}
+
+/**
+ *  @brief Process the station started event.
+ */
+void WiFiRequestHandler::StationStartedEvent()
+{
+    TRACE_MESSAGE("StationStartedEvent: Enter");
+    _lastIdfErrorCode = tcpip_adapter_set_hostname(TCPIP_ADAPTER_IF_STA, SystemRequestHandler::GetDeviceName());
+    if (_lastIdfErrorCode != ESP_OK)
+    {
+        xEventGroupClearBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTED_BIT | WIFI_INTERFACE_STARTING_BIT | WIFI_CONNECTING_BIT);
+        xEventGroupSetBits(_xWiFiEventGroup, WIFI_ERROR_BIT);
+    }
+    else
+    {
+        xEventGroupClearBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTING_BIT | WIFI_ERROR_BIT);
+        xEventGroupSetBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTED_BIT);
+    }
+    TRACE_MESSAGE("StationStartedEvent: Exit");
+}
+
+/**
+ *  @brief Process the station stopped event.
+ */
+void WiFiRequestHandler::StationStoppedEvent()
+{
+    TRACE_MESSAGE("StationStoppedEvent: Enter");
+
+    _stationNetIfHandle = nullptr;
+    xEventGroupClearBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTED_BIT | WIFI_INTERFACE_STARTING_BIT);
+
+    TRACE_MESSAGE("StationStoppedEvent: Exit");
 }
 
 /**
