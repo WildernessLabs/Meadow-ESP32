@@ -435,15 +435,16 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetDefaultAccessPoint(char *value)
 {
     TRACE_MESSAGE("WiFiRequestHandler::SetDefaultAccessPoint %s", (value == NULL) ? "NULL" : value);
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    char emptyAp = '\0';
+    char emptyAp[1];
 
+    *emptyAp = 0;
     if (value == NULL)
     {
-        value = &emptyAp;
+        value = emptyAp;
     }
     if (!_defaultAccessPoint)
     {
-        _defaultAccessPoint = strdup(&emptyAp);
+        _defaultAccessPoint = strdup(emptyAp);
     }
 
     if (strcmp(value, _defaultAccessPoint) != 0)
@@ -782,6 +783,7 @@ void WiFiRequestHandler::SwitchAntenna(AntennaTypes::AntennaTypes newAntenna)
 void WiFiRequestHandler::Setup()
 {
     TRACE_MESSAGE("Setup: Enter");
+
     RequestHandlerBase::Setup();
     gpio_set_direction(WiFiRequestHandler::EXTERNAL_ANTENNA_PIN, GPIO_MODE_OUTPUT);
     gpio_set_level(WiFiRequestHandler::EXTERNAL_ANTENNA_PIN, 0);
@@ -789,7 +791,8 @@ void WiFiRequestHandler::Setup()
     gpio_set_level(WiFiRequestHandler::ON_BOARD_ANTENNA_PIN, 1);
 
     SwitchAntenna(static_cast<AntennaTypes::AntennaTypes>(GetAntenna()));
-    /*
+
+    /* 
      *  Now create the objects necessary for the WiFi tasks.
      */
     _xWiFiEventGroup = xEventGroupCreate();
