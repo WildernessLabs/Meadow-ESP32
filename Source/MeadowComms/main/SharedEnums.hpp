@@ -422,7 +422,11 @@ namespace BluetoothFunction
         /// <summary>
         /// BluetoothFunction - ClientWriteRequestEvent
         /// </summary>
-        ClientWriteRequestEvent = 4
+        ClientWriteRequestEvent = 4,
+        /// <summary>
+        /// BluetoothFunction - ErrorEvent
+        /// </summary>
+        ErrorEvent = 5
     };
 
 }
