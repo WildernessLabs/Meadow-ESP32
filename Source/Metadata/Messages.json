@@ -46,11 +46,14 @@
             ]
         },
         { 
-            "Name": "WiFiCredentials",
+            "Name": "AccessPointInformation",
             "MessageElements":
             [
                 { "Name": "NetworkName", "DataType": "string" },
-                { "Name": "Password", "DataType": "string" }
+                { "Name": "Password", "DataType": "string" },
+                { "Name": "IpAddress", "DataType": "uint32" },
+                { "Name": "SubnetMask", "DataType": "uint32" },
+                { "Name": "Gateway", "DataType": "uint32" }
             ]
         },
         { 

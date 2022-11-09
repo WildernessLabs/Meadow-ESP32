@@ -509,7 +509,7 @@ private:
     /**
      *  @brief Connect to the specified access point starting the network interface if necessary.
      */
-    StatusCodes::StatusCodes ConnectToAccessPoint(const char *ssid, const char *password);
+    StatusCodes::StatusCodes ConnectToAccessPoint(const Esp32Messaging::AccessPointInformation *accessPointInformation);
 
     /**
      *  @brief Connect to an access point.
@@ -530,7 +530,7 @@ private:
      *  @brief Start the network interface ready for the device to be configured
      *  as either an access point (softAP) or as a network device (station).
      */
-    esp_err_t StartWiFiInterface();
+    esp_err_t StartWiFiInterface(const Esp32Messaging::AccessPointInformation *accessPointInformation);
 
     /**
      *  @brief Get a list of available access points.
