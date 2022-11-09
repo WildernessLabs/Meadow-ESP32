@@ -70,10 +70,13 @@ namespace Esp32Messaging
         uint8_t *ErrorData;
     };
 
-    struct WiFiCredentials
+    struct AccessPointInformation
     {
         char * NetworkName;
         char * Password;
+        uint32_t IpAddress;
+        uint32_t SubnetMask;
+        uint32_t Gateway;
     };
 
     struct DisconnectFromAccessPointRequest
@@ -464,9 +467,9 @@ public:
     static void EncodeErrorEvent(Esp32Messaging::ErrorEvent *, uint8_t *);
     static int EncodedErrorEventBufferSize(Esp32Messaging::ErrorEvent *);
     static Esp32Messaging::ErrorEvent *ExtractErrorEvent(uint8_t *);
-    static void EncodeWiFiCredentials(Esp32Messaging::WiFiCredentials *, uint8_t *);
-    static int EncodedWiFiCredentialsBufferSize(Esp32Messaging::WiFiCredentials *);
-    static Esp32Messaging::WiFiCredentials *ExtractWiFiCredentials(uint8_t *);
+    static void EncodeAccessPointInformation(Esp32Messaging::AccessPointInformation *, uint8_t *);
+    static int EncodedAccessPointInformationBufferSize(Esp32Messaging::AccessPointInformation *);
+    static Esp32Messaging::AccessPointInformation *ExtractAccessPointInformation(uint8_t *);
     static void EncodeDisconnectFromAccessPointRequest(Esp32Messaging::DisconnectFromAccessPointRequest *, uint8_t *);
     static int EncodedDisconnectFromAccessPointRequestBufferSize(Esp32Messaging::DisconnectFromAccessPointRequest *);
     static Esp32Messaging::DisconnectFromAccessPointRequest *ExtractDisconnectFromAccessPointRequest(uint8_t *);
