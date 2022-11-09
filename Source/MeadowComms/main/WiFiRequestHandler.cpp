@@ -1596,29 +1596,6 @@ esp_err_t WiFiRequestHandler::StartWiFiInterface()
 }
 
 /**
- *  @brief Process the request to start the WiFi network interface.
- *
- *  This will only start the WiFi interface, it will not connect to an access
- *  point.  Also, this will only operate in station mode at the moment.
- *
- *  @param message
- *      Request sent from the STM32.
- */
-// void WiFiRequestHandler::StartWiFiInterface(Message *message)
-// {
-//     TRACE_MESSAGE("StartNetwork: Enter");
-//     message->MessageType = MessageTypes::Response;
-//     StatusCodes::StatusCodes sc = (StartWiFiInterface() == ESP_OK) ? StatusCodes::CompletedOk : StatusCodes::Failure;
-//     message->StatusCode = sc;
-//     _messageDispatcher->QueueMessageForStm32(message);
-//     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
-
-//     RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::StartWiFiInterfaceEvent, sc);
-
-//     TRACE_MESSAGE("StartNetwork: Exit");
-// }
-
-/**
  *  @brief Get the full list of available networks.
  *
  *  @pre
@@ -2067,9 +2044,6 @@ void WiFiRequestHandler::GetSockOpt(void *vpMessage)
         }
         if (errorCode == 0)
         {
-            // response.Result = 0;
-            // response.ResponseErrno = 0;
-            // response.OptionValue = NULL;
             Esp32Messaging::TimeVal esp_tv = { };
             Esp32Messaging::Linger esp_lv = { };
             Esp32Messaging::IntegerResponse esp_iv = { };
