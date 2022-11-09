@@ -902,6 +902,7 @@ void WiFiRequestHandler::EventHandlerHelper(esp_event_base_t eventBase, int32_t 
             case WIFI_EVENT_STA_START:
                 TRACE_MESSAGE("EventHandlerHelper: WIFI_EVENT_STA_START");
                 StationStartedEvent();
+                esp_wifi_connect();
                 break;
             case WIFI_EVENT_STA_STOP:
                 TRACE_MESSAGE("EventHandlerHelper: WIFI_EVENT_STA_STOP");
@@ -1336,7 +1337,7 @@ bool WiFiRequestHandler::IsConnected()
  */
 StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const char *ssid, const char *password)
 {
-    TRACE_MESSAGE("ConnectToAccessPoint: access point %s, password %s", ssid, password);
+    TRACE_MESSAGE("ConnectToAccessPoint: Access point %s, password '%s'", ssid, password == nullptr ? "" : password);
 
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
 
@@ -1383,7 +1384,6 @@ StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const char *ss
         {
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_CONNECTING_BIT);
             wifi_config_t wifi_config = { };
-            wifi_config.sta.threshold.authmode = WIFI_AUTH_WPA2_PSK;
             wifi_config.sta.pmf_cfg =
             {
                 .capable = true,
