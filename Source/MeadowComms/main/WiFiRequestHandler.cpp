@@ -867,6 +867,34 @@ void WiFiRequestHandler::RaiseConnectToAccessPointEvent(StatusCodes::StatusCodes
 }
 
 /**
+ * @brief Raise an error event for the WiFi interface.
+ * 
+ * @param statusCode Status code
+ * 
+ * @param payload Payload for the error event.
+ * 
+ * @param payloadLength Length of the payload.
+ */
+void WiFiRequestHandler::RaiseErrorEvent(StatusCodes::StatusCodes statusCode, uint8_t *payload, uint32_t payloadLength)
+{
+    TRACE_MESSAGE("RaiseErrorEvent: Enter");
+
+    if (!payload || (payloadLength == 0))
+    {
+        payload = NULL;
+        payloadLength = 0;
+    }
+
+    Message *message = Message::CreateOnHeap(MessageTypes::Event, Esp32Interfaces::WiFi, WiFiFunction::ErrorEvent, statusCode, _messageDispatcher->GetNextMessageID(), payload, payloadLength);
+    if (message != NULL)
+    {
+        _messageDispatcher->QueueMessageForStm32(message);
+    }
+
+    TRACE_MESSAGE("RaiseErrorEvent: Exit");
+}
+
+/**
  *  @brief Event loop for the IDF WiFi system.
  *
  *  Perform the actual event loop handling on behalf of the static method set up for the
@@ -1450,6 +1478,19 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
 
     Esp32Messaging::AccessPointInformation *accessPointInformation = Encoders::ExtractAccessPointInformation(message->Payload);
     message->DeletePayload();
+
+    //
+    //  Check if the IP address is non-zero, in this case the application is configured for a static IP.
+    //  Static IP addresses must have a valid subnet mask and gateway address set.
+    //
+    if (accessPointInformation->IpAddress != 0)
+    {
+        if ((accessPointInformation->SubnetMask == 0) || (accessPointInformation->Gateway == 0))
+        {
+            result = StatusCodes::InvalidIp;
+            RaiseErrorEvent(result, nullptr, 0);
+        }
+    }
 
     result = ConnectToAccessPoint(accessPointInformation);
     vPortFree(accessPointInformation);
