@@ -490,6 +490,11 @@ private:
     void RaiseConnectToAccessPointEvent(StatusCodes::StatusCodes);
 
     /**
+     *  @brief Raise the ErrorEvent for the managed code.
+     */
+    void RaiseErrorEvent(StatusCodes::StatusCodes statusCode, uint8_t *payload, uint32_t payloadLength);
+
+    /**
      *  @brief Stop the WiFi Adapter.
      * 
      *  This request could come from an explicit stop request of from a disconnect request.
