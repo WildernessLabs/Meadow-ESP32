@@ -42,11 +42,11 @@
           "Comment": "WiFi functions available on the ESP32",
           "BaseDataType": "UInt32",
           "EnumNames": [
-              "ConnectToAccessPoint", "ConnectToDefaultAccessPoint", "ClearDefaultAccessPoint", "DisconnectFromAccessPoint",
+              "StartWiFiInterface", "StopWiFiInterface", "ConnectToAccessPoint", "ConnectToDefaultAccessPoint", "ClearDefaultAccessPoint", "DisconnectFromAccessPoint",
               "GetAccessPoints", "SetAntenna",
               "Socket", "Connect", "Write", "SetSockOpt", "GetSockOpt", "Read", "Close", "SendTo", "RecvFrom", "Poll", "InterruptPollResponse", "Send", "Bind", "Listen", "Accept", "Ioctl",
               "GetSockName", "GetPeerName", "FreeAddrInfo", "GetAddrInfo", "RecvMsg", "Shutdown", "SendMsg", "Dup2", "AddRef", "SockCaps",
-              "NetworkConnectedEvent", "NetworkDisconnectedEvent", "ErrorEvent", "NtpUpdateEvent"
+              "StartWiFiInterfaceEvent", "StopWiFiInterfaceEvent", "NetworkConnectedEvent", "NetworkDisconnectedEvent", "NtpUpdateEvent", "ErrorEvent"
           ]
         },
         {
@@ -55,7 +55,7 @@
           "Comment": "Bluetooth functions available on the ESP32",
           "BaseDataType": "UInt32",
           "EnumNames": [
-              "Start", "Stop", "GetHandles", "ServerDataSet", "ClientWriteRequestEvent", "ErrorEvent"
+              "Start", "Stop", "GetHandles", "ServerDataSet", "ClientWriteRequestEvent"
           ]
         },
         {

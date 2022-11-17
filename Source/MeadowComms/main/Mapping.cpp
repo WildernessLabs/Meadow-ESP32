@@ -75,6 +75,19 @@ Mapping::int_mapping_t Mapping::_socketOptions[] =
 };
 
 /**
+ *  @brief Map the STM32 TCP options to ESP32 TCP options.
+ *
+ *  STM value is first, ESP value second.
+ */
+Mapping::int_mapping_t Mapping::_tcpOptions[] =
+{
+    { 0x10, TCP_NODELAY },
+    { 0x11, TCP_KEEPIDLE },
+    { 0x12, TCP_KEEPINTVL },
+    { 0x13, TCP_KEEPCNT }
+};
+
+/**
  *  @brief Map the STM32 protocol family codes to ESP32 protocol family code.
  *
  *  STM value is first, ESP value second.
@@ -105,7 +118,9 @@ Mapping::int_mapping_t Mapping::_socketTypes[] =
  */
 Mapping::int_mapping_t Mapping::_socketLevels[] =
 {
-    { 0, SOL_SOCKET }
+    { 0, SOL_SOCKET },
+    { 3, IPPROTO_TCP },
+    { 6, IPPROTO_TCP }
 };
 
 /**
@@ -643,6 +658,10 @@ int32_t Mapping::GetValue(Mapping::MappingTable mapping, MappingDirection type, 
         case MappingTable::SocketLevel:
             table = _socketLevels;
             size = sizeof(_socketLevels);
+            break;
+        case MappingTable::TCPOptions:
+            table = _tcpOptions;
+            size = sizeof(_tcpOptions);
             break;
         case MappingTable::Errno:
             table = _errno;

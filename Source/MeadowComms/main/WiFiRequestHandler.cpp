@@ -2202,6 +2202,156 @@ void WiFiRequestHandler::GetSockOpt(void *vpMessage)
 }
 
 /**
+ * @brief Extract an encoded integer setsockopt option value.
+ * 
+ * @param data 
+ *      Source of the socket option data (the option value).
+ * 
+ * @param length
+ *      Pointer to a socklen_t object to take the length of the extracted option value.
+ * 
+ * @return uint8_t* 
+ *      Pointer to the extracted option value (integer) or NULL if there was a problem.
+ */
+uint8_t *WiFiRequestHandler::ExtractIntegerSocketOptionValue(uint8_t *data, socklen_t *length)
+{
+    uint8_t *result = NULL;
+
+    if (length != NULL)
+    {
+        *length = 0;
+        if (data != NULL)
+        {
+            int *intVal = reinterpret_cast<int *>(pvPortMalloc(sizeof(int)));
+            if (intVal != NULL)
+            {
+                *intVal = Encoders::ExtractInt32(data);
+                *length = sizeof(intVal);
+            }
+            result = reinterpret_cast<uint8_t *>(intVal);
+        }
+    }
+
+    return(result);
+}
+
+/**
+ * @brief Setup the socket value and length for calls to SetSockOpt.
+ * 
+ * @param name
+ *      Name of the option to decode.
+ * 
+ * @param optionValue
+ *      Pointer to the source data.
+ * 
+ * @param length
+ *      Pointer to a socklen_t object to take the length of the option value.
+ * 
+ * @return uint8_t *
+ *      Pointer the the decoded option value.
+ */
+uint8_t *WiFiRequestHandler::GetSocketOptionValue(int name, uint8_t *optionValue, socklen_t *length)
+{
+    TRACE_MESSAGE("GetSocketOptionValue: Enter");
+
+    uint8_t *result = NULL;
+    if (length != NULL)
+    {
+        switch (name)
+        {
+            case SO_SNDTIMEO:       /* Set the send timeout */
+            case SO_RCVTIMEO:       /* Set the receive timeout */
+                {
+                    struct timeval *value = reinterpret_cast<struct timeval *>(pvPortMalloc(sizeof(struct timeval)));
+                    if (value != NULL)
+                    {
+                        Esp32Messaging::TimeVal *tv = Encoders::ExtractTimeVal(optionValue);
+                        value->tv_sec = tv->TvSec;
+                        value->tv_usec = tv->TvUsec;
+                        vPortFree(tv);
+                        result = reinterpret_cast<uint8_t *>(value);
+                        *length = sizeof(struct timeval);
+                    }
+                }
+                break;
+            case SO_REUSEADDR:      /* Reuse local addresses when binding */
+            case SO_RCVBUF:         /* Set the receive buffer size */
+                result = ExtractIntegerSocketOptionValue(optionValue, length);
+                break;
+            case SO_LINGER:         /* Linger on close if data present */
+                TRACE_MESSAGE("SetSockOpt: Implement SO_LINGER");
+                break;
+            case SO_ACCEPTCONN:     /* Socket has had listen() */
+                TRACE_MESSAGE("SetSockOpt: Implement SO_ACCEPTCONN");
+                break;
+            case SO_DONTLINGER:     /* Don't linger on close if data present */
+                TRACE_MESSAGE("SetSockOpt: Implement SO_DONTLINGER");
+                break;
+            case SO_ERROR:          /* Get error status and clear */
+                TRACE_MESSAGE("SetSockOpt: Implement SO_ERROR");
+                break;
+            case SO_TYPE:           /* Get socket type */
+                TRACE_MESSAGE("SetSockOpt: Implement SO_TYPE");
+                break;
+            case SO_NO_CHECK:       /* Don't create UDP checksum */
+                TRACE_MESSAGE("SetSockOpt: Implement SO_NO_CHECK");
+                break;
+            case SO_BROADCAST:
+                TRACE_MESSAGE("SetSockOpt: Implement SO_BROADCAST");
+                break;
+            case SO_KEEPALIVE:
+                TRACE_MESSAGE("SetSockOpt: Implement SO_KEEPALIVE");
+                break;
+            default:
+                break;
+        }
+    }
+
+    TRACE_MESSAGE("GetSocketOptionValue: Exit");
+
+    return(result);
+}
+
+/**
+ * @brief Setup the TCP value and length for calls to SetSockOpt.
+ * 
+ * @param name
+ *      Name of the option to decode.
+ * 
+ * @param optionValue
+ *      Pointer to the source data.
+ * 
+ * @param length
+ *      Pointer to a socklen_t object to take the length of the option value.
+ * 
+ * @return uint8_t *
+ *      Pointer the the decoded option value.
+ */
+uint8_t *WiFiRequestHandler::GetTcpOptionValue(int name, uint8_t *optionValue, socklen_t *length)
+{
+    TRACE_MESSAGE("GetTcpOptionValue: Enter");
+
+    uint8_t *result = NULL;
+
+    if (length != NULL)
+    {
+        switch (name)
+        {
+            case TCP_NODELAY:
+                result = ExtractIntegerSocketOptionValue(optionValue, length);
+                break;
+            default:
+                *length = 0;
+                break;
+        }
+    }
+
+    TRACE_MESSAGE("GetTcpOptionValue: Exit");
+
+    return(result);
+}
+
+/**
  *  @brief Expose the POSIX setsockopt method to the STM32.
  *
  *  @param message
@@ -2219,75 +2369,41 @@ void WiFiRequestHandler::SetSockOpt(void *vpMessage)
     if (IsConnected())
     {
         void *optionValue = nullptr;
-        struct timeval timeOut;
-        int intVal = 0;
-        int32_t errorCode = 0;
+        int32_t errorCode = ENOPROTOOPT;
 
-        int32_t optionName = 0;
-        if (Mapping::GetEspValue(Mapping::SocketOptions, request->OptionName, &optionName) < 0)
+        socklen_t optionLength = 0;
+        int32_t level = 0;
+
+        if (Mapping::GetEspValue(Mapping::SocketLevel, request->Level, &level) < 0)
         {
-            TRACE_MESSAGE("SetSockOpt: Unknown option: 0x%x", request->OptionName);
-            errorCode = ENOPROTOOPT;
+            TRACE_MESSAGE("SetSockOpt: Unknown level: 0x%x", request->Level);
         }
         else
         {
-            int optionLength = 0;
-            errno = 0;
-            switch (optionName)
+            int32_t optionName = 0;
+            if (Mapping::GetEspValue(level == SOL_SOCKET ? Mapping::SocketOptions : Mapping::TCPOptions, request->OptionName, &optionName) < 0)
             {
-                case SO_SNDTIMEO:       /* Set the send timeout */
-                case SO_RCVTIMEO:       /* Set the receive timeout */
-                    {
-                        Esp32Messaging::TimeVal *tv = Encoders::ExtractTimeVal(request->OptionValue);
-                        timeOut.tv_sec = tv->TvSec;
-                        timeOut.tv_usec = tv->TvUsec;
-                        vPortFree(tv);
-                        optionValue = &timeOut;
-                        optionLength = sizeof(timeOut);
-                    }
+                TRACE_MESSAGE("SetSockOpt: Unknown option name: 0x%x", request->OptionName);
+            }
+
+            switch (level)
+            {
+                case SOL_SOCKET:
+                    optionValue = GetSocketOptionValue(optionName, request->OptionValue, &optionLength);
                     break;
-                case SO_REUSEADDR:      /* Reuse local addresses when binding */
-                case SO_RCVBUF:         /* Set the receive buffer size */
-                    intVal = Encoders::ExtractInt32(request->OptionValue);
-                    optionValue = &intVal;
-                    optionLength = sizeof(intVal);
-                    break;
-                case SO_LINGER:         /* Linger on close if data present */
-                    TRACE_MESSAGE("SetSockOpt: Implement SO_LINGER");
-                    break;
-                case SO_ACCEPTCONN:     /* Socket has had listen() */
-                    TRACE_MESSAGE("SetSockOpt: Implement SO_ACCEPTCONN");
-                    break;
-                case SO_DONTLINGER:     /* Don't linger on close if data present */
-                    TRACE_MESSAGE("SetSockOpt: Implement SO_DONTLINGER");
-                    break;
-                case SO_ERROR:          /* Get error status and clear */
-                    TRACE_MESSAGE("SetSockOpt: Implement SO_ERROR");
-                    break;
-                case SO_TYPE:           /* Get socket type */
-                    TRACE_MESSAGE("SetSockOpt: Implement SO_TYPE");
-                    break;
-                case SO_NO_CHECK:       /* Don't create UDP checksum */
-                    TRACE_MESSAGE("SetSockOpt: Implement SO_NO_CHECK");
-                    break;
-                case SO_BROADCAST:
-                    TRACE_MESSAGE("SetSockOpt: Implement SO_BROADCAST");
-                    break;
-                case SO_KEEPALIVE:
-                    TRACE_MESSAGE("SetSockOpt: Implement SO_KEEPALIVE");
-                    break;
+                case IPPROTO_TCP:
+                    optionValue = GetTcpOptionValue(optionName, request->OptionValue, &optionLength);
+                    break;   
                 default:
-                    response.Result = -1;
-                    errorCode = ENOPROTOOPT;
+                    TRACE_MESSAGE("SetSockOpt: Cannot process option level: 0x%x", request->Level);
                     break;
             }
-            if (errorCode == 0)
+            if (optionValue != NULL)
             {
-                int32_t level = 0;
-                Mapping::GetEspValue(Mapping::SocketLevel, request->Level, &level);
                 TRACE_MESSAGE("SetSockOpt: Setting socket option level to 0x%x, option name 0x%x for socket %d", level, optionName, request->SocketHandle);
                 response.Result = setsockopt(request->SocketHandle, level, optionName, optionValue, optionLength);
                 errorCode = errno;
+                vPortFree(optionValue);
             }
         }
 
