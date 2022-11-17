@@ -104,61 +104,65 @@ namespace StatusCodes
         /// </summary>
         InvalidAntennaValue = 19,
         /// <summary>
+        /// StatusCodes - InvalidIp
+        /// </summary>
+        InvalidIp = 20,
+        /// <summary>
         /// StatusCodes - NoMessagesWaiting
         /// </summary>
-        NoMessagesWaiting = 20,
+        NoMessagesWaiting = 21,
         /// <summary>
         /// StatusCodes - CoprocessorNotResponding
         /// </summary>
-        CoprocessorNotResponding = 21,
+        CoprocessorNotResponding = 22,
         /// <summary>
         /// StatusCodes - EspWiFiNotStarted
         /// </summary>
-        EspWiFiNotStarted = 22,
+        EspWiFiNotStarted = 23,
         /// <summary>
         /// StatusCodes - EspOutOfMemory
         /// </summary>
-        EspOutOfMemory = 23,
+        EspOutOfMemory = 24,
         /// <summary>
         /// StatusCodes - EspWiFiInvalidSsid
         /// </summary>
-        EspWiFiInvalidSsid = 24,
+        EspWiFiInvalidSsid = 25,
         /// <summary>
         /// StatusCodes - AccessPointNotFound
         /// </summary>
-        AccessPointNotFound = 25,
+        AccessPointNotFound = 26,
         /// <summary>
         /// StatusCodes - BeaconTimeout
         /// </summary>
-        BeaconTimeout = 26,
+        BeaconTimeout = 27,
         /// <summary>
         /// StatusCodes - AuthenticationFailed
         /// </summary>
-        AuthenticationFailed = 27,
+        AuthenticationFailed = 28,
         /// <summary>
         /// StatusCodes - AssociationFailed
         /// </summary>
-        AssociationFailed = 28,
+        AssociationFailed = 29,
         /// <summary>
         /// StatusCodes - HandshakeTimeout
         /// </summary>
-        HandshakeTimeout = 29,
+        HandshakeTimeout = 30,
         /// <summary>
         /// StatusCodes - ConnectionFailed
         /// </summary>
-        ConnectionFailed = 30,
+        ConnectionFailed = 31,
         /// <summary>
         /// StatusCodes - ApTsfReset
         /// </summary>
-        ApTsfReset = 31,
+        ApTsfReset = 32,
         /// <summary>
         /// StatusCodes - UnmappedErrorCode
         /// </summary>
-        UnmappedErrorCode = 32,
+        UnmappedErrorCode = 33,
         /// <summary>
         /// StatusCodes - UnknownConfigurationItem
         /// </summary>
-        UnknownConfigurationItem = 33
+        UnknownConfigurationItem = 34
     };
 
 }
@@ -249,165 +253,149 @@ namespace WiFiFunction
     enum WiFiFunction : uint32_t
     {
         /// <summary>
-        /// WiFiFunction - StartWiFiInterface
-        /// </summary>
-        StartWiFiInterface = 0,
-        /// <summary>
-        /// WiFiFunction - StopWiFiInterface
-        /// </summary>
-        StopWiFiInterface = 1,
-        /// <summary>
         /// WiFiFunction - ConnectToAccessPoint
         /// </summary>
-        ConnectToAccessPoint = 2,
+        ConnectToAccessPoint = 0,
         /// <summary>
         /// WiFiFunction - ConnectToDefaultAccessPoint
         /// </summary>
-        ConnectToDefaultAccessPoint = 3,
+        ConnectToDefaultAccessPoint = 1,
         /// <summary>
         /// WiFiFunction - ClearDefaultAccessPoint
         /// </summary>
-        ClearDefaultAccessPoint = 4,
+        ClearDefaultAccessPoint = 2,
         /// <summary>
         /// WiFiFunction - DisconnectFromAccessPoint
         /// </summary>
-        DisconnectFromAccessPoint = 5,
+        DisconnectFromAccessPoint = 3,
         /// <summary>
         /// WiFiFunction - GetAccessPoints
         /// </summary>
-        GetAccessPoints = 6,
+        GetAccessPoints = 4,
         /// <summary>
         /// WiFiFunction - SetAntenna
         /// </summary>
-        SetAntenna = 7,
+        SetAntenna = 5,
         /// <summary>
         /// WiFiFunction - Socket
         /// </summary>
-        Socket = 8,
+        Socket = 6,
         /// <summary>
         /// WiFiFunction - Connect
         /// </summary>
-        Connect = 9,
+        Connect = 7,
         /// <summary>
         /// WiFiFunction - Write
         /// </summary>
-        Write = 10,
+        Write = 8,
         /// <summary>
         /// WiFiFunction - SetSockOpt
         /// </summary>
-        SetSockOpt = 11,
+        SetSockOpt = 9,
         /// <summary>
         /// WiFiFunction - GetSockOpt
         /// </summary>
-        GetSockOpt = 12,
+        GetSockOpt = 10,
         /// <summary>
         /// WiFiFunction - Read
         /// </summary>
-        Read = 13,
+        Read = 11,
         /// <summary>
         /// WiFiFunction - Close
         /// </summary>
-        Close = 14,
+        Close = 12,
         /// <summary>
         /// WiFiFunction - SendTo
         /// </summary>
-        SendTo = 15,
+        SendTo = 13,
         /// <summary>
         /// WiFiFunction - RecvFrom
         /// </summary>
-        RecvFrom = 16,
+        RecvFrom = 14,
         /// <summary>
         /// WiFiFunction - Poll
         /// </summary>
-        Poll = 17,
+        Poll = 15,
         /// <summary>
         /// WiFiFunction - InterruptPollResponse
         /// </summary>
-        InterruptPollResponse = 18,
+        InterruptPollResponse = 16,
         /// <summary>
         /// WiFiFunction - Send
         /// </summary>
-        Send = 19,
+        Send = 17,
         /// <summary>
         /// WiFiFunction - Bind
         /// </summary>
-        Bind = 20,
+        Bind = 18,
         /// <summary>
         /// WiFiFunction - Listen
         /// </summary>
-        Listen = 21,
+        Listen = 19,
         /// <summary>
         /// WiFiFunction - Accept
         /// </summary>
-        Accept = 22,
+        Accept = 20,
         /// <summary>
         /// WiFiFunction - Ioctl
         /// </summary>
-        Ioctl = 23,
+        Ioctl = 21,
         /// <summary>
         /// WiFiFunction - GetSockName
         /// </summary>
-        GetSockName = 24,
+        GetSockName = 22,
         /// <summary>
         /// WiFiFunction - GetPeerName
         /// </summary>
-        GetPeerName = 25,
+        GetPeerName = 23,
         /// <summary>
         /// WiFiFunction - FreeAddrInfo
         /// </summary>
-        FreeAddrInfo = 26,
+        FreeAddrInfo = 24,
         /// <summary>
         /// WiFiFunction - GetAddrInfo
         /// </summary>
-        GetAddrInfo = 27,
+        GetAddrInfo = 25,
         /// <summary>
         /// WiFiFunction - RecvMsg
         /// </summary>
-        RecvMsg = 28,
+        RecvMsg = 26,
         /// <summary>
         /// WiFiFunction - Shutdown
         /// </summary>
-        Shutdown = 29,
+        Shutdown = 27,
         /// <summary>
         /// WiFiFunction - SendMsg
         /// </summary>
-        SendMsg = 30,
+        SendMsg = 28,
         /// <summary>
         /// WiFiFunction - Dup2
         /// </summary>
-        Dup2 = 31,
+        Dup2 = 29,
         /// <summary>
         /// WiFiFunction - AddRef
         /// </summary>
-        AddRef = 32,
+        AddRef = 30,
         /// <summary>
         /// WiFiFunction - SockCaps
         /// </summary>
-        SockCaps = 33,
+        SockCaps = 31,
         /// <summary>
-        /// WiFiFunction - StartWiFiInterfaceEvent
+        /// WiFiFunction - NetworkConnectedEvent
         /// </summary>
-        StartWiFiInterfaceEvent = 34,
+        NetworkConnectedEvent = 32,
         /// <summary>
-        /// WiFiFunction - StopWiFiInterfaceEvent
+        /// WiFiFunction - NetworkDisconnectedEvent
         /// </summary>
-        StopWiFiInterfaceEvent = 35,
-        /// <summary>
-        /// WiFiFunction - ConnectToAccessPointEvent
-        /// </summary>
-        ConnectToAccessPointEvent = 36,
-        /// <summary>
-        /// WiFiFunction - DisconnectFromAccessPointEvent
-        /// </summary>
-        DisconnectFromAccessPointEvent = 37,
-        /// <summary>
-        /// WiFiFunction - NtpUpdateEvent
-        /// </summary>
-        NtpUpdateEvent = 38,
+        NetworkDisconnectedEvent = 33,
         /// <summary>
         /// WiFiFunction - ErrorEvent
         /// </summary>
-        ErrorEvent = 39
+        ErrorEvent = 34,
+        /// <summary>
+        /// WiFiFunction - NtpUpdateEvent
+        /// </summary>
+        NtpUpdateEvent = 35
     };
 
 }
@@ -438,7 +426,11 @@ namespace BluetoothFunction
         /// <summary>
         /// BluetoothFunction - ClientWriteRequestEvent
         /// </summary>
-        ClientWriteRequestEvent = 4
+        ClientWriteRequestEvent = 4,
+        /// <summary>
+        /// BluetoothFunction - ErrorEvent
+        /// </summary>
+        ErrorEvent = 5
     };
 
 }

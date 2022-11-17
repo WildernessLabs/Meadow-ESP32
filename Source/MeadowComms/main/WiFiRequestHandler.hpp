@@ -490,16 +490,16 @@ private:
     void RaiseConnectToAccessPointEvent(StatusCodes::StatusCodes);
 
     /**
+     *  @brief Raise the ErrorEvent for the managed code.
+     */
+    void RaiseErrorEvent(StatusCodes::StatusCodes statusCode, uint8_t *payload, uint32_t payloadLength);
+
+    /**
      *  @brief Stop the WiFi Adapter.
      * 
      *  This request could come from an explicit stop request of from a disconnect request.
      */
     StatusCodes::StatusCodes StopWiFIAdapter();
-
-    /**
-     *  @brief Stop the WiFi Adapter in response to a request from a .NET application.
-     */
-    void StopWiFIAdapter(Message *message);
 
     /**
      *  @brief Disconnect from any access points.
@@ -514,7 +514,7 @@ private:
     /**
      *  @brief Connect to the specified access point starting the network interface if necessary.
      */
-    StatusCodes::StatusCodes ConnectToAccessPoint(const char *ssid, const char *password);
+    StatusCodes::StatusCodes ConnectToAccessPoint(const Esp32Messaging::AccessPointInformation *accessPointInformation);
 
     /**
      *  @brief Connect to an access point.
@@ -535,13 +535,7 @@ private:
      *  @brief Start the network interface ready for the device to be configured
      *  as either an access point (softAP) or as a network device (station).
      */
-    esp_err_t StartWiFiInterface();
-
-    /**
-     *  @brief Start the network interface ready for the device to be configured
-     *  as either an access point (softAP) or as a network device (station).
-     */
-    void StartWiFiInterface(Message *message);
+    esp_err_t StartWiFiInterface(const Esp32Messaging::AccessPointInformation *accessPointInformation);
 
     /**
      *  @brief Get a list of available access points.

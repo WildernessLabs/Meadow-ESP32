@@ -10,7 +10,7 @@
                 "CompletedOk", "CrcError", "Restart", "Failure", "InvalidInterface", "QueueError", "Timeout",
                 "InvalidPacket", "InvalidHeader", "UnexpectedData", "MissingEndOfFrameMarker", "HeaderBodyFieldMismatch",
                 "WiFiAlreadyStarted", "InvalidWiFiCredentials", "WiFiDisconnected", "CannotStartNetworkInterface", "CannotConnectToAccessPoint", "DefaultAccessPointNotConfigured",
-                "InvalidAntennaData", "InvalidAntennaValue",
+                "InvalidAntennaData", "InvalidAntennaValue", "InvalidIp",
                 "NoMessagesWaiting", "CoprocessorNotResponding",
                 "EspWiFiNotStarted", "EspOutOfMemory", "EspWiFiInvalidSsid", "AccessPointNotFound", "BeaconTimeout", "AuthenticationFailed",
                 "AssociationFailed", "HandshakeTimeout", "ConnectionFailed", "ApTsfReset",
@@ -42,11 +42,11 @@
           "Comment": "WiFi functions available on the ESP32",
           "BaseDataType": "UInt32",
           "EnumNames": [
-              "StartWiFiInterface", "StopWiFiInterface", "ConnectToAccessPoint", "ConnectToDefaultAccessPoint", "ClearDefaultAccessPoint", "DisconnectFromAccessPoint",
+              "ConnectToAccessPoint", "ConnectToDefaultAccessPoint", "ClearDefaultAccessPoint", "DisconnectFromAccessPoint",
               "GetAccessPoints", "SetAntenna",
               "Socket", "Connect", "Write", "SetSockOpt", "GetSockOpt", "Read", "Close", "SendTo", "RecvFrom", "Poll", "InterruptPollResponse", "Send", "Bind", "Listen", "Accept", "Ioctl",
               "GetSockName", "GetPeerName", "FreeAddrInfo", "GetAddrInfo", "RecvMsg", "Shutdown", "SendMsg", "Dup2", "AddRef", "SockCaps",
-              "StartWiFiInterfaceEvent", "StopWiFiInterfaceEvent", "ConnectToAccessPointEvent", "DisconnectFromAccessPointEvent", "NtpUpdateEvent", "ErrorEvent"
+              "NetworkConnectedEvent", "NetworkDisconnectedEvent", "ErrorEvent", "NtpUpdateEvent"
           ]
         },
         {
@@ -55,7 +55,7 @@
           "Comment": "Bluetooth functions available on the ESP32",
           "BaseDataType": "UInt32",
           "EnumNames": [
-              "Start", "Stop", "GetHandles", "ServerDataSet", "ClientWriteRequestEvent"
+              "Start", "Stop", "GetHandles", "ServerDataSet", "ClientWriteRequestEvent", "ErrorEvent"
           ]
         },
         {
