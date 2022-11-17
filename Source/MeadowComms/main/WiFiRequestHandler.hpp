@@ -607,6 +607,21 @@ private:
      */
     void AuthenticationModeChangedEvent(wifi_event_sta_authmode_change_t *);
 
+    /**
+     * @brief Extract an encoded integer setsockopt option value.
+     */
+    static uint8_t *ExtractIntegerSocketOptionValue(uint8_t *, socklen_t *);
+
+    /**
+     * @brief Setup the socket value and length for calls to SetSockOpt.
+     */
+    static uint8_t *GetSocketOptionValue(int, uint8_t *, socklen_t *);
+
+    /**
+     * @brief Setup the TCP value and length for calls to SetSockOpt.
+     */
+    static uint8_t *GetTcpOptionValue(int, uint8_t *, socklen_t *);
+
     //----------------------------------------------------------------------
     //
     //                      POSIX Calls start here.
