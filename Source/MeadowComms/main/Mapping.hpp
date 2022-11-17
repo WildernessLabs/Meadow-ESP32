@@ -32,8 +32,8 @@ public:
     /**
      *  @brief Type of mapping table to be used.
      */
-    enum MappingTable { AddressFamily, SocketOptions, ProtocolFamilies, SocketTypes, SocketLevel, Errno, MessageFlags, PollEvents,
-                        SocketShutdownType, EspErrorCodes, NetworkAuthenticationType, ResetReasons };
+    enum MappingTable { AddressFamily, SocketOptions, TCPOptions, ProtocolFamilies, SocketTypes, SocketLevel, Errno, MessageFlags,
+                        PollEvents, SocketShutdownType, EspErrorCodes, NetworkAuthenticationType, ResetReasons };
 
     /**
      *  @brief String mapping tables.
@@ -76,6 +76,11 @@ private:
      *  @brief Table of socket options (SO_ constants).
      */
     static int_mapping_t _socketOptions[];
+
+    /**
+     * @brief Table of TCP options (TCP_ constants).
+     */
+    static int_mapping_t _tcpOptions[];
 
     /**
      *  @brief Table of protocol families (PF_ constants).
