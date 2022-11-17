@@ -795,63 +795,75 @@ Esp32Messaging::ErrorEvent *Encoders::ExtractErrorEvent(uint8_t *buffer)
 }
 
 /**
- *  Convert the WiFiCredentials object into a byte stream that can be sent to the STM32.
+ *  Convert the AccessPointInformation object into a byte stream that can be sent to the STM32.
  *  
- *  The amount of memory required can be obtained by calling the EncodedWiFiCredentialsBufferSize method.
+ *  The amount of memory required can be obtained by calling the EncodedAccessPointInformationBufferSize method.
  *  
- *  @param wiFiCredentials
- *      WiFiCredentials object to be encoded.
+ *  @param accessPointInformation
+ *      AccessPointInformation object to be encoded.
  *  
  *  @param buffer
- *      Pointer to a block of memory large enough to hold the encoded WiFiCredentials object.
+ *      Pointer to a block of memory large enough to hold the encoded AccessPointInformation object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodeWiFiCredentials
-void Encoders::EncodeWiFiCredentials(Esp32Messaging::WiFiCredentials *wiFiCredentials, uint8_t *buffer)
+// cppcheck-suppress unusedFunction symbolName=EncodeAccessPointInformation
+void Encoders::EncodeAccessPointInformation(Esp32Messaging::AccessPointInformation *accessPointInformation, uint8_t *buffer)
 {
-    EncodeString(wiFiCredentials->NetworkName, buffer);
-    buffer += StringLength(wiFiCredentials->NetworkName) + 1;
-    EncodeString(wiFiCredentials->Password, buffer);
+    EncodeString(accessPointInformation->NetworkName, buffer);
+    buffer += StringLength(accessPointInformation->NetworkName) + 1;
+    EncodeString(accessPointInformation->Password, buffer);
+    buffer += StringLength(accessPointInformation->Password) + 1;
+    EncodeUInt32(accessPointInformation->IpAddress, buffer);
+    buffer += 4;
+    EncodeUInt32(accessPointInformation->SubnetMask, buffer);
+    buffer += 4;
+    EncodeUInt32(accessPointInformation->Gateway, buffer);
 }
 
 /**
- *  Calculate the amount of memory required to hold the given instance of the WiFiCredentials object.
+ *  Calculate the amount of memory required to hold the given instance of the AccessPointInformation object.
  *  
- *  @param wiFiCredentials
- *      WiFiCredentials object to be encoded.
+ *  @param accessPointInformation
+ *      AccessPointInformation object to be encoded.
  *  
  *  @returns
- *      Number of bytes required to hold the encoded WiFiCredentials object.
+ *      Number of bytes required to hold the encoded AccessPointInformation object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodedWiFiCredentialsBufferSize
-int Encoders::EncodedWiFiCredentialsBufferSize(Esp32Messaging::WiFiCredentials *wiFiCredentials)
+// cppcheck-suppress unusedFunction symbolName=EncodedAccessPointInformationBufferSize
+int Encoders::EncodedAccessPointInformationBufferSize(Esp32Messaging::AccessPointInformation *accessPointInformation)
 {
     int result = 0;
-    result += Encoders::StringLength(wiFiCredentials->NetworkName);
-    result += Encoders::StringLength(wiFiCredentials->Password);
-    return(result + 2);
+    result += Encoders::StringLength(accessPointInformation->NetworkName);
+    result += Encoders::StringLength(accessPointInformation->Password);
+    return(result + 14);
 }
 
 /**
- *  Extract the WiFiCredentials object that is encoded in the given buffer.
+ *  Extract the AccessPointInformation object that is encoded in the given buffer.
  *  
  *  Note that the returned pointer points to a block of memory on the heap and
  *  this should eventually be released calling vPortFree(...).
  *  
  *  @param buffer
- *      Pointer to a block of memory holding the encoded WiFiCredentials object.
+ *      Pointer to a block of memory holding the encoded AccessPointInformation object.
  *  
  *  @returns
- *      Pointer to a WiFiCredentials object.
+ *      Pointer to a AccessPointInformation object.
  */
-// cppcheck-suppress unusedFunction symbolName=ExtractWiFiCredentials
-Esp32Messaging::WiFiCredentials *Encoders::ExtractWiFiCredentials(uint8_t *buffer)
+// cppcheck-suppress unusedFunction symbolName=ExtractAccessPointInformation
+Esp32Messaging::AccessPointInformation *Encoders::ExtractAccessPointInformation(uint8_t *buffer)
 {
-    Esp32Messaging::WiFiCredentials *wiFiCredentials = (Esp32Messaging::WiFiCredentials *) pvPortMalloc(sizeof(Esp32Messaging::WiFiCredentials));
+    Esp32Messaging::AccessPointInformation *accessPointInformation = (Esp32Messaging::AccessPointInformation *) pvPortMalloc(sizeof(Esp32Messaging::AccessPointInformation));
 
-    wiFiCredentials->NetworkName = ExtractString(buffer);
-    buffer += Encoders::StringLength(wiFiCredentials->NetworkName) + 1;
-    wiFiCredentials->Password = ExtractString(buffer);
-    return(wiFiCredentials);
+    accessPointInformation->NetworkName = ExtractString(buffer);
+    buffer += Encoders::StringLength(accessPointInformation->NetworkName) + 1;
+    accessPointInformation->Password = ExtractString(buffer);
+    buffer += Encoders::StringLength(accessPointInformation->Password) + 1;
+    accessPointInformation->IpAddress = ExtractUInt32(buffer);
+    buffer += 4;
+    accessPointInformation->SubnetMask = ExtractUInt32(buffer);
+    buffer += 4;
+    accessPointInformation->Gateway = ExtractUInt32(buffer);
+    return(accessPointInformation);
 }
 
 /**

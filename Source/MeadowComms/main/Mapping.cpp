@@ -454,8 +454,6 @@ Mapping::str_mapping_t Mapping::_transportFunctionNames[] =
  */
 Mapping::str_mapping_t Mapping::_wifiFunctionNames[] =
 {
-    { WiFiFunction::StartWiFiInterface, (char *) "StartWiFiInterface" },
-    { WiFiFunction::StopWiFiInterface, (char *) "StopWiFiInterface" },
     { WiFiFunction::ConnectToAccessPoint, (char *) "ConnectToAccessPoint" },
     { WiFiFunction::ConnectToDefaultAccessPoint, (char *) "ConnectToDefaultAccessPoint" },
     { WiFiFunction::DisconnectFromAccessPoint, (char *) "DisconnectFromAccessPoint" },
@@ -478,10 +476,8 @@ Mapping::str_mapping_t Mapping::_wifiFunctionNames[] =
     { WiFiFunction::Ioctl, (char *) "Ioctl" },
     { WiFiFunction::GetSockName, (char *) "GetSockName" },
     { WiFiFunction::GetPeerName, (char *) "GetPeerName" },
-    { WiFiFunction::StartWiFiInterfaceEvent, (char *) "StartWiFiInterfaceEvent" },
-    { WiFiFunction::StopWiFiInterfaceEvent, (char *) "StopWiFiInterfaceEvent" },
-    { WiFiFunction::ConnectToAccessPointEvent, (char *) "ConnectToAccessPointEvent" },
-    { WiFiFunction::DisconnectFromAccessPointEvent, (char *) "DisconnectFromAccessPointEvent" },
+    { WiFiFunction::NetworkConnectedEvent, (char *) "NetworkConnectedEvent" },
+    { WiFiFunction::NetworkDisconnectedEvent, (char *) "NetworkDisconnectedEvent" },
     { WiFiFunction::SetAntenna, (char *) "SetAntenna" },
     { WiFiFunction::ClearDefaultAccessPoint, (char *) "ClearDefaultAccessPoint" }
 };
