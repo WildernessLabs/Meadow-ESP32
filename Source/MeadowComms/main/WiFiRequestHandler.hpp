@@ -535,7 +535,7 @@ private:
      *  @brief Start the network interface ready for the device to be configured
      *  as either an access point (softAP) or as a network device (station).
      */
-    esp_err_t StartWiFiInterface(const Esp32Messaging::AccessPointInformation *accessPointInformation);
+    esp_err_t StartWiFiInterface(const wifi_mode_t mode, const Esp32Messaging::AccessPointInformation *accessPointInformation);
 
     /**
      *  @brief Get a list of available access points.
