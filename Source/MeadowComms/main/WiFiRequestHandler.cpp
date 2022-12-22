@@ -792,6 +792,8 @@ void WiFiRequestHandler::Setup()
 
     SwitchAntenna(static_cast<AntennaTypes::AntennaTypes>(GetAntenna()));
 
+    esp_wifi_restore();
+
     /* 
      *  Now create the objects necessary for the WiFi tasks.
      */
@@ -1373,7 +1375,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const Esp32Mes
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
 
     EventBits_t bits = xEventGroupGetBits(_xWiFiEventGroup);
-    if (bits & WIFI_CONNECTED_BIT)
+    if (bits & WIFI_HAVE_IP_BIT)
     {
         return(StatusCodes::WiFiAlreadyStarted);
     }
@@ -1388,7 +1390,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const Esp32Mes
     ClearIpAndDisconnectData();
     if (!(bits & WIFI_INTERFACE_STARTED_BIT))
     {
-        if (StartWiFiInterface(accessPointInformation) != ESP_OK)
+        if (StartWiFiInterface(WIFI_MODE_STA, accessPointInformation) != ESP_OK)
         {
             result = StatusCodes::CannotStartNetworkInterface;
         }
@@ -1422,15 +1424,15 @@ StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const Esp32Mes
             };
             memcpy(wifi_config.sta.ssid, accessPointInformation->NetworkName, strlen(accessPointInformation->NetworkName));
             memcpy(wifi_config.sta.password, password, strlen(password));
-            _lastIdfErrorCode = esp_wifi_set_mode(WIFI_MODE_STA);
+            // _lastIdfErrorCode = esp_wifi_set_mode(WIFI_MODE_STA);
             if (_lastIdfErrorCode == ESP_OK)
             {
                 _lastIdfErrorCode = esp_wifi_set_config(WIFI_IF_STA, &wifi_config);
             }
-            if (_lastIdfErrorCode == ESP_OK)
-            {
-                _lastIdfErrorCode = esp_wifi_start();
-            }
+            // if (_lastIdfErrorCode == ESP_OK)
+            // {
+            //     _lastIdfErrorCode = esp_wifi_start();
+            // }
             if (_lastIdfErrorCode == ESP_OK)
             {
                 _lastIdfErrorCode = esp_wifi_connect();
@@ -1587,11 +1589,18 @@ void WiFiRequestHandler::ClearDefaultAccessPointAndPassword(Message *message)
  *
  *  Start the WiFi network interface ready for the device to be configured
  *  as either an access point (softAP) or as a network device (station).
+ * 
+ *  @param mode
+ *      WiFi mode of the ESP32 (Station, Access Point or both).
+ * 
+ *  @param accessPointInformation
+ *      Information about the configuration of the access point to connect to or the
+ *      IP information for a station.
  *
  *  @return
  *      ESP_OK if the interface is initialised correctly, an error code otherwise.
  */
-esp_err_t WiFiRequestHandler::StartWiFiInterface(const Esp32Messaging::AccessPointInformation *accessPointInformation)
+esp_err_t WiFiRequestHandler::StartWiFiInterface(const wifi_mode_t mode, const Esp32Messaging::AccessPointInformation *accessPointInformation)
 {
     TRACE_MESSAGE("StartWiFiInterface: Enter");
 
@@ -1610,7 +1619,21 @@ esp_err_t WiFiRequestHandler::StartWiFiInterface(const Esp32Messaging::AccessPoi
         if (result == ESP_OK)
         {
             _stationNetIfHandle = NULL;
-            _stationNetIfHandle = esp_netif_create_default_wifi_sta();
+            switch (mode)
+            {
+                case WIFI_MODE_STA:
+                    _stationNetIfHandle = esp_netif_create_default_wifi_sta();
+                    break;
+                case WIFI_MODE_AP:
+                    //  To be implemented.
+                    break;
+                case WIFI_MODE_APSTA:
+                    //  To be implemented.
+                    break;
+                default:
+                    //  Nothing to do as the _stationNetIfHandle will be NULL and this will result in an error.
+                    break;
+            }
             if (_stationNetIfHandle == NULL)
             {
                 result = ESP_FAIL;
@@ -1655,12 +1678,23 @@ esp_err_t WiFiRequestHandler::StartWiFiInterface(const Esp32Messaging::AccessPoi
             result = esp_event_handler_register(IP_EVENT, ESP_EVENT_ANY_ID, &WiFiRequestHandler::EventHandler, this);
         }
 
+        if (result == ESP_OK)
+        {
+            result = esp_wifi_set_mode(mode);
+        }
+
+        if (result == ESP_OK)
+        {
+            result = esp_wifi_start();
+        }
+
         if (result != ESP_OK)
         {
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_ERROR_BIT);
             xEventGroupClearBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTING_BIT);
         }
     }
+    ESP_ERROR_CHECK(result);
 
     TRACE_MESSAGE("StartWiFiInterface: Exit");
     return(result);
@@ -1684,10 +1718,10 @@ void WiFiRequestHandler::ScanForAccessPoints(Message *message)
 
     _currentRetryCount = 0;
     EventBits_t bits = xEventGroupGetBits(_xWiFiEventGroup);
-    if (!(bits & WIFI_INTERFACE_STARTED_BIT))
+    if (!(bits & WIFI_CONNECTED_BIT))
     {
         TRACE_MESSAGE("Starting network");
-        if (StartWiFiInterface(nullptr) != ESP_OK)
+        if (StartWiFiInterface(WIFI_MODE_STA, nullptr) != ESP_OK)
         {
             result = StatusCodes::CannotStartNetworkInterface;
         }
@@ -1695,23 +1729,16 @@ void WiFiRequestHandler::ScanForAccessPoints(Message *message)
 
     if (result == StatusCodes::CompletedOk)
     {
-        //
-        //  The maximum packet size is 4,000 bytes for SPI and a single access point contains 47 bytes
-        //  of data (say 50) which gives space for about 80 access points in the packet.
-        //
-        #define MAX_AP 80
-        uint16_t number = MAX_AP;
-        wifi_ap_record_t *ap_info = static_cast<wifi_ap_record_t *>(pvPortMalloc(MAX_AP * sizeof(wifi_ap_record_t)));
+        uint16_t number = CONFIG_WIFI_PROV_SCAN_MAX_ENTRIES;
+        wifi_ap_record_t *ap_info = static_cast<wifi_ap_record_t *>(pvPortMalloc(CONFIG_WIFI_PROV_SCAN_MAX_ENTRIES * sizeof(wifi_ap_record_t)));
         if (ap_info == NULL)
         {
             result = StatusCodes::Failure;
         }
         else
         {
-            bzero(ap_info, MAX_AP * sizeof(wifi_ap_record_t));
+            bzero(ap_info, CONFIG_WIFI_PROV_SCAN_MAX_ENTRIES * sizeof(wifi_ap_record_t));
 
-            ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
-            ESP_ERROR_CHECK(esp_wifi_start());
             bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTED_BIT, pdFALSE, pdFALSE, GetWiFiTimeout() / portTICK_PERIOD_MS);
             if (bits & WIFI_INTERFACE_STARTED_BIT)
             {
