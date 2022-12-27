@@ -1418,7 +1418,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const Esp32Mes
     ClearIpAndDisconnectData();
     if (!(bits & WIFI_INTERFACE_STARTED_BIT))
     {
-        if (StartWiFiInterface(WIFI_MODE_STA, accessPointInformation) != ESP_OK)
+        if (StartWiFiInterface(WIFI_MODE_APSTA, accessPointInformation) != ESP_OK)
         {
             result = StatusCodes::CannotStartNetworkInterface;
         }
