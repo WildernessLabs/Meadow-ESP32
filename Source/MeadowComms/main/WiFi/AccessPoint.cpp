@@ -95,14 +95,14 @@ void WiFiRequestHandler::StartAccessPoint(Message *message)
     if (accessPointInformation)
     {
         EventBits_t bits = xEventGroupGetBits(_xWiFiEventGroup);
-        uint32_t ipAddress = accessPointInformation->IpAddress;
-        uint32_t subnetMask = accessPointInformation->SubnetMask;
-        uint32_t gateway = accessPointInformation->Gateway;
+        // uint32_t ipAddress = accessPointInformation->IpAddress;
+        // uint32_t subnetMask = accessPointInformation->SubnetMask;
+        // uint32_t gateway = accessPointInformation->Gateway;
         if (!(bits & WIFI_INTERFACE_STARTED_BIT))
         {
-            // accessPointInformation->IpAddress = 0;
-            // accessPointInformation->SubnetMask = 0;
-            // accessPointInformation->Gateway = 0;
+            accessPointInformation->IpAddress = 0;
+            accessPointInformation->SubnetMask = 0;
+            accessPointInformation->Gateway = 0;
             if (StartWiFiInterface(WIFI_MODE_APSTA, accessPointInformation) != ESP_OK)
             {
                 result = StatusCodes::CannotStartNetworkInterface;
@@ -181,7 +181,7 @@ void WiFiRequestHandler::StopAccessPoint(Message *message)
 
     if (message->Payload)
     {
-        vPortFree(payload);
+        vPortFree(message->Payload);
     }
     message->PayloadLength = 0;
     message->Payload = nullptr;
