@@ -162,7 +162,15 @@ namespace StatusCodes
         /// <summary>
         /// StatusCodes - UnknownConfigurationItem
         /// </summary>
-        UnknownConfigurationItem = 34
+        UnknownConfigurationItem = 34,
+        /// <summary>
+        /// StatusCodes - CannotStartAccessPoint
+        /// </summary>
+        CannotStartAccessPoint = 35,
+        /// <summary>
+        /// StatusCodes - DhcpConfigurationError
+        /// </summary>
+        DhcpConfigurationError = 36
     };
 
 }
@@ -411,7 +419,23 @@ namespace WiFiFunction
         /// <summary>
         /// WiFiFunction - ErrorEvent
         /// </summary>
-        ErrorEvent = 39
+        ErrorEvent = 39,
+        /// <summary>
+        /// WiFiFunction - StartAccessPoint
+        /// </summary>
+        StartAccessPoint = 40,
+        /// <summary>
+        /// WiFiFunction - StopAccessPoint
+        /// </summary>
+        StopAccessPoint = 41,
+        /// <summary>
+        /// WiFiFunction - NodeConnectedEvent
+        /// </summary>
+        NodeConnectedEvent = 42,
+        /// <summary>
+        /// WiFiFunction - NodeDisconnectedEvent
+        /// </summary>
+        NodeDisconnectedEvent = 43
     };
 
 }
