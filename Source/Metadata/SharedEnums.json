@@ -15,7 +15,7 @@
                 "EspWiFiNotStarted", "EspOutOfMemory", "EspWiFiInvalidSsid", "AccessPointNotFound", "BeaconTimeout", "AuthenticationFailed",
                 "AssociationFailed", "HandshakeTimeout", "ConnectionFailed", "ApTsfReset",
                 "UnmappedErrorCode", "UnknownConfigurationItem",
-                "CannotStartAccessPoint", "DhcpConfigurationError"
+                "CannotStartAccessPoint", "DhcpConfigurationError", "AccessPointNotStarted", "AccessPointAlreadyStarted"
             ]
         },
         {
@@ -48,7 +48,7 @@
               "Socket", "Connect", "Write", "SetSockOpt", "GetSockOpt", "Read", "Close", "SendTo", "RecvFrom", "Poll", "InterruptPollResponse", "Send", "Bind", "Listen", "Accept", "Ioctl",
               "GetSockName", "GetPeerName", "FreeAddrInfo", "GetAddrInfo", "RecvMsg", "Shutdown", "SendMsg", "Dup2", "AddRef", "SockCaps",
               "StartWiFiInterfaceEvent", "StopWiFiInterfaceEvent", "NetworkConnectedEvent", "NetworkDisconnectedEvent", "NtpUpdateEvent", "ErrorEvent",
-              "StartAccessPoint", "StopAccessPoint", "NodeConnectedEvent", "NodeDisconnectedEvent"
+              "StartAccessPoint", "StopAccessPoint", "AccessPointStartedEvent", "AccessPointStoppedEvent", "NodeConnectedEvent", "NodeDisconnectedEvent"
           ]
         },
         {

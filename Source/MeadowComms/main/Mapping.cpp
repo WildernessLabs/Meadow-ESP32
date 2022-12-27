@@ -471,6 +471,10 @@ Mapping::str_mapping_t Mapping::_wifiFunctionNames[] =
 {
     { WiFiFunction::ConnectToAccessPoint, (char *) "ConnectToAccessPoint" },
     { WiFiFunction::ConnectToDefaultAccessPoint, (char *) "ConnectToDefaultAccessPoint" },
+    { WiFiFunction::StartAccessPoint, (char *) "StartAccessPoint" },
+    { WiFiFunction::StopAccessPoint, (char *) "StopAccesPoint" },
+    { WiFiFunction::NodeConnectedEvent, (char *) "NodeConnected" },
+    { WiFiFunction::NodeDisconnectedEvent, (char *) "NodeDisconnectedEvent" },
     { WiFiFunction::DisconnectFromAccessPoint, (char *) "DisconnectFromAccessPoint" },
     { WiFiFunction::GetAccessPoints, (char *) "GetAccessPoints" },
     { WiFiFunction::GetAddrInfo, (char *) "GetAddrInfo" },

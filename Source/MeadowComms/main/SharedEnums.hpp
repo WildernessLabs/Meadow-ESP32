@@ -170,7 +170,15 @@ namespace StatusCodes
         /// <summary>
         /// StatusCodes - DhcpConfigurationError
         /// </summary>
-        DhcpConfigurationError = 36
+        DhcpConfigurationError = 36,
+        /// <summary>
+        /// StatusCodes - AccessPointNotStarted
+        /// </summary>
+        AccessPointNotStarted = 37,
+        /// <summary>
+        /// StatusCodes - AccessPointAlreadyStarted
+        /// </summary>
+        AccessPointAlreadyStarted = 38
     };
 
 }
@@ -429,13 +437,21 @@ namespace WiFiFunction
         /// </summary>
         StopAccessPoint = 41,
         /// <summary>
+        /// WiFiFunction - AccessPointStartedEvent
+        /// </summary>
+        AccessPointStartedEvent = 42,
+        /// <summary>
+        /// WiFiFunction - AccessPointStoppedEvent
+        /// </summary>
+        AccessPointStoppedEvent = 43,
+        /// <summary>
         /// WiFiFunction - NodeConnectedEvent
         /// </summary>
-        NodeConnectedEvent = 42,
+        NodeConnectedEvent = 44,
         /// <summary>
         /// WiFiFunction - NodeDisconnectedEvent
         /// </summary>
-        NodeDisconnectedEvent = 43
+        NodeDisconnectedEvent = 45
     };
 
 }
