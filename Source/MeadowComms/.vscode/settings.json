@@ -33,7 +33,8 @@
   ],
   "idf.adapterTargetName": "esp32",
   "files.associations": {
-    "new": "cpp"
+    "new": "cpp",
+    "functional": "cpp"
   },
   "C_Cpp.intelliSenseEngine": "Tag Parser",
   "idf.adapterTargetName": "esp32",
