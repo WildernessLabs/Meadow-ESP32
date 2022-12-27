@@ -1207,7 +1207,18 @@ StatusCodes::StatusCodes WiFiRequestHandler::StopWiFIAdapter()
 {
     TRACE_MESSAGE("StopWiFIAdapter(): Enter");
 
-    esp_err_t result = esp_wifi_stop();
+    esp_err_t result = ESP_OK;
+
+    EventBits_t bits = xEventGroupGetBits(_xWiFiEventGroup);
+    if (!(bits & WIFI_CONNECTED_BIT))
+    {
+        result = esp_wifi_disconnect();
+    }
+
+    if (result == ESP_OK)
+    {
+        result = esp_wifi_stop();
+    }
 
     //
     //  Strictly speaking we do not need to unregister the event handlers as registering
