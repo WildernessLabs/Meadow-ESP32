@@ -279,6 +279,15 @@ WiFiRequestHandler::WiFiRequestHandler()
     {
         ERROR_MESSAGE("WiFiRequestHandler: Cannot create poll request list mutex.");
     }
+    //
+    //  Get ready for nodes connecting when configured as an access point.
+    //
+    _connectedNodesListMutex = xSemaphoreCreateMutex();
+    if (_connectedNodesListMutex == NULL)
+    {
+        ERROR_MESSAGE("WiFiRequestHandler: Cannot create connected nodes list mutex.");
+    }
+    _connectedNodes.clear();
 
     //
     //  Finally set some default values for private fields.

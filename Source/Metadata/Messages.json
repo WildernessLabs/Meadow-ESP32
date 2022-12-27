@@ -81,17 +81,10 @@
             ]
         },
         {
-            "Name": "NodeConnectedEventData",
+            "Name": "NodeConnectionChangeEventData",
             "MessageElements":
             [
                 { "Name": "IpAddress", "DataType": "uint32" },
-                { "Name": "MacAddress", "DataType": "fixedbytearray", "Length": "6" }
-            ]
-        },
-        {
-            "Name": "NodeDisconnectedEventData",
-            "MessageElements":
-            [
                 { "Name": "MacAddress", "DataType": "fixedbytearray", "Length": "6" }
             ]
         },

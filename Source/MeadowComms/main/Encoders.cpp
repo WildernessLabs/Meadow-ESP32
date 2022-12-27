@@ -1013,113 +1013,60 @@ Esp32Messaging::ConnectEventData *Encoders::ExtractConnectEventData(uint8_t *buf
 }
 
 /**
- *  Convert the NodeConnectedEventData object into a byte stream that can be sent to the STM32.
+ *  Convert the NodeConnectionChangeEventData object into a byte stream that can be sent to the STM32.
  *  
- *  The amount of memory required can be obtained by calling the EncodedNodeConnectedEventDataBufferSize method.
+ *  The amount of memory required can be obtained by calling the EncodedNodeConnectionChangeEventDataBufferSize method.
  *  
- *  @param nodeConnectedEventData
- *      NodeConnectedEventData object to be encoded.
+ *  @param nodeConnectionChangeEventData
+ *      NodeConnectionChangeEventData object to be encoded.
  *  
  *  @param buffer
- *      Pointer to a block of memory large enough to hold the encoded NodeConnectedEventData object.
+ *      Pointer to a block of memory large enough to hold the encoded NodeConnectionChangeEventData object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodeNodeConnectedEventData
-void Encoders::EncodeNodeConnectedEventData(Esp32Messaging::NodeConnectedEventData *nodeConnectedEventData, uint8_t *buffer)
+// cppcheck-suppress unusedFunction symbolName=EncodeNodeConnectionChangeEventData
+void Encoders::EncodeNodeConnectionChangeEventData(Esp32Messaging::NodeConnectionChangeEventData *nodeConnectionChangeEventData, uint8_t *buffer)
 {
-    EncodeUInt32(nodeConnectedEventData->IpAddress, buffer);
+    EncodeUInt32(nodeConnectionChangeEventData->IpAddress, buffer);
     buffer += 4;
-    memcpy((void *) buffer, (void *) nodeConnectedEventData->MacAddress, 6);
+    memcpy((void *) buffer, (void *) nodeConnectionChangeEventData->MacAddress, 6);
 }
 
 /**
- *  Calculate the amount of memory required to hold the given instance of the NodeConnectedEventData object.
+ *  Calculate the amount of memory required to hold the given instance of the NodeConnectionChangeEventData object.
  *  
- *  @param nodeConnectedEventData
- *      NodeConnectedEventData object to be encoded.
+ *  @param nodeConnectionChangeEventData
+ *      NodeConnectionChangeEventData object to be encoded.
  *  
  *  @returns
- *      Number of bytes required to hold the encoded NodeConnectedEventData object.
+ *      Number of bytes required to hold the encoded NodeConnectionChangeEventData object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodedNodeConnectedEventDataBufferSize
-int Encoders::EncodedNodeConnectedEventDataBufferSize(Esp32Messaging::NodeConnectedEventData *nodeConnectedEventData)
+// cppcheck-suppress unusedFunction symbolName=EncodedNodeConnectionChangeEventDataBufferSize
+int Encoders::EncodedNodeConnectionChangeEventDataBufferSize(Esp32Messaging::NodeConnectionChangeEventData *nodeConnectionChangeEventData)
 {
     return(10);
 }
 
 /**
- *  Extract the NodeConnectedEventData object that is encoded in the given buffer.
+ *  Extract the NodeConnectionChangeEventData object that is encoded in the given buffer.
  *  
  *  Note that the returned pointer points to a block of memory on the heap and
  *  this should eventually be released calling vPortFree(...).
  *  
  *  @param buffer
- *      Pointer to a block of memory holding the encoded NodeConnectedEventData object.
+ *      Pointer to a block of memory holding the encoded NodeConnectionChangeEventData object.
  *  
  *  @returns
- *      Pointer to a NodeConnectedEventData object.
+ *      Pointer to a NodeConnectionChangeEventData object.
  */
-// cppcheck-suppress unusedFunction symbolName=ExtractNodeConnectedEventData
-Esp32Messaging::NodeConnectedEventData *Encoders::ExtractNodeConnectedEventData(uint8_t *buffer)
+// cppcheck-suppress unusedFunction symbolName=ExtractNodeConnectionChangeEventData
+Esp32Messaging::NodeConnectionChangeEventData *Encoders::ExtractNodeConnectionChangeEventData(uint8_t *buffer)
 {
-    Esp32Messaging::NodeConnectedEventData *nodeConnectedEventData = (Esp32Messaging::NodeConnectedEventData *) pvPortMalloc(sizeof(Esp32Messaging::NodeConnectedEventData));
+    Esp32Messaging::NodeConnectionChangeEventData *nodeConnectionChangeEventData = (Esp32Messaging::NodeConnectionChangeEventData *) pvPortMalloc(sizeof(Esp32Messaging::NodeConnectionChangeEventData));
 
-    nodeConnectedEventData->IpAddress = ExtractUInt32(buffer);
+    nodeConnectionChangeEventData->IpAddress = ExtractUInt32(buffer);
     buffer += 4;
-    memcpy((void *) nodeConnectedEventData->MacAddress, (void *) buffer, 6);
-    return(nodeConnectedEventData);
-}
-
-/**
- *  Convert the NodeDisconnectedEventData object into a byte stream that can be sent to the STM32.
- *  
- *  The amount of memory required can be obtained by calling the EncodedNodeDisconnectedEventDataBufferSize method.
- *  
- *  @param nodeDisconnectedEventData
- *      NodeDisconnectedEventData object to be encoded.
- *  
- *  @param buffer
- *      Pointer to a block of memory large enough to hold the encoded NodeDisconnectedEventData object.
- */
-// cppcheck-suppress unusedFunction symbolName=EncodeNodeDisconnectedEventData
-void Encoders::EncodeNodeDisconnectedEventData(Esp32Messaging::NodeDisconnectedEventData *nodeDisconnectedEventData, uint8_t *buffer)
-{
-    memcpy((void *) buffer, (void *) nodeDisconnectedEventData->MacAddress, 6);
-}
-
-/**
- *  Calculate the amount of memory required to hold the given instance of the NodeDisconnectedEventData object.
- *  
- *  @param nodeDisconnectedEventData
- *      NodeDisconnectedEventData object to be encoded.
- *  
- *  @returns
- *      Number of bytes required to hold the encoded NodeDisconnectedEventData object.
- */
-// cppcheck-suppress unusedFunction symbolName=EncodedNodeDisconnectedEventDataBufferSize
-int Encoders::EncodedNodeDisconnectedEventDataBufferSize(Esp32Messaging::NodeDisconnectedEventData *nodeDisconnectedEventData)
-{
-    return(6);
-}
-
-/**
- *  Extract the NodeDisconnectedEventData object that is encoded in the given buffer.
- *  
- *  Note that the returned pointer points to a block of memory on the heap and
- *  this should eventually be released calling vPortFree(...).
- *  
- *  @param buffer
- *      Pointer to a block of memory holding the encoded NodeDisconnectedEventData object.
- *  
- *  @returns
- *      Pointer to a NodeDisconnectedEventData object.
- */
-// cppcheck-suppress unusedFunction symbolName=ExtractNodeDisconnectedEventData
-Esp32Messaging::NodeDisconnectedEventData *Encoders::ExtractNodeDisconnectedEventData(uint8_t *buffer)
-{
-    Esp32Messaging::NodeDisconnectedEventData *nodeDisconnectedEventData = (Esp32Messaging::NodeDisconnectedEventData *) pvPortMalloc(sizeof(Esp32Messaging::NodeDisconnectedEventData));
-
-    memcpy((void *) nodeDisconnectedEventData->MacAddress, (void *) buffer, 6);
-    return(nodeDisconnectedEventData);
+    memcpy((void *) nodeConnectionChangeEventData->MacAddress, (void *) buffer, 6);
+    return(nodeConnectionChangeEventData);
 }
 
 /**
