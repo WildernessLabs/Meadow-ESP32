@@ -8,7 +8,7 @@
 #ifndef _WIFI_REQUEST_HANDLER_HPP_
 #define _WIFI_REQUEST_HANDLER_HPP_
 
-#include "../build/config/sdkconfig.h"
+#include "../../build/config/sdkconfig.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -85,6 +85,23 @@ private:
         uint32_t request_id;    /* ID of the message sent to the ESP32. */
     };
     typedef struct poll_request_s poll_request_t;
+
+    /**
+     * @brief Structure holding the information about the nodes connected to the access point presented by the ESP32.
+     */
+    struct connected_node_s
+    {
+        /**
+         * @brief MAC address of the connected node.
+         */
+        uint8_t mac_address[6];
+
+        /**
+         * @brief IP address assigned to the connected node.
+         */
+        uint32_t ip_address;
+    };
+    typedef struct connected_node_s connected_node_t;
 
     /*
      *  Event group bits.
@@ -495,6 +512,12 @@ private:
     void RaiseErrorEvent(StatusCodes::StatusCodes statusCode, uint8_t *payload, uint32_t payloadLength);
 
     /**
+     *  @brief Start the network interface ready for the device to be configured
+     *  as either an access point (softAP) or as a network device (station).
+     */
+    esp_err_t StartWiFiInterface(const wifi_mode_t mode, const Esp32Messaging::AccessPointInformation *accessPointInformation);
+
+    /**
      *  @brief Stop the WiFi Adapter.
      * 
      *  This request could come from an explicit stop request of from a disconnect request.
@@ -532,10 +555,14 @@ private:
     void ProcessConnectionResult(Message *, StatusCodes::StatusCodes, bool);
 
     /**
-     *  @brief Start the network interface ready for the device to be configured
-     *  as either an access point (softAP) or as a network device (station).
+     *  @brief Start the access point.
      */
-    esp_err_t StartWiFiInterface(const wifi_mode_t mode, const Esp32Messaging::AccessPointInformation *accessPointInformation);
+    void StartAccessPoint(Message *message);
+
+    /**
+     *  @brief Stop the access point if it is running.
+     */
+    void StopAccessPoint(Message *message);
 
     /**
      *  @brief Get a list of available access points.
@@ -606,6 +633,16 @@ private:
      *  @brief Process the change in authentication mode event (WIFI_EVENT_STA_AUTHMODE_CHANGE).
      */
     void AuthenticationModeChangedEvent(wifi_event_sta_authmode_change_t *);
+
+    /**
+     * @brief Process the node connecting to access point event.
+     */
+    void NodeConnectedEvent();
+
+    /**
+     * @brief Processes the node disconnecting from the access point event.
+     */
+    void NodeDisconnectedEvent(wifi_event_ap_stadisconnected_t *);
 
     /**
      * @brief Extract an encoded integer setsockopt option value.
