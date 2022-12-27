@@ -86,23 +86,6 @@ private:
     };
     typedef struct poll_request_s poll_request_t;
 
-    /**
-     * @brief Structure holding the information about the nodes connected to the access point presented by the ESP32.
-     */
-    struct connected_node_s
-    {
-        /**
-         * @brief MAC address of the connected node.
-         */
-        uint8_t mac_address[6];
-
-        /**
-         * @brief IP address assigned to the connected node.
-         */
-        uint32_t ip_address;
-    };
-    typedef struct connected_node_s connected_node_t;
-
     /*
      *  Event group bits.
      */
@@ -465,6 +448,16 @@ private:
      */
     TaskHandle_t _completedPollRequestsTaskHandle;
 
+    /**
+     * @brief Mutex for the list of connected nodes.
+     */
+    SemaphoreHandle_t _connectedNodesListMutex;
+
+    /**
+     * @brief List of the nodes connected to this device in configured as an access point.
+     */
+    std::map<uint64_t, uint32_t> _connectedNodes;
+
     /*
      *  Private methods.
      */
@@ -582,6 +575,11 @@ private:
     Esp32Messaging::AccessPointInformation *ExtractAndValidateAccessPointInformation(uint8_t *);
 
     /**
+     * @brief Raise a node connect / disconnect event for the C# code.
+     */
+    void RaiseNodeConnectionChangeEvent(WiFiFunction::WiFiFunction event_type, Esp32Messaging::NodeConnectionChangeEventData *data);
+
+    /**
      *  @brief Get a list of available access points.
      */
     void ScanForAccessPoints(Message *message);
@@ -660,6 +658,16 @@ private:
      * @brief Processes the node disconnecting from the access point event.
      */
     void NodeDisconnectedEvent(wifi_event_ap_stadisconnected_t *);
+
+    /**
+     * @brief Lock the _connectedNodes object.
+     */
+    void LockConnectedNodesMap();
+
+    /**
+     * @brief Unlock the _connectedNodes object.
+     */
+    void UnlockConnectedNodesMap();
 
     /**
      * @brief Extract an encoded integer setsockopt option value.

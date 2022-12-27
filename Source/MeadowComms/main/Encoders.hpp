@@ -99,14 +99,9 @@ namespace Esp32Messaging
         uint32_t Reason;
     };
 
-    struct NodeConnectedEventData
+    struct NodeConnectionChangeEventData
     {
         uint32_t IpAddress;
-        uint8_t MacAddress[6];
-    };
-
-    struct NodeDisconnectedEventData
-    {
         uint8_t MacAddress[6];
     };
 
@@ -490,12 +485,9 @@ public:
     static void EncodeConnectEventData(Esp32Messaging::ConnectEventData *, uint8_t *);
     static int EncodedConnectEventDataBufferSize(Esp32Messaging::ConnectEventData *);
     static Esp32Messaging::ConnectEventData *ExtractConnectEventData(uint8_t *);
-    static void EncodeNodeConnectedEventData(Esp32Messaging::NodeConnectedEventData *, uint8_t *);
-    static int EncodedNodeConnectedEventDataBufferSize(Esp32Messaging::NodeConnectedEventData *);
-    static Esp32Messaging::NodeConnectedEventData *ExtractNodeConnectedEventData(uint8_t *);
-    static void EncodeNodeDisconnectedEventData(Esp32Messaging::NodeDisconnectedEventData *, uint8_t *);
-    static int EncodedNodeDisconnectedEventDataBufferSize(Esp32Messaging::NodeDisconnectedEventData *);
-    static Esp32Messaging::NodeDisconnectedEventData *ExtractNodeDisconnectedEventData(uint8_t *);
+    static void EncodeNodeConnectionChangeEventData(Esp32Messaging::NodeConnectionChangeEventData *, uint8_t *);
+    static int EncodedNodeConnectionChangeEventDataBufferSize(Esp32Messaging::NodeConnectionChangeEventData *);
+    static Esp32Messaging::NodeConnectionChangeEventData *ExtractNodeConnectionChangeEventData(uint8_t *);
     static void EncodeDisconnectEventData(Esp32Messaging::DisconnectEventData *, uint8_t *);
     static int EncodedDisconnectEventDataBufferSize(Esp32Messaging::DisconnectEventData *);
     static Esp32Messaging::DisconnectEventData *ExtractDisconnectEventData(uint8_t *);

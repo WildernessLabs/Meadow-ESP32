@@ -30,6 +30,22 @@
  */
 
 /**
+ *  @brief Lock the _connectedNodes object.
+ */
+void WiFiRequestHandler::LockConnectedNodesMap()
+{
+     xSemaphoreTake(_connectedNodesListMutex, portMAX_DELAY);
+}
+
+/**
+ *  @brief Unlock the _connectedNodes object.
+ */
+void WiFiRequestHandler::UnlockConnectedNodesMap()
+{
+     xSemaphoreGive(_connectedNodesListMutex);
+}
+
+/**
  * @brief Extract and validate the access point information.
  * 
  * @param data
@@ -49,7 +65,7 @@ Esp32Messaging::AccessPointInformation *WiFiRequestHandler::ExtractAndValidateAc
         {
             bool error = (!result->NetworkName) || (strlen(result->NetworkName) == 0) || (strlen(result->NetworkName) > MAXIMUM_SSID_LENGTH);
             error |= (!result->Password) || (strlen(result->Password) > MAXIMUM_PASSWORD_LENGTH);
-            error |= (result->IpAddress == 0) || (result->SubnetMask == 0) || (result->Gateway == 0);
+            // error |= (result->IpAddress == 0) || (result->SubnetMask == 0) || (result->Gateway == 0);
             if (error)
             {
                 vPortFree(result);
@@ -84,9 +100,9 @@ void WiFiRequestHandler::StartAccessPoint(Message *message)
         uint32_t gateway = accessPointInformation->Gateway;
         if (!(bits & WIFI_INTERFACE_STARTED_BIT))
         {
-            accessPointInformation->IpAddress = 0;
-            accessPointInformation->SubnetMask = 0;
-            accessPointInformation->Gateway = 0;
+            // accessPointInformation->IpAddress = 0;
+            // accessPointInformation->SubnetMask = 0;
+            // accessPointInformation->Gateway = 0;
             if (StartWiFiInterface(WIFI_MODE_APSTA, accessPointInformation) != ESP_OK)
             {
                 result = StatusCodes::CannotStartNetworkInterface;
@@ -197,6 +213,27 @@ void WiFiRequestHandler::AccessPointStoppedEvent()
 }
 
 /**
+ * @brief Raise an event for a node connecting ot disconnecting.
+ * 
+ * @param event_type 
+ *      Type of event to raise, NodeConnectedEvent or NodeDisconnectedEvent
+ * 
+ * @param data 
+ *      Information about the node (MAC and possibly IP address).
+ */
+void WiFiRequestHandler::RaiseNodeConnectionChangeEvent(WiFiFunction::WiFiFunction event_type, Esp32Messaging::NodeConnectionChangeEventData *data)
+{
+    uint32_t payloadLength = Encoders::EncodedNodeConnectionChangeEventDataBufferSize(data);
+    uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
+    if (payload)
+    {
+        Encoders::EncodeNodeConnectionChangeEventData(data, payload);
+        Message *message = Message::CreateOnHeap(MessageTypes::Event, Esp32Interfaces::WiFi, event_type, StatusCodes::CompletedOk, _messageDispatcher->GetNextMessageID(), payload, payloadLength);
+        _messageDispatcher->QueueMessageForStm32(message);
+    }
+}
+
+/**
  * @brief Process the node connecting to access point event.
  */
 void WiFiRequestHandler::NodeConnectedEvent()
@@ -209,12 +246,29 @@ void WiFiRequestHandler::NodeConnectedEvent()
     tcpip_adapter_get_sta_list(&wifi_sta_list, &adapter_sta_list);
     if (adapter_sta_list.num > 0)
     {
-        TRACE_MESSAGE("%d stations connected", adapter_sta_list.num );
+        LockConnectedNodesMap();
+        for (uint8_t i = 0; i < adapter_sta_list.num; i++)
+        {
+            tcpip_adapter_sta_info_t station = adapter_sta_list.sta[i];
+            uint64_t key = 0;
+            memcpy(&key, &station.mac, 6);
+            std::map<uint64_t, uint32_t>::iterator it = _connectedNodes.find(key);
+            if (it == _connectedNodes.end())
+            {
+                TRACE_MESSAGE("NodeConnectedEvent: New node: MAC " MACSTR " IP Address " IPSTR, MAC2STR(station.mac), IP2STR(&station.ip));
+                Esp32Messaging::NodeConnectionChangeEventData data;
+                memcpy(&data.MacAddress, &station.mac, 6);
+                memcpy(&data.IpAddress, &station.ip, sizeof(uint32_t));
+                _connectedNodes[key] = data.IpAddress;
+                RaiseNodeConnectionChangeEvent(WiFiFunction::NodeConnectedEvent, &data);
+                break;
+            }
+        }
+        UnlockConnectedNodesMap();
     }
-    for (uint8_t i = 0; i < adapter_sta_list.num; i++)
+    else
     {
-        tcpip_adapter_sta_info_t station = adapter_sta_list.sta[i];
-        TRACE_MESSAGE("Device %d MAC: " MACSTR " IP: 0x%08x, " IPSTR, i, MAC2STR(station.mac), (uint32_t) station.ip.addr, IP2STR(&station.ip));
+        TRACE_MESSAGE("NodeConnectedEvent raised but there are no nodes connected to this device.");
     }
 
     TRACE_MESSAGE("NodeConnectedEvent: Exit");
@@ -230,7 +284,24 @@ void WiFiRequestHandler::NodeDisconnectedEvent(wifi_event_ap_stadisconnected_t *
 {
     TRACE_MESSAGE("NodeDisconnectedEvent: Enter");
 
-    TRACE_MESSAGE("station " MACSTR " leave, AID=%d", MAC2STR(eventData->mac), eventData->aid);
+    uint64_t key = 0;
+    memcpy(&key, &eventData->mac, 6);
+
+    LockConnectedNodesMap();
+    std::map<uint64_t, uint32_t>::iterator it = _connectedNodes.find(key);
+    if (it != _connectedNodes.end())
+    {
+        TRACE_MESSAGE("NodeDisconnectedEvent: Found MAC address " MACSTR, MAC2STR(eventData->mac));
+        _connectedNodes.erase(it);
+        Esp32Messaging::NodeConnectionChangeEventData data = { };
+        memcpy(&data.MacAddress, &eventData->mac, 6);
+        RaiseNodeConnectionChangeEvent(WiFiFunction::NodeDisconnectedEvent, &data);
+    }
+    else
+    {
+        TRACE_MESSAGE("NodeDisconnectedEvent raised but the node could not be found in the connected nodes list.");
+    }
+    UnlockConnectedNodesMap();
 
     TRACE_MESSAGE("NodeDisconnectedEvent: Exit");
 }
