@@ -817,6 +817,12 @@ void Encoders::EncodeAccessPointInformation(Esp32Messaging::AccessPointInformati
     EncodeUInt32(accessPointInformation->SubnetMask, buffer);
     buffer += 4;
     EncodeUInt32(accessPointInformation->Gateway, buffer);
+    buffer += 4;
+    *buffer = accessPointInformation->WiFiAuthenticationMode;
+    buffer += 1;
+    *buffer = accessPointInformation->Channel;
+    buffer += 1;
+    *buffer = accessPointInformation->Hidden;
 }
 
 /**
@@ -834,7 +840,7 @@ int Encoders::EncodedAccessPointInformationBufferSize(Esp32Messaging::AccessPoin
     int result = 0;
     result += Encoders::StringLength(accessPointInformation->NetworkName);
     result += Encoders::StringLength(accessPointInformation->Password);
-    return(result + 14);
+    return(result + 17);
 }
 
 /**
@@ -863,6 +869,12 @@ Esp32Messaging::AccessPointInformation *Encoders::ExtractAccessPointInformation(
     accessPointInformation->SubnetMask = ExtractUInt32(buffer);
     buffer += 4;
     accessPointInformation->Gateway = ExtractUInt32(buffer);
+    buffer += 4;
+    accessPointInformation->WiFiAuthenticationMode = *buffer;
+    buffer += 1;
+    accessPointInformation->Channel = *buffer;
+    buffer += 1;
+    accessPointInformation->Hidden = *buffer;
     return(accessPointInformation);
 }
 
@@ -998,6 +1010,116 @@ Esp32Messaging::ConnectEventData *Encoders::ExtractConnectEventData(uint8_t *buf
     buffer += 1;
     connectEventData->Reason = ExtractUInt32(buffer);
     return(connectEventData);
+}
+
+/**
+ *  Convert the NodeConnectedEventData object into a byte stream that can be sent to the STM32.
+ *  
+ *  The amount of memory required can be obtained by calling the EncodedNodeConnectedEventDataBufferSize method.
+ *  
+ *  @param nodeConnectedEventData
+ *      NodeConnectedEventData object to be encoded.
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory large enough to hold the encoded NodeConnectedEventData object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodeNodeConnectedEventData
+void Encoders::EncodeNodeConnectedEventData(Esp32Messaging::NodeConnectedEventData *nodeConnectedEventData, uint8_t *buffer)
+{
+    EncodeUInt32(nodeConnectedEventData->IpAddress, buffer);
+    buffer += 4;
+    memcpy((void *) buffer, (void *) nodeConnectedEventData->MacAddress, 6);
+}
+
+/**
+ *  Calculate the amount of memory required to hold the given instance of the NodeConnectedEventData object.
+ *  
+ *  @param nodeConnectedEventData
+ *      NodeConnectedEventData object to be encoded.
+ *  
+ *  @returns
+ *      Number of bytes required to hold the encoded NodeConnectedEventData object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodedNodeConnectedEventDataBufferSize
+int Encoders::EncodedNodeConnectedEventDataBufferSize(Esp32Messaging::NodeConnectedEventData *nodeConnectedEventData)
+{
+    return(10);
+}
+
+/**
+ *  Extract the NodeConnectedEventData object that is encoded in the given buffer.
+ *  
+ *  Note that the returned pointer points to a block of memory on the heap and
+ *  this should eventually be released calling vPortFree(...).
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded NodeConnectedEventData object.
+ *  
+ *  @returns
+ *      Pointer to a NodeConnectedEventData object.
+ */
+// cppcheck-suppress unusedFunction symbolName=ExtractNodeConnectedEventData
+Esp32Messaging::NodeConnectedEventData *Encoders::ExtractNodeConnectedEventData(uint8_t *buffer)
+{
+    Esp32Messaging::NodeConnectedEventData *nodeConnectedEventData = (Esp32Messaging::NodeConnectedEventData *) pvPortMalloc(sizeof(Esp32Messaging::NodeConnectedEventData));
+
+    nodeConnectedEventData->IpAddress = ExtractUInt32(buffer);
+    buffer += 4;
+    memcpy((void *) nodeConnectedEventData->MacAddress, (void *) buffer, 6);
+    return(nodeConnectedEventData);
+}
+
+/**
+ *  Convert the NodeDisconnectedEventData object into a byte stream that can be sent to the STM32.
+ *  
+ *  The amount of memory required can be obtained by calling the EncodedNodeDisconnectedEventDataBufferSize method.
+ *  
+ *  @param nodeDisconnectedEventData
+ *      NodeDisconnectedEventData object to be encoded.
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory large enough to hold the encoded NodeDisconnectedEventData object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodeNodeDisconnectedEventData
+void Encoders::EncodeNodeDisconnectedEventData(Esp32Messaging::NodeDisconnectedEventData *nodeDisconnectedEventData, uint8_t *buffer)
+{
+    memcpy((void *) buffer, (void *) nodeDisconnectedEventData->MacAddress, 6);
+}
+
+/**
+ *  Calculate the amount of memory required to hold the given instance of the NodeDisconnectedEventData object.
+ *  
+ *  @param nodeDisconnectedEventData
+ *      NodeDisconnectedEventData object to be encoded.
+ *  
+ *  @returns
+ *      Number of bytes required to hold the encoded NodeDisconnectedEventData object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodedNodeDisconnectedEventDataBufferSize
+int Encoders::EncodedNodeDisconnectedEventDataBufferSize(Esp32Messaging::NodeDisconnectedEventData *nodeDisconnectedEventData)
+{
+    return(6);
+}
+
+/**
+ *  Extract the NodeDisconnectedEventData object that is encoded in the given buffer.
+ *  
+ *  Note that the returned pointer points to a block of memory on the heap and
+ *  this should eventually be released calling vPortFree(...).
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded NodeDisconnectedEventData object.
+ *  
+ *  @returns
+ *      Pointer to a NodeDisconnectedEventData object.
+ */
+// cppcheck-suppress unusedFunction symbolName=ExtractNodeDisconnectedEventData
+Esp32Messaging::NodeDisconnectedEventData *Encoders::ExtractNodeDisconnectedEventData(uint8_t *buffer)
+{
+    Esp32Messaging::NodeDisconnectedEventData *nodeDisconnectedEventData = (Esp32Messaging::NodeDisconnectedEventData *) pvPortMalloc(sizeof(Esp32Messaging::NodeDisconnectedEventData));
+
+    memcpy((void *) nodeDisconnectedEventData->MacAddress, (void *) buffer, 6);
+    return(nodeDisconnectedEventData);
 }
 
 /**
