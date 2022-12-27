@@ -977,7 +977,7 @@ void WiFiRequestHandler::EventHandlerHelper(esp_event_base_t eventBase, int32_t 
                 break;
             case WIFI_EVENT_AP_STADISCONNECTED:
                 TRACE_MESSAGE("EventHandlerHelper: WIFI_EVENT_AP_STADISCONNECTED");
-                NodeDisconnectedEvent((wifi_event_ap_stadisconnected_t *) eventData);
+                NodeDisconnectedEvent(static_cast<wifi_event_ap_stadisconnected_t *>(eventData));
                 break;
             case WIFI_EVENT_AP_PROBEREQRECVED:
                 TRACE_MESSAGE("EventHandlerHelper: WIFI_EVENT_AP_PROBEREQRECVED");
@@ -1092,6 +1092,12 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
             break;
         case WiFiFunction::ClearDefaultAccessPoint:
             ClearDefaultAccessPointAndPassword(request);
+            break;
+        case WiFiFunction::StartAccessPoint:
+            StartAccessPoint(request);
+            break;
+        case WiFiFunction::StopAccessPoint:
+            StopAccessPoint(request);
             break;
         case WiFiFunction::SetAntenna:
             SetAntennaRequest(request);
@@ -1632,20 +1638,13 @@ esp_err_t WiFiRequestHandler::StartWiFiInterface(const wifi_mode_t mode, const E
         if (result == ESP_OK)
         {
             _stationNetIfHandle = NULL;
-            switch (mode)
+            if ((mode == WIFI_MODE_STA) || (mode == WIFI_MODE_APSTA))
             {
-                case WIFI_MODE_STA:
-                    _stationNetIfHandle = esp_netif_create_default_wifi_sta();
-                    break;
-                case WIFI_MODE_AP:
-                    //  To be implemented.
-                    break;
-                case WIFI_MODE_APSTA:
-                    //  To be implemented.
-                    break;
-                default:
-                    //  Nothing to do as the _stationNetIfHandle will be NULL and this will result in an error.
-                    break;
+                _stationNetIfHandle = esp_netif_create_default_wifi_sta();
+            }
+            if ((mode == WIFI_MODE_AP) || (mode == WIFI_MODE_APSTA))
+            {
+                _softApNetIfHandle = esp_netif_create_default_wifi_ap();
             }
             if (_stationNetIfHandle == NULL)
             {
@@ -1917,28 +1916,6 @@ void WiFiRequestHandler::GetAddrInfo(void *vpMessage)
  *
  * ----------------------------------------------------------------------------
  */
-
-/**
- *  @brief Process the access point started event.
- */
-void WiFiRequestHandler::AccessPointStartedEvent()
-{
-    TRACE_MESSAGE("AccessPointStartedEvent: Enter");
-
-    TRACE_MESSAGE("AccessPointStartedEvent: Exit");
-}
-
-/**
- *  @brief Process the access point stopped event.
- */
-void WiFiRequestHandler::AccessPointStoppedEvent()
-{
-    TRACE_MESSAGE("AccessPointStoppedEvent: Enter");
-
-    _softApNetIfHandle = nullptr;
-
-    TRACE_MESSAGE("AccessPointStoppedEvent: Exit");
-}
 
 /**
  *  @brief The access point has just given the ESP32 an IP address.

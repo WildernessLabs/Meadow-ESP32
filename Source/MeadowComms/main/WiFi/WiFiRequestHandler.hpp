@@ -168,11 +168,21 @@ private:
     static const int WIFI_RESET_BIT = BIT9;
 
     /**
+     * @brief Indicated if an access point is running on this device.
+     */
+    static const int WIFI_ACCESS_POINT_STARTED_BIT = BIT10;
+
+    /**
      *  @brief Indicate that some sort of error has occurred.
      * 
      *  This will usually be problems with connections, getting the system started etc.
      */
     static const int WIFI_ERROR_BIT = BIT23;
+
+    /**
+     * @brief All of the bits that could be set in an event group.
+     */
+    static const int WIFI_ALL_BITS = 0x008fffff;
 
     /**
      *  @brief Default scan method for WiFi networks.
@@ -563,6 +573,13 @@ private:
      *  @brief Stop the access point if it is running.
      */
     void StopAccessPoint(Message *message);
+
+    /**
+     * @brief Extract and validate the access point information.
+     * 
+     * @return Esp32Messaging::AccessPointInformation* 
+     */
+    Esp32Messaging::AccessPointInformation *ExtractAndValidateAccessPointInformation(uint8_t *);
 
     /**
      *  @brief Get a list of available access points.
