@@ -129,8 +129,17 @@ extern "C" void app_main()
     // Message *message = static_cast<Message *>(pvPortMalloc(sizeof(Message)));
     // message->MessageType = MessageTypes::Header;
     // message->Interface = Esp32Interfaces::WiFi;
-    // message->Function = WiFiFunction::GetAccessPoints;
+    // message->Function = WiFiFunction::StartAccessPoint;
 
+    // Esp32Messaging::AccessPointInformation info = { };
+    // info.NetworkName = "TestNetwork";
+    // info.Password = "ALongPassword";
+    // info.IpAddress = 0x0104a8c0;
+    // info.SubnetMask = 0x00ffffff;
+    // info.Gateway = info.IpAddress;
+    // message->PayloadLength = Encoders::EncodedAccessPointInformationBufferSize(&info);
+    // message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
+    // Encoders::EncodeAccessPointInformation(&info, message->Payload);
 
     // Message *message = static_cast<Message *>(pvPortMalloc(sizeof(Message)));
     // message->MessageType = MessageTypes::Header;
