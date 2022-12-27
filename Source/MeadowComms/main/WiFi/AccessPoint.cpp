@@ -177,6 +177,21 @@ void WiFiRequestHandler::StopAccessPoint(Message *message)
 {
     TRACE_MESSAGE("StopAccessPoint: Enter");
 
+    TRACE_MESSAGE("StopAccessPoint: ****************** Implementation Required ******************");
+
+    if (message->Payload)
+    {
+        vPortFree(payload);
+    }
+    message->PayloadLength = 0;
+    message->Payload = nullptr;
+    message->MessageType = MessageTypes::Response;
+    message->StatusCode = StatusCodes::CompletedOk;
+    Logging::DumpMessage(COMPONENT_NAME, message);
+
+    _messageDispatcher->QueueMessageForStm32(message);
+    xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
+
     TRACE_MESSAGE("StopAccessPoint: Exit");
 }
 
@@ -207,7 +222,7 @@ void WiFiRequestHandler::AccessPointStoppedEvent()
 {
     TRACE_MESSAGE("AccessPointStoppedEvent: Enter");
 
-    _softApNetIfHandle = nullptr;
+    //  Need to implement this.
 
     TRACE_MESSAGE("AccessPointStoppedEvent: Exit");
 }
