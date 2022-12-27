@@ -114,7 +114,7 @@ void WiFiRequestHandler::StartAccessPoint(Message *message)
             config.ap.ssid_len = strlen(accessPointInformation->NetworkName);
             memcpy(config.ap.ssid, accessPointInformation->NetworkName, strlen(accessPointInformation->NetworkName));
             memcpy(config.ap.password, accessPointInformation->Password, strlen(accessPointInformation->Password));
-            config.ap.max_connection = 10;
+            config.ap.max_connection = ESP_WIFI_MAX_CONN_NUM;
             config.ap.authmode = WIFI_AUTH_WPA_WPA2_PSK;
             esp_err_t error = esp_wifi_set_config(ESP_IF_WIFI_AP, &config);
             if (error != ESP_OK)
