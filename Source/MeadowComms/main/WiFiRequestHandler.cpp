@@ -2001,22 +2001,16 @@ void WiFiRequestHandler::Connect(void *vpMessage)
             TRACE_MESSAGE("Connect: IP address: %s", inet_ntoa(sa.sin_addr));
             TRACE_MESSAGE("Connect: Port: %d", ntohs(sa.sin_port));
             response.Result = connect(request->SocketHandle, (struct sockaddr *) &sa, sizeof(sa));
+            if (response.Result != 0)
+            {
+                TRACE_MESSAGE("Connect: Error code: %d - %s", errno, strerror(errno));
+                response.ResponseErrno = MapErrno(errno);
+            }
         }
         else
         {
             response.Result = -1;
-            errno = EFAULT;
-        }
-
-        if (response.Result != 0)
-        {
-            response.Result = -1;
-            TRACE_MESSAGE("Connect: Error code: %d - %s", errno, strerror(errno));
-            response.ResponseErrno = MapErrno(errno);
-        }
-        else
-        {
-            response.ResponseErrno = 0;
+            response.ResponseErrno = MapErrno(EFAULT);
         }
 
         vPortFree(request);
@@ -2091,7 +2085,6 @@ void WiFiRequestHandler::GetSockOpt(void *vpMessage)
 
     if (IsConnected())
     {
-        int32_t errorCode = 0;
         struct timeval timeOut = { };
         struct linger lingerOut = { };
         int intVal = 0;
@@ -2102,11 +2095,11 @@ void WiFiRequestHandler::GetSockOpt(void *vpMessage)
         if (Mapping::GetEspValue(Mapping::SocketOptions, request->OptionName, &optionName) < 0)
         {
             TRACE_MESSAGE("GetSockOpt: Unknown option: %d", request->OptionName);
-            errorCode = ENOPROTOOPT;
+            response.Result = -1;
+            response.ResponseErrno = MapErrno(ENOPROTOOPT);
         }
         else
         {
-            errno = 0;
             switch (optionName)
             {
                 case SO_SNDTIMEO:       /* Get the send timeout */
@@ -2139,19 +2132,18 @@ void WiFiRequestHandler::GetSockOpt(void *vpMessage)
                     break;
                 default:
                     response.Result = -1;
-                    errorCode = ENOPROTOOPT;
+                    response.ResponseErrno = MapErrno(ENOPROTOOPT);
                     break;
             }
-            if (errorCode == 0)
+            if (response.Result == 0)
             {
                 int32_t level = 0;
                 Mapping::GetEspValue(Mapping::SocketLevel, request->Level, &level);
                 TRACE_MESSAGE("GetSockOpt: Getting socket option level 0x%x, option name 0x%x for socket %d", level, optionName, request->SocketHandle);
                 response.Result = getsockopt(request->SocketHandle, level, optionName, static_cast<void *>(optionValue), &optionLength);
-                errorCode = errno;
             }
         }
-        if (errorCode == 0)
+        if (response.Result == 0)
         {
             Esp32Messaging::TimeVal esp_tv = { };
             Esp32Messaging::Linger esp_lv = { };
@@ -2210,8 +2202,7 @@ void WiFiRequestHandler::GetSockOpt(void *vpMessage)
         }
         else
         {
-            response.Result = -1;
-            response.ResponseErrno = MapErrno(errorCode);
+            response.ResponseErrno = MapErrno(errno);
         }
         TRACE_MESSAGE("GetSockOpt: Result: %d, errno: %d - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
 
@@ -2407,7 +2398,6 @@ void WiFiRequestHandler::SetSockOpt(void *vpMessage)
     if (IsConnected())
     {
         void *optionValue = nullptr;
-        int32_t errorCode = ENOPROTOOPT;
 
         socklen_t optionLength = 0;
         int32_t level = 0;
@@ -2440,15 +2430,13 @@ void WiFiRequestHandler::SetSockOpt(void *vpMessage)
             {
                 TRACE_MESSAGE("SetSockOpt: Setting socket option level to 0x%x, option name 0x%x for socket %d", level, optionName, request->SocketHandle);
                 response.Result = setsockopt(request->SocketHandle, level, optionName, optionValue, optionLength);
-                errorCode = errno;
                 vPortFree(optionValue);
             }
         }
 
-        if (errorCode != 0)
+        if (response.Result != 0)
         {
-            response.Result = -1;
-            response.ResponseErrno = MapErrno(errorCode);
+            response.ResponseErrno = MapErrno(errno);
         }
         TRACE_MESSAGE("SetSockOpt: Result: %d, errno: %d - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
 
@@ -2609,12 +2597,9 @@ void WiFiRequestHandler::Close(void *vpMessage)
         Esp32Messaging::CloseRequest *request = Encoders::ExtractCloseRequest(message->Payload);
 
         response.Result = close(request->SocketHandle);
-        if (response.Result != 0)
+        if (response.Result < 0)
         {
-            if (response.Result < 0)
-            {
-                response.Result = MapErrno(errno);
-            }
+            response.ResponseErrno = MapErrno(errno);
         }
 
         vPortFree(request);
@@ -2759,14 +2744,14 @@ void WiFiRequestHandler::SendTo(void *vpMessage)
             }
             response.Result = sendto(request->SocketHandle, request->Buffer, request->Length, mappedFlags, psa, lenSa);
 
-            if (socketAddress != NULL)
-            {
-                vPortFree(socketAddress);
-            }
-
             if (response.Result < 0)
             {
                 response.ResponseErrno = MapErrno(errno);
+            }
+
+            if (socketAddress != NULL)
+            {
+                vPortFree(socketAddress);
             }
         }
         else
@@ -2842,7 +2827,7 @@ void WiFiRequestHandler::RecvFrom(void *vpMessage)
             {
                 response.Buffer = nullptr;
                 response.Result = -1;
-                errno = ENOMEM;
+                response.ResponseErrno = ENOMEM;
             }
             else
             {
@@ -2870,6 +2855,7 @@ void WiFiRequestHandler::RecvFrom(void *vpMessage)
                         response.SourceAddressLength = 0;
                         response.SourceAddressLen = 0;
                         response.Result = -1;
+                        response.ResponseErrno = ENOMEM;
                     }
                     else
                     {
@@ -2976,22 +2962,17 @@ void WiFiRequestHandler::Bind(void *vpMessage)
             TRACE_MESSAGE("Bind: IP address: %s", inet_ntoa(sa.sin_addr));
             TRACE_MESSAGE("Bind: Port: %d", ntohs(sa.sin_port));
             response.Result = bind(request->SocketHandle, (struct sockaddr *) &sa, sizeof(sa));
+            if (response.Result != 0)
+            {
+                response.ResponseErrno = MapErrno(errno);
+            }
         }
         else
         {
             response.Result = -1;
-            errno = EFAULT;
+            response.ResponseErrno = MapErrno(EFAULT);
         }
 
-        if (response.Result != 0)
-        {
-            response.ResponseErrno = MapErrno(errno);
-            response.Result = -1;
-        }
-        else
-        {
-            response.ResponseErrno = 0;
-        }
         TRACE_MESSAGE("Bind: Error code: %d - %s", errno, strerror(errno));
         vPortFree(request);
         vPortFree(socketAddress);
