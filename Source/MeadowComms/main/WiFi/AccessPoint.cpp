@@ -94,10 +94,11 @@ void WiFiRequestHandler::StartAccessPoint(Message *message)
 
     if (accessPointInformation)
     {
+        xEventGroupClearBits(_xWiFiEventGroup, WIFI_ACCESS_POINT_STARTED_BIT | WIFI_ERROR_BIT);
         EventBits_t bits = xEventGroupGetBits(_xWiFiEventGroup);
-        // uint32_t ipAddress = accessPointInformation->IpAddress;
-        // uint32_t subnetMask = accessPointInformation->SubnetMask;
-        // uint32_t gateway = accessPointInformation->Gateway;
+        uint32_t ipAddress = accessPointInformation->IpAddress;
+        uint32_t subnetMask = accessPointInformation->SubnetMask;
+        uint32_t gateway = accessPointInformation->Gateway;
         if (!(bits & WIFI_INTERFACE_STARTED_BIT))
         {
             accessPointInformation->IpAddress = 0;
@@ -109,23 +110,20 @@ void WiFiRequestHandler::StartAccessPoint(Message *message)
             }
             else
             {
-                TRACE_MESSAGE("WiFi interface started OK.");
-            }
-            bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTED_BIT | WIFI_ERROR_BIT, pdFALSE, pdFALSE, GetWiFiTimeout() / portTICK_PERIOD_MS);
-            if ((bits & WIFI_INTERFACE_STARTED_BIT) == 0)
-            {
-                result = StatusCodes::CannotStartNetworkInterface;
-            }
-        }
-        else
-        {
-            if (bits & WIFI_ACCESS_POINT_STARTED_BIT)
-            {
-                result = StatusCodes::AccessPointAlreadyStarted;
+                bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTED_BIT | WIFI_ERROR_BIT, pdFALSE, pdFALSE, GetWiFiTimeout() / portTICK_PERIOD_MS);
+                if ((bits & WIFI_INTERFACE_STARTED_BIT) == 0)
+                {
+                    result = StatusCodes::CannotStartNetworkInterface;
+                }
+                else
+                {
+                    TRACE_MESSAGE("StartAccessPoint: WiFi interface started OK.");
+                }
             }
         }
         if (result == StatusCodes::CompletedOk)
         {
+            TRACE_MESSAGE("StartAccessPoint: Creating access point: %s, password %s", accessPointInformation->NetworkName, accessPointInformation->Password);
             wifi_config_t config = { };
             config.ap.ssid_len = strlen(accessPointInformation->NetworkName);
             memcpy(config.ap.ssid, accessPointInformation->NetworkName, strlen(accessPointInformation->NetworkName));
@@ -135,11 +133,39 @@ void WiFiRequestHandler::StartAccessPoint(Message *message)
             esp_err_t error = esp_wifi_set_config(ESP_IF_WIFI_AP, &config);
             if (error != ESP_OK)
             {
-                TRACE_MESSAGE("Setting access point configuration returned 0x%x (%s)", error, esp_err_to_name(error));
+                TRACE_MESSAGE("StartAccessPoint: Setting access point configuration returned 0x%x (%s)", error, esp_err_to_name(error));
                 result = StatusCodes::CannotStartAccessPoint;
             }
             else
             {
+                if ((ipAddress != 0) && (gateway != 0) && (subnetMask != 0))
+                {
+                    if (esp_netif_dhcps_stop(_softApNetIfHandle) == ESP_OK)
+                    {
+                        char ip[INET_ADDRSTRLEN], sn[INET_ADDRSTRLEN], gw[INET_ADDRSTRLEN];
+                        strcpy(ip, inet_ntoa(ipAddress));
+                        strcpy(sn, inet_ntoa(subnetMask));
+                        strcpy(gw, inet_ntoa(gateway));
+                        TRACE_MESSAGE("StartAccessPoint: Configuring access point DHCP server, IP: %s, subnet mask %s, default gateway %s", ip, sn, gw);
+
+                        esp_netif_ip_info_t ip_info;
+                        ip_info.ip.addr = ipAddress;
+                        ip_info.gw.addr = gateway;
+                        ip_info.netmask.addr = subnetMask;
+                        if (esp_netif_set_ip_info(_softApNetIfHandle, &ip_info) != ESP_OK)
+                        {
+                            result = StatusCodes::CannotStartAccessPoint;
+                            if (esp_netif_dhcps_start(_softApNetIfHandle) != ESP_OK)
+                            {
+                                result = StatusCodes::CannotStartAccessPoint;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        result = StatusCodes::CannotStartAccessPoint;
+                    }
+                }
                 bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_ACCESS_POINT_STARTED_BIT | WIFI_ERROR_BIT, pdFALSE, pdFALSE, GetWiFiTimeout() / portTICK_PERIOD_MS);
                 if ((bits & WIFI_ACCESS_POINT_STARTED_BIT) == 0)
                 {
@@ -177,16 +203,15 @@ void WiFiRequestHandler::StopAccessPoint(Message *message)
 {
     TRACE_MESSAGE("StopAccessPoint: Enter");
 
-    TRACE_MESSAGE("StopAccessPoint: ****************** Implementation Required ******************");
-
-    if (message->Payload)
+    wifi_config_t config = { };
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
+    if (esp_wifi_set_config(ESP_IF_WIFI_AP, &config) != ESP_OK)
     {
-        vPortFree(message->Payload);
+        result = StatusCodes::Failure;
     }
-    message->PayloadLength = 0;
-    message->Payload = nullptr;
+
     message->MessageType = MessageTypes::Response;
-    message->StatusCode = StatusCodes::CompletedOk;
+    message->StatusCode = result;
     Logging::DumpMessage(COMPONENT_NAME, message);
 
     _messageDispatcher->QueueMessageForStm32(message);
@@ -210,6 +235,34 @@ void WiFiRequestHandler::AccessPointStartedEvent()
 {
     TRACE_MESSAGE("AccessPointStartedEvent: Enter");
 
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
+    uint8_t *payload = nullptr;
+    uint32_t payloadLength = 0;
+
+    esp_netif_ip_info_t ip_info;
+    if (esp_netif_get_ip_info(_softApNetIfHandle, &ip_info) == ESP_OK)
+    {
+        Esp32Messaging::AccessPointInformation info = { };
+        info.IpAddress = ip_info.ip.addr;
+        info.SubnetMask = ip_info.netmask.addr;
+        info.Gateway = ip_info.gw.addr;
+        payloadLength = Encoders::EncodedAccessPointInformationBufferSize(&info);
+        payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
+        if (payload)
+        {
+            Encoders::EncodeAccessPointInformation(&info, payload);
+        }
+        else
+        {
+            payload = nullptr;
+            payloadLength = 0;
+            result = StatusCodes::Failure;
+        }
+    }
+
+    Message *message = Message::CreateOnHeap(MessageTypes::Event, Esp32Interfaces::WiFi, WiFiFunction::AccessPointStartedEvent, result, _messageDispatcher->GetNextMessageID(), payload, payloadLength);
+    _messageDispatcher->QueueMessageForStm32(message);
+
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_ACCESS_POINT_STARTED_BIT);
 
     TRACE_MESSAGE("AccessPointStartedEvent: Exit");
@@ -222,7 +275,14 @@ void WiFiRequestHandler::AccessPointStoppedEvent()
 {
     TRACE_MESSAGE("AccessPointStoppedEvent: Enter");
 
-    //  Need to implement this.
+    LockConnectedNodesMap();
+    _connectedNodes.clear();
+    UnlockConnectedNodesMap();
+
+    Message *message = Message::CreateOnHeap(MessageTypes::Event, Esp32Interfaces::WiFi, WiFiFunction::AccessPointStoppedEvent, StatusCodes::CompletedOk, _messageDispatcher->GetNextMessageID(), nullptr, 0);
+    _messageDispatcher->QueueMessageForStm32(message);
+
+    xEventGroupClearBits(_xWiFiEventGroup, WIFI_ACCESS_POINT_STARTED_BIT);
 
     TRACE_MESSAGE("AccessPointStoppedEvent: Exit");
 }
@@ -270,13 +330,16 @@ void WiFiRequestHandler::NodeConnectedEvent()
             std::map<uint64_t, uint32_t>::iterator it = _connectedNodes.find(key);
             if (it == _connectedNodes.end())
             {
-                TRACE_MESSAGE("NodeConnectedEvent: New node: MAC " MACSTR " IP Address " IPSTR, MAC2STR(station.mac), IP2STR(&station.ip));
+                _connectedNodes[key] = 0;
+            }
+            if (station.ip.addr != _connectedNodes[key])
+            {
+                TRACE_MESSAGE("NodeConnectedEvent: Updating IP address for node: MAC " MACSTR " IP Address " IPSTR, MAC2STR(station.mac), IP2STR(&station.ip));
                 Esp32Messaging::NodeConnectionChangeEventData data;
                 memcpy(&data.MacAddress, &station.mac, 6);
                 memcpy(&data.IpAddress, &station.ip, sizeof(uint32_t));
                 _connectedNodes[key] = data.IpAddress;
                 RaiseNodeConnectionChangeEvent(WiFiFunction::NodeConnectedEvent, &data);
-                break;
             }
         }
         UnlockConnectedNodesMap();
