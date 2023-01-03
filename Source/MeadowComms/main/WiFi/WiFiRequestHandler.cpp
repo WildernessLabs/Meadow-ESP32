@@ -1647,6 +1647,7 @@ esp_err_t WiFiRequestHandler::StartWiFiInterface(const wifi_mode_t mode, const E
         if (result == ESP_OK)
         {
             _stationNetIfHandle = NULL;
+            _softApNetIfHandle = NULL;
             if ((mode == WIFI_MODE_STA) || (mode == WIFI_MODE_APSTA))
             {
                 _stationNetIfHandle = esp_netif_create_default_wifi_sta();
