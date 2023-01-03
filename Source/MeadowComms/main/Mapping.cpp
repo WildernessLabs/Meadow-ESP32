@@ -380,7 +380,11 @@ Mapping::str_mapping_t Mapping::_statusCodes[] =
     { StatusCodes::ConnectionFailed, (char *) "ConnectionFailed" },
     { StatusCodes::ApTsfReset, (char *) "ApTsfReset" },
     { StatusCodes::UnmappedErrorCode, (char *) "UnmappedErrorCode" },
-    { StatusCodes::UnknownConfigurationItem, (char *) "UnknownConfigurationItem" }
+    { StatusCodes::UnknownConfigurationItem, (char *) "UnknownConfigurationItem" },
+    { StatusCodes::CannotStartAccessPoint, (char *) "CannotStartAccessPoint" },
+    { StatusCodes::DhcpConfigurationError, (char *) "DhcpConfigurationError" }, 
+    { StatusCodes::AccessPointNotStarted, (char *) "AccessPointNotStarted" },
+    { StatusCodes::AccessPointAlreadyStarted, (char *) "AccessPointAlreadyStarted" }
 };
 
 /**
