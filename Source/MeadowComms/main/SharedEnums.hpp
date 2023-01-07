@@ -178,7 +178,11 @@ namespace StatusCodes
         /// <summary>
         /// StatusCodes - AccessPointAlreadyStarted
         /// </summary>
-        AccessPointAlreadyStarted = 38
+        AccessPointAlreadyStarted = 38,
+        /// <summary>
+        /// StatusCodes - NotImplemented
+        /// </summary>
+        NotImplemented = 39
     };
 
 }

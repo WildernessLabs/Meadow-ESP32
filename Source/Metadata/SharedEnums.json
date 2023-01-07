@@ -15,7 +15,8 @@
                 "EspWiFiNotStarted", "EspOutOfMemory", "EspWiFiInvalidSsid", "AccessPointNotFound", "BeaconTimeout", "AuthenticationFailed",
                 "AssociationFailed", "HandshakeTimeout", "ConnectionFailed", "ApTsfReset",
                 "UnmappedErrorCode", "UnknownConfigurationItem",
-                "CannotStartAccessPoint", "DhcpConfigurationError", "AccessPointNotStarted", "AccessPointAlreadyStarted"
+                "CannotStartAccessPoint", "DhcpConfigurationError", "AccessPointNotStarted", "AccessPointAlreadyStarted",
+                "NotImplemented"
             ]
         },
         {
