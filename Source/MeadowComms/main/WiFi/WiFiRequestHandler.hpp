@@ -8,7 +8,7 @@
 #ifndef _WIFI_REQUEST_HANDLER_HPP_
 #define _WIFI_REQUEST_HANDLER_HPP_
 
-#include "../build/config/sdkconfig.h"
+#include "../../build/config/sdkconfig.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -151,11 +151,26 @@ private:
     static const int WIFI_RESET_BIT = BIT9;
 
     /**
+     * @brief Indicated if an access point is running on this device.
+     */
+    static const int WIFI_ACCESS_POINT_STARTED_BIT = BIT10;
+
+    /**
+     * @brief USed to indicate that the access point is starting.
+     */
+    static const int WIFI_STARTING_ACCESS_POINT_BIT = BIT11;
+
+    /**
      *  @brief Indicate that some sort of error has occurred.
      * 
      *  This will usually be problems with connections, getting the system started etc.
      */
     static const int WIFI_ERROR_BIT = BIT23;
+
+    /**
+     * @brief All of the bits that could be set in an event group.
+     */
+    static const int WIFI_ALL_BITS = 0x008fffff;
 
     /**
      *  @brief Default scan method for WiFi networks.
@@ -438,6 +453,16 @@ private:
      */
     TaskHandle_t _completedPollRequestsTaskHandle;
 
+    /**
+     * @brief Mutex for the list of connected nodes.
+     */
+    SemaphoreHandle_t _connectedNodesListMutex;
+
+    /**
+     * @brief List of the nodes connected to this device in configured as an access point.
+     */
+    std::map<uint64_t, uint32_t> _connectedNodes;
+
     /*
      *  Private methods.
      */
@@ -495,6 +520,12 @@ private:
     void RaiseErrorEvent(StatusCodes::StatusCodes statusCode, uint8_t *payload, uint32_t payloadLength);
 
     /**
+     *  @brief Start the network interface ready for the device to be configured
+     *  as either an access point (softAP) or as a network device (station).
+     */
+    esp_err_t StartWiFiInterface(const wifi_mode_t mode, const Esp32Messaging::AccessPointInformation *accessPointInformation);
+
+    /**
      *  @brief Stop the WiFi Adapter.
      * 
      *  This request could come from an explicit stop request of from a disconnect request.
@@ -532,10 +563,26 @@ private:
     void ProcessConnectionResult(Message *, StatusCodes::StatusCodes, bool);
 
     /**
-     *  @brief Start the network interface ready for the device to be configured
-     *  as either an access point (softAP) or as a network device (station).
+     *  @brief Start the access point.
      */
-    esp_err_t StartWiFiInterface(const wifi_mode_t mode, const Esp32Messaging::AccessPointInformation *accessPointInformation);
+    void StartAccessPoint(Message *message);
+
+    /**
+     *  @brief Stop the access point if it is running.
+     */
+    void StopAccessPoint(Message *message);
+
+    /**
+     * @brief Extract and validate the access point information.
+     * 
+     * @return Esp32Messaging::AccessPointInformation* 
+     */
+    Esp32Messaging::AccessPointInformation *ExtractAndValidateAccessPointInformation(uint8_t *);
+
+    /**
+     * @brief Raise a node connect / disconnect event for the C# code.
+     */
+    void RaiseNodeConnectionChangeEvent(WiFiFunction::WiFiFunction event_type, Esp32Messaging::NodeConnectionChangeEventData *data);
 
     /**
      *  @brief Get a list of available access points.
@@ -606,6 +653,26 @@ private:
      *  @brief Process the change in authentication mode event (WIFI_EVENT_STA_AUTHMODE_CHANGE).
      */
     void AuthenticationModeChangedEvent(wifi_event_sta_authmode_change_t *);
+
+    /**
+     * @brief Process the node connecting to access point event.
+     */
+    void NodeConnectedEvent();
+
+    /**
+     * @brief Processes the node disconnecting from the access point event.
+     */
+    void NodeDisconnectedEvent(wifi_event_ap_stadisconnected_t *);
+
+    /**
+     * @brief Lock the _connectedNodes object.
+     */
+    void LockConnectedNodesMap();
+
+    /**
+     * @brief Unlock the _connectedNodes object.
+     */
+    void UnlockConnectedNodesMap();
 
     /**
      * @brief Extract an encoded integer setsockopt option value.

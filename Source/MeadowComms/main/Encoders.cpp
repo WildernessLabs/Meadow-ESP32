@@ -817,6 +817,12 @@ void Encoders::EncodeAccessPointInformation(Esp32Messaging::AccessPointInformati
     EncodeUInt32(accessPointInformation->SubnetMask, buffer);
     buffer += 4;
     EncodeUInt32(accessPointInformation->Gateway, buffer);
+    buffer += 4;
+    *buffer = accessPointInformation->WiFiAuthenticationMode;
+    buffer += 1;
+    *buffer = accessPointInformation->Channel;
+    buffer += 1;
+    *buffer = accessPointInformation->Hidden;
 }
 
 /**
@@ -834,7 +840,7 @@ int Encoders::EncodedAccessPointInformationBufferSize(Esp32Messaging::AccessPoin
     int result = 0;
     result += Encoders::StringLength(accessPointInformation->NetworkName);
     result += Encoders::StringLength(accessPointInformation->Password);
-    return(result + 14);
+    return(result + 17);
 }
 
 /**
@@ -863,6 +869,12 @@ Esp32Messaging::AccessPointInformation *Encoders::ExtractAccessPointInformation(
     accessPointInformation->SubnetMask = ExtractUInt32(buffer);
     buffer += 4;
     accessPointInformation->Gateway = ExtractUInt32(buffer);
+    buffer += 4;
+    accessPointInformation->WiFiAuthenticationMode = *buffer;
+    buffer += 1;
+    accessPointInformation->Channel = *buffer;
+    buffer += 1;
+    accessPointInformation->Hidden = *buffer;
     return(accessPointInformation);
 }
 
@@ -998,6 +1010,63 @@ Esp32Messaging::ConnectEventData *Encoders::ExtractConnectEventData(uint8_t *buf
     buffer += 1;
     connectEventData->Reason = ExtractUInt32(buffer);
     return(connectEventData);
+}
+
+/**
+ *  Convert the NodeConnectionChangeEventData object into a byte stream that can be sent to the STM32.
+ *  
+ *  The amount of memory required can be obtained by calling the EncodedNodeConnectionChangeEventDataBufferSize method.
+ *  
+ *  @param nodeConnectionChangeEventData
+ *      NodeConnectionChangeEventData object to be encoded.
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory large enough to hold the encoded NodeConnectionChangeEventData object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodeNodeConnectionChangeEventData
+void Encoders::EncodeNodeConnectionChangeEventData(Esp32Messaging::NodeConnectionChangeEventData *nodeConnectionChangeEventData, uint8_t *buffer)
+{
+    EncodeUInt32(nodeConnectionChangeEventData->IpAddress, buffer);
+    buffer += 4;
+    memcpy((void *) buffer, (void *) nodeConnectionChangeEventData->MacAddress, 6);
+}
+
+/**
+ *  Calculate the amount of memory required to hold the given instance of the NodeConnectionChangeEventData object.
+ *  
+ *  @param nodeConnectionChangeEventData
+ *      NodeConnectionChangeEventData object to be encoded.
+ *  
+ *  @returns
+ *      Number of bytes required to hold the encoded NodeConnectionChangeEventData object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodedNodeConnectionChangeEventDataBufferSize
+int Encoders::EncodedNodeConnectionChangeEventDataBufferSize(Esp32Messaging::NodeConnectionChangeEventData *nodeConnectionChangeEventData)
+{
+    return(10);
+}
+
+/**
+ *  Extract the NodeConnectionChangeEventData object that is encoded in the given buffer.
+ *  
+ *  Note that the returned pointer points to a block of memory on the heap and
+ *  this should eventually be released calling vPortFree(...).
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded NodeConnectionChangeEventData object.
+ *  
+ *  @returns
+ *      Pointer to a NodeConnectionChangeEventData object.
+ */
+// cppcheck-suppress unusedFunction symbolName=ExtractNodeConnectionChangeEventData
+Esp32Messaging::NodeConnectionChangeEventData *Encoders::ExtractNodeConnectionChangeEventData(uint8_t *buffer)
+{
+    Esp32Messaging::NodeConnectionChangeEventData *nodeConnectionChangeEventData = (Esp32Messaging::NodeConnectionChangeEventData *) pvPortMalloc(sizeof(Esp32Messaging::NodeConnectionChangeEventData));
+
+    nodeConnectionChangeEventData->IpAddress = ExtractUInt32(buffer);
+    buffer += 4;
+    memcpy((void *) nodeConnectionChangeEventData->MacAddress, (void *) buffer, 6);
+    return(nodeConnectionChangeEventData);
 }
 
 /**
