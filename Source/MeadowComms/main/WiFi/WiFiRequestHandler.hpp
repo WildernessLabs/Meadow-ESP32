@@ -156,6 +156,11 @@ private:
     static const int WIFI_ACCESS_POINT_STARTED_BIT = BIT10;
 
     /**
+     * @brief USed to indicate that the access point is starting.
+     */
+    static const int WIFI_STARTING_ACCESS_POINT_BIT = BIT11;
+
+    /**
      *  @brief Indicate that some sort of error has occurred.
      * 
      *  This will usually be problems with connections, getting the system started etc.

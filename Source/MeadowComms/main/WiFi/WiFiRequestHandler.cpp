@@ -1418,7 +1418,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const Esp32Mes
     ClearIpAndDisconnectData();
     if (!(bits & WIFI_INTERFACE_STARTED_BIT))
     {
-        if (StartWiFiInterface(WIFI_MODE_APSTA, accessPointInformation) != ESP_OK)
+        if (StartWiFiInterface(WIFI_MODE_STA, accessPointInformation) != ESP_OK)
         {
             result = StatusCodes::CannotStartNetworkInterface;
         }
@@ -1652,10 +1652,11 @@ esp_err_t WiFiRequestHandler::StartWiFiInterface(const wifi_mode_t mode, const E
             {
                 _stationNetIfHandle = esp_netif_create_default_wifi_sta();
             }
-            if ((mode == WIFI_MODE_AP) || (mode == WIFI_MODE_APSTA))
-            {
-                _softApNetIfHandle = esp_netif_create_default_wifi_ap();
-            }
+
+            // if ((mode == WIFI_MODE_AP) || (mode == WIFI_MODE_APSTA))
+            // {
+            //     _softApNetIfHandle = esp_netif_create_default_wifi_ap();
+            // }
             if (_stationNetIfHandle == NULL)
             {
                 result = ESP_FAIL;
