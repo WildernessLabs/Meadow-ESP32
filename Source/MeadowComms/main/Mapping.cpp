@@ -380,7 +380,11 @@ Mapping::str_mapping_t Mapping::_statusCodes[] =
     { StatusCodes::ConnectionFailed, (char *) "ConnectionFailed" },
     { StatusCodes::ApTsfReset, (char *) "ApTsfReset" },
     { StatusCodes::UnmappedErrorCode, (char *) "UnmappedErrorCode" },
-    { StatusCodes::UnknownConfigurationItem, (char *) "UnknownConfigurationItem" }
+    { StatusCodes::UnknownConfigurationItem, (char *) "UnknownConfigurationItem" },
+    { StatusCodes::CannotStartAccessPoint, (char *) "CannotStartAccessPoint" },
+    { StatusCodes::DhcpConfigurationError, (char *) "DhcpConfigurationError" }, 
+    { StatusCodes::AccessPointNotStarted, (char *) "AccessPointNotStarted" },
+    { StatusCodes::AccessPointAlreadyStarted, (char *) "AccessPointAlreadyStarted" }
 };
 
 /**
@@ -471,6 +475,10 @@ Mapping::str_mapping_t Mapping::_wifiFunctionNames[] =
 {
     { WiFiFunction::ConnectToAccessPoint, (char *) "ConnectToAccessPoint" },
     { WiFiFunction::ConnectToDefaultAccessPoint, (char *) "ConnectToDefaultAccessPoint" },
+    { WiFiFunction::StartAccessPoint, (char *) "StartAccessPoint" },
+    { WiFiFunction::StopAccessPoint, (char *) "StopAccesPoint" },
+    { WiFiFunction::NodeConnectedEvent, (char *) "NodeConnected" },
+    { WiFiFunction::NodeDisconnectedEvent, (char *) "NodeDisconnectedEvent" },
     { WiFiFunction::DisconnectFromAccessPoint, (char *) "DisconnectFromAccessPoint" },
     { WiFiFunction::GetAccessPoints, (char *) "GetAccessPoints" },
     { WiFiFunction::GetAddrInfo, (char *) "GetAddrInfo" },

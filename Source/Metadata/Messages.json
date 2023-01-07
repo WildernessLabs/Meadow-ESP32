@@ -53,7 +53,10 @@
                 { "Name": "Password", "DataType": "string" },
                 { "Name": "IpAddress", "DataType": "uint32" },
                 { "Name": "SubnetMask", "DataType": "uint32" },
-                { "Name": "Gateway", "DataType": "uint32" }
+                { "Name": "Gateway", "DataType": "uint32" },
+                { "Name": "WiFiAuthenticationMode", "DataType": "byte" },
+                { "Name": "Channel", "DataType": "byte" },
+                { "Name": "Hidden", "DataType": "byte" }
             ]
         },
         { 
@@ -75,6 +78,14 @@
                 { "Name": "Channel", "DataType": "byte" },
                 { "Name": "AuthenticationMode", "DataType": "byte" },
                 { "Name": "Reason", "DataType": "uint32" }
+            ]
+        },
+        {
+            "Name": "NodeConnectionChangeEventData",
+            "MessageElements":
+            [
+                { "Name": "IpAddress", "DataType": "uint32" },
+                { "Name": "MacAddress", "DataType": "fixedbytearray", "Length": "6" }
             ]
         },
         {
