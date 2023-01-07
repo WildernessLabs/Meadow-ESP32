@@ -115,6 +115,18 @@ extern "C" void app_main()
 #endif
 
     Logging::Setup();
+
+    struct tm t;
+    memset(&t, 0, sizeof(struct tm));
+    t.tm_mon = g_application_version.month - 1;
+    char month_text[4];
+    strftime(month_text, 4, "%b", &t);
+
+    ESP_LOGI(COMPONENT_NAME, "Version: %d.%d.%d.%d, built %02d %s 20%02d %02d:%02d:%02d UTC (%08x:%s)", \
+                g_application_version.major, g_application_version.minor, g_application_version.revision, g_application_version.build, \
+                g_application_version.day, month_text, g_application_version.year, g_application_version.hour, \
+                g_application_version.minute, g_application_version.second, g_application_version.hash, g_application_version.branch_name);
+
     NvsManager::Setup();
     /*
      *  Set up the messaging system to use SPI hardware communications.

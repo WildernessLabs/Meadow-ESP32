@@ -1,9 +1,3 @@
-/*
- *  WiFiRequestHandler.cpp
- *
- *  Implementation of the WiFi functionality.
- */
-#include "../build/config/sdkconfig.h"
 
 #include "driver/gpio.h"
 #include "esp_system.h"
