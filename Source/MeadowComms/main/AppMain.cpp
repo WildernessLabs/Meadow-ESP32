@@ -96,7 +96,7 @@ void heap_caps_alloc_failed_hook(size_t requestedSize, uint32_t caps, const char
 {
     if (requestedSize != 0)
     {
-        printf("%s was called but failed to allocate %d bytes with 0x%X capabilities. \n", functionName, requestedSize, caps);
+        printf("%s was called but failed to allocate %lu bytes with 0x%X capabilities. \n", functionName, (unsigned long) requestedSize, caps);
         vTaskDelay(1000 / portTICK_PERIOD_MS);
         char *ptr = NULL;
         *ptr = 0;
