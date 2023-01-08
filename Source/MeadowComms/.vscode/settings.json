@@ -12,7 +12,7 @@
   ],
   "idf.port": "/dev/cu.usbserial-14101",
   "idf.flashType": "UART",
-
+  "idf.svdFilePath": "${workspaceFolder}/esp32.svd",
   "C_Cpp.clang_format_style": "Visual Studio",
   "editor.formatOnSave": false,
   "[cpp]": {
