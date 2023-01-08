@@ -384,7 +384,8 @@ Mapping::str_mapping_t Mapping::_statusCodes[] =
     { StatusCodes::CannotStartAccessPoint, (char *) "CannotStartAccessPoint" },
     { StatusCodes::DhcpConfigurationError, (char *) "DhcpConfigurationError" }, 
     { StatusCodes::AccessPointNotStarted, (char *) "AccessPointNotStarted" },
-    { StatusCodes::AccessPointAlreadyStarted, (char *) "AccessPointAlreadyStarted" }
+    { StatusCodes::AccessPointAlreadyStarted, (char *) "AccessPointAlreadyStarted" },
+    { StatusCodes::FileNotFound, (char *) "FileNotFound" }
 };
 
 /**
@@ -442,7 +443,12 @@ Mapping::str_mapping_t Mapping::_systemFunctionNames[] =
     { SystemFunction::DeepSleep, (char *) "DeepSleep" },
     { SystemFunction::GetBatteryChargeLevel, (char *) "GetBatteryChargeLevel" },
     { SystemFunction::StartHeapTrace, (char *) "StartHeapTrace" },
-    { SystemFunction::StopHeapTrace, (char *) "StopHeapTrace" }
+    { SystemFunction::StopHeapTrace, (char *) "StopHeapTrace" },
+    { SystemFunction::FileSystemFormat, (char *) "FileSystemFormat" },
+    { SystemFunction::FileSystemListFiles, (char *) "FileSystemListFiles" },
+    { SystemFunction::FileSystemWriteFile, (char *) "FileSystemWriteFile" },
+    { SystemFunction::FileSystemReadFile, (char *) "FileSystemReadFile" },
+    { SystemFunction::FileSystemDeleteFile, (char *) "FileSystemDeleteFile" },
 };
 
 /**
