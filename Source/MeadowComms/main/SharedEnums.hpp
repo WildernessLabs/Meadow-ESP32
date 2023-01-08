@@ -182,7 +182,11 @@ namespace StatusCodes
         /// <summary>
         /// StatusCodes - NotImplemented
         /// </summary>
-        NotImplemented = 39
+        NotImplemented = 39,
+        /// <summary>
+        /// StatusCodes - FileNotFound
+        /// </summary>
+        FileNotFound = 40
     };
 
 }
@@ -260,7 +264,27 @@ namespace SystemFunction
         /// <summary>
         /// SystemFunction - StopHeapTrace
         /// </summary>
-        StopHeapTrace = 6
+        StopHeapTrace = 6,
+        /// <summary>
+        /// SystemFunction - FileSystemFormat
+        /// </summary>
+        FileSystemFormat = 7,
+        /// <summary>
+        /// SystemFunction - FileSystemListFiles
+        /// </summary>
+        FileSystemListFiles = 8,
+        /// <summary>
+        /// SystemFunction - FileSystemWriteFile
+        /// </summary>
+        FileSystemWriteFile = 9,
+        /// <summary>
+        /// SystemFunction - FileSystemReadFile
+        /// </summary>
+        FileSystemReadFile = 10,
+        /// <summary>
+        /// SystemFunction - FileSystemDeleteFile
+        /// </summary>
+        FileSystemDeleteFile = 11
     };
 
 }

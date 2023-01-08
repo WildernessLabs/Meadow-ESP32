@@ -434,6 +434,26 @@ namespace Esp32Messaging
         uint8_t *SetData;
     };
 
+    struct FileName
+    {
+        char * Name;
+    };
+
+    struct FileNameAndContents
+    {
+        char * Name;
+        uint16_t Length;
+        uint32_t contentsLength;
+        uint8_t *contents;
+    };
+
+    struct FileNameList
+    {
+        uint16_t NumberOfFilesNames;
+        uint32_t FileNamesLength;
+        uint8_t *FileNames;
+    };
+
 }
 
 /*
@@ -620,6 +640,15 @@ public:
     static void EncodeBTServerDataSet(Esp32Messaging::BTServerDataSet *, uint8_t *);
     static int EncodedBTServerDataSetBufferSize(Esp32Messaging::BTServerDataSet *);
     static Esp32Messaging::BTServerDataSet *ExtractBTServerDataSet(uint8_t *);
+    static void EncodeFileName(Esp32Messaging::FileName *, uint8_t *);
+    static int EncodedFileNameBufferSize(Esp32Messaging::FileName *);
+    static Esp32Messaging::FileName *ExtractFileName(uint8_t *);
+    static void EncodeFileNameAndContents(Esp32Messaging::FileNameAndContents *, uint8_t *);
+    static int EncodedFileNameAndContentsBufferSize(Esp32Messaging::FileNameAndContents *);
+    static Esp32Messaging::FileNameAndContents *ExtractFileNameAndContents(uint8_t *);
+    static void EncodeFileNameList(Esp32Messaging::FileNameList *, uint8_t *);
+    static int EncodedFileNameListBufferSize(Esp32Messaging::FileNameList *);
+    static Esp32Messaging::FileNameList *ExtractFileNameList(uint8_t *);
 
 };
 

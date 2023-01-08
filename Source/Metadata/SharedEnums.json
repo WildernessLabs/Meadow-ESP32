@@ -16,7 +16,8 @@
                 "AssociationFailed", "HandshakeTimeout", "ConnectionFailed", "ApTsfReset",
                 "UnmappedErrorCode", "UnknownConfigurationItem",
                 "CannotStartAccessPoint", "DhcpConfigurationError", "AccessPointNotStarted", "AccessPointAlreadyStarted",
-                "NotImplemented"
+                "NotImplemented",
+                "FileNotFound"
             ]
         },
         {
@@ -35,7 +36,8 @@
           "BaseDataType": "UInt32",
           "EnumNames": [
               "GetConfiguration", "SetConfigurationItem", "DeepSleep", "GetBatteryChargeLevel",
-              "ErrorEvent", "StartHeapTrace", "StopHeapTrace"
+              "ErrorEvent", "StartHeapTrace", "StopHeapTrace",
+              "FileSystemFormat", "FileSystemListFiles", "FileSystemWriteFile", "FileSystemReadFile", "FileSystemDeleteFile"
           ]
         },
         {

@@ -482,6 +482,30 @@
                 { "Name": "Handle", "DataType": "uint16" },
                 { "Name": "SetData", "DataType": "blob" }
             ]
+        },
+        {
+            "Name": "FileName",
+            "MessageElements":
+            [
+                { "Name": "Name", "DataType": "string" }
+            ]
+        },
+        {
+            "Name": "FileNameAndContents",
+            "MessageElements":
+            [
+                { "Name": "Name", "DataType": "string" },
+                { "Name": "Length", "DataType": "uint16" },
+                { "Name": "contents", "DataType": "blob" }
+            ]
+        },
+        {
+            "Name": "FileNameList",
+            "MessageElements":
+            [
+                { "Name": "NumberOfFilesNames", "DataType": "uint16" },
+                { "Name": "FileNames", "DataType": "blob" }
+            ]
         }
     ]
 }

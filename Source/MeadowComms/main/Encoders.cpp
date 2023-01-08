@@ -4136,4 +4136,214 @@ Esp32Messaging::BTServerDataSet *Encoders::ExtractBTServerDataSet(uint8_t *buffe
     return(bTServerDataSet);
 }
 
+/**
+ *  Convert the FileName object into a byte stream that can be sent to the STM32.
+ *  
+ *  The amount of memory required can be obtained by calling the EncodedFileNameBufferSize method.
+ *  
+ *  @param fileName
+ *      FileName object to be encoded.
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory large enough to hold the encoded FileName object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodeFileName
+void Encoders::EncodeFileName(Esp32Messaging::FileName *fileName, uint8_t *buffer)
+{
+    EncodeString(fileName->Name, buffer);
+}
+
+/**
+ *  Calculate the amount of memory required to hold the given instance of the FileName object.
+ *  
+ *  @param fileName
+ *      FileName object to be encoded.
+ *  
+ *  @returns
+ *      Number of bytes required to hold the encoded FileName object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodedFileNameBufferSize
+int Encoders::EncodedFileNameBufferSize(Esp32Messaging::FileName *fileName)
+{
+    int result = 0;
+    result += Encoders::StringLength(fileName->Name);
+    return(result + 1);
+}
+
+/**
+ *  Extract the FileName object that is encoded in the given buffer.
+ *  
+ *  Note that the returned pointer points to a block of memory on the heap and
+ *  this should eventually be released calling vPortFree(...).
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded FileName object.
+ *  
+ *  @returns
+ *      Pointer to a FileName object.
+ */
+// cppcheck-suppress unusedFunction symbolName=ExtractFileName
+Esp32Messaging::FileName *Encoders::ExtractFileName(uint8_t *buffer)
+{
+    Esp32Messaging::FileName *fileName = (Esp32Messaging::FileName *) pvPortMalloc(sizeof(Esp32Messaging::FileName));
+
+    fileName->Name = ExtractString(buffer);
+    return(fileName);
+}
+
+/**
+ *  Convert the FileNameAndContents object into a byte stream that can be sent to the STM32.
+ *  
+ *  The amount of memory required can be obtained by calling the EncodedFileNameAndContentsBufferSize method.
+ *  
+ *  @param fileNameAndContents
+ *      FileNameAndContents object to be encoded.
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory large enough to hold the encoded FileNameAndContents object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodeFileNameAndContents
+void Encoders::EncodeFileNameAndContents(Esp32Messaging::FileNameAndContents *fileNameAndContents, uint8_t *buffer)
+{
+    EncodeString(fileNameAndContents->Name, buffer);
+    buffer += StringLength(fileNameAndContents->Name) + 1;
+    EncodeUInt16(fileNameAndContents->Length, buffer);
+    buffer += 2;
+    EncodeUInt32(fileNameAndContents->contentsLength, buffer);
+    buffer += 4;
+    if (fileNameAndContents->contentsLength > 0)
+    {
+        memcpy((void *) buffer, (void *) fileNameAndContents->contents, fileNameAndContents->contentsLength);
+    }
+}
+
+/**
+ *  Calculate the amount of memory required to hold the given instance of the FileNameAndContents object.
+ *  
+ *  @param fileNameAndContents
+ *      FileNameAndContents object to be encoded.
+ *  
+ *  @returns
+ *      Number of bytes required to hold the encoded FileNameAndContents object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodedFileNameAndContentsBufferSize
+int Encoders::EncodedFileNameAndContentsBufferSize(Esp32Messaging::FileNameAndContents *fileNameAndContents)
+{
+    int result = 0;
+    result += Encoders::StringLength(fileNameAndContents->Name);
+    result += fileNameAndContents->contentsLength;
+    return(result + 7);
+}
+
+/**
+ *  Extract the FileNameAndContents object that is encoded in the given buffer.
+ *  
+ *  Note that the returned pointer points to a block of memory on the heap and
+ *  this should eventually be released calling vPortFree(...).
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded FileNameAndContents object.
+ *  
+ *  @returns
+ *      Pointer to a FileNameAndContents object.
+ */
+// cppcheck-suppress unusedFunction symbolName=ExtractFileNameAndContents
+Esp32Messaging::FileNameAndContents *Encoders::ExtractFileNameAndContents(uint8_t *buffer)
+{
+    Esp32Messaging::FileNameAndContents *fileNameAndContents = (Esp32Messaging::FileNameAndContents *) pvPortMalloc(sizeof(Esp32Messaging::FileNameAndContents));
+
+    fileNameAndContents->Name = ExtractString(buffer);
+    buffer += Encoders::StringLength(fileNameAndContents->Name) + 1;
+    fileNameAndContents->Length = ExtractUInt16(buffer);
+    buffer += 2;
+    fileNameAndContents->contentsLength = ExtractUInt32(buffer);
+    buffer += 4;
+    if (fileNameAndContents->contentsLength > 0)
+    {
+        fileNameAndContents->contents = (uint8_t *) pvPortMalloc(fileNameAndContents->contentsLength);
+        memcpy(fileNameAndContents->contents, buffer, fileNameAndContents->contentsLength);
+        buffer += fileNameAndContents->contentsLength;
+    }
+    else
+    {
+        fileNameAndContents->contents = nullptr;
+    }
+    return(fileNameAndContents);
+}
+
+/**
+ *  Convert the FileNameList object into a byte stream that can be sent to the STM32.
+ *  
+ *  The amount of memory required can be obtained by calling the EncodedFileNameListBufferSize method.
+ *  
+ *  @param fileNameList
+ *      FileNameList object to be encoded.
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory large enough to hold the encoded FileNameList object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodeFileNameList
+void Encoders::EncodeFileNameList(Esp32Messaging::FileNameList *fileNameList, uint8_t *buffer)
+{
+    EncodeUInt16(fileNameList->NumberOfFilesNames, buffer);
+    buffer += 2;
+    EncodeUInt32(fileNameList->FileNamesLength, buffer);
+    buffer += 4;
+    if (fileNameList->FileNamesLength > 0)
+    {
+        memcpy((void *) buffer, (void *) fileNameList->FileNames, fileNameList->FileNamesLength);
+    }
+}
+
+/**
+ *  Calculate the amount of memory required to hold the given instance of the FileNameList object.
+ *  
+ *  @param fileNameList
+ *      FileNameList object to be encoded.
+ *  
+ *  @returns
+ *      Number of bytes required to hold the encoded FileNameList object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodedFileNameListBufferSize
+int Encoders::EncodedFileNameListBufferSize(Esp32Messaging::FileNameList *fileNameList)
+{
+    int result = 0;
+    result += fileNameList->FileNamesLength;
+    return(result + 6);
+}
+
+/**
+ *  Extract the FileNameList object that is encoded in the given buffer.
+ *  
+ *  Note that the returned pointer points to a block of memory on the heap and
+ *  this should eventually be released calling vPortFree(...).
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded FileNameList object.
+ *  
+ *  @returns
+ *      Pointer to a FileNameList object.
+ */
+// cppcheck-suppress unusedFunction symbolName=ExtractFileNameList
+Esp32Messaging::FileNameList *Encoders::ExtractFileNameList(uint8_t *buffer)
+{
+    Esp32Messaging::FileNameList *fileNameList = (Esp32Messaging::FileNameList *) pvPortMalloc(sizeof(Esp32Messaging::FileNameList));
+
+    fileNameList->NumberOfFilesNames = ExtractUInt16(buffer);
+    buffer += 2;
+    fileNameList->FileNamesLength = ExtractUInt32(buffer);
+    buffer += 4;
+    if (fileNameList->FileNamesLength > 0)
+    {
+        fileNameList->FileNames = (uint8_t *) pvPortMalloc(fileNameList->FileNamesLength);
+        memcpy(fileNameList->FileNames, buffer, fileNameList->FileNamesLength);
+        buffer += fileNameList->FileNamesLength;
+    }
+    else
+    {
+        fileNameList->FileNames = nullptr;
+    }
+    return(fileNameList);
+}
+
 
