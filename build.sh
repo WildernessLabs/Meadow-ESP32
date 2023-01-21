@@ -301,7 +301,7 @@ if ! $NO_BUILD; then
     IDF_FLAGS="build $IDF_FLAGS"
 fi
 if [[ ! -z $IDF_FLAGS ]]; then
-    idf.py -C $scriptdir/Source/MeadowComms $IDF_DEFINES $IDF_FLAGS
+    run_command idf.py -C $scriptdir/Source/MeadowComms $IDF_DEFINES $IDF_FLAGS
 fi
 
 if [ $? -eq 0 ]; then
