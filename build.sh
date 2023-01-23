@@ -130,28 +130,17 @@ if $HELP; then
 fi
 
 run_command() {
-  if $VERBOSE || $DRYRUN; then
-    echo "Executing command: $1"
-    if ! $DRYRUN; then
-        $1
-    fi
+  echo ">>> " "$@"
+  if $VERBOSE; then
+    $@
   else
-    if ! $DRYRUN; then
-        $1 &>/dev/null
-    fi
+    $@ > log.txt 2> errors.txt
   fi
-}
-
-check_command_status() {
-  exit_status=$?
-  if [ $exit_status -ne 0 ]; then
-    printf " ${red}error${reset}\n"
-    if ! $VERBOSE; then
-        printf "Re-run the script with --verbose flag to see the output.\n"
-    fi
+  if [ $? -ne 0 ]; then
+    echo "Operation failed:"
+    echo "$@"
+    echo "<<<"
     exit 1
-  else
-    printf " ${green}success${reset}\n"
   fi
 }
 
@@ -312,7 +301,7 @@ if ! $NO_BUILD; then
     IDF_FLAGS="build $IDF_FLAGS"
 fi
 if [[ ! -z $IDF_FLAGS ]]; then
-    idf.py -C $scriptdir/Source/MeadowComms $IDF_DEFINES $IDF_FLAGS
+    run_command idf.py -C $scriptdir/Source/MeadowComms $IDF_DEFINES $IDF_FLAGS
 fi
 
 if [ $? -eq 0 ]; then
