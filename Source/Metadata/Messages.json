@@ -484,10 +484,11 @@
             ]
         },
         {
-            "Name": "FileName",
+            "Name": "FileDetails",
             "MessageElements":
             [
-                { "Name": "Name", "DataType": "string" }
+                { "Name": "Name", "DataType": "string" },
+                { "Name": "Length", "DataType": "uint16" }
             ]
         },
         {
@@ -496,15 +497,15 @@
             [
                 { "Name": "Name", "DataType": "string" },
                 { "Name": "Length", "DataType": "uint16" },
-                { "Name": "contents", "DataType": "blob" }
+                { "Name": "Contents", "DataType": "blob" }
             ]
         },
         {
             "Name": "FileNameList",
             "MessageElements":
             [
-                { "Name": "NumberOfFilesNames", "DataType": "uint16" },
-                { "Name": "FileNames", "DataType": "blob" }
+                { "Name": "NumberOfFiles", "DataType": "uint16" },
+                { "Name": "FileDetails", "DataType": "blob" }
             ]
         }
     ]
