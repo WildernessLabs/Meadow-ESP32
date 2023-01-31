@@ -4,7 +4,7 @@
  *  Implementation of the methods to provide the file system functionality for the STM32.
  */
 
-#include "../build/config/sdkconfig.h"
+#include "sdkconfig.h"
 
 #include "esp_littlefs.h"
 

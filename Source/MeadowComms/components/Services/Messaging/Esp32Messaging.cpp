@@ -4,7 +4,7 @@
  *  Generic messaging constants, structures and definitions used
  *  in the messaging system.
  */
-#include "../build/config/sdkconfig.h"
+#include "sdkconfig.h"
 
 #include "freertos/FreeRTOS.h"
 #include "esp_system.h"

@@ -4,7 +4,7 @@
 #ifndef APP_MAIN_HPP_
 #define APP_MAIN_HPP_
 
-#include "../build/config/sdkconfig.h"
+#include "sdkconfig.h"
 
 #define APP_MAIN_COMPONENT_NAME "AppMain"
 

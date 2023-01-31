@@ -4,7 +4,7 @@
  *  Hardware transport provider for messages between the ESP32 and
  *  the STM32 using the SPI interface.
  */
-#include "../build/config/sdkconfig.h"
+#include "sdkconfig.h"
 
 #include "SpiTransportProvider.hpp"
 #include "Esp32Messaging.hpp"

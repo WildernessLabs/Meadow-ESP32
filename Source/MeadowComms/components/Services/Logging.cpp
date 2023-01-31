@@ -4,7 +4,7 @@
  *  The Logging class provides the functionality necessary to
  *  setup and run the logging system.
  */
-#include "../build/config/sdkconfig.h"
+#include "sdkconfig.h"
 
 #include "esp32/rom/gpio.h"
 #include <limits.h>
@@ -12,7 +12,6 @@
 #include "SharedEnums.hpp"
 #include "Logging.hpp"
 
-#include "AppMain.hpp"
 #include "NvsManager.hpp"
 #include "MessageDispatcher.hpp"
 #include "SpiTransportProvider.hpp"
@@ -25,6 +24,8 @@
 #warning "Performance logging is enabled."
 
 #endif
+
+#define APP_MAIN_COMPONENT_NAME "AppMain"
 
 /*
  * ---------------------------------------------------------------------------

@@ -5,7 +5,7 @@
  *  of messages between the ESP32 and the STM32.
  */
 
-#include "../build/config/sdkconfig.h"
+#include "sdkconfig.h"
 
 #include "Logging.hpp"
 #include "MessageDispatcher.hpp"
