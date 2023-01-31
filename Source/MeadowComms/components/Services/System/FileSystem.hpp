@@ -7,6 +7,8 @@
 #ifndef _FILE_SYSTEM_HPP_
 #define _FILE_SYSTEM_HPP_
 
+#include "sdkconfig.h"
+
 #include "Esp32Messaging.hpp"
 
 class FileSystem
@@ -31,6 +33,30 @@ private:
      * @brief Destroy the File System object
      */
     ~FileSystem();
+
+    /**
+     * @brief Mount the file system.
+     * 
+     * @return true If the file system is mounted OK.
+     * @return false If the file is not mounted.
+     */
+    bool IsMounted();
+
+    /**
+     * @brief Mount the file system
+     * 
+     * @return true If file system mounted.
+     * @return false If the file system could not be mounted.
+     */
+    bool Mount();
+
+    /**
+     * @brief Mount the file system if necessary.
+     * 
+     * @return true If the file system is mounted (or was mounted successfully)
+     * @return false If the file system could not be mounted.
+     */
+    bool MountIfNecessary();
 
 public:
     /**

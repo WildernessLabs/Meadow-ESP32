@@ -9,7 +9,7 @@
 #ifndef MAIN_MAPPING_HPP
 #define MAIN_MAPPING_HPP
 
-#include "../build/config/sdkconfig.h"
+#include "sdkconfig.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"

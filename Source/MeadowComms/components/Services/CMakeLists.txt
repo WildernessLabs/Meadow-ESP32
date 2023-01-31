@@ -1,0 +1,42 @@
+idf_component_register(SRCS "WiFi/WiFiRequestHandler.cpp"
+                            "WiFi/AccessPoint.cpp"
+                            "WiFi/PosixAPIHandlers.cpp"
+
+                            "System/ThreadPool.cpp"
+                            "System/Thread.cpp"
+                            "System/NvsManager.cpp"
+                            "System/SystemRequestHandler.cpp"
+                            "System/FileSystem.cpp"
+
+                            "Mapping.cpp"
+                            "Logging.cpp"
+
+                            "MeshNetwork/MeshNetworkRequestHandler.cpp"
+
+                            "Messaging/Encoders.cpp"
+                            "Messaging/Esp32Messaging.cpp"
+                            "Messaging/MessageDispatcher.cpp"
+                            "Messaging/RequestHandlerBase.cpp"
+                            "Messaging/SpiTransportProvider.cpp"
+                            "Messaging/TransportProviderBase.cpp"
+
+                            "Exceptions/ThreadPoolException.cpp"
+
+                            "Bluetooth/BluetoothRequestHandler.cpp"
+                            "Bluetooth/bluetooth/BluetoothCharacteristic.cpp"
+                            "Bluetooth/bluetooth/BluetoothCharacteristicValue.cpp"
+                            "Bluetooth/bluetooth/BluetoothHandleManager.cpp"
+                            "Bluetooth/bluetooth/BluetoothService.cpp"
+                            "Bluetooth/bluetooth/BluetoothServiceCollection.cpp"
+                            "Bluetooth/bluetooth/Uuid.cpp"
+                            "Bluetooth/bluetooth/BluetoothManager.cpp"
+                    INCLUDE_DIRS "."
+                                "../../build/config"
+                                "WiFi"
+                                "System"
+                                "Messaging"
+                                "MeshNetwork"
+                                "Bluetooth"
+                                "Exceptions"
+                                "Bluetooth/rapidjson"
+                                )

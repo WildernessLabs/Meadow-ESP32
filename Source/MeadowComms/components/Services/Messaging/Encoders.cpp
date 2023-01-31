@@ -4137,58 +4137,62 @@ Esp32Messaging::BTServerDataSet *Encoders::ExtractBTServerDataSet(uint8_t *buffe
 }
 
 /**
- *  Convert the FileName object into a byte stream that can be sent to the STM32.
+ *  Convert the FileDetails object into a byte stream that can be sent to the STM32.
  *  
- *  The amount of memory required can be obtained by calling the EncodedFileNameBufferSize method.
+ *  The amount of memory required can be obtained by calling the EncodedFileDetailsBufferSize method.
  *  
- *  @param fileName
- *      FileName object to be encoded.
+ *  @param fileDetails
+ *      FileDetails object to be encoded.
  *  
  *  @param buffer
- *      Pointer to a block of memory large enough to hold the encoded FileName object.
+ *      Pointer to a block of memory large enough to hold the encoded FileDetails object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodeFileName
-void Encoders::EncodeFileName(Esp32Messaging::FileName *fileName, uint8_t *buffer)
+// cppcheck-suppress unusedFunction symbolName=EncodeFileDetails
+void Encoders::EncodeFileDetails(Esp32Messaging::FileDetails *fileDetails, uint8_t *buffer)
 {
-    EncodeString(fileName->Name, buffer);
+    EncodeString(fileDetails->Name, buffer);
+    buffer += StringLength(fileDetails->Name) + 1;
+    EncodeUInt16(fileDetails->Length, buffer);
 }
 
 /**
- *  Calculate the amount of memory required to hold the given instance of the FileName object.
+ *  Calculate the amount of memory required to hold the given instance of the FileDetails object.
  *  
- *  @param fileName
- *      FileName object to be encoded.
+ *  @param fileDetails
+ *      FileDetails object to be encoded.
  *  
  *  @returns
- *      Number of bytes required to hold the encoded FileName object.
+ *      Number of bytes required to hold the encoded FileDetails object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodedFileNameBufferSize
-int Encoders::EncodedFileNameBufferSize(Esp32Messaging::FileName *fileName)
+// cppcheck-suppress unusedFunction symbolName=EncodedFileDetailsBufferSize
+int Encoders::EncodedFileDetailsBufferSize(Esp32Messaging::FileDetails *fileDetails)
 {
     int result = 0;
-    result += Encoders::StringLength(fileName->Name);
-    return(result + 1);
+    result += Encoders::StringLength(fileDetails->Name);
+    return(result + 3);
 }
 
 /**
- *  Extract the FileName object that is encoded in the given buffer.
+ *  Extract the FileDetails object that is encoded in the given buffer.
  *  
  *  Note that the returned pointer points to a block of memory on the heap and
  *  this should eventually be released calling vPortFree(...).
  *  
  *  @param buffer
- *      Pointer to a block of memory holding the encoded FileName object.
+ *      Pointer to a block of memory holding the encoded FileDetails object.
  *  
  *  @returns
- *      Pointer to a FileName object.
+ *      Pointer to a FileDetails object.
  */
-// cppcheck-suppress unusedFunction symbolName=ExtractFileName
-Esp32Messaging::FileName *Encoders::ExtractFileName(uint8_t *buffer)
+// cppcheck-suppress unusedFunction symbolName=ExtractFileDetails
+Esp32Messaging::FileDetails *Encoders::ExtractFileDetails(uint8_t *buffer)
 {
-    Esp32Messaging::FileName *fileName = (Esp32Messaging::FileName *) pvPortMalloc(sizeof(Esp32Messaging::FileName));
+    Esp32Messaging::FileDetails *fileDetails = (Esp32Messaging::FileDetails *) pvPortMalloc(sizeof(Esp32Messaging::FileDetails));
 
-    fileName->Name = ExtractString(buffer);
-    return(fileName);
+    fileDetails->Name = ExtractString(buffer);
+    buffer += Encoders::StringLength(fileDetails->Name) + 1;
+    fileDetails->Length = ExtractUInt16(buffer);
+    return(fileDetails);
 }
 
 /**
@@ -4209,11 +4213,11 @@ void Encoders::EncodeFileNameAndContents(Esp32Messaging::FileNameAndContents *fi
     buffer += StringLength(fileNameAndContents->Name) + 1;
     EncodeUInt16(fileNameAndContents->Length, buffer);
     buffer += 2;
-    EncodeUInt32(fileNameAndContents->contentsLength, buffer);
+    EncodeUInt32(fileNameAndContents->ContentsLength, buffer);
     buffer += 4;
-    if (fileNameAndContents->contentsLength > 0)
+    if (fileNameAndContents->ContentsLength > 0)
     {
-        memcpy((void *) buffer, (void *) fileNameAndContents->contents, fileNameAndContents->contentsLength);
+        memcpy((void *) buffer, (void *) fileNameAndContents->Contents, fileNameAndContents->ContentsLength);
     }
 }
 
@@ -4231,7 +4235,7 @@ int Encoders::EncodedFileNameAndContentsBufferSize(Esp32Messaging::FileNameAndCo
 {
     int result = 0;
     result += Encoders::StringLength(fileNameAndContents->Name);
-    result += fileNameAndContents->contentsLength;
+    result += fileNameAndContents->ContentsLength;
     return(result + 7);
 }
 
@@ -4256,17 +4260,17 @@ Esp32Messaging::FileNameAndContents *Encoders::ExtractFileNameAndContents(uint8_
     buffer += Encoders::StringLength(fileNameAndContents->Name) + 1;
     fileNameAndContents->Length = ExtractUInt16(buffer);
     buffer += 2;
-    fileNameAndContents->contentsLength = ExtractUInt32(buffer);
+    fileNameAndContents->ContentsLength = ExtractUInt32(buffer);
     buffer += 4;
-    if (fileNameAndContents->contentsLength > 0)
+    if (fileNameAndContents->ContentsLength > 0)
     {
-        fileNameAndContents->contents = (uint8_t *) pvPortMalloc(fileNameAndContents->contentsLength);
-        memcpy(fileNameAndContents->contents, buffer, fileNameAndContents->contentsLength);
-        buffer += fileNameAndContents->contentsLength;
+        fileNameAndContents->Contents = (uint8_t *) pvPortMalloc(fileNameAndContents->ContentsLength);
+        memcpy(fileNameAndContents->Contents, buffer, fileNameAndContents->ContentsLength);
+        buffer += fileNameAndContents->ContentsLength;
     }
     else
     {
-        fileNameAndContents->contents = nullptr;
+        fileNameAndContents->Contents = nullptr;
     }
     return(fileNameAndContents);
 }
@@ -4285,13 +4289,13 @@ Esp32Messaging::FileNameAndContents *Encoders::ExtractFileNameAndContents(uint8_
 // cppcheck-suppress unusedFunction symbolName=EncodeFileNameList
 void Encoders::EncodeFileNameList(Esp32Messaging::FileNameList *fileNameList, uint8_t *buffer)
 {
-    EncodeUInt16(fileNameList->NumberOfFilesNames, buffer);
+    EncodeUInt16(fileNameList->NumberOfFiles, buffer);
     buffer += 2;
-    EncodeUInt32(fileNameList->FileNamesLength, buffer);
+    EncodeUInt32(fileNameList->FileDetailsLength, buffer);
     buffer += 4;
-    if (fileNameList->FileNamesLength > 0)
+    if (fileNameList->FileDetailsLength > 0)
     {
-        memcpy((void *) buffer, (void *) fileNameList->FileNames, fileNameList->FileNamesLength);
+        memcpy((void *) buffer, (void *) fileNameList->FileDetails, fileNameList->FileDetailsLength);
     }
 }
 
@@ -4308,7 +4312,7 @@ void Encoders::EncodeFileNameList(Esp32Messaging::FileNameList *fileNameList, ui
 int Encoders::EncodedFileNameListBufferSize(Esp32Messaging::FileNameList *fileNameList)
 {
     int result = 0;
-    result += fileNameList->FileNamesLength;
+    result += fileNameList->FileDetailsLength;
     return(result + 6);
 }
 
@@ -4329,19 +4333,19 @@ Esp32Messaging::FileNameList *Encoders::ExtractFileNameList(uint8_t *buffer)
 {
     Esp32Messaging::FileNameList *fileNameList = (Esp32Messaging::FileNameList *) pvPortMalloc(sizeof(Esp32Messaging::FileNameList));
 
-    fileNameList->NumberOfFilesNames = ExtractUInt16(buffer);
+    fileNameList->NumberOfFiles = ExtractUInt16(buffer);
     buffer += 2;
-    fileNameList->FileNamesLength = ExtractUInt32(buffer);
+    fileNameList->FileDetailsLength = ExtractUInt32(buffer);
     buffer += 4;
-    if (fileNameList->FileNamesLength > 0)
+    if (fileNameList->FileDetailsLength > 0)
     {
-        fileNameList->FileNames = (uint8_t *) pvPortMalloc(fileNameList->FileNamesLength);
-        memcpy(fileNameList->FileNames, buffer, fileNameList->FileNamesLength);
-        buffer += fileNameList->FileNamesLength;
+        fileNameList->FileDetails = (uint8_t *) pvPortMalloc(fileNameList->FileDetailsLength);
+        memcpy(fileNameList->FileDetails, buffer, fileNameList->FileDetailsLength);
+        buffer += fileNameList->FileDetailsLength;
     }
     else
     {
-        fileNameList->FileNames = nullptr;
+        fileNameList->FileDetails = nullptr;
     }
     return(fileNameList);
 }

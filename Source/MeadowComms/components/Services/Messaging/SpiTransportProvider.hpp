@@ -8,7 +8,7 @@
 #ifndef _SPI_TRANSPORT_PROVIDER_HPP_
 #define _SPI_TRANSPORT_PROVIDER_HPP_
 
-#include "../build/config/sdkconfig.h"
+#include "sdkconfig.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"

@@ -8,7 +8,7 @@
 #ifndef _ESP32_MESSAGING_HPP_
 #define _ESP32_MESSAGING_HPP_
 
-#include "../build/config/sdkconfig.h"
+#include "sdkconfig.h"
 
 #include "freertos/FreeRTOS.h"
 

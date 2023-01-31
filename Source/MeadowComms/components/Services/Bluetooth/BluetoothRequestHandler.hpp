@@ -7,6 +7,8 @@
 #ifndef _BLUETOOTH_REQUEST_HANDLER_HPP_
 #define _BLUETOOTH_REQUEST_HANDLER_HPP_
 
+#include "sdkconfig.h"
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"

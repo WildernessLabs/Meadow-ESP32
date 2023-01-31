@@ -7,7 +7,7 @@
 #ifndef _NVS_MANAGER_HPP_
 #define _NVS_MANAGER_HPP_
 
-#include "../build/config/sdkconfig.h"
+#include "sdkconfig.h"
 
 #include "Esp32Messaging.hpp"
 #include "SharedEnums.hpp"
