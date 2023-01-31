@@ -3,7 +3,7 @@
  *
  *  Provide a mechanism for storing and retrieving data in non-Volatile storage (NVS).
  */
-#include "../build/config/sdkconfig.h"
+#include "sdkconfig.h"
 
 #include "freertos/FreeRTOS.h"
 #include "esp_system.h"

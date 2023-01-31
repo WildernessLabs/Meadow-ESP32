@@ -6,7 +6,7 @@
  *
  *  This file also contains the mappings.
  */
-#include "../build/config/sdkconfig.h"
+#include "sdkconfig.h"
 
 #include <sys/socket.h>
 #include "errno.h"

@@ -3,7 +3,7 @@
  *
  *  Implementation of the methods to provide the System Request Handler functionality.
  */
-#include "../build/config/sdkconfig.h"
+#include "sdkconfig.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -13,7 +13,7 @@
 #include "esp_log.h"
 #include "esp_wifi.h"
 #include "esp_event.h"
-#include "esp_ota_ops.h"
+// #include "esp_ota_ops.h"
 #include "esp_wifi.h"
 #include "driver/adc.h"
 #include "esp_adc_cal.h"

@@ -3,7 +3,7 @@
  *
  *  Implement the access point functionality (the board acting as an access point).
  */
-#include "../../build/config/sdkconfig.h"
+#include "sdkconfig.h"
 
 #include "driver/gpio.h"
 #include "esp_system.h"
