@@ -85,15 +85,27 @@ FileSystem::~FileSystem()
  * ----------------------------------------------------------------------------
  */
 
-StatusCodes::StatusCodes FileSystem::Setup()
+/**
+ * @brief Mount the file system.
+ * 
+ * @return true If the file system is mounted OK.
+ * @return false If the file is not mounted.
+ */
+bool FileSystem::IsMounted()
 {
-    TRACE_MESSAGE("Setup: Enter");
+    return(esp_littlefs_mounted(_config.partition_label));
+}
 
-    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
+/**
+ * @brief Mount the file system
+ * 
+ * @return true If file system mounted.
+ * @return false If the file system could not be mounted.
+ */
+bool FileSystem::Mount()
+{
+    bool result = true;
 
-    //
-    //  Use settings defined above to initialize and mount LittleFS filesystem.
-    //
     esp_err_t ret = esp_vfs_littlefs_register(&_config);
     if (ret != ESP_OK)
     {
@@ -111,6 +123,32 @@ StatusCodes::StatusCodes FileSystem::Setup()
         }
     }
 
+    return(result);
+}
+
+/**
+ * @brief Mount the file system if necessary.
+ * 
+ * @return true If the file system is mounted (or was mounted successfully)
+ * @return false If the file system could not be mounted.
+ */
+bool FileSystem::MountIfNecessary()
+{
+    bool result = IsMounted();
+    if (!result)
+    {
+        result = Mount();
+    }
+
+    return(result);
+}
+
+StatusCodes::StatusCodes FileSystem::Setup()
+{
+    TRACE_MESSAGE("Setup: Enter");
+
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
+
     TRACE_MESSAGE("Setup: Exit");
 
     return(result);
@@ -125,6 +163,25 @@ StatusCodes::StatusCodes FileSystem::Setup()
 void FileSystem::Format(Message *request)
 {
     TRACE_MESSAGE("Format: Enter");
+
+    esp_err_t ret;
+
+    ret = esp_littlefs_format(_config.partition_label);
+    if (ret != ESP_OK)
+    {
+        TRACE_MESSAGE("Filed to format the file system (%s)", esp_err_to_name(ret));
+    }
+
+    size_t total = 0, used = 0;
+    ret = esp_littlefs_info(_config.partition_label, &total, &used);
+    if (ret != ESP_OK)
+    {
+        TRACE_MESSAGE("Failed to get LittleFS partition information (%s)", esp_err_to_name(ret));
+    }
+    else
+    {
+        TRACE_MESSAGE("Partition size: total: %d, used: %d", total, used);
+    }
 
     TRACE_MESSAGE("Format: Exit");
 }

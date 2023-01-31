@@ -9,7 +9,7 @@
 #ifndef _MESSAGE_DISPATCHER_HPP_
 #define _MESSAGE_DISPATCHER_HPP_
 
-#include "../build/config/sdkconfig.h"
+#include "sdkconfig.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"

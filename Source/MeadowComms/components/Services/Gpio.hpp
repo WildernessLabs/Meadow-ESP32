@@ -8,7 +8,7 @@
 #ifndef _GPIO_HPP_
 #define _GPIO_HPP_
 
-#include "../build/config/sdkconfig.h"
+#include "sdkconfig.h"
 
 #define USE_MEADOW
 

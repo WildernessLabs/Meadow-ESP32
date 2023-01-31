@@ -7,7 +7,7 @@
 #ifndef _SYSTEM_REQUEST_HANDLER_HPP_
 #define _SYSTEM_REQUEST_HANDLER_HPP_
 
-#include "../build/config/sdkconfig.h"
+#include "sdkconfig.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
