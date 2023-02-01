@@ -92,3 +92,4 @@ Source/MeadowComms/sdkconfig
 
 __pycache__/
 Source/MeadowComms/main/build_info.h
+Source/MeadowComms/test/sdkconfig
