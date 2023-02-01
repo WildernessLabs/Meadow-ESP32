@@ -9,7 +9,14 @@
 
 #include "sdkconfig.h"
 
+#include "esp_littlefs.h"
+
 #include "Esp32Messaging.hpp"
+#include "Encoders.hpp"
+#include "SystemRequestHandler.hpp"
+#include "FileSystem.hpp"
+#include "SharedEnums.hpp"
+#include "Mapping.hpp"
 
 class FileSystem
 {
@@ -28,19 +35,6 @@ private:
      * @brief Private File System constructor.
      */
     FileSystem();
-
-    /**
-     * @brief Destroy the File System object
-     */
-    ~FileSystem();
-
-    /**
-     * @brief Mount the file system.
-     * 
-     * @return true If the file system is mounted OK.
-     * @return false If the file is not mounted.
-     */
-    bool IsMounted();
 
     /**
      * @brief Mount the file system
@@ -70,10 +64,23 @@ public:
     FileSystem(MessageDispatcher *);
 
     /**
+     * @brief Destroy the File System object
+     */
+    ~FileSystem();
+
+    /**
      *  @brief Perform any class level setup.
      */
     StatusCodes::StatusCodes Setup();
     
+    /**
+     * @brief Mount the file system.
+     * 
+     * @return true If the file system is mounted OK.
+     * @return false If the file is not mounted.
+     */
+    bool IsMounted();
+
     /**
      * @brief Format the file system.
      */
