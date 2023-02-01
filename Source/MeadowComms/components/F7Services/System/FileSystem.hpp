@@ -59,6 +59,13 @@ public:
     static const char *COMPONENT_NAME;
 
     /**
+     * @brief Name of the partition in the partition table.
+     * 
+     *  Note that this can be different from the pARTITION_LABEL.
+     */
+    static const char *PARTITION_PATH_NAME;
+
+    /**
      * @brief Label for the Little file system.
      */
     static const char *PARTITION_LABEL;
