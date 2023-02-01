@@ -83,7 +83,7 @@ namespace FileGenerator
             //
             //  Copy the ESP32 files.
             //
-            var meadowCommsFolder = Path.Combine(esp32SourceRoot, "MeadowComms/Main");
+            var meadowCommsFolder = Path.Combine(esp32SourceRoot, "MeadowComms/components/Messaging");
             File.Copy($"{outputDirectory}Encoders.cpp", Path.Combine(meadowCommsFolder, "Encoders.cpp"), true);
             File.Copy($"{outputDirectory}Encoders.hpp", Path.Combine(meadowCommsFolder, "Encoders.hpp"), true);
             File.Copy($"{outputDirectory}SharedEnums.hpp", Path.Combine(meadowCommsFolder, "SharedEnums.hpp"), true);
