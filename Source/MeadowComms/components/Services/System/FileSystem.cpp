@@ -6,8 +6,6 @@
 
 #include "sdkconfig.h"
 
-#include "esp_littlefs.h"
-
 #include "Encoders.hpp"
 #include "SystemRequestHandler.hpp"
 #include "FileSystem.hpp"
