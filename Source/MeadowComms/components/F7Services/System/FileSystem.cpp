@@ -6,6 +6,7 @@
 
 #include "sdkconfig.h"
 
+#include "IMessageDispatcher.hpp"
 #include "Encoders.hpp"
 #include "SystemRequestHandler.hpp"
 #include "FileSystem.hpp"
@@ -23,7 +24,12 @@
 /**
  *  @brief Name of the FreeRTOS component.
  */
-const char *SystemRequestHandler::COMPONENT_NAME = "FileSystem";
+const char *FileSystem::COMPONENT_NAME = "FileSystem";
+
+/**
+ *  @brief Name of the FreeRTOS component.
+ */
+const char *FileSystem::PARTITION_LABEL = "littlefs";
 
 /*
  * ----------------------------------------------------------------------------
@@ -42,7 +48,7 @@ FileSystem::FileSystem()
     _config =
     {
         .base_path = "/littlefs",
-        .partition_label = "littlefs",
+        .partition_label = PARTITION_LABEL,
         .format_if_mount_failed = true,
         .dont_mount = false,
     };
@@ -54,7 +60,7 @@ FileSystem::FileSystem()
  * @param messageDispatcher
  *      Message dispatcher object used to queue messages for the STM32.
  */
-FileSystem::FileSystem(MessageDispatcher *messageDispatcher) : FileSystem()
+FileSystem::FileSystem(IMessageDispatcher *messageDispatcher) : FileSystem()
 {
     _messageDispatcher = messageDispatcher;
 }
@@ -141,11 +147,24 @@ bool FileSystem::MountIfNecessary()
     return(result);
 }
 
+/**
+ * @brief Setup the file system.
+ * 
+ * @return StatusCodes::CompletedOk on success, StatusCodes::Failure otherwise.
+ */
 StatusCodes::StatusCodes FileSystem::Setup()
 {
     TRACE_MESSAGE("Setup: Enter");
 
-    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
+    StatusCodes::StatusCodes result;
+    if (Mount())
+    {
+        result = StatusCodes::CompletedOk;
+    }
+    else
+    {
+        result = StatusCodes::Failure;
+    }
 
     TRACE_MESSAGE("Setup: Exit");
 
@@ -167,7 +186,7 @@ void FileSystem::Format(Message *request)
     ret = esp_littlefs_format(_config.partition_label);
     if (ret != ESP_OK)
     {
-        TRACE_MESSAGE("Filed to format the file system (%s)", esp_err_to_name(ret));
+        TRACE_MESSAGE("Failed to format the file system (%s)", esp_err_to_name(ret));
     }
 
     size_t total = 0, used = 0;
