@@ -1,3 +1,3 @@
 idf_component_register(SRC_DIRS "."
                     INCLUDE_DIRS "."
-                    REQUIRES unity Services)
+                    REQUIRES unity F7Services)

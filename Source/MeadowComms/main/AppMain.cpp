@@ -1,7 +1,7 @@
 /*
  *      Main application for the ESP32 code for Meadow.
  */
-#include "../build/config/sdkconfig.h"
+#include "sdkconfig.h"
 
 #include "freertos/FreeRTOS.h"
 #include "esp_log.h"

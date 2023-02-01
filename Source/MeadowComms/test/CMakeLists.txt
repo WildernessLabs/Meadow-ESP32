@@ -12,7 +12,7 @@ set(SDKCONFIG_DEFAULTS "sdkconfig.defaults;sdkconfig.tests")
 # - when invoking CMake directly: cmake -D TEST_COMPONENTS="xxxxx" ..
 # - when using idf.py: idf.py -T xxxxx build
 #
-set(TEST_COMPONENTS "Services" CACHE STRING "List of components to test")
+set(TEST_COMPONENTS "F7Services" CACHE STRING "List of components to test")
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 project(unit_test_test)

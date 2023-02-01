@@ -4,6 +4,12 @@
  *  Run the file system tests.
  */
 
+#include "sdkconfig.h"
+
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/queue.h"
+
 #include <stdio.h>
 #include <string.h>
 #include "unity.h"
@@ -36,4 +42,6 @@ void app_main(void)
      * Make sure that task watchdog is disabled if you use this function.
      */
     // unity_run_menu();
+
+    vTaskSuspend(NULL);
 }
