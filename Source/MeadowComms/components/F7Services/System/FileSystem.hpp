@@ -24,7 +24,7 @@ private:
     /**
      *  @brief Object that will be used to send messages to the STM32 from the ESP32.
      */
-    MessageDispatcher *_messageDispatcher;
+    IMessageDispatcher *_messageDispatcher;
 
     /**
      * @brief LittleFS file system configuration.
@@ -59,9 +59,14 @@ public:
     static const char *COMPONENT_NAME;
 
     /**
+     * @brief Label for the Little file system.
+     */
+    static const char *PARTITION_LABEL;
+
+    /**
      * @brief Public File System constructor.
      */
-    FileSystem(MessageDispatcher *);
+    FileSystem(IMessageDispatcher *);
 
     /**
      * @brief Destroy the File System object
