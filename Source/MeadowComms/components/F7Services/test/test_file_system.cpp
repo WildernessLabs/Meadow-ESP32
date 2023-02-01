@@ -8,14 +8,14 @@
 
 #include <limits.h>
 #include "unity.h"
-#include "Esp32Messaging.hpp"
 
 #include "FileSystem.hpp"
 
-TEST_CASE("Basic file system", "[FileSystem]")
+TEST_CASE("File System set up", "[FileSystem]")
 {
     FileSystem *fs = new FileSystem(nullptr);
     TEST_ASSERT_NOT_NULL(fs);
-    TEST_ASSERT_EQUAL(fs->IsMounted() ? 1 : 0, 0);
+    // vTaskDelay(500 / portTICK_PERIOD_MS);
+    TEST_ASSERT_TRUE(fs->IsMounted() ? 1 : 0);
     delete fs;
 }
