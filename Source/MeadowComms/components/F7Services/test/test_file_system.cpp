@@ -28,6 +28,57 @@
 #define TEST_FILE_CONTENTS      "Hello from ESP32 unit tests\n"
 
 /**
+ * @brief Count the number of files in the root directory of the file system.
+ * 
+ * @return int
+ *      Number of files present or -1 if there is a problem.
+ */
+int CountFiles()
+{
+    DIR *dp = opendir(FileSystem::PARTITION_PATH_NAME);
+    int result = 0;
+    if (dp == NULL)
+    {
+        result = -1;
+    }
+    else
+    {
+        struct dirent *ep;
+        while ((ep = readdir(dp)) != NULL)
+        {
+            result++;
+        }            
+        (void) closedir(dp);
+    }
+    return(result);
+}
+
+/**
+ * @brief Write a test file to the file system.
+ * 
+ * @return int 0 if successful, -1 otherwise.
+ */
+int WriteTestFile()
+{
+    int result = 0;
+
+    string s = FileSystem::PARTITION_PATH_NAME;
+    s += "/";
+    s += TEST_FILE_NAME;
+    FILE *file = fopen(s.c_str(), "w");
+    if (file != NULL)
+    {
+        fprintf(file, TEST_FILE_CONTENTS);
+        fclose(file);
+    }
+    else
+    {
+        result = -1;
+    }
+    return(result);
+}
+
+/**
  * @brief Check that we can mount the file system.
  */
 TEST_CASE("File System set up", "[FileSystem]")
@@ -85,28 +136,11 @@ TEST_CASE("Formatting file system", "[FileSystem]")
     //
     //  Write a single file to the file system.
     //
-    string s = FileSystem::PARTITION_PATH_NAME;
-    s += "/";
-    s += TEST_FILE_NAME;
-    FILE *file = fopen(s.c_str(), "w");
-    TEST_ASSERT_NOT_NULL(file);
-    fprintf(file, TEST_FILE_CONTENTS);
-    fclose(file);
+    TEST_ASSERT_EQUAL(0, WriteTestFile());
     //
     //  Check that we have one file on the file system.
     //
-    DIR *dp;
-    struct dirent *ep;     
-    dp = opendir(FileSystem::PARTITION_PATH_NAME);
-    TEST_ASSERT_NOT_NULL(dp);
-    int count = 0;
-    while ((ep = readdir(dp)) != NULL)
-    {
-        count++;
-        TEST_ASSERT_EQUAL_STRING(TEST_FILE_NAME, ep->d_name);
-    }            
-    (void) closedir(dp);
-    TEST_ASSERT_EQUAL(1, count);
+    TEST_ASSERT_EQUAL(1, CountFiles());
     //
     //  Reformat the file system (reuse the message from above).
     //
@@ -114,15 +148,7 @@ TEST_CASE("Formatting file system", "[FileSystem]")
     //
     //  Verify that the file has now gone.
     //
-    dp = opendir(FileSystem::PARTITION_PATH_NAME);
-    TEST_ASSERT_NOT_NULL(dp);
-    count = 0;
-    while ((ep = readdir(dp)) != NULL)
-    {
-        count++;
-    }            
-    (void) closedir(dp);
-    TEST_ASSERT_EQUAL(0, count);
+    TEST_ASSERT_EQUAL(0, CountFiles());
 
     delete fs;
 }
@@ -152,6 +178,7 @@ TEST_CASE("Write file to file system", "[FileSystem]")
     //
     //  Create a message to format the file system and call the format method.
     //
+    Esp32Messaging::FileNameAndContents fileData;
     Message *writeMessage = Message::CreateOnHeap(MessageTypes::Header, Esp32Interfaces::System, SystemFunction::FileSystemFormat, StatusCodes::Failure);
     TEST_ASSERT_NOT_NULL(writeMessage);
 
