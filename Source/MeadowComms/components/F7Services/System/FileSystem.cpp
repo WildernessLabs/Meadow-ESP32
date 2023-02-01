@@ -27,7 +27,12 @@
 const char *FileSystem::COMPONENT_NAME = "FileSystem";
 
 /**
- *  @brief Name of the FreeRTOS component.
+ *  @brief Name of the partition in the partitions.csv file.
+ */
+const char *FileSystem::PARTITION_PATH_NAME = "/littlefs";
+
+/**
+ *  @brief Label used for the partition when formatting.
  */
 const char *FileSystem::PARTITION_LABEL = "littlefs";
 
@@ -47,7 +52,7 @@ FileSystem::FileSystem()
     _messageDispatcher = nullptr;
     _config =
     {
-        .base_path = "/littlefs",
+        .base_path = PARTITION_PATH_NAME,
         .partition_label = PARTITION_LABEL,
         .format_if_mount_failed = true,
         .dont_mount = false,
@@ -184,11 +189,11 @@ void FileSystem::Format(Message *message)
     StatusCodes::StatusCodes result = StatusCodes::Failure;
     message->DeletePayload();                                   // There should be no payload.
 
-    esp_err_t ret = esp_littlefs_format(_config.partition_label);
+    esp_err_t ret = esp_littlefs_format(PARTITION_LABEL);
     if (ret == ESP_OK)
     {
         size_t total = 0, used = 0;
-        ret = esp_littlefs_info(_config.partition_label, &total, &used);
+        ret = esp_littlefs_info(PARTITION_LABEL, &total, &used);
         if (ret == ESP_OK)
         {
             TRACE_MESSAGE("Partition size: total: %d, used: %d", total, used);
