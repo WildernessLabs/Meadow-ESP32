@@ -174,31 +174,31 @@ StatusCodes::StatusCodes FileSystem::Setup()
 /**
  * @brief Format the file system.
  * 
- * @param request
+ * @param message
  *      Pointer to the originating message object.
  */
-void FileSystem::Format(Message *request)
+void FileSystem::Format(Message *message)
 {
     TRACE_MESSAGE("Format: Enter");
 
-    esp_err_t ret;
+    StatusCodes::StatusCodes result = StatusCodes::Failure;
+    message->DeletePayload();                                   // There should be no payload.
 
-    ret = esp_littlefs_format(_config.partition_label);
-    if (ret != ESP_OK)
+    esp_err_t ret = esp_littlefs_format(_config.partition_label);
+    if (ret == ESP_OK)
     {
-        TRACE_MESSAGE("Failed to format the file system (%s)", esp_err_to_name(ret));
+        size_t total = 0, used = 0;
+        ret = esp_littlefs_info(_config.partition_label, &total, &used);
+        if (ret == ESP_OK)
+        {
+            TRACE_MESSAGE("Partition size: total: %d, used: %d", total, used);
+            result = StatusCodes::CompletedOk;
+        }
     }
 
-    size_t total = 0, used = 0;
-    ret = esp_littlefs_info(_config.partition_label, &total, &used);
-    if (ret != ESP_OK)
-    {
-        TRACE_MESSAGE("Failed to get LittleFS partition information (%s)", esp_err_to_name(ret));
-    }
-    else
-    {
-        TRACE_MESSAGE("Partition size: total: %d, used: %d", total, used);
-    }
+    message->MessageType = MessageTypes::Response;
+    message->StatusCode = result;
+    _messageDispatcher->QueueMessageForStm32(message);
 
     TRACE_MESSAGE("Format: Exit");
 }
