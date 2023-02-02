@@ -27,6 +27,11 @@
 //
 #define TEST_FILE_CONTENTS      "Hello from ESP32 unit tests\n"
 
+//
+//  Message ID to be used for testing.
+//
+#define TEST_MESSAGE_ID         25
+
 /**
  * @brief Count the number of files in the root directory of the file system.
  * 
@@ -56,19 +61,52 @@ int CountFiles()
 /**
  * @brief Write a test file to the file system.
  * 
- * @return int 0 if successful, -1 otherwise.
+ * @param filename Name of the file to write.
+ * @param buffer Pointer to a block of memory holding the data to write.
+ * @param length Number of bytes to write to the file.
+ *
+ * @return Number of bytes written if successful, -1 otherwise.
  */
-int WriteTestFile()
+int WriteTestFile(char *filename, uint8_t *buffer, int length)
 {
     int result = 0;
 
     string s = FileSystem::PARTITION_PATH_NAME;
     s += "/";
-    s += TEST_FILE_NAME;
+    s += filename;
     FILE *file = fopen(s.c_str(), "w");
     if (file != NULL)
     {
-        fprintf(file, TEST_FILE_CONTENTS);
+        result = fwrite((void *) buffer, 1, length, file);
+        fclose(file);
+    }
+    else
+    {
+        result = -1;
+    }
+    return(result);
+}
+
+/**
+ * @brief Read a file from the file system.
+ * 
+ * @param filename Name of the file to read.
+ * @param buffer Pointer to a block of memory to hold the contents of the file.
+ * @param maxLength Maximum number of bytes that the buffer can hold.
+ *
+ * @return int Number of bytes read of -1 if there is a problem.
+ */
+int ReadTestFile(char *filename, uint8_t *buffer, int maxLength)
+{
+    int result = 0;
+
+    string s = FileSystem::PARTITION_PATH_NAME;
+    s += "/";
+    s += filename;
+    FILE *file = fopen(s.c_str(), "r");
+    if (file != NULL)
+    {
+        result = fread((void *) buffer, 1, maxLength, file);
         fclose(file);
     }
     else
@@ -136,7 +174,7 @@ TEST_CASE("Formatting file system", "[FileSystem]")
     //
     //  Write a single file to the file system.
     //
-    TEST_ASSERT_EQUAL(0, WriteTestFile());
+    TEST_ASSERT_EQUAL(strlen(TEST_FILE_CONTENTS), WriteTestFile((char *) TEST_FILE_NAME, (uint8_t *) TEST_FILE_CONTENTS, strlen(TEST_FILE_CONTENTS)));
     //
     //  Check that we have one file on the file system.
     //
@@ -179,7 +217,16 @@ TEST_CASE("Write file to file system", "[FileSystem]")
     //  Create a message to format the file system and call the format method.
     //
     Esp32Messaging::FileNameAndContents fileData;
-    Message *writeMessage = Message::CreateOnHeap(MessageTypes::Header, Esp32Interfaces::System, SystemFunction::FileSystemFormat, StatusCodes::Failure);
+    fileData.Name = (char *) TEST_FILE_NAME;
+    fileData.Length = strlen(TEST_FILE_CONTENTS);
+    fileData.Contents = (uint8_t *) TEST_FILE_CONTENTS;
+    fileData.ContentsLength = fileData.Length;
+    uint32_t payloadLength = Encoders::EncodedFileNameAndContentsBufferSize(&fileData);
+    uint8_t *encodedPayload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
+    TEST_ASSERT_NOT_NULL(encodedPayload);
+    Encoders::EncodeFileNameAndContents(&fileData, encodedPayload);
+    Message *writeMessage = Message::CreateOnHeap(MessageTypes::Header, Esp32Interfaces::System, SystemFunction::FileSystemWriteFile,
+                                                  StatusCodes::Failure, TEST_MESSAGE_ID, encodedPayload, payloadLength);
     TEST_ASSERT_NOT_NULL(writeMessage);
 
     fs->WriteFile(writeMessage);
@@ -196,8 +243,18 @@ TEST_CASE("Write file to file system", "[FileSystem]")
     TEST_ASSERT_EQUAL(Esp32Interfaces::System, response->Interface);
     TEST_ASSERT_EQUAL(SystemFunction::FileSystemWriteFile, response->Function);
     TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
+    TEST_ASSERT_EQUAL(TEST_MESSAGE_ID, response->MessageID);
     TEST_ASSERT_EQUAL(0, response->PayloadLength);
     TEST_ASSERT_NULL(response->Payload);
 
     TEST_ASSERT_EQUAL(0, messageDispatcher->OutboundMessageQueueLength());
+
+    int length = 200;
+    uint8_t *buffer = static_cast<uint8_t *>(pvPortMalloc(length));
+    TEST_ASSERT_EQUAL(strlen(TEST_FILE_CONTENTS), ReadTestFile((char *) TEST_FILE_NAME, buffer, length));
+    TEST_ASSERT_EQUAL_MEMORY_ARRAY(TEST_FILE_CONTENTS, buffer, strlen(TEST_FILE_CONTENTS), 1);
+    vPortFree(buffer);
+
+    delete fs;
 }
+

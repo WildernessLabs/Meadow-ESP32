@@ -227,9 +227,39 @@ void FileSystem::ReadFile(Message *request)
  * @param request
  *      Pointer to the originating message object.
  */
-void FileSystem::WriteFile(Message *request)
+void FileSystem::WriteFile(Message *message)
 {
     TRACE_MESSAGE("WriteFile: Enter");
+
+    StatusCodes::StatusCodes result = StatusCodes::Failure;
+    Esp32Messaging::FileNameAndContents *fileData = Encoders::ExtractFileNameAndContents(message->Payload);
+    message->DeletePayload();
+
+    if (fileData != NULL)
+    {
+        if (fileData->Contents != NULL)
+        {
+            string s = PARTITION_PATH_NAME;
+            s += "/";
+            s += fileData->Name;
+            FILE *file = fopen(s.c_str(), "w");
+            if (file != NULL)
+            {
+                if (fwrite((void *) fileData->Contents, 1, fileData->Length, file) == fileData->Length)
+                {
+                    result = StatusCodes::CompletedOk;
+                }
+                fclose(file);
+            }
+
+            vPortFree(fileData->Contents);
+        }
+        vPortFree(fileData);
+    }
+    
+    message->MessageType = MessageTypes::Response;
+    message->StatusCode = result;
+    _messageDispatcher->QueueMessageForStm32(message);
 
     TRACE_MESSAGE("WriteFile: Exit");
 }
