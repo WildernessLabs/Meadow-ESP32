@@ -1,5 +1,5 @@
 /*
- *  MessageDispatcher.hpp
+ *  IMessageDispatcher.hpp
  *
  *  Message dispatcher layer.  This object separates the need for the
  *  ESP32 interface objects to know about the hardware layer used to
