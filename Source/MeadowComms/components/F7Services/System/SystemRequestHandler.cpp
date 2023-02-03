@@ -110,7 +110,7 @@ SystemRequestHandler::SystemRequestHandler()
  *  @param messageDispatcher
  *      Message dispatcher object that will deal with and communication between the ESP32 and the STM32.
  */
-SystemRequestHandler::SystemRequestHandler(MessageDispatcher *messageDispatcher) : SystemRequestHandler()
+SystemRequestHandler::SystemRequestHandler(IMessageDispatcher *messageDispatcher) : SystemRequestHandler()
 {
     //
     //  Get configuration from NVS.
@@ -118,6 +118,9 @@ SystemRequestHandler::SystemRequestHandler(MessageDispatcher *messageDispatcher)
     _maximumMessageQueueLength = GetConfigurationValue(MAXIMUM_MESSAGE_QUEUE_LENGTH_NAME, _maximumMessageQueueLength);
     _deviceName = GetConfigurationValue(DEVICE_NAME_NAME, const_cast<char *>("MeadowF7"));
     _messageDispatcher = messageDispatcher;
+
+    _fileSystem = new FileSystem(_messageDispatcher);
+    _fileSystem->Setup();
 }
 
 /**

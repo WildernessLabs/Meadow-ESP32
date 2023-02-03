@@ -842,7 +842,7 @@ public:
     /**
      *  @brief Constructor for the WiFi object.
      */
-    explicit WiFiRequestHandler(MessageDispatcher *messageDispatcher);
+    explicit WiFiRequestHandler(IMessageDispatcher *messageDispatcher);
 
     /**
      *  @brief Perform and class level setup required before an instance can be used.

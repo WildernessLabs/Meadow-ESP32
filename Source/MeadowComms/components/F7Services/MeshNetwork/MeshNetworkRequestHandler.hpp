@@ -48,7 +48,7 @@ public:
     /**
      *  @brief Constructor for a Mesh Network request handler object.
      */
-    explicit MeshNetworkRequestHandler(MessageDispatcher *messageDispatcher);
+    explicit MeshNetworkRequestHandler(IMessageDispatcher *messageDispatcher);
 
     /**
      *  @brief Provide and additional setup operations not covered by the constructors.

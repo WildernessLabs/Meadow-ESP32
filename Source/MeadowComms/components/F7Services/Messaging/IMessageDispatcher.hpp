@@ -11,8 +11,6 @@
 
 #include "sdkconfig.h"
 
-#include "freertos/FreeRTOS.h"
-#include "freertos/semphr.h"
 #include "Esp32Messaging.hpp"
 
 /**

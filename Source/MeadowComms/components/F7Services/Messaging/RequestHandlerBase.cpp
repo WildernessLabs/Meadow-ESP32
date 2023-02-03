@@ -32,7 +32,7 @@ const char *RequestHandlerBase::COMPONENT_NAME = "RequestHandlerBase";
  *  @brief MessageDispatcher object that ensure that messages are delivered to
  *  the correct part of the system.
  */
-MessageDispatcher *RequestHandlerBase::_messageDispatcher = nullptr;
+IMessageDispatcher *RequestHandlerBase::_messageDispatcher = nullptr;
 
 /*
  * ---------------------------------------------------------------------------
@@ -57,7 +57,7 @@ RequestHandlerBase::RequestHandlerBase() : _queueHandle(nullptr), _taskHandle(nu
  *      Message dispatcher object that will allow communication
  *      with the STM32.
  */
-RequestHandlerBase::RequestHandlerBase(MessageDispatcher *messageDispatcher) : RequestHandlerBase()
+RequestHandlerBase::RequestHandlerBase(IMessageDispatcher *messageDispatcher) : RequestHandlerBase()
 {
     _messageDispatcher = messageDispatcher;
 }

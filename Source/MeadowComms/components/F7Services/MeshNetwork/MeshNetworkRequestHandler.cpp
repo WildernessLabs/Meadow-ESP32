@@ -67,7 +67,7 @@ MeshNetworkRequestHandler::MeshNetworkRequestHandler()
  *  @param messageDispatcher
  *      Message dispatcher that will allow communication with the STM32.
  */
-MeshNetworkRequestHandler::MeshNetworkRequestHandler(MessageDispatcher *messageDispatcher) : MeshNetworkRequestHandler()
+MeshNetworkRequestHandler::MeshNetworkRequestHandler(IMessageDispatcher *messageDispatcher) : MeshNetworkRequestHandler()
 {
     _messageDispatcher = messageDispatcher;
 }
