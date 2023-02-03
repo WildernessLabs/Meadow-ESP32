@@ -365,6 +365,8 @@ TEST_CASE("Get list of files", "[FileSystem]")
     Esp32Messaging::FileNameList *files = Encoders::ExtractFileNameList(response->Payload);
     TEST_ASSERT_NOT_NULL(files);
     TEST_ASSERT_EQUAL(0, files->NumberOfFiles);
+    TEST_ASSERT_EQUAL(0, files->FileDetailsLength);
+    TEST_ASSERT_NULL(files->FileDetails);
     vPortFree(files);
     response->DeletePayload();
 
@@ -385,6 +387,7 @@ TEST_CASE("Get list of files", "[FileSystem]")
     files = Encoders::ExtractFileNameList(response->Payload);
     TEST_ASSERT_NOT_NULL(files);
     TEST_ASSERT_EQUAL(2, files->NumberOfFiles);
+    TEST_ASSERT_GREATER_THAN(0, files->FileDetailsLength);
     TEST_ASSERT_NOT_NULL(files->FileDetails);
     uint8_t *buffer = files->FileDetails;
     for (int index = 0; index < files->NumberOfFiles; index++)
