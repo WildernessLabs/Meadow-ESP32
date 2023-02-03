@@ -350,7 +350,7 @@ TEST_CASE("Get list of files", "[FileSystem]")
 
     TEST_ASSERT_EQUAL(MessageTypes::Response, response->MessageType);
     TEST_ASSERT_EQUAL(Esp32Interfaces::System, response->Interface);
-    TEST_ASSERT_EQUAL(SystemFunction::FileSystemReadFile, response->Function);
+    TEST_ASSERT_EQUAL(SystemFunction::FileSystemListFiles, response->Function);
     TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
     TEST_ASSERT_EQUAL(TEST_MESSAGE_ID, response->MessageID);
     TEST_ASSERT_GREATER_THAN(0, response->PayloadLength);
