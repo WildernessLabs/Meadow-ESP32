@@ -338,6 +338,38 @@ void FileSystem::DeleteFile(Message *message)
 {
     TRACE_MESSAGE("DeleteFile: Enter");
 
+    StatusCodes::StatusCodes result = StatusCodes::Failure;
+    Esp32Messaging::FileDetails *details = Encoders::ExtractFileDetails(message->Payload);
+    message->DeletePayload();
+
+    if (details != NULL)
+    {
+        if (details->Name != NULL)
+        {
+            string s = PARTITION_PATH_NAME;
+            s += "/";
+            s += details->Name;
+
+            if (remove(s.c_str()) == 0)
+            {
+                result = StatusCodes::CompletedOk;
+            }
+            else
+            {
+                if (errno == ENOENT)
+                {
+                    result = StatusCodes::FileNotFound;
+                }
+            }
+        }
+        vPortFree(details->Name);
+        vPortFree(details);
+    }
+
+    message->MessageType = MessageTypes::Response;
+    message->StatusCode = result;
+    _messageDispatcher->QueueMessageForStm32(message);
+
     TRACE_MESSAGE("DeleteFile: Exit");
 }
 
