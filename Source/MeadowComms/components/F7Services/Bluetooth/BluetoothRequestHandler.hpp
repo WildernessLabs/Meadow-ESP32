@@ -113,7 +113,7 @@ private:
      *  Construct a new Bluetooth request handler object with reference to a
      *  Message Dispatcher object.
      */
-    explicit BluetoothRequestHandler(MessageDispatcher *);
+    explicit BluetoothRequestHandler(IMessageDispatcher *);
 
     static BluetoothRequestHandler *GetInstance();
 
@@ -123,7 +123,7 @@ public:
     static BluetoothManager _manager;
     static BluetoothRequestHandler *_instance;
     
-    static BluetoothRequestHandler *GetInstance(MessageDispatcher *d);
+    static BluetoothRequestHandler *GetInstance(IMessageDispatcher *d);
 
     /**
      *  @brief Name of the component / task for the Bluetooth system.

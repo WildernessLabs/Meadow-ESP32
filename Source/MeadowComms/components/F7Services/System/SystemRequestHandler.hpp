@@ -20,9 +20,11 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "IMessageDispatcher.hpp"
 #include "RequestHandlerBase.hpp"
 #include "NvsManager.hpp"
 #include "ThreadPool.hpp"
+#include "FileSystem.hpp"
 
 /**
  *  @brief Object to deal with system requests such as configuration settings etc.
@@ -64,6 +66,12 @@ private:
      *  @brief Name of the NVS storage holding the _maximumMessagequeueLength value.
      */
     static const char *MAXIMUM_MESSAGE_QUEUE_LENGTH_NAME;
+
+    /**
+     * @brief Container for the methods and data required to access the file
+     *        system on the ESP32.
+     */
+    FileSystem *_fileSystem;
 
     /**
      *  T@brief his method will dispatch incoming messages to the appropriate request handler.
@@ -120,7 +128,7 @@ public:
     /**
      *  @brief Public constructor.
      */
-    explicit SystemRequestHandler(MessageDispatcher *);
+    explicit SystemRequestHandler(IMessageDispatcher *);
 
     /**
      *  @brief Perform any class level setup.

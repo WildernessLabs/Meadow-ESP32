@@ -18,7 +18,7 @@
 //  here to get around compiler errors if the MessageDispatcher.hpp
 //  file is included.
 //
-class MessageDispatcher;
+class IMessageDispatcher;
 
 /**
  *  @brief Base class for any request handlers.
@@ -47,7 +47,7 @@ protected:
     /**
      *  @brief Object that will be used to send messages to the STM32 from the ESP32.
      */
-    static MessageDispatcher *_messageDispatcher;
+    static IMessageDispatcher *_messageDispatcher;
 
     /**
      *  @brief Task that will be used to retrieve and dispatch messages to the appropriate method.
@@ -93,7 +93,7 @@ public:
     /**
      *  @brief Constructor for the RequestHandlerBase class.
      */
-    explicit RequestHandlerBase(MessageDispatcher *message);
+    explicit RequestHandlerBase(IMessageDispatcher *message);
 
     /**
      *  @brief Setup the various properties for correct functioning of the request handler.

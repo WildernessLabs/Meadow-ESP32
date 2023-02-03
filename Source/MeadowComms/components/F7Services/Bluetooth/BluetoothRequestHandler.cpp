@@ -70,7 +70,7 @@ BluetoothRequestHandler* BluetoothRequestHandler::GetInstance()
     return _instance;
 }
 
-BluetoothRequestHandler* BluetoothRequestHandler::GetInstance(MessageDispatcher *d)
+BluetoothRequestHandler* BluetoothRequestHandler::GetInstance(IMessageDispatcher *d)
 {
     if (!_instance)
     {
@@ -87,7 +87,7 @@ BluetoothRequestHandler* BluetoothRequestHandler::GetInstance(MessageDispatcher 
  *  @param messageDispatcher
  *      Message Dispatcher that can be used to send messages to the STM32.
  */
-BluetoothRequestHandler::BluetoothRequestHandler(MessageDispatcher *messageDispatcher) : BluetoothRequestHandler()
+BluetoothRequestHandler::BluetoothRequestHandler(IMessageDispatcher *messageDispatcher) : BluetoothRequestHandler()
 {
     _messageDispatcher = messageDispatcher;
 }
