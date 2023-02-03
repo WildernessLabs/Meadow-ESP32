@@ -713,6 +713,21 @@ void SystemRequestHandler::DispatchRequest(Message *request)
         case SystemFunction::StopHeapTrace:
             StopHeapTrace(request);
             break;
+        case SystemFunction::FileSystemFormat:
+            _fileSystem->Format(request);
+            break;
+        case SystemFunction::FileSystemWriteFile:
+            _fileSystem->WriteFile(request);
+            break;
+        case SystemFunction::FileSystemReadFile:
+            _fileSystem->ReadFile(request);
+            break;
+        case SystemFunction::FileSystemListFiles:
+            _fileSystem->ListFiles(request);
+            break;
+        case SystemFunction::FileSystemDeleteFile:
+            _fileSystem->DeleteFile(request);
+            break;
         default:
             TRACE_MESSAGE("DispatchRequest: Unknown System message received, function 0x%x", request->Function);
             if (request->Payload != NULL)
