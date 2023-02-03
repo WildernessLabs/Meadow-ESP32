@@ -216,7 +216,7 @@ TEST_CASE("Write file to file system", "[FileSystem]")
     //
     TEST_ASSERT_EQUAL(ESP_OK, esp_littlefs_format(FileSystem::PARTITION_LABEL));
     //
-    //  Create a message to format the file system and call the format method.
+    //  Create a message to write a file to the file system.
     //
     Esp32Messaging::FileNameAndContents fileData;
     bzero(&fileData, sizeof(fileData));
@@ -406,6 +406,83 @@ TEST_CASE("Get list of files", "[FileSystem]")
     }
 
     Message::DeleteMessage(listMessage);
+
+    delete fs;
+}
+
+/**
+ * @brief Check that we can delete a file from the file system.
+ */
+TEST_CASE("Delete file", "[FileSystem]")
+{
+    MockMessageDispatcher *messageDispatcher = new MockMessageDispatcher(nullptr);
+    TEST_ASSERT_NOT_NULL(messageDispatcher);
+
+    FileSystem *fs = new FileSystem(messageDispatcher);
+    TEST_ASSERT_NOT_NULL(fs);
+    TEST_ASSERT_EQUAL(fs->Setup(), StatusCodes::CompletedOk);
+    //
+    //  Start with an empty file system.
+    //
+    TEST_ASSERT_EQUAL(ESP_OK, esp_littlefs_format(FileSystem::PARTITION_LABEL));
+
+    //
+    //  Create a message to delete a file from the file system.
+    //
+    Esp32Messaging::FileDetails details;
+    bzero(&details, sizeof(details));
+    details.Name = (char *) TEST_FILE_NAME;
+    uint32_t payloadLength = Encoders::EncodedFileDetailsBufferSize(&details);
+    uint8_t *encodedPayload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
+    TEST_ASSERT_NOT_NULL(encodedPayload);
+    Encoders::EncodeFileDetails(&details, encodedPayload);
+    Message *deleteMessage = Message::CreateOnHeap(MessageTypes::Header, Esp32Interfaces::System, SystemFunction::FileSystemDeleteFile,
+                                                  StatusCodes::Failure, TEST_MESSAGE_ID, encodedPayload, payloadLength);
+    TEST_ASSERT_NOT_NULL(deleteMessage);
+
+    fs->DeleteFile(deleteMessage);
+
+    //
+    //  Now check we have exactly one response and that it is correct.
+    //
+    TEST_ASSERT_EQUAL(1, messageDispatcher->OutboundMessageQueueLength());
+
+    Message *response = messageDispatcher->GetOutboundMessage();
+    TEST_ASSERT_NOT_NULL(response);
+
+    TEST_ASSERT_EQUAL(MessageTypes::Response, response->MessageType);
+    TEST_ASSERT_EQUAL(Esp32Interfaces::System, response->Interface);
+    TEST_ASSERT_EQUAL(SystemFunction::FileSystemDeleteFile, response->Function);
+    TEST_ASSERT_EQUAL(StatusCodes::FileNotFound, response->StatusCode);
+    TEST_ASSERT_EQUAL(TEST_MESSAGE_ID, response->MessageID);
+    TEST_ASSERT_EQUAL(0, response->PayloadLength);
+    TEST_ASSERT_NULL(response->Payload);
+
+    TEST_ASSERT_EQUAL(0, messageDispatcher->OutboundMessageQueueLength());
+
+    //
+    //  Now create a file and try to delete it.
+    //
+    TEST_ASSERT_EQUAL(strlen(TEST_FILE_CONTENTS), WriteTestFile((char *) TEST_FILE_NAME, (uint8_t *) TEST_FILE_CONTENTS, strlen(TEST_FILE_CONTENTS)));
+    TEST_ASSERT_EQUAL(1, CountFiles());
+
+    deleteMessage->PayloadLength = payloadLength;
+    encodedPayload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));  // Re-encode as the above call will have freed the memory.
+    TEST_ASSERT_NOT_NULL(encodedPayload);
+    Encoders::EncodeFileDetails(&details, encodedPayload);
+    deleteMessage->Payload = encodedPayload;
+
+    fs->DeleteFile(deleteMessage);
+
+    TEST_ASSERT_EQUAL(1, messageDispatcher->OutboundMessageQueueLength());
+
+    response = messageDispatcher->GetOutboundMessage();
+    TEST_ASSERT_NOT_NULL(response);
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
+
+    TEST_ASSERT_EQUAL(0, CountFiles());
+
+    Message::DeleteMessage(deleteMessage);
 
     delete fs;
 }
