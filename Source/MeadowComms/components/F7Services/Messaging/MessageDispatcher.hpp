@@ -20,6 +20,7 @@
 #include "TransportProviderBase.hpp"
 #include "SharedEnums.hpp"
 #include "Esp32Messaging.hpp"
+#include "IMessageDispatcher.hpp"
 
 /*
  *  Forward declarations required by the compiler.
@@ -35,7 +36,7 @@ class BluetoothRequestHandler;
  *  This class acts as a broker between the ESP32 and the STM32
  *  message transmit / receive mechanisms.
  */
-class MessageDispatcher
+class MessageDispatcher : public IMessageDispatcher
 {
 private:
     /**
