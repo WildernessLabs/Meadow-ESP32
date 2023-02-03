@@ -214,9 +214,73 @@ void FileSystem::Format(Message *message)
  * @param request
  *      Pointer to the originating message object.
  */
-void FileSystem::ReadFile(Message *request)
+void FileSystem::ReadFile(Message *message)
 {
     TRACE_MESSAGE("ReadFile: Enter");
+
+    StatusCodes::StatusCodes result = StatusCodes::Failure;
+    Esp32Messaging::FileNameAndContents *fileData = Encoders::ExtractFileNameAndContents(message->Payload);
+    message->DeletePayload();
+
+    if (fileData != NULL)
+    {
+        if (fileData->Name != NULL)
+        {
+            string s = PARTITION_PATH_NAME;
+            s += "/";
+            s += fileData->Name;
+            struct stat fileInfo;
+            if (stat(s.c_str(), &fileInfo) == 0)
+            {
+                fileData->ContentsLength = fileInfo.st_size;
+                fileData->Contents = static_cast<uint8_t *>(pvPortMalloc(fileData->ContentsLength));
+                if (fileData->Contents != NULL)
+                {
+                    FILE *file = fopen(s.c_str(), "r");
+                    if (file != NULL)
+                    {
+                        int amountRead = fread(static_cast<void *>(fileData->Contents), 1, fileData->ContentsLength, file);
+                        if (amountRead > 0)
+                        {
+                            fileData->ContentsLength = amountRead;
+                        }
+                        fclose(file);
+                        message->PayloadLength = Encoders::EncodedFileNameAndContentsBufferSize(fileData);
+                        message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
+                        if (message->Payload == NULL)
+                        {
+                            message->PayloadLength = 0;
+                        }
+                        else
+                        {
+                            Encoders::EncodeFileNameAndContents(fileData, message->Payload);
+                            result = StatusCodes::CompletedOk;
+                        }
+                    }
+                    if (result != StatusCodes::CompletedOk)
+                    {
+                        vPortFree(fileData->Contents);
+                        fileData->Contents = NULL;
+                        fileData->ContentsLength = 0;
+                    }
+                }
+                else
+                {
+                    fileData->ContentsLength = 0;
+                }
+            }
+            else
+            {
+                result = StatusCodes::FileNotFound;
+            }
+        }
+        vPortFree(fileData->Name);
+        vPortFree(fileData);
+    }
+    
+    message->MessageType = MessageTypes::Response;
+    message->StatusCode = result;
+    _messageDispatcher->QueueMessageForStm32(message);
 
     TRACE_MESSAGE("ReadFile: Exit");
 }
@@ -256,7 +320,7 @@ void FileSystem::WriteFile(Message *message)
         }
         vPortFree(fileData);
     }
-    
+
     message->MessageType = MessageTypes::Response;
     message->StatusCode = result;
     _messageDispatcher->QueueMessageForStm32(message);

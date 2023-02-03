@@ -217,6 +217,7 @@ TEST_CASE("Write file to file system", "[FileSystem]")
     //  Create a message to format the file system and call the format method.
     //
     Esp32Messaging::FileNameAndContents fileData;
+    bzero(&fileData, sizeof(fileData));
     fileData.Name = (char *) TEST_FILE_NAME;
     fileData.Length = strlen(TEST_FILE_CONTENTS);
     fileData.Contents = (uint8_t *) TEST_FILE_CONTENTS;
@@ -253,8 +254,67 @@ TEST_CASE("Write file to file system", "[FileSystem]")
     uint8_t *buffer = static_cast<uint8_t *>(pvPortMalloc(length));
     TEST_ASSERT_EQUAL(strlen(TEST_FILE_CONTENTS), ReadTestFile((char *) TEST_FILE_NAME, buffer, length));
     TEST_ASSERT_EQUAL_MEMORY_ARRAY(TEST_FILE_CONTENTS, buffer, strlen(TEST_FILE_CONTENTS), 1);
+
     vPortFree(buffer);
+    Message::DeleteMessage(writeMessage);
 
     delete fs;
 }
 
+TEST_CASE("Reading a file", "[FileSystem]")
+{
+    MockMessageDispatcher *messageDispatcher = new MockMessageDispatcher(nullptr);
+    TEST_ASSERT_NOT_NULL(messageDispatcher);
+
+    FileSystem *fs = new FileSystem(messageDispatcher);
+    TEST_ASSERT_NOT_NULL(fs);
+    TEST_ASSERT_EQUAL(fs->Setup(), StatusCodes::CompletedOk);
+    //
+    //  Start with an empty file system.
+    //
+    TEST_ASSERT_EQUAL(ESP_OK, esp_littlefs_format(FileSystem::PARTITION_LABEL));
+    TEST_ASSERT_EQUAL(strlen(TEST_FILE_CONTENTS), WriteTestFile((char *) TEST_FILE_NAME, (uint8_t *) TEST_FILE_CONTENTS, strlen(TEST_FILE_CONTENTS)));
+
+    Esp32Messaging::FileNameAndContents fileData;
+    bzero(&fileData, sizeof(fileData));
+    fileData.Name = (char *) TEST_FILE_NAME;
+    uint32_t payloadLength = Encoders::EncodedFileNameAndContentsBufferSize(&fileData);
+    uint8_t *encodedPayload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
+    TEST_ASSERT_NOT_NULL(encodedPayload);
+    Encoders::EncodeFileNameAndContents(&fileData, encodedPayload);
+    Message *readMessage = Message::CreateOnHeap(MessageTypes::Header, Esp32Interfaces::System, SystemFunction::FileSystemReadFile,
+                                                  StatusCodes::Failure, TEST_MESSAGE_ID, encodedPayload, payloadLength);
+    TEST_ASSERT_NOT_NULL(readMessage);
+
+    fs->ReadFile(readMessage);
+    
+    //
+    //  Now check we have exactly one response and that it is correct.
+    //
+    TEST_ASSERT_EQUAL(1, messageDispatcher->OutboundMessageQueueLength());
+
+    Message *response = messageDispatcher->GetOutboundMessage();
+    TEST_ASSERT_NOT_NULL(response);
+
+    TEST_ASSERT_EQUAL(MessageTypes::Response, response->MessageType);
+    TEST_ASSERT_EQUAL(Esp32Interfaces::System, response->Interface);
+    TEST_ASSERT_EQUAL(SystemFunction::FileSystemReadFile, response->Function);
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
+    TEST_ASSERT_EQUAL(TEST_MESSAGE_ID, response->MessageID);
+    TEST_ASSERT_GREATER_THAN(0, response->PayloadLength);
+    TEST_ASSERT_NOT_NULL(response->Payload);
+
+    TEST_ASSERT_EQUAL(0, messageDispatcher->OutboundMessageQueueLength());
+
+    Esp32Messaging::FileNameAndContents *fileContents = Encoders::ExtractFileNameAndContents(response->Payload);
+    TEST_ASSERT_NOT_NULL(fileContents);
+    TEST_ASSERT_GREATER_THAN(0, fileContents->ContentsLength);
+    TEST_ASSERT_NOT_NULL(fileContents->Contents);
+    TEST_ASSERT_EQUAL_MEMORY_ARRAY(TEST_FILE_CONTENTS, fileContents->Contents, strlen(TEST_FILE_CONTENTS), 1);
+
+    vPortFree(fileContents->Contents);
+    vPortFree(fileContents);
+    Message::DeleteMessage(readMessage);
+
+    delete fs;
+}
