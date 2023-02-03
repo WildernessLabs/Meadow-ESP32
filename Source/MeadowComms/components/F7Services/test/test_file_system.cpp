@@ -337,6 +337,7 @@ TEST_CASE("Get list of files", "[FileSystem]")
     //
     TEST_ASSERT_EQUAL(ESP_OK, esp_littlefs_format(FileSystem::PARTITION_LABEL));
     Message *listMessage = Message::CreateOnHeap(MessageTypes::Header, Esp32Interfaces::System, SystemFunction::FileSystemListFiles, StatusCodes::Failure);
+    listMessage->MessageID = TEST_MESSAGE_ID;
 
     fs->ListFiles(listMessage);
 
@@ -384,6 +385,7 @@ TEST_CASE("Get list of files", "[FileSystem]")
     files = Encoders::ExtractFileNameList(response->Payload);
     TEST_ASSERT_NOT_NULL(files);
     TEST_ASSERT_EQUAL(2, files->NumberOfFiles);
+    TEST_ASSERT_NOT_NULL(files->FileDetails);
     uint8_t *buffer = files->FileDetails;
     for (int index = 0; index < files->NumberOfFiles; index++)
     {
