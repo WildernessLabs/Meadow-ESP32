@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <dirent.h>
+#include <string>
 #include "unity.h"
 
 #include "MockMessageDispatcher.hpp"
@@ -73,7 +74,7 @@ int WriteTestFile(char *filename, uint8_t *buffer, int length)
 {
     int result = 0;
 
-    string s = FileSystem::PARTITION_PATH_NAME;
+    std::string s = FileSystem::PARTITION_PATH_NAME;
     s += "/";
     s += filename;
     FILE *file = fopen(s.c_str(), "w");
@@ -102,7 +103,7 @@ int ReadTestFile(char *filename, uint8_t *buffer, int maxLength)
 {
     int result = 0;
 
-    string s = FileSystem::PARTITION_PATH_NAME;
+    std::string s = FileSystem::PARTITION_PATH_NAME;
     s += "/";
     s += filename;
     FILE *file = fopen(s.c_str(), "r");

@@ -6,6 +6,8 @@
 
 #include "sdkconfig.h"
 
+#include <string>
+
 #include "IMessageDispatcher.hpp"
 #include "Encoders.hpp"
 #include "SystemRequestHandler.hpp"
@@ -226,7 +228,7 @@ void FileSystem::ReadFile(Message *message)
     {
         if (fileData->Name != NULL)
         {
-            string s = PARTITION_PATH_NAME;
+            std::string s = PARTITION_PATH_NAME;
             s += "/";
             s += fileData->Name;
             struct stat fileInfo;
@@ -303,7 +305,7 @@ void FileSystem::WriteFile(Message *message)
     {
         if (fileData->Contents != NULL)
         {
-            string s = PARTITION_PATH_NAME;
+            std::string s = PARTITION_PATH_NAME;
             s += "/";
             s += fileData->Name;
             FILE *file = fopen(s.c_str(), "w");
@@ -346,7 +348,7 @@ void FileSystem::DeleteFile(Message *message)
     {
         if (details->Name != NULL)
         {
-            string s = PARTITION_PATH_NAME;
+            std::string s = PARTITION_PATH_NAME;
             s += "/";
             s += details->Name;
 
@@ -406,7 +408,7 @@ void FileSystem::ListFiles(Message *message)
                 Esp32Messaging::FileDetails details;
                 bzero(&details, sizeof(details));
                 details.Name = ep->d_name;
-                string s = PARTITION_PATH_NAME;
+                std::string s = PARTITION_PATH_NAME;
                 s += "/";
                 s += ep->d_name;
                 struct stat fileInfo;
