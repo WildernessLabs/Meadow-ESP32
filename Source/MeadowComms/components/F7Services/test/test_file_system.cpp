@@ -18,14 +18,16 @@
 #include "FileSystem.hpp"
 
 //
-//  Name of the file to be used as a test file.
+//  Name of the files to be used for testing.
 //
 #define TEST_FILE_NAME          "hello.txt"
+#define TEST_FILE_NAME2         "test.txt"
 
 //
-//  Text to be written into the text file.
+//  Text to be written into the text files.
 //
 #define TEST_FILE_CONTENTS      "Hello from ESP32 unit tests\n"
+#define TEST_FILE_CONTENTS2     "More text\n"
 
 //
 //  Message ID to be used for testing.
@@ -315,6 +317,90 @@ TEST_CASE("Reading a file", "[FileSystem]")
     vPortFree(fileContents->Contents);
     vPortFree(fileContents);
     Message::DeleteMessage(readMessage);
+
+    delete fs;
+}
+
+/**
+ * @brief Test getting a list of files on the file system.
+ */
+TEST_CASE("Get list of files", "[FileSystem]")
+{
+    MockMessageDispatcher *messageDispatcher = new MockMessageDispatcher(nullptr);
+    TEST_ASSERT_NOT_NULL(messageDispatcher);
+
+    FileSystem *fs = new FileSystem(messageDispatcher);
+    TEST_ASSERT_NOT_NULL(fs);
+    TEST_ASSERT_EQUAL(fs->Setup(), StatusCodes::CompletedOk);
+    //
+    //  Start with an empty file system.
+    //
+    TEST_ASSERT_EQUAL(ESP_OK, esp_littlefs_format(FileSystem::PARTITION_LABEL));
+    Message *listMessage = Message::CreateOnHeap(MessageTypes::Header, Esp32Interfaces::System, SystemFunction::FileSystemListFiles, StatusCodes::Failure);
+
+    fs->ListFiles(listMessage);
+
+    //
+    //  Now check we have exactly one response and that it is correct.
+    //
+    TEST_ASSERT_EQUAL(1, messageDispatcher->OutboundMessageQueueLength());
+
+    Message *response = messageDispatcher->GetOutboundMessage();
+    TEST_ASSERT_NOT_NULL(response);
+
+    TEST_ASSERT_EQUAL(MessageTypes::Response, response->MessageType);
+    TEST_ASSERT_EQUAL(Esp32Interfaces::System, response->Interface);
+    TEST_ASSERT_EQUAL(SystemFunction::FileSystemReadFile, response->Function);
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
+    TEST_ASSERT_EQUAL(TEST_MESSAGE_ID, response->MessageID);
+    TEST_ASSERT_GREATER_THAN(0, response->PayloadLength);
+    TEST_ASSERT_NOT_NULL(response->Payload);
+
+    TEST_ASSERT_EQUAL(0, messageDispatcher->OutboundMessageQueueLength());
+
+    //
+    //  We should have no files on the file system.
+    //
+    Esp32Messaging::FileNameList *files = Encoders::ExtractFileNameList(response->Payload);
+    TEST_ASSERT_NOT_NULL(files);
+    TEST_ASSERT_EQUAL(0, files->NumberOfFiles);
+    vPortFree(files);
+    response->DeletePayload();
+
+    //
+    //  Now write two files to the file system and repeat the request reusing the listMessage from above.
+    //
+    TEST_ASSERT_EQUAL(strlen(TEST_FILE_CONTENTS), WriteTestFile((char *) TEST_FILE_NAME, (uint8_t *) TEST_FILE_CONTENTS, strlen(TEST_FILE_CONTENTS)));
+    TEST_ASSERT_EQUAL(strlen(TEST_FILE_CONTENTS2), WriteTestFile((char *) TEST_FILE_NAME2, (uint8_t *) TEST_FILE_CONTENTS2, strlen(TEST_FILE_CONTENTS2)));
+    listMessage->StatusCode = StatusCodes::Failure;
+
+    fs->ListFiles(listMessage);
+
+    //
+    //  We have already tested the message queuing above so we will not repeat those checks, we will
+    //  just check that we can retrieve the file information.
+    //
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
+    files = Encoders::ExtractFileNameList(response->Payload);
+    TEST_ASSERT_NOT_NULL(files);
+    TEST_ASSERT_EQUAL(2, files->NumberOfFiles);
+    uint8_t *buffer = files->FileDetails;
+    for (int index = 0; index < files->NumberOfFiles; index++)
+    {
+        Esp32Messaging::FileDetails *file = Encoders::ExtractFileDetails(buffer);
+        TEST_ASSERT_NOT_NULL(file);
+        buffer += strlen(file->Name) + 1 + sizeof(uint16_t);
+        if (strcmp(file->Name, TEST_FILE_NAME) == 0)
+        {
+            TEST_ASSERT_EQUAL(strlen(TEST_FILE_CONTENTS), file->Length);
+        }
+        if (strcmp(file->Name, TEST_FILE_NAME2) == 0)
+        {
+            TEST_ASSERT_EQUAL(strlen(TEST_FILE_CONTENTS2), file->Length);
+        }
+    }
+
+    Message::DeleteMessage(listMessage);
 
     delete fs;
 }
