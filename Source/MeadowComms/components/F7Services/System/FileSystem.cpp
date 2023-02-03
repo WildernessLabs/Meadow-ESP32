@@ -334,7 +334,7 @@ void FileSystem::WriteFile(Message *message)
  * @param request
  *      Pointer to the originating message object.
  */
-void FileSystem::DeleteFile(Message *request)
+void FileSystem::DeleteFile(Message *message)
 {
     TRACE_MESSAGE("DeleteFile: Enter");
 
@@ -347,9 +347,72 @@ void FileSystem::DeleteFile(Message *request)
  * @param request
  *      Pointer to the originating message object.
  */
-void FileSystem::ListFiles(Message *request)
+void FileSystem::ListFiles(Message *message)
 {
     TRACE_MESSAGE("ListFiles: Enter");
+
+    StatusCodes::StatusCodes result = StatusCodes::Failure;
+    message->DeletePayload();
+
+    int count = 0;
+    DIR *dp = opendir(FileSystem::PARTITION_PATH_NAME);
+    if (dp != NULL)
+    {
+        struct dirent *ep;
+        while ((ep = readdir(dp)) != NULL)
+        {
+            count++;
+        }
+        rewinddir(dp);
+        Esp32Messaging::FileNameList fileNameList;
+        bzero(&fileNameList, sizeof(fileNameList));
+        uint16_t bufferLength = 0;
+        if (count > 0)
+        {
+            while ((ep = readdir(dp)) != NULL)
+            {
+                Esp32Messaging::FileDetails details;
+                bzero(&details, sizeof(details));
+                details.Name = ep->d_name;
+                string s = PARTITION_PATH_NAME;
+                s += "/";
+                s += ep->d_name;
+                struct stat fileInfo;
+                if (stat(s.c_str(), &fileInfo) == 0)
+                {
+                    details.Length = fileInfo.st_size;
+                }
+                else
+                {
+                    details.Length = 0;
+                }
+                bufferLength += Encoders::EncodedFileDetailsBufferSize(&details);
+                fileNameList.FileDetails = static_cast<uint8_t *>(realloc(fileNameList.FileDetails, bufferLength));
+                if (fileNameList.FileDetails != NULL)
+                {
+                    Encoders::EncodeFileDetails(&details, fileNameList.FileDetails + fileNameList.FileDetailsLength);
+                    fileNameList.FileDetailsLength = bufferLength;
+                }
+            }
+        }
+        closedir(dp);
+        fileNameList.NumberOfFiles = count;
+        message->PayloadLength = Encoders::EncodedFileNameListBufferSize(&fileNameList);
+        message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
+        if (message->Payload == NULL)
+        {
+            message->PayloadLength = 0;
+        }
+        else
+        {
+            Encoders::EncodeFileNameList(&fileNameList, message->Payload);
+            result = StatusCodes::CompletedOk;
+        }
+    }
+
+    message->MessageType = MessageTypes::Response;
+    message->StatusCode = result;
+    _messageDispatcher->QueueMessageForStm32(message);
 
     TRACE_MESSAGE("ListFiles: Exit");
 }
