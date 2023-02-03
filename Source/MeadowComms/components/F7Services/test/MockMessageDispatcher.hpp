@@ -13,22 +13,11 @@
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
-#include "WiFiRequestHandler.hpp"
-#include "SystemRequestHandler.hpp"
-#include "BluetoothRequestHandler.hpp"
-#include "MeshNetworkRequestHandler.hpp"
+
 #include "TransportProviderBase.hpp"
 #include "SharedEnums.hpp"
 #include "Esp32Messaging.hpp"
 #include "IMessageDispatcher.hpp"
-
-/*
- *  Forward declarations required by the compiler.
- */
-class WiFiRequestHandler;
-class MeshNetworkRequestHandler;
-class SystemRequestHandler;
-class BluetoothRequestHandler;
 
 /**
  *  @brief Message dispatcher class.
