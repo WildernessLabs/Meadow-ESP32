@@ -7,6 +7,8 @@
 #include "sdkconfig.h"
 
 #include <string>
+#include <string.h>
+#include <dirent.h>
 
 #include "IMessageDispatcher.hpp"
 #include "Encoders.hpp"

@@ -9,13 +9,9 @@
 
 #include "sdkconfig.h"
 
-#include <dirent.h>
-
 #include "esp_littlefs.h"
 
 #include "Esp32Messaging.hpp"
-#include "Encoders.hpp"
-#include "FileSystem.hpp"
 
 class FileSystem
 {
