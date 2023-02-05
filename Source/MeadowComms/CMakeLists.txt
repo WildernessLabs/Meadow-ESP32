@@ -75,6 +75,10 @@ if (THREAD_DEBUG EQUAL 1)
     add_compile_definitions(THREAD_DEBUG)
 endif()
 
+if (FILE_SYSTEM_DEBUG EQUAL 1)
+    add_compile_definitions(FILE_SYSTEM_DEBUG)
+endif()
+
 if (PERFORMANCE_LOGGING EQUAL 1)
     add_compile_definitions(PERFORMANCE_LOGGING)
 endif()

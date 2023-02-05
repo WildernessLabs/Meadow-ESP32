@@ -176,6 +176,7 @@ void Logging::Setup()
 #if defined(SYSTEM_DEBUG)
     #warning "System debugging is enabled."
     esp_log_level_set(SystemRequestHandler::COMPONENT_NAME, ESP_LOG_INFO);
+    esp_log_level_set(FileSystem::COMPONENT_NAME, ESP_LOG_INFO);
 #endif
 
     const uart_config_t loggingUARTConfig =
