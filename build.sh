@@ -271,7 +271,7 @@ if [ ! -z "$DEBUG_SELECTIONS" ]; then
             IDF_DEFINES+=" -DSPI_DEBUG=1"
             ;;
             system)
-            IDF_DEFINES+=" -DSYSTEM_DEBUG=1"
+            IDF_DEFINES+=" -DSYSTEM_DEBUG=1 -DFILE_SYSTEM_DEBUG=1"
             ;;
             messages)
             IDF_DEFINES+=" -DMESSAGES_DEBUG=1"
