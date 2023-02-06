@@ -4211,8 +4211,6 @@ void Encoders::EncodeFileNameAndContents(Esp32Messaging::FileNameAndContents *fi
 {
     EncodeString(fileNameAndContents->Name, buffer);
     buffer += StringLength(fileNameAndContents->Name) + 1;
-    EncodeUInt16(fileNameAndContents->Length, buffer);
-    buffer += 2;
     EncodeUInt32(fileNameAndContents->ContentsLength, buffer);
     buffer += 4;
     if (fileNameAndContents->ContentsLength > 0)
@@ -4236,7 +4234,7 @@ int Encoders::EncodedFileNameAndContentsBufferSize(Esp32Messaging::FileNameAndCo
     int result = 0;
     result += Encoders::StringLength(fileNameAndContents->Name);
     result += fileNameAndContents->ContentsLength;
-    return(result + 7);
+    return(result + 5);
 }
 
 /**
@@ -4258,8 +4256,6 @@ Esp32Messaging::FileNameAndContents *Encoders::ExtractFileNameAndContents(uint8_
 
     fileNameAndContents->Name = ExtractString(buffer);
     buffer += Encoders::StringLength(fileNameAndContents->Name) + 1;
-    fileNameAndContents->Length = ExtractUInt16(buffer);
-    buffer += 2;
     fileNameAndContents->ContentsLength = ExtractUInt32(buffer);
     buffer += 4;
     if (fileNameAndContents->ContentsLength > 0)

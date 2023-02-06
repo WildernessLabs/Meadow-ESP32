@@ -443,7 +443,6 @@ namespace Esp32Messaging
     struct FileNameAndContents
     {
         char * Name;
-        uint16_t Length;
         uint32_t ContentsLength;
         uint8_t *Contents;
     };

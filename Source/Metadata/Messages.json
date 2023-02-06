@@ -496,7 +496,6 @@
             "MessageElements":
             [
                 { "Name": "Name", "DataType": "string" },
-                { "Name": "Length", "DataType": "uint16" },
                 { "Name": "Contents", "DataType": "blob" }
             ]
         },
