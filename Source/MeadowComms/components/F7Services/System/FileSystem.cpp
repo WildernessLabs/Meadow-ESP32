@@ -236,16 +236,20 @@ void FileSystem::ReadFile(Message *message)
             struct stat fileInfo;
             if (stat(s.c_str(), &fileInfo) == 0)
             {
-                fileData->ContentsLength = fileInfo.st_size;
-                fileData->Contents = static_cast<uint8_t *>(pvPortMalloc(fileData->ContentsLength));
+                fileData->ContentsLength = 0;
+                fileData->Contents = static_cast<uint8_t *>(pvPortMalloc(fileInfo.st_size));
                 if (fileData->Contents != NULL)
                 {
+                    TRACE_MESSAGE("Reading %d bytes from file %s", (int) fileInfo.st_size, fileData->Name);
                     FILE *file = fopen(s.c_str(), "r");
                     if (file != NULL)
                     {
-                        int amountRead = fread(static_cast<void *>(fileData->Contents), 1, fileData->ContentsLength, file);
+                        int amountRead = fread(static_cast<void *>(fileData->Contents), 1, fileInfo.st_size, file);
                         if (amountRead > 0)
                         {
+                            fileData->ContentsLength = amountRead;
+                            TRACE_MESSAGE("Read %d bytes", amountRead);
+                            TRACE_HEX_BUFFER(fileData->Contents, amountRead);
                             fileData->ContentsLength = amountRead;
                         }
                         fclose(file);
@@ -310,10 +314,14 @@ void FileSystem::WriteFile(Message *message)
             std::string s = PARTITION_PATH_NAME;
             s += "/";
             s += fileData->Name;
+            TRACE_MESSAGE("Writing %d bytes into file %s", fileData->ContentsLength, s.c_str());
+            TRACE_HEX_BUFFER(fileData->Contents, fileData->ContentsLength);
             FILE *file = fopen(s.c_str(), "w");
             if (file != NULL)
             {
-                if (fwrite((void *) fileData->Contents, 1, fileData->Length, file) == fileData->Length)
+                int amount = fwrite((void *) fileData->Contents, 1, fileData->ContentsLength, file);
+                TRACE_MESSAGE("Written %d bytes", amount);
+                if (amount == fileData->ContentsLength)
                 {
                     result = StatusCodes::CompletedOk;
                 }
@@ -422,6 +430,7 @@ void FileSystem::ListFiles(Message *message)
                 {
                     details.Length = 0;
                 }
+                TRACE_MESSAGE("    File: %s, length: %d", details.Name, details.Length);
                 bufferLength += Encoders::EncodedFileDetailsBufferSize(&details);
                 fileNameList.FileDetails = static_cast<uint8_t *>(realloc(fileNameList.FileDetails, bufferLength));
                 if (fileNameList.FileDetails != NULL)
