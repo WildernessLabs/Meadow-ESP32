@@ -34,6 +34,12 @@ endif()
 set(SDKCONFIG_DEFAULTS ${SDKCONFIG_FILES})
 
 #
+#   Add extra components.
+#
+list(APPEND EXTRA_COMPONENT_DIRS components/esp_littlefs)
+list(APPEND EXTRA_COMPONENT_DIRS components/F7Services)
+
+#
 #   Now work out which compiler defines to set to turn various
 #   features on or off (e.g. WiFi logging etc.).
 #
@@ -67,6 +73,10 @@ endif()
 
 if (THREAD_DEBUG EQUAL 1)
     add_compile_definitions(THREAD_DEBUG)
+endif()
+
+if (FILE_SYSTEM_DEBUG EQUAL 1)
+    add_compile_definitions(FILE_SYSTEM_DEBUG)
 endif()
 
 if (PERFORMANCE_LOGGING EQUAL 1)
