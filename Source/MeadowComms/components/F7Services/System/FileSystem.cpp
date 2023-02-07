@@ -402,6 +402,7 @@ void FileSystem::ListFiles(Message *message)
     DIR *dp = opendir(FileSystem::PARTITION_PATH_NAME);
     if (dp != NULL)
     {
+        TRACE_MESSAGE("Directory %s opened.", FileSystem::PARTITION_PATH_NAME);
         struct dirent *ep;
         while ((ep = readdir(dp)) != NULL)
         {
@@ -411,6 +412,7 @@ void FileSystem::ListFiles(Message *message)
         Esp32Messaging::FileNameList fileNameList;
         bzero(&fileNameList, sizeof(fileNameList));
         uint16_t bufferLength = 0;
+        TRACE_MESSAGE("Found %d files.", count);
         if (count > 0)
         {
             while ((ep = readdir(dp)) != NULL)
