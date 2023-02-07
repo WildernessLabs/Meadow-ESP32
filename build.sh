@@ -198,7 +198,9 @@ generate_build_info() {
   VERSION_MAJOR=${BUILD_VERSION[0]}
   VERSION_MINOR=${BUILD_VERSION[1]}
   VERSION_REVISION=${BUILD_VERSION[2]}
-  VERSION_BUILD=${BUILD_VERSION[3]}
+  # VERSION_BUILD=${BUILD_VERSION[3]}
+
+  VERSION_BUILD=$(get_version_change_distance $1)
 
   # VERSION_BUILD=$(get_version_change_distance $1)
 
