@@ -4,6 +4,7 @@ trigger:
 pool: WL-Linux
 
 steps:
+- script: git submodule update --init --recursive
 - script: git clean -xfd
 - script: docker run --rm -v $PWD:/project -w /project espressif/idf:release-v4.2 ./build.sh --build
 - task: CopyFiles@2
