@@ -1,0 +1,3 @@
+[submodule "Source/MeadowComms/components/esp_littlefs"]
+	path = Source/MeadowComms/components/esp_littlefs
+	url = https://github.com/joltwallet/esp_littlefs.git
