@@ -201,7 +201,7 @@ generate_build_info() {
 
   VERSION_BUILD=$(get_version_change_distance $1)
 
-  echo "$VERSION_MAJOR.$VERSION_MINOR.$VERSION_REVISION.$VERSION_BUILD" > version.txt
+  echo "$VERSION_MAJOR.$VERSION_MINOR.$VERSION_REVISION.$VERSION_BUILD" > $scriptdir/Source/MeadowComms/version.txt
 
   echo Calculated version: ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_REVISION}.${VERSION_BUILD} '('${BUILD_GIT_HASH:0-8}:${BUILD_GIT_REF}')'
 
