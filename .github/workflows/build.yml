@@ -15,11 +15,9 @@ jobs:
     steps:
     - name: Checkout source code
       uses: actions/checkout@v3
-    
-    - name: Set ownership
-      run:
-        # this is to fix GIT not liking owner of the checkout dir
-        chown -R $(id -u):$(id -g) $PWD
+            
+    - name: Fix git safe.directory in container
+      run: mkdir -p /home/runner/work/_temp/_github_home && printf "[safe]\n\tdirectory = /project" > /home/runner/work/_temp/_github_home/.gitconfig
 
     - name: Build the code
       run: docker run --rm -v $PWD:/project -w /project espressif/idf:release-v4.2 ./build.sh --build
