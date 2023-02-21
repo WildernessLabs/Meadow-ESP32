@@ -15,10 +15,11 @@ jobs:
     steps:
     - name: Checkout source code
       uses: actions/checkout@v3
-            
-    - name: Fix git safe.directory in container
-      run: mkdir -p /home/runner/work/_temp/_github_home && printf "[safe]\n\tdirectory = /project" > /home/runner/work/_temp/_github_home/.gitconfig
 
+    - name: Update submodules
+      run: git submodule update --init --recursive
+      id: Update-submodeules
+            
     - name: Build the code
       run: docker run --rm -v $PWD:/project -w /project espressif/idf:release-v4.2 ./build.sh --build
       id: esp-idf-build
