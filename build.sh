@@ -188,6 +188,10 @@ inject_value() {
 generate_build_info() {
   printf "Generating build info..."
 
+  if [ "$scriptdir" == "/project" ]; then
+    git config --global --add safe.directory /project
+  fi
+
   BUILD_GIT_HASH=$(get_git_commit_hash .)
   BUILD_GIT_REF=$(get_git_branch_or_tag .)
 
