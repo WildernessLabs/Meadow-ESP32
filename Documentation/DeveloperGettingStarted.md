@@ -92,21 +92,3 @@ $ dotnet build
 ```
 $ dotnet bin/Debug/netcoreapp5.0/FileGenerator.dll
 ```
-
-
-
-
-## Troubleshooting
-
-1. I try to build and it fails with:
-
-```
-> Executing task in folder MeadowComms: /usr/bin/python ${env:IDF_PATH}/tools/idf.py build <
-
-/System/Library/Frameworks/Python.framework/Versions/2.7/Resources/Python.app/Contents/MacOS/Python: can't open file '/tools/idf.py': [Errno 2] No such file or directory
-The terminal process terminated with exit code: 2
-```
-
-2. IDF Onboarding in VS Code list no git or python version
-
-<no idea how to fix this yet>

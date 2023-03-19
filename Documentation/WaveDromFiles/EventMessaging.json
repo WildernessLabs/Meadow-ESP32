@@ -1,0 +1,17 @@
+{signal: [
+  ['ESP',
+  	{name: 'Message Waiting (MW)', wave: 'LHl|..............'},
+   {name: 'SPI Ready (SIR)',      wave: 'H..|..l..Hl...Hl..H', phase: 0.5}
+  ],
+  {},
+  ['SPI',
+  	{name: 'CS',   wave: 'H...|l..Hl...Hl..H'},
+  	{name: 'MOSI', wave: 'x..|.3..x3...x3..x', data: ['Response Req', 'Empty Packet', 'ACK / NAK']},
+    {name: 'MISO', wave: 'x..|.3..x3...x3..x', data: ['Empty Packet', 'Header + ACK / NAK', 'Empty Packet']},
+	]
+  ],
+ foot: {text:
+  ['tspan', 'ESP Send Message to STM (Event / Response Messages)'], tick: 0
+  }
+}
+
