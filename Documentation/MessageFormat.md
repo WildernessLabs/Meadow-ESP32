@@ -5,8 +5,6 @@ A message is made up of two parts:
 * Message Header
 * Payload (optional)
 
-![Message Format](SuppoprtFiles/MessageFormat.png)
-
 The Payload part of the message is optional as some tasks, say starting the network hardware do not require any additional information.  Other such as connecting to an access point require SSID and access point password and so these require a payload.
 
 ## Message Header
