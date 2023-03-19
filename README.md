@@ -44,7 +44,7 @@ The ESP32 allows the storage of data that can survive resets and power loss.  Th
 
 ## [Mapping Values](Documentation/MappingValues.md)
 
-The `SharedEnums.*` files cater for the consistent use of application defined values between the various components of the system but there are some values that are defined in the SDKs on the various systems (Nuttx and ESP-IDF).  Values such as the error codes, socket options values are examples of these types of values.  The `Mapping` class facilitates these mappings.
+The `SharedEnums.*` files cater for the consistent use of application defined values between the various components of the system but there are some values that are defined in the SDKs on the various systems (NuttX and ESP-IDF).  Values such as the error codes, socket options values are examples of these types of values.  The `Mapping` class facilitates these mappings.
 
 ## [Hints and Tips](Documentation/HintsAndTips.md)
 
