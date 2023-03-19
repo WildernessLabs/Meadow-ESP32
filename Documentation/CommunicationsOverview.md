@@ -102,4 +102,4 @@ When the STM32 receives a response to say a `Socket.Connect` request, it will us
 
 The STM32 uses a separate interrupt table for each of the ESP32 subsystems.  The STM uses the _Interface_ property of the message along with the _Function_ property to identify which interrupt has been generated.  The appropriate C method is called on the STM32 if a match is found.
 
-See the [Interrupt Overview](SupportFiles/InterruptProcessing.md) for more information on how to set this up.
+See the [Interrupt Overview](InterruptProcessing.md) for more information on how to set this up.
