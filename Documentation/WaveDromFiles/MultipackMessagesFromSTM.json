@@ -1,0 +1,17 @@
+{signal: [
+  ['ESP',
+  	{name: 'Message Waiting (MW)', wave: '0........................'},
+   {name: 'SPI Ready (SIR)',      wave: '1.l.Hl...Hl...H|l...Hl...H', phase: 0.5}
+  ],
+  {},
+  ['SPI',
+  	{name: 'CS',   wave: 'Hl.Hl...Hl...H|l...Hl...H'},
+  	{name: 'MOSI', wave: 'x3.x3...x3...x|3...x3...x', data: ['Packet 1', 'Packet 2', 'Packet 3', 'Packet N', 'Empty']},
+    {name: 'MISO', wave: 'x3.x3...x3...x|3...x3...x', data: ['Empty', 'Packet 1 ACK / NAK', 'Packet 2 ACK / NAK', 'Packet N-1 ACK / NAK', 'Packet N ACK / NAK']},
+	]
+  ],
+ foot: {text:
+  ['tspan', 'Multipacket Messages From STM'], tick: 0
+  }
+}
+

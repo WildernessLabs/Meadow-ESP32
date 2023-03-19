@@ -1,0 +1,17 @@
+{signal: [
+  ['ESP',
+  	{name: 'Message Waiting (MW)', wave: '0........'},
+   {name: 'SPI Ready (SIR)',      wave: '1.l..Hl..H', phase: 0.5}
+  ],
+  {},
+  ['SPI',
+  	{name: 'CS',   wave: 'Hl..Hl..H'},
+  	{name: 'MOSI', wave: 'x3..x3..x', data: ['Header and data', 'Empty Packet']},
+    {name: 'MISO', wave: 'x3..x3..x', data: ['Empty Packet', 'ACK / NAK']},
+	]
+  ],
+ foot: {text:
+  ['tspan', 'Simple Message Exchange'], tick: 0
+  }
+}
+
