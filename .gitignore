@@ -81,3 +81,15 @@ Source/MeadowComms/.gdbinit
 Source/OpenOCD/
 
 Source/.vscode/
+
+*.srctrlbm
+
+*.srctrldb
+
+Source/MeadowComms/sdkconfig
+
+*.pdb
+
+__pycache__/
+Source/MeadowComms/main/build_info.h
+Source/MeadowComms/test/sdkconfig

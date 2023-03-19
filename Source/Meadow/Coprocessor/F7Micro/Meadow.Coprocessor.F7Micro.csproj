@@ -78,12 +78,8 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\..\Meadow.Core\source\Meadow.Core\Meadow.Core.csproj">
-      <Project>{5994f664-62d9-4913-9308-af96c65b96ca}</Project>
+      <Project>{9DB204EE-619A-4086-A7A3-003E6400B057}</Project>
       <Name>Meadow.Core</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\Network\Meadow.Network.csproj">
-      <Project>{73fe4593-75ef-43f6-8596-06fab0f02e69}</Project>
-      <Name>Meadow.Network</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

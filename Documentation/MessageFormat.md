@@ -3,11 +3,9 @@
 A message is made up of two parts:
 
 * Message Header
-* Payload
+* Payload (optional)
 
-![Message Format](MessageFormat.png)
-
-Messages allow bidirectional communication between the STM32 and the ESP32.  The payload part of the messages can therefore contain a request (from the STM32 to the ESP32) and a response (from the ESP32 to the STM32).
+The Payload part of the message is optional as some tasks, say starting the network hardware do not require any additional information.  Other such as connecting to an access point require SSID and access point password and so these require a payload.
 
 ## Message Header
 
@@ -19,6 +17,8 @@ The fields in the message header are:
 * Function
 * Message ID
 * Status code
+* Packet offset
+* Packet length
 * Payload length
 * CRC
 
@@ -30,6 +30,7 @@ The interface ID indicates which interface should process the message.  The foll
 * Bluetooth
 * Mesh network
 * System
+* Wired ethernet (not used by the ESP32 code)
 
 The interface is an 8-bit unsigned value.
 
@@ -43,21 +44,25 @@ This is a 32-bit unsigned integer.
 
 The Message ID field should be unique for each interface.  The presence of this field allows the sender to match any responses to the original request.  In this was the sender and receiver can be implemented as multi-threaded systems.
 
-The message ID field is a 32-bit unsigned integer.  This allows for over 4 billion messages and this will wrap around to 0.
+The message ID field is a 32-bit unsigned integer.  This allows for over 4 billion messages.  The _Message ID_ space is split into two, the top bit of the 32-bit field indicates the split.  This bit determines if the message originated on the STM32 or the ESP32.
 
 ### Status Code
 
-The status code indicates the success or failure of the ESP32 system / message processing system.  This is not the same as the result of a method call (for instance `sendto`).  This can indicate the result of the request to start the network or the ability of the system to 
+The status code indicates the success or failure of the ESP32 system to deal with the request.  This is not the same as the result of a method call (for instance `sendto`).
+
+### Packet Offset and Packet Length
+
+Large messages (greater then ~4,000 bytes) are broken down into packets.  This is necessary as a bug in the SPI hardware on the ESP32 means that no single SPI transaction can be longer than about 4090 bytes.  Messages that require more than 4,000 bytes are broken down into smaller packets.  The _packet offset_ indicates where in the payload this packet of data should be placed.  The _packet length_ indicates the total number of bytes in this packet.
 
 ### Payload Length
 
-The payload length indicates the number of bytes in the message payload.  This is the number of bytes in the final message.  As we shall see later, the number of bytes used to send the payload may be more than the number of bytes in the payload due to the error checking requirements.
+The payload length is indicated by a 32-bit unsigned integer.  This represents the full length of the payload, not this packet.
 
-The payload length is indicated by a 16-bit unsigned integer.  The maximum length of a payload is limited to 4,000 bytes.  This limitation is derived from the hardware restriction in the SPI implementation on the ESP32.
+The payload length may be zero if the message is simple.
 
 ### CRC
 
-Each message sent has a 32-bit CRC value.  This is filled with 0 when the CRC is calculated and thn populated with the 32-bit value before the message is sent.
+Each message sent has a 32-bit CRC value.  This is filled with 0 when the CRC is calculated and then populated with the 32-bit value before the message is sent.
 
 ## Message Payload
 

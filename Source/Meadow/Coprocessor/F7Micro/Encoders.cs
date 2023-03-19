@@ -489,53 +489,6 @@ namespace Meadow.Devices.Esp32.MessagePayloads
         }
 
         /// <summary>
-        /// Encode a AntennaInfo object and return a byte array containing the encoded message.
-        /// </summary>
-        /// <param name="antennaInfo">AntennaInfo object to be encoded.</param>
-        /// <returns>Byte array containing the encoded AntennaInfo object.</returns>
-        public static byte[] EncodeAntennaInfo(MessagePayloads.AntennaInfo antennaInfo)
-        {
-            int offset = 0;
-            int length = 0;
-
-            //
-            //  Calculate the amount of memory needed.
-            //
-            length += 1;
-
-            //
-            //  Now allocate a new buffer and copy the data in to the buffer.
-            //
-            byte[] buffer = new byte[length];
-            Array.Clear(buffer, 0, buffer.Length);
-            buffer[offset] = antennaInfo.Antenna;
-            return(buffer);
-        }
-
-        /// <summary>
-        /// Extract a AntennaInfo object from a byte array.
-        /// </summary>
-        /// <param name="antennaInfo">Byte array containing the object to the extracted.</param>
-        /// <returns>AntennaInfo object.</returns>
-        public static MessagePayloads.AntennaInfo ExtractAntennaInfo(byte[] buffer, int offset)
-        {
-            AntennaInfo antennaInfo = new MessagePayloads.AntennaInfo();
-
-            antennaInfo.Antenna = buffer[offset];
-            return(antennaInfo);
-        }
-
-        /// <summary>
-        /// Calculate the amount of memory required to hold the given instance of the AntennaInfo object.
-        /// </summary>
-        /// <param name="antennaInfo">AntennaInfo object to be encoded.</param>
-        /// <returns>Number of bytes required to hold the encoded AntennaInfo object.</returns>
-        public static int EncodedAntennaInfoBufferSize(MessagePayloads.AntennaInfo antennaInfo)
-        {
-            return(1);
-        }
-
-        /// <summary>
         /// Encode a AccessPoint object and return a byte array containing the encoded message.
         /// </summary>
         /// <param name="accessPoint">AccessPoint object to be encoded.</param>
