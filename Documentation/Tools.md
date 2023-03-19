@@ -8,7 +8,7 @@ The application can be built using the Docker image supplied by Espressif.  Docu
 
 The system can be built by executing the following command:
 
-`docker run --rm -v $PWD:/project -w /project espressif/idf:release-4.1 idf.py build`
+`docker run --rm -v $PWD:/project -w /project espressif/idf:release-4.2 idf.py build`
 
 > Note: The build process can sometimes fail as the clean process (`idf.py clean`) does not always fully clean the previous build.  Execute the command `rm -R build` if the build fails.
 
@@ -32,6 +32,8 @@ The native tools can be used to build the system using the command `idf.py build
 * `idf.py fullclean` Perform an extensive clean of the build.
 
 The commands line arguments can also me used on a single command line.  So `idf.py clean build` will clean the system and then rebuild the software.
+
+It is also possible to build the system using the `build.sh` script.
 
 ### Deployment
 
