@@ -27,7 +27,7 @@ const char *Thread::COMPONENT_NAME = "Thread";
  *
  *  Ths is not intended to be called by the user.
  */
-Thread::Thread() : _mutex(xSemaphoreCreateMutex()), _executeMethod(xSemaphoreCreateMutex())
+Thread::Thread() : _mutex(xSemaphoreCreateBinary()), _executeMethod(xSemaphoreCreateBinary())
 {
     _method = nullptr;
     _parameter = nullptr;
