@@ -39,6 +39,9 @@ Thread::Thread() : _mutex(xSemaphoreCreateBinary()), _executeMethod(xSemaphoreCr
     {
         throw new ThreadPoolException("Cannot create execute mutex.");
     }
+    xSemaphoreGive(_mutex);
+    xSemaphoreGive(_executeMethod);
+
     //
     //  We take the execution semaphore before starting the task as the first thing the
     //  task will do is to try and take the semaphore.  Once it has taken the semaphore
