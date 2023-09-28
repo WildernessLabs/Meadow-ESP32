@@ -115,6 +115,7 @@ extern "C" void app_main()
 #endif
 
     Logging::Setup();
+    esp_log_level_set(COMPONENT_NAME, ESP_LOG_INFO);
 
     struct tm t;
     memset(&t, 0, sizeof(struct tm));
@@ -129,7 +130,6 @@ extern "C" void app_main()
                 (unsigned int) g_application_version.hour, (unsigned int) g_application_version.minute, \
                 (unsigned int) g_application_version.second, (unsigned int) g_application_version.hash, \
                 g_application_version.branch_name);
-
     NvsManager::Setup();
     /*
      *  Set up the messaging system to use SPI hardware communications.
@@ -157,6 +157,8 @@ extern "C" void app_main()
     // message->PayloadLength = Encoders::EncodedSocketRequestBufferSize(request);
     // message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
     // Encoders::EncodeSocketRequest(request, message->Payload);
+
+    // messageDispatcher->QueueMessageForEsp32(message);
 
     // Esp32Messaging::AccessPointInformation info = { };
     // info.NetworkName = "TestNetwork";
