@@ -15,8 +15,16 @@
 #include "esp_event.h"
 // #include "esp_ota_ops.h"
 #include "esp_wifi.h"
+//
+//  ADC 4.2.
+//
 #include "driver/adc.h"
 #include "esp_adc_cal.h"
+//
+//  IDF 5.1 headers for ADC - requires port of BatteryLevel method.
+//
+// #include "esp_adc/adc_oneshot.h"
+// #include "esp_adc/adc_cali.h"
 #include "esp_sleep.h"
 #include <string.h>
 #include <stdlib.h>
