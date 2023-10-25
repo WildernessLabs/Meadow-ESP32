@@ -3,6 +3,10 @@
  * 
  *  Outline the ThreadPoolException class.
  */
+
+#ifndef THREAD_POOL_EXCEPTION_HPP
+#define THREAD_POOL_EXCEPTION_HPP
+
 #include <stdexcept>
 #include <string>
 
@@ -22,3 +26,5 @@ public:
      */
     explicit ThreadPoolException(const std::string &message);
 };
+
+#endif // THREAD_POOL_EXCEPTION_HPP
