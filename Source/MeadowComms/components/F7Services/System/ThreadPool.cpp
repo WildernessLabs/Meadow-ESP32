@@ -122,21 +122,24 @@ ThreadPool::~ThreadPool()
 void ThreadPool::Execute(method_t method, void *parameter)
 {
     TRACE_MESSAGE("Execute: Enter");
-    if (xSemaphoreTake(_threadsAvailable, portMAX_DELAY) == pdTRUE)
-    {
+    if (xSemaphoreTake(_threadsAvailable, _threadPoolAcquireTimeoutInMilisseconds / portTICK_PERIOD_MS) == pdTRUE)
+    {    
+        TRACE_MESSAGE("Execute: Searching for an available thread");
+
         for (uint32_t index = 0; index < _threadPoolSize; index++)
         {
             if (_threads[index] && !_threads[index]->IsBusy())
             {
+                TRACE_MESSAGE("Execute: Thread %u available!", (unsigned int) index);
                 _threads[index]->Execute(method, parameter);
                 return;
             }
+            TRACE_MESSAGE("Execute: Thread %u not available", (unsigned int) index);
         }
     }
-    else
-    {
-        throw new ThreadPoolException("Cannot obtain access to threads.");
-    }
+
+    TRACE_MESSAGE("Execute: No threads available");
+    throw ThreadPoolException("Cannot obtain access to an available thread.");
     TRACE_MESSAGE("Execute: Exit");
 }
 
@@ -145,5 +148,7 @@ void ThreadPool::Execute(method_t method, void *parameter)
  */
 void ThreadPool::ThreadCompleted()
 {
+    TRACE_MESSAGE("ThreadCompleted: Enter");
     xSemaphoreGive(_threadsAvailable);
+    TRACE_MESSAGE("ThreadCompleted: Exit");
 }
