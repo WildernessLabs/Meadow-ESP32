@@ -186,7 +186,11 @@ namespace StatusCodes
         /// <summary>
         /// StatusCodes - FileNotFound
         /// </summary>
-        FileNotFound = 40
+        FileNotFound = 40,
+        /// <summary>
+        /// StatusCodes - Thread pool is full and timeout has been exceeded.
+        /// </summary>
+        ThreadPoolIsFull = 41
     };
 
 }

@@ -35,6 +35,11 @@ private:
     uint32_t _threadPoolSize = 0;
 
     /**
+     * @brief Timeout duration (in milliseconds) for acquiring a semaphore representing thread availability in the thread pool.
+     */
+    uint32_t _threadPoolAcquireTimeoutInMilisseconds = 5000;
+
+    /**
      *  @brief Threads in the thread pool.
      */
     Thread **_threads = nullptr;
