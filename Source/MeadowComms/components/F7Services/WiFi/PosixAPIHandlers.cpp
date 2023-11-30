@@ -1306,6 +1306,10 @@ void WiFiRequestHandler::Accept(void *vpMessage)
     message->PayloadLength = Encoders::EncodedAcceptResponseBufferSize(&response);
     message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
     Encoders::EncodeAcceptResponse(&response, message->Payload);
+    if (response.Addr)
+    {
+        vPortFree(response.Addr);
+    }
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
@@ -1484,6 +1488,10 @@ void WiFiRequestHandler::GetSockPeerName(void *vpMessage, WiFiFunction::WiFiFunc
     message->PayloadLength = Encoders::EncodedGetSockPeerNameResponseBufferSize(&response);
     message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
     Encoders::EncodeGetSockPeerNameResponse(&response, message->Payload);
+    if (response.Addr)
+    {
+        vPortFree(response.Addr);
+    }
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::CompletedOk;
     _messageDispatcher->QueueMessageForStm32(message);
@@ -1726,7 +1734,7 @@ void WiFiRequestHandler::PollSocket(void *requestId)
                 {
                     response.Result = 1;
                 }
-                TRACE_MESSAGE("Poll: Returned ESP32 events 0x%04x maps to NuttX events 0x%04x", fds[POLL_FD_INDEX].revents, events);
+                TRACE_MESSAGE("PollSocket: Returned ESP32 events 0x%04x maps to NuttX events 0x%04x", fds[POLL_FD_INDEX].revents, events);
                 response.SetupMessageId = (uint32_t) requestId;
                 close(fds[POLL_DUMMY_FD_INDEX].fd);
                 vPortFree(fds);
@@ -1792,7 +1800,7 @@ void WiFiRequestHandler::Poll(void *vpMessage)
     {
         response.Result = -1;
         response.ResponseErrno = MapErrno(ENETDOWN);
-    }   
+    }
     vPortFree(message->Payload);
 
     message->PayloadLength = Encoders::EncodedIntegerAndErrnoResponseBufferSize(&response);
