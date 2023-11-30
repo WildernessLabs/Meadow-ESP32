@@ -480,18 +480,21 @@ void Logging::DumpPerformanceCounters()
  */
 void Logging::StandaloneHeapTracingStart()
 {
-    TRACE_MESSAGE_SPECIFY_COMPONENT(APP_MAIN_COMPONENT_NAME, " ");
-    TRACE_MESSAGE_SPECIFY_COMPONENT(APP_MAIN_COMPONENT_NAME, "************************************************************");
-    TRACE_MESSAGE_SPECIFY_COMPONENT(APP_MAIN_COMPONENT_NAME, "                 Heap Logging Turned On");
-    TRACE_MESSAGE_SPECIFY_COMPONENT(APP_MAIN_COMPONENT_NAME, "************************************************************");
-    if (!_isStandaloneHeapTracingSetup)
+    if (!_isStandaloneHeapTracingActive)
     {
-        ESP_ERROR_CHECK(heap_trace_init_standalone(_heapTraceRecords, NUMBER_OF_HEAP_TRACE_RECORDS));
-        _isStandaloneHeapTracingSetup = true;
+        TRACE_MESSAGE_SPECIFY_COMPONENT(APP_MAIN_COMPONENT_NAME, " ");
+        TRACE_MESSAGE_SPECIFY_COMPONENT(APP_MAIN_COMPONENT_NAME, "************************************************************");
+        TRACE_MESSAGE_SPECIFY_COMPONENT(APP_MAIN_COMPONENT_NAME, "                 Heap Logging Turned On");
+        TRACE_MESSAGE_SPECIFY_COMPONENT(APP_MAIN_COMPONENT_NAME, "************************************************************");
+        if (!_isStandaloneHeapTracingSetup)
+        {
+            ESP_ERROR_CHECK(heap_trace_init_standalone(_heapTraceRecords, NUMBER_OF_HEAP_TRACE_RECORDS));
+            _isStandaloneHeapTracingSetup = true;
+        }
+        ESP_ERROR_CHECK(heap_trace_start(HEAP_TRACE_LEAKS));
+        _isStandaloneHeapTracingActive = true;
+        _heapEventsRemaining = _heapEventCounterResetValue;
     }
-    ESP_ERROR_CHECK(heap_trace_start(HEAP_TRACE_LEAKS));
-    _isStandaloneHeapTracingActive = true;
-    _heapEventsRemaining = _heapEventCounterResetValue;
 }
 
 /**
@@ -499,8 +502,11 @@ void Logging::StandaloneHeapTracingStart()
  */
 void Logging::StandaloneHeapTracingStop()
 {
-    ESP_ERROR_CHECK(heap_trace_stop());
-    _isStandaloneHeapTracingActive = false;
+    if (_isStandaloneHeapTracingActive)
+    {
+        ESP_ERROR_CHECK(heap_trace_stop());
+        _isStandaloneHeapTracingActive = false;
+    }
 }
 
 /**

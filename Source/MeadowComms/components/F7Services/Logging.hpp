@@ -164,7 +164,7 @@ public:
     /**
      *  Number of heap trace records.
      */
-    static const uint32_t NUMBER_OF_HEAP_TRACE_RECORDS = 400;
+    static const uint32_t NUMBER_OF_HEAP_TRACE_RECORDS = 100;
 
     /**
      *  @brief Array holding the heap trace records.

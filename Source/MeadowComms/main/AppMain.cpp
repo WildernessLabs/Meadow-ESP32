@@ -45,12 +45,12 @@ meadow_version_t g_application_version =
 //
 #if defined(TRACE_MESSAGES)
 
-#warning "Trace message output is enabled - turn this feature off for release builds."
+#pragma message "Trace message output is enabled - turn this feature off for release builds."
 
 #endif
 
 #if defined(DEBUG) || defined(WIFI_DEBUG) || defined(SPI_DEBUG) || defined(THREAD_DEBUG) || defined(SYSTEM_DEBUG) || defined(BT_DEBUG) || defined(MESSAGES_DEBUG)
-    #warning "Debug is enabled."
+    #pragma message "Debug is enabled."
 #endif
 
 //
@@ -63,7 +63,7 @@ meadow_version_t g_application_version =
 //  Work out if we have heap tracing enabled and issue a warning..
 //
 #if defined(CONFIG_HEAP_TRACING_STANDALONE)
-    #warning "Standalone heap tracing turned on."
+    #pragma message "Standalone heap tracing turned on."
 #endif
 
 #if !defined(CONFIG_WIFI_SSID)
@@ -97,7 +97,7 @@ void heap_caps_alloc_failed_hook(size_t requestedSize, uint32_t caps, const char
     if (requestedSize != 0)
     {
         printf("%s was called but failed to allocate %lu bytes with 0x%X capabilities. \n", functionName, (unsigned long) requestedSize, caps);
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        vTaskDelay(10000 / portTICK_PERIOD_MS);
         char *ptr = NULL;
         *ptr = 0;
     }
@@ -133,6 +133,28 @@ extern "C" void app_main()
      */
     SpiTransportProvider *spi = new SpiTransportProvider();
     MessageDispatcher * __attribute__((unused)) messageDispatcher = new MessageDispatcher(spi);
+
+    //
+    //  The following shows how we can reduce the amount of heap memory the system has available.
+    //  The two print statements allow us to see how much memory is available before and after
+    //  the allocation to verify that the allocation has worked and also to see how much memory
+    //  is available.
+    //
+    //  The value of 50,000 bytes was determined by empirical means.  It allows for an application
+    //  to start the network driver, connect to an access point and make a request to a web server.
+    //  The value should be changed depending upon the actual test being performed.
+    //
+    // heap_caps_print_heap_info(MALLOC_CAP_DEFAULT);
+    // char *dummy = static_cast<char *>(pvPortMalloc(50000));
+    // if (dummy != NULL)
+    // {
+    //     dummy[0] = 0;
+    // }
+    // else
+    // {
+    //     ESP_LOGE(COMPONENT_NAME, "Failed to allocate dummy buffer.");
+    // }
+    // heap_caps_print_heap_info(MALLOC_CAP_DEFAULT);
 
     SystemRequestHandler::SendConfigurationAsInterruptMessage();
 
