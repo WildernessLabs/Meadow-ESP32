@@ -38,8 +38,8 @@ namespace Esp32Messaging
         uint8_t BoardMacAddress[6];
         uint8_t SoftApMacAddress[6];
         uint8_t BluetoothMacAddress[6];
-        char * DeviceName;
-        char * DefaultAccessPoint;
+        char *DeviceName;
+        char *DefaultAccessPoint;
         uint8_t ResetReason;
         uint32_t VersionMajor;
         uint32_t VersionMinor;
@@ -52,7 +52,7 @@ namespace Esp32Messaging
         uint8_t BuildMinute;
         uint8_t BuildSecond;
         uint32_t BuildHash;
-        char * BuildBranchName;
+        char *BuildBranchName;
     };
 
     struct ConfigurationValue
@@ -72,8 +72,8 @@ namespace Esp32Messaging
 
     struct AccessPointInformation
     {
-        char * NetworkName;
-        char * Password;
+        char *NetworkName;
+        char *Password;
         uint32_t IpAddress;
         uint32_t SubnetMask;
         uint32_t Gateway;
@@ -150,14 +150,14 @@ namespace Esp32Messaging
         uint32_t AddrLen;
         uint32_t AddrLength;
         uint8_t *Addr;
-        char * CanonName;
+        char *CanonName;
         void *Next;
     };
 
     struct GetAddrInfoRequest
     {
-        char * NodeName;
-        char * ServName;
+        char *NodeName;
+        char *ServName;
         uint32_t HintsLength;
         uint8_t *Hints;
     };
@@ -410,7 +410,7 @@ namespace Esp32Messaging
 
     struct BTStackConfig
     {
-        char * Config;
+        char *Config;
     };
 
     struct BTDataWriteRequest
@@ -436,13 +436,13 @@ namespace Esp32Messaging
 
     struct FileDetails
     {
-        char * Name;
+        char *Name;
         uint16_t Length;
     };
 
     struct FileNameAndContents
     {
-        char * Name;
+        char *Name;
         uint32_t ContentsLength;
         uint8_t *Contents;
     };
