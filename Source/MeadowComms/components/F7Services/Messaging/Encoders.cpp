@@ -81,7 +81,6 @@ uint32_t Encoders::EncodedPacketSize(Message *message, bool headerOnly)
  *  @returns
  *      16-bit unsigned integer value from the first two byte in the buffer.
  */
-// cppcheck-suppress unusedFunction symbolName=ExtractUInt16
 uint16_t Encoders::ExtractUInt16(uint8_t *buffer)
 {
     uint16_t result;
@@ -103,7 +102,6 @@ uint16_t Encoders::ExtractUInt16(uint8_t *buffer)
  *      Pointer to the buffer where the two bytes will be inserted
  *      from the 16-bit unsigned integer (LSB first).
  */
-// cppcheck-suppress unusedFunction symbolName=EncodeUInt16
 void Encoders::EncodeUInt16(uint16_t value, uint8_t *buffer)
 {
     buffer[0] = (value & 0xff);
@@ -291,7 +289,6 @@ uint32_t Encoders::StringLength(char *str)
  *  @returns
  *      8-bit checksum of the bytes in the buffer.
  */
-// cppcheck-suppress unusedFunction symbolName=CRC8
 uint8_t Encoders::CRC8(const uint8_t *data, uint16_t len)
 {
     uint8_t crc = 0x00;
@@ -505,7 +502,6 @@ void Encoders::EncodeMessage(Message *message, uint8_t *buffer, bool headerOnly)
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded SystemConfiguration object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodeSystemConfiguration
 void Encoders::EncodeSystemConfiguration(Esp32Messaging::SystemConfiguration *systemConfiguration, uint8_t *buffer)
 {
     *buffer = systemConfiguration->MaximumMessageQueueLength;
@@ -560,7 +556,6 @@ void Encoders::EncodeSystemConfiguration(Esp32Messaging::SystemConfiguration *sy
  *  @returns
  *      Number of bytes required to hold the encoded SystemConfiguration object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodedSystemConfigurationBufferSize
 int Encoders::EncodedSystemConfigurationBufferSize(Esp32Messaging::SystemConfiguration *systemConfiguration)
 {
     int result = 0;
@@ -582,7 +577,6 @@ int Encoders::EncodedSystemConfigurationBufferSize(Esp32Messaging::SystemConfigu
  *  @returns
  *      Pointer to a ConfigurationValue object.
  */
-// cppcheck-suppress unusedFunction symbolName=ExtractConfigurationValue
 Esp32Messaging::ConfigurationValue *Encoders::ExtractConfigurationValue(uint8_t *buffer)
 {
     Esp32Messaging::ConfigurationValue *configurationValue = (Esp32Messaging::ConfigurationValue *) pvPortMalloc(sizeof(Esp32Messaging::ConfigurationValue));
@@ -615,7 +609,6 @@ Esp32Messaging::ConfigurationValue *Encoders::ExtractConfigurationValue(uint8_t 
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded AccessPointInformation object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodeAccessPointInformation
 void Encoders::EncodeAccessPointInformation(Esp32Messaging::AccessPointInformation *accessPointInformation, uint8_t *buffer)
 {
     EncodeString(accessPointInformation->NetworkName, buffer);
@@ -644,7 +637,6 @@ void Encoders::EncodeAccessPointInformation(Esp32Messaging::AccessPointInformati
  *  @returns
  *      Number of bytes required to hold the encoded AccessPointInformation object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodedAccessPointInformationBufferSize
 int Encoders::EncodedAccessPointInformationBufferSize(Esp32Messaging::AccessPointInformation *accessPointInformation)
 {
     int result = 0;
@@ -665,7 +657,6 @@ int Encoders::EncodedAccessPointInformationBufferSize(Esp32Messaging::AccessPoin
  *  @returns
  *      Pointer to a AccessPointInformation object.
  */
-// cppcheck-suppress unusedFunction symbolName=ExtractAccessPointInformation
 Esp32Messaging::AccessPointInformation *Encoders::ExtractAccessPointInformation(uint8_t *buffer)
 {
     Esp32Messaging::AccessPointInformation *accessPointInformation = (Esp32Messaging::AccessPointInformation *) pvPortMalloc(sizeof(Esp32Messaging::AccessPointInformation));
@@ -700,7 +691,6 @@ Esp32Messaging::AccessPointInformation *Encoders::ExtractAccessPointInformation(
  *  @returns
  *      Pointer to a DisconnectFromAccessPointRequest object.
  */
-// cppcheck-suppress unusedFunction symbolName=ExtractDisconnectFromAccessPointRequest
 Esp32Messaging::DisconnectFromAccessPointRequest *Encoders::ExtractDisconnectFromAccessPointRequest(uint8_t *buffer)
 {
     Esp32Messaging::DisconnectFromAccessPointRequest *disconnectFromAccessPointRequest = (Esp32Messaging::DisconnectFromAccessPointRequest *) pvPortMalloc(sizeof(Esp32Messaging::DisconnectFromAccessPointRequest));
@@ -720,7 +710,6 @@ Esp32Messaging::DisconnectFromAccessPointRequest *Encoders::ExtractDisconnectFro
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded ConnectEventData object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodeConnectEventData
 void Encoders::EncodeConnectEventData(Esp32Messaging::ConnectEventData *connectEventData, uint8_t *buffer)
 {
     EncodeUInt32(connectEventData->IpAddress, buffer);
@@ -749,7 +738,6 @@ void Encoders::EncodeConnectEventData(Esp32Messaging::ConnectEventData *connectE
  *  @returns
  *      Number of bytes required to hold the encoded ConnectEventData object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodedConnectEventDataBufferSize
 int Encoders::EncodedConnectEventDataBufferSize(Esp32Messaging::ConnectEventData *connectEventData)
 {
     return(57);
@@ -766,7 +754,6 @@ int Encoders::EncodedConnectEventDataBufferSize(Esp32Messaging::ConnectEventData
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded NodeConnectionChangeEventData object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodeNodeConnectionChangeEventData
 void Encoders::EncodeNodeConnectionChangeEventData(Esp32Messaging::NodeConnectionChangeEventData *nodeConnectionChangeEventData, uint8_t *buffer)
 {
     EncodeUInt32(nodeConnectionChangeEventData->IpAddress, buffer);
@@ -783,7 +770,6 @@ void Encoders::EncodeNodeConnectionChangeEventData(Esp32Messaging::NodeConnectio
  *  @returns
  *      Number of bytes required to hold the encoded NodeConnectionChangeEventData object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodedNodeConnectionChangeEventDataBufferSize
 int Encoders::EncodedNodeConnectionChangeEventDataBufferSize(Esp32Messaging::NodeConnectionChangeEventData *nodeConnectionChangeEventData)
 {
     return(10);
@@ -800,7 +786,6 @@ int Encoders::EncodedNodeConnectionChangeEventDataBufferSize(Esp32Messaging::Nod
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded AccessPoint object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodeAccessPoint
 void Encoders::EncodeAccessPoint(Esp32Messaging::AccessPoint *accessPoint, uint8_t *buffer)
 {
     memcpy((void *) buffer, (void *) accessPoint->Ssid, 33);
@@ -827,7 +812,6 @@ void Encoders::EncodeAccessPoint(Esp32Messaging::AccessPoint *accessPoint, uint8
  *  @returns
  *      Number of bytes required to hold the encoded AccessPoint object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodedAccessPointBufferSize
 int Encoders::EncodedAccessPointBufferSize(Esp32Messaging::AccessPoint *accessPoint)
 {
     return(47);
@@ -844,7 +828,6 @@ int Encoders::EncodedAccessPointBufferSize(Esp32Messaging::AccessPoint *accessPo
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded AccessPointList object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodeAccessPointList
 void Encoders::EncodeAccessPointList(Esp32Messaging::AccessPointList *accessPointList, uint8_t *buffer)
 {
     EncodeUInt32(accessPointList->NumberOfAccessPoints, buffer);
@@ -866,7 +849,6 @@ void Encoders::EncodeAccessPointList(Esp32Messaging::AccessPointList *accessPoin
  *  @returns
  *      Number of bytes required to hold the encoded AccessPointList object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodedAccessPointListBufferSize
 int Encoders::EncodedAccessPointListBufferSize(Esp32Messaging::AccessPointList *accessPointList)
 {
     int result = 0;
@@ -885,7 +867,6 @@ int Encoders::EncodedAccessPointListBufferSize(Esp32Messaging::AccessPointList *
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded SockAddr object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodeSockAddr
 void Encoders::EncodeSockAddr(Esp32Messaging::SockAddr *sockAddr, uint8_t *buffer)
 {
     *buffer = sockAddr->Family;
@@ -910,7 +891,6 @@ void Encoders::EncodeSockAddr(Esp32Messaging::SockAddr *sockAddr, uint8_t *buffe
  *  @returns
  *      Number of bytes required to hold the encoded SockAddr object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodedSockAddrBufferSize
 int Encoders::EncodedSockAddrBufferSize(Esp32Messaging::SockAddr *sockAddr)
 {
     return(31);
@@ -928,7 +908,6 @@ int Encoders::EncodedSockAddrBufferSize(Esp32Messaging::SockAddr *sockAddr)
  *  @returns
  *      Pointer to a SockAddr object.
  */
-// cppcheck-suppress unusedFunction symbolName=ExtractSockAddr
 Esp32Messaging::SockAddr *Encoders::ExtractSockAddr(uint8_t *buffer)
 {
     Esp32Messaging::SockAddr *sockAddr = (Esp32Messaging::SockAddr *) pvPortMalloc(sizeof(Esp32Messaging::SockAddr));
@@ -958,7 +937,6 @@ Esp32Messaging::SockAddr *Encoders::ExtractSockAddr(uint8_t *buffer)
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded AddrInfo object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodeAddrInfo
 void Encoders::EncodeAddrInfo(Esp32Messaging::AddrInfo *addrInfo, uint8_t *buffer)
 {
     EncodeUInt32(addrInfo->MyHeapAddress, buffer);
@@ -994,7 +972,6 @@ void Encoders::EncodeAddrInfo(Esp32Messaging::AddrInfo *addrInfo, uint8_t *buffe
  *  @returns
  *      Number of bytes required to hold the encoded AddrInfo object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodedAddrInfoBufferSize
 int Encoders::EncodedAddrInfoBufferSize(Esp32Messaging::AddrInfo *addrInfo)
 {
     int result = 0;
@@ -1015,7 +992,6 @@ int Encoders::EncodedAddrInfoBufferSize(Esp32Messaging::AddrInfo *addrInfo)
  *  @returns
  *      Pointer to a AddrInfo object.
  */
-// cppcheck-suppress unusedFunction symbolName=ExtractAddrInfo
 Esp32Messaging::AddrInfo *Encoders::ExtractAddrInfo(uint8_t *buffer)
 {
     Esp32Messaging::AddrInfo *addrInfo = (Esp32Messaging::AddrInfo *) pvPortMalloc(sizeof(Esp32Messaging::AddrInfo));
@@ -1062,7 +1038,6 @@ Esp32Messaging::AddrInfo *Encoders::ExtractAddrInfo(uint8_t *buffer)
  *  @returns
  *      Pointer to a GetAddrInfoRequest object.
  */
-// cppcheck-suppress unusedFunction symbolName=ExtractGetAddrInfoRequest
 Esp32Messaging::GetAddrInfoRequest *Encoders::ExtractGetAddrInfoRequest(uint8_t *buffer)
 {
     Esp32Messaging::GetAddrInfoRequest *getAddrInfoRequest = (Esp32Messaging::GetAddrInfoRequest *) pvPortMalloc(sizeof(Esp32Messaging::GetAddrInfoRequest));
@@ -1097,7 +1072,6 @@ Esp32Messaging::GetAddrInfoRequest *Encoders::ExtractGetAddrInfoRequest(uint8_t 
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded GetAddrInfoResponse object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodeGetAddrInfoResponse
 void Encoders::EncodeGetAddrInfoResponse(Esp32Messaging::GetAddrInfoResponse *getAddrInfoResponse, uint8_t *buffer)
 {
     EncodeInt32(getAddrInfoResponse->AddrInfoResponseErrno, buffer);
@@ -1119,7 +1093,6 @@ void Encoders::EncodeGetAddrInfoResponse(Esp32Messaging::GetAddrInfoResponse *ge
  *  @returns
  *      Number of bytes required to hold the encoded GetAddrInfoResponse object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodedGetAddrInfoResponseBufferSize
 int Encoders::EncodedGetAddrInfoResponseBufferSize(Esp32Messaging::GetAddrInfoResponse *getAddrInfoResponse)
 {
     int result = 0;
@@ -1139,7 +1112,6 @@ int Encoders::EncodedGetAddrInfoResponseBufferSize(Esp32Messaging::GetAddrInfoRe
  *  @returns
  *      Pointer to a SocketRequest object.
  */
-// cppcheck-suppress unusedFunction symbolName=ExtractSocketRequest
 Esp32Messaging::SocketRequest *Encoders::ExtractSocketRequest(uint8_t *buffer)
 {
     Esp32Messaging::SocketRequest *socketRequest = (Esp32Messaging::SocketRequest *) pvPortMalloc(sizeof(Esp32Messaging::SocketRequest));
@@ -1165,7 +1137,6 @@ Esp32Messaging::SocketRequest *Encoders::ExtractSocketRequest(uint8_t *buffer)
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded IntegerResponse object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodeIntegerResponse
 void Encoders::EncodeIntegerResponse(Esp32Messaging::IntegerResponse *integerResponse, uint8_t *buffer)
 {
     EncodeInt32(integerResponse->Result, buffer);
@@ -1180,7 +1151,6 @@ void Encoders::EncodeIntegerResponse(Esp32Messaging::IntegerResponse *integerRes
  *  @returns
  *      Number of bytes required to hold the encoded IntegerResponse object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodedIntegerResponseBufferSize
 int Encoders::EncodedIntegerResponseBufferSize(Esp32Messaging::IntegerResponse *integerResponse)
 {
     return(4);
@@ -1197,7 +1167,6 @@ int Encoders::EncodedIntegerResponseBufferSize(Esp32Messaging::IntegerResponse *
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded IntegerAndErrnoResponse object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodeIntegerAndErrnoResponse
 void Encoders::EncodeIntegerAndErrnoResponse(Esp32Messaging::IntegerAndErrnoResponse *integerAndErrnoResponse, uint8_t *buffer)
 {
     EncodeInt32(integerAndErrnoResponse->Result, buffer);
@@ -1214,7 +1183,6 @@ void Encoders::EncodeIntegerAndErrnoResponse(Esp32Messaging::IntegerAndErrnoResp
  *  @returns
  *      Number of bytes required to hold the encoded IntegerAndErrnoResponse object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodedIntegerAndErrnoResponseBufferSize
 int Encoders::EncodedIntegerAndErrnoResponseBufferSize(Esp32Messaging::IntegerAndErrnoResponse *integerAndErrnoResponse)
 {
     return(8);
@@ -1232,7 +1200,6 @@ int Encoders::EncodedIntegerAndErrnoResponseBufferSize(Esp32Messaging::IntegerAn
  *  @returns
  *      Pointer to a ConnectRequest object.
  */
-// cppcheck-suppress unusedFunction symbolName=ExtractConnectRequest
 Esp32Messaging::ConnectRequest *Encoders::ExtractConnectRequest(uint8_t *buffer)
 {
     Esp32Messaging::ConnectRequest *connectRequest = (Esp32Messaging::ConnectRequest *) pvPortMalloc(sizeof(Esp32Messaging::ConnectRequest));
@@ -1266,7 +1233,6 @@ Esp32Messaging::ConnectRequest *Encoders::ExtractConnectRequest(uint8_t *buffer)
  *  @returns
  *      Pointer to a FreeAddrInfoRequest object.
  */
-// cppcheck-suppress unusedFunction symbolName=ExtractFreeAddrInfoRequest
 Esp32Messaging::FreeAddrInfoRequest *Encoders::ExtractFreeAddrInfoRequest(uint8_t *buffer)
 {
     Esp32Messaging::FreeAddrInfoRequest *freeAddrInfoRequest = (Esp32Messaging::FreeAddrInfoRequest *) pvPortMalloc(sizeof(Esp32Messaging::FreeAddrInfoRequest));
@@ -1286,7 +1252,6 @@ Esp32Messaging::FreeAddrInfoRequest *Encoders::ExtractFreeAddrInfoRequest(uint8_
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded TimeVal object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodeTimeVal
 void Encoders::EncodeTimeVal(Esp32Messaging::TimeVal *timeVal, uint8_t *buffer)
 {
     EncodeUInt32(timeVal->TvSec, buffer);
@@ -1303,7 +1268,6 @@ void Encoders::EncodeTimeVal(Esp32Messaging::TimeVal *timeVal, uint8_t *buffer)
  *  @returns
  *      Number of bytes required to hold the encoded TimeVal object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodedTimeValBufferSize
 int Encoders::EncodedTimeValBufferSize(Esp32Messaging::TimeVal *timeVal)
 {
     return(8);
@@ -1321,7 +1285,6 @@ int Encoders::EncodedTimeValBufferSize(Esp32Messaging::TimeVal *timeVal)
  *  @returns
  *      Pointer to a TimeVal object.
  */
-// cppcheck-suppress unusedFunction symbolName=ExtractTimeVal
 Esp32Messaging::TimeVal *Encoders::ExtractTimeVal(uint8_t *buffer)
 {
     Esp32Messaging::TimeVal *timeVal = (Esp32Messaging::TimeVal *) pvPortMalloc(sizeof(Esp32Messaging::TimeVal));
@@ -1344,7 +1307,6 @@ Esp32Messaging::TimeVal *Encoders::ExtractTimeVal(uint8_t *buffer)
  *  @returns
  *      Pointer to a SetSockOptRequest object.
  */
-// cppcheck-suppress unusedFunction symbolName=ExtractSetSockOptRequest
 Esp32Messaging::SetSockOptRequest *Encoders::ExtractSetSockOptRequest(uint8_t *buffer)
 {
     Esp32Messaging::SetSockOptRequest *setSockOptRequest = (Esp32Messaging::SetSockOptRequest *) pvPortMalloc(sizeof(Esp32Messaging::SetSockOptRequest));
@@ -1383,7 +1345,6 @@ Esp32Messaging::SetSockOptRequest *Encoders::ExtractSetSockOptRequest(uint8_t *b
  *  @returns
  *      Pointer to a GetSockOptRequest object.
  */
-// cppcheck-suppress unusedFunction symbolName=ExtractGetSockOptRequest
 Esp32Messaging::GetSockOptRequest *Encoders::ExtractGetSockOptRequest(uint8_t *buffer)
 {
     Esp32Messaging::GetSockOptRequest *getSockOptRequest = (Esp32Messaging::GetSockOptRequest *) pvPortMalloc(sizeof(Esp32Messaging::GetSockOptRequest));
@@ -1407,7 +1368,6 @@ Esp32Messaging::GetSockOptRequest *Encoders::ExtractGetSockOptRequest(uint8_t *b
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded GetSockOptResponse object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodeGetSockOptResponse
 void Encoders::EncodeGetSockOptResponse(Esp32Messaging::GetSockOptResponse *getSockOptResponse, uint8_t *buffer)
 {
     EncodeInt32(getSockOptResponse->Result, buffer);
@@ -1433,7 +1393,6 @@ void Encoders::EncodeGetSockOptResponse(Esp32Messaging::GetSockOptResponse *getS
  *  @returns
  *      Number of bytes required to hold the encoded GetSockOptResponse object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodedGetSockOptResponseBufferSize
 int Encoders::EncodedGetSockOptResponseBufferSize(Esp32Messaging::GetSockOptResponse *getSockOptResponse)
 {
     int result = 0;
@@ -1452,7 +1411,6 @@ int Encoders::EncodedGetSockOptResponseBufferSize(Esp32Messaging::GetSockOptResp
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded Linger object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodeLinger
 void Encoders::EncodeLinger(Esp32Messaging::Linger *linger, uint8_t *buffer)
 {
     EncodeInt32(linger->LOnOff, buffer);
@@ -1469,7 +1427,6 @@ void Encoders::EncodeLinger(Esp32Messaging::Linger *linger, uint8_t *buffer)
  *  @returns
  *      Number of bytes required to hold the encoded Linger object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodedLingerBufferSize
 int Encoders::EncodedLingerBufferSize(Esp32Messaging::Linger *linger)
 {
     return(8);
@@ -1487,7 +1444,6 @@ int Encoders::EncodedLingerBufferSize(Esp32Messaging::Linger *linger)
  *  @returns
  *      Pointer to a WriteRequest object.
  */
-// cppcheck-suppress unusedFunction symbolName=ExtractWriteRequest
 Esp32Messaging::WriteRequest *Encoders::ExtractWriteRequest(uint8_t *buffer)
 {
     Esp32Messaging::WriteRequest *writeRequest = (Esp32Messaging::WriteRequest *) pvPortMalloc(sizeof(Esp32Messaging::WriteRequest));
@@ -1522,7 +1478,6 @@ Esp32Messaging::WriteRequest *Encoders::ExtractWriteRequest(uint8_t *buffer)
  *  @returns
  *      Pointer to a ReadRequest object.
  */
-// cppcheck-suppress unusedFunction symbolName=ExtractReadRequest
 Esp32Messaging::ReadRequest *Encoders::ExtractReadRequest(uint8_t *buffer)
 {
     Esp32Messaging::ReadRequest *readRequest = (Esp32Messaging::ReadRequest *) pvPortMalloc(sizeof(Esp32Messaging::ReadRequest));
@@ -1544,7 +1499,6 @@ Esp32Messaging::ReadRequest *Encoders::ExtractReadRequest(uint8_t *buffer)
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded ReadResponse object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodeReadResponse
 void Encoders::EncodeReadResponse(Esp32Messaging::ReadResponse *readResponse, uint8_t *buffer)
 {
     EncodeUInt32(readResponse->BufferLength, buffer);
@@ -1568,7 +1522,6 @@ void Encoders::EncodeReadResponse(Esp32Messaging::ReadResponse *readResponse, ui
  *  @returns
  *      Number of bytes required to hold the encoded ReadResponse object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodedReadResponseBufferSize
 int Encoders::EncodedReadResponseBufferSize(Esp32Messaging::ReadResponse *readResponse)
 {
     int result = 0;
@@ -1588,7 +1541,6 @@ int Encoders::EncodedReadResponseBufferSize(Esp32Messaging::ReadResponse *readRe
  *  @returns
  *      Pointer to a CloseRequest object.
  */
-// cppcheck-suppress unusedFunction symbolName=ExtractCloseRequest
 Esp32Messaging::CloseRequest *Encoders::ExtractCloseRequest(uint8_t *buffer)
 {
     Esp32Messaging::CloseRequest *closeRequest = (Esp32Messaging::CloseRequest *) pvPortMalloc(sizeof(Esp32Messaging::CloseRequest));
@@ -1608,7 +1560,6 @@ Esp32Messaging::CloseRequest *Encoders::ExtractCloseRequest(uint8_t *buffer)
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded GetBatteryChargeLevelResponse object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodeGetBatteryChargeLevelResponse
 void Encoders::EncodeGetBatteryChargeLevelResponse(Esp32Messaging::GetBatteryChargeLevelResponse *getBatteryChargeLevelResponse, uint8_t *buffer)
 {
     EncodeUInt32(getBatteryChargeLevelResponse->Level, buffer);
@@ -1623,7 +1574,6 @@ void Encoders::EncodeGetBatteryChargeLevelResponse(Esp32Messaging::GetBatteryCha
  *  @returns
  *      Number of bytes required to hold the encoded GetBatteryChargeLevelResponse object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodedGetBatteryChargeLevelResponseBufferSize
 int Encoders::EncodedGetBatteryChargeLevelResponseBufferSize(Esp32Messaging::GetBatteryChargeLevelResponse *getBatteryChargeLevelResponse)
 {
     return(4);
@@ -1641,7 +1591,6 @@ int Encoders::EncodedGetBatteryChargeLevelResponseBufferSize(Esp32Messaging::Get
  *  @returns
  *      Pointer to a SendRequest object.
  */
-// cppcheck-suppress unusedFunction symbolName=ExtractSendRequest
 Esp32Messaging::SendRequest *Encoders::ExtractSendRequest(uint8_t *buffer)
 {
     Esp32Messaging::SendRequest *sendRequest = (Esp32Messaging::SendRequest *) pvPortMalloc(sizeof(Esp32Messaging::SendRequest));
@@ -1678,7 +1627,6 @@ Esp32Messaging::SendRequest *Encoders::ExtractSendRequest(uint8_t *buffer)
  *  @returns
  *      Pointer to a SendToRequest object.
  */
-// cppcheck-suppress unusedFunction symbolName=ExtractSendToRequest
 Esp32Messaging::SendToRequest *Encoders::ExtractSendToRequest(uint8_t *buffer)
 {
     Esp32Messaging::SendToRequest *sendToRequest = (Esp32Messaging::SendToRequest *) pvPortMalloc(sizeof(Esp32Messaging::SendToRequest));
@@ -1728,7 +1676,6 @@ Esp32Messaging::SendToRequest *Encoders::ExtractSendToRequest(uint8_t *buffer)
  *  @returns
  *      Pointer to a RecvFromRequest object.
  */
-// cppcheck-suppress unusedFunction symbolName=ExtractRecvFromRequest
 Esp32Messaging::RecvFromRequest *Encoders::ExtractRecvFromRequest(uint8_t *buffer)
 {
     Esp32Messaging::RecvFromRequest *recvFromRequest = (Esp32Messaging::RecvFromRequest *) pvPortMalloc(sizeof(Esp32Messaging::RecvFromRequest));
@@ -1754,7 +1701,6 @@ Esp32Messaging::RecvFromRequest *Encoders::ExtractRecvFromRequest(uint8_t *buffe
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded RecvFromResponse object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodeRecvFromResponse
 void Encoders::EncodeRecvFromResponse(Esp32Messaging::RecvFromResponse *recvFromResponse, uint8_t *buffer)
 {
     EncodeUInt32(recvFromResponse->BufferLength, buffer);
@@ -1787,7 +1733,6 @@ void Encoders::EncodeRecvFromResponse(Esp32Messaging::RecvFromResponse *recvFrom
  *  @returns
  *      Number of bytes required to hold the encoded RecvFromResponse object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodedRecvFromResponseBufferSize
 int Encoders::EncodedRecvFromResponseBufferSize(Esp32Messaging::RecvFromResponse *recvFromResponse)
 {
     int result = 0;
@@ -1808,7 +1753,6 @@ int Encoders::EncodedRecvFromResponseBufferSize(Esp32Messaging::RecvFromResponse
  *  @returns
  *      Pointer to a PollRequest object.
  */
-// cppcheck-suppress unusedFunction symbolName=ExtractPollRequest
 Esp32Messaging::PollRequest *Encoders::ExtractPollRequest(uint8_t *buffer)
 {
     Esp32Messaging::PollRequest *pollRequest = (Esp32Messaging::PollRequest *) pvPortMalloc(sizeof(Esp32Messaging::PollRequest));
@@ -1836,7 +1780,6 @@ Esp32Messaging::PollRequest *Encoders::ExtractPollRequest(uint8_t *buffer)
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded PollResponse object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodePollResponse
 void Encoders::EncodePollResponse(Esp32Messaging::PollResponse *pollResponse, uint8_t *buffer)
 {
     EncodeUInt16(pollResponse->ReturnedEvents, buffer);
@@ -1855,7 +1798,6 @@ void Encoders::EncodePollResponse(Esp32Messaging::PollResponse *pollResponse, ui
  *  @returns
  *      Number of bytes required to hold the encoded PollResponse object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodedPollResponseBufferSize
 int Encoders::EncodedPollResponseBufferSize(Esp32Messaging::PollResponse *pollResponse)
 {
     return(10);
@@ -1872,7 +1814,6 @@ int Encoders::EncodedPollResponseBufferSize(Esp32Messaging::PollResponse *pollRe
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded InterruptPollResponse object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodeInterruptPollResponse
 void Encoders::EncodeInterruptPollResponse(Esp32Messaging::InterruptPollResponse *interruptPollResponse, uint8_t *buffer)
 {
     EncodeInt32(interruptPollResponse->SocketHandle, buffer);
@@ -1895,7 +1836,6 @@ void Encoders::EncodeInterruptPollResponse(Esp32Messaging::InterruptPollResponse
  *  @returns
  *      Number of bytes required to hold the encoded InterruptPollResponse object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodedInterruptPollResponseBufferSize
 int Encoders::EncodedInterruptPollResponseBufferSize(Esp32Messaging::InterruptPollResponse *interruptPollResponse)
 {
     return(18);
@@ -1913,7 +1853,6 @@ int Encoders::EncodedInterruptPollResponseBufferSize(Esp32Messaging::InterruptPo
  *  @returns
  *      Pointer to a ListenRequest object.
  */
-// cppcheck-suppress unusedFunction symbolName=ExtractListenRequest
 Esp32Messaging::ListenRequest *Encoders::ExtractListenRequest(uint8_t *buffer)
 {
     Esp32Messaging::ListenRequest *listenRequest = (Esp32Messaging::ListenRequest *) pvPortMalloc(sizeof(Esp32Messaging::ListenRequest));
@@ -1936,7 +1875,6 @@ Esp32Messaging::ListenRequest *Encoders::ExtractListenRequest(uint8_t *buffer)
  *  @returns
  *      Pointer to a BindRequest object.
  */
-// cppcheck-suppress unusedFunction symbolName=ExtractBindRequest
 Esp32Messaging::BindRequest *Encoders::ExtractBindRequest(uint8_t *buffer)
 {
     Esp32Messaging::BindRequest *bindRequest = (Esp32Messaging::BindRequest *) pvPortMalloc(sizeof(Esp32Messaging::BindRequest));
@@ -1970,7 +1908,6 @@ Esp32Messaging::BindRequest *Encoders::ExtractBindRequest(uint8_t *buffer)
  *  @returns
  *      Pointer to a AcceptRequest object.
  */
-// cppcheck-suppress unusedFunction symbolName=ExtractAcceptRequest
 Esp32Messaging::AcceptRequest *Encoders::ExtractAcceptRequest(uint8_t *buffer)
 {
     Esp32Messaging::AcceptRequest *acceptRequest = (Esp32Messaging::AcceptRequest *) pvPortMalloc(sizeof(Esp32Messaging::AcceptRequest));
@@ -1990,7 +1927,6 @@ Esp32Messaging::AcceptRequest *Encoders::ExtractAcceptRequest(uint8_t *buffer)
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded AcceptResponse object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodeAcceptResponse
 void Encoders::EncodeAcceptResponse(Esp32Messaging::AcceptResponse *acceptResponse, uint8_t *buffer)
 {
     EncodeUInt32(acceptResponse->AddrLength, buffer);
@@ -2014,7 +1950,6 @@ void Encoders::EncodeAcceptResponse(Esp32Messaging::AcceptResponse *acceptRespon
  *  @returns
  *      Number of bytes required to hold the encoded AcceptResponse object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodedAcceptResponseBufferSize
 int Encoders::EncodedAcceptResponseBufferSize(Esp32Messaging::AcceptResponse *acceptResponse)
 {
     int result = 0;
@@ -2034,7 +1969,6 @@ int Encoders::EncodedAcceptResponseBufferSize(Esp32Messaging::AcceptResponse *ac
  *  @returns
  *      Pointer to a IoctlRequest object.
  */
-// cppcheck-suppress unusedFunction symbolName=ExtractIoctlRequest
 Esp32Messaging::IoctlRequest *Encoders::ExtractIoctlRequest(uint8_t *buffer)
 {
     Esp32Messaging::IoctlRequest *ioctlRequest = (Esp32Messaging::IoctlRequest *) pvPortMalloc(sizeof(Esp32Messaging::IoctlRequest));
@@ -2054,7 +1988,6 @@ Esp32Messaging::IoctlRequest *Encoders::ExtractIoctlRequest(uint8_t *buffer)
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded IoctlResponse object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodeIoctlResponse
 void Encoders::EncodeIoctlResponse(Esp32Messaging::IoctlResponse *ioctlResponse, uint8_t *buffer)
 {
     EncodeUInt32(ioctlResponse->AddrLength, buffer);
@@ -2080,7 +2013,6 @@ void Encoders::EncodeIoctlResponse(Esp32Messaging::IoctlResponse *ioctlResponse,
  *  @returns
  *      Number of bytes required to hold the encoded IoctlResponse object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodedIoctlResponseBufferSize
 int Encoders::EncodedIoctlResponseBufferSize(Esp32Messaging::IoctlResponse *ioctlResponse)
 {
     int result = 0;
@@ -2100,7 +2032,6 @@ int Encoders::EncodedIoctlResponseBufferSize(Esp32Messaging::IoctlResponse *ioct
  *  @returns
  *      Pointer to a GetSockPeerNameRequest object.
  */
-// cppcheck-suppress unusedFunction symbolName=ExtractGetSockPeerNameRequest
 Esp32Messaging::GetSockPeerNameRequest *Encoders::ExtractGetSockPeerNameRequest(uint8_t *buffer)
 {
     Esp32Messaging::GetSockPeerNameRequest *getSockPeerNameRequest = (Esp32Messaging::GetSockPeerNameRequest *) pvPortMalloc(sizeof(Esp32Messaging::GetSockPeerNameRequest));
@@ -2120,7 +2051,6 @@ Esp32Messaging::GetSockPeerNameRequest *Encoders::ExtractGetSockPeerNameRequest(
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded GetSockPeerNameResponse object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodeGetSockPeerNameResponse
 void Encoders::EncodeGetSockPeerNameResponse(Esp32Messaging::GetSockPeerNameResponse *getSockPeerNameResponse, uint8_t *buffer)
 {
     EncodeUInt32(getSockPeerNameResponse->AddrLength, buffer);
@@ -2144,7 +2074,6 @@ void Encoders::EncodeGetSockPeerNameResponse(Esp32Messaging::GetSockPeerNameResp
  *  @returns
  *      Number of bytes required to hold the encoded GetSockPeerNameResponse object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodedGetSockPeerNameResponseBufferSize
 int Encoders::EncodedGetSockPeerNameResponseBufferSize(Esp32Messaging::GetSockPeerNameResponse *getSockPeerNameResponse)
 {
     int result = 0;
@@ -2163,7 +2092,6 @@ int Encoders::EncodedGetSockPeerNameResponseBufferSize(Esp32Messaging::GetSockPe
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded EventData object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodeEventData
 void Encoders::EncodeEventData(Esp32Messaging::EventData *eventData, uint8_t *buffer)
 {
     *buffer = eventData->Interface;
@@ -2184,7 +2112,6 @@ void Encoders::EncodeEventData(Esp32Messaging::EventData *eventData, uint8_t *bu
  *  @returns
  *      Number of bytes required to hold the encoded EventData object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodedEventDataBufferSize
 int Encoders::EncodedEventDataBufferSize(Esp32Messaging::EventData *eventData)
 {
     return(13);
@@ -2201,7 +2128,6 @@ int Encoders::EncodedEventDataBufferSize(Esp32Messaging::EventData *eventData)
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded EventDataPayload object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodeEventDataPayload
 void Encoders::EncodeEventDataPayload(Esp32Messaging::EventDataPayload *eventDataPayload, uint8_t *buffer)
 {
     EncodeUInt32(eventDataPayload->MessageId, buffer);
@@ -2223,7 +2149,6 @@ void Encoders::EncodeEventDataPayload(Esp32Messaging::EventDataPayload *eventDat
  *  @returns
  *      Number of bytes required to hold the encoded EventDataPayload object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodedEventDataPayloadBufferSize
 int Encoders::EncodedEventDataPayloadBufferSize(Esp32Messaging::EventDataPayload *eventDataPayload)
 {
     int result = 0;
@@ -2243,7 +2168,6 @@ int Encoders::EncodedEventDataPayloadBufferSize(Esp32Messaging::EventDataPayload
  *  @returns
  *      Pointer to a SetAntennaRequest object.
  */
-// cppcheck-suppress unusedFunction symbolName=ExtractSetAntennaRequest
 Esp32Messaging::SetAntennaRequest *Encoders::ExtractSetAntennaRequest(uint8_t *buffer)
 {
     Esp32Messaging::SetAntennaRequest *setAntennaRequest = (Esp32Messaging::SetAntennaRequest *) pvPortMalloc(sizeof(Esp32Messaging::SetAntennaRequest));
@@ -2266,7 +2190,6 @@ Esp32Messaging::SetAntennaRequest *Encoders::ExtractSetAntennaRequest(uint8_t *b
  *  @returns
  *      Pointer to a BTStackConfig object.
  */
-// cppcheck-suppress unusedFunction symbolName=ExtractBTStackConfig
 Esp32Messaging::BTStackConfig *Encoders::ExtractBTStackConfig(uint8_t *buffer)
 {
     Esp32Messaging::BTStackConfig *bTStackConfig = (Esp32Messaging::BTStackConfig *) pvPortMalloc(sizeof(Esp32Messaging::BTStackConfig));
@@ -2286,7 +2209,6 @@ Esp32Messaging::BTStackConfig *Encoders::ExtractBTStackConfig(uint8_t *buffer)
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded BTDataWriteRequest object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodeBTDataWriteRequest
 void Encoders::EncodeBTDataWriteRequest(Esp32Messaging::BTDataWriteRequest *bTDataWriteRequest, uint8_t *buffer)
 {
     EncodeUInt16(bTDataWriteRequest->Handle, buffer);
@@ -2308,7 +2230,6 @@ void Encoders::EncodeBTDataWriteRequest(Esp32Messaging::BTDataWriteRequest *bTDa
  *  @returns
  *      Number of bytes required to hold the encoded BTDataWriteRequest object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodedBTDataWriteRequestBufferSize
 int Encoders::EncodedBTDataWriteRequestBufferSize(Esp32Messaging::BTDataWriteRequest *bTDataWriteRequest)
 {
     int result = 0;
@@ -2327,7 +2248,6 @@ int Encoders::EncodedBTDataWriteRequestBufferSize(Esp32Messaging::BTDataWriteReq
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded BTGetHandlesResponse object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodeBTGetHandlesResponse
 void Encoders::EncodeBTGetHandlesResponse(Esp32Messaging::BTGetHandlesResponse *bTGetHandlesResponse, uint8_t *buffer)
 {
     EncodeUInt16(bTGetHandlesResponse->HandleCount, buffer);
@@ -2349,7 +2269,6 @@ void Encoders::EncodeBTGetHandlesResponse(Esp32Messaging::BTGetHandlesResponse *
  *  @returns
  *      Number of bytes required to hold the encoded BTGetHandlesResponse object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodedBTGetHandlesResponseBufferSize
 int Encoders::EncodedBTGetHandlesResponseBufferSize(Esp32Messaging::BTGetHandlesResponse *bTGetHandlesResponse)
 {
     int result = 0;
@@ -2369,7 +2288,6 @@ int Encoders::EncodedBTGetHandlesResponseBufferSize(Esp32Messaging::BTGetHandles
  *  @returns
  *      Pointer to a BTServerDataSet object.
  */
-// cppcheck-suppress unusedFunction symbolName=ExtractBTServerDataSet
 Esp32Messaging::BTServerDataSet *Encoders::ExtractBTServerDataSet(uint8_t *buffer)
 {
     Esp32Messaging::BTServerDataSet *bTServerDataSet = (Esp32Messaging::BTServerDataSet *) pvPortMalloc(sizeof(Esp32Messaging::BTServerDataSet));
@@ -2402,7 +2320,6 @@ Esp32Messaging::BTServerDataSet *Encoders::ExtractBTServerDataSet(uint8_t *buffe
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded FileDetails object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodeFileDetails
 void Encoders::EncodeFileDetails(Esp32Messaging::FileDetails *fileDetails, uint8_t *buffer)
 {
     EncodeString(fileDetails->Name, buffer);
@@ -2419,7 +2336,6 @@ void Encoders::EncodeFileDetails(Esp32Messaging::FileDetails *fileDetails, uint8
  *  @returns
  *      Number of bytes required to hold the encoded FileDetails object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodedFileDetailsBufferSize
 int Encoders::EncodedFileDetailsBufferSize(Esp32Messaging::FileDetails *fileDetails)
 {
     int result = 0;
@@ -2439,7 +2355,6 @@ int Encoders::EncodedFileDetailsBufferSize(Esp32Messaging::FileDetails *fileDeta
  *  @returns
  *      Pointer to a FileDetails object.
  */
-// cppcheck-suppress unusedFunction symbolName=ExtractFileDetails
 Esp32Messaging::FileDetails *Encoders::ExtractFileDetails(uint8_t *buffer)
 {
     Esp32Messaging::FileDetails *fileDetails = (Esp32Messaging::FileDetails *) pvPortMalloc(sizeof(Esp32Messaging::FileDetails));
@@ -2461,7 +2376,6 @@ Esp32Messaging::FileDetails *Encoders::ExtractFileDetails(uint8_t *buffer)
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded FileNameAndContents object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodeFileNameAndContents
 void Encoders::EncodeFileNameAndContents(Esp32Messaging::FileNameAndContents *fileNameAndContents, uint8_t *buffer)
 {
     EncodeString(fileNameAndContents->Name, buffer);
@@ -2483,7 +2397,6 @@ void Encoders::EncodeFileNameAndContents(Esp32Messaging::FileNameAndContents *fi
  *  @returns
  *      Number of bytes required to hold the encoded FileNameAndContents object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodedFileNameAndContentsBufferSize
 int Encoders::EncodedFileNameAndContentsBufferSize(Esp32Messaging::FileNameAndContents *fileNameAndContents)
 {
     int result = 0;
@@ -2504,7 +2417,6 @@ int Encoders::EncodedFileNameAndContentsBufferSize(Esp32Messaging::FileNameAndCo
  *  @returns
  *      Pointer to a FileNameAndContents object.
  */
-// cppcheck-suppress unusedFunction symbolName=ExtractFileNameAndContents
 Esp32Messaging::FileNameAndContents *Encoders::ExtractFileNameAndContents(uint8_t *buffer)
 {
     Esp32Messaging::FileNameAndContents *fileNameAndContents = (Esp32Messaging::FileNameAndContents *) pvPortMalloc(sizeof(Esp32Messaging::FileNameAndContents));
@@ -2537,7 +2449,6 @@ Esp32Messaging::FileNameAndContents *Encoders::ExtractFileNameAndContents(uint8_
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded FileNameList object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodeFileNameList
 void Encoders::EncodeFileNameList(Esp32Messaging::FileNameList *fileNameList, uint8_t *buffer)
 {
     EncodeUInt16(fileNameList->NumberOfFiles, buffer);
@@ -2559,7 +2470,6 @@ void Encoders::EncodeFileNameList(Esp32Messaging::FileNameList *fileNameList, ui
  *  @returns
  *      Number of bytes required to hold the encoded FileNameList object.
  */
-// cppcheck-suppress unusedFunction symbolName=EncodedFileNameListBufferSize
 int Encoders::EncodedFileNameListBufferSize(Esp32Messaging::FileNameList *fileNameList)
 {
     int result = 0;
