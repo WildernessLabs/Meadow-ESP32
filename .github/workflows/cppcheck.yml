@@ -11,19 +11,11 @@ jobs:
         uses: deep5050/cppcheck-action@main
         with:
           github_token: ${{ secrets.CI_ACCESS_TOKEN}}
-          check_library:
-          skip_preprocessor:
-          enable:
           exclude_check: ./Source/MeadowComms/components/esp_littlefs CMakeLists.txt
-          inconclusive:
           inline_suppression: enable
           force_language: c, c++
           force: enable
-          max_ctu_depth:
-          platform:
           std: c11, c++17
-          output_file:
-          other_options:
 
       - name: publish report    
         uses: mikeal/publish-to-github-action@master
