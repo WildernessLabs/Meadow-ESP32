@@ -14,7 +14,7 @@ jobs:
           exclude_check: ./Source/MeadowComms/components/esp_littlefs CMakeLists.txt
           inline_suppression: enable
           force: enable
-          std: c11, c++17
+          std: c++17
 
       - name: publish report    
         uses: mikeal/publish-to-github-action@master
