@@ -339,6 +339,7 @@ void WiFiRequestHandler::NodeConnectedEvent()
             }
             if (station.ip.addr != _connectedNodes[key])
             {
+                // cppcheck-suppress unknownMacro
                 TRACE_MESSAGE("NodeConnectedEvent: Updating IP address for node: MAC " MACSTR " IP Address " IPSTR, MAC2STR(station.mac), IP2STR(&station.ip));
                 Esp32Messaging::NodeConnectionChangeEventData data;
                 memcpy(&data.MacAddress, &station.mac, 6);

@@ -99,7 +99,7 @@ void heap_caps_alloc_failed_hook(size_t requestedSize, uint32_t caps, const char
         printf("%s was called but failed to allocate %lu bytes with 0x%X capabilities. \n", functionName, (unsigned long) requestedSize, caps);
         vTaskDelay(10000 / portTICK_PERIOD_MS);
         char *ptr = NULL;
-        *ptr = 0;
+        *ptr = 0; // cppcheck-suppress nullPointer
     }
 }
 
