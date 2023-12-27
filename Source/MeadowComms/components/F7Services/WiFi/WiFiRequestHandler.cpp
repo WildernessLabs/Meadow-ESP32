@@ -495,15 +495,15 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetPassword(char *value)
 {
     TRACE_MESSAGE("WiFiRequestHandler::SetPassword %s", (value == NULL) ? "NULL" : value);
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    char emptyPassword = '\0';
+    char *emptyPassword = const_cast<char *>("");
 
     if (value == NULL)
     {
-        value = &emptyPassword;
+        value = emptyPassword;
     }
     if (!_password)
     {
-        _password = strdup(&emptyPassword);
+        _password = strdup(emptyPassword);
     }
 
     if (strcmp(value, _password) != 0)

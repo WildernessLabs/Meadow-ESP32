@@ -18,7 +18,7 @@ jobs:
 
     - name: Update submodules
       run: git submodule update --init --recursive
-      id: Update-submodeules
+      id: Update-submodules
             
     - name: Build the code
       run: docker run --rm -v $PWD:/project -w /project espressif/idf:release-v4.2 ./build.sh --build
