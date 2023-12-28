@@ -20,7 +20,7 @@
 
 #if defined(CONFIG_HEAP_TRACING_STANDALONE) || defined(CONFIG_HEAP_TRACING_TOHOST)
 
-#include "esp_heap_trace.h"
+    #include "esp_heap_trace.h"
 
 #endif
 
@@ -125,7 +125,7 @@ const char *WiFiRequestHandler::MAXIMUM_RETRY_COUNT_NAME = "MaxRetry";
 /**
  *  @brief Indicate if the network should start automatically at start up.
  */
-bool WiFiRequestHandler:: _automaticallyStartNetwork = false;
+bool WiFiRequestHandler::_automaticallyStartNetwork = false;
 
 /**
  *  @brief Name of the NVS storage holding the _automaticallyStartNetwork value.
@@ -339,7 +339,7 @@ WiFiRequestHandler::~WiFiRequestHandler()
  */
 uint32_t WiFiRequestHandler::GetMaximumRetryCount()
 {
-    return(_maximumRetryCount == 0 ? 3 : _maximumRetryCount);
+    return (_maximumRetryCount == 0 ? 3 : _maximumRetryCount);
 }
 
 /**
@@ -355,7 +355,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetMaximumRetryCount(uint32_t value
 {
     TRACE_MESSAGE("WiFiRequestHandler::SetMaximumRetryCount: %d", value);
     _maximumRetryCount = value;
-    return(StatusCodes::CompletedOk);
+    return (StatusCodes::CompletedOk);
 }
 
 /**
@@ -363,7 +363,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetMaximumRetryCount(uint32_t value
  */
 bool WiFiRequestHandler::GetAutomaticReconnect()
 {
-    return(_automaticReconnect);
+    return (_automaticReconnect);
 }
 
 /**
@@ -379,7 +379,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetAutomaticReconnect(bool value)
 {
     TRACE_MESSAGE("WiFiRequestHandler::SetAutomaticReconnect: %d", value ? 1 : 0);
     _automaticReconnect = value;
-    return(StatusCodes::CompletedOk);
+    return (StatusCodes::CompletedOk);
 }
 
 /**
@@ -387,7 +387,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetAutomaticReconnect(bool value)
  */
 bool WiFiRequestHandler::GetAutomaticallyStartNetwork()
 {
-    return(_automaticallyStartNetwork);
+    return (_automaticallyStartNetwork);
 }
 
 /**
@@ -403,7 +403,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetAutomaticallyStartNetwork(bool v
 {
     TRACE_MESSAGE("WiFiRequestHandler::SetAutomaticallyStartNetwork %d", value ? 1 : 0);
     _automaticallyStartNetwork = value;
-    return(StatusCodes::CompletedOk);
+    return (StatusCodes::CompletedOk);
 }
 
 /**
@@ -411,7 +411,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetAutomaticallyStartNetwork(bool v
  */
 bool WiFiRequestHandler::GetUseDhcp()
 {
-    return(_useDhcp);
+    return (_useDhcp);
 }
 
 /**
@@ -427,7 +427,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetUseDhcp(bool value)
 {
     TRACE_MESSAGE("WiFiRequestHandler::SetUseDhcp %d", value ? 1 : 0);
     _useDhcp = value;
-    return(StatusCodes::CompletedOk);
+    return (StatusCodes::CompletedOk);
 }
 
 /**
@@ -435,7 +435,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetUseDhcp(bool value)
  */
 char *WiFiRequestHandler::GetDefaultAccessPoint()
 {
-    return(_defaultAccessPoint);
+    return (_defaultAccessPoint);
 }
 
 /**
@@ -471,7 +471,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetDefaultAccessPoint(char *value)
             _defaultAccessPoint = strdup(value);
         }
     }
-    return(result);
+    return (result);
 }
 
 /**
@@ -479,7 +479,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetDefaultAccessPoint(char *value)
  */
 char *WiFiRequestHandler::GetPassword()
 {
-    return(_password);
+    return (_password);
 }
 
 /**
@@ -514,7 +514,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetPassword(char *value)
             _password = strdup(value);
         }
     }
-    return(result);
+    return (result);
 }
 
 /**
@@ -522,7 +522,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetPassword(char *value)
  */
 uint32_t WiFiRequestHandler::GetIpAddress()
 {
-    return(_staticIpAddress);
+    return (_staticIpAddress);
 }
 
 /**
@@ -537,7 +537,7 @@ uint32_t WiFiRequestHandler::GetIpAddress()
 StatusCodes::StatusCodes WiFiRequestHandler::SetIpAddress(uint32_t value)
 {
     _staticIpAddress = value;
-    return(StatusCodes::CompletedOk);
+    return (StatusCodes::CompletedOk);
 }
 
 /**
@@ -545,7 +545,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetIpAddress(uint32_t value)
  */
 uint32_t WiFiRequestHandler::GetSubNetMask()
 {
-    return(_staticSubNetMask);
+    return (_staticSubNetMask);
 }
 
 /**
@@ -560,7 +560,7 @@ uint32_t WiFiRequestHandler::GetSubNetMask()
 StatusCodes::StatusCodes WiFiRequestHandler::SetSubNetMask(uint32_t value)
 {
     _staticSubNetMask = value;
-    return(StatusCodes::CompletedOk);
+    return (StatusCodes::CompletedOk);
 }
 
 /**
@@ -568,7 +568,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetSubNetMask(uint32_t value)
  */
 uint32_t WiFiRequestHandler::GetDnsServer()
 {
-    return(_dnsServer);
+    return (_dnsServer);
 }
 
 /**
@@ -583,7 +583,7 @@ uint32_t WiFiRequestHandler::GetDnsServer()
 StatusCodes::StatusCodes WiFiRequestHandler::SetDnsServer(uint32_t value)
 {
     _dnsServer = value;
-    return(StatusCodes::CompletedOk);
+    return (StatusCodes::CompletedOk);
 }
 
 /**
@@ -591,7 +591,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetDnsServer(uint32_t value)
  */
 uint32_t WiFiRequestHandler::GetDefaultGateway()
 {
-    return(_defaultGateway);
+    return (_defaultGateway);
 }
 
 /**
@@ -606,7 +606,7 @@ uint32_t WiFiRequestHandler::GetDefaultGateway()
 StatusCodes::StatusCodes WiFiRequestHandler::SetDefaultGateway(uint32_t value)
 {
     _defaultGateway = value;
-    return(StatusCodes::CompletedOk);
+    return (StatusCodes::CompletedOk);
 }
 
 /**
@@ -654,7 +654,7 @@ void WiFiRequestHandler::GetMacAddress(uint8_t *macAddress, wifi_interface_t int
  */
 StatusCodes::StatusCodes WiFiRequestHandler::SetMacAddress(uint8_t *macAddress, wifi_interface_t interface)
 {
-    return(StatusCodes::CompletedOk);
+    return (StatusCodes::CompletedOk);
 }
 
 /**
@@ -665,7 +665,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetMacAddress(uint8_t *macAddress, 
  */
 uint8_t WiFiRequestHandler::GetAntenna()
 {
-    return(SystemRequestHandler::GetConfigurationValue(ANTENNA_TYPE_NAME, static_cast<uint8_t>(AntennaTypes::OnBoard)));
+    return (SystemRequestHandler::GetConfigurationValue(ANTENNA_TYPE_NAME, static_cast<uint8_t>(AntennaTypes::OnBoard)));
 }
 
 /**
@@ -689,7 +689,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetAntenna(uint8_t antenna)
         SystemRequestHandler::SetConfigurationValue(ANTENNA_TYPE_NAME, antenna);
     }
 
-    return(result);
+    return (result);
 }
 
 /**
@@ -697,7 +697,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetAntenna(uint8_t antenna)
  */
 uint32_t WiFiRequestHandler::GetWiFiTimeout()
 {
-    return(_wifiTimeout);
+    return (_wifiTimeout);
 }
 
 /**
@@ -712,7 +712,7 @@ uint32_t WiFiRequestHandler::GetWiFiTimeout()
 StatusCodes::StatusCodes WiFiRequestHandler::SetWiFiTimeout(uint32_t value)
 {
     _wifiTimeout = value;
-    return(StatusCodes::CompletedOk);
+    return (StatusCodes::CompletedOk);
 }
 
 /*
@@ -725,14 +725,14 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetWiFiTimeout(uint32_t value)
 
 /**
  * @brief Get a pointer to this instance of the WiFiRequest Handler object.
- * 
+ *
  *  Note: There should be only one instance of this object in the system.
- * 
+ *
  * @return Pointer the this instance of the WiFiRequest handler.
  */
 WiFiRequestHandler *WiFiRequestHandler::GetInstance()
 {
-    return(_instance);
+    return (_instance);
 }
 
 /**
@@ -754,7 +754,7 @@ int32_t WiFiRequestHandler::MapErrno(int e)
     {
         Mapping::GetStmValue(Mapping::Errno, EFAULT, &result);
     }
-    return(result);
+    return (result);
 }
 
 /**
@@ -788,7 +788,7 @@ gpio_num_t WiFiRequestHandler::ConvertAntennaToPin(AntennaTypes::AntennaTypes an
     TRACE_MESSAGE("ConvertAntennaToPin: Enter");
     TRACE_MESSAGE("ConvertAntennaToPin: Exit");
 
-    return((antenna == AntennaTypes::OnBoard) ? WiFiRequestHandler::ON_BOARD_ANTENNA_PIN : WiFiRequestHandler::EXTERNAL_ANTENNA_PIN);
+    return ((antenna == AntennaTypes::OnBoard) ? WiFiRequestHandler::ON_BOARD_ANTENNA_PIN : WiFiRequestHandler::EXTERNAL_ANTENNA_PIN);
 }
 
 /**
@@ -833,7 +833,7 @@ void WiFiRequestHandler::Setup()
 
     esp_wifi_restore();
 
-    /* 
+    /*
      *  Now create the objects necessary for the WiFi tasks.
      */
     _xWiFiEventGroup = xEventGroupCreate();
@@ -853,7 +853,7 @@ void WiFiRequestHandler::PopulateConnectionEventDataStructure(Esp32Messaging::Co
 {
     TRACE_MESSAGE("PopulateConnectionEventDataStructure: Enter");
 
-    *ed = { };
+    *ed = {};
     // bzero((void *) ed, sizeof(Esp32Messaging::ConnectEventData));
     //
     //  IP information.
@@ -887,7 +887,7 @@ void WiFiRequestHandler::RaiseConnectToAccessPointEvent(StatusCodes::StatusCodes
     {
         PopulateConnectionEventDataStructure(ed);
         uint32_t payloadLength = Encoders::EncodedConnectEventDataBufferSize(ed);
-        uint8_t *payload = static_cast<uint8_t *> (pvPortMalloc(payloadLength));
+        uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
         if (payload != NULL)
         {
             Encoders::EncodeConnectEventData(ed, payload);
@@ -909,11 +909,11 @@ void WiFiRequestHandler::RaiseConnectToAccessPointEvent(StatusCodes::StatusCodes
 
 /**
  * @brief Raise an error event for the WiFi interface.
- * 
+ *
  * @param statusCode Status code
- * 
+ *
  * @param payload Payload for the error event.
- * 
+ *
  * @param payloadLength Length of the payload.
  */
 void WiFiRequestHandler::RaiseErrorEvent(StatusCodes::StatusCodes statusCode, uint8_t *payload, uint32_t payloadLength)
@@ -1172,7 +1172,7 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
                 xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
                 break;
             case WiFiFunction::Socket:
-                SystemRequestHandler::SharedThreadPool()->Execute(Socket,static_cast<void *>(request));
+                SystemRequestHandler::SharedThreadPool()->Execute(Socket, static_cast<void *>(request));
                 xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
                 break;
             case WiFiFunction::GetAddrInfo:
@@ -1220,7 +1220,7 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
                 xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
                 break;
             default:
-                TRACE_MESSAGE("DispatchRequest: Unknown WiFi message received, function %u", (unsigned int)request->Function);
+                TRACE_MESSAGE("DispatchRequest: Unknown WiFi message received, function %u", (unsigned int) request->Function);
                 if ((request->Payload != NULL) && (request->PayloadLength > 0))
                 {
                     TRACE_HEX_BUFFER(request->Payload, request->PayloadLength);
@@ -1228,7 +1228,7 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
                 break;
         }
     }
-    catch (const ThreadPoolException& e)
+    catch (const ThreadPoolException &e)
     {
         TRACE_MESSAGE("DispatchRequest: Exception caught: %s", e.what());
         request->DeletePayload();
@@ -1254,7 +1254,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::PrepareForDeepSleep()
     {
         result = wifiHandler->StopWiFIAdapter();
     }
-    return(result);
+    return (result);
 
     TRACE_MESSAGE("PrepareForDeepSleep(): Enter");
 }
@@ -1306,7 +1306,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::StopWiFIAdapter()
     xEventGroupClearBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTED_BIT | WIFI_INTERFACE_STARTING_BIT);
 
     TRACE_MESSAGE("StopWiFIAdapter(): Exit, ESP error code %d (%s)", result, esp_err_to_name(result));
-    return(Mapping::GetStatusCode(result));
+    return (Mapping::GetStatusCode(result));
 }
 
 /**
@@ -1330,7 +1330,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::DisconnectFromAccessPoint()
     ClearIpAndDisconnectData();
 
     TRACE_MESSAGE("DisconnectFromAccessPoint(): Exit");
-    return(sc);
+    return (sc);
 }
 
 /**
@@ -1396,7 +1396,7 @@ void WiFiRequestHandler::SetAntennaRequest(Message *message)
 
     if (request->Persist)
     {
-        SetAntenna(request->Antenna);   // This method also switches the antenna.
+        SetAntenna(request->Antenna); // This method also switches the antenna.
     }
     else
     {
@@ -1423,7 +1423,7 @@ bool WiFiRequestHandler::IsConnected()
 {
     EventBits_t bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT | WIFI_ERROR_BIT, pdFALSE, pdFALSE, 10 / portTICK_PERIOD_MS);
 
-    return((bits & WIFI_CONNECTED_BIT) == WIFI_CONNECTED_BIT);
+    return ((bits & WIFI_CONNECTED_BIT) == WIFI_CONNECTED_BIT);
 }
 
 /**
@@ -1447,7 +1447,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const Esp32Mes
     EventBits_t bits = xEventGroupGetBits(_xWiFiEventGroup);
     if (bits & WIFI_HAVE_IP_BIT)
     {
-        return(StatusCodes::WiFiAlreadyStarted);
+        return (StatusCodes::WiFiAlreadyStarted);
     }
 
     if ((accessPointInformation->NetworkName == nullptr) || (strlen(accessPointInformation->NetworkName) == 0))
@@ -1473,7 +1473,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const Esp32Mes
     if (result == StatusCodes::CompletedOk)
     {
         _currentRetryCount = 0;
-        char zeroLengthString[1] = { 0 };
+        char zeroLengthString[1] = {0};
         if (password == nullptr)
         {
             password = zeroLengthString;
@@ -1486,12 +1486,8 @@ StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const Esp32Mes
         else
         {
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_CONNECTING_BIT);
-            wifi_config_t wifi_config = { };
-            wifi_config.sta.pmf_cfg =
-            {
-                .capable = true,
-                .required = false
-            };
+            wifi_config_t wifi_config = {};
+            wifi_config.sta.pmf_cfg = {.capable = true, .required = false};
             memcpy(wifi_config.sta.ssid, accessPointInformation->NetworkName, strlen(accessPointInformation->NetworkName));
             memcpy(wifi_config.sta.password, password, strlen(password));
             // _lastIdfErrorCode = esp_wifi_set_mode(WIFI_MODE_STA);
@@ -1534,7 +1530,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const Esp32Mes
         }
     }
     TRACE_MESSAGE("%s: result %d", __func__, result);
-    return(result);
+    return (result);
 }
 
 /**
@@ -1567,7 +1563,7 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
     result = ConnectToAccessPoint(accessPointInformation);
     vPortFree(accessPointInformation);
 
-    Esp32Messaging::ConnectEventData data = { };
+    Esp32Messaging::ConnectEventData data = {};
 
     if (result == StatusCodes::CompletedOk)
     {
@@ -1597,7 +1593,7 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
     {
         RaiseConnectToAccessPointEvent(result);
     }
-    
+
     TRACE_MESSAGE("ConnectToAccessPoint: Exit");
 }
 
@@ -1618,7 +1614,7 @@ void WiFiRequestHandler::ConnectToDefaultAccessPoint(Message *message)
     char *access_point = GetDefaultAccessPoint();
     if (access_point != NULL)
     {
-        Esp32Messaging::AccessPointInformation accessPointInformation = { };
+        Esp32Messaging::AccessPointInformation accessPointInformation = {};
         accessPointInformation.NetworkName = access_point;
         accessPointInformation.Password = GetPassword();
         if (!_useDhcp)
@@ -1642,7 +1638,7 @@ void WiFiRequestHandler::ConnectToDefaultAccessPoint(Message *message)
 
 /**
  *  @brief Clear the default access point and password from NVS.
- * 
+ *
  *  @param message
  *      Message containing the encoded request.
  */
@@ -1665,10 +1661,10 @@ void WiFiRequestHandler::ClearDefaultAccessPointAndPassword(Message *message)
  *
  *  Start the WiFi network interface ready for the device to be configured
  *  as either an access point (softAP) or as a network device (station).
- * 
+ *
  *  @param mode
  *      WiFi mode of the ESP32 (Station, Access Point or both).
- * 
+ *
  *  @param accessPointInformation
  *      Information about the configuration of the access point to connect to or the
  *      IP information for a station.
@@ -1768,7 +1764,7 @@ esp_err_t WiFiRequestHandler::StartWiFiInterface(const wifi_mode_t mode, const E
     ESP_ERROR_CHECK(result);
 
     TRACE_MESSAGE("StartWiFiInterface: Exit");
-    return(result);
+    return (result);
 }
 
 /**

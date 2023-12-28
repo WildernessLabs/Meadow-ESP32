@@ -1,6 +1,6 @@
 /**
  *  ThreadPoolException.hpp
- * 
+ *
  *  Outline the ThreadPoolException class.
  */
 

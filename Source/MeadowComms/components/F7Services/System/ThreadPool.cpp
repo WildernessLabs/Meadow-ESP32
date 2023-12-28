@@ -69,7 +69,8 @@ ThreadPool::ThreadPool(uint32_t numberOfThreads) : ThreadPool()
         if (name != NULL)
         {
             snprintf(name, 15, "Thread-%02u", index);
-            _threads[index] = new Thread(name, ThreadPool::ThreadCompleted);;
+            _threads[index] = new Thread(name, ThreadPool::ThreadCompleted);
+            ;
             if (_threads[index])
             {
                 xSemaphoreGive(_threadsAvailable);
@@ -121,7 +122,7 @@ void ThreadPool::Execute(method_t method, void *parameter)
 {
     TRACE_MESSAGE("Execute: Enter");
     if (xSemaphoreTake(_threadsAvailable, _threadPoolAcquireTimeoutInMilisseconds / portTICK_PERIOD_MS) == pdTRUE)
-    {    
+    {
         TRACE_MESSAGE("Execute: Searching for an available thread");
 
         for (uint32_t index = 0; index < _threadPoolSize; index++)

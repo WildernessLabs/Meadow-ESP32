@@ -50,7 +50,7 @@ void WiFiRequestHandler::GetAddrInfo(void *vpMessage)
         Esp32Messaging::AddrInfo *extractedHints = Encoders::ExtractAddrInfo(request->Hints);
         vPortFree(request->Hints);
 
-        struct addrinfo hints = { };
+        struct addrinfo hints = {};
         hints.ai_family = extractedHints->Family;
         hints.ai_socktype = extractedHints->SocketType;
         vPortFree(extractedHints);
@@ -68,8 +68,8 @@ void WiFiRequestHandler::GetAddrInfo(void *vpMessage)
         response->AddrInfoResponseErrno = MapErrno(errorCode);
         if ((errorCode == 0) || (addressInformation != NULL))
         {
-            Esp32Messaging::SockAddr sa = { };
-            Esp32Messaging::AddrInfo a = { };
+            Esp32Messaging::SockAddr sa = {};
+            Esp32Messaging::AddrInfo a = {};
 
             int family;
             Mapping::GetStmValue(Mapping::AddressFamily, addressInformation->ai_addr->sa_family, &family);
@@ -127,7 +127,7 @@ void WiFiRequestHandler::Socket(void *vpMessage)
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
-    Esp32Messaging::IntegerAndErrnoResponse response = { };
+    Esp32Messaging::IntegerAndErrnoResponse response = {};
 
     if (IsConnected())
     {
@@ -180,7 +180,7 @@ void WiFiRequestHandler::Connect(void *vpMessage)
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
-    Esp32Messaging::IntegerAndErrnoResponse response = { };
+    Esp32Messaging::IntegerAndErrnoResponse response = {};
 
     if (IsConnected())
     {
@@ -194,7 +194,7 @@ void WiFiRequestHandler::Connect(void *vpMessage)
             }
         }
 
-        struct sockaddr_in sa = { };
+        struct sockaddr_in sa = {};
         int family;
         Mapping::GetEspValue(Mapping::AddressFamily, socketAddress->Family, &family);
         errno = 0;
@@ -250,7 +250,7 @@ void WiFiRequestHandler::Connect(void *vpMessage)
  *  @param message
  *      Message structure containing the parameters for the freeaddrinfo method.
  */
-void WiFiRequestHandler::FreeAddrInfo(void  *vpMessage)
+void WiFiRequestHandler::FreeAddrInfo(void *vpMessage)
 {
     TRACE_MESSAGE("FreeAddrInfo: Enter");
     PERFORMANCE_LOGGING_ENTER();
@@ -289,12 +289,12 @@ void WiFiRequestHandler::GetSockOpt(void *vpMessage)
 
     Message *message = static_cast<Message *>(vpMessage);
     Esp32Messaging::GetSockOptRequest *request = Encoders::ExtractGetSockOptRequest(message->Payload);
-    Esp32Messaging::GetSockOptResponse response = { };
+    Esp32Messaging::GetSockOptResponse response = {};
 
     if (IsConnected())
     {
-        struct timeval timeOut = { };
-        struct linger lingerOut = { };
+        struct timeval timeOut = {};
+        struct linger lingerOut = {};
         int intVal = 0;
         int32_t optionName = 0;
         void *optionValue = nullptr;
@@ -310,32 +310,32 @@ void WiFiRequestHandler::GetSockOpt(void *vpMessage)
         {
             switch (optionName)
             {
-                case SO_SNDTIMEO:       /* Get the send timeout */
-                case SO_RCVTIMEO:       /* Get the receive timeout */
+                case SO_SNDTIMEO: /* Get the send timeout */
+                case SO_RCVTIMEO: /* Get the receive timeout */
                     optionValue = &timeOut;
                     optionLength = sizeof(struct timeval);
                     break;
-                case SO_LINGER:         /* Linger on close if data present */
+                case SO_LINGER: /* Linger on close if data present */
                     optionValue = &lingerOut;
                     optionLength = sizeof(struct linger);
                     break;
-                case SO_RCVBUF:         /* Get the receive buffer size */
+                case SO_RCVBUF: /* Get the receive buffer size */
                     optionValue = &intVal;
                     optionLength = sizeof(intVal);
                     break;
-                case SO_ACCEPTCONN:     /* Socket has had listen() */
+                case SO_ACCEPTCONN: /* Socket has had listen() */
                     TRACE_MESSAGE("GetSockOpt: Implement SO_ACCEPTCONN");
                     break;
-                case SO_DONTLINGER:     /* Don't linger on close if data present */
+                case SO_DONTLINGER: /* Don't linger on close if data present */
                     TRACE_MESSAGE("GetSockOpt: Implement SO_DONTLINGER");
                     break;
-                case SO_ERROR:          /* Get error status and clear */
+                case SO_ERROR:      /* Get error status and clear */
                     TRACE_MESSAGE("GetSockOpt: Implement SO_ERROR");
                     break;
-                case SO_TYPE:           /* Get socket type */
+                case SO_TYPE:       /* Get socket type */
                     TRACE_MESSAGE("GetSockOpt: Implement SO_TYPE");
                     break;
-                case SO_NO_CHECK:       /* Don't create UDP checksum */
+                case SO_NO_CHECK:   /* Don't create UDP checksum */
                     TRACE_MESSAGE("GetSockOpt: Implement SO_NO_CHECK");
                     break;
                 default:
@@ -353,13 +353,13 @@ void WiFiRequestHandler::GetSockOpt(void *vpMessage)
         }
         if (response.Result == 0)
         {
-            Esp32Messaging::TimeVal esp_tv = { };
-            Esp32Messaging::Linger esp_lv = { };
-            Esp32Messaging::IntegerResponse esp_iv = { };
+            Esp32Messaging::TimeVal esp_tv = {};
+            Esp32Messaging::Linger esp_lv = {};
+            Esp32Messaging::IntegerResponse esp_iv = {};
             switch (optionName)
             {
-                case SO_SNDTIMEO:       /* Set the send timeout */
-                case SO_RCVTIMEO:       /* Set the receive timeout */
+                case SO_SNDTIMEO: /* Set the send timeout */
+                case SO_RCVTIMEO: /* Set the receive timeout */
                     esp_tv.TvSec = timeOut.tv_sec;
                     esp_tv.TvUsec = timeOut.tv_usec;
                     response.OptionValueLength = Encoders::EncodedTimeValBufferSize(&esp_tv);
@@ -375,7 +375,7 @@ void WiFiRequestHandler::GetSockOpt(void *vpMessage)
                         Encoders::EncodeTimeVal(&esp_tv, response.OptionValue);
                     }
                     break;
-                case SO_LINGER:         /* Linger on close if data present */
+                case SO_LINGER: /* Linger on close if data present */
                     esp_lv.LLinger = lingerOut.l_linger;
                     esp_lv.LOnOff = lingerOut.l_onoff;
                     response.OptionValueLength = Encoders::EncodedLingerBufferSize(&esp_lv);
@@ -440,14 +440,14 @@ void WiFiRequestHandler::GetSockOpt(void *vpMessage)
 
 /**
  * @brief Extract an encoded integer setsockopt option value.
- * 
- * @param data 
+ *
+ * @param data
  *      Source of the socket option data (the option value).
- * 
+ *
  * @param length
  *      Pointer to a socklen_t object to take the length of the extracted option value.
- * 
- * @return uint8_t* 
+ *
+ * @return uint8_t*
  *      Pointer to the extracted option value (integer) or NULL if there was a problem.
  */
 uint8_t *WiFiRequestHandler::ExtractIntegerSocketOptionValue(uint8_t *data, socklen_t *length)
@@ -469,21 +469,21 @@ uint8_t *WiFiRequestHandler::ExtractIntegerSocketOptionValue(uint8_t *data, sock
         }
     }
 
-    return(result);
+    return (result);
 }
 
 /**
  * @brief Setup the socket value and length for calls to SetSockOpt.
- * 
+ *
  * @param name
  *      Name of the option to decode.
- * 
+ *
  * @param optionValue
  *      Pointer to the source data.
- * 
+ *
  * @param length
  *      Pointer to a socklen_t object to take the length of the option value.
- * 
+ *
  * @return uint8_t *
  *      Pointer the the decoded option value.
  */
@@ -496,8 +496,8 @@ uint8_t *WiFiRequestHandler::GetSocketOptionValue(int name, uint8_t *optionValue
     {
         switch (name)
         {
-            case SO_SNDTIMEO:       /* Set the send timeout */
-            case SO_RCVTIMEO:       /* Set the receive timeout */
+            case SO_SNDTIMEO: /* Set the send timeout */
+            case SO_RCVTIMEO: /* Set the receive timeout */
                 {
                     struct timeval *value = reinterpret_cast<struct timeval *>(pvPortMalloc(sizeof(struct timeval)));
                     if (value != NULL)
@@ -511,26 +511,26 @@ uint8_t *WiFiRequestHandler::GetSocketOptionValue(int name, uint8_t *optionValue
                     }
                 }
                 break;
-            case SO_REUSEADDR:      /* Reuse local addresses when binding */
-            case SO_RCVBUF:         /* Set the receive buffer size */
+            case SO_REUSEADDR:  /* Reuse local addresses when binding */
+            case SO_RCVBUF:     /* Set the receive buffer size */
                 result = ExtractIntegerSocketOptionValue(optionValue, length);
                 break;
-            case SO_LINGER:         /* Linger on close if data present */
+            case SO_LINGER:     /* Linger on close if data present */
                 TRACE_MESSAGE("SetSockOpt: Implement SO_LINGER");
                 break;
-            case SO_ACCEPTCONN:     /* Socket has had listen() */
+            case SO_ACCEPTCONN: /* Socket has had listen() */
                 TRACE_MESSAGE("SetSockOpt: Implement SO_ACCEPTCONN");
                 break;
-            case SO_DONTLINGER:     /* Don't linger on close if data present */
+            case SO_DONTLINGER: /* Don't linger on close if data present */
                 TRACE_MESSAGE("SetSockOpt: Implement SO_DONTLINGER");
                 break;
-            case SO_ERROR:          /* Get error status and clear */
+            case SO_ERROR:      /* Get error status and clear */
                 TRACE_MESSAGE("SetSockOpt: Implement SO_ERROR");
                 break;
-            case SO_TYPE:           /* Get socket type */
+            case SO_TYPE:       /* Get socket type */
                 TRACE_MESSAGE("SetSockOpt: Implement SO_TYPE");
                 break;
-            case SO_NO_CHECK:       /* Don't create UDP checksum */
+            case SO_NO_CHECK:   /* Don't create UDP checksum */
                 TRACE_MESSAGE("SetSockOpt: Implement SO_NO_CHECK");
                 break;
             case SO_BROADCAST:
@@ -546,21 +546,21 @@ uint8_t *WiFiRequestHandler::GetSocketOptionValue(int name, uint8_t *optionValue
 
     TRACE_MESSAGE("GetSocketOptionValue: Exit");
 
-    return(result);
+    return (result);
 }
 
 /**
  * @brief Setup the TCP value and length for calls to SetSockOpt.
- * 
+ *
  * @param name
  *      Name of the option to decode.
- * 
+ *
  * @param optionValue
  *      Pointer to the source data.
- * 
+ *
  * @param length
  *      Pointer to a socklen_t object to take the length of the option value.
- * 
+ *
  * @return uint8_t *
  *      Pointer the the decoded option value.
  */
@@ -585,7 +585,7 @@ uint8_t *WiFiRequestHandler::GetTcpOptionValue(int name, uint8_t *optionValue, s
 
     TRACE_MESSAGE("GetTcpOptionValue: Exit");
 
-    return(result);
+    return (result);
 }
 
 /**
@@ -601,7 +601,7 @@ void WiFiRequestHandler::SetSockOpt(void *vpMessage)
 
     Message *message = static_cast<Message *>(vpMessage);
     Esp32Messaging::SetSockOptRequest *request = Encoders::ExtractSetSockOptRequest(message->Payload);
-    Esp32Messaging::IntegerAndErrnoResponse response = { };
+    Esp32Messaging::IntegerAndErrnoResponse response = {};
 
     if (IsConnected())
     {
@@ -629,7 +629,7 @@ void WiFiRequestHandler::SetSockOpt(void *vpMessage)
                     break;
                 case IPPROTO_TCP:
                     optionValue = GetTcpOptionValue(optionName, request->OptionValue, &optionLength);
-                    break;   
+                    break;
                 default:
                     TRACE_MESSAGE("SetSockOpt: Cannot process option level: 0x%x", request->Level);
                     break;
@@ -690,14 +690,15 @@ void WiFiRequestHandler::Write(void *vpMessage)
 
     Message *message = static_cast<Message *>(vpMessage);
     Esp32Messaging::WriteRequest *request = Encoders::ExtractWriteRequest(message->Payload);
-    Esp32Messaging::IntegerAndErrnoResponse response = { };
+    Esp32Messaging::IntegerAndErrnoResponse response = {};
 
     if (IsConnected())
     {
         response.Result = write(request->SocketHandle, request->Buffer, request->Count);
         if (response.Result < 0)
         {
-            response.ResponseErrno = MapErrno(errno);;
+            response.ResponseErrno = MapErrno(errno);
+            ;
         }
 
         if (request->BufferLength > 0)
@@ -741,7 +742,7 @@ void WiFiRequestHandler::Read(void *vpMessage)
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
-    Esp32Messaging::ReadResponse response = { };
+    Esp32Messaging::ReadResponse response = {};
     response.Buffer = nullptr;
 
     if (IsConnected())
@@ -760,7 +761,7 @@ void WiFiRequestHandler::Read(void *vpMessage)
     else
     {
         response.ReadResponseResult = -1;
-        response.ReadResponseErrno = MapErrno(ENETDOWN)        ;
+        response.ReadResponseErrno = MapErrno(ENETDOWN);
     }
 
     vPortFree(message->Payload);
@@ -798,7 +799,7 @@ void WiFiRequestHandler::Close(void *vpMessage)
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
-    Esp32Messaging::IntegerAndErrnoResponse response = { };
+    Esp32Messaging::IntegerAndErrnoResponse response = {};
 
     if (IsConnected())
     {
@@ -844,7 +845,7 @@ void WiFiRequestHandler::Send(void *vpMessage)
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
-    Esp32Messaging::IntegerAndErrnoResponse response = { };
+    Esp32Messaging::IntegerAndErrnoResponse response = {};
 
     if (IsConnected())
     {
@@ -907,7 +908,7 @@ void WiFiRequestHandler::SendTo(void *vpMessage)
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
-    Esp32Messaging::IntegerAndErrnoResponse response = { };
+    Esp32Messaging::IntegerAndErrnoResponse response = {};
 
     if (IsConnected())
     {
@@ -926,8 +927,8 @@ void WiFiRequestHandler::SendTo(void *vpMessage)
                 Mapping::GetEspValue(Mapping::AddressFamily, socketAddress->Family, &family);
                 TRACE_MESSAGE("SendTo: Mapping request family %d to ESP family %d", socketAddress->Family, family);
             }
-            
-            struct sockaddr_in sa = { };
+
+            struct sockaddr_in sa = {};
             struct sockaddr *psa = NULL;
             size_t lenSa = 0;
             if (request->DestinationAddressLength != 0)
@@ -1012,7 +1013,7 @@ void WiFiRequestHandler::RecvFrom(void *vpMessage)
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
-    Esp32Messaging::RecvFromResponse response = { };
+    Esp32Messaging::RecvFromResponse response = {};
 
     if (IsConnected())
     {
@@ -1050,7 +1051,7 @@ void WiFiRequestHandler::RecvFrom(void *vpMessage)
             {
                 if (request->GetSourceAddress != 0)
                 {
-                    Esp32Messaging::SockAddr socketAddress = { };
+                    Esp32Messaging::SockAddr socketAddress = {};
                     int family;
                     Mapping::GetStmValue(Mapping::AddressFamily, sa->sin_family, &family);
                     socketAddress.Family = (uint8_t) (family & 0xff);
@@ -1141,7 +1142,7 @@ void WiFiRequestHandler::Bind(void *vpMessage)
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
-    Esp32Messaging::IntegerAndErrnoResponse response =  { };
+    Esp32Messaging::IntegerAndErrnoResponse response = {};
 
     if (IsConnected())
     {
@@ -1156,7 +1157,7 @@ void WiFiRequestHandler::Bind(void *vpMessage)
             }
         }
 
-        struct sockaddr_in sa = { };
+        struct sockaddr_in sa = {};
         int family;
         Mapping::GetEspValue(Mapping::AddressFamily, socketAddress->Family, &family);
         errno = 0;
@@ -1217,7 +1218,7 @@ void WiFiRequestHandler::Listen(void *vpMessage)
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
-    Esp32Messaging::IntegerAndErrnoResponse response = { };
+    Esp32Messaging::IntegerAndErrnoResponse response = {};
 
     if (IsConnected())
     {
@@ -1257,14 +1258,14 @@ void WiFiRequestHandler::Accept(void *vpMessage)
 {
     TRACE_MESSAGE("Accept: Enter");
     PERFORMANCE_LOGGING_ENTER();
-    Esp32Messaging::AcceptResponse response = { };
+    Esp32Messaging::AcceptResponse response = {};
     Message *message = static_cast<Message *>(vpMessage);
 
     if (IsConnected())
     {
         Esp32Messaging::AcceptRequest *request = Encoders::ExtractAcceptRequest(message->Payload);
 
-        struct sockaddr sa = { };
+        struct sockaddr sa = {};
         socklen_t saLen = sizeof(sa);
         response.Result = accept(request->SocketHandle, &sa, &saLen);
         if (response.Result > 0)
@@ -1334,14 +1335,14 @@ void WiFiRequestHandler::Ioctl(void *vpMessage)
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
-    Esp32Messaging::IoctlResponse response = { };
+    Esp32Messaging::IoctlResponse response = {};
 
     if (IsConnected())
     {
         Esp32Messaging::IoctlRequest *request = Encoders::ExtractIoctlRequest(message->Payload);
 
         esp_netif_ip_info_t ipInfo;
-        Esp32Messaging::SockAddr sa = { };
+        Esp32Messaging::SockAddr sa = {};
         int family;
 
         Mapping::GetStmValue(Mapping::AddressFamily, AF_INET, &family);
@@ -1351,7 +1352,7 @@ void WiFiRequestHandler::Ioctl(void *vpMessage)
 
         switch (request->Command)
         {
-            case SIOCGIFNETMASK:    /* Get network mask */
+            case SIOCGIFNETMASK: /* Get network mask */
                 if (esp_netif_get_ip_info(_stationNetIfHandle, &ipInfo) == ESP_OK)
                 {
                     memcpy(&sa.Ip4Address, &ipInfo.netmask, sizeof(ipInfo.netmask));
@@ -1360,13 +1361,13 @@ void WiFiRequestHandler::Ioctl(void *vpMessage)
                     Encoders::EncodeSockAddr(&sa, response.Addr);
                 }
                 break;
-            case SIOCGIFHWADDR:     /* Get hardware address */
+            case SIOCGIFHWADDR: /* Get hardware address */
                 response.AddrLength = 6;
                 response.Addr = static_cast<uint8_t *>(pvPortMalloc(6));
                 GetMacAddress(response.Addr, WIFI_IF_STA);
                 break;
-            case SIOCGIFADDR:       /* Get IP address */
-            case SIOCGIFCONF:       /* Return an interface list (IPv4) */
+            case SIOCGIFADDR: /* Get IP address */
+            case SIOCGIFCONF: /* Return an interface list (IPv4) */
                 if (esp_netif_get_ip_info(_stationNetIfHandle, &ipInfo) == ESP_OK)
                 {
                     memcpy(&sa.Ip4Address, &ipInfo.ip, sizeof(ipInfo.ip));
@@ -1375,7 +1376,7 @@ void WiFiRequestHandler::Ioctl(void *vpMessage)
                     Encoders::EncodeSockAddr(&sa, response.Addr);
                 }
                 break;
-            case SIOCGIFFLAGS:      /* Gets the interface flags */
+            case SIOCGIFFLAGS: /* Gets the interface flags */
                 if (esp_netif_get_ip_info(_stationNetIfHandle, &ipInfo) == ESP_OK)
                 {
                     response.Flags = IFF_UP;
@@ -1432,13 +1433,13 @@ void WiFiRequestHandler::GetSockPeerName(void *vpMessage, WiFiFunction::WiFiFunc
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
-    Esp32Messaging::GetSockPeerNameResponse response = { };
+    Esp32Messaging::GetSockPeerNameResponse response = {};
 
     if (IsConnected())
     {
         Esp32Messaging::GetSockPeerNameRequest *request = Encoders::ExtractGetSockPeerNameRequest(message->Payload);
 
-        struct sockaddr sa = { };
+        struct sockaddr sa = {};
         socklen_t saLen = sizeof(sa);
         if (methodToCall == WiFiFunction::GetSockName)
         {
@@ -1532,7 +1533,7 @@ void WiFiRequestHandler::GetPeerName(void *vpMessage)
  */
 void WiFiRequestHandler::LockPollRequests()
 {
-     xSemaphoreTake(_pollRequestListMutex, portMAX_DELAY);
+    xSemaphoreTake(_pollRequestListMutex, portMAX_DELAY);
 }
 
 /**
@@ -1540,12 +1541,12 @@ void WiFiRequestHandler::LockPollRequests()
  */
 void WiFiRequestHandler::UnlockPollRequests()
 {
-     xSemaphoreGive(_pollRequestListMutex);
+    xSemaphoreGive(_pollRequestListMutex);
 }
 
 /**
  *  @brief Open a dummy socket to be used by the Poll methods to terminate a poll request.
- * 
+ *
  *  @returns
  *      Handle to the socket that has just been opened of -1 if there is a problem.
  */
@@ -1553,7 +1554,7 @@ int WiFiRequestHandler::OpenDummySocket()
 {
     TRACE_MESSAGE("OpenDummySocket: Enter");
 
-    struct addrinfo hints = { };
+    struct addrinfo hints = {};
     hints.ai_family = AF_INET;
     hints.ai_socktype = SOCK_DGRAM;
 
@@ -1567,7 +1568,7 @@ int WiFiRequestHandler::OpenDummySocket()
     }
     TRACE_MESSAGE("OpenDummySocket: Exit, result %d", dummy_socket_fd);
 
-    return(dummy_socket_fd);
+    return (dummy_socket_fd);
 }
 
 /**
@@ -1585,7 +1586,7 @@ void WiFiRequestHandler::DumpActivePollRequests()
         //  Basically, we are trying to keep the compiler happy and not generate misleading warnings.
         //
         // cppcheck-suppress unreadVariable symbolName=fds
-        __attribute__ ((unused)) struct pollfd *fds = static_cast<struct pollfd *>(it->second);
+        __attribute__((unused)) struct pollfd *fds = static_cast<struct pollfd *>(it->second);
         TRACE_MESSAGE("DumpActiveRequests: Key %08x, socket %d, dummy socket %d", it->first, fds[POLL_FD_INDEX].fd, fds[POLL_DUMMY_FD_INDEX].fd);
         it++;
     }
@@ -1595,7 +1596,7 @@ void WiFiRequestHandler::DumpActivePollRequests()
 
 /**
  *  @brief Setup a poll request an assign it to a thread in the thread pool.
- * 
+ *
  *  @param message
  *      Message structure containing the parameters for the poll method.
  */
@@ -1606,19 +1607,19 @@ int WiFiRequestHandler::PollSetup(void *vpMessage)
     int result = 0;
     if (vpMessage == NULL)
     {
-        return(-1);
+        return (-1);
     }
     struct pollfd *fds = static_cast<struct pollfd *>(pvPortMalloc(2 * sizeof(struct pollfd)));
     if (fds == NULL)
     {
-        return(-1);
+        return (-1);
     }
 
     int dummy_socket_handle = OpenDummySocket();
     if (dummy_socket_handle < 0)
     {
         vPortFree(fds);
-        return(-1);
+        return (-1);
     }
 
     Esp32Messaging::PollRequest *request = static_cast<Esp32Messaging::PollRequest *>(vpMessage);
@@ -1637,15 +1638,15 @@ int WiFiRequestHandler::PollSetup(void *vpMessage)
     _pollRequests[request->SetupMessageId] = fds;
     UnlockPollRequests();
 
-    #if defined(WIFI_DEBUG)
-        DumpActivePollRequests();
-    #endif
+#if defined(WIFI_DEBUG)
+    DumpActivePollRequests();
+#endif
 
     SystemRequestHandler::SharedThreadPool()->Execute(PollSocket, reinterpret_cast<void *>(request->SetupMessageId));
 
     TRACE_MESSAGE("PollSetup: Exit, result %d", result);
 
-    return(result);
+    return (result);
 }
 
 /**
@@ -1661,9 +1662,9 @@ int WiFiRequestHandler::PollTeardown(void *vpMessage)
 
     Esp32Messaging::PollRequest *request = (Esp32Messaging::PollRequest *) vpMessage;
 
-    #if defined(WIFI_DEBUG)
-        DumpActivePollRequests();
-    #endif
+#if defined(WIFI_DEBUG)
+    DumpActivePollRequests();
+#endif
 
     LockPollRequests();
     std::map<uint32_t, struct pollfd *>::iterator it = _pollRequests.find(request->SetupMessageId);
@@ -1671,7 +1672,7 @@ int WiFiRequestHandler::PollTeardown(void *vpMessage)
     {
         TRACE_MESSAGE("PollTeardown: Found socket handle for request 0x%08x", request->SetupMessageId);
         struct pollfd *fds = static_cast<struct pollfd *>(it->second);
-        result = write(fds[WiFiRequestHandler::POLL_DUMMY_FD_INDEX].fd, "E", 1);      // Writing to the dummy file descriptor should end the poll request.
+        result = write(fds[WiFiRequestHandler::POLL_DUMMY_FD_INDEX].fd, "E", 1); // Writing to the dummy file descriptor should end the poll request.
         if (close(fds[WiFiRequestHandler::POLL_DUMMY_FD_INDEX].fd) < 0)
         {
             result = -1;
@@ -1682,20 +1683,20 @@ int WiFiRequestHandler::PollTeardown(void *vpMessage)
     else
     {
         //
-        //  We do not treat this as an error as the request information may have been removed by the 
+        //  We do not treat this as an error as the request information may have been removed by the
         //  interrupt handler.
         //
         TRACE_MESSAGE("PollTeardown: Cannot find request %08x", request->SetupMessageId);
     }
     UnlockPollRequests();
 
-    #if defined(WIFI_DEBUG)
-        DumpActivePollRequests();
-    #endif
+#if defined(WIFI_DEBUG)
+    DumpActivePollRequests();
+#endif
 
     TRACE_MESSAGE("PollTeardown: Exit, result %d", result);
 
-    return(result);
+    return (result);
 }
 
 /**
@@ -1708,7 +1709,7 @@ void WiFiRequestHandler::PollSocket(void *requestId)
 {
     TRACE_MESSAGE("PollSocket: Enter");
 
-    Esp32Messaging::InterruptPollResponse response = { };
+    Esp32Messaging::InterruptPollResponse response = {};
 
     LockPollRequests();
     std::map<uint32_t, struct pollfd *>::iterator it = _pollRequests.find((uint32_t) requestId);
@@ -1724,7 +1725,7 @@ void WiFiRequestHandler::PollSocket(void *requestId)
         else
         {
             LockPollRequests();
-            it = _pollRequests.find((uint32_t) requestId);      // Get again in case anything has changed.
+            it = _pollRequests.find((uint32_t) requestId); // Get again in case anything has changed.
             if (it != _pollRequests.end())
             {
                 int32_t events;
@@ -1751,7 +1752,7 @@ void WiFiRequestHandler::PollSocket(void *requestId)
     TRACE_MESSAGE("PollSocket: Return value from poll: %d", response.Result);
 
     Message *message = static_cast<Message *>(pvPortMalloc(sizeof(Message)));
-    *message = { };
+    *message = {};
     message->Interface = Esp32Interfaces::WiFi;
     message->Function = WiFiFunction::InterruptPollResponse;
     message->MessageID = _messageDispatcher->GetNextMessageID();
@@ -1776,7 +1777,7 @@ void WiFiRequestHandler::Poll(void *vpMessage)
 {
     TRACE_MESSAGE("Poll: Enter");
     Message *message = static_cast<Message *>(vpMessage);
-    Esp32Messaging::IntegerAndErrnoResponse response = { };
+    Esp32Messaging::IntegerAndErrnoResponse response = {};
 
     if (IsConnected())
     {

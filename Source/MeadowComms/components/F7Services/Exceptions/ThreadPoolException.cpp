@@ -1,6 +1,6 @@
 /**
  *  ThreadPoolException.cpp
- * 
+ *
  *  Implementation of the ThreadPoolException class methods.
  */
 #include "ThreadPoolException.hpp"
@@ -14,7 +14,7 @@ ThreadPoolException::ThreadPoolException() : std::runtime_error("ThreadPoolExcep
 
 /**
  *  @brief Create an instance of the ThreadPoolException class with the specified message.
- * 
+ *
  *  @param message
  *      Message to be used in the construction of the instance of the ThreadPoolException class.
  */

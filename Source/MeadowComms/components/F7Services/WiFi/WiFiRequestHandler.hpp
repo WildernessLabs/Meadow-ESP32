@@ -45,27 +45,27 @@
 
 /* Interface flag bits (for ioctl) */
 
-#define IFF_DOWN           (1 << 0) /* Interface is down */
-#define IFF_UP             (1 << 1) /* Interface is up */
-#define IFF_RUNNING        (1 << 2) /* Carrier is available */
-#define IFF_IPv6           (1 << 3) /* Configured for IPv6 packet (vs ARP or IPv4) */
-#define IFF_NOARP          (1 << 7) /* ARP is not required for this packet */
+#define IFF_DOWN (1 << 0)    /* Interface is down */
+#define IFF_UP (1 << 1)      /* Interface is up */
+#define IFF_RUNNING (1 << 2) /* Carrier is available */
+#define IFF_IPv6 (1 << 3)    /* Configured for IPv6 packet (vs ARP or IPv4) */
+#define IFF_NOARP (1 << 7)   /* ARP is not required for this packet */
 
 /* Socket definitions (for ioctl) */
 
-#define _SIOCBASE           (0x0700)            /* Socket ioctl commands */
-#define _IOC(type,nr)       ((type)|(nr))
-#define _SIOC(nr)           _IOC(_SIOCBASE,nr)
+#define _SIOCBASE (0x0700) /* Socket ioctl commands */
+#define _IOC(type, nr) ((type) | (nr))
+#define _SIOC(nr) _IOC(_SIOCBASE, nr)
 
-#define SIOCGIFADDR         _SIOC(0x0001)       /* Get IP address */
-#define SIOCGIFDSTADDR      _SIOC(0x0003)       /* Get P-to-P address */
-#define SIOCGIFBRDADDR      _SIOC(0x0005)       /* Get broadcast IP address */
-#define SIOCGIFNETMASK      _SIOC(0x0007)       /* Get network mask */
-#define SIOCGIFHWADDR       _SIOC(0x0014)       /* Get hardware address */
+#define SIOCGIFADDR _SIOC(0x0001)    /* Get IP address */
+#define SIOCGIFDSTADDR _SIOC(0x0003) /* Get P-to-P address */
+#define SIOCGIFBRDADDR _SIOC(0x0005) /* Get broadcast IP address */
+#define SIOCGIFNETMASK _SIOC(0x0007) /* Get network mask */
+#define SIOCGIFHWADDR _SIOC(0x0014)  /* Get hardware address */
 
-#define SIOCGIFCONF         _SIOC(0x0018)       /* Return an interface list (IPv4) */
-#define SIOCGIFFLAGS        _SIOC(0x001b)       /* Gets the interface flags */
-#define SIOCGIFNAME         _SIOC(0x002A)       /* Get interface name string */
+#define SIOCGIFCONF _SIOC(0x0018)    /* Return an interface list (IPv4) */
+#define SIOCGIFFLAGS _SIOC(0x001b)   /* Gets the interface flags */
+#define SIOCGIFNAME _SIOC(0x002A)    /* Get interface name string */
 
 /**
  *  @brief WiFi class
@@ -81,8 +81,8 @@ private:
      */
     struct poll_request_s
     {
-        struct pollfd *fd;      /* Pointer to the pollfd structure of the original request. */
-        uint32_t request_id;    /* ID of the message sent to the ESP32. */
+        struct pollfd *fd;   /* Pointer to the pollfd structure of the original request. */
+        uint32_t request_id; /* ID of the message sent to the ESP32. */
     };
     typedef struct poll_request_s poll_request_t;
 
@@ -92,7 +92,7 @@ private:
 
     /**
      *  @brief Indicate if the WiFi interface can accept a new request.
-     * 
+     *
      *  The WIFI_READY_FOR_NEXT_COMMAND_BIT indicates if this current request has completed successfully.  It
      *  is used to block the Task from making a second request when one is already
      *  running.
@@ -162,7 +162,7 @@ private:
 
     /**
      *  @brief Indicate that some sort of error has occurred.
-     * 
+     *
      *  This will usually be problems with connections, getting the system started etc.
      */
     static const int WIFI_ERROR_BIT = BIT23;
@@ -246,28 +246,28 @@ private:
 
     /**
      *  @brief Last error code from a call into the ESP IDF.
-     * 
+     *
      *  This can be used to track errors when using events.
      */
     esp_err_t _lastIdfErrorCode;
 
     /**
      *  @brief Information about the access point that we have connected to.
-     * 
+     *
      *  This will be filled with 0 at startup and when the device disconnects from an access point.
      */
     wifi_event_sta_connected_t _apInformation;
 
     /**
      *  @brief Information about the disconnect reason.
-     * 
+     *
      *  This will be filled with 0 at startup and should only be populated following a disconnect event.
      */
     wifi_event_sta_disconnected_t _disconnectData;
 
     /**
      *  @brief Current IP information (IP address, subnet mask and gateway).
-     * 
+     *
      *  This will be filled with 0 at startup and when the device disconnects from an access point.
      */
     esp_netif_ip_info_t _ipInformation;
@@ -338,7 +338,7 @@ private:
 
     /**
      *  @brief Name fo the storage in NVS that holds the value indicating that the
-     *  system should get the time at startup. 
+     *  system should get the time at startup.
      */
     static const char *GET_TIME_AT_STARTUP_NAME;
 
@@ -479,8 +479,8 @@ private:
 
     /**
      * @brief Get the _instance object
-     * 
-     * @return WiFiRequestHandler* 
+     *
+     * @return WiFiRequestHandler*
      */
     static WiFiRequestHandler *GetInstance();
 
@@ -537,7 +537,7 @@ private:
 
     /**
      *  @brief Stop the WiFi Adapter.
-     * 
+     *
      *  This request could come from an explicit stop request of from a disconnect request.
      */
     StatusCodes::StatusCodes StopWiFIAdapter();
@@ -584,8 +584,8 @@ private:
 
     /**
      * @brief Extract and validate the access point information.
-     * 
-     * @return Esp32Messaging::AccessPointInformation* 
+     *
+     * @return Esp32Messaging::AccessPointInformation*
      */
     Esp32Messaging::AccessPointInformation *ExtractAndValidateAccessPointInformation(uint8_t *);
 
@@ -637,7 +637,7 @@ private:
     /**
      *  @brief Process the access point stopped event (WIFI_EVENT_AP_START).
      */
-    void  AccessPointStartedEvent();
+    void AccessPointStartedEvent();
 
     /**
      *  @brief Process the access point stopped event (WIFI_EVENT_AP_STOP).
@@ -702,7 +702,7 @@ private:
     //----------------------------------------------------------------------
     //
     //                      POSIX Calls start here.
-    
+
     /**
      *  @brief Provide a mechanism for the STM32 to call the getaddrinfo method.
      */
@@ -861,7 +861,7 @@ public:
 
     /**
      *  @brief This is the event handler called by FreeRTOS.
-     * 
+     *
      *  It merely passes the event on to an internal private event handler
      *  within the class.
      */

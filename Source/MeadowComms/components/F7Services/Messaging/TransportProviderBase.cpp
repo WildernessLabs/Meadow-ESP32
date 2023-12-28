@@ -95,7 +95,7 @@ int TransportProviderBase::OutboundMessageQueueLength()
         xSemaphoreGive(_outboundMessageQueueMutex);
         result = (int) messageCount;
     }
-    return(result);
+    return (result);
 }
 
 /**
@@ -122,7 +122,7 @@ Message *TransportProviderBase::GetOutboundMessage()
         xSemaphoreGive(_outboundMessageQueueMutex);
     }
 
-    return(result);
+    return (result);
 }
 
 /**
@@ -137,7 +137,7 @@ Message *TransportProviderBase::GetOutboundMessage()
 void TransportProviderBase::DumpMessageAtHeadOfQueue()
 {
     Message *message;
-    if (xQueuePeek( _outboundMessageQueueHandle, &( message ), ( TickType_t ) 10 ))
+    if (xQueuePeek(_outboundMessageQueueHandle, &(message), (TickType_t) 10))
     {
         Logging::DumpMessage(COMPONENT_NAME, message);
     }
@@ -175,7 +175,7 @@ bool TransportProviderBase::QueueMessageForStm32(Message *message)
         }
         xSemaphoreGive(_outboundMessageQueueMutex);
     }
-    return(result);
+    return (result);
 }
 
 /**

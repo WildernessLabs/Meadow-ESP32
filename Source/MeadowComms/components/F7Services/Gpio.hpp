@@ -83,6 +83,6 @@ namespace Gpio
      *  SPI Chip Select pin.
      */
     const gpio_num_t CHIP_SELECT_PIN = GPIO_NUM_5;
-}
+} // namespace Gpio
 
 #endif /* _GPIO_HPP_ */

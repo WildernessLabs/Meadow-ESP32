@@ -33,7 +33,7 @@ private:
 
     /**
      * @brief Mount the file system
-     * 
+     *
      * @return true If file system mounted.
      * @return false If the file system could not be mounted.
      */
@@ -41,7 +41,7 @@ private:
 
     /**
      * @brief Mount the file system if necessary.
-     * 
+     *
      * @return true If the file system is mounted (or was mounted successfully)
      * @return false If the file system could not be mounted.
      */
@@ -55,7 +55,7 @@ public:
 
     /**
      * @brief Name of the partition in the partition table.
-     * 
+     *
      *  Note that this can be different from the pARTITION_LABEL.
      */
     static const char *PARTITION_PATH_NAME;
@@ -79,10 +79,10 @@ public:
      *  @brief Perform any class level setup.
      */
     StatusCodes::StatusCodes Setup();
-    
+
     /**
      * @brief Mount the file system.
-     * 
+     *
      * @return true If the file system is mounted OK.
      * @return false If the file is not mounted.
      */
