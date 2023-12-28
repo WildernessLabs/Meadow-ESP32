@@ -22,8 +22,57 @@ case "$(uname -a)" in
     ;;
 esac
 
+VERBOSE_FLAGS=
+HELP=false
+
+#
+#   Work out which options are on the command line.
+#
+for i in "$@"
+do
+case $i in
+    -v|--verbose)
+    VERBOSE_FLAGS=--verbose
+    ;;
+    -h|--help)
+    HELP=true
+    ;;
+    *)
+    printf "Uknown command line option ($i)."
+    printf "Run run-checks.sh --help for information on valid options."
+    exit 1
+    ;;
+esac
+done
+
+if $HELP; then
+    echo "$0: Run code checks."
+    echo ""
+    echo "Options:"
+    echo "-h | --help             Display this message"
+    echo "-v | --verbose          Execute in verbose mode (useful for debugging)"
+    echo ""
+    exit 0
+fi
+
+
+SOURCE_DIR=$scriptdir/Source/MeadowComms
+COMPONENTS_DIR=$SOURCE_DIR/components/F7Services
+
+echo "Running cppcheck"
 cppcheck --check-level=exhaustive --force --inline-suppr -iCMakeLists.txt -iSource/MeadowComms/components/esp_littlefs -iSource/MeadowComms/build Source/MeadowComms
 #
 #   The following uses the compile_commands.json file - needs uplift to latest SDK.
 #
 # cppcheck --check-level=exhaustive --force --inline-suppr -iCMakeLists.txt -iSource/MeadowComms/components/esp_littlefs -iSource/MeadowComms/build --project=$scriptdir/Source/MeadowComms/build/compile_commands.json
+
+echo "Running clang-format"
+clang-format --dry-run --Werror $VERBOSE_FLAGS $SOURCE_DIR/main/*.?pp 
+clang-format --dry-run --Werror $VERBOSE_FLAGS $COMPONENTS_DIR/*.?pp
+clang-format --dry-run --Werror $VERBOSE_FLAGS $COMPONENTS_DIR/Bluetooth/*.?pp $COMPONENTS_DIR/Bluetooth/bluetooth/*.?pp
+clang-format --dry-run --Werror $VERBOSE_FLAGS $COMPONENTS_DIR/Exceptions/*.?pp
+clang-format --dry-run --Werror $VERBOSE_FLAGS $COMPONENTS_DIR/MeshNetwork/*.?pp
+clang-format --dry-run --Werror $VERBOSE_FLAGS $COMPONENTS_DIR/Messaging/*.?pp
+clang-format --dry-run --Werror $VERBOSE_FLAGS $COMPONENTS_DIR/System/*.?pp
+clang-format --dry-run --Werror $VERBOSE_FLAGS $COMPONENTS_DIR/test/*.?pp
+clang-format --dry-run --Werror $VERBOSE_FLAGS $COMPONENTS_DIR/WiFi/*.?pp
