@@ -21,23 +21,25 @@ BluetoothCharacteristicValue::BluetoothCharacteristicValue(BluetoothCharacterist
 
 BluetoothCharacteristicValue::~BluetoothCharacteristicValue()
 {
-    if(_value)
+    if (_value)
     {
         delete _value;
         _value = NULL;
     }
 }
 
-bool BluetoothCharacteristicValue::WriteValue(uint8_t* source, int length)
+bool BluetoothCharacteristicValue::WriteValue(uint8_t *source, int length)
 {
-    if(length > MaxLength) return false;
-    if(length < 0) return false;
+    if (length > MaxLength)
+        return false;
+    if (length < 0)
+        return false;
 
-    if(length > 0)
+    if (length > 0)
     {
         memcpy(_value, source, length);
 
-        if(_parent->OnValueChanged)
+        if (_parent->OnValueChanged)
         {
             _parent->OnValueChanged(this->_parent);
         }
@@ -46,16 +48,17 @@ bool BluetoothCharacteristicValue::WriteValue(uint8_t* source, int length)
     return true;
 }
 
-bool BluetoothCharacteristicValue::ReadValue(uint8_t* dest, int length)
+bool BluetoothCharacteristicValue::ReadValue(uint8_t *dest, int length)
 {
-    if(length > CurrentLength) return false;
-    if(length < 0) return false;
+    if (length > CurrentLength)
+        return false;
+    if (length < 0)
+        return false;
 
-    if(length > 0)
+    if (length > 0)
     {
         memcpy(dest, _value, length);
     }
 
     return true;
 }
-

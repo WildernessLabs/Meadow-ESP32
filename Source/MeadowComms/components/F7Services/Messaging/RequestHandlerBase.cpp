@@ -144,7 +144,7 @@ bool RequestHandlerBase::QueueEsp32Message(Message *message)
         result = false;
     }
 
-    return(result);
+    return (result);
 }
 
 /**

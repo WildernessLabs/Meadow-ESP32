@@ -35,7 +35,7 @@
 #include <vector>
 #include <string>
 
-//#define BT_FULL_LOGGING
+// #define BT_FULL_LOGGING
 
 using namespace std;
 
@@ -47,15 +47,14 @@ using namespace std;
 class BluetoothRequestHandler : public RequestHandlerBase
 {
 private:
-
     /**
      *  Event group bits.
-     * 
+     *
      *  The Event group bits are used to synchronise the requests and the event processing
      *  system.  They effectively convert asynchronous requests and responses into synchronous
      *  method calls.
      */
-    
+
     /**
      *  BT_READY_BIT indicates if the Bluetooth processing system can process a
      *  request.  It is used to synchronise requests
@@ -107,7 +106,7 @@ private:
     void CreateAttributeGraph(Message *msg);
 
     // these are static because they are called from a C callback handler
-    static void OnDataWriteRequest(uint16_t handle, uint8_t* data, uint16_t dataLength);
+    static void OnDataWriteRequest(uint16_t handle, uint8_t *data, uint16_t dataLength);
 
     /*
      *  Construct a new Bluetooth request handler object with reference to a
@@ -117,12 +116,12 @@ private:
 
     static BluetoothRequestHandler *GetInstance();
 
-    static Esp32Messaging::BTDataWriteRequest* _writeRequest;
+    static Esp32Messaging::BTDataWriteRequest *_writeRequest;
 
 public:
     static BluetoothManager _manager;
     static BluetoothRequestHandler *_instance;
-    
+
     static BluetoothRequestHandler *GetInstance(IMessageDispatcher *d);
 
     /**
@@ -136,9 +135,9 @@ public:
     void Setup();
 
     /**
-     *  This is the event handler called by FreeRTOS.  It merely passes the event on to 
+     *  This is the event handler called by FreeRTOS.  It merely passes the event on to
      *  an internal private event handler within the class.
-     * 
+     *
      *  This method is static to allow it to be accessed from the C APIs.  This method will
      *  pass the processing on to the instance method in order to allow the event loop to
      *  have access to the class level variables, not just the static variable.

@@ -34,7 +34,7 @@
  */
 void WiFiRequestHandler::LockConnectedNodesMap()
 {
-     xSemaphoreTake(_connectedNodesListMutex, portMAX_DELAY);
+    xSemaphoreTake(_connectedNodesListMutex, portMAX_DELAY);
 }
 
 /**
@@ -42,16 +42,16 @@ void WiFiRequestHandler::LockConnectedNodesMap()
  */
 void WiFiRequestHandler::UnlockConnectedNodesMap()
 {
-     xSemaphoreGive(_connectedNodesListMutex);
+    xSemaphoreGive(_connectedNodesListMutex);
 }
 
 /**
  * @brief Extract and validate the access point information.
- * 
+ *
  * @param data
- *      Pointer to a block of memory holding the encoded access point information. 
- * 
- * @return Esp32Messaging::AccessPointInformation* 
+ *      Pointer to a block of memory holding the encoded access point information.
+ *
+ * @return Esp32Messaging::AccessPointInformation*
  *      Pointer to validated access point information, nullptr if there is a problem.
  */
 Esp32Messaging::AccessPointInformation *WiFiRequestHandler::ExtractAndValidateAccessPointInformation(uint8_t *data)
@@ -73,13 +73,13 @@ Esp32Messaging::AccessPointInformation *WiFiRequestHandler::ExtractAndValidateAc
             }
         }
     }
-    
-    return(result);
+
+    return (result);
 }
 
 /**
  *  @brief Start the access point.
- * 
+ *
  *  @param message
  *      Message from the C# application containing information about the access point configuration.
  */
@@ -200,10 +200,10 @@ void WiFiRequestHandler::StartAccessPoint(Message *message)
 
 /**
  *  @brief Stop the access point if it is running.
- *  
+ *
  *  @param message
  *      Message from the C# application requesting that the access point is stopped.
-  */
+ */
 void WiFiRequestHandler::StopAccessPoint(Message *message)
 {
     TRACE_MESSAGE("StopAccessPoint: Enter");
@@ -247,7 +247,7 @@ void WiFiRequestHandler::AccessPointStartedEvent()
     esp_netif_ip_info_t ip_info;
     if (esp_netif_get_ip_info(_softApNetIfHandle, &ip_info) == ESP_OK)
     {
-        Esp32Messaging::AccessPointInformation info = { };
+        Esp32Messaging::AccessPointInformation info = {};
         info.IpAddress = ip_info.ip.addr;
         info.SubnetMask = ip_info.netmask.addr;
         info.Gateway = ip_info.gw.addr;
@@ -294,11 +294,11 @@ void WiFiRequestHandler::AccessPointStoppedEvent()
 
 /**
  * @brief Raise an event for a node connecting ot disconnecting.
- * 
- * @param event_type 
+ *
+ * @param event_type
  *      Type of event to raise, NodeConnectedEvent or NodeDisconnectedEvent
- * 
- * @param data 
+ *
+ * @param data
  *      Information about the node (MAC and possibly IP address).
  */
 void WiFiRequestHandler::RaiseNodeConnectionChangeEvent(WiFiFunction::WiFiFunction event_type, Esp32Messaging::NodeConnectionChangeEventData *data)
@@ -360,7 +360,7 @@ void WiFiRequestHandler::NodeConnectedEvent()
 
 /**
  * @brief Processes the node disconnecting from the access point event.
- * 
+ *
  * @param eventData
  *      Information about the node that has disconnected from the access point.
  */
@@ -377,7 +377,7 @@ void WiFiRequestHandler::NodeDisconnectedEvent(wifi_event_ap_stadisconnected_t *
     {
         TRACE_MESSAGE("NodeDisconnectedEvent: Found MAC address " MACSTR, MAC2STR(eventData->mac));
         _connectedNodes.erase(it);
-        Esp32Messaging::NodeConnectionChangeEventData data = { };
+        Esp32Messaging::NodeConnectionChangeEventData data = {};
         memcpy(&data.MacAddress, &eventData->mac, 6);
         RaiseNodeConnectionChangeEvent(WiFiFunction::NodeDisconnectedEvent, &data);
     }

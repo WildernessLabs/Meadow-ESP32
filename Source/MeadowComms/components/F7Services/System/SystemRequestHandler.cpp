@@ -146,7 +146,7 @@ SystemRequestHandler::~SystemRequestHandler()
  */
 uint32_t SystemRequestHandler::GetMaximumMessageQueueLength()
 {
-    return(_maximumMessageQueueLength);
+    return (_maximumMessageQueueLength);
 }
 
 /**
@@ -154,7 +154,7 @@ uint32_t SystemRequestHandler::GetMaximumMessageQueueLength()
  */
 ThreadPool *SystemRequestHandler::SharedThreadPool()
 {
-    return(_threadPool);
+    return (_threadPool);
 }
 
 /**
@@ -176,7 +176,7 @@ StatusCodes::StatusCodes SystemRequestHandler::SetMaximumMessageQueueLength(uint
             _maximumMessageQueueLength = value;
         }
     }
-    return(result);
+    return (result);
 }
 
 /**
@@ -184,7 +184,7 @@ StatusCodes::StatusCodes SystemRequestHandler::SetMaximumMessageQueueLength(uint
  */
 char *SystemRequestHandler::GetDeviceName()
 {
-    return(_deviceName);
+    return (_deviceName);
 }
 
 /**
@@ -206,7 +206,7 @@ StatusCodes::StatusCodes SystemRequestHandler::SetDeviceName(char *value)
             _deviceName = strdup(value);
         }
     }
-    return(result);
+    return (result);
 }
 
 /*
@@ -244,7 +244,7 @@ void SystemRequestHandler::Setup()
  */
 char *SystemRequestHandler::GetConfigurationValue(const char *name, const char *defaultValue)
 {
-    return(NvsManager::GetValue(_configurationName, name, defaultValue));
+    return (NvsManager::GetValue(_configurationName, name, defaultValue));
 }
 
 /**
@@ -263,7 +263,7 @@ char *SystemRequestHandler::GetConfigurationValue(const char *name, const char *
  */
 NvsManager::ErrorCodes SystemRequestHandler::SetConfigurationValue(const char *name, const char *value)
 {
-    return(NvsManager::SetValue(_configurationName, name, value));
+    return (NvsManager::SetValue(_configurationName, name, value));
 }
 
 /**
@@ -284,7 +284,7 @@ NvsManager::ErrorCodes SystemRequestHandler::SetConfigurationValue(const char *n
  */
 uint32_t SystemRequestHandler::GetConfigurationValue(const char *name, const uint32_t defaultValue)
 {
-    return(NvsManager::GetValue(_configurationName, name, defaultValue));
+    return (NvsManager::GetValue(_configurationName, name, defaultValue));
 }
 
 /**
@@ -303,7 +303,7 @@ uint32_t SystemRequestHandler::GetConfigurationValue(const char *name, const uin
  */
 NvsManager::ErrorCodes SystemRequestHandler::SetConfigurationValue(const char *name, const uint32_t value)
 {
-    return(NvsManager::SetValue(_configurationName, name, value));
+    return (NvsManager::SetValue(_configurationName, name, value));
 }
 
 /**
@@ -324,7 +324,7 @@ NvsManager::ErrorCodes SystemRequestHandler::SetConfigurationValue(const char *n
  */
 int SystemRequestHandler::GetConfigurationValue(const char *name, const int32_t defaultValue)
 {
-    return(NvsManager::GetValue(_configurationName, name, defaultValue));
+    return (NvsManager::GetValue(_configurationName, name, defaultValue));
 }
 
 /**
@@ -343,7 +343,7 @@ int SystemRequestHandler::GetConfigurationValue(const char *name, const int32_t 
  */
 NvsManager::ErrorCodes SystemRequestHandler::SetConfigurationValue(const char *name, const int32_t value)
 {
-    return(NvsManager::SetValue(_configurationName, name, value));
+    return (NvsManager::SetValue(_configurationName, name, value));
 }
 
 /**
@@ -364,7 +364,7 @@ NvsManager::ErrorCodes SystemRequestHandler::SetConfigurationValue(const char *n
  */
 uint8_t SystemRequestHandler::GetConfigurationValue(const char *name, const uint8_t defaultValue)
 {
-    return(NvsManager::GetValue(_configurationName, name, defaultValue));
+    return (NvsManager::GetValue(_configurationName, name, defaultValue));
 }
 
 /**
@@ -380,10 +380,10 @@ uint8_t SystemRequestHandler::GetConfigurationValue(const char *name, const uint
  *
  *  @returns
  *      Error code indicating success or failure status.
-*/
+ */
 NvsManager::ErrorCodes SystemRequestHandler::SetConfigurationValue(const char *name, const uint8_t value)
 {
-    return(NvsManager::SetValue(_configurationName, name, value));
+    return (NvsManager::SetValue(_configurationName, name, value));
 }
 
 /**
@@ -404,7 +404,7 @@ NvsManager::ErrorCodes SystemRequestHandler::SetConfigurationValue(const char *n
  */
 bool SystemRequestHandler::GetConfigurationValue(const char *name, const bool defaultValue)
 {
-    return(NvsManager::GetValue(_configurationName, name, defaultValue));
+    return (NvsManager::GetValue(_configurationName, name, defaultValue));
 }
 
 /**
@@ -423,7 +423,7 @@ bool SystemRequestHandler::GetConfigurationValue(const char *name, const bool de
  */
 NvsManager::ErrorCodes SystemRequestHandler::SetConfigurationValue(const char *name, const bool value)
 {
-    return(NvsManager::SetValue(_configurationName, name, value));
+    return (NvsManager::SetValue(_configurationName, name, value));
 }
 
 /**
@@ -460,7 +460,7 @@ void SystemRequestHandler::PopulateConfiguration(Esp32Messaging::SystemConfigura
     //
     //  Bluetooth MAC address will be zeroed from the memset above.
     //
-    
+
     TRACE_MESSAGE("PopulateConfiguration: Exit");
 }
 
@@ -474,7 +474,7 @@ void SystemRequestHandler::SendConfigurationAsInterruptMessage()
 {
     TRACE_MESSAGE("SendConfigurationAsInterruptMessage: Enter");
 
-    Esp32Messaging::SystemConfiguration config = { };
+    Esp32Messaging::SystemConfiguration config = {};
     PopulateConfiguration(&config);
 
     Message *message = static_cast<Message *>(pvPortMalloc(sizeof(Message)));

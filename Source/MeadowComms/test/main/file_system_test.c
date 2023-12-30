@@ -14,7 +14,7 @@
 #include <string.h>
 #include "unity.h"
 
-static void print_banner(const char* text)
+static void print_banner(const char *text)
 {
     printf("\n#### %s #####\n\n", text);
 }

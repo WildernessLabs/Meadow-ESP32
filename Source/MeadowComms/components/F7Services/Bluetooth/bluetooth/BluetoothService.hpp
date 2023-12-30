@@ -14,24 +14,30 @@ class BluetoothHandleManager;
 
 class BluetoothService
 {
-    public:
-        BluetoothService();
-        BluetoothService(const char* name, Uuid16 uuid);
-        BluetoothCharacteristic& AddCharacteristic(BluetoothCharacteristic *characteristic);
+public:
+    BluetoothService();
+    BluetoothService(const char *name, Uuid16 uuid);
+    BluetoothCharacteristic &AddCharacteristic(BluetoothCharacteristic *characteristic);
 
-        CharacteristicAdded OnCharacteristicAdded = NULL;
+    CharacteristicAdded OnCharacteristicAdded = NULL;
 
-        std::string Name;
-        Uuid16 Uuid;
-        unsigned short Handle;
+    std::string Name;
+    Uuid16 Uuid;
+    unsigned short Handle;
 
-        void SetHandleManager(BluetoothHandleManager *handleManager) { _handleManager = handleManager; }
+    void SetHandleManager(BluetoothHandleManager *handleManager)
+    {
+        _handleManager = handleManager;
+    }
 
-        vector<BluetoothCharacteristic*> GetCharacteristicDefinitions() { return _characteristics; }
+    vector<BluetoothCharacteristic *> GetCharacteristicDefinitions()
+    {
+        return _characteristics;
+    }
 
-    private:
-        vector<BluetoothCharacteristic*> _characteristics;
-        BluetoothHandleManager* _handleManager;
+private:
+    vector<BluetoothCharacteristic *> _characteristics;
+    BluetoothHandleManager *_handleManager;
 };
 
 #endif

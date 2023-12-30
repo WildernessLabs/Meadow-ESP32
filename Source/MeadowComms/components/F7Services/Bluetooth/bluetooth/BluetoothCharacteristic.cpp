@@ -1,6 +1,5 @@
 #include "BluetoothCharacteristic.hpp"
 
-
 BluetoothCharacteristic::BluetoothCharacteristic(Uuid16 uuid, CharacteristicPermission permission, CharacteristicProperty property, int maxValueLength)
 {
     // a characterisic has both a Declaration and Value.  They point to one another.
@@ -44,11 +43,11 @@ void BluetoothCharacteristic::AddDescriptor(BluetoothDescriptor *descriptor)
     // TODO: does it have a handle?
 
     // TODO: set the parent
-    
+
     _descriptors.push_back(descriptor);
 
     // callback that it was added to the graph
-    if(OnDescriptorAdded)
+    if (OnDescriptorAdded)
     {
         OnDescriptorAdded(descriptor);
     }

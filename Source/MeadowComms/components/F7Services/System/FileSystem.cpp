@@ -54,8 +54,7 @@ const char *FileSystem::PARTITION_LABEL = "littlefs";
 FileSystem::FileSystem()
 {
     _messageDispatcher = nullptr;
-    _config =
-    {
+    _config = {
         .base_path = PARTITION_PATH_NAME,
         .partition_label = PARTITION_LABEL,
         .format_if_mount_failed = true,
@@ -65,7 +64,7 @@ FileSystem::FileSystem()
 
 /**
  * @brief Construct a new File System object
- * 
+ *
  * @param messageDispatcher
  *      Message dispatcher object used to queue messages for the STM32.
  */
@@ -100,18 +99,18 @@ FileSystem::~FileSystem()
 
 /**
  * @brief Mount the file system.
- * 
+ *
  * @return true If the file system is mounted OK.
  * @return false If the file is not mounted.
  */
 bool FileSystem::IsMounted()
 {
-    return(esp_littlefs_mounted(_config.partition_label));
+    return (esp_littlefs_mounted(_config.partition_label));
 }
 
 /**
  * @brief Mount the file system
- * 
+ *
  * @return true If file system mounted.
  * @return false If the file system could not be mounted.
  */
@@ -136,12 +135,12 @@ bool FileSystem::Mount()
         }
     }
 
-    return(result);
+    return (result);
 }
 
 /**
  * @brief Mount the file system if necessary.
- * 
+ *
  * @return true If the file system is mounted (or was mounted successfully)
  * @return false If the file system could not be mounted.
  */
@@ -153,12 +152,12 @@ bool FileSystem::MountIfNecessary()
         result = Mount();
     }
 
-    return(result);
+    return (result);
 }
 
 /**
  * @brief Setup the file system.
- * 
+ *
  * @return StatusCodes::CompletedOk on success, StatusCodes::Failure otherwise.
  */
 StatusCodes::StatusCodes FileSystem::Setup()
@@ -177,12 +176,12 @@ StatusCodes::StatusCodes FileSystem::Setup()
 
     TRACE_MESSAGE("Setup: Exit");
 
-    return(result);
+    return (result);
 }
 
 /**
  * @brief Format the file system.
- * 
+ *
  * @param message
  *      Pointer to the originating message object.
  */
@@ -191,7 +190,7 @@ void FileSystem::Format(Message *message)
     TRACE_MESSAGE("Format: Enter");
 
     StatusCodes::StatusCodes result = StatusCodes::Failure;
-    message->DeletePayload();                                   // There should be no payload.
+    message->DeletePayload(); // There should be no payload.
 
     esp_err_t ret = esp_littlefs_format(PARTITION_LABEL);
     if (ret == ESP_OK)
@@ -214,7 +213,7 @@ void FileSystem::Format(Message *message)
 
 /**
  * @brief Read a file from the file system.
- * 
+ *
  * @param request
  *      Pointer to the originating message object.
  */
@@ -285,7 +284,7 @@ void FileSystem::ReadFile(Message *message)
         vPortFree(fileData->Name);
         vPortFree(fileData);
     }
-    
+
     message->MessageType = MessageTypes::Response;
     message->StatusCode = result;
     _messageDispatcher->QueueMessageForStm32(message);
@@ -295,7 +294,7 @@ void FileSystem::ReadFile(Message *message)
 
 /**
  * @brief Write a file to the file system.
- * 
+ *
  * @param request
  *      Pointer to the originating message object.
  */
@@ -342,7 +341,7 @@ void FileSystem::WriteFile(Message *message)
 
 /**
  * @brief Delete a file on the file system.
- * 
+ *
  * @param request
  *      Pointer to the originating message object.
  */
@@ -387,7 +386,7 @@ void FileSystem::DeleteFile(Message *message)
 
 /**
  * @brief List the files on the file system.
- * 
+ *
  * @param request
  *      Pointer to the originating message object.
  */

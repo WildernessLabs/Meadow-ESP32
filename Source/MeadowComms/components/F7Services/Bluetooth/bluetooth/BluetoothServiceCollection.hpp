@@ -14,29 +14,29 @@ using namespace std;
 
 class BluetoothServiceCollection
 {
-    private:
-        vector<BluetoothService*> _services;
-        BluetoothHandleManager* _handleManager;
+private:
+    vector<BluetoothService *> _services;
+    BluetoothHandleManager *_handleManager;
 
-        void HandleServiceCharacteristicAdded(BluetoothCharacteristic *);
-        void HandleServiceValueChanged(BluetoothCharacteristic *characteristic);
+    void HandleServiceCharacteristicAdded(BluetoothCharacteristic *);
+    void HandleServiceValueChanged(BluetoothCharacteristic *characteristic);
 
-    public:
-        BluetoothServiceCollection(BluetoothHandleManager *handleManager)
-        {
-            _handleManager = handleManager;
-        }
+public:
+    BluetoothServiceCollection(BluetoothHandleManager *handleManager)
+    {
+        _handleManager = handleManager;
+    }
 
-        ServiceAdded OnServiceAdded = NULL;
-        CharacteristicAdded OnCharacteristicAdded = NULL;
-        ValueChanged OnValueChanged = NULL;
+    ServiceAdded OnServiceAdded = NULL;
+    CharacteristicAdded OnCharacteristicAdded = NULL;
+    ValueChanged OnValueChanged = NULL;
 
-        BluetoothService& Add(BluetoothService *service);
-        BluetoothService* Find(uint8_t *uuid);
-        BluetoothService* Find(Uuid16 uuid);
-        int Count();
+    BluetoothService &Add(BluetoothService *service);
+    BluetoothService *Find(uint8_t *uuid);
+    BluetoothService *Find(Uuid16 uuid);
+    int Count();
 
-        vector<BluetoothService*> GetServiceDefinitions();
+    vector<BluetoothService *> GetServiceDefinitions();
 };
 
 #endif

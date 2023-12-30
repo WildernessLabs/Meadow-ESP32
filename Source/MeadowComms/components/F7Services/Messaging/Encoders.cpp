@@ -1,7 +1,6 @@
 
 #include "Encoders.hpp"
 
-
 #include "Encoders.hpp"
 #include "Logging.hpp"
 #include "SpiTransportProvider.hpp"
@@ -44,16 +43,16 @@ uint32_t Encoders::CalculateSpiBufferSize(uint32_t requestedSize)
 
 /**
  *  Calculate the minimum amount of space needed to store an encoded message.
- * 
+ *
  *  Assumptions:
  *      1 - The packet information has been set up correctly.
- * 
+ *
  *  @param message
  *      Message to be encoded.
- * 
+ *
  *  @param headerOnly
  *      Are we just sending the header?
- * 
+ *
  *  @returns
  *      Number of bytes needed to contain the message.
  */
@@ -66,7 +65,7 @@ uint32_t Encoders::EncodedPacketSize(Message *message, bool headerOnly)
         result += message->PacketLength;
     }
 
-    return(result);
+    return (result);
 }
 
 /**
@@ -230,7 +229,7 @@ char *Encoders::ExtractString(uint8_t *buffer)
             ptr = nullptr;
         }
     }
-    return((char *) ptr);
+    return ((char *) ptr);
 }
 
 /**
@@ -260,7 +259,7 @@ void Encoders::EncodeString(char *source, uint8_t *buffer)
  *
  *  @param str
  *      Block of memory containing the string.
- *  
+ *
  *  @returns
  *      Length of the string.
  */
@@ -272,7 +271,7 @@ uint32_t Encoders::StringLength(char *str)
     {
         length = strlen(str);
     }
-    return(length);
+    return (length);
 }
 
 /**
@@ -307,7 +306,7 @@ uint8_t Encoders::CRC8(const uint8_t *data, uint16_t len)
             byte >>= 1;
         }
     }
-    return(crc);
+    return (crc);
 }
 
 /**
@@ -351,7 +350,7 @@ uint32_t Encoders::ProgressiveCRC32(uint32_t currentChecksum, uint8_t byte)
     crc ^= byte;
     for (uint32_t index = 0; index < 8; index++)
     {
-        uint32_t mask = (uint32_t) -(crc & 0x01);
+        uint32_t mask = (uint32_t) - (crc & 0x01);
         crc = (crc >> 1) ^ (0xedb88320 & mask);
     }
     return (crc);
@@ -365,7 +364,7 @@ uint32_t Encoders::ProgressiveCRC32(uint32_t currentChecksum, uint8_t byte)
  *  we will pad out the message with four additional bytes and ignore these
  *  four bytes when calculating CRCs (we do not know what they will contain
  *  post transmission).
- * 
+ *
  *  @param buffer
  *      Byte (uint8_t) array containing the encoded message.
  *
@@ -385,14 +384,14 @@ Message *Encoders::ExtractMessage(uint8_t *buffer, uint32_t bufferLength, bool h
 {
     uint32_t crc = ExtractUInt32(buffer + Message::CRC_OFFSET);
     EncodeUInt32(0, buffer + Message::CRC_OFFSET);
-    
+
     Message *message = nullptr;
-    if (crc == CRC32(buffer, bufferLength - 4))             // See note in comment above.
+    if (crc == CRC32(buffer, bufferLength - 4)) // See note in comment above.
     {
         message = static_cast<Message *>(pvPortMalloc(sizeof(Message)));
 
         memset(static_cast<void *>(message), 0, sizeof(Message));
-        buffer += 5;                                        // Skip the protocol and CRC.
+        buffer += 5; // Skip the protocol and CRC.
         message->PacketOffset = ExtractUInt16(buffer);
         buffer += 2;
         message->PacketLength = ExtractUInt16(buffer);
@@ -427,7 +426,7 @@ Message *Encoders::ExtractMessage(uint8_t *buffer, uint32_t bufferLength, bool h
             message->Payload = nullptr;
         }
     }
-    return(message);
+    return (message);
 }
 
 /**
@@ -435,7 +434,7 @@ Message *Encoders::ExtractMessage(uint8_t *buffer, uint32_t bufferLength, bool h
  *
  *  @param message
  *      Message structure to encode in to the byte buffer.
- * 
+ *
  *  @param buffer
  *      Pointer to the block of memory that will contain the encoded message.
  *
@@ -456,7 +455,7 @@ void Encoders::EncodeMessage(Message *message, uint8_t *buffer, bool headerOnly)
     if (buffer)
     {
         uint8_t *next_location = buffer;
-        
+
         memset(buffer, 0, bufferSize);
         *next_location = Message::PROTOCOL_NUMBER;
         next_location++;
@@ -493,12 +492,12 @@ void Encoders::EncodeMessage(Message *message, uint8_t *buffer, bool headerOnly)
 
 /**
  *  Convert the SystemConfiguration object into a byte stream that can be sent to the STM32.
- *  
+ *
  *  The amount of memory required can be obtained by calling the EncodedSystemConfigurationBufferSize method.
- *  
+ *
  *  @param systemConfiguration
  *      SystemConfiguration object to be encoded.
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded SystemConfiguration object.
  */
@@ -549,10 +548,10 @@ void Encoders::EncodeSystemConfiguration(Esp32Messaging::SystemConfiguration *sy
 
 /**
  *  Calculate the amount of memory required to hold the given instance of the SystemConfiguration object.
- *  
+ *
  *  @param systemConfiguration
  *      SystemConfiguration object to be encoded.
- *  
+ *
  *  @returns
  *      Number of bytes required to hold the encoded SystemConfiguration object.
  */
@@ -562,18 +561,18 @@ int Encoders::EncodedSystemConfigurationBufferSize(Esp32Messaging::SystemConfigu
     result += Encoders::StringLength(systemConfiguration->DeviceName);
     result += Encoders::StringLength(systemConfiguration->DefaultAccessPoint);
     result += Encoders::StringLength(systemConfiguration->BuildBranchName);
-    return(result + 54);
+    return (result + 54);
 }
 
 /**
  *  Extract the ConfigurationValue object that is encoded in the given buffer.
- *  
+ *
  *  Note that the returned pointer points to a block of memory on the heap and
  *  this should eventually be released calling vPortFree(...).
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded ConfigurationValue object.
- *  
+ *
  *  @returns
  *      Pointer to a ConfigurationValue object.
  */
@@ -595,17 +594,17 @@ Esp32Messaging::ConfigurationValue *Encoders::ExtractConfigurationValue(uint8_t 
     {
         configurationValue->Value = nullptr;
     }
-    return(configurationValue);
+    return (configurationValue);
 }
 
 /**
  *  Convert the AccessPointInformation object into a byte stream that can be sent to the STM32.
- *  
+ *
  *  The amount of memory required can be obtained by calling the EncodedAccessPointInformationBufferSize method.
- *  
+ *
  *  @param accessPointInformation
  *      AccessPointInformation object to be encoded.
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded AccessPointInformation object.
  */
@@ -630,10 +629,10 @@ void Encoders::EncodeAccessPointInformation(Esp32Messaging::AccessPointInformati
 
 /**
  *  Calculate the amount of memory required to hold the given instance of the AccessPointInformation object.
- *  
+ *
  *  @param accessPointInformation
  *      AccessPointInformation object to be encoded.
- *  
+ *
  *  @returns
  *      Number of bytes required to hold the encoded AccessPointInformation object.
  */
@@ -642,18 +641,18 @@ int Encoders::EncodedAccessPointInformationBufferSize(Esp32Messaging::AccessPoin
     int result = 0;
     result += Encoders::StringLength(accessPointInformation->NetworkName);
     result += Encoders::StringLength(accessPointInformation->Password);
-    return(result + 17);
+    return (result + 17);
 }
 
 /**
  *  Extract the AccessPointInformation object that is encoded in the given buffer.
- *  
+ *
  *  Note that the returned pointer points to a block of memory on the heap and
  *  this should eventually be released calling vPortFree(...).
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded AccessPointInformation object.
- *  
+ *
  *  @returns
  *      Pointer to a AccessPointInformation object.
  */
@@ -676,18 +675,18 @@ Esp32Messaging::AccessPointInformation *Encoders::ExtractAccessPointInformation(
     accessPointInformation->Channel = *buffer;
     buffer += 1;
     accessPointInformation->Hidden = *buffer;
-    return(accessPointInformation);
+    return (accessPointInformation);
 }
 
 /**
  *  Extract the DisconnectFromAccessPointRequest object that is encoded in the given buffer.
- *  
+ *
  *  Note that the returned pointer points to a block of memory on the heap and
  *  this should eventually be released calling vPortFree(...).
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded DisconnectFromAccessPointRequest object.
- *  
+ *
  *  @returns
  *      Pointer to a DisconnectFromAccessPointRequest object.
  */
@@ -696,17 +695,17 @@ Esp32Messaging::DisconnectFromAccessPointRequest *Encoders::ExtractDisconnectFro
     Esp32Messaging::DisconnectFromAccessPointRequest *disconnectFromAccessPointRequest = (Esp32Messaging::DisconnectFromAccessPointRequest *) pvPortMalloc(sizeof(Esp32Messaging::DisconnectFromAccessPointRequest));
 
     disconnectFromAccessPointRequest->TurnOffWiFiInterface = *buffer;
-    return(disconnectFromAccessPointRequest);
+    return (disconnectFromAccessPointRequest);
 }
 
 /**
  *  Convert the ConnectEventData object into a byte stream that can be sent to the STM32.
- *  
+ *
  *  The amount of memory required can be obtained by calling the EncodedConnectEventDataBufferSize method.
- *  
+ *
  *  @param connectEventData
  *      ConnectEventData object to be encoded.
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded ConnectEventData object.
  */
@@ -731,26 +730,26 @@ void Encoders::EncodeConnectEventData(Esp32Messaging::ConnectEventData *connectE
 
 /**
  *  Calculate the amount of memory required to hold the given instance of the ConnectEventData object.
- *  
+ *
  *  @param connectEventData
  *      ConnectEventData object to be encoded.
- *  
+ *
  *  @returns
  *      Number of bytes required to hold the encoded ConnectEventData object.
  */
 int Encoders::EncodedConnectEventDataBufferSize(Esp32Messaging::ConnectEventData *connectEventData)
 {
-    return(57);
+    return (57);
 }
 
 /**
  *  Convert the NodeConnectionChangeEventData object into a byte stream that can be sent to the STM32.
- *  
+ *
  *  The amount of memory required can be obtained by calling the EncodedNodeConnectionChangeEventDataBufferSize method.
- *  
+ *
  *  @param nodeConnectionChangeEventData
  *      NodeConnectionChangeEventData object to be encoded.
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded NodeConnectionChangeEventData object.
  */
@@ -763,26 +762,26 @@ void Encoders::EncodeNodeConnectionChangeEventData(Esp32Messaging::NodeConnectio
 
 /**
  *  Calculate the amount of memory required to hold the given instance of the NodeConnectionChangeEventData object.
- *  
+ *
  *  @param nodeConnectionChangeEventData
  *      NodeConnectionChangeEventData object to be encoded.
- *  
+ *
  *  @returns
  *      Number of bytes required to hold the encoded NodeConnectionChangeEventData object.
  */
 int Encoders::EncodedNodeConnectionChangeEventDataBufferSize(Esp32Messaging::NodeConnectionChangeEventData *nodeConnectionChangeEventData)
 {
-    return(10);
+    return (10);
 }
 
 /**
  *  Convert the AccessPoint object into a byte stream that can be sent to the STM32.
- *  
+ *
  *  The amount of memory required can be obtained by calling the EncodedAccessPointBufferSize method.
- *  
+ *
  *  @param accessPoint
  *      AccessPoint object to be encoded.
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded AccessPoint object.
  */
@@ -805,26 +804,26 @@ void Encoders::EncodeAccessPoint(Esp32Messaging::AccessPoint *accessPoint, uint8
 
 /**
  *  Calculate the amount of memory required to hold the given instance of the AccessPoint object.
- *  
+ *
  *  @param accessPoint
  *      AccessPoint object to be encoded.
- *  
+ *
  *  @returns
  *      Number of bytes required to hold the encoded AccessPoint object.
  */
 int Encoders::EncodedAccessPointBufferSize(Esp32Messaging::AccessPoint *accessPoint)
 {
-    return(47);
+    return (47);
 }
 
 /**
  *  Convert the AccessPointList object into a byte stream that can be sent to the STM32.
- *  
+ *
  *  The amount of memory required can be obtained by calling the EncodedAccessPointListBufferSize method.
- *  
+ *
  *  @param accessPointList
  *      AccessPointList object to be encoded.
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded AccessPointList object.
  */
@@ -842,10 +841,10 @@ void Encoders::EncodeAccessPointList(Esp32Messaging::AccessPointList *accessPoin
 
 /**
  *  Calculate the amount of memory required to hold the given instance of the AccessPointList object.
- *  
+ *
  *  @param accessPointList
  *      AccessPointList object to be encoded.
- *  
+ *
  *  @returns
  *      Number of bytes required to hold the encoded AccessPointList object.
  */
@@ -853,17 +852,17 @@ int Encoders::EncodedAccessPointListBufferSize(Esp32Messaging::AccessPointList *
 {
     int result = 0;
     result += accessPointList->AccessPointsLength;
-    return(result + 8);
+    return (result + 8);
 }
 
 /**
  *  Convert the SockAddr object into a byte stream that can be sent to the STM32.
- *  
+ *
  *  The amount of memory required can be obtained by calling the EncodedSockAddrBufferSize method.
- *  
+ *
  *  @param sockAddr
  *      SockAddr object to be encoded.
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded SockAddr object.
  */
@@ -884,27 +883,27 @@ void Encoders::EncodeSockAddr(Esp32Messaging::SockAddr *sockAddr, uint8_t *buffe
 
 /**
  *  Calculate the amount of memory required to hold the given instance of the SockAddr object.
- *  
+ *
  *  @param sockAddr
  *      SockAddr object to be encoded.
- *  
+ *
  *  @returns
  *      Number of bytes required to hold the encoded SockAddr object.
  */
 int Encoders::EncodedSockAddrBufferSize(Esp32Messaging::SockAddr *sockAddr)
 {
-    return(31);
+    return (31);
 }
 
 /**
  *  Extract the SockAddr object that is encoded in the given buffer.
- *  
+ *
  *  Note that the returned pointer points to a block of memory on the heap and
  *  this should eventually be released calling vPortFree(...).
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded SockAddr object.
- *  
+ *
  *  @returns
  *      Pointer to a SockAddr object.
  */
@@ -923,17 +922,17 @@ Esp32Messaging::SockAddr *Encoders::ExtractSockAddr(uint8_t *buffer)
     memcpy((void *) sockAddr->Ip6Address, (void *) buffer, 16);
     buffer += 16;
     sockAddr->ScopeID = ExtractUInt32(buffer);
-    return(sockAddr);
+    return (sockAddr);
 }
 
 /**
  *  Convert the AddrInfo object into a byte stream that can be sent to the STM32.
- *  
+ *
  *  The amount of memory required can be obtained by calling the EncodedAddrInfoBufferSize method.
- *  
+ *
  *  @param addrInfo
  *      AddrInfo object to be encoded.
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded AddrInfo object.
  */
@@ -965,10 +964,10 @@ void Encoders::EncodeAddrInfo(Esp32Messaging::AddrInfo *addrInfo, uint8_t *buffe
 
 /**
  *  Calculate the amount of memory required to hold the given instance of the AddrInfo object.
- *  
+ *
  *  @param addrInfo
  *      AddrInfo object to be encoded.
- *  
+ *
  *  @returns
  *      Number of bytes required to hold the encoded AddrInfo object.
  */
@@ -977,18 +976,18 @@ int Encoders::EncodedAddrInfoBufferSize(Esp32Messaging::AddrInfo *addrInfo)
     int result = 0;
     result += addrInfo->AddrLength;
     result += Encoders::StringLength(addrInfo->CanonName);
-    return(result + 33);
+    return (result + 33);
 }
 
 /**
  *  Extract the AddrInfo object that is encoded in the given buffer.
- *  
+ *
  *  Note that the returned pointer points to a block of memory on the heap and
  *  this should eventually be released calling vPortFree(...).
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded AddrInfo object.
- *  
+ *
  *  @returns
  *      Pointer to a AddrInfo object.
  */
@@ -1023,18 +1022,18 @@ Esp32Messaging::AddrInfo *Encoders::ExtractAddrInfo(uint8_t *buffer)
     addrInfo->CanonName = ExtractString(buffer);
     buffer += Encoders::StringLength(addrInfo->CanonName) + 1;
     addrInfo->Next = (void *) ExtractUInt32(buffer);
-    return(addrInfo);
+    return (addrInfo);
 }
 
 /**
  *  Extract the GetAddrInfoRequest object that is encoded in the given buffer.
- *  
+ *
  *  Note that the returned pointer points to a block of memory on the heap and
  *  this should eventually be released calling vPortFree(...).
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded GetAddrInfoRequest object.
- *  
+ *
  *  @returns
  *      Pointer to a GetAddrInfoRequest object.
  */
@@ -1058,17 +1057,17 @@ Esp32Messaging::GetAddrInfoRequest *Encoders::ExtractGetAddrInfoRequest(uint8_t 
     {
         getAddrInfoRequest->Hints = nullptr;
     }
-    return(getAddrInfoRequest);
+    return (getAddrInfoRequest);
 }
 
 /**
  *  Convert the GetAddrInfoResponse object into a byte stream that can be sent to the STM32.
- *  
+ *
  *  The amount of memory required can be obtained by calling the EncodedGetAddrInfoResponseBufferSize method.
- *  
+ *
  *  @param getAddrInfoResponse
  *      GetAddrInfoResponse object to be encoded.
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded GetAddrInfoResponse object.
  */
@@ -1086,10 +1085,10 @@ void Encoders::EncodeGetAddrInfoResponse(Esp32Messaging::GetAddrInfoResponse *ge
 
 /**
  *  Calculate the amount of memory required to hold the given instance of the GetAddrInfoResponse object.
- *  
+ *
  *  @param getAddrInfoResponse
  *      GetAddrInfoResponse object to be encoded.
- *  
+ *
  *  @returns
  *      Number of bytes required to hold the encoded GetAddrInfoResponse object.
  */
@@ -1097,18 +1096,18 @@ int Encoders::EncodedGetAddrInfoResponseBufferSize(Esp32Messaging::GetAddrInfoRe
 {
     int result = 0;
     result += getAddrInfoResponse->ResLength;
-    return(result + 8);
+    return (result + 8);
 }
 
 /**
  *  Extract the SocketRequest object that is encoded in the given buffer.
- *  
+ *
  *  Note that the returned pointer points to a block of memory on the heap and
  *  this should eventually be released calling vPortFree(...).
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded SocketRequest object.
- *  
+ *
  *  @returns
  *      Pointer to a SocketRequest object.
  */
@@ -1123,17 +1122,17 @@ Esp32Messaging::SocketRequest *Encoders::ExtractSocketRequest(uint8_t *buffer)
     socketRequest->Type = ExtractInt32(buffer);
     buffer += 4;
     socketRequest->Protocol = ExtractInt32(buffer);
-    return(socketRequest);
+    return (socketRequest);
 }
 
 /**
  *  Convert the IntegerResponse object into a byte stream that can be sent to the STM32.
- *  
+ *
  *  The amount of memory required can be obtained by calling the EncodedIntegerResponseBufferSize method.
- *  
+ *
  *  @param integerResponse
  *      IntegerResponse object to be encoded.
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded IntegerResponse object.
  */
@@ -1144,26 +1143,26 @@ void Encoders::EncodeIntegerResponse(Esp32Messaging::IntegerResponse *integerRes
 
 /**
  *  Calculate the amount of memory required to hold the given instance of the IntegerResponse object.
- *  
+ *
  *  @param integerResponse
  *      IntegerResponse object to be encoded.
- *  
+ *
  *  @returns
  *      Number of bytes required to hold the encoded IntegerResponse object.
  */
 int Encoders::EncodedIntegerResponseBufferSize(Esp32Messaging::IntegerResponse *integerResponse)
 {
-    return(4);
+    return (4);
 }
 
 /**
  *  Convert the IntegerAndErrnoResponse object into a byte stream that can be sent to the STM32.
- *  
+ *
  *  The amount of memory required can be obtained by calling the EncodedIntegerAndErrnoResponseBufferSize method.
- *  
+ *
  *  @param integerAndErrnoResponse
  *      IntegerAndErrnoResponse object to be encoded.
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded IntegerAndErrnoResponse object.
  */
@@ -1176,27 +1175,27 @@ void Encoders::EncodeIntegerAndErrnoResponse(Esp32Messaging::IntegerAndErrnoResp
 
 /**
  *  Calculate the amount of memory required to hold the given instance of the IntegerAndErrnoResponse object.
- *  
+ *
  *  @param integerAndErrnoResponse
  *      IntegerAndErrnoResponse object to be encoded.
- *  
+ *
  *  @returns
  *      Number of bytes required to hold the encoded IntegerAndErrnoResponse object.
  */
 int Encoders::EncodedIntegerAndErrnoResponseBufferSize(Esp32Messaging::IntegerAndErrnoResponse *integerAndErrnoResponse)
 {
-    return(8);
+    return (8);
 }
 
 /**
  *  Extract the ConnectRequest object that is encoded in the given buffer.
- *  
+ *
  *  Note that the returned pointer points to a block of memory on the heap and
  *  this should eventually be released calling vPortFree(...).
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded ConnectRequest object.
- *  
+ *
  *  @returns
  *      Pointer to a ConnectRequest object.
  */
@@ -1218,18 +1217,18 @@ Esp32Messaging::ConnectRequest *Encoders::ExtractConnectRequest(uint8_t *buffer)
     {
         connectRequest->Addr = nullptr;
     }
-    return(connectRequest);
+    return (connectRequest);
 }
 
 /**
  *  Extract the FreeAddrInfoRequest object that is encoded in the given buffer.
- *  
+ *
  *  Note that the returned pointer points to a block of memory on the heap and
  *  this should eventually be released calling vPortFree(...).
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded FreeAddrInfoRequest object.
- *  
+ *
  *  @returns
  *      Pointer to a FreeAddrInfoRequest object.
  */
@@ -1238,17 +1237,17 @@ Esp32Messaging::FreeAddrInfoRequest *Encoders::ExtractFreeAddrInfoRequest(uint8_
     Esp32Messaging::FreeAddrInfoRequest *freeAddrInfoRequest = (Esp32Messaging::FreeAddrInfoRequest *) pvPortMalloc(sizeof(Esp32Messaging::FreeAddrInfoRequest));
 
     freeAddrInfoRequest->AddrInfoAddress = ExtractUInt32(buffer);
-    return(freeAddrInfoRequest);
+    return (freeAddrInfoRequest);
 }
 
 /**
  *  Convert the TimeVal object into a byte stream that can be sent to the STM32.
- *  
+ *
  *  The amount of memory required can be obtained by calling the EncodedTimeValBufferSize method.
- *  
+ *
  *  @param timeVal
  *      TimeVal object to be encoded.
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded TimeVal object.
  */
@@ -1261,27 +1260,27 @@ void Encoders::EncodeTimeVal(Esp32Messaging::TimeVal *timeVal, uint8_t *buffer)
 
 /**
  *  Calculate the amount of memory required to hold the given instance of the TimeVal object.
- *  
+ *
  *  @param timeVal
  *      TimeVal object to be encoded.
- *  
+ *
  *  @returns
  *      Number of bytes required to hold the encoded TimeVal object.
  */
 int Encoders::EncodedTimeValBufferSize(Esp32Messaging::TimeVal *timeVal)
 {
-    return(8);
+    return (8);
 }
 
 /**
  *  Extract the TimeVal object that is encoded in the given buffer.
- *  
+ *
  *  Note that the returned pointer points to a block of memory on the heap and
  *  this should eventually be released calling vPortFree(...).
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded TimeVal object.
- *  
+ *
  *  @returns
  *      Pointer to a TimeVal object.
  */
@@ -1292,18 +1291,18 @@ Esp32Messaging::TimeVal *Encoders::ExtractTimeVal(uint8_t *buffer)
     timeVal->TvSec = ExtractUInt32(buffer);
     buffer += 4;
     timeVal->TvUsec = ExtractUInt32(buffer);
-    return(timeVal);
+    return (timeVal);
 }
 
 /**
  *  Extract the SetSockOptRequest object that is encoded in the given buffer.
- *  
+ *
  *  Note that the returned pointer points to a block of memory on the heap and
  *  this should eventually be released calling vPortFree(...).
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded SetSockOptRequest object.
- *  
+ *
  *  @returns
  *      Pointer to a SetSockOptRequest object.
  */
@@ -1330,18 +1329,18 @@ Esp32Messaging::SetSockOptRequest *Encoders::ExtractSetSockOptRequest(uint8_t *b
         setSockOptRequest->OptionValue = nullptr;
     }
     setSockOptRequest->OptionLen = ExtractInt32(buffer);
-    return(setSockOptRequest);
+    return (setSockOptRequest);
 }
 
 /**
  *  Extract the GetSockOptRequest object that is encoded in the given buffer.
- *  
+ *
  *  Note that the returned pointer points to a block of memory on the heap and
  *  this should eventually be released calling vPortFree(...).
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded GetSockOptRequest object.
- *  
+ *
  *  @returns
  *      Pointer to a GetSockOptRequest object.
  */
@@ -1354,17 +1353,17 @@ Esp32Messaging::GetSockOptRequest *Encoders::ExtractGetSockOptRequest(uint8_t *b
     getSockOptRequest->Level = ExtractInt32(buffer);
     buffer += 4;
     getSockOptRequest->OptionName = ExtractInt32(buffer);
-    return(getSockOptRequest);
+    return (getSockOptRequest);
 }
 
 /**
  *  Convert the GetSockOptResponse object into a byte stream that can be sent to the STM32.
- *  
+ *
  *  The amount of memory required can be obtained by calling the EncodedGetSockOptResponseBufferSize method.
- *  
+ *
  *  @param getSockOptResponse
  *      GetSockOptResponse object to be encoded.
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded GetSockOptResponse object.
  */
@@ -1386,10 +1385,10 @@ void Encoders::EncodeGetSockOptResponse(Esp32Messaging::GetSockOptResponse *getS
 
 /**
  *  Calculate the amount of memory required to hold the given instance of the GetSockOptResponse object.
- *  
+ *
  *  @param getSockOptResponse
  *      GetSockOptResponse object to be encoded.
- *  
+ *
  *  @returns
  *      Number of bytes required to hold the encoded GetSockOptResponse object.
  */
@@ -1397,17 +1396,17 @@ int Encoders::EncodedGetSockOptResponseBufferSize(Esp32Messaging::GetSockOptResp
 {
     int result = 0;
     result += getSockOptResponse->OptionValueLength;
-    return(result + 16);
+    return (result + 16);
 }
 
 /**
  *  Convert the Linger object into a byte stream that can be sent to the STM32.
- *  
+ *
  *  The amount of memory required can be obtained by calling the EncodedLingerBufferSize method.
- *  
+ *
  *  @param linger
  *      Linger object to be encoded.
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded Linger object.
  */
@@ -1420,27 +1419,27 @@ void Encoders::EncodeLinger(Esp32Messaging::Linger *linger, uint8_t *buffer)
 
 /**
  *  Calculate the amount of memory required to hold the given instance of the Linger object.
- *  
+ *
  *  @param linger
  *      Linger object to be encoded.
- *  
+ *
  *  @returns
  *      Number of bytes required to hold the encoded Linger object.
  */
 int Encoders::EncodedLingerBufferSize(Esp32Messaging::Linger *linger)
 {
-    return(8);
+    return (8);
 }
 
 /**
  *  Extract the WriteRequest object that is encoded in the given buffer.
- *  
+ *
  *  Note that the returned pointer points to a block of memory on the heap and
  *  this should eventually be released calling vPortFree(...).
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded WriteRequest object.
- *  
+ *
  *  @returns
  *      Pointer to a WriteRequest object.
  */
@@ -1463,18 +1462,18 @@ Esp32Messaging::WriteRequest *Encoders::ExtractWriteRequest(uint8_t *buffer)
         writeRequest->Buffer = nullptr;
     }
     writeRequest->Count = ExtractInt32(buffer);
-    return(writeRequest);
+    return (writeRequest);
 }
 
 /**
  *  Extract the ReadRequest object that is encoded in the given buffer.
- *  
+ *
  *  Note that the returned pointer points to a block of memory on the heap and
  *  this should eventually be released calling vPortFree(...).
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded ReadRequest object.
- *  
+ *
  *  @returns
  *      Pointer to a ReadRequest object.
  */
@@ -1485,17 +1484,17 @@ Esp32Messaging::ReadRequest *Encoders::ExtractReadRequest(uint8_t *buffer)
     readRequest->SocketHandle = ExtractInt32(buffer);
     buffer += 4;
     readRequest->Count = ExtractInt32(buffer);
-    return(readRequest);
+    return (readRequest);
 }
 
 /**
  *  Convert the ReadResponse object into a byte stream that can be sent to the STM32.
- *  
+ *
  *  The amount of memory required can be obtained by calling the EncodedReadResponseBufferSize method.
- *  
+ *
  *  @param readResponse
  *      ReadResponse object to be encoded.
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded ReadResponse object.
  */
@@ -1515,10 +1514,10 @@ void Encoders::EncodeReadResponse(Esp32Messaging::ReadResponse *readResponse, ui
 
 /**
  *  Calculate the amount of memory required to hold the given instance of the ReadResponse object.
- *  
+ *
  *  @param readResponse
  *      ReadResponse object to be encoded.
- *  
+ *
  *  @returns
  *      Number of bytes required to hold the encoded ReadResponse object.
  */
@@ -1526,18 +1525,18 @@ int Encoders::EncodedReadResponseBufferSize(Esp32Messaging::ReadResponse *readRe
 {
     int result = 0;
     result += readResponse->BufferLength;
-    return(result + 12);
+    return (result + 12);
 }
 
 /**
  *  Extract the CloseRequest object that is encoded in the given buffer.
- *  
+ *
  *  Note that the returned pointer points to a block of memory on the heap and
  *  this should eventually be released calling vPortFree(...).
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded CloseRequest object.
- *  
+ *
  *  @returns
  *      Pointer to a CloseRequest object.
  */
@@ -1546,17 +1545,17 @@ Esp32Messaging::CloseRequest *Encoders::ExtractCloseRequest(uint8_t *buffer)
     Esp32Messaging::CloseRequest *closeRequest = (Esp32Messaging::CloseRequest *) pvPortMalloc(sizeof(Esp32Messaging::CloseRequest));
 
     closeRequest->SocketHandle = ExtractInt32(buffer);
-    return(closeRequest);
+    return (closeRequest);
 }
 
 /**
  *  Convert the GetBatteryChargeLevelResponse object into a byte stream that can be sent to the STM32.
- *  
+ *
  *  The amount of memory required can be obtained by calling the EncodedGetBatteryChargeLevelResponseBufferSize method.
- *  
+ *
  *  @param getBatteryChargeLevelResponse
  *      GetBatteryChargeLevelResponse object to be encoded.
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded GetBatteryChargeLevelResponse object.
  */
@@ -1567,27 +1566,27 @@ void Encoders::EncodeGetBatteryChargeLevelResponse(Esp32Messaging::GetBatteryCha
 
 /**
  *  Calculate the amount of memory required to hold the given instance of the GetBatteryChargeLevelResponse object.
- *  
+ *
  *  @param getBatteryChargeLevelResponse
  *      GetBatteryChargeLevelResponse object to be encoded.
- *  
+ *
  *  @returns
  *      Number of bytes required to hold the encoded GetBatteryChargeLevelResponse object.
  */
 int Encoders::EncodedGetBatteryChargeLevelResponseBufferSize(Esp32Messaging::GetBatteryChargeLevelResponse *getBatteryChargeLevelResponse)
 {
-    return(4);
+    return (4);
 }
 
 /**
  *  Extract the SendRequest object that is encoded in the given buffer.
- *  
+ *
  *  Note that the returned pointer points to a block of memory on the heap and
  *  this should eventually be released calling vPortFree(...).
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded SendRequest object.
- *  
+ *
  *  @returns
  *      Pointer to a SendRequest object.
  */
@@ -1612,18 +1611,18 @@ Esp32Messaging::SendRequest *Encoders::ExtractSendRequest(uint8_t *buffer)
     sendRequest->Length = ExtractInt32(buffer);
     buffer += 4;
     sendRequest->Flags = ExtractInt32(buffer);
-    return(sendRequest);
+    return (sendRequest);
 }
 
 /**
  *  Extract the SendToRequest object that is encoded in the given buffer.
- *  
+ *
  *  Note that the returned pointer points to a block of memory on the heap and
  *  this should eventually be released calling vPortFree(...).
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded SendToRequest object.
- *  
+ *
  *  @returns
  *      Pointer to a SendToRequest object.
  */
@@ -1661,18 +1660,18 @@ Esp32Messaging::SendToRequest *Encoders::ExtractSendToRequest(uint8_t *buffer)
     {
         sendToRequest->DestinationAddress = nullptr;
     }
-    return(sendToRequest);
+    return (sendToRequest);
 }
 
 /**
  *  Extract the RecvFromRequest object that is encoded in the given buffer.
- *  
+ *
  *  Note that the returned pointer points to a block of memory on the heap and
  *  this should eventually be released calling vPortFree(...).
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded RecvFromRequest object.
- *  
+ *
  *  @returns
  *      Pointer to a RecvFromRequest object.
  */
@@ -1687,17 +1686,17 @@ Esp32Messaging::RecvFromRequest *Encoders::ExtractRecvFromRequest(uint8_t *buffe
     recvFromRequest->Flags = ExtractInt32(buffer);
     buffer += 4;
     recvFromRequest->GetSourceAddress = ExtractInt32(buffer);
-    return(recvFromRequest);
+    return (recvFromRequest);
 }
 
 /**
  *  Convert the RecvFromResponse object into a byte stream that can be sent to the STM32.
- *  
+ *
  *  The amount of memory required can be obtained by calling the EncodedRecvFromResponseBufferSize method.
- *  
+ *
  *  @param recvFromResponse
  *      RecvFromResponse object to be encoded.
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded RecvFromResponse object.
  */
@@ -1726,10 +1725,10 @@ void Encoders::EncodeRecvFromResponse(Esp32Messaging::RecvFromResponse *recvFrom
 
 /**
  *  Calculate the amount of memory required to hold the given instance of the RecvFromResponse object.
- *  
+ *
  *  @param recvFromResponse
  *      RecvFromResponse object to be encoded.
- *  
+ *
  *  @returns
  *      Number of bytes required to hold the encoded RecvFromResponse object.
  */
@@ -1738,18 +1737,18 @@ int Encoders::EncodedRecvFromResponseBufferSize(Esp32Messaging::RecvFromResponse
     int result = 0;
     result += recvFromResponse->BufferLength;
     result += recvFromResponse->SourceAddressLength;
-    return(result + 20);
+    return (result + 20);
 }
 
 /**
  *  Extract the PollRequest object that is encoded in the given buffer.
- *  
+ *
  *  Note that the returned pointer points to a block of memory on the heap and
  *  this should eventually be released calling vPortFree(...).
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded PollRequest object.
- *  
+ *
  *  @returns
  *      Pointer to a PollRequest object.
  */
@@ -1766,17 +1765,17 @@ Esp32Messaging::PollRequest *Encoders::ExtractPollRequest(uint8_t *buffer)
     pollRequest->Setup = ExtractInt32(buffer);
     buffer += 4;
     pollRequest->SetupMessageId = ExtractUInt32(buffer);
-    return(pollRequest);
+    return (pollRequest);
 }
 
 /**
  *  Convert the PollResponse object into a byte stream that can be sent to the STM32.
- *  
+ *
  *  The amount of memory required can be obtained by calling the EncodedPollResponseBufferSize method.
- *  
+ *
  *  @param pollResponse
  *      PollResponse object to be encoded.
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded PollResponse object.
  */
@@ -1791,26 +1790,26 @@ void Encoders::EncodePollResponse(Esp32Messaging::PollResponse *pollResponse, ui
 
 /**
  *  Calculate the amount of memory required to hold the given instance of the PollResponse object.
- *  
+ *
  *  @param pollResponse
  *      PollResponse object to be encoded.
- *  
+ *
  *  @returns
  *      Number of bytes required to hold the encoded PollResponse object.
  */
 int Encoders::EncodedPollResponseBufferSize(Esp32Messaging::PollResponse *pollResponse)
 {
-    return(10);
+    return (10);
 }
 
 /**
  *  Convert the InterruptPollResponse object into a byte stream that can be sent to the STM32.
- *  
+ *
  *  The amount of memory required can be obtained by calling the EncodedInterruptPollResponseBufferSize method.
- *  
+ *
  *  @param interruptPollResponse
  *      InterruptPollResponse object to be encoded.
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded InterruptPollResponse object.
  */
@@ -1829,27 +1828,27 @@ void Encoders::EncodeInterruptPollResponse(Esp32Messaging::InterruptPollResponse
 
 /**
  *  Calculate the amount of memory required to hold the given instance of the InterruptPollResponse object.
- *  
+ *
  *  @param interruptPollResponse
  *      InterruptPollResponse object to be encoded.
- *  
+ *
  *  @returns
  *      Number of bytes required to hold the encoded InterruptPollResponse object.
  */
 int Encoders::EncodedInterruptPollResponseBufferSize(Esp32Messaging::InterruptPollResponse *interruptPollResponse)
 {
-    return(18);
+    return (18);
 }
 
 /**
  *  Extract the ListenRequest object that is encoded in the given buffer.
- *  
+ *
  *  Note that the returned pointer points to a block of memory on the heap and
  *  this should eventually be released calling vPortFree(...).
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded ListenRequest object.
- *  
+ *
  *  @returns
  *      Pointer to a ListenRequest object.
  */
@@ -1860,18 +1859,18 @@ Esp32Messaging::ListenRequest *Encoders::ExtractListenRequest(uint8_t *buffer)
     listenRequest->SocketHandle = ExtractInt32(buffer);
     buffer += 4;
     listenRequest->BackLog = ExtractInt32(buffer);
-    return(listenRequest);
+    return (listenRequest);
 }
 
 /**
  *  Extract the BindRequest object that is encoded in the given buffer.
- *  
+ *
  *  Note that the returned pointer points to a block of memory on the heap and
  *  this should eventually be released calling vPortFree(...).
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded BindRequest object.
- *  
+ *
  *  @returns
  *      Pointer to a BindRequest object.
  */
@@ -1893,18 +1892,18 @@ Esp32Messaging::BindRequest *Encoders::ExtractBindRequest(uint8_t *buffer)
     {
         bindRequest->Addr = nullptr;
     }
-    return(bindRequest);
+    return (bindRequest);
 }
 
 /**
  *  Extract the AcceptRequest object that is encoded in the given buffer.
- *  
+ *
  *  Note that the returned pointer points to a block of memory on the heap and
  *  this should eventually be released calling vPortFree(...).
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded AcceptRequest object.
- *  
+ *
  *  @returns
  *      Pointer to a AcceptRequest object.
  */
@@ -1913,17 +1912,17 @@ Esp32Messaging::AcceptRequest *Encoders::ExtractAcceptRequest(uint8_t *buffer)
     Esp32Messaging::AcceptRequest *acceptRequest = (Esp32Messaging::AcceptRequest *) pvPortMalloc(sizeof(Esp32Messaging::AcceptRequest));
 
     acceptRequest->SocketHandle = ExtractInt32(buffer);
-    return(acceptRequest);
+    return (acceptRequest);
 }
 
 /**
  *  Convert the AcceptResponse object into a byte stream that can be sent to the STM32.
- *  
+ *
  *  The amount of memory required can be obtained by calling the EncodedAcceptResponseBufferSize method.
- *  
+ *
  *  @param acceptResponse
  *      AcceptResponse object to be encoded.
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded AcceptResponse object.
  */
@@ -1943,10 +1942,10 @@ void Encoders::EncodeAcceptResponse(Esp32Messaging::AcceptResponse *acceptRespon
 
 /**
  *  Calculate the amount of memory required to hold the given instance of the AcceptResponse object.
- *  
+ *
  *  @param acceptResponse
  *      AcceptResponse object to be encoded.
- *  
+ *
  *  @returns
  *      Number of bytes required to hold the encoded AcceptResponse object.
  */
@@ -1954,18 +1953,18 @@ int Encoders::EncodedAcceptResponseBufferSize(Esp32Messaging::AcceptResponse *ac
 {
     int result = 0;
     result += acceptResponse->AddrLength;
-    return(result + 12);
+    return (result + 12);
 }
 
 /**
  *  Extract the IoctlRequest object that is encoded in the given buffer.
- *  
+ *
  *  Note that the returned pointer points to a block of memory on the heap and
  *  this should eventually be released calling vPortFree(...).
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded IoctlRequest object.
- *  
+ *
  *  @returns
  *      Pointer to a IoctlRequest object.
  */
@@ -1974,17 +1973,17 @@ Esp32Messaging::IoctlRequest *Encoders::ExtractIoctlRequest(uint8_t *buffer)
     Esp32Messaging::IoctlRequest *ioctlRequest = (Esp32Messaging::IoctlRequest *) pvPortMalloc(sizeof(Esp32Messaging::IoctlRequest));
 
     ioctlRequest->Command = ExtractInt32(buffer);
-    return(ioctlRequest);
+    return (ioctlRequest);
 }
 
 /**
  *  Convert the IoctlResponse object into a byte stream that can be sent to the STM32.
- *  
+ *
  *  The amount of memory required can be obtained by calling the EncodedIoctlResponseBufferSize method.
- *  
+ *
  *  @param ioctlResponse
  *      IoctlResponse object to be encoded.
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded IoctlResponse object.
  */
@@ -2006,10 +2005,10 @@ void Encoders::EncodeIoctlResponse(Esp32Messaging::IoctlResponse *ioctlResponse,
 
 /**
  *  Calculate the amount of memory required to hold the given instance of the IoctlResponse object.
- *  
+ *
  *  @param ioctlResponse
  *      IoctlResponse object to be encoded.
- *  
+ *
  *  @returns
  *      Number of bytes required to hold the encoded IoctlResponse object.
  */
@@ -2017,18 +2016,18 @@ int Encoders::EncodedIoctlResponseBufferSize(Esp32Messaging::IoctlResponse *ioct
 {
     int result = 0;
     result += ioctlResponse->AddrLength;
-    return(result + 16);
+    return (result + 16);
 }
 
 /**
  *  Extract the GetSockPeerNameRequest object that is encoded in the given buffer.
- *  
+ *
  *  Note that the returned pointer points to a block of memory on the heap and
  *  this should eventually be released calling vPortFree(...).
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded GetSockPeerNameRequest object.
- *  
+ *
  *  @returns
  *      Pointer to a GetSockPeerNameRequest object.
  */
@@ -2037,17 +2036,17 @@ Esp32Messaging::GetSockPeerNameRequest *Encoders::ExtractGetSockPeerNameRequest(
     Esp32Messaging::GetSockPeerNameRequest *getSockPeerNameRequest = (Esp32Messaging::GetSockPeerNameRequest *) pvPortMalloc(sizeof(Esp32Messaging::GetSockPeerNameRequest));
 
     getSockPeerNameRequest->SocketHandle = ExtractInt32(buffer);
-    return(getSockPeerNameRequest);
+    return (getSockPeerNameRequest);
 }
 
 /**
  *  Convert the GetSockPeerNameResponse object into a byte stream that can be sent to the STM32.
- *  
+ *
  *  The amount of memory required can be obtained by calling the EncodedGetSockPeerNameResponseBufferSize method.
- *  
+ *
  *  @param getSockPeerNameResponse
  *      GetSockPeerNameResponse object to be encoded.
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded GetSockPeerNameResponse object.
  */
@@ -2067,10 +2066,10 @@ void Encoders::EncodeGetSockPeerNameResponse(Esp32Messaging::GetSockPeerNameResp
 
 /**
  *  Calculate the amount of memory required to hold the given instance of the GetSockPeerNameResponse object.
- *  
+ *
  *  @param getSockPeerNameResponse
  *      GetSockPeerNameResponse object to be encoded.
- *  
+ *
  *  @returns
  *      Number of bytes required to hold the encoded GetSockPeerNameResponse object.
  */
@@ -2078,17 +2077,17 @@ int Encoders::EncodedGetSockPeerNameResponseBufferSize(Esp32Messaging::GetSockPe
 {
     int result = 0;
     result += getSockPeerNameResponse->AddrLength;
-    return(result + 12);
+    return (result + 12);
 }
 
 /**
  *  Convert the EventData object into a byte stream that can be sent to the STM32.
- *  
+ *
  *  The amount of memory required can be obtained by calling the EncodedEventDataBufferSize method.
- *  
+ *
  *  @param eventData
  *      EventData object to be encoded.
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded EventData object.
  */
@@ -2105,26 +2104,26 @@ void Encoders::EncodeEventData(Esp32Messaging::EventData *eventData, uint8_t *bu
 
 /**
  *  Calculate the amount of memory required to hold the given instance of the EventData object.
- *  
+ *
  *  @param eventData
  *      EventData object to be encoded.
- *  
+ *
  *  @returns
  *      Number of bytes required to hold the encoded EventData object.
  */
 int Encoders::EncodedEventDataBufferSize(Esp32Messaging::EventData *eventData)
 {
-    return(13);
+    return (13);
 }
 
 /**
  *  Convert the EventDataPayload object into a byte stream that can be sent to the STM32.
- *  
+ *
  *  The amount of memory required can be obtained by calling the EncodedEventDataPayloadBufferSize method.
- *  
+ *
  *  @param eventDataPayload
  *      EventDataPayload object to be encoded.
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded EventDataPayload object.
  */
@@ -2142,10 +2141,10 @@ void Encoders::EncodeEventDataPayload(Esp32Messaging::EventDataPayload *eventDat
 
 /**
  *  Calculate the amount of memory required to hold the given instance of the EventDataPayload object.
- *  
+ *
  *  @param eventDataPayload
  *      EventDataPayload object to be encoded.
- *  
+ *
  *  @returns
  *      Number of bytes required to hold the encoded EventDataPayload object.
  */
@@ -2153,18 +2152,18 @@ int Encoders::EncodedEventDataPayloadBufferSize(Esp32Messaging::EventDataPayload
 {
     int result = 0;
     result += eventDataPayload->PayloadLength;
-    return(result + 8);
+    return (result + 8);
 }
 
 /**
  *  Extract the SetAntennaRequest object that is encoded in the given buffer.
- *  
+ *
  *  Note that the returned pointer points to a block of memory on the heap and
  *  this should eventually be released calling vPortFree(...).
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded SetAntennaRequest object.
- *  
+ *
  *  @returns
  *      Pointer to a SetAntennaRequest object.
  */
@@ -2175,18 +2174,18 @@ Esp32Messaging::SetAntennaRequest *Encoders::ExtractSetAntennaRequest(uint8_t *b
     setAntennaRequest->Antenna = *buffer;
     buffer += 1;
     setAntennaRequest->Persist = *buffer;
-    return(setAntennaRequest);
+    return (setAntennaRequest);
 }
 
 /**
  *  Extract the BTStackConfig object that is encoded in the given buffer.
- *  
+ *
  *  Note that the returned pointer points to a block of memory on the heap and
  *  this should eventually be released calling vPortFree(...).
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded BTStackConfig object.
- *  
+ *
  *  @returns
  *      Pointer to a BTStackConfig object.
  */
@@ -2195,17 +2194,17 @@ Esp32Messaging::BTStackConfig *Encoders::ExtractBTStackConfig(uint8_t *buffer)
     Esp32Messaging::BTStackConfig *bTStackConfig = (Esp32Messaging::BTStackConfig *) pvPortMalloc(sizeof(Esp32Messaging::BTStackConfig));
 
     bTStackConfig->Config = ExtractString(buffer);
-    return(bTStackConfig);
+    return (bTStackConfig);
 }
 
 /**
  *  Convert the BTDataWriteRequest object into a byte stream that can be sent to the STM32.
- *  
+ *
  *  The amount of memory required can be obtained by calling the EncodedBTDataWriteRequestBufferSize method.
- *  
+ *
  *  @param bTDataWriteRequest
  *      BTDataWriteRequest object to be encoded.
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded BTDataWriteRequest object.
  */
@@ -2223,10 +2222,10 @@ void Encoders::EncodeBTDataWriteRequest(Esp32Messaging::BTDataWriteRequest *bTDa
 
 /**
  *  Calculate the amount of memory required to hold the given instance of the BTDataWriteRequest object.
- *  
+ *
  *  @param bTDataWriteRequest
  *      BTDataWriteRequest object to be encoded.
- *  
+ *
  *  @returns
  *      Number of bytes required to hold the encoded BTDataWriteRequest object.
  */
@@ -2234,17 +2233,17 @@ int Encoders::EncodedBTDataWriteRequestBufferSize(Esp32Messaging::BTDataWriteReq
 {
     int result = 0;
     result += bTDataWriteRequest->DataLength;
-    return(result + 6);
+    return (result + 6);
 }
 
 /**
  *  Convert the BTGetHandlesResponse object into a byte stream that can be sent to the STM32.
- *  
+ *
  *  The amount of memory required can be obtained by calling the EncodedBTGetHandlesResponseBufferSize method.
- *  
+ *
  *  @param bTGetHandlesResponse
  *      BTGetHandlesResponse object to be encoded.
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded BTGetHandlesResponse object.
  */
@@ -2262,10 +2261,10 @@ void Encoders::EncodeBTGetHandlesResponse(Esp32Messaging::BTGetHandlesResponse *
 
 /**
  *  Calculate the amount of memory required to hold the given instance of the BTGetHandlesResponse object.
- *  
+ *
  *  @param bTGetHandlesResponse
  *      BTGetHandlesResponse object to be encoded.
- *  
+ *
  *  @returns
  *      Number of bytes required to hold the encoded BTGetHandlesResponse object.
  */
@@ -2273,18 +2272,18 @@ int Encoders::EncodedBTGetHandlesResponseBufferSize(Esp32Messaging::BTGetHandles
 {
     int result = 0;
     result += bTGetHandlesResponse->HandlesLength;
-    return(result + 6);
+    return (result + 6);
 }
 
 /**
  *  Extract the BTServerDataSet object that is encoded in the given buffer.
- *  
+ *
  *  Note that the returned pointer points to a block of memory on the heap and
  *  this should eventually be released calling vPortFree(...).
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded BTServerDataSet object.
- *  
+ *
  *  @returns
  *      Pointer to a BTServerDataSet object.
  */
@@ -2306,17 +2305,17 @@ Esp32Messaging::BTServerDataSet *Encoders::ExtractBTServerDataSet(uint8_t *buffe
     {
         bTServerDataSet->SetData = nullptr;
     }
-    return(bTServerDataSet);
+    return (bTServerDataSet);
 }
 
 /**
  *  Convert the FileDetails object into a byte stream that can be sent to the STM32.
- *  
+ *
  *  The amount of memory required can be obtained by calling the EncodedFileDetailsBufferSize method.
- *  
+ *
  *  @param fileDetails
  *      FileDetails object to be encoded.
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded FileDetails object.
  */
@@ -2329,10 +2328,10 @@ void Encoders::EncodeFileDetails(Esp32Messaging::FileDetails *fileDetails, uint8
 
 /**
  *  Calculate the amount of memory required to hold the given instance of the FileDetails object.
- *  
+ *
  *  @param fileDetails
  *      FileDetails object to be encoded.
- *  
+ *
  *  @returns
  *      Number of bytes required to hold the encoded FileDetails object.
  */
@@ -2340,18 +2339,18 @@ int Encoders::EncodedFileDetailsBufferSize(Esp32Messaging::FileDetails *fileDeta
 {
     int result = 0;
     result += Encoders::StringLength(fileDetails->Name);
-    return(result + 3);
+    return (result + 3);
 }
 
 /**
  *  Extract the FileDetails object that is encoded in the given buffer.
- *  
+ *
  *  Note that the returned pointer points to a block of memory on the heap and
  *  this should eventually be released calling vPortFree(...).
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded FileDetails object.
- *  
+ *
  *  @returns
  *      Pointer to a FileDetails object.
  */
@@ -2362,17 +2361,17 @@ Esp32Messaging::FileDetails *Encoders::ExtractFileDetails(uint8_t *buffer)
     fileDetails->Name = ExtractString(buffer);
     buffer += Encoders::StringLength(fileDetails->Name) + 1;
     fileDetails->Length = ExtractUInt16(buffer);
-    return(fileDetails);
+    return (fileDetails);
 }
 
 /**
  *  Convert the FileNameAndContents object into a byte stream that can be sent to the STM32.
- *  
+ *
  *  The amount of memory required can be obtained by calling the EncodedFileNameAndContentsBufferSize method.
- *  
+ *
  *  @param fileNameAndContents
  *      FileNameAndContents object to be encoded.
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded FileNameAndContents object.
  */
@@ -2390,10 +2389,10 @@ void Encoders::EncodeFileNameAndContents(Esp32Messaging::FileNameAndContents *fi
 
 /**
  *  Calculate the amount of memory required to hold the given instance of the FileNameAndContents object.
- *  
+ *
  *  @param fileNameAndContents
  *      FileNameAndContents object to be encoded.
- *  
+ *
  *  @returns
  *      Number of bytes required to hold the encoded FileNameAndContents object.
  */
@@ -2402,18 +2401,18 @@ int Encoders::EncodedFileNameAndContentsBufferSize(Esp32Messaging::FileNameAndCo
     int result = 0;
     result += Encoders::StringLength(fileNameAndContents->Name);
     result += fileNameAndContents->ContentsLength;
-    return(result + 5);
+    return (result + 5);
 }
 
 /**
  *  Extract the FileNameAndContents object that is encoded in the given buffer.
- *  
+ *
  *  Note that the returned pointer points to a block of memory on the heap and
  *  this should eventually be released calling vPortFree(...).
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded FileNameAndContents object.
- *  
+ *
  *  @returns
  *      Pointer to a FileNameAndContents object.
  */
@@ -2435,17 +2434,17 @@ Esp32Messaging::FileNameAndContents *Encoders::ExtractFileNameAndContents(uint8_
     {
         fileNameAndContents->Contents = nullptr;
     }
-    return(fileNameAndContents);
+    return (fileNameAndContents);
 }
 
 /**
  *  Convert the FileNameList object into a byte stream that can be sent to the STM32.
- *  
+ *
  *  The amount of memory required can be obtained by calling the EncodedFileNameListBufferSize method.
- *  
+ *
  *  @param fileNameList
  *      FileNameList object to be encoded.
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded FileNameList object.
  */
@@ -2463,10 +2462,10 @@ void Encoders::EncodeFileNameList(Esp32Messaging::FileNameList *fileNameList, ui
 
 /**
  *  Calculate the amount of memory required to hold the given instance of the FileNameList object.
- *  
+ *
  *  @param fileNameList
  *      FileNameList object to be encoded.
- *  
+ *
  *  @returns
  *      Number of bytes required to hold the encoded FileNameList object.
  */
@@ -2474,5 +2473,5 @@ int Encoders::EncodedFileNameListBufferSize(Esp32Messaging::FileNameList *fileNa
 {
     int result = 0;
     result += fileNameList->FileDetailsLength;
-    return(result + 6);
+    return (result + 6);
 }

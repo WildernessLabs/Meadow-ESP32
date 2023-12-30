@@ -22,8 +22,7 @@
 /**
  * @brief global variable holding the system build information.
  */
-meadow_version_t g_application_version = 
-{
+meadow_version_t g_application_version = {
     .major = VERSION_MAJOR,
     .minor = VERSION_MINOR,
     .revision = VERSION_REVISION,
@@ -35,8 +34,7 @@ meadow_version_t g_application_version =
     .minute = VERSION_BUILD_MINUTE,
     .second = VERSION_BUILD_SECOND,
     .hash = VERSION_BUILD_HASH_NUMBER,
-    .branch_name = (char *) VERSION_GIT_REF
-};
+    .branch_name = (char *) VERSION_GIT_REF};
 
 //
 //  Checks to see if TRACE or DEBUG is turned on and issues a warning if they are.
@@ -45,7 +43,7 @@ meadow_version_t g_application_version =
 //
 #if defined(TRACE_MESSAGES)
 
-#pragma message "Trace message output is enabled - turn this feature off for release builds."
+    #pragma message "Trace message output is enabled - turn this feature off for release builds."
 
 #endif
 
@@ -67,11 +65,11 @@ meadow_version_t g_application_version =
 #endif
 
 #if !defined(CONFIG_WIFI_SSID)
-#define CONFIG_WIFI_SSID "SSID"
+    #define CONFIG_WIFI_SSID "SSID"
 #endif
 
 #if !defined(CONFIG_WIFI_PASSWORD)
-#define CONFIG_WIFI_PASSWORD "PASSWORD"
+    #define CONFIG_WIFI_PASSWORD "PASSWORD"
 #endif
 
 void TestBluetoothMessage(MessageDispatcher *dispatcher);
@@ -122,17 +120,16 @@ extern "C" void app_main()
     char month_text[4];
     strftime(month_text, 4, "%b", &t);
 
-    ESP_LOGI(COMPONENT_NAME, "Version: %d.%d.%d.%d, built %02d %s 20%02d %02d:%02d:%02d UTC (%08x:%s)", \
-                g_application_version.major, g_application_version.minor, g_application_version.revision, g_application_version.build, \
-                g_application_version.day, month_text, g_application_version.year, g_application_version.hour, \
-                g_application_version.minute, g_application_version.second, g_application_version.hash, g_application_version.branch_name);
+    ESP_LOGI(
+        COMPONENT_NAME, "Version: %d.%d.%d.%d, built %02d %s 20%02d %02d:%02d:%02d UTC (%08x:%s)", g_application_version.major, g_application_version.minor, g_application_version.revision, g_application_version.build, g_application_version.day, month_text, g_application_version.year,
+        g_application_version.hour, g_application_version.minute, g_application_version.second, g_application_version.hash, g_application_version.branch_name);
 
     NvsManager::Setup();
     /*
      *  Set up the messaging system to use SPI hardware communications.
      */
     SpiTransportProvider *spi = new SpiTransportProvider();
-    MessageDispatcher * __attribute__((unused)) messageDispatcher = new MessageDispatcher(spi);
+    MessageDispatcher *__attribute__((unused)) messageDispatcher = new MessageDispatcher(spi);
 
     //
     //  The following shows how we can reduce the amount of heap memory the system has available.
@@ -158,7 +155,7 @@ extern "C" void app_main()
 
     SystemRequestHandler::SendConfigurationAsInterruptMessage();
 
-//    TestBluetoothMessage(messageDispatcher);
+    //    TestBluetoothMessage(messageDispatcher);
 
     // Message *message = static_cast<Message *>(pvPortMalloc(sizeof(Message)));
     // message->MessageType = MessageTypes::Header;
@@ -179,7 +176,7 @@ extern "C" void app_main()
     // message->MessageType = MessageTypes::Header;
     // message->Interface = Esp32Interfaces::WiFi;
     // message->Function = WiFiFunction::ConnectToAccessPoint;
-    
+
     // Esp32Messaging::WiFiCredentials request;
 
     // #include "WiFiRequestHandler.hpp"
@@ -206,7 +203,7 @@ extern "C" void app_main()
     // }
 }
 
-const char* json_test = R"(
+const char *json_test = R"(
 {
     "deviceName":"MY MEADOW",
     "services": [
@@ -231,7 +228,7 @@ const char* json_test = R"(
     ]
 })";
 
-const char* json_test2 = R"(
+const char *json_test2 = R"(
 {
     "deviceName":"MY MEADOW",
     "services": [
@@ -270,7 +267,7 @@ void TestBluetoothMessage(MessageDispatcher *dispatcher)
     // We'll need to separate this and actually have data going in, but this is a baby step toward that
 
     Esp32Messaging::BTStackConfig stackConfig;
-    stackConfig.Config = (char*)json_test;
+    stackConfig.Config = (char *) json_test;
 
     Message startMessage = {};
     startMessage.MessageType = MessageTypes::Header;
@@ -280,5 +277,4 @@ void TestBluetoothMessage(MessageDispatcher *dispatcher)
     startMessage.Payload = (uint8_t *) pvPortMalloc(startMessage.PayloadLength);
     Encoders::EncodeBTStackConfig(&stackConfig, startMessage.Payload);
     dispatcher->QueueMessageForEsp32(&startMessage);
-
 }

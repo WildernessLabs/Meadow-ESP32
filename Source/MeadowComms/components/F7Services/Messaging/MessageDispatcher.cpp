@@ -51,7 +51,7 @@ MessageDispatcher::MessageDispatcher(TransportProviderBase *transportProvider) :
     //
     //  Instantiate all of the request handlers.
     //
-    _wifiRequestHandler = new WiFiRequestHandler(this);     // cppcheck-suppress noCopyConstructor
+    _wifiRequestHandler = new WiFiRequestHandler(this); // cppcheck-suppress noCopyConstructor
     _wifiRequestHandler->Setup();
     _bluetoothRequestHandler = BluetoothRequestHandler::GetInstance(this);
     _meshNetworkRequestHandler = new MeshNetworkRequestHandler(this);
@@ -88,9 +88,9 @@ bool MessageDispatcher::QueueMessageForEsp32(Message *request)
     TRACE_MESSAGE("QueueMessageForEsp32: Enter");
     RequestHandlerBase *provider = nullptr;
 
-    #if defined(PERFORMANCE_LOGGING)
+#if defined(PERFORMANCE_LOGGING)
     request->PerformanceLoggingStart = esp_timer_get_time();
-    #endif
+#endif
     switch (static_cast<Esp32Interfaces::Esp32Interfaces>(request->Interface))
     {
         case Esp32Interfaces::WiFi:
@@ -116,7 +116,7 @@ bool MessageDispatcher::QueueMessageForEsp32(Message *request)
         result = provider->QueueEsp32Message(request);
     }
     TRACE_MESSAGE("QueueMessageForEsp32: Exit");
-    return(result);
+    return (result);
 }
 
 /**
@@ -131,7 +131,7 @@ bool MessageDispatcher::QueueMessageForEsp32(Message *request)
  */
 bool MessageDispatcher::QueueMessageForStm32(Message *response)
 {
-    return(_transportProvider->QueueMessageForStm32(response));
+    return (_transportProvider->QueueMessageForStm32(response));
 }
 
 /**
@@ -151,5 +151,5 @@ uint32_t MessageDispatcher::GetNextMessageID()
     uint32_t messageId = _lastMessageId;
     xSemaphoreGive(_messageIdMutex);
     messageId &= ~ESP32_MESSAGE_ID_MASK;
-    return(messageId);
+    return (messageId);
 }

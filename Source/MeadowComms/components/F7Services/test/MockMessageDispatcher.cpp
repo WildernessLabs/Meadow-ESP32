@@ -86,7 +86,7 @@ bool MockMessageDispatcher::QueueMessageForEsp32(Message *request)
     TRACE_MESSAGE("QueueMessageForEsp32: Enter");
 
     TRACE_MESSAGE("QueueMessageForEsp32: Exit");
-    return(true);
+    return (true);
 }
 
 /**
@@ -109,7 +109,7 @@ bool MockMessageDispatcher::QueueMessageForStm32(Message *message)
         result = false;
     }
 
-    return(result);
+    return (result);
 }
 
 /**
@@ -127,9 +127,8 @@ uint32_t MockMessageDispatcher::GetNextMessageID()
     _lastMessageId++;
     uint32_t messageId = _lastMessageId;
     messageId &= ~ESP32_MESSAGE_ID_MASK;
-    return(messageId);
+    return (messageId);
 }
-
 
 /**
  *  @brief Get the number of messages in the outbound message queue.
@@ -146,7 +145,7 @@ int MockMessageDispatcher::OutboundMessageQueueLength()
     UBaseType_t messageCount = uxQueueMessagesWaiting(_outboundMessageQueueHandle);
     result = (int) messageCount;
 
-    return(result);
+    return (result);
 }
 
 /**
@@ -169,5 +168,5 @@ Message *MockMessageDispatcher::GetOutboundMessage()
         }
     }
 
-    return(result);
+    return (result);
 }

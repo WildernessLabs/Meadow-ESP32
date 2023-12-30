@@ -16,23 +16,23 @@ struct Uuid128
     Uuid128(const char *);
     Uuid128();
     Uuid128(uint8_t *other);
-    
+
     std::string ToString() const;
 
-    bool operator==(const Uuid128  &other) const
+    bool operator==(const Uuid128 &other) const
     {
         return memcmp(data, other.data, 16) == 0;
     }
 
-    Uuid128 operator=(const Uuid128  &other) const
+    Uuid128 operator=(const Uuid128 &other) const
     {
-        memcpy((void*)data, other.data, 16);
+        memcpy((void *) data, other.data, 16);
         return other;
     }
 
-    uint8_t* operator=(uint8_t *other) const
+    uint8_t *operator=(uint8_t *other) const
     {
-        memcpy((void*)data, other, 16);
+        memcpy((void *) data, other, 16);
         return other;
     }
 };
@@ -44,29 +44,29 @@ struct Uuid16
 {
     uint8_t data[2];
 
-    operator uint16_t() const 
-    { 
-        return (uint16_t)*data; 
+    operator uint16_t() const
+    {
+        return (uint16_t) *data;
     }
 
     Uuid16();
     Uuid16(uint16_t value);
     Uuid16(uint8_t *other);
 
-    bool operator==(const Uuid16  &other) const
+    bool operator==(const Uuid16 &other) const
     {
         return memcmp(data, other.data, 2) == 0;
     }
 
-    Uuid16 operator=(const Uuid16  &other) const
+    Uuid16 operator=(const Uuid16 &other) const
     {
-        memcpy((void*)data, other.data, 2);
+        memcpy((void *) data, other.data, 2);
         return other;
     }
 
-    uint8_t* operator=(uint8_t *other) const
+    uint8_t *operator=(uint8_t *other) const
     {
-        memcpy((void*)data, other, 2);
+        memcpy((void *) data, other, 2);
         return other;
     }
 

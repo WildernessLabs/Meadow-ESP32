@@ -1,9 +1,9 @@
 #ifndef _BLUETOOTH_CHARACTERISTIC_HPP_
 #define _BLUETOOTH_CHARACTERISTIC_HPP_
 
+#include <functional>
 #include <string>
 #include <vector>
-#include <functional>
 
 class BluetoothService;
 class BluetoothCharacteristic;
@@ -22,25 +22,27 @@ typedef std::function<void(BluetoothDescriptor *)> DescriptorAdded;
 
 class BluetoothCharacteristic
 {
-    public:
-        BluetoothService *ParentService;
+public:
+    BluetoothService *ParentService;
 
-        BluetoothCharacteristic(Uuid16 uuid, CharacteristicPermission permission, CharacteristicProperty property, int maxValueLength);
-        BluetoothCharacteristic(Uuid128 uuid, CharacteristicPermission permission, CharacteristicProperty property, int maxValueLength);
+    BluetoothCharacteristic(Uuid16 uuid, CharacteristicPermission permission, CharacteristicProperty property, int maxValueLength);
+    BluetoothCharacteristic(Uuid128 uuid, CharacteristicPermission permission, CharacteristicProperty property, int maxValueLength);
 
-        BluetoothCharacteristicDeclaration *Declaration;
-        BluetoothCharacteristicValue * Value;
+    BluetoothCharacteristicDeclaration *Declaration;
+    BluetoothCharacteristicValue *Value;
 
-        void AddDescriptor(BluetoothDescriptor *descriptor);
+    void AddDescriptor(BluetoothDescriptor *descriptor);
 
-        ValueChanged OnValueChanged = NULL;
-        DescriptorAdded OnDescriptorAdded = NULL;
+    ValueChanged OnValueChanged = NULL;
+    DescriptorAdded OnDescriptorAdded = NULL;
 
-        vector<BluetoothDescriptor*> GetDescriptorDefinitions() { return _descriptors; }
-    
-    private:
-        vector<BluetoothDescriptor*> _descriptors;
+    vector<BluetoothDescriptor *> GetDescriptorDefinitions()
+    {
+        return _descriptors;
+    }
+
+private:
+    vector<BluetoothDescriptor *> _descriptors;
 };
-
 
 #endif

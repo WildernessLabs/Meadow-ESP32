@@ -23,7 +23,7 @@
 #include "Mapping.hpp"
 #include "Exceptions/MultipleInstancesException.hpp"
 
-#define CHAR_DECLARATION_SIZE   (sizeof(uint8_t))
+#define CHAR_DECLARATION_SIZE (sizeof(uint8_t))
 
 /*
  * ----------------------------------------------------------------------------
@@ -65,12 +65,12 @@ BluetoothRequestHandler::BluetoothRequestHandler()
     }
 }
 
-BluetoothRequestHandler* BluetoothRequestHandler::GetInstance()
+BluetoothRequestHandler *BluetoothRequestHandler::GetInstance()
 {
     return _instance;
 }
 
-BluetoothRequestHandler* BluetoothRequestHandler::GetInstance(IMessageDispatcher *d)
+BluetoothRequestHandler *BluetoothRequestHandler::GetInstance(IMessageDispatcher *d)
 {
     if (!_instance)
     {
@@ -119,7 +119,6 @@ void BluetoothRequestHandler::Setup()
     _xBtEventGroup = xEventGroupCreate();
     xEventGroupSetBits(_xBtEventGroup, BT_READY_BIT);
 
-
     ESP_LOGI(__func__, "mem release BT controller...");
 
     ESP_ERROR_CHECK(esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT));
@@ -144,7 +143,7 @@ void BluetoothRequestHandler::GetHandles(Message *request)
     response.HandleCount = _manager.GetHandleCount();
     response.HandlesLength = response.HandleCount * 2;
     response.Handles = static_cast<uint8_t *>(pvPortMalloc(response.HandlesLength));
-    _manager.GetHandles((uint16_t*)response.Handles);
+    _manager.GetHandles((uint16_t *) response.Handles);
 
     request->PayloadLength = Encoders::EncodedBTGetHandlesResponseBufferSize(&response);
     request->Payload = static_cast<uint8_t *>(pvPortMalloc(request->PayloadLength));
@@ -212,7 +211,7 @@ void BluetoothRequestHandler::DispatchRequest(Message *request)
             }
             break;
     }
-//    xEventGroupWaitBits(_xBtEventGroup, BT_READY_BIT, pdTRUE, pdTRUE, portMAX_DELAY);
+    //    xEventGroupWaitBits(_xBtEventGroup, BT_READY_BIT, pdTRUE, pdTRUE, portMAX_DELAY);
 
     TRACE_MESSAGE("DispatchRequest: Exit");
 }
@@ -292,7 +291,7 @@ StatusCodes::StatusCodes BluetoothRequestHandler::PrepareForDeepSleep()
     {
         result = bluetoothHandler->TeardownStack(nullptr);
     }
-    return(result);
+    return (result);
 
     TRACE_MESSAGE("PrepareForDeepSleep(): Enter");
 }
@@ -357,12 +356,12 @@ void BluetoothRequestHandler::StartStack()
     }
 
     /* set the security iocap & auth_req & key size & init key response key parameters to the stack*/
-    esp_ble_auth_req_t auth_req = ESP_LE_AUTH_REQ_SC_MITM_BOND;     //bonding with peer device after authentication
-    esp_ble_io_cap_t iocap = ESP_IO_CAP_NONE;           //set the IO capability to No output No input
-    uint8_t key_size = 16;      //the key size should be 7~16 bytes
+    esp_ble_auth_req_t auth_req = ESP_LE_AUTH_REQ_SC_MITM_BOND; // bonding with peer device after authentication
+    esp_ble_io_cap_t iocap = ESP_IO_CAP_NONE;                   // set the IO capability to No output No input
+    uint8_t key_size = 16;                                      // the key size should be 7~16 bytes
     uint8_t init_key = ESP_BLE_ENC_KEY_MASK | ESP_BLE_ID_KEY_MASK;
     uint8_t rsp_key = ESP_BLE_ENC_KEY_MASK | ESP_BLE_ID_KEY_MASK;
-    //set static passkey
+    // set static passkey
     uint32_t passkey = 123456;
     uint8_t auth_option = ESP_BLE_ONLY_ACCEPT_SPECIFIED_AUTH_DISABLE;
     uint8_t oob_support = ESP_BLE_OOB_DISABLE;
@@ -389,9 +388,9 @@ void BluetoothRequestHandler::StartStack()
 
 /**
  * @brief Teardown the bluetooth stack by turning off the bluetooth adapter.
- * 
+ *
  * @param msg
- * 
+ *
  * @return StatusCodes::StatusCodes
  *          Result of turning off the bluetooth stack.
  */
@@ -403,10 +402,10 @@ StatusCodes::StatusCodes BluetoothRequestHandler::TeardownStack(Message *msg)
 
     TRACE_MESSAGE("TeardownStack(): Exit, ESP error code %d (%s)", result, esp_err_to_name(result));
 
-    return(Mapping::GetStatusCode(result));
+    return (Mapping::GetStatusCode(result));
 }
 
-void BluetoothRequestHandler::OnDataWriteRequest(uint16_t handle, uint8_t* data, uint16_t dataLength)
+void BluetoothRequestHandler::OnDataWriteRequest(uint16_t handle, uint8_t *data, uint16_t dataLength)
 {
     TRACE_MESSAGE("Creating _writeRequest for 0x%04x with %i bytes", handle, dataLength);
 
@@ -419,7 +418,7 @@ void BluetoothRequestHandler::OnDataWriteRequest(uint16_t handle, uint8_t* data,
     TRACE_MESSAGE("I think payload_length should be %i bytes", payload_length);
     uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payload_length));
     Encoders::EncodeBTDataWriteRequest(request, payload);
-    vPortFree(request);   // We don't need it anymore as the data is in the encoded payload.
+    vPortFree(request); // We don't need it anymore as the data is in the encoded payload.
 
     TRACE_MESSAGE("Sending event data. payload[6] should be 0x%02x", payload[6]);
     GetInstance()->RaiseEvent(Esp32Interfaces::BlueTooth, BluetoothFunction::ClientWriteRequestEvent, 0, payload, payload_length);
@@ -451,9 +450,7 @@ void BluetoothRequestHandler::CreateAttributeGraph(Message *msg)
 static bool advertising_data_configured = false;
 static bool response_data_configured = false;
 
-void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t event,
-                                        esp_gatt_if_t gatts_if,
-                                        esp_ble_gatts_cb_param_t *param)
+void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param)
 {
     DEBUG_MESSAGE_SPECIFY_COMPONENT(__func__, "event = %x\n", event);
     switch (event)
@@ -464,7 +461,7 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
                 esp_ble_gap_set_device_name(_manager.DeviceName);
 
                 // turn on some security
-//               esp_ble_gap_config_local_privacy(true);
+                //               esp_ble_gap_config_local_privacy(true);
 
                 // configure the advertising data
                 esp_err_t ret = esp_ble_gap_config_adv_data(_manager.GetAdvertisingData());
@@ -494,7 +491,6 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
                 {
                     TRACE_MESSAGE("BLE attribute table created");
                 }
-
             }
             break;
         case ESP_GATTS_READ_EVT:
@@ -519,7 +515,6 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
                     {
                         ERROR_MESSAGE("esp_ble_gatts_send_response failed, error code = %x", ret);
                     }
-
                 }
             }
             break;
@@ -567,16 +562,16 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
             {
                 TRACE_MESSAGE("ESP_GATTS_CONNECT_EVT");
                 /* start security connect with peer device when receive the connect event sent by the master */
-//              esp_ble_set_encryption(param->connect.remote_bda, ESP_BLE_SEC_ENCRYPT_MITM);
+                //              esp_ble_set_encryption(param->connect.remote_bda, ESP_BLE_SEC_ENCRYPT_MITM);
 
                 esp_ble_conn_update_params_t conn_params;
                 memcpy(conn_params.bda, param->connect.remote_bda, sizeof(esp_bd_addr_t));
                 /* For the iOS system, please refer to Apple official documents about the BLE connection parameters restrictions. */
                 conn_params.latency = 0;
-                conn_params.max_int = 0x20;    // max_int = 0x20*1.25ms = 40ms
-                conn_params.min_int = 0x10;    // min_int = 0x10*1.25ms = 20ms
-                conn_params.timeout = 400;    // timeout = 400*10ms = 4000ms
-                //start sent the update connection parameters to the peer device.
+                conn_params.max_int = 0x20; // max_int = 0x20*1.25ms = 40ms
+                conn_params.min_int = 0x10; // min_int = 0x10*1.25ms = 20ms
+                conn_params.timeout = 400;  // timeout = 400*10ms = 4000ms
+                // start sent the update connection parameters to the peer device.
                 esp_ble_gap_update_conn_params(&conn_params);
             }
             break;
@@ -605,12 +600,14 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
                 }
                 else if (param->add_attr_tab.num_handle != _manager.GetAttributeTableLength())
                 {
-                    ERROR_MESSAGE("create attribute table abnormally, num_handle (%d) \
-                            doesn't equal to HRS_IDX_NB(%d)", param->add_attr_tab.num_handle, _manager.GetAttributeTableLength());
+                    ERROR_MESSAGE(
+                        "create attribute table abnormally, num_handle (%d) \
+                            doesn't equal to HRS_IDX_NB(%d)",
+                        param->add_attr_tab.num_handle, _manager.GetAttributeTableLength());
                 }
                 else
                 {
-                    TRACE_MESSAGE("create attribute table successfully, handle count = %d\n",param->add_attr_tab.num_handle);
+                    TRACE_MESSAGE("create attribute table successfully, handle count = %d\n", param->add_attr_tab.num_handle);
                     // the assigned handles with be in param->add_attr_tab.handles - copy them off
                     _manager.SetHandles(param->add_attr_tab.handles, param->add_attr_tab.num_handle);
                     // now fire up the service (which is the first attribute in the attribute table) by handle.
@@ -657,22 +654,22 @@ void BluetoothRequestHandler::GAPEventHandler(esp_gap_ble_cb_event_t event, esp_
             /* passkey request event */
             TRACE_MESSAGE("ESP_GAP_BLE_PASSKEY_REQ_EVT");
             /* Call the following function to input the passkey which is displayed on the remote device */
-            //esp_ble_passkey_reply(heart_rate_profile_tab[HEART_PROFILE_APP_IDX].remote_bda, true, 0x00);
+            // esp_ble_passkey_reply(heart_rate_profile_tab[HEART_PROFILE_APP_IDX].remote_bda, true, 0x00);
             break;
         case ESP_GAP_BLE_OOB_REQ_EVT: // 13
             {
                 TRACE_MESSAGE("ESP_GAP_BLE_OOB_REQ_EVT");
-                uint8_t tk[16] = {1}; //If you paired with OOB, both devices need to use the same tk
+                uint8_t tk[16] = {1}; // If you paired with OOB, both devices need to use the same tk
                 esp_ble_oob_req_reply(param->ble_security.ble_req.bd_addr, tk, sizeof(tk));
             }
             break;
-        case ESP_GAP_BLE_LOCAL_IR_EVT:                               /* BLE local IR event */
+        case ESP_GAP_BLE_LOCAL_IR_EVT: /* BLE local IR event */
             TRACE_MESSAGE("ESP_GAP_BLE_LOCAL_IR_EVT");
             break;
-        case ESP_GAP_BLE_LOCAL_ER_EVT:                               /* BLE local ER event */
+        case ESP_GAP_BLE_LOCAL_ER_EVT: /* BLE local ER event */
             TRACE_MESSAGE("ESP_GAP_BLE_LOCAL_ER_EVT");
             break;
-        case ESP_GAP_BLE_NC_REQ_EVT: // 16
+        case ESP_GAP_BLE_NC_REQ_EVT:   // 16
             /* The app will receive this evt when the IO has DisplayYesNO capability and the peer device IO also has DisplayYesNo capability.
             show the passkey number to the user to confirm it with the number displayed by peer device. */
             esp_ble_confirm_reply(param->ble_security.ble_req.bd_addr, true);
@@ -683,12 +680,12 @@ void BluetoothRequestHandler::GAPEventHandler(esp_gap_ble_cb_event_t event, esp_
             esp_ble_gap_security_rsp(param->ble_security.ble_req.bd_addr, true);
             break;
         case ESP_GAP_BLE_PASSKEY_NOTIF_EVT: // 11
-            ///the app will receive this evt when the IO  has Output capability and the peer device IO has Input capability.
-            ///show the passkey number to the user to input it in the peer device.
+            /// the app will receive this evt when the IO  has Output capability and the peer device IO has Input capability.
+            /// show the passkey number to the user to input it in the peer device.
             TRACE_MESSAGE("The passkey Notify number:%d", param->ble_security.key_notif.passkey);
             break;
         case ESP_GAP_BLE_KEY_EVT: // 9
-            //shows the ble key info share with peer device to the user.
+            // shows the ble key info share with peer device to the user.
             TRACE_MESSAGE("key type = %d", param->ble_security.ble_key.key_type);
             break;
         case ESP_GAP_BLE_AUTH_CMPL_EVT: // 8
@@ -700,7 +697,7 @@ void BluetoothRequestHandler::GAPEventHandler(esp_gap_ble_cb_event_t event, esp_
                 }
                 else
                 {
-                    ERROR_MESSAGE("Auth failed. reason = 0x%x",param->ble_security.auth_cmpl.fail_reason);
+                    ERROR_MESSAGE("Auth failed. reason = 0x%x", param->ble_security.auth_cmpl.fail_reason);
                 }
             }
             break;
