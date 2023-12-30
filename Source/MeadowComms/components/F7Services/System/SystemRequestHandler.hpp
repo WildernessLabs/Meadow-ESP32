@@ -203,7 +203,6 @@ public:
     static void SendConfigurationAsInterruptMessage();
 
     static ThreadPool *SharedThreadPool();
-
 };
 
 #endif /* _SYSTEM_REQUEST_HANDLER_HPP_ */

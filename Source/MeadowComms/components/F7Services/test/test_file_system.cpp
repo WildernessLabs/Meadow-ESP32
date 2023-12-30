@@ -23,23 +23,23 @@
 //
 //  Name of the files to be used for testing.
 //
-#define TEST_FILE_NAME          "hello.txt"
-#define TEST_FILE_NAME2         "test.txt"
+#define TEST_FILE_NAME "hello.txt"
+#define TEST_FILE_NAME2 "test.txt"
 
 //
 //  Text to be written into the text files.
 //
-#define TEST_FILE_CONTENTS      "Hello from ESP32 unit tests\n"
-#define TEST_FILE_CONTENTS2     "More text\n"
+#define TEST_FILE_CONTENTS "Hello from ESP32 unit tests\n"
+#define TEST_FILE_CONTENTS2 "More text\n"
 
 //
 //  Message ID to be used for testing.
 //
-#define TEST_MESSAGE_ID         25
+#define TEST_MESSAGE_ID 25
 
 /**
  * @brief Count the number of files in the root directory of the file system.
- * 
+ *
  * @return int
  *      Number of files present or -1 if there is a problem.
  */
@@ -57,15 +57,15 @@ int CountFiles()
         while ((ep = readdir(dp)) != NULL)
         {
             result++;
-        }            
+        }
         (void) closedir(dp);
     }
-    return(result);
+    return (result);
 }
 
 /**
  * @brief Write a test file to the file system.
- * 
+ *
  * @param filename Name of the file to write.
  * @param buffer Pointer to a block of memory holding the data to write.
  * @param length Number of bytes to write to the file.
@@ -89,12 +89,12 @@ int WriteTestFile(char *filename, uint8_t *buffer, int length)
     {
         result = -1;
     }
-    return(result);
+    return (result);
 }
 
 /**
  * @brief Read a file from the file system.
- * 
+ *
  * @param filename Name of the file to read.
  * @param buffer Pointer to a block of memory to hold the contents of the file.
  * @param maxLength Maximum number of bytes that the buffer can hold.
@@ -118,7 +118,7 @@ int ReadTestFile(char *filename, uint8_t *buffer, int maxLength)
     {
         result = -1;
     }
-    return(result);
+    return (result);
 }
 
 /**
@@ -136,11 +136,11 @@ TEST_CASE("File System set up", "[FileSystem]")
 
 /**
  * @brief Test formatting the LittleFS file system.
- * 
+ *
  *  This test will test formatting the LittleFS file system as follows:
  *      - Format the file system and verify that a single success response is received from
  *        the FileSystem class.
- *      - Write a single file to the newly formatted file system using c stdio methods and 
+ *      - Write a single file to the newly formatted file system using c stdio methods and
  *        verify that there is exactly one file on the file system.
  *      - Reformat the file system and verify that no files can be found.
  */
@@ -198,11 +198,11 @@ TEST_CASE("Formatting file system", "[FileSystem]")
 
 /**
  * @brief Test case for writing a file to the file system.
- * 
+ *
  *  Writing a file will be tested by using the messaging system to pass the file
  *  details and contents and then using C stdio to read the file and verify that
  *  the correct contents have been written to the file system.
- * 
+ *
  *  The file system will then be unmounted and remounted and the files contents
  *  checked once more using C stdio.
  */
@@ -231,8 +231,7 @@ TEST_CASE("Write file to file system", "[FileSystem]")
     uint8_t *encodedPayload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
     TEST_ASSERT_NOT_NULL(encodedPayload);
     Encoders::EncodeFileNameAndContents(&fileData, encodedPayload);
-    Message *writeMessage = Message::CreateOnHeap(MessageTypes::Header, Esp32Interfaces::System, SystemFunction::FileSystemWriteFile,
-                                                  StatusCodes::Failure, TEST_MESSAGE_ID, encodedPayload, payloadLength);
+    Message *writeMessage = Message::CreateOnHeap(MessageTypes::Header, Esp32Interfaces::System, SystemFunction::FileSystemWriteFile, StatusCodes::Failure, TEST_MESSAGE_ID, encodedPayload, payloadLength);
     TEST_ASSERT_NOT_NULL(writeMessage);
 
     fs->WriteFile(writeMessage);
@@ -287,12 +286,11 @@ TEST_CASE("Reading a file", "[FileSystem]")
     uint8_t *encodedPayload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
     TEST_ASSERT_NOT_NULL(encodedPayload);
     Encoders::EncodeFileNameAndContents(&fileData, encodedPayload);
-    Message *readMessage = Message::CreateOnHeap(MessageTypes::Header, Esp32Interfaces::System, SystemFunction::FileSystemReadFile,
-                                                  StatusCodes::Failure, TEST_MESSAGE_ID, encodedPayload, payloadLength);
+    Message *readMessage = Message::CreateOnHeap(MessageTypes::Header, Esp32Interfaces::System, SystemFunction::FileSystemReadFile, StatusCodes::Failure, TEST_MESSAGE_ID, encodedPayload, payloadLength);
     TEST_ASSERT_NOT_NULL(readMessage);
 
     fs->ReadFile(readMessage);
-    
+
     //
     //  Now check we have exactly one response and that it is correct.
     //
@@ -439,8 +437,7 @@ TEST_CASE("Delete file", "[FileSystem]")
     uint8_t *encodedPayload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
     TEST_ASSERT_NOT_NULL(encodedPayload);
     Encoders::EncodeFileDetails(&details, encodedPayload);
-    Message *deleteMessage = Message::CreateOnHeap(MessageTypes::Header, Esp32Interfaces::System, SystemFunction::FileSystemDeleteFile,
-                                                  StatusCodes::Failure, TEST_MESSAGE_ID, encodedPayload, payloadLength);
+    Message *deleteMessage = Message::CreateOnHeap(MessageTypes::Header, Esp32Interfaces::System, SystemFunction::FileSystemDeleteFile, StatusCodes::Failure, TEST_MESSAGE_ID, encodedPayload, payloadLength);
     TEST_ASSERT_NOT_NULL(deleteMessage);
 
     fs->DeleteFile(deleteMessage);
@@ -470,7 +467,7 @@ TEST_CASE("Delete file", "[FileSystem]")
     TEST_ASSERT_EQUAL(1, CountFiles());
 
     deleteMessage->PayloadLength = payloadLength;
-    encodedPayload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));  // Re-encode as the above call will have freed the memory.
+    encodedPayload = static_cast<uint8_t *>(pvPortMalloc(payloadLength)); // Re-encode as the above call will have freed the memory.
     TEST_ASSERT_NOT_NULL(encodedPayload);
     Encoders::EncodeFileDetails(&details, encodedPayload);
     deleteMessage->Payload = encodedPayload;

@@ -32,14 +32,12 @@ public:
     /**
      *  @brief Type of mapping table to be used.
      */
-    enum MappingTable { AddressFamily, SocketOptions, TCPOptions, ProtocolFamilies, SocketTypes, SocketLevel, Errno, MessageFlags,
-                        PollEvents, SocketShutdownType, EspErrorCodes, NetworkAuthenticationType, ResetReasons };
+    enum MappingTable { AddressFamily, SocketOptions, TCPOptions, ProtocolFamilies, SocketTypes, SocketLevel, Errno, MessageFlags, PollEvents, SocketShutdownType, EspErrorCodes, NetworkAuthenticationType, ResetReasons };
 
     /**
      *  @brief String mapping tables.
      */
-    enum StringMappingTable { StatusCodes, MessageTypes, Interfaces, WiFiFunctions, SystemFunctions, BluetoothFunctions,
-                              TransportFunctions };
+    enum StringMappingTable { StatusCodes, MessageTypes, Interfaces, WiFiFunctions, SystemFunctions, BluetoothFunctions, TransportFunctions };
 
 private:
     /**

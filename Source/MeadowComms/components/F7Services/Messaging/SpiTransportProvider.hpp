@@ -40,10 +40,7 @@ private:
     /**
      *  @brief Possible states for the SPI transport layer.
      */
-    enum SpiStates { Invalid, 
-                     WaitingForPacket, AcknowledgingPacket,
-                     SendingPacketDetails, SendingPacket, WaitingForPacketAcknowledgement
-                   };
+    enum SpiStates { Invalid, WaitingForPacket, AcknowledgingPacket, SendingPacketDetails, SendingPacket, WaitingForPacketAcknowledgement };
 
     /**
      *  @brief Pointer to the (only) instance of the SpiTransportProvider class.

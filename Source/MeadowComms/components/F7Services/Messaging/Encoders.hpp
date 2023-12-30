@@ -454,7 +454,7 @@ namespace Esp32Messaging
         uint8_t *FileDetails;
     };
 
-}
+} // namespace Esp32Messaging
 
 /*
  *      Class holding the encoding methods.
@@ -485,7 +485,7 @@ public:
     static uint8_t CRC8(const uint8_t *, uint16_t);
     static uint32_t CRC32(const uint8_t *, uint16_t);
     static uint32_t ProgressiveCRC32(uint32_t, uint8_t);
-    static void EncodeMessage(Message *, uint8_t*, bool);
+    static void EncodeMessage(Message *, uint8_t *, bool);
     static Message *ExtractMessage(uint8_t *, uint32_t, bool);
     static void EncodeSystemConfiguration(Esp32Messaging::SystemConfiguration *, uint8_t *);
     static int EncodedSystemConfigurationBufferSize(Esp32Messaging::SystemConfiguration *);
@@ -582,4 +582,3 @@ public:
 };
 
 #endif /* _ENCODERS_HPP */
-

@@ -20,9 +20,7 @@
 #include "Mapping.hpp"
 
 #if defined(PERFORMANCE_LOGGING)
-
-#warning "Performance logging is enabled."
-
+    #warning "Performance logging is enabled."
 #endif
 
 #define APP_MAIN_COMPONENT_NAME "AppMain"
@@ -78,7 +76,7 @@ uint32_t Logging::_heapEventsRemaining = 0;
 
 /**
  *  @brief Number of events that can occur before the system dumps the trace data.
- * 
+ *
  *  This value is used to reset the _heapEventsRemaining counter.
  */
 uint32_t Logging::_heapEventCounterResetValue = 10;
@@ -179,16 +177,7 @@ void Logging::Setup()
     esp_log_level_set(FileSystem::COMPONENT_NAME, ESP_LOG_INFO);
 #endif
 
-    const uart_config_t loggingUARTConfig =
-    {
-        .baud_rate = 115200,
-        .data_bits = UART_DATA_8_BITS,
-        .parity = UART_PARITY_DISABLE,
-        .stop_bits = UART_STOP_BITS_1,
-        .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
-        .rx_flow_ctrl_thresh = 0,
-        .use_ref_tick = false
-    };
+    const uart_config_t loggingUARTConfig = {.baud_rate = 115200, .data_bits = UART_DATA_8_BITS, .parity = UART_PARITY_DISABLE, .stop_bits = UART_STOP_BITS_1, .flow_ctrl = UART_HW_FLOWCTRL_DISABLE, .rx_flow_ctrl_thresh = 0, .use_ref_tick = false};
     uart_param_config(LOGGING_UART_PORT_NUMBER, &loggingUARTConfig);
     uart_set_pin(LOGGING_UART_PORT_NUMBER, Gpio::LOGGING_TX_PIN, Gpio::LOGGING_RX_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
     //
@@ -227,97 +216,97 @@ void Logging::Error(char *methodName, char *formatString, ...)
 
 /**
  *  @brief Convert the message type enum into a meaningful string.
- * 
+ *
  *  @param type
  *      Message type code to be converted.
- * 
+ *
  *  @return
  *      Meaningful string representation of the message type.
  */
 char *Logging::MessageTypeName(uint8_t type)
 {
-    return(Mapping::GetStringValue(Mapping::MessageTypes, type));    
+    return (Mapping::GetStringValue(Mapping::MessageTypes, type));
 }
 
 /**
  *  @brief Convert the interface number into a meaningful string name.
- * 
+ *
  *  @param interface
  *      Interface number.
- * 
+ *
  *  @return
  *      Meaningful string representation of the interface number.
  */
 char *Logging::InterfaceName(uint32_t interface)
 {
-    return(Mapping::GetStringValue(Mapping::Interfaces, interface));
+    return (Mapping::GetStringValue(Mapping::Interfaces, interface));
 }
 
 /**
  *  @brief Convert a WiFi function number into a meaningful string.
- * 
+ *
  *  @param function
  *      Number of the function to be converted.
- * 
+ *
  *  @return
  *      Meaningful string representation of the WiFi function.
  */
 char *Logging::WiFiFunctionName(uint32_t function)
 {
-    return(Mapping::GetStringValue(Mapping::WiFiFunctions, function));
+    return (Mapping::GetStringValue(Mapping::WiFiFunctions, function));
 }
 
 /**
  *  @brief Convert a System function number into a meaningful string.
- * 
+ *
  *  @param function
  *      Number of the function to be converted.
- * 
+ *
  *  @return
  *      Meaningful string representation of the System function.
  */
 char *Logging::SystemFunctionName(uint32_t function)
 {
-    return(Mapping::GetStringValue(Mapping::SystemFunctions, function));
+    return (Mapping::GetStringValue(Mapping::SystemFunctions, function));
 }
 
 /**
  *  @brief Convert a Bluetooth function number into a meaningful string.
- * 
+ *
  *  @param function
  *      Number of the function to be converted.
- * 
+ *
  *  @return
  *      Meaningful string representation of the Bluetooth function.
  */
 char *Logging::BluetoothFunctionName(uint32_t function)
 {
-    return(Mapping::GetStringValue(Mapping::BluetoothFunctions, function));
+    return (Mapping::GetStringValue(Mapping::BluetoothFunctions, function));
 }
 
 /**
  *  @brief Convert a Transport function number into a meaningful string.
- * 
+ *
  *  @param function
  *      Number of the function to be converted.
- * 
+ *
  *  @return
  *      Meaningful string representation of the Transport function.
  */
 char *Logging::TransportFunctionName(uint32_t function)
 {
-    return(Mapping::GetStringValue(Mapping::TransportFunctions, function));
+    return (Mapping::GetStringValue(Mapping::TransportFunctions, function));
 }
 
 /**
  *  @brief Convert a function number for a specific interface into a meaningful string.
- * 
+ *
  *  @param interface
  *      Interface the function is destined for.
- * 
+ *
  *  @param function
  *      Function number for the interface.
- * 
+ *
  *  @return
  *      Meaningful string representation of the function.
  */
@@ -326,35 +315,35 @@ char *Logging::FunctionName(uint32_t interface, uint32_t function)
     switch (interface)
     {
         case Esp32Interfaces::WiFi:
-            return(WiFiFunctionName(function));
+            return (WiFiFunctionName(function));
             break;
         case Esp32Interfaces::System:
-            return(SystemFunctionName(function));
+            return (SystemFunctionName(function));
             break;
         case Esp32Interfaces::BlueTooth:
-            return(BluetoothFunctionName(function));
+            return (BluetoothFunctionName(function));
             break;
         case Esp32Interfaces::Transport:
-            return(TransportFunctionName(function));
+            return (TransportFunctionName(function));
             break;
         default:
-            return(const_cast<char *>("Not implemented"));
+            return (const_cast<char *>("Not implemented"));
             break;
     }
 }
 
 /**
  *  @brief Convert the StatusCode enum into a readable string.
- * 
+ *
  *  @param code
  *      Status code to be converted.
- * 
+ *
  *  @return
  *      Meaningful string representation of the code.
  */
 char *Logging::StatusCodeName(uint32_t code)
 {
-    return(Mapping::GetStringValue(Mapping::StatusCodes, code));
+    return (Mapping::GetStringValue(Mapping::StatusCodes, code));
 }
 
 /**
@@ -397,10 +386,10 @@ void Logging::DumpMessage(const char *componentName, const Message *message)
 
 /**
  *  @brief Generate a single line summary of the message.
- * 
+ *
  *  @param message
  *      Message to be summarised.
- * 
+ *
  *  @return
  *      Pointer to a string containing the message ID, interface and function requested.
  */
@@ -409,27 +398,27 @@ char *Logging::MessageSummary(const Message *message)
     char buffer[200];
 
     snprintf(buffer, 200, "ID: 0x%08x Interface: %s Function: %s", message->MessageID, InterfaceName(message->Interface), FunctionName(message->Interface, message->Function));
-    return(strdup(buffer));
+    return (strdup(buffer));
 }
 
 #if defined(PERFORMANCE_LOGGING)
 
 /**
  *  @brief Add an entry to the table of performance counters.
- * 
+ *
  *  @param method
  *      Name of the method (or event) being recorded.
- * 
+ *
  *  @param start
  *      Time since the chip started in microseconds of the start of the event.
- * 
+ *
  *  @param end
  *      Time since the chip started in microseconds of the end of the event.
  */
 void Logging::AddPerformanceCounterEntry(const char *method, int64_t start, int64_t end)
 {
     uint64_t duration;
-    if (start < end)        // Check if the counter has wrapped around.
+    if (start < end) // Check if the counter has wrapped around.
     {
         duration = end - start;
     }
@@ -530,7 +519,7 @@ void Logging::DumpStandaloneHeapTraceData()
  */
 bool Logging::IsStandaloneHeapTracingActive()
 {
-    return(_isStandaloneHeapTracingActive);
+    return (_isStandaloneHeapTracingActive);
 }
 
 /**

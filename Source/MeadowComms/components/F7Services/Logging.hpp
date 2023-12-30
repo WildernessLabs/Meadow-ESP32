@@ -25,7 +25,7 @@
 
 #if defined(CONFIG_HEAP_TRACING_STANDALONE)
 
-#include "esp_heap_trace.h"
+    #include "esp_heap_trace.h"
 
 #endif
 
@@ -36,20 +36,20 @@
 //
 #if defined(PERFORMANCE_LOGGING)
 
-#define PERFORMANCE_LOGGING_ENTER()             int64_t performance_logging_start = esp_timer_get_time()
+    #define PERFORMANCE_LOGGING_ENTER() int64_t performance_logging_start = esp_timer_get_time()
 
-#define PERFORMANCE_LOGGING_EXIT()              int64_t performance_logging_end = esp_timer_get_time()
+    #define PERFORMANCE_LOGGING_EXIT() int64_t performance_logging_end = esp_timer_get_time()
 
-#define PERFORMANCE_LOGGING_ADD_ENTRY()         Logging::AddPerformanceCounterEntry(__func__, performance_logging_start, performance_logging_end)
+    #define PERFORMANCE_LOGGING_ADD_ENTRY() Logging::AddPerformanceCounterEntry(__func__, performance_logging_start, performance_logging_end)
 
-#define PERFORMANCE_LOGGING_DUMP_RESULTS()      Logging::DumpPerformanceCounters()
+    #define PERFORMANCE_LOGGING_DUMP_RESULTS() Logging::DumpPerformanceCounters()
 
 #else
 
-#define PERFORMANCE_LOGGING_ENTER()
-#define PERFORMANCE_LOGGING_EXIT()
-#define PERFORMANCE_LOGGING_ADD_ENTRY(method_name)
-#define PERFORMANCE_LOGGING_DUMP_RESULTS()
+    #define PERFORMANCE_LOGGING_ENTER()
+    #define PERFORMANCE_LOGGING_EXIT()
+    #define PERFORMANCE_LOGGING_ADD_ENTRY(method_name)
+    #define PERFORMANCE_LOGGING_DUMP_RESULTS()
 
 #endif
 
@@ -58,39 +58,39 @@
 //
 #if defined(TRACE_MESSAGES)
 
-#define TRACE_MESSAGE(format, ...) ESP_LOGI(COMPONENT_NAME, format, ##__VA_ARGS__)
-#define DEBUG_MESSAGE(format, ...) ESP_LOGD(COMPONENT_NAME, format, ##__VA_ARGS__)
-#define ERROR_MESSAGE(format, ...) ESP_LOGE(COMPONENT_NAME, format, ##__VA_ARGS__)
+    #define TRACE_MESSAGE(format, ...) ESP_LOGI(COMPONENT_NAME, format, ##__VA_ARGS__)
+    #define DEBUG_MESSAGE(format, ...) ESP_LOGD(COMPONENT_NAME, format, ##__VA_ARGS__)
+    #define ERROR_MESSAGE(format, ...) ESP_LOGE(COMPONENT_NAME, format, ##__VA_ARGS__)
 
-#define TRACE_MESSAGE_SPECIFY_COMPONENT(component_name, format, ...) ESP_LOGI(component_name, format, ##__VA_ARGS__)
-#define DEBUG_MESSAGE_SPECIFY_COMPONENT(component_name, format, ...) ESP_LOGD(component_name, format, ##__VA_ARGS__)
-#define ERROR_MESSAGE_SPECIFY_COMPONENT(component_name, format, ...) ESP_LOGE(component_name, format, ##__VA_ARGS__)
+    #define TRACE_MESSAGE_SPECIFY_COMPONENT(component_name, format, ...) ESP_LOGI(component_name, format, ##__VA_ARGS__)
+    #define DEBUG_MESSAGE_SPECIFY_COMPONENT(component_name, format, ...) ESP_LOGD(component_name, format, ##__VA_ARGS__)
+    #define ERROR_MESSAGE_SPECIFY_COMPONENT(component_name, format, ...) ESP_LOGE(component_name, format, ##__VA_ARGS__)
 
-#define TRACE_HEX_BUFFER(buffer, length) ESP_LOG_BUFFER_HEX_LEVEL(COMPONENT_NAME, buffer, length, ESP_LOG_INFO)
-#define DEBUG_HEX_BUFFER(buffer, length) ESP_LOG_BUFFER_HEX_LEVEL(COMPONENT_NAME, buffer, length, ESP_LOG_DEBUG)
-#define ERROR_HEX_BUFFER(buffer, length) ESP_LOG_BUFFER_HEX_LEVEL(COMPONENT_NAME, buffer, length, ESP_LOG_ERROR)
+    #define TRACE_HEX_BUFFER(buffer, length) ESP_LOG_BUFFER_HEX_LEVEL(COMPONENT_NAME, buffer, length, ESP_LOG_INFO)
+    #define DEBUG_HEX_BUFFER(buffer, length) ESP_LOG_BUFFER_HEX_LEVEL(COMPONENT_NAME, buffer, length, ESP_LOG_DEBUG)
+    #define ERROR_HEX_BUFFER(buffer, length) ESP_LOG_BUFFER_HEX_LEVEL(COMPONENT_NAME, buffer, length, ESP_LOG_ERROR)
 
-#define TRACE_HEX_BUFFER_SPECIFY_COMPONENT(component_name, buffer, length) ESP_LOG_BUFFER_HEX_LEVEL(component_name, buffer, length, ESP_LOG_INFO)
-#define DEBUG_HEX_BUFFER_SPECIFY_COMPONENT(component_name, buffer, length) ESP_LOG_BUFFER_HEX_LEVEL(component_name, buffer, length, ESP_LOG_DEBUG)
-#define ERROR_HEX_BUFFER_SPECIFY_COMPONENT(component_name, buffer, length) ESP_LOG_BUFFER_HEX_LEVEL(component_name, buffer, length, ESP_LOG_ERROR)
+    #define TRACE_HEX_BUFFER_SPECIFY_COMPONENT(component_name, buffer, length) ESP_LOG_BUFFER_HEX_LEVEL(component_name, buffer, length, ESP_LOG_INFO)
+    #define DEBUG_HEX_BUFFER_SPECIFY_COMPONENT(component_name, buffer, length) ESP_LOG_BUFFER_HEX_LEVEL(component_name, buffer, length, ESP_LOG_DEBUG)
+    #define ERROR_HEX_BUFFER_SPECIFY_COMPONENT(component_name, buffer, length) ESP_LOG_BUFFER_HEX_LEVEL(component_name, buffer, length, ESP_LOG_ERROR)
 
 #else
 
-#define TRACE_MESSAGE(format, ...)
-#define DEBUG_MESSAGE(format, ...)
-#define ERROR_MESSAGE(format, ...)
+    #define TRACE_MESSAGE(format, ...)
+    #define DEBUG_MESSAGE(format, ...)
+    #define ERROR_MESSAGE(format, ...)
 
-#define TRACE_MESSAGE_SPECIFY_COMPONENT(component_name, format, ...)
-#define DEBUG_MESSAGE_SPECIFY_COMPONENT(component_name, format, ...)
-#define ERROR_MESSAGE_SPECIFY_COMPONENT(component_name, format, ...)
+    #define TRACE_MESSAGE_SPECIFY_COMPONENT(component_name, format, ...)
+    #define DEBUG_MESSAGE_SPECIFY_COMPONENT(component_name, format, ...)
+    #define ERROR_MESSAGE_SPECIFY_COMPONENT(component_name, format, ...)
 
-#define TRACE_HEX_BUFFER(buffer, length)
-#define DEBUG_HEX_BUFFER(buffer, length)
-#define ERROR_HEX_BUFFER(buffer, length)
+    #define TRACE_HEX_BUFFER(buffer, length)
+    #define DEBUG_HEX_BUFFER(buffer, length)
+    #define ERROR_HEX_BUFFER(buffer, length)
 
-#define TRACE_HEX_BUFFER_SPECIFY_COMPONENT(component_name, buffer, length)
-#define DEBUG_HEX_BUFFER_SPECIFY_COMPONENT(component_name, buffer, length)
-#define ERROR_HEX_BUFFER_SPECIFY_COMPONENT(component_name, buffer, length)
+    #define TRACE_HEX_BUFFER_SPECIFY_COMPONENT(component_name, buffer, length)
+    #define DEBUG_HEX_BUFFER_SPECIFY_COMPONENT(component_name, buffer, length)
+    #define ERROR_HEX_BUFFER_SPECIFY_COMPONENT(component_name, buffer, length)
 
 #endif
 
@@ -326,6 +326,5 @@ public:
      */
     static void StandaloneHeapEventCheck();
 };
-
 
 #endif /* MAIN_LOGGING_HPP_ */

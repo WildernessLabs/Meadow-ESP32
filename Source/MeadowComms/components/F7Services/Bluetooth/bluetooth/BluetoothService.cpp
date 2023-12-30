@@ -5,24 +5,24 @@ BluetoothService::BluetoothService()
 {
 }
 
-BluetoothService::BluetoothService(const char* name, Uuid16 uuid)
+BluetoothService::BluetoothService(const char *name, Uuid16 uuid)
 {
     Name.assign(name);
     Uuid = uuid;
 }
 
-BluetoothCharacteristic& BluetoothService::AddCharacteristic(BluetoothCharacteristic *characteristic)
+BluetoothCharacteristic &BluetoothService::AddCharacteristic(BluetoothCharacteristic *characteristic)
 {
-    // do we already know about this characteristic?  If so, ignore 
+    // do we already know about this characteristic?  If so, ignore
     bool exists = false;
 
     /*
-    for (auto it = _characteristics.begin() ; it != _characteristics.end(); ++it) 
+    for (auto it = _characteristics.begin() ; it != _characteristics.end(); ++it)
     {
         auto chr = (BluetoothCharacteristic*)*it;
 
         // only check non-zero handles since the handle will be zero when we generate the graph
-        if((characteristic->Declaration->Handle != 0) && (chr->Declaration->Handle == characteristic->Declaration->Handle)) 
+        if((characteristic->Declaration->Handle != 0) && (chr->Declaration->Handle == characteristic->Declaration->Handle))
         {
             printf("Already exists.  Skipping\n");
             exists = true;
@@ -31,7 +31,8 @@ BluetoothCharacteristic& BluetoothService::AddCharacteristic(BluetoothCharacteri
     }
     */
 
-    if(!exists) {
+    if (!exists)
+    {
         /*
         // make sure handles are set
         if(characteristic->Declaration->Handle == 0)
@@ -50,16 +51,16 @@ BluetoothCharacteristic& BluetoothService::AddCharacteristic(BluetoothCharacteri
 
         // set the parent
         characteristic->ParentService = this;
-       
+
         _characteristics.push_back(characteristic);
 
-        if(OnCharacteristicAdded)
+        if (OnCharacteristicAdded)
         {
             OnCharacteristicAdded(characteristic);
         }
     }
 
-    ESP_LOGI(LOG_COMPONENT_NAME, "%i characteristics known\n", (int)_characteristics.size());
+    ESP_LOGI(LOG_COMPONENT_NAME, "%i characteristics known\n", (int) _characteristics.size());
 
     return *characteristic;
 }

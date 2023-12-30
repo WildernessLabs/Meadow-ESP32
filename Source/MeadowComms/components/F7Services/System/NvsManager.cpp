@@ -104,7 +104,7 @@ void NvsManager::Setup()
  *  @returns
  *      Current boolean value or the default value if a value could not be found.
  */
-char * NvsManager::GetValue(const char *nameSpace, const char *name, const char *defaultValue)
+char *NvsManager::GetValue(const char *nameSpace, const char *name, const char *defaultValue)
 {
     nvs_handle nvsHandle;
     esp_err_t error;
@@ -132,7 +132,7 @@ char * NvsManager::GetValue(const char *nameSpace, const char *name, const char 
         }
     }
 
-    return(result);
+    return (result);
 }
 
 /**
@@ -193,7 +193,7 @@ NvsManager::ErrorCodes NvsManager::SetValue(const char *nameSpace, const char *n
         result = ErrorCodes::NotAvailable;
     }
 
-    return(result);
+    return (result);
 }
 
 /**
@@ -226,11 +226,11 @@ uint32_t NvsManager::GetValue(const char *nameSpace, const char *name, const uin
         error = nvs_open(nameSpace, NVS_READWRITE, &nvsHandle);
         if (error == ESP_OK)
         {
-            nvs_get_u32(nvsHandle, name, &result);      // Result is not changed if there is an error.
+            nvs_get_u32(nvsHandle, name, &result); // Result is not changed if there is an error.
             nvs_close(nvsHandle);
         }
     }
-    return(result);
+    return (result);
 }
 
 /**
@@ -291,7 +291,7 @@ NvsManager::ErrorCodes NvsManager::SetValue(const char *nameSpace, const char *n
         result = ErrorCodes::NotAvailable;
     }
 
-    return(result);
+    return (result);
 }
 
 /**
@@ -315,7 +315,7 @@ NvsManager::ErrorCodes NvsManager::SetValue(const char *nameSpace, const char *n
  */
 int32_t NvsManager::GetValue(const char *nameSpace, const char *name, const int32_t defaultValue)
 {
-    return((int) GetValue(nameSpace, name, (uint32_t) defaultValue));
+    return ((int) GetValue(nameSpace, name, (uint32_t) defaultValue));
 }
 
 /**
@@ -335,7 +335,7 @@ int32_t NvsManager::GetValue(const char *nameSpace, const char *name, const int3
  */
 NvsManager::ErrorCodes NvsManager::SetValue(const char *nameSpace, const char *name, const int32_t value)
 {
-    return(SetValue(nameSpace, name, (uint32_t) value));
+    return (SetValue(nameSpace, name, (uint32_t) value));
 }
 
 /**
@@ -368,12 +368,12 @@ uint8_t NvsManager::GetValue(const char *nameSpace, const char *name, const uint
         error = nvs_open(nameSpace, NVS_READONLY, &nvsHandle);
         if (error == ESP_OK)
         {
-            nvs_get_u8(nvsHandle, name, &result);   // Result is not changed if there is an error.
+            nvs_get_u8(nvsHandle, name, &result); // Result is not changed if there is an error.
             nvs_close(nvsHandle);
         }
     }
 
-    return(result);
+    return (result);
 }
 
 /**
@@ -434,7 +434,7 @@ NvsManager::ErrorCodes NvsManager::SetValue(const char *nameSpace, const char *n
         result = ErrorCodes::NotAvailable;
     }
 
-    return(result);
+    return (result);
 }
 
 /**
@@ -458,7 +458,7 @@ NvsManager::ErrorCodes NvsManager::SetValue(const char *nameSpace, const char *n
  */
 bool NvsManager::GetValue(const char *nameSpace, const char *name, const bool defaultValue)
 {
-    return(GetValue(nameSpace, name, (uint8_t) (defaultValue ? 1 : 0)) == 1);
+    return (GetValue(nameSpace, name, (uint8_t) (defaultValue ? 1 : 0)) == 1);
 }
 
 /**
@@ -478,5 +478,5 @@ bool NvsManager::GetValue(const char *nameSpace, const char *name, const bool de
  */
 NvsManager::ErrorCodes NvsManager::SetValue(const char *nameSpace, const char *name, const bool value)
 {
-    return(SetValue(nameSpace, name, (uint8_t) (value ? 1 : 0)));
+    return (SetValue(nameSpace, name, (uint8_t) (value ? 1 : 0)));
 }

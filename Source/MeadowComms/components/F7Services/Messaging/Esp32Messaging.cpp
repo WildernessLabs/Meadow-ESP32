@@ -163,7 +163,7 @@ Message *Message::CreateOnHeap(uint8_t messageType, uint8_t interface, uint32_t 
 {
     Message *result = static_cast<Message *>(pvPortMalloc(sizeof(Message)));
 
-    *result = { };
+    *result = {};
     result->MessageType = messageType;
     result->Interface = interface;
     result->Function = function;
@@ -174,7 +174,7 @@ Message *Message::CreateOnHeap(uint8_t messageType, uint8_t interface, uint32_t 
     result->Payload = payload;
     result->PayloadLength = payloadLength;
 
-    return(result);
+    return (result);
 }
 
 /**
@@ -197,7 +197,7 @@ Message *Message::CreateOnHeap(uint8_t messageType, uint8_t interface, uint32_t 
  */
 Message *Message::CreateOnHeap(uint8_t messageType, uint8_t interface, uint32_t function, uint32_t statusCode)
 {
-    return(CreateOnHeap(messageType, interface, function, statusCode, 0, nullptr, 0));
+    return (CreateOnHeap(messageType, interface, function, statusCode, 0, nullptr, 0));
 }
 
 /**
@@ -222,7 +222,7 @@ Message *Message::CreateCopyOnHeap(bool copyPayload)
         memcpy(static_cast<void *>(payload), static_cast<void *>(Payload), static_cast<size_t>(payloadLength));
     }
     Message *newMessage = CreateOnHeap(MessageType, Interface, Function, StatusCode, MessageID, payload, payloadLength);
-    return(newMessage);
+    return (newMessage);
 }
 
 /**
@@ -258,4 +258,3 @@ void Message::DeleteMessage(Message *message)
         vPortFree(message);
     }
 }
-

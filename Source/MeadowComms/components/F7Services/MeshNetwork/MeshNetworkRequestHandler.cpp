@@ -98,7 +98,7 @@ void MeshNetworkRequestHandler::Setup()
 
 /**
  *  @brief Dispatch the message
- * 
+ *
  *  @param
  *      Message containing the data for the request.
  */
@@ -108,7 +108,7 @@ void MeshNetworkRequestHandler::DispatchRequest(Message *request)
     //
     //  Memory for the payload is allocated on the heap and it needs to be released.
     //
-    if(request->Payload != NULL)
+    if (request->Payload != NULL)
     {
         TRACE_HEX_BUFFER(request->Payload, request->PayloadLength);
         vPortFree(request->Payload);

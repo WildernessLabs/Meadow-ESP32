@@ -21,8 +21,7 @@ namespace StatusCodes
     /*
      *    Status and error codes for the various function calls.
      */
-    enum StatusCodes : uint32_t
-    {
+    enum StatusCodes : uint32_t {
         /// <summary>
         /// StatusCodes - CompletedOk
         /// </summary>
@@ -193,15 +192,14 @@ namespace StatusCodes
         ThreadPoolIsFull = 41
     };
 
-}
+} // namespace StatusCodes
 
 namespace Esp32Interfaces
 {
     /*
      *    System interfaces available on the ESP32 for the various function calls.
      */
-    enum Esp32Interfaces : uint8_t
-    {
+    enum Esp32Interfaces : uint8_t {
         /// <summary>
         /// Esp32Interfaces - None
         /// </summary>
@@ -232,15 +230,14 @@ namespace Esp32Interfaces
         WiredEthernet = 6
     };
 
-}
+} // namespace Esp32Interfaces
 
 namespace SystemFunction
 {
     /*
      *    System functions available on the ESP32
      */
-    enum SystemFunction : uint32_t
-    {
+    enum SystemFunction : uint32_t {
         /// <summary>
         /// SystemFunction - GetConfiguration
         /// </summary>
@@ -291,15 +288,14 @@ namespace SystemFunction
         FileSystemDeleteFile = 11
     };
 
-}
+} // namespace SystemFunction
 
 namespace WiFiFunction
 {
     /*
      *    WiFi functions available on the ESP32
      */
-    enum WiFiFunction : uint32_t
-    {
+    enum WiFiFunction : uint32_t {
         /// <summary>
         /// WiFiFunction - StartWiFiInterface
         /// </summary>
@@ -486,15 +482,14 @@ namespace WiFiFunction
         NodeDisconnectedEvent = 45
     };
 
-}
+} // namespace WiFiFunction
 
 namespace BluetoothFunction
 {
     /*
      *    Bluetooth functions available on the ESP32
      */
-    enum BluetoothFunction : uint32_t
-    {
+    enum BluetoothFunction : uint32_t {
         /// <summary>
         /// BluetoothFunction - Start
         /// </summary>
@@ -517,15 +512,14 @@ namespace BluetoothFunction
         ClientWriteRequestEvent = 4
     };
 
-}
+} // namespace BluetoothFunction
 
 namespace TransportFunction
 {
     /*
      *    Transport functions available on the ESP32
      */
-    enum TransportFunction : uint32_t
-    {
+    enum TransportFunction : uint32_t {
         /// <summary>
         /// TransportFunction - ResponseReady
         /// </summary>
@@ -544,13 +538,12 @@ namespace TransportFunction
         ResetEsp32 = 3
     };
 
-}
+} // namespace TransportFunction
 
 /*
  *    Possible transport packet types.
  */
-enum MessageTypes : uint8_t
-{
+enum MessageTypes : uint8_t {
     /// <summary>
     /// MessageTypes - Ack
     /// </summary>
@@ -590,8 +583,7 @@ namespace ConfigurationItems
     /*
      *    Name of items that can be configured (changed by the code on the STM32) on the ESP32.
      */
-    enum ConfigurationItems : uint32_t
-    {
+    enum ConfigurationItems : uint32_t {
         /// <summary>
         /// ConfigurationItems - MaximumMessageQueueLength
         /// </summary>
@@ -657,15 +649,14 @@ namespace ConfigurationItems
         /// </summary>
         SubNetMask = 15
     };
-}
+} // namespace ConfigurationItems
 
 namespace WiFiReasons
 {
     /*
      *    WiFi reason codes
      */
-    enum WiFiReasons : uint8_t
-    {
+    enum WiFiReasons : uint8_t {
         /// <summary>
         /// WiFiReasons - Unspecified
         /// </summary>
@@ -792,15 +783,14 @@ namespace WiFiReasons
         TsfReset = 206
     };
 
-}
+} // namespace WiFiReasons
 
 namespace WiFiAuthenticationMode
 {
     /*
      *    Access point authentication method.
      */
-    enum WiFiAuthenticationMode : uint8_t
-    {
+    enum WiFiAuthenticationMode : uint8_t {
         /// <summary>
         /// WiFiAuthenticationMode - Open
         /// </summary>
@@ -835,15 +825,14 @@ namespace WiFiAuthenticationMode
         Wpa2Wpa3Psk = 7
     };
 
-}
+} // namespace WiFiAuthenticationMode
 
 namespace WiFiCountryPolicy
 {
     /*
      *    WiFi Country Policy.
      */
-    enum WiFiCountryPolicy
-    {
+    enum WiFiCountryPolicy {
         /// <summary>
         /// WiFiCountryPolicy - Automatic
         /// </summary>
@@ -854,15 +843,14 @@ namespace WiFiCountryPolicy
         Manual = 1
     };
 
-}
+} // namespace WiFiCountryPolicy
 
 namespace WiFiSecondChannel
 {
     /*
      *    Location of the secondary channel in respect to the primary channel.
      */
-    enum WiFiSecondChannel
-    {
+    enum WiFiSecondChannel {
         /// <summary>
         /// WiFiSecondChannel - None
         /// </summary>
@@ -877,15 +865,14 @@ namespace WiFiSecondChannel
         Below = 2
     };
 
-}
+} // namespace WiFiSecondChannel
 
 namespace WiFiScanType
 {
     /*
      *    WiFiScanType
      */
-    enum WiFiScanType
-    {
+    enum WiFiScanType {
         /// <summary>
         /// WiFiScanType - Active
         /// </summary>
@@ -896,15 +883,14 @@ namespace WiFiScanType
         Passive = 1
     };
 
-}
+} // namespace WiFiScanType
 
 namespace AntennaTypes
 {
     /*
      *    Types of antennas that can be selected.
      */
-    enum AntennaTypes
-    {
+    enum AntennaTypes {
         /// <summary>
         /// AntennaTypes - OnBoard
         /// </summary>
@@ -919,15 +905,14 @@ namespace AntennaTypes
         Max = 1
     };
 
-}
+} // namespace AntennaTypes
 
 namespace WiFiCipherType
 {
     /*
      *    Encryption method used by the access point.
      */
-    enum WiFiCipherType
-    {
+    enum WiFiCipherType {
         /// <summary>
         /// WiFiCipherType - None
         /// </summary>
@@ -958,15 +943,14 @@ namespace WiFiCipherType
         Unknown = 6
     };
 
-}
+} // namespace WiFiCipherType
 
 namespace AddressFamilyType
 {
     /*
      *    Address family types for the low level sockets..
      */
-    enum AddressFamilyType
-    {
+    enum AddressFamilyType {
         /// <summary>
         /// AddressFamilyType - AfUnspec
         /// </summary>
@@ -981,15 +965,14 @@ namespace AddressFamilyType
         AfInet6 = 10
     };
 
-}
+} // namespace AddressFamilyType
 
 namespace ProtocolFamilyType
 {
     /*
      *    Protocol family types for the low level sockets..
      */
-    enum ProtocolFamilyType
-    {
+    enum ProtocolFamilyType {
         /// <summary>
         /// ProtocolFamilyType - PfUnspec
         /// </summary>
@@ -1004,15 +987,14 @@ namespace ProtocolFamilyType
         PfInet6 = 10
     };
 
-}
+} // namespace ProtocolFamilyType
 
 namespace IpProtocolType
 {
     /*
      *    Protocol types for the low level sockets.
      */
-    enum IpProtocolType
-    {
+    enum IpProtocolType {
         /// <summary>
         /// IpProtocolType - IpProtoIP
         /// </summary>
@@ -1047,15 +1029,14 @@ namespace IpProtocolType
         IpProtoNew = 255
     };
 
-}
+} // namespace IpProtocolType
 
 namespace SocketProtocolType
 {
     /*
      *    Socket protocol types for the low level sockets.
      */
-    enum SocketProtocolType
-    {
+    enum SocketProtocolType {
         /// <summary>
         /// SocketProtocolType - SockStream
         /// </summary>
@@ -1070,30 +1051,28 @@ namespace SocketProtocolType
         SockRaw = 3
     };
 
-}
+} // namespace SocketProtocolType
 
 namespace SocketLevelType
 {
     /*
      *    Socket level types for the low level sockets.
      */
-    enum SocketLevelType
-    {
+    enum SocketLevelType {
         /// <summary>
         /// SocketLevelType - SolSocket
         /// </summary>
         SolSocket = 0xfff
     };
 
-}
+} // namespace SocketLevelType
 
 namespace SocketOptionType
 {
     /*
      *    Socket option types for the low level sockets.
      */
-    enum SocketOptionType
-    {
+    enum SocketOptionType {
         /// <summary>
         /// SocketOptionType - SoDebug
         /// </summary>
@@ -1168,15 +1147,14 @@ namespace SocketOptionType
         SoNoCheck = 0x100a
     };
 
-}
+} // namespace SocketOptionType
 
 namespace Esp32ErrorCodes
 {
     /*
      *    ESP32 Error codes (errno).
      */
-    enum Esp32ErrorCodes
-    {
+    enum Esp32ErrorCodes {
         /// <summary>
         /// Esp32ErrorCodes - Perm
         /// </summary>
@@ -1515,15 +1493,14 @@ namespace Esp32ErrorCodes
         WouldBlock = 11
     };
 
-}
+} // namespace Esp32ErrorCodes
 
 namespace Esp32ResetCodes
 {
     /*
      *    ESP32 Error codes (errno).
      */
-    enum Esp32ResetCodes : uint8_t
-    {
+    enum Esp32ResetCodes : uint8_t {
         /// <summary>
         /// Esp32ResetCodes - Unknown
         /// </summary>
@@ -1570,8 +1547,6 @@ namespace Esp32ResetCodes
         SDIO = 10
     };
 
-}
-
+} // namespace Esp32ResetCodes
 
 #endif /* _SHARED_ENUMS_HPP */
-

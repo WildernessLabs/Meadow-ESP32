@@ -93,7 +93,7 @@ Thread::~Thread()
  */
 char *Thread::GetTaskName()
 {
-    return(_name);
+    return (_name);
 }
 
 /**
@@ -109,7 +109,7 @@ method_t Thread::GetMethod()
         xSemaphoreGive(_mutex);
     }
 
-    return(method);
+    return (method);
 }
 
 /**
@@ -125,7 +125,7 @@ void *Thread::GetParameter()
         xSemaphoreGive(_mutex);
     }
 
-    return(parameter);
+    return (parameter);
 }
 
 /*
@@ -148,7 +148,7 @@ bool Thread::IsBusy()
         busy = _isBusy;
         xSemaphoreGive(_mutex);
     }
-    return(busy);
+    return (busy);
 }
 
 /**
