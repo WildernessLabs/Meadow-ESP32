@@ -9,7 +9,7 @@ idf_component_register( SRCS    "WiFi/WiFiRequestHandler.cpp"
                                 "System/NvsManager.cpp"
                                 "System/SystemRequestHandler.cpp"
                                 "System/FileSystem.cpp"
-
+                                "System/TimerHighResolution.cpp"
                                 "Mapping.cpp"
                                 "Logging.cpp"
 
