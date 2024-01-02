@@ -290,6 +290,36 @@ namespace SystemFunction
 
 } // namespace SystemFunction
 
+namespace EventLoopId
+{
+    /*
+     *    User Event Loop available 
+     */
+    enum EventLoopId : uint32_t
+    {
+        /// <summary>
+        /// EventLoopId - Started
+        /// </summary>
+        Started = 0,
+        /// <summary>
+        /// EventLoopId - Experiry
+        /// </summary>
+        Experiry = 1,
+        /// <summary>
+        /// EventLoopId - Stopped
+        /// </summary>
+        Stopped = 2,
+        /// <summary>
+        /// EventLoopId - Trigger
+        /// </summary>
+        Trigger = 3,
+        /// <summary>
+        /// EventLoopId - Failed
+        /// </summary>
+        Failed = 4,
+
+    };
+}
 namespace WiFiFunction
 {
     /*

@@ -31,6 +31,7 @@
 
 #include "MessageDispatcher.hpp"
 #include "Esp32Messaging.hpp"
+#include "TimerHighResolution.hpp"
 #include "RequestHandlerBase.hpp"
 #include "SharedEnums.hpp"
 #include "Encoders.hpp"
@@ -156,9 +157,19 @@ private:
     static const int WIFI_ACCESS_POINT_STARTED_BIT = BIT10;
 
     /**
-     * @brief USed to indicate that the access point is starting.
+     * @brief Used to indicate that the access point is starting.
      */
     static const int WIFI_STARTING_ACCESS_POINT_BIT = BIT11;
+
+    /**
+     * @brief Used to indicate the auto connect is progressing.
+     */
+    static const int WIFI_AUTOMATIC_CONNECTION_BIT = BIT12;
+
+    /**
+     * @brief Used to indicate retry connect to access point.
+     */
+    static const int WIFI_RETRY_CONNECT_BIT = BIT13;
 
     /**
      *  @brief Indicate that some sort of error has occurred.
@@ -240,9 +251,9 @@ private:
     wifi_config_t *_wifiConfig = nullptr;
 
     /**
-     *  @brief Current retry count.
+     *  @brief Object pointer of the TimerHighResolution.
      */
-    int _currentRetryCount = 0;
+    TimerHighResolution *_timerHighResolution;
 
     /**
      *  @brief Last error code from a call into the ESP IDF.
@@ -437,6 +448,11 @@ private:
      *  @brief Default value for the WiFi timeout.
      */
     static uint32_t _wifiTimeout;
+
+    /**
+     * @brief Default value for the TimerHighResolution
+    */
+    static uint32_t _wifiTimerPeriod;
 
     /**
      *  @brief Name of the storage space holding the default WiFi timeout.
@@ -685,6 +701,16 @@ private:
     void UnlockConnectedNodesMap();
 
     /**
+     * @brief Processes the trigger event from the connect event.
+    */
+    void ConnectTriggerEvent();
+
+    /**
+     * @brief Process the failed event from the connect event.
+    */
+    void ConnectFailedEvent();
+
+    /**
      * @brief Extract an encoded integer setsockopt option value.
      */
     static uint8_t *ExtractIntegerSocketOptionValue(uint8_t *, socklen_t *);
@@ -832,6 +858,11 @@ private:
      *  @brief Method called when the time server has supplied updated time information.
      */
     static void NtpServerCallback(struct timeval *tv);
+    
+    /**
+     * @brief
+    */
+    static void WiFiTimerCallback(void *arg);
 
     /**
      *  @brief Indicate if we have a valid WiFi connection.
@@ -950,6 +981,8 @@ public:
      */
     static uint32_t GetWiFiTimeout();
     static StatusCodes::StatusCodes SetWiFiTimeout(uint32_t value);
+
+    static uint32_t GetWiFiTimerPeriod();
 };
 
 #endif /* _WIFI_REQUEST_HANDLER_HPP_ */

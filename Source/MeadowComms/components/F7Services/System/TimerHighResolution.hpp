@@ -2,7 +2,7 @@
  * 
  * Timer.hpp
  * 
- * Hardware timer group to general-purpose
+ * Hardware timer to general-purpose
 */
 #ifndef _TIMER_GROUP_HPP_
 #define _TIMER_GROUP_HPP_
@@ -16,27 +16,33 @@
 
 #include "SharedEnums.hpp"
 
+/**
+ *  @brief TimerHighResolution class
+ *
+ *  Encapsulate the properties and methods required to provide the
+ *  ability to manipulate the Timer.
+ */
 class TimerHighResolution
 {
 private:
 
     /**
-     * @brief
+     * @brief Alias to indicate the function type
     */
     using TimerCallback = void(*)(void*);
 
     /**
-     * @brief
+     * @brief Namer of the timer.
     */
     std::string _nameTimer;
 
     /**
-     * @brief
+     * @brief Handler to hold the created timer.
     */
     esp_timer_handle_t _timer_handler = nullptr;
 
     /**
-    * @brief
+    * @brief Period of the timer.
     */
     uint64_t _timerPeriod;
 
@@ -48,28 +54,49 @@ public:
     static const char *COMPONENT_NAME;
 
     /**
-     * @brief 
-    */
+     * @brief Construct a new High Resolution Timer (ESP TIMER) object
+     * 
+     * @param timerCallback
+     *      Function to call when timer expires.
+     * @param _nameTimer
+     *      Timer namer
+     */
     TimerHighResolution(TimerCallback timerCallback, std::string _nameTimer);
 
     /**
-     * @brief
-    */
+     * @brief Start the timer.
+     * 
+     * @param periodic 
+     *      true to start the timer in periodic mode
+     *      false to start the timer in one-shot mode
+     * 
+     * @return
+     *      StatusCodes::Completed on success, StatusCodes::Failure if there is a problem.
+     */
     StatusCodes::StatusCodes Start(bool periodic);
 
     /**
-     * @brief
-    */
+     * @brief Stop the timer.
+     *  
+     * @return
+     *      StatusCodes::Completed on success, StatusCodes::Failure if there is a problem.
+     */
     StatusCodes::StatusCodes Stop();
 
     /**
-     * @brief
-    */
+     * @brief Set the period of the timer.
+     * 
+     * @param value 
+     *      value in milliseconds of the period
+     */
     void SetPeriod(uint64_t value);
 
     /**
-     * @brief
-    */
+     * @brief Delete the timer.
+     * 
+     * @return
+     *      StatusCodes::Completed on success, StatusCodes::Failure if there is a problem.
+     */
     StatusCodes::StatusCodes Delete();
 
 };
