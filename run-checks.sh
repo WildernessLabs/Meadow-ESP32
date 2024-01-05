@@ -60,7 +60,7 @@ SOURCE_DIR=$scriptdir/Source/MeadowComms
 COMPONENTS_DIR=$SOURCE_DIR/components/F7Services
 
 echo "Running cppcheck"
-cppcheck --check-level=exhaustive --force --inline-suppr -iCMakeLists.txt -iSource/MeadowComms/components/esp_littlefs -iSource/MeadowComms/build Source/MeadowComms
+cppcheck --error-exitcode=1 --quiet --check-level=exhaustive --force --inline-suppr -iCMakeLists.txt -iSource/MeadowComms/components/esp_littlefs -iSource/MeadowComms/build Source/MeadowComms
 #
 #   The following uses the compile_commands.json file - needs uplift to latest SDK.
 #

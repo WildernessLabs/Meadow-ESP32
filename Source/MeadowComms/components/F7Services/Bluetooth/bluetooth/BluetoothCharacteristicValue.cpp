@@ -23,6 +23,9 @@ BluetoothCharacteristicValue::~BluetoothCharacteristicValue()
 {
     if (_value)
     {
+        //
+        //  The value is allocated in the constructor so silence the spurious cppcheck warning.
+        //
         delete _value;
         _value = NULL;
     }
