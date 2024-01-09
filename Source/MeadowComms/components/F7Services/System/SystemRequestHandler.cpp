@@ -522,58 +522,64 @@ void SystemRequestHandler::SetConfigurationItem(Message *request)
     TRACE_MESSAGE("SetConfigurationItem: Enter");
     Esp32Messaging::ConfigurationValue *value = Encoders::ExtractConfigurationValue(request->Payload);
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    switch (value->Item)
+    if (value)
     {
-        case ConfigurationItems::Antenna:
-            WiFiRequestHandler::SetAntenna(*value->Value);
-            break;
-        case ConfigurationItems::AutomaticallyReconnect:
-            result = WiFiRequestHandler::SetAutomaticReconnect((uint8_t) (*value->Value) == 1);
-            break;
-        case ConfigurationItems::AutomaticallyStartNetwork:
-            result = WiFiRequestHandler::SetAutomaticallyStartNetwork((uint8_t) (*value->Value) == 1);
-            break;
-        case ConfigurationItems::BoardMacAddress:
-            result = WiFiRequestHandler::SetMacAddress(value->Value, WIFI_IF_STA);
-            break;
-        case ConfigurationItems::SoftApMacAddress:
-            result = WiFiRequestHandler::SetMacAddress(value->Value, WIFI_IF_AP);
-            break;
-        case ConfigurationItems::DefaultApAndPassword:
-            result = WiFiRequestHandler::SetDefaultAccessPoint(reinterpret_cast<char *>(value->Value));
-            if (result == StatusCodes::CompletedOk)
-            {
-                result = WiFiRequestHandler::SetPassword(reinterpret_cast<char *>((value->Value + strlen(reinterpret_cast<char *>(value->Value)) + 1)));
-            }
-            break;
-        case ConfigurationItems::DeviceName:
-            result = SetDeviceName(reinterpret_cast<char *>(value->Value));
-            break;
-        case ConfigurationItems::DnsServer:
-            result = WiFiRequestHandler::SetDnsServer(*reinterpret_cast<uint32_t *>(value->Value));
-            break;
-        case ConfigurationItems::StaticIpAddress:
-            result = WiFiRequestHandler::SetIpAddress(*reinterpret_cast<uint32_t *>(value->Value));
-            break;
-        case ConfigurationItems::SubNetMask:
-            // result = WiFiRequestHandler::SetSubNetMask((uint32_t) (*value->Value));
-            result = WiFiRequestHandler::SetSubNetMask(*reinterpret_cast<uint32_t *>(value->Value));
-            break;
-        case ConfigurationItems::DefaultGateway:
-            result = WiFiRequestHandler::SetDefaultGateway(*reinterpret_cast<uint32_t *>(value->Value));
-            break;
-        case ConfigurationItems::MaximumMessageQueueLength:
-            result = SetMaximumMessageQueueLength(*reinterpret_cast<uint32_t *>(value->Value));
-            break;
-        case ConfigurationItems::MaximumRetryCount:
-            result = WiFiRequestHandler::SetMaximumRetryCount(*reinterpret_cast<uint32_t *>(value->Value));
-            break;
-        case ConfigurationItems::UseDhcp:
-            result = WiFiRequestHandler::SetUseDhcp((uint8_t) (*value->Value) == 1);
-            break;
-        default:
-            result = StatusCodes::UnknownConfigurationItem;
-            break;
+        switch (value->Item)
+        {
+            case ConfigurationItems::Antenna:
+                WiFiRequestHandler::SetAntenna(*value->Value);
+                break;
+            case ConfigurationItems::AutomaticallyReconnect:
+                result = WiFiRequestHandler::SetAutomaticReconnect((uint8_t) (*value->Value) == 1);
+                break;
+            case ConfigurationItems::AutomaticallyStartNetwork:
+                result = WiFiRequestHandler::SetAutomaticallyStartNetwork((uint8_t) (*value->Value) == 1);
+                break;
+            case ConfigurationItems::BoardMacAddress:
+                result = WiFiRequestHandler::SetMacAddress(value->Value, WIFI_IF_STA);
+                break;
+            case ConfigurationItems::SoftApMacAddress:
+                result = WiFiRequestHandler::SetMacAddress(value->Value, WIFI_IF_AP);
+                break;
+            case ConfigurationItems::DefaultApAndPassword:
+                result = WiFiRequestHandler::SetDefaultAccessPoint(reinterpret_cast<char *>(value->Value));
+                if (result == StatusCodes::CompletedOk)
+                {
+                    result = WiFiRequestHandler::SetPassword(reinterpret_cast<char *>((value->Value + strlen(reinterpret_cast<char *>(value->Value)) + 1)));
+                }
+                break;
+            case ConfigurationItems::DeviceName:
+                result = SetDeviceName(reinterpret_cast<char *>(value->Value));
+                break;
+            case ConfigurationItems::DnsServer:
+                result = WiFiRequestHandler::SetDnsServer(*reinterpret_cast<uint32_t *>(value->Value));
+                break;
+            case ConfigurationItems::StaticIpAddress:
+                result = WiFiRequestHandler::SetIpAddress(*reinterpret_cast<uint32_t *>(value->Value));
+                break;
+            case ConfigurationItems::SubNetMask:
+                result = WiFiRequestHandler::SetSubNetMask(*reinterpret_cast<uint32_t *>(value->Value));
+                break;
+            case ConfigurationItems::DefaultGateway:
+                result = WiFiRequestHandler::SetDefaultGateway(*reinterpret_cast<uint32_t *>(value->Value));
+                break;
+            case ConfigurationItems::MaximumMessageQueueLength:
+                result = SetMaximumMessageQueueLength(*reinterpret_cast<uint32_t *>(value->Value));
+                break;
+            case ConfigurationItems::MaximumRetryCount:
+                result = WiFiRequestHandler::SetMaximumRetryCount(*reinterpret_cast<uint32_t *>(value->Value));
+                break;
+            case ConfigurationItems::UseDhcp:
+                result = WiFiRequestHandler::SetUseDhcp((uint8_t) (*value->Value) == 1);
+                break;
+            default:
+                result = StatusCodes::UnknownConfigurationItem;
+                break;
+        }
+    }
+    else
+    {
+        result = StatusCodes::EspOutOfMemory;
     }
     request->DeletePayload();
     request->MessageType = MessageTypes::Response;
