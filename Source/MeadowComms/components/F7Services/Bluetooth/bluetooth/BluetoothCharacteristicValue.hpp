@@ -26,6 +26,7 @@ public:
     Uuid128 uuid128;
     BluetoothCharacteristic *Parent;
 
+    BluetoothCharacteristicValue() = delete;
     BluetoothCharacteristicValue(BluetoothCharacteristic *c, Uuid16 uuid, CharacteristicPermission permission, int maxValueLength);
     BluetoothCharacteristicValue(BluetoothCharacteristic *c, Uuid128 uuid, CharacteristicPermission permission, int maxValueLength);
     ~BluetoothCharacteristicValue();
