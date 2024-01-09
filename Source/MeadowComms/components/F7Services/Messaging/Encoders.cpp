@@ -580,6 +580,11 @@ Esp32Messaging::ConfigurationValue *Encoders::ExtractConfigurationValue(uint8_t 
 {
     Esp32Messaging::ConfigurationValue *configurationValue = (Esp32Messaging::ConfigurationValue *) pvPortMalloc(sizeof(Esp32Messaging::ConfigurationValue));
 
+    if (configurationValue == NULL)
+    {
+        return (nullptr);
+    }
+
     configurationValue->Item = ExtractUInt32(buffer);
     buffer += 4;
     configurationValue->ValueLength = ExtractUInt32(buffer);
@@ -587,6 +592,13 @@ Esp32Messaging::ConfigurationValue *Encoders::ExtractConfigurationValue(uint8_t 
     if (configurationValue->ValueLength > 0)
     {
         configurationValue->Value = (uint8_t *) pvPortMalloc(configurationValue->ValueLength);
+
+        if (configurationValue->Value == NULL)
+        {
+            vPortFree(configurationValue);
+            return (nullptr);
+        }
+        
         memcpy(configurationValue->Value, buffer, configurationValue->ValueLength);
         buffer += configurationValue->ValueLength;
     }
