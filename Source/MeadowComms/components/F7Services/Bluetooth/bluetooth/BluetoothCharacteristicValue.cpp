@@ -23,6 +23,10 @@ BluetoothCharacteristicValue::~BluetoothCharacteristicValue()
 {
     if (_value)
     {
+        //
+        //  Suppressing the cppcheck warning here because the value is allocated in the constructor.
+        //
+        // cppcheck-suppress mismatchAllocDealloc
         delete _value;
         _value = NULL;
     }
