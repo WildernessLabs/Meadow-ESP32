@@ -598,7 +598,7 @@ Esp32Messaging::ConfigurationValue *Encoders::ExtractConfigurationValue(uint8_t 
             vPortFree(configurationValue);
             return (nullptr);
         }
-        
+
         memcpy(configurationValue->Value, buffer, configurationValue->ValueLength);
         buffer += configurationValue->ValueLength;
     }
