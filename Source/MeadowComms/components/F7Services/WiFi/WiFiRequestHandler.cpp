@@ -1623,6 +1623,8 @@ void WiFiRequestHandler::ConnectToDefaultAccessPoint(Message *message)
             accessPointInformation.SubnetMask = GetSubNetMask();
             accessPointInformation.Gateway = GetDefaultGateway();
         }
+
+        RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::ConnectToDefaultAccessPoint);
         result = ConnectToAccessPoint(&accessPointInformation);
     }
 
