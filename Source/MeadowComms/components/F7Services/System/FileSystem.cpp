@@ -424,7 +424,7 @@ void FileSystem::ListFiles(Message *message)
         TRACE_MESSAGE("Found %d files.", count);
         if (count > 0)
         {
-            while ((ep = readdir(dp)) != NULL)
+            while (((ep = readdir(dp)) != NULL) && (result != StatusCodes::EspOutOfMemory))
             {
                 Esp32Messaging::FileDetails details;
                 bzero(&details, sizeof(details));
@@ -449,20 +449,33 @@ void FileSystem::ListFiles(Message *message)
                     Encoders::EncodeFileDetails(&details, fileNameList.FileDetails + fileNameList.FileDetailsLength);
                     fileNameList.FileDetailsLength = bufferLength;
                 }
+                else
+                {
+                    result = StatusCodes::EspOutOfMemory;
+                }
             }
         }
         closedir(dp);
-        fileNameList.NumberOfFiles = count;
-        message->PayloadLength = Encoders::EncodedFileNameListBufferSize(&fileNameList);
-        message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-        if (message->Payload == NULL)
+        if (result == StatusCodes::EspOutOfMemory)
         {
             message->PayloadLength = 0;
+            message->Payload = nullptr;
         }
         else
         {
-            Encoders::EncodeFileNameList(&fileNameList, message->Payload);
-            result = StatusCodes::CompletedOk;
+            fileNameList.NumberOfFiles = count;
+            message->PayloadLength = Encoders::EncodedFileNameListBufferSize(&fileNameList);
+            message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
+            if (message->Payload == NULL)
+            {
+                message->PayloadLength = 0;
+                result = StatusCodes::EspOutOfMemory;
+            }
+            else
+            {
+                Encoders::EncodeFileNameList(&fileNameList, message->Payload);
+                result = StatusCodes::CompletedOk;
+            }
         }
     }
 
