@@ -2370,6 +2370,11 @@ Esp32Messaging::FileDetails *Encoders::ExtractFileDetails(uint8_t *buffer)
 {
     Esp32Messaging::FileDetails *fileDetails = (Esp32Messaging::FileDetails *) pvPortMalloc(sizeof(Esp32Messaging::FileDetails));
 
+    if (fileDetails == NULL)
+    {
+        return (nullptr);
+    }
+
     fileDetails->Name = ExtractString(buffer);
     buffer += Encoders::StringLength(fileDetails->Name) + 1;
     fileDetails->Length = ExtractUInt16(buffer);
@@ -2432,6 +2437,11 @@ Esp32Messaging::FileNameAndContents *Encoders::ExtractFileNameAndContents(uint8_
 {
     Esp32Messaging::FileNameAndContents *fileNameAndContents = (Esp32Messaging::FileNameAndContents *) pvPortMalloc(sizeof(Esp32Messaging::FileNameAndContents));
 
+    if (fileNameAndContents == NULL)
+    {
+        return (nullptr);
+    }
+
     fileNameAndContents->Name = ExtractString(buffer);
     buffer += Encoders::StringLength(fileNameAndContents->Name) + 1;
     fileNameAndContents->ContentsLength = ExtractUInt32(buffer);
@@ -2439,6 +2449,11 @@ Esp32Messaging::FileNameAndContents *Encoders::ExtractFileNameAndContents(uint8_
     if (fileNameAndContents->ContentsLength > 0)
     {
         fileNameAndContents->Contents = (uint8_t *) pvPortMalloc(fileNameAndContents->ContentsLength);
+        if (fileNameAndContents->Contents == NULL)
+        {
+            vPortFree(fileNameAndContents);
+            return (nullptr);
+        }
         memcpy(fileNameAndContents->Contents, buffer, fileNameAndContents->ContentsLength);
         buffer += fileNameAndContents->ContentsLength;
     }

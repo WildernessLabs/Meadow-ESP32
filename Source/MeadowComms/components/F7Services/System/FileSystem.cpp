@@ -225,7 +225,7 @@ void FileSystem::ReadFile(Message *message)
     Esp32Messaging::FileNameAndContents *fileData = Encoders::ExtractFileNameAndContents(message->Payload);
     message->DeletePayload();
 
-    if (fileData != NULL)
+    if (fileData)
     {
         if (fileData->Name != NULL)
         {
@@ -257,6 +257,7 @@ void FileSystem::ReadFile(Message *message)
                         if (message->Payload == NULL)
                         {
                             message->PayloadLength = 0;
+                            result = StatusCodes::EspOutOfMemory;
                         }
                         else
                         {
@@ -274,6 +275,7 @@ void FileSystem::ReadFile(Message *message)
                 else
                 {
                     fileData->ContentsLength = 0;
+                    result = StatusCodes::EspOutOfMemory;
                 }
             }
             else
@@ -306,9 +308,9 @@ void FileSystem::WriteFile(Message *message)
     Esp32Messaging::FileNameAndContents *fileData = Encoders::ExtractFileNameAndContents(message->Payload);
     message->DeletePayload();
 
-    if (fileData != NULL)
+    if (fileData)
     {
-        if (fileData->Contents != NULL)
+        if (fileData->Contents)
         {
             std::string s = PARTITION_PATH_NAME;
             s += "/";
@@ -330,6 +332,10 @@ void FileSystem::WriteFile(Message *message)
             vPortFree(fileData->Contents);
         }
         vPortFree(fileData);
+    }
+    else
+    {
+        result = StatusCodes::EspOutOfMemory;
     }
 
     message->MessageType = MessageTypes::Response;
@@ -353,7 +359,7 @@ void FileSystem::DeleteFile(Message *message)
     Esp32Messaging::FileDetails *details = Encoders::ExtractFileDetails(message->Payload);
     message->DeletePayload();
 
-    if (details != NULL)
+    if (details)
     {
         if (details->Name != NULL)
         {
@@ -375,6 +381,10 @@ void FileSystem::DeleteFile(Message *message)
         }
         vPortFree(details->Name);
         vPortFree(details);
+    }
+    else
+    {
+        result = StatusCodes::EspOutOfMemory;
     }
 
     message->MessageType = MessageTypes::Response;
