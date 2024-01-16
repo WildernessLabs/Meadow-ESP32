@@ -122,6 +122,49 @@ int ReadTestFile(char *filename, uint8_t *buffer, int maxLength)
 }
 
 /**
+ *  Extract the FileNameList object that is encoded in the given buffer.
+ *  
+ *  Note that the returned pointer points to a block of memory on the heap and
+ *  this should eventually be released calling vPortFree(...).
+ *  
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded FileNameList object.
+ *  
+ *  @returns
+ *      Pointer to a FileNameList object.
+ */
+static Esp32Messaging::FileNameList *ExtractFileNameList(uint8_t *buffer)
+{
+    Esp32Messaging::FileNameList *fileNameList = (Esp32Messaging::FileNameList *) pvPortMalloc(sizeof(Esp32Messaging::FileNameList));
+
+    if (fileNameList == NULL)
+    {
+        return(nullptr);
+    }
+
+    fileNameList->NumberOfFiles = Encoders::ExtractUInt16(buffer);
+    buffer += 2;
+    fileNameList->FileDetailsLength = Encoders::ExtractUInt32(buffer);
+    buffer += 4;
+    if (fileNameList->FileDetailsLength > 0)
+    {
+        fileNameList->FileDetails = (uint8_t *) pvPortMalloc(fileNameList->FileDetailsLength);
+        if (fileNameList->FileDetails == NULL)
+        {
+            vPortFree(fileNameList);
+            return(nullptr);
+        }
+        memcpy(fileNameList->FileDetails, buffer, fileNameList->FileDetailsLength);
+        buffer += fileNameList->FileDetailsLength;
+    }
+    else
+    {
+        fileNameList->FileDetails = nullptr;
+    }
+    return(fileNameList);
+}
+
+/**
  * @brief Check that we can mount the file system.
  */
 TEST_CASE("File System set up", "[FileSystem]")
@@ -224,9 +267,8 @@ TEST_CASE("Write file to file system", "[FileSystem]")
     Esp32Messaging::FileNameAndContents fileData;
     bzero(&fileData, sizeof(fileData));
     fileData.Name = (char *) TEST_FILE_NAME;
-    fileData.Length = strlen(TEST_FILE_CONTENTS);
     fileData.Contents = (uint8_t *) TEST_FILE_CONTENTS;
-    fileData.ContentsLength = fileData.Length;
+    fileData.ContentsLength = strlen(TEST_FILE_CONTENTS);
     uint32_t payloadLength = Encoders::EncodedFileNameAndContentsBufferSize(&fileData);
     uint8_t *encodedPayload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
     TEST_ASSERT_NOT_NULL(encodedPayload);
@@ -363,7 +405,7 @@ TEST_CASE("Get list of files", "[FileSystem]")
     //
     //  We should have no files on the file system.
     //
-    Esp32Messaging::FileNameList *files = Encoders::ExtractFileNameList(response->Payload);
+    Esp32Messaging::FileNameList *files = ExtractFileNameList(response->Payload);
     TEST_ASSERT_NOT_NULL(files);
     TEST_ASSERT_EQUAL(0, files->NumberOfFiles);
     TEST_ASSERT_EQUAL(0, files->FileDetailsLength);
@@ -385,7 +427,7 @@ TEST_CASE("Get list of files", "[FileSystem]")
     //  just check that we can retrieve the file information.
     //
     TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
-    files = Encoders::ExtractFileNameList(response->Payload);
+    files = ExtractFileNameList(response->Payload);
     TEST_ASSERT_NOT_NULL(files);
     TEST_ASSERT_EQUAL(2, files->NumberOfFiles);
     TEST_ASSERT_GREATER_THAN(0, files->FileDetailsLength);
