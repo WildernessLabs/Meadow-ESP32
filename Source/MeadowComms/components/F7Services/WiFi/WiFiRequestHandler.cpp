@@ -1372,8 +1372,6 @@ void WiFiRequestHandler::DisconnectFromAccessPoint(Message *message)
 
     RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::NetworkDisconnectedEvent, sc);
 
-    xEventGroupClearBits(_xWiFiEventGroup, WIFI_DISCONNECT_REQUESTED_BIT);
-
     TRACE_MESSAGE("DisconnectFromAccessPoint(Message): Exit");
 }
 
@@ -2001,7 +1999,7 @@ void WiFiRequestHandler::StationDisconnectedEvent(wifi_event_sta_disconnected_t 
         ClearIpAndDisconnectData();
         bzero((void *) &_apInformation, sizeof(wifi_event_sta_connected_t));
         RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::NetworkDisconnectedEvent);
-        xEventGroupClearBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT | WIFI_CONNECTING_BIT);
+        xEventGroupClearBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT | WIFI_CONNECTING_BIT | WIFI_HAVE_IP_BIT);
         xEventGroupSetBits(_xWiFiEventGroup, WIFI_ERROR_BIT);
     }
 
