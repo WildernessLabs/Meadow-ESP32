@@ -41,6 +41,7 @@ HEAPTRACING=false
 IDF_FLAGS=""
 IDF_DEFINES=""
 DEBUG_SELECTIONS=""
+TEST_SELECTIONS=""
 FLASH=false
 
 #
@@ -95,6 +96,9 @@ case $i in
     -d=*|--debug=*)
     DEBUG_SELECTIONS="${i#*=}"
     ;;
+    # --tests=*)
+    # TEST_SELECTIONS="${i#*=}"
+    # ;;
     -h|--help)
     HELP=true
     ;;
@@ -124,6 +128,7 @@ if $HELP; then
     echo "-tm | --tracemessages   Enable heap tracing."
     echo "--menuconfig            Enter the menu configuration system overwriting sdkconfig.defaults"
     echo "--dryrun                Perform a dry run (do not execute commands)"
+    # echo "--tests=*               Compile the specified unit tests into the ESP32 binary"
     echo "-d=* | --debug=*        Turn on debug for selected system(s). Valid values (comma separated): WIFI, SPI, BT, SYSTEM."
     echo ""
     exit 0
@@ -297,11 +302,38 @@ if [ ! -z "$DEBUG_SELECTIONS" ]; then
 fi
 
 #
+#   Work out which unit tests to build into the system.
+#
+# if [ ! -z "$TEST_SELECTIONS" ]; then
+#     tests=$(echo $TEST_SELECTIONS | tr "," "\n")
+#     TESTS=""
+#     for test in $tests
+#     do
+#         case $test in
+#             FileSystem)
+#             TESTS+=" FileSystem"
+#             ;;
+#             all)
+#             TESTS+=" all"
+#             ;;
+#             *)
+#             printf "Uknown test $test."
+#             printf "Run build.sh --help for information on valid options."
+#             exit 1
+#             ;;
+#         esac
+#     done
+#     if [ ! -z "$TESTS" ]; then
+#         IDF_FLAGS+=" -T $TESTS"
+#     fi
+# fi
+
+#
 #   There are sometimes problems with old configuration in the build directory
 #   so this removes the build directory before executing the full clean.
 #
 if $FULLCLEAN; then
-    run_command "rm -R build"
+    run_command "rm -Rf $scriptdir/build"
     run_command "idf.py fullclean"
 fi
 
