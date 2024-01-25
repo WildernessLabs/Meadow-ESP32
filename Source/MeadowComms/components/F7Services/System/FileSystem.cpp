@@ -225,7 +225,7 @@ void FileSystem::ReadFile(Message *message)
     Esp32Messaging::FileNameAndContents *fileData = Encoders::ExtractFileNameAndContents(message->Payload);
     message->DeletePayload();
 
-    if (fileData != NULL)
+    if (fileData)
     {
         if (fileData->Name != NULL)
         {
@@ -257,6 +257,7 @@ void FileSystem::ReadFile(Message *message)
                         if (message->Payload == NULL)
                         {
                             message->PayloadLength = 0;
+                            result = StatusCodes::EspOutOfMemory;
                         }
                         else
                         {
@@ -274,6 +275,7 @@ void FileSystem::ReadFile(Message *message)
                 else
                 {
                     fileData->ContentsLength = 0;
+                    result = StatusCodes::EspOutOfMemory;
                 }
             }
             else
@@ -306,9 +308,9 @@ void FileSystem::WriteFile(Message *message)
     Esp32Messaging::FileNameAndContents *fileData = Encoders::ExtractFileNameAndContents(message->Payload);
     message->DeletePayload();
 
-    if (fileData != NULL)
+    if (fileData)
     {
-        if (fileData->Contents != NULL)
+        if (fileData->Contents)
         {
             std::string s = PARTITION_PATH_NAME;
             s += "/";
@@ -330,6 +332,10 @@ void FileSystem::WriteFile(Message *message)
             vPortFree(fileData->Contents);
         }
         vPortFree(fileData);
+    }
+    else
+    {
+        result = StatusCodes::EspOutOfMemory;
     }
 
     message->MessageType = MessageTypes::Response;
@@ -353,7 +359,7 @@ void FileSystem::DeleteFile(Message *message)
     Esp32Messaging::FileDetails *details = Encoders::ExtractFileDetails(message->Payload);
     message->DeletePayload();
 
-    if (details != NULL)
+    if (details)
     {
         if (details->Name != NULL)
         {
@@ -375,6 +381,10 @@ void FileSystem::DeleteFile(Message *message)
         }
         vPortFree(details->Name);
         vPortFree(details);
+    }
+    else
+    {
+        result = StatusCodes::EspOutOfMemory;
     }
 
     message->MessageType = MessageTypes::Response;
@@ -414,7 +424,7 @@ void FileSystem::ListFiles(Message *message)
         TRACE_MESSAGE("Found %d files.", count);
         if (count > 0)
         {
-            while ((ep = readdir(dp)) != NULL)
+            while (((ep = readdir(dp)) != NULL) && (result != StatusCodes::EspOutOfMemory))
             {
                 Esp32Messaging::FileDetails details;
                 bzero(&details, sizeof(details));
@@ -439,20 +449,33 @@ void FileSystem::ListFiles(Message *message)
                     Encoders::EncodeFileDetails(&details, fileNameList.FileDetails + fileNameList.FileDetailsLength);
                     fileNameList.FileDetailsLength = bufferLength;
                 }
+                else
+                {
+                    result = StatusCodes::EspOutOfMemory;
+                }
             }
         }
         closedir(dp);
-        fileNameList.NumberOfFiles = count;
-        message->PayloadLength = Encoders::EncodedFileNameListBufferSize(&fileNameList);
-        message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-        if (message->Payload == NULL)
+        if (result == StatusCodes::EspOutOfMemory)
         {
             message->PayloadLength = 0;
+            message->Payload = nullptr;
         }
         else
         {
-            Encoders::EncodeFileNameList(&fileNameList, message->Payload);
-            result = StatusCodes::CompletedOk;
+            fileNameList.NumberOfFiles = count;
+            message->PayloadLength = Encoders::EncodedFileNameListBufferSize(&fileNameList);
+            message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
+            if (message->Payload == NULL)
+            {
+                message->PayloadLength = 0;
+                result = StatusCodes::EspOutOfMemory;
+            }
+            else
+            {
+                Encoders::EncodeFileNameList(&fileNameList, message->Payload);
+                result = StatusCodes::CompletedOk;
+            }
         }
     }
 
