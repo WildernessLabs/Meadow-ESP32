@@ -1540,45 +1540,52 @@ StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const Esp32Mes
 void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
 {
     TRACE_MESSAGE("ConnectToAccessPoint: Enter");
-    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
+    StatusCodes::StatusCodes result;
 
     Esp32Messaging::AccessPointInformation *accessPointInformation = Encoders::ExtractAccessPointInformation(message->Payload);
     message->DeletePayload();
 
-    //
-    //  Check if the IP address is non-zero, in this case the application is configured for a static IP.
-    //  Static IP addresses must have a valid subnet mask and gateway address set.
-    //
-    if (accessPointInformation->IpAddress != 0)
+    if (!accessPointInformation)
     {
-        if ((accessPointInformation->SubnetMask == 0) || (accessPointInformation->Gateway == 0))
-        {
-            result = StatusCodes::InvalidIp;
-            RaiseErrorEvent(result, nullptr, 0);
-        }
-    }
-
-    result = ConnectToAccessPoint(accessPointInformation);
-    vPortFree(accessPointInformation);
-
-    Esp32Messaging::ConnectEventData data = {};
-
-    if (result == StatusCodes::CompletedOk)
-    {
-        PopulateConnectionEventDataStructure(&data);
+        result = StatusCodes::EspOutOfMemory;
     }
     else
     {
-        memcpy(static_cast<void *>(data.Ssid), static_cast<void *>(_disconnectData.ssid), _disconnectData.ssid_len);
-        memcpy(static_cast<void *>(data.Bssid), static_cast<void *>(_disconnectData.bssid), sizeof(data.Bssid));
-        TRACE_MESSAGE("Failed to connect to access point, code: %d", _disconnectData.reason);
-        data.Reason = _disconnectData.reason;
-        ClearIpAndDisconnectData();
-        _lastIdfErrorCode = ESP_OK;
+        //
+        //  Check if the IP address is non-zero, in this case the application is configured for a static IP.
+        //  Static IP addresses must have a valid subnet mask and gateway address set.
+        //
+        if (accessPointInformation->IpAddress != 0)
+        {
+            if ((accessPointInformation->SubnetMask == 0) || (accessPointInformation->Gateway == 0))
+            {
+                result = StatusCodes::InvalidIp;
+                RaiseErrorEvent(result, nullptr, 0);
+            }
+        }
+
+        result = ConnectToAccessPoint(accessPointInformation);
+        vPortFree(accessPointInformation);
+
+        Esp32Messaging::ConnectEventData data = {};
+
+        if (result == StatusCodes::CompletedOk)
+        {
+            PopulateConnectionEventDataStructure(&data);
+        }
+        else
+        {
+            memcpy(static_cast<void *>(data.Ssid), static_cast<void *>(_disconnectData.ssid), _disconnectData.ssid_len);
+            memcpy(static_cast<void *>(data.Bssid), static_cast<void *>(_disconnectData.bssid), sizeof(data.Bssid));
+            TRACE_MESSAGE("Failed to connect to access point, code: %d", _disconnectData.reason);
+            data.Reason = _disconnectData.reason;
+            ClearIpAndDisconnectData();
+            _lastIdfErrorCode = ESP_OK;
+        }
+        message->PayloadLength = Encoders::EncodedConnectEventDataBufferSize(&data);
+        message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
+        Encoders::EncodeConnectEventData(&data, message->Payload);
     }
-    message->PayloadLength = Encoders::EncodedConnectEventDataBufferSize(&data);
-    message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-    Encoders::EncodeConnectEventData(&data, message->Payload);
 
     message->MessageType = MessageTypes::Response;
     message->StatusCode = result;
