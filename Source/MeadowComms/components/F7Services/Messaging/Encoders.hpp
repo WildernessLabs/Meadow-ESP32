@@ -107,9 +107,13 @@ namespace Esp32Messaging
 
     struct DisconnectEventData
     {
+        char Ssid[33];
+        uint8_t SsidLength;
+        uint8_t Bssid[6];
+        int8_t Rssi;
         uint8_t Retrying;
         int32_t RetriesRemaining;
-        uint32_t Reason;
+        uint8_t Reason;
     };
 
     struct AccessPoint
@@ -496,6 +500,8 @@ public:
     static Esp32Messaging::DisconnectFromAccessPointRequest *ExtractDisconnectFromAccessPointRequest(uint8_t *);
     static void EncodeConnectEventData(Esp32Messaging::ConnectEventData *, uint8_t *);
     static int EncodedConnectEventDataBufferSize(Esp32Messaging::ConnectEventData *);
+    static void EncodeDisconnectEventData(Esp32Messaging::DisconnectEventData *, uint8_t *);
+    static int EncodeDisconnectEventDataBufferSize(Esp32Messaging::DisconnectEventData *);
     static void EncodeNodeConnectionChangeEventData(Esp32Messaging::NodeConnectionChangeEventData *, uint8_t *);
     static int EncodedNodeConnectionChangeEventDataBufferSize(Esp32Messaging::NodeConnectionChangeEventData *);
     static Esp32Messaging::NodeConnectionChangeEventData *ExtractNodeConnectionChangeEventData(uint8_t *);

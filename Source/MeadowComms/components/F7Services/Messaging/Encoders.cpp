@@ -755,6 +755,34 @@ int Encoders::EncodedConnectEventDataBufferSize(Esp32Messaging::ConnectEventData
 }
 
 /**
+ * 
+*/
+void Encoders::EncodeDisconnectEventData(Esp32Messaging::DisconnectEventData *disconnectEventData, uint8_t *buffer)
+{
+    memcpy((void *) buffer, (void *) disconnectEventData->Ssid, 33);
+    buffer += 33;
+    *buffer = disconnectEventData->SsidLength;
+    buffer += 1;
+    memcpy((void *) buffer, (void *) disconnectEventData->Bssid, 6);
+    buffer += 6;
+    *buffer = disconnectEventData->Rssi;
+    buffer += 1;
+    *buffer = disconnectEventData->Retrying;
+    buffer += 1;
+    EncodeUInt32(disconnectEventData->RetriesRemaining, buffer);
+    buffer += 4;
+    *buffer = disconnectEventData->Reason;
+}
+
+/**
+ * 
+*/
+int Encoders::EncodeDisconnectEventDataBufferSize(Esp32Messaging::DisconnectEventData *disconnectEventData)
+{
+    return (47);
+}
+
+/**
  *  Convert the NodeConnectionChangeEventData object into a byte stream that can be sent to the STM32.
  *
  *  The amount of memory required can be obtained by calling the EncodedNodeConnectionChangeEventDataBufferSize method.
