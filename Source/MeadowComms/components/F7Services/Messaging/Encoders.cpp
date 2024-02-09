@@ -672,6 +672,11 @@ Esp32Messaging::AccessPointInformation *Encoders::ExtractAccessPointInformation(
 {
     Esp32Messaging::AccessPointInformation *accessPointInformation = (Esp32Messaging::AccessPointInformation *) pvPortMalloc(sizeof(Esp32Messaging::AccessPointInformation));
 
+    if (accessPointInformation == NULL)
+    {
+        return (nullptr);
+    }
+
     accessPointInformation->NetworkName = ExtractString(buffer);
     buffer += Encoders::StringLength(accessPointInformation->NetworkName) + 1;
     accessPointInformation->Password = ExtractString(buffer);
