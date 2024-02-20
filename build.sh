@@ -358,6 +358,12 @@ if [ $? -eq 0 ]; then
   fi
 fi
 
+#Generate checksums for binaries
+
+md5sum  Source/MeadowComms/build/MeadowComms.bin | cut -d ' ' -f 1 > Source/MeadowComms/build/MeadowComms.bin.md5
+md5sum  Source/MeadowComms/build/bootloader/bootloader.bin | cut -d ' ' -f 1 > Source/MeadowComms/build/bootloader/bootloader.bin.md5
+md5sum  Source/MeadowComms/partition_table/partition-table.bin | cut -d ' ' -f 1 > Source/MeadowComms/build/partition_table/partition-table.bin.md5
+
 git checkout HEAD $scriptdir/Source/MeadowComms/main/build_info.template
 git checkout HEAD $scriptdir/Source/MeadowComms/version.txt
 rm $scriptdir/Source/MeadowComms/main/build_info.template.bak
