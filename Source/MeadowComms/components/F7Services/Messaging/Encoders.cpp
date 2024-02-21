@@ -755,8 +755,16 @@ int Encoders::EncodedConnectEventDataBufferSize(Esp32Messaging::ConnectEventData
 }
 
 /**
- * 
-*/
+ *  Convert the DisconnectEventData object into a byte stream that can be sent to the STM32.
+ *
+ *  The amount of memory required can be obtained by calling the EncodeDisconnectEventDataBufferSize method.
+ *
+ *  @param disconnectEventData
+ *      DisconnectEventData object to be encoded.
+ *
+ *  @param buffer
+ *      Pointer to a block of memory large enough to hold the encoded DisconnectEventData object.
+ */
 void Encoders::EncodeDisconnectEventData(Esp32Messaging::DisconnectEventData *disconnectEventData, uint8_t *buffer)
 {
     memcpy((void *) buffer, (void *) disconnectEventData->Ssid, 33);
@@ -767,19 +775,21 @@ void Encoders::EncodeDisconnectEventData(Esp32Messaging::DisconnectEventData *di
     buffer += 6;
     *buffer = disconnectEventData->Rssi;
     buffer += 1;
-    *buffer = disconnectEventData->Retrying;
-    buffer += 1;
-    EncodeUInt32(disconnectEventData->RetriesRemaining, buffer);
-    buffer += 4;
     *buffer = disconnectEventData->Reason;
 }
 
 /**
- * 
+ *  Calculate the amount of memory required to hold the given instance of the DisconnectEventData object.
+ *
+ *  @param disconnectEventData
+ *      DisconnectEventData object to be encoded.
+ *
+ *  @returns
+ *      Number of bytes required to hold the encoded DisconnectEventData object.
 */
 int Encoders::EncodeDisconnectEventDataBufferSize(Esp32Messaging::DisconnectEventData *disconnectEventData)
 {
-    return (47);
+    return (42);
 }
 
 /**

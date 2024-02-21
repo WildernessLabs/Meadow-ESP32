@@ -111,8 +111,6 @@ namespace Esp32Messaging
         uint8_t SsidLength;
         uint8_t Bssid[6];
         int8_t Rssi;
-        uint8_t Retrying;
-        int32_t RetriesRemaining;
         uint8_t Reason;
     };
 

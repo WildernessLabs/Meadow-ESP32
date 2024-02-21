@@ -907,6 +907,10 @@ void WiFiRequestHandler::RaiseConnectToAccessPointEvent(StatusCodes::StatusCodes
     TRACE_MESSAGE("RaiseConnectToAccessPointEvent: Exit");
 }
 
+/**
+ *  @brief Raise the DisconnectEvent for the managed code.
+ *
+ */
 void WiFiRequestHandler::RaiseDisconnectEvent()
 {
     TRACE_MESSAGE("RaiseDisconnectEvent: Enter");
@@ -925,12 +929,16 @@ void WiFiRequestHandler::RaiseDisconnectEvent()
 
         uint32_t payloadLength = Encoders::EncodeDisconnectEventDataBufferSize(ed);
         uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
-
-        Encoders::EncodeDisconnectEventData(ed, payload);
-        vPortFree(ed);
-
-        RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::NetworkDisconnectedEvent, StatusCodes::CompletedOk, payload, payloadLength);
-
+        if (payload != NULL)
+        {
+            Encoders::EncodeDisconnectEventData(ed, payload);
+            vPortFree(ed);
+            RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::NetworkDisconnectedEvent, StatusCodes::CompletedOk, payload, payloadLength);
+        }
+        else
+        {
+            ERROR_MESSAGE("Failed to allocate memory for DisconnectEventData payload. ");
+        }
     }
 
     TRACE_MESSAGE("RaiseDisconnectEvent: Exit");
@@ -1398,8 +1406,6 @@ void WiFiRequestHandler::DisconnectFromAccessPoint(Message *message)
     message->MessageType = MessageTypes::Response;
     _messageDispatcher->QueueMessageForStm32(message);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
-
-    // RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::NetworkDisconnectedEvent, sc);
 
     TRACE_MESSAGE("DisconnectFromAccessPoint(Message): Exit");
 }
