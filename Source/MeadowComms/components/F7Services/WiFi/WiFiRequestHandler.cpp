@@ -921,11 +921,11 @@ void WiFiRequestHandler::RaiseDisconnectEvent()
     {
         memset(ed, 0, sizeof(Esp32Messaging::DisconnectEventData));
 
-        // Station information 
-        memcpy((void *) &ed->Ssid,        (void *) &_disconnectData.ssid,     sizeof(ed->Ssid));
-        memcpy((void *) &ed->SsidLength,  (void *) &_disconnectData.ssid_len, sizeof(ed->SsidLength));
-        memcpy((void *) &ed->Bssid,       (void *) &_disconnectData.bssid,    sizeof(ed->Bssid));
-        memcpy((void *) &ed->Reason,      (void *) &_disconnectData.reason,   sizeof(ed->Reason));
+        // Station information
+        memcpy((void *) &ed->Ssid, (void *) &_disconnectData.ssid, sizeof(ed->Ssid));
+        memcpy((void *) &ed->SsidLength, (void *) &_disconnectData.ssid_len, sizeof(ed->SsidLength));
+        memcpy((void *) &ed->Bssid, (void *) &_disconnectData.bssid, sizeof(ed->Bssid));
+        memcpy((void *) &ed->Reason, (void *) &_disconnectData.reason, sizeof(ed->Reason));
 
         uint32_t payloadLength = Encoders::EncodeDisconnectEventDataBufferSize(ed);
         uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));

@@ -786,7 +786,7 @@ void Encoders::EncodeDisconnectEventData(Esp32Messaging::DisconnectEventData *di
  *
  *  @returns
  *      Number of bytes required to hold the encoded DisconnectEventData object.
-*/
+ */
 int Encoders::EncodeDisconnectEventDataBufferSize(Esp32Messaging::DisconnectEventData *disconnectEventData)
 {
     return (42);

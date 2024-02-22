@@ -525,8 +525,8 @@ private:
     void RaiseConnectToAccessPointEvent(StatusCodes::StatusCodes);
 
     /**
-     * @brief Raise the DisconnectEvent for the managed code.
-    */
+     *  @brief Raise the RaiseDisconnectEvent for the managed code.
+     */
     void RaiseDisconnectEvent();
 
     /**
