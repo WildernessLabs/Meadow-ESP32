@@ -908,6 +908,43 @@ void WiFiRequestHandler::RaiseConnectToAccessPointEvent(StatusCodes::StatusCodes
 }
 
 /**
+ *  @brief Raise the DisconnectEvent for the managed code.
+ *
+ */
+void WiFiRequestHandler::RaiseDisconnectEvent()
+{
+    TRACE_MESSAGE("RaiseDisconnectEvent: Enter");
+
+    Esp32Messaging::DisconnectEventData *ed = static_cast<Esp32Messaging::DisconnectEventData *>(pvPortMalloc(sizeof(Esp32Messaging::DisconnectEventData)));
+
+    if (ed != NULL)
+    {
+        memset(ed, 0, sizeof(Esp32Messaging::DisconnectEventData));
+
+        // Station information
+        memcpy((void *) &ed->Ssid, (void *) &_disconnectData.ssid, sizeof(ed->Ssid));
+        memcpy((void *) &ed->SsidLength, (void *) &_disconnectData.ssid_len, sizeof(ed->SsidLength));
+        memcpy((void *) &ed->Bssid, (void *) &_disconnectData.bssid, sizeof(ed->Bssid));
+        memcpy((void *) &ed->Reason, (void *) &_disconnectData.reason, sizeof(ed->Reason));
+
+        uint32_t payloadLength = Encoders::EncodeDisconnectEventDataBufferSize(ed);
+        uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
+        if (payload != NULL)
+        {
+            Encoders::EncodeDisconnectEventData(ed, payload);
+            vPortFree(ed);
+            RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::NetworkDisconnectedEvent, StatusCodes::CompletedOk, payload, payloadLength);
+        }
+        else
+        {
+            ERROR_MESSAGE("Failed to allocate memory for DisconnectEventData payload. ");
+        }
+    }
+
+    TRACE_MESSAGE("RaiseDisconnectEvent: Exit");
+}
+
+/**
  * @brief Raise an error event for the WiFi interface.
  *
  * @param statusCode Status code
@@ -1369,8 +1406,6 @@ void WiFiRequestHandler::DisconnectFromAccessPoint(Message *message)
     message->MessageType = MessageTypes::Response;
     _messageDispatcher->QueueMessageForStm32(message);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
-
-    RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::NetworkDisconnectedEvent, sc);
 
     TRACE_MESSAGE("DisconnectFromAccessPoint(Message): Exit");
 }
@@ -2003,9 +2038,10 @@ void WiFiRequestHandler::StationDisconnectedEvent(wifi_event_sta_disconnected_t 
 
     if (raiseEvent)
     {
-        ClearIpAndDisconnectData();
+        memcpy(&_disconnectData, eventData, sizeof(wifi_event_sta_disconnected_t));
+        RaiseDisconnectEvent();
         bzero((void *) &_apInformation, sizeof(wifi_event_sta_connected_t));
-        RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::NetworkDisconnectedEvent);
+        ClearIpAndDisconnectData();
         xEventGroupClearBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT | WIFI_CONNECTING_BIT | WIFI_HAVE_IP_BIT);
         xEventGroupSetBits(_xWiFiEventGroup, WIFI_ERROR_BIT);
     }
