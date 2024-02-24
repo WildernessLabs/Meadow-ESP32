@@ -525,6 +525,11 @@ private:
     void RaiseConnectToAccessPointEvent(StatusCodes::StatusCodes);
 
     /**
+     *  @brief Raise the RaiseDisconnectEvent for the managed code.
+     */
+    void RaiseDisconnectEvent();
+
+    /**
      *  @brief Raise the ErrorEvent for the managed code.
      */
     void RaiseErrorEvent(StatusCodes::StatusCodes statusCode, uint8_t *payload, uint32_t payloadLength);
