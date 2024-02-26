@@ -123,13 +123,13 @@ int ReadTestFile(char *filename, uint8_t *buffer, int maxLength)
 
 /**
  *  Extract the FileNameList object that is encoded in the given buffer.
- *  
+ *
  *  Note that the returned pointer points to a block of memory on the heap and
  *  this should eventually be released calling vPortFree(...).
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded FileNameList object.
- *  
+ *
  *  @returns
  *      Pointer to a FileNameList object.
  */
@@ -139,7 +139,7 @@ static Esp32Messaging::FileNameList *ExtractFileNameList(uint8_t *buffer)
 
     if (fileNameList == NULL)
     {
-        return(nullptr);
+        return (nullptr);
     }
 
     fileNameList->NumberOfFiles = Encoders::ExtractUInt16(buffer);
@@ -152,7 +152,7 @@ static Esp32Messaging::FileNameList *ExtractFileNameList(uint8_t *buffer)
         if (fileNameList->FileDetails == NULL)
         {
             vPortFree(fileNameList);
-            return(nullptr);
+            return (nullptr);
         }
         memcpy(fileNameList->FileDetails, buffer, fileNameList->FileDetailsLength);
         buffer += fileNameList->FileDetailsLength;
@@ -161,7 +161,7 @@ static Esp32Messaging::FileNameList *ExtractFileNameList(uint8_t *buffer)
     {
         fileNameList->FileDetails = nullptr;
     }
-    return(fileNameList);
+    return (fileNameList);
 }
 
 /**
