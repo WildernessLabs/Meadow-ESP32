@@ -12,8 +12,11 @@ steps:
   inputs:
     contents: |
       Source/MeadowComms/build/MeadowComms.bin
+      Source/MeadowComms/build/MeadowComms.bin.md5
       Source/MeadowComms/build/bootloader/bootloader.bin
+      Source/MeadowComms/build/bootloader/bootloader.bin.md5
       Source/MeadowComms/build/partition_table/partition-table.bin
+      Source/MeadowComms/build/partition_table/partition-table.bin.md5
     targetFolder: '$(Build.ArtifactStagingDirectory)'
     flattenFolders: true
 - task: PublishBuildArtifacts@1
