@@ -189,7 +189,23 @@ namespace StatusCodes
         /// <summary>
         /// StatusCodes - Thread pool is full and timeout has been exceeded.
         /// </summary>
-        ThreadPoolIsFull = 41
+        ThreadPoolIsFull = 41,
+        /// <summary>
+        /// StatusCodes - This is a placeholder status code for the STM32 to use to indicate that the ESP32 has restarted unexpectedly.
+        /// </summary>
+        UnexpectedCoprocessorRestart = 42,
+        /// <summary>
+        /// StatusCodes - Invalid configuration file.
+        /// </summary>
+        InvalidConfigurationFile = 43,
+        /// <summary>
+        /// StatusCodes - Invalid WiFi configuration file.
+        /// </summary>
+        InvalidWiFiConfigurationFile = 44,
+        /// <summary>
+        /// StatusCodes - Invalid cell configuration file.
+        /// </summary>
+        InvalidCellConfigurationFile = 45,
     };
 
 } // namespace StatusCodes
@@ -285,7 +301,13 @@ namespace SystemFunction
         /// <summary>
         /// SystemFunction - FileSystemDeleteFile
         /// </summary>
-        FileSystemDeleteFile = 11
+        FileSystemDeleteFile = 11,
+        /// <summary>
+        /// SystemFunction - OsException
+        /// </summary>
+        /// Notes: This is a place holder as this is only generated on the STM32
+        //  as a way of letting the managed code know about an OS error.
+        OsException = 12,
     };
 
 } // namespace SystemFunction
