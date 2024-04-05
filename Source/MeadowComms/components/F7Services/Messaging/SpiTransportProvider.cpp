@@ -66,6 +66,7 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
     {
         throw new MultipleInstancesException();
     }
+    SendControlMessageToStm32(ControlMessageType::Reset);
     /*
      *  Should only get here if this is the first instance.
      */
@@ -82,9 +83,6 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
      */
     gpio_pad_select_gpio(Gpio::ESP32_SPI_READY_PIN);
     gpio_set_direction(Gpio::ESP32_SPI_READY_PIN, GPIO_MODE_OUTPUT);
-    //
-    gpio_pad_select_gpio(Gpio::ESP32_MESSAGE_WAITING_PIN);
-    gpio_set_direction(Gpio::ESP32_MESSAGE_WAITING_PIN, GPIO_MODE_OUTPUT);
 
     /*
      *  Configure the pull-ups on the SPI pins.
@@ -166,13 +164,8 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
      */
     xTaskCreate(Task, COMPONENT_NAME, 2048 * 2, this, configMAX_PRIORITIES - 1, &SpiTransportProvider::_transportProviderTaskHandle);
 
-    /*
-     *  The SPI code on the STM32 will wait for both SPI ready and
-     *  message waiting to both go low as a signal that the SPI code
-     *  has completed the initialisation process.
-     */
-    gpio_set_level(Gpio::ESP32_MESSAGE_WAITING_PIN, 0);
     gpio_set_level(Gpio::ESP32_SPI_READY_PIN, 0);
+    SendControlMessageToStm32(ControlMessageType::Ready);
 }
 
 /**
@@ -997,7 +990,7 @@ void SpiTransportProvider::SynchronisationTask(void *pvParameters)
     while (xSemaphoreTake(sender->_synchronisationSemaphore, pdMS_TO_TICKS(2000)) != pdTRUE)
     {
         TRACE_MESSAGE_SPECIFY_COMPONENT(sender->COMPONENT_NAME, "Sending synchronisation pulse to STM32.");
-        sender->ToggleEsp32MessageWaitingPin();
+        sender->SendControlMessageToStm32(ControlMessageType::MessageWaiting);
     }
     vSemaphoreDelete(sender->_synchronisationSemaphore);
     sender->_synchronisationSemaphore = NULL;

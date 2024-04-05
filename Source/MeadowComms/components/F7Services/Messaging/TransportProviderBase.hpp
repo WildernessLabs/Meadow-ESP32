@@ -47,6 +47,16 @@ public:
      */
     static const uint32_t STM32_INTERRUPT_NOTIFICATION_BIT = 0x00000001;
 
+    /**
+     * @brief Control message that can be sent to the STM32.
+     */
+    enum ControlMessageType
+    {
+        Reset = 1,
+        MessageWaiting,
+        Ready,
+    };
+
 private:
     /**
      *  @brief Maximum length of the message queue.
@@ -98,9 +108,9 @@ protected:
     Message *GetOutboundMessage();
 
     /**
-     *  @brief Toggle the GPIO pin that is connected to the STM32.
+     *  @brief Send a control message to the STM32.
      */
-    void ToggleEsp32MessageWaitingPin();
+    void SendControlMessageToStm32(ControlMessageType);
 
     /**
      *  @brief Method used for debugging, this will dump the message at the head

@@ -9,6 +9,8 @@
 
 #include "driver/gpio.h"
 
+#include <string>
+
 #include "TransportProviderBase.hpp"
 #include "Encoders.hpp"
 #include "Logging.hpp"
@@ -171,7 +173,7 @@ bool TransportProviderBase::QueueMessageForStm32(Message *message)
         else
         {
             Logging::DumpMessage(COMPONENT_NAME, message);
-            ToggleEsp32MessageWaitingPin();
+            SendControlMessageToStm32(ControlMessageType::MessageWaiting);
         }
         xSemaphoreGive(_outboundMessageQueueMutex);
     }
@@ -179,15 +181,30 @@ bool TransportProviderBase::QueueMessageForStm32(Message *message)
 }
 
 /**
- *  @brief Toggle the "Message waiting" GPIO pin connected to the STM32.
- *
- *  There may be a problem with this method if the clock frequency on the ESP32
- *  is increased to 240 MHz.  It appears that the messages going to the STM32
- *  stop being received.
+ *  @brief Send a control message to the STM32.
+ * 
+ *  @param messageType
+ *     Type of control message to send.
  */
-void TransportProviderBase::ToggleEsp32MessageWaitingPin()
+void TransportProviderBase::SendControlMessageToStm32(ControlMessageType messageType)
 {
-    gpio_set_level(Gpio::ESP32_MESSAGE_WAITING_PIN, 1);
-    vTaskDelay(50 / portTICK_PERIOD_MS);
-    gpio_set_level(Gpio::ESP32_MESSAGE_WAITING_PIN, 0);
+    char const *message = nullptr;
+    switch (messageType)
+    {
+        case ControlMessageType::MessageWaiting:
+            message = const_cast<char *>("+++MW\n");
+            break;
+        case ControlMessageType::Reset:
+            message = const_cast<char *>("+++RST\n");
+            break;
+        case ControlMessageType::Ready:
+            message = const_cast<char *>("+++RDY\n");
+            break;
+        default:
+            break;
+    }
+    if (message)
+    {
+        printf(message);
+    }
 }
