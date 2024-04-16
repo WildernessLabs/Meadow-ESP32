@@ -55,13 +55,32 @@ public:
         Reset = 1,
         MessageWaiting,
         Ready,
+        SpiInterfaceReady,
     };
+
+    ControlMessageType GetControlSignalMessage();
+
+    void SetControlSignalMessage(ControlMessageType);
+
+    TickType_t GetControlSignalDelay();
+
+    void SetControlSignalDelay(TickType_t);
 
 private:
     /**
      *  @brief Maximum length of the message queue.
      */
     const uint32_t MAX_QUEUE_LENGTH = 10;
+
+    /**
+     * @brief Control message type to send to the STM32 in the 
+     */
+    ControlMessageType _controlSignalMessage = ControlMessageType::Ready;
+
+    /**
+     * @brief Delay for the control signal task.
+     */
+    TickType_t _controlSignalDelay = pdMS_TO_TICKS(2000);
 
 protected:
     /**

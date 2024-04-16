@@ -189,16 +189,25 @@ bool TransportProviderBase::QueueMessageForStm32(Message *message)
 void TransportProviderBase::SendControlMessageToStm32(ControlMessageType messageType)
 {
     char const *message = nullptr;
+    char smallBuffer[20];
+
     switch (messageType)
     {
         case ControlMessageType::MessageWaiting:
             message = const_cast<char *>("+++MW\n");
             break;
         case ControlMessageType::Reset:
-            message = const_cast<char *>("+++RST\n");
+            {
+                esp_reset_reason_t resetReason = esp_reset_reason();
+                snprintf(smallBuffer, sizeof(smallBuffer), "+++RST,%d\n", (int) resetReason);
+                message = smallBuffer;
+            }
             break;
         case ControlMessageType::Ready:
             message = const_cast<char *>("+++RDY\n");
+            break;
+        case ControlMessageType::SpiInterfaceReady:
+            message = const_cast<char *>("+++SIR\n");
             break;
         default:
             break;
@@ -207,4 +216,48 @@ void TransportProviderBase::SendControlMessageToStm32(ControlMessageType message
     {
         printf(message);
     }
+}
+
+/**
+ * @brief Get the current control signal message that should be sent to the STM32.
+ * 
+ * @return TransportProviderBase::ControlMessageType
+ *      The current control signal message.
+ */
+TransportProviderBase::ControlMessageType TransportProviderBase::GetControlSignalMessage()
+{
+    return(_controlSignalMessage);
+}
+
+/**
+ * @brief Set the control signal message to be sent to the STM32.
+ * 
+ * @param messageType 
+ *      The control signal message to be sent.
+ */
+void TransportProviderBase::SetControlSignalMessage(ControlMessageType messageType)
+{
+    _controlSignalMessage = messageType;
+}
+
+/**
+ * @brief Get the number of ticks delay in the attempt to acquire the semaphore.
+ * 
+ * @return TickType_t 
+ *      Number of ticks delay in the attempt to acquire the semaphore.
+ */
+TickType_t TransportProviderBase::GetControlSignalDelay()
+{
+    return(_controlSignalDelay);
+}
+
+/**
+ * @brief Set the number of ticks delay in the attempt to acquire the semaphore.
+ * 
+ * @param delay
+ *      Number of ticks between attempts to take the semaphore.
+ */
+void TransportProviderBase::SetControlSignalDelay(TickType_t delay)
+{
+    _controlSignalDelay = delay;
 }
