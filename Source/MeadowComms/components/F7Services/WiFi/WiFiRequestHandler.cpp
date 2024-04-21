@@ -2022,7 +2022,7 @@ void WiFiRequestHandler::StationConnectedEvent(wifi_event_sta_connected_t *event
     xEventGroupClearBits(_xWiFiEventGroup, WIFI_CONNECTING_BIT);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT);
 
-    EventBits_t bits =  xEventGroupGetBits(_xWiFiEventGroup);
+    EventBits_t bits = xEventGroupGetBits(_xWiFiEventGroup);
     if (bits & WIFI_RECONNECT_BIT)
     {
         RaiseReconnectEvent(StatusCodes::CompletedOk);
