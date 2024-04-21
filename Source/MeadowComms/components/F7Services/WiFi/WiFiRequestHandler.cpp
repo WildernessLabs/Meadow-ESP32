@@ -945,6 +945,32 @@ void WiFiRequestHandler::RaiseDisconnectEvent()
 }
 
 /**
+ * @brief Raise the ReconnectEvent for the managed code.
+ *
+ * @param status
+ *     Status code to send back to the STM32.
+ */
+void WiFiRequestHandler::RaiseReconnectEvent(StatusCodes::StatusCodes statusCode)
+{
+    TRACE_MESSAGE("RaiseReconnectEvent: Enter");
+
+    WiFiFunction::WiFiFunction wifiFn = WiFiFunction::NetworkReconnectEvent;
+
+    if (statusCode == StatusCodes::CompletedOk)
+    {
+        wifiFn = WiFiFunction::NetworkConnectedEvent;
+    }
+
+    Message *message = Message::CreateOnHeap(MessageTypes::Event, Esp32Interfaces::WiFi, wifiFn, StatusCodes::CompletedOk);
+    if (message != NULL)
+    {
+        _messageDispatcher->QueueMessageForStm32(message);
+    }
+
+    TRACE_MESSAGE("RaiseReconnectEvent: Exit");
+}
+
+/**
  * @brief Raise an error event for the WiFi interface.
  *
  * @param statusCode Status code
@@ -1996,6 +2022,13 @@ void WiFiRequestHandler::StationConnectedEvent(wifi_event_sta_connected_t *event
     xEventGroupClearBits(_xWiFiEventGroup, WIFI_CONNECTING_BIT);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT);
 
+    EventBits_t bits =  xEventGroupGetBits(_xWiFiEventGroup);
+    if (bits & WIFI_RECONNECT_BIT)
+    {
+        RaiseReconnectEvent(StatusCodes::CompletedOk);
+        xEventGroupClearBits(_xWiFiEventGroup, WIFI_RECONNECT_BIT);
+    }
+
     TRACE_MESSAGE("StationConnectedEvent: Exit");
 }
 
@@ -2021,8 +2054,9 @@ void WiFiRequestHandler::StationDisconnectedEvent(wifi_event_sta_disconnected_t 
         if (bits & WIFI_CONNECTED_BIT)
         {
             xEventGroupClearBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT);
-            xEventGroupSetBits(_xWiFiEventGroup, WIFI_CONNECTING_BIT);
+            xEventGroupSetBits(_xWiFiEventGroup, WIFI_CONNECTING_BIT | WIFI_RECONNECT_BIT);
             _currentRetryCount = 0;
+            RaiseReconnectEvent(StatusCodes::ReconnectionStarted);
         }
         if (_automaticReconnect && (_currentRetryCount < maximumRetryCount))
         {
@@ -2033,6 +2067,7 @@ void WiFiRequestHandler::StationDisconnectedEvent(wifi_event_sta_disconnected_t 
         else
         {
             xEventGroupClearBits(_xWiFiEventGroup, WIFI_CONNECTING_BIT);
+            RaiseErrorEvent(StatusCodes::ReconnectionFailed, nullptr, 0);
         }
     }
 
@@ -2042,7 +2077,7 @@ void WiFiRequestHandler::StationDisconnectedEvent(wifi_event_sta_disconnected_t 
         RaiseDisconnectEvent();
         bzero((void *) &_apInformation, sizeof(wifi_event_sta_connected_t));
         ClearIpAndDisconnectData();
-        xEventGroupClearBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT | WIFI_CONNECTING_BIT | WIFI_HAVE_IP_BIT);
+        xEventGroupClearBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT | WIFI_CONNECTING_BIT | WIFI_HAVE_IP_BIT | WIFI_RECONNECT_BIT);
         xEventGroupSetBits(_xWiFiEventGroup, WIFI_ERROR_BIT);
     }
 

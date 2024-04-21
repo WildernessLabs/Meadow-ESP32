@@ -189,7 +189,15 @@ namespace StatusCodes
         /// <summary>
         /// StatusCodes - Thread pool is full and timeout has been exceeded.
         /// </summary>
-        ThreadPoolIsFull = 41
+        ThreadPoolIsFull = 41,
+        /// <summary>
+        /// StatusCodes - ReconnectionFailed.
+        /// </summary>
+        ReconnectionFailed = 46,
+        /// <summary>
+        /// StatusCodes - ReconnectionStarted.
+        /// </summary>
+        ReconnectionStarted = 47
     };
 
 } // namespace StatusCodes
@@ -479,7 +487,11 @@ namespace WiFiFunction
         /// <summary>
         /// WiFiFunction - NodeDisconnectedEvent
         /// </summary>
-        NodeDisconnectedEvent = 45
+        NodeDisconnectedEvent = 45,
+        /// <summary>
+        /// WiFiFuction - NetworkReconnectEvent
+        /// <summary>
+        NetworkReconnectEvent = 46
     };
 
 } // namespace WiFiFunction

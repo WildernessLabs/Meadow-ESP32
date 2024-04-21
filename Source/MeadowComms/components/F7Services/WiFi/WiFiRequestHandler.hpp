@@ -156,9 +156,14 @@ private:
     static const int WIFI_ACCESS_POINT_STARTED_BIT = BIT10;
 
     /**
-     * @brief USed to indicate that the access point is starting.
+     * @brief Used to indicate that the access point is starting.
      */
     static const int WIFI_STARTING_ACCESS_POINT_BIT = BIT11;
+
+    /**
+     * @brief Used to indicate the reconnection process is staring.
+     */
+    static const int WIFI_RECONNECT_BIT = BIT12;
 
     /**
      *  @brief Indicate that some sort of error has occurred.
@@ -528,6 +533,14 @@ private:
      *  @brief Raise the RaiseDisconnectEvent for the managed code.
      */
     void RaiseDisconnectEvent();
+
+    /**
+     * @brief Raise the ReconnectEvent for the managed code.
+     *
+     * @param status
+     *     Status code to send back to the STM32.
+     */
+    void RaiseReconnectEvent(StatusCodes::StatusCodes statusCode);
 
     /**
      *  @brief Raise the ErrorEvent for the managed code.
