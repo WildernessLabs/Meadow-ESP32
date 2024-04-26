@@ -206,6 +206,67 @@ namespace StatusCodes
         /// StatusCodes - Invalid cell configuration file.
         /// </summary>
         InvalidCellConfigurationFile = 45,
+
+        /** 46, 47, 48 & 49 free */
+        
+        //
+        //  Keep the ESP reset codes consecutive as they are subject to arithmetic operations
+        //  to determine the exact reset reason.
+        //
+        /**
+         * @brief Unknown reset reason.
+         */
+        EspResetUnknown = 50,
+
+        /**
+         * @brief Power-on or EN line pulled low and released.
+         */
+        EspResetPowerOn = 51,
+
+        /**
+         * @brief Reset using an external GPIO (n/a for the ESP32).
+         */
+        EspResetExternalGpio = 52,
+
+        /**
+         * @brief esp_restart has used to reset the ESP32.
+         */
+        EspResetSoftware = 53,
+
+        /**
+         * @brief Reset due to software exception or panic.
+         */
+        EspResetPanic = 54,
+
+        /**
+         * @brief Reset due to interrupt watchdog.
+         */
+        EspResetInterruptWatchdog = 55,
+
+        /**
+         * @brief Reset due to task watchdog.
+         */
+        EspResetTaskWatchdog = 56,
+
+        /**
+         * @brief Reset due to watchdog other than task or interrupt watchdogs.
+         */
+        EspResetOtherWatchdog = 57,
+
+        /**
+         * @brief Reset after exiting deep sleep.
+         */
+        EspResetDeepSleep = 58,
+
+        /**
+         * @brief Hardware or software brownout reset.
+         */
+        EspResetBrownout = 59,
+
+        /**
+         * @brief Reset over SDIO.
+         */
+        EspResetSdio = 60,
     };
 
 } // namespace StatusCodes
