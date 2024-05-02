@@ -9,6 +9,8 @@
 
 #include "driver/gpio.h"
 
+#include <string>
+
 #include "TransportProviderBase.hpp"
 #include "Encoders.hpp"
 #include "Logging.hpp"
@@ -171,7 +173,7 @@ bool TransportProviderBase::QueueMessageForStm32(Message *message)
         else
         {
             Logging::DumpMessage(COMPONENT_NAME, message);
-            ToggleEsp32MessageWaitingPin();
+            SendControlMessageToStm32(ControlMessageType::MessageWaiting);
         }
         xSemaphoreGive(_outboundMessageQueueMutex);
     }
@@ -179,15 +181,83 @@ bool TransportProviderBase::QueueMessageForStm32(Message *message)
 }
 
 /**
- *  @brief Toggle the "Message waiting" GPIO pin connected to the STM32.
- *
- *  There may be a problem with this method if the clock frequency on the ESP32
- *  is increased to 240 MHz.  It appears that the messages going to the STM32
- *  stop being received.
+ *  @brief Send a control message to the STM32.
+ * 
+ *  @param messageType
+ *     Type of control message to send.
  */
-void TransportProviderBase::ToggleEsp32MessageWaitingPin()
+void TransportProviderBase::SendControlMessageToStm32(ControlMessageType messageType)
 {
-    gpio_set_level(Gpio::ESP32_MESSAGE_WAITING_PIN, 1);
-    vTaskDelay(50 / portTICK_PERIOD_MS);
-    gpio_set_level(Gpio::ESP32_MESSAGE_WAITING_PIN, 0);
+    char const *message = nullptr;
+    char smallBuffer[20];
+
+    switch (messageType)
+    {
+        case ControlMessageType::MessageWaiting:
+            message = const_cast<char *>("+++MW\n");
+            break;
+        case ControlMessageType::Reset:
+            {
+                esp_reset_reason_t resetReason = esp_reset_reason();
+                snprintf(smallBuffer, sizeof(smallBuffer), "\n+++RST,%d\n", (int) resetReason);
+                message = smallBuffer;
+            }
+            break;
+        case ControlMessageType::Ready:
+            message = const_cast<char *>("+++RDY\n");
+            break;
+        case ControlMessageType::SpiInterfaceReady:
+            message = const_cast<char *>("+++SIR\n");
+            break;
+        default:
+            break;
+    }
+    if (message)
+    {
+        printf(message);
+    }
+}
+
+/**
+ * @brief Get the current control signal message that should be sent to the STM32.
+ * 
+ * @return TransportProviderBase::ControlMessageType
+ *      The current control signal message.
+ */
+TransportProviderBase::ControlMessageType TransportProviderBase::GetControlSignalMessage()
+{
+    return(_controlSignalMessage);
+}
+
+/**
+ * @brief Set the control signal message to be sent to the STM32.
+ * 
+ * @param messageType 
+ *      The control signal message to be sent.
+ */
+void TransportProviderBase::SetControlSignalMessage(ControlMessageType messageType)
+{
+    _controlSignalMessage = messageType;
+}
+
+/**
+ * @brief Get the number of ticks delay in the attempt to acquire the semaphore.
+ * 
+ * @return TickType_t 
+ *      Number of ticks delay in the attempt to acquire the semaphore.
+ */
+TickType_t TransportProviderBase::GetControlSignalDelay()
+{
+    return(_controlSignalDelay);
+}
+
+/**
+ * @brief Set the number of ticks delay in the attempt to acquire the semaphore.
+ * 
+ * @param delay
+ *      Number of ticks between attempts to take the semaphore.
+ */
+void TransportProviderBase::SetControlSignalDelay(TickType_t delay)
+{
+    _controlSignalDelay = delay;
 }
