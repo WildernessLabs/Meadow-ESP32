@@ -208,7 +208,7 @@ namespace StatusCodes
         InvalidCellConfigurationFile = 45,
 
         /** 46, 47, 48 & 49 free */
-        
+
         //
         //  Keep the ESP reset codes consecutive as they are subject to arithmetic operations
         //  to determine the exact reset reason.

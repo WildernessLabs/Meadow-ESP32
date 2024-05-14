@@ -182,7 +182,7 @@ bool TransportProviderBase::QueueMessageForStm32(Message *message)
 
 /**
  *  @brief Send a control message to the STM32.
- * 
+ *
  *  @param messageType
  *     Type of control message to send.
  */
@@ -220,19 +220,19 @@ void TransportProviderBase::SendControlMessageToStm32(ControlMessageType message
 
 /**
  * @brief Get the current control signal message that should be sent to the STM32.
- * 
+ *
  * @return TransportProviderBase::ControlMessageType
  *      The current control signal message.
  */
 TransportProviderBase::ControlMessageType TransportProviderBase::GetControlSignalMessage()
 {
-    return(_controlSignalMessage);
+    return (_controlSignalMessage);
 }
 
 /**
  * @brief Set the control signal message to be sent to the STM32.
- * 
- * @param messageType 
+ *
+ * @param messageType
  *      The control signal message to be sent.
  */
 void TransportProviderBase::SetControlSignalMessage(ControlMessageType messageType)
@@ -242,18 +242,18 @@ void TransportProviderBase::SetControlSignalMessage(ControlMessageType messageTy
 
 /**
  * @brief Get the number of ticks delay in the attempt to acquire the semaphore.
- * 
- * @return TickType_t 
+ *
+ * @return TickType_t
  *      Number of ticks delay in the attempt to acquire the semaphore.
  */
 TickType_t TransportProviderBase::GetControlSignalDelay()
 {
-    return(_controlSignalDelay);
+    return (_controlSignalDelay);
 }
 
 /**
  * @brief Set the number of ticks delay in the attempt to acquire the semaphore.
- * 
+ *
  * @param delay
  *      Number of ticks between attempts to take the semaphore.
  */

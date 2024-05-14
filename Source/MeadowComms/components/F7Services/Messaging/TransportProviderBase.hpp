@@ -50,8 +50,7 @@ public:
     /**
      * @brief Control message that can be sent to the STM32.
      */
-    enum ControlMessageType
-    {
+    enum ControlMessageType {
         Reset = 1,
         MessageWaiting,
         Ready,
@@ -73,7 +72,7 @@ private:
     const uint32_t MAX_QUEUE_LENGTH = 10;
 
     /**
-     * @brief Control message type to send to the STM32 in the 
+     * @brief Control message type to send to the STM32 in the
      */
     ControlMessageType _controlSignalMessage = ControlMessageType::Ready;
 
