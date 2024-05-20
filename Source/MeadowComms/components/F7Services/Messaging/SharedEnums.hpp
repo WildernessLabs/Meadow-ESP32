@@ -189,7 +189,11 @@ namespace StatusCodes
         /// <summary>
         /// StatusCodes - Thread pool is full and timeout has been exceeded.
         /// </summary>
-        ThreadPoolIsFull = 41
+        ThreadPoolIsFull = 41,
+        /// <summary>
+        /// StatusCodes - Network deadlock detected.
+        /// </summary>
+        NetworkDeadlock = 46
     };
 
 } // namespace StatusCodes
