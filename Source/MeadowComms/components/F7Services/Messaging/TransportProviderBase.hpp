@@ -47,11 +47,39 @@ public:
      */
     static const uint32_t STM32_INTERRUPT_NOTIFICATION_BIT = 0x00000001;
 
+    /**
+     * @brief Control message that can be sent to the STM32.
+     */
+    enum ControlMessageType {
+        Reset = 1,
+        MessageWaiting,
+        Ready,
+        SpiInterfaceReady,
+    };
+
+    ControlMessageType GetControlSignalMessage();
+
+    void SetControlSignalMessage(ControlMessageType);
+
+    TickType_t GetControlSignalDelay();
+
+    void SetControlSignalDelay(TickType_t);
+
 private:
     /**
      *  @brief Maximum length of the message queue.
      */
     const uint32_t MAX_QUEUE_LENGTH = 10;
+
+    /**
+     * @brief Control message type to send to the STM32 in the
+     */
+    ControlMessageType _controlSignalMessage = ControlMessageType::Ready;
+
+    /**
+     * @brief Delay for the control signal task.
+     */
+    TickType_t _controlSignalDelay = pdMS_TO_TICKS(2000);
 
 protected:
     /**
@@ -98,9 +126,9 @@ protected:
     Message *GetOutboundMessage();
 
     /**
-     *  @brief Toggle the GPIO pin that is connected to the STM32.
+     *  @brief Send a control message to the STM32.
      */
-    void ToggleEsp32MessageWaitingPin();
+    void SendControlMessageToStm32(ControlMessageType);
 
     /**
      *  @brief Method used for debugging, this will dump the message at the head
