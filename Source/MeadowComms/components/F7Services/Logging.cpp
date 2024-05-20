@@ -20,7 +20,7 @@
 #include "Mapping.hpp"
 
 #if defined(PERFORMANCE_LOGGING)
-    #warning "Performance logging is enabled."
+    #pragma message "Performance logging is enabled."
 #endif
 
 #define APP_MAIN_COMPONENT_NAME "AppMain"
@@ -146,33 +146,33 @@ void Logging::Setup()
     //
     //  We enable the RequestHandlerBase as it is the base class for the WiFi, System etc. request handlers.
     //
-    #warning "Message (TransportProviderBase and RequestHandlerBase) debugging is enabled."
+    #pragma message "Message (TransportProviderBase and RequestHandlerBase) debugging is enabled."
     esp_log_level_set(RequestHandlerBase::COMPONENT_NAME, ESP_LOG_INFO);
     esp_log_level_set(TransportProviderBase::COMPONENT_NAME, ESP_LOG_INFO);
 #endif
 
 #if defined(WIFI_DEBUG)
-    #warning "WIFI debugging is enabled."
+    #pragma message "WIFI debugging is enabled."
     esp_log_level_set(WiFiRequestHandler::COMPONENT_NAME, ESP_LOG_INFO);
 #endif
 
 #if defined(SPI_DEBUG)
-    #warning "SPI debugging is enabled."
+    #pragma message "SPI debugging is enabled."
     esp_log_level_set(SpiTransportProvider::COMPONENT_NAME, ESP_LOG_INFO);
 #endif
 
 #if defined(THREAD_DEBUG)
-    #warning "ThreadPool debugging is enabled."
+    #pragma message "ThreadPool debugging is enabled."
     esp_log_level_set(Thread::COMPONENT_NAME, ESP_LOG_INFO);
 #endif
 
 #if defined(BT_DEBUG)
-    #warning "Bluetooth debugging is enabled."
+    #pragma message "Bluetooth debugging is enabled."
     esp_log_level_set(BluetoothRequestHandler::COMPONENT_NAME, ESP_LOG_INFO);
 #endif
 
 #if defined(SYSTEM_DEBUG)
-    #warning "System debugging is enabled."
+    #pragma message "System debugging is enabled."
     esp_log_level_set(SystemRequestHandler::COMPONENT_NAME, ESP_LOG_INFO);
     esp_log_level_set(FileSystem::COMPONENT_NAME, ESP_LOG_INFO);
 #endif

@@ -66,6 +66,7 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
     {
         throw new MultipleInstancesException();
     }
+    SendControlMessageToStm32(ControlMessageType::Reset);
     /*
      *  Should only get here if this is the first instance.
      */
@@ -82,9 +83,6 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
      */
     gpio_pad_select_gpio(Gpio::ESP32_SPI_READY_PIN);
     gpio_set_direction(Gpio::ESP32_SPI_READY_PIN, GPIO_MODE_OUTPUT);
-    //
-    gpio_pad_select_gpio(Gpio::ESP32_MESSAGE_WAITING_PIN);
-    gpio_set_direction(Gpio::ESP32_MESSAGE_WAITING_PIN, GPIO_MODE_OUTPUT);
 
     /*
      *  Configure the pull-ups on the SPI pins.
@@ -166,13 +164,8 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
      */
     xTaskCreate(Task, COMPONENT_NAME, 2048 * 2, this, configMAX_PRIORITIES - 1, &SpiTransportProvider::_transportProviderTaskHandle);
 
-    /*
-     *  The SPI code on the STM32 will wait for both SPI ready and
-     *  message waiting to both go low as a signal that the SPI code
-     *  has completed the initialisation process.
-     */
-    gpio_set_level(Gpio::ESP32_MESSAGE_WAITING_PIN, 0);
     gpio_set_level(Gpio::ESP32_SPI_READY_PIN, 0);
+    SendControlMessageToStm32(ControlMessageType::Ready);
 }
 
 /**
@@ -398,14 +391,16 @@ void SpiTransportProvider::DeleteTransaction(spi_slave_transaction_t *transactio
  */
 void SpiTransportProvider::SpiPostTransmissionCallback(spi_slave_transaction_t *transaction)
 {
-    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-    gpio_set_level(Gpio::ESP32_SPI_READY_PIN, 0);
-    xTaskNotifyFromISR(_transportProviderTaskHandle, TransportProviderBase::STM32_INTERRUPT_NOTIFICATION_BIT, eSetBits, &xHigherPriorityTaskWoken);
-    if (_spiInstance->_synchronisationSemaphore != NULL)
-    {
-        xSemaphoreGiveFromISR(_spiInstance->_synchronisationSemaphore, &xHigherPriorityTaskWoken);
-    }
-    portYIELD_FROM_ISR();
+    // BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    // gpio_set_level(Gpio::ESP32_SPI_READY_PIN, 0);
+    // if (_spiInstance->GetControlSignalMessage() == TransportProviderBase::ControlMessageType::Ready)
+    // {
+    //     _spiInstance->SetControlSignalMessage(TransportProviderBase::ControlMessageType::SpiInterfaceReady);
+    //     _spiInstance->SetControlSignalDelay(portMAX_DELAY);
+    // }
+    // xTaskNotifyFromISR(_transportProviderTaskHandle, TransportProviderBase::STM32_INTERRUPT_NOTIFICATION_BIT, eSetBits, &xHigherPriorityTaskWoken);
+    // xSemaphoreGiveFromISR(_spiInstance->_synchronisationSemaphore, &xHigherPriorityTaskWoken);
+    // portYIELD_FROM_ISR();
 }
 
 /**
@@ -420,7 +415,16 @@ void SpiTransportProvider::SpiPostTransmissionCallback(spi_slave_transaction_t *
  */
 void SpiTransportProvider::SpiPostSetupCallback(spi_slave_transaction_t *transaction)
 {
-    gpio_set_level(Gpio::ESP32_SPI_READY_PIN, 1);
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    // gpio_set_level(Gpio::ESP32_SPI_READY_PIN, 1);
+    if (_spiInstance->GetControlSignalMessage() == TransportProviderBase::ControlMessageType::Ready)
+    {
+        _spiInstance->SetControlSignalMessage(TransportProviderBase::ControlMessageType::SpiInterfaceReady);
+        _spiInstance->SetControlSignalDelay(portMAX_DELAY);
+    }
+    xTaskNotifyFromISR(_transportProviderTaskHandle, TransportProviderBase::STM32_INTERRUPT_NOTIFICATION_BIT, eSetBits, &xHigherPriorityTaskWoken);
+    xSemaphoreGiveFromISR(_spiInstance->_synchronisationSemaphore, &xHigherPriorityTaskWoken);
+    portYIELD_FROM_ISR();
 }
 
 /**
@@ -989,21 +993,13 @@ void SpiTransportProvider::Task(void *pvParameters)
 void SpiTransportProvider::SynchronisationTask(void *pvParameters)
 {
     SpiTransportProvider *sender = static_cast<SpiTransportProvider *>(pvParameters);
-    TRACE_MESSAGE_SPECIFY_COMPONENT(sender->COMPONENT_NAME, "Synchronising with the STM32.");
     //
     //  It is important to wait for the outbound message queue to be
     //  created before we try to process any messages.
     //
-    while (xSemaphoreTake(sender->_synchronisationSemaphore, pdMS_TO_TICKS(2000)) != pdTRUE)
+    while (true)
     {
-        TRACE_MESSAGE_SPECIFY_COMPONENT(sender->COMPONENT_NAME, "Sending synchronisation pulse to STM32.");
-        sender->ToggleEsp32MessageWaitingPin();
+        xSemaphoreTake(sender->_synchronisationSemaphore, sender->GetControlSignalDelay());
+        sender->SendControlMessageToStm32(sender->GetControlSignalMessage());
     }
-    vSemaphoreDelete(sender->_synchronisationSemaphore);
-    sender->_synchronisationSemaphore = NULL;
-
-    TRACE_MESSAGE_SPECIFY_COMPONENT(sender->COMPONENT_NAME, "Synchronisation complete.");
-
-    vTaskDelete(sender->_synchronisationTaskHandle);
-    sender->_synchronisationTaskHandle = NULL;
 }

@@ -191,9 +191,86 @@ namespace StatusCodes
         /// </summary>
         ThreadPoolIsFull = 41,
         /// <summary>
+        /// StatusCodes - This is a placeholder status code for the STM32 to use to indicate that the ESP32 has restarted unexpectedly.
+        /// </summary>
+        UnexpectedCoprocessorRestart = 42,
+        /// <summary>
+        /// StatusCodes - Invalid configuration file.
+        /// </summary>
+        InvalidConfigurationFile = 43,
+        /// <summary>
+        /// StatusCodes - Invalid WiFi configuration file.
+        /// </summary>
+        InvalidWiFiConfigurationFile = 44,
+        /// <summary>
+        /// StatusCodes - Invalid cell configuration file.
+        /// </summary>
+        InvalidCellConfigurationFile = 45,
+        /// <summary>
         /// StatusCodes - Network deadlock detected.
         /// </summary>
-        NetworkDeadlock = 46
+        NetworkDeadlock = 46,
+
+        /** 47, 48 & 49 free */
+
+        //
+        //  Keep the ESP reset codes consecutive as they are subject to arithmetic operations
+        //  to determine the exact reset reason.
+        //
+        /**
+         * @brief Unknown reset reason.
+         */
+        EspResetUnknown = 50,
+
+        /**
+         * @brief Power-on or EN line pulled low and released.
+         */
+        EspResetPowerOn = 51,
+
+        /**
+         * @brief Reset using an external GPIO (n/a for the ESP32).
+         */
+        EspResetExternalGpio = 52,
+
+        /**
+         * @brief esp_restart has used to reset the ESP32.
+         */
+        EspResetSoftware = 53,
+
+        /**
+         * @brief Reset due to software exception or panic.
+         */
+        EspResetPanic = 54,
+
+        /**
+         * @brief Reset due to interrupt watchdog.
+         */
+        EspResetInterruptWatchdog = 55,
+
+        /**
+         * @brief Reset due to task watchdog.
+         */
+        EspResetTaskWatchdog = 56,
+
+        /**
+         * @brief Reset due to watchdog other than task or interrupt watchdogs.
+         */
+        EspResetOtherWatchdog = 57,
+
+        /**
+         * @brief Reset after exiting deep sleep.
+         */
+        EspResetDeepSleep = 58,
+
+        /**
+         * @brief Hardware or software brownout reset.
+         */
+        EspResetBrownout = 59,
+
+        /**
+         * @brief Reset over SDIO.
+         */
+        EspResetSdio = 60,
     };
 
 } // namespace StatusCodes
@@ -289,7 +366,13 @@ namespace SystemFunction
         /// <summary>
         /// SystemFunction - FileSystemDeleteFile
         /// </summary>
-        FileSystemDeleteFile = 11
+        FileSystemDeleteFile = 11,
+        /// <summary>
+        /// SystemFunction - OsException
+        /// </summary>
+        /// Notes: This is a place holder as this is only generated on the STM32
+        //  as a way of letting the managed code know about an OS error.
+        OsException = 12,
     };
 
 } // namespace SystemFunction

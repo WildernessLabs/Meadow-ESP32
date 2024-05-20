@@ -59,12 +59,6 @@ namespace Gpio
     const gpio_num_t ESP32_SPI_READY_PIN = BOOT_PIN;
 
     /**
-     *  Pin used to indicate that the ESP32 has a message waiting
-     *  to be transmitted to the STM32.
-     */
-    const gpio_num_t ESP32_MESSAGE_WAITING_PIN = UART0_RX_PIN;
-
-    /**
      *  SPI MISO pin.
      */
     const gpio_num_t MISO_PIN = GPIO_NUM_19;
