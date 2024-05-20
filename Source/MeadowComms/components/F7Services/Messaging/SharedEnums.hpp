@@ -209,7 +209,7 @@ namespace StatusCodes
         /// <summary>
         /// StatusCodes - Network deadlock detected.
         /// </summary>
-        NetworkDeadlock = 46
+        NetworkDeadlock = 46,
 
         /** 47, 48 & 49 free */
 
