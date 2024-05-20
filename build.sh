@@ -187,6 +187,7 @@ inject_value() {
   VALUE=$(eval echo '${'$KEY'}')
   REPLACEMENT=$(sedFriendly $VALUE)
   FILE=$2
+  echo "Replacing ###${KEY}### with ${VALUE} in $FILE"
   sed -i.bak 's/###'${KEY}'###/'${REPLACEMENT}'/g' $FILE
 }
 
