@@ -206,8 +206,12 @@ namespace StatusCodes
         /// StatusCodes - Invalid cell configuration file.
         /// </summary>
         InvalidCellConfigurationFile = 45,
+        /// <summary>
+        /// StatusCodes - Network deadlock detected.
+        /// </summary>
+        NetworkDeadlock = 46
 
-        /** 46, 47, 48 & 49 free */
+        /** 47, 48 & 49 free */
 
         //
         //  Keep the ESP reset codes consecutive as they are subject to arithmetic operations
