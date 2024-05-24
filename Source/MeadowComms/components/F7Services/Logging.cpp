@@ -397,7 +397,7 @@ char *Logging::MessageSummary(const Message *message)
 {
     char buffer[200];
 
-    snprintf(buffer, 200, "ID: 0x%08x Interface: %s Function: %s", message->MessageID, InterfaceName(message->Interface), FunctionName(message->Interface, message->Function));
+    snprintf(buffer, 200, "ID: 0x%08x Interface: %s Function: %s", (uint32_t) message->MessageID, InterfaceName(message->Interface), FunctionName(message->Interface, message->Function));
     return (strdup(buffer));
 }
 
