@@ -21,7 +21,7 @@ endmacro()
 #   partial sdkconfig files.  This code works out which partial files
 #   to include in this build.
 #
-file(REMOVE sdkconfig)
+# file(REMOVE sdkconfig)
 set(SDKCONFIG_FILES "sdkconfig.defaults")
 if (COREDUMP EQUAL 1)
     message(STATUS "Enabling COREDUMP functionality.")
