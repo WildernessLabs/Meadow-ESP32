@@ -177,7 +177,7 @@ void Logging::Setup()
     esp_log_level_set(FileSystem::COMPONENT_NAME, ESP_LOG_INFO);
 #endif
 
-    const uart_config_t loggingUARTConfig = {.baud_rate = 115200, .data_bits = UART_DATA_8_BITS, .parity = UART_PARITY_DISABLE, .stop_bits = UART_STOP_BITS_1, .flow_ctrl = UART_HW_FLOWCTRL_DISABLE, .rx_flow_ctrl_thresh = 0, .use_ref_tick = false};
+    const uart_config_t loggingUARTConfig = {.baud_rate = 115200, .data_bits = UART_DATA_8_BITS, .parity = UART_PARITY_DISABLE, .stop_bits = UART_STOP_BITS_1, .flow_ctrl = UART_HW_FLOWCTRL_DISABLE, .rx_flow_ctrl_thresh = 0};
     uart_param_config(LOGGING_UART_PORT_NUMBER, &loggingUARTConfig);
     uart_set_pin(LOGGING_UART_PORT_NUMBER, Gpio::LOGGING_TX_PIN, Gpio::LOGGING_RX_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
     //
@@ -397,7 +397,7 @@ char *Logging::MessageSummary(const Message *message)
 {
     char buffer[200];
 
-    snprintf(buffer, 200, "ID: 0x%08x Interface: %s Function: %s", (uint32_t) message->MessageID, InterfaceName(message->Interface), FunctionName(message->Interface, message->Function));
+    snprintf(buffer, 200, "ID: 0x%08x Interface: %s Function: %s", (uint) message->MessageID, InterfaceName(message->Interface), FunctionName(message->Interface, message->Function));
     return (strdup(buffer));
 }
 

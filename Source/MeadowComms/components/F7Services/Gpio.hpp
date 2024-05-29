@@ -53,12 +53,6 @@ namespace Gpio
     const gpio_num_t UART0_TX_PIN = GPIO_NUM_1;
 
     /**
-     *  Pin used to indicate that the ESP32 SPI interface is ready
-     *  to receive / transmit data.
-     */
-    const gpio_num_t ESP32_SPI_READY_PIN = BOOT_PIN;
-
-    /**
      *  SPI MISO pin.
      */
     const gpio_num_t MISO_PIN = GPIO_NUM_19;
