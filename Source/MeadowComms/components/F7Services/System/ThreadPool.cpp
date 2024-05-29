@@ -68,7 +68,7 @@ ThreadPool::ThreadPool(uint32_t numberOfThreads) : ThreadPool()
         char *name = static_cast<char *>(pvPortMalloc(15));
         if (name != NULL)
         {
-            snprintf(name, 15, "Thread-%02u", index);
+            snprintf(name, 15, "Thread-%02u", static_cast<uint8_t>(index & 0xff));
             _threads[index] = new Thread(name, ThreadPool::ThreadCompleted);
             ;
             if (_threads[index])

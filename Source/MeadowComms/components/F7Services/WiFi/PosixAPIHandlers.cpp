@@ -72,7 +72,7 @@ void WiFiRequestHandler::GetAddrInfo(void *vpMessage)
             Esp32Messaging::AddrInfo a = {};
 
             int family;
-            Mapping::GetStmValue(Mapping::AddressFamily, addressInformation->ai_addr->sa_family, &family);
+            Mapping::GetStmValue(Mapping::AddressFamily, addressInformation->ai_addr->sa_family, reinterpret_cast<int32_t *>(&family));
             sa.Family = (unsigned char) (family & 0xff);
             Encoders::EncodeSockAddr(&sa, a.Addr);
 
@@ -196,7 +196,7 @@ void WiFiRequestHandler::Connect(void *vpMessage)
 
         struct sockaddr_in sa = {};
         int family;
-        Mapping::GetEspValue(Mapping::AddressFamily, socketAddress->Family, &family);
+        Mapping::GetEspValue(Mapping::AddressFamily, socketAddress->Family, reinterpret_cast<int32_t *>(&family));
         errno = 0;
         if (family == AF_INET)
         {
@@ -1053,7 +1053,7 @@ void WiFiRequestHandler::RecvFrom(void *vpMessage)
                 {
                     Esp32Messaging::SockAddr socketAddress = {};
                     int family;
-                    Mapping::GetStmValue(Mapping::AddressFamily, sa->sin_family, &family);
+                    Mapping::GetStmValue(Mapping::AddressFamily, sa->sin_family, reinterpret_cast<int32_t *>(&family));
                     socketAddress.Family = (uint8_t) (family & 0xff);
                     memcpy(&socketAddress.Ip4Address, &sa->sin_addr, sizeof(sa->sin_addr));
                     socketAddress.Port = sa->sin_port;
@@ -1159,7 +1159,7 @@ void WiFiRequestHandler::Bind(void *vpMessage)
 
         struct sockaddr_in sa = {};
         int family;
-        Mapping::GetEspValue(Mapping::AddressFamily, socketAddress->Family, &family);
+        Mapping::GetEspValue(Mapping::AddressFamily, socketAddress->Family, reinterpret_cast<int32_t *>(&family));
         errno = 0;
         if (family == AF_INET)
         {
@@ -1273,7 +1273,7 @@ void WiFiRequestHandler::Accept(void *vpMessage)
             Esp32Messaging::SockAddr *sockAddr = static_cast<Esp32Messaging::SockAddr *>(pvPortMalloc(sizeof(Esp32Messaging::SockAddr)));
             bzero(sockAddr, sizeof(Esp32Messaging::SockAddr));
             int family;
-            Mapping::GetStmValue(Mapping::AddressFamily, sa.sa_family, &family);
+            Mapping::GetStmValue(Mapping::AddressFamily, sa.sa_family, reinterpret_cast<int32_t *>(&family));
             sockAddr->Family = (uint8_t) (family & 0xff);
             struct sockaddr_in *sin = (struct sockaddr_in *) &sa;
             sockAddr->Port = sin->sin_port;
@@ -1345,7 +1345,7 @@ void WiFiRequestHandler::Ioctl(void *vpMessage)
         Esp32Messaging::SockAddr sa = {};
         int family;
 
-        Mapping::GetStmValue(Mapping::AddressFamily, AF_INET, &family);
+        Mapping::GetStmValue(Mapping::AddressFamily, AF_INET, reinterpret_cast<int32_t *>(&family));
         sa.Family = (unsigned char) (family & 0xff);
         response.AddrLength = 0;
         response.Addr = nullptr;
@@ -1454,7 +1454,7 @@ void WiFiRequestHandler::GetSockPeerName(void *vpMessage, WiFiFunction::WiFiFunc
             Esp32Messaging::SockAddr *sockAddr = static_cast<Esp32Messaging::SockAddr *>(pvPortMalloc(sizeof(Esp32Messaging::SockAddr)));
             bzero(sockAddr, sizeof(Esp32Messaging::SockAddr));
             int family;
-            Mapping::GetStmValue(Mapping::AddressFamily, sa.sa_family, &family);
+            Mapping::GetStmValue(Mapping::AddressFamily, sa.sa_family, reinterpret_cast<int32_t *>(&family));
             sockAddr->Family = (uint8_t) (family & 0xff);
             struct sockaddr_in *sin = (struct sockaddr_in *) &sa;
             sockAddr->Port = sin->sin_port;
