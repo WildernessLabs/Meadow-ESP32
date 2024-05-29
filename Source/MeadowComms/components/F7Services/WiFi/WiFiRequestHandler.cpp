@@ -5,6 +5,7 @@
 #include "esp_system.h"
 #include "esp_wifi.h"
 #include "esp_event.h"
+#include "esp_mac.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1942,7 +1943,7 @@ void WiFiRequestHandler::StationGotIpEvent(ip_event_got_ip_t *eventData)
 void WiFiRequestHandler::StationStartedEvent()
 {
     TRACE_MESSAGE("StationStartedEvent: Enter");
-    _lastIdfErrorCode = tcpip_adapter_set_hostname(TCPIP_ADAPTER_IF_STA, SystemRequestHandler::GetDeviceName());
+    _lastIdfErrorCode = esp_netif_set_hostname(_stationNetIfHandle, SystemRequestHandler::GetDeviceName());
     if (_lastIdfErrorCode != ESP_OK)
     {
         xEventGroupClearBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTED_BIT | WIFI_INTERFACE_STARTING_BIT | WIFI_CONNECTING_BIT);
