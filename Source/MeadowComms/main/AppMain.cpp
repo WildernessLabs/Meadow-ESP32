@@ -121,9 +121,8 @@ extern "C" void app_main()
     strftime(month_text, 4, "%b", &t);
 
     ESP_LOGI(
-        COMPONENT_NAME, "Version: %d.%d.%d.%d, built %02d %s 20%02d %02d:%02d:%02d UTC (%08x:%s)", (int) g_application_version.major, (int) g_application_version.minor, (int) g_application_version.revision, 
-        (int) g_application_version.build, (int) g_application_version.day, month_text, (int) g_application_version.year, (int) g_application_version.hour, (int) g_application_version.minute,
-        (int) g_application_version.second, (uint) g_application_version.hash, g_application_version.branch_name);
+        COMPONENT_NAME, "Version: %d.%d.%d.%d, built %02d %s 20%02d %02d:%02d:%02d UTC (%08x:%s)", (int) g_application_version.major, (int) g_application_version.minor, (int) g_application_version.revision, (int) g_application_version.build, (int) g_application_version.day, month_text,
+        (int) g_application_version.year, (int) g_application_version.hour, (int) g_application_version.minute, (int) g_application_version.second, (uint) g_application_version.hash, g_application_version.branch_name);
 
     NvsManager::Setup();
     /*
