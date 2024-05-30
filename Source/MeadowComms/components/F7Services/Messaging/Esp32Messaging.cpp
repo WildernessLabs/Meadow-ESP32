@@ -125,14 +125,14 @@ Message::Message(const Message &original)
 
 /**
  * @brief Assignment operator.
- * 
+ *
  * @param original
  *    Message to copy.
- * 
+ *
  * @return Message&
  *    rReference to the new message.
  */
-Message& Message::operator=(const Message &original)
+Message &Message::operator=(const Message &original)
 {
     if (this != &original)
     {
