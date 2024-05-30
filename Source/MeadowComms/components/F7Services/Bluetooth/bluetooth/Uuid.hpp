@@ -19,6 +19,11 @@ struct Uuid128
 
     std::string ToString() const;
 
+    Uuid128(const Uuid128 &other)
+    {
+        memcpy((void *) data, other.data, 16);
+    }
+
     bool operator==(const Uuid128 &other) const
     {
         return memcmp(data, other.data, 16) == 0;
@@ -52,6 +57,11 @@ struct Uuid16
     Uuid16();
     Uuid16(uint16_t value);
     Uuid16(uint8_t *other);
+
+    Uuid16(const Uuid16 &other)
+    {
+        memcpy((void *) data, other.data, 2);
+    }
 
     bool operator==(const Uuid16 &other) const
     {
