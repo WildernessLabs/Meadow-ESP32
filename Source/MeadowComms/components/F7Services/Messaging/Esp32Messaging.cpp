@@ -123,6 +123,43 @@ Message::Message(const Message &original)
     PayloadLength = 0;
 }
 
+/**
+ * @brief Assignment operator.
+ * 
+ * @param original
+ *    Message to copy.
+ * 
+ * @return Message&
+ *    rReference to the new message.
+ */
+Message& Message::operator=(const Message &original)
+{
+    if (this != &original)
+    {
+        if (Payload != nullptr)
+        {
+            vPortFree(Payload);
+            Payload = nullptr;
+        }
+
+        MessageType = original.MessageType;
+        Interface = original.Interface;
+        Function = original.Function;
+        StatusCode = original.StatusCode;
+        MessageID = original.MessageID;
+        PacketOffset = original.PacketOffset;
+        PacketLength = original.PacketLength;
+        PayloadLength = original.PayloadLength;
+
+        if (original.Payload != nullptr)
+        {
+            Payload = static_cast<uint8_t *>(pvPortMalloc(PayloadLength));
+            memcpy(Payload, original.Payload, PayloadLength);
+        }
+    }
+    return *this;
+}
+
 /*
  * ---------------------------------------------------------------------------
  *
