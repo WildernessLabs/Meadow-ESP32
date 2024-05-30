@@ -137,7 +137,7 @@ struct Message
     /**
      * @brief Assignment operator.
      */
-    Message& operator=(const Message&);
+    Message &operator=(const Message &);
 
     /**
      *  @brief Make a copy of the message.
