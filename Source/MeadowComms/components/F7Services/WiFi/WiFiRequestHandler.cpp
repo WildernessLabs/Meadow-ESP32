@@ -1680,7 +1680,7 @@ void WiFiRequestHandler::ConnectToDefaultAccessPoint(Message *message)
             accessPointInformation.SubnetMask = GetSubNetMask();
             accessPointInformation.Gateway = GetDefaultGateway();
         }
-        result = ConnectToAccessPoint(&accessPointInformation);
+        (void) ConnectToAccessPoint(&accessPointInformation);
     }
     else
     {
