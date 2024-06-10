@@ -334,8 +334,8 @@ fi
 #   so this removes the build directory before executing the full clean.
 #
 if $FULLCLEAN; then
-    run_command "rm -Rf $scriptdir/build"
-    run_command "idf.py fullclean"
+    run_command "rm -Rf $scriptdir/Source/MeadowComms/build"
+    run_command "idf.py --project-dir $scriptdir/Source/MeadowComms fullclean"
 fi
 
 #
