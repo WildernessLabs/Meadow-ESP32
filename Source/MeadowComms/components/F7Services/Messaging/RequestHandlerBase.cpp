@@ -211,7 +211,7 @@ void RequestHandlerBase::RaiseEvent(uint8_t interface, uint32_t eventType)
  * @param statusCode - The status code of the response.
  * @param result - Value to send.
  */
-void SendIntegerResult(uint8_t interface, uint32_t function, uint32_t statusCode, uint32_t value)
+void RequestHandlerBase::SendIntegerResult(uint8_t interface, uint32_t function, uint32_t statusCode, uint32_t value)
 {
     TRACE_MESSAGE("SendIntegerResult - Enter");
 
@@ -225,7 +225,7 @@ void SendIntegerResult(uint8_t interface, uint32_t function, uint32_t statusCode
 
         if (payload != NULL)
         {
-            Encoders::EncodeIntegerResponse(response, payload, payloadLength);
+            Encoders::EncodeIntegerResponse(response, payload);
             RaiseEvent(interface, function, statusCode, payload, payloadLength);
         }
         vPortFree(response);
