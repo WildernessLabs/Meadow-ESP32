@@ -202,3 +202,38 @@ void RequestHandlerBase::RaiseEvent(uint8_t interface, uint32_t eventType)
 {
     RaiseEvent(interface, eventType, StatusCodes::CompletedOk, nullptr, 0);
 }
+
+/**
+ * @brief Send an IntegerResponse to the STM32.
+ * 
+ * @param interface - The interface to sending the response.
+ * @param eventType - The event type of the response.
+ * @param statusCode - The status code of the response.
+ * @param result - Value to send.
+ */
+void SendIntegerResult(uint8_t interface, uint32_t function, uint32_t statusCode, uint32_t value)
+{
+    TRACE_MESSAGE("SendIntegerResult - Enter");
+
+    Esp32Messaging::IntegerResponse *response = new Esp32Messaging::IntegerResponse();
+
+    if (response != NULL)
+    {
+        response->Result = value;
+        uint32_t payloadLength = Encoders::EncodedIntegerResponseBufferSize(response);
+        uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
+
+        if (payload != NULL)
+        {
+            Encoders::EncodeIntegerResponse(response, payload, payloadLength);
+            RaiseEvent(interface, function, statusCode, payload, payloadLength);
+        }
+        vPortFree(response);
+    }
+    else
+    {
+        TRACE_MESSAGE("Failed to allocate memory for IntegerResponse")
+    }
+
+    TRACE_MESSAGE("SendIntegerResult - Exit");
+}

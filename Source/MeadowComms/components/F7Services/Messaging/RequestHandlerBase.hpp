@@ -79,6 +79,16 @@ protected:
      */
     void RaiseEvent(uint8_t interface, uint32_t eventType);
 
+    /**
+     * @brief Send an IntegerResponse to the STM32.
+     * 
+     * @param interface - The interface to sending the response.
+     * @param eventType - The event type of the response.
+     * @param statusCode - The status code of the response.
+     * @param result - Value to send.
+     */
+    void SendIntegerResult(uint8_t interface, uint32_t eventType, uint32_t statusCode, uint32_t value);
+
 public:
     /**
      *  @brief Name of this component / task.
