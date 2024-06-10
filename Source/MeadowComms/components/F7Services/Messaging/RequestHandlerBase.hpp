@@ -81,7 +81,7 @@ protected:
 
     /**
      * @brief Send an IntegerResponse to the STM32.
-     * 
+     *
      * @param interface - The interface to sending the response.
      * @param eventType - The event type of the response.
      * @param statusCode - The status code of the response.
