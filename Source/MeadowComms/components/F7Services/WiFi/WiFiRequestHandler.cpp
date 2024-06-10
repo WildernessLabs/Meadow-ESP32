@@ -1667,7 +1667,6 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
 void WiFiRequestHandler::ConnectToDefaultAccessPoint(Message *message)
 {
     TRACE_MESSAGE("ConnectToDefaultAccessPoint: Enter");
-    StatusCodes::StatusCodes result = StatusCodes::DefaultAccessPointNotConfigured;
 
     char *access_point = GetDefaultAccessPoint();
     if (access_point != NULL)
@@ -1682,6 +1681,10 @@ void WiFiRequestHandler::ConnectToDefaultAccessPoint(Message *message)
             accessPointInformation.Gateway = GetDefaultGateway();
         }
         result = ConnectToAccessPoint(&accessPointInformation);
+    }
+    else
+    {
+        RaiseConnectToAccessPointEvent(StatusCodes::DefaultAccessPointNotConfigured);
     }
 
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
