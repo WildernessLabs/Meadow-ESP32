@@ -963,7 +963,7 @@ void WiFiRequestHandler::RaiseNetworkRetryCountExceededEvent()
 {
     TRACE_MESSAGE("RaiseNetworkRetryCountExceededEvent: Enter");
 
-    SendIntegerResult(Esp32Interfaces::WiFi, WiFiFunction::NetworkRetryCountExceededEvent, StatusCodes::CompletedOk, _currentRetryCount);
+    SendIntegerResult(Esp32Interfaces::WiFi, WiFiFunction::NetworkConnectionRetryCountExceededEvent, StatusCodes::CompletedOk, _currentRetryCount);
 
     TRACE_MESSAGE("RaiseNetworkRetryCountExceededEvent: Exit");
 }
