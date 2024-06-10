@@ -1494,10 +1494,9 @@ bool WiFiRequestHandler::IsConnected()
  */
 StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const Esp32Messaging::AccessPointInformation *accessPointInformation)
 {
-    char *password = accessPointInformation->Password;
+    RaiseNetworkConnectingEvent();
 
-    TRACE_MESSAGE("ConnectToAccessPoint: Access point %s, password '%s'", accessPointInformation->NetworkName, password == nullptr ? "" : password);
-    TRACE_MESSAGE("IP information, IP: 0x%08x, subnet: 0x%08x, gateway 0x%08x", accessPointInformation->IpAddress, accessPointInformation->SubnetMask, accessPointInformation->Gateway);
+    char *password = accessPointInformation->Password;
 
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
 
@@ -1653,11 +1652,6 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
     _messageDispatcher->QueueMessageForStm32(message);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
 
-    if (result == StatusCodes::CompletedOk)
-    {
-        RaiseConnectToAccessPointEvent(result);
-    }
-
     TRACE_MESSAGE("ConnectToAccessPoint: Exit");
 }
 
@@ -1691,11 +1685,6 @@ void WiFiRequestHandler::ConnectToDefaultAccessPoint(Message *message)
     }
 
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
-
-    if (result == StatusCodes::CompletedOk)
-    {
-        RaiseConnectToAccessPointEvent(result);
-    }
 
     TRACE_MESSAGE("ConnectToDefaultAccessPoint: Exit");
 }
@@ -2009,6 +1998,8 @@ void WiFiRequestHandler::StationConnectedEvent(wifi_event_sta_connected_t *event
     xEventGroupClearBits(_xWiFiEventGroup, WIFI_CONNECTING_BIT);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT);
 
+    RaiseConnectToAccessPointEvent(StatusCodes::CompletedOk);
+
     TRACE_MESSAGE("StationConnectedEvent: Exit");
 }
 
@@ -2022,7 +2013,7 @@ void WiFiRequestHandler::StationDisconnectedEvent(wifi_event_sta_disconnected_t 
 {
     TRACE_MESSAGE("StationDisconnectedEvent: Enter");
 
-    bool raiseEvent = true;
+    bool raiseDisconnectedEvent = true;
     EventBits_t bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT | WIFI_CONNECTING_BIT | WIFI_DISCONNECT_REQUESTED_BIT, pdFALSE, pdFALSE, 0);
     if (bits & WIFI_DISCONNECT_REQUESTED_BIT)
     {
@@ -2030,26 +2021,48 @@ void WiFiRequestHandler::StationDisconnectedEvent(wifi_event_sta_disconnected_t 
     }
     else
     {
+        //
+        //  Deal with working out if we should start the reconnection process as a forced disconnect has
+        //  not been requested.
+        //
         uint32_t maximumRetryCount = GetMaximumRetryCount();
         if (bits & WIFI_CONNECTED_BIT)
         {
+            //
+            //  So here we were connected and now we are not so clear the connection flags.
+            //
             xEventGroupClearBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT);
-            xEventGroupSetBits(_xWiFiEventGroup, WIFI_CONNECTING_BIT);
             _currentRetryCount = 0;
         }
         if (_automaticReconnect && (_currentRetryCount < maximumRetryCount))
         {
+            //
+            //  the system is configured to automatically reconnect and we have not exceeded the retry count.
+            //
+            xEventGroupSetBits(_xWiFiEventGroup, WIFI_CONNECTING_BIT);
             esp_wifi_connect();
             _currentRetryCount++;
-            raiseEvent = false;
+            raiseDisconnectedEvent = false;
         }
         else
         {
+            //
+            //  Here we were connected or we have been trying to connect and there two possibilities:
+            //      1.  We are not configured to automatically reconnect.
+            //      2.  We are configured to automatically reconnect but we have exceeded the retry count.
+            //
+            //  In the second case we need to raise the event to the application to let it know that we have
+            //  exceeded the retry count.
+            //
             xEventGroupClearBits(_xWiFiEventGroup, WIFI_CONNECTING_BIT);
+            if (_automaticReconnect)
+            {
+                RaiseNetworkRetryCountExceededEvent();
+            }
         }
     }
 
-    if (raiseEvent)
+    if (raiseDisconnectedEvent)
     {
         memcpy(&_disconnectData, eventData, sizeof(wifi_event_sta_disconnected_t));
         RaiseDisconnectEvent();
