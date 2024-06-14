@@ -122,7 +122,7 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
      *  as they will be frequently used for header and transport packets.
      */
     _headerFrameSize = Encoders::CalculateSpiBufferSize(Message::HEADER_SIZE);
-    TRACE_MESSAGE("Header frame size: %d", _headerFrameSize);
+    TRACE_MESSAGE("Header frame size: %lu", _headerFrameSize);
     _txBuffer = static_cast<uint8_t *>(heap_caps_calloc(Message::MAXIMUM_SPI_FRAME_SIZE, 1, MALLOC_CAP_DMA));
     _rxBuffer = static_cast<uint8_t *>(heap_caps_calloc(Message::MAXIMUM_SPI_FRAME_SIZE, 1, MALLOC_CAP_DMA));
     ClearTransmitAndReceiveBuffers();
@@ -464,7 +464,7 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessTransportMessage(Message *
             _currentState = SendingPacketDetails;
             break;
         default:
-            TRACE_MESSAGE("ProcessTransportMessage: Transport function %d not recognised.", request->Function);
+            TRACE_MESSAGE("ProcessTransportMessage: Transport function %lu not recognised.", request->Function);
             break;
     }
     TRACE_MESSAGE("ProcessTransportMessage: Exit");
@@ -543,7 +543,7 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessInboundPacket(Message *pac
             //  enough to hold the full payload, copy the packet into the new buffer, release the current payload buffer
             //  and replace it with the new, larger, buffer.
             //
-            TRACE_MESSAGE("First packet in a multipacket message, expecting %d bytes, received %d bytes", packet->PayloadLength, packet->PacketLength);
+            TRACE_MESSAGE("First packet in a multipacket message, expecting %lu bytes, received %u bytes", packet->PayloadLength, packet->PacketLength);
             uint8_t *payloadBuffer = static_cast<uint8_t *>(pvPortMalloc(packet->PayloadLength));
             memcpy(static_cast<void *>(payloadBuffer), static_cast<const void *>(packet->Payload), packet->PacketLength);
             vPortFree(packet->Payload);

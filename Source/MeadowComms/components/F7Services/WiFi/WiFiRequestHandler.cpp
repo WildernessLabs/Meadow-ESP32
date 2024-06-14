@@ -354,7 +354,7 @@ uint32_t WiFiRequestHandler::GetMaximumRetryCount()
  */
 StatusCodes::StatusCodes WiFiRequestHandler::SetMaximumRetryCount(uint32_t value)
 {
-    TRACE_MESSAGE("WiFiRequestHandler::SetMaximumRetryCount: %d", value);
+    TRACE_MESSAGE("WiFiRequestHandler::SetMaximumRetryCount: %lu", value);
     _maximumRetryCount = value;
     return (StatusCodes::CompletedOk);
 }
@@ -1060,7 +1060,7 @@ void WiFiRequestHandler::EventHandlerHelper(esp_event_base_t eventBase, int32_t 
                 TRACE_MESSAGE("EventHandlerHelper: WIFI_EVENT_AP_PROBEREQRECVED");
                 break;
             default:
-                TRACE_MESSAGE("EventHandlerHelper: Unhandled WiFi Event ID %d", eventId);
+                TRACE_MESSAGE("EventHandlerHelper: Unhandled WiFi Event ID %ld", eventId);
                 break;
         }
     }
@@ -1094,7 +1094,7 @@ void WiFiRequestHandler::EventHandlerHelper(esp_event_base_t eventBase, int32_t 
                     TRACE_MESSAGE("EventHandlerHelper: IP_EVENT_PPP_LOST_IP");
                     break;
                 default:
-                    TRACE_MESSAGE("EventHandlerHelper: Unhandled IP Event ID %d", eventId);
+                    TRACE_MESSAGE("EventHandlerHelper: Unhandled IP Event ID %ld", eventId);
                     break;
             }
         }
@@ -1474,7 +1474,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const Esp32Mes
     char *password = accessPointInformation->Password;
 
     TRACE_MESSAGE("ConnectToAccessPoint: Access point %s, password '%s'", accessPointInformation->NetworkName, password == nullptr ? "" : password);
-    TRACE_MESSAGE("IP information, IP: 0x%08x, subnet: 0x%08x, gateway 0x%08x", accessPointInformation->IpAddress, accessPointInformation->SubnetMask, accessPointInformation->Gateway);
+    TRACE_MESSAGE("IP information, IP: 0x%08x, subnet: 0x%08x, gateway 0x%08x", (uint) accessPointInformation->IpAddress, (uint) accessPointInformation->SubnetMask, (uint) accessPointInformation->Gateway);
 
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
 
@@ -1563,7 +1563,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const Esp32Mes
             }
         }
     }
-    TRACE_MESSAGE("%s: result %d", __func__, result);
+    TRACE_MESSAGE("%s: result %ld", __func__, result);
     return (result);
 }
 
