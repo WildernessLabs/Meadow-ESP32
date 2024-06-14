@@ -739,7 +739,7 @@ void SystemRequestHandler::DispatchRequest(Message *request)
             _fileSystem->DeleteFile(request);
             break;
         default:
-            TRACE_MESSAGE("DispatchRequest: Unknown System message received, function 0x%x", request->Function);
+            TRACE_MESSAGE("DispatchRequest: Unknown System message received, function 0x%lx", request->Function);
             if (request->Payload != NULL)
             {
                 TRACE_HEX_BUFFER(request->Payload, request->PayloadLength);

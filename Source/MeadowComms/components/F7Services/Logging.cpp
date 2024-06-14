@@ -361,13 +361,13 @@ void Logging::DumpMessage(const char *componentName, const Message *message)
     {
         TRACE_MESSAGE_SPECIFY_COMPONENT(componentName, "Message type: 0x%02x (%s)", message->MessageType, MessageTypeName(message->MessageType));
         TRACE_MESSAGE_SPECIFY_COMPONENT(componentName, "ESP32 Interface: 0x%02x (%s)", message->Interface, InterfaceName(message->Interface));
-        TRACE_MESSAGE_SPECIFY_COMPONENT(componentName, "Message ID: 0x%08x", message->MessageID);
+        TRACE_MESSAGE_SPECIFY_COMPONENT(componentName, "Message ID: 0x%08x", (uint) message->MessageID);
         TRACE_MESSAGE_SPECIFY_COMPONENT(componentName, "Packet offset (length): %d (%d) bytes", message->PacketOffset, message->PacketLength);
-        TRACE_MESSAGE_SPECIFY_COMPONENT(componentName, "Function to be executed: 0x%08x (%s)", message->Function, FunctionName(message->Interface, message->Function));
-        TRACE_MESSAGE_SPECIFY_COMPONENT(componentName, "Status code: 0x%08x (%s)", message->StatusCode, StatusCodeName(message->StatusCode));
+        TRACE_MESSAGE_SPECIFY_COMPONENT(componentName, "Function to be executed: 0x%08x (%s)", (uint) message->Function, FunctionName(message->Interface, message->Function));
+        TRACE_MESSAGE_SPECIFY_COMPONENT(componentName, "Status code: 0x%08x (%s)", (uint) message->StatusCode, StatusCodeName(message->StatusCode));
         if (message->PayloadLength > 0)
         {
-            TRACE_MESSAGE_SPECIFY_COMPONENT(componentName, "Payload length: %d", message->PayloadLength);
+            TRACE_MESSAGE_SPECIFY_COMPONENT(componentName, "Payload length: %lu", message->PayloadLength);
             if (message->Payload)
             {
                 TRACE_HEX_BUFFER_SPECIFY_COMPONENT(componentName, message->Payload, message->PayloadLength);
