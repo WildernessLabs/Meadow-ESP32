@@ -15,6 +15,7 @@
 #include "unity.h"
 
 #include "MockMessageDispatcher.hpp"
+#include "MockTransportProvider.hpp"
 #include "Esp32Messaging.hpp"
 #include "Encoders.hpp"
 #include "SharedEnums.hpp"
@@ -99,7 +100,10 @@ static Esp32Messaging::AccessPoint *ExtractAccessPoint(uint8_t *buffer)
 TEST_CASE("Scan for access points", "[WiFi]")
 {
     NvsManager::Setup();
-    MockMessageDispatcher *messageDispatcher = new MockMessageDispatcher(nullptr);
+    MockTransportProvider *transportProvider = new MockTransportProvider();
+    TEST_ASSERT_NOT_NULL(transportProvider);
+
+    MockMessageDispatcher *messageDispatcher = new MockMessageDispatcher(transportProvider);
     TEST_ASSERT_NOT_NULL(messageDispatcher);
 
     //
@@ -157,4 +161,11 @@ TEST_CASE("Scan for access points", "[WiFi]")
     //  Now check the results of the scan remembering that we may not actually find any access points.
     //
     vPortFree(response);
+
+    //
+    //  Finally remove the objects we have created.
+    //
+    delete wifiRequestHandler;
+    delete messageDispatcher;
+    delete transportProvider;
 }
