@@ -68,6 +68,7 @@ cppcheck --error-exitcode=1 --quiet --check-level=exhaustive --force --inline-su
 
 echo "Running clang-format"
 clang-format --dry-run --Werror $VERBOSE_FLAGS $SOURCE_DIR/main/*.?pp 
+clang-format --dry-run --Werror $VERBOSE_FLAGS $SOURCE_DIR/test/*.?pp 
 clang-format --dry-run --Werror $VERBOSE_FLAGS $COMPONENTS_DIR/*.?pp
 clang-format --dry-run --Werror $VERBOSE_FLAGS $COMPONENTS_DIR/Bluetooth/*.?pp $COMPONENTS_DIR/Bluetooth/bluetooth/*.?pp
 clang-format --dry-run --Werror $VERBOSE_FLAGS $COMPONENTS_DIR/Exceptions/*.?pp
