@@ -67,8 +67,8 @@ cppcheck --error-exitcode=1 --quiet --check-level=exhaustive --force --inline-su
 # cppcheck --check-level=exhaustive --force --inline-suppr -iCMakeLists.txt -iSource/MeadowComms/components/esp_littlefs -iSource/MeadowComms/build --project=$scriptdir/Source/MeadowComms/build/compile_commands.json
 
 echo "Running clang-format"
-clang-format --dry-run --Werror $VERBOSE_FLAGS $SOURCE_DIR/main/*.?pp 
-clang-format --dry-run --Werror $VERBOSE_FLAGS $SOURCE_DIR/test/*.?pp 
+clang-format --dry-run --Werror $VERBOSE_FLAGS $SOURCE_DIR/main/*.?pp
+clang-format --dry-run --Werror $VERBOSE_FLAGS $SOURCE_DIR/test/*.?pp
 clang-format --dry-run --Werror $VERBOSE_FLAGS $COMPONENTS_DIR/*.?pp
 clang-format --dry-run --Werror $VERBOSE_FLAGS $COMPONENTS_DIR/Bluetooth/*.?pp $COMPONENTS_DIR/Bluetooth/bluetooth/*.?pp
 clang-format --dry-run --Werror $VERBOSE_FLAGS $COMPONENTS_DIR/Exceptions/*.?pp
