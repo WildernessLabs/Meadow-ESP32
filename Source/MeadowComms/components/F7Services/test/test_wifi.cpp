@@ -98,6 +98,7 @@ static Esp32Messaging::AccessPoint *ExtractAccessPoint(uint8_t *buffer)
  */
 TEST_CASE("Scan for access points", "[WiFi]")
 {
+    NvsManager::Setup();
     MockMessageDispatcher *messageDispatcher = new MockMessageDispatcher(nullptr);
     TEST_ASSERT_NOT_NULL(messageDispatcher);
 
