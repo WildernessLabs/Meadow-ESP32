@@ -200,16 +200,18 @@ Message *Message::CreateOnHeap(uint8_t messageType, uint8_t interface, uint32_t 
 {
     Message *result = static_cast<Message *>(pvPortMalloc(sizeof(Message)));
 
-    bzero(result, sizeof(Message));
-    result->MessageType = messageType;
-    result->Interface = interface;
-    result->Function = function;
-    result->StatusCode = statusCode;
-    result->MessageID = messageId;
-    result->PacketOffset = 0;
-    result->PacketLength = 0;
-    result->Payload = payload;
-    result->PayloadLength = payloadLength;
+    if (result != NULL)
+    {
+        result->MessageType = messageType;
+        result->Interface = interface;
+        result->Function = function;
+        result->StatusCode = statusCode;
+        result->MessageID = messageId;
+        result->PacketOffset = 0;
+        result->PacketLength = 0;
+        result->Payload = payload;
+        result->PayloadLength = payloadLength;
+    }
 
     return (result);
 }
