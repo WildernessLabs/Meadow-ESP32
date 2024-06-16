@@ -2039,6 +2039,7 @@ void WiFiRequestHandler::StationDisconnectedEvent(wifi_event_sta_disconnected_t 
         }
         if (_automaticReconnect && (_currentRetryCount < maximumRetryCount))
         {
+            TRACE_MESSAGE("StationDisconnectedEvent: Reconnecting, retry count %d, maximum %d", _currentRetryCount, maximumRetryCount);
             //
             //  the system is configured to automatically reconnect and we have not exceeded the retry count.
             //
@@ -2049,6 +2050,7 @@ void WiFiRequestHandler::StationDisconnectedEvent(wifi_event_sta_disconnected_t 
         }
         else
         {
+            TRACE_MESSAGE("StationDisconnectedEvent: Not reconnecting, retry count %d, maximum %d", _currentRetryCount, maximumRetryCount);
             //
             //  Here we were connected or we have been trying to connect and there two possibilities:
             //      1.  We are not configured to automatically reconnect.
@@ -2060,6 +2062,7 @@ void WiFiRequestHandler::StationDisconnectedEvent(wifi_event_sta_disconnected_t 
             xEventGroupClearBits(_xWiFiEventGroup, WIFI_CONNECTING_BIT);
             if (_automaticReconnect)
             {
+                TRACE_MESSAGE("StationDisconnectedEvent: Retry count exceeded, raising event");
                 RaiseNetworkRetryCountExceededEvent();
             }
         }

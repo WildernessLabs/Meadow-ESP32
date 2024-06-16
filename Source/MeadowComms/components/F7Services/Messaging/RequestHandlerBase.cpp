@@ -232,7 +232,7 @@ void RequestHandlerBase::SendIntegerResult(uint8_t interface, uint32_t function,
     }
     else
     {
-        TRACE_MESSAGE("Failed to allocate memory for IntegerResponse")
+        TRACE_MESSAGE("Failed to allocate memory for IntegerResponse");
     }
 
     TRACE_MESSAGE("SendIntegerResult - Exit");
