@@ -625,11 +625,6 @@ private:
     WiFiRequestHandler();
 
     /**
-     *  @brief Private destructor for the class.
-     */
-    ~WiFiRequestHandler();
-
-    /**
      *  @brief Process the station started event (WIFI_EVENT_STA_START).
      */
     void StationStartedEvent();
@@ -858,6 +853,11 @@ public:
      *  @brief Constructor for the WiFi object.
      */
     explicit WiFiRequestHandler(IMessageDispatcher *messageDispatcher);
+
+    /**
+     *  @brief Private destructor for the class.
+     */
+    virtual ~WiFiRequestHandler();
 
     /**
      *  @brief Perform and class level setup required before an instance can be used.
