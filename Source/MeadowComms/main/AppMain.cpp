@@ -158,6 +158,12 @@ extern "C" void app_main()
     //    TestBluetoothMessage(messageDispatcher);
 
     // Message *message = static_cast<Message *>(pvPortMalloc(sizeof(Message)));
+    // bzero(message, sizeof(Message));
+    // message->MessageType = MessageTypes::Header;
+    // message->Interface = Esp32Interfaces::WiFi;
+    // message->Function = WiFiFunction::GetAccessPoints;
+
+    // Message *message = static_cast<Message *>(pvPortMalloc(sizeof(Message)));
     // message->MessageType = MessageTypes::Header;
     // message->Interface = Esp32Interfaces::WiFi;
     // message->Function = WiFiFunction::StartAccessPoint;
@@ -187,7 +193,7 @@ extern "C" void app_main()
     // message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
     // Encoders::EncodeWiFiCredentials(&request, message->Payload);
 
-    // messageDispatcher->QueueMessageForEsp32(message);
+    messageDispatcher->QueueMessageForEsp32(message);
 
     //
     //  We suspend this task as the message processing is performed by the objects created above.
