@@ -64,11 +64,6 @@ private:
      */
     MockMessageDispatcher();
 
-    /**
-     *  @brief Destructor for the Message Dispatcher.
-     */
-    ~MockMessageDispatcher();
-
 public:
     /**
      *  @brief Name of the message dispatcher task.
@@ -79,6 +74,11 @@ public:
      *  @brief Constructor for the Message Dispatcher.
      */
     explicit MockMessageDispatcher(TransportProviderBase *transportProvider);
+
+    /**
+     *  @brief Destructor for the Message Dispatcher.
+     */
+    virtual ~MockMessageDispatcher();
 
     /**
      *  @brief Queue a message for the ESP32.
