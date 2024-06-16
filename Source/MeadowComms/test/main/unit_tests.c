@@ -27,17 +27,17 @@ void app_main(void)
      * UNITY_BEGIN() and UNITY_END() calls tell Unity to print a summary
      * (number of tests executed/failed/ignored) of tests executed between these calls.
      */
-    print_banner("Running tests with [FileSystem] tag");
-    UNITY_BEGIN();
-    unity_run_tests_by_tag("[FileSystem]", false);
-    UNITY_END();
+    // print_banner("Running tests with [FileSystem] tag");
+    // UNITY_BEGIN();
+    // unity_run_tests_by_tag("[FileSystem]", false);
+    // UNITY_END();
 
     // print_banner("Running all the registered tests");
     // UNITY_BEGIN();
     // unity_run_all_tests();
     // UNITY_END();
 
-    // print_banner("Starting interactive test menu");
+    print_banner("Starting interactive test menu");
     /* This function will not return, and will be busy waiting for UART input.
      * Make sure that task watchdog is disabled if you use this function.
      */
