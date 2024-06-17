@@ -341,7 +341,7 @@ Mapping::str_mapping_t Mapping::_systemFunctionNames[] = {
     {SystemFunction::SetConfigurationItem, (char *) "SetConfigurationItem"},
     {SystemFunction::DeepSleep, (char *) "DeepSleep"},
     {SystemFunction::GetBatteryChargeLevel, (char *) "GetBatteryChargeLevel"},
-{SystemFunction::StartHeapTrace, (char *) "StartHeapTrace"},
+    {SystemFunction::StartHeapTrace, (char *) "StartHeapTrace"},
     {SystemFunction::StopHeapTrace, (char *) "StopHeapTrace"},
     {SystemFunction::FileSystemFormat, (char *) "FileSystemFormat"},
     {SystemFunction::FileSystemListFiles, (char *) "FileSystemListFiles"},
