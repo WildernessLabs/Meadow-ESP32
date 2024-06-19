@@ -392,10 +392,28 @@ Mapping::str_mapping_t Mapping::_wifiFunctionNames[] = {
     {WiFiFunction::Ioctl, (char *) "Ioctl"},
     {WiFiFunction::GetSockName, (char *) "GetSockName"},
     {WiFiFunction::GetPeerName, (char *) "GetPeerName"},
+    {WiFiFunction::FreeAddrInfo, (char *) "FreeAddrInfo"},
+    {WiFiFunction::GetAddrInfo, (char *) "GetAddrInfo"},
+    {WiFiFunction::RecvMsg, (char *) "RecvMsg"},
+    {WiFiFunction::Shutdown, (char *) "Shutdown"},
+    {WiFiFunction::SendMsg, (char *) "SendMsg"},
+    {WiFiFunction::Dup2, (char *) "Dup2"},
+    {WiFiFunction::AddRef, (char *) "AddRef"},
+    {WiFiFunction::SockCaps, (char *) "SockCaps"},
+    {WiFiFunction::StartWiFiInterfaceEvent, (char *) "StartWiFiInterfaceEvent"},
+    {WiFiFunction::StopWiFiInterfaceEvent, (char *) "StopWiFiInterfaceEvent"},
     {WiFiFunction::NetworkConnectedEvent, (char *) "NetworkConnectedEvent"},
     {WiFiFunction::NetworkDisconnectedEvent, (char *) "NetworkDisconnectedEvent"},
-    {WiFiFunction::SetAntenna, (char *) "SetAntenna"},
-    {WiFiFunction::ClearDefaultAccessPoint, (char *) "ClearDefaultAccessPoint"}};
+    {WiFiFunction::NtpUpdateEvent, (char *) "NtpUpdateEvent"},
+    {WiFiFunction::ErrorEvent, (char *) "ErrorEvent"},
+    {WiFiFunction::StartAccessPoint, (char *) "StartAccessPoint"},
+    {WiFiFunction::StopAccessPoint, (char *) "StopAccessPoint"},
+    {WiFiFunction::AccessPointStartedEvent, (char *) "AccessPointStartedEvent"},
+    {WiFiFunction::AccessPointStoppedEvent, (char *) "AccessPointStoppedEvent"},
+    {WiFiFunction::NodeConnectedEvent, (char *) "NodeConnectedEvent"},
+    {WiFiFunction::NodeDisconnectedEvent, (char *) "NodeDisconnectedEvent"},
+    {WiFiFunction::NetworkConnectionRetryCountExceededEvent, (char *) "NetworkConnectionRetryCountExceededEvent"},
+    {WiFiFunction::NetworkConnectingEvent, (char *) "NetworkConnectingEvent"}};
 
 /*
  * ---------------------------------------------------------------------------
