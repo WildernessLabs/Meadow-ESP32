@@ -530,6 +530,16 @@ private:
     void RaiseDisconnectEvent();
 
     /**
+     * @brief Raise the NetworkConnectingEvent for the managed code.
+     */
+    void RaiseNetworkConnectingEvent();
+
+    /**
+     * @brief Raise the NetworkRetryCountExceededEvent for the managed code.
+     */
+    void RaiseNetworkRetryCountExceededEvent();
+
+    /**
      *  @brief Raise the ErrorEvent for the managed code.
      */
     void RaiseErrorEvent(StatusCodes::StatusCodes statusCode, uint8_t *payload, uint32_t payloadLength);
