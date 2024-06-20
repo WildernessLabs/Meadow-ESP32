@@ -10,6 +10,9 @@
 
 #include <stdint.h>
 
+/**
+ * @brief Provide a mechanism for implementing a progressive delay for retry events.
+ */
 class ProgressiveDelay
 {
 public:
