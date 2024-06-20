@@ -2050,7 +2050,7 @@ void WiFiRequestHandler::StationDisconnectedEvent(wifi_event_sta_disconnected_t 
             esp_wifi_connect();
             _currentRetryCount++;
             raiseDisconnectedEvent = false;
-            TRACE_MESSAGE("StationDisconnectedEvent: Delaying for %lu ms", _progressiveDelay->GetCurrentDelayPeriod());
+            TRACE_MESSAGE("StationDisconnectedEvent: Delaying for %u ms", _progressiveDelay->GetCurrentDelayPeriod());
             _progressiveDelay->Delay();
         }
         else
