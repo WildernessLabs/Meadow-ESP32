@@ -43,10 +43,13 @@ public:
 
     /**
      * @brief Get the Current Delay Period object
-     * 
+     *
      * @return uint32_t Delay in milliseconds.
      */
-    uint32_t GetCurrentDelayPeriod() { return _delayPeriods[_currentPeriod]; }
+    uint32_t GetCurrentDelayPeriod()
+    {
+        return _delayPeriods[_currentPeriod];
+    }
 
 private:
     /**
@@ -57,7 +60,7 @@ private:
     /**
      * @brief Delays in milliseconds.
      */
-    uint32_t _delayPeriods[7] = { 100, 300, 700, 1000, 5000, 10000, 20000 };
+    uint32_t _delayPeriods[7] = {100, 300, 700, 1000, 5000, 10000, 20000};
 };
 
 #endif // __PROGRESSIVE_DELAY_HPP__

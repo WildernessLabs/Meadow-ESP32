@@ -46,7 +46,7 @@ void ProgressiveDelay::Restart()
 
 /**
  * @brief Delay for the current period and move the index onto the next period.
- * 
+ *
  * The delay will gradually get longer as the number of calls to this method until
  * we reach the end of the array of delay periods at which point the same delay
  * will be used for all subsequent calls until Restart is called.
