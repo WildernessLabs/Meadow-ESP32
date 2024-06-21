@@ -17,6 +17,7 @@
 #include "Exceptions/ThreadPoolException.hpp"
 #include "Mapping.hpp"
 #include "Logging.hpp"
+#include "ProgressiveDelay.hpp"
 
 #if defined(CONFIG_HEAP_TRACING_STANDALONE) || defined(CONFIG_HEAP_TRACING_TOHOST)
 
@@ -303,6 +304,7 @@ WiFiRequestHandler::WiFiRequestHandler()
     bzero((void *) &_apInformation, sizeof(wifi_event_sta_connected_t));
     _lastIdfErrorCode = ESP_OK;
     _ipChanged = false;
+    _progressiveDelay = new ProgressiveDelay();
 }
 
 /**
@@ -2036,6 +2038,7 @@ void WiFiRequestHandler::StationDisconnectedEvent(wifi_event_sta_disconnected_t 
             //
             xEventGroupClearBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT);
             _currentRetryCount = 0;
+            _progressiveDelay->Restart();
         }
         if (GetAutomaticReconnect() && (_currentRetryCount < maximumRetryCount))
         {
@@ -2047,6 +2050,8 @@ void WiFiRequestHandler::StationDisconnectedEvent(wifi_event_sta_disconnected_t 
             esp_wifi_connect();
             _currentRetryCount++;
             raiseDisconnectedEvent = false;
+            TRACE_MESSAGE("StationDisconnectedEvent: Delaying for %u ms", _progressiveDelay->GetCurrentDelayPeriod());
+            _progressiveDelay->Delay();
         }
         else
         {
@@ -2067,23 +2072,6 @@ void WiFiRequestHandler::StationDisconnectedEvent(wifi_event_sta_disconnected_t 
             }
         }
     }
-
-    //
-    //  The code below is required to allow for the an access point to return to
-    //  operation and is needed for testing only.
-    //
-    //  To test these events:
-    //      1.  Run a .NET application that connects to an access point.
-    //      2.  Allow the connection to be successful and then turn off the AP.
-    //      3.  Turn the AP back on and the ESP32 should reconnect eventually.
-    //
-    //  The code below is used to delay the event processing to allow the AP to come back online.
-    //
-    // TRACE_MESSAGE("30 seconds delay starts here.");
-    // for (int index = 0; index < 30; index++)
-    // {
-    //     vTaskDelay(1000 / portTICK_PERIOD_MS);
-    // }
 
     if (raiseDisconnectedEvent)
     {
