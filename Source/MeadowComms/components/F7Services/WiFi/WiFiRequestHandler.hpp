@@ -35,6 +35,7 @@
 #include "SharedEnums.hpp"
 #include "Encoders.hpp"
 #include "Logging.hpp"
+#include "ProgressiveDelay.hpp"
 
 /**
  *  The following definitions are copied from the NuttX system as they
@@ -472,6 +473,11 @@ private:
      * @brief List of the nodes connected to this device in configured as an access point.
      */
     std::map<uint64_t, uint32_t> _connectedNodes;
+
+    /**
+     * @brief Progressive delay object to all of back off for some operations.
+     */
+    ProgressiveDelay *_progressiveDelay;
 
     /*
      *  Private methods.

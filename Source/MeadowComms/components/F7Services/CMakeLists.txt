@@ -12,6 +12,7 @@ idf_component_register( SRCS    "WiFi/WiFiRequestHandler.cpp"
 
                                 "Mapping.cpp"
                                 "Logging.cpp"
+                                "ProgressiveDelay.cpp"
 
                                 "MeshNetwork/MeshNetworkRequestHandler.cpp"
 
