@@ -2038,7 +2038,7 @@ void WiFiRequestHandler::StationDisconnectedEvent(wifi_event_sta_disconnected_t 
             //
             xEventGroupClearBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT);
             _currentRetryCount = 0;
-            _progressiveDelay->Restart();
+            RaiseDisconnectEvent();
         }
         if (GetAutomaticReconnect() && (_currentRetryCount < maximumRetryCount))
         {
@@ -2047,6 +2047,11 @@ void WiFiRequestHandler::StationDisconnectedEvent(wifi_event_sta_disconnected_t 
             //  the system is configured to automatically reconnect and we have not exceeded the retry count.
             //
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_CONNECTING_BIT);
+            if (_currentRetryCount == 0)
+            {
+                RaiseNetworkConnectingEvent();
+                _progressiveDelay->Restart();
+            }
             esp_wifi_connect();
             _currentRetryCount++;
             raiseDisconnectedEvent = false;
