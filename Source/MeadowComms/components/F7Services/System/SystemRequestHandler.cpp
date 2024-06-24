@@ -695,6 +695,71 @@ void SystemRequestHandler::StopHeapTrace(Message *message)
 }
 
 /**
+ *  @brief Process the logging configuration.
+ *
+ *  @param request
+ *      Message containing the logging configuration.
+ */
+void SystemRequestHandler::LoggingConfiguration(Message *message)
+{
+    TRACE_MESSAGE("LoggingConfiguration: Enter");
+
+    Esp32Messaging::LoggingConfiguration *config = Encoders::ExtractLoggingConfiguration(message->Payload);
+
+    if (config)
+    {
+        TRACE_MESSAGE("LogConfiguration:");
+        TRACE_MESSAGE("    Interface: %d", config->Interface);
+        TRACE_MESSAGE("    UDP Port: %d", config->UdpPort);
+        if (config->ComponentsToLog)
+        {
+            TRACE_MESSAGE("    Components: %s", config->ComponentsToLog);
+        }
+        else
+        {
+            TRACE_MESSAGE("    Components: None");
+        }
+        vPortFree(config);
+    }
+
+    //
+    //  Setting the logging configuration does not require a response.
+    //
+    Message::DeleteMessage(message);
+
+    TRACE_MESSAGE("LoggingConfiguration: Exit");
+}
+
+/**
+ *  @brief Process the log message.
+ *
+ *  @param request
+ *      Message containing the log message.
+ */
+void SystemRequestHandler::LogMessage(Message *message)
+{
+    TRACE_MESSAGE("LogMessage: Enter");
+
+    Esp32Messaging::LogMessage *logMessage = Encoders::ExtractLogMessage(message->Payload);
+
+    if (logMessage)
+    {
+        if (logMessage->Message)
+        {
+            TRACE_MESSAGE("LogMessage: (%d), %s", logMessage->Level, logMessage->Message);
+        }
+        vPortFree(logMessage);
+    }
+
+    //
+    //  Log messages do not need to be acknowledged.
+    //
+    Message::DeleteMessage(message);
+
+    TRACE_MESSAGE("LogMessage: Exit");
+}
+
+/**
  *  Dispatch the System request to the appropriate method in the class.
  *
  *  @param request
@@ -737,6 +802,12 @@ void SystemRequestHandler::DispatchRequest(Message *request)
             break;
         case SystemFunction::FileSystemDeleteFile:
             _fileSystem->DeleteFile(request);
+            break;
+        case SystemFunction::LoggingConfiguration:
+            LoggingConfiguration(request);
+            break;
+        case SystemFunction::LogMessage:
+            LogMessage(request);
             break;
         default:
             TRACE_MESSAGE("DispatchRequest: Unknown System message received, function 0x%x", request->Function);
