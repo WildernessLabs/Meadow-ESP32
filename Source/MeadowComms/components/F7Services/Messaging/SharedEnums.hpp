@@ -373,6 +373,14 @@ namespace SystemFunction
         /// Notes: This is a place holder as this is only generated on the STM32
         //  as a way of letting the managed code know about an OS error.
         OsException = 12,
+        /// <summary>
+        /// SystemFunction - LoggingConfiguration
+        /// </summary>
+        LoggingConfiguration = 13,
+        /// <summary>
+        /// SystemFunction - LogMessage
+        /// </summary>
+        LogMessage = 14,
     };
 
 } // namespace SystemFunction
@@ -1643,5 +1651,88 @@ namespace Esp32ResetCodes
     };
 
 } // namespace Esp32ResetCodes
+
+namespace Esp32LogLevel
+{
+    /*
+     *    ESP32 logging levels.
+     *
+     *    Note: These logging levels are based on the syslog levels in NuttX.
+     */
+    enum LogLevel : uint8_t {
+        /// <summary>
+        /// Esp32Logging - None
+        /// </summary>
+        None = 255,
+
+        /// <summary>
+        /// Esp32Logging - Emergency
+        /// </summary>
+        Emergency = 0,
+
+        /// <summary>
+        /// Esp32Logging - Emergency
+        /// </summary>
+        Alert = 1,
+
+        /// <summary>
+        /// Esp32Logging - Critical
+        /// </summary>
+        Critical = 2,
+
+        /// <summary>
+        /// Esp32Logging - Error
+        /// </summary>
+        Error = 3,
+
+        /// <summary>
+        /// Esp32Logging - Warning
+        /// </summary>
+        Warning = 4,
+
+        /// <summary>
+        /// Esp32Logging - Info
+        /// </summary>
+        Notice = 5,
+
+        /// <summary>
+        /// Esp32Logging - Debug
+        /// </summary>
+        Information = 6,
+
+        /// <summary>
+        /// Esp32Logging - Debug
+        /// </summary>
+        Debug = 7
+    };
+}; // namespace Esp32LogLevel
+
+namespace Esp32LogDestination
+{
+    /**
+     * @brief Where should the log messages be sent ?
+     */
+    enum LogDestination : uint8_t {
+        /// <summary>
+        /// Log messages are to be ignored (no logging).
+        /// </summary>
+        None = 0,
+
+        /// <summary>
+        /// Send log messages to the UART.
+        /// </summary>
+        Uart = 1,
+
+        /// <summary>
+        /// Send log messages to the JTAG.
+        /// </summary>
+        Jtag = 2,
+
+        /// <summary>
+        /// Send log messages to the UDP port.
+        /// </summary>
+        UDP = 3
+    };
+} // namespace Esp32LogDestination
 
 #endif /* _SHARED_ENUMS_HPP */

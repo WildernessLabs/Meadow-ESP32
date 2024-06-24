@@ -115,6 +115,16 @@ private:
     void StopHeapTrace(Message *);
 
     /**
+     * @brief Process the logging configuration.
+     */
+    void LoggingConfiguration(Message *);
+
+    /**
+     * @brief Process the log message
+     */
+    void LogMessage(Message *);
+
+    /**
      *  @brief Populate the configuration object with the current configuration.
      */
     static void PopulateConfiguration(Esp32Messaging::SystemConfiguration *);

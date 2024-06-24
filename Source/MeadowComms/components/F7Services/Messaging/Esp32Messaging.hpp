@@ -155,7 +155,7 @@ struct Message
     void DeletePayload();
 
     /**
-     *  @brief Delete the message and payload releassing heap storage.
+     *  @brief Delete the message and payload releasing heap storage.
      */
     static void DeleteMessage(Message *);
 };
