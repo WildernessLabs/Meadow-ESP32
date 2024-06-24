@@ -348,6 +348,8 @@ Mapping::str_mapping_t Mapping::_systemFunctionNames[] = {
     {SystemFunction::FileSystemWriteFile, (char *) "FileSystemWriteFile"},
     {SystemFunction::FileSystemReadFile, (char *) "FileSystemReadFile"},
     {SystemFunction::FileSystemDeleteFile, (char *) "FileSystemDeleteFile"},
+    {SystemFunction::LoggingConfiguration, (char *) "LoggingConfiguration"},
+    {SystemFunction::LogMessage, (char *) "LogMessage"},
 };
 
 /**
