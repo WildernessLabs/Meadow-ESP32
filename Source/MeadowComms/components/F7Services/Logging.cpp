@@ -7,6 +7,7 @@
 #include "sdkconfig.h"
 
 #include "esp32/rom/gpio.h"
+#include <string.h>
 #include <limits.h>
 
 #include "SharedEnums.hpp"
@@ -37,6 +38,11 @@
  *  @brief Name of the component / task.
  */
 const char *Logging::COMPONENT_NAME = "Logging";
+
+/**
+ *  @brief Is the logging system configured?
+ */
+bool Logging::_configured = false;
 
 #if defined(PERFORMANCE_LOGGING)
 
@@ -138,45 +144,6 @@ void Logging::Setup()
 {
     esp_log_level_set("*", ESP_LOG_NONE);
 
-#if defined(DEBUG) || defined(WIFI_DEBUG) || defined(SPI_DEBUG) || defined(THREAD_DEBUG) || defined(SYSTEM_DEBUG) || defined(BT_DEBUG)
-    esp_log_level_set(APP_MAIN_COMPONENT_NAME, ESP_LOG_INFO);
-#endif
-
-#if defined(MESSAGES_DEBUG)
-    //
-    //  We enable the RequestHandlerBase as it is the base class for the WiFi, System etc. request handlers.
-    //
-    #pragma message "Message (TransportProviderBase and RequestHandlerBase) debugging is enabled."
-    esp_log_level_set(RequestHandlerBase::COMPONENT_NAME, ESP_LOG_INFO);
-    esp_log_level_set(TransportProviderBase::COMPONENT_NAME, ESP_LOG_INFO);
-#endif
-
-#if defined(WIFI_DEBUG)
-    #pragma message "WIFI debugging is enabled."
-    esp_log_level_set(WiFiRequestHandler::COMPONENT_NAME, ESP_LOG_INFO);
-#endif
-
-#if defined(SPI_DEBUG)
-    #pragma message "SPI debugging is enabled."
-    esp_log_level_set(SpiTransportProvider::COMPONENT_NAME, ESP_LOG_INFO);
-#endif
-
-#if defined(THREAD_DEBUG)
-    #pragma message "ThreadPool debugging is enabled."
-    esp_log_level_set(Thread::COMPONENT_NAME, ESP_LOG_INFO);
-#endif
-
-#if defined(BT_DEBUG)
-    #pragma message "Bluetooth debugging is enabled."
-    esp_log_level_set(BluetoothRequestHandler::COMPONENT_NAME, ESP_LOG_INFO);
-#endif
-
-#if defined(SYSTEM_DEBUG)
-    #pragma message "System debugging is enabled."
-    esp_log_level_set(SystemRequestHandler::COMPONENT_NAME, ESP_LOG_INFO);
-    esp_log_level_set(FileSystem::COMPONENT_NAME, ESP_LOG_INFO);
-#endif
-
     const uart_config_t loggingUARTConfig = {.baud_rate = 115200, .data_bits = UART_DATA_8_BITS, .parity = UART_PARITY_DISABLE, .stop_bits = UART_STOP_BITS_1, .flow_ctrl = UART_HW_FLOWCTRL_DISABLE, .rx_flow_ctrl_thresh = 0, .use_ref_tick = false};
     uart_param_config(LOGGING_UART_PORT_NUMBER, &loggingUARTConfig);
     uart_set_pin(LOGGING_UART_PORT_NUMBER, Gpio::LOGGING_TX_PIN, Gpio::LOGGING_RX_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
@@ -186,6 +153,98 @@ void Logging::Setup()
     uart_driver_install(LOGGING_UART_PORT_NUMBER, RX_BUFFER_SIZE * 2, 0, 0, NULL, 0);
     TRACE_MESSAGE("Logging redirected to UART_NUM_0 on pins %d (Tx), %d (Rx)", Gpio::LOGGING_TX_PIN, Gpio::LOGGING_RX_PIN);
     TRACE_MESSAGE("Logging setup complete.");
+}
+
+/**
+ * @brief Configure the logging system.
+ * 
+ * @param components Names of the components to be logged.
+ * @param interface Destination for the log messages.
+ * @param udpPort UDP port for the log messages when UDP is enabled.
+ */
+void Logging::Configure(char *components, uint32_t interface, uint32_t udpPort)
+{
+    if (!_configured)
+    {
+        bool turnAppLoggingOn = false;
+
+        if (components != NULL)
+        {
+            char *residual;
+            char *duplicate = strdup(components);
+            char *component = strtok_r(duplicate, ";", &residual);
+            while (component != NULL)
+            {
+                turnAppLoggingOn |= TurnLoggingOn(component);
+                component = strtok_r(residual, ";", &residual);
+            }
+            free(duplicate);
+        }
+
+        if (turnAppLoggingOn)
+        {
+            esp_log_level_set(APP_MAIN_COMPONENT_NAME, ESP_LOG_INFO);
+        }
+
+        _configured = true;
+    }
+}
+
+/**
+ * @brief Turn logging on for the specified component.
+ * 
+ * @note The component name specified must match one of the COMPONENT_NAME entries in the various objects in the system.
+ *       Unknown component names will be ignored.
+ * 
+ * @param component Name of the component which should have logging enabled.
+ * 
+ * @return True if the component was found and logging was enabled, false otherwise.
+ */
+bool Logging::TurnLoggingOn(char *component)
+{
+    if (component != NULL)
+    {
+        //
+        //  A multitude of if statements are used here because we have some cases where we want to turn logging on for
+        //  a group of components and one case where we want to do this for a "non-component" name.
+        //
+        if (!strcasecmp(component, WiFiRequestHandler::COMPONENT_NAME))
+        {
+            esp_log_level_set(WiFiRequestHandler::COMPONENT_NAME, ESP_LOG_INFO);
+            return(true);
+        }
+        if (!strcasecmp(component, SystemRequestHandler::COMPONENT_NAME))
+        {
+            esp_log_level_set(SystemRequestHandler::COMPONENT_NAME, ESP_LOG_INFO);
+            esp_log_level_set(FileSystem::COMPONENT_NAME, ESP_LOG_INFO);
+            return(true);
+        }
+        if (!strcasecmp(component, BluetoothRequestHandler::COMPONENT_NAME))
+        {
+            esp_log_level_set(BluetoothRequestHandler::COMPONENT_NAME, ESP_LOG_INFO);
+            return(true);
+        }
+        if (!strcasecmp(component, SpiTransportProvider::COMPONENT_NAME))
+        {
+            esp_log_level_set(SpiTransportProvider::COMPONENT_NAME, ESP_LOG_INFO);
+            return(true);
+        }
+        if (!strcasecmp(component, Thread::COMPONENT_NAME))
+        {
+            esp_log_level_set(Thread::COMPONENT_NAME, ESP_LOG_INFO);
+            esp_log_level_set(ThreadPool::COMPONENT_NAME, ESP_LOG_INFO);
+            return(true);
+        }
+        if (!strcasecmp(component, "Messages"))
+        {
+            esp_log_level_set(RequestHandlerBase::COMPONENT_NAME, ESP_LOG_INFO);
+            esp_log_level_set(TransportProviderBase::COMPONENT_NAME, ESP_LOG_INFO);
+            esp_log_level_set(MessageDispatcher::COMPONENT_NAME, ESP_LOG_INFO);
+            return(true);
+        }
+    }
+
+    return(false);
 }
 
 /**
