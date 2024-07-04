@@ -24,7 +24,7 @@
 /**
  *  @brief Name of this component / task.
  */
-const char *SpiTransportProvider::COMPONENT_NAME = "SPITask";
+const char *SpiTransportProvider::COMPONENT_NAME = "SPI";
 
 /**
  *  @brief Default state is that the class has not been fully constructed
