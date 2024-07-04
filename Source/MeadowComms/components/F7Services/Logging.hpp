@@ -138,7 +138,7 @@ private:
 
     /**
      * @brief Is the logging system configured?
-     * 
+     *
      * This is used to prevent multiple configuration attempts.
      */
     static bool _configured;

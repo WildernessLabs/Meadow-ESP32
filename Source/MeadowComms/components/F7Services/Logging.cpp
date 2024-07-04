@@ -157,7 +157,7 @@ void Logging::Setup()
 
 /**
  * @brief Configure the logging system.
- * 
+ *
  * @param components Names of the components to be logged.
  * @param interface Destination for the log messages.
  * @param udpPort UDP port for the log messages when UDP is enabled.
@@ -192,12 +192,12 @@ void Logging::Configure(char *components, uint32_t interface, uint32_t udpPort)
 
 /**
  * @brief Turn logging on for the specified component.
- * 
+ *
  * @note The component name specified must match one of the COMPONENT_NAME entries in the various objects in the system.
  *       Unknown component names will be ignored.
- * 
+ *
  * @param component Name of the component which should have logging enabled.
- * 
+ *
  * @return True if the component was found and logging was enabled, false otherwise.
  */
 bool Logging::TurnLoggingOn(char *component)
@@ -211,40 +211,40 @@ bool Logging::TurnLoggingOn(char *component)
         if (!strcasecmp(component, WiFiRequestHandler::COMPONENT_NAME))
         {
             esp_log_level_set(WiFiRequestHandler::COMPONENT_NAME, ESP_LOG_INFO);
-            return(true);
+            return (true);
         }
         if (!strcasecmp(component, SystemRequestHandler::COMPONENT_NAME))
         {
             esp_log_level_set(SystemRequestHandler::COMPONENT_NAME, ESP_LOG_INFO);
             esp_log_level_set(FileSystem::COMPONENT_NAME, ESP_LOG_INFO);
-            return(true);
+            return (true);
         }
         if (!strcasecmp(component, BluetoothRequestHandler::COMPONENT_NAME))
         {
             esp_log_level_set(BluetoothRequestHandler::COMPONENT_NAME, ESP_LOG_INFO);
-            return(true);
+            return (true);
         }
         if (!strcasecmp(component, SpiTransportProvider::COMPONENT_NAME))
         {
             esp_log_level_set(SpiTransportProvider::COMPONENT_NAME, ESP_LOG_INFO);
-            return(true);
+            return (true);
         }
         if (!strcasecmp(component, Thread::COMPONENT_NAME))
         {
             esp_log_level_set(Thread::COMPONENT_NAME, ESP_LOG_INFO);
             esp_log_level_set(ThreadPool::COMPONENT_NAME, ESP_LOG_INFO);
-            return(true);
+            return (true);
         }
         if (!strcasecmp(component, "Messages"))
         {
             esp_log_level_set(RequestHandlerBase::COMPONENT_NAME, ESP_LOG_INFO);
             esp_log_level_set(TransportProviderBase::COMPONENT_NAME, ESP_LOG_INFO);
             esp_log_level_set(MessageDispatcher::COMPONENT_NAME, ESP_LOG_INFO);
-            return(true);
+            return (true);
         }
     }
 
-    return(false);
+    return (false);
 }
 
 /**
