@@ -136,6 +136,18 @@ private:
      */
     static const int TX_BUFFER_SIZE = 1024;
 
+    /**
+     * @brief Is the logging system configured?
+     * 
+     * This is used to prevent multiple configuration attempts.
+     */
+    static bool _configured;
+
+    /**
+     * @brief Turn logging on for the specified component.
+     */
+    static bool TurnLoggingOn(char *component);
+
 #if defined(PERFORMANCE_LOGGING)
     /**
      *  @brief Maximum number of performance counters to be held in the circular buffer.
@@ -215,6 +227,11 @@ public:
      * @brief Setup this class.
      */
     static void Setup();
+
+    /**
+     * @brief Configure the logging system.
+     */
+    static void Configure(char *components, uint32_t interface, uint32_t udpPort);
 
     /**
      *  @brief Process the request to output an informational message to the logging system.
