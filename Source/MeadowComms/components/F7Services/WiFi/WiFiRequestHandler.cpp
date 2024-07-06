@@ -39,7 +39,7 @@ extern heap_trace_record_t *trace_records;
  * ----------------------------------------------------------------------------
  */
 
-const char *WiFiRequestHandler::COMPONENT_NAME = "WiFiTask";
+const char *WiFiRequestHandler::COMPONENT_NAME = "WiFi";
 
 /**
  *  @brief Determine if this class is instantiated already (i.e. this should be a singleton).
