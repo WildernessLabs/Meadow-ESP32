@@ -44,7 +44,7 @@
 /**
  *  @brief Name of the FreeRTOS component / task for the System task.
  */
-const char *SystemRequestHandler::COMPONENT_NAME = "SystemTask";
+const char *SystemRequestHandler::COMPONENT_NAME = "System";
 
 /**
  *  @brief Determine if this class is instantiated already (i.e. this should be a singleton).
@@ -708,17 +708,7 @@ void SystemRequestHandler::LoggingConfiguration(Message *message)
 
     if (config)
     {
-        TRACE_MESSAGE("LogConfiguration:");
-        TRACE_MESSAGE("    Interface: %d", config->Interface);
-        TRACE_MESSAGE("    UDP Port: %d", config->UdpPort);
-        if (config->ComponentsToLog)
-        {
-            TRACE_MESSAGE("    Components: %s", config->ComponentsToLog);
-        }
-        else
-        {
-            TRACE_MESSAGE("    Components: None");
-        }
+        Logging::Configure(config->ComponentsToLog, config->Interface, config->UdpPort);
         vPortFree(config);
     }
 
