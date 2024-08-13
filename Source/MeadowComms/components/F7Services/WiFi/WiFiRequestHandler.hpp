@@ -274,6 +274,11 @@ private:
     esp_netif_ip_info_t _ipInformation;
 
     /**
+     *  @brief Current DNS IP information.
+     */
+    esp_netif_dns_info_t _dnsInformation;
+
+    /**
      *  @brief Indicate if the IP address information has changed.
      */
     bool _ipChanged;
@@ -694,6 +699,11 @@ private:
      * @brief Processes the node disconnecting from the access point event.
      */
     void NodeDisconnectedEvent(wifi_event_ap_stadisconnected_t *);
+
+    /**
+     * @brief Processes when the IP address is obtained from the access point event.
+     */
+    void RaiseNetworkGotIpEvent();
 
     /**
      * @brief Lock the _connectedNodes object.

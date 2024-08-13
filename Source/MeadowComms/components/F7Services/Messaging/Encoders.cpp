@@ -2603,3 +2603,33 @@ Esp32Messaging::LogMessage *Encoders::ExtractLogMessage(uint8_t *buffer)
     }
     return (logMessage);
 }
+
+/**
+ *  Convert the GotIpEventData object into a byte stream that can be sent to the STM32.
+ *
+ *  The amount of memory required can be obtained by calling the EncodedGotIpEventDataBufferSize method.
+ *
+ *  @param gotIpEventData
+ *      GotIpEventData object to be encoded.
+ *
+ *  @param buffer
+ *      Pointer to a block of memory large enough to hold the encoded EventData object.
+ */
+void Encoders::EncodeGotIpEventData(Esp32Messaging::GotIpEventData *gotIpEventData, uint8_t *buffer)
+{
+    EncodeUInt32(gotIpEventData->DnsAddress, buffer);
+}
+
+/**
+ *  Calculate the amount of memory required to hold the given instance of the GotIpEventData object.
+ *
+ *  @param gotIpEventData
+ *      GotIpEventData object to be encoded.
+ *
+ *  @returns
+ *      Number of bytes required to hold the encoded GotIpEventData object.
+ */
+int Encoders::EncodedGotIpEventDataBufferSize(Esp32Messaging::GotIpEventData *gotIpEventData)
+{
+    return (4);
+}

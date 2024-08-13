@@ -492,6 +492,12 @@ namespace Esp32Messaging
          */
         char *Message;
     };
+
+    struct GotIpEventData
+    {
+        uint32_t DnsAddress;
+    };
+
 } // namespace Esp32Messaging
 
 /*
@@ -621,6 +627,8 @@ public:
     static int EncodedFileNameListBufferSize(Esp32Messaging::FileNameList *);
     static Esp32Messaging::LoggingConfiguration *ExtractLoggingConfiguration(uint8_t *);
     static Esp32Messaging::LogMessage *ExtractLogMessage(uint8_t *);
+    static void EncodeGotIpEventData(Esp32Messaging::GotIpEventData *, uint8_t *);
+    static int EncodedGotIpEventDataBufferSize(Esp32Messaging::GotIpEventData *);
 };
 
 #endif /* _ENCODERS_HPP */
