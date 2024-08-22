@@ -274,11 +274,6 @@ private:
     esp_netif_ip_info_t _ipInformation;
 
     /**
-     *  @brief Current DNS IP information.
-     */
-    esp_netif_dns_info_t _dnsInformation;
-
-    /**
      *  @brief Indicate if the IP address information has changed.
      */
     bool _ipChanged;
