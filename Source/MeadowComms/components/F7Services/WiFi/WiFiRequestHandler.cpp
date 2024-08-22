@@ -744,7 +744,6 @@ void WiFiRequestHandler::ClearIpAndDisconnectData()
 {
     bzero((void *) &_instance->_disconnectData, sizeof(_disconnectData));
     bzero((void *) &_instance->_ipInformation, sizeof(_ipInformation));
-    bzero((void *) &_instance->_dnsInformation, sizeof(_dnsInformation));
 }
 
 /**
@@ -1005,23 +1004,27 @@ void WiFiRequestHandler::RaiseErrorEvent(StatusCodes::StatusCodes statusCode, ui
 void WiFiRequestHandler::RaiseNetworkGotIpEvent()
 {
     TRACE_MESSAGE("RaiseNetworkGotIpEvent: Enter");
+
+    esp_netif_dns_info_t dnsInformation;
+    esp_netif_get_dns_info(_stationNetIfHandle, ESP_NETIF_DNS_MAIN, &dnsInformation);
+
     Esp32Messaging::GotIpEventData *ed = static_cast<Esp32Messaging::GotIpEventData *>(pvPortMalloc(sizeof(Esp32Messaging::GotIpEventData)));
     if (ed != nullptr)
     {
         memset(ed, 0, sizeof(Esp32Messaging::GotIpEventData));
-        memcpy((void *) &ed->DnsAddress, (void *) &_dnsInformation.ip.u_addr.ip4.addr, sizeof(ed->DnsAddress));
+        memcpy((void *) &ed->DnsAddress, (void *) &dnsInformation.ip.u_addr.ip4.addr, sizeof(ed->DnsAddress));
         uint32_t payloadLength = Encoders::EncodedGotIpEventDataBufferSize(ed);
         uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
         if (payload != NULL)
         {
             Encoders::EncodeGotIpEventData(ed, payload);
-            vPortFree(ed);
             RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::NetworkGotIpEvent, StatusCodes::CompletedOk, payload, payloadLength);
         }
         else
         {
             ERROR_MESSAGE("Failed to allocate memory for GotIpDataEvent payload. ");
         }
+        vPortFree(ed);
     }
     TRACE_MESSAGE("RaiseNetworkGotIpEvent: Exit");
 }
@@ -1977,9 +1980,8 @@ void WiFiRequestHandler::StationGotIpEvent(ip_event_got_ip_t *eventData)
     memcpy((void *) &_ipInformation, (void *) &eventData->ip_info, sizeof(esp_netif_ip_info_t));
     _ipChanged = eventData->ip_changed;
 
-    if (_useDhcp)
+    // if (_useDhcp)
     {
-        esp_netif_get_dns_info(_stationNetIfHandle, ESP_NETIF_DNS_MAIN, &_dnsInformation);
         RaiseNetworkGotIpEvent();
     }
 
