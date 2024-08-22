@@ -1980,7 +1980,7 @@ void WiFiRequestHandler::StationGotIpEvent(ip_event_got_ip_t *eventData)
     memcpy((void *) &_ipInformation, (void *) &eventData->ip_info, sizeof(esp_netif_ip_info_t));
     _ipChanged = eventData->ip_changed;
 
-    // if (_useDhcp)
+    if (_useDhcp)
     {
         RaiseNetworkGotIpEvent();
     }
