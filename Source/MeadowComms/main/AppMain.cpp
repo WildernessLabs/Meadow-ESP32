@@ -33,8 +33,7 @@ meadow_version_t g_application_version = {
     .minute = VERSION_BUILD_MINUTE,
     .second = VERSION_BUILD_SECOND,
     .hash = VERSION_BUILD_HASH_NUMBER,
-    .branch_name = (char *) VERSION_GIT_RE
-};
+    .branch_name = (char *) VERSION_GIT_REF};
 
 //
 //  Checks to see if TRACE or DEBUG is turned on and issues a warning if they are.
@@ -193,7 +192,7 @@ extern "C" void app_main()
     // message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
     // Encoders::EncodeWiFiCredentials(&request, message->Payload);
 
-    messageDispatcher->QueueMessageForEsp32(message);
+    // messageDispatcher->QueueMessageForEsp32(message);
 
     //
     //  We suspend this task as the message processing is performed by the objects created above.
