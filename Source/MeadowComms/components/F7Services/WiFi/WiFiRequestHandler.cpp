@@ -1501,7 +1501,6 @@ StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const Esp32Mes
 
     char *password = accessPointInformation->Password;
 
-    TRACE_MESSAGE("ConnectToAccessPoint: Access point %s, password '%s'", accessPointInformation->NetworkName, password == nullptr ? "" : password);
     TRACE_MESSAGE("IP information, IP: 0x%08x, subnet: 0x%08x, gateway 0x%08x", (uint) accessPointInformation->IpAddress, (uint) accessPointInformation->SubnetMask, (uint) accessPointInformation->Gateway);
 
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
