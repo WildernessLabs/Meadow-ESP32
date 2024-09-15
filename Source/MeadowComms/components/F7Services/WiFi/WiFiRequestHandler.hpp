@@ -35,6 +35,7 @@
 #include "SharedEnums.hpp"
 #include "Encoders.hpp"
 #include "Logging.hpp"
+#include "ProgressiveDelay.hpp"
 
 /**
  *  The following definitions are copied from the NuttX system as they
@@ -473,6 +474,11 @@ private:
      */
     std::map<uint64_t, uint32_t> _connectedNodes;
 
+    /**
+     * @brief Progressive delay object to all of back off for some operations.
+     */
+    ProgressiveDelay *_progressiveDelay;
+
     /*
      *  Private methods.
      */
@@ -528,6 +534,16 @@ private:
      *  @brief Raise the RaiseDisconnectEvent for the managed code.
      */
     void RaiseDisconnectEvent();
+
+    /**
+     * @brief Raise the NetworkConnectingEvent for the managed code.
+     */
+    void RaiseNetworkConnectingEvent();
+
+    /**
+     * @brief Raise the NetworkRetryCountExceededEvent for the managed code.
+     */
+    void RaiseNetworkRetryCountExceededEvent();
 
     /**
      *  @brief Raise the ErrorEvent for the managed code.

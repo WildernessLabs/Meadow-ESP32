@@ -18,6 +18,7 @@
 #include "Exceptions/ThreadPoolException.hpp"
 #include "Mapping.hpp"
 #include "Logging.hpp"
+#include "ProgressiveDelay.hpp"
 
 #if defined(CONFIG_HEAP_TRACING_STANDALONE) || defined(CONFIG_HEAP_TRACING_TOHOST)
 
@@ -39,7 +40,7 @@ extern heap_trace_record_t *trace_records;
  * ----------------------------------------------------------------------------
  */
 
-const char *WiFiRequestHandler::COMPONENT_NAME = "WiFiTask";
+const char *WiFiRequestHandler::COMPONENT_NAME = "WiFi";
 
 /**
  *  @brief Determine if this class is instantiated already (i.e. this should be a singleton).
@@ -304,6 +305,7 @@ WiFiRequestHandler::WiFiRequestHandler()
     bzero((void *) &_apInformation, sizeof(wifi_event_sta_connected_t));
     _lastIdfErrorCode = ESP_OK;
     _ipChanged = false;
+    _progressiveDelay = new ProgressiveDelay();
 }
 
 /**
@@ -946,6 +948,30 @@ void WiFiRequestHandler::RaiseDisconnectEvent()
 }
 
 /**
+ * @brief Raise the NetworkConnectingEvent for the managed code.
+ */
+void WiFiRequestHandler::RaiseNetworkConnectingEvent()
+{
+    TRACE_MESSAGE("RaiseNetworkConnectingEvent: Enter");
+
+    SendIntegerResult(Esp32Interfaces::WiFi, WiFiFunction::NetworkConnectingEvent, StatusCodes::CompletedOk, _currentRetryCount);
+
+    TRACE_MESSAGE("RaiseNetworkConnectingEvent: Exit");
+}
+
+/**
+ * @brief Raise the NetworkRetryCountExceededEvent for the managed code.
+ */
+void WiFiRequestHandler::RaiseNetworkRetryCountExceededEvent()
+{
+    TRACE_MESSAGE("RaiseNetworkRetryCountExceededEvent: Enter");
+
+    SendIntegerResult(Esp32Interfaces::WiFi, WiFiFunction::NetworkConnectionRetryCountExceededEvent, StatusCodes::CompletedOk, _currentRetryCount);
+
+    TRACE_MESSAGE("RaiseNetworkRetryCountExceededEvent: Exit");
+}
+
+/**
  * @brief Raise an error event for the WiFi interface.
  *
  * @param statusCode Status code
@@ -1471,6 +1497,8 @@ bool WiFiRequestHandler::IsConnected()
  */
 StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const Esp32Messaging::AccessPointInformation *accessPointInformation)
 {
+    RaiseNetworkConnectingEvent();
+
     char *password = accessPointInformation->Password;
 
     TRACE_MESSAGE("ConnectToAccessPoint: Access point %s, password '%s'", accessPointInformation->NetworkName, password == nullptr ? "" : password);
@@ -1630,11 +1658,6 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
     _messageDispatcher->QueueMessageForStm32(message);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
 
-    if (result == StatusCodes::CompletedOk)
-    {
-        RaiseConnectToAccessPointEvent(result);
-    }
-
     TRACE_MESSAGE("ConnectToAccessPoint: Exit");
 }
 
@@ -1650,7 +1673,6 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
 void WiFiRequestHandler::ConnectToDefaultAccessPoint(Message *message)
 {
     TRACE_MESSAGE("ConnectToDefaultAccessPoint: Enter");
-    StatusCodes::StatusCodes result = StatusCodes::DefaultAccessPointNotConfigured;
 
     char *access_point = GetDefaultAccessPoint();
     if (access_point != NULL)
@@ -1664,15 +1686,14 @@ void WiFiRequestHandler::ConnectToDefaultAccessPoint(Message *message)
             accessPointInformation.SubnetMask = GetSubNetMask();
             accessPointInformation.Gateway = GetDefaultGateway();
         }
-        result = ConnectToAccessPoint(&accessPointInformation);
+        (void) ConnectToAccessPoint(&accessPointInformation);
+    }
+    else
+    {
+        RaiseConnectToAccessPointEvent(StatusCodes::DefaultAccessPointNotConfigured);
     }
 
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
-
-    if (result == StatusCodes::CompletedOk)
-    {
-        RaiseConnectToAccessPointEvent(result);
-    }
 
     TRACE_MESSAGE("ConnectToDefaultAccessPoint: Exit");
 }
@@ -1986,6 +2007,8 @@ void WiFiRequestHandler::StationConnectedEvent(wifi_event_sta_connected_t *event
     xEventGroupClearBits(_xWiFiEventGroup, WIFI_CONNECTING_BIT);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT);
 
+    RaiseConnectToAccessPointEvent(StatusCodes::CompletedOk);
+
     TRACE_MESSAGE("StationConnectedEvent: Exit");
 }
 
@@ -1999,7 +2022,7 @@ void WiFiRequestHandler::StationDisconnectedEvent(wifi_event_sta_disconnected_t 
 {
     TRACE_MESSAGE("StationDisconnectedEvent: Enter");
 
-    bool raiseEvent = true;
+    bool raiseDisconnectedEvent = true;
     EventBits_t bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT | WIFI_CONNECTING_BIT | WIFI_DISCONNECT_REQUESTED_BIT, pdFALSE, pdFALSE, 0);
     if (bits & WIFI_DISCONNECT_REQUESTED_BIT)
     {
@@ -2007,26 +2030,59 @@ void WiFiRequestHandler::StationDisconnectedEvent(wifi_event_sta_disconnected_t 
     }
     else
     {
+        //
+        //  Deal with working out if we should start the reconnection process as a forced disconnect has
+        //  not been requested.
+        //
         uint32_t maximumRetryCount = GetMaximumRetryCount();
         if (bits & WIFI_CONNECTED_BIT)
         {
+            //
+            //  So here we were connected and now we are not so clear the connection flags.
+            //
             xEventGroupClearBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT);
-            xEventGroupSetBits(_xWiFiEventGroup, WIFI_CONNECTING_BIT);
             _currentRetryCount = 0;
+            RaiseDisconnectEvent();
         }
-        if (_automaticReconnect && (_currentRetryCount < maximumRetryCount))
+        if (GetAutomaticReconnect() && (_currentRetryCount < maximumRetryCount))
         {
+            TRACE_MESSAGE("StationDisconnectedEvent: Reconnecting, retry count %d, maximum %d", _currentRetryCount, maximumRetryCount);
+            //
+            //  the system is configured to automatically reconnect and we have not exceeded the retry count.
+            //
+            xEventGroupSetBits(_xWiFiEventGroup, WIFI_CONNECTING_BIT);
+            if (_currentRetryCount == 0)
+            {
+                RaiseNetworkConnectingEvent();
+                _progressiveDelay->Restart();
+            }
             esp_wifi_connect();
             _currentRetryCount++;
-            raiseEvent = false;
+            raiseDisconnectedEvent = false;
+            TRACE_MESSAGE("StationDisconnectedEvent: Delaying for %u ms", _progressiveDelay->GetCurrentDelayPeriod());
+            _progressiveDelay->Delay();
         }
         else
         {
+            TRACE_MESSAGE("StationDisconnectedEvent: Not reconnecting, retry count %d, maximum %d", _currentRetryCount, maximumRetryCount);
+            //
+            //  Here we were connected or we have been trying to connect and there two possibilities:
+            //      1.  We are not configured to automatically reconnect.
+            //      2.  We are configured to automatically reconnect but we have exceeded the retry count.
+            //
+            //  In the second case we need to raise the event to the application to let it know that we have
+            //  exceeded the retry count.
+            //
             xEventGroupClearBits(_xWiFiEventGroup, WIFI_CONNECTING_BIT);
+            if (GetAutomaticReconnect())
+            {
+                TRACE_MESSAGE("StationDisconnectedEvent: Retry count exceeded, raising event");
+                RaiseNetworkRetryCountExceededEvent();
+            }
         }
     }
 
-    if (raiseEvent)
+    if (raiseDisconnectedEvent)
     {
         memcpy(&_disconnectData, eventData, sizeof(wifi_event_sta_disconnected_t));
         RaiseDisconnectEvent();

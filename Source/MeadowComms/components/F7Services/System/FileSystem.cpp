@@ -284,6 +284,10 @@ void FileSystem::ReadFile(Message *message)
             }
         }
         vPortFree(fileData->Name);
+        if (fileData->Contents != NULL)
+        {
+            vPortFree(fileData->Contents);
+        }
         vPortFree(fileData);
     }
 

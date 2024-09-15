@@ -2545,3 +2545,61 @@ int Encoders::EncodedFileNameListBufferSize(Esp32Messaging::FileNameList *fileNa
     result += fileNameList->FileDetailsLength;
     return (result + 6);
 }
+
+/**
+ * @brief Extract the logging configuration from the given buffer.
+ *
+ * @param buffer Block of memory holding the encoded logging configuration.
+ * @return Esp32Messaging::LoggingConfiguration* Pointer to the extracted logging configuration.
+ */
+Esp32Messaging::LoggingConfiguration *Encoders::ExtractLoggingConfiguration(uint8_t *buffer)
+{
+    Esp32Messaging::LoggingConfiguration *loggingConfiguration = static_cast<Esp32Messaging::LoggingConfiguration *>(pvPortMalloc(sizeof(Esp32Messaging::LoggingConfiguration)));
+
+    if (loggingConfiguration == NULL)
+    {
+        return (nullptr);
+    }
+
+    loggingConfiguration->Interface = *buffer;
+    buffer++;
+    loggingConfiguration->UdpPort = ExtractUInt16(buffer);
+    buffer += 2;
+    if (*buffer == 0)
+    {
+        loggingConfiguration->ComponentsToLog = nullptr;
+    }
+    else
+    {
+        loggingConfiguration->ComponentsToLog = ExtractString(buffer);
+    }
+    return (loggingConfiguration);
+}
+
+/**
+ * @brief Extract the log message and level from the given buffer.
+ *
+ * @param buffer Block of memory holding the encoded log message.
+ * @return Esp32Messaging::LogMessage* Pointer to the extracted log message.
+ */
+Esp32Messaging::LogMessage *Encoders::ExtractLogMessage(uint8_t *buffer)
+{
+    Esp32Messaging::LogMessage *logMessage = static_cast<Esp32Messaging::LogMessage *>(pvPortMalloc(sizeof(Esp32Messaging::LogMessage)));
+
+    if (logMessage == NULL)
+    {
+        return (nullptr);
+    }
+
+    logMessage->Level = *buffer;
+    buffer++;
+    if (*buffer == 0)
+    {
+        logMessage->Message = nullptr;
+    }
+    else
+    {
+        logMessage->Message = ExtractString(buffer);
+    }
+    return (logMessage);
+}

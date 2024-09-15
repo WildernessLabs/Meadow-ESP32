@@ -456,6 +456,42 @@ namespace Esp32Messaging
         uint8_t *FileDetails;
     };
 
+    /**
+     * @brief Logging configuration message data.
+     */
+    struct LoggingConfiguration
+    {
+        /**
+         * @brief Where should the log information go?
+         */
+        uint8_t Interface;
+
+        /**
+         * @brief Which port should be used if UDP logging is to be used.
+         */
+        uint16_t UdpPort;
+
+        /**
+         * @brief Which components should we log?
+         */
+        char *ComponentsToLog;
+    };
+
+    /**
+     * @brief A message to send to the logging system.
+     */
+    struct LogMessage
+    {
+        /**
+         * @brief Log level for this message.
+         */
+        uint8_t Level;
+
+        /**
+         * @brief Message to send to the logging destination.
+         */
+        char *Message;
+    };
 } // namespace Esp32Messaging
 
 /*
@@ -583,6 +619,8 @@ public:
     static Esp32Messaging::FileNameAndContents *ExtractFileNameAndContents(uint8_t *);
     static void EncodeFileNameList(Esp32Messaging::FileNameList *, uint8_t *);
     static int EncodedFileNameListBufferSize(Esp32Messaging::FileNameList *);
+    static Esp32Messaging::LoggingConfiguration *ExtractLoggingConfiguration(uint8_t *);
+    static Esp32Messaging::LogMessage *ExtractLogMessage(uint8_t *);
 };
 
 #endif /* _ENCODERS_HPP */
