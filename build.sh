@@ -294,8 +294,8 @@ if [ ! -z "$DEBUG_SELECTIONS" ]; then
             IDF_DEFINES+=" -DTHREAD_DEBUG=1"
             ;;
             *)
-            printf "Uknown debug subsystem $subsystem."
-            printf "Run build.sh --help for information on valid options."
+            printf "Uknown debug subsystem $subsystem.\n"
+            printf "Run build.sh --help for information on valid options.\n"
             exit 1
             ;;
         esac
@@ -334,8 +334,8 @@ fi
 #   so this removes the build directory before executing the full clean.
 #
 if $FULLCLEAN; then
-    run_command "rm -Rf $scriptdir/build"
-    run_command "idf.py fullclean"
+    run_command "rm -Rf $scriptdir/Source/MeadowComms/build"
+    run_command "idf.py --project-dir $scriptdir/Source/MeadowComms fullclean"
 fi
 
 #

@@ -40,7 +40,7 @@ bool BluetoothRequestHandler::_instantiated = false;
 BluetoothManager BluetoothRequestHandler::_manager;
 BluetoothRequestHandler *BluetoothRequestHandler::_instance = NULL;
 
-const char *BluetoothRequestHandler::COMPONENT_NAME = "BTTask";
+const char *BluetoothRequestHandler::COMPONENT_NAME = "Bluetooth";
 
 /*
  * ----------------------------------------------------------------------------
