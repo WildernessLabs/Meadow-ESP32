@@ -691,6 +691,11 @@ private:
     void NodeDisconnectedEvent(wifi_event_ap_stadisconnected_t *);
 
     /**
+     * @brief Processes when the IP address is obtained from the access point event.
+     */
+    void RaiseNetworkGotIpEvent();
+
+    /**
      * @brief Lock the _connectedNodes object.
      */
     void LockConnectedNodesMap();

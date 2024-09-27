@@ -583,6 +583,10 @@ namespace WiFiFunction
         /// WiFiFunction - NetworkConnectingEvent
         /// </summary>
         NetworkConnectingEvent = 47,
+        /// <summary>
+        /// WiFiFunction - NetworkGotIpEvent
+        /// </summary>
+        NetworkGotIpEvent = 48,
     };
 
 } // namespace WiFiFunction
