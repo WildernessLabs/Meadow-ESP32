@@ -1000,6 +1000,37 @@ void WiFiRequestHandler::RaiseErrorEvent(StatusCodes::StatusCodes statusCode, ui
 }
 
 /**
+ * @brief Raise the NetworkRaiseNetworkGotIpEvent for the managed code.
+ */
+void WiFiRequestHandler::RaiseNetworkGotIpEvent()
+{
+    TRACE_MESSAGE("RaiseNetworkGotIpEvent: Enter");
+
+    esp_netif_dns_info_t dnsInformation;
+    esp_netif_get_dns_info(_stationNetIfHandle, ESP_NETIF_DNS_MAIN, &dnsInformation);
+
+    Esp32Messaging::GotIpEventData *ed = static_cast<Esp32Messaging::GotIpEventData *>(pvPortMalloc(sizeof(Esp32Messaging::GotIpEventData)));
+    if (ed != nullptr)
+    {
+        memset(ed, 0, sizeof(Esp32Messaging::GotIpEventData));
+        memcpy((void *) &ed->DnsAddress, (void *) &dnsInformation.ip.u_addr.ip4.addr, sizeof(ed->DnsAddress));
+        uint32_t payloadLength = Encoders::EncodedGotIpEventDataBufferSize(ed);
+        uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
+        if (payload != NULL)
+        {
+            Encoders::EncodeGotIpEventData(ed, payload);
+            RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::NetworkGotIpEvent, StatusCodes::CompletedOk, payload, payloadLength);
+        }
+        else
+        {
+            ERROR_MESSAGE("Failed to allocate memory for GotIpDataEvent payload. ");
+        }
+        vPortFree(ed);
+    }
+    TRACE_MESSAGE("RaiseNetworkGotIpEvent: Exit");
+}
+
+/**
  *  @brief Event loop for the IDF WiFi system.
  *
  *  Perform the actual event loop handling on behalf of the static method set up for the
@@ -1951,6 +1982,11 @@ void WiFiRequestHandler::StationGotIpEvent(ip_event_got_ip_t *eventData)
     _currentRetryCount = 0;
     memcpy((void *) &_ipInformation, (void *) &eventData->ip_info, sizeof(esp_netif_ip_info_t));
     _ipChanged = eventData->ip_changed;
+
+    if (_useDhcp)
+    {
+        RaiseNetworkGotIpEvent();
+    }
 
     xEventGroupClearBits(_xWiFiEventGroup, WIFI_CONNECTING_BIT | WIFI_INTERFACE_STARTING_BIT);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_HAVE_IP_BIT);
