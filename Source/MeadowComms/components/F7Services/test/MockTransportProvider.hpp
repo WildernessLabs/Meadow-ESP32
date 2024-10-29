@@ -16,6 +16,7 @@
 class MockTransportProvider : public TransportProviderBase
 {
 private:
+
 public:
     /**
      *  @brief Name of this component / task.
