@@ -1999,7 +1999,12 @@ void WiFiRequestHandler::StationGotIpEvent(ip_event_got_ip_t *eventData)
 void WiFiRequestHandler::StationStartedEvent()
 {
     TRACE_MESSAGE("StationStartedEvent: Enter");
-    _lastIdfErrorCode = esp_netif_set_hostname(_stationNetIfHandle, SystemRequestHandler::GetDeviceName());
+    char *deviceName = SystemRequestHandler::GetDeviceName();
+    if (deviceName == NULL)
+    {
+        deviceName = (char *) "Meadow";
+    }
+    _lastIdfErrorCode = esp_netif_set_hostname(_stationNetIfHandle, deviceName);
     if (_lastIdfErrorCode != ESP_OK)
     {
         xEventGroupClearBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTED_BIT | WIFI_INTERFACE_STARTING_BIT | WIFI_CONNECTING_BIT);
