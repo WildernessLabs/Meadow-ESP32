@@ -94,3 +94,4 @@ __pycache__/
 Source/MeadowComms/main/build_info.h
 Source/MeadowComms/test/sdkconfig
 Source/MeadowComms/.gdb_history
+Source/MeadowComms/test/.gdb_history
