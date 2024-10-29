@@ -93,7 +93,7 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
     /*
      *  Setup the SPI bus.
      */
-    spi_bus_config_t spiBusConfiguration = { };
+    spi_bus_config_t spiBusConfiguration = {};
     spiBusConfiguration.mosi_io_num = Gpio::MOSI_PIN;
     spiBusConfiguration.miso_io_num = Gpio::MISO_PIN;
     spiBusConfiguration.sclk_io_num = Gpio::CLOCK_PIN;
@@ -110,7 +110,7 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
     /*
      *  Configuration for the SPI slave interface.
      */
-    spi_slave_interface_config_t slaveConfiguration = { };
+    spi_slave_interface_config_t slaveConfiguration = {};
     slaveConfiguration.mode = 3;
     slaveConfiguration.spics_io_num = Gpio::CHIP_SELECT_PIN;
     slaveConfiguration.queue_size = 3;

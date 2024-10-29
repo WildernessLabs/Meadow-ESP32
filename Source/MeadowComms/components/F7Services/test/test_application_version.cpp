@@ -8,7 +8,7 @@
 
 /**
  * @brief Global variable holding the system build information.
- * 
+ *
  * We set every member to 0.
  */
-meadow_version_t g_application_version = { };
+meadow_version_t g_application_version = {};
