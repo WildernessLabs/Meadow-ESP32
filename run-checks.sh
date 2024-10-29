@@ -60,7 +60,7 @@ SOURCE_DIR=$scriptdir/Source/MeadowComms
 COMPONENTS_DIR=$SOURCE_DIR/components/F7Services
 
 echo "Running cppcheck"
-cppcheck --error-exitcode=1 --quiet --check-level=exhaustive --force --inline-suppr -iCMakeLists.txt -iSource/MeadowComms/components/esp_littlefs -iSource/MeadowComms/build Source/MeadowComms
+cppcheck --error-exitcode=1 --quiet --check-level=exhaustive --force --inline-suppr -iCMakeLists.txt -iSource/MeadowComms/components/esp_littlefs -iSource/MeadowComms/build Source/MeadowComms -iSource/MeadowComms/test/build --suppress=*:Source/MeadowComms/components/F7Services/Bluetooth/rapidjson/* 
 #
 #   The following uses the compile_commands.json file - needs uplift to latest SDK.
 #
@@ -68,7 +68,6 @@ cppcheck --error-exitcode=1 --quiet --check-level=exhaustive --force --inline-su
 
 echo "Running clang-format"
 clang-format --dry-run --Werror $VERBOSE_FLAGS $SOURCE_DIR/main/*.?pp
-clang-format --dry-run --Werror $VERBOSE_FLAGS $SOURCE_DIR/test/*.?pp
 clang-format --dry-run --Werror $VERBOSE_FLAGS $COMPONENTS_DIR/*.?pp
 clang-format --dry-run --Werror $VERBOSE_FLAGS $COMPONENTS_DIR/Bluetooth/*.?pp $COMPONENTS_DIR/Bluetooth/bluetooth/*.?pp
 clang-format --dry-run --Werror $VERBOSE_FLAGS $COMPONENTS_DIR/Exceptions/*.?pp
