@@ -22,4 +22,4 @@ add_compile_definitions(UNIT_TESTING)
 set(TEST_COMPONENTS "F7Services" CACHE STRING "List of components to test")
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
-project(unit_test_test)
+project(MeadowComms)
