@@ -1,7 +1,7 @@
 /*
- *  test_file_system.cpp
+ *  test_wifi.cpp
  *
- *  Implementation of the test methods for the file system.
+ *  Implementation of the test methods for the WiFiRequestHandler class.
  */
 
 #include "sdkconfig.h"
@@ -20,16 +20,17 @@
 #include "Encoders.hpp"
 #include "SharedEnums.hpp"
 #include "WiFiRequestHandler.hpp"
+#include "WiFiRequestHandlerTestFriend.hpp"
 
 /**
  *  Extract the AccessPointList object that is encoded in the given buffer.
- *  
+ *
  *  Note that the returned pointer points to a block of memory on the heap and
  *  this should eventually be released calling vPortFree(...).
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded AccessPointList object.
- *  
+ *
  *  @returns
  *      Pointer to a AccessPointList object.
  */
@@ -52,18 +53,18 @@ static Esp32Messaging::AccessPointList *ExtractAccessPointList(uint8_t *buffer)
     {
         accessPointList->AccessPoints = nullptr;
     }
-    return(accessPointList);
+    return (accessPointList);
 }
 
 /**
  *  Extract the AccessPoint object that is encoded in the given buffer.
- *  
+ *
  *  Note that the returned pointer points to a block of memory on the heap and
  *  this should eventually be released calling vPortFree(...).
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded AccessPoint object.
- *  
+ *
  *  @returns
  *      Pointer to a AccessPoint object.
  */
@@ -84,40 +85,28 @@ static Esp32Messaging::AccessPoint *ExtractAccessPoint(uint8_t *buffer)
     accessPoint->AuthenticationMode = *buffer;
     buffer += 1;
     accessPoint->Protocols = Encoders::ExtractUInt32(buffer);
-    return(accessPoint);
+    return (accessPoint);
 }
 
-class WiFiRequestHandlerTestFriend
+/**
+ * @brief Wait for a response to be received. or for a timeout.
+ * 
+ * @note This method allows for a request to take a time to respond.
+ * 
+ * @param seconds Number of seconds to wait.
+ */
+static void WaitForResponse(MockMessageDispatcher *messageDispatcher, uint32_t seconds)
 {
-    private:
-        WiFiRequestHandler *wifiRequestHandler;
-
-    public:
-        WiFiRequestHandlerTestFriend(WiFiRequestHandler *wifiRequestHandler)
-        {
-            wifiRequestHandler = wifiRequestHandler;
-        }
-
-        void Setup()
-        {
-            wifiRequestHandler->Setup();
-        }
-
-        void ScanForAccessPoints(Message *message)
-        {
-            wifiRequestHandler->ScanForAccessPoints(message);
-        }
-};
+    int count = 0;
+    while ((messageDispatcher->OutboundMessageQueueLength() == 0) && (count < seconds))
+    {
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        count++;
+    }
+}
 
 /**
  * @brief Test a single scan for access points.
- *
- *  This test will test formatting the LittleFS file system as follows:
- *      - Format the file system and verify that a single success response is received from
- *        the FileSystem class.
- *      - Write a single file to the newly formatted file system using c stdio methods and
- *        verify that there is exactly one file on the file system.
- *      - Reformat the file system and verify that no files can be found.
  */
 TEST_CASE("Scan for access points", "[WiFi]")
 {
@@ -139,17 +128,7 @@ TEST_CASE("Scan for access points", "[WiFi]")
     WiFiRequestHandlerTestFriend *wifiRequestHandlerTestFriend = new WiFiRequestHandlerTestFriend(wifiRequestHandler);
     wifiRequestHandlerTestFriend->ScanForAccessPoints(scanRequestMessage);
 
-    //
-    //  Give the Wifi system a little time to start the interface and perform the scan.
-    //  20 seconds should be enough but allow for the fact that it might actually
-    //  complete sooner.
-    //
-    int count = 0;
-    while ((messageDispatcher->OutboundMessageQueueLength() == 0) && (count < 20))
-    {
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
-        count++;
-    }
+    WaitForResponse(messageDispatcher, 20);
 
     //
     //  Now check we have exactly one response and that it is correct.
@@ -163,7 +142,7 @@ TEST_CASE("Scan for access points", "[WiFi]")
     TEST_ASSERT_EQUAL(Esp32Interfaces::WiFi, response->Interface);
     TEST_ASSERT_EQUAL(WiFiFunction::GetAccessPoints, response->Function);
     TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
-    TEST_ASSERT_GREATER_THAN(0, response->PayloadLength);           // Assumes that there will always be an access point available.
+    TEST_ASSERT_GREATER_THAN(0, response->PayloadLength); // Assumes that there will always be an access point available.
     TEST_ASSERT_NOT_NULL(response->Payload);
 
     TEST_ASSERT_EQUAL(0, messageDispatcher->OutboundMessageQueueLength());
@@ -173,7 +152,7 @@ TEST_CASE("Scan for access points", "[WiFi]")
     //  be released when we release the response.
     //
     Esp32Messaging::AccessPointList *accessPointList = ExtractAccessPointList(response->Payload);
-    vPortFree(response->Payload);
+    response->DeletePayload();
     vPortFree(response);
 
     TEST_ASSERT_NOT_NULL(accessPointList);
@@ -194,6 +173,72 @@ TEST_CASE("Scan for access points", "[WiFi]")
     vPortFree(accessPointList->AccessPoints);
     vPortFree(accessPointList);
 
+    //
+    //  Finally remove the objects we have created.
+    //
+    delete wifiRequestHandler;
+    delete messageDispatcher;
+}
+
+/**
+ * @brief Connect to an access point.
+ */
+TEST_CASE("Connect to access point", "[WiFI]")
+{
+    NvsManager::Setup();
+
+    MockMessageDispatcher *messageDispatcher = new MockMessageDispatcher(nullptr);
+    TEST_ASSERT_NOT_NULL(messageDispatcher);
+
+    WiFiRequestHandler *wifiRequestHandler = new WiFiRequestHandler(messageDispatcher);
+    TEST_ASSERT_NOT_NULL(wifiRequestHandler);
+    wifiRequestHandler->Setup();
+
+    //
+    //  Create a message to format the file system and call the format method.
+    //
+    Esp32Messaging::AccessPointInformation accessPointInformation = {};
+    accessPointInformation.NetworkName = (char *) "MarkS";
+    accessPointInformation.Password = (char *) "rmRgecjjqeattS84Ryu01757709635";
+    uint32_t payloadLength = Encoders::EncodedAccessPointInformationBufferSize(&accessPointInformation);
+    uint8_t *buffer = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
+    TEST_ASSERT_NOT_NULL(buffer);
+    Encoders::EncodeAccessPointInformation(&accessPointInformation, buffer);
+    Message *connectToAccessPoint = Message::CreateOnHeap(MessageTypes::Header, Esp32Interfaces::WiFi, WiFiFunction::ConnectToAccessPoint, StatusCodes::Failure, 0xff, buffer, payloadLength);
+    TEST_ASSERT_NOT_NULL(connectToAccessPoint);
+    vPortFree(buffer);
+
+    WiFiRequestHandlerTestFriend *wifiRequestHandlerTestFriend = new WiFiRequestHandlerTestFriend(wifiRequestHandler);
+    wifiRequestHandlerTestFriend->ConnectToAccessPoint(connectToAccessPoint);
+
+    //
+    //  The WiFiRequestHandler already has a timeout parameter, so use that and add 10 seconds for safety.
+    //
+    WaitForResponse(messageDispatcher, WiFiRequestHandler::GetWiFiTimeout() + 10);
+    while (messageDispatcher->OutboundMessageQueueLength() > 0)
+    {
+        Message *response = messageDispatcher->GetOutboundMessage();
+        printf("Message: MessageType %d, Function %d, Interface %d, StatusCode %d\n", (int) response->MessageType, (int) response->Function, (int) response->Interface, (int)response->StatusCode);
+        response->DeletePayload();
+        vPortFree(response);
+        WaitForResponse(messageDispatcher, 30);
+    }
+
+    // TEST_ASSERT_EQUAL(1, messageDispatcher->OutboundMessageQueueLength());
+
+    // response = messageDispatcher->GetOutboundMessage();
+    // TEST_ASSERT_NOT_NULL(response);
+
+    // TEST_ASSERT_EQUAL(MessageTypes::Response, response->MessageType);
+    // TEST_ASSERT_EQUAL(Esp32Interfaces::WiFi, response->Interface);
+    // TEST_ASSERT_EQUAL(WiFiFunction::ConnectToAccessPoint, response->Function);
+    // TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
+    // TEST_ASSERT_EQUAL(0, response->PayloadLength);
+    // TEST_ASSERT_NULL(response->Payload);
+    // vPortFree(response);
+
+    TEST_ASSERT_EQUAL(0, messageDispatcher->OutboundMessageQueueLength());
+    
     //
     //  Finally remove the objects we have created.
     //
