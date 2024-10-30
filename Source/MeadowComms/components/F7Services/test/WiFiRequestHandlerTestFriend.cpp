@@ -6,40 +6,41 @@
 
 #include "sdkconfig.h"
 
-#include <limits.h>
-#include <stdio.h>
-#include <sys/types.h>
-#include <dirent.h>
-#include <string>
-#include <string.h>
-#include "unity.h"
+#include "WiFiRequestHandlerTestFriend.hpp"
 
-#include "MockMessageDispatcher.hpp"
-#include "MockTransportProvider.hpp"
-#include "Esp32Messaging.hpp"
-#include "Encoders.hpp"
-#include "SharedEnums.hpp"
-#include "WiFiRequestHandler.hpp"
-
-class WiFiRequestHandlerTestFriend
+/**
+ * @brief Construct a new WiFiRequestHandlerTestFriend object.
+ * 
+ * @param wifiRequestHandler Instance of the WiFiRequestHandler class under test.
+ */
+WiFiRequestHandlerTestFriend::WiFiRequestHandlerTestFriend(WiFiRequestHandler *wifiRequestHandler) : wifiRequestHandler(wifiRequestHandler)
 {
-    private:
-        WiFiRequestHandler *wifiRequestHandler;
+}
 
-    public:
-        WiFiRequestHandlerTestFriend(WiFiRequestHandler *wifiRequestHandler)
-        {
-            wifiRequestHandler = wifiRequestHandler;
-        }
+/**
+ * @brief Setup the WiFiRequestHandler.
+ */
+void WiFiRequestHandlerTestFriend::Setup()
+{
+    wifiRequestHandler->Setup();
+}
 
-        void Setup()
-        {
-            wifiRequestHandler->Setup();
-        }
+/**
+ * @brief Use the WiFiRequestHandler to scan for access points.
+ * 
+ * @param message Message containing the request for the scan for access points.
+ */
+void WiFiRequestHandlerTestFriend::ScanForAccessPoints(Message *message)
+{
+    wifiRequestHandler->ScanForAccessPoints(message);
+}
 
-        void ScanForAccessPoints(Message *message)
-        {
-            wifiRequestHandler->ScanForAccessPoints(message);
-        }
-};
-
+/**
+ * @brief Use the WiFiRequestHandler to connect to an access point.
+ * 
+ * @param message Message containing the request to connect to an access point.
+ */
+void WiFiRequestHandlerTestFriend::ConnectToAccessPoint(Message *message)
+{
+    wifiRequestHandler->ConnectToAccessPoint(message);
+}
