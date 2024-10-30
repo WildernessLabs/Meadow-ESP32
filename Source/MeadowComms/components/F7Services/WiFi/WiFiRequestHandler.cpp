@@ -2086,7 +2086,7 @@ void WiFiRequestHandler::StationDisconnectedEvent(wifi_event_sta_disconnected_t 
         }
         if (GetAutomaticReconnect() && (_currentRetryCount < maximumRetryCount))
         {
-            TRACE_MESSAGE("StationDisconnectedEvent: Reconnecting, retry count %d, maximum %d", _currentRetryCount, maximumRetryCount);
+            TRACE_MESSAGE("StationDisconnectedEvent: Reconnecting, retry count %d, maximum %lu", _currentRetryCount, maximumRetryCount);
             //
             //  the system is configured to automatically reconnect and we have not exceeded the retry count.
             //
@@ -2099,12 +2099,12 @@ void WiFiRequestHandler::StationDisconnectedEvent(wifi_event_sta_disconnected_t 
             esp_wifi_connect();
             _currentRetryCount++;
             raiseDisconnectedEvent = false;
-            TRACE_MESSAGE("StationDisconnectedEvent: Delaying for %u ms", _progressiveDelay->GetCurrentDelayPeriod());
+            TRACE_MESSAGE("StationDisconnectedEvent: Delaying for %lu ms", _progressiveDelay->GetCurrentDelayPeriod());
             _progressiveDelay->Delay();
         }
         else
         {
-            TRACE_MESSAGE("StationDisconnectedEvent: Not reconnecting, retry count %d, maximum %d", _currentRetryCount, maximumRetryCount);
+            TRACE_MESSAGE("StationDisconnectedEvent: Not reconnecting, retry count %d, maximum %lu", _currentRetryCount, maximumRetryCount);
             //
             //  Here we were connected or we have been trying to connect and there two possibilities:
             //      1.  We are not configured to automatically reconnect.
