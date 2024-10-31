@@ -8,6 +8,8 @@ The individual component tests are located in the *components/F7Services/test* d
 
 ## Building the Tests
 
+The unit test application requires a *secrets.h* file containing a number of definitions for items like the SSID and password for the access point.  This file is ignored (from a git perspective) to keep developer secrets from being added to GitHub.  The file *secrets.template* should be copied to *secrets.h* and the relevant macros edited before the system is built.
+
 The tests can be built using the *test/build.sh* script using the same command line arguments as the main development build script.
 
 The firmware is written using the *test/flash.sh* script or by using the *idf.py flash* command.
