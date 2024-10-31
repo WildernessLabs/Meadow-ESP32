@@ -22,6 +22,8 @@
 #include "WiFiRequestHandler.hpp"
 #include "WiFiRequestHandlerTestFriend.hpp"
 
+#include "secrets.h"
+
 /**
  *  Extract the AccessPointList object that is encoded in the given buffer.
  *
@@ -198,45 +200,61 @@ TEST_CASE("Connect to access point", "[WiFI]")
     //  Create a message to format the file system and call the format method.
     //
     Esp32Messaging::AccessPointInformation accessPointInformation = {};
-    accessPointInformation.NetworkName = (char *) "MarkS";
-    accessPointInformation.Password = (char *) "rmRgecjjqeattS84Ryu01757709635";
+    memset(&accessPointInformation, 0, sizeof(Esp32Messaging::AccessPointInformation));
+    accessPointInformation.NetworkName = (char *) WIFI_NETWORK;
+    accessPointInformation.Password = (char *) WIFI_PASSWORD;
     uint32_t payloadLength = Encoders::EncodedAccessPointInformationBufferSize(&accessPointInformation);
     uint8_t *buffer = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
+    memset(buffer, 0, payloadLength);
     TEST_ASSERT_NOT_NULL(buffer);
     Encoders::EncodeAccessPointInformation(&accessPointInformation, buffer);
     Message *connectToAccessPoint = Message::CreateOnHeap(MessageTypes::Header, Esp32Interfaces::WiFi, WiFiFunction::ConnectToAccessPoint, StatusCodes::Failure, 0xff, buffer, payloadLength);
     TEST_ASSERT_NOT_NULL(connectToAccessPoint);
-    vPortFree(buffer);
 
     WiFiRequestHandlerTestFriend *wifiRequestHandlerTestFriend = new WiFiRequestHandlerTestFriend(wifiRequestHandler);
+    StatusCodes::StatusCodes result = wifiRequestHandlerTestFriend->SetAutomaticReconnect(true);
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, result);
     wifiRequestHandlerTestFriend->ConnectToAccessPoint(connectToAccessPoint);
-
     //
-    //  The WiFiRequestHandler already has a timeout parameter, so use that and add 10 seconds for safety.
+    //  We need to loop through the messages in the outbound queue and check for a successful connection.
+    //  There will be a number of messages generated before the connection is actually made.  These will
+    //  be the event messages informing the STM32 of the current state of the connection.  A typical sequence
+    //  of messages is:
     //
-    WaitForResponse(messageDispatcher, WiFiRequestHandler::GetWiFiTimeout() + 10);
+    //  Message: MessageType 4, Function 47, Interface 1, StatusCode 0
+    //  Message: MessageType 4, Function 36, Interface 1, StatusCode 0
+    //  Message: MessageType 16, Function 2, Interface 1, StatusCode 0
+    //
+    //  The first two messages are examples of the event messages as the connection progresses.  The final
+    //  message is the response to the original connection request.
+    //
+    //  The connection request will take some time so we need to wait for a response to be generated.
+    //
+    uint32_t timeout = WiFiRequestHandler::GetWiFiTimeout() + 10;
+    bool connected = false;
+    WaitForResponse(messageDispatcher, timeout);
     while (messageDispatcher->OutboundMessageQueueLength() > 0)
     {
         Message *response = messageDispatcher->GetOutboundMessage();
         printf("Message: MessageType %d, Function %d, Interface %d, StatusCode %d\n", (int) response->MessageType, (int) response->Function, (int) response->Interface, (int)response->StatusCode);
-        response->DeletePayload();
-        vPortFree(response);
-        WaitForResponse(messageDispatcher, 30);
+        TEST_ASSERT_EQUAL(Esp32Interfaces::WiFi, response->Interface);
+        TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
+        if ((response->MessageType != MessageTypes::Response) && (response->MessageType != MessageTypes::Event))
+        {
+            TEST_FAIL_MESSAGE("Unexpected message type in the outbound queue.");
+        }
+        if ((response->Function != WiFiFunction::ConnectToAccessPoint) && (response->Function != WiFiFunction::NetworkConnectingEvent) && (response->Function != WiFiFunction::NetworkConnectedEvent))
+        {
+            TEST_FAIL_MESSAGE("Unexpected function in the outbound queue.");
+        }
+        if ((response->MessageType == MessageTypes::Response) && (response->StatusCode == StatusCodes::CompletedOk) && (response->Function != WiFiFunction::NetworkConnectedEvent))
+        {
+            connected = true;
+        }
+        Message::DeleteMessage(response);
+        WaitForResponse(messageDispatcher, timeout);
     }
-
-    // TEST_ASSERT_EQUAL(1, messageDispatcher->OutboundMessageQueueLength());
-
-    // response = messageDispatcher->GetOutboundMessage();
-    // TEST_ASSERT_NOT_NULL(response);
-
-    // TEST_ASSERT_EQUAL(MessageTypes::Response, response->MessageType);
-    // TEST_ASSERT_EQUAL(Esp32Interfaces::WiFi, response->Interface);
-    // TEST_ASSERT_EQUAL(WiFiFunction::ConnectToAccessPoint, response->Function);
-    // TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
-    // TEST_ASSERT_EQUAL(0, response->PayloadLength);
-    // TEST_ASSERT_NULL(response->Payload);
-    // vPortFree(response);
-
+    TEST_ASSERT_TRUE(connected);
     TEST_ASSERT_EQUAL(0, messageDispatcher->OutboundMessageQueueLength());
     
     //
