@@ -44,3 +44,16 @@ void WiFiRequestHandlerTestFriend::ConnectToAccessPoint(Message *message)
 {
     wifiRequestHandler->ConnectToAccessPoint(message);
 }
+
+/**
+ * @brief Set the automatic reconnect flag indicating if the system should automatically
+ * reconnect to the access point.
+ * 
+ * @param value True if the system should automatically reconnect, false otherwise.
+ * @return StatusCodes::StatusCodes StatusCodes::CompletedOk if the value was set, an error code otherwise.
+ */
+StatusCodes::StatusCodes WiFiRequestHandlerTestFriend::SetAutomaticReconnect(bool value)
+{
+    return (wifiRequestHandler->SetAutomaticReconnect(value));
+}
+
