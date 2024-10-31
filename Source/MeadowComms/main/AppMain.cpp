@@ -156,44 +156,6 @@ extern "C" void app_main()
 
     //    TestBluetoothMessage(messageDispatcher);
 
-    // Message *message = static_cast<Message *>(pvPortMalloc(sizeof(Message)));
-    // bzero(message, sizeof(Message));
-    // message->MessageType = MessageTypes::Header;
-    // message->Interface = Esp32Interfaces::WiFi;
-    // message->Function = WiFiFunction::GetAccessPoints;
-
-    // Message *message = static_cast<Message *>(pvPortMalloc(sizeof(Message)));
-    // message->MessageType = MessageTypes::Header;
-    // message->Interface = Esp32Interfaces::WiFi;
-    // message->Function = WiFiFunction::StartAccessPoint;
-
-    // Esp32Messaging::AccessPointInformation info = { };
-    // info.NetworkName = "TestNetwork";
-    // info.Password = "ALongPassword";
-    // info.IpAddress = 0x0104a8c0;
-    // info.SubnetMask = 0x00ffffff;
-    // info.Gateway = info.IpAddress;
-    // message->PayloadLength = Encoders::EncodedAccessPointInformationBufferSize(&info);
-    // message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-    // Encoders::EncodeAccessPointInformation(&info, message->Payload);
-
-    // Message *message = static_cast<Message *>(pvPortMalloc(sizeof(Message)));
-    // message->MessageType = MessageTypes::Header;
-    // message->Interface = Esp32Interfaces::WiFi;
-    // message->Function = WiFiFunction::ConnectToAccessPoint;
-
-    // Esp32Messaging::WiFiCredentials request;
-
-    // #include "WiFiRequestHandler.hpp"
-
-    // request.NetworkName = (char *) CONFIG_WIFI_SSID;
-    // request.Password = (char *) CONFIG_WIFI_PASSWORD;
-    // message->PayloadLength = Encoders::EncodedWiFiCredentialsBufferSize(&request);
-    // message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-    // Encoders::EncodeWiFiCredentials(&request, message->Payload);
-
-    // messageDispatcher->QueueMessageForEsp32(message);
-
     //
     //  We suspend this task as the message processing is performed by the objects created above.
     //
