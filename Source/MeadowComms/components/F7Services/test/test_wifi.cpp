@@ -117,7 +117,7 @@ static void WaitForResponse(MockMessageDispatcher *messageDispatcher, uint32_t s
  * 
  * @param numberOfScans Number of scans to perform (default to 1).
  */
-void TestScanForAccessPoints(uint32_t numberOfScans = 1)
+void TestScanForAccessPoints(unsigned numberOfScans = 1)
 {
     NvsManager::Setup();
 
