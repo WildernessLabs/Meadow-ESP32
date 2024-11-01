@@ -36,9 +36,9 @@
  *  @returns
  *      Pointer to a AccessPointList object.
  */
-
 static Esp32Messaging::AccessPointList *ExtractAccessPointList(uint8_t *buffer)
 {
+    // cppcheck-suppress cstyleCast
     Esp32Messaging::AccessPointList *accessPointList = (Esp32Messaging::AccessPointList *) pvPortMalloc(sizeof(Esp32Messaging::AccessPointList));
 
     accessPointList->NumberOfAccessPoints = Encoders::ExtractUInt32(buffer);
@@ -47,6 +47,7 @@ static Esp32Messaging::AccessPointList *ExtractAccessPointList(uint8_t *buffer)
     buffer += 4;
     if (accessPointList->AccessPointsLength > 0)
     {
+        // cppcheck-suppress cstyleCast
         accessPointList->AccessPoints = (uint8_t *) pvPortMalloc(accessPointList->AccessPointsLength);
         memcpy(accessPointList->AccessPoints, buffer, accessPointList->AccessPointsLength);
         buffer += accessPointList->AccessPointsLength;
@@ -72,11 +73,12 @@ static Esp32Messaging::AccessPointList *ExtractAccessPointList(uint8_t *buffer)
  */
 static Esp32Messaging::AccessPoint *ExtractAccessPoint(uint8_t *buffer)
 {
+    // cppcheck-suppress cstyleCast
     Esp32Messaging::AccessPoint *accessPoint = (Esp32Messaging::AccessPoint *) pvPortMalloc(sizeof(Esp32Messaging::AccessPoint));
 
-    memcpy((void *) accessPoint->Ssid, (void *) buffer, 33);
+    memcpy((void *) accessPoint->Ssid, (void *) buffer, 33);    // cppcheck-suppress cstyleCast
     buffer += 33;
-    memcpy((void *) accessPoint->Bssid, (void *) buffer, 6);
+    memcpy((void *) accessPoint->Bssid, (void *) buffer, 6);    // cppcheck-suppress cstyleCast
     buffer += 6;
     accessPoint->PrimaryChannel = *buffer;
     buffer += 1;
@@ -108,9 +110,14 @@ static void WaitForResponse(MockMessageDispatcher *messageDispatcher, uint32_t s
 }
 
 /**
- * @brief Test a single scan for access points.
+ * @brief Test scanning for access points.
+ * 
+ * @note Set number of scans to a number greater than 1 to test for memory leaks.  The number
+ *       should be sufficiently high to cause an accumulated issue.
+ * 
+ * @param numberOfScans Number of scans to perform (default to 1).
  */
-TEST_CASE("Scan for access points", "[WiFi]")
+void TestScanForAccessPoints(uint32_t numberOfScans = 1)
 {
     NvsManager::Setup();
 
@@ -121,65 +128,92 @@ TEST_CASE("Scan for access points", "[WiFi]")
     TEST_ASSERT_NOT_NULL(wifiRequestHandler);
     wifiRequestHandler->Setup();
 
-    //
-    //  Create a message to format the file system and call the format method.
-    //
-    Message *scanRequestMessage = Message::CreateOnHeap(MessageTypes::Header, Esp32Interfaces::WiFi, WiFiFunction::GetAccessPoints, StatusCodes::Failure);
-    TEST_ASSERT_NOT_NULL(scanRequestMessage);
-
     WiFiRequestHandlerTestFriend *wifiRequestHandlerTestFriend = new WiFiRequestHandlerTestFriend(wifiRequestHandler);
-    wifiRequestHandlerTestFriend->ScanForAccessPoints(scanRequestMessage);
 
-    WaitForResponse(messageDispatcher, 20);
-
-    //
-    //  Now check we have exactly one response and that it is correct.
-    //
-    TEST_ASSERT_EQUAL(1, messageDispatcher->OutboundMessageQueueLength());
-
-    Message *response = messageDispatcher->GetOutboundMessage();
-    TEST_ASSERT_NOT_NULL(response);
-
-    TEST_ASSERT_EQUAL(MessageTypes::Response, response->MessageType);
-    TEST_ASSERT_EQUAL(Esp32Interfaces::WiFi, response->Interface);
-    TEST_ASSERT_EQUAL(WiFiFunction::GetAccessPoints, response->Function);
-    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
-    TEST_ASSERT_GREATER_THAN(0, response->PayloadLength); // Assumes that there will always be an access point available.
-    TEST_ASSERT_NOT_NULL(response->Payload);
-
-    TEST_ASSERT_EQUAL(0, messageDispatcher->OutboundMessageQueueLength());
-    //
-    //  The ScanForAccessPoints method will have reused the original request message for the response.
-    //  We do not need to release the original request as it is now in the response variable and will
-    //  be released when we release the response.
-    //
-    Esp32Messaging::AccessPointList *accessPointList = ExtractAccessPointList(response->Payload);
-    response->DeletePayload();
-    vPortFree(response);
-
-    TEST_ASSERT_NOT_NULL(accessPointList);
-    TEST_ASSERT_GREATER_THAN(0, accessPointList->NumberOfAccessPoints);
-
-    uint8_t *buffer = accessPointList->AccessPoints;
-    printf("Number of access points found: %lu\n", accessPointList->NumberOfAccessPoints);
-    for (uint32_t i = 0; i < accessPointList->NumberOfAccessPoints; i++)
+    if (numberOfScans > 1)
     {
-        const Esp32Messaging::AccessPoint *accessPoint = ExtractAccessPoint(buffer);
-        TEST_ASSERT_NOT_NULL(accessPoint);
-        buffer += Encoders::EncodedAccessPointBufferSize(const_cast<Esp32Messaging::AccessPoint *>(accessPoint));
-        printf("Access Point %lu\n", i + 1);
-        printf("    Network Name: %s\n", accessPoint->Ssid);
-        printf("    MAC Address: %02x:%02x:%02x:%02x:%02x:%02x\n", accessPoint->Bssid[0], accessPoint->Bssid[1], accessPoint->Bssid[2], accessPoint->Bssid[3], accessPoint->Bssid[4], accessPoint->Bssid[5]);
-        vPortFree((void *) accessPoint);
+        printf("Performing %u scans for access points.\n", numberOfScans);
     }
-    vPortFree(accessPointList->AccessPoints);
-    vPortFree(accessPointList);
+    else
+    {
+        printf("Performing a single scan for access points.\n");
+    }
+    for (unsigned index = 0; index < numberOfScans; index++)
+    {
+        Message *scanRequestMessage = Message::CreateOnHeap(MessageTypes::Header, Esp32Interfaces::WiFi, WiFiFunction::GetAccessPoints, StatusCodes::Failure);
+        TEST_ASSERT_NOT_NULL(scanRequestMessage);
+
+        wifiRequestHandlerTestFriend->ScanForAccessPoints(scanRequestMessage);
+
+        WaitForResponse(messageDispatcher, 20);
+        //
+        //  Now check we have exactly one response and that it is correct.
+        //
+        TEST_ASSERT_EQUAL(1, messageDispatcher->OutboundMessageQueueLength());
+
+        Message *response = messageDispatcher->GetOutboundMessage();
+        TEST_ASSERT_NOT_NULL(response);
+
+        TEST_ASSERT_EQUAL(MessageTypes::Response, response->MessageType);
+        TEST_ASSERT_EQUAL(Esp32Interfaces::WiFi, response->Interface);
+        TEST_ASSERT_EQUAL(WiFiFunction::GetAccessPoints, response->Function);
+        TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
+        TEST_ASSERT_GREATER_THAN(0, response->PayloadLength); // Assumes that there will always be an access point available.
+        TEST_ASSERT_NOT_NULL(response->Payload);
+
+        TEST_ASSERT_EQUAL(0, messageDispatcher->OutboundMessageQueueLength());
+        //
+        //  The ScanForAccessPoints method will have reused the original request message for the response.
+        //  We do not need to release the original request as it is now in the response variable and will
+        //  be released when we release the response.
+        //
+        Esp32Messaging::AccessPointList *accessPointList = ExtractAccessPointList(response->Payload);
+        response->DeletePayload();
+        vPortFree(response);            // Releases the memory allocated for scanRequestMessage.
+
+        TEST_ASSERT_NOT_NULL(accessPointList);
+        TEST_ASSERT_GREATER_THAN(0, accessPointList->NumberOfAccessPoints);
+
+        uint8_t *buffer = accessPointList->AccessPoints;
+        printf("Scan %u - Number of access points found: %lu\n", (index + 1), accessPointList->NumberOfAccessPoints);
+        for (unsigned accessPointNumber = 0; accessPointNumber < accessPointList->NumberOfAccessPoints; accessPointNumber++)
+        {
+            const Esp32Messaging::AccessPoint *accessPoint = ExtractAccessPoint(buffer);
+            TEST_ASSERT_NOT_NULL(accessPoint);
+            buffer += Encoders::EncodedAccessPointBufferSize(const_cast<Esp32Messaging::AccessPoint *>(accessPoint));
+            if (numberOfScans == (index + 1))       // Display the results of the final scan.
+            {
+                printf("Access Point %u\n", accessPointNumber + 1);
+                printf("    Network Name: %s\n", accessPoint->Ssid);
+                printf("    MAC Address: %02x:%02x:%02x:%02x:%02x:%02x\n", accessPoint->Bssid[0], accessPoint->Bssid[1], accessPoint->Bssid[2], accessPoint->Bssid[3], accessPoint->Bssid[4], accessPoint->Bssid[5]);
+            }
+            vPortFree((void *) (accessPoint));      // cppcheck-suppress cstyleCast
+        }
+        vPortFree(accessPointList->AccessPoints);
+        vPortFree(accessPointList);
+    }
 
     //
     //  Finally remove the objects we have created.
     //
     delete wifiRequestHandler;
     delete messageDispatcher;
+}
+
+/**
+ * @brief Test a single scan for access points.
+ */
+TEST_CASE("Scan for access points", "[WiFi]")
+{
+    TestScanForAccessPoints();
+}
+
+/**
+ * @brief Perform multiple scans for access points.
+ */
+TEST_CASE("Scan for access points multiple times (test for memory leak)", "[WiFi]")
+{
+    TestScanForAccessPoints(NUMBER_OF_SCAN_REQUESTS);
 }
 
 /**
@@ -201,8 +235,8 @@ TEST_CASE("Connect to access point", "[WiFI]")
     //
     Esp32Messaging::AccessPointInformation accessPointInformation = {};
     memset(&accessPointInformation, 0, sizeof(Esp32Messaging::AccessPointInformation));
-    accessPointInformation.NetworkName = (char *) WIFI_NETWORK;
-    accessPointInformation.Password = (char *) WIFI_PASSWORD;
+    accessPointInformation.NetworkName = (char *) WIFI_NETWORK;         // cppcheck-suppress cstyleCast
+    accessPointInformation.Password = (char *) WIFI_PASSWORD;           // cppcheck-suppress cstyleCast
     uint32_t payloadLength = Encoders::EncodedAccessPointInformationBufferSize(&accessPointInformation);
     uint8_t *buffer = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
     memset(buffer, 0, payloadLength);
