@@ -375,7 +375,9 @@ TEST_CASE("Connect to non-existant access point", "[WiFi]")
     while ((messageDispatcher->OutboundMessageQueueLength() > 0) && (!done))
     {
         Message *response = messageDispatcher->GetOutboundMessage();
-        printf("Message: MessageType %d, Function %d, Interface %d, StatusCode %d\n", (int) response->MessageType, (int) response->Function, (int) response->Interface, (int)response->StatusCode);
+        #if defined(DEBUGGING_TESTS)
+            printf("Message: MessageType %d, Function %d, Interface %d, StatusCode %d\n", (int) response->MessageType, (int) response->Function, (int) response->Interface, (int)response->StatusCode);
+        #endif
         TEST_ASSERT_EQUAL(Esp32Interfaces::WiFi, response->Interface);
         if ((response->MessageType != MessageTypes::Response) && (response->MessageType != MessageTypes::Event))
         {
