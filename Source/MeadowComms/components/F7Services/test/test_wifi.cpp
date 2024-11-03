@@ -30,6 +30,11 @@
 #define DEBUGGING_TESTS 1
 
 /**
+ * @brief Number of scan requests to be made in the multiple scan requests test.
+ */
+#define NUMBER_OF_SCAN_REQUESTS     500
+
+/**
  *  Extract the AccessPointList object that is encoded in the given buffer.
  *
  *  Note that the returned pointer points to a block of memory on the heap and
