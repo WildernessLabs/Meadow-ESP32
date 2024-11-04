@@ -114,7 +114,7 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
     slaveConfiguration.mode = 3;
     slaveConfiguration.spics_io_num = Gpio::CHIP_SELECT_PIN;
     slaveConfiguration.queue_size = 3;
-    slaveConfiguration.flags = SPI_SLAVE_BIT_LSBFIRST;
+    slaveConfiguration.flags = 0;
     slaveConfiguration.post_trans_cb = SpiPostTransmissionCallback;
     slaveConfiguration.post_setup_cb = SpiPostSetupCallback;
 
