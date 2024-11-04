@@ -1752,7 +1752,7 @@ void WiFiRequestHandler::PollSocket(void *requestId)
     TRACE_MESSAGE("PollSocket: Return value from poll: %ld", response.Result);
 
     Message *message = static_cast<Message *>(pvPortMalloc(sizeof(Message)));
-    *message = {};
+    memset(static_cast<void *>(message), 0, sizeof(Message));
     message->Interface = Esp32Interfaces::WiFi;
     message->Function = WiFiFunction::InterruptPollResponse;
     message->MessageID = _messageDispatcher->GetNextMessageID();
