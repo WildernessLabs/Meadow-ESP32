@@ -8,6 +8,7 @@
 #include "sdkconfig.h"
 
 #include "Logging.hpp"
+#include "RequestHandlerBase.hpp"
 #include "MockMessageDispatcher.hpp"
 
 /*
@@ -56,6 +57,13 @@ MockMessageDispatcher::MockMessageDispatcher()
  */
 MockMessageDispatcher::MockMessageDispatcher(TransportProviderBase *transportProvider) : MockMessageDispatcher()
 {
+    _wifiRequestHandler = new WiFiRequestHandler(this); // cppcheck-suppress noCopyConstructor
+    _wifiRequestHandler->Setup();
+    _bluetoothRequestHandler = BluetoothRequestHandler::GetInstance(this);
+    _meshNetworkRequestHandler = new MeshNetworkRequestHandler(this);
+    _meshNetworkRequestHandler->Setup();
+    _systemRequestHandler = new SystemRequestHandler(this);
+    _systemRequestHandler->Setup();
 }
 
 /**
@@ -85,8 +93,36 @@ bool MockMessageDispatcher::QueueMessageForEsp32(Message *request)
 {
     TRACE_MESSAGE("QueueMessageForEsp32: Enter");
 
+    RequestHandlerBase *provider = nullptr;
+
+    switch (static_cast<Esp32Interfaces::Esp32Interfaces>(request->Interface))
+    {
+        case Esp32Interfaces::WiFi:
+            provider = dynamic_cast<RequestHandlerBase *>(_wifiRequestHandler);
+            break;
+        case Esp32Interfaces::BlueTooth:
+            provider = dynamic_cast<RequestHandlerBase *>(_bluetoothRequestHandler);
+            break;
+        case Esp32Interfaces::MeshNetwork:
+            provider = dynamic_cast<RequestHandlerBase *>(_meshNetworkRequestHandler);
+            break;
+        case Esp32Interfaces::System:
+            provider = dynamic_cast<RequestHandlerBase *>(_systemRequestHandler);
+            break;
+        default:
+            DEBUG_MESSAGE("QueueMessageForEsp32: Unknown interface %d, message will not be processed.", request->Interface);
+            Message::DeleteMessage(request);
+            break;
+    }
+    bool result = false;
+    if (provider)
+    {
+        result = provider->QueueEsp32Message(request);
+    }
+
     TRACE_MESSAGE("QueueMessageForEsp32: Exit");
-    return (true);
+
+    return (result);
 }
 
 /**
