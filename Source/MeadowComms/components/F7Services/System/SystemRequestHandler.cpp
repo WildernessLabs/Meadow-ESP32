@@ -617,7 +617,7 @@ void SystemRequestHandler::DeepSleep(Message *request)
 
 /**
  * @brief Configure ADC1 for battery level monitoring.
- * 
+ *
  * @note At the end of this method, _adcHandle will be set if the ADC has been initialised
  *       and _adcCalibrationHandle will be set if the calibration scheme has been created.
  */
@@ -717,7 +717,7 @@ void SystemRequestHandler::GetBatteryChargeLevel(Message *message)
     message->MessageType = MessageTypes::Response;
     message->StatusCode = result;
     _messageDispatcher->QueueMessageForStm32(message);
-    
+
     TRACE_MESSAGE("GetBatteryChargeLevel: Exit");
 }
 
