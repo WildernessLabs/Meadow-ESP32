@@ -13,7 +13,9 @@
 #include "sdkconfig.h"
 
 #include "MockMessageDispatcher.hpp"
+#include "Encoders.hpp"
 
 void WaitForResponse(MockMessageDispatcher *messageDispatcher, uint32_t milliseconds);
+Esp32Messaging::IntegerResponse *ExtractIntegerResponse(uint8_t *buffer);
 
 #endif // _TEST_COMMON_HPP_
