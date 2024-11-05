@@ -15,12 +15,12 @@
 #include "unity.h"
 
 #include "MockMessageDispatcher.hpp"
-#include "MockTransportProvider.hpp"
 #include "Esp32Messaging.hpp"
 #include "Encoders.hpp"
 #include "SharedEnums.hpp"
 #include "WiFiRequestHandler.hpp"
 #include "WiFiRequestHandlerTestFriend.hpp"
+#include "test_common.hpp"
 
 #include "secrets.h"
 
@@ -100,23 +100,6 @@ static Esp32Messaging::AccessPoint *ExtractAccessPoint(uint8_t *buffer)
     buffer += 1;
     accessPoint->Protocols = Encoders::ExtractUInt32(buffer);
     return (accessPoint);
-}
-
-/**
- * @brief Wait for a response to be received. or for a timeout.
- * 
- * @note This method allows for a request to take a time to respond.
- * 
- * @param milliseconds Number of milliseconds to wait.
- */
-static void WaitForResponse(MockMessageDispatcher *messageDispatcher, uint32_t milliseconds)
-{
-    int count = 0;
-    while ((messageDispatcher->OutboundMessageQueueLength() == 0) && (count < milliseconds))
-    {
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
-        count += 1000;
-    }
 }
 
 /**
