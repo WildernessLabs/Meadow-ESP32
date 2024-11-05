@@ -19,12 +19,12 @@
 
 /**
  *  Convert the BTStackConfig object into a byte stream that can be sent to the STM32.
- *  
+ *
  *  The amount of memory required can be obtained by calling the EncodedBTStackConfigBufferSize method.
- *  
+ *
  *  @param bTStackConfig
  *      BTStackConfig object to be encoded.
- *  
+ *
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded BTStackConfig object.
  */
@@ -36,10 +36,10 @@ void EncodeBTStackConfig(Esp32Messaging::BTStackConfig *bTStackConfig, uint8_t *
 
 /**
  *  Calculate the amount of memory required to hold the given instance of the BTStackConfig object.
- *  
+ *
  *  @param bTStackConfig
  *      BTStackConfig object to be encoded.
- *  
+ *
  *  @returns
  *      Number of bytes required to hold the encoded BTStackConfig object.
  */
@@ -48,11 +48,11 @@ int EncodedBTStackConfigBufferSize(Esp32Messaging::BTStackConfig *bTStackConfig)
 {
     int result = 0;
     result += Encoders::StringLength(bTStackConfig->Config);
-    return(result + 1);
+    return (result + 1);
 }
 
 /**
- * @brief 
+ * @brief
  */
 TEST_CASE("Start Bluetooth", "[Bluetooth]")
 {

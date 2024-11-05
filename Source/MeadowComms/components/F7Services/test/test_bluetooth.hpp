@@ -4,7 +4,7 @@
  * @brief Hold defintions used by the Bluetooth tests.
  * @version 0.1
  * @date 2024-11-04
- * 
+ *
  * @copyright Copyright (c) 2024
  */
 #ifndef _TEST_BLUETOOTH_HPP_
