@@ -47,7 +47,7 @@ idf_component_register( SRCS    "WiFi/WiFiRequestHandler.cpp"
                                 "Bluetooth/rapidjson"
 
                         REQUIRES app_trace app_update bootloader bootloader_support bt console 
-                                cxx driver efuse esp-tls esp_adc esp_common esp_eth esp_event 
+                                cxx driver efuse esp-tls esp_common esp_eth esp_event 
                                 esp_gdbstub esp_hid esp_http_client esp_http_server esp_https_ota 
                                 esp_https_server esp_littlefs esp_local_ctrl esp_netif esp_ringbuf 
                                 esp_rom esp_system esp_timer
