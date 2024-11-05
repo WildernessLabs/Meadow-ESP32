@@ -7,8 +7,6 @@
 #ifndef __VERSION__H
 #define __VERSION__H
 
-#include "../build/config/sdkconfig.h"
-
 #include <stdlib.h>
 
 #include "build_info.h"
