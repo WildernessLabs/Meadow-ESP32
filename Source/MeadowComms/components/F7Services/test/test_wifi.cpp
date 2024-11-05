@@ -32,7 +32,7 @@
 /**
  * @brief Number of scan requests to be made in the multiple scan requests test.
  */
-#define NUMBER_OF_SCAN_REQUESTS     500
+#define NUMBER_OF_SCAN_REQUESTS 500
 
 /**
  *  Extract the AccessPointList object that is encoded in the given buffer.
@@ -86,9 +86,9 @@ static Esp32Messaging::AccessPoint *ExtractAccessPoint(uint8_t *buffer)
     // cppcheck-suppress cstyleCast
     Esp32Messaging::AccessPoint *accessPoint = (Esp32Messaging::AccessPoint *) pvPortMalloc(sizeof(Esp32Messaging::AccessPoint));
 
-    memcpy((void *) accessPoint->Ssid, (void *) buffer, 33);    // cppcheck-suppress cstyleCast
+    memcpy((void *) accessPoint->Ssid, (void *) buffer, 33); // cppcheck-suppress cstyleCast
     buffer += 33;
-    memcpy((void *) accessPoint->Bssid, (void *) buffer, 6);    // cppcheck-suppress cstyleCast
+    memcpy((void *) accessPoint->Bssid, (void *) buffer, 6); // cppcheck-suppress cstyleCast
     buffer += 6;
     accessPoint->PrimaryChannel = *buffer;
     buffer += 1;
@@ -104,10 +104,10 @@ static Esp32Messaging::AccessPoint *ExtractAccessPoint(uint8_t *buffer)
 
 /**
  * @brief Test scanning for access points.
- * 
+ *
  * @note Set number of scans to a number greater than 1 to test for memory leaks.  The number
  *       should be sufficiently high to cause an accumulated issue.
- * 
+ *
  * @param numberOfScans Number of scans to perform (default to 1).
  */
 static void TestScanForAccessPoints(unsigned numberOfScans = 1)
@@ -162,7 +162,7 @@ static void TestScanForAccessPoints(unsigned numberOfScans = 1)
         //
         Esp32Messaging::AccessPointList *accessPointList = ExtractAccessPointList(response->Payload);
         response->DeletePayload();
-        vPortFree(response);            // Releases the memory allocated for scanRequestMessage.
+        vPortFree(response); // Releases the memory allocated for scanRequestMessage.
 
         TEST_ASSERT_NOT_NULL(accessPointList);
         TEST_ASSERT_GREATER_THAN(0, accessPointList->NumberOfAccessPoints);
@@ -174,13 +174,13 @@ static void TestScanForAccessPoints(unsigned numberOfScans = 1)
             const Esp32Messaging::AccessPoint *accessPoint = ExtractAccessPoint(buffer);
             TEST_ASSERT_NOT_NULL(accessPoint);
             buffer += Encoders::EncodedAccessPointBufferSize(const_cast<Esp32Messaging::AccessPoint *>(accessPoint));
-            if (numberOfScans == (index + 1))       // Display the results of the final scan.
+            if (numberOfScans == (index + 1)) // Display the results of the final scan.
             {
                 printf("Access Point %u\n", accessPointNumber + 1);
                 printf("    Network Name: %s\n", accessPoint->Ssid);
                 printf("    MAC Address: %02x:%02x:%02x:%02x:%02x:%02x\n", accessPoint->Bssid[0], accessPoint->Bssid[1], accessPoint->Bssid[2], accessPoint->Bssid[3], accessPoint->Bssid[4], accessPoint->Bssid[5]);
             }
-            vPortFree((void *) (accessPoint));      // cppcheck-suppress cstyleCast
+            vPortFree((void *) (accessPoint)); // cppcheck-suppress cstyleCast
         }
         vPortFree(accessPointList->AccessPoints);
         vPortFree(accessPointList);
@@ -211,7 +211,7 @@ TEST_CASE("Scan for access points multiple times (test for memory leak)", "[WiFi
 
 /**
  * @brief Create a Connect To Access Point Message object using the supplied credentials.
- * 
+ *
  * @param ssid SSID of the access point.
  * @param password Password for the access point.
  * @return Message* Pointer to the Message with the encoded credentials in the payload.
@@ -220,8 +220,8 @@ static Message *CreateConnectToAccessPointMessage(const char *ssid, const char *
 {
     Esp32Messaging::AccessPointInformation accessPointInformation = {};
     memset(&accessPointInformation, 0, sizeof(Esp32Messaging::AccessPointInformation));
-    accessPointInformation.NetworkName = (char *) ssid;         // cppcheck-suppress cstyleCast
-    accessPointInformation.Password = (char *) password;        // cppcheck-suppress cstyleCast
+    accessPointInformation.NetworkName = (char *) ssid;  // cppcheck-suppress cstyleCast
+    accessPointInformation.Password = (char *) password; // cppcheck-suppress cstyleCast
     uint32_t payloadLength = Encoders::EncodedAccessPointInformationBufferSize(&accessPointInformation);
     uint8_t *buffer = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
     memset(buffer, 0, payloadLength);
@@ -230,7 +230,7 @@ static Message *CreateConnectToAccessPointMessage(const char *ssid, const char *
     Message *connectToAccessPoint = Message::CreateOnHeap(MessageTypes::Header, Esp32Interfaces::WiFi, WiFiFunction::ConnectToAccessPoint, StatusCodes::Failure, 0xff, buffer, payloadLength);
     TEST_ASSERT_NOT_NULL(connectToAccessPoint);
 
-    return(connectToAccessPoint);
+    return (connectToAccessPoint);
 }
 
 /**
@@ -277,9 +277,9 @@ TEST_CASE("Connect to access point", "[WiFI]")
     {
         count++;
         Message *response = messageDispatcher->GetOutboundMessage();
-        #if defined(DEBUGGING_TESTS)
-            printf("Message: MessageType %d, Function %d, Interface %d, StatusCode %d\n", (int) response->MessageType, (int) response->Function, (int) response->Interface, (int)response->StatusCode);
-        #endif
+#if defined(DEBUGGING_TESTS)
+        printf("Message: MessageType %d, Function %d, Interface %d, StatusCode %d\n", (int) response->MessageType, (int) response->Function, (int) response->Interface, (int) response->StatusCode);
+#endif
         TEST_ASSERT_EQUAL(Esp32Interfaces::WiFi, response->Interface);
         TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
         if ((response->MessageType != MessageTypes::Response) && (response->MessageType != MessageTypes::Event))
@@ -320,7 +320,7 @@ TEST_CASE("Connect to access point", "[WiFI]")
 
 /**
  * @brief Test connecting to an access point that does not exist.
- * 
+ *
  * @note This is designed to test the automatic reconnect attempts as well as the final failure of the connection request.
  */
 TEST_CASE("Connect to non-existant access point", "[WiFi]")
@@ -363,9 +363,9 @@ TEST_CASE("Connect to non-existant access point", "[WiFi]")
     while ((messageDispatcher->OutboundMessageQueueLength() > 0) && (!done))
     {
         Message *response = messageDispatcher->GetOutboundMessage();
-        #if defined(DEBUGGING_TESTS)
-            printf("Message: MessageType %d, Function %d, Interface %d, StatusCode %d\n", (int) response->MessageType, (int) response->Function, (int) response->Interface, (int)response->StatusCode);
-        #endif
+#if defined(DEBUGGING_TESTS)
+        printf("Message: MessageType %d, Function %d, Interface %d, StatusCode %d\n", (int) response->MessageType, (int) response->Function, (int) response->Interface, (int) response->StatusCode);
+#endif
         TEST_ASSERT_EQUAL(Esp32Interfaces::WiFi, response->Interface);
         if ((response->MessageType != MessageTypes::Response) && (response->MessageType != MessageTypes::Event))
         {
@@ -408,4 +408,3 @@ TEST_CASE("Connect to non-existant access point", "[WiFi]")
     delete wifiRequestHandler;
     delete messageDispatcher;
 }
- 
