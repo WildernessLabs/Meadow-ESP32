@@ -350,7 +350,7 @@ uint32_t Encoders::ProgressiveCRC32(uint32_t currentChecksum, uint8_t byte)
     crc ^= byte;
     for (uint32_t index = 0; index < 8; index++)
     {
-        uint32_t mask = (uint32_t) -(crc & 0x01);
+        uint32_t mask = (uint32_t) - (crc & 0x01);
         crc = (crc >> 1) ^ (0xedb88320 & mask);
     }
     return (crc);
