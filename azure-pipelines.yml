@@ -2,7 +2,7 @@ trigger:
 - develop
 - meadow-*
 
-pool: WL-Linux
+pool: ubuntu-latest
 
 steps:
 - script: git submodule update --init --recursive
