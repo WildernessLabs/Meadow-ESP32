@@ -2,7 +2,8 @@ trigger:
 - develop
 - meadow-*
 
-pool: ubuntu-latest
+pool:
+  vmImage: ubuntu-latest
 
 steps:
 - script: git submodule update --init --recursive
