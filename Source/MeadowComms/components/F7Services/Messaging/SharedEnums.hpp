@@ -210,6 +210,10 @@ namespace StatusCodes
         /// StatusCodes - Network deadlock detected.
         /// </summary>
         NetworkDeadlock = 46,
+        /// <summary>
+        /// StatusCodes - Battery level on ADC1 cannot be read (used of F7 v1).
+        /// </summary>
+        BatteryLevelCannotBeRead = 47,
 
         /** 47, 48 & 49 free */
 

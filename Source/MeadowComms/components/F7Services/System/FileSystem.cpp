@@ -319,7 +319,7 @@ void FileSystem::WriteFile(Message *message)
             std::string s = PARTITION_PATH_NAME;
             s += "/";
             s += fileData->Name;
-            TRACE_MESSAGE("Writing %d bytes into file %s", fileData->ContentsLength, s.c_str());
+            TRACE_MESSAGE("Writing %lu bytes into file %s", fileData->ContentsLength, s.c_str());
             TRACE_HEX_BUFFER(fileData->Contents, fileData->ContentsLength);
             FILE *file = fopen(s.c_str(), "w");
             if (file != NULL)

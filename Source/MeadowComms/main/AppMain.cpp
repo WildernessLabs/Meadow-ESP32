@@ -17,7 +17,6 @@
 #include "MessageDispatcher.hpp"
 #include "SpiTransportProvider.hpp"
 #include "WiFiRequestHandler.hpp"
-#include "SpiTransportProvider.hpp"
 
 /**
  * @brief global variable holding the system build information.
@@ -94,7 +93,7 @@ void heap_caps_alloc_failed_hook(size_t requestedSize, uint32_t caps, const char
 {
     if (requestedSize != 0)
     {
-        printf("%s was called but failed to allocate %lu bytes with 0x%X capabilities. \n", functionName, (unsigned long) requestedSize, caps);
+        printf("%s was called but failed to allocate %lu bytes with 0x%X capabilities. \n", functionName, (unsigned long) requestedSize, (uint) caps);
         vTaskDelay(10000 / portTICK_PERIOD_MS);
         char *ptr = NULL;
         *ptr = 0; // cppcheck-suppress nullPointer
@@ -121,8 +120,8 @@ extern "C" void app_main()
     strftime(month_text, 4, "%b", &t);
 
     ESP_LOGI(
-        COMPONENT_NAME, "Version: %d.%d.%d.%d, built %02d %s 20%02d %02d:%02d:%02d UTC (%08x:%s)", g_application_version.major, g_application_version.minor, g_application_version.revision, g_application_version.build, g_application_version.day, month_text, g_application_version.year,
-        g_application_version.hour, g_application_version.minute, g_application_version.second, g_application_version.hash, g_application_version.branch_name);
+        COMPONENT_NAME, "Version: %d.%d.%d.%d, built %02d %s 20%02d %02d:%02d:%02d UTC (%08x:%s)", (int) g_application_version.major, (int) g_application_version.minor, (int) g_application_version.revision, (int) g_application_version.build, (int) g_application_version.day, month_text,
+        (int) g_application_version.year, (int) g_application_version.hour, (int) g_application_version.minute, (int) g_application_version.second, (uint) g_application_version.hash, g_application_version.branch_name);
 
     NvsManager::Setup();
     /*
@@ -157,124 +156,8 @@ extern "C" void app_main()
 
     //    TestBluetoothMessage(messageDispatcher);
 
-    // Message *message = static_cast<Message *>(pvPortMalloc(sizeof(Message)));
-    // message->MessageType = MessageTypes::Header;
-    // message->Interface = Esp32Interfaces::WiFi;
-    // message->Function = WiFiFunction::StartAccessPoint;
-
-    // Esp32Messaging::AccessPointInformation info = { };
-    // info.NetworkName = "TestNetwork";
-    // info.Password = "ALongPassword";
-    // info.IpAddress = 0x0104a8c0;
-    // info.SubnetMask = 0x00ffffff;
-    // info.Gateway = info.IpAddress;
-    // message->PayloadLength = Encoders::EncodedAccessPointInformationBufferSize(&info);
-    // message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-    // Encoders::EncodeAccessPointInformation(&info, message->Payload);
-
-    // Message *message = static_cast<Message *>(pvPortMalloc(sizeof(Message)));
-    // message->MessageType = MessageTypes::Header;
-    // message->Interface = Esp32Interfaces::WiFi;
-    // message->Function = WiFiFunction::ConnectToAccessPoint;
-
-    // Esp32Messaging::WiFiCredentials request;
-
-    // #include "WiFiRequestHandler.hpp"
-
-    // request.NetworkName = (char *) CONFIG_WIFI_SSID;
-    // request.Password = (char *) CONFIG_WIFI_PASSWORD;
-    // message->PayloadLength = Encoders::EncodedWiFiCredentialsBufferSize(&request);
-    // message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-    // Encoders::EncodeWiFiCredentials(&request, message->Payload);
-
-    // messageDispatcher->QueueMessageForEsp32(message);
-
     //
     //  We suspend this task as the message processing is performed by the objects created above.
     //
     vTaskSuspend(NULL);
-
-    //
-    //  Main program loop.
-    //
-    // while (true)
-    // {
-    //     vTaskDelay(500 / portTICK_PERIOD_MS);
-    // }
-}
-
-const char *json_test = R"(
-{
-    "deviceName":"MY MEADOW",
-    "services": [
-        {
-            "name": "Service A",
-            "uuid": 254,
-            "characteristics": [
-                {
-                    "uuid": "017e99d6-8a61-11eb-8dcd-0242ac130003",
-                    "permission": 17,
-                    "props": 10,
-                    "len": 4
-                },
-                {
-                    "uuid": 10755,
-                    "permission": 2,
-                    "props": 16,
-                    "len": 4
-                }
-            ]
-        }
-    ]
-})";
-
-const char *json_test2 = R"(
-{
-    "deviceName":"MY MEADOW",
-    "services": [
-        {
-            "name": "Service A",
-            "uuid": 254,
-            "characteristics": [
-                {
-                    "uuid": "017e99d6-8a61-11eb-8dcd-0242ac130003",
-                    "permission": 17,
-                    "props": 10,
-                    "len": 4,
-                    "descriptors": [
-                        {
-                        "uuid": 10498,
-                        "permission": 1,
-                        "len": 2,
-                        "value": 0
-                        }
-                    ]
-                },
-                {
-                    "uuid": 10755,
-                    "permission": 2,
-                    "props": 16,
-                    "len": 4
-                }
-            ]
-        }
-    ]
-})";
-
-void TestBluetoothMessage(MessageDispatcher *dispatcher)
-{
-    // for now we'll use one message that starts and sets up everything.
-    // We'll need to separate this and actually have data going in, but this is a baby step toward that
-
-    Esp32Messaging::BTStackConfig stackConfig;
-    stackConfig.Config = (char *) json_test;
-
-    Message startMessage = {};
-    startMessage.MessageType = MessageTypes::Header;
-    startMessage.Interface = Esp32Interfaces::BlueTooth;
-    startMessage.Function = BluetoothFunction::Start;
-    startMessage.PayloadLength = Encoders::EncodedBTStackConfigBufferSize(&stackConfig);
-    startMessage.Payload = (uint8_t *) pvPortMalloc(startMessage.PayloadLength);
-    Encoders::EncodeBTStackConfig(&stackConfig, startMessage.Payload);
-    dispatcher->QueueMessageForEsp32(&startMessage);
 }

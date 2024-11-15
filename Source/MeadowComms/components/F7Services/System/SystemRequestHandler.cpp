@@ -15,8 +15,10 @@
 #include "esp_event.h"
 // #include "esp_ota_ops.h"
 #include "esp_wifi.h"
-#include "driver/adc.h"
-#include "esp_adc_cal.h"
+#include "esp_adc/adc_oneshot.h"
+#include "esp_adc/adc_cali.h"
+#include "esp_adc/adc_cali_scheme.h"
+
 #include "esp_sleep.h"
 #include <string.h>
 #include <stdlib.h>
@@ -614,6 +616,49 @@ void SystemRequestHandler::DeepSleep(Message *request)
 }
 
 /**
+ * @brief Configure ADC1 for battery level monitoring.
+ *
+ * @note At the end of this method, _adcHandle will be set if the ADC has been initialised
+ *       and _adcCalibrationHandle will be set if the calibration scheme has been created.
+ */
+void SystemRequestHandler::ConfigureADC1()
+{
+    TRACE_MESSAGE("ConfigureADC1: Enter");
+
+    if (!_adc1Handle)
+    {
+        TRACE_MESSAGE("Initialising ADC1.");
+        adc_oneshot_unit_init_cfg_t adc_unit_config = {};
+        adc_unit_config.unit_id = ADC_UNIT_1;
+        if (adc_oneshot_new_unit(&adc_unit_config, &_adc1Handle) == ESP_OK)
+        {
+            adc_oneshot_chan_cfg_t adcChannelConfig = {};
+            adcChannelConfig.bitwidth = ADC_BITWIDTH_DEFAULT;
+            adcChannelConfig.atten = ADC_ATTEN_DB_12;
+            if (adc_oneshot_config_channel(_adc1Handle, ADC_CHANNEL_7, &adcChannelConfig) == ESP_OK)
+            {
+                adc_cali_line_fitting_config_t adcCalibrationConfig = {};
+                adcCalibrationConfig.unit_id = ADC_UNIT_1;
+                adcCalibrationConfig.atten = ADC_ATTEN_DB_12;
+                adcCalibrationConfig.bitwidth = ADC_BITWIDTH_DEFAULT;
+                if (adc_cali_create_scheme_line_fitting(&adcCalibrationConfig, &_adc1CalibrationHandle) != ESP_OK)
+                {
+                    TRACE_MESSAGE("Failed to create calibration scheme.");
+                    _adc1CalibrationHandle = nullptr;
+                }
+            }
+        }
+        else
+        {
+            TRACE_MESSAGE("Failed to create ADC1 handle.");
+            _adc1Handle = nullptr;
+        }
+    }
+
+    TRACE_MESSAGE("ConfigureADC1: Exit");
+}
+
+/**
  *  @brief Get the voltage reading from the battery charging circuit.
  *
  *  @param request
@@ -623,41 +668,56 @@ void SystemRequestHandler::GetBatteryChargeLevel(Message *message)
 {
     TRACE_MESSAGE("GetBatteryChargeLevel: Enter");
 
-    const adc_channel_t channel = ADC_CHANNEL_7;
-    const adc_atten_t attenuation = ADC_ATTEN_DB_11;
-    const adc_unit_t unit = ADC_UNIT_1;
-    const uint32_t vref = 1100;
-    const uint32_t numberOfSamples = 64;
-
-    esp_adc_cal_characteristics_t *adc_chars;
-    uint32_t adc_reading = 0;
-
-    adc1_config_width(ADC_WIDTH_BIT_12);
-    adc1_config_channel_atten((adc1_channel_t) channel, attenuation);
-    adc_chars = static_cast<esp_adc_cal_characteristics_t *>(calloc(1, sizeof(esp_adc_cal_characteristics_t)));
-    esp_adc_cal_characterize(unit, attenuation, ADC_WIDTH_BIT_12, vref, adc_chars);
-
-    for (int i = 0; i < numberOfSamples; i++)
+    StatusCodes::StatusCodes result = StatusCodes::BatteryLevelCannotBeRead;
+    ConfigureADC1();
+    Esp32Messaging::IntegerResponse response = {};
+    if (_adc1Handle)
     {
-        adc_reading += adc1_get_raw((adc1_channel_t) channel);
+        int rawData;
+        int voltage;
+        uint32_t averagedVoltage = 0;
+        unsigned numberOfReadings = 0;
+        for (int index = 0; index < 32; index++)
+        {
+            if (adc_oneshot_read(_adc1Handle, ADC_CHANNEL_7, &rawData) == ESP_OK)
+            {
+                if (_adc1CalibrationHandle)
+                {
+                    if (adc_cali_raw_to_voltage(_adc1CalibrationHandle, rawData, &voltage) == ESP_OK)
+                    {
+                        averagedVoltage += voltage;
+                        numberOfReadings++;
+                    }
+                }
+                else
+                {
+                    averagedVoltage += rawData;
+                    numberOfReadings++;
+                }
+            }
+        }
+        if (numberOfReadings > 0)
+        {
+            result = StatusCodes::CompletedOk;
+            averagedVoltage /= numberOfReadings;
+            //
+            //  The battery voltage will be twice the actual reading as the output from the battery is passed
+            //  through a voltage divider.  This is necessary as the voltage can go as high as 4.2V which
+            //  exceeds the tolerance of the ADC pins on the ESP32.
+            //
+            response.Result = 2 * averagedVoltage;
+        }
+        TRACE_MESSAGE("Averaged voltage: %lu mV", response.Result);
     }
-    adc_reading /= numberOfSamples;
-    Esp32Messaging::IntegerResponse response;
-    //
-    //  The battery voltage will be twice the actual reading as the output from the battery is passed
-    //  through a voltage divider.  This is necessary as the voltage can go as high as 4.2V which
-    //  exceeds the tolerance of the ADC pins on the ESP32.
-    //
-    response.Result = 2 * esp_adc_cal_raw_to_voltage(adc_reading, adc_chars);
-    free(adc_chars);
 
     message->PayloadLength = Encoders::EncodedIntegerResponseBufferSize(&response);
     message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
     Encoders::EncodeIntegerResponse(&response, message->Payload);
 
     message->MessageType = MessageTypes::Response;
-    message->StatusCode = StatusCodes::CompletedOk;
+    message->StatusCode = result;
     _messageDispatcher->QueueMessageForStm32(message);
+
     TRACE_MESSAGE("GetBatteryChargeLevel: Exit");
 }
 
@@ -800,7 +860,7 @@ void SystemRequestHandler::DispatchRequest(Message *request)
             LogMessage(request);
             break;
         default:
-            TRACE_MESSAGE("DispatchRequest: Unknown System message received, function 0x%x", request->Function);
+            TRACE_MESSAGE("DispatchRequest: Unknown System message received, function 0x%lx", request->Function);
             if (request->Payload != NULL)
             {
                 TRACE_HEX_BUFFER(request->Payload, request->PayloadLength);

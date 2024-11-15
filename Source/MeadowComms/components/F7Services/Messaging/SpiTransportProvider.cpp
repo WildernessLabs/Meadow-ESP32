@@ -73,18 +73,6 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
     _spiInstance = this;
 
     /*
-     *  Set the handshake pins to output and set the output level low.
-     *
-     *  First pin is the pin indicating that the ESP32 SPI interface is ready
-     *  to send / receive data.  This is the BOOT pin on the ESP32.
-     *
-     *  The second pin is the pin used by the ESP32 to indicate that a message
-     *  is waiting.  This should be the UART0 Rx pin.
-     */
-    gpio_pad_select_gpio(Gpio::ESP32_SPI_READY_PIN);
-    gpio_set_direction(Gpio::ESP32_SPI_READY_PIN, GPIO_MODE_OUTPUT);
-
-    /*
      *  Configure the pull-ups on the SPI pins.
      */
     gpio_set_pull_mode(Gpio::MOSI_PIN, GPIO_PULLUP_ONLY);
@@ -105,7 +93,7 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
     /*
      *  Setup the SPI bus.
      */
-    spi_bus_config_t spiBusConfiguration;
+    spi_bus_config_t spiBusConfiguration = {};
     spiBusConfiguration.mosi_io_num = Gpio::MOSI_PIN;
     spiBusConfiguration.miso_io_num = Gpio::MISO_PIN;
     spiBusConfiguration.sclk_io_num = Gpio::CLOCK_PIN;
@@ -114,10 +102,15 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
     spiBusConfiguration.max_transfer_sz = 0;
     spiBusConfiguration.flags = SPICOMMON_BUSFLAG_SLAVE;
     spiBusConfiguration.intr_flags = 0;
+    spiBusConfiguration.isr_cpu_id = ESP_INTR_CPU_AFFINITY_AUTO;
+    spiBusConfiguration.data4_io_num = -1;
+    spiBusConfiguration.data5_io_num = -1;
+    spiBusConfiguration.data6_io_num = -1;
+    spiBusConfiguration.data7_io_num = -1;
     /*
      *  Configuration for the SPI slave interface.
      */
-    spi_slave_interface_config_t slaveConfiguration;
+    spi_slave_interface_config_t slaveConfiguration = {};
     slaveConfiguration.mode = 3;
     slaveConfiguration.spics_io_num = Gpio::CHIP_SELECT_PIN;
     slaveConfiguration.queue_size = 3;
@@ -134,7 +127,7 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
      *  as they will be frequently used for header and transport packets.
      */
     _headerFrameSize = Encoders::CalculateSpiBufferSize(Message::HEADER_SIZE);
-    TRACE_MESSAGE("Header frame size: %d", _headerFrameSize);
+    TRACE_MESSAGE("Header frame size: %lu", _headerFrameSize);
     _txBuffer = static_cast<uint8_t *>(heap_caps_calloc(Message::MAXIMUM_SPI_FRAME_SIZE, 1, MALLOC_CAP_DMA));
     _rxBuffer = static_cast<uint8_t *>(heap_caps_calloc(Message::MAXIMUM_SPI_FRAME_SIZE, 1, MALLOC_CAP_DMA));
     ClearTransmitAndReceiveBuffers();
@@ -164,7 +157,6 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
      */
     xTaskCreate(Task, COMPONENT_NAME, 2048 * 2, this, configMAX_PRIORITIES - 1, &SpiTransportProvider::_transportProviderTaskHandle);
 
-    gpio_set_level(Gpio::ESP32_SPI_READY_PIN, 0);
     SendControlMessageToStm32(ControlMessageType::Ready);
 }
 
@@ -391,16 +383,6 @@ void SpiTransportProvider::DeleteTransaction(spi_slave_transaction_t *transactio
  */
 void SpiTransportProvider::SpiPostTransmissionCallback(spi_slave_transaction_t *transaction)
 {
-    // BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-    // gpio_set_level(Gpio::ESP32_SPI_READY_PIN, 0);
-    // if (_spiInstance->GetControlSignalMessage() == TransportProviderBase::ControlMessageType::Ready)
-    // {
-    //     _spiInstance->SetControlSignalMessage(TransportProviderBase::ControlMessageType::SpiInterfaceReady);
-    //     _spiInstance->SetControlSignalDelay(portMAX_DELAY);
-    // }
-    // xTaskNotifyFromISR(_transportProviderTaskHandle, TransportProviderBase::STM32_INTERRUPT_NOTIFICATION_BIT, eSetBits, &xHigherPriorityTaskWoken);
-    // xSemaphoreGiveFromISR(_spiInstance->_synchronisationSemaphore, &xHigherPriorityTaskWoken);
-    // portYIELD_FROM_ISR();
 }
 
 /**
@@ -416,7 +398,6 @@ void SpiTransportProvider::SpiPostTransmissionCallback(spi_slave_transaction_t *
 void SpiTransportProvider::SpiPostSetupCallback(spi_slave_transaction_t *transaction)
 {
     BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-    // gpio_set_level(Gpio::ESP32_SPI_READY_PIN, 1);
     if (_spiInstance->GetControlSignalMessage() == TransportProviderBase::ControlMessageType::Ready)
     {
         _spiInstance->SetControlSignalMessage(TransportProviderBase::ControlMessageType::SpiInterfaceReady);
@@ -488,7 +469,7 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessTransportMessage(Message *
             _currentState = SendingPacketDetails;
             break;
         default:
-            TRACE_MESSAGE("ProcessTransportMessage: Transport function %d not recognised.", request->Function);
+            TRACE_MESSAGE("ProcessTransportMessage: Transport function %lu not recognised.", request->Function);
             break;
     }
     TRACE_MESSAGE("ProcessTransportMessage: Exit");
@@ -567,7 +548,7 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessInboundPacket(Message *pac
             //  enough to hold the full payload, copy the packet into the new buffer, release the current payload buffer
             //  and replace it with the new, larger, buffer.
             //
-            TRACE_MESSAGE("First packet in a multipacket message, expecting %d bytes, received %d bytes", packet->PayloadLength, packet->PacketLength);
+            TRACE_MESSAGE("First packet in a multipacket message, expecting %lu bytes, received %u bytes", packet->PayloadLength, packet->PacketLength);
             uint8_t *payloadBuffer = static_cast<uint8_t *>(pvPortMalloc(packet->PayloadLength));
             memcpy(static_cast<void *>(payloadBuffer), static_cast<const void *>(packet->Payload), packet->PacketLength);
             vPortFree(packet->Payload);

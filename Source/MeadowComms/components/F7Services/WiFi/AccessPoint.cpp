@@ -9,6 +9,7 @@
 #include "esp_system.h"
 #include "esp_wifi.h"
 #include "esp_event.h"
+#include "esp_mac.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -320,40 +321,40 @@ void WiFiRequestHandler::NodeConnectedEvent()
 {
     TRACE_MESSAGE("NodeConnectedEvent: Enter");
 
-    wifi_sta_list_t wifi_sta_list;
-    tcpip_adapter_sta_list_t adapter_sta_list;
-    esp_wifi_ap_get_sta_list(&wifi_sta_list);
-    tcpip_adapter_get_sta_list(&wifi_sta_list, &adapter_sta_list);
-    if (adapter_sta_list.num > 0)
-    {
-        LockConnectedNodesMap();
-        for (uint8_t i = 0; i < adapter_sta_list.num; i++)
-        {
-            tcpip_adapter_sta_info_t station = adapter_sta_list.sta[i];
-            uint64_t key = 0;
-            memcpy(&key, &station.mac, 6);
-            std::map<uint64_t, uint32_t>::iterator it = _connectedNodes.find(key);
-            if (it == _connectedNodes.end())
-            {
-                _connectedNodes[key] = 0;
-            }
-            if (station.ip.addr != _connectedNodes[key])
-            {
-                // cppcheck-suppress unknownMacro
-                TRACE_MESSAGE("NodeConnectedEvent: Updating IP address for node: MAC " MACSTR " IP Address " IPSTR, MAC2STR(station.mac), IP2STR(&station.ip));
-                Esp32Messaging::NodeConnectionChangeEventData data;
-                memcpy(&data.MacAddress, &station.mac, 6);
-                memcpy(&data.IpAddress, &station.ip, sizeof(uint32_t));
-                _connectedNodes[key] = data.IpAddress;
-                RaiseNodeConnectionChangeEvent(WiFiFunction::NodeConnectedEvent, &data);
-            }
-        }
-        UnlockConnectedNodesMap();
-    }
-    else
-    {
-        TRACE_MESSAGE("NodeConnectedEvent raised but there are no nodes connected to this device.");
-    }
+    // wifi_sta_list_t wifi_sta_list;
+    // tcpip_adapter_sta_list_t adapter_sta_list;
+    // esp_wifi_ap_get_sta_list(&wifi_sta_list);
+    // tcpip_adapter_get_sta_list(&wifi_sta_list, &adapter_sta_list);
+    // if (adapter_sta_list.num > 0)
+    // {
+    //     LockConnectedNodesMap();
+    //     for (uint8_t i = 0; i < adapter_sta_list.num; i++)
+    //     {
+    //         tcpip_adapter_sta_info_t station = adapter_sta_list.sta[i];
+    //         uint64_t key = 0;
+    //         memcpy(&key, &station.mac, 6);
+    //         std::map<uint64_t, uint32_t>::iterator it = _connectedNodes.find(key);
+    //         if (it == _connectedNodes.end())
+    //         {
+    //             _connectedNodes[key] = 0;
+    //         }
+    //         if (station.ip.addr != _connectedNodes[key])
+    //         {
+    //             // cppcheck-suppress unknownMacro
+    //             TRACE_MESSAGE("NodeConnectedEvent: Updating IP address for node: MAC " MACSTR " IP Address " IPSTR, MAC2STR(station.mac), IP2STR(&station.ip));
+    //             Esp32Messaging::NodeConnectionChangeEventData data;
+    //             memcpy(&data.MacAddress, &station.mac, 6);
+    //             memcpy(&data.IpAddress, &station.ip, sizeof(uint32_t));
+    //             _connectedNodes[key] = data.IpAddress;
+    //             RaiseNodeConnectionChangeEvent(WiFiFunction::NodeConnectedEvent, &data);
+    //         }
+    //     }
+    //     UnlockConnectedNodesMap();
+    // }
+    // else
+    // {
+    //     TRACE_MESSAGE("NodeConnectedEvent raised but there are no nodes connected to this device.");
+    // }
 
     TRACE_MESSAGE("NodeConnectedEvent: Exit");
 }

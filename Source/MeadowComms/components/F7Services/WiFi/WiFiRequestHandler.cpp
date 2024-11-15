@@ -5,6 +5,7 @@
 #include "esp_system.h"
 #include "esp_wifi.h"
 #include "esp_event.h"
+#include "esp_mac.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -355,7 +356,7 @@ uint32_t WiFiRequestHandler::GetMaximumRetryCount()
  */
 StatusCodes::StatusCodes WiFiRequestHandler::SetMaximumRetryCount(uint32_t value)
 {
-    TRACE_MESSAGE("WiFiRequestHandler::SetMaximumRetryCount: %d", value);
+    TRACE_MESSAGE("WiFiRequestHandler::SetMaximumRetryCount: %lu", value);
     _maximumRetryCount = value;
     return (StatusCodes::CompletedOk);
 }
@@ -749,7 +750,7 @@ void WiFiRequestHandler::ClearIpAndDisconnectData()
 /**
  *  @brief Map the errno variable from an ESP to a STM32 value.
  */
-int32_t WiFiRequestHandler::MapErrno(int e)
+int32_t WiFiRequestHandler::MapErrno(int32_t e)
 {
     int32_t result = 0;
     if (Mapping::GetStmValue(Mapping::Errno, e, &result) != 0)
@@ -1116,7 +1117,7 @@ void WiFiRequestHandler::EventHandlerHelper(esp_event_base_t eventBase, int32_t 
                 TRACE_MESSAGE("EventHandlerHelper: WIFI_EVENT_AP_PROBEREQRECVED");
                 break;
             default:
-                TRACE_MESSAGE("EventHandlerHelper: Unhandled WiFi Event ID %d", eventId);
+                TRACE_MESSAGE("EventHandlerHelper: Unhandled WiFi Event ID %ld", eventId);
                 break;
         }
     }
@@ -1150,7 +1151,7 @@ void WiFiRequestHandler::EventHandlerHelper(esp_event_base_t eventBase, int32_t 
                     TRACE_MESSAGE("EventHandlerHelper: IP_EVENT_PPP_LOST_IP");
                     break;
                 default:
-                    TRACE_MESSAGE("EventHandlerHelper: Unhandled IP Event ID %d", eventId);
+                    TRACE_MESSAGE("EventHandlerHelper: Unhandled IP Event ID %ld", eventId);
                     break;
             }
         }
@@ -1531,6 +1532,8 @@ StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const Esp32Mes
 
     char *password = accessPointInformation->Password;
 
+    TRACE_MESSAGE("IP information, IP: 0x%08x, subnet: 0x%08x, gateway 0x%08x", (uint) accessPointInformation->IpAddress, (uint) accessPointInformation->SubnetMask, (uint) accessPointInformation->Gateway);
+
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
 
     EventBits_t bits = xEventGroupGetBits(_xWiFiEventGroup);
@@ -1618,7 +1621,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const Esp32Mes
             }
         }
     }
-    TRACE_MESSAGE("%s: result %d", __func__, result);
+    TRACE_MESSAGE("%s: result %ld", __func__, result);
     return (result);
 }
 
@@ -1996,7 +1999,12 @@ void WiFiRequestHandler::StationGotIpEvent(ip_event_got_ip_t *eventData)
 void WiFiRequestHandler::StationStartedEvent()
 {
     TRACE_MESSAGE("StationStartedEvent: Enter");
-    _lastIdfErrorCode = tcpip_adapter_set_hostname(TCPIP_ADAPTER_IF_STA, SystemRequestHandler::GetDeviceName());
+    char *deviceName = SystemRequestHandler::GetDeviceName();
+    if (deviceName == NULL)
+    {
+        deviceName = (char *) "Meadow";
+    }
+    _lastIdfErrorCode = esp_netif_set_hostname(_stationNetIfHandle, deviceName);
     if (_lastIdfErrorCode != ESP_OK)
     {
         xEventGroupClearBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTED_BIT | WIFI_INTERFACE_STARTING_BIT | WIFI_CONNECTING_BIT);
@@ -2078,7 +2086,7 @@ void WiFiRequestHandler::StationDisconnectedEvent(wifi_event_sta_disconnected_t 
         }
         if (GetAutomaticReconnect() && (_currentRetryCount < maximumRetryCount))
         {
-            TRACE_MESSAGE("StationDisconnectedEvent: Reconnecting, retry count %d, maximum %d", _currentRetryCount, maximumRetryCount);
+            TRACE_MESSAGE("StationDisconnectedEvent: Reconnecting, retry count %d, maximum %lu", _currentRetryCount, maximumRetryCount);
             //
             //  the system is configured to automatically reconnect and we have not exceeded the retry count.
             //
@@ -2091,12 +2099,12 @@ void WiFiRequestHandler::StationDisconnectedEvent(wifi_event_sta_disconnected_t 
             esp_wifi_connect();
             _currentRetryCount++;
             raiseDisconnectedEvent = false;
-            TRACE_MESSAGE("StationDisconnectedEvent: Delaying for %u ms", _progressiveDelay->GetCurrentDelayPeriod());
+            TRACE_MESSAGE("StationDisconnectedEvent: Delaying for %lu ms", _progressiveDelay->GetCurrentDelayPeriod());
             _progressiveDelay->Delay();
         }
         else
         {
-            TRACE_MESSAGE("StationDisconnectedEvent: Not reconnecting, retry count %d, maximum %d", _currentRetryCount, maximumRetryCount);
+            TRACE_MESSAGE("StationDisconnectedEvent: Not reconnecting, retry count %d, maximum %lu", _currentRetryCount, maximumRetryCount);
             //
             //  Here we were connected or we have been trying to connect and there two possibilities:
             //      1.  We are not configured to automatically reconnect.
