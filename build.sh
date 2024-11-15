@@ -96,6 +96,9 @@ case $i in
     -d=*|--debug=*)
     DEBUG_SELECTIONS="${i#*=}"
     ;;
+    --halt)
+    IDF_DEFINES+=" -DCONFIG_ESP_SYSTEM_PANIC_PRINT_HALT=y"
+    ;;
     # --tests=*)
     # TEST_SELECTIONS="${i#*=}"
     # ;;
@@ -128,6 +131,7 @@ if $HELP; then
     echo "-tm | --tracemessages   Enable heap tracing."
     echo "--menuconfig            Enter the menu configuration system overwriting sdkconfig.defaults"
     echo "--dryrun                Perform a dry run (do not execute commands)"
+    echo "--halt                  Halt the system on hard fault."
     # echo "--tests=*               Compile the specified unit tests into the ESP32 binary"
     echo "-d=* | --debug=*        Turn on debug for selected system(s). Valid values (comma separated): WIFI, SPI, BT, SYSTEM."
     echo ""
@@ -361,9 +365,9 @@ fi
 
 #Generate checksums for binaries
 
-md5sum  Source/MeadowComms/build/MeadowComms.bin | cut -d ' ' -f 1 > Source/MeadowComms/build/MeadowComms.bin.md5
-md5sum  Source/MeadowComms/build/bootloader/bootloader.bin | cut -d ' ' -f 1 > Source/MeadowComms/build/bootloader/bootloader.bin.md5
-md5sum  Source/MeadowComms/build/partition_table/partition-table.bin | cut -d ' ' -f 1 > Source/MeadowComms/build/partition_table/partition-table.bin.md5
+md5sum  $scriptdir/Source/MeadowComms/build/MeadowComms.bin | cut -d ' ' -f 1 > $scriptdir/Source/MeadowComms/build/MeadowComms.bin.md5
+md5sum  $scriptdir/Source/MeadowComms/build/bootloader/bootloader.bin | cut -d ' ' -f 1 > $scriptdir/Source/MeadowComms/build/bootloader/bootloader.bin.md5
+md5sum  $scriptdir/Source/MeadowComms/build/partition_table/partition-table.bin | cut -d ' ' -f 1 > $scriptdir/Source/MeadowComms/build/partition_table/partition-table.bin.md5
 
 git checkout HEAD $scriptdir/Source/MeadowComms/main/build_info.template
 git checkout HEAD $scriptdir/Source/MeadowComms/version.txt

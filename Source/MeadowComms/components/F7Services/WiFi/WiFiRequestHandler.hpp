@@ -641,11 +641,6 @@ private:
     WiFiRequestHandler();
 
     /**
-     *  @brief Private destructor for the class.
-     */
-    ~WiFiRequestHandler();
-
-    /**
      *  @brief Process the station started event (WIFI_EVENT_STA_START).
      */
     void StationStartedEvent();
@@ -881,6 +876,11 @@ public:
     explicit WiFiRequestHandler(IMessageDispatcher *messageDispatcher);
 
     /**
+     *  @brief Private destructor for the class.
+     */
+    virtual ~WiFiRequestHandler();
+
+    /**
      *  @brief Perform and class level setup required before an instance can be used.
      */
     void Setup();
@@ -976,6 +976,10 @@ public:
      */
     static uint32_t GetWiFiTimeout();
     static StatusCodes::StatusCodes SetWiFiTimeout(uint32_t value);
+
+#if defined(UNIT_TESTING)
+    friend class WiFiRequestHandlerTestFriend;
+#endif
 };
 
 #endif /* _WIFI_REQUEST_HANDLER_HPP_ */

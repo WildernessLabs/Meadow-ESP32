@@ -18,6 +18,10 @@
 #include "SharedEnums.hpp"
 #include "Esp32Messaging.hpp"
 #include "IMessageDispatcher.hpp"
+#include "WiFiRequestHandler.hpp"
+#include "SystemRequestHandler.hpp"
+#include "BluetoothRequestHandler.hpp"
+#include "MeshNetworkRequestHandler.hpp"
 
 /**
  *  @brief Message dispatcher class.
@@ -43,6 +47,26 @@ private:
     static QueueHandle_t _outboundMessageQueueHandle;
 
     /**
+     *  @brief WiFi object that will process WiFi messages.
+     */
+    WiFiRequestHandler *_wifiRequestHandler = nullptr;
+
+    /**
+     *  @brief Mesh Network object that will process Mesh Network messages.
+     */
+    MeshNetworkRequestHandler *_meshNetworkRequestHandler = nullptr;
+
+    /**
+     *  @brief System object that will process System messages.
+     */
+    SystemRequestHandler *_systemRequestHandler = nullptr;
+
+    /**
+     *  @brief Bluetooth object that will process Bluetooth messages.
+     */
+    BluetoothRequestHandler *_bluetoothRequestHandler = nullptr;
+
+    /**
      *  @brief Hardware transport provider object that is connected to
      *  the STM32.
      */
@@ -64,11 +88,6 @@ private:
      */
     MockMessageDispatcher();
 
-    /**
-     *  @brief Destructor for the Message Dispatcher.
-     */
-    ~MockMessageDispatcher();
-
 public:
     /**
      *  @brief Name of the message dispatcher task.
@@ -79,6 +98,11 @@ public:
      *  @brief Constructor for the Message Dispatcher.
      */
     explicit MockMessageDispatcher(TransportProviderBase *transportProvider);
+
+    /**
+     *  @brief Destructor for the Message Dispatcher.
+     */
+    virtual ~MockMessageDispatcher();
 
     /**
      *  @brief Queue a message for the ESP32.

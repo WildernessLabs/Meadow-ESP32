@@ -17,6 +17,9 @@
 #include "esp_log.h"
 #include "esp_wifi.h"
 #include "esp_event.h"
+#include "esp_adc/adc_cali.h"
+#include "esp_adc/adc_cali_scheme.h"
+#include "esp_adc/adc_oneshot.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -74,6 +77,16 @@ private:
     FileSystem *_fileSystem;
 
     /**
+     * @brief Handle for ADC1 used on the F7 v1 for battery level monitoring.
+     */
+    adc_oneshot_unit_handle_t _adc1Handle = nullptr;
+
+    /**
+     * @brief Handle for the calibration system for ADC1.
+     */
+    adc_cali_handle_t _adc1CalibrationHandle = nullptr;
+
+    /**
      *  T@brief his method will dispatch incoming messages to the appropriate request handler.
      */
     void DispatchRequest(Message *) override;
@@ -128,6 +141,11 @@ private:
      *  @brief Populate the configuration object with the current configuration.
      */
     static void PopulateConfiguration(Esp32Messaging::SystemConfiguration *);
+
+    /**
+     * @brief Configure ADC1 for battery level monitoring.
+     */
+    void ConfigureADC1();
 
 public:
     /**
