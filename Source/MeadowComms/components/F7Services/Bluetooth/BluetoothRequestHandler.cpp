@@ -2,7 +2,7 @@
  *  Bluetooth.cpp
  *
  *  Created on: 24 Jan 2019
- *  Author: mark
+ *  Author: Mark Stevens
  */
 
 #include "sdkconfig.h"
@@ -65,11 +65,23 @@ BluetoothRequestHandler::BluetoothRequestHandler()
     }
 }
 
+/**
+ * @brief Get this instance of the BluetoothRequestHandler.
+ * 
+ * @return BluetoothRequestHandler* Pointer to this instance of the BluetoothRequestHandler.
+ */
 BluetoothRequestHandler *BluetoothRequestHandler::GetInstance()
 {
     return _instance;
 }
 
+/**
+ * @brief Get this instance of the BluetoothRequestHandler.
+ * 
+ * @param d Message dispatcher that can be used to send messages to the STM32.
+ * 
+ * @return BluetoothRequestHandler* Pointer to this instance of the BluetoothRequestHandler.
+ */
 BluetoothRequestHandler *BluetoothRequestHandler::GetInstance(IMessageDispatcher *d)
 {
     if (!_instance)
@@ -137,6 +149,11 @@ void BluetoothRequestHandler::Setup()
     TRACE_MESSAGE("Setup: Exit");
 }
 
+/**
+ * @brief Get the handles for the services, characteristics and descriptors.
+ * 
+ * @param request Original request from the STM32.
+ */
 void BluetoothRequestHandler::GetHandles(Message *request)
 {
     Esp32Messaging::BTGetHandlesResponse response;
@@ -296,6 +313,9 @@ StatusCodes::StatusCodes BluetoothRequestHandler::PrepareForDeepSleep()
     TRACE_MESSAGE("PrepareForDeepSleep(): Enter");
 }
 
+/**
+ * @brief Start the Bluetooth stack.
+ */
 void BluetoothRequestHandler::StartStack()
 {
     TRACE_MESSAGE("StartStack: Enter");
@@ -405,6 +425,13 @@ StatusCodes::StatusCodes BluetoothRequestHandler::TeardownStack(Message *msg)
     return (Mapping::GetStatusCode(result));
 }
 
+/**
+ * @brief Process a write data request from the Bluetooth client.
+ * 
+ * @param handle Handle for the item that has been changed.
+ * @param data Data that has been written.
+ * @param dataLength Amount of data that has been written.
+ */
 void BluetoothRequestHandler::OnDataWriteRequest(uint16_t handle, uint8_t *data, uint16_t dataLength)
 {
     TRACE_MESSAGE("Creating _writeRequest for 0x%04x with %i bytes", handle, dataLength);
@@ -426,6 +453,11 @@ void BluetoothRequestHandler::OnDataWriteRequest(uint16_t handle, uint8_t *data,
     TRACE_MESSAGE("OnDataWriteRequest: Exit");
 }
 
+/**
+ * @brief Build the service and characteristic graph from the JSON configuration.
+ * 
+ * @param msg Message containing the JSON configuration.
+ */
 void BluetoothRequestHandler::CreateAttributeGraph(Message *msg)
 {
     TRACE_MESSAGE("CreateAttributeGraph. payload len = %lu", msg->PayloadLength);
@@ -447,9 +479,23 @@ void BluetoothRequestHandler::CreateAttributeGraph(Message *msg)
 //////////////////////////
 #define INSTANCE_ID 0
 
+/**
+ * @brief Indicate if the advertising data has been configured.
+ */
 static bool advertising_data_configured = false;
+
+/**
+ * @brief Indicate if the response data has been configured.
+ */
 static bool response_data_configured = false;
 
+/**
+ * @brief Process GATTS events.
+ * 
+ * @param event Event ID for the event that has been generated.
+ * @param gatts_if GATT server callback.
+ * @param param Parameters for the event.
+ */
 void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param)
 {
     DEBUG_MESSAGE_SPECIFY_COMPONENT(__func__, "event = %x\n", event);
@@ -622,6 +668,12 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
     }
 }
 
+/**
+ * @brief GAPE event handler.
+ * 
+ * @param event Event Id for the event that has been generated.
+ * @param param Data for the event.
+ */
 void BluetoothRequestHandler::GAPEventHandler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param)
 {
     TRACE_MESSAGE("GAP event %i", event);
