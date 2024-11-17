@@ -1,24 +1,73 @@
+/**
+ * @file Uuid.cpp
+ * @author Chris Tacke.
+ *
+ * @brief Implementation of the methods operating on 16 and 128 bit UUIDs.
+ *
+ * @copyright Copyright (c) 2019 - 2024
+ */
 #include "Uuid.hpp"
 
+/**
+ * Overview
+ *
+ * Taken from Nordic Semiconductor's BLE characteristics for Beginners:
+ *
+ * https://devzone.nordicsemi.com/guides/short-range-guides/b/bluetooth-low-energy/posts/ble-characteristics-a-beginners-tutorial
+ *
+ * GATT groups attributes together in a specific order.  This order has the Service Declaration at the top
+ * of the group.  This is then followed by the Characteristic Declaration.  These two properties have specific UUIDs
+ * and the two items are defined in the variables
+ *  - PrimaryService
+ *  - CharacteristicDeclaration
+ */
+
+/**
+ * @brief Primary service UUID.
+ *
+ * @note This is the service at the top of each group.  It has the standard type of 0x2800.
+ */
 Uuid16 Uuid16::PrimaryService = Uuid16((uint16_t) 0x2800);
+
+/**
+ * @brief Characteristic declaration UUID for the Primary Service.
+ */
 Uuid16 Uuid16::CharacteristicDeclaration = Uuid16((uint16_t) 0x2803);
 
+/**
+ * @brief Construct a new Uuid16 object (16-bit UUID).
+ */
 Uuid16::Uuid16()
 {
 }
 
+/**
+ * @brief Construct a new Uuid16 object with the specified value.
+ *
+ * @param value Initial value for the UUID.
+ */
 Uuid16::Uuid16(uint16_t value)
 {
     memcpy((void *) data, &value, 2);
 }
 
+/**
+ * @brief Construct a new Uuid16 object from a byte array.
+ *
+ * @param other Pointer to the byte array containing the UUID to be copied.
+ */
 Uuid16::Uuid16(uint8_t *other)
 {
     memcpy((void *) data, other, 2);
 }
 
-// converts a single hex char to a number (0 - 15)
-unsigned char hexDigitToChar(char ch)
+/**
+ * @brief Convert a hexadecimal character to a number.
+ *
+ * @param ch Character to be converted.
+ * @return unsigned char
+ */
+unsigned char HexDigitToChar(char ch)
 {
     // 0-9
     if (ch > 47 && ch < 58)
@@ -35,7 +84,14 @@ unsigned char hexDigitToChar(char ch)
     return 0;
 }
 
-bool isValidHexChar(char ch)
+/**
+ * @brief Check if the character is a valid hexadecimal character.
+ *
+ * @param ch Character to be checked.
+ * @return true If the character is a valid hexadecimal character.
+ * @return false If the character is not a valid hexadecimal character.
+ */
+bool IsValidHexChar(char ch)
 {
     // 0-9
     if (ch > 47 && ch < 58)
@@ -53,20 +109,40 @@ bool isValidHexChar(char ch)
 }
 
 // converts the two hexadecimal characters to an unsigned char (a byte)
+/**
+ * @brief Convert a pair of characters to a byte.
+ *
+ * @param a High 4-bits of the byte.
+ * @param b Lower 4-bits of the byte.
+ * @return unsigned char Byte value represented by the two characters.
+ */
 unsigned char hexPairToChar(char a, char b)
 {
-    return hexDigitToChar(a) * 16 + hexDigitToChar(b);
+    return HexDigitToChar(a) * 16 + HexDigitToChar(b);
 }
 
+/**
+ * @brief Construct a new Uuid128 object with the default values.
+ */
 Uuid128::Uuid128()
 {
 }
 
+/**
+ * @brief Construct a new Uuid128 from an array of bytes.
+ *
+ * @param other 16 bytes of data holding the UUID to be copied.
+ */
 Uuid128::Uuid128(uint8_t *other)
 {
     memcpy((void *) data, other, 16);
 }
 
+/**
+ * @brief Convert a UUID128 (GUID) into a string.
+ *
+ * @return std::string String representation of the UUID.
+ */
 std::string Uuid128::ToString() const
 {
     char one[10], two[6], three[6], four[6], five[14];
@@ -88,6 +164,11 @@ std::string Uuid128::ToString() const
 }
 
 // create a guid from string
+/**
+ * @brief Construct a new Uuid128 object from a string.
+ *
+ * @param fromString String containing the UUID (GUID).
+ */
 Uuid128::Uuid128(const char *fromString)
 {
     char charOne = '\0';
@@ -102,9 +183,11 @@ Uuid128::Uuid128(const char *fromString)
         char ch = fromString[i];
 
         if (ch == '-')
+        {
             continue;
+        }
 
-        if (nextByte >= 16 || !isValidHexChar(ch))
+        if (nextByte >= 16 || !IsValidHexChar(ch))
         {
             // Invalid string so bail
             memset(data, 0, 16);
