@@ -1,9 +1,9 @@
 /**
  * @file BluetoothManager.cpp
  * @author Chris Tacke
- * 
+ *
  * @brief Implementation of the methods in the BluetoothManager class.
- * 
+ *
  * @copyright Copyright (c) 2019 - 2024
  */
 #include "BluetoothManager.hpp"
@@ -35,7 +35,7 @@ BluetoothManager::BluetoothManager() : Services(&this->_handleManager)
 
 /**
  * @brief Process the addition of a new service.
- * 
+ *
  * @param service Service being added.
  */
 void BluetoothManager::HandleServiceAdded(BluetoothService *service)
@@ -45,7 +45,7 @@ void BluetoothManager::HandleServiceAdded(BluetoothService *service)
 
 /**
  * @brief Process the addition of a new characteristic.
- * 
+ *
  * @param characteristic Characteristic being added.
  */
 void BluetoothManager::HandleCharacteristicAdded(BluetoothCharacteristic *characteristic)
@@ -55,7 +55,7 @@ void BluetoothManager::HandleCharacteristicAdded(BluetoothCharacteristic *charac
 
 /**
  * @brief Process the characteristic value changed event.
- * 
+ *
  * @param characteristic Characteristic whose value is being changed.
  */
 void BluetoothManager::HandleValueChanged(BluetoothCharacteristic *characteristic)
@@ -72,9 +72,9 @@ void BluetoothManager::HandleDescriptorAdded(BluetoothDescriptor *)
 
 /**
  * @brief Get all of the handles associated with the BluetoothManager.
- * 
+ *
  * @note It is assumed that the caller has allocated enough memory to hold the handles.
- * 
+ *
  * @param handles Pointer to an array of uint16_t values to hold the handles.
  */
 void BluetoothManager::GetHandles(uint16_t *handles)
@@ -100,7 +100,7 @@ void BluetoothManager::GetHandles(uint16_t *handles)
 
 /**
  * @brief Set the handles for the services, characteristics and descriptors.
- * 
+ *
  * @param handles Pointer to a block of memory holding the handles for the services, characteristics and descriptors.
  * @param count Number of handles.
  */
@@ -191,7 +191,7 @@ void BluetoothManager::GenerateAdvertisingData()
 
 /**
  * @brief Get a pointer to the attribute table.
- * 
+ *
  * @return esp_gatts_attr_db_t* Pointer to the attribute table.
  */
 esp_gatts_attr_db_t *BluetoothManager::GetAttributeTable()
@@ -201,7 +201,7 @@ esp_gatts_attr_db_t *BluetoothManager::GetAttributeTable()
 
 /**
  * @brief Get a pointer to the advertising data.
- * 
+ *
  * @return esp_ble_adv_data_t* Pointer to the advertising data.
  */
 esp_ble_adv_data_t *BluetoothManager::GetAdvertisingData()
@@ -211,7 +211,7 @@ esp_ble_adv_data_t *BluetoothManager::GetAdvertisingData()
 
 /**
  * @brief Get a pointer to the advertising parameters.
- * 
+ *
  * @return esp_ble_adv_params_t* Pointer to the advertising parameters.
  */
 esp_ble_adv_params_t *BluetoothManager::GetAdvertisingParameters()
@@ -221,7 +221,7 @@ esp_ble_adv_params_t *BluetoothManager::GetAdvertisingParameters()
 
 /**
  * @brief Get a pointer to the scan response data.
- * 
+ *
  * @return esp_ble_adv_data_t* Pointer the scan response data.
  */
 esp_ble_adv_data_t *BluetoothManager::GetScanResponseData()
@@ -231,7 +231,7 @@ esp_ble_adv_data_t *BluetoothManager::GetScanResponseData()
 
 /**
  * @brief Get the length of the attributes table.
- * 
+ *
  * @return uint16_t Length of the attributes table.
  */
 uint16_t BluetoothManager::GetAttributeTableLength()
@@ -246,7 +246,7 @@ static int test_value = 0;
 
 /**
  * @brief Get the current value for a given attribute handle.
- * 
+ *
  * @param handle Handle to look up.
  * @param pData Pointer to a block of memory to take the value.
  * @param pLen Pointer to a variable that will hold the length of the data that is being copied.
@@ -274,7 +274,7 @@ void BluetoothManager::GetCurrentValueForAttributeHandle(uint16_t handle, uint8_
 
 /**
  * @brief Set the value for the specified attribute handle.
- * 
+ *
  * @param handle Handle of the attribute being set.
  * @param pData Pointer to the data holding the data value.
  * @param len Length of the data being set.
@@ -302,7 +302,7 @@ void BluetoothManager::SetCurrentValueForAttributeHandle(uint16_t handle, uint8_
 
 /**
  * @brief Build the graph of services, characteristics and descriptors from a pointer toJSON configuration.
- * 
+ *
  * @param cfg_json JSON version of the service configuration.
  */
 void BluetoothManager::BuildGraphFromJson(char *cfg_json)

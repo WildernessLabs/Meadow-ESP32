@@ -1,12 +1,12 @@
 /**
  * @file BluetoothAttribute.hpp
  * @author Chris Tacke
- * 
+ *
  * @brief Hold the definitions for the following:
  *  - BluetoothAttribute class
  *  - CharacteristicProperty enum
  *  - CharacteristicPermission enum
- * 
+ *
  * @copyright Copyright (c) 2019 - 2024
  */
 #ifndef _BLUETOOTH_ATTRIBUTE_HPP_
@@ -29,9 +29,9 @@ enum class CharacteristicProperty : unsigned char { Broadcast = 1 << 0, Read = 1
  * @brief Overload the bitwise OR operator to allow for combining characteristic properties.
  *
  * @param a First permission to combine.
- * 
+ *
  * @param b Second permission to combine.
- * 
+ *
  * @return The combined permission.
  */
 inline CharacteristicProperty operator|(CharacteristicProperty a, CharacteristicProperty b)
@@ -58,9 +58,9 @@ enum class CharacteristicPermission : unsigned short {
  * @brief Overload the bitwise OR operator to allow for combining characteristic permissions.
  *
  * @param a First permission to combine.
- * 
+ *
  * @param b Second permission to combine.
- * 
+ *
  * @return The combined permission.
  */
 inline CharacteristicPermission operator|(CharacteristicPermission a, CharacteristicPermission b)

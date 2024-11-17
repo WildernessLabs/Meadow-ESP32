@@ -1,9 +1,9 @@
 /**
  * @file bt_compat.hpp
  * @author Chris Tacke
- * 
+ *
  * @brief Bluetooth compatibility header.
- * 
+ *
  * @copyright Copyright (c) 2018 - 2024
  */
 #ifndef _BLUETOOTH_COMPAT_HPP_

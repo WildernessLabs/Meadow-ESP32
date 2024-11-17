@@ -1,9 +1,9 @@
 /**
  * @file BluetoothServiceCollection.cpp
  * @author Chris Tacke
- * 
+ *
  * @brief Implementation of the methods in the BluetoothServiceCollection class.
- * 
+ *
  * @copyright Copyright (c) 2019 - 2024
  */
 #include "BluetoothServiceCollection.hpp"
@@ -11,9 +11,9 @@
 
 /**
  * @brief Add a new service to the services collection.
- * 
+ *
  * @param service Service to be added.
- * @return BluetoothService& 
+ * @return BluetoothService&
  */
 BluetoothService &BluetoothServiceCollection::Add(BluetoothService *service)
 {
@@ -54,7 +54,7 @@ BluetoothService &BluetoothServiceCollection::Add(BluetoothService *service)
 
 /**
  * @brief Get the service definitions in this collection.
- * 
+ *
  * @return vector<BluetoothService *> Service definitions.
  */
 vector<BluetoothService *> BluetoothServiceCollection::GetServiceDefinitions()
@@ -64,7 +64,7 @@ vector<BluetoothService *> BluetoothServiceCollection::GetServiceDefinitions()
 
 /**
  * @brief Handle the service characteristic added event.
- * 
+ *
  * @param characteristic Pointer to the characteristic that has been added to the service.
  */
 void BluetoothServiceCollection::HandleServiceCharacteristicAdded(BluetoothCharacteristic *characteristic)
@@ -80,7 +80,7 @@ void BluetoothServiceCollection::HandleServiceCharacteristicAdded(BluetoothChara
 
 /**
  * @brief Handle the service value changed event.
- * 
+ *
  * @param characteristic Characteristic that has had its value changed.
  */
 void BluetoothServiceCollection::HandleServiceValueChanged(BluetoothCharacteristic *characteristic)
@@ -93,7 +93,7 @@ void BluetoothServiceCollection::HandleServiceValueChanged(BluetoothCharacterist
 
 /**
  * @brief Find a service in the collection by UUID.
- * 
+ *
  * @param uuid Pointer to an array of bytes containing the 16-bit UUID fro the service.
  * @return BluetoothService* Pointer to the service if found, NULL otherwise.
  */
@@ -104,7 +104,7 @@ BluetoothService *BluetoothServiceCollection::Find(uint8_t *uuid)
 
 /**
  * @brief Find a service in the collection by UUID.
- * 
+ *
  * @param uuid Uuid16 object containing the UUID of the service to be found.
  * @return BluetoothService* Pointer to the service if found, NULL otherwise.
  */
@@ -126,7 +126,7 @@ BluetoothService *BluetoothServiceCollection::Find(Uuid16 uuid)
 
 /**
  * @brief Get the number of services in this collection.
- * 
+ *
  * @return int Number of services in the collection.
  */
 int BluetoothServiceCollection::Count()

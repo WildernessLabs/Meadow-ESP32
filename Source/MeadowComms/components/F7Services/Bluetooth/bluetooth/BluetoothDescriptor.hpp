@@ -1,11 +1,11 @@
 /**
  * @file BluetoothDescriptor.hpp
  * @author your name (you@domain.com)
- * 
+ *
  * @brief Class defintion and implementation for the BluetoothDescriptor class.
- * 
+ *
  * @copyright Copyright (c) 2019 - 2024
- * 
+ *
  */
 #ifndef _BLUETOOTH_DESCRIPTOR_HPP_
 #define _BLUETOOTH_DESCRIPTOR_HPP_
@@ -34,7 +34,7 @@ private:
 public:
     /**
      * @brief Construct a new BluetoothDescriptor object.
-     * 
+     *
      * @param parent Characteristic that this descriptor belongs to.
      * @param uuid 128-bit UUID for this descriptor.
      * @param permission Permissions for this descriptor.
@@ -53,7 +53,7 @@ public:
 
     /**
      * @brief Construct a new BluetoothDescriptor object.
-     * 
+     *
      * @param parent Characteristic that this descriptor belongs to.
      * @param uuid 16-bit UUID for this descriptor.
      * @param permission Permissions for this descriptor.
@@ -71,7 +71,7 @@ public:
 
     /**
      * @brief Set the Value descriptor.
-     * 
+     *
      * @param value Value to set the descriptor to.
      */
     void SetValue(int value)
@@ -91,7 +91,7 @@ public:
 
     /**
      * @brief Is the UUID a 16 or 128 bit UUID?
-     * 
+     *
      * @return true If the UUID is 128 bits.
      * @return false If the UUID is 16 bits.
      */
