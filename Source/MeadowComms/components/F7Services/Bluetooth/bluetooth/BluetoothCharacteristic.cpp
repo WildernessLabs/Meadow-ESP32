@@ -1,16 +1,16 @@
 /**
  * @file BluetoothCharacteristic.cpp
  * @author Chris Tacke
- * 
+ *
  * @brief Implementation of methods for the BluetoothCharacteristic class.
- * 
+ *
  * @copyright Copyright (c) 2019 - 2024
  */
 #include "BluetoothCharacteristic.hpp"
 
 /**
  * @brief Construct a new BluetoothCharacteristic object.
- * 
+ *
  * @param uuid 16-bit UUID of this characteristic.
  * @param permission Permissions to be applied to the characteristic.
  * @param property Characteristic properties.
@@ -36,7 +36,7 @@ BluetoothCharacteristic::BluetoothCharacteristic(Uuid16 uuid, CharacteristicPerm
 
 /**
  * @brief Construct a new BluetoothCharacteristic object.
- * 
+ *
  * @param uuid 128-bit UUID (GUID) of this characteristic.
  * @param permission Permissions to be applied to the characteristic.
  * @param property Characteristic properties.
@@ -62,7 +62,7 @@ BluetoothCharacteristic::BluetoothCharacteristic(Uuid128 uuid, CharacteristicPer
 
 /**
  * @brief Add a new descriptor to the characteristic.
- * 
+ *
  * @param descriptor Descriptor to be added.
  */
 void BluetoothCharacteristic::AddDescriptor(BluetoothDescriptor *descriptor)

@@ -1,9 +1,9 @@
 /**
  * @file Uuid.hpp
  * @author Chris Tacke
- * 
+ *
  * @brief Definiton for the structures holding 16 and 128 bit UUIDs.
- * 
+ *
  * @copyright Copyright (c) 2019 - 2024
  */
 #ifndef _BLUETOOTH_UUID_HPP_
@@ -32,7 +32,7 @@ struct Uuid128
 
     /**
      * @brief Construct a new Uuid128 object (copy constructor)
-     * 
+     *
      * @param other Structure holding the data to be copied.
      */
     Uuid128(const Uuid128 &other)
@@ -42,7 +42,7 @@ struct Uuid128
 
     /**
      * @brief Overload the equality operator to compare two Uuid128 objects.
-     * 
+     *
      * @param other Object to be compared with.
      * @return true If the data in the two structures is the same.
      * @return false If the data in the two structures is different.
@@ -54,7 +54,7 @@ struct Uuid128
 
     /**
      * @brief Copy the data from one Uuid128 structure into this structure.
-     * 
+     *
      * @param other Uuid16 object to copy the data from.
      * @return Uuid16 This structure.
      */
@@ -66,7 +66,7 @@ struct Uuid128
 
     /**
      * @brief Copy the data from 16 bytes of data into the data in this UUID.
-     * 
+     *
      * @param other Data to be copied into this structure.
      * @return uint8_t* Pointer to the source data.
      */
@@ -89,7 +89,7 @@ struct Uuid16
 
     /**
      * @brief Overloaded the cast to uint16_t.
-     * 
+     *
      * @return uint16_t Data in the structure as a uint16_t.
      */
     operator uint16_t() const
@@ -103,7 +103,7 @@ struct Uuid16
 
     /**
      * @brief Construct a new Uuid16 object (copy constructor)
-     * 
+     *
      * @param other Structure holding the data to be copied.
      */
     Uuid16(const Uuid16 &other)
@@ -113,7 +113,7 @@ struct Uuid16
 
     /**
      * @brief Overload the equality operator to compare two Uuid16 objects.
-     * 
+     *
      * @param other Object to be compared with.
      * @return true If the data in the two structures is the same.
      * @return false If the data in the two structures is different.
@@ -125,7 +125,7 @@ struct Uuid16
 
     /**
      * @brief Copy the data from one Uuid16 structure into this structure.
-     * 
+     *
      * @param other Uuid16 object to copy the data from.
      * @return Uuid16 This structure.
      */
@@ -137,7 +137,7 @@ struct Uuid16
 
     /**
      * @brief Copy the data from two bytes of data into the data in this UUID.
-     * 
+     *
      * @param other Data to be copied into this structure.
      * @return uint8_t* Pointer to the source data.
      */

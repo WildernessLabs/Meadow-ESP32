@@ -67,7 +67,7 @@ BluetoothRequestHandler::BluetoothRequestHandler()
 
 /**
  * @brief Get this instance of the BluetoothRequestHandler.
- * 
+ *
  * @return BluetoothRequestHandler* Pointer to this instance of the BluetoothRequestHandler.
  */
 BluetoothRequestHandler *BluetoothRequestHandler::GetInstance()
@@ -77,9 +77,9 @@ BluetoothRequestHandler *BluetoothRequestHandler::GetInstance()
 
 /**
  * @brief Get this instance of the BluetoothRequestHandler.
- * 
+ *
  * @param d Message dispatcher that can be used to send messages to the STM32.
- * 
+ *
  * @return BluetoothRequestHandler* Pointer to this instance of the BluetoothRequestHandler.
  */
 BluetoothRequestHandler *BluetoothRequestHandler::GetInstance(IMessageDispatcher *d)
@@ -151,7 +151,7 @@ void BluetoothRequestHandler::Setup()
 
 /**
  * @brief Get the handles for the services, characteristics and descriptors.
- * 
+ *
  * @param request Original request from the STM32.
  */
 void BluetoothRequestHandler::GetHandles(Message *request)
@@ -427,7 +427,7 @@ StatusCodes::StatusCodes BluetoothRequestHandler::TeardownStack(Message *msg)
 
 /**
  * @brief Process a write data request from the Bluetooth client.
- * 
+ *
  * @param handle Handle for the item that has been changed.
  * @param data Data that has been written.
  * @param dataLength Amount of data that has been written.
@@ -455,7 +455,7 @@ void BluetoothRequestHandler::OnDataWriteRequest(uint16_t handle, uint8_t *data,
 
 /**
  * @brief Build the service and characteristic graph from the JSON configuration.
- * 
+ *
  * @param msg Message containing the JSON configuration.
  */
 void BluetoothRequestHandler::CreateAttributeGraph(Message *msg)
@@ -491,7 +491,7 @@ static bool response_data_configured = false;
 
 /**
  * @brief Process GATTS events.
- * 
+ *
  * @param event Event ID for the event that has been generated.
  * @param gatts_if GATT server callback.
  * @param param Parameters for the event.
@@ -670,7 +670,7 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
 
 /**
  * @brief GAPE event handler.
- * 
+ *
  * @param event Event Id for the event that has been generated.
  * @param param Data for the event.
  */

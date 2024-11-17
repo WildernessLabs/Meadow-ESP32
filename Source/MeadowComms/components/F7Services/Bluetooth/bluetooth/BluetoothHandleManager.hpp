@@ -1,9 +1,9 @@
 /**
  * @file BluetoothHandleManager.hpp
  * @author Chris Tacke
- * 
+ *
  * @brief Class definition for the BluetoothHandleManager class.
- * 
+ *
  * @copyright Copyright (c) 2019 - 2024
  */
 #ifndef _BLUETOOTH_HANDLE_MANAGER_HPP_
@@ -16,7 +16,7 @@
 class BluetoothService;
 
 /**
- * @brief 
+ * @brief
  */
 class BluetoothHandleManager
 {
@@ -31,7 +31,7 @@ private:
 
     /**
      * @brief Get the next handle value.
-     * 
+     *
      * @return unsigned short Handle value.
      */
     unsigned short GetHandle()

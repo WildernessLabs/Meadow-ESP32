@@ -1,9 +1,9 @@
 /**
  * @file BluetoothCharacteristicValue.cpp
  * @author Chris Tacke
- * 
+ *
  * @brief Implementation of methods in the BluetoothCharacteristicValue class.
- * 
+ *
  * @copyright Copyright (c) 2019 - 2024
  */
 #include "BluetoothCharacteristicValue.hpp"
@@ -64,7 +64,6 @@ BluetoothCharacteristicValue::~BluetoothCharacteristicValue()
         _value = NULL;
     }
 }
-
 
 /**
  *  @brief Write a new value to the characteristic.

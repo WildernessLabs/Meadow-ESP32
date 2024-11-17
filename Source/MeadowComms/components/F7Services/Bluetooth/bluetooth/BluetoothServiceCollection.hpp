@@ -1,9 +1,9 @@
 /**
  * @file BluetoothServiceCollection.hpp
  * @author Chris Tacke
- * 
+ *
  * @brief Definition for the BluetoothServiceCollection class.
- * 
+ *
  * @copyright Copyright (c) 2019 - 2024
  */
 #ifndef _BLUETOOTH_SERVICE_COLLECTION_HPP_
@@ -44,7 +44,7 @@ private:
 public:
     /**
      * @brief Construct a new Bluetooth Service Collection object
-     * 
+     *
      * @param handleManager Handle manager for this service collection.
      */
     BluetoothServiceCollection(BluetoothHandleManager *handleManager)

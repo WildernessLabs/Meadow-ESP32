@@ -1,9 +1,9 @@
 /**
  * @file BluetoothCharacteristic.hpp
  * @author Chris Tacke
- * 
+ *
  * @brief Class definition for a Bluetooth characteristic.
- * 
+ *
  * @copyright Copyright (c) 2019 - 2024
  */
 #ifndef _BLUETOOTH_CHARACTERISTIC_HPP_
@@ -51,7 +51,7 @@ public:
 
     /**
      * @brief Get the vector of BluetoothDescriptor objects for this characteristic.
-     * 
+     *
      * @return vector<BluetoothDescriptor *> Vector of BluetoothDescriptor objects.
      */
     vector<BluetoothDescriptor *> GetDescriptorDefinitions()

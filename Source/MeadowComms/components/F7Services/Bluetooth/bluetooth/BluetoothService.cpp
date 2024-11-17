@@ -1,9 +1,9 @@
 /**
  * @file BluetoothService.cpp
  * @author Chris Tacke
- * 
+ *
  * @brief Implementation for the BluetoothService class.
- * 
+ *
  * @copyright Copyright (c) 2019 - 2024
  */
 #include "BluetoothService.hpp"
@@ -18,9 +18,9 @@ BluetoothService::BluetoothService()
 
 /**
  * @brief Construct a new BluetoothService object.
- * 
+ *
  * @param name Name of the service.
- * 
+ *
  * @param uuid UUID of the service.
  */
 BluetoothService::BluetoothService(const char *name, Uuid16 uuid)
@@ -31,7 +31,7 @@ BluetoothService::BluetoothService(const char *name, Uuid16 uuid)
 
 /**
  * @brief Add a characteristic to the service.
- * 
+ *
  * @param characteristic Characteristic to be added.
  * @return BluetoothCharacteristic& Reference to the characteristic that has been added.
  */

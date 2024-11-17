@@ -1,9 +1,9 @@
 /**
  * @file BluetoothManager.hpp
  * @author Chris Tacke
- * 
+ *
  * @brief Class definition for the BluetoothManager class.
- * 
+ *
  * @copyright Copyright (c) 2019 - 2024
  */
 #ifndef _BLUETOOTH_MANAGER_HPP_
@@ -106,7 +106,7 @@ public:
 
     /**
      * @brief Get the number of attributes in the attribute table.
-     * 
+     *
      * @return int Number of handles.
      */
     int GetHandleCount()

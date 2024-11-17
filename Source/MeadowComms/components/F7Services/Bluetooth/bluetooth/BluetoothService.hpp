@@ -1,9 +1,9 @@
 /**
  * @file BluetoothService.hpp
  * @author Chris Tacke
- * 
+ *
  * @brief Class declaration for the BluetoothService class.
- * 
+ *
  * @copyright Copyright (c) 2019 - 2024
  */
 #ifndef _BLUETOOTH_SERVICE_HPP_
@@ -54,7 +54,7 @@ public:
 
     /**
      * @brief Set the Bluetooth handle manager.
-     * 
+     *
      * @param handleManager Pointer to the Bluetooth handle manager.
      */
     void SetHandleManager(BluetoothHandleManager *handleManager)
@@ -64,7 +64,7 @@ public:
 
     /**
      * @brief Get the characteristic definitions for this service.
-     * 
+     *
      * @return vector<BluetoothCharacteristic *> Pointer to the vector of BluetoothCharacteristic objects.
      */
     vector<BluetoothCharacteristic *> GetCharacteristicDefinitions()

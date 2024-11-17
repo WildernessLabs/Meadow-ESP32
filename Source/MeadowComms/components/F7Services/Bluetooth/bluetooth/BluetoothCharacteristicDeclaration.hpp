@@ -1,9 +1,9 @@
 /**
  * @file BluetoothCharacteristicDeclaration.hpp
  * @author Chris Tacke
- * 
+ *
  * @brief Class declaration for the BluetoothCharacteristicDeclaration class.
- * 
+ *
  * @copyright Copyright (c) 2019 - 2024
  */
 #ifndef _BLUETOOTH_CHARACTERISTIC_DECLARATION_HPP_
@@ -33,7 +33,7 @@ private:
 public:
     /**
      * @brief Construct a new Bluetooth Characteristic Declaration object
-     * 
+     *
      * @param value_uuid 16-bit UUID for the characteristic.
      * @param permission Permissions for the characteristic.
      * @param properties Properties of the characteristic.
@@ -48,7 +48,7 @@ public:
 
     /**
      * @brief Construct a new Bluetooth Characteristic Declaration object
-     * 
+     *
      * @param value_uuid 128-bit UUID for the characteristic.
      * @param permission Permissions for the characteristic.
      * @param properties Properties of the characteristic.
@@ -79,7 +79,7 @@ public:
 
     /**
      * @brief Is the UUID 16 or 128 bit?
-     * 
+     *
      * @return true The UUID is a 128-bit UUID.
      * @return false The UUID is a 16-bit UUID.
      */

@@ -1,20 +1,20 @@
 /**
  * @file Uuid.cpp
  * @author Chris Tacke.
- * 
+ *
  * @brief Implementation of the methods operating on 16 and 128 bit UUIDs.
- * 
+ *
  * @copyright Copyright (c) 2019 - 2024
  */
 #include "Uuid.hpp"
 
 /**
  * Overview
- * 
+ *
  * Taken from Nordic Semiconductor's BLE characteristics for Beginners:
- * 
+ *
  * https://devzone.nordicsemi.com/guides/short-range-guides/b/bluetooth-low-energy/posts/ble-characteristics-a-beginners-tutorial
- * 
+ *
  * GATT groups attributes together in a specific order.  This order has the Service Declaration at the top
  * of the group.  This is then followed by the Characteristic Declaration.  These two properties have specific UUIDs
  * and the two items are defined in the variables
@@ -24,7 +24,7 @@
 
 /**
  * @brief Primary service UUID.
- * 
+ *
  * @note This is the service at the top of each group.  It has the standard type of 0x2800.
  */
 Uuid16 Uuid16::PrimaryService = Uuid16((uint16_t) 0x2800);
@@ -43,7 +43,7 @@ Uuid16::Uuid16()
 
 /**
  * @brief Construct a new Uuid16 object with the specified value.
- * 
+ *
  * @param value Initial value for the UUID.
  */
 Uuid16::Uuid16(uint16_t value)
@@ -53,7 +53,7 @@ Uuid16::Uuid16(uint16_t value)
 
 /**
  * @brief Construct a new Uuid16 object from a byte array.
- * 
+ *
  * @param other Pointer to the byte array containing the UUID to be copied.
  */
 Uuid16::Uuid16(uint8_t *other)
@@ -63,9 +63,9 @@ Uuid16::Uuid16(uint8_t *other)
 
 /**
  * @brief Convert a hexadecimal character to a number.
- * 
+ *
  * @param ch Character to be converted.
- * @return unsigned char 
+ * @return unsigned char
  */
 unsigned char HexDigitToChar(char ch)
 {
@@ -86,7 +86,7 @@ unsigned char HexDigitToChar(char ch)
 
 /**
  * @brief Check if the character is a valid hexadecimal character.
- * 
+ *
  * @param ch Character to be checked.
  * @return true If the character is a valid hexadecimal character.
  * @return false If the character is not a valid hexadecimal character.
@@ -111,7 +111,7 @@ bool IsValidHexChar(char ch)
 // converts the two hexadecimal characters to an unsigned char (a byte)
 /**
  * @brief Convert a pair of characters to a byte.
- * 
+ *
  * @param a High 4-bits of the byte.
  * @param b Lower 4-bits of the byte.
  * @return unsigned char Byte value represented by the two characters.
@@ -130,7 +130,7 @@ Uuid128::Uuid128()
 
 /**
  * @brief Construct a new Uuid128 from an array of bytes.
- * 
+ *
  * @param other 16 bytes of data holding the UUID to be copied.
  */
 Uuid128::Uuid128(uint8_t *other)
@@ -140,7 +140,7 @@ Uuid128::Uuid128(uint8_t *other)
 
 /**
  * @brief Convert a UUID128 (GUID) into a string.
- * 
+ *
  * @return std::string String representation of the UUID.
  */
 std::string Uuid128::ToString() const
@@ -166,7 +166,7 @@ std::string Uuid128::ToString() const
 // create a guid from string
 /**
  * @brief Construct a new Uuid128 object from a string.
- * 
+ *
  * @param fromString String containing the UUID (GUID).
  */
 Uuid128::Uuid128(const char *fromString)
