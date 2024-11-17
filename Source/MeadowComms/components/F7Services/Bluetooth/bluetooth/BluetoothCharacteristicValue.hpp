@@ -1,5 +1,15 @@
+/**
+ * @file BluetoothCharacteristicValue.hpp
+ * @author Chris Tacke
+ *
+ * @brief Definition for the BluetoothCharacteristicValue class.
+ *
+ * @copyright Copyright (c) 2019 - 2024
+ */
 #ifndef _BLUETOOTH_CHARACTERISTIC_VALUE_HPP_
 #define _BLUETOOTH_CHARACTERISTIC_VALUE_HPP_
+
+#include "sdkconfig.h"
 
 #include <string>
 #include <vector>
@@ -12,6 +22,9 @@ using namespace std;
 
 class BluetoothCharacteristic;
 
+/**
+ * @brief Class holding a Bluetooth characteristic value.
+ */
 class BluetoothCharacteristicValue : public BluetoothAttribute
 {
 private:
@@ -33,6 +46,11 @@ public:
     bool WriteValue(uint8_t *source, int length);
     bool ReadValue(uint8_t *dest, int length);
 
+    /**
+     *  @brief Indicate if the UUID value is 128-bit.
+     *
+     *  @return True if the UUID value is 128-bit, false otherwise.
+     */
     bool Is128()
     {
         return _is128;
