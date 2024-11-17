@@ -1,3 +1,11 @@
+/**
+ * @file BluetoothManager.cpp
+ * @author Chris Tacke
+ * 
+ * @brief Implementation of the methods in the BluetoothManager class.
+ * 
+ * @copyright Copyright (c) 2019 - 2024
+ */
 #include "BluetoothManager.hpp"
 
 #include "../rapidjson/document.h"
@@ -5,9 +13,19 @@
 
 using namespace rapidjson;
 
+/**
+ * @brief Variable holding the UUID of the primary service (0x2800).
+ */
 static const uint16_t primary_service_uuid = ESP_GATT_UUID_PRI_SERVICE;
+
+/**
+ * @brief Size of a character variable.
+ */
 #define CHAR_DECLARATION_SIZE (sizeof(uint8_t))
 
+/**
+ * @brief Construct a new Bluetooth Manager:: Bluetooth Manager object
+ */
 BluetoothManager::BluetoothManager() : Services(&this->_handleManager)
 {
     Services.OnServiceAdded = &BluetoothManager::HandleServiceAdded;
@@ -15,25 +33,50 @@ BluetoothManager::BluetoothManager() : Services(&this->_handleManager)
     Services.OnValueChanged = &BluetoothManager::HandleValueChanged;
 }
 
+/**
+ * @brief Process the addition of a new service.
+ * 
+ * @param service Service being added.
+ */
 void BluetoothManager::HandleServiceAdded(BluetoothService *service)
 {
     ESP_LOGI(LOG_COMPONENT_NAME, "New Service: 0x%04X (%s)\n", service->Handle, service->Name.c_str());
 }
 
+/**
+ * @brief Process the addition of a new characteristic.
+ * 
+ * @param characteristic Characteristic being added.
+ */
 void BluetoothManager::HandleCharacteristicAdded(BluetoothCharacteristic *characteristic)
 {
     ESP_LOGI(LOG_COMPONENT_NAME, "New Characteristic: declaration @ 0x%04X value @ 0x%04X\n", characteristic->Declaration->Handle, characteristic->Value->Handle);
 }
 
+/**
+ * @brief Process the characteristic value changed event.
+ * 
+ * @param characteristic Characteristic whose value is being changed.
+ */
 void BluetoothManager::HandleValueChanged(BluetoothCharacteristic *characteristic)
 {
     ESP_LOGI(LOG_COMPONENT_NAME, "New Characteristic Value: value @ 0x%04X is %i bytes\n", characteristic->Value->Handle, characteristic->Value->CurrentLength);
 }
 
+/**
+ * @brief Handle the addition of a new descriptor.
+ */
 void BluetoothManager::HandleDescriptorAdded(BluetoothDescriptor *)
 {
 }
 
+/**
+ * @brief Get all of the handles associated with the BluetoothManager.
+ * 
+ * @note It is assumed that the caller has allocated enough memory to hold the handles.
+ * 
+ * @param handles Pointer to an array of uint16_t values to hold the handles.
+ */
 void BluetoothManager::GetHandles(uint16_t *handles)
 {
     int index = 0;
@@ -55,6 +98,12 @@ void BluetoothManager::GetHandles(uint16_t *handles)
     }
 }
 
+/**
+ * @brief Set the handles for the services, characteristics and descriptors.
+ * 
+ * @param handles Pointer to a block of memory holding the handles for the services, characteristics and descriptors.
+ * @param count Number of handles.
+ */
 void BluetoothManager::SetHandles(uint16_t *handles, uint16_t count)
 {
     ESP_LOGI(LOG_COMPONENT_NAME, "Handles: \n");
@@ -95,6 +144,9 @@ void BluetoothManager::SetHandles(uint16_t *handles, uint16_t count)
     }
 }
 
+/**
+ * @brief Generate the advertising data for the device.
+ */
 void BluetoothManager::GenerateAdvertisingData()
 {
     uint8_t manufacturer_data[10] = {'W', 'I', 'L', 'D', 'E', 'R', 'N', 'E', 'S', 'S'};
@@ -121,14 +173,14 @@ void BluetoothManager::GenerateAdvertisingData()
     _advertisingData.p_service_uuid = advertising_service_uuid;
     _advertisingData.flag = (ESP_BLE_ADV_FLAG_GEN_DISC | ESP_BLE_ADV_FLAG_BREDR_NOT_SPT);
 
-    // scan response data
+    // Scan response data
     _scanResponseData.set_scan_rsp = true;
     _scanResponseData.include_name = true;
     _scanResponseData.include_txpower = true;
     _scanResponseData.manufacturer_len = sizeof(manufacturer_data);
     _scanResponseData.p_manufacturer_data = manufacturer_data;
 
-    // advertising parameters
+    // Advertising parameters
     _advertisingParameters.adv_int_min = 0x20;
     _advertisingParameters.adv_int_max = 0x40;
     _advertisingParameters.adv_type = ADV_TYPE_IND;
@@ -137,33 +189,68 @@ void BluetoothManager::GenerateAdvertisingData()
     _advertisingParameters.adv_filter_policy = ADV_FILTER_ALLOW_SCAN_ANY_CON_ANY;
 }
 
+/**
+ * @brief Get a pointer to the attribute table.
+ * 
+ * @return esp_gatts_attr_db_t* Pointer to the attribute table.
+ */
 esp_gatts_attr_db_t *BluetoothManager::GetAttributeTable()
 {
     return _attribute_table;
 }
 
+/**
+ * @brief Get a pointer to the advertising data.
+ * 
+ * @return esp_ble_adv_data_t* Pointer to the advertising data.
+ */
 esp_ble_adv_data_t *BluetoothManager::GetAdvertisingData()
 {
     return &_advertisingData;
 }
 
+/**
+ * @brief Get a pointer to the advertising parameters.
+ * 
+ * @return esp_ble_adv_params_t* Pointer to the advertising parameters.
+ */
 esp_ble_adv_params_t *BluetoothManager::GetAdvertisingParameters()
 {
     return &_advertisingParameters;
 }
 
+/**
+ * @brief Get a pointer to the scan response data.
+ * 
+ * @return esp_ble_adv_data_t* Pointer the scan response data.
+ */
 esp_ble_adv_data_t *BluetoothManager::GetScanResponseData()
 {
     return &_scanResponseData;
 }
 
+/**
+ * @brief Get the length of the attributes table.
+ * 
+ * @return uint16_t Length of the attributes table.
+ */
 uint16_t BluetoothManager::GetAttributeTableLength()
 {
     return _attributeTableLength;
 }
 
+/**
+ * @brief Dummy variable.
+ */
 static int test_value = 0;
 
+/**
+ * @brief Get the current value for a given attribute handle.
+ * 
+ * @param handle Handle to look up.
+ * @param pData Pointer to a block of memory to take the value.
+ * @param pLen Pointer to a variable that will hold the length of the data that is being copied.
+ */
 void BluetoothManager::GetCurrentValueForAttributeHandle(uint16_t handle, uint8_t *pData, uint16_t *pLen)
 {
     // TODO: go get the data from the STM - for now we just increment to test the data is changing
@@ -185,6 +272,13 @@ void BluetoothManager::GetCurrentValueForAttributeHandle(uint16_t handle, uint8_
     }
 }
 
+/**
+ * @brief Set the value for the specified attribute handle.
+ * 
+ * @param handle Handle of the attribute being set.
+ * @param pData Pointer to the data holding the data value.
+ * @param len Length of the data being set.
+ */
 void BluetoothManager::SetCurrentValueForAttributeHandle(uint16_t handle, uint8_t *pData, uint16_t len)
 {
     ESP_LOGI(LOG_COMPONENT_NAME, "Received %i bytes of data for attribute handle 0x%04x\n", len, handle);
@@ -193,20 +287,24 @@ void BluetoothManager::SetCurrentValueForAttributeHandle(uint16_t handle, uint8_
 
     if (existing != _valueMap.end())
     {
-        // clear and write
+        // Clear and write
         memset(existing->second.value, 0, existing->second.length);
-        // only write *up to* the defined max length
+        // Only write *up to* the defined max length
         size_t length_to_write = existing->second.length < len ? existing->second.length : len;
         memcpy(existing->second.value, pData, length_to_write);
     }
     else
     {
-        // unknown handle
-        // this should *never* happen, but best to be safe
-        ESP_LOGI(LOG_COMPONENT_NAME, "value received with unknown handle 0x%04x\n", test_value);
+        // Unknown handle - this should *never* happen, but best to be safe
+        ESP_LOGI(LOG_COMPONENT_NAME, "Value received with unknown handle 0x%04x\n", test_value);
     }
 }
 
+/**
+ * @brief Build the graph of services, characteristics and descriptors from a pointer toJSON configuration.
+ * 
+ * @param cfg_json JSON version of the service configuration.
+ */
 void BluetoothManager::BuildGraphFromJson(char *cfg_json)
 {
     ESP_LOGI(LOG_COMPONENT_NAME, "parsing config json...\n");
@@ -335,6 +433,9 @@ void BluetoothManager::BuildGraphFromJson(char *cfg_json)
     ESP_LOGI(LOG_COMPONENT_NAME, "parsing json complete!\n");
 }
 
+/**
+ * @brief Generate the attributes table for the GATT database.
+ */
 void BluetoothManager::GenerateAttributeTable()
 {
     // TODO: how many attributes are we going to need?
@@ -344,7 +445,7 @@ void BluetoothManager::GenerateAttributeTable()
 
     auto count = 0;
 
-    // not thrilled with the double-iteration but:
+    // Not thrilled with the double-iteration but:
     // - the list is small
     // - it's better than dynamic resizing the array for every attribute we need to add
     for (const auto &svc: Services.GetServiceDefinitions())
@@ -358,8 +459,8 @@ void BluetoothManager::GenerateAttributeTable()
 
             for (const auto &descriptor: characteristic->GetDescriptorDefinitions())
             {
-                (void) descriptor; // squash the warning about unused variable
-                count++;           // +1 for the decriptor
+                (void) descriptor; // Squash the warning about unused variable
+                count++;           // +1 for the descriptor
             }
         }
     }

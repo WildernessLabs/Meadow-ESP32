@@ -1,16 +1,40 @@
+/**
+ * @file BluetoothService.cpp
+ * @author Chris Tacke
+ * 
+ * @brief Implementation for the BluetoothService class.
+ * 
+ * @copyright Copyright (c) 2019 - 2024
+ */
 #include "BluetoothService.hpp"
 #include "esp_log.h"
 
+/**
+ * @brief Construct a new BluetoothService object.
+ */
 BluetoothService::BluetoothService()
 {
 }
 
+/**
+ * @brief Construct a new BluetoothService object.
+ * 
+ * @param name Name of the service.
+ * 
+ * @param uuid UUID of the service.
+ */
 BluetoothService::BluetoothService(const char *name, Uuid16 uuid)
 {
     Name.assign(name);
     Uuid = uuid;
 }
 
+/**
+ * @brief Add a characteristic to the service.
+ * 
+ * @param characteristic Characteristic to be added.
+ * @return BluetoothCharacteristic& Reference to the characteristic that has been added.
+ */
 BluetoothCharacteristic &BluetoothService::AddCharacteristic(BluetoothCharacteristic *characteristic)
 {
     // do we already know about this characteristic?  If so, ignore
