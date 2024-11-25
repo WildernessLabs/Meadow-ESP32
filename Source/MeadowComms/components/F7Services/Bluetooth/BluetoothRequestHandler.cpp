@@ -465,7 +465,7 @@ void BluetoothRequestHandler::OnDataWriteRequest(uint16_t handle, uint8_t *data,
 void BluetoothRequestHandler::CreateAttributeGraph(Message *msg)
 {
     TRACE_MESSAGE("CreateAttributeGraph: Enter");
-    
+
     TRACE_MESSAGE("CreateAttributeGraph. payload len = %lu", msg->PayloadLength);
 
     Esp32Messaging::BTStackConfig *config = Encoders::ExtractBTStackConfig(msg->Payload);
@@ -656,7 +656,8 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
                 }
                 else if (param->add_attr_tab.num_handle != _manager.GetAttributeTableLength())
                 {
-                    ERROR_MESSAGE("create attribute table abnormally, num_handle (%d) \
+                    ERROR_MESSAGE(
+                        "create attribute table abnormally, num_handle (%d) \
                             doesn't equal to HRS_IDX_NB(%d)",
                         param->add_attr_tab.num_handle, _manager.GetAttributeTableLength());
                 }
