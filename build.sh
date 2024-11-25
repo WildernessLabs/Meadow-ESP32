@@ -292,7 +292,7 @@ if [ ! -z "$DEBUG_SELECTIONS" ]; then
             IDF_DEFINES+=" -DMESSAGES_DEBUG=1"
             ;;
             bt)
-            IDF_DEFINES+=" -DBT_DEBUG=1"
+            IDF_DEFINES+=" -DBLUETOOTH_DEBUG=1"
             ;;
             thread)
             IDF_DEFINES+=" -DTHREAD_DEBUG=1"
