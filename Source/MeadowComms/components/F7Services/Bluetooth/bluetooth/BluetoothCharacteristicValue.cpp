@@ -6,7 +6,32 @@
  *
  * @copyright Copyright (c) 2019 - 2024
  */
+#include "Logging.hpp"
+
+#include "BluetoothRequestHandler.hpp"
+
 #include "BluetoothCharacteristicValue.hpp"
+
+/*
+ * ----------------------------------------------------------------------------
+ *
+ *               Initialise class level static variables.
+ *
+ * ----------------------------------------------------------------------------
+ */
+
+/**
+ * @brief Name of the component (used for logging).
+ */
+const char *BluetoothCharacteristicValue::COMPONENT_NAME = BluetoothRequestHandler::COMPONENT_NAME;
+
+/*
+ * ----------------------------------------------------------------------------
+ *
+ *                  Constructors and destructors.
+ *
+ * ----------------------------------------------------------------------------
+ */
 
 /**
  *  @brief Create a new characteristic value.
@@ -21,11 +46,15 @@
  */
 BluetoothCharacteristicValue::BluetoothCharacteristicValue(BluetoothCharacteristic *parent, Uuid16 uuid, CharacteristicPermission permission, int maxValueLength)
 {
+    TRACE_MESSAGE("BluetoothCharacteristicValue(UUID16): Enter");
+
     _parent = parent;
     uuid16 = uuid;
     Permission = permission;
     _value = new uint8_t[maxValueLength];
     MaxLength = maxValueLength;
+
+    TRACE_MESSAGE("BluetoothCharacteristicValue(UUID16): Exit");
 }
 
 /**
@@ -41,12 +70,16 @@ BluetoothCharacteristicValue::BluetoothCharacteristicValue(BluetoothCharacterist
  */
 BluetoothCharacteristicValue::BluetoothCharacteristicValue(BluetoothCharacteristic *parent, Uuid128 uuid, CharacteristicPermission permission, int maxValueLength)
 {
+    TRACE_MESSAGE("BluetoothCharacteristicValue(UUID128): Enter");
+
     _parent = parent;
     uuid128 = uuid;
     Permission = permission;
     _value = new uint8_t[maxValueLength];
     MaxLength = maxValueLength;
     _is128 = true;
+
+    TRACE_MESSAGE("BluetoothCharacteristicValue(UUID128): Exit");
 }
 
 /**
@@ -54,6 +87,8 @@ BluetoothCharacteristicValue::BluetoothCharacteristicValue(BluetoothCharacterist
  */
 BluetoothCharacteristicValue::~BluetoothCharacteristicValue()
 {
+    TRACE_MESSAGE("~BluetoothCharacteristicValue: Enter");
+
     if (_value)
     {
         //
@@ -63,7 +98,17 @@ BluetoothCharacteristicValue::~BluetoothCharacteristicValue()
         delete _value;
         _value = NULL;
     }
+
+    TRACE_MESSAGE("~BluetoothCharacteristicValue: Exit");
 }
+
+/*
+ * ----------------------------------------------------------------------------
+ *
+ *                             Methods
+ *
+ * ----------------------------------------------------------------------------
+ */
 
 /**
  *  @brief Write a new value to the characteristic.
@@ -76,6 +121,8 @@ BluetoothCharacteristicValue::~BluetoothCharacteristicValue()
  */
 bool BluetoothCharacteristicValue::WriteValue(uint8_t *source, int length)
 {
+    TRACE_MESSAGE("WriteValue: Enter");
+
     if (length > MaxLength)
     {
         return false;
@@ -96,6 +143,8 @@ bool BluetoothCharacteristicValue::WriteValue(uint8_t *source, int length)
     }
 
     return true;
+
+    TRACE_MESSAGE("WriteValue: Exit");
 }
 
 /**
@@ -109,6 +158,8 @@ bool BluetoothCharacteristicValue::WriteValue(uint8_t *source, int length)
  */
 bool BluetoothCharacteristicValue::ReadValue(uint8_t *dest, int length)
 {
+    TRACE_MESSAGE("ReadValue: Enter");
+
     if (length > CurrentLength)
     {
         return false;
@@ -124,4 +175,6 @@ bool BluetoothCharacteristicValue::ReadValue(uint8_t *dest, int length)
     }
 
     return true;
+
+    TRACE_MESSAGE("ReadValue: Exit");
 }

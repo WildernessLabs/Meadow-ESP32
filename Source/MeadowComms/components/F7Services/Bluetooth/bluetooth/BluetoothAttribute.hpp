@@ -16,10 +16,6 @@
 
 #include "bt_compat.hpp"
 
-#define LOG_COMPONENT_NAME "BTTask"
-
-// const char *BluetoothAttribute::COMPONENT_NAME = "BTTask";
-
 /**
  * @brief Property type of this characteristic
  */
@@ -74,6 +70,11 @@ inline CharacteristicPermission operator|(CharacteristicPermission a, Characteri
 class BluetoothAttribute
 {
 public:
+    /**
+     *  @brief Name of the component / task for the Bluetooth system.
+     */
+    static const char *COMPONENT_NAME;
+
     /**
      * @brief Permissions for this attribute
      */

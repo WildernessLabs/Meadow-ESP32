@@ -6,8 +6,33 @@
  *
  * @copyright Copyright (c) 2019 - 2024
  */
+#include "Logging.hpp"
+
+#include "BluetoothRequestHandler.hpp"
+
 #include "BluetoothServiceCollection.hpp"
 #include "esp_log.h"
+
+/*
+ * ----------------------------------------------------------------------------
+ *
+ *               Initialise class level static variables.
+ *
+ * ----------------------------------------------------------------------------
+ */
+
+/**
+ * @brief Name of the component for logging.
+ */
+const char *BluetoothServiceCollection::COMPONENT_NAME = BluetoothRequestHandler::COMPONENT_NAME;
+
+/*
+ * ----------------------------------------------------------------------------
+ *
+ *                             Methods
+ *
+ * ----------------------------------------------------------------------------
+ */
 
 /**
  * @brief Add a new service to the services collection.
@@ -17,6 +42,8 @@
  */
 BluetoothService &BluetoothServiceCollection::Add(BluetoothService *service)
 {
+    TRACE_MESSAGE("Add: Enter");
+
     // Do we already know about this service?  If so, ignore
     bool exists = false;
 
@@ -26,7 +53,7 @@ BluetoothService &BluetoothServiceCollection::Add(BluetoothService *service)
 
         if (svc->Uuid == service->Uuid)
         {
-            ESP_LOGI(LOG_COMPONENT_NAME, "Already exists.  Skipping\n");
+            TRACE_MESSAGE("Already exists.  Skipping");
             exists = true;
             break;
         }
@@ -47,7 +74,9 @@ BluetoothService &BluetoothServiceCollection::Add(BluetoothService *service)
         }
     }
 
-    ESP_LOGI(LOG_COMPONENT_NAME, "%i services known\n", (int) _services.size());
+    TRACE_MESSAGE("%i services known", (int) _services.size());
+
+    TRACE_MESSAGE("Add: Exit");
 
     return *service;
 }
@@ -69,6 +98,8 @@ vector<BluetoothService *> BluetoothServiceCollection::GetServiceDefinitions()
  */
 void BluetoothServiceCollection::HandleServiceCharacteristicAdded(BluetoothCharacteristic *characteristic)
 {
+    TRACE_MESSAGE("HandleServiceCharacteristicAdded: Enter");
+
     // Pass the event upstream
     characteristic->OnValueChanged = std::bind(&BluetoothServiceCollection::HandleServiceValueChanged, this, std::placeholders::_1);
 
@@ -76,6 +107,8 @@ void BluetoothServiceCollection::HandleServiceCharacteristicAdded(BluetoothChara
     {
         OnCharacteristicAdded(characteristic);
     }
+
+    TRACE_MESSAGE("HandleServiceCharacteristicAdded: Exit");
 }
 
 /**
@@ -85,10 +118,14 @@ void BluetoothServiceCollection::HandleServiceCharacteristicAdded(BluetoothChara
  */
 void BluetoothServiceCollection::HandleServiceValueChanged(BluetoothCharacteristic *characteristic)
 {
+    TRACE_MESSAGE("HandleServiceValueChanged: Enter");
+
     if (OnValueChanged)
     {
         OnValueChanged(characteristic);
     }
+
+    TRACE_MESSAGE("HandleServiceValueChanged: Exit");
 }
 
 /**
@@ -110,16 +147,20 @@ BluetoothService *BluetoothServiceCollection::Find(uint8_t *uuid)
  */
 BluetoothService *BluetoothServiceCollection::Find(Uuid16 uuid)
 {
+    TRACE_MESSAGE("Find: Enter");
+
     for (auto it = _services.begin(); it != _services.end(); ++it)
     {
         auto svc = (BluetoothService *) *it;
 
         if (svc->Uuid == uuid)
         {
-            ESP_LOGI(LOG_COMPONENT_NAME, "Found service with matching UUID\n");
+            TRACE_MESSAGE("Found service with matching UUID");
             return svc;
         }
     }
+
+    TRACE_MESSAGE("Find: Exit");
 
     return NULL;
 }

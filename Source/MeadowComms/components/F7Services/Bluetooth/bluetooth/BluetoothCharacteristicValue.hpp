@@ -33,6 +33,11 @@ private:
     BluetoothCharacteristic *_parent;
 
 public:
+    /**
+     *  @brief Name of the component / task for the Bluetooth system.
+     */
+    static const char *COMPONENT_NAME;
+
     uint16_t MaxLength;
     uint16_t CurrentLength;
     Uuid16 uuid16;

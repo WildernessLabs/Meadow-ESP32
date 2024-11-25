@@ -67,8 +67,8 @@ if (MESSAGES_DEBUG EQUAL 1)
     add_compile_definitions(MESSAGES_DEBUG)
 endif()
 
-if (BT_DEBUG EQUAL 1)
-    add_compile_definitions(BT_DEBUG)
+if (BLUETOOTH_DEBUG EQUAL 1)
+    add_compile_definitions(BLUETOOTH_DEBUG)
 endif()
 
 if (THREAD_DEBUG EQUAL 1)
