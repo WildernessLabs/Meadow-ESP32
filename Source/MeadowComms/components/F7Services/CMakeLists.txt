@@ -26,6 +26,7 @@ idf_component_register( SRCS    "WiFi/WiFiRequestHandler.cpp"
                                 "Exceptions/ThreadPoolException.cpp"
 
                                 "Bluetooth/BluetoothRequestHandler.cpp"
+                                "Bluetooth/bluetooth/BluetoothAttribute.cpp"
                                 "Bluetooth/bluetooth/BluetoothCharacteristic.cpp"
                                 "Bluetooth/bluetooth/BluetoothCharacteristicValue.cpp"
                                 "Bluetooth/bluetooth/BluetoothHandleManager.cpp"
