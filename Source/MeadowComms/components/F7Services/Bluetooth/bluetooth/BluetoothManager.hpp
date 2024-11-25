@@ -89,6 +89,11 @@ private:
 
 public:
     /**
+     *  @brief Name of the component / task for the Bluetooth system.
+     */
+    static const char *COMPONENT_NAME;
+
+    /**
      * @brief Name of the device.
      */
     char DeviceName[256];

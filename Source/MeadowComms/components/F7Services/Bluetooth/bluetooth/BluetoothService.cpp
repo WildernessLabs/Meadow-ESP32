@@ -6,8 +6,33 @@
  *
  * @copyright Copyright (c) 2019 - 2024
  */
+#include "Logging.hpp"
+
+#include "BluetoothRequestHandler.hpp"
+
 #include "BluetoothService.hpp"
 #include "esp_log.h"
+
+/*
+ * ----------------------------------------------------------------------------
+ *
+ *               Initialise class level static variables.
+ *
+ * ----------------------------------------------------------------------------
+ */
+
+/**
+ * @brief Name of the component for logging.
+ */
+const char *BluetoothService::COMPONENT_NAME = BluetoothRequestHandler::COMPONENT_NAME;
+
+/*
+ * ----------------------------------------------------------------------------
+ *
+ *                  Constructors and destructors.
+ *
+ * ----------------------------------------------------------------------------
+ */
 
 /**
  * @brief Construct a new BluetoothService object.
@@ -15,6 +40,14 @@
 BluetoothService::BluetoothService()
 {
 }
+
+/*
+ * ----------------------------------------------------------------------------
+ *
+ *                             Methods
+ *
+ * ----------------------------------------------------------------------------
+ */
 
 /**
  * @brief Construct a new BluetoothService object.
@@ -25,8 +58,12 @@ BluetoothService::BluetoothService()
  */
 BluetoothService::BluetoothService(const char *name, Uuid16 uuid)
 {
+    TRACE_MESSAGE("BluetoothService: Enter");
+
     Name.assign(name);
     Uuid = uuid;
+
+    TRACE_MESSAGE("BluetoothService: Exit");
 }
 
 /**
@@ -37,6 +74,8 @@ BluetoothService::BluetoothService(const char *name, Uuid16 uuid)
  */
 BluetoothCharacteristic &BluetoothService::AddCharacteristic(BluetoothCharacteristic *characteristic)
 {
+    TRACE_MESSAGE("AddCharacteristic: Enter");
+
     // do we already know about this characteristic?  If so, ignore
     bool exists = false;
 
@@ -48,7 +87,7 @@ BluetoothCharacteristic &BluetoothService::AddCharacteristic(BluetoothCharacteri
         // only check non-zero handles since the handle will be zero when we generate the graph
         if((characteristic->Declaration->Handle != 0) && (chr->Declaration->Handle == characteristic->Declaration->Handle))
         {
-            printf("Already exists.  Skipping\n");
+            printf("Already exists.  Skipping");
             exists = true;
             break;
         }
@@ -84,7 +123,9 @@ BluetoothCharacteristic &BluetoothService::AddCharacteristic(BluetoothCharacteri
         }
     }
 
-    ESP_LOGI(LOG_COMPONENT_NAME, "%i characteristics known\n", (int) _characteristics.size());
+    TRACE_MESSAGE("%i characteristics known", (int) _characteristics.size());
+
+    TRACE_MESSAGE("AddCharacteristic: Exit");
 
     return *characteristic;
 }
