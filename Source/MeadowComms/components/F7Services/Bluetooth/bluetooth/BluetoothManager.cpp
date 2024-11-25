@@ -193,6 +193,7 @@ void BluetoothManager::SetHandles(uint16_t *handles, uint16_t count)
             characteristic->Value->Handle = handles[index++];
             TRACE_MESSAGE("ATTRIBUTE TABLE VALUE HANDLE = 0x%04x | max length = %i", characteristic->Value->Handle, characteristic->Value->MaxLength);
             auto val = length_val {.length = characteristic->Value->MaxLength, .value = new uint8_t[characteristic->Value->MaxLength]};
+            memset(val.value, 0, characteristic->Value->MaxLength);
 
             TRACE_MESSAGE("Request for data for handle 0x%04x", characteristic->Value->Handle);
 
@@ -334,6 +335,7 @@ void BluetoothManager::GetCurrentValueForAttributeHandle(uint16_t handle, uint8_
     {
         TRACE_MESSAGE("Request for data for handle 0x%04x", handle);
         TRACE_MESSAGE(" known length = %i", existing->second.length);
+        TRACE_HEX_BUFFER(existing->second.value, existing->second.length);
 
         memcpy(pData, existing->second.value, existing->second.length);
         *pLen = existing->second.length;
@@ -357,7 +359,7 @@ void BluetoothManager::GetCurrentValueForAttributeHandle(uint16_t handle, uint8_
  */
 void BluetoothManager::SetCurrentValueForAttributeHandle(uint16_t handle, uint8_t *pData, uint16_t len)
 {
-    TRACE_MESSAGE("GetCurrentValueForAttributeHandle: Enter");
+    TRACE_MESSAGE("SetCurrentValueForAttributeHandle: Enter");
 
     TRACE_MESSAGE("Received %i bytes of data for attribute handle 0x%04x", len, handle);
 
@@ -370,6 +372,8 @@ void BluetoothManager::SetCurrentValueForAttributeHandle(uint16_t handle, uint8_
         // Only write *up to* the defined max length
         size_t length_to_write = existing->second.length < len ? existing->second.length : len;
         memcpy(existing->second.value, pData, length_to_write);
+        TRACE_MESSAGE("Value length %i", length_to_write);
+        TRACE_HEX_BUFFER(existing->second.value, length_to_write);
     }
     else
     {
@@ -377,7 +381,7 @@ void BluetoothManager::SetCurrentValueForAttributeHandle(uint16_t handle, uint8_
         TRACE_MESSAGE("Value received with unknown handle 0x%04x", test_value);
     }
 
-    TRACE_MESSAGE("GetCurrentValueForAttributeHandle: Exit");
+    TRACE_MESSAGE("SetCurrentValueForAttributeHandle: Exit");
 }
 
 /**
