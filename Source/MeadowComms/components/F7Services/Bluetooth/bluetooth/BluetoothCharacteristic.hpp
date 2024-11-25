@@ -36,6 +36,11 @@ typedef std::function<void(BluetoothDescriptor *)> DescriptorAdded;
 class BluetoothCharacteristic
 {
 public:
+    /**
+     *  @brief Name of the component / task for the Bluetooth system.
+     */
+    static const char *COMPONENT_NAME;
+
     BluetoothService *ParentService;
 
     BluetoothCharacteristic(Uuid16 uuid, CharacteristicPermission permission, CharacteristicProperty property, int maxValueLength);

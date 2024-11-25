@@ -156,6 +156,8 @@ void BluetoothRequestHandler::Setup()
  */
 void BluetoothRequestHandler::GetHandles(Message *request)
 {
+    TRACE_MESSAGE("GetHandles: Enter");
+
     Esp32Messaging::BTGetHandlesResponse response;
     response.HandleCount = _manager.GetHandleCount();
     response.HandlesLength = response.HandleCount * 2;
@@ -169,6 +171,8 @@ void BluetoothRequestHandler::GetHandles(Message *request)
     request->StatusCode = StatusCodes::CompletedOk;
 
     _messageDispatcher->QueueMessageForStm32(request);
+
+    TRACE_MESSAGE("GetHandles: Exit");
 }
 
 /**
@@ -327,21 +331,21 @@ void BluetoothRequestHandler::StartStack()
     ret = esp_bt_controller_enable(ESP_BT_MODE_BLE);
     if (ret)
     {
-        ERROR_MESSAGE("esp_bt_controller_enable failed %i\n", ret);
+        ERROR_MESSAGE("esp_bt_controller_enable failed %i", ret);
         return;
     }
 
     ret = esp_bluedroid_init();
     if (ret)
     {
-        ERROR_MESSAGE("esp_bluedroid_init failed %i\n", ret);
+        ERROR_MESSAGE("esp_bluedroid_init failed %i", ret);
         return;
     }
 
     ret = esp_bluedroid_enable();
     if (ret)
     {
-        ERROR_MESSAGE("%s enable bluetooth failed: %s\n", __func__, esp_err_to_name(ret));
+        ERROR_MESSAGE("%s enable bluetooth failed: %s", __func__, esp_err_to_name(ret));
         return;
     }
 
@@ -353,7 +357,7 @@ void BluetoothRequestHandler::StartStack()
         return;
     }
 
-    // register for GAP events
+    // Register for GAP events
     ret = esp_ble_gap_register_callback(this->GAPEventHandler);
     if (ret)
     {
@@ -361,7 +365,7 @@ void BluetoothRequestHandler::StartStack()
         return;
     }
 
-    // register our one (and only) profile
+    // Register our one (and only) profile
     ret = esp_ble_gatts_app_register(MEADOW_PROFILE_APP_ID);
     if (ret)
     {
@@ -460,6 +464,8 @@ void BluetoothRequestHandler::OnDataWriteRequest(uint16_t handle, uint8_t *data,
  */
 void BluetoothRequestHandler::CreateAttributeGraph(Message *msg)
 {
+    TRACE_MESSAGE("CreateAttributeGraph: Enter");
+    
     TRACE_MESSAGE("CreateAttributeGraph. payload len = %lu", msg->PayloadLength);
 
     Esp32Messaging::BTStackConfig *config = Encoders::ExtractBTStackConfig(msg->Payload);
@@ -472,6 +478,8 @@ void BluetoothRequestHandler::CreateAttributeGraph(Message *msg)
     _manager.GenerateAttributeTable();
 
     StartStack();
+
+    TRACE_MESSAGE("CreateAttributeGraph: Exit");
 }
 
 //////////////////////////
@@ -498,7 +506,9 @@ static bool response_data_configured = false;
  */
 void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param)
 {
-    DEBUG_MESSAGE_SPECIFY_COMPONENT(__func__, "event = %x\n", event);
+    TRACE_MESSAGE("GATTSProfileEventHandler: Enter");
+
+    TRACE_MESSAGE("Event = %x", event);
     switch (event)
     {
         case ESP_GATTS_REG_EVT:
@@ -646,14 +656,13 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
                 }
                 else if (param->add_attr_tab.num_handle != _manager.GetAttributeTableLength())
                 {
-                    ERROR_MESSAGE(
-                        "create attribute table abnormally, num_handle (%d) \
+                    ERROR_MESSAGE("create attribute table abnormally, num_handle (%d) \
                             doesn't equal to HRS_IDX_NB(%d)",
                         param->add_attr_tab.num_handle, _manager.GetAttributeTableLength());
                 }
                 else
                 {
-                    TRACE_MESSAGE("create attribute table successfully, handle count = %d\n", param->add_attr_tab.num_handle);
+                    TRACE_MESSAGE("create attribute table successfully, handle count = %d", param->add_attr_tab.num_handle);
                     // the assigned handles with be in param->add_attr_tab.handles - copy them off
                     _manager.SetHandles(param->add_attr_tab.handles, param->add_attr_tab.num_handle);
                     // now fire up the service (which is the first attribute in the attribute table) by handle.
@@ -666,6 +675,8 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
         default:
             break;
     }
+
+    TRACE_MESSAGE("GATTSProfileEventHandler: Exit");
 }
 
 /**
@@ -676,6 +687,8 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
  */
 void BluetoothRequestHandler::GAPEventHandler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param)
 {
+    TRACE_MESSAGE("GAPEventHandler: Enter");
+
     TRACE_MESSAGE("GAP event %i", event);
     switch (event)
     {
@@ -793,9 +806,11 @@ void BluetoothRequestHandler::GAPEventHandler(esp_gap_ble_cb_event_t event, esp_
             }
             break;
         case ESP_GAP_BLE_UPDATE_CONN_PARAMS_EVT: // 20
-            TRACE_MESSAGE("GAP connection parameters successfully changed\n");
+            TRACE_MESSAGE("GAP connection parameters successfully changed");
             break;
         default:
             break;
     }
+
+    TRACE_MESSAGE("GAPEventHandler: Exit");
 }
