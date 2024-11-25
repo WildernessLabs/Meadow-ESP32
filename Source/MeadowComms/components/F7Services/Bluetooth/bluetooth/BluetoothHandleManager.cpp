@@ -6,7 +6,32 @@
  *
  * @copyright Copyright (c) 2019 - 2024
  */
+#include "Logging.hpp"
+
+#include "BluetoothRequestHandler.hpp"
+
 #include "BluetoothHandleManager.hpp"
+
+/*
+ * ----------------------------------------------------------------------------
+ *
+ *               Initialise class level static variables.
+ *
+ * ----------------------------------------------------------------------------
+ */
+
+/**
+ * @brief Name of the component for logging.
+ */
+const char *BluetoothHandleManager::COMPONENT_NAME = BluetoothRequestHandler::COMPONENT_NAME;
+
+/*
+ * ----------------------------------------------------------------------------
+ *
+ *                             Methods
+ *
+ * ----------------------------------------------------------------------------
+ */
 
 /**
  * @brief Assign a handle to a service.
@@ -16,9 +41,13 @@
  */
 unsigned short BluetoothHandleManager::Assign(BluetoothService *service)
 {
+    TRACE_MESSAGE("Assign(BluetoothService): Enter");
+
     auto h = GetHandle();
     service->Handle = h;
     return h;
+
+    TRACE_MESSAGE("Assign(BluetoothService): Exit");
 }
 
 /**
@@ -29,7 +58,11 @@ unsigned short BluetoothHandleManager::Assign(BluetoothService *service)
  */
 unsigned short BluetoothHandleManager::Assign(BluetoothAttribute *attribute)
 {
+    TRACE_MESSAGE("Assign(BluetoothAttribute): Enter");
+
     auto h = GetHandle();
     attribute->Handle = h;
     return h;
+
+    TRACE_MESSAGE("Assign(BluetoothAttribute): Exit");
 }

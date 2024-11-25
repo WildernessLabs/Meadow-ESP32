@@ -6,6 +6,10 @@
  *
  * @copyright Copyright (c) 2019 - 2024
  */
+#include "Logging.hpp"
+
+#include "BluetoothRequestHandler.hpp"
+
 #include "BluetoothManager.hpp"
 
 #include "../rapidjson/document.h"
@@ -13,25 +17,66 @@
 
 using namespace rapidjson;
 
-/**
- * @brief Variable holding the UUID of the primary service (0x2800).
+/*
+ * ----------------------------------------------------------------------------
+ *
+ *                  Local preprocessor definitions.
+ *
+ * ----------------------------------------------------------------------------
  */
-static const uint16_t primary_service_uuid = ESP_GATT_UUID_PRI_SERVICE;
 
 /**
  * @brief Size of a character variable.
  */
 #define CHAR_DECLARATION_SIZE (sizeof(uint8_t))
 
+/*
+ * ----------------------------------------------------------------------------
+ *
+ *               Initialise class level static variables.
+ *
+ * ----------------------------------------------------------------------------
+ */
+
+/**
+ * @brief Name of the component (used for logging).
+ */
+const char *BluetoothManager::COMPONENT_NAME = BluetoothRequestHandler::COMPONENT_NAME;
+
+/**
+ * @brief Variable holding the UUID of the primary service (0x2800).
+ */
+static const uint16_t primary_service_uuid = ESP_GATT_UUID_PRI_SERVICE;
+
+/*
+ * ----------------------------------------------------------------------------
+ *
+ *                  Constructors and destructors.
+ *
+ * ----------------------------------------------------------------------------
+ */
+
 /**
  * @brief Construct a new Bluetooth Manager:: Bluetooth Manager object
  */
 BluetoothManager::BluetoothManager() : Services(&this->_handleManager)
 {
+    TRACE_MESSAGE("BluetoothManager: Enter");
+
     Services.OnServiceAdded = &BluetoothManager::HandleServiceAdded;
     Services.OnCharacteristicAdded = &BluetoothManager::HandleCharacteristicAdded;
     Services.OnValueChanged = &BluetoothManager::HandleValueChanged;
+
+    TRACE_MESSAGE("BluetoothManager: Exit");
 }
+
+/*
+ * ----------------------------------------------------------------------------
+ *
+ *                             Methods
+ *
+ * ----------------------------------------------------------------------------
+ */
 
 /**
  * @brief Process the addition of a new service.
@@ -40,7 +85,11 @@ BluetoothManager::BluetoothManager() : Services(&this->_handleManager)
  */
 void BluetoothManager::HandleServiceAdded(BluetoothService *service)
 {
-    ESP_LOGI(LOG_COMPONENT_NAME, "New Service: 0x%04X (%s)\n", service->Handle, service->Name.c_str());
+    TRACE_MESSAGE("HandleServiceAdded: Enter");
+
+    TRACE_MESSAGE("New Service: 0x%04X (%s)", service->Handle, service->Name.c_str());
+
+    TRACE_MESSAGE("HandleServiceAdded: Exit");
 }
 
 /**
@@ -50,7 +99,11 @@ void BluetoothManager::HandleServiceAdded(BluetoothService *service)
  */
 void BluetoothManager::HandleCharacteristicAdded(BluetoothCharacteristic *characteristic)
 {
-    ESP_LOGI(LOG_COMPONENT_NAME, "New Characteristic: declaration @ 0x%04X value @ 0x%04X\n", characteristic->Declaration->Handle, characteristic->Value->Handle);
+    TRACE_MESSAGE("HandleCharacteristicAdded: Enter");
+
+    TRACE_MESSAGE("New Characteristic: declaration @ 0x%04X value @ 0x%04X", characteristic->Declaration->Handle, characteristic->Value->Handle);
+
+    TRACE_MESSAGE("HandleCharacteristicAdded: Exit");
 }
 
 /**
@@ -60,7 +113,11 @@ void BluetoothManager::HandleCharacteristicAdded(BluetoothCharacteristic *charac
  */
 void BluetoothManager::HandleValueChanged(BluetoothCharacteristic *characteristic)
 {
-    ESP_LOGI(LOG_COMPONENT_NAME, "New Characteristic Value: value @ 0x%04X is %i bytes\n", characteristic->Value->Handle, characteristic->Value->CurrentLength);
+    TRACE_MESSAGE("HandleValueChanged: Enter");
+
+    TRACE_MESSAGE("New Characteristic Value: value @ 0x%04X is %i bytes", characteristic->Value->Handle, characteristic->Value->CurrentLength);
+
+    TRACE_MESSAGE("HandleValueChanged: Exit");
 }
 
 /**
@@ -68,6 +125,9 @@ void BluetoothManager::HandleValueChanged(BluetoothCharacteristic *characteristi
  */
 void BluetoothManager::HandleDescriptorAdded(BluetoothDescriptor *)
 {
+    TRACE_MESSAGE("HandleDescriptorAdded: Enter");
+
+    TRACE_MESSAGE("HandleDescriptorAdded: Exit");
 }
 
 /**
@@ -79,6 +139,8 @@ void BluetoothManager::HandleDescriptorAdded(BluetoothDescriptor *)
  */
 void BluetoothManager::GetHandles(uint16_t *handles)
 {
+    TRACE_MESSAGE("GetHandles: Enter");
+
     int index = 0;
 
     for (const auto &svc: Services.GetServiceDefinitions())
@@ -96,6 +158,8 @@ void BluetoothManager::GetHandles(uint16_t *handles)
             }
         }
     }
+
+    TRACE_MESSAGE("GetHandles: Exit");
 }
 
 /**
@@ -106,10 +170,12 @@ void BluetoothManager::GetHandles(uint16_t *handles)
  */
 void BluetoothManager::SetHandles(uint16_t *handles, uint16_t count)
 {
-    ESP_LOGI(LOG_COMPONENT_NAME, "Handles: \n");
+    TRACE_MESSAGE("SetHandles: Enter");
+
+    TRACE_MESSAGE("Handles: ");
     for (int i = 0; i < count; i++)
     {
-        ESP_LOGI(LOG_COMPONENT_NAME, "   0x%04x ", handles[i]);
+        TRACE_MESSAGE("   0x%04x ", handles[i]);
     }
 
     int index = 0;
@@ -117,18 +183,18 @@ void BluetoothManager::SetHandles(uint16_t *handles, uint16_t count)
     for (const auto &svc: Services.GetServiceDefinitions())
     {
         svc->Handle = handles[index++];
-        ESP_LOGI(LOG_COMPONENT_NAME, "ATTRIBUTE TABLE SERVICE HANDLE = 0x%04x\n", svc->Handle);
+        TRACE_MESSAGE("ATTRIBUTE TABLE SERVICE HANDLE = 0x%04x", svc->Handle);
 
         for (const auto &characteristic: svc->GetCharacteristicDefinitions())
         {
             characteristic->Declaration->Handle = handles[index++];
-            ESP_LOGI(LOG_COMPONENT_NAME, "ATTRIBUTE TABLE DECLARATION HANDLE = 0x%04x\n", characteristic->Declaration->Handle);
+            TRACE_MESSAGE("ATTRIBUTE TABLE DECLARATION HANDLE = 0x%04x", characteristic->Declaration->Handle);
 
             characteristic->Value->Handle = handles[index++];
-            ESP_LOGI(LOG_COMPONENT_NAME, "ATTRIBUTE TABLE VALUE HANDLE = 0x%04x | max length = %i\n", characteristic->Value->Handle, characteristic->Value->MaxLength);
+            TRACE_MESSAGE("ATTRIBUTE TABLE VALUE HANDLE = 0x%04x | max length = %i", characteristic->Value->Handle, characteristic->Value->MaxLength);
             auto val = length_val {.length = characteristic->Value->MaxLength, .value = new uint8_t[characteristic->Value->MaxLength]};
 
-            ESP_LOGI(LOG_COMPONENT_NAME, "Request for data for handle 0x%04x\n", characteristic->Value->Handle);
+            TRACE_MESSAGE("Request for data for handle 0x%04x", characteristic->Value->Handle);
 
             _valueMap.insert({characteristic->Value->Handle, val});
 
@@ -138,10 +204,12 @@ void BluetoothManager::SetHandles(uint16_t *handles, uint16_t count)
             for (const auto &descriptor: characteristic->GetDescriptorDefinitions())
             {
                 descriptor->Handle = handles[index++];
-                ESP_LOGI(LOG_COMPONENT_NAME, "ATTRIBUTE TABLE DESCRIPTOR HANDLE = 0x%04x\n", descriptor->Handle);
+                TRACE_MESSAGE("ATTRIBUTE TABLE DESCRIPTOR HANDLE = 0x%04x", descriptor->Handle);
             }
         }
     }
+
+    TRACE_MESSAGE("SetHandles: Exit");
 }
 
 /**
@@ -149,6 +217,8 @@ void BluetoothManager::SetHandles(uint16_t *handles, uint16_t count)
  */
 void BluetoothManager::GenerateAdvertisingData()
 {
+    TRACE_MESSAGE("GenerateAdvertisingData: Enter");
+
     uint8_t manufacturer_data[10] = {'W', 'I', 'L', 'D', 'E', 'R', 'N', 'E', 'S', 'S'};
 
     // NOTE: unknown if this specific value has meaning.  Pulled directly from espressif.
@@ -187,6 +257,8 @@ void BluetoothManager::GenerateAdvertisingData()
     _advertisingParameters.own_addr_type = BLE_ADDR_TYPE_PUBLIC;
     _advertisingParameters.channel_map = ADV_CHNL_ALL;
     _advertisingParameters.adv_filter_policy = ADV_FILTER_ALLOW_SCAN_ANY_CON_ANY;
+
+    TRACE_MESSAGE("GenerateAdvertisingData: Exit");
 }
 
 /**
@@ -242,7 +314,7 @@ uint16_t BluetoothManager::GetAttributeTableLength()
 /**
  * @brief Dummy variable.
  */
-static int test_value = 0;
+static int __attribute__((unused)) test_value = 0;
 
 /**
  * @brief Get the current value for a given attribute handle.
@@ -253,23 +325,27 @@ static int test_value = 0;
  */
 void BluetoothManager::GetCurrentValueForAttributeHandle(uint16_t handle, uint8_t *pData, uint16_t *pLen)
 {
+    TRACE_MESSAGE("GetCurrentValueForAttributeHandle: Enter");
+
     // TODO: go get the data from the STM - for now we just increment to test the data is changing
     auto existing = _valueMap.find(handle);
 
     if (existing != _valueMap.end())
     {
-        ESP_LOGI(LOG_COMPONENT_NAME, "Request for data for handle 0x%04x\n", handle);
-        ESP_LOGI(LOG_COMPONENT_NAME, " known length = %i\n", existing->second.length);
+        TRACE_MESSAGE("Request for data for handle 0x%04x", handle);
+        TRACE_MESSAGE(" known length = %i", existing->second.length);
 
         memcpy(pData, existing->second.value, existing->second.length);
         *pLen = existing->second.length;
     }
     else
     {
-        ESP_LOGI(LOG_COMPONENT_NAME, "Request for data with unknown handle 0x%04x\n", handle);
+        TRACE_MESSAGE("Request for data with unknown handle 0x%04x", handle);
         *pLen = 0;
         pData = NULL;
     }
+
+    TRACE_MESSAGE("GetCurrentValueForAttributeHandle: Exit");
 }
 
 /**
@@ -281,7 +357,9 @@ void BluetoothManager::GetCurrentValueForAttributeHandle(uint16_t handle, uint8_
  */
 void BluetoothManager::SetCurrentValueForAttributeHandle(uint16_t handle, uint8_t *pData, uint16_t len)
 {
-    ESP_LOGI(LOG_COMPONENT_NAME, "Received %i bytes of data for attribute handle 0x%04x\n", len, handle);
+    TRACE_MESSAGE("GetCurrentValueForAttributeHandle: Enter");
+
+    TRACE_MESSAGE("Received %i bytes of data for attribute handle 0x%04x", len, handle);
 
     auto existing = _valueMap.find(handle);
 
@@ -296,8 +374,10 @@ void BluetoothManager::SetCurrentValueForAttributeHandle(uint16_t handle, uint8_
     else
     {
         // Unknown handle - this should *never* happen, but best to be safe
-        ESP_LOGI(LOG_COMPONENT_NAME, "Value received with unknown handle 0x%04x\n", test_value);
+        TRACE_MESSAGE("Value received with unknown handle 0x%04x", test_value);
     }
+
+    TRACE_MESSAGE("GetCurrentValueForAttributeHandle: Exit");
 }
 
 /**
@@ -307,14 +387,16 @@ void BluetoothManager::SetCurrentValueForAttributeHandle(uint16_t handle, uint8_
  */
 void BluetoothManager::BuildGraphFromJson(char *cfg_json)
 {
-    ESP_LOGI(LOG_COMPONENT_NAME, "parsing config json...\n");
+    TRACE_MESSAGE("BuildGraphFromJson: Enter");
+
+    TRACE_MESSAGE("parsing config json...");
 
     Document doc;
     doc.Parse(cfg_json);
 
     Value &deviceName = doc["deviceName"];
     strcpy(DeviceName, deviceName.GetString());
-    ESP_LOGI(LOG_COMPONENT_NAME, "Device Name = %s\n", DeviceName);
+    TRACE_MESSAGE("Device Name = %s", DeviceName);
 
     const Value &svc_list = doc["services"];
     for (auto i = 0; i < svc_list.Size(); i++)
@@ -322,15 +404,15 @@ void BluetoothManager::BuildGraphFromJson(char *cfg_json)
         auto svc = svc_list[i].GetObject();
         auto svc_uuid = svc["uuid"].GetInt();
         auto svc_name = svc["name"].GetString();
-        ESP_LOGI(LOG_COMPONENT_NAME, "service %s uuid = 0x%04x\n", svc_name, svc_uuid);
+        TRACE_MESSAGE("service %s uuid = 0x%04x", svc_name, svc_uuid);
 
         auto bt_svc = new BluetoothService(svc_name, Uuid16(svc_uuid));
 
         const Value &char_list = svc["characteristics"];
-        ESP_LOGI(LOG_COMPONENT_NAME, "service has %i characteristics\n", char_list.Size());
+        TRACE_MESSAGE("service has %i characteristics", char_list.Size());
         for (auto i = 0; i < char_list.Size(); i++)
         {
-            ESP_LOGI(LOG_COMPONENT_NAME, "characteristic ");
+            TRACE_MESSAGE("characteristic ");
             auto characteristic = char_list[i].GetObject();
 
             // this might be a ushort, might be a guid
@@ -342,12 +424,12 @@ void BluetoothManager::BuildGraphFromJson(char *cfg_json)
             if (characteristic["uuid"].IsInt())
             {
                 chr_uuid16 = Uuid16((uint16_t) characteristic["uuid"].GetInt());
-                ESP_LOGI(LOG_COMPONENT_NAME, " uuid = 0x%04x\n", (uint16_t) chr_uuid16);
+                TRACE_MESSAGE(" uuid = 0x%04x", (uint16_t) chr_uuid16);
             }
             else
             {
                 chr_uuid128 = Uuid128(characteristic["uuid"].GetString());
-                ESP_LOGI(LOG_COMPONENT_NAME, " uuid = %s\n", chr_uuid128.ToString().c_str());
+                TRACE_MESSAGE(" uuid = %s", chr_uuid128.ToString().c_str());
                 is128 = true;
             }
 
@@ -355,9 +437,9 @@ void BluetoothManager::BuildGraphFromJson(char *cfg_json)
             auto chr_props = (uint16_t) characteristic["props"].GetInt();
             auto chr_len = (uint16_t) characteristic["len"].GetInt();
 
-            ESP_LOGI(LOG_COMPONENT_NAME, " permission = 0x%04x\n", chr_perm);
-            ESP_LOGI(LOG_COMPONENT_NAME, " props = 0x%04x\n", chr_props);
-            ESP_LOGI(LOG_COMPONENT_NAME, " len = 0x%04x\n", chr_len);
+            TRACE_MESSAGE(" permission = 0x%04x", chr_perm);
+            TRACE_MESSAGE(" props = 0x%04x", chr_props);
+            TRACE_MESSAGE(" len = 0x%04x", chr_len);
 
             BluetoothCharacteristic *bt_characteristic;
             if (is128)
@@ -371,11 +453,11 @@ void BluetoothManager::BuildGraphFromJson(char *cfg_json)
 
             if (characteristic.HasMember("descriptors"))
             {
-                ESP_LOGI(LOG_COMPONENT_NAME, "attribute has descriptors node\n");
+                TRACE_MESSAGE("attribute has descriptors node");
                 const Value &desc_list = characteristic["descriptors"];
                 if (desc_list.Size() > 0)
                 {
-                    ESP_LOGI(LOG_COMPONENT_NAME, "characteristic has %i descriptors\n", desc_list.Size());
+                    TRACE_MESSAGE("characteristic has %i descriptors", desc_list.Size());
                     for (auto d = 0; d < desc_list.Size(); d++)
                     {
                         Uuid16 desc_uuid16;
@@ -386,22 +468,22 @@ void BluetoothManager::BuildGraphFromJson(char *cfg_json)
                         if (descriptor["uuid"].IsInt())
                         {
                             desc_uuid16 = Uuid16((uint16_t) descriptor["uuid"].GetInt());
-                            ESP_LOGI(LOG_COMPONENT_NAME, " uuid = 0x%04x\n", (uint16_t) desc_uuid16);
+                            TRACE_MESSAGE(" uuid = 0x%04x", (uint16_t) desc_uuid16);
                         }
                         else
                         {
                             desc_uuid128 = Uuid128(descriptor["uuid"].GetString());
-                            ESP_LOGI(LOG_COMPONENT_NAME, " uuid = %s\n", desc_uuid128.ToString().c_str());
+                            TRACE_MESSAGE(" uuid = %s", desc_uuid128.ToString().c_str());
                             is128d = true;
                         }
 
                         auto desc_perm = (uint16_t) descriptor["permission"].GetInt();
-                        ESP_LOGI(LOG_COMPONENT_NAME, "   permission = 0x%04x\n", desc_perm);
+                        TRACE_MESSAGE("   permission = 0x%04x", desc_perm);
                         auto desc_len = (uint16_t) descriptor["len"].GetInt();
-                        ESP_LOGI(LOG_COMPONENT_NAME, "   len = 0x%04x\n", desc_len);
+                        TRACE_MESSAGE("   len = 0x%04x", desc_len);
 
                         auto desc_value = (uint16_t) descriptor["value"].GetInt();
-                        ESP_LOGI(LOG_COMPONENT_NAME, "   value = 0x%04x\n", desc_value);
+                        TRACE_MESSAGE("   value = 0x%04x", desc_value);
 
                         BluetoothDescriptor *bt_descriptor;
 
@@ -416,21 +498,23 @@ void BluetoothManager::BuildGraphFromJson(char *cfg_json)
 
                         bt_descriptor->SetValue(desc_value);
 
-                        ESP_LOGI(LOG_COMPONENT_NAME, "bt_descriptor created\n");
+                        TRACE_MESSAGE("bt_descriptor created");
                         bt_characteristic->AddDescriptor(bt_descriptor);
-                        ESP_LOGI(LOG_COMPONENT_NAME, "bt_descriptor added\n");
+                        TRACE_MESSAGE("bt_descriptor added");
                     }
                 }
             }
 
             bt_svc->AddCharacteristic(bt_characteristic);
-            ESP_LOGI(LOG_COMPONENT_NAME, "bt_characteristic added\n");
+            TRACE_MESSAGE("bt_characteristic added");
         }
 
         Services.Add(bt_svc);
     }
 
-    ESP_LOGI(LOG_COMPONENT_NAME, "parsing json complete!\n");
+    TRACE_MESSAGE("parsing json complete!");
+
+    TRACE_MESSAGE("BuildGraphFromJson: Exit");
 }
 
 /**
@@ -442,6 +526,8 @@ void BluetoothManager::GenerateAttributeTable()
     // 1 for each service
     // 2 for each characteristic (declaration + value)
     // 1 for each descriptor
+
+    TRACE_MESSAGE("GenerateAttributeTable: Enter");
 
     auto count = 0;
 
@@ -465,7 +551,7 @@ void BluetoothManager::GenerateAttributeTable()
         }
     }
 
-    ESP_LOGI(LOG_COMPONENT_NAME, "ATTRIBUTE TABLE LENGTH = %d\n", count);
+    TRACE_MESSAGE("ATTRIBUTE TABLE LENGTH = %d", count);
 
     _attribute_table = new esp_gatts_attr_db_t[count];
     _attributeTableLength = count;
@@ -473,18 +559,18 @@ void BluetoothManager::GenerateAttributeTable()
     auto index = 0;
     for (const auto &svc: Services.GetServiceDefinitions())
     {
-        ESP_LOGI(LOG_COMPONENT_NAME, "ATTRIBUTE TABLE SERVICE AT %d ", index);
+        TRACE_MESSAGE("ATTRIBUTE TABLE SERVICE AT %d ", index);
         // service attribute - all services are primary for now
         _attribute_table[index++] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *) &primary_service_uuid, ESP_GATT_PERM_READ, sizeof(uint16_t), sizeof(svc->Uuid), (uint8_t *) &svc->Uuid}};
 
-        ESP_LOGI(LOG_COMPONENT_NAME, "CONTAINS %d CHARACTERISTICS\n", svc->GetCharacteristicDefinitions().size());
+        TRACE_MESSAGE("CONTAINS %d CHARACTERISTICS", svc->GetCharacteristicDefinitions().size());
         for (const auto &characteristic: svc->GetCharacteristicDefinitions())
         {
-            ESP_LOGI(LOG_COMPONENT_NAME, "ATTRIBUTE TABLE DECLARATION AT %d\n", index);
+            TRACE_MESSAGE("ATTRIBUTE TABLE DECLARATION AT %d", index);
             // declaration attribute
             _attribute_table[index++] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *) &characteristic->Declaration->Uuid, (uint16_t) characteristic->Declaration->Permission, CHAR_DECLARATION_SIZE, CHAR_DECLARATION_SIZE, (uint8_t *) &characteristic->Declaration->Properties}};
 
-            ESP_LOGI(LOG_COMPONENT_NAME, "ATTRIBUTE TABLE VALUE AT %d\n", index);
+            TRACE_MESSAGE("ATTRIBUTE TABLE VALUE AT %d", index);
             // value attribute
             // the first param here (ESP_GATT_RSP_BY_APP) means that we'll handle the request for data manually rather than allowing the API to respond with
             // data in the parameter database.  We need to call to the STM for data, so this is sensible.
@@ -499,7 +585,7 @@ void BluetoothManager::GenerateAttributeTable()
 
             for (const auto &descriptor: characteristic->GetDescriptorDefinitions())
             {
-                ESP_LOGI(LOG_COMPONENT_NAME, "ATTRIBUTE TABLE DESCRIPTOR AT %d\n", index);
+                TRACE_MESSAGE("ATTRIBUTE TABLE DESCRIPTOR AT %d", index);
                 if (descriptor->Is128())
                 {
                     _attribute_table[index++] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_128, (uint8_t *) &descriptor->uuid128, (uint16_t) descriptor->Permission, descriptor->MaxLength, descriptor->CurrentLength, (uint8_t *) descriptor->Value}};
@@ -511,4 +597,6 @@ void BluetoothManager::GenerateAttributeTable()
             }
         }
     }
+
+    TRACE_MESSAGE("GenerateAttributeTable: Exit");
 }

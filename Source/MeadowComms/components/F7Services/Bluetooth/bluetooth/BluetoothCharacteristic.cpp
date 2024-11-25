@@ -6,7 +6,29 @@
  *
  * @copyright Copyright (c) 2019 - 2024
  */
+#include "Logging.hpp"
+
+#include "BluetoothRequestHandler.hpp"
+
 #include "BluetoothCharacteristic.hpp"
+
+/*
+ * ----------------------------------------------------------------------------
+ *
+ *               Initialise class level static variables.
+ *
+ * ----------------------------------------------------------------------------
+ */
+
+const char *BluetoothCharacteristic::COMPONENT_NAME = BluetoothRequestHandler::COMPONENT_NAME;
+
+/*
+ * ----------------------------------------------------------------------------
+ *
+ *                  Constructors and destructors.
+ *
+ * ----------------------------------------------------------------------------
+ */
 
 /**
  * @brief Construct a new BluetoothCharacteristic object.
@@ -18,11 +40,13 @@
  */
 BluetoothCharacteristic::BluetoothCharacteristic(Uuid16 uuid, CharacteristicPermission permission, CharacteristicProperty property, int maxValueLength)
 {
+    TRACE_MESSAGE("BluetoothCharacteristic(UUID16): Enter");
+
     // A characteristic has both a Declaration and Value.  They point to one another.
 
     // TODO: a HANDLE needs to get assigned.  Not sure if the caller would send it, or we auto-gen
 
-    // create the declaration attribute
+    // Create the declaration attribute
     Declaration = new BluetoothCharacteristicDeclaration(uuid, permission, property);
 
     // Create the value attribute
@@ -32,6 +56,8 @@ BluetoothCharacteristic::BluetoothCharacteristic(Uuid16 uuid, CharacteristicPerm
 
     // Update the declaration to point to the value
     Declaration->ValueHandle = Value->Handle;
+
+    TRACE_MESSAGE("BluetoothCharacteristic(UUID16): Exit");
 }
 
 /**
@@ -44,11 +70,13 @@ BluetoothCharacteristic::BluetoothCharacteristic(Uuid16 uuid, CharacteristicPerm
  */
 BluetoothCharacteristic::BluetoothCharacteristic(Uuid128 uuid, CharacteristicPermission permission, CharacteristicProperty property, int maxValueLength)
 {
+    TRACE_MESSAGE("BluetoothCharacteristic(UUID128): Enter");
+
     // A characteristic has both a Declaration and Value.  They point to one another.
 
     // TODO: a HANDLE needs to get assigned.  Not sure if the caller would send it, or we auto-gen
 
-    // create the declaration attribute
+    // Create the declaration attribute
     Declaration = new BluetoothCharacteristicDeclaration(uuid, permission, property);
 
     // Create the value attribute
@@ -58,7 +86,17 @@ BluetoothCharacteristic::BluetoothCharacteristic(Uuid128 uuid, CharacteristicPer
 
     // Update the declaration to point to the value
     Declaration->ValueHandle = Value->Handle;
+
+    TRACE_MESSAGE("BluetoothCharacteristic(UUID128): Exit");
 }
+
+/*
+ * ----------------------------------------------------------------------------
+ *
+ *                             Methods
+ *
+ * ----------------------------------------------------------------------------
+ */
 
 /**
  * @brief Add a new descriptor to the characteristic.
@@ -67,6 +105,8 @@ BluetoothCharacteristic::BluetoothCharacteristic(Uuid128 uuid, CharacteristicPer
  */
 void BluetoothCharacteristic::AddDescriptor(BluetoothDescriptor *descriptor)
 {
+    TRACE_MESSAGE("AddDescriptor: Enter");
+
     // TODO: do we already know about it?
 
     // TODO: does it have a handle?
@@ -80,4 +120,6 @@ void BluetoothCharacteristic::AddDescriptor(BluetoothDescriptor *descriptor)
     {
         OnDescriptorAdded(descriptor);
     }
+
+    TRACE_MESSAGE("AddDescriptor: Exit");
 }

@@ -28,6 +28,11 @@ class BluetoothHandleManager;
 class BluetoothService
 {
 public:
+    /**
+     *  @brief Name of the component / task for the Bluetooth system.
+     */
+    static const char *COMPONENT_NAME;
+
     BluetoothService();
     BluetoothService(const char *name, Uuid16 uuid);
     BluetoothCharacteristic &AddCharacteristic(BluetoothCharacteristic *characteristic);
