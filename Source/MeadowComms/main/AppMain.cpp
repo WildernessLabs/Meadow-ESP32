@@ -46,7 +46,7 @@ meadow_version_t g_application_version = {
 
 #endif
 
-#if defined(DEBUG) || defined(WIFI_DEBUG) || defined(SPI_DEBUG) || defined(THREAD_DEBUG) || defined(SYSTEM_DEBUG) || defined(BT_DEBUG) || defined(MESSAGES_DEBUG)
+#if defined(DEBUG) || defined(WIFI_DEBUG) || defined(SPI_DEBUG) || defined(THREAD_DEBUG) || defined(SYSTEM_DEBUG) || defined(BLUETOOTH_DEBUG) || defined(MESSAGES_DEBUG)
     #pragma message "Debug is enabled."
 #endif
 
