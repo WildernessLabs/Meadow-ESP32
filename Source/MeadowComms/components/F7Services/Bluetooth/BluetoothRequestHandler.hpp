@@ -121,7 +121,9 @@ private:
      */
     void SetCurrentValueForAttributeHandle(Message *request);
 
-    // these are static because they are called from a C callback handler
+    /**
+     * @brief Write request event handler (this has to be static as it is called from C APIs).
+     */
     static void OnDataWriteRequest(uint16_t handle, uint8_t *data, uint16_t dataLength);
 
     /*
@@ -173,7 +175,14 @@ public:
      */
     static StatusCodes::StatusCodes PrepareForDeepSleep();
 
+    /**
+     * @brief Event handler for the GAP system (registered through esp_ble_gap_register_callback).
+     */
     static void GAPEventHandler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param);
+
+    /**
+     * @brief Event handler for the GATTS system (registered through esp_ble_gatts_register_callback).
+     */
     static void GATTSProfileEventHandler(esp_gatts_cb_event_t, esp_gatt_if_t, esp_ble_gatts_cb_param_t *);
 };
 
