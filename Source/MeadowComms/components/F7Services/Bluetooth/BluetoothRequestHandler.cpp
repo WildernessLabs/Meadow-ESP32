@@ -176,6 +176,30 @@ void BluetoothRequestHandler::GetHandles(Message *request)
 }
 
 /**
+ * @brief Set the value for the specified attribute handle.
+ * 
+ * @param request Request from the STM32.
+ */
+void BluetoothRequestHandler::SetCurrentValueForAttributeHandle(Message *request)
+{
+    TRACE_MESSAGE("SetCurrentValueForAttributeHandle: Enter");
+
+    Esp32Messaging::BTServerDataSet *ds = Encoders::ExtractBTServerDataSet(request->Payload);
+    request->DeletePayload();
+
+    TRACE_MESSAGE("Server wrote %lu bytes to 0x%04x", ds->SetDataLength, ds->Handle);
+
+    _manager.SetCurrentValueForAttributeHandle(ds->Handle, ds->SetData, ds->SetDataLength);
+
+    request->MessageType = MessageTypes::Response;
+    request->StatusCode = StatusCodes::CompletedOk;
+
+    _messageDispatcher->QueueMessageForStm32(request);
+
+    TRACE_MESSAGE("SetCurrentValueForAttributeHandle: Exit");
+}
+
+/**
  *  @brief Dispatch bluetooth messages to the appropriate method.
  *
  *  @param request
@@ -192,31 +216,9 @@ void BluetoothRequestHandler::DispatchRequest(Message *request)
     {
         case BluetoothFunction::Start:
             CreateAttributeGraph(request);
-
-            request->PayloadLength = 0;
-            request->MessageType = MessageTypes::Response;
-            request->StatusCode = StatusCodes::CompletedOk;
-
-            _messageDispatcher->QueueMessageForStm32(request);
-
             break;
         case BluetoothFunction::ServerDataSet:
-            {
-                Esp32Messaging::BTServerDataSet *ds = Encoders::ExtractBTServerDataSet(request->Payload);
-                vPortFree(request->Payload);
-                request->Payload = NULL; // we're re-using the message.  We free this, but we *must* null it, else the receiver when we send back will try to free it again
-
-                TRACE_MESSAGE("Server wrote %lu bytes to 0x%04x", ds->SetDataLength, ds->Handle);
-
-                // update the local
-                _manager.SetCurrentValueForAttributeHandle(ds->Handle, ds->SetData, ds->SetDataLength);
-
-                request->PayloadLength = 0;
-                request->MessageType = MessageTypes::Response;
-                request->StatusCode = StatusCodes::CompletedOk;
-
-                _messageDispatcher->QueueMessageForStm32(request);
-            }
+            SetCurrentValueForAttributeHandle(request);
             break;
         case BluetoothFunction::GetHandles:
             GetHandles(request);
@@ -438,21 +440,19 @@ StatusCodes::StatusCodes BluetoothRequestHandler::TeardownStack(Message *msg)
  */
 void BluetoothRequestHandler::OnDataWriteRequest(uint16_t handle, uint8_t *data, uint16_t dataLength)
 {
-    TRACE_MESSAGE("Creating _writeRequest for 0x%04x with %i bytes", handle, dataLength);
+    TRACE_MESSAGE("OnDataWriteRequest: Enter");
 
-    Esp32Messaging::BTDataWriteRequest *request = static_cast<Esp32Messaging::BTDataWriteRequest *>(pvPortMalloc(10));
-    TRACE_MESSAGE("request allocated with %i bytes", 6 + dataLength);
+    Esp32Messaging::BTDataWriteRequest *request = static_cast<Esp32Messaging::BTDataWriteRequest *>(pvPortMalloc(sizeof(Esp32Messaging::BTDataWriteRequest)));
     request->Handle = handle;
     request->DataLength = dataLength;
     request->Data = data;
+
     int payload_length = Encoders::EncodedBTDataWriteRequestBufferSize(request);
-    TRACE_MESSAGE("I think payload_length should be %i bytes", payload_length);
     uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payload_length));
     Encoders::EncodeBTDataWriteRequest(request, payload);
-    vPortFree(request); // We don't need it anymore as the data is in the encoded payload.
+    vPortFree(request);
 
-    TRACE_MESSAGE("Sending event data. payload[6] should be 0x%02x", payload[6]);
-    GetInstance()->RaiseEvent(Esp32Interfaces::BlueTooth, BluetoothFunction::ClientWriteRequestEvent, 0, payload, payload_length);
+    GetInstance()->RaiseEvent(Esp32Interfaces::BlueTooth, BluetoothFunction::ClientWriteRequestEvent, StatusCodes::CompletedOk, payload, payload_length);
 
     TRACE_MESSAGE("OnDataWriteRequest: Exit");
 }
@@ -462,24 +462,26 @@ void BluetoothRequestHandler::OnDataWriteRequest(uint16_t handle, uint8_t *data,
  *
  * @param msg Message containing the JSON configuration.
  */
-void BluetoothRequestHandler::CreateAttributeGraph(Message *msg)
+void BluetoothRequestHandler::CreateAttributeGraph(Message *request)
 {
     TRACE_MESSAGE("CreateAttributeGraph: Enter");
 
-    TRACE_MESSAGE("CreateAttributeGraph. payload len = %lu", msg->PayloadLength);
+    TRACE_MESSAGE("CreateAttributeGraph. payload len = %lu", request->PayloadLength);
 
-    Esp32Messaging::BTStackConfig *config = Encoders::ExtractBTStackConfig(msg->Payload);
-    vPortFree(msg->Payload);
-    msg->Payload = NULL;
+    Esp32Messaging::BTStackConfig *config = Encoders::ExtractBTStackConfig(request->Payload);
+    request->DeletePayload();
 
     _manager.BuildGraphFromJson(config->Config);
-
     _manager.GenerateAdvertisingData();
     _manager.GenerateAttributeTable();
-
     StartStack();
 
-    TRACE_MESSAGE("CreateAttributeGraph: Exit");
+    request->MessageType = MessageTypes::Response;
+    request->StatusCode = StatusCodes::CompletedOk;
+
+    _messageDispatcher->QueueMessageForStm32(request);
+
+   TRACE_MESSAGE("CreateAttributeGraph: Exit");
 }
 
 //////////////////////////
