@@ -510,7 +510,6 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
 {
     TRACE_MESSAGE("GATTSProfileEventHandler: Enter");
 
-    TRACE_MESSAGE("Event = %x", event);
     switch (event)
     {
         case ESP_GATTS_REG_EVT:
@@ -634,11 +633,9 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
             }
             break;
         case ESP_GATTS_DISCONNECT_EVT:
-            {
-                TRACE_MESSAGE("ESP_GATTS_DISCONNECT_EVT, disconnect reason 0x%x", param->disconnect.reason);
-                /* start advertising again when missing the connect */
-                esp_ble_gap_start_advertising(_manager.GetAdvertisingParameters());
-            }
+            TRACE_MESSAGE("ESP_GATTS_DISCONNECT_EVT, disconnect reason 0x%x", param->disconnect.reason);
+            /* start advertising again when missing the connect */
+            esp_ble_gap_start_advertising(_manager.GetAdvertisingParameters());
             break;
         case ESP_GATTS_OPEN_EVT:
             break;
@@ -651,31 +648,30 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
         case ESP_GATTS_CONGEST_EVT:
             break;
         case ESP_GATTS_CREAT_ATTR_TAB_EVT:
+            if (param->add_attr_tab.status != ESP_GATT_OK)
             {
-                if (param->add_attr_tab.status != ESP_GATT_OK)
-                {
-                    ERROR_MESSAGE("create attribute table failed, error code=0x%x", param->add_attr_tab.status);
-                }
-                else if (param->add_attr_tab.num_handle != _manager.GetAttributeTableLength())
-                {
-                    ERROR_MESSAGE(
-                        "create attribute table abnormally, num_handle (%d) \
-                            doesn't equal to HRS_IDX_NB(%d)",
-                        param->add_attr_tab.num_handle, _manager.GetAttributeTableLength());
-                }
-                else
-                {
-                    TRACE_MESSAGE("create attribute table successfully, handle count = %d", param->add_attr_tab.num_handle);
-                    // the assigned handles with be in param->add_attr_tab.handles - copy them off
-                    _manager.SetHandles(param->add_attr_tab.handles, param->add_attr_tab.num_handle);
-                    // now fire up the service (which is the first attribute in the attribute table) by handle.
-                    // TODO: right now we're cheating
-                    TRACE_MESSAGE("starting service with handle 0x%4x", param->add_attr_tab.handles[0]);
-                    esp_ble_gatts_start_service(param->add_attr_tab.handles[0]);
-                }
+                ERROR_MESSAGE("create attribute table failed, error code=0x%x", param->add_attr_tab.status);
+            }
+            else if (param->add_attr_tab.num_handle != _manager.GetAttributeTableLength())
+            {
+                ERROR_MESSAGE(
+                    "create attribute table abnormally, num_handle (%d) \
+                        doesn't equal to HRS_IDX_NB(%d)",
+                    param->add_attr_tab.num_handle, _manager.GetAttributeTableLength());
+            }
+            else
+            {
+                TRACE_MESSAGE("create attribute table successfully, handle count = %d", param->add_attr_tab.num_handle);
+                // the assigned handles with be in param->add_attr_tab.handles - copy them off
+                _manager.SetHandles(param->add_attr_tab.handles, param->add_attr_tab.num_handle);
+                // now fire up the service (which is the first attribute in the attribute table) by handle.
+                // TODO: right now we're cheating
+                TRACE_MESSAGE("starting service with handle 0x%4x", param->add_attr_tab.handles[0]);
+                esp_ble_gatts_start_service(param->add_attr_tab.handles[0]);
             }
             break;
         default:
+            TRACE_MESSAGE("Unhandled GATTS event, ID: 0x%08x", event);
             break;
     }
 
@@ -696,6 +692,7 @@ void BluetoothRequestHandler::GAPEventHandler(esp_gap_ble_cb_event_t event, esp_
     switch (event)
     {
         case ESP_GAP_BLE_SCAN_RSP_DATA_SET_COMPLETE_EVT: // 1
+            TRACE_MESSAGE("ESP_GAP_BLE_SCAN_RSP_DATA_SET_COMPLETE_EVT");
             if (advertising_data_configured)
             {
                 TRACE_MESSAGE("Scan data set.  Starting advertising...");
@@ -703,6 +700,7 @@ void BluetoothRequestHandler::GAPEventHandler(esp_gap_ble_cb_event_t event, esp_
             }
             break;
         case ESP_GAP_BLE_ADV_DATA_SET_COMPLETE_EVT: // 0
+            TRACE_MESSAGE("ESP_GAP_BLE_ADV_DATA_SET_COMPLETE_EVT");
             // triggered by the gatts_event_handler for ESP_GATTS_REG_EVT where we set the advertising data
             if (advertising_data_configured)
             {
@@ -711,12 +709,12 @@ void BluetoothRequestHandler::GAPEventHandler(esp_gap_ble_cb_event_t event, esp_
             }
             break;
         case ESP_GAP_BLE_ADV_START_COMPLETE_EVT: // 6
+            TRACE_MESSAGE("ESP_GAP_BLE_ADV_START_COMPLETE_EVT");
             // advertising has started (well, unless an error is set, so check for that)
             if (param->adv_start_cmpl.status != ESP_BT_STATUS_SUCCESS)
             {
                 ERROR_MESSAGE("Advertising start failed");
             }
-            TRACE_MESSAGE("Advertising start success");
             break;
         case ESP_GAP_BLE_PASSKEY_REQ_EVT: // 12
             /* passkey request event */
@@ -744,42 +742,42 @@ void BluetoothRequestHandler::GAPEventHandler(esp_gap_ble_cb_event_t event, esp_
             TRACE_MESSAGE("ESP_GAP_BLE_NC_REQ_EVT, the passkey Notify number:%lu", param->ble_security.key_notif.passkey);
             break;
         case ESP_GAP_BLE_SEC_REQ_EVT: // 10
+            TRACE_MESSAGE("ESP_GAP_BLE_SEC_REQ_EVT");
             // security request
             esp_ble_gap_security_rsp(param->ble_security.ble_req.bd_addr, true);
             break;
         case ESP_GAP_BLE_PASSKEY_NOTIF_EVT: // 11
             /// the app will receive this evt when the IO  has Output capability and the peer device IO has Input capability.
             /// show the passkey number to the user to input it in the peer device.
-            TRACE_MESSAGE("The passkey Notify number:%lu", param->ble_security.key_notif.passkey);
+            TRACE_MESSAGE("ESP_GAP_BLE_PASSKEY_NOTIF_EVT passkey Notify number:%lu", param->ble_security.key_notif.passkey);
             break;
         case ESP_GAP_BLE_KEY_EVT: // 9
+
             // shows the ble key info share with peer device to the user.
-            TRACE_MESSAGE("key type = %d", param->ble_security.ble_key.key_type);
+            TRACE_MESSAGE("ESP_GAP_BLE_KEY_EVT key type = %d", param->ble_security.ble_key.key_type);
             break;
         case ESP_GAP_BLE_AUTH_CMPL_EVT: // 8
+            TRACE_MESSAGE("ESP_GAP_BLE_AUTH_CMPL_EVT");
+            // auth complete
+            if (param->ble_security.auth_cmpl.success)
             {
-                // auth complete
-                if (param->ble_security.auth_cmpl.success)
-                {
-                    TRACE_MESSAGE("Auth success. mode = %d", param->ble_security.auth_cmpl.auth_mode);
-                }
-                else
-                {
-                    ERROR_MESSAGE("Auth failed. reason = 0x%x", param->ble_security.auth_cmpl.fail_reason);
-                }
+                TRACE_MESSAGE("Auth success. mode = %d", param->ble_security.auth_cmpl.auth_mode);
+            }
+            else
+            {
+                ERROR_MESSAGE("Auth failed. reason = 0x%x", param->ble_security.auth_cmpl.fail_reason);
             }
             break;
         case ESP_GAP_BLE_REMOVE_BOND_DEV_COMPLETE_EVT: // 23
-            {
-                DEBUG_MESSAGE("ESP_GAP_BLE_REMOVE_BOND_DEV_COMPLETE_EVT status = %d", param->remove_bond_dev_cmpl.status);
-                TRACE_MESSAGE("ESP_GAP_BLE_REMOVE_BOND_DEV");
-                TRACE_MESSAGE("-----ESP_GAP_BLE_REMOVE_BOND_DEV----");
-                TRACE_HEX_BUFFER(param->remove_bond_dev_cmpl.bd_addr, sizeof(esp_bd_addr_t));
-                TRACE_MESSAGE("------------------------------------");
-            }
+            DEBUG_MESSAGE("ESP_GAP_BLE_REMOVE_BOND_DEV_COMPLETE_EVT status = %d", param->remove_bond_dev_cmpl.status);
+            TRACE_MESSAGE("ESP_GAP_BLE_REMOVE_BOND_DEV");
+            TRACE_MESSAGE("-----ESP_GAP_BLE_REMOVE_BOND_DEV----");
+            TRACE_HEX_BUFFER(param->remove_bond_dev_cmpl.bd_addr, sizeof(esp_bd_addr_t));
+            TRACE_MESSAGE("------------------------------------");
             break;
         case ESP_GAP_BLE_SET_LOCAL_PRIVACY_COMPLETE_EVT: // 22
             {
+                TRACE_MESSAGE("ESP_GAP_BLE_SET_LOCAL_PRIVACY_COMPLETE_EVT");
                 if (param->local_privacy_cmpl.status != ESP_BT_STATUS_SUCCESS)
                 {
                     ERROR_MESSAGE("config local privacy failed, error status = %x", param->local_privacy_cmpl.status);
@@ -809,9 +807,10 @@ void BluetoothRequestHandler::GAPEventHandler(esp_gap_ble_cb_event_t event, esp_
             }
             break;
         case ESP_GAP_BLE_UPDATE_CONN_PARAMS_EVT: // 20
-            TRACE_MESSAGE("GAP connection parameters successfully changed");
+            TRACE_MESSAGE("ESP_GAP_BLE_UPDATE_CONN_PARAMS_EVT: GAP connection parameters successfully changed");
             break;
         default:
+            TRACE_MESSAGE("Unhandled GAP event, ID: 0x%08x", event);
             break;
     }
 
