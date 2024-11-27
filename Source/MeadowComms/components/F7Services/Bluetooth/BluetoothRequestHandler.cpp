@@ -177,7 +177,7 @@ void BluetoothRequestHandler::GetHandles(Message *request)
 
 /**
  * @brief Set the value for the specified attribute handle.
- * 
+ *
  * @param request Request from the STM32.
  */
 void BluetoothRequestHandler::SetCurrentValueForAttributeHandle(Message *request)
@@ -481,7 +481,7 @@ void BluetoothRequestHandler::CreateAttributeGraph(Message *request)
 
     _messageDispatcher->QueueMessageForStm32(request);
 
-   TRACE_MESSAGE("CreateAttributeGraph: Exit");
+    TRACE_MESSAGE("CreateAttributeGraph: Exit");
 }
 
 //////////////////////////
