@@ -514,6 +514,7 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
     {
         case ESP_GATTS_REG_EVT:
             {
+                TRACE_MESSAGE("ESP_GATTS_REG_EVT");
                 // set the device name
                 esp_ble_gap_set_device_name(_manager.DeviceName);
 
@@ -638,16 +639,22 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
             esp_ble_gap_start_advertising(_manager.GetAdvertisingParameters());
             break;
         case ESP_GATTS_OPEN_EVT:
+            TRACE_MESSAGE("ESP_GATTS_OPEN_EVT");
             break;
         case ESP_GATTS_CANCEL_OPEN_EVT:
+            TRACE_MESSAGE("ESP_GATTS_CANCEL_OPEN_EVT");
             break;
         case ESP_GATTS_CLOSE_EVT:
+            TRACE_MESSAGE("ESP_GATTS_CLOSE_EVT");
             break;
         case ESP_GATTS_LISTEN_EVT:
+            TRACE_MESSAGE("ESP_GATTS_LISTEN_EVT");
             break;
         case ESP_GATTS_CONGEST_EVT:
+            TRACE_MESSAGE("ESP_GATTS_CONGEST_EVT");
             break;
         case ESP_GATTS_CREAT_ATTR_TAB_EVT:
+            TRACE_MESSAGE("ESP_GATTS_CREAT_ATTR_TAB_EVT");
             if (param->add_attr_tab.status != ESP_GATT_OK)
             {
                 ERROR_MESSAGE("create attribute table failed, error code=0x%x", param->add_attr_tab.status);
