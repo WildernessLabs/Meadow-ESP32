@@ -131,16 +131,16 @@ void BluetoothRequestHandler::Setup()
     _xBtEventGroup = xEventGroupCreate();
     xEventGroupSetBits(_xBtEventGroup, BT_READY_BIT);
 
-    ESP_LOGI(__func__, "mem release BT controller...");
+    TRACE_MESSAGE("BT controller mem release...");
 
     ESP_ERROR_CHECK(esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT));
 
     esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
-    ESP_LOGI(__func__, "enable BT controller...");
+    TRACE_MESSAGE("Enable BT controller...");
     esp_err_t ret = esp_bt_controller_init(&bt_cfg);
     if (ret)
     {
-        ESP_LOGI(__func__, "%s enable controller failed: %s", __func__, esp_err_to_name(ret));
+        TRACE_MESSAGE("%s enable controller failed: %s", __func__, esp_err_to_name(ret));
         return;
     }
 
