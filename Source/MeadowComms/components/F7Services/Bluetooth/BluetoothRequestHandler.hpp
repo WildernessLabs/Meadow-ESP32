@@ -35,8 +35,6 @@
 #include <vector>
 #include <string>
 
-// #define BT_FULL_LOGGING
-
 using namespace std;
 
 /**
@@ -98,14 +96,34 @@ private:
     BluetoothRequestHandler();
     ~BluetoothRequestHandler();
 
+    /**
+     * @brief Start the Bluetooth stack.
+     */
     void StartStack();
+
+    /**
+     * @brief Get the Handles and send them to the STM32.
+     */
     void GetHandles(Message *request);
 
+    /**
+     * @brief Shutdown the Bluetooth stack.
+     */
     StatusCodes::StatusCodes TeardownStack(Message *msg);
 
-    void CreateAttributeGraph(Message *msg);
+    /**
+     * @brief Create a Attribute Graph object
+     */
+    void CreateAttributeGraph(Message *request);
 
-    // these are static because they are called from a C callback handler
+    /**
+     * @brief Set the current value for the specified attribute handle.
+     */
+    void SetCurrentValueForAttributeHandle(Message *request);
+
+    /**
+     * @brief Write request event handler (this has to be static as it is called from C APIs).
+     */
     static void OnDataWriteRequest(uint16_t handle, uint8_t *data, uint16_t dataLength);
 
     /*
@@ -114,14 +132,22 @@ private:
      */
     explicit BluetoothRequestHandler(IMessageDispatcher *);
 
+    /**
+     * @brief Get a pointer to this instance.
+     */
     static BluetoothRequestHandler *GetInstance();
-
-    static Esp32Messaging::BTDataWriteRequest *_writeRequest;
 
 public:
     static BluetoothManager _manager;
+
+    /**
+     * @brief This instance (used to ensure only one instance is created).
+     */
     static BluetoothRequestHandler *_instance;
 
+    /**
+     * @brief Get a pointer to this instance (create a new instance if no BluetoothRequestHandler exists).
+     */
     static BluetoothRequestHandler *GetInstance(IMessageDispatcher *d);
 
     /**
@@ -149,7 +175,14 @@ public:
      */
     static StatusCodes::StatusCodes PrepareForDeepSleep();
 
+    /**
+     * @brief Event handler for the GAP system (registered through esp_ble_gap_register_callback).
+     */
     static void GAPEventHandler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param);
+
+    /**
+     * @brief Event handler for the GATTS system (registered through esp_ble_gatts_register_callback).
+     */
     static void GATTSProfileEventHandler(esp_gatts_cb_event_t, esp_gatt_if_t, esp_ble_gatts_cb_param_t *);
 };
 
