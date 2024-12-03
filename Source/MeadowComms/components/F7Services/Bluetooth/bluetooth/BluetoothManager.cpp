@@ -220,9 +220,6 @@ void BluetoothManager::GenerateAdvertisingData()
 {
     TRACE_MESSAGE("GenerateAdvertisingData: Enter");
 
-    // uint8_t manufacturer_data[10] = {'W', 'I', 'L', 'D', 'E', 'R', 'N', 'E', 'S', 'S'};
-    // uint8_t manufacturer_data[10] = {0x86, 0x0d, 0x86, 'D', 'E', 'R', 'N', 'E', 'S', 'S'};
-
     uint8_t *manufacturer_data = static_cast<uint8_t *>(pvPortMalloc(2));
     memset(manufacturer_data, 0, 2);
     manufacturer_data[0] = (uint8_t) (_companyIdentifier & 0x00FF);
