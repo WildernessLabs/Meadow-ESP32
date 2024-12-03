@@ -220,14 +220,22 @@ void BluetoothManager::GenerateAdvertisingData()
 {
     TRACE_MESSAGE("GenerateAdvertisingData: Enter");
 
-    uint8_t manufacturer_data[10] = {'W', 'I', 'L', 'D', 'E', 'R', 'N', 'E', 'S', 'S'};
+    // uint8_t manufacturer_data[10] = {'W', 'I', 'L', 'D', 'E', 'R', 'N', 'E', 'S', 'S'};
+    // uint8_t manufacturer_data[10] = {0x86, 0x0d, 0x86, 'D', 'E', 'R', 'N', 'E', 'S', 'S'};
 
+    uint8_t *manufacturer_data = static_cast<uint8_t *>(pvPortMalloc(2));
+    memset(manufacturer_data, 0, 2);
+    manufacturer_data[0] = (uint8_t) (_companyIdentifier & 0x00FF);
+    manufacturer_data[1] = (uint8_t) ((_companyIdentifier & 0xFF00) >> 8);
+
+    uint8_t *advertising_service_uuid = static_cast<uint8_t *>(pvPortMalloc(16));
     // NOTE: unknown if this specific value has meaning.  Pulled directly from espressif.
-    uint8_t advertising_service_uuid[16] = {
+    uint8_t dummy_advertising_service_uuid[16] = {
         /* LSB <--------------------------------------------------------------------------------> MSB */
         // first uuid, 16bit, [12],[13] is the value
         0xfb, 0x34, 0x9b, 0x5f, 0x80, 0x00, 0x00, 0x80, 0x00, 0x10, 0x00, 0x00, 0xFF, 0x00, 0x00, 0x00,
     };
+    memcpy(advertising_service_uuid, dummy_advertising_service_uuid, 16);
 
     /* The length of adv data must be less than 31 bytes */
     _advertisingData.set_scan_rsp = false;
@@ -236,7 +244,8 @@ void BluetoothManager::GenerateAdvertisingData()
     _advertisingData.min_interval = 0x0006; // slave connection min interval, Time = min_interval * 1.25 msec
     _advertisingData.max_interval = 0x0010; // slave connection max interval, Time = max_interval * 1.25 msec
     _advertisingData.appearance = 0x00;
-    _advertisingData.manufacturer_len = sizeof(manufacturer_data);
+    // _advertisingData.manufacturer_len = sizeof(manufacturer_data);
+    _advertisingData.manufacturer_len = 2;
     _advertisingData.p_manufacturer_data = manufacturer_data;
     _advertisingData.service_data_len = 0;
     _advertisingData.p_service_data = NULL;
@@ -399,8 +408,12 @@ void BluetoothManager::BuildGraphFromJson(char *cfg_json)
     doc.Parse(cfg_json);
 
     Value &deviceName = doc["deviceName"];
-    strcpy(DeviceName, deviceName.GetString());
-    TRACE_MESSAGE("Device Name = %s", DeviceName);
+    strcpy(_deviceName, deviceName.GetString());
+    TRACE_MESSAGE("Device Name = %s", _deviceName);
+
+    auto companyIdentifier = (uint16_t) doc["companyIdentifier"].GetInt();
+    TRACE_MESSAGE("   companyIdentifier = 0x%04x", companyIdentifier);
+    _companyIdentifier = companyIdentifier;
 
     const Value &svc_list = doc["services"];
     for (auto i = 0; i < svc_list.Size(); i++)
