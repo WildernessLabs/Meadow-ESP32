@@ -87,6 +87,11 @@ private:
      */
     esp_ble_adv_data_t _scanResponseData;
 
+    /**
+     * @brief 16-bit assigned number for the company identifier.
+     */
+    uint16_t _companyIdentifier;
+
 public:
     /**
      *  @brief Name of the component / task for the Bluetooth system.
@@ -96,7 +101,7 @@ public:
     /**
      * @brief Name of the device.
      */
-    char DeviceName[256];
+    char _deviceName[256];
 
     BluetoothManager();
 
