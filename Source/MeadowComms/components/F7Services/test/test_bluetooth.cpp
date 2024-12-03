@@ -106,3 +106,12 @@ TEST_CASE("Start Bluetooth (MeadowB, Baidu)", "[Bluetooth]")
     printf("Starting Bluetooth service for MeadowB, Company ID Baidu (0x011c)\n");
     StartBlueToothService(meadow_b_json);
 }
+
+/**
+ * @brief Test starting a Bluetooth service for MeadowC with no company identifier.
+ */
+TEST_CASE("Start Bluetooth (MeadowC, no company identifier)", "[Bluetooth]")
+{
+    printf("Starting Bluetooth service for (MeadowC, no company identifier)\n");
+    StartBlueToothService(meadow_c_json);
+}

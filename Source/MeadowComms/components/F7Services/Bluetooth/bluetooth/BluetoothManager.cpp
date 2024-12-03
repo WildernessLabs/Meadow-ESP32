@@ -221,7 +221,6 @@ void BluetoothManager::GenerateAdvertisingData()
     TRACE_MESSAGE("GenerateAdvertisingData: Enter");
 
     uint8_t *manufacturer_data = static_cast<uint8_t *>(pvPortMalloc(2));
-    memset(manufacturer_data, 0, 2);
     manufacturer_data[0] = (uint8_t) (_companyIdentifier & 0x00FF);
     manufacturer_data[1] = (uint8_t) ((_companyIdentifier & 0xFF00) >> 8);
 
@@ -234,6 +233,7 @@ void BluetoothManager::GenerateAdvertisingData()
     };
     memcpy(advertising_service_uuid, dummy_advertising_service_uuid, 16);
 
+    memset(&_advertisingData, 0, sizeof(esp_ble_adv_data_t));
     /* The length of adv data must be less than 31 bytes */
     _advertisingData.set_scan_rsp = false;
     _advertisingData.include_name = true;
@@ -242,8 +242,16 @@ void BluetoothManager::GenerateAdvertisingData()
     _advertisingData.max_interval = 0x0010; // slave connection max interval, Time = max_interval * 1.25 msec
     _advertisingData.appearance = 0x00;
     // _advertisingData.manufacturer_len = sizeof(manufacturer_data);
-    _advertisingData.manufacturer_len = 2;
-    _advertisingData.p_manufacturer_data = manufacturer_data;
+    if (_hasCompanyIdentifier)
+    {
+        _advertisingData.manufacturer_len = 2;
+        _advertisingData.p_manufacturer_data = manufacturer_data;
+    }
+    else
+    {
+        _advertisingData.manufacturer_len = 0;
+        _advertisingData.p_manufacturer_data = NULL;
+    }
     _advertisingData.service_data_len = 0;
     _advertisingData.p_service_data = NULL;
     _advertisingData.service_uuid_len = sizeof(advertising_service_uuid);
@@ -251,13 +259,23 @@ void BluetoothManager::GenerateAdvertisingData()
     _advertisingData.flag = (ESP_BLE_ADV_FLAG_GEN_DISC | ESP_BLE_ADV_FLAG_BREDR_NOT_SPT);
 
     // Scan response data
+    memset(&_scanResponseData, 0, sizeof(esp_ble_adv_data_t));
     _scanResponseData.set_scan_rsp = true;
     _scanResponseData.include_name = true;
     _scanResponseData.include_txpower = true;
-    _scanResponseData.manufacturer_len = sizeof(manufacturer_data);
-    _scanResponseData.p_manufacturer_data = manufacturer_data;
+    if (_hasCompanyIdentifier)
+    {
+        _scanResponseData.manufacturer_len = 2;
+        _scanResponseData.p_manufacturer_data = manufacturer_data;
+    }
+    else
+    {
+        _scanResponseData.manufacturer_len = 0;
+        _scanResponseData.p_manufacturer_data = NULL;
+    }
 
     // Advertising parameters
+    memset(&_advertisingParameters, 0, sizeof(esp_ble_adv_params_t));
     _advertisingParameters.adv_int_min = 0x20;
     _advertisingParameters.adv_int_max = 0x40;
     _advertisingParameters.adv_type = ADV_TYPE_IND;
@@ -408,9 +426,17 @@ void BluetoothManager::BuildGraphFromJson(char *cfg_json)
     strcpy(_deviceName, deviceName.GetString());
     TRACE_MESSAGE("Device Name = %s", _deviceName);
 
-    auto companyIdentifier = (uint16_t) doc["companyIdentifier"].GetInt();
-    TRACE_MESSAGE("   companyIdentifier = 0x%04x", companyIdentifier);
-    _companyIdentifier = companyIdentifier;
+    if (doc.HasMember("companyIdentifier"))
+    {
+        auto companyIdentifier = (uint16_t) doc["companyIdentifier"].GetInt();
+        TRACE_MESSAGE("   companyIdentifier = 0x%04x", companyIdentifier);
+        _companyIdentifier = companyIdentifier;
+        _hasCompanyIdentifier = true;
+    }
+    else
+    {
+        _hasCompanyIdentifier = false;
+    }
 
     const Value &svc_list = doc["services"];
     for (auto i = 0; i < svc_list.Size(); i++)
