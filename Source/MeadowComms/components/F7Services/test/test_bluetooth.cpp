@@ -53,10 +53,10 @@ int EncodedBTStackConfigBufferSize(Esp32Messaging::BTStackConfig *bTStackConfig)
 
 /**
  * @brief Start the Bluetooth service using the specified configuration.
- * 
+ *
  * @param configuration Configuration of the service.
  */
-static void StartBlueToothService(const char * const configuration)
+static void StartBlueToothService(const char *const configuration)
 {
     MockMessageDispatcher *messageDispatcher = new MockMessageDispatcher(nullptr);
     TEST_ASSERT_NOT_NULL(messageDispatcher);
