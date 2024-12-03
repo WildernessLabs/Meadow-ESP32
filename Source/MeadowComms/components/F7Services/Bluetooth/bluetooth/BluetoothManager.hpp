@@ -92,6 +92,11 @@ private:
      */
     uint16_t _companyIdentifier;
 
+    /**
+     * @brief Indicate if the company identifier is in the Bluetooth definition.
+     */
+    bool _hasCompanyIdentifier;
+
 public:
     /**
      *  @brief Name of the component / task for the Bluetooth system.
