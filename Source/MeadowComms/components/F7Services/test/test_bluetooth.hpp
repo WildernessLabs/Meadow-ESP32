@@ -17,9 +17,13 @@
 #include "Encoders.hpp"
 #include <string.h>
 
-const char *json_test = R"(
+//
+//  Company identifier is for Espressif (0x02e5).
+//
+const char *meadow_a_json = R"(
 {
-    "deviceName":"MY MEADOW",
+    "deviceName":"MeadowA",
+    "companyIdentifier": 741,
     "services": [
         {
             "name": "Service A",
@@ -42,9 +46,13 @@ const char *json_test = R"(
     ]
 })";
 
-const char *json_test2 = R"(
+//
+//  Company ID is for Baidu (0x011c).
+//
+const char *meadow_b_json = R"(
 {
-    "deviceName":"MY MEADOW",
+    "deviceName":"MeadowB",
+    "companyIdentifier": 284,
     "services": [
         {
             "name": "Service A",
@@ -54,15 +62,7 @@ const char *json_test2 = R"(
                     "uuid": "017e99d6-8a61-11eb-8dcd-0242ac130003",
                     "permission": 17,
                     "props": 10,
-                    "len": 4,
-                    "descriptors": [
-                        {
-                        "uuid": 10498,
-                        "permission": 1,
-                        "len": 2,
-                        "value": 0
-                        }
-                    ]
+                    "len": 4
                 },
                 {
                     "uuid": 10755,
@@ -74,5 +74,77 @@ const char *json_test2 = R"(
         }
     ]
 })";
+
+//
+//  Meadow device with no company identifier.
+//
+const char *meadow_c_json = R"(
+{
+    "deviceName":"MeadowC",
+    "services": [
+        {
+            "name": "Service A",
+            "uuid": 254,
+            "characteristics": [
+                {
+                    "uuid": "017e99d6-8a61-11eb-8dcd-0242ac130003",
+                    "permission": 17,
+                    "props": 10,
+                    "len": 4
+                },
+                {
+                    "uuid": 10755,
+                    "permission": 2,
+                    "props": 16,
+                    "len": 4
+                }
+            ]
+        }
+    ]
+})";
+
+//
+//  The JSON below causes a problem with the Descriptor processing, error:
+// I (3121) BTDM_INIT: BT controller compile version [3bf7ef0]
+// I (3121) BTDM_INIT: Bluetooth MAC: 84:0d:8e:18:5b:0a
+// I (3131) phy_init: phy_version 4840,02e0d70,Sep  2 2024,19:39:07
+// E (3531) BT_GATT: Error in gatts_add_char_desc_value_check, line=1611,attribute actual length should not be larger than max length
+//
+//
+//  Company ID is for Baidu (0x011c).
+//
+// const char *meadow_b_json = R"(
+// {
+//     "deviceName":"MeadowB",
+//     "companyIdentifier": 284,
+//     "services": [
+//         {
+//             "name": "Service A",
+//             "uuid": 254,
+//             "characteristics": [
+//                 {
+//                     "uuid": "017e99d6-8a61-11eb-8dcd-0242ac130003",
+//                     "permission": 17,
+//                     "props": 10,
+//                     "len": 4,
+//                     "descriptors": [
+//                         {
+//                         "uuid": 10498,
+//                         "permission": 1,
+//                         "len": 2,
+//                         "value": 0
+//                         }
+//                     ]
+//                 },
+//                 {
+//                     "uuid": 10755,
+//                     "permission": 2,
+//                     "props": 16,
+//                     "len": 4
+//                 }
+//             ]
+//         }
+//     ]
+// })";
 
 #endif // _TEST_BLUETOOTH_HPP_

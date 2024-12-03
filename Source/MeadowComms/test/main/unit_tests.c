@@ -10,6 +10,9 @@
 #include "freertos/task.h"
 #include "freertos/queue.h"
 
+#include "nvs.h"
+#include "nvs_flash.h"
+
 #include <stdio.h>
 #include <string.h>
 #include "unity.h"
@@ -21,6 +24,16 @@ static void print_banner(const char *text)
 
 void app_main(void)
 {
+    //
+    //  Initialise the NVS storage.
+    //
+    esp_err_t error = nvs_flash_init();
+    if ((error == ESP_ERR_NVS_NO_FREE_PAGES) || (error == ESP_ERR_NVS_NEW_VERSION_FOUND))
+    {
+        ESP_ERROR_CHECK(nvs_flash_erase());
+        ESP_ERROR_CHECK(nvs_flash_init());
+    }
+
     /* These are the different ways of running registered tests.
      * In practice, only one of them is usually needed.
      *

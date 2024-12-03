@@ -52,15 +52,17 @@ int EncodedBTStackConfigBufferSize(Esp32Messaging::BTStackConfig *bTStackConfig)
 }
 
 /**
- * @brief
+ * @brief Start the Bluetooth service using the specified configuration.
+ *
+ * @param configuration Configuration of the service.
  */
-TEST_CASE("Start Bluetooth", "[Bluetooth]")
+static void StartBlueToothService(const char *const configuration)
 {
     MockMessageDispatcher *messageDispatcher = new MockMessageDispatcher(nullptr);
     TEST_ASSERT_NOT_NULL(messageDispatcher);
 
     Esp32Messaging::BTStackConfig stackConfig;
-    stackConfig.Config = (char *) json_test;
+    stackConfig.Config = (char *) configuration;
 
     Message startMessage = {};
     startMessage.MessageType = MessageTypes::Header;
@@ -85,4 +87,31 @@ TEST_CASE("Start Bluetooth", "[Bluetooth]")
     TEST_ASSERT_EQUAL(Esp32Interfaces::BlueTooth, response->Interface);
     TEST_ASSERT_EQUAL(BluetoothFunction::Start, response->Function);
     TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
+}
+
+/**
+ * @brief Test starting a Bluetooth service for MeadowA, Company ID Espressif (0x02e5).
+ */
+TEST_CASE("Start Bluetooth (MeadowA, Espressif)", "[Bluetooth]")
+{
+    printf("Starting Bluetooth service for MeadowA, Company ID Espressif (0x02e5)\n");
+    StartBlueToothService(meadow_a_json);
+}
+
+/**
+ * @brief Test starting a Bluetooth service for MeadowB, Company ID BaiDu (0x011c).
+ */
+TEST_CASE("Start Bluetooth (MeadowB, Baidu)", "[Bluetooth]")
+{
+    printf("Starting Bluetooth service for MeadowB, Company ID Baidu (0x011c)\n");
+    StartBlueToothService(meadow_b_json);
+}
+
+/**
+ * @brief Test starting a Bluetooth service for MeadowC with no company identifier.
+ */
+TEST_CASE("Start Bluetooth (MeadowC, no company identifier)", "[Bluetooth]")
+{
+    printf("Starting Bluetooth service for (MeadowC, no company identifier)\n");
+    StartBlueToothService(meadow_c_json);
 }
