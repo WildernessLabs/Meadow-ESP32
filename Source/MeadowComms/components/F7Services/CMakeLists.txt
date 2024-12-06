@@ -45,7 +45,7 @@ idf_component_register( SRCS    "WiFi/WiFiRequestHandler.cpp"
                                 "MeshNetwork"
                                 "Bluetooth"
                                 "Exceptions"
-                                "Bluetooth/rapidjson"
+                                "../rapidjson"
 
                         REQUIRES app_trace app_update bootloader bootloader_support bt console 
                                 cxx driver efuse esp-tls esp_common esp_eth esp_event 
