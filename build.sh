@@ -307,31 +307,15 @@ if [ ! -z "$DEBUG_SELECTIONS" ]; then
 fi
 
 #
-#   Work out which unit tests to build into the system.
+#   The ESP unit tests require a secrets file to be present so check if there is one
+#   available and copy it to the right place if it is available.  This file does not
+#   want to find its way its way into source control so its existence will be checked
+#   later and it will be removed (assuming success).
 #
-# if [ ! -z "$TEST_SELECTIONS" ]; then
-#     tests=$(echo $TEST_SELECTIONS | tr "," "\n")
-#     TESTS=""
-#     for test in $tests
-#     do
-#         case $test in
-#             FileSystem)
-#             TESTS+=" FileSystem"
-#             ;;
-#             all)
-#             TESTS+=" all"
-#             ;;
-#             *)
-#             printf "Uknown test $test."
-#             printf "Run build.sh --help for information on valid options."
-#             exit 1
-#             ;;
-#         esac
-#     done
-#     if [ ! -z "$TESTS" ]; then
-#         IDF_FLAGS+=" -T $TESTS"
-#     fi
-# fi
+if test -f "$scriptdir/../secrets.h"; then
+    cp $scriptdir/../secrets.h $scriptdir/Source/MeadowComms/test/secrets.h
+    cp $scriptdir/../secrets.h $scriptdir/Source/MeadowComms/components/F7Services/test/secrets.h
+fi
 
 #
 #   There are sometimes problems with old configuration in the build directory
