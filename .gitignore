@@ -95,4 +95,5 @@ Source/MeadowComms/main/build_info.h
 Source/MeadowComms/test/sdkconfig
 Source/MeadowComms/.gdb_history
 Source/MeadowComms/test/.gdb_history
-Source/MeadowComms/test/main/secrets.h
+Source/MeadowComms/test/secrets.h
+Source/MeadowComms/components/F7Services/test/secrets.h
