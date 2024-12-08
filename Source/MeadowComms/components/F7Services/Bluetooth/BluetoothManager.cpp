@@ -420,8 +420,6 @@ void BluetoothManager::BuildGraphFromJson(char *cfg_json)
 {
     TRACE_MESSAGE("BuildGraphFromJson: Enter");
 
-    TRACE_MESSAGE("parsing config json...");
-
     Document doc;
     doc.Parse(cfg_json);
 
@@ -554,8 +552,6 @@ void BluetoothManager::BuildGraphFromJson(char *cfg_json)
 
         Services.Add(bt_svc);
     }
-
-    TRACE_MESSAGE("parsing json complete!");
 
     TRACE_MESSAGE("BuildGraphFromJson: Exit");
 }
