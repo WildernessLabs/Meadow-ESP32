@@ -58,8 +58,6 @@ private:
      *  request.  It is used to synchronise requests
      */
     static const int BT_READY_BIT = BIT0;
-    static const int BT_READING_BIT = BIT1;
-    static const int BT_WRITING_BIT = BIT1;
 
     /**
      *  Event group containing 24-bits used to indicate the state of the WiFi connection.
