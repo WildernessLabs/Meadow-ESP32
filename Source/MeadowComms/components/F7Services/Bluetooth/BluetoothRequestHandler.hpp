@@ -30,7 +30,7 @@
 #include "MessageDispatcher.hpp"
 #include "SharedEnums.hpp"
 
-#include "bluetooth/BluetoothManager.hpp"
+#include "BluetoothManager.hpp"
 
 #include <vector>
 #include <string>

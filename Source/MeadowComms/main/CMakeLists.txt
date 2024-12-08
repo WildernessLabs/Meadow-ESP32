@@ -8,5 +8,4 @@ idf_component_register(SRCS "AppMain.cpp"
                                 "../components/F7Services/MeshNetwork"
                                 "../components/F7Services/Exceptions"
                                 "../components/F7Services/Bluetooth"
-                                "../components/F7Services/Bluetooth/rapidjson"
                                 )

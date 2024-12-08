@@ -226,6 +226,9 @@ void BluetoothManager::GenerateAdvertisingData()
 
     uint8_t *advertising_service_uuid = static_cast<uint8_t *>(pvPortMalloc(16));
     // NOTE: unknown if this specific value has meaning.  Pulled directly from espressif.
+    //
+    //  Move this to file/class scope.
+    //
     uint8_t dummy_advertising_service_uuid[16] = {
         /* LSB <--------------------------------------------------------------------------------> MSB */
         // first uuid, 16bit, [12],[13] is the value
