@@ -214,9 +214,14 @@ namespace StatusCodes
         /// StatusCodes - Battery level on ADC1 cannot be read (used of F7 v1).
         /// </summary>
         BatteryLevelCannotBeRead = 47,
-
-        /** 47, 48 & 49 free */
-
+        /**
+         * @brief CannotStopBluetooth (used when the Bluetooth stack cannot be stopped).
+         */
+        CannotStopBluetooth = 48,
+        /**
+         * @brief BluetoothAlreadyStarted (used when the Bluetooth stack is already running).
+         */
+        BluetoothAlreadyStarted = 49,
         //
         //  Keep the ESP reset codes consecutive as they are subject to arithmetic operations
         //  to determine the exact reset reason.
@@ -620,7 +625,23 @@ namespace BluetoothFunction
         /// <summary>
         /// BluetoothFunction - ClientWriteRequestEvent
         /// </summary>
-        ClientWriteRequestEvent = 4
+        ClientWriteRequestEvent = 4,
+        /**
+         * @brief Indicate that the Bluetooth stack is starting.
+         */
+        BluetoothStartingEvent = 5,
+        /**
+         * @brief Indicate the the Bluetooth service has started.
+         */
+        BluetoothStartedEvent = 6,
+        /**
+         * @brief Indicate the the Bluetooth service is stopping.
+         */
+        BluetoothStoppingEvent = 7,
+        /**
+         * @brief Indicate the the Bluetooth service has stopped.
+         */
+        BluetoothStoppedEvent = 8,
     };
 
 } // namespace BluetoothFunction
