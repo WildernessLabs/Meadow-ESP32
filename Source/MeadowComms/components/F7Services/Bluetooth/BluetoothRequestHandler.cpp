@@ -333,7 +333,7 @@ StatusCodes::StatusCodes BluetoothRequestHandler::PrepareForDeepSleep()
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
     if (bluetoothHandler != NULL)
     {
-        if (!bluetoothHandler->TeardownStack())
+        if (!bluetoothHandler->StopBluetoothService())
         {
             result = StatusCodes::Failure;
         }
@@ -349,9 +349,9 @@ StatusCodes::StatusCodes BluetoothRequestHandler::PrepareForDeepSleep()
  *
  * @return true if the system was started, false otherwise.
  */
-bool BluetoothRequestHandler::StartStack()
+bool BluetoothRequestHandler::StartBluetoothService()
 {
-    TRACE_MESSAGE("StartStack: Enter");
+    TRACE_MESSAGE("StartBluetoothService: Enter");
 
     esp_err_t ret;
 
@@ -430,7 +430,7 @@ bool BluetoothRequestHandler::StartStack()
     esp_ble_gap_set_security_param(ESP_BLE_SM_SET_INIT_KEY, &init_key, sizeof(uint8_t));
     esp_ble_gap_set_security_param(ESP_BLE_SM_SET_RSP_KEY, &rsp_key, sizeof(uint8_t));
 
-    TRACE_MESSAGE("StartStack: Exit");
+    TRACE_MESSAGE("StartBluetoothService: Exit");
 
     return true;
 }
@@ -440,23 +440,23 @@ bool BluetoothRequestHandler::StartStack()
  *
  * @return true if the system was stopped, false otherwise.
  */
-bool BluetoothRequestHandler::TeardownStack()
+bool BluetoothRequestHandler::StopBluetoothService()
 {
-    TRACE_MESSAGE("TeardownStack: Enter");
+    TRACE_MESSAGE("StopBluetoothService: Enter");
 
     if (esp_ble_gap_stop_advertising() != ESP_OK)
     {
         ERROR_MESSAGE("Failed to stop advertising");
         return false;
     }
-    // if (_gattsInterfaceHandle != ESP_GATT_IF_NONE)
-    // {
-    //     if (esp_ble_gatts_app_unregister(_gattsInterfaceHandle) != ESP_OK)
-    //     {
-    //         ERROR_MESSAGE("Failed to unregister GATTS app");
-    //         return false;
-    //     }
-    // }
+    if (_gattsInterfaceHandle != ESP_GATT_IF_NONE)
+    {
+        if (esp_ble_gatts_app_unregister(_gattsInterfaceHandle) != ESP_OK)
+        {
+            ERROR_MESSAGE("Failed to unregister GATTS app");
+            return false;
+        }
+    }
     TRACE_MESSAGE("Disabling Bluedriod");
     if (esp_bluedroid_disable() != ESP_OK)
     {
@@ -491,7 +491,7 @@ bool BluetoothRequestHandler::TeardownStack()
     //     return false;
     // }
 
-    TRACE_MESSAGE("TeardownStack: Exit");
+    TRACE_MESSAGE("StopBluetoothService: Exit");
 
     return true;
 }
@@ -499,13 +499,13 @@ bool BluetoothRequestHandler::TeardownStack()
 /**
  * @brief Stop the Bluetooth service.
  *
- * @param request
+ * @param request Request from the STM32.
  */
 void BluetoothRequestHandler::Stop(Message *request)
 {
     TRACE_MESSAGE("Stop: Enter");
 
-    if (TeardownStack())
+    if (StopBluetoothService())
     {
         request->StatusCode = StatusCodes::CompletedOk;
     }
@@ -550,7 +550,7 @@ void BluetoothRequestHandler::OnDataWriteRequest(uint16_t handle, uint8_t *data,
 /**
  * @brief Build the service and characteristic graph from the JSON configuration.
  *
- * @param msg Message containing the JSON configuration.
+ * @param request Message containing the JSON configuration.
  */
 void BluetoothRequestHandler::Start(Message *request)
 {
@@ -564,7 +564,7 @@ void BluetoothRequestHandler::Start(Message *request)
     _manager.BuildGraphFromJson(config->Config);
     _manager.GenerateAdvertisingData();
     _manager.GenerateAttributeTable();
-    if (StartStack())
+    if (StartBluetoothService())
     {
         request->StatusCode = StatusCodes::CompletedOk;
     }
@@ -581,10 +581,6 @@ void BluetoothRequestHandler::Start(Message *request)
 
     TRACE_MESSAGE("Start: Exit");
 }
-
-//////////////////////////
-// BELOW HERE IS THE IMPLEMENTATION OF THE ESP GATT SERVER
-//////////////////////////
 
 /**
  * @brief Process GATTS events.
