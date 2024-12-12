@@ -107,9 +107,9 @@ private:
     ~BluetoothRequestHandler();
 
     /**
-     * @brief Start the Bluetooth service using the 
-     * 
-     * @param request 
+     * @brief Start the Bluetooth service using the
+     *
+     * @param request
      */
     void Start(Message *request);
 
