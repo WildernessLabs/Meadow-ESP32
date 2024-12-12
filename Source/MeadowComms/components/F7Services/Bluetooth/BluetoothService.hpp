@@ -33,8 +33,19 @@ public:
      */
     static const char *COMPONENT_NAME;
 
+    /**
+     * @brief Construct a new Bluetooth Service object
+     */
     BluetoothService();
+
+    /**
+     * @brief Construct a new Bluetooth Service object
+     */
     BluetoothService(const char *name, Uuid16 uuid);
+
+    /**
+     * @brief Add a characteristic to the service.
+     */
     BluetoothCharacteristic &AddCharacteristic(BluetoothCharacteristic *characteristic);
 
     /**
