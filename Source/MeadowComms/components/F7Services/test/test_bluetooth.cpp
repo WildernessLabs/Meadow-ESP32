@@ -97,6 +97,39 @@ static void StartBlueToothService(const char *const configuration)
 }
 
 /**
+ * @brief Stop the Bluetooth service.
+ */
+static void StopBluetoothService()
+{
+    if (messageDispatcher == nullptr)
+    {
+        messageDispatcher = new MockMessageDispatcher(nullptr);
+        TEST_ASSERT_NOT_NULL(messageDispatcher);
+    }
+
+    Message stopMessage = {};
+    stopMessage.MessageType = MessageTypes::Header;
+    stopMessage.Interface = Esp32Interfaces::BlueTooth;
+    stopMessage.Function = BluetoothFunction::Stop;
+    stopMessage.PayloadLength = 0;
+    stopMessage.Payload = nullptr;
+
+    messageDispatcher->QueueMessageForEsp32(&stopMessage);
+
+    WaitForResponse(messageDispatcher, 10000);
+    TEST_ASSERT_EQUAL(1, messageDispatcher->OutboundMessageQueueLength());
+
+    Message *response = messageDispatcher->GetOutboundMessage();
+    TEST_ASSERT_NOT_NULL(response);
+    TEST_ASSERT_NULL(response->Payload);
+    TEST_ASSERT_EQUAL(0, response->PayloadLength);
+    TEST_ASSERT_EQUAL(MessageTypes::Response, response->MessageType);
+    TEST_ASSERT_EQUAL(Esp32Interfaces::BlueTooth, response->Interface);
+    TEST_ASSERT_EQUAL(BluetoothFunction::Stop, response->Function);
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
+}
+
+/**
  * @brief Test starting a Bluetooth service for MeadowA, Company ID Espressif (0x02e5).
  */
 TEST_CASE("Start Bluetooth (MeadowA, Espressif)", "[Bluetooth]")
@@ -124,35 +157,43 @@ TEST_CASE("Start Bluetooth (MeadowC, no company identifier)", "[Bluetooth]")
 }
 
 /**
- * @brief Test the stop functionality.
+ * @brief Test stopping the Bluetooth service when no service has been started.
+ */
+TEST_CASE("Stop Bluetooth service (no service started)", "[Bluetooth]")
+{
+    printf("Stopping Bluetooth service\n");
+    StopBluetoothService();
+}
+
+/**
+ * @brief Test the stop functionality when Bluetooth has been started.
  */
 TEST_CASE("Stop Bluetooth Service (will start MeadowA service first)", "[Bluetooth]")
 {
     printf("Starting Bluetooth service for MeadowA, Company ID Espressif (0x02e5)\n");
     StartBlueToothService(meadow_a_json);
 
-    printf("Waiting for 5 seconds before stopping Bluetooth service\n");
-    vTaskDelay(5000 / portTICK_PERIOD_MS);
+    printf("Waiting for 1 second before stopping Bluetooth service\n");
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
 
     printf("Stopping Bluetooth service\n");
-    Message stopMessage = {};
-    stopMessage.MessageType = MessageTypes::Header;
-    stopMessage.Interface = Esp32Interfaces::BlueTooth;
-    stopMessage.Function = BluetoothFunction::Stop;
-    stopMessage.PayloadLength = 0;
-    stopMessage.Payload = nullptr;
+    StopBluetoothService();
+}
 
-    messageDispatcher->QueueMessageForEsp32(&stopMessage);
+/**
+ * @brief Test restarting the Bluetooth service.
+ */
+TEST_CASE("Restart Bluetooth service with different configuration", "[Bluetooth]")
+{
+    printf("Starting Bluetooth service for MeadowA, Company ID Espressif (0x02e5)\n");
+    StartBlueToothService(meadow_a_json);
 
-    WaitForResponse(messageDispatcher, 10000);
-    TEST_ASSERT_EQUAL(1, messageDispatcher->OutboundMessageQueueLength());
+    printf("Waiting for 1 second before stopping Bluetooth service\n");
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
 
-    Message *response = messageDispatcher->GetOutboundMessage();
-    TEST_ASSERT_NOT_NULL(response);
-    TEST_ASSERT_NULL(response->Payload);
-    TEST_ASSERT_EQUAL(0, response->PayloadLength);
-    TEST_ASSERT_EQUAL(MessageTypes::Response, response->MessageType);
-    TEST_ASSERT_EQUAL(Esp32Interfaces::BlueTooth, response->Interface);
-    TEST_ASSERT_EQUAL(BluetoothFunction::Stop, response->Function);
-    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
+    printf("Stopping Bluetooth service\n");
+    StopBluetoothService();
+
+    printf("Starting Bluetooth service for MeadowB, Company ID Baidu (0x011c)\n");
+    StartBlueToothService(meadow_b_json);
 }
