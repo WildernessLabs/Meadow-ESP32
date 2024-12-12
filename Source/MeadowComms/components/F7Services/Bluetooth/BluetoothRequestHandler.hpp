@@ -54,18 +54,18 @@ private:
      */
 
     /**
-     *  BT_READY_BIT indicates if the Bluetooth processing system can process a
-     *  request.  It is used to synchronise requests
+     *  @brief BT_READY_BIT indicates if the Bluetooth processing system can process a
+     *  request.  It is used to synchronise requests from the STM32.
      */
     static const int BT_READY_BIT = BIT0;
 
     /**
-     *  Event group containing 24-bits used to indicate the state of the WiFi connection.
+     *  @brief Event group containing 24-bits used to indicate the state of the WiFi connection.
      */
     EventGroupHandle_t _xBtEventGroup = nullptr;
 
     /**
-     *  Name of the FreeRTOS task for the Bluetooth system.
+     @brief *  Name of the FreeRTOS task for the Bluetooth system.
      */
     const char *_taskName = "BluetoothTask";
 
@@ -73,6 +73,11 @@ private:
      *  Determine if this class is instantiated already (i.e. this should be a singleton).
      */
     static bool _instantiated;
+
+    /**
+     * @brief Handler for the GATTS interface.
+     */
+    static esp_gatt_if_t _gattsInterfaceHandle;
 
     /**
      *  This method will dispatch incoming messages to the appropriate request handler.
@@ -85,7 +90,14 @@ private:
      */
     void EventHandlerHelper(esp_event_base_t, int32_t, void *);
 
+    /**
+     * @brief Maximum size of the transmission unit.  BLE supports up to 512 bytes.
+     */
     const int BT_GATT_MTU = 500;
+
+    /**
+     * @brief Application ID for the Meadow Profile.
+     */
     const int MEADOW_PROFILE_APP_ID = 0x55;
 
     /*
@@ -95,9 +107,16 @@ private:
     ~BluetoothRequestHandler();
 
     /**
+     * @brief Start the Bluetooth service using the 
+     * 
+     * @param request 
+     */
+    void Start(Message *request);
+
+    /**
      * @brief Start the Bluetooth stack.
      */
-    void StartStack();
+    bool StartStack();
 
     /**
      * @brief Get the Handles and send them to the STM32.
@@ -105,9 +124,14 @@ private:
     void GetHandles(Message *request);
 
     /**
+     * @brief Stop the Bluetooth stack.
+     */
+    void Stop(Message *request);
+
+    /**
      * @brief Shutdown the Bluetooth stack.
      */
-    StatusCodes::StatusCodes TeardownStack(Message *msg);
+    bool TeardownStack();
 
     /**
      * @brief Create a Attribute Graph object
