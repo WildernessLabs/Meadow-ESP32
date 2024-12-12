@@ -228,6 +228,7 @@ void BluetoothManager::GenerateAdvertisingData()
     //
     //  Move this to file/class scope.
     //
+    // clang-format off
     uint8_t dummy_advertising_service_uuid[32] = {
         /* LSB <--------------------------------------------------------------------------------> MSB */
         // First UUID, 16bit, [12],[13] is the value
@@ -235,6 +236,7 @@ void BluetoothManager::GenerateAdvertisingData()
         // Second UUID, 32bit, [12], [13], [14], [15] is the value
         0xfb, 0x34, 0x9b, 0x5f, 0x80, 0x00, 0x00, 0x80, 0x00, 0x10, 0x00, 0x00, 0xee, 0x00, 0x00, 0x00,
     };
+    // clang-format on
     uint8_t *advertising_service_uuid = static_cast<uint8_t *>(pvPortMalloc(sizeof(dummy_advertising_service_uuid)));
     memcpy(advertising_service_uuid, dummy_advertising_service_uuid, sizeof(dummy_advertising_service_uuid));
 

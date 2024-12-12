@@ -336,7 +336,7 @@ StatusCodes::StatusCodes BluetoothRequestHandler::PrepareForDeepSleep()
 
 /**
  * @brief Start the Bluetooth stack.
- * 
+ *
  * @return true if the system was started, false otherwise.
  */
 bool BluetoothRequestHandler::StartStack()
@@ -468,7 +468,7 @@ bool BluetoothRequestHandler::TeardownStack()
     {
         ERROR_MESSAGE("Failed to disable BT controller");
         return false;
-    }   
+    }
     TRACE_MESSAGE("Deinitialising BT controller");
     if (esp_bt_controller_deinit() != ESP_OK)
     {
@@ -488,8 +488,8 @@ bool BluetoothRequestHandler::TeardownStack()
 
 /**
  * @brief Stop the Bluetooth service.
- * 
- * @param request 
+ *
+ * @param request
  */
 void BluetoothRequestHandler::Stop(Message *request)
 {
@@ -908,7 +908,7 @@ void BluetoothRequestHandler::GAPEventHandler(esp_gap_ble_cb_event_t event, esp_
         case ESP_GAP_BLE_UPDATE_CONN_PARAMS_EVT: // 20
             TRACE_MESSAGE("ESP_GAP_BLE_UPDATE_CONN_PARAMS_EVT: GAP connection parameters successfully changed");
             break;
-        case ESP_GAP_BLE_ADV_STOP_COMPLETE_EVT: // 7
+        case ESP_GAP_BLE_ADV_STOP_COMPLETE_EVT:  // 7
             TRACE_MESSAGE("ESP_GAP_BLE_ADV_STOP_COMPLETE_EVT");
             if (param->adv_stop_cmpl.status != ESP_BT_STATUS_SUCCESS)
             {
