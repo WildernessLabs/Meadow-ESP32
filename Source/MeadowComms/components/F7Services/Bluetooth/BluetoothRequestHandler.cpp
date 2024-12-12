@@ -706,6 +706,9 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
         case ESP_GATTS_STOP_EVT:
             TRACE_MESSAGE("ESP_GATTS_STOP_EVT");
             break;
+        case ESP_GATTS_RESPONSE_EVT:
+            TRACE_MESSAGE("ESP_GATTS_RESPONSE_EVT");
+            break;
         case ESP_GATTS_CONNECT_EVT:
             {
                 TRACE_MESSAGE("ESP_GATTS_CONNECT_EVT");
@@ -742,6 +745,12 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
             break;
         case ESP_GATTS_CONGEST_EVT:
             TRACE_MESSAGE("ESP_GATTS_CONGEST_EVT");
+            break;
+        case ESP_GATTS_SET_ATTR_VAL_EVT:
+            TRACE_MESSAGE("ESP_GATTS_SET_ATTR_VAL_EVT");
+            break;
+        case ESP_GATTS_SEND_SERVICE_CHANGE_EVT:
+            TRACE_MESSAGE("ESP_GATTS_SEND_SERVICE_CHANGE_EVT");
             break;
         case ESP_GATTS_CREAT_ATTR_TAB_EVT:
             TRACE_MESSAGE("ESP_GATTS_CREAT_ATTR_TAB_EVT");
