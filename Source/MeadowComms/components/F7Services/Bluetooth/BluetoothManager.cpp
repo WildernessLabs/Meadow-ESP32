@@ -192,7 +192,7 @@ void BluetoothManager::SetHandles(uint16_t *handles, uint16_t count)
 
             characteristic->Value->Handle = handles[index++];
             TRACE_MESSAGE("ATTRIBUTE TABLE VALUE HANDLE = 0x%04x | max length = %i", characteristic->Value->Handle, characteristic->Value->MaxLength);
-            auto val = length_val {.length = characteristic->Value->MaxLength, .value = new uint8_t[characteristic->Value->MaxLength]};
+            auto val = length_val_s {.length = characteristic->Value->MaxLength, .value = new uint8_t[characteristic->Value->MaxLength]};
             memset(val.value, 0, characteristic->Value->MaxLength);
 
             TRACE_MESSAGE("Request for data for handle 0x%04x", characteristic->Value->Handle);
