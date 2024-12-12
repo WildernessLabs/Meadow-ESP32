@@ -35,7 +35,7 @@ private:
     /**
      * @brief Hold information about a value (length and pointer to the value).
      */
-    struct length_val
+    struct length_val_s
     {
         /**
          * @brief Size of the memory block holding the value.
@@ -46,6 +46,10 @@ private:
          */
         uint8_t *value;
     };
+    /**
+     * @brief Type definition for the length_val_s structure.
+     */
+    typedef struct length_val_s length_val_t;
 
     /**
      * @brief Handle manager for the BluetoothManager.
@@ -55,7 +59,7 @@ private:
     /**
      * @brief Map of the values for the BluetoothManager along with their IDs.
      */
-    std::map<uint16_t, length_val> _valueMap;
+    std::map<uint16_t, length_val_s> _valueMap;
 
     static void HandleServiceAdded(BluetoothService *);
     static void HandleCharacteristicAdded(BluetoothCharacteristic *);
