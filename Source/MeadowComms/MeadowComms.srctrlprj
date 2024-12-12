@@ -215,12 +215,15 @@
                 <header_search_path>/Users/markstevens/GitHub/WildernessLabs/Meadow-ESP32/Source/MeadowComms/components/F7Services/MeshNetwork</header_search_path>
                 <header_search_path>/Users/markstevens/GitHub/WildernessLabs/Meadow-ESP32/Source/MeadowComms/components/F7Services/Exceptions</header_search_path>
                 <header_search_path>/Users/markstevens/GitHub/WildernessLabs/Meadow-ESP32/Source/MeadowComms/components/F7Services/Bluetooth</header_search_path>
-                <header_search_path>/Users/markstevens/GitHub/WildernessLabs/Meadow-ESP32/Source/MeadowComms/components/F7Services/Bluetooth/rapidjson</header_search_path>
                 <header_search_path>/Users/markstevens/GitHub/WildernessLabs/Meadow-ESP32/Source/MeadowComms/components/esp_littlefs/include</header_search_path>
                 <header_search_path>/Users/markstevens/.espressif/tools/xtensa-esp-elf/esp-13.2.0_20240530/xtensa-esp-elf/xtensa-esp-elf/include</header_search_path>
                 <header_search_path>/Users/markstevens/.espressif/tools/xtensa-esp-elf/esp-13.2.0_20240530/xtensa-esp-elf/xtensa-esp-elf/include/c++/13.2.0</header_search_path>
                 <header_search_path>/Users/markstevens/.espressif/tools/xtensa-esp-elf/esp-13.2.0_20240530/xtensa-esp-elf/xtensa-esp-elf/include/c++/13.2.0/bits</header_search_path>
+                <header_search_path>/Users/markstevens/.espressif/tools/xtensa-esp-elf/esp-13.2.0_20240530/xtensa-esp-elf/xtensa-esp-elf/include/c++/13.2.0/xtensa-esp-elf/esp32/psram</header_search_path>
+                <header_search_path>/Users/markstevens/.espressif/tools/xtensa-esp-elf/esp-13.2.0_20240530/xtensa-esp-elf/xtensa-esp-elf/include/c++/13.2.0/xtensa-esp-elf/esp32/psram/no-rtti</header_search_path>
                 <header_search_path>/Users/markstevens/.espressif/tools/xtensa-esp-elf/esp-13.2.0_20240530/xtensa-esp-elf/xtensa-esp-elf/include/c++/13.2.0/xtensa-esp-elf/esp32/bits</header_search_path>
+                <header_search_path>/Users/markstevens/.espressif/tools/xtensa-esp-elf/esp-13.2.0_20240530/xtensa-esp-elf/xtensa-esp-elf/include/c++/13.2.0/xtensa-esp-elf/esp32/no-rtti/</header_search_path>
+                <header_search_path>/Users/markstevens/.espressif/tools/xtensa-esp-elf/esp-13.2.0_20240530/xtensa-esp-elf/xtensa-esp-elf/include/c++/13.2.0/xtensa-esp-elf/</header_search_path>
             </header_search_paths>
             <name>C++ Source Group</name>
             <pch_flags>
