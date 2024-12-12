@@ -55,6 +55,16 @@ const char *BluetoothRequestHandler::COMPONENT_NAME = "Bluetooth";
  */
 esp_gatt_if_t BluetoothRequestHandler::_gattsInterfaceHandle = ESP_GATT_IF_NONE;
 
+/**
+ * @brief Indicate if we have configured the advertising data.
+ */
+bool BluetoothRequestHandler::_advertisingDataConfigured = false;
+
+/**
+ * @brief Has the response data been configured?
+ */
+bool BluetoothRequestHandler::_responseDataConfigured = false;
+
 /*
  * ----------------------------------------------------------------------------
  *
@@ -226,7 +236,7 @@ void BluetoothRequestHandler::DispatchRequest(Message *request)
     switch (request->Function)
     {
         case BluetoothFunction::Start:
-            CreateAttributeGraph(request);
+            Start(request);
             break;
         case BluetoothFunction::ServerDataSet:
             SetCurrentValueForAttributeHandle(request);
@@ -542,11 +552,11 @@ void BluetoothRequestHandler::OnDataWriteRequest(uint16_t handle, uint8_t *data,
  *
  * @param msg Message containing the JSON configuration.
  */
-void BluetoothRequestHandler::CreateAttributeGraph(Message *request)
+void BluetoothRequestHandler::Start(Message *request)
 {
-    TRACE_MESSAGE("CreateAttributeGraph: Enter");
+    TRACE_MESSAGE("Start: Enter");
 
-    TRACE_MESSAGE("CreateAttributeGraph. payload len = %lu", request->PayloadLength);
+    TRACE_MESSAGE("Start. payload len = %lu", request->PayloadLength);
 
     Esp32Messaging::BTStackConfig *config = Encoders::ExtractBTStackConfig(request->Payload);
     request->DeletePayload();
@@ -569,23 +579,12 @@ void BluetoothRequestHandler::CreateAttributeGraph(Message *request)
 
     xEventGroupSetBits(_xBtEventGroup, BT_READY_BIT);
 
-    TRACE_MESSAGE("CreateAttributeGraph: Exit");
+    TRACE_MESSAGE("Start: Exit");
 }
 
 //////////////////////////
 // BELOW HERE IS THE IMPLEMENTATION OF THE ESP GATT SERVER
 //////////////////////////
-#define INSTANCE_ID 0
-
-/**
- * @brief Indicate if the advertising data has been configured.
- */
-static bool advertising_data_configured = false;
-
-/**
- * @brief Indicate if the response data has been configured.
- */
-static bool response_data_configured = false;
 
 /**
  * @brief Process GATTS events.
@@ -615,7 +614,7 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
                 {
                     ERROR_MESSAGE("Config adv data failed, error code = %x, %s", ret, esp_err_to_name(ret));
                 }
-                advertising_data_configured = true;
+                _advertisingDataConfigured = true;
 
                 // configure our BLE scan response
                 ret = esp_ble_gap_config_adv_data(_manager.GetScanResponseData());
@@ -623,12 +622,12 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
                 {
                     ERROR_MESSAGE("Config scan response data failed, error code = %x, %s", ret, esp_err_to_name(ret));
                 }
-                response_data_configured = true;
+                _responseDataConfigured = true;
 
                 TRACE_MESSAGE("BLE advertising configured.  Creating attributes...");
 
                 // set the attribute table - this requires the services be already-defined in the Manager
-                esp_err_t create_attr_ret = esp_ble_gatts_create_attr_tab(_manager.GetAttributeTable(), gatts_if, _manager.GetAttributeTableLength(), INSTANCE_ID);
+                esp_err_t create_attr_ret = esp_ble_gatts_create_attr_tab(_manager.GetAttributeTable(), gatts_if, _manager.GetAttributeTableLength(), BluetoothRequestHandler::INSTANCE_ID);
                 if (create_attr_ret)
                 {
                     ERROR_MESSAGE("Create attr table failed, error code = %x", create_attr_ret);
@@ -790,8 +789,8 @@ void BluetoothRequestHandler::GAPEventHandler(esp_gap_ble_cb_event_t event, esp_
     {
         case ESP_GAP_BLE_SCAN_RSP_DATA_SET_COMPLETE_EVT: // 1
             TRACE_MESSAGE("ESP_GAP_BLE_SCAN_RSP_DATA_SET_COMPLETE_EVT");
-            response_data_configured = false;
-            if (!advertising_data_configured)
+            _responseDataConfigured = false;
+            if (!_advertisingDataConfigured)
             {
                 TRACE_MESSAGE("Scan data set.  Starting advertising...");
                 esp_ble_gap_start_advertising(_manager.GetAdvertisingParameters());
@@ -800,8 +799,8 @@ void BluetoothRequestHandler::GAPEventHandler(esp_gap_ble_cb_event_t event, esp_
         case ESP_GAP_BLE_ADV_DATA_SET_COMPLETE_EVT: // 0
             TRACE_MESSAGE("ESP_GAP_BLE_ADV_DATA_SET_COMPLETE_EVT");
             // triggered by the gatts_event_handler for ESP_GATTS_REG_EVT where we set the advertising data
-            advertising_data_configured = false;
-            if (!response_data_configured)
+            _advertisingDataConfigured = false;
+            if (!_responseDataConfigured)
             {
                 TRACE_MESSAGE("Advertising data set.  Starting advertising...");
                 esp_ble_gap_start_advertising(_manager.GetAdvertisingParameters());
@@ -891,7 +890,7 @@ void BluetoothRequestHandler::GAPEventHandler(esp_gap_ble_cb_event_t event, esp_
                 }
                 else
                 {
-                    advertising_data_configured = true;
+                    _advertisingDataConfigured = true;
                 }
 
                 ret = esp_ble_gap_config_adv_data(_manager.GetScanResponseData());
@@ -901,7 +900,7 @@ void BluetoothRequestHandler::GAPEventHandler(esp_gap_ble_cb_event_t event, esp_
                 }
                 else
                 {
-                    response_data_configured = true;
+                    _responseDataConfigured = true;
                 }
             }
             break;

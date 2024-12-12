@@ -60,6 +60,11 @@ private:
     static const int BT_READY_BIT = BIT0;
 
     /**
+     * @brief Instance ID for the Bluetooth service.
+     */
+    static const int INSTANCE_ID = 0;
+
+    /**
      *  @brief Event group containing 24-bits used to indicate the state of the WiFi connection.
      */
     EventGroupHandle_t _xBtEventGroup = nullptr;
@@ -78,6 +83,13 @@ private:
      * @brief Handler for the GATTS interface.
      */
     static esp_gatt_if_t _gattsInterfaceHandle;
+
+    static bool _advertisingDataConfigured;
+
+    /**
+     * @brief Has the response data been configured?
+     */
+    static bool _responseDataConfigured;
 
     /**
      *  This method will dispatch incoming messages to the appropriate request handler.
@@ -107,9 +119,7 @@ private:
     ~BluetoothRequestHandler();
 
     /**
-     * @brief Start the Bluetooth service using the
-     *
-     * @param request
+     * @brief Start the bluetooth service from the attribute graph sent be the managed code.
      */
     void Start(Message *request);
 
@@ -132,11 +142,6 @@ private:
      * @brief Shutdown the Bluetooth stack.
      */
     bool TeardownStack();
-
-    /**
-     * @brief Create a Attribute Graph object
-     */
-    void CreateAttributeGraph(Message *request);
 
     /**
      * @brief Set the current value for the specified attribute handle.
