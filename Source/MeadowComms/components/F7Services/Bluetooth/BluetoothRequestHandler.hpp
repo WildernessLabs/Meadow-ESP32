@@ -126,7 +126,7 @@ private:
     /**
      * @brief Start the Bluetooth stack.
      */
-    bool StartStack();
+    bool StartBluetoothService();
 
     /**
      * @brief Get the Handles and send them to the STM32.
@@ -141,7 +141,7 @@ private:
     /**
      * @brief Shutdown the Bluetooth stack.
      */
-    bool TeardownStack();
+    bool StopBluetoothService();
 
     /**
      * @brief Set the current value for the specified attribute handle.
