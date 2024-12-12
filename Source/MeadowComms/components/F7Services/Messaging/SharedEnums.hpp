@@ -642,6 +642,14 @@ namespace BluetoothFunction
          * @brief Indicate the the Bluetooth service has stopped.
          */
         BluetoothStoppedEvent = 8,
+        /**
+         * @brief Indicate that a client has connected to the Bluetooth service.
+         */
+        ClientConnectedEvent = 9,
+        /**
+         * @brief Indicate that a client has disconnected from the Bluetooth service.
+         */
+        ClientDisconnectedEvent = 10,
     };
 
 } // namespace BluetoothFunction
