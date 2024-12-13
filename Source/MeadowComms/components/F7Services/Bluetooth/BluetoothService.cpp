@@ -41,6 +41,23 @@ BluetoothService::BluetoothService()
 {
 }
 
+/**
+ * @brief Destroy the BluetoothService object and release any allocated resources.
+ */
+BluetoothService::~BluetoothService()
+{
+    TRACE_MESSAGE("~BluetoothService: Enter");
+
+    for (auto it = _characteristics.begin(); it != _characteristics.end(); ++it)
+    {
+        delete *it;
+    }
+    _characteristics.clear();
+
+    TRACE_MESSAGE("~BluetoothService: Exit");
+}
+
+
 /*
  * ----------------------------------------------------------------------------
  *

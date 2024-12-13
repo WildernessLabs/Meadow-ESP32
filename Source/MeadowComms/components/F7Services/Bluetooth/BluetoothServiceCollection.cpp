@@ -82,6 +82,28 @@ BluetoothService &BluetoothServiceCollection::Add(BluetoothService *service)
 }
 
 /**
+ * @brief Delete all of the registered services.
+ * 
+ * @return bool If successfully deleted, false otherwise.
+ */
+bool BluetoothServiceCollection::DeleteAllServices()
+{
+    TRACE_MESSAGE("DeleteAllServices: Enter");
+
+    for (auto it = _services.begin(); it != _services.end(); ++it)
+    {
+        auto service = (BluetoothService *) *it;
+        delete service;
+    }
+
+    _services.clear();
+
+    TRACE_MESSAGE("DeleteAllServices: Exit");
+
+    return true;
+}
+
+/**
  * @brief Get the service definitions in this collection.
  *
  * @return vector<BluetoothService *> Service definitions.
