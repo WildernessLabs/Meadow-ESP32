@@ -350,7 +350,14 @@ uint32_t Encoders::ProgressiveCRC32(uint32_t currentChecksum, uint8_t byte)
     crc ^= byte;
     for (uint32_t index = 0; index < 8; index++)
     {
+        //
+        //  We turn clang-format off on the following line as the CI tools like
+        //  the line below but the local installed tools do complain that it is
+        //  not formatted correctly.
+        //
+        // clang-format off
         uint32_t mask = (uint32_t) - (crc & 0x01);
+        // clang-format on
         crc = (crc >> 1) ^ (0xedb88320 & mask);
     }
     return (crc);

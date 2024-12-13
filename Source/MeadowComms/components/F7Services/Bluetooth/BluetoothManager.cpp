@@ -192,7 +192,7 @@ void BluetoothManager::SetHandles(uint16_t *handles, uint16_t count)
 
             characteristic->Value->Handle = handles[index++];
             TRACE_MESSAGE("ATTRIBUTE TABLE VALUE HANDLE = 0x%04x | max length = %i", characteristic->Value->Handle, characteristic->Value->MaxLength);
-            auto val = length_val {.length = characteristic->Value->MaxLength, .value = new uint8_t[characteristic->Value->MaxLength]};
+            auto val = length_val_s {.length = characteristic->Value->MaxLength, .value = new uint8_t[characteristic->Value->MaxLength]};
             memset(val.value, 0, characteristic->Value->MaxLength);
 
             TRACE_MESSAGE("Request for data for handle 0x%04x", characteristic->Value->Handle);
@@ -224,17 +224,21 @@ void BluetoothManager::GenerateAdvertisingData()
     manufacturer_data[0] = (uint8_t) (_companyIdentifier & 0x00FF);
     manufacturer_data[1] = (uint8_t) ((_companyIdentifier & 0xFF00) >> 8);
 
-    uint8_t *advertising_service_uuid = static_cast<uint8_t *>(pvPortMalloc(16));
     // NOTE: unknown if this specific value has meaning.  Pulled directly from espressif.
     //
     //  Move this to file/class scope.
     //
-    uint8_t dummy_advertising_service_uuid[16] = {
+    // clang-format off
+    uint8_t dummy_advertising_service_uuid[32] = {
         /* LSB <--------------------------------------------------------------------------------> MSB */
-        // first uuid, 16bit, [12],[13] is the value
-        0xfb, 0x34, 0x9b, 0x5f, 0x80, 0x00, 0x00, 0x80, 0x00, 0x10, 0x00, 0x00, 0xFF, 0x00, 0x00, 0x00,
+        // First UUID, 16bit, [12],[13] is the value
+        0xfb, 0x34, 0x9b, 0x5f, 0x80, 0x00, 0x00, 0x80, 0x00, 0x10, 0x00, 0x00, 0xee, 0x00, 0x00, 0x00,
+        // Second UUID, 32bit, [12], [13], [14], [15] is the value
+        0xfb, 0x34, 0x9b, 0x5f, 0x80, 0x00, 0x00, 0x80, 0x00, 0x10, 0x00, 0x00, 0xee, 0x00, 0x00, 0x00,
     };
-    memcpy(advertising_service_uuid, dummy_advertising_service_uuid, 16);
+    // clang-format on
+    uint8_t *advertising_service_uuid = static_cast<uint8_t *>(pvPortMalloc(sizeof(dummy_advertising_service_uuid)));
+    memcpy(advertising_service_uuid, dummy_advertising_service_uuid, sizeof(dummy_advertising_service_uuid));
 
     memset(&_advertisingData, 0, sizeof(esp_ble_adv_data_t));
     /* The length of adv data must be less than 31 bytes */
@@ -244,7 +248,6 @@ void BluetoothManager::GenerateAdvertisingData()
     _advertisingData.min_interval = 0x0006; // slave connection min interval, Time = min_interval * 1.25 msec
     _advertisingData.max_interval = 0x0010; // slave connection max interval, Time = max_interval * 1.25 msec
     _advertisingData.appearance = 0x00;
-    // _advertisingData.manufacturer_len = sizeof(manufacturer_data);
     if (_hasCompanyIdentifier)
     {
         _advertisingData.manufacturer_len = 2;
@@ -257,7 +260,7 @@ void BluetoothManager::GenerateAdvertisingData()
     }
     _advertisingData.service_data_len = 0;
     _advertisingData.p_service_data = NULL;
-    _advertisingData.service_uuid_len = sizeof(advertising_service_uuid);
+    _advertisingData.service_uuid_len = sizeof(dummy_advertising_service_uuid);
     _advertisingData.p_service_uuid = advertising_service_uuid;
     _advertisingData.flag = (ESP_BLE_ADV_FLAG_GEN_DISC | ESP_BLE_ADV_FLAG_BREDR_NOT_SPT);
 
@@ -412,6 +415,16 @@ void BluetoothManager::SetCurrentValueForAttributeHandle(uint16_t handle, uint8_
 }
 
 /**
+ * @brief Delete all of the registered services.
+ *
+ * @return bool True if the services were deleted, false otherwise.
+ */
+bool BluetoothManager::DeleteAllServices()
+{
+    return Services.DeleteAllServices();
+}
+
+/**
  * @brief Build the graph of services, characteristics and descriptors from a pointer toJSON configuration.
  *
  * @param cfg_json JSON version of the service configuration.
@@ -419,8 +432,6 @@ void BluetoothManager::SetCurrentValueForAttributeHandle(uint16_t handle, uint8_
 void BluetoothManager::BuildGraphFromJson(char *cfg_json)
 {
     TRACE_MESSAGE("BuildGraphFromJson: Enter");
-
-    TRACE_MESSAGE("parsing config json...");
 
     Document doc;
     doc.Parse(cfg_json);
@@ -554,8 +565,6 @@ void BluetoothManager::BuildGraphFromJson(char *cfg_json)
 
         Services.Add(bt_svc);
     }
-
-    TRACE_MESSAGE("parsing json complete!");
 
     TRACE_MESSAGE("BuildGraphFromJson: Exit");
 }
