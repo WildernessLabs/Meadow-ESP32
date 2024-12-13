@@ -112,12 +112,20 @@ public:
      */
     char _deviceName[256];
 
+    /**
+     * @brief Construct a new Bluetooth Manager object
+     */
     BluetoothManager();
 
     /**
      * @brief Collection of services for this device.
      */
     BluetoothServiceCollection Services;
+
+    /**
+     * @brief Delete all of the registered services.
+     */
+    bool DeleteAllServices();
 
     void GenerateAttributeTable();
     void GenerateAdvertisingData();

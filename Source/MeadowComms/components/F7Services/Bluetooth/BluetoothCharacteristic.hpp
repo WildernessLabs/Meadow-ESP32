@@ -41,17 +41,46 @@ public:
      */
     static const char *COMPONENT_NAME;
 
+    /**
+     * @brief Pointer to the service that owns this characteristic.
+     */
     BluetoothService *ParentService;
 
+    /**
+     * @brief Construct a new Bluetooth Characteristic object with a 16-bit UUID.
+     */
     BluetoothCharacteristic(Uuid16 uuid, CharacteristicPermission permission, CharacteristicProperty property, int maxValueLength);
+
+    /**
+     * @brief Construct a new Bluetooth Characteristic objectwith a 128-bit UUID.
+     */
     BluetoothCharacteristic(Uuid128 uuid, CharacteristicPermission permission, CharacteristicProperty property, int maxValueLength);
 
+    /**
+     * @brief Destroy the BluetoothCharacteristic object
+     */
+    ~BluetoothCharacteristic();
+
+    /**
+     * @brief Characteristic declaration.
+     */
     BluetoothCharacteristicDeclaration *Declaration;
+
+    /**
+     * @brief Characteristic value.
+     */
     BluetoothCharacteristicValue *Value;
 
     void AddDescriptor(BluetoothDescriptor *descriptor);
 
+    /**
+     * @brief Method to be executed when a value changes.
+     */
     ValueChanged OnValueChanged = NULL;
+
+    /**
+     * @brief Method to be executed when a descriptor is added to the characteristic.
+     */
     DescriptorAdded OnDescriptorAdded = NULL;
 
     /**

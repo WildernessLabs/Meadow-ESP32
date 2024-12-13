@@ -415,6 +415,17 @@ void BluetoothManager::SetCurrentValueForAttributeHandle(uint16_t handle, uint8_
 }
 
 /**
+ * @brief Delete all of the registered services.
+ * 
+ * @return bool True if the services were deleted, false otherwise.
+ */
+bool BluetoothManager::DeleteAllServices()
+{
+    return Services.DeleteAllServices();
+}
+
+
+/**
  * @brief Build the graph of services, characteristics and descriptors from a pointer toJSON configuration.
  *
  * @param cfg_json JSON version of the service configuration.

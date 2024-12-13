@@ -508,6 +508,14 @@ void BluetoothRequestHandler::Stop(Message *request)
     if (StopBluetoothService())
     {
         request->StatusCode = StatusCodes::CompletedOk;
+        if (_manager.DeleteAllServices())
+        {
+            request->StatusCode = StatusCodes::CompletedOk;
+        }
+        else
+        {
+            request->StatusCode = StatusCodes::Failure;
+        }
     }
     else
     {

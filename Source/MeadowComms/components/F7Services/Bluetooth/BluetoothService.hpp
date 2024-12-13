@@ -44,6 +44,11 @@ public:
     BluetoothService(const char *name, Uuid16 uuid);
 
     /**
+     * @brief Destroy the BluetoothService object and release any allocated resources.
+     */
+    ~BluetoothService();
+
+    /**
      * @brief Add a characteristic to the service.
      */
     BluetoothCharacteristic &AddCharacteristic(BluetoothCharacteristic *characteristic);
