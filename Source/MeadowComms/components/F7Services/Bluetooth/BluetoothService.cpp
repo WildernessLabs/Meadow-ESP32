@@ -57,7 +57,6 @@ BluetoothService::~BluetoothService()
     TRACE_MESSAGE("~BluetoothService: Exit");
 }
 
-
 /*
  * ----------------------------------------------------------------------------
  *

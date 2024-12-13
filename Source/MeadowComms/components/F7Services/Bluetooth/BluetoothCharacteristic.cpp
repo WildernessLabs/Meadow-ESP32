@@ -109,7 +109,6 @@ BluetoothCharacteristic::~BluetoothCharacteristic()
     TRACE_MESSAGE("~BluetoothCharacteristic: Exit");
 }
 
-
 /*
  * ----------------------------------------------------------------------------
  *
