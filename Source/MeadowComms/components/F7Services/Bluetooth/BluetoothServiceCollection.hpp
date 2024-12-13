@@ -57,6 +57,11 @@ public:
         _handleManager = handleManager;
     }
 
+    /**
+     * @brief Delete all of the registered services.
+     */
+    bool DeleteAllServices();
+
     ServiceAdded OnServiceAdded = NULL;
     CharacteristicAdded OnCharacteristicAdded = NULL;
     ValueChanged OnValueChanged = NULL;

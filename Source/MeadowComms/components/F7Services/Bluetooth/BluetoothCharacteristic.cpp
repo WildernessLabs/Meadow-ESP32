@@ -90,6 +90,25 @@ BluetoothCharacteristic::BluetoothCharacteristic(Uuid128 uuid, CharacteristicPer
     TRACE_MESSAGE("BluetoothCharacteristic(UUID128): Exit");
 }
 
+/**
+ * @brief Destroy the BluetoothCharacteristic object and release any allocated resources.
+ */
+BluetoothCharacteristic::~BluetoothCharacteristic()
+{
+    TRACE_MESSAGE("~BluetoothCharacteristic: Enter");
+
+    for (auto it = _descriptors.begin(); it != _descriptors.end(); ++it)
+    {
+        delete *it;
+    }
+    _descriptors.clear();
+
+    delete Declaration;
+    delete Value;
+
+    TRACE_MESSAGE("~BluetoothCharacteristic: Exit");
+}
+
 /*
  * ----------------------------------------------------------------------------
  *
