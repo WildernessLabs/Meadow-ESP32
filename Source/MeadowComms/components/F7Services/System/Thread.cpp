@@ -5,6 +5,7 @@
  */
 #include "sdkconfig.h"
 
+#include "Globals.hpp"
 #include "Logging.hpp"
 #include "Thread.hpp"
 #include "Exceptions/ThreadPoolException.hpp"
@@ -62,7 +63,7 @@ Thread::Thread(char *name, task_completed_method_t taskCompletedMethod) : Thread
     TRACE_MESSAGE("Thread: Enter creating thread %s", name);
     _name = name;
     _taskCompletedMethod = taskCompletedMethod;
-    if (xTaskCreate(Thread::Task, _name, 2048 * 2, this, configMAX_PRIORITIES - 1, &_taskHandle) != pdPASS)
+    if (xTaskCreate(Thread::Task, _name, 2048 * 2, this, PRIORITY_THREAD_POOL_TASK, &_taskHandle) != pdPASS)
     {
         throw new ThreadPoolException("Cannot create task.");
     }
