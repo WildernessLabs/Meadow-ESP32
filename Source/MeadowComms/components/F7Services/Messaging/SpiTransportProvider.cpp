@@ -9,6 +9,7 @@
 #include "SpiTransportProvider.hpp"
 #include "Esp32Messaging.hpp"
 #include "Encoders.hpp"
+#include "Globals.hpp"
 #include <string.h>
 
 #include "esp_heap_caps.h"
@@ -150,12 +151,12 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
     {
         ERROR_MESSAGE("Cannot take the synchronisation semaphore.");
     }
-    xTaskCreate(SynchronisationTask, "SPISyncTask", 2048 * 2, this, configMAX_PRIORITIES - 1, &SpiTransportProvider::_synchronisationTaskHandle);
+    xTaskCreate(SynchronisationTask, "SPISyncTask", 2048 * 2, this, PRIORITY_SPI_SYNCHRONISATION_TASK, &SpiTransportProvider::_synchronisationTaskHandle);
 
     /*
      *  Set up the task and that will process the SPI messages.
      */
-    xTaskCreate(Task, COMPONENT_NAME, 2048 * 2, this, configMAX_PRIORITIES - 1, &SpiTransportProvider::_transportProviderTaskHandle);
+    xTaskCreate(Task, COMPONENT_NAME, 2048 * 2, this, PRIORITY_SPI_TASK, &SpiTransportProvider::_transportProviderTaskHandle);
 
     SendControlMessageToStm32(ControlMessageType::Ready);
 }

@@ -16,6 +16,7 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "Globals.hpp"
 #include "Encoders.hpp"
 #include "Exceptions/MultipleInstancesException.hpp"
 #include "Logging.hpp"
@@ -93,7 +94,7 @@ MeshNetworkRequestHandler::~MeshNetworkRequestHandler()
 void MeshNetworkRequestHandler::Setup()
 {
     RequestHandlerBase::Setup();
-    xTaskCreate(Task, COMPONENT_NAME, 1024 * 2, this, configMAX_PRIORITIES - 1, &_taskHandle);
+    xTaskCreate(Task, COMPONENT_NAME, 1024 * 2, this, PRIORITY_MESH_NETWORK_TASK, &_taskHandle);
 }
 
 /**
