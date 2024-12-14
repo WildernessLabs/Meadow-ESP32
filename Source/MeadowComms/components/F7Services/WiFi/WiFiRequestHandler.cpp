@@ -12,6 +12,7 @@
 #include <unistd.h>
 #include "lwip/apps/sntp.h"
 
+#include "Globals.hpp"
 #include "NvsManager.hpp"
 #include "WiFiRequestHandler.hpp"
 #include "Exceptions/MultipleInstancesException.hpp"
@@ -842,7 +843,7 @@ void WiFiRequestHandler::Setup()
     _xWiFiEventGroup = xEventGroupCreate();
     xEventGroupClearBits(_xWiFiEventGroup, 0x008fffff);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
-    xTaskCreate(Task, COMPONENT_NAME, 2048 * 2, this, configMAX_PRIORITIES - 1, &_taskHandle);
+    xTaskCreate(Task, COMPONENT_NAME, 2048 * 2, this, PRIORITY_WIFI_TASK, &_taskHandle);
     TRACE_MESSAGE("Setup: Exit");
 }
 

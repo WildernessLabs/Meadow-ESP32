@@ -23,6 +23,7 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "Globals.hpp"
 #include "Esp32Messaging.hpp"
 #include "RequestHandlerBase.hpp"
 #include "SharedEnums.hpp"
@@ -225,7 +226,7 @@ StatusCodes::StatusCodes SystemRequestHandler::SetDeviceName(char *value)
 void SystemRequestHandler::Setup()
 {
     RequestHandlerBase::Setup();
-    xTaskCreate(Task, COMPONENT_NAME, 2048 * 2, this, configMAX_PRIORITIES - 1, &_taskHandle);
+    xTaskCreate(Task, COMPONENT_NAME, 2048 * 2, this, PRIORITY_SYSTEM_TASK, &_taskHandle);
 }
 
 /**
