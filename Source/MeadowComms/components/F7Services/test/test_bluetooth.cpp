@@ -157,6 +157,15 @@ TEST_CASE("Start Bluetooth (MeadowC, no company identifier)", "[Bluetooth]")
 }
 
 /**
+ * @brief Test starting a Bluetooth service for MeadowA, Company ID Espressif (0x02e5).
+ */
+TEST_CASE("Start Bluetooth (MeadowF7, Espressif)", "[Bluetooth]")
+{
+    printf("Starting Bluetooth service for MeadowF7 (Bluetooth_Basics), Company ID Espressif (0x02e5)\n");
+    StartBlueToothService(meadow_f7_json);
+}
+
+/**
  * @brief Test stopping the Bluetooth service when no service has been started.
  */
 TEST_CASE("Stop Bluetooth service (no service started)", "[Bluetooth]")
