@@ -220,7 +220,7 @@ TEST_CASE("Restart Bluetooth service with different configuration", "[Bluetooth]
 }
 
 /**
- * @brief Test starting a Bluetooth service for MeadowA, Company ID Espressif (0x02e5) and then accepting 
+ * @brief Test starting a Bluetooth service for MeadowA, Company ID Espressif (0x02e5) and then accepting
  *        multiple write requests.
  */
 TEST_CASE("Start Bluetooth (MeadowF7, Espressif)", "[Bluetooth]")
