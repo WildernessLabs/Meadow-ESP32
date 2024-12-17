@@ -2,5 +2,9 @@
     "cSpell.words": [
         "Espressif",
         "NuttX"
-    ]
+    ],
+    "files.associations": {
+        "unity.h": "c",
+        "unity_internals.h": "c"
+    }
 }

@@ -17,6 +17,18 @@
 #include "test_common.hpp"
 #include "test_bluetooth.hpp"
 
+const char *ON_OFF_NAME = "OnOff";
+const char *ON_OFF_UUID = "016e99d6-8a61-11eb-8dcd-0242ac1300ff";
+
+const char *BOOLEAN_FIELD_NAME = "BooleanField";
+const char *BOOLEAN_FIELD_UUID = "017e99d6-8a61-11eb-8dcd-0242ac1300aa";
+
+const char *NUMBER_FIELD_NAME = "NumberField";
+const char *NUMBER_FIELD_UUID = "018e99d6-8a61-11eb-8dcd-0242ac1300bb";
+
+const char *TEXT_FIELD_NAME = "TextField";
+const char *TEXT_FIELD_UUID = "019e99d6-8a61-11eb-8dcd-0242ac1300cc";
+
 /**
  *  @brief Common message dispatcher for these tests.
  */
@@ -205,4 +217,30 @@ TEST_CASE("Restart Bluetooth service with different configuration", "[Bluetooth]
 
     printf("Starting Bluetooth service for MeadowB, Company ID Baidu (0x011c)\n");
     StartBlueToothService(meadow_b_json);
+}
+
+/**
+ * @brief Test starting a Bluetooth service for MeadowA, Company ID Espressif (0x02e5) and then accepting 
+ *        multiple write requests.
+ */
+TEST_CASE("Start Bluetooth (MeadowF7, Espressif)", "[Bluetooth]")
+{
+    printf("Starting Bluetooth service for MeadowF7 (Bluetooth_Basics), Company ID Espressif (0x02e5)\n");
+    StartBlueToothService(meadow_f7_json);
+
+    bool test_running = true;
+    while (test_running)
+    {
+        WaitForResponse(messageDispatcher, 10000);
+        TEST_ASSERT_EQUAL(1, messageDispatcher->OutboundMessageQueueLength());
+
+        Message *response = messageDispatcher->GetOutboundMessage();
+        TEST_ASSERT_NOT_NULL(response);
+        TEST_ASSERT_NULL(response->Payload);
+        TEST_ASSERT_EQUAL(0, response->PayloadLength);
+        TEST_ASSERT_EQUAL(MessageTypes::Response, response->MessageType);
+        TEST_ASSERT_EQUAL(Esp32Interfaces::BlueTooth, response->Interface);
+        TEST_ASSERT_EQUAL(BluetoothFunction::Stop, response->Function);
+        TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
+    }
 }
