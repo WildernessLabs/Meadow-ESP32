@@ -43,6 +43,7 @@ IDF_DEFINES=""
 DEBUG_SELECTIONS=""
 TEST_SELECTIONS=""
 FLASH=false
+GENERATE_SBOM=false
 
 #
 #   Work out which options are on the command line.
@@ -99,9 +100,9 @@ case $i in
     --halt)
     IDF_DEFINES+=" -DCONFIG_ESP_SYSTEM_PANIC_PRINT_HALT=y"
     ;;
-    # --tests=*)
-    # TEST_SELECTIONS="${i#*=}"
-    # ;;
+    --sbom)
+    GENERATE_SBOM=true
+    ;;
     -h|--help)
     HELP=true
     ;;
@@ -132,7 +133,7 @@ if $HELP; then
     echo "--menuconfig            Enter the menu configuration system overwriting sdkconfig.defaults"
     echo "--dryrun                Perform a dry run (do not execute commands)"
     echo "--halt                  Halt the system on hard fault."
-    # echo "--tests=*               Compile the specified unit tests into the ESP32 binary"
+    echo "--sbom                  Generate a Software Bill of Materials (SBOM) in SPDX format."
     echo "-d=* | --debug=*        Turn on debug for selected system(s). Valid values (comma separated): WIFI, SPI, BT, SYSTEM."
     echo ""
     exit 0
@@ -352,7 +353,11 @@ fi
 #
 if $GENERATE_SBOM; then
   echo "Generating SBOM..."
+<<<<<<< HEAD
   esp-idf-sbom create --rem-unused --rem-config -o $scriptdir/Source/MeadowComms/sbom/MeadowComms.spdx $scriptdir/Source/MeadowComms/build/project_description.json
+=======
+  esp-idf-sbom create -o $scriptdir/Source/MeadowComms/sbom/MeadowComms.spdx $scriptdir/Source/MeadowComms/build/project_description.json
+>>>>>>> 07823e21cea4e163bea0c5af43ed6d9ba085c3bb
   esp-idf-sbom check $scriptdir/Source/MeadowComms/sbom/MeadowComms.spdx -o $scriptdir/Source/MeadowComms/sbom/MeadowComms.txt
 fi
 
