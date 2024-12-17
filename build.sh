@@ -347,6 +347,15 @@ if [ $? -eq 0 ]; then
   fi
 fi
 
+#
+# Generate the SBOM (Software Bill of Materials) in SPDX format and them check the SBOM and generate a report file.
+#
+if $GENERATE_SBOM; then
+  echo "Generating SBOM..."
+  esp-idf-sbom create --rem-unused --rem-config -o $scriptdir/Source/MeadowComms/sbom/MeadowComms.spdx $scriptdir/Source/MeadowComms/build/project_description.json
+  esp-idf-sbom check $scriptdir/Source/MeadowComms/sbom/MeadowComms.spdx -o $scriptdir/Source/MeadowComms/sbom/MeadowComms.txt
+fi
+
 #Generate checksums for binaries
 
 md5sum  $scriptdir/Source/MeadowComms/build/MeadowComms.bin | cut -d ' ' -f 1 > $scriptdir/Source/MeadowComms/build/MeadowComms.bin.md5
