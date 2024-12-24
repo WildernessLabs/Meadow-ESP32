@@ -323,7 +323,7 @@ TEST_CASE("Soak test writing numeric characteristic, 10,000 iterations (MeadowF7
     Logging::StandaloneHeapTracingStart();
     uint32_t iteration = 0;
     ESP_ERROR_CHECK(heap_trace_start(HEAP_TRACE_LEAKS));
-    while (iteration < 5)
+    while (iteration < 10000)
     {
         iteration++;
         if ((iteration % 100 == 0) || (iteration < 10))
