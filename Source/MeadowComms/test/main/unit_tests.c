@@ -12,15 +12,23 @@
 
 #include "nvs.h"
 #include "nvs_flash.h"
+#include "esp_heap_trace.h"
 
 #include <stdio.h>
 #include <string.h>
 #include "unity.h"
 
+#define NUMBER_OF_HEAP_TRACE_RECORDS 100
+
 static void print_banner(const char *text)
 {
     printf("\n#### %s #####\n\n", text);
 }
+
+/**
+ *  @brief Array holding the heap trace records.
+ */
+heap_trace_record_t heapTraceRecords[NUMBER_OF_HEAP_TRACE_RECORDS];
 
 void app_main(void)
 {
