@@ -14,6 +14,8 @@
 #include "Esp32Messaging.hpp"
 #include "Encoders.hpp"
 #include "SharedEnums.hpp"
+#include "Logging.hpp"
+
 #include "test_common.hpp"
 #include "test_bluetooth.hpp"
 
@@ -318,9 +320,12 @@ TEST_CASE("Soak test writing numeric characteristic, 10,000 iterations (MeadowF7
     message.DeletePayload();
 
     printf("Start the client application within the next 60 seconds\n");
-    uint32_t iteration = 1;
-    while (true)
+    Logging::StandaloneHeapTracingStart();
+    uint32_t iteration = 0;
+    ESP_ERROR_CHECK(heap_trace_start(HEAP_TRACE_LEAKS));
+    while (iteration < 10000)
     {
+        iteration++;
         if ((iteration % 100 == 0) || (iteration < 10))
         {
             printf("    Iteration %lu\n", iteration);
@@ -386,11 +391,13 @@ TEST_CASE("Soak test writing numeric characteristic, 10,000 iterations (MeadowF7
         TEST_ASSERT_EQUAL(Esp32Interfaces::BlueTooth, response->Interface);
         TEST_ASSERT_EQUAL(BluetoothFunction::ServerDataSet, response->Function);
         TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
-
-        iteration++;
-        if (iteration == 10000)
-        {
-            break;
-        }
+        // if (iteration == 5)
+        // {
+        //     break;
+        // }
     }
+    vTaskDelay(2000 / portTICK_PERIOD_MS);
+
+    Logging::StandaloneHeapTracingStop();
+    Logging::DumpStandaloneHeapTraceData();
 }

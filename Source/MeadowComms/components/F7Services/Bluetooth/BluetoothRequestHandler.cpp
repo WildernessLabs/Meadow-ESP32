@@ -213,6 +213,8 @@ void BluetoothRequestHandler::SetCurrentValueForAttributeHandle(Message *request
     TRACE_MESSAGE("Server wrote %lu bytes to 0x%04x", ds->SetDataLength, ds->Handle);
 
     _manager.SetCurrentValueForAttributeHandle(ds->Handle, ds->SetData, ds->SetDataLength);
+    vPortFree(ds->SetData);
+    vPortFree(ds);
 
     request->MessageType = MessageTypes::Response;
     request->StatusCode = StatusCodes::CompletedOk;
@@ -570,6 +572,9 @@ void BluetoothRequestHandler::Start(Message *request)
     request->DeletePayload();
 
     _manager.BuildGraphFromJson(config->Config);
+    vPortFree(config->Config);
+    vPortFree(config);
+
     _manager.GenerateAdvertisingData();
     _manager.GenerateAttributeTable();
     if (StartBluetoothService())
