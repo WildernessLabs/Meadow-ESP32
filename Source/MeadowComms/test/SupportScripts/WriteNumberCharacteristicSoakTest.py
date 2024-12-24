@@ -73,7 +73,7 @@ async def main(args: argparse.Namespace):
                                     logger.error('    [Read] %s, Error: Value mismatch (Iteration %d, read %d)', char, counter, value_read)
                                     sys.exit()
                                 check_count += 1
-                                await asyncio.sleep(0.1)
+                                await asyncio.sleep(0.5)
                         except Exception as e:
                             logger.error(f'    Iteration: {counter:,}')
                             logger.error('    [Write] %s, Error: %s', char, e)
