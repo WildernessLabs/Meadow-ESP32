@@ -574,7 +574,7 @@ void BluetoothRequestHandler::Start(Message *request)
     _manager.BuildGraphFromJson(config->Config);
     vPortFree(config->Config);
     vPortFree(config);
-    
+
     _manager.GenerateAdvertisingData();
     _manager.GenerateAttributeTable();
     if (StartBluetoothService())
