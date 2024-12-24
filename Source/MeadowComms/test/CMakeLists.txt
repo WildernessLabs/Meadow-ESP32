@@ -5,11 +5,8 @@ cmake_minimum_required(VERSION 3.5)
 #
 set(EXTRA_COMPONENT_DIRS "../components")
 
-set(SDKCONFIG_DEFAULTS "sdkconfig.defaults\;sdkconfig.tests")
-
 file(REMOVE sdkconfig)
 set(SDKCONFIG_FILES "sdkconfig.defaults")
-list(APPEND SDKCONFIG_FILES "\;sdkconfig.tests")
 set(SDKCONFIG_DEFAULTS ${SDKCONFIG_FILES})
 
 add_compile_definitions(UNIT_TESTING)
