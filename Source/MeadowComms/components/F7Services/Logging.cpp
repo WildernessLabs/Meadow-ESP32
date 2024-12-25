@@ -559,10 +559,12 @@ void Logging::StandaloneHeapTracingStop()
 
 /**
  *  @brief Dump the standalone heap tracing data to the serial port.
+ * 
+ *  @param delay Delay in milliseconds before the data is generated.  Default value, 2000ms.
  */
-void Logging::DumpStandaloneHeapTraceData()
+void Logging::DumpStandaloneHeapTraceData(uint32_t delay)
 {
-    vTaskDelay(2000 / portTICK_PERIOD_MS);
+    vTaskDelay(delay / portTICK_PERIOD_MS);
     TRACE_MESSAGE_SPECIFY_COMPONENT(APP_MAIN_COMPONENT_NAME, " ");
     TRACE_MESSAGE_SPECIFY_COMPONENT(APP_MAIN_COMPONENT_NAME, "************************************************************");
     TRACE_MESSAGE_SPECIFY_COMPONENT(APP_MAIN_COMPONENT_NAME, "                   Heap Logging Dump");
