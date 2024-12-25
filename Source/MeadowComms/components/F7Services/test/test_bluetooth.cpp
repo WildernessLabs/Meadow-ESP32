@@ -190,7 +190,19 @@ static void StopBluetoothService()
 TEST_CASE("Start Bluetooth (MeadowA, Espressif)", "[Bluetooth]")
 {
     printf("Starting Bluetooth service for MeadowA, Company ID Espressif (0x02e5)\n");
+
+    if (_generateHeapTraceData)
+    {
+        Logging::StandaloneHeapTracingStart();
+    }
+
     StartBlueToothService(meadow_a_json);
+
+    if (_generateHeapTraceData)
+    {
+        Logging::StandaloneHeapTracingStop();
+        Logging::DumpStandaloneHeapTraceData();
+    }
 }
 
 /**
@@ -199,7 +211,19 @@ TEST_CASE("Start Bluetooth (MeadowA, Espressif)", "[Bluetooth]")
 TEST_CASE("Start Bluetooth (MeadowB, Baidu)", "[Bluetooth]")
 {
     printf("Starting Bluetooth service for MeadowB, Company ID Baidu (0x011c)\n");
+
+    if (_generateHeapTraceData)
+    {
+        Logging::StandaloneHeapTracingStart();
+    }
+
     StartBlueToothService(meadow_b_json);
+
+    if (_generateHeapTraceData)
+    {
+        Logging::StandaloneHeapTracingStop();
+        Logging::DumpStandaloneHeapTraceData();
+    }
 }
 
 /**
@@ -208,7 +232,19 @@ TEST_CASE("Start Bluetooth (MeadowB, Baidu)", "[Bluetooth]")
 TEST_CASE("Start Bluetooth (MeadowC, no company identifier)", "[Bluetooth]")
 {
     printf("Starting Bluetooth service for (MeadowC, no company identifier)\n");
+
+    if (_generateHeapTraceData)
+    {
+        Logging::StandaloneHeapTracingStart();
+    }
+
     StartBlueToothService(meadow_c_json);
+
+    if (_generateHeapTraceData)
+    {
+        Logging::StandaloneHeapTracingStop();
+        Logging::DumpStandaloneHeapTraceData();
+    }
 }
 
 /**
@@ -217,7 +253,19 @@ TEST_CASE("Start Bluetooth (MeadowC, no company identifier)", "[Bluetooth]")
 TEST_CASE("Start Bluetooth (MeadowF7, Espressif)", "[Bluetooth]")
 {
     printf("Starting Bluetooth service for MeadowF7 (Bluetooth_Basics), Company ID Espressif (0x02e5)\n");
+
+    if (_generateHeapTraceData)
+    {
+        Logging::StandaloneHeapTracingStart();
+    }
+
     StartBlueToothService(meadow_f7_json);
+
+    if (_generateHeapTraceData)
+    {
+        Logging::StandaloneHeapTracingStop();
+        Logging::DumpStandaloneHeapTraceData();
+    }
 }
 
 /**
@@ -227,6 +275,12 @@ TEST_CASE("Stop Bluetooth service (no service started)", "[Bluetooth]")
 {
     printf("Stopping Bluetooth service\n");
     StopBluetoothService();
+
+    if (_generateHeapTraceData)
+    {
+        Logging::StandaloneHeapTracingStop();
+        Logging::DumpStandaloneHeapTraceData();
+    }
 }
 
 /**
@@ -235,6 +289,12 @@ TEST_CASE("Stop Bluetooth service (no service started)", "[Bluetooth]")
 TEST_CASE("Stop Bluetooth Service (will start MeadowA service first)", "[Bluetooth]")
 {
     printf("Starting Bluetooth service for MeadowA, Company ID Espressif (0x02e5)\n");
+
+    if (_generateHeapTraceData)
+    {
+        Logging::StandaloneHeapTracingStart();
+    }
+
     StartBlueToothService(meadow_a_json);
 
     printf("Waiting for 1 second before stopping Bluetooth service\n");
@@ -242,6 +302,12 @@ TEST_CASE("Stop Bluetooth Service (will start MeadowA service first)", "[Bluetoo
 
     printf("Stopping Bluetooth service\n");
     StopBluetoothService();
+
+    if (_generateHeapTraceData)
+    {
+        Logging::StandaloneHeapTracingStop();
+        Logging::DumpStandaloneHeapTraceData();
+    }
 }
 
 /**
@@ -250,6 +316,12 @@ TEST_CASE("Stop Bluetooth Service (will start MeadowA service first)", "[Bluetoo
 TEST_CASE("Restart Bluetooth service with different configuration", "[Bluetooth]")
 {
     printf("Starting Bluetooth service for MeadowA, Company ID Espressif (0x02e5)\n");
+
+    if (_generateHeapTraceData)
+    {
+        Logging::StandaloneHeapTracingStart();
+    }
+
     StartBlueToothService(meadow_a_json);
 
     printf("Waiting for 1 second before stopping Bluetooth service\n");
@@ -260,6 +332,12 @@ TEST_CASE("Restart Bluetooth service with different configuration", "[Bluetooth]
 
     printf("Starting Bluetooth service for MeadowB, Company ID Baidu (0x011c)\n");
     StartBlueToothService(meadow_b_json);
+
+    if (_generateHeapTraceData)
+    {
+        Logging::StandaloneHeapTracingStop();
+        Logging::DumpStandaloneHeapTraceData();
+    }
 }
 
 /**
@@ -269,6 +347,12 @@ TEST_CASE("Restart Bluetooth service with different configuration", "[Bluetooth]
 TEST_CASE("Soak test writing numeric characteristic, 10,000 iterations (MeadowF7, Espressif)", "[Bluetooth]")
 {
     printf("Starting Bluetooth service for MeadowF7 (Bluetooth_Basics), Company ID Espressif (0x02e5)\n");
+
+    if (_generateHeapTraceData)
+    {
+        Logging::StandaloneHeapTracingStart();
+    }
+
     StartBlueToothService(meadow_f7_json);
 
     Message message = {};
@@ -320,10 +404,9 @@ TEST_CASE("Soak test writing numeric characteristic, 10,000 iterations (MeadowF7
     message.DeletePayload();
 
     printf("Start the client application within the next 60 seconds\n");
-    Logging::StandaloneHeapTracingStart();
+
     uint32_t iteration = 0;
-    ESP_ERROR_CHECK(heap_trace_start(HEAP_TRACE_LEAKS));
-    while (iteration < 10000)
+    while (true)
     {
         iteration++;
         if ((iteration % 100 == 0) || (iteration < 10))
@@ -358,6 +441,13 @@ TEST_CASE("Soak test writing numeric characteristic, 10,000 iterations (MeadowF7
         TEST_ASSERT_EQUAL(number_field_value_handle, handle);
         Message::DeleteMessage(response);
         //
+        //  Use the value to determine if we should stop the test.
+        //
+        if (value == 0)
+        {
+            break;
+        }
+        //
         //  Write the value back to the characteristic for the client unit test to pick up and verify the value.
         //
         //  Reuse the message object from the start of this method.
@@ -391,13 +481,13 @@ TEST_CASE("Soak test writing numeric characteristic, 10,000 iterations (MeadowF7
         TEST_ASSERT_EQUAL(Esp32Interfaces::BlueTooth, response->Interface);
         TEST_ASSERT_EQUAL(BluetoothFunction::ServerDataSet, response->Function);
         TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
-        // if (iteration == 5)
-        // {
-        //     break;
-        // }
     }
-    vTaskDelay(2000 / portTICK_PERIOD_MS);
 
-    Logging::StandaloneHeapTracingStop();
-    Logging::DumpStandaloneHeapTraceData();
+    StopBluetoothService();
+
+    if (_generateHeapTraceData)
+    {
+        Logging::StandaloneHeapTracingStop();
+        Logging::DumpStandaloneHeapTraceData();
+    }
 }
