@@ -559,7 +559,7 @@ void Logging::StandaloneHeapTracingStop()
 
 /**
  *  @brief Dump the standalone heap tracing data to the serial port.
- * 
+ *
  *  @param delay Delay in milliseconds before the data is generated.  Default value, 2000ms.
  */
 void Logging::DumpStandaloneHeapTraceData(uint32_t delay)
