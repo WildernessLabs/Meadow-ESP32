@@ -20,6 +20,8 @@
 
 #define NUMBER_OF_HEAP_TRACE_RECORDS 100
 
+bool _generateHeapTraceData = false;
+
 static void print_banner(const char *text)
 {
     printf("\n#### %s #####\n\n", text);

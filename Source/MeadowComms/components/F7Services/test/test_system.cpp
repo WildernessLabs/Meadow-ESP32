@@ -51,3 +51,12 @@ TEST_CASE("Get battery level", "[System]")
 
     delete messageDispatcher;
 }
+
+/**
+ * @brief Turn on the generation of heap tracing data.
+ */
+TEST_CASE("Turn on Heap Tracing Data", "[System]")
+{
+    _generateHeapTraceData = true;
+    TEST_PASS();
+}
