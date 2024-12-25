@@ -27,7 +27,7 @@ NUMBER_FIELD_UUID = '018e99d6-8a61-11eb-8dcd-0242ac1300bb'
 TEXT_FIELD_NAME = 'TextField'
 TEXT_FIELD_UUID = '019e99d6-8a61-11eb-8dcd-0242ac1300cc'
 
-NUMBER_OF_ITERATIONS = 10000
+NUMBER_OF_ITERATIONS = 10,000
 
 MAXIMUM_RETRIES = 10
 
@@ -78,6 +78,13 @@ async def main(args: argparse.Namespace):
                             logger.error(f'    Iteration: {counter:,}')
                             logger.error('    [Write] %s, Error: %s', char, e)
                             break
+                    #
+                    #   Use the value 0 to indicate that the test has completed.
+                    #
+                    counter = 0
+                    bytes = counter.to_bytes(4, byteorder = 'little')
+                    await client.write_gatt_char(char.uuid, bytes)
+
         logger.info('Disconnecting...')
     logger.info('Disconnected')
     logger.info('Completed write / read soak test.')
