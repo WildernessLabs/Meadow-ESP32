@@ -321,7 +321,7 @@ public:
     /**
      *  @brief Dump the standalone heap tracing data to the serial port.
      */
-    static void DumpStandaloneHeapTraceData();
+    static void DumpStandaloneHeapTraceData(uint32_t delay = 2000);
 
     /**
      *  @brief Is heap tracing active?

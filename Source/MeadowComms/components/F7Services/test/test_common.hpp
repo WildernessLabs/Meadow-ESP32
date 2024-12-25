@@ -15,6 +15,8 @@
 #include "MockMessageDispatcher.hpp"
 #include "Encoders.hpp"
 
+extern "C" bool _generateHeapTraceData;
+
 void WaitForResponse(MockMessageDispatcher *messageDispatcher, uint32_t milliseconds);
 Esp32Messaging::IntegerResponse *ExtractIntegerResponse(uint8_t *buffer);
 
