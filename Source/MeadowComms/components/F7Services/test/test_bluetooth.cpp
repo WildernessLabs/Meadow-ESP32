@@ -482,7 +482,7 @@ TEST_CASE("Soak test writing numeric characteristic, 10,000 iterations (MeadowF7
         TEST_ASSERT_EQUAL(BluetoothFunction::ServerDataSet, response->Function);
         TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
     }
-    
+
     StopBluetoothService();
 
     if (_generateHeapTraceData)
