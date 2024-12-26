@@ -198,7 +198,6 @@ void BluetoothManager::SetHandles(uint16_t *handles, uint16_t count)
             TRACE_MESSAGE("Request for data for handle 0x%04x", characteristic->Value->Handle);
 
             _valueMap.insert({characteristic->Value->Handle, val});
-
             // cross reference handles
             characteristic->Declaration->ValueHandle = characteristic->Value->Handle;
 
@@ -421,6 +420,12 @@ void BluetoothManager::SetCurrentValueForAttributeHandle(uint16_t handle, uint8_
  */
 bool BluetoothManager::DeleteAllServices()
 {
+    for (auto val: _valueMap)
+    {
+        delete[] val.second.value;
+    }
+    _valueMap.clear();
+
     return Services.DeleteAllServices();
 }
 
