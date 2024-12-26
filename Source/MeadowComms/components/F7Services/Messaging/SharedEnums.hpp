@@ -606,28 +606,28 @@ namespace BluetoothFunction
      *    Bluetooth functions available on the ESP32
      */
     enum BluetoothFunction : uint32_t {
-        /// <summary>
-        /// BluetoothFunction - Start
-        /// </summary>
+        /**
+         * @brief Start the Bluetooth service.
+         */
         Start = 0,
-        /// <summary>
-        /// BluetoothFunction - Stop
-        /// </summary>
+        /**
+         * @brief Stop the Bluetooth service.
+         */
         Stop = 1,
-        /// <summary>
-        /// BluetoothFunction - GetHandles
-        /// </summary>
+        /**
+         * @brief Get the handles for the service and characteristics.
+         */
         GetHandles = 2,
-        /// <summary>
-        /// BluetoothFunction - ServerDataSet
-        /// </summary>
+        /**
+         * @brief Set the value of a characteristic.
+         */
         ServerDataSet = 3,
-        /// <summary>
-        /// BluetoothFunction - ClientWriteRequestEvent
-        /// </summary>
+        /**
+         * @brief Client has written to a characteristic value.
+         */
         ClientWriteRequestEvent = 4,
         /**
-         * @brief Indicate that the Bluetooth stack is starting.
+         * @brief Indicate that the Bluetooth service is starting.
          */
         BluetoothStartingEvent = 5,
         /**
@@ -651,7 +651,6 @@ namespace BluetoothFunction
          */
         ClientDisconnectedEvent = 10,
     };
-
 } // namespace BluetoothFunction
 
 namespace TransportFunction

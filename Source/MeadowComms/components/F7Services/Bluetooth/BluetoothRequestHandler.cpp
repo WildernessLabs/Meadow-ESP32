@@ -509,12 +509,15 @@ void BluetoothRequestHandler::Stop(Message *request)
 {
     TRACE_MESSAGE("Stop: Enter");
 
+    RaiseEvent(Esp32Interfaces::BlueTooth, BluetoothFunction::BluetoothStoppingEvent, StatusCodes::CompletedOk);
+
     if (StopBluetoothService())
     {
         request->StatusCode = StatusCodes::CompletedOk;
         if (_manager.DeleteAllServices())
         {
             request->StatusCode = StatusCodes::CompletedOk;
+            RaiseEvent(Esp32Interfaces::BlueTooth, BluetoothFunction::BluetoothStoppedEvent, StatusCodes::CompletedOk);
         }
         else
         {
@@ -570,6 +573,8 @@ void BluetoothRequestHandler::Start(Message *request)
 
     TRACE_MESSAGE("Start. payload len = %lu", request->PayloadLength);
 
+    RaiseEvent(Esp32Interfaces::BlueTooth, BluetoothFunction::BluetoothStartingEvent, StatusCodes::CompletedOk);
+
     Esp32Messaging::BTStackConfig *config = Encoders::ExtractBTStackConfig(request->Payload);
     request->DeletePayload();
 
@@ -582,6 +587,7 @@ void BluetoothRequestHandler::Start(Message *request)
     if (StartBluetoothService())
     {
         request->StatusCode = StatusCodes::CompletedOk;
+        RaiseEvent(Esp32Interfaces::BlueTooth, BluetoothFunction::BluetoothStartedEvent, StatusCodes::CompletedOk);
     }
     else
     {
@@ -736,11 +742,13 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
                 // start sent the update connection parameters to the peer device.
                 esp_ble_gap_update_conn_params(&conn_params);
             }
+            GetInstance()->RaiseEvent(Esp32Interfaces::BlueTooth, BluetoothFunction::ClientConnectedEvent, StatusCodes::CompletedOk);
             break;
         case ESP_GATTS_DISCONNECT_EVT:
             TRACE_MESSAGE("ESP_GATTS_DISCONNECT_EVT, disconnect reason 0x%x", param->disconnect.reason);
             /* start advertising again when missing the connect */
             esp_ble_gap_start_advertising(_manager.GetAdvertisingParameters());
+            GetInstance()->RaiseEvent(Esp32Interfaces::BlueTooth, BluetoothFunction::ClientDisconnectedEvent, StatusCodes::CompletedOk);
             break;
         case ESP_GATTS_OPEN_EVT:
             TRACE_MESSAGE("ESP_GATTS_OPEN_EVT");

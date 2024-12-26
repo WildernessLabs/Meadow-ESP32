@@ -138,10 +138,67 @@ static void StartBlueToothService(const char *const configuration)
     EncodeBTStackConfig(&stackConfig, startMessage.Payload);
     messageDispatcher->QueueMessageForEsp32(&startMessage);
 
+    //
+    //  The system executes message creation and delivery in amultithreaded environment.
+    //
+    //  The system should raise the events in the following order:
+    //      - BluetoothStartingEvent
+    //      - BluetoothStartedEvent (if start was successful)
+    //      - Start
+    //
+    //  The multithreaded nature of the system means that while the order of the events and response
+    //  should be as above, we may find that the message queue has more than one message in it at any
+    //  given time.
+    //
+
+    //
+    //  First message we should get is a Starting event with no payload.
+    //
     WaitForResponse(messageDispatcher, 10000);
-    TEST_ASSERT_EQUAL(1, messageDispatcher->OutboundMessageQueueLength());
+    uint32_t queue_length = messageDispatcher->OutboundMessageQueueLength();
+    TEST_ASSERT_GREATER_THAN(0, queue_length);
 
     Message *response = messageDispatcher->GetOutboundMessage();
+    TEST_ASSERT_NOT_NULL(response);
+    TEST_ASSERT_NULL(response->Payload);
+    TEST_ASSERT_EQUAL(0, response->PayloadLength);
+    TEST_ASSERT_EQUAL(MessageTypes::Event, response->MessageType);
+    TEST_ASSERT_EQUAL(Esp32Interfaces::BlueTooth, response->Interface);
+    TEST_ASSERT_EQUAL(BluetoothFunction::BluetoothStartingEvent, response->Function);
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
+    vPortFree(response);
+    //
+    //  Now we should get a Started event with no payload.
+    //
+    if (queue_length == 1)
+    {
+        WaitForResponse(messageDispatcher, 10000);
+        queue_length = messageDispatcher->OutboundMessageQueueLength();
+        TEST_ASSERT_GREATER_THAN(0, queue_length);
+    }
+    WaitForResponse(messageDispatcher, 10000);
+    queue_length = messageDispatcher->OutboundMessageQueueLength();
+    TEST_ASSERT_GREATER_THAN(0, queue_length);
+
+    response = messageDispatcher->GetOutboundMessage();
+    TEST_ASSERT_NOT_NULL(response);
+    TEST_ASSERT_NULL(response->Payload);
+    TEST_ASSERT_EQUAL(0, response->PayloadLength);
+    TEST_ASSERT_EQUAL(MessageTypes::Event, response->MessageType);
+    TEST_ASSERT_EQUAL(Esp32Interfaces::BlueTooth, response->Interface);
+    TEST_ASSERT_EQUAL(BluetoothFunction::BluetoothStartedEvent, response->Function);
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
+    vPortFree(response);
+    //
+    //  Finally we should get the response to the Start request.
+    //
+    if (queue_length == 1)
+    {
+        WaitForResponse(messageDispatcher, 10000);
+        queue_length = messageDispatcher->OutboundMessageQueueLength();
+        TEST_ASSERT_GREATER_THAN(0, queue_length);
+    }
+    response = messageDispatcher->GetOutboundMessage();
     TEST_ASSERT_NOT_NULL(response);
     TEST_ASSERT_NULL(response->Payload);
     TEST_ASSERT_EQUAL(0, response->PayloadLength);
@@ -171,10 +228,67 @@ static void StopBluetoothService()
 
     messageDispatcher->QueueMessageForEsp32(&stopMessage);
 
+    //
+    //  The system executes message creation and delivery in amultithreaded environment.
+    //
+    //  The system should raise the events in the following order:
+    //      - BluetoothStartingEvent
+    //      - BluetoothStartedEvent (if start was successful)
+    //      - Start
+    //
+    //  The multithreaded nature of the system means that while the order of the events and response
+    //  should be as above, we may find that the message queue has more than one message in it at any
+    //  given time.
+    //
+
+    //
+    //  First message we should get is a Stopping event with no payload.
+    //
     WaitForResponse(messageDispatcher, 10000);
-    TEST_ASSERT_EQUAL(1, messageDispatcher->OutboundMessageQueueLength());
+    uint32_t queue_length = messageDispatcher->OutboundMessageQueueLength();
+    TEST_ASSERT_GREATER_THAN(0, queue_length);
 
     Message *response = messageDispatcher->GetOutboundMessage();
+    TEST_ASSERT_NOT_NULL(response);
+    TEST_ASSERT_NULL(response->Payload);
+    TEST_ASSERT_EQUAL(0, response->PayloadLength);
+    TEST_ASSERT_EQUAL(MessageTypes::Event, response->MessageType);
+    TEST_ASSERT_EQUAL(Esp32Interfaces::BlueTooth, response->Interface);
+    TEST_ASSERT_EQUAL(BluetoothFunction::BluetoothStoppingEvent, response->Function);
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
+    vPortFree(response);
+    //
+    //  Now we should get a Stopped event with no payload.
+    //
+    if (queue_length == 1)
+    {
+        WaitForResponse(messageDispatcher, 10000);
+        queue_length = messageDispatcher->OutboundMessageQueueLength();
+        TEST_ASSERT_GREATER_THAN(0, queue_length);
+    }
+    WaitForResponse(messageDispatcher, 10000);
+    queue_length = messageDispatcher->OutboundMessageQueueLength();
+    TEST_ASSERT_GREATER_THAN(0, queue_length);
+
+    response = messageDispatcher->GetOutboundMessage();
+    TEST_ASSERT_NOT_NULL(response);
+    TEST_ASSERT_NULL(response->Payload);
+    TEST_ASSERT_EQUAL(0, response->PayloadLength);
+    TEST_ASSERT_EQUAL(MessageTypes::Event, response->MessageType);
+    TEST_ASSERT_EQUAL(Esp32Interfaces::BlueTooth, response->Interface);
+    TEST_ASSERT_EQUAL(BluetoothFunction::BluetoothStoppedEvent, response->Function);
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
+    vPortFree(response);
+    //
+    //  Finally we should get the response to the Stop request.
+    //
+    if (queue_length == 1)
+    {
+        WaitForResponse(messageDispatcher, 10000);
+        queue_length = messageDispatcher->OutboundMessageQueueLength();
+        TEST_ASSERT_GREATER_THAN(0, queue_length);
+    }
+    response = messageDispatcher->GetOutboundMessage();
     TEST_ASSERT_NOT_NULL(response);
     TEST_ASSERT_NULL(response->Payload);
     TEST_ASSERT_EQUAL(0, response->PayloadLength);
@@ -274,7 +388,74 @@ TEST_CASE("Start Bluetooth (MeadowF7, Espressif)", "[Bluetooth]")
 TEST_CASE("Stop Bluetooth service (no service started)", "[Bluetooth]")
 {
     printf("Stopping Bluetooth service\n");
-    StopBluetoothService();
+
+    if (_generateHeapTraceData)
+    {
+        Logging::StandaloneHeapTracingStart();
+    }
+
+    if (messageDispatcher == nullptr)
+    {
+        messageDispatcher = new MockMessageDispatcher(nullptr);
+        TEST_ASSERT_NOT_NULL(messageDispatcher);
+    }
+
+    Message stopMessage = {};
+    stopMessage.MessageType = MessageTypes::Header;
+    stopMessage.Interface = Esp32Interfaces::BlueTooth;
+    stopMessage.Function = BluetoothFunction::Stop;
+    stopMessage.PayloadLength = 0;
+    stopMessage.Payload = nullptr;
+
+    messageDispatcher->QueueMessageForEsp32(&stopMessage);
+
+    //
+    //  The system executes message creation and delivery in amultithreaded environment.
+    //
+    //  The system should raise the events in the following order:
+    //      - BluetoothStartingEvent
+    //      - BluetoothStartedEvent (if start was successful)
+    //      - Start
+    //
+    //  The multithreaded nature of the system means that while the order of the events and response
+    //  should be as above, we may find that the message queue has more than one message in it at any
+    //  given time.
+    //
+
+    //
+    //  First message we should get is a Stopping event with no payload.
+    //
+    WaitForResponse(messageDispatcher, 10000);
+    uint32_t queue_length = messageDispatcher->OutboundMessageQueueLength();
+    TEST_ASSERT_GREATER_THAN(0, queue_length);
+
+    Message *response = messageDispatcher->GetOutboundMessage();
+    TEST_ASSERT_NOT_NULL(response);
+    TEST_ASSERT_NULL(response->Payload);
+    TEST_ASSERT_EQUAL(0, response->PayloadLength);
+    TEST_ASSERT_EQUAL(MessageTypes::Event, response->MessageType);
+    TEST_ASSERT_EQUAL(Esp32Interfaces::BlueTooth, response->Interface);
+    TEST_ASSERT_EQUAL(BluetoothFunction::BluetoothStoppingEvent, response->Function);
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
+    vPortFree(response);
+    //
+    //  Finally we should get the response to the Stop request.
+    //
+    if (queue_length == 1)
+    {
+        WaitForResponse(messageDispatcher, 10000);
+        queue_length = messageDispatcher->OutboundMessageQueueLength();
+        TEST_ASSERT_GREATER_THAN(0, queue_length);
+    }
+    response = messageDispatcher->GetOutboundMessage();
+    TEST_ASSERT_NOT_NULL(response);
+    TEST_ASSERT_NULL(response->Payload);
+    TEST_ASSERT_EQUAL(0, response->PayloadLength);
+    TEST_ASSERT_EQUAL(MessageTypes::Response, response->MessageType);
+    TEST_ASSERT_EQUAL(Esp32Interfaces::BlueTooth, response->Interface);
+    TEST_ASSERT_EQUAL(BluetoothFunction::Stop, response->Function);
+    TEST_ASSERT_EQUAL(StatusCodes::Failure, response->StatusCode);
+
 
     if (_generateHeapTraceData)
     {
@@ -344,7 +525,7 @@ TEST_CASE("Restart Bluetooth service with different configuration", "[Bluetooth]
  * @brief Test starting a Bluetooth service for MeadowF7, Company ID Espressif (0x02e5) and then accepting
  *        multiple write requests.
  */
-TEST_CASE("Soak test writing numeric characteristic, 10,000 iterations (MeadowF7, Espressif)", "[Bluetooth]")
+TEST_CASE("Soak test writing numeric characteristic, number of iterations controlled by client (MeadowF7, Espressif)", "[Bluetooth]")
 {
     printf("Starting Bluetooth service for MeadowF7 (Bluetooth_Basics), Company ID Espressif (0x02e5)\n");
 
@@ -404,8 +585,22 @@ TEST_CASE("Soak test writing numeric characteristic, 10,000 iterations (MeadowF7
     message.DeletePayload();
 
     printf("Start the client application within the next 60 seconds\n");
+    //
+    //  We should get a client connect event.
+    //
+    WaitForResponse(messageDispatcher, 60000);
+    TEST_ASSERT_EQUAL(1, messageDispatcher->OutboundMessageQueueLength());
+
+    response = messageDispatcher->GetOutboundMessage();
+    TEST_ASSERT_NULL(response->Payload);
+    TEST_ASSERT_EQUAL(0, response->PayloadLength);
+    TEST_ASSERT_EQUAL(MessageTypes::Event, response->MessageType);
+    TEST_ASSERT_EQUAL(Esp32Interfaces::BlueTooth, response->Interface);
+    TEST_ASSERT_EQUAL(BluetoothFunction::ClientConnectedEvent, response->Function);
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
 
     uint32_t iteration = 0;
+    uint32_t queue_length = 0;
     while (true)
     {
         iteration++;
@@ -417,7 +612,8 @@ TEST_CASE("Soak test writing numeric characteristic, 10,000 iterations (MeadowF7
         // Wait for a change in the number characteristic.
         //
         WaitForResponse(messageDispatcher, 60000);
-        TEST_ASSERT_EQUAL(1, messageDispatcher->OutboundMessageQueueLength());
+        queue_length = messageDispatcher->OutboundMessageQueueLength();
+        TEST_ASSERT_GREATER_THAN(0, queue_length);
         //
         //  We should get the value as an event, the memory will have been allocated by the
         //  BluetoothRequestHandler so we need to release it.
@@ -482,6 +678,21 @@ TEST_CASE("Soak test writing numeric characteristic, 10,000 iterations (MeadowF7
         TEST_ASSERT_EQUAL(BluetoothFunction::ServerDataSet, response->Function);
         TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
     }
+
+    //
+    //  We should get a client disconnect event.
+    //
+    WaitForResponse(messageDispatcher, 60000);
+    TEST_ASSERT_EQUAL(1, messageDispatcher->OutboundMessageQueueLength());
+
+    response = messageDispatcher->GetOutboundMessage();
+    TEST_ASSERT_NULL(response->Payload);
+    TEST_ASSERT_EQUAL(0, response->PayloadLength);
+    TEST_ASSERT_EQUAL(MessageTypes::Event, response->MessageType);
+    TEST_ASSERT_EQUAL(Esp32Interfaces::BlueTooth, response->Interface);
+    TEST_ASSERT_EQUAL(BluetoothFunction::ClientDisconnectedEvent, response->Function);
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
+
 
     StopBluetoothService();
 
