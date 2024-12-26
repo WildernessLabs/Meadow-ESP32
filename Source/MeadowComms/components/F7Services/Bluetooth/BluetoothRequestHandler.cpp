@@ -190,6 +190,8 @@ void BluetoothRequestHandler::GetHandles(Message *request)
     request->PayloadLength = Encoders::EncodedBTGetHandlesResponseBufferSize(&response);
     request->Payload = static_cast<uint8_t *>(pvPortMalloc(request->PayloadLength));
     Encoders::EncodeBTGetHandlesResponse(&response, request->Payload);
+    vPortFree(response.Handles);
+    
     request->MessageType = MessageTypes::Response;
     request->StatusCode = StatusCodes::CompletedOk;
 
