@@ -247,16 +247,8 @@ void BluetoothManager::GenerateAdvertisingData()
     _advertisingData.min_interval = 0x0006; // slave connection min interval, Time = min_interval * 1.25 msec
     _advertisingData.max_interval = 0x0010; // slave connection max interval, Time = max_interval * 1.25 msec
     _advertisingData.appearance = 0x00;
-    if (_hasCompanyIdentifier)
-    {
-        _advertisingData.manufacturer_len = 2;
-        _advertisingData.p_manufacturer_data = manufacturer_data;
-    }
-    else
-    {
-        _advertisingData.manufacturer_len = 0;
-        _advertisingData.p_manufacturer_data = NULL;
-    }
+    _advertisingData.manufacturer_len = 2;
+    _advertisingData.p_manufacturer_data = manufacturer_data;
     _advertisingData.service_data_len = 0;
     _advertisingData.p_service_data = NULL;
     _advertisingData.service_uuid_len = sizeof(dummy_advertising_service_uuid);
@@ -268,16 +260,8 @@ void BluetoothManager::GenerateAdvertisingData()
     _scanResponseData.set_scan_rsp = true;
     _scanResponseData.include_name = true;
     _scanResponseData.include_txpower = true;
-    if (_hasCompanyIdentifier)
-    {
-        _scanResponseData.manufacturer_len = 2;
-        _scanResponseData.p_manufacturer_data = manufacturer_data;
-    }
-    else
-    {
-        _scanResponseData.manufacturer_len = 0;
-        _scanResponseData.p_manufacturer_data = NULL;
-    }
+    _scanResponseData.manufacturer_len = 2;
+    _scanResponseData.p_manufacturer_data = manufacturer_data;
 
     // Advertising parameters
     memset(&_advertisingParameters, 0, sizeof(esp_ble_adv_params_t));
@@ -450,11 +434,10 @@ void BluetoothManager::BuildGraphFromJson(char *cfg_json)
         auto companyIdentifier = (uint16_t) doc["companyIdentifier"].GetInt();
         TRACE_MESSAGE("   companyIdentifier = 0x%04x", companyIdentifier);
         _companyIdentifier = companyIdentifier;
-        _hasCompanyIdentifier = true;
     }
     else
     {
-        _hasCompanyIdentifier = false;
+        _companyIdentifier = 0xffff;
     }
 
     const Value &svc_list = doc["services"];
