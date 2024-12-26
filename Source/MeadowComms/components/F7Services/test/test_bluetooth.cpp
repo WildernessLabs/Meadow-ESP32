@@ -456,7 +456,6 @@ TEST_CASE("Stop Bluetooth service (no service started)", "[Bluetooth]")
     TEST_ASSERT_EQUAL(BluetoothFunction::Stop, response->Function);
     TEST_ASSERT_EQUAL(StatusCodes::Failure, response->StatusCode);
 
-
     if (_generateHeapTraceData)
     {
         Logging::StandaloneHeapTracingStop();
@@ -692,7 +691,6 @@ TEST_CASE("Soak test writing numeric characteristic, number of iterations contro
     TEST_ASSERT_EQUAL(Esp32Interfaces::BlueTooth, response->Interface);
     TEST_ASSERT_EQUAL(BluetoothFunction::ClientDisconnectedEvent, response->Function);
     TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
-
 
     StopBluetoothService();
 
