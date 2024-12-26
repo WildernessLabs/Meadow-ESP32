@@ -424,6 +424,7 @@ bool BluetoothManager::DeleteAllServices()
     {
         delete[] val.second.value;
     }
+    _valueMap.clear();
 
     return Services.DeleteAllServices();
 }
