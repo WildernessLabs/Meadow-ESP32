@@ -420,7 +420,7 @@ void BluetoothManager::SetCurrentValueForAttributeHandle(uint16_t handle, uint8_
  */
 bool BluetoothManager::DeleteAllServices()
 {
-    for (auto val : _valueMap)
+    for (auto val: _valueMap)
     {
         delete[] val.second.value;
     }
