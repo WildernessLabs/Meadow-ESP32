@@ -93,6 +93,7 @@ bool BluetoothServiceCollection::DeleteAllServices()
     for (auto it = _services.begin(); it != _services.end(); ++it)
     {
         auto service = (BluetoothService *) *it;
+        esp_ble_gatts_stop_service(service->Handle);
         delete service;
     }
 
