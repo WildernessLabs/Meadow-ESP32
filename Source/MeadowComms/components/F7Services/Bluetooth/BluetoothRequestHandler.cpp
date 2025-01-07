@@ -539,13 +539,13 @@ void BluetoothRequestHandler::Stop(Message *request)
 
 /**
  * @brief Get the MAC address for the Bluetooth interface.
- * 
+ *
  * @param macAddress Buffer to hold the MAC address.
  */
 void BluetoothRequestHandler::GetMacAddress(uint8_t *macAddress)
 {
     TRACE_MESSAGE("GetMacAddress: Enter");
-    
+
     if (esp_read_mac(macAddress, ESP_MAC_BT) != ESP_OK)
     {
         bzero(macAddress, 6);
