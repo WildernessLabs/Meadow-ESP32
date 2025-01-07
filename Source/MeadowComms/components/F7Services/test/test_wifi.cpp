@@ -24,6 +24,8 @@
 
 #include "secrets.h"
 
+#define CLASS_OF_TESTS "[WiFi]"
+
 /**
  * @brief Define the DEBUGGING_TESTS macro to enable debug statements.
  */
@@ -196,7 +198,7 @@ static void TestScanForAccessPoints(unsigned numberOfScans = 1)
 /**
  * @brief Test a single scan for access points.
  */
-TEST_CASE("Scan for access points", "[WiFi]")
+TEST_CASE("Scan for access points", CLASS_OF_TESTS)
 {
     TestScanForAccessPoints();
 }
@@ -204,7 +206,7 @@ TEST_CASE("Scan for access points", "[WiFi]")
 /**
  * @brief Perform multiple scans for access points.
  */
-TEST_CASE("Scan for access points multiple times (test for memory leak)", "[WiFi]")
+TEST_CASE("Scan for access points multiple times (test for memory leak)", CLASS_OF_TESTS)
 {
     TestScanForAccessPoints(NUMBER_OF_SCAN_REQUESTS);
 }
@@ -236,7 +238,7 @@ static Message *CreateConnectToAccessPointMessage(const char *ssid, const char *
 /**
  * @brief Connect to an access point.
  */
-TEST_CASE("Connect to access point", "[WiFI]")
+TEST_CASE("Connect to access point", CLASS_OF_TESTS)
 {
     NvsManager::Setup();
 
@@ -323,7 +325,7 @@ TEST_CASE("Connect to access point", "[WiFI]")
  *
  * @note This is designed to test the automatic reconnect attempts as well as the final failure of the connection request.
  */
-TEST_CASE("Connect to non-existant access point", "[WiFi]")
+TEST_CASE("Connect to non-existant access point", CLASS_OF_TESTS)
 {
     NvsManager::Setup();
 
