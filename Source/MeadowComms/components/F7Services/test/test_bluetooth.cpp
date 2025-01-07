@@ -166,7 +166,7 @@ static void StartBlueToothService(const char *const configuration)
     TEST_ASSERT_EQUAL(Esp32Interfaces::BlueTooth, response->Interface);
     TEST_ASSERT_EQUAL(BluetoothFunction::BluetoothStartingEvent, response->Function);
     TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
-    vPortFree(response);
+    Message::DeleteMessage(response);
     //
     //  Now we should get a Started event with no payload.
     //
@@ -188,7 +188,7 @@ static void StartBlueToothService(const char *const configuration)
     TEST_ASSERT_EQUAL(Esp32Interfaces::BlueTooth, response->Interface);
     TEST_ASSERT_EQUAL(BluetoothFunction::BluetoothStartedEvent, response->Function);
     TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
-    vPortFree(response);
+    Message::DeleteMessage(response);
     //
     //  Finally we should get the response to the Start request.
     //
@@ -256,7 +256,7 @@ static void StopBluetoothService()
     TEST_ASSERT_EQUAL(Esp32Interfaces::BlueTooth, response->Interface);
     TEST_ASSERT_EQUAL(BluetoothFunction::BluetoothStoppingEvent, response->Function);
     TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
-    vPortFree(response);
+    Message::DeleteMessage(response);
     //
     //  Now we should get a Stopped event with no payload.
     //
@@ -278,7 +278,7 @@ static void StopBluetoothService()
     TEST_ASSERT_EQUAL(Esp32Interfaces::BlueTooth, response->Interface);
     TEST_ASSERT_EQUAL(BluetoothFunction::BluetoothStoppedEvent, response->Function);
     TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
-    vPortFree(response);
+    Message::DeleteMessage(response);
     //
     //  Finally we should get the response to the Stop request.
     //
@@ -437,7 +437,7 @@ TEST_CASE("Stop Bluetooth service (no service started)", "[Bluetooth]")
     TEST_ASSERT_EQUAL(Esp32Interfaces::BlueTooth, response->Interface);
     TEST_ASSERT_EQUAL(BluetoothFunction::BluetoothStoppingEvent, response->Function);
     TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
-    vPortFree(response);
+    Message::DeleteMessage(response);
     //
     //  Finally we should get the response to the Stop request.
     //
@@ -597,6 +597,7 @@ TEST_CASE("Soak test writing numeric characteristic, number of iterations contro
     TEST_ASSERT_EQUAL(Esp32Interfaces::BlueTooth, response->Interface);
     TEST_ASSERT_EQUAL(BluetoothFunction::ClientConnectedEvent, response->Function);
     TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
+    Message::DeleteMessage(response);
 
     uint32_t iteration = 0;
     uint32_t queue_length = 0;
@@ -691,6 +692,7 @@ TEST_CASE("Soak test writing numeric characteristic, number of iterations contro
     TEST_ASSERT_EQUAL(Esp32Interfaces::BlueTooth, response->Interface);
     TEST_ASSERT_EQUAL(BluetoothFunction::ClientDisconnectedEvent, response->Function);
     TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
+    Message::DeleteMessage(response);
 
     StopBluetoothService();
 
