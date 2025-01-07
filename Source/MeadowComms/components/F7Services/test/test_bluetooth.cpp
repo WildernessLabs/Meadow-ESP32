@@ -19,6 +19,8 @@
 #include "test_common.hpp"
 #include "test_bluetooth.hpp"
 
+#define CLASS_OF_TESTS "[Bluetooth]"
+
 const char *ON_OFF_NAME = "OnOff";
 const char *ON_OFF_UUID = "016e99d6-8a61-11eb-8dcd-0242ac1300ff";
 
@@ -301,7 +303,7 @@ static void StopBluetoothService()
 /**
  * @brief Test starting a Bluetooth service for MeadowA, Company ID Espressif (0x02e5).
  */
-TEST_CASE("Start Bluetooth (MeadowA, Espressif)", "[Bluetooth]")
+TEST_CASE("Start Bluetooth (MeadowA, Espressif)", CLASS_OF_TESTS)
 {
     printf("Starting Bluetooth service for MeadowA, Company ID Espressif (0x02e5)\n");
 
@@ -322,7 +324,7 @@ TEST_CASE("Start Bluetooth (MeadowA, Espressif)", "[Bluetooth]")
 /**
  * @brief Test starting a Bluetooth service for MeadowB, Company ID BaiDu (0x011c).
  */
-TEST_CASE("Start Bluetooth (MeadowB, Baidu)", "[Bluetooth]")
+TEST_CASE("Start Bluetooth (MeadowB, Baidu)", CLASS_OF_TESTS)
 {
     printf("Starting Bluetooth service for MeadowB, Company ID Baidu (0x011c)\n");
 
@@ -343,7 +345,7 @@ TEST_CASE("Start Bluetooth (MeadowB, Baidu)", "[Bluetooth]")
 /**
  * @brief Test starting a Bluetooth service for MeadowC with no company identifier.
  */
-TEST_CASE("Start Bluetooth (MeadowC, no company identifier)", "[Bluetooth]")
+TEST_CASE("Start Bluetooth (MeadowC, no company identifier)", CLASS_OF_TESTS)
 {
     printf("Starting Bluetooth service for (MeadowC, no company identifier)\n");
 
@@ -364,7 +366,7 @@ TEST_CASE("Start Bluetooth (MeadowC, no company identifier)", "[Bluetooth]")
 /**
  * @brief Test starting a Bluetooth service for MeadowA, Company ID Espressif (0x02e5).
  */
-TEST_CASE("Start Bluetooth (MeadowF7, Espressif)", "[Bluetooth]")
+TEST_CASE("Start Bluetooth (MeadowF7, Espressif)", CLASS_OF_TESTS)
 {
     printf("Starting Bluetooth service for MeadowF7 (Bluetooth_Basics), Company ID Espressif (0x02e5)\n");
 
@@ -385,7 +387,7 @@ TEST_CASE("Start Bluetooth (MeadowF7, Espressif)", "[Bluetooth]")
 /**
  * @brief Test stopping the Bluetooth service when no service has been started.
  */
-TEST_CASE("Stop Bluetooth service (no service started)", "[Bluetooth]")
+TEST_CASE("Stop Bluetooth service (no service started)", CLASS_OF_TESTS)
 {
     printf("Stopping Bluetooth service\n");
 
@@ -466,7 +468,7 @@ TEST_CASE("Stop Bluetooth service (no service started)", "[Bluetooth]")
 /**
  * @brief Test the stop functionality when Bluetooth has been started.
  */
-TEST_CASE("Stop Bluetooth Service (will start MeadowA service first)", "[Bluetooth]")
+TEST_CASE("Stop Bluetooth Service (will start MeadowA service first)", CLASS_OF_TESTS)
 {
     printf("Starting Bluetooth service for MeadowA, Company ID Espressif (0x02e5)\n");
 
@@ -493,7 +495,7 @@ TEST_CASE("Stop Bluetooth Service (will start MeadowA service first)", "[Bluetoo
 /**
  * @brief Test restarting the Bluetooth service.
  */
-TEST_CASE("Restart Bluetooth service with different configuration", "[Bluetooth]")
+TEST_CASE("Restart Bluetooth service with different configuration", CLASS_OF_TESTS)
 {
     printf("Starting Bluetooth service for MeadowA, Company ID Espressif (0x02e5)\n");
 
@@ -524,7 +526,7 @@ TEST_CASE("Restart Bluetooth service with different configuration", "[Bluetooth]
  * @brief Test starting a Bluetooth service for MeadowF7, Company ID Espressif (0x02e5) and then accepting
  *        multiple write requests.
  */
-TEST_CASE("Soak test writing numeric characteristic, number of iterations controlled by client (MeadowF7, Espressif)", "[Bluetooth]")
+TEST_CASE("Soak test writing numeric characteristic, number of iterations controlled by client (MeadowF7, Espressif)", CLASS_OF_TESTS)
 {
     printf("Starting Bluetooth service for MeadowF7 (Bluetooth_Basics), Company ID Espressif (0x02e5)\n");
 

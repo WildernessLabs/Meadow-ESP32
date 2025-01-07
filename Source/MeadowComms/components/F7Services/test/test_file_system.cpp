@@ -20,6 +20,8 @@
 #include "SharedEnums.hpp"
 #include "FileSystem.hpp"
 
+#define CLASS_OF_TESTS "[FileSystem]"
+
 //
 //  Name of the files to be used for testing.
 //
@@ -167,7 +169,7 @@ static Esp32Messaging::FileNameList *ExtractFileNameList(uint8_t *buffer)
 /**
  * @brief Check that we can mount the file system.
  */
-TEST_CASE("File System set up", "[FileSystem]")
+TEST_CASE("File System set up", CLASS_OF_TESTS)
 {
     FileSystem *fs = new FileSystem(nullptr);
     TEST_ASSERT_NOT_NULL(fs);
@@ -187,7 +189,7 @@ TEST_CASE("File System set up", "[FileSystem]")
  *        verify that there is exactly one file on the file system.
  *      - Reformat the file system and verify that no files can be found.
  */
-TEST_CASE("Formatting file system", "[FileSystem]")
+TEST_CASE("Formatting file system", CLASS_OF_TESTS)
 {
     MockMessageDispatcher *messageDispatcher = new MockMessageDispatcher(nullptr);
     TEST_ASSERT_NOT_NULL(messageDispatcher);
@@ -249,7 +251,7 @@ TEST_CASE("Formatting file system", "[FileSystem]")
  *  The file system will then be unmounted and remounted and the files contents
  *  checked once more using C stdio.
  */
-TEST_CASE("Write file to file system", "[FileSystem]")
+TEST_CASE("Write file to file system", CLASS_OF_TESTS)
 {
     MockMessageDispatcher *messageDispatcher = new MockMessageDispatcher(nullptr);
     TEST_ASSERT_NOT_NULL(messageDispatcher);
@@ -307,7 +309,7 @@ TEST_CASE("Write file to file system", "[FileSystem]")
     delete fs;
 }
 
-TEST_CASE("Reading a file", "[FileSystem]")
+TEST_CASE("Reading a file", CLASS_OF_TESTS)
 {
     MockMessageDispatcher *messageDispatcher = new MockMessageDispatcher(nullptr);
     TEST_ASSERT_NOT_NULL(messageDispatcher);
@@ -367,7 +369,7 @@ TEST_CASE("Reading a file", "[FileSystem]")
 /**
  * @brief Test getting a list of files on the file system.
  */
-TEST_CASE("Get list of files", "[FileSystem]")
+TEST_CASE("Get list of files", CLASS_OF_TESTS)
 {
     MockMessageDispatcher *messageDispatcher = new MockMessageDispatcher(nullptr);
     TEST_ASSERT_NOT_NULL(messageDispatcher);
@@ -456,7 +458,7 @@ TEST_CASE("Get list of files", "[FileSystem]")
 /**
  * @brief Check that we can delete a file from the file system.
  */
-TEST_CASE("Delete file", "[FileSystem]")
+TEST_CASE("Delete file", CLASS_OF_TESTS)
 {
     MockMessageDispatcher *messageDispatcher = new MockMessageDispatcher(nullptr);
     TEST_ASSERT_NOT_NULL(messageDispatcher);

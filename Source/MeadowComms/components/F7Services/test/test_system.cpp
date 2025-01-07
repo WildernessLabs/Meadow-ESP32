@@ -16,10 +16,12 @@
 
 #include "test_common.hpp"
 
+#define CLASS_OF_TESTS "[System]"
+
 /**
  * @brief Unit test for the battery charge level method.
  */
-TEST_CASE("Get battery level", "[System]")
+TEST_CASE("Get battery level", CLASS_OF_TESTS)
 {
     MockMessageDispatcher *messageDispatcher = new MockMessageDispatcher(nullptr);
     TEST_ASSERT_NOT_NULL(messageDispatcher);
