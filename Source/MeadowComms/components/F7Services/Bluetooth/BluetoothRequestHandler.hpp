@@ -211,6 +211,11 @@ public:
      * @brief Event handler for the GATTS system (registered through esp_ble_gatts_register_callback).
      */
     static void GATTSProfileEventHandler(esp_gatts_cb_event_t, esp_gatt_if_t, esp_ble_gatts_cb_param_t *);
+
+    /**
+     * @brief Get the MAC address for the Bluetooth interface.
+     */
+    static void GetMacAddress(uint8_t *macAddress);
 };
 
 #endif /* _BLUETOOTH_REQUEST_HANDLER_HPP_ */

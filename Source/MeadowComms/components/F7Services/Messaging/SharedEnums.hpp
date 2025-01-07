@@ -786,7 +786,11 @@ namespace ConfigurationItems
         /// <summary>
         /// ConfigurationItems - SubNetMask
         /// </summary>
-        SubNetMask = 15
+        SubNetMask = 15,
+        /// <summary>
+        /// ConfigurationItems - Bluetooth MAC address
+        /// </summary>
+        BluetoothMacAddress = 16,
     };
 } // namespace ConfigurationItems
 
