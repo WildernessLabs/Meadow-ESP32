@@ -13,6 +13,7 @@
 #include "freertos/queue.h"
 #include "esp_system.h"
 #include "esp_log.h"
+#include "esp_mac.h"
 #include "driver/uart.h"
 #include "soc/uart_struct.h"
 #include <string.h>
@@ -534,6 +535,24 @@ void BluetoothRequestHandler::Stop(Message *request)
     xEventGroupSetBits(_xBtEventGroup, BT_READY_BIT);
 
     TRACE_MESSAGE("Stop: Exit");
+}
+
+/**
+ * @brief Get the MAC address for the Bluetooth interface.
+ * 
+ * @param macAddress Buffer to hold the MAC address.
+ */
+void BluetoothRequestHandler::GetMacAddress(uint8_t *macAddress)
+{
+    TRACE_MESSAGE("GetMacAddress: Enter");
+    
+    if (esp_read_mac(macAddress, ESP_MAC_BT) != ESP_OK)
+    {
+        bzero(macAddress, 6);
+    }
+    TRACE_MESSAGE("BT MAC address is %02x:%02x:%02x:%02x:%02x:%02x", macAddress[0], macAddress[1], macAddress[2], macAddress[3], macAddress[4], macAddress[5]);
+
+    TRACE_MESSAGE("GetMacAddress: Exit");
 }
 
 /**

@@ -460,6 +460,7 @@ void SystemRequestHandler::PopulateConfiguration(Esp32Messaging::SystemConfigura
     config->BuildBranchName = g_application_version.branch_name;
     WiFiRequestHandler::GetMacAddress(config->BoardMacAddress, WIFI_IF_STA);
     WiFiRequestHandler::GetMacAddress(config->SoftApMacAddress, WIFI_IF_AP);
+    BluetoothRequestHandler::GetMacAddress(config->BluetoothMacAddress);
     //
     //  Bluetooth MAC address will be zeroed from the memset above.
     //
