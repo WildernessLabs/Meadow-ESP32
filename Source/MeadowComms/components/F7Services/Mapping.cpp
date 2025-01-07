@@ -263,12 +263,15 @@ Mapping::int_mapping_t Mapping::_espErrorCodes[] = {
     {StatusCodes::CannotConnectToAccessPoint, ESP_ERR_WIFI_CONN},
     {StatusCodes::EspWiFiInvalidSsid, ESP_ERR_WIFI_SSID},
     {StatusCodes::EspWiFiNotStarted, ESP_ERR_WIFI_NOT_STARTED},
-    {StatusCodes::EspWiFiNotStarted, ESP_ERR_WIFI_NOT_INIT}};
+    {StatusCodes::EspWiFiNotStarted, ESP_ERR_WIFI_NOT_INIT},
+};
 
 /**
  *  @brief Map of the ESP32 authentication types to the NetworkAuthenticationType enum in Meadow.Core
  */
-Mapping::int_mapping_t Mapping::_networkAuthenticationType[] = {{0, WIFI_AUTH_OPEN}, {1, WIFI_AUTH_WEP}, {2, WIFI_AUTH_WPA_PSK}, {3, WIFI_AUTH_WPA2_PSK}, {4, WIFI_AUTH_WPA_WPA2_PSK}, {5, WIFI_AUTH_WPA2_ENTERPRISE}, {13, WIFI_AUTH_WPA3_PSK}, {14, WIFI_AUTH_WPA2_WPA3_PSK}};
+Mapping::int_mapping_t Mapping::_networkAuthenticationType[] = {
+    {0, WIFI_AUTH_OPEN}, {1, WIFI_AUTH_WEP}, {2, WIFI_AUTH_WPA_PSK}, {3, WIFI_AUTH_WPA2_PSK}, {4, WIFI_AUTH_WPA_WPA2_PSK}, {5, WIFI_AUTH_WPA2_ENTERPRISE}, {13, WIFI_AUTH_WPA3_PSK}, {14, WIFI_AUTH_WPA2_WPA3_PSK},
+};
 
 /**
  *  @brief Map of the status codes to their string representations.
@@ -311,27 +314,31 @@ Mapping::str_mapping_t Mapping::_statusCodes[] = {
     {StatusCodes::DhcpConfigurationError, (char *) "DhcpConfigurationError"},
     {StatusCodes::AccessPointNotStarted, (char *) "AccessPointNotStarted"},
     {StatusCodes::AccessPointAlreadyStarted, (char *) "AccessPointAlreadyStarted"},
-    {StatusCodes::FileNotFound, (char *) "FileNotFound"}};
+    {StatusCodes::FileNotFound, (char *) "FileNotFound"},
+};
 
 /**
- *  @brief Table to reset codes.
+ *  @brief Table of reset codes.
  */
 Mapping::int_mapping_t Mapping::_resetReasons[] = {
     {Esp32ResetCodes::Unknown, ESP_RST_UNKNOWN},       {Esp32ResetCodes::PowerOn, ESP_RST_POWERON},   {Esp32ResetCodes::ExternalGpio, ESP_RST_EXT},    {Esp32ResetCodes::Software, ESP_RST_SW},       {Esp32ResetCodes::Panic, ESP_RST_PANIC}, {Esp32ResetCodes::InterruptWatchdog, ESP_RST_INT_WDT},
-    {Esp32ResetCodes::TaskWatchdog, ESP_RST_TASK_WDT}, {Esp32ResetCodes::OtherWatchdog, ESP_RST_WDT}, {Esp32ResetCodes::DeepSleep, ESP_RST_DEEPSLEEP}, {Esp32ResetCodes::Brownout, ESP_RST_BROWNOUT}, {Esp32ResetCodes::SDIO, ESP_RST_SDIO}};
+    {Esp32ResetCodes::TaskWatchdog, ESP_RST_TASK_WDT}, {Esp32ResetCodes::OtherWatchdog, ESP_RST_WDT}, {Esp32ResetCodes::DeepSleep, ESP_RST_DEEPSLEEP}, {Esp32ResetCodes::Brownout, ESP_RST_BROWNOUT}, {Esp32ResetCodes::SDIO, ESP_RST_SDIO},
+};
 
 /**
  *  @brief Map of the message types to their string representations.
  */
-Mapping::str_mapping_t Mapping::_messageTypeNames[] = {{MessageTypes::Ack, (char *) "Ack"},        {MessageTypes::Nak, (char *) "Nak"},           {MessageTypes::Reset, (char *) "Reset"},
-                                                       {MessageTypes::Event, (char *) "Event"},    {MessageTypes::Response, (char *) "Response"}, {MessageTypes::Transport, (char *) "Transport"},
-                                                       {MessageTypes::Header, (char *) "Request"}, {MessageTypes::Data, (char *) "Data"}};
+Mapping::str_mapping_t Mapping::_messageTypeNames[] = {
+    {MessageTypes::Ack, (char *) "Ack"},        {MessageTypes::Nak, (char *) "Nak"},   {MessageTypes::Reset, (char *) "Reset"}, {MessageTypes::Event, (char *) "Event"}, {MessageTypes::Response, (char *) "Response"}, {MessageTypes::Transport, (char *) "Transport"},
+    {MessageTypes::Header, (char *) "Request"}, {MessageTypes::Data, (char *) "Data"},
+};
 
 /**
  *  @brief Map if the interface IDs to their names.
  */
 Mapping::str_mapping_t Mapping::_interfaceNames[] = {
-    {Esp32Interfaces::WiFi, (char *) "WiFi"}, {Esp32Interfaces::BlueTooth, (char *) "Bluetooth"}, {Esp32Interfaces::MeshNetwork, (char *) "MeshNetwork"}, {Esp32Interfaces::System, (char *) "System"}, {Esp32Interfaces::Transport, (char *) "Transport"}};
+    {Esp32Interfaces::WiFi, (char *) "WiFi"}, {Esp32Interfaces::BlueTooth, (char *) "Bluetooth"}, {Esp32Interfaces::MeshNetwork, (char *) "MeshNetwork"}, {Esp32Interfaces::System, (char *) "System"}, {Esp32Interfaces::Transport, (char *) "Transport"},
+};
 
 /**
  *  @brief Map of the system function IDs to their names.
@@ -356,7 +363,18 @@ Mapping::str_mapping_t Mapping::_systemFunctionNames[] = {
  *  @brief Map of the bluetooth function IDs to their names.
  */
 Mapping::str_mapping_t Mapping::_bluetoothFunctionNames[] = {
-    {BluetoothFunction::Start, (char *) "Start"}, {BluetoothFunction::Stop, (char *) "Stop"}, {BluetoothFunction::GetHandles, (char *) "GetHandles"}, {BluetoothFunction::ServerDataSet, (char *) "ServerDataSet"}, {BluetoothFunction::ClientWriteRequestEvent, (char *) "ClientWriteRequestEvent"}};
+    {BluetoothFunction::Start, (char *) "Start"},
+    {BluetoothFunction::Stop, (char *) "Stop"},
+    {BluetoothFunction::GetHandles, (char *) "GetHandles"},
+    {BluetoothFunction::ServerDataSet, (char *) "ServerDataSet"},
+    {BluetoothFunction::ClientWriteRequestEvent, (char *) "ClientWriteRequestEvent"},
+    {BluetoothFunction::BluetoothStartingEvent, (char *) "BluetoothStartingEvent"},
+    {BluetoothFunction::BluetoothStartedEvent, (char *) "BluetoothStartedEvent"},
+    {BluetoothFunction::BluetoothStoppingEvent, (char *) "BluetoothStoppingEvent"},
+    {BluetoothFunction::BluetoothStoppedEvent, (char *) "BluetoothStoppedEvent"},
+    {BluetoothFunction::ClientConnectedEvent, (char *) "ClientConnectedEvent"},
+    {BluetoothFunction::ClientDisconnectedEvent, (char *) "ClientDisconnectedEvent"},
+};
 
 /**
  *  @brief Map of the transport function IDs to their names.
