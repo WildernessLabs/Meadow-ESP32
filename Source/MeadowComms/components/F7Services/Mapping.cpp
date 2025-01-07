@@ -356,7 +356,17 @@ Mapping::str_mapping_t Mapping::_systemFunctionNames[] = {
  *  @brief Map of the bluetooth function IDs to their names.
  */
 Mapping::str_mapping_t Mapping::_bluetoothFunctionNames[] = {
-    {BluetoothFunction::Start, (char *) "Start"}, {BluetoothFunction::Stop, (char *) "Stop"}, {BluetoothFunction::GetHandles, (char *) "GetHandles"}, {BluetoothFunction::ServerDataSet, (char *) "ServerDataSet"}, {BluetoothFunction::ClientWriteRequestEvent, (char *) "ClientWriteRequestEvent"}};
+    {BluetoothFunction::Start, (char *) "Start"}, {BluetoothFunction::Stop, (char *) "Stop"},
+    {BluetoothFunction::GetHandles, (char *) "GetHandles"},
+    {BluetoothFunction::ServerDataSet, (char *) "ServerDataSet"},
+    {BluetoothFunction::ClientWriteRequestEvent, (char *) "ClientWriteRequestEvent"},
+    {BluetoothFunction::BluetoothStartingEvent, (char *) "BluetoothStartingEvent"},
+    {BluetoothFunction::BluetoothStartedEvent, (char *) "BluetoothStartedEvent"},
+    {BluetoothFunction::BluetoothStoppingEvent, (char *) "BluetoothStoppingEvent"},
+    {BluetoothFunction::BluetoothStoppedEvent, (char *) "BluetoothStoppedEvent"},
+    {BluetoothFunction::ClientConnectedEvent, (char *) "ClientConnectedEvent"},
+    {BluetoothFunction::ClientDisconnectedEvent, (char *) "ClientDisconnectedEvent"},
+};
 
 /**
  *  @brief Map of the transport function IDs to their names.
