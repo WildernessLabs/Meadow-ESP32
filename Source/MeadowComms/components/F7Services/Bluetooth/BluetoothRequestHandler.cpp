@@ -363,7 +363,7 @@ bool BluetoothRequestHandler::StartBluetoothService()
     ret = esp_bt_controller_enable(ESP_BT_MODE_BLE);
     if (ret)
     {
-        ERROR_MESSAGE("esp_bt_controller_enable failed %i", ret);
+        ERROR_MESSAGE("esp_bt_controller_enable failed, code %i, %s", ret, esp_err_to_name(ret));
         return false;
     }
 

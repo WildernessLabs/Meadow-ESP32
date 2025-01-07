@@ -1,7 +1,7 @@
 /*
- *  test_wifi.cpp
+ *  test_system.cpp
  *
- *  Implementation of the test methods for the WiFiRequestHandler class.
+ *  Implementation of the test methods for the SystemRequestHandler class.
  */
 
 #include "sdkconfig.h"
@@ -16,10 +16,12 @@
 
 #include "test_common.hpp"
 
+#define CLASS_OF_TESTS "[System]"
+
 /**
  * @brief Unit test for the battery charge level method.
  */
-TEST_CASE("Get battery level", "[System]")
+TEST_CASE("Get battery level", CLASS_OF_TESTS)
 {
     MockMessageDispatcher *messageDispatcher = new MockMessageDispatcher(nullptr);
     TEST_ASSERT_NOT_NULL(messageDispatcher);
@@ -50,13 +52,4 @@ TEST_CASE("Get battery level", "[System]")
     Message::DeleteMessage(response);
 
     delete messageDispatcher;
-}
-
-/**
- * @brief Turn on the generation of heap tracing data.
- */
-TEST_CASE("Turn on Heap Tracing Data", "[System]")
-{
-    _generateHeapTraceData = true;
-    TEST_PASS();
 }
