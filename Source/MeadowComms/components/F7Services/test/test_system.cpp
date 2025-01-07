@@ -1,7 +1,7 @@
 /*
- *  test_wifi.cpp
+ *  test_system.cpp
  *
- *  Implementation of the test methods for the WiFiRequestHandler class.
+ *  Implementation of the test methods for the SystemRequestHandler class.
  */
 
 #include "sdkconfig.h"
@@ -50,13 +50,4 @@ TEST_CASE("Get battery level", "[System]")
     Message::DeleteMessage(response);
 
     delete messageDispatcher;
-}
-
-/**
- * @brief Turn on the generation of heap tracing data.
- */
-TEST_CASE("Turn on Heap Tracing Data", "[System]")
-{
-    _generateHeapTraceData = true;
-    TEST_PASS();
 }
