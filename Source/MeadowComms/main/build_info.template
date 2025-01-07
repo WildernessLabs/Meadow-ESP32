@@ -7,17 +7,17 @@
  *  cannot be built.
  */
 
-#define VERSION_MAJOR               2
-#define VERSION_MINOR               0
-#define VERSION_REVISION            1
-#define VERSION_BUILD               75
-#define VERSION_BUILD_DAY           17
-#define VERSION_BUILD_MONTH         12
-#define VERSION_BUILD_MONTH_NAME    "Dec"
-#define VERSION_BUILD_YEAR          24
-#define VERSION_BUILD_HOUR          9
-#define VERSION_BUILD_MINUTE        56
-#define VERSION_BUILD_SECOND        21
-#define VERSION_BUILD_HASH          "0x95bf93a1"
-#define VERSION_BUILD_HASH_NUMBER   0x95bf93a1
-#define VERSION_GIT_REF             "GenerateSBOM"
+#define VERSION_MAJOR               ###VERSION_MAJOR###
+#define VERSION_MINOR               ###VERSION_MINOR###
+#define VERSION_REVISION            ###VERSION_REVISION###
+#define VERSION_BUILD               ###VERSION_BUILD###
+#define VERSION_BUILD_DAY           ###BUILD_DAY###
+#define VERSION_BUILD_MONTH         ###BUILD_MONTH###
+#define VERSION_BUILD_MONTH_NAME    "###BUILD_MONTH_NAME###"
+#define VERSION_BUILD_YEAR          ###BUILD_YEAR###
+#define VERSION_BUILD_HOUR          ###BUILD_HOUR###
+#define VERSION_BUILD_MINUTE        ###BUILD_MINUTE###
+#define VERSION_BUILD_SECOND        ###BUILD_SECOND###
+#define VERSION_BUILD_HASH          "###BUILD_HASH###"
+#define VERSION_BUILD_HASH_NUMBER   ###BUILD_HASH###
+#define VERSION_GIT_REF             "###BUILD_GIT_REF###"
