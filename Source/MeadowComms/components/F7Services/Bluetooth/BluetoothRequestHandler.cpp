@@ -159,15 +159,6 @@ void BluetoothRequestHandler::Setup()
 
     ESP_ERROR_CHECK(esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT));
 
-    esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
-    TRACE_MESSAGE("Enable BT controller...");
-    esp_err_t ret = esp_bt_controller_init(&bt_cfg);
-    if (ret)
-    {
-        TRACE_MESSAGE("%s enable controller failed: %s", __func__, esp_err_to_name(ret));
-        return;
-    }
-
     xTaskCreate(Task, _taskName, 4096, this, PRIORITY_BLUETOOTH_TASK, &_taskHandle);
 
     TRACE_MESSAGE("Setup: Exit");
@@ -359,7 +350,17 @@ bool BluetoothRequestHandler::StartBluetoothService()
     TRACE_MESSAGE("StartBluetoothService: Enter");
 
     esp_err_t ret;
+    esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
 
+    TRACE_MESSAGE("Start: esp_bt_controller_init");
+    ret = esp_bt_controller_init(&bt_cfg);
+    if (ret)
+    {
+        TRACE_MESSAGE("%s enable controller failed: %s", __func__, esp_err_to_name(ret));
+        return false;
+    }
+
+    TRACE_MESSAGE("Start: esp_bt_controller_enable");
     ret = esp_bt_controller_enable(ESP_BT_MODE_BLE);
     if (ret)
     {
@@ -367,6 +368,7 @@ bool BluetoothRequestHandler::StartBluetoothService()
         return false;
     }
 
+    TRACE_MESSAGE("Start: esp_bluedroid_init");
     ret = esp_bluedroid_init();
     if (ret)
     {
@@ -374,6 +376,7 @@ bool BluetoothRequestHandler::StartBluetoothService()
         return false;
     }
 
+    TRACE_MESSAGE("Start: esp_bluedroid_enable");
     ret = esp_bluedroid_enable();
     if (ret)
     {
@@ -381,7 +384,7 @@ bool BluetoothRequestHandler::StartBluetoothService()
         return false;
     }
 
-    // register for GATTS events
+    TRACE_MESSAGE("Start: esp_ble_gatts_register_callback");
     ret = esp_ble_gatts_register_callback(this->GATTSProfileEventHandler);
     if (ret)
     {
@@ -389,7 +392,7 @@ bool BluetoothRequestHandler::StartBluetoothService()
         return false;
     }
 
-    // Register for GAP events
+    TRACE_MESSAGE("Start: esp_ble_gap_register_callback");
     ret = esp_ble_gap_register_callback(this->GAPEventHandler);
     if (ret)
     {
@@ -397,7 +400,7 @@ bool BluetoothRequestHandler::StartBluetoothService()
         return false;
     }
 
-    // Register our one (and only) profile
+    TRACE_MESSAGE("Start: esp_ble_gatts_app_register");
     ret = esp_ble_gatts_app_register(MEADOW_PROFILE_APP_ID);
     if (ret)
     {
@@ -405,6 +408,7 @@ bool BluetoothRequestHandler::StartBluetoothService()
         return false;
     }
 
+    TRACE_MESSAGE("Start: esp_ble_gatt_set_local_mtu");
     esp_err_t local_mtu_ret = esp_ble_gatt_set_local_mtu(BT_GATT_MTU);
     if (local_mtu_ret)
     {
@@ -432,7 +436,11 @@ bool BluetoothRequestHandler::StartBluetoothService()
     and the response key means which key you can distribute to the master;
     If your BLE device acts as a master, the response key means you hope which types of key of the slave should distribute to you,
     and the init key means which key you can distribute to the slave. */
+
+    TRACE_MESSAGE("Start: esp_ble_gap_set_security_param (ESP_BLE_SM_SET_INIT_KEY)");
     esp_ble_gap_set_security_param(ESP_BLE_SM_SET_INIT_KEY, &init_key, sizeof(uint8_t));
+
+    TRACE_MESSAGE("Start: esp_ble_gap_set_security_param (ESP_BLE_SM_SET_RSP_KEY)");
     esp_ble_gap_set_security_param(ESP_BLE_SM_SET_RSP_KEY, &rsp_key, sizeof(uint8_t));
 
     TRACE_MESSAGE("StartBluetoothService: Exit");
@@ -441,7 +449,7 @@ bool BluetoothRequestHandler::StartBluetoothService()
 }
 
 /**
- * @brief Teardown the bluetooth stack by turning off the bluetooth adapter.
+ * @brief Teardown the Bluetooth stack by turning off the Bluetooth adapter.
  *
  * @return true if the system was stopped, false otherwise.
  */
@@ -449,26 +457,31 @@ bool BluetoothRequestHandler::StopBluetoothService()
 {
     TRACE_MESSAGE("StopBluetoothService: Enter");
 
+    TRACE_MESSAGE("Stop: esp_ble_gap_stop_advertising");
     if (esp_ble_gap_stop_advertising() != ESP_OK)
     {
         ERROR_MESSAGE("Failed to stop advertising");
         return false;
     }
+
     if (_gattsInterfaceHandle != ESP_GATT_IF_NONE)
     {
+        TRACE_MESSAGE("Stop: esp_ble_gatts_app_unregister");
         if (esp_ble_gatts_app_unregister(_gattsInterfaceHandle) != ESP_OK)
         {
             ERROR_MESSAGE("Failed to unregister GATTS app");
             return false;
         }
     }
-    TRACE_MESSAGE("Disabling Bluedriod");
+
+    TRACE_MESSAGE("Stop: esp_bluedroid_disable");
     if (esp_bluedroid_disable() != ESP_OK)
     {
         ERROR_MESSAGE("Failed to disable bluetooth stack");
         return false;
     }
-    TRACE_MESSAGE("Deinitialising Bluedriod");
+
+    TRACE_MESSAGE("Stop: esp_bluedroid_deinit");
     if (esp_bluedroid_deinit() != ESP_OK)
     {
         ERROR_MESSAGE("Failed to deinitialise bluetooth stack");
@@ -477,24 +490,21 @@ bool BluetoothRequestHandler::StopBluetoothService()
     //
     //  This call fails...
     //
-    TRACE_MESSAGE("Disabling BT controller");
     vTaskDelay(500 / portTICK_PERIOD_MS);
+
+    TRACE_MESSAGE("Stop: esp_bt_controller_disable");
     if (esp_bt_controller_disable() != ESP_OK)
     {
         ERROR_MESSAGE("Failed to disable BT controller");
         return false;
     }
-    TRACE_MESSAGE("Deinitialising BT controller");
+
+    TRACE_MESSAGE("Stop: esp_bt_controller_deinit");
     if (esp_bt_controller_deinit() != ESP_OK)
     {
         ERROR_MESSAGE("Failed to deinitialise BT controller");
         return false;
     }
-    // if (esp_bt_controller_mem_release (ESP_BT_MODE_BLE) != ESP_OK)
-    // {
-    //     TRACE_MESSAGE("Failed to release BLE memory");
-    //     return false;
-    // }
 
     TRACE_MESSAGE("StopBluetoothService: Exit");
 
@@ -590,8 +600,6 @@ void BluetoothRequestHandler::Start(Message *request)
 {
     TRACE_MESSAGE("Start: Enter");
 
-    TRACE_MESSAGE("Start. payload len = %lu", request->PayloadLength);
-
     RaiseEvent(Esp32Interfaces::BlueTooth, BluetoothFunction::BluetoothStartingEvent, StatusCodes::CompletedOk);
 
     Esp32Messaging::BTStackConfig *config = Encoders::ExtractBTStackConfig(request->Payload);
@@ -633,6 +641,7 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
 {
     TRACE_MESSAGE("GATTSProfileEventHandler: Enter");
 
+    esp_err_t ret = ESP_OK;
     switch (event)
     {
         case ESP_GATTS_REG_EVT:
@@ -645,7 +654,7 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
                 // turn on some security
                 //               esp_ble_gap_config_local_privacy(true);
 
-                esp_err_t ret = esp_ble_gap_config_adv_data(_manager.GetAdvertisingData());
+                ret = esp_ble_gap_config_adv_data(_manager.GetAdvertisingData());
                 if (ret)
                 {
                     ERROR_MESSAGE("Config adv data failed, error code = %x, %s", ret, esp_err_to_name(ret));
@@ -693,7 +702,7 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
                     _manager.GetCurrentValueForAttributeHandle(param->read.handle, rsp.attr_value.value, &rsp.attr_value.len);
 
                     TRACE_MESSAGE("  Sending read response of %i bytes", rsp.attr_value.len);
-                    esp_err_t ret = esp_ble_gatts_send_response(gatts_if, param->read.conn_id, param->read.trans_id, ESP_GATT_OK, &rsp);
+                    ret = esp_ble_gatts_send_response(gatts_if, param->read.conn_id, param->read.trans_id, ESP_GATT_OK, &rsp);
 
                     if (ret)
                     {
@@ -709,7 +718,7 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
                 {
                     OnDataWriteRequest(param->write.handle, param->write.value, param->write.len);
 
-                    esp_err_t ret = esp_ble_gatts_send_response(gatts_if, param->write.conn_id, param->write.trans_id, ESP_GATT_OK, NULL);
+                    ret = esp_ble_gatts_send_response(gatts_if, param->write.conn_id, param->write.trans_id, ESP_GATT_OK, NULL);
                     if (ret)
                     {
                         ERROR_MESSAGE("esp_ble_gatts_send_response failed, error code = %x", ret);
@@ -732,9 +741,15 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
             break;
         case ESP_GATTS_UNREG_EVT:
             TRACE_MESSAGE("ESP_GATTS_UNREG_EVT");
+            // if (esp_ble_gatts_stop_service(GetInstance()->_serviceHandle) != ESP_OK)
+            // {
+            //     ERROR_MESSAGE("Failed to stop service");
+            // }
+            // GetInstance()->_serviceHandle = -1;
             break;
         case ESP_GATTS_DELETE_EVT:
             TRACE_MESSAGE("ESP_GATTS_DELETE_EVT");
+
             break;
         case ESP_GATTS_START_EVT:
             TRACE_MESSAGE("ESP_GATTS_START_EVT");
@@ -811,6 +826,7 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
                 // now fire up the service (which is the first attribute in the attribute table) by handle.
                 // TODO: right now we're cheating
                 TRACE_MESSAGE("Starting service with handle 0x%04x", param->add_attr_tab.handles[0]);
+                GetInstance()->_serviceHandle = param->add_attr_tab.handles[0];
                 esp_ble_gatts_start_service(param->add_attr_tab.handles[0]);
             }
             break;
