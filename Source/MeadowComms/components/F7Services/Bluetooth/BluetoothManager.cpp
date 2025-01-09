@@ -446,15 +446,15 @@ void BluetoothManager::BuildGraphFromJson(char *cfg_json)
         auto svc = svc_list[i].GetObject();
         auto svc_uuid = svc["uuid"].GetInt();
         auto svc_name = svc["name"].GetString();
-        TRACE_MESSAGE("service %s uuid = 0x%04x", svc_name, svc_uuid);
+        TRACE_MESSAGE("Service %s uuid = 0x%04x", svc_name, svc_uuid);
 
         auto bt_svc = new BluetoothService(svc_name, Uuid16(svc_uuid));
 
         const Value &char_list = svc["characteristics"];
-        TRACE_MESSAGE("service has %i characteristics", char_list.Size());
+        TRACE_MESSAGE("Service has %i characteristics", char_list.Size());
         for (auto i = 0; i < char_list.Size(); i++)
         {
-            TRACE_MESSAGE("characteristic ");
+            TRACE_MESSAGE("Characteristic ");
             auto characteristic = char_list[i].GetObject();
 
             // this might be a ushort, might be a guid
@@ -466,12 +466,12 @@ void BluetoothManager::BuildGraphFromJson(char *cfg_json)
             if (characteristic["uuid"].IsInt())
             {
                 chr_uuid16 = Uuid16((uint16_t) characteristic["uuid"].GetInt());
-                TRACE_MESSAGE(" uuid = 0x%04x", (uint16_t) chr_uuid16);
+                TRACE_MESSAGE("    UUID = 0x%04x", (uint16_t) chr_uuid16);
             }
             else
             {
                 chr_uuid128 = Uuid128(characteristic["uuid"].GetString());
-                TRACE_MESSAGE(" uuid = %s", chr_uuid128.ToString().c_str());
+                TRACE_MESSAGE("    UUID = %s", chr_uuid128.ToString().c_str());
                 is128 = true;
             }
 
@@ -479,9 +479,9 @@ void BluetoothManager::BuildGraphFromJson(char *cfg_json)
             auto chr_props = (uint16_t) characteristic["props"].GetInt();
             auto chr_len = (uint16_t) characteristic["len"].GetInt();
 
-            TRACE_MESSAGE(" permission = 0x%04x", chr_perm);
-            TRACE_MESSAGE(" props = 0x%04x", chr_props);
-            TRACE_MESSAGE(" len = 0x%04x", chr_len);
+            TRACE_MESSAGE("    Permission = 0x%04x", chr_perm);
+            TRACE_MESSAGE("    Props = 0x%04x", chr_props);
+            TRACE_MESSAGE("    Len = 0x%04x", chr_len);
 
             BluetoothCharacteristic *bt_characteristic;
             if (is128)
@@ -495,11 +495,11 @@ void BluetoothManager::BuildGraphFromJson(char *cfg_json)
 
             if (characteristic.HasMember("descriptors"))
             {
-                TRACE_MESSAGE("attribute has descriptors node");
+                TRACE_MESSAGE("Attribute has descriptors node");
                 const Value &desc_list = characteristic["descriptors"];
                 if (desc_list.Size() > 0)
                 {
-                    TRACE_MESSAGE("characteristic has %i descriptors", desc_list.Size());
+                    TRACE_MESSAGE("Characteristic has %i descriptors", desc_list.Size());
                     for (auto d = 0; d < desc_list.Size(); d++)
                     {
                         Uuid16 desc_uuid16;
@@ -510,22 +510,22 @@ void BluetoothManager::BuildGraphFromJson(char *cfg_json)
                         if (descriptor["uuid"].IsInt())
                         {
                             desc_uuid16 = Uuid16((uint16_t) descriptor["uuid"].GetInt());
-                            TRACE_MESSAGE(" uuid = 0x%04x", (uint16_t) desc_uuid16);
+                            TRACE_MESSAGE("     UUID = 0x%04x", (uint16_t) desc_uuid16);
                         }
                         else
                         {
                             desc_uuid128 = Uuid128(descriptor["uuid"].GetString());
-                            TRACE_MESSAGE(" uuid = %s", desc_uuid128.ToString().c_str());
+                            TRACE_MESSAGE("     UUID = %s", desc_uuid128.ToString().c_str());
                             is128d = true;
                         }
 
                         auto desc_perm = (uint16_t) descriptor["permission"].GetInt();
-                        TRACE_MESSAGE("   permission = 0x%04x", desc_perm);
+                        TRACE_MESSAGE("    Permission = 0x%04x", desc_perm);
                         auto desc_len = (uint16_t) descriptor["len"].GetInt();
-                        TRACE_MESSAGE("   len = 0x%04x", desc_len);
+                        TRACE_MESSAGE("    Len = 0x%04x", desc_len);
 
                         auto desc_value = (uint16_t) descriptor["value"].GetInt();
-                        TRACE_MESSAGE("   value = 0x%04x", desc_value);
+                        TRACE_MESSAGE("   Value = 0x%04x", desc_value);
 
                         BluetoothDescriptor *bt_descriptor;
 
@@ -540,15 +540,14 @@ void BluetoothManager::BuildGraphFromJson(char *cfg_json)
 
                         bt_descriptor->SetValue(desc_value);
 
-                        TRACE_MESSAGE("bt_descriptor created");
                         bt_characteristic->AddDescriptor(bt_descriptor);
-                        TRACE_MESSAGE("bt_descriptor added");
+                        TRACE_MESSAGE("Bluetooth descriptor added");
                     }
                 }
             }
 
             bt_svc->AddCharacteristic(bt_characteristic);
-            TRACE_MESSAGE("bt_characteristic added");
+            TRACE_MESSAGE("Bluetooth characteristic added");
         }
 
         Services.Add(bt_svc);
