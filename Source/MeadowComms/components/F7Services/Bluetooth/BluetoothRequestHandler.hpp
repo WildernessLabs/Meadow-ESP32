@@ -80,7 +80,12 @@ private:
     static bool _instantiated;
 
     /**
-     * @brief Handler for the GATTS interface.
+     * @brief Service handle for the Bluetooth service.
+     */
+    uint16_t _serviceHandle = -1;
+
+    /**
+     * @brief Handle for the GATTS interface.
      */
     static esp_gatt_if_t _gattsInterfaceHandle;
 
