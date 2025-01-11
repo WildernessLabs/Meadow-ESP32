@@ -1,0 +1,27 @@
+define hook-quit
+    set confirm off
+end
+
+set style address foreground yellow
+
+target remote :3333 
+
+mon reset halt
+maintenance flush register-cache
+
+flushregs
+set remote hardware-watchpoint-limit 2
+set listsize 30
+
+tb heap_trace_start
+commands
+mon esp sysview start file://./test/heap_log0.svdat file://./test/heap_log1.svdat
+c
+end
+
+tb heap_trace_stop
+commands
+mon esp sysview stop
+end
+
+c
