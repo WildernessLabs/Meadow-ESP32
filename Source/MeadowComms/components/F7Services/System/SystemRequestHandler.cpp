@@ -19,6 +19,10 @@
 #include "esp_adc/adc_cali.h"
 #include "esp_adc/adc_cali_scheme.h"
 
+#if defined(CONFIG_HEAP_TRACING_TOHOST)
+    #include "esp_heap_trace.h"
+#endif
+
 #include "esp_sleep.h"
 #include <string.h>
 #include <stdlib.h>
@@ -731,9 +735,9 @@ void SystemRequestHandler::GetBatteryChargeLevel(Message *message)
  */
 void SystemRequestHandler::StartHeapTrace(Message *message)
 {
-#if defined(CONFIG_HEAP_TRACING_STANDALONE)
+#if defined(CONFIG_HEAP_TRACING_TOHOST)
     message->DeleteMessage(message);
-    Logging::StandaloneHeapTracingStart();
+    heap_trace_start(HEAP_TRACE_LEAKS);
 #else
     ESP_LOGE(COMPONENT_NAME, "Heap tracing cannot start as it is disabled, update menuconfig.");
 #endif
@@ -747,10 +751,9 @@ void SystemRequestHandler::StartHeapTrace(Message *message)
  */
 void SystemRequestHandler::StopHeapTrace(Message *message)
 {
-#if defined(CONFIG_HEAP_TRACING_STANDALONE)
+#if defined(CONFIG_HEAP_TRACING_TOHOST)
     message->DeleteMessage(message);
-    Logging::StandaloneHeapTracingStop();
-    Logging::DumpStandaloneHeapTraceData();
+    heap_trace_stop();
 #else
     ESP_LOGE(COMPONENT_NAME, "Heap tracing cannot be stopped as it is disabled, update menuconfig.");
 #endif
