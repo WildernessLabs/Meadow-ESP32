@@ -27,12 +27,6 @@
 
 #endif
 
-#if defined(CONFIG_HEAP_TRACING_STANDALONE)
-
-extern heap_trace_record_t *trace_records;
-
-#endif
-
 /*
  * ----------------------------------------------------------------------------
  *
