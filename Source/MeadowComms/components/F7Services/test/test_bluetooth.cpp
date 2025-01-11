@@ -516,6 +516,9 @@ TEST_CASE("Restart Bluetooth service with different configuration", CLASS_OF_TES
     printf("Starting Bluetooth service for MeadowB, Company ID Baidu (0x011c)\n");
     StartBlueToothService(meadow_b_json);
 
+    delete messageDispatcher;
+    messageDispatcher = nullptr;
+
     if (_generateHeapTraceData)
     {
         vTaskDelay(10000 / portTICK_PERIOD_MS);
