@@ -23,10 +23,8 @@
 
 #include "SharedEnums.hpp"
 
-#if defined(CONFIG_HEAP_TRACING_STANDALONE)
-
+#if defined(CONFIG_HEAP_TRACING_TOHOST)
     #include "esp_heap_trace.h"
-
 #endif
 
 #include "Esp32Messaging.hpp"
@@ -170,43 +168,6 @@ private:
     static PerformanceCounterEntry *_performanceCounters[MAX_PERFORMANCE_COUNTERS];
 #endif
 
-#if defined(CONFIG_HEAP_TRACING_STANDALONE)
-
-public:
-    /**
-     *  Number of heap trace records.
-     */
-    static const uint32_t NUMBER_OF_HEAP_TRACE_RECORDS = 100;
-
-    /**
-     *  @brief Array holding the heap trace records.
-     */
-    static heap_trace_record_t _heapTraceRecords[Logging::NUMBER_OF_HEAP_TRACE_RECORDS];
-
-private:
-    /**
-     * @brief Has the heap tracing system already setup?
-     */
-    static bool _isStandaloneHeapTracingSetup;
-    /**
-     *  @brief Has standalone heap tracing been started?
-     */
-    static bool _isStandaloneHeapTracingActive;
-
-    /**
-     *  @brief Number of events remaining before we dump the standalone heap trace data.
-     */
-    static uint32_t _heapEventsRemaining;
-
-    /**
-     *  @brief Number of events that can occur before the system dumps the trace data.
-     *
-     *  This value is used to reset the _heapEventsRemaining counter.
-     */
-    static uint32_t _heapEventCounterResetValue;
-
-#endif
-
 public:
     /**
      *  @brief Name of the component / task.
@@ -307,41 +268,6 @@ public:
      *  @brief Generate a single line summary of the message.
      */
     static char *MessageSummary(const Message *message);
-
-    /**
-     *  @brief Start standalone heap tracing.
-     */
-    static void StandaloneHeapTracingStart();
-
-    /**
-     *  @brief Stop standalone heap tracing.
-     */
-    static void StandaloneHeapTracingStop();
-
-    /**
-     *  @brief Dump the standalone heap tracing data to the serial port.
-     */
-    static void DumpStandaloneHeapTraceData(uint32_t delay = 2000);
-
-    /**
-     *  @brief Is heap tracing active?
-     */
-    static bool IsStandaloneHeapTracingActive();
-
-    /**
-     *  @brief Register a heap event (used to allow a number of events to occur before we dump the trace data.)
-     */
-    static void RegisterHeapEvent();
-
-    /**
-     *  @brief Set the number of events we will let happen before we dump the trace data.
-     */
-    static void SetStandaloneHeapEventResetCounter(uint32_t);
-
-    /**
-     *  @brief Check the number of heap events that have happened and dump the trace data (and reset) if necessary.
-     */
-    static void StandaloneHeapEventCheck();
 };
 
 #endif /* MAIN_LOGGING_HPP_ */

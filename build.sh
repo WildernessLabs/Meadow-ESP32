@@ -299,7 +299,7 @@ if [ ! -z "$DEBUG_SELECTIONS" ]; then
             IDF_DEFINES+=" -DTHREAD_DEBUG=1"
             ;;
             *)
-            printf "Uknown debug subsystem $subsystem.\n"
+            printf "Unknown debug subsystem $subsystem.\n"
             printf "Run build.sh --help for information on valid options.\n"
             exit 1
             ;;

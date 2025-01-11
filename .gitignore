@@ -97,3 +97,5 @@ Source/MeadowComms/.gdb_history
 Source/MeadowComms/test/.gdb_history
 Source/MeadowComms/test/secrets.h
 Source/MeadowComms/components/F7Services/test/secrets.h
+*.svdat
+*.log

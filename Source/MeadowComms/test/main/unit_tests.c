@@ -18,7 +18,8 @@
 #include <string.h>
 #include "unity.h"
 
-#define NUMBER_OF_HEAP_TRACE_RECORDS 100
+#if defined(CONFIG_HEAP_TRACING_TOHOST)
+#endif
 
 bool _generateHeapTraceData = false;
 
@@ -26,11 +27,6 @@ static void print_banner(const char *text)
 {
     printf("\n#### %s #####\n\n", text);
 }
-
-/**
- *  @brief Array holding the heap trace records.
- */
-heap_trace_record_t heapTraceRecords[NUMBER_OF_HEAP_TRACE_RECORDS];
 
 void app_main(void)
 {
@@ -43,6 +39,10 @@ void app_main(void)
         ESP_ERROR_CHECK(nvs_flash_erase());
         ESP_ERROR_CHECK(nvs_flash_init());
     }
+
+#if defined(CONFIG_HEAP_TRACING_TOHOST)
+    heap_trace_init_tohost();
+#endif
 
     /* These are the different ways of running registered tests.
      * In practice, only one of them is usually needed.
