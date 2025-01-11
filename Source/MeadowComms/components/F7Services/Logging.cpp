@@ -63,37 +63,6 @@ Logging::PerformanceCounterEntry *Logging::_performanceCounters[MAX_PERFORMANCE_
 
 #endif
 
-#if defined(CONFIG_HEAP_TRACING_STANDALONE)
-
-/**
- * @brief Has the heap tracing system already setup?
- */
-bool Logging::_isStandaloneHeapTracingSetup = false;
-
-/**
- *  @brief Has standalone heap tracing been started?
- */
-bool Logging::_isStandaloneHeapTracingActive = false;
-
-/**
- *  @brief Number of events remaining before we dump the standalone heap trace data.
- */
-uint32_t Logging::_heapEventsRemaining = 0;
-
-/**
- *  @brief Number of events that can occur before the system dumps the trace data.
- *
- *  This value is used to reset the _heapEventsRemaining counter.
- */
-uint32_t Logging::_heapEventCounterResetValue = 10;
-
-/**
- *  @brief Array holding the heap trace records.
- */
-heap_trace_record_t Logging::_heapTraceRecords[Logging::NUMBER_OF_HEAP_TRACE_RECORDS];
-
-#endif
-
 /*
  * ---------------------------------------------------------------------------
  *
@@ -516,101 +485,6 @@ void Logging::DumpPerformanceCounters()
             PerformanceCounterEntry *pce = _performanceCounters[index];
             printf("%u,%s,%u\n", pce->timestamp, pce->method, pce->duration);
         }
-    }
-}
-
-#endif
-
-#if defined(CONFIG_HEAP_TRACING_STANDALONE)
-
-/**
- *  @brief Start standalone heap tracing.
- */
-void Logging::StandaloneHeapTracingStart()
-{
-    if (!_isStandaloneHeapTracingActive)
-    {
-        TRACE_MESSAGE_SPECIFY_COMPONENT(APP_MAIN_COMPONENT_NAME, " ");
-        TRACE_MESSAGE_SPECIFY_COMPONENT(APP_MAIN_COMPONENT_NAME, "************************************************************");
-        TRACE_MESSAGE_SPECIFY_COMPONENT(APP_MAIN_COMPONENT_NAME, "                 Heap Logging Turned On");
-        TRACE_MESSAGE_SPECIFY_COMPONENT(APP_MAIN_COMPONENT_NAME, "************************************************************");
-        if (!_isStandaloneHeapTracingSetup)
-        {
-            ESP_ERROR_CHECK(heap_trace_init_standalone(_heapTraceRecords, NUMBER_OF_HEAP_TRACE_RECORDS));
-            _isStandaloneHeapTracingSetup = true;
-        }
-        ESP_ERROR_CHECK(heap_trace_start(HEAP_TRACE_LEAKS));
-        _isStandaloneHeapTracingActive = true;
-        _heapEventsRemaining = _heapEventCounterResetValue;
-    }
-}
-
-/**
- *  @brief Stop standalone heap tracing.
- */
-void Logging::StandaloneHeapTracingStop()
-{
-    if (_isStandaloneHeapTracingActive)
-    {
-        ESP_ERROR_CHECK(heap_trace_stop());
-        _isStandaloneHeapTracingActive = false;
-    }
-}
-
-/**
- *  @brief Dump the standalone heap tracing data to the serial port.
- *
- *  @param delay Delay in milliseconds before the data is generated.  Default value, 2000ms.
- */
-void Logging::DumpStandaloneHeapTraceData(uint32_t delay)
-{
-    vTaskDelay(delay / portTICK_PERIOD_MS);
-    TRACE_MESSAGE_SPECIFY_COMPONENT(APP_MAIN_COMPONENT_NAME, " ");
-    TRACE_MESSAGE_SPECIFY_COMPONENT(APP_MAIN_COMPONENT_NAME, "************************************************************");
-    TRACE_MESSAGE_SPECIFY_COMPONENT(APP_MAIN_COMPONENT_NAME, "                   Heap Logging Dump");
-
-    heap_trace_dump();
-
-    TRACE_MESSAGE_SPECIFY_COMPONENT(APP_MAIN_COMPONENT_NAME, "************************************************************");
-    TRACE_MESSAGE_SPECIFY_COMPONENT(APP_MAIN_COMPONENT_NAME, " ");
-}
-
-/**
- *  @brief Is heap tracing active?
- */
-bool Logging::IsStandaloneHeapTracingActive()
-{
-    return (_isStandaloneHeapTracingActive);
-}
-
-/**
- *  @brief Register a heap event (used to allow a number of events to occur before we dump the trace data.)
- */
-void Logging::RegisterHeapEvent()
-{
-    _heapEventsRemaining--;
-    StandaloneHeapEventCheck();
-}
-
-/**
- *  @brief Set the number of events we will let happen before we dump the trace data.
- */
-void Logging::SetStandaloneHeapEventResetCounter(uint32_t eventCount)
-{
-    _heapEventCounterResetValue = eventCount;
-    _heapEventsRemaining = eventCount;
-}
-
-/**
- *  @brief Check the number of heap events that have happened and dump the trace data (and reset) if necessary.
- */
-void Logging::StandaloneHeapEventCheck()
-{
-    if (_heapEventsRemaining == 0)
-    {
-        StandaloneHeapTracingStop();
-        DumpStandaloneHeapTraceData();
-        StandaloneHeapTracingStart();
     }
 }
 
