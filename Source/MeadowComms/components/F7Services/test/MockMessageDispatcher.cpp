@@ -57,13 +57,6 @@ MockMessageDispatcher::MockMessageDispatcher()
  */
 MockMessageDispatcher::MockMessageDispatcher(TransportProviderBase *transportProvider) : MockMessageDispatcher()
 {
-    _wifiRequestHandler = new WiFiRequestHandler(this); // cppcheck-suppress noCopyConstructor
-    _wifiRequestHandler->Setup();
-    _bluetoothRequestHandler = BluetoothRequestHandler::GetInstance(this);
-    _meshNetworkRequestHandler = new MeshNetworkRequestHandler(this);
-    _meshNetworkRequestHandler->Setup();
-    _systemRequestHandler = new SystemRequestHandler(this);
-    _systemRequestHandler->Setup();
 }
 
 /**
@@ -71,6 +64,7 @@ MockMessageDispatcher::MockMessageDispatcher(TransportProviderBase *transportPro
  */
 MockMessageDispatcher::~MockMessageDispatcher()
 {
+    vQueueDelete(_outboundMessageQueueHandle);
 }
 
 /* ---------------------------------------------------------------------------
@@ -98,15 +92,30 @@ bool MockMessageDispatcher::QueueMessageForEsp32(Message *request)
     switch (static_cast<Esp32Interfaces::Esp32Interfaces>(request->Interface))
     {
         case Esp32Interfaces::WiFi:
+            if (!_wifiRequestHandler)
+            {
+                _wifiRequestHandler = new WiFiRequestHandler(this); // cppcheck-suppress noCopyConstructor
+                _wifiRequestHandler->Setup();
+            }
             provider = dynamic_cast<RequestHandlerBase *>(_wifiRequestHandler);
             break;
         case Esp32Interfaces::BlueTooth:
-            provider = dynamic_cast<RequestHandlerBase *>(_bluetoothRequestHandler);
+            provider = dynamic_cast<RequestHandlerBase *>(BluetoothRequestHandler::GetInstance(this));
             break;
         case Esp32Interfaces::MeshNetwork:
+            if (!_meshNetworkRequestHandler)
+            {
+                _meshNetworkRequestHandler = new MeshNetworkRequestHandler(this);
+                _meshNetworkRequestHandler->Setup();
+            }
             provider = dynamic_cast<RequestHandlerBase *>(_meshNetworkRequestHandler);
             break;
         case Esp32Interfaces::System:
+            if (!_systemRequestHandler)
+            {
+                _systemRequestHandler = new SystemRequestHandler(this);
+                _systemRequestHandler->Setup();
+            }
             provider = dynamic_cast<RequestHandlerBase *>(_systemRequestHandler);
             break;
         default:
