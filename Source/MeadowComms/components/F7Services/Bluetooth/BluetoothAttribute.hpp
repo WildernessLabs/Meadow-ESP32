@@ -14,7 +14,7 @@
 
 #include "sdkconfig.h"
 
-#include "bt_compat.hpp"
+// #include "bt_compat.hpp"
 
 /**
  * @brief Property type of this characteristic
