@@ -9,6 +9,8 @@
 #include <string.h>
 #include "unity.h"
 
+#include "esp_sysview_trace.h"
+
 #include "MockMessageDispatcher.hpp"
 #include "MockTransportProvider.hpp"
 #include "Esp32Messaging.hpp"
@@ -33,10 +35,11 @@ const char *NUMBER_FIELD_UUID = "018e99d6-8a61-11eb-8dcd-0242ac1300bb";
 const char *TEXT_FIELD_NAME = "TextField";
 const char *TEXT_FIELD_UUID = "019e99d6-8a61-11eb-8dcd-0242ac1300cc";
 
-/**
- *  @brief Common message dispatcher for these tests.
- */
-static MockMessageDispatcher *messageDispatcher = nullptr;
+void print_end_message()
+{
+    __asm__("nop");
+    // printf("End of test\n");    
+}
 
 /**
  *  Convert the BTStackConfig object into a byte stream that can be sent to the STM32.
@@ -120,12 +123,6 @@ int EncodedBTServerDataSetBufferSize(Esp32Messaging::BTServerDataSet *bTServerDa
  */
 static void StartBlueToothService(const char *const configuration)
 {
-    if (messageDispatcher == nullptr)
-    {
-        messageDispatcher = new MockMessageDispatcher(nullptr);
-        TEST_ASSERT_NOT_NULL(messageDispatcher);
-    }
-
     Esp32Messaging::BTStackConfig stackConfig;
     stackConfig.Config = (char *) configuration;
 
@@ -217,7 +214,6 @@ static void StopBluetoothService()
 {
     if (messageDispatcher == nullptr)
     {
-        printf("Creating message dispatcher\n");
         messageDispatcher = new MockMessageDispatcher(nullptr);
         TEST_ASSERT_NOT_NULL(messageDispatcher);
     }
@@ -473,24 +469,37 @@ TEST_CASE("Stop Bluetooth Service (will start MeadowA service first)", CLASS_OF_
 {
     printf("Starting Bluetooth service for MeadowA, Company ID Espressif (0x02e5)\n");
 
+    TEST_ASSERT_NOT_NULL(SetupMessageDispatcher());
+
     if (_generateHeapTraceData)
     {
         heap_trace_start(HEAP_TRACE_LEAKS);
     }
 
+    heap_trace_start(HEAP_TRACE_LEAKS);
     StartBlueToothService(meadow_a_json);
+    // esp_sysview_flush(ESP_APPTRACE_TMO_INFINITE);
 
-    printf("Waiting for 1 second before stopping Bluetooth service\n");
+    // printf("Waiting for 1 second before stopping Bluetooth service\n");
     vTaskDelay(1000 / portTICK_PERIOD_MS);
 
-    printf("Stopping Bluetooth service\n");
+    // printf("Stopping Bluetooth service\n");
     StopBluetoothService();
+    // esp_sysview_flush(ESP_APPTRACE_TMO_INFINITE);
+
+    // delete messageDispatcher;
 
     if (_generateHeapTraceData)
     {
         vTaskDelay(10000 / portTICK_PERIOD_MS);
         heap_trace_stop();
+        // esp_sysview_flush(ESP_APPTRACE_TMO_INFINITE);
     }
+
+    esp_sysview_flush(ESP_APPTRACE_TMO_INFINITE);
+    // vTaskDelay(2000 / portTICK_PERIOD_MS);
+
+    print_end_message();
 }
 
 /**

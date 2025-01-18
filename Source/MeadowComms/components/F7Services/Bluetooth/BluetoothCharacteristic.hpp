@@ -9,7 +9,7 @@
 #ifndef _BLUETOOTH_CHARACTERISTIC_HPP_
 #define _BLUETOOTH_CHARACTERISTIC_HPP_
 
-#include "sdkconfig.h"
+// #include "sdkconfig.h"
 
 #include <functional>
 #include <string>

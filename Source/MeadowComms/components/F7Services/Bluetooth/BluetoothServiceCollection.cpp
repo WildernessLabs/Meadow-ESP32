@@ -8,10 +8,8 @@
  */
 #include "Logging.hpp"
 
-#include "BluetoothRequestHandler.hpp"
-
 #include "BluetoothServiceCollection.hpp"
-#include "esp_log.h"
+#include "BluetoothComponentName.hpp"
 
 /*
  * ----------------------------------------------------------------------------
@@ -20,11 +18,7 @@
  *
  * ----------------------------------------------------------------------------
  */
-
-/**
- * @brief Name of the component for logging.
- */
-const char *BluetoothServiceCollection::COMPONENT_NAME = BluetoothRequestHandler::COMPONENT_NAME;
+const char *BluetoothServiceCollection::COMPONENT_NAME = BLUETOOTH_COMPONENT_NAME;
 
 /*
  * ----------------------------------------------------------------------------
@@ -83,6 +77,8 @@ BluetoothService &BluetoothServiceCollection::Add(BluetoothService *service)
 
 /**
  * @brief Delete all of the registered services.
+ * 
+ * @note This assumes that all of the services have already been stopped.
  *
  * @return bool If successfully deleted, false otherwise.
  */
@@ -93,7 +89,6 @@ bool BluetoothServiceCollection::DeleteAllServices()
     for (auto it = _services.begin(); it != _services.end(); ++it)
     {
         auto service = (BluetoothService *) *it;
-        esp_ble_gatts_stop_service(service->Handle);
         delete service;
     }
 
