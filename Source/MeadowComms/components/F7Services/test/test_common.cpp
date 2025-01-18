@@ -62,5 +62,5 @@ MockMessageDispatcher *SetupMessageDispatcher()
     {
         messageDispatcher = new MockMessageDispatcher(nullptr);
     }
-    return(messageDispatcher);
+    return (messageDispatcher);
 }

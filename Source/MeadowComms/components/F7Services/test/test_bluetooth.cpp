@@ -38,7 +38,7 @@ const char *TEXT_FIELD_UUID = "019e99d6-8a61-11eb-8dcd-0242ac1300cc";
 void print_end_message()
 {
     __asm__("nop");
-    // printf("End of test\n");    
+    // printf("End of test\n");
 }
 
 /**
@@ -123,6 +123,12 @@ int EncodedBTServerDataSetBufferSize(Esp32Messaging::BTServerDataSet *bTServerDa
  */
 static void StartBlueToothService(const char *const configuration)
 {
+    if (messageDispatcher == nullptr)
+    {
+        messageDispatcher = new MockMessageDispatcher(nullptr);
+        TEST_ASSERT_NOT_NULL(messageDispatcher);
+    }
+
     Esp32Messaging::BTStackConfig stackConfig;
     stackConfig.Config = (char *) configuration;
 

@@ -77,7 +77,7 @@ BluetoothService &BluetoothServiceCollection::Add(BluetoothService *service)
 
 /**
  * @brief Delete all of the registered services.
- * 
+ *
  * @note This assumes that all of the services have already been stopped.
  *
  * @return bool If successfully deleted, false otherwise.
