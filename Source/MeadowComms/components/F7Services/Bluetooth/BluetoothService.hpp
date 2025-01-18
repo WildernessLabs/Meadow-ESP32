@@ -9,7 +9,7 @@
 #ifndef _BLUETOOTH_SERVICE_HPP_
 #define _BLUETOOTH_SERVICE_HPP_
 
-#include "sdkconfig.h"
+// #include "sdkconfig.h"
 
 #include <string>
 #include <vector>

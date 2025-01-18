@@ -8,9 +8,8 @@
  */
 #include "Logging.hpp"
 
-#include "BluetoothRequestHandler.hpp"
-
 #include "BluetoothHandleManager.hpp"
+#include "BluetoothComponentName.hpp"
 
 /*
  * ----------------------------------------------------------------------------
@@ -19,11 +18,7 @@
  *
  * ----------------------------------------------------------------------------
  */
-
-/**
- * @brief Name of the component for logging.
- */
-const char *BluetoothHandleManager::COMPONENT_NAME = BluetoothRequestHandler::COMPONENT_NAME;
+const char *BluetoothHandleManager::COMPONENT_NAME = BLUETOOTH_COMPONENT_NAME;
 
 /*
  * ----------------------------------------------------------------------------

@@ -6,9 +6,8 @@
  *
  * @copyright Copyright (c) 2019 - 2024
  */
+#include "BluetoothComponentName.hpp"
 #include "Logging.hpp"
-
-#include "BluetoothRequestHandler.hpp"
 
 #include "BluetoothCharacteristic.hpp"
 
@@ -20,7 +19,7 @@
  * ----------------------------------------------------------------------------
  */
 
-const char *BluetoothCharacteristic::COMPONENT_NAME = BluetoothRequestHandler::COMPONENT_NAME;
+const char *BluetoothCharacteristic::COMPONENT_NAME = BLUETOOTH_COMPONENT_NAME;
 
 /*
  * ----------------------------------------------------------------------------
