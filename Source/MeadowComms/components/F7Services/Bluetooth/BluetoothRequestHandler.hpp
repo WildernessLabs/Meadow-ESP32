@@ -97,6 +97,31 @@ private:
     static bool _responseDataConfigured;
 
     /**
+     * @brief Table of attributes in the GATT database.
+     */
+    esp_gatts_attr_db_t *_attribute_table;
+
+    /**
+     * @brief Number of elements in the attribute table.
+     */
+    uint16_t _attributeTableLength;
+
+    /**
+     * @brief Advertising data content, according to "Supplement to the Bluetooth Core Specification".
+     */
+    esp_ble_adv_data_t _advertisingData;
+
+    /**
+     * @brief Advertising parameters.
+     */
+    esp_ble_adv_params_t _advertisingParameters;
+
+    /**
+     * @brief Advertising response data.
+     */
+    esp_ble_adv_data_t _scanResponseData;    
+
+    /**
      *  This method will dispatch incoming messages to the appropriate request handler.
      */
     void DispatchRequest(Message *) override;
@@ -169,6 +194,15 @@ private:
      */
     static BluetoothRequestHandler *GetInstance();
 
+    esp_gatts_attr_db_t *GetAttributeTable();
+    esp_ble_adv_data_t *GetAdvertisingData();
+    esp_ble_adv_data_t *GetScanResponseData();
+    esp_ble_adv_params_t *GetAdvertisingParameters();
+    uint16_t GetAttributeTableLength();
+    void GenerateAdvertisingData();
+    void GenerateAttributeTable();
+    int GetHandleCount();
+    
 public:
     static BluetoothManager _manager;
 

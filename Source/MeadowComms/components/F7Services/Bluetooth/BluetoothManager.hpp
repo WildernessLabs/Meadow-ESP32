@@ -37,7 +37,7 @@ private:
          */
         uint8_t *value;
     };
-    
+
     /**
      * @brief Type definition for the length_val_s structure.
      */
@@ -57,11 +57,6 @@ private:
     static void HandleCharacteristicAdded(BluetoothCharacteristic *);
     static void HandleValueChanged(BluetoothCharacteristic *);
     static void HandleDescriptorAdded(BluetoothDescriptor *);
-
-    /**
-     * @brief Number of elements in the attribute table.
-     */
-    uint16_t _attributeTableLength;
 
     /**
      * @brief 16-bit assigned number for the company identifier.
@@ -94,23 +89,19 @@ public:
      */
     bool DeleteAllServices();
 
-    void GenerateAttributeTable();
-    void GenerateAdvertisingData();
     void SetHandles(uint16_t *handles, uint16_t count);
-
-    /**
-     * @brief Get the number of attributes in the attribute table.
-     *
-     * @return int Number of handles.
-     */
-    int GetHandleCount()
-    {
-        return _attributeTableLength;
-    }
 
     void GetHandles(uint16_t *handles);
 
-    uint16_t GetAttributeTableLength();
+    uint16_t GetCompanyIdentifier()
+    {
+        return _companyIdentifier;
+    }
+
+    const vector<BluetoothService *> GetServiceDefinitions()
+    {
+        return Services.GetServiceDefinitions();
+    }
 
     void GetCurrentValueForAttributeHandle(uint16_t handle, uint8_t *pData, uint16_t *pLen);
     void SetCurrentValueForAttributeHandle(uint16_t handle, uint8_t *pData, uint16_t len);
