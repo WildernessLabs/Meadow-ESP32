@@ -18,5 +18,4 @@
 #include <string.h>
 #include "test_bluetooth_service_json.hpp"
 
-
 #endif // _TEST_BLUETOOTH_HPP_

@@ -119,7 +119,7 @@ private:
     /**
      * @brief Advertising response data.
      */
-    esp_ble_adv_data_t _scanResponseData;    
+    esp_ble_adv_data_t _scanResponseData;
 
     /**
      *  This method will dispatch incoming messages to the appropriate request handler.
@@ -202,7 +202,7 @@ private:
     void GenerateAdvertisingData();
     void GenerateAttributeTable();
     int GetHandleCount();
-    
+
 public:
     static BluetoothManager _manager;
 
