@@ -1,3 +1,11 @@
+/**
+ * @file test_bluetooth_service_json.hpp
+ * @author Mark Stevens
+ *
+ * @brief JSON encoding of the Bluetooth service configuration.
+ *
+ * @copyright Copyright (c) 2025
+ */
 #ifndef __TEST_BLUETOOTH_SERVICE_JSON_HPP__
 #define __TEST_BLUETOOTH_SERVICE_JSON_HPP__
 
