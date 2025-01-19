@@ -20,8 +20,7 @@ mon esp sysview start file://./test/heap_log0.svdat file://./test/heap_log1.svda
 c
 end
 
-# tb heap_trace_stop
-tb print_end_message
+tb EndOfTest
 commands
 mon esp sysview stop
 end
