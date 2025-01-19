@@ -9,7 +9,6 @@
 #include "Logging.hpp"
 
 #include "BluetoothManager.hpp"
-
 #include "BluetoothComponentName.hpp"
 
 #include "../rapidjson/document.h"
@@ -51,7 +50,7 @@ const char *BluetoothManager::COMPONENT_NAME = BLUETOOTH_COMPONENT_NAME;
  */
 
 /**
- * @brief Construct a new Bluetooth Manager:: Bluetooth Manager object
+ * @brief Construct a new BluetoothManager object.
  */
 BluetoothManager::BluetoothManager() : Services(&this->_handleManager)
 {
@@ -116,8 +115,10 @@ void BluetoothManager::HandleValueChanged(BluetoothCharacteristic *characteristi
 
 /**
  * @brief Handle the addition of a new descriptor.
+ *
+ * @param descriptor Descriptor being added.
  */
-void BluetoothManager::HandleDescriptorAdded(BluetoothDescriptor *)
+void BluetoothManager::HandleDescriptorAdded(BluetoothDescriptor *descriptor)
 {
     TRACE_MESSAGE("HandleDescriptorAdded: Enter");
 
@@ -125,7 +126,7 @@ void BluetoothManager::HandleDescriptorAdded(BluetoothDescriptor *)
 }
 
 /**
- * @brief Get all of the handles associated with the BluetoothManager.
+ * @brief Get all of the handles associated with the services, characteristics and descriptors.
  *
  * @note It is assumed that the caller has allocated enough memory to hold the handles.
  *
@@ -212,7 +213,7 @@ void BluetoothManager::SetHandles(uint16_t *handles, uint16_t count)
 static int __attribute__((unused)) test_value = 0;
 
 /**
- * @brief Get the current value for a given attribute handle.
+ * @brief Get the current value for a attribute with the specified handle.
  *
  * @param handle Handle to look up.
  * @param pData Pointer to a block of memory to take the value.
@@ -244,7 +245,7 @@ void BluetoothManager::GetCurrentValueForAttributeHandle(uint16_t handle, uint8_
 }
 
 /**
- * @brief Set the value for the specified attribute handle.
+ * @brief Set the value for a attribute with the specified handle.
  *
  * @param handle Handle of the attribute being set.
  * @param pData Pointer to the data holding the data value.

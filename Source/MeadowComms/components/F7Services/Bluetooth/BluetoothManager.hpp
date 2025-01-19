@@ -53,9 +53,24 @@ private:
      */
     std::map<uint16_t, length_val_s> _valueMap;
 
+    /**
+     * @brief Process the addition of a new service.
+     */
     static void HandleServiceAdded(BluetoothService *);
+
+    /**
+     * @brief Process the addition of a new characteristic.
+     */
     static void HandleCharacteristicAdded(BluetoothCharacteristic *);
+
+    /**
+     * @brief Process the characteristic value changed event.
+     */
     static void HandleValueChanged(BluetoothCharacteristic *);
+
+    /**
+     * @brief Handle the addition of a new descriptor.
+     */
     static void HandleDescriptorAdded(BluetoothDescriptor *);
 
     /**
@@ -89,23 +104,46 @@ public:
      */
     bool DeleteAllServices();
 
+    /**
+     * @brief Set the handles for the services, characteristics and descriptors.
+     */
     void SetHandles(uint16_t *handles, uint16_t count);
 
+    /**
+     * @brief Get all of the handles associated with the services, characteristics and descriptors.
+     */
     void GetHandles(uint16_t *handles);
 
+    /**
+     * @brief Get the Company Identifier.
+     */
     uint16_t GetCompanyIdentifier()
     {
         return _companyIdentifier;
     }
 
+    /**
+     * @brief Get the services collections.
+     */
     const vector<BluetoothService *> GetServiceDefinitions()
     {
         return Services.GetServiceDefinitions();
     }
 
+    /**
+     * @brief Get the current value for a attribute with the specified handle.
+     */
     void GetCurrentValueForAttributeHandle(uint16_t handle, uint8_t *pData, uint16_t *pLen);
+
+    /**
+     * @brief @brief Set the value for a attribute with the specified handle.
+     */
     void SetCurrentValueForAttributeHandle(uint16_t handle, uint8_t *pData, uint16_t len);
 
+    /**
+     * @brief Process the JSON defintion of the services, characteristics and descriptors and build
+     *        a graph representation of the BLE functionality.
+     */
     void BuildGraphFromJson(char *cfg_json);
 };
 

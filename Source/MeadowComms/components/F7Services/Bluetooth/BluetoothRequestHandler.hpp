@@ -3,7 +3,6 @@
  *
  *  Bluetooth request handler will deal with incoming bluetooth requests.
  */
-
 #ifndef _BLUETOOTH_REQUEST_HANDLER_HPP_
 #define _BLUETOOTH_REQUEST_HANDLER_HPP_
 

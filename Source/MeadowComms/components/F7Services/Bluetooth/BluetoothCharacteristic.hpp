@@ -9,12 +9,13 @@
 #ifndef _BLUETOOTH_CHARACTERISTIC_HPP_
 #define _BLUETOOTH_CHARACTERISTIC_HPP_
 
-// #include "sdkconfig.h"
-
 #include <functional>
 #include <string>
 #include <vector>
 
+//
+//  Some forward declarations.
+//
 class BluetoothService;
 class BluetoothCharacteristic;
 class BluetoothCharacteristicValue;
@@ -25,9 +26,24 @@ class BluetoothCharacteristicValue;
 
 using namespace std;
 
+/**
+ * @brief Prototype for the ServiceAdded event.
+ */
 typedef std::function<void(BluetoothService *)> ServiceAdded;
+
+/**
+ * @brief Prototype for the CharacteristicAdded event.
+ */
 typedef std::function<void(BluetoothCharacteristic *)> CharacteristicAdded;
+
+/**
+ * @brief Prototype for the ValueChanged event.
+ */
 typedef std::function<void(BluetoothCharacteristic *)> ValueChanged;
+
+/**
+ * @brief Prototype for the DescriptorAdded event.
+ */
 typedef std::function<void(BluetoothDescriptor *)> DescriptorAdded;
 
 /**
