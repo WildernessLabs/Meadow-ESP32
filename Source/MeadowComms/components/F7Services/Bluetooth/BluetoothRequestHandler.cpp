@@ -68,6 +68,24 @@ bool BluetoothRequestHandler::_advertisingDataConfigured = false;
 bool BluetoothRequestHandler::_responseDataConfigured = false;
 
 /**
+ * @brief Array holding the manufacturer data for these services.  This currently holds the two byte client ID.
+ */
+uint8_t BluetoothRequestHandler::_manufacturerData[2] = {};
+
+/**
+ * @brief Dummy UUID for the advertising service.  This is taken from the ESP-IDF examples.
+ */
+// clang-format off
+uint8_t BluetoothRequestHandler::_dummyAdvertisingServiceUuid[ADVERTISING_SERVICE_UUID_LENGTH] = {
+    /* LSB <--------------------------------------------------------------------------------> MSB */
+    // First UUID, 16bit, [12],[13] is the value
+    0xfb, 0x34, 0x9b, 0x5f, 0x80, 0x00, 0x00, 0x80, 0x00, 0x10, 0x00, 0x00, 0xee, 0x00, 0x00, 0x00,
+    // Second UUID, 32bit, [12], [13], [14], [15] is the value
+    0xfb, 0x34, 0x9b, 0x5f, 0x80, 0x00, 0x00, 0x80, 0x00, 0x10, 0x00, 0x00, 0xee, 0x00, 0x00, 0x00,
+};
+// clang-format on
+
+/**
  * @brief Variable holding the UUID of the primary service (0x2800).
  */
 static const uint16_t primary_service_uuid = ESP_GATT_UUID_PRI_SERVICE;
@@ -177,26 +195,9 @@ void BluetoothRequestHandler::GenerateAdvertisingData()
 {
     TRACE_MESSAGE("GenerateAdvertisingData: Enter");
 
-    uint8_t *manufacturer_data = static_cast<uint8_t *>(pvPortMalloc(2));
     uint16_t companyIdentifier = _manager.GetCompanyIdentifier();
-    manufacturer_data[0] = (uint8_t) (companyIdentifier & 0x00FF);
-    manufacturer_data[1] = (uint8_t) ((companyIdentifier & 0xFF00) >> 8);
-
-    // NOTE: unknown if this specific value has meaning.  Pulled directly from espressif.
-    //
-    //  Move this to file/class scope.
-    //
-    // clang-format off
-    uint8_t dummy_advertising_service_uuid[32] = {
-        /* LSB <--------------------------------------------------------------------------------> MSB */
-        // First UUID, 16bit, [12],[13] is the value
-        0xfb, 0x34, 0x9b, 0x5f, 0x80, 0x00, 0x00, 0x80, 0x00, 0x10, 0x00, 0x00, 0xee, 0x00, 0x00, 0x00,
-        // Second UUID, 32bit, [12], [13], [14], [15] is the value
-        0xfb, 0x34, 0x9b, 0x5f, 0x80, 0x00, 0x00, 0x80, 0x00, 0x10, 0x00, 0x00, 0xee, 0x00, 0x00, 0x00,
-    };
-    // clang-format on
-    uint8_t *advertising_service_uuid = static_cast<uint8_t *>(pvPortMalloc(sizeof(dummy_advertising_service_uuid)));
-    memcpy(advertising_service_uuid, dummy_advertising_service_uuid, sizeof(dummy_advertising_service_uuid));
+    _manufacturerData[0] = (uint8_t) (companyIdentifier & 0x00FF);
+    _manufacturerData[1] = (uint8_t) ((companyIdentifier & 0xFF00) >> 8);
 
     memset(&_advertisingData, 0, sizeof(esp_ble_adv_data_t));
     /* The length of adv data must be less than 31 bytes */
@@ -206,12 +207,12 @@ void BluetoothRequestHandler::GenerateAdvertisingData()
     _advertisingData.min_interval = 0x0006; // slave connection min interval, Time = min_interval * 1.25 msec
     _advertisingData.max_interval = 0x0010; // slave connection max interval, Time = max_interval * 1.25 msec
     _advertisingData.appearance = 0x00;
-    _advertisingData.manufacturer_len = 2;
-    _advertisingData.p_manufacturer_data = manufacturer_data;
+    _advertisingData.manufacturer_len = sizeof(_manufacturerData);
+    _advertisingData.p_manufacturer_data = _manufacturerData;
     _advertisingData.service_data_len = 0;
     _advertisingData.p_service_data = NULL;
-    _advertisingData.service_uuid_len = sizeof(dummy_advertising_service_uuid);
-    _advertisingData.p_service_uuid = advertising_service_uuid;
+    _advertisingData.service_uuid_len = sizeof(_dummyAdvertisingServiceUuid);
+    _advertisingData.p_service_uuid = _dummyAdvertisingServiceUuid;
     _advertisingData.flag = (ESP_BLE_ADV_FLAG_GEN_DISC | ESP_BLE_ADV_FLAG_BREDR_NOT_SPT);
 
     // Scan response data
@@ -219,8 +220,8 @@ void BluetoothRequestHandler::GenerateAdvertisingData()
     _scanResponseData.set_scan_rsp = true;
     _scanResponseData.include_name = true;
     _scanResponseData.include_txpower = true;
-    _scanResponseData.manufacturer_len = 2;
-    _scanResponseData.p_manufacturer_data = manufacturer_data;
+    _scanResponseData.manufacturer_len = sizeof(_manufacturerData);
+    _scanResponseData.p_manufacturer_data = _manufacturerData;
 
     // Advertising parameters
     memset(&_advertisingParameters, 0, sizeof(esp_ble_adv_params_t));
