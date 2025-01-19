@@ -10,8 +10,6 @@
 #ifndef _BLUETOOTH_DESCRIPTOR_HPP_
 #define _BLUETOOTH_DESCRIPTOR_HPP_
 
-#include "sdkconfig.h"
-
 #include "BluetoothAttribute.hpp"
 #include "Uuid.hpp"
 

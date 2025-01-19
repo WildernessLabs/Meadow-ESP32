@@ -6,11 +6,11 @@
  *
  * @copyright Copyright (c) 2019 - 2024
  */
-#include "Logging.hpp"
-
-#include "BluetoothRequestHandler.hpp"
 
 #include "BluetoothCharacteristicValue.hpp"
+#include "BluetoothComponentName.hpp"
+
+#include "Logging.hpp"
 
 /*
  * ----------------------------------------------------------------------------
@@ -20,10 +20,7 @@
  * ----------------------------------------------------------------------------
  */
 
-/**
- * @brief Name of the component (used for logging).
- */
-const char *BluetoothCharacteristicValue::COMPONENT_NAME = BluetoothRequestHandler::COMPONENT_NAME;
+const char *BluetoothCharacteristicValue::COMPONENT_NAME = BLUETOOTH_COMPONENT_NAME;
 
 /*
  * ----------------------------------------------------------------------------
@@ -91,11 +88,19 @@ BluetoothCharacteristicValue::~BluetoothCharacteristicValue()
 
     if (_value)
     {
+        // if (_is128)
+        // {
+        //     delete uuid128;
+        // }
+        // else
+        // {
+        //     delete uuid16;
+        // }
         //
         //  Suppressing the cppcheck warning here because the value is allocated in the constructor.
         //
         // cppcheck-suppress mismatchAllocDealloc
-        delete _value;
+        delete[] _value;
         _value = NULL;
     }
 

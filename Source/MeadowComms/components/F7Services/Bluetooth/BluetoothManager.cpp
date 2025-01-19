@@ -8,12 +8,10 @@
  */
 #include "Logging.hpp"
 
-#include "BluetoothRequestHandler.hpp"
-
 #include "BluetoothManager.hpp"
+#include "BluetoothComponentName.hpp"
 
 #include "../rapidjson/document.h"
-#include "esp_log.h"
 
 using namespace rapidjson;
 
@@ -41,12 +39,7 @@ using namespace rapidjson;
 /**
  * @brief Name of the component (used for logging).
  */
-const char *BluetoothManager::COMPONENT_NAME = BluetoothRequestHandler::COMPONENT_NAME;
-
-/**
- * @brief Variable holding the UUID of the primary service (0x2800).
- */
-static const uint16_t primary_service_uuid = ESP_GATT_UUID_PRI_SERVICE;
+const char *BluetoothManager::COMPONENT_NAME = BLUETOOTH_COMPONENT_NAME;
 
 /*
  * ----------------------------------------------------------------------------
@@ -57,7 +50,7 @@ static const uint16_t primary_service_uuid = ESP_GATT_UUID_PRI_SERVICE;
  */
 
 /**
- * @brief Construct a new Bluetooth Manager:: Bluetooth Manager object
+ * @brief Construct a new BluetoothManager object.
  */
 BluetoothManager::BluetoothManager() : Services(&this->_handleManager)
 {
@@ -122,8 +115,10 @@ void BluetoothManager::HandleValueChanged(BluetoothCharacteristic *characteristi
 
 /**
  * @brief Handle the addition of a new descriptor.
+ *
+ * @param descriptor Descriptor being added.
  */
-void BluetoothManager::HandleDescriptorAdded(BluetoothDescriptor *)
+void BluetoothManager::HandleDescriptorAdded(BluetoothDescriptor *descriptor)
 {
     TRACE_MESSAGE("HandleDescriptorAdded: Enter");
 
@@ -131,7 +126,7 @@ void BluetoothManager::HandleDescriptorAdded(BluetoothDescriptor *)
 }
 
 /**
- * @brief Get all of the handles associated with the BluetoothManager.
+ * @brief Get all of the handles associated with the services, characteristics and descriptors.
  *
  * @note It is assumed that the caller has allocated enough memory to hold the handles.
  *
@@ -213,125 +208,12 @@ void BluetoothManager::SetHandles(uint16_t *handles, uint16_t count)
 }
 
 /**
- * @brief Generate the advertising data for the device.
- */
-void BluetoothManager::GenerateAdvertisingData()
-{
-    TRACE_MESSAGE("GenerateAdvertisingData: Enter");
-
-    uint8_t *manufacturer_data = static_cast<uint8_t *>(pvPortMalloc(2));
-    manufacturer_data[0] = (uint8_t) (_companyIdentifier & 0x00FF);
-    manufacturer_data[1] = (uint8_t) ((_companyIdentifier & 0xFF00) >> 8);
-
-    // NOTE: unknown if this specific value has meaning.  Pulled directly from espressif.
-    //
-    //  Move this to file/class scope.
-    //
-    // clang-format off
-    uint8_t dummy_advertising_service_uuid[32] = {
-        /* LSB <--------------------------------------------------------------------------------> MSB */
-        // First UUID, 16bit, [12],[13] is the value
-        0xfb, 0x34, 0x9b, 0x5f, 0x80, 0x00, 0x00, 0x80, 0x00, 0x10, 0x00, 0x00, 0xee, 0x00, 0x00, 0x00,
-        // Second UUID, 32bit, [12], [13], [14], [15] is the value
-        0xfb, 0x34, 0x9b, 0x5f, 0x80, 0x00, 0x00, 0x80, 0x00, 0x10, 0x00, 0x00, 0xee, 0x00, 0x00, 0x00,
-    };
-    // clang-format on
-    uint8_t *advertising_service_uuid = static_cast<uint8_t *>(pvPortMalloc(sizeof(dummy_advertising_service_uuid)));
-    memcpy(advertising_service_uuid, dummy_advertising_service_uuid, sizeof(dummy_advertising_service_uuid));
-
-    memset(&_advertisingData, 0, sizeof(esp_ble_adv_data_t));
-    /* The length of adv data must be less than 31 bytes */
-    _advertisingData.set_scan_rsp = false;
-    _advertisingData.include_name = true;
-    _advertisingData.include_txpower = true;
-    _advertisingData.min_interval = 0x0006; // slave connection min interval, Time = min_interval * 1.25 msec
-    _advertisingData.max_interval = 0x0010; // slave connection max interval, Time = max_interval * 1.25 msec
-    _advertisingData.appearance = 0x00;
-    _advertisingData.manufacturer_len = 2;
-    _advertisingData.p_manufacturer_data = manufacturer_data;
-    _advertisingData.service_data_len = 0;
-    _advertisingData.p_service_data = NULL;
-    _advertisingData.service_uuid_len = sizeof(dummy_advertising_service_uuid);
-    _advertisingData.p_service_uuid = advertising_service_uuid;
-    _advertisingData.flag = (ESP_BLE_ADV_FLAG_GEN_DISC | ESP_BLE_ADV_FLAG_BREDR_NOT_SPT);
-
-    // Scan response data
-    memset(&_scanResponseData, 0, sizeof(esp_ble_adv_data_t));
-    _scanResponseData.set_scan_rsp = true;
-    _scanResponseData.include_name = true;
-    _scanResponseData.include_txpower = true;
-    _scanResponseData.manufacturer_len = 2;
-    _scanResponseData.p_manufacturer_data = manufacturer_data;
-
-    // Advertising parameters
-    memset(&_advertisingParameters, 0, sizeof(esp_ble_adv_params_t));
-    _advertisingParameters.adv_int_min = 0x20;
-    _advertisingParameters.adv_int_max = 0x40;
-    _advertisingParameters.adv_type = ADV_TYPE_IND;
-    _advertisingParameters.own_addr_type = BLE_ADDR_TYPE_PUBLIC;
-    _advertisingParameters.channel_map = ADV_CHNL_ALL;
-    _advertisingParameters.adv_filter_policy = ADV_FILTER_ALLOW_SCAN_ANY_CON_ANY;
-
-    TRACE_MESSAGE("GenerateAdvertisingData: Exit");
-}
-
-/**
- * @brief Get a pointer to the attribute table.
- *
- * @return esp_gatts_attr_db_t* Pointer to the attribute table.
- */
-esp_gatts_attr_db_t *BluetoothManager::GetAttributeTable()
-{
-    return _attribute_table;
-}
-
-/**
- * @brief Get a pointer to the advertising data.
- *
- * @return esp_ble_adv_data_t* Pointer to the advertising data.
- */
-esp_ble_adv_data_t *BluetoothManager::GetAdvertisingData()
-{
-    return &_advertisingData;
-}
-
-/**
- * @brief Get a pointer to the advertising parameters.
- *
- * @return esp_ble_adv_params_t* Pointer to the advertising parameters.
- */
-esp_ble_adv_params_t *BluetoothManager::GetAdvertisingParameters()
-{
-    return &_advertisingParameters;
-}
-
-/**
- * @brief Get a pointer to the scan response data.
- *
- * @return esp_ble_adv_data_t* Pointer the scan response data.
- */
-esp_ble_adv_data_t *BluetoothManager::GetScanResponseData()
-{
-    return &_scanResponseData;
-}
-
-/**
- * @brief Get the length of the attributes table.
- *
- * @return uint16_t Length of the attributes table.
- */
-uint16_t BluetoothManager::GetAttributeTableLength()
-{
-    return _attributeTableLength;
-}
-
-/**
  * @brief Dummy variable.
  */
 static int __attribute__((unused)) test_value = 0;
 
 /**
- * @brief Get the current value for a given attribute handle.
+ * @brief Get the current value for a attribute with the specified handle.
  *
  * @param handle Handle to look up.
  * @param pData Pointer to a block of memory to take the value.
@@ -348,7 +230,6 @@ void BluetoothManager::GetCurrentValueForAttributeHandle(uint16_t handle, uint8_
     {
         TRACE_MESSAGE("Request for data for handle 0x%04x", handle);
         TRACE_MESSAGE(" known length = %i", existing->second.length);
-        TRACE_HEX_BUFFER(existing->second.value, existing->second.length);
 
         memcpy(pData, existing->second.value, existing->second.length);
         *pLen = existing->second.length;
@@ -364,7 +245,7 @@ void BluetoothManager::GetCurrentValueForAttributeHandle(uint16_t handle, uint8_
 }
 
 /**
- * @brief Set the value for the specified attribute handle.
+ * @brief Set the value for a attribute with the specified handle.
  *
  * @param handle Handle of the attribute being set.
  * @param pData Pointer to the data holding the data value.
@@ -386,7 +267,6 @@ void BluetoothManager::SetCurrentValueForAttributeHandle(uint16_t handle, uint8_
         size_t length_to_write = existing->second.length < len ? existing->second.length : len;
         memcpy(existing->second.value, pData, length_to_write);
         TRACE_MESSAGE("Value length %i", length_to_write);
-        TRACE_HEX_BUFFER(existing->second.value, length_to_write);
     }
     else
     {
@@ -554,88 +434,4 @@ void BluetoothManager::BuildGraphFromJson(char *cfg_json)
     }
 
     TRACE_MESSAGE("BuildGraphFromJson: Exit");
-}
-
-/**
- * @brief Generate the attributes table for the GATT database.
- */
-void BluetoothManager::GenerateAttributeTable()
-{
-    // TODO: how many attributes are we going to need?
-    // 1 for each service
-    // 2 for each characteristic (declaration + value)
-    // 1 for each descriptor
-
-    TRACE_MESSAGE("GenerateAttributeTable: Enter");
-
-    auto count = 0;
-
-    // Not thrilled with the double-iteration but:
-    // - the list is small
-    // - it's better than dynamic resizing the array for every attribute we need to add
-    for (const auto &svc: Services.GetServiceDefinitions())
-    {
-        // 1 for the service
-        count++;
-
-        for (const auto &characteristic: svc->GetCharacteristicDefinitions())
-        {
-            count += 2; // +2 for the declaration and value
-
-            for (const auto &descriptor: characteristic->GetDescriptorDefinitions())
-            {
-                (void) descriptor; // Squash the warning about unused variable
-                count++;           // +1 for the descriptor
-            }
-        }
-    }
-
-    TRACE_MESSAGE("ATTRIBUTE TABLE LENGTH = %d", count);
-
-    _attribute_table = new esp_gatts_attr_db_t[count];
-    _attributeTableLength = count;
-
-    auto index = 0;
-    for (const auto &svc: Services.GetServiceDefinitions())
-    {
-        TRACE_MESSAGE("ATTRIBUTE TABLE SERVICE AT %d ", index);
-        // service attribute - all services are primary for now
-        _attribute_table[index++] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *) &primary_service_uuid, ESP_GATT_PERM_READ, sizeof(uint16_t), sizeof(svc->Uuid), (uint8_t *) &svc->Uuid}};
-
-        TRACE_MESSAGE("CONTAINS %d CHARACTERISTICS", svc->GetCharacteristicDefinitions().size());
-        for (const auto &characteristic: svc->GetCharacteristicDefinitions())
-        {
-            TRACE_MESSAGE("ATTRIBUTE TABLE DECLARATION AT %d", index);
-            // declaration attribute
-            _attribute_table[index++] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *) &characteristic->Declaration->Uuid, (uint16_t) characteristic->Declaration->Permission, CHAR_DECLARATION_SIZE, CHAR_DECLARATION_SIZE, (uint8_t *) &characteristic->Declaration->Properties}};
-
-            TRACE_MESSAGE("ATTRIBUTE TABLE VALUE AT %d", index);
-            // value attribute
-            // the first param here (ESP_GATT_RSP_BY_APP) means that we'll handle the request for data manually rather than allowing the API to respond with
-            // data in the parameter database.  We need to call to the STM for data, so this is sensible.
-            if (characteristic->Value->Is128())
-            {
-                _attribute_table[index++] = {{ESP_GATT_RSP_BY_APP}, {ESP_UUID_LEN_128, (uint8_t *) &characteristic->Value->uuid128, (uint16_t) characteristic->Value->Permission, characteristic->Value->MaxLength, 0, NULL}}; // <- 0, NULL means "current value length is 0, current value data is null"
-            }
-            else
-            {
-                _attribute_table[index++] = {{ESP_GATT_RSP_BY_APP}, {ESP_UUID_LEN_16, (uint8_t *) &characteristic->Value->uuid16, (uint16_t) characteristic->Value->Permission, characteristic->Value->MaxLength, 0, NULL}}; // <- 0, NULL means "current value length is 0, current value data is null"
-            }
-
-            for (const auto &descriptor: characteristic->GetDescriptorDefinitions())
-            {
-                TRACE_MESSAGE("ATTRIBUTE TABLE DESCRIPTOR AT %d", index);
-                if (descriptor->Is128())
-                {
-                    _attribute_table[index++] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_128, (uint8_t *) &descriptor->uuid128, (uint16_t) descriptor->Permission, descriptor->MaxLength, descriptor->CurrentLength, (uint8_t *) descriptor->Value}};
-                }
-                else
-                {
-                    _attribute_table[index++] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *) &descriptor->uuid16, (uint16_t) descriptor->Permission, descriptor->MaxLength, descriptor->CurrentLength, (uint8_t *) descriptor->Value}};
-                }
-            }
-        }
-    }
-
-    TRACE_MESSAGE("GenerateAttributeTable: Exit");
 }

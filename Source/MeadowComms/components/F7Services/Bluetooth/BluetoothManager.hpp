@@ -9,20 +9,11 @@
 #ifndef _BLUETOOTH_MANAGER_HPP_
 #define _BLUETOOTH_MANAGER_HPP_
 
-#include "sdkconfig.h"
-
 #include "BluetoothServiceCollection.hpp"
 #include "BluetoothAttribute.hpp"
 #include "BluetoothHandleManager.hpp"
 #include <vector>
 #include <map>
-
-#include "esp_bt.h"
-#include "esp_gap_ble_api.h"
-#include "esp_gatts_api.h"
-#include "esp_bt_defs.h"
-#include "esp_bt_main.h"
-#include "esp_gatt_common_api.h"
 
 using namespace std;
 
@@ -46,6 +37,7 @@ private:
          */
         uint8_t *value;
     };
+
     /**
      * @brief Type definition for the length_val_s structure.
      */
@@ -61,35 +53,25 @@ private:
      */
     std::map<uint16_t, length_val_s> _valueMap;
 
+    /**
+     * @brief Process the addition of a new service.
+     */
     static void HandleServiceAdded(BluetoothService *);
+
+    /**
+     * @brief Process the addition of a new characteristic.
+     */
     static void HandleCharacteristicAdded(BluetoothCharacteristic *);
+
+    /**
+     * @brief Process the characteristic value changed event.
+     */
     static void HandleValueChanged(BluetoothCharacteristic *);
+
+    /**
+     * @brief Handle the addition of a new descriptor.
+     */
     static void HandleDescriptorAdded(BluetoothDescriptor *);
-
-    /**
-     * @brief Table of attributes in the GATT database.
-     */
-    esp_gatts_attr_db_t *_attribute_table;
-
-    /**
-     * @brief Number of elements in the attribute table.
-     */
-    uint16_t _attributeTableLength;
-
-    /**
-     * @brief Advertising data content, according to "Supplement to the Bluetooth Core Specification".
-     */
-    esp_ble_adv_data_t _advertisingData;
-
-    /**
-     * @brief Advertising parameters.
-     */
-    esp_ble_adv_params_t _advertisingParameters;
-
-    /**
-     * @brief Advertising response data.
-     */
-    esp_ble_adv_data_t _scanResponseData;
 
     /**
      * @brief 16-bit assigned number for the company identifier.
@@ -122,31 +104,46 @@ public:
      */
     bool DeleteAllServices();
 
-    void GenerateAttributeTable();
-    void GenerateAdvertisingData();
+    /**
+     * @brief Set the handles for the services, characteristics and descriptors.
+     */
     void SetHandles(uint16_t *handles, uint16_t count);
 
     /**
-     * @brief Get the number of attributes in the attribute table.
-     *
-     * @return int Number of handles.
+     * @brief Get all of the handles associated with the services, characteristics and descriptors.
      */
-    int GetHandleCount()
-    {
-        return _attributeTableLength;
-    }
-
     void GetHandles(uint16_t *handles);
 
-    esp_gatts_attr_db_t *GetAttributeTable();
-    esp_ble_adv_data_t *GetAdvertisingData();
-    esp_ble_adv_data_t *GetScanResponseData();
-    esp_ble_adv_params_t *GetAdvertisingParameters();
-    uint16_t GetAttributeTableLength();
+    /**
+     * @brief Get the Company Identifier.
+     */
+    uint16_t GetCompanyIdentifier()
+    {
+        return _companyIdentifier;
+    }
 
+    /**
+     * @brief Get the services collections.
+     */
+    const vector<BluetoothService *> GetServiceDefinitions()
+    {
+        return Services.GetServiceDefinitions();
+    }
+
+    /**
+     * @brief Get the current value for a attribute with the specified handle.
+     */
     void GetCurrentValueForAttributeHandle(uint16_t handle, uint8_t *pData, uint16_t *pLen);
+
+    /**
+     * @brief @brief Set the value for a attribute with the specified handle.
+     */
     void SetCurrentValueForAttributeHandle(uint16_t handle, uint8_t *pData, uint16_t len);
 
+    /**
+     * @brief Process the JSON defintion of the services, characteristics and descriptors and build
+     *        a graph representation of the BLE functionality.
+     */
     void BuildGraphFromJson(char *cfg_json);
 };
 

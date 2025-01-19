@@ -24,6 +24,7 @@
 #include "Encoders.hpp"
 #include "Mapping.hpp"
 #include "Exceptions/MultipleInstancesException.hpp"
+#include "BluetoothComponentName.hpp"
 
 #define CHAR_DECLARATION_SIZE (sizeof(uint8_t))
 
@@ -49,7 +50,7 @@ BluetoothRequestHandler *BluetoothRequestHandler::_instance = nullptr;
 /**
  * @brief Name of the component for logging purposes.
  */
-const char *BluetoothRequestHandler::COMPONENT_NAME = "Bluetooth";
+const char *BluetoothRequestHandler::COMPONENT_NAME = BLUETOOTH_COMPONENT_NAME;
 
 /**
  * @brief Set the handle for the GATTS interface to indicate that it is not valid.
@@ -65,6 +66,11 @@ bool BluetoothRequestHandler::_advertisingDataConfigured = false;
  * @brief Has the response data been configured?
  */
 bool BluetoothRequestHandler::_responseDataConfigured = false;
+
+/**
+ * @brief Variable holding the UUID of the primary service (0x2800).
+ */
+static const uint16_t primary_service_uuid = ESP_GATT_UUID_PRI_SERVICE;
 
 /*
  * ----------------------------------------------------------------------------
@@ -165,6 +171,214 @@ void BluetoothRequestHandler::Setup()
 }
 
 /**
+ * @brief Generate the advertising data for the device.
+ */
+void BluetoothRequestHandler::GenerateAdvertisingData()
+{
+    TRACE_MESSAGE("GenerateAdvertisingData: Enter");
+
+    uint8_t *manufacturer_data = static_cast<uint8_t *>(pvPortMalloc(2));
+    uint16_t companyIdentifier = _manager.GetCompanyIdentifier();
+    manufacturer_data[0] = (uint8_t) (companyIdentifier & 0x00FF);
+    manufacturer_data[1] = (uint8_t) ((companyIdentifier & 0xFF00) >> 8);
+
+    // NOTE: unknown if this specific value has meaning.  Pulled directly from espressif.
+    //
+    //  Move this to file/class scope.
+    //
+    // clang-format off
+    uint8_t dummy_advertising_service_uuid[32] = {
+        /* LSB <--------------------------------------------------------------------------------> MSB */
+        // First UUID, 16bit, [12],[13] is the value
+        0xfb, 0x34, 0x9b, 0x5f, 0x80, 0x00, 0x00, 0x80, 0x00, 0x10, 0x00, 0x00, 0xee, 0x00, 0x00, 0x00,
+        // Second UUID, 32bit, [12], [13], [14], [15] is the value
+        0xfb, 0x34, 0x9b, 0x5f, 0x80, 0x00, 0x00, 0x80, 0x00, 0x10, 0x00, 0x00, 0xee, 0x00, 0x00, 0x00,
+    };
+    // clang-format on
+    uint8_t *advertising_service_uuid = static_cast<uint8_t *>(pvPortMalloc(sizeof(dummy_advertising_service_uuid)));
+    memcpy(advertising_service_uuid, dummy_advertising_service_uuid, sizeof(dummy_advertising_service_uuid));
+
+    memset(&_advertisingData, 0, sizeof(esp_ble_adv_data_t));
+    /* The length of adv data must be less than 31 bytes */
+    _advertisingData.set_scan_rsp = false;
+    _advertisingData.include_name = true;
+    _advertisingData.include_txpower = true;
+    _advertisingData.min_interval = 0x0006; // slave connection min interval, Time = min_interval * 1.25 msec
+    _advertisingData.max_interval = 0x0010; // slave connection max interval, Time = max_interval * 1.25 msec
+    _advertisingData.appearance = 0x00;
+    _advertisingData.manufacturer_len = 2;
+    _advertisingData.p_manufacturer_data = manufacturer_data;
+    _advertisingData.service_data_len = 0;
+    _advertisingData.p_service_data = NULL;
+    _advertisingData.service_uuid_len = sizeof(dummy_advertising_service_uuid);
+    _advertisingData.p_service_uuid = advertising_service_uuid;
+    _advertisingData.flag = (ESP_BLE_ADV_FLAG_GEN_DISC | ESP_BLE_ADV_FLAG_BREDR_NOT_SPT);
+
+    // Scan response data
+    memset(&_scanResponseData, 0, sizeof(esp_ble_adv_data_t));
+    _scanResponseData.set_scan_rsp = true;
+    _scanResponseData.include_name = true;
+    _scanResponseData.include_txpower = true;
+    _scanResponseData.manufacturer_len = 2;
+    _scanResponseData.p_manufacturer_data = manufacturer_data;
+
+    // Advertising parameters
+    memset(&_advertisingParameters, 0, sizeof(esp_ble_adv_params_t));
+    _advertisingParameters.adv_int_min = 0x20;
+    _advertisingParameters.adv_int_max = 0x40;
+    _advertisingParameters.adv_type = ADV_TYPE_IND;
+    _advertisingParameters.own_addr_type = BLE_ADDR_TYPE_PUBLIC;
+    _advertisingParameters.channel_map = ADV_CHNL_ALL;
+    _advertisingParameters.adv_filter_policy = ADV_FILTER_ALLOW_SCAN_ANY_CON_ANY;
+
+    TRACE_MESSAGE("GenerateAdvertisingData: Exit");
+}
+
+/**
+ * @brief Get a pointer to the attribute table.
+ *
+ * @return esp_gatts_attr_db_t* Pointer to the attribute table.
+ */
+esp_gatts_attr_db_t *BluetoothRequestHandler::GetAttributeTable()
+{
+    return _attribute_table;
+}
+
+/**
+ * @brief Get a pointer to the advertising data.
+ *
+ * @return esp_ble_adv_data_t* Pointer to the advertising data.
+ */
+esp_ble_adv_data_t *BluetoothRequestHandler::GetAdvertisingData()
+{
+    return &_advertisingData;
+}
+
+/**
+ * @brief Get a pointer to the advertising parameters.
+ *
+ * @return esp_ble_adv_params_t* Pointer to the advertising parameters.
+ */
+esp_ble_adv_params_t *BluetoothRequestHandler::GetAdvertisingParameters()
+{
+    return &_advertisingParameters;
+}
+
+/**
+ * @brief Get a pointer to the scan response data.
+ *
+ * @return esp_ble_adv_data_t* Pointer the scan response data.
+ */
+esp_ble_adv_data_t *BluetoothRequestHandler::GetScanResponseData()
+{
+    return &_scanResponseData;
+}
+
+/**
+ * @brief Get the length of the attributes table.
+ *
+ * @return uint16_t Length of the attributes table.
+ */
+uint16_t BluetoothRequestHandler::GetAttributeTableLength()
+{
+    return _attributeTableLength;
+}
+
+/**
+ * @brief Get the number of attributes in the attribute table.
+ *
+ * @return int Number of handles.
+ */
+int BluetoothRequestHandler::GetHandleCount()
+{
+    return _attributeTableLength;
+}
+
+/**
+ * @brief Generate the attributes table for the GATT database.
+ */
+void BluetoothRequestHandler::GenerateAttributeTable()
+{
+    // TODO: how many attributes are we going to need?
+    // 1 for each service
+    // 2 for each characteristic (declaration + value)
+    // 1 for each descriptor
+
+    TRACE_MESSAGE("GenerateAttributeTable: Enter");
+
+    auto count = 0;
+
+    // Not thrilled with the double-iteration but:
+    // - the list is small
+    // - it's better than dynamic resizing the array for every attribute we need to add
+    for (const auto &svc: _manager.GetServiceDefinitions())
+    {
+        // 1 for the service
+        count++;
+
+        for (const auto &characteristic: svc->GetCharacteristicDefinitions())
+        {
+            count += 2; // +2 for the declaration and value
+
+            for (const auto &descriptor: characteristic->GetDescriptorDefinitions())
+            {
+                (void) descriptor; // Squash the warning about unused variable
+                count++;           // +1 for the descriptor
+            }
+        }
+    }
+
+    TRACE_MESSAGE("ATTRIBUTE TABLE LENGTH = %d", count);
+
+    _attribute_table = new esp_gatts_attr_db_t[count];
+    _attributeTableLength = count;
+
+    auto index = 0;
+    for (const auto &svc: _manager.GetServiceDefinitions())
+    {
+        TRACE_MESSAGE("ATTRIBUTE TABLE SERVICE AT %d ", index);
+        // service attribute - all services are primary for now
+        _attribute_table[index++] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *) &primary_service_uuid, ESP_GATT_PERM_READ, sizeof(uint16_t), sizeof(svc->Uuid), (uint8_t *) &svc->Uuid}};
+
+        TRACE_MESSAGE("CONTAINS %d CHARACTERISTICS", svc->GetCharacteristicDefinitions().size());
+        for (const auto &characteristic: svc->GetCharacteristicDefinitions())
+        {
+            TRACE_MESSAGE("ATTRIBUTE TABLE DECLARATION AT %d", index);
+            // declaration attribute
+            _attribute_table[index++] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *) &characteristic->Declaration->Uuid, (uint16_t) characteristic->Declaration->Permission, CHAR_DECLARATION_SIZE, CHAR_DECLARATION_SIZE, (uint8_t *) &characteristic->Declaration->Properties}};
+
+            TRACE_MESSAGE("ATTRIBUTE TABLE VALUE AT %d", index);
+            // value attribute
+            // the first param here (ESP_GATT_RSP_BY_APP) means that we'll handle the request for data manually rather than allowing the API to respond with
+            // data in the parameter database.  We need to call to the STM for data, so this is sensible.
+            if (characteristic->Value->Is128())
+            {
+                _attribute_table[index++] = {{ESP_GATT_RSP_BY_APP}, {ESP_UUID_LEN_128, (uint8_t *) &characteristic->Value->uuid128, (uint16_t) characteristic->Value->Permission, characteristic->Value->MaxLength, 0, NULL}}; // <- 0, NULL means "current value length is 0, current value data is null"
+            }
+            else
+            {
+                _attribute_table[index++] = {{ESP_GATT_RSP_BY_APP}, {ESP_UUID_LEN_16, (uint8_t *) &characteristic->Value->uuid16, (uint16_t) characteristic->Value->Permission, characteristic->Value->MaxLength, 0, NULL}}; // <- 0, NULL means "current value length is 0, current value data is null"
+            }
+
+            for (const auto &descriptor: characteristic->GetDescriptorDefinitions())
+            {
+                TRACE_MESSAGE("ATTRIBUTE TABLE DESCRIPTOR AT %d", index);
+                if (descriptor->Is128())
+                {
+                    _attribute_table[index++] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_128, (uint8_t *) &descriptor->uuid128, (uint16_t) descriptor->Permission, descriptor->MaxLength, descriptor->CurrentLength, (uint8_t *) descriptor->Value}};
+                }
+                else
+                {
+                    _attribute_table[index++] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *) &descriptor->uuid16, (uint16_t) descriptor->Permission, descriptor->MaxLength, descriptor->CurrentLength, (uint8_t *) descriptor->Value}};
+                }
+            }
+        }
+    }
+
+    TRACE_MESSAGE("GenerateAttributeTable: Exit");
+}
+
+/**
  * @brief Get the handles for the services, characteristics and descriptors.
  *
  * @param request Original request from the STM32.
@@ -174,7 +388,7 @@ void BluetoothRequestHandler::GetHandles(Message *request)
     TRACE_MESSAGE("GetHandles: Enter");
 
     Esp32Messaging::BTGetHandlesResponse response;
-    response.HandleCount = _manager.GetHandleCount();
+    response.HandleCount = GetHandleCount();
     response.HandlesLength = response.HandleCount * 2;
     response.Handles = static_cast<uint8_t *>(pvPortMalloc(response.HandlesLength));
     _manager.GetHandles((uint16_t *) response.Handles);
@@ -609,8 +823,8 @@ void BluetoothRequestHandler::Start(Message *request)
     vPortFree(config->Config);
     vPortFree(config);
 
-    _manager.GenerateAdvertisingData();
-    _manager.GenerateAttributeTable();
+    GenerateAdvertisingData();
+    GenerateAttributeTable();
     if (StartBluetoothService())
     {
         request->StatusCode = StatusCodes::CompletedOk;
@@ -654,7 +868,7 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
                 // turn on some security
                 //               esp_ble_gap_config_local_privacy(true);
 
-                ret = esp_ble_gap_config_adv_data(_manager.GetAdvertisingData());
+                ret = esp_ble_gap_config_adv_data(GetInstance()->GetAdvertisingData());
                 if (ret)
                 {
                     ERROR_MESSAGE("Config adv data failed, error code = %x, %s", ret, esp_err_to_name(ret));
@@ -662,7 +876,7 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
                 _advertisingDataConfigured = true;
 
                 // configure our BLE scan response
-                ret = esp_ble_gap_config_adv_data(_manager.GetScanResponseData());
+                ret = esp_ble_gap_config_adv_data(GetInstance()->GetScanResponseData());
                 if (ret)
                 {
                     ERROR_MESSAGE("Config scan response data failed, error code = %x, %s", ret, esp_err_to_name(ret));
@@ -672,7 +886,7 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
                 TRACE_MESSAGE("BLE advertising configured.  Creating attributes...");
 
                 // set the attribute table - this requires the services be already-defined in the Manager
-                esp_err_t create_attr_ret = esp_ble_gatts_create_attr_tab(_manager.GetAttributeTable(), gatts_if, _manager.GetAttributeTableLength(), BluetoothRequestHandler::INSTANCE_ID);
+                esp_err_t create_attr_ret = esp_ble_gatts_create_attr_tab(GetInstance()->GetAttributeTable(), gatts_if, GetInstance()->GetAttributeTableLength(), BluetoothRequestHandler::INSTANCE_ID);
                 if (create_attr_ret)
                 {
                     ERROR_MESSAGE("Create attr table failed, error code = %x", create_attr_ret);
@@ -781,7 +995,7 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
         case ESP_GATTS_DISCONNECT_EVT:
             TRACE_MESSAGE("ESP_GATTS_DISCONNECT_EVT, disconnect reason 0x%x", param->disconnect.reason);
             /* start advertising again when missing the connect */
-            esp_ble_gap_start_advertising(_manager.GetAdvertisingParameters());
+            esp_ble_gap_start_advertising(GetInstance()->GetAdvertisingParameters());
             GetInstance()->RaiseEvent(Esp32Interfaces::BlueTooth, BluetoothFunction::ClientDisconnectedEvent, StatusCodes::CompletedOk);
             break;
         case ESP_GATTS_OPEN_EVT:
@@ -811,12 +1025,12 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
             {
                 ERROR_MESSAGE("Create attribute table failed, error code=0x%x", param->add_attr_tab.status);
             }
-            else if (param->add_attr_tab.num_handle != _manager.GetAttributeTableLength())
+            else if (param->add_attr_tab.num_handle != GetInstance()->GetAttributeTableLength())
             {
                 ERROR_MESSAGE(
                     "Create attribute table abnormally, num_handle (%d) \
                         doesn't equal to HRS_IDX_NB(%d)",
-                    param->add_attr_tab.num_handle, _manager.GetAttributeTableLength());
+                    param->add_attr_tab.num_handle, GetInstance()->GetAttributeTableLength());
             }
             else
             {
@@ -856,7 +1070,7 @@ void BluetoothRequestHandler::GAPEventHandler(esp_gap_ble_cb_event_t event, esp_
             if (!_advertisingDataConfigured)
             {
                 TRACE_MESSAGE("Scan data set.  Starting advertising...");
-                esp_ble_gap_start_advertising(_manager.GetAdvertisingParameters());
+                esp_ble_gap_start_advertising(GetInstance()->GetAdvertisingParameters());
             }
             break;
         case ESP_GAP_BLE_ADV_DATA_SET_COMPLETE_EVT: // 0
@@ -866,7 +1080,7 @@ void BluetoothRequestHandler::GAPEventHandler(esp_gap_ble_cb_event_t event, esp_
             if (!_responseDataConfigured)
             {
                 TRACE_MESSAGE("Advertising data set.  Starting advertising...");
-                esp_ble_gap_start_advertising(_manager.GetAdvertisingParameters());
+                esp_ble_gap_start_advertising(GetInstance()->GetAdvertisingParameters());
             }
             break;
         case ESP_GAP_BLE_ADV_START_COMPLETE_EVT: // 6
@@ -946,7 +1160,7 @@ void BluetoothRequestHandler::GAPEventHandler(esp_gap_ble_cb_event_t event, esp_
                 }
 
                 TRACE_MESSAGE("GAP 22: local privacy set. Configuring advertising");
-                esp_err_t ret = esp_ble_gap_config_adv_data(_manager.GetAdvertisingData());
+                esp_err_t ret = esp_ble_gap_config_adv_data(GetInstance()->GetAdvertisingData());
                 if (ret)
                 {
                     ERROR_MESSAGE("Config adv data failed, error code = %x", ret);
@@ -956,7 +1170,7 @@ void BluetoothRequestHandler::GAPEventHandler(esp_gap_ble_cb_event_t event, esp_
                     _advertisingDataConfigured = true;
                 }
 
-                ret = esp_ble_gap_config_adv_data(_manager.GetScanResponseData());
+                ret = esp_ble_gap_config_adv_data(GetInstance()->GetScanResponseData());
                 if (ret)
                 {
                     ERROR_MESSAGE("Config adv data failed, error code = %x", ret);

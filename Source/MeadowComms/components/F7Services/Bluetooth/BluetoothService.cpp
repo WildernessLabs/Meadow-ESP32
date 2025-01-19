@@ -8,10 +8,8 @@
  */
 #include "Logging.hpp"
 
-#include "BluetoothRequestHandler.hpp"
-
 #include "BluetoothService.hpp"
-#include "esp_log.h"
+#include "BluetoothComponentName.hpp"
 
 /*
  * ----------------------------------------------------------------------------
@@ -20,11 +18,7 @@
  *
  * ----------------------------------------------------------------------------
  */
-
-/**
- * @brief Name of the component for logging.
- */
-const char *BluetoothService::COMPONENT_NAME = BluetoothRequestHandler::COMPONENT_NAME;
+const char *BluetoothService::COMPONENT_NAME = BLUETOOTH_COMPONENT_NAME;
 
 /*
  * ----------------------------------------------------------------------------

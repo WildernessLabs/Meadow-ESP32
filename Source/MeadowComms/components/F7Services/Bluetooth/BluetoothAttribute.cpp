@@ -7,11 +7,8 @@
  * @copyright Copyright (c) 2024
  */
 
-#include "sdkconfig.h"
-
-#include "BluetoothRequestHandler.hpp"
-
 #include "BluetoothAttribute.hpp"
+#include "BluetoothComponentName.hpp"
 
 /*
  * ---------------------------------------------------------------------------
@@ -21,7 +18,4 @@
  * ---------------------------------------------------------------------------
  */
 
-/**
- *  @brief Name of the component / task.
- */
-const char *BluetoothAttribute::COMPONENT_NAME = BluetoothRequestHandler::COMPONENT_NAME;
+const char *BluetoothAttribute::COMPONENT_NAME = BLUETOOTH_COMPONENT_NAME;

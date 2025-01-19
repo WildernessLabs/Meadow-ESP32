@@ -9,8 +9,6 @@
 #ifndef _BLUETOOTH_SERVICE_COLLECTION_HPP_
 #define _BLUETOOTH_SERVICE_COLLECTION_HPP_
 
-#include "sdkconfig.h"
-
 #include <string>
 #include <vector>
 #include <functional>
@@ -62,15 +60,44 @@ public:
      */
     bool DeleteAllServices();
 
+    /**
+     * @brief ServiceAdded event handler.
+     */
     ServiceAdded OnServiceAdded = NULL;
+
+    /**
+     * @brief CharacteristicAdded event handler.
+     */
     CharacteristicAdded OnCharacteristicAdded = NULL;
+
+    /**
+     * @brief ValueChanged event handler.
+     */
     ValueChanged OnValueChanged = NULL;
 
+    /**
+     * @brief Add a new service to the collection.
+     */
     BluetoothService &Add(BluetoothService *service);
+
+    /**
+     * @brief Find a service in the collection by UUID.
+     */
     BluetoothService *Find(uint8_t *uuid);
+
+    /**
+     * @brief Find a service in the collection by UUID.
+     */
     BluetoothService *Find(Uuid16 uuid);
+
+    /**
+     * @brief Get the number of services in the collection.
+     */
     int Count();
 
+    /**
+     * @brief Get the service definitions for this collection.
+     */
     vector<BluetoothService *> GetServiceDefinitions();
 };
 
