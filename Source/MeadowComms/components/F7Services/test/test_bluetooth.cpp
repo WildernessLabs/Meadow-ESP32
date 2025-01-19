@@ -35,10 +35,13 @@ const char *NUMBER_FIELD_UUID = "018e99d6-8a61-11eb-8dcd-0242ac1300bb";
 const char *TEXT_FIELD_NAME = "TextField";
 const char *TEXT_FIELD_UUID = "019e99d6-8a61-11eb-8dcd-0242ac1300cc";
 
-void print_end_message()
+/**
+ * @brief This s really a dummy method and is used by the trap the end of a test method
+ *        So that gdb can halt heap tracing to host.
+ */
+void EndOfTest()
 {
     __asm__("nop");
-    // printf("End of test\n");
 }
 
 /**
@@ -123,11 +126,7 @@ int EncodedBTServerDataSetBufferSize(Esp32Messaging::BTServerDataSet *bTServerDa
  */
 static void StartBlueToothService(const char *const configuration)
 {
-    if (messageDispatcher == nullptr)
-    {
-        messageDispatcher = new MockMessageDispatcher(nullptr);
-        TEST_ASSERT_NOT_NULL(messageDispatcher);
-    }
+    TEST_ASSERT_NOT_NULL(SetupMessageDispatcher());
 
     Esp32Messaging::BTStackConfig stackConfig;
     stackConfig.Config = (char *) configuration;
@@ -218,11 +217,7 @@ static void StartBlueToothService(const char *const configuration)
  */
 static void StopBluetoothService()
 {
-    if (messageDispatcher == nullptr)
-    {
-        messageDispatcher = new MockMessageDispatcher(nullptr);
-        TEST_ASSERT_NOT_NULL(messageDispatcher);
-    }
+    TEST_ASSERT_NOT_NULL(SetupMessageDispatcher());
 
     Message stopMessage = {};
     stopMessage.MessageType = MessageTypes::Header;
@@ -310,6 +305,8 @@ TEST_CASE("Start Bluetooth (MeadowA, Espressif)", CLASS_OF_TESTS)
 {
     printf("Starting Bluetooth service for MeadowA, Company ID Espressif (0x02e5)\n");
 
+    TEST_ASSERT_NOT_NULL(SetupMessageDispatcher());
+
     if (_generateHeapTraceData)
     {
         heap_trace_start(HEAP_TRACE_LEAKS);
@@ -330,6 +327,8 @@ TEST_CASE("Start Bluetooth (MeadowA, Espressif)", CLASS_OF_TESTS)
 TEST_CASE("Start Bluetooth (MeadowB, Baidu)", CLASS_OF_TESTS)
 {
     printf("Starting Bluetooth service for MeadowB, Company ID Baidu (0x011c)\n");
+
+    TEST_ASSERT_NOT_NULL(SetupMessageDispatcher());
 
     if (_generateHeapTraceData)
     {
@@ -352,6 +351,8 @@ TEST_CASE("Start Bluetooth (MeadowC, no company identifier)", CLASS_OF_TESTS)
 {
     printf("Starting Bluetooth service for (MeadowC, no company identifier)\n");
 
+    TEST_ASSERT_NOT_NULL(SetupMessageDispatcher());
+
     if (_generateHeapTraceData)
     {
         heap_trace_start(HEAP_TRACE_LEAKS);
@@ -372,6 +373,8 @@ TEST_CASE("Start Bluetooth (MeadowC, no company identifier)", CLASS_OF_TESTS)
 TEST_CASE("Start Bluetooth (MeadowF7, Espressif)", CLASS_OF_TESTS)
 {
     printf("Starting Bluetooth service for MeadowF7 (Bluetooth_Basics), Company ID Espressif (0x02e5)\n");
+
+    TEST_ASSERT_NOT_NULL(SetupMessageDispatcher());
 
     if (_generateHeapTraceData)
     {
@@ -394,15 +397,11 @@ TEST_CASE("Stop Bluetooth service (no service started)", CLASS_OF_TESTS)
 {
     printf("Stopping Bluetooth service\n");
 
+    TEST_ASSERT_NOT_NULL(SetupMessageDispatcher());
+
     if (_generateHeapTraceData)
     {
         heap_trace_start(HEAP_TRACE_LEAKS);
-    }
-
-    if (messageDispatcher == nullptr)
-    {
-        messageDispatcher = new MockMessageDispatcher(nullptr);
-        TEST_ASSERT_NOT_NULL(messageDispatcher);
     }
 
     Message stopMessage = {};
@@ -505,7 +504,7 @@ TEST_CASE("Stop Bluetooth Service (will start MeadowA service first)", CLASS_OF_
     esp_sysview_flush(ESP_APPTRACE_TMO_INFINITE);
     // vTaskDelay(2000 / portTICK_PERIOD_MS);
 
-    print_end_message();
+    EndOfTest();
 }
 
 /**
@@ -514,6 +513,8 @@ TEST_CASE("Stop Bluetooth Service (will start MeadowA service first)", CLASS_OF_
 TEST_CASE("Restart Bluetooth service with different configuration", CLASS_OF_TESTS)
 {
     printf("Starting Bluetooth service for MeadowA, Company ID Espressif (0x02e5)\n");
+
+    TEST_ASSERT_NOT_NULL(SetupMessageDispatcher());
 
     if (_generateHeapTraceData)
     {
@@ -548,6 +549,8 @@ TEST_CASE("Restart Bluetooth service with different configuration", CLASS_OF_TES
 TEST_CASE("Soak test writing numeric characteristic, number of iterations controlled by client (MeadowF7, Espressif)", CLASS_OF_TESTS)
 {
     printf("Starting Bluetooth service for MeadowF7 (Bluetooth_Basics), Company ID Espressif (0x02e5)\n");
+
+    TEST_ASSERT_NOT_NULL(SetupMessageDispatcher());
 
     if (_generateHeapTraceData)
     {
