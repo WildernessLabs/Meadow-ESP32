@@ -11,6 +11,11 @@
 #include "test_common.hpp"
 
 /**
+ *  @brief Common message dispatcher for these tests.
+ */
+MockMessageDispatcher *messageDispatcher = nullptr;
+
+/**
  *  Extract the IntegerResponse object that is encoded in the given buffer.
  *
  *  Note that the returned pointer points to a block of memory on the heap and
@@ -46,4 +51,16 @@ void WaitForResponse(MockMessageDispatcher *messageDispatcher, uint32_t millisec
         vTaskDelay(1000 / portTICK_PERIOD_MS);
         count += 1000;
     }
+}
+
+/**
+ * @brief Setup the message dispatcher ready for testing.
+ */
+MockMessageDispatcher *SetupMessageDispatcher()
+{
+    if (messageDispatcher == nullptr)
+    {
+        messageDispatcher = new MockMessageDispatcher(nullptr);
+    }
+    return (messageDispatcher);
 }

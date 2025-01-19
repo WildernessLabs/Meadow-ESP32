@@ -12,9 +12,7 @@
 #ifndef _BLUETOOTH_ATTRIBUTE_HPP_
 #define _BLUETOOTH_ATTRIBUTE_HPP_
 
-#include "sdkconfig.h"
-
-// #include "bt_compat.hpp"
+#include <stdint.h>
 
 /**
  * @brief Property type of this characteristic

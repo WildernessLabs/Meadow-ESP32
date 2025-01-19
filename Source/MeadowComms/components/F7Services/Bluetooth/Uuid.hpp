@@ -10,7 +10,7 @@
 #define _BLUETOOTH_UUID_HPP_
 
 #include "string.h"
-// #include "bt_compat.hpp"
+#include <cstdint>
 
 #include <string>
 

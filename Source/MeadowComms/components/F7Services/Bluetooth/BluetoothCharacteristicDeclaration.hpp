@@ -9,8 +9,6 @@
 #ifndef _BLUETOOTH_CHARACTERISTIC_DECLARATION_HPP_
 #define _BLUETOOTH_CHARACTERISTIC_DECLARATION_HPP_
 
-#include "sdkconfig.h"
-
 #include <string>
 #include <vector>
 
@@ -60,6 +58,21 @@ public:
         Properties = properties;
         ValueUuid128 = value_uuid;
         _is128 = true;
+    }
+
+    /**
+     * @brief Destroy the BluetoothCharacteristicDeclaration object and release any allocated resources.
+     */
+    ~BluetoothCharacteristicDeclaration()
+    {
+        // if (_is128)
+        // {
+        //     delete ValueUuid128;
+        // }
+        // else
+        // {
+        //     delete ValueUuid16;
+        // }
     }
 
     /**

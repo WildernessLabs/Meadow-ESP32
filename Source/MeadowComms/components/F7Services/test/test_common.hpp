@@ -17,7 +17,10 @@
 
 extern "C" bool _generateHeapTraceData;
 
+extern MockMessageDispatcher *messageDispatcher;
+
 void WaitForResponse(MockMessageDispatcher *messageDispatcher, uint32_t milliseconds);
 Esp32Messaging::IntegerResponse *ExtractIntegerResponse(uint8_t *buffer);
+MockMessageDispatcher *SetupMessageDispatcher(void);
 
 #endif // _TEST_COMMON_HPP_
