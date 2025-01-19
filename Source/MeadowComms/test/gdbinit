@@ -15,11 +15,13 @@ set listsize 30
 
 tb heap_trace_start
 commands
-mon esp sysview start file://./test/heap_log0.svdat file://./test/heap_log1.svdat
+mon esp sysview start file://./test/heap_log0.svdat file://./test/heap_log1.svdat 1 -1 -1 0 0
+# mon esp sysview start file://./test/heap_log0.svdat file://./test/heap_log1.svdat
 c
 end
 
-tb heap_trace_stop
+# tb heap_trace_stop
+tb print_end_message
 commands
 mon esp sysview stop
 end
