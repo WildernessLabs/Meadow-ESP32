@@ -64,6 +64,11 @@ private:
     static const int INSTANCE_ID = 0;
 
     /**
+     * @brief Size of the advertising service UUID.
+     */
+    static const int ADVERTISING_SERVICE_UUID_LENGTH = 32;
+
+    /**
      *  @brief Event group containing 24-bits used to indicate the state of the WiFi connection.
      */
     EventGroupHandle_t _xBtEventGroup = nullptr;
@@ -88,7 +93,14 @@ private:
      */
     static esp_gatt_if_t _gattsInterfaceHandle;
 
+    /**
+     * @brief Hold the manufacturer data for these service.
+     */
+    static uint8_t _manufacturerData[2];
+
     static bool _advertisingDataConfigured;
+
+    static uint8_t _dummyAdvertisingServiceUuid[ADVERTISING_SERVICE_UUID_LENGTH];
 
     /**
      * @brief Has the response data been configured?
