@@ -65,6 +65,22 @@ MockMessageDispatcher::MockMessageDispatcher(TransportProviderBase *transportPro
 MockMessageDispatcher::~MockMessageDispatcher()
 {
     vQueueDelete(_outboundMessageQueueHandle);
+    // if (_wifiRequestHandler)
+    // {
+    //     delete _wifiRequestHandler;
+    // }
+    // if (_meshNetworkRequestHandler)
+    // {
+    //     delete _meshNetworkRequestHandler;
+    // }
+    // if (_systemRequestHandler)
+    // {
+    //     delete _systemRequestHandler;
+    // }
+    if (_bluetoothRequestHandler)
+    {
+        delete _bluetoothRequestHandler;
+    }
 }
 
 /* ---------------------------------------------------------------------------
