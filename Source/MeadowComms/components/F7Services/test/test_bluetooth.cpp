@@ -481,28 +481,21 @@ TEST_CASE("Stop Bluetooth Service (will start MeadowA service first)", CLASS_OF_
         heap_trace_start(HEAP_TRACE_LEAKS);
     }
 
-    heap_trace_start(HEAP_TRACE_LEAKS);
     StartBlueToothService(meadow_a_json);
-    // esp_sysview_flush(ESP_APPTRACE_TMO_INFINITE);
 
-    // printf("Waiting for 1 second before stopping Bluetooth service\n");
     vTaskDelay(1000 / portTICK_PERIOD_MS);
 
-    // printf("Stopping Bluetooth service\n");
     StopBluetoothService();
-    // esp_sysview_flush(ESP_APPTRACE_TMO_INFINITE);
 
-    // delete messageDispatcher;
+    TEST_ASSERT_EQUAL(0, messageDispatcher->OutboundMessageQueueLength());
+
+    delete messageDispatcher;
 
     if (_generateHeapTraceData)
     {
         vTaskDelay(10000 / portTICK_PERIOD_MS);
         heap_trace_stop();
-        // esp_sysview_flush(ESP_APPTRACE_TMO_INFINITE);
     }
-
-    esp_sysview_flush(ESP_APPTRACE_TMO_INFINITE);
-    // vTaskDelay(2000 / portTICK_PERIOD_MS);
 
     EndOfTest();
 }
@@ -540,6 +533,46 @@ TEST_CASE("Restart Bluetooth service with different configuration", CLASS_OF_TES
         vTaskDelay(10000 / portTICK_PERIOD_MS);
         heap_trace_stop();
     }
+}
+
+/**
+ * @brief Test the stop functionality when Bluetooth has been started.
+ */
+TEST_CASE("Restart Bluetooth Service 50 times (Execution time ~4-5 minutes)", CLASS_OF_TESTS)
+{
+    TEST_ASSERT_NOT_NULL(SetupMessageDispatcher());
+
+    if (_generateHeapTraceData)
+    {
+        heap_trace_start(HEAP_TRACE_LEAKS);
+    }
+
+    for (int counter = 0; counter < 50; counter++)
+    {
+        printf("Iteration %d\n", counter);
+        StartBlueToothService(meadow_a_json);
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
+
+        StopBluetoothService();
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
+
+        StartBlueToothService(meadow_b_json);
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
+
+        StopBluetoothService();
+        vTaskDelay(1000 / portTICK_PERIOD_MS);
+    }
+    return;
+
+    delete messageDispatcher;
+
+    if (_generateHeapTraceData)
+    {
+        vTaskDelay(10000 / portTICK_PERIOD_MS);
+        heap_trace_stop();
+    }
+
+    EndOfTest();
 }
 
 /**
