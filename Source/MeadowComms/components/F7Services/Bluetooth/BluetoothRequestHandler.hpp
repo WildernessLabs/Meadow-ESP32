@@ -154,10 +154,9 @@ private:
     const int MEADOW_PROFILE_APP_ID = 0x55;
 
     /*
-     *  Private constructor and destructor.
+     *  Private constructor.
      */
     BluetoothRequestHandler();
-    ~BluetoothRequestHandler();
 
     /**
      * @brief Start the bluetooth service from the attribute graph sent be the managed code.
@@ -215,6 +214,8 @@ private:
     int GetHandleCount();
 
 public:
+    virtual ~BluetoothRequestHandler();
+
     static BluetoothManager _manager;
 
     /**
