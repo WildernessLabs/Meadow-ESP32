@@ -16,4 +16,19 @@ The firmware is written using the *test/flash.sh* script or by using the *idf.py
 
 ## Running the Tests
 
-The tests are run by connecting a serial console to the ESP32 chip or using the command *idf.py monitor*.
+The tests are run by connecting a serial console to the ESP32 chip or using the command *idf.py monitor*.  This will restart the ESP32 and show the following:
+
+```
+#### Starting interactive test menu #####
+
+Press ENTER to see the list of tests.
+```
+
+Pressing the enter key will show the list of available tests.  Tests can be run by entering the number of the test to be run.
+
+### Helper "Tests"
+
+A number of the tests are not tests, instead they provide some helper functionality.  The two main helpers are:
+
+* Restart the board
+* Enable heap tracing to host
