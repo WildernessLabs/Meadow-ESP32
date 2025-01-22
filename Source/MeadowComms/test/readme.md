@@ -4,7 +4,7 @@ The unit tests are run by the code in the *main/unit_tests.c* application code. 
 
 ## Individual Tests
 
-The individual component tests are located in the *components/F7Services/test* directory.
+The individual component tests are located in the [*components/F7Services/test*](../components/F7Services/test/Readme.md) directory.
 
 ## Building the Tests
 
