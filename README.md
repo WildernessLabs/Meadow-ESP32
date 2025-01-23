@@ -8,11 +8,11 @@ Additional documentation is available for the following items (click on the head
 
 ## [Message Format](Documentation/MessageFormat.md)
 
-Requests, responses and interrupts transfer data between the tw chips through a series of messages.  The maximum amount of data that can be transferred is restricted to 4,000 bytes due to a hardware limit on the ESP32.
+Requests, responses and interrupts transfer data between the two chips through a series of messages.  The maximum amount of data that can be transferred is restricted to 4,000 bytes per SPI transfer due to a hardware limit on the ESP32.  This has been extended to 16,834 by using multiple SPI transfers per message.
 
 ## [Communication Process Overview](Documentation/CommunicationsOverview.md)
 
-Communication between the two microcontrollers is achieved using a single SPI bus and two GPIO lines to signal system readiness.
+Communication between the two microcontrollers is achieved using a single SPI bus for data transfer and a UART for control messages.
 
 ## [ESP32 Development Tools](Documentation/Tools.md)
 
@@ -21,16 +21,6 @@ The ESP32 runs FreeRTOS and the ESP-IDF to provide a multitasking environment th
 Documentation for ESP-IDF is available through the [Espressif documentation site](https://github.com/WildernessLabs/Meadow-ESP32).
 
 ESP-IDF repository containing source code and examples is available on [GitHub](https://github.com/espressif/esp-idf).
-
-## [File Generator](Documentation/FileGenerator.md)
-
-Three languages are used to facilitate communication between the various subsystems, namely, C#, C and C++.
-
-* C# is used in Meadow.Core
-* NuttX is developed using C
-* Code on the ESP32 uses both C and C++
-
-The `FileGenerator` application uses two metadata files to generate message definitions, encoders and constants for all three languages.  This ensures consistency between the three environments.
 
 ## [Diagnostics](Documentation/Diagnostics.md)
 
