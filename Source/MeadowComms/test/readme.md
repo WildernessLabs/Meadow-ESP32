@@ -32,3 +32,33 @@ A number of the tests are not tests, instead they provide some helper functional
 
 * Restart the board
 * Enable heap tracing to host
+
+## Heap Tracing
+
+The ESP IDF provides two methods of heap tracing:
+
+* [Host based](https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/system/heap_debug.html#host-based-mode)
+* [Device Based](https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/system/heap_debug.html#standalone-mode)
+
+Heap tracing to host is currently supported in the unit tests.
+
+Some of the classes can also be analysed using *valgrind*.  Documentation for this analysis can be found in [valgrind desktop application](../Desktop/Readme.md) directory.
+
+### Running Heap Tracking to Host
+
+The following steps should be taken in order to turn on and analyse host based heap tracing:
+
+* Build and flash the unit test application as normal.
+* Open a terminal window and run the command *idf.py monitor*
+* Open a second terminal window and run the command *idf.py openocd*
+* Open a third terminal window, navigate to the unit test application directory and run the command *xtensa-esp32-elf-gdb -x gdbinit build/MeadowComms.elf*
+* Execute the helper *Turn on Heap Tracing Data* by selecting it from the test menu
+* Now run the selected test
+
+The *xtensa-esp32-elf-gdb* command will stop at the end of the test and drop out to the GDB command prompt.  At this point the three terminal sessions can exit the various commands:
+
+* *xtensa-esp32-elf-gdb* - use the *quit* command
+* *idf.py monitor* - use the key sequence *Ctrl-]*
+* *openocd* - use the key sequence *Ctrl-C*
+
+The heap traces can now be analysed with the command *$IDF_PATH/tools/esp_app_trace/sysviewtrace_proc.py -p -b build/MeadowComms.elf heap_log0.svdat > memory.log*.  The *memory.log* file will contain the resulting logs.
