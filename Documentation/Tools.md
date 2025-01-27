@@ -1,6 +1,6 @@
 # MeadowComms Build and Deployment
 
-The MeadowComms application runns on the ESP32 as a native application built using release 4.1 of the ESP-IDF.
+The MeadowComms application runs on the ESP32 as a native application built using the ESP-IDF.
 
 ## Docker Image
 
@@ -8,7 +8,7 @@ The application can be built using the Docker image supplied by Espressif.  Docu
 
 The system can be built by executing the following command:
 
-`docker run --rm -v $PWD:/project -w /project espressif/idf:release-4.2 idf.py build`
+`docker run --rm -v $PWD:/project -w /project espressif/idf:release-5.3 idf.py build`
 
 > Note: The build process can sometimes fail as the clean process (`idf.py clean`) does not always fully clean the previous build.  Execute the command `rm -R build` if the build fails.
 
@@ -26,14 +26,29 @@ The installation guide for a manual installation can be found in the Espressif [
 
 ### Build
 
-The native tools can be used to build the system using the command `idf.py build`.  Other command line arguments that may be useful:
+It is recommended that the system should be built using the `bash` script `build.sh`.  The build script takes a number of command line arguments, the most commonly used are:
 
-* `idf.py clean` Cleans the build directory
-* `idf.py fullclean` Perform an extensive clean of the build.
+* --build
+* --fullclean
+* --debug=&lt;subsystem&gt;
+* --tracemessages
+* --help
 
-The commands line arguments can also me used on a single command line.  So `idf.py clean build` will clean the system and then rebuild the software.
+#### `--build`
 
-It is also possible to build the system using the `build.sh` script.
+As the name suggests, this option builds the system.
+
+#### `--fullclean`
+
+Perform a full clean of the system.
+
+#### `--debug=<subsystem>` and `--tracemessages`
+
+This turns on debug messages for the relevant subsystem (wifi, bt etc.).
+
+#### `--help`
+
+Display help on the options available.
 
 ### Deployment
 
@@ -46,13 +61,11 @@ Both of these ports can be accessed through the [ESP-Prog board](https://github.
 
 #### JTAG
 
-JTAG communication takes place over the 10 pin headers on the ESP-Prog and the Meadow pogo board.
+JTAG communication takes place over the 10 pin headers on the ESP-Prog and the Meadow development board.  The ESP-Prog and the Meadow development boards are connected using a standard 10 pin (2 x 5) 0.1" pitch IDC cable
 
 Deployment using the JTAG interface is available through the `flash.sh` script.
 
-Revions A of the pogo board has been comprehensively tested and can be connected to the ESP-PROG board using a standard 10 pin (2 x 5) 0.1" pitch IDC cable.
-
-Revsion B of the pogo board has the signal and the power pins connected to the wrong pins and the JTAG header will not work unless the pins on each row are swapped (i.e. pin 1 & 2 are swapped, 3 & 4 etc.).
+Note that this method of deployment is faster than using the serial interface.
 
 #### Serial
 
@@ -60,9 +73,9 @@ Serial deployment is possible using the 6-pin headers on the ESP-Prog board.  Th
 
 Serial deployment on MacOS, Big Sur, requires version 3.5 of `pyserial` in order to function correctly.
 
-Revision A of the pogo board has the two serial lines crossed and requires a modified IDC cable or a manual connection using female-female Dupont cables.  If a manual connection is made then use the diagram on the [Communication Interface](https://github.com/espressif/esp-iot-solution/blob/master/documents/evaluation_boards/ESP-Prog_guide_en.md#322-communication-interface) page as a guide.  Make a 1-1 connection between the pins on the ESP-Prog and the pogo board **except** pins 3 and 5.  These should be crossed, pin 3 on the ESP-Prog to pin 5 on the pogo board.
+Most of the Meadow development boards can accept a standard 6-pin IDC cable direct to the ESP-Prog serial interface.
 
-Revision B of the pogo board has this problem fixed and connecting using a 6-pin IDC cable works on this board.
+Some of the development boards have the serial R<sub>x</sub> and T<sub>x</sub> pins crossed.  In this case it is necessary to use a modified 6-pin serial cable in order to establish communication with the host computer.  If a manual connection is made then use the diagram on the [Communication Interface](https://github.com/espressif/esp-iot-solution/blob/master/documents/evaluation_boards/ESP-Prog_guide_en.md#322-communication-interface) page as a guide.  Make a 1-1 connection between the pins on the ESP-Prog and the pogo board **except** pins 3 and 5.  These should be crossed, pin 3 on the ESP-Prog to pin 5 on the pogo board.
 
 The ESP-Prog presents two serial ports to the host computer.  On a Mac these look something like `/dev/tty.serial14400` and `/dev/tty.serial14401`.  Experience has shown that the higher port number is connected to the serial interface through to the pogo board.
 
