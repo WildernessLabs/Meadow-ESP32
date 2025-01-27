@@ -1,4 +1,0 @@
-{
-    "cortex-debug.armToolchainPath": "/usr/local/bin",
-    "cortex-debug.openocdPath": "/Users/markstevens/esp-tools/tools/openocd-esp32/v0.10.0-esp32-20200709/openocd-esp32/bin/openocd"
-}

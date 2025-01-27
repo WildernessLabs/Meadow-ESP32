@@ -177,7 +177,7 @@ get_git_branch_or_tag() {
 
 get_version_change_distance() {
   REPO_PATH=$1
-  origin=$(git log -n 1 --oneline $scriptdir/Source/MeadowComms/version.txt  | cut -f 1 -d " ")
+  origin=$(git log -n 1 --oneline $scriptdir/version.txt  | cut -f 1 -d " ")
   distance=$(git log --oneline ${origin}..HEAD | wc -l)
   echo $distance
 }
@@ -206,9 +206,9 @@ generate_build_info() {
   BUILD_GIT_HASH=$(get_git_commit_hash .)
   BUILD_GIT_REF=$(get_git_branch_or_tag .)
 
-  git checkout HEAD $scriptdir/Source/MeadowComms/version.txt
+  git checkout HEAD $scriptdir/version.txt
 
-  read -r BUILD_VERSION_STRING<$scriptdir/Source/MeadowComms/version.txt || true
+  read -r BUILD_VERSION_STRING<$scriptdir/version.txt || true
   IFS='.' read -ra BUILD_VERSION <<< "$BUILD_VERSION_STRING"
   VERSION_MAJOR=${BUILD_VERSION[0]}
   VERSION_MINOR=${BUILD_VERSION[1]}
@@ -216,16 +216,16 @@ generate_build_info() {
 
   VERSION_BUILD=$(get_version_change_distance $1)
 
-  echo "$VERSION_MAJOR.$VERSION_MINOR.$VERSION_REVISION.$VERSION_BUILD" > $scriptdir/Source/MeadowComms/version.txt
+  echo "$VERSION_MAJOR.$VERSION_MINOR.$VERSION_REVISION.$VERSION_BUILD" > $scriptdir/version.txt
 
   echo Calculated version: ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_REVISION}.${VERSION_BUILD} '('${BUILD_GIT_HASH:0-8}:${BUILD_GIT_REF}')'
 
-  git checkout HEAD $scriptdir/Source/MeadowComms/main/version.h
+  git checkout HEAD $scriptdir/main/version.h
 
   #
   # Get the date / time components in UTC format.
   #
-  # These macros may look odd but the date foramtting can return date componets in the form
+  # These macros may look odd but the date formatting can return date components in the form
   # 00, 01, 02 etc and these when compiled are taken as octal numbers.  This means 09 is an
   # invalid number for the compiler so it it is necessary to remove the leading 0 and put it
   # back when formatting the date/time output for the user.
@@ -246,9 +246,9 @@ generate_build_info() {
 
   for s in $(echo VERSION_MAJOR VERSION_MINOR VERSION_REVISION VERSION_BUILD BUILD_DAY BUILD_TWO_DIGIT_DAY BUILD_MONTH BUILD_TWO_DIGIT_MONTH BUILD_MONTH_NAME BUILD_YEAR BUILD_HOUR BUILD_TWO_DIGIT_HOUR HOUR BUILD_MINUTE BUILD_TWO_DIGIT_MINUTE BUILD_SECOND BUILD_TWO_DIGIT_SECOND BUILD_HASH BUILD_GIT_REF)
   do
-    inject_value $s $scriptdir/Source/MeadowComms/main/build_info.template
+    inject_value $s $scriptdir/main/build_info.template
   done
-   cp $scriptdir/Source/MeadowComms/main/build_info.template $scriptdir/Source/MeadowComms/main/build_info.h
+   cp $scriptdir/main/build_info.template $scriptdir/main/build_info.h
 
   printf " ${green}success${reset}\n"
 }
@@ -314,8 +314,8 @@ fi
 #   later and it will be removed (assuming success).
 #
 if test -f "$scriptdir/../secrets.h"; then
-    cp $scriptdir/../secrets.h $scriptdir/Source/MeadowComms/test/secrets.h
-    cp $scriptdir/../secrets.h $scriptdir/Source/MeadowComms/components/F7Services/test/secrets.h
+    cp $scriptdir/../secrets.h $scriptdir/test/secrets.h
+    cp $scriptdir/../secrets.h $scriptdir/components/F7Services/test/secrets.h
 fi
 
 #
@@ -323,8 +323,8 @@ fi
 #   so this removes the build directory before executing the full clean.
 #
 if $FULLCLEAN; then
-    run_command "rm -Rf $scriptdir/Source/MeadowComms/build"
-    run_command "idf.py --project-dir $scriptdir/Source/MeadowComms fullclean"
+    run_command "rm -Rf $scriptdir/build"
+    run_command "idf.py --project-dir $scriptdir fullclean"
 fi
 
 #
@@ -339,7 +339,7 @@ if ! $NO_BUILD; then
     IDF_FLAGS="build $IDF_FLAGS"
 fi
 if [[ ! -z $IDF_FLAGS ]]; then
-    idf.py -C $scriptdir/Source/MeadowComms $IDF_DEFINES $IDF_FLAGS
+    idf.py -C $scriptdir $IDF_DEFINES $IDF_FLAGS
 fi
 
 if [ $? -eq 0 ]; then
@@ -353,19 +353,19 @@ fi
 #
 if $GENERATE_SBOM; then
   echo "Generating SBOM..."
-  esp-idf-sbom create --rem-unused --rem-config -o $scriptdir/Source/MeadowComms/sbom/MeadowComms.spdx $scriptdir/Source/MeadowComms/build/project_description.json
-  esp-idf-sbom check $scriptdir/Source/MeadowComms/sbom/MeadowComms.spdx -o $scriptdir/Source/MeadowComms/sbom/MeadowComms.txt
+  esp-idf-sbom create --rem-unused --rem-config -o $scriptdir/sbom/MeadowComms.spdx $scriptdir/build/project_description.json
+  esp-idf-sbom check $scriptdir/sbom/MeadowComms.spdx -o $scriptdir/sbom/MeadowComms.txt
 fi
 
 #Generate checksums for binaries
 
-md5sum  $scriptdir/Source/MeadowComms/build/MeadowComms.bin | cut -d ' ' -f 1 > $scriptdir/Source/MeadowComms/build/MeadowComms.bin.md5
-md5sum  $scriptdir/Source/MeadowComms/build/bootloader/bootloader.bin | cut -d ' ' -f 1 > $scriptdir/Source/MeadowComms/build/bootloader/bootloader.bin.md5
-md5sum  $scriptdir/Source/MeadowComms/build/partition_table/partition-table.bin | cut -d ' ' -f 1 > $scriptdir/Source/MeadowComms/build/partition_table/partition-table.bin.md5
+md5sum  $scriptdir/build/MeadowComms.bin | cut -d ' ' -f 1 > $scriptdir/build/MeadowComms.bin.md5
+md5sum  $scriptdir/build/bootloader/bootloader.bin | cut -d ' ' -f 1 > $scriptdir/build/bootloader/bootloader.bin.md5
+md5sum  $scriptdir/build/partition_table/partition-table.bin | cut -d ' ' -f 1 > $scriptdir/build/partition_table/partition-table.bin.md5
 
-git checkout HEAD $scriptdir/Source/MeadowComms/main/build_info.template
-git checkout HEAD $scriptdir/Source/MeadowComms/version.txt
-rm $scriptdir/Source/MeadowComms/main/build_info.template.bak
+git checkout HEAD $scriptdir/main/build_info.template
+git checkout HEAD $scriptdir/version.txt
+rm $scriptdir/main/build_info.template.bak
 
 now=$(date +"%T")
 printf "Build of version $VERSION_MAJOR.$VERSION_MINOR.$VERSION_REVISION.$VERSION_BUILD (${BUILD_GIT_HASH:0-8}:$BUILD_GIT_REF) finished at $now\n"
