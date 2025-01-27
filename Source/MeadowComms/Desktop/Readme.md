@@ -1,13 +1,27 @@
-# Desktop Specific Files
+# Checking for Memory Leaks with *valgrind*
 
-In this folder you will find the files that will allow the SSEM emulator to be run on a desktop machine as well as perform some source code checks.
-
-The makefile will draw the core system files from the NuttX directory as well as the files that are specific to running the application on a desktop.  For instance, the registration of the file system on the desktop differs from the registration process in NuttX.
+A number of the classes in the system are standalone and do not require access to the ESP32 hardware.  These classes can be tested in a desktop application meaning we can use standard desktop tools such and *valgrind* to analyse the code.  These tools are made available through a docker container.
 
 ## Dockerfile
 
-A Dockerfile has been provided to supply the standard desktop development tools found in Linux systems to allow the code to be built under Ubuntu Linux.  This also provides access to the valgrind tool for memory checking.
+A docker file has been provided as *valgrind* does not run on all operating systems.  The docker image can be built with the command:
+
+```bash
+docker build -t ubuntu/devtools:latest .
+```
+
+Once built, the docker image should be run in interactive mode with the command:
+
+```bash
+docker run --rm -tiv $PWD/..:/project ubuntu/devtools:latest
+```
 
 ## runvalgrind.sh
 
-This script runs the application using valgrind producing a summary report in the file valgrind.txt.
+This script runs the application using *valgrind* producing a summary report in the file valgrind.txt.  This analysis can be run by opening a terminal and  navigating to the *Desktop* directory and running the following commands:
+
+```bash
+make clean
+make
+./runvalgrind.sh
+```

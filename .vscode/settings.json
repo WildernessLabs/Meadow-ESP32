@@ -1,7 +1,9 @@
 {
     "cSpell.words": [
+        "analyse",
         "Espressif",
-        "NuttX"
+        "NuttX",
+        "utilised"
     ],
     "files.associations": {
         "unity.h": "c",

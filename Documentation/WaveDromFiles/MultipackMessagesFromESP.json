@@ -1,14 +1,13 @@
 {signal: [
   ['ESP',
-   {name: 'Message Waiting (MW)', wave: 'lPl..............................'},
-   {name: 'SPI Ready (SIR)',      wave: 'H.|.l..Hl...Hl...Hl...H|l...Hl...H', phase: 0.5}
+   {name: 'UART Tx', wave: 'x3x|3xxx3xxxx3xxxx3xxxxx|3xxxx3xxxx3', data: ['MW', 'SIR', 'SIR', 'SIR', 'SIR', 'SIR', 'SIR', 'SIR']}
   ],
   {},
   ['SPI',
-   {name: 'CS',   wave: 'x|1l..Hl...Hl...hL...H|l...Hl...H'},
-  	{name: 'MOSI', wave: 'x|.3..x3...x3...x3...x|3...x3...x', data: ['Response Req', 'Empty', 'Header ACK / NAK', 'Packet 1 ACK / NAK', 'Packet N-1 ACK / NAK', 'Packet N ACK / NAK', 'Empty']},
-    {name: 'MISO', wave: 'x|.3..x3...x3...x3...x|3...x3...x', data: ['Empty', 'Message Header', 'Packet 1', 'Packet 2', 'Packet N', 'Empty']},
-	]
+    {name: 'CS',   wave: 'H..|.l..Hl...Hl...Hl...H|.l...Hl...H'},
+  	{name: 'MOSI', wave: 'xxx|x3..x3...x3...x3...x|x3...x3...x', data: ['Response Req', 'Empty', 'Header ACK / NAK', 'Packet 1 ACK / NAK', 'Packet N-1 ACK / NAK', 'Packet N ACK / NAK', 'Empty']},
+    {name: 'MISO', wave: 'xxx|x3..x3...x3...x3...x|x3...x3...x', data: ['Empty', 'Message Header', 'Packet 1', 'Packet 2', 'Packet N', 'Empty']},
+    ]
   ],
  foot: {text:
   ['tspan', 'Multipacket Messages From ESP'], tick: 0
