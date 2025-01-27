@@ -56,15 +56,11 @@ if $HELP; then
 fi
 
 
-SOURCE_DIR=$scriptdir/Source/MeadowComms
+SOURCE_DIR=$scriptdir
 COMPONENTS_DIR=$SOURCE_DIR/components/F7Services
 
 echo "Running cppcheck"
-cppcheck --error-exitcode=1 --quiet --check-level=exhaustive --force --inline-suppr -iCMakeLists.txt -iSource/MeadowComms/components/esp_littlefs -iSource/MeadowComms/build Source/MeadowComms -iSource/MeadowComms/test/build --suppress=*:Source/MeadowComms/components/F7Services/Bluetooth/rapidjson/* 
-#
-#   The following uses the compile_commands.json file - needs uplift to latest SDK.
-#
-# cppcheck --check-level=exhaustive --force --inline-suppr -iCMakeLists.txt -iSource/MeadowComms/components/esp_littlefs -iSource/MeadowComms/build --project=$scriptdir/Source/MeadowComms/build/compile_commands.json
+cppcheck --error-exitcode=1 --quiet --check-level=exhaustive --force --inline-suppr -iCMakeLists.txt -icomponents/esp_littlefs -ibuild .
 
 echo "Running clang-format"
 clang-format --dry-run --Werror $VERBOSE_FLAGS $SOURCE_DIR/main/*.?pp
