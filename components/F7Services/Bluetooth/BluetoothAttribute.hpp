@@ -34,6 +34,20 @@ inline CharacteristicProperty operator|(CharacteristicProperty a, Characteristic
 }
 
 /**
+ * @brief Overload the bitwise AND operator to allow for extracting a specific characteristic permissions.
+ *
+ * @param a First permission to extract.
+ *
+ * @param b Second permission to extract.
+ *
+ * @return Specific permission if it is set.
+ */
+inline CharacteristicProperty operator&(CharacteristicProperty a, CharacteristicProperty b)
+{
+    return static_cast<CharacteristicProperty>(static_cast<int>(a) & static_cast<int>(b));
+}
+
+/**
  * @brief Permissions for a characteristic.
  */
 enum class CharacteristicPermission : unsigned short {
