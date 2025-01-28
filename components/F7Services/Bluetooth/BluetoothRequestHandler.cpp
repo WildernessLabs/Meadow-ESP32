@@ -1208,7 +1208,7 @@ void BluetoothRequestHandler::GAPEventHandler(esp_gap_ble_cb_event_t event, esp_
         case ESP_GAP_BLE_SET_PKT_LENGTH_COMPLETE_EVT:
             TRACE_MESSAGE("ESP_GAP_BLE_SET_PKT_LENGTH_COMPLETE_EVT");
             break;
-        case ESP_GAP_BLE_ADV_STOP_COMPLETE_EVT:  // 7
+        case ESP_GAP_BLE_ADV_STOP_COMPLETE_EVT: // 7
             TRACE_MESSAGE("ESP_GAP_BLE_ADV_STOP_COMPLETE_EVT");
             if (param->adv_stop_cmpl.status != ESP_BT_STATUS_SUCCESS)
             {
