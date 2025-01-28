@@ -81,7 +81,7 @@ const char *meadow_c_json = R"(
                 {
                     "uuid": "017e99d6-8a61-11eb-8dcd-0242ac130003",
                     "permission": 17,
-                    "props": 10,
+                    "props": 26,
                     "len": 4
                 },
                 {
