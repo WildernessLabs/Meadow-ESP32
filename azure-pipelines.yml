@@ -12,18 +12,18 @@ steps:
 - task: CopyFiles@2
   inputs:
     contents: |
-      Source/MeadowComms/build/MeadowComms.bin
-      Source/MeadowComms/build/MeadowComms.bin.md5
-      Source/MeadowComms/build/bootloader/bootloader.bin
-      Source/MeadowComms/build/bootloader/bootloader.bin.md5
-      Source/MeadowComms/build/partition_table/partition-table.bin
-      Source/MeadowComms/build/partition_table/partition-table.bin.md5
+      build/MeadowComms.bin
+      build/MeadowComms.bin.md5
+      build/bootloader/bootloader.bin
+      build/bootloader/bootloader.bin.md5
+      build/partition_table/partition-table.bin
+      build/partition_table/partition-table.bin.md5
     targetFolder: '$(Build.ArtifactStagingDirectory)/release'
     flattenFolders: true
 - task: CopyFiles@2
   inputs:
     contents: |
-      Source/MeadowComms/build/**/?(*.elf|*.map|*.bin|*.md5)
+      build/**/?(*.elf|*.map|*.bin|*.md5)
     targetFolder: '$(Build.ArtifactStagingDirectory)/build'
     flattenFolders: false
 - task: PublishBuildArtifacts@1
