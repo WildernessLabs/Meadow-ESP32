@@ -141,6 +141,16 @@ public:
     void SetCurrentValueForAttributeHandle(uint16_t handle, uint8_t *pData, uint16_t len);
 
     /**
+     * @brief Get the properties for the characteristic with the specified handle.
+     */
+    CharacteristicProperty GetCharacteristicProperties(uint16_t handle);
+
+    /**
+     * @brief Get the permissions for the characteristic with the specified handle.
+     */
+    CharacteristicPermission GetCharacteristicPermissions(uint16_t handle);
+
+    /**
      * @brief Process the JSON defintion of the services, characteristics and descriptors and build
      *        a graph representation of the BLE functionality.
      */
