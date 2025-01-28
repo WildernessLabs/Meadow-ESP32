@@ -158,6 +158,50 @@ void BluetoothManager::GetHandles(uint16_t *handles)
 }
 
 /**
+ * @brief Get the properties for the characteristic with the specified handle.
+ * 
+ * @param handle Handle for the characteristic
+ * @return CharacteristicPermission Properties of the characteristic or 0 if the handle cannot be found.
+ */
+CharacteristicProperty BluetoothManager::GetCharacteristicProperties(uint16_t handle)
+{
+    for (const auto &svc: Services.GetServiceDefinitions())
+    {
+        for (const auto &characteristic: svc->GetCharacteristicDefinitions())
+        {
+            if (characteristic->Value->Handle == handle)
+            {
+                return characteristic->Declaration->Properties;
+            }
+        }
+    }
+
+    return (CharacteristicProperty) 0;
+}
+
+/**
+ * @brief Get the permissions for the characteristic with the specified handle.
+ * 
+ * @param handle Handle for the characteristic
+ * @return CharacteristicPermission Permissions of the characteristic or 0 if the handle cannot be found.
+ */
+CharacteristicPermission BluetoothManager::GetCharacteristicPermissions(uint16_t handle)
+{
+    for (const auto &svc: Services.GetServiceDefinitions())
+    {
+        for (const auto &characteristic: svc->GetCharacteristicDefinitions())
+        {
+            if (characteristic->Value->Handle == handle)
+            {
+                return characteristic->Declaration->Permission;
+            }
+        }
+    }
+
+    return (CharacteristicPermission) 0;
+}
+
+/**
  * @brief Set the handles for the services, characteristics and descriptors.
  *
  * @param handles Pointer to a block of memory holding the handles for the services, characteristics and descriptors.
