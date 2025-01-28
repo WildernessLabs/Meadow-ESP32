@@ -1,0 +1,14 @@
+==105== Memcheck, a memory error detector
+==105== Copyright (C) 2002-2022, and GNU GPL'd, by Julian Seward et al.
+==105== Using Valgrind-3.22.0 and LibVEX; rerun with -h for copyright info
+==105== Command: ./Bluetooth
+==105== Parent PID: 100
+==105== 
+==105== 
+==105== HEAP SUMMARY:
+==105==     in use at exit: 0 bytes in 0 blocks
+==105==   total heap usage: 39 allocs, 39 frees, 143,247 bytes allocated
+==105== 
+==105== All heap blocks were freed -- no leaks are possible
+==105== 
+==105== ERROR SUMMARY: 0 errors from 0 contexts (suppressed: 0 from 0)

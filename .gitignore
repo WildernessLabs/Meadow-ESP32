@@ -73,11 +73,7 @@ Secrets.hpp
 Secrets.cs
 _clicache
 
-# File generator output files.
-Output/
-Source/EncodedMessageGenerator/MessageGenerator
-
-Source/MeadowComms/.gdbinit
+.gdbinit
 Source/OpenOCD/
 
 Source/.vscode/
@@ -86,18 +82,17 @@ Source/.vscode/
 
 *.srctrldb
 
-Source/MeadowComms/sdkconfig
+sdkconfig
 
 *.pdb
 
 __pycache__/
-Source/MeadowComms/main/build_info.h
-Source/MeadowComms/test/sdkconfig
-Source/MeadowComms/.gdb_history
-Source/MeadowComms/test/.gdb_history
-Source/MeadowComms/test/secrets.h
-Source/MeadowComms/components/F7Services/test/secrets.h
+main/build_info.h
+test/sdkconfig
+.gdb_history
+test/.gdb_history
+test/secrets.h
+components/F7Services/test/secrets.h
 *.svdat
 *.log
-Source/MeadowComms/Desktop/valgrind.txt
-Source/MeadowComms/Desktop/Bluetooth
+Desktop/valgrind.txt
