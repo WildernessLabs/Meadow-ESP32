@@ -58,6 +58,11 @@ const char *BluetoothRequestHandler::COMPONENT_NAME = BLUETOOTH_COMPONENT_NAME;
 esp_gatt_if_t BluetoothRequestHandler::_gattsInterfaceHandle = ESP_GATT_IF_NONE;
 
 /**
+ * @brief The handle that is assigned a connection when a device connects over Bluetooth.
+ */
+uint16_t BluetoothRequestHandler::_connectionHandle = 0xffff;
+
+/**
  * @brief Indicate if we have configured the advertising data.
  */
 bool BluetoothRequestHandler::_advertisingDataConfigured = false;
@@ -422,11 +427,23 @@ void BluetoothRequestHandler::SetCurrentValueForAttributeHandle(Message *request
     TRACE_MESSAGE("Server wrote %lu bytes to 0x%04x", ds->SetDataLength, ds->Handle);
 
     _manager.SetCurrentValueForAttributeHandle(ds->Handle, ds->SetData, ds->SetDataLength);
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
+    if (_connectionHandle != 0xffff)
+    {
+        if ((_manager.GetCharacteristicProperties(ds->Handle) & CharacteristicProperty::Notify) == CharacteristicProperty::Notify)
+        {
+            if (esp_ble_gatts_send_indicate(_gattsInterfaceHandle, _connectionHandle, ds->Handle, ds->SetDataLength, ds->SetData, false) != ESP_OK)
+            {
+                TRACE_MESSAGE("Failed to send indication to connection ID 0x%04x", _connectionHandle);
+                result = StatusCodes::Failure;
+            }
+        }
+    }
     vPortFree(ds->SetData);
     vPortFree(ds);
 
     request->MessageType = MessageTypes::Response;
-    request->StatusCode = StatusCodes::CompletedOk;
+    request->StatusCode = result;
 
     _messageDispatcher->QueueMessageForStm32(request);
 
@@ -981,6 +998,8 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
                 /* start security connect with peer device when receive the connect event sent by the master */
                 //              esp_ble_set_encryption(param->connect.remote_bda, ESP_BLE_SEC_ENCRYPT_MITM);
 
+                TRACE_MESSAGE("    Connection ID 0x%04x", param->connect.conn_id);
+                _connectionHandle = param->connect.conn_id;
                 esp_ble_conn_update_params_t conn_params;
                 memcpy(conn_params.bda, param->connect.remote_bda, sizeof(esp_bd_addr_t));
                 /* For the iOS system, please refer to Apple official documents about the BLE connection parameters restrictions. */
@@ -997,6 +1016,7 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
             TRACE_MESSAGE("ESP_GATTS_DISCONNECT_EVT, disconnect reason 0x%x", param->disconnect.reason);
             /* start advertising again when missing the connect */
             esp_ble_gap_start_advertising(GetInstance()->GetAdvertisingParameters());
+            _connectionHandle = 0xffff;
             GetInstance()->RaiseEvent(Esp32Interfaces::BlueTooth, BluetoothFunction::ClientDisconnectedEvent, StatusCodes::CompletedOk);
             break;
         case ESP_GATTS_OPEN_EVT:
@@ -1185,7 +1205,10 @@ void BluetoothRequestHandler::GAPEventHandler(esp_gap_ble_cb_event_t event, esp_
         case ESP_GAP_BLE_UPDATE_CONN_PARAMS_EVT: // 20
             TRACE_MESSAGE("ESP_GAP_BLE_UPDATE_CONN_PARAMS_EVT: GAP connection parameters successfully changed");
             break;
-        case ESP_GAP_BLE_ADV_STOP_COMPLETE_EVT:  // 7
+        case ESP_GAP_BLE_SET_PKT_LENGTH_COMPLETE_EVT:
+            TRACE_MESSAGE("ESP_GAP_BLE_SET_PKT_LENGTH_COMPLETE_EVT");
+            break;
+        case ESP_GAP_BLE_ADV_STOP_COMPLETE_EVT: // 7
             TRACE_MESSAGE("ESP_GAP_BLE_ADV_STOP_COMPLETE_EVT");
             if (param->adv_stop_cmpl.status != ESP_BT_STATUS_SUCCESS)
             {

@@ -94,6 +94,11 @@ private:
     static esp_gatt_if_t _gattsInterfaceHandle;
 
     /**
+     * @brief The handle that is assigned a connection when a device connects over Bluetooth.
+     */
+    static uint16_t _connectionHandle;
+
+    /**
      * @brief Hold the manufacturer data for these service.
      */
     static uint8_t _manufacturerData[2];
