@@ -417,6 +417,8 @@ TEST_CASE("Notify characteristic (MeadowC, no company identifier)", CLASS_OF_TES
     TEST_ASSERT_EQUAL(BluetoothFunction::ServerDataSet, response->Function);
     TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
 
+    TEST_ASSERT_EQUAL(0, messageDispatcher->OutboundMessageQueueLength());
+
     if (_generateHeapTraceData)
     {
         vTaskDelay(10000 / portTICK_PERIOD_MS);
