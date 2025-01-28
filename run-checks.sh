@@ -60,6 +60,7 @@ SOURCE_DIR=$scriptdir
 COMPONENTS_DIR=$SOURCE_DIR/components/F7Services
 
 echo "Running cppcheck"
+
 cppcheck --error-exitcode=1 --quiet --check-level=exhaustive --force --inline-suppr -iCMakeLists.txt -icomponents/esp_littlefs -ibuild .
 
 echo "Running clang-format"
