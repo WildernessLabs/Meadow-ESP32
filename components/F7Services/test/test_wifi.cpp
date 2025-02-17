@@ -308,7 +308,7 @@ TEST_CASE("Connect to access point", CLASS_OF_TESTS)
         Message::DeleteMessage(response);
         WaitForResponse(messageDispatcher, timeout);
     }
-    printf("Test completeed.\n");
+    printf("Test completed.\n");
     TEST_ASSERT_TRUE(connectedEvent);
     TEST_ASSERT_TRUE(connectionResult);
     TEST_ASSERT_EQUAL(0, messageDispatcher->OutboundMessageQueueLength());
@@ -409,4 +409,135 @@ TEST_CASE("Connect to non-existant access point", CLASS_OF_TESTS)
     //
     delete wifiRequestHandler;
     delete messageDispatcher;
+}
+
+#define BUFFER_SIZE 4096
+/**
+ * @brief Cycle through a list of large files on a web server and download them.
+ * 
+ * @note This test is here to establish baseline statistics for ESP32 download speed.
+ */
+TEST_CASE("Speed test (1 - 9 MB files)", CLASS_OF_TESTS)
+{
+    NvsManager::Setup();
+
+    MockMessageDispatcher *messageDispatcher = new MockMessageDispatcher(nullptr);
+    TEST_ASSERT_NOT_NULL(messageDispatcher);
+
+    WiFiRequestHandler *wifiRequestHandler = new WiFiRequestHandler(messageDispatcher);
+    TEST_ASSERT_NOT_NULL(wifiRequestHandler);
+    wifiRequestHandler->Setup();
+
+    Message *connectToAccessPoint = CreateConnectToAccessPointMessage(WIFI_NETWORK, WIFI_PASSWORD);
+
+    WiFiRequestHandlerTestFriend *wifiRequestHandlerTestFriend = new WiFiRequestHandlerTestFriend(wifiRequestHandler);
+    StatusCodes::StatusCodes result = wifiRequestHandlerTestFriend->SetAutomaticReconnect(true);
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, result);
+    wifiRequestHandlerTestFriend->ConnectToAccessPoint(connectToAccessPoint);
+    uint32_t timeout = WiFiRequestHandler::GetWiFiTimeout() + 10;
+    WaitForResponse(messageDispatcher, timeout);
+    bool connectedEvent = false;
+    bool connectionResult = false;
+    unsigned count = 0;
+    while ((messageDispatcher->OutboundMessageQueueLength() > 0) && !(connectedEvent && connectionResult) && (count < 10))
+    {
+        count++;
+        Message *response = messageDispatcher->GetOutboundMessage();
+        printf("Message: MessageType %d, Function %d, Interface %d, StatusCode %d\n", (int) response->MessageType, (int) response->Function, (int) response->Interface, (int) response->StatusCode);
+        TEST_ASSERT_EQUAL(Esp32Interfaces::WiFi, response->Interface);
+        TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
+        if ((response->MessageType != MessageTypes::Response) && (response->MessageType != MessageTypes::Event))
+        {
+            TEST_FAIL_MESSAGE("Unexpected message type in the outbound queue.");
+        }
+        switch (response->Function)
+        {
+            case WiFiFunction::ConnectToAccessPoint:
+                TEST_ASSERT_EQUAL(response->MessageType, MessageTypes::Response);
+                connectionResult = true;
+                break;
+            case WiFiFunction::NetworkConnectingEvent:
+                TEST_ASSERT_EQUAL(response->MessageType, MessageTypes::Event);
+                break;
+            case WiFiFunction::NetworkConnectedEvent:
+                TEST_ASSERT_EQUAL(response->MessageType, MessageTypes::Event);
+                connectedEvent = true;
+                break;
+            default:
+                TEST_FAIL_MESSAGE("Unexpected function in the outbound queue.");
+                break;
+        }
+        Message::DeleteMessage(response);
+        WaitForResponse(messageDispatcher, timeout);
+    }
+
+    int sockfd;
+    struct sockaddr_in server_addr;
+    char *buffer;
+    ssize_t bytes_received;
+    char file_name[100];
+
+    for (int index = 1; index < 10; index++)
+    {
+        snprintf(file_name, sizeof(file_name), "GET /LargeFile%d.html HTTP/1.1\r\nHost: " WEB_SERVER_IP_ADDRESS "\r\nConnection: close\r\n\r\n", index);
+        time_t start;
+        time(&start);
+
+        sockfd = socket(AF_INET, SOCK_STREAM, 0);
+        if (sockfd < 0)
+        {
+            TEST_FAIL();
+        }
+    
+        memset(&server_addr, 0, sizeof(server_addr));
+        server_addr.sin_family = AF_INET;
+        server_addr.sin_port = htons(SERVER_PORT);
+        if (inet_pton(AF_INET, SERVER_IP, &server_addr.sin_addr) <= 0)
+        {
+            close(sockfd);
+            TEST_FAIL();
+        }
+    
+        if (connect(sockfd, (struct sockaddr *) &server_addr, sizeof(server_addr)) < 0)
+        {
+            close(sockfd);
+            TEST_FAIL();
+        }
+    
+        if (send(sockfd, file_name, strlen(file_name), 0) < 0)
+        {
+            close(sockfd);
+            TEST_FAIL();
+        }
+    
+        int total_bytes = 0;
+        buffer = (char *) malloc(BUFFER_SIZE);
+        if (buffer == NULL)
+        {
+            close(sockfd);
+            TEST_FAIL();
+        }
+    
+        while ((bytes_received = recv(sockfd, buffer, BUFFER_SIZE - 1, 0)) > 0)
+        {
+            total_bytes += bytes_received;
+        }
+
+        free(buffer);
+    
+        if (bytes_received < 0)
+        {
+            TEST_FAIL();
+        }
+        
+        close(sockfd);
+    
+        time_t end;
+        time(&end);
+        double seconds = difftime(end, start);
+
+        printf("File downloaded successfully as LargeFile%d.html\n", index);
+        printf("Downloaded %d bytes in %.2f seconds\n", total_bytes, seconds);
+    }
+    TEST_PASS();
 }
