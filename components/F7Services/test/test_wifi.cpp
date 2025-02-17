@@ -493,7 +493,7 @@ TEST_CASE("Speed test (1 - 9 MB files)", CLASS_OF_TESTS)
         memset(&server_addr, 0, sizeof(server_addr));
         server_addr.sin_family = AF_INET;
         server_addr.sin_port = htons(SERVER_PORT);
-        if (inet_pton(AF_INET, SERVER_IP, &server_addr.sin_addr) <= 0)
+        if (inet_pton(AF_INET, WEB_SERVER_IP_ADDRESS, &server_addr.sin_addr) <= 0)
         {
             close(sockfd);
             TEST_FAIL();
