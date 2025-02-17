@@ -412,9 +412,10 @@ TEST_CASE("Connect to non-existant access point", CLASS_OF_TESTS)
 }
 
 #define BUFFER_SIZE 4096
+
 /**
  * @brief Cycle through a list of large files on a web server and download them.
- * 
+ *
  * @note This test is here to establish baseline statistics for ESP32 download speed.
  */
 TEST_CASE("Speed test (1 - 9 MB files)", CLASS_OF_TESTS)
@@ -488,7 +489,7 @@ TEST_CASE("Speed test (1 - 9 MB files)", CLASS_OF_TESTS)
         {
             TEST_FAIL();
         }
-    
+
         memset(&server_addr, 0, sizeof(server_addr));
         server_addr.sin_family = AF_INET;
         server_addr.sin_port = htons(SERVER_PORT);
@@ -497,19 +498,19 @@ TEST_CASE("Speed test (1 - 9 MB files)", CLASS_OF_TESTS)
             close(sockfd);
             TEST_FAIL();
         }
-    
+
         if (connect(sockfd, (struct sockaddr *) &server_addr, sizeof(server_addr)) < 0)
         {
             close(sockfd);
             TEST_FAIL();
         }
-    
+
         if (send(sockfd, file_name, strlen(file_name), 0) < 0)
         {
             close(sockfd);
             TEST_FAIL();
         }
-    
+
         int total_bytes = 0;
         buffer = (char *) malloc(BUFFER_SIZE);
         if (buffer == NULL)
@@ -517,21 +518,21 @@ TEST_CASE("Speed test (1 - 9 MB files)", CLASS_OF_TESTS)
             close(sockfd);
             TEST_FAIL();
         }
-    
+
         while ((bytes_received = recv(sockfd, buffer, BUFFER_SIZE - 1, 0)) > 0)
         {
             total_bytes += bytes_received;
         }
 
         free(buffer);
-    
+
         if (bytes_received < 0)
         {
             TEST_FAIL();
         }
-        
+
         close(sockfd);
-    
+
         time_t end;
         time(&end);
         double seconds = difftime(end, start);
