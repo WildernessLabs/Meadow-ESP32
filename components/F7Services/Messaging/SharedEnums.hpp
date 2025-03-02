@@ -1775,4 +1775,112 @@ namespace Esp32LogDestination
     };
 } // namespace Esp32LogDestination
 
+/**
+ * @brief Possible Bluetooth IO capabilities
+ */
+namespace BluetoothIOCapabilities
+{
+    /**
+     * @brief Possible IO Capabilities.
+     */
+    enum Capabilities : uint8_t {
+        /**
+         * @brief Device has a display only.
+         */
+        DisplayOnly = 0x00,
+
+        /**
+         * @brief Device can display Yes / No only.
+         */
+        DisplayYesNo = 0x01,
+
+        /**
+         * @brief Device has a keyboard only.
+         */
+        KeyboardOnly = 0x02,
+
+        /**
+         * @brief Device has no IO capability (default).
+         */
+        NoInputNoOutput = 0x03,
+
+        /**
+         * @brief Device has a keyboard and a display.
+         */
+        KeyboardDisplay = 0x04
+    };
+} // namespace BluetoothIOCapabilities
+
+/**
+ * @brief Bluetooth bonding options.
+ */
+namespace BluetoothBondingOptions
+{
+    /**
+     * @brief Possible bonding options.
+     */
+    enum BondingOptions : uint8_t {
+        /**
+         * @brief No bonding required.
+         */
+        NoBonding = 0x00,
+
+        /**
+         * @brief Bonding required.
+         */
+        Bonding = 0x01
+    };
+} // namespace BluetoothBondingOptions
+
+/**
+ * @brief Bluetooth authorisation requirements.
+ */
+namespace BluetoothAuthorisationRequirements
+{
+    /**
+     * @brief Possible authorisation requirements.
+     */
+    enum AuthorisationRequirements : uint8_t {
+        /**
+         * @brief No authorisation required.
+         */
+        NoBonding = BluetoothBondingOptions::NoBonding,
+
+        /**
+         * @brief Authorisation required.
+         */
+        Bonding = BluetoothBondingOptions::Bonding,
+
+        /**
+         * @brief Man in the middle protection.
+         */
+        ManInTheMiddle = (1 << 2),
+
+        /**
+         * @brief Bonding and man in the middle protection.
+         */
+        ManInTheMiddleWithBonding = (Bonding | ManInTheMiddle),
+
+        /**
+         * @brief Secure connection only.
+         */
+        SecureConnectionOnly = (1 << 3),
+
+        /**
+         * @brief Secure connection with bonding.
+         */
+        SecureConnectionWithBonding = (Bonding | SecureConnectionOnly),
+
+        /**
+         * @brief Secure connection with man in the middle protection.
+         */
+        SecureConnectionWithManInTheMiddle = (ManInTheMiddle | SecureConnectionOnly),
+
+        /**
+         * @brief Secure connection with man in the middle protection and bonding.
+         */
+        SecureConnectionWithManInTheMiddleAndBonding = (ManInTheMiddle | SecureConnectionOnly | Bonding)
+    };
+} // namespace BluetoothAuthorisationRequirements
+
 #endif /* _SHARED_ENUMS_HPP */

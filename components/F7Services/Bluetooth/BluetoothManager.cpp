@@ -11,10 +11,6 @@
 #include "BluetoothManager.hpp"
 #include "BluetoothComponentName.hpp"
 
-#include "../rapidjson/document.h"
-
-using namespace rapidjson;
-
 /*
  * ----------------------------------------------------------------------------
  *
@@ -338,6 +334,24 @@ bool BluetoothManager::DeleteAllServices()
 }
 
 /**
+ * @brief Get the integer value for the specified JSON node.
+ *
+ * @param document JSON document.
+ * @param node Node name.
+ * @param defaultValue Default value to be used if the node is not found.
+ *
+ * @return int Integer value for the node (if found) or the default value.
+ */
+int32_t BluetoothManager::GetJsonIntValue(Document &document, const char *node, int defaultValue)
+{
+    if (document.HasMember(node))
+    {
+        return document[node].GetInt();
+    }
+    return defaultValue;
+}
+
+/**
  * @brief Build the graph of services, characteristics and descriptors from a pointer toJSON configuration.
  *
  * @param cfg_json JSON version of the service configuration.
@@ -353,16 +367,17 @@ void BluetoothManager::BuildGraphFromJson(char *cfg_json)
     strcpy(_deviceName, deviceName.GetString());
     TRACE_MESSAGE("Device Name = %s", _deviceName);
 
-    if (doc.HasMember("companyIdentifier"))
-    {
-        auto companyIdentifier = (uint16_t) doc["companyIdentifier"].GetInt();
-        TRACE_MESSAGE("   companyIdentifier = 0x%04x", companyIdentifier);
-        _companyIdentifier = companyIdentifier;
-    }
-    else
-    {
-        _companyIdentifier = 0xffff;
-    }
+    //
+    //  It is assumed that the values passed here have already been verified by the managed layer (i.e. Meadow.Core).
+    //
+    _companyIdentifier = GetJsonIntValue(doc, "companyIdentifier", 0xffff);
+    _passKey = GetJsonIntValue(doc, "passKey", 0);
+    _ioCapabilities = (BluetoothIOCapabilities::Capabilities) GetJsonIntValue(doc, "ioCapabilities", 0x03);
+    _authorisationRequirements = (BluetoothAuthorisationRequirements::AuthorisationRequirements) GetJsonIntValue(doc, "authorisationRequirements", 0);
+    TRACE_MESSAGE("    companyIdentifier = 0x%04x", _companyIdentifier);
+    TRACE_MESSAGE("    passKey = %06" PRIu32, _passKey);
+    TRACE_MESSAGE("    ioCapabilities = 0x%02x", _ioCapabilities);
+    TRACE_MESSAGE("    authorisationRequirements = 0x%02x", _authorisationRequirements);
 
     const Value &svc_list = doc["services"];
     for (auto i = 0; i < svc_list.Size(); i++)

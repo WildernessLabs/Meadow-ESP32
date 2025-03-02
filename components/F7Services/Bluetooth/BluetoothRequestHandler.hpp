@@ -103,8 +103,14 @@ private:
      */
     static uint8_t _manufacturerData[2];
 
+    /**
+     * @brief Indicate if we have configured the advertising data.
+     */
     static bool _advertisingDataConfigured;
 
+    /**
+     * @brief Dummy UUID for the advertising service.  This is taken from the ESP-IDF examples.
+     */
     static uint8_t _dummyAdvertisingServiceUuid[ADVERTISING_SERVICE_UUID_LENGTH];
 
     /**
@@ -115,7 +121,7 @@ private:
     /**
      * @brief Table of attributes in the GATT database.
      */
-    esp_gatts_attr_db_t *_attribute_table;
+    esp_gatts_attr_db_t *_attributeTable;
 
     /**
      * @brief Number of elements in the attribute table.
@@ -136,6 +142,21 @@ private:
      * @brief Advertising response data.
      */
     esp_ble_adv_data_t _scanResponseData;
+
+    /**
+     * @brief Pass key for bluetooth pairing.
+     */
+    static uint32_t _passKey;
+
+    /**
+     * @brief Bluetooth IO capabilites for the device.
+     */
+    static BluetoothIOCapabilities::Capabilities _ioCapabilities;
+
+    /**
+     * @brief Bluetooth authorisation requirements.
+     */
+    static BluetoothAuthorisationRequirements::AuthorisationRequirements _authorisationRequirements;
 
     /**
      *  This method will dispatch incoming messages to the appropriate request handler.

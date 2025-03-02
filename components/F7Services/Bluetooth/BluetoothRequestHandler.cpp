@@ -95,6 +95,23 @@ uint8_t BluetoothRequestHandler::_dummyAdvertisingServiceUuid[ADVERTISING_SERVIC
  */
 static const uint16_t primary_service_uuid = ESP_GATT_UUID_PRI_SERVICE;
 
+/**
+ * @brief Pass key for Bluetooth pairing.
+ *
+ * @note This is a six digit number, so in the range 000000 to 999999.
+ */
+uint32_t BluetoothRequestHandler::_passKey = 0;
+
+/**
+ * @brief IO capabilities for the device.
+ */
+BluetoothIOCapabilities::Capabilities BluetoothRequestHandler::_ioCapabilities = BluetoothIOCapabilities::Capabilities::NoInputNoOutput;
+
+/**
+ * @brief Bluetooth authorisation requirements.
+ */
+BluetoothAuthorisationRequirements::AuthorisationRequirements BluetoothRequestHandler::_authorisationRequirements = BluetoothAuthorisationRequirements::AuthorisationRequirements::NoBonding;
+
 /*
  * ----------------------------------------------------------------------------
  *
@@ -115,6 +132,8 @@ BluetoothRequestHandler::BluetoothRequestHandler()
     else
     {
         _instantiated = true;
+        _attributeTable = nullptr;
+        _attributeTableLength = 0;
     }
 }
 
@@ -247,7 +266,7 @@ void BluetoothRequestHandler::GenerateAdvertisingData()
  */
 esp_gatts_attr_db_t *BluetoothRequestHandler::GetAttributeTable()
 {
-    return _attribute_table;
+    return _attributeTable;
 }
 
 /**
@@ -336,7 +355,7 @@ void BluetoothRequestHandler::GenerateAttributeTable()
 
     TRACE_MESSAGE("ATTRIBUTE TABLE LENGTH = %d", count);
 
-    _attribute_table = new esp_gatts_attr_db_t[count];
+    _attributeTable = new esp_gatts_attr_db_t[count];
     _attributeTableLength = count;
 
     auto index = 0;
@@ -344,14 +363,14 @@ void BluetoothRequestHandler::GenerateAttributeTable()
     {
         TRACE_MESSAGE("ATTRIBUTE TABLE SERVICE AT %d ", index);
         // service attribute - all services are primary for now
-        _attribute_table[index++] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *) &primary_service_uuid, ESP_GATT_PERM_READ, sizeof(uint16_t), sizeof(svc->Uuid), (uint8_t *) &svc->Uuid}};
+        _attributeTable[index++] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *) &primary_service_uuid, ESP_GATT_PERM_READ, sizeof(uint16_t), sizeof(svc->Uuid), (uint8_t *) &svc->Uuid}};
 
         TRACE_MESSAGE("CONTAINS %d CHARACTERISTICS", svc->GetCharacteristicDefinitions().size());
         for (const auto &characteristic: svc->GetCharacteristicDefinitions())
         {
             TRACE_MESSAGE("ATTRIBUTE TABLE DECLARATION AT %d", index);
             // declaration attribute
-            _attribute_table[index++] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *) &characteristic->Declaration->Uuid, (uint16_t) characteristic->Declaration->Permission, CHAR_DECLARATION_SIZE, CHAR_DECLARATION_SIZE, (uint8_t *) &characteristic->Declaration->Properties}};
+            _attributeTable[index++] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *) &characteristic->Declaration->Uuid, (uint16_t) characteristic->Declaration->Permission, CHAR_DECLARATION_SIZE, CHAR_DECLARATION_SIZE, (uint8_t *) &characteristic->Declaration->Properties}};
 
             TRACE_MESSAGE("ATTRIBUTE TABLE VALUE AT %d", index);
             // value attribute
@@ -359,11 +378,11 @@ void BluetoothRequestHandler::GenerateAttributeTable()
             // data in the parameter database.  We need to call to the STM for data, so this is sensible.
             if (characteristic->Value->Is128())
             {
-                _attribute_table[index++] = {{ESP_GATT_RSP_BY_APP}, {ESP_UUID_LEN_128, (uint8_t *) &characteristic->Value->uuid128, (uint16_t) characteristic->Value->Permission, characteristic->Value->MaxLength, 0, NULL}}; // <- 0, NULL means "current value length is 0, current value data is null"
+                _attributeTable[index++] = {{ESP_GATT_RSP_BY_APP}, {ESP_UUID_LEN_128, (uint8_t *) &characteristic->Value->uuid128, (uint16_t) characteristic->Value->Permission, characteristic->Value->MaxLength, 0, NULL}}; // <- 0, NULL means "current value length is 0, current value data is null"
             }
             else
             {
-                _attribute_table[index++] = {{ESP_GATT_RSP_BY_APP}, {ESP_UUID_LEN_16, (uint8_t *) &characteristic->Value->uuid16, (uint16_t) characteristic->Value->Permission, characteristic->Value->MaxLength, 0, NULL}}; // <- 0, NULL means "current value length is 0, current value data is null"
+                _attributeTable[index++] = {{ESP_GATT_RSP_BY_APP}, {ESP_UUID_LEN_16, (uint8_t *) &characteristic->Value->uuid16, (uint16_t) characteristic->Value->Permission, characteristic->Value->MaxLength, 0, NULL}}; // <- 0, NULL means "current value length is 0, current value data is null"
             }
 
             for (const auto &descriptor: characteristic->GetDescriptorDefinitions())
@@ -371,11 +390,11 @@ void BluetoothRequestHandler::GenerateAttributeTable()
                 TRACE_MESSAGE("ATTRIBUTE TABLE DESCRIPTOR AT %d", index);
                 if (descriptor->Is128())
                 {
-                    _attribute_table[index++] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_128, (uint8_t *) &descriptor->uuid128, (uint16_t) descriptor->Permission, descriptor->MaxLength, descriptor->CurrentLength, (uint8_t *) descriptor->Value}};
+                    _attributeTable[index++] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_128, (uint8_t *) &descriptor->uuid128, (uint16_t) descriptor->Permission, descriptor->MaxLength, descriptor->CurrentLength, (uint8_t *) descriptor->Value}};
                 }
                 else
                 {
-                    _attribute_table[index++] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *) &descriptor->uuid16, (uint16_t) descriptor->Permission, descriptor->MaxLength, descriptor->CurrentLength, (uint8_t *) descriptor->Value}};
+                    _attributeTable[index++] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *) &descriptor->uuid16, (uint16_t) descriptor->Permission, descriptor->MaxLength, descriptor->CurrentLength, (uint8_t *) descriptor->Value}};
                 }
             }
         }
@@ -647,19 +666,14 @@ bool BluetoothRequestHandler::StartBluetoothService()
         ERROR_MESSAGE("Set local  MTU failed, error code = %x", local_mtu_ret);
     }
 
-    /* set the security iocap & auth_req & key size & init key response key parameters to the stack*/
-    esp_ble_auth_req_t auth_req = ESP_LE_AUTH_REQ_SC_MITM_BOND; // bonding with peer device after authentication
-    esp_ble_io_cap_t iocap = ESP_IO_CAP_NONE;                   // set the IO capability to No output No input
-    uint8_t key_size = 16;                                      // the key size should be 7~16 bytes
+    uint8_t key_size = 16;
     uint8_t init_key = ESP_BLE_ENC_KEY_MASK | ESP_BLE_ID_KEY_MASK;
     uint8_t rsp_key = ESP_BLE_ENC_KEY_MASK | ESP_BLE_ID_KEY_MASK;
-    // set static passkey
-    uint32_t passkey = 123456;
     uint8_t auth_option = ESP_BLE_ONLY_ACCEPT_SPECIFIED_AUTH_DISABLE;
     uint8_t oob_support = ESP_BLE_OOB_DISABLE;
-    esp_ble_gap_set_security_param(ESP_BLE_SM_SET_STATIC_PASSKEY, &passkey, sizeof(uint32_t));
-    esp_ble_gap_set_security_param(ESP_BLE_SM_AUTHEN_REQ_MODE, &auth_req, sizeof(uint8_t));
-    esp_ble_gap_set_security_param(ESP_BLE_SM_IOCAP_MODE, &iocap, sizeof(uint8_t));
+    esp_ble_gap_set_security_param(ESP_BLE_SM_SET_STATIC_PASSKEY, &BluetoothRequestHandler::_passKey, sizeof(uint32_t));
+    esp_ble_gap_set_security_param(ESP_BLE_SM_AUTHEN_REQ_MODE, &BluetoothRequestHandler::_authorisationRequirements, sizeof(uint8_t));
+    esp_ble_gap_set_security_param(ESP_BLE_SM_IOCAP_MODE, &BluetoothRequestHandler::_ioCapabilities, sizeof(uint8_t));
     esp_ble_gap_set_security_param(ESP_BLE_SM_MAX_KEY_SIZE, &key_size, sizeof(uint8_t));
     esp_ble_gap_set_security_param(ESP_BLE_SM_ONLY_ACCEPT_SPECIFIED_SEC_AUTH, &auth_option, sizeof(uint8_t));
     esp_ble_gap_set_security_param(ESP_BLE_SM_OOB_SUPPORT, &oob_support, sizeof(uint8_t));
@@ -841,6 +855,9 @@ void BluetoothRequestHandler::Start(Message *request)
     vPortFree(config->Config);
     vPortFree(config);
 
+    BluetoothRequestHandler::_authorisationRequirements = _manager.GetAuthorisationRequirements();
+    BluetoothRequestHandler::_ioCapabilities = _manager.GetIOCapabilities();
+    BluetoothRequestHandler::_passKey = _manager.GetPassKey();
     GenerateAdvertisingData();
     GenerateAttributeTable();
     if (StartBluetoothService())

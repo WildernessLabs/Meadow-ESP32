@@ -9,13 +9,17 @@
 #ifndef _BLUETOOTH_MANAGER_HPP_
 #define _BLUETOOTH_MANAGER_HPP_
 
+#include "SharedEnums.hpp"
 #include "BluetoothServiceCollection.hpp"
 #include "BluetoothAttribute.hpp"
 #include "BluetoothHandleManager.hpp"
 #include <vector>
 #include <map>
 
+#include "../rapidjson/document.h"
+
 using namespace std;
+using namespace rapidjson;
 
 /**
  * @brief Class holding the data and methods for the BluetoothManager.
@@ -74,9 +78,29 @@ private:
     static void HandleDescriptorAdded(BluetoothDescriptor *);
 
     /**
+     * @brief Get the value for the specified node in the JSON document.
+     */
+    static int32_t GetJsonIntValue(Document &document, const char *node, int defaultValue);
+
+    /**
      * @brief 16-bit assigned number for the company identifier.
      */
     uint16_t _companyIdentifier;
+
+    /**
+     * @brief Authorisation requirements for the device.
+     */
+    BluetoothAuthorisationRequirements::AuthorisationRequirements _authorisationRequirements;
+
+    /**
+     * @brief Passkey for the device.
+     */
+    uint32_t _passKey;
+
+    /**
+     * @brief Input / output capabilities for the device.
+     */
+    BluetoothIOCapabilities::Capabilities _ioCapabilities;
 
 public:
     /**
@@ -120,6 +144,30 @@ public:
     uint16_t GetCompanyIdentifier()
     {
         return _companyIdentifier;
+    }
+
+    /**
+     * @brief Get the Authorisation Requirements object
+     */
+    BluetoothAuthorisationRequirements::AuthorisationRequirements GetAuthorisationRequirements()
+    {
+        return _authorisationRequirements;
+    }
+
+    /**
+     * @brief Get the pass key for the device.
+     */
+    uint32_t GetPassKey()
+    {
+        return _passKey;
+    }
+
+    /**
+     * @brief Get the IO capabilities for the device.
+     */
+    BluetoothIOCapabilities::Capabilities GetIOCapabilities()
+    {
+        return _ioCapabilities;
     }
 
     /**
