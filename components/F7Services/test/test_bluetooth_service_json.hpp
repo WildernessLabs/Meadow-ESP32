@@ -138,6 +138,46 @@ const char *meadow_f7_json = R"({
 })";
 
 //
+//  The following three fragments of a service definition are designed to allow the dynamic
+//  creation of a service defintion for a Meadow F7 Bluetooth service.
+//
+//  The first fragment defines the basic device properties.  The next properties are missing
+//  here and can be dynamically added to the JSON.  The missing fragments are:
+//      - passKey
+//      - ioCapabilities
+//      - authorisationRequirements
+//
+const char *meadow_f7_service_header = R"({
+    "deviceName":"MeadowF7",
+    "companyIdentifier":741,
+)";
+
+//
+//  The next section will contain the characteristic definition.  The first part of the
+//  definition is as follows and should be followed by the permissions property.
+//
+const char *characteristic_start = R"(    "services": [
+        {
+            "name":"GattService",
+            "uuid":253,
+            "characteristics": [
+                {
+                    "uuid":"019e99d6-8a61-11eb-8dcd-0242ac1300cc",
+)";
+
+//
+//  The final part of the characteristic definition is as follows:
+//
+const char *characteristic_end = R"(
+                    "props":10,
+                    "len":4
+                }
+            ]
+        }
+    ]
+})";
+
+//
 //  The JSON below causes a problem with the Descriptor processing, error:
 // I (3121) BTDM_INIT: BT controller compile version [3bf7ef0]
 // I (3121) BTDM_INIT: Bluetooth MAC: 84:0d:8e:18:5b:0a

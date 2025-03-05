@@ -606,9 +606,9 @@ TEST_CASE("Restart Bluetooth Service 50 times (Execution time ~4-5 minutes)", CL
         heap_trace_start(HEAP_TRACE_LEAKS);
     }
 
-    for (int counter = 0; counter < 50; counter++)
+    for (uint32_t counter = 0; counter < 50; counter++)
     {
-        printf("Iteration %d\n", counter);
+        printf("Iteration %" PRIu32 "\n", counter);
         StartBlueToothService(meadow_a_json);
         vTaskDelay(1000 / portTICK_PERIOD_MS);
 
@@ -684,7 +684,8 @@ TEST_CASE("Soak test writing numeric characteristic, number of iterations contro
     //      - 018e99d6-8a61-11eb-8dcd-0242ac1300bb (NumberField)
     //      - 019e99d6-8a61-11eb-8dcd-0242ac1300cc (TextField)
     //
-    __attribute__((unused)) uint8_t *payload = response->Payload;
+    //  cppcheck-suppress-begin unreadVariable
+    __attribute__((unused)) uint8_t const *payload = response->Payload;
     __attribute__((unused)) uint16_t handle_count = Encoders::ExtractUInt16(response->Payload);
     __attribute__((unused)) uint32_t handles_length = Encoders::ExtractUInt32(response->Payload + 2);
     __attribute__((unused)) uint16_t number_of_handles = Encoders::ExtractUInt16(response->Payload + 6);
@@ -697,6 +698,7 @@ TEST_CASE("Soak test writing numeric characteristic, number of iterations contro
     __attribute__((unused)) uint16_t number_field_value_handle = Encoders::ExtractUInt16(response->Payload + 18);
     __attribute__((unused)) uint16_t text_field_declaration_handle = Encoders::ExtractUInt16(response->Payload + 20);
     __attribute__((unused)) uint16_t text_field_value_handle = Encoders::ExtractUInt16(response->Payload + 22);
+    //  cppcheck-suppress-end unreadVariable
     message.DeletePayload();
 
     printf("Start the client application within the next 60 seconds\n");
@@ -722,7 +724,7 @@ TEST_CASE("Soak test writing numeric characteristic, number of iterations contro
         iteration++;
         if ((iteration % 100 == 0) || (iteration < 10))
         {
-            printf("    Iteration %lu\n", iteration);
+            printf("    Iteration %" PRIu32 "\n", iteration);
         }
         //
         // Wait for a change in the number characteristic.
@@ -817,4 +819,64 @@ TEST_CASE("Soak test writing numeric characteristic, number of iterations contro
         vTaskDelay(10000 / portTICK_PERIOD_MS);
         heap_trace_stop();
     }
+}
+
+/**
+ * @brief Take the three elements of a service defintion and use these along with the values here
+ *        to build a service definition.
+ * 
+ * @param buffer Pointer to the buffer holding the service definition.
+ * @param passKey Pass key for the service.
+ * @param ioCapabilities IO capabilities for the service.
+ * @param authorisationRequirements Authorisation requirements for the service.
+ * @param characteristicPermissions Permissions for the characteristics in the service.
+ * 
+ * @note It is assumed that the buffer is large enough to hold the service defintion.
+ */
+void BuildServiceDefinition(char *buffer, int passKey, int ioCapabilities, int authorisationRequirements, int characteristicPermissions)
+{
+    char *next = buffer;
+
+    strcpy(next, meadow_f7_service_header);
+    next += strlen(meadow_f7_service_header);
+    if (passKey >= 0)
+    {
+        sprintf(next, "    \"passKey\":%d", passKey);
+        next = buffer + strlen(buffer);
+    }
+    if (ioCapabilities >= 0)
+    {
+        sprintf(next, ",\n    \"ioCapabilities\":%d", ioCapabilities);
+        next = buffer + strlen(buffer);
+    }
+    if (authorisationRequirements >= 0)
+    {
+        sprintf(next, ",\n    \"authorisationRequirements\":%d", authorisationRequirements);
+        next = buffer + strlen(buffer);
+    }
+    strcat(next, characteristic_start);
+    next = buffer + strlen(buffer);
+    if (characteristicPermissions < 0)
+    {
+        characteristicPermissions = 17;
+    }
+    sprintf(next, "                    \"permission\":%d,", characteristicPermissions);
+    next = buffer + strlen(buffer);
+    strcat(next, characteristic_end);
+}
+
+/**
+ * @brief Deploy a Bluetooth service with no IO capabilities and no bonding.
+ */
+TEST_CASE("No IO Capability, No Bonding", CLASS_OF_TESTS)
+{
+    char *buffer = static_cast<char *>(pvPortMalloc(1024));
+    TEST_ASSERT_NOT_NULL(buffer);
+
+    BuildServiceDefinition(buffer, -1, -1, -1, -1);
+    printf("%s\n", buffer);
+
+    TEST_ASSERT_NOT_NULL(SetupMessageDispatcher());
+    StartBlueToothService(buffer);
+    vPortFree(buffer);
 }
