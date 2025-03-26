@@ -51,15 +51,13 @@ const char *FileSystem::PARTITION_LABEL = "littlefs";
 /**
  * @brief Construct a new FileSystem object (Private)
  */
-FileSystem::FileSystem()
+FileSystem::FileSystem() : _config {}
 {
     _messageDispatcher = nullptr;
-    _config = {
-        .base_path = PARTITION_PATH_NAME,
-        .partition_label = PARTITION_LABEL,
-        .format_if_mount_failed = true,
-        .dont_mount = false,
-    };
+    _config.base_path = PARTITION_PATH_NAME;
+    _config.partition_label = PARTITION_LABEL;
+    _config.format_if_mount_failed = true;
+    _config.dont_mount = false;
 }
 
 /**
