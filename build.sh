@@ -44,6 +44,7 @@ DEBUG_SELECTIONS=""
 TEST_SELECTIONS=""
 FLASH=false
 GENERATE_SBOM=false
+BUILD=false
 
 #
 #   Work out which options are on the command line.
@@ -58,6 +59,7 @@ case $i in
     VERBOSE=false
     ;;
     -b|--build)
+    BUILD=true
     IDF_FLAGS+=" build"
     ;;
     -c|--clean)
@@ -357,11 +359,14 @@ if $GENERATE_SBOM; then
   esp-idf-sbom check $scriptdir/sbom/MeadowComms.spdx -o $scriptdir/sbom/MeadowComms.txt
 fi
 
-#Generate checksums for binaries
-
-md5sum  $scriptdir/build/MeadowComms.bin | cut -d ' ' -f 1 > $scriptdir/build/MeadowComms.bin.md5
-md5sum  $scriptdir/build/bootloader/bootloader.bin | cut -d ' ' -f 1 > $scriptdir/build/bootloader/bootloader.bin.md5
-md5sum  $scriptdir/build/partition_table/partition-table.bin | cut -d ' ' -f 1 > $scriptdir/build/partition_table/partition-table.bin.md5
+#
+# Generate checksums for binaries
+#
+if $BUILD; then
+  md5sum  $scriptdir/build/MeadowComms.bin | cut -d ' ' -f 1 > $scriptdir/build/MeadowComms.bin.md5
+  md5sum  $scriptdir/build/bootloader/bootloader.bin | cut -d ' ' -f 1 > $scriptdir/build/bootloader/bootloader.bin.md5
+  md5sum  $scriptdir/build/partition_table/partition-table.bin | cut -d ' ' -f 1 > $scriptdir/build/partition_table/partition-table.bin.md5
+fi
 
 git checkout HEAD $scriptdir/main/build_info.template
 git checkout HEAD $scriptdir/version.txt
