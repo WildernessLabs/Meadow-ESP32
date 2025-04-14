@@ -96,3 +96,4 @@ components/F7Services/test/secrets.h
 *.svdat
 *.log
 Desktop/valgrind.txt
+sdkconfig
