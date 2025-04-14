@@ -1,0 +1,4 @@
+#
+#   Ensure that all users have automatic line ending conversion enabled.
+#
+* text=auto
