@@ -57,8 +57,11 @@ FileSystem::FileSystem()
     _config = {
         .base_path = PARTITION_PATH_NAME,
         .partition_label = PARTITION_LABEL,
+        .partition = NULL,
         .format_if_mount_failed = true,
+        .read_only = false,
         .dont_mount = false,
+        .grow_on_mount = true,
     };
 }
 
