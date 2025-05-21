@@ -36,7 +36,6 @@ set(SDKCONFIG_DEFAULTS ${SDKCONFIG_FILES})
 #
 #   Add extra components.
 #
-list(APPEND EXTRA_COMPONENT_DIRS components/esp_littlefs)
 list(APPEND EXTRA_COMPONENT_DIRS components/F7Services)
 
 #
