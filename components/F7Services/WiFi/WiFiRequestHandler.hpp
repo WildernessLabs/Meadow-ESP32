@@ -479,6 +479,11 @@ private:
      */
     ProgressiveDelay *_progressiveDelay;
 
+    /**
+     *  @brief Empty string for use when we need to pass a string but do not have one.
+     */
+    static char _emptyString[1];
+
     /*
      *  Private methods.
      */
