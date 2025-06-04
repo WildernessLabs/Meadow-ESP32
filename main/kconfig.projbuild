@@ -1,0 +1,14 @@
+menu "Meadow COMMS Project Build Configuration"
+
+    config ENABLE_DIAGNOSTIC_THREAD
+        bool "Enable diagnostic thread"
+        default n
+        help
+            This option enables the diagnostic thread for monitoring system performance.
+
+    config ENABLE_PERFORMANCE_LOGGING
+        bool "Enable performance logging"
+        default n
+        help
+            This option enables performance logging to track system metrics.
+endmenu
