@@ -17,7 +17,7 @@
 #include "SharedEnums.hpp"
 #include "Mapping.hpp"
 
-#if defined (FILE_SYSTEM_DEBUG)
+#if defined(FILE_SYSTEM_DEBUG)
     #pragma message "FileSystem.cpp: Debugging enabled"
 #endif
 
@@ -209,9 +209,9 @@ StatusCodes::StatusCodes FileSystem::Setup()
     StatusCodes::StatusCodes result;
     if (Mount())
     {
-        #if defined(FILE_SYSTEM_DEBUG)
-            ShowFiles();
-        #endif
+#if defined(FILE_SYSTEM_DEBUG)
+        ShowFiles();
+#endif
 
         result = StatusCodes::CompletedOk;
     }
