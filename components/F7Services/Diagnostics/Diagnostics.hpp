@@ -10,7 +10,13 @@
 #ifndef DIAGNOSTICS_HPP
 #define DIAGNOSTICS_HPP
 
+#include <sdkconfig.h>
+
 #include <stdint.h>
+#include <string>
+
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 
 class Diagnostics
 {
@@ -25,6 +31,14 @@ private:
      */
     static void ReportMemoryUsage();
     
+    /**
+     * @brief Report task information.
+     * 
+     * @param state Task state.
+     * @return Character representation of the task state.
+     */
+    static std::string TaskStateToString(eTaskState state);
+
     /**
      * @brief Report task information.
      */

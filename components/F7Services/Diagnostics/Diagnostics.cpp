@@ -11,6 +11,7 @@
 #include "sdkconfig.h"
 
 #include <inttypes.h>
+#include <string>
 
 #include "Diagnostics.hpp"
 #include "esp_system.h"
@@ -91,14 +92,16 @@ void Diagnostics::Thread(void *pvParameters)
     
     while (true)
     {
+        ESP_LOGI(COMPONENT_NAME, "");
         ESP_LOGI(COMPONENT_NAME, "=== System Diagnostics ===");
         
         ReportSystemUptime();
-        ReportMemoryUsage();
         ReportTaskInformation();
+        ReportMemoryUsage();
         ReportHeapInformation();
         
         ESP_LOGI(COMPONENT_NAME, "=== End Diagnostics ===");
+        ESP_LOGI(COMPONENT_NAME, "");
 
         vTaskDelay(pdMS_TO_TICKS(DIAGNOSTICS_INTERVAL_MS));
     }
@@ -134,16 +137,72 @@ void Diagnostics::ReportMemoryUsage()
 }
 
 /**
+ * @brief Convert the task state enum into a string.
+ *
+ * @param state Task state.
+ * @return string String representation of the task state.
+ */
+std::string Diagnostics::TaskStateToString(eTaskState state)
+{
+    switch (state)
+    {
+        case eTaskState::eRunning:
+            return("Running");
+        case eTaskState::eReady:
+            return("Ready");
+        case eTaskState::eBlocked:
+            return("Blocked");
+        case eTaskState::eSuspended:
+            return("Suspended");
+        case eTaskState::eDeleted:
+            return("Deleted");
+        default:
+            return("Unknown");
+    }
+}
+
+/**
  * @brief Report task information.
  */
 void Diagnostics::ReportTaskInformation()
 {
-    UBaseType_t task_count = uxTaskGetNumberOfTasks();
-    ESP_LOGI(COMPONENT_NAME, "Number of tasks: %u", task_count);
-    
-    // Get high water mark for this task
-    UBaseType_t stack_high_water_mark = uxTaskGetStackHighWaterMark(_diagnosticsTaskHandle);
-    ESP_LOGI(COMPONENT_NAME, "Diagnostics task stack high water mark: %" PRIu32 " bytes", (uint32_t) (stack_high_water_mark * sizeof(StackType_t)));
+    TaskStatus_t *tasks;
+    volatile UBaseType_t numberOfTasks;
+    unsigned long totalRunTime;
+
+    numberOfTasks = uxTaskGetNumberOfTasks();
+    if (!numberOfTasks)
+    {
+        ESP_LOGI(COMPONENT_NAME, "No running tasks.\n");
+    }
+    tasks = static_cast<TaskStatus_t *>(pvPortMalloc(numberOfTasks * sizeof(TaskStatus_t)));
+    if (tasks != NULL)
+    {
+        ESP_LOGI(COMPONENT_NAME, "ID  Task Name                        State     Priority Stack Watermark Run-time Percentage");
+        numberOfTasks = uxTaskGetSystemState(tasks, numberOfTasks, &totalRunTime);
+        totalRunTime /= 100UL;
+        for (int x = 0; x < numberOfTasks; x++)
+        {
+            unsigned long runTimePercentage;
+            if (totalRunTime > 0)
+            {
+                runTimePercentage = tasks[x].ulRunTimeCounter / totalRunTime;
+            }
+            else
+            {
+                runTimePercentage = 0;
+            }
+            std::string taskState = TaskStateToString(tasks[x].eCurrentState);
+            ESP_LOGI(COMPONENT_NAME, "%-2d  %-32s %-9s %2" PRIu32 " (%2" PRIu32 ")  %15u %8lu  %3lu%%", tasks[x].xTaskNumber, tasks[x].pcTaskName, taskState.c_str(),
+                (long unsigned int) tasks[x].uxCurrentPriority, (long unsigned int) tasks[x].uxBasePriority,
+                (unsigned int) tasks[x].usStackHighWaterMark, tasks[x].ulRunTimeCounter, runTimePercentage);
+        }
+        vPortFree(tasks);
+    }
+    else
+    {
+        ESP_LOGI(COMPONENT_NAME, "Cannot allocate memory for task information.\n");
+    }
 }
 
 /**

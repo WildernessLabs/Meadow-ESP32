@@ -6,6 +6,18 @@ menu "Meadow COMMS Project Build Configuration"
         help
             This option enables the diagnostic thread for monitoring system performance.
 
+    config ENABLE_DETAILED_HEAP_DIAGNOSTICS
+        bool "Enable detailed heap diagnostics"
+        default n
+        help
+            This option enables detailed heap diagnostics to monitor memory usage and detect leaks.
+
+    config ENABLE_DETAILED_TASK_DIAGNOSTICS
+        bool "Enable detailed task diagnostics"
+        default n
+        help
+            This option enables detailed task diagnostics to monitor task performance and detect issues.
+
     config ENABLE_PERFORMANCE_LOGGING
         bool "Enable performance logging"
         default n
