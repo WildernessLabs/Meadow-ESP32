@@ -35,6 +35,8 @@ idf_component_register( SRCS    "WiFi/WiFiRequestHandler.cpp"
                                 "Bluetooth/Uuid.cpp"
                                 "Bluetooth/BluetoothManager.cpp"
 
+                                "Diagnostics/Diagnostics.cpp"
+
                         INCLUDE_DIRS "."
                                 "../../main"
                                 "../../build/config"
