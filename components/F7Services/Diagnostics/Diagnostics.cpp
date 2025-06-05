@@ -27,6 +27,10 @@
     #include "esp_heap_trace.h"
 #endif
 
+#if !defined(CONFIG_DIAGNOSTICS_INTERVAL_MS)
+    #define CONFIG_DIAGNOSTICS_INTERVAL_MS 30000
+#endif
+
 /*
  * ---------------------------------------------------------------------------
  *
