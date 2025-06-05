@@ -130,9 +130,9 @@ SystemRequestHandler::SystemRequestHandler(IMessageDispatcher *messageDispatcher
     _fileSystem = new FileSystem(_messageDispatcher);
     _fileSystem->Setup();
 
-    #if defined (CONFIG_ENABLE_DIAGNOSTIC_THREAD)
-        Diagnostics::Setup();
-    #endif
+#if defined(CONFIG_ENABLE_DIAGNOSTIC_THREAD)
+    Diagnostics::Setup();
+#endif
 }
 
 /**

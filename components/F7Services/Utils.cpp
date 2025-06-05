@@ -4,7 +4,7 @@
  * @brief Utility functions for the ESP32 application.
  * @version 0.1
  * @date 2025-06-05
- * 
+ *
  * @copyright Copyright (c) 2025
  */
 
@@ -17,15 +17,15 @@
 
 #include "Utils.hpp"
 
- /**
+/**
  * @brief Format a number with commas as thousands separators.
- * 
+ *
  * @param number The number to format.
  * @return std::string The formatted number.
  */
 std::string Utils::NumberWithCommas(uint64_t number)
 {
-    uint64_t bufferSize = 27;              // 20 digits, plus 6 commas (max) + terminator.
+    uint64_t bufferSize = 27; // 20 digits, plus 6 commas (max) + terminator.
     char buffer[27];
 
     size_t len = snprintf(buffer, bufferSize, "%" PRIu64, number);
@@ -60,7 +60,7 @@ std::string Utils::NumberWithCommas(uint64_t number)
 
 /**
  * @brief Format a number with commas as thousands separators.
- * 
+ *
  * @param number The number to format.
  * @return std::string The formatted number.
  */
