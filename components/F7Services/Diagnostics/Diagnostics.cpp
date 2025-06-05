@@ -21,6 +21,8 @@
 #include "esp_heap_caps.h"
 #include "esp_timer.h"
 
+#include "Utils.hpp"
+
 #if defined(CONFIG_HEAP_TRACING_TOHOST)
     #include "esp_heap_trace.h"
 #endif
@@ -129,11 +131,11 @@ void Diagnostics::ReportMemoryUsage()
     multi_heap_info_t heap_info;
     heap_caps_get_info(&heap_info, MALLOC_CAP_DEFAULT);
 
-    ESP_LOGI(COMPONENT_NAME, "Total heap: %" PRIu32 " bytes", (uint32_t) (heap_info.total_allocated_bytes + heap_info.total_free_bytes));
-    ESP_LOGI(COMPONENT_NAME, "Free heap: %" PRIu32 " bytes", (uint32_t) heap_info.total_free_bytes);
-    ESP_LOGI(COMPONENT_NAME, "Allocated heap: %" PRIu32 " bytes", (uint32_t) heap_info.total_allocated_bytes);
-    ESP_LOGI(COMPONENT_NAME, "Largest free block: %" PRIu32 " bytes", (uint32_t) heap_info.largest_free_block);
-    ESP_LOGI(COMPONENT_NAME, "Minimum free heap: %" PRIu32 " bytes", (uint32_t) esp_get_minimum_free_heap_size());
+    ESP_LOGI(COMPONENT_NAME, "Total heap: %s bytes", Utils::NumberWithCommas((uint64_t) (heap_info.total_allocated_bytes + heap_info.total_free_bytes)).c_str());
+    ESP_LOGI(COMPONENT_NAME, "Free heap: %s bytes", Utils::NumberWithCommas((uint64_t) heap_info.total_free_bytes).c_str());
+    ESP_LOGI(COMPONENT_NAME, "Allocated heap: %s bytes", Utils::NumberWithCommas((uint64_t) heap_info.total_allocated_bytes).c_str());
+    ESP_LOGI(COMPONENT_NAME, "Largest free block: %s bytes", Utils::NumberWithCommas((uint64_t) heap_info.largest_free_block).c_str());
+    ESP_LOGI(COMPONENT_NAME, "Minimum free heap: %s bytes", Utils::NumberWithCommas((uint64_t) esp_get_minimum_free_heap_size()).c_str());
 }
 
 /**
@@ -229,6 +231,6 @@ void Diagnostics::ReportHeapInformation()
     size_t dram_free = heap_caps_get_free_size(MALLOC_CAP_8BIT);
     size_t iram_free = heap_caps_get_free_size(MALLOC_CAP_32BIT);
 
-    ESP_LOGI(COMPONENT_NAME, "DRAM free: %" PRIu32 " bytes", (uint32_t) dram_free);
-    ESP_LOGI(COMPONENT_NAME, "IRAM free: %" PRIu32 " bytes", (uint32_t) iram_free);
+    ESP_LOGI(COMPONENT_NAME, "DRAM free: %s bytes", Utils::NumberWithCommas((uint64_t) dram_free).c_str());
+    ESP_LOGI(COMPONENT_NAME, "IRAM free: %s bytes", Utils::NumberWithCommas((uint64_t) iram_free).c_str());
 }
