@@ -163,6 +163,27 @@ std::string Diagnostics::TaskStateToString(eTaskState state)
 }
 
 /**
+ * @brief Translate core ID to string representation.
+ * 
+ * @param coreID Core ID for a task
+ * @return std::string String representation of the core ID.
+ */
+std::string Diagnostics::TranslateCoreID(BaseType_t coreID)
+{
+    switch (coreID)
+    {
+        case tskNO_AFFINITY:
+            return "-";
+        case 0:
+            return "0";
+        case 1:
+            return "1";
+        default:
+            return "?";
+    }
+}
+
+/**
  * @brief Report task information.
  */
 void Diagnostics::ReportTaskInformation()
@@ -176,7 +197,7 @@ void Diagnostics::ReportTaskInformation()
     if (tasks != NULL)
     {
         ESP_LOGI(COMPONENT_NAME, "Number of tasks: %d", numberOfTasks);
-        ESP_LOGI(COMPONENT_NAME, "ID  Task Name                        State     Priority Stack Watermark Run-time Percentage");
+        ESP_LOGI(COMPONENT_NAME, "ID  Core Task Name                        State     Priority Stack Watermark Run-time Percentage");
         numberOfTasks = uxTaskGetSystemState(tasks, numberOfTasks, &totalRunTime);
         totalRunTime /= 100UL;
         for (int index = 0; index < numberOfTasks; index++)
@@ -191,7 +212,8 @@ void Diagnostics::ReportTaskInformation()
                 runTimePercentage = 0;
             }
             std::string taskState = TaskStateToString(tasks[index].eCurrentState);
-            ESP_LOGI(COMPONENT_NAME, "%-2d  %-16s %-9s %2" PRIu32 " (%2" PRIu32 ")  %15u %8lu  %3lu%%", tasks[index].xTaskNumber, tasks[index].pcTaskName, taskState.c_str(),
+            std::string coreID = TranslateCoreID(tasks[index].xCoreID);
+            ESP_LOGI(COMPONENT_NAME, "%-2d    %s  %-16s %-9s %2" PRIu32 " (%2" PRIu32 ")  %15u %8lu  %3lu%%", tasks[index].xTaskNumber, coreID.c_str(), tasks[index].pcTaskName, taskState.c_str(),
                 (long unsigned int) tasks[index].uxCurrentPriority, (long unsigned int) tasks[index].uxBasePriority,
                 (unsigned int) tasks[index].usStackHighWaterMark, tasks[index].ulRunTimeCounter, runTimePercentage);
         }

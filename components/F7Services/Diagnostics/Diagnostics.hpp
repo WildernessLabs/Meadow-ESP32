@@ -40,6 +40,14 @@ private:
     static std::string TaskStateToString(eTaskState state);
 
     /**
+     * @brief Translate core ID to string representation.
+     * 
+     * @param coreID Core ID to translate.
+     * @return std::string String representation of the core ID.
+     */
+    static std::string TranslateCoreID(BaseType_t coreID);
+
+    /**
      * @brief Report task information.
      */
     static void ReportTaskInformation();
