@@ -191,7 +191,7 @@ void Diagnostics::ReportTaskInformation()
                 runTimePercentage = 0;
             }
             std::string taskState = TaskStateToString(tasks[index].eCurrentState);
-            ESP_LOGI(COMPONENT_NAME, "%-2d  %-32s %-9s %2" PRIu32 " (%2" PRIu32 ")  %15u %8lu  %3lu%%", tasks[index].xTaskNumber, tasks[index].pcTaskName, taskState.c_str(),
+            ESP_LOGI(COMPONENT_NAME, "%-2d  %-16s %-9s %2" PRIu32 " (%2" PRIu32 ")  %15u %8lu  %3lu%%", tasks[index].xTaskNumber, tasks[index].pcTaskName, taskState.c_str(),
                 (long unsigned int) tasks[index].uxCurrentPriority, (long unsigned int) tasks[index].uxBasePriority,
                 (unsigned int) tasks[index].usStackHighWaterMark, tasks[index].ulRunTimeCounter, runTimePercentage);
         }
