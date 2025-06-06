@@ -98,8 +98,8 @@ void Diagnostics::Thread(void *pvParameters)
         
         ReportSystemUptime();
         ReportTaskInformation();
+        ESP_LOGI(COMPONENT_NAME, "");
         ReportMemoryUsage();
-        ReportHeapInformation();
         
         ESP_LOGI(COMPONENT_NAME, "=== End Diagnostics ===");
         ESP_LOGI(COMPONENT_NAME, "");
@@ -127,6 +127,10 @@ void Diagnostics::ReportSystemUptime()
  */
 void Diagnostics::ReportMemoryUsage()
 {
+    ESP_LOGI(COMPONENT_NAME, "Memory Usage");
+    bool valid = heap_caps_check_integrity_all(true);
+    ESP_LOGI(COMPONENT_NAME, "Heap integrity check: %s", valid ? "PASS" : "FAILED");
+
     multi_heap_info_t heap_info;
     heap_caps_get_info(&heap_info, MALLOC_CAP_DEFAULT);
 
@@ -135,6 +139,20 @@ void Diagnostics::ReportMemoryUsage()
     ESP_LOGI(COMPONENT_NAME, "Allocated heap: %s bytes", Utils::NumberWithCommas((uint64_t) heap_info.total_allocated_bytes).c_str());
     ESP_LOGI(COMPONENT_NAME, "Largest free block: %s bytes", Utils::NumberWithCommas((uint64_t) heap_info.largest_free_block).c_str());
     ESP_LOGI(COMPONENT_NAME, "Minimum free heap: %s bytes", Utils::NumberWithCommas((uint64_t) esp_get_minimum_free_heap_size()).c_str());
+
+#if defined(CONFIG_HEAP_TRACING_TOHOST)
+    ESP_LOGI(COMPONENT_NAME, "Heap tracing is enabled");
+    
+    // Report heap trace information if available
+    size_t num_totals;
+    size_t num_allocations;
+    size_t num_frees;
+    
+    heap_trace_get_count(&num_totals, &num_allocations, &num_frees);
+    ESP_LOGI(COMPONENT_NAME, "Heap trace - Total: %" PRIu32 ", Allocations: %" PRIu32 ", Frees: %" PRIu32, (uint32_t) num_totals, (uint32_t) num_allocations, (uint32_t) num_frees);
+#else
+    ESP_LOGI(COMPONENT_NAME, "Heap tracing is not enabled");
+#endif
 }
 
 /**
@@ -197,7 +215,7 @@ void Diagnostics::ReportTaskInformation()
     if (tasks != NULL)
     {
         ESP_LOGI(COMPONENT_NAME, "Number of tasks: %d", numberOfTasks);
-        ESP_LOGI(COMPONENT_NAME, "ID  Core Task Name                        State     Priority Stack Watermark Run-time Percentage");
+        ESP_LOGI(COMPONENT_NAME, "ID  Core Task Name        State     Priority Stack Watermark Run-time Percentage");
         numberOfTasks = uxTaskGetSystemState(tasks, numberOfTasks, &totalRunTime);
         totalRunTime /= 100UL;
         for (int index = 0; index < numberOfTasks; index++)
@@ -223,31 +241,4 @@ void Diagnostics::ReportTaskInformation()
     {
         ESP_LOGI(COMPONENT_NAME, "Cannot allocate memory for task information.\n");
     }
-}
-
-/**
- * @brief Report heap information including any heap tracing data.
- */
-void Diagnostics::ReportHeapInformation()
-{
-#if defined(CONFIG_HEAP_TRACING_TOHOST)
-    ESP_LOGI(COMPONENT_NAME, "Heap tracing is enabled");
-    
-    // Report heap trace information if available
-    size_t num_totals;
-    size_t num_allocations;
-    size_t num_frees;
-    
-    heap_trace_get_count(&num_totals, &num_allocations, &num_frees);
-    ESP_LOGI(COMPONENT_NAME, "Heap trace - Total: %" PRIu32 ", Allocations: %" PRIu32 ", Frees: %" PRIu32, (uint32_t) num_totals, (uint32_t) num_allocations, (uint32_t) num_frees);
-#else
-    ESP_LOGI(COMPONENT_NAME, "Heap tracing is not enabled");
-#endif
-    
-    // Report additional heap capabilities
-    size_t dram_free = heap_caps_get_free_size(MALLOC_CAP_8BIT);
-    size_t iram_free = heap_caps_get_free_size(MALLOC_CAP_32BIT);
-
-    ESP_LOGI(COMPONENT_NAME, "DRAM free: %s bytes", Utils::NumberWithCommas((uint64_t) dram_free).c_str());
-    ESP_LOGI(COMPONENT_NAME, "IRAM free: %s bytes", Utils::NumberWithCommas((uint64_t) iram_free).c_str());
 }

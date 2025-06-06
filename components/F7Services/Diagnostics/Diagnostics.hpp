@@ -53,11 +53,6 @@ private:
     static void ReportTaskInformation();
     
     /**
-     * @brief Report heap information including any heap tracing data.
-     */
-    static void ReportHeapInformation();
-
-    /**
      * @brief FreeRTOS task function for the diagnostics thread.
      */
     static void Thread(void *pvParameters);
