@@ -1,0 +1,36 @@
+menu "Meadow COMMS Project Build Configuration"
+
+    config ENABLE_DIAGNOSTIC_THREAD
+        bool "Enable diagnostic thread"
+        default n
+        help
+            This option enables the diagnostic thread for monitoring system performance.
+
+    config DIAGNOSTICS_INTERVAL_MS
+        int "Diagnostics interval (ms)"
+        range 10000 60000
+        default 30000
+        help
+            Interval for collecting diagnostic data and sending this through the logging channel.
+
+            Range 10,000 to 60,000 milliseconds (10 seconds to 60 seconds).
+            Default is 30,000 milliseconds (30 seconds).
+
+    config ENABLE_DETAILED_HEAP_DIAGNOSTICS
+        bool "Enable detailed heap diagnostics"
+        default n
+        help
+            This option enables detailed heap diagnostics to monitor memory usage and detect leaks.
+
+    config ENABLE_DETAILED_TASK_DIAGNOSTICS
+        bool "Enable detailed task diagnostics"
+        default n
+        help
+            This option enables detailed task diagnostics to monitor task performance and detect issues.
+
+    config ENABLE_PERFORMANCE_LOGGING
+        bool "Enable performance logging"
+        default n
+        help
+            This option enables performance logging to track system metrics.
+endmenu

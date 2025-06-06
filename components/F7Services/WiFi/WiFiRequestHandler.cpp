@@ -242,6 +242,11 @@ uint32_t WiFiRequestHandler::_wifiTimeout = 30000;
  */
 const char *WiFiRequestHandler::DEFAULT_WIFI_TIMEOUT_NAME = "WiFiTimeout";
 
+/**
+ * @brief Empty string used when SSID and password are not available.
+ */
+char WiFiRequestHandler::_emptyString[1] = {0};
+
 /*
  * ----------------------------------------------------------------------------
  *
@@ -301,6 +306,7 @@ WiFiRequestHandler::WiFiRequestHandler()
     _lastIdfErrorCode = ESP_OK;
     _ipChanged = false;
     _progressiveDelay = new ProgressiveDelay();
+    WiFiRequestHandler::_emptyString[0] = 0;
 }
 
 /**
@@ -449,16 +455,14 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetDefaultAccessPoint(char *value)
 {
     TRACE_MESSAGE("WiFiRequestHandler::SetDefaultAccessPoint %s", (value == NULL) ? "NULL" : value);
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    char emptyAp[1];
 
-    *emptyAp = 0;
     if (value == NULL)
     {
-        value = emptyAp;
+        value = WiFiRequestHandler::_emptyString;
     }
     if (!_defaultAccessPoint)
     {
-        _defaultAccessPoint = strdup(emptyAp);
+        _defaultAccessPoint = WiFiRequestHandler::_emptyString;
     }
 
     if (strcmp(value, _defaultAccessPoint) != 0)
@@ -493,15 +497,14 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetPassword(char *value)
 {
     TRACE_MESSAGE("WiFiRequestHandler::SetPassword %s", (value == NULL) ? "NULL" : value);
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    char *emptyPassword = const_cast<char *>("");
 
     if (value == NULL)
     {
-        value = emptyPassword;
+        value = WiFiRequestHandler::_emptyString;
     }
     if (!_password)
     {
-        _password = strdup(emptyPassword);
+        _password = WiFiRequestHandler::_emptyString;
     }
 
     if (strcmp(value, _password) != 0)
