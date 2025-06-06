@@ -91,7 +91,7 @@ main/build_info.h
 test/sdkconfig
 .gdb_history
 test/.gdb_history
-test/secrets.h
+secrets.h
 components/F7Services/test/secrets.h
 *.svdat
 *.log
