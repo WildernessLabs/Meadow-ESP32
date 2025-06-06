@@ -165,7 +165,7 @@ std::string Diagnostics::TaskStateToString(eTaskState state)
 /**
  * @brief Translate core ID to string representation.
  * 
- * @param coreID Core ID for a task
+ * @param coreID Core ID for a task.
  * @return std::string String representation of the core ID.
  */
 std::string Diagnostics::TranslateCoreID(BaseType_t coreID)
@@ -173,13 +173,13 @@ std::string Diagnostics::TranslateCoreID(BaseType_t coreID)
     switch (coreID)
     {
         case tskNO_AFFINITY:
-            return "-";
+            return("-");
         case 0:
-            return "0";
+            return("0");
         case 1:
-            return "1";
+            return("1");
         default:
-            return "?";
+            return("?");
     }
 }
 
