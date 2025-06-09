@@ -22,6 +22,7 @@
 #include "esp_timer.h"
 
 #include "Utils.hpp"
+#include "Debug.hpp"
 
 #if defined(CONFIG_HEAP_TRACING_TOHOST)
     #include "esp_heap_trace.h"
@@ -130,6 +131,10 @@ void Diagnostics::ReportMemoryUsage()
     ESP_LOGI(COMPONENT_NAME, "Memory Usage");
     bool valid = heap_caps_check_integrity_all(true);
     ESP_LOGI(COMPONENT_NAME, "Heap integrity check: %s", valid ? "PASS" : "FAILED");
+    if (!valid)
+    {
+        DEBUG_BREAKPOINT();
+    }
 
     multi_heap_info_t heap_info;
     heap_caps_get_info(&heap_info, MALLOC_CAP_DEFAULT);
