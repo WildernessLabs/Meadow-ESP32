@@ -73,7 +73,6 @@ Secrets.hpp
 Secrets.cs
 _clicache
 
-.gdbinit
 Source/OpenOCD/
 
 Source/.vscode/
