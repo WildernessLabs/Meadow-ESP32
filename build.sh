@@ -309,7 +309,7 @@ fi
 if $FULLCLEAN; then
     run_command "rm -Rf $scriptdir/build"
     run_command "idf.py --project-dir $scriptdir fullclean"
-    run_command "rm $scriptdir/sdkconfig"
+    run_command "rm -f $scriptdir/sdkconfig"
 fi
 
 #
