@@ -26,9 +26,9 @@ const char *Thread::COMPONENT_NAME = "Thread";
 /**
  *  @brief Default constructor.
  *
- *  Ths is not intended to be called by the user.
+ *  This is not intended to be called by the user.
  */
-Thread::Thread() : _mutex(xSemaphoreCreateMutex()), _executeMethod(xSemaphoreCreateBinary())
+Thread::Thread() : _mutex(xSemaphoreCreateMutex())
 {
     _method = nullptr;
     _parameter = nullptr;
@@ -36,10 +36,19 @@ Thread::Thread() : _mutex(xSemaphoreCreateMutex()), _executeMethod(xSemaphoreCre
     {
         throw new ThreadPoolException("Cannot create mutex for thread.");
     }
+    //
+    //  We explicitly create the _executeMethod semaphore here rather than in the member
+    //  initialiser list as using the list has generated an exception in the past.
+    //
+    //  We need to give the semaphore after it has been created as per the FreeRTOS documentation.
+    //  See: https://www.freertos.org/Documentation/02-Kernel/04-API-references/10-Semaphore-and-Mutexes/01-xSemaphoreCreateBinary
+    //
+    _executeMethod = xSemaphoreCreateBinary();
     if (_executeMethod == NULL)
     {
         throw new ThreadPoolException("Cannot create execute mutex.");
     }
+    xSemaphoreGive(_executeMethod);
 }
 
 /**
@@ -96,7 +105,7 @@ char *Thread::GetTaskName()
  */
 method_t Thread::GetMethod()
 {
-    method_t method = NULL;
+    method_t method = nullptr;
 
     if (xSemaphoreTake(_mutex, portMAX_DELAY) == pdTRUE)
     {
@@ -112,7 +121,7 @@ method_t Thread::GetMethod()
  */
 void *Thread::GetParameter()
 {
-    void *parameter = NULL;
+    void *parameter = nullptr;
 
     if (xSemaphoreTake(_mutex, portMAX_DELAY) == pdTRUE)
     {
@@ -212,7 +221,7 @@ void Thread::TaskCompleted()
 
 /**
  *  @brief FreeRTOS task that will execute the methods passed to it.
- *
+ * 
  *  @param taskParameters
  *      Parameters passed to the task when it is created by xCreateTask.
  *      This should be set to be a pointer to the instantiated class that
@@ -224,7 +233,11 @@ void Thread::Task(void *taskParameters)
     while (true)
     {
         sender->TakeExecutionSemaphore();
-        (sender->GetMethod())(sender->GetParameter());
-        sender->TaskCompleted();
+        method_t method = sender->GetMethod();
+        if (method)
+        {
+            method(sender->GetParameter());
+            sender->TaskCompleted();
+        }
     }
 }
