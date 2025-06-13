@@ -221,7 +221,7 @@ void Thread::TaskCompleted()
 
 /**
  *  @brief FreeRTOS task that will execute the methods passed to it.
- * 
+ *
  *  @param taskParameters
  *      Parameters passed to the task when it is created by xCreateTask.
  *      This should be set to be a pointer to the instantiated class that
