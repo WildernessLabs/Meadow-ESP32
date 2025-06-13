@@ -28,7 +28,7 @@ const char *Thread::COMPONENT_NAME = "Thread";
  *
  *  Ths is not intended to be called by the user.
  */
-Thread::Thread() : _mutex(xSemaphoreCreateMutex()), _executeMethod(xSemaphoreCreateMutex())
+Thread::Thread() : _mutex(xSemaphoreCreateMutex()), _executeMethod(xSemaphoreCreateBinary())
 {
     _method = nullptr;
     _parameter = nullptr;
@@ -40,12 +40,6 @@ Thread::Thread() : _mutex(xSemaphoreCreateMutex()), _executeMethod(xSemaphoreCre
     {
         throw new ThreadPoolException("Cannot create execute mutex.");
     }
-    //
-    //  We take the execution semaphore before starting the task as the first thing the
-    //  task will do is to try and take the semaphore.  Once it has taken the semaphore
-    //  the task will start to execute the method.
-    //
-    TakeExecutionSemaphore();
 }
 
 /**
