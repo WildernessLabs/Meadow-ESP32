@@ -46,7 +46,7 @@ Thread::Thread() : _mutex(xSemaphoreCreateMutex())
     _executeMethod = xSemaphoreCreateBinary();
     if (_executeMethod == NULL)
     {
-        throw new ThreadPoolException("Cannot create execute mutex.");
+        throw new ThreadPoolException("Cannot create execute semaphore.");
     }
     xSemaphoreGive(_executeMethod);
 }
