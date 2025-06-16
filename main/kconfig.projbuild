@@ -16,11 +16,14 @@ menu "Meadow COMMS Project Build Configuration"
             Range 10,000 to 60,000 milliseconds (10 seconds to 60 seconds).
             Default is 30,000 milliseconds (30 seconds).
 
-    config ENABLE_DETAILED_HEAP_DIAGNOSTICS
-        bool "Enable detailed heap diagnostics"
-        default n
+    config HOOK_REGISTER_SIZE
+        int "Hook register size"
+        range 1000 10000
+        default 4000
+        depends on HEAP_USE_HOOKS
         help
-            This option enables detailed heap diagnostics to monitor memory usage and detect leaks.
+            Number of pointers that can be stored in the hook register.  This is used to store information
+            about heap memory allocations and deallocations in order to attempt to detect double frees.
 
     config ENABLE_DETAILED_TASK_DIAGNOSTICS
         bool "Enable detailed task diagnostics"

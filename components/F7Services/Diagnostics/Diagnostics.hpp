@@ -22,14 +22,14 @@ class Diagnostics
 {
 private:
     /**
+     * @brief Name of the component / task.
+     */
+    static const char *COMPONENT_NAME;
+
+    /**
      * @brief Report system uptime information.
      */
     static void ReportSystemUptime();
-
-    /**
-     * @brief Report memory usage information.
-     */
-    static void ReportMemoryUsage();
 
     /**
      * @brief Report task information.
