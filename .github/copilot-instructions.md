@@ -34,4 +34,5 @@
 - Formatting rules are in the .clang-format file
 - Use spaces around operators
 - Use spaces after commas
+- Use spaces after casts
 
