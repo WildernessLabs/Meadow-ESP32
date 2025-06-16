@@ -18,12 +18,11 @@
 #include "esp_log.h"
 #include "esp_heap_caps.h"
 
-#if defined(CONFIG_HEAP_TRACING_DEST)
-#include "esp_heap_trace.h"
+#if defined(CONFIG_HEAP_TRACING_TOHOST) || defined(CONFIG_HEAP_TRACING_STANDALONE)
+    #include "esp_heap_trace.h"
 #endif
 
 #include "Utils.hpp"
-#include "Heap.hpp"
 #include "Debug.hpp"
 
 /*
@@ -53,6 +52,15 @@ const void *Heap::_allocations[CONFIG_HOOK_REGISTER_SIZE] = {nullptr};
 
 #endif
 
+#if defined(CONFIG_HEAP_TRACING_STANDALONE)
+
+/**
+ * @brief Maximum number of heap trace records.
+ */
+heap_trace_record_t *Heap::_traceRecords = nullptr;
+
+#endif // CONFIG_HEAP_TRACING_STANDALONE
+
 /*
  * ---------------------------------------------------------------------------
  *
@@ -66,9 +74,33 @@ const void *Heap::_allocations[CONFIG_HOOK_REGISTER_SIZE] = {nullptr};
  */
 void Heap::Setup()
 {
+    esp_err_t result;
+
     esp_log_level_set(COMPONENT_NAME, ESP_LOG_INFO);
 
     ESP_LOGI(COMPONENT_NAME, "Setting up heap diagnostics");
+
+#if defined(CONFIG_HEAP_TRACING_STANDALONE)
+
+    _traceRecords = static_cast<heap_trace_record_t *>(pvPortMalloc(sizeof(heap_trace_record_t) * CONFIG_TRACE_RECORD_NUM));
+    if (_traceRecords == nullptr)
+    {
+        ESP_LOGE(COMPONENT_NAME, "Failed to allocate memory for heap trace records");
+    }
+    else
+    {
+        result = heap_trace_init_standalone(_traceRecords, CONFIG_TRACE_RECORD_NUM);
+        if (result != ESP_OK)
+        {
+            ESP_LOGE(COMPONENT_NAME, "Failed to initialize heap tracing: %s", esp_err_to_name(result));
+        }
+        else
+        {
+            ESP_LOGI(COMPONENT_NAME, "Heap tracing initialized successfully");
+        }
+    }
+
+#endif
 
     ESP_LOGI(COMPONENT_NAME, "Heap diagnostics setup complete");
 }
@@ -208,62 +240,99 @@ void Heap::FreeHook(const void * const ptr)
 
 #endif // CONFIG_HEAP_USE_HOOKS
 
-#if defined(CONFIG_HEAP_TRACING_TOHOST)
+#if defined(CONFIG_HEAP_TRACING_STANDALONE)
 /**
  * @brief Start heap tracing if supported by the ESP32 configuration.
- */
-void Heap::StartTracing()
+ * 
+ * @param mode The heap trace mode, use HEAP_TRACE_ALL or HEAP_TRACE_LEAKS (default)
+*/
+void Heap::StartStandaloneTracing(heap_trace_mode_t mode)
 {
-    ESP_LOGI(COMPONENT_NAME, "Starting heap tracing");
+    ESP_LOGI(COMPONENT_NAME, "Starting standalone heap tracing");
 
-    esp_err_t result = heap_trace_start(HEAP_TRACE_LEAKS);
+    if (_traceRecords == nullptr)
+    {
+        ESP_LOGE(COMPONENT_NAME, "Heap trace records not initialized");
+        return;
+    }
+
+    esp_err_t result = heap_trace_start(mode);
     if (result == ESP_OK)
     {
         ESP_LOGI(COMPONENT_NAME, "Heap tracing started successfully");
     }
     else
     {
-        ESP_LOGE(COMPONENT_NAME, "Failed to start heap tracing: %d", result);
+        ESP_LOGE(COMPONENT_NAME, "Failed to start heap tracing: %s", esp_err_to_name(result));
     }
 }
 
 /**
  * @brief Stop heap tracing and report results.
  */
-void Heap::StopTracing()
+void Heap::StopStandaloneTracing()
 {
-    ESP_LOGI(COMPONENT_NAME, "Stopping heap tracing");
+    ESP_LOGI(COMPONENT_NAME, "Stopping standalone heap tracing");
+
+    if (_traceRecords == nullptr)
+    {
+        ESP_LOGE(COMPONENT_NAME, "Heap trace records not initialized");
+        return;
+    }
 
     esp_err_t result = heap_trace_stop();
     if (result == ESP_OK)
     {
         ESP_LOGI(COMPONENT_NAME, "Heap tracing stopped successfully");
-
-        // Report final results
-        ReportTracingStatus();
     }
     else
     {
-        ESP_LOGE(COMPONENT_NAME, "Failed to stop heap tracing: %d", result);
+        ESP_LOGE(COMPONENT_NAME, "Failed to stop heap tracing: %s", esp_err_to_name(result));
     }
+}
+
+/**
+ * @brief Dump all heap trace records to stdout
+ */
+void Heap::DumpStandaloneTraceRecords()
+{
+    if (_traceRecords == nullptr)
+    {
+        ESP_LOGE(COMPONENT_NAME, "Heap trace records not initialized");
+        return;
+    }
+    heap_trace_dump();    
 }
 
 /**
  * @brief Report current heap tracing statistics.
  */
-void Heap::ReportTracingStatus()
+void Heap::ReportStatistics()
 {
-    size_t num_records;
-    size_t num_allocations;
-    size_t num_frees;
+    ESP_LOGI(COMPONENT_NAME, "Reporting heap trace statistics");
 
-    heap_trace_get_count(&num_records, &num_allocations, &num_frees);
+    if (_traceRecords == nullptr)
+    {
+        ESP_LOGE(COMPONENT_NAME, "Heap trace records not initialized");
+        return;
+    }
+
+    esp_err_t result;
+    heap_trace_summary_t summary;
+    result = heap_trace_summary(&summary);
+    if (result != ESP_OK)
+    {
+        ESP_LOGE(COMPONENT_NAME, "Failed to get heap trace summary: %s", esp_err_to_name(result));
+        return;
+    }
+
 
     ESP_LOGI(COMPONENT_NAME, "Heap trace statistics:");
-    ESP_LOGI(COMPONENT_NAME, "  Records: %" PRIu32, (uint32_t) num_records);
-    ESP_LOGI(COMPONENT_NAME, "  Allocations: %" PRIu32, (uint32_t) num_allocations);
-    ESP_LOGI(COMPONENT_NAME, "  Frees: %" PRIu32, (uint32_t) num_frees);
-    ESP_LOGI(COMPONENT_NAME, "  Leaks: %" PRIu32, (uint32_t) (num_allocations - num_frees));
+    ESP_LOGI(COMPONENT_NAME, "    Records: %" PRIu32, (uint32_t) summary.count);
+    ESP_LOGI(COMPONENT_NAME, "    Allocations: %" PRIu32, (uint32_t) summary.total_allocations);
+    ESP_LOGI(COMPONENT_NAME, "    Frees: %" PRIu32, (uint32_t) summary.total_frees);
+    ESP_LOGI(COMPONENT_NAME, "    Highwatermark: %" PRIu32, (uint32_t) summary.high_water_mark);
+    ESP_LOGI(COMPONENT_NAME, "    Overflowed: %s", summary.has_overflowed ? "true" : "false");
 }
 
 #endif

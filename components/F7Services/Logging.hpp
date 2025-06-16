@@ -4,9 +4,7 @@
  *  The Logging class provides the functionality necessary to
  *  setup and run the logging system.
  */
-
-#ifndef MAIN_LOGGING_HPP_
-#define MAIN_LOGGING_HPP_
+#pragma once
 
 #include "sdkconfig.h"
 
@@ -22,11 +20,6 @@
 #include "Gpio.hpp"
 
 #include "SharedEnums.hpp"
-
-#if defined(CONFIG_HEAP_TRACING_TOHOST)
-    #include "esp_heap_trace.h"
-#endif
-
 #include "Esp32Messaging.hpp"
 
 //
@@ -269,5 +262,3 @@ public:
      */
     static char *MessageSummary(const Message *message);
 };
-
-#endif /* MAIN_LOGGING_HPP_ */

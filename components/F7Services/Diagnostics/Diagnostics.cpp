@@ -13,19 +13,19 @@
 #include <inttypes.h>
 #include <string>
 
-#include "Diagnostics.hpp"
-#include "esp_system.h"
-#include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "esp_system.h"
+#include "esp_log.h"
 #include "esp_heap_caps.h"
 #include "esp_timer.h"
 
+#include "Diagnostics.hpp"
 #include "Utils.hpp"
 #include "Heap.hpp"
 #include "Debug.hpp"
 
-#if defined(CONFIG_HEAP_TRACING_TOHOST)
+#if defined(CONFIG_HEAP_TRACING_TOHOST) || defined(CONFIG_HEAP_TRACING_STANDALONE)
     #include "esp_heap_trace.h"
 #endif
 
@@ -51,6 +51,11 @@ const char *Diagnostics::COMPONENT_NAME = "Diagnostics";
  */
 static TaskHandle_t _diagnosticsTaskHandle = NULL;
 
+/**
+ *  @brief Lock for controlling output.
+ */
+SemaphoreHandle_t Diagnostics::_outputBinarySemaphore = nullptr;
+
 /*
  * ---------------------------------------------------------------------------
  *
@@ -68,6 +73,12 @@ void Diagnostics::Setup()
 {
     esp_log_level_set(COMPONENT_NAME, ESP_LOG_INFO);
     ESP_LOGI(COMPONENT_NAME, "Setting up diagnostics system");
+
+    _outputBinarySemaphore = xSemaphoreCreateBinary();
+    if (_outputBinarySemaphore == NULL)
+    {
+        ESP_LOGE(COMPONENT_NAME, "Failed to create output binary semaphore");
+    }
     
     BaseType_t result = xTaskCreate(Thread, "Diagnostics", 4096, NULL, 5, &_diagnosticsTaskHandle);
     
@@ -79,6 +90,42 @@ void Diagnostics::Setup()
     
     ESP_LOGI(COMPONENT_NAME, "Diagnostics system setup complete");
 }
+
+/**
+ * @brief Lock the output semaphore.
+ * 
+ * This method acquires the output semaphore, stopping this class from using the output stream.
+ */
+void Diagnostics::LockOutput()
+{
+    if (_outputBinarySemaphore == nullptr)
+    {
+        _outputBinarySemaphore = xSemaphoreCreateBinary();
+        if (_outputBinarySemaphore == nullptr)
+        {
+            ESP_LOGE(COMPONENT_NAME, "Failed to create output binary semaphore");
+            return;
+        }
+    }
+    if (xSemaphoreTake(_outputBinarySemaphore, portMAX_DELAY) != pdTRUE)
+    {
+        ESP_LOGE(COMPONENT_NAME, "Failed to take output binary semaphore");
+    }
+}
+
+/**
+ * @brief Unlock the output semaphore.
+ * 
+ * This method releases the output semaphore, allowing this class to use the output stream.
+ */
+void Diagnostics::UnlockOutput()
+{
+    if (_outputBinarySemaphore != nullptr)
+    {
+        xSemaphoreGive(_outputBinarySemaphore);
+    }
+}
+
 
 /**
  * @brief Main diagnostics thread function.
@@ -95,6 +142,7 @@ void Diagnostics::Thread(void *pvParameters)
     
     while (true)
     {
+        Diagnostics::LockOutput();
         ESP_LOGI(COMPONENT_NAME, "");
         ESP_LOGI(COMPONENT_NAME, "=== System Diagnostics ===");
         
@@ -105,6 +153,7 @@ void Diagnostics::Thread(void *pvParameters)
         
         ESP_LOGI(COMPONENT_NAME, "=== End Diagnostics ===");
         ESP_LOGI(COMPONENT_NAME, "");
+        Diagnostics::UnlockOutput();
 
         vTaskDelay(pdMS_TO_TICKS(CONFIG_DIAGNOSTICS_INTERVAL_MS));
     }

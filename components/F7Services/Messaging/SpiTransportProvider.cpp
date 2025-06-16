@@ -6,13 +6,16 @@
  */
 #include "sdkconfig.h"
 
+#include <string.h>
+
+#include "esp_heap_caps.h"
+
 #include "SpiTransportProvider.hpp"
 #include "Esp32Messaging.hpp"
 #include "Encoders.hpp"
 #include "Globals.hpp"
-#include <string.h>
-
-#include "esp_heap_caps.h"
+#include "Diagnostics.hpp"
+#include "Heap.hpp"
 
 /*
  * ----------------------------------------------------------------------------
@@ -938,6 +941,7 @@ void SpiTransportProvider::Task(void *pvParameters)
     {
         vTaskDelay(10 / portTICK_PERIOD_MS);
     }
+    Heap::StartStandaloneTracing();
     spi_slave_transaction_t *transaction = sender->CreateSpiTransaction(nullptr);
     while (true)
     {
@@ -945,6 +949,13 @@ void SpiTransportProvider::Task(void *pvParameters)
         TRACE_MESSAGE("****************************** New State ******************************");
         TRACE_MESSAGE("");
         transaction = sender->ProcessMessages(transaction);
+
+        Heap::StopStandaloneTracing();
+        Diagnostics::LockOutput();
+        Heap::DumpStandaloneTraceRecords();
+        Diagnostics::UnlockOutput();
+
+        Heap::StartStandaloneTracing();
     }
     //
     //  We should only get here if the code in the while loop generates a fault.

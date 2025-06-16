@@ -25,6 +25,15 @@ menu "Meadow COMMS Project Build Configuration"
             Number of pointers that can be stored in the hook register.  This is used to store information
             about heap memory allocations and deallocations in order to attempt to detect double frees.
 
+    config TRACE_RECORD_NUM
+        int "Number of standalone trace records"
+        range 10 500
+        default 100
+        depends on HEAP_TRACING_STANDALONE
+        help
+            Number of records that can be stored in the trace buffer.  This is used to store information
+            about heap memory allocations and deallocations in order to attempt to detect memory leaks.
+
     config ENABLE_DETAILED_TASK_DIAGNOSTICS
         bool "Enable detailed task diagnostics"
         default n
