@@ -75,6 +75,7 @@ void Diagnostics::Setup()
     ESP_LOGI(COMPONENT_NAME, "Setting up diagnostics system");
 
     _outputBinarySemaphore = xSemaphoreCreateBinary();
+    xSemaphoreGive(_outputBinarySemaphore);
     if (_outputBinarySemaphore == NULL)
     {
         ESP_LOGE(COMPONENT_NAME, "Failed to create output binary semaphore");
