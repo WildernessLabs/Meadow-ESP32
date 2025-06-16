@@ -1,18 +1,18 @@
 /**
  * @file Debug.hpp
  * @author Wilderness Labs
- * @brief 
+ * @brief Debugging utilities for MeadowComms ESP32 firmware.
  * @version 0.1
  * @date 2025-06-06
- * 
+ *
  * @copyright Copyright (c) 2025
  */
 
- #pragma once
+#pragma once
 
 #include <sdkconfig.h>
 
 /**
  * @brief Insert a debug breakpoint into the code.
  */
-#define DEBUG_BREAKPOINT()          asm("break 0, 0");
+#define DEBUG_BREAKPOINT() asm("break 0, 0");

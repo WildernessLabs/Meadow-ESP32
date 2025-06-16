@@ -7,8 +7,7 @@
  *
  * @copyright Copyright (c) 2025
  */
-#ifndef DIAGNOSTICS_HPP
-#define DIAGNOSTICS_HPP
+#pragma once
 
 #include <sdkconfig.h>
 
@@ -25,6 +24,11 @@ private:
      * @brief Name of the component / task.
      */
     static const char *COMPONENT_NAME;
+
+    /**
+     *  @brief Lock for controlling access to the members of this class.
+     */
+    static SemaphoreHandle_t _outputBinarySemaphore;
 
     /**
      * @brief Report system uptime information.
@@ -58,7 +62,18 @@ private:
     static void Thread(void *pvParameters);
 
 public:
+    /**
+     * @brief Setup the diagnostics system.
+     */
     static void Setup();
-};
 
-#endif // DIAGNOSTICS_HPP
+    /**
+     * @brief Lock the output semaphore.
+     */
+    static void LockOutput();
+
+    /**
+     * @brief Unlock the output semaphore.
+     */
+    static void UnlockOutput();
+};

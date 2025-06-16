@@ -56,13 +56,6 @@ meadow_version_t g_application_version = {
 //
 #define COMPONENT_NAME APP_MAIN_COMPONENT_NAME
 
-//
-//  Work out if we have heap tracing enabled and issue a warning.
-//
-#if defined(CONFIG_HEAP_TRACING_TOHOST)
-    #pragma message "Heap tracing turned on."
-#endif
-
 #if !defined(CONFIG_WIFI_SSID)
     #define CONFIG_WIFI_SSID "SSID"
 #endif
@@ -124,10 +117,6 @@ extern "C" void app_main()
         (int) g_application_version.year, (int) g_application_version.hour, (int) g_application_version.minute, (int) g_application_version.second, (uint) g_application_version.hash, g_application_version.branch_name);
 
     NvsManager::Setup();
-
-#if defined(CONFIG_HEAP_TRACING_TOHOST)
-    heap_trace_init_tohost();
-#endif
 
     /*
      *  Set up the messaging system to use SPI hardware communications.

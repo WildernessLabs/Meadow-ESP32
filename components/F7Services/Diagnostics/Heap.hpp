@@ -9,11 +9,17 @@
  */
 #pragma once
 
-#include <sdkconfig.h>
+#include "sdkconfig.h"
+
 #include <stdint.h>
 #include <string>
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
+
+#if defined(CONFIG_HEAP_TRACING_TOHOST) || defined(CONFIG_HEAP_TRACING_STANDALONE)
+    #include "esp_heap_trace.h"
+#endif
 
 /**
  * @brief Class providing heap memory diagnostics and management functionality.
@@ -54,21 +60,28 @@ public:
      */
     static void FreeHook(const void * const ptr);
 
-#if defined(CONFIG_HEAP_TRACING_TOHOST)
+#if defined(CONFIG_HEAP_TRACING_STANDALONE)
     /**
      * @brief Start heap tracing if supported by the ESP32 configuration.
+     * 
+     * @param mode The heap trace mode, use HEAP_TRACE_ALL or HEAP_TRACE_LEAKS (default)
      */
-    static void StartTracing();
+    static void StartStandaloneTracing(heap_trace_mode_t mode = HEAP_TRACE_LEAKS);
     
     /**
      * @brief Stop heap tracing and report results.
      */
-    static void StopTracing();
+    static void StopStandaloneTracing();
+
+    /**
+     * @brief Dump all heap trace records to stdout.
+     */
+    static void DumpStandaloneTraceRecords();
     
     /**
      * @brief Report current heap tracing statistics.
      */
-    static void ReportTracingStatus();
+    static void ReportStatistics();
 #endif
 
 private:
@@ -90,4 +103,13 @@ private:
     static uint32_t _allocationCount;
 
 #endif // CONFIG_HEAP_USE_HOOKS
+
+#if defined (CONFIG_HEAP_TRACING_STANDALONE)
+
+    /**
+     * @brief Pointer to the heap trace records.
+     */
+    static heap_trace_record_t *_traceRecords;
+
+#endif
 };
