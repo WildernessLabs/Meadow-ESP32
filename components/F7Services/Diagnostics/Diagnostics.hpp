@@ -4,7 +4,7 @@
  * @brief Provide system diagnostic tools for the ESP32 application.
  * @version 0.1
  * @date 2025-06-04
- * 
+ *
  * @copyright Copyright (c) 2025
  */
 #ifndef DIAGNOSTICS_HPP
@@ -25,15 +25,15 @@ private:
      * @brief Report system uptime information.
      */
     static void ReportSystemUptime();
-    
+
     /**
      * @brief Report memory usage information.
      */
     static void ReportMemoryUsage();
-    
+
     /**
      * @brief Report task information.
-     * 
+     *
      * @param state Task state.
      * @return Character representation of the task state.
      */
@@ -51,7 +51,7 @@ private:
      * @brief Report task information.
      */
     static void ReportTaskInformation();
-    
+
     /**
      * @brief FreeRTOS task function for the diagnostics thread.
      */
