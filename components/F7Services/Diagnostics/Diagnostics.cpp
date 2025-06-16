@@ -22,6 +22,7 @@
 #include "esp_timer.h"
 
 #include "Utils.hpp"
+#include "Heap.hpp"
 #include "Debug.hpp"
 
 #if defined(CONFIG_HEAP_TRACING_TOHOST)
@@ -43,7 +44,7 @@
 /**
  *  @brief Name of the component / task.
  */
-static const char *COMPONENT_NAME = "Diagnostics";
+const char *Diagnostics::COMPONENT_NAME = "Diagnostics";
 
 /**
  *  @brief Task handle for the diagnostics thread.
@@ -100,7 +101,7 @@ void Diagnostics::Thread(void *pvParameters)
         ReportSystemUptime();
         ReportTaskInformation();
         ESP_LOGI(COMPONENT_NAME, "");
-        ReportMemoryUsage();
+        Heap::ReportUsage();
         
         ESP_LOGI(COMPONENT_NAME, "=== End Diagnostics ===");
         ESP_LOGI(COMPONENT_NAME, "");
@@ -121,43 +122,6 @@ void Diagnostics::ReportSystemUptime()
     uint32_t seconds = uptime_seconds % 60;
 
     ESP_LOGI(COMPONENT_NAME, "System uptime: %" PRIu32 ":%02" PRIu32 ":%02" PRIu32 " (%" PRIu32 " seconds)", hours, minutes, seconds, uptime_seconds);
-}
-
-/**
- * @brief Report memory usage information.
- */
-void Diagnostics::ReportMemoryUsage()
-{
-    ESP_LOGI(COMPONENT_NAME, "Memory Usage");
-    bool valid = heap_caps_check_integrity_all(true);
-    ESP_LOGI(COMPONENT_NAME, "Heap integrity check: %s", valid ? "PASS" : "FAILED");
-    if (!valid)
-    {
-        DEBUG_BREAKPOINT();
-    }
-
-    multi_heap_info_t heap_info;
-    heap_caps_get_info(&heap_info, MALLOC_CAP_DEFAULT);
-
-    ESP_LOGI(COMPONENT_NAME, "Total heap: %s bytes", Utils::NumberWithCommas((uint64_t) (heap_info.total_allocated_bytes + heap_info.total_free_bytes)).c_str());
-    ESP_LOGI(COMPONENT_NAME, "Free heap: %s bytes", Utils::NumberWithCommas((uint64_t) heap_info.total_free_bytes).c_str());
-    ESP_LOGI(COMPONENT_NAME, "Allocated heap: %s bytes", Utils::NumberWithCommas((uint64_t) heap_info.total_allocated_bytes).c_str());
-    ESP_LOGI(COMPONENT_NAME, "Largest free block: %s bytes", Utils::NumberWithCommas((uint64_t) heap_info.largest_free_block).c_str());
-    ESP_LOGI(COMPONENT_NAME, "Minimum free heap: %s bytes", Utils::NumberWithCommas((uint64_t) esp_get_minimum_free_heap_size()).c_str());
-
-#if defined(CONFIG_HEAP_TRACING_TOHOST)
-    ESP_LOGI(COMPONENT_NAME, "Heap tracing is enabled");
-    
-    // Report heap trace information if available
-    size_t num_totals;
-    size_t num_allocations;
-    size_t num_frees;
-    
-    heap_trace_get_count(&num_totals, &num_allocations, &num_frees);
-    ESP_LOGI(COMPONENT_NAME, "Heap trace - Total: %" PRIu32 ", Allocations: %" PRIu32 ", Frees: %" PRIu32, (uint32_t) num_totals, (uint32_t) num_allocations, (uint32_t) num_frees);
-#else
-    ESP_LOGI(COMPONENT_NAME, "Heap tracing is not enabled");
-#endif
 }
 
 /**
