@@ -40,6 +40,7 @@
 #include "Mapping.hpp"
 #include "version.h"
 #include "Diagnostics.hpp"
+#include "Heap.hpp"
 
 /*
  * ----------------------------------------------------------------------------
@@ -132,6 +133,7 @@ SystemRequestHandler::SystemRequestHandler(IMessageDispatcher *messageDispatcher
 
 #if defined(CONFIG_ENABLE_DIAGNOSTIC_THREAD)
     Diagnostics::Setup();
+    Heap::Setup();
 #endif
 }
 
