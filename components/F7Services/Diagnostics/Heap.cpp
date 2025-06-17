@@ -243,7 +243,7 @@ void Heap::FreeHook(const void * const ptr)
 #if defined(CONFIG_HEAP_TRACING_STANDALONE)
 /**
  * @brief Start heap tracing if supported by the ESP32 configuration.
- * 
+ *
  * @param mode The heap trace mode, use HEAP_TRACE_ALL or HEAP_TRACE_LEAKS (default)
 */
 void Heap::StartStandaloneTracing(heap_trace_mode_t mode)
@@ -301,7 +301,7 @@ void Heap::DumpStandaloneTraceRecords()
         ESP_LOGE(COMPONENT_NAME, "Heap trace records not initialized");
         return;
     }
-    heap_trace_dump();    
+    heap_trace_dump();
 }
 
 /**
@@ -325,7 +325,6 @@ void Heap::ReportStatistics()
         ESP_LOGE(COMPONENT_NAME, "Failed to get heap trace summary: %s", esp_err_to_name(result));
         return;
     }
-
 
     ESP_LOGI(COMPONENT_NAME, "Heap trace statistics:");
     ESP_LOGI(COMPONENT_NAME, "    Records: %" PRIu32, (uint32_t) summary.count);
