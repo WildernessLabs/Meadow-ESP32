@@ -75,10 +75,13 @@ void Diagnostics::Setup()
     ESP_LOGI(COMPONENT_NAME, "Setting up diagnostics system");
 
     _outputBinarySemaphore = xSemaphoreCreateBinary();
-    xSemaphoreGive(_outputBinarySemaphore);
     if (_outputBinarySemaphore == NULL)
     {
         ESP_LOGE(COMPONENT_NAME, "Failed to create output binary semaphore");
+    }
+    else
+    {
+        xSemaphoreGive(_outputBinarySemaphore);
     }
     
     BaseType_t result = xTaskCreate(Thread, "Diagnostics", 4096, NULL, 5, &_diagnosticsTaskHandle);
@@ -107,6 +110,7 @@ void Diagnostics::LockOutput()
             ESP_LOGE(COMPONENT_NAME, "Failed to create output binary semaphore");
             return;
         }
+        xSemaphoreGive(_outputBinarySemaphore);
     }
     if (xSemaphoreTake(_outputBinarySemaphore, portMAX_DELAY) != pdTRUE)
     {
