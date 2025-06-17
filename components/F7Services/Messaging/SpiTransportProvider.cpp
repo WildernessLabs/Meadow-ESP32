@@ -941,7 +941,15 @@ void SpiTransportProvider::Task(void *pvParameters)
     {
         vTaskDelay(10 / portTICK_PERIOD_MS);
     }
-    Heap::StartStandaloneTracing();
+
+    //
+    //  Uncomment if heap standalone heap tracing is needed.
+    //
+    //  This code and the code in the while loop will check for memory leaks
+    //  occurring in the request / response message processing cycle.
+    //
+    // Heap::StartStandaloneTracing();
+
     spi_slave_transaction_t *transaction = sender->CreateSpiTransaction(nullptr);
     while (true)
     {
@@ -950,12 +958,15 @@ void SpiTransportProvider::Task(void *pvParameters)
         TRACE_MESSAGE("");
         transaction = sender->ProcessMessages(transaction);
 
-        Heap::StopStandaloneTracing();
-        Diagnostics::LockOutput();
-        Heap::DumpStandaloneTraceRecords();
-        Diagnostics::UnlockOutput();
+        //
+        //  Uncomment if heap standalone heap tracing is needed.
+        //
+        // Heap::StopStandaloneTracing();
+        // Diagnostics::LockOutput();
+        // Heap::DumpStandaloneTraceRecords();
+        // Diagnostics::UnlockOutput();
 
-        Heap::StartStandaloneTracing();
+        // Heap::StartStandaloneTracing();
     }
     //
     //  We should only get here if the code in the while loop generates a fault.
