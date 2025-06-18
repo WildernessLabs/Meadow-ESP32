@@ -11,15 +11,15 @@
 
 #include "sdkconfig.h"
 
+#if defined(CONFIG_HEAP_TRACING_TOHOST) || defined(CONFIG_HEAP_TRACING_STANDALONE) || defined(CONFIG_HEAP_USE_HOOKS)
+
 #include <stdint.h>
 #include <string>
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
 
-#if defined(CONFIG_HEAP_TRACING_TOHOST) || defined(CONFIG_HEAP_TRACING_STANDALONE)
-    #include "esp_heap_trace.h"
-#endif
+#include "esp_heap_trace.h"
 
 /**
  * @brief Class providing heap memory diagnostics and management functionality.
@@ -50,23 +50,6 @@ public:
     static bool CheckIntegrity();
 
     /**
-     * @brief Hook for memory allocation events.
-     * 
-     * @param ptr Pointer to the allocated memory.
-     * @param size Size of the allocated memory in bytes.
-     * @param caps Memory capabilities flags.
-     */
-    static void AllocationHook(const void * const ptr, const size_t size, const uint32_t caps);
-
-    /**
-     * @brief Hook for memory deallocation events.
-     * 
-     * @param ptr Pointer to the memory being freed.
-     */
-    static void FreeHook(const void * const ptr);
-
-#if defined(CONFIG_HEAP_TRACING_STANDALONE)
-    /**
      * @brief Start heap tracing if supported by the ESP32 configuration.
      * 
      * @param mode The heap trace mode, use HEAP_TRACE_ALL or HEAP_TRACE_LEAKS (default)
@@ -87,11 +70,14 @@ public:
      * @brief Report current heap tracing statistics.
      */
     static void ReportStatistics();
-#endif
 
 private:
-#if defined(CONFIG_HEAP_USE_HOOKS)
+    /**
+     * @brief Flag indicating whether heap tracing is currently active.
+     */
+    static bool _isRunning;
 
+#if defined(CONFIG_HEAP_USE_HOOKS)
     /**
      * @brief Array to hold pointers to allocated memory for tracking.
      */
@@ -102,9 +88,25 @@ private:
      */
     static uint32_t _allocationCount;
 
+    /**
+     * @brief Hook for memory allocation events.
+     * 
+     * @param ptr Pointer to the allocated memory.
+     * @param size Size of the allocated memory in bytes.
+     * @param caps Memory capabilities flags.
+     */
+    static void AllocationHook(const void * const ptr, const size_t size, const uint32_t caps);
+
+    /**
+     * @brief Hook for memory deallocation events.
+     * 
+     * @param ptr Pointer to the memory being freed.
+     */
+    static void FreeHook(const void * const ptr);
+
 #endif // CONFIG_HEAP_USE_HOOKS
 
-#if defined (CONFIG_HEAP_TRACING_STANDALONE)
+#if defined(CONFIG_HEAP_TRACING_STANDALONE)
 
     /**
      * @brief Pointer to the heap trace records.
@@ -113,3 +115,5 @@ private:
 
 #endif
 };
+
+#endif
