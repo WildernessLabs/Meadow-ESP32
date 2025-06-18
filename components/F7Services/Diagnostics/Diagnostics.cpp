@@ -24,6 +24,7 @@
 #include "Utils.hpp"
 #include "Heap.hpp"
 #include "Debug.hpp"
+#include "Logging.hpp"
 
 #if defined(CONFIG_HEAP_TRACING_TOHOST) || defined(CONFIG_HEAP_TRACING_STANDALONE)
     #include "esp_heap_trace.h"
@@ -71,13 +72,12 @@ SemaphoreHandle_t Diagnostics::_outputBinarySemaphore = nullptr;
  */
 void Diagnostics::Setup()
 {
-    esp_log_level_set(COMPONENT_NAME, ESP_LOG_INFO);
-    ESP_LOGI(COMPONENT_NAME, "Setting up diagnostics system");
+    TRACE_MESSAGE("Setup: Enter");
 
     _outputBinarySemaphore = xSemaphoreCreateBinary();
     if (_outputBinarySemaphore == NULL)
     {
-        ESP_LOGE(COMPONENT_NAME, "Failed to create output binary semaphore");
+        ERROR_MESSAGE("Failed to create output binary semaphore");
     }
     else
     {
@@ -88,11 +88,11 @@ void Diagnostics::Setup()
     
     if (result != pdPASS)
     {
-        ESP_LOGE(COMPONENT_NAME, "Failed to create diagnostics task");
+        ERROR_MESSAGE("Failed to create diagnostics task");
         return;
     }
     
-    ESP_LOGI(COMPONENT_NAME, "Diagnostics system setup complete");
+    TRACE_MESSAGE("Setup: Exit");
 }
 
 /**
@@ -107,14 +107,14 @@ void Diagnostics::LockOutput()
         _outputBinarySemaphore = xSemaphoreCreateBinary();
         if (_outputBinarySemaphore == nullptr)
         {
-            ESP_LOGE(COMPONENT_NAME, "Failed to create output binary semaphore");
+            ERROR_MESSAGE("Failed to create output binary semaphore");
             return;
         }
         xSemaphoreGive(_outputBinarySemaphore);
     }
     if (xSemaphoreTake(_outputBinarySemaphore, portMAX_DELAY) != pdTRUE)
     {
-        ESP_LOGE(COMPONENT_NAME, "Failed to take output binary semaphore");
+        ERROR_MESSAGE("Failed to take output binary semaphore");
     }
 }
 
