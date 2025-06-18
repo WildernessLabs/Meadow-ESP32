@@ -154,7 +154,9 @@ void Diagnostics::Thread(void *pvParameters)
         ReportSystemUptime();
         ReportTaskInformation();
         ESP_LOGI(COMPONENT_NAME, "");
+#if defined(CONFIG_HEAP_TRACING_TOHOST) || defined(CONFIG_HEAP_TRACING_STANDALONE)
         Heap::ReportUsage();
+#endif
         
         ESP_LOGI(COMPONENT_NAME, "=== End Diagnostics ===");
         ESP_LOGI(COMPONENT_NAME, "");
