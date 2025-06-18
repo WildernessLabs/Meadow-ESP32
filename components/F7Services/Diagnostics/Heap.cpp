@@ -24,6 +24,7 @@
 
 #include "Utils.hpp"
 #include "Debug.hpp"
+#include "Logging.hpp"
 
 /*
  * ---------------------------------------------------------------------------
@@ -50,7 +51,7 @@ uint32_t Heap::_allocationCount = 0;
  */
 const void *Heap::_allocations[CONFIG_HOOK_REGISTER_SIZE] = {nullptr};
 
-#endif
+#endif  // CONFIG_HEAP_USE_HOOKS
 
 #if defined(CONFIG_HEAP_TRACING_STANDALONE)
 
@@ -78,31 +79,31 @@ void Heap::Setup()
 
     esp_log_level_set(COMPONENT_NAME, ESP_LOG_INFO);
 
-    ESP_LOGI(COMPONENT_NAME, "Setting up heap diagnostics");
+    TRACE_MESSAGE("Setup: Enter");
 
 #if defined(CONFIG_HEAP_TRACING_STANDALONE)
 
     _traceRecords = static_cast<heap_trace_record_t *>(pvPortMalloc(sizeof(heap_trace_record_t) * CONFIG_TRACE_RECORD_NUM));
     if (_traceRecords == nullptr)
     {
-        ESP_LOGE(COMPONENT_NAME, "Failed to allocate memory for heap trace records");
+        ERROR_MESSAGE("Failed to allocate memory for heap trace records");
     }
     else
     {
         result = heap_trace_init_standalone(_traceRecords, CONFIG_TRACE_RECORD_NUM);
         if (result != ESP_OK)
         {
-            ESP_LOGE(COMPONENT_NAME, "Failed to initialize heap tracing: %s", esp_err_to_name(result));
+            ERROR_MESSAGE("Failed to initialize heap tracing: %s", esp_err_to_name(result));
         }
         else
         {
-            ESP_LOGI(COMPONENT_NAME, "Heap tracing initialized successfully");
+            TRACE_MESSAGE("Heap tracing initialized successfully");
         }
     }
 
 #endif
 
-    ESP_LOGI(COMPONENT_NAME, "Heap diagnostics setup complete");
+    TRACE_MESSAGE("Setup: Exit");
 }
 
 /**
@@ -141,18 +142,19 @@ void Heap::ReportUsage()
  */
 bool Heap::CheckIntegrity()
 {
-    ESP_LOGI(COMPONENT_NAME, "Checking heap integrity...");
+    TRACE_MESSAGE("CheckIntegrity: Enter");
 
     bool integrity = heap_caps_check_integrity_all(true);
-
     if (integrity)
     {
-        ESP_LOGI(COMPONENT_NAME, "Heap integrity check passed");
+        TRACE_MESSAGE("Heap integrity check passed");
     }
     else
     {
-        ESP_LOGE(COMPONENT_NAME, "HEAP CORRUPTION DETECTED!");
+        ERROR_MESSAGE("HEAP CORRUPTION DETECTED!");
     }
+
+    TRACE_MESSAGE("CheckIntegrity: Exit");
 
     return integrity;
 }
@@ -246,9 +248,9 @@ void Heap::FreeHook(const void * const ptr)
  *
  * @param mode The heap trace mode, use HEAP_TRACE_ALL or HEAP_TRACE_LEAKS (default)
 */
-void Heap::StartStandaloneTracing(heap_trace_mode_t mode)
+void Heap::StartTracing(heap_trace_mode_t mode)
 {
-    ESP_LOGI(COMPONENT_NAME, "Starting standalone heap tracing");
+    TRACE_MESSAGE("StartTracing: Enter");
 
     if (_traceRecords == nullptr)
     {
@@ -265,13 +267,17 @@ void Heap::StartStandaloneTracing(heap_trace_mode_t mode)
     {
         ESP_LOGE(COMPONENT_NAME, "Failed to start heap tracing: %s", esp_err_to_name(result));
     }
+
+    TRACE_MESSAGE("StartTracing: Exit");
 }
 
 /**
  * @brief Stop heap tracing and report results.
  */
-void Heap::StopStandaloneTracing()
+void Heap::StopTracing()
 {
+    TRACE_MESSAGE("StopTracing: Enter");
+
     ESP_LOGI(COMPONENT_NAME, "Stopping standalone heap tracing");
 
     if (_traceRecords == nullptr)
@@ -289,16 +295,18 @@ void Heap::StopStandaloneTracing()
     {
         ESP_LOGE(COMPONENT_NAME, "Failed to stop heap tracing: %s", esp_err_to_name(result));
     }
+
+    TRACE_MESSAGE("StopTracing: Exit");
 }
 
 /**
  * @brief Dump all heap trace records to stdout
  */
-void Heap::DumpStandaloneTraceRecords()
+void Heap::DumpTraceRecords()
 {
     if (_traceRecords == nullptr)
     {
-        ESP_LOGE(COMPONENT_NAME, "Heap trace records not initialized");
+        ERROR_MESSAGE("Heap trace records not initialized");
         return;
     }
     heap_trace_dump();
@@ -313,7 +321,7 @@ void Heap::ReportStatistics()
 
     if (_traceRecords == nullptr)
     {
-        ESP_LOGE(COMPONENT_NAME, "Heap trace records not initialized");
+        ERROR_MESSAGE("Heap trace records not initialized");
         return;
     }
 
@@ -322,7 +330,7 @@ void Heap::ReportStatistics()
     result = heap_trace_summary(&summary);
     if (result != ESP_OK)
     {
-        ESP_LOGE(COMPONENT_NAME, "Failed to get heap trace summary: %s", esp_err_to_name(result));
+        ERROR_MESSAGE("Failed to get heap trace summary: %s", esp_err_to_name(result));
         return;
     }
 
