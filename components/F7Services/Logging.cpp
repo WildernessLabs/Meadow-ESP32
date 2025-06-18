@@ -19,6 +19,7 @@
 #include "WiFiRequestHandler.hpp"
 #include "SpiTransportProvider.hpp"
 #include "Mapping.hpp"
+#include "Diagnostics.hpp"
 
 #if defined(PERFORMANCE_LOGGING)
     #pragma message "Performance logging is enabled."
@@ -122,7 +123,7 @@ void Logging::Setup()
     uart_driver_install(LOGGING_UART_PORT_NUMBER, RX_BUFFER_SIZE * 2, 0, 0, NULL, 0);
 
 #if defined(CONFIG_ENABLE_DIAGNOSTIC_THREAD)
-    esp_log_level_set(Logging::COMPONENT_NAME, ESP_LOG_INFO);
+    esp_log_level_set(Diagnostics::COMPONENT_NAME, ESP_LOG_INFO);
 #endif
 
     TRACE_MESSAGE("Logging redirected to UART_NUM_0 on pins %d (Tx), %d (Rx)", Gpio::LOGGING_TX_PIN, Gpio::LOGGING_RX_PIN);

@@ -21,11 +21,6 @@ class Diagnostics
 {
 private:
     /**
-     * @brief Name of the component / task.
-     */
-    static const char *COMPONENT_NAME;
-
-    /**
      *  @brief Lock for controlling access to the members of this class.
      */
     static SemaphoreHandle_t _outputBinarySemaphore;
@@ -62,6 +57,11 @@ private:
     static void Thread(void *pvParameters);
 
 public:
+    /**
+     * @brief Name of the component / task.
+     */
+    static const char *COMPONENT_NAME;
+
     /**
      * @brief Setup the diagnostics system.
      */
