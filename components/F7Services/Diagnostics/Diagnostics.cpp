@@ -4,8 +4,14 @@
  * @brief Provide system diagnostic tools for the ESP32 application.
  * @version 0.1
  * @date 2025-06-04
- * 
+ *
  * @copyright Copyright (c) 2025
+ *
+ * @note The standard method of sending diagnostic information to the serial output is via
+ *       the trace, debug, and error macros defined in Logging.hpp.  In general this is used
+ *       except where heap information is being generated.  In these cases the ESP_LOG?
+ *       macros are used as they do not need the --tracemessages flag to be used in order
+ *       to output the heap information.
  */
 
 #include "sdkconfig.h"
@@ -67,7 +73,7 @@ SemaphoreHandle_t Diagnostics::_outputBinarySemaphore = nullptr;
 
 /**
  * @brief Setup the diagnostics system.
- * 
+ *
  * This method initializes the diagnostics system and starts the diagnostics thread.
  */
 void Diagnostics::Setup()
@@ -83,21 +89,21 @@ void Diagnostics::Setup()
     {
         xSemaphoreGive(_outputBinarySemaphore);
     }
-    
+
     BaseType_t result = xTaskCreate(Thread, "Diagnostics", 4096, NULL, 5, &_diagnosticsTaskHandle);
-    
+
     if (result != pdPASS)
     {
         ERROR_MESSAGE("Failed to create diagnostics task");
         return;
     }
-    
+
     TRACE_MESSAGE("Setup: Exit");
 }
 
 /**
  * @brief Lock the output semaphore.
- * 
+ *
  * This method acquires the output semaphore, stopping this class from using the output stream.
  */
 void Diagnostics::LockOutput()
@@ -120,7 +126,7 @@ void Diagnostics::LockOutput()
 
 /**
  * @brief Unlock the output semaphore.
- * 
+ *
  * This method releases the output semaphore, allowing this class to use the output stream.
  */
 void Diagnostics::UnlockOutput()
@@ -131,33 +137,33 @@ void Diagnostics::UnlockOutput()
     }
 }
 
-
 /**
  * @brief Main diagnostics thread function.
- * 
+ *
  * This method runs continuously and collects system diagnostic information
  * at regular intervals.
- * 
- * @param pvParameters 
+ *
+ * @param pvParameters
  *      Pointer to task parameters (not used).
  */
 void Diagnostics::Thread(void *pvParameters)
 {
-    ESP_LOGI(COMPONENT_NAME, "Diagnostics thread started");
-    
+    TRACE_MESSAGE("Thread: Enter");
+
     while (true)
     {
         Diagnostics::LockOutput();
         ESP_LOGI(COMPONENT_NAME, "");
         ESP_LOGI(COMPONENT_NAME, "=== System Diagnostics ===");
-        
+
         ReportSystemUptime();
         ReportTaskInformation();
         ESP_LOGI(COMPONENT_NAME, "");
+
 #if defined(CONFIG_HEAP_TRACING_TOHOST) || defined(CONFIG_HEAP_TRACING_STANDALONE)
         Heap::ReportUsage();
 #endif
-        
+
         ESP_LOGI(COMPONENT_NAME, "=== End Diagnostics ===");
         ESP_LOGI(COMPONENT_NAME, "");
         Diagnostics::UnlockOutput();
@@ -207,7 +213,7 @@ std::string Diagnostics::TaskStateToString(eTaskState state)
 
 /**
  * @brief Translate core ID to string representation.
- * 
+ *
  * @param coreID Core ID for a task.
  * @return std::string String representation of the core ID.
  */
