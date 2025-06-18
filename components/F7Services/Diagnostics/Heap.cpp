@@ -251,11 +251,13 @@ void Heap::ReportStatistics()
 {
     TRACE_MESSAGE("ReportStatistics: Enter");
 
+#if defined(CONFIG_HEAP_TRACING_STANDALONE)
     if (!_traceRecords)
     {
         ERROR_MESSAGE("Heap trace records not initialized");
         return;
     }
+#endif
 
     esp_err_t result;
     heap_trace_summary_t summary;
