@@ -28,6 +28,11 @@ class Heap
 {
 public:
     /**
+     * @brief Name of the FreeRTOS component / task for the heap diagnostics.
+     */
+    static const char *COMPONENT_NAME;
+
+    /**
      * @brief Initialize the heap diagnostic subsystem.
      */
     static void Setup();
@@ -66,17 +71,17 @@ public:
      * 
      * @param mode The heap trace mode, use HEAP_TRACE_ALL or HEAP_TRACE_LEAKS (default)
      */
-    static void StartStandaloneTracing(heap_trace_mode_t mode = HEAP_TRACE_LEAKS);
+    static void StartTracing(heap_trace_mode_t mode = HEAP_TRACE_LEAKS);
     
     /**
      * @brief Stop heap tracing and report results.
      */
-    static void StopStandaloneTracing();
+    static void StopTracing();
 
     /**
      * @brief Dump all heap trace records to stdout.
      */
-    static void DumpStandaloneTraceRecords();
+    static void DumpTraceRecords();
     
     /**
      * @brief Report current heap tracing statistics.
@@ -85,11 +90,6 @@ public:
 #endif
 
 private:
-    /**
-     * @brief Name of the FreeRTOS component / task for the heap diagnostics.
-     */
-    static const char *COMPONENT_NAME;
-
 #if defined(CONFIG_HEAP_USE_HOOKS)
 
     /**

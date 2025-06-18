@@ -948,7 +948,7 @@ void SpiTransportProvider::Task(void *pvParameters)
     //  This code and the code in the while loop will check for memory leaks
     //  occurring in the request / response message processing cycle.
     //
-    // Heap::StartStandaloneTracing();
+    // Heap::StartTracing();
 
     spi_slave_transaction_t *transaction = sender->CreateSpiTransaction(nullptr);
     while (true)
@@ -961,12 +961,12 @@ void SpiTransportProvider::Task(void *pvParameters)
         //
         //  Uncomment if heap standalone heap tracing is needed.
         //
-        // Heap::StopStandaloneTracing();
+        // Heap::StopTracing();
         // Diagnostics::LockOutput();
-        // Heap::DumpStandaloneTraceRecords();
+        // Heap::DumpTraceRecords();
         // Diagnostics::UnlockOutput();
 
-        // Heap::StartStandaloneTracing();
+        // Heap::StartTracing();
     }
     //
     //  We should only get here if the code in the while loop generates a fault.
