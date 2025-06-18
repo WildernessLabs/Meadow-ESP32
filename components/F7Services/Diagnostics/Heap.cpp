@@ -6,6 +6,12 @@
  * @date 2025-06-16
  *
  * @copyright Copyright (c) 2025
+ *
+ * @note The standard method of sending diagnostic information to the serial output is via 
+ *       the trace, debug, and error macros defined in Logging.hpp.  In general this is used
+ *       except where heap information is being generated.  In these cases the ESP_LOG?
+ *       macros are used as they do not need the --tracemessages flag to be used in order
+ *       to output the heap information.
  */
 
 #include "sdkconfig.h"
