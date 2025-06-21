@@ -73,7 +73,6 @@ Secrets.hpp
 Secrets.cs
 _clicache
 
-.gdbinit
 Source/OpenOCD/
 
 Source/.vscode/
@@ -98,3 +97,4 @@ components/F7Services/test/secrets.h
 Desktop/valgrind.txt
 sdkconfig
 managed_components/
+gdblog.txt

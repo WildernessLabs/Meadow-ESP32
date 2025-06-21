@@ -57,7 +57,7 @@ meadow_version_t g_application_version = {
 #define COMPONENT_NAME APP_MAIN_COMPONENT_NAME
 
 //
-//  Work out if we have heap tracing enabled and issue a warning..
+//  Work out if we have heap tracing enabled and issue a warning.
 //
 #if defined(CONFIG_HEAP_TRACING_TOHOST)
     #pragma message "Heap tracing turned on."

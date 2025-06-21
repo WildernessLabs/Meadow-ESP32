@@ -26,9 +26,9 @@ const char *Thread::COMPONENT_NAME = "Thread";
 /**
  *  @brief Default constructor.
  *
- *  Ths is not intended to be called by the user.
+ *  This is not intended to be called by the user.
  */
-Thread::Thread() : _mutex(xSemaphoreCreateMutex()), _executeMethod(xSemaphoreCreateMutex())
+Thread::Thread() : _mutex(xSemaphoreCreateMutex())
 {
     _method = nullptr;
     _parameter = nullptr;
@@ -36,16 +36,19 @@ Thread::Thread() : _mutex(xSemaphoreCreateMutex()), _executeMethod(xSemaphoreCre
     {
         throw new ThreadPoolException("Cannot create mutex for thread.");
     }
+    //
+    //  We explicitly create the _executeMethod semaphore here rather than in the member
+    //  initialiser list as using the list has generated an exception in the past.
+    //
+    //  We need to give the semaphore after it has been created as per the FreeRTOS documentation.
+    //  See: https://www.freertos.org/Documentation/02-Kernel/04-API-references/10-Semaphore-and-Mutexes/01-xSemaphoreCreateBinary
+    //
+    _executeMethod = xSemaphoreCreateBinary();
     if (_executeMethod == NULL)
     {
-        throw new ThreadPoolException("Cannot create execute mutex.");
+        throw new ThreadPoolException("Cannot create execute semaphore.");
     }
-    //
-    //  We take the execution semaphore before starting the task as the first thing the
-    //  task will do is to try and take the semaphore.  Once it has taken the semaphore
-    //  the task will start to execute the method.
-    //
-    TakeExecutionSemaphore();
+    xSemaphoreGive(_executeMethod);
 }
 
 /**
@@ -63,6 +66,11 @@ Thread::Thread(char *name, task_completed_method_t taskCompletedMethod) : Thread
     TRACE_MESSAGE("Thread: Enter creating thread %s", name);
     _name = name;
     _taskCompletedMethod = taskCompletedMethod;
+    //
+    //  We take the execution semaphore here to prevent the Task from trying to execute
+    //  a method before one has been assigned to it.
+    //
+    TakeExecutionSemaphore();
     if (xTaskCreate(Thread::Task, _name, 2048 * 2, this, PRIORITY_THREAD_POOL_TASK, &_taskHandle) != pdPASS)
     {
         throw new ThreadPoolException("Cannot create task.");
@@ -102,7 +110,7 @@ char *Thread::GetTaskName()
  */
 method_t Thread::GetMethod()
 {
-    method_t method = NULL;
+    method_t method = nullptr;
 
     if (xSemaphoreTake(_mutex, portMAX_DELAY) == pdTRUE)
     {
@@ -118,7 +126,7 @@ method_t Thread::GetMethod()
  */
 void *Thread::GetParameter()
 {
-    void *parameter = NULL;
+    void *parameter = nullptr;
 
     if (xSemaphoreTake(_mutex, portMAX_DELAY) == pdTRUE)
     {
@@ -230,7 +238,11 @@ void Thread::Task(void *taskParameters)
     while (true)
     {
         sender->TakeExecutionSemaphore();
-        (sender->GetMethod())(sender->GetParameter());
-        sender->TaskCompleted();
+        method_t method = sender->GetMethod();
+        if (method)
+        {
+            method(sender->GetParameter());
+            sender->TaskCompleted();
+        }
     }
 }

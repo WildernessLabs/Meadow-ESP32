@@ -13,6 +13,7 @@ idf_component_register( SRCS    "WiFi/WiFiRequestHandler.cpp"
                                 "Mapping.cpp"
                                 "Logging.cpp"
                                 "ProgressiveDelay.cpp"
+                                "Utils.cpp"
 
                                 "MeshNetwork/MeshNetworkRequestHandler.cpp"
 
@@ -34,6 +35,8 @@ idf_component_register( SRCS    "WiFi/WiFiRequestHandler.cpp"
                                 "Bluetooth/BluetoothServiceCollection.cpp"
                                 "Bluetooth/Uuid.cpp"
                                 "Bluetooth/BluetoothManager.cpp"
+
+                                "Diagnostics/Diagnostics.cpp"
 
                         INCLUDE_DIRS "."
                                 "../../main"
