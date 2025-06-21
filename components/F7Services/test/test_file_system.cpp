@@ -46,8 +46,6 @@
 #define TEST_UPGRADE_FILE_NAME_AA "upgrade_aa.txt"
 #define TEST_UPGRADE_FILE_NAME_55 "upgrade_55.txt"
 
-
-
 /**
  * @brief Count the number of files in the root directory of the file system.
  *
@@ -542,7 +540,7 @@ TEST_CASE("Delete file", CLASS_OF_TESTS)
 
 /**
  * @brief Prepare the file system for an upgrade test.
- * 
+ *
  *  This test will format the file system and then write a number of files to the
  *  file system.
  */
@@ -591,7 +589,7 @@ TEST_CASE("Prepare file system upgrade test", CLASS_OF_TESTS)
 
 /**
  * @brief Post file system upgrade test.
- * 
+ *
  *  This test should be run after upgrading the ESP32 firmware to verify that
  *  the file system upgrade process preserved all files correctly. It reads the
  *  files created by the "Prepare file system upgrade test" and verifies their
