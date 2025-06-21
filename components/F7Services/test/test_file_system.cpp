@@ -39,6 +39,13 @@
 //
 #define TEST_MESSAGE_ID 25
 
+//
+//  Constants for file system upgrade testing.
+//
+#define TEST_UPGRADE_BUFFER_SIZE 1024
+#define TEST_UPGRADE_FILE_NAME_AA "upgrade_aa.txt"
+#define TEST_UPGRADE_FILE_NAME_55 "upgrade_55.txt"
+
 /**
  * @brief Count the number of files in the root directory of the file system.
  *
@@ -74,7 +81,7 @@ int CountFiles()
  *
  * @return Number of bytes written if successful, -1 otherwise.
  */
-int WriteTestFile(char *filename, uint8_t *buffer, int length)
+int WriteTestFile(const char *filename, const uint8_t *buffer, int length)
 {
     int result = 0;
 
@@ -84,7 +91,7 @@ int WriteTestFile(char *filename, uint8_t *buffer, int length)
     FILE *file = fopen(s.c_str(), "w");
     if (file != NULL)
     {
-        result = fwrite((void *) buffer, 1, length, file);
+        result = fwrite(static_cast<const void *>(buffer), 1, length, file);
         fclose(file);
     }
     else
@@ -103,7 +110,7 @@ int WriteTestFile(char *filename, uint8_t *buffer, int length)
  *
  * @return int Number of bytes read of -1 if there is a problem.
  */
-int ReadTestFile(char *filename, uint8_t *buffer, int maxLength)
+int ReadTestFile(const char *filename, uint8_t *buffer, int maxLength)
 {
     int result = 0;
 
@@ -113,7 +120,7 @@ int ReadTestFile(char *filename, uint8_t *buffer, int maxLength)
     FILE *file = fopen(s.c_str(), "r");
     if (file != NULL)
     {
-        result = fread((void *) buffer, 1, maxLength, file);
+        result = fread(static_cast<void *>(buffer), 1, maxLength, file);
         fclose(file);
     }
     else
@@ -527,6 +534,131 @@ TEST_CASE("Delete file", CLASS_OF_TESTS)
     TEST_ASSERT_EQUAL(0, CountFiles());
 
     Message::DeleteMessage(deleteMessage);
+
+    delete fs;
+}
+
+/**
+ * @brief Prepare the file system for an upgrade test.
+ *
+ *  This test will format the file system and then write a number of files to the
+ *  file system.
+ */
+TEST_CASE("Prepare file system upgrade test", CLASS_OF_TESTS)
+{
+    MockMessageDispatcher *messageDispatcher = new MockMessageDispatcher(nullptr);
+    TEST_ASSERT_NOT_NULL(messageDispatcher);
+
+    FileSystem *fs = new FileSystem(messageDispatcher);
+    TEST_ASSERT_NOT_NULL(fs);
+    TEST_ASSERT_EQUAL(fs->Setup(), StatusCodes::CompletedOk);
+    //
+    //  Start with an empty file system.
+    //
+    TEST_ASSERT_EQUAL(ESP_OK, esp_littlefs_format(FileSystem::PARTITION_LABEL));
+
+    //
+    //  Now put some files on the file system to test the upgrade process.
+    //
+    TEST_ASSERT_EQUAL(strlen(TEST_FILE_CONTENTS), WriteTestFile((char *) TEST_FILE_NAME, (uint8_t *) TEST_FILE_CONTENTS, strlen(TEST_FILE_CONTENTS)));
+    TEST_ASSERT_EQUAL(strlen(TEST_FILE_CONTENTS2), WriteTestFile((char *) TEST_FILE_NAME2, (uint8_t *) TEST_FILE_CONTENTS2, strlen(TEST_FILE_CONTENTS2)));
+
+    uint8_t *buffer = static_cast<uint8_t *>(pvPortMalloc(TEST_UPGRADE_BUFFER_SIZE));
+    TEST_ASSERT_NOT_NULL(buffer);
+    for (int index = 0; index < TEST_UPGRADE_BUFFER_SIZE; index++)
+    {
+        buffer[index] = 0xaa;
+    }
+    WriteTestFile(TEST_UPGRADE_FILE_NAME_AA, buffer, TEST_UPGRADE_BUFFER_SIZE);
+    for (int index = 0; index < TEST_UPGRADE_BUFFER_SIZE; index++)
+    {
+        buffer[index] = 0x55;
+    }
+    WriteTestFile(TEST_UPGRADE_FILE_NAME_55, buffer, TEST_UPGRADE_BUFFER_SIZE);
+    vPortFree(buffer);
+
+    //
+    //  Now give instructions to the user.
+    //
+    printf("\n\nFile system for the upgrade test prepared.\n");
+    printf("Upgrade the ESP32 firmware to the one containing the new file system library.\n");
+    printf("Run the 'Post file system upgrade test' to verify that the file system upgrade works.\n\n\n");
+
+    delete fs;
+}
+
+/**
+ * @brief Post file system upgrade test.
+ *
+ *  This test should be run after upgrading the ESP32 firmware to verify that
+ *  the file system upgrade process preserved all files correctly. It reads the
+ *  files created by the "Prepare file system upgrade test" and verifies their
+ *  contents match the expected values.
+ */
+TEST_CASE("Post file system upgrade test", CLASS_OF_TESTS)
+{
+    MockMessageDispatcher *messageDispatcher = new MockMessageDispatcher(nullptr);
+    TEST_ASSERT_NOT_NULL(messageDispatcher);
+
+    FileSystem *fs = new FileSystem(messageDispatcher);
+    TEST_ASSERT_NOT_NULL(fs);
+    TEST_ASSERT_EQUAL(fs->Setup(), StatusCodes::CompletedOk);
+
+    //
+    //  Verify the first test file exists and has correct contents.
+    //
+    uint8_t *buffer1 = static_cast<uint8_t *>(pvPortMalloc(strlen(TEST_FILE_CONTENTS) + 1));
+    TEST_ASSERT_NOT_NULL(buffer1);
+    memset(buffer1, 0, strlen(TEST_FILE_CONTENTS) + 1);
+    int bytesRead = ReadTestFile(TEST_FILE_NAME, buffer1, strlen(TEST_FILE_CONTENTS));
+    TEST_ASSERT_EQUAL(strlen(TEST_FILE_CONTENTS), bytesRead);
+    TEST_ASSERT_EQUAL_MEMORY(TEST_FILE_CONTENTS, buffer1, strlen(TEST_FILE_CONTENTS));
+    vPortFree(buffer1);
+
+    //
+    //  Verify the second test file exists and has correct contents.
+    //
+    uint8_t *buffer2 = static_cast<uint8_t *>(pvPortMalloc(strlen(TEST_FILE_CONTENTS2) + 1));
+    TEST_ASSERT_NOT_NULL(buffer2);
+    memset(buffer2, 0, strlen(TEST_FILE_CONTENTS2) + 1);
+    bytesRead = ReadTestFile(TEST_FILE_NAME2, buffer2, strlen(TEST_FILE_CONTENTS2));
+    TEST_ASSERT_EQUAL(strlen(TEST_FILE_CONTENTS2), bytesRead);
+    TEST_ASSERT_EQUAL_MEMORY(TEST_FILE_CONTENTS2, buffer2, strlen(TEST_FILE_CONTENTS2));
+    vPortFree(buffer2);
+
+    //
+    //  Verify the 0xAA upgrade test file exists and has correct contents.
+    //
+    uint8_t *bufferAA = static_cast<uint8_t *>(pvPortMalloc(TEST_UPGRADE_BUFFER_SIZE));
+    TEST_ASSERT_NOT_NULL(bufferAA);
+    memset(bufferAA, 0, TEST_UPGRADE_BUFFER_SIZE);
+    bytesRead = ReadTestFile(TEST_UPGRADE_FILE_NAME_AA, bufferAA, TEST_UPGRADE_BUFFER_SIZE);
+    TEST_ASSERT_EQUAL(TEST_UPGRADE_BUFFER_SIZE, bytesRead);
+    for (int index = 0; index < TEST_UPGRADE_BUFFER_SIZE; index++)
+    {
+        TEST_ASSERT_EQUAL_HEX8(0xAA, (uint8_t) bufferAA[index]);
+    }
+    vPortFree(bufferAA);
+
+    //
+    //  Verify the 0x55 upgrade test file exists and has correct contents.
+    //
+    uint8_t *buffer55 = static_cast<uint8_t *>(pvPortMalloc(TEST_UPGRADE_BUFFER_SIZE));
+    TEST_ASSERT_NOT_NULL(buffer55);
+    memset(buffer55, 0, TEST_UPGRADE_BUFFER_SIZE);
+    bytesRead = ReadTestFile(TEST_UPGRADE_FILE_NAME_55, buffer55, TEST_UPGRADE_BUFFER_SIZE);
+    TEST_ASSERT_EQUAL(TEST_UPGRADE_BUFFER_SIZE, bytesRead);
+    for (int index = 0; index < TEST_UPGRADE_BUFFER_SIZE; index++)
+    {
+        TEST_ASSERT_EQUAL_HEX8(0x55, (uint8_t) buffer55[index]);
+    }
+    vPortFree(buffer55);
+
+    //
+    //  Verify the correct number of files exist on the file system.
+    //
+    int fileCount = CountFiles();
+    TEST_ASSERT_EQUAL(4, fileCount);
 
     delete fs;
 }
