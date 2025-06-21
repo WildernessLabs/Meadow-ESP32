@@ -209,15 +209,15 @@ void Diagnostics::ReportTaskInformation()
 void Diagnostics::ReportHeapInformation()
 {
 #if defined(CONFIG_HEAP_TRACING_TOHOST)
-    ESP_LOGI(COMPONENT_NAME, "Heap tracing is enabled");
+    // ESP_LOGI(COMPONENT_NAME, "Heap tracing is enabled");
     
-    // Report heap trace information if available
-    size_t num_totals;
-    size_t num_allocations;
-    size_t num_frees;
+    // // Report heap trace information if available
+    // size_t num_totals;
+    // size_t num_allocations;
+    // size_t num_frees;
     
-    heap_trace_get_count(&num_totals, &num_allocations, &num_frees);
-    ESP_LOGI(COMPONENT_NAME, "Heap trace - Total: %" PRIu32 ", Allocations: %" PRIu32 ", Frees: %" PRIu32, (uint32_t) num_totals, (uint32_t) num_allocations, (uint32_t) num_frees);
+    // heap_trace_get_count(&num_totals, &num_allocations, &num_frees);
+    // ESP_LOGI(COMPONENT_NAME, "Heap trace - Total: %" PRIu32 ", Allocations: %" PRIu32 ", Frees: %" PRIu32, (uint32_t) num_totals, (uint32_t) num_allocations, (uint32_t) num_frees);
 #else
     ESP_LOGI(COMPONENT_NAME, "Heap tracing is not enabled");
 #endif
