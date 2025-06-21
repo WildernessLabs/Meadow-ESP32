@@ -45,7 +45,7 @@ private:
     SemaphoreHandle_t _mutex = NULL;
 
     /**
-     *  @brief Sempahore that will be used to trigger the execution of the _method.
+     *  @brief Semaphore that will be used to trigger the execution of the _method.
      */
     SemaphoreHandle_t _executeMethod = NULL;
 
@@ -81,7 +81,7 @@ private:
 
 public:
     /**
-     *  @brief Name of the componet / task for the Thread class.
+     *  @brief Name of the component / task for the Thread class.
      */
     static const char *COMPONENT_NAME;
 
@@ -106,7 +106,7 @@ public:
     bool IsBusy();
 
     /**
-     *  @brief Take the exectution semaphore putting the thread into a holding state.
+     *  @brief Take the execution semaphore putting the thread into a holding state.
      */
     void TakeExecutionSemaphore();
 

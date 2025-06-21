@@ -34,7 +34,6 @@ VERBOSE=true
 CLEAN=false
 FULLCLEAN=false
 COREDUMP=false
-MENUCONFIG=false
 HELP=false
 DRYRUN=false
 HEAPTRACING=false
@@ -80,8 +79,8 @@ case $i in
     -tm|--tracemessages)
     IDF_DEFINES+=" -DTRACE_MESSAGES=1"
     ;;
-    --MENUCONFIG)
-    MENUCONFIG=true
+    --DEVELOP)
+    IDF_DEFINES+=" -DDEVELOP=1"
     ;;
     --debug)
     DEBUG=true
@@ -132,11 +131,11 @@ if $HELP; then
     echo "--coredump              Add core dump functionality to the application"
     echo "-th | --heaptracing     Enable heap tracing."
     echo "-tm | --tracemessages   Enable heap tracing."
-    echo "--menuconfig            Enter the menu configuration system overwriting sdkconfig.defaults"
     echo "--dryrun                Perform a dry run (do not execute commands)"
     echo "--halt                  Halt the system on hard fault."
     echo "--sbom                  Generate a Software Bill of Materials (SBOM) in SPDX format."
     echo "-d=* | --debug=*        Turn on debug for selected system(s). Valid values (comma separated): WIFI, SPI, BT, SYSTEM."
+    echo "--develop               Enable development mode (adds -DDEVELOP=1 to the build)"
     echo ""
     exit 0
 fi
@@ -258,23 +257,6 @@ generate_build_info() {
 generate_build_info
 
 #
-#   Enter the configuration system for the application.  This takes care
-#   of the fact that we have a default configuration system and makes sure
-#   we edit the release configuration file.
-#
-if $MENUCONFIG; then
-    SDKCONFIG="sdkconfig"
-    DEFAULT_SDKCONFIG="sdkconfig.defaults"
-    if test -f "$SDKCONFIG"; then
-        run_command "rm $SDKCONFIG"
-    fi
-    run_command "mv $DEFAULT_SDKCONFIG $SDKCONFIG"
-    run_command "idf.py menuconfig"
-    run_command "mv $SDKCONFIG $DEFAULT_SDKCONFIG"
-    exit 0
-fi
-
-#
 #   Work out if we need to add any defintions to enable logging.
 #
 if [ ! -z "$DEBUG_SELECTIONS" ]; then
@@ -327,6 +309,7 @@ fi
 if $FULLCLEAN; then
     run_command "rm -Rf $scriptdir/build"
     run_command "idf.py --project-dir $scriptdir fullclean"
+    run_command "rm -f $scriptdir/sdkconfig"
 fi
 
 #
