@@ -47,6 +47,11 @@ private:
      */
     bool MountIfNecessary();
 
+    /**
+     * @brief Display the list of files on the file system to the console.
+     */
+    void ShowFiles();
+
 public:
     /**
      *  @brief Name of the FreeRTOS component.
