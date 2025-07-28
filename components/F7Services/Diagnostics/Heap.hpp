@@ -77,35 +77,6 @@ private:
      */
     static bool _isRunning;
 
-#if defined(CONFIG_HEAP_USE_HOOKS)
-    /**
-     * @brief Array to hold pointers to allocated memory for tracking.
-     */
-    static const void *_allocations[CONFIG_HOOK_REGISTER_SIZE];
-
-    /**
-     * @brief Count of current allocations.
-     */
-    static uint32_t _allocationCount;
-
-    /**
-     * @brief Hook for memory allocation events.
-     * 
-     * @param ptr Pointer to the allocated memory.
-     * @param size Size of the allocated memory in bytes.
-     * @param caps Memory capabilities flags.
-     */
-    static void AllocationHook(const void * const ptr, const size_t size, const uint32_t caps);
-
-    /**
-     * @brief Hook for memory deallocation events.
-     * 
-     * @param ptr Pointer to the memory being freed.
-     */
-    static void FreeHook(const void * const ptr);
-
-#endif // CONFIG_HEAP_USE_HOOKS
-
 #if defined(CONFIG_HEAP_TRACING_STANDALONE)
 
     /**
