@@ -13,15 +13,10 @@
 #include "esp_log.h"
 #include "esp_wifi.h"
 #include "esp_event.h"
-// #include "esp_ota_ops.h"
 #include "esp_wifi.h"
 #include "esp_adc/adc_oneshot.h"
 #include "esp_adc/adc_cali.h"
 #include "esp_adc/adc_cali_scheme.h"
-
-#if defined(CONFIG_HEAP_TRACING_TOHOST)
-    #include "esp_heap_trace.h"
-#endif
 
 #include "esp_sleep.h"
 #include <string.h>
@@ -40,6 +35,7 @@
 #include "Mapping.hpp"
 #include "version.h"
 #include "Diagnostics.hpp"
+#include "Heap.hpp"
 
 /*
  * ----------------------------------------------------------------------------
@@ -132,6 +128,7 @@ SystemRequestHandler::SystemRequestHandler(IMessageDispatcher *messageDispatcher
 
 #if defined(CONFIG_ENABLE_DIAGNOSTIC_THREAD)
     Diagnostics::Setup();
+    Heap::Setup();
 #endif
 }
 
@@ -733,38 +730,6 @@ void SystemRequestHandler::GetBatteryChargeLevel(Message *message)
 }
 
 /**
- *  @brief Turn heap tracing on.
- *
- *  @param request
- *      Message requesting heap tracing to be turned on.
- */
-void SystemRequestHandler::StartHeapTrace(Message *message)
-{
-#if defined(CONFIG_HEAP_TRACING_TOHOST)
-    message->DeleteMessage(message);
-    heap_trace_start(HEAP_TRACE_LEAKS);
-#else
-    ESP_LOGE(COMPONENT_NAME, "Heap tracing cannot start as it is disabled, update menuconfig.");
-#endif
-}
-
-/**
- *  @brief Turn heap tracing off.
- *
- *  @param request
- *      Message requesting that heap tracing is turned off.
- */
-void SystemRequestHandler::StopHeapTrace(Message *message)
-{
-#if defined(CONFIG_HEAP_TRACING_TOHOST)
-    message->DeleteMessage(message);
-    heap_trace_stop();
-#else
-    ESP_LOGE(COMPONENT_NAME, "Heap tracing cannot be stopped as it is disabled, update menuconfig.");
-#endif
-}
-
-/**
  *  @brief Process the logging configuration.
  *
  *  @param request
@@ -841,12 +806,6 @@ void SystemRequestHandler::DispatchRequest(Message *request)
             break;
         case SystemFunction::GetBatteryChargeLevel:
             GetBatteryChargeLevel(request);
-            break;
-        case SystemFunction::StartHeapTrace:
-            StartHeapTrace(request);
-            break;
-        case SystemFunction::StopHeapTrace:
-            StopHeapTrace(request);
             break;
         case SystemFunction::FileSystemFormat:
             _fileSystem->Format(request);
