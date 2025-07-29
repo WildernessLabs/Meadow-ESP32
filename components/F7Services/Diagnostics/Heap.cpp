@@ -16,8 +16,6 @@
 
 #include "sdkconfig.h"
 
-#if defined(CONFIG_HEAP_TRACING_TOHOST) || defined(CONFIG_HEAP_TRACING_STANDALONE)
-
 #include <inttypes.h>
 #include <string>
 
@@ -26,6 +24,7 @@
 #include "esp_log.h"
 #include "esp_heap_caps.h"
 
+#include "esp_heap_task_info.h"
 #include "esp_heap_trace.h"
 
 #include "Utils.hpp"
@@ -44,20 +43,6 @@
  *  @brief Name of the component / task.
  */
 const char *Heap::COMPONENT_NAME = "HeapDiagnostics";
-
-#if defined(CONFIG_HEAP_USE_HOOKS)
-
-/**
- * @brief Number of allocations tracked by the heap hooks.
- */
-uint32_t Heap::_allocationCount = 0;
-
-/**
- * @brief Array to hold pointers to allocated memory for tracking.
- */
-const void *Heap::_allocations[CONFIG_HOOK_REGISTER_SIZE] = {nullptr};
-
-#endif  // CONFIG_HEAP_USE_HOOKS
 
 #if defined(CONFIG_HEAP_TRACING_STANDALONE)
 
@@ -93,7 +78,6 @@ void Heap::Setup()
     TRACE_MESSAGE("Setup: Enter");
 
 #if defined(CONFIG_HEAP_TRACING_STANDALONE)
-
     _traceRecords = static_cast<heap_trace_record_t *>(pvPortMalloc(sizeof(heap_trace_record_t) * CONFIG_TRACE_RECORD_NUM));
     if (_traceRecords == NULL)
     {
@@ -103,7 +87,8 @@ void Heap::Setup()
     {
         result = heap_trace_init_standalone(_traceRecords, CONFIG_TRACE_RECORD_NUM);
     }
-#else
+#endif
+#if defined(CONFIG_HEAP_TRACING_TOHOST)
     result = heap_trace_init_tohost();
 #endif
     if (result != ESP_OK)
@@ -141,10 +126,6 @@ void Heap::ReportUsage()
     ESP_LOGI(COMPONENT_NAME, "Largest free block: %s bytes", Utils::NumberWithCommas((uint64_t) heap_info.largest_free_block).c_str());
     ESP_LOGI(COMPONENT_NAME, "Minimum free heap: %s bytes", Utils::NumberWithCommas((uint64_t) esp_get_minimum_free_heap_size()).c_str());
     ESP_LOGI(COMPONENT_NAME, "Heap fragmentation: %d%%", heap_info.total_free_bytes ? (100 - (heap_info.largest_free_block * 100) / heap_info.total_free_bytes) : 0);
-
-#if defined(CONFIG_HEAP_USE_HOOKS)
-    ESP_LOGI(COMPONENT_NAME, "Current allocations: %s of %s", Utils::NumberWithCommas((uint64_t) _allocationCount).c_str(), Utils::NumberWithCommas((uint64_t) CONFIG_HOOK_REGISTER_SIZE).c_str());
-#endif
 }
 
 /**
@@ -191,7 +172,8 @@ void Heap::StartTracing(heap_trace_mode_t mode)
     }
 #endif
 
-    if (heap_trace_start(mode) == ESP_OK)
+    esp_err_t result = heap_trace_start(mode);
+    if (result == ESP_OK)
     {
         _isRunning = true;
     }
@@ -219,7 +201,8 @@ void Heap::StopTracing()
     }
 #endif
 
-    if (heap_trace_stop() != ESP_OK)
+    esp_err_t result = heap_trace_stop();
+    if (result != ESP_OK)
     {
         ERROR_MESSAGE("Failed to stop heap tracing: %s", esp_err_to_name(result));
     }
@@ -278,5 +261,46 @@ void Heap::ReportStatistics()
     TRACE_MESSAGE("ReportStatistics: Exit");
 }
 
-#endif // defined(CONFIG_HEAP_TRACING_TOHOST) || defined(CONFIG_HEAP_TRACING_STANDALONE)
+#if defined(CONFIG_HEAP_TASK_TRACKING)
 
+/**
+ * @brief Report heap usage by task.
+ *
+ * This method reports the heap usage for each task in the system.
+ */
+void Heap::ReportHeapUseByTask()
+{
+    heap_all_tasks_stat_t allTasksStatistics;
+    assert(heap_caps_alloc_all_task_stat_arrays(&allTasksStatistics) == ESP_OK);
+    assert(heap_caps_get_all_task_stat(&allTasksStatistics) == ESP_OK);
+
+    ESP_LOGI(COMPONENT_NAME, "--------------------------------------------------------------------------------");
+    ESP_LOGI(COMPONENT_NAME, "                        Printing All Tasks Information\n");
+    ESP_LOGI(COMPONENT_NAME, "--------------------------------------------------------------------------------");
+    for (size_t task_idx = 0; task_idx < allTasksStatistics.task_count; task_idx++)
+    {
+        task_stat_t taskStatistics = allTasksStatistics.stat_arr[task_idx];
+        ESP_LOGI(COMPONENT_NAME, "%s: %s: Peak Usage %" PRIu16 ", Current Usage %" PRIu16, taskStatistics.name,
+                                 taskStatistics.is_alive ? "ALIVE  " : "DELETED", taskStatistics.overall_peak_usage, taskStatistics.overall_current_usage);
+
+        for (size_t heapIndex = 0; heapIndex < taskStatistics.heap_count; heapIndex++)
+        {
+            heap_stat_t heapStatistics = taskStatistics.heap_stat[heapIndex];
+            ESP_LOGI(COMPONENT_NAME, "    %s: Caps: %" PRIu32 ". Size %" PRIu16 ", Current Usage %" PRIu16 ", Peak Usage %" PRIu16 ", alloc count %" PRIu16, heapStatistics.name,
+                                    heapStatistics.caps, heapStatistics.size, heapStatistics.current_usage, heapStatistics.peak_usage, heapStatistics.alloc_count);
+
+            for (size_t allocationIndex = 0; allocationIndex < heapStatistics.alloc_count; allocationIndex++)
+            {
+                heap_task_block_t allocation = heapStatistics.alloc_stat[allocationIndex];
+                ESP_LOGI(COMPONENT_NAME, "        %p: Size: %" PRIu32, allocation.address, allocation.size);
+            }
+        }
+    }
+    ESP_LOGI(COMPONENT_NAME, "--------------------------------------------------------------------------------");
+    ESP_LOGI(COMPONENT_NAME, "                        End of All Tasks Information\n");
+    ESP_LOGI(COMPONENT_NAME, "--------------------------------------------------------------------------------");
+
+    heap_caps_free_all_task_stat_arrays(&allTasksStatistics);
+}
+
+#endif // CONFIG_HEAP_TASK_TRACKING

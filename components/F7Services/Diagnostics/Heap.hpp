@@ -11,14 +11,13 @@
 
 #include "sdkconfig.h"
 
-#if defined(CONFIG_HEAP_TRACING_TOHOST) || defined(CONFIG_HEAP_TRACING_STANDALONE) || defined(CONFIG_HEAP_USE_HOOKS)
-
 #include <stdint.h>
 #include <string>
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
 
+#include "esp_heap_task_info.h"
 #include "esp_heap_trace.h"
 
 /**
@@ -71,6 +70,15 @@ public:
      */
     static void ReportStatistics();
 
+#if defined(CONFIG_HEAP_TASK_TRACKING)
+
+    /**
+     * @brief Report heap usage by task.
+     */
+    static void ReportHeapUseByTask();
+
+#endif 
+
 private:
     /**
      * @brief Flag indicating whether heap tracing is currently active.
@@ -86,5 +94,3 @@ private:
 
 #endif
 };
-
-#endif
