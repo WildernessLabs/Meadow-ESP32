@@ -8,6 +8,9 @@
     "files.associations": {
         "unity.h": "c",
         "unity_internals.h": "c",
-        "map": "cpp"
+        "map": "cpp",
+        "typeinfo": "cpp",
+        "chrono": "cpp",
+        "text_encoding": "cpp"
     }
 }
