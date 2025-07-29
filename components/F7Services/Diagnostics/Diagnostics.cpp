@@ -160,9 +160,11 @@ void Diagnostics::Thread(void *pvParameters)
         ReportTaskInformation();
         ESP_LOGI(COMPONENT_NAME, "");
 
-#if defined(CONFIG_HEAP_TRACING_TOHOST) || defined(CONFIG_HEAP_TRACING_STANDALONE)
         Heap::ReportUsage();
+#if defined(CONFIG_HEAP_TASK_TRACKING)
+        Heap::ReportHeapUseByTask();
 #endif
+        ESP_LOGI(COMPONENT_NAME, "");
 
         ESP_LOGI(COMPONENT_NAME, "=== End Diagnostics ===");
         ESP_LOGI(COMPONENT_NAME, "");
