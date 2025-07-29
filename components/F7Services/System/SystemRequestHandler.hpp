@@ -118,16 +118,6 @@ private:
     void GetBatteryChargeLevel(Message *);
 
     /**
-     *  @brief Start heap tracing.
-     */
-    static void StartHeapTrace(Message *);
-
-    /**
-     *  @brief Stop heap tracing.
-     */
-    void StopHeapTrace(Message *);
-
-    /**
      * @brief Process the logging configuration.
      */
     void LoggingConfiguration(Message *);

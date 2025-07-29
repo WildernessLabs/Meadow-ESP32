@@ -4,8 +4,14 @@
  * @brief Provide system diagnostic tools for the ESP32 application.
  * @version 0.1
  * @date 2025-06-04
- * 
+ *
  * @copyright Copyright (c) 2025
+ *
+ * @note The standard method of sending diagnostic information to the serial output is via
+ *       the trace, debug, and error macros defined in Logging.hpp.  In general this is used
+ *       except where heap information is being generated.  In these cases the ESP_LOG?
+ *       macros are used as they do not need the --tracemessages flag to be used in order
+ *       to output the heap information.
  */
 
 #include "sdkconfig.h"
@@ -13,17 +19,20 @@
 #include <inttypes.h>
 #include <string>
 
-#include "Diagnostics.hpp"
-#include "esp_system.h"
-#include "esp_log.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "esp_system.h"
+#include "esp_log.h"
 #include "esp_heap_caps.h"
 #include "esp_timer.h"
 
+#include "Diagnostics.hpp"
 #include "Utils.hpp"
+#include "Heap.hpp"
+#include "Debug.hpp"
+#include "Logging.hpp"
 
-#if defined(CONFIG_HEAP_TRACING_TOHOST)
+#if defined(CONFIG_HEAP_TRACING_TOHOST) || defined(CONFIG_HEAP_TRACING_STANDALONE)
     #include "esp_heap_trace.h"
 #endif
 
@@ -42,12 +51,17 @@
 /**
  *  @brief Name of the component / task.
  */
-static const char *COMPONENT_NAME = "Diagnostics";
+const char *Diagnostics::COMPONENT_NAME = "Diagnostics";
 
 /**
  *  @brief Task handle for the diagnostics thread.
  */
 static TaskHandle_t _diagnosticsTaskHandle = NULL;
+
+/**
+ *  @brief Lock for controlling output.
+ */
+SemaphoreHandle_t Diagnostics::_outputBinarySemaphore = nullptr;
 
 /*
  * ---------------------------------------------------------------------------
@@ -59,50 +73,102 @@ static TaskHandle_t _diagnosticsTaskHandle = NULL;
 
 /**
  * @brief Setup the diagnostics system.
- * 
+ *
  * This method initializes the diagnostics system and starts the diagnostics thread.
  */
 void Diagnostics::Setup()
 {
-    esp_log_level_set(COMPONENT_NAME, ESP_LOG_INFO);
-    ESP_LOGI(COMPONENT_NAME, "Setting up diagnostics system");
-    
+    TRACE_MESSAGE("Setup: Enter");
+
+    _outputBinarySemaphore = xSemaphoreCreateBinary();
+    if (_outputBinarySemaphore == NULL)
+    {
+        ERROR_MESSAGE("Failed to create output binary semaphore");
+    }
+    else
+    {
+        xSemaphoreGive(_outputBinarySemaphore);
+    }
+
     BaseType_t result = xTaskCreate(Thread, "Diagnostics", 4096, NULL, 5, &_diagnosticsTaskHandle);
-    
+
     if (result != pdPASS)
     {
-        ESP_LOGE(COMPONENT_NAME, "Failed to create diagnostics task");
+        ERROR_MESSAGE("Failed to create diagnostics task");
         return;
     }
-    
-    ESP_LOGI(COMPONENT_NAME, "Diagnostics system setup complete");
+
+    TRACE_MESSAGE("Setup: Exit");
+}
+
+/**
+ * @brief Lock the output semaphore.
+ *
+ * This method acquires the output semaphore, stopping this class from using the output stream.
+ */
+void Diagnostics::LockOutput()
+{
+    if (_outputBinarySemaphore == nullptr)
+    {
+        _outputBinarySemaphore = xSemaphoreCreateBinary();
+        if (_outputBinarySemaphore == nullptr)
+        {
+            ERROR_MESSAGE("Failed to create output binary semaphore");
+            return;
+        }
+        xSemaphoreGive(_outputBinarySemaphore);
+    }
+    if (xSemaphoreTake(_outputBinarySemaphore, portMAX_DELAY) != pdTRUE)
+    {
+        ERROR_MESSAGE("Failed to take output binary semaphore");
+    }
+}
+
+/**
+ * @brief Unlock the output semaphore.
+ *
+ * This method releases the output semaphore, allowing this class to use the output stream.
+ */
+void Diagnostics::UnlockOutput()
+{
+    if (_outputBinarySemaphore != nullptr)
+    {
+        xSemaphoreGive(_outputBinarySemaphore);
+    }
 }
 
 /**
  * @brief Main diagnostics thread function.
- * 
+ *
  * This method runs continuously and collects system diagnostic information
  * at regular intervals.
- * 
- * @param pvParameters 
+ *
+ * @param pvParameters
  *      Pointer to task parameters (not used).
  */
 void Diagnostics::Thread(void *pvParameters)
 {
-    ESP_LOGI(COMPONENT_NAME, "Diagnostics thread started");
-    
+    TRACE_MESSAGE("Thread: Enter");
+
     while (true)
     {
+        Diagnostics::LockOutput();
         ESP_LOGI(COMPONENT_NAME, "");
         ESP_LOGI(COMPONENT_NAME, "=== System Diagnostics ===");
-        
+
         ReportSystemUptime();
         ReportTaskInformation();
-        ReportMemoryUsage();
-        ReportHeapInformation();
-        
+        ESP_LOGI(COMPONENT_NAME, "");
+
+        Heap::ReportUsage();
+#if defined(CONFIG_HEAP_TASK_TRACKING)
+        Heap::ReportHeapUseByTask();
+#endif
+        ESP_LOGI(COMPONENT_NAME, "");
+
         ESP_LOGI(COMPONENT_NAME, "=== End Diagnostics ===");
         ESP_LOGI(COMPONENT_NAME, "");
+        Diagnostics::UnlockOutput();
 
         vTaskDelay(pdMS_TO_TICKS(CONFIG_DIAGNOSTICS_INTERVAL_MS));
     }
@@ -120,21 +186,6 @@ void Diagnostics::ReportSystemUptime()
     uint32_t seconds = uptime_seconds % 60;
 
     ESP_LOGI(COMPONENT_NAME, "System uptime: %" PRIu32 ":%02" PRIu32 ":%02" PRIu32 " (%" PRIu32 " seconds)", hours, minutes, seconds, uptime_seconds);
-}
-
-/**
- * @brief Report memory usage information.
- */
-void Diagnostics::ReportMemoryUsage()
-{
-    multi_heap_info_t heap_info;
-    heap_caps_get_info(&heap_info, MALLOC_CAP_DEFAULT);
-
-    ESP_LOGI(COMPONENT_NAME, "Total heap: %s bytes", Utils::NumberWithCommas((uint64_t) (heap_info.total_allocated_bytes + heap_info.total_free_bytes)).c_str());
-    ESP_LOGI(COMPONENT_NAME, "Free heap: %s bytes", Utils::NumberWithCommas((uint64_t) heap_info.total_free_bytes).c_str());
-    ESP_LOGI(COMPONENT_NAME, "Allocated heap: %s bytes", Utils::NumberWithCommas((uint64_t) heap_info.total_allocated_bytes).c_str());
-    ESP_LOGI(COMPONENT_NAME, "Largest free block: %s bytes", Utils::NumberWithCommas((uint64_t) heap_info.largest_free_block).c_str());
-    ESP_LOGI(COMPONENT_NAME, "Minimum free heap: %s bytes", Utils::NumberWithCommas((uint64_t) esp_get_minimum_free_heap_size()).c_str());
 }
 
 /**
@@ -163,6 +214,27 @@ std::string Diagnostics::TaskStateToString(eTaskState state)
 }
 
 /**
+ * @brief Translate core ID to string representation.
+ *
+ * @param coreID Core ID for a task.
+ * @return std::string String representation of the core ID.
+ */
+std::string Diagnostics::TranslateCoreID(BaseType_t coreID)
+{
+    switch (coreID)
+    {
+        case tskNO_AFFINITY:
+            return("-");
+        case 0:
+            return("0");
+        case 1:
+            return("1");
+        default:
+            return("?");
+    }
+}
+
+/**
  * @brief Report task information.
  */
 void Diagnostics::ReportTaskInformation()
@@ -176,7 +248,7 @@ void Diagnostics::ReportTaskInformation()
     if (tasks != NULL)
     {
         ESP_LOGI(COMPONENT_NAME, "Number of tasks: %d", numberOfTasks);
-        ESP_LOGI(COMPONENT_NAME, "ID  Task Name                        State     Priority Stack Watermark Run-time Percentage");
+        ESP_LOGI(COMPONENT_NAME, "ID  Core Task Name        State     Priority Stack Watermark Run-time Percentage");
         numberOfTasks = uxTaskGetSystemState(tasks, numberOfTasks, &totalRunTime);
         totalRunTime /= 100UL;
         for (int index = 0; index < numberOfTasks; index++)
@@ -191,7 +263,8 @@ void Diagnostics::ReportTaskInformation()
                 runTimePercentage = 0;
             }
             std::string taskState = TaskStateToString(tasks[index].eCurrentState);
-            ESP_LOGI(COMPONENT_NAME, "%-2d  %-32s %-9s %2" PRIu32 " (%2" PRIu32 ")  %15u %8lu  %3lu%%", tasks[index].xTaskNumber, tasks[index].pcTaskName, taskState.c_str(),
+            std::string coreID = TranslateCoreID(tasks[index].xCoreID);
+            ESP_LOGI(COMPONENT_NAME, "%-2d    %s  %-16s %-9s %2" PRIu32 " (%2" PRIu32 ")  %15u %8lu  %3lu%%", tasks[index].xTaskNumber, coreID.c_str(), tasks[index].pcTaskName, taskState.c_str(),
                 (long unsigned int) tasks[index].uxCurrentPriority, (long unsigned int) tasks[index].uxBasePriority,
                 (unsigned int) tasks[index].usStackHighWaterMark, tasks[index].ulRunTimeCounter, runTimePercentage);
         }
@@ -201,31 +274,4 @@ void Diagnostics::ReportTaskInformation()
     {
         ESP_LOGI(COMPONENT_NAME, "Cannot allocate memory for task information.\n");
     }
-}
-
-/**
- * @brief Report heap information including any heap tracing data.
- */
-void Diagnostics::ReportHeapInformation()
-{
-#if defined(CONFIG_HEAP_TRACING_TOHOST)
-    // ESP_LOGI(COMPONENT_NAME, "Heap tracing is enabled");
-    
-    // // Report heap trace information if available
-    // size_t num_totals;
-    // size_t num_allocations;
-    // size_t num_frees;
-    
-    // heap_trace_get_count(&num_totals, &num_allocations, &num_frees);
-    // ESP_LOGI(COMPONENT_NAME, "Heap trace - Total: %" PRIu32 ", Allocations: %" PRIu32 ", Frees: %" PRIu32, (uint32_t) num_totals, (uint32_t) num_allocations, (uint32_t) num_frees);
-#else
-    ESP_LOGI(COMPONENT_NAME, "Heap tracing is not enabled");
-#endif
-    
-    // Report additional heap capabilities
-    size_t dram_free = heap_caps_get_free_size(MALLOC_CAP_8BIT);
-    size_t iram_free = heap_caps_get_free_size(MALLOC_CAP_32BIT);
-
-    ESP_LOGI(COMPONENT_NAME, "DRAM free: %s bytes", Utils::NumberWithCommas((uint64_t) dram_free).c_str());
-    ESP_LOGI(COMPONENT_NAME, "IRAM free: %s bytes", Utils::NumberWithCommas((uint64_t) iram_free).c_str());
 }

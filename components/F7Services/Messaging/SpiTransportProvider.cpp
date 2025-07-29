@@ -6,13 +6,16 @@
  */
 #include "sdkconfig.h"
 
+#include <string.h>
+
+#include "esp_heap_caps.h"
+
 #include "SpiTransportProvider.hpp"
 #include "Esp32Messaging.hpp"
 #include "Encoders.hpp"
 #include "Globals.hpp"
-#include <string.h>
-
-#include "esp_heap_caps.h"
+#include "Diagnostics.hpp"
+#include "Heap.hpp"
 
 /*
  * ----------------------------------------------------------------------------
@@ -938,6 +941,15 @@ void SpiTransportProvider::Task(void *pvParameters)
     {
         vTaskDelay(10 / portTICK_PERIOD_MS);
     }
+
+    //
+    //  Uncomment if heap standalone heap tracing is needed.
+    //
+    //  This code and the code in the while loop will check for memory leaks
+    //  occurring in the request / response message processing cycle.
+    //
+    // Heap::StartTracing();
+
     spi_slave_transaction_t *transaction = sender->CreateSpiTransaction(nullptr);
     while (true)
     {
@@ -945,6 +957,16 @@ void SpiTransportProvider::Task(void *pvParameters)
         TRACE_MESSAGE("****************************** New State ******************************");
         TRACE_MESSAGE("");
         transaction = sender->ProcessMessages(transaction);
+
+        //
+        //  Uncomment if heap standalone heap tracing is needed.
+        //
+        // Heap::StopTracing();
+        // Diagnostics::LockOutput();
+        // Heap::DumpTraceRecords();
+        // Diagnostics::UnlockOutput();
+
+        // Heap::StartTracing();
     }
     //
     //  We should only get here if the code in the while loop generates a fault.
