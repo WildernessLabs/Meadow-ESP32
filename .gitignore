@@ -96,4 +96,5 @@ components/F7Services/test/secrets.h
 *.log
 Desktop/valgrind.txt
 sdkconfig
+managed_components/
 gdblog.txt

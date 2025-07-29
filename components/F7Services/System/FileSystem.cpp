@@ -17,6 +17,10 @@
 #include "SharedEnums.hpp"
 #include "Mapping.hpp"
 
+#if defined(FILE_SYSTEM_DEBUG)
+    #pragma message "FileSystem.cpp: Debugging enabled"
+#endif
+
 /*
  * ----------------------------------------------------------------------------
  *
@@ -57,8 +61,11 @@ FileSystem::FileSystem()
     _config = {
         .base_path = PARTITION_PATH_NAME,
         .partition_label = PARTITION_LABEL,
+        .partition = NULL,
         .format_if_mount_failed = true,
+        .read_only = false,
         .dont_mount = false,
+        .grow_on_mount = true,
     };
 }
 
@@ -96,6 +103,40 @@ FileSystem::~FileSystem()
  *
  * ----------------------------------------------------------------------------
  */
+
+/**
+ * @brief Show the list of files on the file system.
+ */
+void FileSystem::ShowFiles()
+{
+    TRACE_MESSAGE("Files on file system:");
+    DIR *dp = opendir(FileSystem::PARTITION_PATH_NAME);
+    if (dp != NULL)
+    {
+        struct dirent *ep;
+        while ((ep = readdir(dp)) != NULL)
+        {
+            std::string s = PARTITION_PATH_NAME;
+            s += "/";
+            s += ep->d_name;
+            struct stat fileInfo;
+            if (stat(s.c_str(), &fileInfo) == 0)
+            {
+                TRACE_MESSAGE("    %s, %d", ep->d_name, (int) fileInfo.st_size);
+            }
+            else
+            {
+                TRACE_MESSAGE("    %s, stat failed: %s", ep->d_name, strerror(errno));
+            }
+        }
+        closedir(dp);
+    }
+    else
+    {
+        TRACE_MESSAGE("Failed to open directory %s", FileSystem::PARTITION_PATH_NAME);
+    }
+    TRACE_MESSAGE("End of file list.");
+}
 
 /**
  * @brief Mount the file system.
@@ -163,10 +204,15 @@ bool FileSystem::MountIfNecessary()
 StatusCodes::StatusCodes FileSystem::Setup()
 {
     TRACE_MESSAGE("Setup: Enter");
+    ESP_LOGI(COMPONENT_NAME, "Setting up file system");
 
     StatusCodes::StatusCodes result;
     if (Mount())
     {
+#if defined(FILE_SYSTEM_DEBUG)
+        ShowFiles();
+#endif
+
         result = StatusCodes::CompletedOk;
     }
     else
