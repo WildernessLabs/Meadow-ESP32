@@ -61,7 +61,7 @@ COMPONENTS_DIR=$SOURCE_DIR/components/F7Services
 
 echo "Running cppcheck"
 
-cppcheck --error-exitcode=1 --quiet --check-level=exhaustive --force --inline-suppr -iCMakeLists.txt -icomponents/esp_littlefs -ibuild .
+cppcheck --error-exitcode=1 --quiet --check-level=exhaustive --force --inline-suppr -iCMakeLists.txt -imanaged_components -ibuild .
 
 echo "Running clang-format"
 clang-format --dry-run --Werror $VERBOSE_FLAGS $SOURCE_DIR/main/*.?pp
