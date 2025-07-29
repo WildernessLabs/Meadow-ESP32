@@ -71,7 +71,7 @@ bool Heap::_isRunning = false;
  */
 void Heap::Setup()
 {
-    esp_err_t result;
+    esp_err_t result = ESP_FAIL;
 
     esp_log_level_set(COMPONENT_NAME, ESP_LOG_INFO);
 
@@ -109,6 +109,7 @@ void Heap::Setup()
 void Heap::ReportUsage()
 {
     ESP_LOGI(COMPONENT_NAME, "Memory Usage");
+    printf("========================================\n");
     bool valid = heap_caps_check_integrity_all(true);
     ESP_LOGI(COMPONENT_NAME, "Heap integrity check: %s", valid ? "PASS" : "FAILED");
     if (!valid)
