@@ -23,7 +23,7 @@ define stop-file-logging
 end
 
 hook-quit
-flushregs
+maintenance flush register-cache
 set remote hardware-watchpoint-limit 2
 set listsize 30
 
