@@ -35,4 +35,3 @@
 - Use spaces around operators
 - Use spaces after commas
 - Use spaces after casts
-
