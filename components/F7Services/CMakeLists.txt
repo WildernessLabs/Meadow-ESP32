@@ -2,13 +2,6 @@ set(SDKCONFIG_DEFAULTS "sdkconfig.defaults")
 
 file(GLOB_RECURSE F7SERVICES_SOURCES
     ./*.cpp
-    ./WiFi/*.cpp
-    ./System/*.cpp
-    ./Messaging/*.cpp
-    ./MeshNetwork/*.cpp
-    ./Bluetooth/*.cpp
-    ./Diagnostics/*.cpp
-    ./Exceptions/*.cpp
 )
 
 # Remove test files from the sources
