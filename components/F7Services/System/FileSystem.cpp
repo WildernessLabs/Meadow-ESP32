@@ -58,15 +58,19 @@ const char *FileSystem::PARTITION_LABEL = "littlefs";
 FileSystem::FileSystem()
 {
     _messageDispatcher = nullptr;
-    _config = {
-        .base_path = PARTITION_PATH_NAME,
-        .partition_label = PARTITION_LABEL,
-        .partition = NULL,
-        .format_if_mount_failed = true,
-        .read_only = false,
-        .dont_mount = false,
-        .grow_on_mount = true,
-    };
+    _config = {};
+    _config.base_path = PARTITION_PATH_NAME;
+    _config.partition_label = PARTITION_LABEL;
+    _config.format_if_mount_failed = true;
+    _config.dont_mount = false;
+    //
+    //  The following options are not used in LittleFS version 1.5.5.
+    //  They are left here for future reference if we uplift LittleFS to a
+    //  more recent version.
+    //
+    // _config.read_only = false;
+    // _config.partition = NULL;
+    // _config.grow_on_mount = true;
 }
 
 /**
