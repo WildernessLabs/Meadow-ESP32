@@ -1,7 +1,7 @@
 set(SDKCONFIG_DEFAULTS "sdkconfig.defaults")
 
 file(GLOB_RECURSE F7SERVICES_SOURCES
-    **/*.cpp
+    ./*.cpp
 )
 
 # Remove test files from the sources
