@@ -109,7 +109,6 @@ void Heap::Setup()
 void Heap::ReportUsage()
 {
     ESP_LOGI(COMPONENT_NAME, "Memory Usage");
-    printf("========================================\n");
     bool valid = heap_caps_check_integrity_all(true);
     ESP_LOGI(COMPONENT_NAME, "Heap integrity check: %s", valid ? "PASS" : "FAILED");
     if (!valid)
@@ -136,17 +135,23 @@ void Heap::ReportUsage()
  */
 bool Heap::CheckIntegrity()
 {
+#if defined (CONFIG_ENABLE_HEAP_INTEGRITY_CHECKS)
     TRACE_MESSAGE("CheckIntegrity: Enter");
 
     bool integrity = heap_caps_check_integrity_all(true);
     if (!integrity)
     {
         ERROR_MESSAGE("HEAP CORRUPTION DETECTED!");
+        DEBUG_BREAKPOINT();
     }
 
     TRACE_MESSAGE("CheckIntegrity: Exit");
 
     return integrity;
+#else
+    TRACE_MESSAGE("CheckIntegrity: Integrity checks disabled");
+    return true;
+#endif // CONFIG_ENABLE_HEAP_INTEGRITY_CHECKS
 }
 
 /**
