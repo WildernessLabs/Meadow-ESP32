@@ -14,6 +14,7 @@
 #include "TransportProviderBase.hpp"
 #include "Encoders.hpp"
 #include "Logging.hpp"
+#include "Heap.hpp"
 
 /*
  * ----------------------------------------------------------------------------
@@ -172,6 +173,7 @@ bool TransportProviderBase::QueueMessageForStm32(Message *message)
         }
         else
         {
+            Heap::CheckIntegrity();
             Logging::DumpMessage(COMPONENT_NAME, message);
             SendControlMessageToStm32(ControlMessageType::MessageWaiting);
         }
