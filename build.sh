@@ -308,7 +308,7 @@ fi
 #
 if $FULLCLEAN; then
     run_command "rm -Rf $scriptdir/build"
-    run_command "idf.py --project-dir $scriptdir fullclean"
+    run_command "idf.py fullclean"
     run_command "rm -f $scriptdir/sdkconfig"
 fi
 
@@ -324,7 +324,7 @@ if ! $NO_BUILD; then
     IDF_FLAGS="build $IDF_FLAGS"
 fi
 if [[ ! -z $IDF_FLAGS ]]; then
-    idf.py -C $scriptdir $IDF_DEFINES $IDF_FLAGS
+    idf.py $IDF_DEFINES $IDF_FLAGS
 fi
 
 if [ $? -eq 0 ]; then
