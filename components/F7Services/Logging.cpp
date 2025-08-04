@@ -20,6 +20,7 @@
 #include "SpiTransportProvider.hpp"
 #include "Mapping.hpp"
 #include "Diagnostics.hpp"
+#include "Heap.hpp"
 
 #if defined(PERFORMANCE_LOGGING)
     #pragma message "Performance logging is enabled."
@@ -104,7 +105,7 @@ Logging::~Logging()
 
 /**
  *  @brief Setup the logging system.
- *
+ * 
  *  The ESP32 should be set up to use custom logging (use 'make menuconfig' to do this) with
  *  the Tx pin set to GPIO22 and the Rx pin set to some other value (21 is used at the moment).
  *  This method then sets up the UART (should be UART0) so that the logging system can output
@@ -124,6 +125,11 @@ void Logging::Setup()
 
 #if defined(CONFIG_ENABLE_DIAGNOSTIC_THREAD)
     esp_log_level_set(Diagnostics::COMPONENT_NAME, ESP_LOG_INFO);
+#endif
+
+#if defined(CONFIG_ENABLE_HEAP_INTEGRITY_CHECKS)
+    #pragma message "Heap integrity checks enabled, setting heap logging level to INFO."
+    esp_log_level_set(Heap::COMPONENT_NAME, ESP_LOG_INFO);
 #endif
 
     TRACE_MESSAGE("Logging redirected to UART_NUM_0 on pins %d (Tx), %d (Rx)", Gpio::LOGGING_TX_PIN, Gpio::LOGGING_RX_PIN);

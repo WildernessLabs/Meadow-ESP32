@@ -21,6 +21,11 @@
 #include "esp_heap_trace.h"
 
 /**
+ * @brief Enable heap integrity checks?
+ */
+// #define CONFIG_ENABLE_HEAP_INTEGRITY_CHECKS 1
+
+/**
  * @brief Class providing heap memory diagnostics and management functionality.
  */
 class Heap
