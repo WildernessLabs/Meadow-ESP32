@@ -79,7 +79,7 @@ case $i in
     -tm|--tracemessages)
     IDF_DEFINES+=" -DTRACE_MESSAGES=1"
     ;;
-    --DEBUG)
+    --develop)
     IDF_DEFINES+=" -DDEBUG=1"
     ;;
     --debug)
