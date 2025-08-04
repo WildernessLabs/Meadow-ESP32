@@ -25,7 +25,7 @@ endmacro()
 set(SDKCONFIG_FILES "sdkconfig.defaults")
 if (DEBUG EQUAL 1)
     message(STATUS "Enabling debug mode.")
-    list(APPEND SDKCONFIG_FILES "\;sdkconfig.debug")
+    list(APPEND SDKCONFIG_FILES "\;sdkconfig.develop")
 endif()
 set(SDKCONFIG_DEFAULTS ${SDKCONFIG_FILES})
 
