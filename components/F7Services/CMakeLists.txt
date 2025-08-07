@@ -22,8 +22,6 @@ idf_component_register( SRCS    ${F7SERVICES_SOURCES}
                                 "Diagnostics"
 
                         REQUIRES 
-                                bootloader 
-                                bootloader_support 
                                 bt
                                 cxx 
                                 driver 
@@ -36,7 +34,6 @@ idf_component_register( SRCS    ${F7SERVICES_SOURCES}
                                 nvs_flash
                                 partition_table 
                                 pthread 
-                                soc 
                                 spi_flash
                                 tcp_transport 
                                 ulp 
@@ -45,10 +42,8 @@ idf_component_register( SRCS    ${F7SERVICES_SOURCES}
                                 xtensa
                                 esp_netif 
                                 esp_system 
-                                esp_timer 
                                 esp_wifi 
                                 espcoredump 
                                 esp_common 
                                 esp_event 
-                                esp_gdbstub 
                                 )
