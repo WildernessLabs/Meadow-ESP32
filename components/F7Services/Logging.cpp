@@ -105,7 +105,7 @@ Logging::~Logging()
 
 /**
  *  @brief Setup the logging system.
- * 
+ *
  *  The ESP32 should be set up to use custom logging (use 'make menuconfig' to do this) with
  *  the Tx pin set to GPIO22 and the Rx pin set to some other value (21 is used at the moment).
  *  This method then sets up the UART (should be UART0) so that the logging system can output
