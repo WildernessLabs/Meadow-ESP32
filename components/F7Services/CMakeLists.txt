@@ -19,10 +19,31 @@ idf_component_register( SRCS    ${F7SERVICES_SOURCES}
                                 "Bluetooth"
                                 "Exceptions"
                                 "../rapidjson"
+                                "Diagnostics"
 
-                        REQUIRES app_trace app_update bootloader bootloader_support bt
-                                cxx driver efuse fatfs freertos heap json log lwip main nvs_flash
-                                partition_table perfmon protobuf-c protocomm pthread sdmmc soc spi_flash
-                                spiffs tcp_transport ulp vfs wear_levelling wpa_supplicant xtensa
-                                esp_netif esp_rom esp_system esp_timer esp_wifi espcoredump esp_common esp_event esp_gdbstub esp_hid
+                        REQUIRES 
+                                bt
+                                cxx 
+                                driver 
+                                efuse 
+                                fatfs 
+                                freertos 
+                                heap 
+                                log 
+                                lwip 
+                                nvs_flash
+                                partition_table 
+                                pthread 
+                                spi_flash
+                                tcp_transport 
+                                ulp 
+                                vfs 
+                                wpa_supplicant 
+                                xtensa
+                                esp_netif 
+                                esp_system 
+                                esp_wifi 
+                                espcoredump 
+                                esp_common 
+                                esp_event 
                                 )

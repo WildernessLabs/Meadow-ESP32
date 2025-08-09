@@ -3,9 +3,10 @@
  */
 #include "sdkconfig.h"
 
+#include <string.h>
+
 #include "freertos/FreeRTOS.h"
 #include "esp_log.h"
-#include <string.h>
 #include "nvs_flash.h"
 #include "esp_ota_ops.h"
 #include "esp_heap_caps.h"
@@ -16,7 +17,6 @@
 #include "Logging.hpp"
 #include "MessageDispatcher.hpp"
 #include "SpiTransportProvider.hpp"
-#include "WiFiRequestHandler.hpp"
 
 /**
  * @brief global variable holding the system build information.
