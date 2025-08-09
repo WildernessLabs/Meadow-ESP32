@@ -15,7 +15,6 @@ idf_component_register( SRCS    ${F7SERVICES_SOURCES}
                                 "WiFi"
                                 "System"
                                 "Messaging"
-                                "MeshNetwork"
                                 "Bluetooth"
                                 "Exceptions"
                                 "../rapidjson"
