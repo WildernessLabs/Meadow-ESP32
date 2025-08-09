@@ -16,7 +16,6 @@
 #include "WiFiRequestHandler.hpp"
 #include "SystemRequestHandler.hpp"
 #include "BluetoothRequestHandler.hpp"
-#include "MeshNetworkRequestHandler.hpp"
 #include "TransportProviderBase.hpp"
 #include "SharedEnums.hpp"
 #include "Esp32Messaging.hpp"
@@ -26,7 +25,6 @@
  *  Forward declarations required by the compiler.
  */
 class WiFiRequestHandler;
-class MeshNetworkRequestHandler;
 class SystemRequestHandler;
 class BluetoothRequestHandler;
 
@@ -52,11 +50,6 @@ private:
      *  @brief WiFi object that will process WiFi messages.
      */
     WiFiRequestHandler *_wifiRequestHandler = nullptr;
-
-    /**
-     *  @brief Mesh Network object that will process Mesh Network messages.
-     */
-    MeshNetworkRequestHandler *_meshNetworkRequestHandler = nullptr;
 
     /**
      *  @brief System object that will process System messages.
