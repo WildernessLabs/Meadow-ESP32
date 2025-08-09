@@ -54,8 +54,6 @@ MessageDispatcher::MessageDispatcher(TransportProviderBase *transportProvider) :
     _wifiRequestHandler = new WiFiRequestHandler(this); // cppcheck-suppress noCopyConstructor
     _wifiRequestHandler->Setup();
     _bluetoothRequestHandler = BluetoothRequestHandler::GetInstance(this);
-    _meshNetworkRequestHandler = new MeshNetworkRequestHandler(this);
-    _meshNetworkRequestHandler->Setup();
     _systemRequestHandler = new SystemRequestHandler(this);
     _systemRequestHandler->Setup();
 }
@@ -98,9 +96,6 @@ bool MessageDispatcher::QueueMessageForEsp32(Message *request)
             break;
         case Esp32Interfaces::BlueTooth:
             provider = dynamic_cast<RequestHandlerBase *>(_bluetoothRequestHandler);
-            break;
-        case Esp32Interfaces::MeshNetwork:
-            provider = dynamic_cast<RequestHandlerBase *>(_meshNetworkRequestHandler);
             break;
         case Esp32Interfaces::System:
             provider = dynamic_cast<RequestHandlerBase *>(_systemRequestHandler);
