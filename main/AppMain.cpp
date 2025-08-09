@@ -21,8 +21,7 @@
 /**
  * @brief global variable holding the system build information.
  */
-meadow_version_t g_application_version =
-{
+meadow_version_t g_application_version = {
     .major = VERSION_MAJOR,
     .minor = VERSION_MINOR,
     .revision = VERSION_REVISION,
@@ -34,8 +33,7 @@ meadow_version_t g_application_version =
     .minute = VERSION_BUILD_MINUTE,
     .second = VERSION_BUILD_SECOND,
     .hash = VERSION_BUILD_HASH_NUMBER,
-    .branch_name = (char *) VERSION_GIT_REF
-};
+    .branch_name = (char *) VERSION_GIT_REF};
 
 //
 //  Checks to see if TRACE or DEBUG is turned on and issues a warning if they are.
