@@ -427,6 +427,88 @@ TEST_CASE("Notify characteristic (MeadowC, no company identifier)", CLASS_OF_TES
 }
 
 /**
+ * @brief Test starting a Bluetooth service for MeadowD with no company identifier.
+ */
+TEST_CASE("Notify characteristic (MeadowD, no company identifier)", CLASS_OF_TESTS)
+{
+    printf("Starting Bluetooth service for (MeadowD, no company identifier)\n");
+
+    TEST_ASSERT_NOT_NULL(SetupMessageDispatcher());
+
+    if (_generateHeapTraceData)
+    {
+        heap_trace_start(HEAP_TRACE_LEAKS);
+    }
+
+    StartBlueToothService(meadow_d_json);
+
+    //
+    //  Wait for client to connect.
+    //
+    printf("Please connect client within 60 seconds.\n");
+    WaitForResponse(messageDispatcher, 60000);
+    TEST_ASSERT_EQUAL(1, messageDispatcher->OutboundMessageQueueLength());
+
+    Message *response = messageDispatcher->GetOutboundMessage();
+    TEST_ASSERT_NULL(response->Payload);
+    TEST_ASSERT_EQUAL(0, response->PayloadLength);
+    TEST_ASSERT_EQUAL(MessageTypes::Event, response->MessageType);
+    TEST_ASSERT_EQUAL(Esp32Interfaces::BlueTooth, response->Interface);
+    TEST_ASSERT_EQUAL(BluetoothFunction::ClientConnectedEvent, response->Function);
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
+    Message::DeleteMessage(response);
+
+    printf("Client connected, subscribe to notifications within 10 seconds.\n");
+
+    vTaskDelay(10000 / portTICK_PERIOD_MS);
+
+    //
+    //  Write the value back to the characteristic for the client unit test to pick up and verify the value.
+    //
+    //  Reuse the message object from the start of this method.
+    //
+    printf("Writing value to characteristic\n");
+    Message message = {};
+    message.MessageType = MessageTypes::Header;
+    message.Interface = Esp32Interfaces::BlueTooth;
+    message.Function = BluetoothFunction::ServerDataSet;
+
+    uint32_t value = 0xa0a0a0a0;
+    Esp32Messaging::BTServerDataSet dataSet;
+    dataSet.Handle = 0x2a;
+    dataSet.SetData = (uint8_t *) &value;
+    dataSet.SetDataLength = sizeof(value);
+    message.PayloadLength = EncodedBTServerDataSetBufferSize(&dataSet);
+    uint8_t *payload = (uint8_t *) pvPortMalloc(message.PayloadLength);
+    TEST_ASSERT_NOT_NULL(payload);
+    EncodeBTServerDataSet(&dataSet, payload);
+    message.Payload = payload;
+
+    messageDispatcher->QueueMessageForEsp32(&message);
+    //
+    //  Wait for the confirmation message that the change has been written back.
+    //
+    WaitForResponse(messageDispatcher, 60000);
+    TEST_ASSERT_EQUAL(1, messageDispatcher->OutboundMessageQueueLength());
+    response = messageDispatcher->GetOutboundMessage();
+    TEST_ASSERT_NOT_NULL(response);
+    TEST_ASSERT_NULL(response->Payload);
+    TEST_ASSERT_EQUAL(0, response->PayloadLength);
+    TEST_ASSERT_EQUAL(MessageTypes::Response, response->MessageType);
+    TEST_ASSERT_EQUAL(Esp32Interfaces::BlueTooth, response->Interface);
+    TEST_ASSERT_EQUAL(BluetoothFunction::ServerDataSet, response->Function);
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
+
+    TEST_ASSERT_EQUAL(0, messageDispatcher->OutboundMessageQueueLength());
+
+    if (_generateHeapTraceData)
+    {
+        vTaskDelay(10000 / portTICK_PERIOD_MS);
+        heap_trace_stop();
+    }
+}
+
+/**
  * @brief Test starting a Bluetooth service for MeadowA, Company ID Espressif (0x02e5).
  */
 TEST_CASE("Start Bluetooth (MeadowF7, Espressif)", CLASS_OF_TESTS)
