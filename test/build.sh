@@ -197,6 +197,16 @@ if [ ! -z "$DEBUG_SELECTIONS" ]; then
     done
 fi
 
+#
+#   There are sometimes problems with old configuration in the build directory
+#   so this removes the build directory before executing the full clean.
+#
+if $FULLCLEAN; then
+    run_command "rm -Rf $scriptdir/build"
+    run_command "idf.py fullclean"
+    run_command "rm -f $scriptdir/sdkconfig"
+fi
+
 if ! $NO_BUILD; then
     IDF_FLAGS="build $IDF_FLAGS"
 fi
