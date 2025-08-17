@@ -10,6 +10,7 @@
 #include "unity.h"
 
 #include "esp_sysview_trace.h"
+#include "esp_heap_trace.h"
 
 #include "MockMessageDispatcher.hpp"
 #include "MockTransportProvider.hpp"
@@ -307,18 +308,18 @@ TEST_CASE("Start Bluetooth (MeadowA, Espressif)", CLASS_OF_TESTS)
 
     TEST_ASSERT_NOT_NULL(SetupMessageDispatcher());
 
-    if (_generateHeapTraceData)
-    {
-        heap_trace_start(HEAP_TRACE_LEAKS);
-    }
+    // if (_generateHeapTraceData)
+    // {
+    //     heap_trace_start(HEAP_TRACE_LEAKS);
+    // }
 
     StartBlueToothService(meadow_a_json);
 
-    if (_generateHeapTraceData)
-    {
-        vTaskDelay(10000 / portTICK_PERIOD_MS);
-        heap_trace_stop();
-    }
+    // if (_generateHeapTraceData)
+    // {
+    //     vTaskDelay(10000 / portTICK_PERIOD_MS);
+    //     heap_trace_stop();
+    // }
 }
 
 /**
@@ -330,18 +331,18 @@ TEST_CASE("Start Bluetooth (MeadowB, Baidu)", CLASS_OF_TESTS)
 
     TEST_ASSERT_NOT_NULL(SetupMessageDispatcher());
 
-    if (_generateHeapTraceData)
-    {
-        heap_trace_start(HEAP_TRACE_LEAKS);
-    }
+    // if (_generateHeapTraceData)
+    // {
+    //     heap_trace_start(HEAP_TRACE_LEAKS);
+    // }
 
     StartBlueToothService(meadow_b_json);
 
-    if (_generateHeapTraceData)
-    {
-        vTaskDelay(10000 / portTICK_PERIOD_MS);
-        heap_trace_stop();
-    }
+    // if (_generateHeapTraceData)
+    // {
+    //     vTaskDelay(10000 / portTICK_PERIOD_MS);
+    //     heap_trace_stop();
+    // }
 }
 
 /**
@@ -353,10 +354,10 @@ TEST_CASE("Notify characteristic (MeadowC, no company identifier)", CLASS_OF_TES
 
     TEST_ASSERT_NOT_NULL(SetupMessageDispatcher());
 
-    if (_generateHeapTraceData)
-    {
-        heap_trace_start(HEAP_TRACE_LEAKS);
-    }
+    // if (_generateHeapTraceData)
+    // {
+    //     heap_trace_start(HEAP_TRACE_LEAKS);
+    // }
 
     StartBlueToothService(meadow_c_json);
 
@@ -419,11 +420,11 @@ TEST_CASE("Notify characteristic (MeadowC, no company identifier)", CLASS_OF_TES
 
     TEST_ASSERT_EQUAL(0, messageDispatcher->OutboundMessageQueueLength());
 
-    if (_generateHeapTraceData)
-    {
-        vTaskDelay(10000 / portTICK_PERIOD_MS);
-        heap_trace_stop();
-    }
+    // if (_generateHeapTraceData)
+    // {
+    //     vTaskDelay(10000 / portTICK_PERIOD_MS);
+    //     heap_trace_stop();
+    // }
 }
 
 /**
@@ -435,10 +436,10 @@ TEST_CASE("Notify characteristic (MeadowD, no company identifier)", CLASS_OF_TES
 
     TEST_ASSERT_NOT_NULL(SetupMessageDispatcher());
 
-    if (_generateHeapTraceData)
-    {
-        heap_trace_start(HEAP_TRACE_LEAKS);
-    }
+    // if (_generateHeapTraceData)
+    // {
+    //     heap_trace_start(HEAP_TRACE_LEAKS);
+    // }
 
     StartBlueToothService(meadow_d_json);
 
@@ -501,11 +502,11 @@ TEST_CASE("Notify characteristic (MeadowD, no company identifier)", CLASS_OF_TES
 
     TEST_ASSERT_EQUAL(0, messageDispatcher->OutboundMessageQueueLength());
 
-    if (_generateHeapTraceData)
-    {
-        vTaskDelay(10000 / portTICK_PERIOD_MS);
-        heap_trace_stop();
-    }
+    // if (_generateHeapTraceData)
+    // {
+    //     vTaskDelay(10000 / portTICK_PERIOD_MS);
+    //     heap_trace_stop();
+    // }
 }
 
 /**
@@ -517,18 +518,18 @@ TEST_CASE("Start Bluetooth (MeadowF7, Espressif)", CLASS_OF_TESTS)
 
     TEST_ASSERT_NOT_NULL(SetupMessageDispatcher());
 
-    if (_generateHeapTraceData)
-    {
-        heap_trace_start(HEAP_TRACE_LEAKS);
-    }
+    // if (_generateHeapTraceData)
+    // {
+    //     heap_trace_start(HEAP_TRACE_LEAKS);
+    // }
 
     StartBlueToothService(meadow_f7_json);
 
-    if (_generateHeapTraceData)
-    {
-        vTaskDelay(10000 / portTICK_PERIOD_MS);
-        heap_trace_stop();
-    }
+    // if (_generateHeapTraceData)
+    // {
+    //     vTaskDelay(10000 / portTICK_PERIOD_MS);
+    //     heap_trace_stop();
+    // }
 }
 
 /**
@@ -540,10 +541,10 @@ TEST_CASE("Stop Bluetooth service (no service started)", CLASS_OF_TESTS)
 
     TEST_ASSERT_NOT_NULL(SetupMessageDispatcher());
 
-    if (_generateHeapTraceData)
-    {
-        heap_trace_start(HEAP_TRACE_LEAKS);
-    }
+    // if (_generateHeapTraceData)
+    // {
+    //     heap_trace_start(HEAP_TRACE_LEAKS);
+    // }
 
     Message stopMessage = {};
     stopMessage.MessageType = MessageTypes::Header;
@@ -601,11 +602,11 @@ TEST_CASE("Stop Bluetooth service (no service started)", CLASS_OF_TESTS)
     TEST_ASSERT_EQUAL(BluetoothFunction::Stop, response->Function);
     TEST_ASSERT_EQUAL(StatusCodes::Failure, response->StatusCode);
 
-    if (_generateHeapTraceData)
-    {
-        vTaskDelay(10000 / portTICK_PERIOD_MS);
-        heap_trace_stop();
-    }
+    // if (_generateHeapTraceData)
+    // {
+    //     vTaskDelay(10000 / portTICK_PERIOD_MS);
+    //     heap_trace_stop();
+    // }
 }
 
 /**
@@ -617,10 +618,10 @@ TEST_CASE("Stop Bluetooth Service (will start MeadowA service first)", CLASS_OF_
 
     TEST_ASSERT_NOT_NULL(SetupMessageDispatcher());
 
-    if (_generateHeapTraceData)
-    {
-        heap_trace_start(HEAP_TRACE_LEAKS);
-    }
+    // if (_generateHeapTraceData)
+    // {
+    //     heap_trace_start(HEAP_TRACE_LEAKS);
+    // }
 
     StartBlueToothService(meadow_a_json);
 
@@ -632,11 +633,11 @@ TEST_CASE("Stop Bluetooth Service (will start MeadowA service first)", CLASS_OF_
 
     delete messageDispatcher;
 
-    if (_generateHeapTraceData)
-    {
-        vTaskDelay(10000 / portTICK_PERIOD_MS);
-        heap_trace_stop();
-    }
+    // if (_generateHeapTraceData)
+    // {
+    //     vTaskDelay(10000 / portTICK_PERIOD_MS);
+    //     heap_trace_stop();
+    // }
 
     EndOfTest();
 }
@@ -650,10 +651,10 @@ TEST_CASE("Restart Bluetooth service with different configuration", CLASS_OF_TES
 
     TEST_ASSERT_NOT_NULL(SetupMessageDispatcher());
 
-    if (_generateHeapTraceData)
-    {
-        heap_trace_start(HEAP_TRACE_LEAKS);
-    }
+    // if (_generateHeapTraceData)
+    // {
+    //     heap_trace_start(HEAP_TRACE_LEAKS);
+    // }
 
     StartBlueToothService(meadow_a_json);
 
@@ -669,11 +670,11 @@ TEST_CASE("Restart Bluetooth service with different configuration", CLASS_OF_TES
     delete messageDispatcher;
     messageDispatcher = nullptr;
 
-    if (_generateHeapTraceData)
-    {
-        vTaskDelay(10000 / portTICK_PERIOD_MS);
-        heap_trace_stop();
-    }
+    // if (_generateHeapTraceData)
+    // {
+    //     vTaskDelay(10000 / portTICK_PERIOD_MS);
+    //     heap_trace_stop();
+    // }
 }
 
 /**
@@ -683,10 +684,10 @@ TEST_CASE("Restart Bluetooth Service 50 times (Execution time ~4-5 minutes)", CL
 {
     TEST_ASSERT_NOT_NULL(SetupMessageDispatcher());
 
-    if (_generateHeapTraceData)
-    {
-        heap_trace_start(HEAP_TRACE_LEAKS);
-    }
+    // if (_generateHeapTraceData)
+    // {
+    //     heap_trace_start(HEAP_TRACE_LEAKS);
+    // }
 
     for (int counter = 0; counter < 50; counter++)
     {
@@ -707,11 +708,11 @@ TEST_CASE("Restart Bluetooth Service 50 times (Execution time ~4-5 minutes)", CL
 
     delete messageDispatcher;
 
-    if (_generateHeapTraceData)
-    {
-        vTaskDelay(10000 / portTICK_PERIOD_MS);
-        heap_trace_stop();
-    }
+    // if (_generateHeapTraceData)
+    // {
+    //     vTaskDelay(10000 / portTICK_PERIOD_MS);
+    //     heap_trace_stop();
+    // }
 
     EndOfTest();
 }
@@ -726,10 +727,10 @@ TEST_CASE("Soak test writing numeric characteristic, number of iterations contro
 
     TEST_ASSERT_NOT_NULL(SetupMessageDispatcher());
 
-    if (_generateHeapTraceData)
-    {
-        heap_trace_start(HEAP_TRACE_LEAKS);
-    }
+    // if (_generateHeapTraceData)
+    // {
+    //     heap_trace_start(HEAP_TRACE_LEAKS);
+    // }
 
     StartBlueToothService(meadow_f7_json);
 
@@ -894,9 +895,9 @@ TEST_CASE("Soak test writing numeric characteristic, number of iterations contro
 
     StopBluetoothService();
 
-    if (_generateHeapTraceData)
-    {
-        vTaskDelay(10000 / portTICK_PERIOD_MS);
-        heap_trace_stop();
-    }
+    // if (_generateHeapTraceData)
+    // {
+    //     vTaskDelay(10000 / portTICK_PERIOD_MS);
+    //     heap_trace_stop();
+    // }
 }
