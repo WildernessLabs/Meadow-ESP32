@@ -21,7 +21,6 @@
 #include "WiFiRequestHandler.hpp"
 #include "SystemRequestHandler.hpp"
 #include "BluetoothRequestHandler.hpp"
-#include "MeshNetworkRequestHandler.hpp"
 
 /**
  *  @brief Message dispatcher class.
@@ -50,11 +49,6 @@ private:
      *  @brief WiFi object that will process WiFi messages.
      */
     WiFiRequestHandler *_wifiRequestHandler = nullptr;
-
-    /**
-     *  @brief Mesh Network object that will process Mesh Network messages.
-     */
-    MeshNetworkRequestHandler *_meshNetworkRequestHandler = nullptr;
 
     /**
      *  @brief System object that will process System messages.

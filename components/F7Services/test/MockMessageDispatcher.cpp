@@ -118,14 +118,6 @@ bool MockMessageDispatcher::QueueMessageForEsp32(Message *request)
         case Esp32Interfaces::BlueTooth:
             provider = dynamic_cast<RequestHandlerBase *>(BluetoothRequestHandler::GetInstance(this));
             break;
-        case Esp32Interfaces::MeshNetwork:
-            if (!_meshNetworkRequestHandler)
-            {
-                _meshNetworkRequestHandler = new MeshNetworkRequestHandler(this);
-                _meshNetworkRequestHandler->Setup();
-            }
-            provider = dynamic_cast<RequestHandlerBase *>(_meshNetworkRequestHandler);
-            break;
         case Esp32Interfaces::System:
             if (!_systemRequestHandler)
             {
