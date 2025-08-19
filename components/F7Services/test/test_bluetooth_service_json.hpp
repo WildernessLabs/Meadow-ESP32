@@ -117,7 +117,13 @@ const char *meadow_d_json = R"(
                         "uuid": 10498,
                         "permission": 17,
                         "len": 1,
-                        "value": 16
+                        "value": 3
+                        },
+                        {
+                        "uuid": 10497,
+                        "permission": 1,
+                        "len": 20,
+                        "value": "Test characteristic"
                         }
                     ]
                 },

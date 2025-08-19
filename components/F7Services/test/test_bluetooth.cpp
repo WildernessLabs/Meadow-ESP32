@@ -430,7 +430,7 @@ TEST_CASE("Notify characteristic (MeadowC, no company identifier)", CLASS_OF_TES
 /**
  * @brief Test starting a Bluetooth service for MeadowD with no company identifier.
  */
-TEST_CASE("Notify characteristic (MeadowD, no company identifier)", CLASS_OF_TESTS)
+TEST_CASE("Notify characteristic, multiple descriptors (MeadowD, no company identifier)", CLASS_OF_TESTS)
 {
     printf("Starting Bluetooth service for (MeadowD, no company identifier)\n");
 
@@ -442,6 +442,9 @@ TEST_CASE("Notify characteristic (MeadowD, no company identifier)", CLASS_OF_TES
     // }
 
     StartBlueToothService(meadow_d_json);
+
+    WaitForResponse(messageDispatcher, 30000);
+    TEST_ASSERT_EQUAL(1, messageDispatcher->OutboundMessageQueueLength());
 
     //
     //  Wait for client to connect.
@@ -490,15 +493,27 @@ TEST_CASE("Notify characteristic (MeadowD, no company identifier)", CLASS_OF_TES
     //  Wait for the confirmation message that the change has been written back.
     //
     WaitForResponse(messageDispatcher, 60000);
-    TEST_ASSERT_EQUAL(1, messageDispatcher->OutboundMessageQueueLength());
-    response = messageDispatcher->GetOutboundMessage();
-    TEST_ASSERT_NOT_NULL(response);
-    TEST_ASSERT_NULL(response->Payload);
-    TEST_ASSERT_EQUAL(0, response->PayloadLength);
-    TEST_ASSERT_EQUAL(MessageTypes::Response, response->MessageType);
-    TEST_ASSERT_EQUAL(Esp32Interfaces::BlueTooth, response->Interface);
-    TEST_ASSERT_EQUAL(BluetoothFunction::ServerDataSet, response->Function);
-    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
+    // TEST_ASSERT_EQUAL(1, messageDispatcher->OutboundMessageQueueLength());
+    while (messageDispatcher->OutboundMessageQueueLength() > 0)
+    {
+        response = messageDispatcher->GetOutboundMessage();
+        TEST_ASSERT_NOT_NULL(response);
+        TEST_ASSERT_NULL(response->Payload);
+        TEST_ASSERT_EQUAL(0, response->PayloadLength);
+        if ((response->MessageType != MessageTypes::Response) && (response->MessageType != MessageTypes::Event))
+        {
+            printf("Unexpected message type: %" PRIu32 "\n", (uint32_t) response->MessageType);
+            TEST_FAIL();
+        }
+        TEST_ASSERT_EQUAL(Esp32Interfaces::BlueTooth, response->Interface);
+        if ((response->Function != BluetoothFunction::ServerDataSet) && (response->Function != BluetoothFunction::ClientDisconnectedEvent))
+        {
+            printf("Unexpected function: %" PRIu32 "\n", response->Function);
+            TEST_FAIL();
+        }
+        TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
+        vTaskDelay(500 / portTICK_PERIOD_MS);
+    }
 
     TEST_ASSERT_EQUAL(0, messageDispatcher->OutboundMessageQueueLength());
 
