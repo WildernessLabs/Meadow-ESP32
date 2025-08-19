@@ -37,15 +37,25 @@ public:
      * @param uuid 128-bit UUID for this descriptor.
      * @param permission Permissions for this descriptor.
      * @param maxValueLength Maximum length of the data in the descriptor.
+     * @param value Initial value for the descriptor.
      */
-    BluetoothDescriptor(BluetoothCharacteristic *parent, Uuid128 uuid, CharacteristicPermission permission, uint16_t maxValueLength)
+    BluetoothDescriptor(BluetoothCharacteristic *parent, Uuid128 uuid, CharacteristicPermission permission, uint16_t maxValueLength, uint8_t *value)
     {
         _parent = parent;
         uuid128 = uuid;
         Permission = permission;
         MaxLength = maxValueLength;
         Value = new uint8_t[MaxLength];
-        memset(Value, 0, MaxLength);
+        if (value != NULL)
+        {
+            memcpy(Value, value, MaxLength);
+            CurrentLength = maxValueLength;
+        }
+        else
+        {
+            memset(Value, 0, MaxLength);
+            CurrentLength = 0;
+        }
         _is128 = true;
     }
 
@@ -56,15 +66,33 @@ public:
      * @param uuid 16-bit UUID for this descriptor.
      * @param permission Permissions for this descriptor.
      * @param maxValueLength Maximum length of the data in the descriptor.
+     * @param value Initial value for the descriptor.
      */
-    BluetoothDescriptor(BluetoothCharacteristic *parent, Uuid16 uuid, CharacteristicPermission permission, uint16_t maxValueLength)
+    BluetoothDescriptor(BluetoothCharacteristic *parent, Uuid16 uuid, CharacteristicPermission permission, uint16_t maxValueLength, uint8_t *value)
     {
         _parent = parent;
         uuid16 = uuid;
         Permission = permission;
         MaxLength = maxValueLength;
         Value = new uint8_t[MaxLength];
-        memset(Value, 0, MaxLength);
+        if (value != NULL)
+        {
+            memcpy(Value, value, MaxLength);
+            CurrentLength = maxValueLength;
+        }
+        else
+        {
+            memset(Value, 0, MaxLength);
+            CurrentLength = 0;
+        }
+    }
+
+    /**
+     * @brief Destroy the Bluetooth Descriptor object
+     */
+    ~BluetoothDescriptor()
+    {
+        delete[] Value;
     }
 
     /**
@@ -72,14 +100,15 @@ public:
      *
      * @param value Value to set the descriptor to.
      */
-    void SetValue(int value)
+    void SetValue(uint32_t length, uint8_t *value)
     {
-        if (sizeof(int) > MaxLength)
+        if ((length > MaxLength) || (value == NULL))
         {
             return;
         }
         memset(Value, 0, MaxLength);
-        memcpy(Value, &value, sizeof(int));
+        memcpy(Value, value, length);
+        CurrentLength = length;
     }
 
     /**
