@@ -95,6 +95,9 @@ const char *meadow_c_json = R"(
     ]
 })";
 
+//
+//  Company ID is for Baidu (0x011c).
+//
 const char *meadow_d_json = R"(
 {
     "deviceName":"MeadowD",
@@ -107,14 +110,14 @@ const char *meadow_d_json = R"(
                 {
                     "uuid": "017e99d6-8a61-11eb-8dcd-0242ac130003",
                     "permission": 17,
-                    "props": 10,
+                    "props": 18,
                     "len": 4,
                     "descriptors": [
                         {
                         "uuid": 10498,
-                        "permission": 1,
-                        "len": 2,
-                        "value": 0
+                        "permission": 17,
+                        "len": 1,
+                        "value": 16
                         }
                     ]
                 },
