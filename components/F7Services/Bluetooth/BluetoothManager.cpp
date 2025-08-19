@@ -389,8 +389,8 @@ void BluetoothManager::BuildGraphFromJson(char *cfg_json)
 
             if (characteristic["uuid"].IsInt())
             {
-                chr_uuid16 = Uuid16((uint16_t) characteristic["uuid"].GetInt());
-                TRACE_MESSAGE("    UUID = 0x%04x", (uint16_t) chr_uuid16);
+                chr_uuid16 = Uuid16((uint16_t) characteristic["uuid"].GetUint());
+                TRACE_MESSAGE("    UUID = 0x%04x", chr_uuid16.ToUint16());
             }
             else
             {
@@ -433,8 +433,8 @@ void BluetoothManager::BuildGraphFromJson(char *cfg_json)
 
                         if (descriptor["uuid"].IsInt())
                         {
-                            desc_uuid16 = Uuid16((uint16_t) descriptor["uuid"].GetInt());
-                            TRACE_MESSAGE("     UUID = 0x%04x", (uint16_t) desc_uuid16);
+                            desc_uuid16 = Uuid16((uint16_t) descriptor["uuid"].GetUint());
+                            TRACE_MESSAGE("    UUID = 0x%04x", desc_uuid16.ToUint16());
                         }
                         else
                         {
@@ -449,7 +449,7 @@ void BluetoothManager::BuildGraphFromJson(char *cfg_json)
                         TRACE_MESSAGE("    Len = 0x%04x", desc_len);
 
                         auto desc_value = (uint16_t) descriptor["value"].GetInt();
-                        TRACE_MESSAGE("   Value = 0x%04x", desc_value);
+                        TRACE_MESSAGE("    Value = 0x%04x", desc_value);
 
                         BluetoothDescriptor *bt_descriptor;
 
