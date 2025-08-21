@@ -1691,6 +1691,11 @@ Esp32Messaging::CloseRequest *Encoders::ExtractCloseRequest(uint8_t *buffer)
 {
     Esp32Messaging::CloseRequest *closeRequest = (Esp32Messaging::CloseRequest *) pvPortMalloc(sizeof(Esp32Messaging::CloseRequest));
 
+    if (closeRequest == NULL)
+    {
+        return (nullptr);
+    }
+
     closeRequest->SocketHandle = ExtractInt32(buffer);
     return (closeRequest);
 }
