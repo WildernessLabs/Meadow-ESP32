@@ -845,10 +845,7 @@ void WiFiRequestHandler::Read(void *vpMessage)
         message->StatusCode = StatusCodes::CompletedOk;
     }   
 
-    if (response.Buffer)
-    {
-        vPortFree(response.Buffer);
-    }
+    vPortFree(response.Buffer);
 
     message->MessageType = MessageTypes::Response;
     _messageDispatcher->QueueMessageForStm32(message);
