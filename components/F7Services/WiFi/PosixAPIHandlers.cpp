@@ -545,7 +545,7 @@ uint8_t *WiFiRequestHandler::GetSocketOptionValue(int name, uint8_t *optionValue
                         if (tv == NULL)
                         {
                             *length = 0;
-                            vPortFree(value);       // We can fall through here as result is NULL.
+                            vPortFree(value); // We can fall through here as result is NULL.
                         }
                         else
                         {
@@ -843,7 +843,7 @@ void WiFiRequestHandler::Read(void *vpMessage)
     {
         Encoders::EncodeReadResponse(&response, message->Payload);
         message->StatusCode = StatusCodes::CompletedOk;
-    }   
+    }
 
     vPortFree(response.Buffer);
 
@@ -1344,7 +1344,7 @@ void WiFiRequestHandler::Listen(void *vpMessage)
     if (message->Payload == NULL)
     {
         message->PayloadLength = 0;
-        message->StatusCode = StatusCodes::EspOutOfMemory;        
+        message->StatusCode = StatusCodes::EspOutOfMemory;
     }
     else
     {
