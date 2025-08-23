@@ -35,7 +35,7 @@ done
 
 run_command() {
   if $VERBOSE; then
-    echo
+    echo $1
     $1
   else
     $1 &>/dev/null
@@ -66,5 +66,5 @@ check_command_status() {
 OCD=true
 printf "Flashing ESP32 binaries using OpenOCD... "
 
-run_command "openocd -s share/openocd/scripts -f $script"
+run_command "openocd -s $OPENOCD_SCRIPTS -f $script"
 check_command_status
