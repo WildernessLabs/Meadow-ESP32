@@ -96,6 +96,49 @@ const char *meadow_c_json = R"(
 })";
 
 //
+//  Company ID is for Baidu (0x011c).
+//
+const char *meadow_d_json = R"(
+{
+    "deviceName":"MeadowD",
+    "companyIdentifier": 284,
+    "services": [
+        {
+            "name": "Service A",
+            "uuid": 254,
+            "characteristics": [
+                {
+                    "uuid": "017e99d6-8a61-11eb-8dcd-0242ac130003",
+                    "permission": 17,
+                    "props": 18,
+                    "len": 4,
+                    "descriptors": [
+                        {
+                        "uuid": 10498,
+                        "permission": 17,
+                        "len": 1,
+                        "value": 3
+                        },
+                        {
+                        "uuid": 10497,
+                        "permission": 1,
+                        "len": 20,
+                        "value": "Test characteristic"
+                        }
+                    ]
+                },
+                {
+                    "uuid": 10755,
+                    "permission": 2,
+                    "props": 16,
+                    "len": 4
+                }
+            ]
+        }
+    ]
+})";
+
+//
 //  Meadow device name MeadowF7 with company identifier Espressif (0x02e5).
 //
 //  This JSON represents the configuration used in the Bluetooth_Basics managed application.
@@ -136,49 +179,5 @@ const char *meadow_f7_json = R"({
         }
     ]
 })";
-
-//
-//  The JSON below causes a problem with the Descriptor processing, error:
-// I (3121) BTDM_INIT: BT controller compile version [3bf7ef0]
-// I (3121) BTDM_INIT: Bluetooth MAC: 84:0d:8e:18:5b:0a
-// I (3131) phy_init: phy_version 4840,02e0d70,Sep  2 2024,19:39:07
-// E (3531) BT_GATT: Error in gatts_add_char_desc_value_check, line=1611,attribute actual length should not be larger than max length
-//
-//
-//  Company ID is for Baidu (0x011c).
-//
-// const char *meadow_b_json = R"(
-// {
-//     "deviceName":"MeadowB",
-//     "companyIdentifier": 284,
-//     "services": [
-//         {
-//             "name": "Service A",
-//             "uuid": 254,
-//             "characteristics": [
-//                 {
-//                     "uuid": "017e99d6-8a61-11eb-8dcd-0242ac130003",
-//                     "permission": 17,
-//                     "props": 10,
-//                     "len": 4,
-//                     "descriptors": [
-//                         {
-//                         "uuid": 10498,
-//                         "permission": 1,
-//                         "len": 2,
-//                         "value": 0
-//                         }
-//                     ]
-//                 },
-//                 {
-//                     "uuid": 10755,
-//                     "permission": 2,
-//                     "props": 16,
-//                     "len": 4
-//                 }
-//             ]
-//         }
-//     ]
-// })";
 
 #endif // __TEST_BLUETOOTH_SERVICE_JSON_HPP__

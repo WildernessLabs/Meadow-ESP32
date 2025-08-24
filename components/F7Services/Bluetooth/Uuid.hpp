@@ -148,6 +148,18 @@ struct Uuid16
     }
 
     /**
+     * @brief Return the UUID as a uint16_t
+     *
+     * @return uint16_t Value held in the data array.
+     */
+    uint16_t ToUint16() const
+    {
+        // clang-format off
+        return (uint16_t) *((uint16_t *) data);
+        // clang-format on
+    }
+
+    /**
      * @brief Primary Service UUID.
      */
     static Uuid16 PrimaryService;
