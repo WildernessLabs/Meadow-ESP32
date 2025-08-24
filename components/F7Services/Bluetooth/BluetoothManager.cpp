@@ -389,8 +389,8 @@ void BluetoothManager::BuildGraphFromJson(char *cfg_json)
 
             if (characteristic["uuid"].IsInt())
             {
-                chr_uuid16 = Uuid16((uint16_t) characteristic["uuid"].GetInt());
-                TRACE_MESSAGE("    UUID = 0x%04x", (uint16_t) chr_uuid16);
+                chr_uuid16 = Uuid16((uint16_t) characteristic["uuid"].GetUint());
+                TRACE_MESSAGE("    UUID = 0x%04x", chr_uuid16.ToUint16());
             }
             else
             {
@@ -433,8 +433,8 @@ void BluetoothManager::BuildGraphFromJson(char *cfg_json)
 
                         if (descriptor["uuid"].IsInt())
                         {
-                            desc_uuid16 = Uuid16((uint16_t) descriptor["uuid"].GetInt());
-                            TRACE_MESSAGE("     UUID = 0x%04x", (uint16_t) desc_uuid16);
+                            desc_uuid16 = Uuid16((uint16_t) descriptor["uuid"].GetUint());
+                            TRACE_MESSAGE("    UUID = 0x%04x", desc_uuid16.ToUint16());
                         }
                         else
                         {
@@ -448,22 +448,32 @@ void BluetoothManager::BuildGraphFromJson(char *cfg_json)
                         auto desc_len = (uint16_t) descriptor["len"].GetInt();
                         TRACE_MESSAGE("    Len = 0x%04x", desc_len);
 
-                        auto desc_value = (uint16_t) descriptor["value"].GetInt();
-                        TRACE_MESSAGE("   Value = 0x%04x", desc_value);
+                        uint32_t int_value = 0;
+                        const char *str_value = nullptr;
+                        uint8_t *value = nullptr;
+                        if (descriptor["value"].IsInt())
+                        {
+                            int_value = (uint32_t) descriptor["value"].GetInt();
+                            TRACE_MESSAGE("    Value = 0x%04x", int_value);
+                            value = (uint8_t *) &int_value;
+                        }
+                        else
+                        {
+                            str_value = descriptor["value"].GetString();
+                            TRACE_MESSAGE("    Value = %s", str_value);
+                            value = (uint8_t *) str_value;
+                        }
 
                         BluetoothDescriptor *bt_descriptor;
 
                         if (is128d)
                         {
-                            bt_descriptor = new BluetoothDescriptor(bt_characteristic, desc_uuid128, (CharacteristicPermission) desc_perm, desc_len);
+                            bt_descriptor = new BluetoothDescriptor(bt_characteristic, desc_uuid128, (CharacteristicPermission) desc_perm, desc_len, value);
                         }
                         else
                         {
-                            bt_descriptor = new BluetoothDescriptor(bt_characteristic, desc_uuid16, (CharacteristicPermission) desc_perm, desc_len);
+                            bt_descriptor = new BluetoothDescriptor(bt_characteristic, desc_uuid16, (CharacteristicPermission) desc_perm, desc_len, value);
                         }
-
-                        bt_descriptor->SetValue(desc_value);
-
                         bt_characteristic->AddDescriptor(bt_descriptor);
                         TRACE_MESSAGE("Bluetooth descriptor added");
                     }
