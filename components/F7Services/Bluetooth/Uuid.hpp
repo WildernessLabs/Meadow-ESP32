@@ -154,7 +154,9 @@ struct Uuid16
      */
     uint16_t ToUint16() const
     {
+        // clang-format off
         return (uint16_t) *((uint16_t *) data);
+        // clang-format on
     }
 
     /**
