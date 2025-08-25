@@ -498,6 +498,59 @@ namespace Esp32Messaging
         uint32_t DnsAddress;
     };
 
+    /**
+     * @brief Core dump information.
+     */
+    struct CoreDumpInformationResponse
+    {
+        /**
+         * @brief Indicates if the core dump information is valid.
+         */
+        uint8_t IsValid;
+
+        /**
+         * @brief Total size of the core dump.
+         */
+        uint32_t CoreDumpSize;
+
+        /**
+         * @brief Size of the partition containing the core dump.
+         */
+        uint32_t PartitionSize;
+    };
+
+    /**
+     * @brief Request for a fragment of the core dump.
+     */
+    struct CoreDumpFragmentRequest
+    {
+        /**
+         * @brief Offset within the core dump from which to start the fragment.
+         */
+        uint32_t Offset;
+
+        /**
+         * @brief Size of the fragment to retrieve.
+         */
+        uint32_t Size;
+    };
+
+    /**
+     * @brief Fragment of the coredump.
+     */
+    struct CoreDumpFragmentResponse
+    {
+        /**
+         * @brief Size of the fragment.
+         */
+        uint32_t Size;
+
+        /**
+         * @brief Pointer to the fragment data.
+         */
+        uint8_t *Data;
+    };
+
 } // namespace Esp32Messaging
 
 /*
@@ -629,6 +682,11 @@ public:
     static Esp32Messaging::LogMessage *ExtractLogMessage(uint8_t *);
     static void EncodeGotIpEventData(Esp32Messaging::GotIpEventData *, uint8_t *);
     static int EncodedGotIpEventDataBufferSize(Esp32Messaging::GotIpEventData *);
+    static void EncodeCoreDumpInformation(Esp32Messaging::CoreDumpInformationResponse *, uint8_t *);
+    static int EncodedCoreDumpInformationBufferSize(Esp32Messaging::CoreDumpInformationResponse *);
+    static Esp32Messaging::CoreDumpFragmentRequest *ExtractCoreDumpFragmentRequest(uint8_t *);
+    static void EncodeCoreDumpFragmentResponse(Esp32Messaging::CoreDumpFragmentResponse *, uint8_t *);
+    static int EncodedCoreDumpFragmentResponseBufferSize(Esp32Messaging::CoreDumpFragmentResponse *);
 };
 
 #endif /* _ENCODERS_HPP */
