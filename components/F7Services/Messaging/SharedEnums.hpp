@@ -280,6 +280,11 @@ namespace StatusCodes
          * @brief Reset over SDIO.
          */
         EspResetSdio = 60,
+
+        /**
+         * @brief Invalid request.
+         */
+        InvalidRequest = 61,
     };
 
 } // namespace StatusCodes
@@ -390,6 +395,18 @@ namespace SystemFunction
         /// SystemFunction - LogMessage
         /// </summary>
         LogMessage = 14,
+        /// <summary>
+        /// SystemFunction - GetCoreDumpInformation
+        /// </summary>
+        GetCoreDumpInformation = 15,
+        /// <summary>
+        /// SystemFunction - GetCoreDumpFragment
+        /// </summary>
+        GetCoreDumpFragment = 16,
+        /// <summary>
+        /// SystemFunction - EraseCoreDump
+        /// </summary>
+        EraseCoreDump = 17
     };
 
 } // namespace SystemFunction

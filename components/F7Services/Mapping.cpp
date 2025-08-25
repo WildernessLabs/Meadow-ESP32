@@ -315,6 +315,7 @@ Mapping::str_mapping_t Mapping::_statusCodes[] = {
     {StatusCodes::AccessPointNotStarted, (char *) "AccessPointNotStarted"},
     {StatusCodes::AccessPointAlreadyStarted, (char *) "AccessPointAlreadyStarted"},
     {StatusCodes::FileNotFound, (char *) "FileNotFound"},
+    {StatusCodes::InvalidRequest, (char *) "InvalidRequest"},
 };
 
 /**
@@ -357,6 +358,9 @@ Mapping::str_mapping_t Mapping::_systemFunctionNames[] = {
     {SystemFunction::FileSystemDeleteFile, (char *) "FileSystemDeleteFile"},
     {SystemFunction::LoggingConfiguration, (char *) "LoggingConfiguration"},
     {SystemFunction::LogMessage, (char *) "LogMessage"},
+    {SystemFunction::GetCoreDumpInformation, (char *) "GetCoreDumpInformation"},
+    {SystemFunction::GetCoreDumpFragment, (char *) "GetCoreDumpFragment"},
+    {SystemFunction::EraseCoreDump, (char *) "EraseCoreDump"},
 };
 
 /**
