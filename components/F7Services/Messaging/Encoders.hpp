@@ -550,7 +550,6 @@ namespace Esp32Messaging
          */
         uint8_t *Data;
     };
-
 } // namespace Esp32Messaging
 
 /*
