@@ -17,13 +17,38 @@
 #include <cstdio>
 #include <cstring>
 
+#include "IMessageDispatcher.hpp"
 #include "Esp32Messaging.hpp"
 #include "RequestHandlerBase.hpp"
 #include "SharedEnums.hpp"
 #include "Encoders.hpp"
 
-namespace CoreDump
+class CoreDump
 {
+public:
+    /**
+     * @brief CoreDump component name.
+     */
+    static const char *COMPONENT_NAME;
+
+    /**
+     * @brief Construct a new Core Dump object
+     */
+    explicit CoreDump(IMessageDispatcher *messageDispatcher);
+
+    /**
+     * @brief Destroy the Core Dump object
+     */
+    ~CoreDump();
+
+    //
+    // Prevent move, copying and assignment.
+    //
+    CoreDump(const CoreDump &) = delete;
+    CoreDump &operator=(const CoreDump &) = delete;
+    CoreDump(CoreDump &&) = delete;
+    CoreDump &operator=(CoreDump &&) = delete;
+
     /**
      * @brief Get the Information about the code dump.
      * 
@@ -44,4 +69,15 @@ namespace CoreDump
      * @param pvMessage Pointer to the message requesting the core dump erasure.
      */
     void Erase(void * pvMessage);
-}
+
+private:
+    /**
+     *  @brief Object that will be used to send messages to the STM32 from the ESP32.
+     */
+    IMessageDispatcher *_messageDispatcher;
+
+    /**
+     * @brief Construct a new Core Dump object
+     */
+    CoreDump() = delete;
+};

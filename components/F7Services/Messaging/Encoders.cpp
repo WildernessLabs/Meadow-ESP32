@@ -2816,3 +2816,100 @@ int Encoders::EncodedGotIpEventDataBufferSize(Esp32Messaging::GotIpEventData *go
 {
     return (4);
 }
+
+/**
+ * @brief Encode the CoreDumpInformation into the provided buffer.
+ *
+ * @param coreDumpInfo Pointer to the CoreDumpInformation.
+ * @param buffer Pointer to the buffer to write the encoded data.
+ */
+void Encoders::EncodeCoreDumpInformation(Esp32Messaging::CoreDumpInformationResponse *coreDumpInfo, uint8_t *buffer)
+{
+    if (coreDumpInfo == NULL || buffer == NULL)
+    {
+        return;
+    }
+
+    *buffer = coreDumpInfo->IsValid;
+    buffer++;
+    EncodeUInt32(coreDumpInfo->CoreDumpSize, buffer);
+    buffer += 4;
+    EncodeUInt32(coreDumpInfo->PartitionSize, buffer);
+}
+
+/**
+ * @brief Get the size of the encoded CoreDumpInformation.
+ *
+ * @param coreDumpInfo Pointer to the CoreDumpInformation.
+ * @return int Size of the encoded CoreDumpInformation.
+ */
+int Encoders::EncodedCoreDumpInformationBufferSize(Esp32Messaging::CoreDumpInformationResponse *coreDumpInfo)
+{
+    if (coreDumpInfo == NULL)
+    {
+        return -1;
+    }
+
+    return (9);
+}
+
+/**
+ * @brief Extract a core dump fragment request from the given buffer.
+ *
+ * @param buffer Block of memory holding the encoded core dump fragment request.
+ * @return Esp32Messaging::CoreDumpFragmentRequest* Pointer to the extracted core dump fragment request.
+ */
+Esp32Messaging::CoreDumpFragmentRequest *Encoders::ExtractCoreDumpFragmentRequest(uint8_t *buffer)
+{
+    if (buffer == NULL)
+    {
+        return (nullptr);
+    }
+
+    Esp32Messaging::CoreDumpFragmentRequest *fragmentRequest = static_cast<Esp32Messaging::CoreDumpFragmentRequest *>(pvPortMalloc(sizeof(Esp32Messaging::CoreDumpFragmentRequest)));
+    if (fragmentRequest == NULL)
+    {
+        return (nullptr);
+    }
+
+    
+    fragmentRequest->Offset = ExtractUInt32(buffer);
+    buffer += 4;
+    fragmentRequest->Size = ExtractUInt32(buffer);
+
+    return (fragmentRequest);
+}
+
+/**
+ * @brief Encode the CoreDumpFragment into the provided buffer.
+ *
+ * @param fragment Pointer to the CoreDumpFragment.
+ * @param buffer Pointer to the buffer to write the encoded data.
+ */
+void Encoders::EncodeCoreDumpFragmentResponse(Esp32Messaging::CoreDumpFragmentResponse *fragment, uint8_t *buffer)
+{
+    if (fragment == NULL || buffer == NULL)
+    {
+        return;
+    }
+
+    EncodeUInt32(fragment->Size, buffer);
+    buffer += 4;
+    memcpy(buffer, fragment->Data, fragment->Size);
+}
+
+/**
+ * @brief Get the size of the encoded CoreDumpFragment.
+ *
+ * @param fragment Pointer to the CoreDumpFragment.
+ * @return int Size of the encoded CoreDumpFragment.
+ */
+int Encoders::EncodedCoreDumpFragmentResponseBufferSize(Esp32Messaging::CoreDumpFragmentResponse *fragment)
+{
+    if (fragment == NULL)
+    {
+        return -1;
+    }
+
+    return (8 + fragment->Size);
+}

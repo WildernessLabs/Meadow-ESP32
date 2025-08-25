@@ -36,6 +36,7 @@
 #include "version.h"
 #include "Diagnostics.hpp"
 #include "Heap.hpp"
+#include "CoreDump.hpp"
 
 /*
  * ----------------------------------------------------------------------------
@@ -125,6 +126,7 @@ SystemRequestHandler::SystemRequestHandler(IMessageDispatcher *messageDispatcher
 
     _fileSystem = new FileSystem(_messageDispatcher);
     _fileSystem->Setup();
+    _coreDump = new CoreDump(_messageDispatcher);
 
 #if defined(CONFIG_ENABLE_DIAGNOSTIC_THREAD)
     Diagnostics::Setup();
@@ -827,6 +829,15 @@ void SystemRequestHandler::DispatchRequest(Message *request)
             break;
         case SystemFunction::LogMessage:
             LogMessage(request);
+            break;
+        case SystemFunction::GetCoreDumpFragment:
+            _coreDump->GetFragment(request);
+            break;
+        case SystemFunction::GetCoreDumpInformation:
+            _coreDump->GetInformation(request);
+            break;
+        case SystemFunction::EraseCoreDump:
+            _coreDump->Erase(request);
             break;
         default:
             TRACE_MESSAGE("DispatchRequest: Unknown System message received, function 0x%lx", request->Function);
