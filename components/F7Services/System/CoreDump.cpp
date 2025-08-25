@@ -10,13 +10,13 @@
  * @note This file provides the implementation for core dump management and analysis.
  */
 
- #include "sdkconfig.h"
+#include "sdkconfig.h"
 
- #include <inttypes.h>
- #include "esp_err.h"
- #include "esp_partition.h"
+#include <inttypes.h>
+#include "esp_err.h"
+#include "esp_partition.h"
 
- #include "Logging.hpp"
+#include "Logging.hpp"
 
 #include "CoreDump.hpp"
 
@@ -45,7 +45,7 @@ const char *CoreDump::COMPONENT_NAME = "CoreDump";
 
 // /**
 //  * @brief Construct a new Core Dump:: Core Dump object
-//  * 
+//  *
 //  */
 //  CoreDump::CoreDump() : _messageDispatcher(nullptr)
 // {
@@ -80,10 +80,10 @@ CoreDump::~CoreDump()
 
 /**
  * @brief Get the Information about the code dump.
- * 
+ *
  * @param pvMessage Pointer to the message requesting the coredump information.
  */
-void CoreDump::GetInformation(void * vpMessage)
+void CoreDump::GetInformation(void *vpMessage)
 {
     TRACE_MESSAGE("GetInformation: Enter");
 
@@ -138,10 +138,10 @@ void CoreDump::GetInformation(void * vpMessage)
 
 /**
  * @brief Get part (maybe all) of the core dump.
- * 
+ *
  * @param pvMessage Pointer to the message requesting the core dump fragment.
  */
-void CoreDump::GetFragment(void * vpMessage)
+void CoreDump::GetFragment(void *vpMessage)
 {
     TRACE_MESSAGE("GetFragment: Enter");
 
@@ -241,10 +241,10 @@ void CoreDump::GetFragment(void * vpMessage)
 
 /**
  * @brief Erase the core dump.
- * 
+ *
  * @param vpMessage Pointer to the message requesting the core dump erasure.
  */
-void CoreDump::Erase(void * vpMessage)
+void CoreDump::Erase(void *vpMessage)
 {
     TRACE_MESSAGE("Erase: Enter");
 
@@ -255,7 +255,7 @@ void CoreDump::Erase(void * vpMessage)
 
     Message *message = static_cast<Message *>(vpMessage);
     StatusCodes::StatusCodes result = StatusCodes::Failure;
-    
+
     esp_partition_iterator_t partitions;
     partitions = esp_partition_find(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_DATA_COREDUMP, NULL);
     if (partitions != NULL)

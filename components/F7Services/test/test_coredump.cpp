@@ -91,7 +91,7 @@ uint8_t *EncodeCoreDumpFragmentRequest(Esp32Messaging::CoreDumpFragmentRequest *
         buffer += 4;
         Encoders::EncodeUInt32(request->Size, buffer);
     }
- 
+
     return fragment;
 }
 
@@ -136,7 +136,7 @@ Esp32Messaging::CoreDumpFragmentResponse *ExtractCoreDumpFragmentResponse(uint8_
 
 /**
  * @brief Get the Core Dump Information object
- * 
+ *
  * @param dispatcher Message dispatcher.
  * @param codeDump Core dump object.
  * @return Esp32Messaging::CoreDumpInformationResponse* Pointer to a CoreDumpInformationResponse object.
@@ -354,7 +354,8 @@ void GenerateCoreDump(uint32_t count)
     if (count == 0)
     {
         printf("Forcing core dump...\n");
-        *((uint32_t *) 0) = 0; // Force a crash by dereferencing a null pointer.
+        // cppcheck-suppress nullPointer
+        *((uint32_t *) 0) = 0;
     }
     else
     {

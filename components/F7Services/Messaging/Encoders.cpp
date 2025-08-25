@@ -2872,7 +2872,6 @@ Esp32Messaging::CoreDumpFragmentRequest *Encoders::ExtractCoreDumpFragmentReques
         return (nullptr);
     }
 
-    
     fragmentRequest->Offset = ExtractUInt32(buffer);
     buffer += 4;
     fragmentRequest->Size = ExtractUInt32(buffer);
