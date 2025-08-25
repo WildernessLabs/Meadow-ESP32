@@ -28,6 +28,7 @@
 #include "NvsManager.hpp"
 #include "ThreadPool.hpp"
 #include "FileSystem.hpp"
+#include "CoreDump.hpp"
 
 /**
  *  @brief Object to deal with system requests such as configuration settings etc.
@@ -75,6 +76,11 @@ private:
      *        system on the ESP32.
      */
     FileSystem *_fileSystem;
+
+    /**
+     * @brief Coredump request handler.
+     */
+    CoreDump *_coreDump;
 
     /**
      * @brief Handle for ADC1 used on the F7 v1 for battery level monitoring.

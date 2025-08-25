@@ -69,10 +69,6 @@ MockMessageDispatcher::~MockMessageDispatcher()
     // {
     //     delete _wifiRequestHandler;
     // }
-    // if (_meshNetworkRequestHandler)
-    // {
-    //     delete _meshNetworkRequestHandler;
-    // }
     // if (_systemRequestHandler)
     // {
     //     delete _systemRequestHandler;
