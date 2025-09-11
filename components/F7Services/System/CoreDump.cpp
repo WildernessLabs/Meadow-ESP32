@@ -47,20 +47,19 @@ const char *CoreDump::COMPONENT_NAME = "CoreDump";
  * ----------------------------------------------------------------------------
  */
 
-// /**
-//  * @brief Construct a new Core Dump:: Core Dump object
-//  *
-//  */
-//  CoreDump::CoreDump() : _messageDispatcher(nullptr)
-// {
-//     TRACE_MESSAGE("CoreDump: Constructor");
-// }
-
+ /**
+  * @brief Construct a new Core Dump:: Core Dump object
+  * 
+  * @param messageDispatcher Message dispatcher object used for communication with the STM32.
+  */
 CoreDump::CoreDump(IMessageDispatcher *messageDispatcher) : _messageDispatcher(messageDispatcher)
 {
     TRACE_MESSAGE("CoreDump: Constructor with dispatcher");
 }
 
+/**
+ * @brief Destroy the Core Dump object.
+ */
 CoreDump::~CoreDump()
 {
     TRACE_MESSAGE("CoreDump: Destructor");
