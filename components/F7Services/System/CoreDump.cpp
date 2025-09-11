@@ -22,6 +22,10 @@
 
 extern "C" esp_err_t esp_core_dump_image_check();
 
+#if defined(CORE_DUMP_DEBUG)
+    #pragma message "CoreDump.cpp: Debugging enabled"
+#endif
+
 /*
  * ----------------------------------------------------------------------------
  *
