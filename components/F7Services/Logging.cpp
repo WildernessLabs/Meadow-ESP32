@@ -198,6 +198,12 @@ bool Logging::TurnLoggingOn(char *component)
         {
             esp_log_level_set(SystemRequestHandler::COMPONENT_NAME, ESP_LOG_INFO);
             esp_log_level_set(FileSystem::COMPONENT_NAME, ESP_LOG_INFO);
+            esp_log_level_set(CoreDump::COMPONENT_NAME, ESP_LOG_INFO);
+            return (true);
+        }
+        if (!strcasecmp(component, CoreDump::COMPONENT_NAME))
+        {
+            esp_log_level_set(CoreDump::COMPONENT_NAME, ESP_LOG_INFO);
             return (true);
         }
         if (!strcasecmp(component, BluetoothRequestHandler::COMPONENT_NAME))

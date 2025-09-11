@@ -74,6 +74,10 @@ if (FILE_SYSTEM_DEBUG EQUAL 1)
     add_compile_definitions(FILE_SYSTEM_DEBUG)
 endif()
 
+if (CORE_DUMP_DEBUG EQUAL 1)
+    add_compile_definitions(CORE_DUMP_DEBUG)
+endif()
+
 if (DIAGNOSTICS EQUAL 1)
     add_compile_definitions(DIAGNOSTICS)
 endif()
