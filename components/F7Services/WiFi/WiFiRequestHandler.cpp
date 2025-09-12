@@ -834,7 +834,7 @@ void WiFiRequestHandler::Setup()
     _xWiFiEventGroup = xEventGroupCreate();
     xEventGroupClearBits(_xWiFiEventGroup, 0x008fffff);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
-    xTaskCreate(Task, COMPONENT_NAME, 2048 * 2, this, PRIORITY_WIFI_TASK, &_taskHandle);
+    xTaskCreate(Task, COMPONENT_NAME, TASK_STACK_SIZE, this, PRIORITY_WIFI_TASK, &_taskHandle);
     TRACE_MESSAGE("Setup: Exit");
 }
 

@@ -71,7 +71,7 @@ Thread::Thread(char *name, task_completed_method_t taskCompletedMethod) : Thread
     //  a method before one has been assigned to it.
     //
     TakeExecutionSemaphore();
-    if (xTaskCreate(Thread::Task, _name, 2048 * 2, this, PRIORITY_THREAD_POOL_TASK, &_taskHandle) != pdPASS)
+    if (xTaskCreate(Thread::Task, _name, TASK_STACK_SIZE, this, PRIORITY_THREAD_POOL_TASK, &_taskHandle) != pdPASS)
     {
         throw new ThreadPoolException("Cannot create task.");
     }
