@@ -41,7 +41,7 @@ private:
      *  @brief Stack size for the SPI synchronisation task.
      */
     static constexpr uint32_t SYNCHRONISATION_TASK_STACK_SIZE = 4096;
-    
+
     /**
      *  @brief Maximum number of retries before the system gives up.
      */
