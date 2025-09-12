@@ -33,6 +33,16 @@ class SpiTransportProvider : public TransportProviderBase
 {
 private:
     /**
+     *  @brief Stack size for the SPI task.
+     */
+    static constexpr uint32_t SPI_TASK_STACK_SIZE = 8192;
+
+    /**
+     *  @brief Stack size for the SPI synchronisation task.
+     */
+    static constexpr uint32_t SYNCHRONISATION_TASK_STACK_SIZE = 4096;
+    
+    /**
      *  @brief Maximum number of retries before the system gives up.
      */
     const int MAXIMUM_RETRY_COUNT = 3;

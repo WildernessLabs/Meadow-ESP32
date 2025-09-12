@@ -37,6 +37,11 @@ class SystemRequestHandler : public RequestHandlerBase
 {
 private:
     /**
+     *  @brief Stack size for the system request handler task.
+     */
+    static constexpr uint32_t TASK_STACK_SIZE = 8192;
+
+    /**
      *  @brief Name of the NVS store holding the system configuration.
      */
     static const char *_configurationName;
