@@ -30,6 +30,11 @@ class Thread
 {
 private:
     /**
+     *  @brief Stack size for the threads.
+     */
+    static constexpr uint32_t TASK_STACK_SIZE = 8192;
+
+    /**
      *  @brief Name used to identify this thread.
      */
     char *_name = nullptr;
