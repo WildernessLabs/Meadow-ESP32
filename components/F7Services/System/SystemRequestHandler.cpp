@@ -234,7 +234,7 @@ StatusCodes::StatusCodes SystemRequestHandler::SetDeviceName(char *value)
 void SystemRequestHandler::Setup()
 {
     RequestHandlerBase::Setup();
-    xTaskCreate(Task, COMPONENT_NAME, 2048 * 2, this, PRIORITY_SYSTEM_TASK, &_taskHandle);
+    xTaskCreate(Task, COMPONENT_NAME, TASK_STACK_SIZE, this, PRIORITY_SYSTEM_TASK, &_taskHandle);
 }
 
 /**
