@@ -112,8 +112,12 @@ void RequestHandlerBase::Task(void *pvParameters)
     {
         Message *message;
         BaseType_t result = xQueueReceive(sender->_queueHandle, &message, portMAX_DELAY);
-        if (result == pdTRUE)
+        if ((result == pdTRUE) && (message != NULL))
         {
+            //
+            //  We check that the message is valid before dispatching it meaning
+            //  that we don't have to do this in the request handlers.
+            //
             sender->DispatchRequest(message);
         }
     }
