@@ -1,4 +1,3 @@
-
 #include "Encoders.hpp"
 
 #include "Encoders.hpp"
@@ -60,7 +59,7 @@ uint32_t Encoders::EncodedPacketSize(Message *message, bool headerOnly)
 {
     uint32_t result = Message::HEADER_SIZE;
 
-    if (!headerOnly)
+    if ((!headerOnly) && (message != NULL))
     {
         result += message->PacketLength;
     }
@@ -982,6 +981,11 @@ int Encoders::EncodedSockAddrBufferSize(Esp32Messaging::SockAddr *sockAddr)
 Esp32Messaging::SockAddr *Encoders::ExtractSockAddr(uint8_t *buffer)
 {
     Esp32Messaging::SockAddr *sockAddr = (Esp32Messaging::SockAddr *) pvPortMalloc(sizeof(Esp32Messaging::SockAddr));
+
+    if (sockAddr == NULL)
+    {
+        return (nullptr);
+    }
 
     sockAddr->Family = *buffer;
     buffer += 1;
