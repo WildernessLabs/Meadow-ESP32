@@ -2036,42 +2036,60 @@ void WiFiRequestHandler::Poll(void *vpMessage)
     assert(message->Payload != NULL);
     Esp32Messaging::IntegerAndErrnoResponse response = {};
 
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
     if (IsConnected())
     {
         Esp32Messaging::PollRequest *request = Encoders::ExtractPollRequest(message->Payload);
-        if (request->Setup == 1)
+        if (request)
         {
-            response.Result = PollSetup(static_cast<void *>(request));
+            if (request->Setup == 1)
+            {
+                response.Result = PollSetup(static_cast<void *>(request));
+            }
+            else
+            {
+                response.Result = PollTeardown(static_cast<void *>(request));
+            }
+
+            if (response.Result < 0)
+            {
+                response.ResponseErrno = MapErrno(errno);
+            }
+            vPortFree(request);
         }
         else
         {
-            response.Result = PollTeardown(static_cast<void *>(request));
+            result = StatusCodes::EspOutOfMemory;
         }
-
-        if (response.Result < 0)
-        {
-            response.ResponseErrno = MapErrno(errno);
-        }
-        vPortFree(request);
     }
     else
     {
         response.Result = -1;
         response.ResponseErrno = MapErrno(ENETDOWN);
     }
+
     vPortFree(message->Payload);
 
-    message->PayloadLength = Encoders::EncodedIntegerAndErrnoResponseBufferSize(&response);
-    message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-    if (message->Payload == NULL)
+    if (result != StatusCodes::CompletedOk)
     {
         message->PayloadLength = 0;
-        message->StatusCode = StatusCodes::EspOutOfMemory;
+        message->Payload = nullptr;
+        message->StatusCode = result;
     }
     else
     {
-        Encoders::EncodeIntegerAndErrnoResponse(&response, message->Payload);
-        message->StatusCode = StatusCodes::CompletedOk;
+        message->PayloadLength = Encoders::EncodedIntegerAndErrnoResponseBufferSize(&response);
+        message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
+        if (message->Payload == NULL)
+        {
+            message->PayloadLength = 0;
+            message->StatusCode = StatusCodes::EspOutOfMemory;
+        }
+        else
+        {
+            Encoders::EncodeIntegerAndErrnoResponse(&response, message->Payload);
+            message->StatusCode = StatusCodes::CompletedOk;
+        }
     }
     message->MessageType = MessageTypes::Response;
     _messageDispatcher->QueueMessageForStm32(message);
