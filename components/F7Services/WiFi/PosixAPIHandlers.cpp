@@ -857,19 +857,36 @@ void WiFiRequestHandler::Read(void *vpMessage)
 
     Esp32Messaging::ReadResponse response = {};
     response.Buffer = nullptr;
-
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
     if (IsConnected())
     {
         Esp32Messaging::ReadRequest *request = Encoders::ExtractReadRequest(message->Payload);
-        response.Buffer = static_cast<uint8_t *>(pvPortMalloc(request->Count));
-        bzero(response.Buffer, request->Count);
-        response.BufferLength = request->Count;
-        response.ReadResponseResult = read(request->SocketHandle, response.Buffer, request->Count);
-        if (response.ReadResponseResult < 0)
+        if (request)
         {
-            response.ReadResponseErrno = MapErrno(errno);
+            response.Buffer = static_cast<uint8_t *>(pvPortMalloc(request->Count));
+            if (response.Buffer)
+            {
+                bzero(response.Buffer, request->Count);
+                response.BufferLength = request->Count;
+                response.ReadResponseResult = read(request->SocketHandle, response.Buffer, request->Count);
+                if (response.ReadResponseResult < 0)
+                {
+                    response.ReadResponseErrno = MapErrno(errno);
+                    free(response.Buffer);
+                    response.Buffer = NULL;
+                    response.BufferLength = 0;
+                }
+                else
+                {
+                    result = StatusCodes::EspOutOfMemory;
+                }
+            }
+            vPortFree(request);
         }
-        vPortFree(request);
+        else
+        {
+            result = StatusCodes::EspOutOfMemory;
+        }
     }
     else
     {
@@ -879,20 +896,26 @@ void WiFiRequestHandler::Read(void *vpMessage)
 
     vPortFree(message->Payload);
 
-    //
-    //  TODO: Optimise this by not sending an empty buffer in the case of an error.
-    //
-    message->PayloadLength = Encoders::EncodedReadResponseBufferSize(&response);
-    message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-    if (message->Payload == NULL)
+    if (result != StatusCodes::CompletedOk)
     {
         message->PayloadLength = 0;
-        message->StatusCode = StatusCodes::EspOutOfMemory;
+        message->Payload = nullptr;
+        message->StatusCode = result;
     }
     else
     {
-        Encoders::EncodeReadResponse(&response, message->Payload);
-        message->StatusCode = StatusCodes::CompletedOk;
+        message->PayloadLength = Encoders::EncodedReadResponseBufferSize(&response);
+        message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
+        if (message->Payload == NULL)
+        {
+            message->PayloadLength = 0;
+            message->StatusCode = StatusCodes::EspOutOfMemory;
+        }
+        else
+        {
+            Encoders::EncodeReadResponse(&response, message->Payload);
+            message->StatusCode = StatusCodes::CompletedOk;
+        }
     }
 
     vPortFree(response.Buffer);
