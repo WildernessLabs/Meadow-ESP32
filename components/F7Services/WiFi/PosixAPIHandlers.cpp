@@ -54,6 +54,8 @@ void WiFiRequestHandler::GetAddrInfo(void *vpMessage)
     Message *message = static_cast<Message *>(vpMessage);
     Esp32Messaging::GetAddrInfoResponse *response = static_cast<Esp32Messaging::GetAddrInfoResponse *>(pvPortMalloc(sizeof(Esp32Messaging::GetAddrInfoResponse)));
 
+    assert(message != NULL);
+    assert(message->Payload != NULL);
     if (IsConnected())
     {
         Esp32Messaging::GetAddrInfoRequest *request = Encoders::ExtractGetAddrInfoRequest(message->Payload);
@@ -313,7 +315,9 @@ void WiFiRequestHandler::FreeAddrInfo(void *vpMessage)
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
-    TRACE_MESSAGE("FreeAddrInfo: Releasing addrinfo storage.");
+
+    assert(message != NULL);
+    assert(message->Payload != NULL);
     Esp32Messaging::FreeAddrInfoRequest *request = Encoders::ExtractFreeAddrInfoRequest(message->Payload);
 
     if (request != NULL)
@@ -352,6 +356,9 @@ void WiFiRequestHandler::GetSockOpt(void *vpMessage)
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
+
+    assert(message != NULL);
+    assert(message->Payload != NULL);
     Esp32Messaging::GetSockOptRequest *request = Encoders::ExtractGetSockOptRequest(message->Payload);
     Esp32Messaging::GetSockOptResponse response = {};
 
@@ -680,6 +687,9 @@ void WiFiRequestHandler::SetSockOpt(void *vpMessage)
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
+
+    assert(message != NULL);
+    assert(message->Payload != NULL);
     Esp32Messaging::SetSockOptRequest *request = Encoders::ExtractSetSockOptRequest(message->Payload);
     Esp32Messaging::IntegerAndErrnoResponse response = {};
 
@@ -777,6 +787,9 @@ void WiFiRequestHandler::Write(void *vpMessage)
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
+
+    assert(message != NULL);
+    assert(message->Payload != NULL);
     Esp32Messaging::WriteRequest *request = Encoders::ExtractWriteRequest(message->Payload);
     Esp32Messaging::IntegerAndErrnoResponse response = {};
 
@@ -838,6 +851,10 @@ void WiFiRequestHandler::Read(void *vpMessage)
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
+
+    assert(message != NULL);
+    assert(message->Payload != NULL);
+
     Esp32Messaging::ReadResponse response = {};
     response.Buffer = nullptr;
 
@@ -971,6 +988,9 @@ void WiFiRequestHandler::Send(void *vpMessage)
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
+
+    assert(message != NULL);
+    assert(message->Payload != NULL);
     Esp32Messaging::IntegerAndErrnoResponse response = {};
 
     if (IsConnected())
@@ -1042,6 +1062,9 @@ void WiFiRequestHandler::SendTo(void *vpMessage)
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
+
+    assert(message != NULL);
+    assert(message->Payload != NULL);
     Esp32Messaging::IntegerAndErrnoResponse response = {};
 
     if (IsConnected())
@@ -1155,6 +1178,9 @@ void WiFiRequestHandler::RecvFrom(void *vpMessage)
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
+
+    assert(message != NULL);
+    assert(message->Payload != NULL);
     Esp32Messaging::RecvFromResponse response = {};
 
     if (IsConnected())
@@ -1288,6 +1314,9 @@ void WiFiRequestHandler::Bind(void *vpMessage)
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
+
+    assert(message != NULL);
+    assert(message->Payload != NULL);
     Esp32Messaging::IntegerAndErrnoResponse response = {};
 
     if (IsConnected())
@@ -1440,8 +1469,12 @@ void WiFiRequestHandler::Accept(void *vpMessage)
 {
     TRACE_MESSAGE("Accept: Enter");
     PERFORMANCE_LOGGING_ENTER();
-    Esp32Messaging::AcceptResponse response = {};
+
     Message *message = static_cast<Message *>(vpMessage);
+    assert(message != NULL);
+    assert(message->Payload != NULL);
+
+    Esp32Messaging::AcceptResponse response = {};
 
     if (IsConnected())
     {
@@ -1522,6 +1555,9 @@ void WiFiRequestHandler::Ioctl(void *vpMessage)
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
+
+    assert(message != NULL);
+    assert(message->Payload != NULL);
     Esp32Messaging::IoctlResponse response = {};
 
     if (IsConnected())
@@ -1625,6 +1661,9 @@ void WiFiRequestHandler::GetSockPeerName(void *vpMessage, WiFiFunction::WiFiFunc
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
+
+    assert(message != NULL);
+    assert(message->Payload != NULL);
     Esp32Messaging::GetSockPeerNameResponse response = {};
 
     if (IsConnected())
@@ -1992,6 +2031,9 @@ void WiFiRequestHandler::Poll(void *vpMessage)
 {
     TRACE_MESSAGE("Poll: Enter");
     Message *message = static_cast<Message *>(vpMessage);
+
+    assert(message != NULL);
+    assert(message->Payload != NULL);
     Esp32Messaging::IntegerAndErrnoResponse response = {};
 
     if (IsConnected())
