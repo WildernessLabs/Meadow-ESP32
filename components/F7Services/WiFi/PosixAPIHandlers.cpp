@@ -233,47 +233,61 @@ void WiFiRequestHandler::Connect(void *vpMessage)
 
     assert(message != NULL);
     assert(message->Payload != NULL);
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
     if (IsConnected())
     {
         Esp32Messaging::ConnectRequest *request = Encoders::ExtractConnectRequest(message->Payload);
-        Esp32Messaging::SockAddr *socketAddress = Encoders::ExtractSockAddr(request->Addr);
-        if (request->AddrLength > 0)
+        if (request)
         {
-            if (request->Addr)
+            Esp32Messaging::SockAddr *socketAddress = Encoders::ExtractSockAddr(request->Addr);
+            if (socketAddress)
             {
-                vPortFree(request->Addr);
-            }
-        }
+                if (request->AddrLength > 0)
+                {
+                    if (request->Addr)
+                    {
+                        vPortFree(request->Addr);
+                    }
+                }
 
-        struct sockaddr_in sa = {};
-        int family;
-        Mapping::GetEspValue(Mapping::AddressFamily, socketAddress->Family, reinterpret_cast<int32_t *>(&family));
-        errno = 0;
-        if (family == AF_INET)
-        {
-            sa.sin_family = (uint8_t) (family & 0xff);
-            sa.sin_port = socketAddress->Port;
-            memcpy(&sa.sin_addr, &socketAddress->Ip4Address, sizeof(sa.sin_addr));
-            sa.sin_len = sizeof(struct sockaddr_in);
-            TRACE_MESSAGE("Connect: Connecting socket: %ld", request->SocketHandle);
-            TRACE_MESSAGE("Connect: Family: %d", sa.sin_family);
-            TRACE_MESSAGE("Connect: IP address: %s", inet_ntoa(sa.sin_addr));
-            TRACE_MESSAGE("Connect: Port: %d", ntohs(sa.sin_port));
-            response.Result = connect(request->SocketHandle, (struct sockaddr *) &sa, sizeof(sa));
-            if (response.Result != 0)
-            {
-                TRACE_MESSAGE("Connect: Error code: %d - %s", errno, strerror(errno));
-                response.ResponseErrno = MapErrno(errno);
+                struct sockaddr_in sa = {};
+                int family;
+                Mapping::GetEspValue(Mapping::AddressFamily, socketAddress->Family, reinterpret_cast<int32_t *>(&family));
+                errno = 0;
+                if (family == AF_INET)
+                {
+                    sa.sin_family = (uint8_t) (family & 0xff);
+                    sa.sin_port = socketAddress->Port;
+                    memcpy(&sa.sin_addr, &socketAddress->Ip4Address, sizeof(sa.sin_addr));
+                    sa.sin_len = sizeof(struct sockaddr_in);
+                    TRACE_MESSAGE("Connect: Connecting socket: %ld", request->SocketHandle);
+                    TRACE_MESSAGE("Connect: Family: %d", sa.sin_family);
+                    TRACE_MESSAGE("Connect: IP address: %s", inet_ntoa(sa.sin_addr));
+                    TRACE_MESSAGE("Connect: Port: %d", ntohs(sa.sin_port));
+                    response.Result = connect(request->SocketHandle, (struct sockaddr *) &sa, sizeof(sa));
+                    if (response.Result != 0)
+                    {
+                        TRACE_MESSAGE("Connect: Error code: %d - %s", errno, strerror(errno));
+                        response.ResponseErrno = MapErrno(errno);
+                    }
+                }
+                else
+                {
+                    response.Result = -1;
+                    response.ResponseErrno = MapErrno(EFAULT);
+                }
+                vPortFree(socketAddress);
             }
+            else
+            {
+                result = StatusCodes::EspOutOfMemory;
+            }
+            vPortFree(request);
         }
         else
         {
-            response.Result = -1;
-            response.ResponseErrno = MapErrno(EFAULT);
+            result = StatusCodes::EspOutOfMemory;
         }
-
-        vPortFree(request);
-        vPortFree(socketAddress);
     }
     else
     {
@@ -283,17 +297,27 @@ void WiFiRequestHandler::Connect(void *vpMessage)
 
     vPortFree(message->Payload);
 
-    message->PayloadLength = Encoders::EncodedIntegerAndErrnoResponseBufferSize(&response);
-    message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-    if (message->Payload != NULL)
+    if (result != StatusCodes::CompletedOk)
     {
-        Encoders::EncodeIntegerAndErrnoResponse(&response, message->Payload);
-        message->StatusCode = StatusCodes::CompletedOk;
+        message->PayloadLength = 0;
+        message->Payload = nullptr;
+        
+        message->StatusCode = result;
     }
     else
     {
-        message->PayloadLength = 0;
-        message->StatusCode = StatusCodes::EspOutOfMemory;
+        message->PayloadLength = Encoders::EncodedIntegerAndErrnoResponseBufferSize(&response);
+        message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
+        if (message->Payload != NULL)
+        {
+            Encoders::EncodeIntegerAndErrnoResponse(&response, message->Payload);
+            message->StatusCode = StatusCodes::CompletedOk;
+        }
+        else
+        {
+            message->PayloadLength = 0;
+            message->StatusCode = StatusCodes::EspOutOfMemory;
+        }
     }
     message->MessageType = MessageTypes::Response;
     _messageDispatcher->QueueMessageForStm32(message);
