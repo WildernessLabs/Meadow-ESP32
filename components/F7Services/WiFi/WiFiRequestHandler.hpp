@@ -765,22 +765,22 @@ private:
     static void SetSockOpt(void *vpMessage);
 
     /**
-     * @brief Process the SO_SNDTIMEO and SO_SNDTIMEO get socket option. 
-     * 
+     * @brief Process the SO_SNDTIMEO and SO_SNDTIMEO get socket option.
+     *
      * @param vpMessage Pointer to the request.
      */
     static StatusCodes::StatusCodes GetSendReceiveOption(int socket, int level, int optionName, Esp32Messaging::GetSockOptResponse &response);
 
     /**
-     * @brief Process the SO_LINGER get socket option. 
-     * 
+     * @brief Process the SO_LINGER get socket option.
+     *
      * @param vpMessage Pointer to the request.
      */
     static StatusCodes::StatusCodes GetLingerOption(int socket, int level, int optionName, Esp32Messaging::GetSockOptResponse &response);
 
     /**
-     * @brief Process the SO_RCVBUF get socket option. 
-     * 
+     * @brief Process the SO_RCVBUF get socket option.
+     *
      * @param vpMessage Pointer to the request.
      */
     static StatusCodes::StatusCodes GetSendReceiveBuffer(int socket, int level, int optionName, Esp32Messaging::GetSockOptResponse &response);
