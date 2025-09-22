@@ -1099,34 +1099,42 @@ void WiFiRequestHandler::Send(void *vpMessage)
     assert(message->Payload != NULL);
     Esp32Messaging::IntegerAndErrnoResponse response = {};
 
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
     if (IsConnected())
     {
         Esp32Messaging::SendRequest *request = Encoders::ExtractSendRequest(message->Payload);
-        int32_t mappedFlags = 0;
-        response.ResponseErrno = 0;
-        response.Result = Mapping::GetEspFlagValue(Mapping::MessageFlags, request->Flags, &mappedFlags);
-        if (response.Result == 0)
+        if (request)
         {
-            response.Result = send(request->SocketHandle, request->Buffer, request->Length, mappedFlags);
-            if (response.Result < 0)
+            int32_t mappedFlags = 0;
+            response.ResponseErrno = 0;
+            response.Result = Mapping::GetEspFlagValue(Mapping::MessageFlags, request->Flags, &mappedFlags);
+            if (response.Result == 0)
             {
-                response.ResponseErrno = MapErrno(errno);
+                response.Result = send(request->SocketHandle, request->Buffer, request->Length, mappedFlags);
+                if (response.Result < 0)
+                {
+                    response.ResponseErrno = MapErrno(errno);
+                }
             }
+            else
+            {
+                response.ResponseErrno = MapErrno(EFAULT);
+            }
+
+            TRACE_MESSAGE("Send: Sent %" PRIi32 " bytes.", request->Length);
+            if (request->Buffer && (request->Length > 0))
+            {
+                TRACE_HEX_BUFFER(request->Buffer, request->Length);
+            }
+            TRACE_MESSAGE("Send: Result: %" PRIi32 ", errno: %" PRIi32 " - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
+
+            vPortFree(request->Buffer);
+            vPortFree(request);
         }
         else
         {
-            response.ResponseErrno = MapErrno(EFAULT);
+            result = StatusCodes::EspOutOfMemory;
         }
-
-        TRACE_MESSAGE("Send: Sent %ld bytes.", request->Length);
-        if (request->Buffer && (request->Length > 0))
-        {
-            TRACE_HEX_BUFFER(request->Buffer, request->Length);
-        }
-        TRACE_MESSAGE("Send: Result: %ld, errno: %ld - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
-
-        vPortFree(request->Buffer);
-        vPortFree(request);
     }
     else
     {
@@ -1136,17 +1144,26 @@ void WiFiRequestHandler::Send(void *vpMessage)
 
     vPortFree(message->Payload);
 
-    message->PayloadLength = Encoders::EncodedIntegerAndErrnoResponseBufferSize(&response);
-    message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-    if (message->Payload == NULL)
+    if (result != StatusCodes::CompletedOk)
     {
         message->PayloadLength = 0;
-        message->StatusCode = StatusCodes::EspOutOfMemory;
+        message->Payload = nullptr;
+        message->StatusCode = result;
     }
     else
     {
-        Encoders::EncodeIntegerAndErrnoResponse(&response, message->Payload);
-        message->StatusCode = StatusCodes::CompletedOk;
+        message->PayloadLength = Encoders::EncodedIntegerAndErrnoResponseBufferSize(&response);
+        message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
+        if (message->Payload == NULL)
+        {
+            message->PayloadLength = 0;
+            message->StatusCode = StatusCodes::EspOutOfMemory;
+        }
+        else
+        {
+            Encoders::EncodeIntegerAndErrnoResponse(&response, message->Payload);
+            message->StatusCode = StatusCodes::CompletedOk;
+        }
     }
     message->MessageType = MessageTypes::Response;
     _messageDispatcher->QueueMessageForStm32(message);
