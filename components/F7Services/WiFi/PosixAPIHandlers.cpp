@@ -174,7 +174,7 @@ void WiFiRequestHandler::Socket(void *vpMessage)
 
             vPortFree(request);
         }
-        else 
+        else
         {
             result = StatusCodes::EspOutOfMemory;
         }
@@ -369,8 +369,8 @@ void WiFiRequestHandler::FreeAddrInfo(void *vpMessage)
 }
 
 /**
- * @brief Process the SO_SNDTIMEO and SO_SNDTIMEO get socket option. 
- * 
+ * @brief Process the SO_SNDTIMEO and SO_SNDTIMEO get socket option.
+ *
  * @param vpMessage Pointer to the request.
  */
 StatusCodes::StatusCodes WiFiRequestHandler::GetSendReceiveOption(int socketHandle, int level, int optionName, Esp32Messaging::GetSockOptResponse &response)
@@ -399,12 +399,12 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetSendReceiveOption(int socketHand
         Encoders::EncodeTimeVal(&esp_tv, response.OptionValue);
     }
 
-    return(result);
+    return (result);
 }
 
 /**
- * @brief Process the SO_LINGER get socket option. 
- * 
+ * @brief Process the SO_LINGER get socket option.
+ *
  * @param vpMessage Pointer to the request.
  */
 StatusCodes::StatusCodes WiFiRequestHandler::GetLingerOption(int socket, int level, int optionName, Esp32Messaging::GetSockOptResponse &response)
@@ -433,12 +433,12 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetLingerOption(int socket, int lev
         Encoders::EncodeLinger(&esp_lv, response.OptionValue);
     }
 
-    return(result);
+    return (result);
 }
 
 /**
- * @brief Process the SO_RCVBUF get socket option. 
- * 
+ * @brief Process the SO_RCVBUF get socket option.
+ *
  * @param vpMessage Pointer to the request.
  */
 StatusCodes::StatusCodes WiFiRequestHandler::GetSendReceiveBuffer(int socket, int level, int optionName, Esp32Messaging::GetSockOptResponse &response)
@@ -466,7 +466,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetSendReceiveBuffer(int socket, in
         Encoders::EncodeIntegerResponse(&esp_iv, response.OptionValue);
     }
 
-    return(result);
+    return (result);
 }
 
 /**
@@ -502,19 +502,19 @@ void WiFiRequestHandler::GetSockOpt(void *vpMessage)
             {
                 int32_t level = 0;
                 Mapping::GetEspValue(Mapping::SocketLevel, request->Level, &level);
-                TRACE_MESSAGE("GetSockOpt: Getting socket option level 0x%" PRIx32", option name 0x%" PRIx32 " for socket %" PRIi32, (uint) level, (uint) optionName, request->SocketHandle);
+                TRACE_MESSAGE("GetSockOpt: Getting socket option level 0x%" PRIx32 ", option name 0x%" PRIx32 " for socket %" PRIi32, (uint) level, (uint) optionName, request->SocketHandle);
                 response.Result = -1;
                 response.ResponseErrno = MapErrno(ENOPROTOOPT);
                 switch (optionName)
                 {
-                    case SO_SNDTIMEO: /* Get the send timeout */
-                    case SO_RCVTIMEO: /* Get the receive timeout */
+                    case SO_SNDTIMEO:   /* Get the send timeout */
+                    case SO_RCVTIMEO:   /* Get the receive timeout */
                         result = GetSendReceiveOption(request->SocketHandle, level, optionName, response);
                         break;
-                    case SO_LINGER: /* Linger on close if data present */
+                    case SO_LINGER:     /* Linger on close if data present */
                         result = GetLingerOption(request->SocketHandle, level, optionName, response);
                         break;
-                    case SO_RCVBUF: /* Get the receive buffer size */
+                    case SO_RCVBUF:     /* Get the receive buffer size */
                         result = GetSendReceiveBuffer(request->SocketHandle, level, optionName, response);
                         break;
                     case SO_ACCEPTCONN: /* Socket has had listen() */
