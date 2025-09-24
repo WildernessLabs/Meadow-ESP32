@@ -801,6 +801,14 @@ private:
     static void Close(void *vpMessage);
 
     /**
+     * @brief Provide a mechanism for the STM32 to call the sendto method.
+     * 
+     * @param request Request from the STM32.
+     * @param response Response to the STM32.
+     */
+    static StatusCodes::StatusCodes SendTo(Esp32Messaging::SendToRequest *request, Esp32Messaging::IntegerAndErrnoResponse &response);
+
+    /**
      *  @brief Provide a mechanism for the STM32 to call the sendto method.
      */
     static void SendTo(void *vpMessage);
