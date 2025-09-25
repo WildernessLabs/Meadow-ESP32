@@ -747,10 +747,10 @@ uint8_t *WiFiRequestHandler::GetTcpOptionValue(int name, uint8_t *optionValue, s
 
 /**
  * @brief Process the setsockopt request from the STM32.
- * 
+ *
  * @param request Request from the STM32.
  * @param response Response to the STM32.
- * 
+ *
  * @return StatusCodes::StatusCodes Status of the request.
  */
 StatusCodes::StatusCodes WiFiRequestHandler::SetSockOpt(Esp32Messaging::SetSockOptRequest *request, Esp32Messaging::IntegerAndErrnoResponse &response)
@@ -1206,7 +1206,7 @@ void WiFiRequestHandler::Send(void *vpMessage)
 
 /**
  * @brief Provide a mechanism for the STM32 to call the sendto method.
- * 
+ *
  * @param request Request from the STM32.
  * @param response Response to the STM32.
  */
@@ -1231,7 +1231,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::SendTo(Esp32Messaging::SendToReques
             {
                 response.Result = -1;
                 response.ResponseErrno = MapErrno(ENOMEM);
-                return(StatusCodes::EspOutOfMemory);
+                return (StatusCodes::EspOutOfMemory);
             }
         }
 
@@ -1272,7 +1272,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::SendTo(Esp32Messaging::SendToReques
         response.ResponseErrno = MapErrno(EFAULT);
         return (StatusCodes::Failure);
     }
-    return(StatusCodes::CompletedOk);
+    return (StatusCodes::CompletedOk);
 }
 
 /**
