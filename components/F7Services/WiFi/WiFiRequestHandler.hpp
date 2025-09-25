@@ -760,6 +760,16 @@ private:
     static void Write(void *vpMessage);
 
     /**
+     * @brief Process the setsockopt request from the STM32.
+     * 
+     * @param request Request from the STM32.
+     * @param response Response to the STM32.
+     * 
+     * @return StatusCodes::StatusCodes Status of the request.
+     */
+    static StatusCodes::StatusCodes SetSockOpt(Esp32Messaging::SetSockOptRequest *request, Esp32Messaging::IntegerAndErrnoResponse &response);
+
+    /**
      *  @brief Provide a mechanism for the STM32 to call the setsockopt method.
      */
     static void SetSockOpt(void *vpMessage);

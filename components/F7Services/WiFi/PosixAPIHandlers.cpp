@@ -746,6 +746,60 @@ uint8_t *WiFiRequestHandler::GetTcpOptionValue(int name, uint8_t *optionValue, s
 }
 
 /**
+ * @brief Process the setsockopt request from the STM32.
+ * 
+ * @param request Request from the STM32.
+ * @param response Response to the STM32.
+ * 
+ * @return StatusCodes::StatusCodes Status of the request.
+ */
+StatusCodes::StatusCodes WiFiRequestHandler::SetSockOpt(Esp32Messaging::SetSockOptRequest *request, Esp32Messaging::IntegerAndErrnoResponse &response)
+{
+    void *optionValue = nullptr;
+    socklen_t optionLength = 0;
+    int32_t level = 0;
+
+    if (Mapping::GetEspValue(Mapping::SocketLevel, request->Level, &level) < 0)
+    {
+        TRACE_MESSAGE("SetSockOpt: Unknown level: 0x%" PRIx32, request->Level);
+    }
+    else
+    {
+        int32_t optionName = 0;
+        if (Mapping::GetEspValue(level == SOL_SOCKET ? Mapping::SocketOptions : Mapping::TCPOptions, request->OptionName, &optionName) < 0)
+        {
+            TRACE_MESSAGE("SetSockOpt: Unknown option name: 0x%x", (uint) request->OptionName);
+        }
+
+        switch (level)
+        {
+            case SOL_SOCKET:
+                optionValue = GetSocketOptionValue(optionName, request->OptionValue, &optionLength);
+                break;
+            case IPPROTO_TCP:
+                optionValue = GetTcpOptionValue(optionName, request->OptionValue, &optionLength);
+                break;
+            default:
+                TRACE_MESSAGE("SetSockOpt: Cannot process option level: 0x%x", (uint) request->Level);
+                break;
+        }
+        if (optionValue != NULL)
+        {
+            TRACE_MESSAGE("SetSockOpt: Setting socket option level to 0x%x, option name 0x%x for socket %ld", (uint) level, (uint) optionName, request->SocketHandle);
+            response.Result = setsockopt(request->SocketHandle, level, optionName, optionValue, optionLength);
+            vPortFree(optionValue);
+        }
+    }
+
+    if (response.Result != 0)
+    {
+        response.ResponseErrno = MapErrno(errno);
+    }
+    TRACE_MESSAGE("SetSockOpt: Result: %ld, errno: %ld - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
+    return (StatusCodes::CompletedOk);
+}
+
+/**
  *  @brief Expose the POSIX setsockopt method to the STM32.
  *
  *  @param message
@@ -760,61 +814,29 @@ void WiFiRequestHandler::SetSockOpt(void *vpMessage)
 
     assert(message != NULL);
     assert(message->Payload != NULL);
-    Esp32Messaging::SetSockOptRequest *request = Encoders::ExtractSetSockOptRequest(message->Payload);
     Esp32Messaging::IntegerAndErrnoResponse response = {};
-
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
     if (IsConnected())
     {
-        void *optionValue = nullptr;
-
-        socklen_t optionLength = 0;
-        int32_t level = 0;
-
-        if (Mapping::GetEspValue(Mapping::SocketLevel, request->Level, &level) < 0)
+        Esp32Messaging::SetSockOptRequest *request = Encoders::ExtractSetSockOptRequest(message->Payload);
+        if (request)
         {
-            TRACE_MESSAGE("SetSockOpt: Unknown level: 0x%x", (uint) request->Level);
+            result = SetSockOpt(request, response);
+            if (request->OptionValueLength > 0)
+            {
+                if (request->OptionValue)
+                {
+                    vPortFree(request->OptionValue);
+                }
+            }
         }
         else
         {
-            int32_t optionName = 0;
-            if (Mapping::GetEspValue(level == SOL_SOCKET ? Mapping::SocketOptions : Mapping::TCPOptions, request->OptionName, &optionName) < 0)
-            {
-                TRACE_MESSAGE("SetSockOpt: Unknown option name: 0x%x", (uint) request->OptionName);
-            }
-
-            switch (level)
-            {
-                case SOL_SOCKET:
-                    optionValue = GetSocketOptionValue(optionName, request->OptionValue, &optionLength);
-                    break;
-                case IPPROTO_TCP:
-                    optionValue = GetTcpOptionValue(optionName, request->OptionValue, &optionLength);
-                    break;
-                default:
-                    TRACE_MESSAGE("SetSockOpt: Cannot process option level: 0x%x", (uint) request->Level);
-                    break;
-            }
-            if (optionValue != NULL)
-            {
-                TRACE_MESSAGE("SetSockOpt: Setting socket option level to 0x%x, option name 0x%x for socket %ld", (uint) level, (uint) optionName, request->SocketHandle);
-                response.Result = setsockopt(request->SocketHandle, level, optionName, optionValue, optionLength);
-                vPortFree(optionValue);
-            }
+            response.Result = -1;
+            response.ResponseErrno = MapErrno(ENOMEM);
+            result = StatusCodes::EspOutOfMemory;
         }
 
-        if (response.Result != 0)
-        {
-            response.ResponseErrno = MapErrno(errno);
-        }
-        TRACE_MESSAGE("SetSockOpt: Result: %ld, errno: %ld - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
-
-        if (request->OptionValueLength > 0)
-        {
-            if (request->OptionValue)
-            {
-                vPortFree(request->OptionValue);
-            }
-        }
         vPortFree(request);
     }
     else
@@ -825,17 +847,26 @@ void WiFiRequestHandler::SetSockOpt(void *vpMessage)
 
     vPortFree(message->Payload);
 
-    message->PayloadLength = Encoders::EncodedIntegerAndErrnoResponseBufferSize(&response);
-    message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-    if (message->Payload == NULL)
+    if (result != StatusCodes::CompletedOk)
     {
         message->PayloadLength = 0;
-        message->StatusCode = StatusCodes::EspOutOfMemory;
+        message->Payload = nullptr;
+        message->StatusCode = result;
     }
     else
     {
-        Encoders::EncodeIntegerAndErrnoResponse(&response, message->Payload);
-        message->StatusCode = StatusCodes::CompletedOk;
+        message->PayloadLength = Encoders::EncodedIntegerAndErrnoResponseBufferSize(&response);
+        message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
+        if (message->Payload == NULL)
+        {
+            message->PayloadLength = 0;
+            message->StatusCode = StatusCodes::EspOutOfMemory;
+        }
+        else
+        {
+            Encoders::EncodeIntegerAndErrnoResponse(&response, message->Payload);
+            message->StatusCode = StatusCodes::CompletedOk;
+        }
     }
     message->MessageType = MessageTypes::Response;
     _messageDispatcher->QueueMessageForStm32(message);
