@@ -760,6 +760,18 @@ private:
     static void Write(void *vpMessage);
 
     /**
+     * @brief Process the setsockopt request from the STM32.
+     *
+     * @param request Request from the STM32.
+     * @param response Response to the STM32.
+     *
+     * @return StatusCodes::StatusCodes Returns StatusCodes::CompletedOk if the operation succeeds,
+     *         StatusCodes::Failure if there is an invalid parameter or mapping error,
+     *         StatusCodes::EspOutOfMemory if memory allocation fails.
+     */
+    static StatusCodes::StatusCodes SetSockOpt(Esp32Messaging::SetSockOptRequest *request, Esp32Messaging::IntegerAndErrnoResponse &response);
+
+    /**
      *  @brief Provide a mechanism for the STM32 to call the setsockopt method.
      */
     static void SetSockOpt(void *vpMessage);
@@ -791,14 +803,25 @@ private:
     static void GetSockOpt(void *vpMessage);
 
     /**
+     *  @brief Provide a mechanism for the STM32 to call the close method.
+     */
+
+    static void Close(void *vpMessage);
+    /**
      *  @brief Provide a mechanism for the STM32 to call the read method.
      */
     static void Read(void *vpMessage);
 
     /**
-     *  @brief Provide a mechanism for the STM32 to call the close method.
+     * @brief Provide a mechanism for the STM32 to call the sendto method.
+     *
+     * @param request Request from the STM32.
+     * @param response Response to the STM32.
+     *
+     * @return StatusCodes::CompletedOk if the sendto operation succeeds,
+     *         StatusCodes::EspOutOfMemory if memory allocation fails.
      */
-    static void Close(void *vpMessage);
+    static StatusCodes::StatusCodes SendTo(Esp32Messaging::SendToRequest *request, Esp32Messaging::IntegerAndErrnoResponse &response);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the sendto method.
