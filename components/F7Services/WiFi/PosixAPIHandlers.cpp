@@ -84,9 +84,7 @@ void WiFiRequestHandler::GetAddrInfo(void *vpMessage)
             Esp32Messaging::SockAddr sa = {};
             Esp32Messaging::AddrInfo a = {};
 
-            int family;
-            Mapping::GetStmValue(Mapping::AddressFamily, addressInformation->ai_addr->sa_family, reinterpret_cast<int32_t *>(&family));
-            sa.Family = (unsigned char) (family & 0xff);
+            Mapping::GetStmValue(Mapping::AddressFamily, addressInformation->ai_addr->sa_family, reinterpret_cast<int32_t *>(&sa.Family));
             Encoders::EncodeSockAddr(&sa, a.Addr);
 
             a.CanonName = strdup(addressInformation->ai_canonname);
@@ -1403,9 +1401,7 @@ void WiFiRequestHandler::RecvFrom(void *vpMessage)
                 if (request->GetSourceAddress != 0)
                 {
                     Esp32Messaging::SockAddr socketAddress = {};
-                    int family;
-                    Mapping::GetStmValue(Mapping::AddressFamily, sa->sin_family, reinterpret_cast<int32_t *>(&family));
-                    socketAddress.Family = (uint8_t) (family & 0xff);
+                    Mapping::GetStmValue(Mapping::AddressFamily, sa->sin_family, reinterpret_cast<int32_t *>(&socketAddress.Family));
                     memcpy(&socketAddress.Ip4Address, &sa->sin_addr, sizeof(sa->sin_addr));
                     socketAddress.Port = sa->sin_port;
                     response.SourceAddressLength = Encoders::EncodedSockAddrBufferSize(&socketAddress);
@@ -1670,9 +1666,7 @@ void WiFiRequestHandler::Accept(void *vpMessage)
         {
             Esp32Messaging::SockAddr *sockAddr = static_cast<Esp32Messaging::SockAddr *>(pvPortMalloc(sizeof(Esp32Messaging::SockAddr)));
             bzero(sockAddr, sizeof(Esp32Messaging::SockAddr));
-            int family;
-            Mapping::GetStmValue(Mapping::AddressFamily, sa.sa_family, reinterpret_cast<int32_t *>(&family));
-            sockAddr->Family = (uint8_t) (family & 0xff);
+            Mapping::GetStmValue(Mapping::AddressFamily, sa.sa_family, reinterpret_cast<int32_t *>(&sockAddr->Family));
             struct sockaddr_in *sin = (struct sockaddr_in *) &sa;
             sockAddr->Port = sin->sin_port;
             memcpy(&sockAddr->Ip4Address, &sin->sin_addr, sizeof(sin->sin_addr));
@@ -1749,10 +1743,8 @@ void WiFiRequestHandler::Ioctl(void *vpMessage)
 
         esp_netif_ip_info_t ipInfo;
         Esp32Messaging::SockAddr sa = {};
-        int family;
 
-        Mapping::GetStmValue(Mapping::AddressFamily, AF_INET, reinterpret_cast<int32_t *>(&family));
-        sa.Family = (unsigned char) (family & 0xff);
+        Mapping::GetStmValue(Mapping::AddressFamily, AF_INET, reinterpret_cast<int32_t *>(&sa.Family));
         response.AddrLength = 0;
         response.Addr = nullptr;
 
@@ -1867,9 +1859,7 @@ void WiFiRequestHandler::GetSockPeerName(void *vpMessage, WiFiFunction::WiFiFunc
         {
             Esp32Messaging::SockAddr *sockAddr = static_cast<Esp32Messaging::SockAddr *>(pvPortMalloc(sizeof(Esp32Messaging::SockAddr)));
             bzero(sockAddr, sizeof(Esp32Messaging::SockAddr));
-            int family;
-            Mapping::GetStmValue(Mapping::AddressFamily, sa.sa_family, reinterpret_cast<int32_t *>(&family));
-            sockAddr->Family = (uint8_t) (family & 0xff);
+            Mapping::GetStmValue(Mapping::AddressFamily, sa.sa_family, reinterpret_cast<int32_t *>(&sockAddr->Family));
             struct sockaddr_in *sin = (struct sockaddr_in *) &sa;
             sockAddr->Port = sin->sin_port;
             memcpy(&sockAddr->Ip4Address, &sin->sin_addr, sizeof(sin->sin_addr));
@@ -2147,9 +2137,7 @@ void WiFiRequestHandler::PollSocket(void *requestId)
             it = _pollRequests.find((uint32_t) requestId); // Get again in case anything has changed.
             if (it != _pollRequests.end())
             {
-                int32_t events;
-                Mapping::GetStmFlagValue(Mapping::PollEvents, fds[POLL_FD_INDEX].revents, &events);
-                response.ReturnedEvents = (uint16_t) (events & 0xffff);
+                Mapping::GetStmFlagValue(Mapping::PollEvents, fds[POLL_FD_INDEX].revents, (int32_t *) &response.ReturnedEvents);
                 if (response.ReturnedEvents != 0)
                 {
                     response.Result = 1;
