@@ -490,7 +490,7 @@ Mapping::~Mapping()
  *  @returns
  *      0 if the value could be found, -1 if there is a problem.
  */
-int32_t Mapping::GetFlagValue(Mapping::MappingTable mapping, MappingDirection type, int32_t value, int32_t *mappedValue)
+int32_t Mapping::GetFlagValue(MappingTable mapping, MappingDirection type, int32_t value, int32_t *mappedValue)
 {
     int32_t flag = 0x0001;
     int32_t result = 0;
@@ -539,7 +539,7 @@ int32_t Mapping::GetFlagValue(Mapping::MappingTable mapping, MappingDirection ty
  *  @returns
  *      0 if the value could be found, -1 if there is a problem.
  */
-int32_t Mapping::GetValue(Mapping::MappingTable mapping, MappingDirection type, int32_t value, int8_t *result)
+int32_t Mapping::GetValue(MappingTable mapping, MappingDirection type, int32_t value, int8_t *result)
 {
     int32_t mappedValue;
     int32_t mappingResult = GetValue(mapping, type, value, &mappedValue);
@@ -575,7 +575,43 @@ int32_t Mapping::GetValue(Mapping::MappingTable mapping, MappingDirection type, 
  *  @returns
  *      0 if the value could be found, -1 if there is a problem.
  */
-int32_t Mapping::GetValue(Mapping::MappingTable mapping, MappingDirection type, int32_t value, int32_t *result)
+int32_t Mapping::GetValue(MappingTable mapping, MappingDirection type, int32_t value, int16_t *result)
+{
+    int32_t mappedValue;
+    int32_t mappingResult = GetValue(mapping, type, value, &mappedValue);
+    if (mappingResult == 0)
+    {
+        *result = mappedValue & 0xffff;
+    }
+
+    return (mappingResult);
+}
+
+/**
+ *  @brief Convert the specified flags for the specified platform.
+ *
+ *  This method will take a STM flags and convert it into the corresponding ESP
+ *  flags (or the reverse depending upon the requested direction).
+ *
+ *  Note that this is different from mapping a value as the flags could be an ORed
+ *  combination of values.
+ *
+ *  @param mapping
+ *      Which type of mapping should be used (i.e. which mapping table).
+ *
+ *  @param type
+ *      Direction of the mapping.
+ *
+ *  @param value
+ *      Value to map.
+ *
+ *  @param result
+ *      Mapped value if successful.
+ *
+ *  @returns
+ *      0 if the value could be found, -1 if there is a problem.
+ */
+int32_t Mapping::GetValue(MappingTable mapping, MappingDirection type, int32_t value, int32_t *result)
 {
     int_mapping_t *table = NULL;
     size_t size = 0;
@@ -676,7 +712,7 @@ int32_t Mapping::GetValue(Mapping::MappingTable mapping, MappingDirection type, 
  *  @returns
  *      0 if successful, -1 if there was an error.
  */
-int32_t Mapping::GetEspValue(Mapping::MappingTable mapping, int32_t value, int8_t *result)
+int32_t Mapping::GetEspValue(MappingTable mapping, int32_t value, int8_t *result)
 {
     return (GetValue(mapping, Mapping::StmToEsp, value, result));
 }
@@ -696,7 +732,27 @@ int32_t Mapping::GetEspValue(Mapping::MappingTable mapping, int32_t value, int8_
  *  @returns
  *      0 if successful, -1 if there was an error.
  */
-int32_t Mapping::GetEspValue(Mapping::MappingTable mapping, int32_t value, int32_t *result)
+int32_t Mapping::GetEspValue(MappingTable mapping, int32_t value, int16_t *result)
+{
+    return (GetValue(mapping, Mapping::StmToEsp, value, result));
+}
+
+/**
+ *  @brief Get the ESP constant given the value of the STM constant.
+ *
+ *  @param mapping
+ *      Which type of mapping should be used (i.e. which mapping table).
+ *
+ *  @param value
+ *      Value to look for.
+ *
+ *  @param result
+ *      Pointer to the memory location to hold the mapped value.
+ *
+ *  @returns
+ *      0 if successful, -1 if there was an error.
+ */
+int32_t Mapping::GetEspValue(MappingTable mapping, int32_t value, int32_t *result)
 {
     return (GetValue(mapping, Mapping::StmToEsp, value, result));
 }
@@ -716,7 +772,7 @@ int32_t Mapping::GetEspValue(Mapping::MappingTable mapping, int32_t value, int32
  *  @returns
  *      0 if successful, -1 if there was an error.
  */
-int32_t Mapping::GetStmValue(Mapping::MappingTable mapping, int32_t value, int8_t *result)
+int32_t Mapping::GetStmValue(MappingTable mapping, int32_t value, int8_t *result)
 {
     return (GetValue(mapping, Mapping::StmToEsp, value, result));
 }
@@ -736,7 +792,27 @@ int32_t Mapping::GetStmValue(Mapping::MappingTable mapping, int32_t value, int8_
  *  @returns
  *      0 if successful, -1 if there was an error.
  */
-int32_t Mapping::GetStmValue(Mapping::MappingTable mapping, int32_t value, int32_t *result)
+int32_t Mapping::GetStmValue(MappingTable mapping, int32_t value, int16_t *result)
+{
+    return (GetValue(mapping, Mapping::StmToEsp, value, result));
+}
+
+/**
+ *  @brief Get the STM constant given the specified ESP constant.
+ *
+ *  @param mapping
+ *      Which type of mapping should be used (i.e. which mapping table).
+ *
+ *  @param value
+ *      Value to look for.
+ *
+ *  @param result
+ *      Pointer to the memory location to hold the mapped value.
+ *
+ *  @returns
+ *      0 if successful, -1 if there was an error.
+ */
+int32_t Mapping::GetStmValue(MappingTable mapping, int32_t value, int32_t *result)
 {
     return (GetValue(mapping, Mapping::EspToStm, value, result));
 }
@@ -758,7 +834,7 @@ int32_t Mapping::GetStmValue(Mapping::MappingTable mapping, int32_t value, int32
  *  @returns
  *      0 if successful, -1 if there was an error.
  */
-int32_t Mapping::GetEspFlagValue(Mapping::MappingTable mapping, int32_t value, int32_t *result)
+int32_t Mapping::GetEspFlagValue(MappingTable mapping, int32_t value, int32_t *result)
 {
     return (GetFlagValue(mapping, Mapping::StmToEsp, value, result));
 }
@@ -780,7 +856,7 @@ int32_t Mapping::GetEspFlagValue(Mapping::MappingTable mapping, int32_t value, i
  *  @returns
  *      0 if successful, -1 if there was an error.
  */
-int32_t Mapping::GetStmFlagValue(Mapping::MappingTable mapping, int32_t value, int32_t *result)
+int32_t Mapping::GetStmFlagValue(MappingTable mapping, int32_t value, int32_t *result)
 {
     return (GetFlagValue(mapping, Mapping::EspToStm, value, result));
 }
