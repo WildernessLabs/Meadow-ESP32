@@ -746,6 +746,60 @@ uint8_t *WiFiRequestHandler::GetTcpOptionValue(int name, uint8_t *optionValue, s
 }
 
 /**
+ * @brief Process the setsockopt request from the STM32.
+ *
+ * @param request Request from the STM32.
+ * @param response Response to the STM32.
+ *
+ * @return StatusCodes::StatusCodes Status of the request.
+ */
+StatusCodes::StatusCodes WiFiRequestHandler::SetSockOpt(Esp32Messaging::SetSockOptRequest *request, Esp32Messaging::IntegerAndErrnoResponse &response)
+{
+    void *optionValue = nullptr;
+    socklen_t optionLength = 0;
+    int32_t level = 0;
+
+    if (Mapping::GetEspValue(Mapping::SocketLevel, request->Level, &level) < 0)
+    {
+        TRACE_MESSAGE("SetSockOpt: Unknown level: 0x%" PRIx32, request->Level);
+    }
+    else
+    {
+        int32_t optionName = 0;
+        if (Mapping::GetEspValue(level == SOL_SOCKET ? Mapping::SocketOptions : Mapping::TCPOptions, request->OptionName, &optionName) < 0)
+        {
+            TRACE_MESSAGE("SetSockOpt: Unknown option name: 0x%x", (uint) request->OptionName);
+        }
+
+        switch (level)
+        {
+            case SOL_SOCKET:
+                optionValue = GetSocketOptionValue(optionName, request->OptionValue, &optionLength);
+                break;
+            case IPPROTO_TCP:
+                optionValue = GetTcpOptionValue(optionName, request->OptionValue, &optionLength);
+                break;
+            default:
+                TRACE_MESSAGE("SetSockOpt: Cannot process option level: 0x%x", (uint) request->Level);
+                break;
+        }
+        if (optionValue != NULL)
+        {
+            TRACE_MESSAGE("SetSockOpt: Setting socket option level to 0x%x, option name 0x%x for socket %ld", (uint) level, (uint) optionName, request->SocketHandle);
+            response.Result = setsockopt(request->SocketHandle, level, optionName, optionValue, optionLength);
+            vPortFree(optionValue);
+        }
+    }
+
+    if (response.Result != 0)
+    {
+        response.ResponseErrno = MapErrno(errno);
+    }
+    TRACE_MESSAGE("SetSockOpt: Result: %ld, errno: %ld - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
+    return (StatusCodes::CompletedOk);
+}
+
+/**
  *  @brief Expose the POSIX setsockopt method to the STM32.
  *
  *  @param message
@@ -760,61 +814,29 @@ void WiFiRequestHandler::SetSockOpt(void *vpMessage)
 
     assert(message != NULL);
     assert(message->Payload != NULL);
-    Esp32Messaging::SetSockOptRequest *request = Encoders::ExtractSetSockOptRequest(message->Payload);
     Esp32Messaging::IntegerAndErrnoResponse response = {};
-
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
     if (IsConnected())
     {
-        void *optionValue = nullptr;
-
-        socklen_t optionLength = 0;
-        int32_t level = 0;
-
-        if (Mapping::GetEspValue(Mapping::SocketLevel, request->Level, &level) < 0)
+        Esp32Messaging::SetSockOptRequest *request = Encoders::ExtractSetSockOptRequest(message->Payload);
+        if (request)
         {
-            TRACE_MESSAGE("SetSockOpt: Unknown level: 0x%x", (uint) request->Level);
+            result = SetSockOpt(request, response);
+            if (request->OptionValueLength > 0)
+            {
+                if (request->OptionValue)
+                {
+                    vPortFree(request->OptionValue);
+                }
+            }
         }
         else
         {
-            int32_t optionName = 0;
-            if (Mapping::GetEspValue(level == SOL_SOCKET ? Mapping::SocketOptions : Mapping::TCPOptions, request->OptionName, &optionName) < 0)
-            {
-                TRACE_MESSAGE("SetSockOpt: Unknown option name: 0x%x", (uint) request->OptionName);
-            }
-
-            switch (level)
-            {
-                case SOL_SOCKET:
-                    optionValue = GetSocketOptionValue(optionName, request->OptionValue, &optionLength);
-                    break;
-                case IPPROTO_TCP:
-                    optionValue = GetTcpOptionValue(optionName, request->OptionValue, &optionLength);
-                    break;
-                default:
-                    TRACE_MESSAGE("SetSockOpt: Cannot process option level: 0x%x", (uint) request->Level);
-                    break;
-            }
-            if (optionValue != NULL)
-            {
-                TRACE_MESSAGE("SetSockOpt: Setting socket option level to 0x%x, option name 0x%x for socket %ld", (uint) level, (uint) optionName, request->SocketHandle);
-                response.Result = setsockopt(request->SocketHandle, level, optionName, optionValue, optionLength);
-                vPortFree(optionValue);
-            }
+            response.Result = -1;
+            response.ResponseErrno = MapErrno(ENOMEM);
+            result = StatusCodes::EspOutOfMemory;
         }
 
-        if (response.Result != 0)
-        {
-            response.ResponseErrno = MapErrno(errno);
-        }
-        TRACE_MESSAGE("SetSockOpt: Result: %ld, errno: %ld - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
-
-        if (request->OptionValueLength > 0)
-        {
-            if (request->OptionValue)
-            {
-                vPortFree(request->OptionValue);
-            }
-        }
         vPortFree(request);
     }
     else
@@ -825,17 +847,26 @@ void WiFiRequestHandler::SetSockOpt(void *vpMessage)
 
     vPortFree(message->Payload);
 
-    message->PayloadLength = Encoders::EncodedIntegerAndErrnoResponseBufferSize(&response);
-    message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-    if (message->Payload == NULL)
+    if (result != StatusCodes::CompletedOk)
     {
         message->PayloadLength = 0;
-        message->StatusCode = StatusCodes::EspOutOfMemory;
+        message->Payload = nullptr;
+        message->StatusCode = result;
     }
     else
     {
-        Encoders::EncodeIntegerAndErrnoResponse(&response, message->Payload);
-        message->StatusCode = StatusCodes::CompletedOk;
+        message->PayloadLength = Encoders::EncodedIntegerAndErrnoResponseBufferSize(&response);
+        message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
+        if (message->Payload == NULL)
+        {
+            message->PayloadLength = 0;
+            message->StatusCode = StatusCodes::EspOutOfMemory;
+        }
+        else
+        {
+            Encoders::EncodeIntegerAndErrnoResponse(&response, message->Payload);
+            message->StatusCode = StatusCodes::CompletedOk;
+        }
     }
     message->MessageType = MessageTypes::Response;
     _messageDispatcher->QueueMessageForStm32(message);
@@ -1099,34 +1130,42 @@ void WiFiRequestHandler::Send(void *vpMessage)
     assert(message->Payload != NULL);
     Esp32Messaging::IntegerAndErrnoResponse response = {};
 
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
     if (IsConnected())
     {
         Esp32Messaging::SendRequest *request = Encoders::ExtractSendRequest(message->Payload);
-        int32_t mappedFlags = 0;
-        response.ResponseErrno = 0;
-        response.Result = Mapping::GetEspFlagValue(Mapping::MessageFlags, request->Flags, &mappedFlags);
-        if (response.Result == 0)
+        if (request)
         {
-            response.Result = send(request->SocketHandle, request->Buffer, request->Length, mappedFlags);
-            if (response.Result < 0)
+            int32_t mappedFlags = 0;
+            response.ResponseErrno = 0;
+            response.Result = Mapping::GetEspFlagValue(Mapping::MessageFlags, request->Flags, &mappedFlags);
+            if (response.Result == 0)
             {
-                response.ResponseErrno = MapErrno(errno);
+                response.Result = send(request->SocketHandle, request->Buffer, request->Length, mappedFlags);
+                if (response.Result < 0)
+                {
+                    response.ResponseErrno = MapErrno(errno);
+                }
             }
+            else
+            {
+                response.ResponseErrno = MapErrno(EFAULT);
+            }
+
+            TRACE_MESSAGE("Send: Sent %" PRIi32 " bytes.", request->Length);
+            if (request->Buffer && (request->Length > 0))
+            {
+                TRACE_HEX_BUFFER(request->Buffer, request->Length);
+            }
+            TRACE_MESSAGE("Send: Result: %" PRIi32 ", errno: %" PRIi32 " - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
+
+            vPortFree(request->Buffer);
+            vPortFree(request);
         }
         else
         {
-            response.ResponseErrno = MapErrno(EFAULT);
+            result = StatusCodes::EspOutOfMemory;
         }
-
-        TRACE_MESSAGE("Send: Sent %ld bytes.", request->Length);
-        if (request->Buffer && (request->Length > 0))
-        {
-            TRACE_HEX_BUFFER(request->Buffer, request->Length);
-        }
-        TRACE_MESSAGE("Send: Result: %ld, errno: %ld - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
-
-        vPortFree(request->Buffer);
-        vPortFree(request);
     }
     else
     {
@@ -1136,17 +1175,26 @@ void WiFiRequestHandler::Send(void *vpMessage)
 
     vPortFree(message->Payload);
 
-    message->PayloadLength = Encoders::EncodedIntegerAndErrnoResponseBufferSize(&response);
-    message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-    if (message->Payload == NULL)
+    if (result != StatusCodes::CompletedOk)
     {
         message->PayloadLength = 0;
-        message->StatusCode = StatusCodes::EspOutOfMemory;
+        message->Payload = nullptr;
+        message->StatusCode = result;
     }
     else
     {
-        Encoders::EncodeIntegerAndErrnoResponse(&response, message->Payload);
-        message->StatusCode = StatusCodes::CompletedOk;
+        message->PayloadLength = Encoders::EncodedIntegerAndErrnoResponseBufferSize(&response);
+        message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
+        if (message->Payload == NULL)
+        {
+            message->PayloadLength = 0;
+            message->StatusCode = StatusCodes::EspOutOfMemory;
+        }
+        else
+        {
+            Encoders::EncodeIntegerAndErrnoResponse(&response, message->Payload);
+            message->StatusCode = StatusCodes::CompletedOk;
+        }
     }
     message->MessageType = MessageTypes::Response;
     _messageDispatcher->QueueMessageForStm32(message);
@@ -1154,6 +1202,77 @@ void WiFiRequestHandler::Send(void *vpMessage)
     PERFORMANCE_LOGGING_EXIT();
     PERFORMANCE_LOGGING_ADD_ENTRY();
     TRACE_MESSAGE("Send: Exit");
+}
+
+/**
+ * @brief Provide a mechanism for the STM32 to call the sendto method.
+ *
+ * @param request Request from the STM32.
+ * @param response Response to the STM32.
+ */
+StatusCodes::StatusCodes WiFiRequestHandler::SendTo(Esp32Messaging::SendToRequest *request, Esp32Messaging::IntegerAndErrnoResponse &response)
+{
+    int32_t mappedFlags = 0;
+    response.ResponseErrno = 0;
+    response.Result = Mapping::GetEspFlagValue(Mapping::MessageFlags, request->Flags, &mappedFlags);
+    if (response.Result == 0)
+    {
+        Esp32Messaging::SockAddr *socketAddress = NULL;
+        int32_t family = 0;
+        if (request->DestinationAddress)
+        {
+            socketAddress = Encoders::ExtractSockAddr(request->DestinationAddress);
+            if (socketAddress)
+            {
+                Mapping::GetEspValue(Mapping::AddressFamily, socketAddress->Family, &family);
+                TRACE_MESSAGE("SendTo: Mapping request family %" PRIu8 " to ESP family %" PRIi32, socketAddress->Family, family);
+            }
+            else
+            {
+                response.Result = -1;
+                response.ResponseErrno = MapErrno(ENOMEM);
+                return (StatusCodes::EspOutOfMemory);
+            }
+        }
+
+        struct sockaddr_in sa = {};
+        struct sockaddr *psa = NULL;
+        size_t lenSa = 0;
+        if (request->DestinationAddressLength != 0)
+        {
+            if (family == AF_INET)
+            {
+                if (request->DestinationAddress)
+                {
+                    sa.sin_family = (unsigned char) (family & 0xff);
+
+                    sa.sin_port = socketAddress->Port;
+                    memcpy(&sa.sin_addr, &socketAddress->Ip4Address, sizeof(sa.sin_addr));
+                    sa.sin_len = sizeof(sa);
+                    psa = (struct sockaddr *) &sa;
+                    lenSa = sizeof(sa);
+                }
+                TRACE_MESSAGE("SendTo: Connecting socket: %" PRIi32, request->SocketHandle);
+                TRACE_MESSAGE("SendTo: Family: %" PRIi32, (psa == NULL) ? 0 : sa.sin_family);
+                TRACE_MESSAGE("SendTo: IP address: %s", (psa == NULL) ? "NULL" : inet_ntoa(sa.sin_addr));
+                TRACE_MESSAGE("SendTo: Port: %" PRIi32, (psa == NULL) ? 0 : ntohs(sa.sin_port));
+            }
+        }
+        response.Result = sendto(request->SocketHandle, request->Buffer, request->Length, mappedFlags, psa, lenSa);
+
+        if (response.Result < 0)
+        {
+            response.ResponseErrno = MapErrno(errno);
+        }
+        vPortFree(socketAddress);
+    }
+    else
+    {
+        response.Result = -1;
+        response.ResponseErrno = MapErrno(EFAULT);
+        return (StatusCodes::Failure);
+    }
+    return (StatusCodes::CompletedOk);
 }
 
 /**
@@ -1172,78 +1291,27 @@ void WiFiRequestHandler::SendTo(void *vpMessage)
     assert(message != NULL);
     assert(message->Payload != NULL);
     Esp32Messaging::IntegerAndErrnoResponse response = {};
-
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
     if (IsConnected())
     {
         Esp32Messaging::SendToRequest *request = Encoders::ExtractSendToRequest(message->Payload);
-
-        int32_t mappedFlags = 0;
-        response.ResponseErrno = 0;
-        response.Result = Mapping::GetEspFlagValue(Mapping::MessageFlags, request->Flags, &mappedFlags);
-        if (response.Result == 0)
+        if (request)
         {
-            Esp32Messaging::SockAddr *socketAddress = NULL;
-            int32_t family = 0;
-            if (request->DestinationAddress)
+            result = SendTo(request, response);
+            TRACE_MESSAGE("SendTo: Sent %" PRIi32 " bytes.", response.Result);
+            if (request->Buffer && (request->Length > 0))
             {
-                socketAddress = Encoders::ExtractSockAddr(request->DestinationAddress);
-                Mapping::GetEspValue(Mapping::AddressFamily, socketAddress->Family, &family);
-                TRACE_MESSAGE("SendTo: Mapping request family %d to ESP family %ld", socketAddress->Family, family);
+                TRACE_HEX_BUFFER(request->Buffer, request->Length);
             }
-
-            struct sockaddr_in sa = {};
-            struct sockaddr *psa = NULL;
-            size_t lenSa = 0;
-            if (request->DestinationAddressLength != 0)
-            {
-                if (family == AF_INET)
-                {
-                    if (request->DestinationAddress)
-                    {
-                        sa.sin_family = (unsigned char) (family & 0xff);
-
-                        sa.sin_port = socketAddress->Port;
-                        memcpy(&sa.sin_addr, &socketAddress->Ip4Address, sizeof(sa.sin_addr));
-                        sa.sin_len = sizeof(sa);
-                        psa = (struct sockaddr *) &sa;
-                        lenSa = sizeof(sa);
-                    }
-                    TRACE_MESSAGE("SendTo: Connecting socket: %ld", request->SocketHandle);
-                    TRACE_MESSAGE("SendTo: Family: %d", (psa == NULL) ? 0 : sa.sin_family);
-                    TRACE_MESSAGE("SendTo: IP address: %s", (psa == NULL) ? "NULL" : inet_ntoa(sa.sin_addr));
-                    TRACE_MESSAGE("SendTo: Port: %d", (psa == NULL) ? 0 : ntohs(sa.sin_port));
-                }
-            }
-            response.Result = sendto(request->SocketHandle, request->Buffer, request->Length, mappedFlags, psa, lenSa);
-
-            if (response.Result < 0)
-            {
-                response.ResponseErrno = MapErrno(errno);
-            }
-
-            if (socketAddress != NULL)
-            {
-                vPortFree(socketAddress);
-            }
+            TRACE_MESSAGE("SendTo: Result: %" PRIi32 ", errno: %" PRIi32 " - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
+            vPortFree(request->DestinationAddress);
+            vPortFree(request->Buffer);
+            vPortFree(request);
         }
         else
         {
-            response.ResponseErrno = MapErrno(EFAULT);
+            result = StatusCodes::EspOutOfMemory;
         }
-
-        TRACE_MESSAGE("SendTo: Sent %ld bytes.", response.Result);
-        if (request->Buffer && (request->Length > 0))
-        {
-            TRACE_HEX_BUFFER(request->Buffer, request->Length);
-        }
-        TRACE_MESSAGE("SendTo: Result: %ld, errno: %ld - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
-
-        if (request->DestinationAddress)
-        {
-            vPortFree(request->DestinationAddress);
-        }
-        vPortFree(request->Buffer);
-        vPortFree(request);
     }
     else
     {
@@ -1252,17 +1320,26 @@ void WiFiRequestHandler::SendTo(void *vpMessage)
     }
     vPortFree(message->Payload);
 
-    message->PayloadLength = Encoders::EncodedIntegerAndErrnoResponseBufferSize(&response);
-    message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-    if (message->Payload == NULL)
+    if (result != StatusCodes::CompletedOk)
     {
         message->PayloadLength = 0;
-        message->StatusCode = StatusCodes::EspOutOfMemory;
+        message->Payload = nullptr;
+        message->StatusCode = result;
     }
     else
     {
-        Encoders::EncodeIntegerAndErrnoResponse(&response, message->Payload);
-        message->StatusCode = StatusCodes::CompletedOk;
+        message->PayloadLength = Encoders::EncodedIntegerAndErrnoResponseBufferSize(&response);
+        message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
+        if (message->Payload == NULL)
+        {
+            message->PayloadLength = 0;
+            message->StatusCode = StatusCodes::EspOutOfMemory;
+        }
+        else
+        {
+            Encoders::EncodeIntegerAndErrnoResponse(&response, message->Payload);
+            message->StatusCode = StatusCodes::CompletedOk;
+        }
     }
     message->MessageType = MessageTypes::Response;
     _messageDispatcher->QueueMessageForStm32(message);
