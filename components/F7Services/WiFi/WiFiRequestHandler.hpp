@@ -737,6 +737,11 @@ private:
     /**
      *  @brief Provide a mechanism for the STM32 to call the getaddrinfo method.
      */
+    static StatusCodes::StatusCodes GetAddrInfo(Esp32Messaging::GetAddrInfoRequest *request, Esp32Messaging::GetAddrInfoResponse *response);
+
+    /**
+     *  @brief Provide a mechanism for the STM32 to call the getaddrinfo method.
+     */
     static void GetAddrInfo(void *vpMessage);
 
     /**

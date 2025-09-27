@@ -40,6 +40,75 @@
  * ----------------------------------------------------------------------------
  */
 
+ /**
+  * @brief Get address information.
+  * 
+  * @param request Request from the STM32
+  * @param response Response to the STM32
+  * @return StatusCodes::StatusCodes Result of this method, StatusCodes::CompletedOk if the GetAddrInfo operation succeeds,
+  *         StatusCodes::Failed if the GetAddrInfo operation fails.
+  */
+ StatusCodes::StatusCodes WiFiRequestHandler::GetAddrInfo(Esp32Messaging::GetAddrInfoRequest *request, Esp32Messaging::GetAddrInfoResponse *response)
+ {
+    Esp32Messaging::AddrInfo *extractedHints = Encoders::ExtractAddrInfo(request->Hints);
+    vPortFree(request->Hints);
+    request->Hints = nullptr;
+
+    if (extractedHints == NULL)
+    {
+        return(StatusCodes::EspOutOfMemory);
+    }
+
+    struct addrinfo hints = {};
+    hints.ai_family = extractedHints->Family;
+    hints.ai_socktype = extractedHints->SocketType;
+    vPortFree(extractedHints);
+    //
+    //  This will hold a pointer to a chain of one or more addrinfo structures.
+    //
+    //  It is the responsibility of the calling .NET application to ensure
+    //  that FreeAddrInfo is called.  FreeAddrInfo will free the allocated
+    //  memory.
+    //
+    struct addrinfo *addressInformation;
+    int errorCode = getaddrinfo(request->NodeName, request->ServName, &hints, &addressInformation);
+
+    response->AddrInfoResponseErrno = MapErrno(errorCode);
+    if ((errorCode == 0) || (addressInformation != NULL))
+    {
+        Esp32Messaging::SockAddr sa = {};
+        Esp32Messaging::AddrInfo a = {};
+
+        Mapping::GetStmValue(Mapping::AddressFamily, addressInformation->ai_addr->sa_family, reinterpret_cast<int32_t *>(&sa.Family));
+        Encoders::EncodeSockAddr(&sa, a.Addr);
+
+        a.CanonName = strdup(addressInformation->ai_canonname);
+        a.Family = addressInformation->ai_family;
+        a.Flags = addressInformation->ai_flags;
+        a.MyHeapAddress = reinterpret_cast<uint32_t>(addressInformation);
+        a.Next = addressInformation->ai_next;
+        a.Protocol = addressInformation->ai_protocol;
+        a.SocketType = addressInformation->ai_socktype;
+        a.AddrLen = addressInformation->ai_addrlen;
+
+        response->ResLength = Encoders::EncodedAddrInfoBufferSize(&a);
+        response->Res = static_cast<uint8_t *>(pvPortMalloc(response->ResLength));
+        if (response->Res == NULL)
+        {
+            free(a.CanonName);
+            vPortFree(addressInformation);          // Do we call freeaddrinfo here ?
+            return(StatusCodes::EspOutOfMemory);
+        }
+        Encoders::EncodeAddrInfo(&a, response->Res);
+    }
+    else
+    {
+        response->AddrInfoResponseErrno = MapErrno(errno);
+        vPortFree(addressInformation);
+    }
+    return(StatusCodes::CompletedOk);
+ }
+
 /**
  *  @brief Expose the POSIX getaddrinfo method to the STM32.
  *
@@ -52,78 +121,62 @@ void WiFiRequestHandler::GetAddrInfo(void *vpMessage)
     PERFORMANCE_LOGGING_ENTER();
 
     Message *message = static_cast<Message *>(vpMessage);
-    Esp32Messaging::GetAddrInfoResponse *response = static_cast<Esp32Messaging::GetAddrInfoResponse *>(pvPortMalloc(sizeof(Esp32Messaging::GetAddrInfoResponse)));
 
     assert(message != NULL);
     assert(message->Payload != NULL);
-    if (IsConnected())
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
+    Esp32Messaging::GetAddrInfoResponse *response = static_cast<Esp32Messaging::GetAddrInfoResponse *>(pvPortMalloc(sizeof(Esp32Messaging::GetAddrInfoResponse)));
+    if (response)
     {
-        Esp32Messaging::GetAddrInfoRequest *request = Encoders::ExtractGetAddrInfoRequest(message->Payload);
-        //
-        Esp32Messaging::AddrInfo *extractedHints = Encoders::ExtractAddrInfo(request->Hints);
-        vPortFree(request->Hints);
-
-        struct addrinfo hints = {};
-        hints.ai_family = extractedHints->Family;
-        hints.ai_socktype = extractedHints->SocketType;
-        vPortFree(extractedHints);
-        //
-        //  This will hold a pointer to a chain of one or more addrinfo structure.
-        //
-        //  It is the responsibility of the calling .NET application to ensure
-        //  that FreeAddrInfo is called.  FreeAddrInfo will free the allocated
-        //  memory.
-        //
-        struct addrinfo *addressInformation;
-        int errorCode = getaddrinfo(request->NodeName, request->ServName, &hints, &addressInformation);
-        vPortFree(request);
-
-        response->AddrInfoResponseErrno = MapErrno(errorCode);
-        if ((errorCode == 0) || (addressInformation != NULL))
+        bzero(response, sizeof(Esp32Messaging::GetAddrInfoResponse));
+        if (IsConnected())
         {
-            Esp32Messaging::SockAddr sa = {};
-            Esp32Messaging::AddrInfo a = {};
-
-            Mapping::GetStmValue(Mapping::AddressFamily, addressInformation->ai_addr->sa_family, reinterpret_cast<int32_t *>(&sa.Family));
-            Encoders::EncodeSockAddr(&sa, a.Addr);
-
-            a.CanonName = strdup(addressInformation->ai_canonname);
-            a.Family = addressInformation->ai_family;
-            a.Flags = addressInformation->ai_flags;
-            a.MyHeapAddress = reinterpret_cast<uint32_t>(addressInformation);
-            a.Next = addressInformation->ai_next;
-            a.Protocol = addressInformation->ai_protocol;
-            a.SocketType = addressInformation->ai_socktype;
-            a.AddrLen = addressInformation->ai_addrlen;
-
-            response->ResLength = Encoders::EncodedAddrInfoBufferSize(&a);
-            response->Res = static_cast<uint8_t *>(pvPortMalloc(response->ResLength));
-            Encoders::EncodeAddrInfo(&a, response->Res);
+            Esp32Messaging::GetAddrInfoRequest *request = Encoders::ExtractGetAddrInfoRequest(message->Payload);
+            if (request)
+            {
+                result = GetAddrInfo(request, response);
+                //
+                //  We assume that GetAddrInfo call above will release request->Hints.
+                //
+                vPortFree(request);
+            }
+            else
+            {
+                result = StatusCodes::EspOutOfMemory;
+            }
         }
         else
         {
-            response->AddrInfoResponseErrno = MapErrno(errno);
-            vPortFree(addressInformation);
+            response->AddrInfoResponseErrno = MapErrno(ENETDOWN);
         }
     }
     else
     {
-        response->AddrInfoResponseErrno = MapErrno(ENETDOWN);
+        result = StatusCodes::EspOutOfMemory;
     }
 
     vPortFree(message->Payload);
 
-    message->PayloadLength = Encoders::EncodedGetAddrInfoResponseBufferSize(response);
-    message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-    if (message->Payload != NULL)
+    if (result != StatusCodes::CompletedOk)
     {
-        Encoders::EncodeGetAddrInfoResponse(response, message->Payload);
-        message->StatusCode = StatusCodes::CompletedOk;
+        message->PayloadLength = 0;
+        message->Payload = nullptr;
+        message->StatusCode = result;
     }
     else
     {
-        message->PayloadLength = 0;
-        message->StatusCode = StatusCodes::EspOutOfMemory;
+        message->PayloadLength = Encoders::EncodedGetAddrInfoResponseBufferSize(response);
+        message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
+        if (message->Payload != NULL)
+        {
+            Encoders::EncodeGetAddrInfoResponse(response, message->Payload);
+            message->StatusCode = StatusCodes::CompletedOk;
+        }
+        else
+        {
+            message->PayloadLength = 0;
+            message->StatusCode = StatusCodes::EspOutOfMemory;
+        }
     }
     vPortFree(response);
     message->MessageType = MessageTypes::Response;
