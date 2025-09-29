@@ -1828,7 +1828,7 @@ void WiFiRequestHandler::Ioctl(void *vpMessage)
     assert(message != NULL);
     assert(message->Payload != NULL);
     Esp32Messaging::IoctlResponse response = {};
-
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
     if (IsConnected())
     {
         Esp32Messaging::IoctlRequest *request = Encoders::ExtractIoctlRequest(message->Payload);
@@ -1848,13 +1848,31 @@ void WiFiRequestHandler::Ioctl(void *vpMessage)
                     memcpy(&sa.Ip4Address, &ipInfo.netmask, sizeof(ipInfo.netmask));
                     response.AddrLength = Encoders::EncodedSockAddrBufferSize(&sa);
                     response.Addr = static_cast<uint8_t *>(pvPortMalloc(response.AddrLength));
-                    Encoders::EncodeSockAddr(&sa, response.Addr);
+                    if (response.Addr == NULL)
+                    {
+                        response.Result = -1;
+                        response.ResponseErrno = MapErrno(ENOMEM);
+                        result = StatusCodes::EspOutOfMemory;
+                    }
+                    else
+                    {
+                        Encoders::EncodeSockAddr(&sa, response.Addr);
+                    }
                 }
                 break;
             case SIOCGIFHWADDR: /* Get hardware address */
                 response.AddrLength = 6;
                 response.Addr = static_cast<uint8_t *>(pvPortMalloc(6));
-                GetMacAddress(response.Addr, WIFI_IF_STA);
+                if (response.Addr == NULL)
+                {
+                    response.Result = -1;
+                    response.ResponseErrno = MapErrno(ENOMEM);
+                    result = StatusCodes::EspOutOfMemory;
+                }
+                else
+                {
+                    GetMacAddress(response.Addr, WIFI_IF_STA);
+                }
                 break;
             case SIOCGIFADDR: /* Get IP address */
             case SIOCGIFCONF: /* Return an interface list (IPv4) */
@@ -1863,7 +1881,16 @@ void WiFiRequestHandler::Ioctl(void *vpMessage)
                     memcpy(&sa.Ip4Address, &ipInfo.ip, sizeof(ipInfo.ip));
                     response.AddrLength = Encoders::EncodedSockAddrBufferSize(&sa);
                     response.Addr = static_cast<uint8_t *>(pvPortMalloc(response.AddrLength));
-                    Encoders::EncodeSockAddr(&sa, response.Addr);
+                    if (response.Addr == NULL)
+                    {
+                        response.Result = -1;
+                        response.ResponseErrno = MapErrno(ENOMEM);
+                        result = StatusCodes::EspOutOfMemory;
+                    }
+                    else
+                    {
+                        Encoders::EncodeSockAddr(&sa, response.Addr);
+                    }
                 }
                 break;
             case SIOCGIFFLAGS: /* Gets the interface flags */
@@ -1879,7 +1906,7 @@ void WiFiRequestHandler::Ioctl(void *vpMessage)
             default:
                 response.Result = -1;
                 response.ResponseErrno = MapErrno(EINVAL);
-                TRACE_MESSAGE("Unknown ioctl request %04x", (uint) request->Command);
+                TRACE_MESSAGE("Unknown ioctl request %04" PRIx16, (uint) request->Command);
                 break;
         }
         vPortFree(request);
@@ -1892,17 +1919,26 @@ void WiFiRequestHandler::Ioctl(void *vpMessage)
 
     vPortFree(message->Payload);
 
-    message->PayloadLength = Encoders::EncodedIoctlResponseBufferSize(&response);
-    message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-    if (message->Payload == NULL)
+    if (result != StatusCodes::CompletedOk)
     {
         message->PayloadLength = 0;
-        message->StatusCode = StatusCodes::EspOutOfMemory;
+        message->Payload = nullptr;
+        message->StatusCode = result;
     }
     else
     {
-        Encoders::EncodeIoctlResponse(&response, message->Payload);
-        message->StatusCode = StatusCodes::CompletedOk;
+        message->PayloadLength = Encoders::EncodedIoctlResponseBufferSize(&response);
+        message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
+        if (message->Payload == NULL)
+        {
+            message->PayloadLength = 0;
+            message->StatusCode = StatusCodes::EspOutOfMemory;
+        }
+        else
+        {
+            Encoders::EncodeIoctlResponse(&response, message->Payload);
+            message->StatusCode = StatusCodes::CompletedOk;
+        }
     }
     vPortFree(response.Addr);
     message->MessageType = MessageTypes::Response;
