@@ -1574,6 +1574,63 @@ void WiFiRequestHandler::RecvFrom(void *vpMessage)
 }
 
 /**
+ * @brief Bind a socket to an address.
+ *
+ * @param request Request from the STM32.
+ * @param response Response to the STM32.
+ * @return StatusCodes::StatusCodes Returns StatusCodes::CompletedOk if the operation succeeds,
+ *         StatusCodes::EspOutOfMemory if memory allocation fails.
+ */
+StatusCodes::StatusCodes WiFiRequestHandler::Bind(Esp32Messaging::BindRequest *request, Esp32Messaging::IntegerAndErrnoResponse &response)
+{
+    Esp32Messaging::SockAddr *socketAddress = Encoders::ExtractSockAddr(request->Addr);
+    if (socketAddress == NULL)
+    {
+        response.Result = -1;
+        response.ResponseErrno = MapErrno(ENOMEM);
+        return (StatusCodes::EspOutOfMemory);
+    }
+
+    if (request->AddrLength > 0)
+    {
+        if (request->Addr)
+        {
+            vPortFree(request->Addr);
+            request->Addr = nullptr;
+        }
+    }
+
+    struct sockaddr_in sa = {};
+    int family;
+    Mapping::GetEspValue(Mapping::AddressFamily, socketAddress->Family, reinterpret_cast<int32_t *>(&family));
+    errno = 0;
+    if (family == AF_INET)
+    {
+        sa.sin_family = socketAddress->Family;
+        sa.sin_port = socketAddress->Port;
+        memcpy(&sa.sin_addr, &socketAddress->Ip4Address, sizeof(socketAddress->Ip4Address));
+        TRACE_MESSAGE("Bind: Socket handle: %" PRIi32, request->SocketHandle);
+        TRACE_MESSAGE("Bind: Family: %" PRIi32, sa.sin_family);
+        TRACE_MESSAGE("Bind: IP address: %s", inet_ntoa(sa.sin_addr));
+        TRACE_MESSAGE("Bind: Port: %" PRIi16, ntohs(sa.sin_port));
+        response.Result = bind(request->SocketHandle, (struct sockaddr *) &sa, sizeof(sa));
+        if (response.Result != 0)
+        {
+            response.ResponseErrno = MapErrno(errno);
+        }
+    }
+    else
+    {
+        response.Result = -1;
+        response.ResponseErrno = MapErrno(EFAULT);
+    }
+
+    TRACE_MESSAGE("Bind: Error code: %" PRIi32 " - %s", errno, strerror(errno));
+    vPortFree(socketAddress);
+    return (StatusCodes::CompletedOk);
+}
+
+/**
  *  @brief Expose the POSIX bind method to the STM32.
  *
  *  @param message
@@ -1589,48 +1646,19 @@ void WiFiRequestHandler::Bind(void *vpMessage)
     assert(message != NULL);
     assert(message->Payload != NULL);
     Esp32Messaging::IntegerAndErrnoResponse response = {};
-
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
     if (IsConnected())
     {
         Esp32Messaging::BindRequest *request = Encoders::ExtractBindRequest(message->Payload);
-        Esp32Messaging::SockAddr *socketAddress = Encoders::ExtractSockAddr(request->Addr);
-        if (request->AddrLength > 0)
+        if (request)
         {
-            if (request->Addr)
-            {
-                vPortFree(request->Addr);
-                request->Addr = nullptr;
-            }
-        }
-
-        struct sockaddr_in sa = {};
-        int family;
-        Mapping::GetEspValue(Mapping::AddressFamily, socketAddress->Family, reinterpret_cast<int32_t *>(&family));
-        errno = 0;
-        if (family == AF_INET)
-        {
-            sa.sin_family = socketAddress->Family;
-            sa.sin_port = socketAddress->Port;
-            memcpy(&sa.sin_addr, &socketAddress->Ip4Address, sizeof(socketAddress->Ip4Address));
-            TRACE_MESSAGE("Bind: Socket handle: %ld", request->SocketHandle);
-            TRACE_MESSAGE("Bind: Family: %d", sa.sin_family);
-            TRACE_MESSAGE("Bind: IP address: %s", inet_ntoa(sa.sin_addr));
-            TRACE_MESSAGE("Bind: Port: %d", ntohs(sa.sin_port));
-            response.Result = bind(request->SocketHandle, (struct sockaddr *) &sa, sizeof(sa));
-            if (response.Result != 0)
-            {
-                response.ResponseErrno = MapErrno(errno);
-            }
+            result = Bind(request, response);
+            vPortFree(request);
         }
         else
         {
-            response.Result = -1;
-            response.ResponseErrno = MapErrno(EFAULT);
+            result = StatusCodes::EspOutOfMemory;
         }
-
-        TRACE_MESSAGE("Bind: Error code: %d - %s", errno, strerror(errno));
-        vPortFree(request);
-        vPortFree(socketAddress);
     }
     else
     {
@@ -1640,17 +1668,26 @@ void WiFiRequestHandler::Bind(void *vpMessage)
 
     vPortFree(message->Payload);
 
-    message->PayloadLength = Encoders::EncodedIntegerAndErrnoResponseBufferSize(&response);
-    message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-    if (message->Payload == NULL)
+    if (result != StatusCodes::CompletedOk)
     {
         message->PayloadLength = 0;
-        message->StatusCode = StatusCodes::EspOutOfMemory;
+        message->Payload = nullptr;
+        message->StatusCode = result;
     }
     else
     {
-        Encoders::EncodeIntegerAndErrnoResponse(&response, message->Payload);
-        message->StatusCode = StatusCodes::CompletedOk;
+        message->PayloadLength = Encoders::EncodedIntegerAndErrnoResponseBufferSize(&response);
+        message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
+        if (message->Payload == NULL)
+        {
+            message->PayloadLength = 0;
+            message->StatusCode = StatusCodes::EspOutOfMemory;
+        }
+        else
+        {
+            Encoders::EncodeIntegerAndErrnoResponse(&response, message->Payload);
+            message->StatusCode = StatusCodes::CompletedOk;
+        }
     }
     message->MessageType = MessageTypes::Response;
     _messageDispatcher->QueueMessageForStm32(message);
@@ -1731,6 +1768,59 @@ void WiFiRequestHandler::Listen(void *vpMessage)
 }
 
 /**
+ * @brief Process the accept request from the STM32.
+ *
+ * @param request Request from the STM32.
+ * @param response Response to the STM32.
+ *
+ * @return StatusCodes::StatusCodes Returns StatusCodes::CompletedOk if the operation succeeds,
+ *         StatusCodes::EspOutOfMemory if memory allocation fails.
+ */
+StatusCodes::StatusCodes WiFiRequestHandler::Accept(Esp32Messaging::AcceptRequest *request, Esp32Messaging::AcceptResponse &response)
+{
+    struct sockaddr sa = {};
+    socklen_t saLen = sizeof(sa);
+    response.Result = accept(request->SocketHandle, &sa, &saLen);
+    if (response.Result > 0)
+    {
+        Esp32Messaging::SockAddr *sockAddr = static_cast<Esp32Messaging::SockAddr *>(pvPortMalloc(sizeof(Esp32Messaging::SockAddr)));
+        if (sockAddr)
+        {
+            bzero(sockAddr, sizeof(Esp32Messaging::SockAddr));
+            Mapping::GetStmValue(Mapping::AddressFamily, sa.sa_family, reinterpret_cast<int32_t *>(&sockAddr->Family));
+            struct sockaddr_in *sin = (struct sockaddr_in *) &sa;
+            sockAddr->Port = sin->sin_port;
+            memcpy(&sockAddr->Ip4Address, &sin->sin_addr, sizeof(sin->sin_addr));
+            response.AddrLength = Encoders::EncodedSockAddrBufferSize(sockAddr);
+            response.Addr = static_cast<uint8_t *>(pvPortMalloc(response.AddrLength));
+            if (response.Addr == NULL)
+            {
+                vPortFree(sockAddr);
+                return (StatusCodes::EspOutOfMemory);
+            }
+            Encoders::EncodeSockAddr(sockAddr, response.Addr);
+            vPortFree(sockAddr);
+            response.ResponseErrno = 0;
+            TRACE_MESSAGE("Accept: Socket handle: %ld", response.Result);
+            TRACE_MESSAGE("Accept: Family: %d", sin->sin_family);
+            TRACE_MESSAGE("Accept: IP address: %s", inet_ntoa(sin->sin_addr));
+            TRACE_MESSAGE("Accept: Port: %d", ntohs(sin->sin_port));
+        }
+        else
+        {
+            return (StatusCodes::EspOutOfMemory);
+        }
+    }
+    else
+    {
+        response.AddrLength = 0;
+        response.Addr = nullptr;
+        response.ResponseErrno = MapErrno(errno);
+    }
+    return (StatusCodes::CompletedOk);
+}
+
+/**
  *  @brief Expose the POSIX accept method to the STM32.
  *
  *  @param message
@@ -1746,39 +1836,19 @@ void WiFiRequestHandler::Accept(void *vpMessage)
     assert(message->Payload != NULL);
 
     Esp32Messaging::AcceptResponse response = {};
-
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
     if (IsConnected())
     {
         Esp32Messaging::AcceptRequest *request = Encoders::ExtractAcceptRequest(message->Payload);
-
-        struct sockaddr sa = {};
-        socklen_t saLen = sizeof(sa);
-        response.Result = accept(request->SocketHandle, &sa, &saLen);
-        if (response.Result > 0)
+        if (request)
         {
-            Esp32Messaging::SockAddr *sockAddr = static_cast<Esp32Messaging::SockAddr *>(pvPortMalloc(sizeof(Esp32Messaging::SockAddr)));
-            bzero(sockAddr, sizeof(Esp32Messaging::SockAddr));
-            Mapping::GetStmValue(Mapping::AddressFamily, sa.sa_family, reinterpret_cast<int32_t *>(&sockAddr->Family));
-            struct sockaddr_in *sin = (struct sockaddr_in *) &sa;
-            sockAddr->Port = sin->sin_port;
-            memcpy(&sockAddr->Ip4Address, &sin->sin_addr, sizeof(sin->sin_addr));
-            response.AddrLength = Encoders::EncodedSockAddrBufferSize(sockAddr);
-            response.Addr = static_cast<uint8_t *>(pvPortMalloc(response.AddrLength));
-            Encoders::EncodeSockAddr(sockAddr, response.Addr);
-            vPortFree(sockAddr);
-            response.ResponseErrno = 0;
-            TRACE_MESSAGE("Accept: Socket handle: %ld", response.Result);
-            TRACE_MESSAGE("Accept: Family: %d", sin->sin_family);
-            TRACE_MESSAGE("Accept: IP address: %s", inet_ntoa(sin->sin_addr));
-            TRACE_MESSAGE("Accept: Port: %d", ntohs(sin->sin_port));
+            result = Accept(request, response);
+            vPortFree(request);
         }
         else
         {
-            response.AddrLength = 0;
-            response.Addr = nullptr;
-            response.ResponseErrno = MapErrno(errno);
+            result = StatusCodes::EspOutOfMemory;
         }
-        vPortFree(request);
     }
     else
     {
@@ -1788,17 +1858,26 @@ void WiFiRequestHandler::Accept(void *vpMessage)
 
     vPortFree(message->Payload);
 
-    message->PayloadLength = Encoders::EncodedAcceptResponseBufferSize(&response);
-    message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-    if (message->Payload == NULL)
+    if (result != StatusCodes::CompletedOk)
     {
         message->PayloadLength = 0;
-        message->StatusCode = StatusCodes::EspOutOfMemory;
+        message->Payload = nullptr;
+        message->StatusCode = result;
     }
     else
     {
-        Encoders::EncodeAcceptResponse(&response, message->Payload);
-        message->StatusCode = StatusCodes::CompletedOk;
+        message->PayloadLength = Encoders::EncodedAcceptResponseBufferSize(&response);
+        message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
+        if (message->Payload == NULL)
+        {
+            message->PayloadLength = 0;
+            message->StatusCode = StatusCodes::EspOutOfMemory;
+        }
+        else
+        {
+            Encoders::EncodeAcceptResponse(&response, message->Payload);
+            message->StatusCode = StatusCodes::CompletedOk;
+        }
     }
     vPortFree(response.Addr);
     message->MessageType = MessageTypes::Response;

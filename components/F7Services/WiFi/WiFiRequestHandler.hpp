@@ -884,6 +884,16 @@ private:
     static void Poll(void *vpMessage);
 
     /**
+     * @brief Bind a socket to an address.
+     *
+     * @param request Request from the STM32.
+     * @param response Response to the STM32.
+     * @return StatusCodes::StatusCodes Returns StatusCodes::CompletedOk if the operation succeeds,
+     *         StatusCodes::EspOutOfMemory if memory allocation fails.
+     */
+    static StatusCodes::StatusCodes Bind(Esp32Messaging::BindRequest *request, Esp32Messaging::IntegerAndErrnoResponse &response);
+
+    /**
      *  @brief Provide a mechanism for the STM32 to call the bind method.
      */
     static void Bind(void *vpMessage);
@@ -892,6 +902,17 @@ private:
      *  @brief Provide a mechanism for the STM32 to call the listen method.
      */
     static void Listen(void *vpMessage);
+
+    /**
+     * @brief Process the accept request from the STM32.
+     *
+     * @param request Request from the STM32.
+     * @param response Response to the STM32.
+     *
+     * @return StatusCodes::StatusCodes Returns StatusCodes::CompletedOk if the operation succeeds,
+     *         StatusCodes::EspOutOfMemory if memory allocation fails.
+     */
+    static StatusCodes::StatusCodes Accept(Esp32Messaging::AcceptRequest *request, Esp32Messaging::AcceptResponse &response);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the accept method.
