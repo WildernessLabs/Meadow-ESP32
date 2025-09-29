@@ -40,23 +40,23 @@
  * ----------------------------------------------------------------------------
  */
 
-/**
- * @brief Get address information.
- *
- * @param request Request from the STM32
- * @param response Response to the STM32
- * @return StatusCodes::StatusCodes Result of this method, StatusCodes::CompletedOk if the GetAddrInfo operation succeeds,
- *         StatusCodes::Failed if the GetAddrInfo operation fails.
- */
-StatusCodes::StatusCodes WiFiRequestHandler::GetAddrInfo(Esp32Messaging::GetAddrInfoRequest *request, Esp32Messaging::GetAddrInfoResponse *response)
-{
+ /**
+  * @brief Get address information.
+  *
+  * @param request Request from the STM32
+  * @param response Response to the STM32
+  * @return StatusCodes::StatusCodes Result of this method, StatusCodes::CompletedOk if the GetAddrInfo operation succeeds,
+  *         StatusCodes::Failed if the GetAddrInfo operation fails.
+  */
+ StatusCodes::StatusCodes WiFiRequestHandler::GetAddrInfo(Esp32Messaging::GetAddrInfoRequest *request, Esp32Messaging::GetAddrInfoResponse *response)
+ {
     Esp32Messaging::AddrInfo *extractedHints = Encoders::ExtractAddrInfo(request->Hints);
     vPortFree(request->Hints);
     request->Hints = nullptr;
 
     if (extractedHints == NULL)
     {
-        return (StatusCodes::EspOutOfMemory);
+        return(StatusCodes::EspOutOfMemory);
     }
 
     struct addrinfo hints = {};
@@ -96,8 +96,8 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetAddrInfo(Esp32Messaging::GetAddr
         if (response->Res == NULL)
         {
             free(a.CanonName);
-            vPortFree(addressInformation); // Do we call freeaddrinfo here ?
-            return (StatusCodes::EspOutOfMemory);
+            vPortFree(addressInformation);          // Do we call freeaddrinfo here ?
+            return(StatusCodes::EspOutOfMemory);
         }
         Encoders::EncodeAddrInfo(&a, response->Res);
     }
@@ -106,8 +106,8 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetAddrInfo(Esp32Messaging::GetAddr
         response->AddrInfoResponseErrno = MapErrno(errno);
         vPortFree(addressInformation);
     }
-    return (StatusCodes::CompletedOk);
-}
+    return(StatusCodes::CompletedOk);
+ }
 
 /**
  *  @brief Expose the POSIX getaddrinfo method to the STM32.
@@ -1425,7 +1425,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::RecvFrom(Esp32Messaging::RecvFromRe
                 response.Buffer = nullptr;
                 response.Result = -1;
                 response.ResponseErrno = ENOMEM;
-                return (StatusCodes::EspOutOfMemory);
+                return(StatusCodes::EspOutOfMemory);
             }
             bzero(sa, sizeof(struct sockaddr_in));
             len = sizeof(struct sockaddr_in);
@@ -1436,7 +1436,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::RecvFrom(Esp32Messaging::RecvFromRe
             response.Buffer = nullptr;
             response.Result = -1;
             response.ResponseErrno = ENOMEM;
-            return (StatusCodes::EspOutOfMemory);
+            return(StatusCodes::EspOutOfMemory);
         }
         else
         {
@@ -1463,7 +1463,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::RecvFrom(Esp32Messaging::RecvFromRe
                     response.SourceAddressLen = 0;
                     response.Result = -1;
                     response.ResponseErrno = ENOMEM;
-                    return (StatusCodes::EspOutOfMemory);
+                    return(StatusCodes::EspOutOfMemory);
                 }
                 else
                 {
@@ -1498,7 +1498,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::RecvFrom(Esp32Messaging::RecvFromRe
     {
         response.ResponseErrno = MapErrno(response.ResponseErrno);
     }
-    return (StatusCodes::CompletedOk);
+    return(StatusCodes::CompletedOk);
 }
 
 /**
