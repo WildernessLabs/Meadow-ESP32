@@ -1401,6 +1401,107 @@ void WiFiRequestHandler::SendTo(void *vpMessage)
 }
 
 /**
+ *  @brief Process the recvfrom request from the STM32.
+ *
+ *  @param request Request from the STM32.
+ *  @param response Response to the STM32.
+ *  @return StatusCodes::StatusCodes Returns StatusCodes::CompletedOk if the operation succeeds,
+ *         StatusCodes::EspOutOfMemory if memory allocation fails.
+ */
+StatusCodes::StatusCodes WiFiRequestHandler::RecvFrom(Esp32Messaging::RecvFromRequest *request, Esp32Messaging::RecvFromResponse &response)
+{
+    int32_t mappedFlags = 0;
+    response.Result = Mapping::GetEspFlagValue(Mapping::MessageFlags, request->Flags, &mappedFlags);
+    if (response.Result == 0)
+    {
+        TRACE_MESSAGE("Requesting %" PRIi32 " bytes from socket handle %" PRIi32, request->Length, request->SocketHandle);
+        struct sockaddr_in *sa = NULL;
+        socklen_t len;
+        if (request->GetSourceAddress != 0)
+        {
+            sa = static_cast<struct sockaddr_in *>(pvPortMalloc(sizeof(struct sockaddr_in)));
+            if (sa == NULL)
+            {
+                response.Buffer = nullptr;
+                response.Result = -1;
+                response.ResponseErrno = ENOMEM;
+                return(StatusCodes::EspOutOfMemory);
+            }
+            bzero(sa, sizeof(struct sockaddr_in));
+            len = sizeof(struct sockaddr_in);
+        }
+        response.Buffer = static_cast<uint8_t *>(pvPortMalloc(request->Length));
+        if (response.Buffer == NULL)
+        {
+            response.Buffer = nullptr;
+            response.Result = -1;
+            response.ResponseErrno = ENOMEM;
+            return(StatusCodes::EspOutOfMemory);
+        }
+        else
+        {
+            response.Result = recvfrom(request->SocketHandle, response.Buffer, request->Length, mappedFlags, reinterpret_cast<struct sockaddr *>(sa), (sa == NULL) ? NULL : &len);
+        }
+
+        if (response.Result < 0)
+        {
+            response.ResponseErrno = errno;
+        }
+        else
+        {
+            if (request->GetSourceAddress != 0)
+            {
+                Esp32Messaging::SockAddr socketAddress = {};
+                Mapping::GetStmValue(Mapping::AddressFamily, sa->sin_family, reinterpret_cast<int32_t *>(&socketAddress.Family));
+                memcpy(&socketAddress.Ip4Address, &sa->sin_addr, sizeof(sa->sin_addr));
+                socketAddress.Port = sa->sin_port;
+                response.SourceAddressLength = Encoders::EncodedSockAddrBufferSize(&socketAddress);
+                response.SourceAddress = static_cast<uint8_t *>(pvPortMalloc(response.SourceAddressLength));
+                if (response.SourceAddress == NULL)
+                {
+                    response.SourceAddressLength = 0;
+                    response.SourceAddressLen = 0;
+                    response.Result = -1;
+                    response.ResponseErrno = ENOMEM;
+                    return(StatusCodes::EspOutOfMemory);
+                }
+                else
+                {
+                    Encoders::EncodeSockAddr(&socketAddress, response.SourceAddress);
+                }
+            }
+            else
+            {
+                response.SourceAddress = nullptr;
+                response.SourceAddressLength = 0;
+                response.SourceAddressLen = 0;
+            }
+            response.BufferLength = response.Result;
+        }
+
+        if (sa != NULL)
+        {
+            vPortFree(sa);
+        }
+    }
+    else
+    {
+        response.ResponseErrno = EFAULT;
+    }
+    TRACE_MESSAGE("RecvFrom: Received %" PRIi32 " bytes.", response.Result);
+    if (response.Buffer && (response.BufferLength > 0))
+    {
+        TRACE_HEX_BUFFER(response.Buffer, response.Result);
+    }
+    TRACE_MESSAGE("RecvFrom: Result: %" PRIi32 ", errno: %" PRIi32 " - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
+    if (response.Result < 0)
+    {
+        response.ResponseErrno = MapErrno(response.ResponseErrno);
+    }
+    return(StatusCodes::CompletedOk);
+}
+
+/**
  *  @brief Expose the POSIX recvfrom method to the STM32.
  *
  *  @param message
@@ -1416,91 +1517,20 @@ void WiFiRequestHandler::RecvFrom(void *vpMessage)
     assert(message != NULL);
     assert(message->Payload != NULL);
     Esp32Messaging::RecvFromResponse response = {};
-
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
     if (IsConnected())
     {
         Esp32Messaging::RecvFromRequest *request = Encoders::ExtractRecvFromRequest(message->Payload);
-        int32_t mappedFlags = 0;
-        response.Result = Mapping::GetEspFlagValue(Mapping::MessageFlags, request->Flags, &mappedFlags);
-        if (response.Result == 0)
+        if (request)
         {
-            TRACE_MESSAGE("Requesting %ld bytes from socket handle %ld", request->Length, request->SocketHandle);
-            struct sockaddr_in *sa = NULL;
-            socklen_t len;
-            if (request->GetSourceAddress != 0)
-            {
-                sa = static_cast<struct sockaddr_in *>(pvPortMalloc(sizeof(struct sockaddr_in)));
-                bzero(sa, sizeof(struct sockaddr_in));
-                len = sizeof(struct sockaddr_in);
-            }
-            response.Buffer = static_cast<uint8_t *>(pvPortMalloc(request->Length));
-            if (response.Buffer == NULL)
-            {
-                response.Buffer = nullptr;
-                response.Result = -1;
-                response.ResponseErrno = ENOMEM;
-            }
-            else
-            {
-                response.Result = recvfrom(request->SocketHandle, response.Buffer, request->Length, mappedFlags, reinterpret_cast<struct sockaddr *>(sa), (sa == NULL) ? NULL : &len);
-            }
-
-            if (response.Result < 0)
-            {
-                response.ResponseErrno = errno;
-            }
-            else
-            {
-                if (request->GetSourceAddress != 0)
-                {
-                    Esp32Messaging::SockAddr socketAddress = {};
-                    Mapping::GetStmValue(Mapping::AddressFamily, sa->sin_family, reinterpret_cast<int32_t *>(&socketAddress.Family));
-                    memcpy(&socketAddress.Ip4Address, &sa->sin_addr, sizeof(sa->sin_addr));
-                    socketAddress.Port = sa->sin_port;
-                    response.SourceAddressLength = Encoders::EncodedSockAddrBufferSize(&socketAddress);
-                    response.SourceAddress = static_cast<uint8_t *>(pvPortMalloc(response.SourceAddressLength));
-                    if (response.SourceAddress == NULL)
-                    {
-                        response.SourceAddressLength = 0;
-                        response.SourceAddressLen = 0;
-                        response.Result = -1;
-                        response.ResponseErrno = ENOMEM;
-                    }
-                    else
-                    {
-                        Encoders::EncodeSockAddr(&socketAddress, response.SourceAddress);
-                    }
-                }
-                else
-                {
-                    response.SourceAddress = nullptr;
-                    response.SourceAddressLength = 0;
-                    response.SourceAddressLen = 0;
-                }
-                response.BufferLength = response.Result;
-            }
-
-            if (sa != NULL)
-            {
-                vPortFree(sa);
-            }
+            result = RecvFrom(request, response);
+            vPortFree(request);
         }
         else
         {
-            response.ResponseErrno = EFAULT;
+            response.Result = -1;
+            response.ResponseErrno = MapErrno(ENOMEM);
         }
-        TRACE_MESSAGE("RecvFrom: Received %ld bytes.", response.Result);
-        if (response.Buffer && (response.BufferLength > 0))
-        {
-            TRACE_HEX_BUFFER(response.Buffer, response.Result);
-        }
-        TRACE_MESSAGE("RecvFrom: Result: %ld, errno: %ld - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
-        if (response.Result < 0)
-        {
-            response.ResponseErrno = MapErrno(response.ResponseErrno);
-        }
-
-        vPortFree(request);
     }
     else
     {
@@ -1510,17 +1540,26 @@ void WiFiRequestHandler::RecvFrom(void *vpMessage)
 
     vPortFree(message->Payload);
 
-    message->PayloadLength = Encoders::EncodedRecvFromResponseBufferSize(&response);
-    message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-    if (message->Payload == NULL)
+    if (result != StatusCodes::CompletedOk)
     {
         message->PayloadLength = 0;
-        message->StatusCode = StatusCodes::EspOutOfMemory;
+        message->Payload = nullptr;
+        message->StatusCode = result;
     }
     else
     {
-        Encoders::EncodeRecvFromResponse(&response, message->Payload);
-        message->StatusCode = StatusCodes::CompletedOk;
+        message->PayloadLength = Encoders::EncodedRecvFromResponseBufferSize(&response);
+        message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
+        if (message->Payload == NULL)
+        {
+            message->PayloadLength = 0;
+            message->StatusCode = StatusCodes::EspOutOfMemory;
+        }
+        else
+        {
+            Encoders::EncodeRecvFromResponse(&response, message->Payload);
+            message->StatusCode = StatusCodes::CompletedOk;
+        }
     }
 
     vPortFree(response.Buffer);

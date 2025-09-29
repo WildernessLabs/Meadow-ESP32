@@ -839,6 +839,16 @@ private:
     static void Send(void *vpMessage);
 
     /**
+     * @brief Process the recvfrom request from the STM32.
+     *
+     * @param request Request from the STM32.
+     * @param response Response to the STM32.
+     * @return StatusCodes::StatusCodes Returns StatusCodes::CompletedOk if the operation succeeds,
+     *         StatusCodes::EspOutOfMemory if memory allocation fails.
+     */
+    static StatusCodes::StatusCodes RecvFrom(Esp32Messaging::RecvFromRequest *request, Esp32Messaging::RecvFromResponse &response);
+
+    /**
      *  @brief Provide a mechanism for the STM32 to call the recvfrom method.
      */
     static void RecvFrom(void *vpMessage);
