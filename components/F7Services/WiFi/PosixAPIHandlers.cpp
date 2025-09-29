@@ -1980,7 +1980,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetSockPeerName(Esp32Messaging::Get
             response.Addr = nullptr;
             response.Result = -1;
             response.ResponseErrno = MapErrno(ENOMEM);
-            return(StatusCodes::EspOutOfMemory);
+            return (StatusCodes::EspOutOfMemory);
         }
         bzero(sockAddr, sizeof(Esp32Messaging::SockAddr));
         Mapping::GetStmValue(Mapping::AddressFamily, sa.sa_family, reinterpret_cast<int32_t *>(&sockAddr->Family));
@@ -1996,7 +1996,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetSockPeerName(Esp32Messaging::Get
             response.Addr = nullptr;
             response.Result = -1;
             response.ResponseErrno = MapErrno(ENOMEM);
-            return(StatusCodes::EspOutOfMemory);
+            return (StatusCodes::EspOutOfMemory);
         }
         Encoders::EncodeSockAddr(sockAddr, response.Addr);
         vPortFree(sockAddr);
