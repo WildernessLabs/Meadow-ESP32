@@ -1914,6 +1914,73 @@ void WiFiRequestHandler::Ioctl(void *vpMessage)
 }
 
 /**
+ * @brief Provide a mechanism to call the getsockname or getpeername.
+ *
+ * @param request Request from the STM32.
+ * @param methodToCall Indicate if we are calling getsockname or getpeername.
+ * @param response Response to the STM32.
+ *
+ * @return StatusCodes::StatusCodes Returns StatusCodes::CompletedOk if the operation succeeds,
+ *         StatusCodes::EspOutOfMemory if memory allocation fails.
+ */
+StatusCodes::StatusCodes WiFiRequestHandler::GetSockPeerName(Esp32Messaging::GetSockPeerNameRequest *request, WiFiFunction::WiFiFunction methodToCall, Esp32Messaging::GetSockPeerNameResponse &response)
+{
+    struct sockaddr sa = {};
+    socklen_t saLen = sizeof(sa);
+    if (methodToCall == WiFiFunction::GetSockName)
+    {
+        response.Result = getsockname(request->SocketHandle, &sa, &saLen);
+    }
+    else
+    {
+        response.Result = getpeername(request->SocketHandle, &sa, &saLen);
+    }
+    if (response.Result == 0)
+    {
+        Esp32Messaging::SockAddr *sockAddr = static_cast<Esp32Messaging::SockAddr *>(pvPortMalloc(sizeof(Esp32Messaging::SockAddr)));
+        if (sockAddr == NULL)
+        {
+            response.AddrLength = 0;
+            response.Addr = nullptr;
+            response.Result = -1;
+            response.ResponseErrno = MapErrno(ENOMEM);
+            return(StatusCodes::EspOutOfMemory);
+        }
+        bzero(sockAddr, sizeof(Esp32Messaging::SockAddr));
+        Mapping::GetStmValue(Mapping::AddressFamily, sa.sa_family, reinterpret_cast<int32_t *>(&sockAddr->Family));
+        struct sockaddr_in *sin = (struct sockaddr_in *) &sa;
+        sockAddr->Port = sin->sin_port;
+        memcpy(&sockAddr->Ip4Address, &sin->sin_addr, sizeof(sin->sin_addr));
+        response.AddrLength = Encoders::EncodedSockAddrBufferSize(sockAddr);
+        response.Addr = static_cast<uint8_t *>(pvPortMalloc(response.AddrLength));
+        if (response.Addr == NULL)
+        {
+            vPortFree(sockAddr);
+            response.AddrLength = 0;
+            response.Addr = nullptr;
+            response.Result = -1;
+            response.ResponseErrno = MapErrno(ENOMEM);
+            return(StatusCodes::EspOutOfMemory);
+        }
+        Encoders::EncodeSockAddr(sockAddr, response.Addr);
+        vPortFree(sockAddr);
+        response.ResponseErrno = 0;
+        TRACE_MESSAGE("GetSockPeerName: Socket handle: %" PRIi32, request->SocketHandle);
+        TRACE_MESSAGE("GetSockPeerName: Family: %" PRIi32, sin->sin_family);
+        TRACE_MESSAGE("GetSockPeerName: IP address: %s", inet_ntoa(sin->sin_addr));
+        TRACE_MESSAGE("GetSockPeerName: Port: %" PRIi32, ntohs(sin->sin_port));
+    }
+    else
+    {
+        response.AddrLength = 0;
+        response.Addr = nullptr;
+        response.ResponseErrno = MapErrno(errno);
+        ERROR_MESSAGE("Failure: Result code %" PRIi32 " (%s), errno %" PRIi32 " (%s)", response.Result, esp_err_to_name(response.Result), errno, strerror(errno));
+    }
+    return StatusCodes::CompletedOk;
+}
+
+/**
  *  @brief Expose the POSIX getsockname method to the STM32.
  *
  *  @param message
@@ -1932,46 +1999,21 @@ void WiFiRequestHandler::GetSockPeerName(void *vpMessage, WiFiFunction::WiFiFunc
     assert(message != NULL);
     assert(message->Payload != NULL);
     Esp32Messaging::GetSockPeerNameResponse response = {};
-
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
     if (IsConnected())
     {
         Esp32Messaging::GetSockPeerNameRequest *request = Encoders::ExtractGetSockPeerNameRequest(message->Payload);
+        if (request)
+        {
+            result = GetSockPeerName(request, methodToCall, response);
+        }
+        else
+        {
+            response.Result = -1;
+            response.ResponseErrno = MapErrno(ENOMEM);
+            result = StatusCodes::EspOutOfMemory;
+        }
 
-        struct sockaddr sa = {};
-        socklen_t saLen = sizeof(sa);
-        if (methodToCall == WiFiFunction::GetSockName)
-        {
-            response.Result = getsockname(request->SocketHandle, &sa, &saLen);
-        }
-        else
-        {
-            response.Result = getpeername(request->SocketHandle, &sa, &saLen);
-        }
-        if (response.Result == 0)
-        {
-            Esp32Messaging::SockAddr *sockAddr = static_cast<Esp32Messaging::SockAddr *>(pvPortMalloc(sizeof(Esp32Messaging::SockAddr)));
-            bzero(sockAddr, sizeof(Esp32Messaging::SockAddr));
-            Mapping::GetStmValue(Mapping::AddressFamily, sa.sa_family, reinterpret_cast<int32_t *>(&sockAddr->Family));
-            struct sockaddr_in *sin = (struct sockaddr_in *) &sa;
-            sockAddr->Port = sin->sin_port;
-            memcpy(&sockAddr->Ip4Address, &sin->sin_addr, sizeof(sin->sin_addr));
-            response.AddrLength = Encoders::EncodedSockAddrBufferSize(sockAddr);
-            response.Addr = static_cast<uint8_t *>(pvPortMalloc(response.AddrLength));
-            Encoders::EncodeSockAddr(sockAddr, response.Addr);
-            vPortFree(sockAddr);
-            response.ResponseErrno = 0;
-            TRACE_MESSAGE("GetSockPeerName: Socket handle: %ld", request->SocketHandle);
-            TRACE_MESSAGE("GetSockPeerName: Family: %d", sin->sin_family);
-            TRACE_MESSAGE("GetSockPeerName: IP address: %s", inet_ntoa(sin->sin_addr));
-            TRACE_MESSAGE("GetSockPeerName: Port: %d", ntohs(sin->sin_port));
-        }
-        else
-        {
-            response.AddrLength = 0;
-            response.Addr = nullptr;
-            response.ResponseErrno = MapErrno(errno);
-            ERROR_MESSAGE("Failure: Result code %ld (%s), errno %d (%s)", response.Result, esp_err_to_name(response.Result), errno, strerror(errno));
-        }
         vPortFree(request);
     }
     else
@@ -1982,17 +2024,26 @@ void WiFiRequestHandler::GetSockPeerName(void *vpMessage, WiFiFunction::WiFiFunc
 
     vPortFree(message->Payload);
 
-    message->PayloadLength = Encoders::EncodedGetSockPeerNameResponseBufferSize(&response);
-    message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-    if (message->Payload == NULL)
+    if (result != StatusCodes::CompletedOk)
     {
         message->PayloadLength = 0;
-        message->StatusCode = StatusCodes::EspOutOfMemory;
+        message->Payload = nullptr;
+        message->StatusCode = result;
     }
     else
     {
-        Encoders::EncodeGetSockPeerNameResponse(&response, message->Payload);
-        message->StatusCode = StatusCodes::CompletedOk;
+        message->PayloadLength = Encoders::EncodedGetSockPeerNameResponseBufferSize(&response);
+        message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
+        if (message->Payload == NULL)
+        {
+            message->PayloadLength = 0;
+            message->StatusCode = StatusCodes::EspOutOfMemory;
+        }
+        else
+        {
+            Encoders::EncodeGetSockPeerNameResponse(&response, message->Payload);
+            message->StatusCode = StatusCodes::CompletedOk;
+        }
     }
     vPortFree(response.Addr);
     message->MessageType = MessageTypes::Response;

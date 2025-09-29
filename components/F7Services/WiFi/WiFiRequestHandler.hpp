@@ -904,6 +904,18 @@ private:
     static void Ioctl(void *vpMessage);
 
     /**
+     * @brief Provide a mechanism to call the getsockname or getpeername.
+     *
+     * @param request Request from the STM32.
+     * @param methodToCall Indicate if we are calling getsockname or getpeername.
+     * @param response Response to the STM32.
+     *
+     * @return StatusCodes::StatusCodes Returns StatusCodes::CompletedOk if the operation succeeds,
+     *         StatusCodes::EspOutOfMemory if memory allocation fails.
+     */
+    static StatusCodes::StatusCodes GetSockPeerName(Esp32Messaging::GetSockPeerNameRequest *request, WiFiFunction::WiFiFunction methodToCall, Esp32Messaging::GetSockPeerNameResponse &response);
+
+    /**
      *  @brief Provide a mechanism to call the getsockname or getpeername.
      */
     static void GetSockPeerName(void *vpMessage, WiFiFunction::WiFiFunction request);
