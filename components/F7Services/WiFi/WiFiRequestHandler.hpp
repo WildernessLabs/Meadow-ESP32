@@ -737,6 +737,11 @@ private:
     /**
      *  @brief Provide a mechanism for the STM32 to call the getaddrinfo method.
      */
+    static StatusCodes::StatusCodes GetAddrInfo(Esp32Messaging::GetAddrInfoRequest *request, Esp32Messaging::GetAddrInfoResponse *response);
+
+    /**
+     *  @brief Provide a mechanism for the STM32 to call the getaddrinfo method.
+     */
     static void GetAddrInfo(void *vpMessage);
 
     /**
@@ -834,6 +839,16 @@ private:
     static void Send(void *vpMessage);
 
     /**
+     * @brief Process the recvfrom request from the STM32.
+     *
+     * @param request Request from the STM32.
+     * @param response Response to the STM32.
+     * @return StatusCodes::StatusCodes Returns StatusCodes::CompletedOk if the operation succeeds,
+     *         StatusCodes::EspOutOfMemory if memory allocation fails.
+     */
+    static StatusCodes::StatusCodes RecvFrom(Esp32Messaging::RecvFromRequest *request, Esp32Messaging::RecvFromResponse &response);
+
+    /**
      *  @brief Provide a mechanism for the STM32 to call the recvfrom method.
      */
     static void RecvFrom(void *vpMessage);
@@ -869,6 +884,16 @@ private:
     static void Poll(void *vpMessage);
 
     /**
+     * @brief Bind a socket to an address.
+     *
+     * @param request Request from the STM32.
+     * @param response Response to the STM32.
+     * @return StatusCodes::StatusCodes Returns StatusCodes::CompletedOk if the operation succeeds,
+     *         StatusCodes::EspOutOfMemory if memory allocation fails.
+     */
+    static StatusCodes::StatusCodes Bind(Esp32Messaging::BindRequest *request, Esp32Messaging::IntegerAndErrnoResponse &response);
+
+    /**
      *  @brief Provide a mechanism for the STM32 to call the bind method.
      */
     static void Bind(void *vpMessage);
@@ -879,6 +904,17 @@ private:
     static void Listen(void *vpMessage);
 
     /**
+     * @brief Process the accept request from the STM32.
+     *
+     * @param request Request from the STM32.
+     * @param response Response to the STM32.
+     *
+     * @return StatusCodes::StatusCodes Returns StatusCodes::CompletedOk if the operation succeeds,
+     *         StatusCodes::EspOutOfMemory if memory allocation fails.
+     */
+    static StatusCodes::StatusCodes Accept(Esp32Messaging::AcceptRequest *request, Esp32Messaging::AcceptResponse &response);
+
+    /**
      *  @brief Provide a mechanism for the STM32 to call the accept method.
      */
     static void Accept(void *vpMessage);
@@ -887,6 +923,18 @@ private:
      *  @brief Provide a mechanism for the STM32 to call the simulated ioctl method.
      */
     static void Ioctl(void *vpMessage);
+
+    /**
+     * @brief Provide a mechanism to call the getsockname or getpeername.
+     *
+     * @param request Request from the STM32.
+     * @param methodToCall Indicate if we are calling getsockname or getpeername.
+     * @param response Response to the STM32.
+     *
+     * @return StatusCodes::StatusCodes Returns StatusCodes::CompletedOk if the operation succeeds,
+     *         StatusCodes::EspOutOfMemory if memory allocation fails.
+     */
+    static StatusCodes::StatusCodes GetSockPeerName(Esp32Messaging::GetSockPeerNameRequest *request, WiFiFunction::WiFiFunction methodToCall, Esp32Messaging::GetSockPeerNameResponse &response);
 
     /**
      *  @brief Provide a mechanism to call the getsockname or getpeername.
