@@ -26,7 +26,7 @@
  * @brief Uncomment the line below to turn on assertions for debugging this file only.  Do not
  *        leave this enabled in production code as it is of no use to the user.
  */
-#undef NDEBUG
+// #undef NDEBUG
 #include <assert.h>
 #ifndef NDEBUG
     #pragma message "PosixAPIHandlers.cpp: Assertions enabled"
