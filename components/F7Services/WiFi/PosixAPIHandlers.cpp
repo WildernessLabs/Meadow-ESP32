@@ -2400,7 +2400,7 @@ void WiFiRequestHandler::PollSocket(void *requestId)
                 {
                     response.Result = 1;
                 }
-                TRACE_MESSAGE("PollSocket: Returned ESP32 events 0x%04x maps to NuttX events 0x%04x", fds[POLL_FD_INDEX].revents, (uint) events);
+                TRACE_MESSAGE("PollSocket: Returned ESP32 events 0x%04x maps to NuttX events 0x%04x", fds[POLL_FD_INDEX].revents, response.ReturnedEvents);
                 response.SetupMessageId = (uint32_t) requestId;
                 close(fds[POLL_DUMMY_FD_INDEX].fd);
                 vPortFree(fds);
