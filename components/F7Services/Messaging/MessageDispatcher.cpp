@@ -101,7 +101,7 @@ bool MessageDispatcher::QueueMessageForEsp32(Message *request)
             provider = dynamic_cast<RequestHandlerBase *>(_systemRequestHandler);
             break;
         default:
-            DEBUG_MESSAGE("QueueMessageForEsp32: Unknown interface %d, message will not be processed.", request->Interface);
+            DEBUG_MESSAGE("QueueMessageForEsp32: Unknown interface %" PRIu8 ", message will not be processed.", request->Interface);
             Message::DeleteMessage(request);
             break;
     }
