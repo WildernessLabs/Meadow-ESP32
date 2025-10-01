@@ -131,7 +131,7 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
      *  as they will be frequently used for header and transport packets.
      */
     _headerFrameSize = Encoders::CalculateSpiBufferSize(Message::HEADER_SIZE);
-    TRACE_MESSAGE("Header frame size: %lu", _headerFrameSize);
+    TRACE_MESSAGE("Header frame size: %" PRIu32, _headerFrameSize);
     _txBuffer = static_cast<uint8_t *>(heap_caps_calloc(Message::MAXIMUM_SPI_FRAME_SIZE, 1, MALLOC_CAP_DMA));
     _rxBuffer = static_cast<uint8_t *>(heap_caps_calloc(Message::MAXIMUM_SPI_FRAME_SIZE, 1, MALLOC_CAP_DMA));
     ClearTransmitAndReceiveBuffers();
@@ -276,7 +276,7 @@ spi_slave_transaction_t *SpiTransportProvider::CreateAcknowledgementTransaction(
 {
     TRACE_MESSAGE("CreateAcknowledgementTransaction: Enter");
 
-    TRACE_MESSAGE("Message type: 0x%02x", messageType);
+    TRACE_MESSAGE("Message type: 0x%02" PRIx8, messageType);
     Message *copyOfMessage = message->CreateCopyOnHeap(false);
     copyOfMessage->MessageType = messageType;
     copyOfMessage->StatusCode = static_cast<uint32_t>(code);
@@ -333,7 +333,7 @@ void SpiTransportProvider::UpdatePacketInformation(Message *message)
 {
     TRACE_MESSAGE("%s: Enter", __func__);
 
-    TRACE_MESSAGE("Initial offset %d, length %d", message->PacketOffset, message->PacketLength);
+    TRACE_MESSAGE("Initial offset %" PRIu16 ", length %" PRIu16, message->PacketOffset, message->PacketLength);
     message->PacketOffset += message->PacketLength;
     uint16_t amountRemaining = message->PayloadLength - message->PacketOffset;
     if (amountRemaining <= Message::MAXIMUM_PACKET_SIZE)
@@ -344,7 +344,7 @@ void SpiTransportProvider::UpdatePacketInformation(Message *message)
     {
         message->PacketLength = Message::MAXIMUM_PACKET_SIZE;
     }
-    TRACE_MESSAGE("New offset %d, length %d", message->PacketOffset, message->PacketLength);
+    TRACE_MESSAGE("New offset %" PRIu16 ", length %" PRIu16, message->PacketOffset, message->PacketLength);
 
     TRACE_MESSAGE("%s: Exit", __func__);
 }
@@ -473,7 +473,7 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessTransportMessage(Message *
             _currentState = SendingPacketDetails;
             break;
         default:
-            TRACE_MESSAGE("ProcessTransportMessage: Transport function %lu not recognised.", request->Function);
+            TRACE_MESSAGE("ProcessTransportMessage: Transport function %" PRIu32 " not recognised.", request->Function);
             break;
     }
     TRACE_MESSAGE("ProcessTransportMessage: Exit");
@@ -497,7 +497,7 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessInboundPacket(Message *pac
     bool queuePacket;
     if (_incomingMessage)
     {
-        TRACE_MESSAGE("Top up packet received, offset %d bytes, length %d bytes", packet->PacketOffset, packet->PacketLength);
+        TRACE_MESSAGE("Top up packet received, offset %" PRIu16 " bytes, length %" PRIu16 " bytes", packet->PacketOffset, packet->PacketLength);
         if (_incomingMessage->MessageID == packet->MessageID)
         {
             TRACE_MESSAGE("Packet matches incoming packet");
@@ -552,7 +552,7 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessInboundPacket(Message *pac
             //  enough to hold the full payload, copy the packet into the new buffer, release the current payload buffer
             //  and replace it with the new, larger, buffer.
             //
-            TRACE_MESSAGE("First packet in a multipacket message, expecting %lu bytes, received %u bytes", packet->PayloadLength, packet->PacketLength);
+            TRACE_MESSAGE("First packet in a multipacket message, expecting %" PRIu32 " bytes, received %" PRIu16 " bytes", packet->PayloadLength, packet->PacketLength);
             uint8_t *payloadBuffer = static_cast<uint8_t *>(pvPortMalloc(packet->PayloadLength));
             memcpy(static_cast<void *>(payloadBuffer), static_cast<const void *>(packet->Payload), packet->PacketLength);
             vPortFree(packet->Payload);
@@ -594,7 +594,7 @@ spi_slave_transaction_t *SpiTransportProvider::PacketReceived(spi_slave_transact
     TRACE_MESSAGE("InboundMessageReceived: Entering method");
 
     int dataSize = transaction->trans_len / 8;
-    TRACE_MESSAGE("InboundMessageReceived: Received %d bytes.", dataSize);
+    TRACE_MESSAGE("InboundMessageReceived: Received %" PRIi32 " bytes.", dataSize);
     TRACE_HEX_BUFFER(transaction->rx_buffer, dataSize);
 
     spi_slave_transaction_t *newTransaction = nullptr;
@@ -784,7 +784,7 @@ spi_slave_transaction_t *SpiTransportProvider::PacketAcknowledgementReceived(spi
         }
         else
         {
-            TRACE_MESSAGE("Message is not ACK %02x", incomingMessage->MessageType);
+            TRACE_MESSAGE("Message is not ACK %02" PRIx8, incomingMessage->MessageType);
             QueueMessageForStm32(_outboundMessage);
         }
     }
