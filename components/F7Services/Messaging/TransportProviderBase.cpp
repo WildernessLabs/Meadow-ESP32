@@ -201,7 +201,7 @@ void TransportProviderBase::SendControlMessageToStm32(ControlMessageType message
         case ControlMessageType::Reset:
             {
                 esp_reset_reason_t resetReason = esp_reset_reason();
-                snprintf(smallBuffer, sizeof(smallBuffer), "\n+++RST,%d\n", (int) resetReason);
+                snprintf(smallBuffer, sizeof(smallBuffer), "\n+++RST,%" PRIi32 "\n", (int32_t) resetReason);
                 message = smallBuffer;
             }
             break;
