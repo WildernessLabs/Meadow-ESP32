@@ -247,7 +247,7 @@ void Diagnostics::ReportTaskInformation()
     tasks = static_cast<TaskStatus_t *>(pvPortMalloc(numberOfTasks * sizeof(TaskStatus_t)));
     if (tasks != NULL)
     {
-        ESP_LOGI(COMPONENT_NAME, "Number of tasks: %d", numberOfTasks);
+        ESP_LOGI(COMPONENT_NAME, "Number of tasks: %" PRIu32, numberOfTasks);
         ESP_LOGI(COMPONENT_NAME, "ID  Core Task Name        State     Priority Stack Watermark Run-time Percentage");
         numberOfTasks = uxTaskGetSystemState(tasks, numberOfTasks, &totalRunTime);
         totalRunTime /= 100UL;
@@ -264,9 +264,9 @@ void Diagnostics::ReportTaskInformation()
             }
             std::string taskState = TaskStateToString(tasks[index].eCurrentState);
             std::string coreID = TranslateCoreID(tasks[index].xCoreID);
-            ESP_LOGI(COMPONENT_NAME, "%-2d    %s  %-16s %-9s %2" PRIu32 " (%2" PRIu32 ")  %15u %8lu  %3lu%%", tasks[index].xTaskNumber, coreID.c_str(), tasks[index].pcTaskName, taskState.c_str(),
-                (long unsigned int) tasks[index].uxCurrentPriority, (long unsigned int) tasks[index].uxBasePriority,
-                (unsigned int) tasks[index].usStackHighWaterMark, tasks[index].ulRunTimeCounter, runTimePercentage);
+            ESP_LOGI(COMPONENT_NAME, "%-2" PRIu32 "    %s  %-16s %-9s %2" PRIu32 " (%2" PRIu32 ")  %15u %8lu  %3lu%%", tasks[index].xTaskNumber, coreID.c_str(), tasks[index].pcTaskName, taskState.c_str(),
+                tasks[index].uxCurrentPriority, tasks[index].uxBasePriority,
+                tasks[index].usStackHighWaterMark, tasks[index].ulRunTimeCounter, runTimePercentage);
         }
         vPortFree(tasks);
     }
