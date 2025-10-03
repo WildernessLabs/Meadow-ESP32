@@ -86,7 +86,7 @@ void heap_caps_alloc_failed_hook(size_t requestedSize, uint32_t caps, const char
 {
     if (requestedSize != 0)
     {
-        printf("%s was called but failed to allocate %lu bytes with 0x%X capabilities. \n", functionName, (unsigned long) requestedSize, (uint) caps);
+        printf("%s was called but failed to allocate %" PRIu16 " bytes with 0x%" PRIx32 " capabilities. \n", functionName, requestedSize, caps);
         vTaskDelay(10000 / portTICK_PERIOD_MS);
         char *ptr = NULL;
         *ptr = 0; // cppcheck-suppress nullPointer
@@ -113,8 +113,10 @@ extern "C" void app_main()
     strftime(month_text, 4, "%b", &t);
 
     ESP_LOGI(
-        COMPONENT_NAME, "Version: %d.%d.%d.%d, built %02d %s 20%02d %02d:%02d:%02d UTC (%08x:%s)", (int) g_application_version.major, (int) g_application_version.minor, (int) g_application_version.revision, (int) g_application_version.build, (int) g_application_version.day, month_text,
-        (int) g_application_version.year, (int) g_application_version.hour, (int) g_application_version.minute, (int) g_application_version.second, (uint) g_application_version.hash, g_application_version.branch_name);
+        COMPONENT_NAME, "Version: %" PRIu32 ".%" PRIu32 ".%" PRIu32 ".%" PRIu32 ", built %02" PRIu8 " %s 20%02" PRIu8 " %02" PRIu8 ":%02" PRIu8 ":%02" PRIu8 " UTC (%08" PRIu32 ":%s)",
+        g_application_version.major, g_application_version.minor, g_application_version.revision, g_application_version.build,
+        g_application_version.day, month_text, g_application_version.year, g_application_version.hour, g_application_version.minute, g_application_version.second,
+        g_application_version.hash, g_application_version.branch_name);
 
     NvsManager::Setup();
 
