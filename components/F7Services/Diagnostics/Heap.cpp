@@ -125,7 +125,7 @@ void Heap::ReportUsage()
     ESP_LOGI(COMPONENT_NAME, "Free blocks: %s", Utils::NumberWithCommas((uint64_t) heap_info.free_blocks).c_str());
     ESP_LOGI(COMPONENT_NAME, "Largest free block: %s bytes", Utils::NumberWithCommas((uint64_t) heap_info.largest_free_block).c_str());
     ESP_LOGI(COMPONENT_NAME, "Minimum free heap: %s bytes", Utils::NumberWithCommas((uint64_t) esp_get_minimum_free_heap_size()).c_str());
-    ESP_LOGI(COMPONENT_NAME, "Heap fragmentation: %d%%", heap_info.total_free_bytes ? (100 - (heap_info.largest_free_block * 100) / heap_info.total_free_bytes) : 0);
+    ESP_LOGI(COMPONENT_NAME, "Heap fragmentation: %" PRIu32 "%%", heap_info.total_free_bytes ? (100 - (heap_info.largest_free_block * 100) / heap_info.total_free_bytes) : 0);
 }
 
 /**

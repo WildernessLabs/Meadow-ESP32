@@ -133,7 +133,7 @@ BluetoothCharacteristic &BluetoothService::AddCharacteristic(BluetoothCharacteri
         }
     }
 
-    TRACE_MESSAGE("%i characteristics known", (int) _characteristics.size());
+    TRACE_MESSAGE("%" PRIu32 " characteristics known", (int) _characteristics.size());
 
     TRACE_MESSAGE("AddCharacteristic: Exit");
 

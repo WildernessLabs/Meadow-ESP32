@@ -11,6 +11,7 @@
 #include <string.h>
 #include <unistd.h>
 #include "lwip/apps/sntp.h"
+#include <inttypes.h>
 
 #include "Globals.hpp"
 #include "NvsManager.hpp"
@@ -351,7 +352,7 @@ uint32_t WiFiRequestHandler::GetMaximumRetryCount()
  */
 StatusCodes::StatusCodes WiFiRequestHandler::SetMaximumRetryCount(uint32_t value)
 {
-    TRACE_MESSAGE("WiFiRequestHandler::SetMaximumRetryCount: %lu", value);
+    TRACE_MESSAGE("WiFiRequestHandler::SetMaximumRetryCount: %" PRIu32, value);
     _maximumRetryCount = value;
     return (StatusCodes::CompletedOk);
 }
@@ -375,7 +376,7 @@ bool WiFiRequestHandler::GetAutomaticReconnect()
  */
 StatusCodes::StatusCodes WiFiRequestHandler::SetAutomaticReconnect(bool value)
 {
-    TRACE_MESSAGE("WiFiRequestHandler::SetAutomaticReconnect: %d", value ? 1 : 0);
+    TRACE_MESSAGE("WiFiRequestHandler::SetAutomaticReconnect: %" PRIi32, value ? 1 : 0);
     _automaticReconnect = value;
     return (StatusCodes::CompletedOk);
 }
@@ -399,7 +400,7 @@ bool WiFiRequestHandler::GetAutomaticallyStartNetwork()
  */
 StatusCodes::StatusCodes WiFiRequestHandler::SetAutomaticallyStartNetwork(bool value)
 {
-    TRACE_MESSAGE("WiFiRequestHandler::SetAutomaticallyStartNetwork %d", value ? 1 : 0);
+    TRACE_MESSAGE("WiFiRequestHandler::SetAutomaticallyStartNetwork: %" PRIi32, value ? 1 : 0);
     _automaticallyStartNetwork = value;
     return (StatusCodes::CompletedOk);
 }
@@ -423,7 +424,7 @@ bool WiFiRequestHandler::GetUseDhcp()
  */
 StatusCodes::StatusCodes WiFiRequestHandler::SetUseDhcp(bool value)
 {
-    TRACE_MESSAGE("WiFiRequestHandler::SetUseDhcp %d", value ? 1 : 0);
+    TRACE_MESSAGE("WiFiRequestHandler::SetUseDhcp: %" PRIi32, value ? 1 : 0);
     _useDhcp = value;
     return (StatusCodes::CompletedOk);
 }
@@ -762,7 +763,7 @@ void WiFiRequestHandler::NtpServerCallback(struct timeval *tv)
 {
     TRACE_MESSAGE("NtpServerCallback: Enter");
 
-    TRACE_MESSAGE("Setting time to %d", (int) tv->tv_sec);
+    TRACE_MESSAGE("Setting time to %" PRIi32, (int) tv->tv_sec);
 
     settimeofday(tv, NULL);
 
@@ -805,7 +806,7 @@ void WiFiRequestHandler::SwitchAntenna(AntennaTypes::AntennaTypes newAntenna)
     //
     //  Make sure the old antenna is switched off before the new one is turned on.
     //
-    TRACE_MESSAGE("Switching from antenna %d to %d", oldAntennaPin, newAntennaPin);
+    TRACE_MESSAGE("Switching from antenna %" PRIu32 " to %" PRIu32, oldAntennaPin, newAntennaPin);
     gpio_set_level(oldAntennaPin, 0);
     gpio_set_level(newAntennaPin, 1);
     TRACE_MESSAGE("SwitchAntenna; Exit");
@@ -1109,7 +1110,7 @@ void WiFiRequestHandler::EventHandlerHelper(esp_event_base_t eventBase, int32_t 
                 TRACE_MESSAGE("EventHandlerHelper: WIFI_EVENT_AP_PROBEREQRECVED");
                 break;
             default:
-                TRACE_MESSAGE("EventHandlerHelper: Unhandled WiFi Event ID %ld", eventId);
+                TRACE_MESSAGE("EventHandlerHelper: Unhandled WiFi Event ID %" PRIi32, eventId);
                 break;
         }
     }
@@ -1143,7 +1144,7 @@ void WiFiRequestHandler::EventHandlerHelper(esp_event_base_t eventBase, int32_t 
                     TRACE_MESSAGE("EventHandlerHelper: IP_EVENT_PPP_LOST_IP");
                     break;
                 default:
-                    TRACE_MESSAGE("EventHandlerHelper: Unhandled IP Event ID %ld", eventId);
+                    TRACE_MESSAGE("EventHandlerHelper: Unhandled IP Event ID %" PRIi32, eventId);
                     break;
             }
         }
@@ -1307,7 +1308,7 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
                 xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
                 break;
             default:
-                TRACE_MESSAGE("DispatchRequest: Unknown WiFi message received, function %u", (unsigned int) request->Function);
+                TRACE_MESSAGE("DispatchRequest: Unknown WiFi message received, function %" PRIu32, request->Function);
                 if ((request->Payload != NULL) && (request->PayloadLength > 0))
                 {
                     TRACE_HEX_BUFFER(request->Payload, request->PayloadLength);
@@ -1392,7 +1393,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::StopWiFIAdapter()
 
     xEventGroupClearBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTED_BIT | WIFI_INTERFACE_STARTING_BIT);
 
-    TRACE_MESSAGE("StopWiFIAdapter(): Exit, ESP error code %d (%s)", result, esp_err_to_name(result));
+    TRACE_MESSAGE("StopWiFIAdapter(): Exit, ESP error code %" PRIi32 " (%s)", result, esp_err_to_name(result));
     return (Mapping::GetStatusCode(result));
 }
 
@@ -1475,7 +1476,7 @@ void WiFiRequestHandler::SetAntennaRequest(Message *message)
     message->Payload = nullptr;
     message->PayloadLength = 0;
 
-    TRACE_MESSAGE("Switching antenna to %d with persist set to %d", request->Antenna, request->Persist);
+    TRACE_MESSAGE("Switching antenna to %" PRIu8 " with persist set to %" PRIu8, request->Antenna, request->Persist);
 
     if (request->Persist)
     {
@@ -1524,7 +1525,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const Esp32Mes
 
     char *password = accessPointInformation->Password;
 
-    TRACE_MESSAGE("IP information, IP: 0x%08x, subnet: 0x%08x, gateway 0x%08x", (uint) accessPointInformation->IpAddress, (uint) accessPointInformation->SubnetMask, (uint) accessPointInformation->Gateway);
+    TRACE_MESSAGE("IP information, IP: 0x%08" PRIx32 ", subnet: 0x%08" PRIx32 ", gateway 0x%08" PRIx32, accessPointInformation->IpAddress, accessPointInformation->SubnetMask, accessPointInformation->Gateway);
 
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
 
@@ -1613,7 +1614,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const Esp32Mes
             }
         }
     }
-    TRACE_MESSAGE("%s: result %ld", __func__, result);
+    TRACE_MESSAGE("%s: result %" PRIu32, __func__, result);
     return (result);
 }
 
@@ -1663,7 +1664,7 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
         {
             memcpy(static_cast<void *>(data.Ssid), static_cast<void *>(_disconnectData.ssid), _disconnectData.ssid_len);
             memcpy(static_cast<void *>(data.Bssid), static_cast<void *>(_disconnectData.bssid), sizeof(data.Bssid));
-            TRACE_MESSAGE("Failed to connect to access point, code: %d", _disconnectData.reason);
+            TRACE_MESSAGE("Failed to connect to access point, code: %" PRIu8, _disconnectData.reason);
             data.Reason = _disconnectData.reason;
             ClearIpAndDisconnectData();
             _lastIdfErrorCode = ESP_OK;
@@ -1890,7 +1891,7 @@ void WiFiRequestHandler::ScanForAccessPoints(Message *message)
             {
                 uint16_t apCount = 0;
                 esp_wifi_scan_get_ap_num(&apCount);
-                TRACE_MESSAGE("ScanForAccessPoints: Number of access points found: %d", apCount);
+                TRACE_MESSAGE("ScanForAccessPoints: Number of access points found: %" PRIu16, apCount);
                 if (apCount != 0)
                 {
                     Esp32Messaging::AccessPointList *accessPointList = static_cast<Esp32Messaging::AccessPointList *>(pvPortMalloc(sizeof(Esp32Messaging::AccessPointList)));
@@ -2078,7 +2079,7 @@ void WiFiRequestHandler::StationDisconnectedEvent(wifi_event_sta_disconnected_t 
         }
         if (GetAutomaticReconnect() && (_currentRetryCount < maximumRetryCount))
         {
-            TRACE_MESSAGE("StationDisconnectedEvent: Reconnecting, retry count %d, maximum %lu", _currentRetryCount, maximumRetryCount);
+            TRACE_MESSAGE("StationDisconnectedEvent: Reconnecting, retry count %" PRIi32 ", maximum %" PRIu32, _currentRetryCount, maximumRetryCount);
             //
             //  the system is configured to automatically reconnect and we have not exceeded the retry count.
             //
@@ -2091,12 +2092,12 @@ void WiFiRequestHandler::StationDisconnectedEvent(wifi_event_sta_disconnected_t 
             esp_wifi_connect();
             _currentRetryCount++;
             raiseDisconnectedEvent = false;
-            TRACE_MESSAGE("StationDisconnectedEvent: Delaying for %lu ms", _progressiveDelay->GetCurrentDelayPeriod());
+            TRACE_MESSAGE("StationDisconnectedEvent: Delaying for %" PRIu32 " ms", _progressiveDelay->GetCurrentDelayPeriod());
             _progressiveDelay->Delay();
         }
         else
         {
-            TRACE_MESSAGE("StationDisconnectedEvent: Not reconnecting, retry count %d, maximum %lu", _currentRetryCount, maximumRetryCount);
+            TRACE_MESSAGE("StationDisconnectedEvent: Not reconnecting, retry count %" PRIi32 ", maximum %" PRIu32, _currentRetryCount, maximumRetryCount);
             //
             //  Here we were connected or we have been trying to connect and there two possibilities:
             //      1.  We are not configured to automatically reconnect.

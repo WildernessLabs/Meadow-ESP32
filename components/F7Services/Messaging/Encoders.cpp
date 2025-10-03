@@ -461,7 +461,7 @@ void Encoders::EncodeMessage(Message *message, uint8_t *buffer, bool headerOnly)
 {
     uint32_t messageSize = EncodedPacketSize(message, headerOnly);
     uint32_t bufferSize = Encoders::CalculateSpiBufferSize(messageSize);
-    TRACE_MESSAGE_SPECIFY_COMPONENT(SpiTransportProvider::COMPONENT_NAME, "Encoding %lu bytes as a %lu byte packet", messageSize, bufferSize);
+    TRACE_MESSAGE_SPECIFY_COMPONENT(SpiTransportProvider::COMPONENT_NAME, "Encoding %" PRIu32 " bytes as a %" PRIu32 " byte packet", messageSize, bufferSize);
 
     if (buffer)
     {

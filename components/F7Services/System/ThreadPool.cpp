@@ -63,12 +63,12 @@ ThreadPool::ThreadPool(uint32_t numberOfThreads) : ThreadPool()
         throw new ThreadPoolException("Cannot create semaphore for ThreadPool.");
     }
 
-    for (uint32_t index = 0; index < _threadPoolSize; index++)
+    for (uint8_t index = 0; index < _threadPoolSize; index++)
     {
         char *name = static_cast<char *>(pvPortMalloc(15));
         if (name != NULL)
         {
-            snprintf(name, 15, "Thread-%02u", static_cast<uint8_t>(index & 0xff));
+            snprintf(name, 15, "Thread-%02" PRIu8, index);
             _threads[index] = new Thread(name, ThreadPool::ThreadCompleted);
             ;
             if (_threads[index])
@@ -125,15 +125,15 @@ void ThreadPool::Execute(method_t method, void *parameter)
     {
         TRACE_MESSAGE("Execute: Searching for an available thread");
 
-        for (uint32_t index = 0; index < _threadPoolSize; index++)
+        for (uint8_t index = 0; index < _threadPoolSize; index++)
         {
             if (_threads[index] && !_threads[index]->IsBusy())
             {
-                TRACE_MESSAGE("Execute: Thread %u available!", (unsigned int) index);
+                TRACE_MESSAGE("Execute: Thread %" PRIu8 " available!", index);
                 _threads[index]->Execute(method, parameter);
                 return;
             }
-            TRACE_MESSAGE("Execute: Thread %u not available", (unsigned int) index);
+            TRACE_MESSAGE("Execute: Thread %" PRIu8 " not available", index);
         }
     }
 

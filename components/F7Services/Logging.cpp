@@ -132,7 +132,7 @@ void Logging::Setup()
     esp_log_level_set(Heap::COMPONENT_NAME, ESP_LOG_INFO);
 #endif
 
-    TRACE_MESSAGE("Logging redirected to UART_NUM_0 on pins %d (Tx), %d (Rx)", Gpio::LOGGING_TX_PIN, Gpio::LOGGING_RX_PIN);
+    TRACE_MESSAGE("Logging redirected to UART_NUM_0 on pins %" PRIu32 " (Tx), %" PRIu32 " (Rx)", Gpio::LOGGING_TX_PIN, Gpio::LOGGING_RX_PIN);
     TRACE_MESSAGE("Logging setup complete.");
 }
 
@@ -405,15 +405,15 @@ void Logging::DumpMessage(const char *componentName, const Message *message)
 {
     if (message)
     {
-        TRACE_MESSAGE_SPECIFY_COMPONENT(componentName, "Message type: 0x%02x (%s)", message->MessageType, MessageTypeName(message->MessageType));
-        TRACE_MESSAGE_SPECIFY_COMPONENT(componentName, "ESP32 Interface: 0x%02x (%s)", message->Interface, InterfaceName(message->Interface));
-        TRACE_MESSAGE_SPECIFY_COMPONENT(componentName, "Message ID: 0x%08x", (uint) message->MessageID);
-        TRACE_MESSAGE_SPECIFY_COMPONENT(componentName, "Packet offset (length): %d (%d) bytes", message->PacketOffset, message->PacketLength);
-        TRACE_MESSAGE_SPECIFY_COMPONENT(componentName, "Function to be executed: 0x%08x (%s)", (uint) message->Function, FunctionName(message->Interface, message->Function));
-        TRACE_MESSAGE_SPECIFY_COMPONENT(componentName, "Status code: 0x%08x (%s)", (uint) message->StatusCode, StatusCodeName(message->StatusCode));
+        TRACE_MESSAGE_SPECIFY_COMPONENT(componentName, "Message type: 0x%02" PRIx8 " (%s)", message->MessageType, MessageTypeName(message->MessageType));
+        TRACE_MESSAGE_SPECIFY_COMPONENT(componentName, "ESP32 Interface: 0x%02" PRIx8 " (%s)", message->Interface, InterfaceName(message->Interface));
+        TRACE_MESSAGE_SPECIFY_COMPONENT(componentName, "Message ID: 0x%08" PRIx32, message->MessageID);
+        TRACE_MESSAGE_SPECIFY_COMPONENT(componentName, "Packet offset (length): %" PRIu16 " (%" PRIu16 ") bytes", message->PacketOffset, message->PacketLength);
+        TRACE_MESSAGE_SPECIFY_COMPONENT(componentName, "Function to be executed: 0x%08" PRIx32 " (%s)", message->Function, FunctionName(message->Interface, message->Function));
+        TRACE_MESSAGE_SPECIFY_COMPONENT(componentName, "Status code: 0x%08" PRIx32 " (%s)", message->StatusCode, StatusCodeName(message->StatusCode));
         if (message->PayloadLength > 0)
         {
-            TRACE_MESSAGE_SPECIFY_COMPONENT(componentName, "Payload length: %lu", message->PayloadLength);
+            TRACE_MESSAGE_SPECIFY_COMPONENT(componentName, "Payload length: %" PRIu32, message->PayloadLength);
             if (message->Payload)
             {
                 TRACE_HEX_BUFFER_SPECIFY_COMPONENT(componentName, message->Payload, message->PayloadLength);
@@ -443,7 +443,7 @@ char *Logging::MessageSummary(const Message *message)
 {
     char buffer[200];
 
-    snprintf(buffer, 200, "ID: 0x%08x Interface: %s Function: %s", (uint) message->MessageID, InterfaceName(message->Interface), FunctionName(message->Interface, message->Function));
+    snprintf(buffer, 200, "ID: 0x%08" PRIx32 " Interface: %s Function: %s", message->MessageID, InterfaceName(message->Interface), FunctionName(message->Interface, message->Function));
     return (strdup(buffer));
 }
 
@@ -501,7 +501,7 @@ void Logging::DumpPerformanceCounters()
         if (_performanceCounters[index] != NULL)
         {
             PerformanceCounterEntry *pce = _performanceCounters[index];
-            printf("%u,%s,%u\n", pce->timestamp, pce->method, pce->duration);
+            printf("%" PRIu32 ",%s,%" PRIu32 "\n", pce->timestamp, pce->method, pce->duration);
         }
     }
 }

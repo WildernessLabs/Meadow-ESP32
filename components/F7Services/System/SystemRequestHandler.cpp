@@ -717,7 +717,7 @@ void SystemRequestHandler::GetBatteryChargeLevel(Message *message)
             //
             response.Result = 2 * averagedVoltage;
         }
-        TRACE_MESSAGE("Averaged voltage: %lu mV", response.Result);
+        TRACE_MESSAGE("Averaged voltage: %" PRIi32 " mV", response.Result);
     }
 
     message->PayloadLength = Encoders::EncodedIntegerResponseBufferSize(&response);
@@ -773,7 +773,7 @@ void SystemRequestHandler::LogMessage(Message *message)
     {
         if (logMessage->Message)
         {
-            TRACE_MESSAGE("LogMessage: (%d), %s", logMessage->Level, logMessage->Message);
+            TRACE_MESSAGE("LogMessage: (%" PRIu8 "), %s", logMessage->Level, logMessage->Message);
         }
         vPortFree(logMessage);
     }
@@ -840,7 +840,7 @@ void SystemRequestHandler::DispatchRequest(Message *request)
             _coreDump->Erase(request);
             break;
         default:
-            TRACE_MESSAGE("DispatchRequest: Unknown System message received, function 0x%lx", request->Function);
+            TRACE_MESSAGE("DispatchRequest: Unknown System message received, function 0x%" PRIx32, request->Function);
             if (request->Payload != NULL)
             {
                 TRACE_HEX_BUFFER(request->Payload, request->PayloadLength);
