@@ -505,7 +505,7 @@ void FileSystem::ListFiles(Message *message)
                 }
                 else
                 {
-                    result = StatusCodes::EspOutOfMemory;   
+                    result = StatusCodes::EspOutOfMemory;
                 }
             }
         }
