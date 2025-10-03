@@ -68,7 +68,7 @@ BluetoothService &BluetoothServiceCollection::Add(BluetoothService *service)
         }
     }
 
-    TRACE_MESSAGE("%i services known", (int) _services.size());
+    TRACE_MESSAGE("%" PRIu32 " services known", (int) _services.size());
 
     TRACE_MESSAGE("Add: Exit");
 
