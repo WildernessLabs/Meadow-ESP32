@@ -113,10 +113,8 @@ extern "C" void app_main()
     strftime(month_text, 4, "%b", &t);
 
     ESP_LOGI(
-        COMPONENT_NAME, "Version: %" PRIu32 ".%" PRIu32 ".%" PRIu32 ".%" PRIu32 ", built %02" PRIu8 " %s 20%02" PRIu8 " %02" PRIu8 ":%02" PRIu8 ":%02" PRIu8 " UTC (%08" PRIu32 ":%s)",
-        g_application_version.major, g_application_version.minor, g_application_version.revision, g_application_version.build,
-        g_application_version.day, month_text, g_application_version.year, g_application_version.hour, g_application_version.minute, g_application_version.second,
-        g_application_version.hash, g_application_version.branch_name);
+        COMPONENT_NAME, "Version: %" PRIu32 ".%" PRIu32 ".%" PRIu32 ".%" PRIu32 ", built %02" PRIu8 " %s 20%02" PRIu8 " %02" PRIu8 ":%02" PRIu8 ":%02" PRIu8 " UTC (%08" PRIu32 ":%s)", g_application_version.major, g_application_version.minor, g_application_version.revision,
+        g_application_version.build, g_application_version.day, month_text, g_application_version.year, g_application_version.hour, g_application_version.minute, g_application_version.second, g_application_version.hash, g_application_version.branch_name);
 
     NvsManager::Setup();
 
