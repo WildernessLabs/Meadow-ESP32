@@ -80,7 +80,7 @@ void BluetoothManager::HandleServiceAdded(BluetoothService *service)
 {
     TRACE_MESSAGE("HandleServiceAdded: Enter");
 
-    TRACE_MESSAGE("New Service: 0x%04X (%s)", service->Handle, service->Name.c_str());
+    TRACE_MESSAGE("New Service: 0x%04" PRIx16 " (%s)", service->Handle, service->Name.c_str());
 
     TRACE_MESSAGE("HandleServiceAdded: Exit");
 }
@@ -94,7 +94,7 @@ void BluetoothManager::HandleCharacteristicAdded(BluetoothCharacteristic *charac
 {
     TRACE_MESSAGE("HandleCharacteristicAdded: Enter");
 
-    TRACE_MESSAGE("New Characteristic: declaration @ 0x%04X value @ 0x%04X", characteristic->Declaration->Handle, characteristic->Value->Handle);
+    TRACE_MESSAGE("New Characteristic: declaration @ 0x%04" PRIx16 " value @ 0x%04" PRIx16, characteristic->Declaration->Handle, characteristic->Value->Handle);
 
     TRACE_MESSAGE("HandleCharacteristicAdded: Exit");
 }
@@ -108,7 +108,7 @@ void BluetoothManager::HandleValueChanged(BluetoothCharacteristic *characteristi
 {
     TRACE_MESSAGE("HandleValueChanged: Enter");
 
-    TRACE_MESSAGE("New Characteristic Value: value @ 0x%04X is %i bytes", characteristic->Value->Handle, characteristic->Value->CurrentLength);
+    TRACE_MESSAGE("New Characteristic Value: value @ 0x%04" PRIx16 " is %" PRIu16 " bytes", characteristic->Value->Handle, characteristic->Value->CurrentLength);
 
     TRACE_MESSAGE("HandleValueChanged: Exit");
 }
@@ -222,19 +222,19 @@ void BluetoothManager::SetHandles(uint16_t *handles, uint16_t count)
     for (const auto &svc: Services.GetServiceDefinitions())
     {
         svc->Handle = handles[index++];
-        TRACE_MESSAGE("ATTRIBUTE TABLE SERVICE HANDLE = 0x%04x", svc->Handle);
+        TRACE_MESSAGE("ATTRIBUTE TABLE SERVICE HANDLE = 0x%04" PRIx16, svc->Handle);
 
         for (const auto &characteristic: svc->GetCharacteristicDefinitions())
         {
             characteristic->Declaration->Handle = handles[index++];
-            TRACE_MESSAGE("ATTRIBUTE TABLE DECLARATION HANDLE = 0x%04x", characteristic->Declaration->Handle);
+            TRACE_MESSAGE("ATTRIBUTE TABLE DECLARATION HANDLE = 0x%04" PRIx16, characteristic->Declaration->Handle);
 
             characteristic->Value->Handle = handles[index++];
-            TRACE_MESSAGE("ATTRIBUTE TABLE VALUE HANDLE = 0x%04x | max length = %i", characteristic->Value->Handle, characteristic->Value->MaxLength);
+            TRACE_MESSAGE("ATTRIBUTE TABLE VALUE HANDLE = 0x%04" PRIx16 " | max length = %" PRIu16, characteristic->Value->Handle, characteristic->Value->MaxLength);
             auto val = length_val_s {.length = characteristic->Value->MaxLength, .value = new uint8_t[characteristic->Value->MaxLength]};
             memset(val.value, 0, characteristic->Value->MaxLength);
 
-            TRACE_MESSAGE("Request for data for handle 0x%04x", characteristic->Value->Handle);
+            TRACE_MESSAGE("Request for data for handle 0x%04" PRIx16, characteristic->Value->Handle);
 
             _valueMap.insert({characteristic->Value->Handle, val});
             // cross reference handles
@@ -243,7 +243,7 @@ void BluetoothManager::SetHandles(uint16_t *handles, uint16_t count)
             for (const auto &descriptor: characteristic->GetDescriptorDefinitions())
             {
                 descriptor->Handle = handles[index++];
-                TRACE_MESSAGE("ATTRIBUTE TABLE DESCRIPTOR HANDLE = 0x%04x", descriptor->Handle);
+                TRACE_MESSAGE("ATTRIBUTE TABLE DESCRIPTOR HANDLE = 0x%04" PRIx16, descriptor->Handle);
             }
         }
     }
@@ -272,15 +272,15 @@ void BluetoothManager::GetCurrentValueForAttributeHandle(uint16_t handle, uint8_
 
     if (existing != _valueMap.end())
     {
-        TRACE_MESSAGE("Request for data for handle 0x%04x", handle);
-        TRACE_MESSAGE(" known length = %i", existing->second.length);
+        TRACE_MESSAGE("Request for data for handle 0x%04" PRIx16, handle);
+        TRACE_MESSAGE(" known length = %" PRIu16, existing->second.length);
 
         memcpy(pData, existing->second.value, existing->second.length);
         *pLen = existing->second.length;
     }
     else
     {
-        TRACE_MESSAGE("Request for data with unknown handle 0x%04x", handle);
+        TRACE_MESSAGE("Request for data with unknown handle 0x%04" PRIx16, handle);
         *pLen = 0;
         pData = NULL;
     }
@@ -299,7 +299,7 @@ void BluetoothManager::SetCurrentValueForAttributeHandle(uint16_t handle, uint8_
 {
     TRACE_MESSAGE("SetCurrentValueForAttributeHandle: Enter");
 
-    TRACE_MESSAGE("Received %i bytes of data for attribute handle 0x%04x", len, handle);
+    TRACE_MESSAGE("Received %" PRIu16 " bytes of data for attribute handle 0x%04" PRIx16, len, handle);
 
     auto existing = _valueMap.find(handle);
 
@@ -310,12 +310,12 @@ void BluetoothManager::SetCurrentValueForAttributeHandle(uint16_t handle, uint8_
         // Only write *up to* the defined max length
         size_t length_to_write = existing->second.length < len ? existing->second.length : len;
         memcpy(existing->second.value, pData, length_to_write);
-        TRACE_MESSAGE("Value length %i", length_to_write);
+        TRACE_MESSAGE("Value length %" PRIu32, length_to_write);
     }
     else
     {
         // Unknown handle - this should *never* happen, but best to be safe
-        TRACE_MESSAGE("Value received with unknown handle 0x%04x", test_value);
+        TRACE_MESSAGE("Value received with unknown handle 0x%04" PRIx32, test_value);
     }
 
     TRACE_MESSAGE("SetCurrentValueForAttributeHandle: Exit");
@@ -356,7 +356,7 @@ void BluetoothManager::BuildGraphFromJson(char *cfg_json)
     if (doc.HasMember("companyIdentifier"))
     {
         auto companyIdentifier = (uint16_t) doc["companyIdentifier"].GetInt();
-        TRACE_MESSAGE("   companyIdentifier = 0x%04x", companyIdentifier);
+        TRACE_MESSAGE("   companyIdentifier = 0x%04" PRIx16, companyIdentifier);
         _companyIdentifier = companyIdentifier;
     }
     else
@@ -370,12 +370,12 @@ void BluetoothManager::BuildGraphFromJson(char *cfg_json)
         auto svc = svc_list[i].GetObject();
         auto svc_uuid = svc["uuid"].GetInt();
         auto svc_name = svc["name"].GetString();
-        TRACE_MESSAGE("Service %s uuid = 0x%04x", svc_name, svc_uuid);
+        TRACE_MESSAGE("Service %s uuid = 0x%04" PRIx16, svc_name, svc_uuid);
 
         auto bt_svc = new BluetoothService(svc_name, Uuid16(svc_uuid));
 
         const Value &char_list = svc["characteristics"];
-        TRACE_MESSAGE("Service has %i characteristics", char_list.Size());
+        TRACE_MESSAGE("Service has %" PRIu32 " characteristics", char_list.Size());
         for (auto i = 0; i < char_list.Size(); i++)
         {
             TRACE_MESSAGE("Characteristic ");
@@ -390,7 +390,7 @@ void BluetoothManager::BuildGraphFromJson(char *cfg_json)
             if (characteristic["uuid"].IsInt())
             {
                 chr_uuid16 = Uuid16((uint16_t) characteristic["uuid"].GetUint());
-                TRACE_MESSAGE("    UUID = 0x%04x", chr_uuid16.ToUint16());
+                TRACE_MESSAGE("    UUID = 0x%04" PRIx16, chr_uuid16.ToUint16());
             }
             else
             {
@@ -403,9 +403,9 @@ void BluetoothManager::BuildGraphFromJson(char *cfg_json)
             auto chr_props = (uint16_t) characteristic["props"].GetInt();
             auto chr_len = (uint16_t) characteristic["len"].GetInt();
 
-            TRACE_MESSAGE("    Permission = 0x%04x", chr_perm);
-            TRACE_MESSAGE("    Props = 0x%04x", chr_props);
-            TRACE_MESSAGE("    Len = 0x%04x", chr_len);
+            TRACE_MESSAGE("    Permission = 0x%04" PRIx16, chr_perm);
+            TRACE_MESSAGE("    Props = 0x%04" PRIx16, chr_props);
+            TRACE_MESSAGE("    Len = 0x%04" PRIx16, chr_len);
 
             BluetoothCharacteristic *bt_characteristic;
             if (is128)
@@ -434,7 +434,7 @@ void BluetoothManager::BuildGraphFromJson(char *cfg_json)
                         if (descriptor["uuid"].IsInt())
                         {
                             desc_uuid16 = Uuid16((uint16_t) descriptor["uuid"].GetUint());
-                            TRACE_MESSAGE("    UUID = 0x%04x", desc_uuid16.ToUint16());
+                            TRACE_MESSAGE("    UUID = 0x%04" PRIx16, desc_uuid16.ToUint16());
                         }
                         else
                         {
@@ -444,9 +444,9 @@ void BluetoothManager::BuildGraphFromJson(char *cfg_json)
                         }
 
                         auto desc_perm = (uint16_t) descriptor["permission"].GetInt();
-                        TRACE_MESSAGE("    Permission = 0x%04x", desc_perm);
+                        TRACE_MESSAGE("    Permission = 0x%04" PRIx16, desc_perm);
                         auto desc_len = (uint16_t) descriptor["len"].GetInt();
-                        TRACE_MESSAGE("    Len = 0x%04x", desc_len);
+                        TRACE_MESSAGE("    Len = 0x%04" PRIx16, desc_len);
 
                         uint32_t int_value = 0;
                         const char *str_value = nullptr;
@@ -454,7 +454,7 @@ void BluetoothManager::BuildGraphFromJson(char *cfg_json)
                         if (descriptor["value"].IsInt())
                         {
                             int_value = (uint32_t) descriptor["value"].GetInt();
-                            TRACE_MESSAGE("    Value = 0x%04x", int_value);
+                            TRACE_MESSAGE("    Value = 0x%04" PRIx32, int_value);
                             value = (uint8_t *) &int_value;
                         }
                         else

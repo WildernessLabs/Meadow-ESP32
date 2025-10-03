@@ -334,7 +334,7 @@ void BluetoothRequestHandler::GenerateAttributeTable()
         }
     }
 
-    TRACE_MESSAGE("ATTRIBUTE TABLE LENGTH = %d", count);
+    TRACE_MESSAGE("ATTRIBUTE TABLE LENGTH = %" PRId32, count);
 
     _attribute_table = new esp_gatts_attr_db_t[count];
     _attributeTableLength = count;
@@ -342,18 +342,18 @@ void BluetoothRequestHandler::GenerateAttributeTable()
     auto index = 0;
     for (const auto &svc: _manager.GetServiceDefinitions())
     {
-        TRACE_MESSAGE("ATTRIBUTE TABLE SERVICE AT %d ", index);
+        TRACE_MESSAGE("ATTRIBUTE TABLE SERVICE AT %" PRId32, index);
         // service attribute - all services are primary for now
         _attribute_table[index++] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *) &primary_service_uuid, ESP_GATT_PERM_READ, sizeof(uint16_t), sizeof(svc->Uuid), (uint8_t *) &svc->Uuid}};
 
-        TRACE_MESSAGE("CONTAINS %d CHARACTERISTICS", svc->GetCharacteristicDefinitions().size());
+        TRACE_MESSAGE("CONTAINS %" PRIu32 " CHARACTERISTICS", svc->GetCharacteristicDefinitions().size());
         for (const auto &characteristic: svc->GetCharacteristicDefinitions())
         {
-            TRACE_MESSAGE("ATTRIBUTE TABLE DECLARATION AT %d", index);
+            TRACE_MESSAGE("ATTRIBUTE TABLE DECLARATION AT %" PRId32, index);
             // declaration attribute
             _attribute_table[index++] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *) &characteristic->Declaration->Uuid, (uint16_t) characteristic->Declaration->Permission, CHAR_DECLARATION_SIZE, CHAR_DECLARATION_SIZE, (uint8_t *) &characteristic->Declaration->Properties}};
 
-            TRACE_MESSAGE("ATTRIBUTE TABLE VALUE AT %d", index);
+            TRACE_MESSAGE("ATTRIBUTE TABLE VALUE AT %" PRId32, index);
             // value attribute
             // the first param here (ESP_GATT_RSP_BY_APP) means that we'll handle the request for data manually rather than allowing the API to respond with
             // data in the parameter database.  We need to call to the STM for data, so this is sensible.
@@ -368,7 +368,7 @@ void BluetoothRequestHandler::GenerateAttributeTable()
 
             for (const auto &descriptor: characteristic->GetDescriptorDefinitions())
             {
-                TRACE_MESSAGE("ATTRIBUTE TABLE DESCRIPTOR AT %d", index);
+                TRACE_MESSAGE("ATTRIBUTE TABLE DESCRIPTOR AT %" PRId32, index);
                 if (descriptor->Is128())
                 {
                     _attribute_table[index++] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_128, (uint8_t *) &descriptor->uuid128, (uint16_t) descriptor->Permission, descriptor->MaxLength, descriptor->CurrentLength, descriptor->Value}};
@@ -424,7 +424,7 @@ void BluetoothRequestHandler::SetCurrentValueForAttributeHandle(Message *request
     Esp32Messaging::BTServerDataSet *ds = Encoders::ExtractBTServerDataSet(request->Payload);
     request->DeletePayload();
 
-    TRACE_MESSAGE("Server wrote %lu bytes to 0x%04x", ds->SetDataLength, ds->Handle);
+    TRACE_MESSAGE("Server wrote %" PRIu32 " bytes to 0x%04" PRIx16, ds->SetDataLength, ds->Handle);
 
     _manager.SetCurrentValueForAttributeHandle(ds->Handle, ds->SetData, ds->SetDataLength);
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
@@ -434,7 +434,7 @@ void BluetoothRequestHandler::SetCurrentValueForAttributeHandle(Message *request
         {
             if (esp_ble_gatts_send_indicate(_gattsInterfaceHandle, _connectionHandle, ds->Handle, ds->SetDataLength, ds->SetData, false) != ESP_OK)
             {
-                TRACE_MESSAGE("Failed to send indication to connection ID 0x%04x", _connectionHandle);
+                TRACE_MESSAGE("Failed to send indication to connection ID 0x%04" PRIu16, _connectionHandle);
                 result = StatusCodes::Failure;
             }
         }
@@ -476,7 +476,7 @@ void BluetoothRequestHandler::DispatchRequest(Message *request)
             Stop(request);
             break;
         default:
-            TRACE_MESSAGE("Unknown Bluetooth message received, function %lu", request->Function);
+            TRACE_MESSAGE("Unknown Bluetooth message received, function %" PRIu32, request->Function);
             if (request->Payload != NULL)
             {
                 TRACE_HEX_BUFFER(request->Payload, request->PayloadLength);
@@ -509,7 +509,7 @@ void BluetoothRequestHandler::DispatchRequest(Message *request)
  */
 void BluetoothRequestHandler::EventHandlerHelper(esp_event_base_t eventBase, int32_t eventId, void *eventData)
 {
-    TRACE_MESSAGE("EventHandlerHelper: Enter with base %s and id 0x%x", eventBase, (uint) eventId);
+    TRACE_MESSAGE("EventHandlerHelper: Enter with base %s and id 0x%" PRIx32, eventBase, (uint) eventId);
 
     TRACE_MESSAGE("EventHandlerHelper: Exit");
 }
@@ -596,7 +596,7 @@ bool BluetoothRequestHandler::StartBluetoothService()
     ret = esp_bt_controller_enable(ESP_BT_MODE_BLE);
     if (ret)
     {
-        ERROR_MESSAGE("esp_bt_controller_enable failed, code %i, %s", ret, esp_err_to_name(ret));
+        ERROR_MESSAGE("esp_bt_controller_enable failed, code %" PRIi32 ", %s", ret, esp_err_to_name(ret));
         return false;
     }
 
@@ -604,7 +604,7 @@ bool BluetoothRequestHandler::StartBluetoothService()
     ret = esp_bluedroid_init();
     if (ret)
     {
-        ERROR_MESSAGE("esp_bluedroid_init failed %i", ret);
+        ERROR_MESSAGE("esp_bluedroid_init failed %" PRIi32, ret);
         return false;
     }
 
@@ -620,7 +620,7 @@ bool BluetoothRequestHandler::StartBluetoothService()
     ret = esp_ble_gatts_register_callback(this->GATTSProfileEventHandler);
     if (ret)
     {
-        ERROR_MESSAGE("gatts register error, error code = %x", ret);
+        ERROR_MESSAGE("gatts register error, error code = %" PRIi32, ret);
         return false;
     }
 
@@ -628,7 +628,7 @@ bool BluetoothRequestHandler::StartBluetoothService()
     ret = esp_ble_gap_register_callback(this->GAPEventHandler);
     if (ret)
     {
-        ERROR_MESSAGE("gap register error, error code = %x", ret);
+        ERROR_MESSAGE("gap register error, error code = %" PRIi32, ret);
         return false;
     }
 
@@ -636,7 +636,7 @@ bool BluetoothRequestHandler::StartBluetoothService()
     ret = esp_ble_gatts_app_register(MEADOW_PROFILE_APP_ID);
     if (ret)
     {
-        ERROR_MESSAGE("gatts app register error, error code = %x", ret);
+        ERROR_MESSAGE("gatts app register error, error code = %" PRIi32, ret);
         return false;
     }
 
@@ -644,7 +644,7 @@ bool BluetoothRequestHandler::StartBluetoothService()
     esp_err_t local_mtu_ret = esp_ble_gatt_set_local_mtu(BT_GATT_MTU);
     if (local_mtu_ret)
     {
-        ERROR_MESSAGE("Set local  MTU failed, error code = %x", local_mtu_ret);
+        ERROR_MESSAGE("Set local  MTU failed, error code = %" PRIi32, local_mtu_ret);
     }
 
     /* set the security iocap & auth_req & key size & init key response key parameters to the stack*/
@@ -792,7 +792,7 @@ void BluetoothRequestHandler::GetMacAddress(uint8_t *macAddress)
     {
         bzero(macAddress, 6);
     }
-    TRACE_MESSAGE("BT MAC address is %02x:%02x:%02x:%02x:%02x:%02x", macAddress[0], macAddress[1], macAddress[2], macAddress[3], macAddress[4], macAddress[5]);
+    TRACE_MESSAGE("BT MAC address is %02" PRIx8 ":%02" PRIx8 ":%02" PRIx8 ":%02" PRIx8 ":%02" PRIx8 ":%02" PRIx8, macAddress[0], macAddress[1], macAddress[2], macAddress[3], macAddress[4], macAddress[5]);
 
     TRACE_MESSAGE("GetMacAddress: Exit");
 }
@@ -889,7 +889,7 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
                 ret = esp_ble_gap_config_adv_data(GetInstance()->GetAdvertisingData());
                 if (ret)
                 {
-                    ERROR_MESSAGE("Config adv data failed, error code = %x, %s", ret, esp_err_to_name(ret));
+                    ERROR_MESSAGE("Config adv data failed, error code = %" PRIi32 ", %s", ret, esp_err_to_name(ret));
                 }
                 _advertisingDataConfigured = true;
 
@@ -897,7 +897,7 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
                 ret = esp_ble_gap_config_adv_data(GetInstance()->GetScanResponseData());
                 if (ret)
                 {
-                    ERROR_MESSAGE("Config scan response data failed, error code = %x, %s", ret, esp_err_to_name(ret));
+                    ERROR_MESSAGE("Config scan response data failed, error code = %" PRIi32 ", %s", ret, esp_err_to_name(ret));
                 }
                 _responseDataConfigured = true;
 
@@ -907,7 +907,7 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
                 esp_err_t create_attr_ret = esp_ble_gatts_create_attr_tab(GetInstance()->GetAttributeTable(), gatts_if, GetInstance()->GetAttributeTableLength(), BluetoothRequestHandler::INSTANCE_ID);
                 if (create_attr_ret)
                 {
-                    ERROR_MESSAGE("Create attr table failed, error code = %x", create_attr_ret);
+                    ERROR_MESSAGE("Create attr table failed, error code = %" PRIi32, create_attr_ret);
                 }
                 else
                 {
@@ -920,7 +920,7 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
             break;
         case ESP_GATTS_READ_EVT:
             {
-                TRACE_MESSAGE("ESP_GATTS_READ_EVT, reading handle 0x%04x need response=%i", param->read.handle, param->read.need_rsp);
+                TRACE_MESSAGE("ESP_GATTS_READ_EVT, reading handle 0x%04" PRIu16 " need response=%" PRIi32, param->read.handle, param->read.need_rsp);
 
                 if (param->read.need_rsp)
                 {
@@ -933,19 +933,19 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
                     // go get the currently known value from the manager
                     _manager.GetCurrentValueForAttributeHandle(param->read.handle, rsp.attr_value.value, &rsp.attr_value.len);
 
-                    TRACE_MESSAGE("  Sending read response of %i bytes", rsp.attr_value.len);
+                    TRACE_MESSAGE("  Sending read response of %" PRIu16 " bytes", rsp.attr_value.len);
                     ret = esp_ble_gatts_send_response(gatts_if, param->read.conn_id, param->read.trans_id, ESP_GATT_OK, &rsp);
 
                     if (ret)
                     {
-                        ERROR_MESSAGE("esp_ble_gatts_send_response failed, error code = %x", ret);
+                        ERROR_MESSAGE("esp_ble_gatts_send_response failed, error code = %" PRIi32, ret);
                     }
                 }
             }
             break;
         case ESP_GATTS_WRITE_EVT:
             {
-                TRACE_MESSAGE("ESP_GATTS_WRITE_EVT, write handle 0x%04x", param->write.handle);
+                TRACE_MESSAGE("ESP_GATTS_WRITE_EVT, write handle 0x%04" PRIx16, param->write.handle);
                 if (param->write.need_rsp)
                 {
                     OnDataWriteRequest(param->write.handle, param->write.value, param->write.len);
@@ -953,7 +953,7 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
                     ret = esp_ble_gatts_send_response(gatts_if, param->write.conn_id, param->write.trans_id, ESP_GATT_OK, NULL);
                     if (ret)
                     {
-                        ERROR_MESSAGE("esp_ble_gatts_send_response failed, error code = %x", ret);
+                        ERROR_MESSAGE("esp_ble_gatts_send_response failed, error code = %" PRIi32, ret);
                     }
                     else
                     {
@@ -998,7 +998,7 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
                 /* start security connect with peer device when receive the connect event sent by the master */
                 //              esp_ble_set_encryption(param->connect.remote_bda, ESP_BLE_SEC_ENCRYPT_MITM);
 
-                TRACE_MESSAGE("    Connection ID 0x%04x", param->connect.conn_id);
+                TRACE_MESSAGE("    Connection ID 0x%04" PRIx16, param->connect.conn_id);
                 _connectionHandle = param->connect.conn_id;
                 esp_ble_conn_update_params_t conn_params;
                 memcpy(conn_params.bda, param->connect.remote_bda, sizeof(esp_bd_addr_t));
@@ -1013,7 +1013,7 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
             GetInstance()->RaiseEvent(Esp32Interfaces::BlueTooth, BluetoothFunction::ClientConnectedEvent, StatusCodes::CompletedOk);
             break;
         case ESP_GATTS_DISCONNECT_EVT:
-            TRACE_MESSAGE("ESP_GATTS_DISCONNECT_EVT, disconnect reason 0x%x", param->disconnect.reason);
+            TRACE_MESSAGE("ESP_GATTS_DISCONNECT_EVT, disconnect reason 0x%" PRIx32, param->disconnect.reason);
             /* start advertising again when missing the connect */
             esp_ble_gap_start_advertising(GetInstance()->GetAdvertisingParameters());
             _connectionHandle = 0xffff;
@@ -1044,23 +1044,23 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
             TRACE_MESSAGE("ESP_GATTS_CREAT_ATTR_TAB_EVT");
             if (param->add_attr_tab.status != ESP_GATT_OK)
             {
-                ERROR_MESSAGE("Create attribute table failed, error code=0x%x", param->add_attr_tab.status);
+                ERROR_MESSAGE("Create attribute table failed, error code=0x%" PRIx32, param->add_attr_tab.status);
             }
             else if (param->add_attr_tab.num_handle != GetInstance()->GetAttributeTableLength())
             {
                 ERROR_MESSAGE(
-                    "Create attribute table abnormally, num_handle (%d) \
-                        doesn't equal to HRS_IDX_NB(%d)",
+                    "Create attribute table abnormally, num_handle (%" PRIu16 ") \
+                        doesn't equal to HRS_IDX_NB(%" PRIu16 ")",
                     param->add_attr_tab.num_handle, GetInstance()->GetAttributeTableLength());
             }
             else
             {
-                TRACE_MESSAGE("Create attribute table successfully, handle count = %d", param->add_attr_tab.num_handle);
+                TRACE_MESSAGE("Create attribute table successfully, handle count = %" PRIu16, param->add_attr_tab.num_handle);
                 // the assigned handles with be in param->add_attr_tab.handles - copy them off
                 _manager.SetHandles(param->add_attr_tab.handles, param->add_attr_tab.num_handle);
                 // now fire up the service (which is the first attribute in the attribute table) by handle.
                 // TODO: right now we're cheating
-                TRACE_MESSAGE("Starting service with handle 0x%04x", param->add_attr_tab.handles[0]);
+                TRACE_MESSAGE("Starting service with handle 0x%04" PRIx16, param->add_attr_tab.handles[0]);
                 GetInstance()->_serviceHandle = param->add_attr_tab.handles[0];
                 esp_ble_gatts_start_service(param->add_attr_tab.handles[0]);
             }
@@ -1135,7 +1135,7 @@ void BluetoothRequestHandler::GAPEventHandler(esp_gap_ble_cb_event_t event, esp_
             /* The app will receive this evt when the IO has DisplayYesNO capability and the peer device IO also has DisplayYesNo capability.
             show the passkey number to the user to confirm it with the number displayed by peer device. */
             esp_ble_confirm_reply(param->ble_security.ble_req.bd_addr, true);
-            TRACE_MESSAGE("ESP_GAP_BLE_NC_REQ_EVT, the passkey Notify number:%lu", param->ble_security.key_notif.passkey);
+            TRACE_MESSAGE("ESP_GAP_BLE_NC_REQ_EVT, the passkey Notify number:%" PRIu32, param->ble_security.key_notif.passkey);
             break;
         case ESP_GAP_BLE_SEC_REQ_EVT: // 10
             TRACE_MESSAGE("ESP_GAP_BLE_SEC_REQ_EVT");
@@ -1145,27 +1145,27 @@ void BluetoothRequestHandler::GAPEventHandler(esp_gap_ble_cb_event_t event, esp_
         case ESP_GAP_BLE_PASSKEY_NOTIF_EVT: // 11
             /// the app will receive this evt when the IO  has Output capability and the peer device IO has Input capability.
             /// show the passkey number to the user to input it in the peer device.
-            TRACE_MESSAGE("ESP_GAP_BLE_PASSKEY_NOTIF_EVT passkey Notify number:%lu", param->ble_security.key_notif.passkey);
+            TRACE_MESSAGE("ESP_GAP_BLE_PASSKEY_NOTIF_EVT passkey Notify number:%" PRIu32, param->ble_security.key_notif.passkey);
             break;
         case ESP_GAP_BLE_KEY_EVT: // 9
 
             // shows the ble key info share with peer device to the user.
-            TRACE_MESSAGE("ESP_GAP_BLE_KEY_EVT key type = %d", param->ble_security.ble_key.key_type);
+            TRACE_MESSAGE("ESP_GAP_BLE_KEY_EVT key type = %" PRId32, param->ble_security.ble_key.key_type);
             break;
         case ESP_GAP_BLE_AUTH_CMPL_EVT: // 8
             TRACE_MESSAGE("ESP_GAP_BLE_AUTH_CMPL_EVT");
             // auth complete
             if (param->ble_security.auth_cmpl.success)
             {
-                TRACE_MESSAGE("Auth success. mode = %d", param->ble_security.auth_cmpl.auth_mode);
+                TRACE_MESSAGE("Auth success. mode = %" PRId32, param->ble_security.auth_cmpl.auth_mode);
             }
             else
             {
-                ERROR_MESSAGE("Auth failed. reason = 0x%x", param->ble_security.auth_cmpl.fail_reason);
+                ERROR_MESSAGE("Auth failed. reason = 0x%" PRIx32, param->ble_security.auth_cmpl.fail_reason);
             }
             break;
         case ESP_GAP_BLE_REMOVE_BOND_DEV_COMPLETE_EVT: // 23
-            DEBUG_MESSAGE("ESP_GAP_BLE_REMOVE_BOND_DEV_COMPLETE_EVT status = %d", param->remove_bond_dev_cmpl.status);
+            DEBUG_MESSAGE("ESP_GAP_BLE_REMOVE_BOND_DEV_COMPLETE_EVT status = %" PRId32, param->remove_bond_dev_cmpl.status);
             TRACE_MESSAGE("ESP_GAP_BLE_REMOVE_BOND_DEV");
             TRACE_MESSAGE("-----ESP_GAP_BLE_REMOVE_BOND_DEV----");
             TRACE_HEX_BUFFER(param->remove_bond_dev_cmpl.bd_addr, sizeof(esp_bd_addr_t));
@@ -1176,7 +1176,7 @@ void BluetoothRequestHandler::GAPEventHandler(esp_gap_ble_cb_event_t event, esp_
                 TRACE_MESSAGE("ESP_GAP_BLE_SET_LOCAL_PRIVACY_COMPLETE_EVT");
                 if (param->local_privacy_cmpl.status != ESP_BT_STATUS_SUCCESS)
                 {
-                    ERROR_MESSAGE("Config local privacy failed, error status = %x", param->local_privacy_cmpl.status);
+                    ERROR_MESSAGE("Config local privacy failed, error status = %" PRId32, param->local_privacy_cmpl.status);
                     break;
                 }
 
@@ -1184,7 +1184,7 @@ void BluetoothRequestHandler::GAPEventHandler(esp_gap_ble_cb_event_t event, esp_
                 esp_err_t ret = esp_ble_gap_config_adv_data(GetInstance()->GetAdvertisingData());
                 if (ret)
                 {
-                    ERROR_MESSAGE("Config adv data failed, error code = %x", ret);
+                    ERROR_MESSAGE("Config adv data failed, error code = %" PRIi32, ret);
                 }
                 else
                 {
@@ -1194,7 +1194,7 @@ void BluetoothRequestHandler::GAPEventHandler(esp_gap_ble_cb_event_t event, esp_
                 ret = esp_ble_gap_config_adv_data(GetInstance()->GetScanResponseData());
                 if (ret)
                 {
-                    ERROR_MESSAGE("Config adv data failed, error code = %x", ret);
+                    ERROR_MESSAGE("Config adv data failed, error code = %" PRIi32, ret);
                 }
                 else
                 {
@@ -1220,7 +1220,7 @@ void BluetoothRequestHandler::GAPEventHandler(esp_gap_ble_cb_event_t event, esp_
             }
             break;
         default:
-            TRACE_MESSAGE("Unhandled GAP event, ID: 0x%08x", event);
+            TRACE_MESSAGE("Unhandled GAP event, ID: 0x%08" PRIx32, event);
             break;
     }
 
