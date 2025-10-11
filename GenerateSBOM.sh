@@ -22,6 +22,9 @@ case "$(uname -a)" in
     ;;
 esac
 
+VERBOSE=false
+DRYRUN=false
+
 # Check if the shell is interactive.
 if [[ $- == *i* ]]; then
   red=`tput setaf 1`
@@ -42,18 +45,10 @@ run_command() {
   fi
 }
 
-check_command_status() {
-  exit_status=$?
-  if [ $exit_status -ne 0 ]; then
-    printf " ${red}error${reset}\n"
-    if ! $VERBOSE; then
-        printf "Re-run the script with --verbose flag to see the output.\n"
-    fi
-    exit 1
-  else
-    printf " ${green}success${reset}\n"
-  fi
-}
+#
+# Generate the SBOM (Software Bill of Materials) in SPDX format and them check the SBOM and generate a report file.
+#
+echo "Generating SBOM..."
+run_command "esp-idf-sbom create --rem-unused --rem-config -o $scriptdir/sbom/MeadowComms.spdx $scriptdir/build/project_description.json"
+run_command "esp-idf-sbom check $scriptdir/sbom/MeadowComms.spdx -o $scriptdir/sbom/MeadowComms.txt"
 
-idf.py openocd gdb --gdbinit "$scriptdir/gdbinit.tohost"
-sysviewtrace_proc.py -p -b build/MeadowComms.elf "$scriptdir/heap.svdat"
