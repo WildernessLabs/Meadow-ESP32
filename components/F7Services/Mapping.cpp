@@ -945,3 +945,19 @@ char *Mapping::GetStringValue(Mapping::StringMappingTable mapping, int32_t key)
 
     return (result);
 }
+
+/**
+ * @brief Map the ESP errno to a NuttX errno value.
+ *
+ * @param espErrno ESP IDF errno value.
+ * @return int32_t NuttX errno value.
+ */
+int32_t Mapping::NuttxErrno(int32_t espErrno)
+{
+    int32_t result = 0;
+    if (GetStmValue(Mapping::Errno, espErrno, &result) != 0)
+    {
+        GetStmValue(Mapping::Errno, EFAULT, &result);
+    }
+    return (result);
+}
