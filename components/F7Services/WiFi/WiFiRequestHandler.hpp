@@ -961,11 +961,6 @@ private:
      */
     static bool IsConnected();
 
-    /**
-     *  @brief Map the errno variable from an ESP to a STM32 value.
-     */
-    static int32_t MapErrno(int32_t);
-
 public:
     /**
      *  @brief Name of the component / task for the WiFi system.

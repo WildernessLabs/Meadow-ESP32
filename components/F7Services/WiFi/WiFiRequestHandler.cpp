@@ -741,19 +741,6 @@ void WiFiRequestHandler::ClearIpAndDisconnectData()
 }
 
 /**
- *  @brief Map the errno variable from an ESP to a STM32 value.
- */
-int32_t WiFiRequestHandler::MapErrno(int32_t e)
-{
-    int32_t result = 0;
-    if (Mapping::GetStmValue(Mapping::Errno, e, &result) != 0)
-    {
-        Mapping::GetStmValue(Mapping::Errno, EFAULT, &result);
-    }
-    return (result);
-}
-
-/**
  *  @brief Callback to be executed when the NTP time server has provided updated time information.
  *
  *  @param tv
