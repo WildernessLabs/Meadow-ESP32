@@ -948,7 +948,7 @@ char *Mapping::GetStringValue(Mapping::StringMappingTable mapping, int32_t key)
 
 /**
  * @brief Map the ESP errno to a NuttX errno value.
- * 
+ *
  * @param espErrno ESP IDF errno value.
  * @return int32_t NuttX errno value.
  */
