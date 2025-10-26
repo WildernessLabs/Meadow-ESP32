@@ -73,7 +73,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetAddrInfo(Esp32Messaging::GetAddr
     struct addrinfo *addressInformation;
     int errorCode = getaddrinfo(request->NodeName, request->ServName, &hints, &addressInformation);
 
-    response->AddrInfoResponseErrno = MapErrno(errorCode);
+    response->AddrInfoResponseErrno = Mapping::NuttxErrno(errorCode);
     if ((errorCode == 0) || (addressInformation != NULL))
     {
         Esp32Messaging::SockAddr sa = {};
@@ -103,7 +103,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetAddrInfo(Esp32Messaging::GetAddr
     }
     else
     {
-        response->AddrInfoResponseErrno = MapErrno(errno);
+        response->AddrInfoResponseErrno = Mapping::NuttxErrno(errno);
         vPortFree(addressInformation);
     }
     return (StatusCodes::CompletedOk);
@@ -147,7 +147,7 @@ void WiFiRequestHandler::GetAddrInfo(void *vpMessage)
         }
         else
         {
-            response->AddrInfoResponseErrno = MapErrno(ENETDOWN);
+            response->AddrInfoResponseErrno = Mapping::NuttxErrno(ENETDOWN);
         }
     }
     else
@@ -215,7 +215,7 @@ void WiFiRequestHandler::Socket(void *vpMessage)
             if (response.Result < 0)
             {
                 TRACE_MESSAGE("Socket: Error code: %" PRIi32 " - %s", errno, strerror(errno));
-                response.ResponseErrno = MapErrno(errno);
+                response.ResponseErrno = Mapping::NuttxErrno(errno);
             }
             else
             {
@@ -233,7 +233,7 @@ void WiFiRequestHandler::Socket(void *vpMessage)
     else
     {
         response.Result = -1;
-        response.ResponseErrno = MapErrno(ENETDOWN);
+        response.ResponseErrno = Mapping::NuttxErrno(ENETDOWN);
     }
 
     vPortFree(message->Payload);
@@ -319,13 +319,13 @@ void WiFiRequestHandler::Connect(void *vpMessage)
                     if (response.Result != 0)
                     {
                         TRACE_MESSAGE("Connect: Error code: %d - %s", errno, strerror(errno));
-                        response.ResponseErrno = MapErrno(errno);
+                        response.ResponseErrno = Mapping::NuttxErrno(errno);
                     }
                 }
                 else
                 {
                     response.Result = -1;
-                    response.ResponseErrno = MapErrno(EFAULT);
+                    response.ResponseErrno = Mapping::NuttxErrno(EFAULT);
                 }
                 vPortFree(socketAddress);
             }
@@ -343,7 +343,7 @@ void WiFiRequestHandler::Connect(void *vpMessage)
     else
     {
         response.Result = -1;
-        response.ResponseErrno = MapErrno(ENETDOWN);
+        response.ResponseErrno = Mapping::NuttxErrno(ENETDOWN);
     }
 
     vPortFree(message->Payload);
@@ -440,7 +440,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetSendReceiveOption(int socketHand
     response.OptionValue = static_cast<uint8_t *>(malloc(response.OptionValueLength));
     if (response.OptionValue == NULL)
     {
-        response.ResponseErrno = MapErrno(ENOBUFS);
+        response.ResponseErrno = Mapping::NuttxErrno(ENOBUFS);
         response.Result = -1;
         response.OptionValueLength = 0;
         result = StatusCodes::EspOutOfMemory;
@@ -474,7 +474,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetLingerOption(int socket, int lev
     response.OptionValue = static_cast<uint8_t *>(malloc(response.OptionValueLength));
     if (response.OptionValue == NULL)
     {
-        response.ResponseErrno = MapErrno(ENOBUFS);
+        response.ResponseErrno = Mapping::NuttxErrno(ENOBUFS);
         response.Result = -1;
         response.OptionValueLength = 0;
         result = StatusCodes::EspOutOfMemory;
@@ -507,7 +507,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetSendReceiveBuffer(int socket, in
     response.OptionValue = static_cast<uint8_t *>(malloc(response.OptionValueLength));
     if (response.OptionValue == NULL)
     {
-        response.ResponseErrno = MapErrno(ENOBUFS);
+        response.ResponseErrno = Mapping::NuttxErrno(ENOBUFS);
         response.Result = -1;
         response.OptionValueLength = 0;
         result = StatusCodes::EspOutOfMemory;
@@ -547,7 +547,7 @@ void WiFiRequestHandler::GetSockOpt(void *vpMessage)
             {
                 TRACE_MESSAGE("GetSockOpt: Unknown option: %" PRIi32, request->OptionName);
                 response.Result = -1;
-                response.ResponseErrno = MapErrno(ENOPROTOOPT);
+                response.ResponseErrno = Mapping::NuttxErrno(ENOPROTOOPT);
             }
             else
             {
@@ -555,7 +555,7 @@ void WiFiRequestHandler::GetSockOpt(void *vpMessage)
                 Mapping::GetEspValue(Mapping::SocketLevel, request->Level, &level);
                 TRACE_MESSAGE("GetSockOpt: Getting socket option level 0x%" PRIx32 ", option name 0x%" PRIx32 " for socket %" PRIi32, (uint) level, (uint) optionName, request->SocketHandle);
                 response.Result = -1;
-                response.ResponseErrno = MapErrno(ENOPROTOOPT);
+                response.ResponseErrno = Mapping::NuttxErrno(ENOPROTOOPT);
                 switch (optionName)
                 {
                     case SO_SNDTIMEO:   /* Get the send timeout */
@@ -592,7 +592,7 @@ void WiFiRequestHandler::GetSockOpt(void *vpMessage)
         else
         {
             response.Result = -1;
-            response.ResponseErrno = MapErrno(ENOMEM);
+            response.ResponseErrno = Mapping::NuttxErrno(ENOMEM);
             result = StatusCodes::EspOutOfMemory;
         }
         TRACE_MESSAGE("GetSockOpt: Result: %" PRIi32 ", errno: %" PRIi32 " - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
@@ -602,7 +602,7 @@ void WiFiRequestHandler::GetSockOpt(void *vpMessage)
     else
     {
         response.Result = -1;
-        response.ResponseErrno = MapErrno(ENETDOWN);
+        response.ResponseErrno = Mapping::NuttxErrno(ENETDOWN);
     }
 
     if (result != StatusCodes::CompletedOk)
@@ -844,7 +844,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetSockOpt(Esp32Messaging::SetSockO
 
     if (response.Result != 0)
     {
-        response.ResponseErrno = MapErrno(errno);
+        response.ResponseErrno = Mapping::NuttxErrno(errno);
     }
     TRACE_MESSAGE("SetSockOpt: Result: %ld, errno: %ld - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
     return (StatusCodes::CompletedOk);
@@ -884,7 +884,7 @@ void WiFiRequestHandler::SetSockOpt(void *vpMessage)
         else
         {
             response.Result = -1;
-            response.ResponseErrno = MapErrno(ENOMEM);
+            response.ResponseErrno = Mapping::NuttxErrno(ENOMEM);
             result = StatusCodes::EspOutOfMemory;
         }
 
@@ -893,7 +893,7 @@ void WiFiRequestHandler::SetSockOpt(void *vpMessage)
     else
     {
         response.Result = -1;
-        response.ResponseErrno = MapErrno(ENETDOWN);
+        response.ResponseErrno = Mapping::NuttxErrno(ENETDOWN);
     }
 
     vPortFree(message->Payload);
@@ -953,7 +953,7 @@ void WiFiRequestHandler::Write(void *vpMessage)
             response.Result = write(request->SocketHandle, request->Buffer, request->Count);
             if (response.Result < 0)
             {
-                response.ResponseErrno = MapErrno(errno);
+                response.ResponseErrno = Mapping::NuttxErrno(errno);
             }
 
             if ((request->BufferLength > 0) && request->Buffer)
@@ -970,7 +970,7 @@ void WiFiRequestHandler::Write(void *vpMessage)
     else
     {
         response.Result = -1;
-        response.ResponseErrno = MapErrno(ENETDOWN);
+        response.ResponseErrno = Mapping::NuttxErrno(ENETDOWN);
     }
 
     vPortFree(message->Payload);
@@ -1036,7 +1036,7 @@ void WiFiRequestHandler::Read(void *vpMessage)
                 response.ReadResponseResult = read(request->SocketHandle, response.Buffer, request->Count);
                 if (response.ReadResponseResult < 0)
                 {
-                    response.ReadResponseErrno = MapErrno(errno);
+                    response.ReadResponseErrno = Mapping::NuttxErrno(errno);
                     free(response.Buffer);
                     response.Buffer = NULL;
                     response.BufferLength = 0;
@@ -1056,7 +1056,7 @@ void WiFiRequestHandler::Read(void *vpMessage)
     else
     {
         response.ReadResponseResult = -1;
-        response.ReadResponseErrno = MapErrno(ENETDOWN);
+        response.ReadResponseErrno = Mapping::NuttxErrno(ENETDOWN);
     }
 
     vPortFree(message->Payload);
@@ -1118,7 +1118,7 @@ void WiFiRequestHandler::Close(void *vpMessage)
             response.Result = close(request->SocketHandle);
             if (response.Result < 0)
             {
-                response.ResponseErrno = MapErrno(errno);
+                response.ResponseErrno = Mapping::NuttxErrno(errno);
             }
             vPortFree(request);
         }
@@ -1130,7 +1130,7 @@ void WiFiRequestHandler::Close(void *vpMessage)
     else
     {
         response.Result = -1;
-        response.ResponseErrno = MapErrno(ENETDOWN);
+        response.ResponseErrno = Mapping::NuttxErrno(ENETDOWN);
     }
 
     vPortFree(message->Payload);
@@ -1195,12 +1195,12 @@ void WiFiRequestHandler::Send(void *vpMessage)
                 response.Result = send(request->SocketHandle, request->Buffer, request->Length, mappedFlags);
                 if (response.Result < 0)
                 {
-                    response.ResponseErrno = MapErrno(errno);
+                    response.ResponseErrno = Mapping::NuttxErrno(errno);
                 }
             }
             else
             {
-                response.ResponseErrno = MapErrno(EFAULT);
+                response.ResponseErrno = Mapping::NuttxErrno(EFAULT);
             }
 
             TRACE_MESSAGE("Send: Sent %" PRIi32 " bytes.", request->Length);
@@ -1221,7 +1221,7 @@ void WiFiRequestHandler::Send(void *vpMessage)
     else
     {
         response.Result = -1;
-        response.ResponseErrno = MapErrno(ENETDOWN);
+        response.ResponseErrno = Mapping::NuttxErrno(ENETDOWN);
     }
 
     vPortFree(message->Payload);
@@ -1281,7 +1281,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::SendTo(Esp32Messaging::SendToReques
             else
             {
                 response.Result = -1;
-                response.ResponseErrno = MapErrno(ENOMEM);
+                response.ResponseErrno = Mapping::NuttxErrno(ENOMEM);
                 return (StatusCodes::EspOutOfMemory);
             }
         }
@@ -1313,14 +1313,14 @@ StatusCodes::StatusCodes WiFiRequestHandler::SendTo(Esp32Messaging::SendToReques
 
         if (response.Result < 0)
         {
-            response.ResponseErrno = MapErrno(errno);
+            response.ResponseErrno = Mapping::NuttxErrno(errno);
         }
         vPortFree(socketAddress);
     }
     else
     {
         response.Result = -1;
-        response.ResponseErrno = MapErrno(EFAULT);
+        response.ResponseErrno = Mapping::NuttxErrno(EFAULT);
         return (StatusCodes::Failure);
     }
     return (StatusCodes::CompletedOk);
@@ -1367,7 +1367,7 @@ void WiFiRequestHandler::SendTo(void *vpMessage)
     else
     {
         response.Result = -1;
-        response.ResponseErrno = MapErrno(ENETDOWN);
+        response.ResponseErrno = Mapping::NuttxErrno(ENETDOWN);
     }
     vPortFree(message->Payload);
 
@@ -1496,7 +1496,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::RecvFrom(Esp32Messaging::RecvFromRe
     TRACE_MESSAGE("RecvFrom: Result: %" PRIi32 ", errno: %" PRIi32 " - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
     if (response.Result < 0)
     {
-        response.ResponseErrno = MapErrno(response.ResponseErrno);
+        response.ResponseErrno = Mapping::NuttxErrno(response.ResponseErrno);
     }
     return (StatusCodes::CompletedOk);
 }
@@ -1529,13 +1529,13 @@ void WiFiRequestHandler::RecvFrom(void *vpMessage)
         else
         {
             response.Result = -1;
-            response.ResponseErrno = MapErrno(ENOMEM);
+            response.ResponseErrno = Mapping::NuttxErrno(ENOMEM);
         }
     }
     else
     {
         response.Result = -1;
-        response.ResponseErrno = MapErrno(ENETDOWN);
+        response.ResponseErrno = Mapping::NuttxErrno(ENETDOWN);
     }
 
     vPortFree(message->Payload);
@@ -1587,7 +1587,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::Bind(Esp32Messaging::BindRequest *r
     if (socketAddress == NULL)
     {
         response.Result = -1;
-        response.ResponseErrno = MapErrno(ENOMEM);
+        response.ResponseErrno = Mapping::NuttxErrno(ENOMEM);
         return (StatusCodes::EspOutOfMemory);
     }
 
@@ -1616,13 +1616,13 @@ StatusCodes::StatusCodes WiFiRequestHandler::Bind(Esp32Messaging::BindRequest *r
         response.Result = bind(request->SocketHandle, (struct sockaddr *) &sa, sizeof(sa));
         if (response.Result != 0)
         {
-            response.ResponseErrno = MapErrno(errno);
+            response.ResponseErrno = Mapping::NuttxErrno(errno);
         }
     }
     else
     {
         response.Result = -1;
-        response.ResponseErrno = MapErrno(EFAULT);
+        response.ResponseErrno = Mapping::NuttxErrno(EFAULT);
     }
 
     TRACE_MESSAGE("Bind: Error code: %" PRIi32 " - %s", errno, strerror(errno));
@@ -1663,7 +1663,7 @@ void WiFiRequestHandler::Bind(void *vpMessage)
     else
     {
         response.Result = -1;
-        response.ResponseErrno = MapErrno(ENETDOWN);
+        response.ResponseErrno = Mapping::NuttxErrno(ENETDOWN);
     }
 
     vPortFree(message->Payload);
@@ -1720,7 +1720,7 @@ void WiFiRequestHandler::Listen(void *vpMessage)
         if (request)
         {
             response.Result = listen(request->SocketHandle, request->BackLog);
-            response.ResponseErrno = (response.Result == 0) ? 0 : MapErrno(errno);
+            response.ResponseErrno = (response.Result == 0) ? 0 : Mapping::NuttxErrno(errno);
             vPortFree(request);
         }
         else
@@ -1731,7 +1731,7 @@ void WiFiRequestHandler::Listen(void *vpMessage)
     else
     {
         response.Result = -1;
-        response.ResponseErrno = MapErrno(ENETDOWN);
+        response.ResponseErrno = Mapping::NuttxErrno(ENETDOWN);
     }
 
     vPortFree(message->Payload);
@@ -1815,7 +1815,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::Accept(Esp32Messaging::AcceptReques
     {
         response.AddrLength = 0;
         response.Addr = nullptr;
-        response.ResponseErrno = MapErrno(errno);
+        response.ResponseErrno = Mapping::NuttxErrno(errno);
     }
     return (StatusCodes::CompletedOk);
 }
@@ -1853,7 +1853,7 @@ void WiFiRequestHandler::Accept(void *vpMessage)
     else
     {
         response.Result = -1;
-        response.ResponseErrno = MapErrno(ENETDOWN);
+        response.ResponseErrno = Mapping::NuttxErrno(ENETDOWN);
     }
 
     vPortFree(message->Payload);
@@ -1930,7 +1930,7 @@ void WiFiRequestHandler::Ioctl(void *vpMessage)
                     if (response.Addr == NULL)
                     {
                         response.Result = -1;
-                        response.ResponseErrno = MapErrno(ENOMEM);
+                        response.ResponseErrno = Mapping::NuttxErrno(ENOMEM);
                         result = StatusCodes::EspOutOfMemory;
                     }
                     else
@@ -1945,7 +1945,7 @@ void WiFiRequestHandler::Ioctl(void *vpMessage)
                 if (response.Addr == NULL)
                 {
                     response.Result = -1;
-                    response.ResponseErrno = MapErrno(ENOMEM);
+                    response.ResponseErrno = Mapping::NuttxErrno(ENOMEM);
                     result = StatusCodes::EspOutOfMemory;
                 }
                 else
@@ -1963,7 +1963,7 @@ void WiFiRequestHandler::Ioctl(void *vpMessage)
                     if (response.Addr == NULL)
                     {
                         response.Result = -1;
-                        response.ResponseErrno = MapErrno(ENOMEM);
+                        response.ResponseErrno = Mapping::NuttxErrno(ENOMEM);
                         result = StatusCodes::EspOutOfMemory;
                     }
                     else
@@ -1984,7 +1984,7 @@ void WiFiRequestHandler::Ioctl(void *vpMessage)
                 break;
             default:
                 response.Result = -1;
-                response.ResponseErrno = MapErrno(EINVAL);
+                response.ResponseErrno = Mapping::NuttxErrno(EINVAL);
                 TRACE_MESSAGE("Unknown ioctl request %04" PRIx16, (uint) request->Command);
                 break;
         }
@@ -1993,7 +1993,7 @@ void WiFiRequestHandler::Ioctl(void *vpMessage)
     else
     {
         response.Result = -1;
-        response.ResponseErrno = MapErrno(ENETDOWN);
+        response.ResponseErrno = Mapping::NuttxErrno(ENETDOWN);
     }
 
     vPortFree(message->Payload);
@@ -2058,7 +2058,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetSockPeerName(Esp32Messaging::Get
             response.AddrLength = 0;
             response.Addr = nullptr;
             response.Result = -1;
-            response.ResponseErrno = MapErrno(ENOMEM);
+            response.ResponseErrno = Mapping::NuttxErrno(ENOMEM);
             return (StatusCodes::EspOutOfMemory);
         }
         bzero(sockAddr, sizeof(Esp32Messaging::SockAddr));
@@ -2074,7 +2074,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetSockPeerName(Esp32Messaging::Get
             response.AddrLength = 0;
             response.Addr = nullptr;
             response.Result = -1;
-            response.ResponseErrno = MapErrno(ENOMEM);
+            response.ResponseErrno = Mapping::NuttxErrno(ENOMEM);
             return (StatusCodes::EspOutOfMemory);
         }
         Encoders::EncodeSockAddr(sockAddr, response.Addr);
@@ -2089,7 +2089,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetSockPeerName(Esp32Messaging::Get
     {
         response.AddrLength = 0;
         response.Addr = nullptr;
-        response.ResponseErrno = MapErrno(errno);
+        response.ResponseErrno = Mapping::NuttxErrno(errno);
         ERROR_MESSAGE("Failure: Result code %" PRIi32 " (%s), errno %" PRIi32 " (%s)", response.Result, esp_err_to_name(response.Result), errno, strerror(errno));
     }
     return StatusCodes::CompletedOk;
@@ -2125,7 +2125,7 @@ void WiFiRequestHandler::GetSockPeerName(void *vpMessage, WiFiFunction::WiFiFunc
         else
         {
             response.Result = -1;
-            response.ResponseErrno = MapErrno(ENOMEM);
+            response.ResponseErrno = Mapping::NuttxErrno(ENOMEM);
             result = StatusCodes::EspOutOfMemory;
         }
 
@@ -2134,7 +2134,7 @@ void WiFiRequestHandler::GetSockPeerName(void *vpMessage, WiFiFunction::WiFiFunc
     else
     {
         response.Result = -1;
-        response.ResponseErrno = MapErrno(ENETDOWN);
+        response.ResponseErrno = Mapping::NuttxErrno(ENETDOWN);
     }
 
     vPortFree(message->Payload);
@@ -2387,7 +2387,7 @@ void WiFiRequestHandler::PollSocket(void *requestId)
         response.Result = poll(fds, 2, -1);
         if (response.Result < 0)
         {
-            response.ResponseErrno = MapErrno(errno);
+            response.ResponseErrno = Mapping::NuttxErrno(errno);
         }
         else
         {
@@ -2409,7 +2409,7 @@ void WiFiRequestHandler::PollSocket(void *requestId)
             else
             {
                 response.Result = -1;
-                response.ResponseErrno = MapErrno(EFAULT);
+                response.ResponseErrno = Mapping::NuttxErrno(EFAULT);
             }
             UnlockPollRequests();
         }
@@ -2482,7 +2482,7 @@ void WiFiRequestHandler::Poll(void *vpMessage)
 
             if (response.Result < 0)
             {
-                response.ResponseErrno = MapErrno(errno);
+                response.ResponseErrno = Mapping::NuttxErrno(errno);
             }
             vPortFree(request);
         }
@@ -2494,7 +2494,7 @@ void WiFiRequestHandler::Poll(void *vpMessage)
     else
     {
         response.Result = -1;
-        response.ResponseErrno = MapErrno(ENETDOWN);
+        response.ResponseErrno = Mapping::NuttxErrno(ENETDOWN);
     }
 
     vPortFree(message->Payload);
