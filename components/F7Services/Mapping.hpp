@@ -250,6 +250,11 @@ public:
      *  @brief Map the ESP error codes to a StatusCode value.
      */
     static StatusCodes::StatusCodes GetStatusCode(esp_err_t);
+
+    /**
+     *  @brief Map the ESP errno to a NuttX errno value.
+     */
+    static int32_t NuttxErrno(int32_t espErrno);
 };
 
 #endif /* MAIN_MAPPING_HPP */
