@@ -837,6 +837,8 @@ void BluetoothRequestHandler::Start(Message *request)
     Esp32Messaging::BTStackConfig *config = Encoders::ExtractBTStackConfig(request->Payload);
     request->DeletePayload();
 
+    TRACE_MESSAGE("Building Bluetooth graph from JSON configuration...");
+    TRACE_MESSAGE("%s", config->Config);
     _manager.BuildGraphFromJson(config->Config);
     vPortFree(config->Config);
     vPortFree(config);
