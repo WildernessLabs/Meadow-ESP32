@@ -154,12 +154,20 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
     {
         ERROR_MESSAGE("Cannot take the synchronisation semaphore.");
     }
-    xTaskCreate(SynchronisationTask, "SPISyncTask", 2048 * 2, this, PRIORITY_SPI_SYNCHRONISATION_TASK, &SpiTransportProvider::_synchronisationTaskHandle);
+    if (xTaskCreate(SynchronisationTask, "SPISyncTask", SYNCHRONISATION_TASK_STACK_SIZE, this, PRIORITY_SPI_SYNCHRONISATION_TASK, &SpiTransportProvider::_synchronisationTaskHandle) != pdPASS)
+    {
+        ERROR_MESSAGE("Failed to create SPI synchronisation task");
+        return;
+    }
 
     /*
      *  Set up the task and that will process the SPI messages.
      */
-    xTaskCreate(Task, COMPONENT_NAME, 2048 * 2, this, PRIORITY_SPI_TASK, &SpiTransportProvider::_transportProviderTaskHandle);
+    if (xTaskCreate(Task, COMPONENT_NAME, SPI_TASK_STACK_SIZE, this, PRIORITY_SPI_TASK, &SpiTransportProvider::_transportProviderTaskHandle) != pdPASS)
+    {
+        ERROR_MESSAGE("Failed to create SPI transport provider task");
+        return;
+    }
 
     SendControlMessageToStm32(ControlMessageType::Ready);
 }
