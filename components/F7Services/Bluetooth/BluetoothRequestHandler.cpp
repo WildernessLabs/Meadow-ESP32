@@ -188,7 +188,11 @@ void BluetoothRequestHandler::Setup()
 
     ESP_ERROR_CHECK(esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT));
 
-    xTaskCreate(Task, _taskName, TASK_STACK_SIZE, this, PRIORITY_BLUETOOTH_TASK, &_taskHandle);
+    if (xTaskCreate(Task, _taskName, TASK_STACK_SIZE, this, PRIORITY_BLUETOOTH_TASK, &_taskHandle) != pdPASS)
+    {
+        ERROR_MESSAGE("Failed to create Bluetooth request handler task");
+        return;
+    }
 
     TRACE_MESSAGE("Setup: Exit");
 }
