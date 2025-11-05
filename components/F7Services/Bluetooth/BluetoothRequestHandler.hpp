@@ -69,11 +69,6 @@ private:
     static const int ADVERTISING_SERVICE_UUID_LENGTH = 32;
 
     /**
-     *  @brief Stack size for the Bluetooth request handler task.
-     */
-    static constexpr uint32_t TASK_STACK_SIZE = 8192;
-
-    /**
      *  @brief Event group containing 24-bits used to indicate the state of the WiFi connection.
      */
     EventGroupHandle_t _xBtEventGroup = nullptr;

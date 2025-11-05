@@ -174,11 +174,6 @@ private:
     static const int WIFI_ALL_BITS = 0x008fffff;
 
     /**
-     *  @brief Stack size for the WiFi task.
-     */
-    static constexpr uint32_t TASK_STACK_SIZE = 8192;
-
-    /**
      *  @brief Default scan method for WiFi networks.
      */
     const wifi_scan_method_t DEFAULT_SCAN_METHOD = WIFI_FAST_SCAN;

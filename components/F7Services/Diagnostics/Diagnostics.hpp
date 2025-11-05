@@ -21,11 +21,6 @@ class Diagnostics
 {
 private:
     /**
-     *  @brief Stack size for the diagnostics task.
-     */
-    static constexpr uint32_t TASK_STACK_SIZE = 8192;
-    
-    /**
      *  @brief Lock for controlling access to the members of this class.
      */
     static SemaphoreHandle_t _outputBinarySemaphore;

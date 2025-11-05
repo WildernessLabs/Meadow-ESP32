@@ -90,7 +90,7 @@ void Diagnostics::Setup()
         xSemaphoreGive(_outputBinarySemaphore);
     }
 
-    BaseType_t result = xTaskCreate(Thread, "Diagnostics", TASK_STACK_SIZE, NULL, 5, &_diagnosticsTaskHandle);
+    BaseType_t result = xTaskCreate(Thread, "Diagnostics", 4096, NULL, 5, &_diagnosticsTaskHandle);
 
     if (result != pdPASS)
     {

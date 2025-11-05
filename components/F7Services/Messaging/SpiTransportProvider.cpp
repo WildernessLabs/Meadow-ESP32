@@ -154,12 +154,12 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
     {
         ERROR_MESSAGE("Cannot take the synchronisation semaphore.");
     }
-    xTaskCreate(SynchronisationTask, "SPISyncTask", SYNCHRONISATION_TASK_STACK_SIZE, this, PRIORITY_SPI_SYNCHRONISATION_TASK, &SpiTransportProvider::_synchronisationTaskHandle);
+    xTaskCreate(SynchronisationTask, "SPISyncTask", 2048 * 2, this, PRIORITY_SPI_SYNCHRONISATION_TASK, &SpiTransportProvider::_synchronisationTaskHandle);
 
     /*
      *  Set up the task and that will process the SPI messages.
      */
-    xTaskCreate(Task, COMPONENT_NAME, SPI_TASK_STACK_SIZE, this, PRIORITY_SPI_TASK, &SpiTransportProvider::_transportProviderTaskHandle);
+    xTaskCreate(Task, COMPONENT_NAME, 2048 * 2, this, PRIORITY_SPI_TASK, &SpiTransportProvider::_transportProviderTaskHandle);
 
     SendControlMessageToStm32(ControlMessageType::Ready);
 }

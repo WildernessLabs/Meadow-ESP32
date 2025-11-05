@@ -22,12 +22,12 @@ private:
     /**
      *  @brief Maximum number of threads we should allow.
      */
-    const int MAX_THREADS = 10;
+    const int MAX_THREADS = 99;
 
     /**
      *  @brief Size of the thread pool.
      */
-    const int THREAD_POOL_SIZE = 5;
+    const int THREAD_POOL_SIZE = 10;
 
     /**
      *  @brief Number of threads in the threadpool.

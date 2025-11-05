@@ -188,7 +188,7 @@ void BluetoothRequestHandler::Setup()
 
     ESP_ERROR_CHECK(esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT));
 
-    xTaskCreate(Task, _taskName, TASK_STACK_SIZE, this, PRIORITY_BLUETOOTH_TASK, &_taskHandle);
+    xTaskCreate(Task, _taskName, 4096, this, PRIORITY_BLUETOOTH_TASK, &_taskHandle);
 
     TRACE_MESSAGE("Setup: Exit");
 }
