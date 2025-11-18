@@ -8,6 +8,7 @@
 #include "Logging.hpp"
 #include "ThreadPool.hpp"
 #include "Exceptions/ThreadPoolException.hpp"
+#include "Utils.hpp"
 
 /*
  * ----------------------------------------------------------------------------
@@ -97,7 +98,7 @@ ThreadPool::~ThreadPool()
                 delete _threads[index];
             }
         }
-        vPortFree(_threadsAvailable);
+        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&_threads));
     }
 }
 
