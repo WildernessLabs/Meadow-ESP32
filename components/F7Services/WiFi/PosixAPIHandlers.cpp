@@ -62,7 +62,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetAddrInfo(Esp32Messaging::GetAddr
     struct addrinfo hints = {};
     hints.ai_family = extractedHints->Family;
     hints.ai_socktype = extractedHints->SocketType;
-    
+
     Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&extractedHints));
     //
     //  This will hold a pointer to a chain of one or more addrinfo structures.
