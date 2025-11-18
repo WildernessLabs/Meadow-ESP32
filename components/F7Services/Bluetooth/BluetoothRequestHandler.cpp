@@ -25,6 +25,7 @@
 #include "Mapping.hpp"
 #include "Exceptions/MultipleInstancesException.hpp"
 #include "BluetoothComponentName.hpp"
+#include "Utils.hpp"
 
 #define CHAR_DECLARATION_SIZE (sizeof(uint8_t))
 
@@ -402,7 +403,7 @@ void BluetoothRequestHandler::GetHandles(Message *request)
     request->PayloadLength = Encoders::EncodedBTGetHandlesResponseBufferSize(&response);
     request->Payload = static_cast<uint8_t *>(pvPortMalloc(request->PayloadLength));
     Encoders::EncodeBTGetHandlesResponse(&response, request->Payload);
-    vPortFree(response.Handles);
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&response.Handles));
 
     request->MessageType = MessageTypes::Response;
     request->StatusCode = StatusCodes::CompletedOk;
@@ -439,8 +440,8 @@ void BluetoothRequestHandler::SetCurrentValueForAttributeHandle(Message *request
             }
         }
     }
-    vPortFree(ds->SetData);
-    vPortFree(ds);
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&ds->SetData));
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&ds));
 
     request->MessageType = MessageTypes::Response;
     request->StatusCode = result;
@@ -816,7 +817,7 @@ void BluetoothRequestHandler::OnDataWriteRequest(uint16_t handle, uint8_t *data,
     int payload_length = Encoders::EncodedBTDataWriteRequestBufferSize(request);
     uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payload_length));
     Encoders::EncodeBTDataWriteRequest(request, payload);
-    vPortFree(request);
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&request));
 
     GetInstance()->RaiseEvent(Esp32Interfaces::BlueTooth, BluetoothFunction::ClientWriteRequestEvent, StatusCodes::CompletedOk, payload, payload_length);
 
@@ -838,8 +839,8 @@ void BluetoothRequestHandler::Start(Message *request)
     request->DeletePayload();
 
     _manager.BuildGraphFromJson(config->Config);
-    vPortFree(config->Config);
-    vPortFree(config);
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&config->Config));
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&config));
 
     GenerateAdvertisingData();
     GenerateAttributeTable();
