@@ -16,6 +16,7 @@
 #include "Globals.hpp"
 #include "Diagnostics.hpp"
 #include "Heap.hpp"
+#include "Utils.hpp"
 
 /*
  * ----------------------------------------------------------------------------
@@ -172,13 +173,11 @@ SpiTransportProvider::~SpiTransportProvider()
     spi_slave_free(VSPI_HOST);
     if (_rxBuffer)
     {
-        vPortFree(_rxBuffer);
-        _rxBuffer = nullptr;
+        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&_rxBuffer));
     }
     if (_txBuffer)
     {
-        vPortFree(_txBuffer);
-        _txBuffer = nullptr;
+        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&_txBuffer));
     }
     if (_incomingMessage)
     {
@@ -373,8 +372,7 @@ void SpiTransportProvider::DeleteTransaction(spi_slave_transaction_t *transactio
         {
             heap_caps_free(const_cast<void *>(transaction->tx_buffer));
         }
-        vPortFree(transaction);
-        transaction = nullptr;
+        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&transaction));
     }
     TRACE_MESSAGE("DeleteTransaction: Exit");
 }
@@ -558,8 +556,7 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessInboundPacket(Message *pac
             TRACE_MESSAGE("First packet in a multipacket message, expecting %" PRIu32 " bytes, received %" PRIu16 " bytes", packet->PayloadLength, packet->PacketLength);
             uint8_t *payloadBuffer = static_cast<uint8_t *>(pvPortMalloc(packet->PayloadLength));
             memcpy(static_cast<void *>(payloadBuffer), static_cast<const void *>(packet->Payload), packet->PacketLength);
-            vPortFree(packet->Payload);
-            packet->Payload = nullptr;
+            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&packet->Payload));
             packet->Payload = payloadBuffer;
             _incomingMessage = packet;
             //
