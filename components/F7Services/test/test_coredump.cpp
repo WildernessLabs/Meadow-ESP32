@@ -19,6 +19,7 @@
 #include "SharedEnums.hpp"
 #include "Encoders.hpp"
 #include "CoreDump.hpp"
+#include "Utils.hpp"
 
 #include "test_common.hpp"
 
@@ -121,7 +122,7 @@ Esp32Messaging::CoreDumpFragmentResponse *ExtractCoreDumpFragmentResponse(uint8_
         fragmentResponse->Data = static_cast<uint8_t *>(pvPortMalloc(fragmentResponse->Size));
         if (fragmentResponse->Data == NULL)
         {
-            vPortFree(fragmentResponse);
+            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&fragmentResponse));
             return (nullptr);
         }
         memcpy(fragmentResponse->Data, buffer, fragmentResponse->Size);
@@ -212,7 +213,7 @@ TEST_CASE("Get core dump information", CLASS_OF_TESTS)
     printf("IsValid: %s\n", information->IsValid ? "true" : "false");
     printf("Partition Size: 0x%05" PRIx32 "\n", information->PartitionSize);
     printf("Core Dump Size: 0x%05" PRIx32 "\n", information->CoreDumpSize);
-    vPortFree(information);
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&information));
 
     delete codeDump;
     delete messageDispatcher;
@@ -277,12 +278,12 @@ TEST_CASE("Get core dump fragment", CLASS_OF_TESTS)
     TEST_ASSERT_NOT_NULL(response->Payload);
     TEST_ASSERT_GREATER_THAN(0, response->PayloadLength);
     Esp32Messaging::CoreDumpFragmentResponse *responseFragment = ExtractCoreDumpFragmentResponse(response->Payload);
-    vPortFree(request->Payload);
+    response->DeletePayload();
     TEST_ASSERT_NOT_NULL(responseFragment);
     TEST_ASSERT_EQUAL(256, responseFragment->Size);
     TEST_ASSERT_NOT_NULL(responseFragment->Data);
-    vPortFree(responseFragment->Data);
-    vPortFree(responseFragment);
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&responseFragment->Data));
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&responseFragment));
     //
     //  Next we ask for data from the end of the coredump.  This time we ask for more bytes than are available.
     //  We do this by setting the offset to 100 bytes from the end of the core dump and then ask for 256 bytes.
@@ -307,12 +308,12 @@ TEST_CASE("Get core dump fragment", CLASS_OF_TESTS)
     TEST_ASSERT_GREATER_THAN(0, response->PayloadLength);
     TEST_ASSERT_NOT_NULL(response->Payload);
     responseFragment = ExtractCoreDumpFragmentResponse(response->Payload);
-    vPortFree(request->Payload);
+    response->DeletePayload();
     TEST_ASSERT_NOT_NULL(responseFragment);
     TEST_ASSERT_EQUAL(100, responseFragment->Size);
     TEST_ASSERT_NOT_NULL(responseFragment->Data);
-    vPortFree(responseFragment->Data);
-    vPortFree(responseFragment);
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&responseFragment->Data));
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&responseFragment));
 
     Message::DeleteMessage(response);
 
@@ -338,7 +339,7 @@ TEST_CASE("Erase core dump", CLASS_OF_TESTS)
     TEST_ASSERT_EQUAL(0x10000, information->PartitionSize);
     TEST_ASSERT_EQUAL(0, information->CoreDumpSize);
 
-    vPortFree(information);
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&information));
 
     delete codeDump;
     delete messageDispatcher;
