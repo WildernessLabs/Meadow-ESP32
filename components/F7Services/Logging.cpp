@@ -21,6 +21,7 @@
 #include "Mapping.hpp"
 #include "Diagnostics.hpp"
 #include "Heap.hpp"
+#include "Utils.hpp"
 
 #if defined(PERFORMANCE_LOGGING)
     #pragma message "Performance logging is enabled."
@@ -480,7 +481,7 @@ void Logging::AddPerformanceCounterEntry(const char *method, int64_t start, int6
     pce->duration = pd;
     if (_performanceCounters[_nextPerformanceCounterEntry] != NULL)
     {
-        vPortFree(_performanceCounters[_nextPerformanceCounterEntry]);
+        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&_performanceCounters[_nextPerformanceCounterEntry]));
     }
     _performanceCounters[_nextPerformanceCounterEntry] = pce;
     _nextPerformanceCounterEntry++;
