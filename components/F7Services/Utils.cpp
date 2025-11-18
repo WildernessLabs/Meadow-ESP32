@@ -10,6 +10,8 @@
 
 #include "sdkconfig.h"
 
+#include "freertos/FreeRTOS.h"
+
 #include <inttypes.h>
 #include <stdint.h>
 #include <string.h>
@@ -67,4 +69,18 @@ std::string Utils::NumberWithCommas(uint64_t number)
 std::string Utils::NumberWithCommas(uint32_t number)
 {
     return NumberWithCommas(static_cast<uint64_t>(number));
+}
+
+/**
+ * @brief Delete a pointer and set it to nullptr.
+ *
+ * @param ptr Pointer to the pointer to delete and nullify.
+ */
+void Utils::DeleteAndNullifyPointer(void **ptr)
+{
+    if ((ptr != nullptr) && (*ptr != nullptr))
+    {
+        vPortFree(*ptr);
+        *ptr = nullptr;
+    }
 }

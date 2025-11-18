@@ -33,6 +33,13 @@ namespace Utils
      * @return std::string The formatted number as a string.
      */
     std::string NumberWithCommas(uint32_t number);
+
+    /**
+     * @brief Delete a pointer and set it to nullptr.
+     *
+     * @param ptr Pointer to the pointer to delete and nullify.
+     */
+    void DeleteAndNullifyPointer(void **ptr);
 }; // namespace Utils
 
 #endif // UTILS_HPP
