@@ -12,6 +12,7 @@
 
 #include "NvsManager.hpp"
 #include "Exceptions/MultipleInstancesException.hpp"
+#include "Utils.hpp"
 
 /*
  * ----------------------------------------------------------------------------
@@ -123,7 +124,7 @@ char *NvsManager::GetValue(const char *nameSpace, const char *name, const char *
                 {
                     if (nvs_get_str(nvsHandle, name, result, &length) != ESP_OK)
                     {
-                        vPortFree(result);
+                        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&result));
                         result = const_cast<char *>(defaultValue);
                     }
                 }
