@@ -233,6 +233,7 @@ void RequestHandlerBase::SendIntegerResult(uint8_t interface, uint32_t function,
             RaiseEvent(interface, function, statusCode, payload, payloadLength);
         }
         vPortFree(response);
+        response = nullptr;
     }
     else
     {
