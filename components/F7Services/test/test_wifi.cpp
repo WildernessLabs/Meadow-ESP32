@@ -21,6 +21,7 @@
 #include "WiFiRequestHandler.hpp"
 #include "WiFiRequestHandlerTestFriend.hpp"
 #include "test_common.hpp"
+#include "Utils.hpp"
 
 #include "secrets.h"
 
@@ -40,7 +41,7 @@
  *  Extract the AccessPointList object that is encoded in the given buffer.
  *
  *  Note that the returned pointer points to a block of memory on the heap and
- *  this should eventually be released calling vPortFree(...).
+ *  this should eventually be released calling Utils::DeleteAndNullifyPointer(...).
  *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded AccessPointList object.
@@ -75,7 +76,7 @@ static Esp32Messaging::AccessPointList *ExtractAccessPointList(uint8_t *buffer)
  *  Extract the AccessPoint object that is encoded in the given buffer.
  *
  *  Note that the returned pointer points to a block of memory on the heap and
- *  this should eventually be released calling vPortFree(...).
+ *  this should eventually be released calling Utils::DeleteAndNullifyPointer(...).
  *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded AccessPoint object.
@@ -164,7 +165,7 @@ static void TestScanForAccessPoints(unsigned numberOfScans = 1)
         //
         Esp32Messaging::AccessPointList *accessPointList = ExtractAccessPointList(response->Payload);
         response->DeletePayload();
-        vPortFree(response); // Releases the memory allocated for scanRequestMessage.
+        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&response));
 
         TEST_ASSERT_NOT_NULL(accessPointList);
         TEST_ASSERT_GREATER_THAN(0, accessPointList->NumberOfAccessPoints);
@@ -182,10 +183,11 @@ static void TestScanForAccessPoints(unsigned numberOfScans = 1)
                 printf("    Network Name: %s\n", accessPoint->Ssid);
                 printf("    MAC Address: %02x:%02x:%02x:%02x:%02x:%02x\n", accessPoint->Bssid[0], accessPoint->Bssid[1], accessPoint->Bssid[2], accessPoint->Bssid[3], accessPoint->Bssid[4], accessPoint->Bssid[5]);
             }
-            vPortFree((void *) (accessPoint)); // cppcheck-suppress cstyleCast
+            
+            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(const_cast<Esp32Messaging::AccessPoint **>(&accessPoint)));
         }
-        vPortFree(accessPointList->AccessPoints);
-        vPortFree(accessPointList);
+        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&accessPointList->AccessPoints));
+        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&accessPointList));
     }
 
     //
