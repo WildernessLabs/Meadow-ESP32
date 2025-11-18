@@ -1905,7 +1905,7 @@ void WiFiRequestHandler::ScanForAccessPoints(Message *message)
                     }
                     Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&accessPoints));
                     Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&accessPoint));
-                    
+
                     message->PayloadLength = Encoders::EncodedAccessPointListBufferSize(accessPointList);
                     message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
                     Encoders::EncodeAccessPointList(accessPointList, message->Payload);
