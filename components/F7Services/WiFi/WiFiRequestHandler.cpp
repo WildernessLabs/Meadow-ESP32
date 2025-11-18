@@ -21,6 +21,7 @@
 #include "Mapping.hpp"
 #include "Logging.hpp"
 #include "ProgressiveDelay.hpp"
+#include "Utils.hpp"
 
 /*
  * ----------------------------------------------------------------------------
@@ -874,8 +875,7 @@ void WiFiRequestHandler::RaiseConnectToAccessPointEvent(StatusCodes::StatusCodes
         if (payload != NULL)
         {
             Encoders::EncodeConnectEventData(ed, payload);
-            vPortFree(ed);
-            ed = nullptr;
+            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&ed));
             RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::NetworkConnectedEvent, status, payload, payloadLength);
         }
         else
@@ -916,8 +916,7 @@ void WiFiRequestHandler::RaiseDisconnectEvent()
         if (payload != NULL)
         {
             Encoders::EncodeDisconnectEventData(ed, payload);
-            vPortFree(ed);
-            ed = nullptr;
+            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&ed));
             RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::NetworkDisconnectedEvent, StatusCodes::CompletedOk, payload, payloadLength);
         }
         else
@@ -1007,8 +1006,7 @@ void WiFiRequestHandler::RaiseNetworkGotIpEvent()
         {
             ERROR_MESSAGE("Failed to allocate memory for GotIpDataEvent payload. ");
         }
-        vPortFree(ed);
-        ed = nullptr;
+        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&ed));
     }
     TRACE_MESSAGE("RaiseNetworkGotIpEvent: Exit");
 }
@@ -1436,8 +1434,7 @@ void WiFiRequestHandler::DisconnectFromAccessPoint(Message *message)
         {
             sc = StopWiFIAdapter();
         }
-        vPortFree(request);
-        request = nullptr;
+        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&request));
     }
 
     message->DeletePayload();
@@ -1473,8 +1470,7 @@ void WiFiRequestHandler::SetAntennaRequest(Message *message)
         SwitchAntenna(static_cast<AntennaTypes::AntennaTypes>(request->Antenna));
     }
 
-    vPortFree(request);
-    request = nullptr;
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&request));
     message->StatusCode = StatusCodes::CompletedOk;
     message->MessageType = MessageTypes::Response;
     _messageDispatcher->QueueMessageForStm32(message);
@@ -1639,8 +1635,7 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
         }
 
         result = ConnectToAccessPoint(accessPointInformation);
-        vPortFree(accessPointInformation);
-        accessPointInformation = nullptr;
+        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&accessPointInformation));
 
         Esp32Messaging::ConnectEventData data = {};
 
@@ -1908,18 +1903,14 @@ void WiFiRequestHandler::ScanForAccessPoints(Message *message)
                         Encoders::EncodeAccessPoint(accessPoint, currentLocation);
                         currentLocation += singleAccessPointSize;
                     }
-                    vPortFree(accessPoints);
-                    accessPoints = nullptr;
-                    vPortFree(accessPoint);
-                    accessPoint = nullptr;
-
+                    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&accessPoints));
+                    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&accessPoint));
+                    
                     message->PayloadLength = Encoders::EncodedAccessPointListBufferSize(accessPointList);
                     message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
                     Encoders::EncodeAccessPointList(accessPointList, message->Payload);
-                    vPortFree(accessPointList->AccessPoints);
-                    accessPointList->AccessPoints = nullptr;
-                    vPortFree(accessPointList);
-                    accessPointList = nullptr;
+                    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&accessPointList->AccessPoints));
+                    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&accessPointList));
                 }
                 result = StatusCodes::CompletedOk;
             }
