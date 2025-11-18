@@ -875,6 +875,7 @@ void WiFiRequestHandler::RaiseConnectToAccessPointEvent(StatusCodes::StatusCodes
         {
             Encoders::EncodeConnectEventData(ed, payload);
             vPortFree(ed);
+            ed = nullptr;
             RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::NetworkConnectedEvent, status, payload, payloadLength);
         }
         else
@@ -916,6 +917,7 @@ void WiFiRequestHandler::RaiseDisconnectEvent()
         {
             Encoders::EncodeDisconnectEventData(ed, payload);
             vPortFree(ed);
+            ed = nullptr;
             RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::NetworkDisconnectedEvent, StatusCodes::CompletedOk, payload, payloadLength);
         }
         else
@@ -1006,6 +1008,7 @@ void WiFiRequestHandler::RaiseNetworkGotIpEvent()
             ERROR_MESSAGE("Failed to allocate memory for GotIpDataEvent payload. ");
         }
         vPortFree(ed);
+        ed = nullptr;
     }
     TRACE_MESSAGE("RaiseNetworkGotIpEvent: Exit");
 }
@@ -1434,12 +1437,10 @@ void WiFiRequestHandler::DisconnectFromAccessPoint(Message *message)
             sc = StopWiFIAdapter();
         }
         vPortFree(request);
+        request = nullptr;
     }
 
-    vPortFree(message->Payload);
-    message->Payload = NULL;
-    message->PayloadLength = 0;
-
+    message->DeletePayload();
     message->StatusCode = sc;
     message->MessageType = MessageTypes::Response;
     _messageDispatcher->QueueMessageForStm32(message);
@@ -1459,9 +1460,7 @@ void WiFiRequestHandler::SetAntennaRequest(Message *message)
     TRACE_MESSAGE("SetAntennaRequest: Enter");
 
     Esp32Messaging::SetAntennaRequest *request = Encoders::ExtractSetAntennaRequest(message->Payload);
-    vPortFree(message->Payload);
-    message->Payload = nullptr;
-    message->PayloadLength = 0;
+    message->DeletePayload();
 
     TRACE_MESSAGE("Switching antenna to %" PRIu8 " with persist set to %" PRIu8, request->Antenna, request->Persist);
 
@@ -1475,6 +1474,7 @@ void WiFiRequestHandler::SetAntennaRequest(Message *message)
     }
 
     vPortFree(request);
+    request = nullptr;
     message->StatusCode = StatusCodes::CompletedOk;
     message->MessageType = MessageTypes::Response;
     _messageDispatcher->QueueMessageForStm32(message);
@@ -1640,6 +1640,7 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
 
         result = ConnectToAccessPoint(accessPointInformation);
         vPortFree(accessPointInformation);
+        accessPointInformation = nullptr;
 
         Esp32Messaging::ConnectEventData data = {};
 
@@ -1908,13 +1909,17 @@ void WiFiRequestHandler::ScanForAccessPoints(Message *message)
                         currentLocation += singleAccessPointSize;
                     }
                     vPortFree(accessPoints);
+                    accessPoints = nullptr;
                     vPortFree(accessPoint);
+                    accessPoint = nullptr;
 
                     message->PayloadLength = Encoders::EncodedAccessPointListBufferSize(accessPointList);
                     message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
                     Encoders::EncodeAccessPointList(accessPointList, message->Payload);
                     vPortFree(accessPointList->AccessPoints);
+                    accessPointList->AccessPoints = nullptr;
                     vPortFree(accessPointList);
+                    accessPointList = nullptr;
                 }
                 result = StatusCodes::CompletedOk;
             }
