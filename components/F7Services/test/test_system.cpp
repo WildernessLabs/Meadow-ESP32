@@ -13,6 +13,7 @@
 #include "Esp32Messaging.hpp"
 #include "Encoders.hpp"
 #include "SharedEnums.hpp"
+#include "Utils.hpp"
 
 #include "test_common.hpp"
 
@@ -47,9 +48,10 @@ TEST_CASE("Get battery level", CLASS_OF_TESTS)
     TEST_ASSERT_NOT_NULL(integerResponse);
     TEST_ASSERT_GREATER_THAN(0, integerResponse->Result);
     printf("Battery level: %ld mV\n", integerResponse->Result);
-    vPortFree(integerResponse);
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&integerResponse));
 
     Message::DeleteMessage(response);
+    response = nullptr;
 
     delete messageDispatcher;
 }
