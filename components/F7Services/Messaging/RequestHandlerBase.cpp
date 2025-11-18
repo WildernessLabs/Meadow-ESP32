@@ -14,6 +14,7 @@
 #include "RequestHandlerBase.hpp"
 #include "Logging.hpp"
 #include "MessageDispatcher.hpp"
+#include "Utils.hpp"
 
 /*
  * ---------------------------------------------------------------------------
@@ -232,8 +233,7 @@ void RequestHandlerBase::SendIntegerResult(uint8_t interface, uint32_t function,
             Encoders::EncodeIntegerResponse(response, payload);
             RaiseEvent(interface, function, statusCode, payload, payloadLength);
         }
-        vPortFree(response);
-        response = nullptr;
+        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&response));
     }
     else
     {
