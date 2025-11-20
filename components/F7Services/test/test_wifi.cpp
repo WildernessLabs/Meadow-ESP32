@@ -174,7 +174,7 @@ static void TestScanForAccessPoints(unsigned numberOfScans = 1)
         printf("Scan %u - Number of access points found: %lu\n", (index + 1), accessPointList->NumberOfAccessPoints);
         for (unsigned accessPointNumber = 0; accessPointNumber < accessPointList->NumberOfAccessPoints; accessPointNumber++)
         {
-            const Esp32Messaging::AccessPoint *accessPoint = ExtractAccessPoint(buffer);
+            Esp32Messaging::AccessPoint *accessPoint = ExtractAccessPoint(buffer);
             TEST_ASSERT_NOT_NULL(accessPoint);
             buffer += Encoders::EncodedAccessPointBufferSize(const_cast<Esp32Messaging::AccessPoint *>(accessPoint));
             if (numberOfScans == (index + 1)) // Display the results of the final scan.
