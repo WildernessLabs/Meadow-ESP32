@@ -99,6 +99,7 @@ ThreadPool::~ThreadPool()
             }
         }
         Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&_threads));
+        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&_threadsAvailable));
     }
 }
 
