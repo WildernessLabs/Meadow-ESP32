@@ -9,6 +9,7 @@
 #include "Logging.hpp"
 #include "Thread.hpp"
 #include "Exceptions/ThreadPoolException.hpp"
+#include "Utils.hpp"
 
 /*
  * ----------------------------------------------------------------------------
@@ -83,7 +84,7 @@ Thread::Thread(char *name, task_completed_method_t taskCompletedMethod) : Thread
  */
 Thread::~Thread()
 {
-    vPortFree(_name);
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&_name));
 }
 
 /*

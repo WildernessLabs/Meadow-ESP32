@@ -21,6 +21,7 @@
 #include "Exceptions/MultipleInstancesException.hpp"
 #include "Mapping.hpp"
 #include "Logging.hpp"
+#include "Utils.hpp"
 
 /*
  * ----------------------------------------------------------------------------
@@ -69,8 +70,7 @@ Esp32Messaging::AccessPointInformation *WiFiRequestHandler::ExtractAndValidateAc
             // error |= (result->IpAddress == 0) || (result->SubnetMask == 0) || (result->Gateway == 0);
             if (error)
             {
-                vPortFree(result);
-                result = nullptr;
+                Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&result));
             }
         }
     }
@@ -187,8 +187,6 @@ void WiFiRequestHandler::StartAccessPoint(Message *message)
 
     message->DeletePayload();
 
-    message->PayloadLength = 0;
-    message->Payload = nullptr;
     message->MessageType = MessageTypes::Response;
     message->StatusCode = StatusCodes::NotImplemented;
     Logging::DumpMessage(COMPONENT_NAME, message);

@@ -17,8 +17,8 @@
 #include "esp_partition.h"
 
 #include "Logging.hpp"
-
 #include "CoreDump.hpp"
+#include "Utils.hpp"
 
 extern "C" esp_err_t esp_core_dump_image_check();
 
@@ -204,7 +204,7 @@ void CoreDump::GetFragment(void *vpMessage)
                         }
                         else
                         {
-                            vPortFree(data);
+                            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&data));
                         }
                     }
                 }

@@ -31,6 +31,7 @@
 #include "Heap.hpp"
 #include "Debug.hpp"
 #include "Logging.hpp"
+#include "Utils.hpp"
 
 #if defined(CONFIG_HEAP_TRACING_TOHOST) || defined(CONFIG_HEAP_TRACING_STANDALONE)
     #include "esp_heap_trace.h"
@@ -268,7 +269,7 @@ void Diagnostics::ReportTaskInformation()
                 tasks[index].uxCurrentPriority, tasks[index].uxBasePriority,
                 tasks[index].usStackHighWaterMark, tasks[index].ulRunTimeCounter, runTimePercentage);
         }
-        vPortFree(tasks);
+        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&tasks));
     }
     else
     {

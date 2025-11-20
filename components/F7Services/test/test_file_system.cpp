@@ -19,6 +19,7 @@
 #include "Encoders.hpp"
 #include "SharedEnums.hpp"
 #include "FileSystem.hpp"
+#include "Utils.hpp"
 
 #define CLASS_OF_TESTS "[FileSystem]"
 
@@ -134,7 +135,7 @@ int ReadTestFile(const char *filename, uint8_t *buffer, int maxLength)
  *  Extract the FileNameList object that is encoded in the given buffer.
  *
  *  Note that the returned pointer points to a block of memory on the heap and
- *  this should eventually be released calling vPortFree(...).
+ *  this should eventually be released calling Utils::DeleteAndNullifyPointer(...).
  *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded FileNameList object.
@@ -160,7 +161,7 @@ static Esp32Messaging::FileNameList *ExtractFileNameList(uint8_t *buffer)
         fileNameList->FileDetails = (uint8_t *) pvPortMalloc(fileNameList->FileDetailsLength);
         if (fileNameList->FileDetails == NULL)
         {
-            vPortFree(fileNameList);
+            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&fileNameList));
             return (nullptr);
         }
         memcpy(fileNameList->FileDetails, buffer, fileNameList->FileDetailsLength);
@@ -310,7 +311,7 @@ TEST_CASE("Write file to file system", CLASS_OF_TESTS)
     TEST_ASSERT_EQUAL(strlen(TEST_FILE_CONTENTS), ReadTestFile((char *) TEST_FILE_NAME, buffer, length));
     TEST_ASSERT_EQUAL_MEMORY_ARRAY(TEST_FILE_CONTENTS, buffer, strlen(TEST_FILE_CONTENTS), 1);
 
-    vPortFree(buffer);
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&buffer));
     Message::DeleteMessage(writeMessage);
 
     delete fs;
@@ -366,8 +367,8 @@ TEST_CASE("Reading a file", CLASS_OF_TESTS)
     TEST_ASSERT_NOT_NULL(fileContents->Contents);
     TEST_ASSERT_EQUAL_MEMORY_ARRAY(TEST_FILE_CONTENTS, fileContents->Contents, strlen(TEST_FILE_CONTENTS), 1);
 
-    vPortFree(fileContents->Contents);
-    vPortFree(fileContents);
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&fileContents->Contents));
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&fileContents));
     Message::DeleteMessage(readMessage);
 
     delete fs;
@@ -419,7 +420,7 @@ TEST_CASE("Get list of files", CLASS_OF_TESTS)
     TEST_ASSERT_EQUAL(0, files->NumberOfFiles);
     TEST_ASSERT_EQUAL(0, files->FileDetailsLength);
     TEST_ASSERT_NULL(files->FileDetails);
-    vPortFree(files);
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&files));
     response->DeletePayload();
 
     //
@@ -575,7 +576,7 @@ TEST_CASE("Prepare file system upgrade test", CLASS_OF_TESTS)
         buffer[index] = 0x55;
     }
     WriteTestFile(TEST_UPGRADE_FILE_NAME_55, buffer, TEST_UPGRADE_BUFFER_SIZE);
-    vPortFree(buffer);
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&buffer));
 
     //
     //  Now give instructions to the user.
@@ -613,7 +614,7 @@ TEST_CASE("Post file system upgrade test", CLASS_OF_TESTS)
     int bytesRead = ReadTestFile(TEST_FILE_NAME, buffer1, strlen(TEST_FILE_CONTENTS));
     TEST_ASSERT_EQUAL(strlen(TEST_FILE_CONTENTS), bytesRead);
     TEST_ASSERT_EQUAL_MEMORY(TEST_FILE_CONTENTS, buffer1, strlen(TEST_FILE_CONTENTS));
-    vPortFree(buffer1);
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&buffer1));
 
     //
     //  Verify the second test file exists and has correct contents.
@@ -624,7 +625,7 @@ TEST_CASE("Post file system upgrade test", CLASS_OF_TESTS)
     bytesRead = ReadTestFile(TEST_FILE_NAME2, buffer2, strlen(TEST_FILE_CONTENTS2));
     TEST_ASSERT_EQUAL(strlen(TEST_FILE_CONTENTS2), bytesRead);
     TEST_ASSERT_EQUAL_MEMORY(TEST_FILE_CONTENTS2, buffer2, strlen(TEST_FILE_CONTENTS2));
-    vPortFree(buffer2);
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&buffer2));
 
     //
     //  Verify the 0xAA upgrade test file exists and has correct contents.
@@ -638,7 +639,7 @@ TEST_CASE("Post file system upgrade test", CLASS_OF_TESTS)
     {
         TEST_ASSERT_EQUAL_HEX8(0xAA, (uint8_t) bufferAA[index]);
     }
-    vPortFree(bufferAA);
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&bufferAA));
 
     //
     //  Verify the 0x55 upgrade test file exists and has correct contents.
@@ -652,7 +653,7 @@ TEST_CASE("Post file system upgrade test", CLASS_OF_TESTS)
     {
         TEST_ASSERT_EQUAL_HEX8(0x55, (uint8_t) buffer55[index]);
     }
-    vPortFree(buffer55);
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&buffer55));
 
     //
     //  Verify the correct number of files exist on the file system.
