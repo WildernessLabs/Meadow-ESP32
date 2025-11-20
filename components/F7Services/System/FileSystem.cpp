@@ -16,6 +16,7 @@
 #include "FileSystem.hpp"
 #include "SharedEnums.hpp"
 #include "Mapping.hpp"
+#include "Utils.hpp"
 
 #if defined(FILE_SYSTEM_DEBUG)
     #pragma message "FileSystem.cpp: Debugging enabled"
@@ -317,8 +318,7 @@ void FileSystem::ReadFile(Message *message)
                     }
                     if (result != StatusCodes::CompletedOk)
                     {
-                        vPortFree(fileData->Contents);
-                        fileData->Contents = NULL;
+                        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&fileData->Contents));
                         fileData->ContentsLength = 0;
                     }
                 }
@@ -333,12 +333,12 @@ void FileSystem::ReadFile(Message *message)
                 result = StatusCodes::FileNotFound;
             }
         }
-        vPortFree(fileData->Name);
+        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&fileData->Name));
         if (fileData->Contents != NULL)
         {
-            vPortFree(fileData->Contents);
+            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&fileData->Contents));
         }
-        vPortFree(fileData);
+        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&fileData));
     }
 
     message->MessageType = MessageTypes::Response;
@@ -383,9 +383,9 @@ void FileSystem::WriteFile(Message *message)
                 fclose(file);
             }
 
-            vPortFree(fileData->Contents);
+            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&fileData->Contents));
         }
-        vPortFree(fileData);
+        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&fileData));
     }
     else
     {
@@ -433,8 +433,8 @@ void FileSystem::DeleteFile(Message *message)
                 }
             }
         }
-        vPortFree(details->Name);
-        vPortFree(details);
+        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&details->Name));
+        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&details));
     }
     else
     {

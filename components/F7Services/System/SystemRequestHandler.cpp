@@ -37,6 +37,7 @@
 #include "Diagnostics.hpp"
 #include "Heap.hpp"
 #include "CoreDump.hpp"
+#include "Utils.hpp"
 
 /*
  * ----------------------------------------------------------------------------
@@ -746,7 +747,7 @@ void SystemRequestHandler::LoggingConfiguration(Message *message)
     if (config)
     {
         Logging::Configure(config->ComponentsToLog, config->Interface, config->UdpPort);
-        vPortFree(config);
+        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&config));
     }
 
     //
@@ -775,7 +776,8 @@ void SystemRequestHandler::LogMessage(Message *message)
         {
             TRACE_MESSAGE("LogMessage: (%" PRIu8 "), %s", logMessage->Level, logMessage->Message);
         }
-        vPortFree(logMessage);
+        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&logMessage->Message));
+        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&logMessage));
     }
 
     //

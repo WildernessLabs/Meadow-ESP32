@@ -3,6 +3,7 @@
 #include "Encoders.hpp"
 #include "Logging.hpp"
 #include "SpiTransportProvider.hpp"
+#include "Utils.hpp"
 
 /**
  *  Calculate the amount of memory that should be allocated for
@@ -383,7 +384,7 @@ uint32_t Encoders::ProgressiveCRC32(uint32_t currentChecksum, uint8_t byte)
  *
  *  @returns
  *      New Message object extracted from the buffer.  The Message object
- *     Will be placed on the FreeRTOS heap (use vPortFree to release the
+ *     Will be placed on the FreeRTOS heap (use Utils::DeleteAndNullifyPointer to release the
  *     storage).
  */
 Message *Encoders::ExtractMessage(uint8_t *buffer, uint32_t bufferLength, bool headerOnly)
@@ -424,8 +425,7 @@ Message *Encoders::ExtractMessage(uint8_t *buffer, uint32_t bufferLength, bool h
             message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PacketLength));
             if (message->Payload == NULL)
             {
-                vPortFree(message);
-                message = nullptr;
+                Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&message));
             }
             else
             {
@@ -454,7 +454,7 @@ Message *Encoders::ExtractMessage(uint8_t *buffer, uint32_t bufferLength, bool h
  *
  *  @returns
  *     Byte buffer containing the encoded message.  The storage
- *     Will be placed on the FreeRTOS heap (use vPortFree to release the
+ *     Will be placed on the FreeRTOS heap (use Utils::DeleteAndNullifyPointer to release the
  *     storage).
  */
 void Encoders::EncodeMessage(Message *message, uint8_t *buffer, bool headerOnly)
@@ -579,7 +579,7 @@ int Encoders::EncodedSystemConfigurationBufferSize(Esp32Messaging::SystemConfigu
  *  Extract the ConfigurationValue object that is encoded in the given buffer.
  *
  *  Note that the returned pointer points to a block of memory on the heap and
- *  this should eventually be released calling vPortFree(...).
+ *  this should eventually be released calling Utils::DeleteAndNullifyPointer(...).
  *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded ConfigurationValue object.
@@ -606,7 +606,7 @@ Esp32Messaging::ConfigurationValue *Encoders::ExtractConfigurationValue(uint8_t 
 
         if (configurationValue->Value == NULL)
         {
-            vPortFree(configurationValue);
+            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&configurationValue));
             return (nullptr);
         }
 
@@ -671,7 +671,7 @@ int Encoders::EncodedAccessPointInformationBufferSize(Esp32Messaging::AccessPoin
  *  Extract the AccessPointInformation object that is encoded in the given buffer.
  *
  *  Note that the returned pointer points to a block of memory on the heap and
- *  this should eventually be released calling vPortFree(...).
+ *  this should eventually be released calling Utils::DeleteAndNullifyPointer(...).
  *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded AccessPointInformation object.
@@ -710,7 +710,7 @@ Esp32Messaging::AccessPointInformation *Encoders::ExtractAccessPointInformation(
  *  Extract the DisconnectFromAccessPointRequest object that is encoded in the given buffer.
  *
  *  Note that the returned pointer points to a block of memory on the heap and
- *  this should eventually be released calling vPortFree(...).
+ *  this should eventually be released calling Utils::DeleteAndNullifyPointer(...).
  *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded DisconnectFromAccessPointRequest object.
@@ -970,7 +970,7 @@ int Encoders::EncodedSockAddrBufferSize(Esp32Messaging::SockAddr *sockAddr)
  *  Extract the SockAddr object that is encoded in the given buffer.
  *
  *  Note that the returned pointer points to a block of memory on the heap and
- *  this should eventually be released calling vPortFree(...).
+ *  this should eventually be released calling Utils::DeleteAndNullifyPointer(...).
  *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded SockAddr object.
@@ -1059,7 +1059,7 @@ int Encoders::EncodedAddrInfoBufferSize(Esp32Messaging::AddrInfo *addrInfo)
  *  Extract the AddrInfo object that is encoded in the given buffer.
  *
  *  Note that the returned pointer points to a block of memory on the heap and
- *  this should eventually be released calling vPortFree(...).
+ *  this should eventually be released calling Utils::DeleteAndNullifyPointer(...).
  *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded AddrInfo object.
@@ -1095,7 +1095,7 @@ Esp32Messaging::AddrInfo *Encoders::ExtractAddrInfo(uint8_t *buffer)
         addrInfo->Addr = (uint8_t *) pvPortMalloc(addrInfo->AddrLength);
         if (addrInfo->Addr == NULL)
         {
-            vPortFree(addrInfo);
+            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&addrInfo));
             return (nullptr);
         }
         memcpy(addrInfo->Addr, buffer, addrInfo->AddrLength);
@@ -1115,7 +1115,7 @@ Esp32Messaging::AddrInfo *Encoders::ExtractAddrInfo(uint8_t *buffer)
  *  Extract the GetAddrInfoRequest object that is encoded in the given buffer.
  *
  *  Note that the returned pointer points to a block of memory on the heap and
- *  this should eventually be released calling vPortFree(...).
+ *  this should eventually be released calling Utils::DeleteAndNullifyPointer(...).
  *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded GetAddrInfoRequest object.
@@ -1143,7 +1143,7 @@ Esp32Messaging::GetAddrInfoRequest *Encoders::ExtractGetAddrInfoRequest(uint8_t 
         getAddrInfoRequest->Hints = (uint8_t *) pvPortMalloc(getAddrInfoRequest->HintsLength);
         if (getAddrInfoRequest->Hints == NULL)
         {
-            vPortFree(getAddrInfoRequest);
+            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&getAddrInfoRequest));
             return (nullptr);
         }
         memcpy(getAddrInfoRequest->Hints, buffer, getAddrInfoRequest->HintsLength);
@@ -1199,7 +1199,7 @@ int Encoders::EncodedGetAddrInfoResponseBufferSize(Esp32Messaging::GetAddrInfoRe
  *  Extract the SocketRequest object that is encoded in the given buffer.
  *
  *  Note that the returned pointer points to a block of memory on the heap and
- *  this should eventually be released calling vPortFree(...).
+ *  this should eventually be released calling Utils::DeleteAndNullifyPointer(...).
  *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded SocketRequest object.
@@ -1292,7 +1292,7 @@ int Encoders::EncodedIntegerAndErrnoResponseBufferSize(Esp32Messaging::IntegerAn
  *  Extract the ConnectRequest object that is encoded in the given buffer.
  *
  *  Note that the returned pointer points to a block of memory on the heap and
- *  this should eventually be released calling vPortFree(...).
+ *  this should eventually be released calling Utils::DeleteAndNullifyPointer(...).
  *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded ConnectRequest object.
@@ -1318,7 +1318,7 @@ Esp32Messaging::ConnectRequest *Encoders::ExtractConnectRequest(uint8_t *buffer)
         connectRequest->Addr = (uint8_t *) pvPortMalloc(connectRequest->AddrLength);
         if (connectRequest->Addr == NULL)
         {
-            vPortFree(connectRequest);
+            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&connectRequest));
             return (nullptr);
         }
         memcpy(connectRequest->Addr, buffer, connectRequest->AddrLength);
@@ -1335,7 +1335,7 @@ Esp32Messaging::ConnectRequest *Encoders::ExtractConnectRequest(uint8_t *buffer)
  *  Extract the FreeAddrInfoRequest object that is encoded in the given buffer.
  *
  *  Note that the returned pointer points to a block of memory on the heap and
- *  this should eventually be released calling vPortFree(...).
+ *  this should eventually be released calling Utils::DeleteAndNullifyPointer(...).
  *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded FreeAddrInfoRequest object.
@@ -1392,7 +1392,7 @@ int Encoders::EncodedTimeValBufferSize(Esp32Messaging::TimeVal *timeVal)
  *  Extract the TimeVal object that is encoded in the given buffer.
  *
  *  Note that the returned pointer points to a block of memory on the heap and
- *  this should eventually be released calling vPortFree(...).
+ *  this should eventually be released calling Utils::DeleteAndNullifyPointer(...).
  *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded TimeVal object.
@@ -1419,7 +1419,7 @@ Esp32Messaging::TimeVal *Encoders::ExtractTimeVal(uint8_t *buffer)
  *  Extract the SetSockOptRequest object that is encoded in the given buffer.
  *
  *  Note that the returned pointer points to a block of memory on the heap and
- *  this should eventually be released calling vPortFree(...).
+ *  this should eventually be released calling Utils::DeleteAndNullifyPointer(...).
  *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded SetSockOptRequest object.
@@ -1449,7 +1449,7 @@ Esp32Messaging::SetSockOptRequest *Encoders::ExtractSetSockOptRequest(uint8_t *b
         setSockOptRequest->OptionValue = (uint8_t *) pvPortMalloc(setSockOptRequest->OptionValueLength);
         if (setSockOptRequest->OptionValue == NULL)
         {
-            vPortFree(setSockOptRequest);
+            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&setSockOptRequest));
             return (nullptr);
         }
         memcpy(setSockOptRequest->OptionValue, buffer, setSockOptRequest->OptionValueLength);
@@ -1467,7 +1467,7 @@ Esp32Messaging::SetSockOptRequest *Encoders::ExtractSetSockOptRequest(uint8_t *b
  *  Extract the GetSockOptRequest object that is encoded in the given buffer.
  *
  *  Note that the returned pointer points to a block of memory on the heap and
- *  this should eventually be released calling vPortFree(...).
+ *  this should eventually be released calling Utils::DeleteAndNullifyPointer(...).
  *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded GetSockOptRequest object.
@@ -1571,7 +1571,7 @@ int Encoders::EncodedLingerBufferSize(Esp32Messaging::Linger *linger)
  *  Extract the WriteRequest object that is encoded in the given buffer.
  *
  *  Note that the returned pointer points to a block of memory on the heap and
- *  this should eventually be released calling vPortFree(...).
+ *  this should eventually be released calling Utils::DeleteAndNullifyPointer(...).
  *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded WriteRequest object.
@@ -1597,7 +1597,7 @@ Esp32Messaging::WriteRequest *Encoders::ExtractWriteRequest(uint8_t *buffer)
         writeRequest->Buffer = (uint8_t *) pvPortMalloc(writeRequest->BufferLength);
         if (writeRequest->Buffer == NULL)
         {
-            vPortFree(writeRequest);
+            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&writeRequest));
             return (nullptr);
         }
         memcpy(writeRequest->Buffer, buffer, writeRequest->BufferLength);
@@ -1615,7 +1615,7 @@ Esp32Messaging::WriteRequest *Encoders::ExtractWriteRequest(uint8_t *buffer)
  *  Extract the ReadRequest object that is encoded in the given buffer.
  *
  *  Note that the returned pointer points to a block of memory on the heap and
- *  this should eventually be released calling vPortFree(...).
+ *  this should eventually be released calling Utils::DeleteAndNullifyPointer(...).
  *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded ReadRequest object.
@@ -1683,7 +1683,7 @@ int Encoders::EncodedReadResponseBufferSize(Esp32Messaging::ReadResponse *readRe
  *  Extract the CloseRequest object that is encoded in the given buffer.
  *
  *  Note that the returned pointer points to a block of memory on the heap and
- *  this should eventually be released calling vPortFree(...).
+ *  this should eventually be released calling Utils::DeleteAndNullifyPointer(...).
  *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded CloseRequest object.
@@ -1738,7 +1738,7 @@ int Encoders::EncodedGetBatteryChargeLevelResponseBufferSize(Esp32Messaging::Get
  *  Extract the SendRequest object that is encoded in the given buffer.
  *
  *  Note that the returned pointer points to a block of memory on the heap and
- *  this should eventually be released calling vPortFree(...).
+ *  this should eventually be released calling Utils::DeleteAndNullifyPointer(...).
  *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded SendRequest object.
@@ -1764,7 +1764,7 @@ Esp32Messaging::SendRequest *Encoders::ExtractSendRequest(uint8_t *buffer)
         sendRequest->Buffer = (uint8_t *) pvPortMalloc(sendRequest->BufferLength);
         if (sendRequest->Buffer == NULL)
         {
-            vPortFree(sendRequest);
+            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&sendRequest));
             return (nullptr);
         }
         memcpy(sendRequest->Buffer, buffer, sendRequest->BufferLength);
@@ -1784,7 +1784,7 @@ Esp32Messaging::SendRequest *Encoders::ExtractSendRequest(uint8_t *buffer)
  *  Extract the SendToRequest object that is encoded in the given buffer.
  *
  *  Note that the returned pointer points to a block of memory on the heap and
- *  this should eventually be released calling vPortFree(...).
+ *  this should eventually be released calling Utils::DeleteAndNullifyPointer(...).
  *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded SendToRequest object.
@@ -1810,7 +1810,7 @@ Esp32Messaging::SendToRequest *Encoders::ExtractSendToRequest(uint8_t *buffer)
         sendToRequest->Buffer = (uint8_t *) pvPortMalloc(sendToRequest->BufferLength);
         if (sendToRequest->Buffer == NULL)
         {
-            vPortFree(sendToRequest);
+            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&sendToRequest));
             return (nullptr);
         }
         memcpy(sendToRequest->Buffer, buffer, sendToRequest->BufferLength);
@@ -1831,8 +1831,8 @@ Esp32Messaging::SendToRequest *Encoders::ExtractSendToRequest(uint8_t *buffer)
         sendToRequest->DestinationAddress = (uint8_t *) pvPortMalloc(sendToRequest->DestinationAddressLength);
         if (sendToRequest->DestinationAddress == NULL)
         {
-            vPortFree(sendToRequest->Buffer);
-            vPortFree(sendToRequest);
+            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&sendToRequest->Buffer));
+            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&sendToRequest));
             return (nullptr);
         }
         memcpy(sendToRequest->DestinationAddress, buffer, sendToRequest->DestinationAddressLength);
@@ -1849,7 +1849,7 @@ Esp32Messaging::SendToRequest *Encoders::ExtractSendToRequest(uint8_t *buffer)
  *  Extract the RecvFromRequest object that is encoded in the given buffer.
  *
  *  Note that the returned pointer points to a block of memory on the heap and
- *  this should eventually be released calling vPortFree(...).
+ *  this should eventually be released calling Utils::DeleteAndNullifyPointer(...).
  *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded RecvFromRequest object.
@@ -1931,7 +1931,7 @@ int Encoders::EncodedRecvFromResponseBufferSize(Esp32Messaging::RecvFromResponse
  *  Extract the PollRequest object that is encoded in the given buffer.
  *
  *  Note that the returned pointer points to a block of memory on the heap and
- *  this should eventually be released calling vPortFree(...).
+ *  this should eventually be released calling Utils::DeleteAndNullifyPointer(...).
  *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded PollRequest object.
@@ -2036,7 +2036,7 @@ int Encoders::EncodedInterruptPollResponseBufferSize(Esp32Messaging::InterruptPo
  *  Extract the ListenRequest object that is encoded in the given buffer.
  *
  *  Note that the returned pointer points to a block of memory on the heap and
- *  this should eventually be released calling vPortFree(...).
+ *  this should eventually be released calling Utils::DeleteAndNullifyPointer(...).
  *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded ListenRequest object.
@@ -2063,7 +2063,7 @@ Esp32Messaging::ListenRequest *Encoders::ExtractListenRequest(uint8_t *buffer)
  *  Extract the BindRequest object that is encoded in the given buffer.
  *
  *  Note that the returned pointer points to a block of memory on the heap and
- *  this should eventually be released calling vPortFree(...).
+ *  this should eventually be released calling Utils::DeleteAndNullifyPointer(...).
  *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded BindRequest object.
@@ -2089,7 +2089,7 @@ Esp32Messaging::BindRequest *Encoders::ExtractBindRequest(uint8_t *buffer)
         bindRequest->Addr = (uint8_t *) pvPortMalloc(bindRequest->AddrLength);
         if (bindRequest->Addr == NULL)
         {
-            vPortFree(bindRequest);
+            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&bindRequest));
             return (nullptr);
         }
         memcpy(bindRequest->Addr, buffer, bindRequest->AddrLength);
@@ -2106,7 +2106,7 @@ Esp32Messaging::BindRequest *Encoders::ExtractBindRequest(uint8_t *buffer)
  *  Extract the AcceptRequest object that is encoded in the given buffer.
  *
  *  Note that the returned pointer points to a block of memory on the heap and
- *  this should eventually be released calling vPortFree(...).
+ *  this should eventually be released calling Utils::DeleteAndNullifyPointer(...).
  *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded AcceptRequest object.
@@ -2172,7 +2172,7 @@ int Encoders::EncodedAcceptResponseBufferSize(Esp32Messaging::AcceptResponse *ac
  *  Extract the IoctlRequest object that is encoded in the given buffer.
  *
  *  Note that the returned pointer points to a block of memory on the heap and
- *  this should eventually be released calling vPortFree(...).
+ *  this should eventually be released calling Utils::DeleteAndNullifyPointer(...).
  *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded IoctlRequest object.
@@ -2240,7 +2240,7 @@ int Encoders::EncodedIoctlResponseBufferSize(Esp32Messaging::IoctlResponse *ioct
  *  Extract the GetSockPeerNameRequest object that is encoded in the given buffer.
  *
  *  Note that the returned pointer points to a block of memory on the heap and
- *  this should eventually be released calling vPortFree(...).
+ *  this should eventually be released calling Utils::DeleteAndNullifyPointer(...).
  *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded GetSockPeerNameRequest object.
@@ -2381,7 +2381,7 @@ int Encoders::EncodedEventDataPayloadBufferSize(Esp32Messaging::EventDataPayload
  *  Extract the SetAntennaRequest object that is encoded in the given buffer.
  *
  *  Note that the returned pointer points to a block of memory on the heap and
- *  this should eventually be released calling vPortFree(...).
+ *  this should eventually be released calling Utils::DeleteAndNullifyPointer(...).
  *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded SetAntennaRequest object.
@@ -2408,7 +2408,7 @@ Esp32Messaging::SetAntennaRequest *Encoders::ExtractSetAntennaRequest(uint8_t *b
  *  Extract the BTStackConfig object that is encoded in the given buffer.
  *
  *  Note that the returned pointer points to a block of memory on the heap and
- *  this should eventually be released calling vPortFree(...).
+ *  this should eventually be released calling Utils::DeleteAndNullifyPointer(...).
  *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded BTStackConfig object.
@@ -2511,7 +2511,7 @@ int Encoders::EncodedBTGetHandlesResponseBufferSize(Esp32Messaging::BTGetHandles
  *  Extract the BTServerDataSet object that is encoded in the given buffer.
  *
  *  Note that the returned pointer points to a block of memory on the heap and
- *  this should eventually be released calling vPortFree(...).
+ *  this should eventually be released calling Utils::DeleteAndNullifyPointer(...).
  *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded BTServerDataSet object.
@@ -2537,7 +2537,7 @@ Esp32Messaging::BTServerDataSet *Encoders::ExtractBTServerDataSet(uint8_t *buffe
         bTServerDataSet->SetData = (uint8_t *) pvPortMalloc(bTServerDataSet->SetDataLength);
         if (bTServerDataSet->SetData == NULL)
         {
-            vPortFree(bTServerDataSet);
+            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&bTServerDataSet));
             return (nullptr);
         }
         memcpy(bTServerDataSet->SetData, buffer, bTServerDataSet->SetDataLength);
@@ -2588,7 +2588,7 @@ int Encoders::EncodedFileDetailsBufferSize(Esp32Messaging::FileDetails *fileDeta
  *  Extract the FileDetails object that is encoded in the given buffer.
  *
  *  Note that the returned pointer points to a block of memory on the heap and
- *  this should eventually be released calling vPortFree(...).
+ *  this should eventually be released calling Utils::DeleteAndNullifyPointer(...).
  *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded FileDetails object.
@@ -2655,7 +2655,7 @@ int Encoders::EncodedFileNameAndContentsBufferSize(Esp32Messaging::FileNameAndCo
  *  Extract the FileNameAndContents object that is encoded in the given buffer.
  *
  *  Note that the returned pointer points to a block of memory on the heap and
- *  this should eventually be released calling vPortFree(...).
+ *  this should eventually be released calling Utils::DeleteAndNullifyPointer(...).
  *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded FileNameAndContents object.
@@ -2681,7 +2681,7 @@ Esp32Messaging::FileNameAndContents *Encoders::ExtractFileNameAndContents(uint8_
         fileNameAndContents->Contents = (uint8_t *) pvPortMalloc(fileNameAndContents->ContentsLength);
         if (fileNameAndContents->Contents == NULL)
         {
-            vPortFree(fileNameAndContents);
+            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&fileNameAndContents));
             return (nullptr);
         }
         memcpy(fileNameAndContents->Contents, buffer, fileNameAndContents->ContentsLength);

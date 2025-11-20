@@ -19,7 +19,7 @@ MockMessageDispatcher *messageDispatcher = nullptr;
  *  Extract the IntegerResponse object that is encoded in the given buffer.
  *
  *  Note that the returned pointer points to a block of memory on the heap and
- *  this should eventually be released calling vPortFree(...).
+ *  this should eventually be released calling Utils::DeleteAndNullifyPointer(...).
  *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded IntegerResponse object.
