@@ -184,7 +184,7 @@ static void TestScanForAccessPoints(unsigned numberOfScans = 1)
                 printf("    MAC Address: %02x:%02x:%02x:%02x:%02x:%02x\n", accessPoint->Bssid[0], accessPoint->Bssid[1], accessPoint->Bssid[2], accessPoint->Bssid[3], accessPoint->Bssid[4], accessPoint->Bssid[5]);
             }
 
-            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&accessPoint)));
+            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&accessPoint));
         }
         Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&accessPointList->AccessPoints));
         Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&accessPointList));
