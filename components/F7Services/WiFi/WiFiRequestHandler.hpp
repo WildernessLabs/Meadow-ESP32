@@ -40,7 +40,7 @@
 /**
  *  The following definitions are copied from the NuttX system as they
  *  have no analogy in ESP-IDF and hence no mapping is needed but we need
- *  a copy of these defintions in order to implement some of the networking
+ *  a copy of these definitions in order to implement some of the networking
  *  functionality.
  */
 
@@ -533,7 +533,7 @@ private:
     /**
      *  @brief Copy the IP and access point structure into the connection event data structure.
      */
-    void PopulateConnectionEventDataStructure(Esp32Messaging::ConnectEventData *ed);
+    void PopulateConnectionEventDataStructure(Esp32Messaging::ConnectEventData * const ed);
 
     /**
      *  @brief Raise the ConnectToAccessPointEvent for the managed code.
@@ -1024,13 +1024,13 @@ public:
      *  the board starts.
      */
     static char *GetDefaultAccessPoint();
-    static StatusCodes::StatusCodes SetDefaultAccessPoint(char *value);
+    static StatusCodes::StatusCodes SetDefaultAccessPoint(const char *value);
 
     /**
      *  @brief Get / Set the password for the default access point.
      */
     static char *GetPassword();
-    static StatusCodes::StatusCodes SetPassword(char *value);
+    static StatusCodes::StatusCodes SetPassword(const char *value);
 
     /**
      *  @brief Get / set the default IP address when not using DHCP.
@@ -1059,8 +1059,8 @@ public:
     /**
      *  @brief Get / Set the MAC address of the interface.
      */
-    static void GetMacAddress(uint8_t *macAddress, wifi_interface_t interface);
-    static StatusCodes::StatusCodes SetMacAddress(uint8_t *macAddress, wifi_interface_t interface);
+    static void GetMacAddress(uint8_t * const macAddress, wifi_interface_t interface);
+    static StatusCodes::StatusCodes SetMacAddress(const uint8_t * const macAddress, wifi_interface_t interface);
 
     /**
      *  @brief Get / Set the current antenna in use.
