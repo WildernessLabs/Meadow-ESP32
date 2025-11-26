@@ -122,7 +122,7 @@ extern "C" void app_main()
      *  Set up the messaging system to use SPI hardware communications.
      */
     SpiTransportProvider *spi = new SpiTransportProvider();
-    MessageDispatcher *__attribute__((unused)) messageDispatcher = new MessageDispatcher(spi);
+    MessageDispatcher * __attribute__((unused)) messageDispatcher = new MessageDispatcher(spi);
 
     //
     //  The following shows how we can reduce the amount of heap memory the system has available.
