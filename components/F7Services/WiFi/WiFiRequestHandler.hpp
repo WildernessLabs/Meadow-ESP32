@@ -742,27 +742,27 @@ private:
     /**
      *  @brief Provide a mechanism for the STM32 to call the getaddrinfo method.
      */
-    static void GetAddrInfo(void *vpMessage);
+    static void GetAddrInfo(void * const vpMessage);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the socket method.
      */
-    static void Socket(void *vpMessage);
+    static void Socket(void * const vpMessage);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the connect method.
      */
-    static void Connect(void *vpMessage);
+    static void Connect(void * const vpMessage);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the freeaddrinfo method.
      */
-    static void FreeAddrInfo(void *vpMessage);
+    static void FreeAddrInfo(void * const vpMessage);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the write method.
      */
-    static void Write(void *vpMessage);
+    static void Write(void * const vpMessage);
 
     /**
      * @brief Process the setsockopt request from the STM32.
@@ -779,7 +779,7 @@ private:
     /**
      *  @brief Provide a mechanism for the STM32 to call the setsockopt method.
      */
-    static void SetSockOpt(void *vpMessage);
+    static void SetSockOpt(void * const vpMessage);
 
     /**
      * @brief Process the SO_SNDTIMEO and SO_SNDTIMEO get socket option.
@@ -805,17 +805,17 @@ private:
     /**
      *  @brief Provide a mechanism for the STM32 to call the getsockopt method.
      */
-    static void GetSockOpt(void *vpMessage);
+    static void GetSockOpt(void * const vpMessage);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the close method.
      */
 
-    static void Close(void *vpMessage);
+    static void Close(void * const vpMessage);
     /**
      *  @brief Provide a mechanism for the STM32 to call the read method.
      */
-    static void Read(void *vpMessage);
+    static void Read(void * const vpMessage);
 
     /**
      * @brief Provide a mechanism for the STM32 to call the sendto method.
@@ -831,12 +831,12 @@ private:
     /**
      *  @brief Provide a mechanism for the STM32 to call the sendto method.
      */
-    static void SendTo(void *vpMessage);
+    static void SendTo(void * const vpMessage);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the send method.
      */
-    static void Send(void *vpMessage);
+    static void Send(void * const vpMessage);
 
     /**
      * @brief Process the recvfrom request from the STM32.
@@ -851,22 +851,22 @@ private:
     /**
      *  @brief Provide a mechanism for the STM32 to call the recvfrom method.
      */
-    static void RecvFrom(void *vpMessage);
+    static void RecvFrom(void * const vpMessage);
 
     /**
      *  @brief Setup a poll request an assign it to a thread in the thread pool.
      */
-    static int PollSetup(void *vpMessage);
+    static int PollSetup(void * const vpMessage);
 
     /**
      *  @brief Teardown a poll request that has previously been setup by PollSetup.
      */
-    static int PollTeardown(void *pvMessage);
+    static int PollTeardown(void * const pvMessage);
 
     /**
      *  @brief Execute the actual request to poll a socket.
      */
-    static void PollSocket(void *pvMessage);
+    static void PollSocket(void * const pvMessage);
 
     /**
      *  @brief Open a dummy socket to be used by the Poll methods to terminate a poll request.
@@ -881,7 +881,7 @@ private:
     /**
      *  @brief Provide a mechanism for the STM32 to call the poll method.
      */
-    static void Poll(void *vpMessage);
+    static void Poll(void * const vpMessage);
 
     /**
      * @brief Bind a socket to an address.
@@ -896,12 +896,12 @@ private:
     /**
      *  @brief Provide a mechanism for the STM32 to call the bind method.
      */
-    static void Bind(void *vpMessage);
+    static void Bind(void * const vpMessage);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the listen method.
      */
-    static void Listen(void *vpMessage);
+    static void Listen(void * const vpMessage);
 
     /**
      * @brief Process the accept request from the STM32.
@@ -917,12 +917,12 @@ private:
     /**
      *  @brief Provide a mechanism for the STM32 to call the accept method.
      */
-    static void Accept(void *vpMessage);
+    static void Accept(void * const vpMessage);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the simulated ioctl method.
      */
-    static void Ioctl(void *vpMessage);
+    static void Ioctl(void * const vpMessage);
 
     /**
      * @brief Provide a mechanism to call the getsockname or getpeername.
@@ -939,17 +939,17 @@ private:
     /**
      *  @brief Provide a mechanism to call the getsockname or getpeername.
      */
-    static void GetSockPeerName(void *vpMessage, WiFiFunction::WiFiFunction request);
+    static void GetSockPeerName(void * const vpMessage, WiFiFunction::WiFiFunction request);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the simulated getsockname method.
      */
-    static void GetSockName(void *vpMessage);
+    static void GetSockName(void * const vpMessage);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the simulated getpeername method.
      */
-    static void GetPeerName(void *vpMessage);
+    static void GetPeerName(void * const vpMessage);
 
     /**
      *  @brief Method called when the time server has supplied updated time information.
