@@ -1,11 +1,13 @@
-/*
- *  FileSystem.hpp
+/**
+ * @file FileSystem.hpp
+ * @author Mark Stevens
+ * @brief Implementation of the FileSystem class for working with files on the ESP32.
+ * @date 2023-01-08
  *
- *  File system message request handlers
+ * @copyright Copyright (c) 2025 Wilderness Labs
  */
 
-#ifndef _FILE_SYSTEM_HPP_
-#define _FILE_SYSTEM_HPP_
+#pragma once
 
 #include "sdkconfig.h"
 
@@ -118,5 +120,3 @@ public:
      */
     void ListFiles(Message * const message);
 };
-
-#endif /* _FILE_SYSTEM_HPP_ */

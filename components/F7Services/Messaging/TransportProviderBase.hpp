@@ -1,12 +1,13 @@
-/*
- *  TransportProviderBase.hpp
+/**
+ * @file TransportProviderBase.hpp
+ * @author Mark Stevens
+ * @brief Base class for the hardware level data transmit/receive hardware used to connect the ESP32 and the STM32 chips.
+ * @date 2019-02-22
  *
- *  This class is a base class for the hardware level data transmit / receive
- *  hardware used to connect the ESP32 and the STM32 chips.
+ * @copyright Copyright (c) 2019 Wilderness Labs
  */
 
-#ifndef _TRANSPORT_PROVIDER_BASE_HPP_
-#define _TRANSPORT_PROVIDER_BASE_HPP_
+#pragma once
 
 #include "sdkconfig.h"
 
@@ -142,5 +143,3 @@ public:
      */
     static const char *COMPONENT_NAME;
 };
-
-#endif /* _TRANSPORT_PROVIDER_BASE_HPP_ */

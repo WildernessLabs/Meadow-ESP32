@@ -1,12 +1,13 @@
-/*
- *  WiFi.hpp
+/**
+ * @file WiFiRequestHandler.hpp
+ * @author Mark Stevens
+ * @brief Provide WiFi specific methods and properties.
+ * @date 2019-02-03
  *
- *  Encapsulate the properties and methods required to provide the
- *  ability to communicate with the WiFi network.
+ * @copyright Copyright (c) 2019 Wilderness Labs
  */
 
-#ifndef _WIFI_REQUEST_HANDLER_HPP_
-#define _WIFI_REQUEST_HANDLER_HPP_
+#pragma once
 
 #include "sdkconfig.h"
 
@@ -1078,5 +1079,3 @@ public:
     friend class WiFiRequestHandlerTestFriend;
 #endif
 };
-
-#endif /* _WIFI_REQUEST_HANDLER_HPP_ */

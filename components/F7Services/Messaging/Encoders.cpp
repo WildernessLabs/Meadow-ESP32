@@ -1,4 +1,11 @@
-#include "Encoders.hpp"
+/**
+ * @file Encoders.cpp
+ * @author Mark Stevens
+ * @brief Message encoders and decoders implementation.
+ * @date 2019-01-18
+ *
+ * @copyright Copyright (c) 2019 Wilderness Labs
+ */
 
 #include "Encoders.hpp"
 #include "Logging.hpp"

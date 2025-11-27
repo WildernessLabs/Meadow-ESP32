@@ -1,11 +1,13 @@
 /**
- *  ThreadPoolException.hpp
+ * @file ThreadPoolException.hpp
+ * @author Mark Stevens
+ * @brief Provide an exception for thread pool related errors.
+ * @date 2021-01-14
  *
- *  Outline the ThreadPoolException class.
+ * @copyright Copyright (c) 2021 Wilderness Labs
  */
 
-#ifndef THREAD_POOL_EXCEPTION_HPP
-#define THREAD_POOL_EXCEPTION_HPP
+#pragma once
 
 #include <stdexcept>
 #include <string>
@@ -26,5 +28,3 @@ public:
      */
     explicit ThreadPoolException(const std::string &message);
 };
-
-#endif // THREAD_POOL_EXCEPTION_HPP

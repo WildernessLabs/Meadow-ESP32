@@ -1,12 +1,13 @@
-/*
- *  Gpio.hpp
+/**
+ * @file Gpio.hpp
+ * @author Mark Stevens
+ * @brief Constants defining the pins on the ESP32 that are available to Meadow.
+ * @date 2019-03-25
  *
- *  Constants defining the pins on the ESP32 that are
- *  available to Meadow.
+ * @copyright Copyright (c) 2019 Wilderness Labs
  */
 
-#ifndef _GPIO_HPP_
-#define _GPIO_HPP_
+#pragma once
 
 #include "sdkconfig.h"
 
@@ -72,5 +73,3 @@ namespace Gpio
      */
     const gpio_num_t CHIP_SELECT_PIN = GPIO_NUM_5;
 } // namespace Gpio
-
-#endif /* _GPIO_HPP_ */

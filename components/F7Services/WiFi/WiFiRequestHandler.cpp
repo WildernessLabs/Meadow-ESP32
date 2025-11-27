@@ -1,3 +1,11 @@
+/**
+ * @file WiFiRequestHandler.cpp
+ * @author Mark Stevens
+ * @brief Provide WiFi specific methods and properties.
+ * @date 2019-02-03
+ *
+ * @copyright Copyright (c) 2019 Wilderness Labs
+ */
 
 #include "sdkconfig.h"
 

@@ -1,11 +1,12 @@
 /**
  * @file BluetoothService.cpp
  * @author Chris Tacke
+ * @brief Implementation of the BluetoothService class.
+ * @date 2021-02-14
  *
- * @brief Implementation for the BluetoothService class.
- *
- * @copyright Copyright (c) 2019 - 2024
+ * @copyright Copyright (c) 2021 Wilderness Labs
  */
+
 #include "Logging.hpp"
 
 #include "BluetoothService.hpp"

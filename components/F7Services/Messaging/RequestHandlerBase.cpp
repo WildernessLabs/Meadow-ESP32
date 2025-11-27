@@ -1,8 +1,12 @@
-/*
- *  RequestHandlerBase.cpp
+/**
+ * @file RequestHandlerBase.cpp
+ * @author Mark Stevens
+ * @brief Base class for the request handlers.
+ * @date 2019-02-03
  *
- *  Base class for the request handlers.
+ * @copyright Copyright (c) 2019 Wilderness Labs
  */
+
 #include "sdkconfig.h"
 
 #include "freertos/FreeRTOS.h"

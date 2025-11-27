@@ -1,10 +1,13 @@
 /**
- *  Thread.hpp
+ * @file Thread.hpp
+ * @author Mark Stevens
+ * @brief Thread class used by the ThreadPool to execute methods.
+ * @date 2021-01-14
  *
- *  Outline the Thread class used by the ThreadPool.
+ * @copyright Copyright (c) 2021 Wilderness Labs
  */
-#ifndef _THREAD_HPP_
-#define _THREAD_HPP_
+
+#pragma once
 
 #include "sdkconfig.h"
 
@@ -135,5 +138,3 @@ public:
      */
     void *GetParameter();
 };
-
-#endif // #ifndef _THREAD_HPP_

@@ -1,12 +1,13 @@
-/*
- *  Esp32Messaging.hpp
+/**
+ * @file Esp32Messaging.hpp
+ * @author Mark Stevens
+ * @brief Generic messaging constants, structures and definitions used in the messaging system.
+ * @date 2019-03-15
  *
- *  Generic messaging constants, structures and definitions used
- *  in the messaging system.
+ * @copyright Copyright (c) 2019 Wilderness Labs
  */
 
-#ifndef _ESP32_MESSAGING_HPP_
-#define _ESP32_MESSAGING_HPP_
+#pragma once
 
 #include "sdkconfig.h"
 
@@ -164,5 +165,3 @@ struct Message
      */
     static void DeleteMessage(Message *);
 };
-
-#endif /* _ESP32_MESSAGING_HPP_ */

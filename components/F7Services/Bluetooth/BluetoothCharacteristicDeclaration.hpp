@@ -1,13 +1,13 @@
 /**
  * @file BluetoothCharacteristicDeclaration.hpp
  * @author Chris Tacke
+ * @brief Class definition for the BluetoothCharacteristicDeclaration class.
+ * @date 2021-02-14
  *
- * @brief Class declaration for the BluetoothCharacteristicDeclaration class.
- *
- * @copyright Copyright (c) 2019 - 2024
+ * @copyright Copyright (c) 2021 Wilderness Labs
  */
-#ifndef _BLUETOOTH_CHARACTERISTIC_DECLARATION_HPP_
-#define _BLUETOOTH_CHARACTERISTIC_DECLARATION_HPP_
+
+#pragma once
 
 #include <string>
 #include <vector>
@@ -111,5 +111,3 @@ public:
      */
     Uuid128 ValueUuid128;
 };
-
-#endif

@@ -1,10 +1,10 @@
 /**
  * @file BluetoothAttribute.cpp
  * @author Mark Stevens
- *
  * @brief Implementation for the BluetoothAttribute class.
+ * @date 2024-11-25
  *
- * @copyright Copyright (c) 2024
+ * @copyright Copyright (c) 2024 Wilderness Labs
  */
 
 #include "BluetoothAttribute.hpp"

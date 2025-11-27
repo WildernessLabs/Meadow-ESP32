@@ -1,11 +1,10 @@
 /**
  * @file Diagnostics.cpp
- * @author Wilderness Labs
+ * @author Mark Stevens
  * @brief Provide system diagnostic tools for the ESP32 application.
- * @version 0.1
  * @date 2025-06-04
  *
- * @copyright Copyright (c) 2025
+ * @copyright Copyright (c) 2025 Wilderness Labs
  *
  * @note The standard method of sending diagnostic information to the serial output is via
  *       the trace, debug, and error macros defined in Logging.hpp.  In general this is used
@@ -200,17 +199,17 @@ std::string Diagnostics::TaskStateToString(eTaskState state)
     switch (state)
     {
         case eTaskState::eRunning:
-            return("Running");
+            return ("Running");
         case eTaskState::eReady:
-            return("Ready");
+            return ("Ready");
         case eTaskState::eBlocked:
-            return("Blocked");
+            return ("Blocked");
         case eTaskState::eSuspended:
-            return("Suspended");
+            return ("Suspended");
         case eTaskState::eDeleted:
-            return("Deleted");
+            return ("Deleted");
         default:
-            return("Unknown");
+            return ("Unknown");
     }
 }
 
@@ -225,13 +224,13 @@ std::string Diagnostics::TranslateCoreID(BaseType_t coreID)
     switch (coreID)
     {
         case tskNO_AFFINITY:
-            return("-");
+            return ("-");
         case 0:
-            return("0");
+            return ("0");
         case 1:
-            return("1");
+            return ("1");
         default:
-            return("?");
+            return ("?");
     }
 }
 
@@ -265,9 +264,9 @@ void Diagnostics::ReportTaskInformation()
             }
             std::string taskState = TaskStateToString(tasks[index].eCurrentState);
             std::string coreID = TranslateCoreID(tasks[index].xCoreID);
-            ESP_LOGI(COMPONENT_NAME, "%-2" PRIu32 "    %s  %-16s %-9s %2" PRIu32 " (%2" PRIu32 ")  %15u %8lu  %3lu%%", tasks[index].xTaskNumber, coreID.c_str(), tasks[index].pcTaskName, taskState.c_str(),
-                tasks[index].uxCurrentPriority, tasks[index].uxBasePriority,
-                tasks[index].usStackHighWaterMark, tasks[index].ulRunTimeCounter, runTimePercentage);
+            ESP_LOGI(
+                COMPONENT_NAME, "%-2" PRIu32 "    %s  %-16s %-9s %2" PRIu32 " (%2" PRIu32 ")  %15u %8lu  %3lu%%", tasks[index].xTaskNumber, coreID.c_str(), tasks[index].pcTaskName, taskState.c_str(), tasks[index].uxCurrentPriority, tasks[index].uxBasePriority, tasks[index].usStackHighWaterMark,
+                tasks[index].ulRunTimeCounter, runTimePercentage);
         }
         Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&tasks));
     }

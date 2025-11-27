@@ -1,13 +1,13 @@
 /**
  * @file BluetoothManager.hpp
  * @author Chris Tacke
- *
  * @brief Class definition for the BluetoothManager class.
+ * @date 2021-02-14
  *
- * @copyright Copyright (c) 2019 - 2024
+ * @copyright Copyright (c) 2021 Wilderness Labs
  */
-#ifndef _BLUETOOTH_MANAGER_HPP_
-#define _BLUETOOTH_MANAGER_HPP_
+
+#pragma once
 
 #include "BluetoothServiceCollection.hpp"
 #include "BluetoothAttribute.hpp"
@@ -156,5 +156,3 @@ public:
      */
     void BuildGraphFromJson(char *cfg_json);
 };
-
-#endif

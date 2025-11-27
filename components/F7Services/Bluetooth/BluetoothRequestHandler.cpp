@@ -1,8 +1,10 @@
-/*
- *  Bluetooth.cpp
+/**
+ * @file BluetoothRequestHandler.cpp
+ * @author Mark Stevens
+ * @brief Implementation for the Bluetooth Request Handler class.
+ * @date 2025-01-27
  *
- *  Created on: 24 Jan 2019
- *  Author: Mark Stevens
+ * @copyright Copyright (c) 2025 Wilderness Labs
  */
 
 #include "sdkconfig.h"

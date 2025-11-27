@@ -1,9 +1,12 @@
-/*
- *  SpiTransportProvider.cpp
+/**
+ * @file SpiTransportProvider.cpp
+ * @author Mark Stevens
+ * @brief Hardware transport provider for messages between the ESP32 and the STM32 using the SPI interface.
+ * @date 2019-03-15
  *
- *  Hardware transport provider for messages between the ESP32 and
- *  the STM32 using the SPI interface.
+ * @copyright Copyright (c) 2019 Wilderness Labs
  */
+
 #include "sdkconfig.h"
 
 #include <string.h>

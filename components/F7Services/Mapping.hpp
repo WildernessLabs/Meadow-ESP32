@@ -1,13 +1,13 @@
-/*
- *  Mapping.hpp
+/**
+ * @file Mapping.hpp
+ * @author Mark Stevens
+ * @brief Define the class that will allow the mapping of values on the STM32 to those on the ESP32 and vice-versa.
+ * @date 2020-05-19
  *
- *  Define the class that will allow the mapping of values on the STM32 to
- *  those on the ESP32 and vice-versa.
- *
- *  This file also contains the mappings.
+ * @copyright Copyright (c) 2020 Wilderness Labs
  */
-#ifndef MAIN_MAPPING_HPP
-#define MAIN_MAPPING_HPP
+
+#pragma once
 
 #include "sdkconfig.h"
 
@@ -256,5 +256,3 @@ public:
      */
     static int32_t NuttxErrno(int32_t espErrno);
 };
-
-#endif /* MAIN_MAPPING_HPP */

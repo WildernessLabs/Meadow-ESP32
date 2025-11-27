@@ -1,8 +1,12 @@
 /**
- *  ThreadPool.cpp
+ * @file ThreadPool.cpp
+ * @author Mark Stevens
+ * @brief Implementation of the ThreadPool class.
+ * @date 2021-01-14
  *
- *  Implement the methods in the ThreadPool class.
+ * @copyright Copyright (c) 2021 Wilderness Labs
  */
+
 #include "sdkconfig.h"
 
 #include "Logging.hpp"

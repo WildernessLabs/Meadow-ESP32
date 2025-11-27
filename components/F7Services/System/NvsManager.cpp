@@ -1,8 +1,12 @@
-/*
- *  NvsManager.hpp
+/**
+ * @file NvsManager.cpp
+ * @author Mark Stevens
+ * @brief Provide a mechanism for storing and retrieving data in Non-Volatile Storage (NVS).
+ * @date 2019-12-08
  *
- *  Provide a mechanism for storing and retrieving data in non-Volatile storage (NVS).
+ * @copyright Copyright (c) 2019 Wilderness Labs
  */
+
 #include "sdkconfig.h"
 
 #include "freertos/FreeRTOS.h"
