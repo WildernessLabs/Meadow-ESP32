@@ -3,7 +3,7 @@
  * @author Mark Stevens
  * @brief Generic messaging constants, structures and definitions used in the messaging system.
  * @date 2019-03-15
- * 
+ *
  * @copyright Copyright (c) 2019 Wilderness Labs
  */
 
@@ -165,4 +165,3 @@ struct Message
      */
     static void DeleteMessage(Message *);
 };
-

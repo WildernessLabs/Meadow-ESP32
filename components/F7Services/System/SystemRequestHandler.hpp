@@ -3,7 +3,7 @@
  * @author Mark Stevens
  * @brief System message request handler.
  * @date 2019-02-03
- * 
+ *
  * @copyright Copyright (c) 2019 Wilderness Labs
  */
 

@@ -3,7 +3,7 @@
  * @author Mark Stevens
  * @brief Implementation of the ThreadPool class.
  * @date 2021-01-14
- * 
+ *
  * @copyright Copyright (c) 2021 Wilderness Labs
  */
 

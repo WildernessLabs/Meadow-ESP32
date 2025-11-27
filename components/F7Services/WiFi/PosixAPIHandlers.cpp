@@ -3,7 +3,7 @@
  * @author Mark Stevens
  * @brief Implement the POSIX API handlers for the WiFi service.
  * @date 2022-12-27
- * 
+ *
  * @copyright Copyright (c) 2022 Wilderness Labs
  */
 

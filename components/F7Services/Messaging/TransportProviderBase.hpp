@@ -3,7 +3,7 @@
  * @author Mark Stevens
  * @brief Base class for the hardware level data transmit/receive hardware used to connect the ESP32 and the STM32 chips.
  * @date 2019-02-22
- * 
+ *
  * @copyright Copyright (c) 2019 Wilderness Labs
  */
 

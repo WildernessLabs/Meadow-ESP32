@@ -3,7 +3,7 @@
  * @author Mark Stevens
  * @brief Define the ThreadPool class used to manage a pool of threads for executing methods.
  * @date 2021-01-14
- * 
+ *
  * @copyright Copyright (c) 2021 Wilderness Labs
  */
 

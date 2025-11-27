@@ -3,7 +3,7 @@
  * @author Mark Stevens
  * @brief Provide a mechanism for storing and retrieving data in Non-Volatile Storage (NVS).
  * @date 2019-12-08
- * 
+ *
  * @copyright Copyright (c) 2019 Wilderness Labs
  */
 
@@ -103,4 +103,4 @@ public:
      *  @brief Set a boolean value.
      */
     static ErrorCodes SetValue(const char *nameSpace, const char *name, const bool value);
-};    
+};

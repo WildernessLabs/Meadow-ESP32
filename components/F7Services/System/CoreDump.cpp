@@ -5,7 +5,7 @@
  * @date 2025-08-24
  *
  * @copyright Copyright (c) 2025 Wilderness Labs
- * 
+ *
  * @note This file provides the implementation for core dump management and analysis.
  */
 
@@ -21,9 +21,9 @@
 
 /**
  * @brief Check the validity of the core dump image.
- * 
+ *
  * @note This function is defined in the ESP-IDF framework.
- * 
+ *
  * @return esp_err_t ESP_OK if the core dump image is valid, otherwise an error code.
  */
 extern "C" esp_err_t esp_core_dump_image_check();

@@ -3,7 +3,7 @@
  * @author Mark Stevens
  * @brief Provide a home for global variables.
  * @date 2024-12-12
- * 
+ *
  * @copyright Copyright (c) 2024 Wilderness Labs
  */
 

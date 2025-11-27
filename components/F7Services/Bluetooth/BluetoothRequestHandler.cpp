@@ -3,7 +3,7 @@
  * @author Mark Stevens
  * @brief Implementation for the Bluetooth Request Handler class.
  * @date 2025-01-27
- * 
+ *
  * @copyright Copyright (c) 2025 Wilderness Labs
  */
 

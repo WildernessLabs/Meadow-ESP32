@@ -3,7 +3,7 @@
  * @author Mark Stevens
  * @brief Provide an exception for thread pool related errors.
  * @date 2021-01-14
- * 
+ *
  * @copyright Copyright (c) 2021 Wilderness Labs
  */
 

@@ -3,7 +3,7 @@
  * @author Mark Stevens
  * @brief Implementation of the Thread class used by the ThreadPool to execute methods.
  * @date 2021-01-14
- * 
+ *
  * @copyright Copyright (c) 2021 Wilderness Labs
  */
 

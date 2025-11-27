@@ -3,7 +3,7 @@
  * @author Chris Tacke
  * @brief Definition for the structures holding 16 and 128 bit UUIDs.
  * @date 2021-02-14
- * 
+ *
  * @copyright Copyright (c) 2021 Wilderness Labs
  */
 

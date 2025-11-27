@@ -3,7 +3,7 @@
  * @author Chris Tacke
  * @brief Class definition for the BluetoothHandleManager class.
  * @date 2021-02-20
- * 
+ *
  * @copyright Copyright (c) 2021 Wilderness Labs
  */
 

@@ -3,7 +3,7 @@
  * @author Mark Stevens
  * @brief Utility functions for the ESP32 application.
  * @date 2025-06-05
- * 
+ *
  * @copyright Copyright (c) 2025 Wilderness Labs
  */
 
