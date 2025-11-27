@@ -52,23 +52,23 @@ public:
     /**
      * @brief Get the Information about the code dump.
      *
-     * @param pvMessage Pointer to the message requesting the coredump information.
+     * @param vpMessage Pointer to the message requesting the coredump information.
      */
-    void GetInformation(void *pvMessage);
+    void GetInformation(void * const vpMessage);
 
     /**
      * @brief Get part (maybe all) of the core dump.
      *
-     * @param pvMessage Pointer to the message requesting the core dump fragment.
+     * @param vpMessage Pointer to the message requesting the core dump fragment.
      */
-    void GetFragment(void *pvMessage);
+    void GetFragment(void * const vpMessage);
 
     /**
      * @brief Erase the core dump.
      *
-     * @param pvMessage Pointer to the message requesting the core dump erasure.
+     * @param vpMessage Pointer to the message requesting the core dump erasure.
      */
-    void Erase(void *pvMessage);
+    void Erase(void * const vpMessage);
 
 private:
     /**

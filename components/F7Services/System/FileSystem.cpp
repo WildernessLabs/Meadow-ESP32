@@ -236,7 +236,7 @@ StatusCodes::StatusCodes FileSystem::Setup()
  * @param message
  *      Pointer to the originating message object.
  */
-void FileSystem::Format(Message *message)
+void FileSystem::Format(Message * const message)
 {
     TRACE_MESSAGE("Format: Enter");
 
@@ -265,10 +265,10 @@ void FileSystem::Format(Message *message)
 /**
  * @brief Read a file from the file system.
  *
- * @param request
+ * @param message
  *      Pointer to the originating message object.
  */
-void FileSystem::ReadFile(Message *message)
+void FileSystem::ReadFile(Message * const message)
 {
     TRACE_MESSAGE("ReadFile: Enter");
 
@@ -351,10 +351,10 @@ void FileSystem::ReadFile(Message *message)
 /**
  * @brief Write a file to the file system.
  *
- * @param request
+ * @param message
  *      Pointer to the originating message object.
  */
-void FileSystem::WriteFile(Message *message)
+void FileSystem::WriteFile(Message * const message)
 {
     TRACE_MESSAGE("WriteFile: Enter");
 
@@ -402,10 +402,10 @@ void FileSystem::WriteFile(Message *message)
 /**
  * @brief Delete a file on the file system.
  *
- * @param request
+ * @param message
  *      Pointer to the originating message object.
  */
-void FileSystem::DeleteFile(Message *message)
+void FileSystem::DeleteFile(Message * const message)
 {
     TRACE_MESSAGE("DeleteFile: Enter");
 

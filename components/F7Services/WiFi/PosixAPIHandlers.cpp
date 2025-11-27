@@ -116,12 +116,12 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetAddrInfo(Esp32Messaging::GetAddr
  *  @param message
  *      Message structure containing the parameters for the getaddrinfo method.
  */
-void WiFiRequestHandler::GetAddrInfo(void *vpMessage)
+void WiFiRequestHandler::GetAddrInfo(void * const vpMessage)
 {
     TRACE_MESSAGE("GetAddrInfo: Enter");
     PERFORMANCE_LOGGING_ENTER();
 
-    Message *message = static_cast<Message *>(vpMessage);
+    Message * const message = static_cast<Message *>(vpMessage);
 
     assert(message != NULL);
     assert(message->Payload != NULL);
@@ -194,12 +194,12 @@ void WiFiRequestHandler::GetAddrInfo(void *vpMessage)
  *  @param message
  *      Message structure containing the parameters for the socket method.
  */
-void WiFiRequestHandler::Socket(void *vpMessage)
+void WiFiRequestHandler::Socket(void * const vpMessage)
 {
     TRACE_MESSAGE("Socket: Enter");
     PERFORMANCE_LOGGING_ENTER();
 
-    Message *message = static_cast<Message *>(vpMessage);
+    Message * const message = static_cast<Message *>(vpMessage);
     Esp32Messaging::IntegerAndErrnoResponse response = {};
 
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
@@ -274,12 +274,12 @@ void WiFiRequestHandler::Socket(void *vpMessage)
  *  @param message
  *      Message structure containing the parameters for the connect method.
  */
-void WiFiRequestHandler::Connect(void *vpMessage)
+void WiFiRequestHandler::Connect(void * const vpMessage)
 {
     TRACE_MESSAGE("Connect: Enter");
     PERFORMANCE_LOGGING_ENTER();
 
-    Message *message = static_cast<Message *>(vpMessage);
+    Message * const message = static_cast<Message *>(vpMessage);
     Esp32Messaging::IntegerAndErrnoResponse response = {};
 
     assert(message != NULL);
@@ -384,12 +384,12 @@ void WiFiRequestHandler::Connect(void *vpMessage)
  *  @param message
  *      Message structure containing the parameters for the freeaddrinfo method.
  */
-void WiFiRequestHandler::FreeAddrInfo(void *vpMessage)
+void WiFiRequestHandler::FreeAddrInfo(void * const vpMessage)
 {
     TRACE_MESSAGE("FreeAddrInfo: Enter");
     PERFORMANCE_LOGGING_ENTER();
 
-    Message *message = static_cast<Message *>(vpMessage);
+    Message * const message = static_cast<Message *>(vpMessage);
 
     assert(message != NULL);
     assert(message->Payload != NULL);
@@ -523,12 +523,12 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetSendReceiveBuffer(int socket, in
  *  @param message
  *      Message structure containing the parameters for the getsockopt method.
  */
-void WiFiRequestHandler::GetSockOpt(void *vpMessage)
+void WiFiRequestHandler::GetSockOpt(void * const vpMessage)
 {
     TRACE_MESSAGE("GetSockOpt: Enter");
     PERFORMANCE_LOGGING_ENTER();
 
-    Message *message = static_cast<Message *>(vpMessage);
+    Message * const message = static_cast<Message *>(vpMessage);
 
     assert(message != NULL);
     assert(message->Payload != NULL);
@@ -851,12 +851,12 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetSockOpt(Esp32Messaging::SetSockO
  *  @param message
  *      Message structure containing the parameters for the setsockopt method.
  */
-void WiFiRequestHandler::SetSockOpt(void *vpMessage)
+void WiFiRequestHandler::SetSockOpt(void * const vpMessage)
 {
     TRACE_MESSAGE("SetSockOpt: Enter");
     PERFORMANCE_LOGGING_ENTER();
 
-    Message *message = static_cast<Message *>(vpMessage);
+    Message * const message = static_cast<Message *>(vpMessage);
 
     assert(message != NULL);
     assert(message->Payload != NULL);
@@ -927,12 +927,12 @@ void WiFiRequestHandler::SetSockOpt(void *vpMessage)
  *  @param message
  *      Message structure containing the parameters for the write method.
  */
-void WiFiRequestHandler::Write(void *vpMessage)
+void WiFiRequestHandler::Write(void * const vpMessage)
 {
     TRACE_MESSAGE("Write: Enter");
     PERFORMANCE_LOGGING_ENTER();
 
-    Message *message = static_cast<Message *>(vpMessage);
+    Message * const message = static_cast<Message *>(vpMessage);
 
     assert(message != NULL);
     assert(message->Payload != NULL);
@@ -1004,12 +1004,12 @@ void WiFiRequestHandler::Write(void *vpMessage)
  *  @param message
  *      Message structure containing the parameters for the read method.
  */
-void WiFiRequestHandler::Read(void *vpMessage)
+void WiFiRequestHandler::Read(void * const vpMessage)
 {
     TRACE_MESSAGE("Read: Enter");
     PERFORMANCE_LOGGING_ENTER();
 
-    Message *message = static_cast<Message *>(vpMessage);
+    Message * const message = static_cast<Message *>(vpMessage);
 
     assert(message != NULL);
     assert(message->Payload != NULL);
@@ -1092,12 +1092,12 @@ void WiFiRequestHandler::Read(void *vpMessage)
  *  @param message
  *      Message structure containing the parameters for the close method.
  */
-void WiFiRequestHandler::Close(void *vpMessage)
+void WiFiRequestHandler::Close(void * const vpMessage)
 {
     TRACE_MESSAGE("Close: Enter");
     PERFORMANCE_LOGGING_ENTER();
 
-    Message *message = static_cast<Message *>(vpMessage);
+    Message * const message = static_cast<Message *>(vpMessage);
     Esp32Messaging::IntegerAndErrnoResponse response = {};
 
     assert(message != NULL);
@@ -1160,12 +1160,12 @@ void WiFiRequestHandler::Close(void *vpMessage)
  *  @param message
  *      Message structure containing the parameters for the send method.
  */
-void WiFiRequestHandler::Send(void *vpMessage)
+void WiFiRequestHandler::Send(void * const vpMessage)
 {
     TRACE_MESSAGE("Send: Enter");
     PERFORMANCE_LOGGING_ENTER();
 
-    Message *message = static_cast<Message *>(vpMessage);
+    Message * const message = static_cast<Message *>(vpMessage);
 
     assert(message != NULL);
     assert(message->Payload != NULL);
@@ -1318,12 +1318,12 @@ StatusCodes::StatusCodes WiFiRequestHandler::SendTo(Esp32Messaging::SendToReques
  *  @param message
  *      Message structure containing the parameters for the sendto method.
  */
-void WiFiRequestHandler::SendTo(void *vpMessage)
+void WiFiRequestHandler::SendTo(void * const vpMessage)
 {
     TRACE_MESSAGE("SendTo: Enter");
     PERFORMANCE_LOGGING_ENTER();
 
-    Message *message = static_cast<Message *>(vpMessage);
+    Message * const message = static_cast<Message *>(vpMessage);
 
     assert(message != NULL);
     assert(message->Payload != NULL);
@@ -1491,12 +1491,12 @@ StatusCodes::StatusCodes WiFiRequestHandler::RecvFrom(Esp32Messaging::RecvFromRe
  *  @param message
  *      Message structure containing the parameters for the recvfrom method.
  */
-void WiFiRequestHandler::RecvFrom(void *vpMessage)
+void WiFiRequestHandler::RecvFrom(void * const vpMessage)
 {
     TRACE_MESSAGE("RecvFrom: Enter");
     PERFORMANCE_LOGGING_ENTER();
 
-    Message *message = static_cast<Message *>(vpMessage);
+    Message * const message = static_cast<Message *>(vpMessage);
 
     assert(message != NULL);
     assert(message->Payload != NULL);
@@ -1620,12 +1620,12 @@ StatusCodes::StatusCodes WiFiRequestHandler::Bind(Esp32Messaging::BindRequest *r
  *  @param message
  *      Message structure containing the parameters for the bind method.
  */
-void WiFiRequestHandler::Bind(void *vpMessage)
+void WiFiRequestHandler::Bind(void * const vpMessage)
 {
     TRACE_MESSAGE("Bind: Enter");
     PERFORMANCE_LOGGING_ENTER();
 
-    Message *message = static_cast<Message *>(vpMessage);
+    Message * const message = static_cast<Message *>(vpMessage);
 
     assert(message != NULL);
     assert(message->Payload != NULL);
@@ -1684,12 +1684,12 @@ void WiFiRequestHandler::Bind(void *vpMessage)
  *  @param message
  *      Message structure containing the parameters for the listen method.
  */
-void WiFiRequestHandler::Listen(void *vpMessage)
+void WiFiRequestHandler::Listen(void * const vpMessage)
 {
     TRACE_MESSAGE("Listen: Enter");
     PERFORMANCE_LOGGING_ENTER();
 
-    Message *message = static_cast<Message *>(vpMessage);
+    Message * const message = static_cast<Message *>(vpMessage);
     Esp32Messaging::IntegerAndErrnoResponse response = {};
 
     assert(message != NULL);
@@ -1805,12 +1805,12 @@ StatusCodes::StatusCodes WiFiRequestHandler::Accept(Esp32Messaging::AcceptReques
  *  @param message
  *      Message structure containing the parameters for the accept method.
  */
-void WiFiRequestHandler::Accept(void *vpMessage)
+void WiFiRequestHandler::Accept(void * const vpMessage)
 {
     TRACE_MESSAGE("Accept: Enter");
     PERFORMANCE_LOGGING_ENTER();
 
-    Message *message = static_cast<Message *>(vpMessage);
+    Message * const message = static_cast<Message *>(vpMessage);
     assert(message != NULL);
     assert(message->Payload != NULL);
 
@@ -1874,12 +1874,12 @@ void WiFiRequestHandler::Accept(void *vpMessage)
  *  @param message
  *      Message structure containing the parameters for the ioctl method.
  */
-void WiFiRequestHandler::Ioctl(void *vpMessage)
+void WiFiRequestHandler::Ioctl(void * const vpMessage)
 {
     TRACE_MESSAGE("Ioctl: Enter");
     PERFORMANCE_LOGGING_ENTER();
 
-    Message *message = static_cast<Message *>(vpMessage);
+    Message * const message = static_cast<Message *>(vpMessage);
 
     assert(message != NULL);
     assert(message->Payload != NULL);
@@ -2078,12 +2078,12 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetSockPeerName(Esp32Messaging::Get
  *  @param methodToCall
  *      Which method should be called, getsockname or getpeername?
  */
-void WiFiRequestHandler::GetSockPeerName(void *vpMessage, WiFiFunction::WiFiFunction methodToCall)
+void WiFiRequestHandler::GetSockPeerName(void * const vpMessage, WiFiFunction::WiFiFunction methodToCall)
 {
     TRACE_MESSAGE("GetSockPeerName: Enter");
     PERFORMANCE_LOGGING_ENTER();
 
-    Message *message = static_cast<Message *>(vpMessage);
+    Message * const message = static_cast<Message *>(vpMessage);
 
     assert(message != NULL);
     assert(message->Payload != NULL);
@@ -2146,7 +2146,7 @@ void WiFiRequestHandler::GetSockPeerName(void *vpMessage, WiFiFunction::WiFiFunc
  *  @param message
  *      Message structure containing the parameters for the getsockname method.
  */
-void WiFiRequestHandler::GetSockName(void *vpMessage)
+void WiFiRequestHandler::GetSockName(void * const vpMessage)
 {
     TRACE_MESSAGE("GetSockName: Enter");
     GetSockPeerName(vpMessage, WiFiFunction::GetSockName);
@@ -2159,7 +2159,7 @@ void WiFiRequestHandler::GetSockName(void *vpMessage)
  *  @param message
  *      Message structure containing the parameters for the getpeername method.
  */
-void WiFiRequestHandler::GetPeerName(void *vpMessage)
+void WiFiRequestHandler::GetPeerName(void * const vpMessage)
 {
     TRACE_MESSAGE("GetPeerName: Enter");
     GetSockPeerName(vpMessage, WiFiFunction::GetPeerName);
@@ -2238,7 +2238,7 @@ void WiFiRequestHandler::DumpActivePollRequests()
  *  @param message
  *      Message structure containing the parameters for the poll method.
  */
-int WiFiRequestHandler::PollSetup(void *vpMessage)
+int WiFiRequestHandler::PollSetup(void * const vpMessage)
 {
     TRACE_MESSAGE("PollSetup: Enter");
 
@@ -2260,7 +2260,7 @@ int WiFiRequestHandler::PollSetup(void *vpMessage)
         return (-1);
     }
 
-    Esp32Messaging::PollRequest *request = static_cast<Esp32Messaging::PollRequest *>(vpMessage);
+    Esp32Messaging::PollRequest * const request = static_cast<Esp32Messaging::PollRequest *>(vpMessage);
     memset(fds, 0, 2 * sizeof(struct pollfd));
     int32_t events;
     Mapping::GetEspFlagValue(Mapping::PollEvents, request->Events, &events);
@@ -2293,12 +2293,12 @@ int WiFiRequestHandler::PollSetup(void *vpMessage)
  *  @param message
  *      Message structure containing the parameters for the poll method.
  */
-int WiFiRequestHandler::PollTeardown(void *vpMessage)
+int WiFiRequestHandler::PollTeardown(void * const vpMessage)
 {
     TRACE_MESSAGE("PollTeardown: Enter");
     int result = 0;
 
-    Esp32Messaging::PollRequest *request = (Esp32Messaging::PollRequest *) vpMessage;
+    Esp32Messaging::PollRequest * const request = (Esp32Messaging::PollRequest *) vpMessage;
 
 #if defined(WIFI_DEBUG)
     DumpActivePollRequests();
@@ -2343,7 +2343,7 @@ int WiFiRequestHandler::PollTeardown(void *vpMessage)
  *  @param message
  *      Message structure containing the parameters for the poll method.
  */
-void WiFiRequestHandler::PollSocket(void *requestId)
+void WiFiRequestHandler::PollSocket(void * const requestId)
 {
     TRACE_MESSAGE("PollSocket: Enter");
 
@@ -2427,10 +2427,10 @@ void WiFiRequestHandler::PollSocket(void *requestId)
  *  @param message
  *      Message structure containing the parameters for the poll method.
  */
-void WiFiRequestHandler::Poll(void *vpMessage)
+void WiFiRequestHandler::Poll(void * const vpMessage)
 {
     TRACE_MESSAGE("Poll: Enter");
-    Message *message = static_cast<Message *>(vpMessage);
+    Message * const message = static_cast<Message *>(vpMessage);
 
     assert(message != NULL);
     assert(message->Payload != NULL);

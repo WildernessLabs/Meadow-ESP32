@@ -84,9 +84,9 @@ CoreDump::~CoreDump()
 /**
  * @brief Get the Information about the code dump.
  *
- * @param pvMessage Pointer to the message requesting the coredump information.
+ * @param vpMessage Pointer to the message requesting the coredump information.
  */
-void CoreDump::GetInformation(void *vpMessage)
+void CoreDump::GetInformation(void * const vpMessage)
 {
     TRACE_MESSAGE("GetInformation: Enter");
 
@@ -94,7 +94,7 @@ void CoreDump::GetInformation(void *vpMessage)
     {
         return;
     }
-    Message *message = static_cast<Message *>(vpMessage);
+    Message * const message = static_cast<Message *>(vpMessage);
 
     Esp32Messaging::CoreDumpInformationResponse response = {};
     esp_partition_iterator_t partitions;
@@ -142,9 +142,9 @@ void CoreDump::GetInformation(void *vpMessage)
 /**
  * @brief Get part (maybe all) of the core dump.
  *
- * @param pvMessage Pointer to the message requesting the core dump fragment.
+ * @param vpMessage Pointer to the message requesting the core dump fragment.
  */
-void CoreDump::GetFragment(void *vpMessage)
+void CoreDump::GetFragment(void * const vpMessage)
 {
     TRACE_MESSAGE("GetFragment: Enter");
 
@@ -153,7 +153,7 @@ void CoreDump::GetFragment(void *vpMessage)
         return;
     }
 
-    Message *message = static_cast<Message *>(vpMessage);
+    Message * const message = static_cast<Message *>(vpMessage);
     StatusCodes::StatusCodes result = StatusCodes::Failure;
     Esp32Messaging::CoreDumpFragmentResponse response = {};
     Esp32Messaging::CoreDumpFragmentRequest *request = Encoders::ExtractCoreDumpFragmentRequest(message->Payload);
@@ -247,7 +247,7 @@ void CoreDump::GetFragment(void *vpMessage)
  *
  * @param vpMessage Pointer to the message requesting the core dump erasure.
  */
-void CoreDump::Erase(void *vpMessage)
+void CoreDump::Erase(void * const vpMessage)
 {
     TRACE_MESSAGE("Erase: Enter");
 
@@ -256,7 +256,7 @@ void CoreDump::Erase(void *vpMessage)
         return;
     }
 
-    Message *message = static_cast<Message *>(vpMessage);
+    Message * const message = static_cast<Message *>(vpMessage);
     StatusCodes::StatusCodes result = StatusCodes::Failure;
 
     esp_partition_iterator_t partitions;

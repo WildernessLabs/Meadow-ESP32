@@ -98,9 +98,9 @@ private:
     adc_cali_handle_t _adc1CalibrationHandle = nullptr;
 
     /**
-     *  T@brief his method will dispatch incoming messages to the appropriate request handler.
+     *  @brief This method will dispatch incoming messages to the appropriate request handler.
      */
-    void DispatchRequest(Message *) override;
+    void DispatchRequest(Message * const) override;
 
     /**
      *  @brief Constructor(s) and destructor.
@@ -111,32 +111,32 @@ private:
     /**
      *  @brief Get the system configuration.
      */
-    void GetConfiguration(Message *);
+    void GetConfiguration(Message * const request);
 
     /**
      *  @brief Set a system configuration item.
      */
-    void SetConfigurationItem(Message *);
+    void SetConfigurationItem(Message * const request);
 
     /**
      *  @brief Put the ESP32 into deep sleep.
      */
-    void DeepSleep(Message *);
+    void DeepSleep(Message * const request);
 
     /**
      *  @brief Get the battery level.
      */
-    void GetBatteryChargeLevel(Message *);
+    void GetBatteryChargeLevel(Message * const request);
 
     /**
      * @brief Process the logging configuration.
      */
-    void LoggingConfiguration(Message *);
+    void LoggingConfiguration(Message * const request);
 
     /**
      * @brief Process the log message
      */
-    void LogMessage(Message *);
+    void LogMessage(Message * const request);
 
     /**
      *  @brief Populate the configuration object with the current configuration.
