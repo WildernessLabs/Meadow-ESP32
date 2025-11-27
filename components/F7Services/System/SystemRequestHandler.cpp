@@ -509,7 +509,7 @@ void SystemRequestHandler::SendConfigurationAsInterruptMessage()
  *  @param request
  *      Message requesting the system configuration.
  */
-void SystemRequestHandler::GetConfiguration(Message *request)
+void SystemRequestHandler::GetConfiguration(Message * const request)
 {
     TRACE_MESSAGE("GetConfiguration: Enter");
     Esp32Messaging::SystemConfiguration config = {};
@@ -530,7 +530,7 @@ void SystemRequestHandler::GetConfiguration(Message *request)
  *  @param request
  *      Message containing the new configuration value.
  */
-void SystemRequestHandler::SetConfigurationItem(Message *request)
+void SystemRequestHandler::SetConfigurationItem(Message * const request)
 {
     TRACE_MESSAGE("SetConfigurationItem: Enter");
     Esp32Messaging::ConfigurationValue *value = Encoders::ExtractConfigurationValue(request->Payload);
@@ -612,7 +612,7 @@ void SystemRequestHandler::SetConfigurationItem(Message *request)
  *  @param request
  *      Message requesting the ESP32 got to sleep.
  */
-void SystemRequestHandler::DeepSleep(Message *request)
+void SystemRequestHandler::DeepSleep(Message * const request)
 {
     TRACE_MESSAGE("DeepSleep: Enter");
 
@@ -675,7 +675,7 @@ void SystemRequestHandler::ConfigureADC1()
  *  @param request
  *      Message requesting the battery level.
  */
-void SystemRequestHandler::GetBatteryChargeLevel(Message *message)
+void SystemRequestHandler::GetBatteryChargeLevel(Message * const message)
 {
     TRACE_MESSAGE("GetBatteryChargeLevel: Enter");
 
@@ -738,7 +738,7 @@ void SystemRequestHandler::GetBatteryChargeLevel(Message *message)
  *  @param request
  *      Message containing the logging configuration.
  */
-void SystemRequestHandler::LoggingConfiguration(Message *message)
+void SystemRequestHandler::LoggingConfiguration(Message * const message)
 {
     TRACE_MESSAGE("LoggingConfiguration: Enter");
 
@@ -764,7 +764,7 @@ void SystemRequestHandler::LoggingConfiguration(Message *message)
  *  @param request
  *      Message containing the log message.
  */
-void SystemRequestHandler::LogMessage(Message *message)
+void SystemRequestHandler::LogMessage(Message * const message)
 {
     TRACE_MESSAGE("LogMessage: Enter");
 
