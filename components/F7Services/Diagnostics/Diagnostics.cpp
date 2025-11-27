@@ -1,12 +1,11 @@
 /**
  * @file Diagnostics.cpp
- * @author Wilderness Labs
+ * @author Mark Stevens
  * @brief Provide system diagnostic tools for the ESP32 application.
- * @version 0.1
  * @date 2025-06-04
- *
- * @copyright Copyright (c) 2025
- *
+ * 
+ * @copyright Copyright (c) 2025 Wilderness Labs
+ * 
  * @note The standard method of sending diagnostic information to the serial output is via
  *       the trace, debug, and error macros defined in Logging.hpp.  In general this is used
  *       except where heap information is being generated.  In these cases the ESP_LOG?

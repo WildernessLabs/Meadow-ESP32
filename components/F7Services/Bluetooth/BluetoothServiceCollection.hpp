@@ -1,13 +1,13 @@
 /**
  * @file BluetoothServiceCollection.hpp
  * @author Chris Tacke
- *
- * @brief Definition for the BluetoothServiceCollection class.
- *
- * @copyright Copyright (c) 2019 - 2024
+ * @brief Class definition for the BluetoothServiceCollection class.
+ * @date 2021-02-14
+ * 
+ * @copyright Copyright (c) 2021 Wilderness Labs
  */
-#ifndef _BLUETOOTH_SERVICE_COLLECTION_HPP_
-#define _BLUETOOTH_SERVICE_COLLECTION_HPP_
+
+#pragma once
 
 #include <string>
 #include <vector>
@@ -100,5 +100,3 @@ public:
      */
     vector<BluetoothService *> GetServiceDefinitions();
 };
-
-#endif

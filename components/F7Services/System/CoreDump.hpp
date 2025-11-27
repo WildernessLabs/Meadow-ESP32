@@ -2,11 +2,10 @@
  * @file CoreDump.hpp
  * @author Wilderness Labs
  * @brief Core dump handling for the ESP32 application.
- * @version 0.1
- * @date 2025-08-23
- *
+ * @date 2025-08-24
+ * 
  * @copyright Copyright (c) 2025 Wilderness Labs
- *
+ * 
  * @note This file provides the interface for core dump management and analysis.
  */
 

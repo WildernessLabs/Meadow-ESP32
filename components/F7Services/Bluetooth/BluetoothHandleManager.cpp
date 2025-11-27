@@ -1,11 +1,12 @@
 /**
  * @file BluetoothHandleManager.cpp
  * @author Chris Tacke
- *
- * @brief Methods for the BluetoothHandleManager class.
- *
- * @copyright Copyright (c) 2019 - 2024
+ * @brief Implementation of the BluetoothHandleManager class.
+ * @date 2021-02-20
+ * 
+ * @copyright Copyright (c) 2021 Wilderness Labs
  */
+
 #include "Logging.hpp"
 
 #include "BluetoothHandleManager.hpp"

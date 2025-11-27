@@ -1,11 +1,13 @@
-/*
- *  SystemRequestHandler.hpp
- *
- *  System message request handler
+/**
+ * @file SystemRequestHandler.hpp
+ * @author Mark Stevens
+ * @brief System message request handler.
+ * @date 2019-02-03
+ * 
+ * @copyright Copyright (c) 2019 Wilderness Labs
  */
 
-#ifndef _SYSTEM_REQUEST_HANDLER_HPP_
-#define _SYSTEM_REQUEST_HANDLER_HPP_
+#pragma once
 
 #include "sdkconfig.h"
 
@@ -233,5 +235,3 @@ public:
 
     static ThreadPool *SharedThreadPool();
 };
-
-#endif /* _SYSTEM_REQUEST_HANDLER_HPP_ */

@@ -1,13 +1,13 @@
 /**
  * @file BluetoothHandleManager.hpp
  * @author Chris Tacke
- *
  * @brief Class definition for the BluetoothHandleManager class.
- *
- * @copyright Copyright (c) 2019 - 2024
+ * @date 2021-02-20
+ * 
+ * @copyright Copyright (c) 2021 Wilderness Labs
  */
-#ifndef _BLUETOOTH_HANDLE_MANAGER_HPP_
-#define _BLUETOOTH_HANDLE_MANAGER_HPP_
+
+#pragma once
 
 #include "BluetoothService.hpp"
 #include "BluetoothAttribute.hpp"
@@ -55,5 +55,3 @@ public:
     unsigned short Assign(BluetoothService *service);
     unsigned short Assign(BluetoothAttribute *attribute);
 };
-
-#endif

@@ -1,8 +1,12 @@
 /**
- *  ThreadPoolException.cpp
- *
- *  Implementation of the ThreadPoolException class methods.
+ * @file ThreadPoolException.cpp
+ * @author Mark Stevens
+ * @brief Implementation of the ThreadPoolException class.
+ * @date 2021-01-14
+ * 
+ * @copyright Copyright (c) 2021 Wilderness Labs
  */
+
 #include "ThreadPoolException.hpp"
 
 /**

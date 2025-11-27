@@ -1,16 +1,13 @@
 /**
  * @file BluetoothAttribute.hpp
  * @author Chris Tacke
- *
- * @brief Hold the definitions for the following:
- *  - BluetoothAttribute class
- *  - CharacteristicProperty enum
- *  - CharacteristicPermission enum
- *
- * @copyright Copyright (c) 2019 - 2024
+ * @brief Hold the definitions for the BluetoothAttribute class, CharacteristicProperty enum, and CharacteristicPermission enum.
+ * @date 2021-02-14
+ * 
+ * @copyright Copyright (c) 2021 Wilderness Labs
  */
-#ifndef _BLUETOOTH_ATTRIBUTE_HPP_
-#define _BLUETOOTH_ATTRIBUTE_HPP_
+
+#pragma once
 
 #include <stdint.h>
 
@@ -97,5 +94,3 @@ public:
      */
     uint16_t Handle;
 };
-
-#endif

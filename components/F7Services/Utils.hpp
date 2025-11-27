@@ -1,20 +1,16 @@
 /**
  * @file Utils.hpp
- * @author Wilderness Labs
+ * @author Mark Stevens
  * @brief Utility functions for the ESP32 application.
- * @version 0.1
  * @date 2025-06-05
- *
- * @copyright Copyright (c) 2025
+ * 
+ * @copyright Copyright (c) 2025 Wilderness Labs
  */
 
 #pragma once
 
-#ifndef UTILS_HPP
-    #define UTILS_HPP
-
-    #include <stdint.h>
-    #include <string>
+#include <stdint.h>
+#include <string>
 
 namespace Utils
 {
@@ -41,5 +37,3 @@ namespace Utils
      */
     void DeleteAndNullifyPointer(void **ptr);
 }; // namespace Utils
-
-#endif // UTILS_HPP

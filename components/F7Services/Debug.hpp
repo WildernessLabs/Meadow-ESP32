@@ -1,11 +1,10 @@
 /**
  * @file Debug.hpp
- * @author Wilderness Labs
+ * @author Mark Stevens
  * @brief Debugging utilities for MeadowComms ESP32 firmware.
- * @version 0.1
- * @date 2025-06-06
- *
- * @copyright Copyright (c) 2025
+ * @date 2025-06-09
+ * 
+ * @copyright Copyright (c) 2025 Wilderness Labs
  */
 
 #pragma once

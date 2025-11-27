@@ -1,8 +1,12 @@
 /**
- *  Thread.cpp
- *
- *  Implementation of the methods for the Thread class as used by the ThreadPool class.
+ * @file Thread.cpp
+ * @author Mark Stevens
+ * @brief Implementation of the Thread class used by the ThreadPool to execute methods.
+ * @date 2021-01-14
+ * 
+ * @copyright Copyright (c) 2021 Wilderness Labs
  */
+
 #include "sdkconfig.h"
 
 #include "Globals.hpp"

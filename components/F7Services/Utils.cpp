@@ -1,11 +1,10 @@
 /**
  * @file Utils.cpp
- * @author Wilderness Labs
+ * @author Mark Stevens
  * @brief Utility functions for the ESP32 application.
- * @version 0.1
  * @date 2025-06-05
- *
- * @copyright Copyright (c) 2025
+ * 
+ * @copyright Copyright (c) 2025 Wilderness Labs
  */
 
 #include "sdkconfig.h"

@@ -1,13 +1,13 @@
 /**
  * @file Uuid.hpp
  * @author Chris Tacke
- *
- * @brief Definiton for the structures holding 16 and 128 bit UUIDs.
- *
- * @copyright Copyright (c) 2019 - 2024
+ * @brief Definition for the structures holding 16 and 128 bit UUIDs.
+ * @date 2021-02-14
+ * 
+ * @copyright Copyright (c) 2021 Wilderness Labs
  */
-#ifndef _BLUETOOTH_UUID_HPP_
-#define _BLUETOOTH_UUID_HPP_
+
+#pragma once
 
 #include "string.h"
 #include <cstdint>
@@ -169,5 +169,3 @@ struct Uuid16
      */
     static Uuid16 CharacteristicDeclaration;
 };
-
-#endif

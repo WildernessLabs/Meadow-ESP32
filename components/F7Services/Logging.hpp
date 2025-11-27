@@ -1,9 +1,12 @@
-/*
- *  Logging.hpp
- *
- *  The Logging class provides the functionality necessary to
- *  setup and run the logging system.
+/**
+ * @file Logging.hpp
+ * @author Mark Stevens
+ * @brief The Logging class provides the functionality necessary to setup and run the logging system.
+ * @date 2019-01-24
+ * 
+ * @copyright Copyright (c) 2019 Wilderness Labs
  */
+
 #pragma once
 
 #include "sdkconfig.h"
