@@ -125,7 +125,7 @@ int EncodedBTServerDataSetBufferSize(Esp32Messaging::BTServerDataSet *bTServerDa
  *
  * @param configuration Configuration of the service.
  */
-static void StartBlueToothService(const char *const configuration)
+static void StartBlueToothService(const char * const configuration)
 {
     TEST_ASSERT_NOT_NULL(SetupMessageDispatcher());
 

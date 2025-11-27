@@ -22,12 +22,11 @@
 #include "Diagnostics.hpp"
 #include "Heap.hpp"
 #include "Utils.hpp"
+#include "AppMain.hpp"
 
 #if defined(PERFORMANCE_LOGGING)
     #pragma message "Performance logging is enabled."
 #endif
-
-#define APP_MAIN_COMPONENT_NAME "AppMain"
 
 /*
  * ---------------------------------------------------------------------------
@@ -144,7 +143,7 @@ void Logging::Setup()
  * @param interface Destination for the log messages.
  * @param udpPort UDP port for the log messages when UDP is enabled.
  */
-void Logging::Configure(char *components, uint32_t interface, uint32_t udpPort)
+void Logging::Configure(const char * const components, uint32_t interface, uint32_t udpPort)
 {
     if (!_configured)
     {
@@ -152,15 +151,18 @@ void Logging::Configure(char *components, uint32_t interface, uint32_t udpPort)
 
         if (components != NULL)
         {
-            char *residual;
             char *duplicate = strdup(components);
-            char *component = strtok_r(duplicate, ";", &residual);
-            while (component != NULL)
+            if (duplicate != NULL)
             {
-                turnAppLoggingOn |= TurnLoggingOn(component);
-                component = strtok_r(residual, ";", &residual);
+                char *residual;
+                char *component = strtok_r(duplicate, ";", &residual);
+                while (component != NULL)
+                {
+                    turnAppLoggingOn |= TurnLoggingOn(component);
+                    component = strtok_r(residual, ";", &residual);
+                }
+                free(duplicate);
             }
-            free(duplicate);
         }
 
         if (turnAppLoggingOn)
@@ -182,7 +184,7 @@ void Logging::Configure(char *components, uint32_t interface, uint32_t udpPort)
  *
  * @return True if the component was found and logging was enabled, false otherwise.
  */
-bool Logging::TurnLoggingOn(char *component)
+bool Logging::TurnLoggingOn(const char * const component)
 {
     if (component != NULL)
     {
@@ -402,7 +404,7 @@ char *Logging::StatusCodeName(uint32_t code)
  *  @param message
  *      Pointer to the message to be decoded.
  */
-void Logging::DumpMessage(const char *componentName, const Message *message)
+void Logging::DumpMessage(const char * const componentName, const Message * const message)
 {
     if (message)
     {
@@ -440,7 +442,7 @@ void Logging::DumpMessage(const char *componentName, const Message *message)
  *  @return
  *      Pointer to a string containing the message ID, interface and function requested.
  */
-char *Logging::MessageSummary(const Message *message)
+char *Logging::MessageSummary(const Message * const message)
 {
     char buffer[200];
 

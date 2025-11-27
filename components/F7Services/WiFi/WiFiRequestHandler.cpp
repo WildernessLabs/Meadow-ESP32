@@ -447,7 +447,7 @@ char *WiFiRequestHandler::GetDefaultAccessPoint()
  *  @returns
  *      StatusCodes::Completed on success, StatusCodes::Failure if there is a problem.
  */
-StatusCodes::StatusCodes WiFiRequestHandler::SetDefaultAccessPoint(char *value)
+StatusCodes::StatusCodes WiFiRequestHandler::SetDefaultAccessPoint(const char *value)
 {
     TRACE_MESSAGE("WiFiRequestHandler::SetDefaultAccessPoint %s", (value == NULL) ? "NULL" : value);
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
@@ -489,7 +489,7 @@ char *WiFiRequestHandler::GetPassword()
  *  @returns
  *      StatusCodes::Completed on success, StatusCodes::Failure if there is a problem.
  */
-StatusCodes::StatusCodes WiFiRequestHandler::SetPassword(char *value)
+StatusCodes::StatusCodes WiFiRequestHandler::SetPassword(const char *value)
 {
     TRACE_MESSAGE("WiFiRequestHandler::SetPassword %s", (value == NULL) ? "NULL" : value);
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
@@ -617,7 +617,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetDefaultGateway(uint32_t value)
  *          WIFI_IF_STA     Board MAC address
  *          WIFI_IF_AP      Software access point MAC address
  */
-void WiFiRequestHandler::GetMacAddress(uint8_t *macAddress, wifi_interface_t interface)
+void WiFiRequestHandler::GetMacAddress(uint8_t * const macAddress, wifi_interface_t interface)
 {
     if (interface == WIFI_IF_STA)
     {
@@ -649,7 +649,7 @@ void WiFiRequestHandler::GetMacAddress(uint8_t *macAddress, wifi_interface_t int
  *  @returns
  *      StatusCodes::Completed on success, StatusCodes::Failure if there is a problem.
  */
-StatusCodes::StatusCodes WiFiRequestHandler::SetMacAddress(uint8_t *macAddress, wifi_interface_t interface)
+StatusCodes::StatusCodes WiFiRequestHandler::SetMacAddress(const uint8_t * const macAddress, wifi_interface_t interface)
 {
     return (StatusCodes::CompletedOk);
 }
@@ -833,12 +833,11 @@ void WiFiRequestHandler::Setup()
  *  @param ed
  *    Pointer to the connection event data structure to be populated.
  */
-void WiFiRequestHandler::PopulateConnectionEventDataStructure(Esp32Messaging::ConnectEventData *ed)
+void WiFiRequestHandler::PopulateConnectionEventDataStructure(Esp32Messaging::ConnectEventData * const ed)
 {
     TRACE_MESSAGE("PopulateConnectionEventDataStructure: Enter");
 
     *ed = {};
-    // bzero((void *) ed, sizeof(Esp32Messaging::ConnectEventData));
     //
     //  IP information.
     //
