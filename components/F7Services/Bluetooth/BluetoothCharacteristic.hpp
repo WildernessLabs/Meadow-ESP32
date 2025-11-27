@@ -1,13 +1,13 @@
 /**
  * @file BluetoothCharacteristic.hpp
  * @author Chris Tacke
+ * @brief Class definition for the BluetoothCharacteristic class.
+ * @date 2021-02-14
  *
- * @brief Class definition for a Bluetooth characteristic.
- *
- * @copyright Copyright (c) 2019 - 2024
+ * @copyright Copyright (c) 2021 Wilderness Labs
  */
-#ifndef _BLUETOOTH_CHARACTERISTIC_HPP_
-#define _BLUETOOTH_CHARACTERISTIC_HPP_
+
+#pragma once
 
 #include <functional>
 #include <string>
@@ -115,5 +115,3 @@ private:
      */
     vector<BluetoothDescriptor *> _descriptors;
 };
-
-#endif

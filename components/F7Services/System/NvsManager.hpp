@@ -1,11 +1,13 @@
-/*
- *  NvsManager.hpp
+/**
+ * @file NvsManager.hpp
+ * @author Mark Stevens
+ * @brief Provide a mechanism for storing and retrieving data in Non-Volatile Storage (NVS).
+ * @date 2019-12-08
  *
- *  Provide a mechanism for storing and retrieving data in Non-Volatile Storage (NVS).
+ * @copyright Copyright (c) 2019 Wilderness Labs
  */
 
-#ifndef _NVS_MANAGER_HPP_
-#define _NVS_MANAGER_HPP_
+#pragma once
 
 #include "sdkconfig.h"
 
@@ -102,5 +104,3 @@ public:
      */
     static ErrorCodes SetValue(const char *nameSpace, const char *name, const bool value);
 };
-
-#endif /* _NVS_MANAGER_HPP_ */

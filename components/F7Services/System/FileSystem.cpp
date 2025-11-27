@@ -1,7 +1,10 @@
-/*
- *  FileSystem.cpp
+/**
+ * @file FileSystem.cpp
+ * @author Mark Stevens
+ * @brief Implementation of the FileSystem class for working with files on the ESP32.
+ * @date 2023-01-08
  *
- *  Implementation of the methods to provide the file system functionality for the STM32.
+ * @copyright Copyright (c) 2023 Wilderness Labs
  */
 
 #include "sdkconfig.h"

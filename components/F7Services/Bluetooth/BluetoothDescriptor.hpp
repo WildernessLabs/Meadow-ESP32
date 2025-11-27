@@ -1,14 +1,13 @@
 /**
  * @file BluetoothDescriptor.hpp
- * @author your name (you@domain.com)
+ * @author Chris Tacke
+ * @brief Class definition for the BluetoothDescriptor class.
+ * @date 2021-02-14
  *
- * @brief Class defintion and implementation for the BluetoothDescriptor class.
- *
- * @copyright Copyright (c) 2019 - 2024
- *
+ * @copyright Copyright (c) 2021 Wilderness Labs
  */
-#ifndef _BLUETOOTH_DESCRIPTOR_HPP_
-#define _BLUETOOTH_DESCRIPTOR_HPP_
+
+#pragma once
 
 #include "BluetoothAttribute.hpp"
 #include "Uuid.hpp"
@@ -152,5 +151,3 @@ public:
      */
     uint8_t *Value;
 };
-
-#endif

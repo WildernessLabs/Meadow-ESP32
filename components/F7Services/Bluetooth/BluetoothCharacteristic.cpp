@@ -1,11 +1,12 @@
 /**
  * @file BluetoothCharacteristic.cpp
  * @author Chris Tacke
+ * @brief Implementation of the BluetoothCharacteristic class.
+ * @date 2021-02-14
  *
- * @brief Implementation of methods for the BluetoothCharacteristic class.
- *
- * @copyright Copyright (c) 2019 - 2024
+ * @copyright Copyright (c) 2021 Wilderness Labs
  */
+
 #include "BluetoothComponentName.hpp"
 #include "Logging.hpp"
 

@@ -1,8 +1,12 @@
-/*
- *  AccessPoint.cpp
+/**
+ * @file AccessPoint.cpp
+ * @author Mark Stevens
+ * @brief Implement the access point functionality (the board acting as an access point).
+ * @date 2022-12-27
  *
- *  Implement the access point functionality (the board acting as an access point).
+ * @copyright Copyright (c) 2022 Wilderness Labs
  */
+
 #include "sdkconfig.h"
 
 #include "driver/gpio.h"

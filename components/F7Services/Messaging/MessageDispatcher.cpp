@@ -1,8 +1,10 @@
-/*
- *  MessageDispatcher.cpp
+/**
+ * @file MessageDispatcher.cpp
+ * @author Mark Stevens
+ * @brief Implement the methods that will allow the transmission and reception of messages between the ESP32 and the STM32.
+ * @date 2019-02-22
  *
- *  Implement the methods that will allow the transmission and reception
- *  of messages between the ESP32 and the STM32.
+ * @copyright Copyright (c) 2019 Wilderness Labs
  */
 
 #include "sdkconfig.h"

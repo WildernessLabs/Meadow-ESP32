@@ -1,13 +1,13 @@
-/*
- *  MessageDispatcher.hpp
+/**
+ * @file MessageDispatcher.hpp
+ * @author Mark Stevens
+ * @brief Message dispatcher layer implementation.
+ * @date 2019-02-22
  *
- *  Message dispatcher layer.  This object separates the need for the
- *  ESP32 interface objects to know about the hardware layer used to
- *  send messages between the ESP32 and the STM32.
+ * @copyright Copyright (c) 2019 Wilderness Labs
  */
 
-#ifndef _MESSAGE_DISPATCHER_HPP_
-#define _MESSAGE_DISPATCHER_HPP_
+#pragma once
 
 #include "sdkconfig.h"
 
@@ -115,5 +115,3 @@ public:
      */
     uint32_t GetNextMessageID();
 };
-
-#endif /* _MESSAGE_DISPATCHER_HPP_ */

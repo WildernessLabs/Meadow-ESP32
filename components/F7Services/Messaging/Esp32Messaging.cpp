@@ -1,9 +1,12 @@
-/*
- *  Esp32Messaging.cpp
+/**
+ * @file Esp32Messaging.cpp
+ * @author Mark Stevens
+ * @brief Generic messaging constants, structures and definitions used in the messaging system.
+ * @date 2019-04-26
  *
- *  Generic messaging constants, structures and definitions used
- *  in the messaging system.
+ * @copyright Copyright (c) 2019 Wilderness Labs
  */
+
 #include "sdkconfig.h"
 
 #include "freertos/FreeRTOS.h"
