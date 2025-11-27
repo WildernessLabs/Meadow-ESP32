@@ -96,27 +96,27 @@ public:
     /**
      * @brief Format the file system.
      */
-    void Format(Message *);
+    void Format(Message * const message);
 
     /**
      * @brief Read a file from the file system.
      */
-    void ReadFile(Message *);
+    void ReadFile(Message * const message);
 
     /**
      * @brief Write a file to the file system.
      */
-    void WriteFile(Message *);
+    void WriteFile(Message * const message);
 
     /**
      * @brief Delate a file from the file system.
      */
-    void DeleteFile(Message *);
+    void DeleteFile(Message * const message);
 
     /**
      * @brief Get a list of the files on the file system.
      */
-    void ListFiles(Message *);
+    void ListFiles(Message * const message);
 };
 
 #endif /* _FILE_SYSTEM_HPP_ */
