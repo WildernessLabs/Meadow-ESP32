@@ -98,7 +98,7 @@ private:
     adc_cali_handle_t _adc1CalibrationHandle = nullptr;
 
     /**
-     *  @brief his method will dispatch incoming messages to the appropriate request handler.
+     *  @brief This method will dispatch incoming messages to the appropriate request handler.
      */
     void DispatchRequest(Message * const) override;
 
