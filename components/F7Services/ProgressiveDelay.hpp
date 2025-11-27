@@ -1,10 +1,13 @@
-/*
- *  ProgressiveDelay.hpp
- *
- *  Class definition for the Progressive Delay class.
+/**
+ * @file ProgressiveDelay.hpp
+ * @author Mark Stevens
+ * @brief Class definition for the Progressive Delay class.
+ * @date 2024-06-20
+ * 
+ * @copyright Copyright (c) 2024 Wilderness Labs
  */
-#ifndef __PROGRESSIVE_DELAY_HPP__
-#define __PROGRESSIVE_DELAY_HPP__
+
+#pragma once
 
 #include "sdkconfig.h"
 
@@ -62,5 +65,3 @@ private:
      */
     static uint32_t _delayPeriods[];
 };
-
-#endif // __PROGRESSIVE_DELAY_HPP__

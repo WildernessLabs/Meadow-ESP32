@@ -1,13 +1,13 @@
 /**
  * @file BluetoothCharacteristicValue.hpp
  * @author Chris Tacke
- *
- * @brief Definition for the BluetoothCharacteristicValue class.
- *
- * @copyright Copyright (c) 2019 - 2024
+ * @brief Class definition for the BluetoothCharacteristicValue class.
+ * @date 2021-02-14
+ * 
+ * @copyright Copyright (c) 2021 Wilderness Labs
  */
-#ifndef _BLUETOOTH_CHARACTERISTIC_VALUE_HPP_
-#define _BLUETOOTH_CHARACTERISTIC_VALUE_HPP_
+
+#pragma once
 
 #include <string>
 #include <vector>
@@ -112,5 +112,3 @@ public:
         return _is128;
     }
 };
-
-#endif

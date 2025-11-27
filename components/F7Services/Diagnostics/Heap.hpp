@@ -1,12 +1,12 @@
 /**
  * @file Heap.hpp
- * @author Wilderness Labs
+ * @author Mark Stevens
  * @brief Heap memory diagnostics for the ESP32 application.
- * @version 0.1
  * @date 2025-06-16
  * 
- * @copyright Copyright (c) 2025
+ * @copyright Copyright (c) 2025 Wilderness Labs
  */
+
 #pragma once
 
 #include "sdkconfig.h"

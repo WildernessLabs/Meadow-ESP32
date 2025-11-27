@@ -1,12 +1,11 @@
 /**
  * @file CoreDump.cpp
- * @author Wilderness Labs
+ * @author Mark Stevens
  * @brief Core dump handling implementation for the ESP32 application.
- * @version 0.1
- * @date 2025-08-23
+ * @date 2025-08-24
  *
  * @copyright Copyright (c) 2025 Wilderness Labs
- *
+ * 
  * @note This file provides the implementation for core dump management and analysis.
  */
 
@@ -20,6 +19,13 @@
 #include "CoreDump.hpp"
 #include "Utils.hpp"
 
+/**
+ * @brief Check the validity of the core dump image.
+ * 
+ * @note This function is defined in the ESP-IDF framework.
+ * 
+ * @return esp_err_t ESP_OK if the core dump image is valid, otherwise an error code.
+ */
 extern "C" esp_err_t esp_core_dump_image_check();
 
 #if defined(CORE_DUMP_DEBUG)

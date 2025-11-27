@@ -1,14 +1,13 @@
 /**
  * @file Globals.hpp
- * @author Wilderness Labs (Mark Stevens)
+ * @author Mark Stevens
  * @brief Provide a home for global variables.
- * @version 0.1
  * @date 2024-12-12
- *
- * @copyright Copyright (c) 2024
+ * 
+ * @copyright Copyright (c) 2024 Wilderness Labs
  */
-#ifndef __GLOBALS_HPP__
-#define __GLOBALS_HPP__
+
+#pragma once
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -88,5 +87,3 @@ static_assert(PRIORITY_SPI_SYNCHRONISATION_TASK > 0, "SPI synchronisation priori
 static_assert(PRIORITY_SPI_SYNCHRONISATION_TASK < configMAX_PRIORITIES, "SPI synchronisation priority must be less than the maximum priority");
 static_assert(PRIORITY_BLUETOOTH_TASK > 0, "Bluetooth priority must be greater than 0");
 static_assert(PRIORITY_BLUETOOTH_TASK < configMAX_PRIORITIES, "Bluetooth priority must be less than the maximum priority");
-
-#endif // __GLOBALS_HPP__

@@ -1,8 +1,12 @@
-/*
- *  SystemRequestHandler.cpp
- *
- *  Implementation of the methods to provide the System Request Handler functionality.
+/**
+ * @file SystemRequestHandler.cpp
+ * @author Mark Stevens
+ * @brief Implementation of the SystemRequestHandler class.
+ * @date 2019-02-03
+ * 
+ * @copyright Copyright (c) 2019 Wilderness Labs
  */
+
 #include "sdkconfig.h"
 
 #include "freertos/FreeRTOS.h"

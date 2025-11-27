@@ -1,14 +1,12 @@
 /**
  * @file BluetoothComponentName.hpp
  * @author Mark Stevens
- *
  * @brief Hold the name of the Bluetooth component used for logging.
- *
- * @copyright Copyright (c) 2025
+ * @date 2025-01-27
+ * 
+ * @copyright Copyright (c) 2025 Wilderness Labs
  */
-#ifndef __BLUETOOTH_COMPONENT_NAME_HPP__
-#define __BLUETOOTH_COMPONENT_NAME_HPP__
+
+#pragma once
 
 #define BLUETOOTH_COMPONENT_NAME "Bluetooth"
-
-#endif // __BLUETOOTH_COMPONENT_NAME_HPP__

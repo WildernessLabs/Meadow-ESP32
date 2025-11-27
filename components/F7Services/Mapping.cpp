@@ -1,11 +1,12 @@
-/*
- *  Mapping.hpp
- *
- *  Define the class that will allow the mapping of values on the STM32 to
- *  those on the ESP32 and vice-versa.
- *
- *  This file also contains the mappings.
+/**
+ * @file Mapping.cpp
+ * @author Mark Stevens
+ * @brief Define the class that will allow the mapping of values on the STM32 to those on the ESP32 and vice-versa.
+ * @date 2020-05-19
+ * 
+ * @copyright Copyright (c) 2020 Wilderness Labs
  */
+
 #include "sdkconfig.h"
 
 #include <sys/socket.h>

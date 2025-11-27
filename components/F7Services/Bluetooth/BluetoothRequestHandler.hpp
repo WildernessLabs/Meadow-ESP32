@@ -1,10 +1,13 @@
-/*
- *  BluetoothRequestHandler.hpp
- *
- *  Bluetooth request handler will deal with incoming bluetooth requests.
+/**
+ * @file BluetoothRequestHandler.hpp
+ * @author Mark Stevens
+ * @brief Bluetooth request handler will deal with incoming bluetooth requests.
+ * @date 2025-01-27
+ * 
+ * @copyright Copyright (c) 2025 Wilderness Labs
  */
-#ifndef _BLUETOOTH_REQUEST_HANDLER_HPP_
-#define _BLUETOOTH_REQUEST_HANDLER_HPP_
+
+#pragma once
 
 #include "sdkconfig.h"
 
@@ -278,5 +281,3 @@ public:
      */
     static void GetMacAddress(uint8_t *macAddress);
 };
-
-#endif /* _BLUETOOTH_REQUEST_HANDLER_HPP_ */

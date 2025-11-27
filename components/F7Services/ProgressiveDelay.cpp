@@ -1,8 +1,12 @@
-/*
- *  ProgressiveDelay.cpp
- *
- *  Implementation of the methods to provide the Progressive Delay functionality.
+/**
+ * @file ProgressiveDelay.cpp
+ * @author Mark Stevens
+ * @brief Implementation of progressive delay functionality.
+ * @date 2024-06-20
+ * 
+ * @copyright Copyright (c) 2024 Wilderness Labs
  */
+
 #include "sdkconfig.h"
 
 #include "freertos/FreeRTOS.h"

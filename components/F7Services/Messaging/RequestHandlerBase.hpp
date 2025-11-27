@@ -1,11 +1,13 @@
-/*
- *  RequestHandler.hpp
- *
- *  Base class for the request handlers.
+/**
+ * @file RequestHandlerBase.hpp
+ * @author Mark Stevens
+ * @brief Base class for all request handlers.
+ * @date 2019-02-03
+ * 
+ * @copyright Copyright (c) 2019 Wilderness Labs
  */
 
-#ifndef _REQUEST_HANDLER_BASE_HPP_
-#define _REQUEST_HANDLER_BASE_HPP_
+#pragma once
 
 #include "sdkconfig.h"
 
@@ -115,5 +117,3 @@ public:
      */
     bool QueueEsp32Message(Message *message);
 };
-
-#endif /* _REQUEST_HANDLER_BASE_HPP_ */

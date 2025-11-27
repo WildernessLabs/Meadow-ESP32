@@ -1,10 +1,10 @@
 /**
  * @file BluetoothCharacteristicValue.cpp
  * @author Chris Tacke
- *
- * @brief Implementation of methods in the BluetoothCharacteristicValue class.
- *
- * @copyright Copyright (c) 2019 - 2024
+ * @brief Implementation of BluetoothCharacteristicValue class.
+ * @date 2021-02-23
+ * 
+ * @copyright Copyright (c) 2021 Wilderness Labs
  */
 
 #include "BluetoothCharacteristicValue.hpp"

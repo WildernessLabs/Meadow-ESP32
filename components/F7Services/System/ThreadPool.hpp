@@ -1,10 +1,13 @@
 /**
- *  ThreadPool.hpp
- *
- *  Define the methods in the ThreadPool class.
+ * @file ThreadPool.hpp
+ * @author Mark Stevens
+ * @brief Define the ThreadPool class used to manage a pool of threads for executing methods.
+ * @date 2021-01-14
+ * 
+ * @copyright Copyright (c) 2021 Wilderness Labs
  */
-#ifndef _THREAD_POOL_HPP_
-#define _THREAD_POOL_HPP_
+
+#pragma once
 
 #include "sdkconfig.h"
 
@@ -80,5 +83,3 @@ public:
      */
     static void ThreadCompleted();
 };
-
-#endif // #ifndef _THREAD_POOL_HPP_
