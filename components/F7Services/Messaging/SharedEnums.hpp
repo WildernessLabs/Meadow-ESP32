@@ -3,7 +3,7 @@
  * @author Mark Stevens
  * @brief Global enums.
  * @date 2019-02-09
- * 
+ *
  * @copyright Copyright (c) 2019 Wilderness Labs
  */
 

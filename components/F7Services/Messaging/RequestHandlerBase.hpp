@@ -3,7 +3,7 @@
  * @author Mark Stevens
  * @brief Base class for all request handlers.
  * @date 2019-02-03
- * 
+ *
  * @copyright Copyright (c) 2019 Wilderness Labs
  */
 

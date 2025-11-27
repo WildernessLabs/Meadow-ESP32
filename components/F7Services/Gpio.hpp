@@ -3,7 +3,7 @@
  * @author Mark Stevens
  * @brief Constants defining the pins on the ESP32 that are available to Meadow.
  * @date 2019-03-25
- * 
+ *
  * @copyright Copyright (c) 2019 Wilderness Labs
  */
 

@@ -3,7 +3,7 @@
  * @author Mark Stevens
  * @brief Bluetooth request handler will deal with incoming bluetooth requests.
  * @date 2025-01-27
- * 
+ *
  * @copyright Copyright (c) 2025 Wilderness Labs
  */
 

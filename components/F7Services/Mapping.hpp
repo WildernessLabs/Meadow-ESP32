@@ -3,7 +3,7 @@
  * @author Mark Stevens
  * @brief Define the class that will allow the mapping of values on the STM32 to those on the ESP32 and vice-versa.
  * @date 2020-05-19
- * 
+ *
  * @copyright Copyright (c) 2020 Wilderness Labs
  */
 

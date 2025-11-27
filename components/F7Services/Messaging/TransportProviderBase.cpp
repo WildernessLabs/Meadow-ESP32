@@ -3,7 +3,7 @@
  * @author Mark Stevens
  * @brief Base class for any hardware transport provider which facilitates communication between the ESP32 and STM32 chips.
  * @date 2019-02-22
- * 
+ *
  * @copyright Copyright (c) 2019 Wilderness Labs
  */
 

@@ -3,7 +3,7 @@
  * @author Mark Stevens
  * @brief Class definition for the Progressive Delay class.
  * @date 2024-06-20
- * 
+ *
  * @copyright Copyright (c) 2024 Wilderness Labs
  */
 

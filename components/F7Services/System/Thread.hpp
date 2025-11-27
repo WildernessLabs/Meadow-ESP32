@@ -3,11 +3,11 @@
  * @author Mark Stevens
  * @brief Thread class used by the ThreadPool to execute methods.
  * @date 2021-01-14
- * 
+ *
  * @copyright Copyright (c) 2021 Wilderness Labs
  */
 
- #pragma once
+#pragma once
 
 #include "sdkconfig.h"
 

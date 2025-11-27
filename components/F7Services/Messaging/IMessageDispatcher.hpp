@@ -3,7 +3,7 @@
  * @author Mark Stevens
  * @brief Message dispatcher layer. This object separates the need for the ESP32 interface objects to know about the hardware layer used to send messages between the ESP32 and the STM32.
  * @date 2023-02-01
- * 
+ *
  * @copyright Copyright (c) 2023 Wilderness Labs
  */
 

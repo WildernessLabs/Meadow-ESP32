@@ -3,7 +3,7 @@
  * @author Mark Stevens
  * @brief Implementation of the FileSystem class for working with files on the ESP32.
  * @date 2023-01-08
- * 
+ *
  * @copyright Copyright (c) 2025 Wilderness Labs
  */
 

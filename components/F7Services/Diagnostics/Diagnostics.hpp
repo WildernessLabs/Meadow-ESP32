@@ -3,7 +3,7 @@
  * @author Mark Stevens
  * @brief Provide system diagnostic tools for the ESP32 application.
  * @date 2025-06-04
- * 
+ *
  * @copyright Copyright (c) 2025 Wilderness Labs
  */
 
@@ -24,7 +24,7 @@ private:
      *  @brief Stack size for the diagnostics task.
      */
     static constexpr uint32_t TASK_STACK_SIZE = 8192;
-    
+
     /**
      *  @brief Lock for controlling access to the members of this class.
      */
@@ -45,7 +45,7 @@ private:
 
     /**
      * @brief Translate core ID to string representation.
-     * 
+     *
      * @param coreID Core ID to translate.
      * @return std::string String representation of the core ID.
      */

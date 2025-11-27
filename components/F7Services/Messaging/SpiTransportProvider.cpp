@@ -3,7 +3,7 @@
  * @author Mark Stevens
  * @brief Hardware transport provider for messages between the ESP32 and the STM32 using the SPI interface.
  * @date 2019-03-15
- * 
+ *
  * @copyright Copyright (c) 2019 Wilderness Labs
  */
 

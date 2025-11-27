@@ -3,7 +3,7 @@
  * @author Chris Tacke
  * @brief Hold the definitions for the BluetoothAttribute class, CharacteristicProperty enum, and CharacteristicPermission enum.
  * @date 2021-02-14
- * 
+ *
  * @copyright Copyright (c) 2021 Wilderness Labs
  */
 

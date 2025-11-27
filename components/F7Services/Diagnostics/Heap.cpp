@@ -3,9 +3,9 @@
  * @author Mark Stevens
  * @brief Heap memory diagnostics for the ESP32 application.
  * @date 2025-06-16
- * 
+ *
  * @copyright Copyright (c) 2025 Wilderness Labs
- * 
+ *
  * @note The standard method of sending diagnostic information to the serial output is via
  *       the trace, debug, and error macros defined in Logging.hpp.  In general this is used
  *       except where heap information is being generated.  In these cases the ESP_LOG?
@@ -134,7 +134,7 @@ void Heap::ReportUsage()
  */
 bool Heap::CheckIntegrity()
 {
-#if defined (CONFIG_ENABLE_HEAP_INTEGRITY_CHECKS)
+#if defined(CONFIG_ENABLE_HEAP_INTEGRITY_CHECKS)
     TRACE_MESSAGE("CheckIntegrity: Enter");
 
     bool integrity = heap_caps_check_integrity_all(true);
@@ -157,7 +157,7 @@ bool Heap::CheckIntegrity()
  * @brief Start heap tracing if supported by the ESP32 configuration.
  *
  * @param mode The heap trace mode, use HEAP_TRACE_ALL or HEAP_TRACE_LEAKS (default)
-*/
+ */
 void Heap::StartTracing(heap_trace_mode_t mode)
 {
     TRACE_MESSAGE("StartTracing: Enter");
@@ -285,14 +285,13 @@ void Heap::ReportHeapUseByTask()
     for (size_t task_idx = 0; task_idx < allTasksStatistics.task_count; task_idx++)
     {
         task_stat_t taskStatistics = allTasksStatistics.stat_arr[task_idx];
-        ESP_LOGI(COMPONENT_NAME, "%s: %s: Peak Usage %" PRIu16 ", Current Usage %" PRIu16, taskStatistics.name,
-                                 taskStatistics.is_alive ? "ALIVE  " : "DELETED", taskStatistics.overall_peak_usage, taskStatistics.overall_current_usage);
+        ESP_LOGI(COMPONENT_NAME, "%s: %s: Peak Usage %" PRIu16 ", Current Usage %" PRIu16, taskStatistics.name, taskStatistics.is_alive ? "ALIVE  " : "DELETED", taskStatistics.overall_peak_usage, taskStatistics.overall_current_usage);
 
         for (size_t heapIndex = 0; heapIndex < taskStatistics.heap_count; heapIndex++)
         {
             heap_stat_t heapStatistics = taskStatistics.heap_stat[heapIndex];
-            ESP_LOGI(COMPONENT_NAME, "    %s: Caps: %" PRIu32 ". Size %" PRIu16 ", Current Usage %" PRIu16 ", Peak Usage %" PRIu16 ", alloc count %" PRIu16, heapStatistics.name,
-                                    heapStatistics.caps, heapStatistics.size, heapStatistics.current_usage, heapStatistics.peak_usage, heapStatistics.alloc_count);
+            ESP_LOGI(
+                COMPONENT_NAME, "    %s: Caps: %" PRIu32 ". Size %" PRIu16 ", Current Usage %" PRIu16 ", Peak Usage %" PRIu16 ", alloc count %" PRIu16, heapStatistics.name, heapStatistics.caps, heapStatistics.size, heapStatistics.current_usage, heapStatistics.peak_usage, heapStatistics.alloc_count);
 
             for (size_t allocationIndex = 0; allocationIndex < heapStatistics.alloc_count; allocationIndex++)
             {
