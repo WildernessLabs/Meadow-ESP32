@@ -137,7 +137,7 @@ private:
     /**
      * @brief Turn logging on for the specified component.
      */
-    static bool TurnLoggingOn(char *component);
+    static bool TurnLoggingOn(const char * const component);
 
 #if defined(PERFORMANCE_LOGGING)
     /**
@@ -185,7 +185,7 @@ public:
     /**
      * @brief Configure the logging system.
      */
-    static void Configure(char *components, uint32_t interface, uint32_t udpPort);
+    static void Configure(const char * const components, uint32_t interface, uint32_t udpPort);
 
     /**
      *  @brief Process the request to output an informational message to the logging system.
@@ -245,7 +245,7 @@ public:
     /**
      *  @brief Decode the message structure and output the components.
      */
-    static void DumpMessage(const char *componentName, const Message *message);
+    static void DumpMessage(const char * const componentName, const Message * const message);
 
     /**
      *  @brief Add an entry to the table of performance counters.
@@ -260,5 +260,5 @@ public:
     /**
      *  @brief Generate a single line summary of the message.
      */
-    static char *MessageSummary(const Message *message);
+    static char *MessageSummary(const Message * const message);
 };
