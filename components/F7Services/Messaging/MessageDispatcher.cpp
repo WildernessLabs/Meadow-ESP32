@@ -46,7 +46,7 @@ MessageDispatcher::MessageDispatcher() : _messageIdMutex(xSemaphoreCreateMutex()
  *  @param transportProvider
  *      Hardware level transport provider that will deliver and receive the messages.
  */
-MessageDispatcher::MessageDispatcher(TransportProviderBase *transportProvider) : MessageDispatcher()
+MessageDispatcher::MessageDispatcher(TransportProviderBase * const transportProvider) : MessageDispatcher()
 {
     _transportProvider = transportProvider;
     _transportProvider->Setup(this);
