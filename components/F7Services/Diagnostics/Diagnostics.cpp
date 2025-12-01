@@ -194,7 +194,7 @@ void Diagnostics::ReportSystemUptime()
  * @param state Task state.
  * @return string String representation of the task state.
  */
-std::string Diagnostics::TaskStateToString(eTaskState state)
+std::string Diagnostics::TaskStateToString(const eTaskState state)
 {
     switch (state)
     {
@@ -219,7 +219,7 @@ std::string Diagnostics::TaskStateToString(eTaskState state)
  * @param coreID Core ID for a task.
  * @return std::string String representation of the core ID.
  */
-std::string Diagnostics::TranslateCoreID(BaseType_t coreID)
+std::string Diagnostics::TranslateCoreID(const BaseType_t coreID)
 {
     switch (coreID)
     {

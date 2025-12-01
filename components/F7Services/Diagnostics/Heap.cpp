@@ -158,7 +158,7 @@ bool Heap::CheckIntegrity()
  *
  * @param mode The heap trace mode, use HEAP_TRACE_ALL or HEAP_TRACE_LEAKS (default)
  */
-void Heap::StartTracing(heap_trace_mode_t mode)
+void Heap::StartTracing(const heap_trace_mode_t mode)
 {
     TRACE_MESSAGE("StartTracing: Enter");
 
