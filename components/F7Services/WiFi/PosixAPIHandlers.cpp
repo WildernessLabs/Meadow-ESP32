@@ -7,22 +7,13 @@
  * @copyright Copyright (c) 2022 Wilderness Labs
  */
 
-#include "driver/gpio.h"
-#include "esp_system.h"
-#include "esp_wifi.h"
-#include "esp_event.h"
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include "lwip/apps/sntp.h"
 #include <inttypes.h>
 
-#include "NvsManager.hpp"
 #include "WiFiRequestHandler.hpp"
-#include "Exceptions/MultipleInstancesException.hpp"
 #include "Mapping.hpp"
-#include "Logging.hpp"
 #include "Utils.hpp"
 
 /**
@@ -51,7 +42,7 @@
  * @return StatusCodes::StatusCodes Result of this method, StatusCodes::CompletedOk if the GetAddrInfo operation succeeds,
  *         StatusCodes::Failed if the GetAddrInfo operation fails.
  */
-StatusCodes::StatusCodes WiFiRequestHandler::GetAddrInfo(Esp32Messaging::GetAddrInfoRequest *request, Esp32Messaging::GetAddrInfoResponse *response)
+StatusCodes::StatusCodes WiFiRequestHandler::GetAddrInfo(Esp32Messaging::GetAddrInfoRequest * const request, Esp32Messaging::GetAddrInfoResponse * const response)
 {
     Esp32Messaging::AddrInfo *extractedHints = Encoders::ExtractAddrInfo(request->Hints);
     Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&request->Hints));
@@ -423,7 +414,7 @@ void WiFiRequestHandler::FreeAddrInfo(void * const vpMessage)
  *
  * @param vpMessage Pointer to the request.
  */
-StatusCodes::StatusCodes WiFiRequestHandler::GetSendReceiveOption(int socketHandle, int level, int optionName, Esp32Messaging::GetSockOptResponse &response)
+StatusCodes::StatusCodes WiFiRequestHandler::GetSendReceiveOption(const int socketHandle, const int level, const int optionName, Esp32Messaging::GetSockOptResponse &response)
 {
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
 
@@ -436,7 +427,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetSendReceiveOption(int socketHand
     esp_tv.TvSec = timeOut.tv_sec;
     esp_tv.TvUsec = timeOut.tv_usec;
     response.OptionValueLength = Encoders::EncodedTimeValBufferSize(&esp_tv);
-    response.OptionValue = static_cast<uint8_t *>(malloc(response.OptionValueLength));
+    response.OptionValue = static_cast<uint8_t *>(pvPortMalloc(response.OptionValueLength));
     if (response.OptionValue == NULL)
     {
         response.ResponseErrno = Mapping::NuttxErrno(ENOBUFS);
@@ -457,7 +448,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetSendReceiveOption(int socketHand
  *
  * @param vpMessage Pointer to the request.
  */
-StatusCodes::StatusCodes WiFiRequestHandler::GetLingerOption(int socket, int level, int optionName, Esp32Messaging::GetSockOptResponse &response)
+StatusCodes::StatusCodes WiFiRequestHandler::GetLingerOption(const int socket, const int level, const int optionName, Esp32Messaging::GetSockOptResponse &response)
 {
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
 
@@ -470,7 +461,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetLingerOption(int socket, int lev
     esp_lv.LLinger = lingerOut.l_linger;
     esp_lv.LOnOff = lingerOut.l_onoff;
     response.OptionValueLength = Encoders::EncodedLingerBufferSize(&esp_lv);
-    response.OptionValue = static_cast<uint8_t *>(malloc(response.OptionValueLength));
+    response.OptionValue = static_cast<uint8_t *>(pvPortMalloc(response.OptionValueLength));
     if (response.OptionValue == NULL)
     {
         response.ResponseErrno = Mapping::NuttxErrno(ENOBUFS);
@@ -491,7 +482,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetLingerOption(int socket, int lev
  *
  * @param vpMessage Pointer to the request.
  */
-StatusCodes::StatusCodes WiFiRequestHandler::GetSendReceiveBuffer(int socket, int level, int optionName, Esp32Messaging::GetSockOptResponse &response)
+StatusCodes::StatusCodes WiFiRequestHandler::GetSendReceiveBuffer(const int socket, const int level, const int optionName, Esp32Messaging::GetSockOptResponse &response)
 {
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
 
@@ -503,7 +494,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetSendReceiveBuffer(int socket, in
 
     esp_iv.Result = optionValue;
     response.OptionValueLength = Encoders::EncodedIntegerResponseBufferSize(&esp_iv);
-    response.OptionValue = static_cast<uint8_t *>(malloc(response.OptionValueLength));
+    response.OptionValue = static_cast<uint8_t *>(pvPortMalloc(response.OptionValueLength));
     if (response.OptionValue == NULL)
     {
         response.ResponseErrno = Mapping::NuttxErrno(ENOBUFS);
@@ -647,7 +638,7 @@ void WiFiRequestHandler::GetSockOpt(void * const vpMessage)
  * @return uint8_t*
  *      Pointer to the extracted option value (integer) or NULL if there was a problem.
  */
-uint8_t *WiFiRequestHandler::ExtractIntegerSocketOptionValue(uint8_t *data, socklen_t *length)
+uint8_t *WiFiRequestHandler::ExtractIntegerSocketOptionValue(const uint8_t * const data, socklen_t * const length)
 {
     uint8_t *result = NULL;
 
@@ -684,7 +675,7 @@ uint8_t *WiFiRequestHandler::ExtractIntegerSocketOptionValue(uint8_t *data, sock
  * @return uint8_t *
  *      Pointer the the decoded option value.
  */
-uint8_t *WiFiRequestHandler::GetSocketOptionValue(int name, uint8_t *optionValue, socklen_t *length)
+uint8_t *WiFiRequestHandler::GetSocketOptionValue(const int name, uint8_t * const optionValue, socklen_t * const length)
 {
     TRACE_MESSAGE("GetSocketOptionValue: Enter");
 
@@ -769,7 +760,7 @@ uint8_t *WiFiRequestHandler::GetSocketOptionValue(int name, uint8_t *optionValue
  * @return uint8_t *
  *      Pointer the the decoded option value.
  */
-uint8_t *WiFiRequestHandler::GetTcpOptionValue(int name, uint8_t *optionValue, socklen_t *length)
+uint8_t *WiFiRequestHandler::GetTcpOptionValue(const int name, uint8_t * const optionValue, socklen_t * const length)
 {
     TRACE_MESSAGE("GetTcpOptionValue: Enter");
 
@@ -801,7 +792,7 @@ uint8_t *WiFiRequestHandler::GetTcpOptionValue(int name, uint8_t *optionValue, s
  *
  * @return StatusCodes::StatusCodes Status of the request.
  */
-StatusCodes::StatusCodes WiFiRequestHandler::SetSockOpt(Esp32Messaging::SetSockOptRequest *request, Esp32Messaging::IntegerAndErrnoResponse &response)
+StatusCodes::StatusCodes WiFiRequestHandler::SetSockOpt(const Esp32Messaging::SetSockOptRequest * const request, Esp32Messaging::IntegerAndErrnoResponse &response)
 {
     void *optionValue = nullptr;
     socklen_t optionLength = 0;
@@ -2014,7 +2005,7 @@ void WiFiRequestHandler::Ioctl(void * const vpMessage)
  * @return StatusCodes::StatusCodes Returns StatusCodes::CompletedOk if the operation succeeds,
  *         StatusCodes::EspOutOfMemory if memory allocation fails.
  */
-StatusCodes::StatusCodes WiFiRequestHandler::GetSockPeerName(Esp32Messaging::GetSockPeerNameRequest *request, WiFiFunction::WiFiFunction methodToCall, Esp32Messaging::GetSockPeerNameResponse &response)
+StatusCodes::StatusCodes WiFiRequestHandler::GetSockPeerName(const Esp32Messaging::GetSockPeerNameRequest * const request, const WiFiFunction::WiFiFunction methodToCall, Esp32Messaging::GetSockPeerNameResponse &response)
 {
     struct sockaddr sa = {};
     socklen_t saLen = sizeof(sa);
@@ -2080,7 +2071,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetSockPeerName(Esp32Messaging::Get
  *  @param methodToCall
  *      Which method should be called, getsockname or getpeername?
  */
-void WiFiRequestHandler::GetSockPeerName(void * const vpMessage, WiFiFunction::WiFiFunction methodToCall)
+void WiFiRequestHandler::GetSockPeerName(void * const vpMessage, const WiFiFunction::WiFiFunction methodToCall)
 {
     TRACE_MESSAGE("GetSockPeerName: Enter");
     PERFORMANCE_LOGGING_ENTER();
