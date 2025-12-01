@@ -40,7 +40,7 @@ public:
      *  @brief Add the message given to the queue of messages waiting
      *  for transmission to the STM32.
      */
-    bool QueueMessageForStm32(Message *message);
+    bool QueueMessageForStm32(const Message * const message);
 
     /**
      *  @brief Bit that will be used to indicate that a the STM32 has just
@@ -60,11 +60,11 @@ public:
 
     ControlMessageType GetControlSignalMessage();
 
-    void SetControlSignalMessage(ControlMessageType);
+    void SetControlSignalMessage(const ControlMessageType);
 
     TickType_t GetControlSignalDelay();
 
-    void SetControlSignalDelay(TickType_t);
+    void SetControlSignalDelay(const TickType_t);
 
 private:
     /**
@@ -129,7 +129,7 @@ protected:
     /**
      *  @brief Send a control message to the STM32.
      */
-    void SendControlMessageToStm32(ControlMessageType);
+    void SendControlMessageToStm32(const ControlMessageType);
 
     /**
      *  @brief Method used for debugging, this will dump the message at the head
