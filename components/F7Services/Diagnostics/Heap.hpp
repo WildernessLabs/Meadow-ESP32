@@ -58,7 +58,7 @@ public:
      *
      * @param mode The heap trace mode, use HEAP_TRACE_ALL or HEAP_TRACE_LEAKS (default)
      */
-    static void StartTracing(heap_trace_mode_t mode = HEAP_TRACE_LEAKS);
+    static void StartTracing(const heap_trace_mode_t mode = HEAP_TRACE_LEAKS);
 
     /**
      * @brief Stop heap tracing and report results.

@@ -41,7 +41,7 @@ private:
      * @param state Task state.
      * @return Character representation of the task state.
      */
-    static std::string TaskStateToString(eTaskState state);
+    static std::string TaskStateToString(const eTaskState state);
 
     /**
      * @brief Translate core ID to string representation.
@@ -49,7 +49,7 @@ private:
      * @param coreID Core ID to translate.
      * @return std::string String representation of the core ID.
      */
-    static std::string TranslateCoreID(BaseType_t coreID);
+    static std::string TranslateCoreID(const BaseType_t coreID);
 
     /**
      * @brief Report task information.
