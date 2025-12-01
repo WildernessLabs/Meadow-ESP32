@@ -118,12 +118,12 @@ struct Message
     /**
      *  @brief Constructor for the Message class.
      */
-    Message(uint8_t, uint8_t, uint32_t, uint32_t, uint32_t, uint8_t *, uint32_t);
+    Message(const uint8_t, const uint8_t, const uint32_t, const uint32_t, const uint32_t, uint8_t *, const uint32_t);
 
     /**
      *  @brief Constructor for the Message class.
      */
-    Message(uint8_t, uint8_t, uint32_t, uint32_t);
+    Message(const uint8_t, const uint8_t, const uint32_t, const uint32_t);
 
     /**
      *  @brief Default constructor for a Message structure.
@@ -143,17 +143,17 @@ struct Message
     /**
      *  @brief Make a copy of the message.
      */
-    Message *CreateCopyOnHeap(bool);
+    Message *CreateCopyOnHeap(const bool copyPayload);
 
     /**
      *  @brief Create a new message on the heap with the specified values.
      */
-    static Message *CreateOnHeap(uint8_t messageType, uint8_t interface, uint32_t function, uint32_t statusCode, uint32_t messageId, uint8_t *payload, uint32_t payloadLength);
+    static Message *CreateOnHeap(const uint8_t messageType, const uint8_t interface, const uint32_t function, const uint32_t statusCode, const uint32_t messageId, uint8_t *payload, const uint32_t payloadLength);
 
     /**
      *  @brief Create a new message on the heap with the specified values.
      */
-    static Message *CreateOnHeap(uint8_t messageType, uint8_t interface, uint32_t function, uint32_t statusCode);
+    static Message *CreateOnHeap(const uint8_t messageType, const uint8_t interface, const uint32_t function, const uint32_t statusCode);
 
     /**
      *  @brief Delete the payload and free up heap storage.
