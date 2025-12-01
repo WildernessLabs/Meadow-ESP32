@@ -213,7 +213,7 @@ char *Encoders::ExtractString(const uint8_t * const buffer)
 {
     uint32_t length = 0;
     const uint8_t *ptr = buffer;
-    
+
     while (*ptr != 0)
     {
         ptr++;
