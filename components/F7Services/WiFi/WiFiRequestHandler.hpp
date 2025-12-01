@@ -20,13 +20,8 @@
 #include "lwip/sockets.h"
 #include "lwip/netdb.h"
 #include "lwip/dns.h"
-#include "esp_system.h"
-#include "esp_log.h"
-#include "esp_wifi.h"
-#include "esp_event.h"
 #include "errno.h"
 #include <string.h>
-#include <stdlib.h>
 #include <map>
 #include <iterator>
 
@@ -719,17 +714,17 @@ private:
     /**
      * @brief Extract an encoded integer setsockopt option value.
      */
-    static uint8_t *ExtractIntegerSocketOptionValue(uint8_t *, socklen_t *);
+    static uint8_t *ExtractIntegerSocketOptionValue(const uint8_t * const data, socklen_t * const length);
 
     /**
      * @brief Setup the socket value and length for calls to SetSockOpt.
      */
-    static uint8_t *GetSocketOptionValue(int, uint8_t *, socklen_t *);
+    static uint8_t *GetSocketOptionValue(const int name, uint8_t * const optionValue, socklen_t * const length);
 
     /**
      * @brief Setup the TCP value and length for calls to SetSockOpt.
      */
-    static uint8_t *GetTcpOptionValue(int, uint8_t *, socklen_t *);
+    static uint8_t *GetTcpOptionValue(const int name, uint8_t * const optionValue, socklen_t * const length);
 
     //----------------------------------------------------------------------
     //
@@ -738,7 +733,7 @@ private:
     /**
      *  @brief Provide a mechanism for the STM32 to call the getaddrinfo method.
      */
-    static StatusCodes::StatusCodes GetAddrInfo(Esp32Messaging::GetAddrInfoRequest *request, Esp32Messaging::GetAddrInfoResponse *response);
+    static StatusCodes::StatusCodes GetAddrInfo(Esp32Messaging::GetAddrInfoRequest * const request, Esp32Messaging::GetAddrInfoResponse * const response);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the getaddrinfo method.
@@ -775,7 +770,7 @@ private:
      *         StatusCodes::Failure if there is an invalid parameter or mapping error,
      *         StatusCodes::EspOutOfMemory if memory allocation fails.
      */
-    static StatusCodes::StatusCodes SetSockOpt(Esp32Messaging::SetSockOptRequest *request, Esp32Messaging::IntegerAndErrnoResponse &response);
+    static StatusCodes::StatusCodes SetSockOpt(const Esp32Messaging::SetSockOptRequest * const request, Esp32Messaging::IntegerAndErrnoResponse &response);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the setsockopt method.
@@ -787,21 +782,21 @@ private:
      *
      * @param vpMessage Pointer to the request.
      */
-    static StatusCodes::StatusCodes GetSendReceiveOption(int socket, int level, int optionName, Esp32Messaging::GetSockOptResponse &response);
+    static StatusCodes::StatusCodes GetSendReceiveOption(const int socket, const int level, const int optionName, Esp32Messaging::GetSockOptResponse &response);
 
     /**
      * @brief Process the SO_LINGER get socket option.
      *
      * @param vpMessage Pointer to the request.
      */
-    static StatusCodes::StatusCodes GetLingerOption(int socket, int level, int optionName, Esp32Messaging::GetSockOptResponse &response);
+    static StatusCodes::StatusCodes GetLingerOption(const int socket, const int level, const int optionName, Esp32Messaging::GetSockOptResponse &response);
 
     /**
      * @brief Process the SO_RCVBUF get socket option.
      *
      * @param vpMessage Pointer to the request.
      */
-    static StatusCodes::StatusCodes GetSendReceiveBuffer(int socket, int level, int optionName, Esp32Messaging::GetSockOptResponse &response);
+    static StatusCodes::StatusCodes GetSendReceiveBuffer(const int socket, const int level, const int optionName, Esp32Messaging::GetSockOptResponse &response);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the getsockopt method.
@@ -935,12 +930,12 @@ private:
      * @return StatusCodes::StatusCodes Returns StatusCodes::CompletedOk if the operation succeeds,
      *         StatusCodes::EspOutOfMemory if memory allocation fails.
      */
-    static StatusCodes::StatusCodes GetSockPeerName(Esp32Messaging::GetSockPeerNameRequest *request, WiFiFunction::WiFiFunction methodToCall, Esp32Messaging::GetSockPeerNameResponse &response);
+    static StatusCodes::StatusCodes GetSockPeerName(const Esp32Messaging::GetSockPeerNameRequest * const request, const WiFiFunction::WiFiFunction methodToCall, Esp32Messaging::GetSockPeerNameResponse &response);
 
     /**
      *  @brief Provide a mechanism to call the getsockname or getpeername.
      */
-    static void GetSockPeerName(void * const vpMessage, WiFiFunction::WiFiFunction request);
+    static void GetSockPeerName(void * const vpMessage, const WiFiFunction::WiFiFunction request);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the simulated getsockname method.

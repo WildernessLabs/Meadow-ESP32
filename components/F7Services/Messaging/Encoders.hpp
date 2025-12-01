@@ -562,20 +562,20 @@ public:
      *      Seed for the 32-bit CRC calculation.
      */
     static const uint32_t CRC32_SEED = 0xffffffff;
-    static uint32_t CalculateSpiBufferSize(uint32_t);
-    static uint32_t EncodedPacketSize(Message *, bool);
-    static uint16_t ExtractUInt16(uint8_t *);
-    static void EncodeUInt16(uint16_t, uint8_t *);
-    static uint32_t ExtractUInt32(uint8_t *);
-    static void EncodeUInt32(uint32_t, uint8_t *);
-    static uint32_t ExtractInt32(uint8_t *);
-    static void EncodeInt32(int32_t, uint8_t *);
-    static char *ExtractString(uint8_t *);
+    static uint32_t CalculateSpiBufferSize(const uint32_t);
+    static uint32_t EncodedPacketSize(const Message * const, const bool);
+    static uint16_t ExtractUInt16(const uint8_t * const);
+    static void EncodeUInt16(const uint16_t, uint8_t * const);
+    static uint32_t ExtractUInt32(const uint8_t * const);
+    static void EncodeUInt32(const uint32_t, uint8_t * const);
+    static uint32_t ExtractInt32(const uint8_t * const );
+    static void EncodeInt32(const int32_t, uint8_t * const);
+    static char *ExtractString(const uint8_t * const);
     static void EncodeString(char *, uint8_t *);
-    static uint32_t StringLength(char *);
-    static uint8_t CRC8(const uint8_t *, uint16_t);
-    static uint32_t CRC32(const uint8_t *, uint16_t);
-    static uint32_t ProgressiveCRC32(uint32_t, uint8_t);
+    static uint32_t StringLength(const char *);
+    static uint8_t CRC8(const uint8_t *, const uint16_t);
+    static uint32_t CRC32(const uint8_t *, const uint16_t);
+    static uint32_t ProgressiveCRC32(const uint32_t, const uint8_t);
     static void EncodeMessage(Message *, uint8_t *, bool);
     static Message *ExtractMessage(uint8_t *, uint32_t, bool);
     static void EncodeSystemConfiguration(Esp32Messaging::SystemConfiguration *, uint8_t *);

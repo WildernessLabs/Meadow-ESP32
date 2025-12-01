@@ -27,7 +27,7 @@
  *  @returns
  *      Number of bytes that should be allocated.
  */
-uint32_t Encoders::CalculateSpiBufferSize(uint32_t requestedSize)
+uint32_t Encoders::CalculateSpiBufferSize(const uint32_t requestedSize)
 {
     uint32_t result = requestedSize;
 
@@ -63,7 +63,7 @@ uint32_t Encoders::CalculateSpiBufferSize(uint32_t requestedSize)
  *  @returns
  *      Number of bytes needed to contain the message.
  */
-uint32_t Encoders::EncodedPacketSize(Message *message, bool headerOnly)
+uint32_t Encoders::EncodedPacketSize(const Message * const message, const bool headerOnly)
 {
     uint32_t result = Message::HEADER_SIZE;
 
@@ -87,7 +87,7 @@ uint32_t Encoders::EncodedPacketSize(Message *message, bool headerOnly)
  *  @returns
  *      16-bit unsigned integer value from the first two byte in the buffer.
  */
-uint16_t Encoders::ExtractUInt16(uint8_t *buffer)
+uint16_t Encoders::ExtractUInt16(const uint8_t * const buffer)
 {
     uint16_t result;
 
@@ -108,7 +108,7 @@ uint16_t Encoders::ExtractUInt16(uint8_t *buffer)
  *      Pointer to the buffer where the two bytes will be inserted
  *      from the 16-bit unsigned integer (LSB first).
  */
-void Encoders::EncodeUInt16(uint16_t value, uint8_t *buffer)
+void Encoders::EncodeUInt16(const uint16_t value, uint8_t * const buffer)
 {
     buffer[0] = (value & 0xff);
     buffer[1] = ((value >> 8) & 0xff);
@@ -126,7 +126,7 @@ void Encoders::EncodeUInt16(uint16_t value, uint8_t *buffer)
  *  @returns
  *      32-bit unsigned integer extracted from the first 4 bytes in the buffer.
  */
-uint32_t Encoders::ExtractUInt32(uint8_t *buffer)
+uint32_t Encoders::ExtractUInt32(const uint8_t * const buffer)
 {
     uint32_t result;
 
@@ -149,7 +149,7 @@ uint32_t Encoders::ExtractUInt32(uint8_t *buffer)
  *      Pointer to the buffer where 4 bytes will be replaced with the four
  *      bytes representing unsigned integer (LSB first).
  */
-void Encoders::EncodeUInt32(uint32_t value, uint8_t *buffer)
+void Encoders::EncodeUInt32(const uint32_t value, uint8_t * const buffer)
 {
     buffer[0] = (value & 0xff);
     buffer[1] = ((value >> 8) & 0xff);
@@ -169,7 +169,7 @@ void Encoders::EncodeUInt32(uint32_t value, uint8_t *buffer)
  *  @returns
  *      32-bit unsigned integer extracted from the first 4 bytes in the buffer.
  */
-uint32_t Encoders::ExtractInt32(uint8_t *buffer)
+uint32_t Encoders::ExtractInt32(const uint8_t * const buffer)
 {
     int32_t result;
 
@@ -192,7 +192,7 @@ uint32_t Encoders::ExtractInt32(uint8_t *buffer)
  *      Pointer to the buffer where 4 bytes will be replaced with the four
  *      bytes representing unsigned integer (LSB first).
  */
-void Encoders::EncodeInt32(int32_t value, uint8_t *buffer)
+void Encoders::EncodeInt32(const int32_t value, uint8_t * const buffer)
 {
     buffer[0] = (value & 0xff);
     buffer[1] = ((value >> 8) & 0xff);
@@ -209,11 +209,11 @@ void Encoders::EncodeInt32(int32_t value, uint8_t *buffer)
  *  @returns
  *      Pointer to the extracted string.
  */
-char *Encoders::ExtractString(uint8_t *buffer)
+char *Encoders::ExtractString(const uint8_t * const buffer)
 {
     uint32_t length = 0;
-    uint8_t *ptr = buffer;
-
+    const uint8_t *ptr = buffer;
+    
     while (*ptr != 0)
     {
         ptr++;
@@ -270,7 +270,7 @@ void Encoders::EncodeString(char *source, uint8_t *buffer)
  *  @returns
  *      Length of the string.
  */
-uint32_t Encoders::StringLength(char *str)
+uint32_t Encoders::StringLength(const char *str)
 {
     uint32_t length = 0;
 
@@ -295,7 +295,7 @@ uint32_t Encoders::StringLength(char *str)
  *  @returns
  *      8-bit checksum of the bytes in the buffer.
  */
-uint8_t Encoders::CRC8(const uint8_t *data, uint16_t len)
+uint8_t Encoders::CRC8(const uint8_t *data, const uint16_t len)
 {
     uint8_t crc = 0x00;
 
@@ -328,7 +328,7 @@ uint8_t Encoders::CRC8(const uint8_t *data, uint16_t len)
  *  @returns
  *      32-bit checksum of the bytes in the buffer.
  */
-uint32_t Encoders::CRC32(const uint8_t *data, uint16_t len)
+uint32_t Encoders::CRC32(const uint8_t *data, const uint16_t len)
 {
     uint32_t crc = CRC32_SEED;
 
@@ -351,7 +351,7 @@ uint32_t Encoders::CRC32(const uint8_t *data, uint16_t len)
  *  @returns
  *      Next checksum value.
  */
-uint32_t Encoders::ProgressiveCRC32(uint32_t currentChecksum, uint8_t byte)
+uint32_t Encoders::ProgressiveCRC32(const uint32_t currentChecksum, const uint8_t byte)
 {
     uint32_t crc = currentChecksum;
     crc ^= byte;
