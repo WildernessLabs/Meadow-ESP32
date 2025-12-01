@@ -24,9 +24,9 @@ struct Uuid128
      */
     uint8_t data[16];
 
-    Uuid128(const char *);
+    Uuid128(const char * const fromString);
     Uuid128();
-    Uuid128(uint8_t *other);
+    Uuid128(const uint8_t * const other);
 
     std::string ToString() const;
 
@@ -70,7 +70,7 @@ struct Uuid128
      * @param other Data to be copied into this structure.
      * @return uint8_t* Pointer to the source data.
      */
-    uint8_t *operator=(uint8_t *other) const
+    uint8_t *operator=(uint8_t * const other) const
     {
         memcpy((void *) data, other, 16);
         return other;
@@ -98,8 +98,8 @@ struct Uuid16
     }
 
     Uuid16();
-    Uuid16(uint16_t value);
-    Uuid16(uint8_t *other);
+    Uuid16(const uint16_t value);
+    Uuid16(const uint8_t * const other);
 
     /**
      * @brief Construct a new Uuid16 object (copy constructor)
