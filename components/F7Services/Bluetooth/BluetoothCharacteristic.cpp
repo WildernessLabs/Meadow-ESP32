@@ -38,7 +38,7 @@ const char *BluetoothCharacteristic::COMPONENT_NAME = BLUETOOTH_COMPONENT_NAME;
  * @param property Characteristic properties.
  * @param maxValueLength Maximum length of he value data.
  */
-BluetoothCharacteristic::BluetoothCharacteristic(Uuid16 uuid, CharacteristicPermission permission, CharacteristicProperty property, int maxValueLength)
+BluetoothCharacteristic::BluetoothCharacteristic(const Uuid16 uuid, const CharacteristicPermission permission, const CharacteristicProperty property, const int maxValueLength)
 {
     TRACE_MESSAGE("BluetoothCharacteristic(UUID16): Enter");
 
@@ -68,7 +68,7 @@ BluetoothCharacteristic::BluetoothCharacteristic(Uuid16 uuid, CharacteristicPerm
  * @param property Characteristic properties.
  * @param maxValueLength Maximum length of he value data.
  */
-BluetoothCharacteristic::BluetoothCharacteristic(Uuid128 uuid, CharacteristicPermission permission, CharacteristicProperty property, int maxValueLength)
+BluetoothCharacteristic::BluetoothCharacteristic(const Uuid128 uuid, const CharacteristicPermission permission, const CharacteristicProperty property, const int maxValueLength)
 {
     TRACE_MESSAGE("BluetoothCharacteristic(UUID128): Enter");
 
@@ -122,7 +122,7 @@ BluetoothCharacteristic::~BluetoothCharacteristic()
  *
  * @param descriptor Descriptor to be added.
  */
-void BluetoothCharacteristic::AddDescriptor(BluetoothDescriptor *descriptor)
+void BluetoothCharacteristic::AddDescriptor(BluetoothDescriptor * const descriptor)
 {
     TRACE_MESSAGE("AddDescriptor: Enter");
 
@@ -141,4 +141,14 @@ void BluetoothCharacteristic::AddDescriptor(BluetoothDescriptor *descriptor)
     }
 
     TRACE_MESSAGE("AddDescriptor: Exit");
+}
+
+/**
+ * @brief Get the vector of BluetoothDescriptor objects for this characteristic.
+ *
+ * @return vector<BluetoothDescriptor *> Vector of BluetoothDescriptor objects.
+ */
+vector<BluetoothDescriptor *> BluetoothCharacteristic::GetDescriptorDefinitions()
+{
+    return _descriptors;
 }
