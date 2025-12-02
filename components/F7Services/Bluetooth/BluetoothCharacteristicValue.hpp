@@ -123,7 +123,7 @@ private:
     bool _is128 = false;
 
     /**
-     * @brief Pointer ti the memory holding the value.
+     * @brief Pointer to the memory holding the value.
      */
     uint8_t *_value;
 
