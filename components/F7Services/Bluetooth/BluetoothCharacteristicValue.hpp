@@ -60,7 +60,7 @@ public:
      * @brief Remove the default constructor.
      */
     BluetoothCharacteristicValue() = delete;
-    
+
     /**
      * @brief Deleted copy constructor to prevent copying.
      */
@@ -115,6 +115,7 @@ public:
     {
         return _is128;
     }
+
 private:
     /**
      * @brief Is the UUID 128 bits?
