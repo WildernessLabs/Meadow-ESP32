@@ -392,7 +392,7 @@ void BluetoothRequestHandler::GenerateAttributeTable()
  *
  * @param request Original request from the STM32.
  */
-void BluetoothRequestHandler::GetHandles(Message *request)
+void BluetoothRequestHandler::GetHandles(Message * const request)
 {
     TRACE_MESSAGE("GetHandles: Enter");
 
@@ -420,7 +420,7 @@ void BluetoothRequestHandler::GetHandles(Message *request)
  *
  * @param request Request from the STM32.
  */
-void BluetoothRequestHandler::SetCurrentValueForAttributeHandle(Message *request)
+void BluetoothRequestHandler::SetCurrentValueForAttributeHandle(Message * const request)
 {
     TRACE_MESSAGE("SetCurrentValueForAttributeHandle: Enter");
 
@@ -751,7 +751,7 @@ bool BluetoothRequestHandler::StopBluetoothService()
  *
  * @param request Request from the STM32.
  */
-void BluetoothRequestHandler::Stop(Message *request)
+void BluetoothRequestHandler::Stop(Message * const request)
 {
     TRACE_MESSAGE("Stop: Enter");
 
@@ -787,7 +787,7 @@ void BluetoothRequestHandler::Stop(Message *request)
  *
  * @param macAddress Buffer to hold the MAC address.
  */
-void BluetoothRequestHandler::GetMacAddress(uint8_t *macAddress)
+void BluetoothRequestHandler::GetMacAddress(uint8_t * const macAddress)
 {
     TRACE_MESSAGE("GetMacAddress: Enter");
 
@@ -807,7 +807,7 @@ void BluetoothRequestHandler::GetMacAddress(uint8_t *macAddress)
  * @param data Data that has been written.
  * @param dataLength Amount of data that has been written.
  */
-void BluetoothRequestHandler::OnDataWriteRequest(uint16_t handle, uint8_t *data, uint16_t dataLength)
+void BluetoothRequestHandler::OnDataWriteRequest(const uint16_t handle, uint8_t * const data, const uint16_t dataLength)
 {
     TRACE_MESSAGE("OnDataWriteRequest: Enter");
 
@@ -831,7 +831,7 @@ void BluetoothRequestHandler::OnDataWriteRequest(uint16_t handle, uint8_t *data,
  *
  * @param request Message containing the JSON configuration.
  */
-void BluetoothRequestHandler::Start(Message *request)
+void BluetoothRequestHandler::Start(Message * const request)
 {
     TRACE_MESSAGE("Start: Enter");
 
