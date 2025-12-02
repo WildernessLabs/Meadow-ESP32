@@ -133,7 +133,7 @@ void BluetoothManager::HandleDescriptorAdded(BluetoothDescriptor *descriptor)
  *
  * @param handles Pointer to an array of uint16_t values to hold the handles.
  */
-void BluetoothManager::GetHandles(uint16_t *handles)
+void BluetoothManager::GetHandles(uint16_t * const handles)
 {
     TRACE_MESSAGE("GetHandles: Enter");
 
@@ -164,7 +164,7 @@ void BluetoothManager::GetHandles(uint16_t *handles)
  * @param handle Handle for the characteristic
  * @return CharacteristicPermission Properties of the characteristic or 0 if the handle cannot be found.
  */
-CharacteristicProperty BluetoothManager::GetCharacteristicProperties(uint16_t handle)
+CharacteristicProperty BluetoothManager::GetCharacteristicProperties(const uint16_t handle)
 {
     for (const auto &svc: Services.GetServiceDefinitions())
     {
@@ -186,7 +186,7 @@ CharacteristicProperty BluetoothManager::GetCharacteristicProperties(uint16_t ha
  * @param handle Handle for the characteristic
  * @return CharacteristicPermission Permissions of the characteristic or 0 if the handle cannot be found.
  */
-CharacteristicPermission BluetoothManager::GetCharacteristicPermissions(uint16_t handle)
+CharacteristicPermission BluetoothManager::GetCharacteristicPermissions(const uint16_t handle)
 {
     for (const auto &svc: Services.GetServiceDefinitions())
     {
@@ -208,7 +208,7 @@ CharacteristicPermission BluetoothManager::GetCharacteristicPermissions(uint16_t
  * @param handles Pointer to a block of memory holding the handles for the services, characteristics and descriptors.
  * @param count Number of handles.
  */
-void BluetoothManager::SetHandles(uint16_t *handles, uint16_t count)
+void BluetoothManager::SetHandles(const uint16_t * const handles, const uint16_t count)
 {
     TRACE_MESSAGE("SetHandles: Enter");
 
@@ -264,7 +264,7 @@ static int __attribute__((unused)) test_value = 0;
  * @param pData Pointer to a block of memory to take the value.
  * @param pLen Pointer to a variable that will hold the length of the data that is being copied.
  */
-void BluetoothManager::GetCurrentValueForAttributeHandle(uint16_t handle, uint8_t *pData, uint16_t *pLen)
+void BluetoothManager::GetCurrentValueForAttributeHandle(const uint16_t handle, uint8_t *pData, uint16_t * const pLen)
 {
     TRACE_MESSAGE("GetCurrentValueForAttributeHandle: Enter");
 
@@ -296,7 +296,7 @@ void BluetoothManager::GetCurrentValueForAttributeHandle(uint16_t handle, uint8_
  * @param pData Pointer to the data holding the data value.
  * @param len Length of the data being set.
  */
-void BluetoothManager::SetCurrentValueForAttributeHandle(uint16_t handle, uint8_t *pData, uint16_t len)
+void BluetoothManager::SetCurrentValueForAttributeHandle(const uint16_t handle, const uint8_t * const pData, const uint16_t len)
 {
     TRACE_MESSAGE("SetCurrentValueForAttributeHandle: Enter");
 

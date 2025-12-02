@@ -107,12 +107,12 @@ public:
     /**
      * @brief Set the handles for the services, characteristics and descriptors.
      */
-    void SetHandles(uint16_t *handles, uint16_t count);
+    void SetHandles(const uint16_t * const handles, const uint16_t count);
 
     /**
      * @brief Get all of the handles associated with the services, characteristics and descriptors.
      */
-    void GetHandles(uint16_t *handles);
+    void GetHandles(uint16_t * const handles);
 
     /**
      * @brief Get the Company Identifier.
@@ -133,25 +133,25 @@ public:
     /**
      * @brief Get the current value for a attribute with the specified handle.
      */
-    void GetCurrentValueForAttributeHandle(uint16_t handle, uint8_t *pData, uint16_t *pLen);
+    void GetCurrentValueForAttributeHandle(const uint16_t handle, uint8_t *pData, uint16_t * const pLen);
 
     /**
      * @brief @brief Set the value for a attribute with the specified handle.
      */
-    void SetCurrentValueForAttributeHandle(uint16_t handle, uint8_t *pData, uint16_t len);
+    void SetCurrentValueForAttributeHandle(const uint16_t handle, const uint8_t * const pData, const uint16_t len);
 
     /**
      * @brief Get the properties for the characteristic with the specified handle.
      */
-    CharacteristicProperty GetCharacteristicProperties(uint16_t handle);
+    CharacteristicProperty GetCharacteristicProperties(const uint16_t handle);
 
     /**
      * @brief Get the permissions for the characteristic with the specified handle.
      */
-    CharacteristicPermission GetCharacteristicPermissions(uint16_t handle);
+    CharacteristicPermission GetCharacteristicPermissions(const uint16_t handle);
 
     /**
-     * @brief Process the JSON defintion of the services, characteristics and descriptors and build
+     * @brief Process the JSON definition of the services, characteristics and descriptors and build
      *        a graph representation of the BLE functionality.
      */
     void BuildGraphFromJson(char *cfg_json);
