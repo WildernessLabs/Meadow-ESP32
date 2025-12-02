@@ -35,7 +35,7 @@ const char *BluetoothHandleManager::COMPONENT_NAME = BLUETOOTH_COMPONENT_NAME;
  * @param service Service requiring a handle.
  * @return unsigned short Handle assigned to the service.
  */
-unsigned short BluetoothHandleManager::Assign(BluetoothService *service)
+unsigned short BluetoothHandleManager::Assign(BluetoothService * const service)
 {
     TRACE_MESSAGE("Assign(BluetoothService): Enter");
 
@@ -52,7 +52,7 @@ unsigned short BluetoothHandleManager::Assign(BluetoothService *service)
  * @param attribute Attribute requiring a handle.
  * @return unsigned short Handle assigned to the attribute.
  */
-unsigned short BluetoothHandleManager::Assign(BluetoothAttribute *attribute)
+unsigned short BluetoothHandleManager::Assign(BluetoothAttribute * const attribute)
 {
     TRACE_MESSAGE("Assign(BluetoothAttribute): Enter");
 
