@@ -10,8 +10,9 @@
 #pragma once
 
 #include "BluetoothAttribute.hpp"
-#include "BluetoothCharacteristic.hpp"
 #include "Uuid.hpp"
+
+class BluetoothCharacteristic;
 
 /**
  * @brief Data and methods for a Bluetooth descriptor.
