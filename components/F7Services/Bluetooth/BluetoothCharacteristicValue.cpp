@@ -41,7 +41,7 @@ const char *BluetoothCharacteristicValue::COMPONENT_NAME = BLUETOOTH_COMPONENT_N
  *
  *  @param maxValueLength Maximum length of the value that can be stored in the characteristic value.
  */
-BluetoothCharacteristicValue::BluetoothCharacteristicValue(BluetoothCharacteristic *parent, Uuid16 uuid, CharacteristicPermission permission, int maxValueLength)
+BluetoothCharacteristicValue::BluetoothCharacteristicValue(BluetoothCharacteristic * const parent, const Uuid16 uuid, const CharacteristicPermission permission, const int maxValueLength)
 {
     TRACE_MESSAGE("BluetoothCharacteristicValue(UUID16): Enter");
 
@@ -65,7 +65,7 @@ BluetoothCharacteristicValue::BluetoothCharacteristicValue(BluetoothCharacterist
  *
  *  @param maxValueLength Maximum length of the value that can be stored in the characteristic value.
  */
-BluetoothCharacteristicValue::BluetoothCharacteristicValue(BluetoothCharacteristic *parent, Uuid128 uuid, CharacteristicPermission permission, int maxValueLength)
+BluetoothCharacteristicValue::BluetoothCharacteristicValue(BluetoothCharacteristic * const parent, const Uuid128 uuid, const CharacteristicPermission permission, const int maxValueLength)
 {
     TRACE_MESSAGE("BluetoothCharacteristicValue(UUID128): Enter");
 
@@ -124,7 +124,7 @@ BluetoothCharacteristicValue::~BluetoothCharacteristicValue()
  *
  *  @return True if the value was written successfully, false otherwise.
  */
-bool BluetoothCharacteristicValue::WriteValue(uint8_t *source, int length)
+bool BluetoothCharacteristicValue::WriteValue(const uint8_t * const source, const int length)
 {
     TRACE_MESSAGE("WriteValue: Enter");
 
@@ -161,7 +161,7 @@ bool BluetoothCharacteristicValue::WriteValue(uint8_t *source, int length)
  *
  *  @return True if the value was read successfully, false otherwise.
  */
-bool BluetoothCharacteristicValue::ReadValue(uint8_t *dest, int length)
+bool BluetoothCharacteristicValue::ReadValue(uint8_t * const dest, const int length)
 {
     TRACE_MESSAGE("ReadValue: Enter");
 
