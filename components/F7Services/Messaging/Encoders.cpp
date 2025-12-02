@@ -466,12 +466,12 @@ Message *Encoders::ExtractMessage(uint8_t *buffer, const uint32_t bufferLength, 
  */
 void Encoders::EncodeMessage(const Message * const message, uint8_t * const buffer, const bool headerOnly)
 {
-    TRACE_MESSAGE_SPECIFY_COMPONENT(SpiTransportProvider::COMPONENT_NAME, "Encoding %" PRIu32 " bytes as a %" PRIu32 " byte packet", messageSize, bufferSize);
-
     if (buffer)
     {
         uint32_t messageSize = EncodedPacketSize(message, headerOnly);
         uint32_t bufferSize = Encoders::CalculateSpiBufferSize(messageSize);
+        TRACE_MESSAGE_SPECIFY_COMPONENT(SpiTransportProvider::COMPONENT_NAME, "Encoding %" PRIu32 " bytes as a %" PRIu32 " byte packet", messageSize, bufferSize);
+        
         uint8_t *next_location = buffer;
 
         memset(buffer, 0, bufferSize);
