@@ -36,8 +36,8 @@ private:
      */
     BluetoothHandleManager *_handleManager;
 
-    void HandleServiceCharacteristicAdded(BluetoothCharacteristic *);
-    void HandleServiceValueChanged(BluetoothCharacteristic *characteristic);
+    void HandleServiceCharacteristicAdded(BluetoothCharacteristic * const characteristic);
+    void HandleServiceValueChanged(BluetoothCharacteristic * const characteristic);
 
 public:
     /**
@@ -50,7 +50,7 @@ public:
      *
      * @param handleManager Handle manager for this service collection.
      */
-    BluetoothServiceCollection(BluetoothHandleManager *handleManager)
+    explicit BluetoothServiceCollection(BluetoothHandleManager * const handleManager)
     {
         _handleManager = handleManager;
     }
@@ -78,17 +78,17 @@ public:
     /**
      * @brief Add a new service to the collection.
      */
-    BluetoothService &Add(BluetoothService *service);
+    BluetoothService &Add(BluetoothService * const service);
 
     /**
      * @brief Find a service in the collection by UUID.
      */
-    BluetoothService *Find(uint8_t *uuid);
+    BluetoothService *Find(const uint8_t * const uuid);
 
     /**
      * @brief Find a service in the collection by UUID.
      */
-    BluetoothService *Find(Uuid16 uuid);
+    BluetoothService *Find(const Uuid16 uuid);
 
     /**
      * @brief Get the number of services in the collection.
