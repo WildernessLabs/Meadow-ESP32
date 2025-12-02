@@ -174,7 +174,7 @@ private:
     /**
      * @brief Start the bluetooth service from the attribute graph sent be the managed code.
      */
-    void Start(Message *request);
+    void Start(Message * const request);
 
     /**
      * @brief Start the Bluetooth stack.
@@ -184,12 +184,12 @@ private:
     /**
      * @brief Get the Handles and send them to the STM32.
      */
-    void GetHandles(Message *request);
+    void GetHandles(Message * const request);
 
     /**
      * @brief Stop the Bluetooth stack.
      */
-    void Stop(Message *request);
+    void Stop(Message * const request);
 
     /**
      * @brief Shutdown the Bluetooth stack.
@@ -199,12 +199,12 @@ private:
     /**
      * @brief Set the current value for the specified attribute handle.
      */
-    void SetCurrentValueForAttributeHandle(Message *request);
+    void SetCurrentValueForAttributeHandle(Message * const request);
 
     /**
      * @brief Write request event handler (this has to be static as it is called from C APIs).
      */
-    static void OnDataWriteRequest(uint16_t handle, uint8_t *data, uint16_t dataLength);
+    static void OnDataWriteRequest(const uint16_t handle, uint8_t * const data, const uint16_t dataLength);
 
     /*
      *  Construct a new Bluetooth request handler object with reference to a
@@ -279,5 +279,5 @@ public:
     /**
      * @brief Get the MAC address for the Bluetooth interface.
      */
-    static void GetMacAddress(uint8_t *macAddress);
+    static void GetMacAddress(uint8_t * const macAddress);
 };
