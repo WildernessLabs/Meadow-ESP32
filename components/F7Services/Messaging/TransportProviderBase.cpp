@@ -162,7 +162,7 @@ void TransportProviderBase::DumpMessageAtHeadOfQueue()
  *  @return
  *      true if the message was queued, false otherwise.
  */
-bool TransportProviderBase::QueueMessageForStm32(Message *message)
+bool TransportProviderBase::QueueMessageForStm32(const Message * const message)
 {
     bool result = true;
 
@@ -190,7 +190,7 @@ bool TransportProviderBase::QueueMessageForStm32(Message *message)
  *  @param messageType
  *     Type of control message to send.
  */
-void TransportProviderBase::SendControlMessageToStm32(ControlMessageType messageType)
+void TransportProviderBase::SendControlMessageToStm32(const ControlMessageType messageType)
 {
     char const *message = nullptr;
     char smallBuffer[20];
@@ -239,7 +239,7 @@ TransportProviderBase::ControlMessageType TransportProviderBase::GetControlSigna
  * @param messageType
  *      The control signal message to be sent.
  */
-void TransportProviderBase::SetControlSignalMessage(ControlMessageType messageType)
+void TransportProviderBase::SetControlSignalMessage(const ControlMessageType messageType)
 {
     _controlSignalMessage = messageType;
 }
@@ -261,7 +261,7 @@ TickType_t TransportProviderBase::GetControlSignalDelay()
  * @param delay
  *      Number of ticks between attempts to take the semaphore.
  */
-void TransportProviderBase::SetControlSignalDelay(TickType_t delay)
+void TransportProviderBase::SetControlSignalDelay(const TickType_t delay)
 {
     _controlSignalDelay = delay;
 }

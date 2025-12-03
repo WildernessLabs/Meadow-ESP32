@@ -66,7 +66,7 @@ Message::Message()
  *  @param payloadLength
  *      Size (in bytes) of the payload.
  */
-Message::Message(uint8_t messageType, uint8_t interface, uint32_t function, uint32_t statusCode, uint32_t messageId, uint8_t *payload, uint32_t payloadLength)
+Message::Message(const uint8_t messageType, const uint8_t interface, const uint32_t function, const uint32_t statusCode, const uint32_t messageId, uint8_t *payload, const uint32_t payloadLength)
 {
     MessageType = messageType;
     Interface = interface;
@@ -94,7 +94,7 @@ Message::Message(uint8_t messageType, uint8_t interface, uint32_t function, uint
  *  @param statusCode
  *      Status code to be returned by the function.
  */
-Message::Message(uint8_t messageType, uint8_t interface, uint32_t function, uint32_t statusCode)
+Message::Message(const uint8_t messageType, const uint8_t interface, const uint32_t function, const uint32_t statusCode)
 {
     MessageType = messageType;
     Interface = interface;
@@ -199,7 +199,7 @@ Message &Message::operator=(const Message &original)
  *  @returns
  *      Pointer to the newly created message.
  */
-Message *Message::CreateOnHeap(uint8_t messageType, uint8_t interface, uint32_t function, uint32_t statusCode, uint32_t messageId, uint8_t *payload, uint32_t payloadLength)
+Message *Message::CreateOnHeap(const uint8_t messageType, const uint8_t interface, const uint32_t function, const uint32_t statusCode, const uint32_t messageId, uint8_t *payload, const uint32_t payloadLength)
 {
     Message *result = static_cast<Message *>(pvPortMalloc(sizeof(Message)));
 
@@ -237,7 +237,7 @@ Message *Message::CreateOnHeap(uint8_t messageType, uint8_t interface, uint32_t 
  *  @returns
  *      Pointer to the newly created message.
  */
-Message *Message::CreateOnHeap(uint8_t messageType, uint8_t interface, uint32_t function, uint32_t statusCode)
+Message *Message::CreateOnHeap(const uint8_t messageType, const uint8_t interface, const uint32_t function, const uint32_t statusCode)
 {
     return (CreateOnHeap(messageType, interface, function, statusCode, 0, nullptr, 0));
 }
@@ -252,7 +252,7 @@ Message *Message::CreateOnHeap(uint8_t messageType, uint8_t interface, uint32_t 
  *  @returns
  *      New copy of the message.
  */
-Message *Message::CreateCopyOnHeap(bool copyPayload)
+Message *Message::CreateCopyOnHeap(const bool copyPayload)
 {
     uint8_t *payload = nullptr;
     uint32_t payloadLength = 0;

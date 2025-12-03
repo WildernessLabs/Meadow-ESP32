@@ -491,7 +491,7 @@ Mapping::~Mapping()
  *  @returns
  *      0 if the value could be found, -1 if there is a problem.
  */
-int32_t Mapping::GetFlagValue(MappingTable mapping, MappingDirection type, int32_t value, int32_t *mappedValue)
+int32_t Mapping::GetFlagValue(const MappingTable mapping, const MappingDirection type, const int32_t value, int32_t * const mappedValue)
 {
     int32_t flag = 0x0001;
     int32_t result = 0;
@@ -540,7 +540,7 @@ int32_t Mapping::GetFlagValue(MappingTable mapping, MappingDirection type, int32
  *  @returns
  *      0 if the value could be found, -1 if there is a problem.
  */
-int32_t Mapping::GetValue(MappingTable mapping, MappingDirection type, int32_t value, int8_t *result)
+int32_t Mapping::GetValue(const MappingTable mapping, const MappingDirection type, const int32_t value, int8_t * const result)
 {
     int32_t mappedValue;
     int32_t mappingResult = GetValue(mapping, type, value, &mappedValue);
@@ -576,7 +576,7 @@ int32_t Mapping::GetValue(MappingTable mapping, MappingDirection type, int32_t v
  *  @returns
  *      0 if the value could be found, -1 if there is a problem.
  */
-int32_t Mapping::GetValue(MappingTable mapping, MappingDirection type, int32_t value, int16_t *result)
+int32_t Mapping::GetValue(const MappingTable mapping, const MappingDirection type, const int32_t value, int16_t * const result)
 {
     int32_t mappedValue;
     int32_t mappingResult = GetValue(mapping, type, value, &mappedValue);
@@ -612,7 +612,7 @@ int32_t Mapping::GetValue(MappingTable mapping, MappingDirection type, int32_t v
  *  @returns
  *      0 if the value could be found, -1 if there is a problem.
  */
-int32_t Mapping::GetValue(MappingTable mapping, MappingDirection type, int32_t value, int32_t *result)
+int32_t Mapping::GetValue(const MappingTable mapping, const MappingDirection type, const int32_t value, int32_t * const result)
 {
     int_mapping_t *table = NULL;
     size_t size = 0;
@@ -713,7 +713,7 @@ int32_t Mapping::GetValue(MappingTable mapping, MappingDirection type, int32_t v
  *  @returns
  *      0 if successful, -1 if there was an error.
  */
-int32_t Mapping::GetEspValue(MappingTable mapping, int32_t value, int8_t *result)
+int32_t Mapping::GetEspValue(const MappingTable mapping, const int32_t value, int8_t * const result)
 {
     return (GetValue(mapping, Mapping::StmToEsp, value, result));
 }
@@ -733,7 +733,7 @@ int32_t Mapping::GetEspValue(MappingTable mapping, int32_t value, int8_t *result
  *  @returns
  *      0 if successful, -1 if there was an error.
  */
-int32_t Mapping::GetEspValue(MappingTable mapping, int32_t value, int16_t *result)
+int32_t Mapping::GetEspValue(const MappingTable mapping, const int32_t value, int16_t * const result)
 {
     return (GetValue(mapping, Mapping::StmToEsp, value, result));
 }
@@ -753,7 +753,7 @@ int32_t Mapping::GetEspValue(MappingTable mapping, int32_t value, int16_t *resul
  *  @returns
  *      0 if successful, -1 if there was an error.
  */
-int32_t Mapping::GetEspValue(MappingTable mapping, int32_t value, int32_t *result)
+int32_t Mapping::GetEspValue(const MappingTable mapping, const int32_t value, int32_t * const result)
 {
     return (GetValue(mapping, Mapping::StmToEsp, value, result));
 }
@@ -773,7 +773,7 @@ int32_t Mapping::GetEspValue(MappingTable mapping, int32_t value, int32_t *resul
  *  @returns
  *      0 if successful, -1 if there was an error.
  */
-int32_t Mapping::GetStmValue(MappingTable mapping, int32_t value, int8_t *result)
+int32_t Mapping::GetStmValue(const MappingTable mapping, const int32_t value, int8_t * const result)
 {
     return (GetValue(mapping, Mapping::StmToEsp, value, result));
 }
@@ -793,7 +793,7 @@ int32_t Mapping::GetStmValue(MappingTable mapping, int32_t value, int8_t *result
  *  @returns
  *      0 if successful, -1 if there was an error.
  */
-int32_t Mapping::GetStmValue(MappingTable mapping, int32_t value, int16_t *result)
+int32_t Mapping::GetStmValue(const MappingTable mapping, const int32_t value, int16_t * const result)
 {
     return (GetValue(mapping, Mapping::StmToEsp, value, result));
 }
@@ -813,7 +813,7 @@ int32_t Mapping::GetStmValue(MappingTable mapping, int32_t value, int16_t *resul
  *  @returns
  *      0 if successful, -1 if there was an error.
  */
-int32_t Mapping::GetStmValue(MappingTable mapping, int32_t value, int32_t *result)
+int32_t Mapping::GetStmValue(const MappingTable mapping, const int32_t value, int32_t * const result)
 {
     return (GetValue(mapping, Mapping::EspToStm, value, result));
 }
@@ -835,7 +835,7 @@ int32_t Mapping::GetStmValue(MappingTable mapping, int32_t value, int32_t *resul
  *  @returns
  *      0 if successful, -1 if there was an error.
  */
-int32_t Mapping::GetEspFlagValue(MappingTable mapping, int32_t value, int32_t *result)
+int32_t Mapping::GetEspFlagValue(const MappingTable mapping, const int32_t value, int32_t * const result)
 {
     return (GetFlagValue(mapping, Mapping::StmToEsp, value, result));
 }
@@ -857,7 +857,7 @@ int32_t Mapping::GetEspFlagValue(MappingTable mapping, int32_t value, int32_t *r
  *  @returns
  *      0 if successful, -1 if there was an error.
  */
-int32_t Mapping::GetStmFlagValue(MappingTable mapping, int32_t value, int32_t *result)
+int32_t Mapping::GetStmFlagValue(const MappingTable mapping, const int32_t value, int32_t * const result)
 {
     return (GetFlagValue(mapping, Mapping::EspToStm, value, result));
 }
@@ -872,7 +872,7 @@ int32_t Mapping::GetStmFlagValue(MappingTable mapping, int32_t value, int32_t *r
  *      StatusCodes value equivalent to the ESP IDF error code or UnmappedErrorCode if the
  *      ESP value cannot be found.
  */
-StatusCodes::StatusCodes Mapping::GetStatusCode(esp_err_t error)
+StatusCodes::StatusCodes Mapping::GetStatusCode(const esp_err_t error)
 {
     int32_t result;
     if (GetStmValue(Mapping::EspErrorCodes, error, &result) < 0)
@@ -895,7 +895,7 @@ StatusCodes::StatusCodes Mapping::GetStatusCode(esp_err_t error)
  *      String representing the specified value, NULL if the value
  *      could not be found.
  */
-char *Mapping::GetStringValue(Mapping::StringMappingTable mapping, int32_t key)
+char *Mapping::GetStringValue(const Mapping::StringMappingTable mapping, const int32_t key)
 {
     str_mapping_t *table = NULL;
     size_t size = 0;
@@ -953,7 +953,7 @@ char *Mapping::GetStringValue(Mapping::StringMappingTable mapping, int32_t key)
  * @param espErrno ESP IDF errno value.
  * @return int32_t NuttX errno value.
  */
-int32_t Mapping::NuttxErrno(int32_t espErrno)
+int32_t Mapping::NuttxErrno(const int32_t espErrno)
 {
     int32_t result = 0;
     if (GetStmValue(Mapping::Errno, espErrno, &result) != 0)

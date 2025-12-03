@@ -562,123 +562,168 @@ public:
      *      Seed for the 32-bit CRC calculation.
      */
     static const uint32_t CRC32_SEED = 0xffffffff;
-    static uint32_t CalculateSpiBufferSize(uint32_t);
-    static uint32_t EncodedPacketSize(Message *, bool);
-    static uint16_t ExtractUInt16(uint8_t *);
-    static void EncodeUInt16(uint16_t, uint8_t *);
-    static uint32_t ExtractUInt32(uint8_t *);
-    static void EncodeUInt32(uint32_t, uint8_t *);
-    static uint32_t ExtractInt32(uint8_t *);
-    static void EncodeInt32(int32_t, uint8_t *);
-    static char *ExtractString(uint8_t *);
+    static uint32_t CalculateSpiBufferSize(const uint32_t);
+    static uint32_t EncodedPacketSize(const Message * const, const bool);
+    static uint16_t ExtractUInt16(const uint8_t * const);
+    static void EncodeUInt16(const uint16_t, uint8_t * const);
+    static uint32_t ExtractUInt32(const uint8_t * const);
+    static void EncodeUInt32(const uint32_t, uint8_t * const);
+    static uint32_t ExtractInt32(const uint8_t * const);
+    static void EncodeInt32(const int32_t, uint8_t * const);
+    static char *ExtractString(const uint8_t * const);
     static void EncodeString(char *, uint8_t *);
-    static uint32_t StringLength(char *);
-    static uint8_t CRC8(const uint8_t *, uint16_t);
-    static uint32_t CRC32(const uint8_t *, uint16_t);
-    static uint32_t ProgressiveCRC32(uint32_t, uint8_t);
-    static void EncodeMessage(Message *, uint8_t *, bool);
-    static Message *ExtractMessage(uint8_t *, uint32_t, bool);
-    static void EncodeSystemConfiguration(Esp32Messaging::SystemConfiguration *, uint8_t *);
-    static int EncodedSystemConfigurationBufferSize(Esp32Messaging::SystemConfiguration *);
+    static uint32_t StringLength(const char *);
+    static uint8_t CRC8(const uint8_t *, const uint16_t);
+    static uint32_t CRC32(const uint8_t *, const uint16_t);
+    static uint32_t ProgressiveCRC32(const uint32_t, const uint8_t);
+    static void EncodeMessage(const Message * const, uint8_t * const, const bool);
+    static Message *ExtractMessage(uint8_t *, const uint32_t, const bool);
+
+    static void EncodeSystemConfiguration(const Esp32Messaging::SystemConfiguration * const, uint8_t *);
+    static int EncodedSystemConfigurationBufferSize(const Esp32Messaging::SystemConfiguration * const);
     static Esp32Messaging::ConfigurationValue *ExtractConfigurationValue(uint8_t *);
-    static void EncodeAccessPointInformation(Esp32Messaging::AccessPointInformation *, uint8_t *);
-    static int EncodedAccessPointInformationBufferSize(Esp32Messaging::AccessPointInformation *);
+
+    static void EncodeAccessPointInformation(const Esp32Messaging::AccessPointInformation * const, uint8_t *);
+    static int EncodedAccessPointInformationBufferSize(const Esp32Messaging::AccessPointInformation * const);
     static Esp32Messaging::AccessPointInformation *ExtractAccessPointInformation(uint8_t *);
+
     static Esp32Messaging::DisconnectFromAccessPointRequest *ExtractDisconnectFromAccessPointRequest(uint8_t *);
-    static void EncodeConnectEventData(Esp32Messaging::ConnectEventData *, uint8_t *);
-    static int EncodedConnectEventDataBufferSize(Esp32Messaging::ConnectEventData *);
-    static void EncodeDisconnectEventData(Esp32Messaging::DisconnectEventData *, uint8_t *);
-    static int EncodeDisconnectEventDataBufferSize(Esp32Messaging::DisconnectEventData *);
-    static void EncodeNodeConnectionChangeEventData(Esp32Messaging::NodeConnectionChangeEventData *, uint8_t *);
-    static int EncodedNodeConnectionChangeEventDataBufferSize(Esp32Messaging::NodeConnectionChangeEventData *);
+
+    static void EncodeConnectEventData(const Esp32Messaging::ConnectEventData * const, uint8_t *);
+    static int EncodedConnectEventDataBufferSize(const Esp32Messaging::ConnectEventData * const);
+
+    static void EncodeDisconnectEventData(const Esp32Messaging::DisconnectEventData * const, uint8_t *);
+    static int EncodeDisconnectEventDataBufferSize(const Esp32Messaging::DisconnectEventData * const);
+
+    static void EncodeNodeConnectionChangeEventData(const Esp32Messaging::NodeConnectionChangeEventData * const, uint8_t *);
+    static int EncodedNodeConnectionChangeEventDataBufferSize(const Esp32Messaging::NodeConnectionChangeEventData * const);
     static Esp32Messaging::NodeConnectionChangeEventData *ExtractNodeConnectionChangeEventData(uint8_t *);
-    static void EncodeAccessPoint(Esp32Messaging::AccessPoint *, uint8_t *);
-    static int EncodedAccessPointBufferSize(Esp32Messaging::AccessPoint *);
-    static void EncodeAccessPointList(Esp32Messaging::AccessPointList *, uint8_t *);
-    static int EncodedAccessPointListBufferSize(Esp32Messaging::AccessPointList *);
-    static void EncodeSockAddr(Esp32Messaging::SockAddr *, uint8_t *);
-    static int EncodedSockAddrBufferSize(Esp32Messaging::SockAddr *);
+
+    static void EncodeAccessPoint(const Esp32Messaging::AccessPoint * const, uint8_t *);
+    static int EncodedAccessPointBufferSize(const Esp32Messaging::AccessPoint * const);
+    static void EncodeAccessPointList(const Esp32Messaging::AccessPointList * const, uint8_t *);
+    static int EncodedAccessPointListBufferSize(const Esp32Messaging::AccessPointList * const);
+
+    static void EncodeSockAddr(const Esp32Messaging::SockAddr * const, uint8_t *);
+    static int EncodedSockAddrBufferSize(const Esp32Messaging::SockAddr * const);
     static Esp32Messaging::SockAddr *ExtractSockAddr(uint8_t *);
-    static void EncodeAddrInfo(Esp32Messaging::AddrInfo *, uint8_t *);
-    static int EncodedAddrInfoBufferSize(Esp32Messaging::AddrInfo *);
+
+    static void EncodeAddrInfo(const Esp32Messaging::AddrInfo * const, uint8_t *);
+    static int EncodedAddrInfoBufferSize(const Esp32Messaging::AddrInfo * const);
     static Esp32Messaging::AddrInfo *ExtractAddrInfo(uint8_t *);
     static Esp32Messaging::GetAddrInfoRequest *ExtractGetAddrInfoRequest(uint8_t *);
-    static void EncodeGetAddrInfoResponse(Esp32Messaging::GetAddrInfoResponse *, uint8_t *);
-    static int EncodedGetAddrInfoResponseBufferSize(Esp32Messaging::GetAddrInfoResponse *);
+    static void EncodeGetAddrInfoResponse(const Esp32Messaging::GetAddrInfoResponse * const, uint8_t *);
+    static int EncodedGetAddrInfoResponseBufferSize(const Esp32Messaging::GetAddrInfoResponse * const);
+
     static Esp32Messaging::SocketRequest *ExtractSocketRequest(uint8_t *);
-    static void EncodeIntegerResponse(Esp32Messaging::IntegerResponse *, uint8_t *);
-    static int EncodedIntegerResponseBufferSize(Esp32Messaging::IntegerResponse *);
-    static void EncodeIntegerAndErrnoResponse(Esp32Messaging::IntegerAndErrnoResponse *, uint8_t *);
-    static int EncodedIntegerAndErrnoResponseBufferSize(Esp32Messaging::IntegerAndErrnoResponse *);
+
+    static void EncodeIntegerResponse(const Esp32Messaging::IntegerResponse * const, uint8_t *);
+    static int EncodedIntegerResponseBufferSize(const Esp32Messaging::IntegerResponse * const);
+
+    static void EncodeIntegerAndErrnoResponse(const Esp32Messaging::IntegerAndErrnoResponse * const, uint8_t *);
+    static int EncodedIntegerAndErrnoResponseBufferSize(const Esp32Messaging::IntegerAndErrnoResponse * const);
+
     static Esp32Messaging::ConnectRequest *ExtractConnectRequest(uint8_t *);
+
     static Esp32Messaging::FreeAddrInfoRequest *ExtractFreeAddrInfoRequest(uint8_t *);
-    static void EncodeTimeVal(Esp32Messaging::TimeVal *, uint8_t *);
-    static int EncodedTimeValBufferSize(Esp32Messaging::TimeVal *);
+
+    static void EncodeTimeVal(const Esp32Messaging::TimeVal * const, uint8_t *);
+    static int EncodedTimeValBufferSize(const Esp32Messaging::TimeVal * const);
+
     static Esp32Messaging::TimeVal *ExtractTimeVal(uint8_t *);
+
     static Esp32Messaging::SetSockOptRequest *ExtractSetSockOptRequest(uint8_t *);
     static Esp32Messaging::GetSockOptRequest *ExtractGetSockOptRequest(uint8_t *);
-    static void EncodeGetSockOptResponse(Esp32Messaging::GetSockOptResponse *, uint8_t *);
-    static int EncodedGetSockOptResponseBufferSize(Esp32Messaging::GetSockOptResponse *);
-    static void EncodeLinger(Esp32Messaging::Linger *, uint8_t *);
-    static int EncodedLingerBufferSize(Esp32Messaging::Linger *);
+    static void EncodeGetSockOptResponse(const Esp32Messaging::GetSockOptResponse * const, uint8_t *);
+    static int EncodedGetSockOptResponseBufferSize(const Esp32Messaging::GetSockOptResponse * const);
+
+    static void EncodeLinger(const Esp32Messaging::Linger * const, uint8_t *);
+    static int EncodedLingerBufferSize(const Esp32Messaging::Linger * const);
+
     static Esp32Messaging::WriteRequest *ExtractWriteRequest(uint8_t *);
+
     static Esp32Messaging::ReadRequest *ExtractReadRequest(uint8_t *);
-    static void EncodeReadResponse(Esp32Messaging::ReadResponse *, uint8_t *);
-    static int EncodedReadResponseBufferSize(Esp32Messaging::ReadResponse *);
+    static void EncodeReadResponse(const Esp32Messaging::ReadResponse * const, uint8_t *);
+    static int EncodedReadResponseBufferSize(const Esp32Messaging::ReadResponse * const);
+
     static Esp32Messaging::CloseRequest *ExtractCloseRequest(uint8_t *);
-    static void EncodeGetBatteryChargeLevelResponse(Esp32Messaging::GetBatteryChargeLevelResponse *, uint8_t *);
-    static int EncodedGetBatteryChargeLevelResponseBufferSize(Esp32Messaging::GetBatteryChargeLevelResponse *);
+
+    static void EncodeGetBatteryChargeLevelResponse(const Esp32Messaging::GetBatteryChargeLevelResponse * const, uint8_t *);
+    static int EncodedGetBatteryChargeLevelResponseBufferSize(const Esp32Messaging::GetBatteryChargeLevelResponse * const);
+
     static Esp32Messaging::SendRequest *ExtractSendRequest(uint8_t *);
     static Esp32Messaging::SendToRequest *ExtractSendToRequest(uint8_t *);
+
     static Esp32Messaging::RecvFromRequest *ExtractRecvFromRequest(uint8_t *);
-    static void EncodeRecvFromResponse(Esp32Messaging::RecvFromResponse *, uint8_t *);
-    static int EncodedRecvFromResponseBufferSize(Esp32Messaging::RecvFromResponse *);
+    static void EncodeRecvFromResponse(const Esp32Messaging::RecvFromResponse * const, uint8_t *);
+    static int EncodedRecvFromResponseBufferSize(const Esp32Messaging::RecvFromResponse * const);
+
     static Esp32Messaging::PollRequest *ExtractPollRequest(uint8_t *);
-    static void EncodePollResponse(Esp32Messaging::PollResponse *, uint8_t *);
-    static int EncodedPollResponseBufferSize(Esp32Messaging::PollResponse *);
-    static void EncodeInterruptPollResponse(Esp32Messaging::InterruptPollResponse *, uint8_t *);
-    static int EncodedInterruptPollResponseBufferSize(Esp32Messaging::InterruptPollResponse *);
+    static void EncodePollResponse(const Esp32Messaging::PollResponse * const, uint8_t *);
+    static int EncodedPollResponseBufferSize(const Esp32Messaging::PollResponse * const);
+
+    static void EncodeInterruptPollResponse(const Esp32Messaging::InterruptPollResponse * const, uint8_t *);
+    static int EncodedInterruptPollResponseBufferSize(const Esp32Messaging::InterruptPollResponse * const);
+
     static Esp32Messaging::ListenRequest *ExtractListenRequest(uint8_t *);
+
     static Esp32Messaging::BindRequest *ExtractBindRequest(uint8_t *);
+
     static Esp32Messaging::AcceptRequest *ExtractAcceptRequest(uint8_t *);
-    static void EncodeAcceptResponse(Esp32Messaging::AcceptResponse *, uint8_t *);
-    static int EncodedAcceptResponseBufferSize(Esp32Messaging::AcceptResponse *);
-    static void EncodeIoctlRequest(Esp32Messaging::IoctlRequest *, uint8_t *);
-    static int EncodedIoctlRequestBufferSize(Esp32Messaging::IoctlRequest *);
+
+    static void EncodeAcceptResponse(const Esp32Messaging::AcceptResponse * const, uint8_t *);
+    static int EncodedAcceptResponseBufferSize(const Esp32Messaging::AcceptResponse * const);
+
+    static void EncodeIoctlRequest(const Esp32Messaging::IoctlRequest * const, uint8_t *);
+    static int EncodedIoctlRequestBufferSize(const Esp32Messaging::IoctlRequest * const);
+
     static Esp32Messaging::IoctlRequest *ExtractIoctlRequest(uint8_t *);
-    static void EncodeIoctlResponse(Esp32Messaging::IoctlResponse *, uint8_t *);
-    static int EncodedIoctlResponseBufferSize(Esp32Messaging::IoctlResponse *);
+    static void EncodeIoctlResponse(const Esp32Messaging::IoctlResponse * const, uint8_t *);
+    static int EncodedIoctlResponseBufferSize(const Esp32Messaging::IoctlResponse * const);
+
     static Esp32Messaging::GetSockPeerNameRequest *ExtractGetSockPeerNameRequest(uint8_t *);
-    static void EncodeGetSockPeerNameResponse(Esp32Messaging::GetSockPeerNameResponse *, uint8_t *);
-    static int EncodedGetSockPeerNameResponseBufferSize(Esp32Messaging::GetSockPeerNameResponse *);
-    static void EncodeEventData(Esp32Messaging::EventData *, uint8_t *);
-    static int EncodedEventDataBufferSize(Esp32Messaging::EventData *);
-    static void EncodeEventDataPayload(Esp32Messaging::EventDataPayload *, uint8_t *);
-    static int EncodedEventDataPayloadBufferSize(Esp32Messaging::EventDataPayload *);
+
+    static void EncodeGetSockPeerNameResponse(const Esp32Messaging::GetSockPeerNameResponse * const, uint8_t *);
+    static int EncodedGetSockPeerNameResponseBufferSize(const Esp32Messaging::GetSockPeerNameResponse * const);
+
+    static void EncodeEventData(const Esp32Messaging::EventData * const, uint8_t *);
+    static int EncodedEventDataBufferSize(const Esp32Messaging::EventData * const);
+    static void EncodeEventDataPayload(const Esp32Messaging::EventDataPayload * const, uint8_t *);
+    static int EncodedEventDataPayloadBufferSize(const Esp32Messaging::EventDataPayload * const);
+
     static Esp32Messaging::SetAntennaRequest *ExtractSetAntennaRequest(uint8_t *);
-    static void EncodeBTStackConfig(Esp32Messaging::BTStackConfig *, uint8_t *);
-    static int EncodedBTStackConfigBufferSize(Esp32Messaging::BTStackConfig *);
+
+    static void EncodeBTStackConfig(const Esp32Messaging::BTStackConfig * const, uint8_t *);
+    static int EncodedBTStackConfigBufferSize(const Esp32Messaging::BTStackConfig * const);
+
     static Esp32Messaging::BTStackConfig *ExtractBTStackConfig(uint8_t *);
-    static void EncodeBTDataWriteRequest(Esp32Messaging::BTDataWriteRequest *, uint8_t *);
-    static int EncodedBTDataWriteRequestBufferSize(Esp32Messaging::BTDataWriteRequest *);
-    static void EncodeBTGetHandlesResponse(Esp32Messaging::BTGetHandlesResponse *, uint8_t *);
-    static int EncodedBTGetHandlesResponseBufferSize(Esp32Messaging::BTGetHandlesResponse *);
+    static void EncodeBTDataWriteRequest(const Esp32Messaging::BTDataWriteRequest * const, uint8_t *);
+    static int EncodedBTDataWriteRequestBufferSize(const Esp32Messaging::BTDataWriteRequest * const);
+    static void EncodeBTGetHandlesResponse(const Esp32Messaging::BTGetHandlesResponse * const, uint8_t *);
+    static int EncodedBTGetHandlesResponseBufferSize(const Esp32Messaging::BTGetHandlesResponse * const);
     static Esp32Messaging::BTServerDataSet *ExtractBTServerDataSet(uint8_t *);
-    static void EncodeFileDetails(Esp32Messaging::FileDetails *, uint8_t *);
-    static int EncodedFileDetailsBufferSize(Esp32Messaging::FileDetails *);
+
+    static void EncodeFileDetails(const Esp32Messaging::FileDetails * const, uint8_t *);
+    static int EncodedFileDetailsBufferSize(const Esp32Messaging::FileDetails * const);
     static Esp32Messaging::FileDetails *ExtractFileDetails(uint8_t *);
-    static void EncodeFileNameAndContents(Esp32Messaging::FileNameAndContents *, uint8_t *);
-    static int EncodedFileNameAndContentsBufferSize(Esp32Messaging::FileNameAndContents *);
+
+    static void EncodeFileNameAndContents(const Esp32Messaging::FileNameAndContents * const, uint8_t *);
+    static int EncodedFileNameAndContentsBufferSize(const Esp32Messaging::FileNameAndContents * const);
     static Esp32Messaging::FileNameAndContents *ExtractFileNameAndContents(uint8_t *);
-    static void EncodeFileNameList(Esp32Messaging::FileNameList *, uint8_t *);
-    static int EncodedFileNameListBufferSize(Esp32Messaging::FileNameList *);
+
+    static void EncodeFileNameList(const Esp32Messaging::FileNameList * const, uint8_t *);
+    static int EncodedFileNameListBufferSize(const Esp32Messaging::FileNameList * const);
+
     static Esp32Messaging::LoggingConfiguration *ExtractLoggingConfiguration(uint8_t *);
     static Esp32Messaging::LogMessage *ExtractLogMessage(uint8_t *);
-    static void EncodeGotIpEventData(Esp32Messaging::GotIpEventData *, uint8_t *);
-    static int EncodedGotIpEventDataBufferSize(Esp32Messaging::GotIpEventData *);
-    static void EncodeCoreDumpInformation(Esp32Messaging::CoreDumpInformationResponse *, uint8_t *);
-    static int EncodedCoreDumpInformationBufferSize(Esp32Messaging::CoreDumpInformationResponse *);
+
+    static void EncodeGotIpEventData(const Esp32Messaging::GotIpEventData * const, uint8_t *);
+    static int EncodedGotIpEventDataBufferSize(const Esp32Messaging::GotIpEventData * const);
+
+    static void EncodeCoreDumpInformation(const Esp32Messaging::CoreDumpInformationResponse * const, uint8_t *);
+    static int EncodedCoreDumpInformationBufferSize(const Esp32Messaging::CoreDumpInformationResponse * const);
+
     static Esp32Messaging::CoreDumpFragmentRequest *ExtractCoreDumpFragmentRequest(uint8_t *);
-    static void EncodeCoreDumpFragmentResponse(Esp32Messaging::CoreDumpFragmentResponse *, uint8_t *);
-    static int EncodedCoreDumpFragmentResponseBufferSize(Esp32Messaging::CoreDumpFragmentResponse *);
+    static void EncodeCoreDumpFragmentResponse(const Esp32Messaging::CoreDumpFragmentResponse * const, uint8_t *);
+    static int EncodedCoreDumpFragmentResponseBufferSize(const Esp32Messaging::CoreDumpFragmentResponse * const);
 };

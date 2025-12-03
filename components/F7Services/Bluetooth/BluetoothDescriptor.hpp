@@ -12,22 +12,13 @@
 #include "BluetoothAttribute.hpp"
 #include "Uuid.hpp"
 
+class BluetoothCharacteristic;
+
 /**
  * @brief Data and methods for a Bluetooth descriptor.
  */
 class BluetoothDescriptor : public BluetoothAttribute
 {
-private:
-    /**
-     * @brief Pointer to the parent (characteristic) of this descriptor.
-     */
-    BluetoothCharacteristic *_parent;
-
-    /**
-     * @brief Is the UUID 128 bits?
-     */
-    bool _is128 = false;
-
 public:
     /**
      * @brief Construct a new BluetoothDescriptor object.
@@ -38,25 +29,7 @@ public:
      * @param maxValueLength Maximum length of the data in the descriptor.
      * @param value Initial value for the descriptor.
      */
-    BluetoothDescriptor(BluetoothCharacteristic *parent, Uuid128 uuid, CharacteristicPermission permission, uint16_t maxValueLength, uint8_t *value)
-    {
-        _parent = parent;
-        uuid128 = uuid;
-        Permission = permission;
-        MaxLength = maxValueLength;
-        Value = new uint8_t[MaxLength];
-        if (value != NULL)
-        {
-            memcpy(Value, value, MaxLength);
-            CurrentLength = maxValueLength;
-        }
-        else
-        {
-            memset(Value, 0, MaxLength);
-            CurrentLength = 0;
-        }
-        _is128 = true;
-    }
+    BluetoothDescriptor(const BluetoothCharacteristic * const parent, const Uuid128 uuid, const CharacteristicPermission permission, const uint16_t maxValueLength, const uint8_t * const value);
 
     /**
      * @brief Construct a new BluetoothDescriptor object.
@@ -67,48 +40,19 @@ public:
      * @param maxValueLength Maximum length of the data in the descriptor.
      * @param value Initial value for the descriptor.
      */
-    BluetoothDescriptor(BluetoothCharacteristic *parent, Uuid16 uuid, CharacteristicPermission permission, uint16_t maxValueLength, uint8_t *value)
-    {
-        _parent = parent;
-        uuid16 = uuid;
-        Permission = permission;
-        MaxLength = maxValueLength;
-        Value = new uint8_t[MaxLength];
-        if (value != NULL)
-        {
-            memcpy(Value, value, MaxLength);
-            CurrentLength = maxValueLength;
-        }
-        else
-        {
-            memset(Value, 0, MaxLength);
-            CurrentLength = 0;
-        }
-    }
+    BluetoothDescriptor(const BluetoothCharacteristic * const parent, const Uuid16 uuid, const CharacteristicPermission permission, const uint16_t maxValueLength, const uint8_t * const value);
 
     /**
      * @brief Destroy the Bluetooth Descriptor object
      */
-    ~BluetoothDescriptor()
-    {
-        delete[] Value;
-    }
+    ~BluetoothDescriptor();
 
     /**
      * @brief Set the Value descriptor.
      *
      * @param value Value to set the descriptor to.
      */
-    void SetValue(uint32_t length, uint8_t *value)
-    {
-        if ((length > MaxLength) || (value == NULL))
-        {
-            return;
-        }
-        memset(Value, 0, MaxLength);
-        memcpy(Value, value, length);
-        CurrentLength = length;
-    }
+    void SetValue(const uint32_t length, const uint8_t * const value);
 
     /**
      * @brief Name of the descriptor.
@@ -121,10 +65,7 @@ public:
      * @return true If the UUID is 128 bits.
      * @return false If the UUID is 16 bits.
      */
-    bool Is128()
-    {
-        return _is128;
-    }
+    bool Is128();
 
     /**
      * @brief 16-bit UUID for this descriptor.
@@ -150,4 +91,35 @@ public:
      * @brief Pointer to the block of memory holding the value.
      */
     uint8_t *Value;
+
+private:
+    /**
+     * @brief Pointer to the parent (characteristic) of this descriptor.
+     */
+    const BluetoothCharacteristic *_parent;
+
+    /**
+     * @brief Is the UUID 128 bits?
+     */
+    bool _is128 = false;
+
+    /**
+     * @brief Deleted copy constructor to prevent copying.
+     */
+    BluetoothDescriptor(const BluetoothDescriptor &other) = delete;
+
+    /**
+     * @brief Deleted copy assignment operator to prevent assignment.
+     */
+    BluetoothDescriptor &operator=(const BluetoothDescriptor &other) = delete;
+
+    /**
+     * @brief Deleted move constructor to prevent moving.
+     */
+    BluetoothDescriptor(BluetoothDescriptor &&other) = delete;
+
+    /**
+     * @brief Deleted move assignment operator to prevent move assignment.
+     */
+    BluetoothDescriptor &operator=(BluetoothDescriptor &&other) = delete;
 };

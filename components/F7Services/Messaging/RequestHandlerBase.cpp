@@ -174,7 +174,7 @@ bool RequestHandlerBase::QueueEsp32Message(Message *message)
  *  @param payloadLength
  *      Amount of data in the payload.
  */
-void RequestHandlerBase::RaiseEvent(uint8_t interface, uint32_t eventType, uint32_t statusCode, uint8_t *payload, uint32_t payloadLength)
+void RequestHandlerBase::RaiseEvent(const uint8_t interface, const uint32_t eventType, const uint32_t statusCode, uint8_t *payload, const uint32_t payloadLength)
 {
     TRACE_MESSAGE("Raising event %s", Logging::FunctionName(interface, eventType));
     Message *message = Message::CreateOnHeap(MessageTypes::Event, interface, eventType, statusCode, _messageDispatcher->GetNextMessageID(), payload, payloadLength);
@@ -193,7 +193,7 @@ void RequestHandlerBase::RaiseEvent(uint8_t interface, uint32_t eventType, uint3
  *  @param statusCode
  *      Status code.
  */
-void RequestHandlerBase::RaiseEvent(uint8_t interface, uint32_t eventType, uint32_t statusCode)
+void RequestHandlerBase::RaiseEvent(const uint8_t interface, const uint32_t eventType, const uint32_t statusCode)
 {
     RaiseEvent(interface, eventType, statusCode, nullptr, 0);
 }
@@ -207,7 +207,7 @@ void RequestHandlerBase::RaiseEvent(uint8_t interface, uint32_t eventType, uint3
  *  @param eventType
  *      Type of event being raised.
  */
-void RequestHandlerBase::RaiseEvent(uint8_t interface, uint32_t eventType)
+void RequestHandlerBase::RaiseEvent(const uint8_t interface, const uint32_t eventType)
 {
     RaiseEvent(interface, eventType, StatusCodes::CompletedOk, nullptr, 0);
 }
@@ -220,7 +220,7 @@ void RequestHandlerBase::RaiseEvent(uint8_t interface, uint32_t eventType)
  * @param statusCode - The status code of the response.
  * @param result - Value to send.
  */
-void RequestHandlerBase::SendIntegerResult(uint8_t interface, uint32_t function, uint32_t statusCode, uint32_t value)
+void RequestHandlerBase::SendIntegerResult(const uint8_t interface, const uint32_t function, const uint32_t statusCode, const uint32_t value)
 {
     TRACE_MESSAGE("SendIntegerResult - Enter");
 
