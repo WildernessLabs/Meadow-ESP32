@@ -13,7 +13,6 @@
 
 #include "IMessageDispatcher.hpp"
 
-
 class CoreDump
 {
 public:
