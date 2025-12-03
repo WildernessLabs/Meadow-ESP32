@@ -9,13 +9,6 @@
 
 #pragma once
 
-#include "sdkconfig.h"
-
-#include "freertos/FreeRTOS.h"
-#include "freertos/queue.h"
-#include "freertos/semphr.h"
-#include "freertos/task.h"
-#include "esp_log.h"
 #include "Esp32Messaging.hpp"
 
 /*
