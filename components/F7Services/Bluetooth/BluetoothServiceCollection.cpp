@@ -35,7 +35,7 @@ const char *BluetoothServiceCollection::COMPONENT_NAME = BLUETOOTH_COMPONENT_NAM
  * @param service Service to be added.
  * @return BluetoothService&
  */
-BluetoothService &BluetoothServiceCollection::Add(BluetoothService *service)
+BluetoothService &BluetoothServiceCollection::Add(BluetoothService * const service)
 {
     TRACE_MESSAGE("Add: Enter");
 
@@ -115,7 +115,7 @@ vector<BluetoothService *> BluetoothServiceCollection::GetServiceDefinitions()
  *
  * @param characteristic Pointer to the characteristic that has been added to the service.
  */
-void BluetoothServiceCollection::HandleServiceCharacteristicAdded(BluetoothCharacteristic *characteristic)
+void BluetoothServiceCollection::HandleServiceCharacteristicAdded(BluetoothCharacteristic * const characteristic)
 {
     TRACE_MESSAGE("HandleServiceCharacteristicAdded: Enter");
 
@@ -135,7 +135,7 @@ void BluetoothServiceCollection::HandleServiceCharacteristicAdded(BluetoothChara
  *
  * @param characteristic Characteristic that has had its value changed.
  */
-void BluetoothServiceCollection::HandleServiceValueChanged(BluetoothCharacteristic *characteristic)
+void BluetoothServiceCollection::HandleServiceValueChanged(BluetoothCharacteristic * const characteristic)
 {
     TRACE_MESSAGE("HandleServiceValueChanged: Enter");
 
@@ -153,7 +153,7 @@ void BluetoothServiceCollection::HandleServiceValueChanged(BluetoothCharacterist
  * @param uuid Pointer to an array of bytes containing the 16-bit UUID fro the service.
  * @return BluetoothService* Pointer to the service if found, NULL otherwise.
  */
-BluetoothService *BluetoothServiceCollection::Find(uint8_t *uuid)
+BluetoothService *BluetoothServiceCollection::Find(const uint8_t * const uuid)
 {
     return Find(Uuid16(uuid));
 }
@@ -164,7 +164,7 @@ BluetoothService *BluetoothServiceCollection::Find(uint8_t *uuid)
  * @param uuid Uuid16 object containing the UUID of the service to be found.
  * @return BluetoothService* Pointer to the service if found, NULL otherwise.
  */
-BluetoothService *BluetoothServiceCollection::Find(Uuid16 uuid)
+BluetoothService *BluetoothServiceCollection::Find(const Uuid16 uuid)
 {
     TRACE_MESSAGE("Find: Enter");
 

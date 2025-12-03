@@ -39,7 +39,7 @@ public:
     /**
      * @brief Construct a new Bluetooth Service object
      */
-    BluetoothService(const char *name, Uuid16 uuid);
+    BluetoothService(const char *name, const Uuid16 uuid);
 
     /**
      * @brief Destroy the BluetoothService object and release any allocated resources.
@@ -49,7 +49,7 @@ public:
     /**
      * @brief Add a characteristic to the service.
      */
-    BluetoothCharacteristic &AddCharacteristic(BluetoothCharacteristic *characteristic);
+    BluetoothCharacteristic &AddCharacteristic(BluetoothCharacteristic * const characteristic);
 
     /**
      * @brief Event handler for dealing with the addition of a characteristic.
@@ -76,7 +76,7 @@ public:
      *
      * @param handleManager Pointer to the Bluetooth handle manager.
      */
-    void SetHandleManager(BluetoothHandleManager *handleManager)
+    void SetHandleManager(BluetoothHandleManager * const handleManager)
     {
         _handleManager = handleManager;
     }

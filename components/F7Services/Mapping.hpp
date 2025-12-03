@@ -169,25 +169,25 @@ private:
      *  @brief Get the mapped flags using the MappingDirection to determine which
      *  value should be retrieved.
      */
-    static int32_t GetFlagValue(MappingTable mapping, MappingDirection type, int32_t value, int32_t *mappedValue);
+    static int32_t GetFlagValue(const MappingTable mapping, const MappingDirection type, const int32_t value, int32_t * const mappedValue);
 
     /**
      *  @brief Get the mapped value using the MappingDirection to determine which
      *  value should be retrieved.
      */
-    static int32_t GetValue(MappingTable mapping, MappingDirection type, int32_t value, int32_t *result);
+    static int32_t GetValue(const MappingTable mapping, const MappingDirection type, const int32_t value, int32_t * const result);
 
     /**
      *  @brief Get the mapped value using the MappingDirection to determine which
      *  value should be retrieved.
      */
-    static int32_t GetValue(MappingTable mapping, MappingDirection type, int32_t value, int16_t *result);
+    static int32_t GetValue(const MappingTable mapping, const MappingDirection type, const int32_t value, int16_t * const result);
 
     /**
      *  @brief Get the mapped value using the MappingDirection to determine which
      *  value should be retrieved.
      */
-    static int32_t GetValue(MappingTable mapping, MappingDirection type, int32_t value, int8_t *result);
+    static int32_t GetValue(const MappingTable mapping, const MappingDirection type, const int32_t value, int8_t * const result);
 
 public:
     /**
@@ -203,56 +203,56 @@ public:
     /**
      *  @brief Get the integer ESP32 value equivalent to the specified STM32 value.
      */
-    static int32_t GetEspValue(MappingTable mapping, int32_t value, int8_t *result);
+    static int32_t GetEspValue(const MappingTable mapping, const int32_t value, int8_t * const result);
 
     /**
      *  @brief Get the integer STM32 value equivalent to the specified ESP32 value.
      */
-    static int32_t GetStmValue(MappingTable mapping, int32_t value, int16_t *result);
+    static int32_t GetStmValue(const MappingTable mapping, const int32_t value, int16_t * const result);
 
     /**
      *  @brief Get the integer STM32 value equivalent to the specified ESP32 value.
      */
-    static int32_t GetStmValue(MappingTable mapping, int32_t value, int8_t *result);
+    static int32_t GetStmValue(const MappingTable mapping, const int32_t value, int8_t * const result);
 
     /**
      *  @brief Get the mapped value using the MappingDirection to determine which
      *  value should be retrieved.
      */
-    static int32_t GetEspValue(MappingTable mapping, int32_t value, int16_t *result);
+    static int32_t GetEspValue(const MappingTable mapping, const int32_t value, int16_t * const result);
 
     /**
      *  @brief Get the integer ESP32 value equivalent to the specified STM32 value.
      */
-    static int32_t GetEspValue(MappingTable mapping, int32_t value, int32_t *result);
+    static int32_t GetEspValue(const MappingTable mapping, const int32_t value, int32_t * const result);
 
     /**
      *  @brief Get the integer STM32 value equivalent to the specified ESP32 value.
      */
-    static int32_t GetStmValue(MappingTable mapping, int32_t value, int32_t *result);
+    static int32_t GetStmValue(const MappingTable mapping, const int32_t value, int32_t * const result);
 
     /**
      *  @brief Get the integer ESP32 value equivalent to the specified STM32 value.
      */
-    static int32_t GetEspFlagValue(MappingTable mapping, int32_t value, int32_t *result);
+    static int32_t GetEspFlagValue(const MappingTable mapping, const int32_t value, int32_t * const result);
 
     /**
      *  @brief Get the integer STM32 value equivalent to the specified ESP32 value.
      */
-    static int32_t GetStmFlagValue(MappingTable mapping, int32_t value, int32_t *result);
+    static int32_t GetStmFlagValue(const MappingTable mapping, const int32_t value, int32_t * const result);
 
     /**
      *  @brief Get the string value for the given key.
      */
-    static char *GetStringValue(StringMappingTable mapping, int32_t key);
+    static char *GetStringValue(const StringMappingTable mapping, const int32_t key);
 
     /**
      *  @brief Map the ESP error codes to a StatusCode value.
      */
-    static StatusCodes::StatusCodes GetStatusCode(esp_err_t);
+    static StatusCodes::StatusCodes GetStatusCode(const esp_err_t);
 
     /**
      *  @brief Map the ESP errno to a NuttX errno value.
      */
-    static int32_t NuttxErrno(int32_t espErrno);
+    static int32_t NuttxErrno(const int32_t espErrno);
 };

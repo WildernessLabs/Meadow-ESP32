@@ -19,6 +19,7 @@
 class BluetoothService;
 class BluetoothCharacteristic;
 class BluetoothCharacteristicValue;
+class BluetoothCharacteristicDeclaration;
 
 #include "BluetoothDescriptor.hpp"
 #include "BluetoothCharacteristicDeclaration.hpp"
@@ -65,12 +66,12 @@ public:
     /**
      * @brief Construct a new Bluetooth Characteristic object with a 16-bit UUID.
      */
-    BluetoothCharacteristic(Uuid16 uuid, CharacteristicPermission permission, CharacteristicProperty property, int maxValueLength);
+    BluetoothCharacteristic(const Uuid16 uuid, const CharacteristicPermission permission, const CharacteristicProperty property, const int maxValueLength);
 
     /**
      * @brief Construct a new Bluetooth Characteristic objectwith a 128-bit UUID.
      */
-    BluetoothCharacteristic(Uuid128 uuid, CharacteristicPermission permission, CharacteristicProperty property, int maxValueLength);
+    BluetoothCharacteristic(const Uuid128 uuid, const CharacteristicPermission permission, const CharacteristicProperty property, const int maxValueLength);
 
     /**
      * @brief Destroy the BluetoothCharacteristic object
@@ -87,7 +88,7 @@ public:
      */
     BluetoothCharacteristicValue *Value;
 
-    void AddDescriptor(BluetoothDescriptor *descriptor);
+    void AddDescriptor(BluetoothDescriptor * const descriptor);
 
     /**
      * @brief Method to be executed when a value changes.
@@ -104,10 +105,7 @@ public:
      *
      * @return vector<BluetoothDescriptor *> Vector of BluetoothDescriptor objects.
      */
-    vector<BluetoothDescriptor *> GetDescriptorDefinitions()
-    {
-        return _descriptors;
-    }
+    vector<BluetoothDescriptor *> GetDescriptorDefinitions();
 
 private:
     /**

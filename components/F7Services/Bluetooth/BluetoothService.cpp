@@ -67,7 +67,7 @@ BluetoothService::~BluetoothService()
  *
  * @param uuid UUID of the service.
  */
-BluetoothService::BluetoothService(const char *name, Uuid16 uuid)
+BluetoothService::BluetoothService(const char *name, const Uuid16 uuid)
 {
     TRACE_MESSAGE("BluetoothService: Enter");
 
@@ -83,7 +83,7 @@ BluetoothService::BluetoothService(const char *name, Uuid16 uuid)
  * @param characteristic Characteristic to be added.
  * @return BluetoothCharacteristic& Reference to the characteristic that has been added.
  */
-BluetoothCharacteristic &BluetoothService::AddCharacteristic(BluetoothCharacteristic *characteristic)
+BluetoothCharacteristic &BluetoothService::AddCharacteristic(BluetoothCharacteristic * const characteristic)
 {
     TRACE_MESSAGE("AddCharacteristic: Enter");
 

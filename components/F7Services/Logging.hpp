@@ -208,42 +208,42 @@ public:
     /**
      *  @brief Convert a message type into a meaningful string.
      */
-    static char *MessageTypeName(uint8_t type);
+    static char *MessageTypeName(const uint8_t type);
 
     /**
      *  @brief Convert the interface enum (Esp32Interfaces) from an interface type into a string name.
      */
-    static char *InterfaceName(uint32_t interface);
+    static char *InterfaceName(const uint32_t interface);
 
     /**
      *  @brief Convert the request enum into a WiFi message name.
      */
-    static char *WiFiFunctionName(uint32_t function);
+    static char *WiFiFunctionName(const uint32_t function);
 
     /**
      *  @brief Convert the request enum into a System message name.
      */
-    static char *SystemFunctionName(uint32_t function);
+    static char *SystemFunctionName(const uint32_t function);
 
     /**
      *  @brief Convert the request enum into a Bluetooth message name.
      */
-    static char *BluetoothFunctionName(uint32_t function);
+    static char *BluetoothFunctionName(const uint32_t function);
 
     /**
      *  @brief Convert the request enum into a Transport message name.
      */
-    static char *TransportFunctionName(uint32_t function);
+    static char *TransportFunctionName(const uint32_t function);
 
     /**
      *  @brief Convert the specified function ID into a string name.  The function name will vary between the interfaces.
      */
-    static char *FunctionName(uint32_t interface, uint32_t function);
+    static char *FunctionName(const uint32_t interface, const uint32_t function);
 
     /**
      *  @brief Convert a status code into a meaningful name.
      */
-    static char *StatusCodeName(uint32_t code);
+    static char *StatusCodeName(const uint32_t code);
 
     /**
      *  @brief Decode the message structure and output the components.

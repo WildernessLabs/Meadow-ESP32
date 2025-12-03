@@ -9,25 +9,14 @@
 
 #pragma once
 
-#include <string>
-#include <vector>
-
 #include "BluetoothAttribute.hpp"
 #include "BluetoothCharacteristic.hpp"
-
-using namespace std;
 
 /**
  * @brief Class holding a Bluetooth characteristic declaration.
  */
 class BluetoothCharacteristicDeclaration : public BluetoothAttribute
 {
-private:
-    /**
-     * @brief Is the UUID 16 or 128 bit?
-     */
-    bool _is128 = false;
-
 public:
     /**
      * @brief Construct a new Bluetooth Characteristic Declaration object
@@ -36,13 +25,7 @@ public:
      * @param permission Permissions for the characteristic.
      * @param properties Properties of the characteristic.
      */
-    BluetoothCharacteristicDeclaration(Uuid16 value_uuid, CharacteristicPermission permission, CharacteristicProperty properties)
-    {
-        Uuid = Uuid16::CharacteristicDeclaration;
-        Permission = permission;
-        Properties = properties;
-        ValueUuid16 = value_uuid;
-    }
+    BluetoothCharacteristicDeclaration(const Uuid16 value_uuid, const CharacteristicPermission permission, const CharacteristicProperty properties);
 
     /**
      * @brief Construct a new Bluetooth Characteristic Declaration object
@@ -51,29 +34,12 @@ public:
      * @param permission Permissions for the characteristic.
      * @param properties Properties of the characteristic.
      */
-    BluetoothCharacteristicDeclaration(Uuid128 value_uuid, CharacteristicPermission permission, CharacteristicProperty properties)
-    {
-        Uuid = Uuid16::CharacteristicDeclaration;
-        Permission = permission;
-        Properties = properties;
-        ValueUuid128 = value_uuid;
-        _is128 = true;
-    }
+    BluetoothCharacteristicDeclaration(const Uuid128 value_uuid, const CharacteristicPermission permission, const CharacteristicProperty properties);
 
     /**
      * @brief Destroy the BluetoothCharacteristicDeclaration object and release any allocated resources.
      */
-    ~BluetoothCharacteristicDeclaration()
-    {
-        // if (_is128)
-        // {
-        //     delete ValueUuid128;
-        // }
-        // else
-        // {
-        //     delete ValueUuid16;
-        // }
-    }
+    ~BluetoothCharacteristicDeclaration();
 
     /**
      * @brief 16-bit UUID for this characteristic declaration.
@@ -96,10 +62,7 @@ public:
      * @return true The UUID is a 128-bit UUID.
      * @return false The UUID is a 16-bit UUID.
      */
-    bool Is128()
-    {
-        return _is128;
-    }
+    bool Is128();
 
     /**
      * @brief 16-bit UUID for this characteristic.
@@ -110,4 +73,10 @@ public:
      * @brief 128-bit UUID for this characteristic.
      */
     Uuid128 ValueUuid128;
+
+private:
+    /**
+     * @brief Is the UUID 16 or 128 bit?
+     */
+    bool _is128 = false;
 };

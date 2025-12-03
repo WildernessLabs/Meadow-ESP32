@@ -47,7 +47,7 @@ Uuid16::Uuid16()
  *
  * @param value Initial value for the UUID.
  */
-Uuid16::Uuid16(uint16_t value)
+Uuid16::Uuid16(const uint16_t value)
 {
     memcpy((void *) data, &value, 2);
 }
@@ -57,7 +57,7 @@ Uuid16::Uuid16(uint16_t value)
  *
  * @param other Pointer to the byte array containing the UUID to be copied.
  */
-Uuid16::Uuid16(uint8_t *other)
+Uuid16::Uuid16(const uint8_t * const other)
 {
     memcpy((void *) data, other, 2);
 }
@@ -68,7 +68,7 @@ Uuid16::Uuid16(uint8_t *other)
  * @param ch Character to be converted.
  * @return unsigned char
  */
-unsigned char HexDigitToChar(char ch)
+unsigned char HexDigitToChar(const char ch)
 {
     // 0-9
     if (ch > 47 && ch < 58)
@@ -92,7 +92,7 @@ unsigned char HexDigitToChar(char ch)
  * @return true If the character is a valid hexadecimal character.
  * @return false If the character is not a valid hexadecimal character.
  */
-bool IsValidHexChar(char ch)
+bool IsValidHexChar(const char ch)
 {
     // 0-9
     if (ch > 47 && ch < 58)
@@ -117,7 +117,7 @@ bool IsValidHexChar(char ch)
  * @param b Lower 4-bits of the byte.
  * @return unsigned char Byte value represented by the two characters.
  */
-unsigned char hexPairToChar(char a, char b)
+unsigned char HexPairToChar(const char a, const char b)
 {
     return HexDigitToChar(a) * 16 + HexDigitToChar(b);
 }
@@ -134,7 +134,7 @@ Uuid128::Uuid128()
  *
  * @param other 16 bytes of data holding the UUID to be copied.
  */
-Uuid128::Uuid128(uint8_t *other)
+Uuid128::Uuid128(const uint8_t * const other)
 {
     memcpy((void *) data, other, 16);
 }
@@ -170,7 +170,7 @@ std::string Uuid128::ToString() const
  *
  * @param fromString String containing the UUID (GUID).
  */
-Uuid128::Uuid128(const char *fromString)
+Uuid128::Uuid128(const char * const fromString)
 {
     char charOne = '\0';
     char charTwo = '\0';
@@ -203,7 +203,7 @@ Uuid128::Uuid128(const char *fromString)
         else
         {
             charTwo = ch;
-            auto byte = hexPairToChar(charTwo, charOne);
+            auto byte = HexPairToChar(charTwo, charOne);
             data[nextByte++] = byte;
             lookingForFirstChar = true;
         }
