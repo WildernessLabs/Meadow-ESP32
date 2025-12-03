@@ -9,10 +9,6 @@
 
 #pragma once
 
-#include "sdkconfig.h"
-
-#include "freertos/FreeRTOS.h"
-
 #include "Esp32Messaging.hpp"
 
 //
