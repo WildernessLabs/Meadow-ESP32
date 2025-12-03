@@ -23,6 +23,7 @@
 #include "MessageDispatcher.hpp"
 #include "Esp32Messaging.hpp"
 #include "Gpio.hpp"
+#include "SharedEnums.hpp"
 
 /**
  *  @brief The SpiTransportProvider class provides the mechanism for sending and

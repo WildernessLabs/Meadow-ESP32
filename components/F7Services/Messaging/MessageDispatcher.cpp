@@ -11,6 +11,9 @@
 
 #include "Logging.hpp"
 #include "MessageDispatcher.hpp"
+#include "SystemRequestHandler.hpp"
+#include "BluetoothRequestHandler.hpp"
+#include "WiFiRequestHandler.hpp"
 
 /*
  * ----------------------------------------------------------------------------

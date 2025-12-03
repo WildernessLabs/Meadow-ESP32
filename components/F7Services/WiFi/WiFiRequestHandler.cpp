@@ -30,6 +30,7 @@
 #include "Logging.hpp"
 #include "ProgressiveDelay.hpp"
 #include "Utils.hpp"
+#include "SystemRequestHandler.hpp"
 
 /*
  * ----------------------------------------------------------------------------

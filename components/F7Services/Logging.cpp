@@ -27,6 +27,14 @@
 #include "Utils.hpp"
 #include "AppMain.hpp"
 
+#include "SystemRequestHandler.hpp"
+#include "BluetoothRequestHandler.hpp"
+#include "WiFiRequestHandler.hpp"
+#include "FileSystem.hpp"
+#include "Thread.hpp"
+#include "ThreadPool.hpp"
+#include "CoreDump.hpp"
+
 #if defined(PERFORMANCE_LOGGING)
     #pragma message "Performance logging is enabled."
 #endif
