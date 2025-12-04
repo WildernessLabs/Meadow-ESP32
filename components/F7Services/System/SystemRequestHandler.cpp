@@ -13,18 +13,10 @@
 #include "freertos/task.h"
 #include "freertos/queue.h"
 #include "freertos/event_groups.h"
-#include "esp_system.h"
-#include "esp_log.h"
-#include "esp_wifi.h"
-#include "esp_event.h"
-#include "esp_wifi.h"
 #include "esp_adc/adc_oneshot.h"
 #include "esp_adc/adc_cali.h"
 #include "esp_adc/adc_cali_scheme.h"
-
 #include "esp_sleep.h"
-#include <string.h>
-#include <stdlib.h>
 
 #include "Globals.hpp"
 #include "Esp32Messaging.hpp"
@@ -38,10 +30,9 @@
 #include "BluetoothRequestHandler.hpp"
 #include "Mapping.hpp"
 #include "version.h"
-#include "Diagnostics.hpp"
-#include "Heap.hpp"
 #include "CoreDump.hpp"
 #include "Utils.hpp"
+#include "Logging.hpp"
 
 /*
  * ----------------------------------------------------------------------------

@@ -9,6 +9,8 @@
 
 #include "sdkconfig.h"
 
+#include "Encoders.hpp"
+#include "Esp32Messaging.hpp"
 #include "Logging.hpp"
 #include "MessageDispatcher.hpp"
 #include "SystemRequestHandler.hpp"

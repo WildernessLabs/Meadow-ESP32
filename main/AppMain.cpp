@@ -14,6 +14,7 @@
 #include "version.h"
 
 #include "AppMain.hpp"
+#include "Encoders.hpp"
 #include "NvsManager.hpp"
 #include "Logging.hpp"
 #include "MessageDispatcher.hpp"
