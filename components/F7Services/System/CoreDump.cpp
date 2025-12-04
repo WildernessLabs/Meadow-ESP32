@@ -22,7 +22,6 @@
 #include "SharedEnums.hpp"
 #include "Encoders.hpp"
 
-
 /**
  * @brief Check the validity of the core dump image.
  *
