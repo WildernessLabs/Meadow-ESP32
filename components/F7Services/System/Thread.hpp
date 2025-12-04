@@ -13,8 +13,6 @@
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "esp_log.h"
-#include "esp_event.h"
 
 /**
  *  @brief Type definition for the method that will be called by the Task method.
