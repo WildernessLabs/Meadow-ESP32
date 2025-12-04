@@ -18,9 +18,9 @@
 #include "Encoders.hpp"
 #include "SystemRequestHandler.hpp"
 #include "FileSystem.hpp"
-#include "SharedEnums.hpp"
 #include "Mapping.hpp"
 #include "Utils.hpp"
+#include "Logging.hpp"
 
 #if defined(FILE_SYSTEM_DEBUG)
     #pragma message "FileSystem.cpp: Debugging enabled"

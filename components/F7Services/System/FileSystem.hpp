@@ -12,6 +12,7 @@
 #include "esp_littlefs.h"
 
 #include "Esp32Messaging.hpp"
+#include "SharedEnums.hpp"
 
 class FileSystem
 {
