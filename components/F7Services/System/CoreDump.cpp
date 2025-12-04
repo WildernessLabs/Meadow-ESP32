@@ -18,6 +18,9 @@
 #include "Logging.hpp"
 #include "CoreDump.hpp"
 #include "Utils.hpp"
+#include "Esp32Messaging.hpp"
+#include "SharedEnums.hpp"
+#include "Encoders.hpp"
 
 /**
  * @brief Check the validity of the core dump image.

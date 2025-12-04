@@ -20,6 +20,8 @@
 #include "Diagnostics.hpp"
 #include "Heap.hpp"
 #include "Utils.hpp"
+#include "Logging.hpp"
+#include "Exceptions/MultipleInstancesException.hpp"
 
 /*
  * ----------------------------------------------------------------------------

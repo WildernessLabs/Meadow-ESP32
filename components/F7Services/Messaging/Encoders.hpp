@@ -9,18 +9,6 @@
 
 #pragma once
 
-#include "freertos/FreeRTOS.h"
-#include "lwip/err.h"
-#include "lwip/sys.h"
-#include "lwip/sockets.h"
-#include "lwip/netdb.h"
-#include "lwip/dns.h"
-#include "esp_system.h"
-#include "esp_wifi.h"
-#include <stdlib.h>
-#include <string.h>
-#include "esp_log.h"
-#include "SharedEnums.hpp"
 #include "Esp32Messaging.hpp"
 
 namespace Esp32Messaging

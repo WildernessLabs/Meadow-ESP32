@@ -9,20 +9,11 @@
 
 #pragma once
 
-#include "sdkconfig.h"
-
-#include "freertos/FreeRTOS.h"
-#include "freertos/semphr.h"
 #include "driver/spi_slave.h"
-#include "esp_system.h"
-#include "driver/gpio.h"
-#include "esp_log.h"
 
-#include "Exceptions/MultipleInstancesException.hpp"
-#include "TransportProviderBase.hpp"
 #include "MessageDispatcher.hpp"
 #include "Esp32Messaging.hpp"
-#include "Gpio.hpp"
+#include "SharedEnums.hpp"
 
 /**
  *  @brief The SpiTransportProvider class provides the mechanism for sending and

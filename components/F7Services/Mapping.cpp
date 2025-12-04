@@ -11,11 +11,10 @@
 
 #include <sys/socket.h>
 #include "errno.h"
-#include <sys/ioctl.h>
-#include <esp_system.h>
 
 #include <esp_wifi.h>
 
+#include "Encoders.hpp"
 #include "Mapping.hpp"
 #include "SharedEnums.hpp"
 #include "SystemRequestHandler.hpp"

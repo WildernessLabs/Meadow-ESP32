@@ -9,9 +9,7 @@
 
 #pragma once
 
-#include "sdkconfig.h"
-
-#include "freertos/FreeRTOS.h"
+#include <inttypes.h>
 
 /*
  *  Messages between the ESP32 and the STM32 will be encoded and

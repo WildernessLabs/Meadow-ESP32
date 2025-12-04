@@ -11,16 +11,7 @@
 
 #pragma once
 
-#include <cstdint>
-#include <cstdlib>
-#include <cstdio>
-#include <cstring>
-
 #include "IMessageDispatcher.hpp"
-#include "Esp32Messaging.hpp"
-#include "RequestHandlerBase.hpp"
-#include "SharedEnums.hpp"
-#include "Encoders.hpp"
 
 class CoreDump
 {

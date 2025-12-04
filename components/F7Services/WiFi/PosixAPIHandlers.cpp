@@ -15,6 +15,7 @@
 #include "WiFiRequestHandler.hpp"
 #include "Mapping.hpp"
 #include "Utils.hpp"
+#include "SystemRequestHandler.hpp"
 
 /**
  * @brief Uncomment the line below to turn on assertions for debugging this file only.  Do not
