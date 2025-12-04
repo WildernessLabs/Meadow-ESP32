@@ -19,6 +19,8 @@
 #include "Logging.hpp"
 #include "MessageDispatcher.hpp"
 #include "Utils.hpp"
+#include "RequestHandlerBase.hpp"
+#include "TransportProviderBase.hpp"
 
 /*
  * ---------------------------------------------------------------------------

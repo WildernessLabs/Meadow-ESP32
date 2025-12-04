@@ -9,17 +9,9 @@
 
 #pragma once
 
-#include "sdkconfig.h"
-
-#include "freertos/FreeRTOS.h"
-#include "freertos/semphr.h"
-#include "WiFiRequestHandler.hpp"
-#include "SystemRequestHandler.hpp"
-#include "BluetoothRequestHandler.hpp"
-#include "TransportProviderBase.hpp"
-#include "SharedEnums.hpp"
 #include "Esp32Messaging.hpp"
 #include "IMessageDispatcher.hpp"
+#include "TransportProviderBase.hpp"
 
 /*
  *  Forward declarations required by the compiler.

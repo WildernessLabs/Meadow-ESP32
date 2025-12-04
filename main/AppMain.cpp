@@ -4,6 +4,7 @@
 #include "sdkconfig.h"
 
 #include <string.h>
+#include <ctime>
 
 #include "freertos/FreeRTOS.h"
 #include "esp_log.h"
@@ -13,10 +14,12 @@
 #include "version.h"
 
 #include "AppMain.hpp"
+#include "Encoders.hpp"
 #include "NvsManager.hpp"
 #include "Logging.hpp"
 #include "MessageDispatcher.hpp"
 #include "SpiTransportProvider.hpp"
+#include "SystemRequestHandler.hpp"
 
 /**
  * @brief global variable holding the system build information.
