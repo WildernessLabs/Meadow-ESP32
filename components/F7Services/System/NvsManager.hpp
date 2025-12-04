@@ -11,12 +11,6 @@
 
 #include <inttypes.h>
 
-// #include "sdkconfig.h"
-
-// #include "Esp32Messaging.hpp"
-// #include "SharedEnums.hpp"
-// #include "Encoders.hpp"
-// #include "Logging.hpp"
 
 /**
  *  @brief Manage the non-volatile storage.
