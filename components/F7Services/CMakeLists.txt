@@ -17,7 +17,6 @@ idf_component_register( SRCS    ${F7SERVICES_SOURCES}
                                 "Messaging"
                                 "Bluetooth"
                                 "Exceptions"
-                                "../rapidjson"
                                 "Diagnostics"
 
                         REQUIRES 
@@ -44,5 +43,6 @@ idf_component_register( SRCS    ${F7SERVICES_SOURCES}
                                 esp_wifi 
                                 espcoredump 
                                 esp_common 
-                                esp_event 
+                                esp_event
+                                json
                                 )
