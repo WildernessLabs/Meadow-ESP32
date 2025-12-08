@@ -100,6 +100,13 @@ case $i in
 esac
 done
 
+if [[ $# -eq 0 ]]; then
+    # No arguments were passed
+    echo "No arguments supplied, performing default build."
+    BUILD=true
+    IDF_FLAGS+=" build"
+fi
+
 if $HELP; then
     echo "$0: Build the ESP code for Meadow"
     echo ""
