@@ -7,14 +7,12 @@
  * @copyright Copyright (c) 2021 Wilderness Labs
  */
 
+#include "cJSON.h"
+
 #include "Logging.hpp"
 
 #include "BluetoothManager.hpp"
 #include "BluetoothComponentName.hpp"
-
-#include "../rapidjson/document.h"
-
-using namespace rapidjson;
 
 /*
  * ----------------------------------------------------------------------------
@@ -329,164 +327,331 @@ void BluetoothManager::SetCurrentValueForAttributeHandle(const uint16_t handle, 
  */
 bool BluetoothManager::DeleteAllServices()
 {
+    TRACE_MESSAGE("DeleteAllServices: Enter");
+
     for (auto val: _valueMap)
     {
         delete[] val.second.value;
     }
     _valueMap.clear();
 
+    TRACE_MESSAGE("DeleteAllServices: Exit");
+
     return Services.DeleteAllServices();
+}
+
+/**
+ * @brief Get the device information from the JSON configuration.
+ *
+ * @param json Pointer to the cJSON object holding the configuration.
+ */
+void BluetoothManager::GetDeviceInformation(const cJSON * const json)
+{
+    TRACE_MESSAGE("GetDeviceInformation: Enter");
+
+    const cJSON * const deviceName = cJSON_GetObjectItem(json, DEVICE_NAME_KEY);
+    memset(_deviceName, 0, sizeof(_deviceName));
+    if ((deviceName != NULL) && cJSON_IsString(deviceName))
+    {
+        strncpy(_deviceName, deviceName->valuestring, sizeof(_deviceName) - 1);
+    }
+    else
+    {
+        strcpy(_deviceName, DEFAULT_DEVICE_NAME);
+    }
+    TRACE_MESSAGE("Device Name: %s\n", _deviceName);
+
+    const cJSON * const identifier = cJSON_GetObjectItem(json, COMPANY_IDENTIFIER_KEY);
+    if ((identifier == NULL) || !cJSON_IsNumber(identifier))
+    {
+        _companyIdentifier = DEBUG_COMPANY_IDENTIFIER;
+    }
+    else
+    {
+        _companyIdentifier = identifier->valueint;
+    }
+    TRACE_MESSAGE("Company identifier: 0x%04" PRIx16, _companyIdentifier);
+
+    TRACE_MESSAGE("GetDeviceInformation: Exit");
+}
+
+/**
+ * @brief Add services from the JSON configuration.
+ *
+ * @param json Pointer to the cJSON object holding the configuration.
+ */
+void BluetoothManager::AddServices(const cJSON * const json)
+{
+    TRACE_MESSAGE("AddServices: Enter");
+
+    const cJSON * const services = cJSON_GetObjectItem(json, SERVICES_KEY);
+    if ((services == NULL) || !cJSON_IsArray(services))
+    {
+        TRACE_MESSAGE(SERVICES_KEY " is not an array or is missing");
+        return;
+    }
+
+    cJSON *service_configuration = NULL;
+    cJSON_ArrayForEach(service_configuration, services)
+    {
+        const cJSON * const serviceName = cJSON_GetObjectItem(service_configuration, NAME_KEY);
+        if ((serviceName == NULL) || !cJSON_IsString(serviceName))
+        {
+            TRACE_MESSAGE("Service " NAME_KEY " is missing or not a string");
+            return;
+        }
+        else
+        {
+            const cJSON * const serviceUUID = cJSON_GetObjectItem(service_configuration, UUID_KEY);
+            if ((serviceUUID == NULL) || !cJSON_IsNumber(serviceUUID))
+            {
+                TRACE_MESSAGE("Service " UUID_KEY " is missing or not a number");
+                return;
+            }
+            else
+            {
+                uint16_t uuid = (uint16_t) serviceUUID->valueint;
+                TRACE_MESSAGE("Service Name: %s, " UUID_KEY ": %4" PRIx16, serviceName->valuestring, uuid);
+                BluetoothService * const service = new BluetoothService(serviceName->valuestring, Uuid16(uuid));
+                AddCharacteristics(service_configuration, service);
+                Services.Add(service);
+            }
+        }
+    }
+
+    TRACE_MESSAGE("AddServices: Exit");
+}
+
+/**
+ * @brief Add characteristics from the JSON configuration.
+ *
+ * @param json Pointer to the cJSON object holding the configuration.
+ * @param service Pointer to the BluetoothService object to add the characteristics to.
+ */
+void BluetoothManager::AddCharacteristics(const cJSON * const json, BluetoothService * const service)
+{
+    TRACE_MESSAGE("AddCharacteristics: Enter");
+
+    const cJSON * const characteristics = cJSON_GetObjectItem(json, CHARACTERISTICS_KEY);
+    if (!cJSON_IsArray(characteristics))
+    {
+        TRACE_MESSAGE(CHARACTERISTICS_KEY " is not an array");
+        return;
+    }
+
+    cJSON *characteristic = NULL;
+    cJSON_ArrayForEach(characteristic, characteristics)
+    {
+        bool add = true;
+        const cJSON * const permission = cJSON_GetObjectItem(characteristic, PERMISSION_KEY);
+        if ((permission == NULL) || !cJSON_IsNumber(permission))
+        {
+            TRACE_MESSAGE("Characteristic " PERMISSION_KEY " is missing or not a number");
+            add = false;
+        }
+        const cJSON * const props = cJSON_GetObjectItem(characteristic, PROPERTIES_KEY);
+        if ((props == NULL) || !cJSON_IsNumber(props))
+        {
+            TRACE_MESSAGE("Characteristic " PROPERTIES_KEY " is missing or not a number");
+            add = false;
+        }
+        const cJSON * const len = cJSON_GetObjectItem(characteristic, LENGTH_KEY);
+        if ((len == NULL) || !cJSON_IsNumber(len))
+        {
+            TRACE_MESSAGE("Characteristic " LENGTH_KEY " is missing or not a number");
+            add = false;
+        }
+        const cJSON * const uuid = cJSON_GetObjectItem(characteristic, UUID_KEY);
+        if ((uuid == NULL) || !(cJSON_IsNumber(uuid) || cJSON_IsString(uuid)))
+        {
+            TRACE_MESSAGE("Characteristic " UUID_KEY " is missing or not a number or string");
+            add = false;
+        }
+
+        if (add)
+        {
+            Uuid16 uuid16bits;
+            Uuid128 uuid128bits;
+            bool is128bits = false;
+            ParseUuid(uuid, uuid16bits, uuid128bits, is128bits);
+
+            uint16_t permissions = (uint16_t) permission->valueint;
+            uint16_t properties = (uint16_t) props->valueint;
+            uint16_t length = (uint16_t) len->valueint;
+
+            BluetoothCharacteristic *new_characteristic;
+            if (is128bits)
+            {
+                new_characteristic = new BluetoothCharacteristic(uuid128bits, (CharacteristicPermission) permissions, (CharacteristicProperty) properties, length);
+            }
+            else
+            {
+                new_characteristic = new BluetoothCharacteristic(uuid16bits, (CharacteristicPermission) permissions, (CharacteristicProperty) properties, length);
+            }
+
+            char buffer[40];
+            memset(buffer, 0, sizeof(buffer));
+            if (is128bits)
+            {
+                strncpy(buffer, uuid128bits.ToString().c_str(), sizeof(buffer) - 1);
+            }
+            else
+            {
+                snprintf(buffer, sizeof(buffer), "0x%04" PRIx16, (uint16_t) uuid16bits);
+            }
+            TRACE_MESSAGE("    Characteristic : " UUID_KEY " %s, " PERMISSION_KEY ": %d, " PROPERTIES_KEY ": %d, " LENGTH_KEY ": %d", buffer, permissions, properties, length);
+
+            AddDescriptors(characteristic, new_characteristic);
+            service->AddCharacteristic(new_characteristic);
+        }
+    }
+
+    TRACE_MESSAGE("AddCharacteristics: Exit");
+}
+
+/**
+ * @brief Add descriptors from the JSON configuration.
+ *
+ * @param json Pointer to the cJSON object holding the configuration.
+ * @param characteristic Pointer to the BluetoothCharacteristic object to add the descriptors to.
+ */
+void BluetoothManager::AddDescriptors(const cJSON * const json, BluetoothCharacteristic * const characteristic)
+{
+    TRACE_MESSAGE("AddDescriptors: Enter");
+
+    const cJSON * const descriptors = cJSON_GetObjectItem(json, DESCRIPTORS_KEY);
+    if (!cJSON_IsArray(descriptors))
+    {
+        TRACE_MESSAGE(DESCRIPTORS_KEY " is not an array");
+        return;
+    }
+
+    cJSON *descriptor = NULL;
+    cJSON_ArrayForEach(descriptor, descriptors)
+    {
+        bool add = true;
+        const cJSON * const permission = cJSON_GetObjectItem(descriptor, PERMISSION_KEY);
+        if ((permission == NULL) || !cJSON_IsNumber(permission))
+        {
+            TRACE_MESSAGE("Descriptor " PERMISSION_KEY " is missing or not a number");
+            add = false;
+        }
+        const cJSON * const uuid = cJSON_GetObjectItem(descriptor, UUID_KEY);
+        if ((uuid == NULL) || !(cJSON_IsNumber(uuid) || cJSON_IsString(uuid)))
+        {
+            TRACE_MESSAGE("Descriptor " UUID_KEY " is missing or not a number or string");
+            add = false;
+        }
+        const cJSON * const len = cJSON_GetObjectItem(descriptor, LENGTH_KEY);
+        if ((len == NULL) || !cJSON_IsNumber(len))
+        {
+            TRACE_MESSAGE("Descriptor " LENGTH_KEY " is missing or not a number");
+            add = false;
+        }
+        const cJSON * const value = cJSON_GetObjectItem(descriptor, VALUE_KEY);
+        if ((value == NULL) || !(cJSON_IsNumber(value) || cJSON_IsString(value)))
+        {
+            TRACE_MESSAGE("Descriptor " VALUE_KEY " is missing or not a number or string");
+            add = false;
+        }
+
+        if (add)
+        {
+            Uuid16 uuid16bits;
+            Uuid128 uuid128bits;
+            bool is128bits = false;
+            ParseUuid(uuid, uuid16bits, uuid128bits, is128bits);
+
+            uint16_t permissions = (uint16_t) permission->valueint;
+            uint16_t length = (uint16_t) len->valueint;
+
+            BluetoothDescriptor *new_descriptor;
+            if (is128bits)
+            {
+                new_descriptor = new BluetoothDescriptor(characteristic, uuid128bits, (CharacteristicPermission) permissions, length, (uint8_t *) &value->valueint);
+            }
+            else
+            {
+                new_descriptor = new BluetoothDescriptor(characteristic, uuid16bits, (CharacteristicPermission) permissions, length, (uint8_t *) &value->valuestring);
+            }
+
+            char buffer[40];
+            memset(buffer, 0, sizeof(buffer));
+            if (is128bits)
+            {
+                strncpy(buffer, uuid128bits.ToString().c_str(), sizeof(buffer) - 1);
+            }
+            else
+            {
+                snprintf(buffer, sizeof(buffer), "0x%04" PRIx16, (uint16_t) uuid16bits);
+            }
+            TRACE_MESSAGE("        Descriptor : " UUID_KEY " %s, " PERMISSION_KEY ": %d, " LENGTH_KEY ": %d", buffer, permissions, length);
+
+            characteristic->AddDescriptor(new_descriptor);
+        }
+    }
+
+    TRACE_MESSAGE("AddDescriptors: Exit");
+}
+
+/**
+ * @brief Parse UUID from cJSON object.
+ *
+ * @note This method assumes that the validity of the json has already been established and that
+ *       json is a number or a string.
+ *
+ * @param json cJSON object containing the UUID.
+ * @param uuid16 Reference to Uuid16 to be set if UUID is 16-bit.
+ * @param uuid128 Reference to Uuid128 to be set if UUID is 128-bit.
+ * @param is128 Reference to bool to indicate if UUID is 128-bit.
+ */
+void BluetoothManager::ParseUuid(const cJSON * const json, Uuid16 &uuid16, Uuid128 &uuid128, bool &is128)
+{
+    TRACE_MESSAGE("ParseUuid: Enter");
+
+    if (cJSON_IsNumber(json))
+    {
+        Uuid16 uuid16bits = Uuid16((uint16_t) json->valueint);
+        memcpy(uuid16.data, uuid16bits.data, sizeof(uuid16.data));
+        is128 = false;
+    }
+    else
+    {
+        Uuid128 uuid128bits = Uuid128(json->valuestring);
+        memcpy(uuid128.data, uuid128bits.data, sizeof(uuid128.data));
+        is128 = true;
+    }
+
+    TRACE_MESSAGE("ParseUuid: Exit");
 }
 
 /**
  * @brief Build the graph of services, characteristics and descriptors from a pointer toJSON configuration.
  *
- * @param cfg_json JSON version of the service configuration.
+ * @param configuration JSON version of the Bluetooth configuration.
  */
-void BluetoothManager::BuildGraphFromJson(char *cfg_json)
+void BluetoothManager::BuildGraphFromJson(const char * const configuration)
 {
     TRACE_MESSAGE("BuildGraphFromJson: Enter");
 
-    Document doc;
-    doc.Parse(cfg_json);
-
-    Value &deviceName = doc["deviceName"];
-    strcpy(_deviceName, deviceName.GetString());
-    TRACE_MESSAGE("Device Name = %s", _deviceName);
-
-    if (doc.HasMember("companyIdentifier"))
+    cJSON * const json = cJSON_Parse(configuration);
+    if (json == NULL)
     {
-        auto companyIdentifier = (uint16_t) doc["companyIdentifier"].GetInt();
-        TRACE_MESSAGE("   companyIdentifier = 0x%04" PRIx16, companyIdentifier);
-        _companyIdentifier = companyIdentifier;
+        const char *error_location = cJSON_GetErrorPtr();
+        if (error_location != NULL)
+        {
+            TRACE_MESSAGE("BuildGraphFromJson: Error before '%s'", error_location);
+        }
     }
     else
     {
-        _companyIdentifier = 0xffff;
+        GetDeviceInformation(json);
+        AddServices(json);
     }
-
-    const Value &svc_list = doc["services"];
-    for (auto i = 0; i < svc_list.Size(); i++)
-    {
-        auto svc = svc_list[i].GetObject();
-        auto svc_uuid = svc["uuid"].GetInt();
-        auto svc_name = svc["name"].GetString();
-        TRACE_MESSAGE("Service %s uuid = 0x%04" PRIx16, svc_name, svc_uuid);
-
-        auto bt_svc = new BluetoothService(svc_name, Uuid16(svc_uuid));
-
-        const Value &char_list = svc["characteristics"];
-        TRACE_MESSAGE("Service has %" PRIu32 " characteristics", char_list.Size());
-        for (auto i = 0; i < char_list.Size(); i++)
-        {
-            TRACE_MESSAGE("Characteristic ");
-            auto characteristic = char_list[i].GetObject();
-
-            // this might be a ushort, might be a guid
-
-            Uuid16 chr_uuid16;
-            Uuid128 chr_uuid128;
-            auto is128 = false;
-
-            if (characteristic["uuid"].IsInt())
-            {
-                chr_uuid16 = Uuid16((uint16_t) characteristic["uuid"].GetUint());
-                TRACE_MESSAGE("    UUID = 0x%04" PRIx16, chr_uuid16.ToUint16());
-            }
-            else
-            {
-                chr_uuid128 = Uuid128(characteristic["uuid"].GetString());
-                TRACE_MESSAGE("    UUID = %s", chr_uuid128.ToString().c_str());
-                is128 = true;
-            }
-
-            auto chr_perm = (uint16_t) characteristic["permission"].GetInt();
-            auto chr_props = (uint16_t) characteristic["props"].GetInt();
-            auto chr_len = (uint16_t) characteristic["len"].GetInt();
-
-            TRACE_MESSAGE("    Permission = 0x%04" PRIx16, chr_perm);
-            TRACE_MESSAGE("    Props = 0x%04" PRIx16, chr_props);
-            TRACE_MESSAGE("    Len = 0x%04" PRIx16, chr_len);
-
-            BluetoothCharacteristic *bt_characteristic;
-            if (is128)
-            {
-                bt_characteristic = new BluetoothCharacteristic(chr_uuid128, (CharacteristicPermission) chr_perm, (CharacteristicProperty) chr_props, chr_len);
-            }
-            else
-            {
-                bt_characteristic = new BluetoothCharacteristic(chr_uuid16, (CharacteristicPermission) chr_perm, (CharacteristicProperty) chr_props, chr_len);
-            }
-
-            if (characteristic.HasMember("descriptors"))
-            {
-                TRACE_MESSAGE("Attribute has descriptors node");
-                const Value &desc_list = characteristic["descriptors"];
-                if (desc_list.Size() > 0)
-                {
-                    TRACE_MESSAGE("Characteristic has %i descriptors", desc_list.Size());
-                    for (auto d = 0; d < desc_list.Size(); d++)
-                    {
-                        Uuid16 desc_uuid16;
-                        Uuid128 desc_uuid128;
-                        auto is128d = false;
-                        auto descriptor = desc_list[d].GetObject();
-
-                        if (descriptor["uuid"].IsInt())
-                        {
-                            desc_uuid16 = Uuid16((uint16_t) descriptor["uuid"].GetUint());
-                            TRACE_MESSAGE("    UUID = 0x%04" PRIx16, desc_uuid16.ToUint16());
-                        }
-                        else
-                        {
-                            desc_uuid128 = Uuid128(descriptor["uuid"].GetString());
-                            TRACE_MESSAGE("     UUID = %s", desc_uuid128.ToString().c_str());
-                            is128d = true;
-                        }
-
-                        auto desc_perm = (uint16_t) descriptor["permission"].GetInt();
-                        TRACE_MESSAGE("    Permission = 0x%04" PRIx16, desc_perm);
-                        auto desc_len = (uint16_t) descriptor["len"].GetInt();
-                        TRACE_MESSAGE("    Len = 0x%04" PRIx16, desc_len);
-
-                        uint32_t int_value = 0;
-                        const char *str_value = nullptr;
-                        uint8_t *value = nullptr;
-                        if (descriptor["value"].IsInt())
-                        {
-                            int_value = (uint32_t) descriptor["value"].GetInt();
-                            TRACE_MESSAGE("    Value = 0x%04" PRIx32, int_value);
-                            value = (uint8_t *) &int_value;
-                        }
-                        else
-                        {
-                            str_value = descriptor["value"].GetString();
-                            TRACE_MESSAGE("    Value = %s", str_value);
-                            value = (uint8_t *) str_value;
-                        }
-
-                        BluetoothDescriptor *bt_descriptor;
-
-                        if (is128d)
-                        {
-                            bt_descriptor = new BluetoothDescriptor(bt_characteristic, desc_uuid128, (CharacteristicPermission) desc_perm, desc_len, value);
-                        }
-                        else
-                        {
-                            bt_descriptor = new BluetoothDescriptor(bt_characteristic, desc_uuid16, (CharacteristicPermission) desc_perm, desc_len, value);
-                        }
-                        bt_characteristic->AddDescriptor(bt_descriptor);
-                        TRACE_MESSAGE("Bluetooth descriptor added");
-                    }
-                }
-            }
-
-            bt_svc->AddCharacteristic(bt_characteristic);
-            TRACE_MESSAGE("Bluetooth characteristic added");
-        }
-
-        Services.Add(bt_svc);
-    }
+    //
+    //  The JSON library detects NULL and will simply return without action.
+    //
+    cJSON_Delete(json);
 
     TRACE_MESSAGE("BuildGraphFromJson: Exit");
 }
