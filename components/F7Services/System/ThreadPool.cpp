@@ -75,7 +75,6 @@ ThreadPool::ThreadPool(uint32_t numberOfThreads) : ThreadPool()
         {
             snprintf(name, 15, "Thread-%02" PRIu8, index);
             _threads[index] = new Thread(name, ThreadPool::ThreadCompleted);
-            ;
             if (_threads[index])
             {
                 xSemaphoreGive(_threadsAvailable);
