@@ -11,7 +11,6 @@
 
 #include <inttypes.h>
 
-
 /**
  *  @brief Manage the non-volatile storage.
  */
