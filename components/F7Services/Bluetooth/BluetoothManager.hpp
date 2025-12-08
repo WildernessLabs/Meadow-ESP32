@@ -9,6 +9,8 @@
 
 #pragma once
 
+#include "cJSON.h"
+
 #include "BluetoothServiceCollection.hpp"
 #include "BluetoothAttribute.hpp"
 #include "BluetoothHandleManager.hpp"
@@ -16,6 +18,66 @@
 #include <map>
 
 using namespace std;
+
+/**
+ * @brief Key name for device name in the JSON file.
+ */
+#define DEVICE_NAME_KEY "deviceName"
+
+/**
+ * @brief Default device name if none is specified.
+ */
+#define DEFAULT_DEVICE_NAME "MeadowF7"
+
+/**
+ * @brief Key name for company identifier in the JSON file.
+ */
+#define COMPANY_IDENTIFIER_KEY "companyIdentifier"
+
+/**
+ * @brief Key name for services in the JSON file.
+ */
+#define SERVICES_KEY "services"
+
+/**
+ * @brief Key name for characteristics in the JSON file.
+ */
+#define CHARACTERISTICS_KEY "characteristics"
+
+/**
+ * @brief Key name for name in the JSON file.
+ */
+#define NAME_KEY "name"
+
+/**
+ * @brief Key name for UUID in the JSON file.
+ */
+#define UUID_KEY "uuid"
+
+/**
+ * @brief Key name for permission in the JSON file.
+ */
+#define PERMISSION_KEY "permission"
+
+/**
+ * @brief Key name for properties in the JSON file.
+ */
+#define PROPERTIES_KEY "props"
+
+/**
+ * @brief Key name for length in the JSON file.
+ */
+#define LENGTH_KEY "len"
+
+/**
+ * @brief Key name for descriptors in the JSON file.
+ */
+#define DESCRIPTORS_KEY "descriptors"
+
+/**
+ * @brief Key name for values in the JSON file.
+ */
+#define VALUE_KEY "value"
 
 /**
  * @brief Class holding the data and methods for the BluetoothManager.
@@ -54,6 +116,11 @@ private:
     std::map<uint16_t, length_val_s> _valueMap;
 
     /**
+     * @brief Debug company identifier if none is specified.
+     */
+    const uint16_t DEBUG_COMPANY_IDENTIFIER = 0xffff;
+
+    /**
      * @brief Process the addition of a new service.
      */
     static void HandleServiceAdded(BluetoothService *);
@@ -72,6 +139,46 @@ private:
      * @brief Handle the addition of a new descriptor.
      */
     static void HandleDescriptorAdded(BluetoothDescriptor *);
+
+    /**
+     * @brief Get the device information from the JSON configuration.
+     *
+     * @param json Pointer to the cJSON object holding the configuration.
+     */
+    void GetDeviceInformation(const cJSON * const json);
+
+    /**
+     * @brief Add services from the JSON configuration.
+     *
+     * @param json Pointer to the cJSON object holding the configuration.
+     */
+    void AddServices(const cJSON * const json);
+
+    /**
+     * @brief Add characteristics from the JSON configuration.
+     *
+     * @param json Pointer to the cJSON object holding the configuration.
+     * @param service Pointer to the service to add the characteristics to.
+     */
+    void AddCharacteristics(const cJSON * const json, BluetoothService * const service);
+
+    /**
+     * @brief Add descriptors from the JSON configuration.
+     *
+     * @param json Pointer to the cJSON object holding the configuration.
+     * @param characteristic Pointer to the BluetoothCharacteristic object to add the descriptors to.
+     */
+    void AddDescriptors(const cJSON * const json, BluetoothCharacteristic * const characteristic);
+
+    /**
+     * @brief Parse UUID from cJSON object.
+     *
+     * @param json cJSON object containing the UUID.
+     * @param uuid16 Reference to Uuid16 to be set if UUID is 16-bit.
+     * @param uuid128 Reference to Uuid128 to be set if UUID is 128-bit.
+     * @param is128 Reference to bool to indicate if UUID is 128-bit.
+     */
+    void ParseUuid(const cJSON * const json, Uuid16 &uuid16, Uuid128 &uuid128, bool &is128);
 
     /**
      * @brief 16-bit assigned number for the company identifier.
@@ -151,8 +258,9 @@ public:
     CharacteristicPermission GetCharacteristicPermissions(const uint16_t handle);
 
     /**
-     * @brief Process the JSON definition of the services, characteristics and descriptors and build
-     *        a graph representation of the BLE functionality.
+     * @brief Build the graph of services, characteristics and descriptors from a pointer toJSON configuration.
+     *
+     * @param configuration JSON version of the Bluetooth configuration.
      */
-    void BuildGraphFromJson(char *cfg_json);
+    void BuildGraphFromJson(const char * const configuration);
 };
