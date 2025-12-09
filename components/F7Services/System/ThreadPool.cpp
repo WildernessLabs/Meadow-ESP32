@@ -45,30 +45,21 @@ SemaphoreHandle_t ThreadPool::_threadsAvailable = NULL;
  */
 ThreadPool::ThreadPool()
 {
-}
+    TRACE_MESSAGE("ThreadPool: Enter");
 
-/**
- *  @brief Constructor for the ThreadPool.
- *
- *  @param numberOfThreads
- *      Number of threads that should be created in this thread pool.
- */
-ThreadPool::ThreadPool(uint32_t numberOfThreads) : ThreadPool()
-{
-    _threadPoolSize = numberOfThreads > MAX_THREADS ? MAX_THREADS : numberOfThreads;
-    _threads = static_cast<Thread **>(pvPortMalloc(_threadPoolSize * sizeof(Thread *)));
+    _threads = static_cast<Thread **>(pvPortMalloc(THREAD_POOL_SIZE * sizeof(Thread *)));
     if (_threads == NULL)
     {
         throw new ThreadPoolException("Cannot allocate memory for threads.");
     }
 
-    _threadsAvailable = xSemaphoreCreateCounting(_threadPoolSize, 0);
+    _threadsAvailable = xSemaphoreCreateCounting(THREAD_POOL_SIZE, 0);
     if (_threadsAvailable == NULL)
     {
         throw new ThreadPoolException("Cannot create semaphore for ThreadPool.");
     }
 
-    for (uint8_t index = 0; index < _threadPoolSize; index++)
+    for (uint8_t index = 0; index < THREAD_POOL_SIZE; index++)
     {
         char *name = static_cast<char *>(pvPortMalloc(15));
         if (name != NULL)
@@ -85,6 +76,8 @@ ThreadPool::ThreadPool(uint32_t numberOfThreads) : ThreadPool()
             throw new ThreadPoolException("Cannot allocate memory for thread names.");
         }
     }
+
+    TRACE_MESSAGE("ThreadPool: Exit");
 }
 
 /**
@@ -94,7 +87,7 @@ ThreadPool::~ThreadPool()
 {
     if (_threadsAvailable != NULL)
     {
-        for (uint32_t index = 0; index < _threadPoolSize; index++)
+        for (uint32_t index = 0; index < THREAD_POOL_SIZE; index++)
         {
             if (_threads[index])
             {
@@ -126,11 +119,12 @@ ThreadPool::~ThreadPool()
 void ThreadPool::Execute(method_t method, void *parameter)
 {
     TRACE_MESSAGE("Execute: Enter");
+
     if (xSemaphoreTake(_threadsAvailable, _threadPoolAcquireTimeoutInMilisseconds / portTICK_PERIOD_MS) == pdTRUE)
     {
         TRACE_MESSAGE("Execute: Searching for an available thread");
 
-        for (uint8_t index = 0; index < _threadPoolSize; index++)
+        for (uint8_t index = 0; index < THREAD_POOL_SIZE; index++)
         {
             if (_threads[index] && !_threads[index]->IsBusy())
             {
@@ -144,7 +138,6 @@ void ThreadPool::Execute(method_t method, void *parameter)
 
     TRACE_MESSAGE("Execute: No threads available");
     throw ThreadPoolException("Cannot obtain access to an available thread.");
-    TRACE_MESSAGE("Execute: Exit");
 }
 
 /**
@@ -153,6 +146,8 @@ void ThreadPool::Execute(method_t method, void *parameter)
 void ThreadPool::ThreadCompleted()
 {
     TRACE_MESSAGE("ThreadCompleted: Enter");
+
     xSemaphoreGive(_threadsAvailable);
+
     TRACE_MESSAGE("ThreadCompleted: Exit");
 }
