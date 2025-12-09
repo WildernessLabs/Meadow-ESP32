@@ -138,8 +138,6 @@ void ThreadPool::Execute(method_t method, void *parameter)
 
     TRACE_MESSAGE("Execute: No threads available");
     throw ThreadPoolException("Cannot obtain access to an available thread.");
-
-    TRACE_MESSAGE("Execute: Exit");
 }
 
 /**
