@@ -33,11 +33,6 @@ private:
     const int THREAD_POOL_SIZE = 5;
 
     /**
-     *  @brief Number of threads in the threadpool.
-     */
-    uint32_t _threadPoolSize = 0;
-
-    /**
      * @brief Timeout duration (in milliseconds) for acquiring a semaphore representing thread availability in the thread pool.
      */
     uint32_t _threadPoolAcquireTimeoutInMilisseconds = 5000;
@@ -52,11 +47,6 @@ private:
      */
     static SemaphoreHandle_t _threadsAvailable;
 
-    /**
-     *  @brief Default constructor.
-     */
-    ThreadPool();
-
 public:
     /**
      *  @brief Name of the componet / task for the ThreadPool.
@@ -64,9 +54,9 @@ public:
     static const char *COMPONENT_NAME;
 
     /**
-     *  @brief Create a ThreadPool of the specified size.
+     *  @brief Default constructor.
      */
-    explicit ThreadPool(uint32_t numberOfThreads);
+    ThreadPool();
 
     /**
      *  @brief Destructor.

@@ -65,7 +65,7 @@ const char *SystemRequestHandler::_configurationName = "Meadow";
 /**
  *  @brief Private instance of the shared threadpool.
  */
-ThreadPool *SystemRequestHandler::_threadPool = new ThreadPool(5);
+ThreadPool *SystemRequestHandler::_threadPool = new ThreadPool();
 
 /**
  *  @brief Name of the key holding the _maximumMessageQueueLength value.
