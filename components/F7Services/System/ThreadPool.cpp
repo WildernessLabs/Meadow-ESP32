@@ -76,7 +76,7 @@ ThreadPool::ThreadPool()
             throw new ThreadPoolException("Cannot allocate memory for thread names.");
         }
     }
-    
+
     TRACE_MESSAGE("ThreadPool: Exit");
 }
 
