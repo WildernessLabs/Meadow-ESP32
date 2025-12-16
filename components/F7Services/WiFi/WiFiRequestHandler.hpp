@@ -733,125 +733,6 @@ private:
     //                      POSIX Calls start here.
 
     /**
-     *  @brief Provide a mechanism for the STM32 to call the getaddrinfo method.
-     */
-    static StatusCodes::StatusCodes GetAddrInfo(Esp32Messaging::GetAddrInfoRequest * const request, Esp32Messaging::GetAddrInfoResponse * const response);
-
-    /**
-     *  @brief Provide a mechanism for the STM32 to call the getaddrinfo method.
-     */
-    static void GetAddrInfo(void * const vpMessage);
-
-    /**
-     *  @brief Provide a mechanism for the STM32 to call the socket method.
-     */
-    static void Socket(void * const vpMessage);
-
-    /**
-     *  @brief Provide a mechanism for the STM32 to call the connect method.
-     */
-    static void Connect(void * const vpMessage);
-
-    /**
-     *  @brief Provide a mechanism for the STM32 to call the freeaddrinfo method.
-     */
-    static void FreeAddrInfo(void * const vpMessage);
-
-    /**
-     *  @brief Provide a mechanism for the STM32 to call the write method.
-     */
-    static void Write(void * const vpMessage);
-
-    /**
-     * @brief Process the setsockopt request from the STM32.
-     *
-     * @param request Request from the STM32.
-     * @param response Response to the STM32.
-     *
-     * @return StatusCodes::StatusCodes Returns StatusCodes::CompletedOk if the operation succeeds,
-     *         StatusCodes::Failure if there is an invalid parameter or mapping error,
-     *         StatusCodes::EspOutOfMemory if memory allocation fails.
-     */
-    static StatusCodes::StatusCodes SetSockOpt(const Esp32Messaging::SetSockOptRequest * const request, Esp32Messaging::IntegerAndErrnoResponse &response);
-
-    /**
-     *  @brief Provide a mechanism for the STM32 to call the setsockopt method.
-     */
-    static void SetSockOpt(void * const vpMessage);
-
-    /**
-     * @brief Process the SO_SNDTIMEO and SO_SNDTIMEO get socket option.
-     *
-     * @param vpMessage Pointer to the request.
-     */
-    static StatusCodes::StatusCodes GetSendReceiveOption(const int socket, const int level, const int optionName, Esp32Messaging::GetSockOptResponse &response);
-
-    /**
-     * @brief Process the SO_LINGER get socket option.
-     *
-     * @param vpMessage Pointer to the request.
-     */
-    static StatusCodes::StatusCodes GetLingerOption(const int socket, const int level, const int optionName, Esp32Messaging::GetSockOptResponse &response);
-
-    /**
-     * @brief Process the SO_RCVBUF get socket option.
-     *
-     * @param vpMessage Pointer to the request.
-     */
-    static StatusCodes::StatusCodes GetSendReceiveBuffer(const int socket, const int level, const int optionName, Esp32Messaging::GetSockOptResponse &response);
-
-    /**
-     *  @brief Provide a mechanism for the STM32 to call the getsockopt method.
-     */
-    static void GetSockOpt(void * const vpMessage);
-
-    /**
-     *  @brief Provide a mechanism for the STM32 to call the close method.
-     */
-
-    static void Close(void * const vpMessage);
-    /**
-     *  @brief Provide a mechanism for the STM32 to call the read method.
-     */
-    static void Read(void * const vpMessage);
-
-    /**
-     * @brief Provide a mechanism for the STM32 to call the sendto method.
-     *
-     * @param request Request from the STM32.
-     * @param response Response to the STM32.
-     *
-     * @return StatusCodes::CompletedOk if the sendto operation succeeds,
-     *         StatusCodes::EspOutOfMemory if memory allocation fails.
-     */
-    static StatusCodes::StatusCodes SendTo(Esp32Messaging::SendToRequest *request, Esp32Messaging::IntegerAndErrnoResponse &response);
-
-    /**
-     *  @brief Provide a mechanism for the STM32 to call the sendto method.
-     */
-    static void SendTo(void * const vpMessage);
-
-    /**
-     *  @brief Provide a mechanism for the STM32 to call the send method.
-     */
-    static void Send(void * const vpMessage);
-
-    /**
-     * @brief Process the recvfrom request from the STM32.
-     *
-     * @param request Request from the STM32.
-     * @param response Response to the STM32.
-     * @return StatusCodes::StatusCodes Returns StatusCodes::CompletedOk if the operation succeeds,
-     *         StatusCodes::EspOutOfMemory if memory allocation fails.
-     */
-    static StatusCodes::StatusCodes RecvFrom(Esp32Messaging::RecvFromRequest *request, Esp32Messaging::RecvFromResponse &response);
-
-    /**
-     *  @brief Provide a mechanism for the STM32 to call the recvfrom method.
-     */
-    static void RecvFrom(void * const vpMessage);
-
-    /**
      *  @brief Setup a poll request an assign it to a thread in the thread pool.
      */
     static int PollSetup(void * const vpMessage);
@@ -882,82 +763,14 @@ private:
     static void Poll(void * const vpMessage);
 
     /**
-     * @brief Bind a socket to an address.
-     *
-     * @param request Request from the STM32.
-     * @param response Response to the STM32.
-     * @return StatusCodes::StatusCodes Returns StatusCodes::CompletedOk if the operation succeeds,
-     *         StatusCodes::EspOutOfMemory if memory allocation fails.
-     */
-    static StatusCodes::StatusCodes Bind(Esp32Messaging::BindRequest *request, Esp32Messaging::IntegerAndErrnoResponse &response);
-
-    /**
-     *  @brief Provide a mechanism for the STM32 to call the bind method.
-     */
-    static void Bind(void * const vpMessage);
-
-    /**
-     *  @brief Provide a mechanism for the STM32 to call the listen method.
-     */
-    static void Listen(void * const vpMessage);
-
-    /**
-     * @brief Process the accept request from the STM32.
-     *
-     * @param request Request from the STM32.
-     * @param response Response to the STM32.
-     *
-     * @return StatusCodes::StatusCodes Returns StatusCodes::CompletedOk if the operation succeeds,
-     *         StatusCodes::EspOutOfMemory if memory allocation fails.
-     */
-    static StatusCodes::StatusCodes Accept(Esp32Messaging::AcceptRequest *request, Esp32Messaging::AcceptResponse &response);
-
-    /**
-     *  @brief Provide a mechanism for the STM32 to call the accept method.
-     */
-    static void Accept(void * const vpMessage);
-
-    /**
      *  @brief Provide a mechanism for the STM32 to call the simulated ioctl method.
      */
     static void Ioctl(void * const vpMessage);
 
     /**
-     * @brief Provide a mechanism to call the getsockname or getpeername.
-     *
-     * @param request Request from the STM32.
-     * @param methodToCall Indicate if we are calling getsockname or getpeername.
-     * @param response Response to the STM32.
-     *
-     * @return StatusCodes::StatusCodes Returns StatusCodes::CompletedOk if the operation succeeds,
-     *         StatusCodes::EspOutOfMemory if memory allocation fails.
-     */
-    static StatusCodes::StatusCodes GetSockPeerName(const Esp32Messaging::GetSockPeerNameRequest * const request, const WiFiFunction::WiFiFunction methodToCall, Esp32Messaging::GetSockPeerNameResponse &response);
-
-    /**
-     *  @brief Provide a mechanism to call the getsockname or getpeername.
-     */
-    static void GetSockPeerName(void * const vpMessage, const WiFiFunction::WiFiFunction request);
-
-    /**
-     *  @brief Provide a mechanism for the STM32 to call the simulated getsockname method.
-     */
-    static void GetSockName(void * const vpMessage);
-
-    /**
-     *  @brief Provide a mechanism for the STM32 to call the simulated getpeername method.
-     */
-    static void GetPeerName(void * const vpMessage);
-
-    /**
      *  @brief Method called when the time server has supplied updated time information.
      */
     static void NtpServerCallback(struct timeval *tv);
-
-    /**
-     *  @brief Indicate if we have a valid WiFi connection.
-     */
-    static bool IsConnected();
 
 public:
     /**
@@ -979,6 +792,18 @@ public:
      *  @brief Perform and class level setup required before an instance can be used.
      */
     void Setup();
+
+    /**
+     *  @brief Indicate if we have a valid WiFi connection.
+     */
+    static bool IsConnected();
+
+    /**
+     *  @brief Send a response message back to the STM32.
+     * 
+     * @param vpResponse Response message to send.
+     */
+    static void SendResponseToStm32(Message *vpResponse);
 
     /**
      *  @brief This is the event handler called by FreeRTOS.

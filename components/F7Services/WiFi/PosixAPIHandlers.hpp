@@ -1,0 +1,319 @@
+/**
+ * @file PosixAPIHandlers.hpp
+ * @author Mark Stevens
+ * @brief Implement the POSIX API handlers for the WiFi service.
+ * @date 2025-12-15
+ *
+ * @copyright Copyright (c) 2025 Wilderness Labs
+ */
+
+#pragma once
+
+#include "sdkconfig.h"
+
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "lwip/err.h"
+#include "lwip/sys.h"
+#include "lwip/sockets.h"
+#include "lwip/netdb.h"
+#include "lwip/dns.h"
+#include "esp_wifi.h"
+
+#include "errno.h"
+
+#include "WiFiRequestHandler.hpp"
+#include "Mapping.hpp"
+#include "Utils.hpp"
+
+class PosixApiHandlers
+{
+public:
+    /**
+     *  @brief Expose the POSIX getaddrinfo method to the STM32.
+     *
+     *  @param message
+     *      Message structure containing the parameters for the getaddrinfo method.
+     */
+    static void GetAddrInfo(void * const vpMessage);
+
+    /**
+     *  @brief Expose the POSIX socket method to the STM32.
+     *
+     *  @param message
+     *      Message structure containing the parameters for the socket method.
+     */
+    static void Socket(void * const vpMessage);
+
+    /**
+     *  @brief Expose the POSIX connect method to the STM32.
+     *
+     *  @param message
+     *      Message structure containing the parameters for the connect method.
+     */
+    static void Connect(void * const vpMessage);
+
+    /**
+     *  @brief Expose the POSIX freeaddrinfo method to the STM32.
+     *
+     *  @param message
+     *      Message structure containing the parameters for the freeaddrinfo method.
+     */
+    static void FreeAddrInfo(void * const vpMessage);
+
+    /**
+     *  @brief Expose the POSIX getsockopt method to the STM32.
+     *
+     *  @param message
+     *      Message structure containing the parameters for the getsockopt method.
+     */
+    static void GetSockOpt(void * const vpMessage);
+
+    /**
+     *  @brief Expose the POSIX setsockopt method to the STM32.
+     *
+     *  @param message
+     *      Message structure containing the parameters for the setsockopt method.
+     */
+    static void SetSockOpt(void * const vpMessage);
+    
+    /**
+     *  @brief Expose the POSIX write method to the STM32.
+     *
+     *  @param message
+     *      Message structure containing the parameters for the write method.
+     */
+    static void Write(void * const vpMessage);
+
+    /**
+     *  @brief Expose the POSIX read method to the STM32.
+     *
+     *  @param message
+     *      Message structure containing the parameters for the read method.
+     */
+    static void Read(void * const vpMessage);
+
+    /**
+     *  @brief Expose the POSIX close method to the STM32.
+     *
+     *  @param message
+     *      Message structure containing the parameters for the close method.
+     */
+    static void Close(void * const vpMessage);
+
+    /**
+     *  @brief Expose the POSIX send method to the STM32.
+     *
+     *  @param message
+     *      Message structure containing the parameters for the send method.
+     */
+    static void Send(void * const vpMessage);
+
+    /**
+     *  @brief Expose the POSIX sendto method to the STM32.
+     *
+     *  @param message
+     *      Message structure containing the parameters for the sendto method.
+     */
+    static void SendTo(void * const vpMessage);
+
+    /**
+     *  @brief Expose the POSIX recvfrom method to the STM32.
+     *
+     *  @param message
+     *      Message structure containing the parameters for the recvfrom method.
+     */
+    static void RecvFrom(void * const vpMessage);
+
+    /**
+     *  @brief Expose the POSIX bind method to the STM32.
+     *
+     *  @param message
+     *      Message structure containing the parameters for the bind method.
+     */
+    static void Bind(void * const vpMessage);
+
+    /**
+     *  @brief Expose the POSIX listen method to the STM32.
+     *
+     *  @param message
+     *      Message structure containing the parameters for the listen method.
+     */
+    static void Listen(void * const vpMessage);
+
+    /**
+     *  @brief Expose the POSIX accept method to the STM32.
+     *
+     *  @param message
+     *      Message structure containing the parameters for the accept method.
+     */
+    static void Accept(void * const vpMessage);
+
+    /**
+     *  @brief Expose the POSIX getsockname method to the STM32.
+     *
+     *  @param message
+     *      Message structure containing the parameters for the getsockname method.
+     */
+    static void GetSockName(void * const vpMessage);
+
+    /**
+     *  @brief Expose the POSIX getpeername method to the STM32.
+     *
+     *  @param message
+     *      Message structure containing the parameters for the getpeername method.
+     */
+    static void GetPeerName(void * const vpMessage);
+
+private:
+    /**
+     * @brief Get address information.
+     *
+     * @param request Request from the STM32
+     * @param response Response to the STM32
+     * @return StatusCodes::StatusCodes Result of this method, StatusCodes::CompletedOk if the GetAddrInfo operation succeeds,
+     *         StatusCodes::Failed if the GetAddrInfo operation fails.
+     */
+    static StatusCodes::StatusCodes GetAddrInfo(Esp32Messaging::GetAddrInfoRequest * const request, Esp32Messaging::GetAddrInfoResponse * const response);
+
+    /**
+     * @brief Process the SO_SNDTIMEO and SO_SNDTIMEO get socket option.
+     *
+     * @param vpMessage Pointer to the request.
+     */
+    static StatusCodes::StatusCodes GetSendReceiveOption(const int socketHandle, const int level, const int optionName, Esp32Messaging::GetSockOptResponse &response);
+
+    /**
+     * @brief Process the SO_LINGER get socket option.
+     *
+     * @param vpMessage Pointer to the request.
+     */
+    static StatusCodes::StatusCodes GetLingerOption(const int socket, const int level, const int optionName, Esp32Messaging::GetSockOptResponse &response);
+
+    /**
+     * @brief Process the SO_RCVBUF get socket option.
+     *
+     * @param vpMessage Pointer to the request.
+     */
+    static StatusCodes::StatusCodes GetSendReceiveBuffer(const int socket, const int level, const int optionName, Esp32Messaging::GetSockOptResponse &response);
+
+    /**
+     * @brief Extract an encoded integer setsockopt option value.
+     *
+     * @param data
+     *      Source of the socket option data (the option value).
+     *
+     * @param length
+     *      Pointer to a socklen_t object to take the length of the extracted option value.
+     *
+     * @return uint8_t*
+     *      Pointer to the extracted option value (integer) or NULL if there was a problem.
+     */
+    static uint8_t *ExtractIntegerSocketOptionValue(const uint8_t * const data, socklen_t * const length);
+
+    /**
+     * @brief Setup the socket value and length for calls to SetSockOpt.
+     *
+     * @param name
+     *      Name of the option to decode.
+     *
+     * @param optionValue
+     *      Pointer to the source data.
+     *
+     * @param length
+     *      Pointer to a socklen_t object to take the length of the option value.
+     *
+     * @return uint8_t *
+     *      Pointer the the decoded option value.
+     */
+    static uint8_t *GetSocketOptionValue(const int name, uint8_t * const optionValue, socklen_t * const length);
+
+    /**
+     * @brief Setup the TCP value and length for calls to SetSockOpt.
+     *
+     * @param name
+     *      Name of the option to decode.
+     *
+     * @param optionValue
+     *      Pointer to the source data.
+     *
+     * @param length
+     *      Pointer to a socklen_t object to take the length of the option value.
+     *
+     * @return uint8_t *
+     *      Pointer the the decoded option value.
+     */
+    static uint8_t *GetTcpOptionValue(const int name, uint8_t * const optionValue, socklen_t * const length);
+
+    /**
+     * @brief Process the setsockopt request from the STM32.
+     *
+     * @param request Request from the STM32.
+     * @param response Response to the STM32.
+     *
+     * @return StatusCodes::StatusCodes Status of the request.
+     */
+    static StatusCodes::StatusCodes SetSockOpt(const Esp32Messaging::SetSockOptRequest * const request, Esp32Messaging::IntegerAndErrnoResponse &response);
+
+    /**
+     * @brief Provide a mechanism for the STM32 to call the sendto method.
+     *
+     * @param request Request from the STM32.
+     * @param response Response to the STM32.
+     */
+    static StatusCodes::StatusCodes SendTo(Esp32Messaging::SendToRequest *request, Esp32Messaging::IntegerAndErrnoResponse &response);
+
+    /**
+     *  @brief Process the recvfrom request from the STM32.
+     *
+     *  @param request Request from the STM32.
+     *  @param response Response to the STM32.
+     *  @return StatusCodes::StatusCodes Returns StatusCodes::CompletedOk if the operation succeeds,
+     *          StatusCodes::EspOutOfMemory if memory allocation fails.
+     */
+    static StatusCodes::StatusCodes RecvFrom(Esp32Messaging::RecvFromRequest *request, Esp32Messaging::RecvFromResponse &response);
+
+    /**
+     * @brief Bind a socket to an address.
+     *
+     * @param request Request from the STM32.
+     * @param response Response to the STM32.
+     * @return StatusCodes::StatusCodes Returns StatusCodes::CompletedOk if the operation succeeds,
+     *         StatusCodes::EspOutOfMemory if memory allocation fails.
+     */
+    static StatusCodes::StatusCodes Bind(Esp32Messaging::BindRequest *request, Esp32Messaging::IntegerAndErrnoResponse &response);
+
+    /**
+     * @brief Process the accept request from the STM32.
+     *
+     * @param request Request from the STM32.
+     * @param response Response to the STM32.
+     *
+     * @return StatusCodes::StatusCodes Returns StatusCodes::CompletedOk if the operation succeeds,
+     *         StatusCodes::EspOutOfMemory if memory allocation fails.
+     */
+    static StatusCodes::StatusCodes Accept(Esp32Messaging::AcceptRequest *request, Esp32Messaging::AcceptResponse &response);
+
+    /**
+     * @brief Provide a mechanism to call the getsockname or getpeername.
+     *
+     * @param request Request from the STM32.
+     * @param methodToCall Indicate if we are calling getsockname or getpeername.
+     * @param response Response to the STM32.
+     *
+     * @return StatusCodes::StatusCodes Returns StatusCodes::CompletedOk if the operation succeeds,
+     *         StatusCodes::EspOutOfMemory if memory allocation fails.
+     */
+    static StatusCodes::StatusCodes GetSockPeerName(const Esp32Messaging::GetSockPeerNameRequest * const request, const WiFiFunction::WiFiFunction methodToCall, Esp32Messaging::GetSockPeerNameResponse &response);
+
+    /**
+     *  @brief Expose the POSIX getsockname method to the STM32.
+     *
+     *  @param message
+     *      Message structure containing the parameters for the getsockname method.
+     *
+     *  @param methodToCall
+     *      Which method should be called, getsockname or getpeername?
+     */
+    static void GetSockPeerName(void * const vpMessage, const WiFiFunction::WiFiFunction methodToCall);
+};

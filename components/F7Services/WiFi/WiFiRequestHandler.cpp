@@ -31,6 +31,7 @@
 #include "ProgressiveDelay.hpp"
 #include "Utils.hpp"
 #include "SystemRequestHandler.hpp"
+#include "PosixAPIHandlers.hpp"
 
 /*
  * ----------------------------------------------------------------------------
@@ -742,6 +743,16 @@ WiFiRequestHandler *WiFiRequestHandler::GetInstance()
 }
 
 /**
+ * @brief Send the response to the STM32.
+ * 
+ * @param vpResponse Response message to send.
+ */
+void WiFiRequestHandler::SendResponseToStm32(Message *vpResponse)
+{
+    _messageDispatcher->QueueMessageForStm32(vpResponse);
+}
+
+/**
  *  @brief Clear the IP and disconnect data.
  */
 void WiFiRequestHandler::ClearIpAndDisconnectData()
@@ -1228,47 +1239,47 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
                 SetAntennaRequest(request);
                 break;
             case WiFiFunction::Close:
-                Close((void *) request);
+                PosixApiHandlers::Close((void *) request);
                 xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
                 break;
             case WiFiFunction::Read:
-                SystemRequestHandler::SharedThreadPool()->Execute(Read, static_cast<void *>(request));
+                SystemRequestHandler::SharedThreadPool()->Execute(PosixApiHandlers::Read, static_cast<void *>(request));
                 xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
                 break;
             case WiFiFunction::SetSockOpt:
-                SystemRequestHandler::SharedThreadPool()->Execute(SetSockOpt, static_cast<void *>(request));
+                SystemRequestHandler::SharedThreadPool()->Execute(PosixApiHandlers::SetSockOpt, static_cast<void *>(request));
                 xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
                 break;
             case WiFiFunction::GetSockOpt:
-                SystemRequestHandler::SharedThreadPool()->Execute(GetSockOpt, static_cast<void *>(request));
+                SystemRequestHandler::SharedThreadPool()->Execute(PosixApiHandlers::GetSockOpt, static_cast<void *>(request));
                 xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
                 break;
             case WiFiFunction::Write:
-                SystemRequestHandler::SharedThreadPool()->Execute(Write, static_cast<void *>(request));
+                SystemRequestHandler::SharedThreadPool()->Execute(PosixApiHandlers::Write, static_cast<void *>(request));
                 xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
                 break;
             case WiFiFunction::FreeAddrInfo:
-                SystemRequestHandler::SharedThreadPool()->Execute(FreeAddrInfo, static_cast<void *>(request));
+                SystemRequestHandler::SharedThreadPool()->Execute(PosixApiHandlers::FreeAddrInfo, static_cast<void *>(request));
                 xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
                 break;
             case WiFiFunction::Connect:
-                SystemRequestHandler::SharedThreadPool()->Execute(Connect, static_cast<void *>(request));
+                SystemRequestHandler::SharedThreadPool()->Execute(PosixApiHandlers::Connect, static_cast<void *>(request));
                 xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
                 break;
             case WiFiFunction::Socket:
-                SystemRequestHandler::SharedThreadPool()->Execute(Socket, static_cast<void *>(request));
+                SystemRequestHandler::SharedThreadPool()->Execute(PosixApiHandlers::Socket, static_cast<void *>(request));
                 xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
                 break;
             case WiFiFunction::GetAddrInfo:
-                SystemRequestHandler::SharedThreadPool()->Execute(GetAddrInfo, static_cast<void *>(request));
+                SystemRequestHandler::SharedThreadPool()->Execute(PosixApiHandlers::GetAddrInfo, static_cast<void *>(request));
                 xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
                 break;
             case WiFiFunction::SendTo:
-                SystemRequestHandler::SharedThreadPool()->Execute(SendTo, static_cast<void *>(request));
+                SystemRequestHandler::SharedThreadPool()->Execute(PosixApiHandlers::SendTo, static_cast<void *>(request));
                 xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
                 break;
             case WiFiFunction::RecvFrom:
-                SystemRequestHandler::SharedThreadPool()->Execute(RecvFrom, static_cast<void *>(request));
+                SystemRequestHandler::SharedThreadPool()->Execute(PosixApiHandlers::RecvFrom, static_cast<void *>(request));
                 xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
                 break;
             case WiFiFunction::Poll:
@@ -1276,19 +1287,19 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
                 xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
                 break;
             case WiFiFunction::Send:
-                SystemRequestHandler::SharedThreadPool()->Execute(Send, static_cast<void *>(request));
+                SystemRequestHandler::SharedThreadPool()->Execute(PosixApiHandlers::Send, static_cast<void *>(request));
                 xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
                 break;
             case WiFiFunction::Accept:
-                SystemRequestHandler::SharedThreadPool()->Execute(Accept, static_cast<void *>(request));
+                SystemRequestHandler::SharedThreadPool()->Execute(PosixApiHandlers::Accept, static_cast<void *>(request));
                 xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
                 break;
             case WiFiFunction::Bind:
-                SystemRequestHandler::SharedThreadPool()->Execute(Bind, static_cast<void *>(request));
+                SystemRequestHandler::SharedThreadPool()->Execute(PosixApiHandlers::Bind, static_cast<void *>(request));
                 xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
                 break;
             case WiFiFunction::Listen:
-                SystemRequestHandler::SharedThreadPool()->Execute(Listen, static_cast<void *>(request));
+                SystemRequestHandler::SharedThreadPool()->Execute(PosixApiHandlers::Listen, static_cast<void *>(request));
                 xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
                 break;
             case WiFiFunction::Ioctl:
@@ -1296,11 +1307,11 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
                 xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
                 break;
             case WiFiFunction::GetSockName:
-                SystemRequestHandler::SharedThreadPool()->Execute(GetSockName, static_cast<void *>(request));
+                SystemRequestHandler::SharedThreadPool()->Execute(PosixApiHandlers::GetSockName, static_cast<void *>(request));
                 xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
                 break;
             case WiFiFunction::GetPeerName:
-                SystemRequestHandler::SharedThreadPool()->Execute(GetPeerName, static_cast<void *>(request));
+                SystemRequestHandler::SharedThreadPool()->Execute(PosixApiHandlers::GetPeerName, static_cast<void *>(request));
                 xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
                 break;
             default:

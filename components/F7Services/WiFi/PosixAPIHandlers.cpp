@@ -16,6 +16,7 @@
 #include "Mapping.hpp"
 #include "Utils.hpp"
 #include "SystemRequestHandler.hpp"
+#include "PosixAPIHandlers.hpp"
 
 /**
  * @brief Uncomment the line below to turn on assertions for debugging this file only.  Do not
@@ -43,7 +44,7 @@
  * @return StatusCodes::StatusCodes Result of this method, StatusCodes::CompletedOk if the GetAddrInfo operation succeeds,
  *         StatusCodes::Failed if the GetAddrInfo operation fails.
  */
-StatusCodes::StatusCodes WiFiRequestHandler::GetAddrInfo(Esp32Messaging::GetAddrInfoRequest * const request, Esp32Messaging::GetAddrInfoResponse * const response)
+StatusCodes::StatusCodes PosixApiHandlers::GetAddrInfo(Esp32Messaging::GetAddrInfoRequest * const request, Esp32Messaging::GetAddrInfoResponse * const response)
 {
     Esp32Messaging::AddrInfo *extractedHints = Encoders::ExtractAddrInfo(request->Hints);
     Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&request->Hints));
@@ -110,7 +111,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetAddrInfo(Esp32Messaging::GetAddr
  *  @param message
  *      Message structure containing the parameters for the getaddrinfo method.
  */
-void WiFiRequestHandler::GetAddrInfo(void * const vpMessage)
+void PosixApiHandlers::GetAddrInfo(void * const vpMessage)
 {
     TRACE_MESSAGE("GetAddrInfo: Enter");
     PERFORMANCE_LOGGING_ENTER();
@@ -124,7 +125,7 @@ void WiFiRequestHandler::GetAddrInfo(void * const vpMessage)
     if (response)
     {
         bzero(response, sizeof(Esp32Messaging::GetAddrInfoResponse));
-        if (IsConnected())
+        if (WiFiRequestHandler::IsConnected())
         {
             Esp32Messaging::GetAddrInfoRequest *request = Encoders::ExtractGetAddrInfoRequest(message->Payload);
             if (request)
@@ -175,7 +176,7 @@ void WiFiRequestHandler::GetAddrInfo(void * const vpMessage)
     }
     Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&response));
     message->MessageType = MessageTypes::Response;
-    _messageDispatcher->QueueMessageForStm32(message);
+    WiFiRequestHandler::SendResponseToStm32(message);
 
     PERFORMANCE_LOGGING_EXIT();
     PERFORMANCE_LOGGING_ADD_ENTRY();
@@ -188,7 +189,7 @@ void WiFiRequestHandler::GetAddrInfo(void * const vpMessage)
  *  @param message
  *      Message structure containing the parameters for the socket method.
  */
-void WiFiRequestHandler::Socket(void * const vpMessage)
+void PosixApiHandlers::Socket(void * const vpMessage)
 {
     TRACE_MESSAGE("Socket: Enter");
     PERFORMANCE_LOGGING_ENTER();
@@ -199,7 +200,7 @@ void WiFiRequestHandler::Socket(void * const vpMessage)
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
     assert(message != NULL);
     assert(message->Payload != NULL);
-    if (IsConnected())
+    if (WiFiRequestHandler::IsConnected())
     {
         Esp32Messaging::SocketRequest *request = Encoders::ExtractSocketRequest(message->Payload);
         if (request)
@@ -255,7 +256,7 @@ void WiFiRequestHandler::Socket(void * const vpMessage)
         }
     }
     message->MessageType = MessageTypes::Response;
-    _messageDispatcher->QueueMessageForStm32(message);
+    WiFiRequestHandler::SendResponseToStm32(message);
 
     PERFORMANCE_LOGGING_EXIT();
     PERFORMANCE_LOGGING_ADD_ENTRY();
@@ -268,7 +269,7 @@ void WiFiRequestHandler::Socket(void * const vpMessage)
  *  @param message
  *      Message structure containing the parameters for the connect method.
  */
-void WiFiRequestHandler::Connect(void * const vpMessage)
+void PosixApiHandlers::Connect(void * const vpMessage)
 {
     TRACE_MESSAGE("Connect: Enter");
     PERFORMANCE_LOGGING_ENTER();
@@ -279,7 +280,7 @@ void WiFiRequestHandler::Connect(void * const vpMessage)
     assert(message != NULL);
     assert(message->Payload != NULL);
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    if (IsConnected())
+    if (WiFiRequestHandler::IsConnected())
     {
         Esp32Messaging::ConnectRequest *request = Encoders::ExtractConnectRequest(message->Payload);
         if (request)
@@ -365,7 +366,7 @@ void WiFiRequestHandler::Connect(void * const vpMessage)
         }
     }
     message->MessageType = MessageTypes::Response;
-    _messageDispatcher->QueueMessageForStm32(message);
+    WiFiRequestHandler::SendResponseToStm32(message);
 
     PERFORMANCE_LOGGING_EXIT();
     PERFORMANCE_LOGGING_ADD_ENTRY();
@@ -378,7 +379,7 @@ void WiFiRequestHandler::Connect(void * const vpMessage)
  *  @param message
  *      Message structure containing the parameters for the freeaddrinfo method.
  */
-void WiFiRequestHandler::FreeAddrInfo(void * const vpMessage)
+void PosixApiHandlers::FreeAddrInfo(void * const vpMessage)
 {
     TRACE_MESSAGE("FreeAddrInfo: Enter");
     PERFORMANCE_LOGGING_ENTER();
@@ -403,7 +404,7 @@ void WiFiRequestHandler::FreeAddrInfo(void * const vpMessage)
     message->DeletePayload();
     message->MessageType = MessageTypes::Response;
 
-    _messageDispatcher->QueueMessageForStm32(message);
+    WiFiRequestHandler::SendResponseToStm32(message);
 
     PERFORMANCE_LOGGING_EXIT();
     PERFORMANCE_LOGGING_ADD_ENTRY();
@@ -415,7 +416,7 @@ void WiFiRequestHandler::FreeAddrInfo(void * const vpMessage)
  *
  * @param vpMessage Pointer to the request.
  */
-StatusCodes::StatusCodes WiFiRequestHandler::GetSendReceiveOption(const int socketHandle, const int level, const int optionName, Esp32Messaging::GetSockOptResponse &response)
+StatusCodes::StatusCodes PosixApiHandlers::GetSendReceiveOption(const int socketHandle, const int level, const int optionName, Esp32Messaging::GetSockOptResponse &response)
 {
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
 
@@ -449,7 +450,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetSendReceiveOption(const int sock
  *
  * @param vpMessage Pointer to the request.
  */
-StatusCodes::StatusCodes WiFiRequestHandler::GetLingerOption(const int socket, const int level, const int optionName, Esp32Messaging::GetSockOptResponse &response)
+StatusCodes::StatusCodes PosixApiHandlers::GetLingerOption(const int socket, const int level, const int optionName, Esp32Messaging::GetSockOptResponse &response)
 {
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
 
@@ -483,7 +484,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetLingerOption(const int socket, c
  *
  * @param vpMessage Pointer to the request.
  */
-StatusCodes::StatusCodes WiFiRequestHandler::GetSendReceiveBuffer(const int socket, const int level, const int optionName, Esp32Messaging::GetSockOptResponse &response)
+StatusCodes::StatusCodes PosixApiHandlers::GetSendReceiveBuffer(const int socket, const int level, const int optionName, Esp32Messaging::GetSockOptResponse &response)
 {
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
 
@@ -517,7 +518,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetSendReceiveBuffer(const int sock
  *  @param message
  *      Message structure containing the parameters for the getsockopt method.
  */
-void WiFiRequestHandler::GetSockOpt(void * const vpMessage)
+void PosixApiHandlers::GetSockOpt(void * const vpMessage)
 {
     TRACE_MESSAGE("GetSockOpt: Enter");
     PERFORMANCE_LOGGING_ENTER();
@@ -528,7 +529,7 @@ void WiFiRequestHandler::GetSockOpt(void * const vpMessage)
     assert(message->Payload != NULL);
     Esp32Messaging::GetSockOptResponse response = {};
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    if (IsConnected())
+    if (WiFiRequestHandler::IsConnected())
     {
         Esp32Messaging::GetSockOptRequest *request = Encoders::ExtractGetSockOptRequest(message->Payload);
         if (request)
@@ -620,7 +621,7 @@ void WiFiRequestHandler::GetSockOpt(void * const vpMessage)
         }
     }
     message->MessageType = MessageTypes::Response;
-    _messageDispatcher->QueueMessageForStm32(message);
+    WiFiRequestHandler::SendResponseToStm32(message);
 
     PERFORMANCE_LOGGING_EXIT();
     PERFORMANCE_LOGGING_ADD_ENTRY();
@@ -639,7 +640,7 @@ void WiFiRequestHandler::GetSockOpt(void * const vpMessage)
  * @return uint8_t*
  *      Pointer to the extracted option value (integer) or NULL if there was a problem.
  */
-uint8_t *WiFiRequestHandler::ExtractIntegerSocketOptionValue(const uint8_t * const data, socklen_t * const length)
+uint8_t *PosixApiHandlers::ExtractIntegerSocketOptionValue(const uint8_t * const data, socklen_t * const length)
 {
     uint8_t *result = NULL;
 
@@ -676,7 +677,7 @@ uint8_t *WiFiRequestHandler::ExtractIntegerSocketOptionValue(const uint8_t * con
  * @return uint8_t *
  *      Pointer the the decoded option value.
  */
-uint8_t *WiFiRequestHandler::GetSocketOptionValue(const int name, uint8_t * const optionValue, socklen_t * const length)
+uint8_t *PosixApiHandlers::GetSocketOptionValue(const int name, uint8_t * const optionValue, socklen_t * const length)
 {
     TRACE_MESSAGE("GetSocketOptionValue: Enter");
 
@@ -761,7 +762,7 @@ uint8_t *WiFiRequestHandler::GetSocketOptionValue(const int name, uint8_t * cons
  * @return uint8_t *
  *      Pointer the the decoded option value.
  */
-uint8_t *WiFiRequestHandler::GetTcpOptionValue(const int name, uint8_t * const optionValue, socklen_t * const length)
+uint8_t *PosixApiHandlers::GetTcpOptionValue(const int name, uint8_t * const optionValue, socklen_t * const length)
 {
     TRACE_MESSAGE("GetTcpOptionValue: Enter");
 
@@ -793,7 +794,7 @@ uint8_t *WiFiRequestHandler::GetTcpOptionValue(const int name, uint8_t * const o
  *
  * @return StatusCodes::StatusCodes Status of the request.
  */
-StatusCodes::StatusCodes WiFiRequestHandler::SetSockOpt(const Esp32Messaging::SetSockOptRequest * const request, Esp32Messaging::IntegerAndErrnoResponse &response)
+StatusCodes::StatusCodes PosixApiHandlers::SetSockOpt(const Esp32Messaging::SetSockOptRequest * const request, Esp32Messaging::IntegerAndErrnoResponse &response)
 {
     void *optionValue = nullptr;
     socklen_t optionLength = 0;
@@ -845,7 +846,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetSockOpt(const Esp32Messaging::Se
  *  @param message
  *      Message structure containing the parameters for the setsockopt method.
  */
-void WiFiRequestHandler::SetSockOpt(void * const vpMessage)
+void PosixApiHandlers::SetSockOpt(void * const vpMessage)
 {
     TRACE_MESSAGE("SetSockOpt: Enter");
     PERFORMANCE_LOGGING_ENTER();
@@ -856,7 +857,7 @@ void WiFiRequestHandler::SetSockOpt(void * const vpMessage)
     assert(message->Payload != NULL);
     Esp32Messaging::IntegerAndErrnoResponse response = {};
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    if (IsConnected())
+    if (WiFiRequestHandler::IsConnected())
     {
         Esp32Messaging::SetSockOptRequest *request = Encoders::ExtractSetSockOptRequest(message->Payload);
         if (request)
@@ -908,7 +909,7 @@ void WiFiRequestHandler::SetSockOpt(void * const vpMessage)
         }
     }
     message->MessageType = MessageTypes::Response;
-    _messageDispatcher->QueueMessageForStm32(message);
+    WiFiRequestHandler::SendResponseToStm32(message);
 
     PERFORMANCE_LOGGING_EXIT();
     PERFORMANCE_LOGGING_ADD_ENTRY();
@@ -921,7 +922,7 @@ void WiFiRequestHandler::SetSockOpt(void * const vpMessage)
  *  @param message
  *      Message structure containing the parameters for the write method.
  */
-void WiFiRequestHandler::Write(void * const vpMessage)
+void PosixApiHandlers::Write(void * const vpMessage)
 {
     TRACE_MESSAGE("Write: Enter");
     PERFORMANCE_LOGGING_ENTER();
@@ -933,7 +934,7 @@ void WiFiRequestHandler::Write(void * const vpMessage)
     Esp32Messaging::IntegerAndErrnoResponse response = {};
 
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    if (IsConnected())
+    if (WiFiRequestHandler::IsConnected())
     {
         Esp32Messaging::WriteRequest *request = Encoders::ExtractWriteRequest(message->Payload);
         if (request)
@@ -985,7 +986,7 @@ void WiFiRequestHandler::Write(void * const vpMessage)
         }
     }
     message->MessageType = MessageTypes::Response;
-    _messageDispatcher->QueueMessageForStm32(message);
+    WiFiRequestHandler::SendResponseToStm32(message);
 
     PERFORMANCE_LOGGING_EXIT();
     PERFORMANCE_LOGGING_ADD_ENTRY();
@@ -998,7 +999,7 @@ void WiFiRequestHandler::Write(void * const vpMessage)
  *  @param message
  *      Message structure containing the parameters for the read method.
  */
-void WiFiRequestHandler::Read(void * const vpMessage)
+void PosixApiHandlers::Read(void * const vpMessage)
 {
     TRACE_MESSAGE("Read: Enter");
     PERFORMANCE_LOGGING_ENTER();
@@ -1011,7 +1012,7 @@ void WiFiRequestHandler::Read(void * const vpMessage)
     Esp32Messaging::ReadResponse response = {};
     response.Buffer = nullptr;
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    if (IsConnected())
+    if (WiFiRequestHandler::IsConnected())
     {
         Esp32Messaging::ReadRequest *request = Encoders::ExtractReadRequest(message->Payload);
         if (request)
@@ -1073,7 +1074,7 @@ void WiFiRequestHandler::Read(void * const vpMessage)
     Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&response.Buffer));
 
     message->MessageType = MessageTypes::Response;
-    _messageDispatcher->QueueMessageForStm32(message);
+    WiFiRequestHandler::SendResponseToStm32(message);
 
     PERFORMANCE_LOGGING_EXIT();
     PERFORMANCE_LOGGING_ADD_ENTRY();
@@ -1086,7 +1087,7 @@ void WiFiRequestHandler::Read(void * const vpMessage)
  *  @param message
  *      Message structure containing the parameters for the close method.
  */
-void WiFiRequestHandler::Close(void * const vpMessage)
+void PosixApiHandlers::Close(void * const vpMessage)
 {
     TRACE_MESSAGE("Close: Enter");
     PERFORMANCE_LOGGING_ENTER();
@@ -1097,7 +1098,7 @@ void WiFiRequestHandler::Close(void * const vpMessage)
     assert(message != NULL);
     assert(message->Payload != NULL);
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    if (IsConnected())
+    if (WiFiRequestHandler::IsConnected())
     {
         Esp32Messaging::CloseRequest *request = Encoders::ExtractCloseRequest(message->Payload);
         if (request)
@@ -1140,7 +1141,7 @@ void WiFiRequestHandler::Close(void * const vpMessage)
             message->StatusCode = StatusCodes::CompletedOk;
         }
         message->MessageType = MessageTypes::Response;
-        _messageDispatcher->QueueMessageForStm32(message);
+        WiFiRequestHandler::SendResponseToStm32(message);
     }
 
     PERFORMANCE_LOGGING_EXIT();
@@ -1154,7 +1155,7 @@ void WiFiRequestHandler::Close(void * const vpMessage)
  *  @param message
  *      Message structure containing the parameters for the send method.
  */
-void WiFiRequestHandler::Send(void * const vpMessage)
+void PosixApiHandlers::Send(void * const vpMessage)
 {
     TRACE_MESSAGE("Send: Enter");
     PERFORMANCE_LOGGING_ENTER();
@@ -1166,7 +1167,7 @@ void WiFiRequestHandler::Send(void * const vpMessage)
     Esp32Messaging::IntegerAndErrnoResponse response = {};
 
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    if (IsConnected())
+    if (WiFiRequestHandler::IsConnected())
     {
         Esp32Messaging::SendRequest *request = Encoders::ExtractSendRequest(message->Payload);
         if (request)
@@ -1228,7 +1229,7 @@ void WiFiRequestHandler::Send(void * const vpMessage)
         }
     }
     message->MessageType = MessageTypes::Response;
-    _messageDispatcher->QueueMessageForStm32(message);
+    WiFiRequestHandler::SendResponseToStm32(message);
 
     PERFORMANCE_LOGGING_EXIT();
     PERFORMANCE_LOGGING_ADD_ENTRY();
@@ -1241,7 +1242,7 @@ void WiFiRequestHandler::Send(void * const vpMessage)
  * @param request Request from the STM32.
  * @param response Response to the STM32.
  */
-StatusCodes::StatusCodes WiFiRequestHandler::SendTo(Esp32Messaging::SendToRequest *request, Esp32Messaging::IntegerAndErrnoResponse &response)
+StatusCodes::StatusCodes PosixApiHandlers::SendTo(Esp32Messaging::SendToRequest *request, Esp32Messaging::IntegerAndErrnoResponse &response)
 {
     int32_t mappedFlags = 0;
     response.ResponseErrno = 0;
@@ -1312,7 +1313,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::SendTo(Esp32Messaging::SendToReques
  *  @param message
  *      Message structure containing the parameters for the sendto method.
  */
-void WiFiRequestHandler::SendTo(void * const vpMessage)
+void PosixApiHandlers::SendTo(void * const vpMessage)
 {
     TRACE_MESSAGE("SendTo: Enter");
     PERFORMANCE_LOGGING_ENTER();
@@ -1323,7 +1324,7 @@ void WiFiRequestHandler::SendTo(void * const vpMessage)
     assert(message->Payload != NULL);
     Esp32Messaging::IntegerAndErrnoResponse response = {};
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    if (IsConnected())
+    if (WiFiRequestHandler::IsConnected())
     {
         Esp32Messaging::SendToRequest *request = Encoders::ExtractSendToRequest(message->Payload);
         if (request)
@@ -1371,7 +1372,7 @@ void WiFiRequestHandler::SendTo(void * const vpMessage)
         }
     }
     message->MessageType = MessageTypes::Response;
-    _messageDispatcher->QueueMessageForStm32(message);
+    WiFiRequestHandler::SendResponseToStm32(message);
 
     PERFORMANCE_LOGGING_EXIT();
     PERFORMANCE_LOGGING_ADD_ENTRY();
@@ -1386,7 +1387,7 @@ void WiFiRequestHandler::SendTo(void * const vpMessage)
  *  @return StatusCodes::StatusCodes Returns StatusCodes::CompletedOk if the operation succeeds,
  *          StatusCodes::EspOutOfMemory if memory allocation fails.
  */
-StatusCodes::StatusCodes WiFiRequestHandler::RecvFrom(Esp32Messaging::RecvFromRequest *request, Esp32Messaging::RecvFromResponse &response)
+StatusCodes::StatusCodes PosixApiHandlers::RecvFrom(Esp32Messaging::RecvFromRequest *request, Esp32Messaging::RecvFromResponse &response)
 {
     int32_t mappedFlags = 0;
     response.Result = Mapping::GetEspFlagValue(Mapping::MessageFlags, request->Flags, &mappedFlags);
@@ -1485,7 +1486,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::RecvFrom(Esp32Messaging::RecvFromRe
  *  @param message
  *      Message structure containing the parameters for the recvfrom method.
  */
-void WiFiRequestHandler::RecvFrom(void * const vpMessage)
+void PosixApiHandlers::RecvFrom(void * const vpMessage)
 {
     TRACE_MESSAGE("RecvFrom: Enter");
     PERFORMANCE_LOGGING_ENTER();
@@ -1496,7 +1497,7 @@ void WiFiRequestHandler::RecvFrom(void * const vpMessage)
     assert(message->Payload != NULL);
     Esp32Messaging::RecvFromResponse response = {};
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    if (IsConnected())
+    if (WiFiRequestHandler::IsConnected())
     {
         Esp32Messaging::RecvFromRequest *request = Encoders::ExtractRecvFromRequest(message->Payload);
         if (request)
@@ -1544,7 +1545,7 @@ void WiFiRequestHandler::RecvFrom(void * const vpMessage)
     Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&response.SourceAddress));
 
     message->MessageType = MessageTypes::Response;
-    _messageDispatcher->QueueMessageForStm32(message);
+    WiFiRequestHandler::SendResponseToStm32(message);
 
     PERFORMANCE_LOGGING_EXIT();
     PERFORMANCE_LOGGING_ADD_ENTRY();
@@ -1559,7 +1560,7 @@ void WiFiRequestHandler::RecvFrom(void * const vpMessage)
  * @return StatusCodes::StatusCodes Returns StatusCodes::CompletedOk if the operation succeeds,
  *         StatusCodes::EspOutOfMemory if memory allocation fails.
  */
-StatusCodes::StatusCodes WiFiRequestHandler::Bind(Esp32Messaging::BindRequest *request, Esp32Messaging::IntegerAndErrnoResponse &response)
+StatusCodes::StatusCodes PosixApiHandlers::Bind(Esp32Messaging::BindRequest *request, Esp32Messaging::IntegerAndErrnoResponse &response)
 {
     Esp32Messaging::SockAddr *socketAddress = Encoders::ExtractSockAddr(request->Addr);
     if (socketAddress == NULL)
@@ -1614,7 +1615,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::Bind(Esp32Messaging::BindRequest *r
  *  @param message
  *      Message structure containing the parameters for the bind method.
  */
-void WiFiRequestHandler::Bind(void * const vpMessage)
+void PosixApiHandlers::Bind(void * const vpMessage)
 {
     TRACE_MESSAGE("Bind: Enter");
     PERFORMANCE_LOGGING_ENTER();
@@ -1625,7 +1626,7 @@ void WiFiRequestHandler::Bind(void * const vpMessage)
     assert(message->Payload != NULL);
     Esp32Messaging::IntegerAndErrnoResponse response = {};
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    if (IsConnected())
+    if (WiFiRequestHandler::IsConnected())
     {
         Esp32Messaging::BindRequest *request = Encoders::ExtractBindRequest(message->Payload);
         if (request)
@@ -1665,7 +1666,7 @@ void WiFiRequestHandler::Bind(void * const vpMessage)
         }
     }
     message->MessageType = MessageTypes::Response;
-    _messageDispatcher->QueueMessageForStm32(message);
+    WiFiRequestHandler::SendResponseToStm32(message);
 
     PERFORMANCE_LOGGING_EXIT();
     PERFORMANCE_LOGGING_ADD_ENTRY();
@@ -1678,7 +1679,7 @@ void WiFiRequestHandler::Bind(void * const vpMessage)
  *  @param message
  *      Message structure containing the parameters for the listen method.
  */
-void WiFiRequestHandler::Listen(void * const vpMessage)
+void PosixApiHandlers::Listen(void * const vpMessage)
 {
     TRACE_MESSAGE("Listen: Enter");
     PERFORMANCE_LOGGING_ENTER();
@@ -1689,7 +1690,7 @@ void WiFiRequestHandler::Listen(void * const vpMessage)
     assert(message != NULL);
     assert(message->Payload != NULL);
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    if (IsConnected())
+    if (WiFiRequestHandler::IsConnected())
     {
         Esp32Messaging::ListenRequest *request = Encoders::ExtractListenRequest(message->Payload);
         if (request)
@@ -1732,7 +1733,7 @@ void WiFiRequestHandler::Listen(void * const vpMessage)
     }
 
     message->MessageType = MessageTypes::Response;
-    _messageDispatcher->QueueMessageForStm32(message);
+    WiFiRequestHandler::SendResponseToStm32(message);
 
     PERFORMANCE_LOGGING_EXIT();
     PERFORMANCE_LOGGING_ADD_ENTRY();
@@ -1749,7 +1750,7 @@ void WiFiRequestHandler::Listen(void * const vpMessage)
  * @return StatusCodes::StatusCodes Returns StatusCodes::CompletedOk if the operation succeeds,
  *         StatusCodes::EspOutOfMemory if memory allocation fails.
  */
-StatusCodes::StatusCodes WiFiRequestHandler::Accept(Esp32Messaging::AcceptRequest *request, Esp32Messaging::AcceptResponse &response)
+StatusCodes::StatusCodes PosixApiHandlers::Accept(Esp32Messaging::AcceptRequest *request, Esp32Messaging::AcceptResponse &response)
 {
     struct sockaddr sa = {};
     socklen_t saLen = sizeof(sa);
@@ -1799,7 +1800,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::Accept(Esp32Messaging::AcceptReques
  *  @param message
  *      Message structure containing the parameters for the accept method.
  */
-void WiFiRequestHandler::Accept(void * const vpMessage)
+void PosixApiHandlers::Accept(void * const vpMessage)
 {
     TRACE_MESSAGE("Accept: Enter");
     PERFORMANCE_LOGGING_ENTER();
@@ -1810,7 +1811,7 @@ void WiFiRequestHandler::Accept(void * const vpMessage)
 
     Esp32Messaging::AcceptResponse response = {};
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    if (IsConnected())
+    if (WiFiRequestHandler::IsConnected())
     {
         Esp32Messaging::AcceptRequest *request = Encoders::ExtractAcceptRequest(message->Payload);
         if (request)
@@ -1852,7 +1853,7 @@ void WiFiRequestHandler::Accept(void * const vpMessage)
     }
     Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&response.Addr));
     message->MessageType = MessageTypes::Response;
-    _messageDispatcher->QueueMessageForStm32(message);
+    WiFiRequestHandler::SendResponseToStm32(message);
 
     PERFORMANCE_LOGGING_EXIT();
     PERFORMANCE_LOGGING_ADD_ENTRY();
@@ -2006,7 +2007,7 @@ void WiFiRequestHandler::Ioctl(void * const vpMessage)
  * @return StatusCodes::StatusCodes Returns StatusCodes::CompletedOk if the operation succeeds,
  *         StatusCodes::EspOutOfMemory if memory allocation fails.
  */
-StatusCodes::StatusCodes WiFiRequestHandler::GetSockPeerName(const Esp32Messaging::GetSockPeerNameRequest * const request, const WiFiFunction::WiFiFunction methodToCall, Esp32Messaging::GetSockPeerNameResponse &response)
+StatusCodes::StatusCodes PosixApiHandlers::GetSockPeerName(const Esp32Messaging::GetSockPeerNameRequest * const request, const WiFiFunction::WiFiFunction methodToCall, Esp32Messaging::GetSockPeerNameResponse &response)
 {
     struct sockaddr sa = {};
     socklen_t saLen = sizeof(sa);
@@ -2072,7 +2073,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetSockPeerName(const Esp32Messagin
  *  @param methodToCall
  *      Which method should be called, getsockname or getpeername?
  */
-void WiFiRequestHandler::GetSockPeerName(void * const vpMessage, const WiFiFunction::WiFiFunction methodToCall)
+void PosixApiHandlers::GetSockPeerName(void * const vpMessage, const WiFiFunction::WiFiFunction methodToCall)
 {
     TRACE_MESSAGE("GetSockPeerName: Enter");
     PERFORMANCE_LOGGING_ENTER();
@@ -2083,7 +2084,7 @@ void WiFiRequestHandler::GetSockPeerName(void * const vpMessage, const WiFiFunct
     assert(message->Payload != NULL);
     Esp32Messaging::GetSockPeerNameResponse response = {};
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    if (IsConnected())
+    if (WiFiRequestHandler::IsConnected())
     {
         Esp32Messaging::GetSockPeerNameRequest *request = Encoders::ExtractGetSockPeerNameRequest(message->Payload);
         if (request)
@@ -2127,7 +2128,7 @@ void WiFiRequestHandler::GetSockPeerName(void * const vpMessage, const WiFiFunct
     }
     Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&response.Addr));
     message->MessageType = MessageTypes::Response;
-    _messageDispatcher->QueueMessageForStm32(message);
+    WiFiRequestHandler::SendResponseToStm32(message);
 
     PERFORMANCE_LOGGING_EXIT();
     PERFORMANCE_LOGGING_ADD_ENTRY();
@@ -2140,7 +2141,7 @@ void WiFiRequestHandler::GetSockPeerName(void * const vpMessage, const WiFiFunct
  *  @param message
  *      Message structure containing the parameters for the getsockname method.
  */
-void WiFiRequestHandler::GetSockName(void * const vpMessage)
+void PosixApiHandlers::GetSockName(void * const vpMessage)
 {
     TRACE_MESSAGE("GetSockName: Enter");
     GetSockPeerName(vpMessage, WiFiFunction::GetSockName);
@@ -2153,7 +2154,7 @@ void WiFiRequestHandler::GetSockName(void * const vpMessage)
  *  @param message
  *      Message structure containing the parameters for the getpeername method.
  */
-void WiFiRequestHandler::GetPeerName(void * const vpMessage)
+void PosixApiHandlers::GetPeerName(void * const vpMessage)
 {
     TRACE_MESSAGE("GetPeerName: Enter");
     GetSockPeerName(vpMessage, WiFiFunction::GetPeerName);
