@@ -280,6 +280,7 @@ WiFiRequestHandler::WiFiRequestHandler()
     _ipChanged = false;
     _progressiveDelay = new ProgressiveDelay();
     WiFiRequestHandler::_emptyString[0] = 0;
+    PosixApiHandlers::Setup();
 }
 
 /**
@@ -734,7 +735,7 @@ uint32_t WiFiRequestHandler::GetNextMessageID()
 
 /**
  * @brief Send the response to the STM32.
- * 
+ *
  * @param vpResponse Response message to send.
  */
 void WiFiRequestHandler::SendResponseToStm32(Message *vpResponse)
