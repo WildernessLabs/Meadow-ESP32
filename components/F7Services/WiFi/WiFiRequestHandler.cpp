@@ -54,21 +54,6 @@ WiFiRequestHandler *WiFiRequestHandler::_instance = nullptr;
 EventGroupHandle_t WiFiRequestHandler::_xWiFiEventGroup = nullptr;
 
 /**
- *  @brief List of active poll requests.
- */
-std::map<uint32_t, struct pollfd *> WiFiRequestHandler::_pollRequests;
-
-/**
- *  @brief Mutex for the poll request linked list.
- */
-SemaphoreHandle_t WiFiRequestHandler::_pollRequestListMutex = NULL;
-
-/**
- *  @brief Handle for the completed poll requests.
- */
-QueueHandle_t WiFiRequestHandler::_completedPollRequestsQueue = NULL;
-
-/**
  *  @brief GPIO Pin connected to the antenna selection switch
  *  which will connect the on board antenna to the ESP32.
  */
@@ -79,16 +64,6 @@ const gpio_num_t WiFiRequestHandler::ON_BOARD_ANTENNA_PIN = GPIO_NUM_26;
  *  which will connect the external antenna to the ESP32.
  */
 const gpio_num_t WiFiRequestHandler::EXTERNAL_ANTENNA_PIN = GPIO_NUM_27;
-
-/**
- *  @brief Index of the dummy socket file descriptor in poll request.
- */
-const int WiFiRequestHandler::POLL_DUMMY_FD_INDEX = 1;
-
-/**
- *  @brief Index of the actual socket file descriptor in poll request.
- */
-const int WiFiRequestHandler::POLL_FD_INDEX = 0;
 
 /**
  *  @brief Network Interface Handle for the board when running in station mode i.e. as a device connected to an access point.
@@ -158,7 +133,7 @@ bool WiFiRequestHandler::_useDhcp = false;
 const char *WiFiRequestHandler::USE_DHCP_NAME = "UseDHCP";
 
 /**
- *  @brief Defaut access [oint to be used when automatically connecting.
+ *  @brief Default access [oint to be used when automatically connecting.
  */
 char *WiFiRequestHandler::_defaultAccessPoint = nullptr;
 
@@ -286,14 +261,6 @@ WiFiRequestHandler::WiFiRequestHandler()
     //
     setenv("TZ", _timezone, 1);
     tzset();
-    //
-    //  Set up the structures need to deal with poll() requests in an asynchronous manner.
-    //
-    _pollRequestListMutex = xSemaphoreCreateMutex();
-    if (_pollRequestListMutex == NULL)
-    {
-        ERROR_MESSAGE("WiFiRequestHandler: Cannot create poll request list mutex.");
-    }
     //
     //  Get ready for nodes connecting when configured as an access point.
     //
@@ -740,6 +707,21 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetWiFiTimeout(uint32_t value)
 WiFiRequestHandler *WiFiRequestHandler::GetInstance()
 {
     return (_instance);
+}
+
+/**
+ *  @brief Get the next message ID that can be used by the ESP32 system to send a
+ *  message to the STM32.
+ *
+ *  This method will increment the last used message ID, apply the message
+ *  ID mask and then return the Message ID.
+ *
+ *  @returns
+ *      Next message ID that can be used.
+ */
+uint32_t WiFiRequestHandler::GetNextMessageID()
+{
+    return (WiFiRequestHandler::GetInstance()->_messageDispatcher->GetNextMessageID());
 }
 
 /**
@@ -1283,7 +1265,7 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
                 xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
                 break;
             case WiFiFunction::Poll:
-                Poll((void *) request);
+                PosixApiHandlers::Poll((void *) request);
                 xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
                 break;
             case WiFiFunction::Send:

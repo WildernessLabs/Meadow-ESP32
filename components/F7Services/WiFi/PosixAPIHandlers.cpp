@@ -31,6 +31,47 @@
 /*
  * ----------------------------------------------------------------------------
  *
+ *               Initialise class level static variables.
+ *
+ * ----------------------------------------------------------------------------
+ */
+
+/**
+ *  @brief Mutex for the poll request linked list.
+ */
+SemaphoreHandle_t PosixApiHandlers::_pollRequestListMutex = NULL;
+
+/**
+ *  @brief List of active poll requests.
+ */
+std::map<uint32_t, struct pollfd *> PosixApiHandlers::_pollRequests;
+
+/*
+ * ----------------------------------------------------------------------------
+ *
+ *                  Constructors and destructors.
+ *
+ * ----------------------------------------------------------------------------
+ */
+
+/**
+ *  @brief Default constructor for the PosixApiHandlers class.
+ */
+PosixApiHandlers::PosixApiHandlers()
+{
+    //
+    //  Set up the structures need to deal with poll() requests in an asynchronous manner.
+    //
+    _pollRequestListMutex = xSemaphoreCreateMutex();
+    if (_pollRequestListMutex == NULL)
+    {
+        ERROR_MESSAGE("PosixApiHandlers: Cannot create poll request list mutex.");
+    }
+}
+
+/*
+ * ----------------------------------------------------------------------------
+ *
  *                             Methods
  *
  * ----------------------------------------------------------------------------
@@ -2164,7 +2205,7 @@ void PosixApiHandlers::GetPeerName(void * const vpMessage)
 /**
  *  @brief Lock the _pollRequests object.
  */
-void WiFiRequestHandler::LockPollRequests()
+void PosixApiHandlers::LockPollRequests()
 {
     xSemaphoreTake(_pollRequestListMutex, portMAX_DELAY);
 }
@@ -2172,7 +2213,7 @@ void WiFiRequestHandler::LockPollRequests()
 /**
  *  @brief Unlock the _pollRequests object.
  */
-void WiFiRequestHandler::UnlockPollRequests()
+void PosixApiHandlers::UnlockPollRequests()
 {
     xSemaphoreGive(_pollRequestListMutex);
 }
@@ -2183,7 +2224,7 @@ void WiFiRequestHandler::UnlockPollRequests()
  *  @returns
  *      Handle to the socket that has just been opened of -1 if there is a problem.
  */
-int WiFiRequestHandler::OpenDummySocket()
+int PosixApiHandlers::OpenDummySocket()
 {
     TRACE_MESSAGE("OpenDummySocket: Enter");
 
@@ -2207,7 +2248,7 @@ int WiFiRequestHandler::OpenDummySocket()
 /**
  *  @brief Debug method to dump all of the active poll requests.
  */
-void WiFiRequestHandler::DumpActivePollRequests()
+void PosixApiHandlers::DumpActivePollRequests()
 {
     TRACE_MESSAGE("DumpActivePollRequests: Enter");
     LockPollRequests();
@@ -2233,7 +2274,7 @@ void WiFiRequestHandler::DumpActivePollRequests()
  *  @param message
  *      Message structure containing the parameters for the poll method.
  */
-int WiFiRequestHandler::PollSetup(void * const vpMessage)
+int PosixApiHandlers::PollSetup(void * const vpMessage)
 {
     TRACE_MESSAGE("PollSetup: Enter");
 
@@ -2260,10 +2301,10 @@ int WiFiRequestHandler::PollSetup(void * const vpMessage)
     int32_t events;
     Mapping::GetEspFlagValue(Mapping::PollEvents, request->Events, &events);
 
-    fds[WiFiRequestHandler::POLL_FD_INDEX].fd = request->SocketHandle;
-    fds[WiFiRequestHandler::POLL_FD_INDEX].events = (uint16_t) (events & 0xffff);
-    fds[WiFiRequestHandler::POLL_DUMMY_FD_INDEX].fd = dummy_socket_handle;
-    fds[WiFiRequestHandler::POLL_DUMMY_FD_INDEX].events = POLLIN;
+    fds[POLL_FD_INDEX].fd = request->SocketHandle;
+    fds[POLL_FD_INDEX].events = (uint16_t) (events & 0xffff);
+    fds[POLL_DUMMY_FD_INDEX].fd = dummy_socket_handle;
+    fds[POLL_DUMMY_FD_INDEX].events = POLLIN;
 
     TRACE_MESSAGE("Poll: Requested Nuttx events 0x%04x maps to ESP events 0x%04x", request->Events, (uint) events);
 
@@ -2288,7 +2329,7 @@ int WiFiRequestHandler::PollSetup(void * const vpMessage)
  *  @param message
  *      Message structure containing the parameters for the poll method.
  */
-int WiFiRequestHandler::PollTeardown(void * const vpMessage)
+int PosixApiHandlers::PollTeardown(void * const vpMessage)
 {
     TRACE_MESSAGE("PollTeardown: Enter");
     int result = 0;
@@ -2305,8 +2346,8 @@ int WiFiRequestHandler::PollTeardown(void * const vpMessage)
     {
         TRACE_MESSAGE("PollTeardown: Found socket handle for request 0x%08x", (uint) request->SetupMessageId);
         struct pollfd *fds = static_cast<struct pollfd *>(it->second);
-        result = write(fds[WiFiRequestHandler::POLL_DUMMY_FD_INDEX].fd, "E", 1); // Writing to the dummy file descriptor should end the poll request.
-        if (close(fds[WiFiRequestHandler::POLL_DUMMY_FD_INDEX].fd) < 0)
+        result = write(fds[POLL_DUMMY_FD_INDEX].fd, "E", 1); // Writing to the dummy file descriptor should end the poll request.
+        if (close(fds[POLL_DUMMY_FD_INDEX].fd) < 0)
         {
             result = -1;
         }
@@ -2338,7 +2379,7 @@ int WiFiRequestHandler::PollTeardown(void * const vpMessage)
  *  @param message
  *      Message structure containing the parameters for the poll method.
  */
-void WiFiRequestHandler::PollSocket(void * const requestId)
+void PosixApiHandlers::PollSocket(void * const requestId)
 {
     TRACE_MESSAGE("PollSocket: Enter");
 
@@ -2396,7 +2437,7 @@ void WiFiRequestHandler::PollSocket(void * const requestId)
         memset(static_cast<void *>(message), 0, sizeof(Message));
         message->Interface = Esp32Interfaces::WiFi;
         message->Function = WiFiFunction::InterruptPollResponse;
-        message->MessageID = _messageDispatcher->GetNextMessageID();
+        message->MessageID = WiFiRequestHandler::GetNextMessageID();
         message->PayloadLength = Encoders::EncodedInterruptPollResponseBufferSize(&response);
         message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
         if (message->Payload == NULL)
@@ -2410,7 +2451,7 @@ void WiFiRequestHandler::PollSocket(void * const requestId)
             message->StatusCode = StatusCodes::CompletedOk;
         }
         message->MessageType = MessageTypes::Event;
-        _messageDispatcher->QueueMessageForStm32(message);
+        WiFiRequestHandler::SendResponseToStm32(message);
     }
 
     TRACE_MESSAGE("PollSocket: Exit");
@@ -2422,7 +2463,7 @@ void WiFiRequestHandler::PollSocket(void * const requestId)
  *  @param message
  *      Message structure containing the parameters for the poll method.
  */
-void WiFiRequestHandler::Poll(void * const vpMessage)
+void PosixApiHandlers::Poll(void * const vpMessage)
 {
     TRACE_MESSAGE("Poll: Enter");
     Message * const message = static_cast<Message *>(vpMessage);
@@ -2432,7 +2473,7 @@ void WiFiRequestHandler::Poll(void * const vpMessage)
     Esp32Messaging::IntegerAndErrnoResponse response = {};
 
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    if (IsConnected())
+    if (WiFiRequestHandler::IsConnected())
     {
         Esp32Messaging::PollRequest *request = Encoders::ExtractPollRequest(message->Payload);
         if (request)
@@ -2485,7 +2526,7 @@ void WiFiRequestHandler::Poll(void * const vpMessage)
         }
     }
     message->MessageType = MessageTypes::Response;
-    _messageDispatcher->QueueMessageForStm32(message);
+    WiFiRequestHandler::SendResponseToStm32(message);
 
     TRACE_MESSAGE("Poll: Exit");
 }

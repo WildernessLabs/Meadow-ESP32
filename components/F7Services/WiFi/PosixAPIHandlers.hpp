@@ -165,7 +165,40 @@ public:
      */
     static void GetPeerName(void * const vpMessage);
 
+    /**
+     *  @brief Expose the poll method to the STM32.
+     *
+     *  @param message
+     *      Message structure containing the parameters for the poll method.
+     */
+    static void Poll(void * const vpMessage);
+
 private:
+    /**
+     *  @brief Index of the dummy socket file descriptor in poll request.
+     */
+    static constexpr int POLL_DUMMY_FD_INDEX = 1;
+
+    /**
+     *  @brief Index of the actual socket file descriptor in poll request.
+     */
+    static constexpr int POLL_FD_INDEX = 0;
+
+    /**
+     *  @brief Mutex for the poll request linked list.
+     */
+    static SemaphoreHandle_t _pollRequestListMutex;
+
+    /**
+     *  @brief List of active poll requests.
+     */
+    static std::map<uint32_t, struct pollfd *> _pollRequests;
+
+    /**
+     *  @brief Constructor for the PosixApiHandlers class.
+     */
+    PosixApiHandlers();
+
     /**
      * @brief Get address information.
      *
@@ -316,4 +349,51 @@ private:
      *      Which method should be called, getsockname or getpeername?
      */
     static void GetSockPeerName(void * const vpMessage, const WiFiFunction::WiFiFunction methodToCall);
+
+    /**
+     *  @brief Lock the _pollRequests object.
+     */
+    static void LockPollRequests();
+
+    /**
+     *  @brief Unlock the _pollRequests object.
+     */
+    static void UnlockPollRequests();
+
+    /**
+     *  @brief Open a dummy socket to be used by the Poll methods to terminate a poll request.
+     *
+     *  @returns
+     *      Handle to the socket that has just been opened of -1 if there is a problem.
+     */
+    static int OpenDummySocket();
+
+    /**
+     *  @brief Debug method to dump all of the active poll requests.
+     */
+    static void DumpActivePollRequests();
+
+    /**
+     *  @brief Setup a poll request an assign it to a thread in the thread pool.
+     *
+     *  @param message
+     *      Message structure containing the parameters for the poll method.
+     */
+    static int PollSetup(void * const vpMessage);
+
+    /**
+     *  @brief Teardown a poll request that has previously been setup by PollSetup.
+     *
+     *  @param message
+     *      Message structure containing the parameters for the poll method.
+     */
+    static int PollTeardown(void * const vpMessage);
+
+    /**
+     *  @brief Execute the actual request to poll a socket.
+     *
+     *  @param message
+     *      Message structure containing the parameters for the poll method.
+     */
+    static void PollSocket(void * const requestId);
 };
