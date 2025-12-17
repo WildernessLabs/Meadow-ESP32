@@ -41,6 +41,9 @@
  * ----------------------------------------------------------------------------
  */
 
+/**
+ * @brief Name of this component for logging.
+ */
 const char *WiFiRequestHandler::COMPONENT_NAME = "WiFi";
 
 /**
