@@ -37,6 +37,11 @@
  */
 
 /**
+ * @brief Name of this component for logging.
+ */
+const char *PosixApiHandlers::COMPONENT_NAME = "Posix";
+
+/**
  *  @brief Mutex for the poll request linked list.
  */
 SemaphoreHandle_t PosixApiHandlers::_pollRequestListMutex = NULL;

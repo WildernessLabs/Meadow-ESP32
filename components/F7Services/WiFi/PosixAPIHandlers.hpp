@@ -33,6 +33,11 @@ class PosixApiHandlers
 {
 public:
     /**
+     *  @brief Name of the component / task for the WiFi system.
+     */
+    static const char *COMPONENT_NAME;
+
+    /**
      *  @brief Setup the Posix API handlers.
      */
     static void Setup();
@@ -235,7 +240,7 @@ private:
 
     /**
      * @brief Process the SO_SNDTIMEO and SO_SNDTIMEO get socket option.
-     * 
+     *
      * @note This method is only called by one method and so it is suggested that it is inlined.
      *
      * @param vpMessage Pointer to the request.
@@ -244,7 +249,7 @@ private:
 
     /**
      * @brief Process the SO_LINGER get socket option.
-     * 
+     *
      * @note This method is only called by one method and so it is suggested that it is inlined.
      *
      * @param vpMessage Pointer to the request.
@@ -253,7 +258,7 @@ private:
 
     /**
      * @brief Process the SO_RCVBUF get socket option.
-     * 
+     *
      * @note This method is only called by one method and so it is suggested that it is inlined.
      *
      * @param vpMessage Pointer to the request.
@@ -276,7 +281,7 @@ private:
 
     /**
      * @brief Setup the socket value and length for calls to SetSockOpt.
-     * 
+     *
      * @note This method is only called by one method and so it is suggested that it is inlined.
      *
      * @param name
@@ -295,7 +300,7 @@ private:
 
     /**
      * @brief Setup the TCP value and length for calls to SetSockOpt.
-     * 
+     *
      * @note This method is only called by one method and so it is suggested that it is inlined.
      *
      * @param name
@@ -314,7 +319,7 @@ private:
 
     /**
      * @brief Process the setsockopt request from the STM32.
-     * 
+     *
      * @note This method is only called by one method and so it is suggested that it is inlined.
      *
      * @param request Request from the STM32.
@@ -326,7 +331,7 @@ private:
 
     /**
      * @brief Provide a mechanism for the STM32 to call the sendto method.
-     * 
+     *
      * @note This method is only called by one method and so it is suggested that it is inlined.
      *
      * @param request Request from the STM32.
@@ -336,7 +341,7 @@ private:
 
     /**
      * @brief Process the recvfrom request from the STM32.
-     * 
+     *
      * @note This method is only called by one method and so it is suggested that it is inlined.
      *
      * @param request Request from the STM32.
@@ -348,7 +353,7 @@ private:
 
     /**
      * @brief Bind a socket to an address.
-     * 
+     *
      * @note This method is only called by one method and so it is suggested that it is inlined.
      *
      * @param request Request from the STM32.
@@ -360,7 +365,7 @@ private:
 
     /**
      * @brief Process the accept request from the STM32.
-     * 
+     *
      * @note This method is only called by one method and so it is suggested that it is inlined.
      *
      * @param request Request from the STM32.
@@ -396,14 +401,14 @@ private:
 
     /**
      * @brief Lock the _pollRequests object.
-     * 
+     *
      * @note This method is only called by one method and so it is suggested that it is inlined.
      */
     static inline void LockPollRequests();
 
     /**
      * @brief Unlock the _pollRequests object.
-     * 
+     *
      * @note This method is only called by one method and so it is suggested that it is inlined.
      */
     static inline void UnlockPollRequests();
@@ -423,7 +428,7 @@ private:
 
     /**
      * @brief Setup a poll request an assign it to a thread in the thread pool.
-     * 
+     *
      * @note This method is only called by one method and so it is suggested that it is inlined.
      *
      * @param message
@@ -433,7 +438,7 @@ private:
 
     /**
      * @brief Teardown a poll request that has previously been setup by PollSetup.
-     * 
+     *
      * @note This method is only called by one method and so it is suggested that it is inlined.
      *
      * @param message
@@ -443,7 +448,7 @@ private:
 
     /**
      * @brief Execute the actual request to poll a socket.
-     * 
+     *
      * @note This method is only called by one method and so it is suggested that it is inlined.
      *
      * @param message
