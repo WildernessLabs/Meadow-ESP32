@@ -689,6 +689,14 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetWiFiTimeout(uint32_t value)
     return (StatusCodes::CompletedOk);
 }
 
+/**
+ *  @brief Get the network interface handle for station mode.
+ */
+esp_netif_t *WiFiRequestHandler::GetStationNetIfHandle()
+{
+    return (_stationNetIfHandle);
+}
+
 /*
  * ----------------------------------------------------------------------------
  *
@@ -1285,7 +1293,7 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
                 xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
                 break;
             case WiFiFunction::Ioctl:
-                SystemRequestHandler::SharedThreadPool()->Execute(Ioctl, static_cast<void *>(request));
+                SystemRequestHandler::SharedThreadPool()->Execute(PosixApiHandlers::Ioctl, static_cast<void *>(request));
                 xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
                 break;
             case WiFiFunction::GetSockName:

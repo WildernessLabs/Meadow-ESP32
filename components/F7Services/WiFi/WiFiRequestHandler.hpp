@@ -693,11 +693,6 @@ private:
     //                      POSIX Calls start here.
 
     /**
-     *  @brief Provide a mechanism for the STM32 to call the poll method.
-     */
-    static void Poll(void * const vpMessage);
-
-    /**
      *  @brief Provide a mechanism for the STM32 to call the simulated ioctl method.
      */
     static void Ioctl(void * const vpMessage);
@@ -843,6 +838,13 @@ public:
      */
     static uint32_t GetWiFiTimeout();
     static StatusCodes::StatusCodes SetWiFiTimeout(uint32_t value);
+
+    /**
+     *  @brief Get the network interface handle for station mode.
+     * 
+     * @return esp_netif_t* NetIF Handle.
+     */
+    static esp_netif_t *GetStationNetIfHandle();
 
 #if defined(UNIT_TESTING)
     friend class WiFiRequestHandlerTestFriend;

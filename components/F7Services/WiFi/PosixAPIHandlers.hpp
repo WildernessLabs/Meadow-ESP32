@@ -173,6 +173,17 @@ public:
      */
     static void Poll(void * const vpMessage);
 
+    /**
+     *  @brief Expose the simulation of the POSIX ioctl method to the STM32.
+     *
+     *  This is a simulation of the ioctl method as this is not supported by the
+     *  ESP-IDF framework.
+     *
+     *  @param message
+     *      Message structure containing the parameters for the ioctl method.
+     */
+    static void Ioctl(void * const vpMessage);
+
 private:
     /**
      *  @brief Index of the dummy socket file descriptor in poll request.

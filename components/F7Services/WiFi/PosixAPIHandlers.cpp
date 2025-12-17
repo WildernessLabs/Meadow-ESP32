@@ -1910,7 +1910,7 @@ void PosixApiHandlers::Accept(void * const vpMessage)
  *  @param message
  *      Message structure containing the parameters for the ioctl method.
  */
-void WiFiRequestHandler::Ioctl(void * const vpMessage)
+void PosixApiHandlers::Ioctl(void * const vpMessage)
 {
     TRACE_MESSAGE("Ioctl: Enter");
     PERFORMANCE_LOGGING_ENTER();
@@ -1921,7 +1921,7 @@ void WiFiRequestHandler::Ioctl(void * const vpMessage)
     assert(message->Payload != NULL);
     Esp32Messaging::IoctlResponse response = {};
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    if (IsConnected())
+    if (WiFiRequestHandler::IsConnected())
     {
         Esp32Messaging::IoctlRequest *request = Encoders::ExtractIoctlRequest(message->Payload);
 
@@ -1935,7 +1935,7 @@ void WiFiRequestHandler::Ioctl(void * const vpMessage)
         switch (request->Command)
         {
             case SIOCGIFNETMASK: /* Get network mask */
-                if (esp_netif_get_ip_info(_stationNetIfHandle, &ipInfo) == ESP_OK)
+                if (esp_netif_get_ip_info(WiFiRequestHandler::GetStationNetIfHandle(), &ipInfo) == ESP_OK)
                 {
                     memcpy(&sa.Ip4Address, &ipInfo.netmask, sizeof(ipInfo.netmask));
                     response.AddrLength = Encoders::EncodedSockAddrBufferSize(&sa);
@@ -1963,12 +1963,12 @@ void WiFiRequestHandler::Ioctl(void * const vpMessage)
                 }
                 else
                 {
-                    GetMacAddress(response.Addr, WIFI_IF_STA);
+                    WiFiRequestHandler::GetMacAddress(response.Addr, WIFI_IF_STA);
                 }
                 break;
             case SIOCGIFADDR: /* Get IP address */
             case SIOCGIFCONF: /* Return an interface list (IPv4) */
-                if (esp_netif_get_ip_info(_stationNetIfHandle, &ipInfo) == ESP_OK)
+                if (esp_netif_get_ip_info(WiFiRequestHandler::GetStationNetIfHandle(), &ipInfo) == ESP_OK)
                 {
                     memcpy(&sa.Ip4Address, &ipInfo.ip, sizeof(ipInfo.ip));
                     response.AddrLength = Encoders::EncodedSockAddrBufferSize(&sa);
@@ -1986,7 +1986,7 @@ void WiFiRequestHandler::Ioctl(void * const vpMessage)
                 }
                 break;
             case SIOCGIFFLAGS: /* Gets the interface flags */
-                if (esp_netif_get_ip_info(_stationNetIfHandle, &ipInfo) == ESP_OK)
+                if (esp_netif_get_ip_info(WiFiRequestHandler::GetStationNetIfHandle(), &ipInfo) == ESP_OK)
                 {
                     response.Flags = IFF_UP;
                 }
@@ -2031,7 +2031,7 @@ void WiFiRequestHandler::Ioctl(void * const vpMessage)
     }
     Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&response.Addr));
     message->MessageType = MessageTypes::Response;
-    _messageDispatcher->QueueMessageForStm32(message);
+    WiFiRequestHandler::SendResponseToStm32(message);
 
     PERFORMANCE_LOGGING_EXIT();
     PERFORMANCE_LOGGING_ADD_ENTRY();
