@@ -49,16 +49,16 @@ std::map<uint32_t, struct pollfd *> PosixApiHandlers::_pollRequests;
 /*
  * ----------------------------------------------------------------------------
  *
- *                  Constructors and destructors.
+ *                             Methods
  *
  * ----------------------------------------------------------------------------
  */
 
 /**
- *  @brief Default constructor for the PosixApiHandlers class.
+ *  @brief Setup the Posix API handlers.
  */
-PosixApiHandlers::PosixApiHandlers()
-{
+ void PosixApiHandlers::Setup()
+ {
     //
     //  Set up the structures need to deal with poll() requests in an asynchronous manner.
     //
@@ -67,15 +67,7 @@ PosixApiHandlers::PosixApiHandlers()
     {
         ERROR_MESSAGE("PosixApiHandlers: Cannot create poll request list mutex.");
     }
-}
-
-/*
- * ----------------------------------------------------------------------------
- *
- *                             Methods
- *
- * ----------------------------------------------------------------------------
- */
+ }
 
 /**
  * @brief Get address information.
@@ -2203,7 +2195,7 @@ void PosixApiHandlers::GetPeerName(void * const vpMessage)
 }
 
 /**
- *  @brief Lock the _pollRequests object.
+ *  @brief Lock the _pollRequestListMutex object.
  */
 void PosixApiHandlers::LockPollRequests()
 {
@@ -2211,7 +2203,7 @@ void PosixApiHandlers::LockPollRequests()
 }
 
 /**
- *  @brief Unlock the _pollRequests object.
+ *  @brief Unlock the _pollRequestListMutex object.
  */
 void PosixApiHandlers::UnlockPollRequests()
 {

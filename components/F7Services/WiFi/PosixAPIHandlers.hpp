@@ -30,6 +30,11 @@ class PosixApiHandlers
 {
 public:
     /**
+     *  @brief Setup the Posix API handlers.
+     */
+    static void Setup();
+
+    /**
      *  @brief Expose the POSIX getaddrinfo method to the STM32.
      *
      *  @param message
@@ -76,7 +81,7 @@ public:
      *      Message structure containing the parameters for the setsockopt method.
      */
     static void SetSockOpt(void * const vpMessage);
-    
+
     /**
      *  @brief Expose the POSIX write method to the STM32.
      *
@@ -206,9 +211,14 @@ private:
     static std::map<uint32_t, struct pollfd *> _pollRequests;
 
     /**
-     *  @brief Constructor for the PosixApiHandlers class.
+     *  @brief Delete default constructor, copy constructor, move constructor,
+     *         copy assignment operator, and move assignment operator.
      */
-    PosixApiHandlers();
+    PosixApiHandlers() = delete;
+    PosixApiHandlers(const PosixApiHandlers &) = delete;
+    PosixApiHandlers(PosixApiHandlers &&) = delete;
+    PosixApiHandlers& operator=(const PosixApiHandlers &) = delete;
+    PosixApiHandlers& operator=(PosixApiHandlers &&) = delete;
 
     /**
      * @brief Get address information.
