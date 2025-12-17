@@ -217,8 +217,8 @@ private:
     PosixApiHandlers() = delete;
     PosixApiHandlers(const PosixApiHandlers &) = delete;
     PosixApiHandlers(PosixApiHandlers &&) = delete;
-    PosixApiHandlers& operator=(const PosixApiHandlers &) = delete;
-    PosixApiHandlers& operator=(PosixApiHandlers &&) = delete;
+    PosixApiHandlers &operator=(const PosixApiHandlers &) = delete;
+    PosixApiHandlers &operator=(PosixApiHandlers &&) = delete;
 
     /**
      * @brief Get address information.

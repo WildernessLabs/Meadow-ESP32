@@ -57,8 +57,8 @@ std::map<uint32_t, struct pollfd *> PosixApiHandlers::_pollRequests;
 /**
  *  @brief Setup the Posix API handlers.
  */
- void PosixApiHandlers::Setup()
- {
+void PosixApiHandlers::Setup()
+{
     //
     //  Set up the structures need to deal with poll() requests in an asynchronous manner.
     //
@@ -67,7 +67,7 @@ std::map<uint32_t, struct pollfd *> PosixApiHandlers::_pollRequests;
     {
         ERROR_MESSAGE("PosixApiHandlers: Cannot create poll request list mutex.");
     }
- }
+}
 
 /**
  * @brief Get address information.
