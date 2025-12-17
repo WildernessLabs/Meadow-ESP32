@@ -688,15 +688,6 @@ private:
      */
     static uint8_t *GetTcpOptionValue(const int name, uint8_t * const optionValue, socklen_t * const length);
 
-    //----------------------------------------------------------------------
-    //
-    //                      POSIX Calls start here.
-
-    /**
-     *  @brief Provide a mechanism for the STM32 to call the simulated ioctl method.
-     */
-    static void Ioctl(void * const vpMessage);
-
     /**
      *  @brief Method called when the time server has supplied updated time information.
      */
@@ -742,7 +733,7 @@ public:
 
     /**
      *  @brief Send a response message back to the STM32.
-     * 
+     *
      * @param vpResponse Response message to send.
      */
     static void SendResponseToStm32(Message *vpResponse);
@@ -841,7 +832,7 @@ public:
 
     /**
      *  @brief Get the network interface handle for station mode.
-     * 
+     *
      * @return esp_netif_t* NetIF Handle.
      */
     static esp_netif_t *GetStationNetIfHandle();
