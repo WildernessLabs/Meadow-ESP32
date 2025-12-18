@@ -34,6 +34,7 @@
 #include "Thread.hpp"
 #include "ThreadPool.hpp"
 #include "CoreDump.hpp"
+#include "PosixAPIHandlers.hpp"
 
 #if defined(PERFORMANCE_LOGGING)
     #pragma message "Performance logging is enabled."
@@ -206,6 +207,7 @@ bool Logging::TurnLoggingOn(const char * const component)
         if (!strcasecmp(component, WiFiRequestHandler::COMPONENT_NAME))
         {
             esp_log_level_set(WiFiRequestHandler::COMPONENT_NAME, ESP_LOG_INFO);
+            esp_log_level_set(PosixApiHandlers::COMPONENT_NAME, ESP_LOG_INFO);
             return (true);
         }
         if (!strcasecmp(component, SystemRequestHandler::COMPONENT_NAME))
