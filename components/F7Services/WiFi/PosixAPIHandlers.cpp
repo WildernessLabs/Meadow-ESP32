@@ -39,7 +39,7 @@
 /**
  *  @brief Mutex for the poll request linked list.
  */
-SemaphoreHandle_t PosixApiHandlers::_pollRequestListMutex = NULL;
+SemaphoreHandle_t PosixApiHandlers::_pollRequestListMutex = nullptr;
 
 /**
  *  @brief List of active poll requests.
