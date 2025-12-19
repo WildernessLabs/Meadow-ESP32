@@ -25,7 +25,7 @@ private:
     /**
      *  @brief Size of the thread pool.
      */
-#if defined (DEBUG)
+#if defined(DEBUG)
     const int THREAD_POOL_SIZE = 2;
 #else
     const int THREAD_POOL_SIZE = 5;
