@@ -924,24 +924,25 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
         case ESP_GATTS_READ_EVT:
             {
                 TRACE_MESSAGE("ESP_GATTS_READ_EVT, reading handle 0x%04" PRIu16 " need response=%" PRIi32, param->read.handle, param->read.need_rsp);
-
                 if (param->read.need_rsp)
                 {
                     // the app needs to build a response - this is (currently) set for Characteristic Values - so call to the manager to get the value for the handle
-                    esp_gatt_rsp_t rsp;
-                    memset(&rsp, 0, sizeof(esp_gatt_rsp_t));
+                    esp_gatt_rsp_t *response = _manager.GetCurrentValueForAttributeHandle(param->read.handle);
 
-                    rsp.attr_value.handle = param->read.handle;
-
-                    // go get the currently known value from the manager
-                    _manager.GetCurrentValueForAttributeHandle(param->read.handle, rsp.attr_value.value, &rsp.attr_value.len);
-
-                    TRACE_MESSAGE("  Sending read response of %" PRIu16 " bytes", rsp.attr_value.len);
-                    ret = esp_ble_gatts_send_response(gatts_if, param->read.conn_id, param->read.trans_id, ESP_GATT_OK, &rsp);
-
-                    if (ret)
+                    if (response)
                     {
-                        ERROR_MESSAGE("esp_ble_gatts_send_response failed, error code = %" PRIi32, ret);
+                        TRACE_MESSAGE("  Sending read response of %" PRIu16 " bytes", response->attr_value.len);
+                        ret = esp_ble_gatts_send_response(gatts_if, param->read.conn_id, param->read.trans_id, ESP_GATT_OK, response);
+
+                        if (ret)
+                        {
+                            ERROR_MESSAGE("esp_ble_gatts_send_response failed, error code = %" PRIi32, ret);
+                        }
+                        delete response;
+                    }
+                    else
+                    {
+                        ERROR_MESSAGE("Failed to get value for handle 0x%04" PRIu16, param->read.handle);
                     }
                 }
             }
