@@ -585,7 +585,7 @@ bool BluetoothRequestHandler::StartBluetoothService()
     TRACE_MESSAGE("StartBluetoothService: Enter");
 
     esp_err_t ret;
-    esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
+    static esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
 
     TRACE_MESSAGE("Start: esp_bt_controller_init");
     ret = esp_bt_controller_init(&bt_cfg);
