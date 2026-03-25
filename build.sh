@@ -313,12 +313,17 @@ if test -f "$scriptdir/../secrets.h"; then
 fi
 
 #
+# Set the IDF variable in case we are running in a shell where eim has been used to install ESP-IDF.
+#
+IDF="$IDF_PATH/tools/idf.py"
+
+#
 #   There are sometimes problems with old configuration in the build directory
 #   so this removes the build directory before executing the full clean.
 #
 if $FULLCLEAN; then
     run_command "rm -Rf $scriptdir/build"
-    run_command "idf.py fullclean"
+    run_command " $IDF fullclean"
     run_command "rm -f $scriptdir/sdkconfig"
 fi
 
@@ -334,7 +339,7 @@ if ! $NO_BUILD; then
     IDF_FLAGS="build $IDF_FLAGS"
 fi
 if [[ ! -z $IDF_FLAGS ]]; then
-    idf.py $IDF_DEFINES $IDF_FLAGS
+    $IDF $IDF_DEFINES $IDF_FLAGS
 fi
 
 if [ $? -eq 0 ]; then
