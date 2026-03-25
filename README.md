@@ -1,5 +1,7 @@
 # Meadow-ESP32
 
+[![Build](https://github.com/WildernessLabs/Meadow-ESP32/actions/workflows/build.yml/badge.svg)](https://github.com/WildernessLabs/Meadow-ESP32/actions/workflows/build.yml)
+
 This repository contains the code that will run on the ESP32 that will support the communication and facilitate the provision of services to NuttX and Mono.
 
 Services are provided to the STM32 through the SPI interface connected to the STM32 and the ESP32 chips.
