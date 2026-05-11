@@ -585,7 +585,7 @@ bool BluetoothRequestHandler::StartBluetoothService()
     TRACE_MESSAGE("StartBluetoothService: Enter");
 
     esp_err_t ret;
-    static esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
+    esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
 
     TRACE_MESSAGE("Start: esp_bt_controller_init");
     ret = esp_bt_controller_init(&bt_cfg);
@@ -924,25 +924,24 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
         case ESP_GATTS_READ_EVT:
             {
                 TRACE_MESSAGE("ESP_GATTS_READ_EVT, reading handle 0x%04" PRIu16 " need response=%" PRIi32, param->read.handle, param->read.need_rsp);
+
                 if (param->read.need_rsp)
                 {
                     // the app needs to build a response - this is (currently) set for Characteristic Values - so call to the manager to get the value for the handle
-                    esp_gatt_rsp_t *response = _manager.GetCurrentValueForAttributeHandle(param->read.handle);
+                    esp_gatt_rsp_t rsp;
+                    memset(&rsp, 0, sizeof(esp_gatt_rsp_t));
 
-                    if (response)
-                    {
-                        TRACE_MESSAGE("  Sending read response of %" PRIu16 " bytes", response->attr_value.len);
-                        ret = esp_ble_gatts_send_response(gatts_if, param->read.conn_id, param->read.trans_id, ESP_GATT_OK, response);
+                    rsp.attr_value.handle = param->read.handle;
 
-                        if (ret)
-                        {
-                            ERROR_MESSAGE("esp_ble_gatts_send_response failed, error code = %" PRIi32, ret);
-                        }
-                        delete response;
-                    }
-                    else
+                    // go get the currently known value from the manager
+                    _manager.GetCurrentValueForAttributeHandle(param->read.handle, rsp.attr_value.value, &rsp.attr_value.len);
+
+                    TRACE_MESSAGE("  Sending read response of %" PRIu16 " bytes", rsp.attr_value.len);
+                    ret = esp_ble_gatts_send_response(gatts_if, param->read.conn_id, param->read.trans_id, ESP_GATT_OK, &rsp);
+
+                    if (ret)
                     {
-                        ERROR_MESSAGE("Failed to get value for handle 0x%04" PRIu16, param->read.handle);
+                        ERROR_MESSAGE("esp_ble_gatts_send_response failed, error code = %" PRIi32, ret);
                     }
                 }
             }
