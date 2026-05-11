@@ -303,14 +303,23 @@ if [ ! -z "$DEBUG_SELECTIONS" ]; then
 fi
 
 #
-#   The ESP unit tests require a secrets file to be present so check if there is one
-#   available and copy it to the right place if it is available.  This file does not
-#   want to find its way its way into source control so its existence will be checked
-#   later and it will be removed (assuming success).
+#   The unit tests require a secrets file containing network credentials.  This file
+#   must NOT be committed to source control.  The canonical copy lives one level above
+#   the repository root (i.e. ../secrets.h relative to this script).  Copy it into the
+#   two test locations that need it.
 #
-if test -f "$scriptdir/../secrets.h"; then
-    cp $scriptdir/../secrets.h $scriptdir/test/secrets.h
-    cp $scriptdir/../secrets.h $scriptdir/components/F7Services/test/secrets.h
+#   If the master file does not exist the build will continue, but any tests that
+#   require network access will fail.  Use secrets.template as a starting point.
+#
+MASTER_SECRETS="$scriptdir/../secrets.h"
+if test -f "$MASTER_SECRETS"; then
+    echo "Copying network credentials from $MASTER_SECRETS into test directories."
+    cp "$MASTER_SECRETS" "$scriptdir/test/secrets.h"
+    cp "$MASTER_SECRETS" "$scriptdir/components/F7Services/test/secrets.h"
+else
+    printf "${red}WARNING:${reset} Master secrets file not found at $MASTER_SECRETS.\n"
+    printf "         Network-dependent tests will fail.\n"
+    printf "         Copy secrets.template to $MASTER_SECRETS and fill in real credentials.\n"
 fi
 
 #

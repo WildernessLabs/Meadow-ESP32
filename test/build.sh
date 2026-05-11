@@ -205,6 +205,26 @@ if [ ! -z "$DEBUG_SELECTIONS" ]; then
 fi
 
 #
+#   The unit tests require a secrets file containing network credentials.  This file
+#   must NOT be committed to source control.  The canonical copy lives one level above
+#   the repository root (i.e. ../../secrets.h relative to this script).  Copy it into
+#   the two test locations that need it.
+#
+#   If the master file does not exist the build will continue, but any tests that
+#   require network access will fail.  Use secrets.template as a starting point.
+#
+MASTER_SECRETS="$scriptdir/../../secrets.h"
+if test -f "$MASTER_SECRETS"; then
+    echo "Copying network credentials from $MASTER_SECRETS into test directories."
+    cp "$MASTER_SECRETS" "$scriptdir/secrets.h"
+    cp "$MASTER_SECRETS" "$scriptdir/../components/F7Services/test/secrets.h"
+else
+    printf "WARNING: Master secrets file not found at $MASTER_SECRETS.\n"
+    printf "         Network-dependent tests will fail.\n"
+    printf "         Copy secrets.template to $MASTER_SECRETS and fill in real credentials.\n"
+fi
+
+#
 #   There are sometimes problems with old configuration in the build directory
 #   so this removes the build directory before executing the full clean.
 #
