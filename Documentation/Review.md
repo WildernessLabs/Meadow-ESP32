@@ -28,7 +28,6 @@ The Meadow-ESP32 firmware is a well-structured embedded C++ project providing Wi
 
 However, the codebase carries a significant number of correctness and safety issues, several of which are **critical**. The most pressing concerns are:
 
-- **Credentials committed to source control** — WiFi SSID and password are in committed `secrets.h` files.
 - **Mismatched heap allocators** — `pvPortMalloc` / FreeRTOS heap objects are released with `vPortFree` via a utility that wraps `vPortFree`, but `new[]` / `realloc` (stdlib) memory is mixed in, creating undefined behaviour on the FreeRTOS heap.
 - **Missing null checks** after allocation calls throughout the SPI and Bluetooth subsystems.
 - **Race conditions** in the ThreadPool and singleton implementations.
@@ -44,7 +43,6 @@ All open issues on the `WildernessLabs/Meadow-ESP32` repository are addressed in
 
 | Issue | Severity | Title | Review Section |
 |-------|----------|-------|---------------|
-| [#49](https://github.com/WildernessLabs/Meadow-ESP32/issues/49) | — | Encrypt ESP32 file system | §3.1 |
 | [#155](https://github.com/WildernessLabs/Meadow-ESP32/issues/155) | LOW | Tidy up ThreadPool code | §7.1 |
 | [#159](https://github.com/WildernessLabs/Meadow-ESP32/issues/159) | MEDIUM | `GetCurrentValueForAttributeHandle` stack allocation | §6.5 |
 | [#162](https://github.com/WildernessLabs/Meadow-ESP32/issues/162) | CRITICAL | Missing null checks after allocations | §4.1 |
@@ -78,24 +76,6 @@ All open issues on the `WildernessLabs/Meadow-ESP32` repository are addressed in
 ---
 
 ## 3. Security
-
-### 3.1 Credentials Committed to Source Control [CRITICAL / #49 related]
-
-**Files:** `test/secrets.h`, `components/F7Services/test/secrets.h`
-
-Both files contain plaintext WiFi credentials committed to the repository:
-
-```c
-#define WIFI_NETWORK    "MarkS"
-#define WIFI_PASSWORD   "rmRgecjjqeattS84Ryu01757709635"
-```
-
-**Recommendation:**
-1. Rotate the committed password immediately.
-2. Add `secrets.h` to `.gitignore` and provide a `secrets.template` (which does already exist at `test/main/secrets.template` — the same pattern should be applied to both locations).
-3. Review git history to ensure the credentials are purged (`git filter-branch` or `git filter-repo`).
-
-Related: Issue #49 (filesystem encryption) would prevent credentials stored in LittleFS from being extracted via JTAG, but does not address credentials in source control.
 
 ### 3.2 Unencrypted NVS Storage
 
@@ -623,10 +603,6 @@ The following public methods lack docstrings or have incomplete ones:
 ---
 
 ## 9. Test Coverage
-
-### 9.1 Test Infrastructure
-
-Tests are located in `components/F7Services/test/` and `test/`. The test framework uses the ESP-IDF Unity test runner, executed on-device (`test/main/unit_tests.c`). The `test/secrets.h` file contains live network credentials (see §3.1).
 
 ### 9.2 Coverage Gaps
 
