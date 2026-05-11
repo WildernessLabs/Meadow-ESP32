@@ -482,14 +482,6 @@ vTaskSuspend(NULL);
 
 `app_main` is suspended (not deleted), so the objects are intentionally long-lived. However, the `__attribute__((unused))` suppresses an unused-variable warning on `messageDispatcher`, suggesting this was introduced defensively. The code would be clearer if these were top-level global pointers with explicit lifetime documentation.
 
-### 7.4 Spelling Inconsistency: `Milisseconds`
-
-**`ThreadPool.hpp`**, line 38:
-```cpp
-uint32_t _threadPoolAcquireTimeoutInMilisseconds = 5000;
-```
-Misspelled (double 's'). Should be `_threadPoolAcquireTimeoutInMilliseconds`.
-
 ### 7.5 `SendingData` Parameter Unused
 
 **`SpiTransportProvider.cpp`**:
