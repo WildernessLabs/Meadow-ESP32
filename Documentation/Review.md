@@ -77,12 +77,6 @@ All open issues on the `WildernessLabs/Meadow-ESP32` repository are addressed in
 
 ## 3. Security
 
-### 3.2 Unencrypted NVS Storage
-
-WiFi credentials (SSID, password) and device configuration are stored in NVS without encryption. If the device can be accessed physically, NVS contents can be read via the UART or JTAG interface. Issue #49 requests file system encryption; the same consideration applies to NVS.
-
-**Recommendation:** Enable ESP-IDF NVS encryption (`CONFIG_NVS_ENCRYPTION`).
-
 ### 3.3 BLE Security Commented Out
 
 **File:** `BluetoothRequestHandler.cpp`, `GATTSProfileEventHandler`, `ESP_GATTS_CONNECT_EVT`
@@ -94,17 +88,6 @@ WiFi credentials (SSID, password) and device configuration are stored in NVS wit
 BLE pairing security is disabled. Any device in range can connect and read/write characteristics.
 
 **Recommendation:** Enable MITM protection if Bluetooth is used in a sensitive context. At minimum, document this as a conscious decision.
-
-### 3.4 `heap_caps_alloc_failed_hook` Intentional Null Dereference
-
-**File:** `AppMain.cpp`, line 95
-
-```cpp
-char *ptr = NULL;
-*ptr = 0; // cppcheck-suppress nullPointer
-```
-
-This intentionally triggers a hardware fault to generate a core dump. This is a valid embedded debug technique, but it should only be compiled for debug builds, as it is. The use of `PRIu16` for a `size_t` parameter is also incorrect (see §6.10).
 
 ---
 
@@ -440,15 +423,6 @@ bool FileSystem::Mount()
     return (true);
 }
 ```
-
-### 6.10 Incorrect Format Specifier for `size_t` [LOW]
-
-**`AppMain.cpp`**, `heap_caps_alloc_failed_hook`:
-```cpp
-printf("... failed to allocate %" PRIu16 " bytes ...", requestedSize, caps, functionName);
-```
-
-`requestedSize` is `size_t`, not `uint16_t`. On a 32-bit platform `size_t` is 4 bytes; `PRIu16` expects a 16-bit value. Use `%zu` or `PRIuPTR`.
 
 ### 6.11 NvsManager Read Opens with `NVS_READWRITE` [LOW]
 
