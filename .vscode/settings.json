@@ -12,5 +12,6 @@
         "typeinfo": "cpp",
         "chrono": "cpp",
         "text_encoding": "cpp"
-    }
+    },
+    "idf.currentSetup": "/Users/markstevens/.espressif/v6.0/esp-idf"
 }
