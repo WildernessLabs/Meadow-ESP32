@@ -3,6 +3,20 @@
 #
 
 #
+#   Override the partition table configuration.
+#
+#   The development partition table increases the size of the core dump partition.
+#   This increased size allows for all of the RAM to be placed in the core dump for
+#   improved analysis.
+#
+CONFIG_PARTITION_TABLE_CUSTOM=y
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="partitions-develop.csv"
+CONFIG_PARTITION_TABLE_FILENAME="partitions-develop.csv"
+CONFIG_PARTITION_TABLE_OFFSET=0x8000
+CONFIG_PARTITION_TABLE_MD5=y
+CONFIG_ESP_COREDUMP_CAPTURE_DRAM=y
+
+#
 #   Should we enable the diagnostic thread ?
 #
 CONFIG_ENABLE_DIAGNOSTIC_THREAD is not set
