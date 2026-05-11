@@ -157,7 +157,7 @@ bool WiFiRequestHandler::_useDhcp = false;
 const char *WiFiRequestHandler::USE_DHCP_NAME = "UseDHCP";
 
 /**
- *  @brief Defaut access [oint to be used when automatically connecting.
+ *  @brief Default access point to be used when automatically connecting.
  */
 char *WiFiRequestHandler::_defaultAccessPoint = nullptr;
 

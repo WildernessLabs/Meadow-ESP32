@@ -35,7 +35,7 @@ private:
     /**
      * @brief Timeout duration (in milliseconds) for acquiring a semaphore representing thread availability in the thread pool.
      */
-    uint32_t _threadPoolAcquireTimeoutInMilisseconds = 5000;
+    uint32_t _threadPoolAcquireTimeoutInMilliseconds = 5000;
 
     /**
      *  @brief Threads in the thread pool.
@@ -49,7 +49,7 @@ private:
 
 public:
     /**
-     *  @brief Name of the componet / task for the ThreadPool.
+     *  @brief Name of the component / task for the ThreadPool.
      */
     static const char *COMPONENT_NAME;
 

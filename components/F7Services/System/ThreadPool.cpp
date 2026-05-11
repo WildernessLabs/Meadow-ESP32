@@ -120,7 +120,7 @@ void ThreadPool::Execute(method_t method, void *parameter)
 {
     TRACE_MESSAGE("Execute: Enter");
 
-    if (xSemaphoreTake(_threadsAvailable, _threadPoolAcquireTimeoutInMilisseconds / portTICK_PERIOD_MS) == pdTRUE)
+    if (xSemaphoreTake(_threadsAvailable, _threadPoolAcquireTimeoutInMilliseconds / portTICK_PERIOD_MS) == pdTRUE)
     {
         TRACE_MESSAGE("Execute: Searching for an available thread");
 

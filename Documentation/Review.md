@@ -61,7 +61,6 @@ All open issues on the `WildernessLabs/Meadow-ESP32` repository are addressed in
 | [#175](https://github.com/WildernessLabs/Meadow-ESP32/issues/175) | CRITICAL | Integer underflow/overflow in packet handling | §6.6 |
 | [#176](https://github.com/WildernessLabs/Meadow-ESP32/issues/176) | HIGH | SPI state machine default case cannot recover | §6.7 |
 | [#177](https://github.com/WildernessLabs/Meadow-ESP32/issues/177) | MEDIUM | Magic numbers and redundant assignments | §8.1 |
-| [#178](https://github.com/WildernessLabs/Meadow-ESP32/issues/178) | LOW | Typos and inconsistent logging | §8.2 |
 | [#179](https://github.com/WildernessLabs/Meadow-ESP32/issues/179) | LOW | `NULL` instead of `nullptr` | §8.3 |
 | [#180](https://github.com/WildernessLabs/Meadow-ESP32/issues/180) | LOW | `bzero` instead of `std::memset` | §8.4 |
 | [#181](https://github.com/WildernessLabs/Meadow-ESP32/issues/181) | LOW | Unused variables and dead code | §8.5 |
@@ -530,16 +529,6 @@ Several magic numbers appear without named constants:
 - `slaveConfiguration.mode = 3;` — should be `SPI_MODE_3` or similar named constant.
 - `SemaphoreHandle_t _threadsAvailable` initial count of 0 in `xSemaphoreCreateCounting` is fine but should be documented.
 
-### 8.2 Typos and Inconsistent Logging [LOW / #178]
-
-- `SpiTransportProvider::SpiStateString`, case `WaitingForPacket`: returns `"WaitingFoMessage"` — missing 'r' and wrong word.
-- `FileSystem.hpp`, line 65: comment `"Note that this can be different from the pARTITION_LABEL"` — inconsistent capitalisation.
-- `FileSystem.hpp`, line 116: docstring `"Delate a file"` — should be `"Delete a file"`.
-- `ThreadPool.hpp`, line 52: docstring `"Name of the componet / task"` — should be `"component"`.
-- `WiFiRequestHandler.cpp`, line 160: `"Defaut access [oint"` — should be `"Default access point"`.
-- `Globals.hpp` (referenced but not shown): ensure all component names are consistent.
-- `ThreadPool.cpp` constructor comment: `"and so there is no current instance"` duplicated from another comment.
-
 ### 8.3 `NULL` vs `nullptr` [LOW / #179, #187]
 
 The codebase uses `NULL` in at least 426 locations (vs `nullptr` in 212 locations). The project convention specifies `nullptr`. All `NULL` usages in C++ code should be replaced.
@@ -622,7 +611,6 @@ Notable examples:
 | 20 | Replace all `NULL` with `nullptr` in C++ code (issues #179, #187). |
 | 21 | Replace all `bzero` with `std::memset` (issues #180, #188). |
 | 22 | Remove `test_value`, `MAX_THREADS`, unused `state` parameter in `SendingData` (issue #181). |
-| 23 | Fix logging typos: `"WaitingFoMessage"`, `"Delate"`, `"componet"`, `"Milisseconds"` etc. (issue #178). |
 | 25 | Replace magic numbers with named constants (issue #177). |
 | 26 | Remove or make configurable the `ThreadPool` size constant (issue #155). |
 | 28 | Fix `SpiStateString` to return a safe default string in the default case (§6.12). |

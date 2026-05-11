@@ -62,7 +62,7 @@ public:
     /**
      * @brief Name of the partition in the partition table.
      *
-     *  Note that this can be different from the pARTITION_LABEL.
+     *  Note that this can be different from the PARTITION_LABEL.
      */
     static const char *PARTITION_PATH_NAME;
 
@@ -110,7 +110,7 @@ public:
     void WriteFile(Message * const message);
 
     /**
-     * @brief Delate a file from the file system.
+     * @brief Delete a file from the file system.
      */
     void DeleteFile(Message * const message);
 

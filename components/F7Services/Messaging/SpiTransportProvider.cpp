@@ -229,7 +229,7 @@ const char *SpiTransportProvider::SpiStateString(SpiTransportProvider::SpiStates
             stateString = "Invalid";
             break;
         case WaitingForPacket:
-            stateString = "WaitingFoMessage";
+            stateString = "WaitingForPacket";
             break;
         case AcknowledgingPacket:
             stateString = "AcknowledgingPacket";

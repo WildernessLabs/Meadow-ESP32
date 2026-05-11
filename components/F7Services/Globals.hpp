@@ -48,25 +48,27 @@
 #define PRIORITY_THREAD_POOL_TASK (12)
 
 /**
- * @brief Bluetooth tasks are not a common use case for intensive work and so have a moderate
+ * @brief The Bluetooth task is used to process Bluetooth requests from the STM32.  Bluetooth
+ *        tasks are not a common use case for intensive work and so it is given a moderate
  *        priority.
  */
 #define PRIORITY_BLUETOOTH_TASK (10)
 
 /**
- * @brief Process requests from the System requests (get battery level, configuration
- *        changes, etc).
+ * @brief The System task is used to process system requests from the STM32 (get battery level,
+ *        configuration changes, etc).
  */
 #define PRIORITY_SYSTEM_TASK (8)
 
 /**
- * @brief The mesh network is not really implemented at the moment.
+ * @brief The mesh network task is used to process mesh network requests.  The mesh network
+ *        is not really implemented at the moment.
  */
 #define PRIORITY_MESH_NETWORK_TASK (8)
 
 /**
  * @brief The SPI synchronisation task is only used at system start up to start the
- *        communication between the ESP3 and STM32.
+ *        communication between the ESP32 and STM32.
  */
 #define PRIORITY_SPI_SYNCHRONISATION_TASK (8)
 
