@@ -262,9 +262,11 @@ static int __attribute__((unused)) test_value = 0;
  * @param pData Pointer to a block of memory to take the value.
  * @param pLen Pointer to a variable that will hold the length of the data that is being copied.
  */
-void BluetoothManager::GetCurrentValueForAttributeHandle(const uint16_t handle, uint8_t *pData, uint16_t * const pLen)
+esp_gatt_rsp_t *BluetoothManager::GetCurrentValueForAttributeHandle(const uint16_t handle)
 {
     TRACE_MESSAGE("GetCurrentValueForAttributeHandle: Enter");
+
+    esp_gatt_rsp_t *result = nullptr;
 
     // TODO: go get the data from the STM - for now we just increment to test the data is changing
     auto existing = _valueMap.find(handle);
@@ -274,17 +276,23 @@ void BluetoothManager::GetCurrentValueForAttributeHandle(const uint16_t handle, 
         TRACE_MESSAGE("Request for data for handle 0x%04" PRIx16, handle);
         TRACE_MESSAGE(" known length = %" PRIu16, existing->second.length);
 
-        memcpy(pData, existing->second.value, existing->second.length);
-        *pLen = existing->second.length;
+        if (existing->second.length <= ESP_GATT_MAX_ATTR_LEN)
+        {
+            result = new esp_gatt_rsp_t;
+            memset(result, 0, sizeof(esp_gatt_rsp_t));
+            result->attr_value.handle = handle;
+            memcpy(result->attr_value.value, existing->second.value, existing->second.length);
+            result->attr_value.len = existing->second.length;
+        }
     }
     else
     {
         TRACE_MESSAGE("Request for data with unknown handle 0x%04" PRIx16, handle);
-        *pLen = 0;
-        pData = NULL;
     }
 
     TRACE_MESSAGE("GetCurrentValueForAttributeHandle: Exit");
+
+    return result;
 }
 
 /**

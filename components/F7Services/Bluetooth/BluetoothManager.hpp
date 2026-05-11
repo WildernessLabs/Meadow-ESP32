@@ -10,6 +10,7 @@
 #pragma once
 
 #include "cJSON.h"
+#include "esp_gatt_defs.h"
 
 #include "BluetoothServiceCollection.hpp"
 #include "BluetoothAttribute.hpp"
@@ -240,7 +241,7 @@ public:
     /**
      * @brief Get the current value for a attribute with the specified handle.
      */
-    void GetCurrentValueForAttributeHandle(const uint16_t handle, uint8_t *pData, uint16_t * const pLen);
+    esp_gatt_rsp_t *GetCurrentValueForAttributeHandle(const uint16_t handle);
 
     /**
      * @brief @brief Set the value for a attribute with the specified handle.
