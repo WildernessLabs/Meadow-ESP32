@@ -160,7 +160,7 @@ void BluetoothManager::GetHandles(uint16_t * const handles)
  * @brief Get the properties for the characteristic with the specified handle.
  *
  * @param handle Handle for the characteristic
- * @return CharacteristicPermission Properties of the characteristic or 0 if the handle cannot be found.
+ * @return CharacteristicProperty Properties of the characteristic or 0 if the handle cannot be found.
  */
 CharacteristicProperty BluetoothManager::GetCharacteristicProperties(const uint16_t handle)
 {

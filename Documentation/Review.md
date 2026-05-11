@@ -565,15 +565,6 @@ Notable examples:
 - `SendingData(SpiStates state)` has an unused `state` parameter (see §7.5).
 - Commented-out code blocks throughout `SpiTransportProvider.cpp` (heap tracing) and `BluetoothRequestHandler.cpp` (security, service handle) should either be removed or converted to conditional compilation.
 
-### 8.6 Missing Docstrings [LOW / #182]
-
-The following public methods lack docstrings or have incomplete ones:
-
-- `BluetoothRequestHandler::GetInstance()` (no-arg overload) — has a comment but no formal docstring.
-- `BluetoothManager::GetCharacteristicProperties` and `GetCharacteristicPermissions` — the `@return` description says "CharacteristicPermission" for both methods but one returns `CharacteristicProperty`.
-- `SpiTransportProvider::SpiPostTransmissionCallback` — body is empty; should document that this is intentionally a no-op.
-- `FileSystem::MountIfNecessary` — docstring exists in header only.
-
 ---
 
 ## 9. Test Coverage
