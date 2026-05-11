@@ -386,6 +386,7 @@ void SpiTransportProvider::DeleteTransaction(spi_slave_transaction_t *transactio
  *  @brief SPI Post Transmission callback
  *
  *  This method is called when the STM32 has ended the SPI transmission.
+ *  This is intentionally a no-op.
  *
  *  @param transaction
  *      spi_slave_transaction_t structure containing information about the

@@ -213,7 +213,9 @@ private:
     explicit BluetoothRequestHandler(IMessageDispatcher *);
 
     /**
-     * @brief Get a pointer to this instance.
+     * @brief Get a pointer to this instance of the BluetoothRequestHandler.
+     *
+     * @return BluetoothRequestHandler* Pointer to this instance of the BluetoothRequestHandler.
      */
     static BluetoothRequestHandler *GetInstance();
 
@@ -237,7 +239,11 @@ public:
     static BluetoothRequestHandler *_instance;
 
     /**
-     * @brief Get a pointer to this instance (create a new instance if no BluetoothRequestHandler exists).
+     * @brief Get a pointer to this instance of the BluetoothRequestHandler.
+     *
+     * @param d Message dispatcher that can be used to send messages to the STM32.
+     *
+     * @return BluetoothRequestHandler* Pointer to this instance of the BluetoothRequestHandler.
      */
     static BluetoothRequestHandler *GetInstance(IMessageDispatcher *d);
 
