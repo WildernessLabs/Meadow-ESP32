@@ -623,10 +623,8 @@ Notable examples:
 | 21 | Replace all `bzero` with `std::memset` (issues #180, #188). |
 | 22 | Remove `test_value`, `MAX_THREADS`, unused `state` parameter in `SendingData` (issue #181). |
 | 23 | Fix logging typos: `"WaitingFoMessage"`, `"Delate"`, `"componet"`, `"Milisseconds"` etc. (issue #178). |
-| 24 | Add missing docstrings to public methods (issue #182). |
 | 25 | Replace magic numbers with named constants (issue #177). |
 | 26 | Remove or make configurable the `ThreadPool` size constant (issue #155). |
-| 27 | Fix `PRIu16` format specifier for `size_t` in `heap_caps_alloc_failed_hook` (§6.10). |
 | 28 | Fix `SpiStateString` to return a safe default string in the default case (§6.12). |
 
 ---
