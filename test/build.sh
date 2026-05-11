@@ -93,7 +93,7 @@ case $i in
     HELP=true
     ;;
     *)
-    printf "Uknown command line option ($i)."
+    printf "Unknown command line option ($i)."
     printf "Run build.sh --help for information on valid options."
     exit 1
     ;;
