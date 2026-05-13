@@ -67,7 +67,10 @@ meadow_version_t g_application_version = {
     #define CONFIG_WIFI_PASSWORD "PASSWORD"
 #endif
 
-void TestBluetoothMessage(MessageDispatcher *dispatcher);
+/**
+ * @brief Message dispatcher for the system.
+ */
+MessageDispatcher *_messageDispatcher = nullptr;
 
 /**
  *  @brief Callback for the heap allocation failures.
@@ -125,7 +128,9 @@ extern "C" void app_main()
      *  Set up the messaging system to use SPI hardware communications.
      */
     SpiTransportProvider *spi = new SpiTransportProvider();
-    MessageDispatcher * __attribute__((unused)) messageDispatcher = new MessageDispatcher(spi);
+    // MessageDispatcher * __attribute__((unused)) messageDispatcher = new MessageDispatcher(spi);
+
+    _messageDispatcher = new MessageDispatcher(spi);
 
     //
     //  The following shows how we can reduce the amount of heap memory the system has available.
@@ -150,8 +155,6 @@ extern "C" void app_main()
     // heap_caps_print_heap_info(MALLOC_CAP_DEFAULT);
 
     SystemRequestHandler::SendConfigurationAsInterruptMessage();
-
-    //    TestBluetoothMessage(messageDispatcher);
 
     //
     //  We suspend this task as the message processing is performed by the objects created above.

@@ -64,7 +64,6 @@ All open issues on the `WildernessLabs/Meadow-ESP32` repository are addressed in
 | [#179](https://github.com/WildernessLabs/Meadow-ESP32/issues/179) | LOW | `NULL` instead of `nullptr` | §8.3 |
 | [#180](https://github.com/WildernessLabs/Meadow-ESP32/issues/180) | LOW | `bzero` instead of `std::memset` | §8.4 |
 | [#181](https://github.com/WildernessLabs/Meadow-ESP32/issues/181) | LOW | Unused variables and dead code | §8.5 |
-| [#182](https://github.com/WildernessLabs/Meadow-ESP32/issues/182) | LOW | Missing docstrings on public methods | §8.6 |
 | [#183](https://github.com/WildernessLabs/Meadow-ESP32/issues/183) | HIGH | Bluetooth callback lifecycle | §5.4 |
 | [#184](https://github.com/WildernessLabs/Meadow-ESP32/issues/184) | MEDIUM | WiFi credentials not mutex-protected | §5.5 |
 | [#185](https://github.com/WildernessLabs/Meadow-ESP32/issues/185) | MEDIUM | Bluetooth event handler stub | §6.8 |
@@ -471,16 +470,6 @@ More importantly, FreeRTOS tasks do not automatically unwind the C++ stack on ex
 **Recommendation:**
 - Either throw by value (`throw ThreadPoolException(...)`) and catch by reference, as per C++ best practice.
 - Or, since this is an embedded system, replace exceptions with error-return codes and/or `ESP_ERROR_CHECK`-style logging followed by `esp_restart()` on unrecoverable errors.
-
-### 7.3 `app_main` Leaks Allocated Objects
-
-```cpp
-SpiTransportProvider *spi = new SpiTransportProvider();
-MessageDispatcher *__attribute__((unused)) messageDispatcher = new MessageDispatcher(spi);
-vTaskSuspend(NULL);
-```
-
-`app_main` is suspended (not deleted), so the objects are intentionally long-lived. However, the `__attribute__((unused))` suppresses an unused-variable warning on `messageDispatcher`, suggesting this was introduced defensively. The code would be clearer if these were top-level global pointers with explicit lifetime documentation.
 
 ### 7.5 `SendingData` Parameter Unused
 
