@@ -23,14 +23,9 @@ class ThreadPool
 {
 private:
     /**
-     *  @brief Maximum number of threads we should allow.
-     */
-    const int MAX_THREADS = 10;
-
-    /**
      *  @brief Size of the thread pool.
      */
-    const int THREAD_POOL_SIZE = 5;
+    static constexpr int THREAD_POOL_SIZE = 5;
 
     /**
      * @brief Timeout duration (in milliseconds) for acquiring a semaphore representing thread availability in the thread pool.
