@@ -390,39 +390,6 @@ The `EventHandlerHelper` function (referenced by the BLE stack event registratio
 
 **Recommendation:** Implement handlers for security and pairing events, or add explicit log messages for all unhandled events so they can be identified during testing.
 
-### 6.9 `FileSystem::Mount()` Always Returns `true` [HIGH / #186]
-
-```cpp
-bool FileSystem::Mount()
-{
-    bool result = true;
-
-    esp_err_t ret = esp_vfs_littlefs_register(&_config);
-    if (ret != ESP_OK)
-    {
-        // only logs; never sets result = false
-    }
-
-    return (result);
-}
-```
-
-The `result` variable is initialised to `true` and never changed on failure. `Setup()` calls `Mount()` and uses the return value to decide whether to continue, so all mount failures are silently treated as successes.
-
-**Recommendation:**
-```cpp
-bool FileSystem::Mount()
-{
-    esp_err_t ret = esp_vfs_littlefs_register(&_config);
-    if (ret != ESP_OK)
-    {
-        ERROR_MESSAGE("Failed to mount LittleFS: %s", esp_err_to_name(ret));
-        return (false);
-    }
-    return (true);
-}
-```
-
 ### 6.11 NvsManager Read Opens with `NVS_READWRITE` [LOW]
 
 **`NvsManager::GetValue`** for `uint32_t` (line 233):

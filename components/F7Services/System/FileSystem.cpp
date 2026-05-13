@@ -183,6 +183,7 @@ bool FileSystem::Mount()
         {
             TRACE_MESSAGE("Failed to initialize LittleFS (%s)", esp_err_to_name(ret));
         }
+        result = false;
     }
 
     return (result);
