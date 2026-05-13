@@ -1,8 +1,11 @@
 # Meadow-ESP32 Comprehensive Code Review
 
 **Date:** 2026-05-11
+
 **Reviewer:** Copilot (Senior Engineer Review)
+
 **Scope:** `components/F7Services`, `main`, `test`
+
 **Out of scope:** `managed_components`
 
 ---
@@ -61,7 +64,6 @@ All open issues on the `WildernessLabs/Meadow-ESP32` repository are addressed in
 | [#176](https://github.com/WildernessLabs/Meadow-ESP32/issues/176) | HIGH | SPI state machine default case cannot recover | §6.7 |
 | [#177](https://github.com/WildernessLabs/Meadow-ESP32/issues/177) | MEDIUM | Magic numbers and redundant assignments | §8.1 |
 | [#179](https://github.com/WildernessLabs/Meadow-ESP32/issues/179) | LOW | `NULL` instead of `nullptr` | §8.3 |
-| [#180](https://github.com/WildernessLabs/Meadow-ESP32/issues/180) | LOW | `bzero` instead of `std::memset` | §8.4 |
 | [#181](https://github.com/WildernessLabs/Meadow-ESP32/issues/181) | LOW | Unused variables and dead code | §8.5 |
 | [#183](https://github.com/WildernessLabs/Meadow-ESP32/issues/183) | HIGH | Bluetooth callback lifecycle | §5.4 |
 | [#184](https://github.com/WildernessLabs/Meadow-ESP32/issues/184) | MEDIUM | WiFi credentials not mutex-protected | §5.5 |
