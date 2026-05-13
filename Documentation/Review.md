@@ -43,7 +43,6 @@ All open issues on the `WildernessLabs/Meadow-ESP32` repository are addressed in
 
 | Issue | Severity | Title | Review Section |
 |-------|----------|-------|---------------|
-| [#155](https://github.com/WildernessLabs/Meadow-ESP32/issues/155) | LOW | Tidy up ThreadPool code | §7.1 |
 | [#159](https://github.com/WildernessLabs/Meadow-ESP32/issues/159) | MEDIUM | `GetCurrentValueForAttributeHandle` stack allocation | §6.5 |
 | [#162](https://github.com/WildernessLabs/Meadow-ESP32/issues/162) | CRITICAL | Missing null checks after allocations | §4.1 |
 | [#163](https://github.com/WildernessLabs/Meadow-ESP32/issues/163) | CRITICAL | Mismatched allocator/deallocator pairs | §4.2 |
