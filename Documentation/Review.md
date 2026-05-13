@@ -43,7 +43,6 @@ All open issues on the `WildernessLabs/Meadow-ESP32` repository are addressed in
 
 | Issue | Severity | Title | Review Section |
 |-------|----------|-------|---------------|
-| [#155](https://github.com/WildernessLabs/Meadow-ESP32/issues/155) | LOW | Tidy up ThreadPool code | §7.1 |
 | [#159](https://github.com/WildernessLabs/Meadow-ESP32/issues/159) | MEDIUM | `GetCurrentValueForAttributeHandle` stack allocation | §6.5 |
 | [#162](https://github.com/WildernessLabs/Meadow-ESP32/issues/162) | CRITICAL | Missing null checks after allocations | §4.1 |
 | [#163](https://github.com/WildernessLabs/Meadow-ESP32/issues/163) | CRITICAL | Mismatched allocator/deallocator pairs | §4.2 |
@@ -448,12 +447,6 @@ If `state` is not one of the named enum values (possible if memory is corrupted)
 ---
 
 ## 7. Best Practices
-
-### 7.1 ThreadPool Configuration [LOW / #155]
-
-`ThreadPool::ThreadPool()` has `MAX_THREADS = 10` and `THREAD_POOL_SIZE = 5` as instance-level `const int` members. The constructor previously accepted a size parameter but no longer does. Having both constants when only one is used (`THREAD_POOL_SIZE`) is confusing. `MAX_THREADS` appears unused.
-
-**Recommendation:** Remove `MAX_THREADS` and promote `THREAD_POOL_SIZE` to a `static constexpr`, ideally driven by a compile-time `sdkconfig` value. This aligns with issue #155.
 
 ### 7.2 `throw new` in Embedded / FreeRTOS Context [HIGH]
 
