@@ -36,4 +36,14 @@ namespace Utils
      * @param ptr Pointer to the pointer to delete and nullify.
      */
     void DeleteAndNullifyPointer(void **ptr);
+
+    /**
+     * @brief Reallocate memory using the ESP32's pvPortMalloc function.
+     *
+     * @param ptr Pointer to the memory block to reallocate.
+     * @param oldSize The size of the existing memory block (if ptr is not nullptr).
+     * @param newSize The new size of the memory block.
+     * @return void* Pointer to the reallocated memory block, or nullptr if allocation fails.
+     */
+    void *Realloc(void *ptr, size_t oldSize, size_t newSize);
 }; // namespace Utils

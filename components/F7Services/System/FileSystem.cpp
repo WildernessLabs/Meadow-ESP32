@@ -502,9 +502,10 @@ void FileSystem::ListFiles(Message *message)
                 }
                 TRACE_MESSAGE("    File: %s, length: %" PRIu16, details.Name, details.Length);
                 bufferLength += Encoders::EncodedFileDetailsBufferSize(&details);
-                fileNameList.FileDetails = static_cast<uint8_t *>(realloc(fileNameList.FileDetails, bufferLength));
-                if (fileNameList.FileDetails != NULL)
+                uint8_t *newBuffer = static_cast<uint8_t *>(Utils::Realloc(fileNameList.FileDetails, fileNameList.FileDetailsLength, bufferLength));
+                if (newBuffer != NULL)
                 {
+                    fileNameList.FileDetails = newBuffer;
                     Encoders::EncodeFileDetails(&details, fileNameList.FileDetails + fileNameList.FileDetailsLength);
                     fileNameList.FileDetailsLength = bufferLength;
                 }
@@ -533,6 +534,10 @@ void FileSystem::ListFiles(Message *message)
             else
             {
                 Encoders::EncodeFileNameList(&fileNameList, message->Payload);
+                if (fileNameList.FileDetails != NULL)
+                {
+                    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&fileNameList.FileDetails));
+                }
                 result = StatusCodes::CompletedOk;
             }
         }

@@ -83,3 +83,48 @@ void Utils::DeleteAndNullifyPointer(void **ptr)
         *ptr = nullptr;
     }
 }
+
+/**
+ * @brief Reallocate memory using the ESP32's pvPortMalloc function.
+ * 
+ * @note This function mimics the behavior of realloc, but uses pvPortMalloc and vPortFree for memory management.
+ *       It will zero the memory block before copying the old data.
+ *
+ * @param ptr Pointer to the memory block to reallocate.
+ * @param oldSize The size of the existing memory block (if ptr is not nullptr).
+ * @param newSize The new size of the memory block.
+ * @return void* Pointer to the reallocated memory block, or nullptr if allocation fails.
+ */
+void *Utils::Realloc(void *ptr, size_t oldSize, size_t newSize)
+{
+    void *result = nullptr;
+
+    if (!ptr)
+    {
+        result = pvPortMalloc(newSize);
+        if (result)
+        {
+            memset(result, 0, newSize);
+        }
+    }
+    else
+    {
+        if (newSize == 0)
+        {
+            vPortFree(ptr);
+            result = nullptr;
+        }
+        else
+        {
+            void *newPtr = pvPortMalloc(newSize);
+            if (newPtr != nullptr)
+            {
+                memset(newPtr, 0, newSize);
+                memcpy(newPtr, ptr, oldSize < newSize ? oldSize : newSize);
+                vPortFree(ptr);
+            }
+            result = newPtr;
+        }
+    }
+    return(result);
+}
