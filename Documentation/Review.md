@@ -154,7 +154,6 @@ Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&_threadsAvailable));
 
 **Recommendation:**
 - Standardise on `pvPortMalloc` / `vPortFree` for all dynamic allocation.
-- Replace `realloc` with explicit `pvPortMalloc` + `memcpy` + `vPortFree`.
 - Replace `new[]` / `delete[]` in Bluetooth with `pvPortMalloc` / `vPortFree`.
 - Replace `Utils::DeleteAndNullifyPointer` on FreeRTOS handles with the correct `vSemaphoreDelete`, `vQueueDelete`, etc.
 
@@ -513,7 +512,6 @@ Notable examples:
 | 1 | **Rotate and remove committed WiFi credentials** from `test/secrets.h` and `components/F7Services/test/secrets.h`; purge from git history. |
 | 2 | Add null checks after every `pvPortMalloc`, `heap_caps_calloc`, `new`, and `strdup` call (issue #162). |
 | 3 | Fix `FileSystem::Mount()` to return `false` on failure (issue #186). |
-| 4 | Replace `realloc` in `FileSystem::ListFiles` with `pvPortMalloc`/`vPortFree` (issue #169). |
 | 5 | Replace `Utils::DeleteAndNullifyPointer` on `_threadsAvailable` with `vSemaphoreDelete` (§4.2). |
 | 6 | Fix `UpdatePacketInformation` to use `uint32_t` for `amountRemaining` (issue #175). |
 
