@@ -159,8 +159,6 @@ newTransaction = CreateAcknowledgementTransaction(_outboundMessage, ...);
 ```
 `_outboundMessage` is set here but is never deleted in this code path. On the next call to `PacketAcknowledged`, `_outboundMessage` would be a dangling pointer from the previous CRC error unless the state machine resets cleanly.
 
-**`ThreadPool::~ThreadPool`** — The `_threads` array is iterated and each `Thread *` is deleted, but the underlying FreeRTOS task is not deleted. `Thread::~Thread` only frees the name buffer. The FreeRTOS task handle (`_taskHandle`) is never cancelled with `vTaskDelete`.
-
 **Recommendation:** Use RAII wrappers or at minimum a structured goto-based cleanup pattern to ensure all error paths release resources.
 
 ### 4.4 Double-Free and Use-After-Free Risks [HIGH / #165]

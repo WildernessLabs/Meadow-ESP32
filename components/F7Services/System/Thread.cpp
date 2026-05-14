@@ -88,6 +88,9 @@ Thread::Thread(char *name, task_completed_method_t taskCompletedMethod) : Thread
  */
 Thread::~Thread()
 {
+    vTaskDelete(_taskHandle);
+    vSemaphoreDelete(_mutex);
+    vSemaphoreDelete(_executeMethod);
     Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&_name));
 }
 
