@@ -157,6 +157,11 @@ check_command_status() {
 #   of the fact that we have a default configuration system and makes sure
 #   we edit the release configuration file.
 #
+#
+# Set the IDF variable in case we are running in a shell where eim has been used to install ESP-IDF.
+#
+IDF="$IDF_PATH/tools/idf.py"
+
 if $MENUCONFIG; then
     SDKCONFIG="sdkconfig"
     DEFAULT_SDKCONFIG="sdkconfig.defaults"
@@ -164,7 +169,7 @@ if $MENUCONFIG; then
         run_command "rm $SDKCONFIG"
     fi
     run_command "mv $DEFAULT_SDKCONFIG $SDKCONFIG"
-    run_command "idf.py menuconfig"
+    run_command "$IDF menuconfig"
     run_command "mv $SDKCONFIG $DEFAULT_SDKCONFIG"
     exit 0
 fi
@@ -210,7 +215,7 @@ fi
 #
 if $FULLCLEAN; then
     run_command "rm -Rf $scriptdir/build"
-    run_command "idf.py fullclean"
+    run_command "$IDF fullclean"
     run_command "rm -f $scriptdir/sdkconfig"
 fi
 
@@ -218,7 +223,7 @@ if ! $NO_BUILD; then
     IDF_FLAGS="build $IDF_FLAGS"
 fi
 if [[ ! -z $IDF_FLAGS ]]; then
-    run_command "idf.py $IDF_DEFINES $IDF_FLAGS"
+    run_command "$IDF $IDF_DEFINES $IDF_FLAGS"
 fi
 
 if [ $? -eq 0 ]; then
