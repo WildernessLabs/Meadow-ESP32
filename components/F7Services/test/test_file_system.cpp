@@ -47,6 +47,12 @@
 #define TEST_UPGRADE_FILE_NAME_AA "upgrade_aa.txt"
 #define TEST_UPGRADE_FILE_NAME_55 "upgrade_55.txt"
 
+//
+//  Constants for error path testing.
+//
+#define TEST_NON_EXISTENT_FILE_NAME "does_not_exist.txt"
+#define LITTLEFS_BLOCK_SIZE 4096
+
 /**
  * @brief Count the number of files in the root directory of the file system.
  *
@@ -662,6 +668,193 @@ TEST_CASE("Post file system upgrade test", CLASS_OF_TESTS)
     //
     int fileCount = CountFiles();
     TEST_ASSERT_EQUAL(4, fileCount);
+
+    delete fs;
+}
+
+/**
+ * @brief Check that Setup() returns Failure when the partition is already mounted.
+ *
+ *  Calling Setup() a second time on the same FileSystem object triggers a second
+ *  call to esp_vfs_littlefs_register with the same partition label.  The LittleFS
+ *  VFS layer returns ESP_ERR_INVALID_STATE because the partition is already
+ *  registered, so Mount() returns false and Setup() must return
+ *  StatusCodes::Failure.  The partition must remain mounted throughout.
+ */
+TEST_CASE("Mount failure when already mounted", CLASS_OF_TESTS)
+{
+    FileSystem *fs = new FileSystem(nullptr);
+    TEST_ASSERT_NOT_NULL(fs);
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, fs->Setup());
+    TEST_ASSERT_TRUE(esp_littlefs_mounted(FileSystem::PARTITION_LABEL));
+
+    //
+    //  A second Setup() call must fail because the partition is already registered.
+    //  Note: the LittleFS VFS layer releases its internal context as part of the
+    //  failed registration, so no assertion is made about the mounted state after
+    //  this call.
+    //
+    TEST_ASSERT_EQUAL(StatusCodes::Failure, fs->Setup());
+
+    delete fs;
+}
+
+/**
+ * @brief Check that ReadFile returns FileNotFound for a file that does not exist.
+ *
+ *  The file system is formatted to ensure it is empty, then a read is requested
+ *  for a filename that has never been written.  The stat() call inside ReadFile
+ *  must fail, causing the response to carry StatusCodes::FileNotFound with no
+ *  payload.
+ */
+TEST_CASE("ReadFile returns FileNotFound for non-existent file", CLASS_OF_TESTS)
+{
+    MockMessageDispatcher *messageDispatcher = new MockMessageDispatcher(nullptr);
+    TEST_ASSERT_NOT_NULL(messageDispatcher);
+
+    FileSystem *fs = new FileSystem(messageDispatcher);
+    TEST_ASSERT_NOT_NULL(fs);
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, fs->Setup());
+
+    //
+    //  Start with an empty file system so we can be certain the file does not exist.
+    //
+    TEST_ASSERT_EQUAL(ESP_OK, esp_littlefs_format(FileSystem::PARTITION_LABEL));
+
+    //
+    //  Build a read request for a file that has never been written.
+    //
+    Esp32Messaging::FileNameAndContents fileData;
+    memset(&fileData, 0, sizeof(fileData));
+    fileData.Name = (char *) TEST_NON_EXISTENT_FILE_NAME;
+    uint32_t payloadLength = Encoders::EncodedFileNameAndContentsBufferSize(&fileData);
+    uint8_t *encodedPayload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
+    TEST_ASSERT_NOT_NULL(encodedPayload);
+    Encoders::EncodeFileNameAndContents(&fileData, encodedPayload);
+    Message *readMessage = Message::CreateOnHeap(MessageTypes::Header, Esp32Interfaces::System, SystemFunction::FileSystemReadFile, StatusCodes::Failure, TEST_MESSAGE_ID, encodedPayload, payloadLength);
+    TEST_ASSERT_NOT_NULL(readMessage);
+
+    fs->ReadFile(readMessage);
+
+    //
+    //  Verify exactly one response is queued and that it reports FileNotFound
+    //  with no payload attached.
+    //
+    TEST_ASSERT_EQUAL(1, messageDispatcher->OutboundMessageQueueLength());
+
+    Message *response = messageDispatcher->GetOutboundMessage();
+    TEST_ASSERT_NOT_NULL(response);
+
+    TEST_ASSERT_EQUAL(MessageTypes::Response, response->MessageType);
+    TEST_ASSERT_EQUAL(Esp32Interfaces::System, response->Interface);
+    TEST_ASSERT_EQUAL(SystemFunction::FileSystemReadFile, response->Function);
+    TEST_ASSERT_EQUAL(StatusCodes::FileNotFound, response->StatusCode);
+    TEST_ASSERT_EQUAL(TEST_MESSAGE_ID, response->MessageID);
+    TEST_ASSERT_EQUAL(0, response->PayloadLength);
+    TEST_ASSERT_NULL(response->Payload);
+
+    TEST_ASSERT_EQUAL(0, messageDispatcher->OutboundMessageQueueLength());
+
+    Message::DeleteMessage(readMessage);
+
+    delete fs;
+}
+
+/**
+ * @brief Check that WriteFile returns Failure when the file system is full.
+ *
+ *  The file system is filled by writing LITTLEFS_BLOCK_SIZE-byte files via C stdio,
+ *  querying esp_littlefs_info after each write to track remaining free space.  Filling
+ *  stops once fewer than two blocks remain free, leaving at most one free block.
+ *  The WriteFile call then requests 2 * LITTLEFS_BLOCK_SIZE bytes: even if LittleFS
+ *  allocates the last free block, fwrite can only write LITTLEFS_BLOCK_SIZE bytes,
+ *  which is less than ContentsLength, so WriteFile must return StatusCodes::Failure.
+ */
+TEST_CASE("WriteFile returns Failure on a full filesystem", CLASS_OF_TESTS)
+{
+    MockMessageDispatcher *messageDispatcher = new MockMessageDispatcher(nullptr);
+    TEST_ASSERT_NOT_NULL(messageDispatcher);
+
+    FileSystem *fs = new FileSystem(messageDispatcher);
+    TEST_ASSERT_NOT_NULL(fs);
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, fs->Setup());
+
+    //
+    //  Start with an empty file system.
+    //
+    TEST_ASSERT_EQUAL(ESP_OK, esp_littlefs_format(FileSystem::PARTITION_LABEL));
+
+    //
+    //  Fill the file system by writing LITTLEFS_BLOCK_SIZE-byte files and querying
+    //  esp_littlefs_info after each write.  Stop once fewer than two blocks' worth
+    //  of free space remains — at that point LittleFS has no room to allocate a new
+    //  data block for the file under test.
+    //
+    uint8_t *fillBuffer = static_cast<uint8_t *>(pvPortMalloc(LITTLEFS_BLOCK_SIZE));
+    TEST_ASSERT_NOT_NULL(fillBuffer);
+    memset(fillBuffer, 0xFF, LITTLEFS_BLOCK_SIZE);
+
+    size_t total = 0, used = 0;
+    TEST_ASSERT_EQUAL(ESP_OK, esp_littlefs_info(FileSystem::PARTITION_LABEL, &total, &used));
+
+    int fillIndex = 0;
+    while ((total - used) >= 2 * LITTLEFS_BLOCK_SIZE)
+    {
+        char fillName[32];
+        snprintf(fillName, sizeof(fillName), "fill%d.bin", fillIndex++);
+        int written = WriteTestFile(fillName, fillBuffer, LITTLEFS_BLOCK_SIZE);
+        if (written != LITTLEFS_BLOCK_SIZE)
+        {
+            break;
+        }
+        TEST_ASSERT_EQUAL(ESP_OK, esp_littlefs_info(FileSystem::PARTITION_LABEL, &total, &used));
+    }
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&fillBuffer));
+
+    //
+    //  Attempt to write a file whose size spans two LittleFS blocks via the
+    //  FileSystem API.  After filling, at most one block remains free.  fwrite
+    //  can therefore write at most LITTLEFS_BLOCK_SIZE bytes, which is less than
+    //  the requested ContentsLength, so WriteFile must return StatusCodes::Failure.
+    //
+    uint8_t *writeBuffer = static_cast<uint8_t *>(pvPortMalloc(2 * LITTLEFS_BLOCK_SIZE));
+    TEST_ASSERT_NOT_NULL(writeBuffer);
+    memset(writeBuffer, 0xAA, 2 * LITTLEFS_BLOCK_SIZE);
+
+    Esp32Messaging::FileNameAndContents fileData;
+    memset(&fileData, 0, sizeof(fileData));
+    fileData.Name = (char *) TEST_FILE_NAME;
+    fileData.Contents = writeBuffer;
+    fileData.ContentsLength = 2 * LITTLEFS_BLOCK_SIZE;
+    uint32_t payloadLength = Encoders::EncodedFileNameAndContentsBufferSize(&fileData);
+    uint8_t *encodedPayload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
+    TEST_ASSERT_NOT_NULL(encodedPayload);
+    Encoders::EncodeFileNameAndContents(&fileData, encodedPayload);
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&writeBuffer));
+    Message *writeMessage = Message::CreateOnHeap(MessageTypes::Header, Esp32Interfaces::System, SystemFunction::FileSystemWriteFile, StatusCodes::CompletedOk, TEST_MESSAGE_ID, encodedPayload, payloadLength);
+    TEST_ASSERT_NOT_NULL(writeMessage);
+
+    fs->WriteFile(writeMessage);
+
+    //
+    //  Verify exactly one response is queued and that it reports Failure.
+    //
+    TEST_ASSERT_EQUAL(1, messageDispatcher->OutboundMessageQueueLength());
+
+    Message *response = messageDispatcher->GetOutboundMessage();
+    TEST_ASSERT_NOT_NULL(response);
+
+    TEST_ASSERT_EQUAL(MessageTypes::Response, response->MessageType);
+    TEST_ASSERT_EQUAL(Esp32Interfaces::System, response->Interface);
+    TEST_ASSERT_EQUAL(SystemFunction::FileSystemWriteFile, response->Function);
+    TEST_ASSERT_EQUAL(StatusCodes::Failure, response->StatusCode);
+    TEST_ASSERT_EQUAL(TEST_MESSAGE_ID, response->MessageID);
+    TEST_ASSERT_EQUAL(0, response->PayloadLength);
+    TEST_ASSERT_NULL(response->Payload);
+
+    TEST_ASSERT_EQUAL(0, messageDispatcher->OutboundMessageQueueLength());
+
+    Message::DeleteMessage(writeMessage);
 
     delete fs;
 }

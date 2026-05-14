@@ -421,7 +421,6 @@ Notable examples:
 
 ### 9.2 Coverage Gaps
 
-- **FileSystem error paths** — `test_file_system.cpp` should test `Mount()` failure, `ReadFile` with a non-existent file, and `WriteFile` with a full filesystem.
 - **SPI state machine** — No tests for the SPI transport layer in isolation. The mock transport provider (`MockTransportProvider`) exists but appears under-used.
 - **ThreadPool** — No tests for the thread pool under concurrent load or for the semaphore timeout path.
 - **Memory allocation failure** — No tests inject allocation failures to verify null-check paths.
@@ -435,7 +434,6 @@ Notable examples:
 
 | # | Action |
 |---|--------|
-| 1 | **Rotate and remove committed WiFi credentials** from `test/secrets.h` and `components/F7Services/test/secrets.h`; purge from git history. |
 | 2 | Add null checks after every `pvPortMalloc`, `heap_caps_calloc`, `new`, and `strdup` call (issue #162). |
 | 6 | Fix `UpdatePacketInformation` to use `uint32_t` for `amountRemaining` (issue #175). |
 
