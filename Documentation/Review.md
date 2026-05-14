@@ -34,7 +34,6 @@ However, the codebase carries a significant number of correctness and safety iss
 - **Mismatched heap allocators** — `pvPortMalloc` / FreeRTOS heap objects are released with `vPortFree` via a utility that wraps `vPortFree`, but `new[]` / `realloc` (stdlib) memory is mixed in, creating undefined behaviour on the FreeRTOS heap.
 - **Missing null checks** after allocation calls throughout the SPI and Bluetooth subsystems.
 - **Race conditions** in the ThreadPool and singleton implementations.
-- **`FileSystem::Mount()` always returns `true`**, masking all mount failures.
 
 All 30 currently open issues are referenced and grouped below.
 
