@@ -62,7 +62,6 @@ All open issues on the `WildernessLabs/Meadow-ESP32` repository are addressed in
 | [#175](https://github.com/WildernessLabs/Meadow-ESP32/issues/175) | CRITICAL | Integer underflow/overflow in packet handling | §6.6 |
 | [#176](https://github.com/WildernessLabs/Meadow-ESP32/issues/176) | HIGH | SPI state machine default case cannot recover | §6.7 |
 | [#177](https://github.com/WildernessLabs/Meadow-ESP32/issues/177) | MEDIUM | Magic numbers and redundant assignments | §8.1 |
-| [#179](https://github.com/WildernessLabs/Meadow-ESP32/issues/179) | LOW | `NULL` instead of `nullptr` | §8.3 |
 | [#181](https://github.com/WildernessLabs/Meadow-ESP32/issues/181) | LOW | Unused variables and dead code | §8.5 |
 | [#183](https://github.com/WildernessLabs/Meadow-ESP32/issues/183) | HIGH | Bluetooth callback lifecycle | §5.4 |
 | [#184](https://github.com/WildernessLabs/Meadow-ESP32/issues/184) | MEDIUM | WiFi credentials not mutex-protected | §5.5 |
