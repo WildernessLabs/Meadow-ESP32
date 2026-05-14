@@ -369,20 +369,6 @@ error = nvs_open(nameSpace, NVS_READWRITE, &nvsHandle);
 
 This is a read-only operation, but the namespace is opened with read-write access. This is unnecessarily permissive and could mask bugs. It should use `NVS_READONLY`.
 
-### 6.12 `SpiStateString` Missing Default Return Value [LOW]
-
-**`SpiTransportProvider::SpiStateString`**:
-```cpp
-const char *stateString = NULL;
-switch (state)
-{
-    ...
-}
-return (stateString);
-```
-
-If `state` is not one of the named enum values (possible if memory is corrupted), `nullptr` is returned, and callers that pass this to `printf` with `%s` will crash. The `default` case should return a safe sentinel string.
-
 ---
 
 ## 7. Best Practices

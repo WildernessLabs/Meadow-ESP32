@@ -243,6 +243,9 @@ const char *SpiTransportProvider::SpiStateString(SpiTransportProvider::SpiStates
         case WaitingForPacketAcknowledgement:
             stateString = "WaitingForPacketAcknowledgement";
             break;
+        default:
+            stateString = "Unknown";
+            break;
     }
     return (stateString);
 }
