@@ -58,7 +58,6 @@ All open issues on the `WildernessLabs/Meadow-ESP32` repository are addressed in
 | [#170](https://github.com/WildernessLabs/Meadow-ESP32/issues/170) | HIGH | Missing null checks on dispatcher/callback pointers | §6.1 |
 | [#171](https://github.com/WildernessLabs/Meadow-ESP32/issues/171) | MEDIUM | Buffer overflow and static buffer issues | §6.2 |
 | [#172](https://github.com/WildernessLabs/Meadow-ESP32/issues/172) | MEDIUM | Non-atomic operations and inconsistent mutex use | §5.3 |
-| [#173](https://github.com/WildernessLabs/Meadow-ESP32/issues/173) | MEDIUM | Text mode used for binary file I/O | §6.3 |
 | [#174](https://github.com/WildernessLabs/Meadow-ESP32/issues/174) | MEDIUM | TOCTOU race in file size check and open | §6.4 |
 | [#175](https://github.com/WildernessLabs/Meadow-ESP32/issues/175) | CRITICAL | Integer underflow/overflow in packet handling | §6.6 |
 | [#176](https://github.com/WildernessLabs/Meadow-ESP32/issues/176) | HIGH | SPI state machine default case cannot recover | §6.7 |
@@ -290,19 +289,6 @@ strcpy(gateway, inet_ntoa(accessPointInformation->Gateway));
 
 **Recommendation:** Use `esp_ip4addr_ntoa` (reentrant) or `inet_ntop` with explicit buffers.
 
-### 6.3 Text Mode for Binary File I/O [MEDIUM / #173]
-
-**`FileSystem::ReadFile`**:
-```cpp
-FILE *file = fopen(s.c_str(), "r");
-```
-**`FileSystem::WriteFile`**:
-```cpp
-FILE *file = fopen(s.c_str(), "w");
-```
-
-Both use text mode. On the ESP32/LittleFS stack this is unlikely to cause line-ending translation, but it is non-portable and contrary to best practice when handling arbitrary binary payloads. All file operations should use `"rb"` / `"wb"`.
-
 ### 6.4 TOCTOU Race in File Operations [MEDIUM / #174]
 
 **`FileSystem::ReadFile`** and **`FileSystem::ListFiles`** use:
@@ -523,7 +509,6 @@ Notable examples:
 | # | Action |
 |---|--------|
 | 12 | Replace `strcpy` + `inet_ntoa` with `inet_ntop` for IP address formatting (issue #171). |
-| 13 | Change all file `fopen` calls to binary mode `"rb"` / `"wb"` (issue #173). |
 | 14 | Fix TOCTOU in `ReadFile` — open file first, use `fstat` (issue #174). |
 | 15 | Implement or document Bluetooth event handlers (issue #185). |
 | 16 | Protect `_defaultAccessPoint` and `_password` with a mutex (issue #184). |
