@@ -460,7 +460,6 @@ Notable examples:
 | 15 | Implement or document Bluetooth event handlers (issue #185). |
 | 16 | Protect `_defaultAccessPoint` and `_password` with a mutex (issue #184). |
 | 17 | Fix `GetCurrentValueForAttributeHandle` stack allocation and return value (issue #159). |
-| 19 | Fix `NvsManager::GetValue(uint32_t)` to open NVS with `NVS_READONLY` (§6.11). |
 
 ### Low-priority (LOW / style)
 
