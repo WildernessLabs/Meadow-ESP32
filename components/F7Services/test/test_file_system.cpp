@@ -393,7 +393,6 @@ TEST_CASE("Get list of files", CLASS_OF_TESTS)
     listMessage->MessageID = TEST_MESSAGE_ID;
 
     fs->ListFiles(listMessage);
-
     //
     //  Now check we have exactly one response and that it is correct.
     //
@@ -430,7 +429,10 @@ TEST_CASE("Get list of files", CLASS_OF_TESTS)
     TEST_ASSERT_EQUAL(strlen(TEST_FILE_CONTENTS2), WriteTestFile((char *) TEST_FILE_NAME2, (uint8_t *) TEST_FILE_CONTENTS2, strlen(TEST_FILE_CONTENTS2)));
     listMessage->StatusCode = StatusCodes::Failure;
 
+    uint32_t freeHeapBefore = esp_get_free_heap_size();
     fs->ListFiles(listMessage);
+    uint32_t freeHeapAfter = esp_get_free_heap_size();
+    TEST_ASSERT_LESS_OR_EQUAL(freeHeapBefore, freeHeapAfter);
 
     //
     //  We have already tested the message queuing above so we will not repeat those checks, we will
