@@ -478,7 +478,7 @@ void FileSystem::ListFiles(Message *message)
         }
         rewinddir(dp);
         Esp32Messaging::FileNameList fileNameList;
-        bzero(&fileNameList, sizeof(fileNameList));
+        memset(&fileNameList, 0, sizeof(fileNameList));
         uint16_t bufferLength = 0;
         TRACE_MESSAGE("Found %" PRIi32 " files.", count);
         if (count > 0)
@@ -486,7 +486,7 @@ void FileSystem::ListFiles(Message *message)
             while (((ep = readdir(dp)) != NULL) && (result != StatusCodes::EspOutOfMemory))
             {
                 Esp32Messaging::FileDetails details;
-                bzero(&details, sizeof(details));
+                memset(&details, 0, sizeof(details));
                 details.Name = ep->d_name;
                 std::string s = PARTITION_PATH_NAME;
                 s += "/";

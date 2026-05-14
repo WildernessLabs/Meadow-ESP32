@@ -123,7 +123,7 @@ void WiFiRequestHandler::GetAddrInfo(void * const vpMessage)
     Esp32Messaging::GetAddrInfoResponse *response = static_cast<Esp32Messaging::GetAddrInfoResponse *>(pvPortMalloc(sizeof(Esp32Messaging::GetAddrInfoResponse)));
     if (response)
     {
-        bzero(response, sizeof(Esp32Messaging::GetAddrInfoResponse));
+        memset(response, 0, sizeof(Esp32Messaging::GetAddrInfoResponse));
         if (IsConnected())
         {
             Esp32Messaging::GetAddrInfoRequest *request = Encoders::ExtractGetAddrInfoRequest(message->Payload);
@@ -1019,7 +1019,7 @@ void WiFiRequestHandler::Read(void * const vpMessage)
             response.Buffer = static_cast<uint8_t *>(pvPortMalloc(request->Count));
             if (response.Buffer)
             {
-                bzero(response.Buffer, request->Count);
+                memset(response.Buffer, 0, request->Count);
                 response.BufferLength = request->Count;
                 response.ReadResponseResult = read(request->SocketHandle, response.Buffer, request->Count);
                 if (response.ReadResponseResult < 0)
@@ -1405,7 +1405,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::RecvFrom(Esp32Messaging::RecvFromRe
                 response.ResponseErrno = ENOMEM;
                 return (StatusCodes::EspOutOfMemory);
             }
-            bzero(sa, sizeof(struct sockaddr_in));
+            memset(sa, 0, sizeof(struct sockaddr_in));
             len = sizeof(struct sockaddr_in);
         }
         response.Buffer = static_cast<uint8_t *>(pvPortMalloc(request->Length));
@@ -1759,7 +1759,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::Accept(Esp32Messaging::AcceptReques
         Esp32Messaging::SockAddr *sockAddr = static_cast<Esp32Messaging::SockAddr *>(pvPortMalloc(sizeof(Esp32Messaging::SockAddr)));
         if (sockAddr)
         {
-            bzero(sockAddr, sizeof(Esp32Messaging::SockAddr));
+            memset(sockAddr, 0, sizeof(Esp32Messaging::SockAddr));
             Mapping::GetStmValue(Mapping::AddressFamily, sa.sa_family, reinterpret_cast<int32_t *>(&sockAddr->Family));
             struct sockaddr_in *sin = (struct sockaddr_in *) &sa;
             sockAddr->Port = sin->sin_port;
@@ -2029,7 +2029,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetSockPeerName(const Esp32Messagin
             response.ResponseErrno = Mapping::NuttxErrno(ENOMEM);
             return (StatusCodes::EspOutOfMemory);
         }
-        bzero(sockAddr, sizeof(Esp32Messaging::SockAddr));
+        memset(sockAddr, 0, sizeof(Esp32Messaging::SockAddr));
         Mapping::GetStmValue(Mapping::AddressFamily, sa.sa_family, reinterpret_cast<int32_t *>(&sockAddr->Family));
         struct sockaddr_in *sin = (struct sockaddr_in *) &sa;
         sockAddr->Port = sin->sin_port;

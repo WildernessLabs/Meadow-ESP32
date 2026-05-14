@@ -307,7 +307,7 @@ WiFiRequestHandler::WiFiRequestHandler()
     //  Finally set some default values for private fields.
     //
     ClearIpAndDisconnectData();
-    bzero((void *) &_apInformation, sizeof(wifi_event_sta_connected_t));
+    memset((void *) &_apInformation, 0, sizeof(wifi_event_sta_connected_t));
     _lastIdfErrorCode = ESP_OK;
     _ipChanged = false;
     _progressiveDelay = new ProgressiveDelay();
@@ -632,14 +632,14 @@ void WiFiRequestHandler::GetMacAddress(uint8_t * const macAddress, wifi_interfac
     {
         if (esp_read_mac(macAddress, ESP_MAC_WIFI_STA) != ESP_OK)
         {
-            bzero(macAddress, 6);
+            memset(macAddress, 0, 6);
         }
     }
     else
     {
         if (esp_wifi_get_mac(WIFI_IF_AP, macAddress) != ESP_OK)
         {
-            bzero(macAddress, 6);
+            memset(macAddress, 0, 6);
         }
     }
 }
@@ -746,8 +746,8 @@ WiFiRequestHandler *WiFiRequestHandler::GetInstance()
  */
 void WiFiRequestHandler::ClearIpAndDisconnectData()
 {
-    bzero((void *) &_instance->_disconnectData, sizeof(_disconnectData));
-    bzero((void *) &_instance->_ipInformation, sizeof(_ipInformation));
+    memset((void *) &_instance->_disconnectData, 0, sizeof(_disconnectData));
+    memset((void *) &_instance->_ipInformation, 0, sizeof(_ipInformation));
 }
 
 /**
@@ -1900,7 +1900,7 @@ void WiFiRequestHandler::ScanForAccessPoints(Message *message)
                     uint8_t *currentLocation = accessPointList->AccessPoints;
                     for (int index = 0; index < apCount; index++)
                     {
-                        bzero(accessPoint, sizeof(Esp32Messaging::AccessPoint));
+                        memset(accessPoint, 0, sizeof(Esp32Messaging::AccessPoint));
                         memcpy(accessPoint->Ssid, &accessPoints[index].ssid, 33);
                         memcpy(accessPoint->Bssid, &accessPoints[index].bssid, 6);
                         accessPoint->PrimaryChannel = accessPoints[index].primary;
@@ -2110,7 +2110,7 @@ void WiFiRequestHandler::StationDisconnectedEvent(wifi_event_sta_disconnected_t 
     {
         memcpy(&_disconnectData, eventData, sizeof(wifi_event_sta_disconnected_t));
         RaiseDisconnectEvent();
-        bzero((void *) &_apInformation, sizeof(wifi_event_sta_connected_t));
+        memset((void *) &_apInformation, 0, sizeof(wifi_event_sta_connected_t));
         ClearIpAndDisconnectData();
         xEventGroupClearBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT | WIFI_CONNECTING_BIT | WIFI_HAVE_IP_BIT);
         xEventGroupSetBits(_xWiFiEventGroup, WIFI_ERROR_BIT);
