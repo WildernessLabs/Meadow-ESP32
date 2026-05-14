@@ -66,7 +66,6 @@ All open issues on the `WildernessLabs/Meadow-ESP32` repository are addressed in
 | [#184](https://github.com/WildernessLabs/Meadow-ESP32/issues/184) | MEDIUM | WiFi credentials not mutex-protected | §5.5 |
 | [#185](https://github.com/WildernessLabs/Meadow-ESP32/issues/185) | MEDIUM | Bluetooth event handler stub | §6.8 |
 | [#187](https://github.com/WildernessLabs/Meadow-ESP32/issues/187) | LOW | `NULL` instead of `nullptr` (duplicate of #179) | §8.3 |
-| [#188](https://github.com/WildernessLabs/Meadow-ESP32/issues/188) | LOW | `bzero` instead of `std::memset` (duplicate of #180) | §8.4 |
 
 ---
 
@@ -428,19 +427,9 @@ Notable examples:
 - `_pollRequestListMutex = NULL;`
 - `SpiTransportProvider::_synchronisationTaskHandle = NULL;`
 
-### 8.4 `bzero` vs `std::memset` [LOW / #180, #188]
-
-`bzero` is used in at least 7 locations:
-
-- `WiFiRequestHandler.cpp` lines 310, 635, 642, 749, 750, 1903
-- `BluetoothRequestHandler.cpp` line 796
-
-`bzero` is not part of the C++ standard and may not be available on all compilers. Replace with `std::memset(ptr, 0, size)`.
-
 ### 8.5 Unused Variables and Dead Code [LOW / #181]
 
 - `static int __attribute__((unused)) test_value = 0;` in `BluetoothManager.cpp` (see §7.6).
-- `MAX_THREADS` constant in `ThreadPool.hpp` is never used.
 - `SendingData(SpiStates state)` has an unused `state` parameter (see §7.5).
 - Commented-out code blocks throughout `SpiTransportProvider.cpp` (heap tracing) and `BluetoothRequestHandler.cpp` (security, service handle) should either be removed or converted to conditional compilation.
 
@@ -466,7 +455,6 @@ Notable examples:
 |---|--------|
 | 1 | **Rotate and remove committed WiFi credentials** from `test/secrets.h` and `components/F7Services/test/secrets.h`; purge from git history. |
 | 2 | Add null checks after every `pvPortMalloc`, `heap_caps_calloc`, `new`, and `strdup` call (issue #162). |
-| 3 | Fix `FileSystem::Mount()` to return `false` on failure (issue #186). |
 | 6 | Fix `UpdatePacketInformation` to use `uint32_t` for `amountRemaining` (issue #175). |
 
 ### Short-term (HIGH)
@@ -496,8 +484,7 @@ Notable examples:
 | # | Action |
 |---|--------|
 | 20 | Replace all `NULL` with `nullptr` in C++ code (issues #179, #187). |
-| 21 | Replace all `bzero` with `std::memset` (issues #180, #188). |
-| 22 | Remove `test_value`, `MAX_THREADS`, unused `state` parameter in `SendingData` (issue #181). |
+| 22 | Remove `test_value`, unused `state` parameter in `SendingData` (issue #181). |
 | 25 | Replace magic numbers with named constants (issue #177). |
 | 26 | Remove or make configurable the `ThreadPool` size constant (issue #155). |
 | 28 | Fix `SpiStateString` to return a safe default string in the default case (§6.12). |

@@ -275,7 +275,7 @@ TEST_CASE("Write file to file system", CLASS_OF_TESTS)
     //  Create a message to write a file to the file system.
     //
     Esp32Messaging::FileNameAndContents fileData;
-    bzero(&fileData, sizeof(fileData));
+    memset(&fileData, 0, sizeof(fileData));
     fileData.Name = (char *) TEST_FILE_NAME;
     fileData.Contents = (uint8_t *) TEST_FILE_CONTENTS;
     fileData.ContentsLength = strlen(TEST_FILE_CONTENTS);
@@ -332,7 +332,7 @@ TEST_CASE("Reading a file", CLASS_OF_TESTS)
     TEST_ASSERT_EQUAL(strlen(TEST_FILE_CONTENTS), WriteTestFile((char *) TEST_FILE_NAME, (uint8_t *) TEST_FILE_CONTENTS, strlen(TEST_FILE_CONTENTS)));
 
     Esp32Messaging::FileNameAndContents fileData;
-    bzero(&fileData, sizeof(fileData));
+    memset(&fileData, 0, sizeof(fileData));
     fileData.Name = (char *) TEST_FILE_NAME;
     uint32_t payloadLength = Encoders::EncodedFileNameAndContentsBufferSize(&fileData);
     uint8_t *encodedPayload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
@@ -485,7 +485,7 @@ TEST_CASE("Delete file", CLASS_OF_TESTS)
     //  Create a message to delete a file from the file system.
     //
     Esp32Messaging::FileDetails details;
-    bzero(&details, sizeof(details));
+    memset(&details, 0, sizeof(details));
     details.Name = (char *) TEST_FILE_NAME;
     uint32_t payloadLength = Encoders::EncodedFileDetailsBufferSize(&details);
     uint8_t *encodedPayload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));

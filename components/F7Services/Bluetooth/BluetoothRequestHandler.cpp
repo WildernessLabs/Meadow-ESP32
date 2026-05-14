@@ -793,7 +793,7 @@ void BluetoothRequestHandler::GetMacAddress(uint8_t * const macAddress)
 
     if (esp_read_mac(macAddress, ESP_MAC_BT) != ESP_OK)
     {
-        bzero(macAddress, 6);
+        memset(macAddress, 0, 6);
     }
     TRACE_MESSAGE("BT MAC address is %02" PRIx8 ":%02" PRIx8 ":%02" PRIx8 ":%02" PRIx8 ":%02" PRIx8 ":%02" PRIx8, macAddress[0], macAddress[1], macAddress[2], macAddress[3], macAddress[4], macAddress[5]);
 
