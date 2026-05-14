@@ -360,15 +360,6 @@ The `EventHandlerHelper` function (referenced by the BLE stack event registratio
 
 **Recommendation:** Implement handlers for security and pairing events, or add explicit log messages for all unhandled events so they can be identified during testing.
 
-### 6.11 NvsManager Read Opens with `NVS_READWRITE` [LOW]
-
-**`NvsManager::GetValue`** for `uint32_t` (line 233):
-```cpp
-error = nvs_open(nameSpace, NVS_READWRITE, &nvsHandle);
-```
-
-This is a read-only operation, but the namespace is opened with read-write access. This is unnecessarily permissive and could mask bugs. It should use `NVS_READONLY`.
-
 ---
 
 ## 7. Best Practices
