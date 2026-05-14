@@ -469,7 +469,6 @@ Notable examples:
 | 22 | Remove `test_value`, unused `state` parameter in `SendingData` (issue #181). |
 | 25 | Replace magic numbers with named constants (issue #177). |
 | 26 | Remove or make configurable the `ThreadPool` size constant (issue #155). |
-| 28 | Fix `SpiStateString` to return a safe default string in the default case (§6.12). |
 
 ---
 
