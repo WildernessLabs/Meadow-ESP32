@@ -56,7 +56,6 @@ All open issues on the `WildernessLabs/Meadow-ESP32` repository are addressed in
 | [#169](https://github.com/WildernessLabs/Meadow-ESP32/issues/169) | CRITICAL | Allocator mismatch and double-free in file operations | §4.2 |
 | [#170](https://github.com/WildernessLabs/Meadow-ESP32/issues/170) | HIGH | Missing null checks on dispatcher/callback pointers | §6.1 |
 | [#171](https://github.com/WildernessLabs/Meadow-ESP32/issues/171) | MEDIUM | Buffer overflow and static buffer issues | §6.2 |
-| [#172](https://github.com/WildernessLabs/Meadow-ESP32/issues/172) | MEDIUM | Non-atomic operations and inconsistent mutex use | §5.3 |
 | [#174](https://github.com/WildernessLabs/Meadow-ESP32/issues/174) | MEDIUM | TOCTOU race in file size check and open | §6.4 |
 | [#175](https://github.com/WildernessLabs/Meadow-ESP32/issues/175) | CRITICAL | Integer underflow/overflow in packet handling | §6.6 |
 | [#176](https://github.com/WildernessLabs/Meadow-ESP32/issues/176) | HIGH | SPI state machine default case cannot recover | §6.7 |
@@ -215,21 +214,6 @@ SemaphoreHandle_t WiFiRequestHandler::_pollRequestListMutex = NULL;
 `_pollRequestListMutex` is created, which is good, but callers must verify that every access to `_pollRequests` is consistently guarded by this mutex. Any unguarded access is a data race on a non-trivially destructible STL container (heap corruption risk).
 
 **`BluetoothManager::_valueMap`** is a `std::map<uint16_t, length_val_s>` accessed from the GATTS event handler (`ESP_GATTS_READ_EVT`, `ESP_GATTS_WRITE_EVT`) and from the FreeRTOS task handling STM32 requests. No mutex protects this map.
-
-### 5.3 Non-Atomic Increment / Inconsistent Mutex Use [MEDIUM / #172]
-
-**`MessageDispatcher::GetNextMessageID`**:
-```cpp
-xSemaphoreTake(_messageIdMutex, portMAX_DELAY);
-_lastMessageId++;
-uint32_t messageId = _lastMessageId;
-xSemaphoreGive(_messageIdMutex);
-messageId &= ~ESP32_MESSAGE_ID_MASK;
-return (messageId);
-```
-The mutex correctly protects the increment. However, the masking operation (`&= ~ESP32_MESSAGE_ID_MASK`) is applied *after* releasing the mutex, meaning the returned ID could still have the high bit set in some return paths. This is a logic issue, not a concurrency issue — the mask should be applied before releasing the mutex.
-
-Additionally, with `ESP32_MESSAGE_ID_MASK = 0x80000000`, `messageId &= ~0x80000000` clears the MSB. If the intent is to keep ESP32-originated IDs below 0x80000000, then once `_lastMessageId` rolls over past 0x7FFFFFFF the ID will wrap to 0 (since the bit is cleared), and IDs will start repeating immediately (0x80000000 masked → 0, 0x80000001 masked → 1, etc.). In-flight messages could receive the wrong response.
 
 ### 5.4 Bluetooth Callback Lifecycle [HIGH / #183]
 
@@ -476,7 +460,6 @@ Notable examples:
 | 15 | Implement or document Bluetooth event handlers (issue #185). |
 | 16 | Protect `_defaultAccessPoint` and `_password` with a mutex (issue #184). |
 | 17 | Fix `GetCurrentValueForAttributeHandle` stack allocation and return value (issue #159). |
-| 18 | Correct `GetNextMessageID` mask logic to apply before releasing the mutex (issue #172). |
 | 19 | Fix `NvsManager::GetValue(uint32_t)` to open NVS with `NVS_READONLY` (§6.11). |
 
 ### Low-priority (LOW / style)
