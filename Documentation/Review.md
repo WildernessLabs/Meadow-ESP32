@@ -68,7 +68,6 @@ All open issues on the `WildernessLabs/Meadow-ESP32` repository are addressed in
 | [#183](https://github.com/WildernessLabs/Meadow-ESP32/issues/183) | HIGH | Bluetooth callback lifecycle | §5.4 |
 | [#184](https://github.com/WildernessLabs/Meadow-ESP32/issues/184) | MEDIUM | WiFi credentials not mutex-protected | §5.5 |
 | [#185](https://github.com/WildernessLabs/Meadow-ESP32/issues/185) | MEDIUM | Bluetooth event handler stub | §6.8 |
-| [#186](https://github.com/WildernessLabs/Meadow-ESP32/issues/186) | HIGH | `Mount()` always returns `true` | §6.9 |
 | [#187](https://github.com/WildernessLabs/Meadow-ESP32/issues/187) | LOW | `NULL` instead of `nullptr` (duplicate of #179) | §8.3 |
 | [#188](https://github.com/WildernessLabs/Meadow-ESP32/issues/188) | LOW | `bzero` instead of `std::memset` (duplicate of #180) | §8.4 |
 
@@ -141,12 +140,6 @@ The project uses multiple heap allocators:
 
 `Utils::DeleteAndNullifyPointer` calls `vPortFree`. This is **correct** for memory allocated with `pvPortMalloc`, but **incorrect** for the following cases:
 
-**`FileSystem::ListFiles`** (`FileSystem.cpp`, line 504):
-```cpp
-fileNameList.FileDetails = static_cast<uint8_t *>(realloc(fileNameList.FileDetails, bufferLength));
-```
-`realloc` uses the libc heap. The returned pointer is never explicitly freed, but if it were passed to `Utils::DeleteAndNullifyPointer`, `vPortFree` would be called on libc memory — undefined behaviour. The correct allocator here is `pvPortMalloc` + `vPortFree`, with a manual reallocation.
-
 **`BluetoothRequestHandler::GenerateAttributeTable`** (line 342):
 ```cpp
 _attribute_table = new esp_gatts_attr_db_t[count];
@@ -161,7 +154,6 @@ Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&_threadsAvailable));
 
 **Recommendation:**
 - Standardise on `pvPortMalloc` / `vPortFree` for all dynamic allocation.
-- Replace `realloc` with explicit `pvPortMalloc` + `memcpy` + `vPortFree`.
 - Replace `new[]` / `delete[]` in Bluetooth with `pvPortMalloc` / `vPortFree`.
 - Replace `Utils::DeleteAndNullifyPointer` on FreeRTOS handles with the correct `vSemaphoreDelete`, `vQueueDelete`, etc.
 
@@ -390,39 +382,6 @@ The `EventHandlerHelper` function (referenced by the BLE stack event registratio
 
 **Recommendation:** Implement handlers for security and pairing events, or add explicit log messages for all unhandled events so they can be identified during testing.
 
-### 6.9 `FileSystem::Mount()` Always Returns `true` [HIGH / #186]
-
-```cpp
-bool FileSystem::Mount()
-{
-    bool result = true;
-
-    esp_err_t ret = esp_vfs_littlefs_register(&_config);
-    if (ret != ESP_OK)
-    {
-        // only logs; never sets result = false
-    }
-
-    return (result);
-}
-```
-
-The `result` variable is initialised to `true` and never changed on failure. `Setup()` calls `Mount()` and uses the return value to decide whether to continue, so all mount failures are silently treated as successes.
-
-**Recommendation:**
-```cpp
-bool FileSystem::Mount()
-{
-    esp_err_t ret = esp_vfs_littlefs_register(&_config);
-    if (ret != ESP_OK)
-    {
-        ERROR_MESSAGE("Failed to mount LittleFS: %s", esp_err_to_name(ret));
-        return (false);
-    }
-    return (true);
-}
-```
-
 ### 6.11 NvsManager Read Opens with `NVS_READWRITE` [LOW]
 
 **`NvsManager::GetValue`** for `uint32_t` (line 233):
@@ -553,7 +512,6 @@ Notable examples:
 | 1 | **Rotate and remove committed WiFi credentials** from `test/secrets.h` and `components/F7Services/test/secrets.h`; purge from git history. |
 | 2 | Add null checks after every `pvPortMalloc`, `heap_caps_calloc`, `new`, and `strdup` call (issue #162). |
 | 3 | Fix `FileSystem::Mount()` to return `false` on failure (issue #186). |
-| 4 | Replace `realloc` in `FileSystem::ListFiles` with `pvPortMalloc`/`vPortFree` (issue #169). |
 | 5 | Replace `Utils::DeleteAndNullifyPointer` on `_threadsAvailable` with `vSemaphoreDelete` (§4.2). |
 | 6 | Fix `UpdatePacketInformation` to use `uint32_t` for `amountRemaining` (issue #175). |
 
