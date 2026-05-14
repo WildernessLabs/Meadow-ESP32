@@ -146,12 +146,6 @@ _attribute_table = new esp_gatts_attr_db_t[count];
 ```
 `_attribute_table` is a C++ `new[]` allocation. `Utils::DeleteAndNullifyPointer` must **not** be called on this pointer; `delete[]` must be used. Since `BluetoothManager::DeleteAllServices` uses `delete[]` for `_valueMap` values, this particular pair is internally consistent, but mixing `new[]` with the rest of the codebase's FreeRTOS allocations remains a maintenance hazard.
 
-**`ThreadPool::~ThreadPool`** (`ThreadPool.cpp`, line 98):
-```cpp
-Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&_threadsAvailable));
-```
-`_threadsAvailable` is a `SemaphoreHandle_t` (a FreeRTOS object). It must be deleted with `vSemaphoreDelete`, not `vPortFree`. Calling `vPortFree` on a semaphore corrupts the FreeRTOS kernel structures.
-
 **Recommendation:**
 - Standardise on `pvPortMalloc` / `vPortFree` for all dynamic allocation.
 - Replace `new[]` / `delete[]` in Bluetooth with `pvPortMalloc` / `vPortFree`.
@@ -512,7 +506,6 @@ Notable examples:
 | 1 | **Rotate and remove committed WiFi credentials** from `test/secrets.h` and `components/F7Services/test/secrets.h`; purge from git history. |
 | 2 | Add null checks after every `pvPortMalloc`, `heap_caps_calloc`, `new`, and `strdup` call (issue #162). |
 | 3 | Fix `FileSystem::Mount()` to return `false` on failure (issue #186). |
-| 5 | Replace `Utils::DeleteAndNullifyPointer` on `_threadsAvailable` with `vSemaphoreDelete` (§4.2). |
 | 6 | Fix `UpdatePacketInformation` to use `uint32_t` for `amountRemaining` (issue #175). |
 
 ### Short-term (HIGH)
