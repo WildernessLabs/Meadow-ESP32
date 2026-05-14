@@ -230,7 +230,7 @@ uint32_t NvsManager::GetValue(const char *nameSpace, const char *name, const uin
 
     if (_nvsAvailable)
     {
-        error = nvs_open(nameSpace, NVS_READWRITE, &nvsHandle);
+        error = nvs_open(nameSpace, NVS_READONLY, &nvsHandle);
         if (error == ESP_OK)
         {
             nvs_get_u32(nvsHandle, name, &result); // Result is not changed if there is an error.
