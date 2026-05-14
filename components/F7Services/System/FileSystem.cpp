@@ -296,7 +296,7 @@ void FileSystem::ReadFile(Message * const message)
                 if (fileData->Contents != NULL)
                 {
                     TRACE_MESSAGE("Reading %" PRIu32 " bytes from file %s", fileInfo.st_size, fileData->Name);
-                    FILE *file = fopen(s.c_str(), "r");
+                    FILE *file = fopen(s.c_str(), "rb");
                     if (file != NULL)
                     {
                         int amountRead = fread(static_cast<void *>(fileData->Contents), 1, fileInfo.st_size, file);
