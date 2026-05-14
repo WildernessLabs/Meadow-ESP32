@@ -68,7 +68,6 @@ All open issues on the `WildernessLabs/Meadow-ESP32` repository are addressed in
 | [#183](https://github.com/WildernessLabs/Meadow-ESP32/issues/183) | HIGH | Bluetooth callback lifecycle | §5.4 |
 | [#184](https://github.com/WildernessLabs/Meadow-ESP32/issues/184) | MEDIUM | WiFi credentials not mutex-protected | §5.5 |
 | [#185](https://github.com/WildernessLabs/Meadow-ESP32/issues/185) | MEDIUM | Bluetooth event handler stub | §6.8 |
-| [#186](https://github.com/WildernessLabs/Meadow-ESP32/issues/186) | HIGH | `Mount()` always returns `true` | §6.9 |
 | [#187](https://github.com/WildernessLabs/Meadow-ESP32/issues/187) | LOW | `NULL` instead of `nullptr` (duplicate of #179) | §8.3 |
 | [#188](https://github.com/WildernessLabs/Meadow-ESP32/issues/188) | LOW | `bzero` instead of `std::memset` (duplicate of #180) | §8.4 |
 
@@ -140,12 +139,6 @@ The project uses multiple heap allocators:
 - libc: `realloc` / `free`
 
 `Utils::DeleteAndNullifyPointer` calls `vPortFree`. This is **correct** for memory allocated with `pvPortMalloc`, but **incorrect** for the following cases:
-
-**`FileSystem::ListFiles`** (`FileSystem.cpp`, line 504):
-```cpp
-fileNameList.FileDetails = static_cast<uint8_t *>(realloc(fileNameList.FileDetails, bufferLength));
-```
-`realloc` uses the libc heap. The returned pointer is never explicitly freed, but if it were passed to `Utils::DeleteAndNullifyPointer`, `vPortFree` would be called on libc memory — undefined behaviour. The correct allocator here is `pvPortMalloc` + `vPortFree`, with a manual reallocation.
 
 **`BluetoothRequestHandler::GenerateAttributeTable`** (line 342):
 ```cpp
