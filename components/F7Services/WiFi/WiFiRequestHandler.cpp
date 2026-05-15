@@ -1105,6 +1105,9 @@ void WiFiRequestHandler::EventHandlerHelper(esp_event_base_t eventBase, int32_t 
             case WIFI_EVENT_AP_PROBEREQRECVED:
                 TRACE_MESSAGE("EventHandlerHelper: WIFI_EVENT_AP_PROBEREQRECVED");
                 break;
+            case WIFI_EVENT_HOME_CHANNEL_CHANGE:
+                TRACE_MESSAGE("EventHandlerHelper: WIFI_EVENT_HOME_CHANNEL_CHANGE");
+                break;
             default:
                 TRACE_MESSAGE("EventHandlerHelper: Unhandled WiFi Event ID %" PRIi32, eventId);
                 break;
