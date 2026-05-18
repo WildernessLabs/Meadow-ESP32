@@ -384,7 +384,7 @@ private:
     /**
      * @brief Country code for the WiFi configuration.
 ]     */
-    static const char * _countryCode;
+    static const char *_countryCode;
 
     /**
      * @brief Name of the storage in NVS holding the country code.
@@ -1048,8 +1048,8 @@ public:
     /**
      *  @brief Get / Set the country code for the WiFi configuration.
      */
-    static const char * GetCountryCode();
-    static StatusCodes::StatusCodes SetCountryCode(const char *value  = WiFiRequestHandler::_validCountryCodes[0]);
+    static const char *GetCountryCode();
+    static StatusCodes::StatusCodes SetCountryCode(const char *value = WiFiRequestHandler::_validCountryCodes[0]);
 
     /**
      *  @brief Get / set the default IP address when not using DHCP.

@@ -178,13 +178,13 @@ const char *WiFiRequestHandler::PASSWORD_NAME = "Password";
 
 /**
  *  @brief List of valid country codes.
- * 
+ *
  *  @note The first element of this array is used as the default country code if no value is found in NVS.
  *        It is important that this code is "01" as this is the code that the ESP32 recognises as the default
  *        world wide code that is safe for all regions.
  */
-const char * const WiFiRequestHandler::_validCountryCodes[] = { "01", "AT","AU","BE","BG","BR", "CA","CH","CN","CY","CZ","DE","DK","EE","ES","FI","FR","GB","GR","HK","HR","HU",
-                                                         "IE","IN","IS","IT","JP","KR","LI","LT","LU","LV","MT","MX","NL","NO","NZ","PL","PT", "RO","SE","SI","SK","TW","US" };
+const char * const WiFiRequestHandler::_validCountryCodes[] = {"01", "AT", "AU", "BE", "BG", "BR", "CA", "CH", "CN", "CY", "CZ", "DE", "DK", "EE", "ES", "FI", "FR", "GB", "GR", "HK", "HR", "HU", "IE",
+                                                               "IN", "IS", "IT", "JP", "KR", "LI", "LT", "LU", "LV", "MT", "MX", "NL", "NO", "NZ", "PL", "PT", "RO", "SE", "SI", "SK", "TW", "US"};
 
 /**
  * @brief Name of the storage in NVS holding the country code.
@@ -548,7 +548,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetPassword(const char *value)
 /**
  *  @brief Get the country code for the WiFi configuration.
  */
-const char * WiFiRequestHandler::GetCountryCode()
+const char *WiFiRequestHandler::GetCountryCode()
 {
     return (WiFiRequestHandler::_countryCode);
 }
