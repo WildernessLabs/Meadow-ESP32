@@ -1883,7 +1883,7 @@ esp_err_t WiFiRequestHandler::StartWiFiInterface(const wifi_mode_t mode, const E
         if (result == ESP_OK)
         {
             wifi_country_t country = {};
-            strcpy(country.cc, "EU");
+            strcpy(country.cc, _countryCode);
             country.schan = 1;
             country.nchan = 13;
             country.policy = WIFI_COUNTRY_POLICY_MANUAL;
