@@ -420,3 +420,44 @@ TEST_CASE("Connect to non-existant access point", CLASS_OF_TESTS)
     delete wifiRequestHandler;
     delete messageDispatcher;
 }
+
+/**
+ * @brief Test the GetCountryCode and SetCountryCode methods.
+ *
+ * Stages:
+ *  1. GetCountryCode returns a non-null value after Setup.
+ *  2. SetCountryCode returns CompletedOk for a valid country code.
+ *  3. SetCountryCode updates the value returned by GetCountryCode.
+ *  4. SetCountryCode returns CompletedOk when the code is unchanged.
+ */
+TEST_CASE("GetCountryCode and SetCountryCode", CLASS_OF_TESTS)
+{
+    NvsManager::Setup();
+
+    MockMessageDispatcher *messageDispatcher = new MockMessageDispatcher(nullptr);
+    TEST_ASSERT_NOT_NULL(messageDispatcher);
+
+    WiFiRequestHandler *wifiRequestHandler = new WiFiRequestHandler(messageDispatcher);
+    TEST_ASSERT_NOT_NULL(wifiRequestHandler);
+    wifiRequestHandler->Setup();
+    //
+    // GetCountryCode returns a non-null value after Setup.
+    //
+    const char *countryCode = WiFiRequestHandler::GetCountryCode();
+    TEST_ASSERT_NOT_NULL(countryCode);
+    //
+    // SetCountryCode returns CompletedOk for a valid country code.
+    //
+    StatusCodes::StatusCodes result = WiFiRequestHandler::SetCountryCode("AU");
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, result);
+    TEST_ASSERT_EQUAL_STRING("AU", WiFiRequestHandler::GetCountryCode());
+    //
+    // SetCountryCode returns CompletedOk when the code is unchanged.
+    //
+    result = WiFiRequestHandler::SetCountryCode("GB");
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, result);
+    TEST_ASSERT_EQUAL_STRING("GB", WiFiRequestHandler::GetCountryCode());
+
+    delete wifiRequestHandler;
+    delete messageDispatcher;
+}

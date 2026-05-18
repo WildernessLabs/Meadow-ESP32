@@ -278,6 +278,11 @@ namespace StatusCodes
          * @brief Invalid request.
          */
         InvalidRequest = 61,
+
+        /**
+         * @brief Invalid WiFi country code.
+         */
+        InvalidWiFiCountryCode = 62,
     };
 
 } // namespace StatusCodes

@@ -377,6 +377,21 @@ private:
     static const char *PASSWORD_NAME;
 
     /**
+     *  @brief List of valid country codes.
+     */
+    static const char * const _validCountryCodes[];
+
+    /**
+     * @brief Country code for the WiFi configuration.
+]     */
+    static const char * _countryCode;
+
+    /**
+     * @brief Name of the storage in NVS holding the country code.
+     */
+    static const char *COUNTRY_CODE_NAME;
+
+    /**
      *  @brief Name of the NTP server to be used when using NTP to set the time
      *  when the board starts.
      */
@@ -1029,6 +1044,12 @@ public:
      */
     static char *GetPassword();
     static StatusCodes::StatusCodes SetPassword(const char *value);
+
+    /**
+     *  @brief Get / Set the country code for the WiFi configuration.
+     */
+    static const char * GetCountryCode();
+    static StatusCodes::StatusCodes SetCountryCode(const char *value  = WiFiRequestHandler::_validCountryCodes[0]);
 
     /**
      *  @brief Get / set the default IP address when not using DHCP.

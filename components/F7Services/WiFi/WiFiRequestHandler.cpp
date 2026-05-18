@@ -117,7 +117,7 @@ const char *WiFiRequestHandler::AUTOMATIC_RECONNECT_NAME = "AutoReconnect";
 /**
  *  @brief Maximum number of times a failed event should retry before raising an error.
  */
-uint32_t WiFiRequestHandler::_maximumRetryCount = 3;
+uint32_t WiFiRequestHandler::_maximumRetryCount = 10;
 
 /**
  *  @brief Name of the NVS storage holding the _maximumRetryCount value.
@@ -175,6 +175,26 @@ char *WiFiRequestHandler::_password = nullptr;
  *  @brief Name of the storage in NVS holding the password for the access point.
  */
 const char *WiFiRequestHandler::PASSWORD_NAME = "Password";
+
+/**
+ *  @brief List of valid country codes.
+ * 
+ *  @note The first element of this array is used as the default country code if no value is found in NVS.
+ *        It is important that this code is "01" as this is the code that the ESP32 recognises as the default
+ *        world wide code that is safe for all regions.
+ */
+const char * const WiFiRequestHandler::_validCountryCodes[] = { "01", "AT","AU","BE","BG","BR", "CA","CH","CN","CY","CZ","DE","DK","EE","ES","FI","FR","GB","GR","HK","HR","HU",
+                                                         "IE","IN","IS","IT","JP","KR","LI","LT","LU","LV","MT","MX","NL","NO","NZ","PL","PT", "RO","SE","SI","SK","TW","US" };
+
+/**
+ * @brief Name of the storage in NVS holding the country code.
+ */
+const char *WiFiRequestHandler::COUNTRY_CODE_NAME = "CountryCode";
+
+/**
+ * @brief Country code for the WiFi configuration.
+ */
+const char *WiFiRequestHandler::_countryCode = nullptr;
 
 /**
  *  @brief Name of the NTP server to be used when using NTP to set the time
@@ -280,6 +300,8 @@ WiFiRequestHandler::WiFiRequestHandler()
     _password = SystemRequestHandler::GetConfigurationValue(PASSWORD_NAME, _password);
     _stationNetIfHandle = nullptr;
     _softApNetIfHandle = nullptr;
+    _countryCode = SystemRequestHandler::GetConfigurationValue(COUNTRY_CODE_NAME, _validCountryCodes[0]);
+    TRACE_MESSAGE("WiFiRequestHandler: Country code is %s", _countryCode);
     //
     //  Setup the timezones ready for when we get the time from a timeserver.
     //
@@ -519,6 +541,50 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetPassword(const char *value)
             free(_password);
             _password = strdup(value);
         }
+    }
+    return (result);
+}
+
+/**
+ *  @brief Get the country code for the WiFi configuration.
+ */
+const char * WiFiRequestHandler::GetCountryCode()
+{
+    return (WiFiRequestHandler::_countryCode);
+}
+
+/**
+ *  @brief Set the country code for the WiFi configuration.
+ *
+ *  @param value
+ *      New country code value.
+ *
+ *  @returns
+ *      StatusCodes::Completed on success, StatusCodes::Failure if there is a problem.
+ */
+StatusCodes::StatusCodes WiFiRequestHandler::SetCountryCode(const char *value)
+{
+    TRACE_MESSAGE("WiFiRequestHandler::SetCountryCode %s", (value == NULL) ? "NULL" : value);
+    StatusCodes::StatusCodes result = StatusCodes::InvalidWiFiCountryCode;
+
+    if (strcmp(value, _countryCode))
+    {
+        for (uint32_t countryCodeIndex = 0; countryCodeIndex < (sizeof(WiFiRequestHandler::_validCountryCodes) / sizeof(WiFiRequestHandler::_validCountryCodes[0])); countryCodeIndex++)
+        {
+            if (!strcmp(value, WiFiRequestHandler::_validCountryCodes[countryCodeIndex]))
+            {
+                if (SystemRequestHandler::SetConfigurationValue(COUNTRY_CODE_NAME, value) == NvsManager::ErrorCodes::Ok)
+                {
+                    _countryCode = SystemRequestHandler::GetConfigurationValue(COUNTRY_CODE_NAME, WiFiRequestHandler::_validCountryCodes[0]);
+                    result = StatusCodes::CompletedOk;
+                    break;
+                }
+            }
+        }
+    }
+    else
+    {
+        result = StatusCodes::CompletedOk;
     }
     return (result);
 }
@@ -1812,6 +1878,16 @@ esp_err_t WiFiRequestHandler::StartWiFiInterface(const wifi_mode_t mode, const E
         {
             wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
             result = esp_wifi_init(&cfg);
+        }
+
+        if (result == ESP_OK)
+        {
+            wifi_country_t country = {};
+            strcpy(country.cc, "EU");
+            country.schan = 1;
+            country.nchan = 13;
+            country.policy = WIFI_COUNTRY_POLICY_MANUAL;
+            result = esp_wifi_set_country(&country);
         }
 
         if (result == ESP_OK)
