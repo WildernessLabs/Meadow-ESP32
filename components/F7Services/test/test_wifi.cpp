@@ -251,6 +251,8 @@ TEST_CASE("Connect to access point", CLASS_OF_TESTS)
     TEST_ASSERT_NOT_NULL(wifiRequestHandler);
     wifiRequestHandler->Setup();
 
+    printf("Connecting to access point: %s\n", WIFI_NETWORK);
+    printf("Password: %s\n", WIFI_PASSWORD);
     Message *connectToAccessPoint = CreateConnectToAccessPointMessage(WIFI_NETWORK, WIFI_PASSWORD);
 
     WiFiRequestHandlerTestFriend *wifiRequestHandlerTestFriend = new WiFiRequestHandlerTestFriend(wifiRequestHandler);
@@ -294,13 +296,16 @@ TEST_CASE("Connect to access point", CLASS_OF_TESTS)
         {
             case WiFiFunction::ConnectToAccessPoint:
                 TEST_ASSERT_EQUAL(response->MessageType, MessageTypes::Response);
+                TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
                 connectionResult = true;
                 break;
             case WiFiFunction::NetworkConnectingEvent:
                 TEST_ASSERT_EQUAL(response->MessageType, MessageTypes::Event);
+                TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
                 break;
             case WiFiFunction::NetworkConnectedEvent:
                 TEST_ASSERT_EQUAL(response->MessageType, MessageTypes::Event);
+                TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
                 connectedEvent = true;
                 break;
             default:
@@ -308,9 +313,12 @@ TEST_CASE("Connect to access point", CLASS_OF_TESTS)
                 break;
         }
         Message::DeleteMessage(response);
-        WaitForResponse(messageDispatcher, timeout);
+        if (!connectionResult)
+        {
+            WaitForResponse(messageDispatcher, timeout);
+        }
     }
-    printf("Test completeed.\n");
+    printf("Test completed.\n");
     TEST_ASSERT_TRUE(connectedEvent);
     TEST_ASSERT_TRUE(connectionResult);
     TEST_ASSERT_EQUAL(0, messageDispatcher->OutboundMessageQueueLength());
@@ -409,6 +417,47 @@ TEST_CASE("Connect to non-existant access point", CLASS_OF_TESTS)
     //
     //  Finally remove the objects we have created.
     //
+    delete wifiRequestHandler;
+    delete messageDispatcher;
+}
+
+/**
+ * @brief Test the GetCountryCode and SetCountryCode methods.
+ *
+ * Stages:
+ *  1. GetCountryCode returns a non-null value after Setup.
+ *  2. SetCountryCode returns CompletedOk for a valid country code.
+ *  3. SetCountryCode updates the value returned by GetCountryCode.
+ *  4. SetCountryCode returns CompletedOk when the code is unchanged.
+ */
+TEST_CASE("GetCountryCode and SetCountryCode", CLASS_OF_TESTS)
+{
+    NvsManager::Setup();
+
+    MockMessageDispatcher *messageDispatcher = new MockMessageDispatcher(nullptr);
+    TEST_ASSERT_NOT_NULL(messageDispatcher);
+
+    WiFiRequestHandler *wifiRequestHandler = new WiFiRequestHandler(messageDispatcher);
+    TEST_ASSERT_NOT_NULL(wifiRequestHandler);
+    wifiRequestHandler->Setup();
+    //
+    // GetCountryCode returns a non-null value after Setup.
+    //
+    const char *countryCode = WiFiRequestHandler::GetCountryCode();
+    TEST_ASSERT_NOT_NULL(countryCode);
+    //
+    // SetCountryCode returns CompletedOk for a valid country code.
+    //
+    StatusCodes::StatusCodes result = WiFiRequestHandler::SetCountryCode("AU");
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, result);
+    TEST_ASSERT_EQUAL_STRING("AU", WiFiRequestHandler::GetCountryCode());
+    //
+    // SetCountryCode returns CompletedOk when the code is unchanged.
+    //
+    result = WiFiRequestHandler::SetCountryCode("GB");
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, result);
+    TEST_ASSERT_EQUAL_STRING("GB", WiFiRequestHandler::GetCountryCode());
+
     delete wifiRequestHandler;
     delete messageDispatcher;
 }
