@@ -92,107 +92,132 @@ void WiFiRequestHandler::StartAccessPoint(Message *message)
 {
     TRACE_MESSAGE("StartAccessPoint: Enter");
 
-    // StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
 
-    // Esp32Messaging::AccessPointInformation *accessPointInformation = ExtractAndValidateAccessPointInformation(message->Payload);
-    // message->DeletePayload();
-
-    // if (accessPointInformation)
-    // {
-    //     xEventGroupClearBits(_xWiFiEventGroup, WIFI_ACCESS_POINT_STARTED_BIT | WIFI_ERROR_BIT);
-    //     EventBits_t bits = xEventGroupGetBits(_xWiFiEventGroup);
-    //     uint32_t ipAddress = accessPointInformation->IpAddress;
-    //     uint32_t subnetMask = accessPointInformation->SubnetMask;
-    //     uint32_t gateway = accessPointInformation->Gateway;
-    //     if (!(bits & WIFI_INTERFACE_STARTED_BIT))
-    //     {
-    //         accessPointInformation->IpAddress = 0;
-    //         accessPointInformation->SubnetMask = 0;
-    //         accessPointInformation->Gateway = 0;
-    //         if (StartWiFiInterface(WIFI_MODE_APSTA, accessPointInformation) != ESP_OK)
-    //         {
-    //             result = StatusCodes::CannotStartNetworkInterface;
-    //         }
-    //         else
-    //         {
-    //             bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTED_BIT | WIFI_ERROR_BIT, pdFALSE, pdFALSE, GetWiFiTimeout() / portTICK_PERIOD_MS);
-    //             if ((bits & WIFI_INTERFACE_STARTED_BIT) == 0)
-    //             {
-    //                 result = StatusCodes::CannotStartNetworkInterface;
-    //             }
-    //             else
-    //             {
-    //                 TRACE_MESSAGE("StartAccessPoint: WiFi interface started OK.");
-    //             }
-    //         }
-    //     }
-    //     if (result == StatusCodes::CompletedOk)
-    //     {
-    //         TRACE_MESSAGE("StartAccessPoint: Creating access point: %s, password %s", accessPointInformation->NetworkName, accessPointInformation->Password);
-    //         wifi_config_t config = { };
-    //         config.ap.ssid_len = strlen(accessPointInformation->NetworkName);
-    //         memcpy(config.ap.ssid, accessPointInformation->NetworkName, strlen(accessPointInformation->NetworkName));
-    //         memcpy(config.ap.password, accessPointInformation->Password, strlen(accessPointInformation->Password));
-    //         config.ap.max_connection = ESP_WIFI_MAX_CONN_NUM;
-    //         config.ap.authmode = WIFI_AUTH_WPA_WPA2_PSK;
-    //         esp_err_t error = esp_wifi_set_config(ESP_IF_WIFI_AP, &config);
-    //         if (error != ESP_OK)
-    //         {
-    //             TRACE_MESSAGE("StartAccessPoint: Setting access point configuration returned 0x%x (%s)", error, esp_err_to_name(error));
-    //             result = StatusCodes::CannotStartAccessPoint;
-    //         }
-    //         else
-    //         {
-    //             if ((ipAddress != 0) && (gateway != 0) && (subnetMask != 0))
-    //             {
-    //                 if (esp_netif_dhcps_stop(_softApNetIfHandle) == ESP_OK)
-    //                 {
-    //                     char ip[INET_ADDRSTRLEN], sn[INET_ADDRSTRLEN], gw[INET_ADDRSTRLEN];
-    //                     strcpy(ip, inet_ntoa(ipAddress));
-    //                     strcpy(sn, inet_ntoa(subnetMask));
-    //                     strcpy(gw, inet_ntoa(gateway));
-    //                     TRACE_MESSAGE("StartAccessPoint: Configuring access point DHCP server, IP: %s, subnet mask %s, default gateway %s", ip, sn, gw);
-
-    //                     esp_netif_ip_info_t ip_info;
-    //                     ip_info.ip.addr = ipAddress;
-    //                     ip_info.gw.addr = gateway;
-    //                     ip_info.netmask.addr = subnetMask;
-    //                     if (esp_netif_set_ip_info(_softApNetIfHandle, &ip_info) != ESP_OK)
-    //                     {
-    //                         result = StatusCodes::DhcpConfigurationError;
-    //                     }
-    //                     else
-    //                     {
-    //                         if (esp_netif_dhcps_start(_softApNetIfHandle) != ESP_OK)
-    //                         {
-    //                             result = StatusCodes::DhcpConfigurationError;
-    //                         }
-    //                     }
-    //                 }
-    //                 else
-    //                 {
-    //                     result = StatusCodes::DhcpConfigurationError;
-    //                 }
-    //             }
-    //             bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_ACCESS_POINT_STARTED_BIT | WIFI_ERROR_BIT, pdFALSE, pdFALSE, GetWiFiTimeout() / portTICK_PERIOD_MS);
-    //             if ((bits & WIFI_ACCESS_POINT_STARTED_BIT) == 0)
-    //             {
-    //                 result = StatusCodes::Timeout;
-    //                 xEventGroupClearBits(_xWiFiEventGroup, WIFI_ERROR_BIT);
-    //             }
-    //         }
-    //     }
-    //     vPortFree(accessPointInformation);
-    // }
-    // else
-    // {
-    //     result = StatusCodes::CannotStartAccessPoint;
-    // }
-
+    Esp32Messaging::AccessPointInformation *accessPointInformation = ExtractAndValidateAccessPointInformation(message->Payload);
     message->DeletePayload();
 
+    if (accessPointInformation)
+    {
+        xEventGroupClearBits(_xWiFiEventGroup, WIFI_ACCESS_POINT_STARTED_BIT | WIFI_ERROR_BIT);
+        EventBits_t bits = xEventGroupGetBits(_xWiFiEventGroup);
+        uint32_t ipAddress = accessPointInformation->IpAddress;
+        uint32_t subnetMask = accessPointInformation->SubnetMask;
+        uint32_t gateway = accessPointInformation->Gateway;
+
+        if (!(bits & WIFI_INTERFACE_STARTED_BIT))
+        {
+            //
+            //  Clear the IP settings so the station interface uses DHCP; the AP's
+            //  static-IP settings are applied separately below.
+            //
+            accessPointInformation->IpAddress = 0;
+            accessPointInformation->SubnetMask = 0;
+            accessPointInformation->Gateway = 0;
+            if (StartWiFiInterface(WIFI_MODE_APSTA, accessPointInformation) != ESP_OK)
+            {
+                result = StatusCodes::CannotStartNetworkInterface;
+            }
+            else
+            {
+                bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTED_BIT | WIFI_ERROR_BIT, pdFALSE, pdFALSE, GetWiFiTimeout() / portTICK_PERIOD_MS);
+                if ((bits & WIFI_INTERFACE_STARTED_BIT) == 0)
+                {
+                    result = StatusCodes::CannotStartNetworkInterface;
+                }
+                else
+                {
+                    TRACE_MESSAGE("StartAccessPoint: WiFi interface started OK.");
+                }
+            }
+        }
+        else
+        {
+            //
+            //  Interface already started in station mode — upgrade to APSTA so
+            //  station mode remains available alongside the soft-AP.
+            //
+            if (esp_wifi_set_mode(WIFI_MODE_APSTA) != ESP_OK)
+            {
+                result = StatusCodes::CannotStartNetworkInterface;
+            }
+            else if (_softApNetIfHandle == nullptr)
+            {
+                _softApNetIfHandle = esp_netif_create_default_wifi_ap();
+                if (_softApNetIfHandle == nullptr)
+                {
+                    result = StatusCodes::CannotStartNetworkInterface;
+                }
+            }
+        }
+
+        if (result == StatusCodes::CompletedOk)
+        {
+            TRACE_MESSAGE("StartAccessPoint: Creating access point: %s, password %s", accessPointInformation->NetworkName, accessPointInformation->Password);
+            wifi_config_t config = {};
+            config.ap.ssid_len = strlen(accessPointInformation->NetworkName);
+            memcpy(config.ap.ssid, accessPointInformation->NetworkName, strlen(accessPointInformation->NetworkName));
+            memcpy(config.ap.password, accessPointInformation->Password, strlen(accessPointInformation->Password));
+            config.ap.max_connection = ESP_WIFI_MAX_CONN_NUM;
+            config.ap.authmode = WIFI_AUTH_WPA_WPA2_PSK;
+            esp_err_t error = esp_wifi_set_config(WIFI_IF_AP, &config);
+            if (error != ESP_OK)
+            {
+                TRACE_MESSAGE("StartAccessPoint: Setting access point configuration returned 0x%x (%s)", error, esp_err_to_name(error));
+                result = StatusCodes::CannotStartAccessPoint;
+            }
+            else
+            {
+                if ((ipAddress != 0) && (gateway != 0) && (subnetMask != 0))
+                {
+                    if (esp_netif_dhcps_stop(_softApNetIfHandle) == ESP_OK)
+                    {
+                        char ip[INET_ADDRSTRLEN], sn[INET_ADDRSTRLEN], gw[INET_ADDRSTRLEN];
+                        strcpy(ip, inet_ntoa(ipAddress));
+                        strcpy(sn, inet_ntoa(subnetMask));
+                        strcpy(gw, inet_ntoa(gateway));
+                        TRACE_MESSAGE("StartAccessPoint: Configuring access point DHCP server, IP: %s, subnet mask %s, default gateway %s", ip, sn, gw);
+
+                        esp_netif_ip_info_t ip_info;
+                        ip_info.ip.addr = ipAddress;
+                        ip_info.gw.addr = gateway;
+                        ip_info.netmask.addr = subnetMask;
+                        if (esp_netif_set_ip_info(_softApNetIfHandle, &ip_info) != ESP_OK)
+                        {
+                            result = StatusCodes::DhcpConfigurationError;
+                        }
+                        else
+                        {
+                            if (esp_netif_dhcps_start(_softApNetIfHandle) != ESP_OK)
+                            {
+                                result = StatusCodes::DhcpConfigurationError;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        result = StatusCodes::DhcpConfigurationError;
+                    }
+                }
+
+                bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_ACCESS_POINT_STARTED_BIT | WIFI_ERROR_BIT, pdFALSE, pdFALSE, GetWiFiTimeout() / portTICK_PERIOD_MS);
+                if ((bits & WIFI_ACCESS_POINT_STARTED_BIT) == 0)
+                {
+                    result = StatusCodes::Timeout;
+                    xEventGroupClearBits(_xWiFiEventGroup, WIFI_ERROR_BIT);
+                }
+            }
+        }
+
+        vPortFree(accessPointInformation);
+    }
+    else
+    {
+        result = StatusCodes::CannotStartAccessPoint;
+    }
+
     message->MessageType = MessageTypes::Response;
-    message->StatusCode = StatusCodes::NotImplemented;
+    message->StatusCode = result;
     Logging::DumpMessage(COMPONENT_NAME, message);
 
     _messageDispatcher->QueueMessageForStm32(message);
