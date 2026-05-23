@@ -563,8 +563,7 @@ static void TestStartAccessPoint(const char *ssid, const char *password, uint32_
     {
         Message *response = messageDispatcher->GetOutboundMessage();
 #if defined(DEBUGGING_TESTS)
-        printf("Message: MessageType %d, Function %d, Interface %d, StatusCode %d\n",
-               (int) response->MessageType, (int) response->Function, (int) response->Interface, (int) response->StatusCode);
+        printf("Message: MessageType %d, Function %d, Interface %d, StatusCode %d\n", (int) response->MessageType, (int) response->Function, (int) response->Interface, (int) response->StatusCode);
 #endif
         TEST_ASSERT_EQUAL(Esp32Interfaces::WiFi, response->Interface);
 
@@ -576,17 +575,17 @@ static void TestStartAccessPoint(const char *ssid, const char *password, uint32_
                 startResponse = true;
                 break;
             case WiFiFunction::AccessPointStartedEvent:
-            {
-                TEST_ASSERT_EQUAL(MessageTypes::Event, response->MessageType);
-                TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
-                TEST_ASSERT_NOT_NULL(response->Payload);
-                Esp32Messaging::AccessPointInformation *info = Encoders::ExtractAccessPointInformation(response->Payload);
-                TEST_ASSERT_NOT_NULL(info);
-                reportedIpAddress = info->IpAddress;
-                vPortFree(info);
-                apStartedEvent = true;
-                break;
-            }
+                {
+                    TEST_ASSERT_EQUAL(MessageTypes::Event, response->MessageType);
+                    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
+                    TEST_ASSERT_NOT_NULL(response->Payload);
+                    Esp32Messaging::AccessPointInformation *info = Encoders::ExtractAccessPointInformation(response->Payload);
+                    TEST_ASSERT_NOT_NULL(info);
+                    reportedIpAddress = info->IpAddress;
+                    vPortFree(info);
+                    apStartedEvent = true;
+                    break;
+                }
             default:
                 TEST_FAIL_MESSAGE("Unexpected function in the outbound queue.");
                 break;
@@ -666,8 +665,7 @@ TEST_CASE("Stop access point", CLASS_OF_TESTS)
     {
         Message *response = messageDispatcher->GetOutboundMessage();
 #if defined(DEBUGGING_TESTS)
-        printf("Message: MessageType %d, Function %d, Interface %d, StatusCode %d\n",
-               (int) response->MessageType, (int) response->Function, (int) response->Interface, (int) response->StatusCode);
+        printf("Message: MessageType %d, Function %d, Interface %d, StatusCode %d\n", (int) response->MessageType, (int) response->Function, (int) response->Interface, (int) response->StatusCode);
 #endif
         TEST_ASSERT_EQUAL(Esp32Interfaces::WiFi, response->Interface);
 
