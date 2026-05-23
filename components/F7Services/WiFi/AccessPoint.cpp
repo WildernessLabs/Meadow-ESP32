@@ -236,15 +236,38 @@ void WiFiRequestHandler::StopAccessPoint(Message *message)
 {
     TRACE_MESSAGE("StopAccessPoint: Enter");
 
-    // wifi_config_t config = { };
-    // StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    // if (esp_wifi_set_config(ESP_IF_WIFI_AP, &config) != ESP_OK)
-    // {
-    //     result = StatusCodes::Failure;
-    // }
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
+
+    EventBits_t bits = xEventGroupGetBits(_xWiFiEventGroup);
+    if (!(bits & WIFI_ACCESS_POINT_STARTED_BIT))
+    {
+        result = StatusCodes::AccessPointNotStarted;
+    }
+    else
+    {
+        wifi_config_t config = {};
+        if (esp_wifi_set_config(WIFI_IF_AP, &config) != ESP_OK)
+        {
+            result = StatusCodes::Failure;
+        }
+        else
+        {
+            //
+            //  Switch back to station-only mode.  If the station connection is
+            //  active the STA interface is preserved; otherwise the device returns
+            //  to an idle station state.
+            //
+            if (esp_wifi_set_mode(WIFI_MODE_STA) != ESP_OK)
+            {
+                result = StatusCodes::Failure;
+            }
+
+            _softApNetIfHandle = nullptr;
+        }
+    }
 
     message->MessageType = MessageTypes::Response;
-    message->StatusCode = StatusCodes::NotImplemented;
+    message->StatusCode = result;
     Logging::DumpMessage(COMPONENT_NAME, message);
 
     _messageDispatcher->QueueMessageForStm32(message);
