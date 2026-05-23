@@ -611,6 +611,10 @@ namespace WiFiFunction
         /// WiFiFunction - NetworkGotIpEvent
         /// </summary>
         NetworkGotIpEvent = 48,
+        /// <summary>
+        /// WiFiFunction - MaximumConnectionsReachedEvent
+        /// </summary>
+        MaximumConnectionsReachedEvent = 49,
     };
 
 } // namespace WiFiFunction
