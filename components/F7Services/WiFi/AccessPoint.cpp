@@ -367,56 +367,39 @@ void WiFiRequestHandler::RaiseNodeConnectionChangeEvent(WiFiFunction::WiFiFuncti
 
 /**
  * @brief Process the node connecting to access point event.
+ *
+ *        Called when the DHCP server has assigned an IP to a newly connected
+ *        station.  The event data contains both the station MAC address and
+ *        the assigned IP so no secondary STA-list query is required.
+ *
+ * @param eventData
+ *      DHCP-assignment event data — carries the station MAC and IP address.
  */
-void WiFiRequestHandler::NodeConnectedEvent()
+void WiFiRequestHandler::NodeConnectedEvent(ip_event_ap_staipassigned_t *eventData)
 {
     TRACE_MESSAGE("NodeConnectedEvent: Enter");
 
-    wifi_sta_list_t wifi_sta_list;
-    esp_netif_sta_list_t netif_sta_list;
+    uint64_t key = 0;
+    memcpy(&key, &eventData->mac, 6);
 
-    if (esp_wifi_ap_get_sta_list(&wifi_sta_list) == ESP_OK)
+    LockConnectedNodesMap();
+
+    // cppcheck-suppress unknownMacro
+    TRACE_MESSAGE("NodeConnectedEvent: MAC " MACSTR " assigned IP " IPSTR, MAC2STR(eventData->mac), IP2STR(&eventData->ip));
+
+    Esp32Messaging::NodeConnectionChangeEventData data = {};
+    memcpy(&data.MacAddress, &eventData->mac, 6);
+    memcpy(&data.IpAddress, &eventData->ip, sizeof(uint32_t));
+    _connectedNodes[key] = data.IpAddress;
+    RaiseNodeConnectionChangeEvent(WiFiFunction::NodeConnectedEvent, &data);
+
+    if (_connectedNodes.size() == ESP_WIFI_MAX_CONN_NUM)
     {
-        if (esp_netif_get_sta_list(&wifi_sta_list, &netif_sta_list) == ESP_OK)
-        {
-            if (netif_sta_list.num > 0)
-            {
-                LockConnectedNodesMap();
-                for (uint8_t i = 0; i < netif_sta_list.num; i++)
-                {
-                    esp_netif_sta_info_t station = netif_sta_list.sta[i];
-                    uint64_t key = 0;
-                    memcpy(&key, &station.mac, 6);
-                    auto it = _connectedNodes.find(key);
-                    if (it == _connectedNodes.end())
-                    {
-                        _connectedNodes[key] = 0;
-                    }
-                    if (station.ip.addr != _connectedNodes[key])
-                    {
-                        // cppcheck-suppress unknownMacro
-                        TRACE_MESSAGE("NodeConnectedEvent: Updating IP address for node: MAC " MACSTR " IP Address " IPSTR, MAC2STR(station.mac), IP2STR(&station.ip));
-                        Esp32Messaging::NodeConnectionChangeEventData data;
-                        memcpy(&data.MacAddress, &station.mac, 6);
-                        memcpy(&data.IpAddress, &station.ip, sizeof(uint32_t));
-                        _connectedNodes[key] = data.IpAddress;
-                        RaiseNodeConnectionChangeEvent(WiFiFunction::NodeConnectedEvent, &data);
-
-                        if (_connectedNodes.size() == ESP_WIFI_MAX_CONN_NUM)
-                        {
-                            Message *maxConnMessage = Message::CreateOnHeap(MessageTypes::Event, Esp32Interfaces::WiFi, WiFiFunction::MaximumConnectionsReachedEvent, StatusCodes::CompletedOk, _messageDispatcher->GetNextMessageID(), nullptr, 0);
-                            _messageDispatcher->QueueMessageForStm32(maxConnMessage);
-                        }
-                    }
-                }
-                UnlockConnectedNodesMap();
-            }
-            else
-            {
-                TRACE_MESSAGE("NodeConnectedEvent raised but there are no nodes connected to this device.");
-            }
-        }
+        Message *maxConnMessage = Message::CreateOnHeap(MessageTypes::Event, Esp32Interfaces::WiFi, WiFiFunction::MaximumConnectionsReachedEvent, StatusCodes::CompletedOk, _messageDispatcher->GetNextMessageID(), nullptr, 0);
+        _messageDispatcher->QueueMessageForStm32(maxConnMessage);
     }
+
+    UnlockConnectedNodesMap();
 
     TRACE_MESSAGE("NodeConnectedEvent: Exit");
 }

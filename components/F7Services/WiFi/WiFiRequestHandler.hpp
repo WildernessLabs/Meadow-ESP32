@@ -705,8 +705,12 @@ private:
 
     /**
      * @brief Process the node connecting to access point event.
+     *
+     * @param eventData
+     *      Information about the node that has connected to the access point,
+     *      including its MAC address and the DHCP-assigned IP address.
      */
-    void NodeConnectedEvent();
+    void NodeConnectedEvent(ip_event_ap_staipassigned_t *eventData);
 
     /**
      * @brief Processes the node disconnecting from the access point event.
