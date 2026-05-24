@@ -18,7 +18,7 @@ It is currently not possible to deploy the system using the Docker image on Wind
 
 ### Installation Using VS Code
 
-The native tools are probably best installed using the [VSCode extension](https://marketplace.visualstudio.com/items?itemName=espressif.esp-idf-extension).  This extension can be used to check the installation prerequisites and to install the correct tools and SDK.  Ensure that `Release 4.1` is selected when deploying the tools.
+The native tools are probably best installed using the [VSCode extension](https://marketplace.visualstudio.com/items?itemName=espressif.esp-idf-extension).  This extension can be used to check the installation prerequisites and to install the correct tools and SDK.  Ensure that `Release 5.3` or later is selected when deploying the tools.
 
 ### Manual Installation
 
@@ -26,31 +26,29 @@ The installation guide for a manual installation can be found in the Espressif [
 
 ### Build
 
-It is recommended that the system should be built using the `bash` script `build.sh`.  The build script takes a number of command line arguments, the most commonly used are:
+Comprehensive build instructions are available in the [Building the System](Building.md) documentation. This includes details about all available build options, debug configurations, and troubleshooting.
 
-* --build
-* --fullclean
-* --debug=&lt;subsystem&gt;
-* --tracemessages
-* --help
+For quick reference, it is recommended that the system should be built using the `bash` script `build.sh`:
 
-#### `--build`
+```bash
+./build.sh --build          # Release build
+./build.sh --develop        # Development build with debug symbols
+./build.sh --help           # Display all available options
+```
 
-As the name suggests, this option builds the system.
+See [Building the System](Building.md) for complete details.
 
-#### `--fullclean`
+## Unit Testing
 
-Perform a full clean of the system.
+The project includes comprehensive unit tests for all subsystems. For complete testing instructions, including test setup, execution, and advanced features like heap tracing, see the [Testing Guide](Testing.md).
 
-#### `--debug=<subsystem>` and `--tracemessages`
+Quick test build:
 
-This turns on debug messages for the relevant subsystem (wifi, bt etc.).
-
-#### `--help`
-
-Display help on the options available.
-
-### Deployment
+```bash
+cd test
+./build.sh --build --flash --monitor
+# Follow the interactive test menu
+```
 
 The application can be deployed using either:
 
