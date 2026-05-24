@@ -71,7 +71,7 @@ The `build.sh` script provides multiple options for different build scenarios:
 
 | Option | Description |
 |--------|-------------|
-| `--develop` | Enable development mode with debug symbols |
+| `--develop` | Enable development mode with debug code |
 | `--coredump` | Include core dump functionality |
 | `-th`, `--heaptracing` | Enable heap tracing for memory analysis |
 | `-tm`, `--tracemessages` | Enable message tracing |
