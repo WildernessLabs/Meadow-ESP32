@@ -323,13 +323,6 @@ void test_wifi_private_method()
 }
 ```
 
-## Continuous Integration
-
-Tests can be run automatically in CI/CD pipelines. The test application returns exit codes:
-
-- **0**: All tests passed
-- **Non-zero**: One or more tests failed
-
 ## Troubleshooting Tests
 
 ### Issue: Serial Connection Cannot Be Established
