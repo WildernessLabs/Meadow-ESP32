@@ -56,3 +56,23 @@ StatusCodes::StatusCodes WiFiRequestHandlerTestFriend::SetAutomaticReconnect(boo
 {
     return (wifiRequestHandler->SetAutomaticReconnect(value));
 }
+
+/**
+ * @brief Start the device as a soft access point.
+ *
+ * @param message Message containing the encoded access point configuration.
+ */
+void WiFiRequestHandlerTestFriend::StartAccessPoint(Message *message)
+{
+    wifiRequestHandler->StartAccessPoint(message);
+}
+
+/**
+ * @brief Stop the soft access point if it is running.
+ *
+ * @param message Message requesting that the access point is stopped.
+ */
+void WiFiRequestHandlerTestFriend::StopAccessPoint(Message *message)
+{
+    wifiRequestHandler->StopAccessPoint(message);
+}

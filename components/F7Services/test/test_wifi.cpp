@@ -461,3 +461,315 @@ TEST_CASE("GetCountryCode and SetCountryCode", CLASS_OF_TESTS)
     delete wifiRequestHandler;
     delete messageDispatcher;
 }
+
+/*
+ * ----------------------------------------------------------------------------
+ *
+ *                       Access Point Tests
+ *
+ * ----------------------------------------------------------------------------
+ */
+
+/**
+ * @brief Name of the SSID for the soft access point used in tests.
+ */
+#define AP_SSID "MeadowTestAP"
+
+/**
+ * @brief Password for the soft access point used in tests.
+ */
+#define AP_PASSWORD "MeadowTest1234"
+
+/**
+ * @brief Static IP address for the AP DHCP server in network byte order (192.168.10.1).
+ */
+#define AP_STATIC_IP 0x010AA8C0U
+
+/**
+ * @brief Static subnet mask for the AP DHCP server in network byte order (255.255.255.0).
+ */
+#define AP_STATIC_SUBNET 0x00FFFFFFU
+
+/**
+ * @brief Static gateway address for the AP DHCP server in network byte order (192.168.10.1).
+ */
+#define AP_STATIC_GATEWAY 0x010AA8C0U
+
+/**
+ * @brief Create a message to start the soft access point.
+ *
+ * @param ssid SSID for the access point.
+ * @param password Password for the access point.
+ * @param ipAddress Static IP address for the AP (0 to use default DHCP).
+ * @param subnetMask Subnet mask for the AP (0 to use default DHCP).
+ * @param gateway Gateway for the AP (0 to use default DHCP).
+ * @return Message* Pointer to a heap-allocated message containing the encoded payload.
+ */
+static Message *CreateStartAccessPointMessage(const char *ssid, const char *password, uint32_t ipAddress = 0, uint32_t subnetMask = 0, uint32_t gateway = 0)
+{
+    Esp32Messaging::AccessPointInformation accessPointInformation = {};
+    memset(&accessPointInformation, 0, sizeof(Esp32Messaging::AccessPointInformation));
+    accessPointInformation.NetworkName = const_cast<char *>(ssid);
+    accessPointInformation.Password = const_cast<char *>(password);
+    accessPointInformation.IpAddress = ipAddress;
+    accessPointInformation.SubnetMask = subnetMask;
+    accessPointInformation.Gateway = gateway;
+
+    uint32_t payloadLength = Encoders::EncodedAccessPointInformationBufferSize(&accessPointInformation);
+    uint8_t *buffer = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
+    memset(buffer, 0, payloadLength);
+    TEST_ASSERT_NOT_NULL(buffer);
+    Encoders::EncodeAccessPointInformation(&accessPointInformation, buffer);
+
+    Message *message = Message::CreateOnHeap(MessageTypes::Header, Esp32Interfaces::WiFi, WiFiFunction::StartAccessPoint, StatusCodes::Failure, 0xff, buffer, payloadLength);
+    TEST_ASSERT_NOT_NULL(message);
+
+    return (message);
+}
+
+/**
+ * @brief Start a soft access point with the given credentials and verify the response.
+ *
+ * @param ssid SSID for the access point.
+ * @param password Password for the access point.
+ * @param ipAddress Optional static IP address for the DHCP server (0 for default).
+ * @param subnetMask Optional static subnet mask (0 for default).
+ * @param gateway Optional static gateway (0 for default).
+ */
+static void TestStartAccessPoint(const char *ssid, const char *password, uint32_t ipAddress = 0, uint32_t subnetMask = 0, uint32_t gateway = 0)
+{
+    NvsManager::Setup();
+
+    MockMessageDispatcher *messageDispatcher = new MockMessageDispatcher(nullptr);
+    TEST_ASSERT_NOT_NULL(messageDispatcher);
+
+    WiFiRequestHandler *wifiRequestHandler = new WiFiRequestHandler(messageDispatcher);
+    TEST_ASSERT_NOT_NULL(wifiRequestHandler);
+    wifiRequestHandler->Setup();
+
+    WiFiRequestHandlerTestFriend *testFriend = new WiFiRequestHandlerTestFriend(wifiRequestHandler);
+
+    Message *startMessage = CreateStartAccessPointMessage(ssid, password, ipAddress, subnetMask, gateway);
+    testFriend->StartAccessPoint(startMessage);
+
+    unsigned timeout = WiFiRequestHandler::GetWiFiTimeout() + 10000;
+    WaitForResponse(messageDispatcher, timeout);
+
+    bool apStartedEvent = false;
+    bool startResponse = false;
+    uint32_t reportedIpAddress = 0;
+
+    while ((messageDispatcher->OutboundMessageQueueLength() > 0) && !(apStartedEvent && startResponse))
+    {
+        Message *response = messageDispatcher->GetOutboundMessage();
+#if defined(DEBUGGING_TESTS)
+        printf("Message: MessageType %d, Function %d, Interface %d, StatusCode %d\n", (int) response->MessageType, (int) response->Function, (int) response->Interface, (int) response->StatusCode);
+#endif
+        TEST_ASSERT_EQUAL(Esp32Interfaces::WiFi, response->Interface);
+
+        switch (response->Function)
+        {
+            case WiFiFunction::StartAccessPoint:
+                TEST_ASSERT_EQUAL(MessageTypes::Response, response->MessageType);
+                TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
+                startResponse = true;
+                break;
+            case WiFiFunction::AccessPointStartedEvent:
+                {
+                    TEST_ASSERT_EQUAL(MessageTypes::Event, response->MessageType);
+                    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
+                    TEST_ASSERT_NOT_NULL(response->Payload);
+                    Esp32Messaging::AccessPointInformation *info = Encoders::ExtractAccessPointInformation(response->Payload);
+                    TEST_ASSERT_NOT_NULL(info);
+                    reportedIpAddress = info->IpAddress;
+                    vPortFree(info);
+                    apStartedEvent = true;
+                    break;
+                }
+            default:
+                TEST_FAIL_MESSAGE("Unexpected function in the outbound queue.");
+                break;
+        }
+
+        Message::DeleteMessage(response);
+        if (!(apStartedEvent && startResponse))
+        {
+            WaitForResponse(messageDispatcher, timeout);
+        }
+    }
+
+    TEST_ASSERT_TRUE(apStartedEvent);
+    TEST_ASSERT_TRUE(startResponse);
+    TEST_ASSERT_NOT_EQUAL(0, reportedIpAddress);
+
+    delete testFriend;
+    delete wifiRequestHandler;
+    delete messageDispatcher;
+}
+
+/**
+ * @brief Start a soft access point with a known SSID and password.
+ */
+TEST_CASE("Start access point", CLASS_OF_TESTS)
+{
+    TestStartAccessPoint(AP_SSID, AP_PASSWORD);
+}
+
+/**
+ * @brief Start a soft access point with a static IP configuration.
+ */
+TEST_CASE("Start access point with static IP", CLASS_OF_TESTS)
+{
+    TestStartAccessPoint(AP_SSID, AP_PASSWORD, AP_STATIC_IP, AP_STATIC_SUBNET, AP_STATIC_GATEWAY);
+}
+
+/**
+ * @brief Start a soft access point then stop it.
+ */
+TEST_CASE("Stop access point", CLASS_OF_TESTS)
+{
+    NvsManager::Setup();
+
+    MockMessageDispatcher *messageDispatcher = new MockMessageDispatcher(nullptr);
+    TEST_ASSERT_NOT_NULL(messageDispatcher);
+
+    WiFiRequestHandler *wifiRequestHandler = new WiFiRequestHandler(messageDispatcher);
+    TEST_ASSERT_NOT_NULL(wifiRequestHandler);
+    wifiRequestHandler->Setup();
+
+    WiFiRequestHandlerTestFriend *testFriend = new WiFiRequestHandlerTestFriend(wifiRequestHandler);
+
+    unsigned timeout = WiFiRequestHandler::GetWiFiTimeout() + 10000;
+
+    //  Start the access point first.
+    Message *startMessage = CreateStartAccessPointMessage(AP_SSID, AP_PASSWORD);
+    testFriend->StartAccessPoint(startMessage);
+    WaitForResponse(messageDispatcher, timeout);
+
+    //  Drain the outbound queue from the start.
+    while (messageDispatcher->OutboundMessageQueueLength() > 0)
+    {
+        Message *msg = messageDispatcher->GetOutboundMessage();
+        Message::DeleteMessage(msg);
+        WaitForResponse(messageDispatcher, 1000);
+    }
+
+    //  Now stop the access point.
+    Message *stopMessage = Message::CreateOnHeap(MessageTypes::Header, Esp32Interfaces::WiFi, WiFiFunction::StopAccessPoint, StatusCodes::Failure);
+    TEST_ASSERT_NOT_NULL(stopMessage);
+    testFriend->StopAccessPoint(stopMessage);
+    WaitForResponse(messageDispatcher, timeout);
+
+    bool stopResponse = false;
+    while (messageDispatcher->OutboundMessageQueueLength() > 0)
+    {
+        Message *response = messageDispatcher->GetOutboundMessage();
+#if defined(DEBUGGING_TESTS)
+        printf("Message: MessageType %d, Function %d, Interface %d, StatusCode %d\n", (int) response->MessageType, (int) response->Function, (int) response->Interface, (int) response->StatusCode);
+#endif
+        TEST_ASSERT_EQUAL(Esp32Interfaces::WiFi, response->Interface);
+
+        switch (response->Function)
+        {
+            case WiFiFunction::StopAccessPoint:
+                TEST_ASSERT_EQUAL(MessageTypes::Response, response->MessageType);
+                TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
+                stopResponse = true;
+                break;
+            case WiFiFunction::AccessPointStoppedEvent:
+                TEST_ASSERT_EQUAL(MessageTypes::Event, response->MessageType);
+                break;
+            default:
+                TEST_FAIL_MESSAGE("Unexpected function in the outbound queue.");
+                break;
+        }
+
+        Message::DeleteMessage(response);
+        if (!stopResponse)
+        {
+            WaitForResponse(messageDispatcher, timeout);
+        }
+    }
+
+    TEST_ASSERT_TRUE(stopResponse);
+
+    delete testFriend;
+    delete wifiRequestHandler;
+    delete messageDispatcher;
+}
+
+/**
+ * @brief Attempt to start a soft access point with an invalid configuration (missing SSID).
+ */
+TEST_CASE("Start access point - invalid configuration", CLASS_OF_TESTS)
+{
+    NvsManager::Setup();
+
+    MockMessageDispatcher *messageDispatcher = new MockMessageDispatcher(nullptr);
+    TEST_ASSERT_NOT_NULL(messageDispatcher);
+
+    WiFiRequestHandler *wifiRequestHandler = new WiFiRequestHandler(messageDispatcher);
+    TEST_ASSERT_NOT_NULL(wifiRequestHandler);
+    wifiRequestHandler->Setup();
+
+    WiFiRequestHandlerTestFriend *testFriend = new WiFiRequestHandlerTestFriend(wifiRequestHandler);
+
+    //  Create a message with an empty SSID to trigger validation failure.
+    Message *startMessage = CreateStartAccessPointMessage("", AP_PASSWORD);
+    testFriend->StartAccessPoint(startMessage);
+
+    WaitForResponse(messageDispatcher, 5000);
+
+    TEST_ASSERT_EQUAL(1, messageDispatcher->OutboundMessageQueueLength());
+
+    Message *response = messageDispatcher->GetOutboundMessage();
+    TEST_ASSERT_NOT_NULL(response);
+    TEST_ASSERT_EQUAL(MessageTypes::Response, response->MessageType);
+    TEST_ASSERT_EQUAL(Esp32Interfaces::WiFi, response->Interface);
+    TEST_ASSERT_EQUAL(WiFiFunction::StartAccessPoint, response->Function);
+    TEST_ASSERT_EQUAL(StatusCodes::CannotStartAccessPoint, response->StatusCode);
+
+    Message::DeleteMessage(response);
+
+    delete testFriend;
+    delete wifiRequestHandler;
+    delete messageDispatcher;
+}
+
+/**
+ * @brief Attempt to stop the soft access point when it is not running.
+ */
+TEST_CASE("Stop access point when not running", CLASS_OF_TESTS)
+{
+    NvsManager::Setup();
+
+    MockMessageDispatcher *messageDispatcher = new MockMessageDispatcher(nullptr);
+    TEST_ASSERT_NOT_NULL(messageDispatcher);
+
+    WiFiRequestHandler *wifiRequestHandler = new WiFiRequestHandler(messageDispatcher);
+    TEST_ASSERT_NOT_NULL(wifiRequestHandler);
+    wifiRequestHandler->Setup();
+
+    WiFiRequestHandlerTestFriend *testFriend = new WiFiRequestHandlerTestFriend(wifiRequestHandler);
+
+    Message *stopMessage = Message::CreateOnHeap(MessageTypes::Header, Esp32Interfaces::WiFi, WiFiFunction::StopAccessPoint, StatusCodes::Failure);
+    TEST_ASSERT_NOT_NULL(stopMessage);
+    testFriend->StopAccessPoint(stopMessage);
+
+    WaitForResponse(messageDispatcher, 5000);
+
+    TEST_ASSERT_EQUAL(1, messageDispatcher->OutboundMessageQueueLength());
+
+    Message *response = messageDispatcher->GetOutboundMessage();
+    TEST_ASSERT_NOT_NULL(response);
+    TEST_ASSERT_EQUAL(MessageTypes::Response, response->MessageType);
+    TEST_ASSERT_EQUAL(Esp32Interfaces::WiFi, response->Interface);
+    TEST_ASSERT_EQUAL(WiFiFunction::StopAccessPoint, response->Function);
+    TEST_ASSERT_EQUAL(StatusCodes::AccessPointNotStarted, response->StatusCode);
+
+    Message::DeleteMessage(response);
+
+    delete testFriend;
+    delete wifiRequestHandler;
+    delete messageDispatcher;
+}

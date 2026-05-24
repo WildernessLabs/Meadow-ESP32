@@ -1194,7 +1194,7 @@ void WiFiRequestHandler::EventHandlerHelper(esp_event_base_t eventBase, int32_t 
                     break;
                 case IP_EVENT_AP_STAIPASSIGNED:
                     TRACE_MESSAGE("EventHandlerHelper: IP_EVENT_AP_STAIPASSIGNED");
-                    NodeConnectedEvent();
+                    NodeConnectedEvent(static_cast<ip_event_ap_staipassigned_t *>(eventData));
                     break;
                 case IP_EVENT_GOT_IP6:
                     TRACE_MESSAGE("EventHandlerHelper: IP_EVENT_GOT_IP6");
@@ -1842,11 +1842,17 @@ esp_err_t WiFiRequestHandler::StartWiFiInterface(const wifi_mode_t mode, const E
                 _stationNetIfHandle = esp_netif_create_default_wifi_sta();
             }
 
-            // if ((mode == WIFI_MODE_AP) || (mode == WIFI_MODE_APSTA))
-            // {
-            //     _softApNetIfHandle = esp_netif_create_default_wifi_ap();
-            // }
-            if (_stationNetIfHandle == NULL)
+            if ((mode == WIFI_MODE_AP) || (mode == WIFI_MODE_APSTA))
+            {
+                _softApNetIfHandle = esp_netif_create_default_wifi_ap();
+            }
+
+            if (_stationNetIfHandle == NULL && ((mode == WIFI_MODE_STA) || (mode == WIFI_MODE_APSTA)))
+            {
+                result = ESP_FAIL;
+            }
+
+            if (_softApNetIfHandle == NULL && ((mode == WIFI_MODE_AP) || (mode == WIFI_MODE_APSTA)))
             {
                 result = ESP_FAIL;
             }

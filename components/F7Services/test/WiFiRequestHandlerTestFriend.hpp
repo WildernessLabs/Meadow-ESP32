@@ -58,4 +58,18 @@ public:
      * @return StatusCodes::StatusCodes StatusCodes::CompletedOk if the value was set, an error code otherwise.
      */
     StatusCodes::StatusCodes SetAutomaticReconnect(bool value);
+
+    /**
+     * @brief Start the device as a soft access point.
+     *
+     * @param message Message containing the encoded access point configuration.
+     */
+    void StartAccessPoint(Message *message);
+
+    /**
+     * @brief Stop the soft access point if it is running.
+     *
+     * @param message Message requesting that the access point is stopped.
+     */
+    void StopAccessPoint(Message *message);
 };
