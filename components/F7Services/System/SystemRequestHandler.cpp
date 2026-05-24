@@ -580,6 +580,9 @@ void SystemRequestHandler::SetConfigurationItem(Message * const request)
             case ConfigurationItems::UseDhcp:
                 result = WiFiRequestHandler::SetUseDhcp((uint8_t) (*value->Value) == 1);
                 break;
+            case ConfigurationItems::CountryCode:
+                result = WiFiRequestHandler::SetCountryCode(reinterpret_cast<char *>(value->Value));
+                break;
             default:
                 result = StatusCodes::UnknownConfigurationItem;
                 break;

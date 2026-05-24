@@ -810,6 +810,10 @@ namespace ConfigurationItems
         /// ConfigurationItems - Bluetooth MAC address
         /// </summary>
         BluetoothMacAddress = 16,
+        /// <summary>
+        /// ConfigurationItems - WiFi country code
+        /// </summary>
+        CountryCode = 17,
     };
 } // namespace ConfigurationItems
 
