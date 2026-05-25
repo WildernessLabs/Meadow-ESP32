@@ -251,11 +251,6 @@ void BluetoothManager::SetHandles(const uint16_t * const handles, const uint16_t
 }
 
 /**
- * @brief Dummy variable.
- */
-static int __attribute__((unused)) test_value = 0;
-
-/**
  * @brief Get the current value for a attribute with the specified handle.
  *
  * @param handle Handle to look up.
@@ -314,7 +309,7 @@ void BluetoothManager::SetCurrentValueForAttributeHandle(const uint16_t handle, 
     else
     {
         // Unknown handle - this should *never* happen, but best to be safe
-        TRACE_MESSAGE("Value received with unknown handle 0x%04" PRIx32, test_value);
+        TRACE_MESSAGE("Value received with unknown handle 0x%04" PRIx32, handle);
     }
 
     TRACE_MESSAGE("SetCurrentValueForAttributeHandle: Exit");

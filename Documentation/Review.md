@@ -373,19 +373,6 @@ bool SpiTransportProvider::SendingData(SpiStates state)
 
 The `state` parameter is declared but the method uses `_currentState` directly. This is dead code; either the parameter should be used (`state == ...`) or the method should not take a parameter. The call site passes `_currentState` which makes the parameter effectively ignored.
 
-### 7.6 `test_value` Dead Variable in BluetoothManager
-
-**`BluetoothManager.cpp`**, line 256:
-```cpp
-static int __attribute__((unused)) test_value = 0;
-```
-
-This variable is referenced in a trace message in `SetCurrentValueForAttributeHandle` as `test_value` when it should reference `handle`:
-```cpp
-TRACE_MESSAGE("Value received with unknown handle 0x%04" PRIx32, test_value);
-```
-This prints `0` instead of the actual handle value. Both the variable and the log message are incorrect.
-
 ---
 
 ## 8. Code Style and Conventions
