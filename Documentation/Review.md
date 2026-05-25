@@ -390,16 +390,6 @@ This prints `0` instead of the actual handle value. Both the variable and the lo
 
 ## 8. Code Style and Conventions
 
-### 8.1 Magic Numbers [MEDIUM / #177]
-
-Several magic numbers appear without named constants:
-
-- `_connectionHandle = 0xffff;` — should be a named constant such as `INVALID_CONNECTION_HANDLE`.
-- BLE advertising intervals (`0x0006`, `0x0010`, `0x20`, `0x40`) — should be named constants with comments explaining the timing in milliseconds.
-- `conn_params.timeout = 400;` — a comment exists (`400*10ms = 4000ms`) but a named constant would be clearer.
-- `slaveConfiguration.mode = 3;` — should be `SPI_MODE_3` or similar named constant.
-- `SemaphoreHandle_t _threadsAvailable` initial count of 0 in `xSemaphoreCreateCounting` is fine but should be documented.
-
 ### 8.3 `NULL` vs `nullptr` [LOW / #179, #187]
 
 The codebase uses `NULL` in at least 426 locations (vs `nullptr` in 212 locations). The project convention specifies `nullptr`. All `NULL` usages in C++ code should be replaced.

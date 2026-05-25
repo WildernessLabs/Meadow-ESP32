@@ -77,6 +77,11 @@ private:
     static constexpr uint32_t TASK_STACK_SIZE = 8192;
 
     /**
+     * @brief Invalid connection handle value.
+     */
+    static constexpr uint16_t INVALID_CONNECTION_HANDLE = 0xffff;
+
+    /**
      *  @brief Event group containing 24-bits used to indicate the state of the WiFi connection.
      */
     EventGroupHandle_t _xBtEventGroup = nullptr;

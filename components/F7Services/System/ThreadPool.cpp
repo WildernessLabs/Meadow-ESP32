@@ -52,7 +52,10 @@ ThreadPool::ThreadPool()
     {
         throw new ThreadPoolException("Cannot allocate memory for threads.");
     }
-
+    //
+    //  Create the counting semaphore with a maximum count equal to the number of threads in the pool and an initial count of 0.
+    //  The count will be incremented as each thread is created and becomes available for use.
+    //
     _threadsAvailable = xSemaphoreCreateCounting(THREAD_POOL_SIZE, 0);
     if (_threadsAvailable == NULL)
     {
