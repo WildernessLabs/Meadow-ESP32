@@ -63,7 +63,7 @@ esp_gatt_if_t BluetoothRequestHandler::_gattsInterfaceHandle = ESP_GATT_IF_NONE;
 /**
  * @brief The handle that is assigned a connection when a device connects over Bluetooth.
  */
-uint16_t BluetoothRequestHandler::_connectionHandle = 0xffff;
+uint16_t BluetoothRequestHandler::_connectionHandle = INVALID_CONNECTION_HANDLE;
 
 /**
  * @brief Indicate if we have configured the advertising data.
@@ -431,7 +431,7 @@ void BluetoothRequestHandler::SetCurrentValueForAttributeHandle(Message * const 
 
     _manager.SetCurrentValueForAttributeHandle(ds->Handle, ds->SetData, ds->SetDataLength);
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    if (_connectionHandle != 0xffff)
+    if (_connectionHandle != INVALID_CONNECTION_HANDLE)
     {
         if ((_manager.GetCharacteristicProperties(ds->Handle) & CharacteristicProperty::Notify) == CharacteristicProperty::Notify)
         {
