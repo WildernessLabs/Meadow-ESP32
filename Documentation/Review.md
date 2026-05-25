@@ -57,9 +57,7 @@ All open issues on the `WildernessLabs/Meadow-ESP32` repository are addressed in
 | [#170](https://github.com/WildernessLabs/Meadow-ESP32/issues/170) | HIGH | Missing null checks on dispatcher/callback pointers | §6.1 |
 | [#171](https://github.com/WildernessLabs/Meadow-ESP32/issues/171) | MEDIUM | Buffer overflow and static buffer issues | §6.2 |
 | [#174](https://github.com/WildernessLabs/Meadow-ESP32/issues/174) | MEDIUM | TOCTOU race in file size check and open | §6.4 |
-| [#175](https://github.com/WildernessLabs/Meadow-ESP32/issues/175) | CRITICAL | Integer underflow/overflow in packet handling | §6.6 |
 | [#176](https://github.com/WildernessLabs/Meadow-ESP32/issues/176) | HIGH | SPI state machine default case cannot recover | §6.7 |
-| [#177](https://github.com/WildernessLabs/Meadow-ESP32/issues/177) | MEDIUM | Magic numbers and redundant assignments | §8.1 |
 | [#181](https://github.com/WildernessLabs/Meadow-ESP32/issues/181) | LOW | Unused variables and dead code | §8.5 |
 | [#183](https://github.com/WildernessLabs/Meadow-ESP32/issues/183) | HIGH | Bluetooth callback lifecycle | §5.4 |
 | [#184](https://github.com/WildernessLabs/Meadow-ESP32/issues/184) | MEDIUM | WiFi credentials not mutex-protected | §5.5 |
@@ -300,20 +298,6 @@ else
 ```
 
 **Issue #159 recommendation:** Allocate `esp_gatt_rsp_t` on the heap and return a pointer from `GetCurrentValueForAttributeHandle`, returning `nullptr` on failure (handle not found).
-
-### 6.6 Integer Underflow/Overflow in Packet Handling [CRITICAL / #175]
-
-**`SpiTransportProvider::UpdatePacketInformation`**:
-```cpp
-message->PacketOffset += message->PacketLength;
-uint16_t amountRemaining = message->PayloadLength - message->PacketOffset;
-```
-
-`PayloadLength` is `uint32_t` and `PacketOffset` is `uint16_t`. The subtraction is performed as `uint32_t - uint16_t` (implicit promotion), then the result is truncated to `uint16_t`. If `PayloadLength > 65535`, `amountRemaining` wraps silently, causing incorrect packet fragmentation or an infinite loop.
-
-Although the current `MAXIMUM_SPI_FRAME_SIZE` (4092 bytes) means payloads are unlikely to exceed 65535 bytes in practice, the data type is wrong and the assumption is not enforced.
-
-**Recommendation:** Change `PacketOffset` and `PacketLength` to `uint32_t` throughout, or add an `assert`/check that `PayloadLength <= 65535`.
 
 ### 6.7 SPI State Machine Cannot Recover from Unknown State [HIGH / #176]
 
