@@ -100,3 +100,4 @@ managed_components/
 gdblog.txt
 CoreDumps/
 Scratch/
+.cache/**
