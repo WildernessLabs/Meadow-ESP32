@@ -1953,6 +1953,41 @@ void WiFiRequestHandler::Ioctl(void * const vpMessage)
                     response.Flags = IFF_DOWN;
                 }
                 break;
+            case SIOCSESPNONBLOCK: /* Meadow/ESPCP: flip O_NONBLOCK on the lwip socket */
+                {
+                    /* The one per-socket ioctl.  NuttX appends two extra int32s to the
+                     * bare command: [Command(4)][SocketHandle(4)][NonBlocking(4)].  The
+                     * generated IoctlRequest only carries Command, so read the extras
+                     * straight off the still-live message payload.  SocketHandle is a
+                     * raw lwip fd (as setsockopt uses); lwip_fcntl honours only the
+                     * O_NONBLOCK bit on F_SETFL. */
+                    int socketHandle = (int) Encoders::ExtractInt32(message->Payload + 4);
+                    int nonBlocking = (int) Encoders::ExtractInt32(message->Payload + 8);
+                    int flags = lwip_fcntl(socketHandle, F_GETFL, 0);
+                    if (flags < 0)
+                    {
+                        response.Result = -1;
+                        response.ResponseErrno = Mapping::NuttxErrno(errno);
+                    }
+                    else
+                    {
+                        if (nonBlocking)
+                        {
+                            flags |= O_NONBLOCK;
+                        }
+                        else
+                        {
+                            flags &= ~O_NONBLOCK;
+                        }
+                        response.Result = lwip_fcntl(socketHandle, F_SETFL, flags);
+                        if (response.Result != 0)
+                        {
+                            response.ResponseErrno = Mapping::NuttxErrno(errno);
+                        }
+                    }
+                    TRACE_MESSAGE("Ioctl SIOCSESPNONBLOCK: socket %d nonblock=%d result=%ld", socketHandle, nonBlocking, (long) response.Result);
+                    break;
+                }
             default:
                 response.Result = -1;
                 response.ResponseErrno = Mapping::NuttxErrno(EINVAL);

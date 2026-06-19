@@ -66,6 +66,12 @@
 #define SIOCGIFFLAGS _SIOC(0x001b)   /* Gets the interface flags */
 #define SIOCGIFNAME _SIOC(0x002A)    /* Get interface name string */
 
+/* Meadow/ESPCP: NuttX emits this per-socket ioctl to push a socket's O_NONBLOCK
+ * state down to the matching lwip socket here (NuttX has no FIONBIO).  Its
+ * payload is the bare command followed by two extra int32s:
+ *   [Command(4)][SocketHandle(4)][NonBlocking(4)]  (1 = non-blocking, 0 = block) */
+#define SIOCSESPNONBLOCK _SIOC(0x00F0)
+
 /**
  *  @brief WiFi class
  *
