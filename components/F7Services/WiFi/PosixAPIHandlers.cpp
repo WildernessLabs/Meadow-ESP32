@@ -810,6 +810,50 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetSendReceiveBuffer(const int sock
 }
 
 /**
+ * @brief Process the SO_ERROR get socket option (pending socket error).
+ *
+ * Used to complete a non-blocking connect: once the socket polls writable, the
+ * F7/.NET reads SO_ERROR to obtain the final connect result (0 = connected).
+ * The value is itself an errno, so it is mapped ESP->NuttX (0 stays 0) so the
+ * F7/.NET interprets it consistently with every other errno on the wire.
+ */
+StatusCodes::StatusCodes WiFiRequestHandler::GetErrorOption(const int socket, const int level, const int optionName, Esp32Messaging::GetSockOptResponse &response)
+{
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
+
+    Esp32Messaging::IntegerResponse esp_iv = {};
+
+    int optionValue = 0;
+    socklen_t optionLength = sizeof(int);
+    response.Result = getsockopt(socket, level, optionName, static_cast<void *>(&optionValue), &optionLength);
+    if (response.Result == 0)
+    {
+        response.ResponseErrno = 0;
+    }
+    else
+    {
+        response.ResponseErrno = Mapping::NuttxErrno(errno);
+    }
+
+    esp_iv.Result = (optionValue == 0) ? 0 : Mapping::NuttxErrno(optionValue);
+    response.OptionValueLength = Encoders::EncodedIntegerResponseBufferSize(&esp_iv);
+    response.OptionValue = static_cast<uint8_t *>(pvPortMalloc(response.OptionValueLength));
+    if (response.OptionValue == nullptr)
+    {
+        response.ResponseErrno = Mapping::NuttxErrno(ENOBUFS);
+        response.Result = -1;
+        response.OptionValueLength = 0;
+        result = StatusCodes::EspOutOfMemory;
+    }
+    else
+    {
+        Encoders::EncodeIntegerResponse(&esp_iv, response.OptionValue);
+    }
+
+    return (result);
+}
+
+/**
  *  @brief Expose the POSIX getsockopt method to the STM32.
  *
  *  @param message
@@ -897,8 +941,8 @@ void WiFiRequestHandler::GetSockOpt(void * const vpMessage)
                         case SO_DONTLINGER: /* Don't linger on close if data present */
                             TRACE_MESSAGE("GetSockOpt: Implement SO_DONTLINGER");
                             break;
-                        case SO_ERROR:      /* Get error status and clear */
-                            TRACE_MESSAGE("GetSockOpt: Implement SO_ERROR");
+                        case SO_ERROR:      /* Get error status and clear (non-blocking connect result) */
+                            result = GetErrorOption(request->SocketHandle, level, optionName, response);
                             break;
                         case SO_TYPE:       /* Get socket type */
                             TRACE_MESSAGE("GetSockOpt: Implement SO_TYPE");
