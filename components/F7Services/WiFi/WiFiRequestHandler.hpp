@@ -66,6 +66,12 @@
 #define SIOCGIFFLAGS _SIOC(0x001b)   /* Gets the interface flags */
 #define SIOCGIFNAME _SIOC(0x002A)    /* Get interface name string */
 
+/* Meadow/ESPCP: NuttX emits this per-socket ioctl to push a socket's O_NONBLOCK
+ * state down to the matching lwip socket here (NuttX has no FIONBIO).  Its
+ * payload is the bare command followed by two extra int32s:
+ *   [Command(4)][SocketHandle(4)][NonBlocking(4)]  (1 = non-blocking, 0 = block) */
+#define SIOCSESPNONBLOCK _SIOC(0x00F0)
+
 /**
  *  @brief WiFi class
  *
@@ -463,14 +469,29 @@ private:
     static const char *DEFAULT_WIFI_TIMEOUT_NAME;
 
     /**
-     *  @brief List of active poll requests.
+     *  @brief Active poll requests, keyed by the STM32's SetupMessageId. Each value
+     *         holds the socket fd + the events being waited on. A single persistent
+     *         monitor task poll()s over all of them at once (see PollMonitorTask),
+     *         instead of the old one-worker-thread-per-poll model that exhausted the
+     *         5-thread pool and starved recv/send during a TLS handshake.
      */
-    static std::map<uint32_t, struct pollfd *> _pollRequests;
+    static std::map<uint32_t, struct pollfd> _pollRequests;
 
     /**
-     *  @brief Mutex for the poll request linked list.
+     *  @brief Mutex for the poll request list.
      */
     static SemaphoreHandle_t _pollRequestListMutex;
+
+    /**
+     *  @brief Self-connected loopback UDP socket used to wake the poll monitor out
+     *         of poll() when the request set changes. -1 until the monitor starts.
+     */
+    static int _pollControlFd;
+
+    /**
+     *  @brief Set once the single persistent poll-monitor task has been started.
+     */
+    static bool _pollMonitorStarted;
 
     /**
      *  @brief Handle for the completed poll requests.
@@ -820,6 +841,15 @@ private:
     static StatusCodes::StatusCodes GetSendReceiveBuffer(const int socket, const int level, const int optionName, Esp32Messaging::GetSockOptResponse &response);
 
     /**
+     * @brief Process the SO_ERROR get socket option (pending socket error).
+     *
+     * Needed for non-blocking connect: after the socket polls writable the F7/.NET
+     * reads SO_ERROR to get the final connect result (0 = success). The value is an
+     * errno, so it is translated ESP->NuttX before being returned.
+     */
+    static StatusCodes::StatusCodes GetErrorOption(const int socket, const int level, const int optionName, Esp32Messaging::GetSockOptResponse &response);
+
+    /**
      *  @brief Provide a mechanism for the STM32 to call the getsockopt method.
      */
     static void GetSockOpt(void * const vpMessage);
@@ -871,24 +901,45 @@ private:
     static void RecvFrom(void * const vpMessage);
 
     /**
-     *  @brief Setup a poll request an assign it to a thread in the thread pool.
+     *  @brief Register a poll request with the persistent monitor (no thread pool).
      */
     static int PollSetup(void * const vpMessage);
 
     /**
-     *  @brief Teardown a poll request that has previously been setup by PollSetup.
+     *  @brief Remove a poll request previously registered by PollSetup.
      */
     static int PollTeardown(void * const pvMessage);
 
     /**
-     *  @brief Execute the actual request to poll a socket.
+     *  @brief Start the single persistent poll-monitor task on first use (idempotent).
      */
-    static void PollSocket(void * const pvMessage);
+    static void EnsurePollMonitor();
 
     /**
-     *  @brief Open a dummy socket to be used by the Poll methods to terminate a poll request.
+     *  @brief Create the self-connected loopback UDP socket used to wake the monitor.
      */
-    static int OpenDummySocket();
+    static int CreatePollControlSocket();
+
+    /**
+     *  @brief Wake the poll monitor out of poll() so it rebuilds its fd set.
+     */
+    static void WakePollMonitor();
+
+    /**
+     *  @brief Drop registered fds that have become invalid (closed) so a stale fd
+     *         cannot fail the whole poll() with EBADF.
+     */
+    static void PrunePollRequests();
+
+    /**
+     *  @brief Build and push the InterruptPollResponse Event for a satisfied request.
+     */
+    static void SendInterruptPollResponse(uint32_t setupMessageId, int16_t revents);
+
+    /**
+     *  @brief Single persistent task that poll()s over all pending poll requests.
+     */
+    static void PollMonitorTask(void * const pvParameters);
 
     /**
      *  @brief Debug method to dump all of the active poll requests.
