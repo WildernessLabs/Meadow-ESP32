@@ -55,12 +55,18 @@ EventGroupHandle_t WiFiRequestHandler::_xWiFiEventGroup = nullptr;
 /**
  *  @brief List of active poll requests.
  */
-std::map<uint32_t, struct pollfd *> WiFiRequestHandler::_pollRequests;
+std::map<uint32_t, struct pollfd> WiFiRequestHandler::_pollRequests;
 
 /**
- *  @brief Mutex for the poll request linked list.
+ *  @brief Mutex for the poll request list.
  */
 SemaphoreHandle_t WiFiRequestHandler::_pollRequestListMutex = NULL;
+
+/**
+ *  @brief Control socket + started flag for the persistent poll monitor.
+ */
+int WiFiRequestHandler::_pollControlFd = -1;
+bool WiFiRequestHandler::_pollMonitorStarted = false;
 
 /**
  *  @brief Handle for the completed poll requests.
