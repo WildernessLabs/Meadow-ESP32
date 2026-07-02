@@ -434,7 +434,7 @@ void WiFiRequestHandler::GetSockOpt(void *vpMessage)
                     //  NuttX errno values.  Zero (no error) stays zero.
                     //
                     intVal = (intVal != 0) ? (int) MapErrno(intVal) : 0;
-                    /* fall through to the integer encode */
+                    [[fallthrough]];    /* to the integer encode */
                 case SO_RCVBUF:
                     esp_iv.Result = *(static_cast<int *>(optionValue));
                     response.OptionValueLength = Encoders::EncodedIntegerResponseBufferSize(&esp_iv);
@@ -1530,7 +1530,7 @@ void WiFiRequestHandler::Ioctl(void *vpMessage)
                     if (flags < 0)
                     {
                         response.Result = -1;
-                        response.ResponseErrno = Mapping::NuttxErrno(errno);
+                        response.ResponseErrno = MapErrno(errno);
                     }
                     else
                     {
@@ -1545,7 +1545,7 @@ void WiFiRequestHandler::Ioctl(void *vpMessage)
                         response.Result = lwip_fcntl(socketHandle, F_SETFL, flags);
                         if (response.Result != 0)
                         {
-                            response.ResponseErrno = Mapping::NuttxErrno(errno);
+                            response.ResponseErrno = MapErrno(errno);
                         }
                     }
                     TRACE_MESSAGE("Ioctl SIOCSESPNONBLOCK: socket %d nonblock=%d result=%ld", socketHandle, nonBlocking, (long) response.Result);
