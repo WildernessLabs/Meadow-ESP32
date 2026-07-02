@@ -447,7 +447,19 @@ private:
     /**
      *  @brief List of active poll requests.
      */
-    static std::map<uint32_t, struct pollfd *> _pollRequests;
+    /**
+     *  @brief One armed poll: the pollfd pair (real socket + dummy cancel
+     *         socket) plus the caller-requested timeout in milliseconds
+     *         (-1 = infinite).  The timeout bounds how long a PollSocket
+     *         worker can be held if the teardown poke is ever lost.
+     */
+    struct PollEntry
+    {
+        struct pollfd fds[2];
+        int32_t timeoutMs;
+    };
+
+    static std::map<uint32_t, PollEntry *> _pollRequests;
 
     /**
      *  @brief Mutex for the poll request linked list.

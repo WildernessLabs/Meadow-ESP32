@@ -1705,16 +1705,16 @@ void WiFiRequestHandler::DumpActivePollRequests()
 {
     TRACE_MESSAGE("DumpActivePollRequests: Enter");
     LockPollRequests();
-    std::map<uint32_t, struct pollfd *>::iterator it = _pollRequests.begin();
+    std::map<uint32_t, PollEntry *>::iterator it = _pollRequests.begin();
     while (it != _pollRequests.end())
     {
         //
-        //  fds is marked as unused as in debug mode the TRACE_MESSAGE results in the usage being thrown away.
+        //  entry is marked as unused as in debug mode the TRACE_MESSAGE results in the usage being thrown away.
         //  Basically, we are trying to keep the compiler happy and not generate misleading warnings.
         //
-        // cppcheck-suppress unreadVariable symbolName=fds
-        __attribute__((unused)) struct pollfd *fds = static_cast<struct pollfd *>(it->second);
-        TRACE_MESSAGE("DumpActiveRequests: Key %08x, socket %d, dummy socket %d", (uint) it->first, fds[POLL_FD_INDEX].fd, fds[POLL_DUMMY_FD_INDEX].fd);
+        // cppcheck-suppress unreadVariable symbolName=entry
+        __attribute__((unused)) PollEntry *entry = it->second;
+        TRACE_MESSAGE("DumpActiveRequests: Key %08x, socket %d, dummy socket %d", (uint) it->first, entry->fds[POLL_FD_INDEX].fd, entry->fds[POLL_DUMMY_FD_INDEX].fd);
         it++;
     }
     UnlockPollRequests();
@@ -1736,8 +1736,8 @@ int WiFiRequestHandler::PollSetup(void *vpMessage)
     {
         return (-1);
     }
-    struct pollfd *fds = static_cast<struct pollfd *>(pvPortMalloc(2 * sizeof(struct pollfd)));
-    if (fds == NULL)
+    PollEntry *entry = static_cast<PollEntry *>(pvPortMalloc(sizeof(PollEntry)));
+    if (entry == NULL)
     {
         return (-1);
     }
@@ -1745,31 +1745,50 @@ int WiFiRequestHandler::PollSetup(void *vpMessage)
     int dummy_socket_handle = OpenDummySocket();
     if (dummy_socket_handle < 0)
     {
-        vPortFree(fds);
+        vPortFree(entry);
         return (-1);
     }
 
     Esp32Messaging::PollRequest *request = static_cast<Esp32Messaging::PollRequest *>(vpMessage);
-    memset(fds, 0, 2 * sizeof(struct pollfd));
+    memset(static_cast<void *>(entry), 0, sizeof(PollEntry));
     int32_t events;
     Mapping::GetEspFlagValue(Mapping::PollEvents, request->Events, &events);
 
-    fds[WiFiRequestHandler::POLL_FD_INDEX].fd = request->SocketHandle;
-    fds[WiFiRequestHandler::POLL_FD_INDEX].events = (uint16_t) (events & 0xffff);
-    fds[WiFiRequestHandler::POLL_DUMMY_FD_INDEX].fd = dummy_socket_handle;
-    fds[WiFiRequestHandler::POLL_DUMMY_FD_INDEX].events = POLLIN;
+    entry->fds[WiFiRequestHandler::POLL_FD_INDEX].fd = request->SocketHandle;
+    entry->fds[WiFiRequestHandler::POLL_FD_INDEX].events = (uint16_t) (events & 0xffff);
+    entry->fds[WiFiRequestHandler::POLL_DUMMY_FD_INDEX].fd = dummy_socket_handle;
+    entry->fds[WiFiRequestHandler::POLL_DUMMY_FD_INDEX].events = POLLIN;
+    entry->timeoutMs = request->Timeout;
 
     TRACE_MESSAGE("Poll: Requested Nuttx events 0x%04x maps to ESP events 0x%04x", request->Events, (uint) events);
 
     LockPollRequests();
-    _pollRequests[request->SetupMessageId] = fds;
+    _pollRequests[request->SetupMessageId] = entry;
     UnlockPollRequests();
 
 #if defined(WIFI_DEBUG)
     DumpActivePollRequests();
 #endif
 
-    SystemRequestHandler::SharedThreadPool()->Execute(PollSocket, reinterpret_cast<void *>(request->SetupMessageId));
+    try
+    {
+        SystemRequestHandler::SharedThreadPool()->Execute(PollSocket, reinterpret_cast<void *>(request->SetupMessageId));
+    }
+    catch (...)
+    {
+        //
+        //  No worker will ever service this entry.  Without this cleanup the
+        //  map entry, the PollEntry heap block and the dummy lwip socket all
+        //  leak on every pool-full poll -- lwip file descriptors are a very
+        //  scarce resource.  Rethrow so the dispatcher reports the failure.
+        //
+        LockPollRequests();
+        _pollRequests.erase(request->SetupMessageId);
+        UnlockPollRequests();
+        close(dummy_socket_handle);
+        vPortFree(entry);
+        throw;
+    }
 
     TRACE_MESSAGE("PollSetup: Exit, result %d", result);
 
@@ -1794,17 +1813,17 @@ int WiFiRequestHandler::PollTeardown(void *vpMessage)
 #endif
 
     LockPollRequests();
-    std::map<uint32_t, struct pollfd *>::iterator it = _pollRequests.find(request->SetupMessageId);
+    std::map<uint32_t, PollEntry *>::iterator it = _pollRequests.find(request->SetupMessageId);
     if (it != _pollRequests.end())
     {
         TRACE_MESSAGE("PollTeardown: Found socket handle for request 0x%08x", (uint) request->SetupMessageId);
-        struct pollfd *fds = static_cast<struct pollfd *>(it->second);
-        result = write(fds[WiFiRequestHandler::POLL_DUMMY_FD_INDEX].fd, "E", 1); // Writing to the dummy file descriptor should end the poll request.
-        if (close(fds[WiFiRequestHandler::POLL_DUMMY_FD_INDEX].fd) < 0)
+        PollEntry *entry = it->second;
+        result = write(entry->fds[WiFiRequestHandler::POLL_DUMMY_FD_INDEX].fd, "E", 1); // Writing to the dummy file descriptor should end the poll request.
+        if (close(entry->fds[WiFiRequestHandler::POLL_DUMMY_FD_INDEX].fd) < 0)
         {
             result = -1;
         }
-        vPortFree(fds);
+        vPortFree(entry);
         _pollRequests.erase(it);
     }
     else
@@ -1838,13 +1857,40 @@ void WiFiRequestHandler::PollSocket(void *requestId)
 
     Esp32Messaging::InterruptPollResponse response = {};
 
+    //
+    //  Take a private copy of the pollfd pair under the lock.  The previous
+    //  code dereferenced the map iterator after releasing the lock, racing a
+    //  concurrent PollTeardown erase (invalidated iterator = undefined
+    //  behaviour).  With a copy, a concurrent teardown at worst pokes the
+    //  dummy socket, which simply wakes the poll below.
+    //
+    struct pollfd local_fds[2];
+    int32_t timeout_ms = -1;
+    bool have_entry = false;
+
     LockPollRequests();
-    std::map<uint32_t, struct pollfd *>::iterator it = _pollRequests.find((uint32_t) requestId);
-    UnlockPollRequests();
-    if (it != _pollRequests.end())
     {
-        struct pollfd *fds = static_cast<struct pollfd *>(it->second);
-        response.Result = poll(fds, 2, -1);
+        std::map<uint32_t, PollEntry *>::iterator it = _pollRequests.find((uint32_t) requestId);
+        if (it != _pollRequests.end())
+        {
+            local_fds[0] = it->second->fds[0];
+            local_fds[1] = it->second->fds[1];
+            timeout_ms = it->second->timeoutMs;
+            have_entry = true;
+        }
+    }
+    UnlockPollRequests();
+
+    if (have_entry)
+    {
+        //
+        //  Honour the caller-requested timeout (milliseconds; <= 0 keeps the
+        //  historical infinite wait).  This bounds how long this worker can
+        //  be pinned if the teardown poke is ever lost -- unbounded waits
+        //  here were exhausting the shared thread pool, after which every
+        //  request failed with ThreadPoolIsFull.
+        //
+        response.Result = poll(local_fds, 2, (timeout_ms > 0) ? timeout_ms : -1);
         if (response.Result < 0)
         {
             response.ResponseErrno = MapErrno(errno);
@@ -1852,20 +1898,20 @@ void WiFiRequestHandler::PollSocket(void *requestId)
         else
         {
             LockPollRequests();
-            it = _pollRequests.find((uint32_t) requestId); // Get again in case anything has changed.
+            std::map<uint32_t, PollEntry *>::iterator it = _pollRequests.find((uint32_t) requestId); // Get again in case anything has changed.
             if (it != _pollRequests.end())
             {
                 int32_t events;
-                Mapping::GetStmFlagValue(Mapping::PollEvents, fds[POLL_FD_INDEX].revents, &events);
+                Mapping::GetStmFlagValue(Mapping::PollEvents, local_fds[POLL_FD_INDEX].revents, &events);
                 response.ReturnedEvents = (uint16_t) (events & 0xffff);
                 if (response.ReturnedEvents != 0)
                 {
                     response.Result = 1;
                 }
-                TRACE_MESSAGE("PollSocket: Returned ESP32 events 0x%04x maps to NuttX events 0x%04x", fds[POLL_FD_INDEX].revents, (uint) events);
+                TRACE_MESSAGE("PollSocket: Returned ESP32 events 0x%04x maps to NuttX events 0x%04x", local_fds[POLL_FD_INDEX].revents, (uint) events);
                 response.SetupMessageId = (uint32_t) requestId;
-                close(fds[POLL_DUMMY_FD_INDEX].fd);
-                vPortFree(fds);
+                close(it->second->fds[POLL_DUMMY_FD_INDEX].fd);
+                vPortFree(it->second);
                 _pollRequests.erase(it);
             }
             else

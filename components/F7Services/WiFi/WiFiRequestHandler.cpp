@@ -44,7 +44,7 @@ EventGroupHandle_t WiFiRequestHandler::_xWiFiEventGroup = nullptr;
 /**
  *  @brief List of active poll requests.
  */
-std::map<uint32_t, struct pollfd *> WiFiRequestHandler::_pollRequests;
+std::map<uint32_t, WiFiRequestHandler::PollEntry *> WiFiRequestHandler::_pollRequests;
 
 /**
  *  @brief Mutex for the poll request linked list.
@@ -1321,6 +1321,22 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
         request->DeletePayload();
         request->MessageType = MessageTypes::Response;
         request->StatusCode = StatusCodes::ThreadPoolIsFull;
+        _messageDispatcher->QueueMessageForStm32(request);
+        xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
+    }
+    catch (...)
+    {
+        //
+        //  Anything escaping here (bad_alloc under pressure, handler bugs)
+        //  previously either aborted the firmware or left the READY bit
+        //  unset, wedging this dispatch loop forever at the wait below --
+        //  after which the ESP never answers another espcp request.  Fail
+        //  the one request and keep the service alive.
+        //
+        ERROR_MESSAGE("DispatchRequest: Unexpected exception; failing request, keeping dispatcher alive");
+        request->DeletePayload();
+        request->MessageType = MessageTypes::Response;
+        request->StatusCode = StatusCodes::Failure;
         _messageDispatcher->QueueMessageForStm32(request);
         xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
     }
