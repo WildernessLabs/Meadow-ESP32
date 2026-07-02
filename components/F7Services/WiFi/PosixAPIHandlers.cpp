@@ -361,7 +361,13 @@ void WiFiRequestHandler::GetSockOpt(void *vpMessage)
                     TRACE_MESSAGE("GetSockOpt: Implement SO_DONTLINGER");
                     break;
                 case SO_ERROR:      /* Get error status and clear */
-                    TRACE_MESSAGE("GetSockOpt: Implement SO_ERROR");
+                    //
+                    //  Required for non-blocking connect: after the socket
+                    //  polls writable, .NET reads SO_ERROR for the final
+                    //  connect result (0 = connected).
+                    //
+                    optionValue = &intVal;
+                    optionLength = sizeof(intVal);
                     break;
                 case SO_TYPE:       /* Get socket type */
                     TRACE_MESSAGE("GetSockOpt: Implement SO_TYPE");
@@ -422,6 +428,13 @@ void WiFiRequestHandler::GetSockOpt(void *vpMessage)
                         Encoders::EncodeLinger(&esp_lv, response.OptionValue);
                     }
                     break;
+                case SO_ERROR:
+                    //
+                    //  The pending error is an lwip errno; the F7 expects
+                    //  NuttX errno values.  Zero (no error) stays zero.
+                    //
+                    intVal = (intVal != 0) ? (int) MapErrno(intVal) : 0;
+                    /* fall through to the integer encode */
                 case SO_RCVBUF:
                     esp_iv.Result = *(static_cast<int *>(optionValue));
                     response.OptionValueLength = Encoders::EncodedIntegerResponseBufferSize(&esp_iv);
