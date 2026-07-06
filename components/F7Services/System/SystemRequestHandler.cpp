@@ -528,6 +528,18 @@ void SystemRequestHandler::GetConfiguration(Message * const request)
 void SystemRequestHandler::SetConfigurationItem(Message * const request)
 {
     TRACE_MESSAGE("SetConfigurationItem: Enter");
+
+    static constexpr uint32_t MINIMUM_CONFIGURATION_VALUE_PAYLOAD_SIZE = 8;
+
+    if ((request->Payload == nullptr) || (request->PayloadLength < MINIMUM_CONFIGURATION_VALUE_PAYLOAD_SIZE))
+    {
+        request->MessageType = MessageTypes::Response;
+        request->StatusCode = StatusCodes::InvalidPacket;
+        _messageDispatcher->QueueMessageForStm32(request);
+        TRACE_MESSAGE("SetConfigurationItem: Exit - invalid payload");
+        return;
+    }
+
     Esp32Messaging::ConfigurationValue *value = Encoders::ExtractConfigurationValue(request->Payload);
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
     if (value)

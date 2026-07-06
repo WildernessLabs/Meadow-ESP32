@@ -282,7 +282,7 @@ namespace StatusCodes
         /**
          * @brief Invalid WiFi country code.
          */
-        InvalidWiFiCountryCode = 62,
+        InvalidCountryCode = 62,
     };
 
 } // namespace StatusCodes

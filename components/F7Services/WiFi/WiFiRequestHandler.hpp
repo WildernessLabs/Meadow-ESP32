@@ -866,6 +866,16 @@ private:
     static StatusCodes::StatusCodes RecvFrom(Esp32Messaging::RecvFromRequest *request, Esp32Messaging::RecvFromResponse &response);
 
     /**
+     *  @brief Provide a mechanism for the STM32 to call the sendmsg method.
+     */
+    static void SendMsg(void * const vpMessage);
+
+    /**
+     *  @brief Provide a mechanism for the STM32 to call the recvmsg method.
+     */
+    static void RecvMsg(void * const vpMessage);
+
+    /**
      *  @brief Provide a mechanism for the STM32 to call the recvfrom method.
      */
     static void RecvFrom(void * const vpMessage);

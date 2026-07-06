@@ -294,6 +294,42 @@ namespace Esp32Messaging
         uint32_t SourceAddressLen;
     };
 
+    struct SendMsgRequest
+    {
+        int32_t SocketHandle;
+        int32_t Flags;
+        uint32_t NameLength;
+        uint8_t *Name;
+        uint32_t BufferLength;
+        uint8_t *Buffer;
+        uint32_t ControlLength;
+        uint8_t *Control;
+        int32_t MsgFlags;
+    };
+
+    struct RecvMsgRequest
+    {
+        int32_t SocketHandle;
+        int32_t Length;
+        int32_t Flags;
+        int32_t GetSourceAddress;
+        uint32_t ControlLength;
+    };
+
+    struct RecvMsgResponse
+    {
+        uint32_t BufferLength;
+        uint8_t *Buffer;
+        int32_t Result;
+        int32_t ResponseErrno;
+        uint32_t SourceAddressLength;
+        uint8_t *SourceAddress;
+        uint32_t SourceAddressLen;
+        uint32_t ControlLength;
+        uint8_t *Control;
+        int32_t MsgFlags;
+    };
+
     struct PollRequest
     {
         int32_t SocketHandle;
@@ -645,6 +681,13 @@ public:
     static Esp32Messaging::RecvFromRequest *ExtractRecvFromRequest(uint8_t *);
     static void EncodeRecvFromResponse(const Esp32Messaging::RecvFromResponse * const, uint8_t *);
     static int EncodedRecvFromResponseBufferSize(const Esp32Messaging::RecvFromResponse * const);
+
+    static Esp32Messaging::SendMsgRequest *ExtractSendMsgRequest(uint8_t *);
+
+    static Esp32Messaging::RecvMsgRequest *ExtractRecvMsgRequest(uint8_t *);
+    static int EncodedRecvMsgRequestBufferSize(const Esp32Messaging::RecvMsgRequest * const);
+    static void EncodeRecvMsgResponse(const Esp32Messaging::RecvMsgResponse * const, uint8_t *);
+    static int EncodedRecvMsgResponseBufferSize(const Esp32Messaging::RecvMsgResponse * const);
 
     static Esp32Messaging::PollRequest *ExtractPollRequest(uint8_t *);
     static void EncodePollResponse(const Esp32Messaging::PollResponse * const, uint8_t *);
