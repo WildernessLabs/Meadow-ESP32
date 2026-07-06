@@ -1974,21 +1974,21 @@ Esp32Messaging::SendMsgRequest *Encoders::ExtractSendMsgRequest(uint8_t *buffer)
 {
     if (buffer == nullptr)
     {
-        return(nullptr);
+        return (nullptr);
     }
 
     Esp32Messaging::SendMsgRequest *sendMsgRequest = (Esp32Messaging::SendMsgRequest *) pvPortMalloc(sizeof(Esp32Messaging::SendMsgRequest));
 
     if (sendMsgRequest == NULL)
     {
-        return(nullptr);
+        return (nullptr);
     }
 
     sendMsgRequest->SocketHandle = ExtractInt32(buffer);
     buffer += 4;
     sendMsgRequest->Flags = ExtractInt32(buffer);
     buffer += 4;
-    buffer += 4;                                                  // Skip MessageHeaderLength; the nested fields are self-describing.
+    buffer += 4; // Skip MessageHeaderLength; the nested fields are self-describing.
 
     sendMsgRequest->NameLength = ExtractUInt32(buffer);
     buffer += 4;
@@ -1998,7 +1998,7 @@ Esp32Messaging::SendMsgRequest *Encoders::ExtractSendMsgRequest(uint8_t *buffer)
         if (sendMsgRequest->Name == NULL)
         {
             vPortFree(sendMsgRequest);
-            return(nullptr);
+            return (nullptr);
         }
         memcpy(sendMsgRequest->Name, buffer, sendMsgRequest->NameLength);
         buffer += sendMsgRequest->NameLength;
@@ -2026,7 +2026,7 @@ Esp32Messaging::SendMsgRequest *Encoders::ExtractSendMsgRequest(uint8_t *buffer)
                 vPortFree(sendMsgRequest->Name);
             }
             vPortFree(sendMsgRequest);
-            return(nullptr);
+            return (nullptr);
         }
         memcpy(sendMsgRequest->Buffer, buffer, sendMsgRequest->BufferLength);
         buffer += sendMsgRequest->BufferLength;
@@ -2052,7 +2052,7 @@ Esp32Messaging::SendMsgRequest *Encoders::ExtractSendMsgRequest(uint8_t *buffer)
                 vPortFree(sendMsgRequest->Buffer);
             }
             vPortFree(sendMsgRequest);
-            return(nullptr);
+            return (nullptr);
         }
         memcpy(sendMsgRequest->Control, buffer, sendMsgRequest->ControlLength);
         buffer += sendMsgRequest->ControlLength;
@@ -2064,7 +2064,7 @@ Esp32Messaging::SendMsgRequest *Encoders::ExtractSendMsgRequest(uint8_t *buffer)
 
     sendMsgRequest->MsgFlags = ExtractInt32(buffer);
 
-    return(sendMsgRequest);
+    return (sendMsgRequest);
 }
 
 /**
@@ -2091,14 +2091,14 @@ Esp32Messaging::RecvMsgRequest *Encoders::ExtractRecvMsgRequest(uint8_t *buffer)
 {
     if (buffer == nullptr)
     {
-        return(nullptr);
+        return (nullptr);
     }
 
     Esp32Messaging::RecvMsgRequest *recvMsgRequest = (Esp32Messaging::RecvMsgRequest *) pvPortMalloc(sizeof(Esp32Messaging::RecvMsgRequest));
 
     if (recvMsgRequest == NULL)
     {
-        return(nullptr);
+        return (nullptr);
     }
 
     recvMsgRequest->SocketHandle = ExtractInt32(buffer);
@@ -2110,7 +2110,7 @@ Esp32Messaging::RecvMsgRequest *Encoders::ExtractRecvMsgRequest(uint8_t *buffer)
     recvMsgRequest->GetSourceAddress = ExtractInt32(buffer);
     buffer += 4;
     recvMsgRequest->ControlLength = ExtractUInt32(buffer);
-    return(recvMsgRequest);
+    return (recvMsgRequest);
 }
 
 /**
@@ -2125,7 +2125,7 @@ Esp32Messaging::RecvMsgRequest *Encoders::ExtractRecvMsgRequest(uint8_t *buffer)
 // cppcheck-suppress unusedFunction symbolName=EncodedRecvMsgRequestBufferSize
 int Encoders::EncodedRecvMsgRequestBufferSize(const Esp32Messaging::RecvMsgRequest * const recvMsgRequest)
 {
-    return(20);
+    return (20);
 }
 
 /**
@@ -2200,7 +2200,7 @@ int Encoders::EncodedRecvMsgResponseBufferSize(const Esp32Messaging::RecvMsgResp
     result += recvMsgResponse->BufferLength;
     result += recvMsgResponse->SourceAddressLength;
     result += recvMsgResponse->ControlLength;
-    return(result + 28);
+    return (result + 28);
 }
 
 /**

@@ -1582,7 +1582,7 @@ static bool MapMsgNameToSockAddr(const uint8_t * const raw, const uint32_t lengt
     *outLen = 0;
     if ((raw == nullptr) || (length < 8))
     {
-        return(true);
+        return (true);
     }
     int32_t family = 0;
     Mapping::GetEspValue(Mapping::AddressFamily, Encoders::ExtractUInt16(raw), &family);
@@ -1595,7 +1595,7 @@ static bool MapMsgNameToSockAddr(const uint8_t * const raw, const uint32_t lengt
         *outPsa = (struct sockaddr *) outSa;
         *outLen = sizeof(*outSa);
     }
-    return(true);
+    return (true);
 }
 
 /**
@@ -1659,7 +1659,7 @@ void WiFiRequestHandler::SendMsg(void * const vpMessage)
 
     assert(message != NULL);
     assert(message->Payload != NULL);
-    Esp32Messaging::IntegerAndErrnoResponse response = { };
+    Esp32Messaging::IntegerAndErrnoResponse response = {};
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
 
     if (IsConnected())
@@ -1673,17 +1673,17 @@ void WiFiRequestHandler::SendMsg(void * const vpMessage)
             response.Result = Mapping::GetEspFlagValue(Mapping::MessageFlags, request->Flags, &mappedFlags);
             if (response.Result == 0)
             {
-                struct sockaddr_in sa = { };
+                struct sockaddr_in sa = {};
                 struct sockaddr *psa = nullptr;
                 socklen_t lenSa = 0;
 
                 MapMsgNameToSockAddr(request->Name, request->NameLength, &sa, &psa, &lenSa);
 
-                struct iovec iov = { };
+                struct iovec iov = {};
                 iov.iov_base = request->Buffer;
                 iov.iov_len = request->BufferLength;
 
-                struct msghdr mhdr = { };
+                struct msghdr mhdr = {};
                 mhdr.msg_name = psa;
                 mhdr.msg_namelen = lenSa;
                 mhdr.msg_iov = &iov;
@@ -1778,7 +1778,7 @@ void WiFiRequestHandler::RecvMsg(void * const vpMessage)
 
     assert(message != NULL);
     assert(message->Payload != NULL);
-    Esp32Messaging::RecvMsgResponse response = { };
+    Esp32Messaging::RecvMsgResponse response = {};
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
 
     if (IsConnected())
@@ -1805,12 +1805,12 @@ void WiFiRequestHandler::RecvMsg(void * const vpMessage)
                         controlBuf = static_cast<uint8_t *>(pvPortMalloc(request->ControlLength));
                     }
 
-                    struct sockaddr_in sa = { };
-                    struct iovec iov = { };
+                    struct sockaddr_in sa = {};
+                    struct iovec iov = {};
                     iov.iov_base = response.Buffer;
                     iov.iov_len = request->Length;
 
-                    struct msghdr mhdr = { };
+                    struct msghdr mhdr = {};
                     if (request->GetSourceAddress != 0)
                     {
                         bzero(&sa, sizeof(sa));
