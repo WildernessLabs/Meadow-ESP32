@@ -565,7 +565,7 @@ const char *WiFiRequestHandler::GetCountryCode()
 StatusCodes::StatusCodes WiFiRequestHandler::SetCountryCode(const char *value)
 {
     TRACE_MESSAGE("WiFiRequestHandler::SetCountryCode %s", (value == NULL) ? "NULL" : value);
-    StatusCodes::StatusCodes result = StatusCodes::InvalidWiFiCountryCode;
+    StatusCodes::StatusCodes result = StatusCodes::InvalidCountryCode;
 
     if (strcmp(value, _countryCode))
     {
@@ -1370,6 +1370,14 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
                 break;
             case WiFiFunction::GetPeerName:
                 SystemRequestHandler::SharedThreadPool()->Execute(GetPeerName, static_cast<void *>(request));
+                xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
+                break;
+            case WiFiFunction::SendMsg:
+                SystemRequestHandler::SharedThreadPool()->Execute(SendMsg, static_cast<void *>(request));
+                xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
+                break;
+            case WiFiFunction::RecvMsg:
+                SystemRequestHandler::SharedThreadPool()->Execute(RecvMsg, static_cast<void *>(request));
                 xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
                 break;
             default:

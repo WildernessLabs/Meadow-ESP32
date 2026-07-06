@@ -1414,6 +1414,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::RecvFrom(Esp32Messaging::RecvFromRe
             response.Buffer = nullptr;
             response.Result = -1;
             response.ResponseErrno = ENOMEM;
+            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&sa));
             return (StatusCodes::EspOutOfMemory);
         }
         else
@@ -1441,6 +1442,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::RecvFrom(Esp32Messaging::RecvFromRe
                     response.SourceAddressLen = 0;
                     response.Result = -1;
                     response.ResponseErrno = ENOMEM;
+                    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&sa));
                     return (StatusCodes::EspOutOfMemory);
                 }
                 else
@@ -1549,6 +1551,400 @@ void WiFiRequestHandler::RecvFrom(void * const vpMessage)
     PERFORMANCE_LOGGING_EXIT();
     PERFORMANCE_LOGGING_ADD_ENTRY();
     TRACE_MESSAGE("RecvFrom: Exit");
+}
+
+/**
+ *  @brief Decode the raw NuttX sockaddr bytes carried by a SendMsgRequest's
+ *         Name field into a native sockaddr_in.
+ *
+ *  Unlike the addresses used by bind/connect/sendto (which are converted to
+ *  the shared SockAddr wire format before transmission), sendmsg's msg_name
+ *  is copied verbatim from the STM32's in-memory NuttX struct sockaddr_in:
+ *
+ *      sin_family (uint16, 2 bytes) | sin_port (2 bytes) | sin_addr (4 bytes) | sin_zero (8 bytes)
+ *
+ *  This must therefore be decoded field by field rather than via
+ *  Encoders::ExtractSockAddr(), which expects the different SockAddr layout.
+ *
+ *  When length is 0 or raw is nullptr, outPsa is set to nullptr and outLen
+ *  to 0 and true is returned (no address is a valid state).
+ *
+ *  @param raw           Pointer to the raw NuttX sockaddr bytes, or nullptr.
+ *  @param length        Byte length of the raw blob; 0 means no address.
+ *  @param outSa         Caller-supplied sockaddr_in to fill on success.
+ *  @param outPsa        Set to (struct sockaddr *)outSa, or nullptr.
+ *  @param outLen        Set to sizeof(*outSa), or 0.
+ *  @returns true on success.
+ */
+static bool MapMsgNameToSockAddr(const uint8_t * const raw, const uint32_t length, struct sockaddr_in *outSa, struct sockaddr **outPsa, socklen_t *outLen)
+{
+    *outPsa = nullptr;
+    *outLen = 0;
+    if ((raw == nullptr) || (length < 8))
+    {
+        return(true);
+    }
+    int32_t family = 0;
+    Mapping::GetEspValue(Mapping::AddressFamily, Encoders::ExtractUInt16(raw), &family);
+    if (family == AF_INET)
+    {
+        outSa->sin_family = (unsigned char) (family & 0xff);
+        memcpy(&outSa->sin_port, raw + 2, sizeof(outSa->sin_port));
+        memcpy(&outSa->sin_addr, raw + 4, sizeof(outSa->sin_addr));
+        outSa->sin_len = sizeof(*outSa);
+        *outPsa = (struct sockaddr *) outSa;
+        *outLen = sizeof(*outSa);
+    }
+    return(true);
+}
+
+/**
+ *  @brief Encode the source address returned by recvmsg into the raw NuttX
+ *         sockaddr bytes expected in the response's SourceAddress field.
+ *
+ *  Mirrors MapMsgNameToSockAddr() in the opposite direction: NuttX's
+ *  recvmsg() decode path copies the response's source address bytes
+ *  verbatim into msg_name rather than going through the shared SockAddr
+ *  wire format used by bind/connect/recvfrom, so this must produce the same
+ *  raw layout that sendmsg's msg_name uses:
+ *
+ *      sin_family (uint16, 2 bytes) | sin_port (2 bytes) | sin_addr (4 bytes) | sin_zero (8 bytes)
+ *
+ *  On pvPortMalloc failure the address fields are zeroed so the response is
+ *  still valid.
+ *
+ *  @param sa        sockaddr_in as filled by recvmsg.
+ *  @param nameLen   mhdr.msg_namelen as returned by recvmsg.
+ *  @param response  RecvMsgResponse to fill.
+ */
+static void EncodeSourceAddressToResponse(const struct sockaddr_in * const sa, const socklen_t nameLen, Esp32Messaging::RecvMsgResponse *response)
+{
+    int32_t family = 0;
+    Mapping::GetStmValue(Mapping::AddressFamily, sa->sin_family, &family);
+
+    response->SourceAddressLength = 16;
+    response->SourceAddress = static_cast<uint8_t *>(pvPortMalloc(response->SourceAddressLength));
+    if (response->SourceAddress == nullptr)
+    {
+        response->SourceAddressLength = 0;
+        response->SourceAddressLen = 0;
+    }
+    else
+    {
+        memset(response->SourceAddress, 0, response->SourceAddressLength);
+        Encoders::EncodeUInt16((uint16_t) family, response->SourceAddress);
+        memcpy(response->SourceAddress + 2, &sa->sin_port, sizeof(sa->sin_port));
+        memcpy(response->SourceAddress + 4, &sa->sin_addr, sizeof(sa->sin_addr));
+        response->SourceAddressLen = nameLen;
+    }
+}
+
+/**
+ *  @brief Expose the POSIX sendmsg method to the STM32.
+ *
+ *  The iov buffers from the NuttX msghdr are coalesced into a single contiguous
+ *  buffer by the STM32 before transmission.  On the ESP32 side the buffer is
+ *  passed to sendmsg as a single iovec element so that ancillary control data
+ *  and the destination address are forwarded faithfully.
+ *
+ *  @param vpMessage
+ *      Message structure containing the parameters for the sendmsg method.
+ */
+void WiFiRequestHandler::SendMsg(void * const vpMessage)
+{
+    TRACE_MESSAGE("SendMsg: Enter");
+    PERFORMANCE_LOGGING_ENTER();
+
+    Message * const message = static_cast<Message *>(vpMessage);
+
+    assert(message != NULL);
+    assert(message->Payload != NULL);
+    Esp32Messaging::IntegerAndErrnoResponse response = { };
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
+
+    if (IsConnected())
+    {
+        Esp32Messaging::SendMsgRequest *request = Encoders::ExtractSendMsgRequest(message->Payload);
+
+        if (request)
+        {
+            int32_t mappedFlags = 0;
+            response.ResponseErrno = 0;
+            response.Result = Mapping::GetEspFlagValue(Mapping::MessageFlags, request->Flags, &mappedFlags);
+            if (response.Result == 0)
+            {
+                struct sockaddr_in sa = { };
+                struct sockaddr *psa = nullptr;
+                socklen_t lenSa = 0;
+
+                MapMsgNameToSockAddr(request->Name, request->NameLength, &sa, &psa, &lenSa);
+
+                struct iovec iov = { };
+                iov.iov_base = request->Buffer;
+                iov.iov_len = request->BufferLength;
+
+                struct msghdr mhdr = { };
+                mhdr.msg_name = psa;
+                mhdr.msg_namelen = lenSa;
+                mhdr.msg_iov = &iov;
+                mhdr.msg_iovlen = 1;
+                mhdr.msg_control = request->Control;
+                mhdr.msg_controllen = request->ControlLength;
+                mhdr.msg_flags = 0;
+
+                TRACE_MESSAGE("SendMsg: socket %" PRIi32 ", buffer length %" PRIu32 ", control length %" PRIu32, request->SocketHandle, request->BufferLength, request->ControlLength);
+
+                response.Result = sendmsg(request->SocketHandle, &mhdr, mappedFlags);
+                if (response.Result < 0)
+                {
+                    response.ResponseErrno = Mapping::NuttxErrno(errno);
+                }
+            }
+            else
+            {
+                response.ResponseErrno = Mapping::NuttxErrno(EINVAL);
+            }
+
+            TRACE_MESSAGE("SendMsg: Result: %" PRIi32 ", errno: %" PRIi32 " - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
+
+            if (request->Name)
+            {
+                vPortFree(request->Name);
+            }
+            if (request->Buffer)
+            {
+                vPortFree(request->Buffer);
+            }
+            if (request->Control)
+            {
+                vPortFree(request->Control);
+            }
+            vPortFree(request);
+        }
+        else
+        {
+            result = StatusCodes::EspOutOfMemory;
+        }
+    }
+    else
+    {
+        response.Result = -1;
+        response.ResponseErrno = Mapping::NuttxErrno(ENETDOWN);
+    }
+    message->DeletePayload();
+
+    if (result != StatusCodes::CompletedOk)
+    {
+        message->StatusCode = result;
+    }
+    else
+    {
+        message->PayloadLength = Encoders::EncodedIntegerAndErrnoResponseBufferSize(&response);
+        message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
+        if (message->Payload == NULL)
+        {
+            message->PayloadLength = 0;
+            message->StatusCode = StatusCodes::EspOutOfMemory;
+        }
+        else
+        {
+            Encoders::EncodeIntegerAndErrnoResponse(&response, message->Payload);
+            message->StatusCode = StatusCodes::CompletedOk;
+        }
+    }
+    message->MessageType = MessageTypes::Response;
+    _messageDispatcher->QueueMessageForStm32(message);
+
+    PERFORMANCE_LOGGING_EXIT();
+    PERFORMANCE_LOGGING_ADD_ENTRY();
+    TRACE_MESSAGE("SendMsg: Exit");
+}
+
+/**
+ *  @brief Expose the POSIX recvmsg method to the STM32.
+ *
+ *  Receives a message from the socket and returns the data, source address,
+ *  ancillary control data, and output flags to the STM32 in a RecvMsgResponse.
+ *
+ *  @param vpMessage
+ *      Message structure containing the parameters for the recvmsg method.
+ */
+void WiFiRequestHandler::RecvMsg(void * const vpMessage)
+{
+    TRACE_MESSAGE("RecvMsg: Enter");
+    PERFORMANCE_LOGGING_ENTER();
+
+    Message * const message = static_cast<Message *>(vpMessage);
+
+    assert(message != NULL);
+    assert(message->Payload != NULL);
+    Esp32Messaging::RecvMsgResponse response = { };
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
+
+    if (IsConnected())
+    {
+        Esp32Messaging::RecvMsgRequest *request = Encoders::ExtractRecvMsgRequest(message->Payload);
+
+        if (request)
+        {
+            int32_t mappedFlags = 0;
+            response.Result = Mapping::GetEspFlagValue(Mapping::MessageFlags, request->Flags, &mappedFlags);
+            if (response.Result == 0)
+            {
+                response.Buffer = static_cast<uint8_t *>(pvPortMalloc(request->Length));
+                if (response.Buffer == NULL)
+                {
+                    response.Result = -1;
+                    response.ResponseErrno = ENOMEM;
+                }
+                else
+                {
+                    uint8_t *controlBuf = NULL;
+                    if (request->ControlLength > 0)
+                    {
+                        controlBuf = static_cast<uint8_t *>(pvPortMalloc(request->ControlLength));
+                    }
+
+                    struct sockaddr_in sa = { };
+                    struct iovec iov = { };
+                    iov.iov_base = response.Buffer;
+                    iov.iov_len = request->Length;
+
+                    struct msghdr mhdr = { };
+                    if (request->GetSourceAddress != 0)
+                    {
+                        bzero(&sa, sizeof(sa));
+                        mhdr.msg_name = &sa;
+                        mhdr.msg_namelen = sizeof(sa);
+                    }
+                    mhdr.msg_iov = &iov;
+                    mhdr.msg_iovlen = 1;
+                    mhdr.msg_control = controlBuf;
+                    mhdr.msg_controllen = (controlBuf != NULL) ? request->ControlLength : 0;
+                    mhdr.msg_flags = 0;
+
+                    TRACE_MESSAGE("RecvMsg: Requesting %" PRIi32 " bytes from socket handle %" PRIi32 ", control buffer %" PRIu32, request->Length, request->SocketHandle, request->ControlLength);
+
+                    response.Result = recvmsg(request->SocketHandle, &mhdr, mappedFlags);
+
+                    if (response.Result < 0)
+                    {
+                        response.ResponseErrno = errno;
+                        response.BufferLength = 0;
+                        response.SourceAddress = nullptr;
+                        response.SourceAddressLength = 0;
+                        response.SourceAddressLen = 0;
+                        response.Control = nullptr;
+                        response.ControlLength = 0;
+                        response.MsgFlags = 0;
+                    }
+                    else
+                    {
+                        response.BufferLength = response.Result;
+                        Mapping::GetStmFlagValue(Mapping::MessageFlags, mhdr.msg_flags, &response.MsgFlags);
+
+                        if ((request->GetSourceAddress != 0) && (mhdr.msg_namelen > 0))
+                        {
+                            EncodeSourceAddressToResponse(&sa, mhdr.msg_namelen, &response);
+                        }
+                        else
+                        {
+                            response.SourceAddress = nullptr;
+                            response.SourceAddressLength = 0;
+                            response.SourceAddressLen = 0;
+                        }
+
+                        if ((controlBuf != NULL) && (mhdr.msg_controllen > 0))
+                        {
+                            response.ControlLength = mhdr.msg_controllen;
+                            response.Control = controlBuf;
+                            controlBuf = NULL;
+                        }
+                        else
+                        {
+                            response.ControlLength = 0;
+                            response.Control = nullptr;
+                        }
+                    }
+
+                    if (controlBuf != NULL)
+                    {
+                        vPortFree(controlBuf);
+                    }
+                }
+            }
+            else
+            {
+                response.ResponseErrno = EINVAL;
+            }
+
+            if (response.Result < 0)
+            {
+                response.ResponseErrno = Mapping::NuttxErrno(response.ResponseErrno);
+            }
+
+            TRACE_MESSAGE("RecvMsg: Result: %" PRIi32 ", errno: %" PRIi32 " - %s, msg_flags: 0x%" PRIx32, response.Result, response.ResponseErrno, strerror(response.ResponseErrno), response.MsgFlags);
+
+            vPortFree(request);
+        }
+        else
+        {
+            result = StatusCodes::EspOutOfMemory;
+        }
+    }
+    else
+    {
+        response.Result = -1;
+        response.ResponseErrno = Mapping::NuttxErrno(ENETDOWN);
+        response.Buffer = nullptr;
+        response.BufferLength = 0;
+        response.SourceAddress = nullptr;
+        response.SourceAddressLength = 0;
+        response.SourceAddressLen = 0;
+        response.Control = nullptr;
+        response.ControlLength = 0;
+        response.MsgFlags = 0;
+    }
+
+    message->DeletePayload();
+
+    if (result != StatusCodes::CompletedOk)
+    {
+        message->StatusCode = result;
+    }
+    else
+    {
+        message->PayloadLength = Encoders::EncodedRecvMsgResponseBufferSize(&response);
+        message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
+        if (message->Payload == NULL)
+        {
+            message->PayloadLength = 0;
+            message->StatusCode = StatusCodes::EspOutOfMemory;
+        }
+        else
+        {
+            Encoders::EncodeRecvMsgResponse(&response, message->Payload);
+            message->StatusCode = StatusCodes::CompletedOk;
+        }
+    }
+    if (response.Buffer)
+    {
+        vPortFree(response.Buffer);
+    }
+    if (response.SourceAddress)
+    {
+        vPortFree(response.SourceAddress);
+    }
+    if (response.Control)
+    {
+        vPortFree(response.Control);
+    }
+    message->MessageType = MessageTypes::Response;
+    _messageDispatcher->QueueMessageForStm32(message);
+
+    PERFORMANCE_LOGGING_EXIT();
+    PERFORMANCE_LOGGING_ADD_ENTRY();
+    TRACE_MESSAGE("RecvMsg: Exit");
 }
 
 /**

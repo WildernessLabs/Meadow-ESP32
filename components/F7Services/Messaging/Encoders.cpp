@@ -596,6 +596,11 @@ int Encoders::EncodedSystemConfigurationBufferSize(const Esp32Messaging::SystemC
  */
 Esp32Messaging::ConfigurationValue *Encoders::ExtractConfigurationValue(uint8_t *buffer)
 {
+    if (buffer == nullptr)
+    {
+        return (nullptr);
+    }
+
     Esp32Messaging::ConfigurationValue *configurationValue = (Esp32Messaging::ConfigurationValue *) pvPortMalloc(sizeof(Esp32Messaging::ConfigurationValue));
 
     if (configurationValue == NULL)
@@ -1932,6 +1937,270 @@ int Encoders::EncodedRecvFromResponseBufferSize(const Esp32Messaging::RecvFromRe
     result += recvFromResponse->BufferLength;
     result += recvFromResponse->SourceAddressLength;
     return (result + 20);
+}
+
+/**
+ *  Extract the SendMsgRequest object that is encoded in the given buffer.
+ *
+ *  The outer wire format is:
+ *    [4] SocketHandle (int32)
+ *    [4] Flags (int32)
+ *    [4] MessageHeaderLength (uint32)
+ *    [*] MessageHeader (MessageHeaderLength bytes) - the serialised msghdr, laid out as:
+ *          [4] NameLength (uint32)
+ *          [*] Name (NameLength bytes, if > 0) - raw NuttX sockaddr bytes
+ *          [4] IovecCount (uint32)
+ *          [4 * IovecCount] Iovec lengths (uint32 each)
+ *          [*] Iovec data, concatenated (total length is the sum of the iovec lengths above)
+ *          [4] ControlLength (uint32)
+ *          [*] Control (ControlLength bytes, if > 0)
+ *          [4] MsgFlags (int32)
+ *
+ *  The individual iovec buffers are not preserved separately; since they are
+ *  concatenated on the wire in order, they are extracted here as a single
+ *  coalesced Buffer/BufferLength pair.
+ *
+ *  Note that the returned pointer points to a block of memory on the heap and
+ *  this should eventually be released by calling vPortFree(...).
+ *
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded SendMsgRequest object.
+ *
+ *  @returns
+ *      Pointer to a SendMsgRequest object.
+ */
+// cppcheck-suppress unusedFunction symbolName=ExtractSendMsgRequest
+Esp32Messaging::SendMsgRequest *Encoders::ExtractSendMsgRequest(uint8_t *buffer)
+{
+    if (buffer == nullptr)
+    {
+        return(nullptr);
+    }
+
+    Esp32Messaging::SendMsgRequest *sendMsgRequest = (Esp32Messaging::SendMsgRequest *) pvPortMalloc(sizeof(Esp32Messaging::SendMsgRequest));
+
+    if (sendMsgRequest == NULL)
+    {
+        return(nullptr);
+    }
+
+    sendMsgRequest->SocketHandle = ExtractInt32(buffer);
+    buffer += 4;
+    sendMsgRequest->Flags = ExtractInt32(buffer);
+    buffer += 4;
+    buffer += 4;                                                  // Skip MessageHeaderLength; the nested fields are self-describing.
+
+    sendMsgRequest->NameLength = ExtractUInt32(buffer);
+    buffer += 4;
+    if (sendMsgRequest->NameLength > 0)
+    {
+        sendMsgRequest->Name = (uint8_t *) pvPortMalloc(sendMsgRequest->NameLength);
+        if (sendMsgRequest->Name == NULL)
+        {
+            vPortFree(sendMsgRequest);
+            return(nullptr);
+        }
+        memcpy(sendMsgRequest->Name, buffer, sendMsgRequest->NameLength);
+        buffer += sendMsgRequest->NameLength;
+    }
+    else
+    {
+        sendMsgRequest->Name = nullptr;
+    }
+
+    uint32_t iovecCount = ExtractUInt32(buffer);
+    buffer += 4;
+    sendMsgRequest->BufferLength = 0;
+    for (uint32_t index = 0; index < iovecCount; index++)
+    {
+        sendMsgRequest->BufferLength += ExtractUInt32(buffer);
+        buffer += 4;
+    }
+    if (sendMsgRequest->BufferLength > 0)
+    {
+        sendMsgRequest->Buffer = (uint8_t *) pvPortMalloc(sendMsgRequest->BufferLength);
+        if (sendMsgRequest->Buffer == NULL)
+        {
+            if (sendMsgRequest->Name != nullptr)
+            {
+                vPortFree(sendMsgRequest->Name);
+            }
+            vPortFree(sendMsgRequest);
+            return(nullptr);
+        }
+        memcpy(sendMsgRequest->Buffer, buffer, sendMsgRequest->BufferLength);
+        buffer += sendMsgRequest->BufferLength;
+    }
+    else
+    {
+        sendMsgRequest->Buffer = nullptr;
+    }
+
+    sendMsgRequest->ControlLength = ExtractUInt32(buffer);
+    buffer += 4;
+    if (sendMsgRequest->ControlLength > 0)
+    {
+        sendMsgRequest->Control = (uint8_t *) pvPortMalloc(sendMsgRequest->ControlLength);
+        if (sendMsgRequest->Control == NULL)
+        {
+            if (sendMsgRequest->Name != nullptr)
+            {
+                vPortFree(sendMsgRequest->Name);
+            }
+            if (sendMsgRequest->Buffer != nullptr)
+            {
+                vPortFree(sendMsgRequest->Buffer);
+            }
+            vPortFree(sendMsgRequest);
+            return(nullptr);
+        }
+        memcpy(sendMsgRequest->Control, buffer, sendMsgRequest->ControlLength);
+        buffer += sendMsgRequest->ControlLength;
+    }
+    else
+    {
+        sendMsgRequest->Control = nullptr;
+    }
+
+    sendMsgRequest->MsgFlags = ExtractInt32(buffer);
+
+    return(sendMsgRequest);
+}
+
+/**
+ *  Extract the RecvMsgRequest object that is encoded in the given buffer.
+ *
+ *  The wire format is:
+ *    [4] SocketHandle (int32)
+ *    [4] Length (int32)
+ *    [4] Flags (int32)
+ *    [4] GetSourceAddress (int32)
+ *    [4] ControlLength (uint32)
+ *
+ *  Note that the returned pointer points to a block of memory on the heap and
+ *  this should eventually be released by calling vPortFree(...).
+ *
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded RecvMsgRequest object.
+ *
+ *  @returns
+ *      Pointer to a RecvMsgRequest object.
+ */
+// cppcheck-suppress unusedFunction symbolName=ExtractRecvMsgRequest
+Esp32Messaging::RecvMsgRequest *Encoders::ExtractRecvMsgRequest(uint8_t *buffer)
+{
+    if (buffer == nullptr)
+    {
+        return(nullptr);
+    }
+
+    Esp32Messaging::RecvMsgRequest *recvMsgRequest = (Esp32Messaging::RecvMsgRequest *) pvPortMalloc(sizeof(Esp32Messaging::RecvMsgRequest));
+
+    if (recvMsgRequest == NULL)
+    {
+        return(nullptr);
+    }
+
+    recvMsgRequest->SocketHandle = ExtractInt32(buffer);
+    buffer += 4;
+    recvMsgRequest->Length = ExtractInt32(buffer);
+    buffer += 4;
+    recvMsgRequest->Flags = ExtractInt32(buffer);
+    buffer += 4;
+    recvMsgRequest->GetSourceAddress = ExtractInt32(buffer);
+    buffer += 4;
+    recvMsgRequest->ControlLength = ExtractUInt32(buffer);
+    return(recvMsgRequest);
+}
+
+/**
+ *  Calculate the amount of memory required to hold the given instance of the RecvMsgRequest object.
+ *
+ *  @param recvMsgRequest
+ *      RecvMsgRequest object to be encoded.
+ *
+ *  @returns
+ *      Number of bytes required to hold the encoded RecvMsgRequest object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodedRecvMsgRequestBufferSize
+int Encoders::EncodedRecvMsgRequestBufferSize(const Esp32Messaging::RecvMsgRequest * const recvMsgRequest)
+{
+    return(20);
+}
+
+/**
+ *  Convert the RecvMsgResponse object into a byte stream that can be sent to the STM32.
+ *
+ *  The wire format is:
+ *    [4] BufferLength (uint32)
+ *    [*] Buffer (BufferLength bytes, if > 0)
+ *    [4] Result (int32)
+ *    [4] ResponseErrno (int32)
+ *    [4] SourceAddressLength (uint32)
+ *    [*] SourceAddress (SourceAddressLength bytes, if > 0)
+ *    [4] SourceAddressLen (uint32)
+ *    [4] ControlLength (uint32)
+ *    [*] Control (ControlLength bytes, if > 0)
+ *    [4] MsgFlags (int32)
+ *
+ *  The amount of memory required can be obtained by calling the EncodedRecvMsgResponseBufferSize method.
+ *
+ *  @param recvMsgResponse
+ *      RecvMsgResponse object to be encoded.
+ *
+ *  @param buffer
+ *      Pointer to a block of memory large enough to hold the encoded RecvMsgResponse object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodeRecvMsgResponse
+void Encoders::EncodeRecvMsgResponse(const Esp32Messaging::RecvMsgResponse * const recvMsgResponse, uint8_t *buffer)
+{
+    EncodeUInt32(recvMsgResponse->BufferLength, buffer);
+    buffer += 4;
+    if (recvMsgResponse->BufferLength > 0)
+    {
+        memcpy((void *) buffer, (void *) recvMsgResponse->Buffer, recvMsgResponse->BufferLength);
+        buffer += recvMsgResponse->BufferLength;
+    }
+    EncodeInt32(recvMsgResponse->Result, buffer);
+    buffer += 4;
+    EncodeInt32(recvMsgResponse->ResponseErrno, buffer);
+    buffer += 4;
+    EncodeUInt32(recvMsgResponse->SourceAddressLength, buffer);
+    buffer += 4;
+    if (recvMsgResponse->SourceAddressLength > 0)
+    {
+        memcpy((void *) buffer, (void *) recvMsgResponse->SourceAddress, recvMsgResponse->SourceAddressLength);
+        buffer += recvMsgResponse->SourceAddressLength;
+    }
+    EncodeUInt32(recvMsgResponse->SourceAddressLen, buffer);
+    buffer += 4;
+    EncodeUInt32(recvMsgResponse->ControlLength, buffer);
+    buffer += 4;
+    if (recvMsgResponse->ControlLength > 0)
+    {
+        memcpy((void *) buffer, (void *) recvMsgResponse->Control, recvMsgResponse->ControlLength);
+        buffer += recvMsgResponse->ControlLength;
+    }
+    EncodeInt32(recvMsgResponse->MsgFlags, buffer);
+}
+
+/**
+ *  Calculate the amount of memory required to hold the given instance of the RecvMsgResponse object.
+ *
+ *  @param recvMsgResponse
+ *      RecvMsgResponse object to be encoded.
+ *
+ *  @returns
+ *      Number of bytes required to hold the encoded RecvMsgResponse object.
+ */
+// cppcheck-suppress unusedFunction symbolName=EncodedRecvMsgResponseBufferSize
+int Encoders::EncodedRecvMsgResponseBufferSize(const Esp32Messaging::RecvMsgResponse * const recvMsgResponse)
+{
+    int result = 0;
+    result += recvMsgResponse->BufferLength;
+    result += recvMsgResponse->SourceAddressLength;
+    result += recvMsgResponse->ControlLength;
+    return(result + 28);
 }
 
 /**
