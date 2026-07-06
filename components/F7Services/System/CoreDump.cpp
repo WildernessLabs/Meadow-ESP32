@@ -25,11 +25,14 @@
 /**
  * @brief Check the validity of the core dump image.
  *
- * @note This function is defined in the ESP-IDF framework.
+ * @note This function is defined in the ESP-IDF framework and is only available
+ *       when CONFIG_ESP_COREDUMP_ENABLE_TO_FLASH is set.
  *
  * @return esp_err_t ESP_OK if the core dump image is valid, otherwise an error code.
  */
+#if CONFIG_ESP_COREDUMP_ENABLE_TO_FLASH
 extern "C" esp_err_t esp_core_dump_image_check();
+#endif
 
 #if defined(CORE_DUMP_DEBUG)
     #pragma message "CoreDump.cpp: Debug logging enabled"
@@ -112,6 +115,7 @@ void CoreDump::GetInformation(void * const vpMessage)
     {
         const esp_partition_t *partition = esp_partition_get(partitions);
         response.PartitionSize = partition->size;
+#if CONFIG_ESP_COREDUMP_ENABLE_TO_FLASH
         if (esp_core_dump_image_check() != ESP_OK)
         {
             response.IsValid = 0;
@@ -123,6 +127,9 @@ void CoreDump::GetInformation(void * const vpMessage)
             esp_partition_read(partition, 0, &size, sizeof(size));
             response.CoreDumpSize = size;
         }
+#else
+        response.IsValid = 0;
+#endif
         esp_partition_iterator_release(partitions);
     }
     else
@@ -184,6 +191,7 @@ void CoreDump::GetFragment(void * const vpMessage)
         if (partitions != NULL)
         {
             const esp_partition_t *partition = esp_partition_get(partitions);
+#if CONFIG_ESP_COREDUMP_ENABLE_TO_FLASH
             if (esp_core_dump_image_check() == ESP_OK)
             {
                 uint32_t size = 0;
@@ -218,6 +226,7 @@ void CoreDump::GetFragment(void * const vpMessage)
                     }
                 }
             }
+#endif
             esp_partition_iterator_release(partitions);
         }
     }
