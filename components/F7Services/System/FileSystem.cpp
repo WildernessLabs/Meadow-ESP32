@@ -338,12 +338,7 @@ void FileSystem::ReadFile(Message * const message)
                 result = StatusCodes::FileNotFound;
             }
         }
-        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&fileData->Name));
-        if (fileData->Contents != NULL)
-        {
-            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&fileData->Contents));
-        }
-        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&fileData));
+        Encoders::FreeFileNameAndContents(&fileData);
     }
 
     message->MessageType = MessageTypes::Response;
@@ -390,7 +385,7 @@ void FileSystem::WriteFile(Message * const message)
 
             Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&fileData->Contents));
         }
-        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&fileData));
+        Encoders::FreeFileNameAndContents(&fileData);
     }
     else
     {
@@ -438,8 +433,7 @@ void FileSystem::DeleteFile(Message * const message)
                 }
             }
         }
-        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&details->Name));
-        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&details));
+        Encoders::FreeFileDetails(&details);
     }
     else
     {

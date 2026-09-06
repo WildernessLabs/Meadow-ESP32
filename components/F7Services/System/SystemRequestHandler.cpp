@@ -82,6 +82,38 @@ char *SystemRequestHandler::_deviceName = nullptr;
  */
 const char *SystemRequestHandler::DEVICE_NAME_NAME = "DeviceName";
 
+/**
+ *  @brief Name used for the device on the network when NVS does not hold one.
+ */
+static const char *DEVICE_NAME_DEFAULT_VALUE = "MeadowF7";
+
+/**
+ *  @brief Make a copy of a string on the heap.
+ *
+ *  The copy is allocated with pvPortMalloc so that it can be released with
+ *  Utils::DeleteAndNullifyPointer, matching the storage returned by NvsManager.
+ *
+ *  @param value
+ *      String to be copied.
+ *
+ *  @returns
+ *      Pointer to the copy of the string, nullptr if the copy could not be made.
+ */
+static char *DuplicateString(const char *value)
+{
+    if (value == nullptr)
+    {
+        return (nullptr);
+    }
+
+    char *result = static_cast<char *>(pvPortMalloc(strlen(value) + 1));
+    if (result != nullptr)
+    {
+        strcpy(result, value);
+    }
+    return (result);
+}
+
 /*
  * ----------------------------------------------------------------------------
  *
@@ -117,7 +149,15 @@ SystemRequestHandler::SystemRequestHandler(IMessageDispatcher *messageDispatcher
     //  Get configuration from NVS.
     //
     _maximumMessageQueueLength = GetConfigurationValue(MAXIMUM_MESSAGE_QUEUE_LENGTH_NAME, _maximumMessageQueueLength);
-    _deviceName = GetConfigurationValue(DEVICE_NAME_NAME, const_cast<char *>("MeadowF7"));
+    //
+    //  Ask for the name with no default so that _deviceName always owns storage on
+    //  the heap; a non-heap default would make it unsafe to release on reassignment.
+    //
+    _deviceName = GetConfigurationValue(DEVICE_NAME_NAME, nullptr);
+    if (_deviceName == nullptr)
+    {
+        _deviceName = DuplicateString(DEVICE_NAME_DEFAULT_VALUE);
+    }
     _messageDispatcher = messageDispatcher;
 
     _fileSystem = new FileSystem(_messageDispatcher);
@@ -135,6 +175,7 @@ SystemRequestHandler::SystemRequestHandler(IMessageDispatcher *messageDispatcher
  */
 SystemRequestHandler::~SystemRequestHandler()
 {
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&_deviceName));
 }
 
 /*
@@ -206,11 +247,12 @@ char *SystemRequestHandler::GetDeviceName()
 StatusCodes::StatusCodes SystemRequestHandler::SetDeviceName(char *value)
 {
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    if (strcmp(value, _deviceName) != 0)
+    if ((_deviceName == nullptr) || (strcmp(value, _deviceName) != 0))
     {
         if (SystemRequestHandler::SetConfigurationValue(DEVICE_NAME_NAME, value) == NvsManager::ErrorCodes::Ok)
         {
-            _deviceName = strdup(value);
+            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&_deviceName));
+            _deviceName = DuplicateString(value);
         }
     }
     return (result);
@@ -510,6 +552,7 @@ void SystemRequestHandler::GetConfiguration(Message * const request)
     Esp32Messaging::SystemConfiguration config = {};
     PopulateConfiguration(&config);
 
+    request->DeletePayload();
     request->PayloadLength = Encoders::EncodedSystemConfigurationBufferSize(&config);
     request->Payload = static_cast<uint8_t *>(pvPortMalloc(request->PayloadLength));
     Encoders::EncodeSystemConfiguration(&config, request->Payload);
@@ -604,6 +647,7 @@ void SystemRequestHandler::SetConfigurationItem(Message * const request)
     {
         result = StatusCodes::EspOutOfMemory;
     }
+    Encoders::FreeConfigurationValue(&value);
     request->DeletePayload();
     request->MessageType = MessageTypes::Response;
     request->StatusCode = result;
@@ -731,6 +775,7 @@ void SystemRequestHandler::GetBatteryChargeLevel(Message * const message)
         TRACE_MESSAGE("Averaged voltage: %" PRIi32 " mV", response.Result);
     }
 
+    message->DeletePayload();
     message->PayloadLength = Encoders::EncodedIntegerResponseBufferSize(&response);
     message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
     Encoders::EncodeIntegerResponse(&response, message->Payload);
@@ -757,7 +802,7 @@ void SystemRequestHandler::LoggingConfiguration(Message * const message)
     if (config)
     {
         Logging::Configure(config->ComponentsToLog, config->Interface, config->UdpPort);
-        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&config));
+        Encoders::FreeLoggingConfiguration(&config);
     }
 
     //
@@ -786,8 +831,7 @@ void SystemRequestHandler::LogMessage(Message * const message)
         {
             TRACE_MESSAGE("LogMessage: (%" PRIu8 "), %s", logMessage->Level, logMessage->Message);
         }
-        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&logMessage->Message));
-        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&logMessage));
+        Encoders::FreeLogMessage(&logMessage);
     }
 
     //

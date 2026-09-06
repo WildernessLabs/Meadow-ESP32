@@ -585,8 +585,9 @@ int Encoders::EncodedSystemConfigurationBufferSize(const Esp32Messaging::SystemC
 /**
  *  Extract the ConfigurationValue object that is encoded in the given buffer.
  *
- *  Note that the returned pointer points to a block of memory on the heap and
- *  this should eventually be released calling Utils::DeleteAndNullifyPointer(...).
+ *  Note that the returned object holds nested allocations, so it should eventually be
+ *  released by calling Encoders::FreeConfigurationValue(...) rather than by freeing the object
+ *  on its own.
  *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded ConfigurationValue object.
@@ -630,6 +631,25 @@ Esp32Messaging::ConfigurationValue *Encoders::ExtractConfigurationValue(uint8_t 
         configurationValue->Value = nullptr;
     }
     return (configurationValue);
+}
+
+/**
+ *  Release the heap storage used by a ConfigurationValue object along with the storage used by
+ *  the nested Value member.
+ *
+ *  @param configurationValue
+ *      Pointer to the pointer to the ConfigurationValue object to be released.  The pointer is
+ *      set to nullptr when the object has been released.
+ */
+void Encoders::FreeConfigurationValue(Esp32Messaging::ConfigurationValue **configurationValue)
+{
+    if ((configurationValue == nullptr) || (*configurationValue == nullptr))
+    {
+        return;
+    }
+
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&(*configurationValue)->Value));
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(configurationValue));
 }
 
 /**
@@ -682,8 +702,9 @@ int Encoders::EncodedAccessPointInformationBufferSize(const Esp32Messaging::Acce
 /**
  *  Extract the AccessPointInformation object that is encoded in the given buffer.
  *
- *  Note that the returned pointer points to a block of memory on the heap and
- *  this should eventually be released calling Utils::DeleteAndNullifyPointer(...).
+ *  Note that the returned object holds nested allocations, so it should eventually be
+ *  released by calling Encoders::FreeAccessPointInformation(...) rather than by freeing the object
+ *  on its own.
  *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded AccessPointInformation object.
@@ -716,6 +737,26 @@ Esp32Messaging::AccessPointInformation *Encoders::ExtractAccessPointInformation(
     buffer += 1;
     accessPointInformation->Hidden = *buffer;
     return (accessPointInformation);
+}
+
+/**
+ *  Release the heap storage used by an AccessPointInformation object along with the storage used by
+ *  the nested NetworkName and Password members.
+ *
+ *  @param accessPointInformation
+ *      Pointer to the pointer to the AccessPointInformation object to be released.  The pointer is
+ *      set to nullptr when the object has been released.
+ */
+void Encoders::FreeAccessPointInformation(Esp32Messaging::AccessPointInformation **accessPointInformation)
+{
+    if ((accessPointInformation == nullptr) || (*accessPointInformation == nullptr))
+    {
+        return;
+    }
+
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&(*accessPointInformation)->NetworkName));
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&(*accessPointInformation)->Password));
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(accessPointInformation));
 }
 
 /**
@@ -1070,8 +1111,9 @@ int Encoders::EncodedAddrInfoBufferSize(const Esp32Messaging::AddrInfo * const a
 /**
  *  Extract the AddrInfo object that is encoded in the given buffer.
  *
- *  Note that the returned pointer points to a block of memory on the heap and
- *  this should eventually be released calling Utils::DeleteAndNullifyPointer(...).
+ *  Note that the returned object holds nested allocations, so it should eventually be
+ *  released by calling Encoders::FreeAddrInfo(...) rather than by freeing the object
+ *  on its own.
  *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded AddrInfo object.
@@ -1124,10 +1166,31 @@ Esp32Messaging::AddrInfo *Encoders::ExtractAddrInfo(uint8_t *buffer)
 }
 
 /**
+ *  Release the heap storage used by an AddrInfo object along with the storage used by
+ *  the nested Addr and CanonName members.
+ *
+ *  @param addrInfo
+ *      Pointer to the pointer to the AddrInfo object to be released.  The pointer is
+ *      set to nullptr when the object has been released.
+ */
+void Encoders::FreeAddrInfo(Esp32Messaging::AddrInfo **addrInfo)
+{
+    if ((addrInfo == nullptr) || (*addrInfo == nullptr))
+    {
+        return;
+    }
+
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&(*addrInfo)->Addr));
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&(*addrInfo)->CanonName));
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(addrInfo));
+}
+
+/**
  *  Extract the GetAddrInfoRequest object that is encoded in the given buffer.
  *
- *  Note that the returned pointer points to a block of memory on the heap and
- *  this should eventually be released calling Utils::DeleteAndNullifyPointer(...).
+ *  Note that the returned object holds nested allocations, so it should eventually be
+ *  released by calling Encoders::FreeGetAddrInfoRequest(...) rather than by freeing the object
+ *  on its own.
  *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded GetAddrInfoRequest object.
@@ -1166,6 +1229,27 @@ Esp32Messaging::GetAddrInfoRequest *Encoders::ExtractGetAddrInfoRequest(uint8_t 
         getAddrInfoRequest->Hints = nullptr;
     }
     return (getAddrInfoRequest);
+}
+
+/**
+ *  Release the heap storage used by a GetAddrInfoRequest object along with the storage used by
+ *  the nested NodeName, ServName and Hints members.
+ *
+ *  @param getAddrInfoRequest
+ *      Pointer to the pointer to the GetAddrInfoRequest object to be released.  The pointer is
+ *      set to nullptr when the object has been released.
+ */
+void Encoders::FreeGetAddrInfoRequest(Esp32Messaging::GetAddrInfoRequest **getAddrInfoRequest)
+{
+    if ((getAddrInfoRequest == nullptr) || (*getAddrInfoRequest == nullptr))
+    {
+        return;
+    }
+
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&(*getAddrInfoRequest)->NodeName));
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&(*getAddrInfoRequest)->ServName));
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&(*getAddrInfoRequest)->Hints));
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(getAddrInfoRequest));
 }
 
 /**
@@ -1303,8 +1387,9 @@ int Encoders::EncodedIntegerAndErrnoResponseBufferSize(const Esp32Messaging::Int
 /**
  *  Extract the ConnectRequest object that is encoded in the given buffer.
  *
- *  Note that the returned pointer points to a block of memory on the heap and
- *  this should eventually be released calling Utils::DeleteAndNullifyPointer(...).
+ *  Note that the returned object holds nested allocations, so it should eventually be
+ *  released by calling Encoders::FreeConnectRequest(...) rather than by freeing the object
+ *  on its own.
  *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded ConnectRequest object.
@@ -1341,6 +1426,25 @@ Esp32Messaging::ConnectRequest *Encoders::ExtractConnectRequest(uint8_t *buffer)
         connectRequest->Addr = nullptr;
     }
     return (connectRequest);
+}
+
+/**
+ *  Release the heap storage used by a ConnectRequest object along with the storage used by
+ *  the nested Addr member.
+ *
+ *  @param connectRequest
+ *      Pointer to the pointer to the ConnectRequest object to be released.  The pointer is
+ *      set to nullptr when the object has been released.
+ */
+void Encoders::FreeConnectRequest(Esp32Messaging::ConnectRequest **connectRequest)
+{
+    if ((connectRequest == nullptr) || (*connectRequest == nullptr))
+    {
+        return;
+    }
+
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&(*connectRequest)->Addr));
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(connectRequest));
 }
 
 /**
@@ -1430,8 +1534,9 @@ Esp32Messaging::TimeVal *Encoders::ExtractTimeVal(uint8_t *buffer)
 /**
  *  Extract the SetSockOptRequest object that is encoded in the given buffer.
  *
- *  Note that the returned pointer points to a block of memory on the heap and
- *  this should eventually be released calling Utils::DeleteAndNullifyPointer(...).
+ *  Note that the returned object holds nested allocations, so it should eventually be
+ *  released by calling Encoders::FreeSetSockOptRequest(...) rather than by freeing the object
+ *  on its own.
  *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded SetSockOptRequest object.
@@ -1473,6 +1578,25 @@ Esp32Messaging::SetSockOptRequest *Encoders::ExtractSetSockOptRequest(uint8_t *b
     }
     setSockOptRequest->OptionLen = ExtractInt32(buffer);
     return (setSockOptRequest);
+}
+
+/**
+ *  Release the heap storage used by a SetSockOptRequest object along with the storage used by
+ *  the nested OptionValue member.
+ *
+ *  @param setSockOptRequest
+ *      Pointer to the pointer to the SetSockOptRequest object to be released.  The pointer is
+ *      set to nullptr when the object has been released.
+ */
+void Encoders::FreeSetSockOptRequest(Esp32Messaging::SetSockOptRequest **setSockOptRequest)
+{
+    if ((setSockOptRequest == nullptr) || (*setSockOptRequest == nullptr))
+    {
+        return;
+    }
+
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&(*setSockOptRequest)->OptionValue));
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(setSockOptRequest));
 }
 
 /**
@@ -1582,8 +1706,9 @@ int Encoders::EncodedLingerBufferSize(const Esp32Messaging::Linger * const linge
 /**
  *  Extract the WriteRequest object that is encoded in the given buffer.
  *
- *  Note that the returned pointer points to a block of memory on the heap and
- *  this should eventually be released calling Utils::DeleteAndNullifyPointer(...).
+ *  Note that the returned object holds nested allocations, so it should eventually be
+ *  released by calling Encoders::FreeWriteRequest(...) rather than by freeing the object
+ *  on its own.
  *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded WriteRequest object.
@@ -1621,6 +1746,25 @@ Esp32Messaging::WriteRequest *Encoders::ExtractWriteRequest(uint8_t *buffer)
     }
     writeRequest->Count = ExtractInt32(buffer);
     return (writeRequest);
+}
+
+/**
+ *  Release the heap storage used by a WriteRequest object along with the storage used by
+ *  the nested Buffer member.
+ *
+ *  @param writeRequest
+ *      Pointer to the pointer to the WriteRequest object to be released.  The pointer is
+ *      set to nullptr when the object has been released.
+ */
+void Encoders::FreeWriteRequest(Esp32Messaging::WriteRequest **writeRequest)
+{
+    if ((writeRequest == nullptr) || (*writeRequest == nullptr))
+    {
+        return;
+    }
+
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&(*writeRequest)->Buffer));
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(writeRequest));
 }
 
 /**
@@ -1749,8 +1893,9 @@ int Encoders::EncodedGetBatteryChargeLevelResponseBufferSize(const Esp32Messagin
 /**
  *  Extract the SendRequest object that is encoded in the given buffer.
  *
- *  Note that the returned pointer points to a block of memory on the heap and
- *  this should eventually be released calling Utils::DeleteAndNullifyPointer(...).
+ *  Note that the returned object holds nested allocations, so it should eventually be
+ *  released by calling Encoders::FreeSendRequest(...) rather than by freeing the object
+ *  on its own.
  *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded SendRequest object.
@@ -1793,10 +1938,30 @@ Esp32Messaging::SendRequest *Encoders::ExtractSendRequest(uint8_t *buffer)
 }
 
 /**
+ *  Release the heap storage used by a SendRequest object along with the storage used by
+ *  the nested Buffer member.
+ *
+ *  @param sendRequest
+ *      Pointer to the pointer to the SendRequest object to be released.  The pointer is
+ *      set to nullptr when the object has been released.
+ */
+void Encoders::FreeSendRequest(Esp32Messaging::SendRequest **sendRequest)
+{
+    if ((sendRequest == nullptr) || (*sendRequest == nullptr))
+    {
+        return;
+    }
+
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&(*sendRequest)->Buffer));
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(sendRequest));
+}
+
+/**
  *  Extract the SendToRequest object that is encoded in the given buffer.
  *
- *  Note that the returned pointer points to a block of memory on the heap and
- *  this should eventually be released calling Utils::DeleteAndNullifyPointer(...).
+ *  Note that the returned object holds nested allocations, so it should eventually be
+ *  released by calling Encoders::FreeSendToRequest(...) rather than by freeing the object
+ *  on its own.
  *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded SendToRequest object.
@@ -1855,6 +2020,26 @@ Esp32Messaging::SendToRequest *Encoders::ExtractSendToRequest(uint8_t *buffer)
         sendToRequest->DestinationAddress = nullptr;
     }
     return (sendToRequest);
+}
+
+/**
+ *  Release the heap storage used by a SendToRequest object along with the storage used by
+ *  the nested Buffer and DestinationAddress members.
+ *
+ *  @param sendToRequest
+ *      Pointer to the pointer to the SendToRequest object to be released.  The pointer is
+ *      set to nullptr when the object has been released.
+ */
+void Encoders::FreeSendToRequest(Esp32Messaging::SendToRequest **sendToRequest)
+{
+    if ((sendToRequest == nullptr) || (*sendToRequest == nullptr))
+    {
+        return;
+    }
+
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&(*sendToRequest)->Buffer));
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&(*sendToRequest)->DestinationAddress));
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(sendToRequest));
 }
 
 /**
@@ -1960,8 +2145,9 @@ int Encoders::EncodedRecvFromResponseBufferSize(const Esp32Messaging::RecvFromRe
  *  concatenated on the wire in order, they are extracted here as a single
  *  coalesced Buffer/BufferLength pair.
  *
- *  Note that the returned pointer points to a block of memory on the heap and
- *  this should eventually be released by calling vPortFree(...).
+ *  Note that the returned object holds nested allocations, so it should eventually be
+ *  released by calling Encoders::FreeSendMsgRequest(...) rather than by freeing the object
+ *  on its own.
  *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded SendMsgRequest object.
@@ -2065,6 +2251,27 @@ Esp32Messaging::SendMsgRequest *Encoders::ExtractSendMsgRequest(uint8_t *buffer)
     sendMsgRequest->MsgFlags = ExtractInt32(buffer);
 
     return (sendMsgRequest);
+}
+
+/**
+ *  Release the heap storage used by a SendMsgRequest object along with the storage used by
+ *  the nested Name, Buffer and Control members.
+ *
+ *  @param sendMsgRequest
+ *      Pointer to the pointer to the SendMsgRequest object to be released.  The pointer is
+ *      set to nullptr when the object has been released.
+ */
+void Encoders::FreeSendMsgRequest(Esp32Messaging::SendMsgRequest **sendMsgRequest)
+{
+    if ((sendMsgRequest == nullptr) || (*sendMsgRequest == nullptr))
+    {
+        return;
+    }
+
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&(*sendMsgRequest)->Name));
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&(*sendMsgRequest)->Buffer));
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&(*sendMsgRequest)->Control));
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(sendMsgRequest));
 }
 
 /**
@@ -2338,8 +2545,9 @@ Esp32Messaging::ListenRequest *Encoders::ExtractListenRequest(uint8_t *buffer)
 /**
  *  Extract the BindRequest object that is encoded in the given buffer.
  *
- *  Note that the returned pointer points to a block of memory on the heap and
- *  this should eventually be released calling Utils::DeleteAndNullifyPointer(...).
+ *  Note that the returned object holds nested allocations, so it should eventually be
+ *  released by calling Encoders::FreeBindRequest(...) rather than by freeing the object
+ *  on its own.
  *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded BindRequest object.
@@ -2376,6 +2584,25 @@ Esp32Messaging::BindRequest *Encoders::ExtractBindRequest(uint8_t *buffer)
         bindRequest->Addr = nullptr;
     }
     return (bindRequest);
+}
+
+/**
+ *  Release the heap storage used by a BindRequest object along with the storage used by
+ *  the nested Addr member.
+ *
+ *  @param bindRequest
+ *      Pointer to the pointer to the BindRequest object to be released.  The pointer is
+ *      set to nullptr when the object has been released.
+ */
+void Encoders::FreeBindRequest(Esp32Messaging::BindRequest **bindRequest)
+{
+    if ((bindRequest == nullptr) || (*bindRequest == nullptr))
+    {
+        return;
+    }
+
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&(*bindRequest)->Addr));
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(bindRequest));
 }
 
 /**
@@ -2683,8 +2910,9 @@ Esp32Messaging::SetAntennaRequest *Encoders::ExtractSetAntennaRequest(uint8_t *b
 /**
  *  Extract the BTStackConfig object that is encoded in the given buffer.
  *
- *  Note that the returned pointer points to a block of memory on the heap and
- *  this should eventually be released calling Utils::DeleteAndNullifyPointer(...).
+ *  Note that the returned object holds nested allocations, so it should eventually be
+ *  released by calling Encoders::FreeBTStackConfig(...) rather than by freeing the object
+ *  on its own.
  *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded BTStackConfig object.
@@ -2703,6 +2931,25 @@ Esp32Messaging::BTStackConfig *Encoders::ExtractBTStackConfig(uint8_t *buffer)
 
     bTStackConfig->Config = ExtractString(buffer);
     return (bTStackConfig);
+}
+
+/**
+ *  Release the heap storage used by a BTStackConfig object along with the storage used by
+ *  the nested Config member.
+ *
+ *  @param bTStackConfig
+ *      Pointer to the pointer to the BTStackConfig object to be released.  The pointer is
+ *      set to nullptr when the object has been released.
+ */
+void Encoders::FreeBTStackConfig(Esp32Messaging::BTStackConfig **bTStackConfig)
+{
+    if ((bTStackConfig == nullptr) || (*bTStackConfig == nullptr))
+    {
+        return;
+    }
+
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&(*bTStackConfig)->Config));
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(bTStackConfig));
 }
 
 /**
@@ -2786,8 +3033,9 @@ int Encoders::EncodedBTGetHandlesResponseBufferSize(const Esp32Messaging::BTGetH
 /**
  *  Extract the BTServerDataSet object that is encoded in the given buffer.
  *
- *  Note that the returned pointer points to a block of memory on the heap and
- *  this should eventually be released calling Utils::DeleteAndNullifyPointer(...).
+ *  Note that the returned object holds nested allocations, so it should eventually be
+ *  released by calling Encoders::FreeBTServerDataSet(...) rather than by freeing the object
+ *  on its own.
  *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded BTServerDataSet object.
@@ -2827,6 +3075,25 @@ Esp32Messaging::BTServerDataSet *Encoders::ExtractBTServerDataSet(uint8_t *buffe
 }
 
 /**
+ *  Release the heap storage used by a BTServerDataSet object along with the storage used by
+ *  the nested SetData member.
+ *
+ *  @param bTServerDataSet
+ *      Pointer to the pointer to the BTServerDataSet object to be released.  The pointer is
+ *      set to nullptr when the object has been released.
+ */
+void Encoders::FreeBTServerDataSet(Esp32Messaging::BTServerDataSet **bTServerDataSet)
+{
+    if ((bTServerDataSet == nullptr) || (*bTServerDataSet == nullptr))
+    {
+        return;
+    }
+
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&(*bTServerDataSet)->SetData));
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(bTServerDataSet));
+}
+
+/**
  *  Convert the FileDetails object into a byte stream that can be sent to the STM32.
  *
  *  The amount of memory required can be obtained by calling the EncodedFileDetailsBufferSize method.
@@ -2863,8 +3130,9 @@ int Encoders::EncodedFileDetailsBufferSize(const Esp32Messaging::FileDetails * c
 /**
  *  Extract the FileDetails object that is encoded in the given buffer.
  *
- *  Note that the returned pointer points to a block of memory on the heap and
- *  this should eventually be released calling Utils::DeleteAndNullifyPointer(...).
+ *  Note that the returned object holds nested allocations, so it should eventually be
+ *  released by calling Encoders::FreeFileDetails(...) rather than by freeing the object
+ *  on its own.
  *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded FileDetails object.
@@ -2885,6 +3153,25 @@ Esp32Messaging::FileDetails *Encoders::ExtractFileDetails(uint8_t *buffer)
     buffer += Encoders::StringLength(fileDetails->Name) + 1;
     fileDetails->Length = ExtractUInt16(buffer);
     return (fileDetails);
+}
+
+/**
+ *  Release the heap storage used by a FileDetails object along with the storage used by
+ *  the nested Name member.
+ *
+ *  @param fileDetails
+ *      Pointer to the pointer to the FileDetails object to be released.  The pointer is
+ *      set to nullptr when the object has been released.
+ */
+void Encoders::FreeFileDetails(Esp32Messaging::FileDetails **fileDetails)
+{
+    if ((fileDetails == nullptr) || (*fileDetails == nullptr))
+    {
+        return;
+    }
+
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&(*fileDetails)->Name));
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(fileDetails));
 }
 
 /**
@@ -2930,8 +3217,9 @@ int Encoders::EncodedFileNameAndContentsBufferSize(const Esp32Messaging::FileNam
 /**
  *  Extract the FileNameAndContents object that is encoded in the given buffer.
  *
- *  Note that the returned pointer points to a block of memory on the heap and
- *  this should eventually be released calling Utils::DeleteAndNullifyPointer(...).
+ *  Note that the returned object holds nested allocations, so it should eventually be
+ *  released by calling Encoders::FreeFileNameAndContents(...) rather than by freeing the object
+ *  on its own.
  *
  *  @param buffer
  *      Pointer to a block of memory holding the encoded FileNameAndContents object.
@@ -2968,6 +3256,26 @@ Esp32Messaging::FileNameAndContents *Encoders::ExtractFileNameAndContents(uint8_
         fileNameAndContents->Contents = nullptr;
     }
     return (fileNameAndContents);
+}
+
+/**
+ *  Release the heap storage used by a FileNameAndContents object along with the storage used by
+ *  the nested Name and Contents members.
+ *
+ *  @param fileNameAndContents
+ *      Pointer to the pointer to the FileNameAndContents object to be released.  The pointer is
+ *      set to nullptr when the object has been released.
+ */
+void Encoders::FreeFileNameAndContents(Esp32Messaging::FileNameAndContents **fileNameAndContents)
+{
+    if ((fileNameAndContents == nullptr) || (*fileNameAndContents == nullptr))
+    {
+        return;
+    }
+
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&(*fileNameAndContents)->Name));
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&(*fileNameAndContents)->Contents));
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(fileNameAndContents));
 }
 
 /**
@@ -3012,6 +3320,9 @@ int Encoders::EncodedFileNameListBufferSize(const Esp32Messaging::FileNameList *
 /**
  * @brief Extract the logging configuration from the given buffer.
  *
+ * @note The returned object holds nested allocations, so it should eventually be released by
+ *       calling Encoders::FreeLoggingConfiguration(...) rather than by freeing the object on its own.
+ *
  * @param buffer Block of memory holding the encoded logging configuration.
  * @return Esp32Messaging::LoggingConfiguration* Pointer to the extracted logging configuration.
  */
@@ -3040,7 +3351,29 @@ Esp32Messaging::LoggingConfiguration *Encoders::ExtractLoggingConfiguration(uint
 }
 
 /**
+ *  Release the heap storage used by a LoggingConfiguration object along with the storage used by
+ *  the nested ComponentsToLog member.
+ *
+ *  @param loggingConfiguration
+ *      Pointer to the pointer to the LoggingConfiguration object to be released.  The pointer is
+ *      set to nullptr when the object has been released.
+ */
+void Encoders::FreeLoggingConfiguration(Esp32Messaging::LoggingConfiguration **loggingConfiguration)
+{
+    if ((loggingConfiguration == nullptr) || (*loggingConfiguration == nullptr))
+    {
+        return;
+    }
+
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&(*loggingConfiguration)->ComponentsToLog));
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(loggingConfiguration));
+}
+
+/**
  * @brief Extract the log message and level from the given buffer.
+ *
+ * @note The returned object holds nested allocations, so it should eventually be released by
+ *       calling Encoders::FreeLogMessage(...) rather than by freeing the object on its own.
  *
  * @param buffer Block of memory holding the encoded log message.
  * @return Esp32Messaging::LogMessage* Pointer to the extracted log message.
@@ -3065,6 +3398,25 @@ Esp32Messaging::LogMessage *Encoders::ExtractLogMessage(uint8_t *buffer)
         logMessage->Message = ExtractString(buffer);
     }
     return (logMessage);
+}
+
+/**
+ *  Release the heap storage used by a LogMessage object along with the storage used by
+ *  the nested Message member.
+ *
+ *  @param logMessage
+ *      Pointer to the pointer to the LogMessage object to be released.  The pointer is
+ *      set to nullptr when the object has been released.
+ */
+void Encoders::FreeLogMessage(Esp32Messaging::LogMessage **logMessage)
+{
+    if ((logMessage == nullptr) || (*logMessage == nullptr))
+    {
+        return;
+    }
+
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&(*logMessage)->Message));
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(logMessage));
 }
 
 /**

@@ -1720,7 +1720,7 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
         }
 
         result = ConnectToAccessPoint(accessPointInformation);
-        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&accessPointInformation));
+        Encoders::FreeAccessPointInformation(&accessPointInformation);
 
         Esp32Messaging::ConnectEventData data = {};
 

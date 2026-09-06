@@ -582,7 +582,7 @@ static void TestStartAccessPoint(const char *ssid, const char *password, uint32_
                     Esp32Messaging::AccessPointInformation *info = Encoders::ExtractAccessPointInformation(response->Payload);
                     TEST_ASSERT_NOT_NULL(info);
                     reportedIpAddress = info->IpAddress;
-                    vPortFree(info);
+                    Encoders::FreeAccessPointInformation(&info);
                     apStartedEvent = true;
                     break;
                 }
