@@ -479,7 +479,7 @@ void FileSystem::ListFiles(Message *message)
         rewinddir(dp);
         Esp32Messaging::FileNameList fileNameList;
         memset(&fileNameList, 0, sizeof(fileNameList));
-        uint16_t bufferLength = 0;
+        uint32_t bufferLength = 0;
         TRACE_MESSAGE("Found %" PRIi32 " files.", count);
         if (count > 0)
         {
@@ -487,6 +487,9 @@ void FileSystem::ListFiles(Message *message)
             {
                 Esp32Messaging::FileDetails details;
                 memset(&details, 0, sizeof(details));
+                //
+                //  details.Name borrows the storage owned by the DIR object.  It is only valid until the next readdir or closedir call.
+                //
                 details.Name = ep->d_name;
                 std::string s = PARTITION_PATH_NAME;
                 s += "/";
@@ -516,12 +519,7 @@ void FileSystem::ListFiles(Message *message)
             }
         }
         closedir(dp);
-        if (result == StatusCodes::EspOutOfMemory)
-        {
-            message->PayloadLength = 0;
-            message->Payload = nullptr;
-        }
-        else
+        if (result != StatusCodes::EspOutOfMemory)
         {
             fileNameList.NumberOfFiles = count;
             message->PayloadLength = Encoders::EncodedFileNameListBufferSize(&fileNameList);
@@ -534,12 +532,17 @@ void FileSystem::ListFiles(Message *message)
             else
             {
                 Encoders::EncodeFileNameList(&fileNameList, message->Payload);
-                if (fileNameList.FileDetails != NULL)
-                {
-                    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&fileNameList.FileDetails));
-                }
                 result = StatusCodes::CompletedOk;
             }
+        }
+        if (result == StatusCodes::EspOutOfMemory)
+        {
+            message->PayloadLength = 0;
+            message->Payload = nullptr;
+        }
+        if (fileNameList.FileDetails != NULL)
+        {
+            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&fileNameList.FileDetails));
         }
     }
 
