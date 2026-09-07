@@ -77,7 +77,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetAddrInfo(Esp32Messaging::GetAddr
         Mapping::GetStmValue(Mapping::AddressFamily, addressInformation->ai_addr->sa_family, reinterpret_cast<int32_t *>(&sa.Family));
         Encoders::EncodeSockAddr(&sa, a.Addr);
 
-        a.CanonName = strdup(addressInformation->ai_canonname);
+        a.CanonName = (addressInformation->ai_canonname == NULL) ? NULL : strdup(addressInformation->ai_canonname);
         a.Family = addressInformation->ai_family;
         a.Flags = addressInformation->ai_flags;
         a.MyHeapAddress = reinterpret_cast<uint32_t>(addressInformation);
@@ -91,15 +91,17 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetAddrInfo(Esp32Messaging::GetAddr
         if (response->Res == NULL)
         {
             free(a.CanonName);
-            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&addressInformation));
+            response->ResLength = 0;
+            freeaddrinfo(addressInformation);
             return (StatusCodes::EspOutOfMemory);
         }
         Encoders::EncodeAddrInfo(&a, response->Res);
+        free(a.CanonName);
     }
     else
     {
         response->AddrInfoResponseErrno = Mapping::NuttxErrno(errno);
-        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&addressInformation));
+        freeaddrinfo(addressInformation);
     }
     return (StatusCodes::CompletedOk);
 }
@@ -173,7 +175,11 @@ void WiFiRequestHandler::GetAddrInfo(void * const vpMessage)
             message->StatusCode = StatusCodes::EspOutOfMemory;
         }
     }
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&response));
+    if (response != nullptr)
+    {
+        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&response->Res));
+        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&response));
+    }
     message->MessageType = MessageTypes::Response;
     _messageDispatcher->QueueMessageForStm32(message);
 
@@ -587,9 +593,10 @@ void WiFiRequestHandler::GetSockOpt(void * const vpMessage)
         response.ResponseErrno = Mapping::NuttxErrno(ENETDOWN);
     }
 
+    message->DeletePayload();
+
     if (result != StatusCodes::CompletedOk)
     {
-        message->DeletePayload();
         message->StatusCode = result;
     }
     else
@@ -606,11 +613,9 @@ void WiFiRequestHandler::GetSockOpt(void * const vpMessage)
             message->PayloadLength = 0;
             message->StatusCode = StatusCodes::EspOutOfMemory;
         }
-        if (response.OptionValue != NULL)
-        {
-            free(response.OptionValue);
-        }
     }
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&response.OptionValue));
+
     message->MessageType = MessageTypes::Response;
     _messageDispatcher->QueueMessageForStm32(message);
 
