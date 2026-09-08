@@ -32,8 +32,11 @@ public:
     /**
      *  @brief Add the message given to the queue of messages waiting
      *  for transmission to the STM32.
+     *
+     *  @note This method takes ownership of the message.  The message is deleted
+     *        if it cannot be queued, so the caller must not use it afterwards.
      */
-    bool QueueMessageForStm32(const Message * const message);
+    bool QueueMessageForStm32(Message * const message);
 
     /**
      *  @brief Bit that will be used to indicate that a the STM32 has just
@@ -49,6 +52,7 @@ public:
         MessageWaiting,
         Ready,
         SpiInterfaceReady,
+        Busy,
     };
 
     ControlMessageType GetControlSignalMessage();
@@ -64,6 +68,16 @@ private:
      *  @brief Maximum length of the message queue.
      */
     const uint32_t MAX_QUEUE_LENGTH = 10;
+
+    /**
+     *  @brief Number of times an attempt is made to queue a message for the STM32.
+     */
+    static const uint32_t QUEUE_ATTEMPTS = 3;
+
+    /**
+     *  @brief Delay between the attempts to queue a message for the STM32.
+     */
+    static const TickType_t QUEUE_ATTEMPT_DELAY = pdMS_TO_TICKS(100);
 
     /**
      * @brief Control message type to send to the STM32 in the

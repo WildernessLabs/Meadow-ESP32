@@ -180,6 +180,15 @@ void RequestHandlerBase::RaiseEvent(const uint8_t interface, const uint32_t even
 {
     TRACE_MESSAGE("Raising event %s", Logging::FunctionName(interface, eventType));
     Message *message = Message::CreateOnHeap(MessageTypes::Event, interface, eventType, statusCode, _messageDispatcher->GetNextMessageID(), payload, payloadLength);
+    if (message == nullptr)
+    {
+        //
+        //  CreateOnHeap takes ownership of the payload so it has to be released here.
+        //
+        ERROR_MESSAGE("Cannot create the message for event %s", Logging::FunctionName(interface, eventType));
+        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&payload));
+        return;
+    }
     _messageDispatcher->QueueMessageForStm32(message);
 }
 
