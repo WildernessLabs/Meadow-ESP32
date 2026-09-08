@@ -74,8 +74,30 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetAddrInfo(Esp32Messaging::GetAddr
         Esp32Messaging::SockAddr sa = {};
         Esp32Messaging::AddrInfo a = {};
 
-        Mapping::GetStmValue(Mapping::AddressFamily, addressInformation->ai_addr->sa_family, reinterpret_cast<int32_t *>(&sa.Family));
-        Encoders::EncodeSockAddr(&sa, a.Addr);
+        if (addressInformation->ai_addr != NULL)
+        {
+            Mapping::GetStmValue(Mapping::AddressFamily, addressInformation->ai_addr->sa_family, reinterpret_cast<int32_t *>(&sa.Family));
+            if (addressInformation->ai_addr->sa_family == AF_INET)
+            {
+                const struct sockaddr_in * const sin = reinterpret_cast<const struct sockaddr_in *>(addressInformation->ai_addr);
+                sa.Port = sin->sin_port;
+                memcpy(&sa.Ip4Address, &sin->sin_addr, sizeof(sin->sin_addr));
+            }
+            //
+            //  The encoded address needs a buffer of its own; a.Addr is null until it is
+            //  allocated here and the encoded address is copied into the response below.
+            //
+            a.AddrLength = Encoders::EncodedSockAddrBufferSize(&sa);
+            a.Addr = static_cast<uint8_t *>(pvPortMalloc(a.AddrLength));
+            if (a.Addr == NULL)
+            {
+                a.AddrLength = 0;
+                response->ResLength = 0;
+                freeaddrinfo(addressInformation);
+                return (StatusCodes::EspOutOfMemory);
+            }
+            Encoders::EncodeSockAddr(&sa, a.Addr);
+        }
 
         a.CanonName = (addressInformation->ai_canonname == NULL) ? NULL : strdup(addressInformation->ai_canonname);
         a.Family = addressInformation->ai_family;
@@ -91,12 +113,14 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetAddrInfo(Esp32Messaging::GetAddr
         if (response->Res == NULL)
         {
             free(a.CanonName);
+            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&a.Addr));
             response->ResLength = 0;
             freeaddrinfo(addressInformation);
             return (StatusCodes::EspOutOfMemory);
         }
         Encoders::EncodeAddrInfo(&a, response->Res);
         free(a.CanonName);
+        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&a.Addr));
     }
     else
     {
