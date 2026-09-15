@@ -22,7 +22,11 @@
 /**
  * @brief Class of tests for NVS manager functionality (shown in the Unity interface).
  */
-#define CLASS_OF_TESTS "[NvsManager]"
+//
+//  [Emulated] marks this as suitable for an unattended run under QEMU.  Tag matching
+//  is a substring search, so it still runs when [NvsManager] is selected.
+//
+#define CLASS_OF_TESTS "[NvsManager][Emulated]"
 
 /**
  * @brief Namespace used exclusively for unit testing to avoid conflicts with production data.

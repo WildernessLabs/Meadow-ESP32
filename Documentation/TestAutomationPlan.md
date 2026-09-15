@@ -96,8 +96,8 @@ can complete without human or hardware assistance.
 
 | Tag | Cases | QEMU | Hardware | Notes |
 |---|---|---|---|---|
-| `[NvsManager]` | 1 | **Pass** | **Pass** | Fully verified both tiers |
-| `[FileSystem]` | 11 | **11/11 pass** | **11/11 pass** | One test takes ~6 minutes under QEMU |
+| `[NvsManager]` | 1 | **Pass** | **Pass** | Tagged `[Emulated]` |
+| `[FileSystem]` | 11 | **11/11 pass** | **11/11 pass** | 10 tagged `[Emulated]`; the full-filesystem test is `[Slow]` |
 | `[System]` | 1 | **Stalls** | **Pass** (288 mV) | Hardware only |
 | `[CoreDump]` | 4 | Unverified | Unverified | Ordered sequence; one case panics deliberately |
 | `[WiFi]` | 10 | No (no radio) | Unverified | Needs a live access point |
@@ -116,7 +116,13 @@ can complete without human or hardware assistance.
   (generate → information → fragment → erase). The two file system upgrade cases carry
   state across a reflash.
 - **Long running.** `test_bluetooth.cpp:756` restarts the Bluetooth service 50 times,
-  taking 4–5 minutes on its own. A full `*` sweep is not a per-commit check.
+  taking 4–5 minutes on its own. A full `*` sweep is not a per-commit check. The
+  `[Slow]` tag exists for this; the Bluetooth case is a candidate for it.
+- **Slow only under emulation.** `WriteFile returns Failure on a full filesystem`
+  fills the partition a block at a time. That is seconds on hardware and minutes under
+  QEMU, where it exceeded a ten minute timeout on a shared build runner, so it is
+  tagged `[Slow]` and excluded from CI. Emulated flash is the slowest thing QEMU
+  models; tests dominated by flash writes belong on hardware.
 - **Environmental.** The `[WiFi]` cases pass or fail partly on the RF environment
   rather than on the firmware. A policy for this is needed before they join any
   automated set, otherwise routine red builds will train everyone to ignore the runner.
@@ -307,9 +313,13 @@ These move complexity out of the runner and into the tests, where it belongs.
    Expressing it in Unity moves sequencing and reboot resynchronisation into tooling
    that already understands it, and keeps the runner a thin driver rather than a place
    where test knowledge accumulates and rots.
-2. **Add a second tag axis.** Unity supports multiple tags per case. A second tag
-   describing *how* a test runs — unattended, needs a peer, needs a reflash, slow —
-   keeps that classification beside the test instead of hardcoded in the runner.
+2. ~~**Add a second tag axis.**~~ Done. Tests now carry `[Emulated]` when they suit an
+   unattended emulated run and `[Slow]` when they are correct but too slow for every
+   commit. Tag matching is a substring search, so the subsystem tags still select
+   everything they did before and nothing is hidden from a developer. CI selects
+   `[Emulated]`, so a new test opts in by being marked rather than by a list in the CI
+   script being edited. Worth extending for the remaining cases — needs a peer, needs
+   a reflash.
 3. **Parameterise the long-running cases** via `unity_gets()`, using the agreed prompt
    convention, so iteration counts can differ between CI and the bench.
 

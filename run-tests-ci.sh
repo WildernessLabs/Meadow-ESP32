@@ -18,10 +18,15 @@ set -e
 scriptdir="$( cd "$(dirname "$0")" ; pwd -P )"
 
 #
-#   Tags that run under QEMU.  [System] reads a real ADC and [WiFi] and [Bluetooth]
-#   need a radio, so all three are left to the hardware tier.
+#   [Emulated] selects the tests that are suitable for an unattended run under QEMU.
+#   It is a second tag carried alongside the subsystem tag, so a test opts in by being
+#   marked rather than by being listed here.
 #
-SELECTORS=('[NvsManager]' '[FileSystem]')
+#   It excludes tests that need hardware ([System] reads a real ADC, [WiFi] and
+#   [Bluetooth] need a radio) and tests that are correct under emulation but too slow
+#   to run on every commit, which carry [Slow] instead.
+#
+SELECTORS=('[Emulated]')
 
 RESULTS_DIR="$scriptdir/test-results"
 

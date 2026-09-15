@@ -145,8 +145,9 @@ such as `[FileSystem]`, a quoted test name, a menu number, or `*` for everything
 | `--hardware` | Run on a board rather than under QEMU |
 | `-p=* \| --port=*` | Serial device of the board; implies `--hardware` |
 | `--no-fresh` | Skip the reset to a known state before running |
-| `--timeout=*` | Seconds allowed for each selector (default 300) |
+| `--timeout=*` | Seconds allowed for each selector (default 600) |
 | `--transcript=*` | Write the full console transcript to a file |
+| `--junit=*` | Write the results as a JUnit report to a file |
 | `-v \| --verbose` | Echo the console output as the tests run |
 
 By default each run starts from a known state: under QEMU the pristine flash image is
@@ -174,7 +175,8 @@ flash, UART and timers, but not the radio and not the ADC.
 
 | Tests | Runs under QEMU |
 |---|---|
-| `[FileSystem]`, `[NvsManager]` | Yes |
+| `[NvsManager]` | Yes |
+| `[FileSystem]` | Yes, though one test is tagged `[Slow]` and left out of CI |
 | `[CoreDump]` | The partition is emulated, but the sequence is not yet proven |
 | `[System]` | No — reads a real ADC, and the read never returns under QEMU |
 | `[WiFi]`, `[Bluetooth]` | No — there is no radio to emulate |
@@ -247,13 +249,37 @@ the logic lives in a script rather than in the workflow file.
 
 `run-tests-ci.sh` installs the QEMU system libraries and the emulator, creates a
 placeholder `secrets.h`, builds the application and then the tests, and finally runs
-the tags that do not need a radio or an ADC:
+everything carrying the `[Emulated]` tag.
 
-```bash
-SELECTORS=('[NvsManager]' '[FileSystem]')
+### How Tests Opt In
+
+Tests carry a second tag describing *how* they run alongside the one saying what they
+cover, so the CI job does not need a list of tags to keep in step:
+
+| Tag | Meaning |
+|---|---|
+| `[Emulated]` | Runs unattended under QEMU; this is what CI selects |
+| `[Slow]` | Correct under QEMU but too slow to run on every commit |
+
+Tag matching is a substring search, so a test declared as
+`"[FileSystem][Emulated]"` is still selected by `[FileSystem]`. Nothing is hidden from
+a developer or a hardware run by being tagged.
+
+A new test opts into CI by being declared with `[Emulated]`:
+
+```c
+#define CLASS_OF_TESTS "[FileSystem][Emulated]"
 ```
 
-Add a tag to that list as more of the suite becomes able to run under emulation.
+`WriteFile returns Failure on a full filesystem` is the one test currently marked
+`[Slow]`. It fills the partition a block at a time, which takes minutes on emulated
+flash against seconds on hardware, so it runs on the bench and on demand rather than on
+every commit:
+
+```bash
+cd test
+./run-tests.sh --timeout=900 '[Slow]'
+```
 
 ### Test Results
 
@@ -578,12 +604,16 @@ cp test/secrets.template test/secrets.h
 
 This is expected rather than a fault. `WriteFile returns Failure on a full filesystem`
 fills the partition a block at a time, and emulated flash is far slower than the real
-thing: the test alone takes around six minutes under QEMU against a few seconds on
-hardware.
+thing: the test alone takes around six minutes on a developer machine and longer on a
+shared build runner, against a few seconds on hardware.
 
-The default timeout of 600 seconds for each selector allows for this. Raise it with
-`--timeout=` if a slower machine needs longer, and prefer hardware when running that
-test repeatedly.
+That test is tagged `[Slow]` and is therefore left out of the `[Emulated]` set that CI
+runs. Selecting `[FileSystem]` still includes it, so allow for the time or raise the
+per-selector timeout:
+
+```bash
+./run-tests.sh --timeout=900 '[FileSystem]'
+```
 
 ### Issue: Build Fails With `build_info.h: No such file or directory`
 
