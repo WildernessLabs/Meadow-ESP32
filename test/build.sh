@@ -42,6 +42,7 @@ IDF_DEFINES=""
 DEBUG_SELECTIONS=""
 TEST_SELECTIONS=""
 FLASH=false
+QEMU=false
 
 #
 #   Work out which options are on the command line.
@@ -63,6 +64,9 @@ case $i in
     ;;
     --flash)
     FLASH=true
+    ;;
+    -q|--qemu)
+    QEMU=true
     ;;
     -tm|--tracemessages)
     IDF_DEFINES+=" -DTRACE_MESSAGES=1"
@@ -117,6 +121,7 @@ if $HELP; then
     echo "-c | --clean            Perform a clean build"
     echo "-f | --flash            Flash the ESP32 with the bootloader, partition table and application code"
     echo "-m | --monitor          Connect to the serial port for application monitoring"
+    echo "-q | --qemu             Generate a QEMU flash image from the build output"
     echo "--fullclean             Perform a full clean followed by a build"
     echo "-tm | --tracemessages   Enable heap tracing."
     echo "--menuconfig            Enter the menu configuration system overwriting sdkconfig.defaults"
@@ -230,6 +235,14 @@ if [ $? -eq 0 ]; then
   if $FLASH; then
     $scriptdir/flash.sh
   fi
+fi
+
+#
+#   Generate the QEMU flash image.  This uses the shared script in the root of the
+#   repository so that the application and test builds produce images the same way.
+#
+if $QEMU; then
+  $scriptdir/../qemu-image.sh $scriptdir/build
 fi
 
 now=$(date +"%T")

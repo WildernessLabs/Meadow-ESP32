@@ -37,11 +37,29 @@ Friend classes allow access to private methods and members for testing:
 
 ### Prerequisites
 
-Before building the tests, create a `secrets.h` file in the `test/` directory containing WiFi credentials:
+#### Build the application first
+
+The test build depends on the application build having been run at least once. The test
+application includes `build_info.h`, which only the root `build.sh` generates, and
+`test/main/CMakeLists.txt` adds the root `build/config` directory to its include path.
+Neither exists in a freshly cloned repository, so building the tests first fails with
+`build_info.h: No such file or directory`.
 
 ```bash
-cp test/secrets.template test/secrets.h
-# Edit test/secrets.h with your WiFi SSID and password
+# From the root of the repository
+./build.sh --build
+```
+
+This only needs repeating when the root build directory is removed.
+
+#### Supply the WiFi credentials
+
+The WiFi tests read their credentials from a `secrets.h` file alongside the test
+sources:
+
+```bash
+cp test/main/secrets.template components/F7Services/test/secrets.h
+# Edit the file with your WiFi SSID and password
 ```
 
 The `secrets.h` file should contain:
@@ -52,6 +70,10 @@ The `secrets.h` file should contain:
 ```
 
 > **Important**: The `secrets.h` file is in `.gitignore` to prevent credentials from being committed.
+
+The file has to exist even when the WiFi tests are not being run, because
+`test_wifi.cpp` includes it unconditionally. A copy of the template with placeholder
+values is enough to compile everything else.
 
 ### Build Commands
 
@@ -70,6 +92,9 @@ cd test
 
 # Build and flash (using the serial interface)
 ./build.sh --build --flash
+
+# Build and generate a QEMU image so the tests can run without hardware
+./build.sh --build --qemu
 ```
 
 The build script in the test directory supports the same options as the main `build.sh` script. See [Building](Building.md) for complete option documentation.
@@ -85,7 +110,126 @@ build/
 └── ...                   # Other build artifacts
 ```
 
-## Running Tests
+## Running Tests Automatically
+
+`test/run-tests.sh` drives the test menu so the tests can be run without anyone typing
+at a terminal. The same script covers both a connected board and the emulator, because
+the firmware presents the same menu either way.
+
+```bash
+cd test
+
+# Every test, under QEMU
+./run-tests.sh
+
+# A single tag
+./run-tests.sh '[FileSystem]'
+
+# A single test, by name (keep the quotes)
+./run-tests.sh '"Delete file"'
+
+# Several selections in order
+./run-tests.sh '[NvsManager]' '[FileSystem]'
+
+# On a connected board instead of the emulator
+./run-tests.sh --port=/dev/cu.usbserial-2101 '[WiFi]'
+```
+
+Selectors are passed to the menu unchanged, so anything the menu accepts works: a tag
+such as `[FileSystem]`, a quoted test name, a menu number, or `*` for everything.
+
+### Options
+
+| Option | Effect |
+|---|---|
+| `--hardware` | Run on a board rather than under QEMU |
+| `-p=* \| --port=*` | Serial device of the board; implies `--hardware` |
+| `--no-fresh` | Skip the reset to a known state before running |
+| `--timeout=*` | Seconds allowed for each selector (default 300) |
+| `--transcript=*` | Write the full console transcript to a file |
+| `-v \| --verbose` | Echo the console output as the tests run |
+
+By default each run starts from a known state: under QEMU the pristine flash image is
+restored, and on hardware the board is reset. Use `--no-fresh` to continue from
+whatever the previous run left behind, which is occasionally useful when reproducing
+an ordering problem.
+
+### Exit Status
+
+The exit status distinguishes the ways a run can end, so it can be used in a script or
+a build pipeline:
+
+| Status | Meaning |
+|---|---|
+| 0 | Every selector passed |
+| 1 | A test reported a failure |
+| 2 | A selector produced no result before the timeout |
+| 3 | The device rebooted part way through, usually a panic |
+
+## Running Under QEMU
+
+QEMU runs the firmware without any hardware, which makes it suitable for the file
+system and storage tests and for use in a build pipeline. It emulates the processor,
+flash, UART and timers, but not the radio and not the ADC.
+
+| Tests | Runs under QEMU |
+|---|---|
+| `[FileSystem]`, `[NvsManager]` | Yes |
+| `[CoreDump]` | The partition is emulated, but the sequence is not yet proven |
+| `[System]` | No — reads a real ADC, and the read never returns under QEMU |
+| `[WiFi]`, `[Bluetooth]` | No — there is no radio to emulate |
+
+### Installing the Emulator
+
+QEMU is an optional ESP-IDF tool and is not installed by default:
+
+```bash
+python $IDF_PATH/tools/idf_tools.py install qemu-xtensa
+```
+
+Export the ESP-IDF environment afterwards so `qemu-system-xtensa` is on the path.
+
+### Building an Image
+
+QEMU boots from a single image covering the whole of flash rather than from the
+separate binaries used when flashing a board. `build.sh --qemu` produces one by merging
+the build output, using the flash layout recorded by the build:
+
+```bash
+cd test
+./build.sh --build --qemu
+```
+
+This writes three files into the build directory:
+
+| File | Purpose |
+|---|---|
+| `qemu_flash.bin` | The image QEMU boots |
+| `qemu_flash_pristine.bin` | Reference copy used to reset between runs |
+| `qemu_efuse.bin` | eFuse values, which QEMU has no hardware for |
+
+> **Important**: QEMU writes to `qemu_flash.bin` in place, so the file system contents,
+> NVS and any core dump survive between runs. `run-tests.sh` restores the pristine copy
+> before each run unless `--no-fresh` is given.
+
+The same option works for the application build from the root of the repository.
+
+### Running an Image Interactively
+
+`qemu.sh` boots an image with the console attached to the terminal, which is the
+emulator equivalent of `idf.py monitor`:
+
+```bash
+# The application image
+./qemu.sh
+
+# The test image, from a known starting state
+./qemu.sh --test --fresh
+```
+
+Press `Ctrl-A` then `X` to leave QEMU.
+
+## Running Tests Manually
 
 ### Starting the Test Application
 
@@ -226,6 +370,33 @@ Ctrl-]
 Ctrl-C
 ```
 
+### Debugging Under QEMU
+
+QEMU provides its own GDB stub, so a test can be debugged without a JTAG probe. This is
+often the quickest way to investigate a panic, because the debugger catches the fault
+where it happens rather than leaving a core dump to unpick afterwards.
+
+Start the emulator halted, in one terminal:
+
+```bash
+./qemu.sh --test --debug --fresh
+```
+
+Attach the debugger in another:
+
+```bash
+xtensa-esp32-elf-gdb -x qemu-gdbinit test/build/MeadowComms.elf
+```
+
+`qemu-gdbinit` connects to the stub and breaks at `app_main`. Use `continue` to reach
+the test menu, then drive the menu from the QEMU terminal as usual.
+
+The port can be moved with `--gdb-port=` if 3333 is already in use.
+
+> **Note**: `test/gdbinit` is for hardware debugging through OpenOCD and issues monitor
+> commands that QEMU does not provide. Use `qemu-gdbinit` for the emulator and
+> `test/gdbinit` for a board.
+
 ### Core Dump Testing
 
 Tests related to core dump functionality verify that crash information is properly captured and can be analyzed. Enable core dumps with:
@@ -354,6 +525,41 @@ cp test/secrets.template test/secrets.h
    ```bash
    ./build.sh --develop --debug=WIFI --build
    ```
+
+### Issue: `[FileSystem]` Stops After Nine Tests
+
+**Known defect.** Running the whole `[FileSystem]` tag stops at
+`ReadFile returns FileNotFound for non-existent file`, and `run-tests.sh` reports a
+timeout or a reboot. This reproduces identically on hardware and under QEMU.
+
+`Mount failure when already mounted` deliberately calls `Setup()` a second time so the
+failure path can be checked. That failed registration releases the LittleFS context but
+leaves the partition registered, so the next test to call `stat()` locks a mutex that
+has already been freed and the device panics.
+
+The individual tests pass when run on their own:
+
+```bash
+./run-tests.sh '"ReadFile returns FileNotFound for non-existent file"'
+```
+
+### Issue: Build Fails With `build_info.h: No such file or directory`
+
+**Solution**: Build the application before the tests. See
+[Prerequisites](#prerequisites).
+
+### Issue: QEMU Reports No Image, or `qemu-system-xtensa` Is Not Found
+
+**Solution**:
+1. Generate an image with `./build.sh --build --qemu`
+2. Install the emulator with `python $IDF_PATH/tools/idf_tools.py install qemu-xtensa`
+3. Export the ESP-IDF environment so the tools are on the path
+
+### Issue: Tests Behave Differently On Consecutive QEMU Runs
+
+**Solution**: QEMU writes to the flash image in place, so state carries over between
+runs. Either allow `run-tests.sh` to restore the pristine image, which it does by
+default, or restore it by hand with `./qemu.sh --fresh`.
 
 ### Issue: Heap Tracing Setup Fails
 
