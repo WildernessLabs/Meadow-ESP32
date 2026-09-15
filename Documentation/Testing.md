@@ -229,6 +229,54 @@ emulator equivalent of `idf.py monitor`:
 
 Press `Ctrl-A` then `X` to leave QEMU.
 
+## Continuous Integration
+
+The `Unit tests` workflow (`.github/workflows/unit-tests.yml`) runs the emulated tests
+on every push and pull request against `develop`. It needs no hardware, so it runs on
+a standard GitHub runner alongside the existing build and code check workflows.
+
+The workflow itself is a thin wrapper. All of the work is in `run-tests-ci.sh` at the
+root of the repository, which runs inside the ESP-IDF container:
+
+```bash
+docker run --rm -v $PWD:/project -w /project espressif/idf:release-v5.5 ./run-tests-ci.sh
+```
+
+Running that same command locally reproduces a CI failure exactly, which is the reason
+the logic lives in a script rather than in the workflow file.
+
+`run-tests-ci.sh` installs the QEMU system libraries and the emulator, creates a
+placeholder `secrets.h`, builds the application and then the tests, and finally runs
+the tags that do not need a radio or an ADC:
+
+```bash
+SELECTORS=('[NvsManager]' '[FileSystem]')
+```
+
+Add a tag to that list as more of the suite becomes able to run under emulation.
+
+### Test Results
+
+The run writes a JUnit report and the full console transcript to `test-results/`, and
+the workflow publishes both as a build artefact whether the run passed or failed. The
+JUnit report lists each test individually with its file and line, so a failure points
+straight at the source rather than at the tag that contained it.
+
+To produce the same locally:
+
+```bash
+cd test
+./run-tests.sh --junit=results.xml --transcript=console.log '[FileSystem]'
+```
+
+### Why Docker
+
+Espressif publishes `espressif/esp-idf-ci-action`, but it is a composite action that
+runs the same `espressif/idf` container underneath, adding little beyond a tidier
+syntax and a `safe.directory` call that `build.sh` already handles for itself. There is
+no official action that installs the toolchain natively on a runner, so the container
+remains the sensible choice and matches the existing workflows.
+
 ## Running Tests Manually
 
 ### Starting the Test Application

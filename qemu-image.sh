@@ -69,19 +69,22 @@ printf "Generating QEMU image for $TARGET ($FLASH_SIZE flash)..."
 cd "$BUILD_DIR"
 
 #
-#   esptool 5 renamed the flash options to use hyphens and warns about the older
-#   spelling that the build writes into flash_args, so translate them on the way past
-#   to keep the build output clean.
+#   Use the esptool bundled with ESP-IDF rather than any standalone esptool that may be
+#   on the path.  A separately installed esptool 5 renames the merge_bin command and its
+#   flash options, which then disagree with the flash_args file the build writes.  The
+#   bundled module accepts the spelling in that file on both a developer machine and in
+#   the ESP-IDF container.
 #
-sed '1s/--flash_mode/--flash-mode/; 1s/--flash_freq/--flash-freq/; 1s/--flash_size/--flash-size/' \
-    flash_args > qemu_flash_args
+if command -v python > /dev/null; then
+    PYTHON=python
+else
+    PYTHON=python3
+fi
 
-esptool --chip "$TARGET" merge-bin \
+$PYTHON -m esptool --chip "$TARGET" merge_bin \
     --output qemu_flash.bin \
     --fill-flash-size "$FLASH_SIZE" \
-    @qemu_flash_args > /dev/null
-
-rm -f qemu_flash_args
+    @flash_args > /dev/null
 
 #
 #   Keep a pristine copy so a test run can start from a known state, and write the
@@ -89,8 +92,12 @@ rm -f qemu_flash_args
 #
 cp qemu_flash.bin qemu_flash_pristine.bin
 
+#
+#   Python is used to write the eFuse file rather than xxd, which is not present in the
+#   ESP-IDF container.
+#
 if [ ! -f qemu_efuse.bin ]; then
-    echo "$QEMU_EFUSE_HEX" | tr -d '\n' | xxd -r -p > qemu_efuse.bin
+    $PYTHON -c "import binascii; open('qemu_efuse.bin', 'wb').write(binascii.unhexlify('$QEMU_EFUSE_HEX'))"
 fi
 
 printf " ${green}success${reset}\n"

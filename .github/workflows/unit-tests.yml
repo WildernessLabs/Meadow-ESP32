@@ -1,0 +1,39 @@
+name: Unit tests
+
+on:
+  repository_dispatch:
+  push:
+    branches: [ develop ]
+  pull_request:
+    branches: [ develop ]
+
+jobs:
+  qemu:
+
+    runs-on: ubuntu-latest
+
+    # The emulated file system tests are slow: filling the partition a block at a time
+    # takes minutes on emulated flash where it takes seconds on hardware.
+    timeout-minutes: 90
+
+    steps:
+    - name: Checkout source code
+      uses: actions/checkout@v4
+
+    - name: Update submodules
+      run: git submodule update --init --recursive
+
+    - name: Build and run the tests under QEMU
+      run: docker run --rm -v $PWD:/project -w /project espressif/idf:release-v5.5 ./run-tests-ci.sh
+      id: qemu-tests
+
+    - name: Publish the test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: qemu-test-results
+        path: test-results/
+        if-no-files-found: warn
+
+    - name: Show the exit code
+      run: echo "The exit code was ${{ steps.qemu-tests.outputs.result }}"

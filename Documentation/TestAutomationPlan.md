@@ -1,9 +1,9 @@
 # Test Automation Plan
 
 Planning notes for automating the MeadowComms unit test suite. The build, run and
-debug scripts described here are now in the repository; what remains unbuilt is the
-CI integration and the firmware changes listed towards the end. For how to use the
-scripts see [Testing](Testing.md).
+debug scripts described here are in the repository, and the emulated tier runs in CI.
+What remains are the firmware changes listed towards the end and the hardware tier.
+For how to use the scripts see [Testing](Testing.md).
 
 **Verification status (15 September 2026).** The emulated and hardware tiers have
 both been exercised end to end. Results are recorded inline and marked **Verified**;
@@ -12,8 +12,7 @@ anything still unproven is marked **Unverified**. Testing used ESP-IDF 5.5.3,
 
 **Tooling.** `build.sh --qemu` generates the emulator image, `qemu.sh` boots it for
 interactive use or debugging, and `test/run-tests.sh` drives the test menu on either
-QEMU or a board. The Tooling Options section below is retained because the choice of
-harness for CI is still open.
+QEMU or a board. `run-tests-ci.sh` wraps all of that for the `Unit tests` workflow.
 
 ## Purpose
 
@@ -31,7 +30,7 @@ make that practical.
 | Test entry point | `test/main/unit_tests.c` → `unity_run_menu()` |
 | Build and flash | `test/build.sh` (same options as the main build script) |
 | Existing automation | `test/SupportScripts/WriteNumberCharacteristicSoakTest.py` (BLE peer, not a test runner) |
-| CI | `.github/workflows/build.yml` and `run-code-checks.yml` — build only, no test execution |
+| CI | `build.yml`, `run-code-checks.yml` and `unit-tests.yml` — the last runs the emulated tests |
 
 ## Build Prerequisites
 
@@ -321,11 +320,11 @@ These move complexity out of the runner and into the tests, where it belongs.
 | `pytest-embedded` | ESP-IDF's own harness. Provides `run_all_single_board_cases()` and `expect_unity_test_output()`, written against `unity_run_menu`, plus build/flash orchestration, reboot handling and JUnit XML. Not currently installed — `pip install pytest-embedded-idf pytest-embedded-serial-esp`. |
 | Bespoke script | Roughly 150 lines: shell out to `build.sh`, open the transport, drive the menu, parse results. No new dependencies, and there is precedent in `test/SupportScripts/`. |
 
-The recommendation remains `pytest-embedded`, principally because reboot handling and
-multi-stage tests are already solved there. That said, the proof-of-concept drivers
-written during verification show the bespoke route is genuinely small — the QEMU and
-hardware drivers differ only in transport and reset mechanism, and both handle the
-prompt protocol, reboot detection and timeouts in well under 150 lines.
+The bespoke route was taken. `TestRunner.py` handles the prompt protocol, reboot
+detection, timeouts and JUnit output for both transports in a little over 250 lines,
+and adds no dependency beyond pyserial, which is already present. `pytest-embedded`
+remains the better answer if multi-stage tests or hardware fixtures grow complicated,
+and nothing here prevents moving to it: the menu protocol is the stable interface.
 
 ## Open Questions
 
@@ -352,11 +351,11 @@ Still open:
 
 ## Suggested Sequence
 
-1. Decide how CI satisfies the two build prerequisites — either reconfigure the root
-   project first, or decouple the test build from it.
-2. Stand up the QEMU tier for `[FileSystem]` and `[NvsManager]` with tag filtering,
-   pristine-image reset, per-selector timeouts and JUnit output.
-3. Wire that tier into the existing CI workflows.
+1. ~~Decide how CI satisfies the two build prerequisites.~~ `run-tests-ci.sh` builds the
+   application before the tests.
+2. ~~Stand up the QEMU tier with tag filtering, pristine-image reset, per-selector
+   timeouts and JUnit output.~~ Done.
+3. ~~Wire that tier into the existing CI workflows.~~ `unit-tests.yml`.
 4. Make the remaining firmware changes above, then bring `[CoreDump]` into the emulated
    tier.
 5. Extend the same runner to hardware for the radio tests.

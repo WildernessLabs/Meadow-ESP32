@@ -38,6 +38,7 @@ VERBOSE=false
 HELP=false
 TIMEOUT=600
 TRANSCRIPT=""
+JUNIT=""
 SELECTORS=()
 
 #
@@ -62,6 +63,9 @@ case $i in
     ;;
     --transcript=*)
     TRANSCRIPT="${i#*=}"
+    ;;
+    --junit=*)
+    JUNIT="${i#*=}"
     ;;
     -v|--verbose)
     VERBOSE=true
@@ -92,6 +96,7 @@ if $HELP; then
     echo "--no-fresh              Do not reset to a known state before running"
     echo "--timeout=*             Seconds to allow each selector (default 600)"
     echo "--transcript=*          Write the full console transcript to this file"
+    echo "--junit=*               Write the results as a JUnit report to this file"
     echo "-v | --verbose          Echo the console output as the tests run"
     echo ""
     echo "Any remaining arguments are passed to the test menu as selectors:"
@@ -144,6 +149,10 @@ fi
 
 if [ ! -z "$TRANSCRIPT" ]; then
     RUNNER_ARGS+=(--transcript "$TRANSCRIPT")
+fi
+
+if [ ! -z "$JUNIT" ]; then
+    RUNNER_ARGS+=(--junit "$JUNIT")
 fi
 
 python3 "$scriptdir/SupportScripts/TestRunner.py" "${RUNNER_ARGS[@]}" "${SELECTORS[@]}"

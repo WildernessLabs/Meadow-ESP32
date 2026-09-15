@@ -322,6 +322,13 @@ fi
 # Set the IDF variable in case we are running in a shell where eim has been used to install ESP-IDF.
 #
 IDF="$IDF_PATH/tools/idf.py"
+#
+#   idf.py takes the project from the current directory, so make sure that is the
+#   directory holding this script.  Without this the script builds whichever project
+#   the caller happened to be standing in.
+#
+cd "$scriptdir"
+
 
 #
 #   There are sometimes problems with old configuration in the build directory
