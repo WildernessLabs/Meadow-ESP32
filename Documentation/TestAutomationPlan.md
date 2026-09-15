@@ -1,15 +1,19 @@
 # Test Automation Plan
 
-Planning notes for automating the MeadowComms unit test suite. No automation is
-committed yet, but the core assumptions in this document have now been tested
-against both QEMU and hardware. For the current manual process see
-[Testing](Testing.md).
+Planning notes for automating the MeadowComms unit test suite. The build, run and
+debug scripts described here are now in the repository; what remains unbuilt is the
+CI integration and the firmware changes listed towards the end. For how to use the
+scripts see [Testing](Testing.md).
 
-**Verification status (15 September 2026).** The emulated and hardware tiers were
-both exercised with throwaway Python drivers. Results are recorded inline and marked
-**Verified**; anything still unproven is marked **Unverified**. Testing used
-ESP-IDF 5.5.3, `qemu-xtensa` `esp_develop_9.2.2_20250817`, and an ESP32 dev board
-(chip rev v3.1).
+**Verification status (15 September 2026).** The emulated and hardware tiers have
+both been exercised end to end. Results are recorded inline and marked **Verified**;
+anything still unproven is marked **Unverified**. Testing used ESP-IDF 5.5.3,
+`qemu-xtensa` `esp_develop_9.2.2_20250817`, and an ESP32 dev board (chip rev v3.1).
+
+**Tooling.** `build.sh --qemu` generates the emulator image, `qemu.sh` boots it for
+interactive use or debugging, and `test/run-tests.sh` drives the test menu on either
+QEMU or a board. The Tooling Options section below is retained because the choice of
+harness for CI is still open.
 
 ## Purpose
 
@@ -94,7 +98,7 @@ can complete without human or hardware assistance.
 | Tag | Cases | QEMU | Hardware | Notes |
 |---|---|---|---|---|
 | `[NvsManager]` | 1 | **Pass** | **Pass** | Fully verified both tiers |
-| `[FileSystem]` | 11 | **9/11, then panic** | **9/11, then panic** | Blocked by the defect below |
+| `[FileSystem]` | 11 | **11/11 pass** | **11/11 pass** | One test takes ~6 minutes under QEMU |
 | `[System]` | 1 | **Stalls** | **Pass** (288 mV) | Hardware only |
 | `[CoreDump]` | 4 | Unverified | Unverified | Ordered sequence; one case panics deliberately |
 | `[WiFi]` | 10 | No (no radio) | Unverified | Needs a live access point |
@@ -118,14 +122,14 @@ can complete without human or hardware assistance.
   rather than on the firmware. A policy for this is needed before they join any
   automated set, otherwise routine red builds will train everyone to ignore the runner.
 
-## Blocking Defect: `[FileSystem]` Cannot Complete
+## Resolved Defect: LittleFS Double Mount
 
-**Verified on both QEMU and hardware, with byte-for-byte identical backtraces.**
+**Fixed.** `[FileSystem]` now passes 11 of 11 on both QEMU and hardware.
 
 Running `TEST_CASE("Mount failure when already mounted")`
-(`test_file_system.cpp:684`) leaves the LittleFS VFS layer in a state that panics the
-**next** test to touch the file system. Test 10 passes in isolation; it only fails when
-test 9 has run first. The whole `[FileSystem]` tag therefore stops at 9 of 11.
+(`test_file_system.cpp:684`) used to panic the **next** test to touch the file system,
+stopping the tag at 9 of 11. It reproduced on hardware and under QEMU with
+byte-for-byte identical backtraces:
 
 ```
 Guru Meditation Error: Core 0 panic'ed (LoadProhibited)
@@ -138,17 +142,38 @@ esp_littlefs.c:691         sem_take
 queue.c:817                xQueueTakeMutexRecursive   <-- freed context
 ```
 
-Test 9 deliberately calls `Setup()` twice. The second call fails, and — as its own
-comment at `test_file_system.cpp:690` records — the LittleFS VFS layer releases its
-internal context as part of that failed registration. The VFS path stays registered
-against the freed context, so the next `stat()` locks a mutex that no longer exists.
+The cause is in the `joltwallet/littlefs` component. `esp_littlefs_init()` rejects a
+duplicate registration like this:
 
-The same defect surfaced as a `Cache error` panic rather than `LoadProhibited` on one
-hardware run. Two symptoms, one cause; do not triage this from a single panic type.
+```c
+if (esp_littlefs_by_label(conf->partition_label, &index) == ESP_OK) {
+    ESP_LOGE(ESP_LITTLEFS_TAG, "Partition already used");
+    err = ESP_ERR_INVALID_STATE;
+    goto exit;
+}
+...
+exit:
+    if(err != ESP_OK){
+        if( index >= 0 ) {
+            esp_littlefs_free(&_efs[index]);
+```
 
-Whether the fix belongs in the test (clean up after itself), in `FileSystem`, or in the
-`joltwallet/littlefs` failed-registration path is **undecided** and is the first thing
-to settle before the emulated tier can be called green.
+`esp_littlefs_by_label()` sets `index` to the slot of the **existing** mount, so the
+error path frees that live context, including the lock, while the VFS is still
+registered against it. Any subsequent file operation then locks freed memory. The same
+defect surfaced once as a `Cache error` rather than `LoadProhibited`, so do not triage
+it from a single panic type.
+
+The fix is in `FileSystem::Mount()`, which now refuses to register a partition that is
+already mounted so the faulty path is never entered. It was deliberately not applied to
+the component itself: `managed_components/` is fetched from the component registry and
+a local edit there would be lost the next time dependencies are resolved. The upstream
+defect is still present in `joltwallet/littlefs` 1.5.5 and is worth reporting.
+
+`Mount failure when already mounted` was strengthened at the same time. It previously
+documented the broken behaviour as expected and asserted nothing about the mount
+afterwards; it now asserts the mount survives, that the file system is still usable,
+and that it unmounts cleanly.
 
 ## Execution Environments
 
@@ -167,7 +192,7 @@ the radio or anything analogue.
 | Tag | Viable under QEMU | Reason |
 |---|---|---|
 | `[NvsManager]` | **Yes** (verified) | NVS is flash |
-| `[FileSystem]` | **Yes** (verified, 9/11 — see defect above) | LittleFS sits on emulated flash |
+| `[FileSystem]` | **Yes** (verified, 11/11) | LittleFS sits on emulated flash |
 | `[CoreDump]` | Likely | The core dump partition is flash and is detected correctly at boot; the deliberate panic and reboot were both observed to work |
 | `[System]` | **No** (verified) | See below |
 | `[WiFi]` | No | No radio emulation |
@@ -278,17 +303,15 @@ invents its own and the runner accumulates special cases.
 
 These move complexity out of the runner and into the tests, where it belongs.
 
-1. **Fix the `[FileSystem]` state leak** described above. Nothing else in the emulated
-   tier matters until this is resolved.
-2. **Convert ordered sequences to `TEST_CASE_MULTIPLE_STAGES`.** The four `[CoreDump]`
+1. **Convert ordered sequences to `TEST_CASE_MULTIPLE_STAGES`.** The four `[CoreDump]`
    cases and the file system upgrade pair currently encode their ordering implicitly.
    Expressing it in Unity moves sequencing and reboot resynchronisation into tooling
    that already understands it, and keeps the runner a thin driver rather than a place
    where test knowledge accumulates and rots.
-3. **Add a second tag axis.** Unity supports multiple tags per case. A second tag
+2. **Add a second tag axis.** Unity supports multiple tags per case. A second tag
    describing *how* a test runs — unattended, needs a peer, needs a reflash, slow —
    keeps that classification beside the test instead of hardcoded in the runner.
-4. **Parameterise the long-running cases** via `unity_gets()`, using the agreed prompt
+3. **Parameterise the long-running cases** via `unity_gets()`, using the agreed prompt
    convention, so iteration counts can differ between CI and the bench.
 
 ## Tooling Options
@@ -313,11 +336,11 @@ Resolved during verification:
 - ~~Is the emulated tier viable at all?~~ **Yes** — verified for `[NvsManager]` and
   `[FileSystem]`.
 - ~~Does QEMU behave like hardware?~~ For the one memory defect observed, identically.
+- ~~Where does the `[FileSystem]` fix belong?~~ In `FileSystem::Mount()`; the component
+  itself cannot be patched because `managed_components/` is refetched.
 
 Still open:
 
-- Where does the `[FileSystem]` fix belong — the test, `FileSystem`, or the
-  `joltwallet/littlefs` failed-registration path?
 - Do the `[CoreDump]` tests run under QEMU? The partition is detected and the deliberate
   panic works, but the sequence has not been driven end to end.
 - Is the duplicated `sdkconfig.h` on the test include path actually harmful?
@@ -329,15 +352,14 @@ Still open:
 
 ## Suggested Sequence
 
-1. Resolve the `[FileSystem]` state leak so the emulated tier has a green baseline.
-2. Decide how CI satisfies the two build prerequisites — either reconfigure the root
+1. Decide how CI satisfies the two build prerequisites — either reconfigure the root
    project first, or decouple the test build from it.
-3. Stand up the QEMU tier for `[FileSystem]` and `[NvsManager]` with tag filtering,
+2. Stand up the QEMU tier for `[FileSystem]` and `[NvsManager]` with tag filtering,
    pristine-image reset, per-selector timeouts and JUnit output.
-4. Wire that tier into the existing CI workflows.
-5. Make the remaining firmware changes above, then bring `[CoreDump]` into the emulated
+3. Wire that tier into the existing CI workflows.
+4. Make the remaining firmware changes above, then bring `[CoreDump]` into the emulated
    tier.
-6. Extend the same runner to hardware for the radio tests.
+5. Extend the same runner to hardware for the radio tests.
 
 ## Related Documentation
 

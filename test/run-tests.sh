@@ -36,7 +36,7 @@ DEVICE=""
 FRESH=true
 VERBOSE=false
 HELP=false
-TIMEOUT=300
+TIMEOUT=600
 TRANSCRIPT=""
 SELECTORS=()
 
@@ -90,7 +90,7 @@ if $HELP; then
     echo "--hardware              Run on a connected board rather than under QEMU"
     echo "-p=* | --port=*         Serial device of the board (implies --hardware)"
     echo "--no-fresh              Do not reset to a known state before running"
-    echo "--timeout=*             Seconds to allow each selector (default 300)"
+    echo "--timeout=*             Seconds to allow each selector (default 600)"
     echo "--transcript=*          Write the full console transcript to this file"
     echo "-v | --verbose          Echo the console output as the tests run"
     echo ""

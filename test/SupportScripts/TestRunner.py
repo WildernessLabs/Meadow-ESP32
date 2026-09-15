@@ -211,8 +211,8 @@ def main():
                         help=f'Console baud rate (default {DEFAULT_BAUD})')
     parser.add_argument('--serial-port', type=int, default=DEFAULT_SERIAL_PORT,
                         help=f'TCP port for the QEMU console (default {DEFAULT_SERIAL_PORT})')
-    parser.add_argument('--timeout', type=int, default=300,
-                        help='Seconds to allow each selector (default 300)')
+    parser.add_argument('--timeout', type=int, default=600,
+                        help='Seconds to allow each selector (default 600)')
     parser.add_argument('--fresh', action='store_true',
                         help='Reset to a known state before running')
     parser.add_argument('--transcript', default=None,

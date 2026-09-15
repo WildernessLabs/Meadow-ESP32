@@ -9,6 +9,7 @@
 #include <limits.h>
 #include <stdio.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <dirent.h>
 #include <string>
 #include <string.h>
@@ -689,14 +690,24 @@ TEST_CASE("Mount failure when already mounted", CLASS_OF_TESTS)
     TEST_ASSERT_TRUE(esp_littlefs_mounted(FileSystem::PARTITION_LABEL));
 
     //
-    //  A second Setup() call must fail because the partition is already registered.
-    //  Note: the LittleFS VFS layer releases its internal context as part of the
-    //  failed registration, so no assertion is made about the mounted state after
-    //  this call.
+    //  A second Setup() call must fail because the partition is already mounted, and
+    //  it must leave the existing mount untouched.  Mount() refuses the duplicate
+    //  itself rather than letting LittleFS take an error path that frees the context
+    //  belonging to the live mount.
     //
     TEST_ASSERT_EQUAL(StatusCodes::Failure, fs->Setup());
+    TEST_ASSERT_TRUE(esp_littlefs_mounted(FileSystem::PARTITION_LABEL));
+
+    //
+    //  The file system must still be usable, which is what a freed context would
+    //  prevent.  This is the operation that previously panicked on the following test.
+    //
+    struct stat fileStatus;
+    stat(FileSystem::PARTITION_PATH_NAME, &fileStatus);
 
     delete fs;
+
+    TEST_ASSERT_FALSE(esp_littlefs_mounted(FileSystem::PARTITION_LABEL));
 }
 
 /**

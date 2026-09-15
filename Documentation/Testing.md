@@ -526,22 +526,16 @@ cp test/secrets.template test/secrets.h
    ./build.sh --develop --debug=WIFI --build
    ```
 
-### Issue: `[FileSystem]` Stops After Nine Tests
+### Issue: `[FileSystem]` Takes Several Minutes Under QEMU
 
-**Known defect.** Running the whole `[FileSystem]` tag stops at
-`ReadFile returns FileNotFound for non-existent file`, and `run-tests.sh` reports a
-timeout or a reboot. This reproduces identically on hardware and under QEMU.
+This is expected rather than a fault. `WriteFile returns Failure on a full filesystem`
+fills the partition a block at a time, and emulated flash is far slower than the real
+thing: the test alone takes around six minutes under QEMU against a few seconds on
+hardware.
 
-`Mount failure when already mounted` deliberately calls `Setup()` a second time so the
-failure path can be checked. That failed registration releases the LittleFS context but
-leaves the partition registered, so the next test to call `stat()` locks a mutex that
-has already been freed and the device panics.
-
-The individual tests pass when run on their own:
-
-```bash
-./run-tests.sh '"ReadFile returns FileNotFound for non-existent file"'
-```
+The default timeout of 600 seconds for each selector allows for this. Raise it with
+`--timeout=` if a slower machine needs longer, and prefer hardware when running that
+test repeatedly.
 
 ### Issue: Build Fails With `build_info.h: No such file or directory`
 
