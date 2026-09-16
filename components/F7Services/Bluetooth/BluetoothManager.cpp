@@ -302,14 +302,14 @@ void BluetoothManager::SetCurrentValueForAttributeHandle(const uint16_t handle, 
         // Clear and write
         memset(existing->second.value, 0, existing->second.length);
         // Only write *up to* the defined max length
-        size_t length_to_write = existing->second.length < len ? existing->second.length : len;
+        uint16_t length_to_write = existing->second.length < len ? existing->second.length : len;
         memcpy(existing->second.value, pData, length_to_write);
-        TRACE_MESSAGE("Value length %" PRIu32, length_to_write);
+        TRACE_MESSAGE("Value length %" PRIu16, length_to_write);
     }
     else
     {
         // Unknown handle - this should *never* happen, but best to be safe
-        TRACE_MESSAGE("Value received with unknown handle 0x%04" PRIx32, handle);
+        TRACE_MESSAGE("Value received with unknown handle 0x%02" PRIx16, handle);
     }
 
     TRACE_MESSAGE("SetCurrentValueForAttributeHandle: Exit");

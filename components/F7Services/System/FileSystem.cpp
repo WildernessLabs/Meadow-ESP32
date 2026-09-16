@@ -131,7 +131,7 @@ void FileSystem::ShowFiles()
             struct stat fileInfo;
             if (stat(s.c_str(), &fileInfo) == 0)
             {
-                TRACE_MESSAGE("    %s, %" PRIu32, ep->d_name, fileInfo.st_size);
+                TRACE_MESSAGE("    %s, %" PRIi32, ep->d_name, static_cast<int32_t>(fileInfo.st_size));
             }
             else
             {
@@ -313,7 +313,7 @@ void FileSystem::ReadFile(Message * const message)
                 fileData->Contents = static_cast<uint8_t *>(pvPortMalloc(fileInfo.st_size));
                 if (fileData->Contents != NULL)
                 {
-                    TRACE_MESSAGE("Reading %" PRIu32 " bytes from file %s", fileInfo.st_size, fileData->Name);
+                    TRACE_MESSAGE("Reading %" PRIi32 " bytes from file %s", static_cast<int32_t>(fileInfo.st_size), fileData->Name);
                     FILE *file = fopen(s.c_str(), "rb");
                     if (file != NULL)
                     {
@@ -321,7 +321,7 @@ void FileSystem::ReadFile(Message * const message)
                         if (amountRead > 0)
                         {
                             fileData->ContentsLength = amountRead;
-                            TRACE_MESSAGE("Read %" PRIi32 " bytes", amountRead);
+                            TRACE_MESSAGE("Read %" PRIi32 " bytes", static_cast<int32_t>(amountRead));
                             TRACE_HEX_BUFFER(fileData->Contents, amountRead);
                             fileData->ContentsLength = amountRead;
                         }
@@ -387,13 +387,13 @@ void FileSystem::WriteFile(Message * const message)
             std::string s = PARTITION_PATH_NAME;
             s += "/";
             s += fileData->Name;
-            TRACE_MESSAGE("Writing %lu bytes into file %s", fileData->ContentsLength, s.c_str());
+            TRACE_MESSAGE("Writing %" PRIu32 " bytes into file %s", fileData->ContentsLength, s.c_str());
             TRACE_HEX_BUFFER(fileData->Contents, fileData->ContentsLength);
             FILE *file = fopen(s.c_str(), "w");
             if (file != NULL)
             {
                 int amount = fwrite((void *) fileData->Contents, 1, fileData->ContentsLength, file);
-                TRACE_MESSAGE("Written %" PRIi32 " bytes", amount);
+                TRACE_MESSAGE("Written %" PRIi32 " bytes", static_cast<int32_t>(amount));
                 if (amount == fileData->ContentsLength)
                 {
                     result = StatusCodes::CompletedOk;
@@ -492,7 +492,7 @@ void FileSystem::ListFiles(Message *message)
         Esp32Messaging::FileNameList fileNameList;
         memset(&fileNameList, 0, sizeof(fileNameList));
         uint32_t bufferLength = 0;
-        TRACE_MESSAGE("Found %" PRIi32 " files.", count);
+        TRACE_MESSAGE("Found %" PRIi32 " files.", static_cast<int32_t>(count));
         if (count > 0)
         {
             while (((ep = readdir(dp)) != NULL) && (result != StatusCodes::EspOutOfMemory))

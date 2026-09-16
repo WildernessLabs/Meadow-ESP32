@@ -92,7 +92,7 @@ void heap_caps_alloc_failed_hook(size_t requestedSize, uint32_t caps, const char
 {
     if (requestedSize != 0)
     {
-        printf("%s was called but failed to allocate %" PRIu16 " bytes with 0x%" PRIx32 " capabilities. \n", functionName, requestedSize, caps);
+        printf("%s was called but failed to allocate %" PRIu32 " bytes with 0x%" PRIx32 " capabilities. \n", functionName, static_cast<uint32_t>(requestedSize), caps);
         vTaskDelay(10000 / portTICK_PERIOD_MS);
         char *ptr = NULL;
         *ptr = 0; // cppcheck-suppress nullPointer

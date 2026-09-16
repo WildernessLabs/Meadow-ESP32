@@ -566,7 +566,7 @@ void WiFiRequestHandler::GetSockOpt(void * const vpMessage)
             {
                 int32_t level = 0;
                 Mapping::GetEspValue(Mapping::SocketLevel, request->Level, &level);
-                TRACE_MESSAGE("GetSockOpt: Getting socket option level 0x%" PRIx32 ", option name 0x%" PRIx32 " for socket %" PRIi32, (uint) level, (uint) optionName, request->SocketHandle);
+                TRACE_MESSAGE("GetSockOpt: Getting socket option level 0x%" PRIx32 ", option name 0x%" PRIx32 " for socket %" PRIi32, static_cast<uint32_t>(level), static_cast<uint32_t>(optionName), request->SocketHandle);
                 response.Result = -1;
                 response.ResponseErrno = Mapping::NuttxErrno(ENOPROTOOPT);
                 switch (optionName)
@@ -1972,7 +1972,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::Bind(Esp32Messaging::BindRequest *r
         TRACE_MESSAGE("Bind: Socket handle: %" PRIi32, request->SocketHandle);
         TRACE_MESSAGE("Bind: Family: %" PRIi32, sa.sin_family);
         TRACE_MESSAGE("Bind: IP address: %s", inet_ntoa(sa.sin_addr));
-        TRACE_MESSAGE("Bind: Port: %" PRIi16, ntohs(sa.sin_port));
+        TRACE_MESSAGE("Bind: Port: %" PRIu16, ntohs(sa.sin_port));
         response.Result = bind(request->SocketHandle, (struct sockaddr *) &sa, sizeof(sa));
         if (response.Result != 0)
         {
@@ -2339,7 +2339,7 @@ void WiFiRequestHandler::Ioctl(void * const vpMessage)
             default:
                 response.Result = -1;
                 response.ResponseErrno = Mapping::NuttxErrno(EINVAL);
-                TRACE_MESSAGE("Unknown ioctl request %04" PRIx16, (uint) request->Command);
+                TRACE_MESSAGE("Unknown ioctl request %04" PRIx32, static_cast<uint32_t>(request->Command));
                 break;
         }
         Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&request));

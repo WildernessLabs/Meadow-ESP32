@@ -75,6 +75,7 @@ The `build.sh` script provides multiple options for different build scenarios:
 | `--coredump` | Include core dump functionality |
 | `-th`, `--heaptracing` | Enable heap tracing for memory analysis |
 | `-tm`, `--tracemessages` | Enable message tracing |
+| `-pl`, `--performancelogging` | Enable performance logging of method entry and exit times |
 | `--halt` | Halt the system on hard fault (useful for debugging) |
 
 #### Subsystem-Specific Debug Options
@@ -122,7 +123,7 @@ Examples:
 
 #### Build with All Debugging Features
 ```bash
-./build.sh --build --develop --coredump --heaptracing --trace messages
+./build.sh --build --develop --coredump --heaptracing --tracemessages --performancelogging
 ```
 
 ### Direct ESP-IDF Commands

@@ -16,6 +16,7 @@
 #include "freertos/queue.h"
 #include "esp_system.h"
 #include "esp_log.h"
+#include "esp_timer.h"
 #include "driver/uart.h"
 #include "soc/uart_struct.h"
 #include <string.h>
@@ -42,7 +43,7 @@
 
     #define PERFORMANCE_LOGGING_ENTER()
     #define PERFORMANCE_LOGGING_EXIT()
-    #define PERFORMANCE_LOGGING_ADD_ENTRY(method_name)
+    #define PERFORMANCE_LOGGING_ADD_ENTRY()
     #define PERFORMANCE_LOGGING_DUMP_RESULTS()
 
 #endif

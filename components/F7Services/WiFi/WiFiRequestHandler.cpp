@@ -826,7 +826,7 @@ void WiFiRequestHandler::NtpServerCallback(struct timeval *tv)
 {
     TRACE_MESSAGE("NtpServerCallback: Enter");
 
-    TRACE_MESSAGE("Setting time to %" PRIi32, (int) tv->tv_sec);
+    TRACE_MESSAGE("Setting time to %" PRIi32, static_cast<int32_t>(tv->tv_sec));
 
     settimeofday(tv, NULL);
 
