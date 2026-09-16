@@ -249,32 +249,6 @@ bool Logging::TurnLoggingOn(const char * const component)
 }
 
 /**
- *  @brief Process the request to output an informational message to the logging system.
- *
- *  @param methodName
- *      Name of the method that called the Information method.
- *
- *  @param formatString
- *      Format string for the message.
- */
-void Logging::Information(char *methodName, char *formatString, ...)
-{
-}
-
-/**
- *  @brief Process the request to output an error message to the logging system
- *
- *  @param methodName
- *      Name of the method that called the Information method.
- *
- *  @param formatString
- *      Format string for the message.
- */
-void Logging::Error(char *methodName, char *formatString, ...)
-{
-}
-
-/**
  *  @brief Convert the message type enum into a meaningful string.
  *
  *  @param type
