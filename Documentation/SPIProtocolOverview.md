@@ -45,6 +45,7 @@ The ESP32 uses a UART to send control signals to the STM32.  These signals are s
 * +++RST,*code*
 * +++MW
 * +++SIR
+* +++BSY
 
 Each control signal must be on a new line and must be the only data on the line.
 
@@ -59,6 +60,12 @@ The ESP has generated a message for the STM32.
 #### +++SIR - SPI Interface Ready
 
 The SPI interface on the ESP32 is ready for data transmission.  This signal is needed as there is a short delay between the CS line dropping to 0 and the ESP being able to receive data.
+
+#### +++BSY - Outbound Message Queue Full
+
+The queue of messages waiting to be collected by the STM32 is full and the ESP32 has had to drop a message.  The STM32 should collect the messages that are already waiting and may wish to reduce the rate at which it is making requests.
+
+Note that the STM32 does not act on this signal yet; the ESP32 emits it so that the information is available when support is added.
 
 The three *+++* markers will be assumed to be present in the remainder of this document.
 ### Constraints

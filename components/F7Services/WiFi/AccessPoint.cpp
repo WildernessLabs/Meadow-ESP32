@@ -75,7 +75,7 @@ Esp32Messaging::AccessPointInformation *WiFiRequestHandler::ExtractAndValidateAc
             // error |= (result->IpAddress == 0) || (result->SubnetMask == 0) || (result->Gateway == 0);
             if (error)
             {
-                Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&result));
+                Encoders::FreeAccessPointInformation(&result);
             }
         }
     }
@@ -210,7 +210,7 @@ void WiFiRequestHandler::StartAccessPoint(Message *message)
             }
         }
 
-        vPortFree(accessPointInformation);
+        Encoders::FreeAccessPointInformation(&accessPointInformation);
     }
     else
     {

@@ -442,8 +442,7 @@ void BluetoothRequestHandler::SetCurrentValueForAttributeHandle(Message * const 
             }
         }
     }
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&ds->SetData));
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&ds));
+    Encoders::FreeBTServerDataSet(&ds);
 
     request->MessageType = MessageTypes::Response;
     request->StatusCode = result;
@@ -841,8 +840,7 @@ void BluetoothRequestHandler::Start(Message * const request)
     request->DeletePayload();
 
     _manager.BuildGraphFromJson(config->Config);
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&config->Config));
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&config));
+    Encoders::FreeBTStackConfig(&config);
 
     GenerateAdvertisingData();
     GenerateAttributeTable();

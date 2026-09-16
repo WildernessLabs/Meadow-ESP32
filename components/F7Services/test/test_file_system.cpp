@@ -386,8 +386,7 @@ TEST_CASE("Reading a file", CLASS_OF_TESTS)
     TEST_ASSERT_NOT_NULL(fileContents->Contents);
     TEST_ASSERT_EQUAL_MEMORY_ARRAY(TEST_FILE_CONTENTS, fileContents->Contents, strlen(TEST_FILE_CONTENTS), 1);
 
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&fileContents->Contents));
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&fileContents));
+    Encoders::FreeFileNameAndContents(&fileContents);
     Message::DeleteMessage(readMessage);
 
     delete fs;
@@ -477,6 +476,7 @@ TEST_CASE("Get list of files", CLASS_OF_TESTS)
         {
             TEST_ASSERT_EQUAL(strlen(TEST_FILE_CONTENTS2), file->Length);
         }
+        Encoders::FreeFileDetails(&file);
     }
 
     Message::DeleteMessage(listMessage);

@@ -161,31 +161,70 @@ void TransportProviderBase::DumpMessageAtHeadOfQueue()
  *  @brief Add the message to the queue of messages waiting to be sent to
  *  the STM32.
  *
+ *  The queue only has room for MAX_QUEUE_LENGTH messages and it is drained by the
+ *  transport provider task when the STM32 asks for the next message.  A full queue
+ *  is therefore usually a transient condition and the attempt is repeated up to
+ *  QUEUE_ATTEMPTS times, pausing for QUEUE_ATTEMPT_DELAY in between, to give the
+ *  STM32 the opportunity to collect the messages that are already waiting.
+ *
+ *  The queue mutex is released around the pause as the transport provider task
+ *  needs it in order to take a message off the queue.
+ *
+ *  A message that still cannot be queued is dropped and the Busy control signal is
+ *  sent to the STM32 to indicate that there are messages waiting to be collected.
+ *  Reporting the failure as a message to the STM32 is not possible as that would
+ *  need a slot on the queue that is full.
+ *
+ *  @note This method takes ownership of the message.  The message is deleted if it
+ *        cannot be queued, so the caller must not use it afterwards.
+ *
  *  @param message
  *      Message to be sent to the STM32.
  *
  *  @return
  *      true if the message was queued, false otherwise.
  */
-bool TransportProviderBase::QueueMessageForStm32(const Message * const message)
+bool TransportProviderBase::QueueMessageForStm32(Message * const message)
 {
-    bool result = true;
+    bool result = false;
+    //
+    //  The transport provider task is the only task that takes messages off the queue and
+    //  it only does so when the STM32 asks for one.  Pausing in that task would send the
+    //  only task that can make room to sleep, so it is given a single attempt.
+    //
+    const uint32_t attempts = (xTaskGetCurrentTaskHandle() == _transportProviderTaskHandle) ? 1 : QUEUE_ATTEMPTS;
 
-    if (xSemaphoreTake(_outboundMessageQueueMutex, portMAX_DELAY))
+    for (uint32_t attempt = 0; (attempt < attempts) && !result; attempt++)
     {
-        if (xQueueSendToBack(_outboundMessageQueueHandle, &message, 0) != pdPASS)
+        if (xSemaphoreTake(_outboundMessageQueueMutex, portMAX_DELAY) == pdTRUE)
         {
-            ERROR_MESSAGE("Cannot queue message.");
-            result = false;
+            if (xQueueSendToBack(_outboundMessageQueueHandle, &message, 0) == pdPASS)
+            {
+                Heap::CheckIntegrity();
+                Logging::DumpMessage(COMPONENT_NAME, message);
+                SendControlMessageToStm32(ControlMessageType::MessageWaiting);
+                result = true;
+            }
+            xSemaphoreGive(_outboundMessageQueueMutex);
         }
-        else
+        //
+        //  The attempt failed, so pause to give the STM32 the chance to collect a
+        //  message before trying again.  There is no point pausing after the last
+        //  attempt as the message is about to be dropped.
+        //
+        if (!result && ((attempt + 1) < attempts))
         {
-            Heap::CheckIntegrity();
-            Logging::DumpMessage(COMPONENT_NAME, message);
-            SendControlMessageToStm32(ControlMessageType::MessageWaiting);
+            vTaskDelay(QUEUE_ATTEMPT_DELAY);
         }
-        xSemaphoreGive(_outboundMessageQueueMutex);
     }
+
+    if (!result)
+    {
+        ERROR_MESSAGE("Cannot queue message after %" PRIu32 " attempt(s), dropping it.", attempts);
+        SendControlMessageToStm32(ControlMessageType::Busy);
+        Message::DeleteMessage(message);
+    }
+
     return (result);
 }
 
@@ -217,6 +256,9 @@ void TransportProviderBase::SendControlMessageToStm32(const ControlMessageType m
             break;
         case ControlMessageType::SpiInterfaceReady:
             message = const_cast<char *>("+++SIR\n");
+            break;
+        case ControlMessageType::Busy:
+            message = const_cast<char *>("+++BSY\n");
             break;
         default:
             break;

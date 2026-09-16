@@ -949,13 +949,13 @@ void WiFiRequestHandler::RaiseConnectToAccessPointEvent(StatusCodes::StatusCodes
         if (payload != NULL)
         {
             Encoders::EncodeConnectEventData(ed, payload);
-            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&ed));
             RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::NetworkConnectedEvent, status, payload, payloadLength);
         }
         else
         {
             ERROR_MESSAGE("Failed to allocate memory for ConnectEventData payload.");
         }
+        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&ed));
     }
     else
     {
@@ -990,13 +990,13 @@ void WiFiRequestHandler::RaiseDisconnectEvent()
         if (payload != NULL)
         {
             Encoders::EncodeDisconnectEventData(ed, payload);
-            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&ed));
             RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::NetworkDisconnectedEvent, StatusCodes::CompletedOk, payload, payloadLength);
         }
         else
         {
             ERROR_MESSAGE("Failed to allocate memory for DisconnectEventData payload. ");
         }
+        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&ed));
     }
 
     TRACE_MESSAGE("RaiseDisconnectEvent: Exit");
@@ -1720,7 +1720,7 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
         }
 
         result = ConnectToAccessPoint(accessPointInformation);
-        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&accessPointInformation));
+        Encoders::FreeAccessPointInformation(&accessPointInformation);
 
         Esp32Messaging::ConnectEventData data = {};
 

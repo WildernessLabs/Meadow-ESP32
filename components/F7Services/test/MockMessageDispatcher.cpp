@@ -156,7 +156,8 @@ bool MockMessageDispatcher::QueueMessageForStm32(Message *message)
 
     if (xQueueSendToBack(_outboundMessageQueueHandle, &message, 0) != pdPASS)
     {
-        ERROR_MESSAGE("Cannot queue message.");
+        ERROR_MESSAGE("Cannot queue message, dropping it.");
+        Message::DeleteMessage(message);
         result = false;
     }
 

@@ -137,6 +137,9 @@ void CoreDump::GetInformation(void * const vpMessage)
         response.IsValid = 0;
     }
 
+    //
+    //  This request (message) has no payload so there is nothing to delete.
+    //
     message->PayloadLength = Encoders::EncodedCoreDumpInformationBufferSize(&response);
     message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
     if (message->Payload != NULL)
@@ -231,6 +234,9 @@ void CoreDump::GetFragment(void * const vpMessage)
         }
     }
 
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&request));
+    message->DeletePayload();
+
     if (result == StatusCodes::CompletedOk)
     {
         message->PayloadLength = Encoders::EncodedCoreDumpFragmentResponseBufferSize(&response);
@@ -243,16 +249,14 @@ void CoreDump::GetFragment(void * const vpMessage)
         else
         {
             message->PayloadLength = 0;
-            message->Payload = nullptr;
             message->StatusCode = StatusCodes::EspOutOfMemory;
         }
     }
     else
     {
-        message->PayloadLength = 0;
-        message->Payload = nullptr;
         message->StatusCode = result;
     }
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&response.Data));
 
     message->MessageType = MessageTypes::Response;
     _messageDispatcher->QueueMessageForStm32(message);
@@ -289,8 +293,7 @@ void CoreDump::Erase(void * const vpMessage)
         esp_partition_iterator_release(partitions);
     }
 
-    message->PayloadLength = 0;
-    message->Payload = nullptr;
+    message->DeletePayload();
     message->StatusCode = result;
     message->MessageType = MessageTypes::Response;
     _messageDispatcher->QueueMessageForStm32(message);
