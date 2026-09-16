@@ -22,7 +22,11 @@
 #include "test_common.hpp"
 #include "test_bluetooth.hpp"
 
-#define CLASS_OF_TESTS "[Bluetooth]"
+//
+//  [HardwareOnly] marks a test that cannot run under emulation.  These need a radio,
+//  which QEMU does not provide.
+//
+#define CLASS_OF_TESTS "[Bluetooth][HardwareOnly]"
 
 const char *ON_OFF_NAME = "OnOff";
 const char *ON_OFF_UUID = "016e99d6-8a61-11eb-8dcd-0242ac1300ff";

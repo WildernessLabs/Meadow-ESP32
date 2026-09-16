@@ -25,7 +25,11 @@
 
 #include "secrets.h"
 
-#define CLASS_OF_TESTS "[WiFi]"
+//
+//  [HardwareOnly] marks a test that cannot run under emulation.  These need a radio,
+//  which QEMU does not provide.
+//
+#define CLASS_OF_TESTS "[WiFi][HardwareOnly]"
 
 /**
  * @brief Define the DEBUGGING_TESTS macro to enable debug statements.

@@ -65,9 +65,13 @@ cp test/main/secrets.template components/F7Services/test/secrets.h
 The `secrets.h` file should contain:
 
 ```c
-#define TEST_WIFI_SSID "YourNetworkSSID"
-#define TEST_WIFI_PASSWORD "YourNetworkPassword"
+#define WIFI_NETWORK    "YourNetworkSSID"
+#define WIFI_PASSWORD   "YourNetworkPassword"
 ```
+
+The template also carries the address of the web server the POSIX tests fetch from,
+as `WEB_SERVER_IP_ADDRESS` and `WEB_SERVER_PORT`, which keeps it out of source
+control.
 
 > **Important**: The `secrets.h` file is in `.gitignore` to prevent credentials from being committed.
 
@@ -180,6 +184,9 @@ flash, UART and timers, but not the radio and not the ADC.
 | `[CoreDump]` | The partition is emulated, but the sequence is not yet proven |
 | `[System]` | No — reads a real ADC, and the read never returns under QEMU |
 | `[WiFi]`, `[Bluetooth]` | No — there is no radio to emulate |
+| `[POSIX]` | No — needs a radio and a web server on the local network |
+
+Everything in that last group carries `[HardwareOnly]`.
 
 ### Installing the Emulator
 
@@ -259,17 +266,45 @@ cover, so the CI job does not need a list of tags to keep in step:
 | Tag | Meaning |
 |---|---|
 | `[Emulated]` | Runs unattended under QEMU; this is what CI selects |
-| `[Slow]` | Correct under QEMU but too slow to run on every commit |
+| `[HardwareOnly]` | Cannot run under emulation at all, needing a radio, an ADC or a server |
+| `[Slow]` | Too slow to run on every commit |
+
+The three are independent. `[Slow]` says how long a test takes, not where it can
+run: `WriteFile returns Failure on a full filesystem` is `[Slow]` but not
+`[HardwareOnly]`, because it passes under QEMU in about six minutes against seconds
+on a board.
+
+> **Selecting a subsystem includes its slow tests.** Tag matching is a substring
+> search, so `[POSIX]` also picks up anything declared `[POSIX][HardwareOnly][Slow]`.
+> Selecting `[POSIX]` therefore runs the soak test as well and takes about ten
+> minutes, and `[FileSystem]` behaves the same way. Name a single test when only the
+> quick ones are wanted:
+>
+> ```bash
+> ./run-tests.sh --port=<port> '"Fetch a web page using recvfrom"'
+> ```
+>
+> The default per selector timeout of 600 seconds is not enough for `[POSIX]` as a
+> whole; pass `--timeout=1200`.
+
+`[CoreDump]` and `[Helpers]` carry neither `[Emulated]` nor `[HardwareOnly]`. The
+core dump sequence has not been driven end to end under emulation, and the helpers
+are not tests in the usual sense, so neither is claimed either way.
 
 Tag matching is a substring search, so a test declared as
 `"[FileSystem][Emulated]"` is still selected by `[FileSystem]`. Nothing is hidden from
 a developer or a hardware run by being tagged.
 
-A new test opts into CI by being declared with `[Emulated]`:
+A new test opts into CI by being declared with `[Emulated]`, and says so when it
+needs hardware:
 
 ```c
 #define CLASS_OF_TESTS "[FileSystem][Emulated]"
+#define CLASS_OF_TESTS "[WiFi][HardwareOnly]"
 ```
+
+Tags can be combined in the negative as well, so `![Slow]` runs everything except
+the long tests and `[HardwareOnly]` selects everything needing a board.
 
 `WriteFile returns Failure on a full filesystem` is the one test currently marked
 `[Slow]`. It fills the partition a block at a time, which takes minutes on emulated

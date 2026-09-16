@@ -17,7 +17,11 @@
 
 #include "test_common.hpp"
 
-#define CLASS_OF_TESTS "[System]"
+//
+//  [HardwareOnly] marks a test that cannot run under emulation.  This one reads a
+//  real ADC; under QEMU the read never returns.
+//
+#define CLASS_OF_TESTS "[System][HardwareOnly]"
 
 /**
  * @brief Unit test for the battery charge level method.
