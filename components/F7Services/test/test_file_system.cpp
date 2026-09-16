@@ -164,7 +164,7 @@ int ReadTestFile(const char *filename, uint8_t *buffer, int maxLength)
  */
 static Esp32Messaging::FileNameList *ExtractFileNameList(uint8_t *buffer)
 {
-    Esp32Messaging::FileNameList *fileNameList = (Esp32Messaging::FileNameList *) pvPortMalloc(sizeof(Esp32Messaging::FileNameList));
+    Esp32Messaging::FileNameList *fileNameList = static_cast<Esp32Messaging::FileNameList *>(pvPortMalloc(sizeof(Esp32Messaging::FileNameList)));
 
     if (fileNameList == NULL)
     {
@@ -177,7 +177,7 @@ static Esp32Messaging::FileNameList *ExtractFileNameList(uint8_t *buffer)
     buffer += 4;
     if (fileNameList->FileDetailsLength > 0)
     {
-        fileNameList->FileDetails = (uint8_t *) pvPortMalloc(fileNameList->FileDetailsLength);
+        fileNameList->FileDetails = static_cast<uint8_t *>(pvPortMalloc(fileNameList->FileDetailsLength));
         if (fileNameList->FileDetails == NULL)
         {
             Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&fileNameList));
@@ -251,7 +251,7 @@ TEST_CASE("Formatting file system", CLASS_OF_TESTS)
     //
     //  Write a single file to the file system.
     //
-    TEST_ASSERT_EQUAL(strlen(TEST_FILE_CONTENTS), WriteTestFile((char *) TEST_FILE_NAME, (uint8_t *) TEST_FILE_CONTENTS, strlen(TEST_FILE_CONTENTS)));
+    TEST_ASSERT_EQUAL(strlen(TEST_FILE_CONTENTS), WriteTestFile(const_cast<char *>(TEST_FILE_NAME), reinterpret_cast<uint8_t *>(const_cast<char *>(TEST_FILE_CONTENTS)), strlen(TEST_FILE_CONTENTS)));
     //
     //  Check that we have one file on the file system.
     //
@@ -295,8 +295,8 @@ TEST_CASE("Write file to file system", CLASS_OF_TESTS)
     //
     Esp32Messaging::FileNameAndContents fileData;
     memset(&fileData, 0, sizeof(fileData));
-    fileData.Name = (char *) TEST_FILE_NAME;
-    fileData.Contents = (uint8_t *) TEST_FILE_CONTENTS;
+    fileData.Name = const_cast<char *>(TEST_FILE_NAME);
+    fileData.Contents = reinterpret_cast<uint8_t *>(const_cast<char *>(TEST_FILE_CONTENTS));
     fileData.ContentsLength = strlen(TEST_FILE_CONTENTS);
     uint32_t payloadLength = Encoders::EncodedFileNameAndContentsBufferSize(&fileData);
     uint8_t *encodedPayload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
@@ -327,7 +327,7 @@ TEST_CASE("Write file to file system", CLASS_OF_TESTS)
 
     int length = 200;
     uint8_t *buffer = static_cast<uint8_t *>(pvPortMalloc(length));
-    TEST_ASSERT_EQUAL(strlen(TEST_FILE_CONTENTS), ReadTestFile((char *) TEST_FILE_NAME, buffer, length));
+    TEST_ASSERT_EQUAL(strlen(TEST_FILE_CONTENTS), ReadTestFile(const_cast<char *>(TEST_FILE_NAME), buffer, length));
     TEST_ASSERT_EQUAL_MEMORY_ARRAY(TEST_FILE_CONTENTS, buffer, strlen(TEST_FILE_CONTENTS), 1);
 
     Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&buffer));
@@ -348,11 +348,11 @@ TEST_CASE("Reading a file", CLASS_OF_TESTS)
     //  Start with an empty file system.
     //
     TEST_ASSERT_EQUAL(ESP_OK, esp_littlefs_format(FileSystem::PARTITION_LABEL));
-    TEST_ASSERT_EQUAL(strlen(TEST_FILE_CONTENTS), WriteTestFile((char *) TEST_FILE_NAME, (uint8_t *) TEST_FILE_CONTENTS, strlen(TEST_FILE_CONTENTS)));
+    TEST_ASSERT_EQUAL(strlen(TEST_FILE_CONTENTS), WriteTestFile(const_cast<char *>(TEST_FILE_NAME), reinterpret_cast<uint8_t *>(const_cast<char *>(TEST_FILE_CONTENTS)), strlen(TEST_FILE_CONTENTS)));
 
     Esp32Messaging::FileNameAndContents fileData;
     memset(&fileData, 0, sizeof(fileData));
-    fileData.Name = (char *) TEST_FILE_NAME;
+    fileData.Name = const_cast<char *>(TEST_FILE_NAME);
     uint32_t payloadLength = Encoders::EncodedFileNameAndContentsBufferSize(&fileData);
     uint8_t *encodedPayload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
     TEST_ASSERT_NOT_NULL(encodedPayload);
@@ -443,8 +443,8 @@ TEST_CASE("Get list of files", CLASS_OF_TESTS)
     //
     //  Now write two files to the file system and repeat the request reusing the listMessage from above.
     //
-    TEST_ASSERT_EQUAL(strlen(TEST_FILE_CONTENTS), WriteTestFile((char *) TEST_FILE_NAME, (uint8_t *) TEST_FILE_CONTENTS, strlen(TEST_FILE_CONTENTS)));
-    TEST_ASSERT_EQUAL(strlen(TEST_FILE_CONTENTS2), WriteTestFile((char *) TEST_FILE_NAME2, (uint8_t *) TEST_FILE_CONTENTS2, strlen(TEST_FILE_CONTENTS2)));
+    TEST_ASSERT_EQUAL(strlen(TEST_FILE_CONTENTS), WriteTestFile(const_cast<char *>(TEST_FILE_NAME), reinterpret_cast<uint8_t *>(const_cast<char *>(TEST_FILE_CONTENTS)), strlen(TEST_FILE_CONTENTS)));
+    TEST_ASSERT_EQUAL(strlen(TEST_FILE_CONTENTS2), WriteTestFile(const_cast<char *>(TEST_FILE_NAME2), reinterpret_cast<uint8_t *>(const_cast<char *>(TEST_FILE_CONTENTS2)), strlen(TEST_FILE_CONTENTS2)));
     listMessage->StatusCode = StatusCodes::Failure;
 
     uint32_t freeHeapBefore = esp_get_free_heap_size();
@@ -505,7 +505,7 @@ TEST_CASE("Delete file", CLASS_OF_TESTS)
     //
     Esp32Messaging::FileDetails details;
     memset(&details, 0, sizeof(details));
-    details.Name = (char *) TEST_FILE_NAME;
+    details.Name = const_cast<char *>(TEST_FILE_NAME);
     uint32_t payloadLength = Encoders::EncodedFileDetailsBufferSize(&details);
     uint8_t *encodedPayload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
     TEST_ASSERT_NOT_NULL(encodedPayload);
@@ -536,7 +536,7 @@ TEST_CASE("Delete file", CLASS_OF_TESTS)
     //
     //  Now create a file and try to delete it.
     //
-    TEST_ASSERT_EQUAL(strlen(TEST_FILE_CONTENTS), WriteTestFile((char *) TEST_FILE_NAME, (uint8_t *) TEST_FILE_CONTENTS, strlen(TEST_FILE_CONTENTS)));
+    TEST_ASSERT_EQUAL(strlen(TEST_FILE_CONTENTS), WriteTestFile(const_cast<char *>(TEST_FILE_NAME), reinterpret_cast<uint8_t *>(const_cast<char *>(TEST_FILE_CONTENTS)), strlen(TEST_FILE_CONTENTS)));
     TEST_ASSERT_EQUAL(1, CountFiles());
 
     deleteMessage->PayloadLength = payloadLength;
@@ -582,8 +582,8 @@ TEST_CASE("Prepare file system upgrade test", CLASS_OF_TESTS)
     //
     //  Now put some files on the file system to test the upgrade process.
     //
-    TEST_ASSERT_EQUAL(strlen(TEST_FILE_CONTENTS), WriteTestFile((char *) TEST_FILE_NAME, (uint8_t *) TEST_FILE_CONTENTS, strlen(TEST_FILE_CONTENTS)));
-    TEST_ASSERT_EQUAL(strlen(TEST_FILE_CONTENTS2), WriteTestFile((char *) TEST_FILE_NAME2, (uint8_t *) TEST_FILE_CONTENTS2, strlen(TEST_FILE_CONTENTS2)));
+    TEST_ASSERT_EQUAL(strlen(TEST_FILE_CONTENTS), WriteTestFile(const_cast<char *>(TEST_FILE_NAME), reinterpret_cast<uint8_t *>(const_cast<char *>(TEST_FILE_CONTENTS)), strlen(TEST_FILE_CONTENTS)));
+    TEST_ASSERT_EQUAL(strlen(TEST_FILE_CONTENTS2), WriteTestFile(const_cast<char *>(TEST_FILE_NAME2), reinterpret_cast<uint8_t *>(const_cast<char *>(TEST_FILE_CONTENTS2)), strlen(TEST_FILE_CONTENTS2)));
 
     uint8_t *buffer = static_cast<uint8_t *>(pvPortMalloc(TEST_UPGRADE_BUFFER_SIZE));
     TEST_ASSERT_NOT_NULL(buffer);
@@ -749,7 +749,7 @@ TEST_CASE("ReadFile returns FileNotFound for non-existent file", CLASS_OF_TESTS)
     //
     Esp32Messaging::FileNameAndContents fileData;
     memset(&fileData, 0, sizeof(fileData));
-    fileData.Name = (char *) TEST_NON_EXISTENT_FILE_NAME;
+    fileData.Name = const_cast<char *>(TEST_NON_EXISTENT_FILE_NAME);
     uint32_t payloadLength = Encoders::EncodedFileNameAndContentsBufferSize(&fileData);
     uint8_t *encodedPayload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
     TEST_ASSERT_NOT_NULL(encodedPayload);
@@ -846,7 +846,7 @@ TEST_CASE("WriteFile returns Failure on a full filesystem", SLOW_TESTS)
 
     Esp32Messaging::FileNameAndContents fileData;
     memset(&fileData, 0, sizeof(fileData));
-    fileData.Name = (char *) TEST_FILE_NAME;
+    fileData.Name = const_cast<char *>(TEST_FILE_NAME);
     fileData.Contents = writeBuffer;
     fileData.ContentsLength = 2 * LITTLEFS_BLOCK_SIZE;
     uint32_t payloadLength = Encoders::EncodedFileNameAndContentsBufferSize(&fileData);

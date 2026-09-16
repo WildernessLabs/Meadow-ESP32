@@ -392,7 +392,7 @@ void FileSystem::WriteFile(Message * const message)
             FILE *file = fopen(s.c_str(), "w");
             if (file != NULL)
             {
-                int amount = fwrite((void *) fileData->Contents, 1, fileData->ContentsLength, file);
+                int amount = fwrite(fileData->Contents, 1, fileData->ContentsLength, file);
                 TRACE_MESSAGE("Written %" PRIi32 " bytes", static_cast<int32_t>(amount));
                 if (amount == fileData->ContentsLength)
                 {

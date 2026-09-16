@@ -30,7 +30,7 @@ MockMessageDispatcher *messageDispatcher = nullptr;
 // cppcheck-suppress unusedFunction symbolName=ExtractIntegerResponse
 Esp32Messaging::IntegerResponse *ExtractIntegerResponse(uint8_t *buffer)
 {
-    Esp32Messaging::IntegerResponse *integerResponse = (Esp32Messaging::IntegerResponse *) pvPortMalloc(sizeof(Esp32Messaging::IntegerResponse));
+    Esp32Messaging::IntegerResponse *integerResponse = static_cast<Esp32Messaging::IntegerResponse *>(pvPortMalloc(sizeof(Esp32Messaging::IntegerResponse)));
 
     integerResponse->Result = Encoders::ExtractInt32(buffer);
     return (integerResponse);

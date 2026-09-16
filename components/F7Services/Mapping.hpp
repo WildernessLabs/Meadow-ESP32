@@ -51,7 +51,7 @@ private:
     struct str_mapping_s
     {
         int32_t key;
-        char *value;
+        const char *value;
     };
     typedef struct str_mapping_s str_mapping_t;
 
@@ -234,7 +234,7 @@ public:
     /**
      *  @brief Get the string value for the given key.
      */
-    static char *GetStringValue(const StringMappingTable mapping, const int32_t key);
+    static const char *GetStringValue(const StringMappingTable mapping, const int32_t key);
 
     /**
      *  @brief Map the ESP error codes to a StatusCode value.

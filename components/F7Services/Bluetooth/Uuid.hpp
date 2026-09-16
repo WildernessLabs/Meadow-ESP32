@@ -37,7 +37,7 @@ struct Uuid128
      */
     Uuid128(const Uuid128 &other)
     {
-        memcpy((void *) data, other.data, 16);
+        memcpy(const_cast<uint8_t *>(data), other.data, 16);
     }
 
     /**
@@ -60,7 +60,7 @@ struct Uuid128
      */
     Uuid128 operator=(const Uuid128 &other) const
     {
-        memcpy((void *) data, other.data, 16);
+        memcpy(const_cast<uint8_t *>(data), other.data, 16);
         return other;
     }
 
@@ -72,7 +72,7 @@ struct Uuid128
      */
     uint8_t *operator=(uint8_t * const other) const
     {
-        memcpy((void *) data, other, 16);
+        memcpy(const_cast<uint8_t *>(data), other, 16);
         return other;
     }
 };
@@ -94,7 +94,7 @@ struct Uuid16
      */
     operator uint16_t() const
     {
-        return (uint16_t) *data;
+        return static_cast<uint16_t>(*data);
     }
 
     Uuid16();
@@ -108,7 +108,7 @@ struct Uuid16
      */
     Uuid16(const Uuid16 &other)
     {
-        memcpy((void *) data, other.data, 2);
+        memcpy(const_cast<uint8_t *>(data), other.data, 2);
     }
 
     /**
@@ -131,7 +131,7 @@ struct Uuid16
      */
     Uuid16 operator=(const Uuid16 &other) const
     {
-        memcpy((void *) data, other.data, 2);
+        memcpy(const_cast<uint8_t *>(data), other.data, 2);
         return other;
     }
 
@@ -143,7 +143,7 @@ struct Uuid16
      */
     uint8_t *operator=(uint8_t *other) const
     {
-        memcpy((void *) data, other, 2);
+        memcpy(const_cast<uint8_t *>(data), other, 2);
         return other;
     }
 
@@ -155,7 +155,7 @@ struct Uuid16
     uint16_t ToUint16() const
     {
         // clang-format off
-        return (uint16_t) *((uint16_t *) data);
+        return (*(reinterpret_cast<const uint16_t *>(data)));
         // clang-format on
     }
 

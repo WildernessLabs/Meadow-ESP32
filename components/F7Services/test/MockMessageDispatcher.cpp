@@ -195,7 +195,7 @@ int MockMessageDispatcher::OutboundMessageQueueLength()
     int result = -1;
 
     UBaseType_t messageCount = uxQueueMessagesWaiting(_outboundMessageQueueHandle);
-    result = (int) messageCount;
+    result = static_cast<int>(messageCount);
 
     return (result);
 }
@@ -214,7 +214,7 @@ Message *MockMessageDispatcher::GetOutboundMessage()
 
     if (uxQueueMessagesWaiting(_outboundMessageQueueHandle) > 0)
     {
-        if (xQueueReceive(_outboundMessageQueueHandle, (void *) &result, portMAX_DELAY) != pdTRUE)
+        if (xQueueReceive(_outboundMessageQueueHandle, &result, portMAX_DELAY) != pdTRUE)
         {
             result = nullptr;
         }

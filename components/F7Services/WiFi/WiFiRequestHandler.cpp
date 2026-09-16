@@ -200,7 +200,7 @@ const char *WiFiRequestHandler::_countryCode = nullptr;
  *  @brief Name of the NTP server to be used when using NTP to set the time
  *  when the board starts.
  */
-char *WiFiRequestHandler::_ntpServer = (char *) "pool.ntp.org";
+const char *WiFiRequestHandler::_ntpServer = "pool.ntp.org";
 
 /**
  *  @brief Name of the storage space in NVS holding the NTP server information.
@@ -215,7 +215,7 @@ const char *WiFiRequestHandler::TIMEZONE_NAME = "Timezone";
 /**
  *  @brief Timezone to be used when the ESP32 starts.  Default will be UTC.
  */
-char *WiFiRequestHandler::_timezone = (char *) "UTC";
+const char *WiFiRequestHandler::_timezone = "UTC";
 
 /**
  *  @brief Static IP address when not using DHCP.
@@ -329,7 +329,7 @@ WiFiRequestHandler::WiFiRequestHandler()
     //  Finally set some default values for private fields.
     //
     ClearIpAndDisconnectData();
-    memset((void *) &_apInformation, 0, sizeof(wifi_event_sta_connected_t));
+    memset(&_apInformation, 0, sizeof(wifi_event_sta_connected_t));
     _lastIdfErrorCode = ESP_OK;
     _ipChanged = false;
     _progressiveDelay = new ProgressiveDelay();
@@ -812,8 +812,8 @@ WiFiRequestHandler *WiFiRequestHandler::GetInstance()
  */
 void WiFiRequestHandler::ClearIpAndDisconnectData()
 {
-    memset((void *) &_instance->_disconnectData, 0, sizeof(_disconnectData));
-    memset((void *) &_instance->_ipInformation, 0, sizeof(_ipInformation));
+    memset(&_instance->_disconnectData, 0, sizeof(_disconnectData));
+    memset(&_instance->_ipInformation, 0, sizeof(_ipInformation));
 }
 
 /**
@@ -916,16 +916,16 @@ void WiFiRequestHandler::PopulateConnectionEventDataStructure(Esp32Messaging::Co
     //
     //  IP information.
     //
-    memcpy((void *) &ed->IpAddress, (void *) &_ipInformation.ip.addr, sizeof(ed->IpAddress));
-    memcpy((void *) &ed->SubnetMask, (void *) &_ipInformation.netmask.addr, sizeof(ed->SubnetMask));
-    memcpy((void *) &ed->Gateway, (void *) &_ipInformation.gw.addr, sizeof(ed->Gateway));
+    memcpy(&ed->IpAddress, &_ipInformation.ip.addr, sizeof(ed->IpAddress));
+    memcpy(&ed->SubnetMask, &_ipInformation.netmask.addr, sizeof(ed->SubnetMask));
+    memcpy(&ed->Gateway, &_ipInformation.gw.addr, sizeof(ed->Gateway));
     //
     //  Access point information.
     //
-    memcpy((void *) &ed->Ssid, _apInformation.ssid, _apInformation.ssid_len);
-    memcpy((void *) &ed->Bssid, _apInformation.bssid, sizeof(ed->Bssid));
+    memcpy(&ed->Ssid, _apInformation.ssid, _apInformation.ssid_len);
+    memcpy(&ed->Bssid, _apInformation.bssid, sizeof(ed->Bssid));
     ed->Channel = _apInformation.channel;
-    Mapping::GetStmValue(Mapping::NetworkAuthenticationType, _apInformation.authmode, (int8_t *) &ed->AuthenticationMode);
+    Mapping::GetStmValue(Mapping::NetworkAuthenticationType, _apInformation.authmode, reinterpret_cast<int8_t *>(&ed->AuthenticationMode));
 
     TRACE_MESSAGE("PopulateConnectionEventDataStructure: Exit");
 }
@@ -980,10 +980,10 @@ void WiFiRequestHandler::RaiseDisconnectEvent()
         memset(ed, 0, sizeof(Esp32Messaging::DisconnectEventData));
 
         // Station information
-        memcpy((void *) &ed->Ssid, (void *) &_disconnectData.ssid, sizeof(ed->Ssid));
-        memcpy((void *) &ed->SsidLength, (void *) &_disconnectData.ssid_len, sizeof(ed->SsidLength));
-        memcpy((void *) &ed->Bssid, (void *) &_disconnectData.bssid, sizeof(ed->Bssid));
-        memcpy((void *) &ed->Reason, (void *) &_disconnectData.reason, sizeof(ed->Reason));
+        memcpy(&ed->Ssid, &_disconnectData.ssid, sizeof(ed->Ssid));
+        memcpy(&ed->SsidLength, &_disconnectData.ssid_len, sizeof(ed->SsidLength));
+        memcpy(&ed->Bssid, &_disconnectData.bssid, sizeof(ed->Bssid));
+        memcpy(&ed->Reason, &_disconnectData.reason, sizeof(ed->Reason));
 
         uint32_t payloadLength = Encoders::EncodeDisconnectEventDataBufferSize(ed);
         uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
@@ -1068,7 +1068,7 @@ void WiFiRequestHandler::RaiseNetworkGotIpEvent()
     if (ed != nullptr)
     {
         memset(ed, 0, sizeof(Esp32Messaging::GotIpEventData));
-        memcpy((void *) &ed->DnsAddress, (void *) &dnsInformation.ip.u_addr.ip4.addr, sizeof(ed->DnsAddress));
+        memcpy(&ed->DnsAddress, &dnsInformation.ip.u_addr.ip4.addr, sizeof(ed->DnsAddress));
         uint32_t payloadLength = Encoders::EncodedGotIpEventDataBufferSize(ed);
         uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
         if (payload != NULL)
@@ -1297,7 +1297,7 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
                 SetAntennaRequest(request);
                 break;
             case WiFiFunction::Close:
-                Close((void *) request);
+                Close(request);
                 xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
                 break;
             case WiFiFunction::Read:
@@ -1341,7 +1341,7 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
                 xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
                 break;
             case WiFiFunction::Poll:
-                Poll((void *) request);
+                Poll(request);
                 xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
                 break;
             case WiFiFunction::Send:
@@ -1678,7 +1678,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const Esp32Mes
             else
             {
                 int32_t found;
-                result = (StatusCodes::StatusCodes) Mapping::GetStmValue(Mapping::EspErrorCodes, (int32_t) _lastIdfErrorCode, &found);
+                result = static_cast<StatusCodes::StatusCodes>(Mapping::GetStmValue(Mapping::EspErrorCodes, static_cast<int32_t>(_lastIdfErrorCode), &found));
             }
         }
     }
@@ -2057,7 +2057,7 @@ void WiFiRequestHandler::StationGotIpEvent(ip_event_got_ip_t *eventData)
 {
     TRACE_MESSAGE("StationGotIpEvent: Enter");
     _currentRetryCount = 0;
-    memcpy((void *) &_ipInformation, (void *) &eventData->ip_info, sizeof(esp_netif_ip_info_t));
+    memcpy(&_ipInformation, &eventData->ip_info, sizeof(esp_netif_ip_info_t));
     _ipChanged = eventData->ip_changed;
 
     if (_useDhcp)
@@ -2079,7 +2079,7 @@ void WiFiRequestHandler::StationStartedEvent()
     char *deviceName = SystemRequestHandler::GetDeviceName();
     if (deviceName == NULL)
     {
-        deviceName = (char *) "Meadow";
+        deviceName = "Meadow";
     }
     _lastIdfErrorCode = esp_netif_set_hostname(_stationNetIfHandle, deviceName);
     if (_lastIdfErrorCode != ESP_OK)
@@ -2119,7 +2119,7 @@ void WiFiRequestHandler::StationStoppedEvent()
 void WiFiRequestHandler::StationConnectedEvent(wifi_event_sta_connected_t *eventData)
 {
     TRACE_MESSAGE("StationConnectedEvent: Enter");
-    memcpy((void *) &_apInformation, (void *) eventData, sizeof(wifi_event_sta_connected_t));
+    memcpy(&_apInformation, eventData, sizeof(wifi_event_sta_connected_t));
 
     xEventGroupClearBits(_xWiFiEventGroup, WIFI_CONNECTING_BIT);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT);
@@ -2203,7 +2203,7 @@ void WiFiRequestHandler::StationDisconnectedEvent(wifi_event_sta_disconnected_t 
     {
         memcpy(&_disconnectData, eventData, sizeof(wifi_event_sta_disconnected_t));
         RaiseDisconnectEvent();
-        memset((void *) &_apInformation, 0, sizeof(wifi_event_sta_connected_t));
+        memset(&_apInformation, 0, sizeof(wifi_event_sta_connected_t));
         ClearIpAndDisconnectData();
         xEventGroupClearBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT | WIFI_CONNECTING_BIT | WIFI_HAVE_IP_BIT);
         xEventGroupSetBits(_xWiFiEventGroup, WIFI_ERROR_BIT);

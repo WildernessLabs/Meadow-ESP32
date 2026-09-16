@@ -395,7 +395,7 @@ private:
      *  @brief Name of the NTP server to be used when using NTP to set the time
      *  when the board starts.
      */
-    static char *_ntpServer;
+    static const char *_ntpServer;
 
     /**
      *  @brief Name of the storage space in NVS holding the timezone information.
@@ -405,7 +405,7 @@ private:
     /**
      *  @brief Timezone to be used when the ESP32 starts.  Default will be UTC.
      */
-    static char *_timezone;
+    static const char *_timezone;
 
     /**
      *  @brief Name of the storage space in NVS holding the NTP server information.

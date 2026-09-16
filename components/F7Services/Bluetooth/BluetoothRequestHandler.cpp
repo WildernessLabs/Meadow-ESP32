@@ -204,8 +204,8 @@ void BluetoothRequestHandler::GenerateAdvertisingData()
     TRACE_MESSAGE("GenerateAdvertisingData: Enter");
 
     uint16_t companyIdentifier = _manager.GetCompanyIdentifier();
-    _manufacturerData[0] = (uint8_t) (companyIdentifier & 0x00FF);
-    _manufacturerData[1] = (uint8_t) ((companyIdentifier & 0xFF00) >> 8);
+    _manufacturerData[0] = static_cast<uint8_t>((companyIdentifier & 0x00FF));
+    _manufacturerData[1] = static_cast<uint8_t>(((companyIdentifier & 0xFF00) >> 8));
 
     memset(&_advertisingData, 0, sizeof(esp_ble_adv_data_t));
     /* The length of adv data must be less than 31 bytes */
@@ -347,14 +347,16 @@ void BluetoothRequestHandler::GenerateAttributeTable()
     {
         TRACE_MESSAGE("ATTRIBUTE TABLE SERVICE AT %" PRId32, index);
         // service attribute - all services are primary for now
-        _attribute_table[index++] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *) &primary_service_uuid, ESP_GATT_PERM_READ, sizeof(uint16_t), sizeof(svc->Uuid), (uint8_t *) &svc->Uuid}};
+        _attribute_table[index++] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, reinterpret_cast<uint8_t *>(const_cast<uint16_t *>(&primary_service_uuid)), ESP_GATT_PERM_READ, sizeof(uint16_t), sizeof(svc->Uuid), reinterpret_cast<uint8_t *>(&svc->Uuid)}};
 
         TRACE_MESSAGE("CONTAINS %" PRIu32 " CHARACTERISTICS", svc->GetCharacteristicDefinitions().size());
         for (const auto &characteristic: svc->GetCharacteristicDefinitions())
         {
             TRACE_MESSAGE("ATTRIBUTE TABLE DECLARATION AT %" PRId32, index);
             // declaration attribute
-            _attribute_table[index++] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *) &characteristic->Declaration->Uuid, (uint16_t) characteristic->Declaration->Permission, CHAR_DECLARATION_SIZE, CHAR_DECLARATION_SIZE, (uint8_t *) &characteristic->Declaration->Properties}};
+            _attribute_table[index++] = {
+                {ESP_GATT_AUTO_RSP},
+                {ESP_UUID_LEN_16, reinterpret_cast<uint8_t *>(&characteristic->Declaration->Uuid), static_cast<uint16_t>(characteristic->Declaration->Permission), CHAR_DECLARATION_SIZE, CHAR_DECLARATION_SIZE, reinterpret_cast<uint8_t *>(&characteristic->Declaration->Properties)}};
 
             TRACE_MESSAGE("ATTRIBUTE TABLE VALUE AT %" PRId32, index);
             // value attribute
@@ -362,11 +364,14 @@ void BluetoothRequestHandler::GenerateAttributeTable()
             // data in the parameter database.  We need to call to the STM for data, so this is sensible.
             if (characteristic->Value->Is128())
             {
-                _attribute_table[index++] = {{ESP_GATT_RSP_BY_APP}, {ESP_UUID_LEN_128, (uint8_t *) &characteristic->Value->uuid128, (uint16_t) characteristic->Value->Permission, characteristic->Value->MaxLength, 0, NULL}}; // <- 0, NULL means "current value length is 0, current value data is null"
+                _attribute_table[index++] = {
+                    {ESP_GATT_RSP_BY_APP},
+                    {ESP_UUID_LEN_128, reinterpret_cast<uint8_t *>(&characteristic->Value->uuid128), static_cast<uint16_t>(characteristic->Value->Permission), characteristic->Value->MaxLength, 0, NULL}}; // <- 0, NULL means "current value length is 0, current value data is null"
             }
             else
             {
-                _attribute_table[index++] = {{ESP_GATT_RSP_BY_APP}, {ESP_UUID_LEN_16, (uint8_t *) &characteristic->Value->uuid16, (uint16_t) characteristic->Value->Permission, characteristic->Value->MaxLength, 0, NULL}}; // <- 0, NULL means "current value length is 0, current value data is null"
+                _attribute_table[index++] = {
+                    {ESP_GATT_RSP_BY_APP}, {ESP_UUID_LEN_16, reinterpret_cast<uint8_t *>(&characteristic->Value->uuid16), static_cast<uint16_t>(characteristic->Value->Permission), characteristic->Value->MaxLength, 0, NULL}}; // <- 0, NULL means "current value length is 0, current value data is null"
             }
 
             for (const auto &descriptor: characteristic->GetDescriptorDefinitions())
@@ -374,11 +379,11 @@ void BluetoothRequestHandler::GenerateAttributeTable()
                 TRACE_MESSAGE("ATTRIBUTE TABLE DESCRIPTOR AT %" PRId32, index);
                 if (descriptor->Is128())
                 {
-                    _attribute_table[index++] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_128, (uint8_t *) &descriptor->uuid128, (uint16_t) descriptor->Permission, descriptor->MaxLength, descriptor->CurrentLength, descriptor->Value}};
+                    _attribute_table[index++] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_128, reinterpret_cast<uint8_t *>(&descriptor->uuid128), static_cast<uint16_t>(descriptor->Permission), descriptor->MaxLength, descriptor->CurrentLength, descriptor->Value}};
                 }
                 else
                 {
-                    _attribute_table[index++] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, (uint8_t *) &descriptor->uuid16, (uint16_t) descriptor->Permission, descriptor->MaxLength, descriptor->CurrentLength, descriptor->Value}};
+                    _attribute_table[index++] = {{ESP_GATT_AUTO_RSP}, {ESP_UUID_LEN_16, reinterpret_cast<uint8_t *>(&descriptor->uuid16), static_cast<uint16_t>(descriptor->Permission), descriptor->MaxLength, descriptor->CurrentLength, descriptor->Value}};
                 }
             }
         }
@@ -400,7 +405,7 @@ void BluetoothRequestHandler::GetHandles(Message * const request)
     response.HandleCount = GetHandleCount();
     response.HandlesLength = response.HandleCount * 2;
     response.Handles = static_cast<uint8_t *>(pvPortMalloc(response.HandlesLength));
-    _manager.GetHandles((uint16_t *) response.Handles);
+    _manager.GetHandles(reinterpret_cast<uint16_t *>(response.Handles));
 
     request->PayloadLength = Encoders::EncodedBTGetHandlesResponseBufferSize(&response);
     request->Payload = static_cast<uint8_t *>(pvPortMalloc(request->PayloadLength));

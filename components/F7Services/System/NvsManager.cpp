@@ -322,7 +322,7 @@ NvsManager::ErrorCodes NvsManager::SetValue(const char *nameSpace, const char *n
  */
 int32_t NvsManager::GetValue(const char *nameSpace, const char *name, const int32_t defaultValue)
 {
-    return ((int) GetValue(nameSpace, name, (uint32_t) defaultValue));
+    return (static_cast<int>(GetValue(nameSpace, name, static_cast<uint32_t>(defaultValue))));
 }
 
 /**
@@ -342,7 +342,7 @@ int32_t NvsManager::GetValue(const char *nameSpace, const char *name, const int3
  */
 NvsManager::ErrorCodes NvsManager::SetValue(const char *nameSpace, const char *name, const int32_t value)
 {
-    return (SetValue(nameSpace, name, (uint32_t) value));
+    return (SetValue(nameSpace, name, static_cast<uint32_t>(value)));
 }
 
 /**
@@ -465,7 +465,7 @@ NvsManager::ErrorCodes NvsManager::SetValue(const char *nameSpace, const char *n
  */
 bool NvsManager::GetValue(const char *nameSpace, const char *name, const bool defaultValue)
 {
-    return (GetValue(nameSpace, name, (uint8_t) (defaultValue ? 1 : 0)) == 1);
+    return (GetValue(nameSpace, name, static_cast<uint8_t>(defaultValue ? 1 : 0)) == 1);
 }
 
 /**
@@ -485,5 +485,5 @@ bool NvsManager::GetValue(const char *nameSpace, const char *name, const bool de
  */
 NvsManager::ErrorCodes NvsManager::SetValue(const char *nameSpace, const char *name, const bool value)
 {
-    return (SetValue(nameSpace, name, (uint8_t) (value ? 1 : 0)));
+    return (SetValue(nameSpace, name, static_cast<uint8_t>(value ? 1 : 0)));
 }

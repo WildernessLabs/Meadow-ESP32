@@ -30,7 +30,7 @@
 /**
  *  Static string to be used if a string mapping cannot be found.
  */
-static char *_unknown = (char *) "Unknown";
+static const char *_unknown = "Unknown";
 
 /**
  *  @brief Map the STM32 address family codes to ESP32 address family code.
@@ -277,45 +277,45 @@ Mapping::int_mapping_t Mapping::_networkAuthenticationType[] = {
  *  @brief Map of the status codes to their string representations.
  */
 Mapping::str_mapping_t Mapping::_statusCodes[] = {
-    {StatusCodes::CompletedOk, (char *) "CompletedOk"},
-    {StatusCodes::CrcError, (char *) "CrcError"},
-    {StatusCodes::Restart, (char *) "Restarting"},
-    {StatusCodes::Failure, (char *) "Failure"},
-    {StatusCodes::InvalidInterface, (char *) "InvalidInterface"},
-    {StatusCodes::QueueError, (char *) "QueueError"},
-    {StatusCodes::Timeout, (char *) "Timeout"},
-    {StatusCodes::InvalidPacket, (char *) "InvalidPacket"},
-    {StatusCodes::InvalidHeader, (char *) "InvalidHeader"},
-    {StatusCodes::UnexpectedData, (char *) "UnexpectedData"},
-    {StatusCodes::MissingEndOfFrameMarker, (char *) "MissingEndOfFrameMarker"},
-    {StatusCodes::HeaderBodyFieldMismatch, (char *) "HeaderBodyFieldMismatch"},
-    {StatusCodes::WiFiAlreadyStarted, (char *) "WiFiAlreadyStarted"},
-    {StatusCodes::InvalidWiFiCredentials, (char *) "InvalidWiFiCredentials"},
-    {StatusCodes::WiFiDisconnected, (char *) "WiFiDisconnected"},
-    {StatusCodes::CannotStartNetworkInterface, (char *) "CannotStartNetworkInterface"},
-    {StatusCodes::CannotConnectToAccessPoint, (char *) "CannotConnectToAccessPoint"},
-    {StatusCodes::InvalidAntennaData, (char *) "InvalidAntennaData"},
-    {StatusCodes::InvalidAntennaValue, (char *) "InvalidAntennaValue"},
-    {StatusCodes::NoMessagesWaiting, (char *) "NoMessagesWaiting"},
-    {StatusCodes::CoprocessorNotResponding, (char *) "CoprocessorNotResponding"},
-    {StatusCodes::EspWiFiNotStarted, (char *) "EspWiFiNotStarted"},
-    {StatusCodes::EspOutOfMemory, (char *) "EspOutOfMemory"},
-    {StatusCodes::EspWiFiInvalidSsid, (char *) "EspWiFiInvalidSsid"},
-    {StatusCodes::AccessPointNotFound, (char *) "AccessPointNotFound"},
-    {StatusCodes::BeaconTimeout, (char *) "BeaconTimeout"},
-    {StatusCodes::AuthenticationFailed, (char *) "AuthenticationFailed"},
-    {StatusCodes::AssociationFailed, (char *) "AssociationFailed"},
-    {StatusCodes::HandshakeTimeout, (char *) "HandshakeTimeout"},
-    {StatusCodes::ConnectionFailed, (char *) "ConnectionFailed"},
-    {StatusCodes::ApTsfReset, (char *) "ApTsfReset"},
-    {StatusCodes::UnmappedErrorCode, (char *) "UnmappedErrorCode"},
-    {StatusCodes::UnknownConfigurationItem, (char *) "UnknownConfigurationItem"},
-    {StatusCodes::CannotStartAccessPoint, (char *) "CannotStartAccessPoint"},
-    {StatusCodes::DhcpConfigurationError, (char *) "DhcpConfigurationError"},
-    {StatusCodes::AccessPointNotStarted, (char *) "AccessPointNotStarted"},
-    {StatusCodes::AccessPointAlreadyStarted, (char *) "AccessPointAlreadyStarted"},
-    {StatusCodes::FileNotFound, (char *) "FileNotFound"},
-    {StatusCodes::InvalidRequest, (char *) "InvalidRequest"},
+    {StatusCodes::CompletedOk, "CompletedOk"},
+    {StatusCodes::CrcError, "CrcError"},
+    {StatusCodes::Restart, "Restarting"},
+    {StatusCodes::Failure, "Failure"},
+    {StatusCodes::InvalidInterface, "InvalidInterface"},
+    {StatusCodes::QueueError, "QueueError"},
+    {StatusCodes::Timeout, "Timeout"},
+    {StatusCodes::InvalidPacket, "InvalidPacket"},
+    {StatusCodes::InvalidHeader, "InvalidHeader"},
+    {StatusCodes::UnexpectedData, "UnexpectedData"},
+    {StatusCodes::MissingEndOfFrameMarker, "MissingEndOfFrameMarker"},
+    {StatusCodes::HeaderBodyFieldMismatch, "HeaderBodyFieldMismatch"},
+    {StatusCodes::WiFiAlreadyStarted, "WiFiAlreadyStarted"},
+    {StatusCodes::InvalidWiFiCredentials, "InvalidWiFiCredentials"},
+    {StatusCodes::WiFiDisconnected, "WiFiDisconnected"},
+    {StatusCodes::CannotStartNetworkInterface, "CannotStartNetworkInterface"},
+    {StatusCodes::CannotConnectToAccessPoint, "CannotConnectToAccessPoint"},
+    {StatusCodes::InvalidAntennaData, "InvalidAntennaData"},
+    {StatusCodes::InvalidAntennaValue, "InvalidAntennaValue"},
+    {StatusCodes::NoMessagesWaiting, "NoMessagesWaiting"},
+    {StatusCodes::CoprocessorNotResponding, "CoprocessorNotResponding"},
+    {StatusCodes::EspWiFiNotStarted, "EspWiFiNotStarted"},
+    {StatusCodes::EspOutOfMemory, "EspOutOfMemory"},
+    {StatusCodes::EspWiFiInvalidSsid, "EspWiFiInvalidSsid"},
+    {StatusCodes::AccessPointNotFound, "AccessPointNotFound"},
+    {StatusCodes::BeaconTimeout, "BeaconTimeout"},
+    {StatusCodes::AuthenticationFailed, "AuthenticationFailed"},
+    {StatusCodes::AssociationFailed, "AssociationFailed"},
+    {StatusCodes::HandshakeTimeout, "HandshakeTimeout"},
+    {StatusCodes::ConnectionFailed, "ConnectionFailed"},
+    {StatusCodes::ApTsfReset, "ApTsfReset"},
+    {StatusCodes::UnmappedErrorCode, "UnmappedErrorCode"},
+    {StatusCodes::UnknownConfigurationItem, "UnknownConfigurationItem"},
+    {StatusCodes::CannotStartAccessPoint, "CannotStartAccessPoint"},
+    {StatusCodes::DhcpConfigurationError, "DhcpConfigurationError"},
+    {StatusCodes::AccessPointNotStarted, "AccessPointNotStarted"},
+    {StatusCodes::AccessPointAlreadyStarted, "AccessPointAlreadyStarted"},
+    {StatusCodes::FileNotFound, "FileNotFound"},
+    {StatusCodes::InvalidRequest, "InvalidRequest"},
 };
 
 /**
@@ -330,114 +330,112 @@ Mapping::int_mapping_t Mapping::_resetReasons[] = {
  *  @brief Map of the message types to their string representations.
  */
 Mapping::str_mapping_t Mapping::_messageTypeNames[] = {
-    {MessageTypes::Ack, (char *) "Ack"},        {MessageTypes::Nak, (char *) "Nak"},   {MessageTypes::Reset, (char *) "Reset"}, {MessageTypes::Event, (char *) "Event"}, {MessageTypes::Response, (char *) "Response"}, {MessageTypes::Transport, (char *) "Transport"},
-    {MessageTypes::Header, (char *) "Request"}, {MessageTypes::Data, (char *) "Data"},
+    {MessageTypes::Ack, "Ack"}, {MessageTypes::Nak, "Nak"}, {MessageTypes::Reset, "Reset"}, {MessageTypes::Event, "Event"}, {MessageTypes::Response, "Response"}, {MessageTypes::Transport, "Transport"}, {MessageTypes::Header, "Request"}, {MessageTypes::Data, "Data"},
 };
 
 /**
  *  @brief Map if the interface IDs to their names.
  */
 Mapping::str_mapping_t Mapping::_interfaceNames[] = {
-    {Esp32Interfaces::WiFi, (char *) "WiFi"}, {Esp32Interfaces::BlueTooth, (char *) "Bluetooth"}, {Esp32Interfaces::MeshNetwork, (char *) "MeshNetwork"}, {Esp32Interfaces::System, (char *) "System"}, {Esp32Interfaces::Transport, (char *) "Transport"},
+    {Esp32Interfaces::WiFi, "WiFi"}, {Esp32Interfaces::BlueTooth, "Bluetooth"}, {Esp32Interfaces::MeshNetwork, "MeshNetwork"}, {Esp32Interfaces::System, "System"}, {Esp32Interfaces::Transport, "Transport"},
 };
 
 /**
  *  @brief Map of the system function IDs to their names.
  */
 Mapping::str_mapping_t Mapping::_systemFunctionNames[] = {
-    {SystemFunction::GetConfiguration, (char *) "GetConfiguration"},
-    {SystemFunction::SetConfigurationItem, (char *) "SetConfigurationItem"},
-    {SystemFunction::DeepSleep, (char *) "DeepSleep"},
-    {SystemFunction::GetBatteryChargeLevel, (char *) "GetBatteryChargeLevel"},
-    {SystemFunction::StartHeapTrace, (char *) "StartHeapTrace"},
-    {SystemFunction::StopHeapTrace, (char *) "StopHeapTrace"},
-    {SystemFunction::FileSystemFormat, (char *) "FileSystemFormat"},
-    {SystemFunction::FileSystemListFiles, (char *) "FileSystemListFiles"},
-    {SystemFunction::FileSystemWriteFile, (char *) "FileSystemWriteFile"},
-    {SystemFunction::FileSystemReadFile, (char *) "FileSystemReadFile"},
-    {SystemFunction::FileSystemDeleteFile, (char *) "FileSystemDeleteFile"},
-    {SystemFunction::LoggingConfiguration, (char *) "LoggingConfiguration"},
-    {SystemFunction::LogMessage, (char *) "LogMessage"},
-    {SystemFunction::GetCoreDumpInformation, (char *) "GetCoreDumpInformation"},
-    {SystemFunction::GetCoreDumpFragment, (char *) "GetCoreDumpFragment"},
-    {SystemFunction::EraseCoreDump, (char *) "EraseCoreDump"},
+    {SystemFunction::GetConfiguration, "GetConfiguration"},
+    {SystemFunction::SetConfigurationItem, "SetConfigurationItem"},
+    {SystemFunction::DeepSleep, "DeepSleep"},
+    {SystemFunction::GetBatteryChargeLevel, "GetBatteryChargeLevel"},
+    {SystemFunction::StartHeapTrace, "StartHeapTrace"},
+    {SystemFunction::StopHeapTrace, "StopHeapTrace"},
+    {SystemFunction::FileSystemFormat, "FileSystemFormat"},
+    {SystemFunction::FileSystemListFiles, "FileSystemListFiles"},
+    {SystemFunction::FileSystemWriteFile, "FileSystemWriteFile"},
+    {SystemFunction::FileSystemReadFile, "FileSystemReadFile"},
+    {SystemFunction::FileSystemDeleteFile, "FileSystemDeleteFile"},
+    {SystemFunction::LoggingConfiguration, "LoggingConfiguration"},
+    {SystemFunction::LogMessage, "LogMessage"},
+    {SystemFunction::GetCoreDumpInformation, "GetCoreDumpInformation"},
+    {SystemFunction::GetCoreDumpFragment, "GetCoreDumpFragment"},
+    {SystemFunction::EraseCoreDump, "EraseCoreDump"},
 };
 
 /**
  *  @brief Map of the bluetooth function IDs to their names.
  */
 Mapping::str_mapping_t Mapping::_bluetoothFunctionNames[] = {
-    {BluetoothFunction::Start, (char *) "Start"},
-    {BluetoothFunction::Stop, (char *) "Stop"},
-    {BluetoothFunction::GetHandles, (char *) "GetHandles"},
-    {BluetoothFunction::ServerDataSet, (char *) "ServerDataSet"},
-    {BluetoothFunction::ClientWriteRequestEvent, (char *) "ClientWriteRequestEvent"},
-    {BluetoothFunction::BluetoothStartingEvent, (char *) "BluetoothStartingEvent"},
-    {BluetoothFunction::BluetoothStartedEvent, (char *) "BluetoothStartedEvent"},
-    {BluetoothFunction::BluetoothStoppingEvent, (char *) "BluetoothStoppingEvent"},
-    {BluetoothFunction::BluetoothStoppedEvent, (char *) "BluetoothStoppedEvent"},
-    {BluetoothFunction::ClientConnectedEvent, (char *) "ClientConnectedEvent"},
-    {BluetoothFunction::ClientDisconnectedEvent, (char *) "ClientDisconnectedEvent"},
+    {BluetoothFunction::Start, "Start"},
+    {BluetoothFunction::Stop, "Stop"},
+    {BluetoothFunction::GetHandles, "GetHandles"},
+    {BluetoothFunction::ServerDataSet, "ServerDataSet"},
+    {BluetoothFunction::ClientWriteRequestEvent, "ClientWriteRequestEvent"},
+    {BluetoothFunction::BluetoothStartingEvent, "BluetoothStartingEvent"},
+    {BluetoothFunction::BluetoothStartedEvent, "BluetoothStartedEvent"},
+    {BluetoothFunction::BluetoothStoppingEvent, "BluetoothStoppingEvent"},
+    {BluetoothFunction::BluetoothStoppedEvent, "BluetoothStoppedEvent"},
+    {BluetoothFunction::ClientConnectedEvent, "ClientConnectedEvent"},
+    {BluetoothFunction::ClientDisconnectedEvent, "ClientDisconnectedEvent"},
 };
 
 /**
  *  @brief Map of the transport function IDs to their names.
  */
-Mapping::str_mapping_t Mapping::_transportFunctionNames[] = {
-    {TransportFunction::ResponseReady, (char *) "ResponseReady"}, {TransportFunction::SendResponse, (char *) "SendResponse"}, {TransportFunction::KillNuttxThread, (char *) "KillNuttxThread"}, {TransportFunction::ResetEsp32, (char *) "ResetEsp32"}};
+Mapping::str_mapping_t Mapping::_transportFunctionNames[] = {{TransportFunction::ResponseReady, "ResponseReady"}, {TransportFunction::SendResponse, "SendResponse"}, {TransportFunction::KillNuttxThread, "KillNuttxThread"}, {TransportFunction::ResetEsp32, "ResetEsp32"}};
 
 /**
  *  @brief Map of the WiFi function ID to their names.
  */
 Mapping::str_mapping_t Mapping::_wifiFunctionNames[] = {
-    {WiFiFunction::ConnectToAccessPoint, (char *) "ConnectToAccessPoint"},
-    {WiFiFunction::ConnectToDefaultAccessPoint, (char *) "ConnectToDefaultAccessPoint"},
-    {WiFiFunction::StartAccessPoint, (char *) "StartAccessPoint"},
-    {WiFiFunction::StopAccessPoint, (char *) "StopAccesPoint"},
-    {WiFiFunction::NodeConnectedEvent, (char *) "NodeConnected"},
-    {WiFiFunction::NodeDisconnectedEvent, (char *) "NodeDisconnectedEvent"},
-    {WiFiFunction::DisconnectFromAccessPoint, (char *) "DisconnectFromAccessPoint"},
-    {WiFiFunction::GetAccessPoints, (char *) "GetAccessPoints"},
-    {WiFiFunction::GetAddrInfo, (char *) "GetAddrInfo"},
-    {WiFiFunction::Socket, (char *) "Socket"},
-    {WiFiFunction::Connect, (char *) "Connect"},
-    {WiFiFunction::Write, (char *) "Write"},
-    {WiFiFunction::SetSockOpt, (char *) "SetSockOpt"},
-    {WiFiFunction::Read, (char *) "Read"},
-    {WiFiFunction::Close, (char *) "Close"},
-    {WiFiFunction::SendTo, (char *) "SendTo"},
-    {WiFiFunction::RecvFrom, (char *) "RecvFrom"},
-    {WiFiFunction::Poll, (char *) "Poll"},
-    {WiFiFunction::InterruptPollResponse, (char *) "InterruptPollResponse"},
-    {WiFiFunction::Send, (char *) "Send"},
-    {WiFiFunction::Bind, (char *) "Bind"},
-    {WiFiFunction::Listen, (char *) "Listen"},
-    {WiFiFunction::Accept, (char *) "Accept"},
-    {WiFiFunction::Ioctl, (char *) "Ioctl"},
-    {WiFiFunction::GetSockName, (char *) "GetSockName"},
-    {WiFiFunction::GetPeerName, (char *) "GetPeerName"},
-    {WiFiFunction::FreeAddrInfo, (char *) "FreeAddrInfo"},
-    {WiFiFunction::GetAddrInfo, (char *) "GetAddrInfo"},
-    {WiFiFunction::RecvMsg, (char *) "RecvMsg"},
-    {WiFiFunction::Shutdown, (char *) "Shutdown"},
-    {WiFiFunction::SendMsg, (char *) "SendMsg"},
-    {WiFiFunction::Dup2, (char *) "Dup2"},
-    {WiFiFunction::AddRef, (char *) "AddRef"},
-    {WiFiFunction::SockCaps, (char *) "SockCaps"},
-    {WiFiFunction::StartWiFiInterfaceEvent, (char *) "StartWiFiInterfaceEvent"},
-    {WiFiFunction::StopWiFiInterfaceEvent, (char *) "StopWiFiInterfaceEvent"},
-    {WiFiFunction::NetworkConnectedEvent, (char *) "NetworkConnectedEvent"},
-    {WiFiFunction::NetworkDisconnectedEvent, (char *) "NetworkDisconnectedEvent"},
-    {WiFiFunction::NtpUpdateEvent, (char *) "NtpUpdateEvent"},
-    {WiFiFunction::ErrorEvent, (char *) "ErrorEvent"},
-    {WiFiFunction::StartAccessPoint, (char *) "StartAccessPoint"},
-    {WiFiFunction::StopAccessPoint, (char *) "StopAccessPoint"},
-    {WiFiFunction::AccessPointStartedEvent, (char *) "AccessPointStartedEvent"},
-    {WiFiFunction::AccessPointStoppedEvent, (char *) "AccessPointStoppedEvent"},
-    {WiFiFunction::NodeConnectedEvent, (char *) "NodeConnectedEvent"},
-    {WiFiFunction::NodeDisconnectedEvent, (char *) "NodeDisconnectedEvent"},
-    {WiFiFunction::NetworkConnectionRetryCountExceededEvent, (char *) "NetworkConnectionRetryCountExceededEvent"},
-    {WiFiFunction::NetworkConnectingEvent, (char *) "NetworkConnectingEvent"}};
+    {WiFiFunction::ConnectToAccessPoint, "ConnectToAccessPoint"},
+    {WiFiFunction::ConnectToDefaultAccessPoint, "ConnectToDefaultAccessPoint"},
+    {WiFiFunction::StartAccessPoint, "StartAccessPoint"},
+    {WiFiFunction::StopAccessPoint, "StopAccesPoint"},
+    {WiFiFunction::NodeConnectedEvent, "NodeConnected"},
+    {WiFiFunction::NodeDisconnectedEvent, "NodeDisconnectedEvent"},
+    {WiFiFunction::DisconnectFromAccessPoint, "DisconnectFromAccessPoint"},
+    {WiFiFunction::GetAccessPoints, "GetAccessPoints"},
+    {WiFiFunction::GetAddrInfo, "GetAddrInfo"},
+    {WiFiFunction::Socket, "Socket"},
+    {WiFiFunction::Connect, "Connect"},
+    {WiFiFunction::Write, "Write"},
+    {WiFiFunction::SetSockOpt, "SetSockOpt"},
+    {WiFiFunction::Read, "Read"},
+    {WiFiFunction::Close, "Close"},
+    {WiFiFunction::SendTo, "SendTo"},
+    {WiFiFunction::RecvFrom, "RecvFrom"},
+    {WiFiFunction::Poll, "Poll"},
+    {WiFiFunction::InterruptPollResponse, "InterruptPollResponse"},
+    {WiFiFunction::Send, "Send"},
+    {WiFiFunction::Bind, "Bind"},
+    {WiFiFunction::Listen, "Listen"},
+    {WiFiFunction::Accept, "Accept"},
+    {WiFiFunction::Ioctl, "Ioctl"},
+    {WiFiFunction::GetSockName, "GetSockName"},
+    {WiFiFunction::GetPeerName, "GetPeerName"},
+    {WiFiFunction::FreeAddrInfo, "FreeAddrInfo"},
+    {WiFiFunction::GetAddrInfo, "GetAddrInfo"},
+    {WiFiFunction::RecvMsg, "RecvMsg"},
+    {WiFiFunction::Shutdown, "Shutdown"},
+    {WiFiFunction::SendMsg, "SendMsg"},
+    {WiFiFunction::Dup2, "Dup2"},
+    {WiFiFunction::AddRef, "AddRef"},
+    {WiFiFunction::SockCaps, "SockCaps"},
+    {WiFiFunction::StartWiFiInterfaceEvent, "StartWiFiInterfaceEvent"},
+    {WiFiFunction::StopWiFiInterfaceEvent, "StopWiFiInterfaceEvent"},
+    {WiFiFunction::NetworkConnectedEvent, "NetworkConnectedEvent"},
+    {WiFiFunction::NetworkDisconnectedEvent, "NetworkDisconnectedEvent"},
+    {WiFiFunction::NtpUpdateEvent, "NtpUpdateEvent"},
+    {WiFiFunction::ErrorEvent, "ErrorEvent"},
+    {WiFiFunction::StartAccessPoint, "StartAccessPoint"},
+    {WiFiFunction::StopAccessPoint, "StopAccessPoint"},
+    {WiFiFunction::AccessPointStartedEvent, "AccessPointStartedEvent"},
+    {WiFiFunction::AccessPointStoppedEvent, "AccessPointStoppedEvent"},
+    {WiFiFunction::NodeConnectedEvent, "NodeConnectedEvent"},
+    {WiFiFunction::NodeDisconnectedEvent, "NodeDisconnectedEvent"},
+    {WiFiFunction::NetworkConnectionRetryCountExceededEvent, "NetworkConnectionRetryCountExceededEvent"},
+    {WiFiFunction::NetworkConnectingEvent, "NetworkConnectingEvent"}};
 
 /*
  * ---------------------------------------------------------------------------
@@ -876,9 +874,9 @@ StatusCodes::StatusCodes Mapping::GetStatusCode(const esp_err_t error)
     int32_t result;
     if (GetStmValue(Mapping::EspErrorCodes, error, &result) < 0)
     {
-        result = (int32_t) StatusCodes::UnmappedErrorCode;
+        result = static_cast<int32_t>(StatusCodes::UnmappedErrorCode);
     }
-    return ((StatusCodes::StatusCodes) result);
+    return (static_cast<StatusCodes::StatusCodes>(result));
 }
 
 /**
@@ -894,11 +892,11 @@ StatusCodes::StatusCodes Mapping::GetStatusCode(const esp_err_t error)
  *      String representing the specified value, NULL if the value
  *      could not be found.
  */
-char *Mapping::GetStringValue(const Mapping::StringMappingTable mapping, const int32_t key)
+const char *Mapping::GetStringValue(const Mapping::StringMappingTable mapping, const int32_t key)
 {
     str_mapping_t *table = NULL;
     size_t size = 0;
-    char *result = static_cast<char *>(_unknown);
+    const char *result = _unknown;
     switch (mapping)
     {
         case StringMappingTable::StatusCodes:

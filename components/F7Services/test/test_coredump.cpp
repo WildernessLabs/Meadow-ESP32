@@ -356,7 +356,7 @@ void GenerateCoreDump(uint32_t count)
     {
         printf("Forcing core dump...\n");
         // cppcheck-suppress nullPointer
-        *((uint32_t *) 0) = 0;
+        *(reinterpret_cast<uint32_t *>(0)) = 0;
     }
     else
     {

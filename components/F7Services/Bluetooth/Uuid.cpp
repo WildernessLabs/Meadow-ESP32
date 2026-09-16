@@ -28,12 +28,12 @@
  *
  * @note This is the service at the top of each group.  It has the standard type of 0x2800.
  */
-Uuid16 Uuid16::PrimaryService = Uuid16((uint16_t) 0x2800);
+Uuid16 Uuid16::PrimaryService = Uuid16(static_cast<uint16_t>(0x2800));
 
 /**
  * @brief Characteristic declaration UUID for the Primary Service.
  */
-Uuid16 Uuid16::CharacteristicDeclaration = Uuid16((uint16_t) 0x2803);
+Uuid16 Uuid16::CharacteristicDeclaration = Uuid16(static_cast<uint16_t>(0x2803));
 
 /**
  * @brief Construct a new Uuid16 object (16-bit UUID).
@@ -49,7 +49,7 @@ Uuid16::Uuid16()
  */
 Uuid16::Uuid16(const uint16_t value)
 {
-    memcpy((void *) data, &value, 2);
+    memcpy(data, &value, 2);
 }
 
 /**
@@ -59,7 +59,7 @@ Uuid16::Uuid16(const uint16_t value)
  */
 Uuid16::Uuid16(const uint8_t * const other)
 {
-    memcpy((void *) data, other, 2);
+    memcpy(data, other, 2);
 }
 
 /**
@@ -136,7 +136,7 @@ Uuid128::Uuid128()
  */
 Uuid128::Uuid128(const uint8_t * const other)
 {
-    memcpy((void *) data, other, 16);
+    memcpy(data, other, 16);
 }
 
 /**

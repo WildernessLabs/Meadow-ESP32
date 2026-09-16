@@ -323,7 +323,7 @@ void WiFiRequestHandler::Connect(void * const vpMessage)
                 errno = 0;
                 if (family == AF_INET)
                 {
-                    sa.sin_family = (uint8_t) (family & 0xff);
+                    sa.sin_family = static_cast<uint8_t>(family & 0xff);
                     sa.sin_port = socketAddress->Port;
                     memcpy(&sa.sin_addr, &socketAddress->Ip4Address, sizeof(sa.sin_addr));
                     sa.sin_len = sizeof(struct sockaddr_in);
@@ -331,7 +331,7 @@ void WiFiRequestHandler::Connect(void * const vpMessage)
                     TRACE_MESSAGE("Connect: Family: %d", sa.sin_family);
                     TRACE_MESSAGE("Connect: IP address: %s", inet_ntoa(sa.sin_addr));
                     TRACE_MESSAGE("Connect: Port: %d", ntohs(sa.sin_port));
-                    response.Result = connect(request->SocketHandle, (struct sockaddr *) &sa, sizeof(sa));
+                    response.Result = connect(request->SocketHandle, reinterpret_cast<struct sockaddr *>(&sa), sizeof(sa));
                     if (response.Result != 0)
                     {
                         TRACE_MESSAGE("Connect: Error code: %d - %s", errno, strerror(errno));
@@ -1284,12 +1284,12 @@ StatusCodes::StatusCodes WiFiRequestHandler::SendTo(Esp32Messaging::SendToReques
             {
                 if (request->DestinationAddress)
                 {
-                    sa.sin_family = (unsigned char) (family & 0xff);
+                    sa.sin_family = static_cast<unsigned char>(family & 0xff);
 
                     sa.sin_port = socketAddress->Port;
                     memcpy(&sa.sin_addr, &socketAddress->Ip4Address, sizeof(sa.sin_addr));
                     sa.sin_len = sizeof(sa);
-                    psa = (struct sockaddr *) &sa;
+                    psa = reinterpret_cast<struct sockaddr *>(&sa);
                     lenSa = sizeof(sa);
                 }
                 TRACE_MESSAGE("SendTo: Connecting socket: %" PRIi32, request->SocketHandle);
@@ -1595,11 +1595,11 @@ static bool MapMsgNameToSockAddr(const uint8_t * const raw, const uint32_t lengt
     Mapping::GetEspValue(Mapping::AddressFamily, Encoders::ExtractUInt16(raw), &family);
     if (family == AF_INET)
     {
-        outSa->sin_family = (unsigned char) (family & 0xff);
+        outSa->sin_family = static_cast<unsigned char>(family & 0xff);
         memcpy(&outSa->sin_port, raw + 2, sizeof(outSa->sin_port));
         memcpy(&outSa->sin_addr, raw + 4, sizeof(outSa->sin_addr));
         outSa->sin_len = sizeof(*outSa);
-        *outPsa = (struct sockaddr *) outSa;
+        *outPsa = reinterpret_cast<struct sockaddr *>(outSa);
         *outLen = sizeof(*outSa);
     }
     return (true);
@@ -1639,7 +1639,7 @@ static void EncodeSourceAddressToResponse(const struct sockaddr_in * const sa, c
     else
     {
         memset(response->SourceAddress, 0, response->SourceAddressLength);
-        Encoders::EncodeUInt16((uint16_t) family, response->SourceAddress);
+        Encoders::EncodeUInt16(static_cast<uint16_t>(family), response->SourceAddress);
         memcpy(response->SourceAddress + 2, &sa->sin_port, sizeof(sa->sin_port));
         memcpy(response->SourceAddress + 4, &sa->sin_addr, sizeof(sa->sin_addr));
         response->SourceAddressLen = nameLen;
@@ -1973,7 +1973,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::Bind(Esp32Messaging::BindRequest *r
         TRACE_MESSAGE("Bind: Family: %" PRIi32, sa.sin_family);
         TRACE_MESSAGE("Bind: IP address: %s", inet_ntoa(sa.sin_addr));
         TRACE_MESSAGE("Bind: Port: %" PRIu16, ntohs(sa.sin_port));
-        response.Result = bind(request->SocketHandle, (struct sockaddr *) &sa, sizeof(sa));
+        response.Result = bind(request->SocketHandle, reinterpret_cast<struct sockaddr *>(&sa), sizeof(sa));
         if (response.Result != 0)
         {
             response.ResponseErrno = Mapping::NuttxErrno(errno);
@@ -2144,7 +2144,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::Accept(Esp32Messaging::AcceptReques
         {
             memset(sockAddr, 0, sizeof(Esp32Messaging::SockAddr));
             Mapping::GetStmValue(Mapping::AddressFamily, sa.sa_family, reinterpret_cast<int32_t *>(&sockAddr->Family));
-            struct sockaddr_in *sin = (struct sockaddr_in *) &sa;
+            struct sockaddr_in *sin = reinterpret_cast<struct sockaddr_in *>(&sa);
             sockAddr->Port = sin->sin_port;
             memcpy(&sockAddr->Ip4Address, &sin->sin_addr, sizeof(sin->sin_addr));
             response.AddrLength = Encoders::EncodedSockAddrBufferSize(sockAddr);
@@ -2414,7 +2414,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetSockPeerName(const Esp32Messagin
         }
         memset(sockAddr, 0, sizeof(Esp32Messaging::SockAddr));
         Mapping::GetStmValue(Mapping::AddressFamily, sa.sa_family, reinterpret_cast<int32_t *>(&sockAddr->Family));
-        struct sockaddr_in *sin = (struct sockaddr_in *) &sa;
+        struct sockaddr_in *sin = reinterpret_cast<struct sockaddr_in *>(&sa);
         sockAddr->Port = sin->sin_port;
         memcpy(&sockAddr->Ip4Address, &sin->sin_addr, sizeof(sin->sin_addr));
         response.AddrLength = Encoders::EncodedSockAddrBufferSize(sockAddr);
@@ -2643,7 +2643,7 @@ int WiFiRequestHandler::PollSetup(void * const vpMessage)
     Mapping::GetEspFlagValue(Mapping::PollEvents, request->Events, &events);
 
     fds[WiFiRequestHandler::POLL_FD_INDEX].fd = request->SocketHandle;
-    fds[WiFiRequestHandler::POLL_FD_INDEX].events = (uint16_t) (events & 0xffff);
+    fds[WiFiRequestHandler::POLL_FD_INDEX].events = static_cast<uint16_t>(events & 0xffff);
     fds[WiFiRequestHandler::POLL_DUMMY_FD_INDEX].fd = dummy_socket_handle;
     fds[WiFiRequestHandler::POLL_DUMMY_FD_INDEX].events = POLLIN;
 
@@ -2675,7 +2675,7 @@ int WiFiRequestHandler::PollTeardown(void * const vpMessage)
     TRACE_MESSAGE("PollTeardown: Enter");
     int result = 0;
 
-    Esp32Messaging::PollRequest * const request = (Esp32Messaging::PollRequest *) vpMessage;
+    Esp32Messaging::PollRequest * const request = static_cast<Esp32Messaging::PollRequest *>(vpMessage);
 
 #if defined(WIFI_DEBUG)
     DumpActivePollRequests();
@@ -2727,7 +2727,7 @@ void WiFiRequestHandler::PollSocket(void * const requestId)
     Esp32Messaging::InterruptPollResponse response = {};
 
     LockPollRequests();
-    std::map<uint32_t, struct pollfd *>::iterator it = _pollRequests.find((uint32_t) requestId);
+    std::map<uint32_t, struct pollfd *>::iterator it = _pollRequests.find(reinterpret_cast<uint32_t>(requestId));
     UnlockPollRequests();
     if (it != _pollRequests.end())
     {
@@ -2740,16 +2740,16 @@ void WiFiRequestHandler::PollSocket(void * const requestId)
         else
         {
             LockPollRequests();
-            it = _pollRequests.find((uint32_t) requestId); // Get again in case anything has changed.
+            it = _pollRequests.find(reinterpret_cast<uint32_t>(requestId)); // Get again in case anything has changed.
             if (it != _pollRequests.end())
             {
-                Mapping::GetStmFlagValue(Mapping::PollEvents, fds[POLL_FD_INDEX].revents, (int32_t *) &response.ReturnedEvents);
+                Mapping::GetStmFlagValue(Mapping::PollEvents, fds[POLL_FD_INDEX].revents, reinterpret_cast<int32_t *>(&response.ReturnedEvents));
                 if (response.ReturnedEvents != 0)
                 {
                     response.Result = 1;
                 }
                 TRACE_MESSAGE("PollSocket: Returned ESP32 events 0x%04x maps to NuttX events 0x%04x", fds[POLL_FD_INDEX].revents, response.ReturnedEvents);
-                response.SetupMessageId = (uint32_t) requestId;
+                response.SetupMessageId = reinterpret_cast<uint32_t>(requestId);
                 close(fds[POLL_DUMMY_FD_INDEX].fd);
                 Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&fds));
                 _pollRequests.erase(it);

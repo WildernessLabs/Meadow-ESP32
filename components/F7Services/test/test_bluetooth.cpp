@@ -103,7 +103,7 @@ void EncodeBTServerDataSet(Esp32Messaging::BTServerDataSet *bTServerDataSet, uin
     buffer += 4;
     if (bTServerDataSet->SetDataLength > 0)
     {
-        memcpy((void *) buffer, (void *) bTServerDataSet->SetData, bTServerDataSet->SetDataLength);
+        memcpy(buffer, bTServerDataSet->SetData, bTServerDataSet->SetDataLength);
     }
 }
 
@@ -134,7 +134,7 @@ static void StartBlueToothService(const char * const configuration)
     TEST_ASSERT_NOT_NULL(SetupMessageDispatcher());
 
     Esp32Messaging::BTStackConfig stackConfig;
-    stackConfig.Config = (char *) configuration;
+    stackConfig.Config = const_cast<char *>(configuration);
 
     Message startMessage = {};
     startMessage.MessageType = MessageTypes::Header;
@@ -142,7 +142,7 @@ static void StartBlueToothService(const char * const configuration)
     startMessage.Function = BluetoothFunction::Start;
     startMessage.PayloadLength = EncodedBTStackConfigBufferSize(&stackConfig);
     TEST_ASSERT_GREATER_THAN(0, startMessage.PayloadLength);
-    startMessage.Payload = (uint8_t *) pvPortMalloc(startMessage.PayloadLength);
+    startMessage.Payload = static_cast<uint8_t *>(pvPortMalloc(startMessage.PayloadLength));
     TEST_ASSERT_NOT_NULL(startMessage.Payload);
     EncodeBTStackConfig(&stackConfig, startMessage.Payload);
     messageDispatcher->QueueMessageForEsp32(&startMessage);
@@ -421,10 +421,10 @@ TEST_CASE("Notify characteristic (MeadowC, no company identifier)", CLASS_OF_TES
     uint32_t value = 0xa0a0a0a0;
     Esp32Messaging::BTServerDataSet dataSet;
     dataSet.Handle = 0x2a;
-    dataSet.SetData = (uint8_t *) &value;
+    dataSet.SetData = reinterpret_cast<uint8_t *>(&value);
     dataSet.SetDataLength = sizeof(value);
     message.PayloadLength = EncodedBTServerDataSetBufferSize(&dataSet);
-    uint8_t *payload = (uint8_t *) pvPortMalloc(message.PayloadLength);
+    uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(message.PayloadLength));
     TEST_ASSERT_NOT_NULL(payload);
     EncodeBTServerDataSet(&dataSet, payload);
     message.Payload = payload;
@@ -506,10 +506,10 @@ TEST_CASE("Notify characteristic, multiple descriptors (MeadowD, no company iden
     uint32_t value = 0xa0a0a0a0;
     Esp32Messaging::BTServerDataSet dataSet;
     dataSet.Handle = 0x2a;
-    dataSet.SetData = (uint8_t *) &value;
+    dataSet.SetData = reinterpret_cast<uint8_t *>(&value);
     dataSet.SetDataLength = sizeof(value);
     message.PayloadLength = EncodedBTServerDataSetBufferSize(&dataSet);
-    uint8_t *payload = (uint8_t *) pvPortMalloc(message.PayloadLength);
+    uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(message.PayloadLength));
     TEST_ASSERT_NOT_NULL(payload);
     EncodeBTServerDataSet(&dataSet, payload);
     message.Payload = payload;
@@ -528,7 +528,7 @@ TEST_CASE("Notify characteristic, multiple descriptors (MeadowD, no company iden
         TEST_ASSERT_EQUAL(0, response->PayloadLength);
         if ((response->MessageType != MessageTypes::Response) && (response->MessageType != MessageTypes::Event))
         {
-            printf("Unexpected message type: %" PRIu32 "\n", (uint32_t) response->MessageType);
+            printf("Unexpected message type: %" PRIu32 "\n", static_cast<uint32_t>(response->MessageType));
             TEST_FAIL();
         }
         TEST_ASSERT_EQUAL(Esp32Interfaces::BlueTooth, response->Interface);
@@ -944,10 +944,10 @@ TEST_CASE("Soak test writing numeric characteristic, number of iterations contro
 
         Esp32Messaging::BTServerDataSet dataSet;
         dataSet.Handle = handle;
-        dataSet.SetData = (uint8_t *) &value;
+        dataSet.SetData = reinterpret_cast<uint8_t *>(&value);
         dataSet.SetDataLength = sizeof(value);
         message.PayloadLength = EncodedBTServerDataSetBufferSize(&dataSet);
-        uint8_t *payload = (uint8_t *) pvPortMalloc(message.PayloadLength);
+        uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(message.PayloadLength));
         TEST_ASSERT_NOT_NULL(payload);
         EncodeBTServerDataSet(&dataSet, payload);
         message.Payload = payload;
