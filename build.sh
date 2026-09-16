@@ -83,6 +83,9 @@ case $i in
     -tm|--tracemessages)
     IDF_DEFINES+=" -DTRACE_MESSAGES=1"
     ;;
+    -pl|--performancelogging)
+    IDF_DEFINES+=" -DPERFORMANCE_LOGGING=1"
+    ;;
     --develop)
     IDF_DEFINES+=" -DDEBUG=1"
     ;;
@@ -143,6 +146,7 @@ if $HELP; then
     echo "--coredump              Add core dump functionality to the application"
     echo "-th | --heaptracing     Enable heap tracing."
     echo "-tm | --tracemessages   Enable heap tracing."
+    echo "-pl | --performancelogging  Enable performance logging of method entry and exit times."
     echo "--dryrun                Perform a dry run (do not execute commands)"
     echo "--halt                  Halt the system on hard fault."
     echo "--sbom                  Generate a Software Bill of Materials (SBOM) in SPDX format."
