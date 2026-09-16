@@ -44,6 +44,7 @@ TEST_SELECTIONS=""
 FLASH=false
 GENERATE_SBOM=false
 BUILD=false
+QEMU=false
 
 #
 #   Work out which options are on the command line.
@@ -69,6 +70,9 @@ case $i in
     ;;
     --flash)
     FLASH=true
+    ;;
+    -q|--qemu)
+    QEMU=true
     ;;
     --coredump)
     IDF_DEFINES+=" -DCOREDUMP=1"
@@ -132,6 +136,7 @@ if $HELP; then
     echo "-c | --clean            Perform a clean build"
     echo "-f | --flash            Flash the ESP32 with the bootloader, partition table and application code"
     echo "-m | --monitor          Connect to the serial port for application monitoring"
+    echo "-q | --qemu             Generate a QEMU flash image from the build output"
     echo "--fullclean             Perform a full clean followed by a build"
     echo "-v | --verbose          Display commands as they are executed (default)"
     echo "-s | --silent           Execute commands silently"
@@ -317,6 +322,13 @@ fi
 # Set the IDF variable in case we are running in a shell where eim has been used to install ESP-IDF.
 #
 IDF="$IDF_PATH/tools/idf.py"
+#
+#   idf.py takes the project from the current directory, so make sure that is the
+#   directory holding this script.  Without this the script builds whichever project
+#   the caller happened to be standing in.
+#
+cd "$scriptdir"
+
 
 #
 #   There are sometimes problems with old configuration in the build directory
@@ -365,6 +377,14 @@ if $BUILD; then
   md5sum  $scriptdir/build/MeadowComms.bin | cut -d ' ' -f 1 > $scriptdir/build/MeadowComms.bin.md5
   md5sum  $scriptdir/build/bootloader/bootloader.bin | cut -d ' ' -f 1 > $scriptdir/build/bootloader/bootloader.bin.md5
   md5sum  $scriptdir/build/partition_table/partition-table.bin | cut -d ' ' -f 1 > $scriptdir/build/partition_table/partition-table.bin.md5
+fi
+
+#
+#   Generate the QEMU flash image.  This uses the shared script so that the
+#   application and test builds produce images the same way.
+#
+if $QEMU; then
+  $scriptdir/qemu-image.sh $scriptdir/build
 fi
 
 git checkout HEAD $scriptdir/main/build_info.template

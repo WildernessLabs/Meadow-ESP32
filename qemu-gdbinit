@@ -1,0 +1,40 @@
+#
+#   GDB initialisation for debugging under QEMU.
+#
+#   The hardware setup in test/gdbinit talks to OpenOCD and uses monitor commands to
+#   reset and halt the chip.  QEMU provides its own GDB stub and is already halted when
+#   started with qemu.sh --debug, so no monitor commands are used here.
+#
+#   Usage:
+#       ./qemu.sh --test --debug              (in one terminal)
+#       xtensa-esp32-elf-gdb -x qemu-gdbinit test/build/MeadowComms.elf
+#
+
+#
+#  Hook to disable the confirmation prompt when quitting GDB.
+#
+define hook-quit
+    set confirm off
+end
+
+set style address foreground yellow
+
+#
+#   Connect to the GDB stub published by qemu.sh --debug.  The target is already
+#   halted at the reset vector, so there is nothing to reset here.
+#
+target remote :3333
+
+set remote hardware-watchpoint-limit 2
+set listsize 30
+
+#
+#   Break where a failing test will end up, so a panic drops into the debugger rather
+#   than writing a core dump and rebooting.
+#
+tbreak app_main
+
+echo \n
+echo QEMU target attached and halted at app_main.\n
+echo Use 'continue' to start the application.\n
+echo \n

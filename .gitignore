@@ -101,3 +101,8 @@ gdblog.txt
 CoreDumps/
 Scratch/
 .cache/**
+
+#
+#   Test results written by run-tests.sh and run-tests-ci.sh.
+#
+test-results/

@@ -9,6 +9,7 @@
 #include <limits.h>
 #include <stdio.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <dirent.h>
 #include <string>
 #include <string.h>
@@ -21,7 +22,19 @@
 #include "FileSystem.hpp"
 #include "Utils.hpp"
 
-#define CLASS_OF_TESTS "[FileSystem]"
+//
+//  Tests carry a second tag describing how they run as well as what they cover.
+//  [Emulated] marks a test as suitable for an unattended run under QEMU.  Tag
+//  matching is a substring search, so these tests still run when [FileSystem] is
+//  selected.
+//
+#define CLASS_OF_TESTS "[FileSystem][Emulated]"
+
+//
+//  Tests that are correct under QEMU but too slow to run there routinely.  Filling
+//  the partition takes minutes on emulated flash against seconds on hardware.
+//
+#define SLOW_TESTS "[FileSystem][Slow]"
 
 //
 //  Name of the files to be used for testing.
@@ -689,14 +702,24 @@ TEST_CASE("Mount failure when already mounted", CLASS_OF_TESTS)
     TEST_ASSERT_TRUE(esp_littlefs_mounted(FileSystem::PARTITION_LABEL));
 
     //
-    //  A second Setup() call must fail because the partition is already registered.
-    //  Note: the LittleFS VFS layer releases its internal context as part of the
-    //  failed registration, so no assertion is made about the mounted state after
-    //  this call.
+    //  A second Setup() call must fail because the partition is already mounted, and
+    //  it must leave the existing mount untouched.  Mount() refuses the duplicate
+    //  itself rather than letting LittleFS take an error path that frees the context
+    //  belonging to the live mount.
     //
     TEST_ASSERT_EQUAL(StatusCodes::Failure, fs->Setup());
+    TEST_ASSERT_TRUE(esp_littlefs_mounted(FileSystem::PARTITION_LABEL));
+
+    //
+    //  The file system must still be usable, which is what a freed context would
+    //  prevent.  This is the operation that previously panicked on the following test.
+    //
+    struct stat fileStatus;
+    stat(FileSystem::PARTITION_PATH_NAME, &fileStatus);
 
     delete fs;
+
+    TEST_ASSERT_FALSE(esp_littlefs_mounted(FileSystem::PARTITION_LABEL));
 }
 
 /**
@@ -770,7 +793,7 @@ TEST_CASE("ReadFile returns FileNotFound for non-existent file", CLASS_OF_TESTS)
  *  allocates the last free block, fwrite can only write LITTLEFS_BLOCK_SIZE bytes,
  *  which is less than ContentsLength, so WriteFile must return StatusCodes::Failure.
  */
-TEST_CASE("WriteFile returns Failure on a full filesystem", CLASS_OF_TESTS)
+TEST_CASE("WriteFile returns Failure on a full filesystem", SLOW_TESTS)
 {
     MockMessageDispatcher *messageDispatcher = new MockMessageDispatcher(nullptr);
     TEST_ASSERT_NOT_NULL(messageDispatcher);

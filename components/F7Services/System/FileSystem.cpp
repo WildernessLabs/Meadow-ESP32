@@ -161,12 +161,30 @@ bool FileSystem::IsMounted()
 /**
  * @brief Mount the file system
  *
+ * @note Mounting a partition that is already mounted is refused here rather than being
+ *       passed to LittleFS.  esp_littlefs_init() does detect the duplicate, but the
+ *       error path it then takes frees the context belonging to the existing mount,
+ *       including the lock guarding it, while that mount is still registered with the
+ *       VFS.  The next file operation on the partition locks freed memory and the
+ *       system panics.  The check below keeps that path from ever being taken.
+ *
+ *       See esp_littlefs_init() in the joltwallet/littlefs component, where the
+ *       "Partition already used" branch leaves index referring to the existing mount
+ *       and the exit path frees _efs[index].
+ *
  * @return true If file system mounted.
  * @return false If the file system could not be mounted.
  */
 bool FileSystem::Mount()
 {
     bool result = true;
+
+    if (IsMounted())
+    {
+        TRACE_MESSAGE("File system is already mounted");
+
+        return (false);
+    }
 
     esp_err_t ret = esp_vfs_littlefs_register(&_config);
     if (ret != ESP_OK)
