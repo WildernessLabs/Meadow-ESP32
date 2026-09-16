@@ -321,7 +321,7 @@ void FileSystem::ReadFile(Message * const message)
                         if (amountRead > 0)
                         {
                             fileData->ContentsLength = amountRead;
-                            TRACE_MESSAGE("Read %" PRIi32 " bytes", amountRead);
+                            TRACE_MESSAGE("Read %" PRIi32 " bytes", static_cast<int32_t>(amountRead));
                             TRACE_HEX_BUFFER(fileData->Contents, amountRead);
                             fileData->ContentsLength = amountRead;
                         }
@@ -393,7 +393,7 @@ void FileSystem::WriteFile(Message * const message)
             if (file != NULL)
             {
                 int amount = fwrite((void *) fileData->Contents, 1, fileData->ContentsLength, file);
-                TRACE_MESSAGE("Written %" PRIi32 " bytes", amount);
+                TRACE_MESSAGE("Written %" PRIi32 " bytes", static_cast<int32_t>(amount));
                 if (amount == fileData->ContentsLength)
                 {
                     result = StatusCodes::CompletedOk;
@@ -492,7 +492,7 @@ void FileSystem::ListFiles(Message *message)
         Esp32Messaging::FileNameList fileNameList;
         memset(&fileNameList, 0, sizeof(fileNameList));
         uint32_t bufferLength = 0;
-        TRACE_MESSAGE("Found %" PRIi32 " files.", count);
+        TRACE_MESSAGE("Found %" PRIi32 " files.", static_cast<int32_t>(count));
         if (count > 0)
         {
             while (((ep = readdir(dp)) != NULL) && (result != StatusCodes::EspOutOfMemory))

@@ -437,7 +437,7 @@ void BluetoothRequestHandler::SetCurrentValueForAttributeHandle(Message * const 
         {
             if (esp_ble_gatts_send_indicate(_gattsInterfaceHandle, _connectionHandle, ds->Handle, ds->SetDataLength, ds->SetData, false) != ESP_OK)
             {
-                TRACE_MESSAGE("Failed to send indication to connection ID 0x%04" PRIu16, _connectionHandle);
+                TRACE_MESSAGE("Failed to send indication to connection ID 0x%04" PRIx16, _connectionHandle);
                 result = StatusCodes::Failure;
             }
         }
@@ -511,7 +511,7 @@ void BluetoothRequestHandler::DispatchRequest(Message *request)
  */
 void BluetoothRequestHandler::EventHandlerHelper(esp_event_base_t eventBase, int32_t eventId, void *eventData)
 {
-    TRACE_MESSAGE("EventHandlerHelper: Enter with base %s and id 0x%" PRIx32, eventBase, (uint) eventId);
+    TRACE_MESSAGE("EventHandlerHelper: Enter with base %s and id 0x%" PRIx32, eventBase, static_cast<uint32_t>(eventId));
 
     TRACE_MESSAGE("EventHandlerHelper: Exit");
 }
@@ -921,7 +921,7 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
             break;
         case ESP_GATTS_READ_EVT:
             {
-                TRACE_MESSAGE("ESP_GATTS_READ_EVT, reading handle 0x%04" PRIu16 " need response=%" PRIi32, param->read.handle, param->read.need_rsp);
+                TRACE_MESSAGE("ESP_GATTS_READ_EVT, reading handle 0x%04" PRIx16 " need response=%" PRIi32, param->read.handle, static_cast<int32_t>(param->read.need_rsp));
 
                 if (param->read.need_rsp)
                 {

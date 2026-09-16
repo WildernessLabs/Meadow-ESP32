@@ -69,7 +69,7 @@ BluetoothService &BluetoothServiceCollection::Add(BluetoothService * const servi
         }
     }
 
-    TRACE_MESSAGE("%" PRIu32 " services known", (int) _services.size());
+    TRACE_MESSAGE("%" PRIu32 " services known", static_cast<uint32_t>(_services.size()));
 
     TRACE_MESSAGE("Add: Exit");
 
