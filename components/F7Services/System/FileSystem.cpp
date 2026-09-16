@@ -313,7 +313,7 @@ void FileSystem::ReadFile(Message * const message)
                 fileData->Contents = static_cast<uint8_t *>(pvPortMalloc(fileInfo.st_size));
                 if (fileData->Contents != NULL)
                 {
-                    TRACE_MESSAGE("Reading %" PRIu32 " bytes from file %s", fileInfo.st_size, fileData->Name);
+                    TRACE_MESSAGE("Reading %" PRIi32 " bytes from file %s", static_cast<int32_t>(fileInfo.st_size), fileData->Name);
                     FILE *file = fopen(s.c_str(), "rb");
                     if (file != NULL)
                     {
