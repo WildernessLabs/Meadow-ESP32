@@ -42,13 +42,13 @@
 //  These tests need a radio and a web server on the local network, so they are not
 //  tagged [Emulated] and do not run under QEMU.
 //
-#define CLASS_OF_TESTS "[POSIX]"
+#define CLASS_OF_TESTS "[POSIX][HardwareOnly]"
 
 //
 //  The soak test runs for a long time and is left out of ordinary runs.  Select it with
 //  the [Slow] tag when it is wanted.
 //
-#define SLOW_TESTS "[POSIX][Slow]"
+#define SLOW_TESTS "[POSIX][HardwareOnly][Slow]"
 
 //
 //  The web server is described in secrets.h so its address does not end up in source
