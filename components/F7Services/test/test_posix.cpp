@@ -361,8 +361,8 @@ static uint8_t *EncodeRecvMsgRequest(const int32_t socketHandle, const int32_t l
 
     Encoders::EncodeInt32(socketHandle, buffer);
     Encoders::EncodeInt32(length, buffer + 4);
-    Encoders::EncodeInt32(0, buffer + 8);  // No flags.
-    Encoders::EncodeInt32(1, buffer + 12); // Ask for the source address.
+    Encoders::EncodeInt32(0, buffer + 8);   // No flags.
+    Encoders::EncodeInt32(1, buffer + 12);  // Ask for the source address.
     Encoders::EncodeUInt32(0, buffer + 16); // No control data wanted.
 
     return (buffer);
@@ -410,8 +410,8 @@ static bool ConnectToTestAccessPoint(MockMessageDispatcher *messageDispatcher)
 
     Esp32Messaging::AccessPointInformation accessPointInformation = {};
     memset(&accessPointInformation, 0, sizeof(accessPointInformation));
-    accessPointInformation.NetworkName = (char *) WIFI_NETWORK;  // cppcheck-suppress cstyleCast
-    accessPointInformation.Password = (char *) WIFI_PASSWORD;    // cppcheck-suppress cstyleCast
+    accessPointInformation.NetworkName = (char *) WIFI_NETWORK; // cppcheck-suppress cstyleCast
+    accessPointInformation.Password = (char *) WIFI_PASSWORD;   // cppcheck-suppress cstyleCast
 
     uint32_t payloadLength = Encoders::EncodedAccessPointInformationBufferSize(&accessPointInformation);
     uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
@@ -494,15 +494,11 @@ static int32_t SendPageRequest(MockMessageDispatcher *messageDispatcher)
     char httpRequest[256];
     if (WEB_SERVER_PORT == 80)
     {
-        snprintf(httpRequest, sizeof(httpRequest),
-                 "GET %s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\n\r\n",
-                 TEST_WEB_PAGE, WEB_SERVER_IP_ADDRESS);
+        snprintf(httpRequest, sizeof(httpRequest), "GET %s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\n\r\n", TEST_WEB_PAGE, WEB_SERVER_IP_ADDRESS);
     }
     else
     {
-        snprintf(httpRequest, sizeof(httpRequest),
-                 "GET %s HTTP/1.1\r\nHost: %s:%d\r\nConnection: close\r\n\r\n",
-                 TEST_WEB_PAGE, WEB_SERVER_IP_ADDRESS, (int) WEB_SERVER_PORT);
+        snprintf(httpRequest, sizeof(httpRequest), "GET %s HTTP/1.1\r\nHost: %s:%d\r\nConnection: close\r\n\r\n", TEST_WEB_PAGE, WEB_SERVER_IP_ADDRESS, (int) WEB_SERVER_PORT);
     }
 
     uint32_t requestLength = strlen(httpRequest);
@@ -575,9 +571,7 @@ static bool FetchPageOnce(MockMessageDispatcher *messageDispatcher, const WiFiFu
 
     for (int receives = 0; (receives < MAXIMUM_RECEIVES) && !complete && !failed; receives++)
     {
-        uint8_t *payload = (receiveFunction == WiFiFunction::RecvMsg)
-                               ? EncodeRecvMsgRequest(socketHandle, RECEIVE_CHUNK_SIZE)
-                               : EncodeRecvFromRequest(socketHandle, RECEIVE_CHUNK_SIZE);
+        uint8_t *payload = (receiveFunction == WiFiFunction::RecvMsg) ? EncodeRecvMsgRequest(socketHandle, RECEIVE_CHUNK_SIZE) : EncodeRecvFromRequest(socketHandle, RECEIVE_CHUNK_SIZE);
 
         Message *response = Call(messageDispatcher, receiveFunction, payload, requestSize);
         if (response == nullptr)
@@ -718,8 +712,7 @@ TEST_CASE("Fetch a web page repeatedly", SLOW_TESTS)
         std::string page;
         if (!FetchPageOnce(messageDispatcher, receiveFunction, &page))
         {
-            printf("Fetch %d of %d failed using %s.\n", iteration, SOAK_ITERATIONS,
-                   (receiveFunction == WiFiFunction::RecvMsg) ? "recvmsg" : "recvfrom");
+            printf("Fetch %d of %d failed using %s.\n", iteration, SOAK_ITERATIONS, (receiveFunction == WiFiFunction::RecvMsg) ? "recvmsg" : "recvfrom");
             TEST_FAIL_MESSAGE("A fetch failed during the soak test.");
         }
 
@@ -732,9 +725,7 @@ TEST_CASE("Fetch a web page repeatedly", SLOW_TESTS)
         if ((iteration % SOAK_PROGRESS_INTERVAL) == 0)
         {
             const int64_t elapsed = esp_timer_get_time() - startedAt;
-            printf("  %d fetches, free heap %" PRIu32 " bytes, lowest %" PRIu32 ", %" PRId64 " ms per fetch.\n",
-                   iteration, esp_get_free_heap_size(), esp_get_minimum_free_heap_size(),
-                   (elapsed / 1000) / iteration);
+            printf("  %d fetches, free heap %" PRIu32 " bytes, lowest %" PRIu32 ", %" PRId64 " ms per fetch.\n", iteration, esp_get_free_heap_size(), esp_get_minimum_free_heap_size(), (elapsed / 1000) / iteration);
         }
     }
 
