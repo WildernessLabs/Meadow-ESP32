@@ -487,7 +487,7 @@ void SystemRequestHandler::PopulateConfiguration(Esp32Messaging::SystemConfigura
 
     memset(config, 0, sizeof(Esp32Messaging::SystemConfiguration));
     esp_reset_reason_t resetReason = esp_reset_reason();
-    Mapping::GetStmValue(Mapping::ResetReasons, resetReason, (int8_t *) &config->ResetReason);
+    Mapping::GetStmValue(Mapping::ResetReasons, resetReason, reinterpret_cast<int8_t *>(&config->ResetReason));
     config->Antenna = WiFiRequestHandler::GetAntenna();
     config->MaximumRetryCount = WiFiRequestHandler::GetMaximumRetryCount();
     config->DefaultAccessPoint = WiFiRequestHandler::GetDefaultAccessPoint();
@@ -593,10 +593,10 @@ void SystemRequestHandler::SetConfigurationItem(Message * const request)
                 WiFiRequestHandler::SetAntenna(*value->Value);
                 break;
             case ConfigurationItems::AutomaticallyReconnect:
-                result = WiFiRequestHandler::SetAutomaticReconnect((uint8_t) (*value->Value) == 1);
+                result = WiFiRequestHandler::SetAutomaticReconnect(static_cast<uint8_t>((*value->Value)) == 1);
                 break;
             case ConfigurationItems::AutomaticallyStartNetwork:
-                result = WiFiRequestHandler::SetAutomaticallyStartNetwork((uint8_t) (*value->Value) == 1);
+                result = WiFiRequestHandler::SetAutomaticallyStartNetwork(static_cast<uint8_t>((*value->Value)) == 1);
                 break;
             case ConfigurationItems::BoardMacAddress:
                 result = WiFiRequestHandler::SetMacAddress(value->Value, WIFI_IF_STA);
@@ -633,7 +633,7 @@ void SystemRequestHandler::SetConfigurationItem(Message * const request)
                 result = WiFiRequestHandler::SetMaximumRetryCount(*reinterpret_cast<uint32_t *>(value->Value));
                 break;
             case ConfigurationItems::UseDhcp:
-                result = WiFiRequestHandler::SetUseDhcp((uint8_t) (*value->Value) == 1);
+                result = WiFiRequestHandler::SetUseDhcp(static_cast<uint8_t>((*value->Value)) == 1);
                 break;
             case ConfigurationItems::CountryCode:
                 result = WiFiRequestHandler::SetCountryCode(reinterpret_cast<char *>(value->Value));

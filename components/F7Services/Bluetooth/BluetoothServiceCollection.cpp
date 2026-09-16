@@ -44,7 +44,7 @@ BluetoothService &BluetoothServiceCollection::Add(BluetoothService * const servi
 
     for (auto it = _services.begin(); it != _services.end(); ++it)
     {
-        auto svc = (BluetoothService *) *it;
+        auto svc = static_cast<BluetoothService *>(*it);
 
         if (svc->Uuid == service->Uuid)
         {
@@ -89,7 +89,7 @@ bool BluetoothServiceCollection::DeleteAllServices()
 
     for (auto it = _services.begin(); it != _services.end(); ++it)
     {
-        auto service = (BluetoothService *) *it;
+        auto service = static_cast<BluetoothService *>(*it);
         delete service;
     }
 
@@ -170,7 +170,7 @@ BluetoothService *BluetoothServiceCollection::Find(const Uuid16 uuid)
 
     for (auto it = _services.begin(); it != _services.end(); ++it)
     {
-        auto svc = (BluetoothService *) *it;
+        auto svc = static_cast<BluetoothService *>(*it);
 
         if (svc->Uuid == uuid)
         {

@@ -410,8 +410,8 @@ static bool ConnectToTestAccessPoint(MockMessageDispatcher *messageDispatcher)
 
     Esp32Messaging::AccessPointInformation accessPointInformation = {};
     memset(&accessPointInformation, 0, sizeof(accessPointInformation));
-    accessPointInformation.NetworkName = (char *) WIFI_NETWORK; // cppcheck-suppress cstyleCast
-    accessPointInformation.Password = (char *) WIFI_PASSWORD;   // cppcheck-suppress cstyleCast
+    accessPointInformation.NetworkName = const_cast<char *>(WIFI_NETWORK); // cppcheck-suppress cstyleCast
+    accessPointInformation.Password = const_cast<char *>(WIFI_PASSWORD);   // cppcheck-suppress cstyleCast
 
     uint32_t payloadLength = Encoders::EncodedAccessPointInformationBufferSize(&accessPointInformation);
     uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
@@ -485,7 +485,7 @@ static int32_t SendPageRequest(MockMessageDispatcher *messageDispatcher)
         printf("connect() failed, errno %" PRIi32 "\n", callResult.ResponseErrno);
         TEST_FAIL_MESSAGE("Could not connect to the web server.");
     }
-    printf("Connected to %s:%d.\n", WEB_SERVER_IP_ADDRESS, (int) WEB_SERVER_PORT);
+    printf("Connected to %s:%d.\n", WEB_SERVER_IP_ADDRESS, WEB_SERVER_PORT);
 
     //
     //  Closing the connection afterwards is requested so the server ends the response
@@ -498,7 +498,7 @@ static int32_t SendPageRequest(MockMessageDispatcher *messageDispatcher)
     }
     else
     {
-        snprintf(httpRequest, sizeof(httpRequest), "GET %s HTTP/1.1\r\nHost: %s:%d\r\nConnection: close\r\n\r\n", TEST_WEB_PAGE, WEB_SERVER_IP_ADDRESS, (int) WEB_SERVER_PORT);
+        snprintf(httpRequest, sizeof(httpRequest), "GET %s HTTP/1.1\r\nHost: %s:%d\r\nConnection: close\r\n\r\n", TEST_WEB_PAGE, WEB_SERVER_IP_ADDRESS, WEB_SERVER_PORT);
     }
 
     uint32_t requestLength = strlen(httpRequest);
@@ -539,7 +539,7 @@ static void CloseSocket(MockMessageDispatcher *messageDispatcher, const int32_t 
  */
 static void CheckPageContents(const std::string &page, const bool complete)
 {
-    printf("Received %u bytes from the server.\n", (unsigned) page.length());
+    printf("Received %u bytes from the server.\n", static_cast<unsigned>(page.length()));
 
     TEST_ASSERT_TRUE_MESSAGE(complete, "The server did not close the connection.");
     TEST_ASSERT_TRUE_MESSAGE(page.find("200 OK") != std::string::npos, "The server did not return 200 OK.");
@@ -583,7 +583,7 @@ static bool FetchPageOnce(MockMessageDispatcher *messageDispatcher, const WiFiFu
 
         if ((response->StatusCode != StatusCodes::CompletedOk) || (response->Payload == nullptr))
         {
-            printf("Receive returned status %d.\n", (int) response->StatusCode);
+            printf("Receive returned status %d.\n", static_cast<int>(response->StatusCode));
             Message::DeleteMessage(response);
             failed = true;
             break;
@@ -718,7 +718,7 @@ TEST_CASE("Fetch a web page repeatedly", SLOW_TESTS)
 
         if (page.find(TEST_EXPECTED_HEADING) == std::string::npos)
         {
-            printf("Fetch %d of %d returned %u bytes without the expected content.\n", iteration, SOAK_ITERATIONS, (unsigned) page.length());
+            printf("Fetch %d of %d returned %u bytes without the expected content.\n", iteration, SOAK_ITERATIONS, static_cast<unsigned>(page.length()));
             TEST_FAIL_MESSAGE("A fetch returned the wrong content during the soak test.");
         }
 

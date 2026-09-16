@@ -180,7 +180,7 @@ void Diagnostics::Thread(void *pvParameters)
 void Diagnostics::ReportSystemUptime()
 {
     int64_t uptime_us = esp_timer_get_time();
-    uint32_t uptime_seconds = (uint32_t) (uptime_us / 1000000);
+    uint32_t uptime_seconds = static_cast<uint32_t>((uptime_us / 1000000));
     uint32_t hours = uptime_seconds / 3600;
     uint32_t minutes = (uptime_seconds % 3600) / 60;
     uint32_t seconds = uptime_seconds % 60;

@@ -175,7 +175,7 @@ CharacteristicProperty BluetoothManager::GetCharacteristicProperties(const uint1
         }
     }
 
-    return (CharacteristicProperty) 0;
+    return static_cast<CharacteristicProperty>(0);
 }
 
 /**
@@ -197,7 +197,7 @@ CharacteristicPermission BluetoothManager::GetCharacteristicPermissions(const ui
         }
     }
 
-    return (CharacteristicPermission) 0;
+    return static_cast<CharacteristicPermission>(0);
 }
 
 /**
@@ -405,7 +405,7 @@ void BluetoothManager::AddServices(const cJSON * const json)
             }
             else
             {
-                uint16_t uuid = (uint16_t) serviceUUID->valueint;
+                uint16_t uuid = static_cast<uint16_t>(serviceUUID->valueint);
                 TRACE_MESSAGE("Service Name: %s, " UUID_KEY ": %4" PRIx16, serviceName->valuestring, uuid);
                 BluetoothService * const service = new BluetoothService(serviceName->valuestring, Uuid16(uuid));
                 AddCharacteristics(service_configuration, service);
@@ -470,18 +470,18 @@ void BluetoothManager::AddCharacteristics(const cJSON * const json, BluetoothSer
             bool is128bits = false;
             ParseUuid(uuid, uuid16bits, uuid128bits, is128bits);
 
-            uint16_t permissions = (uint16_t) permission->valueint;
-            uint16_t properties = (uint16_t) props->valueint;
-            uint16_t length = (uint16_t) len->valueint;
+            uint16_t permissions = static_cast<uint16_t>(permission->valueint);
+            uint16_t properties = static_cast<uint16_t>(props->valueint);
+            uint16_t length = static_cast<uint16_t>(len->valueint);
 
             BluetoothCharacteristic *new_characteristic;
             if (is128bits)
             {
-                new_characteristic = new BluetoothCharacteristic(uuid128bits, (CharacteristicPermission) permissions, (CharacteristicProperty) properties, length);
+                new_characteristic = new BluetoothCharacteristic(uuid128bits, static_cast<CharacteristicPermission>(permissions), static_cast<CharacteristicProperty>(properties), length);
             }
             else
             {
-                new_characteristic = new BluetoothCharacteristic(uuid16bits, (CharacteristicPermission) permissions, (CharacteristicProperty) properties, length);
+                new_characteristic = new BluetoothCharacteristic(uuid16bits, static_cast<CharacteristicPermission>(permissions), static_cast<CharacteristicProperty>(properties), length);
             }
 
             char buffer[40];
@@ -492,7 +492,7 @@ void BluetoothManager::AddCharacteristics(const cJSON * const json, BluetoothSer
             }
             else
             {
-                snprintf(buffer, sizeof(buffer), "0x%04" PRIx16, (uint16_t) uuid16bits);
+                snprintf(buffer, sizeof(buffer), "0x%04" PRIx16, static_cast<uint16_t>(uuid16bits));
             }
             TRACE_MESSAGE("    Characteristic : " UUID_KEY " %s, " PERMISSION_KEY ": %d, " PROPERTIES_KEY ": %d, " LENGTH_KEY ": %d", buffer, permissions, properties, length);
 
@@ -557,17 +557,17 @@ void BluetoothManager::AddDescriptors(const cJSON * const json, BluetoothCharact
             bool is128bits = false;
             ParseUuid(uuid, uuid16bits, uuid128bits, is128bits);
 
-            uint16_t permissions = (uint16_t) permission->valueint;
-            uint16_t length = (uint16_t) len->valueint;
+            uint16_t permissions = static_cast<uint16_t>(permission->valueint);
+            uint16_t length = static_cast<uint16_t>(len->valueint);
 
             BluetoothDescriptor *new_descriptor;
             if (is128bits)
             {
-                new_descriptor = new BluetoothDescriptor(characteristic, uuid128bits, (CharacteristicPermission) permissions, length, (uint8_t *) &value->valueint);
+                new_descriptor = new BluetoothDescriptor(characteristic, uuid128bits, static_cast<CharacteristicPermission>(permissions), length, reinterpret_cast<uint8_t *>(const_cast<int *>(&value->valueint)));
             }
             else
             {
-                new_descriptor = new BluetoothDescriptor(characteristic, uuid16bits, (CharacteristicPermission) permissions, length, (uint8_t *) &value->valuestring);
+                new_descriptor = new BluetoothDescriptor(characteristic, uuid16bits, static_cast<CharacteristicPermission>(permissions), length, reinterpret_cast<uint8_t *>(const_cast<char **>(&value->valuestring)));
             }
 
             char buffer[40];
@@ -578,7 +578,7 @@ void BluetoothManager::AddDescriptors(const cJSON * const json, BluetoothCharact
             }
             else
             {
-                snprintf(buffer, sizeof(buffer), "0x%04" PRIx16, (uint16_t) uuid16bits);
+                snprintf(buffer, sizeof(buffer), "0x%04" PRIx16, static_cast<uint16_t>(uuid16bits));
             }
             TRACE_MESSAGE("        Descriptor : " UUID_KEY " %s, " PERMISSION_KEY ": %d, " LENGTH_KEY ": %d", buffer, permissions, length);
 
@@ -606,7 +606,7 @@ void BluetoothManager::ParseUuid(const cJSON * const json, Uuid16 &uuid16, Uuid1
 
     if (cJSON_IsNumber(json))
     {
-        Uuid16 uuid16bits = Uuid16((uint16_t) json->valueint);
+        Uuid16 uuid16bits = Uuid16(static_cast<uint16_t>(json->valueint));
         memcpy(uuid16.data, uuid16bits.data, sizeof(uuid16.data));
         is128 = false;
     }

@@ -257,7 +257,7 @@ bool Logging::TurnLoggingOn(const char * const component)
  *  @return
  *      Meaningful string representation of the message type.
  */
-char *Logging::MessageTypeName(const uint8_t type)
+const char *Logging::MessageTypeName(const uint8_t type)
 {
     return (Mapping::GetStringValue(Mapping::MessageTypes, type));
 }
@@ -271,7 +271,7 @@ char *Logging::MessageTypeName(const uint8_t type)
  *  @return
  *      Meaningful string representation of the interface number.
  */
-char *Logging::InterfaceName(const uint32_t interface)
+const char *Logging::InterfaceName(const uint32_t interface)
 {
     return (Mapping::GetStringValue(Mapping::Interfaces, interface));
 }
@@ -285,7 +285,7 @@ char *Logging::InterfaceName(const uint32_t interface)
  *  @return
  *      Meaningful string representation of the WiFi function.
  */
-char *Logging::WiFiFunctionName(const uint32_t function)
+const char *Logging::WiFiFunctionName(const uint32_t function)
 {
     return (Mapping::GetStringValue(Mapping::WiFiFunctions, function));
 }
@@ -299,7 +299,7 @@ char *Logging::WiFiFunctionName(const uint32_t function)
  *  @return
  *      Meaningful string representation of the System function.
  */
-char *Logging::SystemFunctionName(const uint32_t function)
+const char *Logging::SystemFunctionName(const uint32_t function)
 {
     return (Mapping::GetStringValue(Mapping::SystemFunctions, function));
 }
@@ -313,7 +313,7 @@ char *Logging::SystemFunctionName(const uint32_t function)
  *  @return
  *      Meaningful string representation of the Bluetooth function.
  */
-char *Logging::BluetoothFunctionName(const uint32_t function)
+const char *Logging::BluetoothFunctionName(const uint32_t function)
 {
     return (Mapping::GetStringValue(Mapping::BluetoothFunctions, function));
 }
@@ -327,7 +327,7 @@ char *Logging::BluetoothFunctionName(const uint32_t function)
  *  @return
  *      Meaningful string representation of the Transport function.
  */
-char *Logging::TransportFunctionName(const uint32_t function)
+const char *Logging::TransportFunctionName(const uint32_t function)
 {
     return (Mapping::GetStringValue(Mapping::TransportFunctions, function));
 }
@@ -344,7 +344,7 @@ char *Logging::TransportFunctionName(const uint32_t function)
  *  @return
  *      Meaningful string representation of the function.
  */
-char *Logging::FunctionName(const uint32_t interface, const uint32_t function)
+const char *Logging::FunctionName(const uint32_t interface, const uint32_t function)
 {
     switch (interface)
     {
@@ -375,7 +375,7 @@ char *Logging::FunctionName(const uint32_t interface, const uint32_t function)
  *  @return
  *      Meaningful string representation of the code.
  */
-char *Logging::StatusCodeName(const uint32_t code)
+const char *Logging::StatusCodeName(const uint32_t code)
 {
     return (Mapping::GetStringValue(Mapping::StatusCodes, code));
 }

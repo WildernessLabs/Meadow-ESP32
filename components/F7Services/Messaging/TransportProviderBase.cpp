@@ -103,7 +103,7 @@ int TransportProviderBase::OutboundMessageQueueLength()
     {
         UBaseType_t messageCount = uxQueueMessagesWaiting(_outboundMessageQueueHandle);
         xSemaphoreGive(_outboundMessageQueueMutex);
-        result = (int) messageCount;
+        result = static_cast<int>(messageCount);
     }
     return (result);
 }
@@ -124,7 +124,7 @@ Message *TransportProviderBase::GetOutboundMessage()
     {
         if (uxQueueMessagesWaiting(_outboundMessageQueueHandle) > 0)
         {
-            if (xQueueReceive(_outboundMessageQueueHandle, (void *) &result, portMAX_DELAY) != pdTRUE)
+            if (xQueueReceive(_outboundMessageQueueHandle, &result, portMAX_DELAY) != pdTRUE)
             {
                 result = nullptr;
             }
@@ -147,7 +147,7 @@ Message *TransportProviderBase::GetOutboundMessage()
 void TransportProviderBase::DumpMessageAtHeadOfQueue()
 {
     Message *message;
-    if (xQueuePeek(_outboundMessageQueueHandle, &(message), (TickType_t) 10))
+    if (xQueuePeek(_outboundMessageQueueHandle, &(message), static_cast<TickType_t>(10)))
     {
         Logging::DumpMessage(COMPONENT_NAME, message);
     }
@@ -247,7 +247,7 @@ void TransportProviderBase::SendControlMessageToStm32(const ControlMessageType m
         case ControlMessageType::Reset:
             {
                 esp_reset_reason_t resetReason = esp_reset_reason();
-                snprintf(smallBuffer, sizeof(smallBuffer), "\n+++RST,%" PRIi32 "\n", (int32_t) resetReason);
+                snprintf(smallBuffer, sizeof(smallBuffer), "\n+++RST,%" PRIi32 "\n", static_cast<int32_t>(resetReason));
                 message = smallBuffer;
             }
             break;

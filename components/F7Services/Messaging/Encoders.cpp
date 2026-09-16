@@ -220,23 +220,17 @@ char *Encoders::ExtractString(const uint8_t * const buffer)
         length++;
     }
 
-    if (length == 0)
+    char *result = nullptr;
+
+    if (length != 0)
     {
-        ptr = nullptr;
-    }
-    else
-    {
-        ptr = (uint8_t *) pvPortMalloc(length + 1);
-        if (ptr != NULL)
+        result = static_cast<char *>(pvPortMalloc(length + 1));
+        if (result != NULL)
         {
-            strcpy((char *) ptr, (char *) buffer);
-        }
-        else
-        {
-            ptr = nullptr;
+            strcpy(result, reinterpret_cast<const char *>(buffer));
         }
     }
-    return ((char *) ptr);
+    return (result);
 }
 
 /**
@@ -256,7 +250,7 @@ void Encoders::EncodeString(char *source, uint8_t *buffer)
     }
     else
     {
-        strcpy((char *) buffer, (char *) source);
+        strcpy(reinterpret_cast<char *>(buffer), source);
     }
 }
 
@@ -363,7 +357,7 @@ uint32_t Encoders::ProgressiveCRC32(const uint32_t currentChecksum, const uint8_
         //  not formatted correctly.
         //
         // clang-format off
-        uint32_t mask = (uint32_t) - (crc & 0x01);
+        uint32_t mask = - (crc & 0x01);
         // clang-format on
         crc = (crc >> 1) ^ (0xedb88320 & mask);
     }
@@ -527,11 +521,11 @@ void Encoders::EncodeSystemConfiguration(const Esp32Messaging::SystemConfigurati
     buffer += 4;
     *buffer = systemConfiguration->Antenna;
     buffer += 1;
-    memcpy((void *) buffer, (void *) systemConfiguration->BoardMacAddress, 6);
+    memcpy(buffer, systemConfiguration->BoardMacAddress, 6);
     buffer += 6;
-    memcpy((void *) buffer, (void *) systemConfiguration->SoftApMacAddress, 6);
+    memcpy(buffer, systemConfiguration->SoftApMacAddress, 6);
     buffer += 6;
-    memcpy((void *) buffer, (void *) systemConfiguration->BluetoothMacAddress, 6);
+    memcpy(buffer, systemConfiguration->BluetoothMacAddress, 6);
     buffer += 6;
     EncodeString(systemConfiguration->DeviceName, buffer);
     buffer += StringLength(systemConfiguration->DeviceName) + 1;
@@ -602,7 +596,7 @@ Esp32Messaging::ConfigurationValue *Encoders::ExtractConfigurationValue(uint8_t 
         return (nullptr);
     }
 
-    Esp32Messaging::ConfigurationValue *configurationValue = (Esp32Messaging::ConfigurationValue *) pvPortMalloc(sizeof(Esp32Messaging::ConfigurationValue));
+    Esp32Messaging::ConfigurationValue *configurationValue = static_cast<Esp32Messaging::ConfigurationValue *>(pvPortMalloc(sizeof(Esp32Messaging::ConfigurationValue)));
 
     if (configurationValue == NULL)
     {
@@ -615,7 +609,7 @@ Esp32Messaging::ConfigurationValue *Encoders::ExtractConfigurationValue(uint8_t 
     buffer += 4;
     if (configurationValue->ValueLength > 0)
     {
-        configurationValue->Value = (uint8_t *) pvPortMalloc(configurationValue->ValueLength);
+        configurationValue->Value = static_cast<uint8_t *>(pvPortMalloc(configurationValue->ValueLength));
 
         if (configurationValue->Value == NULL)
         {
@@ -714,7 +708,7 @@ int Encoders::EncodedAccessPointInformationBufferSize(const Esp32Messaging::Acce
  */
 Esp32Messaging::AccessPointInformation *Encoders::ExtractAccessPointInformation(uint8_t *buffer)
 {
-    Esp32Messaging::AccessPointInformation *accessPointInformation = (Esp32Messaging::AccessPointInformation *) pvPortMalloc(sizeof(Esp32Messaging::AccessPointInformation));
+    Esp32Messaging::AccessPointInformation *accessPointInformation = static_cast<Esp32Messaging::AccessPointInformation *>(pvPortMalloc(sizeof(Esp32Messaging::AccessPointInformation)));
 
     if (accessPointInformation == NULL)
     {
@@ -773,7 +767,7 @@ void Encoders::FreeAccessPointInformation(Esp32Messaging::AccessPointInformation
  */
 Esp32Messaging::DisconnectFromAccessPointRequest *Encoders::ExtractDisconnectFromAccessPointRequest(uint8_t *buffer)
 {
-    Esp32Messaging::DisconnectFromAccessPointRequest *disconnectFromAccessPointRequest = (Esp32Messaging::DisconnectFromAccessPointRequest *) pvPortMalloc(sizeof(Esp32Messaging::DisconnectFromAccessPointRequest));
+    Esp32Messaging::DisconnectFromAccessPointRequest *disconnectFromAccessPointRequest = static_cast<Esp32Messaging::DisconnectFromAccessPointRequest *>(pvPortMalloc(sizeof(Esp32Messaging::DisconnectFromAccessPointRequest)));
 
     if (disconnectFromAccessPointRequest == NULL)
     {
@@ -803,9 +797,9 @@ void Encoders::EncodeConnectEventData(const Esp32Messaging::ConnectEventData * c
     buffer += 4;
     EncodeUInt32(connectEventData->Gateway, buffer);
     buffer += 4;
-    memcpy((void *) buffer, (void *) connectEventData->Ssid, 33);
+    memcpy(buffer, connectEventData->Ssid, 33);
     buffer += 33;
-    memcpy((void *) buffer, (void *) connectEventData->Bssid, 6);
+    memcpy(buffer, connectEventData->Bssid, 6);
     buffer += 6;
     *buffer = connectEventData->Channel;
     buffer += 1;
@@ -841,11 +835,11 @@ int Encoders::EncodedConnectEventDataBufferSize(const Esp32Messaging::ConnectEve
  */
 void Encoders::EncodeDisconnectEventData(const Esp32Messaging::DisconnectEventData * const disconnectEventData, uint8_t *buffer)
 {
-    memcpy((void *) buffer, (void *) disconnectEventData->Ssid, 33);
+    memcpy(buffer, disconnectEventData->Ssid, 33);
     buffer += 33;
     *buffer = disconnectEventData->SsidLength;
     buffer += 1;
-    memcpy((void *) buffer, (void *) disconnectEventData->Bssid, 6);
+    memcpy(buffer, disconnectEventData->Bssid, 6);
     buffer += 6;
     *buffer = disconnectEventData->Rssi;
     buffer += 1;
@@ -881,7 +875,7 @@ void Encoders::EncodeNodeConnectionChangeEventData(const Esp32Messaging::NodeCon
 {
     EncodeUInt32(nodeConnectionChangeEventData->IpAddress, buffer);
     buffer += 4;
-    memcpy((void *) buffer, (void *) nodeConnectionChangeEventData->MacAddress, 6);
+    memcpy(buffer, nodeConnectionChangeEventData->MacAddress, 6);
 }
 
 /**
@@ -911,15 +905,15 @@ int Encoders::EncodedNodeConnectionChangeEventDataBufferSize(const Esp32Messagin
  */
 void Encoders::EncodeAccessPoint(const Esp32Messaging::AccessPoint * const accessPoint, uint8_t *buffer)
 {
-    memcpy((void *) buffer, (void *) accessPoint->Ssid, 33);
+    memcpy(buffer, accessPoint->Ssid, 33);
     buffer += 33;
-    memcpy((void *) buffer, (void *) accessPoint->Bssid, 6);
+    memcpy(buffer, accessPoint->Bssid, 6);
     buffer += 6;
     *buffer = accessPoint->PrimaryChannel;
     buffer += 1;
     *buffer = accessPoint->SecondaryChannel;
     buffer += 1;
-    *buffer = (uint8_t) accessPoint->Rssi;
+    *buffer = static_cast<uint8_t>(accessPoint->Rssi);
     buffer += 1;
     *buffer = accessPoint->AuthenticationMode;
     buffer += 1;
@@ -959,7 +953,7 @@ void Encoders::EncodeAccessPointList(const Esp32Messaging::AccessPointList * con
     buffer += 4;
     if (accessPointList->AccessPointsLength > 0)
     {
-        memcpy((void *) buffer, (void *) accessPointList->AccessPoints, accessPointList->AccessPointsLength);
+        memcpy(buffer, accessPointList->AccessPoints, accessPointList->AccessPointsLength);
     }
 }
 
@@ -1000,7 +994,7 @@ void Encoders::EncodeSockAddr(const Esp32Messaging::SockAddr * const sockAddr, u
     buffer += 4;
     EncodeUInt32(sockAddr->FlowInfo, buffer);
     buffer += 4;
-    memcpy((void *) buffer, (void *) sockAddr->Ip6Address, 16);
+    memcpy(buffer, sockAddr->Ip6Address, 16);
     buffer += 16;
     EncodeUInt32(sockAddr->ScopeID, buffer);
 }
@@ -1033,7 +1027,7 @@ int Encoders::EncodedSockAddrBufferSize(const Esp32Messaging::SockAddr * const s
  */
 Esp32Messaging::SockAddr *Encoders::ExtractSockAddr(uint8_t *buffer)
 {
-    Esp32Messaging::SockAddr *sockAddr = (Esp32Messaging::SockAddr *) pvPortMalloc(sizeof(Esp32Messaging::SockAddr));
+    Esp32Messaging::SockAddr *sockAddr = static_cast<Esp32Messaging::SockAddr *>(pvPortMalloc(sizeof(Esp32Messaging::SockAddr)));
 
     if (sockAddr == NULL)
     {
@@ -1048,7 +1042,7 @@ Esp32Messaging::SockAddr *Encoders::ExtractSockAddr(uint8_t *buffer)
     buffer += 4;
     sockAddr->FlowInfo = ExtractUInt32(buffer);
     buffer += 4;
-    memcpy((void *) sockAddr->Ip6Address, (void *) buffer, 16);
+    memcpy(sockAddr->Ip6Address, buffer, 16);
     buffer += 16;
     sockAddr->ScopeID = ExtractUInt32(buffer);
     return (sockAddr);
@@ -1083,12 +1077,12 @@ void Encoders::EncodeAddrInfo(const Esp32Messaging::AddrInfo * const addrInfo, u
     buffer += 4;
     if (addrInfo->AddrLength > 0)
     {
-        memcpy((void *) buffer, (void *) addrInfo->Addr, addrInfo->AddrLength);
+        memcpy(buffer, addrInfo->Addr, addrInfo->AddrLength);
         buffer += addrInfo->AddrLength;
     }
     EncodeString(addrInfo->CanonName, buffer);
     buffer += StringLength(addrInfo->CanonName) + 1;
-    EncodeUInt32((uint32_t) addrInfo->Next, buffer);
+    EncodeUInt32(reinterpret_cast<uint32_t>(addrInfo->Next), buffer);
 }
 
 /**
@@ -1123,7 +1117,7 @@ int Encoders::EncodedAddrInfoBufferSize(const Esp32Messaging::AddrInfo * const a
  */
 Esp32Messaging::AddrInfo *Encoders::ExtractAddrInfo(uint8_t *buffer)
 {
-    Esp32Messaging::AddrInfo *addrInfo = (Esp32Messaging::AddrInfo *) pvPortMalloc(sizeof(Esp32Messaging::AddrInfo));
+    Esp32Messaging::AddrInfo *addrInfo = static_cast<Esp32Messaging::AddrInfo *>(pvPortMalloc(sizeof(Esp32Messaging::AddrInfo)));
 
     if (addrInfo == NULL)
     {
@@ -1146,7 +1140,7 @@ Esp32Messaging::AddrInfo *Encoders::ExtractAddrInfo(uint8_t *buffer)
     buffer += 4;
     if (addrInfo->AddrLength > 0)
     {
-        addrInfo->Addr = (uint8_t *) pvPortMalloc(addrInfo->AddrLength);
+        addrInfo->Addr = static_cast<uint8_t *>(pvPortMalloc(addrInfo->AddrLength));
         if (addrInfo->Addr == NULL)
         {
             Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&addrInfo));
@@ -1161,7 +1155,7 @@ Esp32Messaging::AddrInfo *Encoders::ExtractAddrInfo(uint8_t *buffer)
     }
     addrInfo->CanonName = ExtractString(buffer);
     buffer += Encoders::StringLength(addrInfo->CanonName) + 1;
-    addrInfo->Next = (void *) ExtractUInt32(buffer);
+    addrInfo->Next = reinterpret_cast<void *>(ExtractUInt32(buffer));
     return (addrInfo);
 }
 
@@ -1200,7 +1194,7 @@ void Encoders::FreeAddrInfo(Esp32Messaging::AddrInfo **addrInfo)
  */
 Esp32Messaging::GetAddrInfoRequest *Encoders::ExtractGetAddrInfoRequest(uint8_t *buffer)
 {
-    Esp32Messaging::GetAddrInfoRequest *getAddrInfoRequest = (Esp32Messaging::GetAddrInfoRequest *) pvPortMalloc(sizeof(Esp32Messaging::GetAddrInfoRequest));
+    Esp32Messaging::GetAddrInfoRequest *getAddrInfoRequest = static_cast<Esp32Messaging::GetAddrInfoRequest *>(pvPortMalloc(sizeof(Esp32Messaging::GetAddrInfoRequest)));
 
     if (getAddrInfoRequest == NULL)
     {
@@ -1215,7 +1209,7 @@ Esp32Messaging::GetAddrInfoRequest *Encoders::ExtractGetAddrInfoRequest(uint8_t 
     buffer += 4;
     if (getAddrInfoRequest->HintsLength > 0)
     {
-        getAddrInfoRequest->Hints = (uint8_t *) pvPortMalloc(getAddrInfoRequest->HintsLength);
+        getAddrInfoRequest->Hints = static_cast<uint8_t *>(pvPortMalloc(getAddrInfoRequest->HintsLength));
         if (getAddrInfoRequest->Hints == NULL)
         {
             Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&getAddrInfoRequest));
@@ -1271,7 +1265,7 @@ void Encoders::EncodeGetAddrInfoResponse(const Esp32Messaging::GetAddrInfoRespon
     buffer += 4;
     if (getAddrInfoResponse->ResLength > 0)
     {
-        memcpy((void *) buffer, (void *) getAddrInfoResponse->Res, getAddrInfoResponse->ResLength);
+        memcpy(buffer, getAddrInfoResponse->Res, getAddrInfoResponse->ResLength);
     }
 }
 
@@ -1305,14 +1299,14 @@ int Encoders::EncodedGetAddrInfoResponseBufferSize(const Esp32Messaging::GetAddr
  */
 Esp32Messaging::SocketRequest *Encoders::ExtractSocketRequest(uint8_t *buffer)
 {
-    Esp32Messaging::SocketRequest *socketRequest = (Esp32Messaging::SocketRequest *) pvPortMalloc(sizeof(Esp32Messaging::SocketRequest));
+    Esp32Messaging::SocketRequest *socketRequest = static_cast<Esp32Messaging::SocketRequest *>(pvPortMalloc(sizeof(Esp32Messaging::SocketRequest)));
 
     if (socketRequest == NULL)
     {
         return (nullptr);
     }
 
-    socketRequest->AddressInformation = (void *) ExtractUInt32(buffer);
+    socketRequest->AddressInformation = reinterpret_cast<void *>(ExtractUInt32(buffer));
     buffer += 4;
     socketRequest->Domain = ExtractInt32(buffer);
     buffer += 4;
@@ -1399,7 +1393,7 @@ int Encoders::EncodedIntegerAndErrnoResponseBufferSize(const Esp32Messaging::Int
  */
 Esp32Messaging::ConnectRequest *Encoders::ExtractConnectRequest(uint8_t *buffer)
 {
-    Esp32Messaging::ConnectRequest *connectRequest = (Esp32Messaging::ConnectRequest *) pvPortMalloc(sizeof(Esp32Messaging::ConnectRequest));
+    Esp32Messaging::ConnectRequest *connectRequest = static_cast<Esp32Messaging::ConnectRequest *>(pvPortMalloc(sizeof(Esp32Messaging::ConnectRequest)));
 
     if (connectRequest == NULL)
     {
@@ -1412,7 +1406,7 @@ Esp32Messaging::ConnectRequest *Encoders::ExtractConnectRequest(uint8_t *buffer)
     buffer += 4;
     if (connectRequest->AddrLength > 0)
     {
-        connectRequest->Addr = (uint8_t *) pvPortMalloc(connectRequest->AddrLength);
+        connectRequest->Addr = static_cast<uint8_t *>(pvPortMalloc(connectRequest->AddrLength));
         if (connectRequest->Addr == NULL)
         {
             Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&connectRequest));
@@ -1461,7 +1455,7 @@ void Encoders::FreeConnectRequest(Esp32Messaging::ConnectRequest **connectReques
  */
 Esp32Messaging::FreeAddrInfoRequest *Encoders::ExtractFreeAddrInfoRequest(uint8_t *buffer)
 {
-    Esp32Messaging::FreeAddrInfoRequest *freeAddrInfoRequest = (Esp32Messaging::FreeAddrInfoRequest *) pvPortMalloc(sizeof(Esp32Messaging::FreeAddrInfoRequest));
+    Esp32Messaging::FreeAddrInfoRequest *freeAddrInfoRequest = static_cast<Esp32Messaging::FreeAddrInfoRequest *>(pvPortMalloc(sizeof(Esp32Messaging::FreeAddrInfoRequest)));
 
     if (freeAddrInfoRequest == NULL)
     {
@@ -1518,7 +1512,7 @@ int Encoders::EncodedTimeValBufferSize(const Esp32Messaging::TimeVal * const tim
  */
 Esp32Messaging::TimeVal *Encoders::ExtractTimeVal(uint8_t *buffer)
 {
-    Esp32Messaging::TimeVal *timeVal = (Esp32Messaging::TimeVal *) pvPortMalloc(sizeof(Esp32Messaging::TimeVal));
+    Esp32Messaging::TimeVal *timeVal = static_cast<Esp32Messaging::TimeVal *>(pvPortMalloc(sizeof(Esp32Messaging::TimeVal)));
 
     if (timeVal == NULL)
     {
@@ -1546,7 +1540,7 @@ Esp32Messaging::TimeVal *Encoders::ExtractTimeVal(uint8_t *buffer)
  */
 Esp32Messaging::SetSockOptRequest *Encoders::ExtractSetSockOptRequest(uint8_t *buffer)
 {
-    Esp32Messaging::SetSockOptRequest *setSockOptRequest = (Esp32Messaging::SetSockOptRequest *) pvPortMalloc(sizeof(Esp32Messaging::SetSockOptRequest));
+    Esp32Messaging::SetSockOptRequest *setSockOptRequest = static_cast<Esp32Messaging::SetSockOptRequest *>(pvPortMalloc(sizeof(Esp32Messaging::SetSockOptRequest)));
 
     if (setSockOptRequest == NULL)
     {
@@ -1563,7 +1557,7 @@ Esp32Messaging::SetSockOptRequest *Encoders::ExtractSetSockOptRequest(uint8_t *b
     buffer += 4;
     if (setSockOptRequest->OptionValueLength > 0)
     {
-        setSockOptRequest->OptionValue = (uint8_t *) pvPortMalloc(setSockOptRequest->OptionValueLength);
+        setSockOptRequest->OptionValue = static_cast<uint8_t *>(pvPortMalloc(setSockOptRequest->OptionValueLength));
         if (setSockOptRequest->OptionValue == NULL)
         {
             Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&setSockOptRequest));
@@ -1613,7 +1607,7 @@ void Encoders::FreeSetSockOptRequest(Esp32Messaging::SetSockOptRequest **setSock
  */
 Esp32Messaging::GetSockOptRequest *Encoders::ExtractGetSockOptRequest(uint8_t *buffer)
 {
-    Esp32Messaging::GetSockOptRequest *getSockOptRequest = (Esp32Messaging::GetSockOptRequest *) pvPortMalloc(sizeof(Esp32Messaging::GetSockOptRequest));
+    Esp32Messaging::GetSockOptRequest *getSockOptRequest = static_cast<Esp32Messaging::GetSockOptRequest *>(pvPortMalloc(sizeof(Esp32Messaging::GetSockOptRequest)));
 
     if (getSockOptRequest == NULL)
     {
@@ -1649,7 +1643,7 @@ void Encoders::EncodeGetSockOptResponse(const Esp32Messaging::GetSockOptResponse
     buffer += 4;
     if (getSockOptResponse->OptionValueLength > 0)
     {
-        memcpy((void *) buffer, (void *) getSockOptResponse->OptionValue, getSockOptResponse->OptionValueLength);
+        memcpy(buffer, getSockOptResponse->OptionValue, getSockOptResponse->OptionValueLength);
         buffer += getSockOptResponse->OptionValueLength;
     }
     EncodeInt32(getSockOptResponse->OptionLen, buffer);
@@ -1718,7 +1712,7 @@ int Encoders::EncodedLingerBufferSize(const Esp32Messaging::Linger * const linge
  */
 Esp32Messaging::WriteRequest *Encoders::ExtractWriteRequest(uint8_t *buffer)
 {
-    Esp32Messaging::WriteRequest *writeRequest = (Esp32Messaging::WriteRequest *) pvPortMalloc(sizeof(Esp32Messaging::WriteRequest));
+    Esp32Messaging::WriteRequest *writeRequest = static_cast<Esp32Messaging::WriteRequest *>(pvPortMalloc(sizeof(Esp32Messaging::WriteRequest)));
 
     if (writeRequest == NULL)
     {
@@ -1731,7 +1725,7 @@ Esp32Messaging::WriteRequest *Encoders::ExtractWriteRequest(uint8_t *buffer)
     buffer += 4;
     if (writeRequest->BufferLength > 0)
     {
-        writeRequest->Buffer = (uint8_t *) pvPortMalloc(writeRequest->BufferLength);
+        writeRequest->Buffer = static_cast<uint8_t *>(pvPortMalloc(writeRequest->BufferLength));
         if (writeRequest->Buffer == NULL)
         {
             Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&writeRequest));
@@ -1781,7 +1775,7 @@ void Encoders::FreeWriteRequest(Esp32Messaging::WriteRequest **writeRequest)
  */
 Esp32Messaging::ReadRequest *Encoders::ExtractReadRequest(uint8_t *buffer)
 {
-    Esp32Messaging::ReadRequest *readRequest = (Esp32Messaging::ReadRequest *) pvPortMalloc(sizeof(Esp32Messaging::ReadRequest));
+    Esp32Messaging::ReadRequest *readRequest = static_cast<Esp32Messaging::ReadRequest *>(pvPortMalloc(sizeof(Esp32Messaging::ReadRequest)));
 
     if (readRequest == NULL)
     {
@@ -1811,7 +1805,7 @@ void Encoders::EncodeReadResponse(const Esp32Messaging::ReadResponse * const rea
     buffer += 4;
     if (readResponse->BufferLength > 0)
     {
-        memcpy((void *) buffer, (void *) readResponse->Buffer, readResponse->BufferLength);
+        memcpy(buffer, readResponse->Buffer, readResponse->BufferLength);
         buffer += readResponse->BufferLength;
     }
     EncodeInt32(readResponse->ReadResponseResult, buffer);
@@ -1849,7 +1843,7 @@ int Encoders::EncodedReadResponseBufferSize(const Esp32Messaging::ReadResponse *
  */
 Esp32Messaging::CloseRequest *Encoders::ExtractCloseRequest(uint8_t *buffer)
 {
-    Esp32Messaging::CloseRequest *closeRequest = (Esp32Messaging::CloseRequest *) pvPortMalloc(sizeof(Esp32Messaging::CloseRequest));
+    Esp32Messaging::CloseRequest *closeRequest = static_cast<Esp32Messaging::CloseRequest *>(pvPortMalloc(sizeof(Esp32Messaging::CloseRequest)));
 
     if (closeRequest == NULL)
     {
@@ -1905,7 +1899,7 @@ int Encoders::EncodedGetBatteryChargeLevelResponseBufferSize(const Esp32Messagin
  */
 Esp32Messaging::SendRequest *Encoders::ExtractSendRequest(uint8_t *buffer)
 {
-    Esp32Messaging::SendRequest *sendRequest = (Esp32Messaging::SendRequest *) pvPortMalloc(sizeof(Esp32Messaging::SendRequest));
+    Esp32Messaging::SendRequest *sendRequest = static_cast<Esp32Messaging::SendRequest *>(pvPortMalloc(sizeof(Esp32Messaging::SendRequest)));
 
     if (sendRequest == NULL)
     {
@@ -1918,7 +1912,7 @@ Esp32Messaging::SendRequest *Encoders::ExtractSendRequest(uint8_t *buffer)
     buffer += 4;
     if (sendRequest->BufferLength > 0)
     {
-        sendRequest->Buffer = (uint8_t *) pvPortMalloc(sendRequest->BufferLength);
+        sendRequest->Buffer = static_cast<uint8_t *>(pvPortMalloc(sendRequest->BufferLength));
         if (sendRequest->Buffer == NULL)
         {
             Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&sendRequest));
@@ -1971,7 +1965,7 @@ void Encoders::FreeSendRequest(Esp32Messaging::SendRequest **sendRequest)
  */
 Esp32Messaging::SendToRequest *Encoders::ExtractSendToRequest(uint8_t *buffer)
 {
-    Esp32Messaging::SendToRequest *sendToRequest = (Esp32Messaging::SendToRequest *) pvPortMalloc(sizeof(Esp32Messaging::SendToRequest));
+    Esp32Messaging::SendToRequest *sendToRequest = static_cast<Esp32Messaging::SendToRequest *>(pvPortMalloc(sizeof(Esp32Messaging::SendToRequest)));
 
     if (sendToRequest == NULL)
     {
@@ -1984,7 +1978,7 @@ Esp32Messaging::SendToRequest *Encoders::ExtractSendToRequest(uint8_t *buffer)
     buffer += 4;
     if (sendToRequest->BufferLength > 0)
     {
-        sendToRequest->Buffer = (uint8_t *) pvPortMalloc(sendToRequest->BufferLength);
+        sendToRequest->Buffer = static_cast<uint8_t *>(pvPortMalloc(sendToRequest->BufferLength));
         if (sendToRequest->Buffer == NULL)
         {
             Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&sendToRequest));
@@ -2005,7 +1999,7 @@ Esp32Messaging::SendToRequest *Encoders::ExtractSendToRequest(uint8_t *buffer)
     buffer += 4;
     if (sendToRequest->DestinationAddressLength > 0)
     {
-        sendToRequest->DestinationAddress = (uint8_t *) pvPortMalloc(sendToRequest->DestinationAddressLength);
+        sendToRequest->DestinationAddress = static_cast<uint8_t *>(pvPortMalloc(sendToRequest->DestinationAddressLength));
         if (sendToRequest->DestinationAddress == NULL)
         {
             Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&sendToRequest->Buffer));
@@ -2056,7 +2050,7 @@ void Encoders::FreeSendToRequest(Esp32Messaging::SendToRequest **sendToRequest)
  */
 Esp32Messaging::RecvFromRequest *Encoders::ExtractRecvFromRequest(uint8_t *buffer)
 {
-    Esp32Messaging::RecvFromRequest *recvFromRequest = (Esp32Messaging::RecvFromRequest *) pvPortMalloc(sizeof(Esp32Messaging::RecvFromRequest));
+    Esp32Messaging::RecvFromRequest *recvFromRequest = static_cast<Esp32Messaging::RecvFromRequest *>(pvPortMalloc(sizeof(Esp32Messaging::RecvFromRequest)));
 
     if (recvFromRequest == NULL)
     {
@@ -2090,7 +2084,7 @@ void Encoders::EncodeRecvFromResponse(const Esp32Messaging::RecvFromResponse * c
     buffer += 4;
     if (recvFromResponse->BufferLength > 0)
     {
-        memcpy((void *) buffer, (void *) recvFromResponse->Buffer, recvFromResponse->BufferLength);
+        memcpy(buffer, recvFromResponse->Buffer, recvFromResponse->BufferLength);
         buffer += recvFromResponse->BufferLength;
     }
     EncodeInt32(recvFromResponse->Result, buffer);
@@ -2101,7 +2095,7 @@ void Encoders::EncodeRecvFromResponse(const Esp32Messaging::RecvFromResponse * c
     buffer += 4;
     if (recvFromResponse->SourceAddressLength > 0)
     {
-        memcpy((void *) buffer, (void *) recvFromResponse->SourceAddress, recvFromResponse->SourceAddressLength);
+        memcpy(buffer, recvFromResponse->SourceAddress, recvFromResponse->SourceAddressLength);
         buffer += recvFromResponse->SourceAddressLength;
     }
     EncodeUInt32(recvFromResponse->SourceAddressLen, buffer);
@@ -2163,7 +2157,7 @@ Esp32Messaging::SendMsgRequest *Encoders::ExtractSendMsgRequest(uint8_t *buffer)
         return (nullptr);
     }
 
-    Esp32Messaging::SendMsgRequest *sendMsgRequest = (Esp32Messaging::SendMsgRequest *) pvPortMalloc(sizeof(Esp32Messaging::SendMsgRequest));
+    Esp32Messaging::SendMsgRequest *sendMsgRequest = static_cast<Esp32Messaging::SendMsgRequest *>(pvPortMalloc(sizeof(Esp32Messaging::SendMsgRequest)));
 
     if (sendMsgRequest == NULL)
     {
@@ -2180,7 +2174,7 @@ Esp32Messaging::SendMsgRequest *Encoders::ExtractSendMsgRequest(uint8_t *buffer)
     buffer += 4;
     if (sendMsgRequest->NameLength > 0)
     {
-        sendMsgRequest->Name = (uint8_t *) pvPortMalloc(sendMsgRequest->NameLength);
+        sendMsgRequest->Name = static_cast<uint8_t *>(pvPortMalloc(sendMsgRequest->NameLength));
         if (sendMsgRequest->Name == NULL)
         {
             vPortFree(sendMsgRequest);
@@ -2204,7 +2198,7 @@ Esp32Messaging::SendMsgRequest *Encoders::ExtractSendMsgRequest(uint8_t *buffer)
     }
     if (sendMsgRequest->BufferLength > 0)
     {
-        sendMsgRequest->Buffer = (uint8_t *) pvPortMalloc(sendMsgRequest->BufferLength);
+        sendMsgRequest->Buffer = static_cast<uint8_t *>(pvPortMalloc(sendMsgRequest->BufferLength));
         if (sendMsgRequest->Buffer == NULL)
         {
             if (sendMsgRequest->Name != nullptr)
@@ -2226,7 +2220,7 @@ Esp32Messaging::SendMsgRequest *Encoders::ExtractSendMsgRequest(uint8_t *buffer)
     buffer += 4;
     if (sendMsgRequest->ControlLength > 0)
     {
-        sendMsgRequest->Control = (uint8_t *) pvPortMalloc(sendMsgRequest->ControlLength);
+        sendMsgRequest->Control = static_cast<uint8_t *>(pvPortMalloc(sendMsgRequest->ControlLength));
         if (sendMsgRequest->Control == NULL)
         {
             if (sendMsgRequest->Name != nullptr)
@@ -2301,7 +2295,7 @@ Esp32Messaging::RecvMsgRequest *Encoders::ExtractRecvMsgRequest(uint8_t *buffer)
         return (nullptr);
     }
 
-    Esp32Messaging::RecvMsgRequest *recvMsgRequest = (Esp32Messaging::RecvMsgRequest *) pvPortMalloc(sizeof(Esp32Messaging::RecvMsgRequest));
+    Esp32Messaging::RecvMsgRequest *recvMsgRequest = static_cast<Esp32Messaging::RecvMsgRequest *>(pvPortMalloc(sizeof(Esp32Messaging::RecvMsgRequest)));
 
     if (recvMsgRequest == NULL)
     {
@@ -2365,7 +2359,7 @@ void Encoders::EncodeRecvMsgResponse(const Esp32Messaging::RecvMsgResponse * con
     buffer += 4;
     if (recvMsgResponse->BufferLength > 0)
     {
-        memcpy((void *) buffer, (void *) recvMsgResponse->Buffer, recvMsgResponse->BufferLength);
+        memcpy(buffer, recvMsgResponse->Buffer, recvMsgResponse->BufferLength);
         buffer += recvMsgResponse->BufferLength;
     }
     EncodeInt32(recvMsgResponse->Result, buffer);
@@ -2376,7 +2370,7 @@ void Encoders::EncodeRecvMsgResponse(const Esp32Messaging::RecvMsgResponse * con
     buffer += 4;
     if (recvMsgResponse->SourceAddressLength > 0)
     {
-        memcpy((void *) buffer, (void *) recvMsgResponse->SourceAddress, recvMsgResponse->SourceAddressLength);
+        memcpy(buffer, recvMsgResponse->SourceAddress, recvMsgResponse->SourceAddressLength);
         buffer += recvMsgResponse->SourceAddressLength;
     }
     EncodeUInt32(recvMsgResponse->SourceAddressLen, buffer);
@@ -2385,7 +2379,7 @@ void Encoders::EncodeRecvMsgResponse(const Esp32Messaging::RecvMsgResponse * con
     buffer += 4;
     if (recvMsgResponse->ControlLength > 0)
     {
-        memcpy((void *) buffer, (void *) recvMsgResponse->Control, recvMsgResponse->ControlLength);
+        memcpy(buffer, recvMsgResponse->Control, recvMsgResponse->ControlLength);
         buffer += recvMsgResponse->ControlLength;
     }
     EncodeInt32(recvMsgResponse->MsgFlags, buffer);
@@ -2424,7 +2418,7 @@ int Encoders::EncodedRecvMsgResponseBufferSize(const Esp32Messaging::RecvMsgResp
  */
 Esp32Messaging::PollRequest *Encoders::ExtractPollRequest(uint8_t *buffer)
 {
-    Esp32Messaging::PollRequest *pollRequest = (Esp32Messaging::PollRequest *) pvPortMalloc(sizeof(Esp32Messaging::PollRequest));
+    Esp32Messaging::PollRequest *pollRequest = static_cast<Esp32Messaging::PollRequest *>(pvPortMalloc(sizeof(Esp32Messaging::PollRequest)));
 
     if (pollRequest == NULL)
     {
@@ -2529,7 +2523,7 @@ int Encoders::EncodedInterruptPollResponseBufferSize(const Esp32Messaging::Inter
  */
 Esp32Messaging::ListenRequest *Encoders::ExtractListenRequest(uint8_t *buffer)
 {
-    Esp32Messaging::ListenRequest *listenRequest = (Esp32Messaging::ListenRequest *) pvPortMalloc(sizeof(Esp32Messaging::ListenRequest));
+    Esp32Messaging::ListenRequest *listenRequest = static_cast<Esp32Messaging::ListenRequest *>(pvPortMalloc(sizeof(Esp32Messaging::ListenRequest)));
 
     if (listenRequest == NULL)
     {
@@ -2557,7 +2551,7 @@ Esp32Messaging::ListenRequest *Encoders::ExtractListenRequest(uint8_t *buffer)
  */
 Esp32Messaging::BindRequest *Encoders::ExtractBindRequest(uint8_t *buffer)
 {
-    Esp32Messaging::BindRequest *bindRequest = (Esp32Messaging::BindRequest *) pvPortMalloc(sizeof(Esp32Messaging::BindRequest));
+    Esp32Messaging::BindRequest *bindRequest = static_cast<Esp32Messaging::BindRequest *>(pvPortMalloc(sizeof(Esp32Messaging::BindRequest)));
 
     if (bindRequest == NULL)
     {
@@ -2570,7 +2564,7 @@ Esp32Messaging::BindRequest *Encoders::ExtractBindRequest(uint8_t *buffer)
     buffer += 4;
     if (bindRequest->AddrLength > 0)
     {
-        bindRequest->Addr = (uint8_t *) pvPortMalloc(bindRequest->AddrLength);
+        bindRequest->Addr = static_cast<uint8_t *>(pvPortMalloc(bindRequest->AddrLength));
         if (bindRequest->Addr == NULL)
         {
             Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&bindRequest));
@@ -2619,7 +2613,7 @@ void Encoders::FreeBindRequest(Esp32Messaging::BindRequest **bindRequest)
  */
 Esp32Messaging::AcceptRequest *Encoders::ExtractAcceptRequest(uint8_t *buffer)
 {
-    Esp32Messaging::AcceptRequest *acceptRequest = (Esp32Messaging::AcceptRequest *) pvPortMalloc(sizeof(Esp32Messaging::AcceptRequest));
+    Esp32Messaging::AcceptRequest *acceptRequest = static_cast<Esp32Messaging::AcceptRequest *>(pvPortMalloc(sizeof(Esp32Messaging::AcceptRequest)));
 
     if (acceptRequest == NULL)
     {
@@ -2647,7 +2641,7 @@ void Encoders::EncodeAcceptResponse(const Esp32Messaging::AcceptResponse * const
     buffer += 4;
     if (acceptResponse->AddrLength > 0)
     {
-        memcpy((void *) buffer, (void *) acceptResponse->Addr, acceptResponse->AddrLength);
+        memcpy(buffer, acceptResponse->Addr, acceptResponse->AddrLength);
         buffer += acceptResponse->AddrLength;
     }
     EncodeInt32(acceptResponse->Result, buffer);
@@ -2685,7 +2679,7 @@ int Encoders::EncodedAcceptResponseBufferSize(const Esp32Messaging::AcceptRespon
  */
 Esp32Messaging::IoctlRequest *Encoders::ExtractIoctlRequest(uint8_t *buffer)
 {
-    Esp32Messaging::IoctlRequest *ioctlRequest = (Esp32Messaging::IoctlRequest *) pvPortMalloc(sizeof(Esp32Messaging::IoctlRequest));
+    Esp32Messaging::IoctlRequest *ioctlRequest = static_cast<Esp32Messaging::IoctlRequest *>(pvPortMalloc(sizeof(Esp32Messaging::IoctlRequest)));
 
     if (ioctlRequest == NULL)
     {
@@ -2713,7 +2707,7 @@ void Encoders::EncodeIoctlResponse(const Esp32Messaging::IoctlResponse * const i
     buffer += 4;
     if (ioctlResponse->AddrLength > 0)
     {
-        memcpy((void *) buffer, (void *) ioctlResponse->Addr, ioctlResponse->AddrLength);
+        memcpy(buffer, ioctlResponse->Addr, ioctlResponse->AddrLength);
         buffer += ioctlResponse->AddrLength;
     }
     EncodeInt32(ioctlResponse->Flags, buffer);
@@ -2753,7 +2747,7 @@ int Encoders::EncodedIoctlResponseBufferSize(const Esp32Messaging::IoctlResponse
  */
 Esp32Messaging::GetSockPeerNameRequest *Encoders::ExtractGetSockPeerNameRequest(uint8_t *buffer)
 {
-    Esp32Messaging::GetSockPeerNameRequest *getSockPeerNameRequest = (Esp32Messaging::GetSockPeerNameRequest *) pvPortMalloc(sizeof(Esp32Messaging::GetSockPeerNameRequest));
+    Esp32Messaging::GetSockPeerNameRequest *getSockPeerNameRequest = static_cast<Esp32Messaging::GetSockPeerNameRequest *>(pvPortMalloc(sizeof(Esp32Messaging::GetSockPeerNameRequest)));
 
     if (getSockPeerNameRequest == NULL)
     {
@@ -2781,7 +2775,7 @@ void Encoders::EncodeGetSockPeerNameResponse(const Esp32Messaging::GetSockPeerNa
     buffer += 4;
     if (getSockPeerNameResponse->AddrLength > 0)
     {
-        memcpy((void *) buffer, (void *) getSockPeerNameResponse->Addr, getSockPeerNameResponse->AddrLength);
+        memcpy(buffer, getSockPeerNameResponse->Addr, getSockPeerNameResponse->AddrLength);
         buffer += getSockPeerNameResponse->AddrLength;
     }
     EncodeInt32(getSockPeerNameResponse->Result, buffer);
@@ -2860,7 +2854,7 @@ void Encoders::EncodeEventDataPayload(const Esp32Messaging::EventDataPayload * c
     buffer += 4;
     if (eventDataPayload->PayloadLength > 0)
     {
-        memcpy((void *) buffer, (void *) eventDataPayload->Payload, eventDataPayload->PayloadLength);
+        memcpy(buffer, eventDataPayload->Payload, eventDataPayload->PayloadLength);
     }
 }
 
@@ -2894,7 +2888,7 @@ int Encoders::EncodedEventDataPayloadBufferSize(const Esp32Messaging::EventDataP
  */
 Esp32Messaging::SetAntennaRequest *Encoders::ExtractSetAntennaRequest(uint8_t *buffer)
 {
-    Esp32Messaging::SetAntennaRequest *setAntennaRequest = (Esp32Messaging::SetAntennaRequest *) pvPortMalloc(sizeof(Esp32Messaging::SetAntennaRequest));
+    Esp32Messaging::SetAntennaRequest *setAntennaRequest = static_cast<Esp32Messaging::SetAntennaRequest *>(pvPortMalloc(sizeof(Esp32Messaging::SetAntennaRequest)));
 
     if (setAntennaRequest == NULL)
     {
@@ -2922,7 +2916,7 @@ Esp32Messaging::SetAntennaRequest *Encoders::ExtractSetAntennaRequest(uint8_t *b
  */
 Esp32Messaging::BTStackConfig *Encoders::ExtractBTStackConfig(uint8_t *buffer)
 {
-    Esp32Messaging::BTStackConfig *bTStackConfig = (Esp32Messaging::BTStackConfig *) pvPortMalloc(sizeof(Esp32Messaging::BTStackConfig));
+    Esp32Messaging::BTStackConfig *bTStackConfig = static_cast<Esp32Messaging::BTStackConfig *>(pvPortMalloc(sizeof(Esp32Messaging::BTStackConfig)));
 
     if (bTStackConfig == NULL)
     {
@@ -2971,7 +2965,7 @@ void Encoders::EncodeBTDataWriteRequest(const Esp32Messaging::BTDataWriteRequest
     buffer += 4;
     if (bTDataWriteRequest->DataLength > 0)
     {
-        memcpy((void *) buffer, (void *) bTDataWriteRequest->Data, bTDataWriteRequest->DataLength);
+        memcpy(buffer, bTDataWriteRequest->Data, bTDataWriteRequest->DataLength);
     }
 }
 
@@ -3010,7 +3004,7 @@ void Encoders::EncodeBTGetHandlesResponse(const Esp32Messaging::BTGetHandlesResp
     buffer += 4;
     if (bTGetHandlesResponse->HandlesLength > 0)
     {
-        memcpy((void *) buffer, (void *) bTGetHandlesResponse->Handles, bTGetHandlesResponse->HandlesLength);
+        memcpy(buffer, bTGetHandlesResponse->Handles, bTGetHandlesResponse->HandlesLength);
     }
 }
 
@@ -3045,7 +3039,7 @@ int Encoders::EncodedBTGetHandlesResponseBufferSize(const Esp32Messaging::BTGetH
  */
 Esp32Messaging::BTServerDataSet *Encoders::ExtractBTServerDataSet(uint8_t *buffer)
 {
-    Esp32Messaging::BTServerDataSet *bTServerDataSet = (Esp32Messaging::BTServerDataSet *) pvPortMalloc(sizeof(Esp32Messaging::BTServerDataSet));
+    Esp32Messaging::BTServerDataSet *bTServerDataSet = static_cast<Esp32Messaging::BTServerDataSet *>(pvPortMalloc(sizeof(Esp32Messaging::BTServerDataSet)));
 
     if (bTServerDataSet == NULL)
     {
@@ -3058,7 +3052,7 @@ Esp32Messaging::BTServerDataSet *Encoders::ExtractBTServerDataSet(uint8_t *buffe
     buffer += 4;
     if (bTServerDataSet->SetDataLength > 0)
     {
-        bTServerDataSet->SetData = (uint8_t *) pvPortMalloc(bTServerDataSet->SetDataLength);
+        bTServerDataSet->SetData = static_cast<uint8_t *>(pvPortMalloc(bTServerDataSet->SetDataLength));
         if (bTServerDataSet->SetData == NULL)
         {
             Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&bTServerDataSet));
@@ -3142,7 +3136,7 @@ int Encoders::EncodedFileDetailsBufferSize(const Esp32Messaging::FileDetails * c
  */
 Esp32Messaging::FileDetails *Encoders::ExtractFileDetails(uint8_t *buffer)
 {
-    Esp32Messaging::FileDetails *fileDetails = (Esp32Messaging::FileDetails *) pvPortMalloc(sizeof(Esp32Messaging::FileDetails));
+    Esp32Messaging::FileDetails *fileDetails = static_cast<Esp32Messaging::FileDetails *>(pvPortMalloc(sizeof(Esp32Messaging::FileDetails)));
 
     if (fileDetails == NULL)
     {
@@ -3193,7 +3187,7 @@ void Encoders::EncodeFileNameAndContents(const Esp32Messaging::FileNameAndConten
     buffer += 4;
     if (fileNameAndContents->ContentsLength > 0)
     {
-        memcpy((void *) buffer, (void *) fileNameAndContents->Contents, fileNameAndContents->ContentsLength);
+        memcpy(buffer, fileNameAndContents->Contents, fileNameAndContents->ContentsLength);
     }
 }
 
@@ -3229,7 +3223,7 @@ int Encoders::EncodedFileNameAndContentsBufferSize(const Esp32Messaging::FileNam
  */
 Esp32Messaging::FileNameAndContents *Encoders::ExtractFileNameAndContents(uint8_t *buffer)
 {
-    Esp32Messaging::FileNameAndContents *fileNameAndContents = (Esp32Messaging::FileNameAndContents *) pvPortMalloc(sizeof(Esp32Messaging::FileNameAndContents));
+    Esp32Messaging::FileNameAndContents *fileNameAndContents = static_cast<Esp32Messaging::FileNameAndContents *>(pvPortMalloc(sizeof(Esp32Messaging::FileNameAndContents)));
 
     if (fileNameAndContents == NULL)
     {
@@ -3242,7 +3236,7 @@ Esp32Messaging::FileNameAndContents *Encoders::ExtractFileNameAndContents(uint8_
     buffer += 4;
     if (fileNameAndContents->ContentsLength > 0)
     {
-        fileNameAndContents->Contents = (uint8_t *) pvPortMalloc(fileNameAndContents->ContentsLength);
+        fileNameAndContents->Contents = static_cast<uint8_t *>(pvPortMalloc(fileNameAndContents->ContentsLength));
         if (fileNameAndContents->Contents == NULL)
         {
             Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&fileNameAndContents));
@@ -3297,7 +3291,7 @@ void Encoders::EncodeFileNameList(const Esp32Messaging::FileNameList * const fil
     buffer += 4;
     if (fileNameList->FileDetailsLength > 0)
     {
-        memcpy((void *) buffer, (void *) fileNameList->FileDetails, fileNameList->FileDetailsLength);
+        memcpy(buffer, fileNameList->FileDetails, fileNameList->FileDetailsLength);
     }
 }
 
