@@ -191,16 +191,6 @@ public:
     static void Configure(const char * const components, uint32_t interface, uint32_t udpPort);
 
     /**
-     *  @brief Process the request to output an informational message to the logging system.
-     */
-    static void Information(char *methodName, char *formatString, ...);
-
-    /**
-     *  @brief Process the request to output an error message to the logging system
-     */
-    static void Error(char *methodName, char *formatString, ...);
-
-    /**
      *  @brief Translate the ESP-IDF error codes into StatusCodes.
      */
     static StatusCodes::StatusCodes TranslateEspErrorCode(esp_err_t);
