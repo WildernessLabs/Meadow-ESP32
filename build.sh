@@ -145,7 +145,7 @@ if $HELP; then
     echo "-s | --silent           Execute commands silently"
     echo "--coredump              Add core dump functionality to the application"
     echo "-th | --heaptracing     Enable heap tracing."
-    echo "-tm | --tracemessages   Enable heap tracing."
+    echo "-tm | --tracemessages   Enable trace and debug message output."
     echo "-pl | --performancelogging  Enable performance logging of method entry and exit times."
     echo "--dryrun                Perform a dry run (do not execute commands)"
     echo "--halt                  Halt the system on hard fault."
