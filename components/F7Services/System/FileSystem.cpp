@@ -131,7 +131,7 @@ void FileSystem::ShowFiles()
             struct stat fileInfo;
             if (stat(s.c_str(), &fileInfo) == 0)
             {
-                TRACE_MESSAGE("    %s, %" PRIu32, ep->d_name, fileInfo.st_size);
+                TRACE_MESSAGE("    %s, %" PRIi32, ep->d_name, static_cast<int32_t>(fileInfo.st_size));
             }
             else
             {
@@ -387,7 +387,7 @@ void FileSystem::WriteFile(Message * const message)
             std::string s = PARTITION_PATH_NAME;
             s += "/";
             s += fileData->Name;
-            TRACE_MESSAGE("Writing %lu bytes into file %s", fileData->ContentsLength, s.c_str());
+            TRACE_MESSAGE("Writing %" PRIu32 " bytes into file %s", fileData->ContentsLength, s.c_str());
             TRACE_HEX_BUFFER(fileData->Contents, fileData->ContentsLength);
             FILE *file = fopen(s.c_str(), "w");
             if (file != NULL)
