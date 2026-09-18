@@ -39,7 +39,7 @@ Thread::Thread() : _mutex(xSemaphoreCreateMutex())
     _parameter = nullptr;
     if (_mutex == NULL)
     {
-        throw new ThreadPoolException("Cannot create mutex for thread.");
+        throw ThreadPoolException("Cannot create mutex for thread.");
     }
     //
     //  We explicitly create the _executeMethod semaphore here rather than in the member
@@ -51,7 +51,7 @@ Thread::Thread() : _mutex(xSemaphoreCreateMutex())
     _executeMethod = xSemaphoreCreateBinary();
     if (_executeMethod == NULL)
     {
-        throw new ThreadPoolException("Cannot create execute semaphore.");
+        throw ThreadPoolException("Cannot create execute semaphore.");
     }
     xSemaphoreGive(_executeMethod);
 }
@@ -78,7 +78,7 @@ Thread::Thread(char *name, task_completed_method_t taskCompletedMethod) : Thread
     TakeExecutionSemaphore();
     if (xTaskCreate(Thread::Task, _name, TASK_STACK_SIZE, this, PRIORITY_THREAD_POOL_TASK, &_taskHandle) != pdPASS)
     {
-        throw new ThreadPoolException("Cannot create task.");
+        throw ThreadPoolException("Cannot create task.");
     }
     TRACE_MESSAGE("Thread: Exit creating thread %s", name);
 }
@@ -184,7 +184,13 @@ void Thread::Execute(method_t method, void *parameter)
     {
         if (_isBusy)
         {
-            throw new ThreadPoolException("Attempt to execute method on a busy thread.");
+            //
+            //  The mutex is released before the throw.  TaskCompleted() waits on it
+            //  without a timeout, so a thread that threw while holding it would never
+            //  be able to report that it had finished.
+            //
+            xSemaphoreGive(_mutex);
+            throw ThreadPoolException("Attempt to execute method on a busy thread.");
         }
         _isBusy = true;
         _method = method;
@@ -208,7 +214,7 @@ void Thread::TakeExecutionSemaphore()
     }
     else
     {
-        throw new ThreadPoolException("Task cannot take the execution mutex.");
+        throw ThreadPoolException("Task cannot take the execution mutex.");
     }
 }
 
