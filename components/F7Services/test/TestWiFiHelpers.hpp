@@ -129,6 +129,21 @@ void CollectConnectionMessages(MockMessageDispatcher *dispatcher, const unsigned
 void EnsureAccessPointStopped(MockMessageDispatcher *dispatcher);
 
 /**
+ * @brief Disconnect from the access point, whether or not one is joined.
+ *
+ * Used by the tests that need the station to be down before they start.  A connection
+ * left up by an earlier test is not merely untidy: ConnectToAccessPoint returns
+ * WiFiAlreadyStarted without going near the radio once an address is held, so a test
+ * that expects a connection attempt to be made would never see one.
+ *
+ * The response is discarded, as a report that nothing was connected is as good an
+ * outcome here as a report that the connection has been dropped.
+ *
+ * @param dispatcher Dispatcher to queue the request on.
+ */
+void EnsureDisconnected(MockMessageDispatcher *dispatcher);
+
+/**
  * @brief Connect to the access point named in secrets.h.
  *
  * Socket creation is refused while the interface is down, so the POSIX tests cannot do
