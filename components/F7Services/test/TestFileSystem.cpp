@@ -1,7 +1,7 @@
 /*
  *  TestFileSystem.cpp
  *
- *  Implementation of the test methods for the file system.
+ *  Implementation of the test methods for the FileSystem class.
  */
 
 #include "sdkconfig.h"
@@ -22,175 +22,133 @@
 #include "FileSystem.hpp"
 #include "Utils.hpp"
 
-//
-//  Tests carry a second tag describing how they run as well as what they cover.
-//  [Emulated] marks a test as suitable for an unattended run under QEMU.  Tag
-//  matching is a substring search, so these tests still run when [FileSystem] is
-//  selected.
-//
+#include "TestAssertions.hpp"
+#include "TestEncoders.hpp"
+#include "TestFileSystemHelpers.hpp"
+
+/**
+ * @brief Class of tests in this file.
+ */
 #define CLASS_OF_TESTS "[FileSystem][Emulated]"
 
-//
-//  Tests that are correct under QEMU but too slow to run there routinely.  Filling
-//  the partition takes minutes on emulated flash against seconds on hardware.
-//
+/**
+ * @brief Class of tests that take a long time to execute.
+ */
 #define SLOW_TESTS "[FileSystem][Slow]"
 
-//
-//  Name of the files to be used for testing.
-//
+/**
+ * @brief Names of the files used by these tests.
+ */
 #define TEST_FILE_NAME "hello.txt"
 #define TEST_FILE_NAME2 "test.txt"
 
-//
-//  Text to be written into the text files.
-//
+/**
+ * @brief Contents of the files used by these tests.
+ */
 #define TEST_FILE_CONTENTS "Hello from ESP32 unit tests\n"
 #define TEST_FILE_CONTENTS2 "More text\n"
 
-//
-//  Message ID to be used for testing.
-//
+/**
+ * @brief Message ID used for the requests made by these tests.
+ */
 #define TEST_MESSAGE_ID 25
 
-//
-//  Constants for file system upgrade testing.
-//
+/**
+ * @brief Size and names of the files used by the file system upgrade tests.
+ */
 #define TEST_UPGRADE_BUFFER_SIZE 1024
 #define TEST_UPGRADE_FILE_NAME_AA "upgrade_aa.txt"
 #define TEST_UPGRADE_FILE_NAME_55 "upgrade_55.txt"
 
-//
-//  Constants for error path testing.
-//
+/**
+ * @brief Name of a file that is never written to the file system.
+ */
 #define TEST_NON_EXISTENT_FILE_NAME "does_not_exist.txt"
+
+/**
+ * @brief Size of a LittleFS block in bytes.
+ */
 #define LITTLEFS_BLOCK_SIZE 4096
 
 /**
- * @brief Count the number of files in the root directory of the file system.
+ * @brief Create a message carrying an encoded FileNameAndContents object.
  *
- * @return int
- *      Number of files present or -1 if there is a problem.
+ * @param function Function the message should request.
+ * @param name Name of the file the request relates to.
+ * @param contents Contents of the file, nullptr when the request only names the file.
+ * @param contentsLength Number of bytes of content, 0 when the request only names the file.
+ *
+ * @return Pointer to a message holding the encoded object in its payload.
  */
-int CountFiles()
+static Message *CreateFileNameAndContentsMessage(const uint32_t function, const char *name, const uint8_t *contents, const uint32_t contentsLength)
 {
-    DIR *dp = opendir(FileSystem::PARTITION_PATH_NAME);
-    int result = 0;
-    if (dp == NULL)
-    {
-        result = -1;
-    }
-    else
-    {
-        struct dirent *ep;
-        while ((ep = readdir(dp)) != NULL)
-        {
-            result++;
-        }
-        (void) closedir(dp);
-    }
-    return (result);
+    Esp32Messaging::FileNameAndContents fileData;
+    memset(&fileData, 0, sizeof(fileData));
+    fileData.Name = const_cast<char *>(name);
+    fileData.Contents = const_cast<uint8_t *>(contents);
+    fileData.ContentsLength = contentsLength;
+
+    uint32_t payloadLength = Encoders::EncodedFileNameAndContentsBufferSize(&fileData);
+    uint8_t *encodedPayload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
+    TEST_ASSERT_NOT_NULL(encodedPayload);
+    Encoders::EncodeFileNameAndContents(&fileData, encodedPayload);
+
+    Message *message = Message::CreateOnHeap(MessageTypes::Header, Esp32Interfaces::System, function, StatusCodes::Failure, TEST_MESSAGE_ID, encodedPayload, payloadLength);
+    TEST_ASSERT_NOT_NULL(message);
+
+    return (message);
 }
 
 /**
- * @brief Write a test file to the file system.
+ * @brief Write one of the files used by these tests using C stdio.
  *
  * @param filename Name of the file to write.
- * @param buffer Pointer to a block of memory holding the data to write.
- * @param length Number of bytes to write to the file.
- *
- * @return Number of bytes written if successful, -1 otherwise.
+ * @param contents Contents to be written to the file.
  */
-int WriteTestFile(const char *filename, const uint8_t *buffer, int length)
+static void WriteTestFileContents(const char *filename, const char *contents)
 {
-    int result = 0;
-
-    std::string s = FileSystem::PARTITION_PATH_NAME;
-    s += "/";
-    s += filename;
-    FILE *file = fopen(s.c_str(), "w");
-    if (file != NULL)
-    {
-        result = fwrite(static_cast<const void *>(buffer), 1, length, file);
-        fclose(file);
-    }
-    else
-    {
-        result = -1;
-    }
-    return (result);
+    TEST_ASSERT_EQUAL(strlen(contents), WriteTestFile(filename, reinterpret_cast<const uint8_t *>(contents), strlen(contents)));
 }
 
 /**
- * @brief Read a file from the file system.
+ * @brief Read a file back and check that it holds the expected contents.
  *
  * @param filename Name of the file to read.
- * @param buffer Pointer to a block of memory to hold the contents of the file.
- * @param maxLength Maximum number of bytes that the buffer can hold.
- *
- * @return int Number of bytes read of -1 if there is a problem.
+ * @param contents Contents the file is expected to hold.
  */
-int ReadTestFile(const char *filename, uint8_t *buffer, int maxLength)
+static void CheckTestFileContents(const char *filename, const char *contents)
 {
-    int result = 0;
+    const size_t length = strlen(contents);
 
-    std::string s = FileSystem::PARTITION_PATH_NAME;
-    s += "/";
-    s += filename;
-    FILE *file = fopen(s.c_str(), "r");
-    if (file != NULL)
-    {
-        result = fread(static_cast<void *>(buffer), 1, maxLength, file);
-        fclose(file);
-    }
-    else
-    {
-        result = -1;
-    }
-    return (result);
+    uint8_t *buffer = static_cast<uint8_t *>(pvPortMalloc(length + 1));
+    TEST_ASSERT_NOT_NULL(buffer);
+    memset(buffer, 0, length + 1);
+
+    TEST_ASSERT_EQUAL(length, ReadTestFile(filename, buffer, length));
+    TEST_ASSERT_EQUAL_MEMORY(contents, buffer, length);
+
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&buffer));
 }
 
 /**
- *  Extract the FileNameList object that is encoded in the given buffer.
+ * @brief Read one of the upgrade test files back and check that it holds the expected value.
  *
- *  Note that the returned pointer points to a block of memory on the heap and
- *  this should eventually be released calling Utils::DeleteAndNullifyPointer(...).
- *
- *  @param buffer
- *      Pointer to a block of memory holding the encoded FileNameList object.
- *
- *  @returns
- *      Pointer to a FileNameList object.
+ * @param filename Name of the file to read.
+ * @param expectedValue Value that every byte in the file should hold.
  */
-static Esp32Messaging::FileNameList *ExtractFileNameList(uint8_t *buffer)
+static void CheckUpgradeFileContents(const char *filename, const uint8_t expectedValue)
 {
-    Esp32Messaging::FileNameList *fileNameList = static_cast<Esp32Messaging::FileNameList *>(pvPortMalloc(sizeof(Esp32Messaging::FileNameList)));
+    uint8_t *buffer = static_cast<uint8_t *>(pvPortMalloc(TEST_UPGRADE_BUFFER_SIZE));
+    TEST_ASSERT_NOT_NULL(buffer);
+    memset(buffer, 0, TEST_UPGRADE_BUFFER_SIZE);
 
-    if (fileNameList == NULL)
+    TEST_ASSERT_EQUAL(TEST_UPGRADE_BUFFER_SIZE, ReadTestFile(filename, buffer, TEST_UPGRADE_BUFFER_SIZE));
+    for (int index = 0; index < TEST_UPGRADE_BUFFER_SIZE; index++)
     {
-        return (nullptr);
+        TEST_ASSERT_EQUAL_HEX8(expectedValue, buffer[index]);
     }
 
-    fileNameList->NumberOfFiles = Encoders::ExtractUInt16(buffer);
-    buffer += 2;
-    fileNameList->FileDetailsLength = Encoders::ExtractUInt32(buffer);
-    buffer += 4;
-    if (fileNameList->FileDetailsLength > 0)
-    {
-        fileNameList->FileDetails = static_cast<uint8_t *>(pvPortMalloc(fileNameList->FileDetailsLength));
-        if (fileNameList->FileDetails == NULL)
-        {
-            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&fileNameList));
-            return (nullptr);
-        }
-        memcpy(fileNameList->FileDetails, buffer, fileNameList->FileDetailsLength);
-        buffer += fileNameList->FileDetailsLength;
-    }
-    else
-    {
-        fileNameList->FileDetails = nullptr;
-    }
-    return (fileNameList);
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&buffer));
 }
 
 /**
@@ -200,7 +158,7 @@ TEST_CASE("File System set up", CLASS_OF_TESTS)
 {
     FileSystem *fs = new FileSystem(nullptr);
     TEST_ASSERT_NOT_NULL(fs);
-    TEST_ASSERT_EQUAL(fs->Setup(), StatusCodes::CompletedOk);
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, fs->Setup());
     TEST_ASSERT_TRUE(esp_littlefs_mounted(FileSystem::PARTITION_LABEL));
     delete fs;
     TEST_ASSERT_FALSE(esp_littlefs_mounted(FileSystem::PARTITION_LABEL));
@@ -218,40 +176,30 @@ TEST_CASE("File System set up", CLASS_OF_TESTS)
  */
 TEST_CASE("Formatting file system", CLASS_OF_TESTS)
 {
-    MockMessageDispatcher *messageDispatcher = new MockMessageDispatcher(nullptr);
-    TEST_ASSERT_NOT_NULL(messageDispatcher);
-
-    FileSystem *fs = new FileSystem(messageDispatcher);
-    TEST_ASSERT_NOT_NULL(fs);
-    TEST_ASSERT_EQUAL(fs->Setup(), StatusCodes::CompletedOk);
+    FileSystemTestContext context = {};
+    CreateFileSystemTestContext(&context, false);
     //
     //  Create a message to format the file system and call the format method.
     //
     Message *formatMessage = Message::CreateOnHeap(MessageTypes::Header, Esp32Interfaces::System, SystemFunction::FileSystemFormat, StatusCodes::Failure);
     TEST_ASSERT_NOT_NULL(formatMessage);
 
-    fs->Format(formatMessage);
+    context.Fs->Format(formatMessage);
 
     //
     //  Now check we have exactly one response and that it is correct.
     //
-    TEST_ASSERT_EQUAL(1, messageDispatcher->OutboundMessageQueueLength());
+    ASSERT_OUTBOUND_QUEUE_LENGTH(context.Dispatcher, 1);
 
-    Message *response = messageDispatcher->GetOutboundMessage();
-    TEST_ASSERT_NOT_NULL(response);
+    Message *response = context.Dispatcher->GetOutboundMessage();
+    ASSERT_RESPONSE(response, Esp32Interfaces::System, SystemFunction::FileSystemFormat, StatusCodes::CompletedOk);
+    ASSERT_NO_PAYLOAD(response);
 
-    TEST_ASSERT_EQUAL(MessageTypes::Response, response->MessageType);
-    TEST_ASSERT_EQUAL(Esp32Interfaces::System, response->Interface);
-    TEST_ASSERT_EQUAL(SystemFunction::FileSystemFormat, response->Function);
-    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
-    TEST_ASSERT_EQUAL(0, response->PayloadLength);
-    TEST_ASSERT_NULL(response->Payload);
-
-    TEST_ASSERT_EQUAL(0, messageDispatcher->OutboundMessageQueueLength());
+    ASSERT_OUTBOUND_QUEUE_LENGTH(context.Dispatcher, 0);
     //
     //  Write a single file to the file system.
     //
-    TEST_ASSERT_EQUAL(strlen(TEST_FILE_CONTENTS), WriteTestFile(const_cast<char *>(TEST_FILE_NAME), reinterpret_cast<uint8_t *>(const_cast<char *>(TEST_FILE_CONTENTS)), strlen(TEST_FILE_CONTENTS)));
+    WriteTestFileContents(TEST_FILE_NAME, TEST_FILE_CONTENTS);
     //
     //  Check that we have one file on the file system.
     //
@@ -259,13 +207,13 @@ TEST_CASE("Formatting file system", CLASS_OF_TESTS)
     //
     //  Reformat the file system (reuse the message from above).
     //
-    fs->Format(formatMessage);
+    context.Fs->Format(formatMessage);
     //
     //  Verify that the file has now gone.
     //
     TEST_ASSERT_EQUAL(0, CountFiles());
 
-    delete fs;
+    ReleaseFileSystemTestContext(&context);
 }
 
 /**
@@ -274,111 +222,62 @@ TEST_CASE("Formatting file system", CLASS_OF_TESTS)
  *  Writing a file will be tested by using the messaging system to pass the file
  *  details and contents and then using C stdio to read the file and verify that
  *  the correct contents have been written to the file system.
- *
- *  The file system will then be unmounted and remounted and the files contents
- *  checked once more using C stdio.
  */
 TEST_CASE("Write file to file system", CLASS_OF_TESTS)
 {
-    MockMessageDispatcher *messageDispatcher = new MockMessageDispatcher(nullptr);
-    TEST_ASSERT_NOT_NULL(messageDispatcher);
-
-    FileSystem *fs = new FileSystem(messageDispatcher);
-    TEST_ASSERT_NOT_NULL(fs);
-    TEST_ASSERT_EQUAL(fs->Setup(), StatusCodes::CompletedOk);
-    //
-    //  Start with an empty file system.
-    //
-    TEST_ASSERT_EQUAL(ESP_OK, esp_littlefs_format(FileSystem::PARTITION_LABEL));
+    FileSystemTestContext context = {};
+    CreateFileSystemTestContext(&context, true);
     //
     //  Create a message to write a file to the file system.
     //
-    Esp32Messaging::FileNameAndContents fileData;
-    memset(&fileData, 0, sizeof(fileData));
-    fileData.Name = const_cast<char *>(TEST_FILE_NAME);
-    fileData.Contents = reinterpret_cast<uint8_t *>(const_cast<char *>(TEST_FILE_CONTENTS));
-    fileData.ContentsLength = strlen(TEST_FILE_CONTENTS);
-    uint32_t payloadLength = Encoders::EncodedFileNameAndContentsBufferSize(&fileData);
-    uint8_t *encodedPayload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
-    TEST_ASSERT_NOT_NULL(encodedPayload);
-    Encoders::EncodeFileNameAndContents(&fileData, encodedPayload);
-    Message *writeMessage = Message::CreateOnHeap(MessageTypes::Header, Esp32Interfaces::System, SystemFunction::FileSystemWriteFile, StatusCodes::Failure, TEST_MESSAGE_ID, encodedPayload, payloadLength);
-    TEST_ASSERT_NOT_NULL(writeMessage);
+    Message *writeMessage = CreateFileNameAndContentsMessage(SystemFunction::FileSystemWriteFile, TEST_FILE_NAME, reinterpret_cast<const uint8_t *>(TEST_FILE_CONTENTS), strlen(TEST_FILE_CONTENTS));
 
-    fs->WriteFile(writeMessage);
+    context.Fs->WriteFile(writeMessage);
 
     //
     //  Now check we have exactly one response and that it is correct.
     //
-    TEST_ASSERT_EQUAL(1, messageDispatcher->OutboundMessageQueueLength());
+    ASSERT_OUTBOUND_QUEUE_LENGTH(context.Dispatcher, 1);
 
-    Message *response = messageDispatcher->GetOutboundMessage();
-    TEST_ASSERT_NOT_NULL(response);
+    Message *response = context.Dispatcher->GetOutboundMessage();
+    ASSERT_RESPONSE(response, Esp32Interfaces::System, SystemFunction::FileSystemWriteFile, StatusCodes::CompletedOk);
+    ASSERT_MESSAGE_ID(response, TEST_MESSAGE_ID);
+    ASSERT_NO_PAYLOAD(response);
 
-    TEST_ASSERT_EQUAL(MessageTypes::Response, response->MessageType);
-    TEST_ASSERT_EQUAL(Esp32Interfaces::System, response->Interface);
-    TEST_ASSERT_EQUAL(SystemFunction::FileSystemWriteFile, response->Function);
-    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
-    TEST_ASSERT_EQUAL(TEST_MESSAGE_ID, response->MessageID);
-    TEST_ASSERT_EQUAL(0, response->PayloadLength);
-    TEST_ASSERT_NULL(response->Payload);
+    ASSERT_OUTBOUND_QUEUE_LENGTH(context.Dispatcher, 0);
 
-    TEST_ASSERT_EQUAL(0, messageDispatcher->OutboundMessageQueueLength());
+    CheckTestFileContents(TEST_FILE_NAME, TEST_FILE_CONTENTS);
 
-    int length = 200;
-    uint8_t *buffer = static_cast<uint8_t *>(pvPortMalloc(length));
-    TEST_ASSERT_EQUAL(strlen(TEST_FILE_CONTENTS), ReadTestFile(const_cast<char *>(TEST_FILE_NAME), buffer, length));
-    TEST_ASSERT_EQUAL_MEMORY_ARRAY(TEST_FILE_CONTENTS, buffer, strlen(TEST_FILE_CONTENTS), 1);
-
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&buffer));
     Message::DeleteMessage(writeMessage);
 
-    delete fs;
+    ReleaseFileSystemTestContext(&context);
 }
 
+/**
+ * @brief Test case for reading a file from the file system.
+ */
 TEST_CASE("Reading a file", CLASS_OF_TESTS)
 {
-    MockMessageDispatcher *messageDispatcher = new MockMessageDispatcher(nullptr);
-    TEST_ASSERT_NOT_NULL(messageDispatcher);
+    FileSystemTestContext context = {};
+    CreateFileSystemTestContext(&context, true);
 
-    FileSystem *fs = new FileSystem(messageDispatcher);
-    TEST_ASSERT_NOT_NULL(fs);
-    TEST_ASSERT_EQUAL(fs->Setup(), StatusCodes::CompletedOk);
-    //
-    //  Start with an empty file system.
-    //
-    TEST_ASSERT_EQUAL(ESP_OK, esp_littlefs_format(FileSystem::PARTITION_LABEL));
-    TEST_ASSERT_EQUAL(strlen(TEST_FILE_CONTENTS), WriteTestFile(const_cast<char *>(TEST_FILE_NAME), reinterpret_cast<uint8_t *>(const_cast<char *>(TEST_FILE_CONTENTS)), strlen(TEST_FILE_CONTENTS)));
+    WriteTestFileContents(TEST_FILE_NAME, TEST_FILE_CONTENTS);
 
-    Esp32Messaging::FileNameAndContents fileData;
-    memset(&fileData, 0, sizeof(fileData));
-    fileData.Name = const_cast<char *>(TEST_FILE_NAME);
-    uint32_t payloadLength = Encoders::EncodedFileNameAndContentsBufferSize(&fileData);
-    uint8_t *encodedPayload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
-    TEST_ASSERT_NOT_NULL(encodedPayload);
-    Encoders::EncodeFileNameAndContents(&fileData, encodedPayload);
-    Message *readMessage = Message::CreateOnHeap(MessageTypes::Header, Esp32Interfaces::System, SystemFunction::FileSystemReadFile, StatusCodes::Failure, TEST_MESSAGE_ID, encodedPayload, payloadLength);
-    TEST_ASSERT_NOT_NULL(readMessage);
+    Message *readMessage = CreateFileNameAndContentsMessage(SystemFunction::FileSystemReadFile, TEST_FILE_NAME, nullptr, 0);
 
-    fs->ReadFile(readMessage);
+    context.Fs->ReadFile(readMessage);
 
     //
     //  Now check we have exactly one response and that it is correct.
     //
-    TEST_ASSERT_EQUAL(1, messageDispatcher->OutboundMessageQueueLength());
+    ASSERT_OUTBOUND_QUEUE_LENGTH(context.Dispatcher, 1);
 
-    Message *response = messageDispatcher->GetOutboundMessage();
-    TEST_ASSERT_NOT_NULL(response);
+    Message *response = context.Dispatcher->GetOutboundMessage();
+    ASSERT_RESPONSE(response, Esp32Interfaces::System, SystemFunction::FileSystemReadFile, StatusCodes::CompletedOk);
+    ASSERT_MESSAGE_ID(response, TEST_MESSAGE_ID);
+    ASSERT_HAS_PAYLOAD(response);
 
-    TEST_ASSERT_EQUAL(MessageTypes::Response, response->MessageType);
-    TEST_ASSERT_EQUAL(Esp32Interfaces::System, response->Interface);
-    TEST_ASSERT_EQUAL(SystemFunction::FileSystemReadFile, response->Function);
-    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
-    TEST_ASSERT_EQUAL(TEST_MESSAGE_ID, response->MessageID);
-    TEST_ASSERT_GREATER_THAN(0, response->PayloadLength);
-    TEST_ASSERT_NOT_NULL(response->Payload);
-
-    TEST_ASSERT_EQUAL(0, messageDispatcher->OutboundMessageQueueLength());
+    ASSERT_OUTBOUND_QUEUE_LENGTH(context.Dispatcher, 0);
 
     Esp32Messaging::FileNameAndContents *fileContents = Encoders::ExtractFileNameAndContents(response->Payload);
     TEST_ASSERT_NOT_NULL(fileContents);
@@ -389,7 +288,7 @@ TEST_CASE("Reading a file", CLASS_OF_TESTS)
     Encoders::FreeFileNameAndContents(&fileContents);
     Message::DeleteMessage(readMessage);
 
-    delete fs;
+    ReleaseFileSystemTestContext(&context);
 }
 
 /**
@@ -397,58 +296,46 @@ TEST_CASE("Reading a file", CLASS_OF_TESTS)
  */
 TEST_CASE("Get list of files", CLASS_OF_TESTS)
 {
-    MockMessageDispatcher *messageDispatcher = new MockMessageDispatcher(nullptr);
-    TEST_ASSERT_NOT_NULL(messageDispatcher);
+    FileSystemTestContext context = {};
+    CreateFileSystemTestContext(&context, true);
 
-    FileSystem *fs = new FileSystem(messageDispatcher);
-    TEST_ASSERT_NOT_NULL(fs);
-    TEST_ASSERT_EQUAL(fs->Setup(), StatusCodes::CompletedOk);
-    //
-    //  Start with an empty file system.
-    //
-    TEST_ASSERT_EQUAL(ESP_OK, esp_littlefs_format(FileSystem::PARTITION_LABEL));
     Message *listMessage = Message::CreateOnHeap(MessageTypes::Header, Esp32Interfaces::System, SystemFunction::FileSystemListFiles, StatusCodes::Failure);
+    TEST_ASSERT_NOT_NULL(listMessage);
     listMessage->MessageID = TEST_MESSAGE_ID;
 
-    fs->ListFiles(listMessage);
+    context.Fs->ListFiles(listMessage);
     //
     //  Now check we have exactly one response and that it is correct.
     //
-    TEST_ASSERT_EQUAL(1, messageDispatcher->OutboundMessageQueueLength());
+    ASSERT_OUTBOUND_QUEUE_LENGTH(context.Dispatcher, 1);
 
-    Message *response = messageDispatcher->GetOutboundMessage();
-    TEST_ASSERT_NOT_NULL(response);
+    Message *response = context.Dispatcher->GetOutboundMessage();
+    ASSERT_RESPONSE(response, Esp32Interfaces::System, SystemFunction::FileSystemListFiles, StatusCodes::CompletedOk);
+    ASSERT_MESSAGE_ID(response, TEST_MESSAGE_ID);
+    ASSERT_HAS_PAYLOAD(response);
 
-    TEST_ASSERT_EQUAL(MessageTypes::Response, response->MessageType);
-    TEST_ASSERT_EQUAL(Esp32Interfaces::System, response->Interface);
-    TEST_ASSERT_EQUAL(SystemFunction::FileSystemListFiles, response->Function);
-    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
-    TEST_ASSERT_EQUAL(TEST_MESSAGE_ID, response->MessageID);
-    TEST_ASSERT_GREATER_THAN(0, response->PayloadLength);
-    TEST_ASSERT_NOT_NULL(response->Payload);
-
-    TEST_ASSERT_EQUAL(0, messageDispatcher->OutboundMessageQueueLength());
+    ASSERT_OUTBOUND_QUEUE_LENGTH(context.Dispatcher, 0);
 
     //
     //  We should have no files on the file system.
     //
-    Esp32Messaging::FileNameList *files = ExtractFileNameList(response->Payload);
+    Esp32Messaging::FileNameList *files = TestEncoders::ExtractFileNameList(response->Payload);
     TEST_ASSERT_NOT_NULL(files);
     TEST_ASSERT_EQUAL(0, files->NumberOfFiles);
     TEST_ASSERT_EQUAL(0, files->FileDetailsLength);
     TEST_ASSERT_NULL(files->FileDetails);
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&files));
+    TestEncoders::FreeFileNameList(&files);
     response->DeletePayload();
 
     //
     //  Now write two files to the file system and repeat the request reusing the listMessage from above.
     //
-    TEST_ASSERT_EQUAL(strlen(TEST_FILE_CONTENTS), WriteTestFile(const_cast<char *>(TEST_FILE_NAME), reinterpret_cast<uint8_t *>(const_cast<char *>(TEST_FILE_CONTENTS)), strlen(TEST_FILE_CONTENTS)));
-    TEST_ASSERT_EQUAL(strlen(TEST_FILE_CONTENTS2), WriteTestFile(const_cast<char *>(TEST_FILE_NAME2), reinterpret_cast<uint8_t *>(const_cast<char *>(TEST_FILE_CONTENTS2)), strlen(TEST_FILE_CONTENTS2)));
+    WriteTestFileContents(TEST_FILE_NAME, TEST_FILE_CONTENTS);
+    WriteTestFileContents(TEST_FILE_NAME2, TEST_FILE_CONTENTS2);
     listMessage->StatusCode = StatusCodes::Failure;
 
     uint32_t freeHeapBefore = esp_get_free_heap_size();
-    fs->ListFiles(listMessage);
+    context.Fs->ListFiles(listMessage);
     uint32_t freeHeapAfter = esp_get_free_heap_size();
     TEST_ASSERT_LESS_OR_EQUAL(freeHeapBefore, freeHeapAfter);
 
@@ -457,11 +344,12 @@ TEST_CASE("Get list of files", CLASS_OF_TESTS)
     //  just check that we can retrieve the file information.
     //
     TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
-    files = ExtractFileNameList(response->Payload);
+    files = TestEncoders::ExtractFileNameList(response->Payload);
     TEST_ASSERT_NOT_NULL(files);
     TEST_ASSERT_EQUAL(2, files->NumberOfFiles);
     TEST_ASSERT_GREATER_THAN(0, files->FileDetailsLength);
     TEST_ASSERT_NOT_NULL(files->FileDetails);
+
     uint8_t *buffer = files->FileDetails;
     for (int index = 0; index < files->NumberOfFiles; index++)
     {
@@ -478,10 +366,11 @@ TEST_CASE("Get list of files", CLASS_OF_TESTS)
         }
         Encoders::FreeFileDetails(&file);
     }
+    TestEncoders::FreeFileNameList(&files);
 
     Message::DeleteMessage(listMessage);
 
-    delete fs;
+    ReleaseFileSystemTestContext(&context);
 }
 
 /**
@@ -489,16 +378,8 @@ TEST_CASE("Get list of files", CLASS_OF_TESTS)
  */
 TEST_CASE("Delete file", CLASS_OF_TESTS)
 {
-    MockMessageDispatcher *messageDispatcher = new MockMessageDispatcher(nullptr);
-    TEST_ASSERT_NOT_NULL(messageDispatcher);
-
-    FileSystem *fs = new FileSystem(messageDispatcher);
-    TEST_ASSERT_NOT_NULL(fs);
-    TEST_ASSERT_EQUAL(fs->Setup(), StatusCodes::CompletedOk);
-    //
-    //  Start with an empty file system.
-    //
-    TEST_ASSERT_EQUAL(ESP_OK, esp_littlefs_format(FileSystem::PARTITION_LABEL));
+    FileSystemTestContext context = {};
+    CreateFileSystemTestContext(&context, true);
 
     //
     //  Create a message to delete a file from the file system.
@@ -513,30 +394,24 @@ TEST_CASE("Delete file", CLASS_OF_TESTS)
     Message *deleteMessage = Message::CreateOnHeap(MessageTypes::Header, Esp32Interfaces::System, SystemFunction::FileSystemDeleteFile, StatusCodes::Failure, TEST_MESSAGE_ID, encodedPayload, payloadLength);
     TEST_ASSERT_NOT_NULL(deleteMessage);
 
-    fs->DeleteFile(deleteMessage);
+    context.Fs->DeleteFile(deleteMessage);
 
     //
     //  Now check we have exactly one response and that it is correct.
     //
-    TEST_ASSERT_EQUAL(1, messageDispatcher->OutboundMessageQueueLength());
+    ASSERT_OUTBOUND_QUEUE_LENGTH(context.Dispatcher, 1);
 
-    Message *response = messageDispatcher->GetOutboundMessage();
-    TEST_ASSERT_NOT_NULL(response);
+    Message *response = context.Dispatcher->GetOutboundMessage();
+    ASSERT_RESPONSE(response, Esp32Interfaces::System, SystemFunction::FileSystemDeleteFile, StatusCodes::FileNotFound);
+    ASSERT_MESSAGE_ID(response, TEST_MESSAGE_ID);
+    ASSERT_NO_PAYLOAD(response);
 
-    TEST_ASSERT_EQUAL(MessageTypes::Response, response->MessageType);
-    TEST_ASSERT_EQUAL(Esp32Interfaces::System, response->Interface);
-    TEST_ASSERT_EQUAL(SystemFunction::FileSystemDeleteFile, response->Function);
-    TEST_ASSERT_EQUAL(StatusCodes::FileNotFound, response->StatusCode);
-    TEST_ASSERT_EQUAL(TEST_MESSAGE_ID, response->MessageID);
-    TEST_ASSERT_EQUAL(0, response->PayloadLength);
-    TEST_ASSERT_NULL(response->Payload);
-
-    TEST_ASSERT_EQUAL(0, messageDispatcher->OutboundMessageQueueLength());
+    ASSERT_OUTBOUND_QUEUE_LENGTH(context.Dispatcher, 0);
 
     //
     //  Now create a file and try to delete it.
     //
-    TEST_ASSERT_EQUAL(strlen(TEST_FILE_CONTENTS), WriteTestFile(const_cast<char *>(TEST_FILE_NAME), reinterpret_cast<uint8_t *>(const_cast<char *>(TEST_FILE_CONTENTS)), strlen(TEST_FILE_CONTENTS)));
+    WriteTestFileContents(TEST_FILE_NAME, TEST_FILE_CONTENTS);
     TEST_ASSERT_EQUAL(1, CountFiles());
 
     deleteMessage->PayloadLength = payloadLength;
@@ -545,11 +420,11 @@ TEST_CASE("Delete file", CLASS_OF_TESTS)
     Encoders::EncodeFileDetails(&details, encodedPayload);
     deleteMessage->Payload = encodedPayload;
 
-    fs->DeleteFile(deleteMessage);
+    context.Fs->DeleteFile(deleteMessage);
 
-    TEST_ASSERT_EQUAL(1, messageDispatcher->OutboundMessageQueueLength());
+    ASSERT_OUTBOUND_QUEUE_LENGTH(context.Dispatcher, 1);
 
-    response = messageDispatcher->GetOutboundMessage();
+    response = context.Dispatcher->GetOutboundMessage();
     TEST_ASSERT_NOT_NULL(response);
     TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
 
@@ -557,7 +432,7 @@ TEST_CASE("Delete file", CLASS_OF_TESTS)
 
     Message::DeleteMessage(deleteMessage);
 
-    delete fs;
+    ReleaseFileSystemTestContext(&context);
 }
 
 /**
@@ -568,35 +443,24 @@ TEST_CASE("Delete file", CLASS_OF_TESTS)
  */
 TEST_CASE("Prepare file system upgrade test", CLASS_OF_TESTS)
 {
-    MockMessageDispatcher *messageDispatcher = new MockMessageDispatcher(nullptr);
-    TEST_ASSERT_NOT_NULL(messageDispatcher);
-
-    FileSystem *fs = new FileSystem(messageDispatcher);
-    TEST_ASSERT_NOT_NULL(fs);
-    TEST_ASSERT_EQUAL(fs->Setup(), StatusCodes::CompletedOk);
-    //
-    //  Start with an empty file system.
-    //
-    TEST_ASSERT_EQUAL(ESP_OK, esp_littlefs_format(FileSystem::PARTITION_LABEL));
+    FileSystemTestContext context = {};
+    CreateFileSystemTestContext(&context, true);
 
     //
     //  Now put some files on the file system to test the upgrade process.
     //
-    TEST_ASSERT_EQUAL(strlen(TEST_FILE_CONTENTS), WriteTestFile(const_cast<char *>(TEST_FILE_NAME), reinterpret_cast<uint8_t *>(const_cast<char *>(TEST_FILE_CONTENTS)), strlen(TEST_FILE_CONTENTS)));
-    TEST_ASSERT_EQUAL(strlen(TEST_FILE_CONTENTS2), WriteTestFile(const_cast<char *>(TEST_FILE_NAME2), reinterpret_cast<uint8_t *>(const_cast<char *>(TEST_FILE_CONTENTS2)), strlen(TEST_FILE_CONTENTS2)));
+    WriteTestFileContents(TEST_FILE_NAME, TEST_FILE_CONTENTS);
+    WriteTestFileContents(TEST_FILE_NAME2, TEST_FILE_CONTENTS2);
 
     uint8_t *buffer = static_cast<uint8_t *>(pvPortMalloc(TEST_UPGRADE_BUFFER_SIZE));
     TEST_ASSERT_NOT_NULL(buffer);
-    for (int index = 0; index < TEST_UPGRADE_BUFFER_SIZE; index++)
-    {
-        buffer[index] = 0xaa;
-    }
-    WriteTestFile(TEST_UPGRADE_FILE_NAME_AA, buffer, TEST_UPGRADE_BUFFER_SIZE);
-    for (int index = 0; index < TEST_UPGRADE_BUFFER_SIZE; index++)
-    {
-        buffer[index] = 0x55;
-    }
-    WriteTestFile(TEST_UPGRADE_FILE_NAME_55, buffer, TEST_UPGRADE_BUFFER_SIZE);
+
+    memset(buffer, 0xaa, TEST_UPGRADE_BUFFER_SIZE);
+    TEST_ASSERT_EQUAL(TEST_UPGRADE_BUFFER_SIZE, WriteTestFile(TEST_UPGRADE_FILE_NAME_AA, buffer, TEST_UPGRADE_BUFFER_SIZE));
+
+    memset(buffer, 0x55, TEST_UPGRADE_BUFFER_SIZE);
+    TEST_ASSERT_EQUAL(TEST_UPGRADE_BUFFER_SIZE, WriteTestFile(TEST_UPGRADE_FILE_NAME_55, buffer, TEST_UPGRADE_BUFFER_SIZE));
+
     Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&buffer));
 
     //
@@ -606,7 +470,7 @@ TEST_CASE("Prepare file system upgrade test", CLASS_OF_TESTS)
     printf("Upgrade the ESP32 firmware to the one containing the new file system library.\n");
     printf("Run the 'Post file system upgrade test' to verify that the file system upgrade works.\n\n\n");
 
-    delete fs;
+    ReleaseFileSystemTestContext(&context);
 }
 
 /**
@@ -619,70 +483,23 @@ TEST_CASE("Prepare file system upgrade test", CLASS_OF_TESTS)
  */
 TEST_CASE("Post file system upgrade test", CLASS_OF_TESTS)
 {
-    MockMessageDispatcher *messageDispatcher = new MockMessageDispatcher(nullptr);
-    TEST_ASSERT_NOT_NULL(messageDispatcher);
-
-    FileSystem *fs = new FileSystem(messageDispatcher);
-    TEST_ASSERT_NOT_NULL(fs);
-    TEST_ASSERT_EQUAL(fs->Setup(), StatusCodes::CompletedOk);
+    FileSystemTestContext context = {};
+    CreateFileSystemTestContext(&context, false);
 
     //
-    //  Verify the first test file exists and has correct contents.
+    //  Verify that the test files exist and have the correct contents.
     //
-    uint8_t *buffer1 = static_cast<uint8_t *>(pvPortMalloc(strlen(TEST_FILE_CONTENTS) + 1));
-    TEST_ASSERT_NOT_NULL(buffer1);
-    memset(buffer1, 0, strlen(TEST_FILE_CONTENTS) + 1);
-    int bytesRead = ReadTestFile(TEST_FILE_NAME, buffer1, strlen(TEST_FILE_CONTENTS));
-    TEST_ASSERT_EQUAL(strlen(TEST_FILE_CONTENTS), bytesRead);
-    TEST_ASSERT_EQUAL_MEMORY(TEST_FILE_CONTENTS, buffer1, strlen(TEST_FILE_CONTENTS));
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&buffer1));
-
-    //
-    //  Verify the second test file exists and has correct contents.
-    //
-    uint8_t *buffer2 = static_cast<uint8_t *>(pvPortMalloc(strlen(TEST_FILE_CONTENTS2) + 1));
-    TEST_ASSERT_NOT_NULL(buffer2);
-    memset(buffer2, 0, strlen(TEST_FILE_CONTENTS2) + 1);
-    bytesRead = ReadTestFile(TEST_FILE_NAME2, buffer2, strlen(TEST_FILE_CONTENTS2));
-    TEST_ASSERT_EQUAL(strlen(TEST_FILE_CONTENTS2), bytesRead);
-    TEST_ASSERT_EQUAL_MEMORY(TEST_FILE_CONTENTS2, buffer2, strlen(TEST_FILE_CONTENTS2));
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&buffer2));
-
-    //
-    //  Verify the 0xAA upgrade test file exists and has correct contents.
-    //
-    uint8_t *bufferAA = static_cast<uint8_t *>(pvPortMalloc(TEST_UPGRADE_BUFFER_SIZE));
-    TEST_ASSERT_NOT_NULL(bufferAA);
-    memset(bufferAA, 0, TEST_UPGRADE_BUFFER_SIZE);
-    bytesRead = ReadTestFile(TEST_UPGRADE_FILE_NAME_AA, bufferAA, TEST_UPGRADE_BUFFER_SIZE);
-    TEST_ASSERT_EQUAL(TEST_UPGRADE_BUFFER_SIZE, bytesRead);
-    for (int index = 0; index < TEST_UPGRADE_BUFFER_SIZE; index++)
-    {
-        TEST_ASSERT_EQUAL_HEX8(0xAA, (uint8_t) bufferAA[index]);
-    }
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&bufferAA));
-
-    //
-    //  Verify the 0x55 upgrade test file exists and has correct contents.
-    //
-    uint8_t *buffer55 = static_cast<uint8_t *>(pvPortMalloc(TEST_UPGRADE_BUFFER_SIZE));
-    TEST_ASSERT_NOT_NULL(buffer55);
-    memset(buffer55, 0, TEST_UPGRADE_BUFFER_SIZE);
-    bytesRead = ReadTestFile(TEST_UPGRADE_FILE_NAME_55, buffer55, TEST_UPGRADE_BUFFER_SIZE);
-    TEST_ASSERT_EQUAL(TEST_UPGRADE_BUFFER_SIZE, bytesRead);
-    for (int index = 0; index < TEST_UPGRADE_BUFFER_SIZE; index++)
-    {
-        TEST_ASSERT_EQUAL_HEX8(0x55, (uint8_t) buffer55[index]);
-    }
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&buffer55));
+    CheckTestFileContents(TEST_FILE_NAME, TEST_FILE_CONTENTS);
+    CheckTestFileContents(TEST_FILE_NAME2, TEST_FILE_CONTENTS2);
+    CheckUpgradeFileContents(TEST_UPGRADE_FILE_NAME_AA, 0xaa);
+    CheckUpgradeFileContents(TEST_UPGRADE_FILE_NAME_55, 0x55);
 
     //
     //  Verify the correct number of files exist on the file system.
     //
-    int fileCount = CountFiles();
-    TEST_ASSERT_EQUAL(4, fileCount);
+    TEST_ASSERT_EQUAL(4, CountFiles());
 
-    delete fs;
+    ReleaseFileSystemTestContext(&context);
 }
 
 /**
@@ -732,55 +549,32 @@ TEST_CASE("Mount failure when already mounted", CLASS_OF_TESTS)
  */
 TEST_CASE("ReadFile returns FileNotFound for non-existent file", CLASS_OF_TESTS)
 {
-    MockMessageDispatcher *messageDispatcher = new MockMessageDispatcher(nullptr);
-    TEST_ASSERT_NOT_NULL(messageDispatcher);
-
-    FileSystem *fs = new FileSystem(messageDispatcher);
-    TEST_ASSERT_NOT_NULL(fs);
-    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, fs->Setup());
-
-    //
-    //  Start with an empty file system so we can be certain the file does not exist.
-    //
-    TEST_ASSERT_EQUAL(ESP_OK, esp_littlefs_format(FileSystem::PARTITION_LABEL));
+    FileSystemTestContext context = {};
+    CreateFileSystemTestContext(&context, true);
 
     //
     //  Build a read request for a file that has never been written.
     //
-    Esp32Messaging::FileNameAndContents fileData;
-    memset(&fileData, 0, sizeof(fileData));
-    fileData.Name = const_cast<char *>(TEST_NON_EXISTENT_FILE_NAME);
-    uint32_t payloadLength = Encoders::EncodedFileNameAndContentsBufferSize(&fileData);
-    uint8_t *encodedPayload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
-    TEST_ASSERT_NOT_NULL(encodedPayload);
-    Encoders::EncodeFileNameAndContents(&fileData, encodedPayload);
-    Message *readMessage = Message::CreateOnHeap(MessageTypes::Header, Esp32Interfaces::System, SystemFunction::FileSystemReadFile, StatusCodes::Failure, TEST_MESSAGE_ID, encodedPayload, payloadLength);
-    TEST_ASSERT_NOT_NULL(readMessage);
+    Message *readMessage = CreateFileNameAndContentsMessage(SystemFunction::FileSystemReadFile, TEST_NON_EXISTENT_FILE_NAME, nullptr, 0);
 
-    fs->ReadFile(readMessage);
+    context.Fs->ReadFile(readMessage);
 
     //
     //  Verify exactly one response is queued and that it reports FileNotFound
     //  with no payload attached.
     //
-    TEST_ASSERT_EQUAL(1, messageDispatcher->OutboundMessageQueueLength());
+    ASSERT_OUTBOUND_QUEUE_LENGTH(context.Dispatcher, 1);
 
-    Message *response = messageDispatcher->GetOutboundMessage();
-    TEST_ASSERT_NOT_NULL(response);
+    Message *response = context.Dispatcher->GetOutboundMessage();
+    ASSERT_RESPONSE(response, Esp32Interfaces::System, SystemFunction::FileSystemReadFile, StatusCodes::FileNotFound);
+    ASSERT_MESSAGE_ID(response, TEST_MESSAGE_ID);
+    ASSERT_NO_PAYLOAD(response);
 
-    TEST_ASSERT_EQUAL(MessageTypes::Response, response->MessageType);
-    TEST_ASSERT_EQUAL(Esp32Interfaces::System, response->Interface);
-    TEST_ASSERT_EQUAL(SystemFunction::FileSystemReadFile, response->Function);
-    TEST_ASSERT_EQUAL(StatusCodes::FileNotFound, response->StatusCode);
-    TEST_ASSERT_EQUAL(TEST_MESSAGE_ID, response->MessageID);
-    TEST_ASSERT_EQUAL(0, response->PayloadLength);
-    TEST_ASSERT_NULL(response->Payload);
-
-    TEST_ASSERT_EQUAL(0, messageDispatcher->OutboundMessageQueueLength());
+    ASSERT_OUTBOUND_QUEUE_LENGTH(context.Dispatcher, 0);
 
     Message::DeleteMessage(readMessage);
 
-    delete fs;
+    ReleaseFileSystemTestContext(&context);
 }
 
 /**
@@ -795,17 +589,8 @@ TEST_CASE("ReadFile returns FileNotFound for non-existent file", CLASS_OF_TESTS)
  */
 TEST_CASE("WriteFile returns Failure on a full filesystem", SLOW_TESTS)
 {
-    MockMessageDispatcher *messageDispatcher = new MockMessageDispatcher(nullptr);
-    TEST_ASSERT_NOT_NULL(messageDispatcher);
-
-    FileSystem *fs = new FileSystem(messageDispatcher);
-    TEST_ASSERT_NOT_NULL(fs);
-    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, fs->Setup());
-
-    //
-    //  Start with an empty file system.
-    //
-    TEST_ASSERT_EQUAL(ESP_OK, esp_littlefs_format(FileSystem::PARTITION_LABEL));
+    FileSystemTestContext context = {};
+    CreateFileSystemTestContext(&context, true);
 
     //
     //  Fill the file system by writing LITTLEFS_BLOCK_SIZE-byte files and querying
@@ -844,40 +629,24 @@ TEST_CASE("WriteFile returns Failure on a full filesystem", SLOW_TESTS)
     TEST_ASSERT_NOT_NULL(writeBuffer);
     memset(writeBuffer, 0xAA, 2 * LITTLEFS_BLOCK_SIZE);
 
-    Esp32Messaging::FileNameAndContents fileData;
-    memset(&fileData, 0, sizeof(fileData));
-    fileData.Name = const_cast<char *>(TEST_FILE_NAME);
-    fileData.Contents = writeBuffer;
-    fileData.ContentsLength = 2 * LITTLEFS_BLOCK_SIZE;
-    uint32_t payloadLength = Encoders::EncodedFileNameAndContentsBufferSize(&fileData);
-    uint8_t *encodedPayload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
-    TEST_ASSERT_NOT_NULL(encodedPayload);
-    Encoders::EncodeFileNameAndContents(&fileData, encodedPayload);
+    Message *writeMessage = CreateFileNameAndContentsMessage(SystemFunction::FileSystemWriteFile, TEST_FILE_NAME, writeBuffer, 2 * LITTLEFS_BLOCK_SIZE);
     Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&writeBuffer));
-    Message *writeMessage = Message::CreateOnHeap(MessageTypes::Header, Esp32Interfaces::System, SystemFunction::FileSystemWriteFile, StatusCodes::CompletedOk, TEST_MESSAGE_ID, encodedPayload, payloadLength);
-    TEST_ASSERT_NOT_NULL(writeMessage);
 
-    fs->WriteFile(writeMessage);
+    context.Fs->WriteFile(writeMessage);
 
     //
     //  Verify exactly one response is queued and that it reports Failure.
     //
-    TEST_ASSERT_EQUAL(1, messageDispatcher->OutboundMessageQueueLength());
+    ASSERT_OUTBOUND_QUEUE_LENGTH(context.Dispatcher, 1);
 
-    Message *response = messageDispatcher->GetOutboundMessage();
-    TEST_ASSERT_NOT_NULL(response);
+    Message *response = context.Dispatcher->GetOutboundMessage();
+    ASSERT_RESPONSE(response, Esp32Interfaces::System, SystemFunction::FileSystemWriteFile, StatusCodes::Failure);
+    ASSERT_MESSAGE_ID(response, TEST_MESSAGE_ID);
+    ASSERT_NO_PAYLOAD(response);
 
-    TEST_ASSERT_EQUAL(MessageTypes::Response, response->MessageType);
-    TEST_ASSERT_EQUAL(Esp32Interfaces::System, response->Interface);
-    TEST_ASSERT_EQUAL(SystemFunction::FileSystemWriteFile, response->Function);
-    TEST_ASSERT_EQUAL(StatusCodes::Failure, response->StatusCode);
-    TEST_ASSERT_EQUAL(TEST_MESSAGE_ID, response->MessageID);
-    TEST_ASSERT_EQUAL(0, response->PayloadLength);
-    TEST_ASSERT_NULL(response->Payload);
-
-    TEST_ASSERT_EQUAL(0, messageDispatcher->OutboundMessageQueueLength());
+    ASSERT_OUTBOUND_QUEUE_LENGTH(context.Dispatcher, 0);
 
     Message::DeleteMessage(writeMessage);
 
-    delete fs;
+    ReleaseFileSystemTestContext(&context);
 }

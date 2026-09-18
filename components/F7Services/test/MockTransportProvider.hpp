@@ -4,6 +4,9 @@
  *  Mock up of the TransportProvider for unit testing.
  */
 
+#ifndef _MOCK_TRANSPORT_PROVIDER_HPP_
+#define _MOCK_TRANSPORT_PROVIDER_HPP_
+
 #include "sdkconfig.h"
 
 #include "driver/gpio.h"
@@ -38,3 +41,5 @@ public:
      */
     void Setup(MessageDispatcher *messageDispatcher);
 };
+
+#endif // _MOCK_TRANSPORT_PROVIDER_HPP_

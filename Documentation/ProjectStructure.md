@@ -59,10 +59,12 @@ Meadow-ESP32/
 │   ├── test/                   # Unit tests
 │   │   ├── CMakeLists.txt
 │   │   ├── Readme.md
-│   │   ├── test_*.cpp          # Individual test files
+│   │   ├── Test*.cpp           # Individual test files
+│   │   ├── TestHarness.cpp/.hpp
+│   │   ├── TestAssertions.cpp/.hpp
+│   │   ├── TestEncoders.cpp/.hpp
 │   │   ├── MockMessageDispatcher.cpp/.hpp
-│   │   ├── MockTransportProvider.cpp/.hpp
-│   │   └── WiFiRequestHandlerTestFriend.cpp/.hpp
+│   │   └── MockTransportProvider.cpp/.hpp
 │   │
 │   ├── CMakeLists.txt          # Build configuration for F7Services
 │   ├── idf_component.yml       # Component metadata

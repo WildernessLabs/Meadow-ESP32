@@ -15,7 +15,7 @@ The unit tests are located in the `components/F7Services/test/` directory and co
 | `TestNvsManager.cpp` | Non-volatile storage (NVS) operations |
 | `TestCoreDump.cpp` | Core dump functionality |
 | `TestApplicationVersion.cpp` | Application version tracking |
-| `test_common.cpp` | Common utilities and helpers |
+| `TestPosix.cpp` | POSIX socket API over the messaging interface |
 | `TestHelpers.cpp` | Helper functions for test infrastructure |
 
 ## Test Infrastructure
@@ -27,11 +27,16 @@ The test system uses mock classes to isolate functionality without requiring ful
 - **`MockMessageDispatcher`**: Simulates message dispatch without SPI communication
 - **`MockTransportProvider`**: Simulates transport layer without actual hardware
 
-### Friend Classes
+### Shared Test Code
 
-Friend classes allow access to private methods and members for testing:
+The tests share the following modules rather than repeating the same setup in each file:
 
-- **`WiFiRequestHandlerTestFriend`**: Provides access to WiFi internals for testing
+- **`TestHarness`**: Message dispatcher lifetime and the methods that send a request and
+  wait for its response
+- **`TestAssertions`**: Assertions for the message header fields nearly every test checks
+- **`TestEncoders`**: The encoding and extraction methods that mirror the `Encoders` class
+- **`TestWiFiHelpers`**, **`TestFileSystemHelpers`**, **`TestBluetoothHelpers`**:
+  Subsystem setup and the request sequences more than one test needs
 
 ## Building the Tests
 
@@ -588,18 +593,24 @@ void test_with_mock_dispatcher()
 }
 ```
 
-### Friend Class Testing
+### Driving a Request Handler
 
-Example using `WiFiRequestHandlerTestFriend`:
+Requests reach a handler through the dispatcher, the same way they arrive from the STM32.
+The handler is created by the dispatcher the first time it has a message to deliver, so
+there is nothing for a test to construct itself:
 
 ```cpp
-void test_wifi_private_method()
+TEST_CASE("Scan for access points", "[WiFi][HardwareOnly]")
 {
-    WiFiRequestHandlerTestFriend handler;
-    
-    // Access private methods through friend class
-    bool result = handler.PrivateHelperMethod();
-    TEST_ASSERT_TRUE(result);
+    MockMessageDispatcher *dispatcher = SetupWiFiDispatcher();
+
+    QueueWiFiRequest(dispatcher, WiFiFunction::GetAccessPoints);
+
+    Message *response = WaitForResponseTo(dispatcher, Esp32Interfaces::WiFi, WiFiFunction::GetAccessPoints, RadioTimeout());
+    ASSERT_RESPONSE(response, Esp32Interfaces::WiFi, WiFiFunction::GetAccessPoints, StatusCodes::CompletedOk);
+    ASSERT_HAS_PAYLOAD(response);
+
+    Message::DeleteMessage(response);
 }
 ```
 

@@ -13,7 +13,7 @@
 
 #include "esp_system.h"
 
-#include "test_common.hpp"
+#include "TestHarness.hpp"
 
 #define CLASS_OF_TESTS "[Helpers]"
 
