@@ -2,6 +2,8 @@
 
 [![Build](https://github.com/WildernessLabs/Meadow-ESP32/actions/workflows/build.yml/badge.svg)](https://github.com/WildernessLabs/Meadow-ESP32/actions/workflows/build.yml)
 
+[![Unit tests](https://github.com/WildernessLabs/Meadow-ESP32/actions/workflows/unit-tests.yml/badge.svg)](https://github.com/WildernessLabs/Meadow-ESP32/actions/workflows/unit-tests.yml) Unit Tests (Emulated Only)
+
 This repository contains the code that will run on the ESP32 to support communication and facilitate the provision of services to NuttX and Meadow.Core.
 
 Services are provided to the STM32 through the SPI interface connected to the STM32 and the ESP32 chips.
