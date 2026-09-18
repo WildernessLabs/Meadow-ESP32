@@ -129,7 +129,7 @@ SystemRequestHandler::SystemRequestHandler()
 {
     if (_instantiated)
     {
-        throw new MultipleInstancesException();
+        throw MultipleInstancesException();
     }
     else
     {
