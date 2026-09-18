@@ -1504,11 +1504,17 @@ void WiFiRequestHandler::DisconnectFromAccessPoint(Message *message)
 {
     TRACE_MESSAGE("DisconnectFromAccessPoint(Message): Enter");
 
-    xEventGroupSetBits(_xWiFiEventGroup, WIFI_DISCONNECT_REQUESTED_BIT);
-
     StatusCodes::StatusCodes sc = StatusCodes::CompletedOk;
     if (IsConnected())
     {
+        //
+        //  The bit is only set when there is a connection to drop.  It is cleared by
+        //  StationDisconnectedEvent, which is only raised when a disconnection actually
+        //  happens, so setting it with nothing connected leaves it set for good.  The
+        //  next connection attempt to fail would then be taken for a requested
+        //  disconnection and would not be retried.
+        //
+        xEventGroupSetBits(_xWiFiEventGroup, WIFI_DISCONNECT_REQUESTED_BIT);
         sc = DisconnectFromAccessPoint();
     }
     if (sc == StatusCodes::CompletedOk)
