@@ -52,6 +52,15 @@ SELECTORS+=(
 )
 EXPECT_REBOOT='--expect-reboot="Generate a core dump"'
 
+#
+#   The MessageDispatcher tests run under QEMU but are not tagged [Emulated] either.
+#   Building a dispatcher creates the WiFi, Bluetooth and System request handlers, which
+#   are singletons, so it claims them for the rest of the boot and any later test that
+#   wanted one of its own would reset the board.  Running them as a selector of their own,
+#   last, keeps that to themselves.
+#
+SELECTORS+=('[MessageDispatcher]')
+
 RESULTS_DIR="$scriptdir/test-results"
 
 printf "Installing the QEMU system dependencies...\n"

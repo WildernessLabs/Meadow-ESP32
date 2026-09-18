@@ -34,9 +34,9 @@ private:
     /**
      *  @brief Mask for the message IDs for outbound messages.
      *
-     *  This mask is applied to message IDs to make sure that they are all
-     *  above 0x7fffffff.  This identifies them as originating from the
-     *  ESP32 rather than the STM32.
+     *  This mask is cleared in the message IDs the ESP32 grants, so they are
+     *  all below 0x80000000.  The STM32 sets it in the IDs it grants, so the
+     *  top bit says which end of the link a message originated from.
      */
     const uint32_t ESP32_MESSAGE_ID_MASK = 0x80000000;
 
