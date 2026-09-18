@@ -1,5 +1,5 @@
 /*
- *  test_wifi.cpp
+ *  TestWiFi.cpp
  *
  *  Implementation of the test methods for the WiFiRequestHandler class.
  */

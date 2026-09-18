@@ -53,7 +53,7 @@ qemu-system-xtensa --version | head -1
 
 #
 #   The WiFi tests read their credentials from this file.  It is not in source control
-#   and the tests that use it are not run here, but test_wifi.cpp includes it
+#   and the tests that use it are not run here, but TestWiFi.cpp includes it
 #   unconditionally so it has to exist for the build to succeed.
 #
 if [ ! -f "$scriptdir/components/F7Services/test/secrets.h" ]; then

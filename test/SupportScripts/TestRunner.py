@@ -38,7 +38,7 @@ SUMMARY = re.compile(r'^(\d+) Tests (\d+) Failures (\d+) Ignored', re.M)
 
 #
 #   Unity prints one of these for every test it runs, for example:
-#       /path/test_file_system.cpp:206:Formatting file system:PASS
+#       /path/TestFileSystem.cpp:206:Formatting file system:PASS
 #
 #   The trailing \r is matched explicitly because the console sends \r\n and the end of
 #   line anchor would otherwise never be reached.

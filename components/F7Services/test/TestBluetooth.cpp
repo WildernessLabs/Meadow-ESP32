@@ -20,7 +20,7 @@
 #include "Logging.hpp"
 
 #include "test_common.hpp"
-#include "test_bluetooth.hpp"
+#include "TestBluetooth.hpp"
 
 //
 //  [HardwareOnly] marks a test that cannot run under emulation.  These need a radio,

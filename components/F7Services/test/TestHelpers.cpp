@@ -1,5 +1,5 @@
 /*
- *  test_helpers.cpp
+ *  TestHelpers.cpp
  *
  *  Implementation of the "test" methods designed to facilitate testing.
  *

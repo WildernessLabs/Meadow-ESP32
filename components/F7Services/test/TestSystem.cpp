@@ -1,5 +1,5 @@
 /*
- *  test_system.cpp
+ *  TestSystem.cpp
  *
  *  Implementation of the test methods for the SystemRequestHandler class.
  */

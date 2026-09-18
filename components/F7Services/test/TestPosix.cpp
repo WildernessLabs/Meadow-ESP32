@@ -1,5 +1,5 @@
 /*
- *  test_posix.cpp
+ *  TestPosix.cpp
  *
  *  Implementation of the test methods for the POSIX socket API.
  *

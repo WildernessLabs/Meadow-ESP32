@@ -8,15 +8,15 @@ The unit tests are located in the `components/F7Services/test/` directory and co
 
 | Test File | Coverage |
 |-----------|----------|
-| `test_wifi.cpp` | WiFi connectivity and access point scanning |
-| `test_bluetooth.cpp` | Bluetooth services, characteristics, and attributes |
-| `test_file_system.cpp` | File system operations and SPIFFS management |
-| `test_system.cpp` | System-level functionality and configuration |
-| `test_nvs_manager.cpp` | Non-volatile storage (NVS) operations |
-| `test_coredump.cpp` | Core dump functionality |
-| `test_application_version.cpp` | Application version tracking |
+| `TestWiFi.cpp` | WiFi connectivity and access point scanning |
+| `TestBluetooth.cpp` | Bluetooth services, characteristics, and attributes |
+| `TestFileSystem.cpp` | File system operations and SPIFFS management |
+| `TestSystem.cpp` | System-level functionality and configuration |
+| `TestNvsManager.cpp` | Non-volatile storage (NVS) operations |
+| `TestCoreDump.cpp` | Core dump functionality |
+| `TestApplicationVersion.cpp` | Application version tracking |
 | `test_common.cpp` | Common utilities and helpers |
-| `test_helpers.cpp` | Helper functions for test infrastructure |
+| `TestHelpers.cpp` | Helper functions for test infrastructure |
 
 ## Test Infrastructure
 
@@ -76,7 +76,7 @@ control.
 > **Important**: The `secrets.h` file is in `.gitignore` to prevent credentials from being committed.
 
 The file has to exist even when the WiFi tests are not being run, because
-`test_wifi.cpp` includes it unconditionally. A copy of the template with placeholder
+`TestWiFi.cpp` includes it unconditionally. A copy of the template with placeholder
 values is enough to compile everything else.
 
 ### Build Commands

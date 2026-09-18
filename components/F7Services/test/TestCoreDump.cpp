@@ -1,5 +1,5 @@
 /**
- * @file test_coredump.cpp
+ * @file TestCoreDump.cpp
  * @author Wilderness Labs
  * @brief Unit tests for core dump handling on the ESP32 application.
  * @version 0.1

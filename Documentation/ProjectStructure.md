@@ -285,10 +285,10 @@ Tests follow the same component structure:
 
 ```
 components/F7Services/test/
-├── test_wifi.cpp
-├── test_bluetooth.cpp
-├── test_file_system.cpp
-├── test_system.cpp
+├── TestWiFi.cpp
+├── TestBluetooth.cpp
+├── TestFileSystem.cpp
+├── TestSystem.cpp
 ├── MockMessageDispatcher   # Mock implementations
 ├── MockTransportProvider
 └── test_common.*           # Test infrastructure

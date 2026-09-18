@@ -1,5 +1,5 @@
 /*
- *  test_file_system.cpp
+ *  TestFileSystem.cpp
  *
  *  Implementation of the test methods for the file system.
  */

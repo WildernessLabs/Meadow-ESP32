@@ -1,5 +1,5 @@
 /**
- * @file test_bluetooth_service_json.hpp
+ * @file TestBluetoothServiceJson.hpp
  * @author Mark Stevens
  *
  * @brief JSON encoding of the Bluetooth service configuration.
