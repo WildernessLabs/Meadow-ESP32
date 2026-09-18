@@ -28,6 +28,39 @@ scriptdir="$( cd "$(dirname "$0")" ; pwd -P )"
 #
 SELECTORS=('[Emulated]')
 
+#
+#   The core dump tests are not tagged [Emulated] and are named individually, because
+#   they have to run in this order and because the first of them restarts the device.
+#   QEMU saves a core dump to flash and reads it back exactly as the hardware does, so
+#   they need no board, but the menu runs a tag as one batch and a restart part way
+#   through loses its place.  Naming the crashing test on its own, and telling the runner
+#   with --expect-reboot that the restart is deliberate, keeps them in the same session
+#   and so against the same flash as the core dump they read.
+#
+#   They run after [Emulated] so that a restart cannot disturb it, and the last of them
+#   erases the core dump again.
+#
+#   NOTE: this is provisional.  If it gives trouble on the CI runner, delete SELECTORS
+#   from '"Generate a core dump"' onwards and the --expect-reboot line below; the
+#   [Emulated] run is unaffected by their removal.
+#
+SELECTORS+=(
+    '"Generate a core dump"'
+    '"Get core dump information"'
+    '"Get core dump fragment"'
+    '"Erase core dump"'
+)
+EXPECT_REBOOT='--expect-reboot="Generate a core dump"'
+
+#
+#   The MessageDispatcher tests run under QEMU but are not tagged [Emulated] either.
+#   Building a dispatcher creates the WiFi, Bluetooth and System request handlers, which
+#   are singletons, so it claims them for the rest of the boot and any later test that
+#   wanted one of its own would reset the board.  Running them as a selector of their own,
+#   last, keeps that to themselves.
+#
+SELECTORS+=('[MessageDispatcher]')
+
 RESULTS_DIR="$scriptdir/test-results"
 
 printf "Installing the QEMU system dependencies...\n"
@@ -53,7 +86,7 @@ qemu-system-xtensa --version | head -1
 
 #
 #   The WiFi tests read their credentials from this file.  It is not in source control
-#   and the tests that use it are not run here, but test_wifi.cpp includes it
+#   and the tests that use it are not run here, but TestWiFi.cpp includes it
 #   unconditionally so it has to exist for the build to succeed.
 #
 if [ ! -f "$scriptdir/components/F7Services/test/secrets.h" ]; then
@@ -84,6 +117,7 @@ set +e
 "$scriptdir/test/run-tests.sh" \
     --junit="$RESULTS_DIR/qemu-tests.xml" \
     --transcript="$RESULTS_DIR/qemu-console.log" \
+    "$EXPECT_REBOOT" \
     "${SELECTORS[@]}"
 RESULT=$?
 set -e

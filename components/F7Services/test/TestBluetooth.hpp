@@ -1,5 +1,5 @@
 /**
- * @file test_bluetooth.hpp
+ * @file TestBluetooth.hpp
  * @author Mark Stevens
  * @brief Hold defintions used by the Bluetooth tests.
  * @version 0.1
@@ -16,6 +16,6 @@
 #include "Esp32Messaging.hpp"
 #include "Encoders.hpp"
 #include <string.h>
-#include "test_bluetooth_service_json.hpp"
+#include "TestBluetoothServiceJson.hpp"
 
 #endif // _TEST_BLUETOOTH_HPP_

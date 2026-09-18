@@ -735,9 +735,6 @@ public:
 
     static Esp32Messaging::SetAntennaRequest *ExtractSetAntennaRequest(uint8_t *);
 
-    static void EncodeBTStackConfig(const Esp32Messaging::BTStackConfig * const, uint8_t *);
-    static int EncodedBTStackConfigBufferSize(const Esp32Messaging::BTStackConfig * const);
-
     static Esp32Messaging::BTStackConfig *ExtractBTStackConfig(uint8_t *);
     static void FreeBTStackConfig(Esp32Messaging::BTStackConfig **);
     static void EncodeBTDataWriteRequest(const Esp32Messaging::BTDataWriteRequest * const, uint8_t *);

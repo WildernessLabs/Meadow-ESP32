@@ -50,7 +50,7 @@ ThreadPool::ThreadPool()
     _threads = static_cast<Thread **>(pvPortMalloc(THREAD_POOL_SIZE * sizeof(Thread *)));
     if (_threads == NULL)
     {
-        throw new ThreadPoolException("Cannot allocate memory for threads.");
+        throw ThreadPoolException("Cannot allocate memory for threads.");
     }
     //
     //  Create the counting semaphore with a maximum count equal to the number of threads in the pool and an initial count of 0.
@@ -59,7 +59,7 @@ ThreadPool::ThreadPool()
     _threadsAvailable = xSemaphoreCreateCounting(THREAD_POOL_SIZE, 0);
     if (_threadsAvailable == NULL)
     {
-        throw new ThreadPoolException("Cannot create semaphore for ThreadPool.");
+        throw ThreadPoolException("Cannot create semaphore for ThreadPool.");
     }
 
     for (uint8_t index = 0; index < THREAD_POOL_SIZE; index++)
@@ -76,7 +76,7 @@ ThreadPool::ThreadPool()
         }
         else
         {
-            throw new ThreadPoolException("Cannot allocate memory for thread names.");
+            throw ThreadPoolException("Cannot allocate memory for thread names.");
         }
     }
 

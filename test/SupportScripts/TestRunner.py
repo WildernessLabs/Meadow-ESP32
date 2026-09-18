@@ -16,8 +16,20 @@ Selectors are passed through to the menu unchanged and may be:
     "Delete file"       a single test, by name, with the quotes
     7                   a single test, by menu number
 
+A test that deliberately restarts the device, such as the one that forces a core dump,
+ends its selector early and leaves the device back at the boot prompt.  Naming that
+selector with --expect-reboot tells the driver to carry on with the next selector rather
+than treating the restart as a failure, which allows the tests that read back what the
+restart produced to run in the same session and so against the same flash.
+
+Note that this works between selectors and not within one.  The menu runs a whole tag as
+a single batch on the device, and a restart part way through loses its place; offering
+the tag again would start it from the beginning.  A test that restarts the device
+therefore has to be named as a selector of its own, ahead of the selectors that depend
+on it.
+
 Exit status is 0 when every selector passed, 1 when a test failed, 2 when a selector
-produced no result before the timeout, and 3 when the device rebooted part way through.
+produced no result before the timeout, and 3 when the device rebooted unexpectedly.
 '''
 
 import argparse
@@ -38,7 +50,7 @@ SUMMARY = re.compile(r'^(\d+) Tests (\d+) Failures (\d+) Ignored', re.M)
 
 #
 #   Unity prints one of these for every test it runs, for example:
-#       /path/test_file_system.cpp:206:Formatting file system:PASS
+#       /path/TestFileSystem.cpp:206:Formatting file system:PASS
 #
 #   The trailing \r is matched explicitly because the console sends \r\n and the end of
 #   line anchor would otherwise never be reached.
@@ -244,16 +256,22 @@ def WriteJUnitReport(path, results):
 
         cases = UNITY_RESULT.findall(segment)
         if not cases:
+            #
+            #   A test that restarts the device on purpose never prints a result line,
+            #   so it is recorded as the one thing that did happen rather than as a
+            #   failure.
+            #
             case = document.createElement('testcase')
             case.setAttribute('name', selector)
             case.setAttribute('classname', 'MeadowComms')
-            failure = document.createElement('failure')
-            failure.setAttribute('message', f'Selector {status}')
-            failure.appendChild(document.createTextNode(segment[-4000:]))
-            case.appendChild(failure)
+            if status != 'rebooted as expected':
+                failure = document.createElement('failure')
+                failure.setAttribute('message', f'Selector {status}')
+                failure.appendChild(document.createTextNode(segment[-4000:]))
+                case.appendChild(failure)
             suite.appendChild(case)
             suite.setAttribute('tests', '1')
-            suite.setAttribute('failures', '1')
+            suite.setAttribute('failures', '0' if status == 'rebooted as expected' else '1')
             continue
 
         failed = 0
@@ -296,6 +314,11 @@ def main():
                         help='Seconds to allow each selector (default 600)')
     parser.add_argument('--fresh', action='store_true',
                         help='Reset to a known state before running')
+    parser.add_argument('--expect-reboot', action='append', default=[],
+                        metavar='SELECTOR',
+                        help='Selector that restarts the device on purpose; the run '
+                             'continues with the next selector rather than stopping. '
+                             'May be given more than once')
     parser.add_argument('--transcript', default=None,
                         help='Write the full console transcript to this file')
     parser.add_argument('--junit', default=None,
@@ -330,9 +353,21 @@ def main():
             print(f'\n=== {selector} ===')
             result, segment, counts = RunSelector(transport, selector,
                                                   arguments.timeout, transcript)
+
+            if result == 'rebooted' and selector in arguments.expect_reboot:
+                result = 'rebooted as expected'
+
             results.append((selector, result, segment))
             if arguments.verbose or result in ('stalled', 'rebooted', 'ignored'):
                 print(segment.strip())
+
+            if result == 'rebooted as expected':
+                #
+                #   The device is back at the boot prompt, which is where the run
+                #   started, so the next selector can be offered straight away.
+                #
+                print(f'{selector}: the device rebooted, as expected.')
+                continue
 
             if result == 'rebooted':
                 print(f'{selector}: the device rebooted part way through.')

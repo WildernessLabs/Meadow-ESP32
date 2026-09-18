@@ -1,5 +1,5 @@
 /*
- *  test_application_version.cpp
+ *  TestApplicationVersion.cpp
  *
  *  Provides a dummy version information structure to the tests that require it.
  */

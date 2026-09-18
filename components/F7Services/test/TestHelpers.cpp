@@ -1,5 +1,5 @@
 /*
- *  test_helpers.cpp
+ *  TestHelpers.cpp
  *
  *  Implementation of the "test" methods designed to facilitate testing.
  *
@@ -13,7 +13,7 @@
 
 #include "esp_system.h"
 
-#include "test_common.hpp"
+#include "TestHarness.hpp"
 
 #define CLASS_OF_TESTS "[Helpers]"
 

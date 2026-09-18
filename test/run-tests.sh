@@ -40,6 +40,7 @@ TIMEOUT=600
 TRANSCRIPT=""
 JUNIT=""
 SELECTORS=()
+EXPECT_REBOOT=()
 
 #
 #   Work out which options are on the command line.  Anything that is not a recognised
@@ -66,6 +67,9 @@ case $i in
     ;;
     --junit=*)
     JUNIT="${i#*=}"
+    ;;
+    --expect-reboot=*)
+    EXPECT_REBOOT+=("${i#*=}")
     ;;
     -v|--verbose)
     VERBOSE=true
@@ -97,6 +101,8 @@ if $HELP; then
     echo "--timeout=*             Seconds to allow each selector (default 600)"
     echo "--transcript=*          Write the full console transcript to this file"
     echo "--junit=*               Write the results as a JUnit report to this file"
+    echo "--expect-reboot=*       Selector that restarts the device on purpose, so the"
+    echo "                        run carries on with the next selector.  Repeatable"
     echo "-v | --verbose          Echo the console output as the tests run"
     echo ""
     echo "Any remaining arguments are passed to the test menu as selectors:"
@@ -154,5 +160,9 @@ fi
 if [ ! -z "$JUNIT" ]; then
     RUNNER_ARGS+=(--junit "$JUNIT")
 fi
+
+for selector in "${EXPECT_REBOOT[@]}"; do
+    RUNNER_ARGS+=(--expect-reboot "$selector")
+done
 
 python3 "$scriptdir/SupportScripts/TestRunner.py" "${RUNNER_ARGS[@]}" "${SELECTORS[@]}"

@@ -1106,8 +1106,4 @@ public:
      */
     static uint32_t GetWiFiTimeout();
     static StatusCodes::StatusCodes SetWiFiTimeout(uint32_t value);
-
-#if defined(UNIT_TESTING)
-    friend class WiFiRequestHandlerTestFriend;
-#endif
 };

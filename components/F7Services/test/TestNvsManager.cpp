@@ -1,5 +1,5 @@
 /**
- * @file test_nvs_manager.cpp
+ * @file TestNvsManager.cpp
  * @author Wilderness Labs
  * @brief Unit tests for the NvsManager class.
  * @version 0.1

@@ -106,16 +106,16 @@ can complete without human or hardware assistance.
 
 ### Tests Needing Special Handling
 
-- **Client-driven.** `test_bluetooth.cpp:806` ("number of iterations controlled by
+- **Client-driven.** `TestBluetooth.cpp:806` ("number of iterations controlled by
   client") requires a BLE peer. `WriteNumberCharacteristicSoakTest.py` is that peer.
   Automating it means orchestrating both sides together, not driving the menu.
-- **Self-rebooting.** `test_coredump.cpp:370` asserts deliberately to produce a core
-  dump; `test_helpers.cpp:32` restarts the device. The runner must expect the reboot
+- **Self-rebooting.** `TestCoreDump.cpp:370` asserts deliberately to produce a core
+  dump; `TestHelpers.cpp:32` restarts the device. The runner must expect the reboot
   and resynchronise with a fresh menu rather than treating silence as a hang.
 - **Ordered and stateful.** The four `[CoreDump]` cases form a sequence
   (generate → information → fragment → erase). The two file system upgrade cases carry
   state across a reflash.
-- **Long running.** `test_bluetooth.cpp:756` restarts the Bluetooth service 50 times,
+- **Long running.** `TestBluetooth.cpp:756` restarts the Bluetooth service 50 times,
   taking 4–5 minutes on its own. A full `*` sweep is not a per-commit check. The
   `[Slow]` tag exists for this; the Bluetooth case is a candidate for it.
 - **Slow only under emulation.** `WriteFile returns Failure on a full filesystem`
@@ -132,7 +132,7 @@ can complete without human or hardware assistance.
 **Fixed.** `[FileSystem]` now passes 11 of 11 on both QEMU and hardware.
 
 Running `TEST_CASE("Mount failure when already mounted")`
-(`test_file_system.cpp:684`) used to panic the **next** test to touch the file system,
+(`TestFileSystem.cpp:684`) used to panic the **next** test to touch the file system,
 stopping the tag at 9 of 11. It reproduced on hardware and under QEMU with
 byte-for-byte identical backtraces:
 
@@ -140,7 +140,7 @@ byte-for-byte identical backtraces:
 Guru Meditation Error: Core 0 panic'ed (LoadProhibited)
 EXCVADDR: 0x80000008
 
-test_file_system.cpp:737   fs->ReadFile(...)
+TestFileSystem.cpp:737   fs->ReadFile(...)
 FileSystem.cpp:292         stat()
 esp_littlefs.c:1349        vfs_littlefs_stat
 esp_littlefs.c:691         sem_take
@@ -299,9 +299,9 @@ invents its own and the runner accumulates special cases.
 
 ### Where This Helps
 
-- `test_bluetooth.cpp:806` already takes its iteration count from the BLE client; a
+- `TestBluetooth.cpp:806` already takes its iteration count from the BLE client; a
   console parameter would let the runner set it directly.
-- `test_bluetooth.cpp:756` hardcodes 50 restarts. A parameter would allow 5 in CI and
+- `TestBluetooth.cpp:756` hardcodes 50 restarts. A parameter would allow 5 in CI and
   50 on the bench from a single test case rather than two.
 
 ## Proposed Firmware Changes

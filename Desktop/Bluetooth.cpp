@@ -1,5 +1,5 @@
 #include <iostream>
-#include "test_bluetooth_service_json.hpp"
+#include "TestBluetoothServiceJson.hpp"
 #include "BluetoothManager.hpp"
 
 using namespace std;

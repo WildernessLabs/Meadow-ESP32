@@ -1,0 +1,539 @@
+/**
+ * @file TestEncoders.cpp
+ * @author Mark Stevens
+ * @brief Encoding and extraction methods that mirror the Encoders class.
+ * @version 0.1
+ * @date 2026-09-18
+ *
+ * @copyright Copyright (c) 2026 Wilderness Labs
+ */
+
+#include "sdkconfig.h"
+
+#include <string.h>
+#include <arpa/inet.h>
+
+#include "freertos/FreeRTOS.h"
+
+#include "Encoders.hpp"
+#include "Utils.hpp"
+
+#include "TestEncoders.hpp"
+
+namespace TestEncoders
+{
+    /**
+     * @brief Extract the IntegerResponse object encoded in the given buffer.
+     *
+     * @param buffer Pointer to a block of memory holding the encoded IntegerResponse object.
+     *
+     * @return Pointer to an IntegerResponse object, nullptr if the object cannot be allocated.
+     */
+    Esp32Messaging::IntegerResponse *ExtractIntegerResponse(const uint8_t *buffer)
+    {
+        Esp32Messaging::IntegerResponse *integerResponse = static_cast<Esp32Messaging::IntegerResponse *>(pvPortMalloc(sizeof(Esp32Messaging::IntegerResponse)));
+
+        if (integerResponse == nullptr)
+        {
+            return (nullptr);
+        }
+
+        integerResponse->Result = Encoders::ExtractInt32(buffer);
+
+        return (integerResponse);
+    }
+
+    /**
+     * @brief Extract the AccessPointList object encoded in the given buffer.
+     *
+     * @param buffer Pointer to a block of memory holding the encoded AccessPointList object.
+     *
+     * @return Pointer to an AccessPointList object, nullptr if the object cannot be allocated.
+     */
+    Esp32Messaging::AccessPointList *ExtractAccessPointList(const uint8_t *buffer)
+    {
+        Esp32Messaging::AccessPointList *accessPointList = static_cast<Esp32Messaging::AccessPointList *>(pvPortMalloc(sizeof(Esp32Messaging::AccessPointList)));
+
+        if (accessPointList == nullptr)
+        {
+            return (nullptr);
+        }
+
+        accessPointList->NumberOfAccessPoints = Encoders::ExtractUInt32(buffer);
+        buffer += 4;
+        accessPointList->AccessPointsLength = Encoders::ExtractUInt32(buffer);
+        buffer += 4;
+        if (accessPointList->AccessPointsLength > 0)
+        {
+            accessPointList->AccessPoints = static_cast<uint8_t *>(pvPortMalloc(accessPointList->AccessPointsLength));
+            if (accessPointList->AccessPoints == nullptr)
+            {
+                Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&accessPointList));
+                return (nullptr);
+            }
+            memcpy(accessPointList->AccessPoints, buffer, accessPointList->AccessPointsLength);
+        }
+        else
+        {
+            accessPointList->AccessPoints = nullptr;
+        }
+
+        return (accessPointList);
+    }
+
+    /**
+     * @brief Release an AccessPointList object and the access points it holds.
+     *
+     * @param accessPointList Pointer to the pointer to the object to be released.
+     */
+    void FreeAccessPointList(Esp32Messaging::AccessPointList **accessPointList)
+    {
+        if ((accessPointList == nullptr) || (*accessPointList == nullptr))
+        {
+            return;
+        }
+
+        if ((*accessPointList)->AccessPoints != nullptr)
+        {
+            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&(*accessPointList)->AccessPoints));
+        }
+        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(accessPointList));
+    }
+
+    /**
+     * @brief Extract the AccessPoint object encoded in the given buffer.
+     *
+     * @param buffer Pointer to a block of memory holding the encoded AccessPoint object.
+     *
+     * @return Pointer to an AccessPoint object, nullptr if the object cannot be allocated.
+     */
+    Esp32Messaging::AccessPoint *ExtractAccessPoint(const uint8_t *buffer)
+    {
+        Esp32Messaging::AccessPoint *accessPoint = static_cast<Esp32Messaging::AccessPoint *>(pvPortMalloc(sizeof(Esp32Messaging::AccessPoint)));
+
+        if (accessPoint == nullptr)
+        {
+            return (nullptr);
+        }
+
+        memcpy(accessPoint->Ssid, buffer, sizeof(accessPoint->Ssid));
+        buffer += sizeof(accessPoint->Ssid);
+        memcpy(accessPoint->Bssid, buffer, sizeof(accessPoint->Bssid));
+        buffer += sizeof(accessPoint->Bssid);
+        accessPoint->PrimaryChannel = *buffer;
+        buffer += 1;
+        accessPoint->SecondaryChannel = *buffer;
+        buffer += 1;
+        accessPoint->Rssi = static_cast<int8_t>(*buffer);
+        buffer += 1;
+        accessPoint->AuthenticationMode = *buffer;
+        buffer += 1;
+        accessPoint->Protocols = Encoders::ExtractUInt32(buffer);
+
+        return (accessPoint);
+    }
+
+    /**
+     * @brief Extract the FileNameList object encoded in the given buffer.
+     *
+     * @param buffer Pointer to a block of memory holding the encoded FileNameList object.
+     *
+     * @return Pointer to a FileNameList object, nullptr if the object cannot be allocated.
+     */
+    Esp32Messaging::FileNameList *ExtractFileNameList(const uint8_t *buffer)
+    {
+        Esp32Messaging::FileNameList *fileNameList = static_cast<Esp32Messaging::FileNameList *>(pvPortMalloc(sizeof(Esp32Messaging::FileNameList)));
+
+        if (fileNameList == nullptr)
+        {
+            return (nullptr);
+        }
+
+        fileNameList->NumberOfFiles = Encoders::ExtractUInt16(buffer);
+        buffer += 2;
+        fileNameList->FileDetailsLength = Encoders::ExtractUInt32(buffer);
+        buffer += 4;
+        if (fileNameList->FileDetailsLength > 0)
+        {
+            fileNameList->FileDetails = static_cast<uint8_t *>(pvPortMalloc(fileNameList->FileDetailsLength));
+            if (fileNameList->FileDetails == nullptr)
+            {
+                Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&fileNameList));
+                return (nullptr);
+            }
+            memcpy(fileNameList->FileDetails, buffer, fileNameList->FileDetailsLength);
+        }
+        else
+        {
+            fileNameList->FileDetails = nullptr;
+        }
+
+        return (fileNameList);
+    }
+
+    /**
+     * @brief Release a FileNameList object and the file details it holds.
+     *
+     * @param fileNameList Pointer to the pointer to the object to be released.
+     */
+    void FreeFileNameList(Esp32Messaging::FileNameList **fileNameList)
+    {
+        if ((fileNameList == nullptr) || (*fileNameList == nullptr))
+        {
+            return;
+        }
+
+        if ((*fileNameList)->FileDetails != nullptr)
+        {
+            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&(*fileNameList)->FileDetails));
+        }
+        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(fileNameList));
+    }
+
+    /**
+     * @brief Extract the CoreDumpInformationResponse object encoded in the given buffer.
+     *
+     * @param buffer Pointer to a block of memory holding the encoded object, nullptr for an
+     *               empty response.
+     *
+     * @return Pointer to a CoreDumpInformationResponse object, nullptr if the object cannot
+     *         be allocated.
+     */
+    Esp32Messaging::CoreDumpInformationResponse *ExtractCoreDumpInformation(const uint8_t *buffer)
+    {
+        Esp32Messaging::CoreDumpInformationResponse *information = static_cast<Esp32Messaging::CoreDumpInformationResponse *>(pvPortMalloc(sizeof(Esp32Messaging::CoreDumpInformationResponse)));
+
+        if (information == nullptr)
+        {
+            return (nullptr);
+        }
+
+        if (buffer == nullptr)
+        {
+            information->IsValid = 0;
+            information->CoreDumpSize = 0;
+            information->PartitionSize = 0;
+            return (information);
+        }
+
+        information->IsValid = *buffer;
+        buffer++;
+        information->CoreDumpSize = Encoders::ExtractUInt32(buffer);
+        buffer += 4;
+        information->PartitionSize = Encoders::ExtractUInt32(buffer);
+
+        return (information);
+    }
+
+    /**
+     * @brief Calculate the memory required to hold an encoded CoreDumpFragmentRequest object.
+     *
+     * @param request Pointer to the CoreDumpFragmentRequest object to be encoded.
+     *
+     * @return Number of bytes required to hold the encoded object.
+     */
+    uint32_t EncodedCoreDumpFragmentRequestBufferSize(const Esp32Messaging::CoreDumpFragmentRequest * const request)
+    {
+        (void) request;
+
+        return (sizeof(uint32_t) + sizeof(uint32_t));
+    }
+
+    /**
+     * @brief Encode a CoreDumpFragmentRequest object into a newly allocated buffer.
+     *
+     * @param request Pointer to the CoreDumpFragmentRequest object to be encoded.
+     *
+     * @return Pointer to the encoded object, nullptr if the buffer cannot be allocated.
+     */
+    uint8_t *EncodeCoreDumpFragmentRequest(const Esp32Messaging::CoreDumpFragmentRequest * const request)
+    {
+        if (request == nullptr)
+        {
+            return (nullptr);
+        }
+
+        uint8_t *fragment = static_cast<uint8_t *>(pvPortMalloc(EncodedCoreDumpFragmentRequestBufferSize(request)));
+        if (fragment != nullptr)
+        {
+            Encoders::EncodeUInt32(request->Offset, fragment);
+            Encoders::EncodeUInt32(request->Size, fragment + 4);
+        }
+
+        return (fragment);
+    }
+
+    /**
+     * @brief Extract the CoreDumpFragmentResponse object encoded in the given buffer.
+     *
+     * @param buffer Pointer to a block of memory holding the encoded object.
+     *
+     * @return Pointer to a CoreDumpFragmentResponse object, nullptr if the object cannot be
+     *         allocated.
+     */
+    Esp32Messaging::CoreDumpFragmentResponse *ExtractCoreDumpFragmentResponse(const uint8_t *buffer)
+    {
+        if (buffer == nullptr)
+        {
+            return (nullptr);
+        }
+
+        Esp32Messaging::CoreDumpFragmentResponse *fragmentResponse = static_cast<Esp32Messaging::CoreDumpFragmentResponse *>(pvPortMalloc(sizeof(Esp32Messaging::CoreDumpFragmentResponse)));
+        if (fragmentResponse == nullptr)
+        {
+            return (nullptr);
+        }
+
+        fragmentResponse->Size = Encoders::ExtractUInt32(buffer);
+        buffer += 4;
+        if (fragmentResponse->Size > 0)
+        {
+            fragmentResponse->Data = static_cast<uint8_t *>(pvPortMalloc(fragmentResponse->Size));
+            if (fragmentResponse->Data == nullptr)
+            {
+                Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&fragmentResponse));
+                return (nullptr);
+            }
+            memcpy(fragmentResponse->Data, buffer, fragmentResponse->Size);
+        }
+        else
+        {
+            fragmentResponse->Data = nullptr;
+        }
+
+        return (fragmentResponse);
+    }
+
+    /**
+     * @brief Release a CoreDumpFragmentResponse object and the data it holds.
+     *
+     * @param fragmentResponse Pointer to the pointer to the object to be released.
+     */
+    void FreeCoreDumpFragmentResponse(Esp32Messaging::CoreDumpFragmentResponse **fragmentResponse)
+    {
+        if ((fragmentResponse == nullptr) || (*fragmentResponse == nullptr))
+        {
+            return;
+        }
+
+        if ((*fragmentResponse)->Data != nullptr)
+        {
+            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&(*fragmentResponse)->Data));
+        }
+        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(fragmentResponse));
+    }
+
+    /**
+     * @brief Calculate the memory required to hold an encoded BTStackConfig object.
+     *
+     * @param bTStackConfig Pointer to the BTStackConfig object to be encoded.
+     *
+     * @return Number of bytes required to hold the encoded object.
+     */
+    uint32_t EncodedBTStackConfigBufferSize(const Esp32Messaging::BTStackConfig * const bTStackConfig)
+    {
+        return (Encoders::StringLength(bTStackConfig->Config) + 1);
+    }
+
+    /**
+     * @brief Encode a BTStackConfig object into the given buffer.
+     *
+     * @param bTStackConfig Pointer to the BTStackConfig object to be encoded.
+     * @param buffer Pointer to the block of memory to hold the encoded object.
+     */
+    void EncodeBTStackConfig(const Esp32Messaging::BTStackConfig * const bTStackConfig, uint8_t *buffer)
+    {
+        Encoders::EncodeString(bTStackConfig->Config, buffer);
+    }
+
+    /**
+     * @brief Calculate the memory required to hold an encoded BTServerDataSet object.
+     *
+     * @param bTServerDataSet Pointer to the BTServerDataSet object to be encoded.
+     *
+     * @return Number of bytes required to hold the encoded object.
+     */
+    uint32_t EncodedBTServerDataSetBufferSize(const Esp32Messaging::BTServerDataSet * const bTServerDataSet)
+    {
+        return (sizeof(uint16_t) + sizeof(uint32_t) + bTServerDataSet->SetDataLength);
+    }
+
+    /**
+     * @brief Encode a BTServerDataSet object into the given buffer.
+     *
+     * @param bTServerDataSet Pointer to the BTServerDataSet object to be encoded.
+     * @param buffer Pointer to the block of memory to hold the encoded object.
+     */
+    void EncodeBTServerDataSet(const Esp32Messaging::BTServerDataSet * const bTServerDataSet, uint8_t *buffer)
+    {
+        Encoders::EncodeUInt16(bTServerDataSet->Handle, buffer);
+        buffer += 2;
+        Encoders::EncodeUInt32(bTServerDataSet->SetDataLength, buffer);
+        buffer += 4;
+        if (bTServerDataSet->SetDataLength > 0)
+        {
+            memcpy(buffer, bTServerDataSet->SetData, bTServerDataSet->SetDataLength);
+        }
+    }
+
+    /**
+     * @brief Encode a socket request into a newly allocated buffer.
+     *
+     * @param domain Address family for the socket.
+     * @param type Type of socket required.
+     * @param protocol Protocol the socket should use.
+     *
+     * @return Pointer to the encoded request, nullptr if the buffer cannot be allocated.
+     */
+    uint8_t *EncodeSocketRequest(const int32_t domain, const int32_t type, const int32_t protocol)
+    {
+        uint8_t *buffer = static_cast<uint8_t *>(pvPortMalloc(ENCODED_SOCKET_REQUEST_SIZE));
+
+        if (buffer == nullptr)
+        {
+            return (nullptr);
+        }
+        memset(buffer, 0, ENCODED_SOCKET_REQUEST_SIZE);
+
+        Encoders::EncodeUInt32(0, buffer); // AddressInformation is not used here.
+        Encoders::EncodeInt32(domain, buffer + 4);
+        Encoders::EncodeInt32(type, buffer + 8);
+        Encoders::EncodeInt32(protocol, buffer + 12);
+
+        return (buffer);
+    }
+
+    /**
+     * @brief Encode a connect request for an IPv4 address into a newly allocated buffer.
+     *
+     * @param socketHandle Socket to connect.
+     * @param address Dotted quad address of the server.
+     * @param port Port to connect to, in host byte order.
+     *
+     * @return Pointer to the encoded request, nullptr if the buffer cannot be allocated.
+     */
+    uint8_t *EncodeConnectRequest(const int32_t socketHandle, const char *address, const uint16_t port)
+    {
+        uint8_t *buffer = static_cast<uint8_t *>(pvPortMalloc(ENCODED_CONNECT_REQUEST_SIZE));
+
+        if (buffer == nullptr)
+        {
+            return (nullptr);
+        }
+        memset(buffer, 0, ENCODED_CONNECT_REQUEST_SIZE);
+
+        Encoders::EncodeInt32(socketHandle, buffer);
+        Encoders::EncodeUInt32(ENCODED_SOCK_ADDR_SIZE, buffer + 4);
+
+        uint8_t *sockAddr = buffer + 8;
+        sockAddr[0] = NUTTX_AF_INET;
+        Encoders::EncodeUInt16(htons(port), sockAddr + 1);
+        Encoders::EncodeUInt32(inet_addr(address), sockAddr + 3);
+
+        return (buffer);
+    }
+
+    /**
+     * @brief Encode a send request into a newly allocated buffer.
+     *
+     * @param socketHandle Socket to send on.
+     * @param data Data to be sent.
+     * @param length Number of bytes to send.
+     * @param encodedLength Filled in with the length of the encoded request.
+     *
+     * @return Pointer to the encoded request, nullptr if the buffer cannot be allocated.
+     */
+    uint8_t *EncodeSendRequest(const int32_t socketHandle, const char *data, const uint32_t length, uint32_t *encodedLength)
+    {
+        *encodedLength = 4 + 4 + length + 4 + 4;
+        uint8_t *buffer = static_cast<uint8_t *>(pvPortMalloc(*encodedLength));
+
+        if (buffer == nullptr)
+        {
+            return (nullptr);
+        }
+        memset(buffer, 0, *encodedLength);
+
+        Encoders::EncodeInt32(socketHandle, buffer);
+        Encoders::EncodeUInt32(length, buffer + 4);
+        memcpy(buffer + 8, data, length);
+        Encoders::EncodeInt32(static_cast<int32_t>(length), buffer + 8 + length);
+        Encoders::EncodeInt32(0, buffer + 12 + length); // No flags.
+
+        return (buffer);
+    }
+
+    /**
+     * @brief Encode a recvfrom request into a newly allocated buffer.
+     *
+     * @param socketHandle Socket to receive from.
+     * @param length Largest number of bytes wanted.
+     *
+     * @return Pointer to the encoded request, nullptr if the buffer cannot be allocated.
+     */
+    uint8_t *EncodeRecvFromRequest(const int32_t socketHandle, const int32_t length)
+    {
+        uint8_t *buffer = static_cast<uint8_t *>(pvPortMalloc(ENCODED_RECV_FROM_REQUEST_SIZE));
+
+        if (buffer == nullptr)
+        {
+            return (nullptr);
+        }
+        memset(buffer, 0, ENCODED_RECV_FROM_REQUEST_SIZE);
+
+        Encoders::EncodeInt32(socketHandle, buffer);
+        Encoders::EncodeInt32(length, buffer + 4);
+        Encoders::EncodeInt32(0, buffer + 8);  // No flags.
+        Encoders::EncodeInt32(1, buffer + 12); // Ask for the source address.
+
+        return (buffer);
+    }
+
+    /**
+     * @brief Encode a recvmsg request into a newly allocated buffer.
+     *
+     * @param socketHandle Socket to receive from.
+     * @param length Largest number of bytes wanted.
+     *
+     * @return Pointer to the encoded request, nullptr if the buffer cannot be allocated.
+     */
+    uint8_t *EncodeRecvMsgRequest(const int32_t socketHandle, const int32_t length)
+    {
+        uint8_t *buffer = static_cast<uint8_t *>(pvPortMalloc(ENCODED_RECV_MSG_REQUEST_SIZE));
+
+        if (buffer == nullptr)
+        {
+            return (nullptr);
+        }
+        memset(buffer, 0, ENCODED_RECV_MSG_REQUEST_SIZE);
+
+        Encoders::EncodeInt32(socketHandle, buffer);
+        Encoders::EncodeInt32(length, buffer + 4);
+        Encoders::EncodeInt32(0, buffer + 8);   // No flags.
+        Encoders::EncodeInt32(1, buffer + 12);  // Ask for the source address.
+        Encoders::EncodeUInt32(0, buffer + 16); // No control data wanted.
+
+        return (buffer);
+    }
+
+    /**
+     * @brief Encode a close request into a newly allocated buffer.
+     *
+     * @param socketHandle Socket to close.
+     *
+     * @return Pointer to the encoded request, nullptr if the buffer cannot be allocated.
+     */
+    uint8_t *EncodeCloseRequest(const int32_t socketHandle)
+    {
+        uint8_t *buffer = static_cast<uint8_t *>(pvPortMalloc(ENCODED_CLOSE_REQUEST_SIZE));
+
+        if (buffer == nullptr)
+        {
+            return (nullptr);
+        }
+
+        Encoders::EncodeInt32(socketHandle, buffer);
+
+        return (buffer);
+    }
+} // namespace TestEncoders

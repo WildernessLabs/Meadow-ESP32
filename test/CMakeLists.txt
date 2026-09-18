@@ -9,8 +9,6 @@ file(REMOVE sdkconfig)
 set(SDKCONFIG_FILES "sdkconfig.defaults")
 set(SDKCONFIG_DEFAULTS ${SDKCONFIG_FILES})
 
-add_compile_definitions(UNIT_TESTING)
-
 # Set the components to include the tests for.
 # This can be overriden from CMake cache:
 # - when invoking CMake directly: cmake -D TEST_COMPONENTS="xxxxx" ..
