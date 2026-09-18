@@ -74,7 +74,7 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
 {
     if (_spiInstance)
     {
-        throw new MultipleInstancesException();
+        throw MultipleInstancesException();
     }
     SendControlMessageToStm32(ControlMessageType::Reset);
     /*

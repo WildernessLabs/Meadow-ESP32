@@ -287,7 +287,7 @@ WiFiRequestHandler::WiFiRequestHandler()
 {
     if (_instance != nullptr)
     {
-        throw new MultipleInstancesException();
+        throw MultipleInstancesException();
     }
     else
     {
