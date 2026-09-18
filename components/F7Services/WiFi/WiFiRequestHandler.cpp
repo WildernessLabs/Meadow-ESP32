@@ -117,7 +117,7 @@ const char *WiFiRequestHandler::AUTOMATIC_RECONNECT_NAME = "AutoReconnect";
 /**
  *  @brief Maximum number of times a failed event should retry before raising an error.
  */
-uint32_t WiFiRequestHandler::_maximumRetryCount = 10;
+uint32_t WiFiRequestHandler::_maximumRetryCount = WiFiRequestHandler::DEFAULT_MAXIMUM_RETRY_COUNT;
 
 /**
  *  @brief Name of the NVS storage holding the _maximumRetryCount value.
@@ -302,6 +302,8 @@ WiFiRequestHandler::WiFiRequestHandler()
     _softApNetIfHandle = nullptr;
     _countryCode = SystemRequestHandler::GetConfigurationValue(COUNTRY_CODE_NAME, _validCountryCodes[0]);
     TRACE_MESSAGE("WiFiRequestHandler: Country code is %s", _countryCode);
+    _maximumRetryCount = SystemRequestHandler::GetConfigurationValue(MAXIMUM_RETRY_COUNT_NAME, static_cast<uint32_t>(DEFAULT_MAXIMUM_RETRY_COUNT));
+    TRACE_MESSAGE("WiFiRequestHandler: Maximum retry count is %" PRIu32, _maximumRetryCount);
     //
     //  Setup the timezones ready for when we get the time from a timeserver.
     //
@@ -385,8 +387,20 @@ uint32_t WiFiRequestHandler::GetMaximumRetryCount()
 StatusCodes::StatusCodes WiFiRequestHandler::SetMaximumRetryCount(uint32_t value)
 {
     TRACE_MESSAGE("WiFiRequestHandler::SetMaximumRetryCount: %" PRIu32, value);
-    _maximumRetryCount = value;
-    return (StatusCodes::CompletedOk);
+
+    StatusCodes::StatusCodes result = StatusCodes::Failure;
+
+    if (value == _maximumRetryCount)
+    {
+        result = StatusCodes::CompletedOk;
+    }
+    else if (SystemRequestHandler::SetConfigurationValue(MAXIMUM_RETRY_COUNT_NAME, value) == NvsManager::ErrorCodes::Ok)
+    {
+        _maximumRetryCount = SystemRequestHandler::GetConfigurationValue(MAXIMUM_RETRY_COUNT_NAME, static_cast<uint32_t>(DEFAULT_MAXIMUM_RETRY_COUNT));
+        result = StatusCodes::CompletedOk;
+    }
+
+    return (result);
 }
 
 /**

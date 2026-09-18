@@ -335,6 +335,11 @@ private:
     static const char *MAXIMUM_RETRY_COUNT_NAME;
 
     /**
+     *  @brief Value used for the maximum retry count when NVS holds nothing for it.
+     */
+    static constexpr uint32_t DEFAULT_MAXIMUM_RETRY_COUNT = 10;
+
+    /**
      *  @brief Indicate if the system should connect to a time server and get the
      *  current time at startup.
      */
