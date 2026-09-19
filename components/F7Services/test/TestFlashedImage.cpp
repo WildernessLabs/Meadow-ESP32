@@ -44,17 +44,16 @@
 /**
  * @brief Name of the file held in the image built by the host.
  *
- * @note Deliberately longer than 32 characters.  mklittlefs writes its name length limit
- *       into the superblock, and a stock build of it uses 32: that image still mounts but
- *       quietly truncates longer names.  A name this length only survives if the tool was
- *       built with LFS_NAME_MAX matching CONFIG_LITTLEFS_OBJ_NAME_LEN, which is 64 here.
+ * @note The name carries two dots.  Nothing in LittleFS or the VFS layer treats a name as
+ *       a stem and an extension, so this is just a name, but it is worth a test rather
+ *       than an assumption.
  */
-#define FLASHED_FILE_NAME "test-configuration-placeholder.txt"
+#define FLASHED_FILE_NAME "unittest.config.json"
 
 /**
- * @brief Text the file is expected to start with.
+ * @brief Text the file is expected to contain.
  */
-#define FLASHED_FILE_FIRST_LINE "Written by mklittlefs on the host, not by the ESP32."
+#define FLASHED_FILE_FIRST_LINE "WiFiNetwork"
 
 /**
  * @brief Largest amount of the file the test will read.
@@ -89,9 +88,6 @@ TEST_CASE("A flashed file system mounts without being reformatted", CLASS_OF_TES
 
 /**
  * @brief Check that the contents of the flashed file survive the journey.
- *
- *  The name is longer than a stock mklittlefs would keep, so reading it back under the
- *  name it was created with also says the tool was built with the right name length.
  */
 TEST_CASE("A flashed file can be read back", CLASS_OF_TESTS)
 {

@@ -181,11 +181,30 @@ if $REBUILD_TOOL; then
     printf "${green}success${reset}\n"
 fi
 
-printf "Building the image... "
+#
+#   The files are staged rather than the directory being handed over as it stands.  It
+#   holds things that belong to this machine and not to the board: .gitkeep, which only
+#   exists so the directory survives a clone, and the templates the real files are copied
+#   from.  Putting either on the device wastes space and invites someone to read a
+#   template believing it to be configuration.
+#
+STAGING=$(mktemp -d -t mkfsimage)
+trap 'rm -rf "$STAGING"' EXIT
+
+find "$SOURCE" -type f ! -name '.*' ! -name '*.template' -exec cp {} "$STAGING/" \;
+
+STAGED_COUNT=$(find "$STAGING" -type f | wc -l | tr -d ' ')
+if [ "$STAGED_COUNT" -eq 0 ]; then
+    printf "${red}No files to put in the image.${reset}\n"
+    printf "$SOURCE holds nothing that is not a dot file or a template.\n"
+    exit 1
+fi
+
+printf "Building the image from $STAGED_COUNT file(s)... "
 if $VERBOSE; then
-    "$MKLITTLEFS" -c "$SOURCE" -s "$SIZE" -p "$PAGE_SIZE" -b "$BLOCK_SIZE" "$OUTPUT"
+    "$MKLITTLEFS" -c "$STAGING" -s "$SIZE" -p "$PAGE_SIZE" -b "$BLOCK_SIZE" "$OUTPUT"
 else
-    "$MKLITTLEFS" -c "$SOURCE" -s "$SIZE" -p "$PAGE_SIZE" -b "$BLOCK_SIZE" "$OUTPUT" > /dev/null 2>&1
+    "$MKLITTLEFS" -c "$STAGING" -s "$SIZE" -p "$PAGE_SIZE" -b "$BLOCK_SIZE" "$OUTPUT" > /dev/null 2>&1
 fi
 printf "${green}success${reset}\n"
 
@@ -199,7 +218,7 @@ if $FLASH; then
     #   configuration is generated because the image and the offset are only known here.
     #
     CONFIG=$(mktemp -t mkfsimage)
-    trap 'rm -f "$CONFIG"' EXIT
+    trap 'rm -f "$CONFIG"; rm -rf "$STAGING"' EXIT
 
     cat > "$CONFIG" <<EOF
 source [find interface/ftdi/esp_ftdi.cfg]

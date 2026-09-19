@@ -20,6 +20,12 @@
 
 bool _generateHeapTraceData = false;
 
+//
+//  Defined in UnitTestConfiguration.cpp.  Reads the settings the tests use from a file
+//  on the device, in place of the values that used to be compiled in through secrets.h.
+//
+extern void UnitTestConfigurationLoad(void);
+
 static void print_banner(const char *text)
 {
     printf("\n#### %s #####\n\n", text);
@@ -52,6 +58,11 @@ void app_main(void)
     // UNITY_BEGIN();
     // unity_run_all_tests();
     // UNITY_END();
+
+    //
+    //  Read the test configuration before any test can ask for it.
+    //
+    UnitTestConfigurationLoad();
 
     print_banner("Starting interactive test menu");
     /* This function will not return, and will be busy waiting for UART input.

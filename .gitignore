@@ -112,3 +112,9 @@ test-results/
 #   the image itself is not.
 #
 littlefs.bin
+
+#
+#   The unit test configuration holds the credentials for the network the tests run
+#   against.  The template it is copied from is in source control; this is not.
+#
+unittest.config.json

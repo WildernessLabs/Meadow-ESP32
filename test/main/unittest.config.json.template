@@ -1,0 +1,11 @@
+{
+    "WiFiNetwork": "SSID",
+    "WiFiPassword": "Password",
+    "SimpleWebServerName": "testserver",
+    "SimpleWebPage": "/get.html",
+    "BinaryResourceName": "/binaryfile/",
+    "LargeTestFile": "/largefile.bin",
+    "WebServerIpAddress": "192.168.0.1",
+    "WebServerPort": 8080,
+    "Iterations": 100
+}
