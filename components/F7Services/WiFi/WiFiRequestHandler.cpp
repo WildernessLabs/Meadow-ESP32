@@ -513,7 +513,15 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetDefaultAccessPoint(const char *v
     {
         if (SystemRequestHandler::SetConfigurationValue(DEFAULT_ACCESS_POINT_NAME, value) == NvsManager::ErrorCodes::Ok)
         {
-            free(_defaultAccessPoint);
+            //
+            //  _emptyString is a static array standing in for a value that has never been
+            //  set, so only a copy made here may be released.  A board with nothing stored
+            //  in NVS reaches this the first time the STM32 gives it an access point.
+            //
+            if (_defaultAccessPoint != WiFiRequestHandler::_emptyString)
+            {
+                free(_defaultAccessPoint);
+            }
             _defaultAccessPoint = strdup(value);
         }
     }
@@ -555,7 +563,13 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetPassword(const char *value)
     {
         if (SystemRequestHandler::SetConfigurationValue(PASSWORD_NAME, value) == NvsManager::ErrorCodes::Ok)
         {
-            free(_password);
+            //
+            //  As above, _emptyString is not on the heap and must not be released.
+            //
+            if (_password != WiFiRequestHandler::_emptyString)
+            {
+                free(_password);
+            }
             _password = strdup(value);
         }
     }

@@ -488,6 +488,11 @@ void SystemRequestHandler::PopulateConfiguration(Esp32Messaging::SystemConfigura
     memset(config, 0, sizeof(Esp32Messaging::SystemConfiguration));
     esp_reset_reason_t resetReason = esp_reset_reason();
     Mapping::GetStmValue(Mapping::ResetReasons, resetReason, reinterpret_cast<int8_t *>(&config->ResetReason));
+    //
+    //  The STM32 holds the queue length in a single byte, so a longer queue than that
+    //  cannot be reported even though it can be set.
+    //
+    config->MaximumMessageQueueLength = static_cast<uint8_t>(GetMaximumMessageQueueLength());
     config->Antenna = WiFiRequestHandler::GetAntenna();
     config->MaximumRetryCount = WiFiRequestHandler::GetMaximumRetryCount();
     config->DefaultAccessPoint = WiFiRequestHandler::GetDefaultAccessPoint();
@@ -507,9 +512,6 @@ void SystemRequestHandler::PopulateConfiguration(Esp32Messaging::SystemConfigura
     WiFiRequestHandler::GetMacAddress(config->BoardMacAddress, WIFI_IF_STA);
     WiFiRequestHandler::GetMacAddress(config->SoftApMacAddress, WIFI_IF_AP);
     BluetoothRequestHandler::GetMacAddress(config->BluetoothMacAddress);
-    //
-    //  Bluetooth MAC address will be zeroed from the memset above.
-    //
 
     TRACE_MESSAGE("PopulateConfiguration: Exit");
 }
@@ -574,8 +576,23 @@ void SystemRequestHandler::SetConfigurationItem(Message * const request)
 
     static constexpr uint32_t MINIMUM_CONFIGURATION_VALUE_PAYLOAD_SIZE = 8;
 
-    if ((request->Payload == nullptr) || (request->PayloadLength < MINIMUM_CONFIGURATION_VALUE_PAYLOAD_SIZE))
+    bool invalidPayload = ((request->Payload == nullptr) || (request->PayloadLength < MINIMUM_CONFIGURATION_VALUE_PAYLOAD_SIZE));
+    if (!invalidPayload)
     {
+        //
+        //  The length is sent by the STM32 and describes the bytes that follow it in the
+        //  same message.  Every item below reads those bytes, so a length of zero leaves
+        //  nothing to read and a length that runs past the end of the message would be
+        //  copied out of memory the message does not own.  Both are refused here rather
+        //  than being dereferenced further down.
+        //
+        const uint32_t valueLength = Encoders::ExtractUInt32(request->Payload + 4);
+        invalidPayload = ((valueLength == 0) || (valueLength > (request->PayloadLength - MINIMUM_CONFIGURATION_VALUE_PAYLOAD_SIZE)));
+    }
+
+    if (invalidPayload)
+    {
+        request->DeletePayload();
         request->MessageType = MessageTypes::Response;
         request->StatusCode = StatusCodes::InvalidPacket;
         _messageDispatcher->QueueMessageForStm32(request);
@@ -590,7 +607,7 @@ void SystemRequestHandler::SetConfigurationItem(Message * const request)
         switch (value->Item)
         {
             case ConfigurationItems::Antenna:
-                WiFiRequestHandler::SetAntenna(*value->Value);
+                result = WiFiRequestHandler::SetAntenna(*value->Value);
                 break;
             case ConfigurationItems::AutomaticallyReconnect:
                 result = WiFiRequestHandler::SetAutomaticReconnect(static_cast<uint8_t>((*value->Value)) == 1);

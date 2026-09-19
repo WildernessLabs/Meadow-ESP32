@@ -275,8 +275,9 @@ the logic lives in a script rather than in the workflow file.
 
 `run-tests-ci.sh` installs the QEMU system libraries and the emulator, builds the
 application and then the tests, and finally runs everything carrying the `[Emulated]`
-tag. It writes no configuration file: the emulated tests need none, and the run reports
-that none was found.
+tag, followed by the handful of selectors named in the script that run under QEMU but
+cannot join that batch. It writes no configuration file: the emulated tests need none,
+and the run reports that none was found.
 
 ### How Tests Opt In
 
@@ -307,9 +308,19 @@ on a board.
 > The default per selector timeout of 600 seconds is not enough for `[POSIX]` as a
 > whole; pass `--timeout=1200`.
 
-`[CoreDump]` and `[Helpers]` carry neither `[Emulated]` nor `[HardwareOnly]`. The
-core dump sequence has not been driven end to end under emulation, and the helpers
-are not tests in the usual sense, so neither is claimed either way.
+`[CoreDump]`, `[Configuration]`, `[MessageDispatcher]`, `[WiFiConfiguration]` and
+`[Helpers]` carry neither `[Emulated]` nor `[HardwareOnly]`. They run under emulation
+but cannot share a batch, so `run-tests-ci.sh` names each of them as a selector of its
+own and the comments there say why. The reason is nearly always a singleton: building
+a dispatcher or answering a System message claims the request handlers for the rest of
+the boot, and a second instance of one resets the board by design. The core dump
+sequence is ordered and restarts the device part way through, and the helpers are not
+tests in the usual sense.
+
+The order matters. `[Configuration]` runs straight after `[Emulated]`, because the
+SystemRequestHandler it builds mounts the file system and would otherwise be holding
+the partition while the `[FileSystem]` tests work on it. The core dump tests follow,
+and the restart in the first of them hands the singletons back to the selectors after.
 
 Tag matching is a substring search, so a test declared as
 `"[FileSystem][Emulated]"` is still selected by `[FileSystem]`. Nothing is hidden from

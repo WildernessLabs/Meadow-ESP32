@@ -29,6 +29,18 @@ scriptdir="$( cd "$(dirname "$0")" ; pwd -P )"
 SELECTORS=('[Emulated]')
 
 #
+#   The configuration tests run under QEMU but are not tagged [Emulated].  Answering a
+#   System message builds a SystemRequestHandler, and its constructor mounts the file
+#   system, so running them inside the [Emulated] batch would leave a partition mounted
+#   underneath the [FileSystem] tests.  Building that handler also claims a singleton for
+#   the rest of the boot.
+#
+#   They therefore run as a selector of their own, after [Emulated] and before the core
+#   dump tests, the first of which restarts the device and so hands the singletons back.
+#
+SELECTORS+=('[Configuration]')
+
+#
 #   The core dump tests are not tagged [Emulated] and are named individually, because
 #   they have to run in this order and because the first of them restarts the device.
 #   QEMU saves a core dump to flash and reads it back exactly as the hardware does, so
