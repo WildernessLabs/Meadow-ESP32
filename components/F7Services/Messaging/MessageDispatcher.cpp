@@ -99,13 +99,13 @@ bool MessageDispatcher::QueueMessageForEsp32(Message *request)
     switch (static_cast<Esp32Interfaces::Esp32Interfaces>(request->Interface))
     {
         case Esp32Interfaces::WiFi:
-            provider = dynamic_cast<RequestHandlerBase *>(_wifiRequestHandler);
+            provider = static_cast<RequestHandlerBase *>(_wifiRequestHandler);
             break;
         case Esp32Interfaces::BlueTooth:
-            provider = dynamic_cast<RequestHandlerBase *>(_bluetoothRequestHandler);
+            provider = static_cast<RequestHandlerBase *>(_bluetoothRequestHandler);
             break;
         case Esp32Interfaces::System:
-            provider = dynamic_cast<RequestHandlerBase *>(_systemRequestHandler);
+            provider = static_cast<RequestHandlerBase *>(_systemRequestHandler);
             break;
         default:
             DEBUG_MESSAGE("QueueMessageForEsp32: Unknown interface %" PRIu8 ", message will not be processed.", request->Interface);
