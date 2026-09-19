@@ -56,7 +56,6 @@ TaskHandle_t SpiTransportProvider::_synchronisationTaskHandle = NULL;
  */
 uint8_t *SpiTransportProvider::_rxBuffer = nullptr;
 uint8_t *SpiTransportProvider::_txBuffer = nullptr;
-uint8_t *SpiTransportProvider::_transportFrameBuffer = nullptr;
 uint32_t SpiTransportProvider::_headerFrameSize = 0;
 
 /*

@@ -1336,20 +1336,12 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
                 Close(request);
                 xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
                 break;
-            case WiFiFunction::Read:
-                SystemRequestHandler::SharedThreadPool()->Execute(Read, static_cast<void *>(request));
-                xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
-                break;
             case WiFiFunction::SetSockOpt:
                 SystemRequestHandler::SharedThreadPool()->Execute(SetSockOpt, static_cast<void *>(request));
                 xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
                 break;
             case WiFiFunction::GetSockOpt:
                 SystemRequestHandler::SharedThreadPool()->Execute(GetSockOpt, static_cast<void *>(request));
-                xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
-                break;
-            case WiFiFunction::Write:
-                SystemRequestHandler::SharedThreadPool()->Execute(Write, static_cast<void *>(request));
                 xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
                 break;
             case WiFiFunction::FreeAddrInfo:
