@@ -25,11 +25,6 @@ const char *ProgressiveDelay::COMPONENT_NAME = "ProgressiveDelay";
 uint32_t ProgressiveDelay::_delayPeriods[] = {100, 300, 700, 1000, 5000, 10000, 20000};
 
 /**
- * @brief Delay periods in milliseconds)
- */
-// ProgressiveDelay::_delayPeriods{ 100, 300, 700, 1000, 5000, 10000, 20000 };
-
-/**
  * @brief Construct a new Progressive Delay object
  */
 ProgressiveDelay::ProgressiveDelay()

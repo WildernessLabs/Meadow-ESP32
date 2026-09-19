@@ -68,11 +68,6 @@ private:
     static uint8_t *_txBuffer;
 
     /**
-     *  @brief Buffer for the transport frame.
-     */
-    static uint8_t *_transportFrameBuffer;
-
-    /**
      *  @brief Size of a header / transport frame.
      */
     static uint32_t _headerFrameSize;

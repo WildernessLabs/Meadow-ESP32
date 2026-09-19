@@ -294,11 +294,6 @@ private:
     static esp_netif_t *_softApNetIfHandle;
 
     /**
-     *  @brief Current antenna in use.  Default to the on board antenna at startup.
-     */
-    static AntennaTypes::AntennaTypes _currentAntenna;
-
-    /**
      *  @brief Name of the NVS storage holding the _currentAntenna value.
      */
     static const char *ANTENNA_TYPE_NAME;
@@ -782,11 +777,6 @@ private:
     static void FreeAddrInfo(void * const vpMessage);
 
     /**
-     *  @brief Provide a mechanism for the STM32 to call the write method.
-     */
-    static void Write(void * const vpMessage);
-
-    /**
      * @brief Process the setsockopt request from the STM32.
      *
      * @param request Request from the STM32.
@@ -834,10 +824,6 @@ private:
      */
 
     static void Close(void * const vpMessage);
-    /**
-     *  @brief Provide a mechanism for the STM32 to call the read method.
-     */
-    static void Read(void * const vpMessage);
 
     /**
      * @brief Provide a mechanism for the STM32 to call the sendto method.
