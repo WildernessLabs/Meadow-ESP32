@@ -488,6 +488,11 @@ void SystemRequestHandler::PopulateConfiguration(Esp32Messaging::SystemConfigura
     memset(config, 0, sizeof(Esp32Messaging::SystemConfiguration));
     esp_reset_reason_t resetReason = esp_reset_reason();
     Mapping::GetStmValue(Mapping::ResetReasons, resetReason, reinterpret_cast<int8_t *>(&config->ResetReason));
+    //
+    //  The STM32 holds the queue length in a single byte, so a longer queue than that
+    //  cannot be reported even though it can be set.
+    //
+    config->MaximumMessageQueueLength = static_cast<uint8_t>(GetMaximumMessageQueueLength());
     config->Antenna = WiFiRequestHandler::GetAntenna();
     config->MaximumRetryCount = WiFiRequestHandler::GetMaximumRetryCount();
     config->DefaultAccessPoint = WiFiRequestHandler::GetDefaultAccessPoint();
@@ -507,9 +512,6 @@ void SystemRequestHandler::PopulateConfiguration(Esp32Messaging::SystemConfigura
     WiFiRequestHandler::GetMacAddress(config->BoardMacAddress, WIFI_IF_STA);
     WiFiRequestHandler::GetMacAddress(config->SoftApMacAddress, WIFI_IF_AP);
     BluetoothRequestHandler::GetMacAddress(config->BluetoothMacAddress);
-    //
-    //  Bluetooth MAC address will be zeroed from the memset above.
-    //
 
     TRACE_MESSAGE("PopulateConfiguration: Exit");
 }
