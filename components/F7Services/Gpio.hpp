@@ -4,14 +4,12 @@
  * @brief Constants defining the pins on the ESP32 that are available to Meadow.
  * @date 2019-03-25
  *
- * @copyright Copyright (c) 2019 Wilderness Labs
+ * @copyright Copyright (c) 2019-2026 Wilderness Labs
  */
 
 #pragma once
 
 #include "sdkconfig.h"
-
-#define USE_MEADOW
 
 #include "esp_system.h"
 #include "driver/gpio.h"
