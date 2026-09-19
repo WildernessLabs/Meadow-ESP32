@@ -22,9 +22,8 @@
 #include "Utils.hpp"
 
 #include "TestHarness.hpp"
+#include "UnitTestConfiguration.hpp"
 #include "TestWiFiHelpers.hpp"
-
-#include "secrets.h"
 
 /**
  * @brief Number of times a connection to the access point should be attempted.
@@ -307,7 +306,7 @@ void EnsureDisconnected(MockMessageDispatcher *dispatcher)
 }
 
 /**
- * @brief Connect to the access point named in secrets.h.
+ * @brief Connect to the access point named in the configuration.
  *
  * @param dispatcher Dispatcher to queue the request on.
  *
@@ -324,9 +323,9 @@ bool ConnectToTestAccessPoint(MockMessageDispatcher *dispatcher)
 
     for (int attempt = 1; (attempt <= CONNECTION_ATTEMPTS) && !_connectedToAccessPoint; attempt++)
     {
-        printf("Connecting to access point %s, attempt %d.\n", WIFI_NETWORK, attempt);
+        printf("Connecting to access point %s, attempt %d.\n", UnitTestConfiguration::WiFiNetwork(), attempt);
 
-        QueueAccessPointRequest(dispatcher, WiFiFunction::ConnectToAccessPoint, WIFI_NETWORK, WIFI_PASSWORD);
+        QueueAccessPointRequest(dispatcher, WiFiFunction::ConnectToAccessPoint, UnitTestConfiguration::WiFiNetwork(), UnitTestConfiguration::WiFiPassword());
 
         Message *response = WaitForResponseTo(dispatcher, Esp32Interfaces::WiFi, WiFiFunction::ConnectToAccessPoint, timeout);
         if (response != nullptr)

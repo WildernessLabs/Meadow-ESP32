@@ -22,6 +22,7 @@
 #include "TestAssertions.hpp"
 #include "TestBluetoothHelpers.hpp"
 #include "TestHarness.hpp"
+#include "UnitTestConfiguration.hpp"
 #include "TestBluetooth.hpp"
 
 //
@@ -29,11 +30,6 @@
 //  which QEMU does not provide.
 //
 #define CLASS_OF_TESTS "[Bluetooth][HardwareOnly]"
-
-/**
- * @brief Number of times the restart test starts and stops the service.
- */
-#define RESTART_ITERATIONS 50
 
 /**
  * @brief Milliseconds allowed for the user to connect a client.
@@ -296,15 +292,20 @@ TEST_CASE("Restart Bluetooth service with different configuration", CLASS_OF_TES
 
 /**
  * @brief Test the stop functionality when Bluetooth has been started.
+ *
+ *  BluetoothRestartIterations in the configuration file says how many times the service
+ *  is restarted.  At its default of 50 this takes four or five minutes, so a larger
+ *  count wants the time it will take working out before it is asked for.
  */
-TEST_CASE("Restart Bluetooth Service 50 times (Execution time ~4-5 minutes)", CLASS_OF_TESTS)
+TEST_CASE("Restart Bluetooth Service repeatedly (test for memory leak)", CLASS_OF_TESTS)
 {
     MockMessageDispatcher *dispatcher = SetupMessageDispatcher();
     TEST_ASSERT_NOT_NULL(dispatcher);
 
-    for (int counter = 0; counter < RESTART_ITERATIONS; counter++)
+    const uint32_t iterations = UnitTestConfiguration::BluetoothRestartIterations();
+    for (uint32_t counter = 0; counter < iterations; counter++)
     {
-        printf("Iteration %d\n", counter);
+        printf("Iteration %" PRIu32 " of %" PRIu32 "\n", counter + 1, iterations);
 
         StartBluetoothService(dispatcher, meadow_a_json);
         vTaskDelay(1000 / portTICK_PERIOD_MS);

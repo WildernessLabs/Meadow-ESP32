@@ -34,9 +34,8 @@
 #include "TestAssertions.hpp"
 #include "TestEncoders.hpp"
 #include "TestHarness.hpp"
+#include "UnitTestConfiguration.hpp"
 #include "TestWiFiHelpers.hpp"
-
-#include "secrets.h"
 
 //
 //  [HardwareOnly] marks a test that cannot run under emulation.  These need a radio,
@@ -48,11 +47,6 @@
  * @brief Class of tests that take a long time to execute.
  */
 #define SLOW_TESTS "[WiFi][HardwareOnly][Slow]"
-
-/**
- * @brief Number of scan requests to be made in the multiple scan requests test.
- */
-#define NUMBER_OF_SCAN_REQUESTS 500
 
 /**
  * @brief Name of the SSID for the soft access point used in tests.
@@ -165,7 +159,7 @@ TEST_CASE("Scan for access points", CLASS_OF_TESTS)
  */
 TEST_CASE("Scan for access points multiple times (test for memory leak)", SLOW_TESTS)
 {
-    TestScanForAccessPoints(NUMBER_OF_SCAN_REQUESTS);
+    TestScanForAccessPoints(UnitTestConfiguration::ScanIterations());
 }
 
 /**
@@ -191,11 +185,11 @@ TEST_CASE("Connect to access point", CLASS_OF_TESTS)
 
     EnsureDisconnected(dispatcher);
 
-    printf("Connecting to access point: %s\n", WIFI_NETWORK);
+    printf("Connecting to access point: %s\n", UnitTestConfiguration::WiFiNetwork());
 
     TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, WiFiRequestHandler::SetAutomaticReconnect(true));
 
-    QueueAccessPointRequest(dispatcher, WiFiFunction::ConnectToAccessPoint, WIFI_NETWORK, WIFI_PASSWORD);
+    QueueAccessPointRequest(dispatcher, WiFiFunction::ConnectToAccessPoint, UnitTestConfiguration::WiFiNetwork(), UnitTestConfiguration::WiFiPassword());
 
     ConnectionProgress progress = {};
     CollectConnectionMessages(dispatcher, RadioTimeout(), &progress);

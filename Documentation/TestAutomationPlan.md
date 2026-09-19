@@ -54,7 +54,8 @@ resolves first wins. This has not been shown to cause a failure, but it means th
 binary may not be compiled against the configuration its own `sdkconfig.defaults`
 describes. **Unverified** — worth confirming before relying on it either way.
 
-`secrets.h` is also required at `components/F7Services/test/secrets.h` (gitignored).
+The settings are read from `unittest.config.json` on the device, written there by
+`mkfsimage.sh` (gitignored; the template is not).
 The `[WiFi]` tests need real credentials there, but every other tier only needs the
 file to exist, so a hosted CI job can supply a dummy.
 
@@ -115,8 +116,8 @@ can complete without human or hardware assistance.
 - **Ordered and stateful.** The four `[CoreDump]` cases form a sequence
   (generate → information → fragment → erase). The two file system upgrade cases carry
   state across a reflash.
-- **Long running.** `TestBluetooth.cpp:756` restarts the Bluetooth service 50 times,
-  taking 4–5 minutes on its own. A full `*` sweep is not a per-commit check. The
+- **Long running.** `TestBluetooth.cpp` restarts the Bluetooth service
+  `BluetoothRestartIterations` times, 50 by default, taking 4–5 minutes on its own. A full `*` sweep is not a per-commit check. The
   `[Slow]` tag exists for this; the Bluetooth case is a candidate for it.
 - **Slow only under emulation.** `WriteFile returns Failure on a full filesystem`
   fills the partition a block at a time. That is seconds on hardware and minutes under
@@ -234,7 +235,7 @@ WiFi and Bluetooth is precisely where hardware behaviour is the thing under test
 ### Hardware
 
 A dedicated board wired to whichever machine runs the suite, plus an access point
-matching the credentials in `secrets.h`. Someone has to own that hardware, the network,
+matching the credentials in `unittest.config.json`. Someone has to own that hardware, the network,
 and the triage of intermittent RF failures — an ongoing commitment rather than a
 one-off setup, and the main argument for pushing as much as possible onto the emulator.
 

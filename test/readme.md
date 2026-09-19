@@ -8,7 +8,7 @@ The individual component tests are located in the [*components/F7Services/test*]
 
 ## Building the Tests
 
-The unit test application requires a *secrets.h* file containing a number of definitions for items like the SSID and password for the access point.  This file is ignored (from a git perspective) to keep developer secrets from being added to GitHub.  The file *secrets.template* should be copied to *secrets.h* and the relevant macros edited before the system is built.
+The unit test application reads its settings from *unittest.config.json*, a file written to the board's file system by *mkfsimage.sh* rather than compiled into the application.  Changing a network or a server address therefore needs no rebuild.  The file is ignored (from a git perspective) to keep developer secrets from being added to GitHub; the template it is copied from, *test/main/unittest.config.json.template*, is in source control.  Copy the template to *test/fsimage/unittest.config.json*, edit it, and write it to the board with `./mkfsimage.sh --flash`.
 
 The tests can be built using the *test/build.sh* script using the same command line arguments as the main development build script.
 

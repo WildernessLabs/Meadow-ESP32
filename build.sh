@@ -312,17 +312,6 @@ if [ ! -z "$DEBUG_SELECTIONS" ]; then
 fi
 
 #
-#   The ESP unit tests require a secrets file to be present so check if there is one
-#   available and copy it to the right place if it is available.  This file does not
-#   want to find its way its way into source control so its existence will be checked
-#   later and it will be removed (assuming success).
-#
-if test -f "$scriptdir/../secrets.h"; then
-    cp $scriptdir/../secrets.h $scriptdir/test/secrets.h
-    cp $scriptdir/../secrets.h $scriptdir/components/F7Services/test/secrets.h
-fi
-
-#
 # Set the IDF variable in case we are running in a shell where eim has been used to install ESP-IDF.
 #
 IDF="$IDF_PATH/tools/idf.py"
