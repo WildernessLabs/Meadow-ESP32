@@ -489,10 +489,6 @@ void Encoders::EncodeMessage(const Message * const message, uint8_t * const buff
         next_location += 4;
         EncodeUInt32(message->PayloadLength, next_location);
         next_location += 4;
-        //
-        //  The byte after the PayloadLength is the CRC.  This is filled in later
-        //  and so a 0 is written into the message temporarily.
-        //
         if (!headerOnly && (message->PacketLength > 0))
         {
             memcpy(next_location, message->Payload + message->PacketOffset, message->PacketLength);

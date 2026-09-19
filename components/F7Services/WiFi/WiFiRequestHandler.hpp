@@ -114,8 +114,7 @@ private:
     static const int WIFI_CONNECTED_BIT = BIT2;
 
     /**
-     *  @brief When set, this indicates that the system has lost the WiFi connection
-     *  and is actively trying to re-establish the connection.
+     *  @brief When set, this indicates that the system been granted an IP address from the access point.
      */
     static const int WIFI_HAVE_IP_BIT = BIT3;
 
@@ -383,7 +382,7 @@ private:
 
     /**
      * @brief Country code for the WiFi configuration.
-]     */
+     */
     static const char *_countryCode;
 
     /**

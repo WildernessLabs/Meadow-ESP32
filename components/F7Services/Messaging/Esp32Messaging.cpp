@@ -42,7 +42,7 @@ Message::Message()
 }
 
 /**
- *  C@brief onstructor for the Message class.
+ *  @brief onstructor for the Message class.
  *
  *  @param messageType
  *      Type of message to send (see PacketType enum).

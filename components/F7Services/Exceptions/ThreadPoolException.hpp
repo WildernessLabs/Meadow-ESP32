@@ -13,7 +13,7 @@
 #include <string>
 
 /**
- *  @breif Exceptions thrown by the Thread and the ThreadPool classes.
+ *  @brief Exceptions thrown by the Thread and the ThreadPool classes.
  */
 class ThreadPoolException : public std::runtime_error
 {
