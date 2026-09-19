@@ -254,6 +254,49 @@ TEST_CASE("Write file to file system", CLASS_OF_TESTS)
 }
 
 /**
+ * @brief Check that WriteFile rejects a request to create a zero-length file.
+ *
+ *  A zero-length request carries no Contents, which previously fell through the
+ *  write path untouched and reported StatusCodes::Failure without telling the
+ *  caller why.  WriteFile must recognise ContentsLength == 0 explicitly, report
+ *  StatusCodes::InvalidRequest, and leave the file system untouched.
+ */
+TEST_CASE("WriteFile rejects a zero-length file", CLASS_OF_TESTS)
+{
+    FileSystemTestContext context = {};
+    CreateFileSystemTestContext(&context, true);
+
+    //
+    //  Build a write request naming a file but carrying no contents.
+    //
+    Message *writeMessage = CreateFileNameAndContentsMessage(SystemFunction::FileSystemWriteFile, TEST_FILE_NAME, nullptr, 0);
+
+    context.Fs->WriteFile(writeMessage);
+
+    //
+    //  Verify exactly one response is queued and that it reports InvalidRequest
+    //  with no payload attached.
+    //
+    ASSERT_OUTBOUND_QUEUE_LENGTH(context.Dispatcher, 1);
+
+    Message *response = context.Dispatcher->GetOutboundMessage();
+    ASSERT_RESPONSE(response, Esp32Interfaces::System, SystemFunction::FileSystemWriteFile, StatusCodes::InvalidRequest);
+    ASSERT_MESSAGE_ID(response, TEST_MESSAGE_ID);
+    ASSERT_NO_PAYLOAD(response);
+
+    ASSERT_OUTBOUND_QUEUE_LENGTH(context.Dispatcher, 0);
+
+    //
+    //  The rejected request must not have created a file.
+    //
+    TEST_ASSERT_EQUAL(0, CountFiles());
+
+    Message::DeleteMessage(writeMessage);
+
+    ReleaseFileSystemTestContext(&context);
+}
+
+/**
  * @brief Test case for reading a file from the file system.
  */
 TEST_CASE("Reading a file", CLASS_OF_TESTS)

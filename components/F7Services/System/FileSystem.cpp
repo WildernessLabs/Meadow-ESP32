@@ -382,7 +382,11 @@ void FileSystem::WriteFile(Message * const message)
 
     if (fileData)
     {
-        if (fileData->Contents)
+        if (fileData->ContentsLength == 0)
+        {
+            result = StatusCodes::InvalidRequest;
+        }
+        else
         {
             std::string s = PARTITION_PATH_NAME;
             s += "/";
