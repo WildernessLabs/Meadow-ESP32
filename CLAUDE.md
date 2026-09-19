@@ -33,10 +33,7 @@ idf.py monitor
 | Flag | Effect |
 |------|--------|
 | `--develop` | `DEBUG=1` + debug symbols |
-| `--coredump` | Enable core dump to flash |
-| `--heaptracing` | Heap memory tracing |
 | `--tracemessages` | SPI message protocol tracing |
-| `--halt` | Halt on hard fault |
 
 ## Testing
 

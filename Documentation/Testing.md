@@ -481,9 +481,9 @@ Host-based heap tracing is useful for identifying memory leaks and tracking heap
 
 ##### Setup
 
-1. Build and flash the test application with heap tracing enabled:
+1. Uncomment the `CONFIG_HEAP_TRACING_*` options in `test/sdkconfig.defaults`, then build and flash the test application:
    ```bash
-   ./build.sh --heaptracing --build --flash
+   ./build.sh --build --flash
    ```
 
 2. Ensure you have a debugger connected (OpenOCD):
@@ -556,10 +556,10 @@ The port can be moved with `--gdb-port=` if 3333 is already in use.
 
 ### Core Dump Testing
 
-Tests related to core dump functionality verify that crash information is properly captured and can be analyzed. Enable core dumps with:
+Tests related to core dump functionality verify that crash information is properly captured and can be analyzed. Core dump to flash is already enabled by `sdkconfig.defaults` (`CONFIG_ESP_COREDUMP_ENABLE_TO_FLASH`), so a normal build is all that's needed:
 
 ```bash
-./build.sh --coredump --build
+./build.sh --build
 ```
 
 After a crash, retrieve and analyze the core dump:

@@ -32,11 +32,9 @@ fi
 VERBOSE=true
 CLEAN=false
 FULLCLEAN=false
-COREDUMP=false
 MENUCONFIG=false
 HELP=false
 DRYRUN=false
-HEAPTRACING=false
 IDF_FLAGS=""
 IDF_DEFINES=""
 DEBUG_SELECTIONS=""
@@ -87,9 +85,6 @@ case $i in
     -d=*|--debug=*)
     DEBUG_SELECTIONS="${i#*=}"
     ;;
-    --halt)
-    IDF_DEFINES+=" -DCONFIG_ESP_SYSTEM_PANIC_PRINT_HALT=y"
-    ;;
     # --tests=*)
     # TEST_SELECTIONS="${i#*=}"
     # ;;
@@ -125,7 +120,6 @@ if $HELP; then
     echo "--fullclean             Perform a full clean followed by a build"
     echo "-tm | --tracemessages   Enable heap tracing."
     echo "--menuconfig            Enter the menu configuration system overwriting sdkconfig.defaults"
-    echo "--halt                  Halt the system on hard fault."
     echo "-d=* | --debug=*        Turn on debug for selected system(s). Valid values (comma separated): WIFI, SPI, BT, SYSTEM."
     echo ""
     exit 0

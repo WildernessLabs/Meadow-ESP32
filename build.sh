@@ -4,6 +4,19 @@ set -e
 scriptdir="$( cd "$(dirname "$0")" ; pwd -P )"
 
 #
+#   generate_build_info rewrites the tracked build_info.template and version.txt
+#   files as scratch space.  This trap restores both on every exit path -
+#   success, an error under set -e, or a signal - so a failed build cannot
+#   leave the tree dirty or poison the next build with stale version data.
+#
+restore_tracked_build_files() {
+  git checkout HEAD "$scriptdir/main/build_info.template" 2>/dev/null || true
+  git checkout HEAD "$scriptdir/version.txt" 2>/dev/null || true
+  rm -f "$scriptdir/main/build_info.template.bak"
+}
+trap restore_tracked_build_files EXIT
+
+#
 #   Work out the OS so that we can change actions per OS where necessary.
 #
 shopt -s nocasematch
@@ -33,10 +46,8 @@ fi
 VERBOSE=true
 CLEAN=false
 FULLCLEAN=false
-COREDUMP=false
 HELP=false
 DRYRUN=false
-HEAPTRACING=false
 IDF_FLAGS=""
 IDF_DEFINES=""
 DEBUG_SELECTIONS=""
@@ -74,12 +85,6 @@ case $i in
     -q|--qemu)
     QEMU=true
     ;;
-    --coredump)
-    IDF_DEFINES+=" -DCOREDUMP=1"
-    ;;
-    -th|--heaptracing)
-    IDF_DEFINES+=" -DHEAPTRACING=1"
-    ;;
     -tm|--tracemessages)
     IDF_DEFINES+=" -DTRACE_MESSAGES=1"
     ;;
@@ -104,9 +109,6 @@ case $i in
     ;;
     -d=*|--debug=*)
     DEBUG_SELECTIONS="${i#*=}"
-    ;;
-    --halt)
-    IDF_DEFINES+=" -DCONFIG_ESP_SYSTEM_PANIC_PRINT_HALT=y"
     ;;
     --sbom)
     GENERATE_SBOM=true
@@ -143,12 +145,9 @@ if $HELP; then
     echo "--fullclean             Perform a full clean followed by a build"
     echo "-v | --verbose          Display commands as they are executed (default)"
     echo "-s | --silent           Execute commands silently"
-    echo "--coredump              Add core dump functionality to the application"
-    echo "-th | --heaptracing     Enable heap tracing."
     echo "-tm | --tracemessages   Enable trace and debug message output."
     echo "-pl | --performancelogging  Enable performance logging of method entry and exit times."
     echo "--dryrun                Perform a dry run (do not execute commands)"
-    echo "--halt                  Halt the system on hard fault."
     echo "--sbom                  Generate a Software Bill of Materials (SBOM) in SPDX format."
     echo "-d=* | --debug=*        Turn on debug for selected system(s). Valid values (comma separated): WIFI, SPI, BT, SYSTEM."
     echo "--develop               Enable development mode (adds -DDEVELOP=1 to the build)"
@@ -379,10 +378,6 @@ fi
 if $QEMU; then
   $scriptdir/qemu-image.sh $scriptdir/build
 fi
-
-git checkout HEAD $scriptdir/main/build_info.template
-git checkout HEAD $scriptdir/version.txt
-rm $scriptdir/main/build_info.template.bak
 
 now=$(date +"%T")
 printf "Build of version $VERSION_MAJOR.$VERSION_MINOR.$VERSION_REVISION.$VERSION_BUILD (${BUILD_GIT_HASH:0-8}:$BUILD_GIT_REF) finished at $now\n"
