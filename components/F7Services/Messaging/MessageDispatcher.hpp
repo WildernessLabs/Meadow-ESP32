@@ -95,15 +95,15 @@ public:
     /**
      *  @brief Queue a message for the ESP32.
      */
-    bool QueueMessageForEsp32(Message *request);
+    bool QueueMessageForEsp32(Message *request) override;
 
     /**
      *  @brief Queue a message for the STM32.
      */
-    bool QueueMessageForStm32(Message *response);
+    bool QueueMessageForStm32(Message *response) override;
 
     /**
      *  @brief Get the next message ID.
      */
-    uint32_t GetNextMessageID();
+    uint32_t GetNextMessageID() override;
 };
