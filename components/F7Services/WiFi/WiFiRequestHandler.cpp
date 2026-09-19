@@ -902,12 +902,20 @@ void WiFiRequestHandler::SwitchAntenna(AntennaTypes::AntennaTypes newAntenna)
     //
     gpio_num_t newAntennaPin = ConvertAntennaToPin(newAntenna);
     gpio_num_t oldAntennaPin = ConvertAntennaToPin(static_cast<AntennaTypes::AntennaTypes>(GetAntenna()));
-    //
-    //  Make sure the old antenna is switched off before the new one is turned on.
-    //
-    TRACE_MESSAGE("Switching from antenna %" PRIu32 " to %" PRIu32, oldAntennaPin, newAntennaPin);
-    gpio_set_level(oldAntennaPin, 0);
-    gpio_set_level(newAntennaPin, 1);
+    if (newAntennaPin == oldAntennaPin)
+    {
+        TRACE_MESSAGE("Antenna not changed");
+    }
+    else
+    {
+        //
+        //  Make sure the old antenna is switched off before the new one is turned on.
+        //
+        TRACE_MESSAGE("SwitchAntenna: Switching from antenna %" PRIu32 " to %" PRIu32, oldAntennaPin, newAntennaPin);
+        gpio_set_level(oldAntennaPin, 0);
+        gpio_set_level(newAntennaPin, 1);
+        SystemRequestHandler::SetConfigurationValue(ANTENNA_TYPE_NAME, static_cast<uint8_t>(newAntenna));
+    }
     TRACE_MESSAGE("SwitchAntenna; Exit");
 }
 
