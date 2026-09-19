@@ -61,6 +61,15 @@ EXPECT_REBOOT='--expect-reboot="Generate a core dump"'
 #
 SELECTORS+=('[MessageDispatcher]')
 
+#
+#   The WiFi configuration tests follow the MessageDispatcher tests and reuse the
+#   WiFiRequestHandler those built.  The handler is a singleton and a second instance
+#   resets the board, so the order of these two selectors matters.  They need no radio:
+#   the country code is read from NVS by the constructor and nothing here starts the
+#   interface.
+#
+SELECTORS+=('[WiFiConfiguration]')
+
 RESULTS_DIR="$scriptdir/test-results"
 
 printf "Installing the QEMU system dependencies...\n"

@@ -33,13 +33,32 @@ static const int CONNECTION_ATTEMPTS = 3;
 
 /**
  * @brief Largest number of messages to read while waiting for a connection response.
+ *
+ * @note A failing connection raises an event for every retry, and the retry count
+ *       defaults to 10, so this has to be comfortably clear of that or the response
+ *       arrives after the reading has stopped.
  */
-static const unsigned MAXIMUM_CONNECTION_MESSAGES = 10;
+static const unsigned MAXIMUM_CONNECTION_MESSAGES = 32;
 
 /**
  * @brief Milliseconds allowed for the access point to stop.
  */
 static const unsigned STOP_ACCESS_POINT_TIMEOUT = 5000;
+
+/**
+ * @brief Milliseconds to wait for the event saying a disconnection has taken effect.
+ */
+static const unsigned DISCONNECT_EVENT_TIMEOUT = 10000;
+
+/**
+ * @brief Interval between checks for that event, in milliseconds.
+ */
+static const unsigned DISCONNECT_POLL_INTERVAL = 10;
+
+/**
+ * @brief Milliseconds to let the event handler finish after it has raised the event.
+ */
+static const unsigned DISCONNECT_SETTLING_TIME = 500;
 
 /**
  * @brief Whether the access point has already been joined during this run.
@@ -223,6 +242,71 @@ void EnsureAccessPointStopped(MockMessageDispatcher *dispatcher)
 }
 
 /**
+ * @brief Disconnect from the access point, whether or not one is joined.
+ *
+ * @param dispatcher Dispatcher to queue the request on.
+ */
+void EnsureDisconnected(MockMessageDispatcher *dispatcher)
+{
+    //
+    //  The handler reads TurnOffWiFiInterface from the payload without checking that
+    //  there is one, so a payload is always sent.  Zero leaves the interface up and
+    //  drops only the association, which is all these tests need.
+    //
+    uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(sizeof(uint8_t)));
+    TEST_ASSERT_NOT_NULL(payload);
+    payload[0] = 0;
+
+    Message *request = Message::CreateOnHeap(MessageTypes::Header, Esp32Interfaces::WiFi, WiFiFunction::DisconnectFromAccessPoint, StatusCodes::Failure, 0xff, payload, sizeof(uint8_t));
+    TEST_ASSERT_NOT_NULL(request);
+    dispatcher->QueueMessageForEsp32(request);
+
+    Message *response = WaitForResponseTo(dispatcher, Esp32Interfaces::WiFi, WiFiFunction::DisconnectFromAccessPoint, RadioTimeout());
+    if (response != nullptr)
+    {
+        Message::DeleteMessage(response);
+    }
+
+    //
+    //  The response says the disconnect has been asked for, not that it has happened.
+    //  The bit that says an address is held is cleared by the event handler, which runs
+    //  afterwards and raises the disconnected event as part of the same piece of work.
+    //  Waiting for that event is therefore a wait for the state to have changed, which
+    //  is what the caller actually wants: a connect issued too early is answered
+    //  WiFiAlreadyStarted and never reaches the radio.
+    //
+    //  Nothing is raised when there was no connection to drop, so a timeout here is an
+    //  ordinary outcome and is not treated as a failure.
+    //
+    unsigned waited = 0;
+    bool disconnected = false;
+    while ((waited < DISCONNECT_EVENT_TIMEOUT) && !disconnected)
+    {
+        if (dispatcher->OutboundMessageQueueLength() == 0)
+        {
+            vTaskDelay(DISCONNECT_POLL_INTERVAL / portTICK_PERIOD_MS);
+            waited += DISCONNECT_POLL_INTERVAL;
+            continue;
+        }
+
+        Message *message = dispatcher->GetOutboundMessage();
+        if (message != nullptr)
+        {
+            disconnected = (message->Function == WiFiFunction::NetworkDisconnectedEvent);
+            Message::DeleteMessage(message);
+        }
+    }
+
+    //
+    //  The event is raised just before the bits are cleared, so let that finish.
+    //
+    vTaskDelay(DISCONNECT_SETTLING_TIME / portTICK_PERIOD_MS);
+    DrainOutboundQueue(dispatcher, 0);
+
+    _connectedToAccessPoint = false;
+}
+
+/**
  * @brief Connect to the access point named in secrets.h.
  *
  * @param dispatcher Dispatcher to queue the request on.
@@ -247,7 +331,12 @@ bool ConnectToTestAccessPoint(MockMessageDispatcher *dispatcher)
         Message *response = WaitForResponseTo(dispatcher, Esp32Interfaces::WiFi, WiFiFunction::ConnectToAccessPoint, timeout);
         if (response != nullptr)
         {
-            _connectedToAccessPoint = (response->StatusCode == StatusCodes::CompletedOk);
+            //
+            //  WiFiAlreadyStarted means an address is already held, which is the state
+            //  this method exists to reach.  Treating it as a failure would report that
+            //  the access point could not be joined while the board was sitting on it.
+            //
+            _connectedToAccessPoint = ((response->StatusCode == StatusCodes::CompletedOk) || (response->StatusCode == StatusCodes::WiFiAlreadyStarted));
             Message::DeleteMessage(response);
         }
     }

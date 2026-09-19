@@ -117,7 +117,7 @@ const char *WiFiRequestHandler::AUTOMATIC_RECONNECT_NAME = "AutoReconnect";
 /**
  *  @brief Maximum number of times a failed event should retry before raising an error.
  */
-uint32_t WiFiRequestHandler::_maximumRetryCount = 10;
+uint32_t WiFiRequestHandler::_maximumRetryCount = WiFiRequestHandler::DEFAULT_MAXIMUM_RETRY_COUNT;
 
 /**
  *  @brief Name of the NVS storage holding the _maximumRetryCount value.
@@ -302,6 +302,8 @@ WiFiRequestHandler::WiFiRequestHandler()
     _softApNetIfHandle = nullptr;
     _countryCode = SystemRequestHandler::GetConfigurationValue(COUNTRY_CODE_NAME, _validCountryCodes[0]);
     TRACE_MESSAGE("WiFiRequestHandler: Country code is %s", _countryCode);
+    _maximumRetryCount = SystemRequestHandler::GetConfigurationValue(MAXIMUM_RETRY_COUNT_NAME, static_cast<uint32_t>(DEFAULT_MAXIMUM_RETRY_COUNT));
+    TRACE_MESSAGE("WiFiRequestHandler: Maximum retry count is %" PRIu32, _maximumRetryCount);
     //
     //  Setup the timezones ready for when we get the time from a timeserver.
     //
@@ -385,8 +387,23 @@ uint32_t WiFiRequestHandler::GetMaximumRetryCount()
 StatusCodes::StatusCodes WiFiRequestHandler::SetMaximumRetryCount(uint32_t value)
 {
     TRACE_MESSAGE("WiFiRequestHandler::SetMaximumRetryCount: %" PRIu32, value);
-    _maximumRetryCount = value;
-    return (StatusCodes::CompletedOk);
+
+    StatusCodes::StatusCodes result = StatusCodes::Failure;
+
+    if (value == _maximumRetryCount)
+    {
+        result = StatusCodes::CompletedOk;
+    }
+    else
+    {
+        if (SystemRequestHandler::SetConfigurationValue(MAXIMUM_RETRY_COUNT_NAME, value) == NvsManager::ErrorCodes::Ok)
+        {
+            _maximumRetryCount = SystemRequestHandler::GetConfigurationValue(MAXIMUM_RETRY_COUNT_NAME, static_cast<uint32_t>(DEFAULT_MAXIMUM_RETRY_COUNT));
+            result = StatusCodes::CompletedOk;
+        }
+    }
+
+    return (result);
 }
 
 /**
@@ -1504,11 +1521,17 @@ void WiFiRequestHandler::DisconnectFromAccessPoint(Message *message)
 {
     TRACE_MESSAGE("DisconnectFromAccessPoint(Message): Enter");
 
-    xEventGroupSetBits(_xWiFiEventGroup, WIFI_DISCONNECT_REQUESTED_BIT);
-
     StatusCodes::StatusCodes sc = StatusCodes::CompletedOk;
     if (IsConnected())
     {
+        //
+        //  The bit is only set when there is a connection to drop.  It is cleared by
+        //  StationDisconnectedEvent, which is only raised when a disconnection actually
+        //  happens, so setting it with nothing connected leaves it set for good.  The
+        //  next connection attempt to fail would then be taken for a requested
+        //  disconnection and would not be retried.
+        //
+        xEventGroupSetBits(_xWiFiEventGroup, WIFI_DISCONNECT_REQUESTED_BIT);
         sc = DisconnectFromAccessPoint();
     }
     if (sc == StatusCodes::CompletedOk)
@@ -2076,8 +2099,8 @@ void WiFiRequestHandler::StationGotIpEvent(ip_event_got_ip_t *eventData)
 void WiFiRequestHandler::StationStartedEvent()
 {
     TRACE_MESSAGE("StationStartedEvent: Enter");
-    char *deviceName = SystemRequestHandler::GetDeviceName();
-    if (deviceName == NULL)
+    const char *deviceName = SystemRequestHandler::GetDeviceName();
+    if (deviceName == nullptr)
     {
         deviceName = "Meadow";
     }

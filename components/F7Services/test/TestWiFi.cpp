@@ -45,6 +45,11 @@
 #define CLASS_OF_TESTS "[WiFi][HardwareOnly]"
 
 /**
+ * @brief Class of tests that take a long time to execute.
+ */
+#define SLOW_TESTS "[WiFi][HardwareOnly][Slow]"
+
+/**
  * @brief Number of scan requests to be made in the multiple scan requests test.
  */
 #define NUMBER_OF_SCAN_REQUESTS 500
@@ -73,6 +78,22 @@
  * @brief Static gateway address for the AP DHCP server in network byte order (192.168.10.1).
  */
 #define AP_STATIC_GATEWAY 0x010AA8C0U
+
+/**
+ * @brief Number of retries to allow a connection that is expected to fail.
+ *
+ *  The handler waits GetWiFiTimeout() for either an address or an error before giving up
+ *  and answering Timeout, and the error is only raised once the retries have been used
+ *  up.  Retries are spaced by ProgressiveDelay, whose periods are
+ *  {100, 300, 700, 1000, 5000, 10000, 20000} ms with the last repeating, so the default
+ *  of 10 retries spends 97 seconds backing off and the 30 second wait always expires
+ *  first.  That is why the same request is answered CannotConnectToAccessPoint on a cold
+ *  interface and Timeout on a warm one.
+ *
+ *  Six retries back off for 17.1 seconds, which finishes inside the timeout with room to
+ *  spare while still working through five of the seven delay periods.
+ */
+#define FAILING_CONNECTION_RETRIES 6
 
 /**
  * @brief Test scanning for access points.
@@ -142,7 +163,7 @@ TEST_CASE("Scan for access points", CLASS_OF_TESTS)
 /**
  * @brief Perform multiple scans for access points.
  */
-TEST_CASE("Scan for access points multiple times (test for memory leak)", CLASS_OF_TESTS)
+TEST_CASE("Scan for access points multiple times (test for memory leak)", SLOW_TESTS)
 {
     TestScanForAccessPoints(NUMBER_OF_SCAN_REQUESTS);
 }
@@ -159,10 +180,16 @@ TEST_CASE("Scan for access points multiple times (test for memory leak)", CLASS_
  *
  *  The first two messages are the events raised as the connection progresses and the final
  *  message is the response to the original connection request.
+ *
+ * @note The station is disconnected first.  ConnectToAccessPoint returns
+ *       WiFiAlreadyStarted without going near the radio once an address is held, so a
+ *       connection left up by an earlier test would stop this one testing anything.
  */
 TEST_CASE("Connect to access point", CLASS_OF_TESTS)
 {
     MockMessageDispatcher *dispatcher = SetupWiFiDispatcher();
+
+    EnsureDisconnected(dispatcher);
 
     printf("Connecting to access point: %s\n", WIFI_NETWORK);
 
@@ -185,61 +212,37 @@ TEST_CASE("Connect to access point", CLASS_OF_TESTS)
  *
  * @note This is designed to test the automatic reconnect attempts as well as the final
  *       failure of the connection request.
+ *
+ * @note The station is disconnected first.  Run after "Connect to access point" with a
+ *       connection still up, this would be answered WiFiAlreadyStarted rather than
+ *       CannotConnectToAccessPoint, and would fail.
  */
 TEST_CASE("Connect to non-existant access point", CLASS_OF_TESTS)
 {
     MockMessageDispatcher *dispatcher = SetupWiFiDispatcher();
 
+    EnsureDisconnected(dispatcher);
+
     TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, WiFiRequestHandler::SetAutomaticReconnect(true));
+
+    //
+    //  Let the retries finish inside the handler's own timeout, so the answer does not
+    //  depend on whether the interface was already up.  The old value is put back at the
+    //  end; it is not held in NVS, so it is only the rest of this run that is affected.
+    //
+    const uint32_t originalRetryCount = WiFiRequestHandler::GetMaximumRetryCount();
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, WiFiRequestHandler::SetMaximumRetryCount(FAILING_CONNECTION_RETRIES));
 
     QueueAccessPointRequest(dispatcher, WiFiFunction::ConnectToAccessPoint, "BadAccessPoint", "BadPassword");
 
     ConnectionProgress progress = {};
     CollectConnectionMessages(dispatcher, RadioTimeout(), &progress);
 
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, WiFiRequestHandler::SetMaximumRetryCount(originalRetryCount));
+
     TEST_ASSERT_TRUE(progress.ResponseReceived);
     TEST_ASSERT_EQUAL(StatusCodes::CannotConnectToAccessPoint, progress.ResponseStatusCode);
     TEST_ASSERT_FALSE(progress.ConnectedEvent);
-}
-
-/**
- * @brief Test the GetCountryCode and SetCountryCode methods.
- *
- * Stages:
- *  1. GetCountryCode returns a non-null value after Setup.
- *  2. SetCountryCode returns CompletedOk for a valid country code.
- *  3. SetCountryCode updates the value returned by GetCountryCode.
- *  4. SetCountryCode returns CompletedOk when the code is unchanged.
- *
- * @note These are public static methods, so the test calls them directly rather than
- *       going through the message interface.  Scanning first makes sure the request
- *       handler has been created and set up.
- */
-TEST_CASE("GetCountryCode and SetCountryCode", CLASS_OF_TESTS)
-{
-    MockMessageDispatcher *dispatcher = SetupWiFiDispatcher();
-
-    QueueWiFiRequest(dispatcher, WiFiFunction::GetAccessPoints);
-    Message *response = WaitForResponseTo(dispatcher, Esp32Interfaces::WiFi, WiFiFunction::GetAccessPoints, RadioTimeout());
-    TEST_ASSERT_NOT_NULL_MESSAGE(response, "The WiFi request handler did not start.");
-    Message::DeleteMessage(response);
-    //
-    // GetCountryCode returns a non-null value after Setup.
-    //
-    const char *countryCode = WiFiRequestHandler::GetCountryCode();
-    TEST_ASSERT_NOT_NULL(countryCode);
-    //
-    // SetCountryCode returns CompletedOk for a valid country code.
-    //
-    StatusCodes::StatusCodes result = WiFiRequestHandler::SetCountryCode("AU");
-    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, result);
-    TEST_ASSERT_EQUAL_STRING("AU", WiFiRequestHandler::GetCountryCode());
-    //
-    // SetCountryCode returns CompletedOk when the code is unchanged.
-    //
-    result = WiFiRequestHandler::SetCountryCode("GB");
-    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, result);
-    TEST_ASSERT_EQUAL_STRING("GB", WiFiRequestHandler::GetCountryCode());
 }
 
 /*

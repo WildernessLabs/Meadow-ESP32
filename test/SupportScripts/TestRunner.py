@@ -218,10 +218,25 @@ def RunSelector(transport, selector, timeout, transcript):
     else:
         return ('ignored', ''.join(transcript[mark:]), None)
 
-    def Settled(text):
-        return MENU_PROMPT in text or BOOT_PROMPT in text
+    #
+    #   The prompt is looked for across everything this selector has produced, not just
+    #   what arrives from here on.  A test that finishes quickly can have its whole
+    #   output, prompt included, delivered in the same read that acknowledged the
+    #   selector, and a prompt that has already gone past is never seen again: the wait
+    #   then lasts the full timeout and the run still reports a pass, because the summary
+    #   is in the segment either way.  That made the time a run took depend on --timeout
+    #   rather than on the work.
+    #
+    def Settled(_):
+        return MENU_PROMPT in ''.join(transcript[mark:]) or BOOT_PROMPT in ''.join(transcript[mark:])
 
-    ReadUntil(transport, Settled, timeout, transcript)
+    #
+    #   ReadUntil only tests the predicate after something new arrives, so the case where
+    #   the prompt is already in hand has to be dealt with before it is called.
+    #
+    if not Settled(''):
+        ReadUntil(transport, Settled, timeout, transcript)
+
     segment = ''.join(transcript[mark:])
 
     if BOOT_PROMPT in segment:
