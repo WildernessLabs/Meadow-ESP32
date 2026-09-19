@@ -193,6 +193,14 @@ SpiTransportProvider::~SpiTransportProvider()
         Message::DeleteMessage(_outboundMessage);
     }
     _currentState = Invalid;
+
+    //
+    //  Production creates this object once and never destroys it, so this only matters to
+    //  the tests.  The constructor rejects a second instance by throwing and nothing
+    //  catches that, so an object that is discarded has to hand the guard back or the
+    //  next construction aborts the board.
+    //
+    _spiInstance = nullptr;
 }
 
 /*

@@ -165,6 +165,15 @@ BluetoothRequestHandler::BluetoothRequestHandler(IMessageDispatcher *messageDisp
  */
 BluetoothRequestHandler::~BluetoothRequestHandler()
 {
+    //
+    //  Production creates this object once and never destroys it, so this only matters to
+    //  the tests.  GetInstance() builds a handler only when _instance is null and hands
+    //  the pointer out, so a handler that is discarded has to clear it or the next caller
+    //  is given a freed object.  The constructor rejects a second instance by throwing
+    //  and nothing catches that, so the guard has to go back with it.
+    //
+    _instance = nullptr;
+    _instantiated = false;
 }
 
 /*

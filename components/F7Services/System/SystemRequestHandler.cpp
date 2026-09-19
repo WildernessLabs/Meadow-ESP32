@@ -176,6 +176,41 @@ SystemRequestHandler::SystemRequestHandler(IMessageDispatcher *messageDispatcher
 SystemRequestHandler::~SystemRequestHandler()
 {
     Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&_deviceName));
+
+    //
+    //  The file system unmounts the partition as it goes, so releasing it here is what
+    //  stops a handler built afterwards mounting the same partition a second time.
+    //
+    delete _fileSystem;
+    _fileSystem = nullptr;
+    delete _coreDump;
+    _coreDump = nullptr;
+
+    //
+    //  ADC1 is only configured when a battery level is asked for, so both handles can
+    //  still be null.
+    //
+    if (_adc1CalibrationHandle != nullptr)
+    {
+        adc_cali_delete_scheme_line_fitting(_adc1CalibrationHandle);
+        _adc1CalibrationHandle = nullptr;
+    }
+    if (_adc1Handle != nullptr)
+    {
+        adc_oneshot_del_unit(_adc1Handle);
+        _adc1Handle = nullptr;
+    }
+
+    //
+    //  Production creates this object once and never destroys it, so this only matters to
+    //  the tests.  The constructor rejects a second instance by throwing and nothing
+    //  catches that, so an object that is discarded has to hand the guard back or the
+    //  next construction aborts the board.
+    //
+    //  The task and the message queue belong to RequestHandlerBase, which releases
+    //  neither, so a handler must not be discarded while its task is running.
+    //
+    _instantiated = false;
 }
 
 /*
