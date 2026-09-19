@@ -37,8 +37,6 @@
 #include <vector>
 #include <string>
 
-using namespace std;
-
 /**
  *  @brief Bluetooth request handler object.
  *

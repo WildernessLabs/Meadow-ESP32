@@ -17,8 +17,6 @@
 #include <vector>
 #include <map>
 
-using namespace std;
-
 /**
  * @brief Key name for device name in the JSON file.
  */
@@ -232,7 +230,7 @@ public:
     /**
      * @brief Get the services collections.
      */
-    const vector<BluetoothService *> GetServiceDefinitions()
+    const std::vector<BluetoothService *> GetServiceDefinitions()
     {
         return Services.GetServiceDefinitions();
     }

@@ -16,8 +16,6 @@
 #include "BluetoothAttribute.hpp"
 #include "BluetoothCharacteristic.hpp"
 
-using namespace std;
-
 class BluetoothCharacteristic;
 
 /**
