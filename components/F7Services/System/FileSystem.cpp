@@ -396,7 +396,7 @@ void FileSystem::WriteFile(Message * const message)
                 TRACE_MESSAGE("Written %" PRIi32 " bytes", static_cast<int32_t>(amount));
                 if (amount == fileData->ContentsLength)
                 {
-                    result = StatusCodes::CompletedOk;
+                    result = StatusCodes::InvalidRequest;
                 }
                 fclose(file);
             }
