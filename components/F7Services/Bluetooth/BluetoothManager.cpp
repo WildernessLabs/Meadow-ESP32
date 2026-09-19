@@ -324,7 +324,7 @@ bool BluetoothManager::DeleteAllServices()
 {
     TRACE_MESSAGE("DeleteAllServices: Enter");
 
-    for (auto val: _valueMap)
+    for (const auto val: _valueMap)
     {
         delete[] val.second.value;
     }
