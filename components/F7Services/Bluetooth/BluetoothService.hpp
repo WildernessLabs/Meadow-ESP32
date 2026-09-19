@@ -16,8 +16,6 @@
 #include "BluetoothCharacteristic.hpp"
 #include "BluetoothHandleManager.hpp"
 
-using namespace std;
-
 class BluetoothHandleManager;
 
 /**
@@ -86,7 +84,7 @@ public:
      *
      * @return vector<BluetoothCharacteristic *> Pointer to the vector of BluetoothCharacteristic objects.
      */
-    vector<BluetoothCharacteristic *> GetCharacteristicDefinitions()
+    std::vector<BluetoothCharacteristic *> GetCharacteristicDefinitions()
     {
         return _characteristics;
     }
@@ -95,7 +93,7 @@ private:
     /**
      * @brief Characteristics for this service.
      */
-    vector<BluetoothCharacteristic *> _characteristics;
+    std::vector<BluetoothCharacteristic *> _characteristics;
 
     /**
      * @brief Bluetooth handle manager for this service.

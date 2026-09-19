@@ -148,7 +148,7 @@ void BluetoothCharacteristic::AddDescriptor(BluetoothDescriptor * const descript
  *
  * @return vector<BluetoothDescriptor *> Vector of BluetoothDescriptor objects.
  */
-vector<BluetoothDescriptor *> BluetoothCharacteristic::GetDescriptorDefinitions()
+std::vector<BluetoothDescriptor *> BluetoothCharacteristic::GetDescriptorDefinitions()
 {
     return _descriptors;
 }

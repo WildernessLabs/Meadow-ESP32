@@ -105,7 +105,7 @@ bool BluetoothServiceCollection::DeleteAllServices()
  *
  * @return vector<BluetoothService *> Service definitions.
  */
-vector<BluetoothService *> BluetoothServiceCollection::GetServiceDefinitions()
+std::vector<BluetoothService *> BluetoothServiceCollection::GetServiceDefinitions()
 {
     return _services;
 }

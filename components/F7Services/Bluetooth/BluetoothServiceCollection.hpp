@@ -18,8 +18,6 @@
 #include "BluetoothCharacteristic.hpp"
 #include "BluetoothHandleManager.hpp"
 
-using namespace std;
-
 /**
  * @brief Class holding the data and methods for the collection of Bluetooth services.
  */
@@ -29,7 +27,7 @@ private:
     /**
      * @brief Collection of Bluetooth services.
      */
-    vector<BluetoothService *> _services;
+    std::vector<BluetoothService *> _services;
 
     /**
      * @brief Pointer to the Bluetooth handle manager.
@@ -98,5 +96,5 @@ public:
     /**
      * @brief Get the service definitions for this collection.
      */
-    vector<BluetoothService *> GetServiceDefinitions();
+    std::vector<BluetoothService *> GetServiceDefinitions();
 };

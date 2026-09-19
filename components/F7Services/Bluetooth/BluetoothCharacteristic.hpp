@@ -25,8 +25,6 @@ class BluetoothCharacteristicDeclaration;
 #include "BluetoothCharacteristicDeclaration.hpp"
 #include "BluetoothCharacteristicValue.hpp"
 
-using namespace std;
-
 /**
  * @brief Prototype for the ServiceAdded event.
  */
@@ -105,11 +103,11 @@ public:
      *
      * @return vector<BluetoothDescriptor *> Vector of BluetoothDescriptor objects.
      */
-    vector<BluetoothDescriptor *> GetDescriptorDefinitions();
+    std::vector<BluetoothDescriptor *> GetDescriptorDefinitions();
 
 private:
     /**
      * @brief Bluetooth descriptors for this characteristic.
      */
-    vector<BluetoothDescriptor *> _descriptors;
+    std::vector<BluetoothDescriptor *> _descriptors;
 };
