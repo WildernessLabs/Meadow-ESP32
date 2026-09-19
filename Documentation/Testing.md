@@ -150,8 +150,13 @@ cd test
 ./run-tests.sh '[NvsManager]' '[FileSystem]'
 
 # On a connected board instead of the emulator
-./run-tests.sh --port=/dev/cu.usbserial-2101 '[WiFi]'
+./run-tests.sh --port=/dev/cu.usbserial-101 '[WiFi]'
 ```
+
+The board enumerates as a pair of ports and only the second of the pair is the console,
+so `ls /dev/cu.usbserial-*` and take the higher of the two. The names are assigned by
+USB location and change when the board is moved to another socket, so check rather than
+remembering them.
 
 Selectors are passed to the menu unchanged, so anything the menu accepts works: a tag
 such as `[FileSystem]`, a quoted test name, a menu number, or `*` for everything.
