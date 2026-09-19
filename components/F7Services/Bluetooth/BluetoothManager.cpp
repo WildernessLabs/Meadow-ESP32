@@ -352,7 +352,7 @@ void BluetoothManager::GetDeviceInformation(const cJSON * const json)
     }
     else
     {
-        strcpy(_deviceName, DEFAULT_DEVICE_NAME);
+        strncpy(_deviceName, DEFAULT_DEVICE_NAME, sizeof(_deviceName) - 1);
     }
     TRACE_MESSAGE("Device Name: %s\n", _deviceName);
 
