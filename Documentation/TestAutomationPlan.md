@@ -101,6 +101,7 @@ can complete without human or hardware assistance.
 | `[FileSystem]` | 11 | **11/11 pass** | **11/11 pass** | 10 tagged `[Emulated]`; the full-filesystem test is `[Slow]` |
 | `[System]` | 1 | **Stalls** | **Pass** (288 mV) | Hardware only |
 | `[CoreDump]` | 4 | Unverified | Unverified | Ordered sequence; one case panics deliberately |
+| `[Configuration]` | 18 | **18/18 pass** | Unverified | Its own selector, run before the core dump tests; see `run-tests-ci.sh` |
 | `[WiFi]` | 10 | No (no radio) | Unverified | Needs a live access point |
 | `[Bluetooth]` | 10 | No (no radio) | Unverified | One case needs an external BLE client; one runs 4–5 minutes |
 | `[Helpers]` | 2 | Restart only | Unverified | Heap tracing needs OpenOCD and JTAG |
