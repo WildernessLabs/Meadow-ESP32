@@ -248,7 +248,7 @@ TEST_CASE("Get core dump information", CLASS_OF_TESTS)
     AssertHeapRecovered(heapBefore, "getting the core dump information");
 
     delete coreDump;
-    ReleaseMessageDispatcher();
+    ResetMessageDispatcher();
 }
 
 /**
@@ -327,7 +327,7 @@ TEST_CASE("Get core dump fragment", CLASS_OF_TESTS)
     Message::DeleteMessage(request);
 
     delete coreDump;
-    ReleaseMessageDispatcher();
+    ResetMessageDispatcher();
 }
 
 /**
@@ -442,7 +442,7 @@ TEST_CASE("Retrieve the whole core dump", CLASS_OF_TESTS)
     Message::DeleteMessage(request);
 
     delete coreDump;
-    ReleaseMessageDispatcher();
+    ResetMessageDispatcher();
 }
 
 /**
@@ -483,7 +483,7 @@ TEST_CASE("Erase core dump", CLASS_OF_TESTS)
     Message::DeleteMessage(request);
 
     delete coreDump;
-    ReleaseMessageDispatcher();
+    ResetMessageDispatcher();
 }
 
 /**

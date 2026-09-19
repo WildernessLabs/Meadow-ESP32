@@ -125,6 +125,10 @@ static void TestNotifyCharacteristic(const char * const configuration)
     WriteServerDataSet(dispatcher, NOTIFICATION_CHARACTERISTIC_HANDLE, NOTIFICATION_VALUE, CLIENT_CONNECTION_TIMEOUT);
 
     ASSERT_OUTBOUND_QUEUE_LENGTH(dispatcher, 0);
+
+    StopBluetoothService(dispatcher);
+
+    ResetMessageDispatcher();
 }
 
 /**
@@ -138,6 +142,10 @@ TEST_CASE("Start Bluetooth (MeadowA, Espressif)", CLASS_OF_TESTS)
     TEST_ASSERT_NOT_NULL(dispatcher);
 
     StartBluetoothService(dispatcher, meadow_a_json);
+
+    StopBluetoothService(dispatcher);
+
+    ResetMessageDispatcher();
 }
 
 /**
@@ -151,6 +159,10 @@ TEST_CASE("Start Bluetooth (MeadowB, Baidu)", CLASS_OF_TESTS)
     TEST_ASSERT_NOT_NULL(dispatcher);
 
     StartBluetoothService(dispatcher, meadow_b_json);
+
+    StopBluetoothService(dispatcher);
+
+    ResetMessageDispatcher();
 }
 
 /**
@@ -225,6 +237,10 @@ TEST_CASE("Start Bluetooth (MeadowF7, Espressif)", CLASS_OF_TESTS)
     TEST_ASSERT_NOT_NULL(dispatcher);
 
     StartBluetoothService(dispatcher, meadow_f7_json);
+
+    StopBluetoothService(dispatcher);
+
+    ResetMessageDispatcher();
 }
 
 /**
@@ -261,7 +277,7 @@ TEST_CASE("Stop Bluetooth Service (will start MeadowA service first)", CLASS_OF_
 
     ASSERT_OUTBOUND_QUEUE_LENGTH(dispatcher, 0);
 
-    ReleaseMessageDispatcher();
+    ResetMessageDispatcher();
 
     EndOfTest();
 }
@@ -287,7 +303,9 @@ TEST_CASE("Restart Bluetooth service with different configuration", CLASS_OF_TES
     printf("Starting Bluetooth service for MeadowB, Company ID Baidu (0x011c)\n");
     StartBluetoothService(dispatcher, meadow_b_json);
 
-    ReleaseMessageDispatcher();
+    StopBluetoothService(dispatcher);
+
+    ResetMessageDispatcher();
 }
 
 /**
@@ -320,7 +338,7 @@ TEST_CASE("Restart Bluetooth Service repeatedly (test for memory leak)", CLASS_O
         vTaskDelay(1000 / portTICK_PERIOD_MS);
     }
 
-    ReleaseMessageDispatcher();
+    ResetMessageDispatcher();
 
     EndOfTest();
 }
@@ -338,13 +356,12 @@ TEST_CASE("Soak test writing numeric characteristic, number of iterations contro
 
     StartBluetoothService(dispatcher, meadow_f7_json);
 
-    Message getHandles = {};
-    getHandles.MessageType = MessageTypes::Header;
-    getHandles.Interface = Esp32Interfaces::BlueTooth;
-    getHandles.Function = BluetoothFunction::GetHandles;
-    getHandles.PayloadLength = 0;
-    getHandles.Payload = nullptr;
-    dispatcher->QueueMessageForEsp32(&getHandles);
+    //
+    //  The request has to be on the heap, see RunBluetoothLifecycleRequest for why.
+    //
+    Message *getHandles = Message::CreateOnHeap(MessageTypes::Header, Esp32Interfaces::BlueTooth, BluetoothFunction::GetHandles, StatusCodes::Failure);
+    TEST_ASSERT_NOT_NULL(getHandles);
+    dispatcher->QueueMessageForEsp32(getHandles);
 
     WaitForResponse(dispatcher, BLUETOOTH_RESPONSE_TIMEOUT);
     ASSERT_OUTBOUND_QUEUE_LENGTH(dispatcher, 1);
@@ -433,4 +450,6 @@ TEST_CASE("Soak test writing numeric characteristic, number of iterations contro
     Message::DeleteMessage(response);
 
     StopBluetoothService(dispatcher);
+
+    ResetMessageDispatcher();
 }

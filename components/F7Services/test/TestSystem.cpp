@@ -53,5 +53,5 @@ TEST_CASE("Get battery level", CLASS_OF_TESTS)
 
     Message::DeleteMessage(response);
 
-    ReleaseMessageDispatcher();
+    ResetMessageDispatcher();
 }
