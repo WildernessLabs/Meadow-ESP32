@@ -37,9 +37,8 @@
 
 #include "TestEncoders.hpp"
 #include "TestHarness.hpp"
+#include "UnitTestConfiguration.hpp"
 #include "TestWiFiHelpers.hpp"
-
-#include "secrets.h"
 
 //
 //  These tests need a radio and a web server on the local network, so they are not
@@ -54,11 +53,11 @@
 #define SLOW_TESTS "[POSIX][HardwareOnly][Slow]"
 
 //
-//  The web server is described in secrets.h so its address does not end up in source
-//  control.  WEB_SERVER_IP_ADDRESS and WEB_SERVER_PORT come from there; the page asked
-//  for here is the server's default one.
+//  The web server is described in the configuration file on the device, so its address
+//  does not end up in source control.  The address and the port come from there; the page
+//  asked for here is the server's default one.
 //
-//  secrets.h also defines SIMPLE_WEB_PAGE for a named resource, which a later test
+//  The configuration also carries SimpleWebPage for a named resource, which a later test
 //  fetching something other than the default page would use.
 //
 #define TEST_WEB_PAGE "/"
@@ -90,9 +89,10 @@
 #define SOCKET_RESPONSE_TIMEOUT 10000
 
 //
-//  Number of times the soak test fetches the page, and how often it reports progress.
+//  How often the soak test reports progress.  How many times it fetches the page comes
+//  from the configuration file, so a soak can be lengthened or shortened without the
+//  firmware being rebuilt.
 //
-#define SOAK_ITERATIONS 10000
 #define SOAK_PROGRESS_INTERVAL 250
 
 //
@@ -142,7 +142,7 @@ static int32_t SendPageRequest(MockMessageDispatcher *dispatcher)
     const int32_t socketHandle = callResult.Result;
     printf("Socket %" PRIi32 " created.\n", socketHandle);
 
-    payload = TestEncoders::EncodeConnectRequest(socketHandle, WEB_SERVER_IP_ADDRESS, WEB_SERVER_PORT);
+    payload = TestEncoders::EncodeConnectRequest(socketHandle, UnitTestConfiguration::WebServerIpAddress(), UnitTestConfiguration::WebServerPort());
     if (!SocketCall(dispatcher, WiFiFunction::Connect, payload, TestEncoders::ENCODED_CONNECT_REQUEST_SIZE, &callResult))
     {
         TEST_FAIL_MESSAGE("No response to the connect request.");
@@ -152,20 +152,20 @@ static int32_t SendPageRequest(MockMessageDispatcher *dispatcher)
         printf("connect() failed, errno %" PRIi32 "\n", callResult.ResponseErrno);
         TEST_FAIL_MESSAGE("Could not connect to the web server.");
     }
-    printf("Connected to %s:%d.\n", WEB_SERVER_IP_ADDRESS, WEB_SERVER_PORT);
+    printf("Connected to %s:%" PRIu32 ".\n", UnitTestConfiguration::WebServerIpAddress(), UnitTestConfiguration::WebServerPort());
 
     //
     //  Closing the connection afterwards is requested so the server ends the response
     //  rather than leaving the receive waiting for more.
     //
     char httpRequest[256];
-    if (WEB_SERVER_PORT == 80)
+    if (UnitTestConfiguration::WebServerPort() == 80)
     {
-        snprintf(httpRequest, sizeof(httpRequest), "GET %s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\n\r\n", TEST_WEB_PAGE, WEB_SERVER_IP_ADDRESS);
+        snprintf(httpRequest, sizeof(httpRequest), "GET %s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\n\r\n", TEST_WEB_PAGE, UnitTestConfiguration::WebServerIpAddress());
     }
     else
     {
-        snprintf(httpRequest, sizeof(httpRequest), "GET %s HTTP/1.1\r\nHost: %s:%d\r\nConnection: close\r\n\r\n", TEST_WEB_PAGE, WEB_SERVER_IP_ADDRESS, WEB_SERVER_PORT);
+        snprintf(httpRequest, sizeof(httpRequest), "GET %s HTTP/1.1\r\nHost: %s:%" PRIu32 "\r\nConnection: close\r\n\r\n", TEST_WEB_PAGE, UnitTestConfiguration::WebServerIpAddress(), UnitTestConfiguration::WebServerPort());
     }
 
     uint32_t requestLength = strlen(httpRequest);
@@ -286,7 +286,7 @@ static bool FetchPageOnce(MockMessageDispatcher *dispatcher, const WiFiFunction:
 }
 
 /**
- * @brief Create the dispatcher and join the access point named in secrets.h.
+ * @brief Create the dispatcher and join the access point named in the configuration.
  *
  * @return Pointer to the dispatcher the tests should use.
  */
@@ -299,7 +299,7 @@ static MockMessageDispatcher *SetupConnectedDispatcher()
 
     if (!ConnectToTestAccessPoint(dispatcher))
     {
-        TEST_FAIL_MESSAGE("Could not connect to the access point named in secrets.h.");
+        TEST_FAIL_MESSAGE("Could not connect to the access point named in the configuration.");
     }
 
     return (dispatcher);
@@ -363,39 +363,40 @@ TEST_CASE("Fetch a web page repeatedly", SLOW_TESTS)
         TEST_FAIL_MESSAGE("The first fetch failed, so there is nothing to soak test.");
     }
 
+    const uint32_t iterations = UnitTestConfiguration::Iterations();
     const uint32_t heapAtStart = esp_get_free_heap_size();
     const int64_t startedAt = esp_timer_get_time();
 
-    printf("Fetching the page %d times, free heap %" PRIu32 " bytes.\n", SOAK_ITERATIONS, heapAtStart);
+    printf("Fetching the page %" PRIu32 " times, free heap %" PRIu32 " bytes.\n", iterations, heapAtStart);
 
-    for (int iteration = 1; iteration <= SOAK_ITERATIONS; iteration++)
+    for (uint32_t iteration = 1; iteration <= iterations; iteration++)
     {
         const WiFiFunction::WiFiFunction receiveFunction = ((iteration % 2) == 0) ? WiFiFunction::RecvMsg : WiFiFunction::RecvFrom;
 
         std::string page;
         if (!FetchPageOnce(dispatcher, receiveFunction, &page))
         {
-            printf("Fetch %d of %d failed using %s.\n", iteration, SOAK_ITERATIONS, (receiveFunction == WiFiFunction::RecvMsg) ? "recvmsg" : "recvfrom");
+            printf("Fetch %" PRIu32 " of %" PRIu32 " failed using %s.\n", iteration, iterations, (receiveFunction == WiFiFunction::RecvMsg) ? "recvmsg" : "recvfrom");
             TEST_FAIL_MESSAGE("A fetch failed during the soak test.");
         }
 
         if (page.find(TEST_EXPECTED_HEADING) == std::string::npos)
         {
-            printf("Fetch %d of %d returned %u bytes without the expected content.\n", iteration, SOAK_ITERATIONS, static_cast<unsigned>(page.length()));
+            printf("Fetch %" PRIu32 " of %" PRIu32 " returned %u bytes without the expected content.\n", iteration, iterations, static_cast<unsigned>(page.length()));
             TEST_FAIL_MESSAGE("A fetch returned the wrong content during the soak test.");
         }
 
         if ((iteration % SOAK_PROGRESS_INTERVAL) == 0)
         {
             const int64_t elapsed = esp_timer_get_time() - startedAt;
-            printf("  %d fetches, free heap %" PRIu32 " bytes, lowest %" PRIu32 ", %" PRId64 " ms per fetch.\n", iteration, esp_get_free_heap_size(), esp_get_minimum_free_heap_size(), (elapsed / 1000) / iteration);
+            printf("  %" PRIu32 " fetches, free heap %" PRIu32 " bytes, lowest %" PRIu32 ", %" PRId64 " ms per fetch.\n", iteration, esp_get_free_heap_size(), esp_get_minimum_free_heap_size(), (elapsed / 1000) / iteration);
         }
     }
 
     const uint32_t heapAtEnd = esp_get_free_heap_size();
     const int64_t elapsed = esp_timer_get_time() - startedAt;
 
-    printf("Completed %d fetches in %" PRId64 " seconds.\n", SOAK_ITERATIONS, elapsed / 1000000);
+    printf("Completed %" PRIu32 " fetches in %" PRId64 " seconds.\n", iterations, elapsed / 1000000);
     printf("Free heap %" PRIu32 " bytes at the start, %" PRIu32 " at the end.\n", heapAtStart, heapAtEnd);
 
     //
@@ -406,7 +407,7 @@ TEST_CASE("Fetch a web page repeatedly", SLOW_TESTS)
     if (heapAtEnd < heapAtStart)
     {
         const uint32_t lost = heapAtStart - heapAtEnd;
-        printf("Free heap fell by %" PRIu32 " bytes over %d fetches.\n", lost, SOAK_ITERATIONS);
+        printf("Free heap fell by %" PRIu32 " bytes over %" PRIu32 " fetches.\n", lost, iterations);
         TEST_ASSERT_TRUE_MESSAGE(lost <= SOAK_HEAP_ALLOWANCE, "The free heap fell too far, which suggests a leak in the socket path.");
     }
 }

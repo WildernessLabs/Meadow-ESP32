@@ -24,8 +24,11 @@ See [Building the System](Documentation/Building.md) for detailed instructions.
 ### Running Tests
 
 ```bash
+# From the root of the repository, once: settings the tests read from the device.
+cp test/main/unittest.config.json.template test/fsimage/unittest.config.json
+./mkfsimage.sh --flash          # Write the test settings to the board
+
 cd test
-cp secrets.template secrets.h   # Add WiFi credentials
 ./build.sh --build --flash --monitor
 # Select test from interactive menu
 ```

@@ -59,30 +59,31 @@ This only needs repeating when the root build directory is removed.
 
 #### Supply the WiFi credentials
 
-The WiFi tests read their credentials from a `secrets.h` file alongside the test
-sources:
+The settings the tests use are read from a file on the device rather than compiled in,
+so changing a network or a server address needs no rebuild:
 
 ```bash
-cp test/main/secrets.template components/F7Services/test/secrets.h
-# Edit the file with your WiFi SSID and password
+cp test/main/unittest.config.json.template test/fsimage/unittest.config.json
+# Edit the file with your WiFi SSID, password and test server
+./mkfsimage.sh --flash
 ```
 
-The `secrets.h` file should contain:
+`unittest.config.json` carries:
 
-```c
-#define WIFI_NETWORK    "YourNetworkSSID"
-#define WIFI_PASSWORD   "YourNetworkPassword"
-```
+| Entry | |
+|---|---|
+| `WiFiNetwork`, `WiFiPassword` | the access point the tests join |
+| `WebServerIpAddress`, `WebServerPort` | the server the POSIX tests fetch from |
+| `SimpleWebServerName`, `SimpleWebPage`, `BinaryResourceName`, `LargeTestFile` | resources on that server |
+| `Iterations` | how many times the soak tests repeat |
 
-The template also carries the address of the web server the POSIX tests fetch from,
-as `WEB_SERVER_IP_ADDRESS` and `WEB_SERVER_PORT`, which keeps it out of source
-control.
+> **Important**: `unittest.config.json` is in `.gitignore` so credentials are not
+> committed. The template it is copied from is in source control.
 
-> **Important**: The `secrets.h` file is in `.gitignore` to prevent credentials from being committed.
-
-The file has to exist even when the WiFi tests are not being run, because
-`TestWiFi.cpp` includes it unconditionally. A copy of the template with placeholder
-values is enough to compile everything else.
+Nothing has to exist for the build to succeed. A run with no configuration file says so
+and uses the defaults, which is enough for every test that needs no settings. An entry
+the file leaves out keeps its default. A file that is there but cannot be parsed stops
+the run before any test starts, rather than testing against settings nobody chose.
 
 ### Build Commands
 
@@ -259,9 +260,10 @@ docker run --rm -v $PWD:/project -w /project espressif/idf:release-v5.5 ./run-te
 Running that same command locally reproduces a CI failure exactly, which is the reason
 the logic lives in a script rather than in the workflow file.
 
-`run-tests-ci.sh` installs the QEMU system libraries and the emulator, creates a
-placeholder `secrets.h`, builds the application and then the tests, and finally runs
-everything carrying the `[Emulated]` tag.
+`run-tests-ci.sh` installs the QEMU system libraries and the emulator, builds the
+application and then the tests, and finally runs everything carrying the `[Emulated]`
+tag. It writes no configuration file: the emulated tests need none, and the run reports
+that none was found.
 
 ### How Tests Opt In
 
@@ -628,18 +630,21 @@ mode COM:       # Windows
 idf.py -p /dev/ttyUSB0 monitor
 ```
 
-### Issue: Secrets File Missing
+### Issue: The run says no configuration file was found
 
-**Solution**: Create the secrets file:
+**Solution**: Build one and write it to the board:
 ```bash
-cp test/secrets.template test/secrets.h
-# Edit with your WiFi credentials
+cp test/main/unittest.config.json.template test/fsimage/unittest.config.json
+# Edit with your WiFi credentials and test server
+./mkfsimage.sh --flash
 ```
+The tests that need no settings run without one, so this only matters for the WiFi,
+Bluetooth and POSIX tests.
 
 ### Issue: Test Hangs or Never Completes
 
 **Solution**: 
-1. Check WiFi credentials in `secrets.h`
+1. Check the WiFi credentials in `unittest.config.json`
 2. Increase test timeout in test file
 3. Run with verbose logging:
    ```bash

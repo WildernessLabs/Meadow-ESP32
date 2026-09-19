@@ -43,8 +43,11 @@ idf.py monitor
 Tests live in `components/F7Services/test/` and use the Unity framework. Run from a separate build in `test/`:
 
 ```bash
+# From the root of the repository, once: settings the tests read from the device.
+cp test/main/unittest.config.json.template test/fsimage/unittest.config.json
+./mkfsimage.sh --flash          # Write the test settings to the board
+
 cd test
-cp secrets.template secrets.h   # Add WiFi credentials once
 ./build.sh --build
 ./build.sh --flash
 idf.py monitor                  # Interactive menu selects test

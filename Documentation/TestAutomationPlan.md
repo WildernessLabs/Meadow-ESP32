@@ -54,7 +54,8 @@ resolves first wins. This has not been shown to cause a failure, but it means th
 binary may not be compiled against the configuration its own `sdkconfig.defaults`
 describes. **Unverified** — worth confirming before relying on it either way.
 
-`secrets.h` is also required at `components/F7Services/test/secrets.h` (gitignored).
+The settings are read from `unittest.config.json` on the device, written there by
+`mkfsimage.sh` (gitignored; the template is not).
 The `[WiFi]` tests need real credentials there, but every other tier only needs the
 file to exist, so a hosted CI job can supply a dummy.
 
@@ -234,7 +235,7 @@ WiFi and Bluetooth is precisely where hardware behaviour is the thing under test
 ### Hardware
 
 A dedicated board wired to whichever machine runs the suite, plus an access point
-matching the credentials in `secrets.h`. Someone has to own that hardware, the network,
+matching the credentials in `unittest.config.json`. Someone has to own that hardware, the network,
 and the triage of intermittent RF failures — an ongoing commitment rather than a
 one-off setup, and the main argument for pushing as much as possible onto the emulator.
 

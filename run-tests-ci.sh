@@ -94,15 +94,10 @@ python "$IDF_PATH/tools/idf_tools.py" install qemu-xtensa
 qemu-system-xtensa --version | head -1
 
 #
-#   The WiFi tests read their credentials from this file.  It is not in source control
-#   and the tests that use it are not run here, but TestWiFi.cpp includes it
-#   unconditionally so it has to exist for the build to succeed.
+#   Nothing is needed here to let the build succeed.  The settings the tests use are read
+#   from a file on the device at run time, and the emulated tests do not need any of them:
+#   the run reports that no configuration was found and carries on with the defaults.
 #
-if [ ! -f "$scriptdir/components/F7Services/test/secrets.h" ]; then
-    printf "Creating a placeholder secrets.h...\n"
-    cp "$scriptdir/test/main/secrets.template" \
-       "$scriptdir/components/F7Services/test/secrets.h"
-fi
 
 #
 #   The test build needs build_info.h and the build/config directory, both of which are

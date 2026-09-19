@@ -90,9 +90,7 @@ main/build_info.h
 test/sdkconfig
 .gdb_history
 test/.gdb_history
-secrets.h
-components/F7Services/test/secrets.h
-*.svdat
+components/F7Services/test/*.svdat
 *.log
 Desktop/valgrind.txt
 sdkconfig
@@ -118,3 +116,10 @@ littlefs.bin
 #   against.  The template it is copied from is in source control; this is not.
 #
 unittest.config.json
+
+#
+#   secrets.h is no longer part of the build, the settings having moved to
+#   unittest.config.json.  The rule stays so that a copy left behind by an older build,
+#   or by a branch that predates the change, cannot be committed by accident.
+#
+secrets.h

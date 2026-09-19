@@ -144,7 +144,7 @@ void EnsureAccessPointStopped(MockMessageDispatcher *dispatcher);
 void EnsureDisconnected(MockMessageDispatcher *dispatcher);
 
 /**
- * @brief Connect to the access point named in secrets.h.
+ * @brief Connect to the access point named in the configuration.
  *
  * Socket creation is refused while the interface is down, so the POSIX tests cannot do
  * anything until this has succeeded.
