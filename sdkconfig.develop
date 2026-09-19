@@ -19,7 +19,7 @@ CONFIG_ESP_COREDUMP_CAPTURE_DRAM=y
 #
 #   Should we enable the diagnostic thread ?
 #
-CONFIG_ENABLE_DIAGNOSTIC_THREAD is not set
+# CONFIG_ENABLE_DIAGNOSTIC_THREAD is not set
 # CONFIG_ENABLE_DIAGNOSTIC_THREAD=y
 
 #
@@ -55,7 +55,7 @@ CONFIG_HEAP_TRACING_STANDALONE=y
 #   Kconfig symbol for it, so a CONFIG_TRACE_RECORD_NUM here only raised a warning and
 #   left the code without a value to compile against.
 #
-CONFIG_HEAP_TRACING_TOHOST is not set
+# CONFIG_HEAP_TRACING_TOHOST is not set
 # CONFIG_HEAP_TRACING_TOHOST=y
 # CONFIG_HEAP_TRACING_STACK_DEPTH=5
 CONFIG_HEAP_PLACE_FUNCTION_INTO_FLASH=y
