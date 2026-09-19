@@ -245,7 +245,7 @@ private:
     /**
      *  @brief Current retry count.
      */
-    int _currentRetryCount = 0;
+    uint32_t _currentRetryCount = 0;
 
     /**
      *  @brief Last error code from a call into the ESP IDF.

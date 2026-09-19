@@ -610,8 +610,8 @@ spi_slave_transaction_t *SpiTransportProvider::PacketReceived(spi_slave_transact
 {
     TRACE_MESSAGE("InboundMessageReceived: Entering method");
 
-    int dataSize = transaction->trans_len / 8;
-    TRACE_MESSAGE("InboundMessageReceived: Received %" PRIi32 " bytes.", dataSize);
+    uint32_t dataSize = transaction->trans_len / 8;
+    TRACE_MESSAGE("InboundMessageReceived: Received %" PRIu32 " bytes.", dataSize);
     TRACE_HEX_BUFFER(transaction->rx_buffer, dataSize);
 
     spi_slave_transaction_t *newTransaction = nullptr;

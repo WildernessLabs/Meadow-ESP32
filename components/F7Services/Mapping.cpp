@@ -672,7 +672,7 @@ int32_t Mapping::GetValue(const MappingTable mapping, const MappingDirection typ
 
     if (table != NULL)
     {
-        for (int index = 0; index < size; index++)
+        for (size_t index = 0; index < size; index++)
         {
             if (type == Mapping::StmToEsp)
             {

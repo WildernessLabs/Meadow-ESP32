@@ -58,7 +58,7 @@ private:
     /**
      * @brief Index of the next period to be used.
      */
-    int _currentPeriod = 0;
+    uint32_t _currentPeriod = 0;
 
     /**
      * @brief Delays in milliseconds.
