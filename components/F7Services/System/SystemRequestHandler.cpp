@@ -574,8 +574,23 @@ void SystemRequestHandler::SetConfigurationItem(Message * const request)
 
     static constexpr uint32_t MINIMUM_CONFIGURATION_VALUE_PAYLOAD_SIZE = 8;
 
-    if ((request->Payload == nullptr) || (request->PayloadLength < MINIMUM_CONFIGURATION_VALUE_PAYLOAD_SIZE))
+    bool invalidPayload = ((request->Payload == nullptr) || (request->PayloadLength < MINIMUM_CONFIGURATION_VALUE_PAYLOAD_SIZE));
+    if (!invalidPayload)
     {
+        //
+        //  The length is sent by the STM32 and describes the bytes that follow it in the
+        //  same message.  Every item below reads those bytes, so a length of zero leaves
+        //  nothing to read and a length that runs past the end of the message would be
+        //  copied out of memory the message does not own.  Both are refused here rather
+        //  than being dereferenced further down.
+        //
+        const uint32_t valueLength = Encoders::ExtractUInt32(request->Payload + 4);
+        invalidPayload = ((valueLength == 0) || (valueLength > (request->PayloadLength - MINIMUM_CONFIGURATION_VALUE_PAYLOAD_SIZE)));
+    }
+
+    if (invalidPayload)
+    {
+        request->DeletePayload();
         request->MessageType = MessageTypes::Response;
         request->StatusCode = StatusCodes::InvalidPacket;
         _messageDispatcher->QueueMessageForStm32(request);
