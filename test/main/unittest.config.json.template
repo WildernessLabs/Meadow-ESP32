@@ -7,5 +7,9 @@
     "LargeTestFile": "/largefile.bin",
     "WebServerIpAddress": "192.168.0.1",
     "WebServerPort": 8080,
-    "Iterations": 100
+    "PosixIterations": 10000,
+    "ScanIterations": 500,
+    "BluetoothRestartIterations": 50,
+    "SoakHeapAllowance": 8192,
+    "SoakProgressInterval": 250
 }

@@ -159,7 +159,7 @@ TEST_CASE("Scan for access points", CLASS_OF_TESTS)
  */
 TEST_CASE("Scan for access points multiple times (test for memory leak)", SLOW_TESTS)
 {
-    TestScanForAccessPoints(UnitTestConfiguration::Iterations());
+    TestScanForAccessPoints(UnitTestConfiguration::ScanIterations());
 }
 
 /**

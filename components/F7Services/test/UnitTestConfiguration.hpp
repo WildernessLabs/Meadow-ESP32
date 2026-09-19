@@ -80,9 +80,29 @@ private:
     static uint32_t _webServerPort;
 
     /**
-     *  @brief Number of times a test that repeats itself should do so.
+     *  @brief Number of page fetches the POSIX soak test should make.
      */
-    static uint32_t _iterations;
+    static uint32_t _posixIterations;
+
+    /**
+     *  @brief Number of scans the repeated access point scan test should make.
+     */
+    static uint32_t _scanIterations;
+
+    /**
+     *  @brief Number of times the Bluetooth restart test should restart the service.
+     */
+    static uint32_t _bluetoothRestartIterations;
+
+    /**
+     *  @brief How far the free heap may fall across the POSIX soak test.
+     */
+    static uint32_t _soakHeapAllowance;
+
+    /**
+     *  @brief How often the POSIX soak test reports its progress.
+     */
+    static uint32_t _soakProgressInterval;
 
 public:
     /**
@@ -146,9 +166,36 @@ public:
     static uint32_t WebServerPort();
 
     /**
-     *  @brief Get the number of times a test that repeats itself should do so.
+     *  @brief Get the number of page fetches the POSIX soak test should make.
      */
-    static uint32_t Iterations();
+    static uint32_t PosixIterations();
+
+    /**
+     *  @brief Get the number of scans the repeated access point scan test should make.
+     */
+    static uint32_t ScanIterations();
+
+    /**
+     *  @brief Get the number of times the Bluetooth restart test should restart the service.
+     */
+    static uint32_t BluetoothRestartIterations();
+
+    /**
+     *  @brief Get how far the free heap may fall across the POSIX soak test.
+     *
+     *  Allocation patterns leave the heap slightly differently arranged from one run to
+     *  the next, so a soak is not expected to give back exactly what it took.  This says
+     *  how much of a fall is put down to that rather than to a leak, so it belongs with
+     *  the number of fetches: a longer soak allows more, a shorter one less.
+     */
+    static uint32_t SoakHeapAllowance();
+
+    /**
+     *  @brief Get how often the POSIX soak test reports its progress.
+     *
+     *  @note Counted in fetches.  Zero turns the reports off.
+     */
+    static uint32_t SoakProgressInterval();
 };
 
 /**

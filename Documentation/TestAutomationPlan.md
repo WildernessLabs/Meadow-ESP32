@@ -116,8 +116,8 @@ can complete without human or hardware assistance.
 - **Ordered and stateful.** The four `[CoreDump]` cases form a sequence
   (generate → information → fragment → erase). The two file system upgrade cases carry
   state across a reflash.
-- **Long running.** `TestBluetooth.cpp:756` restarts the Bluetooth service 50 times,
-  taking 4–5 minutes on its own. A full `*` sweep is not a per-commit check. The
+- **Long running.** `TestBluetooth.cpp` restarts the Bluetooth service
+  `BluetoothRestartIterations` times, 50 by default, taking 4–5 minutes on its own. A full `*` sweep is not a per-commit check. The
   `[Slow]` tag exists for this; the Bluetooth case is a candidate for it.
 - **Slow only under emulation.** `WriteFile returns Failure on a full filesystem`
   fills the partition a block at a time. That is seconds on hardware and minutes under

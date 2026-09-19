@@ -75,7 +75,8 @@ cp test/main/unittest.config.json.template test/fsimage/unittest.config.json
 | `WiFiNetwork`, `WiFiPassword` | the access point the tests join |
 | `WebServerIpAddress`, `WebServerPort` | the server the POSIX tests fetch from |
 | `SimpleWebServerName`, `SimpleWebPage`, `BinaryResourceName`, `LargeTestFile` | resources on that server |
-| `Iterations` | how many times the soak tests repeat |
+| `PosixIterations`, `ScanIterations`, `BluetoothRestartIterations` | how many times each of the repeating tests repeats |
+| `SoakHeapAllowance`, `SoakProgressInterval` | how far the free heap may fall across the POSIX soak, and how often it reports |
 
 > **Important**: `unittest.config.json` is in `.gitignore` so credentials are not
 > committed. The template it is copied from is in source control.
@@ -84,6 +85,13 @@ Nothing has to exist for the build to succeed. A run with no configuration file 
 and uses the defaults, which is enough for every test that needs no settings. An entry
 the file leaves out keeps its default. A file that is there but cannot be parsed stops
 the run before any test starts, rather than testing against settings nobody chose.
+
+The three counts are separate because the tests they belong to are not alike: a page
+fetch takes a moment, a scan takes seconds and a Bluetooth restart takes longer still,
+so one number for all three would make one test too long or another too short to mean
+anything. `SoakHeapAllowance` goes with `PosixIterations` — a leak shows up in
+proportion to the number of fetches, so shortening the soak without lowering the
+allowance leaves a check that passes whatever happens.
 
 ### Build Commands
 

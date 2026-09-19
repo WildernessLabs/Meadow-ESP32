@@ -54,9 +54,33 @@ char *UnitTestConfiguration::_webServerIpAddress = nullptr;
 uint32_t UnitTestConfiguration::_webServerPort = 80;
 
 /**
- *  @brief Number of repeats used when the file does not give one.
+ *  @brief Number of page fetches used when the file does not give one.
+ *
+ *  @note The defaults are the counts these tests used before they could be configured.
+ *        They differ because the tests differ: a fetch takes a moment, a scan takes
+ *        seconds and a Bluetooth restart takes longer still.
  */
-uint32_t UnitTestConfiguration::_iterations = 100;
+uint32_t UnitTestConfiguration::_posixIterations = 10000;
+
+/**
+ *  @brief Number of scans used when the file does not give one.
+ */
+uint32_t UnitTestConfiguration::_scanIterations = 500;
+
+/**
+ *  @brief Number of Bluetooth restarts used when the file does not give one.
+ */
+uint32_t UnitTestConfiguration::_bluetoothRestartIterations = 50;
+
+/**
+ *  @brief Heap allowance used when the file does not give one.
+ */
+uint32_t UnitTestConfiguration::_soakHeapAllowance = 8192;
+
+/**
+ *  @brief Progress reporting interval used when the file does not give one.
+ */
+uint32_t UnitTestConfiguration::_soakProgressInterval = 250;
 
 /**
  *  @brief Largest configuration file that will be read.
@@ -176,7 +200,7 @@ static void ReadUInt32(const cJSON * const json, const char *name, uint32_t *val
  */
 static void ReportString(const char *name, const char *value)
 {
-    printf("  %-20s : %s\n", name, ((value == nullptr) || (*value == '\0')) ? "(not set)" : value);
+    printf("  %-26s : %s\n", name, ((value == nullptr) || (*value == '\0')) ? "(not set)" : value);
 }
 
 /**
@@ -291,7 +315,11 @@ void UnitTestConfiguration::Load()
     ReadString(json, "LargeTestFile", &_largeTestFile);
     ReadString(json, "WebServerIpAddress", &_webServerIpAddress);
     ReadUInt32(json, "WebServerPort", &_webServerPort);
-    ReadUInt32(json, "Iterations", &_iterations);
+    ReadUInt32(json, "PosixIterations", &_posixIterations);
+    ReadUInt32(json, "ScanIterations", &_scanIterations);
+    ReadUInt32(json, "BluetoothRestartIterations", &_bluetoothRestartIterations);
+    ReadUInt32(json, "SoakHeapAllowance", &_soakHeapAllowance);
+    ReadUInt32(json, "SoakProgressInterval", &_soakProgressInterval);
 
     cJSON_Delete(json);
     _loaded = true;
@@ -302,14 +330,18 @@ void UnitTestConfiguration::Load()
     //  The password is not printed.  The console output of a test run gets pasted into
     //  issues and pull requests.
     //
-    printf("  %-20s : %s\n", "WiFiPassword", ((_wiFiPassword == nullptr) || (*_wiFiPassword == '\0')) ? "(not set)" : "********");
+    printf("  %-26s : %s\n", "WiFiPassword", ((_wiFiPassword == nullptr) || (*_wiFiPassword == '\0')) ? "(not set)" : "********");
     ReportString("SimpleWebServerName", _simpleWebServerName);
     ReportString("SimpleWebPage", _simpleWebPage);
     ReportString("BinaryResourceName", _binaryResourceName);
     ReportString("LargeTestFile", _largeTestFile);
     ReportString("WebServerIpAddress", _webServerIpAddress);
-    printf("  %-20s : %" PRIu32 "\n", "WebServerPort", _webServerPort);
-    printf("  %-20s : %" PRIu32 "\n", "Iterations", _iterations);
+    printf("  %-26s : %" PRIu32 "\n", "WebServerPort", _webServerPort);
+    printf("  %-26s : %" PRIu32 "\n", "PosixIterations", _posixIterations);
+    printf("  %-26s : %" PRIu32 "\n", "ScanIterations", _scanIterations);
+    printf("  %-26s : %" PRIu32 "\n", "BluetoothRestartIterations", _bluetoothRestartIterations);
+    printf("  %-26s : %" PRIu32 "\n", "SoakHeapAllowance", _soakHeapAllowance);
+    printf("  %-26s : %" PRIu32 "\n", "SoakProgressInterval", _soakProgressInterval);
     printf("\n");
 }
 
@@ -386,11 +418,43 @@ uint32_t UnitTestConfiguration::WebServerPort()
 }
 
 /**
- *  @brief Get the number of times a test that repeats itself should do so.
+ *  @brief Get the number of page fetches the POSIX soak test should make.
  */
-uint32_t UnitTestConfiguration::Iterations()
+uint32_t UnitTestConfiguration::PosixIterations()
 {
-    return (_iterations);
+    return (_posixIterations);
+}
+
+/**
+ *  @brief Get the number of scans the repeated access point scan test should make.
+ */
+uint32_t UnitTestConfiguration::ScanIterations()
+{
+    return (_scanIterations);
+}
+
+/**
+ *  @brief Get the number of times the Bluetooth restart test should restart the service.
+ */
+uint32_t UnitTestConfiguration::BluetoothRestartIterations()
+{
+    return (_bluetoothRestartIterations);
+}
+
+/**
+ *  @brief Get how far the free heap may fall across the POSIX soak test.
+ */
+uint32_t UnitTestConfiguration::SoakHeapAllowance()
+{
+    return (_soakHeapAllowance);
+}
+
+/**
+ *  @brief Get how often the POSIX soak test reports its progress.
+ */
+uint32_t UnitTestConfiguration::SoakProgressInterval()
+{
+    return (_soakProgressInterval);
 }
 
 /**

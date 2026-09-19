@@ -88,20 +88,6 @@
 //
 #define SOCKET_RESPONSE_TIMEOUT 10000
 
-//
-//  How often the soak test reports progress.  How many times it fetches the page comes
-//  from the configuration file, so a soak can be lengthened or shortened without the
-//  firmware being rebuilt.
-//
-#define SOAK_PROGRESS_INTERVAL 250
-
-//
-//  How far the free heap is allowed to fall across the whole soak test.  Allocation
-//  patterns leave the heap slightly differently arranged run to run, so an exact match
-//  is not expected, but a genuine leak over this many fetches is far larger than this.
-//
-#define SOAK_HEAP_ALLOWANCE 8192
-
 /**
  * @brief Make a socket call and read back the result and errno it produced.
  *
@@ -363,7 +349,8 @@ TEST_CASE("Fetch a web page repeatedly", SLOW_TESTS)
         TEST_FAIL_MESSAGE("The first fetch failed, so there is nothing to soak test.");
     }
 
-    const uint32_t iterations = UnitTestConfiguration::Iterations();
+    const uint32_t iterations = UnitTestConfiguration::PosixIterations();
+    const uint32_t progressInterval = UnitTestConfiguration::SoakProgressInterval();
     const uint32_t heapAtStart = esp_get_free_heap_size();
     const int64_t startedAt = esp_timer_get_time();
 
@@ -386,7 +373,7 @@ TEST_CASE("Fetch a web page repeatedly", SLOW_TESTS)
             TEST_FAIL_MESSAGE("A fetch returned the wrong content during the soak test.");
         }
 
-        if ((iteration % SOAK_PROGRESS_INTERVAL) == 0)
+        if ((progressInterval > 0) && ((iteration % progressInterval) == 0))
         {
             const int64_t elapsed = esp_timer_get_time() - startedAt;
             printf("  %" PRIu32 " fetches, free heap %" PRIu32 " bytes, lowest %" PRIu32 ", %" PRId64 " ms per fetch.\n", iteration, esp_get_free_heap_size(), esp_get_minimum_free_heap_size(), (elapsed / 1000) / iteration);
@@ -402,12 +389,13 @@ TEST_CASE("Fetch a web page repeatedly", SLOW_TESTS)
     //
     //  The heap is not expected to come back to exactly where it started, because
     //  allocation patterns leave it slightly differently arranged, but a real leak over
-    //  this many iterations is far larger than the allowance below.
+    //  this many fetches is far larger than the allowance the configuration gives.
     //
     if (heapAtEnd < heapAtStart)
     {
+        const uint32_t allowance = UnitTestConfiguration::SoakHeapAllowance();
         const uint32_t lost = heapAtStart - heapAtEnd;
-        printf("Free heap fell by %" PRIu32 " bytes over %" PRIu32 " fetches.\n", lost, iterations);
-        TEST_ASSERT_TRUE_MESSAGE(lost <= SOAK_HEAP_ALLOWANCE, "The free heap fell too far, which suggests a leak in the socket path.");
+        printf("Free heap fell by %" PRIu32 " bytes over %" PRIu32 " fetches, against an allowance of %" PRIu32 ".\n", lost, iterations, allowance);
+        TEST_ASSERT_TRUE_MESSAGE(lost <= allowance, "The free heap fell too far, which suggests a leak in the socket path.");
     }
 }
