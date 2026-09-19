@@ -932,7 +932,7 @@ void WiFiRequestHandler::Setup()
      *  Now create the objects necessary for the WiFi tasks.
      */
     _xWiFiEventGroup = xEventGroupCreate();
-    xEventGroupClearBits(_xWiFiEventGroup, 0x008fffff);
+    xEventGroupClearBits(_xWiFiEventGroup, WIFI_ALL_BITS);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
     xTaskCreate(Task, COMPONENT_NAME, TASK_STACK_SIZE, this, PRIORITY_WIFI_TASK, &_taskHandle);
     TRACE_MESSAGE("Setup: Exit");
