@@ -28,7 +28,8 @@ extern "C" bool _generateHeapTraceData;
  *
  * @note MockMessageDispatcher holds the outbound message queue in a static member, so two
  *       live dispatchers share one queue and destroying either one invalidates it for the
- *       other.  The tests therefore work with a single dispatcher at a time.
+ *       other.  One dispatcher is therefore created on demand and kept for the life of the
+ *       test application; ResetMessageDispatcher clears it down between tests.
  */
 extern MockMessageDispatcher *messageDispatcher;
 
@@ -56,12 +57,14 @@ struct SocketCallResult
 MockMessageDispatcher *SetupMessageDispatcher(void);
 
 /**
- * @brief Destroy the shared message dispatcher.
+ * @brief Return the shared message dispatcher to a known state between tests.
  *
- * @note This clears the shared pointer as well as destroying the object, so that a test
- *       running afterwards creates a new dispatcher rather than using a stale one.
+ * @note The dispatcher is not destroyed.  The request handlers cache it in a static that
+ *       outlives any one test, and the Bluetooth handler raises events from its own task
+ *       and stack callbacks, so destroying it would leave those references dangling.
+ *       This releases the messages left in the outbound queue instead.
  */
-void ReleaseMessageDispatcher(void);
+void ResetMessageDispatcher(void);
 
 /**
  * @brief Wait for a message to arrive in the outbound queue, or for a timeout.

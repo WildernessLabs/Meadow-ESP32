@@ -30,6 +30,11 @@ MockMessageDispatcher *messageDispatcher = nullptr;
 static const uint32_t RESPONSE_POLL_INTERVAL = 10;
 
 /**
+ * @brief Milliseconds allowed for trailing messages when the dispatcher is reset.
+ */
+static const uint32_t RESET_SETTLING_TIME = 50;
+
+/**
  * @brief Create the shared message dispatcher if it does not already exist.
  *
  * @return Pointer to the shared message dispatcher, nullptr if it cannot be created.
@@ -45,14 +50,20 @@ MockMessageDispatcher *SetupMessageDispatcher()
 }
 
 /**
- * @brief Destroy the shared message dispatcher.
+ * @brief Return the shared message dispatcher to a known state between tests.
+ *
+ *  The dispatcher is deliberately not destroyed.  The request handlers cache it in
+ *  RequestHandlerBase::_messageDispatcher, a static that outlives any one test, and the
+ *  Bluetooth handler is a singleton whose task and stack callbacks raise events long
+ *  after a test has finished with it.  Destroying the dispatcher leaves all of those
+ *  references pointing at freed memory.  The firmware runs a single dispatcher for its
+ *  whole life, so the tests model that and release only the messages left behind.
  */
-void ReleaseMessageDispatcher()
+void ResetMessageDispatcher()
 {
     if (messageDispatcher != nullptr)
     {
-        delete messageDispatcher;
-        messageDispatcher = nullptr;
+        DrainOutboundQueue(messageDispatcher, RESET_SETTLING_TIME);
     }
 }
 

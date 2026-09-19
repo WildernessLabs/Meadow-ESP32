@@ -59,14 +59,16 @@ void RunBluetoothLifecycleRequest(MockMessageDispatcher *dispatcher, const uint3
 {
     TEST_ASSERT_NOT_NULL(dispatcher);
 
-    Message request = {};
-    request.MessageType = MessageTypes::Header;
-    request.Interface = Esp32Interfaces::BlueTooth;
-    request.Function = function;
-    request.Payload = payload;
-    request.PayloadLength = payloadLength;
+    //
+    //  The request has to be on the heap.  The handler turns the request into the
+    //  response to the request, queues that back and the test then releases it, so a
+    //  request built on the stack would be freed through a pointer into this function's
+    //  stack frame.
+    //
+    Message *request = Message::CreateOnHeap(MessageTypes::Header, Esp32Interfaces::BlueTooth, function, StatusCodes::Failure, 0, payload, payloadLength);
+    TEST_ASSERT_NOT_NULL(request);
 
-    dispatcher->QueueMessageForEsp32(&request);
+    dispatcher->QueueMessageForEsp32(request);
 
     //
     //  The transition event comes first and carries no payload.
@@ -148,14 +150,13 @@ void QueueServerDataSet(MockMessageDispatcher *dispatcher, const uint16_t handle
     TEST_ASSERT_NOT_NULL(payload);
     TestEncoders::EncodeBTServerDataSet(&dataSet, payload);
 
-    Message message = {};
-    message.MessageType = MessageTypes::Header;
-    message.Interface = Esp32Interfaces::BlueTooth;
-    message.Function = BluetoothFunction::ServerDataSet;
-    message.Payload = payload;
-    message.PayloadLength = payloadLength;
+    //
+    //  The request has to be on the heap, see RunBluetoothLifecycleRequest for why.
+    //
+    Message *message = Message::CreateOnHeap(MessageTypes::Header, Esp32Interfaces::BlueTooth, BluetoothFunction::ServerDataSet, StatusCodes::Failure, 0, payload, payloadLength);
+    TEST_ASSERT_NOT_NULL(message);
 
-    dispatcher->QueueMessageForEsp32(&message);
+    dispatcher->QueueMessageForEsp32(message);
 }
 
 /**
