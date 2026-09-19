@@ -394,10 +394,13 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetMaximumRetryCount(uint32_t value
     {
         result = StatusCodes::CompletedOk;
     }
-    else if (SystemRequestHandler::SetConfigurationValue(MAXIMUM_RETRY_COUNT_NAME, value) == NvsManager::ErrorCodes::Ok)
+    else
     {
-        _maximumRetryCount = SystemRequestHandler::GetConfigurationValue(MAXIMUM_RETRY_COUNT_NAME, static_cast<uint32_t>(DEFAULT_MAXIMUM_RETRY_COUNT));
-        result = StatusCodes::CompletedOk;
+        if (SystemRequestHandler::SetConfigurationValue(MAXIMUM_RETRY_COUNT_NAME, value) == NvsManager::ErrorCodes::Ok)
+        {
+            _maximumRetryCount = SystemRequestHandler::GetConfigurationValue(MAXIMUM_RETRY_COUNT_NAME, static_cast<uint32_t>(DEFAULT_MAXIMUM_RETRY_COUNT));
+            result = StatusCodes::CompletedOk;
+        }
     }
 
     return (result);
@@ -2096,8 +2099,8 @@ void WiFiRequestHandler::StationGotIpEvent(ip_event_got_ip_t *eventData)
 void WiFiRequestHandler::StationStartedEvent()
 {
     TRACE_MESSAGE("StationStartedEvent: Enter");
-    char *deviceName = SystemRequestHandler::GetDeviceName();
-    if (deviceName == NULL)
+    const char *deviceName = SystemRequestHandler::GetDeviceName();
+    if (deviceName == nullptr)
     {
         deviceName = "Meadow";
     }
