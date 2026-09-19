@@ -106,3 +106,9 @@ Scratch/
 #   Test results written by run-tests.sh and run-tests-ci.sh.
 #
 test-results/
+
+#
+#   LittleFS images built by mkfsimage.sh.  The directory they are built from is kept,
+#   the image itself is not.
+#
+littlefs.bin

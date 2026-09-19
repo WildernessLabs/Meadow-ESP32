@@ -1,0 +1,2 @@
+Written by mklittlefs on the host, not by the ESP32.
+If this text is read back, the flashed image mounted without being reformatted.
