@@ -382,7 +382,11 @@ void FileSystem::WriteFile(Message * const message)
 
     if (fileData)
     {
-        if (fileData->Contents)
+        if (fileData->ContentsLength == 0)
+        {
+            result = StatusCodes::InvalidRequest;
+        }
+        else
         {
             std::string s = PARTITION_PATH_NAME;
             s += "/";
@@ -396,7 +400,7 @@ void FileSystem::WriteFile(Message * const message)
                 TRACE_MESSAGE("Written %" PRIi32 " bytes", static_cast<int32_t>(amount));
                 if (amount == fileData->ContentsLength)
                 {
-                    result = StatusCodes::InvalidRequest;
+                    result = StatusCodes::CompletedOk;
                 }
                 fclose(file);
             }
