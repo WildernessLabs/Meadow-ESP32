@@ -397,8 +397,8 @@ void FileSystem::WriteFile(Message * const message)
             if (file != NULL)
             {
                 int amount = fwrite(fileData->Contents, 1, fileData->ContentsLength, file);
-                TRACE_MESSAGE("Written %" PRIi32 " bytes", static_cast<int32_t>(amount));
-                if (amount == fileData->ContentsLength)
+                TRACE_MESSAGE("Written %" PRIu32 " bytes", static_cast<uint32_t>(amount));
+                if (static_cast<uint32_t>(amount) == fileData->ContentsLength)
                 {
                     result = StatusCodes::CompletedOk;
                 }
