@@ -457,10 +457,10 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessTransportMessage(Message *
 {
     TRACE_MESSAGE("ProcessTransportMessage: Enter");
     spi_slave_transaction_t *newTransaction = nullptr;
+    Message *message;
     switch (request->Function)
     {
         case TransportFunction::SendResponse:
-            Message *message;
             message = Message::CreateOnHeap(MessageTypes::Transport | MessageTypes::Ack, Esp32Interfaces::Transport, TransportFunction::SendResponse, StatusCodes::CompletedOk);
             message->MessageID = request->MessageID;
             if (OutboundMessageQueueLength() > 0)
