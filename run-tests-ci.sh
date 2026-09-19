@@ -52,14 +52,16 @@ SELECTORS+=('[Configuration]')
 #   They run after [Emulated] so that a restart cannot disturb it, and the last of them
 #   erases the core dump again.
 #
-#   NOTE: this is provisional.  If it gives trouble on the CI runner, delete SELECTORS
-#   from '"Generate a core dump"' onwards and the --expect-reboot line below; the
-#   [Emulated] run is unaffected by their removal.
+#   The whole sequence, including the full retrieval, has been run under QEMU on a
+#   developer machine and takes a couple of minutes.  If it ever gives trouble on the CI
+#   runner, delete SELECTORS from '"Generate a core dump"' onwards and the
+#   --expect-reboot line below; the [Emulated] run is unaffected by their removal.
 #
 SELECTORS+=(
     '"Generate a core dump"'
     '"Get core dump information"'
     '"Get core dump fragment"'
+    '"Retrieve the whole core dump"'
     '"Erase core dump"'
 )
 EXPECT_REBOOT='--expect-reboot="Generate a core dump"'

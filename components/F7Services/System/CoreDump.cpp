@@ -161,6 +161,15 @@ void CoreDump::GetInformation(void * const vpMessage)
 /**
  * @brief Get part (maybe all) of the core dump.
  *
+ *  The fragment asked for has to lie wholly inside the core dump, so the caller works
+ *  out how much is left and asks for that rather than asking for a round number and
+ *  letting the answer be short.  A request that runs past the end is refused with
+ *  InvalidRequest.
+ *
+ *  The image checksum is worked out only for the request at offset zero, as it reads the
+ *  whole partition and a retrieval is made of many requests.  A dump whose checksum does
+ *  not match is refused with CrcError.
+ *
  * @param vpMessage Pointer to the message requesting the core dump fragment.
  */
 void CoreDump::GetFragment(void * const vpMessage)
@@ -195,36 +204,55 @@ void CoreDump::GetFragment(void * const vpMessage)
         {
             const esp_partition_t *partition = esp_partition_get(partitions);
 #if CONFIG_ESP_COREDUMP_ENABLE_TO_FLASH
-            if (esp_core_dump_image_check() == ESP_OK)
+            //
+            //  Verify the checksum for the first fragment only as it can take 900-1000 milliseconds.
+            //
+            bool imageIsValid = true;
+
+            if (request->Offset == 0)
+            {
+                imageIsValid = (esp_core_dump_image_check() == ESP_OK);
+            }
+
+            if (!imageIsValid)
+            {
+                result = StatusCodes::CrcError;
+            }
+            else
             {
                 uint32_t size = 0;
                 if (esp_partition_read(partition, 0, &size, sizeof(size)) == ESP_OK)
                 {
-                    uint32_t fragmentSize = size;
-                    if (request->Offset < size)
+                    const bool sizeIsSensible = ((size > 0) && (size <= partition->size));
+
+                    if (sizeIsSensible)
                     {
-                        fragmentSize = size - request->Offset;
-                        if (fragmentSize > request->Size)
+                        const bool fragmentIsInRange = ((request->Size > 0) && (request->Offset <= size) && (request->Size <= (size - request->Offset)));
+
+                        if (!fragmentIsInRange)
                         {
-                            fragmentSize = request->Size;
-                        }
-                    }
-                    uint8_t *data = static_cast<uint8_t *>(pvPortMalloc(fragmentSize));
-                    if (data == NULL)
-                    {
-                        result = StatusCodes::EspOutOfMemory;
-                    }
-                    else
-                    {
-                        if (esp_partition_read(partition, request->Offset, data, fragmentSize) == ESP_OK)
-                        {
-                            response.Data = data;
-                            response.Size = fragmentSize;
-                            result = StatusCodes::CompletedOk;
+                            result = StatusCodes::InvalidRequest;
                         }
                         else
                         {
-                            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&data));
+                            uint8_t *data = static_cast<uint8_t *>(pvPortMalloc(request->Size));
+                            if (data == NULL)
+                            {
+                                result = StatusCodes::EspOutOfMemory;
+                            }
+                            else
+                            {
+                                if (esp_partition_read(partition, request->Offset, data, request->Size) == ESP_OK)
+                                {
+                                    response.Data = data;
+                                    response.Size = request->Size;
+                                    result = StatusCodes::CompletedOk;
+                                }
+                                else
+                                {
+                                    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&data));
+                                }
+                            }
                         }
                     }
                 }

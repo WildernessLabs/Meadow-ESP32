@@ -5,8 +5,22 @@ cmake_minimum_required(VERSION 3.5)
 #
 set(EXTRA_COMPONENT_DIRS "../components")
 
+#
+#   Work out what we want the sdkconfig file to contain.
+#
+#   The application only picks the development configuration up when build.sh is given
+#   --develop.  The tests always build with it, because what it turns on is what they
+#   need: the larger core dump partition and the RAM contents in the dump, so that the
+#   core dump tests have a full sized dump to read back, and the heap poisoning and the
+#   assertions, so that a test that corrupts the heap is caught where it happens rather
+#   than somewhere later.
+#
+#   The partial files are merged in the order given and later files win, so the shared
+#   development configuration comes after the test defaults and the handful of test
+#   specific adjustments to it come last.
+#
 file(REMOVE sdkconfig)
-set(SDKCONFIG_FILES "sdkconfig.defaults")
+set(SDKCONFIG_FILES "sdkconfig.defaults\;../sdkconfig.develop\;sdkconfig.develop")
 set(SDKCONFIG_DEFAULTS ${SDKCONFIG_FILES})
 
 # Set the components to include the tests for.

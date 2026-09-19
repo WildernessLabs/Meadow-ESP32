@@ -105,9 +105,6 @@ cd test
 # Full clean and rebuild
 ./build.sh --fullclean
 
-# Build with debugging
-./build.sh --develop --build
-
 # Build and flash (using the serial interface)
 ./build.sh --build --flash
 
@@ -116,6 +113,26 @@ cd test
 ```
 
 The build script in the test directory supports the same options as the main `build.sh` script. See [Building](Building.md) for complete option documentation.
+
+### The Development Configuration
+
+The application only picks up `sdkconfig.develop` when `build.sh` is given `--develop`.
+The tests always build with it, so there is no `--develop` option in the test build
+script and no test build without it. What it turns on is what the tests need:
+
+- the partition table in `partitions-develop.csv`, which gives the core dump partition
+  512 KB in place of 64 KB, and `CONFIG_ESP_COREDUMP_CAPTURE_DRAM`, which puts the RAM
+  contents in the dump. Together these make the dump the `[CoreDump]` tests read back
+  around 166 KB rather than the 23 KB a dump of stack frames alone comes to, which is
+  the size the retrieval has to work at;
+- heap poisoning and the assertions, so that a test that corrupts the heap or breaks an
+  invariant is caught where it happens rather than somewhere later.
+
+`sdkconfig.develop` names the partition table file relative to the project directory,
+and the tests build from a project directory of their own, so `test/sdkconfig.develop`
+points it back at the one file in the root of the repository. That file holds nothing
+else: the development configuration itself is not copied, so the tests and the
+application cannot drift apart.
 
 ### Test Build Output
 
@@ -200,7 +217,7 @@ flash, UART and timers, but not the radio and not the ADC.
 |---|---|
 | `[NvsManager]` | Yes |
 | `[FileSystem]` | Yes, though one test is tagged `[Slow]` and left out of CI |
-| `[CoreDump]` | The partition is emulated, but the sequence is not yet proven |
+| `[CoreDump]` | Yes — the emulator saves a dump and reads it back as the hardware does, including a full retrieval |
 | `[System]` | No — reads a real ADC, and the read never returns under QEMU |
 | `[WiFi]`, `[Bluetooth]` | No — there is no radio to emulate |
 | `[POSIX]` | No — needs a radio and a web server on the local network |

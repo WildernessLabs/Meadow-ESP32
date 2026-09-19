@@ -46,6 +46,17 @@ const char *Heap::COMPONENT_NAME = "HeapDiagnostics";
 #if defined(CONFIG_HEAP_TRACING_STANDALONE)
 
 /**
+ * @brief Number of records standalone heap tracing keeps.
+ *
+ * @note This used to be read from CONFIG_TRACE_RECORD_NUM, but ESP-IDF has no Kconfig
+ *       symbol of that name, so setting it in sdkconfig.develop only raised a warning
+ *       and the value never reached sdkconfig.h.  The file therefore did not compile
+ *       whenever standalone tracing was turned on.  The count belongs with the code that
+ *       allocates the records rather than with the configuration, so it is set here.
+ */
+static const uint32_t TRACE_RECORD_COUNT = 100;
+
+/**
  * @brief Maximum number of heap trace records.
  */
 heap_trace_record_t *Heap::_traceRecords = nullptr;
@@ -77,14 +88,14 @@ void Heap::Setup()
     TRACE_MESSAGE("Setup: Enter");
 
 #if defined(CONFIG_HEAP_TRACING_STANDALONE)
-    _traceRecords = static_cast<heap_trace_record_t *>(pvPortMalloc(sizeof(heap_trace_record_t) * CONFIG_TRACE_RECORD_NUM));
+    _traceRecords = static_cast<heap_trace_record_t *>(pvPortMalloc(sizeof(heap_trace_record_t) * TRACE_RECORD_COUNT));
     if (_traceRecords == NULL)
     {
         ERROR_MESSAGE("Failed to allocate memory for heap trace records");
     }
     else
     {
-        result = heap_trace_init_standalone(_traceRecords, CONFIG_TRACE_RECORD_NUM);
+        result = heap_trace_init_standalone(_traceRecords, TRACE_RECORD_COUNT);
     }
 #endif
 #if defined(CONFIG_HEAP_TRACING_TOHOST)

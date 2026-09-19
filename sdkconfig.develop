@@ -50,7 +50,11 @@ CONFIG_COMPILER_OPTIMIZATION_ASSERTION_LEVEL=2
 #
 # CONFIG_HEAP_TRACING_STANDALONE is not set
 CONFIG_HEAP_TRACING_STANDALONE=y
-CONFIG_TRACE_RECORD_NUM=100
+#
+#   The number of trace records standalone tracing keeps is set in Heap.cpp.  There is no
+#   Kconfig symbol for it, so a CONFIG_TRACE_RECORD_NUM here only raised a warning and
+#   left the code without a value to compile against.
+#
 CONFIG_HEAP_TRACING_TOHOST is not set
 # CONFIG_HEAP_TRACING_TOHOST=y
 # CONFIG_HEAP_TRACING_STACK_DEPTH=5

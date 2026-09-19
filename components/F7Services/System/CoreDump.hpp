@@ -49,6 +49,11 @@ public:
     /**
      * @brief Get part (maybe all) of the core dump.
      *
+     *  The fragment asked for has to lie wholly inside the core dump; a request running
+     *  past the end is refused with InvalidRequest rather than answered with what is
+     *  left.  A dump whose checksum does not match is refused with CrcError, which is
+     *  only worked out for the request at offset zero.
+     *
      * @param vpMessage Pointer to the message requesting the core dump fragment.
      */
     void GetFragment(void * const vpMessage);

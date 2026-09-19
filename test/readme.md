@@ -12,6 +12,8 @@ The unit test application reads its settings from *unittest.config.json*, a file
 
 The tests can be built using the *test/build.sh* script using the same command line arguments as the main development build script.
 
+The tests always build with the development configuration, which the application only picks up when *build.sh* is given `--develop`.  It gives the core dump partition 512 KB and puts the RAM contents in the dump, so the core dump tests read back a full sized dump, and it turns on heap poisoning and the assertions, so that a test that corrupts the heap is caught where it happens.  See [Testing](../Documentation/Testing.md) for how the configuration files fit together.
+
 The firmware is written using the *test/flash.sh* script or by using the *idf.py flash* command.
 
 ## Running the Tests

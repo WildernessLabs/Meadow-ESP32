@@ -1,0 +1,17 @@
+#
+#   Test build adjustments to the development configuration.
+#
+#   The development configuration itself lives in sdkconfig.develop in the root of the
+#   repository and is shared with the application.  Nothing is copied here: this file
+#   holds only the settings that have to differ because the tests are built from a
+#   project directory of their own, and it is merged after the shared file so that what
+#   it says wins.
+#
+#   ESP-IDF resolves the partition table file against the project directory, which is
+#   this directory rather than the root of the repository, so the name the shared file
+#   gives it does not find the file from here.  This points it back at the one file in
+#   the root, so that the tests and the application are built against the same partition
+#   table rather than against two copies that can drift apart.
+#
+CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="../partitions-develop.csv"
+CONFIG_PARTITION_TABLE_FILENAME="../partitions-develop.csv"
