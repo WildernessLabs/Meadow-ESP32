@@ -393,7 +393,7 @@ void WiFiRequestHandler::NodeConnectedEvent(ip_event_ap_staipassigned_t *eventDa
     _connectedNodes[key] = data.IpAddress;
     RaiseNodeConnectionChangeEvent(WiFiFunction::NodeConnectedEvent, &data);
 
-    if (_connectedNodes.size() == ESP_WIFI_MAX_CONN_NUM)
+    if (_connectedNodes.size() >= ESP_WIFI_MAX_CONN_NUM)
     {
         Message *maxConnMessage = Message::CreateOnHeap(MessageTypes::Event, Esp32Interfaces::WiFi, WiFiFunction::MaximumConnectionsReachedEvent, StatusCodes::CompletedOk, _messageDispatcher->GetNextMessageID(), nullptr, 0);
         _messageDispatcher->QueueMessageForStm32(maxConnMessage);
