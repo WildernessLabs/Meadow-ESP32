@@ -111,11 +111,6 @@ private:
     SemaphoreHandle_t _synchronisationSemaphore = NULL;
 
     /**
-     *  @brief Default destructor.
-     */
-    ~SpiTransportProvider();
-
-    /**
      *  @brief SPI Post Transmission callback
      *
      *  Note this this method is static as it is used as a callback
@@ -235,6 +230,11 @@ public:
      *  @brief Default constructor.
      */
     SpiTransportProvider();
+
+    /**
+     *  @brief Default destructor.
+     */
+    virtual ~SpiTransportProvider();
 
     /*
      *  @brief Setup the SPI transport class.

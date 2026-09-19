@@ -72,12 +72,12 @@ private:
      * @brief Container for the methods and data required to access the file
      *        system on the ESP32.
      */
-    FileSystem *_fileSystem;
+    FileSystem *_fileSystem = nullptr;
 
     /**
      * @brief Coredump request handler.
      */
-    CoreDump *_coreDump;
+    CoreDump *_coreDump = nullptr;
 
     /**
      * @brief Handle for ADC1 used on the F7 v1 for battery level monitoring.
@@ -95,10 +95,9 @@ private:
     void DispatchRequest(Message * const) override;
 
     /**
-     *  @brief Constructor(s) and destructor.
+     *  @brief Default constructor.
      */
     SystemRequestHandler();
-    ~SystemRequestHandler();
 
     /**
      *  @brief Get the system configuration.
@@ -150,6 +149,11 @@ public:
      *  @brief Public constructor.
      */
     explicit SystemRequestHandler(IMessageDispatcher *);
+
+    /**
+     *  @brief Public destructor.
+     */
+    virtual ~SystemRequestHandler();
 
     /**
      *  @brief Perform any class level setup.

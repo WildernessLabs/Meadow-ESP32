@@ -357,6 +357,13 @@ WiFiRequestHandler::WiFiRequestHandler(IMessageDispatcher *messageDispatcher) : 
  */
 WiFiRequestHandler::~WiFiRequestHandler()
 {
+    //
+    //  Production creates this object once and never destroys it, so this only matters to
+    //  the tests.  The constructor throws when an instance already exists and nothing
+    //  catches that, so a handler that is discarded has to hand the pointer back or the
+    //  next construction aborts the board.
+    //
+    _instance = nullptr;
 }
 
 /*
