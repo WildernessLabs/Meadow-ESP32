@@ -605,7 +605,7 @@ void SystemRequestHandler::SetConfigurationItem(Message * const request)
         switch (value->Item)
         {
             case ConfigurationItems::Antenna:
-                WiFiRequestHandler::SetAntenna(*value->Value);
+                result = WiFiRequestHandler::SetAntenna(*value->Value);
                 break;
             case ConfigurationItems::AutomaticallyReconnect:
                 result = WiFiRequestHandler::SetAutomaticReconnect(static_cast<uint8_t>((*value->Value)) == 1);
