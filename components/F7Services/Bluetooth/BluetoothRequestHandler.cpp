@@ -1064,8 +1064,7 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
             else if (param->add_attr_tab.num_handle != GetInstance()->GetAttributeTableLength())
             {
                 ERROR_MESSAGE(
-                    "Create attribute table abnormally, num_handle (%" PRIu16 ") \
-                        doesn't equal to HRS_IDX_NB(%" PRIu16 ")",
+                    "Create attribute table failed, num_handle (%" PRIu16 ") does not match the expected attribute table length (%" PRIu16 ")",
                     param->add_attr_tab.num_handle, GetInstance()->GetAttributeTableLength());
             }
             else
