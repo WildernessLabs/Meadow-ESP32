@@ -169,7 +169,7 @@ private:
     /**
      * @brief All of the bits that could be set in an event group.
      */
-    static const int WIFI_ALL_BITS = 0x008fffff;
+    static const int WIFI_ALL_BITS = 0x00ffffff;
 
     /**
      *  @brief Stack size for the WiFi task.
