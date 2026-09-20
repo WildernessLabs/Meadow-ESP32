@@ -16,6 +16,14 @@ menu "Meadow COMMS Project Build Configuration"
             Range 10,000 to 60,000 milliseconds (10 seconds to 60 seconds).
             Default is 30,000 milliseconds (30 seconds).
 
+    config ENABLE_HEAP_INTEGRITY_CHECKS
+        bool "Enable heap integrity checks"
+        default n
+        help
+            This option enables a heap integrity check, breaking to the debugger on corruption
+            when a debugger is attached and reporting the heap component at the INFO logging
+            level.
+
     config HOOK_REGISTER_SIZE
         int "Hook register size"
         range 1000 10000
