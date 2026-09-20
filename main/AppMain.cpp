@@ -75,9 +75,8 @@ MessageDispatcher *_messageDispatcher = nullptr;
 /**
  *  @brief Callback for the heap allocation failures.
  *
- *  The method prints some information about the method that caused the problem.
- *  It then waits for a while for the message to be output and then generates an
- *  exception to force a core dump (if enabled) and a restart.
+ *  Reports the allocation that failed through the logging system rather than the
+ *  raw UART and let the caller's existing EspOutOfMemory handling run.
  *
  *  @param requestedSize
  *      Amount of space requested.
@@ -90,13 +89,7 @@ MessageDispatcher *_messageDispatcher = nullptr;
  */
 void heap_caps_alloc_failed_hook(size_t requestedSize, uint32_t caps, const char *functionName)
 {
-    if (requestedSize != 0)
-    {
-        printf("%s was called but failed to allocate %" PRIu32 " bytes with 0x%" PRIx32 " capabilities. \n", functionName, static_cast<uint32_t>(requestedSize), caps);
-        vTaskDelay(10000 / portTICK_PERIOD_MS);
-        char *ptr = NULL;
-        *ptr = 0; // cppcheck-suppress nullPointer
-    }
+    ESP_LOGE(COMPONENT_NAME, "%s failed to allocate %" PRIu32 " bytes with 0x%" PRIx32 " capabilities.", functionName, static_cast<uint32_t>(requestedSize), caps);
 }
 
 /*
