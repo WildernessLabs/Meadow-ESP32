@@ -33,6 +33,8 @@
 #include "CoreDump.hpp"
 #include "Utils.hpp"
 #include "Logging.hpp"
+#include "Diagnostics.hpp"
+#include "Heap.hpp"
 
 /*
  * ----------------------------------------------------------------------------
