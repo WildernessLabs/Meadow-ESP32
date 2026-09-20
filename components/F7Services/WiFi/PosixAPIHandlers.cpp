@@ -673,7 +673,7 @@ uint8_t *WiFiRequestHandler::ExtractIntegerSocketOptionValue(const uint8_t * con
             if (intVal != NULL)
             {
                 *intVal = Encoders::ExtractInt32(data);
-                *length = sizeof(intVal);
+                *length = sizeof(*intVal);
             }
             result = reinterpret_cast<uint8_t *>(intVal);
         }
