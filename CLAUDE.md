@@ -129,7 +129,7 @@ Top-level files: `Logging.*`, `Mapping.*`, `Globals.hpp`, `Utils.*`, `Progressiv
 - `build.sh` injects git commit hash, branch, and build timestamp into `main/build_info.h` from `build_info.template`, then restores the template after build.
 - SPI transaction hard limit: **4092 bytes** (hardware constraint).
 - SDK config files: `sdkconfig.defaults` (release), `sdkconfig.develop` (merged on `--develop`), `sdkconfig` (generated, not committed).
-- Managed dependencies: `joltwallet/littlefs` v1.5.5, `espressif/cjson` ^1.7.19 (via `idf_component.yml`).
+- Managed dependencies (via `idf_component.yml`): `joltwallet/littlefs` v1.5.5. `espressif/cjson` ==1.7.19 is also declared but gated to `idf_version >=6.0`; on the 5.3+ toolchain this project actually builds with, that rule never matches, so JSON parsing uses ESP-IDF's bundled `json` component instead (cJSON 1.7.19, verified free of the known CVE).
 
 ## Documentation
 
