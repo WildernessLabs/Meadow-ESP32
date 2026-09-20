@@ -875,6 +875,11 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessMessages(spi_slave_transac
 
     TRACE_MESSAGE("ProcessMessages: Waiting for notification, current state: %s", SpiStateString(_currentState));
     ESP_ERROR_CHECK(spi_slave_queue_trans(VSPI_HOST, transaction, portMAX_DELAY));
+    //
+    //  notificationBits is not examined because STM32_INTERRUPT_NOTIFICATION_BIT is the
+    //  only bit this task is ever notified with (see SpiPostSetupCallback), so every
+    //  wakeup here means the same thing.
+    //
     xTaskNotifyWait(0x00000000, ULONG_MAX, &notificationBits, portMAX_DELAY);
 
     //

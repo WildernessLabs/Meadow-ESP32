@@ -436,13 +436,13 @@ static const char *SafeString(const char *value)
  */
 static bool ReadStoredString(const char *name, char *buffer, const size_t bufferLength)
 {
-    char *stored = SystemRequestHandler::GetConfigurationValue(name, nullptr);
+    const char *stored = SystemRequestHandler::GetConfigurationValue(name, nullptr);
     bool found = (stored != nullptr);
 
     if (found)
     {
         snprintf(buffer, bufferLength, "%s", stored);
-        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&stored));
+        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(const_cast<char **>(&stored)));
     }
     else
     {

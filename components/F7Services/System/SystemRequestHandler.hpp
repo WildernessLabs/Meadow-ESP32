@@ -163,7 +163,7 @@ public:
     /**
      *  @brief Get a string configuration value.
      */
-    static char *GetConfigurationValue(const char *, const char *);
+    static const char *GetConfigurationValue(const char *, const char *);
 
     /**
      *  @brief Get an unsigned integer configuration value.
