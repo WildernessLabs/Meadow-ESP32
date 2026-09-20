@@ -361,7 +361,7 @@ const char *Logging::FunctionName(const uint32_t interface, const uint32_t funct
             return (TransportFunctionName(function));
             break;
         default:
-            return (const_cast<char *>("Not implemented"));
+            return ("Not implemented");
             break;
     }
 }

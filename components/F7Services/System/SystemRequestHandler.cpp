@@ -155,7 +155,7 @@ SystemRequestHandler::SystemRequestHandler(IMessageDispatcher *messageDispatcher
     //  Ask for the name with no default so that _deviceName always owns storage on
     //  the heap; a non-heap default would make it unsafe to release on reassignment.
     //
-    _deviceName = GetConfigurationValue(DEVICE_NAME_NAME, nullptr);
+    _deviceName = const_cast<char *>(GetConfigurationValue(DEVICE_NAME_NAME, nullptr));
     if (_deviceName == nullptr)
     {
         _deviceName = DuplicateString(DEVICE_NAME_DEFAULT_VALUE);
@@ -328,7 +328,7 @@ void SystemRequestHandler::Setup()
  *  @returns
  *      Current boolean value or the default value if a value could not be found.
  */
-char *SystemRequestHandler::GetConfigurationValue(const char *name, const char *defaultValue)
+const char *SystemRequestHandler::GetConfigurationValue(const char *name, const char *defaultValue)
 {
     return (NvsManager::GetValue(_configurationName, name, defaultValue));
 }

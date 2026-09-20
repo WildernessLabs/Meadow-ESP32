@@ -242,7 +242,7 @@ void TransportProviderBase::SendControlMessageToStm32(const ControlMessageType m
     switch (messageType)
     {
         case ControlMessageType::MessageWaiting:
-            message = const_cast<char *>("+++MW\n");
+            message = "+++MW\n";
             break;
         case ControlMessageType::Reset:
             {
@@ -252,13 +252,13 @@ void TransportProviderBase::SendControlMessageToStm32(const ControlMessageType m
             }
             break;
         case ControlMessageType::Ready:
-            message = const_cast<char *>("+++RDY\n");
+            message = "+++RDY\n";
             break;
         case ControlMessageType::SpiInterfaceReady:
-            message = const_cast<char *>("+++SIR\n");
+            message = "+++SIR\n";
             break;
         case ControlMessageType::Busy:
-            message = const_cast<char *>("+++BSY\n");
+            message = "+++BSY\n";
             break;
         default:
             break;

@@ -52,7 +52,7 @@ public:
     /**
      *  @brief Get a string value.
      */
-    static char *GetValue(const char *nameSpace, const char *name, const char *defaultValue);
+    static const char *GetValue(const char *nameSpace, const char *name, const char *defaultValue);
 
     /**
      *  @brief Set a string value.

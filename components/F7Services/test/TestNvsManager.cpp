@@ -82,11 +82,11 @@ TEST_CASE("NVS Manager operations", CLASS_OF_TESTS)
 
         TEST_ASSERT_EQUAL(NvsManager::ErrorCodes::Ok, NvsManager::SetValue(TEST_NAMESPACE, key, expected));
 
-        char *retrieved = NvsManager::GetValue(TEST_NAMESPACE, key, defaultValue);
+        const char *retrieved = NvsManager::GetValue(TEST_NAMESPACE, key, defaultValue);
         TEST_ASSERT_NOT_NULL(retrieved);
         TEST_ASSERT_NOT_EQUAL(defaultValue, retrieved); // heap-allocated copy, not the default pointer
         TEST_ASSERT_EQUAL_STRING(expected, retrieved);
-        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&retrieved));
+        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(const_cast<char **>(&retrieved)));
     }
 
     //
@@ -99,10 +99,10 @@ TEST_CASE("NVS Manager operations", CLASS_OF_TESTS)
 
         TEST_ASSERT_EQUAL(NvsManager::ErrorCodes::Ok, NvsManager::SetValue(TEST_NAMESPACE, key, second));
 
-        char *retrieved = NvsManager::GetValue(TEST_NAMESPACE, key, defaultValue);
+        const char *retrieved = NvsManager::GetValue(TEST_NAMESPACE, key, defaultValue);
         TEST_ASSERT_NOT_NULL(retrieved);
         TEST_ASSERT_EQUAL_STRING(second, retrieved);
-        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&retrieved));
+        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(const_cast<char **>(&retrieved)));
     }
 
     //
@@ -110,7 +110,7 @@ TEST_CASE("NVS Manager operations", CLASS_OF_TESTS)
     //
     {
         const char *defaultValue = "fallback";
-        char *retrieved = NvsManager::GetValue(TEST_NAMESPACE, "str_missing", defaultValue);
+        const char *retrieved = NvsManager::GetValue(TEST_NAMESPACE, "str_missing", defaultValue);
         TEST_ASSERT_EQUAL_PTR(defaultValue, retrieved); // pointer equality: no allocation on miss
     }
 

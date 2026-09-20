@@ -296,8 +296,8 @@ WiFiRequestHandler::WiFiRequestHandler()
     //
     //  Get configuration from NVS.
     //
-    _defaultAccessPoint = SystemRequestHandler::GetConfigurationValue(DEFAULT_ACCESS_POINT_NAME, _defaultAccessPoint);
-    _password = SystemRequestHandler::GetConfigurationValue(PASSWORD_NAME, _password);
+    _defaultAccessPoint = const_cast<char *>(SystemRequestHandler::GetConfigurationValue(DEFAULT_ACCESS_POINT_NAME, _defaultAccessPoint));
+    _password = const_cast<char *>(SystemRequestHandler::GetConfigurationValue(PASSWORD_NAME, _password));
     _stationNetIfHandle = nullptr;
     _softApNetIfHandle = nullptr;
     _countryCode = SystemRequestHandler::GetConfigurationValue(COUNTRY_CODE_NAME, _validCountryCodes[0]);

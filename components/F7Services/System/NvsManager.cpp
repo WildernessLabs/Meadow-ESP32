@@ -111,11 +111,11 @@ void NvsManager::Setup()
  *  @returns
  *      Current boolean value or the default value if a value could not be found.
  */
-char *NvsManager::GetValue(const char *nameSpace, const char *name, const char *defaultValue)
+const char *NvsManager::GetValue(const char *nameSpace, const char *name, const char *defaultValue)
 {
     nvs_handle nvsHandle;
     esp_err_t error;
-    char *result = const_cast<char *>(defaultValue);
+    const char *result = defaultValue;
 
     if (_nvsAvailable)
     {
@@ -125,13 +125,16 @@ char *NvsManager::GetValue(const char *nameSpace, const char *name, const char *
             size_t length = 0;
             if (nvs_get_str(nvsHandle, name, NULL, &length) == ESP_OK)
             {
-                result = static_cast<char *>(pvPortMalloc(length));
-                if (result != NULL)
+                char *buffer = static_cast<char *>(pvPortMalloc(length));
+                if (buffer != NULL)
                 {
-                    if (nvs_get_str(nvsHandle, name, result, &length) != ESP_OK)
+                    if (nvs_get_str(nvsHandle, name, buffer, &length) == ESP_OK)
                     {
-                        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&result));
-                        result = const_cast<char *>(defaultValue);
+                        result = buffer;
+                    }
+                    else
+                    {
+                        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&buffer));
                     }
                 }
             }
