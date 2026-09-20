@@ -68,6 +68,29 @@ cp test/main/unittest.config.json.template test/fsimage/unittest.config.json
 ./mkfsimage.sh --flash
 ```
 
+`mkfsimage.sh` builds `mklittlefs` from the managed components before it builds the
+image, so the test project has to have been configured at least once. A `--fullclean`
+removes `test/managed_components` and the script stops until `idf.py reconfigure` has
+been run in `test/`.
+
+A failed mount is not reported. `FileSystem` is set up with `format_if_mount_failed`, so
+a partition it cannot read is quietly replaced with an empty one and the only sign is the
+settings having gone. The proof that the image arrived is the board reading it back at
+startup:
+
+```
+#### Unit test configuration #####
+
+I (1164) FileSystem: Setting up file system
+  Read from unittest.config.json
+
+  WiFiNetwork                : YourNetwork
+  ...
+```
+
+A run that says no configuration file was found, straight after one was written, means
+the mount failed rather than the file being absent.
+
 `unittest.config.json` carries:
 
 | Entry | |
@@ -188,7 +211,13 @@ such as `[FileSystem]`, a quoted test name, a menu number, or `*` for everything
 | `--timeout=*` | Seconds allowed for each selector (default 600) |
 | `--transcript=*` | Write the full console transcript to a file |
 | `--junit=*` | Write the results as a JUnit report to a file |
+| `--expect-reboot=*` | Selector that restarts the device on purpose; repeatable |
 | `-v \| --verbose` | Echo the console output as the tests run |
+
+`--expect-reboot` is what separates a restart that is the point of the test from one that
+is a panic. A selector named this way is allowed to take the device down and the run
+carries on with the next selector; any other reboot ends the run with status 3. Give the
+option once per selector that does it.
 
 By default each run starts from a known state: under QEMU the pristine flash image is
 restored, and on hardware the board is reset. Use `--no-fresh` to continue from
@@ -671,6 +700,16 @@ mode COM:       # Windows
 idf.py -p /dev/ttyUSB0 monitor
 ```
 
+### Issue: `mkfsimage.sh` cannot find the managed components
+
+**Solution**: Configure the test project so the `mklittlefs` sources are fetched again:
+```bash
+cd test
+idf.py reconfigure
+```
+`--fullclean` removes `test/managed_components`, and `mkfsimage.sh` builds its own copy
+of `mklittlefs` from what is there. Reconfiguring brings it back without a full rebuild.
+
 ### Issue: The run says no configuration file was found
 
 **Solution**: Build one and write it to the board:
@@ -681,6 +720,11 @@ cp test/main/unittest.config.json.template test/fsimage/unittest.config.json
 ```
 The tests that need no settings run without one, so this only matters for the WiFi,
 Bluetooth and POSIX tests.
+
+If the settings are still missing after an image has been written, the mount is failing
+rather than the file being absent, and the empty partition is one the firmware has just
+reformatted. Run `./mkfsimage.sh` on its own and check the `partition table` and
+`partition offset` it reports against the table the firmware was built with.
 
 ### Issue: Test Hangs or Never Completes
 
