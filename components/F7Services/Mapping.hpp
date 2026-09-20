@@ -162,6 +162,12 @@ private:
     static int32_t GetFlagValue(const MappingTable mapping, const MappingDirection type, const int32_t value, int32_t * const mappedValue);
 
     /**
+     *  @brief Get the mapped flags using the MappingDirection to determine which
+     *  value should be retrieved.
+     */
+    static int32_t GetFlagValue(const MappingTable mapping, const MappingDirection type, const int32_t value, int16_t * const mappedValue);
+
+    /**
      *  @brief Get the mapped value using the MappingDirection to determine which
      *  value should be retrieved.
      */
@@ -230,6 +236,11 @@ public:
      *  @brief Get the integer STM32 value equivalent to the specified ESP32 value.
      */
     static int32_t GetStmFlagValue(const MappingTable mapping, const int32_t value, int32_t * const result);
+
+    /**
+     *  @brief Get the integer STM32 value equivalent to the specified ESP32 value.
+     */
+    static int32_t GetStmFlagValue(const MappingTable mapping, const int32_t value, int16_t * const result);
 
     /**
      *  @brief Get the string value for the given key.

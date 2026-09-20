@@ -76,7 +76,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetAddrInfo(Esp32Messaging::GetAddr
 
         if (addressInformation->ai_addr != NULL)
         {
-            Mapping::GetStmValue(Mapping::AddressFamily, addressInformation->ai_addr->sa_family, reinterpret_cast<int32_t *>(&sa.Family));
+            Mapping::GetStmValue(Mapping::AddressFamily, addressInformation->ai_addr->sa_family, reinterpret_cast<int8_t *>(&sa.Family));
             if (addressInformation->ai_addr->sa_family == AF_INET)
             {
                 const struct sockaddr_in * const sin = reinterpret_cast<const struct sockaddr_in *>(addressInformation->ai_addr);
@@ -1277,7 +1277,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::RecvFrom(Esp32Messaging::RecvFromRe
             if (request->GetSourceAddress != 0)
             {
                 Esp32Messaging::SockAddr socketAddress = {};
-                Mapping::GetStmValue(Mapping::AddressFamily, sa->sin_family, reinterpret_cast<int32_t *>(&socketAddress.Family));
+                Mapping::GetStmValue(Mapping::AddressFamily, sa->sin_family, reinterpret_cast<int8_t *>(&socketAddress.Family));
                 memcpy(&socketAddress.Ip4Address, &sa->sin_addr, sizeof(sa->sin_addr));
                 socketAddress.Port = sa->sin_port;
                 response.SourceAddressLength = Encoders::EncodedSockAddrBufferSize(&socketAddress);
@@ -1982,7 +1982,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::Accept(Esp32Messaging::AcceptReques
         if (sockAddr)
         {
             memset(sockAddr, 0, sizeof(Esp32Messaging::SockAddr));
-            Mapping::GetStmValue(Mapping::AddressFamily, sa.sa_family, reinterpret_cast<int32_t *>(&sockAddr->Family));
+            Mapping::GetStmValue(Mapping::AddressFamily, sa.sa_family, reinterpret_cast<int8_t *>(&sockAddr->Family));
             struct sockaddr_in *sin = reinterpret_cast<struct sockaddr_in *>(&sa);
             sockAddr->Port = sin->sin_port;
             memcpy(&sockAddr->Ip4Address, &sin->sin_addr, sizeof(sin->sin_addr));
@@ -2108,7 +2108,7 @@ void WiFiRequestHandler::Ioctl(void * const vpMessage)
         esp_netif_ip_info_t ipInfo;
         Esp32Messaging::SockAddr sa = {};
 
-        Mapping::GetStmValue(Mapping::AddressFamily, AF_INET, reinterpret_cast<int32_t *>(&sa.Family));
+        Mapping::GetStmValue(Mapping::AddressFamily, AF_INET, reinterpret_cast<int8_t *>(&sa.Family));
         response.AddrLength = 0;
         response.Addr = nullptr;
 
@@ -2252,7 +2252,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetSockPeerName(const Esp32Messagin
             return (StatusCodes::EspOutOfMemory);
         }
         memset(sockAddr, 0, sizeof(Esp32Messaging::SockAddr));
-        Mapping::GetStmValue(Mapping::AddressFamily, sa.sa_family, reinterpret_cast<int32_t *>(&sockAddr->Family));
+        Mapping::GetStmValue(Mapping::AddressFamily, sa.sa_family, reinterpret_cast<int8_t *>(&sockAddr->Family));
         struct sockaddr_in *sin = reinterpret_cast<struct sockaddr_in *>(&sa);
         sockAddr->Port = sin->sin_port;
         memcpy(&sockAddr->Ip4Address, &sin->sin_addr, sizeof(sin->sin_addr));
@@ -2582,7 +2582,7 @@ void WiFiRequestHandler::PollSocket(void * const requestId)
             it = _pollRequests.find(reinterpret_cast<uint32_t>(requestId)); // Get again in case anything has changed.
             if (it != _pollRequests.end())
             {
-                Mapping::GetStmFlagValue(Mapping::PollEvents, fds[POLL_FD_INDEX].revents, reinterpret_cast<int32_t *>(&response.ReturnedEvents));
+                Mapping::GetStmFlagValue(Mapping::PollEvents, fds[POLL_FD_INDEX].revents, reinterpret_cast<int16_t *>(&response.ReturnedEvents));
                 if (response.ReturnedEvents != 0)
                 {
                     response.Result = 1;
