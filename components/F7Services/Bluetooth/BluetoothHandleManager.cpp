@@ -40,10 +40,15 @@ unsigned short BluetoothHandleManager::Assign(BluetoothService * const service)
     TRACE_MESSAGE("Assign(BluetoothService): Enter");
 
     auto h = GetHandle();
+    if (h == 0)
+    {
+        ERROR_MESSAGE("Assign(BluetoothService): No handles remain, cannot assign one to this service.");
+    }
     service->Handle = h;
-    return h;
 
     TRACE_MESSAGE("Assign(BluetoothService): Exit");
+
+    return h;
 }
 
 /**
@@ -57,8 +62,13 @@ unsigned short BluetoothHandleManager::Assign(BluetoothAttribute * const attribu
     TRACE_MESSAGE("Assign(BluetoothAttribute): Enter");
 
     auto h = GetHandle();
+    if (h == 0)
+    {
+        ERROR_MESSAGE("Assign(BluetoothAttribute): No handles remain, cannot assign one to this attribute.");
+    }
     attribute->Handle = h;
-    return h;
 
     TRACE_MESSAGE("Assign(BluetoothAttribute): Exit");
+
+    return h;
 }
