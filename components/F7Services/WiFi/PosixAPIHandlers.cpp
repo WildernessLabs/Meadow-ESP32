@@ -2489,8 +2489,16 @@ int WiFiRequestHandler::PollSetup(void * const vpMessage)
     TRACE_MESSAGE("Poll: Requested Nuttx events 0x%04x maps to ESP events 0x%04x", request->Events, (uint) events);
 
     LockPollRequests();
-    _pollRequests[request->SetupMessageId] = fds;
+    bool inserted = _pollRequests.insert({request->SetupMessageId, fds}).second;
     UnlockPollRequests();
+
+    if (!inserted)
+    {
+        TRACE_MESSAGE("PollSetup: Duplicate setup message ID 0x%08x, rejecting", (uint) request->SetupMessageId);
+        close(dummy_socket_handle);
+        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&fds));
+        return (-1);
+    }
 
 #if defined(WIFI_DEBUG)
     DumpActivePollRequests();
