@@ -90,7 +90,14 @@ All source is under `components/F7Services/`:
 
 Top-level files: `Logging.*`, `Mapping.*`, `Globals.hpp`, `Utils.*`, `ProgressiveDelay.*`, `Gpio.hpp`, `Debug.hpp`.
 
-### Flash Partitions (`partitions.csv`)
+### Flash Partitions
+
+There are two tables and the build picks one. `partitions.csv` is the release layout,
+used by `sdkconfig.defaults`. `partitions-develop.csv` is merged in by `--develop` and
+by the test build; it gives up application space for a core dump partition large enough
+to be useful.
+
+`partitions.csv` (release):
 
 | Name | Offset | Size |
 |---|---|---|
@@ -99,6 +106,20 @@ Top-level files: `Logging.*`, `Mapping.*`, `Globals.hpp`, `Utils.*`, `Progressiv
 | factory | 0x10000 | 3.625 MB |
 | coredump | 0x3b0000 | 64 KB |
 | littlefs | 0x3c0000 | 256 KB |
+
+`partitions-develop.csv` (`--develop` and the tests):
+
+| Name | Offset | Size |
+|---|---|---|
+| nvs | 0x9000 | 24 KB |
+| phy_init | 0xf000 | 4 KB |
+| factory | 0x10000 | 3.125 MB |
+| coredump | 0x330000 | 512 KB |
+| littlefs | 0x3c0000 | 256 KB |
+
+`littlefs` is at 0x3c0000 in both, so one filesystem image serves either build.
+`mkfsimage.sh` reads the offset from whichever table `sdkconfig` names rather than
+assuming one.
 
 ## Code Conventions
 
