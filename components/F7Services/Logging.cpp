@@ -448,8 +448,13 @@ char *Logging::MessageSummary(const Message * const message)
  *
  *  @param end
  *      Time since the chip started in microseconds of the end of the event.
+ *
+ *  @param ownsMethod
+ *      True if method is heap-allocated and this call is handing over ownership of
+ *      it, so it is freed when the entry is later released.  False (the default,
+ *      matching every existing caller) for a string literal such as __func__.
  */
-void Logging::AddPerformanceCounterEntry(const char *method, int64_t start, int64_t end)
+void Logging::AddPerformanceCounterEntry(const char *method, int64_t start, int64_t end, bool ownsMethod)
 {
     uint64_t duration;
     if (start <= end) // Check if the counter has wrapped around.
@@ -467,9 +472,15 @@ void Logging::AddPerformanceCounterEntry(const char *method, int64_t start, int6
     {
         pce->timestamp = esp_log_timestamp();
         pce->method = method;
+        pce->ownsMethod = ownsMethod;
         pce->duration = pd;
         if (_performanceCounters[_nextPerformanceCounterEntry] != NULL)
         {
+            PerformanceCounterEntry *previous = _performanceCounters[_nextPerformanceCounterEntry];
+            if (previous->ownsMethod)
+            {
+                free(const_cast<char *>(previous->method));
+            }
             Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&_performanceCounters[_nextPerformanceCounterEntry]));
         }
         _performanceCounters[_nextPerformanceCounterEntry] = pce;
@@ -477,6 +488,17 @@ void Logging::AddPerformanceCounterEntry(const char *method, int64_t start, int6
         if (_nextPerformanceCounterEntry >= _numberOfPerformanceCounterSlots)
         {
             _nextPerformanceCounterEntry = 0;
+        }
+    }
+    else
+    {
+        if (ownsMethod)
+        {
+            //
+            //  The entry could not be stored, so nothing will ever release method through it;
+            //  free it here instead so ownership is not dropped on this path.
+            //
+            free(const_cast<char *>(method));
         }
     }
 }

@@ -111,6 +111,13 @@ private:
         const char *method;
 
         /**
+         *  @brief True if method was heap-allocated (e.g. by MessageSummary) and must
+         *  be freed when this entry is released; false if it is a string literal such
+         *  as __func__, which must not be freed.
+         */
+        bool ownsMethod;
+
+        /**
          *  @brief Number of microseconds elapsed during the recorded event.
          */
         uint32_t duration;
@@ -243,8 +250,13 @@ public:
 
     /**
      *  @brief Add an entry to the table of performance counters.
+     *
+     *  @param ownsMethod
+     *      True if method is heap-allocated and this call is handing over ownership of
+     *      it, so it is freed when the entry is later released.  False (the default,
+     *      matching every existing caller) for a string literal such as __func__.
      */
-    static void AddPerformanceCounterEntry(const char *method, int64_t start, int64_t end);
+    static void AddPerformanceCounterEntry(const char *method, int64_t start, int64_t end, bool ownsMethod = false);
 
     /**
      *  @brief Dump the table of performance counters.
