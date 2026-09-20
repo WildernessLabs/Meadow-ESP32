@@ -256,15 +256,19 @@ void BluetoothManager::SetHandles(const uint16_t * const handles, const uint16_t
  * @param handle Handle to look up.
  * @param pData Pointer to a block of memory to take the value.
  * @param pLen Pointer to a variable that will hold the length of the data that is being copied.
+ *
+ * @return true if the handle is known and pData/pLen were filled in, false if the handle
+ *  is unknown, in which case pLen is set to 0 and pData is left untouched.
  */
-void BluetoothManager::GetCurrentValueForAttributeHandle(const uint16_t handle, uint8_t *pData, uint16_t * const pLen)
+bool BluetoothManager::GetCurrentValueForAttributeHandle(const uint16_t handle, uint8_t *pData, uint16_t * const pLen)
 {
     TRACE_MESSAGE("GetCurrentValueForAttributeHandle: Enter");
 
     // TODO: go get the data from the STM - for now we just increment to test the data is changing
     auto existing = _valueMap.find(handle);
+    bool found = (existing != _valueMap.end());
 
-    if (existing != _valueMap.end())
+    if (found)
     {
         TRACE_MESSAGE("Request for data for handle 0x%04" PRIx16, handle);
         TRACE_MESSAGE(" known length = %" PRIu16, existing->second.length);
@@ -276,10 +280,11 @@ void BluetoothManager::GetCurrentValueForAttributeHandle(const uint16_t handle, 
     {
         TRACE_MESSAGE("Request for data with unknown handle 0x%04" PRIx16, handle);
         *pLen = 0;
-        pData = NULL;
     }
 
     TRACE_MESSAGE("GetCurrentValueForAttributeHandle: Exit");
+
+    return (found);
 }
 
 /**

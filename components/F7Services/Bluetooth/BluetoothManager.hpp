@@ -245,8 +245,11 @@ public:
 
     /**
      * @brief Get the current value for a attribute with the specified handle.
+     *
+     * @return true if the handle is known and pData/pLen were filled in, false if the
+     *  handle is unknown.
      */
-    void GetCurrentValueForAttributeHandle(const uint16_t handle, uint8_t *pData, uint16_t * const pLen);
+    bool GetCurrentValueForAttributeHandle(const uint16_t handle, uint8_t *pData, uint16_t * const pLen);
 
     /**
      * @brief @brief Set the value for a attribute with the specified handle.
