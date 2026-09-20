@@ -232,7 +232,7 @@ private:
     int GetHandleCount();
 
 public:
-    virtual ~BluetoothRequestHandler();
+    virtual ~BluetoothRequestHandler() override;
 
     static BluetoothManager _manager;
 
