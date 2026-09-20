@@ -1448,9 +1448,10 @@ StatusCodes::StatusCodes WiFiRequestHandler::PrepareForDeepSleep()
     {
         result = wifiHandler->StopWiFIAdapter();
     }
-    return (result);
 
-    TRACE_MESSAGE("PrepareForDeepSleep(): Enter");
+    TRACE_MESSAGE("PrepareForDeepSleep(): Exit");
+
+    return (result);
 }
 
 /**

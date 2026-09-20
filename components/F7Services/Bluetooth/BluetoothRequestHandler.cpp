@@ -583,7 +583,7 @@ StatusCodes::StatusCodes BluetoothRequestHandler::PrepareForDeepSleep()
         }
     }
 
-    TRACE_MESSAGE("PrepareForDeepSleep(): Enter");
+    TRACE_MESSAGE("PrepareForDeepSleep(): Exit");
 
     return (result);
 }
