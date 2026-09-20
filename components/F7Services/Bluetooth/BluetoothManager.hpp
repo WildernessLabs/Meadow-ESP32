@@ -183,16 +183,16 @@ private:
      */
     uint16_t _companyIdentifier;
 
+    /**
+     * @brief Name of the device.
+     */
+    char _deviceName[256];
+
 public:
     /**
      *  @brief Name of the component / task for the Bluetooth system.
      */
     static const char *COMPONENT_NAME;
-
-    /**
-     * @brief Name of the device.
-     */
-    char _deviceName[256];
 
     /**
      * @brief Construct a new Bluetooth Manager object
@@ -225,6 +225,14 @@ public:
     uint16_t GetCompanyIdentifier()
     {
         return _companyIdentifier;
+    }
+
+    /**
+     * @brief Get the device name.
+     */
+    const char *GetDeviceName() const
+    {
+        return (_deviceName);
     }
 
     /**
