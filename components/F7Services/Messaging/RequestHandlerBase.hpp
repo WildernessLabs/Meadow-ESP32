@@ -61,11 +61,6 @@ protected:
     RequestHandlerBase();
 
     /**
-     *  @brief Destructor for the RequestHandlerBase class.
-     */
-    ~RequestHandlerBase();
-
-    /**
      *  @brief Create a new event message and add to the outbound message queue.
      */
     void RaiseEvent(const uint8_t interface, const uint32_t eventType, const uint32_t statusCode, uint8_t *payload, const uint32_t payloadLength);
@@ -105,6 +100,11 @@ public:
      *  @brief Constructor for the RequestHandlerBase class.
      */
     explicit RequestHandlerBase(IMessageDispatcher *message);
+
+    /**
+     *  @brief Destructor for the RequestHandlerBase class.
+     */
+    virtual ~RequestHandlerBase();
 
     /**
      *  @brief Setup the various properties for correct functioning of the request handler.

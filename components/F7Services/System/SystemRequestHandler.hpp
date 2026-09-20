@@ -153,7 +153,7 @@ public:
     /**
      *  @brief Public destructor.
      */
-    virtual ~SystemRequestHandler();
+    virtual ~SystemRequestHandler() override;
 
     /**
      *  @brief Perform any class level setup.

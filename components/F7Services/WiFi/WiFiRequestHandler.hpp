@@ -992,7 +992,7 @@ public:
     /**
      *  @brief Private destructor for the class.
      */
-    virtual ~WiFiRequestHandler();
+    virtual ~WiFiRequestHandler() override;
 
     /**
      *  @brief Perform and class level setup required before an instance can be used.
