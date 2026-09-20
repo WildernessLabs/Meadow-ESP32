@@ -838,7 +838,6 @@ spi_slave_transaction_t *SpiTransportProvider::PacketAcknowledgementReceived(spi
  */
 bool SpiTransportProvider::MessageContainsData(const uint8_t *buffer, uint32_t bufferLength)
 {
-    TRACE_MESSAGE("MessageContainsData: Enter");
     bool result = false;
     for (uint32_t index = 0; index < bufferLength; index++)
     {
@@ -848,7 +847,6 @@ bool SpiTransportProvider::MessageContainsData(const uint8_t *buffer, uint32_t b
             break;
         }
     }
-    TRACE_MESSAGE("MessageContainsData: Exit");
     return (result);
 }
 
@@ -864,8 +862,6 @@ bool SpiTransportProvider::MessageContainsData(const uint8_t *buffer, uint32_t b
  */
 bool SpiTransportProvider::SendingData(SpiStates state)
 {
-    TRACE_MESSAGE("SendingData: Enter");
-    TRACE_MESSAGE("SendingData: Exit");
     return ((_currentState == AcknowledgingPacket) || (_currentState == SendingPacketDetails) || (_currentState == SendingPacket));
 }
 

@@ -880,9 +880,6 @@ void WiFiRequestHandler::NtpServerCallback(struct timeval *tv)
  */
 gpio_num_t WiFiRequestHandler::ConvertAntennaToPin(AntennaTypes::AntennaTypes antenna)
 {
-    TRACE_MESSAGE("ConvertAntennaToPin: Enter");
-    TRACE_MESSAGE("ConvertAntennaToPin: Exit");
-
     return ((antenna == AntennaTypes::OnBoard) ? WiFiRequestHandler::ON_BOARD_ANTENNA_PIN : WiFiRequestHandler::EXTERNAL_ANTENNA_PIN);
 }
 
