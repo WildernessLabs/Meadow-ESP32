@@ -452,7 +452,7 @@ char *Logging::MessageSummary(const Message * const message)
 void Logging::AddPerformanceCounterEntry(const char *method, int64_t start, int64_t end)
 {
     uint64_t duration;
-    if (start < end) // Check if the counter has wrapped around.
+    if (start <= end) // Check if the counter has wrapped around.
     {
         duration = end - start;
     }
@@ -463,18 +463,21 @@ void Logging::AddPerformanceCounterEntry(const char *method, int64_t start, int6
     int pd = duration & 0xffffffff;
     PerformanceCounterEntry *pce = static_cast<PerformanceCounterEntry *>(pvPortMalloc(sizeof(PerformanceCounterEntry)));
 
-    pce->timestamp = esp_log_timestamp();
-    pce->method = method;
-    pce->duration = pd;
-    if (_performanceCounters[_nextPerformanceCounterEntry] != NULL)
+    if (pce != NULL)
     {
-        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&_performanceCounters[_nextPerformanceCounterEntry]));
-    }
-    _performanceCounters[_nextPerformanceCounterEntry] = pce;
-    _nextPerformanceCounterEntry++;
-    if (_nextPerformanceCounterEntry >= _numberOfPerformanceCounterSlots)
-    {
-        _nextPerformanceCounterEntry = 0;
+        pce->timestamp = esp_log_timestamp();
+        pce->method = method;
+        pce->duration = pd;
+        if (_performanceCounters[_nextPerformanceCounterEntry] != NULL)
+        {
+            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&_performanceCounters[_nextPerformanceCounterEntry]));
+        }
+        _performanceCounters[_nextPerformanceCounterEntry] = pce;
+        _nextPerformanceCounterEntry++;
+        if (_nextPerformanceCounterEntry >= _numberOfPerformanceCounterSlots)
+        {
+            _nextPerformanceCounterEntry = 0;
+        }
     }
 }
 
