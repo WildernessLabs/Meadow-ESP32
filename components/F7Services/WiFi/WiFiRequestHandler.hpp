@@ -997,7 +997,7 @@ public:
     /**
      *  @brief Perform and class level setup required before an instance can be used.
      */
-    void Setup();
+    void Setup() override;
 
     /**
      *  @brief This is the event handler called by FreeRTOS.
