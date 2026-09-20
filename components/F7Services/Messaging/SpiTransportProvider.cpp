@@ -772,7 +772,7 @@ spi_slave_transaction_t *SpiTransportProvider::PacketAcknowledgementReceived(spi
         {
 #if defined(PERFORMANCE_LOGGING)
             PERFORMANCE_LOGGING_EXIT();
-            Logging::AddPerformanceCounterEntry(Logging::MessageSummary(_outboundMessage), _outboundMessage->PerformanceLoggingStart, performance_logging_end);
+            Logging::AddPerformanceCounterEntry(Logging::MessageSummary(_outboundMessage), _outboundMessage->PerformanceLoggingStart, performance_logging_end, true);
 #endif
 
             UpdatePacketInformation(_outboundMessage);
