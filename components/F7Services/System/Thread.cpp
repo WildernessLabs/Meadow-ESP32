@@ -45,15 +45,11 @@ Thread::Thread() : _mutex(xSemaphoreCreateMutex())
     //  We explicitly create the _executeMethod semaphore here rather than in the member
     //  initialiser list as using the list has generated an exception in the past.
     //
-    //  We need to give the semaphore after it has been created as per the FreeRTOS documentation.
-    //  See: https://www.freertos.org/Documentation/02-Kernel/04-API-references/10-Semaphore-and-Mutexes/01-xSemaphoreCreateBinary
-    //
     _executeMethod = xSemaphoreCreateBinary();
     if (_executeMethod == NULL)
     {
         throw ThreadPoolException("Cannot create execute semaphore.");
     }
-    xSemaphoreGive(_executeMethod);
 }
 
 /**
@@ -71,11 +67,6 @@ Thread::Thread(char *name, task_completed_method_t taskCompletedMethod) : Thread
     TRACE_MESSAGE("Thread: Enter creating thread %s", name);
     _name = name;
     _taskCompletedMethod = taskCompletedMethod;
-    //
-    //  We take the execution semaphore here to prevent the Task from trying to execute
-    //  a method before one has been assigned to it.
-    //
-    TakeExecutionSemaphore();
     if (xTaskCreate(Thread::Task, _name, TASK_STACK_SIZE, this, PRIORITY_THREAD_POOL_TASK, &_taskHandle) != pdPASS)
     {
         throw ThreadPoolException("Cannot create task.");
