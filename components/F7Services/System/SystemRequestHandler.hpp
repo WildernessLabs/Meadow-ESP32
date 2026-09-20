@@ -158,7 +158,7 @@ public:
     /**
      *  @brief Perform any class level setup.
      */
-    void Setup();
+    void Setup() override;
 
     /**
      *  @brief Get a string configuration value.

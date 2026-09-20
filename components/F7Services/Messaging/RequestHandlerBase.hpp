@@ -109,7 +109,7 @@ public:
     /**
      *  @brief Setup the various properties for correct functioning of the request handler.
      */
-    void Setup();
+    virtual void Setup();
 
     /**
      *  @brief Add the message to the queue of messages waiting to be processed by the interface object.

@@ -258,7 +258,7 @@ public:
     /*
      *  Provide and additional setup operations not covered by the constructors.
      */
-    void Setup();
+    void Setup() override;
 
     /**
      *  This is the event handler called by FreeRTOS.  It merely passes the event on to

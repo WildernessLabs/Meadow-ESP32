@@ -81,13 +81,14 @@ bool Heap::_isRunning = false;
  */
 void Heap::Setup()
 {
-    esp_err_t result = ESP_FAIL;
-
     esp_log_level_set(COMPONENT_NAME, ESP_LOG_INFO);
 
     TRACE_MESSAGE("Setup: Enter");
 
-#if defined(CONFIG_HEAP_TRACING_STANDALONE)
+#if defined(CONFIG_HEAP_TRACING_STANDALONE) || defined(CONFIG_HEAP_TRACING_TOHOST)
+    esp_err_t result = ESP_FAIL;
+
+    #if defined(CONFIG_HEAP_TRACING_STANDALONE)
     _traceRecords = static_cast<heap_trace_record_t *>(pvPortMalloc(sizeof(heap_trace_record_t) * TRACE_RECORD_COUNT));
     if (_traceRecords == NULL)
     {
@@ -97,10 +98,10 @@ void Heap::Setup()
     {
         result = heap_trace_init_standalone(_traceRecords, TRACE_RECORD_COUNT);
     }
-#endif
-#if defined(CONFIG_HEAP_TRACING_TOHOST)
+    #endif
+    #if defined(CONFIG_HEAP_TRACING_TOHOST)
     result = heap_trace_init_tohost();
-#endif
+    #endif
     if (result != ESP_OK)
     {
         ERROR_MESSAGE("Failed to initialize heap tracing: %s", esp_err_to_name(result));
@@ -109,6 +110,9 @@ void Heap::Setup()
     {
         TRACE_MESSAGE("Heap tracing initialized successfully");
     }
+#else
+    TRACE_MESSAGE("Heap tracing not configured");
+#endif
 
     TRACE_MESSAGE("Setup: Exit");
 }

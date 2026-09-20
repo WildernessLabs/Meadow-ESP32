@@ -244,7 +244,7 @@ char *Encoders::ExtractString(const uint8_t * const buffer)
  */
 void Encoders::EncodeString(char *source, uint8_t *buffer)
 {
-    if ((source == nullptr) || (source == NULL))
+    if (source == nullptr)
     {
         *buffer = 0;
     }
@@ -268,7 +268,7 @@ uint32_t Encoders::StringLength(const char *str)
 {
     uint32_t length = 0;
 
-    if ((str != nullptr) || (str != NULL))
+    if (str != nullptr)
     {
         length = strlen(str);
     }
