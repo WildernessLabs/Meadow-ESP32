@@ -150,15 +150,6 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
      *  Set up the task and that will process the SPI messages.
      */
     _synchronisationSemaphore = xSemaphoreCreateBinary();
-    //
-    //  FreeRTOS documentation states that a binary semaphore must be given after creation as it is created "empty".
-    //  For more information, see https://www.freertos.org/xSemaphoreCreateBinary.html
-    //
-    xSemaphoreGive(_synchronisationSemaphore);
-    if (xSemaphoreTake(_synchronisationSemaphore, pdMS_TO_TICKS(500)) != pdTRUE)
-    {
-        ERROR_MESSAGE("Cannot take the synchronisation semaphore.");
-    }
     xTaskCreate(SynchronisationTask, "SPISyncTask", SYNCHRONISATION_TASK_STACK_SIZE, this, PRIORITY_SPI_SYNCHRONISATION_TASK, &SpiTransportProvider::_synchronisationTaskHandle);
 
     /*
