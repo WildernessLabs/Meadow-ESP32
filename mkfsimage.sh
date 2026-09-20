@@ -74,8 +74,8 @@ if $HELP; then
     echo "$0: Build a LittleFS image and optionally write it to the board."
     echo ""
     echo "The image is built from a directory of files on this machine.  Its geometry is"
-    echo "read from the project's partitions.csv and sdkconfig, so it cannot drift from"
-    echo "what the firmware will try to mount."
+    echo "read from the project's sdkconfig and from the partition table that sdkconfig"
+    echo "names, so it cannot drift from what the firmware will try to mount."
     echo ""
     echo "Options:"
     echo "-h | --help             Display this message"
@@ -93,6 +93,18 @@ if $HELP; then
     echo "    ./mkfsimage.sh --flash               build it and write it to the board"
     echo "    ./mkfsimage.sh --project=. --flash   the same for the application"
     echo ""
+    echo "Deploying an image to a board from a clean tree:"
+    echo "    1. idf.py reconfigure        in the project directory, to fetch the managed"
+    echo "                                 components that mklittlefs is built from"
+    echo "    2. ./mkfsimage.sh            build the image and list what went into it"
+    echo "    3. ./mkfsimage.sh --flash    write it to the board at the littlefs offset"
+    echo "    4. idf.py monitor            reset the board and read the mount back"
+    echo ""
+    echo "Step 1 is only needed after a full clean, which removes managed_components and"
+    echo "with it the mklittlefs sources.  Step 4 is worth the minute it costs: a failed"
+    echo "mount is not reported, so the only proof the image arrived is the firmware"
+    echo "reading the files back."
+    echo ""
     exit 0
 fi
 
@@ -104,15 +116,15 @@ PROJECT_DIR="$( cd "$scriptdir/$PROJECT" 2>/dev/null && pwd -P )" || {
 [ -z "$SOURCE" ] && SOURCE="$PROJECT_DIR/fsimage"
 [ -z "$OUTPUT" ] && OUTPUT="$PROJECT_DIR/littlefs.bin"
 
-PARTITIONS="$PROJECT_DIR/partitions.csv"
 SDKCONFIG="$PROJECT_DIR/sdkconfig"
 MKLITTLEFS_DIR="$PROJECT_DIR/managed_components/joltwallet__littlefs/mklittlefs"
 MKLITTLEFS="$MKLITTLEFS_DIR/mklittlefs"
 
-for required in "$PARTITIONS" "$SDKCONFIG" "$MKLITTLEFS_DIR"; do
+for required in "$SDKCONFIG" "$MKLITTLEFS_DIR"; do
     if [ ! -e "$required" ]; then
         printf "${red}Cannot find $required${reset}\n"
         printf "The project has to have been configured at least once before an image can be built.\n"
+        printf "Run idf.py reconfigure in $PROJECT_DIR first; see mkfsimage.sh --help.\n"
         exit 1
     fi
 done
@@ -121,6 +133,32 @@ if [ ! -d "$SOURCE" ]; then
     printf "${red}No such source directory: $SOURCE${reset}\n"
     exit 1
 fi
+
+#
+#   The partition table is the one the configuration names, not a file assumed to be in
+#   the project directory.  A project can build with any table it likes, the tests build
+#   with one from the directory above, and a partitions.csv can sit beside the project
+#   unused, describing a layout the firmware never had.  Taking the offset from that file
+#   would write the image where nothing is going to look for it.
+#
+PARTITIONS_NAME=$(grep -E "^CONFIG_PARTITION_TABLE_FILENAME=" "$SDKCONFIG" | cut -d= -f2- | tr -d '"')
+if [ -z "$PARTITIONS_NAME" ]; then
+    printf "${red}No CONFIG_PARTITION_TABLE_FILENAME in $SDKCONFIG${reset}\n"
+    exit 1
+fi
+
+case "$PARTITIONS_NAME" in
+    /*) PARTITIONS="$PARTITIONS_NAME" ;;
+    *)  PARTITIONS="$PROJECT_DIR/$PARTITIONS_NAME" ;;
+esac
+
+if [ ! -f "$PARTITIONS" ]; then
+    printf "${red}Cannot find the partition table $PARTITIONS${reset}\n"
+    printf "CONFIG_PARTITION_TABLE_FILENAME names it as $PARTITIONS_NAME.\n"
+    exit 1
+fi
+
+PARTITIONS="$( cd "$(dirname "$PARTITIONS")" && pwd -P )/$(basename "$PARTITIONS")"
 
 #
 #   Read the geometry from the project.  The offset and the size come from the partition
@@ -145,6 +183,7 @@ if [ -z "$OFFSET" ] || [ -z "$SIZE" ] || [ -z "$PAGE_SIZE" ] || [ -z "$NAME_MAX"
 fi
 
 printf "${bold}Image geometry, taken from $PROJECT${reset}\n"
+printf "  partition table  : %s\n" "$PARTITIONS"
 printf "  partition offset : %s\n" "$OFFSET"
 printf "  partition size   : %s\n" "$SIZE"
 printf "  page size        : %s\n" "$PAGE_SIZE"
