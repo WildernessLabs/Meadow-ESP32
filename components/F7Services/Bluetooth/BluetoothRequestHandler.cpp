@@ -896,7 +896,7 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
                 TRACE_MESSAGE("ESP_GATTS_REG_EVT");
 
                 _gattsInterfaceHandle = gatts_if;
-                esp_ble_gap_set_device_name(_manager._deviceName);
+                esp_ble_gap_set_device_name(_manager.GetDeviceName());
 
                 // turn on some security
                 //               esp_ble_gap_config_local_privacy(true);
