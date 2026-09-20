@@ -531,6 +531,42 @@ int32_t Mapping::GetFlagValue(const MappingTable mapping, const MappingDirection
  *  @param value
  *      Value to map.
  *
+ *  @param mappedValue
+ *      Mapped value if successful.
+ *
+ *  @returns
+ *      0 if the value could be found, -1 if there is a problem.
+ */
+int32_t Mapping::GetFlagValue(const MappingTable mapping, const MappingDirection type, const int32_t value, int16_t * const mappedValue)
+{
+    int32_t mappedFlags;
+    int32_t mappingResult = GetFlagValue(mapping, type, value, &mappedFlags);
+    if (mappingResult == 0)
+    {
+        *mappedValue = mappedFlags & 0xffff;
+    }
+
+    return (mappingResult);
+}
+
+/**
+ *  @brief Convert the specified flags for the specified platform.
+ *
+ *  This method will take a STM flags and convert it into the corresponding ESP
+ *  flags (or the reverse depending upon the requested direction).
+ *
+ *  Note that this is different from mapping a value as the flags could be an ORed
+ *  combination of values.
+ *
+ *  @param mapping
+ *      Which type of mapping should be used (i.e. which mapping table).
+ *
+ *  @param type
+ *      Direction of the mapping.
+ *
+ *  @param value
+ *      Value to map.
+ *
  *  @param result
  *      Mapped value if successful.
  *
@@ -772,7 +808,7 @@ int32_t Mapping::GetEspValue(const MappingTable mapping, const int32_t value, in
  */
 int32_t Mapping::GetStmValue(const MappingTable mapping, const int32_t value, int8_t * const result)
 {
-    return (GetValue(mapping, Mapping::StmToEsp, value, result));
+    return (GetValue(mapping, Mapping::EspToStm, value, result));
 }
 
 /**
@@ -792,7 +828,7 @@ int32_t Mapping::GetStmValue(const MappingTable mapping, const int32_t value, in
  */
 int32_t Mapping::GetStmValue(const MappingTable mapping, const int32_t value, int16_t * const result)
 {
-    return (GetValue(mapping, Mapping::StmToEsp, value, result));
+    return (GetValue(mapping, Mapping::EspToStm, value, result));
 }
 
 /**
@@ -855,6 +891,28 @@ int32_t Mapping::GetEspFlagValue(const MappingTable mapping, const int32_t value
  *      0 if successful, -1 if there was an error.
  */
 int32_t Mapping::GetStmFlagValue(const MappingTable mapping, const int32_t value, int32_t * const result)
+{
+    return (GetFlagValue(mapping, Mapping::EspToStm, value, result));
+}
+
+/**
+ *  @brief Get the STM flags from the ESP flags.
+ *
+ *  Note that the flags could be made up from multiple ORed flags.
+ *
+ *  @param mapping
+ *      Which type of mapping should be used (i.e. which mapping table).
+ *
+ *  @param value
+ *      Value to look for.
+ *
+ *  @param result
+ *      Pointer to the memory location to hold the mapped value.
+ *
+ *  @returns
+ *      0 if successful, -1 if there was an error.
+ */
+int32_t Mapping::GetStmFlagValue(const MappingTable mapping, const int32_t value, int16_t * const result)
 {
     return (GetFlagValue(mapping, Mapping::EspToStm, value, result));
 }
