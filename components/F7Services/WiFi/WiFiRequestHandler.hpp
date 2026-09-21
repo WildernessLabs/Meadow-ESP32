@@ -659,6 +659,17 @@ private:
     void ClearDefaultAccessPointAndPassword(Message *message);
 
     /**
+     *  @brief Indicate whether the given country code is one of _validCountryCodes.
+     *
+     *  @param code
+     *      Country code to check, which may be nullptr.
+     *
+     *  @returns
+     *      true if code is non-null and matches one of _validCountryCodes.
+     */
+    static bool IsValidCountryCode(const char *code);
+
+    /**
      *  @brief Convert the Antenna enum representation of an antenna into a GPIO pin number.
      */
     static gpio_num_t ConvertAntennaToPin(AntennaTypes::AntennaTypes antenna);
