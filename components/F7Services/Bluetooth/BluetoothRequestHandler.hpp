@@ -125,8 +125,13 @@ private:
 
     /**
      * @brief Table of attributes in the GATT database.
+     *
+     *  Initialised to nullptr so that the first call to GenerateAttributeTable() can
+     *  unconditionally delete[] whatever this currently holds before replacing it -
+     *  delete[] on a null pointer is a no-op, but on an uninitialised one it is undefined
+     *  behaviour.
      */
-    esp_gatts_attr_db_t *_attribute_table;
+    esp_gatts_attr_db_t *_attribute_table = nullptr;
 
     /**
      * @brief Number of elements in the attribute table.
