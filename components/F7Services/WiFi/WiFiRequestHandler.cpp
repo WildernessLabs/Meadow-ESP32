@@ -848,8 +848,11 @@ WiFiRequestHandler *WiFiRequestHandler::GetInstance()
  */
 void WiFiRequestHandler::ClearIpAndDisconnectData()
 {
-    memset(&_instance->_disconnectData, 0, sizeof(_disconnectData));
-    memset(&_instance->_ipInformation, 0, sizeof(_ipInformation));
+    if (_instance != nullptr)
+    {
+        memset(&_instance->_disconnectData, 0, sizeof(_disconnectData));
+        memset(&_instance->_ipInformation, 0, sizeof(_ipInformation));
+    }
 }
 
 /**
