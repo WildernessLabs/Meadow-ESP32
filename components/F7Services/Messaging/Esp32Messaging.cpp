@@ -264,6 +264,14 @@ Message *Message::CreateCopyOnHeap(const bool copyPayload)
         memcpy(static_cast<void *>(payload), static_cast<void *>(Payload), static_cast<size_t>(payloadLength));
     }
     Message *newMessage = CreateOnHeap(MessageType, Interface, Function, StatusCode, MessageID, payload, payloadLength);
+    if (newMessage == nullptr)
+    {
+        //
+        //  CreateOnHeap does not take ownership of payload on failure, so it is not
+        //  otherwise reachable from here and has to be released before returning.
+        //
+        vPortFree(payload);
+    }
     return (newMessage);
 }
 

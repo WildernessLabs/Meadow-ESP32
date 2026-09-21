@@ -172,6 +172,9 @@ BluetoothRequestHandler::~BluetoothRequestHandler()
     //  is given a freed object.  The constructor rejects a second instance by throwing
     //  and nothing catches that, so the guard has to go back with it.
     //
+    delete[] _attribute_table;
+    _attribute_table = nullptr;
+
     _instance = nullptr;
     _instantiated = false;
 }
@@ -348,6 +351,11 @@ void BluetoothRequestHandler::GenerateAttributeTable()
 
     TRACE_MESSAGE("ATTRIBUTE TABLE LENGTH = %" PRId32, count);
 
+    //
+    //  A restart calls this again without ever destroying the handler, so whatever the
+    //  previous call allocated has to be released here before it is replaced.
+    //
+    delete[] _attribute_table;
     _attribute_table = new esp_gatts_attr_db_t[count];
     _attributeTableLength = count;
 
