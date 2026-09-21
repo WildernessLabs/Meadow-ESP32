@@ -505,7 +505,7 @@ char *WiFiRequestHandler::GetDefaultAccessPoint()
 StatusCodes::StatusCodes WiFiRequestHandler::SetDefaultAccessPoint(const char *value)
 {
     TRACE_MESSAGE("WiFiRequestHandler::SetDefaultAccessPoint %s", (value == NULL) ? "NULL" : value);
-    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
+    StatusCodes::StatusCodes result = StatusCodes::Failure;
 
     if (value == NULL)
     {
@@ -516,7 +516,11 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetDefaultAccessPoint(const char *v
         _defaultAccessPoint = WiFiRequestHandler::_emptyString;
     }
 
-    if (strcmp(value, _defaultAccessPoint) != 0)
+    if (strcmp(value, _defaultAccessPoint) == 0)
+    {
+        result = StatusCodes::CompletedOk;
+    }
+    else
     {
         if (SystemRequestHandler::SetConfigurationValue(DEFAULT_ACCESS_POINT_NAME, value) == NvsManager::ErrorCodes::Ok)
         {
@@ -528,6 +532,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetDefaultAccessPoint(const char *v
                 free(_defaultAccessPoint);
             }
             _defaultAccessPoint = strdup(value);
+            result = StatusCodes::CompletedOk;
         }
     }
     return (result);
@@ -553,7 +558,7 @@ char *WiFiRequestHandler::GetPassword()
 StatusCodes::StatusCodes WiFiRequestHandler::SetPassword(const char *value)
 {
     TRACE_MESSAGE("WiFiRequestHandler::SetPassword %s", (value == NULL) ? "NULL" : value);
-    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
+    StatusCodes::StatusCodes result = StatusCodes::Failure;
 
     if (value == NULL)
     {
@@ -564,7 +569,11 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetPassword(const char *value)
         _password = WiFiRequestHandler::_emptyString;
     }
 
-    if (strcmp(value, _password) != 0)
+    if (strcmp(value, _password) == 0)
+    {
+        result = StatusCodes::CompletedOk;
+    }
+    else
     {
         if (SystemRequestHandler::SetConfigurationValue(PASSWORD_NAME, value) == NvsManager::ErrorCodes::Ok)
         {
@@ -576,6 +585,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetPassword(const char *value)
                 free(_password);
             }
             _password = strdup(value);
+            result = StatusCodes::CompletedOk;
         }
     }
     return (result);
