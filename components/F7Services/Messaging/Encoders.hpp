@@ -594,7 +594,7 @@ public:
     static void EncodeUInt32(const uint32_t, uint8_t * const);
     static uint32_t ExtractInt32(const uint8_t * const);
     static void EncodeInt32(const int32_t, uint8_t * const);
-    static char *ExtractString(const uint8_t * const);
+    static char *ExtractString(const uint8_t * const, const uint32_t maxLength = Message::MAXIMUM_PAYLOAD_LENGTH);
     static void EncodeString(char *, uint8_t *);
     static uint32_t StringLength(const char *);
     static uint8_t CRC8(const uint8_t *, const uint16_t);

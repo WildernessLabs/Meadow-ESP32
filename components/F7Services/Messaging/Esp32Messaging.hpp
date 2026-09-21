@@ -109,6 +109,17 @@ struct Message
     static const uint16_t MAXIMUM_PACKET_SIZE = (MAXIMUM_SPI_FRAME_SIZE - HEADER_SIZE - SPI_MESSAGE_OVERHEAD);
 
     /**
+     *  @brief Maximum number of bytes in a fully reassembled message payload.
+     *
+     *  A payload above MAXIMUM_PACKET_SIZE is split across several packets by
+     *  SpiTransportProvider and reassembled by the receiver, so this is a protocol-level
+     *  bound rather than a per-packet one.  It is not enforced anywhere on the wire; it
+     *  exists so decoders have a hard upper bound to scan against instead of trusting the
+     *  payload to be well-formed.
+     */
+    static const uint32_t MAXIMUM_PAYLOAD_LENGTH = 8192;
+
+    /**
      *  @brief Message ID used to indicate an invalid (or unknown) message ID.
      */
     static const uint32_t INVALID_MESSAGE_ID = 0xffffffff;

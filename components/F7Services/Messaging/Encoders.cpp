@@ -203,31 +203,42 @@ void Encoders::EncodeInt32(const int32_t value, uint8_t * const buffer)
 /**
  *  Extract a string (terminated by 0) from a block of memory.
  *
+ *  buffer has no guaranteed trailing NUL of its own - it is typically a view into a
+ *  message payload sized exactly to what was received on the wire.  The scan is bounded
+ *  by maxLength so a payload that never contains a NUL cannot walk past the end of that
+ *  block; nullptr is returned rather than treating an unterminated run as a string.
+ *
  *  @param buffer
  *      Pointer to the block of memory containing the string.
  *
+ *  @param maxLength
+ *      Number of bytes, starting at buffer, that may be scanned looking for the
+ *      terminator; the terminator itself must be one of those bytes.  Defaults to the
+ *      largest a reassembled message payload can be, which bounds the resulting string's
+ *      content to one byte less than that (the terminator takes the last slot).
+ *
  *  @returns
- *      Pointer to the extracted string.
+ *      Pointer to the extracted string, or nullptr if buffer holds an empty string or no
+ *      terminator was found within maxLength bytes.
  */
-char *Encoders::ExtractString(const uint8_t * const buffer)
+char *Encoders::ExtractString(const uint8_t * const buffer, const uint32_t maxLength)
 {
     uint32_t length = 0;
-    const uint8_t *ptr = buffer;
 
-    while (*ptr != 0)
+    while ((length < maxLength) && (buffer[length] != 0))
     {
-        ptr++;
         length++;
     }
 
     char *result = nullptr;
 
-    if (length != 0)
+    if ((length != 0) && (length < maxLength))
     {
         result = static_cast<char *>(pvPortMalloc(length + 1));
         if (result != NULL)
         {
-            strcpy(result, reinterpret_cast<const char *>(buffer));
+            memcpy(result, buffer, length);
+            result[length] = 0;
         }
     }
     return (result);
