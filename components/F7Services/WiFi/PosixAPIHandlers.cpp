@@ -20,10 +20,82 @@
 /*
  * ----------------------------------------------------------------------------
  *
+ *               Initialise class level static variables.
+ *
+ * ----------------------------------------------------------------------------
+ */
+
+/**
+ *  @brief Table mapping a handle handed to the STM32 to the addrinfo chain it stands in
+ *  for.  See the declaration in WiFiRequestHandler.hpp for why this exists.
+ */
+std::map<uint32_t, struct addrinfo *> WiFiRequestHandler::_addrInfoHandles;
+
+/**
+ *  @brief Next handle AddAddrInfoHandle will hand out.  0 is reserved, so the first
+ *  handle issued is 1.
+ */
+uint32_t WiFiRequestHandler::_nextAddrInfoHandle = 1;
+
+/*
+ * ----------------------------------------------------------------------------
+ *
  *                             Methods
  *
  * ----------------------------------------------------------------------------
  */
+
+/**
+ * @brief Record addressInformation under a new handle for a later FreeAddrInfo call to
+ *  find.
+ *
+ * @param addressInformation
+ *      Chain of addrinfo structures returned by getaddrinfo().
+ *
+ * @returns
+ *      Handle to send to the STM32 in place of addressInformation's real address.
+ */
+uint32_t WiFiRequestHandler::AddAddrInfoHandle(struct addrinfo * const addressInformation)
+{
+    const uint32_t handle = _nextAddrInfoHandle;
+
+    _nextAddrInfoHandle++;
+    if (_nextAddrInfoHandle == 0)
+    {
+        //
+        //  Wrapped past the top of a uint32_t.  0 is never issued, so resume from 1;
+        //  any handle issued this far back has certainly already been freed.
+        //
+        _nextAddrInfoHandle = 1;
+    }
+
+    _addrInfoHandles[handle] = addressInformation;
+
+    return (handle);
+}
+
+/**
+ * @brief Look up and remove the addrinfo chain recorded under handle.
+ *
+ * @param handle
+ *      Handle the STM32 is asking to free.
+ *
+ * @returns
+ *      The addrinfo chain, or nullptr if handle is not currently held.
+ */
+struct addrinfo *WiFiRequestHandler::TakeAddrInfoHandle(const uint32_t handle)
+{
+    struct addrinfo *result = nullptr;
+
+    auto entry = _addrInfoHandles.find(handle);
+    if (entry != _addrInfoHandles.end())
+    {
+        result = entry->second;
+        _addrInfoHandles.erase(entry);
+    }
+
+    return (result);
+}
 
 /**
  * @brief Get address information.
@@ -92,7 +164,6 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetAddrInfo(Esp32Messaging::GetAddr
         a.CanonName = (addressInformation->ai_canonname == NULL) ? NULL : strdup(addressInformation->ai_canonname);
         a.Family = addressInformation->ai_family;
         a.Flags = addressInformation->ai_flags;
-        a.MyHeapAddress = reinterpret_cast<uint32_t>(addressInformation);
         a.Next = addressInformation->ai_next;
         a.Protocol = addressInformation->ai_protocol;
         a.SocketType = addressInformation->ai_socktype;
@@ -108,6 +179,13 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetAddrInfo(Esp32Messaging::GetAddr
             freeaddrinfo(addressInformation);
             return (StatusCodes::EspOutOfMemory);
         }
+        //
+        //  A handle is only issued once addressInformation is certain to be handed to
+        //  the STM32; every failure path above still frees it directly instead.  Sending
+        //  the real heap address here would let a stale or corrupted value coming back
+        //  from the STM32 make freeaddrinfo operate on memory it does not own.
+        //
+        a.MyHeapAddress = AddAddrInfoHandle(addressInformation);
         Encoders::EncodeAddrInfo(&a, response->Res);
         free(a.CanonName);
         Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&a.Addr));
@@ -498,9 +576,23 @@ void WiFiRequestHandler::FreeAddrInfo(void * const vpMessage)
 
         if (request != NULL)
         {
-            freeaddrinfo(reinterpret_cast<struct addrinfo *>(request->AddrInfoAddress));
+            struct addrinfo *addressInformation = TakeAddrInfoHandle(request->AddrInfoAddress);
+            if (addressInformation != nullptr)
+            {
+                freeaddrinfo(addressInformation);
+                message->StatusCode = StatusCodes::CompletedOk;
+            }
+            else
+            {
+                //
+                //  The handle is not one this instance currently holds - never issued,
+                //  already freed, or held over an ESP32 restart.  There is nothing safe
+                //  to free, so the request is refused rather than trusting the value.
+                //
+                ERROR_MESSAGE("FreeAddrInfo: Handle %" PRIu32 " is not held; refusing the request.", request->AddrInfoAddress);
+                message->StatusCode = StatusCodes::InvalidRequest;
+            }
             Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&request));
-            message->StatusCode = StatusCodes::CompletedOk;
         }
         else
         {

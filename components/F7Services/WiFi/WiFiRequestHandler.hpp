@@ -773,6 +773,52 @@ private:
     //                      POSIX Calls start here.
 
     /**
+     * @brief Map from a handle handed to the STM32 to the addrinfo chain getaddrinfo()
+     *  allocated for it.
+     *
+     *  GetAddrInfo hands the STM32 a handle instead of the chain's real heap address, and
+     *  FreeAddrInfo looks the handle up here rather than trusting whatever value comes
+     *  back on the wire.  A handle is removed as soon as it is looked up, so a stale or
+     *  replayed handle - including one a still-connected STM32 held across an ESP32
+     *  restart - is refused rather than freeing memory it no longer owns or freeing it
+     *  twice.
+     */
+    static std::map<uint32_t, struct addrinfo *> _addrInfoHandles;
+
+    /**
+     * @brief Next handle AddAddrInfoHandle will hand out.
+     *
+     *  0 is never assigned, so it doubles as an unambiguous "no handle" value.
+     */
+    static uint32_t _nextAddrInfoHandle;
+
+    /**
+     * @brief Record addressInformation under a new handle for a later FreeAddrInfo call
+     *  to find.
+     *
+     * @param addressInformation
+     *      Chain of addrinfo structures returned by getaddrinfo().  Ownership is not
+     *      taken; the caller remains responsible for it until TakeAddrInfoHandle returns
+     *      it back.
+     *
+     * @returns
+     *      Handle to send to the STM32 in place of addressInformation's real address.
+     */
+    static uint32_t AddAddrInfoHandle(struct addrinfo * const addressInformation);
+
+    /**
+     * @brief Look up and remove the addrinfo chain recorded under handle.
+     *
+     * @param handle
+     *      Handle the STM32 is asking to free.
+     *
+     * @returns
+     *      The addrinfo chain, or nullptr if handle is not currently held, either because
+     *      it was never issued or because it has already been taken.
+     */
+    static struct addrinfo *TakeAddrInfoHandle(const uint32_t handle);
+
+    /**
      *  @brief Provide a mechanism for the STM32 to call the getaddrinfo method.
      */
     static StatusCodes::StatusCodes GetAddrInfo(Esp32Messaging::GetAddrInfoRequest * const request, Esp32Messaging::GetAddrInfoResponse * const response);
