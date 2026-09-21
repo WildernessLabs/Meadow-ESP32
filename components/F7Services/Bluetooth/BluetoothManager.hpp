@@ -274,7 +274,18 @@ public:
     /**
      * @brief Build the graph of services, characteristics and descriptors from a pointer toJSON configuration.
      *
+     *  configuration is refused, and nothing is parsed, when it is null or its length is
+     *  not less than Message::MAXIMUM_PAYLOAD_LENGTH, the documented bound on a fully
+     *  reassembled message payload.  Without this check, cJSON_Parse would be handed a
+     *  document bounded by nothing but the SPI payload itself, and an arbitrarily large
+     *  one could exhaust the heap before any of the post-parse service and characteristic
+     *  count limits get a chance to run.
+     *
      * @param configuration JSON version of the Bluetooth configuration.
+     *
+     * @returns
+     *      true if configuration was parsed and the graph was built from it, false if
+     *      configuration was refused.
      */
-    void BuildGraphFromJson(const char * const configuration);
+    bool BuildGraphFromJson(const char * const configuration);
 };

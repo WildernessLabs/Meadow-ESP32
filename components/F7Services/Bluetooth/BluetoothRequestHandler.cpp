@@ -853,19 +853,26 @@ void BluetoothRequestHandler::Start(Message * const request)
     Esp32Messaging::BTStackConfig *config = Encoders::ExtractBTStackConfig(request->Payload);
     request->DeletePayload();
 
-    _manager.BuildGraphFromJson(config->Config);
+    bool graphBuilt = _manager.BuildGraphFromJson(config->Config);
     Encoders::FreeBTStackConfig(&config);
 
-    GenerateAdvertisingData();
-    GenerateAttributeTable();
-    if (StartBluetoothService())
+    if (!graphBuilt)
     {
-        request->StatusCode = StatusCodes::CompletedOk;
-        RaiseEvent(Esp32Interfaces::BlueTooth, BluetoothFunction::BluetoothStartedEvent, StatusCodes::CompletedOk);
+        request->StatusCode = StatusCodes::InvalidConfigurationFile;
     }
     else
     {
-        request->StatusCode = StatusCodes::Failure;
+        GenerateAdvertisingData();
+        GenerateAttributeTable();
+        if (StartBluetoothService())
+        {
+            request->StatusCode = StatusCodes::CompletedOk;
+            RaiseEvent(Esp32Interfaces::BlueTooth, BluetoothFunction::BluetoothStartedEvent, StatusCodes::CompletedOk);
+        }
+        else
+        {
+            request->StatusCode = StatusCodes::Failure;
+        }
     }
 
     request->MessageType = MessageTypes::Response;

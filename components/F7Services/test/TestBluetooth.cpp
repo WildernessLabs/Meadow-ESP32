@@ -134,6 +134,31 @@ static void TestNotifyCharacteristic(const char * const configuration)
 }
 
 /**
+ * @brief Check that Start is refused when the configuration cannot fit within a single
+ *        message payload, rather than being handed to cJSON unbounded.
+ *
+ *  Regression check for issue #225.  The configuration here carries no NUL anywhere in
+ *  the first Message::MAXIMUM_PAYLOAD_LENGTH bytes, so Encoders::ExtractString cannot find
+ *  a terminator within that bound and BuildGraphFromJson is called with a null
+ *  configuration.  The graph is never built and, unlike the other tests in this file,
+ *  nothing here touches the radio, so it runs under emulation.
+ */
+TEST_CASE("Start is refused when the configuration is not shorter than the maximum payload length", "[Bluetooth][Emulated]")
+{
+    MockMessageDispatcher *dispatcher = SetupMessageDispatcher();
+    TEST_ASSERT_NOT_NULL(dispatcher);
+
+    const uint32_t payloadLength = Message::MAXIMUM_PAYLOAD_LENGTH + 16;
+    uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
+    TEST_ASSERT_NOT_NULL(payload);
+    memset(payload, 'x', payloadLength);
+
+    RunBluetoothLifecycleRequest(dispatcher, BluetoothFunction::Start, BluetoothFunction::BluetoothStartingEvent, NO_COMPLETION_EVENT, StatusCodes::InvalidConfigurationFile, payload, payloadLength);
+
+    ResetMessageDispatcher();
+}
+
+/**
  * @brief Test starting a Bluetooth service for MeadowA, Company ID Espressif (0x02e5).
  */
 TEST_CASE("Start Bluetooth (MeadowA, Espressif)", CLASS_OF_TESTS)
