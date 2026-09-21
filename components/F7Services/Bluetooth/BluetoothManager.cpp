@@ -433,9 +433,9 @@ void BluetoothManager::AddCharacteristics(const cJSON * const json, BluetoothSer
     TRACE_MESSAGE("AddCharacteristics: Enter");
 
     const cJSON * const characteristics = cJSON_GetObjectItem(json, CHARACTERISTICS_KEY);
-    if (!cJSON_IsArray(characteristics))
+    if ((characteristics == nullptr) || !cJSON_IsArray(characteristics))
     {
-        TRACE_MESSAGE(CHARACTERISTICS_KEY " is not an array");
+        TRACE_MESSAGE(CHARACTERISTICS_KEY " is missing or not an array");
         return;
     }
 
