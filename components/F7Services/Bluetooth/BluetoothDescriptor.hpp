@@ -88,9 +88,14 @@ public:
     uint16_t CurrentLength;
 
     /**
-     * @brief Pointer to the block of memory holding the value.
+     * @brief Get a read-only view of the block of memory holding the value.
+     *
+     * @return Pointer to the value.  Ownership stays with the descriptor; the caller must not delete it.
      */
-    uint8_t *Value;
+    const uint8_t *GetValue() const
+    {
+        return (Value);
+    }
 
 private:
     /**
@@ -102,6 +107,11 @@ private:
      * @brief Is the UUID 128 bits?
      */
     bool _is128 = false;
+
+    /**
+     * @brief Pointer to the block of memory holding the value.
+     */
+    uint8_t *Value;
 
     /**
      * @brief Deleted copy constructor to prevent copying.
