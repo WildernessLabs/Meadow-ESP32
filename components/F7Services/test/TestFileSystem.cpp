@@ -297,6 +297,49 @@ TEST_CASE("WriteFile rejects a zero-length file", CLASS_OF_TESTS)
 }
 
 /**
+ * @brief Check that WriteFile rejects a request with no file name.
+ *
+ *  A request with no Name previously reached std::string::operator+=(nullptr), which is
+ *  undefined behaviour (ExtractString returns nullptr for an empty name).  WriteFile must
+ *  recognise a missing Name explicitly, report failure, and leave the file system
+ *  untouched.
+ */
+TEST_CASE("WriteFile rejects a request with no file name", CLASS_OF_TESTS)
+{
+    FileSystemTestContext context = {};
+    CreateFileSystemTestContext(&context, true);
+
+    //
+    //  Build a write request carrying contents but no file name.
+    //
+    Message *writeMessage = CreateFileNameAndContentsMessage(SystemFunction::FileSystemWriteFile, nullptr, reinterpret_cast<const uint8_t *>(TEST_FILE_CONTENTS), strlen(TEST_FILE_CONTENTS));
+
+    context.Fs->WriteFile(writeMessage);
+
+    //
+    //  Verify exactly one response is queued and that it reports failure with no payload
+    //  attached.
+    //
+    ASSERT_OUTBOUND_QUEUE_LENGTH(context.Dispatcher, 1);
+
+    Message *response = context.Dispatcher->GetOutboundMessage();
+    ASSERT_RESPONSE(response, Esp32Interfaces::System, SystemFunction::FileSystemWriteFile, StatusCodes::Failure);
+    ASSERT_MESSAGE_ID(response, TEST_MESSAGE_ID);
+    ASSERT_NO_PAYLOAD(response);
+
+    ASSERT_OUTBOUND_QUEUE_LENGTH(context.Dispatcher, 0);
+
+    //
+    //  The rejected request must not have created a file.
+    //
+    TEST_ASSERT_EQUAL(0, CountFiles());
+
+    Message::DeleteMessage(writeMessage);
+
+    ReleaseFileSystemTestContext(&context);
+}
+
+/**
  * @brief Test case for reading a file from the file system.
  */
 TEST_CASE("Reading a file", CLASS_OF_TESTS)
