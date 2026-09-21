@@ -292,6 +292,40 @@ static MockMessageDispatcher *SetupConnectedDispatcher()
 }
 
 /**
+ * @brief Check that FreeAddrInfo refuses a handle it never issued, rather than trusting
+ *        whatever value the STM32 sends back.
+ *
+ *  Regression check for issue #220.  GetAddrInfo now hands the STM32 an opaque handle
+ *  instead of the real heap address of the addrinfo chain, and FreeAddrInfo has to
+ *  refuse a handle it is not currently holding - never issued, already freed, or
+ *  replayed from before an ESP32 restart - rather than calling freeaddrinfo on whatever
+ *  address that value happens to decode to.
+ *
+ * @note This does not need a DNS lookup or a live connection, only a WiFi request
+ *       handler, but sending it any WiFi-interface message brings the handler up the same
+ *       way every other test in this file does - through MockMessageDispatcher, which
+ *       creates it and calls Setup() the first time it sees one.  Setup() touches the
+ *       radio and the antenna GPIOs, so this is CLASS_OF_TESTS like the rest of the file
+ *       rather than [Emulated].
+ */
+TEST_CASE("FreeAddrInfo refuses a handle it never issued", CLASS_OF_TESTS)
+{
+    MockMessageDispatcher *dispatcher = SetupMessageDispatcher();
+    TEST_ASSERT_NOT_NULL(dispatcher);
+
+    uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(sizeof(uint32_t)));
+    TEST_ASSERT_NOT_NULL(payload);
+    Encoders::EncodeUInt32(0xdeadbeef, payload);
+
+    Message *response = SendRequest(dispatcher, Esp32Interfaces::WiFi, WiFiFunction::FreeAddrInfo, payload, sizeof(uint32_t), SOCKET_RESPONSE_TIMEOUT);
+    TEST_ASSERT_NOT_NULL_MESSAGE(response, "The FreeAddrInfo request was never answered.");
+
+    TEST_ASSERT_EQUAL(StatusCodes::InvalidRequest, response->StatusCode);
+
+    Message::DeleteMessage(response);
+}
+
+/**
  * @brief Fetch the default page from the test web server using recvfrom.
  */
 TEST_CASE("Fetch a web page using recvfrom", CLASS_OF_TESTS)
