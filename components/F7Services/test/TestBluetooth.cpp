@@ -10,6 +10,8 @@
 #include <dirent.h>
 #include <string>
 #include <string.h>
+#include "esp_heap_caps.h"
+#include "esp_system.h"
 #include "unity.h"
 
 #include "MockMessageDispatcher.hpp"
@@ -320,10 +322,22 @@ TEST_CASE("Restart Bluetooth Service repeatedly (test for memory leak)", CLASS_O
     MockMessageDispatcher *dispatcher = SetupMessageDispatcher();
     TEST_ASSERT_NOT_NULL(dispatcher);
 
+    //
+    //  One start/stop cycle before the measurements start, so that anything allocated
+    //  once and kept (e.g. lazily-initialised Bluetooth controller state) is not counted
+    //  as a leak.
+    //
+    StartBluetoothService(dispatcher, meadow_a_json);
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
+    StopBluetoothService(dispatcher);
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
+
     const uint32_t iterations = UnitTestConfiguration::BluetoothRestartIterations();
+    const uint32_t heapAtStart = esp_get_free_heap_size();
+
     for (uint32_t counter = 0; counter < iterations; counter++)
     {
-        printf("Iteration %" PRIu32 " of %" PRIu32 "\n", counter + 1, iterations);
+        printf("Iteration %" PRIu32 " of %" PRIu32 ", free heap %" PRIu32 " bytes.\n", counter + 1, iterations, esp_get_free_heap_size());
 
         StartBluetoothService(dispatcher, meadow_a_json);
         vTaskDelay(1000 / portTICK_PERIOD_MS);
@@ -336,6 +350,23 @@ TEST_CASE("Restart Bluetooth Service repeatedly (test for memory leak)", CLASS_O
 
         StopBluetoothService(dispatcher);
         vTaskDelay(1000 / portTICK_PERIOD_MS);
+    }
+
+    const uint32_t heapAtEnd = esp_get_free_heap_size();
+
+    printf("Free heap %" PRIu32 " bytes at the start, %" PRIu32 " at the end.\n", heapAtStart, heapAtEnd);
+
+    //
+    //  The heap is not expected to come back to exactly where it started, because
+    //  allocation patterns leave it slightly differently arranged, but a real leak over
+    //  this many restarts is far larger than the allowance the configuration gives.
+    //
+    if (heapAtEnd < heapAtStart)
+    {
+        const uint32_t allowance = UnitTestConfiguration::SoakHeapAllowance();
+        const uint32_t lost = heapAtStart - heapAtEnd;
+        printf("Free heap fell by %" PRIu32 " bytes over %" PRIu32 " restarts, against an allowance of %" PRIu32 ".\n", lost, iterations, allowance);
+        TEST_ASSERT_TRUE_MESSAGE(lost <= allowance, "The free heap fell too far, which suggests a leak in the Bluetooth attribute teardown path.");
     }
 
     ResetMessageDispatcher();

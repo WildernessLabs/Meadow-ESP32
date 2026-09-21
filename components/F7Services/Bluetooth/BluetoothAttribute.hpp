@@ -85,6 +85,13 @@ public:
     static const char *COMPONENT_NAME;
 
     /**
+     * @brief Virtual destructor.  BluetoothCharacteristicDeclaration, BluetoothCharacteristicValue
+     *  and BluetoothDescriptor are all deleted dynamically during normal service teardown; without
+     *  this, deleting one of them through a BluetoothAttribute pointer would be undefined behaviour.
+     */
+    virtual ~BluetoothAttribute() = default;
+
+    /**
      * @brief Permissions for this attribute
      */
     CharacteristicPermission Permission;
