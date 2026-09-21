@@ -237,7 +237,12 @@ bool TransportProviderBase::QueueMessageForStm32(Message * const message)
 void TransportProviderBase::SendControlMessageToStm32(const ControlMessageType messageType)
 {
     char const *message = nullptr;
-    char smallBuffer[20];
+    //
+    //  "\n+++RST,%" PRIi32 "\n" with the most negative int32_t reset reason, plus the NUL
+    //  terminator: 1 (leading \n) + 7 ("+++RST,") + 11 ("-2147483648") + 1 (trailing \n) +
+    //  1 (NUL) = 21 bytes.  Using 32 to give some headroom.
+    //
+    char smallBuffer[32];
 
     switch (messageType)
     {
@@ -265,7 +270,7 @@ void TransportProviderBase::SendControlMessageToStm32(const ControlMessageType m
     }
     if (message)
     {
-        printf(message);
+        printf("%s", message);
     }
 }
 
