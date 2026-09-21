@@ -1248,7 +1248,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::RecvFrom(Esp32Messaging::RecvFromRe
             {
                 response.Buffer = nullptr;
                 response.Result = -1;
-                response.ResponseErrno = ENOMEM;
+                response.ResponseErrno = Mapping::NuttxErrno(ENOMEM);
                 return (StatusCodes::EspOutOfMemory);
             }
             memset(sa, 0, sizeof(struct sockaddr_in));
@@ -1259,7 +1259,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::RecvFrom(Esp32Messaging::RecvFromRe
         {
             response.Buffer = nullptr;
             response.Result = -1;
-            response.ResponseErrno = ENOMEM;
+            response.ResponseErrno = Mapping::NuttxErrno(ENOMEM);
             Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&sa));
             return (StatusCodes::EspOutOfMemory);
         }
@@ -1270,7 +1270,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::RecvFrom(Esp32Messaging::RecvFromRe
 
         if (response.Result < 0)
         {
-            response.ResponseErrno = errno;
+            response.ResponseErrno = Mapping::NuttxErrno(errno);
         }
         else
         {
@@ -1287,7 +1287,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::RecvFrom(Esp32Messaging::RecvFromRe
                     response.SourceAddressLength = 0;
                     response.SourceAddressLen = 0;
                     response.Result = -1;
-                    response.ResponseErrno = ENOMEM;
+                    response.ResponseErrno = Mapping::NuttxErrno(ENOMEM);
                     Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&sa));
                     return (StatusCodes::EspOutOfMemory);
                 }
@@ -1312,7 +1312,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::RecvFrom(Esp32Messaging::RecvFromRe
     }
     else
     {
-        response.ResponseErrno = EFAULT;
+        response.ResponseErrno = Mapping::NuttxErrno(EFAULT);
     }
     TRACE_MESSAGE("RecvFrom: Received %" PRIi32 " bytes.", response.Result);
     if (response.Buffer && (response.BufferLength > 0))
@@ -1320,10 +1320,6 @@ StatusCodes::StatusCodes WiFiRequestHandler::RecvFrom(Esp32Messaging::RecvFromRe
         TRACE_HEX_BUFFER(response.Buffer, response.Result);
     }
     TRACE_MESSAGE("RecvFrom: Result: %" PRIi32 ", errno: %" PRIi32 " - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
-    if (response.Result < 0)
-    {
-        response.ResponseErrno = Mapping::NuttxErrno(response.ResponseErrno);
-    }
     return (StatusCodes::CompletedOk);
 }
 
@@ -1629,7 +1625,7 @@ void WiFiRequestHandler::RecvMsg(void * const vpMessage)
                 if (response.Buffer == NULL)
                 {
                     response.Result = -1;
-                    response.ResponseErrno = ENOMEM;
+                    response.ResponseErrno = Mapping::NuttxErrno(ENOMEM);
                 }
                 else
                 {
@@ -1663,7 +1659,7 @@ void WiFiRequestHandler::RecvMsg(void * const vpMessage)
 
                     if (response.Result < 0)
                     {
-                        response.ResponseErrno = errno;
+                        response.ResponseErrno = Mapping::NuttxErrno(errno);
                         response.BufferLength = 0;
                         response.SourceAddress = nullptr;
                         response.SourceAddressLength = 0;
@@ -1709,12 +1705,7 @@ void WiFiRequestHandler::RecvMsg(void * const vpMessage)
             }
             else
             {
-                response.ResponseErrno = EINVAL;
-            }
-
-            if (response.Result < 0)
-            {
-                response.ResponseErrno = Mapping::NuttxErrno(response.ResponseErrno);
+                response.ResponseErrno = Mapping::NuttxErrno(EINVAL);
             }
 
             TRACE_MESSAGE("RecvMsg: Result: %" PRIi32 ", errno: %" PRIi32 " - %s, msg_flags: 0x%" PRIx32, response.Result, response.ResponseErrno, strerror(response.ResponseErrno), response.MsgFlags);
