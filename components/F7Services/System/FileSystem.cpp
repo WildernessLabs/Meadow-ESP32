@@ -281,9 +281,7 @@ void FileSystem::Format(Message * const message)
         }
     }
 
-    message->MessageType = MessageTypes::Response;
-    message->StatusCode = result;
-    _messageDispatcher->QueueMessageForStm32(message);
+    SendResponse(message, result);
 
     TRACE_MESSAGE("Format: Exit");
 }
@@ -317,6 +315,31 @@ bool FileSystem::IsValidFileName(const char * const name)
         }
     }
     return (result);
+}
+
+/**
+ * @brief Turn a request into its response and hand it to the dispatcher.
+ *
+ * @param message
+ *      Request being turned into its own response.
+ *
+ * @param result
+ *      Status code the response should carry.
+ */
+void FileSystem::SendResponse(Message * const message, const StatusCodes::StatusCodes result)
+{
+    message->MessageType = MessageTypes::Response;
+    message->StatusCode = result;
+
+    if (_messageDispatcher == nullptr)
+    {
+        TRACE_MESSAGE("SendResponse: No message dispatcher, discarding the response.");
+        Message::DeleteMessage(message);
+    }
+    else
+    {
+        _messageDispatcher->QueueMessageForStm32(message);
+    }
 }
 
 /**
@@ -397,9 +420,7 @@ void FileSystem::ReadFile(Message * const message)
         Encoders::FreeFileNameAndContents(&fileData);
     }
 
-    message->MessageType = MessageTypes::Response;
-    message->StatusCode = result;
-    _messageDispatcher->QueueMessageForStm32(message);
+    SendResponse(message, result);
 
     TRACE_MESSAGE("ReadFile: Exit");
 }
@@ -459,9 +480,7 @@ void FileSystem::WriteFile(Message * const message)
         result = StatusCodes::EspOutOfMemory;
     }
 
-    message->MessageType = MessageTypes::Response;
-    message->StatusCode = result;
-    _messageDispatcher->QueueMessageForStm32(message);
+    SendResponse(message, result);
 
     TRACE_MESSAGE("WriteFile: Exit");
 }
@@ -511,9 +530,7 @@ void FileSystem::DeleteFile(Message * const message)
         result = StatusCodes::EspOutOfMemory;
     }
 
-    message->MessageType = MessageTypes::Response;
-    message->StatusCode = result;
-    _messageDispatcher->QueueMessageForStm32(message);
+    SendResponse(message, result);
 
     TRACE_MESSAGE("DeleteFile: Exit");
 }
@@ -607,9 +624,7 @@ void FileSystem::ListFiles(Message *message)
         }
     }
 
-    message->MessageType = MessageTypes::Response;
-    message->StatusCode = result;
-    _messageDispatcher->QueueMessageForStm32(message);
+    SendResponse(message, result);
 
     TRACE_MESSAGE("ListFiles: Exit");
 }
