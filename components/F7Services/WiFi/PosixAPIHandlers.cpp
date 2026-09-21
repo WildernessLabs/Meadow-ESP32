@@ -16,6 +16,7 @@
 #include "Mapping.hpp"
 #include "Utils.hpp"
 #include "SystemRequestHandler.hpp"
+#include "Exceptions/ThreadPoolException.hpp"
 
 /*
  * ----------------------------------------------------------------------------
@@ -2982,7 +2983,26 @@ int WiFiRequestHandler::PollSetup(void * const vpMessage)
     DumpActivePollRequests();
 #endif
 
-    SystemRequestHandler::SharedThreadPool()->Execute(PollSocket, reinterpret_cast<void *>(request->SetupMessageId));
+    try
+    {
+        SystemRequestHandler::SharedThreadPool()->Execute(PollSocket, reinterpret_cast<void *>(request->SetupMessageId));
+    }
+    catch (const ThreadPoolException &)
+    {
+        //
+        //  The pool has no free worker to run PollSocket, so nothing will ever call
+        //  PollTeardown for this request.  The entry, the dummy socket and fds have to be
+        //  cleaned up here instead, mirroring the duplicate-setup-message-ID rejection
+        //  above.
+        //
+        TRACE_MESSAGE("PollSetup: Thread pool exhausted, rejecting");
+        LockPollRequests();
+        _pollRequests.erase(request->SetupMessageId);
+        UnlockPollRequests();
+        close(dummy_socket_handle);
+        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&fds));
+        return (-1);
+    }
 
     TRACE_MESSAGE("PollSetup: Exit, result %d", result);
 
