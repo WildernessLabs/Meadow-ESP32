@@ -193,13 +193,16 @@ bool FileSystem::Mount()
         {
             TRACE_MESSAGE("Failed to mount or format filesystem");
         }
-        else if (ret == ESP_ERR_NOT_FOUND)
-        {
-            TRACE_MESSAGE("Failed to find LittleFS partition");
-        }
         else
         {
-            TRACE_MESSAGE("Failed to initialize LittleFS (%s)", esp_err_to_name(ret));
+            if (ret == ESP_ERR_NOT_FOUND)
+            {
+                TRACE_MESSAGE("Failed to find LittleFS partition");
+            }
+            else
+            {
+                TRACE_MESSAGE("Failed to initialize LittleFS (%s)", esp_err_to_name(ret));
+            }
         }
         result = false;
     }
@@ -388,21 +391,24 @@ void FileSystem::WriteFile(Message * const message)
         }
         else
         {
-            std::string s = PARTITION_PATH_NAME;
-            s += "/";
-            s += fileData->Name;
-            TRACE_MESSAGE("Writing %" PRIu32 " bytes into file %s", fileData->ContentsLength, s.c_str());
-            TRACE_HEX_BUFFER(fileData->Contents, fileData->ContentsLength);
-            FILE *file = fopen(s.c_str(), "w");
-            if (file != NULL)
+            if (fileData->Name != NULL)
             {
-                int amount = fwrite(fileData->Contents, 1, fileData->ContentsLength, file);
-                TRACE_MESSAGE("Written %" PRIu32 " bytes", static_cast<uint32_t>(amount));
-                if (static_cast<uint32_t>(amount) == fileData->ContentsLength)
+                std::string s = PARTITION_PATH_NAME;
+                s += "/";
+                s += fileData->Name;
+                TRACE_MESSAGE("Writing %" PRIu32 " bytes into file %s", fileData->ContentsLength, s.c_str());
+                TRACE_HEX_BUFFER(fileData->Contents, fileData->ContentsLength);
+                FILE *file = fopen(s.c_str(), "w");
+                if (file != NULL)
                 {
-                    result = StatusCodes::CompletedOk;
+                    int amount = fwrite(fileData->Contents, 1, fileData->ContentsLength, file);
+                    TRACE_MESSAGE("Written %" PRIu32 " bytes", static_cast<uint32_t>(amount));
+                    if (static_cast<uint32_t>(amount) == fileData->ContentsLength)
+                    {
+                        result = StatusCodes::CompletedOk;
+                    }
+                    fclose(file);
                 }
-                fclose(file);
             }
 
             Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&fileData->Contents));
@@ -482,62 +488,58 @@ void FileSystem::ListFiles(Message *message)
     StatusCodes::StatusCodes result = StatusCodes::Failure;
     message->DeletePayload();
 
-    int count = 0;
     DIR *dp = opendir(FileSystem::PARTITION_PATH_NAME);
     if (dp != NULL)
     {
         TRACE_MESSAGE("Directory %s opened.", FileSystem::PARTITION_PATH_NAME);
-        struct dirent *ep;
-        while ((ep = readdir(dp)) != NULL)
-        {
-            count++;
-        }
-        rewinddir(dp);
         Esp32Messaging::FileNameList fileNameList;
         memset(&fileNameList, 0, sizeof(fileNameList));
         uint32_t bufferLength = 0;
-        TRACE_MESSAGE("Found %" PRIi32 " files.", static_cast<int32_t>(count));
-        if (count > 0)
+        //
+        //  NumberOfFiles is incremented only when an entry is actually encoded into
+        //  FileDetails, so the two can never disagree, even if a directory change or an
+        //  out-of-memory partway through means fewer entries are encoded than exist.
+        //
+        struct dirent *ep;
+        while (((ep = readdir(dp)) != NULL) && (result != StatusCodes::EspOutOfMemory))
         {
-            while (((ep = readdir(dp)) != NULL) && (result != StatusCodes::EspOutOfMemory))
+            Esp32Messaging::FileDetails details;
+            memset(&details, 0, sizeof(details));
+            //
+            //  details.Name borrows the storage owned by the DIR object.  It is only valid until the next readdir or closedir call.
+            //
+            details.Name = ep->d_name;
+            std::string s = PARTITION_PATH_NAME;
+            s += "/";
+            s += ep->d_name;
+            struct stat fileInfo;
+            if (stat(s.c_str(), &fileInfo) == 0)
             {
-                Esp32Messaging::FileDetails details;
-                memset(&details, 0, sizeof(details));
-                //
-                //  details.Name borrows the storage owned by the DIR object.  It is only valid until the next readdir or closedir call.
-                //
-                details.Name = ep->d_name;
-                std::string s = PARTITION_PATH_NAME;
-                s += "/";
-                s += ep->d_name;
-                struct stat fileInfo;
-                if (stat(s.c_str(), &fileInfo) == 0)
-                {
-                    details.Length = fileInfo.st_size;
-                }
-                else
-                {
-                    details.Length = 0;
-                }
-                TRACE_MESSAGE("    File: %s, length: %" PRIu16, details.Name, details.Length);
-                bufferLength += Encoders::EncodedFileDetailsBufferSize(&details);
-                uint8_t *newBuffer = static_cast<uint8_t *>(Utils::Realloc(fileNameList.FileDetails, fileNameList.FileDetailsLength, bufferLength));
-                if (newBuffer != NULL)
-                {
-                    fileNameList.FileDetails = newBuffer;
-                    Encoders::EncodeFileDetails(&details, fileNameList.FileDetails + fileNameList.FileDetailsLength);
-                    fileNameList.FileDetailsLength = bufferLength;
-                }
-                else
-                {
-                    result = StatusCodes::EspOutOfMemory;
-                }
+                details.Length = fileInfo.st_size;
+            }
+            else
+            {
+                details.Length = 0;
+            }
+            TRACE_MESSAGE("    File: %s, length: %" PRIu16, details.Name, details.Length);
+            bufferLength += Encoders::EncodedFileDetailsBufferSize(&details);
+            uint8_t *newBuffer = static_cast<uint8_t *>(Utils::Realloc(fileNameList.FileDetails, fileNameList.FileDetailsLength, bufferLength));
+            if (newBuffer != NULL)
+            {
+                fileNameList.FileDetails = newBuffer;
+                Encoders::EncodeFileDetails(&details, fileNameList.FileDetails + fileNameList.FileDetailsLength);
+                fileNameList.FileDetailsLength = bufferLength;
+                fileNameList.NumberOfFiles++;
+            }
+            else
+            {
+                result = StatusCodes::EspOutOfMemory;
             }
         }
         closedir(dp);
+        TRACE_MESSAGE("Found %" PRIi32 " files.", static_cast<int32_t>(fileNameList.NumberOfFiles));
         if (result != StatusCodes::EspOutOfMemory)
         {
-            fileNameList.NumberOfFiles = count;
             message->PayloadLength = Encoders::EncodedFileNameListBufferSize(&fileNameList);
             message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
             if (message->Payload == NULL)

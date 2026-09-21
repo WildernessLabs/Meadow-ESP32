@@ -92,7 +92,7 @@ public:
     /**
      * @brief Destroy the BluetoothCharacteristicValue object and release any allocated resources.
      */
-    ~BluetoothCharacteristicValue();
+    ~BluetoothCharacteristicValue() override;
 
     /**
      * @brief Set the value of the characteristic.

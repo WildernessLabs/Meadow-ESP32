@@ -505,7 +505,7 @@ char *WiFiRequestHandler::GetDefaultAccessPoint()
 StatusCodes::StatusCodes WiFiRequestHandler::SetDefaultAccessPoint(const char *value)
 {
     TRACE_MESSAGE("WiFiRequestHandler::SetDefaultAccessPoint %s", (value == NULL) ? "NULL" : value);
-    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
+    StatusCodes::StatusCodes result = StatusCodes::Failure;
 
     if (value == NULL)
     {
@@ -516,7 +516,11 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetDefaultAccessPoint(const char *v
         _defaultAccessPoint = WiFiRequestHandler::_emptyString;
     }
 
-    if (strcmp(value, _defaultAccessPoint) != 0)
+    if (strcmp(value, _defaultAccessPoint) == 0)
+    {
+        result = StatusCodes::CompletedOk;
+    }
+    else
     {
         if (SystemRequestHandler::SetConfigurationValue(DEFAULT_ACCESS_POINT_NAME, value) == NvsManager::ErrorCodes::Ok)
         {
@@ -528,6 +532,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetDefaultAccessPoint(const char *v
                 free(_defaultAccessPoint);
             }
             _defaultAccessPoint = strdup(value);
+            result = StatusCodes::CompletedOk;
         }
     }
     return (result);
@@ -553,7 +558,7 @@ char *WiFiRequestHandler::GetPassword()
 StatusCodes::StatusCodes WiFiRequestHandler::SetPassword(const char *value)
 {
     TRACE_MESSAGE("WiFiRequestHandler::SetPassword %s", (value == NULL) ? "NULL" : value);
-    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
+    StatusCodes::StatusCodes result = StatusCodes::Failure;
 
     if (value == NULL)
     {
@@ -564,7 +569,11 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetPassword(const char *value)
         _password = WiFiRequestHandler::_emptyString;
     }
 
-    if (strcmp(value, _password) != 0)
+    if (strcmp(value, _password) == 0)
+    {
+        result = StatusCodes::CompletedOk;
+    }
+    else
     {
         if (SystemRequestHandler::SetConfigurationValue(PASSWORD_NAME, value) == NvsManager::ErrorCodes::Ok)
         {
@@ -576,6 +585,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetPassword(const char *value)
                 free(_password);
             }
             _password = strdup(value);
+            result = StatusCodes::CompletedOk;
         }
     }
     return (result);
@@ -848,8 +858,11 @@ WiFiRequestHandler *WiFiRequestHandler::GetInstance()
  */
 void WiFiRequestHandler::ClearIpAndDisconnectData()
 {
-    memset(&_instance->_disconnectData, 0, sizeof(_disconnectData));
-    memset(&_instance->_ipInformation, 0, sizeof(_ipInformation));
+    if (_instance != nullptr)
+    {
+        memset(&_instance->_disconnectData, 0, sizeof(_disconnectData));
+        memset(&_instance->_ipInformation, 0, sizeof(_ipInformation));
+    }
 }
 
 /**
@@ -1021,7 +1034,12 @@ void WiFiRequestHandler::RaiseDisconnectEvent()
         memset(ed, 0, sizeof(Esp32Messaging::DisconnectEventData));
 
         // Station information
-        memcpy(&ed->Ssid, &_disconnectData.ssid, sizeof(ed->Ssid));
+        //
+        //  _disconnectData.ssid is 32 bytes, one shorter than ed->Ssid, so the copy length
+        //  must come from the source, not sizeof(ed->Ssid); the memset above already
+        //  NUL-terminates ed->Ssid.
+        //
+        memcpy(&ed->Ssid, &_disconnectData.ssid, sizeof(_disconnectData.ssid));
         memcpy(&ed->SsidLength, &_disconnectData.ssid_len, sizeof(ed->SsidLength));
         memcpy(&ed->Bssid, &_disconnectData.bssid, sizeof(ed->Bssid));
         memcpy(&ed->Reason, &_disconnectData.reason, sizeof(ed->Reason));
@@ -1072,7 +1090,9 @@ void WiFiRequestHandler::RaiseNetworkRetryCountExceededEvent()
  *
  * @param statusCode Status code
  *
- * @param payload Payload for the error event.
+ * @param payload Heap-allocated payload for the error event, or nullptr.  Ownership passes
+ *        to this method: it is either handed to the outgoing message or released here, on
+ *        every path, before the method returns.
  *
  * @param payloadLength Length of the payload.
  */
@@ -1080,14 +1100,29 @@ void WiFiRequestHandler::RaiseErrorEvent(StatusCodes::StatusCodes statusCode, ui
 {
     TRACE_MESSAGE("RaiseErrorEvent: Enter");
 
-    if (!payload || (payloadLength == 0))
+    if (payload == NULL)
     {
-        payload = NULL;
         payloadLength = 0;
+    }
+    else
+    {
+        if (payloadLength == 0)
+        {
+            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&payload));
+        }
     }
 
     Message *message = Message::CreateOnHeap(MessageTypes::Event, Esp32Interfaces::WiFi, WiFiFunction::ErrorEvent, statusCode, _messageDispatcher->GetNextMessageID(), payload, payloadLength);
-    if (message != NULL)
+    if (message == NULL)
+    {
+        //
+        //  CreateOnHeap takes ownership of the payload so it has to be released here as the sender assumes
+        //  that the message has been created and the queue processing will take care of releasing the payload.
+        //
+        ERROR_MESSAGE("RaiseErrorEvent: Cannot create the message for the error event.");
+        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&payload));
+    }
+    else
     {
         _messageDispatcher->QueueMessageForStm32(message);
     }

@@ -39,7 +39,7 @@ public:
     /**
      * @brief Destroy the BluetoothCharacteristicDeclaration object and release any allocated resources.
      */
-    ~BluetoothCharacteristicDeclaration();
+    ~BluetoothCharacteristicDeclaration() override;
 
     /**
      * @brief 16-bit UUID for this characteristic declaration.
