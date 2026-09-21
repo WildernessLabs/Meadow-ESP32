@@ -71,6 +71,23 @@ private:
      */
     bool IsValidFileName(const char * const name);
 
+    /**
+     * @brief Turn a request into its response and hand it to the dispatcher.
+     *
+     *  message is recycled as its own response, so this only updates its type and status
+     *  code before queuing it.  _messageDispatcher is only ever null in tests that build a
+     *  FileSystem directly rather than through the normal message-handling path, but a
+     *  response cannot be delivered without one; when that happens, message is logged and
+     *  released here instead of being handed to a null pointer.
+     *
+     * @param message
+     *      Request being turned into its own response.
+     *
+     * @param result
+     *      Status code the response should carry.
+     */
+    void SendResponse(Message * const message, const StatusCodes::StatusCodes result);
+
 public:
     /**
      *  @brief Name of the FreeRTOS component.

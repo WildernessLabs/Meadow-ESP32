@@ -716,6 +716,38 @@ TEST_CASE("Mount failure when already mounted", CLASS_OF_TESTS)
 }
 
 /**
+ * @brief Check that a request is discarded safely when there is no message dispatcher to
+ *        answer it, rather than dereferencing a null pointer.
+ *
+ *  Regression check for issue #170.  A FileSystem is only ever built without a dispatcher
+ *  in a test - production always supplies one through SystemRequestHandler - but
+ *  SendResponse still has to cope with it instead of crashing.  ListFiles stands in for
+ *  the five methods that recycle their request as its response; they all end by calling
+ *  SendResponse.
+ */
+TEST_CASE("A request is discarded safely when there is no message dispatcher", CLASS_OF_TESTS)
+{
+    FileSystem *fs = new FileSystem(nullptr);
+    TEST_ASSERT_NOT_NULL(fs);
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, fs->Setup());
+
+    Message *listMessage = Message::CreateOnHeap(MessageTypes::Header, Esp32Interfaces::System, SystemFunction::FileSystemListFiles, StatusCodes::Failure);
+    TEST_ASSERT_NOT_NULL(listMessage);
+
+    //
+    //  SendResponse deletes the message itself when there is no dispatcher to queue it
+    //  on, so all of it is freed rather than leaked: free heap afterwards must be at
+    //  least what it was before the call.
+    //
+    uint32_t freeHeapBefore = esp_get_free_heap_size();
+    fs->ListFiles(listMessage);
+    uint32_t freeHeapAfter = esp_get_free_heap_size();
+    TEST_ASSERT_GREATER_OR_EQUAL(freeHeapBefore, freeHeapAfter);
+
+    delete fs;
+}
+
+/**
  * @brief Check that ReadFile returns FileNotFound for a file that does not exist.
  *
  *  The file system is formatted to ensure it is empty, then a read is requested
