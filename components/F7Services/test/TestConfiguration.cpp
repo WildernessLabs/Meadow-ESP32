@@ -550,6 +550,104 @@ TEST_CASE("A configuration item whose value runs past the message is refused", C
 }
 
 /**
+ * @brief Check that a fixed-size value shorter than the STM32 needs to read is refused.
+ *
+ *  DnsServer, StaticIpAddress, SubNetMask, DefaultGateway, MaximumMessageQueueLength and
+ *  MaximumRetryCount all read a uint32_t out of the value, so a value shorter than 4 bytes
+ *  would otherwise be read past its end.  DnsServer stands in for all six; they share the
+ *  same check.
+ */
+TEST_CASE("A fixed-size configuration value shorter than a uint32_t is refused", CLASS_OF_TESTS)
+{
+    EnsureHandlers();
+
+    const uint8_t shortValue[3] = {0x08, 0x08, 0x08};
+
+    TEST_ASSERT_EQUAL(StatusCodes::InvalidPacket, SetItem(ConfigurationItems::DnsServer, shortValue, sizeof(shortValue)));
+}
+
+/**
+ * @brief Check that a device name with no terminator within its value length is refused.
+ *
+ *  The value is a block of exactly ValueLength bytes copied from the STM32, with no
+ *  guarantee it is terminated.  SetDeviceName calls strcmp on it, so an unterminated value
+ *  has to be refused before it reaches that call rather than being read past its end.
+ */
+TEST_CASE("A device name with no terminator is refused", CLASS_OF_TESTS)
+{
+    EnsureHandlers();
+
+    const uint8_t unterminated[4] = {'T', 'e', 's', 't'};
+
+    TEST_ASSERT_EQUAL(StatusCodes::InvalidPacket, SetItem(ConfigurationItems::DeviceName, unterminated, sizeof(unterminated)));
+}
+
+/**
+ * @brief Check that a country code with no terminator within its value length is refused.
+ */
+TEST_CASE("A country code with no terminator is refused", CLASS_OF_TESTS)
+{
+    EnsureHandlers();
+
+    const uint8_t unterminated[2] = {'G', 'B'};
+
+    TEST_ASSERT_EQUAL(StatusCodes::InvalidPacket, SetItem(ConfigurationItems::CountryCode, unterminated, sizeof(unterminated)));
+}
+
+/**
+ * @brief Check that an access point name with no terminator within its value length is
+ *        refused.
+ *
+ *  With no terminator, the handler cannot find where the access point name ends and the
+ *  password begins, so the whole value has to be refused rather than treated as an access
+ *  point name with an empty password.
+ */
+TEST_CASE("An access point name with no terminator is refused", CLASS_OF_TESTS)
+{
+    EnsureHandlers();
+
+    const uint8_t unterminated[] = "NoTerminatorHere";
+
+    //
+    //  sizeof() includes the string literal's own terminator, so it is dropped from the
+    //  value length to leave a value with no NUL anywhere in it.
+    //
+    TEST_ASSERT_EQUAL(StatusCodes::InvalidPacket, SetItem(ConfigurationItems::DefaultApAndPassword, unterminated, sizeof(unterminated) - 1));
+}
+
+/**
+ * @brief Check that an access point name with no room left for a password is refused.
+ *
+ *  The value carries only the access point name and its terminator, with nothing after
+ *  it.  The handler must not read past the end of the value looking for a password that
+ *  is not there.
+ *
+ * @note The access point name is applied before the missing password is discovered, so
+ *       this test puts the original name and password back afterwards rather than leaving
+ *       the failed request half-applied.
+ */
+TEST_CASE("An access point name with no password is refused", CLASS_OF_TESTS)
+{
+    EnsureHandlers();
+
+    char originalAccessPoint[64];
+    char originalPassword[96];
+    snprintf(originalAccessPoint, sizeof(originalAccessPoint), "%s", SafeString(WiFiRequestHandler::GetDefaultAccessPoint()));
+    snprintf(originalPassword, sizeof(originalPassword), "%s", SafeString(WiFiRequestHandler::GetPassword()));
+
+    TEST_ASSERT_EQUAL(StatusCodes::InvalidPacket, SetItem(ConfigurationItems::DefaultApAndPassword, ACCESS_POINT_UNDER_TEST, strlen(ACCESS_POINT_UNDER_TEST) + 1));
+
+    uint8_t value[sizeof(originalAccessPoint) + sizeof(originalPassword)];
+    uint32_t valueLength = 0;
+    valueLength += snprintf(reinterpret_cast<char *>(value), sizeof(value), "%s", originalAccessPoint) + 1;
+    valueLength += snprintf(reinterpret_cast<char *>(value) + valueLength, sizeof(value) - valueLength, "%s", originalPassword) + 1;
+
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, SetItem(ConfigurationItems::DefaultApAndPassword, value, valueLength));
+    TEST_ASSERT_EQUAL_STRING(originalAccessPoint, WiFiRequestHandler::GetDefaultAccessPoint());
+    TEST_ASSERT_EQUAL_STRING(originalPassword, WiFiRequestHandler::GetPassword());
+}
+
+/**
  * @brief Check that the maximum message queue length can be set.
  *
  *  The value is held in NVS so that it outlives a restart, and is read back by the

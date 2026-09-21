@@ -110,6 +110,25 @@ private:
     void SetConfigurationItem(Message * const request);
 
     /**
+     * @brief Check that a buffer holds a NUL terminator within a given number of bytes.
+     *
+     *  A ConfigurationValue's Value is a block of bytes of exactly ValueLength, copied
+     *  from the STM32 and not guaranteed to be terminated, so a value that SetConfigurationItem
+     *  treats as a C string has to be checked before it is passed to a function that will
+     *  call strlen or strcmp on it.
+     *
+     * @param buffer
+     *      Buffer to search.  May be nullptr, in which case the result is false.
+     *
+     * @param length
+     *      Number of bytes available in buffer.
+     *
+     * @returns
+     *      true if a NUL byte was found within the first length bytes of buffer.
+     */
+    static bool ContainsNulTerminator(const uint8_t * const buffer, const uint32_t length);
+
+    /**
      *  @brief Put the ESP32 into deep sleep.
      */
     void DeepSleep(Message * const request);
