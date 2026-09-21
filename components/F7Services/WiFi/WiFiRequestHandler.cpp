@@ -1021,7 +1021,12 @@ void WiFiRequestHandler::RaiseDisconnectEvent()
         memset(ed, 0, sizeof(Esp32Messaging::DisconnectEventData));
 
         // Station information
-        memcpy(&ed->Ssid, &_disconnectData.ssid, sizeof(ed->Ssid));
+        //
+        //  _disconnectData.ssid is 32 bytes, one shorter than ed->Ssid, so the copy length
+        //  must come from the source, not sizeof(ed->Ssid); the memset above already
+        //  NUL-terminates ed->Ssid.
+        //
+        memcpy(&ed->Ssid, &_disconnectData.ssid, sizeof(_disconnectData.ssid));
         memcpy(&ed->SsidLength, &_disconnectData.ssid_len, sizeof(ed->SsidLength));
         memcpy(&ed->Bssid, &_disconnectData.bssid, sizeof(ed->Bssid));
         memcpy(&ed->Reason, &_disconnectData.reason, sizeof(ed->Reason));
