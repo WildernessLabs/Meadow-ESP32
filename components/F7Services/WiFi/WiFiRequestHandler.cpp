@@ -2034,7 +2034,7 @@ void WiFiRequestHandler::ScanForAccessPoints(Message *message)
                     for (int index = 0; index < apCount; index++)
                     {
                         memset(accessPoint, 0, sizeof(Esp32Messaging::AccessPoint));
-                        memcpy(accessPoint->Ssid, &accessPoints[index].ssid, 33);
+                        memcpy(accessPoint->Ssid, &accessPoints[index].ssid, sizeof(accessPoint->Ssid));
                         memcpy(accessPoint->Bssid, &accessPoints[index].bssid, 6);
                         accessPoint->PrimaryChannel = accessPoints[index].primary;
                         accessPoint->SecondaryChannel = accessPoints[index].second;
