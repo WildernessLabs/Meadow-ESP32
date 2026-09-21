@@ -45,7 +45,7 @@ public:
     /**
      * @brief Destroy the Bluetooth Descriptor object
      */
-    ~BluetoothDescriptor();
+    ~BluetoothDescriptor() override;
 
     /**
      * @brief Set the Value descriptor.
