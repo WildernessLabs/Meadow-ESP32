@@ -253,12 +253,17 @@ ThreadPool *SystemRequestHandler::SharedThreadPool()
  */
 StatusCodes::StatusCodes SystemRequestHandler::SetMaximumMessageQueueLength(uint32_t value)
 {
-    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    if (_maximumMessageQueueLength != value)
+    StatusCodes::StatusCodes result = StatusCodes::Failure;
+    if (_maximumMessageQueueLength == value)
+    {
+        result = StatusCodes::CompletedOk;
+    }
+    else
     {
         if (SetConfigurationValue(MAXIMUM_MESSAGE_QUEUE_LENGTH_NAME, value) == NvsManager::ErrorCodes::Ok)
         {
             _maximumMessageQueueLength = value;
+            result = StatusCodes::CompletedOk;
         }
     }
     return (result);
@@ -283,13 +288,18 @@ char *SystemRequestHandler::GetDeviceName()
  */
 StatusCodes::StatusCodes SystemRequestHandler::SetDeviceName(char *value)
 {
-    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    if ((_deviceName == nullptr) || (strcmp(value, _deviceName) != 0))
+    StatusCodes::StatusCodes result = StatusCodes::Failure;
+    if ((_deviceName != nullptr) && (strcmp(value, _deviceName) == 0))
+    {
+        result = StatusCodes::CompletedOk;
+    }
+    else
     {
         if (SystemRequestHandler::SetConfigurationValue(DEVICE_NAME_NAME, value) == NvsManager::ErrorCodes::Ok)
         {
             Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&_deviceName));
             _deviceName = DuplicateString(value);
+            result = StatusCodes::CompletedOk;
         }
     }
     return (result);
