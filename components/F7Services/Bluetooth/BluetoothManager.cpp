@@ -11,6 +11,7 @@
 
 #include "Logging.hpp"
 
+#include "Esp32Messaging.hpp"
 #include "BluetoothManager.hpp"
 #include "BluetoothComponentName.hpp"
 
@@ -629,29 +630,44 @@ void BluetoothManager::ParseUuid(const cJSON * const json, Uuid16 &uuid16, Uuid1
  * @brief Build the graph of services, characteristics and descriptors from a pointer toJSON configuration.
  *
  * @param configuration JSON version of the Bluetooth configuration.
+ *
+ * @returns
+ *      true if configuration was parsed and the graph was built from it, false if
+ *      configuration was refused.
  */
-void BluetoothManager::BuildGraphFromJson(const char * const configuration)
+bool BluetoothManager::BuildGraphFromJson(const char * const configuration)
 {
     TRACE_MESSAGE("BuildGraphFromJson: Enter");
 
-    cJSON * const json = cJSON_Parse(configuration);
-    if (json == NULL)
+    bool result = false;
+
+    if ((configuration == nullptr) || (strnlen(configuration, Message::MAXIMUM_PAYLOAD_LENGTH) >= Message::MAXIMUM_PAYLOAD_LENGTH))
     {
-        const char *error_location = cJSON_GetErrorPtr();
-        if (error_location != NULL)
-        {
-            TRACE_MESSAGE("BuildGraphFromJson: Error before '%s'", error_location);
-        }
+        TRACE_MESSAGE("BuildGraphFromJson: Refused - configuration is missing or not shorter than the maximum payload length");
     }
     else
     {
-        GetDeviceInformation(json);
-        AddServices(json);
+        cJSON * const json = cJSON_Parse(configuration);
+        if (json == NULL)
+        {
+            const char *error_location = cJSON_GetErrorPtr();
+            if (error_location != NULL)
+            {
+                TRACE_MESSAGE("BuildGraphFromJson: Error before '%s'", error_location);
+            }
+        }
+        else
+        {
+            GetDeviceInformation(json);
+            AddServices(json);
+            result = true;
+        }
+        //
+        //  The JSON library detects NULL and will simply return without action.
+        //
+        cJSON_Delete(json);
     }
-    //
-    //  The JSON library detects NULL and will simply return without action.
-    //
-    cJSON_Delete(json);
 
     TRACE_MESSAGE("BuildGraphFromJson: Exit");
+    return (result);
 }
