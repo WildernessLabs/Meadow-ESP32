@@ -612,6 +612,23 @@ void SystemRequestHandler::GetConfiguration(Message * const request)
 }
 
 /**
+ * @brief Check that a buffer holds a NUL terminator within a given number of bytes.
+ *
+ * @param buffer
+ *      Buffer to search.  May be nullptr, in which case the result is false.
+ *
+ * @param length
+ *      Number of bytes available in buffer.
+ *
+ * @returns
+ *      true if a NUL byte was found within the first length bytes of buffer.
+ */
+bool SystemRequestHandler::ContainsNulTerminator(const uint8_t * const buffer, const uint32_t length)
+{
+    return ((buffer != nullptr) && (memchr(buffer, 0, length) != nullptr));
+}
+
+/**
  *  @brief Set a single configuration value.
  *
  *  @param request
@@ -669,38 +686,116 @@ void SystemRequestHandler::SetConfigurationItem(Message * const request)
                 result = WiFiRequestHandler::SetMacAddress(value->Value, WIFI_IF_AP);
                 break;
             case ConfigurationItems::DefaultApAndPassword:
-                result = WiFiRequestHandler::SetDefaultAccessPoint(reinterpret_cast<char *>(value->Value));
-                if (result == StatusCodes::CompletedOk)
+                if (!ContainsNulTerminator(value->Value, value->ValueLength))
                 {
-                    result = WiFiRequestHandler::SetPassword(reinterpret_cast<char *>((value->Value + strlen(reinterpret_cast<char *>(value->Value)) + 1)));
+                    result = StatusCodes::InvalidPacket;
+                }
+                else
+                {
+                    result = WiFiRequestHandler::SetDefaultAccessPoint(reinterpret_cast<char *>(value->Value));
+                    if (result == StatusCodes::CompletedOk)
+                    {
+                        //
+                        //  The access point name and the password are sent as two NUL-terminated
+                        //  strings back to back.  The name has already been shown to have a
+                        //  terminator within ValueLength, so the password starts at most at
+                        //  ValueLength bytes in and cannot itself be checked with a negative
+                        //  or overflowing length.
+                        //
+                        const uint32_t passwordOffset = static_cast<uint32_t>(strlen(reinterpret_cast<char *>(value->Value))) + 1;
+                        if (!ContainsNulTerminator(value->Value + passwordOffset, value->ValueLength - passwordOffset))
+                        {
+                            result = StatusCodes::InvalidPacket;
+                        }
+                        else
+                        {
+                            result = WiFiRequestHandler::SetPassword(reinterpret_cast<char *>(value->Value + passwordOffset));
+                        }
+                    }
                 }
                 break;
             case ConfigurationItems::DeviceName:
-                result = SetDeviceName(reinterpret_cast<char *>(value->Value));
+                if (!ContainsNulTerminator(value->Value, value->ValueLength))
+                {
+                    result = StatusCodes::InvalidPacket;
+                }
+                else
+                {
+                    result = SetDeviceName(reinterpret_cast<char *>(value->Value));
+                }
                 break;
             case ConfigurationItems::DnsServer:
-                result = WiFiRequestHandler::SetDnsServer(*reinterpret_cast<uint32_t *>(value->Value));
+                if (value->ValueLength < sizeof(uint32_t))
+                {
+                    result = StatusCodes::InvalidPacket;
+                }
+                else
+                {
+                    result = WiFiRequestHandler::SetDnsServer(*reinterpret_cast<uint32_t *>(value->Value));
+                }
                 break;
             case ConfigurationItems::StaticIpAddress:
-                result = WiFiRequestHandler::SetIpAddress(*reinterpret_cast<uint32_t *>(value->Value));
+                if (value->ValueLength < sizeof(uint32_t))
+                {
+                    result = StatusCodes::InvalidPacket;
+                }
+                else
+                {
+                    result = WiFiRequestHandler::SetIpAddress(*reinterpret_cast<uint32_t *>(value->Value));
+                }
                 break;
             case ConfigurationItems::SubNetMask:
-                result = WiFiRequestHandler::SetSubNetMask(*reinterpret_cast<uint32_t *>(value->Value));
+                if (value->ValueLength < sizeof(uint32_t))
+                {
+                    result = StatusCodes::InvalidPacket;
+                }
+                else
+                {
+                    result = WiFiRequestHandler::SetSubNetMask(*reinterpret_cast<uint32_t *>(value->Value));
+                }
                 break;
             case ConfigurationItems::DefaultGateway:
-                result = WiFiRequestHandler::SetDefaultGateway(*reinterpret_cast<uint32_t *>(value->Value));
+                if (value->ValueLength < sizeof(uint32_t))
+                {
+                    result = StatusCodes::InvalidPacket;
+                }
+                else
+                {
+                    result = WiFiRequestHandler::SetDefaultGateway(*reinterpret_cast<uint32_t *>(value->Value));
+                }
                 break;
             case ConfigurationItems::MaximumMessageQueueLength:
-                result = SetMaximumMessageQueueLength(*reinterpret_cast<uint32_t *>(value->Value));
+                if (value->ValueLength < sizeof(uint32_t))
+                {
+                    result = StatusCodes::InvalidPacket;
+                }
+                else
+                {
+                    result = SetMaximumMessageQueueLength(*reinterpret_cast<uint32_t *>(value->Value));
+                }
                 break;
             case ConfigurationItems::MaximumRetryCount:
-                result = WiFiRequestHandler::SetMaximumRetryCount(*reinterpret_cast<uint32_t *>(value->Value));
+                if (value->ValueLength < sizeof(uint32_t))
+                {
+                    result = StatusCodes::InvalidPacket;
+                }
+                else
+                {
+                    result = WiFiRequestHandler::SetMaximumRetryCount(*reinterpret_cast<uint32_t *>(value->Value));
+                }
                 break;
             case ConfigurationItems::UseDhcp:
                 result = WiFiRequestHandler::SetUseDhcp(static_cast<uint8_t>((*value->Value)) == 1);
                 break;
             case ConfigurationItems::CountryCode:
-                result = WiFiRequestHandler::SetCountryCode(reinterpret_cast<char *>(value->Value));
+                if (!ContainsNulTerminator(value->Value, value->ValueLength))
+                {
+                    result = StatusCodes::InvalidPacket;
+                }
+                else
+                {
+                    result = WiFiRequestHandler::SetCountryCode(reinterpret_cast<char *>(value->Value));
+                }
                 break;
             default:
                 result = StatusCodes::UnknownConfigurationItem;
