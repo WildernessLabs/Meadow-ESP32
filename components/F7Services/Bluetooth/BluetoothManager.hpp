@@ -184,9 +184,14 @@ private:
     uint16_t _companyIdentifier;
 
     /**
+     * @brief Maximum length, in bytes including the null terminator, of the device name.
+     */
+    static constexpr size_t MAXIMUM_DEVICE_NAME_LENGTH = 256;
+
+    /**
      * @brief Name of the device.
      */
-    char _deviceName[256];
+    char _deviceName[MAXIMUM_DEVICE_NAME_LENGTH];
 
 public:
     /**
