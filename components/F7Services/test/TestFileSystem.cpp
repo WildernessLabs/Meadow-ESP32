@@ -340,6 +340,96 @@ TEST_CASE("WriteFile rejects a request with no file name", CLASS_OF_TESTS)
 }
 
 /**
+ * @brief Check that WriteFile rejects a name that attempts to traverse out of the
+ *        littlefs mount point.
+ *
+ *  Regression check for issue #227.  IsValidFileName rejects every name containing a
+ *  path separator, so this also covers the general "no separator is ever permitted"
+ *  guarantee, not just the ".." case.
+ */
+TEST_CASE("WriteFile rejects a path traversal attempt", CLASS_OF_TESTS)
+{
+    FileSystemTestContext context = {};
+    CreateFileSystemTestContext(&context, true);
+
+    Message *writeMessage = CreateFileNameAndContentsMessage(SystemFunction::FileSystemWriteFile, "../escaped.txt", reinterpret_cast<const uint8_t *>(TEST_FILE_CONTENTS), strlen(TEST_FILE_CONTENTS));
+
+    context.Fs->WriteFile(writeMessage);
+
+    ASSERT_OUTBOUND_QUEUE_LENGTH(context.Dispatcher, 1);
+
+    Message *response = context.Dispatcher->GetOutboundMessage();
+    ASSERT_RESPONSE(response, Esp32Interfaces::System, SystemFunction::FileSystemWriteFile, StatusCodes::Failure);
+    ASSERT_NO_PAYLOAD(response);
+
+    ASSERT_OUTBOUND_QUEUE_LENGTH(context.Dispatcher, 0);
+
+    //
+    //  Nothing was created inside the mount, and (by construction, since no separator was
+    //  accepted) nothing could have been created outside it either.
+    //
+    TEST_ASSERT_EQUAL(0, CountFiles());
+
+    Message::DeleteMessage(writeMessage);
+
+    ReleaseFileSystemTestContext(&context);
+}
+
+/**
+ * @brief Check that WriteFile rejects a name with an embedded path separator that is
+ *        not a ".." traversal, so the check is not just matching the literal "..".
+ */
+TEST_CASE("WriteFile rejects an embedded path separator", CLASS_OF_TESTS)
+{
+    FileSystemTestContext context = {};
+    CreateFileSystemTestContext(&context, true);
+
+    Message *writeMessage = CreateFileNameAndContentsMessage(SystemFunction::FileSystemWriteFile, "sub/escaped.txt", reinterpret_cast<const uint8_t *>(TEST_FILE_CONTENTS), strlen(TEST_FILE_CONTENTS));
+
+    context.Fs->WriteFile(writeMessage);
+
+    Message *response = context.Dispatcher->GetOutboundMessage();
+    ASSERT_RESPONSE(response, Esp32Interfaces::System, SystemFunction::FileSystemWriteFile, StatusCodes::Failure);
+
+    TEST_ASSERT_EQUAL(0, CountFiles());
+
+    Message::DeleteMessage(writeMessage);
+
+    ReleaseFileSystemTestContext(&context);
+}
+
+/**
+ * @brief Check that WriteFile rejects a name too long for the mounted file system to
+ *        store, rather than truncating it or passing it on to fopen().
+ */
+TEST_CASE("WriteFile rejects a file name that exceeds the file system limit", CLASS_OF_TESTS)
+{
+    FileSystemTestContext context = {};
+    CreateFileSystemTestContext(&context, true);
+
+    //
+    //  CONFIG_LITTLEFS_OBJ_NAME_LEN includes the NUL terminator, so a name of exactly
+    //  that length (with no terminator counted against it here) is already too long.
+    //
+    char overlongName[CONFIG_LITTLEFS_OBJ_NAME_LEN + 1];
+    memset(overlongName, 'a', sizeof(overlongName) - 1);
+    overlongName[sizeof(overlongName) - 1] = 0;
+
+    Message *writeMessage = CreateFileNameAndContentsMessage(SystemFunction::FileSystemWriteFile, overlongName, reinterpret_cast<const uint8_t *>(TEST_FILE_CONTENTS), strlen(TEST_FILE_CONTENTS));
+
+    context.Fs->WriteFile(writeMessage);
+
+    Message *response = context.Dispatcher->GetOutboundMessage();
+    ASSERT_RESPONSE(response, Esp32Interfaces::System, SystemFunction::FileSystemWriteFile, StatusCodes::Failure);
+
+    TEST_ASSERT_EQUAL(0, CountFiles());
+
+    Message::DeleteMessage(writeMessage);
+
+    ReleaseFileSystemTestContext(&context);
+}
+
+/**
  * @brief Test case for reading a file from the file system.
  */
 TEST_CASE("Reading a file", CLASS_OF_TESTS)

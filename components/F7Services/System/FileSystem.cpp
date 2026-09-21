@@ -289,6 +289,37 @@ void FileSystem::Format(Message * const message)
 }
 
 /**
+ * @brief Reject a file name that could escape the littlefs mount point or that the
+ *  file system cannot store.
+ *
+ *  name is rejected if it is null or empty, contains a path separator ('/' or '\\') or
+ *  the substring "..", or is not shorter than CONFIG_LITTLEFS_OBJ_NAME_LEN (the longest
+ *  name, including the NUL terminator, the mounted file system can hold).  No separator
+ *  is ever permitted, so every accepted name is a single path component and the path
+ *  built from it can never resolve outside PARTITION_PATH_NAME.
+ *
+ * @param name
+ *      Candidate file name, typically supplied by the STM32.
+ *
+ * @returns
+ *      true if name is safe to concatenate onto PARTITION_PATH_NAME.
+ */
+bool FileSystem::IsValidFileName(const char * const name)
+{
+    bool result = false;
+
+    if (name != NULL)
+    {
+        const size_t length = strlen(name);
+        if ((length > 0) && (length < CONFIG_LITTLEFS_OBJ_NAME_LEN) && (strchr(name, '/') == NULL) && (strchr(name, '\\') == NULL) && (strstr(name, "..") == NULL))
+        {
+            result = true;
+        }
+    }
+    return (result);
+}
+
+/**
  * @brief Read a file from the file system.
  *
  * @param message
@@ -304,7 +335,11 @@ void FileSystem::ReadFile(Message * const message)
 
     if (fileData)
     {
-        if (fileData->Name != NULL)
+        if (!IsValidFileName(fileData->Name))
+        {
+            result = StatusCodes::Failure;
+        }
+        else
         {
             std::string s = PARTITION_PATH_NAME;
             s += "/";
@@ -391,7 +426,11 @@ void FileSystem::WriteFile(Message * const message)
         }
         else
         {
-            if (fileData->Name != NULL)
+            if (!IsValidFileName(fileData->Name))
+            {
+                result = StatusCodes::Failure;
+            }
+            else
             {
                 std::string s = PARTITION_PATH_NAME;
                 s += "/";
@@ -443,7 +482,11 @@ void FileSystem::DeleteFile(Message * const message)
 
     if (details)
     {
-        if (details->Name != NULL)
+        if (!IsValidFileName(details->Name))
+        {
+            result = StatusCodes::Failure;
+        }
+        else
         {
             std::string s = PARTITION_PATH_NAME;
             s += "/";
