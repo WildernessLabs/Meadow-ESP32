@@ -17,16 +17,6 @@
 #include "Utils.hpp"
 #include "SystemRequestHandler.hpp"
 
-/**
- * @brief Uncomment the line below to turn on assertions for debugging this file only.  Do not
- *        leave this enabled in production code as it is of no use to the user.
- */
-// #undef NDEBUG
-#include <assert.h>
-#ifndef NDEBUG
-    #pragma message "PosixAPIHandlers.cpp: Assertions enabled"
-#endif
-
 /*
  * ----------------------------------------------------------------------------
  *
@@ -143,37 +133,62 @@ void WiFiRequestHandler::GetAddrInfo(void * const vpMessage)
 
     Message * const message = static_cast<Message *>(vpMessage);
 
-    assert(message != NULL);
-    assert(message->Payload != NULL);
-    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    Esp32Messaging::GetAddrInfoResponse *response = static_cast<Esp32Messaging::GetAddrInfoResponse *>(pvPortMalloc(sizeof(Esp32Messaging::GetAddrInfoResponse)));
-    if (response)
+    if (message == nullptr)
     {
-        memset(response, 0, sizeof(Esp32Messaging::GetAddrInfoResponse));
-        if (IsConnected())
+        //
+        //  There is no message to attach a status code to and no MessageID to correlate a
+        //  response with, so the failure is reported as an event instead of a response.
+        //
+        ERROR_MESSAGE("GetAddrInfo: Received a null message; cannot process the request.");
+        if (_instance != nullptr)
         {
-            Esp32Messaging::GetAddrInfoRequest *request = Encoders::ExtractGetAddrInfoRequest(message->Payload);
-            if (request)
+            _instance->RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
+        }
+        PERFORMANCE_LOGGING_EXIT();
+        PERFORMANCE_LOGGING_ADD_ENTRY();
+        TRACE_MESSAGE("GetAddrInfo: Exit");
+        return;
+    }
+
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
+    Esp32Messaging::GetAddrInfoResponse *response = nullptr;
+
+    if (message->Payload == nullptr)
+    {
+        ERROR_MESSAGE("GetAddrInfo: Received a message with a null payload.");
+        result = StatusCodes::InvalidRequest;
+    }
+    else
+    {
+        response = static_cast<Esp32Messaging::GetAddrInfoResponse *>(pvPortMalloc(sizeof(Esp32Messaging::GetAddrInfoResponse)));
+        if (response)
+        {
+            memset(response, 0, sizeof(Esp32Messaging::GetAddrInfoResponse));
+            if (IsConnected())
             {
-                result = GetAddrInfo(request, response);
-                //
-                //  We assume that GetAddrInfo call above will release request->Hints.
-                //
-                Encoders::FreeGetAddrInfoRequest(&request);
+                Esp32Messaging::GetAddrInfoRequest *request = Encoders::ExtractGetAddrInfoRequest(message->Payload);
+                if (request)
+                {
+                    result = GetAddrInfo(request, response);
+                    //
+                    //  We assume that GetAddrInfo call above will release request->Hints.
+                    //
+                    Encoders::FreeGetAddrInfoRequest(&request);
+                }
+                else
+                {
+                    result = StatusCodes::EspOutOfMemory;
+                }
             }
             else
             {
-                result = StatusCodes::EspOutOfMemory;
+                response->AddrInfoResponseErrno = Mapping::NuttxErrno(ENETDOWN);
             }
         }
         else
         {
-            response->AddrInfoResponseErrno = Mapping::NuttxErrno(ENETDOWN);
+            result = StatusCodes::EspOutOfMemory;
         }
-    }
-    else
-    {
-        result = StatusCodes::EspOutOfMemory;
     }
 
     message->DeletePayload();
@@ -224,40 +239,64 @@ void WiFiRequestHandler::Socket(void * const vpMessage)
     PERFORMANCE_LOGGING_ENTER();
 
     Message * const message = static_cast<Message *>(vpMessage);
-    Esp32Messaging::IntegerAndErrnoResponse response = {};
 
-    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    assert(message != NULL);
-    assert(message->Payload != NULL);
-    if (IsConnected())
+    if (message == nullptr)
     {
-        Esp32Messaging::SocketRequest *request = Encoders::ExtractSocketRequest(message->Payload);
-        if (request)
+        //
+        //  There is no message to attach a status code to and no MessageID to correlate a
+        //  response with, so the failure is reported as an event instead of a response.
+        //
+        ERROR_MESSAGE("Socket: Received a null message; cannot process the request.");
+        if (_instance != nullptr)
         {
-            TRACE_MESSAGE("Socket: Creating socket on domain %" PRIi32 ", type %" PRIi32 " and protocol %" PRIi32, request->Domain, request->Type, request->Protocol);
+            _instance->RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
+        }
+        PERFORMANCE_LOGGING_EXIT();
+        PERFORMANCE_LOGGING_ADD_ENTRY();
+        TRACE_MESSAGE("Socket: Exit");
+        return;
+    }
 
-            response.Result = socket(request->Domain, request->Type, request->Protocol);
-            if (response.Result < 0)
-            {
-                TRACE_MESSAGE("Socket: Error code: %" PRIi32 " - %s", errno, strerror(errno));
-                response.ResponseErrno = Mapping::NuttxErrno(errno);
-            }
-            else
-            {
-                TRACE_MESSAGE("Socket: Created socket %" PRIi32, response.Result);
-                response.ResponseErrno = 0;
-            }
-            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&request));
-        }
-        else
-        {
-            result = StatusCodes::EspOutOfMemory;
-        }
+    Esp32Messaging::IntegerAndErrnoResponse response = {};
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
+
+    if (message->Payload == nullptr)
+    {
+        ERROR_MESSAGE("Socket: Received a message with a null payload.");
+        result = StatusCodes::InvalidRequest;
     }
     else
     {
-        response.Result = -1;
-        response.ResponseErrno = Mapping::NuttxErrno(ENETDOWN);
+        if (IsConnected())
+        {
+            Esp32Messaging::SocketRequest *request = Encoders::ExtractSocketRequest(message->Payload);
+            if (request)
+            {
+                TRACE_MESSAGE("Socket: Creating socket on domain %" PRIi32 ", type %" PRIi32 " and protocol %" PRIi32, request->Domain, request->Type, request->Protocol);
+
+                response.Result = socket(request->Domain, request->Type, request->Protocol);
+                if (response.Result < 0)
+                {
+                    TRACE_MESSAGE("Socket: Error code: %" PRIi32 " - %s", errno, strerror(errno));
+                    response.ResponseErrno = Mapping::NuttxErrno(errno);
+                }
+                else
+                {
+                    TRACE_MESSAGE("Socket: Created socket %" PRIi32, response.Result);
+                    response.ResponseErrno = 0;
+                }
+                Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&request));
+            }
+            else
+            {
+                result = StatusCodes::EspOutOfMemory;
+            }
+        }
+        else
+        {
+            response.Result = -1;
+            response.ResponseErrno = Mapping::NuttxErrno(ENETDOWN);
+        }
     }
 
     message->DeletePayload();
@@ -304,62 +343,86 @@ void WiFiRequestHandler::Connect(void * const vpMessage)
     PERFORMANCE_LOGGING_ENTER();
 
     Message * const message = static_cast<Message *>(vpMessage);
-    Esp32Messaging::IntegerAndErrnoResponse response = {};
 
-    assert(message != NULL);
-    assert(message->Payload != NULL);
-    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    if (IsConnected())
+    if (message == nullptr)
     {
-        Esp32Messaging::ConnectRequest *request = Encoders::ExtractConnectRequest(message->Payload);
-        if (request)
+        //
+        //  There is no message to attach a status code to and no MessageID to correlate a
+        //  response with, so the failure is reported as an event instead of a response.
+        //
+        ERROR_MESSAGE("Connect: Received a null message; cannot process the request.");
+        if (_instance != nullptr)
         {
-            Esp32Messaging::SockAddr *socketAddress = Encoders::ExtractSockAddr(request->Addr);
-            if (socketAddress)
+            _instance->RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
+        }
+        PERFORMANCE_LOGGING_EXIT();
+        PERFORMANCE_LOGGING_ADD_ENTRY();
+        TRACE_MESSAGE("Connect: Exit");
+        return;
+    }
+
+    Esp32Messaging::IntegerAndErrnoResponse response = {};
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
+
+    if (message->Payload == nullptr)
+    {
+        ERROR_MESSAGE("Connect: Received a message with a null payload.");
+        result = StatusCodes::InvalidRequest;
+    }
+    else
+    {
+        if (IsConnected())
+        {
+            Esp32Messaging::ConnectRequest *request = Encoders::ExtractConnectRequest(message->Payload);
+            if (request)
             {
-                struct sockaddr_in sa = {};
-                int family;
-                Mapping::GetEspValue(Mapping::AddressFamily, socketAddress->Family, reinterpret_cast<int32_t *>(&family));
-                errno = 0;
-                if (family == AF_INET)
+                Esp32Messaging::SockAddr *socketAddress = Encoders::ExtractSockAddr(request->Addr);
+                if (socketAddress)
                 {
-                    sa.sin_family = static_cast<uint8_t>(family & 0xff);
-                    sa.sin_port = socketAddress->Port;
-                    memcpy(&sa.sin_addr, &socketAddress->Ip4Address, sizeof(sa.sin_addr));
-                    sa.sin_len = sizeof(struct sockaddr_in);
-                    TRACE_MESSAGE("Connect: Connecting socket: %ld", request->SocketHandle);
-                    TRACE_MESSAGE("Connect: Family: %d", sa.sin_family);
-                    TRACE_MESSAGE("Connect: IP address: %s", inet_ntoa(sa.sin_addr));
-                    TRACE_MESSAGE("Connect: Port: %d", ntohs(sa.sin_port));
-                    response.Result = connect(request->SocketHandle, reinterpret_cast<struct sockaddr *>(&sa), sizeof(sa));
-                    if (response.Result != 0)
+                    struct sockaddr_in sa = {};
+                    int family;
+                    Mapping::GetEspValue(Mapping::AddressFamily, socketAddress->Family, reinterpret_cast<int32_t *>(&family));
+                    errno = 0;
+                    if (family == AF_INET)
                     {
-                        TRACE_MESSAGE("Connect: Error code: %d - %s", errno, strerror(errno));
-                        response.ResponseErrno = Mapping::NuttxErrno(errno);
+                        sa.sin_family = static_cast<uint8_t>(family & 0xff);
+                        sa.sin_port = socketAddress->Port;
+                        memcpy(&sa.sin_addr, &socketAddress->Ip4Address, sizeof(sa.sin_addr));
+                        sa.sin_len = sizeof(struct sockaddr_in);
+                        TRACE_MESSAGE("Connect: Connecting socket: %ld", request->SocketHandle);
+                        TRACE_MESSAGE("Connect: Family: %d", sa.sin_family);
+                        TRACE_MESSAGE("Connect: IP address: %s", inet_ntoa(sa.sin_addr));
+                        TRACE_MESSAGE("Connect: Port: %d", ntohs(sa.sin_port));
+                        response.Result = connect(request->SocketHandle, reinterpret_cast<struct sockaddr *>(&sa), sizeof(sa));
+                        if (response.Result != 0)
+                        {
+                            TRACE_MESSAGE("Connect: Error code: %d - %s", errno, strerror(errno));
+                            response.ResponseErrno = Mapping::NuttxErrno(errno);
+                        }
                     }
+                    else
+                    {
+                        response.Result = -1;
+                        response.ResponseErrno = Mapping::NuttxErrno(EFAULT);
+                    }
+                    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&socketAddress));
                 }
                 else
                 {
-                    response.Result = -1;
-                    response.ResponseErrno = Mapping::NuttxErrno(EFAULT);
+                    result = StatusCodes::EspOutOfMemory;
                 }
-                Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&socketAddress));
+                Encoders::FreeConnectRequest(&request);
             }
             else
             {
                 result = StatusCodes::EspOutOfMemory;
             }
-            Encoders::FreeConnectRequest(&request);
         }
         else
         {
-            result = StatusCodes::EspOutOfMemory;
+            response.Result = -1;
+            response.ResponseErrno = Mapping::NuttxErrno(ENETDOWN);
         }
-    }
-    else
-    {
-        response.Result = -1;
-        response.ResponseErrno = Mapping::NuttxErrno(ENETDOWN);
     }
 
     message->DeletePayload();
@@ -407,19 +470,42 @@ void WiFiRequestHandler::FreeAddrInfo(void * const vpMessage)
 
     Message * const message = static_cast<Message *>(vpMessage);
 
-    assert(message != NULL);
-    assert(message->Payload != NULL);
-    Esp32Messaging::FreeAddrInfoRequest *request = Encoders::ExtractFreeAddrInfoRequest(message->Payload);
-
-    if (request != NULL)
+    if (message == nullptr)
     {
-        freeaddrinfo(reinterpret_cast<struct addrinfo *>(request->AddrInfoAddress));
-        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&request));
-        message->StatusCode = StatusCodes::CompletedOk;
+        //
+        //  There is no message to attach a status code to and no MessageID to correlate a
+        //  response with, so the failure is reported as an event instead of a response.
+        //
+        ERROR_MESSAGE("FreeAddrInfo: Received a null message; cannot process the request.");
+        if (_instance != nullptr)
+        {
+            _instance->RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
+        }
+        PERFORMANCE_LOGGING_EXIT();
+        PERFORMANCE_LOGGING_ADD_ENTRY();
+        TRACE_MESSAGE("FreeAddrInfo: Exit");
+        return;
+    }
+
+    if (message->Payload == nullptr)
+    {
+        ERROR_MESSAGE("FreeAddrInfo: Received a message with a null payload.");
+        message->StatusCode = StatusCodes::InvalidRequest;
     }
     else
     {
-        message->StatusCode = StatusCodes::EspOutOfMemory;
+        Esp32Messaging::FreeAddrInfoRequest *request = Encoders::ExtractFreeAddrInfoRequest(message->Payload);
+
+        if (request != NULL)
+        {
+            freeaddrinfo(reinterpret_cast<struct addrinfo *>(request->AddrInfoAddress));
+            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&request));
+            message->StatusCode = StatusCodes::CompletedOk;
+        }
+        else
+        {
+            message->StatusCode = StatusCodes::EspOutOfMemory;
+        }
     }
 
     message->DeletePayload();
@@ -546,75 +632,99 @@ void WiFiRequestHandler::GetSockOpt(void * const vpMessage)
 
     Message * const message = static_cast<Message *>(vpMessage);
 
-    assert(message != NULL);
-    assert(message->Payload != NULL);
+    if (message == nullptr)
+    {
+        //
+        //  There is no message to attach a status code to and no MessageID to correlate a
+        //  response with, so the failure is reported as an event instead of a response.
+        //
+        ERROR_MESSAGE("GetSockOpt: Received a null message; cannot process the request.");
+        if (_instance != nullptr)
+        {
+            _instance->RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
+        }
+        PERFORMANCE_LOGGING_EXIT();
+        PERFORMANCE_LOGGING_ADD_ENTRY();
+        TRACE_MESSAGE("GetSockOpt: Exit");
+        return;
+    }
+
     Esp32Messaging::GetSockOptResponse response = {};
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    if (IsConnected())
+
+    if (message->Payload == nullptr)
     {
-        Esp32Messaging::GetSockOptRequest *request = Encoders::ExtractGetSockOptRequest(message->Payload);
-        if (request)
+        ERROR_MESSAGE("GetSockOpt: Received a message with a null payload.");
+        result = StatusCodes::InvalidRequest;
+    }
+    else
+    {
+        if (IsConnected())
         {
-            int32_t optionName = 0;
-            if (Mapping::GetEspValue(Mapping::SocketOptions, request->OptionName, &optionName) < 0)
+            Esp32Messaging::GetSockOptRequest *request = Encoders::ExtractGetSockOptRequest(message->Payload);
+            if (request)
             {
-                TRACE_MESSAGE("GetSockOpt: Unknown option: %" PRIi32, request->OptionName);
-                response.Result = -1;
-                response.ResponseErrno = Mapping::NuttxErrno(ENOPROTOOPT);
+                int32_t optionName = 0;
+                if (Mapping::GetEspValue(Mapping::SocketOptions, request->OptionName, &optionName) < 0)
+                {
+                    TRACE_MESSAGE("GetSockOpt: Unknown option: %" PRIi32, request->OptionName);
+                    response.Result = -1;
+                    response.ResponseErrno = Mapping::NuttxErrno(ENOPROTOOPT);
+                }
+                else
+                {
+                    int32_t level = 0;
+                    Mapping::GetEspValue(Mapping::SocketLevel, request->Level, &level);
+                    TRACE_MESSAGE("GetSockOpt: Getting socket option level 0x%" PRIx32 ", option name 0x%" PRIx32 " for socket %" PRIi32, static_cast<uint32_t>(level), static_cast<uint32_t>(optionName), request->SocketHandle);
+                    response.Result = -1;
+                    response.ResponseErrno = Mapping::NuttxErrno(ENOPROTOOPT);
+                    switch (optionName)
+                    {
+                        case SO_SNDTIMEO:   /* Get the send timeout */
+                        case SO_RCVTIMEO:   /* Get the receive timeout */
+                            result = GetSendReceiveOption(request->SocketHandle, level, optionName, response);
+                            break;
+                        case SO_LINGER:     /* Linger on close if data present */
+                            result = GetLingerOption(request->SocketHandle, level, optionName, response);
+                            break;
+                        case SO_RCVBUF:     /* Get the receive buffer size */
+                            result = GetSendReceiveBuffer(request->SocketHandle, level, optionName, response);
+                            break;
+                        case SO_ACCEPTCONN: /* Socket has had listen() */
+                            TRACE_MESSAGE("GetSockOpt: Implement SO_ACCEPTCONN");
+                            break;
+                        case SO_DONTLINGER: /* Don't linger on close if data present */
+                            TRACE_MESSAGE("GetSockOpt: Implement SO_DONTLINGER");
+                            break;
+                        case SO_ERROR:      /* Get error status and clear */
+                            TRACE_MESSAGE("GetSockOpt: Implement SO_ERROR");
+                            break;
+                        case SO_TYPE:       /* Get socket type */
+                            TRACE_MESSAGE("GetSockOpt: Implement SO_TYPE");
+                            break;
+                        case SO_NO_CHECK:   /* Don't create UDP checksum */
+                            TRACE_MESSAGE("GetSockOpt: Implement SO_NO_CHECK");
+                            break;
+                        default:
+                            TRACE_MESSAGE("GetSockOpt: Unknown option: %" PRIi32, request->OptionName);
+                            break;
+                    }
+                }
             }
             else
             {
-                int32_t level = 0;
-                Mapping::GetEspValue(Mapping::SocketLevel, request->Level, &level);
-                TRACE_MESSAGE("GetSockOpt: Getting socket option level 0x%" PRIx32 ", option name 0x%" PRIx32 " for socket %" PRIi32, static_cast<uint32_t>(level), static_cast<uint32_t>(optionName), request->SocketHandle);
                 response.Result = -1;
-                response.ResponseErrno = Mapping::NuttxErrno(ENOPROTOOPT);
-                switch (optionName)
-                {
-                    case SO_SNDTIMEO:   /* Get the send timeout */
-                    case SO_RCVTIMEO:   /* Get the receive timeout */
-                        result = GetSendReceiveOption(request->SocketHandle, level, optionName, response);
-                        break;
-                    case SO_LINGER:     /* Linger on close if data present */
-                        result = GetLingerOption(request->SocketHandle, level, optionName, response);
-                        break;
-                    case SO_RCVBUF:     /* Get the receive buffer size */
-                        result = GetSendReceiveBuffer(request->SocketHandle, level, optionName, response);
-                        break;
-                    case SO_ACCEPTCONN: /* Socket has had listen() */
-                        TRACE_MESSAGE("GetSockOpt: Implement SO_ACCEPTCONN");
-                        break;
-                    case SO_DONTLINGER: /* Don't linger on close if data present */
-                        TRACE_MESSAGE("GetSockOpt: Implement SO_DONTLINGER");
-                        break;
-                    case SO_ERROR:      /* Get error status and clear */
-                        TRACE_MESSAGE("GetSockOpt: Implement SO_ERROR");
-                        break;
-                    case SO_TYPE:       /* Get socket type */
-                        TRACE_MESSAGE("GetSockOpt: Implement SO_TYPE");
-                        break;
-                    case SO_NO_CHECK:   /* Don't create UDP checksum */
-                        TRACE_MESSAGE("GetSockOpt: Implement SO_NO_CHECK");
-                        break;
-                    default:
-                        TRACE_MESSAGE("GetSockOpt: Unknown option: %" PRIi32, request->OptionName);
-                        break;
-                }
+                response.ResponseErrno = Mapping::NuttxErrno(ENOMEM);
+                result = StatusCodes::EspOutOfMemory;
             }
+            TRACE_MESSAGE("GetSockOpt: Result: %" PRIi32 ", errno: %" PRIi32 " - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
+            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&request));
         }
         else
         {
             response.Result = -1;
-            response.ResponseErrno = Mapping::NuttxErrno(ENOMEM);
-            result = StatusCodes::EspOutOfMemory;
+            response.ResponseErrno = Mapping::NuttxErrno(ENETDOWN);
         }
-        TRACE_MESSAGE("GetSockOpt: Result: %" PRIi32 ", errno: %" PRIi32 " - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
-        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&request));
-    }
-    else
-    {
-        response.Result = -1;
-        response.ResponseErrno = Mapping::NuttxErrno(ENETDOWN);
     }
 
     message->DeletePayload();
@@ -873,30 +983,54 @@ void WiFiRequestHandler::SetSockOpt(void * const vpMessage)
 
     Message * const message = static_cast<Message *>(vpMessage);
 
-    assert(message != NULL);
-    assert(message->Payload != NULL);
+    if (message == nullptr)
+    {
+        //
+        //  There is no message to attach a status code to and no MessageID to correlate a
+        //  response with, so the failure is reported as an event instead of a response.
+        //
+        ERROR_MESSAGE("SetSockOpt: Received a null message; cannot process the request.");
+        if (_instance != nullptr)
+        {
+            _instance->RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
+        }
+        PERFORMANCE_LOGGING_EXIT();
+        PERFORMANCE_LOGGING_ADD_ENTRY();
+        TRACE_MESSAGE("SetSockOpt: Exit");
+        return;
+    }
+
     Esp32Messaging::IntegerAndErrnoResponse response = {};
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    if (IsConnected())
+
+    if (message->Payload == nullptr)
     {
-        Esp32Messaging::SetSockOptRequest *request = Encoders::ExtractSetSockOptRequest(message->Payload);
-        if (request)
+        ERROR_MESSAGE("SetSockOpt: Received a message with a null payload.");
+        result = StatusCodes::InvalidRequest;
+    }
+    else
+    {
+        if (IsConnected())
         {
-            result = SetSockOpt(request, response);
+            Esp32Messaging::SetSockOptRequest *request = Encoders::ExtractSetSockOptRequest(message->Payload);
+            if (request)
+            {
+                result = SetSockOpt(request, response);
+            }
+            else
+            {
+                response.Result = -1;
+                response.ResponseErrno = Mapping::NuttxErrno(ENOMEM);
+                result = StatusCodes::EspOutOfMemory;
+            }
+
+            Encoders::FreeSetSockOptRequest(&request);
         }
         else
         {
             response.Result = -1;
-            response.ResponseErrno = Mapping::NuttxErrno(ENOMEM);
-            result = StatusCodes::EspOutOfMemory;
+            response.ResponseErrno = Mapping::NuttxErrno(ENETDOWN);
         }
-
-        Encoders::FreeSetSockOptRequest(&request);
-    }
-    else
-    {
-        response.Result = -1;
-        response.ResponseErrno = Mapping::NuttxErrno(ENETDOWN);
     }
 
     message->DeletePayload();
@@ -941,32 +1075,56 @@ void WiFiRequestHandler::Close(void * const vpMessage)
     PERFORMANCE_LOGGING_ENTER();
 
     Message * const message = static_cast<Message *>(vpMessage);
-    Esp32Messaging::IntegerAndErrnoResponse response = {};
 
-    assert(message != NULL);
-    assert(message->Payload != NULL);
-    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    if (IsConnected())
+    if (message == nullptr)
     {
-        Esp32Messaging::CloseRequest *request = Encoders::ExtractCloseRequest(message->Payload);
-        if (request)
+        //
+        //  There is no message to attach a status code to and no MessageID to correlate a
+        //  response with, so the failure is reported as an event instead of a response.
+        //
+        ERROR_MESSAGE("Close: Received a null message; cannot process the request.");
+        if (_instance != nullptr)
         {
-            response.Result = close(request->SocketHandle);
-            if (response.Result < 0)
-            {
-                response.ResponseErrno = Mapping::NuttxErrno(errno);
-            }
-            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&request));
+            _instance->RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
         }
-        else
-        {
-            result = StatusCodes::EspOutOfMemory;
-        }
+        PERFORMANCE_LOGGING_EXIT();
+        PERFORMANCE_LOGGING_ADD_ENTRY();
+        TRACE_MESSAGE("Close: Exit");
+        return;
+    }
+
+    Esp32Messaging::IntegerAndErrnoResponse response = {};
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
+
+    if (message->Payload == nullptr)
+    {
+        ERROR_MESSAGE("Close: Received a message with a null payload.");
+        result = StatusCodes::InvalidRequest;
     }
     else
     {
-        response.Result = -1;
-        response.ResponseErrno = Mapping::NuttxErrno(ENETDOWN);
+        if (IsConnected())
+        {
+            Esp32Messaging::CloseRequest *request = Encoders::ExtractCloseRequest(message->Payload);
+            if (request)
+            {
+                response.Result = close(request->SocketHandle);
+                if (response.Result < 0)
+                {
+                    response.ResponseErrno = Mapping::NuttxErrno(errno);
+                }
+                Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&request));
+            }
+            else
+            {
+                result = StatusCodes::EspOutOfMemory;
+            }
+        }
+        else
+        {
+            response.Result = -1;
+            response.ResponseErrno = Mapping::NuttxErrno(ENETDOWN);
+        }
     }
 
     message->DeletePayload();
@@ -1010,49 +1168,72 @@ void WiFiRequestHandler::Send(void * const vpMessage)
 
     Message * const message = static_cast<Message *>(vpMessage);
 
-    assert(message != NULL);
-    assert(message->Payload != NULL);
-    Esp32Messaging::IntegerAndErrnoResponse response = {};
-
-    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    if (IsConnected())
+    if (message == nullptr)
     {
-        Esp32Messaging::SendRequest *request = Encoders::ExtractSendRequest(message->Payload);
-        if (request)
+        //
+        //  There is no message to attach a status code to and no MessageID to correlate a
+        //  response with, so the failure is reported as an event instead of a response.
+        //
+        ERROR_MESSAGE("Send: Received a null message; cannot process the request.");
+        if (_instance != nullptr)
         {
-            int32_t mappedFlags = 0;
-            response.ResponseErrno = 0;
-            response.Result = Mapping::GetEspFlagValue(Mapping::MessageFlags, request->Flags, &mappedFlags);
-            if (response.Result == 0)
-            {
-                response.Result = send(request->SocketHandle, request->Buffer, request->Length, mappedFlags);
-                if (response.Result < 0)
-                {
-                    response.ResponseErrno = Mapping::NuttxErrno(errno);
-                }
-            }
-            else
-            {
-                response.ResponseErrno = Mapping::NuttxErrno(EFAULT);
-            }
+            _instance->RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
+        }
+        PERFORMANCE_LOGGING_EXIT();
+        PERFORMANCE_LOGGING_ADD_ENTRY();
+        TRACE_MESSAGE("Send: Exit");
+        return;
+    }
 
-            TRACE_MESSAGE("Send: Sent %" PRIi32 " bytes.", request->Length);
-            if (request->Buffer && (request->Length > 0))
-            {
-                TRACE_HEX_BUFFER(request->Buffer, request->Length);
-            }
-            TRACE_MESSAGE("Send: Result: %" PRIi32 ", errno: %" PRIi32 " - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
-            Encoders::FreeSendRequest(&request);
-        }
-        else
-        {
-            result = StatusCodes::EspOutOfMemory;
-        }
+    Esp32Messaging::IntegerAndErrnoResponse response = {};
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
+
+    if (message->Payload == nullptr)
+    {
+        ERROR_MESSAGE("Send: Received a message with a null payload.");
+        result = StatusCodes::InvalidRequest;
     }
     else
     {
-        response.Result = -1;
-        response.ResponseErrno = Mapping::NuttxErrno(ENETDOWN);
+        if (IsConnected())
+        {
+            Esp32Messaging::SendRequest *request = Encoders::ExtractSendRequest(message->Payload);
+            if (request)
+            {
+                int32_t mappedFlags = 0;
+                response.ResponseErrno = 0;
+                response.Result = Mapping::GetEspFlagValue(Mapping::MessageFlags, request->Flags, &mappedFlags);
+                if (response.Result == 0)
+                {
+                    response.Result = send(request->SocketHandle, request->Buffer, request->Length, mappedFlags);
+                    if (response.Result < 0)
+                    {
+                        response.ResponseErrno = Mapping::NuttxErrno(errno);
+                    }
+                }
+                else
+                {
+                    response.ResponseErrno = Mapping::NuttxErrno(EFAULT);
+                }
+
+                TRACE_MESSAGE("Send: Sent %" PRIi32 " bytes.", request->Length);
+                if (request->Buffer && (request->Length > 0))
+                {
+                    TRACE_HEX_BUFFER(request->Buffer, request->Length);
+                }
+                TRACE_MESSAGE("Send: Result: %" PRIi32 ", errno: %" PRIi32 " - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
+                Encoders::FreeSendRequest(&request);
+            }
+            else
+            {
+                result = StatusCodes::EspOutOfMemory;
+            }
+        }
+        else
+        {
+            response.Result = -1;
+            response.ResponseErrno = Mapping::NuttxErrno(ENETDOWN);
+        }
     }
 
     message->DeletePayload();
@@ -1167,33 +1348,57 @@ void WiFiRequestHandler::SendTo(void * const vpMessage)
 
     Message * const message = static_cast<Message *>(vpMessage);
 
-    assert(message != NULL);
-    assert(message->Payload != NULL);
+    if (message == nullptr)
+    {
+        //
+        //  There is no message to attach a status code to and no MessageID to correlate a
+        //  response with, so the failure is reported as an event instead of a response.
+        //
+        ERROR_MESSAGE("SendTo: Received a null message; cannot process the request.");
+        if (_instance != nullptr)
+        {
+            _instance->RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
+        }
+        PERFORMANCE_LOGGING_EXIT();
+        PERFORMANCE_LOGGING_ADD_ENTRY();
+        TRACE_MESSAGE("SendTo: Exit");
+        return;
+    }
+
     Esp32Messaging::IntegerAndErrnoResponse response = {};
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    if (IsConnected())
+
+    if (message->Payload == nullptr)
     {
-        Esp32Messaging::SendToRequest *request = Encoders::ExtractSendToRequest(message->Payload);
-        if (request)
-        {
-            result = SendTo(request, response);
-            TRACE_MESSAGE("SendTo: Sent %" PRIi32 " bytes.", response.Result);
-            if (request->Buffer && (request->Length > 0))
-            {
-                TRACE_HEX_BUFFER(request->Buffer, request->Length);
-            }
-            TRACE_MESSAGE("SendTo: Result: %" PRIi32 ", errno: %" PRIi32 " - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
-            Encoders::FreeSendToRequest(&request);
-        }
-        else
-        {
-            result = StatusCodes::EspOutOfMemory;
-        }
+        ERROR_MESSAGE("SendTo: Received a message with a null payload.");
+        result = StatusCodes::InvalidRequest;
     }
     else
     {
-        response.Result = -1;
-        response.ResponseErrno = Mapping::NuttxErrno(ENETDOWN);
+        if (IsConnected())
+        {
+            Esp32Messaging::SendToRequest *request = Encoders::ExtractSendToRequest(message->Payload);
+            if (request)
+            {
+                result = SendTo(request, response);
+                TRACE_MESSAGE("SendTo: Sent %" PRIi32 " bytes.", response.Result);
+                if (request->Buffer && (request->Length > 0))
+                {
+                    TRACE_HEX_BUFFER(request->Buffer, request->Length);
+                }
+                TRACE_MESSAGE("SendTo: Result: %" PRIi32 ", errno: %" PRIi32 " - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
+                Encoders::FreeSendToRequest(&request);
+            }
+            else
+            {
+                result = StatusCodes::EspOutOfMemory;
+            }
+        }
+        else
+        {
+            response.Result = -1;
+            response.ResponseErrno = Mapping::NuttxErrno(ENETDOWN);
+        }
     }
     message->DeletePayload();
 
@@ -1340,28 +1545,52 @@ void WiFiRequestHandler::RecvFrom(void * const vpMessage)
 
     Message * const message = static_cast<Message *>(vpMessage);
 
-    assert(message != NULL);
-    assert(message->Payload != NULL);
+    if (message == nullptr)
+    {
+        //
+        //  There is no message to attach a status code to and no MessageID to correlate a
+        //  response with, so the failure is reported as an event instead of a response.
+        //
+        ERROR_MESSAGE("RecvFrom: Received a null message; cannot process the request.");
+        if (_instance != nullptr)
+        {
+            _instance->RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
+        }
+        PERFORMANCE_LOGGING_EXIT();
+        PERFORMANCE_LOGGING_ADD_ENTRY();
+        TRACE_MESSAGE("RecvFrom: Exit");
+        return;
+    }
+
     Esp32Messaging::RecvFromResponse response = {};
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    if (IsConnected())
+
+    if (message->Payload == nullptr)
     {
-        Esp32Messaging::RecvFromRequest *request = Encoders::ExtractRecvFromRequest(message->Payload);
-        if (request)
+        ERROR_MESSAGE("RecvFrom: Received a message with a null payload.");
+        result = StatusCodes::InvalidRequest;
+    }
+    else
+    {
+        if (IsConnected())
         {
-            result = RecvFrom(request, response);
-            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&request));
+            Esp32Messaging::RecvFromRequest *request = Encoders::ExtractRecvFromRequest(message->Payload);
+            if (request)
+            {
+                result = RecvFrom(request, response);
+                Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&request));
+            }
+            else
+            {
+                response.Result = -1;
+                response.ResponseErrno = Mapping::NuttxErrno(ENOMEM);
+            }
         }
         else
         {
             response.Result = -1;
-            response.ResponseErrno = Mapping::NuttxErrno(ENOMEM);
+            response.ResponseErrno = Mapping::NuttxErrno(ENETDOWN);
         }
-    }
-    else
-    {
-        response.Result = -1;
-        response.ResponseErrno = Mapping::NuttxErrno(ENETDOWN);
     }
 
     message->DeletePayload();
@@ -1503,67 +1732,90 @@ void WiFiRequestHandler::SendMsg(void * const vpMessage)
 
     Message * const message = static_cast<Message *>(vpMessage);
 
-    assert(message != NULL);
-    assert(message->Payload != NULL);
+    if (message == nullptr)
+    {
+        //
+        //  There is no message to attach a status code to and no MessageID to correlate a
+        //  response with, so the failure is reported as an event instead of a response.
+        //
+        ERROR_MESSAGE("SendMsg: Received a null message; cannot process the request.");
+        if (_instance != nullptr)
+        {
+            _instance->RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
+        }
+        PERFORMANCE_LOGGING_EXIT();
+        PERFORMANCE_LOGGING_ADD_ENTRY();
+        TRACE_MESSAGE("SendMsg: Exit");
+        return;
+    }
+
     Esp32Messaging::IntegerAndErrnoResponse response = {};
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
 
-    if (IsConnected())
+    if (message->Payload == nullptr)
     {
-        Esp32Messaging::SendMsgRequest *request = Encoders::ExtractSendMsgRequest(message->Payload);
-
-        if (request)
-        {
-            int32_t mappedFlags = 0;
-            response.ResponseErrno = 0;
-            response.Result = Mapping::GetEspFlagValue(Mapping::MessageFlags, request->Flags, &mappedFlags);
-            if (response.Result == 0)
-            {
-                struct sockaddr_in sa = {};
-                struct sockaddr *psa = nullptr;
-                socklen_t lenSa = 0;
-
-                MapMsgNameToSockAddr(request->Name, request->NameLength, &sa, &psa, &lenSa);
-
-                struct iovec iov = {};
-                iov.iov_base = request->Buffer;
-                iov.iov_len = request->BufferLength;
-
-                struct msghdr mhdr = {};
-                mhdr.msg_name = psa;
-                mhdr.msg_namelen = lenSa;
-                mhdr.msg_iov = &iov;
-                mhdr.msg_iovlen = 1;
-                mhdr.msg_control = request->Control;
-                mhdr.msg_controllen = request->ControlLength;
-                mhdr.msg_flags = 0;
-
-                TRACE_MESSAGE("SendMsg: socket %" PRIi32 ", buffer length %" PRIu32 ", control length %" PRIu32, request->SocketHandle, request->BufferLength, request->ControlLength);
-
-                response.Result = sendmsg(request->SocketHandle, &mhdr, mappedFlags);
-                if (response.Result < 0)
-                {
-                    response.ResponseErrno = Mapping::NuttxErrno(errno);
-                }
-            }
-            else
-            {
-                response.ResponseErrno = Mapping::NuttxErrno(EINVAL);
-            }
-
-            TRACE_MESSAGE("SendMsg: Result: %" PRIi32 ", errno: %" PRIi32 " - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
-
-            Encoders::FreeSendMsgRequest(&request);
-        }
-        else
-        {
-            result = StatusCodes::EspOutOfMemory;
-        }
+        ERROR_MESSAGE("SendMsg: Received a message with a null payload.");
+        result = StatusCodes::InvalidRequest;
     }
     else
     {
-        response.Result = -1;
-        response.ResponseErrno = Mapping::NuttxErrno(ENETDOWN);
+        if (IsConnected())
+        {
+            Esp32Messaging::SendMsgRequest *request = Encoders::ExtractSendMsgRequest(message->Payload);
+
+            if (request)
+            {
+                int32_t mappedFlags = 0;
+                response.ResponseErrno = 0;
+                response.Result = Mapping::GetEspFlagValue(Mapping::MessageFlags, request->Flags, &mappedFlags);
+                if (response.Result == 0)
+                {
+                    struct sockaddr_in sa = {};
+                    struct sockaddr *psa = nullptr;
+                    socklen_t lenSa = 0;
+
+                    MapMsgNameToSockAddr(request->Name, request->NameLength, &sa, &psa, &lenSa);
+
+                    struct iovec iov = {};
+                    iov.iov_base = request->Buffer;
+                    iov.iov_len = request->BufferLength;
+
+                    struct msghdr mhdr = {};
+                    mhdr.msg_name = psa;
+                    mhdr.msg_namelen = lenSa;
+                    mhdr.msg_iov = &iov;
+                    mhdr.msg_iovlen = 1;
+                    mhdr.msg_control = request->Control;
+                    mhdr.msg_controllen = request->ControlLength;
+                    mhdr.msg_flags = 0;
+
+                    TRACE_MESSAGE("SendMsg: socket %" PRIi32 ", buffer length %" PRIu32 ", control length %" PRIu32, request->SocketHandle, request->BufferLength, request->ControlLength);
+
+                    response.Result = sendmsg(request->SocketHandle, &mhdr, mappedFlags);
+                    if (response.Result < 0)
+                    {
+                        response.ResponseErrno = Mapping::NuttxErrno(errno);
+                    }
+                }
+                else
+                {
+                    response.ResponseErrno = Mapping::NuttxErrno(EINVAL);
+                }
+
+                TRACE_MESSAGE("SendMsg: Result: %" PRIi32 ", errno: %" PRIi32 " - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
+
+                Encoders::FreeSendMsgRequest(&request);
+            }
+            else
+            {
+                result = StatusCodes::EspOutOfMemory;
+            }
+        }
+        else
+        {
+            response.Result = -1;
+            response.ResponseErrno = Mapping::NuttxErrno(ENETDOWN);
+        }
     }
     message->DeletePayload();
 
@@ -1610,134 +1862,157 @@ void WiFiRequestHandler::RecvMsg(void * const vpMessage)
 
     Message * const message = static_cast<Message *>(vpMessage);
 
-    assert(message != NULL);
-    assert(message->Payload != NULL);
+    if (message == nullptr)
+    {
+        //
+        //  There is no message to attach a status code to and no MessageID to correlate a
+        //  response with, so the failure is reported as an event instead of a response.
+        //
+        ERROR_MESSAGE("RecvMsg: Received a null message; cannot process the request.");
+        if (_instance != nullptr)
+        {
+            _instance->RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
+        }
+        PERFORMANCE_LOGGING_EXIT();
+        PERFORMANCE_LOGGING_ADD_ENTRY();
+        TRACE_MESSAGE("RecvMsg: Exit");
+        return;
+    }
+
     Esp32Messaging::RecvMsgResponse response = {};
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
 
-    if (IsConnected())
+    if (message->Payload == nullptr)
     {
-        Esp32Messaging::RecvMsgRequest *request = Encoders::ExtractRecvMsgRequest(message->Payload);
-
-        if (request)
-        {
-            int32_t mappedFlags = 0;
-            response.Result = Mapping::GetEspFlagValue(Mapping::MessageFlags, request->Flags, &mappedFlags);
-            if (response.Result == 0)
-            {
-                response.Buffer = static_cast<uint8_t *>(pvPortMalloc(request->Length));
-                if (response.Buffer == NULL)
-                {
-                    response.Result = -1;
-                    response.ResponseErrno = ENOMEM;
-                }
-                else
-                {
-                    uint8_t *controlBuf = NULL;
-                    if (request->ControlLength > 0)
-                    {
-                        controlBuf = static_cast<uint8_t *>(pvPortMalloc(request->ControlLength));
-                    }
-
-                    struct sockaddr_in sa = {};
-                    struct iovec iov = {};
-                    iov.iov_base = response.Buffer;
-                    iov.iov_len = request->Length;
-
-                    struct msghdr mhdr = {};
-                    if (request->GetSourceAddress != 0)
-                    {
-                        bzero(&sa, sizeof(sa));
-                        mhdr.msg_name = &sa;
-                        mhdr.msg_namelen = sizeof(sa);
-                    }
-                    mhdr.msg_iov = &iov;
-                    mhdr.msg_iovlen = 1;
-                    mhdr.msg_control = controlBuf;
-                    mhdr.msg_controllen = (controlBuf != NULL) ? request->ControlLength : 0;
-                    mhdr.msg_flags = 0;
-
-                    TRACE_MESSAGE("RecvMsg: Requesting %" PRIi32 " bytes from socket handle %" PRIi32 ", control buffer %" PRIu32, request->Length, request->SocketHandle, request->ControlLength);
-
-                    response.Result = recvmsg(request->SocketHandle, &mhdr, mappedFlags);
-
-                    if (response.Result < 0)
-                    {
-                        response.ResponseErrno = errno;
-                        response.BufferLength = 0;
-                        response.SourceAddress = nullptr;
-                        response.SourceAddressLength = 0;
-                        response.SourceAddressLen = 0;
-                        response.Control = nullptr;
-                        response.ControlLength = 0;
-                        response.MsgFlags = 0;
-                    }
-                    else
-                    {
-                        response.BufferLength = response.Result;
-                        Mapping::GetStmFlagValue(Mapping::MessageFlags, mhdr.msg_flags, &response.MsgFlags);
-
-                        if ((request->GetSourceAddress != 0) && (mhdr.msg_namelen > 0))
-                        {
-                            EncodeSourceAddressToResponse(&sa, mhdr.msg_namelen, &response);
-                        }
-                        else
-                        {
-                            response.SourceAddress = nullptr;
-                            response.SourceAddressLength = 0;
-                            response.SourceAddressLen = 0;
-                        }
-
-                        if ((controlBuf != NULL) && (mhdr.msg_controllen > 0))
-                        {
-                            response.ControlLength = mhdr.msg_controllen;
-                            response.Control = controlBuf;
-                            controlBuf = NULL;
-                        }
-                        else
-                        {
-                            response.ControlLength = 0;
-                            response.Control = nullptr;
-                        }
-                    }
-
-                    if (controlBuf != NULL)
-                    {
-                        vPortFree(controlBuf);
-                    }
-                }
-            }
-            else
-            {
-                response.ResponseErrno = EINVAL;
-            }
-
-            if (response.Result < 0)
-            {
-                response.ResponseErrno = Mapping::NuttxErrno(response.ResponseErrno);
-            }
-
-            TRACE_MESSAGE("RecvMsg: Result: %" PRIi32 ", errno: %" PRIi32 " - %s, msg_flags: 0x%" PRIx32, response.Result, response.ResponseErrno, strerror(response.ResponseErrno), response.MsgFlags);
-
-            vPortFree(request);
-        }
-        else
-        {
-            result = StatusCodes::EspOutOfMemory;
-        }
+        ERROR_MESSAGE("RecvMsg: Received a message with a null payload.");
+        result = StatusCodes::InvalidRequest;
     }
     else
     {
-        response.Result = -1;
-        response.ResponseErrno = Mapping::NuttxErrno(ENETDOWN);
-        response.Buffer = nullptr;
-        response.BufferLength = 0;
-        response.SourceAddress = nullptr;
-        response.SourceAddressLength = 0;
-        response.SourceAddressLen = 0;
-        response.Control = nullptr;
-        response.ControlLength = 0;
-        response.MsgFlags = 0;
+        if (IsConnected())
+        {
+            Esp32Messaging::RecvMsgRequest *request = Encoders::ExtractRecvMsgRequest(message->Payload);
+
+            if (request)
+            {
+                int32_t mappedFlags = 0;
+                response.Result = Mapping::GetEspFlagValue(Mapping::MessageFlags, request->Flags, &mappedFlags);
+                if (response.Result == 0)
+                {
+                    response.Buffer = static_cast<uint8_t *>(pvPortMalloc(request->Length));
+                    if (response.Buffer == NULL)
+                    {
+                        response.Result = -1;
+                        response.ResponseErrno = ENOMEM;
+                    }
+                    else
+                    {
+                        uint8_t *controlBuf = NULL;
+                        if (request->ControlLength > 0)
+                        {
+                            controlBuf = static_cast<uint8_t *>(pvPortMalloc(request->ControlLength));
+                        }
+
+                        struct sockaddr_in sa = {};
+                        struct iovec iov = {};
+                        iov.iov_base = response.Buffer;
+                        iov.iov_len = request->Length;
+
+                        struct msghdr mhdr = {};
+                        if (request->GetSourceAddress != 0)
+                        {
+                            bzero(&sa, sizeof(sa));
+                            mhdr.msg_name = &sa;
+                            mhdr.msg_namelen = sizeof(sa);
+                        }
+                        mhdr.msg_iov = &iov;
+                        mhdr.msg_iovlen = 1;
+                        mhdr.msg_control = controlBuf;
+                        mhdr.msg_controllen = (controlBuf != NULL) ? request->ControlLength : 0;
+                        mhdr.msg_flags = 0;
+
+                        TRACE_MESSAGE("RecvMsg: Requesting %" PRIi32 " bytes from socket handle %" PRIi32 ", control buffer %" PRIu32, request->Length, request->SocketHandle, request->ControlLength);
+
+                        response.Result = recvmsg(request->SocketHandle, &mhdr, mappedFlags);
+
+                        if (response.Result < 0)
+                        {
+                            response.ResponseErrno = errno;
+                            response.BufferLength = 0;
+                            response.SourceAddress = nullptr;
+                            response.SourceAddressLength = 0;
+                            response.SourceAddressLen = 0;
+                            response.Control = nullptr;
+                            response.ControlLength = 0;
+                            response.MsgFlags = 0;
+                        }
+                        else
+                        {
+                            response.BufferLength = response.Result;
+                            Mapping::GetStmFlagValue(Mapping::MessageFlags, mhdr.msg_flags, &response.MsgFlags);
+
+                            if ((request->GetSourceAddress != 0) && (mhdr.msg_namelen > 0))
+                            {
+                                EncodeSourceAddressToResponse(&sa, mhdr.msg_namelen, &response);
+                            }
+                            else
+                            {
+                                response.SourceAddress = nullptr;
+                                response.SourceAddressLength = 0;
+                                response.SourceAddressLen = 0;
+                            }
+
+                            if ((controlBuf != NULL) && (mhdr.msg_controllen > 0))
+                            {
+                                response.ControlLength = mhdr.msg_controllen;
+                                response.Control = controlBuf;
+                                controlBuf = NULL;
+                            }
+                            else
+                            {
+                                response.ControlLength = 0;
+                                response.Control = nullptr;
+                            }
+                        }
+
+                        if (controlBuf != NULL)
+                        {
+                            vPortFree(controlBuf);
+                        }
+                    }
+                }
+                else
+                {
+                    response.ResponseErrno = EINVAL;
+                }
+
+                if (response.Result < 0)
+                {
+                    response.ResponseErrno = Mapping::NuttxErrno(response.ResponseErrno);
+                }
+
+                TRACE_MESSAGE("RecvMsg: Result: %" PRIi32 ", errno: %" PRIi32 " - %s, msg_flags: 0x%" PRIx32, response.Result, response.ResponseErrno, strerror(response.ResponseErrno), response.MsgFlags);
+
+                vPortFree(request);
+            }
+            else
+            {
+                result = StatusCodes::EspOutOfMemory;
+            }
+        }
+        else
+        {
+            response.Result = -1;
+            response.ResponseErrno = Mapping::NuttxErrno(ENETDOWN);
+            response.Buffer = nullptr;
+            response.BufferLength = 0;
+            response.SourceAddress = nullptr;
+            response.SourceAddressLength = 0;
+            response.SourceAddressLen = 0;
+            response.Control = nullptr;
+            response.ControlLength = 0;
+            response.MsgFlags = 0;
+        }
     }
 
     message->DeletePayload();
@@ -1843,27 +2118,51 @@ void WiFiRequestHandler::Bind(void * const vpMessage)
 
     Message * const message = static_cast<Message *>(vpMessage);
 
-    assert(message != NULL);
-    assert(message->Payload != NULL);
+    if (message == nullptr)
+    {
+        //
+        //  There is no message to attach a status code to and no MessageID to correlate a
+        //  response with, so the failure is reported as an event instead of a response.
+        //
+        ERROR_MESSAGE("Bind: Received a null message; cannot process the request.");
+        if (_instance != nullptr)
+        {
+            _instance->RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
+        }
+        PERFORMANCE_LOGGING_EXIT();
+        PERFORMANCE_LOGGING_ADD_ENTRY();
+        TRACE_MESSAGE("Bind: Exit");
+        return;
+    }
+
     Esp32Messaging::IntegerAndErrnoResponse response = {};
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    if (IsConnected())
+
+    if (message->Payload == nullptr)
     {
-        Esp32Messaging::BindRequest *request = Encoders::ExtractBindRequest(message->Payload);
-        if (request)
-        {
-            result = Bind(request, response);
-            Encoders::FreeBindRequest(&request);
-        }
-        else
-        {
-            result = StatusCodes::EspOutOfMemory;
-        }
+        ERROR_MESSAGE("Bind: Received a message with a null payload.");
+        result = StatusCodes::InvalidRequest;
     }
     else
     {
-        response.Result = -1;
-        response.ResponseErrno = Mapping::NuttxErrno(ENETDOWN);
+        if (IsConnected())
+        {
+            Esp32Messaging::BindRequest *request = Encoders::ExtractBindRequest(message->Payload);
+            if (request)
+            {
+                result = Bind(request, response);
+                Encoders::FreeBindRequest(&request);
+            }
+            else
+            {
+                result = StatusCodes::EspOutOfMemory;
+            }
+        }
+        else
+        {
+            response.Result = -1;
+            response.ResponseErrno = Mapping::NuttxErrno(ENETDOWN);
+        }
     }
 
     message->DeletePayload();
@@ -1906,29 +2205,53 @@ void WiFiRequestHandler::Listen(void * const vpMessage)
     PERFORMANCE_LOGGING_ENTER();
 
     Message * const message = static_cast<Message *>(vpMessage);
-    Esp32Messaging::IntegerAndErrnoResponse response = {};
 
-    assert(message != NULL);
-    assert(message->Payload != NULL);
-    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    if (IsConnected())
+    if (message == nullptr)
     {
-        Esp32Messaging::ListenRequest *request = Encoders::ExtractListenRequest(message->Payload);
-        if (request)
+        //
+        //  There is no message to attach a status code to and no MessageID to correlate a
+        //  response with, so the failure is reported as an event instead of a response.
+        //
+        ERROR_MESSAGE("Listen: Received a null message; cannot process the request.");
+        if (_instance != nullptr)
         {
-            response.Result = listen(request->SocketHandle, request->BackLog);
-            response.ResponseErrno = (response.Result == 0) ? 0 : Mapping::NuttxErrno(errno);
-            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&request));
+            _instance->RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
         }
-        else
-        {
-            result = StatusCodes::EspOutOfMemory;
-        }
+        PERFORMANCE_LOGGING_EXIT();
+        PERFORMANCE_LOGGING_ADD_ENTRY();
+        TRACE_MESSAGE("Listen: Exit");
+        return;
+    }
+
+    Esp32Messaging::IntegerAndErrnoResponse response = {};
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
+
+    if (message->Payload == nullptr)
+    {
+        ERROR_MESSAGE("Listen: Received a message with a null payload.");
+        result = StatusCodes::InvalidRequest;
     }
     else
     {
-        response.Result = -1;
-        response.ResponseErrno = Mapping::NuttxErrno(ENETDOWN);
+        if (IsConnected())
+        {
+            Esp32Messaging::ListenRequest *request = Encoders::ExtractListenRequest(message->Payload);
+            if (request)
+            {
+                response.Result = listen(request->SocketHandle, request->BackLog);
+                response.ResponseErrno = (response.Result == 0) ? 0 : Mapping::NuttxErrno(errno);
+                Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&request));
+            }
+            else
+            {
+                result = StatusCodes::EspOutOfMemory;
+            }
+        }
+        else
+        {
+            response.Result = -1;
+            response.ResponseErrno = Mapping::NuttxErrno(ENETDOWN);
+        }
     }
 
     message->DeletePayload();
@@ -2027,28 +2350,52 @@ void WiFiRequestHandler::Accept(void * const vpMessage)
     PERFORMANCE_LOGGING_ENTER();
 
     Message * const message = static_cast<Message *>(vpMessage);
-    assert(message != NULL);
-    assert(message->Payload != NULL);
+
+    if (message == nullptr)
+    {
+        //
+        //  There is no message to attach a status code to and no MessageID to correlate a
+        //  response with, so the failure is reported as an event instead of a response.
+        //
+        ERROR_MESSAGE("Accept: Received a null message; cannot process the request.");
+        if (_instance != nullptr)
+        {
+            _instance->RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
+        }
+        PERFORMANCE_LOGGING_EXIT();
+        PERFORMANCE_LOGGING_ADD_ENTRY();
+        TRACE_MESSAGE("Accept: Exit");
+        return;
+    }
 
     Esp32Messaging::AcceptResponse response = {};
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    if (IsConnected())
+
+    if (message->Payload == nullptr)
     {
-        Esp32Messaging::AcceptRequest *request = Encoders::ExtractAcceptRequest(message->Payload);
-        if (request)
-        {
-            result = Accept(request, response);
-            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&request));
-        }
-        else
-        {
-            result = StatusCodes::EspOutOfMemory;
-        }
+        ERROR_MESSAGE("Accept: Received a message with a null payload.");
+        result = StatusCodes::InvalidRequest;
     }
     else
     {
-        response.Result = -1;
-        response.ResponseErrno = Mapping::NuttxErrno(ENETDOWN);
+        if (IsConnected())
+        {
+            Esp32Messaging::AcceptRequest *request = Encoders::ExtractAcceptRequest(message->Payload);
+            if (request)
+            {
+                result = Accept(request, response);
+                Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&request));
+            }
+            else
+            {
+                result = StatusCodes::EspOutOfMemory;
+            }
+        }
+        else
+        {
+            response.Result = -1;
+            response.ResponseErrno = Mapping::NuttxErrno(ENETDOWN);
+        }
     }
 
     message->DeletePayload();
@@ -2097,96 +2444,120 @@ void WiFiRequestHandler::Ioctl(void * const vpMessage)
 
     Message * const message = static_cast<Message *>(vpMessage);
 
-    assert(message != NULL);
-    assert(message->Payload != NULL);
+    if (message == nullptr)
+    {
+        //
+        //  There is no message to attach a status code to and no MessageID to correlate a
+        //  response with, so the failure is reported as an event instead of a response.
+        //
+        ERROR_MESSAGE("Ioctl: Received a null message; cannot process the request.");
+        if (_instance != nullptr)
+        {
+            _instance->RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
+        }
+        PERFORMANCE_LOGGING_EXIT();
+        PERFORMANCE_LOGGING_ADD_ENTRY();
+        TRACE_MESSAGE("Ioctl: Exit");
+        return;
+    }
+
     Esp32Messaging::IoctlResponse response = {};
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    if (IsConnected())
+
+    if (message->Payload == nullptr)
     {
-        Esp32Messaging::IoctlRequest *request = Encoders::ExtractIoctlRequest(message->Payload);
-
-        esp_netif_ip_info_t ipInfo;
-        Esp32Messaging::SockAddr sa = {};
-
-        Mapping::GetStmValue(Mapping::AddressFamily, AF_INET, reinterpret_cast<int8_t *>(&sa.Family));
-        response.AddrLength = 0;
-        response.Addr = nullptr;
-
-        switch (request->Command)
-        {
-            case SIOCGIFNETMASK: /* Get network mask */
-                if (esp_netif_get_ip_info(_stationNetIfHandle, &ipInfo) == ESP_OK)
-                {
-                    memcpy(&sa.Ip4Address, &ipInfo.netmask, sizeof(ipInfo.netmask));
-                    response.AddrLength = Encoders::EncodedSockAddrBufferSize(&sa);
-                    response.Addr = static_cast<uint8_t *>(pvPortMalloc(response.AddrLength));
-                    if (response.Addr == NULL)
-                    {
-                        response.Result = -1;
-                        response.ResponseErrno = Mapping::NuttxErrno(ENOMEM);
-                        result = StatusCodes::EspOutOfMemory;
-                    }
-                    else
-                    {
-                        Encoders::EncodeSockAddr(&sa, response.Addr);
-                    }
-                }
-                break;
-            case SIOCGIFHWADDR: /* Get hardware address */
-                response.AddrLength = 6;
-                response.Addr = static_cast<uint8_t *>(pvPortMalloc(6));
-                if (response.Addr == NULL)
-                {
-                    response.Result = -1;
-                    response.ResponseErrno = Mapping::NuttxErrno(ENOMEM);
-                    result = StatusCodes::EspOutOfMemory;
-                }
-                else
-                {
-                    GetMacAddress(response.Addr, WIFI_IF_STA);
-                }
-                break;
-            case SIOCGIFADDR: /* Get IP address */
-            case SIOCGIFCONF: /* Return an interface list (IPv4) */
-                if (esp_netif_get_ip_info(_stationNetIfHandle, &ipInfo) == ESP_OK)
-                {
-                    memcpy(&sa.Ip4Address, &ipInfo.ip, sizeof(ipInfo.ip));
-                    response.AddrLength = Encoders::EncodedSockAddrBufferSize(&sa);
-                    response.Addr = static_cast<uint8_t *>(pvPortMalloc(response.AddrLength));
-                    if (response.Addr == NULL)
-                    {
-                        response.Result = -1;
-                        response.ResponseErrno = Mapping::NuttxErrno(ENOMEM);
-                        result = StatusCodes::EspOutOfMemory;
-                    }
-                    else
-                    {
-                        Encoders::EncodeSockAddr(&sa, response.Addr);
-                    }
-                }
-                break;
-            case SIOCGIFFLAGS: /* Gets the interface flags */
-                if (esp_netif_get_ip_info(_stationNetIfHandle, &ipInfo) == ESP_OK)
-                {
-                    response.Flags = IFF_UP;
-                }
-                else
-                {
-                    response.Flags = IFF_DOWN;
-                }
-                break;
-            default:
-                response.Result = -1;
-                response.ResponseErrno = Mapping::NuttxErrno(EINVAL);
-                TRACE_MESSAGE("Unknown ioctl request %04" PRIx32, static_cast<uint32_t>(request->Command));
-                break;
-        }
-        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&request));
+        ERROR_MESSAGE("Ioctl: Received a message with a null payload.");
+        result = StatusCodes::InvalidRequest;
     }
     else
     {
-        response.Result = -1;
-        response.ResponseErrno = Mapping::NuttxErrno(ENETDOWN);
+        if (IsConnected())
+        {
+            Esp32Messaging::IoctlRequest *request = Encoders::ExtractIoctlRequest(message->Payload);
+
+            esp_netif_ip_info_t ipInfo;
+            Esp32Messaging::SockAddr sa = {};
+
+            Mapping::GetStmValue(Mapping::AddressFamily, AF_INET, reinterpret_cast<int8_t *>(&sa.Family));
+            response.AddrLength = 0;
+            response.Addr = nullptr;
+
+            switch (request->Command)
+            {
+                case SIOCGIFNETMASK: /* Get network mask */
+                    if (esp_netif_get_ip_info(_stationNetIfHandle, &ipInfo) == ESP_OK)
+                    {
+                        memcpy(&sa.Ip4Address, &ipInfo.netmask, sizeof(ipInfo.netmask));
+                        response.AddrLength = Encoders::EncodedSockAddrBufferSize(&sa);
+                        response.Addr = static_cast<uint8_t *>(pvPortMalloc(response.AddrLength));
+                        if (response.Addr == NULL)
+                        {
+                            response.Result = -1;
+                            response.ResponseErrno = Mapping::NuttxErrno(ENOMEM);
+                            result = StatusCodes::EspOutOfMemory;
+                        }
+                        else
+                        {
+                            Encoders::EncodeSockAddr(&sa, response.Addr);
+                        }
+                    }
+                    break;
+                case SIOCGIFHWADDR: /* Get hardware address */
+                    response.AddrLength = 6;
+                    response.Addr = static_cast<uint8_t *>(pvPortMalloc(6));
+                    if (response.Addr == NULL)
+                    {
+                        response.Result = -1;
+                        response.ResponseErrno = Mapping::NuttxErrno(ENOMEM);
+                        result = StatusCodes::EspOutOfMemory;
+                    }
+                    else
+                    {
+                        GetMacAddress(response.Addr, WIFI_IF_STA);
+                    }
+                    break;
+                case SIOCGIFADDR: /* Get IP address */
+                case SIOCGIFCONF: /* Return an interface list (IPv4) */
+                    if (esp_netif_get_ip_info(_stationNetIfHandle, &ipInfo) == ESP_OK)
+                    {
+                        memcpy(&sa.Ip4Address, &ipInfo.ip, sizeof(ipInfo.ip));
+                        response.AddrLength = Encoders::EncodedSockAddrBufferSize(&sa);
+                        response.Addr = static_cast<uint8_t *>(pvPortMalloc(response.AddrLength));
+                        if (response.Addr == NULL)
+                        {
+                            response.Result = -1;
+                            response.ResponseErrno = Mapping::NuttxErrno(ENOMEM);
+                            result = StatusCodes::EspOutOfMemory;
+                        }
+                        else
+                        {
+                            Encoders::EncodeSockAddr(&sa, response.Addr);
+                        }
+                    }
+                    break;
+                case SIOCGIFFLAGS: /* Gets the interface flags */
+                    if (esp_netif_get_ip_info(_stationNetIfHandle, &ipInfo) == ESP_OK)
+                    {
+                        response.Flags = IFF_UP;
+                    }
+                    else
+                    {
+                        response.Flags = IFF_DOWN;
+                    }
+                    break;
+                default:
+                    response.Result = -1;
+                    response.ResponseErrno = Mapping::NuttxErrno(EINVAL);
+                    TRACE_MESSAGE("Unknown ioctl request %04" PRIx32, static_cast<uint32_t>(request->Command));
+                    break;
+            }
+            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&request));
+        }
+        else
+        {
+            response.Result = -1;
+            response.ResponseErrno = Mapping::NuttxErrno(ENETDOWN);
+        }
     }
 
     message->DeletePayload();
@@ -2301,30 +2672,54 @@ void WiFiRequestHandler::GetSockPeerName(void * const vpMessage, const WiFiFunct
 
     Message * const message = static_cast<Message *>(vpMessage);
 
-    assert(message != NULL);
-    assert(message->Payload != NULL);
+    if (message == nullptr)
+    {
+        //
+        //  There is no message to attach a status code to and no MessageID to correlate a
+        //  response with, so the failure is reported as an event instead of a response.
+        //
+        ERROR_MESSAGE("GetSockPeerName: Received a null message; cannot process the request.");
+        if (_instance != nullptr)
+        {
+            _instance->RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
+        }
+        PERFORMANCE_LOGGING_EXIT();
+        PERFORMANCE_LOGGING_ADD_ENTRY();
+        TRACE_MESSAGE("GetSockPeerName: Exit");
+        return;
+    }
+
     Esp32Messaging::GetSockPeerNameResponse response = {};
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    if (IsConnected())
+
+    if (message->Payload == nullptr)
     {
-        Esp32Messaging::GetSockPeerNameRequest *request = Encoders::ExtractGetSockPeerNameRequest(message->Payload);
-        if (request)
+        ERROR_MESSAGE("GetSockPeerName: Received a message with a null payload.");
+        result = StatusCodes::InvalidRequest;
+    }
+    else
+    {
+        if (IsConnected())
         {
-            result = GetSockPeerName(request, methodToCall, response);
+            Esp32Messaging::GetSockPeerNameRequest *request = Encoders::ExtractGetSockPeerNameRequest(message->Payload);
+            if (request)
+            {
+                result = GetSockPeerName(request, methodToCall, response);
+            }
+            else
+            {
+                response.Result = -1;
+                response.ResponseErrno = Mapping::NuttxErrno(ENOMEM);
+                result = StatusCodes::EspOutOfMemory;
+            }
+
+            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&request));
         }
         else
         {
             response.Result = -1;
-            response.ResponseErrno = Mapping::NuttxErrno(ENOMEM);
-            result = StatusCodes::EspOutOfMemory;
+            response.ResponseErrno = Mapping::NuttxErrno(ENETDOWN);
         }
-
-        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&request));
-    }
-    else
-    {
-        response.Result = -1;
-        response.ResponseErrno = Mapping::NuttxErrno(ENETDOWN);
     }
 
     message->DeletePayload();
@@ -2656,40 +3051,61 @@ void WiFiRequestHandler::Poll(void * const vpMessage)
     TRACE_MESSAGE("Poll: Enter");
     Message * const message = static_cast<Message *>(vpMessage);
 
-    assert(message != NULL);
-    assert(message->Payload != NULL);
-    Esp32Messaging::IntegerAndErrnoResponse response = {};
-
-    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    if (IsConnected())
+    if (message == nullptr)
     {
-        Esp32Messaging::PollRequest *request = Encoders::ExtractPollRequest(message->Payload);
-        if (request)
+        //
+        //  There is no message to attach a status code to and no MessageID to correlate a
+        //  response with, so the failure is reported as an event instead of a response.
+        //
+        ERROR_MESSAGE("Poll: Received a null message; cannot process the request.");
+        if (_instance != nullptr)
         {
-            if (request->Setup == 1)
-            {
-                response.Result = PollSetup(static_cast<void *>(request));
-            }
-            else
-            {
-                response.Result = PollTeardown(static_cast<void *>(request));
-            }
+            _instance->RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
+        }
+        TRACE_MESSAGE("Poll: Exit");
+        return;
+    }
 
-            if (response.Result < 0)
-            {
-                response.ResponseErrno = Mapping::NuttxErrno(errno);
-            }
-            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&request));
-        }
-        else
-        {
-            result = StatusCodes::EspOutOfMemory;
-        }
+    Esp32Messaging::IntegerAndErrnoResponse response = {};
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
+
+    if (message->Payload == nullptr)
+    {
+        ERROR_MESSAGE("Poll: Received a message with a null payload.");
+        result = StatusCodes::InvalidRequest;
     }
     else
     {
-        response.Result = -1;
-        response.ResponseErrno = Mapping::NuttxErrno(ENETDOWN);
+        if (IsConnected())
+        {
+            Esp32Messaging::PollRequest *request = Encoders::ExtractPollRequest(message->Payload);
+            if (request)
+            {
+                if (request->Setup == 1)
+                {
+                    response.Result = PollSetup(static_cast<void *>(request));
+                }
+                else
+                {
+                    response.Result = PollTeardown(static_cast<void *>(request));
+                }
+
+                if (response.Result < 0)
+                {
+                    response.ResponseErrno = Mapping::NuttxErrno(errno);
+                }
+                Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&request));
+            }
+            else
+            {
+                result = StatusCodes::EspOutOfMemory;
+            }
+        }
+        else
+        {
+            response.Result = -1;
+            response.ResponseErrno = Mapping::NuttxErrno(ENETDOWN);
+        }
     }
 
     message->DeletePayload();

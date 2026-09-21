@@ -145,6 +145,7 @@ assuming one.
 - `const` wherever appropriate
 - Use whole words, not abbreviations
 - Spaces around operators, after commas, after casts
+- No `else if` chains — use a nested `else { if (...) { ... } }` instead. `clang-format` will not flag `else if`, so this has to be right when written.
 
 ## Key Build Notes
 
