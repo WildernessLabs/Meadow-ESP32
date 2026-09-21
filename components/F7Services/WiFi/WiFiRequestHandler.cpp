@@ -301,6 +301,16 @@ WiFiRequestHandler::WiFiRequestHandler()
     _stationNetIfHandle = nullptr;
     _softApNetIfHandle = nullptr;
     _countryCode = SystemRequestHandler::GetConfigurationValue(COUNTRY_CODE_NAME, _validCountryCodes[0]);
+    if (!IsValidCountryCode(_countryCode))
+    {
+        //
+        //  NVS held a country code that predates _validCountryCodes, or was corrupted, or
+        //  written by another code path.  Fall back to the default rather than carrying an
+        //  unvalidated value into esp_wifi_set_country().
+        //
+        ERROR_MESSAGE("WiFiRequestHandler: NVS held an invalid country code (%s); using the default.", (_countryCode == nullptr) ? "<null>" : _countryCode);
+        _countryCode = _validCountryCodes[0];
+    }
     TRACE_MESSAGE("WiFiRequestHandler: Country code is %s", _countryCode);
     _maximumRetryCount = SystemRequestHandler::GetConfigurationValue(MAXIMUM_RETRY_COUNT_NAME, static_cast<uint32_t>(DEFAULT_MAXIMUM_RETRY_COUNT));
     TRACE_MESSAGE("WiFiRequestHandler: Maximum retry count is %" PRIu32, _maximumRetryCount);
@@ -600,6 +610,33 @@ const char *WiFiRequestHandler::GetCountryCode()
 }
 
 /**
+ *  @brief Indicate whether the given country code is one of _validCountryCodes.
+ *
+ *  @param code
+ *      Country code to check, which may be nullptr.
+ *
+ *  @returns
+ *      true if code is non-null and matches one of _validCountryCodes.
+ */
+bool WiFiRequestHandler::IsValidCountryCode(const char *code)
+{
+    bool result = false;
+
+    if (code != nullptr)
+    {
+        for (uint32_t countryCodeIndex = 0; countryCodeIndex < (sizeof(WiFiRequestHandler::_validCountryCodes) / sizeof(WiFiRequestHandler::_validCountryCodes[0])); countryCodeIndex++)
+        {
+            if (!strcmp(code, WiFiRequestHandler::_validCountryCodes[countryCodeIndex]))
+            {
+                result = true;
+                break;
+            }
+        }
+    }
+    return (result);
+}
+
+/**
  *  @brief Set the country code for the WiFi configuration.
  *
  *  @param value
@@ -615,16 +652,12 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetCountryCode(const char *value)
 
     if (strcmp(value, _countryCode))
     {
-        for (uint32_t countryCodeIndex = 0; countryCodeIndex < (sizeof(WiFiRequestHandler::_validCountryCodes) / sizeof(WiFiRequestHandler::_validCountryCodes[0])); countryCodeIndex++)
+        if (IsValidCountryCode(value))
         {
-            if (!strcmp(value, WiFiRequestHandler::_validCountryCodes[countryCodeIndex]))
+            if (SystemRequestHandler::SetConfigurationValue(COUNTRY_CODE_NAME, value) == NvsManager::ErrorCodes::Ok)
             {
-                if (SystemRequestHandler::SetConfigurationValue(COUNTRY_CODE_NAME, value) == NvsManager::ErrorCodes::Ok)
-                {
-                    _countryCode = SystemRequestHandler::GetConfigurationValue(COUNTRY_CODE_NAME, WiFiRequestHandler::_validCountryCodes[0]);
-                    result = StatusCodes::CompletedOk;
-                    break;
-                }
+                _countryCode = SystemRequestHandler::GetConfigurationValue(COUNTRY_CODE_NAME, WiFiRequestHandler::_validCountryCodes[0]);
+                result = StatusCodes::CompletedOk;
             }
         }
     }
@@ -1972,7 +2005,14 @@ esp_err_t WiFiRequestHandler::StartWiFiInterface(const wifi_mode_t mode, const E
         if (result == ESP_OK)
         {
             wifi_country_t country = {};
-            strcpy(country.cc, _countryCode);
+            //
+            //  _countryCode is validated on both read (constructor) and write
+            //  (SetCountryCode), so it is always one of _validCountryCodes here.  The bound
+            //  copy is still worth having, so a future change that removes that guarantee
+            //  cannot overflow country.cc.
+            //
+            strncpy(country.cc, _countryCode, sizeof(country.cc) - 1);
+            country.cc[sizeof(country.cc) - 1] = '\0';
             country.schan = 1;
             country.nchan = 13;
             country.policy = WIFI_COUNTRY_POLICY_MANUAL;
