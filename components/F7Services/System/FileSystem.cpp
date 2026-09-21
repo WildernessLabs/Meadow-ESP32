@@ -193,13 +193,16 @@ bool FileSystem::Mount()
         {
             TRACE_MESSAGE("Failed to mount or format filesystem");
         }
-        else if (ret == ESP_ERR_NOT_FOUND)
-        {
-            TRACE_MESSAGE("Failed to find LittleFS partition");
-        }
         else
         {
-            TRACE_MESSAGE("Failed to initialize LittleFS (%s)", esp_err_to_name(ret));
+            if (ret == ESP_ERR_NOT_FOUND)
+            {
+                TRACE_MESSAGE("Failed to find LittleFS partition");
+            }
+            else
+            {
+                TRACE_MESSAGE("Failed to initialize LittleFS (%s)", esp_err_to_name(ret));
+            }
         }
         result = false;
     }
@@ -388,21 +391,24 @@ void FileSystem::WriteFile(Message * const message)
         }
         else
         {
-            std::string s = PARTITION_PATH_NAME;
-            s += "/";
-            s += fileData->Name;
-            TRACE_MESSAGE("Writing %" PRIu32 " bytes into file %s", fileData->ContentsLength, s.c_str());
-            TRACE_HEX_BUFFER(fileData->Contents, fileData->ContentsLength);
-            FILE *file = fopen(s.c_str(), "w");
-            if (file != NULL)
+            if (fileData->Name != NULL)
             {
-                int amount = fwrite(fileData->Contents, 1, fileData->ContentsLength, file);
-                TRACE_MESSAGE("Written %" PRIu32 " bytes", static_cast<uint32_t>(amount));
-                if (static_cast<uint32_t>(amount) == fileData->ContentsLength)
+                std::string s = PARTITION_PATH_NAME;
+                s += "/";
+                s += fileData->Name;
+                TRACE_MESSAGE("Writing %" PRIu32 " bytes into file %s", fileData->ContentsLength, s.c_str());
+                TRACE_HEX_BUFFER(fileData->Contents, fileData->ContentsLength);
+                FILE *file = fopen(s.c_str(), "w");
+                if (file != NULL)
                 {
-                    result = StatusCodes::CompletedOk;
+                    int amount = fwrite(fileData->Contents, 1, fileData->ContentsLength, file);
+                    TRACE_MESSAGE("Written %" PRIu32 " bytes", static_cast<uint32_t>(amount));
+                    if (static_cast<uint32_t>(amount) == fileData->ContentsLength)
+                    {
+                        result = StatusCodes::CompletedOk;
+                    }
+                    fclose(file);
                 }
-                fclose(file);
             }
 
             Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&fileData->Contents));
