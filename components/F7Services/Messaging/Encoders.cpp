@@ -1219,6 +1219,8 @@ Esp32Messaging::GetAddrInfoRequest *Encoders::ExtractGetAddrInfoRequest(uint8_t 
         getAddrInfoRequest->Hints = static_cast<uint8_t *>(pvPortMalloc(getAddrInfoRequest->HintsLength));
         if (getAddrInfoRequest->Hints == NULL)
         {
+            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&getAddrInfoRequest->NodeName));
+            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&getAddrInfoRequest->ServName));
             Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&getAddrInfoRequest));
             return (nullptr);
         }
@@ -3246,6 +3248,7 @@ Esp32Messaging::FileNameAndContents *Encoders::ExtractFileNameAndContents(uint8_
         fileNameAndContents->Contents = static_cast<uint8_t *>(pvPortMalloc(fileNameAndContents->ContentsLength));
         if (fileNameAndContents->Contents == NULL)
         {
+            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&fileNameAndContents->Name));
             Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&fileNameAndContents));
             return (nullptr);
         }
