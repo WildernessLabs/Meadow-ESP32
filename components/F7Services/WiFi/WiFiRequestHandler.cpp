@@ -1075,7 +1075,9 @@ void WiFiRequestHandler::RaiseNetworkRetryCountExceededEvent()
  *
  * @param statusCode Status code
  *
- * @param payload Payload for the error event.
+ * @param payload Heap-allocated payload for the error event, or nullptr.  Ownership passes
+ *        to this method: it is either handed to the outgoing message or released here, on
+ *        every path, before the method returns.
  *
  * @param payloadLength Length of the payload.
  */
@@ -1083,14 +1085,29 @@ void WiFiRequestHandler::RaiseErrorEvent(StatusCodes::StatusCodes statusCode, ui
 {
     TRACE_MESSAGE("RaiseErrorEvent: Enter");
 
-    if (!payload || (payloadLength == 0))
+    if (payload == NULL)
     {
-        payload = NULL;
         payloadLength = 0;
+    }
+    else
+    {
+        if (payloadLength == 0)
+        {
+            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&payload));
+        }
     }
 
     Message *message = Message::CreateOnHeap(MessageTypes::Event, Esp32Interfaces::WiFi, WiFiFunction::ErrorEvent, statusCode, _messageDispatcher->GetNextMessageID(), payload, payloadLength);
-    if (message != NULL)
+    if (message == NULL)
+    {
+        //
+        //  CreateOnHeap takes ownership of the payload so it has to be released here as the sender assumes
+        //  that the message has been created and the queue processing will take care of releasing the payload.
+        //
+        ERROR_MESSAGE("RaiseErrorEvent: Cannot create the message for the error event.");
+        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&payload));
+    }
+    else
     {
         _messageDispatcher->QueueMessageForStm32(message);
     }

@@ -569,6 +569,17 @@ private:
 
     /**
      *  @brief Raise the ErrorEvent for the managed code.
+     *
+     *  @param statusCode
+     *      Status code to be reported with the event.
+     *
+     *  @param payload
+     *      Heap-allocated payload for the event, or nullptr.  Ownership passes to this
+     *      method: it is either handed to the outgoing message or released here, on every
+     *      path, before the method returns.
+     *
+     *  @param payloadLength
+     *      Number of bytes in payload.
      */
     void RaiseErrorEvent(StatusCodes::StatusCodes statusCode, uint8_t *payload, uint32_t payloadLength);
 
