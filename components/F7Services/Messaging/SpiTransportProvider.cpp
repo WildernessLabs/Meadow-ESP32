@@ -363,9 +363,10 @@ void SpiTransportProvider::UpdatePacketInformation(Message *message)
  *  the _rxBuffer and the _txBuffer as these two buffers are used frequently so they need to remain in place.
  *
  *  @param transaction
- *      Pointer to the transaction (on the heap)
+ *      Pointer to the transaction (on the heap), taken by reference so the
+ *      caller's pointer is nullified along with the storage it points to.
  */
-void SpiTransportProvider::DeleteTransaction(spi_slave_transaction_t *transaction)
+void SpiTransportProvider::DeleteTransaction(spi_slave_transaction_t *&transaction)
 {
     TRACE_MESSAGE("DeleteTransaction: Enter");
     if (transaction)
