@@ -58,12 +58,12 @@ private:
     /**
      *  @brief Method to be execute by the task.
      */
-    method_t _method;
+    method_t _method = nullptr;
 
     /**
      *  @brief First parameter to the passed to the method.
      */
-    void *_parameter;
+    void *_parameter = nullptr;
 
     /**
      *  @brief Task handle for the task that will actually execute the method.
