@@ -94,7 +94,7 @@ struct Uuid16
      */
     operator uint16_t() const
     {
-        return static_cast<uint16_t>(*data);
+        return static_cast<uint16_t>((data[1] << 8) | data[0]);
     }
 
     Uuid16();
