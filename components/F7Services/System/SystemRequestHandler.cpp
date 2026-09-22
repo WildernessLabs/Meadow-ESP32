@@ -66,8 +66,14 @@ const char *SystemRequestHandler::_configurationName = "Meadow";
 
 /**
  *  @brief Private instance of the shared threadpool.
+ *
+ *  @note Left null until SharedThreadPool() first constructs it.  Constructing a
+ *        ThreadPool here, during static initialisation, would run before app_main()
+ *        and before Logging::Setup(), so a construction failure would throw where
+ *        nothing can catch it and any trace calls in the constructor would run
+ *        against an unconfigured logging system.
  */
-ThreadPool *SystemRequestHandler::_threadPool = new ThreadPool();
+ThreadPool *SystemRequestHandler::_threadPool = nullptr;
 
 /**
  *  @brief Name of the key holding the _maximumMessageQueueLength value.
@@ -236,9 +242,17 @@ uint32_t SystemRequestHandler::GetMaximumMessageQueueLength()
 
 /**
  *  @brief Get a pointer to the shared threadpool.
+ *
+ *  Constructs the pool on first use, so construction happens after app_main() has
+ *  run Logging::Setup() and any failure is a catchable ThreadPoolException rather
+ *  than an unreportable throw during static initialisation.
  */
 ThreadPool *SystemRequestHandler::SharedThreadPool()
 {
+    if (_threadPool == nullptr)
+    {
+        _threadPool = new ThreadPool();
+    }
     return (_threadPool);
 }
 
