@@ -207,8 +207,12 @@ private:
     /**
      *  @brief Free any memory allocated for the transaction but keep the
      *  Tx and Rx buffers.
+     *
+     *  @param transaction
+     *      Pointer to the transaction (on the heap), taken by reference so the
+     *      caller's pointer is nullified along with the storage it points to.
      */
-    void DeleteTransaction(spi_slave_transaction_t *transaction);
+    void DeleteTransaction(spi_slave_transaction_t *&transaction);
 
     /**
      *  @brief Update the packet information in the message to prepare the message for the next transmission.
