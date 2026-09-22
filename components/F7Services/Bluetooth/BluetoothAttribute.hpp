@@ -93,11 +93,18 @@ public:
 
     /**
      * @brief Permissions for this attribute
+     *
+     *  @note Defaults to no permission bits set until a constructor assigns the real
+     *        value, rather than leaving it indeterminate.
      */
-    CharacteristicPermission Permission;
+    CharacteristicPermission Permission = static_cast<CharacteristicPermission>(0);
 
     /**
      * @brief Handle for this attribute
+     *
+     *  @note 0x0000 is reserved in the Bluetooth GATT specification and never assigned
+     *        to a real attribute, so it doubles as an unambiguous "not yet assigned"
+     *        sentinel until BluetoothHandleManager gives this attribute a real handle.
      */
-    uint16_t Handle;
+    uint16_t Handle = 0x0000;
 };
