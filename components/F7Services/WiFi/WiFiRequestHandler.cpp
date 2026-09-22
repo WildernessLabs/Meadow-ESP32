@@ -650,20 +650,29 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetCountryCode(const char *value)
     TRACE_MESSAGE("WiFiRequestHandler::SetCountryCode %s", (value == NULL) ? "NULL" : value);
     StatusCodes::StatusCodes result = StatusCodes::InvalidCountryCode;
 
-    if (strcmp(value, _countryCode))
+    if ((value != nullptr) && (_countryCode != nullptr) && !strcmp(value, _countryCode))
+    {
+        result = StatusCodes::CompletedOk;
+    }
+    else
     {
         if (IsValidCountryCode(value))
         {
             if (SystemRequestHandler::SetConfigurationValue(COUNTRY_CODE_NAME, value) == NvsManager::ErrorCodes::Ok)
             {
+                const char *previousCountryCode = _countryCode;
                 _countryCode = SystemRequestHandler::GetConfigurationValue(COUNTRY_CODE_NAME, WiFiRequestHandler::_validCountryCodes[0]);
+                //
+                //  _validCountryCodes[0] is not on the heap and must not be released; it is the only
+                //  literal GetConfigurationValue can hand back here, so anything else came from NVS.
+                //
+                if ((previousCountryCode != nullptr) && (previousCountryCode != WiFiRequestHandler::_validCountryCodes[0]))
+                {
+                    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(const_cast<char **>(&previousCountryCode)));
+                }
                 result = StatusCodes::CompletedOk;
             }
         }
-    }
-    else
-    {
-        result = StatusCodes::CompletedOk;
     }
     return (result);
 }
