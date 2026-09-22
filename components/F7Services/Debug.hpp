@@ -13,7 +13,7 @@
 
 /**
  * @brief Insert a debug breakpoint into the code.
- * 
+ *
  * @note This is designed to be used in conjunction with the ESP32 debugger and is only
  *       designed to be used when diagnostic classes (Heap.cpp etc.) are compiled into the binary.
  */
