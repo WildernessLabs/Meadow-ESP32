@@ -629,6 +629,10 @@ int32_t Mapping::GetValue(const MappingTable mapping, const MappingDirection typ
  *
  *  Note that this is different from mapping a value as the flags could be an ORed
  *  combination of values.
+ * 
+ * @note It is recognised that this method is not the most efficient way to do this, but it is the simplest and 
+ *       easiest to maintain as it does not place any restrictions on the ordering of the elements in the tables.
+ *       If performance becomes an issue, then a more efficient method can be implemented.
  *
  *  @param mapping
  *      Which type of mapping should be used (i.e. which mapping table).
