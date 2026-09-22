@@ -2092,6 +2092,12 @@ void WiFiRequestHandler::ScanForAccessPoints(Message *message)
         bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTED_BIT, pdFALSE, pdFALSE, GetWiFiTimeout() / portTICK_PERIOD_MS);
         if (bits & WIFI_INTERFACE_STARTED_BIT)
         {
+            //
+            //  WIFI_SCAN_COMPLETE_BIT is waited on with xClearOnExit = pdFALSE, so a bit left
+            //  set by an earlier scan would make the wait below return immediately against an
+            //  incomplete scan.
+            //
+            xEventGroupClearBits(_xWiFiEventGroup, WIFI_SCAN_COMPLETE_BIT);
             ESP_ERROR_CHECK(esp_wifi_scan_start(NULL, true));
 
             bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_SCAN_COMPLETE_BIT, pdFALSE, pdFALSE, GetWiFiTimeout() / portTICK_PERIOD_MS);
