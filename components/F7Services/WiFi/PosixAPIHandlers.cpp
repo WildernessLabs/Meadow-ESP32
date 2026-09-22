@@ -2383,7 +2383,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::Accept(Esp32Messaging::AcceptReques
     struct sockaddr sa = {};
     socklen_t saLen = sizeof(sa);
     response.Result = accept(request->SocketHandle, &sa, &saLen);
-    if (response.Result > 0)
+    if (response.Result >= 0)
     {
         Esp32Messaging::SockAddr *sockAddr = static_cast<Esp32Messaging::SockAddr *>(pvPortMalloc(sizeof(Esp32Messaging::SockAddr)));
         if (sockAddr)
