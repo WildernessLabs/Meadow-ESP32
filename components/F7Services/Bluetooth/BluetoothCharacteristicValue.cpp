@@ -128,28 +128,24 @@ bool BluetoothCharacteristicValue::WriteValue(const uint8_t * const source, cons
 {
     TRACE_MESSAGE("WriteValue: Enter");
 
-    if (length > MaxLength)
-    {
-        return false;
-    }
-    if (length < 0)
-    {
-        return false;
-    }
+    bool result = false;
 
-    if (length > 0)
+    if ((length >= 0) && (length <= MaxLength))
     {
-        memcpy(_value, source, length);
-
-        if (_parent->OnValueChanged)
+        if (length > 0)
         {
-            _parent->OnValueChanged(this->_parent);
-        }
-    }
+            memcpy(_value, source, length);
 
-    return true;
+            if (_parent->OnValueChanged)
+            {
+                _parent->OnValueChanged(this->_parent);
+            }
+        }
+        result = true;
+    }
 
     TRACE_MESSAGE("WriteValue: Exit");
+    return (result);
 }
 
 /**
@@ -165,21 +161,17 @@ bool BluetoothCharacteristicValue::ReadValue(uint8_t * const dest, const int len
 {
     TRACE_MESSAGE("ReadValue: Enter");
 
-    if (length > CurrentLength)
-    {
-        return false;
-    }
-    if (length < 0)
-    {
-        return false;
-    }
+    bool result = false;
 
-    if (length > 0)
+    if ((length >= 0) && (length <= CurrentLength))
     {
-        memcpy(dest, _value, length);
+        if (length > 0)
+        {
+            memcpy(dest, _value, length);
+        }
+        result = true;
     }
-
-    return true;
 
     TRACE_MESSAGE("ReadValue: Exit");
+    return (result);
 }
