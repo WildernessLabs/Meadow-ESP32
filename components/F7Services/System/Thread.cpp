@@ -35,8 +35,6 @@ const char *Thread::COMPONENT_NAME = "Thread";
  */
 Thread::Thread() : _mutex(xSemaphoreCreateMutex())
 {
-    _method = nullptr;
-    _parameter = nullptr;
     if (_mutex == NULL)
     {
         throw ThreadPoolException("Cannot create mutex for thread.");
