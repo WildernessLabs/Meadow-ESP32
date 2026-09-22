@@ -136,7 +136,7 @@ bool BluetoothCharacteristicValue::WriteValue(const uint8_t * const source, cons
         {
             memcpy(_value, source, length);
 
-            if (_parent->OnValueChanged)
+            if ((_parent != nullptr) && (_parent->OnValueChanged != nullptr))
             {
                 _parent->OnValueChanged(this->_parent);
             }
