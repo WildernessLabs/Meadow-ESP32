@@ -562,16 +562,41 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessInboundPacket(Message *pac
             //  and replace it with the new, larger, buffer.
             //
             TRACE_MESSAGE("First packet in a multipacket message, expecting %" PRIu32 " bytes, received %" PRIu16 " bytes", packet->PayloadLength, packet->PacketLength);
-            uint8_t *payloadBuffer = static_cast<uint8_t *>(pvPortMalloc(packet->PayloadLength));
-            memcpy(static_cast<void *>(payloadBuffer), static_cast<const void *>(packet->Payload), packet->PacketLength);
-            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&packet->Payload));
-            packet->Payload = payloadBuffer;
-            _incomingMessage = packet;
-            //
-            //  We don't want to queue the message (packet) as we are expecting more data.
-            //
-            queuePacket = false;
-            deletePacket = false;
+            if ((packet->PacketLength > packet->PayloadLength) || (packet->PayloadLength > Message::MAXIMUM_PAYLOAD_LENGTH))
+            {
+                //
+                //  PacketLength exceeding PayloadLength would overrun the reassembly buffer
+                //  below, and a PayloadLength past the protocol maximum is never legitimate;
+                //  either is a malformed or half-initialised STM32 frame.
+                //
+                messageType = MessageTypes::Nak;
+                responseCode = StatusCodes::InvalidPacket;
+                queuePacket = false;
+                deletePacket = true;
+            }
+            else
+            {
+                uint8_t *payloadBuffer = static_cast<uint8_t *>(pvPortMalloc(packet->PayloadLength));
+                if (payloadBuffer == NULL)
+                {
+                    messageType = MessageTypes::Nak;
+                    responseCode = StatusCodes::EspOutOfMemory;
+                    queuePacket = false;
+                    deletePacket = true;
+                }
+                else
+                {
+                    memcpy(static_cast<void *>(payloadBuffer), static_cast<const void *>(packet->Payload), packet->PacketLength);
+                    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&packet->Payload));
+                    packet->Payload = payloadBuffer;
+                    _incomingMessage = packet;
+                    //
+                    //  We don't want to queue the message (packet) as we are expecting more data.
+                    //
+                    queuePacket = false;
+                    deletePacket = false;
+                }
+            }
         }
     }
     result = CreateAcknowledgementTransaction(packet, responseCode, messageType);
