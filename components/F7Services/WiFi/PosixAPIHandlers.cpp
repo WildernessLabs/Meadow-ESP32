@@ -128,7 +128,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetAddrInfo(Esp32Messaging::GetAddr
     //  that FreeAddrInfo is called.  FreeAddrInfo will free the allocated
     //  memory.
     //
-    struct addrinfo *addressInformation;
+    struct addrinfo *addressInformation = nullptr;
     int errorCode = getaddrinfo(request->NodeName, request->ServName, &hints, &addressInformation);
 
     response->AddrInfoResponseErrno = Mapping::NuttxErrno(errorCode);
