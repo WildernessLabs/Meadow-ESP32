@@ -394,8 +394,8 @@ on a board.
 > The default per selector timeout of 600 seconds is not enough for `[POSIX]` as a
 > whole; pass `--timeout=1200`.
 
-`[CoreDump]`, `[Configuration]`, `[MessageDispatcher]`, `[WiFiConfiguration]` and
-`[Helpers]` carry neither `[Emulated]` nor `[HardwareOnly]`. They run under emulation
+`[CoreDump]`, `[Configuration]`, `[MessageDispatcher]`, `[WiFiConfiguration]`,
+`[SpiTransportProvider]` and `[Helpers]` carry neither `[Emulated]` nor `[HardwareOnly]`. They run under emulation
 but cannot share a batch, so `run-tests-ci.sh` names each of them as a selector of its
 own and the comments there say why. The reason is nearly always a singleton: building
 a dispatcher or answering a System message claims the request handlers for the rest of
@@ -407,6 +407,9 @@ The order matters. `[Configuration]` runs straight after `[Emulated]`, because t
 SystemRequestHandler it builds mounts the file system and would otherwise be holding
 the partition while the `[FileSystem]` tests work on it. The core dump tests follow,
 and the restart in the first of them hands the singletons back to the selectors after.
+`[SpiTransportProvider]` comes last of all: the provider it builds prints `+++RDY` to the
+console for the rest of the boot, which can make the runner lose any selector after it
+(issue #499).
 
 Tag matching is a substring search, so a test declared as
 `"[FileSystem][Emulated]"` is still selected by `[FileSystem]`. Nothing is hidden from

@@ -42,8 +42,11 @@ private:
 
     /**
      *  @brief Queue handle for the messages to be sent to the STM32.
+     *
+     *  @note One per dispatcher.  The destructor deletes the queue, so a handle shared by
+     *        every instance would leave the others holding a deleted queue.
      */
-    static QueueHandle_t _outboundMessageQueueHandle;
+    QueueHandle_t _outboundMessageQueueHandle = nullptr;
 
     /**
      *  @brief WiFi object that will process WiFi messages.

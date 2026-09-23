@@ -24,11 +24,6 @@
  */
 const char *MockMessageDispatcher::COMPONENT_NAME = "MockMessageDispatcher";
 
-/**
- * @brief Handle for the outbound (simulated STM32) message queue.
- */
-QueueHandle_t MockMessageDispatcher::_outboundMessageQueueHandle = nullptr;
-
 /*
  * ---------------------------------------------------------------------------
  *
