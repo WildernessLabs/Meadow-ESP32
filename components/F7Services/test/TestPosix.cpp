@@ -376,6 +376,32 @@ TEST_CASE("FreeAddrInfo refuses a handle it never issued", CLASS_OF_TESTS)
 }
 
 /**
+ * @brief Check that Close responds even when the request has no payload, rather than
+ *        leaving the STM32 waiting forever.
+ *
+ *  Regression check for issue #245.  QueueMessageForStm32 used to sit inside the
+ *  success branch only, so a request that failed before reaching close() itself never
+ *  got a reply and the Message leaked.  A null payload is the simplest way to reach
+ *  that path without a live socket.
+ *
+ * @note This does not cover the EspOutOfMemory path (a failed ExtractCloseRequest
+ *       allocation), because nothing in this harness can make that allocation fail on
+ *       demand.  The null-payload path exercises the same previously-unreachable send.
+ */
+TEST_CASE("Close responds when the request has no payload", CLASS_OF_TESTS)
+{
+    MockMessageDispatcher *dispatcher = SetupMessageDispatcher();
+    TEST_ASSERT_NOT_NULL(dispatcher);
+
+    Message *response = SendRequest(dispatcher, Esp32Interfaces::WiFi, WiFiFunction::Close, nullptr, 0, SOCKET_RESPONSE_TIMEOUT);
+    TEST_ASSERT_NOT_NULL_MESSAGE(response, "The Close request was never answered.");
+
+    TEST_ASSERT_EQUAL(StatusCodes::InvalidRequest, response->StatusCode);
+
+    Message::DeleteMessage(response);
+}
+
+/**
  * @brief Check that an ioctl for the network mask succeeds while connected.
  *
  *  Regression check for issue #278.  esp_netif_get_ip_info succeeding is the ordinary

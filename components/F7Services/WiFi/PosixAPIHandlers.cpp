@@ -1265,9 +1265,13 @@ void WiFiRequestHandler::Close(void * const vpMessage)
             Encoders::EncodeIntegerAndErrnoResponse(&response, message->Payload);
             message->StatusCode = StatusCodes::CompletedOk;
         }
-        message->MessageType = MessageTypes::Response;
-        _messageDispatcher->QueueMessageForStm32(message);
     }
+    //
+    //  Every other handler in this file responds on both paths; a reply has to be sent
+    //  here too, or the STM32 blocks forever waiting for one and this Message leaks.
+    //
+    message->MessageType = MessageTypes::Response;
+    _messageDispatcher->QueueMessageForStm32(message);
 
     PERFORMANCE_LOGGING_EXIT();
     PERFORMANCE_LOGGING_ADD_ENTRY();
