@@ -71,7 +71,7 @@ EXPECT_REBOOT='--expect-reboot="Generate a core dump"'
 #   Building a dispatcher creates the WiFi, Bluetooth and System request handlers, which
 #   are singletons, so it claims them for the rest of the boot and any later test that
 #   wanted one of its own would reset the board.  Running them as a selector of their own,
-#   last, keeps that to themselves.
+#   after everything that builds handlers of its own, keeps that to themselves.
 #
 SELECTORS+=('[MessageDispatcher]')
 
@@ -83,6 +83,15 @@ SELECTORS+=('[MessageDispatcher]')
 #   interface.
 #
 SELECTORS+=('[WiFiConfiguration]')
+
+#
+#   The SpiTransportProvider tests run under QEMU but are not tagged [Emulated], and they
+#   have to come last.  Building the provider starts its synchronisation task, which prints
+#   +++RDY to the console every half second for the rest of the boot.  The runner takes
+#   that output for the echo of a selector the device may have dropped, so a selector after
+#   these tests can wait forever.  See issue #499.
+#
+SELECTORS+=('[SpiTransportProvider]')
 
 RESULTS_DIR="$scriptdir/test-results"
 

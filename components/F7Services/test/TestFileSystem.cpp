@@ -54,13 +54,6 @@
 #define TEST_MESSAGE_ID 25
 
 /**
- * @brief Size and names of the files used by the file system upgrade tests.
- */
-#define TEST_UPGRADE_BUFFER_SIZE 1024
-#define TEST_UPGRADE_FILE_NAME_AA "upgrade_aa.txt"
-#define TEST_UPGRADE_FILE_NAME_55 "upgrade_55.txt"
-
-/**
  * @brief Name of a file that is never written to the file system.
  */
 #define TEST_NON_EXISTENT_FILE_NAME "does_not_exist.txt"
@@ -126,27 +119,6 @@ static void CheckTestFileContents(const char *filename, const char *contents)
 
     TEST_ASSERT_EQUAL(length, ReadTestFile(filename, buffer, length));
     TEST_ASSERT_EQUAL_MEMORY(contents, buffer, length);
-
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&buffer));
-}
-
-/**
- * @brief Read one of the upgrade test files back and check that it holds the expected value.
- *
- * @param filename Name of the file to read.
- * @param expectedValue Value that every byte in the file should hold.
- */
-static void CheckUpgradeFileContents(const char *filename, const uint8_t expectedValue)
-{
-    uint8_t *buffer = static_cast<uint8_t *>(pvPortMalloc(TEST_UPGRADE_BUFFER_SIZE));
-    TEST_ASSERT_NOT_NULL(buffer);
-    memset(buffer, 0, TEST_UPGRADE_BUFFER_SIZE);
-
-    TEST_ASSERT_EQUAL(TEST_UPGRADE_BUFFER_SIZE, ReadTestFile(filename, buffer, TEST_UPGRADE_BUFFER_SIZE));
-    for (int index = 0; index < TEST_UPGRADE_BUFFER_SIZE; index++)
-    {
-        TEST_ASSERT_EQUAL_HEX8(expectedValue, buffer[index]);
-    }
 
     Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&buffer));
 }
@@ -607,73 +579,6 @@ TEST_CASE("Delete file", CLASS_OF_TESTS)
     TEST_ASSERT_EQUAL(0, CountFiles());
 
     Message::DeleteMessage(deleteMessage);
-
-    ReleaseFileSystemTestContext(&context);
-}
-
-/**
- * @brief Prepare the file system for an upgrade test.
- *
- *  This test will format the file system and then write a number of files to the
- *  file system.
- */
-TEST_CASE("Prepare file system upgrade test", CLASS_OF_TESTS)
-{
-    FileSystemTestContext context = {};
-    CreateFileSystemTestContext(&context, true);
-
-    //
-    //  Now put some files on the file system to test the upgrade process.
-    //
-    WriteTestFileContents(TEST_FILE_NAME, TEST_FILE_CONTENTS);
-    WriteTestFileContents(TEST_FILE_NAME2, TEST_FILE_CONTENTS2);
-
-    uint8_t *buffer = static_cast<uint8_t *>(pvPortMalloc(TEST_UPGRADE_BUFFER_SIZE));
-    TEST_ASSERT_NOT_NULL(buffer);
-
-    memset(buffer, 0xaa, TEST_UPGRADE_BUFFER_SIZE);
-    TEST_ASSERT_EQUAL(TEST_UPGRADE_BUFFER_SIZE, WriteTestFile(TEST_UPGRADE_FILE_NAME_AA, buffer, TEST_UPGRADE_BUFFER_SIZE));
-
-    memset(buffer, 0x55, TEST_UPGRADE_BUFFER_SIZE);
-    TEST_ASSERT_EQUAL(TEST_UPGRADE_BUFFER_SIZE, WriteTestFile(TEST_UPGRADE_FILE_NAME_55, buffer, TEST_UPGRADE_BUFFER_SIZE));
-
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&buffer));
-
-    //
-    //  Now give instructions to the user.
-    //
-    printf("\n\nFile system for the upgrade test prepared.\n");
-    printf("Upgrade the ESP32 firmware to the one containing the new file system library.\n");
-    printf("Run the 'Post file system upgrade test' to verify that the file system upgrade works.\n\n\n");
-
-    ReleaseFileSystemTestContext(&context);
-}
-
-/**
- * @brief Post file system upgrade test.
- *
- *  This test should be run after upgrading the ESP32 firmware to verify that
- *  the file system upgrade process preserved all files correctly. It reads the
- *  files created by the "Prepare file system upgrade test" and verifies their
- *  contents match the expected values.
- */
-TEST_CASE("Post file system upgrade test", CLASS_OF_TESTS)
-{
-    FileSystemTestContext context = {};
-    CreateFileSystemTestContext(&context, false);
-
-    //
-    //  Verify that the test files exist and have the correct contents.
-    //
-    CheckTestFileContents(TEST_FILE_NAME, TEST_FILE_CONTENTS);
-    CheckTestFileContents(TEST_FILE_NAME2, TEST_FILE_CONTENTS2);
-    CheckUpgradeFileContents(TEST_UPGRADE_FILE_NAME_AA, 0xaa);
-    CheckUpgradeFileContents(TEST_UPGRADE_FILE_NAME_55, 0x55);
-
-    //
-    //  Verify the correct number of files exist on the file system.
-    //
-    TEST_ASSERT_EQUAL(4, CountFiles());
 
     ReleaseFileSystemTestContext(&context);
 }

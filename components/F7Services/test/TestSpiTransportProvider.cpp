@@ -31,8 +31,13 @@
  *  constructing and destroying one per test - the shared instance is built on first
  *  use and each test resets the one piece of private state it touches (_incomingMessage)
  *  instead of tearing the object down.
+ *
+ *  They run under QEMU but are not tagged [Emulated].  Building the provider starts its
+ *  synchronisation task, which prints +++RDY to the console for the rest of the boot and
+ *  can make the test runner lose a later selector, so run-tests-ci.sh runs them last.
+ *  See issue #499.
  */
-#define CLASS_OF_TESTS "[SpiTransportProvider][Emulated]"
+#define CLASS_OF_TESTS "[SpiTransportProvider]"
 
 /**
  * @brief Friend of SpiTransportProvider granting these tests access to
