@@ -193,4 +193,50 @@ const char *meadow_f7_json = R"({
     ]
 })";
 
+//
+//  Meadow device name MeadowF7NotifyTest with company identifier Espressif (0x02e5).
+//
+//  This is the service NotifyCharacteristicSoakTest.py drives: an iteration count and a
+//  client number the client writes, and a notifying field with the Client Characteristic
+//  Configuration descriptor (0x2902) a client needs in order to subscribe.
+//
+const char *meadow_f7_notify_json = R"({
+    "deviceName":"MeadowF7NotifyTest",
+    "companyIdentifier":741,
+    "services": [
+        {
+            "name":"NotifyService",
+            "uuid":252,
+            "characteristics": [
+                {
+                    "uuid":"018e99d6-8a61-11eb-8dcd-0242ac1300aa",
+                    "permission":17,
+                    "props":10,
+                    "len":4
+                },
+                {
+                    "uuid":"018e99d6-8a61-11eb-8dcd-0242ac1300bb",
+                    "permission":17,
+                    "props":10,
+                    "len":4
+                },
+                {
+                    "uuid":"018e99d6-8a61-11eb-8dcd-0242ac1300cc",
+                    "permission":1,
+                    "props":18,
+                    "len":4,
+                    "descriptors": [
+                        {
+                        "uuid": 10498,
+                        "permission": 17,
+                        "len": 2,
+                        "value": 0
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+})";
+
 #endif // _TEST_BLUETOOTH_SERVICE_JSON_HPP_

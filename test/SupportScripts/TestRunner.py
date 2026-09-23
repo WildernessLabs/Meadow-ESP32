@@ -102,6 +102,8 @@ BLUETOOTH_CLIENTS = {
         lambda arguments: ['NotifyCharacteristicClient.py', '--name', 'MeadowD'],
     'Soak test writing numeric characteristic, number of iterations controlled by client (MeadowF7, Espressif)':
         lambda arguments: ['WriteNumberCharacteristicSoakTest.py', '--iterations', str(arguments.soak_iterations)],
+    'Soak test notifying characteristic, number of iterations controlled by client (MeadowF7NotifyTest, Espressif)':
+        lambda arguments: ['NotifyCharacteristicSoakTest.py', '--iterations', str(arguments.soak_iterations)],
 }
 
 
@@ -447,7 +449,7 @@ def main():
                         help='Interpreter, with bleak installed, that runs the Bluetooth '
                              'clients (default: the one running this script)')
     parser.add_argument('--soak-iterations', type=int, default=DEFAULT_SOAK_ITERATIONS,
-                        help=f'Values the Bluetooth soak client writes '
+                        help=f'Iterations the Bluetooth soak clients ask for '
                              f'(default {DEFAULT_SOAK_ITERATIONS})')
     arguments = parser.parse_args()
 

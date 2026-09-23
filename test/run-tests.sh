@@ -113,7 +113,7 @@ if $HELP; then
     echo "                        run carries on with the next selector.  Repeatable"
     echo "--bluetooth-python=*    Python with bleak installed, used to run the Bluetooth"
     echo "                        clients (see SupportScripts/requirements.txt)"
-    echo "--soak-iterations=*     Values the Bluetooth soak client writes (default 1000)"
+    echo "--soak-iterations=*     Iterations the Bluetooth soak clients ask for (default 1000)"
     echo "-v | --verbose          Echo the console output as the tests run"
     echo ""
     echo "Any remaining arguments are passed to the test menu as selectors:"

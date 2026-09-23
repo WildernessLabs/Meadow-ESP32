@@ -115,7 +115,7 @@ so one number for all three would make one test too long or another too short to
 anything. `SoakHeapAllowance` goes with `PosixIterations` — a leak shows up in
 proportion to the number of fetches, so shortening the soak without lowering the
 allowance leaves a check that passes whatever happens. The Bluetooth restart test and the
-Bluetooth write soak apply the same allowance to their own counts,
+Bluetooth write and notify soaks apply the same allowance to their own counts,
 `BluetoothRestartIterations` and the client's `--soak-iterations`.
 
 ### Build Commands
@@ -215,7 +215,7 @@ such as `[FileSystem]`, a quoted test name, a menu number, or `*` for everything
 | `--junit=*` | Write the results as a JUnit report to a file |
 | `--expect-reboot=*` | Selector that restarts the device on purpose; repeatable |
 | `--bluetooth-python=*` | Python with `bleak` installed, used to run the Bluetooth clients |
-| `--soak-iterations=*` | Values the Bluetooth soak client writes (default 1000) |
+| `--soak-iterations=*` | Iterations the Bluetooth soak clients ask for (default 1000) |
 | `-v \| --verbose` | Echo the console output as the tests run |
 
 `--expect-reboot` is what separates a restart that is the point of the test from one that
@@ -236,6 +236,7 @@ test is `BLUETOOTH_CLIENTS` in `TestRunner.py`.
 | Notify characteristic (MeadowC, no company identifier) | `NotifyCharacteristicClient.py --name MeadowC` |
 | Notify characteristic, multiple descriptors (MeadowD, no company identifier) | `NotifyCharacteristicClient.py --name MeadowD` |
 | Soak test writing numeric characteristic, number of iterations controlled by client (MeadowF7, Espressif) | `WriteNumberCharacteristicSoakTest.py` |
+| Soak test notifying characteristic, number of iterations controlled by client (MeadowF7NotifyTest, Espressif) | `NotifyCharacteristicSoakTest.py` |
 
 The clients use [Bleak](https://github.com/hbldh/bleak), which the ESP-IDF Python
 environment does not include. Keep it in a virtual environment of its own and point the

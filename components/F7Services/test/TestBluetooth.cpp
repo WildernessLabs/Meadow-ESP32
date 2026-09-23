@@ -64,19 +64,50 @@
 #define MEADOW_F7_HANDLE_COUNT 9
 
 /**
- * @brief Length of the GetHandles payload for the MeadowF7 service.
+ * @brief Length of the header in a GetHandles payload.
  *
  *  A uint16_t handle count and a uint32_t length precede the handles.
  */
-#define MEADOW_F7_HANDLES_PAYLOAD_LENGTH (2 + 4 + (MEADOW_F7_HANDLE_COUNT * 2))
+#define HANDLES_PAYLOAD_HEADER_LENGTH (2 + 4)
 
 /**
- * @brief Offset in the GetHandles payload of the NumberField value handle.
+ * @brief Index of the NumberField value handle among the MeadowF7 handles.
  *
- *  Six bytes of header, then the service handle and the declaration and value handles of
- *  OnOff and BooleanField, then the NumberField declaration handle.
+ *  After the service handle and the declaration and value handles of OnOff and
+ *  BooleanField, then the NumberField declaration handle.
  */
-#define MEADOW_F7_NUMBER_FIELD_VALUE_OFFSET (6 + (6 * 2))
+#define MEADOW_F7_NUMBER_FIELD_VALUE_INDEX 6
+
+/**
+ * @brief Number of handles the MeadowF7NotifyTest service returns.
+ *
+ *  The service, the declaration and value of the iteration count and the client number,
+ *  and the declaration, value and Client Characteristic Configuration descriptor of the
+ *  notify field.
+ */
+#define MEADOW_F7_NOTIFY_HANDLE_COUNT 8
+
+/**
+ * @brief Index of the IterationCountField value handle among the MeadowF7NotifyTest handles.
+ */
+#define MEADOW_F7_NOTIFY_ITERATION_COUNT_VALUE_INDEX 2
+
+/**
+ * @brief Index of the ClientNumberField value handle among the MeadowF7NotifyTest handles.
+ */
+#define MEADOW_F7_NOTIFY_CLIENT_NUMBER_VALUE_INDEX 4
+
+/**
+ * @brief Index of the NotifyField value handle among the MeadowF7NotifyTest handles.
+ */
+#define MEADOW_F7_NOTIFY_NOTIFY_FIELD_VALUE_INDEX 6
+
+/**
+ * @brief Value the notify soak client writes to the client number field first.
+ *
+ *  It says the test is being driven by a script rather than by hand.
+ */
+#define SCRIPT_CONTROLLED_MARKER 0x7fffffff
 
 /**
  * @brief Names and UUIDs of the characteristics in the MeadowF7 service.
@@ -427,18 +458,126 @@ TEST_CASE("Restart Bluetooth Service repeatedly (test for memory leak)", CLASS_O
 }
 
 /**
- * @brief Test starting a Bluetooth service for MeadowF7, Company ID Espressif (0x02e5) and then accepting
- *        multiple write requests.
+ * @brief Free heap and timing across the measured part of a soak test.
+ *
+ *  The first measurement is the baseline, so whatever the soak allocates once and keeps
+ *  before then is not counted as a leak.  Each later measurement becomes the end figure.
+ *  Measurements are only taken where nothing is in flight, so that the start and the end
+ *  are taken in the same state.
  */
-TEST_CASE("Soak test writing numeric characteristic, number of iterations controlled by client (MeadowF7, Espressif)", CLASS_OF_TESTS)
+class SoakHeapMonitor
 {
-    printf("Starting Bluetooth service for MeadowF7 (Bluetooth_Basics), Company ID Espressif (0x02e5)\n");
+private:
+    /**
+     * @brief True once the baseline has been taken.
+     */
+    bool _baselineTaken = false;
 
-    MockMessageDispatcher *dispatcher = SetupMessageDispatcher();
-    TEST_ASSERT_NOT_NULL(dispatcher);
+    /**
+     * @brief Iteration at which the baseline was taken.
+     */
+    uint32_t _baselineIteration = 0;
 
-    StartBluetoothService(dispatcher, meadow_f7_json);
+    /**
+     * @brief Free heap at the baseline.
+     */
+    uint32_t _heapAtStart = 0;
 
+    /**
+     * @brief Free heap at the most recent measurement.
+     */
+    uint32_t _heapAtEnd = 0;
+
+    /**
+     * @brief Time the baseline was taken, in microseconds.
+     */
+    int64_t _startedAt = 0;
+
+    /**
+     * @brief Iterations between progress reports, zero for none.
+     */
+    const uint32_t _progressInterval = UnitTestConfiguration::SoakProgressInterval();
+
+public:
+    /**
+     * @brief Record the free heap at a point where nothing is in flight.
+     *
+     * @param iteration Iterations completed so far.
+     */
+    void Measure(const uint32_t iteration)
+    {
+        _heapAtEnd = esp_get_free_heap_size();
+        if (!_baselineTaken)
+        {
+            _baselineTaken = true;
+            _baselineIteration = iteration;
+            _heapAtStart = _heapAtEnd;
+            _startedAt = esp_timer_get_time();
+            printf("Warm-up complete after %" PRIu32 " iterations, free heap %" PRIu32 " bytes.\n", iteration, _heapAtStart);
+        }
+    }
+
+    /**
+     * @brief Report the free heap and the rate if this iteration is due a report.
+     *
+     * @param iteration Iterations completed so far.
+     */
+    void ReportProgress(const uint32_t iteration) const
+    {
+        if ((_progressInterval > 0) && ((iteration % _progressInterval) == 0) && _baselineTaken && (iteration > _baselineIteration))
+        {
+            const int64_t elapsed = esp_timer_get_time() - _startedAt;
+            printf("  %" PRIu32 " iterations, free heap %" PRIu32 " bytes, lowest %" PRIu32 ", %" PRId64 " ms per iteration.\n", iteration, esp_get_free_heap_size(), esp_get_minimum_free_heap_size(), (elapsed / 1000) / (iteration - _baselineIteration));
+        }
+    }
+
+    /**
+     * @brief Report the totals and fail if the free heap fell further than the allowance.
+     *
+     *  The heap is not expected to come back to exactly where it started, because
+     *  allocation patterns leave it slightly differently arranged, but a real leak over
+     *  this many round trips is far larger than the allowance the configuration gives.  A
+     *  run that never got past the warm-up has nothing to compare.
+     *
+     * @param iteration Iterations completed.
+     * @param failureMessage Message to fail with when the heap fell too far.
+     */
+    void Check(const uint32_t iteration, const char * const failureMessage) const
+    {
+        if (!_baselineTaken || (iteration <= _baselineIteration))
+        {
+            printf("Too few iterations after the warm-up to check the heap.\n");
+            return;
+        }
+
+        const uint32_t measured = iteration - _baselineIteration;
+        const int64_t elapsed = esp_timer_get_time() - _startedAt;
+        printf("Measured %" PRIu32 " iterations in %" PRId64 " seconds.\n", measured, elapsed / 1000000);
+        printf("Free heap %" PRIu32 " bytes at the start, %" PRIu32 " at the end, lowest %" PRIu32 ".\n", _heapAtStart, _heapAtEnd, esp_get_minimum_free_heap_size());
+
+        if (_heapAtEnd < _heapAtStart)
+        {
+            const uint32_t allowance = UnitTestConfiguration::SoakHeapAllowance();
+            const uint32_t lost = _heapAtStart - _heapAtEnd;
+            printf("Free heap fell by %" PRIu32 " bytes over %" PRIu32 " iterations, against an allowance of %" PRIu32 ".\n", lost, measured, allowance);
+            TEST_ASSERT_TRUE_MESSAGE(lost <= allowance, failureMessage);
+        }
+    }
+};
+
+/**
+ * @brief Ask for the handles of the running service and check how many there are.
+ *
+ *  The payload is the handle count (2 bytes) and the length of the handle list (4 bytes),
+ *  followed by the handles themselves, two bytes each: the service, then for each
+ *  characteristic its declaration, its value and any descriptors, in configuration order.
+ *
+ * @param dispatcher Dispatcher to queue the request on.
+ * @param expectedCount Number of handles the service should have.
+ * @param handles Array of at least expectedCount entries to receive the handles.
+ */
+static void GetServiceHandles(MockMessageDispatcher *dispatcher, const uint16_t expectedCount, uint16_t * const handles)
+{
     //
     //  The request has to be on the heap, see RunBluetoothLifecycleRequest for why.
     //
@@ -452,22 +591,66 @@ TEST_CASE("Soak test writing numeric characteristic, number of iterations contro
     Message *response = dispatcher->GetOutboundMessage();
     ASSERT_RESPONSE(response, Esp32Interfaces::BlueTooth, BluetoothFunction::GetHandles, StatusCodes::CompletedOk);
     ASSERT_HAS_PAYLOAD(response);
-    TEST_ASSERT_EQUAL(MEADOW_F7_HANDLES_PAYLOAD_LENGTH, response->PayloadLength);
-    //
-    //  The payload is the handle count (2 bytes) and the length of the handle list (4 bytes),
-    //  followed by the handles themselves, two bytes each, in this order:
-    //      - Service handle
-    //      - 016e99d6-8a61-11eb-8dcd-0242ac1300ff (OnOff), declaration then value
-    //      - 017e99d6-8a61-11eb-8dcd-0242ac1300aa (BooleanField), declaration then value
-    //      - 018e99d6-8a61-11eb-8dcd-0242ac1300bb (NumberField), declaration then value
-    //      - 019e99d6-8a61-11eb-8dcd-0242ac1300cc (TextField), declaration then value
-    //
+    TEST_ASSERT_EQUAL(HANDLES_PAYLOAD_HEADER_LENGTH + (expectedCount * sizeof(uint16_t)), response->PayloadLength);
+
     const uint16_t handleCount = Encoders::ExtractUInt16(response->Payload);
     const uint32_t handlesLength = Encoders::ExtractUInt32(response->Payload + 2);
-    TEST_ASSERT_EQUAL(MEADOW_F7_HANDLE_COUNT, handleCount);
-    TEST_ASSERT_EQUAL(MEADOW_F7_HANDLE_COUNT * sizeof(uint16_t), handlesLength);
-    const uint16_t numberFieldValueHandle = Encoders::ExtractUInt16(response->Payload + MEADOW_F7_NUMBER_FIELD_VALUE_OFFSET);
+    TEST_ASSERT_EQUAL(expectedCount, handleCount);
+    TEST_ASSERT_EQUAL(expectedCount * sizeof(uint16_t), handlesLength);
+    for (uint16_t index = 0; index < expectedCount; index++)
+    {
+        handles[index] = Encoders::ExtractUInt16(response->Payload + HANDLES_PAYLOAD_HEADER_LENGTH + (index * sizeof(uint16_t)));
+    }
     Message::DeleteMessage(response);
+}
+
+/**
+ * @brief Check a client write event and extract the four byte value written.
+ *
+ *  The event's memory was allocated by the BluetoothRequestHandler, and it is released
+ *  here.
+ *
+ * @param event Event raised for the write.
+ * @param handle Receives the handle written to.
+ * @param value Receives the value written, little endian on the wire.
+ */
+static void ExtractClientWrite(Message *event, uint16_t &handle, uint32_t &value)
+{
+    ASSERT_EVENT(event, Esp32Interfaces::BlueTooth, BluetoothFunction::ClientWriteRequestEvent, StatusCodes::CompletedOk);
+    TEST_ASSERT_NOT_NULL(event->Payload);
+    TEST_ASSERT_GREATER_OR_EQUAL(6 + sizeof(uint32_t), event->PayloadLength);
+
+    handle = Encoders::ExtractUInt16(event->Payload);
+    const uint32_t length = Encoders::ExtractUInt32(event->Payload + 2);
+    TEST_ASSERT_EQUAL(sizeof(uint32_t), length);
+    value = 0;
+    for (uint32_t index = 0; index < length; index++)
+    {
+        value |= (static_cast<uint32_t>(event->Payload[6 + index]) << (index * 8));
+    }
+    Message::DeleteMessage(event);
+}
+
+/**
+ * @brief Test starting a Bluetooth service for MeadowF7, Company ID Espressif (0x02e5) and then accepting
+ *        multiple write requests.
+ *
+ *  WriteNumberCharacteristicSoakTest.py is the client.  It writes 1, 2, 3 and so on to the
+ *  number characteristic, reading each value back once it has been echoed, and writes 0
+ *  to finish.
+ */
+TEST_CASE("Soak test writing numeric characteristic, number of iterations controlled by client (MeadowF7, Espressif)", CLASS_OF_TESTS)
+{
+    printf("Starting Bluetooth service for MeadowF7 (Bluetooth_Basics), Company ID Espressif (0x02e5)\n");
+
+    MockMessageDispatcher *dispatcher = SetupMessageDispatcher();
+    TEST_ASSERT_NOT_NULL(dispatcher);
+
+    StartBluetoothService(dispatcher, meadow_f7_json);
+
+    uint16_t handles[MEADOW_F7_HANDLE_COUNT];
+    GetServiceHandles(dispatcher, MEADOW_F7_HANDLE_COUNT, handles);
+    const uint16_t numberFieldValueHandle = handles[MEADOW_F7_NUMBER_FIELD_VALUE_INDEX];
 
     WaitForClientConnection(dispatcher);
 
@@ -477,15 +660,7 @@ TEST_CASE("Soak test writing numeric characteristic, number of iterations contro
     //  client therefore writes its next value first, so the response and the next write
     //  are accepted in either order rather than one strictly after the other.
     //
-    const uint32_t progressInterval = UnitTestConfiguration::SoakProgressInterval();
-    uint32_t heapAtStart = 0;
-    uint32_t heapAtEnd = 0;
-    int64_t startedAt = 0;
-    //
-    //  Iteration at which the heap was first measured, zero until then.
-    //
-    uint32_t baselineIteration = 0;
-
+    SoakHeapMonitor monitor;
     uint32_t iteration = 0;
     uint32_t outstandingDataSetResponses = 0;
     bool clientFinished = false;
@@ -494,7 +669,7 @@ TEST_CASE("Soak test writing numeric characteristic, number of iterations contro
     {
         WaitForOutboundMessage(dispatcher, CLIENT_CONNECTION_TIMEOUT);
         TEST_ASSERT_GREATER_THAN(0, dispatcher->OutboundMessageQueueLength());
-        response = dispatcher->GetOutboundMessage();
+        Message *response = dispatcher->GetOutboundMessage();
         TEST_ASSERT_NOT_NULL(response);
 
         if (response->Function == BluetoothFunction::ServerDataSet)
@@ -504,23 +679,9 @@ TEST_CASE("Soak test writing numeric characteristic, number of iterations contro
             TEST_ASSERT_GREATER_THAN_MESSAGE(0, outstandingDataSetResponses, "ServerDataSet response with no request outstanding.");
             outstandingDataSetResponses--;
             Message::DeleteMessage(response);
-
-            //
-            //  The heap is measured with every echo complete, so that the start and the end
-            //  are taken in the same state: client connected, nothing in flight.  Everything
-            //  up to the first such point is the warm-up, so anything allocated once and
-            //  kept is not counted as a leak.
-            //
             if (outstandingDataSetResponses == 0)
             {
-                heapAtEnd = esp_get_free_heap_size();
-                if (baselineIteration == 0)
-                {
-                    baselineIteration = iteration;
-                    heapAtStart = heapAtEnd;
-                    startedAt = esp_timer_get_time();
-                    printf("Warm-up complete after %" PRIu32 " iterations, free heap %" PRIu32 " bytes.\n", baselineIteration, heapAtStart);
-                }
+                monitor.Measure(iteration);
             }
             continue;
         }
@@ -537,24 +698,10 @@ TEST_CASE("Soak test writing numeric characteristic, number of iterations contro
             continue;
         }
 
-        //
-        //  The value arrives as an event whose memory was allocated by the
-        //  BluetoothRequestHandler, so it is released here.
-        //
-        ASSERT_EVENT(response, Esp32Interfaces::BlueTooth, BluetoothFunction::ClientWriteRequestEvent, StatusCodes::CompletedOk);
-        TEST_ASSERT_NOT_NULL(response->Payload);
-        TEST_ASSERT_GREATER_OR_EQUAL(6 + sizeof(uint32_t), response->PayloadLength);
-
-        const uint16_t handle = Encoders::ExtractUInt16(response->Payload);
-        const uint32_t length = Encoders::ExtractUInt32(response->Payload + 2);
-        TEST_ASSERT_EQUAL(numberFieldValueHandle, handle);
-        TEST_ASSERT_EQUAL(sizeof(uint32_t), length);
+        uint16_t handle = 0;
         uint32_t value = 0;
-        for (uint32_t index = 0; index < length; index++)
-        {
-            value |= (static_cast<uint32_t>(response->Payload[6 + index]) << (index * 8));
-        }
-        Message::DeleteMessage(response);
+        ExtractClientWrite(response, handle, value);
+        TEST_ASSERT_EQUAL(numberFieldValueHandle, handle);
 
         //
         //  The client writes 0 to say the test is over.
@@ -567,11 +714,7 @@ TEST_CASE("Soak test writing numeric characteristic, number of iterations contro
 
         iteration++;
         TEST_ASSERT_EQUAL_UINT32(iteration, value);
-        if ((progressInterval > 0) && ((iteration % progressInterval) == 0) && (baselineIteration > 0) && (iteration > baselineIteration))
-        {
-            const int64_t elapsed = esp_timer_get_time() - startedAt;
-            printf("  %" PRIu32 " iterations, free heap %" PRIu32 " bytes, lowest %" PRIu32 ", %" PRId64 " ms per iteration.\n", iteration, esp_get_free_heap_size(), esp_get_minimum_free_heap_size(), (elapsed / 1000) / (iteration - baselineIteration));
-        }
+        monitor.ReportProgress(iteration);
 
         //
         //  Write the value back to the characteristic for the client to read and verify.
@@ -582,29 +725,140 @@ TEST_CASE("Soak test writing numeric characteristic, number of iterations contro
     TEST_ASSERT_EQUAL_UINT32_MESSAGE(0, outstandingDataSetResponses, "ServerDataSet requests left without a response.");
     printf("Client completed %" PRIu32 " iterations.\n", iteration);
 
-    //
-    //  A run that never got past the warm-up has nothing to compare.
-    //
-    if ((baselineIteration > 0) && (iteration > baselineIteration))
-    {
-        const uint32_t measured = iteration - baselineIteration;
-        const int64_t elapsed = esp_timer_get_time() - startedAt;
-        printf("Measured %" PRIu32 " iterations in %" PRId64 " seconds.\n", measured, elapsed / 1000000);
-        printf("Free heap %" PRIu32 " bytes at the start, %" PRIu32 " at the end, lowest %" PRIu32 ".\n", heapAtStart, heapAtEnd, esp_get_minimum_free_heap_size());
+    monitor.Check(iteration, "The free heap fell too far, which suggests a leak in the characteristic write path.");
 
-        //
-        //  The heap is not expected to come back to exactly where it started, because
-        //  allocation patterns leave it slightly differently arranged, but a real leak over
-        //  this many round trips is far larger than the allowance the configuration gives.
-        //
-        if (heapAtEnd < heapAtStart)
+    StopBluetoothService(dispatcher);
+
+    ResetMessageDispatcher();
+}
+
+/**
+ * @brief Soak test the notification path: the device notifies a number, the client
+ *        writes it back, and the device notifies the next one.
+ *
+ *  NotifyCharacteristicSoakTest.py is the client.  It subscribes to the notify field,
+ *  writes SCRIPT_CONTROLLED_MARKER to the client number field and then the number of
+ *  iterations to the iteration count field, reading each back once it has been echoed.
+ *  The device then notifies 1, 2, 3 and so on, each only once the client has written the
+ *  previous one back, and notifies 0 to finish, at which point the client disconnects.
+ *
+ *  The response to a notification and the client's reply to it can reach the queue in
+ *  either order, so neither is required to come first.
+ */
+TEST_CASE("Soak test notifying characteristic, number of iterations controlled by client (MeadowF7NotifyTest, Espressif)", CLASS_OF_TESTS)
+{
+    printf("Starting Bluetooth service for MeadowF7NotifyTest, Company ID Espressif (0x02e5)\n");
+
+    MockMessageDispatcher *dispatcher = SetupMessageDispatcher();
+    TEST_ASSERT_NOT_NULL(dispatcher);
+
+    StartBluetoothService(dispatcher, meadow_f7_notify_json);
+
+    uint16_t handles[MEADOW_F7_NOTIFY_HANDLE_COUNT];
+    GetServiceHandles(dispatcher, MEADOW_F7_NOTIFY_HANDLE_COUNT, handles);
+    const uint16_t iterationCountHandle = handles[MEADOW_F7_NOTIFY_ITERATION_COUNT_VALUE_INDEX];
+    const uint16_t clientNumberHandle = handles[MEADOW_F7_NOTIFY_CLIENT_NUMBER_VALUE_INDEX];
+    const uint16_t notifyFieldHandle = handles[MEADOW_F7_NOTIFY_NOTIFY_FIELD_VALUE_INDEX];
+
+    WaitForClientConnection(dispatcher);
+
+    SoakHeapMonitor monitor;
+    bool markerReceived = false;
+    uint32_t iterations = 0;
+    uint32_t notified = 0;
+    uint32_t acknowledged = 0;
+    uint32_t outstandingDataSetResponses = 0;
+    bool endSent = false;
+    bool clientDisconnected = false;
+    while (!clientDisconnected)
+    {
+        WaitForOutboundMessage(dispatcher, CLIENT_CONNECTION_TIMEOUT);
+        TEST_ASSERT_GREATER_THAN(0, dispatcher->OutboundMessageQueueLength());
+        Message *response = dispatcher->GetOutboundMessage();
+        TEST_ASSERT_NOT_NULL(response);
+
+        if (response->Function == BluetoothFunction::ServerDataSet)
         {
-            const uint32_t allowance = UnitTestConfiguration::SoakHeapAllowance();
-            const uint32_t lost = heapAtStart - heapAtEnd;
-            printf("Free heap fell by %" PRIu32 " bytes over %" PRIu32 " iterations, against an allowance of %" PRIu32 ".\n", lost, measured, allowance);
-            TEST_ASSERT_TRUE_MESSAGE(lost <= allowance, "The free heap fell too far, which suggests a leak in the characteristic write path.");
+            ASSERT_RESPONSE(response, Esp32Interfaces::BlueTooth, BluetoothFunction::ServerDataSet, StatusCodes::CompletedOk);
+            ASSERT_NO_PAYLOAD(response);
+            TEST_ASSERT_GREATER_THAN_MESSAGE(0, outstandingDataSetResponses, "ServerDataSet response with no request outstanding.");
+            outstandingDataSetResponses--;
+            Message::DeleteMessage(response);
+            continue;
         }
+
+        if (response->Function == BluetoothFunction::ClientDisconnectedEvent)
+        {
+            ASSERT_EVENT(response, Esp32Interfaces::BlueTooth, BluetoothFunction::ClientDisconnectedEvent, StatusCodes::CompletedOk);
+            ASSERT_NO_PAYLOAD(response);
+            Message::DeleteMessage(response);
+            TEST_ASSERT_TRUE_MESSAGE(endSent, "The client disconnected before the end of the test was notified.");
+            clientDisconnected = true;
+            continue;
+        }
+
+        uint16_t handle = 0;
+        uint32_t value = 0;
+        ExtractClientWrite(response, handle, value);
+
+        if (handle == iterationCountHandle)
+        {
+            TEST_ASSERT_TRUE_MESSAGE(markerReceived, "Iteration count written before the client number marker.");
+            TEST_ASSERT_EQUAL_UINT32_MESSAGE(0, iterations, "Iteration count written more than once.");
+            TEST_ASSERT_GREATER_THAN_UINT32_MESSAGE(0, value, "The client asked for no iterations.");
+            iterations = value;
+            printf("Client asked for %" PRIu32 " notifications.\n", iterations);
+
+            //
+            //  Echo the count so the client can read it back, then start.
+            //
+            QueueServerDataSet(dispatcher, handle, value);
+            notified = 1;
+            QueueServerDataSet(dispatcher, notifyFieldHandle, notified);
+            outstandingDataSetResponses += 2;
+            continue;
+        }
+
+        TEST_ASSERT_EQUAL_MESSAGE(clientNumberHandle, handle, "Write to an unexpected characteristic.");
+        if (iterations == 0)
+        {
+            //
+            //  Before the count arrives the only write expected is the marker, echoed so
+            //  the client can read it back.
+            //
+            TEST_ASSERT_EQUAL_HEX32_MESSAGE(SCRIPT_CONTROLLED_MARKER, value, "Expected the client number marker.");
+            markerReceived = true;
+            QueueServerDataSet(dispatcher, handle, value);
+            outstandingDataSetResponses++;
+            continue;
+        }
+
+        TEST_ASSERT_FALSE_MESSAGE(endSent, "Client number written after the end of the test was notified.");
+        TEST_ASSERT_EQUAL_UINT32_MESSAGE(notified, value, "The client wrote back a different number from the one notified.");
+        acknowledged = value;
+        monitor.ReportProgress(acknowledged);
+        if (outstandingDataSetResponses == 0)
+        {
+            monitor.Measure(acknowledged);
+        }
+
+        if (acknowledged < iterations)
+        {
+            notified++;
+            QueueServerDataSet(dispatcher, notifyFieldHandle, notified);
+        }
+        else
+        {
+            QueueServerDataSet(dispatcher, notifyFieldHandle, 0);
+            endSent = true;
+        }
+        outstandingDataSetResponses++;
     }
+    TEST_ASSERT_EQUAL_UINT32_MESSAGE(0, outstandingDataSetResponses, "ServerDataSet requests left without a response.");
+    TEST_ASSERT_EQUAL_UINT32_MESSAGE(iterations, acknowledged, "The client did not return every notification.");
+    printf("Client returned %" PRIu32 " notifications.\n", acknowledged);
+
+    monitor.Check(acknowledged, "The free heap fell too far, which suggests a leak in the notification path.");
 
     StopBluetoothService(dispatcher);
 
