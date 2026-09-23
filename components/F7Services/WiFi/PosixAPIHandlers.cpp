@@ -455,40 +455,52 @@ void WiFiRequestHandler::Connect(void * const vpMessage)
             Esp32Messaging::ConnectRequest *request = Encoders::ExtractConnectRequest(message->Payload);
             if (request)
             {
-                Esp32Messaging::SockAddr *socketAddress = Encoders::ExtractSockAddr(request->Addr);
-                if (socketAddress)
+                if (request->AddrLength == 0)
                 {
-                    struct sockaddr_in sa = {};
-                    int family;
-                    Mapping::GetEspValue(Mapping::AddressFamily, socketAddress->Family, reinterpret_cast<int32_t *>(&family));
-                    errno = 0;
-                    if (family == AF_INET)
-                    {
-                        sa.sin_family = static_cast<uint8_t>(family & 0xff);
-                        sa.sin_port = socketAddress->Port;
-                        memcpy(&sa.sin_addr, &socketAddress->Ip4Address, sizeof(sa.sin_addr));
-                        sa.sin_len = sizeof(struct sockaddr_in);
-                        TRACE_MESSAGE("Connect: Connecting socket: %ld", request->SocketHandle);
-                        TRACE_MESSAGE("Connect: Family: %d", sa.sin_family);
-                        TRACE_MESSAGE("Connect: IP address: %s", inet_ntoa(sa.sin_addr));
-                        TRACE_MESSAGE("Connect: Port: %d", ntohs(sa.sin_port));
-                        response.Result = connect(request->SocketHandle, reinterpret_cast<struct sockaddr *>(&sa), sizeof(sa));
-                        if (response.Result != 0)
-                        {
-                            TRACE_MESSAGE("Connect: Error code: %d - %s", errno, strerror(errno));
-                            response.ResponseErrno = Mapping::NuttxErrno(errno);
-                        }
-                    }
-                    else
-                    {
-                        response.Result = -1;
-                        response.ResponseErrno = Mapping::NuttxErrno(EFAULT);
-                    }
-                    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&socketAddress));
+                    //
+                    //  request->Addr is nullptr when AddrLength is 0, and ExtractSockAddr
+                    //  dereferences it immediately, so this has to be checked before calling it.
+                    //
+                    response.Result = -1;
+                    response.ResponseErrno = Mapping::NuttxErrno(EFAULT);
                 }
                 else
                 {
-                    result = StatusCodes::EspOutOfMemory;
+                    Esp32Messaging::SockAddr *socketAddress = Encoders::ExtractSockAddr(request->Addr);
+                    if (socketAddress)
+                    {
+                        struct sockaddr_in sa = {};
+                        int family;
+                        Mapping::GetEspValue(Mapping::AddressFamily, socketAddress->Family, reinterpret_cast<int32_t *>(&family));
+                        errno = 0;
+                        if (family == AF_INET)
+                        {
+                            sa.sin_family = static_cast<uint8_t>(family & 0xff);
+                            sa.sin_port = socketAddress->Port;
+                            memcpy(&sa.sin_addr, &socketAddress->Ip4Address, sizeof(sa.sin_addr));
+                            sa.sin_len = sizeof(struct sockaddr_in);
+                            TRACE_MESSAGE("Connect: Connecting socket: %ld", request->SocketHandle);
+                            TRACE_MESSAGE("Connect: Family: %d", sa.sin_family);
+                            TRACE_MESSAGE("Connect: IP address: %s", inet_ntoa(sa.sin_addr));
+                            TRACE_MESSAGE("Connect: Port: %d", ntohs(sa.sin_port));
+                            response.Result = connect(request->SocketHandle, reinterpret_cast<struct sockaddr *>(&sa), sizeof(sa));
+                            if (response.Result != 0)
+                            {
+                                TRACE_MESSAGE("Connect: Error code: %d - %s", errno, strerror(errno));
+                                response.ResponseErrno = Mapping::NuttxErrno(errno);
+                            }
+                        }
+                        else
+                        {
+                            response.Result = -1;
+                            response.ResponseErrno = Mapping::NuttxErrno(EFAULT);
+                        }
+                        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&socketAddress));
+                    }
+                    else
+                    {
+                        result = StatusCodes::EspOutOfMemory;
+                    }
                 }
                 Encoders::FreeConnectRequest(&request);
             }
@@ -2165,6 +2177,17 @@ void WiFiRequestHandler::RecvMsg(void * const vpMessage)
  */
 StatusCodes::StatusCodes WiFiRequestHandler::Bind(Esp32Messaging::BindRequest *request, Esp32Messaging::IntegerAndErrnoResponse &response)
 {
+    if (request->AddrLength == 0)
+    {
+        //
+        //  request->Addr is nullptr when AddrLength is 0, and ExtractSockAddr dereferences
+        //  it immediately, so this has to be checked before calling it.
+        //
+        response.Result = -1;
+        response.ResponseErrno = Mapping::NuttxErrno(EFAULT);
+        return (StatusCodes::CompletedOk);
+    }
+
     Esp32Messaging::SockAddr *socketAddress = Encoders::ExtractSockAddr(request->Addr);
     if (socketAddress == NULL)
     {
