@@ -54,13 +54,28 @@
 #define NOTIFICATION_VALUE 0xa0a0a0a0
 
 /**
- * @brief Number of bytes of handle data the MeadowF7 service returns.
+ * @brief Number of handles the MeadowF7 service returns.
  *
  *  The handles are all uint16_t values.  The first value is the handle for the service,
- *  and each characteristic contributes the handle for its declaration followed by the
- *  handle for its value.
+ *  and each of the four characteristics contributes the handle for its declaration
+ *  followed by the handle for its value.
  */
-#define MEADOW_F7_HANDLES_PAYLOAD_LENGTH 24
+#define MEADOW_F7_HANDLE_COUNT 9
+
+/**
+ * @brief Length of the GetHandles payload for the MeadowF7 service.
+ *
+ *  A uint16_t handle count and a uint32_t length precede the handles.
+ */
+#define MEADOW_F7_HANDLES_PAYLOAD_LENGTH (2 + 4 + (MEADOW_F7_HANDLE_COUNT * 2))
+
+/**
+ * @brief Offset in the GetHandles payload of the NumberField value handle.
+ *
+ *  Six bytes of header, then the service handle and the declaration and value handles of
+ *  OnOff and BooleanField, then the NumberField declaration handle.
+ */
+#define MEADOW_F7_NUMBER_FIELD_VALUE_OFFSET (6 + (6 * 2))
 
 /**
  * @brief Names and UUIDs of the characteristics in the MeadowF7 service.
@@ -102,6 +117,31 @@ static void WaitForClientConnection(MockMessageDispatcher *dispatcher)
     ASSERT_EVENT(response, Esp32Interfaces::BlueTooth, BluetoothFunction::ClientConnectedEvent, StatusCodes::CompletedOk);
     ASSERT_NO_PAYLOAD(response);
     Message::DeleteMessage(response);
+}
+
+/**
+ * @brief Milliseconds between checks of the outbound queue in the soak test.
+ *
+ *  WaitForResponse checks once a second, which would limit the soak test to about one
+ *  iteration a second.
+ */
+#define SOAK_POLL_INTERVAL 10
+
+/**
+ * @brief Wait for a message to arrive in the outbound queue, or for a timeout.
+ *
+ * @param dispatcher Dispatcher whose outbound queue is being watched.
+ * @param milliseconds Number of milliseconds to wait.
+ */
+static void WaitForOutboundMessage(MockMessageDispatcher *dispatcher, const uint32_t milliseconds)
+{
+    uint32_t waited = 0;
+
+    while ((dispatcher->OutboundMessageQueueLength() == 0) && (waited < milliseconds))
+    {
+        vTaskDelay(pdMS_TO_TICKS(SOAK_POLL_INTERVAL));
+        waited += SOAK_POLL_INTERVAL;
+    }
 }
 
 /**
@@ -427,83 +467,105 @@ TEST_CASE("Soak test writing numeric characteristic, number of iterations contro
     ASSERT_HAS_PAYLOAD(response);
     TEST_ASSERT_EQUAL(MEADOW_F7_HANDLES_PAYLOAD_LENGTH, response->PayloadLength);
     //
-    //  The characteristic handles for the meadow_f7_json service will be in the following order:
+    //  The payload is the handle count (2 bytes) and the length of the handle list (4 bytes),
+    //  followed by the handles themselves, two bytes each, in this order:
     //      - Service handle
-    //      - 016e99d6-8a61-11eb-8dcd-0242ac1300ff (OnOff)
-    //      - 017e99d6-8a61-11eb-8dcd-0242ac1300aa (BooleanField)
-    //      - 018e99d6-8a61-11eb-8dcd-0242ac1300bb (NumberField)
-    //      - 019e99d6-8a61-11eb-8dcd-0242ac1300cc (TextField)
+    //      - 016e99d6-8a61-11eb-8dcd-0242ac1300ff (OnOff), declaration then value
+    //      - 017e99d6-8a61-11eb-8dcd-0242ac1300aa (BooleanField), declaration then value
+    //      - 018e99d6-8a61-11eb-8dcd-0242ac1300bb (NumberField), declaration then value
+    //      - 019e99d6-8a61-11eb-8dcd-0242ac1300cc (TextField), declaration then value
     //
-    __attribute__((unused)) uint16_t handleCount = Encoders::ExtractUInt16(response->Payload);
-    __attribute__((unused)) uint32_t handlesLength = Encoders::ExtractUInt32(response->Payload + 2);
-    __attribute__((unused)) uint16_t numberOfHandles = Encoders::ExtractUInt16(response->Payload + 6);
-    __attribute__((unused)) uint16_t serviceHandle = Encoders::ExtractUInt16(response->Payload + 8);
-    __attribute__((unused)) uint16_t onOffDeclarationHandle = Encoders::ExtractUInt16(response->Payload + 10);
-    __attribute__((unused)) uint16_t onOffValueHandle = Encoders::ExtractUInt16(response->Payload + 12);
-    __attribute__((unused)) uint16_t booleanFieldDeclarationHandle = Encoders::ExtractUInt16(response->Payload + 14);
-    __attribute__((unused)) uint16_t booleanFieldValueHandle = Encoders::ExtractUInt16(response->Payload + 16);
-    uint16_t numberFieldValueHandle = Encoders::ExtractUInt16(response->Payload + 20);
-    __attribute__((unused)) uint16_t numberFieldDeclarationHandle = Encoders::ExtractUInt16(response->Payload + 18);
-    __attribute__((unused)) uint16_t textFieldDeclarationHandle = Encoders::ExtractUInt16(response->Payload + 22);
+    const uint16_t handleCount = Encoders::ExtractUInt16(response->Payload);
+    const uint32_t handlesLength = Encoders::ExtractUInt32(response->Payload + 2);
+    TEST_ASSERT_EQUAL(MEADOW_F7_HANDLE_COUNT, handleCount);
+    TEST_ASSERT_EQUAL(MEADOW_F7_HANDLE_COUNT * sizeof(uint16_t), handlesLength);
+    const uint16_t numberFieldValueHandle = Encoders::ExtractUInt16(response->Payload + MEADOW_F7_NUMBER_FIELD_VALUE_OFFSET);
     Message::DeleteMessage(response);
 
     WaitForClientConnection(dispatcher);
 
+    //
+    //  The client sees the echoed value as soon as the stack has it, which can be before
+    //  the response to the ServerDataSet request reaches the outbound queue.  A prompt
+    //  client therefore writes its next value first, so the response and the next write
+    //  are accepted in either order rather than one strictly after the other.
+    //
     uint32_t iteration = 0;
-    while (true)
+    uint32_t outstandingDataSetResponses = 0;
+    bool clientFinished = false;
+    bool clientDisconnected = false;
+    while (!clientDisconnected)
     {
+        WaitForOutboundMessage(dispatcher, CLIENT_CONNECTION_TIMEOUT);
+        TEST_ASSERT_GREATER_THAN(0, dispatcher->OutboundMessageQueueLength());
+        response = dispatcher->GetOutboundMessage();
+        TEST_ASSERT_NOT_NULL(response);
+
+        if (response->Function == BluetoothFunction::ServerDataSet)
+        {
+            ASSERT_RESPONSE(response, Esp32Interfaces::BlueTooth, BluetoothFunction::ServerDataSet, StatusCodes::CompletedOk);
+            ASSERT_NO_PAYLOAD(response);
+            TEST_ASSERT_GREATER_THAN_MESSAGE(0, outstandingDataSetResponses, "ServerDataSet response with no request outstanding.");
+            outstandingDataSetResponses--;
+            Message::DeleteMessage(response);
+            continue;
+        }
+
+        if (clientFinished)
+        {
+            //
+            //  Once the client has written 0 the only other thing it should do is leave.
+            //
+            ASSERT_EVENT(response, Esp32Interfaces::BlueTooth, BluetoothFunction::ClientDisconnectedEvent, StatusCodes::CompletedOk);
+            ASSERT_NO_PAYLOAD(response);
+            Message::DeleteMessage(response);
+            clientDisconnected = true;
+            continue;
+        }
+
+        //
+        //  The value arrives as an event whose memory was allocated by the
+        //  BluetoothRequestHandler, so it is released here.
+        //
+        ASSERT_EVENT(response, Esp32Interfaces::BlueTooth, BluetoothFunction::ClientWriteRequestEvent, StatusCodes::CompletedOk);
+        TEST_ASSERT_NOT_NULL(response->Payload);
+        TEST_ASSERT_GREATER_OR_EQUAL(6 + sizeof(uint32_t), response->PayloadLength);
+
+        const uint16_t handle = Encoders::ExtractUInt16(response->Payload);
+        const uint32_t length = Encoders::ExtractUInt32(response->Payload + 2);
+        TEST_ASSERT_EQUAL(numberFieldValueHandle, handle);
+        TEST_ASSERT_EQUAL(sizeof(uint32_t), length);
+        uint32_t value = 0;
+        for (uint32_t index = 0; index < length; index++)
+        {
+            value |= (static_cast<uint32_t>(response->Payload[6 + index]) << (index * 8));
+        }
+        Message::DeleteMessage(response);
+
+        //
+        //  The client writes 0 to say the test is over.
+        //
+        if (value == 0)
+        {
+            clientFinished = true;
+            continue;
+        }
+
         iteration++;
         if (((iteration % 100) == 0) || (iteration < 10))
         {
             printf("    Iteration %" PRIu32 "\n", iteration);
         }
-        //
-        // Wait for a change in the number characteristic.
-        //
-        WaitForResponse(dispatcher, CLIENT_CONNECTION_TIMEOUT);
-        TEST_ASSERT_GREATER_THAN(0, dispatcher->OutboundMessageQueueLength());
-        //
-        //  We should get the value as an event, the memory will have been allocated by the
-        //  BluetoothRequestHandler so we need to release it.
-        //
-        response = dispatcher->GetOutboundMessage();
-        ASSERT_EVENT(response, Esp32Interfaces::BlueTooth, BluetoothFunction::ClientWriteRequestEvent, StatusCodes::CompletedOk);
-        TEST_ASSERT_NOT_NULL(response->Payload);
-        TEST_ASSERT_GREATER_OR_EQUAL(7, response->PayloadLength);
+        TEST_ASSERT_EQUAL_UINT32(iteration, value);
 
-        uint16_t handle = Encoders::ExtractUInt16(response->Payload);
-        uint32_t length = Encoders::ExtractUInt32(response->Payload + 2);
-        uint32_t value = 0;
-        for (uint32_t index = 0; index < length; index++)
-        {
-            value |= (response->Payload[6 + index] << (index * 8));
-        }
-        TEST_ASSERT_EQUAL(numberFieldValueHandle, handle);
-        Message::DeleteMessage(response);
         //
-        //  Use the value to determine if we should stop the test.
+        //  Write the value back to the characteristic for the client to read and verify.
         //
-        if (value == 0)
-        {
-            break;
-        }
-        //
-        //  Write the value back to the characteristic for the client unit test to pick up
-        //  and verify the value.
-        //
-        WriteServerDataSet(dispatcher, handle, value, CLIENT_CONNECTION_TIMEOUT);
+        QueueServerDataSet(dispatcher, handle, value);
+        outstandingDataSetResponses++;
     }
-
-    //
-    //  We should get a client disconnect event.
-    //
-    WaitForResponse(dispatcher, CLIENT_CONNECTION_TIMEOUT);
-    ASSERT_OUTBOUND_QUEUE_LENGTH(dispatcher, 1);
-
-    response = dispatcher->GetOutboundMessage();
-    ASSERT_EVENT(response, Esp32Interfaces::BlueTooth, BluetoothFunction::ClientDisconnectedEvent, StatusCodes::CompletedOk);
-    ASSERT_NO_PAYLOAD(response);
-    Message::DeleteMessage(response);
+    TEST_ASSERT_EQUAL_UINT32_MESSAGE(0, outstandingDataSetResponses, "ServerDataSet requests left without a response.");
+    printf("Client completed %" PRIu32 " iterations.\n", iteration);
 
     StopBluetoothService(dispatcher);
 
