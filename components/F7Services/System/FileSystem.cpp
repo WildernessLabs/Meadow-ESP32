@@ -378,26 +378,30 @@ void FileSystem::ReadFile(Message * const message)
                     FILE *file = fopen(s.c_str(), "rb");
                     if (file != NULL)
                     {
-                        int amountRead = fread(static_cast<void *>(fileData->Contents), 1, fileInfo.st_size, file);
-                        if (amountRead > 0)
+                        size_t amountRead = fread(static_cast<void *>(fileData->Contents), 1, fileInfo.st_size, file);
+                        fclose(file);
+                        //
+                        //  Anything less than the full file is a short read, which must not be
+                        //  reported as though the whole file arrived.
+                        //
+                        if (amountRead == static_cast<size_t>(fileInfo.st_size))
                         {
-                            fileData->ContentsLength = amountRead;
+                            fileData->ContentsLength = static_cast<uint32_t>(amountRead);
                             TRACE_MESSAGE("Read %" PRIi32 " bytes", static_cast<int32_t>(amountRead));
                             TRACE_HEX_BUFFER(fileData->Contents, amountRead);
-                            fileData->ContentsLength = amountRead;
-                        }
-                        fclose(file);
-                        message->PayloadLength = Encoders::EncodedFileNameAndContentsBufferSize(fileData);
-                        message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-                        if (message->Payload == NULL)
-                        {
-                            message->PayloadLength = 0;
-                            result = StatusCodes::EspOutOfMemory;
-                        }
-                        else
-                        {
-                            Encoders::EncodeFileNameAndContents(fileData, message->Payload);
-                            result = StatusCodes::CompletedOk;
+
+                            message->PayloadLength = Encoders::EncodedFileNameAndContentsBufferSize(fileData);
+                            message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
+                            if (message->Payload == NULL)
+                            {
+                                message->PayloadLength = 0;
+                                result = StatusCodes::EspOutOfMemory;
+                            }
+                            else
+                            {
+                                Encoders::EncodeFileNameAndContents(fileData, message->Payload);
+                                result = StatusCodes::CompletedOk;
+                            }
                         }
                     }
                     if (result != StatusCodes::CompletedOk)
@@ -461,9 +465,9 @@ void FileSystem::WriteFile(Message * const message)
                 FILE *file = fopen(s.c_str(), "w");
                 if (file != NULL)
                 {
-                    int amount = fwrite(fileData->Contents, 1, fileData->ContentsLength, file);
+                    size_t amount = fwrite(fileData->Contents, 1, fileData->ContentsLength, file);
                     TRACE_MESSAGE("Written %" PRIu32 " bytes", static_cast<uint32_t>(amount));
-                    if (static_cast<uint32_t>(amount) == fileData->ContentsLength)
+                    if (amount == fileData->ContentsLength)
                     {
                         result = StatusCodes::CompletedOk;
                     }
