@@ -113,9 +113,10 @@ struct Message
      *
      *  A payload above MAXIMUM_PACKET_SIZE is split across several packets by
      *  SpiTransportProvider and reassembled by the receiver, so this is a protocol-level
-     *  bound rather than a per-packet one.  It is not enforced anywhere on the wire; it
-     *  exists so decoders have a hard upper bound to scan against instead of trusting the
-     *  payload to be well-formed.
+     *  bound rather than a per-packet one.  SpiTransportProvider::ProcessInboundPacket
+     *  rejects a PayloadLength above this when reassembly starts, so decoders elsewhere
+     *  can still treat it as a hard upper bound to scan against without re-checking it
+     *  themselves.
      */
     static const uint32_t MAXIMUM_PAYLOAD_LENGTH = 8192;
 

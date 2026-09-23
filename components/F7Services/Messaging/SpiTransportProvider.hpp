@@ -23,6 +23,13 @@
  */
 class SpiTransportProvider : public TransportProviderBase
 {
+    //
+    //  ProcessInboundPacket is private production API; the tests need to drive it
+    //  directly with synthetic packets to exercise the reassembly-buffer validation
+    //  without a real STM32 peer.
+    //
+    friend class TestSpiTransportProvider;
+
 private:
     /**
      *  @brief Stack size for the SPI task.
