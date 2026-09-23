@@ -1026,6 +1026,8 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetSockOpt(const Esp32Messaging::Se
     if (Mapping::GetEspValue(Mapping::SocketLevel, request->Level, &level) < 0)
     {
         TRACE_MESSAGE("SetSockOpt: Unknown level: 0x%" PRIx32, request->Level);
+        response.Result = -1;
+        response.ResponseErrno = Mapping::NuttxErrno(ENOPROTOOPT);
     }
     else
     {
@@ -1033,32 +1035,45 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetSockOpt(const Esp32Messaging::Se
         if (Mapping::GetEspValue(level == SOL_SOCKET ? Mapping::SocketOptions : Mapping::TCPOptions, request->OptionName, &optionName) < 0)
         {
             TRACE_MESSAGE("SetSockOpt: Unknown option name: 0x%x", (uint) request->OptionName);
+            response.Result = -1;
+            response.ResponseErrno = Mapping::NuttxErrno(ENOPROTOOPT);
         }
-
-        switch (level)
+        else
         {
-            case SOL_SOCKET:
-                optionValue = GetSocketOptionValue(optionName, request->OptionValue, &optionLength);
-                break;
-            case IPPROTO_TCP:
-                optionValue = GetTcpOptionValue(optionName, request->OptionValue, &optionLength);
-                break;
-            default:
-                TRACE_MESSAGE("SetSockOpt: Cannot process option level: 0x%x", (uint) request->Level);
-                break;
-        }
-        if (optionValue != NULL)
-        {
-            TRACE_MESSAGE("SetSockOpt: Setting socket option level to 0x%x, option name 0x%x for socket %ld", (uint) level, (uint) optionName, request->SocketHandle);
-            response.Result = setsockopt(request->SocketHandle, level, optionName, optionValue, optionLength);
-            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&optionValue));
+            switch (level)
+            {
+                case SOL_SOCKET:
+                    optionValue = GetSocketOptionValue(optionName, request->OptionValue, &optionLength);
+                    break;
+                case IPPROTO_TCP:
+                    optionValue = GetTcpOptionValue(optionName, request->OptionValue, &optionLength);
+                    break;
+                default:
+                    TRACE_MESSAGE("SetSockOpt: Cannot process option level: 0x%x", (uint) request->Level);
+                    break;
+            }
+            if (optionValue != NULL)
+            {
+                TRACE_MESSAGE("SetSockOpt: Setting socket option level to 0x%x, option name 0x%x for socket %ld", (uint) level, (uint) optionName, request->SocketHandle);
+                response.Result = setsockopt(request->SocketHandle, level, optionName, optionValue, optionLength);
+                Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&optionValue));
+                if (response.Result != 0)
+                {
+                    response.ResponseErrno = Mapping::NuttxErrno(errno);
+                }
+            }
+            else
+            {
+                //
+                //  GetSocketOptionValue/GetTcpOptionValue return NULL for a recognised but
+                //  unimplemented option, or an unsupported level.
+                //
+                response.Result = -1;
+                response.ResponseErrno = Mapping::NuttxErrno(ENOPROTOOPT);
+            }
         }
     }
 
-    if (response.Result != 0)
-    {
-        response.ResponseErrno = Mapping::NuttxErrno(errno);
-    }
     TRACE_MESSAGE("SetSockOpt: Result: %ld, errno: %ld - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
     return (StatusCodes::CompletedOk);
 }
