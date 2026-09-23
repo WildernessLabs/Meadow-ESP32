@@ -536,4 +536,64 @@ namespace TestEncoders
 
         return (buffer);
     }
+
+    /**
+     * @brief Encode an ioctl request into a newly allocated buffer.
+     *
+     * @param command Ioctl command number.
+     *
+     * @return Pointer to the encoded request, nullptr if the buffer cannot be allocated.
+     */
+    uint8_t *EncodeIoctlRequest(const int32_t command)
+    {
+        uint8_t *buffer = static_cast<uint8_t *>(pvPortMalloc(ENCODED_IOCTL_REQUEST_SIZE));
+
+        if (buffer == nullptr)
+        {
+            return (nullptr);
+        }
+
+        Encoders::EncodeInt32(command, buffer);
+
+        return (buffer);
+    }
+
+    /**
+     * @brief Extract the IoctlResponse object encoded in the given buffer.
+     *
+     * @param buffer Pointer to a block of memory holding the encoded IoctlResponse object.
+     *
+     * @return Pointer to an IoctlResponse object, nullptr if the object cannot be allocated.
+     */
+    Esp32Messaging::IoctlResponse *ExtractIoctlResponse(const uint8_t *buffer)
+    {
+        Esp32Messaging::IoctlResponse *ioctlResponse = static_cast<Esp32Messaging::IoctlResponse *>(pvPortMalloc(sizeof(Esp32Messaging::IoctlResponse)));
+
+        if (ioctlResponse == nullptr)
+        {
+            return (nullptr);
+        }
+
+        ioctlResponse->AddrLength = Encoders::ExtractUInt32(buffer);
+        buffer += 4;
+        ioctlResponse->Addr = nullptr;
+        if (ioctlResponse->AddrLength > 0)
+        {
+            ioctlResponse->Addr = static_cast<uint8_t *>(pvPortMalloc(ioctlResponse->AddrLength));
+            if (ioctlResponse->Addr == nullptr)
+            {
+                Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&ioctlResponse));
+                return (nullptr);
+            }
+            memcpy(ioctlResponse->Addr, buffer, ioctlResponse->AddrLength);
+            buffer += ioctlResponse->AddrLength;
+        }
+        ioctlResponse->Flags = Encoders::ExtractInt32(buffer);
+        buffer += 4;
+        ioctlResponse->Result = Encoders::ExtractInt32(buffer);
+        buffer += 4;
+        ioctlResponse->ResponseErrno = Encoders::ExtractInt32(buffer);
+
+        return (ioctlResponse);
+    }
 } // namespace TestEncoders

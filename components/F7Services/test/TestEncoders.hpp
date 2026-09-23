@@ -307,6 +307,36 @@ namespace TestEncoders
      * @return Pointer to the encoded request, nullptr if the buffer cannot be allocated.
      */
     uint8_t *EncodeCloseRequest(const int32_t socketHandle);
+
+    /**
+     * @brief Size of the buffer EncodeIoctlRequest produces.
+     */
+    const uint32_t ENCODED_IOCTL_REQUEST_SIZE = 4;
+
+    /**
+     * @brief Encode an ioctl request into a newly allocated buffer.
+     *
+     * @note The returned pointer refers to a block of memory on the heap.  Ownership passes
+     *       to the Message the request is attached to.
+     *
+     * @param command Ioctl command number, using the SIOCGIF* numbering WiFiRequestHandler.hpp
+     *      defines for the wire format.
+     *
+     * @return Pointer to the encoded request, nullptr if the buffer cannot be allocated.
+     */
+    uint8_t *EncodeIoctlRequest(const int32_t command);
+
+    /**
+     * @brief Extract the IoctlResponse object encoded in the given buffer.
+     *
+     * @note The returned object's Addr field, when not null, is also on the heap and is the
+     *       caller's to release.
+     *
+     * @param buffer Pointer to a block of memory holding the encoded IoctlResponse object.
+     *
+     * @return Pointer to an IoctlResponse object, nullptr if the object cannot be allocated.
+     */
+    Esp32Messaging::IoctlResponse *ExtractIoctlResponse(const uint8_t *buffer);
 } // namespace TestEncoders
 
 #endif // _TEST_ENCODERS_HPP_
