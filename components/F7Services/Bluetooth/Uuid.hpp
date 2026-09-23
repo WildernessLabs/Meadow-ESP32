@@ -56,12 +56,12 @@ struct Uuid128
      * @brief Copy the data from one Uuid128 structure into this structure.
      *
      * @param other Uuid16 object to copy the data from.
-     * @return Uuid16 This structure.
+     * @return Uuid128& This structure.
      */
-    Uuid128 operator=(const Uuid128 &other) const
+    Uuid128 &operator=(const Uuid128 &other)
     {
-        memcpy(const_cast<uint8_t *>(data), other.data, 16);
-        return other;
+        memcpy(data, other.data, 16);
+        return *this;
     }
 
     /**
@@ -70,9 +70,9 @@ struct Uuid128
      * @param other Data to be copied into this structure.
      * @return uint8_t* Pointer to the source data.
      */
-    uint8_t *operator=(uint8_t * const other) const
+    uint8_t *operator=(uint8_t * const other)
     {
-        memcpy(const_cast<uint8_t *>(data), other, 16);
+        memcpy(data, other, 16);
         return other;
     }
 };
@@ -127,12 +127,12 @@ struct Uuid16
      * @brief Copy the data from one Uuid16 structure into this structure.
      *
      * @param other Uuid16 object to copy the data from.
-     * @return Uuid16 This structure.
+     * @return Uuid16& This structure.
      */
-    Uuid16 operator=(const Uuid16 &other) const
+    Uuid16 &operator=(const Uuid16 &other)
     {
-        memcpy(const_cast<uint8_t *>(data), other.data, 2);
-        return other;
+        memcpy(data, other.data, 2);
+        return *this;
     }
 
     /**
@@ -141,9 +141,9 @@ struct Uuid16
      * @param other Data to be copied into this structure.
      * @return uint8_t* Pointer to the source data.
      */
-    uint8_t *operator=(uint8_t *other) const
+    uint8_t *operator=(uint8_t *other)
     {
-        memcpy(const_cast<uint8_t *>(data), other, 2);
+        memcpy(data, other, 2);
         return other;
     }
 
