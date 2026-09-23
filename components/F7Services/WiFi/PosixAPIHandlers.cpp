@@ -470,10 +470,9 @@ void WiFiRequestHandler::Connect(void * const vpMessage)
                     if (socketAddress)
                     {
                         struct sockaddr_in sa = {};
-                        int family;
-                        Mapping::GetEspValue(Mapping::AddressFamily, socketAddress->Family, reinterpret_cast<int32_t *>(&family));
+                        int32_t family = 0;
                         errno = 0;
-                        if (family == AF_INET)
+                        if ((Mapping::GetEspValue(Mapping::AddressFamily, socketAddress->Family, &family) == 0) && (family == AF_INET))
                         {
                             sa.sin_family = static_cast<uint8_t>(family & 0xff);
                             sa.sin_port = socketAddress->Port;
@@ -2197,10 +2196,9 @@ StatusCodes::StatusCodes WiFiRequestHandler::Bind(Esp32Messaging::BindRequest *r
     }
 
     struct sockaddr_in sa = {};
-    int family;
-    Mapping::GetEspValue(Mapping::AddressFamily, socketAddress->Family, reinterpret_cast<int32_t *>(&family));
+    int32_t family = 0;
     errno = 0;
-    if (family == AF_INET)
+    if ((Mapping::GetEspValue(Mapping::AddressFamily, socketAddress->Family, &family) == 0) && (family == AF_INET))
     {
         sa.sin_family = socketAddress->Family;
         sa.sin_port = socketAddress->Port;
