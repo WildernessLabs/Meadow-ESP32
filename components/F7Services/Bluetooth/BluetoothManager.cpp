@@ -571,15 +571,46 @@ void BluetoothManager::AddDescriptors(const cJSON * const json, BluetoothCharact
             uint16_t permissions = static_cast<uint16_t>(permission->valueint);
             uint16_t length = static_cast<uint16_t>(len->valueint);
 
-            BluetoothDescriptor *new_descriptor;
-            if (is128bits)
+            /*
+             *  BluetoothDescriptor's constructor copies MaxLength bytes starting at the
+             *  pointer we give it, so that pointer has to reference length real bytes of
+             *  descriptor content, zero-padded if the content is shorter.  Taking the
+             *  address of a cJSON struct member is not that: it hands the constructor the
+             *  field's own storage (or, for valuestring, the address of the pointer itself)
+             *  and lets it read whatever heap memory follows.
+             */
+            uint8_t * const valueBuffer = new uint8_t[length];
+            memset(valueBuffer, 0, length);
+            if (cJSON_IsString(value))
             {
-                new_descriptor = new BluetoothDescriptor(characteristic, uuid128bits, static_cast<CharacteristicPermission>(permissions), length, reinterpret_cast<uint8_t *>(const_cast<int *>(&value->valueint)));
+                size_t contentLength = strlen(value->valuestring);
+                if (contentLength > length)
+                {
+                    contentLength = length;
+                }
+                memcpy(valueBuffer, value->valuestring, contentLength);
             }
             else
             {
-                new_descriptor = new BluetoothDescriptor(characteristic, uuid16bits, static_cast<CharacteristicPermission>(permissions), length, reinterpret_cast<uint8_t *>(const_cast<char **>(&value->valuestring)));
+                int numericValue = value->valueint;
+                size_t contentLength = sizeof(numericValue);
+                if (contentLength > length)
+                {
+                    contentLength = length;
+                }
+                memcpy(valueBuffer, &numericValue, contentLength);
             }
+
+            BluetoothDescriptor *new_descriptor;
+            if (is128bits)
+            {
+                new_descriptor = new BluetoothDescriptor(characteristic, uuid128bits, static_cast<CharacteristicPermission>(permissions), length, valueBuffer);
+            }
+            else
+            {
+                new_descriptor = new BluetoothDescriptor(characteristic, uuid16bits, static_cast<CharacteristicPermission>(permissions), length, valueBuffer);
+            }
+            delete[] valueBuffer;
 
             char buffer[40];
             memset(buffer, 0, sizeof(buffer));
