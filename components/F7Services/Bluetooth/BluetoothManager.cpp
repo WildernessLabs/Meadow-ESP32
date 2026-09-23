@@ -236,7 +236,12 @@ void BluetoothManager::SetHandles(const uint16_t * const handles, const uint16_t
 
             TRACE_MESSAGE("Request for data for handle 0x%04" PRIx16, characteristic->Value->Handle);
 
-            _valueMap.insert({characteristic->Value->Handle, val});
+            auto existingValue = _valueMap.find(characteristic->Value->Handle);
+            if (existingValue != _valueMap.end())
+            {
+                delete[] existingValue->second.value;
+            }
+            _valueMap.insert_or_assign(characteristic->Value->Handle, val);
             // cross reference handles
             characteristic->Declaration->ValueHandle = characteristic->Value->Handle;
 
