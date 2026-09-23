@@ -498,7 +498,7 @@ namespace TestEncoders
         }
         Encoders::EncodeInt32(static_cast<int32_t>(length), p); // Length
         p += 4;
-        Encoders::EncodeInt32(0, p); // Flags
+        Encoders::EncodeInt32(0, p);                            // Flags
         p += 4;
         Encoders::EncodeUInt32(destinationAddressLength, p);
         p += 4;
@@ -536,7 +536,7 @@ namespace TestEncoders
         uint8_t *p = buffer;
         Encoders::EncodeInt32(socketHandle, p);
         p += 4;
-        Encoders::EncodeInt32(0, p); // Flags
+        Encoders::EncodeInt32(0, p);  // Flags
         p += 4;
         Encoders::EncodeUInt32(0, p); // MessageHeaderLength; skipped on extraction.
         p += 4;
@@ -547,7 +547,7 @@ namespace TestEncoders
             memcpy(p, name, nameLength);
             p += nameLength;
         }
-        Encoders::EncodeUInt32(1, p); // One iovec.
+        Encoders::EncodeUInt32(1, p);      // One iovec.
         p += 4;
         Encoders::EncodeUInt32(length, p); // iovec[0] length.
         p += 4;
@@ -558,7 +558,7 @@ namespace TestEncoders
         }
         Encoders::EncodeUInt32(0, p); // ControlLength.
         p += 4;
-        Encoders::EncodeInt32(0, p); // MsgFlags.
+        Encoders::EncodeInt32(0, p);  // MsgFlags.
 
         return (buffer);
     }
