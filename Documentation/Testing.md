@@ -99,7 +99,7 @@ the mount failed rather than the file being absent.
 | `WebServerIpAddress`, `WebServerPort` | the server the POSIX tests fetch from |
 | `SimpleWebServerName`, `SimpleWebPage`, `BinaryResourceName`, `LargeTestFile` | resources on that server |
 | `PosixIterations`, `ScanIterations`, `BluetoothRestartIterations` | how many times each of the repeating tests repeats |
-| `SoakHeapAllowance`, `SoakProgressInterval` | how far the free heap may fall across the POSIX soak, and how often it reports |
+| `SoakHeapAllowance`, `SoakProgressInterval` | how far the free heap may fall across a soak test, and how often the soak tests report |
 
 > **Important**: `unittest.config.json` is in `.gitignore` so credentials are not
 > committed. The template it is copied from is in source control.
@@ -114,7 +114,9 @@ fetch takes a moment, a scan takes seconds and a Bluetooth restart takes longer 
 so one number for all three would make one test too long or another too short to mean
 anything. `SoakHeapAllowance` goes with `PosixIterations` — a leak shows up in
 proportion to the number of fetches, so shortening the soak without lowering the
-allowance leaves a check that passes whatever happens.
+allowance leaves a check that passes whatever happens. The Bluetooth restart test and the
+Bluetooth write and notify soaks apply the same allowance to their own counts,
+`BluetoothRestartIterations` and the client's `--soak-iterations`.
 
 ### Build Commands
 
@@ -212,12 +214,50 @@ such as `[FileSystem]`, a quoted test name, a menu number, or `*` for everything
 | `--transcript=*` | Write the full console transcript to a file |
 | `--junit=*` | Write the results as a JUnit report to a file |
 | `--expect-reboot=*` | Selector that restarts the device on purpose; repeatable |
+| `--bluetooth-python=*` | Python with `bleak` installed, used to run the Bluetooth clients |
+| `--soak-iterations=*` | Iterations the Bluetooth soak clients ask for (default 1000) |
 | `-v \| --verbose` | Echo the console output as the tests run |
 
 `--expect-reboot` is what separates a restart that is the point of the test from one that
 is a panic. A selector named this way is allowed to take the device down and the run
 carries on with the next selector; any other reboot ends the run with status 3. Give the
 option once per selector that does it.
+
+### Bluetooth clients
+
+Some `[Bluetooth]` tests wait for a client to connect over the air, and print "Please
+connect client within 60 seconds." when their service is advertising. When a test with a
+registered client does that, the runner starts the client from `test/SupportScripts`
+alongside it on the host's own Bluetooth adapter. The table of which client goes with which
+test is `BLUETOOTH_CLIENTS` in `TestRunner.py`.
+
+| Test | Client |
+|---|---|
+| Notify characteristic (MeadowC, no company identifier) | `NotifyCharacteristicClient.py --name MeadowC` |
+| Notify characteristic, multiple descriptors (MeadowD, no company identifier) | `NotifyCharacteristicClient.py --name MeadowD` |
+| Soak test writing numeric characteristic, number of iterations controlled by client (MeadowF7, Espressif) | `WriteNumberCharacteristicSoakTest.py` |
+| Soak test notifying characteristic, number of iterations controlled by client (MeadowF7NotifyTest, Espressif) | `NotifyCharacteristicSoakTest.py` |
+
+The clients use [Bleak](https://github.com/hbldh/bleak), which the ESP-IDF Python
+environment does not include. Keep it in a virtual environment of its own and point the
+runner at it:
+
+```bash
+python3 -m venv ~/.venvs/meadow-ble
+~/.venvs/meadow-ble/bin/pip install -r test/SupportScripts/requirements.txt
+
+cd test
+./run-tests.sh --port=/dev/cu.usbserial-101 --bluetooth-python=$HOME/.venvs/meadow-ble/bin/python \
+    '"Soak test writing numeric characteristic, number of iterations controlled by client (MeadowF7, Espressif)"'
+```
+
+A client that fails fails its selector, and its output is printed. On macOS the terminal
+application needs Bluetooth permission (System Settings, Privacy & Security, Bluetooth)
+before the client can scan.
+
+A notifying characteristic needs a Client Characteristic Configuration descriptor
+(`0x2902`, two bytes) in its configuration. The firmware does not add one, and without it
+a client cannot subscribe; CoreBluetooth reports "attribute not found".
 
 By default each run starts from a known state: under QEMU the pristine flash image is
 restored, and on hardware the board is reset. Use `--no-fresh` to continue from

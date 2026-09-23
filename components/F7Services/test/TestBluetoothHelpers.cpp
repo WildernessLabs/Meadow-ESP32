@@ -158,27 +158,3 @@ void QueueServerDataSet(MockMessageDispatcher *dispatcher, const uint16_t handle
 
     dispatcher->QueueMessageForEsp32(message);
 }
-
-/**
- * @brief Write a value to a characteristic and check the response to the request.
- *
- * @param dispatcher Dispatcher to queue the request on.
- * @param handle Handle of the characteristic to write to.
- * @param value Value to write to the characteristic.
- * @param timeout Milliseconds to wait for the response.
- */
-void WriteServerDataSet(MockMessageDispatcher *dispatcher, const uint16_t handle, const uint32_t value, const uint32_t timeout)
-{
-    QueueServerDataSet(dispatcher, handle, value);
-
-    //
-    //  Wait for the confirmation message that the change has been written back.
-    //
-    WaitForResponse(dispatcher, timeout);
-    ASSERT_OUTBOUND_QUEUE_LENGTH(dispatcher, 1);
-
-    Message *response = dispatcher->GetOutboundMessage();
-    ASSERT_RESPONSE(response, Esp32Interfaces::BlueTooth, BluetoothFunction::ServerDataSet, StatusCodes::CompletedOk);
-    ASSERT_NO_PAYLOAD(response);
-    Message::DeleteMessage(response);
-}

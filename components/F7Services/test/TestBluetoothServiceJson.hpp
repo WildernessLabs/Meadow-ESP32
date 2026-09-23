@@ -70,6 +70,11 @@ const char *meadow_b_json = R"(
 //
 //  Meadow device with no company identifier.
 //
+//  The firmware does not add a Client Characteristic Configuration descriptor (0x2902) to
+//  a notifying characteristic, so one is declared here.  Without it a client cannot
+//  subscribe: CoreBluetooth reports "attribute not found" and never delivers the value.
+//  The descriptor is two bytes, and 0 means no subscription.
+//
 const char *meadow_c_json = R"(
 {
     "deviceName":"MeadowC",
@@ -82,7 +87,15 @@ const char *meadow_c_json = R"(
                     "uuid": "017e99d6-8a61-11eb-8dcd-0242ac130003",
                     "permission": 17,
                     "props": 26,
-                    "len": 4
+                    "len": 4,
+                    "descriptors": [
+                        {
+                        "uuid": 10498,
+                        "permission": 17,
+                        "len": 2,
+                        "value": 0
+                        }
+                    ]
                 },
                 {
                     "uuid": 10755,
@@ -116,8 +129,8 @@ const char *meadow_d_json = R"(
                         {
                         "uuid": 10498,
                         "permission": 17,
-                        "len": 1,
-                        "value": 3
+                        "len": 2,
+                        "value": 0
                         },
                         {
                         "uuid": 10497,
@@ -174,6 +187,52 @@ const char *meadow_f7_json = R"({
                     "permission":17,
                     "props":10,
                     "len":256
+                }
+            ]
+        }
+    ]
+})";
+
+//
+//  Meadow device name MeadowF7NotifyTest with company identifier Espressif (0x02e5).
+//
+//  This is the service NotifyCharacteristicSoakTest.py drives: an iteration count and a
+//  client number the client writes, and a notifying field with the Client Characteristic
+//  Configuration descriptor (0x2902) a client needs in order to subscribe.
+//
+const char *meadow_f7_notify_json = R"({
+    "deviceName":"MeadowF7NotifyTest",
+    "companyIdentifier":741,
+    "services": [
+        {
+            "name":"NotifyService",
+            "uuid":252,
+            "characteristics": [
+                {
+                    "uuid":"018e99d6-8a61-11eb-8dcd-0242ac1300aa",
+                    "permission":17,
+                    "props":10,
+                    "len":4
+                },
+                {
+                    "uuid":"018e99d6-8a61-11eb-8dcd-0242ac1300bb",
+                    "permission":17,
+                    "props":10,
+                    "len":4
+                },
+                {
+                    "uuid":"018e99d6-8a61-11eb-8dcd-0242ac1300cc",
+                    "permission":1,
+                    "props":18,
+                    "len":4,
+                    "descriptors": [
+                        {
+                        "uuid": 10498,
+                        "permission": 17,
+                        "len": 2,
+                        "value": 0
+                        }
+                    ]
                 }
             ]
         }

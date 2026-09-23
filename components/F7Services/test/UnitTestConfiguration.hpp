@@ -95,12 +95,12 @@ private:
     static uint32_t _bluetoothRestartIterations;
 
     /**
-     *  @brief How far the free heap may fall across the POSIX soak test.
+     *  @brief How far the free heap may fall across a soak test.
      */
     static uint32_t _soakHeapAllowance;
 
     /**
-     *  @brief How often the POSIX soak test reports its progress.
+     *  @brief How often the soak tests report their progress.
      */
     static uint32_t _soakProgressInterval;
 
@@ -181,7 +181,7 @@ public:
     static uint32_t BluetoothRestartIterations();
 
     /**
-     *  @brief Get how far the free heap may fall across the POSIX soak test.
+     *  @brief Get how far the free heap may fall across a soak test.
      *
      *  Allocation patterns leave the heap slightly differently arranged from one run to
      *  the next, so a soak is not expected to give back exactly what it took.  This says
@@ -191,7 +191,7 @@ public:
     static uint32_t SoakHeapAllowance();
 
     /**
-     *  @brief Get how often the POSIX soak test reports its progress.
+     *  @brief Get how often the soak tests report their progress.
      *
      *  @note Counted in fetches.  Zero turns the reports off.
      */

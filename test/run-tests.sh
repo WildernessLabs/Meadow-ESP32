@@ -39,6 +39,8 @@ HELP=false
 TIMEOUT=600
 TRANSCRIPT=""
 JUNIT=""
+BLUETOOTH_PYTHON=""
+SOAK_ITERATIONS=""
 SELECTORS=()
 EXPECT_REBOOT=()
 
@@ -70,6 +72,12 @@ case $i in
     ;;
     --expect-reboot=*)
     EXPECT_REBOOT+=("${i#*=}")
+    ;;
+    --bluetooth-python=*)
+    BLUETOOTH_PYTHON="${i#*=}"
+    ;;
+    --soak-iterations=*)
+    SOAK_ITERATIONS="${i#*=}"
     ;;
     -v|--verbose)
     VERBOSE=true
@@ -103,6 +111,9 @@ if $HELP; then
     echo "--junit=*               Write the results as a JUnit report to this file"
     echo "--expect-reboot=*       Selector that restarts the device on purpose, so the"
     echo "                        run carries on with the next selector.  Repeatable"
+    echo "--bluetooth-python=*    Python with bleak installed, used to run the Bluetooth"
+    echo "                        clients (see SupportScripts/requirements.txt)"
+    echo "--soak-iterations=*     Iterations the Bluetooth soak clients ask for (default 1000)"
     echo "-v | --verbose          Echo the console output as the tests run"
     echo ""
     echo "Any remaining arguments are passed to the test menu as selectors:"
@@ -159,6 +170,14 @@ fi
 
 if [ ! -z "$JUNIT" ]; then
     RUNNER_ARGS+=(--junit "$JUNIT")
+fi
+
+if [ ! -z "$BLUETOOTH_PYTHON" ]; then
+    RUNNER_ARGS+=(--bluetooth-python "$BLUETOOTH_PYTHON")
+fi
+
+if [ ! -z "$SOAK_ITERATIONS" ]; then
+    RUNNER_ARGS+=(--soak-iterations "$SOAK_ITERATIONS")
 fi
 
 for selector in "${EXPECT_REBOOT[@]}"; do

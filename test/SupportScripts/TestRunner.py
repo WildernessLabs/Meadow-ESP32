@@ -28,6 +28,11 @@ the tag again would start it from the beginning.  A test that restarts the devic
 therefore has to be named as a selector of its own, ahead of the selectors that depend
 on it.
 
+Some Bluetooth tests wait for a client to connect over the air.  When one of those asks
+for its client, the matching script from this directory is started alongside it with
+the interpreter named by --bluetooth-python, which needs the packages listed in
+requirements.txt.  A client that fails fails the selector.
+
 Exit status is 0 when every selector passed, 1 when a test failed, 2 when a selector
 produced no result before the timeout, and 3 when the device rebooted unexpectedly.
 '''
@@ -38,6 +43,7 @@ import re
 import socket
 import subprocess
 import sys
+import tempfile
 import time
 from xml.dom import minidom
 
@@ -73,6 +79,32 @@ SELECTOR_ACKNOWLEDGE_SECONDS = 5
 
 DEFAULT_SERIAL_PORT = 5555
 DEFAULT_BAUD = 115200
+
+#
+#   The Bluetooth tests that need a client print CLIENT_PROMPT once their service is
+#   advertising.  Unity names each test as it starts it, and that name selects the
+#   client from BLUETOOTH_CLIENTS.
+#
+CLIENT_PROMPT = 'Please connect client within'
+TEST_STARTED = re.compile(r'^Running (.+)\.\.\.$')
+SUPPORT_SCRIPTS = os.path.dirname(os.path.abspath(__file__))
+DEFAULT_SOAK_ITERATIONS = 1000
+
+#
+#   How long a client is given to finish once its test has reported a result.
+#
+CLIENT_FINISH_SECONDS = 30
+
+BLUETOOTH_CLIENTS = {
+    'Notify characteristic (MeadowC, no company identifier)':
+        lambda arguments: ['NotifyCharacteristicClient.py', '--name', 'MeadowC'],
+    'Notify characteristic, multiple descriptors (MeadowD, no company identifier)':
+        lambda arguments: ['NotifyCharacteristicClient.py', '--name', 'MeadowD'],
+    'Soak test writing numeric characteristic, number of iterations controlled by client (MeadowF7, Espressif)':
+        lambda arguments: ['WriteNumberCharacteristicSoakTest.py', '--iterations', str(arguments.soak_iterations)],
+    'Soak test notifying characteristic, number of iterations controlled by client (MeadowF7NotifyTest, Espressif)':
+        lambda arguments: ['NotifyCharacteristicSoakTest.py', '--iterations', str(arguments.soak_iterations)],
+}
 
 
 class Transport:
@@ -176,9 +208,80 @@ class SerialTransport(Transport):
         self._port.close()
 
 
-def ReadUntil(transport, predicate, timeout, transcript):
+class ClientLauncher:
+    '''
+    Starts the Bluetooth client a test asks for, while the test is waiting for it.
+
+    The console is watched line by line.  When a test prompts for a client, the client
+    registered against that test's name is started alongside it, using the interpreter
+    given, which has to have bleak installed.
+    '''
+
+    def __init__(self, python, arguments):
+        self._python = python
+        self._arguments = arguments
+        self._pending = ''
+        self._currentTest = None
+        self._clients = []
+
+    def Observe(self, text):
+        '''Process console output as it arrives.'''
+        self._pending += text
+        lines = self._pending.split('\n')
+        self._pending = lines.pop()
+        for line in lines:
+            line = line.rstrip('\r')
+            started = TEST_STARTED.match(line)
+            if started:
+                self._currentTest = started.group(1)
+            elif CLIENT_PROMPT in line:
+                self._Launch()
+
+    def _Launch(self):
+        '''Start the client for the current test, if one is registered.'''
+        client = BLUETOOTH_CLIENTS.get(self._currentTest)
+        if client is None:
+            print(f'No Bluetooth client is registered for "{self._currentTest}"; it will time out.')
+            return
+        command = client(self._arguments)
+        command = [self._python, os.path.join(SUPPORT_SCRIPTS, command[0])] + command[1:]
+        print(f'Starting Bluetooth client {os.path.basename(command[1])}.')
+        output = tempfile.TemporaryFile(mode='w+')
+        process = subprocess.Popen(command, stdout=output, stderr=subprocess.STDOUT, text=True)
+        self._clients.append((self._currentTest, process, output))
+
+    def Finish(self, verbose):
+        '''
+        Wait for the clients started for a selector and report on them.
+
+        Returns True when every client exited cleanly.  A client that is still running
+        after its test has reported is stopped: the test cannot use it any more.
+        '''
+        succeeded = True
+        for test, process, output in self._clients:
+            try:
+                process.wait(timeout=CLIENT_FINISH_SECONDS)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.wait()
+                print(f'The Bluetooth client for "{test}" was still running and has been stopped.')
+            output.seek(0)
+            log = output.read()
+            output.close()
+            if process.returncode != 0:
+                succeeded = False
+                print(f'The Bluetooth client for "{test}" failed with exit status {process.returncode}.')
+            if verbose or process.returncode != 0:
+                print(log.strip())
+        self._clients = []
+        return succeeded
+
+
+def ReadUntil(transport, predicate, timeout, transcript, observer=None):
     '''
     Accumulate console output until predicate reports the text is complete.
+
+    Each piece of output is also handed to observer, when there is one.
 
     Returns the text read and whether the predicate was satisfied before the timeout.
     '''
@@ -191,12 +294,14 @@ def ReadUntil(transport, predicate, timeout, transcript):
         decoded = chunk.decode('utf-8', errors='replace')
         text += decoded
         transcript.append(decoded)
+        if observer is not None:
+            observer(decoded)
         if predicate(text):
             return (text, True)
     return (text, False)
 
 
-def RunSelector(transport, selector, timeout, transcript):
+def RunSelector(transport, selector, timeout, transcript, observer=None):
     '''
     Run one selector and return its result as a tuple of status and counts.
 
@@ -212,7 +317,7 @@ def RunSelector(transport, selector, timeout, transcript):
     for attempt in range(SELECTOR_ATTEMPTS):
         transport.write((selector + '\n').encode())
         _, acknowledged = ReadUntil(transport, lambda text: text.strip() != '',
-                                    SELECTOR_ACKNOWLEDGE_SECONDS, transcript)
+                                    SELECTOR_ACKNOWLEDGE_SECONDS, transcript, observer)
         if acknowledged:
             break
     else:
@@ -235,7 +340,7 @@ def RunSelector(transport, selector, timeout, transcript):
     #   the prompt is already in hand has to be dealt with before it is called.
     #
     if not Settled(''):
-        ReadUntil(transport, Settled, timeout, transcript)
+        ReadUntil(transport, Settled, timeout, transcript, observer)
 
     segment = ''.join(transcript[mark:])
 
@@ -340,7 +445,16 @@ def main():
                         help='Write the results as a JUnit report to this file')
     parser.add_argument('--verbose', action='store_true',
                         help='Echo the console output as tests run')
+    parser.add_argument('--bluetooth-python', default=sys.executable,
+                        help='Interpreter, with bleak installed, that runs the Bluetooth '
+                             'clients (default: the one running this script)')
+    parser.add_argument('--soak-iterations', type=int, default=DEFAULT_SOAK_ITERATIONS,
+                        help=f'Iterations the Bluetooth soak clients ask for '
+                             f'(default {DEFAULT_SOAK_ITERATIONS})')
     arguments = parser.parse_args()
+
+    if arguments.soak_iterations < 1:
+        parser.error('--soak-iterations must be at least 1')
 
     if arguments.hardware and arguments.device is None:
         parser.error('--hardware requires --device')
@@ -357,6 +471,7 @@ def main():
 
     status = 0
     results = []
+    launcher = ClientLauncher(arguments.bluetooth_python, arguments)
     try:
         _, booted = ReadUntil(transport, lambda text: BOOT_PROMPT in text, 60, transcript)
         if not booted:
@@ -367,7 +482,17 @@ def main():
         for selector in arguments.selectors:
             print(f'\n=== {selector} ===')
             result, segment, counts = RunSelector(transport, selector,
-                                                  arguments.timeout, transcript)
+                                                  arguments.timeout, transcript,
+                                                  launcher.Observe)
+            clientsSucceeded = launcher.Finish(arguments.verbose)
+
+            #
+            #   A client that fails ends without the stop value, so the device test fails
+            #   as well.  This catches the case where it does not, rather than letting a
+            #   client that never really ran pass unnoticed.
+            #
+            if (result == 'passed') and not clientsSucceeded:
+                result = 'failed'
 
             if result == 'rebooted' and selector in arguments.expect_reboot:
                 result = 'rebooted as expected'
@@ -399,7 +524,7 @@ def main():
 
             total, failures, ignored = counts
             print(f'{selector}: {total} tests, {failures} failures, {ignored} ignored.')
-            if failures and status == 0:
+            if (result == 'failed') and (status == 0):
                 status = 1
     finally:
         if arguments.transcript:
