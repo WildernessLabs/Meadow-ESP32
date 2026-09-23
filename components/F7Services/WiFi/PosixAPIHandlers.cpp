@@ -1421,31 +1421,48 @@ StatusCodes::StatusCodes WiFiRequestHandler::SendTo(Esp32Messaging::SendToReques
         struct sockaddr_in sa = {};
         struct sockaddr *psa = NULL;
         size_t lenSa = 0;
+        bool destinationUsable = true;
         if (request->DestinationAddressLength != 0)
         {
-            if (family == AF_INET)
+            if ((family == AF_INET) && (request->DestinationAddress != NULL))
             {
-                if (request->DestinationAddress)
-                {
-                    sa.sin_family = static_cast<unsigned char>(family & 0xff);
+                sa.sin_family = static_cast<unsigned char>(family & 0xff);
 
-                    sa.sin_port = socketAddress->Port;
-                    memcpy(&sa.sin_addr, &socketAddress->Ip4Address, sizeof(sa.sin_addr));
-                    sa.sin_len = sizeof(sa);
-                    psa = reinterpret_cast<struct sockaddr *>(&sa);
-                    lenSa = sizeof(sa);
-                }
+                sa.sin_port = socketAddress->Port;
+                memcpy(&sa.sin_addr, &socketAddress->Ip4Address, sizeof(sa.sin_addr));
+                sa.sin_len = sizeof(sa);
+                psa = reinterpret_cast<struct sockaddr *>(&sa);
+                lenSa = sizeof(sa);
                 TRACE_MESSAGE("SendTo: Connecting socket: %" PRIi32, request->SocketHandle);
-                TRACE_MESSAGE("SendTo: Family: %" PRIi32, (psa == NULL) ? 0 : sa.sin_family);
-                TRACE_MESSAGE("SendTo: IP address: %s", (psa == NULL) ? "NULL" : inet_ntoa(sa.sin_addr));
-                TRACE_MESSAGE("SendTo: Port: %" PRIi32, (psa == NULL) ? 0 : ntohs(sa.sin_port));
+                TRACE_MESSAGE("SendTo: Family: %" PRIi32, sa.sin_family);
+                TRACE_MESSAGE("SendTo: IP address: %s", inet_ntoa(sa.sin_addr));
+                TRACE_MESSAGE("SendTo: Port: %" PRIi32, ntohs(sa.sin_port));
+            }
+            else
+            {
+                //
+                //  A destination was supplied but could not be decoded into a usable
+                //  AF_INET address.  Sending anyway would either fail with a confusing
+                //  errno (unconnected socket) or silently reach whatever peer the socket
+                //  happens to already be connected to (connected socket).
+                //
+                destinationUsable = false;
             }
         }
-        response.Result = sendto(request->SocketHandle, request->Buffer, request->Length, mappedFlags, psa, lenSa);
 
-        if (response.Result < 0)
+        if (destinationUsable)
         {
-            response.ResponseErrno = Mapping::NuttxErrno(errno);
+            response.Result = sendto(request->SocketHandle, request->Buffer, request->Length, mappedFlags, psa, lenSa);
+
+            if (response.Result < 0)
+            {
+                response.ResponseErrno = Mapping::NuttxErrno(errno);
+            }
+        }
+        else
+        {
+            response.Result = -1;
+            response.ResponseErrno = Mapping::NuttxErrno(EFAULT);
         }
         Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&socketAddress));
     }
@@ -1761,34 +1778,49 @@ void WiFiRequestHandler::RecvFrom(void * const vpMessage)
  *  Encoders::ExtractSockAddr(), which expects the different SockAddr layout.
  *
  *  When length is 0 or raw is nullptr, outPsa is set to nullptr and outLen
- *  to 0 and true is returned (no address is a valid state).
+ *  to 0 and true is returned (no address is a valid state).  Anything else that
+ *  cannot be decoded into a usable AF_INET address - a length shorter than the
+ *  16-byte structure above, or a family other than AF_INET - is reported as a
+ *  failure instead of being silently treated as no address.
  *
  *  @param raw           Pointer to the raw NuttX sockaddr bytes, or nullptr.
  *  @param length        Byte length of the raw blob; 0 means no address.
  *  @param outSa         Caller-supplied sockaddr_in to fill on success.
  *  @param outPsa        Set to (struct sockaddr *)outSa, or nullptr.
  *  @param outLen        Set to sizeof(*outSa), or 0.
- *  @returns true on success.
+ *  @returns true if an address was decoded or none was supplied, false if raw was
+ *      supplied but could not be decoded into a usable address.
  */
 static bool MapMsgNameToSockAddr(const uint8_t * const raw, const uint32_t length, struct sockaddr_in *outSa, struct sockaddr **outPsa, socklen_t *outLen)
 {
+    //
+    //  The full wire structure documented above is 16 bytes; anything shorter cannot
+    //  be a real one.
+    //
+    const uint32_t NUTTX_SOCKADDR_IN_SIZE = 16;
+
     *outPsa = nullptr;
     *outLen = 0;
-    if ((raw == nullptr) || (length < 8))
+    if ((raw == nullptr) || (length == 0))
     {
         return (true);
     }
+    if (length < NUTTX_SOCKADDR_IN_SIZE)
+    {
+        return (false);
+    }
     int32_t family = 0;
     Mapping::GetEspValue(Mapping::AddressFamily, Encoders::ExtractUInt16(raw), &family);
-    if (family == AF_INET)
+    if (family != AF_INET)
     {
-        outSa->sin_family = static_cast<unsigned char>(family & 0xff);
-        memcpy(&outSa->sin_port, raw + 2, sizeof(outSa->sin_port));
-        memcpy(&outSa->sin_addr, raw + 4, sizeof(outSa->sin_addr));
-        outSa->sin_len = sizeof(*outSa);
-        *outPsa = reinterpret_cast<struct sockaddr *>(outSa);
-        *outLen = sizeof(*outSa);
+        return (false);
     }
+    outSa->sin_family = static_cast<unsigned char>(family & 0xff);
+    memcpy(&outSa->sin_port, raw + 2, sizeof(outSa->sin_port));
+    memcpy(&outSa->sin_addr, raw + 4, sizeof(outSa->sin_addr));
+    outSa->sin_len = sizeof(*outSa);
+    *outPsa = reinterpret_cast<struct sockaddr *>(outSa);
+    *outLen = sizeof(*outSa);
     return (true);
 }
 
@@ -1893,27 +1925,40 @@ void WiFiRequestHandler::SendMsg(void * const vpMessage)
                     struct sockaddr *psa = nullptr;
                     socklen_t lenSa = 0;
 
-                    MapMsgNameToSockAddr(request->Name, request->NameLength, &sa, &psa, &lenSa);
-
-                    struct iovec iov = {};
-                    iov.iov_base = request->Buffer;
-                    iov.iov_len = request->BufferLength;
-
-                    struct msghdr mhdr = {};
-                    mhdr.msg_name = psa;
-                    mhdr.msg_namelen = lenSa;
-                    mhdr.msg_iov = &iov;
-                    mhdr.msg_iovlen = 1;
-                    mhdr.msg_control = request->Control;
-                    mhdr.msg_controllen = request->ControlLength;
-                    mhdr.msg_flags = 0;
-
-                    TRACE_MESSAGE("SendMsg: socket %" PRIi32 ", buffer length %" PRIu32 ", control length %" PRIu32, request->SocketHandle, request->BufferLength, request->ControlLength);
-
-                    response.Result = sendmsg(request->SocketHandle, &mhdr, mappedFlags);
-                    if (response.Result < 0)
+                    if (!MapMsgNameToSockAddr(request->Name, request->NameLength, &sa, &psa, &lenSa))
                     {
-                        response.ResponseErrno = Mapping::NuttxErrno(errno);
+                        //
+                        //  A destination name was supplied but could not be decoded into a
+                        //  usable AF_INET address.  Sending anyway would either fail with a
+                        //  confusing errno (unconnected socket) or silently reach whatever
+                        //  peer the socket happens to already be connected to (connected
+                        //  socket).
+                        //
+                        response.Result = -1;
+                        response.ResponseErrno = Mapping::NuttxErrno(EFAULT);
+                    }
+                    else
+                    {
+                        struct iovec iov = {};
+                        iov.iov_base = request->Buffer;
+                        iov.iov_len = request->BufferLength;
+
+                        struct msghdr mhdr = {};
+                        mhdr.msg_name = psa;
+                        mhdr.msg_namelen = lenSa;
+                        mhdr.msg_iov = &iov;
+                        mhdr.msg_iovlen = 1;
+                        mhdr.msg_control = request->Control;
+                        mhdr.msg_controllen = request->ControlLength;
+                        mhdr.msg_flags = 0;
+
+                        TRACE_MESSAGE("SendMsg: socket %" PRIi32 ", buffer length %" PRIu32 ", control length %" PRIu32, request->SocketHandle, request->BufferLength, request->ControlLength);
+
+                        response.Result = sendmsg(request->SocketHandle, &mhdr, mappedFlags);
+                        if (response.Result < 0)
+                        {
+                            response.ResponseErrno = Mapping::NuttxErrno(errno);
+                        }
                     }
                 }
                 else

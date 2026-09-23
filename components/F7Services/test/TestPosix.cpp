@@ -75,6 +75,8 @@
 //
 #define LWIP_SOCK_STREAM 1
 #define LWIP_IPPROTO_TCP 6
+#define LWIP_SOCK_DGRAM 2
+#define LWIP_IPPROTO_UDP 17
 
 //
 //  Largest amount of data asked for in one call, and the most calls to make before
@@ -339,6 +341,97 @@ static MockMessageDispatcher *SetupConnectedDispatcher()
     }
 
     return (dispatcher);
+}
+
+/**
+ * @brief Open a UDP socket for the sendto/sendmsg tests, which do not need a live peer.
+ *
+ * @param dispatcher Dispatcher to queue the request on.
+ *
+ * @return Handle of the socket.
+ */
+static int32_t OpenUdpSocket(MockMessageDispatcher *dispatcher)
+{
+    SocketCallResult callResult = {};
+    uint8_t *payload = TestEncoders::EncodeSocketRequest(TestEncoders::NUTTX_AF_INET, LWIP_SOCK_DGRAM, LWIP_IPPROTO_UDP);
+
+    if (!SocketCall(dispatcher, WiFiFunction::Socket, payload, TestEncoders::ENCODED_SOCKET_REQUEST_SIZE, &callResult))
+    {
+        TEST_FAIL_MESSAGE("No response to the socket request.");
+    }
+    if (callResult.Result < 0)
+    {
+        printf("socket() failed, errno %" PRIi32 "\n", callResult.ResponseErrno);
+        TEST_FAIL_MESSAGE("Could not create the UDP socket.");
+    }
+
+    return (callResult.Result);
+}
+
+/**
+ * @brief Check that sendto refuses a destination address it cannot decode into a usable
+ *        AF_INET address, rather than sending with no destination at all.
+ *
+ *  Regression check for issue #283.  A destination whose family does not map to AF_INET
+ *  used to leave psa null and lenSa 0 while still calling sendto, which either fails
+ *  with a confusing errno or silently reaches whatever peer the socket happens to
+ *  already be connected to.  0xff is not a family Mapping::AddressFamily maps to
+ *  anything, so the fix's rejection path is what has to answer this request.
+ */
+TEST_CASE("SendTo refuses a destination address with an unmapped family", CLASS_OF_TESTS)
+{
+    MockMessageDispatcher *dispatcher = SetupConnectedDispatcher();
+    const int32_t socketHandle = OpenUdpSocket(dispatcher);
+
+    Esp32Messaging::SockAddr sa = {};
+    sa.Family = 0xff;
+    uint8_t addressBuffer[31];
+    Encoders::EncodeSockAddr(&sa, addressBuffer);
+
+    const char data[] = "test";
+    uint32_t encodedLength = 0;
+    uint8_t *payload = TestEncoders::EncodeSendToRequest(socketHandle, data, sizeof(data) - 1, addressBuffer, sizeof(addressBuffer), &encodedLength);
+    TEST_ASSERT_NOT_NULL(payload);
+
+    SocketCallResult callResult = {};
+    if (!SocketCall(dispatcher, WiFiFunction::SendTo, payload, encodedLength, &callResult))
+    {
+        TEST_FAIL_MESSAGE("No response to the sendto request.");
+    }
+    TEST_ASSERT_EQUAL_INT32(-1, callResult.Result);
+
+    CloseSocket(dispatcher, socketHandle);
+}
+
+/**
+ * @brief Check that sendmsg refuses a destination name shorter than a NuttX
+ *        sockaddr_in, rather than treating it as a usable address.
+ *
+ *  Regression check for issue #283.  MapMsgNameToSockAddr used to accept any name of 8
+ *  bytes or more as decoded, even though a real NuttX sockaddr_in is 16 bytes.  An
+ *  8-byte name is exactly the boundary that used to be (wrongly) accepted.
+ */
+TEST_CASE("SendMsg refuses a name shorter than a NuttX sockaddr_in", CLASS_OF_TESTS)
+{
+    MockMessageDispatcher *dispatcher = SetupConnectedDispatcher();
+    const int32_t socketHandle = OpenUdpSocket(dispatcher);
+
+    uint8_t shortName[8] = {};
+    Encoders::EncodeUInt16(TestEncoders::NUTTX_AF_INET, shortName);
+
+    const char data[] = "test";
+    uint32_t encodedLength = 0;
+    uint8_t *payload = TestEncoders::EncodeSendMsgRequest(socketHandle, shortName, sizeof(shortName), data, sizeof(data) - 1, &encodedLength);
+    TEST_ASSERT_NOT_NULL(payload);
+
+    SocketCallResult callResult = {};
+    if (!SocketCall(dispatcher, WiFiFunction::SendMsg, payload, encodedLength, &callResult))
+    {
+        TEST_FAIL_MESSAGE("No response to the sendmsg request.");
+    }
+    TEST_ASSERT_EQUAL_INT32(-1, callResult.Result);
+
+    CloseSocket(dispatcher, socketHandle);
 }
 
 /**

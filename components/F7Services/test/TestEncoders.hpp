@@ -271,6 +271,41 @@ namespace TestEncoders
     uint8_t *EncodeSendRequest(const int32_t socketHandle, const char *data, const uint32_t length, uint32_t *encodedLength);
 
     /**
+     * @brief Encode a sendto request into a newly allocated buffer.
+     *
+     * @note The returned pointer refers to a block of memory on the heap.  Ownership passes
+     *       to the Message the request is attached to.
+     *
+     * @param socketHandle Socket to send on.
+     * @param data Data to be sent.
+     * @param length Number of bytes to send.
+     * @param destinationAddress Encoded SockAddr bytes for the destination (e.g. from
+     *      Encoders::EncodeSockAddr), or nullptr for no destination.
+     * @param destinationAddressLength Length of destinationAddress, 0 for no destination.
+     * @param encodedLength Filled in with the length of the encoded request.
+     *
+     * @return Pointer to the encoded request, nullptr if the buffer cannot be allocated.
+     */
+    uint8_t *EncodeSendToRequest(const int32_t socketHandle, const char *data, const uint32_t length, const uint8_t *destinationAddress, const uint32_t destinationAddressLength, uint32_t *encodedLength);
+
+    /**
+     * @brief Encode a sendmsg request carrying a single iovec into a newly allocated buffer.
+     *
+     * @note The returned pointer refers to a block of memory on the heap.  Ownership passes
+     *       to the Message the request is attached to.
+     *
+     * @param socketHandle Socket to send on.
+     * @param name Raw NuttX sockaddr bytes for the destination name, or nullptr for none.
+     * @param nameLength Length of name, 0 for none.
+     * @param data Data to be sent.
+     * @param length Number of bytes to send.
+     * @param encodedLength Filled in with the length of the encoded request.
+     *
+     * @return Pointer to the encoded request, nullptr if the buffer cannot be allocated.
+     */
+    uint8_t *EncodeSendMsgRequest(const int32_t socketHandle, const uint8_t *name, const uint32_t nameLength, const char *data, const uint32_t length, uint32_t *encodedLength);
+
+    /**
      * @brief Encode a recvfrom request into a newly allocated buffer.
      *
      * @note The returned pointer refers to a block of memory on the heap.  Ownership passes

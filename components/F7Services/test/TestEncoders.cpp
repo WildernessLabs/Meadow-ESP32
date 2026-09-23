@@ -464,6 +464,106 @@ namespace TestEncoders
     }
 
     /**
+     * @brief Encode a sendto request into a newly allocated buffer.
+     *
+     * @param socketHandle Socket to send on.
+     * @param data Data to be sent.
+     * @param length Number of bytes to send.
+     * @param destinationAddress Encoded SockAddr bytes for the destination, or nullptr.
+     * @param destinationAddressLength Length of destinationAddress, 0 for no destination.
+     * @param encodedLength Filled in with the length of the encoded request.
+     *
+     * @return Pointer to the encoded request, nullptr if the buffer cannot be allocated.
+     */
+    uint8_t *EncodeSendToRequest(const int32_t socketHandle, const char *data, const uint32_t length, const uint8_t *destinationAddress, const uint32_t destinationAddressLength, uint32_t *encodedLength)
+    {
+        *encodedLength = 4 + 4 + length + 4 + 4 + 4 + destinationAddressLength;
+        uint8_t *buffer = static_cast<uint8_t *>(pvPortMalloc(*encodedLength));
+
+        if (buffer == nullptr)
+        {
+            return (nullptr);
+        }
+        memset(buffer, 0, *encodedLength);
+
+        uint8_t *p = buffer;
+        Encoders::EncodeInt32(socketHandle, p);
+        p += 4;
+        Encoders::EncodeUInt32(length, p);
+        p += 4;
+        if (length > 0)
+        {
+            memcpy(p, data, length);
+            p += length;
+        }
+        Encoders::EncodeInt32(static_cast<int32_t>(length), p); // Length
+        p += 4;
+        Encoders::EncodeInt32(0, p);                            // Flags
+        p += 4;
+        Encoders::EncodeUInt32(destinationAddressLength, p);
+        p += 4;
+        if (destinationAddressLength > 0)
+        {
+            memcpy(p, destinationAddress, destinationAddressLength);
+        }
+
+        return (buffer);
+    }
+
+    /**
+     * @brief Encode a sendmsg request carrying a single iovec into a newly allocated buffer.
+     *
+     * @param socketHandle Socket to send on.
+     * @param name Raw NuttX sockaddr bytes for the destination name, or nullptr.
+     * @param nameLength Length of name, 0 for none.
+     * @param data Data to be sent.
+     * @param length Number of bytes to send.
+     * @param encodedLength Filled in with the length of the encoded request.
+     *
+     * @return Pointer to the encoded request, nullptr if the buffer cannot be allocated.
+     */
+    uint8_t *EncodeSendMsgRequest(const int32_t socketHandle, const uint8_t *name, const uint32_t nameLength, const char *data, const uint32_t length, uint32_t *encodedLength)
+    {
+        *encodedLength = 4 + 4 + 4 + 4 + nameLength + 4 + 4 + length + 4 + 4;
+        uint8_t *buffer = static_cast<uint8_t *>(pvPortMalloc(*encodedLength));
+
+        if (buffer == nullptr)
+        {
+            return (nullptr);
+        }
+        memset(buffer, 0, *encodedLength);
+
+        uint8_t *p = buffer;
+        Encoders::EncodeInt32(socketHandle, p);
+        p += 4;
+        Encoders::EncodeInt32(0, p);  // Flags
+        p += 4;
+        Encoders::EncodeUInt32(0, p); // MessageHeaderLength; skipped on extraction.
+        p += 4;
+        Encoders::EncodeUInt32(nameLength, p);
+        p += 4;
+        if (nameLength > 0)
+        {
+            memcpy(p, name, nameLength);
+            p += nameLength;
+        }
+        Encoders::EncodeUInt32(1, p);      // One iovec.
+        p += 4;
+        Encoders::EncodeUInt32(length, p); // iovec[0] length.
+        p += 4;
+        if (length > 0)
+        {
+            memcpy(p, data, length);
+            p += length;
+        }
+        Encoders::EncodeUInt32(0, p); // ControlLength.
+        p += 4;
+        Encoders::EncodeInt32(0, p);  // MsgFlags.
+
+        return (buffer);
+    }
+
+    /**
      * @brief Encode a recvfrom request into a newly allocated buffer.
      *
      * @param socketHandle Socket to receive from.
