@@ -2623,6 +2623,11 @@ void WiFiRequestHandler::Ioctl(void * const vpMessage)
                             Encoders::EncodeSockAddr(&sa, response.Addr);
                         }
                     }
+                    else
+                    {
+                        response.Result = -1;
+                        response.ResponseErrno = Mapping::NuttxErrno(EIO);
+                    }
                     break;
                 case SIOCGIFHWADDR: /* Get hardware address */
                     response.AddrLength = 6;
@@ -2655,6 +2660,11 @@ void WiFiRequestHandler::Ioctl(void * const vpMessage)
                         {
                             Encoders::EncodeSockAddr(&sa, response.Addr);
                         }
+                    }
+                    else
+                    {
+                        response.Result = -1;
+                        response.ResponseErrno = Mapping::NuttxErrno(EIO);
                     }
                     break;
                 case SIOCGIFFLAGS: /* Gets the interface flags */

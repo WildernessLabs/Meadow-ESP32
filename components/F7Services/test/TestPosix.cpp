@@ -185,6 +185,56 @@ static void CloseSocket(MockMessageDispatcher *dispatcher, const int32_t socketH
 }
 
 /**
+ * @brief Send an ioctl request and decode the response.
+ *
+ * @param dispatcher Dispatcher to queue the request on.
+ * @param command Ioctl command to send.
+ *
+ * @return Decoded response, nullptr if the call timed out, the response could not be
+ *  decoded, or the request failed before reaching WiFiRequestHandler::Ioctl. The caller
+ *  owns the returned object and, when it is not null, its Addr field.
+ */
+static Esp32Messaging::IoctlResponse *SendIoctlRequest(MockMessageDispatcher *dispatcher, const int32_t command)
+{
+    uint8_t *payload = TestEncoders::EncodeIoctlRequest(command);
+    if (payload == nullptr)
+    {
+        return (nullptr);
+    }
+
+    Message *response = SendRequest(dispatcher, Esp32Interfaces::WiFi, WiFiFunction::Ioctl, payload, TestEncoders::ENCODED_IOCTL_REQUEST_SIZE, SOCKET_RESPONSE_TIMEOUT);
+    if (response == nullptr)
+    {
+        return (nullptr);
+    }
+
+    Esp32Messaging::IoctlResponse *ioctlResponse = nullptr;
+    if ((response->StatusCode == StatusCodes::CompletedOk) && (response->Payload != nullptr))
+    {
+        ioctlResponse = TestEncoders::ExtractIoctlResponse(response->Payload);
+    }
+    Message::DeleteMessage(response);
+
+    return (ioctlResponse);
+}
+
+/**
+ * @brief Release an IoctlResponse and its Addr field.
+ *
+ * @param ioctlResponse Pointer to the pointer to the object to release.  Set to nullptr
+ *  once released.
+ */
+static void FreeIoctlResponse(Esp32Messaging::IoctlResponse **ioctlResponse)
+{
+    if ((ioctlResponse == nullptr) || (*ioctlResponse == nullptr))
+    {
+        return;
+    }
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&(*ioctlResponse)->Addr));
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(ioctlResponse));
+}
+
+/**
  * @brief Check the page that was fetched is the one the server was expected to return.
  *
  * @param page Everything received from the server.
@@ -323,6 +373,105 @@ TEST_CASE("FreeAddrInfo refuses a handle it never issued", CLASS_OF_TESTS)
     TEST_ASSERT_EQUAL(StatusCodes::InvalidRequest, response->StatusCode);
 
     Message::DeleteMessage(response);
+}
+
+/**
+ * @brief Check that an ioctl for the network mask succeeds while connected.
+ *
+ *  Regression check for issue #278.  esp_netif_get_ip_info succeeding is the ordinary
+ *  case for a connected interface, and it is the success path the fix for a failed
+ *  query sits next to, so a mistake in the new failure handling would show up here as
+ *  a broken success case.
+ *
+ * @note There is no test for the failure path (esp_netif_get_ip_info itself failing)
+ *       because nothing in this test harness can make a real, connected interface fail
+ *       that call on demand.
+ */
+TEST_CASE("Ioctl returns the network mask", CLASS_OF_TESTS)
+{
+    MockMessageDispatcher *dispatcher = SetupConnectedDispatcher();
+
+    Esp32Messaging::IoctlResponse *response = SendIoctlRequest(dispatcher, SIOCGIFNETMASK);
+    TEST_ASSERT_NOT_NULL_MESSAGE(response, "The Ioctl request was never answered.");
+
+    TEST_ASSERT_EQUAL_INT32(0, response->Result);
+    TEST_ASSERT_GREATER_THAN(0, response->AddrLength);
+    TEST_ASSERT_NOT_NULL(response->Addr);
+
+    FreeIoctlResponse(&response);
+}
+
+/**
+ * @brief Check that an ioctl for the IP address succeeds while connected.
+ */
+TEST_CASE("Ioctl returns the IP address", CLASS_OF_TESTS)
+{
+    MockMessageDispatcher *dispatcher = SetupConnectedDispatcher();
+
+    Esp32Messaging::IoctlResponse *response = SendIoctlRequest(dispatcher, SIOCGIFADDR);
+    TEST_ASSERT_NOT_NULL_MESSAGE(response, "The Ioctl request was never answered.");
+
+    TEST_ASSERT_EQUAL_INT32(0, response->Result);
+    TEST_ASSERT_GREATER_THAN(0, response->AddrLength);
+    TEST_ASSERT_NOT_NULL(response->Addr);
+
+    FreeIoctlResponse(&response);
+}
+
+/**
+ * @brief Check that an ioctl for the hardware address succeeds and is a MAC-length
+ *  address, regardless of the state of the network interface.
+ */
+TEST_CASE("Ioctl returns the hardware address", CLASS_OF_TESTS)
+{
+    MockMessageDispatcher *dispatcher = SetupConnectedDispatcher();
+
+    Esp32Messaging::IoctlResponse *response = SendIoctlRequest(dispatcher, SIOCGIFHWADDR);
+    TEST_ASSERT_NOT_NULL_MESSAGE(response, "The Ioctl request was never answered.");
+
+    TEST_ASSERT_EQUAL_INT32(0, response->Result);
+    TEST_ASSERT_EQUAL_UINT32(6, response->AddrLength);
+    TEST_ASSERT_NOT_NULL(response->Addr);
+
+    FreeIoctlResponse(&response);
+}
+
+/**
+ * @brief Check that an ioctl for the interface flags reports the interface as up while
+ *  connected.
+ */
+TEST_CASE("Ioctl returns the interface flags", CLASS_OF_TESTS)
+{
+    MockMessageDispatcher *dispatcher = SetupConnectedDispatcher();
+
+    Esp32Messaging::IoctlResponse *response = SendIoctlRequest(dispatcher, SIOCGIFFLAGS);
+    TEST_ASSERT_NOT_NULL_MESSAGE(response, "The Ioctl request was never answered.");
+
+    TEST_ASSERT_EQUAL_INT32(0, response->Result);
+    TEST_ASSERT_EQUAL_INT32(IFF_UP, response->Flags);
+
+    FreeIoctlResponse(&response);
+}
+
+/**
+ * @brief Check that an ioctl command the handler does not recognise is refused rather
+ *  than reported as though it had succeeded.
+ */
+TEST_CASE("Ioctl refuses an unknown command", CLASS_OF_TESTS)
+{
+    MockMessageDispatcher *dispatcher = SetupConnectedDispatcher();
+
+    //
+    //  Not one of the SIOCGIF* values WiFiRequestHandler.hpp defines, so this falls
+    //  through to the switch's default case.
+    //
+    const int32_t unknownCommand = 0x7fffffff;
+    Esp32Messaging::IoctlResponse *response = SendIoctlRequest(dispatcher, unknownCommand);
+    TEST_ASSERT_NOT_NULL_MESSAGE(response, "The Ioctl request was never answered.");
+
+    TEST_ASSERT_EQUAL_INT32(-1, response->Result);
+
+    FreeIoctlResponse(&response);
 }
 
 /**
