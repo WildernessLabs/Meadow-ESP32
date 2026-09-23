@@ -147,7 +147,10 @@ static void WaitForOutboundMessage(MockMessageDispatcher *dispatcher, const uint
 /**
  * @brief Start a service and write a value to one of its characteristics.
  *
- *  The client unit test picks the value up and verifies it.
+ *  The client picks the value up, verifies it and disconnects.  The disconnection can be
+ *  raised before or after the response to the write, so the two are accepted in either
+ *  order.  The service is only stopped once the client has gone: stopping it with a
+ *  client connected raises a disconnection in the middle of the stop sequence.
  *
  * @param configuration Configuration of the service to start.
  */
@@ -164,7 +167,31 @@ static void TestNotifyCharacteristic(const char * const configuration)
     vTaskDelay(CLIENT_SUBSCRIPTION_TIME / portTICK_PERIOD_MS);
 
     printf("Writing value to characteristic\n");
-    WriteServerDataSet(dispatcher, NOTIFICATION_CHARACTERISTIC_HANDLE, NOTIFICATION_VALUE, CLIENT_CONNECTION_TIMEOUT);
+    QueueServerDataSet(dispatcher, NOTIFICATION_CHARACTERISTIC_HANDLE, NOTIFICATION_VALUE);
+
+    bool responded = false;
+    bool disconnected = false;
+    while (!(responded && disconnected))
+    {
+        WaitForResponse(dispatcher, CLIENT_CONNECTION_TIMEOUT);
+        TEST_ASSERT_GREATER_THAN_MESSAGE(0, dispatcher->OutboundMessageQueueLength(), responded ? "Client did not disconnect." : "No response to the write.");
+        Message *response = dispatcher->GetOutboundMessage();
+        TEST_ASSERT_NOT_NULL(response);
+        ASSERT_NO_PAYLOAD(response);
+        if (response->Function == BluetoothFunction::ServerDataSet)
+        {
+            TEST_ASSERT_FALSE_MESSAGE(responded, "More than one response to the write.");
+            ASSERT_RESPONSE(response, Esp32Interfaces::BlueTooth, BluetoothFunction::ServerDataSet, StatusCodes::CompletedOk);
+            responded = true;
+        }
+        else
+        {
+            TEST_ASSERT_FALSE_MESSAGE(disconnected, "More than one disconnection.");
+            ASSERT_EVENT(response, Esp32Interfaces::BlueTooth, BluetoothFunction::ClientDisconnectedEvent, StatusCodes::CompletedOk);
+            disconnected = true;
+        }
+        Message::DeleteMessage(response);
+    }
 
     ASSERT_OUTBOUND_QUEUE_LENGTH(dispatcher, 0);
 
@@ -244,53 +271,12 @@ TEST_CASE("Notify characteristic (MeadowC, no company identifier)", CLASS_OF_TES
 
 /**
  * @brief Test starting a Bluetooth service for MeadowD with no company identifier.
- *
- *  MeadowD raises a client disconnected event alongside the response to the write, so the
- *  queue is drained rather than being checked for a single response.
  */
 TEST_CASE("Notify characteristic, multiple descriptors (MeadowD, no company identifier)", CLASS_OF_TESTS)
 {
     printf("Starting Bluetooth service for (MeadowD, no company identifier)\n");
 
-    MockMessageDispatcher *dispatcher = SetupMessageDispatcher();
-    TEST_ASSERT_NOT_NULL(dispatcher);
-
-    StartBluetoothService(dispatcher, meadow_d_json);
-
-    WaitForClientConnection(dispatcher);
-
-    printf("Client connected, subscribe to notifications within %d seconds.\n", CLIENT_SUBSCRIPTION_TIME / 1000);
-    vTaskDelay(CLIENT_SUBSCRIPTION_TIME / portTICK_PERIOD_MS);
-
-    printf("Writing value to characteristic\n");
-    QueueServerDataSet(dispatcher, NOTIFICATION_CHARACTERISTIC_HANDLE, NOTIFICATION_VALUE);
-
-    //
-    //  Wait for the confirmation message that the change has been written back.
-    //
-    WaitForResponse(dispatcher, CLIENT_CONNECTION_TIMEOUT);
-    while (dispatcher->OutboundMessageQueueLength() > 0)
-    {
-        Message *response = dispatcher->GetOutboundMessage();
-        TEST_ASSERT_NOT_NULL(response);
-        ASSERT_NO_PAYLOAD(response);
-        if ((response->MessageType != MessageTypes::Response) && (response->MessageType != MessageTypes::Event))
-        {
-            printf("Unexpected message type: %" PRIu32 "\n", static_cast<uint32_t>(response->MessageType));
-            TEST_FAIL();
-        }
-        TEST_ASSERT_EQUAL(Esp32Interfaces::BlueTooth, response->Interface);
-        if ((response->Function != BluetoothFunction::ServerDataSet) && (response->Function != BluetoothFunction::ClientDisconnectedEvent))
-        {
-            printf("Unexpected function: %" PRIu32 "\n", response->Function);
-            TEST_FAIL();
-        }
-        TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
-        Message::DeleteMessage(response);
-        vTaskDelay(500 / portTICK_PERIOD_MS);
-    }
-
-    ASSERT_OUTBOUND_QUEUE_LENGTH(dispatcher, 0);
+    TestNotifyCharacteristic(meadow_d_json);
 }
 
 /**

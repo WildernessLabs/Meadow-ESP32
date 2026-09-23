@@ -231,6 +231,8 @@ test is `BLUETOOTH_CLIENTS` in `TestRunner.py`.
 
 | Test | Client |
 |---|---|
+| Notify characteristic (MeadowC, no company identifier) | `NotifyCharacteristicClient.py --name MeadowC` |
+| Notify characteristic, multiple descriptors (MeadowD, no company identifier) | `NotifyCharacteristicClient.py --name MeadowD` |
 | Soak test writing numeric characteristic, number of iterations controlled by client (MeadowF7, Espressif) | `WriteNumberCharacteristicSoakTest.py` |
 
 The clients use [Bleak](https://github.com/hbldh/bleak), which the ESP-IDF Python
@@ -248,8 +250,11 @@ cd test
 
 A client that fails fails its selector, and its output is printed. On macOS the terminal
 application needs Bluetooth permission (System Settings, Privacy & Security, Bluetooth)
-before the client can scan. The notify tests, MeadowC and MeadowD, have no client yet and still time
-out.
+before the client can scan.
+
+A notifying characteristic needs a Client Characteristic Configuration descriptor
+(`0x2902`, two bytes) in its configuration. The firmware does not add one, and without it
+a client cannot subscribe; CoreBluetooth reports "attribute not found".
 
 By default each run starts from a known state: under QEMU the pristine flash image is
 restored, and on hardware the board is reset. Use `--no-fresh` to continue from

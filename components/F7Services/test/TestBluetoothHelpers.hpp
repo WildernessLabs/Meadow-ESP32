@@ -70,14 +70,4 @@ void StopBluetoothService(MockMessageDispatcher *dispatcher);
  */
 void QueueServerDataSet(MockMessageDispatcher *dispatcher, const uint16_t handle, const uint32_t value);
 
-/**
- * @brief Write a value to a characteristic and check the response to the request.
- *
- * @param dispatcher Dispatcher to queue the request on.
- * @param handle Handle of the characteristic to write to.
- * @param value Value to write to the characteristic.
- * @param timeout Milliseconds to wait for the response.
- */
-void WriteServerDataSet(MockMessageDispatcher *dispatcher, const uint16_t handle, const uint32_t value, const uint32_t timeout);
-
 #endif // _TEST_BLUETOOTH_HELPERS_HPP_

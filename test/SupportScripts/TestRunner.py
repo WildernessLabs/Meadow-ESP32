@@ -96,6 +96,10 @@ DEFAULT_SOAK_ITERATIONS = 1000
 CLIENT_FINISH_SECONDS = 30
 
 BLUETOOTH_CLIENTS = {
+    'Notify characteristic (MeadowC, no company identifier)':
+        lambda arguments: ['NotifyCharacteristicClient.py', '--name', 'MeadowC'],
+    'Notify characteristic, multiple descriptors (MeadowD, no company identifier)':
+        lambda arguments: ['NotifyCharacteristicClient.py', '--name', 'MeadowD'],
     'Soak test writing numeric characteristic, number of iterations controlled by client (MeadowF7, Espressif)':
         lambda arguments: ['WriteNumberCharacteristicSoakTest.py', '--iterations', str(arguments.soak_iterations)],
 }
