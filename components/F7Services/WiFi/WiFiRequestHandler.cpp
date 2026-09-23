@@ -1541,7 +1541,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::StopWiFIAdapter()
     esp_err_t result = ESP_OK;
 
     EventBits_t bits = xEventGroupGetBits(_xWiFiEventGroup);
-    if (!(bits & WIFI_CONNECTED_BIT))
+    if (bits & WIFI_CONNECTED_BIT)
     {
         result = esp_wifi_disconnect();
     }
