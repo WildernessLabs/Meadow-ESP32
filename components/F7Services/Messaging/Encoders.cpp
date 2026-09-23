@@ -92,7 +92,7 @@ uint16_t Encoders::ExtractUInt16(const uint8_t * const buffer)
     uint16_t result;
 
     result = buffer[0];
-    result |= (buffer[1] << 8);
+    result |= (static_cast<uint32_t>(buffer[1]) << 8);
     return (result);
 }
 
@@ -131,9 +131,9 @@ uint32_t Encoders::ExtractUInt32(const uint8_t * const buffer)
     uint32_t result;
 
     result = buffer[0];
-    result |= (buffer[1] << 8);
-    result |= (buffer[2] << 16);
-    result |= (buffer[3] << 24);
+    result |= (static_cast<uint32_t>(buffer[1]) << 8);
+    result |= (static_cast<uint32_t>(buffer[2]) << 16);
+    result |= (static_cast<uint32_t>(buffer[3]) << 24);
     return (result);
 }
 
@@ -171,12 +171,12 @@ void Encoders::EncodeUInt32(const uint32_t value, uint8_t * const buffer)
  */
 uint32_t Encoders::ExtractInt32(const uint8_t * const buffer)
 {
-    int32_t result;
+    uint32_t result;
 
     result = buffer[0];
-    result |= (buffer[1] << 8);
-    result |= (buffer[2] << 16);
-    result |= (buffer[3] << 24);
+    result |= (static_cast<uint32_t>(buffer[1]) << 8);
+    result |= (static_cast<uint32_t>(buffer[2]) << 16);
+    result |= (static_cast<uint32_t>(buffer[3]) << 24);
     return (result);
 }
 
