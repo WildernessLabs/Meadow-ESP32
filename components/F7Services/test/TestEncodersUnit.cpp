@@ -6,6 +6,7 @@
 
 #include "sdkconfig.h"
 
+#include <stdint.h>
 #include <string.h>
 #include "unity.h"
 
@@ -77,4 +78,56 @@ TEST_CASE("ExtractString returns nullptr when no terminator is found within maxL
 
     char *result = Encoders::ExtractString(buffer, maxLength);
     TEST_ASSERT_NULL(result);
+}
+
+/**
+ * @brief Check that ExtractUInt16 decodes a value whose high byte has its top bit set.
+ */
+TEST_CASE("ExtractUInt16 decodes a value with the top bit set", CLASS_OF_TESTS)
+{
+    const uint8_t buffer[] = {0x34, 0xf2};
+
+    TEST_ASSERT_EQUAL_HEX16(0xf234, Encoders::ExtractUInt16(buffer));
+}
+
+/**
+ * @brief Check that ExtractUInt32 decodes every possible high byte.
+ *
+ *  Regression check for issue #274: shifting a byte of 0x80 or more left by 24 overflowed
+ *  a signed int, which is undefined behaviour, because the byte was promoted to int rather
+ *  than uint32_t before the shift.
+ */
+TEST_CASE("ExtractUInt32 decodes every high byte", CLASS_OF_TESTS)
+{
+    for (uint32_t highByte = 0; highByte <= 0xff; highByte++)
+    {
+        const uint32_t expected = (highByte << 24) | 0x00a5b6c7;
+        uint8_t buffer[sizeof(uint32_t)];
+        Encoders::EncodeUInt32(expected, buffer);
+        TEST_ASSERT_EQUAL_HEX32(expected, Encoders::ExtractUInt32(buffer));
+    }
+
+    const uint8_t allOnes[] = {0xff, 0xff, 0xff, 0xff};
+    TEST_ASSERT_EQUAL_HEX32(0xffffffff, Encoders::ExtractUInt32(allOnes));
+}
+
+/**
+ * @brief Check that ExtractInt32 round trips negative values and the extremes.
+ *
+ *  Regression check for issue #274: ExtractInt32 has the same shift as ExtractUInt32, and
+ *  it also accumulated into an int32_t while returning a uint32_t.
+ */
+TEST_CASE("ExtractInt32 round trips negative values and the extremes", CLASS_OF_TESTS)
+{
+    const int32_t values[] = {0, 1, -1, -2, 0x12345678, -0x12345678, INT32_MAX, INT32_MIN};
+
+    for (const int32_t value: values)
+    {
+        uint8_t buffer[sizeof(int32_t)];
+        Encoders::EncodeInt32(value, buffer);
+        TEST_ASSERT_EQUAL_INT32(value, static_cast<int32_t>(Encoders::ExtractInt32(buffer)));
+    }
+
+    const uint8_t minusTwo[] = {0xfe, 0xff, 0xff, 0xff};
+    TEST_ASSERT_EQUAL_INT32(-2, static_cast<int32_t>(Encoders::ExtractInt32(minusTwo)));
 }
