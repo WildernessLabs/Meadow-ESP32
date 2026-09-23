@@ -442,7 +442,7 @@ uint32_t UnitTestConfiguration::BluetoothRestartIterations()
 }
 
 /**
- *  @brief Get how far the free heap may fall across the POSIX soak test.
+ *  @brief Get how far the free heap may fall across a soak test.
  */
 uint32_t UnitTestConfiguration::SoakHeapAllowance()
 {
@@ -450,7 +450,7 @@ uint32_t UnitTestConfiguration::SoakHeapAllowance()
 }
 
 /**
- *  @brief Get how often the POSIX soak test reports its progress.
+ *  @brief Get how often the soak tests report their progress.
  */
 uint32_t UnitTestConfiguration::SoakProgressInterval()
 {

@@ -99,7 +99,7 @@ the mount failed rather than the file being absent.
 | `WebServerIpAddress`, `WebServerPort` | the server the POSIX tests fetch from |
 | `SimpleWebServerName`, `SimpleWebPage`, `BinaryResourceName`, `LargeTestFile` | resources on that server |
 | `PosixIterations`, `ScanIterations`, `BluetoothRestartIterations` | how many times each of the repeating tests repeats |
-| `SoakHeapAllowance`, `SoakProgressInterval` | how far the free heap may fall across the POSIX soak, and how often it reports |
+| `SoakHeapAllowance`, `SoakProgressInterval` | how far the free heap may fall across a soak test, and how often the soak tests report |
 
 > **Important**: `unittest.config.json` is in `.gitignore` so credentials are not
 > committed. The template it is copied from is in source control.
@@ -114,7 +114,9 @@ fetch takes a moment, a scan takes seconds and a Bluetooth restart takes longer 
 so one number for all three would make one test too long or another too short to mean
 anything. `SoakHeapAllowance` goes with `PosixIterations` — a leak shows up in
 proportion to the number of fetches, so shortening the soak without lowering the
-allowance leaves a check that passes whatever happens.
+allowance leaves a check that passes whatever happens. The Bluetooth restart test and the
+Bluetooth write soak apply the same allowance to their own counts,
+`BluetoothRestartIterations` and the client's `--soak-iterations`.
 
 ### Build Commands
 

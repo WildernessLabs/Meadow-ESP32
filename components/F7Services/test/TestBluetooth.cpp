@@ -12,6 +12,7 @@
 #include <string.h>
 #include "esp_heap_caps.h"
 #include "esp_system.h"
+#include "esp_timer.h"
 #include "unity.h"
 
 #include "MockMessageDispatcher.hpp"
@@ -476,6 +477,15 @@ TEST_CASE("Soak test writing numeric characteristic, number of iterations contro
     //  client therefore writes its next value first, so the response and the next write
     //  are accepted in either order rather than one strictly after the other.
     //
+    const uint32_t progressInterval = UnitTestConfiguration::SoakProgressInterval();
+    uint32_t heapAtStart = 0;
+    uint32_t heapAtEnd = 0;
+    int64_t startedAt = 0;
+    //
+    //  Iteration at which the heap was first measured, zero until then.
+    //
+    uint32_t baselineIteration = 0;
+
     uint32_t iteration = 0;
     uint32_t outstandingDataSetResponses = 0;
     bool clientFinished = false;
@@ -494,6 +504,24 @@ TEST_CASE("Soak test writing numeric characteristic, number of iterations contro
             TEST_ASSERT_GREATER_THAN_MESSAGE(0, outstandingDataSetResponses, "ServerDataSet response with no request outstanding.");
             outstandingDataSetResponses--;
             Message::DeleteMessage(response);
+
+            //
+            //  The heap is measured with every echo complete, so that the start and the end
+            //  are taken in the same state: client connected, nothing in flight.  Everything
+            //  up to the first such point is the warm-up, so anything allocated once and
+            //  kept is not counted as a leak.
+            //
+            if (outstandingDataSetResponses == 0)
+            {
+                heapAtEnd = esp_get_free_heap_size();
+                if (baselineIteration == 0)
+                {
+                    baselineIteration = iteration;
+                    heapAtStart = heapAtEnd;
+                    startedAt = esp_timer_get_time();
+                    printf("Warm-up complete after %" PRIu32 " iterations, free heap %" PRIu32 " bytes.\n", baselineIteration, heapAtStart);
+                }
+            }
             continue;
         }
 
@@ -538,11 +566,12 @@ TEST_CASE("Soak test writing numeric characteristic, number of iterations contro
         }
 
         iteration++;
-        if (((iteration % 100) == 0) || (iteration < 10))
-        {
-            printf("    Iteration %" PRIu32 "\n", iteration);
-        }
         TEST_ASSERT_EQUAL_UINT32(iteration, value);
+        if ((progressInterval > 0) && ((iteration % progressInterval) == 0) && (baselineIteration > 0) && (iteration > baselineIteration))
+        {
+            const int64_t elapsed = esp_timer_get_time() - startedAt;
+            printf("  %" PRIu32 " iterations, free heap %" PRIu32 " bytes, lowest %" PRIu32 ", %" PRId64 " ms per iteration.\n", iteration, esp_get_free_heap_size(), esp_get_minimum_free_heap_size(), (elapsed / 1000) / (iteration - baselineIteration));
+        }
 
         //
         //  Write the value back to the characteristic for the client to read and verify.
@@ -552,6 +581,30 @@ TEST_CASE("Soak test writing numeric characteristic, number of iterations contro
     }
     TEST_ASSERT_EQUAL_UINT32_MESSAGE(0, outstandingDataSetResponses, "ServerDataSet requests left without a response.");
     printf("Client completed %" PRIu32 " iterations.\n", iteration);
+
+    //
+    //  A run that never got past the warm-up has nothing to compare.
+    //
+    if ((baselineIteration > 0) && (iteration > baselineIteration))
+    {
+        const uint32_t measured = iteration - baselineIteration;
+        const int64_t elapsed = esp_timer_get_time() - startedAt;
+        printf("Measured %" PRIu32 " iterations in %" PRId64 " seconds.\n", measured, elapsed / 1000000);
+        printf("Free heap %" PRIu32 " bytes at the start, %" PRIu32 " at the end, lowest %" PRIu32 ".\n", heapAtStart, heapAtEnd, esp_get_minimum_free_heap_size());
+
+        //
+        //  The heap is not expected to come back to exactly where it started, because
+        //  allocation patterns leave it slightly differently arranged, but a real leak over
+        //  this many round trips is far larger than the allowance the configuration gives.
+        //
+        if (heapAtEnd < heapAtStart)
+        {
+            const uint32_t allowance = UnitTestConfiguration::SoakHeapAllowance();
+            const uint32_t lost = heapAtStart - heapAtEnd;
+            printf("Free heap fell by %" PRIu32 " bytes over %" PRIu32 " iterations, against an allowance of %" PRIu32 ".\n", lost, measured, allowance);
+            TEST_ASSERT_TRUE_MESSAGE(lost <= allowance, "The free heap fell too far, which suggests a leak in the characteristic write path.");
+        }
+    }
 
     StopBluetoothService(dispatcher);
 
