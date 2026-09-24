@@ -11,6 +11,7 @@
 
 #pragma once
 
+#include "Encoders.hpp"
 #include "IMessageDispatcher.hpp"
 
 class CoreDump
@@ -20,6 +21,14 @@ public:
      * @brief CoreDump component name.
      */
     static const char *COMPONENT_NAME;
+
+    /**
+     * @brief Largest fragment that can be returned in a single response.
+     *
+     *  The response carries the fragment size ahead of the data, and the whole payload
+     *  has to fit within the protocol's maximum payload length.
+     */
+    static constexpr uint32_t MAXIMUM_FRAGMENT_SIZE = Message::MAXIMUM_PAYLOAD_LENGTH - Encoders::CORE_DUMP_FRAGMENT_RESPONSE_HEADER_SIZE;
 
     /**
      * @brief Construct a new Core Dump object
@@ -49,10 +58,10 @@ public:
     /**
      * @brief Get part (maybe all) of the core dump.
      *
-     *  The fragment asked for has to lie wholly inside the core dump; a request running
-     *  past the end is refused with InvalidRequest rather than answered with what is
-     *  left.  A dump whose checksum does not match is refused with CrcError, which is
-     *  only worked out for the request at offset zero.
+     *  The fragment returned may be shorter than the one asked for: a request running
+     *  past the end of the dump is answered with what is left, and no fragment is longer
+     *  than MAXIMUM_FRAGMENT_SIZE.  A dump whose checksum does not match is refused with
+     *  CrcError, which is only worked out for the request at offset zero.
      *
      * @param vpMessage Pointer to the message requesting the core dump fragment.
      */

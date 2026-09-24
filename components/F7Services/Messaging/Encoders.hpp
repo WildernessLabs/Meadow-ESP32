@@ -586,6 +586,12 @@ public:
      *      Seed for the 32-bit CRC calculation.
      */
     static const uint32_t CRC32_SEED = 0xffffffff;
+
+    /**
+     *  @brief Number of bytes in an encoded core dump fragment response ahead of the fragment data.
+     */
+    static constexpr uint32_t CORE_DUMP_FRAGMENT_RESPONSE_HEADER_SIZE = 4;
+
     static uint32_t CalculateSpiBufferSize(const uint32_t);
     static uint32_t EncodedPacketSize(const Message * const, const bool);
     static uint16_t ExtractUInt16(const uint8_t * const);
