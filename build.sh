@@ -340,9 +340,6 @@ fi
 #
 find . -name "AppMain.*.obj" -exec rm {} \;
 
-if ! $NO_BUILD; then
-    IDF_FLAGS="build $IDF_FLAGS"
-fi
 if [[ ! -z $IDF_FLAGS ]]; then
     $IDF $IDF_DEFINES $IDF_FLAGS
 fi
