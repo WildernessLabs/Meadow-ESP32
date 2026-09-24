@@ -986,8 +986,6 @@ void WiFiRequestHandler::Setup()
 
     SwitchAntenna(static_cast<AntennaTypes::AntennaTypes>(GetAntenna()));
 
-    esp_wifi_restore();
-
     /*
      *  Now create the objects necessary for the WiFi tasks.
      */
@@ -2009,6 +2007,11 @@ esp_err_t WiFiRequestHandler::StartWiFiInterface(const wifi_mode_t mode, const E
         {
             wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
             result = esp_wifi_init(&cfg);
+        }
+
+        if (result == ESP_OK)
+        {
+            result = esp_wifi_restore();
         }
 
         if (result == ESP_OK)
