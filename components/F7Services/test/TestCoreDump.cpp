@@ -198,8 +198,13 @@ static Esp32Messaging::CoreDumpFragmentResponse *GetCoreDumpFragment(MockMessage
     ASSERT_HAS_PAYLOAD(response);
 
     Esp32Messaging::CoreDumpFragmentResponse *fragment = TestEncoders::ExtractCoreDumpFragmentResponse(response->Payload);
+    const uint32_t payloadLength = response->PayloadLength;
     response->DeletePayload();
     TEST_ASSERT_NOT_NULL(fragment);
+    //
+    //  The payload is the fragment size followed by the fragment, and nothing more.
+    //
+    TEST_ASSERT_EQUAL(Encoders::CORE_DUMP_FRAGMENT_RESPONSE_HEADER_SIZE + fragment->Size, payloadLength);
 
     return (fragment);
 }
@@ -303,18 +308,34 @@ TEST_CASE("Get core dump fragment", CLASS_OF_TESTS)
     TestEncoders::FreeCoreDumpFragmentResponse(&fragment);
     AssertHeapRecovered(heapBefore, "retrieving the last core dump fragment");
     //
-    //  A fragment has to lie wholly inside the core dump.  Asking for more than is left
-    //  is refused rather than answered with a short fragment, so the caller works out
-    //  how much remains and asks for exactly that.
-    //
-    //  The last of these is the case that used to be dangerous.  An offset at the end of
-    //  the dump left the size of the fragment at the size of the whole dump, and the
-    //  allocation that followed was large enough to fail and, with the development
-    //  configuration, to abort.
+    //  Asking for more than is left is answered with what is left.  The STM32 asks for
+    //  the same size every time and advances by the size it is given, so this is how
+    //  the last fragment of almost every dump is retrieved (issue #501).
     //
     heapBefore = esp_get_free_heap_size();
-    AssertCoreDumpFragmentRefused(dispatcher, coreDump, request, information->CoreDumpSize - 100, 256, StatusCodes::InvalidRequest);
-    AssertCoreDumpFragmentRefused(dispatcher, coreDump, request, 0, information->CoreDumpSize + 1, StatusCodes::InvalidRequest);
+    fragment = GetCoreDumpFragment(dispatcher, coreDump, request, information->CoreDumpSize - 100, 256);
+    TEST_ASSERT_EQUAL(100, fragment->Size);
+    TEST_ASSERT_NOT_NULL(fragment->Data);
+    TestEncoders::FreeCoreDumpFragmentResponse(&fragment);
+    AssertHeapRecovered(heapBefore, "retrieving a short last core dump fragment");
+    //
+    //  No fragment is longer than will fit in a single response, however much is asked
+    //  for and however much is left.
+    //
+    const uint32_t largestFragment = (information->CoreDumpSize < CoreDump::MAXIMUM_FRAGMENT_SIZE) ? information->CoreDumpSize : CoreDump::MAXIMUM_FRAGMENT_SIZE;
+    heapBefore = esp_get_free_heap_size();
+    fragment = GetCoreDumpFragment(dispatcher, coreDump, request, 0, UINT32_MAX);
+    TEST_ASSERT_EQUAL(largestFragment, fragment->Size);
+    TEST_ASSERT_NOT_NULL(fragment->Data);
+    TestEncoders::FreeCoreDumpFragmentResponse(&fragment);
+    AssertHeapRecovered(heapBefore, "retrieving the largest core dump fragment");
+    //
+    //  A request starting at or past the end of the dump is refused, as there is nothing
+    //  to return.  An offset at the end of the dump is the case that used to be
+    //  dangerous: it left the size of the fragment at the size of the whole dump, and
+    //  the read that followed ran past the end of it (issue #259).
+    //
+    heapBefore = esp_get_free_heap_size();
     AssertCoreDumpFragmentRefused(dispatcher, coreDump, request, information->CoreDumpSize, CORE_DUMP_FRAGMENT_SIZE, StatusCodes::InvalidRequest);
     AssertCoreDumpFragmentRefused(dispatcher, coreDump, request, UINT32_MAX, CORE_DUMP_FRAGMENT_SIZE, StatusCodes::InvalidRequest);
     //
@@ -338,9 +359,11 @@ TEST_CASE("Get core dump fragment", CLASS_OF_TESTS)
  *
  *      1 - ask for the core dump information;
  *      2 - stop if the dump is invalid or empty;
- *      3 - ask for 4000 bytes, or whatever is left if that is less, and count what came
- *          back;
+ *      3 - ask for 4000 bytes and advance by the size of the fragment that came back;
  *      4 - repeat until the whole dump has been retrieved.
+ *
+ *  The STM32 asks for 4000 bytes every time, including for the last fragment, so this
+ *  also proves that the last fragment is answered with what is left (issue #501).
  *
  *  The STM32 assembles the dump, so nothing here keeps the bytes.  What is being proven
  *  is that every fragment of a full sized dump can be asked for and answered, and that
@@ -386,8 +409,8 @@ TEST_CASE("Retrieve the whole core dump", CLASS_OF_TESTS)
     //  of each request and gives the response back in the same message.
     //
     //  The last fragment is short of the full 4000 bytes unless the dump divides
-    //  exactly.  A fragment has to lie wholly inside the dump, so that last one is asked
-    //  for at the size it actually is rather than at the size of all the others.
+    //  exactly.  It is asked for at the full size, as the STM32 does, and the size that
+    //  comes back is what the retrieval advances by.
     //
     Message *request = Message::CreateOnHeap(MessageTypes::Header, Esp32Interfaces::System, SystemFunction::GetCoreDumpFragment, StatusCodes::CompletedOk, MESSAGE_ID, nullptr, 0);
     TEST_ASSERT_NOT_NULL(request);
@@ -402,16 +425,17 @@ TEST_CASE("Retrieve the whole core dump", CLASS_OF_TESTS)
     while (retrieved < coreDumpSize)
     {
         const uint32_t remaining = coreDumpSize - retrieved;
-        const uint32_t wanted = (remaining < CORE_DUMP_FRAGMENT_SIZE) ? remaining : CORE_DUMP_FRAGMENT_SIZE;
+        const uint32_t expected = (remaining < CORE_DUMP_FRAGMENT_SIZE) ? remaining : CORE_DUMP_FRAGMENT_SIZE;
         const uint32_t heapBeforeFragment = esp_get_free_heap_size();
 
-        Esp32Messaging::CoreDumpFragmentResponse *fragment = GetCoreDumpFragment(dispatcher, coreDump, request, retrieved, wanted);
+        Esp32Messaging::CoreDumpFragmentResponse *fragment = GetCoreDumpFragment(dispatcher, coreDump, request, retrieved, CORE_DUMP_FRAGMENT_SIZE);
         TEST_ASSERT_NOT_NULL(fragment);
-        TEST_ASSERT_EQUAL(wanted, fragment->Size);
+        TEST_ASSERT_EQUAL(expected, fragment->Size);
         TEST_ASSERT_NOT_NULL(fragment->Data);
+        const uint32_t received = fragment->Size;
         TestEncoders::FreeCoreDumpFragmentResponse(&fragment);
 
-        retrieved += wanted;
+        retrieved += received;
         fragments++;
 
         //

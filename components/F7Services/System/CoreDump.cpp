@@ -161,10 +161,9 @@ void CoreDump::GetInformation(void * const vpMessage)
 /**
  * @brief Get part (maybe all) of the core dump.
  *
- *  The fragment asked for has to lie wholly inside the core dump, so the caller works
- *  out how much is left and asks for that rather than asking for a round number and
- *  letting the answer be short.  A request that runs past the end is refused with
- *  InvalidRequest.
+ *  The fragment returned is the smallest of the size asked for, what is left of the dump
+ *  and MAXIMUM_FRAGMENT_SIZE.  A request for nothing, or one starting at or past the end
+ *  of the dump, is refused with InvalidRequest.
  *
  *  The image checksum is worked out only for the request at offset zero, as it reads the
  *  whole partition and a retrieval is made of many requests.  A dump whose checksum does
@@ -227,25 +226,35 @@ void CoreDump::GetFragment(void * const vpMessage)
 
                     if (sizeIsSensible)
                     {
-                        const bool fragmentIsInRange = ((request->Size > 0) && (request->Offset <= size) && (request->Size <= (size - request->Offset)));
+                        const bool requestIsValid = ((request->Size > 0) && (request->Offset < size));
 
-                        if (!fragmentIsInRange)
+                        if (!requestIsValid)
                         {
                             result = StatusCodes::InvalidRequest;
                         }
                         else
                         {
-                            uint8_t *data = static_cast<uint8_t *>(pvPortMalloc(request->Size));
+                            uint32_t fragmentSize = size - request->Offset;
+                            if (fragmentSize > request->Size)
+                            {
+                                fragmentSize = request->Size;
+                            }
+                            if (fragmentSize > MAXIMUM_FRAGMENT_SIZE)
+                            {
+                                fragmentSize = MAXIMUM_FRAGMENT_SIZE;
+                            }
+
+                            uint8_t *data = static_cast<uint8_t *>(pvPortMalloc(fragmentSize));
                             if (data == NULL)
                             {
                                 result = StatusCodes::EspOutOfMemory;
                             }
                             else
                             {
-                                if (esp_partition_read(partition, request->Offset, data, request->Size) == ESP_OK)
+                                if (esp_partition_read(partition, request->Offset, data, fragmentSize) == ESP_OK)
                                 {
                                     response.Data = data;
-                                    response.Size = request->Size;
+                                    response.Size = fragmentSize;
                                     result = StatusCodes::CompletedOk;
                                 }
                                 else

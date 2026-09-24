@@ -3546,5 +3546,5 @@ int Encoders::EncodedCoreDumpFragmentResponseBufferSize(const Esp32Messaging::Co
         return -1;
     }
 
-    return (8 + fragment->Size);
+    return (CORE_DUMP_FRAGMENT_RESPONSE_HEADER_SIZE + fragment->Size);
 }

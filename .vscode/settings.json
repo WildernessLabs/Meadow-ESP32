@@ -13,5 +13,11 @@
         "chrono": "cpp",
         "text_encoding": "cpp"
     },
-    "idf.currentSetup": "/Users/markstevens/.espressif/v5.5.3/esp-idf"
+    "idf.currentSetup": "/Users/markstevens/.espressif/v5.5.3/esp-idf",
+    "clangd.path": "/Users/markstevens/.espressif/tools/esp-clang/esp-19.1.2_20250312/esp-clang/bin/clangd",
+    "clangd.arguments": [
+      "--background-index",
+      "--query-driver=**",
+      "--compile-commands-dir=/Users/markstevens/GitHub/WildernessLabs/OS/Meadow-ESP32/build"
+    ]
 }
