@@ -239,6 +239,41 @@ TEST_CASE("Connect to non-existant access point", CLASS_OF_TESTS)
     TEST_ASSERT_FALSE(progress.ConnectedEvent);
 }
 
+/**
+ * @brief Test that ConnectToDefaultAccessPoint is answered when no default access
+ *        point is configured, rather than leaking the request (issue #251).
+ *
+ * @note This does not need a radio, but is kept HardwareOnly with the rest of this
+ *       file's connection tests since it shares WiFiRequestHandler state with them.
+ *
+ * @note The handler also raises NetworkConnectedEvent with this same status, as the
+ *       "managed code" notification of a connection outcome; that event carries no
+ *       payload and is not what this test is checking, so WaitForResponseTo discards
+ *       it along with anything else that is not the response being waited for.
+ */
+TEST_CASE("Connect to the default access point when none is configured", CLASS_OF_TESTS)
+{
+    MockMessageDispatcher *dispatcher = SetupWiFiDispatcher();
+
+    char *originalAccessPoint = WiFiRequestHandler::GetDefaultAccessPoint();
+    char *originalPassword = WiFiRequestHandler::GetPassword();
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, WiFiRequestHandler::SetDefaultAccessPoint(NULL));
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, WiFiRequestHandler::SetPassword(NULL));
+
+    QueueWiFiRequest(dispatcher, WiFiFunction::ConnectToDefaultAccessPoint);
+
+    Message *response = WaitForResponseTo(dispatcher, Esp32Interfaces::WiFi, WiFiFunction::ConnectToDefaultAccessPoint, RadioTimeout());
+
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, WiFiRequestHandler::SetDefaultAccessPoint(originalAccessPoint));
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, WiFiRequestHandler::SetPassword(originalPassword));
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&originalAccessPoint));
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&originalPassword));
+
+    ASSERT_RESPONSE(response, Esp32Interfaces::WiFi, WiFiFunction::ConnectToDefaultAccessPoint, StatusCodes::DefaultAccessPointNotConfigured);
+    Message::DeleteMessage(response);
+    ASSERT_OUTBOUND_QUEUE_LENGTH(dispatcher, 0);
+}
+
 /*
  * ----------------------------------------------------------------------------
  *

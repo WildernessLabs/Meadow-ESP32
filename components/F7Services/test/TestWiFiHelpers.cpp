@@ -192,6 +192,7 @@ void CollectConnectionMessages(MockMessageDispatcher *dispatcher, const unsigned
         switch (response->Function)
         {
             case WiFiFunction::ConnectToAccessPoint:
+            case WiFiFunction::ConnectToDefaultAccessPoint:
                 TEST_ASSERT_EQUAL(MessageTypes::Response, response->MessageType);
                 progress->ResponseStatusCode = response->StatusCode;
                 progress->ResponseReceived = true;

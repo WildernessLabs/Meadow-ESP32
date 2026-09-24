@@ -1870,8 +1870,10 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
 /**
  *  @brief Connect to the default access point.
  *
- *  Note: This is a non-blocking call and will generate the connection event
- *        with the status code set accordingly.
+ *  This blocks for up to GetWiFiTimeout() while the connection is attempted, the same
+ *  as ConnectToAccessPoint(Message *), and queues a Response carrying the result on
+ *  every path, reusing the request message.  A successful connection also raises
+ *  NetworkConnectedEvent, as any other connection does, from StationConnectedEvent.
  *
  *  @param message
  *      Message containing the encoded request.
@@ -1880,8 +1882,19 @@ void WiFiRequestHandler::ConnectToDefaultAccessPoint(Message *message)
 {
     TRACE_MESSAGE("ConnectToDefaultAccessPoint: Enter");
 
+    message->DeletePayload();
+
+    StatusCodes::StatusCodes result = StatusCodes::DefaultAccessPointNotConfigured;
+    Esp32Messaging::ConnectEventData data = {};
+
+    //
+    //  "Not configured" is an empty string as well as NULL: SetDefaultAccessPoint(NULL),
+    //  which ClearDefaultAccessPointAndPassword uses, stores an empty string rather than
+    //  clearing the pointer, and it stays that way for the rest of the app's life.  NULL
+    //  itself is only ever seen the first time, before NVS has been read.
+    //
     char *access_point = GetDefaultAccessPoint();
-    if (access_point != NULL)
+    if ((access_point != NULL) && (access_point[0] != '\0'))
     {
         Esp32Messaging::AccessPointInformation accessPointInformation = {};
         accessPointInformation.NetworkName = access_point;
@@ -1892,13 +1905,40 @@ void WiFiRequestHandler::ConnectToDefaultAccessPoint(Message *message)
             accessPointInformation.SubnetMask = GetSubNetMask();
             accessPointInformation.Gateway = GetDefaultGateway();
         }
-        (void) ConnectToAccessPoint(&accessPointInformation);
+        result = ConnectToAccessPoint(&accessPointInformation);
+
+        if (result == StatusCodes::CompletedOk)
+        {
+            PopulateConnectionEventDataStructure(&data);
+        }
+        else
+        {
+            memcpy(static_cast<void *>(data.Ssid), static_cast<void *>(_disconnectData.ssid), _disconnectData.ssid_len);
+            memcpy(static_cast<void *>(data.Bssid), static_cast<void *>(_disconnectData.bssid), sizeof(data.Bssid));
+            data.Reason = _disconnectData.reason;
+            ClearIpAndDisconnectData();
+            _lastIdfErrorCode = ESP_OK;
+        }
     }
     else
     {
-        RaiseConnectToAccessPointEvent(StatusCodes::DefaultAccessPointNotConfigured);
+        //
+        //  No connection was attempted, so there is no StationConnectedEvent or
+        //  StationDisconnectedEvent to raise NetworkConnectedEvent for the managed code.
+        //  Raise it directly instead; data stays zeroed, as there is nothing to report.
+        //
+        RaiseConnectToAccessPointEvent(result);
     }
 
+    message->PayloadLength = Encoders::EncodedConnectEventDataBufferSize(&data);
+    message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
+    Encoders::EncodeConnectEventData(&data, message->Payload);
+
+    message->MessageType = MessageTypes::Response;
+    message->StatusCode = result;
+    Logging::DumpMessage(COMPONENT_NAME, message);
+
+    _messageDispatcher->QueueMessageForStm32(message);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
 
     TRACE_MESSAGE("ConnectToDefaultAccessPoint: Exit");
