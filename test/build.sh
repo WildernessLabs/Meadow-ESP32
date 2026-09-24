@@ -225,9 +225,6 @@ if $FULLCLEAN; then
     run_command "rm -f $scriptdir/sdkconfig"
 fi
 
-if ! $NO_BUILD; then
-    IDF_FLAGS="build $IDF_FLAGS"
-fi
 if [[ ! -z $IDF_FLAGS ]]; then
     run_command "$IDF $IDF_DEFINES $IDF_FLAGS"
 fi
