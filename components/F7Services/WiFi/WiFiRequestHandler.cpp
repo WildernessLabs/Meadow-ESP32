@@ -1177,14 +1177,21 @@ void WiFiRequestHandler::RaiseNetworkGotIpEvent()
 {
     TRACE_MESSAGE("RaiseNetworkGotIpEvent: Enter");
 
-    esp_netif_dns_info_t dnsInformation;
-    esp_netif_get_dns_info(_stationNetIfHandle, ESP_NETIF_DNS_MAIN, &dnsInformation);
+    esp_netif_dns_info_t dnsInformation = {};
+    esp_err_t dnsResult = esp_netif_get_dns_info(_stationNetIfHandle, ESP_NETIF_DNS_MAIN, &dnsInformation);
+    if (dnsResult != ESP_OK)
+    {
+        ERROR_MESSAGE("Failed to get DNS information for the station network interface.");
+    }
 
     Esp32Messaging::GotIpEventData *ed = static_cast<Esp32Messaging::GotIpEventData *>(pvPortMalloc(sizeof(Esp32Messaging::GotIpEventData)));
     if (ed != nullptr)
     {
         memset(ed, 0, sizeof(Esp32Messaging::GotIpEventData));
-        memcpy(&ed->DnsAddress, &dnsInformation.ip.u_addr.ip4.addr, sizeof(ed->DnsAddress));
+        if (dnsResult == ESP_OK)
+        {
+            memcpy(&ed->DnsAddress, &dnsInformation.ip.u_addr.ip4.addr, sizeof(ed->DnsAddress));
+        }
         uint32_t payloadLength = Encoders::EncodedGotIpEventDataBufferSize(ed);
         uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
         if (payload != NULL)
