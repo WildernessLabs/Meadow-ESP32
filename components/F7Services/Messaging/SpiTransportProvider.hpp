@@ -163,7 +163,7 @@ private:
      *  @brief Check to see if the state we are in indicates that we should be
      *  receiving data from the STM32.
      */
-    bool SendingData(SpiStates);
+    bool SendingData();
 
     /**
      *  @brief Process an inbound transport request.

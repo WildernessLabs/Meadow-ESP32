@@ -877,7 +877,7 @@ bool SpiTransportProvider::MessageContainsData(const uint8_t *buffer, uint32_t b
  *      true if the state indicates that the ESP32 is sending data,
  *      false otherwise.
  */
-bool SpiTransportProvider::SendingData(SpiStates state)
+bool SpiTransportProvider::SendingData()
 {
     return ((_currentState == AcknowledgingPacket) || (_currentState == SendingPacketDetails) || (_currentState == SendingPacket));
 }
@@ -913,7 +913,7 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessMessages(spi_slave_transac
     //  is mandatory when spi_slave_queue_trans is used.
     //
     ESP_ERROR_CHECK(spi_slave_get_trans_result(VSPI_HOST, &transaction, portMAX_DELAY));
-    if (SendingData(_currentState) || MessageContainsData(static_cast<uint8_t *>(transaction->rx_buffer), transaction->length / 8))
+    if (SendingData() || MessageContainsData(static_cast<uint8_t *>(transaction->rx_buffer), transaction->length / 8))
     {
         switch (_currentState)
         {
