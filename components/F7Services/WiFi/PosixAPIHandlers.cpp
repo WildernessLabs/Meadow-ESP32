@@ -2975,6 +2975,12 @@ void WiFiRequestHandler::UnlockPollRequests()
 /**
  *  @brief Open a dummy socket to be used by the Poll methods to terminate a poll request.
  *
+ *  This socket is never connected or sent to; it exists only to be closed from another
+ *  task to wake a blocked poll() early.  Its address family does not have to match
+ *  anything, so no DNS lookup is needed to create it (issue #282) - a getaddrinfo
+ *  failure was previously misread as success (>= 0 is always true for it) and could
+ *  dereference a null addrinfo.
+ *
  *  @returns
  *      Handle to the socket that has just been opened of -1 if there is a problem.
  */
@@ -2982,18 +2988,8 @@ int WiFiRequestHandler::OpenDummySocket()
 {
     TRACE_MESSAGE("OpenDummySocket: Enter");
 
-    struct addrinfo hints = {};
-    hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_DGRAM;
+    int dummy_socket_fd = socket(AF_INET, SOCK_DGRAM, 0);
 
-    struct addrinfo *res = NULL;
-
-    int dummy_socket_fd = -1;
-    if (getaddrinfo("localhost", "80", &hints, &res) >= 0)
-    {
-        dummy_socket_fd = socket(res->ai_family, res->ai_socktype, 0);
-        freeaddrinfo(res);
-    }
     TRACE_MESSAGE("OpenDummySocket: Exit, result %d", dummy_socket_fd);
 
     return (dummy_socket_fd);
