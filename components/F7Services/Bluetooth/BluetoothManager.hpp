@@ -216,13 +216,27 @@ public:
 
     /**
      * @brief Set the handles for the services, characteristics and descriptors.
+     *
+     * @param handles Block of memory holding the handles, count entries long.
+     * @param count Number of handles available in handles.
+     *
+     * @return True if every handle needed by the service graph was read from handles,
+     *         false if the graph needed more handles than count and was left partially
+     *         updated.
      */
-    void SetHandles(const uint16_t * const handles, const uint16_t count);
+    bool SetHandles(const uint16_t * const handles, const uint16_t count);
 
     /**
      * @brief Get all of the handles associated with the services, characteristics and descriptors.
+     *
+     * @param handles Block of memory to hold the handles, capacity entries long.
+     * @param capacity Number of handles that will fit in handles.
+     *
+     * @return True if every handle in the service graph was written to handles, false if
+     *         the graph needed more handles than capacity and handles was left partially
+     *         filled.
      */
-    void GetHandles(uint16_t * const handles);
+    bool GetHandles(uint16_t * const handles, const uint16_t capacity);
 
     /**
      * @brief Get the Company Identifier.
