@@ -899,6 +899,11 @@ void SystemRequestHandler::ConfigureADC1()
 /**
  *  @brief Get the voltage reading from the battery charging circuit.
  *
+ *  Without a calibration scheme, adc_oneshot_read returns raw ADC counts rather than a
+ *  voltage, and there is no way to convert one into the other here.  Reporting the count
+ *  as though it were a voltage would be silently wrong rather than absent, so the request
+ *  fails with BatteryLevelCannotBeRead instead (issue #308).
+ *
  *  @param request
  *      Message requesting the battery level.
  */
@@ -909,7 +914,7 @@ void SystemRequestHandler::GetBatteryChargeLevel(Message * const message)
     StatusCodes::StatusCodes result = StatusCodes::BatteryLevelCannotBeRead;
     ConfigureADC1();
     Esp32Messaging::IntegerResponse response = {};
-    if (_adc1Handle)
+    if (_adc1Handle && _adc1CalibrationHandle)
     {
         int rawData;
         int voltage;
@@ -919,17 +924,9 @@ void SystemRequestHandler::GetBatteryChargeLevel(Message * const message)
         {
             if (adc_oneshot_read(_adc1Handle, ADC_CHANNEL_7, &rawData) == ESP_OK)
             {
-                if (_adc1CalibrationHandle)
+                if (adc_cali_raw_to_voltage(_adc1CalibrationHandle, rawData, &voltage) == ESP_OK)
                 {
-                    if (adc_cali_raw_to_voltage(_adc1CalibrationHandle, rawData, &voltage) == ESP_OK)
-                    {
-                        averagedVoltage += voltage;
-                        numberOfReadings++;
-                    }
-                }
-                else
-                {
-                    averagedVoltage += rawData;
+                    averagedVoltage += voltage;
                     numberOfReadings++;
                 }
             }
