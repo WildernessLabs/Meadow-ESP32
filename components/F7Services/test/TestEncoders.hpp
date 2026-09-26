@@ -217,6 +217,11 @@ namespace TestEncoders
     const uint32_t ENCODED_CLOSE_REQUEST_SIZE = 4;
 
     /**
+     * @brief Number of bytes in an encoded poll request.
+     */
+    const uint32_t ENCODED_POLL_REQUEST_SIZE = 18;
+
+    /**
      * @brief Address family for IPv4 using the NuttX numbering.
      *
      * @note NuttX and LwIP disagree on the value of AF_INET, and the STM32 encodes the
@@ -342,6 +347,21 @@ namespace TestEncoders
      * @return Pointer to the encoded request, nullptr if the buffer cannot be allocated.
      */
     uint8_t *EncodeCloseRequest(const int32_t socketHandle);
+
+    /**
+     * @brief Encode a poll request into a newly allocated buffer.
+     *
+     * @note The returned pointer refers to a block of memory on the heap.  Ownership passes
+     *       to the Message the request is attached to.
+     *
+     * @param socketHandle Socket being polled.
+     * @param events NuttX poll events being asked for.
+     * @param setup True to set the poll request up, false to tear it down.
+     * @param setupMessageId Identifier correlating a teardown with its setup.
+     *
+     * @return Pointer to the encoded request, nullptr if the buffer cannot be allocated.
+     */
+    uint8_t *EncodePollRequest(const int32_t socketHandle, const uint16_t events, const bool setup, const uint32_t setupMessageId);
 
     /**
      * @brief Size of the buffer EncodeIoctlRequest produces.

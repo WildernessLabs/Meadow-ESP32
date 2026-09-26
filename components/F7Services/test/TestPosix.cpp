@@ -368,6 +368,59 @@ static int32_t OpenUdpSocket(MockMessageDispatcher *dispatcher)
     return (callResult.Result);
 }
 
+//
+//  NuttX POLLIN, as Mapping::_pollEvents maps it.
+//
+#define NUTTX_POLLIN 0x01
+
+/**
+ * @brief Check that a poll setup succeeds for a socket that is open, and that the
+ *        matching teardown also succeeds.
+ *
+ *  Regression check for issue #282.  PollSetup calls OpenDummySocket to get the second
+ *  file descriptor poll() needs alongside the caller's socket, and used to trust
+ *  getaddrinfo("localhost", ...) succeeding whenever it returned a value greater than or
+ *  equal to zero - true of every getaddrinfo error code as well as success, so a lookup
+ *  failure fell through to calling socket() on an addrinfo chain that was never filled
+ *  in.  The fix drops the lookup entirely and opens the dummy socket directly.
+ *
+ * @note This does not reproduce the lookup failing - "localhost" resolves without a
+ *       network, in both the old and the new code, so nothing in this harness can make
+ *       getaddrinfo fail on demand.  What it does check is that Poll, PollSetup and
+ *       PollTeardown still work end to end after the change, since nothing on the
+ *       success path had a test before this one.
+ */
+TEST_CASE("Poll sets up and tears down for an open socket", CLASS_OF_TESTS)
+{
+    MockMessageDispatcher *dispatcher = SetupConnectedDispatcher();
+    const int32_t socketHandle = OpenUdpSocket(dispatcher);
+
+    const uint32_t setupMessageId = 0x00000282;
+
+    SocketCallResult callResult = {};
+    uint8_t *payload = TestEncoders::EncodePollRequest(socketHandle, NUTTX_POLLIN, true, setupMessageId);
+    TEST_ASSERT_NOT_NULL(payload);
+    if (!SocketCall(dispatcher, WiFiFunction::Poll, payload, TestEncoders::ENCODED_POLL_REQUEST_SIZE, &callResult))
+    {
+        TEST_FAIL_MESSAGE("No response to the poll setup request.");
+    }
+    TEST_ASSERT_EQUAL_INT32_MESSAGE(0, callResult.Result, "PollSetup failed, so OpenDummySocket did not return a usable descriptor.");
+
+    payload = TestEncoders::EncodePollRequest(socketHandle, NUTTX_POLLIN, false, setupMessageId);
+    TEST_ASSERT_NOT_NULL(payload);
+    if (!SocketCall(dispatcher, WiFiFunction::Poll, payload, TestEncoders::ENCODED_POLL_REQUEST_SIZE, &callResult))
+    {
+        TEST_FAIL_MESSAGE("No response to the poll teardown request.");
+    }
+    //
+    //  PollTeardown returns whatever write() returned for the byte it wrote to wake the
+    //  dummy socket up, not a 0-based status, so a clean teardown is 1 rather than 0.
+    //
+    TEST_ASSERT_EQUAL_INT32(1, callResult.Result);
+
+    CloseSocket(dispatcher, socketHandle);
+}
+
 /**
  * @brief Check that sendto refuses a destination address it cannot decode into a usable
  *        AF_INET address, rather than sending with no destination at all.

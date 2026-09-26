@@ -638,6 +638,34 @@ namespace TestEncoders
     }
 
     /**
+     * @brief Encode a poll request into a newly allocated buffer.
+     *
+     * @param socketHandle Socket being polled.
+     * @param events NuttX poll events being asked for.
+     * @param setup True to set the poll request up, false to tear it down.
+     * @param setupMessageId Identifier correlating a teardown with its setup.
+     *
+     * @return Pointer to the encoded request, nullptr if the buffer cannot be allocated.
+     */
+    uint8_t *EncodePollRequest(const int32_t socketHandle, const uint16_t events, const bool setup, const uint32_t setupMessageId)
+    {
+        uint8_t *buffer = static_cast<uint8_t *>(pvPortMalloc(ENCODED_POLL_REQUEST_SIZE));
+
+        if (buffer == nullptr)
+        {
+            return (nullptr);
+        }
+
+        Encoders::EncodeInt32(socketHandle, buffer);
+        Encoders::EncodeUInt16(events, buffer + 4);
+        Encoders::EncodeInt32(0, buffer + 6); // Timeout is not used by PollSetup or PollTeardown.
+        Encoders::EncodeInt32(setup ? 1 : 0, buffer + 10);
+        Encoders::EncodeUInt32(setupMessageId, buffer + 14);
+
+        return (buffer);
+    }
+
+    /**
      * @brief Encode an ioctl request into a newly allocated buffer.
      *
      * @param command Ioctl command number.
