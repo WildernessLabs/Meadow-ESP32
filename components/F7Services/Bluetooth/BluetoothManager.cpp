@@ -128,33 +128,52 @@ void BluetoothManager::HandleDescriptorAdded(BluetoothDescriptor *descriptor)
 /**
  * @brief Get all of the handles associated with the services, characteristics and descriptors.
  *
- * @note It is assumed that the caller has allocated enough memory to hold the handles.
- *
  * @param handles Pointer to an array of uint16_t values to hold the handles.
+ * @param capacity Number of uint16_t values that fit in handles.
+ *
+ * @return True if every handle in the service graph was written, false if the graph
+ *         needed more than capacity handles and handles was left partially filled
+ *         (issue #350).
  */
-void BluetoothManager::GetHandles(uint16_t * const handles)
+bool BluetoothManager::GetHandles(uint16_t * const handles, const uint16_t capacity)
 {
     TRACE_MESSAGE("GetHandles: Enter");
 
-    int index = 0;
+    uint16_t index = 0;
 
     for (const auto &svc: Services.GetServiceDefinitions())
     {
+        if (index >= capacity)
+        {
+            TRACE_MESSAGE("GetHandles: Exit - capacity %" PRIu16 " exceeded", capacity);
+            return (false);
+        }
         handles[index++] = svc->Handle;
 
         for (const auto &characteristic: svc->GetCharacteristicDefinitions())
         {
+            if ((index + 2) > capacity)
+            {
+                TRACE_MESSAGE("GetHandles: Exit - capacity %" PRIu16 " exceeded", capacity);
+                return (false);
+            }
             handles[index++] = characteristic->Declaration->Handle;
             handles[index++] = characteristic->Value->Handle;
 
             for (const auto &descriptor: characteristic->GetDescriptorDefinitions())
             {
+                if (index >= capacity)
+                {
+                    TRACE_MESSAGE("GetHandles: Exit - capacity %" PRIu16 " exceeded", capacity);
+                    return (false);
+                }
                 handles[index++] = descriptor->Handle;
             }
         }
     }
 
     TRACE_MESSAGE("GetHandles: Exit");
+    return (true);
 }
 
 /**
@@ -205,9 +224,12 @@ CharacteristicPermission BluetoothManager::GetCharacteristicPermissions(const ui
  * @brief Set the handles for the services, characteristics and descriptors.
  *
  * @param handles Pointer to a block of memory holding the handles for the services, characteristics and descriptors.
- * @param count Number of handles.
+ * @param count Number of handles available in handles.
+ *
+ * @return True if every handle needed by the service graph was read, false if the graph
+ *         needed more than count handles and was left partially updated (issue #350).
  */
-void BluetoothManager::SetHandles(const uint16_t * const handles, const uint16_t count)
+bool BluetoothManager::SetHandles(const uint16_t * const handles, const uint16_t count)
 {
     TRACE_MESSAGE("SetHandles: Enter");
 
@@ -217,15 +239,25 @@ void BluetoothManager::SetHandles(const uint16_t * const handles, const uint16_t
         TRACE_MESSAGE("   0x%04x ", handles[i]);
     }
 
-    int index = 0;
+    uint16_t index = 0;
 
     for (const auto &svc: Services.GetServiceDefinitions())
     {
+        if (index >= count)
+        {
+            TRACE_MESSAGE("SetHandles: Exit - handle count %" PRIu16 " exceeded", count);
+            return (false);
+        }
         svc->Handle = handles[index++];
         TRACE_MESSAGE("ATTRIBUTE TABLE SERVICE HANDLE = 0x%04" PRIx16, svc->Handle);
 
         for (const auto &characteristic: svc->GetCharacteristicDefinitions())
         {
+            if ((index + 2) > count)
+            {
+                TRACE_MESSAGE("SetHandles: Exit - handle count %" PRIu16 " exceeded", count);
+                return (false);
+            }
             characteristic->Declaration->Handle = handles[index++];
             TRACE_MESSAGE("ATTRIBUTE TABLE DECLARATION HANDLE = 0x%04" PRIx16, characteristic->Declaration->Handle);
 
@@ -247,6 +279,11 @@ void BluetoothManager::SetHandles(const uint16_t * const handles, const uint16_t
 
             for (const auto &descriptor: characteristic->GetDescriptorDefinitions())
             {
+                if (index >= count)
+                {
+                    TRACE_MESSAGE("SetHandles: Exit - handle count %" PRIu16 " exceeded", count);
+                    return (false);
+                }
                 descriptor->Handle = handles[index++];
                 TRACE_MESSAGE("ATTRIBUTE TABLE DESCRIPTOR HANDLE = 0x%04" PRIx16, descriptor->Handle);
             }
@@ -254,6 +291,7 @@ void BluetoothManager::SetHandles(const uint16_t * const handles, const uint16_t
     }
 
     TRACE_MESSAGE("SetHandles: Exit");
+    return (true);
 }
 
 /**

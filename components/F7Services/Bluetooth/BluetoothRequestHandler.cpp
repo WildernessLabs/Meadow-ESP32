@@ -422,15 +422,27 @@ void BluetoothRequestHandler::GetHandles(Message * const request)
     response.HandleCount = GetHandleCount();
     response.HandlesLength = response.HandleCount * 2;
     response.Handles = static_cast<uint8_t *>(pvPortMalloc(response.HandlesLength));
-    _manager.GetHandles(reinterpret_cast<uint16_t *>(response.Handles));
 
-    request->PayloadLength = Encoders::EncodedBTGetHandlesResponseBufferSize(&response);
-    request->Payload = static_cast<uint8_t *>(pvPortMalloc(request->PayloadLength));
-    Encoders::EncodeBTGetHandlesResponse(&response, request->Payload);
+    if (_manager.GetHandles(reinterpret_cast<uint16_t *>(response.Handles), response.HandleCount))
+    {
+        request->PayloadLength = Encoders::EncodedBTGetHandlesResponseBufferSize(&response);
+        request->Payload = static_cast<uint8_t *>(pvPortMalloc(request->PayloadLength));
+        Encoders::EncodeBTGetHandlesResponse(&response, request->Payload);
+        request->StatusCode = StatusCodes::CompletedOk;
+    }
+    else
+    {
+        //
+        //  The service graph needed more handles than GetHandleCount() predicted, so
+        //  response.Handles was only partially filled.  Report the failure rather than
+        //  send a payload built from it (issue #350).
+        //
+        ERROR_MESSAGE("GetHandles: the service graph needed more than %" PRIu16 " handles", response.HandleCount);
+        request->StatusCode = StatusCodes::Failure;
+    }
     Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&response.Handles));
 
     request->MessageType = MessageTypes::Response;
-    request->StatusCode = StatusCodes::CompletedOk;
 
     _messageDispatcher->QueueMessageForStm32(request);
 
@@ -1084,12 +1096,23 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
             {
                 TRACE_MESSAGE("Create attribute table successfully, handle count = %" PRIu16, param->add_attr_tab.num_handle);
                 // the assigned handles with be in param->add_attr_tab.handles - copy them off
-                _manager.SetHandles(param->add_attr_tab.handles, param->add_attr_tab.num_handle);
-                // now fire up the service (which is the first attribute in the attribute table) by handle.
-                // TODO: right now we're cheating
-                TRACE_MESSAGE("Starting service with handle 0x%04" PRIx16, param->add_attr_tab.handles[0]);
-                GetInstance()->_serviceHandle = param->add_attr_tab.handles[0];
-                esp_ble_gatts_start_service(param->add_attr_tab.handles[0]);
+                if (!_manager.SetHandles(param->add_attr_tab.handles, param->add_attr_tab.num_handle))
+                {
+                    //
+                    //  The num_handle check above should make this unreachable, but SetHandles
+                    //  is not trusting that on its own (issue #350).  Without every handle
+                    //  applied the service graph is not safe to start.
+                    //
+                    ERROR_MESSAGE("SetHandles failed, the service graph needed more than %" PRIu16 " handles", param->add_attr_tab.num_handle);
+                }
+                else
+                {
+                    // now fire up the service (which is the first attribute in the attribute table) by handle.
+                    // TODO: right now we're cheating
+                    TRACE_MESSAGE("Starting service with handle 0x%04" PRIx16, param->add_attr_tab.handles[0]);
+                    GetInstance()->_serviceHandle = param->add_attr_tab.handles[0];
+                    esp_ble_gatts_start_service(param->add_attr_tab.handles[0]);
+                }
             }
             break;
         default:
