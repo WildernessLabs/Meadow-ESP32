@@ -1323,28 +1323,42 @@ void WiFiRequestHandler::Send(void * const vpMessage)
             Esp32Messaging::SendRequest *request = Encoders::ExtractSendRequest(message->Payload);
             if (request)
             {
-                int32_t mappedFlags = 0;
-                response.ResponseErrno = 0;
-                response.Result = Mapping::GetEspFlagValue(Mapping::MessageFlags, request->Flags, &mappedFlags);
-                if (response.Result == 0)
+                //
+                //  Length is the wire field passed to send(); Buffer is allocated with
+                //  BufferLength bytes.  Nothing upstream ties the two together, so a
+                //  declared Length past the end of the allocation is rejected here rather
+                //  than read past the end of the heap block and transmitted (issue #238).
+                //
+                if ((request->Length < 0) || (static_cast<uint32_t>(request->Length) > request->BufferLength))
                 {
-                    response.Result = send(request->SocketHandle, request->Buffer, request->Length, mappedFlags);
-                    if (response.Result < 0)
-                    {
-                        response.ResponseErrno = Mapping::NuttxErrno(errno);
-                    }
+                    ERROR_MESSAGE("Send: declared length %" PRIi32 " is either negative or exceeds the allocated buffer of %" PRIu32 " bytes.", request->Length, request->BufferLength);
+                    result = StatusCodes::InvalidRequest;
                 }
                 else
                 {
-                    response.ResponseErrno = Mapping::NuttxErrno(EFAULT);
-                }
+                    int32_t mappedFlags = 0;
+                    response.ResponseErrno = 0;
+                    response.Result = Mapping::GetEspFlagValue(Mapping::MessageFlags, request->Flags, &mappedFlags);
+                    if (response.Result == 0)
+                    {
+                        response.Result = send(request->SocketHandle, request->Buffer, request->Length, mappedFlags);
+                        if (response.Result < 0)
+                        {
+                            response.ResponseErrno = Mapping::NuttxErrno(errno);
+                        }
+                    }
+                    else
+                    {
+                        response.ResponseErrno = Mapping::NuttxErrno(EFAULT);
+                    }
 
-                TRACE_MESSAGE("Send: Sent %" PRIi32 " bytes.", request->Length);
-                if (request->Buffer && (request->Length > 0))
-                {
-                    TRACE_HEX_BUFFER(request->Buffer, request->Length);
+                    TRACE_MESSAGE("Send: Sent %" PRIi32 " bytes.", request->Length);
+                    if (request->Buffer && (request->Length > 0))
+                    {
+                        TRACE_HEX_BUFFER(request->Buffer, request->Length);
+                    }
+                    TRACE_MESSAGE("Send: Result: %" PRIi32 ", errno: %" PRIi32 " - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
                 }
-                TRACE_MESSAGE("Send: Result: %" PRIi32 ", errno: %" PRIi32 " - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
                 Encoders::FreeSendRequest(&request);
             }
             else
@@ -1520,13 +1534,27 @@ void WiFiRequestHandler::SendTo(void * const vpMessage)
             Esp32Messaging::SendToRequest *request = Encoders::ExtractSendToRequest(message->Payload);
             if (request)
             {
-                result = SendTo(request, response);
-                TRACE_MESSAGE("SendTo: Sent %" PRIi32 " bytes.", response.Result);
-                if (request->Buffer && (request->Length > 0))
+                //
+                //  Length is the wire field passed to sendto(); Buffer is allocated with
+                //  BufferLength bytes.  Nothing upstream ties the two together, so a
+                //  declared Length past the end of the allocation is rejected here rather
+                //  than read past the end of the heap block and transmitted (issue #238).
+                //
+                if ((request->Length < 0) || (static_cast<uint32_t>(request->Length) > request->BufferLength))
                 {
-                    TRACE_HEX_BUFFER(request->Buffer, request->Length);
+                    ERROR_MESSAGE("SendTo: declared length %" PRIi32 " is either negative or exceeds the allocated buffer of %" PRIu32 " bytes.", request->Length, request->BufferLength);
+                    result = StatusCodes::InvalidRequest;
                 }
-                TRACE_MESSAGE("SendTo: Result: %" PRIi32 ", errno: %" PRIi32 " - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
+                else
+                {
+                    result = SendTo(request, response);
+                    TRACE_MESSAGE("SendTo: Sent %" PRIi32 " bytes.", response.Result);
+                    if (request->Buffer && (request->Length > 0))
+                    {
+                        TRACE_HEX_BUFFER(request->Buffer, request->Length);
+                    }
+                    TRACE_MESSAGE("SendTo: Result: %" PRIi32 ", errno: %" PRIi32 " - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
+                }
                 Encoders::FreeSendToRequest(&request);
             }
             else

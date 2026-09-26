@@ -35,6 +35,7 @@
 #include "NvsManager.hpp"
 #include "Utils.hpp"
 
+#include "TestAssertions.hpp"
 #include "TestEncoders.hpp"
 #include "TestHarness.hpp"
 #include "UnitTestConfiguration.hpp"
@@ -399,6 +400,78 @@ TEST_CASE("SendTo refuses a destination address with an unmapped family", CLASS_
         TEST_FAIL_MESSAGE("No response to the sendto request.");
     }
     TEST_ASSERT_EQUAL_INT32(-1, callResult.Result);
+
+    CloseSocket(dispatcher, socketHandle);
+}
+
+/**
+ * @brief Check that send refuses a declared length that disagrees with the buffer it
+ *        was given, rather than reading past the end of it.
+ *
+ *  Regression check for issue #238.  request->Buffer is allocated with BufferLength
+ *  bytes; Length is a separate wire field passed straight to send().  A Length larger
+ *  than BufferLength used to read past the end of the heap block and transmit whatever
+ *  followed it, and a negative Length converts to a huge size_t at the send() call and
+ *  does the same through a different door.  Both are now rejected with InvalidRequest,
+ *  and no payload, before send() is called.
+ */
+TEST_CASE("Send refuses a declared length that does not match the buffer", CLASS_OF_TESTS)
+{
+    MockMessageDispatcher *dispatcher = SetupConnectedDispatcher();
+    const int32_t socketHandle = OpenUdpSocket(dispatcher);
+
+    const char data[] = "test";
+    uint32_t encodedLength = 0;
+
+    uint8_t *oversized = TestEncoders::EncodeSendRequestWithDeclaredLength(socketHandle, data, sizeof(data) - 1, 10000, &encodedLength);
+    TEST_ASSERT_NOT_NULL(oversized);
+    Message *response = SendRequest(dispatcher, Esp32Interfaces::WiFi, WiFiFunction::Send, oversized, encodedLength, SOCKET_RESPONSE_TIMEOUT);
+    TEST_ASSERT_NOT_NULL(response);
+    ASSERT_RESPONSE(response, Esp32Interfaces::WiFi, WiFiFunction::Send, StatusCodes::InvalidRequest);
+    ASSERT_NO_PAYLOAD(response);
+    Message::DeleteMessage(response);
+
+    uint8_t *negative = TestEncoders::EncodeSendRequestWithDeclaredLength(socketHandle, data, sizeof(data) - 1, -1, &encodedLength);
+    TEST_ASSERT_NOT_NULL(negative);
+    response = SendRequest(dispatcher, Esp32Interfaces::WiFi, WiFiFunction::Send, negative, encodedLength, SOCKET_RESPONSE_TIMEOUT);
+    TEST_ASSERT_NOT_NULL(response);
+    ASSERT_RESPONSE(response, Esp32Interfaces::WiFi, WiFiFunction::Send, StatusCodes::InvalidRequest);
+    ASSERT_NO_PAYLOAD(response);
+    Message::DeleteMessage(response);
+
+    CloseSocket(dispatcher, socketHandle);
+}
+
+/**
+ * @brief Check that sendto refuses a declared length that disagrees with the buffer it
+ *        was given, rather than reading past the end of it.
+ *
+ *  Regression check for issue #238.  See "Send refuses a declared length that does not
+ *  match the buffer" above; this is the same check for sendto().
+ */
+TEST_CASE("SendTo refuses a declared length that does not match the buffer", CLASS_OF_TESTS)
+{
+    MockMessageDispatcher *dispatcher = SetupConnectedDispatcher();
+    const int32_t socketHandle = OpenUdpSocket(dispatcher);
+
+    const char data[] = "test";
+    uint32_t encodedLength = 0;
+
+    uint8_t *oversized = TestEncoders::EncodeSendToRequestWithDeclaredLength(socketHandle, data, sizeof(data) - 1, 10000, nullptr, 0, &encodedLength);
+    TEST_ASSERT_NOT_NULL(oversized);
+    Message *response = SendRequest(dispatcher, Esp32Interfaces::WiFi, WiFiFunction::SendTo, oversized, encodedLength, SOCKET_RESPONSE_TIMEOUT);
+    TEST_ASSERT_NOT_NULL(response);
+    ASSERT_RESPONSE(response, Esp32Interfaces::WiFi, WiFiFunction::SendTo, StatusCodes::InvalidRequest);
+    ASSERT_NO_PAYLOAD(response);
+    Message::DeleteMessage(response);
+
+    uint8_t *negative = TestEncoders::EncodeSendToRequestWithDeclaredLength(socketHandle, data, sizeof(data) - 1, -1, nullptr, 0, &encodedLength);
+    TEST_ASSERT_NOT_NULL(negative);
+    response = SendRequest(dispatcher, Esp32Interfaces::WiFi, WiFiFunction::SendTo, negative, encodedLength, SOCKET_RESPONSE_TIMEOUT);
+    TEST_ASSERT_NOT_NULL(response);
+    ASSERT_RESPONSE(response, Esp32Interfaces::WiFi, WiFiFunction::SendTo, StatusCodes::InvalidRequest);
+    ASSERT_NO_PAYLOAD(response);
+    Message::DeleteMessage(response);
 
     CloseSocket(dispatcher, socketHandle);
 }

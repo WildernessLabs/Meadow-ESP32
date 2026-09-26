@@ -271,6 +271,27 @@ namespace TestEncoders
     uint8_t *EncodeSendRequest(const int32_t socketHandle, const char *data, const uint32_t length, uint32_t *encodedLength);
 
     /**
+     * @brief Encode a send request whose wire Length field disagrees with the size of the
+     *        buffer it actually carries.
+     *
+     * @note Regression coverage for issue #238: BufferLength is what the handler allocates
+     *       and copies data into; Length is the separate wire field the fix must reject
+     *       when it claims more than that.  bufferLength bytes of data are copied and
+     *       BufferLength is encoded as bufferLength, but the wire Length field is encoded
+     *       as declaredLength regardless, so it can be made to disagree, including being
+     *       negative.
+     *
+     * @param socketHandle Socket to send on.
+     * @param data Data to be copied into the buffer, bufferLength bytes of it.
+     * @param bufferLength Number of bytes of data copied in, and the wire BufferLength.
+     * @param declaredLength Value encoded into the wire Length field.
+     * @param encodedLength Filled in with the length of the encoded request.
+     *
+     * @return Pointer to the encoded request, nullptr if the buffer cannot be allocated.
+     */
+    uint8_t *EncodeSendRequestWithDeclaredLength(const int32_t socketHandle, const char *data, const uint32_t bufferLength, const int32_t declaredLength, uint32_t *encodedLength);
+
+    /**
      * @brief Encode a sendto request into a newly allocated buffer.
      *
      * @note The returned pointer refers to a block of memory on the heap.  Ownership passes
@@ -287,6 +308,25 @@ namespace TestEncoders
      * @return Pointer to the encoded request, nullptr if the buffer cannot be allocated.
      */
     uint8_t *EncodeSendToRequest(const int32_t socketHandle, const char *data, const uint32_t length, const uint8_t *destinationAddress, const uint32_t destinationAddressLength, uint32_t *encodedLength);
+
+    /**
+     * @brief Encode a sendto request whose wire Length field disagrees with the size of
+     *        the buffer it actually carries.
+     *
+     * @note Regression coverage for issue #238: see EncodeSendRequestWithDeclaredLength,
+     *       which this mirrors for sendto.
+     *
+     * @param socketHandle Socket to send on.
+     * @param data Data to be copied into the buffer, bufferLength bytes of it.
+     * @param bufferLength Number of bytes of data copied in, and the wire BufferLength.
+     * @param declaredLength Value encoded into the wire Length field.
+     * @param destinationAddress Encoded SockAddr bytes for the destination, or nullptr.
+     * @param destinationAddressLength Length of destinationAddress, 0 for no destination.
+     * @param encodedLength Filled in with the length of the encoded request.
+     *
+     * @return Pointer to the encoded request, nullptr if the buffer cannot be allocated.
+     */
+    uint8_t *EncodeSendToRequestWithDeclaredLength(const int32_t socketHandle, const char *data, const uint32_t bufferLength, const int32_t declaredLength, const uint8_t *destinationAddress, const uint32_t destinationAddressLength, uint32_t *encodedLength);
 
     /**
      * @brief Encode a sendmsg request carrying a single iovec into a newly allocated buffer.
