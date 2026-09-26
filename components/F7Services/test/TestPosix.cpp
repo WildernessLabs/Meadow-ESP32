@@ -35,6 +35,7 @@
 #include "NvsManager.hpp"
 #include "Utils.hpp"
 
+#include "TestAssertions.hpp"
 #include "TestEncoders.hpp"
 #include "TestHarness.hpp"
 #include "UnitTestConfiguration.hpp"
@@ -620,6 +621,64 @@ TEST_CASE("Fetch a web page using recvmsg", CLASS_OF_TESTS)
     const bool complete = FetchPageOnce(dispatcher, WiFiFunction::RecvMsg, &page);
 
     CheckPageContents(page, complete);
+}
+
+/**
+ * @brief Check that recvfrom refuses a requested length that cannot fit in the protocol's
+ *        payload maximum, rather than allocating it and later failing to encode a response.
+ *
+ *  Regression check for issue #286.  The socket does not need a live peer since the length
+ *  is rejected before recvfrom() is ever called, so a UDP socket is enough.
+ */
+TEST_CASE("RecvFrom refuses a length that does not fit the payload maximum", CLASS_OF_TESTS)
+{
+    MockMessageDispatcher *dispatcher = SetupConnectedDispatcher();
+    const int32_t socketHandle = OpenUdpSocket(dispatcher);
+
+    uint8_t *oversized = TestEncoders::EncodeRecvFromRequest(socketHandle, Message::MAXIMUM_PAYLOAD_LENGTH + 1);
+    TEST_ASSERT_NOT_NULL(oversized);
+    Message *response = SendRequest(dispatcher, Esp32Interfaces::WiFi, WiFiFunction::RecvFrom, oversized, TestEncoders::ENCODED_RECV_FROM_REQUEST_SIZE, SOCKET_RESPONSE_TIMEOUT);
+    TEST_ASSERT_NOT_NULL(response);
+    ASSERT_RESPONSE(response, Esp32Interfaces::WiFi, WiFiFunction::RecvFrom, StatusCodes::InvalidRequest);
+    Message::DeleteMessage(response);
+
+    uint8_t *negative = TestEncoders::EncodeRecvFromRequest(socketHandle, -1);
+    TEST_ASSERT_NOT_NULL(negative);
+    response = SendRequest(dispatcher, Esp32Interfaces::WiFi, WiFiFunction::RecvFrom, negative, TestEncoders::ENCODED_RECV_FROM_REQUEST_SIZE, SOCKET_RESPONSE_TIMEOUT);
+    TEST_ASSERT_NOT_NULL(response);
+    ASSERT_RESPONSE(response, Esp32Interfaces::WiFi, WiFiFunction::RecvFrom, StatusCodes::InvalidRequest);
+    Message::DeleteMessage(response);
+
+    CloseSocket(dispatcher, socketHandle);
+}
+
+/**
+ * @brief Check that recvmsg refuses a requested length that cannot fit in the protocol's
+ *        payload maximum, rather than allocating it and later failing to encode a response.
+ *
+ *  Regression check for issue #286.  See "RecvFrom refuses a length that does not fit the
+ *  payload maximum" above; this is the same check for recvmsg.
+ */
+TEST_CASE("RecvMsg refuses a length that does not fit the payload maximum", CLASS_OF_TESTS)
+{
+    MockMessageDispatcher *dispatcher = SetupConnectedDispatcher();
+    const int32_t socketHandle = OpenUdpSocket(dispatcher);
+
+    uint8_t *oversized = TestEncoders::EncodeRecvMsgRequest(socketHandle, Message::MAXIMUM_PAYLOAD_LENGTH + 1);
+    TEST_ASSERT_NOT_NULL(oversized);
+    Message *response = SendRequest(dispatcher, Esp32Interfaces::WiFi, WiFiFunction::RecvMsg, oversized, TestEncoders::ENCODED_RECV_MSG_REQUEST_SIZE, SOCKET_RESPONSE_TIMEOUT);
+    TEST_ASSERT_NOT_NULL(response);
+    ASSERT_RESPONSE(response, Esp32Interfaces::WiFi, WiFiFunction::RecvMsg, StatusCodes::InvalidRequest);
+    Message::DeleteMessage(response);
+
+    uint8_t *negative = TestEncoders::EncodeRecvMsgRequest(socketHandle, -1);
+    TEST_ASSERT_NOT_NULL(negative);
+    response = SendRequest(dispatcher, Esp32Interfaces::WiFi, WiFiFunction::RecvMsg, negative, TestEncoders::ENCODED_RECV_MSG_REQUEST_SIZE, SOCKET_RESPONSE_TIMEOUT);
+    TEST_ASSERT_NOT_NULL(response);
+    ASSERT_RESPONSE(response, Esp32Interfaces::WiFi, WiFiFunction::RecvMsg, StatusCodes::InvalidRequest);
+    Message::DeleteMessage(response);
+
+    CloseSocket(dispatcher, socketHandle);
 }
 
 /**
