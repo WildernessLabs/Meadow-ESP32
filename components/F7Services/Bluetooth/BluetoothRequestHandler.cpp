@@ -785,10 +785,13 @@ bool BluetoothRequestHandler::StopBluetoothService()
         ERROR_MESSAGE("Failed to deinitialise bluetooth stack");
         return false;
     }
+
     //
-    //  This call fails...
+    //  In the past we have seen some failures during teardown and the delay below seemed to help.
+    //  Current testing indicates that the delay is not needed.  The code and this comment remain
+    //  for future reference incase it is needed again.
     //
-    vTaskDelay(500 / portTICK_PERIOD_MS);
+    // vTaskDelay(500 / portTICK_PERIOD_MS);
 
     TRACE_MESSAGE("Stop: esp_bt_controller_disable");
     if (esp_bt_controller_disable() != ESP_OK)
