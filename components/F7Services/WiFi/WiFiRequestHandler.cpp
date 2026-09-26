@@ -2319,6 +2319,8 @@ void WiFiRequestHandler::StationDisconnectedEvent(wifi_event_sta_disconnected_t 
 {
     TRACE_MESSAGE("StationDisconnectedEvent: Enter");
 
+    memcpy(&_disconnectData, eventData, sizeof(wifi_event_sta_disconnected_t));
+
     bool raiseDisconnectedEvent = true;
     EventBits_t bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT | WIFI_CONNECTING_BIT | WIFI_DISCONNECT_REQUESTED_BIT, pdFALSE, pdFALSE, 0);
     if (bits & WIFI_DISCONNECT_REQUESTED_BIT)
@@ -2381,10 +2383,9 @@ void WiFiRequestHandler::StationDisconnectedEvent(wifi_event_sta_disconnected_t 
 
     if (raiseDisconnectedEvent)
     {
-        memcpy(&_disconnectData, eventData, sizeof(wifi_event_sta_disconnected_t));
         RaiseDisconnectEvent();
         memset(&_apInformation, 0, sizeof(wifi_event_sta_connected_t));
-        ClearIpAndDisconnectData();
+        memset(&_ipInformation, 0, sizeof(_ipInformation));
         xEventGroupClearBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT | WIFI_CONNECTING_BIT | WIFI_HAVE_IP_BIT);
         xEventGroupSetBits(_xWiFiEventGroup, WIFI_ERROR_BIT);
     }
