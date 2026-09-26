@@ -281,6 +281,15 @@ public:
     CharacteristicProperty GetCharacteristicProperties(const uint16_t handle);
 
     /**
+     * @brief Check whether a handle identifies a known characteristic value.
+     *
+     * @param handle Handle to look up.
+     *
+     * @return True if a characteristic with this value handle exists, false otherwise.
+     */
+    bool IsKnownCharacteristicHandle(const uint16_t handle);
+
+    /**
      * @brief Get the permissions for the characteristic with the specified handle.
      */
     CharacteristicPermission GetCharacteristicPermissions(const uint16_t handle);

@@ -21,9 +21,11 @@
 #include "Encoders.hpp"
 #include "SharedEnums.hpp"
 #include "Logging.hpp"
+#include "Utils.hpp"
 
 #include "TestAssertions.hpp"
 #include "TestBluetoothHelpers.hpp"
+#include "TestEncoders.hpp"
 #include "TestHarness.hpp"
 #include "UnitTestConfiguration.hpp"
 #include "TestBluetooth.hpp"
@@ -53,6 +55,14 @@
  * @brief Value written to a characteristic by the notification tests.
  */
 #define NOTIFICATION_VALUE 0xa0a0a0a0
+
+/**
+ * @brief Number of handles the MeadowA service returns.
+ *
+ *  The service, plus a declaration and a value handle for each of its two
+ *  characteristics; neither has a descriptor.
+ */
+#define MEADOW_A_HANDLE_COUNT 5
 
 /**
  * @brief Number of handles the MeadowF7 service returns.
@@ -242,6 +252,13 @@ static void TestNotifyCharacteristic(const char * const configuration)
  *  configuration.  The graph is never built and, unlike the other tests in this file,
  *  nothing here touches the radio, so it runs under emulation.
  */
+
+//
+//  Forward declaration: defined further down, alongside its other callers, but needed
+//  by "ServerDataSet refuses an unknown handle and an oversized length" above them.
+//
+static void GetServiceHandles(MockMessageDispatcher *dispatcher, const uint16_t expectedCount, uint16_t * const handles);
+
 TEST_CASE("Start is refused when the configuration is not shorter than the maximum payload length", "[Bluetooth][Emulated]")
 {
     MockMessageDispatcher *dispatcher = SetupMessageDispatcher();
@@ -268,6 +285,78 @@ TEST_CASE("Start Bluetooth (MeadowA, Espressif)", CLASS_OF_TESTS)
     TEST_ASSERT_NOT_NULL(dispatcher);
 
     StartBluetoothService(dispatcher, meadow_a_json);
+
+    StopBluetoothService(dispatcher);
+
+    ResetMessageDispatcher();
+}
+
+/**
+ * @brief Encode and queue a ServerDataSet request with an arbitrary handle and length,
+ *        without going through QueueServerDataSet's fixed 4-byte value.
+ *
+ * @param dispatcher Dispatcher to queue the request on.
+ * @param handle Handle to write to.
+ * @param dataLength Value to encode into the wire SetDataLength field.
+ * @param data Buffer of at least dataLength bytes: EncodeBTServerDataSet copies exactly
+ *        that many bytes from it while building the request, regardless of what the fix
+ *        under test goes on to do with the request.
+ */
+static void QueueServerDataSetRaw(MockMessageDispatcher *dispatcher, const uint16_t handle, const uint32_t dataLength, uint8_t * const data)
+{
+    Esp32Messaging::BTServerDataSet dataSet = {};
+    dataSet.Handle = handle;
+    dataSet.SetDataLength = dataLength;
+    dataSet.SetData = data;
+
+    const uint32_t payloadLength = TestEncoders::EncodedBTServerDataSetBufferSize(&dataSet);
+    uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
+    TEST_ASSERT_NOT_NULL(payload);
+    TestEncoders::EncodeBTServerDataSet(&dataSet, payload);
+
+    Message *message = Message::CreateOnHeap(MessageTypes::Header, Esp32Interfaces::BlueTooth, BluetoothFunction::ServerDataSet, StatusCodes::Failure, 0, payload, payloadLength);
+    TEST_ASSERT_NOT_NULL(message);
+
+    dispatcher->QueueMessageForEsp32(message);
+}
+
+/**
+ * @brief Check that ServerDataSet refuses an unknown handle, rather than passing it to
+ *        the manager or the BLE stack.
+ *
+ *  Regression check for issue #300.  No client is needed: the request is rejected before
+ *  anything is sent over the air.
+ *
+ *  This does not also cover the oversized-length half of #300 (SetDataLength above
+ *  UINT16_MAX).  EncodeBTServerDataSet, on the test side, and ExtractBTServerDataSet, on
+ *  the firmware side, both copy the full declared length before this fix's check ever
+ *  runs, so proving that boundary needs a genuine 64KB+ allocation - measured to fail
+ *  with the Bluetooth stack already running on this board ("Mem alloc fail. size
+ *  0x00010006"), which lands safely in this fix's existing ds == nullptr /
+ *  EspOutOfMemory path rather than reaching the length check at all.  On real hardware
+ *  an oversized length is therefore more likely to be caught by that allocation failure
+ *  than by the explicit boundary check, which mainly guards the (memory-permitting)
+ *  range between "fits in heap" and "fits in uint16_t".
+ */
+TEST_CASE("ServerDataSet refuses an unknown handle", CLASS_OF_TESTS)
+{
+    MockMessageDispatcher *dispatcher = SetupMessageDispatcher();
+    TEST_ASSERT_NOT_NULL(dispatcher);
+
+    StartBluetoothService(dispatcher, meadow_a_json);
+
+    uint16_t handles[MEADOW_A_HANDLE_COUNT];
+    GetServiceHandles(dispatcher, MEADOW_A_HANDLE_COUNT, handles);
+    const uint16_t unknownHandle = static_cast<uint16_t>(handles[MEADOW_A_HANDLE_COUNT - 1] + 1000);
+
+    uint32_t smallValue = 0;
+    QueueServerDataSetRaw(dispatcher, unknownHandle, sizeof(smallValue), reinterpret_cast<uint8_t *>(&smallValue));
+    WaitForResponse(dispatcher, BLUETOOTH_RESPONSE_TIMEOUT);
+    ASSERT_OUTBOUND_QUEUE_LENGTH(dispatcher, 1);
+    Message *response = dispatcher->GetOutboundMessage();
+    ASSERT_RESPONSE(response, Esp32Interfaces::BlueTooth, BluetoothFunction::ServerDataSet, StatusCodes::InvalidRequest);
+    ASSERT_NO_PAYLOAD(response);
+    Message::DeleteMessage(response);
 
     StopBluetoothService(dispatcher);
 
