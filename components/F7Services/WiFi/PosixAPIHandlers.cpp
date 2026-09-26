@@ -1603,10 +1603,19 @@ void WiFiRequestHandler::SendTo(void * const vpMessage)
  *  @param request Request from the STM32.
  *  @param response Response to the STM32.
  *  @return StatusCodes::StatusCodes Returns StatusCodes::CompletedOk if the operation succeeds,
+ *          StatusCodes::InvalidRequest if the requested length is out of range,
  *          StatusCodes::EspOutOfMemory if memory allocation fails.
  */
 StatusCodes::StatusCodes WiFiRequestHandler::RecvFrom(Esp32Messaging::RecvFromRequest *request, Esp32Messaging::RecvFromResponse &response)
 {
+    if ((request->Length < 0) || (static_cast<uint32_t>(request->Length) > Message::MAXIMUM_PAYLOAD_LENGTH))
+    {
+        ERROR_MESSAGE("RecvFrom: requested length %" PRIi32 " is out of range.", request->Length);
+        response.Result = -1;
+        response.ResponseErrno = Mapping::NuttxErrno(EINVAL);
+        return (StatusCodes::InvalidRequest);
+    }
+
     int32_t mappedFlags = 0;
     response.Result = Mapping::GetEspFlagValue(Mapping::MessageFlags, request->Flags, &mappedFlags);
     if (response.Result == 0)
@@ -2087,98 +2096,106 @@ void WiFiRequestHandler::RecvMsg(void * const vpMessage)
 
             if (request)
             {
-                int32_t mappedFlags = 0;
-                response.Result = Mapping::GetEspFlagValue(Mapping::MessageFlags, request->Flags, &mappedFlags);
-                if (response.Result == 0)
+                if ((request->Length < 0) || (static_cast<uint64_t>(request->Length) + request->ControlLength > Message::MAXIMUM_PAYLOAD_LENGTH))
                 {
-                    response.Buffer = static_cast<uint8_t *>(pvPortMalloc(request->Length));
-                    if (response.Buffer == NULL)
-                    {
-                        response.Result = -1;
-                        response.ResponseErrno = Mapping::NuttxErrno(ENOMEM);
-                    }
-                    else
-                    {
-                        uint8_t *controlBuf = NULL;
-                        if (request->ControlLength > 0)
-                        {
-                            controlBuf = static_cast<uint8_t *>(pvPortMalloc(request->ControlLength));
-                        }
-
-                        struct sockaddr_in sa = {};
-                        struct iovec iov = {};
-                        iov.iov_base = response.Buffer;
-                        iov.iov_len = request->Length;
-
-                        struct msghdr mhdr = {};
-                        if (request->GetSourceAddress != 0)
-                        {
-                            bzero(&sa, sizeof(sa));
-                            mhdr.msg_name = &sa;
-                            mhdr.msg_namelen = sizeof(sa);
-                        }
-                        mhdr.msg_iov = &iov;
-                        mhdr.msg_iovlen = 1;
-                        mhdr.msg_control = controlBuf;
-                        mhdr.msg_controllen = (controlBuf != NULL) ? request->ControlLength : 0;
-                        mhdr.msg_flags = 0;
-
-                        TRACE_MESSAGE("RecvMsg: Requesting %" PRIi32 " bytes from socket handle %" PRIi32 ", control buffer %" PRIu32, request->Length, request->SocketHandle, request->ControlLength);
-
-                        response.Result = recvmsg(request->SocketHandle, &mhdr, mappedFlags);
-
-                        if (response.Result < 0)
-                        {
-                            response.ResponseErrno = Mapping::NuttxErrno(errno);
-                            response.BufferLength = 0;
-                            response.SourceAddress = nullptr;
-                            response.SourceAddressLength = 0;
-                            response.SourceAddressLen = 0;
-                            response.Control = nullptr;
-                            response.ControlLength = 0;
-                            response.MsgFlags = 0;
-                        }
-                        else
-                        {
-                            response.BufferLength = response.Result;
-                            Mapping::GetStmFlagValue(Mapping::MessageFlags, mhdr.msg_flags, &response.MsgFlags);
-
-                            if ((request->GetSourceAddress != 0) && (mhdr.msg_namelen > 0))
-                            {
-                                EncodeSourceAddressToResponse(&sa, mhdr.msg_namelen, &response);
-                            }
-                            else
-                            {
-                                response.SourceAddress = nullptr;
-                                response.SourceAddressLength = 0;
-                                response.SourceAddressLen = 0;
-                            }
-
-                            if ((controlBuf != NULL) && (mhdr.msg_controllen > 0))
-                            {
-                                response.ControlLength = mhdr.msg_controllen;
-                                response.Control = controlBuf;
-                                controlBuf = NULL;
-                            }
-                            else
-                            {
-                                response.ControlLength = 0;
-                                response.Control = nullptr;
-                            }
-                        }
-
-                        if (controlBuf != NULL)
-                        {
-                            vPortFree(controlBuf);
-                        }
-                    }
+                    ERROR_MESSAGE("RecvMsg: requested length %" PRIi32 " plus control length %" PRIu32 " is out of range.", request->Length, request->ControlLength);
+                    result = StatusCodes::InvalidRequest;
                 }
                 else
                 {
-                    response.ResponseErrno = Mapping::NuttxErrno(EINVAL);
-                }
+                    int32_t mappedFlags = 0;
+                    response.Result = Mapping::GetEspFlagValue(Mapping::MessageFlags, request->Flags, &mappedFlags);
+                    if (response.Result == 0)
+                    {
+                        response.Buffer = static_cast<uint8_t *>(pvPortMalloc(request->Length));
+                        if (response.Buffer == NULL)
+                        {
+                            response.Result = -1;
+                            response.ResponseErrno = Mapping::NuttxErrno(ENOMEM);
+                        }
+                        else
+                        {
+                            uint8_t *controlBuf = NULL;
+                            if (request->ControlLength > 0)
+                            {
+                                controlBuf = static_cast<uint8_t *>(pvPortMalloc(request->ControlLength));
+                            }
 
-                TRACE_MESSAGE("RecvMsg: Result: %" PRIi32 ", errno: %" PRIi32 " - %s, msg_flags: 0x%" PRIx32, response.Result, response.ResponseErrno, strerror(response.ResponseErrno), response.MsgFlags);
+                            struct sockaddr_in sa = {};
+                            struct iovec iov = {};
+                            iov.iov_base = response.Buffer;
+                            iov.iov_len = request->Length;
+
+                            struct msghdr mhdr = {};
+                            if (request->GetSourceAddress != 0)
+                            {
+                                bzero(&sa, sizeof(sa));
+                                mhdr.msg_name = &sa;
+                                mhdr.msg_namelen = sizeof(sa);
+                            }
+                            mhdr.msg_iov = &iov;
+                            mhdr.msg_iovlen = 1;
+                            mhdr.msg_control = controlBuf;
+                            mhdr.msg_controllen = (controlBuf != NULL) ? request->ControlLength : 0;
+                            mhdr.msg_flags = 0;
+
+                            TRACE_MESSAGE("RecvMsg: Requesting %" PRIi32 " bytes from socket handle %" PRIi32 ", control buffer %" PRIu32, request->Length, request->SocketHandle, request->ControlLength);
+
+                            response.Result = recvmsg(request->SocketHandle, &mhdr, mappedFlags);
+
+                            if (response.Result < 0)
+                            {
+                                response.ResponseErrno = Mapping::NuttxErrno(errno);
+                                response.BufferLength = 0;
+                                response.SourceAddress = nullptr;
+                                response.SourceAddressLength = 0;
+                                response.SourceAddressLen = 0;
+                                response.Control = nullptr;
+                                response.ControlLength = 0;
+                                response.MsgFlags = 0;
+                            }
+                            else
+                            {
+                                response.BufferLength = response.Result;
+                                Mapping::GetStmFlagValue(Mapping::MessageFlags, mhdr.msg_flags, &response.MsgFlags);
+
+                                if ((request->GetSourceAddress != 0) && (mhdr.msg_namelen > 0))
+                                {
+                                    EncodeSourceAddressToResponse(&sa, mhdr.msg_namelen, &response);
+                                }
+                                else
+                                {
+                                    response.SourceAddress = nullptr;
+                                    response.SourceAddressLength = 0;
+                                    response.SourceAddressLen = 0;
+                                }
+
+                                if ((controlBuf != NULL) && (mhdr.msg_controllen > 0))
+                                {
+                                    response.ControlLength = mhdr.msg_controllen;
+                                    response.Control = controlBuf;
+                                    controlBuf = NULL;
+                                }
+                                else
+                                {
+                                    response.ControlLength = 0;
+                                    response.Control = nullptr;
+                                }
+                            }
+
+                            if (controlBuf != NULL)
+                            {
+                                vPortFree(controlBuf);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        response.ResponseErrno = Mapping::NuttxErrno(EINVAL);
+                    }
+
+                    TRACE_MESSAGE("RecvMsg: Result: %" PRIi32 ", errno: %" PRIi32 " - %s, msg_flags: 0x%" PRIx32, response.Result, response.ResponseErrno, strerror(response.ResponseErrno), response.MsgFlags);
+                }
 
                 vPortFree(request);
             }
