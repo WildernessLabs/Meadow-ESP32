@@ -240,6 +240,51 @@ TEST_CASE("Connect to non-existant access point", CLASS_OF_TESTS)
 }
 
 /**
+ * @brief Check that a failed connection attempt reports the SSID it actually tried,
+ *        rather than stale or zeroed data left over from a previous attempt.
+ *
+ *  Regression check for issue #246.  StationDisconnectedEvent used to clear
+ *  _disconnectData (via ClearIpAndDisconnectData) before setting WIFI_ERROR_BIT, and
+ *  ConnectToAccessPoint(Message *) only reads _disconnectData after waking on that bit -
+ *  so the data was already wiped by the time it got there, regardless of when within
+ *  StationDisconnectedEvent it had been captured.  This decodes the actual response
+ *  payload, not just its status code, and checks the SSID field is the one this attempt
+ *  used rather than empty or held over from an earlier one.
+ *
+ * @note Run after "Connect to non-existant access point" rather than duplicating its
+ *       retry-count dance; same reasoning as that test's own note about running with a
+ *       connection already up.
+ */
+TEST_CASE("Connect to non-existant access point reports the attempted SSID", CLASS_OF_TESTS)
+{
+    MockMessageDispatcher *dispatcher = SetupWiFiDispatcher();
+
+    EnsureDisconnected(dispatcher);
+
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, WiFiRequestHandler::SetAutomaticReconnect(true));
+
+    const uint32_t originalRetryCount = WiFiRequestHandler::GetMaximumRetryCount();
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, WiFiRequestHandler::SetMaximumRetryCount(FAILING_CONNECTION_RETRIES));
+
+    const char *attemptedSsid = "AlsoNotARealAccessPoint";
+    QueueAccessPointRequest(dispatcher, WiFiFunction::ConnectToAccessPoint, attemptedSsid, "BadPassword");
+
+    Message *response = WaitForResponseTo(dispatcher, Esp32Interfaces::WiFi, WiFiFunction::ConnectToAccessPoint, RadioTimeout());
+
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, WiFiRequestHandler::SetMaximumRetryCount(originalRetryCount));
+
+    TEST_ASSERT_NOT_NULL(response);
+    ASSERT_RESPONSE(response, Esp32Interfaces::WiFi, WiFiFunction::ConnectToAccessPoint, StatusCodes::CannotConnectToAccessPoint);
+    ASSERT_HAS_PAYLOAD(response);
+
+    Esp32Messaging::ConnectEventData *eventData = TestEncoders::ExtractConnectEventData(response->Payload);
+    TEST_ASSERT_NOT_NULL(eventData);
+    TEST_ASSERT_EQUAL_STRING(attemptedSsid, eventData->Ssid);
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&eventData));
+    Message::DeleteMessage(response);
+}
+
+/**
  * @brief Test that ConnectToDefaultAccessPoint is answered when no default access
  *        point is configured, rather than leaking the request (issue #251).
  *

@@ -42,6 +42,22 @@ namespace TestEncoders
     Esp32Messaging::IntegerResponse *ExtractIntegerResponse(const uint8_t *buffer);
 
     /**
+     * @brief Extract the ConnectEventData object encoded in the given buffer.
+     *
+     * @note The returned pointer refers to a block of memory on the heap which should
+     *       eventually be released by calling Utils::DeleteAndNullifyPointer(...).
+     *
+     * @param buffer Pointer to a block of memory holding the encoded ConnectEventData
+     *      object: IpAddress, SubnetMask, Gateway, Ssid[33], Bssid[6], Channel,
+     *      AuthenticationMode, Reason - see Encoders::EncodeConnectEventData.  This is
+     *      the payload of a ConnectToAccessPoint/ConnectToDefaultAccessPoint response, as
+     *      well as of NetworkConnectedEvent.
+     *
+     * @return Pointer to a ConnectEventData object, nullptr if it cannot be allocated.
+     */
+    Esp32Messaging::ConnectEventData *ExtractConnectEventData(const uint8_t *buffer);
+
+    /**
      * @brief Extract the AccessPointList object encoded in the given buffer.
      *
      * @note The returned pointer refers to a block of memory on the heap which should

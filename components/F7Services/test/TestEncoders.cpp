@@ -44,6 +44,42 @@ namespace TestEncoders
     }
 
     /**
+     * @brief Extract the ConnectEventData object encoded in the given buffer.
+     *
+     * @param buffer Pointer to a block of memory holding the encoded ConnectEventData
+     *      object.
+     *
+     * @return Pointer to a ConnectEventData object, nullptr if it cannot be allocated.
+     */
+    Esp32Messaging::ConnectEventData *ExtractConnectEventData(const uint8_t *buffer)
+    {
+        Esp32Messaging::ConnectEventData *connectEventData = static_cast<Esp32Messaging::ConnectEventData *>(pvPortMalloc(sizeof(Esp32Messaging::ConnectEventData)));
+
+        if (connectEventData == nullptr)
+        {
+            return (nullptr);
+        }
+
+        connectEventData->IpAddress = Encoders::ExtractUInt32(buffer);
+        buffer += 4;
+        connectEventData->SubnetMask = Encoders::ExtractUInt32(buffer);
+        buffer += 4;
+        connectEventData->Gateway = Encoders::ExtractUInt32(buffer);
+        buffer += 4;
+        memcpy(connectEventData->Ssid, buffer, 33);
+        buffer += 33;
+        memcpy(connectEventData->Bssid, buffer, 6);
+        buffer += 6;
+        connectEventData->Channel = *buffer;
+        buffer += 1;
+        connectEventData->AuthenticationMode = *buffer;
+        buffer += 1;
+        connectEventData->Reason = Encoders::ExtractUInt32(buffer);
+
+        return (connectEventData);
+    }
+
+    /**
      * @brief Extract the AccessPointList object encoded in the given buffer.
      *
      * @param buffer Pointer to a block of memory holding the encoded AccessPointList object.
