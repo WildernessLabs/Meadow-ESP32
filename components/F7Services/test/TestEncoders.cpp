@@ -464,6 +464,38 @@ namespace TestEncoders
     }
 
     /**
+     * @brief Encode a send request whose wire Length field disagrees with the size of the
+     *        buffer it actually carries.  See TestEncoders.hpp for the full explanation.
+     *
+     * @param socketHandle Socket to send on.
+     * @param data Data to be copied into the buffer, bufferLength bytes of it.
+     * @param bufferLength Number of bytes of data copied in, and the wire BufferLength.
+     * @param declaredLength Value encoded into the wire Length field.
+     * @param encodedLength Filled in with the length of the encoded request.
+     *
+     * @return Pointer to the encoded request, nullptr if the buffer cannot be allocated.
+     */
+    uint8_t *EncodeSendRequestWithDeclaredLength(const int32_t socketHandle, const char *data, const uint32_t bufferLength, const int32_t declaredLength, uint32_t *encodedLength)
+    {
+        *encodedLength = 4 + 4 + bufferLength + 4 + 4;
+        uint8_t *buffer = static_cast<uint8_t *>(pvPortMalloc(*encodedLength));
+
+        if (buffer == nullptr)
+        {
+            return (nullptr);
+        }
+        memset(buffer, 0, *encodedLength);
+
+        Encoders::EncodeInt32(socketHandle, buffer);
+        Encoders::EncodeUInt32(bufferLength, buffer + 4);
+        memcpy(buffer + 8, data, bufferLength);
+        Encoders::EncodeInt32(declaredLength, buffer + 8 + bufferLength);
+        Encoders::EncodeInt32(0, buffer + 12 + bufferLength); // No flags.
+
+        return (buffer);
+    }
+
+    /**
      * @brief Encode a sendto request into a newly allocated buffer.
      *
      * @param socketHandle Socket to send on.
@@ -499,6 +531,56 @@ namespace TestEncoders
         Encoders::EncodeInt32(static_cast<int32_t>(length), p); // Length
         p += 4;
         Encoders::EncodeInt32(0, p);                            // Flags
+        p += 4;
+        Encoders::EncodeUInt32(destinationAddressLength, p);
+        p += 4;
+        if (destinationAddressLength > 0)
+        {
+            memcpy(p, destinationAddress, destinationAddressLength);
+        }
+
+        return (buffer);
+    }
+
+    /**
+     * @brief Encode a sendto request whose wire Length field disagrees with the size of
+     *        the buffer it actually carries.  See TestEncoders.hpp for the full
+     *        explanation.
+     *
+     * @param socketHandle Socket to send on.
+     * @param data Data to be copied into the buffer, bufferLength bytes of it.
+     * @param bufferLength Number of bytes of data copied in, and the wire BufferLength.
+     * @param declaredLength Value encoded into the wire Length field.
+     * @param destinationAddress Encoded SockAddr bytes for the destination, or nullptr.
+     * @param destinationAddressLength Length of destinationAddress, 0 for no destination.
+     * @param encodedLength Filled in with the length of the encoded request.
+     *
+     * @return Pointer to the encoded request, nullptr if the buffer cannot be allocated.
+     */
+    uint8_t *EncodeSendToRequestWithDeclaredLength(const int32_t socketHandle, const char *data, const uint32_t bufferLength, const int32_t declaredLength, const uint8_t *destinationAddress, const uint32_t destinationAddressLength, uint32_t *encodedLength)
+    {
+        *encodedLength = 4 + 4 + bufferLength + 4 + 4 + 4 + destinationAddressLength;
+        uint8_t *buffer = static_cast<uint8_t *>(pvPortMalloc(*encodedLength));
+
+        if (buffer == nullptr)
+        {
+            return (nullptr);
+        }
+        memset(buffer, 0, *encodedLength);
+
+        uint8_t *p = buffer;
+        Encoders::EncodeInt32(socketHandle, p);
+        p += 4;
+        Encoders::EncodeUInt32(bufferLength, p);
+        p += 4;
+        if (bufferLength > 0)
+        {
+            memcpy(p, data, bufferLength);
+            p += bufferLength;
+        }
+        Encoders::EncodeInt32(declaredLength, p); // Length
+        p += 4;
+        Encoders::EncodeInt32(0, p);              // Flags
         p += 4;
         Encoders::EncodeUInt32(destinationAddressLength, p);
         p += 4;
