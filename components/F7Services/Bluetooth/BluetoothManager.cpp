@@ -180,6 +180,33 @@ CharacteristicProperty BluetoothManager::GetCharacteristicProperties(const uint1
 }
 
 /**
+ * @brief Check whether a handle identifies a known characteristic value.
+ *
+ *  A characteristic legitimately configured with no properties would make
+ *  GetCharacteristicProperties() == 0 ambiguous between "not found" and "found, but
+ *  nothing set"; this checks handle identity directly instead (issue #300).
+ *
+ * @param handle Handle to look up.
+ *
+ * @return True if a characteristic with this value handle exists, false otherwise.
+ */
+bool BluetoothManager::IsKnownCharacteristicHandle(const uint16_t handle)
+{
+    for (const auto &svc: Services.GetServiceDefinitions())
+    {
+        for (const auto &characteristic: svc->GetCharacteristicDefinitions())
+        {
+            if (characteristic->Value->Handle == handle)
+            {
+                return (true);
+            }
+        }
+    }
+
+    return (false);
+}
+
+/**
  * @brief Get the permissions for the characteristic with the specified handle.
  *
  * @param handle Handle for the characteristic

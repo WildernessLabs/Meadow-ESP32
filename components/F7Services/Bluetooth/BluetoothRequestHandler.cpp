@@ -440,6 +440,13 @@ void BluetoothRequestHandler::GetHandles(Message * const request)
 /**
  * @brief Set the value for the specified attribute handle.
  *
+ *  SetDataLength is a uint32_t from the wire, but esp_ble_gatts_send_indicate's length
+ *  parameter is uint16_t, so a length above UINT16_MAX would otherwise be silently
+ *  truncated and a different amount of data sent than the caller asked for.  The handle
+ *  is checked against the attribute table before either the manager or the BLE stack
+ *  sees it, rather than relying on the properties lookup incidentally returning nothing
+ *  useful for one it does not recognise (issue #300).
+ *
  * @param request Request from the STM32.
  */
 void BluetoothRequestHandler::SetCurrentValueForAttributeHandle(Message * const request)
@@ -449,22 +456,45 @@ void BluetoothRequestHandler::SetCurrentValueForAttributeHandle(Message * const 
     Esp32Messaging::BTServerDataSet *ds = Encoders::ExtractBTServerDataSet(request->Payload);
     request->DeletePayload();
 
-    TRACE_MESSAGE("Server wrote %" PRIu32 " bytes to 0x%04" PRIx16, ds->SetDataLength, ds->Handle);
-
-    _manager.SetCurrentValueForAttributeHandle(ds->Handle, ds->SetData, ds->SetDataLength);
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    if (_connectionHandle != INVALID_CONNECTION_HANDLE)
+    if (ds == nullptr)
     {
-        if ((_manager.GetCharacteristicProperties(ds->Handle) & CharacteristicProperty::Notify) == CharacteristicProperty::Notify)
+        result = StatusCodes::EspOutOfMemory;
+    }
+    else
+    {
+        TRACE_MESSAGE("Server wrote %" PRIu32 " bytes to 0x%04" PRIx16, ds->SetDataLength, ds->Handle);
+
+        if (!_manager.IsKnownCharacteristicHandle(ds->Handle))
         {
-            if (esp_ble_gatts_send_indicate(_gattsInterfaceHandle, _connectionHandle, ds->Handle, ds->SetDataLength, ds->SetData, false) != ESP_OK)
+            ERROR_MESSAGE("SetCurrentValueForAttributeHandle: unknown handle 0x%04" PRIx16, ds->Handle);
+            result = StatusCodes::InvalidRequest;
+        }
+        else
+        {
+            if (ds->SetDataLength > UINT16_MAX)
             {
-                TRACE_MESSAGE("Failed to send indication to connection ID 0x%04" PRIx16, _connectionHandle);
-                result = StatusCodes::Failure;
+                ERROR_MESSAGE("SetCurrentValueForAttributeHandle: length %" PRIu32 " exceeds the maximum of %u bytes.", ds->SetDataLength, UINT16_MAX);
+                result = StatusCodes::InvalidRequest;
+            }
+            else
+            {
+                _manager.SetCurrentValueForAttributeHandle(ds->Handle, ds->SetData, static_cast<uint16_t>(ds->SetDataLength));
+                if (_connectionHandle != INVALID_CONNECTION_HANDLE)
+                {
+                    if ((_manager.GetCharacteristicProperties(ds->Handle) & CharacteristicProperty::Notify) == CharacteristicProperty::Notify)
+                    {
+                        if (esp_ble_gatts_send_indicate(_gattsInterfaceHandle, _connectionHandle, ds->Handle, static_cast<uint16_t>(ds->SetDataLength), ds->SetData, false) != ESP_OK)
+                        {
+                            TRACE_MESSAGE("Failed to send indication to connection ID 0x%04" PRIx16, _connectionHandle);
+                            result = StatusCodes::Failure;
+                        }
+                    }
+                }
             }
         }
+        Encoders::FreeBTServerDataSet(&ds);
     }
-    Encoders::FreeBTServerDataSet(&ds);
 
     request->MessageType = MessageTypes::Response;
     request->StatusCode = result;
