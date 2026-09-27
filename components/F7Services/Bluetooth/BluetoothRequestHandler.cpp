@@ -878,12 +878,23 @@ void BluetoothRequestHandler::OnDataWriteRequest(const uint16_t handle, uint8_t 
     TRACE_MESSAGE("OnDataWriteRequest: Enter");
 
     Esp32Messaging::BTDataWriteRequest *request = static_cast<Esp32Messaging::BTDataWriteRequest *>(pvPortMalloc(sizeof(Esp32Messaging::BTDataWriteRequest)));
+    if (request == nullptr)
+    {
+        ERROR_MESSAGE("OnDataWriteRequest: Failed to allocate memory for the write request.");
+        return;
+    }
     request->Handle = handle;
     request->DataLength = dataLength;
     request->Data = data;
 
     int payload_length = Encoders::EncodedBTDataWriteRequestBufferSize(request);
     uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payload_length));
+    if (payload == nullptr)
+    {
+        ERROR_MESSAGE("OnDataWriteRequest: Failed to allocate memory for the event payload.");
+        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&request));
+        return;
+    }
     Encoders::EncodeBTDataWriteRequest(request, payload);
     Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&request));
 
@@ -956,7 +967,11 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
                 TRACE_MESSAGE("ESP_GATTS_REG_EVT");
 
                 _gattsInterfaceHandle = gatts_if;
-                esp_ble_gap_set_device_name(_manager.GetDeviceName());
+                ret = esp_ble_gap_set_device_name(_manager.GetDeviceName());
+                if (ret)
+                {
+                    ERROR_MESSAGE("Set device name failed, error code = %" PRIi32 ", %s", ret, esp_err_to_name(ret));
+                }
 
                 // turn on some security
                 //               esp_ble_gap_config_local_privacy(true);
@@ -1083,14 +1098,22 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
                 conn_params.min_int = 0x10; // min_int = 0x10*1.25ms = 20ms
                 conn_params.timeout = 400;  // timeout = 400*10ms = 4000ms
                 // start sent the update connection parameters to the peer device.
-                esp_ble_gap_update_conn_params(&conn_params);
+                ret = esp_ble_gap_update_conn_params(&conn_params);
+                if (ret)
+                {
+                    ERROR_MESSAGE("Update connection parameters failed, error code = %" PRIi32 ", %s", ret, esp_err_to_name(ret));
+                }
             }
             GetInstance()->RaiseEvent(Esp32Interfaces::BlueTooth, BluetoothFunction::ClientConnectedEvent, StatusCodes::CompletedOk);
             break;
         case ESP_GATTS_DISCONNECT_EVT:
             TRACE_MESSAGE("ESP_GATTS_DISCONNECT_EVT, disconnect reason 0x%" PRIx32, param->disconnect.reason);
             /* start advertising again when missing the connect */
-            esp_ble_gap_start_advertising(GetInstance()->GetAdvertisingParameters());
+            ret = esp_ble_gap_start_advertising(GetInstance()->GetAdvertisingParameters());
+            if (ret)
+            {
+                ERROR_MESSAGE("Start advertising failed, error code = %" PRIi32 ", %s", ret, esp_err_to_name(ret));
+            }
             _connectionHandle = 0xffff;
             GetInstance()->RaiseEvent(Esp32Interfaces::BlueTooth, BluetoothFunction::ClientDisconnectedEvent, StatusCodes::CompletedOk);
             break;
@@ -1174,7 +1197,11 @@ void BluetoothRequestHandler::GAPEventHandler(esp_gap_ble_cb_event_t event, esp_
             if (!_advertisingDataConfigured)
             {
                 TRACE_MESSAGE("Scan data set.  Starting advertising...");
-                esp_ble_gap_start_advertising(GetInstance()->GetAdvertisingParameters());
+                esp_err_t ret = esp_ble_gap_start_advertising(GetInstance()->GetAdvertisingParameters());
+                if (ret)
+                {
+                    ERROR_MESSAGE("Start advertising failed, error code = %" PRIi32 ", %s", ret, esp_err_to_name(ret));
+                }
             }
             break;
         case ESP_GAP_BLE_ADV_DATA_SET_COMPLETE_EVT: // 0
@@ -1184,7 +1211,11 @@ void BluetoothRequestHandler::GAPEventHandler(esp_gap_ble_cb_event_t event, esp_
             if (!_responseDataConfigured)
             {
                 TRACE_MESSAGE("Advertising data set.  Starting advertising...");
-                esp_ble_gap_start_advertising(GetInstance()->GetAdvertisingParameters());
+                esp_err_t ret = esp_ble_gap_start_advertising(GetInstance()->GetAdvertisingParameters());
+                if (ret)
+                {
+                    ERROR_MESSAGE("Start advertising failed, error code = %" PRIi32 ", %s", ret, esp_err_to_name(ret));
+                }
             }
             break;
         case ESP_GAP_BLE_ADV_START_COMPLETE_EVT: // 6
@@ -1221,9 +1252,15 @@ void BluetoothRequestHandler::GAPEventHandler(esp_gap_ble_cb_event_t event, esp_
             TRACE_MESSAGE("ESP_GAP_BLE_NC_REQ_EVT, the passkey Notify number:%" PRIu32, param->ble_security.key_notif.passkey);
             break;
         case ESP_GAP_BLE_SEC_REQ_EVT: // 10
-            TRACE_MESSAGE("ESP_GAP_BLE_SEC_REQ_EVT");
-            // security request
-            esp_ble_gap_security_rsp(param->ble_security.ble_req.bd_addr, true);
+            {
+                TRACE_MESSAGE("ESP_GAP_BLE_SEC_REQ_EVT");
+                // security request
+                esp_err_t ret = esp_ble_gap_security_rsp(param->ble_security.ble_req.bd_addr, true);
+                if (ret)
+                {
+                    ERROR_MESSAGE("Security response failed, error code = %" PRIi32 ", %s", ret, esp_err_to_name(ret));
+                }
+            }
             break;
         case ESP_GAP_BLE_PASSKEY_NOTIF_EVT: // 11
             /// the app will receive this evt when the IO  has Output capability and the peer device IO has Input capability.
