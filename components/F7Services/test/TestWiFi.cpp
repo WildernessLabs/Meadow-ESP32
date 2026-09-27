@@ -285,6 +285,32 @@ TEST_CASE("Connect to non-existant access point reports the attempted SSID", CLA
 }
 
 /**
+ * @brief Check that an invalid static IP configuration is rejected without a
+ *        connection attempt (issue #250).
+ *
+ *  Regression check for issue #250.  The static-IP validation used to assign
+ *  StatusCodes::InvalidIp with no early return, so the connection was attempted
+ *  anyway and the result unconditionally overwritten by whatever ConnectToAccessPoint
+ *  returned.  A subnet mask of 0 alongside a non-zero IP address is exactly the case
+ *  the validation exists to catch.
+ *
+ * @note This does not need a radio: the fix returns before the handler goes near the
+ *       connection state, regardless of what that state currently is.
+ */
+TEST_CASE("Connect with an invalid static IP configuration is refused", CLASS_OF_TESTS)
+{
+    MockMessageDispatcher *dispatcher = SetupWiFiDispatcher();
+
+    QueueAccessPointRequest(dispatcher, WiFiFunction::ConnectToAccessPoint, "AnySsid", "AnyPassword", 0x0101a8c0, 0, 0);
+
+    Message *response = WaitForResponseTo(dispatcher, Esp32Interfaces::WiFi, WiFiFunction::ConnectToAccessPoint, RadioTimeout());
+
+    TEST_ASSERT_NOT_NULL(response);
+    ASSERT_RESPONSE(response, Esp32Interfaces::WiFi, WiFiFunction::ConnectToAccessPoint, StatusCodes::InvalidIp);
+    Message::DeleteMessage(response);
+}
+
+/**
  * @brief Test that ConnectToDefaultAccessPoint is answered when no default access
  *        point is configured, rather than leaking the request (issue #251).
  *

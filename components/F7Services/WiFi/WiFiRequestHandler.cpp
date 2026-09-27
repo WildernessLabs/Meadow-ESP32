@@ -1832,16 +1832,21 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
         //  Check if the IP address is non-zero, in this case the application is configured for a static IP.
         //  Static IP addresses must have a valid subnet mask and gateway address set.
         //
+        bool staticIpIsValid = true;
         if (accessPointInformation->IpAddress != 0)
         {
             if ((accessPointInformation->SubnetMask == 0) || (accessPointInformation->Gateway == 0))
             {
+                staticIpIsValid = false;
                 result = StatusCodes::InvalidIp;
                 RaiseErrorEvent(result, nullptr, 0);
             }
         }
 
-        result = ConnectToAccessPoint(accessPointInformation);
+        if (staticIpIsValid)
+        {
+            result = ConnectToAccessPoint(accessPointInformation);
+        }
         Encoders::FreeAccessPointInformation(&accessPointInformation);
 
         Esp32Messaging::ConnectEventData data = {};
