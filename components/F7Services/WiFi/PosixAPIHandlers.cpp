@@ -353,16 +353,31 @@ void WiFiRequestHandler::Socket(void * const vpMessage)
             {
                 TRACE_MESSAGE("Socket: Creating socket on domain %" PRIi32 ", type %" PRIi32 " and protocol %" PRIi32, request->Domain, request->Type, request->Protocol);
 
-                response.Result = socket(request->Domain, request->Type, request->Protocol);
-                if (response.Result < 0)
+                if (request->Domain != AF_INET)
                 {
-                    TRACE_MESSAGE("Socket: Error code: %" PRIi32 " - %s", errno, strerror(errno));
-                    response.ResponseErrno = Mapping::NuttxErrno(errno);
+                    //
+                    //  The SockAddr wire format carries fields for an IPv6 address, but
+                    //  nothing downstream of here - Bind, Connect, SendTo, SendMsg, Accept,
+                    //  GetSockName/GetPeerName - decodes or reports anything but an AF_INET
+                    //  address.  Refusing the domain here means those never have to cope
+                    //  with an address family they cannot represent.
+                    //
+                    response.Result = -1;
+                    response.ResponseErrno = Mapping::NuttxErrno(EAFNOSUPPORT);
                 }
                 else
                 {
-                    TRACE_MESSAGE("Socket: Created socket %" PRIi32, response.Result);
-                    response.ResponseErrno = 0;
+                    response.Result = socket(request->Domain, request->Type, request->Protocol);
+                    if (response.Result < 0)
+                    {
+                        TRACE_MESSAGE("Socket: Error code: %" PRIi32 " - %s", errno, strerror(errno));
+                        response.ResponseErrno = Mapping::NuttxErrno(errno);
+                    }
+                    else
+                    {
+                        TRACE_MESSAGE("Socket: Created socket %" PRIi32, response.Result);
+                        response.ResponseErrno = 0;
+                    }
                 }
                 Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&request));
             }
@@ -492,7 +507,7 @@ void WiFiRequestHandler::Connect(void * const vpMessage)
                         else
                         {
                             response.Result = -1;
-                            response.ResponseErrno = Mapping::NuttxErrno(EFAULT);
+                            response.ResponseErrno = Mapping::NuttxErrno(EAFNOSUPPORT);
                         }
                         Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&socketAddress));
                     }
@@ -1436,9 +1451,31 @@ StatusCodes::StatusCodes WiFiRequestHandler::SendTo(Esp32Messaging::SendToReques
         struct sockaddr *psa = NULL;
         size_t lenSa = 0;
         bool destinationUsable = true;
+        int destinationErrno = EFAULT;
         if (request->DestinationAddressLength != 0)
         {
-            if ((family == AF_INET) && (request->DestinationAddress != NULL))
+            if (request->DestinationAddress == NULL)
+            {
+                //
+                //  A destination was supplied but could not be decoded at all.  Sending
+                //  anyway would either fail with a confusing errno (unconnected socket) or
+                //  silently reach whatever peer the socket happens to already be connected
+                //  to (connected socket).
+                //
+                destinationUsable = false;
+                destinationErrno = EFAULT;
+            }
+            else if (family != AF_INET)
+            {
+                //
+                //  A destination was supplied but names an address family this handler
+                //  cannot decode.  Socket() refuses to create anything but an AF_INET
+                //  socket, so this can only happen for a malformed request.
+                //
+                destinationUsable = false;
+                destinationErrno = EAFNOSUPPORT;
+            }
+            else
             {
                 sa.sin_family = static_cast<unsigned char>(family & 0xff);
 
@@ -1451,16 +1488,6 @@ StatusCodes::StatusCodes WiFiRequestHandler::SendTo(Esp32Messaging::SendToReques
                 TRACE_MESSAGE("SendTo: Family: %" PRIi32, sa.sin_family);
                 TRACE_MESSAGE("SendTo: IP address: %s", inet_ntoa(sa.sin_addr));
                 TRACE_MESSAGE("SendTo: Port: %" PRIi32, ntohs(sa.sin_port));
-            }
-            else
-            {
-                //
-                //  A destination was supplied but could not be decoded into a usable
-                //  AF_INET address.  Sending anyway would either fail with a confusing
-                //  errno (unconnected socket) or silently reach whatever peer the socket
-                //  happens to already be connected to (connected socket).
-                //
-                destinationUsable = false;
             }
         }
 
@@ -1476,7 +1503,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::SendTo(Esp32Messaging::SendToReques
         else
         {
             response.Result = -1;
-            response.ResponseErrno = Mapping::NuttxErrno(EFAULT);
+            response.ResponseErrno = Mapping::NuttxErrno(destinationErrno);
         }
         Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&socketAddress));
     }
@@ -1815,7 +1842,7 @@ void WiFiRequestHandler::RecvFrom(void * const vpMessage)
  *  Encoders::ExtractSockAddr(), which expects the different SockAddr layout.
  *
  *  When length is 0 or raw is nullptr, outPsa is set to nullptr and outLen
- *  to 0 and true is returned (no address is a valid state).  Anything else that
+ *  to 0 and 0 is returned (no address is a valid state).  Anything else that
  *  cannot be decoded into a usable AF_INET address - a length shorter than the
  *  16-byte structure above, or a family other than AF_INET - is reported as a
  *  failure instead of being silently treated as no address.
@@ -1825,10 +1852,11 @@ void WiFiRequestHandler::RecvFrom(void * const vpMessage)
  *  @param outSa         Caller-supplied sockaddr_in to fill on success.
  *  @param outPsa        Set to (struct sockaddr *)outSa, or nullptr.
  *  @param outLen        Set to sizeof(*outSa), or 0.
- *  @returns true if an address was decoded or none was supplied, false if raw was
- *      supplied but could not be decoded into a usable address.
+ *  @returns 0 if an address was decoded or none was supplied.  EFAULT if raw was
+ *      supplied but was too short to be a real sockaddr.  EAFNOSUPPORT if it decoded
+ *      but named a family other than AF_INET.
  */
-static bool MapMsgNameToSockAddr(const uint8_t * const raw, const uint32_t length, struct sockaddr_in *outSa, struct sockaddr **outPsa, socklen_t *outLen)
+static int MapMsgNameToSockAddr(const uint8_t * const raw, const uint32_t length, struct sockaddr_in *outSa, struct sockaddr **outPsa, socklen_t *outLen)
 {
     //
     //  The full wire structure documented above is 16 bytes; anything shorter cannot
@@ -1840,17 +1868,17 @@ static bool MapMsgNameToSockAddr(const uint8_t * const raw, const uint32_t lengt
     *outLen = 0;
     if ((raw == nullptr) || (length == 0))
     {
-        return (true);
+        return (0);
     }
     if (length < NUTTX_SOCKADDR_IN_SIZE)
     {
-        return (false);
+        return (EFAULT);
     }
     int32_t family = 0;
     Mapping::GetEspValue(Mapping::AddressFamily, Encoders::ExtractUInt16(raw), &family);
     if (family != AF_INET)
     {
-        return (false);
+        return (EAFNOSUPPORT);
     }
     outSa->sin_family = static_cast<unsigned char>(family & 0xff);
     memcpy(&outSa->sin_port, raw + 2, sizeof(outSa->sin_port));
@@ -1858,7 +1886,7 @@ static bool MapMsgNameToSockAddr(const uint8_t * const raw, const uint32_t lengt
     outSa->sin_len = sizeof(*outSa);
     *outPsa = reinterpret_cast<struct sockaddr *>(outSa);
     *outLen = sizeof(*outSa);
-    return (true);
+    return (0);
 }
 
 /**
@@ -1962,7 +1990,8 @@ void WiFiRequestHandler::SendMsg(void * const vpMessage)
                     struct sockaddr *psa = nullptr;
                     socklen_t lenSa = 0;
 
-                    if (!MapMsgNameToSockAddr(request->Name, request->NameLength, &sa, &psa, &lenSa))
+                    const int nameErrno = MapMsgNameToSockAddr(request->Name, request->NameLength, &sa, &psa, &lenSa);
+                    if (nameErrno != 0)
                     {
                         //
                         //  A destination name was supplied but could not be decoded into a
@@ -1972,7 +2001,7 @@ void WiFiRequestHandler::SendMsg(void * const vpMessage)
                         //  socket).
                         //
                         response.Result = -1;
-                        response.ResponseErrno = Mapping::NuttxErrno(EFAULT);
+                        response.ResponseErrno = Mapping::NuttxErrno(nameErrno);
                     }
                     else
                     {
@@ -2310,7 +2339,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::Bind(Esp32Messaging::BindRequest *r
     else
     {
         response.Result = -1;
-        response.ResponseErrno = Mapping::NuttxErrno(EFAULT);
+        response.ResponseErrno = Mapping::NuttxErrno(EAFNOSUPPORT);
     }
 
     TRACE_MESSAGE("Bind: Error code: %" PRIi32 " - %s", errno, strerror(errno));

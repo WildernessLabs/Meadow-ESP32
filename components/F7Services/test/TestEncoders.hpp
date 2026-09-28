@@ -246,6 +246,19 @@ namespace TestEncoders
     const int32_t NUTTX_AF_INET = 2;
 
     /**
+     * @brief Address family for IPv6 using the NuttX numbering.
+     *
+     * @note Not a family the ESP32 supports; used to check that it is refused rather than
+     *       silently truncated.
+     */
+    const int32_t NUTTX_AF_INET6 = 10;
+
+    /**
+     * @brief EAFNOSUPPORT using the NuttX errno numbering.
+     */
+    const int32_t NUTTX_EAFNOSUPPORT = 106;
+
+    /**
      * @brief Encode a socket request into a newly allocated buffer.
      *
      * @note The returned pointer refers to a block of memory on the heap.  Ownership passes

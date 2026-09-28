@@ -431,6 +431,9 @@ TEST_CASE("Poll sets up and tears down for an open socket", CLASS_OF_TESTS)
  *  with a confusing errno or silently reaches whatever peer the socket happens to
  *  already be connected to.  0xff is not a family Mapping::AddressFamily maps to
  *  anything, so the fix's rejection path is what has to answer this request.
+ *
+ *  Also checks issue #284: the errno reported for this is EAFNOSUPPORT, not EFAULT -
+ *  the address decoded fine, it just names a family this handler cannot use.
  */
 TEST_CASE("SendTo refuses a destination address with an unmapped family", CLASS_OF_TESTS)
 {
@@ -453,8 +456,65 @@ TEST_CASE("SendTo refuses a destination address with an unmapped family", CLASS_
         TEST_FAIL_MESSAGE("No response to the sendto request.");
     }
     TEST_ASSERT_EQUAL_INT32(-1, callResult.Result);
+    TEST_ASSERT_EQUAL_INT32(TestEncoders::NUTTX_EAFNOSUPPORT, callResult.ResponseErrno);
 
     CloseSocket(dispatcher, socketHandle);
+}
+
+/**
+ * @brief Check that sendmsg refuses a destination name that decodes cleanly but names an
+ *        address family other than AF_INET, and that the errno for it is EAFNOSUPPORT.
+ *
+ *  Regression check for issue #284.  Unlike "SendMsg refuses a name shorter than a NuttX
+ *  sockaddr_in" below, this name is a full 16 bytes - it decodes - it just is not
+ *  AF_INET, which used to be reported as EFAULT indistinguishably from a malformed name.
+ */
+TEST_CASE("SendMsg refuses a name with an unmapped family", CLASS_OF_TESTS)
+{
+    MockMessageDispatcher *dispatcher = SetupConnectedDispatcher();
+    const int32_t socketHandle = OpenUdpSocket(dispatcher);
+
+    uint8_t name[16] = {};
+    Encoders::EncodeUInt16(TestEncoders::NUTTX_AF_INET6, name);
+
+    const char data[] = "test";
+    uint32_t encodedLength = 0;
+    uint8_t *payload = TestEncoders::EncodeSendMsgRequest(socketHandle, name, sizeof(name), data, sizeof(data) - 1, &encodedLength);
+    TEST_ASSERT_NOT_NULL(payload);
+
+    SocketCallResult callResult = {};
+    if (!SocketCall(dispatcher, WiFiFunction::SendMsg, payload, encodedLength, &callResult))
+    {
+        TEST_FAIL_MESSAGE("No response to the sendmsg request.");
+    }
+    TEST_ASSERT_EQUAL_INT32(-1, callResult.Result);
+    TEST_ASSERT_EQUAL_INT32(TestEncoders::NUTTX_EAFNOSUPPORT, callResult.ResponseErrno);
+
+    CloseSocket(dispatcher, socketHandle);
+}
+
+/**
+ * @brief Check that socket() refuses to create an AF_INET6 socket.
+ *
+ *  Regression check for issue #284.  The wire format and lwip both support AF_INET6, but
+ *  nothing downstream of Socket() - Bind, Connect, SendTo, SendMsg, Accept,
+ *  GetSockName/GetPeerName - can decode or report anything but an AF_INET address, so
+ *  Socket() has to refuse the domain rather than let an unusable socket be created.
+ */
+TEST_CASE("Socket refuses an AF_INET6 domain", CLASS_OF_TESTS)
+{
+    MockMessageDispatcher *dispatcher = SetupConnectedDispatcher();
+
+    uint8_t *payload = TestEncoders::EncodeSocketRequest(TestEncoders::NUTTX_AF_INET6, LWIP_SOCK_DGRAM, LWIP_IPPROTO_UDP);
+    TEST_ASSERT_NOT_NULL(payload);
+
+    SocketCallResult callResult = {};
+    if (!SocketCall(dispatcher, WiFiFunction::Socket, payload, TestEncoders::ENCODED_SOCKET_REQUEST_SIZE, &callResult))
+    {
+        TEST_FAIL_MESSAGE("No response to the socket request.");
+    }
+    TEST_ASSERT_EQUAL_INT32(-1, callResult.Result);
+    TEST_ASSERT_EQUAL_INT32(TestEncoders::NUTTX_EAFNOSUPPORT, callResult.ResponseErrno);
 }
 
 /**
