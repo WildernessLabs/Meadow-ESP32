@@ -258,6 +258,31 @@ uint32_t WiFiRequestHandler::_defaultGateway = 0;
 const char *WiFiRequestHandler::DEFAULT_GATEWAY_NAME = "Gateway";
 
 /**
+ *  @brief Board (station) MAC address requested through SetMacAddress, applied the next
+ *      time the station interface starts.  Only meaningful when
+ *      _stationMacAddressOverrideIsSet is true.
+ */
+uint8_t WiFiRequestHandler::_stationMacAddressOverride[6] = {};
+
+/**
+ *  @brief True when SetMacAddress has been given a board MAC address to apply.
+ */
+bool WiFiRequestHandler::_stationMacAddressOverrideIsSet = false;
+
+/**
+ *  @brief Software access point MAC address requested through SetMacAddress, applied the
+ *      next time the access point interface starts.  Only meaningful when
+ *      _softApMacAddressOverrideIsSet is true.
+ */
+uint8_t WiFiRequestHandler::_softApMacAddressOverride[6] = {};
+
+/**
+ *  @brief True when SetMacAddress has been given a software access point MAC address to
+ *      apply.
+ */
+bool WiFiRequestHandler::_softApMacAddressOverrideIsSet = false;
+
+/**
  *  @brief Default value for the WiFi timeout.
  */
 uint32_t WiFiRequestHandler::_wifiTimeout = 30000;
@@ -772,6 +797,12 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetDefaultGateway(uint32_t value)
 /**
  *  @brief Get the MAC address of the board.
  *
+ *  @note esp_wifi_get_mac() reports the address the driver is actually using, which
+ *      reflects an address SetMacAddress() has applied, but only works once the WiFi
+ *      driver is initialised.  esp_read_mac() reads the factory address straight from
+ *      eFuse and works at any time, so it is tried first before the driver is up and used
+ *      as a fallback afterwards, in the unexpected case esp_wifi_get_mac() fails.
+ *
  *  @param macAddress
  *      Pointer to the buffer to hold the MAC address.
  *
@@ -784,9 +815,12 @@ void WiFiRequestHandler::GetMacAddress(uint8_t * const macAddress, wifi_interfac
 {
     if (interface == WIFI_IF_STA)
     {
-        if (esp_read_mac(macAddress, ESP_MAC_WIFI_STA) != ESP_OK)
+        if (esp_wifi_get_mac(WIFI_IF_STA, macAddress) != ESP_OK)
         {
-            memset(macAddress, 0, 6);
+            if (esp_read_mac(macAddress, ESP_MAC_WIFI_STA) != ESP_OK)
+            {
+                memset(macAddress, 0, 6);
+            }
         }
     }
     else
@@ -801,8 +835,14 @@ void WiFiRequestHandler::GetMacAddress(uint8_t * const macAddress, wifi_interfac
 /**
  *  @brief Set the MAC address of the board.
  *
+ *  @note esp_wifi_set_mac() can only be called once the WiFi driver is initialised and the
+ *      target interface is stopped, neither of which is true until a connection is
+ *      attempted.  The requested address is therefore stored here and applied by
+ *      StartWiFiInterface() the next time the interface (re)starts.
+ *
  *  @param macAddress
- *      New MAC address.
+ *      New MAC address, 6 bytes.  Must be a unicast address, so the least-significant bit
+ *      of the first byte must be clear.
  *
  *  @param interface
  *      Interface the MAC address refers to.  Valid values:
@@ -814,7 +854,23 @@ void WiFiRequestHandler::GetMacAddress(uint8_t * const macAddress, wifi_interfac
  */
 StatusCodes::StatusCodes WiFiRequestHandler::SetMacAddress(const uint8_t * const macAddress, wifi_interface_t interface)
 {
-    return (StatusCodes::CompletedOk);
+    StatusCodes::StatusCodes result = StatusCodes::Failure;
+
+    if ((macAddress != nullptr) && ((macAddress[0] & 0x01) == 0))
+    {
+        if (interface == WIFI_IF_STA)
+        {
+            memcpy(_stationMacAddressOverride, macAddress, sizeof(_stationMacAddressOverride));
+            _stationMacAddressOverrideIsSet = true;
+        }
+        else
+        {
+            memcpy(_softApMacAddressOverride, macAddress, sizeof(_softApMacAddressOverride));
+            _softApMacAddressOverrideIsSet = true;
+        }
+        result = StatusCodes::CompletedOk;
+    }
+    return (result);
 }
 
 /**
@@ -2096,6 +2152,16 @@ esp_err_t WiFiRequestHandler::StartWiFiInterface(const wifi_mode_t mode, const E
         if (result == ESP_OK)
         {
             result = esp_wifi_set_mode(mode);
+        }
+
+        if ((result == ESP_OK) && _stationMacAddressOverrideIsSet && ((mode == WIFI_MODE_STA) || (mode == WIFI_MODE_APSTA)))
+        {
+            result = esp_wifi_set_mac(WIFI_IF_STA, _stationMacAddressOverride);
+        }
+
+        if ((result == ESP_OK) && _softApMacAddressOverrideIsSet && ((mode == WIFI_MODE_AP) || (mode == WIFI_MODE_APSTA)))
+        {
+            result = esp_wifi_set_mac(WIFI_IF_AP, _softApMacAddressOverride);
         }
 
         if (result == ESP_OK)

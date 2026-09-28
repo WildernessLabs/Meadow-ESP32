@@ -307,6 +307,44 @@ void EnsureDisconnected(MockMessageDispatcher *dispatcher)
 }
 
 /**
+ * @brief Disconnect from any access point and fully tear down the WiFi interface.
+ *
+ *  Unlike EnsureDisconnected(), this asks for TurnOffWiFiInterface, so StopWiFIAdapter()
+ *  runs and clears WIFI_INTERFACE_STARTED_BIT.  A test that needs to observe
+ *  StartWiFiInterface() run from a clean slate - for example, one that changes a setting
+ *  StartWiFiInterface() only applies once, on the interface's first start after a
+ *  connection - has to force that regardless of what an earlier test in the run left the
+ *  radio doing, since ordinary disconnects leave the interface up.
+ *
+ * @param dispatcher Dispatcher to queue the request on.
+ */
+void EnsureWiFiInterfaceStopped(MockMessageDispatcher *dispatcher)
+{
+    uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(sizeof(uint8_t)));
+    TEST_ASSERT_NOT_NULL(payload);
+    payload[0] = 1;
+
+    Message *request = Message::CreateOnHeap(MessageTypes::Header, Esp32Interfaces::WiFi, WiFiFunction::DisconnectFromAccessPoint, StatusCodes::Failure, 0xff, payload, sizeof(uint8_t));
+    TEST_ASSERT_NOT_NULL(request);
+    dispatcher->QueueMessageForEsp32(request);
+
+    Message *response = WaitForResponseTo(dispatcher, Esp32Interfaces::WiFi, WiFiFunction::DisconnectFromAccessPoint, RadioTimeout());
+    if (response != nullptr)
+    {
+        Message::DeleteMessage(response);
+    }
+
+    //
+    //  StopWiFIAdapter() does not raise an event of its own, so there is nothing to wait
+    //  for beyond the response: by the time it is queued, esp_wifi_deinit() has already
+    //  run on the WiFi task and WIFI_INTERFACE_STARTED_BIT is already clear.
+    //
+    DrainOutboundQueue(dispatcher, 0);
+
+    _connectedToAccessPoint = false;
+}
+
+/**
  * @brief Connect to the access point named in the configuration.
  *
  * @param dispatcher Dispatcher to queue the request on.

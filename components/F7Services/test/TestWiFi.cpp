@@ -202,6 +202,56 @@ TEST_CASE("Connect to access point", CLASS_OF_TESTS)
 }
 
 /**
+ * @brief Test that a MAC address set before connecting is actually applied to the radio.
+ *
+ *  SetMacAddress() cannot call esp_wifi_set_mac() immediately: that requires the WiFi
+ *  driver initialised and the target interface stopped, which is only momentarily true
+ *  between esp_wifi_init() and esp_wifi_start() inside StartWiFiInterface().  It stores
+ *  the requested address instead and StartWiFiInterface() applies it the next time the
+ *  interface starts.  QEMU cannot prove this - there is no radio, so StartWiFiInterface()
+ *  never runs - which is why this needs real hardware.
+ *
+ * @note EnsureWiFiInterfaceStopped() is used rather than EnsureDisconnected(), because
+ *       StartWiFiInterface() only applies a stored override on the interface's first
+ *       start after esp_wifi_init(); an ordinary disconnect leaves the interface running
+ *       and would let an earlier test's connection hide this one testing anything.
+ */
+TEST_CASE("Setting the board MAC address before connecting applies it to the radio", CLASS_OF_TESTS)
+{
+    MockMessageDispatcher *dispatcher = SetupWiFiDispatcher();
+
+    EnsureWiFiInterfaceStopped(dispatcher);
+
+    uint8_t originalMacAddress[6];
+    WiFiRequestHandler::GetMacAddress(originalMacAddress, WIFI_IF_STA);
+
+    const uint8_t testMacAddress[6] = {0x02, 0x00, 0x00, 0x00, 0x00, 0x01};
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, WiFiRequestHandler::SetMacAddress(testMacAddress, WIFI_IF_STA));
+
+    printf("Connecting to access point: %s\n", UnitTestConfiguration::WiFiNetwork());
+
+    QueueAccessPointRequest(dispatcher, WiFiFunction::ConnectToAccessPoint, UnitTestConfiguration::WiFiNetwork(), UnitTestConfiguration::WiFiPassword());
+
+    ConnectionProgress progress = {};
+    CollectConnectionMessages(dispatcher, RadioTimeout(), &progress);
+
+    TEST_ASSERT_TRUE(progress.ConnectedEvent);
+    TEST_ASSERT_TRUE(progress.ResponseReceived);
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, progress.ResponseStatusCode);
+
+    uint8_t currentMacAddress[6];
+    WiFiRequestHandler::GetMacAddress(currentMacAddress, WIFI_IF_STA);
+    TEST_ASSERT_EQUAL_HEX8_ARRAY(testMacAddress, currentMacAddress, 6);
+
+    //
+    //  Restore the board's own address and force the next interface start to pick it back
+    //  up, so no later test connects with the test address still in place.
+    //
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, WiFiRequestHandler::SetMacAddress(originalMacAddress, WIFI_IF_STA));
+    EnsureWiFiInterfaceStopped(dispatcher);
+}
+
+/**
  * @brief Test connecting to an access point that does not exist.
  *
  * @note This is designed to test the automatic reconnect attempts as well as the final

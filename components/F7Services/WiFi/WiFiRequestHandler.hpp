@@ -452,6 +452,31 @@ private:
     static const char *DEFAULT_GATEWAY_NAME;
 
     /**
+     *  @brief Board (station) MAC address requested through SetMacAddress, applied the
+     *      next time the station interface starts.  Only meaningful when
+     *      _stationMacAddressOverrideIsSet is true.
+     */
+    static uint8_t _stationMacAddressOverride[6];
+
+    /**
+     *  @brief True when SetMacAddress has been given a board MAC address to apply.
+     */
+    static bool _stationMacAddressOverrideIsSet;
+
+    /**
+     *  @brief Software access point MAC address requested through SetMacAddress, applied
+     *      the next time the access point interface starts.  Only meaningful when
+     *      _softApMacAddressOverrideIsSet is true.
+     */
+    static uint8_t _softApMacAddressOverride[6];
+
+    /**
+     *  @brief True when SetMacAddress has been given a software access point MAC address
+     *      to apply.
+     */
+    static bool _softApMacAddressOverrideIsSet;
+
+    /**
      *  @brief Default value for the WiFi timeout.
      */
     static uint32_t _wifiTimeout;
