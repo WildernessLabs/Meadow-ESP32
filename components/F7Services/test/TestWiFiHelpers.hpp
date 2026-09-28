@@ -144,6 +144,20 @@ void EnsureAccessPointStopped(MockMessageDispatcher *dispatcher);
 void EnsureDisconnected(MockMessageDispatcher *dispatcher);
 
 /**
+ * @brief Disconnect from any access point and fully tear down the WiFi interface.
+ *
+ * Unlike EnsureDisconnected(), this asks for TurnOffWiFiInterface, so StopWiFIAdapter()
+ * runs and clears WIFI_INTERFACE_STARTED_BIT.  A test that needs to observe
+ * StartWiFiInterface() run from a clean slate - for example, one that changes a setting
+ * StartWiFiInterface() only applies once, on the interface's first start after a
+ * connection - has to force that regardless of what an earlier test in the run left the
+ * radio doing, since ordinary disconnects leave the interface up.
+ *
+ * @param dispatcher Dispatcher to queue the request on.
+ */
+void EnsureWiFiInterfaceStopped(MockMessageDispatcher *dispatcher);
+
+/**
  * @brief Connect to the access point named in the configuration.
  *
  * Socket creation is refused while the interface is down, so the POSIX tests cannot do

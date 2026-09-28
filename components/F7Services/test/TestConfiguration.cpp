@@ -918,13 +918,17 @@ TEST_CASE("The boolean network settings can be set", CLASS_OF_TESTS)
 }
 
 /**
- * @brief Check that setting a MAC address is accepted and changes nothing.
+ * @brief Check that setting a MAC address is accepted and stored, but does not take effect
+ *      until the interface it belongs to (re)starts.
  *
- *  WiFiRequestHandler::SetMacAddress does nothing and reports success, so the STM32 can
- *  send one without being refused.  This test says so, so that the day it is implemented
- *  the test fails rather than the behaviour changing quietly.
+ *  WiFiRequestHandler::SetMacAddress cannot call esp_wifi_set_mac() immediately: that call
+ *  requires the WiFi driver to be initialised and the target interface stopped, neither of
+ *  which is true here because EnsureHandlers() deliberately does not call
+ *  WiFiRequestHandler::Setup().  The requested address is recorded and applied by
+ *  StartWiFiInterface() instead, so GetMacAddress() still reads back the hardware address
+ *  unchanged in this test.
  */
-TEST_CASE("Setting a MAC address is accepted and changes nothing", CLASS_OF_TESTS)
+TEST_CASE("Setting a MAC address is accepted and stored, but not applied until the interface starts", CLASS_OF_TESTS)
 {
     EnsureHandlers();
 
@@ -939,6 +943,13 @@ TEST_CASE("Setting a MAC address is accepted and changes nothing", CLASS_OF_TEST
     uint8_t boardMacAddress[MAC_ADDRESS_LENGTH];
     WiFiRequestHandler::GetMacAddress(boardMacAddress, WIFI_IF_STA);
     TEST_ASSERT_EQUAL_HEX8_ARRAY(originalBoardMacAddress, boardMacAddress, MAC_ADDRESS_LENGTH);
+
+    //
+    //  A multicast address (least-significant bit of the first byte set) is not a valid
+    //  unicast MAC and must be refused rather than stored.
+    //
+    const uint8_t multicastMacAddress[MAC_ADDRESS_LENGTH] = {0x03, 0x00, 0x00, 0x00, 0x00, 0x01};
+    TEST_ASSERT_EQUAL(StatusCodes::Failure, SetItem(ConfigurationItems::BoardMacAddress, multicastMacAddress, sizeof(multicastMacAddress)));
 }
 
 /**
