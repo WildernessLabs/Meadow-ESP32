@@ -306,7 +306,7 @@ WiFiRequestHandler::WiFiRequestHandler()
         //
         //  NVS held a country code that predates _validCountryCodes, or was corrupted, or
         //  written by another code path.  Fall back to the default rather than carrying an
-        //  unvalidated value into esp_wifi_set_country().
+        //  unvalidated value into esp_wifi_set_country_code().
         //
         ERROR_MESSAGE("WiFiRequestHandler: NVS held an invalid country code (%s); using the default.", (_countryCode == nullptr) ? "<null>" : _countryCode);
         _countryCode = _validCountryCodes[0];
@@ -2068,19 +2068,14 @@ esp_err_t WiFiRequestHandler::StartWiFiInterface(const wifi_mode_t mode, const E
 
         if (result == ESP_OK)
         {
-            wifi_country_t country = {};
+            //
+            //  esp_wifi_set_country_code() derives the channel range (schan/nchan) for the
+            //  given country from ESP-IDF's own table.
             //
             //  _countryCode is validated on both read (constructor) and write
-            //  (SetCountryCode), so it is always one of _validCountryCodes here.  The bound
-            //  copy is still worth having, so a future change that removes that guarantee
-            //  cannot overflow country.cc.
+            //  (SetCountryCode), so it is always one of _validCountryCodes here.
             //
-            strncpy(country.cc, _countryCode, sizeof(country.cc) - 1);
-            country.cc[sizeof(country.cc) - 1] = '\0';
-            country.schan = 1;
-            country.nchan = 13;
-            country.policy = WIFI_COUNTRY_POLICY_MANUAL;
-            result = esp_wifi_set_country(&country);
+            result = esp_wifi_set_country_code(_countryCode, false);
         }
 
         if (result == ESP_OK)
