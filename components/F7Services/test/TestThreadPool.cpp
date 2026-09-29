@@ -16,7 +16,9 @@
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "freertos/semphr.h"
 
+#include "Globals.hpp"
 #include "ThreadPool.hpp"
 #include "Exceptions/ThreadPoolException.hpp"
 
@@ -237,4 +239,110 @@ TEST_CASE("ThreadPool reuses a thread once its method has finished", CLASS_OF_TE
     TEST_ASSERT_EQUAL(expected, _methodsFinished.load());
 
     delete pool;
+}
+
+/**
+ * @brief Number of methods each submitting task hands to the pool in the concurrency test.
+ */
+#define CONCURRENT_SUBMISSIONS 5000
+
+/**
+ * @brief Number of tasks submitting to the pool at the same time, spread across both cores.
+ */
+#define CONCURRENT_SUBMITTERS 4
+
+/**
+ * @brief Milliseconds allowed for the submitting tasks to finish.
+ */
+#define CONCURRENT_SUBMISSION_TIMEOUT 120000
+
+/**
+ * @brief Everything a submitting task needs, and what it reports back.
+ */
+struct SubmitterContext
+{
+    /**
+     * @brief Pool the task submits to.
+     */
+    ThreadPool *Pool;
+
+    /**
+     * @brief Number of submissions the pool refused with a ThreadPoolException.
+     */
+    std::atomic<uint32_t> Refusals {0};
+
+    /**
+     * @brief Given once by each task when it has made all of its submissions.
+     */
+    SemaphoreHandle_t Finished;
+};
+
+/**
+ * @brief Task that hands CONCURRENT_SUBMISSIONS quick methods to the pool as fast as it can.
+ *
+ * @param parameter SubmitterContext shared with the test and the other submitting task.
+ */
+static void SubmitterTask(void *parameter)
+{
+    SubmitterContext *context = static_cast<SubmitterContext *>(parameter);
+    for (uint32_t index = 0; index < CONCURRENT_SUBMISSIONS; index++)
+    {
+        try
+        {
+            context->Pool->Execute(QuickMethod, nullptr);
+        }
+        catch (const ThreadPoolException &e)
+        {
+            //
+            //  A refusal also loses the pool a token, so carrying on would soon leave every
+            //  submission waiting out the acquire timeout.  One is enough to fail the test.
+            //
+            context->Refusals.fetch_add(1);
+            break;
+        }
+    }
+    xSemaphoreGive(context->Finished);
+    vTaskDelete(nullptr);
+}
+
+/**
+ * @brief Check that two tasks submitting at once, one on each core, are never refused.
+ *
+ *  Holding a token from the pool's counting semaphore means a thread is free, so a
+ *  correct pool never refuses these submissions.  Choosing a thread used to be a check
+ *  followed by a separate claim, so two submitters could pick the same free thread and
+ *  the second was refused with "Attempt to execute method on a busy thread", losing its
+ *  token as well.
+ */
+TEST_CASE("ThreadPool gives concurrent callers separate threads", CLASS_OF_TESTS)
+{
+    ResetCounters();
+
+    //
+    //  Static so a submitting task that outlives a failed test cannot write to a dead stack frame.
+    //
+    static SubmitterContext context;
+    context.Refusals.store(0);
+    context.Pool = new ThreadPool();
+    TEST_ASSERT_NOT_NULL(context.Pool);
+    context.Finished = xSemaphoreCreateCounting(CONCURRENT_SUBMITTERS, 0);
+    TEST_ASSERT_NOT_NULL(context.Finished);
+
+    for (BaseType_t core = 0; core < CONCURRENT_SUBMITTERS; core++)
+    {
+        TEST_ASSERT_EQUAL(pdPASS, xTaskCreatePinnedToCore(SubmitterTask, "Submitter", 4096, &context, PRIORITY_THREAD_POOL_TASK, nullptr, core % 2));
+    }
+    for (uint32_t submitter = 0; submitter < CONCURRENT_SUBMITTERS; submitter++)
+    {
+        TEST_ASSERT_EQUAL_MESSAGE(pdTRUE, xSemaphoreTake(context.Finished, CONCURRENT_SUBMISSION_TIMEOUT / portTICK_PERIOD_MS), "A submitting task did not finish.");
+    }
+    vTaskDelay(METHOD_SETTLING_TIME / portTICK_PERIOD_MS);
+
+    const uint32_t refusals = context.Refusals.load();
+    printf("%" PRIu32 " of %" PRIu32 " concurrent submissions refused.\n", refusals, static_cast<uint32_t>(CONCURRENT_SUBMITTERS * CONCURRENT_SUBMISSIONS));
+    TEST_ASSERT_EQUAL_UINT32_MESSAGE(0, refusals, "The pool refused a submission while it held a free thread.");
+    TEST_ASSERT_EQUAL(CONCURRENT_SUBMITTERS * CONCURRENT_SUBMISSIONS, _methodsFinished.load());
+
+    vSemaphoreDelete(context.Finished);
+    delete context.Pool;
 }

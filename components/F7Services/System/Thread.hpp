@@ -127,6 +127,11 @@ public:
     void Execute(method_t method, void *parameter);
 
     /**
+     *  @brief Claim this thread and execute a method on it if it is idle, as one atomic step.
+     */
+    bool TryExecute(method_t method, void *parameter);
+
+    /**
      *  @brief Indicate if this thread is busy.
      */
     bool IsBusy();

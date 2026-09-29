@@ -54,11 +54,6 @@ private:
     static char *_deviceName;
 
     /**
-     *  @brief Private instance fo the sheared thread pool.
-     */
-    static ThreadPool *_threadPool;
-
-    /**
      *  @brief Name of the storage in NVS holding the name of the device.
      */
     static const char *DEVICE_NAME_NAME;

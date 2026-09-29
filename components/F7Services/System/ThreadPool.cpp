@@ -128,12 +128,17 @@ void ThreadPool::Execute(method_t method, void *parameter)
     {
         TRACE_MESSAGE("Execute: Searching for an available thread");
 
+        //
+        //  The pool is called from more than one task at once (the WiFi task, and socket
+        //  handlers running on the pool's own threads), so the check that a thread is idle
+        //  and the claim have to be one step.  IsBusy() followed by Execute() let two
+        //  callers pick the same thread, and the loser was refused with its token lost.
+        //
         for (uint8_t index = 0; index < THREAD_POOL_SIZE; index++)
         {
-            if (_threads[index] && !_threads[index]->IsBusy())
+            if (_threads[index] && _threads[index]->TryExecute(method, parameter))
             {
                 TRACE_MESSAGE("Execute: Thread %" PRIu8 " available!", index);
-                _threads[index]->Execute(method, parameter);
                 return;
             }
             TRACE_MESSAGE("Execute: Thread %" PRIu8 " not available", index);
