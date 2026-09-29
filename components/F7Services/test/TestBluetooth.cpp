@@ -457,6 +457,105 @@ TEST_CASE("Stop Bluetooth Service (will start MeadowA service first)", CLASS_OF_
 }
 
 /**
+ * @brief Send a Start request with the given configuration and check it is answered Failure.
+ *
+ *  No BluetoothStartedEvent may be raised, then or afterwards, and the Bluetooth stack the
+ *  failed start left running must still stop cleanly so later tests can start it again.
+ *
+ * @param dispatcher Dispatcher to queue the request on.
+ * @param configuration Configuration the Bluetooth stack cannot start a service from.
+ */
+static void CheckStartReportsFailure(MockMessageDispatcher *dispatcher, const char * const configuration)
+{
+    Esp32Messaging::BTStackConfig stackConfig = {};
+    stackConfig.Config = const_cast<char *>(configuration);
+
+    const uint32_t payloadLength = TestEncoders::EncodedBTStackConfigBufferSize(&stackConfig);
+    TEST_ASSERT_GREATER_THAN(0, payloadLength);
+    uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
+    TEST_ASSERT_NOT_NULL(payload);
+    TestEncoders::EncodeBTStackConfig(&stackConfig, payload);
+
+    RunBluetoothLifecycleRequest(dispatcher, BluetoothFunction::Start, BluetoothFunction::BluetoothStartingEvent, NO_COMPLETION_EVENT, StatusCodes::Failure, payload, payloadLength);
+
+    //
+    //  A started event arriving after the failure response would contradict it.
+    //
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
+    ASSERT_OUTBOUND_QUEUE_LENGTH(dispatcher, 0);
+
+    StopBluetoothService(dispatcher);
+    ASSERT_OUTBOUND_QUEUE_LENGTH(dispatcher, 0);
+}
+
+/**
+ * @brief Start is answered Failure when the stack refuses the attribute table asynchronously.
+ *
+ *  Bluedroid accepts only one primary service per attribute table, and the handler builds a
+ *  single table holding every service, so a configuration with two services is refused in
+ *  ESP_GATTS_CREAT_ATTR_TAB_EVT, after StartBluetoothService() has returned.  Start used to
+ *  answer CompletedOk and raise BluetoothStartedEvent regardless.
+ */
+TEST_CASE("Start reports failure when the attribute table is refused (two services)", CLASS_OF_TESTS)
+{
+    static const char *twoServicesJson = R"({
+    "deviceName":"MeadowTwo",
+    "companyIdentifier": 741,
+    "services": [
+        {
+            "name": "Service A",
+            "uuid": 254,
+            "characteristics": [ { "uuid": 10755, "permission": 17, "props": 18, "len": 4 } ]
+        },
+        {
+            "name": "Service B",
+            "uuid": 253,
+            "characteristics": [ { "uuid": 10756, "permission": 17, "props": 18, "len": 4 } ]
+        }
+    ]
+})";
+
+    MockMessageDispatcher *dispatcher = SetupMessageDispatcher();
+    TEST_ASSERT_NOT_NULL(dispatcher);
+
+    CheckStartReportsFailure(dispatcher, twoServicesJson);
+
+    ResetMessageDispatcher();
+    EndOfTest();
+}
+
+/**
+ * @brief Start is answered Failure when the attribute table is too large for the stack.
+ *
+ *  Fifty characteristics make a table of 101 attributes (the service plus a declaration and
+ *  a value for each), one more than CONFIG_BT_GATT_MAX_SR_ATTRIBUTES allows, so
+ *  esp_ble_gatts_create_attr_tab() refuses it in ESP_GATTS_REG_EVT.
+ */
+TEST_CASE("Start reports failure when the attribute table is too large", CLASS_OF_TESTS)
+{
+    static constexpr int CHARACTERISTICS = 50;
+
+    std::string configuration = R"({"deviceName":"MeadowBig","companyIdentifier":741,"services":[{"name":"Big service","uuid":254,"characteristics":[)";
+    for (int index = 0; index < CHARACTERISTICS; index++)
+    {
+        if (index > 0)
+        {
+            configuration += ",";
+        }
+        configuration += "{\"uuid\":" + std::to_string(0x2a00 + index) + ",\"permission\":17,\"props\":2,\"len\":4}";
+    }
+    configuration += "]}]}";
+
+    MockMessageDispatcher *dispatcher = SetupMessageDispatcher();
+    TEST_ASSERT_NOT_NULL(dispatcher);
+
+    CheckStartReportsFailure(dispatcher, configuration.c_str());
+
+    ResetMessageDispatcher();
+    EndOfTest();
+}
+
+/**
  * @brief Test restarting the Bluetooth service.
  */
 TEST_CASE("Restart Bluetooth service with different configuration", CLASS_OF_TESTS)
