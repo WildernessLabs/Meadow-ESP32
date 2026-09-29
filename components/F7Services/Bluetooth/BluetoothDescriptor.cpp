@@ -12,6 +12,8 @@
 #include "BluetoothDescriptor.hpp"
 #include "Uuid.hpp"
 
+#include <algorithm>
+
 /*
  * ----------------------------------------------------------------------------
  *
@@ -27,24 +29,22 @@
  * @param uuid 128-bit UUID for this descriptor.
  * @param permission Permissions for this descriptor.
  * @param maxValueLength Maximum length of the data in the descriptor.
- * @param value Initial value for the descriptor.
+ * @param value Initial value for the descriptor, or nullptr for an empty value.
+ * @param valueLength Number of bytes available at value; at most maxValueLength of them are copied.
  */
-BluetoothDescriptor::BluetoothDescriptor(const BluetoothCharacteristic * const parent, const Uuid128 uuid, const CharacteristicPermission permission, const uint16_t maxValueLength, const uint8_t * const value)
+BluetoothDescriptor::BluetoothDescriptor(const BluetoothCharacteristic * const parent, const Uuid128 uuid, const CharacteristicPermission permission, const uint16_t maxValueLength, const uint8_t * const value, const uint16_t valueLength)
 {
     _parent = parent;
     uuid128 = uuid;
     Permission = permission;
     MaxLength = maxValueLength;
     Value = new uint8_t[MaxLength];
-    if (value != NULL)
+    memset(Value, 0, MaxLength);
+    CurrentLength = 0;
+    if (value != nullptr)
     {
-        memcpy(Value, value, MaxLength);
-        CurrentLength = maxValueLength;
-    }
-    else
-    {
-        memset(Value, 0, MaxLength);
-        CurrentLength = 0;
+        CurrentLength = std::min(valueLength, MaxLength);
+        memcpy(Value, value, CurrentLength);
     }
     _is128 = true;
 }
@@ -56,24 +56,22 @@ BluetoothDescriptor::BluetoothDescriptor(const BluetoothCharacteristic * const p
  * @param uuid 16-bit UUID for this descriptor.
  * @param permission Permissions for this descriptor.
  * @param maxValueLength Maximum length of the data in the descriptor.
- * @param value Initial value for the descriptor.
+ * @param value Initial value for the descriptor, or nullptr for an empty value.
+ * @param valueLength Number of bytes available at value; at most maxValueLength of them are copied.
  */
-BluetoothDescriptor::BluetoothDescriptor(const BluetoothCharacteristic * const parent, const Uuid16 uuid, const CharacteristicPermission permission, const uint16_t maxValueLength, const uint8_t * const value)
+BluetoothDescriptor::BluetoothDescriptor(const BluetoothCharacteristic * const parent, const Uuid16 uuid, const CharacteristicPermission permission, const uint16_t maxValueLength, const uint8_t * const value, const uint16_t valueLength)
 {
     _parent = parent;
     uuid16 = uuid;
     Permission = permission;
     MaxLength = maxValueLength;
     Value = new uint8_t[MaxLength];
-    if (value != NULL)
+    memset(Value, 0, MaxLength);
+    CurrentLength = 0;
+    if (value != nullptr)
     {
-        memcpy(Value, value, MaxLength);
-        CurrentLength = maxValueLength;
-    }
-    else
-    {
-        memset(Value, 0, MaxLength);
-        CurrentLength = 0;
+        CurrentLength = std::min(valueLength, MaxLength);
+        memcpy(Value, value, CurrentLength);
     }
 }
 
