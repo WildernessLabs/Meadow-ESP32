@@ -8,6 +8,7 @@
  */
 
 #include "cJSON.h"
+#include "esp_gatt_defs.h"
 
 #include "Logging.hpp"
 
@@ -326,12 +327,13 @@ bool BluetoothManager::SetHandles(const uint16_t * const handles, const uint16_t
  *
  * @param handle Handle to look up.
  * @param pData Pointer to a block of memory to take the value.
+ * @param capacity Size of the block at pData; no more than this many bytes are copied.
  * @param pLen Pointer to a variable that will hold the length of the data that is being copied.
  *
  * @return true if the handle is known and pData/pLen were filled in, false if the handle
  *  is unknown, in which case pLen is set to 0 and pData is left untouched.
  */
-bool BluetoothManager::GetCurrentValueForAttributeHandle(const uint16_t handle, uint8_t *pData, uint16_t * const pLen)
+bool BluetoothManager::GetCurrentValueForAttributeHandle(const uint16_t handle, uint8_t *pData, const uint16_t capacity, uint16_t * const pLen)
 {
     TRACE_MESSAGE("GetCurrentValueForAttributeHandle: Enter");
 
@@ -344,8 +346,14 @@ bool BluetoothManager::GetCurrentValueForAttributeHandle(const uint16_t handle, 
         TRACE_MESSAGE("Request for data for handle 0x%04" PRIx16, handle);
         TRACE_MESSAGE(" known length = %" PRIu16, existing->second.length);
 
-        memcpy(pData, existing->second.value, existing->second.length);
-        *pLen = existing->second.length;
+        uint16_t length = existing->second.length;
+        if (length > capacity)
+        {
+            ERROR_MESSAGE("GetCurrentValueForAttributeHandle: value of %" PRIu16 " bytes for handle 0x%04" PRIx16 " truncated to %" PRIu16 ".", length, handle, capacity);
+            length = capacity;
+        }
+        memcpy(pData, existing->second.value, length);
+        *pLen = length;
     }
     else
     {
@@ -532,6 +540,18 @@ void BluetoothManager::AddCharacteristics(const cJSON * const json, BluetoothSer
             TRACE_MESSAGE("Characteristic " LENGTH_KEY " is missing or not a number");
             add = false;
         }
+        else
+        {
+            //
+            //  The length sizes the value's storage and is copied into a GATT response
+            //  buffer of ESP_GATT_MAX_ATTR_LEN bytes when a peer reads it, so it has to fit.
+            //
+            if ((len->valueint < 1) || (len->valueint > ESP_GATT_MAX_ATTR_LEN))
+            {
+                ERROR_MESSAGE("Characteristic " LENGTH_KEY " %d is outside 1 to %d, ignoring it.", len->valueint, ESP_GATT_MAX_ATTR_LEN);
+                add = false;
+            }
+        }
         const cJSON * const uuid = cJSON_GetObjectItem(characteristic, UUID_KEY);
         if ((uuid == NULL) || !(cJSON_IsNumber(uuid) || cJSON_IsString(uuid)))
         {
@@ -619,6 +639,18 @@ void BluetoothManager::AddDescriptors(const cJSON * const json, BluetoothCharact
             TRACE_MESSAGE("Descriptor " LENGTH_KEY " is missing or not a number");
             add = false;
         }
+        else
+        {
+            //
+            //  The length sizes the value's storage and is copied into a GATT response
+            //  buffer of ESP_GATT_MAX_ATTR_LEN bytes when a peer reads it, so it has to fit.
+            //
+            if ((len->valueint < 1) || (len->valueint > ESP_GATT_MAX_ATTR_LEN))
+            {
+                ERROR_MESSAGE("Descriptor " LENGTH_KEY " %d is outside 1 to %d, ignoring it.", len->valueint, ESP_GATT_MAX_ATTR_LEN);
+                add = false;
+            }
+        }
         const cJSON * const value = cJSON_GetObjectItem(descriptor, VALUE_KEY);
         if ((value == NULL) || !(cJSON_IsNumber(value) || cJSON_IsString(value)))
         {
@@ -669,11 +701,11 @@ void BluetoothManager::AddDescriptors(const cJSON * const json, BluetoothCharact
             BluetoothDescriptor *new_descriptor;
             if (is128bits)
             {
-                new_descriptor = new BluetoothDescriptor(characteristic, uuid128bits, static_cast<CharacteristicPermission>(permissions), length, valueBuffer);
+                new_descriptor = new BluetoothDescriptor(characteristic, uuid128bits, static_cast<CharacteristicPermission>(permissions), length, valueBuffer, length);
             }
             else
             {
-                new_descriptor = new BluetoothDescriptor(characteristic, uuid16bits, static_cast<CharacteristicPermission>(permissions), length, valueBuffer);
+                new_descriptor = new BluetoothDescriptor(characteristic, uuid16bits, static_cast<CharacteristicPermission>(permissions), length, valueBuffer, length);
             }
             delete[] valueBuffer;
 
