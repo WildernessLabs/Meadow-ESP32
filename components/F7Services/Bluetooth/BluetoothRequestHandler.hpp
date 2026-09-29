@@ -60,6 +60,26 @@ private:
     static const int BT_READY_BIT = BIT0;
 
     /**
+     *  @brief Set by the GATT event handler once the service has actually started.
+     *
+     *  The attribute table is created and the service started asynchronously, after
+     *  StartBluetoothService() has returned, so Start() waits for this bit or for
+     *  BT_SERVICE_START_FAILED_BIT before it answers the STM32.
+     */
+    static const int BT_SERVICE_STARTED_BIT = BIT1;
+
+    /**
+     *  @brief Set by the GATT event handler when registering the application, creating the
+     *  attribute table or starting the service fails.
+     */
+    static const int BT_SERVICE_START_FAILED_BIT = BIT2;
+
+    /**
+     *  @brief Milliseconds Start() waits for the service to start or fail before it gives up.
+     */
+    static constexpr uint32_t SERVICE_START_TIMEOUT = 5000;
+
+    /**
      * @brief Instance ID for the Bluetooth service.
      */
     static const int INSTANCE_ID = 0;
@@ -188,6 +208,13 @@ private:
      * @brief Start the Bluetooth stack.
      */
     bool StartBluetoothService();
+
+    /**
+     * @brief Tell Start() whether the asynchronous part of starting the service succeeded.
+     *
+     * @param started true once the service has started, false if a step on the way failed.
+     */
+    void SignalServiceStart(const bool started);
 
     /**
      * @brief Get the Handles and send them to the STM32.

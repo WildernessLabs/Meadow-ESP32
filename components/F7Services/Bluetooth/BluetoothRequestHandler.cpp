@@ -749,6 +749,19 @@ bool BluetoothRequestHandler::StartBluetoothService()
 }
 
 /**
+ * @brief Tell Start() whether the asynchronous part of starting the service succeeded.
+ *
+ * Called from the GATT event handler, which runs on the Bluetooth stack's task, while
+ * Start() waits on the Bluetooth request handler's task.
+ *
+ * @param started true once the service has started, false if a step on the way failed.
+ */
+void BluetoothRequestHandler::SignalServiceStart(const bool started)
+{
+    xEventGroupSetBits(_xBtEventGroup, started ? BT_SERVICE_STARTED_BIT : BT_SERVICE_START_FAILED_BIT);
+}
+
+/**
  * @brief Teardown the Bluetooth stack by turning off the Bluetooth adapter.
  *
  * @return true if the system was stopped, false otherwise.
@@ -930,10 +943,34 @@ void BluetoothRequestHandler::Start(Message * const request)
     {
         GenerateAdvertisingData();
         GenerateAttributeTable();
+        xEventGroupClearBits(_xBtEventGroup, BT_SERVICE_STARTED_BIT | BT_SERVICE_START_FAILED_BIT);
         if (StartBluetoothService())
         {
-            request->StatusCode = StatusCodes::CompletedOk;
-            RaiseEvent(Esp32Interfaces::BlueTooth, BluetoothFunction::BluetoothStartedEvent, StatusCodes::CompletedOk);
+            //
+            //  StartBluetoothService() only makes the synchronous calls.  The GATT application
+            //  is registered, the attribute table created and the service started later, in
+            //  the GATT event handler on the Bluetooth stack's own task, so wait for it to
+            //  report how that went before telling the STM32 anything.
+            //
+            const EventBits_t bits = xEventGroupWaitBits(_xBtEventGroup, BT_SERVICE_STARTED_BIT | BT_SERVICE_START_FAILED_BIT, pdTRUE, pdFALSE, SERVICE_START_TIMEOUT / portTICK_PERIOD_MS);
+            if ((bits & BT_SERVICE_STARTED_BIT) && !(bits & BT_SERVICE_START_FAILED_BIT))
+            {
+                request->StatusCode = StatusCodes::CompletedOk;
+                RaiseEvent(Esp32Interfaces::BlueTooth, BluetoothFunction::BluetoothStartedEvent, StatusCodes::CompletedOk);
+            }
+            else
+            {
+                if (bits & BT_SERVICE_START_FAILED_BIT)
+                {
+                    ERROR_MESSAGE("Start: the Bluetooth service did not start.");
+                    request->StatusCode = StatusCodes::Failure;
+                }
+                else
+                {
+                    ERROR_MESSAGE("Start: no word from the Bluetooth stack after %" PRIu32 " ms.", SERVICE_START_TIMEOUT);
+                    request->StatusCode = StatusCodes::Timeout;
+                }
+            }
         }
         else
         {
@@ -968,6 +1005,13 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
             {
                 TRACE_MESSAGE("ESP_GATTS_REG_EVT");
 
+                if (param->reg.status != ESP_GATT_OK)
+                {
+                    ERROR_MESSAGE("Registering the GATT application failed, status 0x%" PRIx32, static_cast<uint32_t>(param->reg.status));
+                    GetInstance()->SignalServiceStart(false);
+                    break;
+                }
+
                 _gattsInterfaceHandle = gatts_if;
                 ret = esp_ble_gap_set_device_name(_manager.GetDeviceName());
                 if (ret)
@@ -1000,6 +1044,7 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
                 if (create_attr_ret)
                 {
                     ERROR_MESSAGE("Create attr table failed, error code = %" PRIi32, create_attr_ret);
+                    GetInstance()->SignalServiceStart(false);
                 }
                 else
                 {
@@ -1077,6 +1122,15 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
             break;
         case ESP_GATTS_START_EVT:
             TRACE_MESSAGE("ESP_GATTS_START_EVT");
+            if (param->start.status == ESP_GATT_OK)
+            {
+                GetInstance()->SignalServiceStart(true);
+            }
+            else
+            {
+                ERROR_MESSAGE("Starting the service failed, status 0x%" PRIx32, static_cast<uint32_t>(param->start.status));
+                GetInstance()->SignalServiceStart(false);
+            }
             break;
         case ESP_GATTS_STOP_EVT:
             TRACE_MESSAGE("ESP_GATTS_STOP_EVT");
@@ -1142,34 +1196,49 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
             break;
         case ESP_GATTS_CREAT_ATTR_TAB_EVT:
             TRACE_MESSAGE("ESP_GATTS_CREAT_ATTR_TAB_EVT");
+            //
+            //  Every failure below must reach Start(), which is waiting to answer the STM32.
+            //  A table holding more than one primary service is refused here, for example.
+            //
             if (param->add_attr_tab.status != ESP_GATT_OK)
             {
                 ERROR_MESSAGE("Create attribute table failed, error code=0x%" PRIx32, param->add_attr_tab.status);
-            }
-            else if (param->add_attr_tab.num_handle != GetInstance()->GetAttributeTableLength())
-            {
-                ERROR_MESSAGE("Create attribute table failed, num_handle (%" PRIu16 ") does not match the expected attribute table length (%" PRIu16 ")", param->add_attr_tab.num_handle, GetInstance()->GetAttributeTableLength());
+                GetInstance()->SignalServiceStart(false);
             }
             else
             {
-                TRACE_MESSAGE("Create attribute table successfully, handle count = %" PRIu16, param->add_attr_tab.num_handle);
-                // the assigned handles with be in param->add_attr_tab.handles - copy them off
-                if (!_manager.SetHandles(param->add_attr_tab.handles, param->add_attr_tab.num_handle))
+                if (param->add_attr_tab.num_handle != GetInstance()->GetAttributeTableLength())
                 {
-                    //
-                    //  The num_handle check above should make this unreachable, but SetHandles
-                    //  is not trusting that on its own (issue #350).  Without every handle
-                    //  applied the service graph is not safe to start.
-                    //
-                    ERROR_MESSAGE("SetHandles failed, the service graph needed more than %" PRIu16 " handles", param->add_attr_tab.num_handle);
+                    ERROR_MESSAGE("Create attribute table failed, num_handle (%" PRIu16 ") does not match the expected attribute table length (%" PRIu16 ")", param->add_attr_tab.num_handle, GetInstance()->GetAttributeTableLength());
+                    GetInstance()->SignalServiceStart(false);
                 }
                 else
                 {
-                    // now fire up the service (which is the first attribute in the attribute table) by handle.
-                    // TODO: right now we're cheating
-                    TRACE_MESSAGE("Starting service with handle 0x%04" PRIx16, param->add_attr_tab.handles[0]);
-                    GetInstance()->_serviceHandle = param->add_attr_tab.handles[0];
-                    esp_ble_gatts_start_service(param->add_attr_tab.handles[0]);
+                    TRACE_MESSAGE("Create attribute table successfully, handle count = %" PRIu16, param->add_attr_tab.num_handle);
+                    // the assigned handles with be in param->add_attr_tab.handles - copy them off
+                    if (!_manager.SetHandles(param->add_attr_tab.handles, param->add_attr_tab.num_handle))
+                    {
+                        //
+                        //  The num_handle check above should make this unreachable, but SetHandles
+                        //  is not trusting that on its own (issue #350).  Without every handle
+                        //  applied the service graph is not safe to start.
+                        //
+                        ERROR_MESSAGE("SetHandles failed, the service graph needed more than %" PRIu16 " handles", param->add_attr_tab.num_handle);
+                        GetInstance()->SignalServiceStart(false);
+                    }
+                    else
+                    {
+                        // now fire up the service (which is the first attribute in the attribute table) by handle.
+                        // TODO: right now we're cheating
+                        TRACE_MESSAGE("Starting service with handle 0x%04" PRIx16, param->add_attr_tab.handles[0]);
+                        GetInstance()->_serviceHandle = param->add_attr_tab.handles[0];
+                        ret = esp_ble_gatts_start_service(param->add_attr_tab.handles[0]);
+                        if (ret != ESP_OK)
+                        {
+                            ERROR_MESSAGE("Requesting the service start failed, error code = %" PRIi32 ", %s", ret, esp_err_to_name(ret));
+                            GetInstance()->SignalServiceStart(false);
+                        }
+                    }
                 }
             }
             break;
