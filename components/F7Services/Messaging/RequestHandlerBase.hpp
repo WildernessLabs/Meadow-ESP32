@@ -85,6 +85,16 @@ protected:
      */
     void SendIntegerResult(const uint8_t interface, const uint32_t eventType, const uint32_t statusCode, const uint32_t value);
 
+    /**
+     * @brief Answer a request whose function code this handler does not recognise.
+     *
+     * The request is recycled as a NotImplemented response and handed to the STM32, which
+     * takes ownership of it, so the STM32 is not left waiting and the request is not leaked.
+     *
+     * @param request - Request carrying the unrecognised function code.
+     */
+    void RespondToUnknownFunction(Message *request);
+
 public:
     /**
      *  @brief Name of this component / task.

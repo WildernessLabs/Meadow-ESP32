@@ -1557,6 +1557,12 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
                 {
                     TRACE_HEX_BUFFER(request->Payload, request->PayloadLength);
                 }
+                RespondToUnknownFunction(request);
+                //
+                //  No handler runs for this request, so nothing else will set the bit and the
+                //  wait below would block the WiFi task for good.
+                //
+                xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
                 break;
         }
     }

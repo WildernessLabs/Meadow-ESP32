@@ -11,6 +11,7 @@
 #include "sdkconfig.h"
 
 #include <stdio.h>
+#include <string.h>
 #include "unity.h"
 
 #include "freertos/FreeRTOS.h"
@@ -62,6 +63,11 @@
  * @brief Interval between checks of the transport's outbound queue, in milliseconds.
  */
 #define RESPONSE_POLL_INTERVAL 10
+
+/**
+ * @brief Function code that no request handler recognises.
+ */
+#define UNKNOWN_FUNCTION 0x7ffe
 
 /**
  * @brief Transport the dispatcher under test hands its messages to.
@@ -244,4 +250,63 @@ TEST_CASE("MessageDispatcher routes a system request and returns the response", 
     ASSERT_HAS_PAYLOAD(response);
 
     Message::DeleteMessage(response);
+}
+
+/**
+ * @brief Send two requests with an unknown function code to one interface and check both are answered.
+ *
+ *  Each must come back as a NotImplemented response with no payload.  The second answer is
+ *  what shows the handler's task is still taking requests after the first: the WiFi task
+ *  used to wait forever for a ready bit that nothing set for an unknown function.
+ *
+ * @param dispatcher Dispatcher to route the requests through.
+ * @param interface Interface whose request handler is under test.
+ */
+static void CheckUnknownFunctionIsAnswered(MessageDispatcher *dispatcher, const Esp32Interfaces::Esp32Interfaces interface)
+{
+    DrainTransport();
+
+    for (uint32_t attempt = 0; attempt < 2; attempt++)
+    {
+        uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(4));
+        TEST_ASSERT_NOT_NULL(payload);
+        memset(payload, 0xa5, 4);
+        Message *request = Message::CreateOnHeap(MessageTypes::Header, interface, UNKNOWN_FUNCTION, StatusCodes::Failure, TEST_MESSAGE_ID + attempt, payload, 4);
+        TEST_ASSERT_NOT_NULL(request);
+
+        TEST_ASSERT_TRUE_MESSAGE(dispatcher->QueueMessageForEsp32(request), "The request was not accepted.");
+
+        Message *response = WaitForTransportMessage(RESPONSE_TIMEOUT);
+        TEST_ASSERT_NOT_NULL_MESSAGE(response, attempt == 0 ? "A request with an unknown function was never answered." : "The handler stopped taking requests after an unknown function.");
+
+        ASSERT_RESPONSE(response, interface, UNKNOWN_FUNCTION, StatusCodes::NotImplemented);
+        ASSERT_MESSAGE_ID(response, TEST_MESSAGE_ID + attempt);
+        ASSERT_NO_PAYLOAD(response);
+
+        Message::DeleteMessage(response);
+    }
+}
+
+/**
+ * @brief An unknown WiFi function is answered NotImplemented and the WiFi task keeps running.
+ */
+TEST_CASE("An unknown WiFi function is answered and does not hang the WiFi task", CLASS_OF_TESTS)
+{
+    CheckUnknownFunctionIsAnswered(SetupDispatcher(), Esp32Interfaces::WiFi);
+}
+
+/**
+ * @brief An unknown System function is answered NotImplemented.
+ */
+TEST_CASE("An unknown System function is answered", CLASS_OF_TESTS)
+{
+    CheckUnknownFunctionIsAnswered(SetupDispatcher(), Esp32Interfaces::System);
+}
+
+/**
+ * @brief An unknown Bluetooth function is answered NotImplemented.
+ */
+TEST_CASE("An unknown Bluetooth function is answered", CLASS_OF_TESTS)
+{
+    CheckUnknownFunctionIsAnswered(SetupDispatcher(), Esp32Interfaces::BlueTooth);
 }
