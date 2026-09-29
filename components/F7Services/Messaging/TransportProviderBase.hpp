@@ -36,7 +36,7 @@ public:
      *  @note This method takes ownership of the message.  The message is deleted
      *        if it cannot be queued, so the caller must not use it afterwards.
      */
-    bool QueueMessageForStm32(Message * const message);
+    bool QueueMessageForStm32(Message *message);
 
     /**
      *  @brief Bit that will be used to indicate that a the STM32 has just

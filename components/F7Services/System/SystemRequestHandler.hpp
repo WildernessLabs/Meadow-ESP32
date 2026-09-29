@@ -141,12 +141,12 @@ private:
     /**
      * @brief Process the logging configuration.
      */
-    void LoggingConfiguration(Message * const request);
+    void LoggingConfiguration(Message *request);
 
     /**
      * @brief Process the log message
      */
-    void LogMessage(Message * const request);
+    void LogMessage(Message *request);
 
     /**
      *  @brief Populate the configuration object with the current configuration.

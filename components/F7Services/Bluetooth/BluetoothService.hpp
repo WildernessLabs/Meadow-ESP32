@@ -45,6 +45,26 @@ public:
     ~BluetoothService();
 
     /**
+     * @brief Deleted copy constructor, a copy would share and then double free the owned storage.
+     */
+    BluetoothService(const BluetoothService &other) = delete;
+
+    /**
+     * @brief Deleted copy assignment operator, a copy would share and then double free the owned storage.
+     */
+    BluetoothService &operator=(const BluetoothService &other) = delete;
+
+    /**
+     * @brief Deleted move constructor to prevent moving.
+     */
+    BluetoothService(BluetoothService &&other) = delete;
+
+    /**
+     * @brief Deleted move assignment operator to prevent move assignment.
+     */
+    BluetoothService &operator=(BluetoothService &&other) = delete;
+
+    /**
      * @brief Add a characteristic to the service.
      */
     BluetoothCharacteristic &AddCharacteristic(BluetoothCharacteristic * const characteristic);

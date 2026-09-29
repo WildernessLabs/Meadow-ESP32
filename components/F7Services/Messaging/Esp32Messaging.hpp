@@ -171,7 +171,7 @@ struct Message
     void DeletePayload();
 
     /**
-     *  @brief Delete the message and payload releasing heap storage.
+     *  @brief Delete the message and payload releasing heap storage, and set the caller's pointer to nullptr.
      */
-    static void DeleteMessage(Message *);
+    static void DeleteMessage(Message *&message);
 };

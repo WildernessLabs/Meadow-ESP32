@@ -529,7 +529,6 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessInboundPacket(Message *pac
                 messageType = MessageTypes::Nak;
                 responseCode = StatusCodes::InvalidPacket;
                 Message::DeleteMessage(_incomingMessage);
-                _incomingMessage = nullptr;
             }
         }
         else
@@ -537,7 +536,6 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessInboundPacket(Message *pac
             responseCode = StatusCodes::InvalidPacket;
             messageType = MessageTypes::Nak;
             Message::DeleteMessage(_incomingMessage);
-            _incomingMessage = nullptr;
         }
         queuePacket = false;
         deletePacket = true;
@@ -649,7 +647,6 @@ spi_slave_transaction_t *SpiTransportProvider::PacketReceived(spi_slave_transact
             if (_incomingMessage)
             {
                 Message::DeleteMessage(_incomingMessage);
-                _incomingMessage = nullptr;
             }
             responseCode = StatusCodes::CrcError;
             messageType = MessageTypes::Nak;
@@ -705,7 +702,6 @@ spi_slave_transaction_t *SpiTransportProvider::PacketAcknowledged(spi_slave_tran
     DeleteTransaction(transaction);
     spi_slave_transaction_t *newTransaction = CreateSpiTransaction(nullptr);
     Message::DeleteMessage(_outboundMessage);
-    _outboundMessage = nullptr;
     _currentState = WaitingForPacket;
 
     TRACE_MESSAGE("PacketAcknowledged: Exit");

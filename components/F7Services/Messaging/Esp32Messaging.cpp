@@ -294,17 +294,19 @@ void Message::DeletePayload()
  *  @brief Release the heap storage allocated for the message and any payload.
  *
  *  @param message
- *      Pointer to the message to be cleared.
+ *      Pointer to the message to be cleared, taken by reference so the caller's pointer
+ *      is set to nullptr and cannot be freed or dereferenced a second time.
  */
-void Message::DeleteMessage(Message *message)
+void Message::DeleteMessage(Message *&message)
 {
-    if (message != NULL)
+    if (message != nullptr)
     {
-        if (message->Payload != NULL)
+        if (message->Payload != nullptr)
         {
             vPortFree(message->Payload);
             message->Payload = nullptr;
         }
         vPortFree(message);
+        message = nullptr;
     }
 }

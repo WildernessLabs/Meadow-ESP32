@@ -59,6 +59,26 @@ public:
     ~ThreadPool();
 
     /**
+     * @brief Deleted copy constructor, a copy would share and then double free the owned storage.
+     */
+    ThreadPool(const ThreadPool &other) = delete;
+
+    /**
+     * @brief Deleted copy assignment operator, a copy would share and then double free the owned storage.
+     */
+    ThreadPool &operator=(const ThreadPool &other) = delete;
+
+    /**
+     * @brief Deleted move constructor to prevent moving.
+     */
+    ThreadPool(ThreadPool &&other) = delete;
+
+    /**
+     * @brief Deleted move assignment operator to prevent move assignment.
+     */
+    ThreadPool &operator=(ThreadPool &&other) = delete;
+
+    /**
      *  @brief Use of the the thread to execute a method.
      */
     void Execute(method_t method, void *parameter);
