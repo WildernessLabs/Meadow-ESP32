@@ -184,7 +184,7 @@ void TransportProviderBase::DumpMessageAtHeadOfQueue()
  *  @return
  *      true if the message was queued, false otherwise.
  */
-bool TransportProviderBase::QueueMessageForStm32(Message * const message)
+bool TransportProviderBase::QueueMessageForStm32(Message *message)
 {
     bool result = false;
     //

@@ -86,7 +86,7 @@ private:
      * @param result
      *      Status code the response should carry.
      */
-    void SendResponse(Message * const message, const StatusCodes::StatusCodes result);
+    void SendResponse(Message *message, const StatusCodes::StatusCodes result);
 
 public:
     /**

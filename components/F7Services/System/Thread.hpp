@@ -102,6 +102,26 @@ public:
     ~Thread();
 
     /**
+     * @brief Deleted copy constructor, a copy would share and then double free the owned storage.
+     */
+    Thread(const Thread &other) = delete;
+
+    /**
+     * @brief Deleted copy assignment operator, a copy would share and then double free the owned storage.
+     */
+    Thread &operator=(const Thread &other) = delete;
+
+    /**
+     * @brief Deleted move constructor to prevent moving.
+     */
+    Thread(Thread &&other) = delete;
+
+    /**
+     * @brief Deleted move assignment operator to prevent move assignment.
+     */
+    Thread &operator=(Thread &&other) = delete;
+
+    /**
      *  @brief Execute a method on this threads task passing the required parameters
      */
     void Execute(method_t method, void *parameter);

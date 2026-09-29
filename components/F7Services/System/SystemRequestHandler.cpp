@@ -963,7 +963,7 @@ void SystemRequestHandler::GetBatteryChargeLevel(Message * const message)
  *  @param request
  *      Message containing the logging configuration.
  */
-void SystemRequestHandler::LoggingConfiguration(Message * const message)
+void SystemRequestHandler::LoggingConfiguration(Message *message)
 {
     TRACE_MESSAGE("LoggingConfiguration: Enter");
 
@@ -989,7 +989,7 @@ void SystemRequestHandler::LoggingConfiguration(Message * const message)
  *  @param request
  *      Message containing the log message.
  */
-void SystemRequestHandler::LogMessage(Message * const message)
+void SystemRequestHandler::LogMessage(Message *message)
 {
     TRACE_MESSAGE("LogMessage: Enter");
 

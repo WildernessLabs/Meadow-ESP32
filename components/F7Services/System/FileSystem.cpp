@@ -326,7 +326,7 @@ bool FileSystem::IsValidFileName(const char * const name)
  * @param result
  *      Status code the response should carry.
  */
-void FileSystem::SendResponse(Message * const message, const StatusCodes::StatusCodes result)
+void FileSystem::SendResponse(Message *message, const StatusCodes::StatusCodes result)
 {
     message->MessageType = MessageTypes::Response;
     message->StatusCode = result;
