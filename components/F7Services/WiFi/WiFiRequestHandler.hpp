@@ -25,6 +25,7 @@
 #include "errno.h"
 #include <string.h>
 #include <map>
+#include <string>
 #include <iterator>
 
 #include "MessageDispatcher.hpp"
@@ -369,6 +370,15 @@ private:
      *  @brief Password for the access point.
      */
     static char *_password;
+
+    /**
+     *  @brief Mutex guarding _defaultAccessPoint and _password.
+     *
+     *  The System task sets them from a configuration request while the WiFi task reads
+     *  them to connect, and each handler has its own task, so nothing else keeps the two
+     *  apart.  Created on first use so the setters and getters are safe whenever they run.
+     */
+    static SemaphoreHandle_t CredentialsMutex();
 
     /**
      *  @brief Name of the storage in NVS holding the password for the access point.
@@ -1132,14 +1142,19 @@ public:
     /**
      *  @brief Get / Set the name of the default access point to be used when
      *  the board starts.
+     *
+     *  The getter returns a copy: the System task can replace the stored value while
+     *  another task is still using what it read, so a pointer to it would not stay valid.
      */
-    static char *GetDefaultAccessPoint();
+    static std::string GetDefaultAccessPoint();
     static StatusCodes::StatusCodes SetDefaultAccessPoint(const char *value);
 
     /**
      *  @brief Get / Set the password for the default access point.
+     *
+     *  The getter returns a copy, for the same reason as GetDefaultAccessPoint().
      */
-    static char *GetPassword();
+    static std::string GetPassword();
     static StatusCodes::StatusCodes SetPassword(const char *value);
 
     /**
