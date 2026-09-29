@@ -497,6 +497,22 @@ private:
     static SemaphoreHandle_t _pollRequestListMutex;
 
     /**
+     *  @brief Socket handles the STM32 has been given, mapped to the lwIP descriptors behind them.
+     *
+     *  Every handler that takes a socket handle from the STM32 looks it up here first, so a
+     *  handle this handler never issued cannot reach another descriptor, such as an open
+     *  LittleFS file or a poll request's dummy socket.  Today each handle is the descriptor
+     *  itself.  Keying the map by the STM32's handle means handles the STM32 creates can be
+     *  mapped to lwIP descriptors later without changing the handlers.
+     */
+    static std::map<int32_t, int> _socketHandles;
+
+    /**
+     *  @brief Mutex for _socketHandles, which handlers on several pool threads use at once.
+     */
+    static SemaphoreHandle_t _socketHandlesMutex;
+
+    /**
      *  @brief Handle for the completed poll requests.
      */
     static QueueHandle_t _completedPollRequestsQueue;
@@ -982,6 +998,21 @@ private:
      *  @brief Open a dummy socket to be used by the Poll methods to terminate a poll request.
      */
     static int OpenDummySocket();
+
+    /**
+     *  @brief Record a socket this handler created and return the handle the STM32 should use for it.
+     */
+    static int32_t RegisterSocket(const int descriptor);
+
+    /**
+     *  @brief Find the lwIP descriptor behind a socket handle from the STM32.
+     */
+    static bool FindSocket(const int32_t handle, int * const descriptor);
+
+    /**
+     *  @brief Forget a socket handle once the socket behind it has been closed.
+     */
+    static void ReleaseSocket(const int32_t handle);
 
     /**
      *  @brief Debug method to dump all of the active poll requests.

@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <string>
+#include <unistd.h>
 #include <arpa/inet.h>
 #include "esp_heap_caps.h"
 #include "esp_system.h"
@@ -33,6 +34,7 @@
 #include "SharedEnums.hpp"
 #include "WiFiRequestHandler.hpp"
 #include "NvsManager.hpp"
+#include "Mapping.hpp"
 #include "Utils.hpp"
 
 #include "TestAssertions.hpp"
@@ -944,4 +946,91 @@ TEST_CASE("Fetch a web page repeatedly", SLOW_TESTS)
         printf("Free heap fell by %" PRIu32 " bytes over %" PRIu32 " fetches, against an allowance of %" PRIu32 ".\n", lost, iterations, allowance);
         TEST_ASSERT_TRUE_MESSAGE(lost <= allowance, "The free heap fell too far, which suggests a leak in the socket path.");
     }
+}
+
+/**
+ * @brief Open a UDP socket directly with lwIP, without going through the request handler.
+ *
+ *  This is a real descriptor that the handler never issued, standing in for the ones that
+ *  belong to other parts of the firmware: an open file, or a poll request's dummy socket.
+ *
+ * @return The lwIP descriptor, which the caller must close.
+ */
+static int OpenUnissuedSocket()
+{
+    const int descriptor = socket(AF_INET, SOCK_DGRAM, 0);
+    TEST_ASSERT_GREATER_OR_EQUAL_INT_MESSAGE(0, descriptor, "Could not open a socket directly with lwIP.");
+    return (descriptor);
+}
+
+/**
+ * @brief Send a close request for a handle and check it is refused with EBADF.
+ *
+ * @param dispatcher Dispatcher to queue the request on.
+ * @param socketHandle Handle the handler should not recognise.
+ */
+static void CheckCloseIsRefused(MockMessageDispatcher *dispatcher, const int32_t socketHandle)
+{
+    SocketCallResult callResult = {};
+    uint8_t *payload = TestEncoders::EncodeCloseRequest(socketHandle);
+    TEST_ASSERT_TRUE_MESSAGE(SocketCall(dispatcher, WiFiFunction::Close, payload, TestEncoders::ENCODED_CLOSE_REQUEST_SIZE, &callResult), "No response to the close request.");
+    TEST_ASSERT_EQUAL_INT32_MESSAGE(-1, callResult.Result, "A close request for a handle the handler did not issue succeeded.");
+    TEST_ASSERT_EQUAL_INT32(Mapping::NuttxErrno(EBADF), callResult.ResponseErrno);
+}
+
+/**
+ * @brief Check that close refuses a descriptor the handler did not create, and leaves it open.
+ *
+ *  Regression check for issue #237.  The handle from the STM32 used to be passed straight to
+ *  close(), so a request could close any descriptor in the firmware.
+ */
+TEST_CASE("Close refuses a socket handle the handler did not issue", CLASS_OF_TESTS)
+{
+    MockMessageDispatcher *dispatcher = SetupConnectedDispatcher();
+    const int descriptor = OpenUnissuedSocket();
+
+    CheckCloseIsRefused(dispatcher, descriptor);
+
+    TEST_ASSERT_EQUAL_INT_MESSAGE(0, close(descriptor), "The descriptor was closed by a request that should have been refused.");
+}
+
+/**
+ * @brief Check that send refuses a descriptor the handler did not create.
+ */
+TEST_CASE("Send refuses a socket handle the handler did not issue", CLASS_OF_TESTS)
+{
+    MockMessageDispatcher *dispatcher = SetupConnectedDispatcher();
+    const int descriptor = OpenUnissuedSocket();
+
+    const char data[] = "test";
+    uint32_t encodedLength = 0;
+    uint8_t *payload = TestEncoders::EncodeSendRequestWithDeclaredLength(descriptor, data, sizeof(data) - 1, sizeof(data) - 1, &encodedLength);
+    TEST_ASSERT_NOT_NULL(payload);
+
+    SocketCallResult callResult = {};
+    TEST_ASSERT_TRUE_MESSAGE(SocketCall(dispatcher, WiFiFunction::Send, payload, encodedLength, &callResult), "No response to the send request.");
+    TEST_ASSERT_EQUAL_INT32_MESSAGE(-1, callResult.Result, "A send request for a handle the handler did not issue succeeded.");
+    TEST_ASSERT_EQUAL_INT32(Mapping::NuttxErrno(EBADF), callResult.ResponseErrno);
+
+    TEST_ASSERT_EQUAL_INT(0, close(descriptor));
+}
+
+/**
+ * @brief Check that a closed handle stays refused after lwIP reuses its descriptor number.
+ *
+ *  lwIP hands out the lowest free descriptor, so a descriptor opened straight after a close
+ *  takes the number the STM32 still holds.  A stale close request must not reach it.
+ */
+TEST_CASE("A closed socket handle is refused after its descriptor is reused", CLASS_OF_TESTS)
+{
+    MockMessageDispatcher *dispatcher = SetupConnectedDispatcher();
+    const int32_t socketHandle = OpenUdpSocket(dispatcher);
+    CloseSocket(dispatcher, socketHandle);
+
+    const int descriptor = OpenUnissuedSocket();
+    TEST_ASSERT_EQUAL_INT_MESSAGE(socketHandle, descriptor, "lwIP did not reuse the descriptor number, so this test cannot check a stale handle.");
+
+    CheckCloseIsRefused(dispatcher, socketHandle);
+
+    TEST_ASSERT_EQUAL_INT_MESSAGE(0, close(descriptor), "A stale handle closed the descriptor that reused its number.");
 }
