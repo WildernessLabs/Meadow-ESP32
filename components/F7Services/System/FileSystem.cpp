@@ -367,25 +367,33 @@ void FileSystem::ReadFile(Message * const message)
             std::string s = PARTITION_PATH_NAME;
             s += "/";
             s += fileData->Name;
-            struct stat fileInfo;
-            if (stat(s.c_str(), &fileInfo) == 0)
+            //
+            //  Open first and take the size from the open file.  A stat() on the path followed
+            //  by fopen() checks one file and may read another, or a different length of the
+            //  same one, if the file is replaced or rewritten in between.
+            //
+            FILE *file = fopen(s.c_str(), "rb");
+            if (file == NULL)
             {
-                //
-                //  A read request should carry no contents, but ExtractFileNameAndContents
-                //  allocates whatever the request declares, so release it before the pointer
-                //  is reused for the file or every such request leaks it.
-                //
-                Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&fileData->Contents));
-                fileData->ContentsLength = 0;
-                fileData->Contents = static_cast<uint8_t *>(pvPortMalloc(fileInfo.st_size));
-                if (fileData->Contents != NULL)
+                result = StatusCodes::FileNotFound;
+            }
+            else
+            {
+                struct stat fileInfo;
+                if (fstat(fileno(file), &fileInfo) == 0)
                 {
-                    TRACE_MESSAGE("Reading %" PRIi32 " bytes from file %s", static_cast<int32_t>(fileInfo.st_size), fileData->Name);
-                    FILE *file = fopen(s.c_str(), "rb");
-                    if (file != NULL)
+                    //
+                    //  A read request should carry no contents, but ExtractFileNameAndContents
+                    //  allocates whatever the request declares, so release it before the pointer
+                    //  is reused for the file or every such request leaks it.
+                    //
+                    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&fileData->Contents));
+                    fileData->ContentsLength = 0;
+                    fileData->Contents = static_cast<uint8_t *>(pvPortMalloc(fileInfo.st_size));
+                    if (fileData->Contents != NULL)
                     {
+                        TRACE_MESSAGE("Reading %" PRIi32 " bytes from file %s", static_cast<int32_t>(fileInfo.st_size), fileData->Name);
                         size_t amountRead = fread(static_cast<void *>(fileData->Contents), 1, fileInfo.st_size, file);
-                        fclose(file);
                         //
                         //  Anything less than the full file is a short read, which must not be
                         //  reported as though the whole file arrived.
@@ -409,22 +417,19 @@ void FileSystem::ReadFile(Message * const message)
                                 result = StatusCodes::CompletedOk;
                             }
                         }
+                        if (result != StatusCodes::CompletedOk)
+                        {
+                            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&fileData->Contents));
+                            fileData->ContentsLength = 0;
+                        }
                     }
-                    if (result != StatusCodes::CompletedOk)
+                    else
                     {
-                        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&fileData->Contents));
                         fileData->ContentsLength = 0;
+                        result = StatusCodes::EspOutOfMemory;
                     }
                 }
-                else
-                {
-                    fileData->ContentsLength = 0;
-                    result = StatusCodes::EspOutOfMemory;
-                }
-            }
-            else
-            {
-                result = StatusCodes::FileNotFound;
+                fclose(file);
             }
         }
         Encoders::FreeFileNameAndContents(&fileData);
