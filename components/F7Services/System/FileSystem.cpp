@@ -370,6 +370,12 @@ void FileSystem::ReadFile(Message * const message)
             struct stat fileInfo;
             if (stat(s.c_str(), &fileInfo) == 0)
             {
+                //
+                //  A read request should carry no contents, but ExtractFileNameAndContents
+                //  allocates whatever the request declares, so release it before the pointer
+                //  is reused for the file or every such request leaks it.
+                //
+                Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&fileData->Contents));
                 fileData->ContentsLength = 0;
                 fileData->Contents = static_cast<uint8_t *>(pvPortMalloc(fileInfo.st_size));
                 if (fileData->Contents != NULL)

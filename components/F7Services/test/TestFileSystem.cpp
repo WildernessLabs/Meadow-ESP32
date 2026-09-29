@@ -13,6 +13,7 @@
 #include <dirent.h>
 #include <string>
 #include <string.h>
+#include "esp_system.h"
 #include "unity.h"
 
 #include "MockMessageDispatcher.hpp"
@@ -436,6 +437,78 @@ TEST_CASE("Reading a file", CLASS_OF_TESTS)
     Encoders::FreeFileNameAndContents(&fileContents);
     Message::DeleteMessage(readMessage);
 
+    ReleaseFileSystemTestContext(&context);
+}
+
+/**
+ * @brief Read the test file with a request that also carries contents, and check the response.
+ *
+ * @param context Test context holding the file system under test.
+ * @param requestContents Contents to send with the read request.
+ * @param requestContentsLength Number of bytes in requestContents.
+ */
+static void ReadFileWithRequestContents(FileSystemTestContext *context, const uint8_t *requestContents, const uint32_t requestContentsLength)
+{
+    Message *readMessage = CreateFileNameAndContentsMessage(SystemFunction::FileSystemReadFile, TEST_FILE_NAME, requestContents, requestContentsLength);
+    context->Fs->ReadFile(readMessage);
+
+    ASSERT_OUTBOUND_QUEUE_LENGTH(context->Dispatcher, 1);
+    Message *response = context->Dispatcher->GetOutboundMessage();
+    ASSERT_RESPONSE(response, Esp32Interfaces::System, SystemFunction::FileSystemReadFile, StatusCodes::CompletedOk);
+
+    Esp32Messaging::FileNameAndContents *fileContents = Encoders::ExtractFileNameAndContents(response->Payload);
+    TEST_ASSERT_NOT_NULL(fileContents);
+    TEST_ASSERT_EQUAL(strlen(TEST_FILE_CONTENTS), fileContents->ContentsLength);
+    TEST_ASSERT_EQUAL_MEMORY(TEST_FILE_CONTENTS, fileContents->Contents, strlen(TEST_FILE_CONTENTS));
+    Encoders::FreeFileNameAndContents(&fileContents);
+
+    //
+    //  The request is recycled as the response, so this releases both.
+    //
+    Message::DeleteMessage(response);
+}
+
+/**
+ * @brief A read request that carries contents returns the file and does not leak those contents.
+ *
+ * @note ExtractFileNameAndContents allocates whatever contents the request declares.  ReadFile
+ *       used to overwrite that pointer with the buffer for the file, leaking the request's
+ *       contents on every such read.  Ten reads of 1 KB each would lose about 10 KB.
+ */
+TEST_CASE("ReadFile does not leak contents sent with the read request", CLASS_OF_TESTS)
+{
+    static constexpr uint32_t REQUEST_CONTENTS_LENGTH = 1024;
+    static constexpr uint32_t ITERATIONS = 10;
+    static constexpr uint32_t HEAP_ALLOWANCE = 512;
+
+    FileSystemTestContext context = {};
+    CreateFileSystemTestContext(&context, true);
+    WriteTestFileContents(TEST_FILE_NAME, TEST_FILE_CONTENTS);
+
+    uint8_t *requestContents = static_cast<uint8_t *>(pvPortMalloc(REQUEST_CONTENTS_LENGTH));
+    TEST_ASSERT_NOT_NULL(requestContents);
+    memset(requestContents, 0xa5, REQUEST_CONTENTS_LENGTH);
+
+    //
+    //  The first read may leave long-lived allocations behind in the file system and stdio
+    //  layers, so the baseline is taken after it.
+    //
+    ReadFileWithRequestContents(&context, requestContents, REQUEST_CONTENTS_LENGTH);
+    const uint32_t heapBefore = esp_get_free_heap_size();
+
+    for (uint32_t iteration = 0; iteration < ITERATIONS; iteration++)
+    {
+        ReadFileWithRequestContents(&context, requestContents, REQUEST_CONTENTS_LENGTH);
+    }
+
+    const uint32_t heapAfter = esp_get_free_heap_size();
+    if (heapAfter < heapBefore)
+    {
+        printf("Free heap fell by %" PRIu32 " bytes over %" PRIu32 " reads, from %" PRIu32 " to %" PRIu32 ".\n", heapBefore - heapAfter, ITERATIONS, heapBefore, heapAfter);
+        TEST_ASSERT_LESS_OR_EQUAL_UINT32_MESSAGE(HEAP_ALLOWANCE, heapBefore - heapAfter, "The free heap fell too far, which suggests ReadFile leaks the request's contents.");
+    }
+
+    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&requestContents));
     ReleaseFileSystemTestContext(&context);
 }
 
