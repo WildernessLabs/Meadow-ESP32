@@ -256,3 +256,24 @@ void RequestHandlerBase::SendIntegerResult(const uint8_t interface, const uint32
 
     TRACE_MESSAGE("SendIntegerResult - Exit");
 }
+
+/**
+ * @brief Answer a request whose function code this handler does not recognise.
+ *
+ * The request is recycled as a NotImplemented response and handed to the STM32, which
+ * takes ownership of it, so the STM32 is not left waiting and the request is not leaked.
+ *
+ * @param request - Request carrying the unrecognised function code.
+ */
+void RequestHandlerBase::RespondToUnknownFunction(Message *request)
+{
+    TRACE_MESSAGE("RespondToUnknownFunction - Enter");
+
+    ERROR_MESSAGE("Unknown function %" PRIu32 " for interface %" PRIu8 ", responding NotImplemented.", request->Function, request->Interface);
+    request->DeletePayload();
+    request->MessageType = MessageTypes::Response;
+    request->StatusCode = StatusCodes::NotImplemented;
+    _messageDispatcher->QueueMessageForStm32(request);
+
+    TRACE_MESSAGE("RespondToUnknownFunction - Exit");
+}

@@ -547,6 +547,8 @@ void BluetoothRequestHandler::DispatchRequest(Message *request)
             {
                 TRACE_HEX_BUFFER(request->Payload, request->PayloadLength);
             }
+            RespondToUnknownFunction(request);
+            xEventGroupSetBits(_xBtEventGroup, BT_READY_BIT);
             break;
     }
     //    xEventGroupWaitBits(_xBtEventGroup, BT_READY_BIT, pdTRUE, pdTRUE, portMAX_DELAY);

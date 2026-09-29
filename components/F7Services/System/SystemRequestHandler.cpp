@@ -1071,6 +1071,7 @@ void SystemRequestHandler::DispatchRequest(Message *request)
             {
                 TRACE_HEX_BUFFER(request->Payload, request->PayloadLength);
             }
+            RespondToUnknownFunction(request);
             break;
     }
     TRACE_MESSAGE("DispatchRequest: Exit");
