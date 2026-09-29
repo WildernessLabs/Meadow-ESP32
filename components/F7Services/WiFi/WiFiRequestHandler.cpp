@@ -63,6 +63,16 @@ std::map<uint32_t, struct pollfd *> WiFiRequestHandler::_pollRequests;
 SemaphoreHandle_t WiFiRequestHandler::_pollRequestListMutex = NULL;
 
 /**
+ *  @brief Socket handles the STM32 has been given, mapped to the lwIP descriptors behind them.
+ */
+std::map<int32_t, int> WiFiRequestHandler::_socketHandles;
+
+/**
+ *  @brief Mutex for _socketHandles.
+ */
+SemaphoreHandle_t WiFiRequestHandler::_socketHandlesMutex = NULL;
+
+/**
  *  @brief Handle for the completed poll requests.
  */
 QueueHandle_t WiFiRequestHandler::_completedPollRequestsQueue = NULL;
@@ -351,6 +361,11 @@ WiFiRequestHandler::WiFiRequestHandler()
     if (_pollRequestListMutex == NULL)
     {
         ERROR_MESSAGE("WiFiRequestHandler: Cannot create poll request list mutex.");
+    }
+    _socketHandlesMutex = xSemaphoreCreateMutex();
+    if (_socketHandlesMutex == NULL)
+    {
+        ERROR_MESSAGE("WiFiRequestHandler: Cannot create socket handle table mutex.");
     }
     //
     //  Get ready for nodes connecting when configured as an access point.

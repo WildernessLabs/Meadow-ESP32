@@ -375,6 +375,7 @@ void WiFiRequestHandler::Socket(void * const vpMessage)
                     }
                     else
                     {
+                        response.Result = RegisterSocket(response.Result);
                         TRACE_MESSAGE("Socket: Created socket %" PRIi32, response.Result);
                         response.ResponseErrno = 0;
                     }
@@ -497,7 +498,16 @@ void WiFiRequestHandler::Connect(void * const vpMessage)
                             TRACE_MESSAGE("Connect: Family: %d", sa.sin_family);
                             TRACE_MESSAGE("Connect: IP address: %s", inet_ntoa(sa.sin_addr));
                             TRACE_MESSAGE("Connect: Port: %d", ntohs(sa.sin_port));
-                            response.Result = connect(request->SocketHandle, reinterpret_cast<struct sockaddr *>(&sa), sizeof(sa));
+                            int descriptor = -1;
+                            if (FindSocket(request->SocketHandle, &descriptor))
+                            {
+                                response.Result = connect(descriptor, reinterpret_cast<struct sockaddr *>(&sa), sizeof(sa));
+                            }
+                            else
+                            {
+                                response.Result = -1;
+                                errno = EBADF;
+                            }
                             if (response.Result != 0)
                             {
                                 TRACE_MESSAGE("Connect: Error code: %d - %s", errno, strerror(errno));
@@ -797,17 +807,27 @@ void WiFiRequestHandler::GetSockOpt(void * const vpMessage)
                     TRACE_MESSAGE("GetSockOpt: Getting socket option level 0x%" PRIx32 ", option name 0x%" PRIx32 " for socket %" PRIi32, static_cast<uint32_t>(level), static_cast<uint32_t>(optionName), request->SocketHandle);
                     response.Result = -1;
                     response.ResponseErrno = Mapping::NuttxErrno(ENOPROTOOPT);
+                    int descriptor = -1;
+                    if (!FindSocket(request->SocketHandle, &descriptor))
+                    {
+                        //
+                        //  No option is read for a handle this handler did not issue, so the
+                        //  switch below falls to its default and leaves this error in place.
+                        //
+                        response.ResponseErrno = Mapping::NuttxErrno(EBADF);
+                        optionName = -1;
+                    }
                     switch (optionName)
                     {
                         case SO_SNDTIMEO:   /* Get the send timeout */
                         case SO_RCVTIMEO:   /* Get the receive timeout */
-                            result = GetSendReceiveOption(request->SocketHandle, level, optionName, response);
+                            result = GetSendReceiveOption(descriptor, level, optionName, response);
                             break;
                         case SO_LINGER:     /* Linger on close if data present */
-                            result = GetLingerOption(request->SocketHandle, level, optionName, response);
+                            result = GetLingerOption(descriptor, level, optionName, response);
                             break;
                         case SO_RCVBUF:     /* Get the receive buffer size */
-                            result = GetSendReceiveBuffer(request->SocketHandle, level, optionName, response);
+                            result = GetSendReceiveBuffer(descriptor, level, optionName, response);
                             break;
                         case SO_ACCEPTCONN: /* Socket has had listen() */
                             TRACE_MESSAGE("GetSockOpt: Implement SO_ACCEPTCONN");
@@ -1081,7 +1101,16 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetSockOpt(const Esp32Messaging::Se
             if (optionValue != NULL)
             {
                 TRACE_MESSAGE("SetSockOpt: Setting socket option level to 0x%x, option name 0x%x for socket %ld", (uint) level, (uint) optionName, request->SocketHandle);
-                response.Result = setsockopt(request->SocketHandle, level, optionName, optionValue, optionLength);
+                int descriptor = -1;
+                if (FindSocket(request->SocketHandle, &descriptor))
+                {
+                    response.Result = setsockopt(descriptor, level, optionName, optionValue, optionLength);
+                }
+                else
+                {
+                    response.Result = -1;
+                    errno = EBADF;
+                }
                 Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&optionValue));
                 if (response.Result != 0)
                 {
@@ -1242,7 +1271,21 @@ void WiFiRequestHandler::Close(void * const vpMessage)
             Esp32Messaging::CloseRequest *request = Encoders::ExtractCloseRequest(message->Payload);
             if (request)
             {
-                response.Result = close(request->SocketHandle);
+                int descriptor = -1;
+                if (FindSocket(request->SocketHandle, &descriptor))
+                {
+                    response.Result = close(descriptor);
+                    //
+                    //  The descriptor is released whether or not close() reports an error, so
+                    //  the handle is forgotten either way; lwIP may reuse the number next.
+                    //
+                    ReleaseSocket(request->SocketHandle);
+                }
+                else
+                {
+                    response.Result = -1;
+                    errno = EBADF;
+                }
                 if (response.Result < 0)
                 {
                     response.ResponseErrno = Mapping::NuttxErrno(errno);
@@ -1356,7 +1399,16 @@ void WiFiRequestHandler::Send(void * const vpMessage)
                     response.Result = Mapping::GetEspFlagValue(Mapping::MessageFlags, request->Flags, &mappedFlags);
                     if (response.Result == 0)
                     {
-                        response.Result = send(request->SocketHandle, request->Buffer, request->Length, mappedFlags);
+                        int descriptor = -1;
+                        if (FindSocket(request->SocketHandle, &descriptor))
+                        {
+                            response.Result = send(descriptor, request->Buffer, request->Length, mappedFlags);
+                        }
+                        else
+                        {
+                            response.Result = -1;
+                            errno = EBADF;
+                        }
                         if (response.Result < 0)
                         {
                             response.ResponseErrno = Mapping::NuttxErrno(errno);
@@ -1493,7 +1545,16 @@ StatusCodes::StatusCodes WiFiRequestHandler::SendTo(Esp32Messaging::SendToReques
 
         if (destinationUsable)
         {
-            response.Result = sendto(request->SocketHandle, request->Buffer, request->Length, mappedFlags, psa, lenSa);
+            int descriptor = -1;
+            if (FindSocket(request->SocketHandle, &descriptor))
+            {
+                response.Result = sendto(descriptor, request->Buffer, request->Length, mappedFlags, psa, lenSa);
+            }
+            else
+            {
+                response.Result = -1;
+                errno = EBADF;
+            }
 
             if (response.Result < 0)
             {
@@ -1674,7 +1735,16 @@ StatusCodes::StatusCodes WiFiRequestHandler::RecvFrom(Esp32Messaging::RecvFromRe
         }
         else
         {
-            response.Result = recvfrom(request->SocketHandle, response.Buffer, request->Length, mappedFlags, reinterpret_cast<struct sockaddr *>(sa), (sa == NULL) ? NULL : &len);
+            int descriptor = -1;
+            if (FindSocket(request->SocketHandle, &descriptor))
+            {
+                response.Result = recvfrom(descriptor, response.Buffer, request->Length, mappedFlags, reinterpret_cast<struct sockaddr *>(sa), (sa == NULL) ? NULL : &len);
+            }
+            else
+            {
+                response.Result = -1;
+                errno = EBADF;
+            }
         }
 
         if (response.Result < 0)
@@ -2020,7 +2090,16 @@ void WiFiRequestHandler::SendMsg(void * const vpMessage)
 
                         TRACE_MESSAGE("SendMsg: socket %" PRIi32 ", buffer length %" PRIu32 ", control length %" PRIu32, request->SocketHandle, request->BufferLength, request->ControlLength);
 
-                        response.Result = sendmsg(request->SocketHandle, &mhdr, mappedFlags);
+                        int descriptor = -1;
+                        if (FindSocket(request->SocketHandle, &descriptor))
+                        {
+                            response.Result = sendmsg(descriptor, &mhdr, mappedFlags);
+                        }
+                        else
+                        {
+                            response.Result = -1;
+                            errno = EBADF;
+                        }
                         if (response.Result < 0)
                         {
                             response.ResponseErrno = Mapping::NuttxErrno(errno);
@@ -2170,7 +2249,16 @@ void WiFiRequestHandler::RecvMsg(void * const vpMessage)
 
                             TRACE_MESSAGE("RecvMsg: Requesting %" PRIi32 " bytes from socket handle %" PRIi32 ", control buffer %" PRIu32, request->Length, request->SocketHandle, request->ControlLength);
 
-                            response.Result = recvmsg(request->SocketHandle, &mhdr, mappedFlags);
+                            int descriptor = -1;
+                            if (FindSocket(request->SocketHandle, &descriptor))
+                            {
+                                response.Result = recvmsg(descriptor, &mhdr, mappedFlags);
+                            }
+                            else
+                            {
+                                response.Result = -1;
+                                errno = EBADF;
+                            }
 
                             if (response.Result < 0)
                             {
@@ -2330,7 +2418,16 @@ StatusCodes::StatusCodes WiFiRequestHandler::Bind(Esp32Messaging::BindRequest *r
         TRACE_MESSAGE("Bind: Family: %" PRIi32, sa.sin_family);
         TRACE_MESSAGE("Bind: IP address: %s", inet_ntoa(sa.sin_addr));
         TRACE_MESSAGE("Bind: Port: %" PRIu16, ntohs(sa.sin_port));
-        response.Result = bind(request->SocketHandle, reinterpret_cast<struct sockaddr *>(&sa), sizeof(sa));
+        int descriptor = -1;
+        if (FindSocket(request->SocketHandle, &descriptor))
+        {
+            response.Result = bind(descriptor, reinterpret_cast<struct sockaddr *>(&sa), sizeof(sa));
+        }
+        else
+        {
+            response.Result = -1;
+            errno = EBADF;
+        }
         if (response.Result != 0)
         {
             response.ResponseErrno = Mapping::NuttxErrno(errno);
@@ -2481,7 +2578,16 @@ void WiFiRequestHandler::Listen(void * const vpMessage)
             Esp32Messaging::ListenRequest *request = Encoders::ExtractListenRequest(message->Payload);
             if (request)
             {
-                response.Result = listen(request->SocketHandle, request->BackLog);
+                int descriptor = -1;
+                if (FindSocket(request->SocketHandle, &descriptor))
+                {
+                    response.Result = listen(descriptor, request->BackLog);
+                }
+                else
+                {
+                    response.Result = -1;
+                    errno = EBADF;
+                }
                 response.ResponseErrno = (response.Result == 0) ? 0 : Mapping::NuttxErrno(errno);
                 Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&request));
             }
@@ -2541,9 +2647,19 @@ StatusCodes::StatusCodes WiFiRequestHandler::Accept(Esp32Messaging::AcceptReques
 {
     struct sockaddr sa = {};
     socklen_t saLen = sizeof(sa);
-    response.Result = accept(request->SocketHandle, &sa, &saLen);
+    int descriptor = -1;
+    if (FindSocket(request->SocketHandle, &descriptor))
+    {
+        response.Result = accept(descriptor, &sa, &saLen);
+    }
+    else
+    {
+        response.Result = -1;
+        errno = EBADF;
+    }
     if (response.Result >= 0)
     {
+        response.Result = RegisterSocket(response.Result);
         Esp32Messaging::SockAddr *sockAddr = static_cast<Esp32Messaging::SockAddr *>(pvPortMalloc(sizeof(Esp32Messaging::SockAddr)));
         if (sockAddr)
         {
@@ -2856,13 +2972,22 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetSockPeerName(const Esp32Messagin
 {
     struct sockaddr sa = {};
     socklen_t saLen = sizeof(sa);
-    if (methodToCall == WiFiFunction::GetSockName)
+    int descriptor = -1;
+    if (!FindSocket(request->SocketHandle, &descriptor))
     {
-        response.Result = getsockname(request->SocketHandle, &sa, &saLen);
+        response.Result = -1;
+        errno = EBADF;
     }
     else
     {
-        response.Result = getpeername(request->SocketHandle, &sa, &saLen);
+        if (methodToCall == WiFiFunction::GetSockName)
+        {
+            response.Result = getsockname(descriptor, &sa, &saLen);
+        }
+        else
+        {
+            response.Result = getpeername(descriptor, &sa, &saLen);
+        }
     }
     if (response.Result == 0)
     {
@@ -3047,6 +3172,75 @@ void WiFiRequestHandler::UnlockPollRequests()
 }
 
 /**
+ *  @brief Record a socket this handler created and return the handle the STM32 should use for it.
+ *
+ *  Today the handle is the lwIP descriptor itself.  This is the one place that decides
+ *  what the STM32 is given, so mapping handles the STM32 creates onto lwIP descriptors
+ *  only changes this function, FindSocket() and ReleaseSocket().
+ *
+ *  @param descriptor
+ *      lwIP descriptor returned by socket() or accept().
+ *
+ *  @returns
+ *      Handle to send to the STM32.
+ */
+int32_t WiFiRequestHandler::RegisterSocket(const int descriptor)
+{
+    const int32_t handle = static_cast<int32_t>(descriptor);
+    xSemaphoreTake(_socketHandlesMutex, portMAX_DELAY);
+    _socketHandles[handle] = descriptor;
+    xSemaphoreGive(_socketHandlesMutex);
+    return (handle);
+}
+
+/**
+ *  @brief Find the lwIP descriptor behind a socket handle from the STM32.
+ *
+ *  Only handles given out by RegisterSocket() and not yet released are found.  Anything
+ *  else could be a descriptor belonging to another part of the firmware, such as an open
+ *  LittleFS file or a poll request's dummy socket, and must not be read, written or closed
+ *  on the STM32's behalf.
+ *
+ *  @param handle
+ *      Socket handle carried by the STM32's request.
+ *
+ *  @param descriptor
+ *      Set to the lwIP descriptor when the handle is found.
+ *
+ *  @returns
+ *      true if the handle is one this handler issued, false otherwise.
+ */
+bool WiFiRequestHandler::FindSocket(const int32_t handle, int * const descriptor)
+{
+    xSemaphoreTake(_socketHandlesMutex, portMAX_DELAY);
+    const std::map<int32_t, int>::const_iterator entry = _socketHandles.find(handle);
+    const bool found = (entry != _socketHandles.end());
+    if (found)
+    {
+        *descriptor = entry->second;
+    }
+    xSemaphoreGive(_socketHandlesMutex);
+    if (!found)
+    {
+        ERROR_MESSAGE("Socket handle %" PRIi32 " was not issued by this handler, refusing it.", handle);
+    }
+    return (found);
+}
+
+/**
+ *  @brief Forget a socket handle once the socket behind it has been closed.
+ *
+ *  @param handle
+ *      Socket handle carried by the STM32's close request.
+ */
+void WiFiRequestHandler::ReleaseSocket(const int32_t handle)
+{
+    xSemaphoreTake(_socketHandlesMutex, portMAX_DELAY);
+    _socketHandles.erase(handle);
+    xSemaphoreGive(_socketHandlesMutex);
+}
+
+/**
  *  @brief Open a dummy socket to be used by the Poll methods to terminate a poll request.
  *
  *  This socket is never connected or sent to; it exists only to be closed from another
@@ -3107,6 +3301,11 @@ int WiFiRequestHandler::PollSetup(void * const vpMessage)
     {
         return (-1);
     }
+    int descriptor = -1;
+    if (!FindSocket(static_cast<Esp32Messaging::PollRequest *>(vpMessage)->SocketHandle, &descriptor))
+    {
+        return (-1);
+    }
     struct pollfd *fds = static_cast<struct pollfd *>(pvPortMalloc(2 * sizeof(struct pollfd)));
     if (fds == NULL)
     {
@@ -3125,7 +3324,7 @@ int WiFiRequestHandler::PollSetup(void * const vpMessage)
     int32_t events;
     Mapping::GetEspFlagValue(Mapping::PollEvents, request->Events, &events);
 
-    fds[WiFiRequestHandler::POLL_FD_INDEX].fd = request->SocketHandle;
+    fds[WiFiRequestHandler::POLL_FD_INDEX].fd = descriptor;
     fds[WiFiRequestHandler::POLL_FD_INDEX].events = static_cast<uint16_t>(events & 0xffff);
     fds[WiFiRequestHandler::POLL_DUMMY_FD_INDEX].fd = dummy_socket_handle;
     fds[WiFiRequestHandler::POLL_DUMMY_FD_INDEX].events = POLLIN;
