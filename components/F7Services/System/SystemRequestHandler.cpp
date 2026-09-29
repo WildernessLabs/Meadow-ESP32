@@ -65,17 +65,6 @@ uint32_t SystemRequestHandler::_maximumMessageQueueLength = 10;
 const char *SystemRequestHandler::_configurationName = "Meadow";
 
 /**
- *  @brief Private instance of the shared threadpool.
- *
- *  @note Left null until SharedThreadPool() first constructs it.  Constructing a
- *        ThreadPool here, during static initialisation, would run before app_main()
- *        and before Logging::Setup(), so a construction failure would throw where
- *        nothing can catch it and any trace calls in the constructor would run
- *        against an unconfigured logging system.
- */
-ThreadPool *SystemRequestHandler::_threadPool = nullptr;
-
-/**
  *  @brief Name of the key holding the _maximumMessageQueueLength value.
  */
 const char *SystemRequestHandler::MAXIMUM_MESSAGE_QUEUE_LENGTH_NAME = "MaxQueueLen";
@@ -246,14 +235,17 @@ uint32_t SystemRequestHandler::GetMaximumMessageQueueLength()
  *  Constructs the pool on first use, so construction happens after app_main() has
  *  run Logging::Setup() and any failure is a catchable ThreadPoolException rather
  *  than an unreportable throw during static initialisation.
+ *
+ *  The pool is held in a function-local static, whose initialisation C++ guarantees
+ *  runs exactly once even when several tasks call this at the same time (ESP-IDF
+ *  implements the guard with a FreeRTOS lock).  A null check followed by new could
+ *  build two pools if two tasks raced to the first call.  If construction throws, the
+ *  static is left uninitialised and the next call tries again.
  */
 ThreadPool *SystemRequestHandler::SharedThreadPool()
 {
-    if (_threadPool == nullptr)
-    {
-        _threadPool = new ThreadPool();
-    }
-    return (_threadPool);
+    static ThreadPool * const threadPool = new ThreadPool();
+    return (threadPool);
 }
 
 /**

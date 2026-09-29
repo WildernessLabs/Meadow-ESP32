@@ -158,6 +158,47 @@ bool Thread::IsBusy()
 }
 
 /**
+ *  @brief Execute the specified method in this thread if the thread is idle.
+ *
+ *  Checking that the thread is idle and claiming it happen under the one hold of the
+ *  mutex, so two callers can never both claim the same thread.  Checking IsBusy() and
+ *  then calling Execute() leaves a window between the two in which another caller can
+ *  claim the thread.
+ *
+ *  @param method
+ *      Pointer to the method that should be executed.
+ *
+ *  @param parameter
+ *      Parameter to be passed to the method.
+ *
+ *  @return
+ *      true if the thread was idle and will now run the method, false if it was busy,
+ *      in which case nothing about the thread has changed.
+ */
+bool Thread::TryExecute(method_t method, void *parameter)
+{
+    TRACE_MESSAGE("TryExecute: Thread %s Enter", _name);
+    bool claimed = false;
+    if (xSemaphoreTake(_mutex, portMAX_DELAY) == pdTRUE)
+    {
+        if (!_isBusy)
+        {
+            _isBusy = true;
+            _method = method;
+            _parameter = parameter;
+            claimed = true;
+        }
+        xSemaphoreGive(_mutex);
+        if (claimed)
+        {
+            xSemaphoreGive(_executeMethod);
+        }
+    }
+    TRACE_MESSAGE("TryExecute: Thread %s Exit", _name);
+    return (claimed);
+}
+
+/**
  *  @brief Execute the specified method in this thread.
  *
  *  @param method
@@ -165,29 +206,15 @@ bool Thread::IsBusy()
  *
  *  @param parameter
  *      Parameter to be passed to the method.
+ *
+ *  @throws ThreadPoolException if the thread is already busy.
  */
 void Thread::Execute(method_t method, void *parameter)
 {
-    TRACE_MESSAGE("Execute: Thread %s Enter", _name);
-    if (xSemaphoreTake(_mutex, portMAX_DELAY) == pdTRUE)
+    if (!TryExecute(method, parameter))
     {
-        if (_isBusy)
-        {
-            //
-            //  The mutex is released before the throw.  TaskCompleted() waits on it
-            //  without a timeout, so a thread that threw while holding it would never
-            //  be able to report that it had finished.
-            //
-            xSemaphoreGive(_mutex);
-            throw ThreadPoolException("Attempt to execute method on a busy thread.");
-        }
-        _isBusy = true;
-        _method = method;
-        _parameter = parameter;
-        xSemaphoreGive(_mutex);
-        xSemaphoreGive(_executeMethod);
+        throw ThreadPoolException("Attempt to execute method on a busy thread.");
     }
-    TRACE_MESSAGE("Execute: Thread %s Exit", _name);
 }
 
 /**

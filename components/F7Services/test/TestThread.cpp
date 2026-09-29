@@ -278,3 +278,38 @@ TEST_CASE("Thread refuses a method while it is busy", CLASS_OF_TESTS)
 
     delete thread;
 }
+
+/**
+ * @brief Check that TryExecute claims an idle thread and leaves a busy one untouched.
+ *
+ *  TryExecute is what the pool uses to check a thread is idle and claim it in one step.
+ *  A refusal must report false rather than throw, and must not replace the method or
+ *  parameter the thread is already running with.
+ */
+TEST_CASE("Thread TryExecute claims an idle thread and refuses a busy one", CLASS_OF_TESTS)
+{
+    ResetCounters();
+
+    Thread *thread = CreateThread("TestTryExecute", CountingCompletionMethod);
+    int firstParameter = 1;
+    int secondParameter = 2;
+
+    TEST_ASSERT_TRUE_MESSAGE(thread->TryExecute(SlowMethod, &firstParameter), "An idle thread refused a method.");
+    TEST_ASSERT_TRUE(thread->IsBusy());
+
+    TEST_ASSERT_FALSE_MESSAGE(thread->TryExecute(CountingMethod, &secondParameter), "A busy thread accepted a second method.");
+    TEST_ASSERT_EQUAL_PTR_MESSAGE(&firstParameter, thread->GetParameter(), "A refused claim replaced the running method's parameter.");
+    TEST_ASSERT_TRUE_MESSAGE(thread->GetMethod() == SlowMethod, "A refused claim replaced the running method.");
+
+    vTaskDelay((SLOW_METHOD_DURATION + METHOD_SETTLING_TIME) / portTICK_PERIOD_MS);
+    TEST_ASSERT_EQUAL_MESSAGE(1, _methodCallCount.load(), "The refused method ran.");
+    TEST_ASSERT_EQUAL(1, _completedCallCount.load());
+    TEST_ASSERT_FALSE(thread->IsBusy());
+
+    TEST_ASSERT_TRUE_MESSAGE(thread->TryExecute(CountingMethod, &secondParameter), "The thread did not take work again once idle.");
+    vTaskDelay(METHOD_SETTLING_TIME / portTICK_PERIOD_MS);
+    TEST_ASSERT_EQUAL(2, _methodCallCount.load());
+    TEST_ASSERT_EQUAL_PTR(&secondParameter, _methodParameter.load());
+
+    delete thread;
+}
