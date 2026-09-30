@@ -1914,6 +1914,14 @@ StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const Esp32Mes
         {
             password = zeroLengthString;
         }
+        //
+        //  A password of exactly MAXIMUM_PASSWORD_LENGTH (64) characters is valid and fills
+        //  wifi_config.sta.password with no terminator, which is what the stack expects.  It
+        //  copies the field into a NUL-terminated profile of its own, and for WPA2-PSK
+        //  wpa_set_passphrase() treats a 64-character value as a 64-digit hex pre-shared key
+        //  rather than a passphrase.  WPA3-SAE takes the password as it is, any length up to
+        //  the field, so no tighter limit can be applied here without refusing valid networks.
+        //
         if ((strlen(accessPointInformation->NetworkName) > MAXIMUM_SSID_LENGTH) || (strlen(password) > MAXIMUM_PASSWORD_LENGTH))
         {
             result = StatusCodes::InvalidWiFiCredentials;
