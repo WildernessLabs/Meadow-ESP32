@@ -245,24 +245,43 @@ char *Encoders::ExtractString(const uint8_t * const buffer, const uint32_t maxLe
 }
 
 /**
- *  Copy the string into the buffer.
+ *  Copy the string and its terminator into the buffer, provided both fit in the space remaining.
+ *
+ *  A nullptr is encoded as a single 0 byte, the same as an empty string.  Nothing is
+ *  written unless the whole string and its terminator fit, so a caller whose sizing
+ *  function has drifted from its encoder gets a failure rather than a heap overflow.
  *
  *  @param source
- *      Block of memory containing the string.
+ *      Block of memory containing the string, may be nullptr.
  *
  *  @param buffer
- *      Pointer to a block of memory to take the string.
+ *      Position in the buffer to take the string, advanced past the terminator on success.
+ *
+ *  @param remaining
+ *      Number of bytes left in the buffer from buffer onwards, reduced by the number of bytes written on success.
+ *
+ *  @returns
+ *      true if the string was written, false if it does not fit.
  */
-void Encoders::EncodeString(char *source, uint8_t *buffer)
+bool Encoders::EncodeString(const char * const source, uint8_t *&buffer, uint32_t &remaining)
 {
-    if (source == nullptr)
+    const uint32_t length = StringLength(source);
+    //
+    //  length < remaining rather than length + 1 <= remaining, so a string of UINT32_MAX
+    //  characters cannot wrap the comparison.
+    //
+    if (length >= remaining)
     {
-        *buffer = 0;
+        return (false);
     }
-    else
+    if (length > 0)
     {
-        strcpy(reinterpret_cast<char *>(buffer), source);
+        memcpy(buffer, source, length);
     }
+    buffer[length] = 0;
+    buffer += length + 1;
+    remaining -= length + 1;
+    return (true);
 }
 
 /**
@@ -519,9 +538,31 @@ void Encoders::EncodeMessage(const Message * const message, uint8_t * const buff
  *
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded SystemConfiguration object.
+ *
+ *  @param bufferLength
+ *      Number of bytes allocated for buffer.  Nothing is written beyond it.
+ *
+ *  @returns
+ *      true if the encoded SystemConfiguration object fits in bufferLength bytes, false if it does not,
+ *      in which case the contents of buffer are undefined and must not be sent.
  */
-void Encoders::EncodeSystemConfiguration(const Esp32Messaging::SystemConfiguration * const systemConfiguration, uint8_t *buffer)
+bool Encoders::EncodeSystemConfiguration(const Esp32Messaging::SystemConfiguration * const systemConfiguration, uint8_t *buffer, const uint32_t bufferLength)
 {
+    //
+    //  Queue length (1), retry count (4), antenna (1) and three MAC addresses (6 each).
+    //
+    const uint32_t LEADING_FIELDS_LENGTH = 24;
+    //
+    //  Reset reason (1), four version numbers (4 each), six build date and time fields (1 each) and the build hash (4).
+    //
+    const uint32_t TRAILING_FIELDS_LENGTH = 27;
+    uint32_t remaining = bufferLength;
+
+    if (remaining < LEADING_FIELDS_LENGTH)
+    {
+        return (false);
+    }
+    remaining -= LEADING_FIELDS_LENGTH;
     *buffer = systemConfiguration->MaximumMessageQueueLength;
     buffer += 1;
     EncodeInt32(systemConfiguration->MaximumRetryCount, buffer);
@@ -534,10 +575,11 @@ void Encoders::EncodeSystemConfiguration(const Esp32Messaging::SystemConfigurati
     buffer += 6;
     memcpy(buffer, systemConfiguration->BluetoothMacAddress, 6);
     buffer += 6;
-    EncodeString(systemConfiguration->DeviceName, buffer);
-    buffer += StringLength(systemConfiguration->DeviceName) + 1;
-    EncodeString(systemConfiguration->DefaultAccessPoint, buffer);
-    buffer += StringLength(systemConfiguration->DefaultAccessPoint) + 1;
+    if (!EncodeString(systemConfiguration->DeviceName, buffer, remaining) || !EncodeString(systemConfiguration->DefaultAccessPoint, buffer, remaining) || (remaining < TRAILING_FIELDS_LENGTH))
+    {
+        return (false);
+    }
+    remaining -= TRAILING_FIELDS_LENGTH;
     *buffer = systemConfiguration->ResetReason;
     buffer += 1;
     EncodeUInt32(systemConfiguration->VersionMajor, buffer);
@@ -562,7 +604,7 @@ void Encoders::EncodeSystemConfiguration(const Esp32Messaging::SystemConfigurati
     buffer += 1;
     EncodeUInt32(systemConfiguration->BuildHash, buffer);
     buffer += 4;
-    EncodeString(systemConfiguration->BuildBranchName, buffer);
+    return (EncodeString(systemConfiguration->BuildBranchName, buffer, remaining));
 }
 
 /**
@@ -663,13 +705,26 @@ void Encoders::FreeConfigurationValue(Esp32Messaging::ConfigurationValue **confi
  *
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded AccessPointInformation object.
+ *
+ *  @param bufferLength
+ *      Number of bytes allocated for buffer.  Nothing is written beyond it.
+ *
+ *  @returns
+ *      true if the encoded AccessPointInformation object fits in bufferLength bytes, false if it does not,
+ *      in which case the contents of buffer are undefined and must not be sent.
  */
-void Encoders::EncodeAccessPointInformation(const Esp32Messaging::AccessPointInformation * const accessPointInformation, uint8_t *buffer)
+bool Encoders::EncodeAccessPointInformation(const Esp32Messaging::AccessPointInformation * const accessPointInformation, uint8_t *buffer, const uint32_t bufferLength)
 {
-    EncodeString(accessPointInformation->NetworkName, buffer);
-    buffer += StringLength(accessPointInformation->NetworkName) + 1;
-    EncodeString(accessPointInformation->Password, buffer);
-    buffer += StringLength(accessPointInformation->Password) + 1;
+    //
+    //  IP address, subnet mask and gateway (4 each), then authentication mode, channel and hidden flag (1 each).
+    //
+    const uint32_t TRAILING_FIELDS_LENGTH = 15;
+    uint32_t remaining = bufferLength;
+
+    if (!EncodeString(accessPointInformation->NetworkName, buffer, remaining) || !EncodeString(accessPointInformation->Password, buffer, remaining) || (remaining < TRAILING_FIELDS_LENGTH))
+    {
+        return (false);
+    }
     EncodeUInt32(accessPointInformation->IpAddress, buffer);
     buffer += 4;
     EncodeUInt32(accessPointInformation->SubnetMask, buffer);
@@ -681,6 +736,7 @@ void Encoders::EncodeAccessPointInformation(const Esp32Messaging::AccessPointInf
     *buffer = accessPointInformation->Channel;
     buffer += 1;
     *buffer = accessPointInformation->Hidden;
+    return (true);
 }
 
 /**
@@ -1065,9 +1121,31 @@ Esp32Messaging::SockAddr *Encoders::ExtractSockAddr(uint8_t *buffer)
  *
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded AddrInfo object.
+ *
+ *  @param bufferLength
+ *      Number of bytes allocated for buffer.  Nothing is written beyond it.
+ *
+ *  @returns
+ *      true if the encoded AddrInfo object fits in bufferLength bytes, false if it does not,
+ *      in which case the contents of buffer are undefined and must not be sent.
  */
-void Encoders::EncodeAddrInfo(const Esp32Messaging::AddrInfo * const addrInfo, uint8_t *buffer)
+bool Encoders::EncodeAddrInfo(const Esp32Messaging::AddrInfo * const addrInfo, uint8_t *buffer, const uint32_t bufferLength)
 {
+    //
+    //  Heap address, flags, family, socket type, protocol and the two address lengths (4 each).
+    //
+    const uint32_t LEADING_FIELDS_LENGTH = 28;
+    //
+    //  Next pointer (4).
+    //
+    const uint32_t TRAILING_FIELDS_LENGTH = 4;
+    uint32_t remaining = bufferLength;
+
+    if ((remaining < LEADING_FIELDS_LENGTH) || ((remaining - LEADING_FIELDS_LENGTH) < addrInfo->AddrLength))
+    {
+        return (false);
+    }
+    remaining -= LEADING_FIELDS_LENGTH + addrInfo->AddrLength;
     EncodeUInt32(addrInfo->MyHeapAddress, buffer);
     buffer += 4;
     EncodeInt32(addrInfo->Flags, buffer);
@@ -1087,9 +1165,12 @@ void Encoders::EncodeAddrInfo(const Esp32Messaging::AddrInfo * const addrInfo, u
         memcpy(buffer, addrInfo->Addr, addrInfo->AddrLength);
         buffer += addrInfo->AddrLength;
     }
-    EncodeString(addrInfo->CanonName, buffer);
-    buffer += StringLength(addrInfo->CanonName) + 1;
+    if (!EncodeString(addrInfo->CanonName, buffer, remaining) || (remaining < TRAILING_FIELDS_LENGTH))
+    {
+        return (false);
+    }
     EncodeUInt32(reinterpret_cast<uint32_t>(addrInfo->Next), buffer);
+    return (true);
 }
 
 /**
@@ -3146,12 +3227,28 @@ void Encoders::FreeBTServerDataSet(Esp32Messaging::BTServerDataSet **bTServerDat
  *
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded FileDetails object.
+ *
+ *  @param bufferLength
+ *      Number of bytes allocated for buffer.  Nothing is written beyond it.
+ *
+ *  @returns
+ *      true if the encoded FileDetails object fits in bufferLength bytes, false if it does not,
+ *      in which case the contents of buffer are undefined and must not be sent.
  */
-void Encoders::EncodeFileDetails(const Esp32Messaging::FileDetails * const fileDetails, uint8_t *buffer)
+bool Encoders::EncodeFileDetails(const Esp32Messaging::FileDetails * const fileDetails, uint8_t *buffer, const uint32_t bufferLength)
 {
-    EncodeString(fileDetails->Name, buffer);
-    buffer += StringLength(fileDetails->Name) + 1;
+    //
+    //  File length (2).
+    //
+    const uint32_t TRAILING_FIELDS_LENGTH = 2;
+    uint32_t remaining = bufferLength;
+
+    if (!EncodeString(fileDetails->Name, buffer, remaining) || (remaining < TRAILING_FIELDS_LENGTH))
+    {
+        return (false);
+    }
     EncodeUInt16(fileDetails->Length, buffer);
+    return (true);
 }
 
 /**
@@ -3227,17 +3324,33 @@ void Encoders::FreeFileDetails(Esp32Messaging::FileDetails **fileDetails)
  *
  *  @param buffer
  *      Pointer to a block of memory large enough to hold the encoded FileNameAndContents object.
+ *
+ *  @param bufferLength
+ *      Number of bytes allocated for buffer.  Nothing is written beyond it.
+ *
+ *  @returns
+ *      true if the encoded FileNameAndContents object fits in bufferLength bytes, false if it does not,
+ *      in which case the contents of buffer are undefined and must not be sent.
  */
-void Encoders::EncodeFileNameAndContents(const Esp32Messaging::FileNameAndContents * const fileNameAndContents, uint8_t *buffer)
+bool Encoders::EncodeFileNameAndContents(const Esp32Messaging::FileNameAndContents * const fileNameAndContents, uint8_t *buffer, const uint32_t bufferLength)
 {
-    EncodeString(fileNameAndContents->Name, buffer);
-    buffer += StringLength(fileNameAndContents->Name) + 1;
+    //
+    //  Contents length (4), followed by the contents themselves.
+    //
+    const uint32_t LENGTH_FIELD_LENGTH = 4;
+    uint32_t remaining = bufferLength;
+
+    if (!EncodeString(fileNameAndContents->Name, buffer, remaining) || (remaining < LENGTH_FIELD_LENGTH) || ((remaining - LENGTH_FIELD_LENGTH) < fileNameAndContents->ContentsLength))
+    {
+        return (false);
+    }
     EncodeUInt32(fileNameAndContents->ContentsLength, buffer);
-    buffer += 4;
+    buffer += LENGTH_FIELD_LENGTH;
     if (fileNameAndContents->ContentsLength > 0)
     {
         memcpy(buffer, fileNameAndContents->Contents, fileNameAndContents->ContentsLength);
     }
+    return (true);
 }
 
 /**

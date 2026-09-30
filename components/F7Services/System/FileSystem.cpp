@@ -413,8 +413,15 @@ void FileSystem::ReadFile(Message * const message)
                             }
                             else
                             {
-                                Encoders::EncodeFileNameAndContents(fileData, message->Payload);
-                                result = StatusCodes::CompletedOk;
+                                if (Encoders::EncodeFileNameAndContents(fileData, message->Payload, message->PayloadLength))
+                                {
+                                    result = StatusCodes::CompletedOk;
+                                }
+                                else
+                                {
+                                    message->DeletePayload();
+                                    result = StatusCodes::Failure;
+                                }
                             }
                         }
                         if (result != StatusCodes::CompletedOk)
@@ -571,12 +578,17 @@ void FileSystem::ListFiles(Message *message)
         memset(&fileNameList, 0, sizeof(fileNameList));
         uint32_t bufferLength = 0;
         //
+        //  Set if an entry does not fit the space its sizing function asked for, in which
+        //  case the listing is abandoned rather than sent with that entry missing.
+        //
+        bool encodingFailed = false;
+        //
         //  NumberOfFiles is incremented only when an entry is actually encoded into
         //  FileDetails, so the two can never disagree, even if a directory change or an
         //  out-of-memory partway through means fewer entries are encoded than exist.
         //
         struct dirent *ep;
-        while (((ep = readdir(dp)) != NULL) && (result != StatusCodes::EspOutOfMemory))
+        while (((ep = readdir(dp)) != NULL) && (result != StatusCodes::EspOutOfMemory) && !encodingFailed)
         {
             Esp32Messaging::FileDetails details;
             memset(&details, 0, sizeof(details));
@@ -602,9 +614,15 @@ void FileSystem::ListFiles(Message *message)
             if (newBuffer != NULL)
             {
                 fileNameList.FileDetails = newBuffer;
-                Encoders::EncodeFileDetails(&details, fileNameList.FileDetails + fileNameList.FileDetailsLength);
-                fileNameList.FileDetailsLength = bufferLength;
-                fileNameList.NumberOfFiles++;
+                if (Encoders::EncodeFileDetails(&details, fileNameList.FileDetails + fileNameList.FileDetailsLength, bufferLength - fileNameList.FileDetailsLength))
+                {
+                    fileNameList.FileDetailsLength = bufferLength;
+                    fileNameList.NumberOfFiles++;
+                }
+                else
+                {
+                    encodingFailed = true;
+                }
             }
             else
             {
@@ -613,7 +631,7 @@ void FileSystem::ListFiles(Message *message)
         }
         closedir(dp);
         TRACE_MESSAGE("Found %" PRIi32 " files.", static_cast<int32_t>(fileNameList.NumberOfFiles));
-        if (result != StatusCodes::EspOutOfMemory)
+        if ((result != StatusCodes::EspOutOfMemory) && !encodingFailed)
         {
             message->PayloadLength = Encoders::EncodedFileNameListBufferSize(&fileNameList);
             message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));

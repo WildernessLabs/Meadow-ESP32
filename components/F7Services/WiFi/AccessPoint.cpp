@@ -305,13 +305,9 @@ void WiFiRequestHandler::AccessPointStartedEvent()
         info.Gateway = ip_info.gw.addr;
         payloadLength = Encoders::EncodedAccessPointInformationBufferSize(&info);
         payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
-        if (payload)
+        if ((payload == nullptr) || !Encoders::EncodeAccessPointInformation(&info, payload, payloadLength))
         {
-            Encoders::EncodeAccessPointInformation(&info, payload);
-        }
-        else
-        {
-            payload = nullptr;
+            Utils::DeleteAndNullifyPointer(payload);
             payloadLength = 0;
             result = StatusCodes::Failure;
         }

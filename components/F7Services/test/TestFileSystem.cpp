@@ -85,7 +85,7 @@ static Message *CreateFileNameAndContentsMessage(const uint32_t function, const 
     uint32_t payloadLength = Encoders::EncodedFileNameAndContentsBufferSize(&fileData);
     uint8_t *encodedPayload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
     TEST_ASSERT_NOT_NULL(encodedPayload);
-    Encoders::EncodeFileNameAndContents(&fileData, encodedPayload);
+    TEST_ASSERT_TRUE(Encoders::EncodeFileNameAndContents(&fileData, encodedPayload, payloadLength));
 
     Message *message = Message::CreateOnHeap(MessageTypes::Header, Esp32Interfaces::System, function, StatusCodes::Failure, TEST_MESSAGE_ID, encodedPayload, payloadLength);
     TEST_ASSERT_NOT_NULL(message);
@@ -611,7 +611,7 @@ TEST_CASE("Delete file", CLASS_OF_TESTS)
     uint32_t payloadLength = Encoders::EncodedFileDetailsBufferSize(&details);
     uint8_t *encodedPayload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
     TEST_ASSERT_NOT_NULL(encodedPayload);
-    Encoders::EncodeFileDetails(&details, encodedPayload);
+    TEST_ASSERT_TRUE(Encoders::EncodeFileDetails(&details, encodedPayload, payloadLength));
     Message *deleteMessage = Message::CreateOnHeap(MessageTypes::Header, Esp32Interfaces::System, SystemFunction::FileSystemDeleteFile, StatusCodes::Failure, TEST_MESSAGE_ID, encodedPayload, payloadLength);
     TEST_ASSERT_NOT_NULL(deleteMessage);
 
@@ -638,7 +638,7 @@ TEST_CASE("Delete file", CLASS_OF_TESTS)
     deleteMessage->PayloadLength = payloadLength;
     encodedPayload = static_cast<uint8_t *>(pvPortMalloc(payloadLength)); // Re-encode as the above call will have freed the memory.
     TEST_ASSERT_NOT_NULL(encodedPayload);
-    Encoders::EncodeFileDetails(&details, encodedPayload);
+    TEST_ASSERT_TRUE(Encoders::EncodeFileDetails(&details, encodedPayload, payloadLength));
     deleteMessage->Payload = encodedPayload;
 
     context.Fs->DeleteFile(deleteMessage);

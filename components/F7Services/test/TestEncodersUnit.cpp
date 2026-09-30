@@ -8,6 +8,7 @@
 
 #include <stdint.h>
 #include <string.h>
+#include "freertos/FreeRTOS.h"
 #include "unity.h"
 
 #include "Encoders.hpp"
@@ -294,4 +295,248 @@ TEST_CASE("ExtractSendMsgRequest refuses a truncated payload", CLASS_OF_TESTS)
     {
         CheckSendMsgIsMalformed(payload, length);
     }
+}
+
+/**
+ * @brief Value written to every byte of a buffer before an encoder is run over it, so a
+ *        write past the space the encoder was given can be seen afterwards.
+ */
+static const uint8_t GUARD_BYTE = 0xa5;
+
+/**
+ * @brief Number of guard bytes placed after the space an encoder is given.
+ */
+static const uint32_t GUARD_LENGTH = 16;
+
+/**
+ * @brief Check that the guard bytes following the first length bytes of buffer are intact.
+ *
+ * @param buffer Buffer the encoder was run over.
+ * @param length Number of bytes the encoder was allowed to write.
+ * @param message Message to report if a guard byte has been overwritten.
+ */
+static void AssertGuardIntact(const uint8_t * const buffer, const uint32_t length, const char * const message)
+{
+    for (uint32_t index = 0; index < GUARD_LENGTH; index++)
+    {
+        TEST_ASSERT_EQUAL_HEX8_MESSAGE(GUARD_BYTE, buffer[length + index], message);
+    }
+}
+
+/**
+ * @brief Run an encoder over every buffer length from 0 up to the length its sizing
+ *        function asked for, and check it refuses each one that is too short without
+ *        writing past it, and accepts the full length.
+ *
+ * @param requiredLength Length returned by the matching Encoded*BufferSize function.
+ * @param encode Callable taking (uint8_t *buffer, uint32_t bufferLength) and returning the encoder's result.
+ * @param encoded Buffer of at least requiredLength bytes to receive the full-length encoding for the caller to decode.
+ */
+template<typename Encoder> static void CheckEncoderStaysInsideBuffer(const uint32_t requiredLength, Encoder encode, uint8_t * const encoded)
+{
+    uint8_t *buffer = static_cast<uint8_t *>(pvPortMalloc(requiredLength + GUARD_LENGTH));
+    TEST_ASSERT_NOT_NULL(buffer);
+
+    for (uint32_t length = 0; length < requiredLength; length++)
+    {
+        memset(buffer, GUARD_BYTE, requiredLength + GUARD_LENGTH);
+        TEST_ASSERT_FALSE_MESSAGE(encode(buffer, length), "A buffer shorter than the sizing function asked for was accepted.");
+        AssertGuardIntact(buffer, length, "The encoder wrote past the length it was given.");
+    }
+
+    memset(buffer, GUARD_BYTE, requiredLength + GUARD_LENGTH);
+    TEST_ASSERT_TRUE_MESSAGE(encode(buffer, requiredLength), "The length the sizing function asked for was refused.");
+    AssertGuardIntact(buffer, requiredLength, "The encoder wrote past the length its sizing function asked for.");
+    memcpy(encoded, buffer, requiredLength);
+
+    Utils::DeleteAndNullifyPointer(buffer);
+}
+
+/**
+ * @brief EncodeString writes a string and its terminator that fit exactly, and moves the
+ *        cursor and the remaining count past them.
+ */
+TEST_CASE("EncodeString writes a string that fits and advances past it", CLASS_OF_TESTS)
+{
+    uint8_t buffer[8];
+    memset(buffer, GUARD_BYTE, sizeof(buffer));
+    uint8_t *position = buffer;
+    uint32_t remaining = 6;
+
+    TEST_ASSERT_TRUE(Encoders::EncodeString("hello", position, remaining));
+    TEST_ASSERT_EQUAL_STRING("hello", reinterpret_cast<char *>(buffer));
+    TEST_ASSERT_EQUAL_PTR(buffer + 6, position);
+    TEST_ASSERT_EQUAL_UINT32(0, remaining);
+    TEST_ASSERT_EQUAL_HEX8(GUARD_BYTE, buffer[6]);
+}
+
+/**
+ * @brief EncodeString writes nothing, and leaves the cursor and remaining count alone,
+ *        when there is room for the characters but not the terminator.
+ */
+TEST_CASE("EncodeString writes nothing when the terminator does not fit", CLASS_OF_TESTS)
+{
+    uint8_t buffer[8];
+    memset(buffer, GUARD_BYTE, sizeof(buffer));
+    uint8_t *position = buffer;
+    uint32_t remaining = 5;
+
+    TEST_ASSERT_FALSE(Encoders::EncodeString("hello", position, remaining));
+    TEST_ASSERT_EQUAL_PTR(buffer, position);
+    TEST_ASSERT_EQUAL_UINT32(5, remaining);
+    for (uint32_t index = 0; index < sizeof(buffer); index++)
+    {
+        TEST_ASSERT_EQUAL_HEX8(GUARD_BYTE, buffer[index]);
+    }
+}
+
+/**
+ * @brief EncodeString encodes nullptr as a single 0 byte, and refuses it when there is no room at all.
+ */
+TEST_CASE("EncodeString encodes nullptr as a single 0 byte", CLASS_OF_TESTS)
+{
+    uint8_t buffer[2];
+    memset(buffer, GUARD_BYTE, sizeof(buffer));
+    uint8_t *position = buffer;
+    uint32_t remaining = 0;
+
+    TEST_ASSERT_FALSE(Encoders::EncodeString(nullptr, position, remaining));
+    TEST_ASSERT_EQUAL_HEX8(GUARD_BYTE, buffer[0]);
+
+    remaining = 1;
+    TEST_ASSERT_TRUE(Encoders::EncodeString(nullptr, position, remaining));
+    TEST_ASSERT_EQUAL_HEX8(0, buffer[0]);
+    TEST_ASSERT_EQUAL_HEX8(GUARD_BYTE, buffer[1]);
+    TEST_ASSERT_EQUAL_PTR(buffer + 1, position);
+    TEST_ASSERT_EQUAL_UINT32(0, remaining);
+}
+
+/**
+ * @brief EncodeSystemConfiguration refuses any buffer shorter than
+ *        EncodedSystemConfigurationBufferSize asks for, and never writes past the one it is given.
+ */
+TEST_CASE("EncodeSystemConfiguration stays inside the buffer it is given", CLASS_OF_TESTS)
+{
+    Esp32Messaging::SystemConfiguration configuration = {};
+    configuration.DeviceName = const_cast<char *>("MeadowDevice");
+    configuration.DefaultAccessPoint = const_cast<char *>("Network");
+    configuration.BuildBranchName = const_cast<char *>("develop");
+    configuration.BuildHash = 0x12345678;
+
+    const uint32_t requiredLength = Encoders::EncodedSystemConfigurationBufferSize(&configuration);
+    uint8_t *encoded = static_cast<uint8_t *>(pvPortMalloc(requiredLength));
+    TEST_ASSERT_NOT_NULL(encoded);
+    CheckEncoderStaysInsideBuffer(requiredLength, [&configuration](uint8_t *buffer, const uint32_t bufferLength) { return (Encoders::EncodeSystemConfiguration(&configuration, buffer, bufferLength)); }, encoded);
+
+    //
+    //  The branch name is the last field, so it ends at the last byte.
+    //
+    TEST_ASSERT_EQUAL_STRING("develop", reinterpret_cast<char *>(encoded + requiredLength - strlen("develop") - 1));
+    TEST_ASSERT_EQUAL_UINT32(0x12345678, Encoders::ExtractUInt32(encoded + requiredLength - strlen("develop") - 1 - 4));
+    Utils::DeleteAndNullifyPointer(encoded);
+}
+
+/**
+ * @brief EncodeAccessPointInformation refuses any buffer shorter than
+ *        EncodedAccessPointInformationBufferSize asks for, and never writes past the one it is given.
+ */
+TEST_CASE("EncodeAccessPointInformation stays inside the buffer it is given", CLASS_OF_TESTS)
+{
+    Esp32Messaging::AccessPointInformation information = {};
+    information.NetworkName = const_cast<char *>("Network");
+    information.Password = const_cast<char *>("Password");
+    information.Gateway = 0x0101a8c0;
+    information.Hidden = 1;
+
+    const uint32_t requiredLength = Encoders::EncodedAccessPointInformationBufferSize(&information);
+    uint8_t *encoded = static_cast<uint8_t *>(pvPortMalloc(requiredLength));
+    TEST_ASSERT_NOT_NULL(encoded);
+    CheckEncoderStaysInsideBuffer(requiredLength, [&information](uint8_t *buffer, const uint32_t bufferLength) { return (Encoders::EncodeAccessPointInformation(&information, buffer, bufferLength)); }, encoded);
+
+    Esp32Messaging::AccessPointInformation *decoded = Encoders::ExtractAccessPointInformation(encoded);
+    TEST_ASSERT_NOT_NULL(decoded);
+    TEST_ASSERT_EQUAL_STRING("Network", decoded->NetworkName);
+    TEST_ASSERT_EQUAL_STRING("Password", decoded->Password);
+    TEST_ASSERT_EQUAL_UINT32(0x0101a8c0, decoded->Gateway);
+    TEST_ASSERT_EQUAL_UINT8(1, decoded->Hidden);
+    Encoders::FreeAccessPointInformation(&decoded);
+    Utils::DeleteAndNullifyPointer(encoded);
+}
+
+/**
+ * @brief EncodeAddrInfo refuses any buffer shorter than EncodedAddrInfoBufferSize asks
+ *        for, and never writes past the one it is given.
+ */
+TEST_CASE("EncodeAddrInfo stays inside the buffer it is given", CLASS_OF_TESTS)
+{
+    uint8_t address[8] = {1, 2, 3, 4, 5, 6, 7, 8};
+    Esp32Messaging::AddrInfo addrInfo = {};
+    addrInfo.MyHeapAddress = 42;
+    addrInfo.AddrLength = sizeof(address);
+    addrInfo.Addr = address;
+    addrInfo.CanonName = const_cast<char *>("host.example");
+    addrInfo.Next = reinterpret_cast<void *>(0x1234);
+
+    const uint32_t requiredLength = Encoders::EncodedAddrInfoBufferSize(&addrInfo);
+    uint8_t *encoded = static_cast<uint8_t *>(pvPortMalloc(requiredLength));
+    TEST_ASSERT_NOT_NULL(encoded);
+    CheckEncoderStaysInsideBuffer(requiredLength, [&addrInfo](uint8_t *buffer, const uint32_t bufferLength) { return (Encoders::EncodeAddrInfo(&addrInfo, buffer, bufferLength)); }, encoded);
+
+    Esp32Messaging::AddrInfo *decoded = Encoders::ExtractAddrInfo(encoded);
+    TEST_ASSERT_NOT_NULL(decoded);
+    TEST_ASSERT_EQUAL_UINT32(42, decoded->MyHeapAddress);
+    TEST_ASSERT_EQUAL_UINT32(sizeof(address), decoded->AddrLength);
+    TEST_ASSERT_EQUAL_UINT8_ARRAY(address, decoded->Addr, sizeof(address));
+    TEST_ASSERT_EQUAL_STRING("host.example", decoded->CanonName);
+    Encoders::FreeAddrInfo(&decoded);
+    Utils::DeleteAndNullifyPointer(encoded);
+}
+
+/**
+ * @brief EncodeFileDetails refuses any buffer shorter than EncodedFileDetailsBufferSize
+ *        asks for, and never writes past the one it is given.
+ */
+TEST_CASE("EncodeFileDetails stays inside the buffer it is given", CLASS_OF_TESTS)
+{
+    Esp32Messaging::FileDetails details = {};
+    details.Name = const_cast<char *>("config.json");
+    details.Length = 0x1234;
+
+    const uint32_t requiredLength = Encoders::EncodedFileDetailsBufferSize(&details);
+    uint8_t *encoded = static_cast<uint8_t *>(pvPortMalloc(requiredLength));
+    TEST_ASSERT_NOT_NULL(encoded);
+    CheckEncoderStaysInsideBuffer(requiredLength, [&details](uint8_t *buffer, const uint32_t bufferLength) { return (Encoders::EncodeFileDetails(&details, buffer, bufferLength)); }, encoded);
+
+    Esp32Messaging::FileDetails *decoded = Encoders::ExtractFileDetails(encoded);
+    TEST_ASSERT_NOT_NULL(decoded);
+    TEST_ASSERT_EQUAL_STRING("config.json", decoded->Name);
+    TEST_ASSERT_EQUAL_UINT16(0x1234, decoded->Length);
+    Encoders::FreeFileDetails(&decoded);
+    Utils::DeleteAndNullifyPointer(encoded);
+}
+
+/**
+ * @brief EncodeFileNameAndContents refuses any buffer shorter than
+ *        EncodedFileNameAndContentsBufferSize asks for, and never writes past the one it is given.
+ */
+TEST_CASE("EncodeFileNameAndContents stays inside the buffer it is given", CLASS_OF_TESTS)
+{
+    uint8_t contents[12] = {'f', 'i', 'l', 'e', ' ', 'c', 'o', 'n', 't', 'e', 'n', 't'};
+    Esp32Messaging::FileNameAndContents file = {};
+    file.Name = const_cast<char *>("data.bin");
+    file.Contents = contents;
+    file.ContentsLength = sizeof(contents);
+
+    const uint32_t requiredLength = Encoders::EncodedFileNameAndContentsBufferSize(&file);
+    uint8_t *encoded = static_cast<uint8_t *>(pvPortMalloc(requiredLength));
+    TEST_ASSERT_NOT_NULL(encoded);
+    CheckEncoderStaysInsideBuffer(requiredLength, [&file](uint8_t *buffer, const uint32_t bufferLength) { return (Encoders::EncodeFileNameAndContents(&file, buffer, bufferLength)); }, encoded);
+
+    Esp32Messaging::FileNameAndContents *decoded = Encoders::ExtractFileNameAndContents(encoded);
+    TEST_ASSERT_NOT_NULL(decoded);
+    TEST_ASSERT_EQUAL_STRING("data.bin", decoded->Name);
+    TEST_ASSERT_EQUAL_UINT32(sizeof(contents), decoded->ContentsLength);
+    TEST_ASSERT_EQUAL_UINT8_ARRAY(contents, decoded->Contents, sizeof(contents));
+    Encoders::FreeFileNameAndContents(&decoded);
+    Utils::DeleteAndNullifyPointer(encoded);
 }

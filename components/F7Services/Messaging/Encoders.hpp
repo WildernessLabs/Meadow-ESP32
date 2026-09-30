@@ -601,7 +601,7 @@ public:
     static uint32_t ExtractInt32(const uint8_t * const);
     static void EncodeInt32(const int32_t, uint8_t * const);
     static char *ExtractString(const uint8_t * const, const uint32_t maxLength = Message::MAXIMUM_PAYLOAD_LENGTH);
-    static void EncodeString(char *, uint8_t *);
+    static bool EncodeString(const char * const, uint8_t *&, uint32_t &);
     static uint32_t StringLength(const char *);
     static uint8_t CRC8(const uint8_t *, const uint16_t);
     static uint32_t CRC32(const uint8_t *, const uint16_t);
@@ -609,12 +609,12 @@ public:
     static void EncodeMessage(const Message * const, uint8_t * const, const bool);
     static Message *ExtractMessage(uint8_t *, const uint32_t, const bool);
 
-    static void EncodeSystemConfiguration(const Esp32Messaging::SystemConfiguration * const, uint8_t *);
+    static bool EncodeSystemConfiguration(const Esp32Messaging::SystemConfiguration * const, uint8_t *, const uint32_t);
     static int EncodedSystemConfigurationBufferSize(const Esp32Messaging::SystemConfiguration * const);
     static Esp32Messaging::ConfigurationValue *ExtractConfigurationValue(uint8_t *);
     static void FreeConfigurationValue(Esp32Messaging::ConfigurationValue **);
 
-    static void EncodeAccessPointInformation(const Esp32Messaging::AccessPointInformation * const, uint8_t *);
+    static bool EncodeAccessPointInformation(const Esp32Messaging::AccessPointInformation * const, uint8_t *, const uint32_t);
     static int EncodedAccessPointInformationBufferSize(const Esp32Messaging::AccessPointInformation * const);
     static Esp32Messaging::AccessPointInformation *ExtractAccessPointInformation(uint8_t *);
     static void FreeAccessPointInformation(Esp32Messaging::AccessPointInformation **);
@@ -640,7 +640,7 @@ public:
     static int EncodedSockAddrBufferSize(const Esp32Messaging::SockAddr * const);
     static Esp32Messaging::SockAddr *ExtractSockAddr(uint8_t *);
 
-    static void EncodeAddrInfo(const Esp32Messaging::AddrInfo * const, uint8_t *);
+    static bool EncodeAddrInfo(const Esp32Messaging::AddrInfo * const, uint8_t *, const uint32_t);
     static int EncodedAddrInfoBufferSize(const Esp32Messaging::AddrInfo * const);
     static Esp32Messaging::AddrInfo *ExtractAddrInfo(uint8_t *);
     static void FreeAddrInfo(Esp32Messaging::AddrInfo **);
@@ -750,12 +750,12 @@ public:
     static Esp32Messaging::BTServerDataSet *ExtractBTServerDataSet(uint8_t *);
     static void FreeBTServerDataSet(Esp32Messaging::BTServerDataSet **);
 
-    static void EncodeFileDetails(const Esp32Messaging::FileDetails * const, uint8_t *);
+    static bool EncodeFileDetails(const Esp32Messaging::FileDetails * const, uint8_t *, const uint32_t);
     static int EncodedFileDetailsBufferSize(const Esp32Messaging::FileDetails * const);
     static Esp32Messaging::FileDetails *ExtractFileDetails(uint8_t *);
     static void FreeFileDetails(Esp32Messaging::FileDetails **);
 
-    static void EncodeFileNameAndContents(const Esp32Messaging::FileNameAndContents * const, uint8_t *);
+    static bool EncodeFileNameAndContents(const Esp32Messaging::FileNameAndContents * const, uint8_t *, const uint32_t);
     static int EncodedFileNameAndContentsBufferSize(const Esp32Messaging::FileNameAndContents * const);
     static Esp32Messaging::FileNameAndContents *ExtractFileNameAndContents(uint8_t *);
     static void FreeFileNameAndContents(Esp32Messaging::FileNameAndContents **);

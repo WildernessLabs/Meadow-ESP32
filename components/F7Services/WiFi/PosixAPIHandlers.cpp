@@ -187,9 +187,20 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetAddrInfo(Esp32Messaging::GetAddr
         //  from the STM32 make freeaddrinfo operate on memory it does not own.
         //
         a.MyHeapAddress = AddAddrInfoHandle(addressInformation);
-        Encoders::EncodeAddrInfo(&a, response->Res);
+        const bool encoded = Encoders::EncodeAddrInfo(&a, response->Res, response->ResLength);
         free(a.CanonName);
         Utils::DeleteAndNullifyPointer(a.Addr);
+        if (!encoded)
+        {
+            //
+            //  The handle is not going to reach the STM32, so withdraw it and release the list here.
+            //
+            TakeAddrInfoHandle(a.MyHeapAddress);
+            freeaddrinfo(addressInformation);
+            Utils::DeleteAndNullifyPointer(response->Res);
+            response->ResLength = 0;
+            return (StatusCodes::Failure);
+        }
     }
     else
     {

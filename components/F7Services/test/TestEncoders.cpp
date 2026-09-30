@@ -14,6 +14,7 @@
 #include <arpa/inet.h>
 
 #include "freertos/FreeRTOS.h"
+#include "unity.h"
 
 #include "Encoders.hpp"
 #include "Utils.hpp"
@@ -379,7 +380,8 @@ namespace TestEncoders
      */
     void EncodeBTStackConfig(const Esp32Messaging::BTStackConfig * const bTStackConfig, uint8_t *buffer)
     {
-        Encoders::EncodeString(bTStackConfig->Config, buffer);
+        uint32_t remaining = EncodedBTStackConfigBufferSize(bTStackConfig);
+        TEST_ASSERT_TRUE(Encoders::EncodeString(bTStackConfig->Config, buffer, remaining));
     }
 
     /**
