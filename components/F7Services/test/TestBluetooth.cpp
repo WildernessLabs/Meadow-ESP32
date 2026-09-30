@@ -275,6 +275,48 @@ TEST_CASE("Start is refused when the configuration is not shorter than the maxim
 }
 
 /**
+ * @brief Check that Start is refused, not crashed, when the request carries no payload.
+ *
+ *  Regression check for issue #390.  Start passed the payload straight to
+ *  ExtractBTStackConfig, which reads it without checking it exists, so an empty request
+ *  dereferenced a null pointer.  Nothing here touches the radio, so it runs under emulation.
+ */
+TEST_CASE("Start is refused when the request has no payload", "[Bluetooth][Emulated]")
+{
+    MockMessageDispatcher *dispatcher = SetupMessageDispatcher();
+    TEST_ASSERT_NOT_NULL(dispatcher);
+
+    RunBluetoothLifecycleRequest(dispatcher, BluetoothFunction::Start, BluetoothFunction::BluetoothStartingEvent, NO_COMPLETION_EVENT, StatusCodes::InvalidConfigurationFile, nullptr, 0);
+
+    ResetMessageDispatcher();
+}
+
+/**
+ * @brief Check that ServerDataSet is refused, not crashed, when the request carries no payload.
+ *
+ *  Regression check for issue #390.  ExtractBTServerDataSet reads the handle straight from
+ *  the payload, so an empty request dereferenced a null pointer.  The refusal comes before
+ *  anything that needs the Bluetooth stack, so it runs under emulation.
+ */
+TEST_CASE("ServerDataSet is refused when the request has no payload", "[Bluetooth][Emulated]")
+{
+    MockMessageDispatcher *dispatcher = SetupMessageDispatcher();
+    TEST_ASSERT_NOT_NULL(dispatcher);
+
+    Message *request = Message::CreateOnHeap(MessageTypes::Header, Esp32Interfaces::BlueTooth, BluetoothFunction::ServerDataSet, StatusCodes::Failure, 0, nullptr, 0);
+    TEST_ASSERT_NOT_NULL(request);
+    dispatcher->QueueMessageForEsp32(request);
+
+    Message *response = WaitForResponseTo(dispatcher, Esp32Interfaces::BlueTooth, BluetoothFunction::ServerDataSet, BLUETOOTH_RESPONSE_TIMEOUT);
+    TEST_ASSERT_NOT_NULL_MESSAGE(response, "The ServerDataSet request was never answered.");
+    ASSERT_RESPONSE(response, Esp32Interfaces::BlueTooth, BluetoothFunction::ServerDataSet, StatusCodes::InvalidRequest);
+    ASSERT_NO_PAYLOAD(response);
+    Message::DeleteMessage(response);
+
+    ResetMessageDispatcher();
+}
+
+/**
  * @brief Test starting a Bluetooth service for MeadowA, Company ID Espressif (0x02e5).
  */
 TEST_CASE("Start Bluetooth (MeadowA, Espressif)", CLASS_OF_TESTS)
