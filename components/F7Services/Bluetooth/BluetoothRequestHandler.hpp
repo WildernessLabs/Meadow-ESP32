@@ -54,12 +54,6 @@ private:
      */
 
     /**
-     *  @brief BT_READY_BIT indicates if the Bluetooth processing system can process a
-     *  request.  It is used to synchronise requests from the STM32.
-     */
-    static const int BT_READY_BIT = BIT0;
-
-    /**
      *  @brief Set by the GATT event handler once the service has actually started.
      *
      *  The attribute table is created and the service started asynchronously, after
