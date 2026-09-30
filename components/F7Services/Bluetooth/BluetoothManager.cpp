@@ -457,48 +457,55 @@ void BluetoothManager::GetDeviceInformation(const cJSON * const json)
 /**
  * @brief Add services from the JSON configuration.
  *
+ * Every entry is examined: a malformed service is counted and skipped rather than ending
+ * the parse, so the caller learns how much of the configuration could not be used.
+ *
  * @param json Pointer to the cJSON object holding the configuration.
+ *
+ * @return Number of service, characteristic and descriptor entries that were rejected.
  */
-void BluetoothManager::AddServices(const cJSON * const json)
+uint32_t BluetoothManager::AddServices(const cJSON * const json)
 {
     TRACE_MESSAGE("AddServices: Enter");
 
+    uint32_t rejected = 0;
     const cJSON * const services = cJSON_GetObjectItem(json, SERVICES_KEY);
     if ((services == NULL) || !cJSON_IsArray(services))
     {
         TRACE_MESSAGE(SERVICES_KEY " is not an array or is missing");
-        return;
+        return (rejected);
     }
 
     cJSON *service_configuration = NULL;
     cJSON_ArrayForEach(service_configuration, services)
     {
         const cJSON * const serviceName = cJSON_GetObjectItem(service_configuration, NAME_KEY);
+        const cJSON * const serviceUUID = cJSON_GetObjectItem(service_configuration, UUID_KEY);
         if ((serviceName == NULL) || !cJSON_IsString(serviceName))
         {
-            TRACE_MESSAGE("Service " NAME_KEY " is missing or not a string");
-            return;
+            ERROR_MESSAGE("Service " NAME_KEY " is missing or not a string, rejecting the service.");
+            rejected++;
         }
         else
         {
-            const cJSON * const serviceUUID = cJSON_GetObjectItem(service_configuration, UUID_KEY);
             if ((serviceUUID == NULL) || !cJSON_IsNumber(serviceUUID))
             {
-                TRACE_MESSAGE("Service " UUID_KEY " is missing or not a number");
-                return;
+                ERROR_MESSAGE("Service " UUID_KEY " is missing or not a number, rejecting the service.");
+                rejected++;
             }
             else
             {
                 uint16_t uuid = static_cast<uint16_t>(serviceUUID->valueint);
                 TRACE_MESSAGE("Service Name: %s, " UUID_KEY ": %4" PRIx16, serviceName->valuestring, uuid);
                 BluetoothService * const service = new BluetoothService(serviceName->valuestring, Uuid16(uuid));
-                AddCharacteristics(service_configuration, service);
+                rejected += AddCharacteristics(service_configuration, service);
                 Services.Add(service);
             }
         }
     }
 
     TRACE_MESSAGE("AddServices: Exit");
+    return (rejected);
 }
 
 /**
@@ -506,16 +513,26 @@ void BluetoothManager::AddServices(const cJSON * const json)
  *
  * @param json Pointer to the cJSON object holding the configuration.
  * @param service Pointer to the BluetoothService object to add the characteristics to.
+ *
+ * @return Number of characteristic and descriptor entries that were rejected.  A service
+ *         with no characteristics key has none to reject; one that is not an array counts once.
  */
-void BluetoothManager::AddCharacteristics(const cJSON * const json, BluetoothService * const service)
+uint32_t BluetoothManager::AddCharacteristics(const cJSON * const json, BluetoothService * const service)
 {
     TRACE_MESSAGE("AddCharacteristics: Enter");
 
+    uint32_t rejected = 0;
     const cJSON * const characteristics = cJSON_GetObjectItem(json, CHARACTERISTICS_KEY);
-    if ((characteristics == nullptr) || !cJSON_IsArray(characteristics))
+    if (characteristics == nullptr)
     {
-        TRACE_MESSAGE(CHARACTERISTICS_KEY " is missing or not an array");
-        return;
+        TRACE_MESSAGE(CHARACTERISTICS_KEY " is missing");
+        return (rejected);
+    }
+    if (!cJSON_IsArray(characteristics))
+    {
+        ERROR_MESSAGE(CHARACTERISTICS_KEY " is not an array, rejecting it.");
+        rejected++;
+        return (rejected);
     }
 
     cJSON *characteristic = NULL;
@@ -548,7 +565,7 @@ void BluetoothManager::AddCharacteristics(const cJSON * const json, BluetoothSer
             //
             if ((len->valueint < 1) || (len->valueint > ESP_GATT_MAX_ATTR_LEN))
             {
-                ERROR_MESSAGE("Characteristic " LENGTH_KEY " %d is outside 1 to %d, ignoring it.", len->valueint, ESP_GATT_MAX_ATTR_LEN);
+                ERROR_MESSAGE("Characteristic " LENGTH_KEY " %d is outside 1 to %d, rejecting it.", len->valueint, ESP_GATT_MAX_ATTR_LEN);
                 add = false;
             }
         }
@@ -592,12 +609,18 @@ void BluetoothManager::AddCharacteristics(const cJSON * const json, BluetoothSer
             }
             TRACE_MESSAGE("    Characteristic : " UUID_KEY " %s, " PERMISSION_KEY ": %d, " PROPERTIES_KEY ": %d, " LENGTH_KEY ": %d", buffer, permissions, properties, length);
 
-            AddDescriptors(characteristic, new_characteristic);
+            rejected += AddDescriptors(characteristic, new_characteristic);
             service->AddCharacteristic(new_characteristic);
+        }
+        else
+        {
+            ERROR_MESSAGE("Rejecting a malformed characteristic.");
+            rejected++;
         }
     }
 
     TRACE_MESSAGE("AddCharacteristics: Exit");
+    return (rejected);
 }
 
 /**
@@ -605,16 +628,26 @@ void BluetoothManager::AddCharacteristics(const cJSON * const json, BluetoothSer
  *
  * @param json Pointer to the cJSON object holding the configuration.
  * @param characteristic Pointer to the BluetoothCharacteristic object to add the descriptors to.
+ *
+ * @return Number of descriptor entries that were rejected.  A characteristic with no
+ *         descriptors key has none to reject; one that is not an array counts once.
  */
-void BluetoothManager::AddDescriptors(const cJSON * const json, BluetoothCharacteristic * const characteristic)
+uint32_t BluetoothManager::AddDescriptors(const cJSON * const json, BluetoothCharacteristic * const characteristic)
 {
     TRACE_MESSAGE("AddDescriptors: Enter");
 
+    uint32_t rejected = 0;
     const cJSON * const descriptors = cJSON_GetObjectItem(json, DESCRIPTORS_KEY);
+    if (descriptors == nullptr)
+    {
+        TRACE_MESSAGE(DESCRIPTORS_KEY " is missing");
+        return (rejected);
+    }
     if (!cJSON_IsArray(descriptors))
     {
-        TRACE_MESSAGE(DESCRIPTORS_KEY " is not an array");
-        return;
+        ERROR_MESSAGE(DESCRIPTORS_KEY " is not an array, rejecting it.");
+        rejected++;
+        return (rejected);
     }
 
     cJSON *descriptor = NULL;
@@ -647,7 +680,7 @@ void BluetoothManager::AddDescriptors(const cJSON * const json, BluetoothCharact
             //
             if ((len->valueint < 1) || (len->valueint > ESP_GATT_MAX_ATTR_LEN))
             {
-                ERROR_MESSAGE("Descriptor " LENGTH_KEY " %d is outside 1 to %d, ignoring it.", len->valueint, ESP_GATT_MAX_ATTR_LEN);
+                ERROR_MESSAGE("Descriptor " LENGTH_KEY " %d is outside 1 to %d, rejecting it.", len->valueint, ESP_GATT_MAX_ATTR_LEN);
                 add = false;
             }
         }
@@ -723,9 +756,15 @@ void BluetoothManager::AddDescriptors(const cJSON * const json, BluetoothCharact
 
             characteristic->AddDescriptor(new_descriptor);
         }
+        else
+        {
+            ERROR_MESSAGE("Rejecting a malformed descriptor.");
+            rejected++;
+        }
     }
 
     TRACE_MESSAGE("AddDescriptors: Exit");
+    return (rejected);
 }
 
 /**
@@ -792,8 +831,22 @@ bool BluetoothManager::BuildGraphFromJson(const char * const configuration)
         else
         {
             GetDeviceInformation(json);
-            AddServices(json);
-            result = true;
+            //
+            //  A configuration with any entry that could not be used, or with no usable
+            //  service at all, is refused as a whole rather than started in part: the
+            //  Start response has no way to say which entries were dropped.  What was built
+            //  is released so a later Start does not add to it.
+            //
+            const uint32_t rejected = AddServices(json);
+            if ((rejected > 0) || Services.GetServiceDefinitions().empty())
+            {
+                ERROR_MESSAGE("BuildGraphFromJson: %" PRIu32 " entries rejected, %" PRIu32 " services built; refusing the configuration.", rejected, static_cast<uint32_t>(Services.GetServiceDefinitions().size()));
+                DeleteAllServices();
+            }
+            else
+            {
+                result = true;
+            }
         }
         //
         //  The JSON library detects NULL and will simply return without action.
