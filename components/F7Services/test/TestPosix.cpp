@@ -1034,3 +1034,30 @@ TEST_CASE("A closed socket handle is refused after its descriptor is reused", CL
 
     TEST_ASSERT_EQUAL_INT_MESSAGE(0, close(descriptor), "A stale handle closed the descriptor that reused its number.");
 }
+
+/**
+ * @brief Check that sendmsg refuses an iovec count its payload cannot hold.
+ *
+ *  Regression check for issue #217.  The count used to drive a loop with no bound, so
+ *  0xFFFFFFFF walked the address space four bytes at a time until the device faulted.
+ *  Through the real handler it must now be answered InvalidRequest.
+ */
+TEST_CASE("SendMsg refuses an iovec count its payload cannot hold", CLASS_OF_TESTS)
+{
+    MockMessageDispatcher *dispatcher = SetupConnectedDispatcher();
+    const int32_t socketHandle = OpenUdpSocket(dispatcher);
+
+    static constexpr uint32_t PAYLOAD_LENGTH = 32;
+    uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(PAYLOAD_LENGTH));
+    TEST_ASSERT_NOT_NULL(payload);
+    memset(payload, 0, PAYLOAD_LENGTH);
+    Encoders::EncodeInt32(socketHandle, payload);
+    Encoders::EncodeUInt32(0xffffffff, payload + 16);
+
+    Message *response = SendRequest(dispatcher, Esp32Interfaces::WiFi, WiFiFunction::SendMsg, payload, PAYLOAD_LENGTH, SOCKET_RESPONSE_TIMEOUT);
+    TEST_ASSERT_NOT_NULL_MESSAGE(response, "No response to the sendmsg request.");
+    ASSERT_RESPONSE(response, Esp32Interfaces::WiFi, WiFiFunction::SendMsg, StatusCodes::InvalidRequest);
+    Message::DeleteMessage(response);
+
+    CloseSocket(dispatcher, socketHandle);
+}

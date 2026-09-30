@@ -2047,7 +2047,8 @@ void WiFiRequestHandler::SendMsg(void * const vpMessage)
     {
         if (IsConnected())
         {
-            Esp32Messaging::SendMsgRequest *request = Encoders::ExtractSendMsgRequest(message->Payload);
+            bool malformed = false;
+            Esp32Messaging::SendMsgRequest *request = Encoders::ExtractSendMsgRequest(message->Payload, message->PayloadLength, &malformed);
 
             if (request)
             {
@@ -2117,7 +2118,15 @@ void WiFiRequestHandler::SendMsg(void * const vpMessage)
             }
             else
             {
-                result = StatusCodes::EspOutOfMemory;
+                if (malformed)
+                {
+                    ERROR_MESSAGE("SendMsg: the request declares more data than its %" PRIu32 " byte payload holds.", message->PayloadLength);
+                    result = StatusCodes::InvalidRequest;
+                }
+                else
+                {
+                    result = StatusCodes::EspOutOfMemory;
+                }
             }
         }
         else

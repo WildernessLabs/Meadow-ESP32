@@ -2148,6 +2148,11 @@ int Encoders::EncodedRecvFromResponseBufferSize(const Esp32Messaging::RecvFromRe
  *  concatenated on the wire in order, they are extracted here as a single
  *  coalesced Buffer/BufferLength pair.
  *
+ *  Every length above comes from the STM32.  Each is checked against the bytes the
+ *  payload actually holds before anything is allocated or copied, so a request that
+ *  declares more than it carries is refused rather than walked or copied past the end of
+ *  the payload (issue #217).
+ *
  *  Note that the returned object holds nested allocations, so it should eventually be
  *  released by calling Encoders::FreeSendMsgRequest(...) rather than by freeing the object
  *  on its own.
@@ -2155,104 +2160,139 @@ int Encoders::EncodedRecvFromResponseBufferSize(const Esp32Messaging::RecvFromRe
  *  @param buffer
  *      Pointer to a block of memory holding the encoded SendMsgRequest object.
  *
+ *  @param length
+ *      Number of bytes in that block, the message's PayloadLength.
+ *
+ *  @param malformed
+ *      Set to true when the request declares more data than the payload holds, so the
+ *      caller can tell a malformed request from running out of memory.
+ *
  *  @returns
- *      Pointer to a SendMsgRequest object.
+ *      Pointer to a SendMsgRequest object, nullptr if the request is malformed or memory
+ *      runs out.
  */
 // cppcheck-suppress unusedFunction symbolName=ExtractSendMsgRequest
-Esp32Messaging::SendMsgRequest *Encoders::ExtractSendMsgRequest(uint8_t *buffer)
+Esp32Messaging::SendMsgRequest *Encoders::ExtractSendMsgRequest(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
-    if (buffer == nullptr)
+    //
+    //  Socket handle, flags, message header length and name length.
+    //
+    static constexpr uint32_t FIXED_HEADER_LENGTH = 16;
+
+    *malformed = false;
+    if ((buffer == nullptr) || (length < FIXED_HEADER_LENGTH))
     {
+        *malformed = (buffer != nullptr);
         return (nullptr);
     }
 
     Esp32Messaging::SendMsgRequest *sendMsgRequest = static_cast<Esp32Messaging::SendMsgRequest *>(pvPortMalloc(sizeof(Esp32Messaging::SendMsgRequest)));
-
     if (sendMsgRequest == NULL)
     {
         return (nullptr);
     }
+    memset(sendMsgRequest, 0, sizeof(Esp32Messaging::SendMsgRequest));
 
+    uint32_t remaining = length;
     sendMsgRequest->SocketHandle = ExtractInt32(buffer);
     buffer += 4;
     sendMsgRequest->Flags = ExtractInt32(buffer);
     buffer += 4;
     buffer += 4; // Skip MessageHeaderLength; the nested fields are self-describing.
-
     sendMsgRequest->NameLength = ExtractUInt32(buffer);
     buffer += 4;
-    if (sendMsgRequest->NameLength > 0)
+    remaining -= FIXED_HEADER_LENGTH;
+
+    //
+    //  The name must fit, and leave room for the iovec count after it.
+    //
+    bool fits = (sendMsgRequest->NameLength <= remaining) && ((remaining - sendMsgRequest->NameLength) >= 4);
+    if (fits && (sendMsgRequest->NameLength > 0))
     {
         sendMsgRequest->Name = static_cast<uint8_t *>(pvPortMalloc(sendMsgRequest->NameLength));
         if (sendMsgRequest->Name == NULL)
         {
-            vPortFree(sendMsgRequest);
+            FreeSendMsgRequest(&sendMsgRequest);
             return (nullptr);
         }
         memcpy(sendMsgRequest->Name, buffer, sendMsgRequest->NameLength);
+    }
+    if (fits)
+    {
         buffer += sendMsgRequest->NameLength;
-    }
-    else
-    {
-        sendMsgRequest->Name = nullptr;
-    }
+        remaining -= sendMsgRequest->NameLength;
 
-    uint32_t iovecCount = ExtractUInt32(buffer);
-    buffer += 4;
-    sendMsgRequest->BufferLength = 0;
-    for (uint32_t index = 0; index < iovecCount; index++)
-    {
-        sendMsgRequest->BufferLength += ExtractUInt32(buffer);
+        const uint32_t iovecCount = ExtractUInt32(buffer);
         buffer += 4;
-    }
-    if (sendMsgRequest->BufferLength > 0)
-    {
-        sendMsgRequest->Buffer = static_cast<uint8_t *>(pvPortMalloc(sendMsgRequest->BufferLength));
-        if (sendMsgRequest->Buffer == NULL)
+        remaining -= 4;
+
+        //
+        //  Each iovec length takes four bytes, so a count the payload cannot hold is refused
+        //  before the loop rather than walked.  The total is summed in 64 bits and has to fit
+        //  in what is left, which also rules out the 32-bit sum wrapping to a small value.
+        //
+        fits = (iovecCount <= (remaining / 4));
+        uint64_t total = 0;
+        if (fits)
         {
-            if (sendMsgRequest->Name != nullptr)
+            for (uint32_t index = 0; index < iovecCount; index++)
             {
-                vPortFree(sendMsgRequest->Name);
+                total += ExtractUInt32(buffer);
+                buffer += 4;
             }
-            vPortFree(sendMsgRequest);
-            return (nullptr);
+            remaining -= iovecCount * 4;
+            fits = (total <= remaining);
         }
-        memcpy(sendMsgRequest->Buffer, buffer, sendMsgRequest->BufferLength);
-        buffer += sendMsgRequest->BufferLength;
-    }
-    else
-    {
-        sendMsgRequest->Buffer = nullptr;
-    }
-
-    sendMsgRequest->ControlLength = ExtractUInt32(buffer);
-    buffer += 4;
-    if (sendMsgRequest->ControlLength > 0)
-    {
-        sendMsgRequest->Control = static_cast<uint8_t *>(pvPortMalloc(sendMsgRequest->ControlLength));
-        if (sendMsgRequest->Control == NULL)
+        if (fits)
         {
-            if (sendMsgRequest->Name != nullptr)
+            sendMsgRequest->BufferLength = static_cast<uint32_t>(total);
+            if (sendMsgRequest->BufferLength > 0)
             {
-                vPortFree(sendMsgRequest->Name);
+                sendMsgRequest->Buffer = static_cast<uint8_t *>(pvPortMalloc(sendMsgRequest->BufferLength));
+                if (sendMsgRequest->Buffer == NULL)
+                {
+                    FreeSendMsgRequest(&sendMsgRequest);
+                    return (nullptr);
+                }
+                memcpy(sendMsgRequest->Buffer, buffer, sendMsgRequest->BufferLength);
+                buffer += sendMsgRequest->BufferLength;
             }
-            if (sendMsgRequest->Buffer != nullptr)
+            remaining -= sendMsgRequest->BufferLength;
+
+            //
+            //  Control length, the control data itself, then the message flags.
+            //
+            fits = (remaining >= 4);
+            if (fits)
             {
-                vPortFree(sendMsgRequest->Buffer);
+                sendMsgRequest->ControlLength = ExtractUInt32(buffer);
+                buffer += 4;
+                remaining -= 4;
+                fits = (sendMsgRequest->ControlLength <= remaining) && ((remaining - sendMsgRequest->ControlLength) >= 4);
             }
-            vPortFree(sendMsgRequest);
-            return (nullptr);
+            if (fits)
+            {
+                if (sendMsgRequest->ControlLength > 0)
+                {
+                    sendMsgRequest->Control = static_cast<uint8_t *>(pvPortMalloc(sendMsgRequest->ControlLength));
+                    if (sendMsgRequest->Control == NULL)
+                    {
+                        FreeSendMsgRequest(&sendMsgRequest);
+                        return (nullptr);
+                    }
+                    memcpy(sendMsgRequest->Control, buffer, sendMsgRequest->ControlLength);
+                    buffer += sendMsgRequest->ControlLength;
+                }
+                sendMsgRequest->MsgFlags = ExtractInt32(buffer);
+            }
         }
-        memcpy(sendMsgRequest->Control, buffer, sendMsgRequest->ControlLength);
-        buffer += sendMsgRequest->ControlLength;
     }
-    else
+
+    if (!fits)
     {
-        sendMsgRequest->Control = nullptr;
+        *malformed = true;
+        FreeSendMsgRequest(&sendMsgRequest);
     }
-
-    sendMsgRequest->MsgFlags = ExtractInt32(buffer);
-
     return (sendMsgRequest);
 }
 

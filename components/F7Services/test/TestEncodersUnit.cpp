@@ -131,3 +131,167 @@ TEST_CASE("ExtractInt32 round trips negative values and the extremes", CLASS_OF_
     const uint8_t minusTwo[] = {0xfe, 0xff, 0xff, 0xff};
     TEST_ASSERT_EQUAL_INT32(-2, static_cast<int32_t>(Encoders::ExtractInt32(minusTwo)));
 }
+
+/**
+ * @brief Write a 32-bit value into a payload being built and move past it.
+ *
+ * @param position Where to write, advanced by four bytes.
+ * @param value Value to write.
+ */
+static void PutUInt32(uint8_t *&position, const uint32_t value)
+{
+    Encoders::EncodeUInt32(value, position);
+    position += 4;
+}
+
+/**
+ * @brief Write the fixed part of a sendmsg request: socket, flags, header length and name length.
+ *
+ * @param position Where to write, advanced past the fields.
+ * @param nameLength Name length to declare.
+ */
+static void PutSendMsgHeader(uint8_t *&position, const uint32_t nameLength)
+{
+    PutUInt32(position, 54);
+    PutUInt32(position, 0);
+    PutUInt32(position, 0);
+    PutUInt32(position, nameLength);
+}
+
+/**
+ * @brief Decode a payload and check it is refused as malformed.
+ *
+ * @param payload Encoded request.
+ * @param length Number of bytes in the payload.
+ */
+static void CheckSendMsgIsMalformed(const uint8_t *payload, const uint32_t length)
+{
+    bool malformed = false;
+    Esp32Messaging::SendMsgRequest *request = Encoders::ExtractSendMsgRequest(payload, length, &malformed);
+    TEST_ASSERT_NULL_MESSAGE(request, "A request declaring more than its payload holds was decoded.");
+    TEST_ASSERT_TRUE_MESSAGE(malformed, "The refusal was not reported as a malformed request.");
+}
+
+/**
+ * @brief A well-formed sendmsg request with a name, two iovecs and control data decodes intact.
+ */
+TEST_CASE("ExtractSendMsgRequest decodes a well-formed request", CLASS_OF_TESTS)
+{
+    uint8_t payload[128] = {};
+    uint8_t *position = payload;
+    const uint8_t name[4] = {0x11, 0x22, 0x33, 0x44};
+    PutSendMsgHeader(position, sizeof(name));
+    memcpy(position, name, sizeof(name));
+    position += sizeof(name);
+    PutUInt32(position, 2);
+    PutUInt32(position, 3);
+    PutUInt32(position, 2);
+    memcpy(position, "abcde", 5);
+    position += 5;
+    PutUInt32(position, 2);
+    memcpy(position, "zz", 2);
+    position += 2;
+    PutUInt32(position, 7);
+
+    bool malformed = true;
+    Esp32Messaging::SendMsgRequest *request = Encoders::ExtractSendMsgRequest(payload, static_cast<uint32_t>(position - payload), &malformed);
+    TEST_ASSERT_NOT_NULL(request);
+    TEST_ASSERT_FALSE(malformed);
+    TEST_ASSERT_EQUAL_INT32(54, request->SocketHandle);
+    TEST_ASSERT_EQUAL_UINT32(sizeof(name), request->NameLength);
+    TEST_ASSERT_EQUAL_HEX8_ARRAY(name, request->Name, sizeof(name));
+    TEST_ASSERT_EQUAL_UINT32(5, request->BufferLength);
+    TEST_ASSERT_EQUAL_MEMORY("abcde", request->Buffer, 5);
+    TEST_ASSERT_EQUAL_UINT32(2, request->ControlLength);
+    TEST_ASSERT_EQUAL_MEMORY("zz", request->Control, 2);
+    TEST_ASSERT_EQUAL_INT32(7, request->MsgFlags);
+    Encoders::FreeSendMsgRequest(&request);
+}
+
+/**
+ * @brief An iovec count the payload cannot hold is refused before the lengths are walked.
+ *
+ *  Regression check for issue #217: a count of 0xFFFFFFFF used to walk the address space
+ *  four bytes at a time until the device faulted.
+ */
+TEST_CASE("ExtractSendMsgRequest refuses an iovec count the payload cannot hold", CLASS_OF_TESTS)
+{
+    uint8_t payload[32] = {};
+    uint8_t *position = payload;
+    PutSendMsgHeader(position, 0);
+    PutUInt32(position, 0xffffffff);
+    PutUInt32(position, 4);
+    CheckSendMsgIsMalformed(payload, static_cast<uint32_t>(position - payload));
+}
+
+/**
+ * @brief iovec lengths whose 32-bit sum wraps to a small value are refused.
+ *
+ *  0xFFFFFFF8 + 0x10 wraps to 8 in 32 bits, which used to allocate 8 bytes while the
+ *  request claimed four gigabytes of data.
+ */
+TEST_CASE("ExtractSendMsgRequest refuses iovec lengths that wrap when summed", CLASS_OF_TESTS)
+{
+    uint8_t payload[64] = {};
+    uint8_t *position = payload;
+    PutSendMsgHeader(position, 0);
+    PutUInt32(position, 2);
+    PutUInt32(position, 0xfffffff8);
+    PutUInt32(position, 0x10);
+    position += 8;
+    PutUInt32(position, 0);
+    PutUInt32(position, 0);
+    CheckSendMsgIsMalformed(payload, static_cast<uint32_t>(position - payload));
+}
+
+/**
+ * @brief A name, data or control length longer than the payload is refused.
+ */
+TEST_CASE("ExtractSendMsgRequest refuses lengths longer than the payload", CLASS_OF_TESTS)
+{
+    uint8_t payload[64] = {};
+    uint8_t *position = payload;
+    PutSendMsgHeader(position, 1000);
+    PutUInt32(position, 0);
+    CheckSendMsgIsMalformed(payload, static_cast<uint32_t>(position - payload));
+
+    position = payload;
+    PutSendMsgHeader(position, 0);
+    PutUInt32(position, 1);
+    PutUInt32(position, 1000);
+    PutUInt32(position, 0);
+    PutUInt32(position, 0);
+    CheckSendMsgIsMalformed(payload, static_cast<uint32_t>(position - payload));
+
+    position = payload;
+    PutSendMsgHeader(position, 0);
+    PutUInt32(position, 0);
+    PutUInt32(position, 1000);
+    PutUInt32(position, 0);
+    CheckSendMsgIsMalformed(payload, static_cast<uint32_t>(position - payload));
+}
+
+/**
+ * @brief A payload that ends part way through a field is refused.
+ */
+TEST_CASE("ExtractSendMsgRequest refuses a truncated payload", CLASS_OF_TESTS)
+{
+    uint8_t payload[64] = {};
+    uint8_t *position = payload;
+    PutSendMsgHeader(position, 0);
+    PutUInt32(position, 0);
+    PutUInt32(position, 0);
+    PutUInt32(position, 0);
+    const uint32_t complete = static_cast<uint32_t>(position - payload);
+
+    bool malformed = true;
+    Esp32Messaging::SendMsgRequest *request = Encoders::ExtractSendMsgRequest(payload, complete, &malformed);
+    TEST_ASSERT_NOT_NULL_MESSAGE(request, "The complete empty request was refused.");
+    TEST_ASSERT_FALSE(malformed);
+    Encoders::FreeSendMsgRequest(&request);
+
+    for (uint32_t length = 0; length < complete; length++)
+    {
+        CheckSendMsgIsMalformed(payload, length);
+    }
+}
