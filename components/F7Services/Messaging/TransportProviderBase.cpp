@@ -170,6 +170,14 @@ void TransportProviderBase::DumpMessageAtHeadOfQueue()
  *  The queue mutex is released around the pause as the transport provider task
  *  needs it in order to take a message off the queue.
  *
+ *  The mutex is held only for the queue operation itself.  The MessageWaiting control
+ *  message is a blocking UART write, so sending it with the mutex held would make every
+ *  other task queuing a message, and the transport provider task taking one off, wait
+ *  on the UART (issue #271).  Sending it afterwards is safe: each message's
+ *  MessageWaiting is sent after that message is on the queue, and the STM32 answers each
+ *  one with a single request for the next message, so a request never finds the queue
+ *  empty because of the order the two happen in.
+ *
  *  A message that still cannot be queued is dropped and the Busy control signal is
  *  sent to the STM32 to indicate that there are messages waiting to be collected.
  *  Reporting the failure as a message to the STM32 is not possible as that would
@@ -194,17 +202,19 @@ bool TransportProviderBase::QueueMessageForStm32(Message *message)
     //
     const uint32_t attempts = (xTaskGetCurrentTaskHandle() == _transportProviderTaskHandle) ? 1 : QUEUE_ATTEMPTS;
 
+    //
+    //  Both of these compile to nothing outside a diagnostic build.  The message is dumped
+    //  here, while it still belongs to this task: once it is on the queue and the mutex is
+    //  released, the transport provider task may take it off and delete it at any moment.
+    //
+    Heap::CheckIntegrity();
+    Logging::DumpMessage(COMPONENT_NAME, message);
+
     for (uint32_t attempt = 0; (attempt < attempts) && !result; attempt++)
     {
         if (xSemaphoreTake(_outboundMessageQueueMutex, portMAX_DELAY) == pdTRUE)
         {
-            if (xQueueSendToBack(_outboundMessageQueueHandle, &message, 0) == pdPASS)
-            {
-                Heap::CheckIntegrity();
-                Logging::DumpMessage(COMPONENT_NAME, message);
-                SendControlMessageToStm32(ControlMessageType::MessageWaiting);
-                result = true;
-            }
+            result = (xQueueSendToBack(_outboundMessageQueueHandle, &message, 0) == pdPASS);
             xSemaphoreGive(_outboundMessageQueueMutex);
         }
         //
@@ -218,7 +228,11 @@ bool TransportProviderBase::QueueMessageForStm32(Message *message)
         }
     }
 
-    if (!result)
+    if (result)
+    {
+        SendControlMessageToStm32(ControlMessageType::MessageWaiting);
+    }
+    else
     {
         ERROR_MESSAGE("Cannot queue message after %" PRIu32 " attempt(s), dropping it.", attempts);
         SendControlMessageToStm32(ControlMessageType::Busy);
