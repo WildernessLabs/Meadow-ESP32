@@ -23,6 +23,8 @@
 #include <string>
 #include <string.h>
 #include "unity.h"
+#include "mbedtls/md.h"
+#include "mbedtls/pkcs5.h"
 
 #include "MockMessageDispatcher.hpp"
 #include "Esp32Messaging.hpp"
@@ -199,6 +201,101 @@ TEST_CASE("Connect to access point", CLASS_OF_TESTS)
     TEST_ASSERT_TRUE(progress.ResponseReceived);
     TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, progress.ResponseStatusCode);
     ASSERT_OUTBOUND_QUEUE_LENGTH(dispatcher, 0);
+}
+
+/**
+ * @brief Length in bytes of a WPA2 pre-shared key.
+ */
+#define PRE_SHARED_KEY_LENGTH 32
+
+/**
+ * @brief Iterations WPA2 uses to derive the pre-shared key from a passphrase.
+ */
+#define PRE_SHARED_KEY_ITERATIONS 4096
+
+/**
+ * @brief Derive the 64-hex-digit pre-shared key for a WPA2 network from its SSID and passphrase.
+ *
+ *  This is the key WPA2 itself derives, PBKDF2-HMAC-SHA1 over the passphrase with the SSID
+ *  as salt, which an access point also accepts in place of the passphrase.
+ *
+ * @param ssid Network name.
+ * @param passphrase Passphrase for the network.
+ * @param hexKey Buffer of at least 2 * PRE_SHARED_KEY_LENGTH + 1 bytes for the key as text.
+ */
+static void DerivePreSharedKeyHex(const char *ssid, const char *passphrase, char *hexKey)
+{
+    uint8_t key[PRE_SHARED_KEY_LENGTH];
+    TEST_ASSERT_EQUAL_INT_MESSAGE(
+        0, mbedtls_pkcs5_pbkdf2_hmac_ext(MBEDTLS_MD_SHA1, reinterpret_cast<const unsigned char *>(passphrase), strlen(passphrase), reinterpret_cast<const unsigned char *>(ssid), strlen(ssid), PRE_SHARED_KEY_ITERATIONS, sizeof(key), key), "Could not derive the pre-shared key.");
+    for (uint32_t index = 0; index < sizeof(key); index++)
+    {
+        snprintf(hexKey + (2 * index), 3, "%02x", key[index]);
+    }
+}
+
+/**
+ * @brief Check that a 64-character password, the network's hex pre-shared key, connects.
+ *
+ *  Issue #293 proposed refusing 64-character passwords because they fill
+ *  wifi_config.sta.password with no terminator.  ESP-IDF treats exactly 64 characters as a
+ *  64-digit hex pre-shared key (wpa_set_passphrase), so they are valid.  This connects to the
+ *  test network, which uses WPA2-PSK, with its derived key instead of its passphrase: a
+ *  successful connection shows the unterminated 64-byte value is read correctly.
+ *
+ * @note The station is disconnected first, as in "Connect to access point".
+ */
+TEST_CASE("Connect to access point using its 64-digit hex pre-shared key", CLASS_OF_TESTS)
+{
+    MockMessageDispatcher *dispatcher = SetupWiFiDispatcher();
+
+    EnsureDisconnected(dispatcher);
+
+    char hexKey[(2 * PRE_SHARED_KEY_LENGTH) + 1] = {};
+    DerivePreSharedKeyHex(UnitTestConfiguration::WiFiNetwork(), UnitTestConfiguration::WiFiPassword(), hexKey);
+    TEST_ASSERT_EQUAL_UINT32(2 * PRE_SHARED_KEY_LENGTH, strlen(hexKey));
+
+    printf("Connecting to access point %s with its pre-shared key.\n", UnitTestConfiguration::WiFiNetwork());
+    QueueAccessPointRequest(dispatcher, WiFiFunction::ConnectToAccessPoint, UnitTestConfiguration::WiFiNetwork(), hexKey);
+
+    ConnectionProgress progress = {};
+    CollectConnectionMessages(dispatcher, RadioTimeout(), &progress);
+
+    TEST_ASSERT_TRUE_MESSAGE(progress.ConnectedEvent, "The station did not connect using the 64-digit pre-shared key.");
+    TEST_ASSERT_TRUE(progress.ResponseReceived);
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, progress.ResponseStatusCode);
+    ASSERT_OUTBOUND_QUEUE_LENGTH(dispatcher, 0);
+
+    EnsureDisconnected(dispatcher);
+}
+
+/**
+ * @brief Check that a wrong 64-digit hex key is refused, so the key really is being used.
+ *
+ *  Companion to "Connect to access point using its 64-digit hex pre-shared key": the derived
+ *  key with its first digit changed must not connect.  Run it on its own, as a failed
+ *  connection leaves the interface running and changes how the next connection reports.
+ */
+TEST_CASE("Connect to access point refuses a wrong 64-digit hex pre-shared key", CLASS_OF_TESTS)
+{
+    MockMessageDispatcher *dispatcher = SetupWiFiDispatcher();
+
+    EnsureDisconnected(dispatcher);
+
+    char hexKey[(2 * PRE_SHARED_KEY_LENGTH) + 1] = {};
+    DerivePreSharedKeyHex(UnitTestConfiguration::WiFiNetwork(), UnitTestConfiguration::WiFiPassword(), hexKey);
+    hexKey[0] = (hexKey[0] == '0') ? '1' : '0';
+
+    QueueAccessPointRequest(dispatcher, WiFiFunction::ConnectToAccessPoint, UnitTestConfiguration::WiFiNetwork(), hexKey);
+
+    ConnectionProgress progress = {};
+    CollectConnectionMessages(dispatcher, RadioTimeout(), &progress);
+
+    TEST_ASSERT_FALSE_MESSAGE(progress.ConnectedEvent, "The station connected with a wrong pre-shared key.");
+    TEST_ASSERT_TRUE(progress.ResponseReceived);
+    TEST_ASSERT_NOT_EQUAL(StatusCodes::CompletedOk, progress.ResponseStatusCode);
+
+    EnsureDisconnected(dispatcher);
 }
 
 /**
