@@ -121,7 +121,7 @@ static const size_t MAXIMUM_CONFIGURATION_FILE_SIZE = 4096;
     printf("\n");
     fflush(stdout);
 
-    vTaskSuspend(NULL);
+    vTaskSuspend(nullptr);
 
     //
     //  Nothing resumes this task, but saying so lets the compiler and cppcheck see that
@@ -213,7 +213,7 @@ static void ReportString(const char *name, const char *value)
 static char *ReadConfigurationFile(const char *path)
 {
     FILE *file = fopen(path, "r");
-    if (file == nullptr)
+    if (file == NULL)
     {
         return (nullptr);
     }

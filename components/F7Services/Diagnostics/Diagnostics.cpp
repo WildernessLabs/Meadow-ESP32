@@ -56,7 +56,7 @@ const char *Diagnostics::COMPONENT_NAME = "Diagnostics";
 /**
  *  @brief Task handle for the diagnostics thread.
  */
-static TaskHandle_t _diagnosticsTaskHandle = NULL;
+static TaskHandle_t _diagnosticsTaskHandle = nullptr;
 
 /**
  *  @brief Lock for controlling output.
@@ -81,7 +81,7 @@ void Diagnostics::Setup()
     TRACE_MESSAGE("Setup: Enter");
 
     _outputBinarySemaphore = xSemaphoreCreateBinary();
-    if (_outputBinarySemaphore == NULL)
+    if (_outputBinarySemaphore == nullptr)
     {
         ERROR_MESSAGE("Failed to create output binary semaphore");
     }
@@ -90,7 +90,7 @@ void Diagnostics::Setup()
         xSemaphoreGive(_outputBinarySemaphore);
     }
 
-    BaseType_t result = xTaskCreate(Thread, "Diagnostics", TASK_STACK_SIZE, NULL, 5, &_diagnosticsTaskHandle);
+    BaseType_t result = xTaskCreate(Thread, "Diagnostics", TASK_STACK_SIZE, nullptr, 5, &_diagnosticsTaskHandle);
 
     if (result != pdPASS)
     {
@@ -245,7 +245,7 @@ void Diagnostics::ReportTaskInformation()
 
     numberOfTasks = uxTaskGetNumberOfTasks();
     tasks = static_cast<TaskStatus_t *>(pvPortMalloc(numberOfTasks * sizeof(TaskStatus_t)));
-    if (tasks != NULL)
+    if (tasks != nullptr)
     {
         ESP_LOGI(COMPONENT_NAME, "Number of tasks: %" PRIu32, numberOfTasks);
         ESP_LOGI(COMPONENT_NAME, "ID  Core Task Name        State     Priority Stack Watermark Run-time Percentage");

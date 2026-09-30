@@ -74,13 +74,13 @@ int CountFiles()
     DIR *dp = opendir(FileSystem::PARTITION_PATH_NAME);
     int result = 0;
 
-    if (dp == nullptr)
+    if (dp == NULL)
     {
         result = -1;
     }
     else
     {
-        while (readdir(dp) != nullptr)
+        while (readdir(dp) != NULL)
         {
             result++;
         }
@@ -108,7 +108,7 @@ int WriteTestFile(const char *filename, const uint8_t *buffer, int length)
     fullPath += filename;
 
     FILE *file = fopen(fullPath.c_str(), "w");
-    if (file != nullptr)
+    if (file != NULL)
     {
         result = fwrite(static_cast<const void *>(buffer), 1, length, file);
         fclose(file);
@@ -139,7 +139,7 @@ int ReadTestFile(const char *filename, uint8_t *buffer, int maxLength)
     fullPath += filename;
 
     FILE *file = fopen(fullPath.c_str(), "r");
-    if (file != nullptr)
+    if (file != NULL)
     {
         result = fread(static_cast<void *>(buffer), 1, maxLength, file);
         fclose(file);

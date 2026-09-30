@@ -111,12 +111,12 @@ public:
     /**
      * @brief Method to be executed when a value changes.
      */
-    ValueChanged OnValueChanged = NULL;
+    ValueChanged OnValueChanged = nullptr;
 
     /**
      * @brief Method to be executed when a descriptor is added to the characteristic.
      */
-    DescriptorAdded OnDescriptorAdded = NULL;
+    DescriptorAdded OnDescriptorAdded = nullptr;
 
     /**
      * @brief Get the vector of BluetoothDescriptor objects for this characteristic.

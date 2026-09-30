@@ -48,12 +48,12 @@ private:
     /**
      *  @brief Lock for controlling access to the members of this class.
      */
-    SemaphoreHandle_t _mutex = NULL;
+    SemaphoreHandle_t _mutex = nullptr;
 
     /**
      *  @brief Semaphore that will be used to trigger the execution of the _method.
      */
-    SemaphoreHandle_t _executeMethod = NULL;
+    SemaphoreHandle_t _executeMethod = nullptr;
 
     /**
      *  @brief Method to be execute by the task.
@@ -68,7 +68,7 @@ private:
     /**
      *  @brief Task handle for the task that will actually execute the method.
      */
-    task_completed_method_t _taskCompletedMethod = NULL;
+    task_completed_method_t _taskCompletedMethod = nullptr;
 
     /**
      *  @brief Indicate if this thread is actually running a method.

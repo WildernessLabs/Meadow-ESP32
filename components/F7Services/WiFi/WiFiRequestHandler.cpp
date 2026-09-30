@@ -60,7 +60,7 @@ std::map<uint32_t, struct pollfd *> WiFiRequestHandler::_pollRequests;
 /**
  *  @brief Mutex for the poll request linked list.
  */
-SemaphoreHandle_t WiFiRequestHandler::_pollRequestListMutex = NULL;
+SemaphoreHandle_t WiFiRequestHandler::_pollRequestListMutex = nullptr;
 
 /**
  *  @brief Socket handles the STM32 has been given, mapped to the lwIP descriptors behind them.
@@ -70,12 +70,12 @@ std::map<int32_t, int> WiFiRequestHandler::_socketHandles;
 /**
  *  @brief Mutex for _socketHandles.
  */
-SemaphoreHandle_t WiFiRequestHandler::_socketHandlesMutex = NULL;
+SemaphoreHandle_t WiFiRequestHandler::_socketHandlesMutex = nullptr;
 
 /**
  *  @brief Handle for the completed poll requests.
  */
-QueueHandle_t WiFiRequestHandler::_completedPollRequestsQueue = NULL;
+QueueHandle_t WiFiRequestHandler::_completedPollRequestsQueue = nullptr;
 
 /**
  *  @brief GPIO Pin connected to the antenna selection switch
@@ -424,12 +424,12 @@ WiFiRequestHandler::WiFiRequestHandler()
     //  Set up the structures need to deal with poll() requests in an asynchronous manner.
     //
     _pollRequestListMutex = xSemaphoreCreateMutex();
-    if (_pollRequestListMutex == NULL)
+    if (_pollRequestListMutex == nullptr)
     {
         ERROR_MESSAGE("WiFiRequestHandler: Cannot create poll request list mutex.");
     }
     _socketHandlesMutex = xSemaphoreCreateMutex();
-    if (_socketHandlesMutex == NULL)
+    if (_socketHandlesMutex == nullptr)
     {
         ERROR_MESSAGE("WiFiRequestHandler: Cannot create socket handle table mutex.");
     }
@@ -437,7 +437,7 @@ WiFiRequestHandler::WiFiRequestHandler()
     //  Get ready for nodes connecting when configured as an access point.
     //
     _connectedNodesListMutex = xSemaphoreCreateMutex();
-    if (_connectedNodesListMutex == NULL)
+    if (_connectedNodesListMutex == nullptr)
     {
         ERROR_MESSAGE("WiFiRequestHandler: Cannot create connected nodes list mutex.");
     }
@@ -629,10 +629,10 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetDefaultAccessPoint(const char *v
     //  string while it is being released.
     //
     CredentialsLock lock(CredentialsMutex());
-    TRACE_MESSAGE("WiFiRequestHandler::SetDefaultAccessPoint %s", (value == NULL) ? "NULL" : value);
+    TRACE_MESSAGE("WiFiRequestHandler::SetDefaultAccessPoint %s", (value == nullptr) ? "NULL" : value);
     StatusCodes::StatusCodes result = StatusCodes::Failure;
 
-    if (value == NULL)
+    if (value == nullptr)
     {
         value = WiFiRequestHandler::_emptyString;
     }
@@ -691,10 +691,10 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetPassword(const char *value)
     //  string while it is being released.
     //
     CredentialsLock lock(CredentialsMutex());
-    TRACE_MESSAGE("WiFiRequestHandler::SetPassword %s", (value == NULL) ? "NULL" : value);
+    TRACE_MESSAGE("WiFiRequestHandler::SetPassword %s", (value == nullptr) ? "NULL" : value);
     StatusCodes::StatusCodes result = StatusCodes::Failure;
 
-    if (value == NULL)
+    if (value == nullptr)
     {
         value = WiFiRequestHandler::_emptyString;
     }
@@ -771,7 +771,7 @@ bool WiFiRequestHandler::IsValidCountryCode(const char *code)
  */
 StatusCodes::StatusCodes WiFiRequestHandler::SetCountryCode(const char *value)
 {
-    TRACE_MESSAGE("WiFiRequestHandler::SetCountryCode %s", (value == NULL) ? "NULL" : value);
+    TRACE_MESSAGE("WiFiRequestHandler::SetCountryCode %s", (value == nullptr) ? "NULL" : value);
     StatusCodes::StatusCodes result = StatusCodes::InvalidCountryCode;
 
     if ((value != nullptr) && (_countryCode != nullptr) && !strcmp(value, _countryCode))
@@ -1190,12 +1190,12 @@ void WiFiRequestHandler::RaiseConnectToAccessPointEvent(StatusCodes::StatusCodes
     TRACE_MESSAGE("RaiseConnectToAccessPointEvent: Enter");
 
     Esp32Messaging::ConnectEventData *ed = static_cast<Esp32Messaging::ConnectEventData *>(pvPortMalloc(sizeof(Esp32Messaging::ConnectEventData)));
-    if (ed != NULL)
+    if (ed != nullptr)
     {
         PopulateConnectionEventDataStructure(ed);
         uint32_t payloadLength = Encoders::EncodedConnectEventDataBufferSize(ed);
         uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
-        if (payload != NULL)
+        if (payload != nullptr)
         {
             Encoders::EncodeConnectEventData(ed, payload);
             RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::NetworkConnectedEvent, status, payload, payloadLength);
@@ -1224,7 +1224,7 @@ void WiFiRequestHandler::RaiseDisconnectEvent()
 
     Esp32Messaging::DisconnectEventData *ed = static_cast<Esp32Messaging::DisconnectEventData *>(pvPortMalloc(sizeof(Esp32Messaging::DisconnectEventData)));
 
-    if (ed != NULL)
+    if (ed != nullptr)
     {
         memset(ed, 0, sizeof(Esp32Messaging::DisconnectEventData));
 
@@ -1241,7 +1241,7 @@ void WiFiRequestHandler::RaiseDisconnectEvent()
 
         uint32_t payloadLength = Encoders::EncodeDisconnectEventDataBufferSize(ed);
         uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
-        if (payload != NULL)
+        if (payload != nullptr)
         {
             Encoders::EncodeDisconnectEventData(ed, payload);
             RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::NetworkDisconnectedEvent, StatusCodes::CompletedOk, payload, payloadLength);
@@ -1295,7 +1295,7 @@ void WiFiRequestHandler::RaiseErrorEvent(StatusCodes::StatusCodes statusCode, ui
 {
     TRACE_MESSAGE("RaiseErrorEvent: Enter");
 
-    if (payload == NULL)
+    if (payload == nullptr)
     {
         payloadLength = 0;
     }
@@ -1308,7 +1308,7 @@ void WiFiRequestHandler::RaiseErrorEvent(StatusCodes::StatusCodes statusCode, ui
     }
 
     Message *message = Message::CreateOnHeap(MessageTypes::Event, Esp32Interfaces::WiFi, WiFiFunction::ErrorEvent, statusCode, _messageDispatcher->GetNextMessageID(), payload, payloadLength);
-    if (message == NULL)
+    if (message == nullptr)
     {
         //
         //  CreateOnHeap takes ownership of the payload so it has to be released here as the sender assumes
@@ -1349,7 +1349,7 @@ void WiFiRequestHandler::RaiseNetworkGotIpEvent()
         }
         uint32_t payloadLength = Encoders::EncodedGotIpEventDataBufferSize(ed);
         uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
-        if (payload != NULL)
+        if (payload != nullptr)
         {
             Encoders::EncodeGotIpEventData(ed, payload);
             RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::NetworkGotIpEvent, StatusCodes::CompletedOk, payload, payloadLength);
@@ -1652,7 +1652,7 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
                 break;
             default:
                 TRACE_MESSAGE("DispatchRequest: Unknown WiFi message received, function %" PRIu32, request->Function);
-                if ((request->Payload != NULL) && (request->PayloadLength > 0))
+                if ((request->Payload != nullptr) && (request->PayloadLength > 0))
                 {
                     TRACE_HEX_BUFFER(request->Payload, request->PayloadLength);
                 }
@@ -1687,7 +1687,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::PrepareForDeepSleep()
 
     WiFiRequestHandler *wifiHandler = WiFiRequestHandler::GetInstance();
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    if (wifiHandler != NULL)
+    if (wifiHandler != nullptr)
     {
         result = wifiHandler->StopWiFIAdapter();
     }
@@ -2069,9 +2069,9 @@ void WiFiRequestHandler::ConnectToDefaultAccessPoint(Message *message)
     Esp32Messaging::ConnectEventData data = {};
 
     //
-    //  "Not configured" is an empty string as well as NULL: SetDefaultAccessPoint(NULL),
+    //  "Not configured" is an empty string as well as nullptr: SetDefaultAccessPoint(nullptr),
     //  which ClearDefaultAccessPointAndPassword uses, stores an empty string rather than
-    //  clearing the pointer, and it stays that way for the rest of the app's life.  NULL
+    //  clearing the pointer, and it stays that way for the rest of the app's life.  nullptr
     //  itself is only ever seen the first time, before NVS has been read.
     //
     //
@@ -2141,8 +2141,8 @@ void WiFiRequestHandler::ClearDefaultAccessPointAndPassword(Message *message)
     TRACE_MESSAGE("ClearDefaultAccessPointAndPassword: Enter");
 
     message->MessageType = MessageTypes::Response;
-    StatusCodes::StatusCodes sc = SetDefaultAccessPoint(NULL);
-    StatusCodes::StatusCodes sc1 = SetPassword(NULL);
+    StatusCodes::StatusCodes sc = SetDefaultAccessPoint(nullptr);
+    StatusCodes::StatusCodes sc1 = SetPassword(nullptr);
     message->StatusCode = (sc == StatusCodes::CompletedOk) && (sc1 == StatusCodes::CompletedOk) ? StatusCodes::CompletedOk : StatusCodes::Failure;
     _messageDispatcher->QueueMessageForStm32(message);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
@@ -2184,8 +2184,8 @@ esp_err_t WiFiRequestHandler::StartWiFiInterface(const wifi_mode_t mode, const E
 
         if (result == ESP_OK)
         {
-            _stationNetIfHandle = NULL;
-            _softApNetIfHandle = NULL;
+            _stationNetIfHandle = nullptr;
+            _softApNetIfHandle = nullptr;
             if ((mode == WIFI_MODE_STA) || (mode == WIFI_MODE_APSTA))
             {
                 _stationNetIfHandle = esp_netif_create_default_wifi_sta();
@@ -2196,12 +2196,12 @@ esp_err_t WiFiRequestHandler::StartWiFiInterface(const wifi_mode_t mode, const E
                 _softApNetIfHandle = esp_netif_create_default_wifi_ap();
             }
 
-            if (_stationNetIfHandle == NULL && ((mode == WIFI_MODE_STA) || (mode == WIFI_MODE_APSTA)))
+            if (_stationNetIfHandle == nullptr && ((mode == WIFI_MODE_STA) || (mode == WIFI_MODE_APSTA)))
             {
                 result = ESP_FAIL;
             }
 
-            if (_softApNetIfHandle == NULL && ((mode == WIFI_MODE_AP) || (mode == WIFI_MODE_APSTA)))
+            if (_softApNetIfHandle == nullptr && ((mode == WIFI_MODE_AP) || (mode == WIFI_MODE_APSTA)))
             {
                 result = ESP_FAIL;
             }
@@ -2332,7 +2332,7 @@ void WiFiRequestHandler::ScanForAccessPoints(Message *message)
             //  incomplete scan.
             //
             xEventGroupClearBits(_xWiFiEventGroup, WIFI_SCAN_COMPLETE_BIT);
-            ESP_ERROR_CHECK(esp_wifi_scan_start(NULL, true));
+            ESP_ERROR_CHECK(esp_wifi_scan_start(nullptr, true));
 
             bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_SCAN_COMPLETE_BIT, pdFALSE, pdFALSE, GetWiFiTimeout() / portTICK_PERIOD_MS);
             if (bits & WIFI_SCAN_COMPLETE_BIT)

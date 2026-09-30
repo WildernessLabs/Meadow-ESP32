@@ -35,7 +35,7 @@ const char *Thread::COMPONENT_NAME = "Thread";
  */
 Thread::Thread() : _mutex(xSemaphoreCreateMutex())
 {
-    if (_mutex == NULL)
+    if (_mutex == nullptr)
     {
         throw ThreadPoolException("Cannot create mutex for thread.");
     }
@@ -44,7 +44,7 @@ Thread::Thread() : _mutex(xSemaphoreCreateMutex())
     //  initialiser list as using the list has generated an exception in the past.
     //
     _executeMethod = xSemaphoreCreateBinary();
-    if (_executeMethod == NULL)
+    if (_executeMethod == nullptr)
     {
         throw ThreadPoolException("Cannot create execute semaphore.");
     }
@@ -247,7 +247,7 @@ void Thread::TaskCompleted()
         _parameter = nullptr;
         xSemaphoreGive(_mutex);
     }
-    if (_taskCompletedMethod != NULL)
+    if (_taskCompletedMethod != nullptr)
     {
         (_taskCompletedMethod());
     }

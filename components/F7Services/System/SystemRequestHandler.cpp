@@ -647,7 +647,7 @@ void SystemRequestHandler::GetConfiguration(Message * const request)
  */
 bool SystemRequestHandler::ContainsNulTerminator(const uint8_t * const buffer, const uint32_t length)
 {
-    return ((buffer != nullptr) && (memchr(buffer, 0, length) != nullptr));
+    return ((buffer != nullptr) && (memchr(buffer, 0, length) != NULL));
 }
 
 /**
@@ -1075,7 +1075,7 @@ void SystemRequestHandler::DispatchRequest(Message *request)
             break;
         default:
             TRACE_MESSAGE("DispatchRequest: Unknown System message received, function 0x%" PRIx32, request->Function);
-            if (request->Payload != NULL)
+            if (request->Payload != nullptr)
             {
                 TRACE_HEX_BUFFER(request->Payload, request->PayloadLength);
             }

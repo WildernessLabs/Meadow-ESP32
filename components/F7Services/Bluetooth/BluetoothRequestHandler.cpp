@@ -229,7 +229,7 @@ void BluetoothRequestHandler::GenerateAdvertisingData()
     _advertisingData.manufacturer_len = sizeof(_manufacturerData);
     _advertisingData.p_manufacturer_data = _manufacturerData;
     _advertisingData.service_data_len = 0;
-    _advertisingData.p_service_data = NULL;
+    _advertisingData.p_service_data = nullptr;
     _advertisingData.service_uuid_len = sizeof(_dummyAdvertisingServiceUuid);
     _advertisingData.p_service_uuid = _dummyAdvertisingServiceUuid;
     _advertisingData.flag = (ESP_BLE_ADV_FLAG_GEN_DISC | ESP_BLE_ADV_FLAG_BREDR_NOT_SPT);
@@ -382,12 +382,13 @@ void BluetoothRequestHandler::GenerateAttributeTable()
             {
                 _attribute_table[index++] = {
                     {ESP_GATT_RSP_BY_APP},
-                    {ESP_UUID_LEN_128, reinterpret_cast<uint8_t *>(&characteristic->Value->uuid128), static_cast<uint16_t>(characteristic->Value->Permission), characteristic->Value->MaxLength, 0, NULL}}; // <- 0, NULL means "current value length is 0, current value data is null"
+                    {ESP_UUID_LEN_128, reinterpret_cast<uint8_t *>(&characteristic->Value->uuid128), static_cast<uint16_t>(characteristic->Value->Permission), characteristic->Value->MaxLength, 0, nullptr}}; // <- 0, nullptr means "current value length is 0, current value data is null"
             }
             else
             {
                 _attribute_table[index++] = {
-                    {ESP_GATT_RSP_BY_APP}, {ESP_UUID_LEN_16, reinterpret_cast<uint8_t *>(&characteristic->Value->uuid16), static_cast<uint16_t>(characteristic->Value->Permission), characteristic->Value->MaxLength, 0, NULL}}; // <- 0, NULL means "current value length is 0, current value data is null"
+                    {ESP_GATT_RSP_BY_APP},
+                    {ESP_UUID_LEN_16, reinterpret_cast<uint8_t *>(&characteristic->Value->uuid16), static_cast<uint16_t>(characteristic->Value->Permission), characteristic->Value->MaxLength, 0, nullptr}}; // <- 0, nullptr means "current value length is 0, current value data is null"
             }
 
             for (const auto &descriptor: characteristic->GetDescriptorDefinitions())
@@ -555,7 +556,7 @@ void BluetoothRequestHandler::DispatchRequest(Message *request)
             break;
         default:
             TRACE_MESSAGE("Unknown Bluetooth message received, function %" PRIu32, request->Function);
-            if (request->Payload != NULL)
+            if (request->Payload != nullptr)
             {
                 TRACE_HEX_BUFFER(request->Payload, request->PayloadLength);
             }
@@ -637,7 +638,7 @@ StatusCodes::StatusCodes BluetoothRequestHandler::PrepareForDeepSleep()
 
     BluetoothRequestHandler *bluetoothHandler = BluetoothRequestHandler::GetInstance();
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
-    if (bluetoothHandler != NULL)
+    if (bluetoothHandler != nullptr)
     {
         if (!bluetoothHandler->StopBluetoothService())
         {
@@ -1115,7 +1116,7 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
                 {
                     OnDataWriteRequest(param->write.handle, param->write.value, param->write.len);
 
-                    ret = esp_ble_gatts_send_response(gatts_if, param->write.conn_id, param->write.trans_id, ESP_GATT_OK, NULL);
+                    ret = esp_ble_gatts_send_response(gatts_if, param->write.conn_id, param->write.trans_id, ESP_GATT_OK, nullptr);
                     if (ret)
                     {
                         ERROR_MESSAGE("esp_ble_gatts_send_response failed, error code = %" PRIi32, ret);

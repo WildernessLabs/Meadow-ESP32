@@ -49,7 +49,7 @@ SpiTransportProvider *SpiTransportProvider::_spiInstance = nullptr;
  */
 SpiTransportProvider::SpiStates SpiTransportProvider::_currentState = Invalid;
 
-TaskHandle_t SpiTransportProvider::_synchronisationTaskHandle = NULL;
+TaskHandle_t SpiTransportProvider::_synchronisationTaskHandle = nullptr;
 
 /**
  *  Buffers will be allocated as needed and so they are initially null.
@@ -219,7 +219,7 @@ SpiTransportProvider::~SpiTransportProvider()
  */
 const char *SpiTransportProvider::SpiStateString(SpiTransportProvider::SpiStates state)
 {
-    const char *stateString = NULL;
+    const char *stateString = nullptr;
 
     switch (state)
     {
@@ -575,7 +575,7 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessInboundPacket(Message *pac
             else
             {
                 uint8_t *payloadBuffer = static_cast<uint8_t *>(pvPortMalloc(packet->PayloadLength));
-                if (payloadBuffer == NULL)
+                if (payloadBuffer == nullptr)
                 {
                     messageType = MessageTypes::Nak;
                     responseCode = StatusCodes::EspOutOfMemory;

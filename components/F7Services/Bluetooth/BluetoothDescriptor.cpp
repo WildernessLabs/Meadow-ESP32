@@ -98,7 +98,7 @@ BluetoothDescriptor::~BluetoothDescriptor()
  */
 void BluetoothDescriptor::SetValue(const uint32_t length, const uint8_t * const value)
 {
-    if ((length > MaxLength) || (value == NULL))
+    if ((length > MaxLength) || (value == nullptr))
     {
         return;
     }

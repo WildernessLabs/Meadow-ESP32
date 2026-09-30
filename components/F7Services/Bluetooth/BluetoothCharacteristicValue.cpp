@@ -101,7 +101,7 @@ BluetoothCharacteristicValue::~BluetoothCharacteristicValue()
         //
         // cppcheck-suppress mismatchAllocDealloc
         delete[] _value;
-        _value = NULL;
+        _value = nullptr;
     }
 
     TRACE_MESSAGE("~BluetoothCharacteristicValue: Exit");

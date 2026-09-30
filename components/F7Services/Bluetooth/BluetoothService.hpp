@@ -72,7 +72,7 @@ public:
     /**
      * @brief Event handler for dealing with the addition of a characteristic.
      */
-    CharacteristicAdded OnCharacteristicAdded = NULL;
+    CharacteristicAdded OnCharacteristicAdded = nullptr;
 
     /**
      * @brief Name of the service.

@@ -74,7 +74,7 @@ FileSystem::FileSystem()
     //  more recent version.
     //
     // _config.read_only = false;
-    // _config.partition = NULL;
+    // _config.partition = nullptr;
     // _config.grow_on_mount = true;
 }
 
@@ -306,7 +306,7 @@ bool FileSystem::IsValidFileName(const char * const name)
 {
     bool result = false;
 
-    if (name != NULL)
+    if (name != nullptr)
     {
         const size_t length = strlen(name);
         if ((length > 0) && (length < CONFIG_LITTLEFS_OBJ_NAME_LEN) && (strchr(name, '/') == NULL) && (strchr(name, '\\') == NULL) && (strstr(name, "..") == NULL))
@@ -390,7 +390,7 @@ void FileSystem::ReadFile(Message * const message)
                     Utils::DeleteAndNullifyPointer(fileData->Contents);
                     fileData->ContentsLength = 0;
                     fileData->Contents = static_cast<uint8_t *>(pvPortMalloc(fileInfo.st_size));
-                    if (fileData->Contents != NULL)
+                    if (fileData->Contents != nullptr)
                     {
                         TRACE_MESSAGE("Reading %" PRIi32 " bytes from file %s", static_cast<int32_t>(fileInfo.st_size), fileData->Name);
                         size_t amountRead = fread(static_cast<void *>(fileData->Contents), 1, fileInfo.st_size, file);
@@ -406,7 +406,7 @@ void FileSystem::ReadFile(Message * const message)
 
                             message->PayloadLength = Encoders::EncodedFileNameAndContentsBufferSize(fileData);
                             message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-                            if (message->Payload == NULL)
+                            if (message->Payload == nullptr)
                             {
                                 message->PayloadLength = 0;
                                 result = StatusCodes::EspOutOfMemory;
@@ -611,7 +611,7 @@ void FileSystem::ListFiles(Message *message)
             TRACE_MESSAGE("    File: %s, length: %" PRIu16, details.Name, details.Length);
             bufferLength += Encoders::EncodedFileDetailsBufferSize(&details);
             uint8_t *newBuffer = static_cast<uint8_t *>(Utils::Realloc(fileNameList.FileDetails, fileNameList.FileDetailsLength, bufferLength));
-            if (newBuffer != NULL)
+            if (newBuffer != nullptr)
             {
                 fileNameList.FileDetails = newBuffer;
                 if (Encoders::EncodeFileDetails(&details, fileNameList.FileDetails + fileNameList.FileDetailsLength, bufferLength - fileNameList.FileDetailsLength))
@@ -635,7 +635,7 @@ void FileSystem::ListFiles(Message *message)
         {
             message->PayloadLength = Encoders::EncodedFileNameListBufferSize(&fileNameList);
             message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-            if (message->Payload == NULL)
+            if (message->Payload == nullptr)
             {
                 message->PayloadLength = 0;
                 result = StatusCodes::EspOutOfMemory;
@@ -651,7 +651,7 @@ void FileSystem::ListFiles(Message *message)
             message->PayloadLength = 0;
             message->Payload = nullptr;
         }
-        if (fileNameList.FileDetails != NULL)
+        if (fileNameList.FileDetails != nullptr)
         {
             Utils::DeleteAndNullifyPointer(fileNameList.FileDetails);
         }

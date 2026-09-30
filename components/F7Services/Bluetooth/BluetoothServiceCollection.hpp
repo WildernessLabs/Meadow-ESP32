@@ -61,17 +61,17 @@ public:
     /**
      * @brief ServiceAdded event handler.
      */
-    ServiceAdded OnServiceAdded = NULL;
+    ServiceAdded OnServiceAdded = nullptr;
 
     /**
      * @brief CharacteristicAdded event handler.
      */
-    CharacteristicAdded OnCharacteristicAdded = NULL;
+    CharacteristicAdded OnCharacteristicAdded = nullptr;
 
     /**
      * @brief ValueChanged event handler.
      */
-    ValueChanged OnValueChanged = NULL;
+    ValueChanged OnValueChanged = nullptr;
 
     /**
      * @brief Add a new service to the collection.

@@ -90,7 +90,7 @@ void Heap::Setup()
 
     #if defined(CONFIG_HEAP_TRACING_STANDALONE)
     _traceRecords = static_cast<heap_trace_record_t *>(pvPortMalloc(sizeof(heap_trace_record_t) * TRACE_RECORD_COUNT));
-    if (_traceRecords == NULL)
+    if (_traceRecords == nullptr)
     {
         ERROR_MESSAGE("Failed to allocate memory for heap trace records");
     }

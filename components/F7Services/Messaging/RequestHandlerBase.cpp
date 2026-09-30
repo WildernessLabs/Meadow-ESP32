@@ -96,7 +96,7 @@ RequestHandlerBase::~RequestHandlerBase()
 void RequestHandlerBase::Setup()
 {
     _queueHandle = xQueueCreate(MAX_QUEUE_LENGTH, sizeof(Message *));
-    if (_queueHandle == NULL)
+    if (_queueHandle == nullptr)
     {
         ERROR_MESSAGE("Cannot allocate ESP32 handler queue.");
     }
@@ -118,7 +118,7 @@ void RequestHandlerBase::Task(void *pvParameters)
     {
         Message *message;
         BaseType_t result = xQueueReceive(sender->_queueHandle, &message, portMAX_DELAY);
-        if ((result == pdTRUE) && (message != NULL))
+        if ((result == pdTRUE) && (message != nullptr))
         {
             //
             //  We check that the message is valid before dispatching it meaning
@@ -236,13 +236,13 @@ void RequestHandlerBase::SendIntegerResult(const uint8_t interface, const uint32
 
     Esp32Messaging::IntegerResponse *response = new Esp32Messaging::IntegerResponse();
 
-    if (response != NULL)
+    if (response != nullptr)
     {
         response->Result = value;
         uint32_t payloadLength = Encoders::EncodedIntegerResponseBufferSize(response);
         uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
 
-        if (payload != NULL)
+        if (payload != nullptr)
         {
             Encoders::EncodeIntegerResponse(response, payload);
             RaiseEvent(interface, function, statusCode, payload, payloadLength);
