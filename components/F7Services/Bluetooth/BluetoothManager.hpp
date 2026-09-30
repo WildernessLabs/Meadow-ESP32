@@ -149,24 +149,30 @@ private:
      * @brief Add services from the JSON configuration.
      *
      * @param json Pointer to the cJSON object holding the configuration.
+     *
+     * @return Number of service, characteristic and descriptor entries rejected.
      */
-    void AddServices(const cJSON * const json);
+    uint32_t AddServices(const cJSON * const json);
 
     /**
      * @brief Add characteristics from the JSON configuration.
      *
      * @param json Pointer to the cJSON object holding the configuration.
      * @param service Pointer to the service to add the characteristics to.
+     *
+     * @return Number of characteristic and descriptor entries rejected.
      */
-    void AddCharacteristics(const cJSON * const json, BluetoothService * const service);
+    uint32_t AddCharacteristics(const cJSON * const json, BluetoothService * const service);
 
     /**
      * @brief Add descriptors from the JSON configuration.
      *
      * @param json Pointer to the cJSON object holding the configuration.
      * @param characteristic Pointer to the BluetoothCharacteristic object to add the descriptors to.
+     *
+     * @return Number of descriptor entries rejected.
      */
-    void AddDescriptors(const cJSON * const json, BluetoothCharacteristic * const characteristic);
+    uint32_t AddDescriptors(const cJSON * const json, BluetoothCharacteristic * const characteristic);
 
     /**
      * @brief Parse UUID from cJSON object.

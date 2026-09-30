@@ -80,56 +80,114 @@ static std::vector<BluetoothCharacteristic *> BuildSingleService(BluetoothManage
 }
 
 /**
- * @brief A characteristic of exactly the GATT maximum length is kept and one byte longer is ignored.
+ * @brief Check that a configuration is refused and that nothing is left built behind it.
+ *
+ * @param manager Manager to build the graph in.
+ * @param configuration JSON configuration that holds at least one unusable entry.
+ * @param reason What is wrong with the configuration, for the failure message.
  */
-TEST_CASE("BuildGraphFromJson ignores a characteristic longer than the GATT maximum", CLASS_OF_TESTS)
+static void CheckConfigurationIsRefused(BluetoothManager &manager, const std::string &configuration, const char *reason)
+{
+    TEST_ASSERT_FALSE_MESSAGE(manager.BuildGraphFromJson(configuration.c_str()), reason);
+    TEST_ASSERT_EQUAL_MESSAGE(0, manager.GetServiceDefinitions().size(), "A refused configuration left services behind.");
+}
+
+/**
+ * @brief A characteristic of exactly the GATT maximum length is accepted.
+ */
+TEST_CASE("BuildGraphFromJson accepts a characteristic of the GATT maximum length", CLASS_OF_TESTS)
 {
     BluetoothManager manager;
-    const std::string characteristics = CharacteristicJson(0x2a01, ESP_GATT_MAX_ATTR_LEN, "") + "," + CharacteristicJson(0x2a02, ESP_GATT_MAX_ATTR_LEN + 1, "");
+    const std::vector<BluetoothCharacteristic *> accepted = BuildSingleService(manager, ServiceJson(CharacteristicJson(0x2a01, ESP_GATT_MAX_ATTR_LEN, "")));
 
-    const std::vector<BluetoothCharacteristic *> accepted = BuildSingleService(manager, ServiceJson(characteristics));
-
-    TEST_ASSERT_EQUAL_MESSAGE(1, accepted.size(), "Only the characteristic within the GATT maximum should be kept.");
+    TEST_ASSERT_EQUAL(1, accepted.size());
     TEST_ASSERT_EQUAL_UINT16(ESP_GATT_MAX_ATTR_LEN, accepted[0]->Value->MaxLength);
 
     manager.DeleteAllServices();
 }
 
 /**
- * @brief Lengths that are zero, negative or wrap to a small uint16_t are all refused.
+ * @brief A characteristic one byte longer than the GATT maximum makes the configuration unusable.
+ *
+ * @note Since #297 a rejected entry refuses the whole configuration rather than being
+ *       dropped from it, so the valid characteristic alongside it is not built either.
+ */
+TEST_CASE("BuildGraphFromJson refuses a characteristic longer than the GATT maximum", CLASS_OF_TESTS)
+{
+    BluetoothManager manager;
+    const std::string characteristics = CharacteristicJson(0x2a01, ESP_GATT_MAX_ATTR_LEN, "") + "," + CharacteristicJson(0x2a02, ESP_GATT_MAX_ATTR_LEN + 1, "");
+    CheckConfigurationIsRefused(manager, ServiceJson(characteristics), "A characteristic longer than the GATT maximum was accepted.");
+}
+
+/**
+ * @brief Lengths that are zero, negative or wrap to a small uint16_t each refuse the configuration.
  *
  * @note 70000 is 4464 once truncated to uint16_t, which fits the value storage but not the
  *       GATT response, so it has to be refused before the cast rather than after it.
  */
-TEST_CASE("BuildGraphFromJson ignores a characteristic with a zero, negative or out of range length", CLASS_OF_TESTS)
+TEST_CASE("BuildGraphFromJson refuses a characteristic with a zero, negative or out of range length", CLASS_OF_TESTS)
 {
     BluetoothManager manager;
-    const std::string characteristics = CharacteristicJson(0x2a01, 0, "") + "," + CharacteristicJson(0x2a02, -1, "") + "," + CharacteristicJson(0x2a03, 70000, "");
-
-    const std::vector<BluetoothCharacteristic *> accepted = BuildSingleService(manager, ServiceJson(characteristics));
-
-    TEST_ASSERT_EQUAL_MESSAGE(0, accepted.size(), "No characteristic with an invalid length should be kept.");
-
-    manager.DeleteAllServices();
+    for (const int length: {0, -1, 70000})
+    {
+        CheckConfigurationIsRefused(manager, ServiceJson(CharacteristicJson(0x2a01, length, "")), "A characteristic with an invalid length was accepted.");
+    }
 }
 
 /**
- * @brief A descriptor longer than the GATT maximum, or with a zero length, is ignored and the
- *        valid descriptor alongside it is kept.
+ * @brief A descriptor longer than the GATT maximum, or with a zero length, refuses the configuration.
  */
-TEST_CASE("BuildGraphFromJson ignores a descriptor longer than the GATT maximum", CLASS_OF_TESTS)
+TEST_CASE("BuildGraphFromJson refuses a descriptor longer than the GATT maximum", CLASS_OF_TESTS)
 {
     BluetoothManager manager;
-    const std::string descriptors = DescriptorJson(0x2901, ESP_GATT_MAX_ATTR_LEN + 1) + "," + DescriptorJson(0x2904, 0) + "," + DescriptorJson(0x2902, 2);
+    for (const int length: {ESP_GATT_MAX_ATTR_LEN + 1, 0})
+    {
+        const std::string descriptors = DescriptorJson(0x2902, 2) + "," + DescriptorJson(0x2901, length);
+        CheckConfigurationIsRefused(manager, ServiceJson(CharacteristicJson(0x2a01, 4, descriptors)), "A descriptor with an invalid length was accepted.");
+    }
+}
 
-    const std::vector<BluetoothCharacteristic *> accepted = BuildSingleService(manager, ServiceJson(CharacteristicJson(0x2a01, 4, descriptors)));
+/**
+ * @brief A malformed service refuses the configuration wherever it appears in the array.
+ *
+ *  Regression check for issue #297.  AddServices used to return at the first malformed
+ *  service, so a bad service first built nothing and a bad service later silently dropped
+ *  every service after it, and in both cases Start reported success.
+ */
+TEST_CASE("BuildGraphFromJson refuses a configuration holding a malformed service", CLASS_OF_TESTS)
+{
+    BluetoothManager manager;
+    const std::string valid = "{\"name\":\"Good\",\"uuid\":254,\"characteristics\":[" + CharacteristicJson(0x2a01, 4, "") + "]}";
+    const std::string noName = "{\"uuid\":253,\"characteristics\":[" + CharacteristicJson(0x2a02, 4, "") + "]}";
+    const std::string textUuid = "{\"name\":\"Bad\",\"uuid\":\"fd\",\"characteristics\":[" + CharacteristicJson(0x2a03, 4, "") + "]}";
 
-    TEST_ASSERT_EQUAL(1, accepted.size());
-    const std::vector<BluetoothDescriptor *> keptDescriptors = accepted[0]->GetDescriptorDefinitions();
-    TEST_ASSERT_EQUAL_MESSAGE(1, keptDescriptors.size(), "Only the descriptor with a valid length should be kept.");
-    TEST_ASSERT_EQUAL_UINT16(2, keptDescriptors[0]->MaxLength);
+    CheckConfigurationIsRefused(manager, "{\"deviceName\":\"MeadowTest\",\"services\":[" + noName + "," + valid + "]}", "A malformed first service was accepted.");
+    CheckConfigurationIsRefused(manager, "{\"deviceName\":\"MeadowTest\",\"services\":[" + valid + "," + textUuid + "]}", "A malformed later service was accepted.");
+}
 
-    manager.DeleteAllServices();
+/**
+ * @brief A configuration that parses but holds no usable service is refused.
+ *
+ *  Regression check for issue #297: an empty graph was reported as built, and Start went on
+ *  to create a zero-length attribute table.
+ */
+TEST_CASE("BuildGraphFromJson refuses a configuration with no services", CLASS_OF_TESTS)
+{
+    BluetoothManager manager;
+    CheckConfigurationIsRefused(manager, "{\"deviceName\":\"MeadowTest\",\"services\":[]}", "An empty services array was accepted.");
+    CheckConfigurationIsRefused(manager, "{\"deviceName\":\"MeadowTest\"}", "A configuration with no services key was accepted.");
+    CheckConfigurationIsRefused(manager, "{\"deviceName\":\"MeadowTest\",\"services\":{}}", "A services key that is not an array was accepted.");
+}
+
+/**
+ * @brief A characteristics or descriptors key that is present but not an array refuses the configuration.
+ */
+TEST_CASE("BuildGraphFromJson refuses characteristics or descriptors that are not arrays", CLASS_OF_TESTS)
+{
+    BluetoothManager manager;
+    CheckConfigurationIsRefused(manager, "{\"deviceName\":\"MeadowTest\",\"services\":[{\"name\":\"S\",\"uuid\":254,\"characteristics\":{}}]}", "A characteristics object was accepted.");
+    const std::string characteristic = "{\"uuid\":10755,\"permission\":17,\"props\":10,\"len\":4,\"descriptors\":7}";
+    CheckConfigurationIsRefused(manager, ServiceJson(characteristic), "A descriptors number was accepted.");
 }
 
 /**
