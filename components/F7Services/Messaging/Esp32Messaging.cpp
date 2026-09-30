@@ -20,152 +20,6 @@
 /*
  * ---------------------------------------------------------------------------
  *
- *                     Constructors and destructor
- *
- * ---------------------------------------------------------------------------
- */
-
-/**
- *  @brief Default constructor for a Message structure.
- */
-Message::Message()
-{
-    MessageType = 0;
-    Interface = 0;
-    Function = 0;
-    StatusCode = 0;
-    MessageID = 0;
-    PacketOffset = 0;
-    PacketLength = 0;
-    Payload = nullptr;
-    PayloadLength = 0;
-}
-
-/**
- *  @brief onstructor for the Message class.
- *
- *  @param messageType
- *      Type of message to send (see PacketType enum).
- *
- *  @param interface
- *      Interface on the ESP that this message should be routed to.
- *
- *  @param function
- *      Function to be called on the interface.
- *
- *  @param statusCode
- *      Status code to be returned by the function.
- *
- *  @param messageId
- *      Unique ID of thiS message.
- *
- *  @param payload
- *      Data required by the function (or being returned by the function).  Note
- *      that the payload should be on the heap.
- *
- *  @param payloadLength
- *      Size (in bytes) of the payload.
- */
-Message::Message(const uint8_t messageType, const uint8_t interface, const uint32_t function, const uint32_t statusCode, const uint32_t messageId, uint8_t *payload, const uint32_t payloadLength)
-{
-    MessageType = messageType;
-    Interface = interface;
-    Function = function;
-    StatusCode = statusCode;
-    MessageID = messageId;
-    PacketOffset = 0;
-    PacketLength = 0;
-    Payload = payload;
-    PayloadLength = payloadLength;
-}
-
-/**
- *  @brief Constructor for the Message class.
- *
- *  @param messageType
- *      Type of message to send (see PacketType enum).
- *
- *  @param interface
- *      Interface on the ESP that this message should be routed to.
- *
- *  @param function
- *      Function to be called on the interface.
- *
- *  @param statusCode
- *      Status code to be returned by the function.
- */
-Message::Message(const uint8_t messageType, const uint8_t interface, const uint32_t function, const uint32_t statusCode)
-{
-    MessageType = messageType;
-    Interface = interface;
-    Function = function;
-    StatusCode = statusCode;
-    MessageID = 0;
-    PacketOffset = 0;
-    PacketLength = 0;
-    Payload = nullptr;
-    PayloadLength = 0;
-}
-
-/**
- *  @brief Copy constructor
- *
- *  @param original
- *      Message to copy.
- */
-Message::Message(const Message &original)
-{
-    MessageType = original.MessageType;
-    Interface = original.Interface;
-    Function = original.Function;
-    StatusCode = original.StatusCode;
-    MessageID = original.MessageID;
-    PacketOffset = 0;
-    PacketLength = 0;
-    Payload = nullptr;
-    PayloadLength = 0;
-}
-
-/**
- * @brief Assignment operator.
- *
- * @param original
- *    Message to copy.
- *
- * @return Message&
- *    rReference to the new message.
- */
-Message &Message::operator=(const Message &original)
-{
-    if (this != &original)
-    {
-        if (Payload != nullptr)
-        {
-            vPortFree(Payload);
-            Payload = nullptr;
-        }
-
-        MessageType = original.MessageType;
-        Interface = original.Interface;
-        Function = original.Function;
-        StatusCode = original.StatusCode;
-        MessageID = original.MessageID;
-        PacketOffset = original.PacketOffset;
-        PacketLength = original.PacketLength;
-        PayloadLength = original.PayloadLength;
-
-        if (original.Payload != nullptr)
-        {
-            Payload = static_cast<uint8_t *>(pvPortMalloc(PayloadLength));
-            memcpy(Payload, original.Payload, PayloadLength);
-        }
-    }
-    return *this;
-}
-
-/*
- * ---------------------------------------------------------------------------
- *
  *                             Methods
  *
  * ---------------------------------------------------------------------------
@@ -205,6 +59,11 @@ Message *Message::CreateOnHeap(const uint8_t messageType, const uint8_t interfac
 
     if (result != NULL)
     {
+        //
+        //  pvPortMalloc runs no constructor, so every member not set below, such as
+        //  PerformanceLoggingStart, would otherwise start as whatever the heap held.
+        //
+        memset(static_cast<void *>(result), 0, sizeof(Message));
         result->MessageType = messageType;
         result->Interface = interface;
         result->Function = function;
@@ -257,10 +116,14 @@ Message *Message::CreateCopyOnHeap(const bool copyPayload)
     uint8_t *payload = nullptr;
     uint32_t payloadLength = 0;
 
-    if (copyPayload)
+    if (copyPayload && (Payload != nullptr) && (PayloadLength > 0))
     {
         payloadLength = PayloadLength;
         payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
+        if (payload == nullptr)
+        {
+            return (nullptr);
+        }
         memcpy(static_cast<void *>(payload), static_cast<void *>(Payload), static_cast<size_t>(payloadLength));
     }
     Message *newMessage = CreateOnHeap(MessageType, Interface, Function, StatusCode, MessageID, payload, payloadLength);

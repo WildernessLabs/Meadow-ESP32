@@ -125,30 +125,22 @@ struct Message
      */
     static const uint32_t INVALID_MESSAGE_ID = 0xffffffff;
 
-    /**
-     *  @brief Constructor for the Message class.
-     */
-    Message(const uint8_t, const uint8_t, const uint32_t, const uint32_t, const uint32_t, uint8_t *, const uint32_t);
+    //
+    //  A Message is plain data.  Every one is allocated with pvPortMalloc, by CreateOnHeap,
+    //  CreateCopyOnHeap or a decoder, and released with DeleteMessage, so no constructor
+    //  would ever run and none is declared.  CreateOnHeap zeroes the whole structure.
+    //
 
     /**
-     *  @brief Constructor for the Message class.
+     *  @brief Deleted copy constructor: a copy would share Payload and release it twice.
+     *         Use CreateCopyOnHeap to copy a message.
      */
-    Message(const uint8_t, const uint8_t, const uint32_t, const uint32_t);
+    Message(const Message &) = delete;
 
     /**
-     *  @brief Default constructor for a Message structure.
+     *  @brief Deleted copy assignment operator, for the same reason as the copy constructor.
      */
-    Message();
-
-    /**
-     *  @brief Copy constructor.
-     */
-    Message(const Message &);
-
-    /**
-     * @brief Assignment operator.
-     */
-    Message &operator=(const Message &);
+    Message &operator=(const Message &) = delete;
 
     /**
      *  @brief Make a copy of the message.
