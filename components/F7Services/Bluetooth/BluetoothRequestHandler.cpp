@@ -197,7 +197,6 @@ void BluetoothRequestHandler::Setup()
     RequestHandlerBase::Setup();
 
     _xBtEventGroup = xEventGroupCreate();
-    xEventGroupSetBits(_xBtEventGroup, BT_READY_BIT);
 
     TRACE_MESSAGE("BT controller mem release...");
 
@@ -540,7 +539,6 @@ void BluetoothRequestHandler::DispatchRequest(Message *request)
 {
     TRACE_MESSAGE("DispatchRequest: Enter");
 
-    xEventGroupClearBits(_xBtEventGroup, BT_READY_BIT);
     switch (request->Function)
     {
         case BluetoothFunction::Start:
@@ -562,10 +560,8 @@ void BluetoothRequestHandler::DispatchRequest(Message *request)
                 TRACE_HEX_BUFFER(request->Payload, request->PayloadLength);
             }
             RespondToUnknownFunction(request);
-            xEventGroupSetBits(_xBtEventGroup, BT_READY_BIT);
             break;
     }
-    //    xEventGroupWaitBits(_xBtEventGroup, BT_READY_BIT, pdTRUE, pdTRUE, portMAX_DELAY);
 
     TRACE_MESSAGE("DispatchRequest: Exit");
 }
@@ -872,8 +868,6 @@ void BluetoothRequestHandler::Stop(Message * const request)
     request->MessageType = MessageTypes::Response;
     _messageDispatcher->QueueMessageForStm32(request);
 
-    xEventGroupSetBits(_xBtEventGroup, BT_READY_BIT);
-
     TRACE_MESSAGE("Stop: Exit");
 }
 
@@ -1017,8 +1011,6 @@ void BluetoothRequestHandler::Start(Message * const request)
     request->MessageType = MessageTypes::Response;
 
     _messageDispatcher->QueueMessageForStm32(request);
-
-    xEventGroupSetBits(_xBtEventGroup, BT_READY_BIT);
 
     TRACE_MESSAGE("Start: Exit");
 }
