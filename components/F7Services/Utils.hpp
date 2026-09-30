@@ -12,6 +12,8 @@
 #include <stdint.h>
 #include <string>
 
+#include "freertos/FreeRTOS.h"
+
 namespace Utils
 {
     /**
@@ -31,11 +33,25 @@ namespace Utils
     std::string NumberWithCommas(uint32_t number);
 
     /**
-     * @brief Delete a pointer and set it to nullptr.
+     * @brief Release heap storage obtained from pvPortMalloc and set the caller's pointer to nullptr.
      *
-     * @param ptr Pointer to the pointer to delete and nullify.
+     * Taking the pointer by reference means callers pass the pointer itself rather than
+     * reinterpret_cast<void **>(&pointer).  Writing nullptr through a void ** into a T * is
+     * undefined behaviour under strict aliasing, and the cast accepted any address at all.
+     *
+     * @note This releases with vPortFree, so it is only for storage from pvPortMalloc.
+     *
+     * @tparam T Type the pointer points to; it may be const.
+     * @param pointer Pointer to release, set to nullptr on return.  A nullptr is ignored.
      */
-    void DeleteAndNullifyPointer(void **ptr);
+    template<typename T> void DeleteAndNullifyPointer(T *&pointer)
+    {
+        if (pointer != nullptr)
+        {
+            vPortFree(const_cast<void *>(static_cast<const void *>(pointer)));
+            pointer = nullptr;
+        }
+    }
 
     /**
      * @brief Reallocate memory using the ESP32's pvPortMalloc function.

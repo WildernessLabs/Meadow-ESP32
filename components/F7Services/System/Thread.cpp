@@ -80,7 +80,7 @@ Thread::~Thread()
     vTaskDelete(_taskHandle);
     vSemaphoreDelete(_mutex);
     vSemaphoreDelete(_executeMethod);
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&_name));
+    Utils::DeleteAndNullifyPointer(_name);
 }
 
 /*

@@ -248,7 +248,7 @@ TEST_CASE("Get core dump information", CLASS_OF_TESTS)
     printf("IsValid: %s\n", information->IsValid ? "true" : "false");
     printf("Partition Size: 0x%05" PRIx32 "\n", information->PartitionSize);
     printf("Core Dump Size: 0x%05" PRIx32 "\n", information->CoreDumpSize);
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&information));
+    Utils::DeleteAndNullifyPointer(information);
 
     AssertHeapRecovered(heapBefore, "getting the core dump information");
 
@@ -344,7 +344,7 @@ TEST_CASE("Get core dump fragment", CLASS_OF_TESTS)
     AssertCoreDumpFragmentRefused(dispatcher, coreDump, request, 0, 0, StatusCodes::InvalidRequest);
     AssertHeapRecovered(heapBefore, "refusing core dump fragments");
 
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&information));
+    Utils::DeleteAndNullifyPointer(information);
     Message::DeleteMessage(request);
 
     delete coreDump;
@@ -394,7 +394,7 @@ TEST_CASE("Retrieve the whole core dump", CLASS_OF_TESTS)
     const uint8_t isValid = information->IsValid;
     const uint32_t coreDumpSize = information->CoreDumpSize;
     const uint32_t partitionSize = information->PartitionSize;
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&information));
+    Utils::DeleteAndNullifyPointer(information);
 
     AssertHeapRecovered(heapBeforeInformation, "getting the core dump information");
 
@@ -488,7 +488,7 @@ TEST_CASE("Erase core dump", CLASS_OF_TESTS)
     TEST_ASSERT_EQUAL(CORE_DUMP_PARTITION_SIZE, information->PartitionSize);
     TEST_ASSERT_EQUAL(0, information->CoreDumpSize);
 
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&information));
+    Utils::DeleteAndNullifyPointer(information);
     //
     //  With the dump erased there is nothing to hand back, and the two ways the handler
     //  can tell give different answers.  A request at offset zero works the checksum out

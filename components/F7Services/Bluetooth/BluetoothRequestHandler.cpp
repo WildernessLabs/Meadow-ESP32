@@ -440,7 +440,7 @@ void BluetoothRequestHandler::GetHandles(Message * const request)
         ERROR_MESSAGE("GetHandles: the service graph needed more than %" PRIu16 " handles", response.HandleCount);
         request->StatusCode = StatusCodes::Failure;
     }
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&response.Handles));
+    Utils::DeleteAndNullifyPointer(response.Handles);
 
     request->MessageType = MessageTypes::Response;
 
@@ -907,11 +907,11 @@ void BluetoothRequestHandler::OnDataWriteRequest(const uint16_t handle, uint8_t 
     if (payload == nullptr)
     {
         ERROR_MESSAGE("OnDataWriteRequest: Failed to allocate memory for the event payload.");
-        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&request));
+        Utils::DeleteAndNullifyPointer(request);
         return;
     }
     Encoders::EncodeBTDataWriteRequest(request, payload);
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&request));
+    Utils::DeleteAndNullifyPointer(request);
 
     GetInstance()->RaiseEvent(Esp32Interfaces::BlueTooth, BluetoothFunction::ClientWriteRequestEvent, StatusCodes::CompletedOk, payload, payload_length);
 

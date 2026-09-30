@@ -387,7 +387,7 @@ void FileSystem::ReadFile(Message * const message)
                     //  allocates whatever the request declares, so release it before the pointer
                     //  is reused for the file or every such request leaks it.
                     //
-                    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&fileData->Contents));
+                    Utils::DeleteAndNullifyPointer(fileData->Contents);
                     fileData->ContentsLength = 0;
                     fileData->Contents = static_cast<uint8_t *>(pvPortMalloc(fileInfo.st_size));
                     if (fileData->Contents != NULL)
@@ -419,7 +419,7 @@ void FileSystem::ReadFile(Message * const message)
                         }
                         if (result != StatusCodes::CompletedOk)
                         {
-                            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&fileData->Contents));
+                            Utils::DeleteAndNullifyPointer(fileData->Contents);
                             fileData->ContentsLength = 0;
                         }
                     }
@@ -486,7 +486,7 @@ void FileSystem::WriteFile(Message * const message)
                 }
             }
 
-            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&fileData->Contents));
+            Utils::DeleteAndNullifyPointer(fileData->Contents);
         }
         Encoders::FreeFileNameAndContents(&fileData);
     }
@@ -635,7 +635,7 @@ void FileSystem::ListFiles(Message *message)
         }
         if (fileNameList.FileDetails != NULL)
         {
-            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&fileNameList.FileDetails));
+            Utils::DeleteAndNullifyPointer(fileNameList.FileDetails);
         }
     }
 

@@ -792,7 +792,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetCountryCode(const char *value)
                 //
                 if ((previousCountryCode != nullptr) && (previousCountryCode != WiFiRequestHandler::_validCountryCodes[0]))
                 {
-                    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(const_cast<char **>(&previousCountryCode)));
+                    Utils::DeleteAndNullifyPointer(previousCountryCode);
                 }
                 result = StatusCodes::CompletedOk;
             }
@@ -1204,7 +1204,7 @@ void WiFiRequestHandler::RaiseConnectToAccessPointEvent(StatusCodes::StatusCodes
         {
             ERROR_MESSAGE("Failed to allocate memory for ConnectEventData payload.");
         }
-        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&ed));
+        Utils::DeleteAndNullifyPointer(ed);
     }
     else
     {
@@ -1250,7 +1250,7 @@ void WiFiRequestHandler::RaiseDisconnectEvent()
         {
             ERROR_MESSAGE("Failed to allocate memory for DisconnectEventData payload. ");
         }
-        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&ed));
+        Utils::DeleteAndNullifyPointer(ed);
     }
 
     TRACE_MESSAGE("RaiseDisconnectEvent: Exit");
@@ -1303,7 +1303,7 @@ void WiFiRequestHandler::RaiseErrorEvent(StatusCodes::StatusCodes statusCode, ui
     {
         if (payloadLength == 0)
         {
-            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&payload));
+            Utils::DeleteAndNullifyPointer(payload);
         }
     }
 
@@ -1315,7 +1315,7 @@ void WiFiRequestHandler::RaiseErrorEvent(StatusCodes::StatusCodes statusCode, ui
         //  that the message has been created and the queue processing will take care of releasing the payload.
         //
         ERROR_MESSAGE("RaiseErrorEvent: Cannot create the message for the error event.");
-        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&payload));
+        Utils::DeleteAndNullifyPointer(payload);
     }
     else
     {
@@ -1358,7 +1358,7 @@ void WiFiRequestHandler::RaiseNetworkGotIpEvent()
         {
             ERROR_MESSAGE("Failed to allocate memory for GotIpDataEvent payload. ");
         }
-        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&ed));
+        Utils::DeleteAndNullifyPointer(ed);
     }
     TRACE_MESSAGE("RaiseNetworkGotIpEvent: Exit");
 }
@@ -1802,7 +1802,7 @@ void WiFiRequestHandler::DisconnectFromAccessPoint(Message *message)
         {
             sc = StopWiFIAdapter();
         }
-        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&request));
+        Utils::DeleteAndNullifyPointer(request);
     }
 
     message->DeletePayload();
@@ -1838,7 +1838,7 @@ void WiFiRequestHandler::SetAntennaRequest(Message *message)
         SwitchAntenna(static_cast<AntennaTypes::AntennaTypes>(request->Antenna));
     }
 
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&request));
+    Utils::DeleteAndNullifyPointer(request);
     message->StatusCode = StatusCodes::CompletedOk;
     message->MessageType = MessageTypes::Response;
     _messageDispatcher->QueueMessageForStm32(message);
@@ -2368,14 +2368,14 @@ void WiFiRequestHandler::ScanForAccessPoints(Message *message)
                         Encoders::EncodeAccessPoint(accessPoint, currentLocation);
                         currentLocation += singleAccessPointSize;
                     }
-                    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&accessPoints));
-                    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&accessPoint));
+                    Utils::DeleteAndNullifyPointer(accessPoints);
+                    Utils::DeleteAndNullifyPointer(accessPoint);
 
                     message->PayloadLength = Encoders::EncodedAccessPointListBufferSize(accessPointList);
                     message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
                     Encoders::EncodeAccessPointList(accessPointList, message->Payload);
-                    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&accessPointList->AccessPoints));
-                    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&accessPointList));
+                    Utils::DeleteAndNullifyPointer(accessPointList->AccessPoints);
+                    Utils::DeleteAndNullifyPointer(accessPointList);
                 }
                 result = StatusCodes::CompletedOk;
             }

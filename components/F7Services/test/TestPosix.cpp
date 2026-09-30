@@ -235,8 +235,8 @@ static void FreeIoctlResponse(Esp32Messaging::IoctlResponse **ioctlResponse)
     {
         return;
     }
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&(*ioctlResponse)->Addr));
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(ioctlResponse));
+    Utils::DeleteAndNullifyPointer((*ioctlResponse)->Addr);
+    Utils::DeleteAndNullifyPointer(*ioctlResponse);
 }
 
 /**

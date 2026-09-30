@@ -268,7 +268,7 @@ void Diagnostics::ReportTaskInformation()
                 COMPONENT_NAME, "%-2" PRIu32 "    %s  %-16s %-9s %2" PRIu32 " (%2" PRIu32 ")  %15u %8lu  %3lu%%", tasks[index].xTaskNumber, coreID.c_str(), tasks[index].pcTaskName, taskState.c_str(), tasks[index].uxCurrentPriority, tasks[index].uxBasePriority, tasks[index].usStackHighWaterMark,
                 tasks[index].ulRunTimeCounter, runTimePercentage);
         }
-        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&tasks));
+        Utils::DeleteAndNullifyPointer(tasks);
     }
     else
     {

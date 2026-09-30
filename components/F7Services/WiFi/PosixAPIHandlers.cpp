@@ -109,7 +109,7 @@ struct addrinfo *WiFiRequestHandler::TakeAddrInfoHandle(const uint32_t handle)
 StatusCodes::StatusCodes WiFiRequestHandler::GetAddrInfo(Esp32Messaging::GetAddrInfoRequest * const request, Esp32Messaging::GetAddrInfoResponse * const response)
 {
     Esp32Messaging::AddrInfo *extractedHints = Encoders::ExtractAddrInfo(request->Hints);
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&request->Hints));
+    Utils::DeleteAndNullifyPointer(request->Hints);
 
     if (extractedHints == NULL)
     {
@@ -175,7 +175,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetAddrInfo(Esp32Messaging::GetAddr
         if (response->Res == NULL)
         {
             free(a.CanonName);
-            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&a.Addr));
+            Utils::DeleteAndNullifyPointer(a.Addr);
             response->ResLength = 0;
             freeaddrinfo(addressInformation);
             return (StatusCodes::EspOutOfMemory);
@@ -189,7 +189,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetAddrInfo(Esp32Messaging::GetAddr
         a.MyHeapAddress = AddAddrInfoHandle(addressInformation);
         Encoders::EncodeAddrInfo(&a, response->Res);
         free(a.CanonName);
-        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&a.Addr));
+        Utils::DeleteAndNullifyPointer(a.Addr);
     }
     else
     {
@@ -295,8 +295,8 @@ void WiFiRequestHandler::GetAddrInfo(void * const vpMessage)
     }
     if (response != nullptr)
     {
-        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&response->Res));
-        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&response));
+        Utils::DeleteAndNullifyPointer(response->Res);
+        Utils::DeleteAndNullifyPointer(response);
     }
     message->MessageType = MessageTypes::Response;
     _messageDispatcher->QueueMessageForStm32(message);
@@ -380,7 +380,7 @@ void WiFiRequestHandler::Socket(void * const vpMessage)
                         response.ResponseErrno = 0;
                     }
                 }
-                Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&request));
+                Utils::DeleteAndNullifyPointer(request);
             }
             else
             {
@@ -519,7 +519,7 @@ void WiFiRequestHandler::Connect(void * const vpMessage)
                             response.Result = -1;
                             response.ResponseErrno = Mapping::NuttxErrno(EAFNOSUPPORT);
                         }
-                        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&socketAddress));
+                        Utils::DeleteAndNullifyPointer(socketAddress);
                     }
                     else
                     {
@@ -629,7 +629,7 @@ void WiFiRequestHandler::FreeAddrInfo(void * const vpMessage)
                 ERROR_MESSAGE("FreeAddrInfo: Handle %" PRIu32 " is not held; refusing the request.", request->AddrInfoAddress);
                 message->StatusCode = StatusCodes::InvalidRequest;
             }
-            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&request));
+            Utils::DeleteAndNullifyPointer(request);
         }
         else
         {
@@ -857,7 +857,7 @@ void WiFiRequestHandler::GetSockOpt(void * const vpMessage)
                 result = StatusCodes::EspOutOfMemory;
             }
             TRACE_MESSAGE("GetSockOpt: Result: %" PRIi32 ", errno: %" PRIi32 " - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
-            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&request));
+            Utils::DeleteAndNullifyPointer(request);
         }
         else
         {
@@ -887,7 +887,7 @@ void WiFiRequestHandler::GetSockOpt(void * const vpMessage)
             message->StatusCode = StatusCodes::EspOutOfMemory;
         }
     }
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&response.OptionValue));
+    Utils::DeleteAndNullifyPointer(response.OptionValue);
 
     message->MessageType = MessageTypes::Response;
     _messageDispatcher->QueueMessageForStm32(message);
@@ -965,13 +965,13 @@ uint8_t *WiFiRequestHandler::GetSocketOptionValue(const int name, uint8_t * cons
                         if (tv == NULL)
                         {
                             *length = 0;
-                            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&value));
+                            Utils::DeleteAndNullifyPointer(value);
                         }
                         else
                         {
                             value->tv_sec = tv->TvSec;
                             value->tv_usec = tv->TvUsec;
-                            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&tv));
+                            Utils::DeleteAndNullifyPointer(tv);
                             result = reinterpret_cast<uint8_t *>(value);
                             *length = sizeof(struct timeval);
                         }
@@ -1111,7 +1111,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetSockOpt(const Esp32Messaging::Se
                     response.Result = -1;
                     errno = EBADF;
                 }
-                Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&optionValue));
+                Utils::DeleteAndNullifyPointer(optionValue);
                 if (response.Result != 0)
                 {
                     response.ResponseErrno = Mapping::NuttxErrno(errno);
@@ -1290,7 +1290,7 @@ void WiFiRequestHandler::Close(void * const vpMessage)
                 {
                     response.ResponseErrno = Mapping::NuttxErrno(errno);
                 }
-                Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&request));
+                Utils::DeleteAndNullifyPointer(request);
             }
             else
             {
@@ -1566,7 +1566,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::SendTo(Esp32Messaging::SendToReques
             response.Result = -1;
             response.ResponseErrno = Mapping::NuttxErrno(destinationErrno);
         }
-        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&socketAddress));
+        Utils::DeleteAndNullifyPointer(socketAddress);
     }
     else
     {
@@ -1730,7 +1730,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::RecvFrom(Esp32Messaging::RecvFromRe
             response.Buffer = nullptr;
             response.Result = -1;
             response.ResponseErrno = Mapping::NuttxErrno(ENOMEM);
-            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&sa));
+            Utils::DeleteAndNullifyPointer(sa);
             return (StatusCodes::EspOutOfMemory);
         }
         else
@@ -1767,7 +1767,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::RecvFrom(Esp32Messaging::RecvFromRe
                     response.SourceAddressLen = 0;
                     response.Result = -1;
                     response.ResponseErrno = Mapping::NuttxErrno(ENOMEM);
-                    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&sa));
+                    Utils::DeleteAndNullifyPointer(sa);
                     return (StatusCodes::EspOutOfMemory);
                 }
                 else
@@ -1786,7 +1786,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::RecvFrom(Esp32Messaging::RecvFromRe
 
         if (sa != NULL)
         {
-            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&sa));
+            Utils::DeleteAndNullifyPointer(sa);
         }
     }
     else
@@ -1848,7 +1848,7 @@ void WiFiRequestHandler::RecvFrom(void * const vpMessage)
             if (request)
             {
                 result = RecvFrom(request, response);
-                Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&request));
+                Utils::DeleteAndNullifyPointer(request);
             }
             else
             {
@@ -1887,8 +1887,8 @@ void WiFiRequestHandler::RecvFrom(void * const vpMessage)
         }
     }
 
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&response.Buffer));
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&response.SourceAddress));
+    Utils::DeleteAndNullifyPointer(response.Buffer);
+    Utils::DeleteAndNullifyPointer(response.SourceAddress);
 
     message->MessageType = MessageTypes::Response;
     _messageDispatcher->QueueMessageForStm32(message);
@@ -2449,7 +2449,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::Bind(Esp32Messaging::BindRequest *r
     }
 
     TRACE_MESSAGE("Bind: Error code: %" PRIi32 " - %s", errno, strerror(errno));
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&socketAddress));
+    Utils::DeleteAndNullifyPointer(socketAddress);
 
     return (StatusCodes::CompletedOk);
 }
@@ -2598,7 +2598,7 @@ void WiFiRequestHandler::Listen(void * const vpMessage)
                     errno = EBADF;
                 }
                 response.ResponseErrno = (response.Result == 0) ? 0 : Mapping::NuttxErrno(errno);
-                Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&request));
+                Utils::DeleteAndNullifyPointer(request);
             }
             else
             {
@@ -2681,11 +2681,11 @@ StatusCodes::StatusCodes WiFiRequestHandler::Accept(Esp32Messaging::AcceptReques
             response.Addr = static_cast<uint8_t *>(pvPortMalloc(response.AddrLength));
             if (response.Addr == NULL)
             {
-                Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&sockAddr));
+                Utils::DeleteAndNullifyPointer(sockAddr);
                 return (StatusCodes::EspOutOfMemory);
             }
             Encoders::EncodeSockAddr(sockAddr, response.Addr);
-            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&sockAddr));
+            Utils::DeleteAndNullifyPointer(sockAddr);
             response.ResponseErrno = 0;
             TRACE_MESSAGE("Accept: Socket handle: %ld", response.Result);
             TRACE_MESSAGE("Accept: Family: %d", sin->sin_family);
@@ -2752,7 +2752,7 @@ void WiFiRequestHandler::Accept(void * const vpMessage)
             if (request)
             {
                 result = Accept(request, response);
-                Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&request));
+                Utils::DeleteAndNullifyPointer(request);
             }
             else
             {
@@ -2787,7 +2787,7 @@ void WiFiRequestHandler::Accept(void * const vpMessage)
             message->StatusCode = StatusCodes::CompletedOk;
         }
     }
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&response.Addr));
+    Utils::DeleteAndNullifyPointer(response.Addr);
     message->MessageType = MessageTypes::Response;
     _messageDispatcher->QueueMessageForStm32(message);
 
@@ -2929,7 +2929,7 @@ void WiFiRequestHandler::Ioctl(void * const vpMessage)
                     TRACE_MESSAGE("Unknown ioctl request %04" PRIx32, static_cast<uint32_t>(request->Command));
                     break;
             }
-            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&request));
+            Utils::DeleteAndNullifyPointer(request);
         }
         else
         {
@@ -2958,7 +2958,7 @@ void WiFiRequestHandler::Ioctl(void * const vpMessage)
             message->StatusCode = StatusCodes::CompletedOk;
         }
     }
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&response.Addr));
+    Utils::DeleteAndNullifyPointer(response.Addr);
     message->MessageType = MessageTypes::Response;
     _messageDispatcher->QueueMessageForStm32(message);
 
@@ -3018,7 +3018,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetSockPeerName(const Esp32Messagin
         response.Addr = static_cast<uint8_t *>(pvPortMalloc(response.AddrLength));
         if (response.Addr == NULL)
         {
-            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&sockAddr));
+            Utils::DeleteAndNullifyPointer(sockAddr);
             response.AddrLength = 0;
             response.Addr = nullptr;
             response.Result = -1;
@@ -3026,7 +3026,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetSockPeerName(const Esp32Messagin
             return (StatusCodes::EspOutOfMemory);
         }
         Encoders::EncodeSockAddr(sockAddr, response.Addr);
-        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&sockAddr));
+        Utils::DeleteAndNullifyPointer(sockAddr);
         response.ResponseErrno = 0;
         TRACE_MESSAGE("GetSockPeerName: Socket handle: %" PRIi32, request->SocketHandle);
         TRACE_MESSAGE("GetSockPeerName: Family: %" PRIi32, sin->sin_family);
@@ -3100,7 +3100,7 @@ void WiFiRequestHandler::GetSockPeerName(void * const vpMessage, const WiFiFunct
                 result = StatusCodes::EspOutOfMemory;
             }
 
-            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&request));
+            Utils::DeleteAndNullifyPointer(request);
         }
         else
         {
@@ -3129,7 +3129,7 @@ void WiFiRequestHandler::GetSockPeerName(void * const vpMessage, const WiFiFunct
             message->StatusCode = StatusCodes::CompletedOk;
         }
     }
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&response.Addr));
+    Utils::DeleteAndNullifyPointer(response.Addr);
     message->MessageType = MessageTypes::Response;
     _messageDispatcher->QueueMessageForStm32(message);
 
@@ -3324,7 +3324,7 @@ int WiFiRequestHandler::PollSetup(void * const vpMessage)
     int dummy_socket_handle = OpenDummySocket();
     if (dummy_socket_handle < 0)
     {
-        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&fds));
+        Utils::DeleteAndNullifyPointer(fds);
         return (-1);
     }
 
@@ -3348,7 +3348,7 @@ int WiFiRequestHandler::PollSetup(void * const vpMessage)
     {
         TRACE_MESSAGE("PollSetup: Duplicate setup message ID 0x%08x, rejecting", (uint) request->SetupMessageId);
         close(dummy_socket_handle);
-        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&fds));
+        Utils::DeleteAndNullifyPointer(fds);
         return (-1);
     }
 
@@ -3373,7 +3373,7 @@ int WiFiRequestHandler::PollSetup(void * const vpMessage)
         _pollRequests.erase(request->SetupMessageId);
         UnlockPollRequests();
         close(dummy_socket_handle);
-        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&fds));
+        Utils::DeleteAndNullifyPointer(fds);
         return (-1);
     }
 
@@ -3410,7 +3410,7 @@ int WiFiRequestHandler::PollTeardown(void * const vpMessage)
         {
             result = -1;
         }
-        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&fds));
+        Utils::DeleteAndNullifyPointer(fds);
         _pollRequests.erase(it);
     }
     else
@@ -3469,7 +3469,7 @@ void WiFiRequestHandler::PollSocket(void * const requestId)
                 TRACE_MESSAGE("PollSocket: Returned ESP32 events 0x%04x maps to NuttX events 0x%04x", fds[POLL_FD_INDEX].revents, response.ReturnedEvents);
                 response.SetupMessageId = reinterpret_cast<uint32_t>(requestId);
                 close(fds[POLL_DUMMY_FD_INDEX].fd);
-                Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&fds));
+                Utils::DeleteAndNullifyPointer(fds);
                 _pollRequests.erase(it);
             }
             else
@@ -3570,7 +3570,7 @@ void WiFiRequestHandler::Poll(void * const vpMessage)
                 {
                     response.ResponseErrno = Mapping::NuttxErrno(errno);
                 }
-                Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&request));
+                Utils::DeleteAndNullifyPointer(request);
             }
             else
             {

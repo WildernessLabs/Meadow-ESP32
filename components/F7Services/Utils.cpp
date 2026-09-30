@@ -71,20 +71,6 @@ std::string Utils::NumberWithCommas(uint32_t number)
 }
 
 /**
- * @brief Delete a pointer and set it to nullptr.
- *
- * @param ptr Pointer to the pointer to delete and nullify.
- */
-void Utils::DeleteAndNullifyPointer(void **ptr)
-{
-    if ((ptr != nullptr) && (*ptr != nullptr))
-    {
-        vPortFree(*ptr);
-        *ptr = nullptr;
-    }
-}
-
-/**
  * @brief Reallocate memory using the ESP32's pvPortMalloc function.
  *
  * @note This function mimics the behavior of realloc, but uses pvPortMalloc and vPortFree for memory management.

@@ -481,7 +481,7 @@ void Logging::AddPerformanceCounterEntry(const char *method, int64_t start, int6
             {
                 free(const_cast<char *>(previous->method));
             }
-            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&_performanceCounters[_nextPerformanceCounterEntry]));
+            Utils::DeleteAndNullifyPointer(_performanceCounters[_nextPerformanceCounterEntry]);
         }
         _performanceCounters[_nextPerformanceCounterEntry] = pce;
         _nextPerformanceCounterEntry++;

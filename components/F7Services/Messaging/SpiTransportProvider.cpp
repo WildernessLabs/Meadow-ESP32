@@ -168,11 +168,11 @@ SpiTransportProvider::~SpiTransportProvider()
     spi_slave_free(VSPI_HOST);
     if (_rxBuffer)
     {
-        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&_rxBuffer));
+        Utils::DeleteAndNullifyPointer(_rxBuffer);
     }
     if (_txBuffer)
     {
-        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&_txBuffer));
+        Utils::DeleteAndNullifyPointer(_txBuffer);
     }
     if (_incomingMessage)
     {
@@ -379,7 +379,7 @@ void SpiTransportProvider::DeleteTransaction(spi_slave_transaction_t *&transacti
         {
             heap_caps_free(const_cast<void *>(transaction->tx_buffer));
         }
-        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&transaction));
+        Utils::DeleteAndNullifyPointer(transaction);
     }
     TRACE_MESSAGE("DeleteTransaction: Exit");
 }
@@ -585,7 +585,7 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessInboundPacket(Message *pac
                 else
                 {
                     memcpy(static_cast<void *>(payloadBuffer), static_cast<const void *>(packet->Payload), packet->PacketLength);
-                    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&packet->Payload));
+                    Utils::DeleteAndNullifyPointer(packet->Payload);
                     packet->Payload = payloadBuffer;
                     _incomingMessage = packet;
                     //

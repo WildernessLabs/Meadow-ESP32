@@ -172,7 +172,7 @@ SystemRequestHandler::SystemRequestHandler(IMessageDispatcher *messageDispatcher
  */
 SystemRequestHandler::~SystemRequestHandler()
 {
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&_deviceName));
+    Utils::DeleteAndNullifyPointer(_deviceName);
 
     //
     //  The file system unmounts the partition as it goes, so releasing it here is what
@@ -303,7 +303,7 @@ StatusCodes::StatusCodes SystemRequestHandler::SetDeviceName(char *value)
     {
         if (SystemRequestHandler::SetConfigurationValue(DEVICE_NAME_NAME, value) == NvsManager::ErrorCodes::Ok)
         {
-            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&_deviceName));
+            Utils::DeleteAndNullifyPointer(_deviceName);
             _deviceName = DuplicateString(value);
             result = StatusCodes::CompletedOk;
         }

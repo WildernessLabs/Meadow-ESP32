@@ -86,7 +86,7 @@ TEST_CASE("NVS Manager operations", CLASS_OF_TESTS)
         TEST_ASSERT_NOT_NULL(retrieved);
         TEST_ASSERT_NOT_EQUAL(defaultValue, retrieved); // heap-allocated copy, not the default pointer
         TEST_ASSERT_EQUAL_STRING(expected, retrieved);
-        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(const_cast<char **>(&retrieved)));
+        Utils::DeleteAndNullifyPointer(retrieved);
     }
 
     //
@@ -102,7 +102,7 @@ TEST_CASE("NVS Manager operations", CLASS_OF_TESTS)
         const char *retrieved = NvsManager::GetValue(TEST_NAMESPACE, key, defaultValue);
         TEST_ASSERT_NOT_NULL(retrieved);
         TEST_ASSERT_EQUAL_STRING(second, retrieved);
-        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(const_cast<char **>(&retrieved)));
+        Utils::DeleteAndNullifyPointer(retrieved);
     }
 
     //

@@ -446,7 +446,7 @@ static bool ReadStoredString(const char *name, char *buffer, const size_t buffer
     if (found)
     {
         snprintf(buffer, bufferLength, "%s", stored);
-        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(const_cast<char **>(&stored)));
+        Utils::DeleteAndNullifyPointer(stored);
     }
     else
     {

@@ -142,7 +142,7 @@ static void TestScanForAccessPoints(unsigned numberOfScans = 1)
                 printf("    MAC Address: %02x:%02x:%02x:%02x:%02x:%02x\n", accessPoint->Bssid[0], accessPoint->Bssid[1], accessPoint->Bssid[2], accessPoint->Bssid[3], accessPoint->Bssid[4], accessPoint->Bssid[5]);
             }
 
-            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&accessPoint));
+            Utils::DeleteAndNullifyPointer(accessPoint);
         }
         TestEncoders::FreeAccessPointList(&accessPointList);
     }
@@ -427,7 +427,7 @@ TEST_CASE("Connect to non-existant access point reports the attempted SSID", CLA
     Esp32Messaging::ConnectEventData *eventData = TestEncoders::ExtractConnectEventData(response->Payload);
     TEST_ASSERT_NOT_NULL(eventData);
     TEST_ASSERT_EQUAL_STRING(attemptedSsid, eventData->Ssid);
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&eventData));
+    Utils::DeleteAndNullifyPointer(eventData);
     Message::DeleteMessage(response);
 }
 

@@ -121,7 +121,7 @@ static void CheckTestFileContents(const char *filename, const char *contents)
     TEST_ASSERT_EQUAL(length, ReadTestFile(filename, buffer, length));
     TEST_ASSERT_EQUAL_MEMORY(contents, buffer, length);
 
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&buffer));
+    Utils::DeleteAndNullifyPointer(buffer);
 }
 
 /**
@@ -508,7 +508,7 @@ TEST_CASE("ReadFile does not leak contents sent with the read request", CLASS_OF
         TEST_ASSERT_LESS_OR_EQUAL_UINT32_MESSAGE(HEAP_ALLOWANCE, heapBefore - heapAfter, "The free heap fell too far, which suggests ReadFile leaks the request's contents.");
     }
 
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&requestContents));
+    Utils::DeleteAndNullifyPointer(requestContents);
     ReleaseFileSystemTestContext(&context);
 }
 
@@ -803,7 +803,7 @@ TEST_CASE("WriteFile returns Failure on a full filesystem", SLOW_TESTS)
         }
         TEST_ASSERT_EQUAL(ESP_OK, esp_littlefs_info(FileSystem::PARTITION_LABEL, &total, &used));
     }
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&fillBuffer));
+    Utils::DeleteAndNullifyPointer(fillBuffer);
 
     //
     //  Attempt to write a file whose size spans two LittleFS blocks via the
@@ -816,7 +816,7 @@ TEST_CASE("WriteFile returns Failure on a full filesystem", SLOW_TESTS)
     memset(writeBuffer, 0xAA, 2 * LITTLEFS_BLOCK_SIZE);
 
     Message *writeMessage = CreateFileNameAndContentsMessage(SystemFunction::FileSystemWriteFile, TEST_FILE_NAME, writeBuffer, 2 * LITTLEFS_BLOCK_SIZE);
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&writeBuffer));
+    Utils::DeleteAndNullifyPointer(writeBuffer);
 
     context.Fs->WriteFile(writeMessage);
 

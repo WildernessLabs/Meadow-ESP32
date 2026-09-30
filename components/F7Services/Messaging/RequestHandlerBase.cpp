@@ -185,7 +185,7 @@ void RequestHandlerBase::RaiseEvent(const uint8_t interface, const uint32_t even
         //  CreateOnHeap takes ownership of the payload so it has to be released here.
         //
         ERROR_MESSAGE("Cannot create the message for event %s", Logging::FunctionName(interface, eventType));
-        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&payload));
+        Utils::DeleteAndNullifyPointer(payload);
         return;
     }
     _messageDispatcher->QueueMessageForStm32(message);
@@ -247,7 +247,7 @@ void RequestHandlerBase::SendIntegerResult(const uint8_t interface, const uint32
             Encoders::EncodeIntegerResponse(response, payload);
             RaiseEvent(interface, function, statusCode, payload, payloadLength);
         }
-        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&response));
+        Utils::DeleteAndNullifyPointer(response);
     }
     else
     {
