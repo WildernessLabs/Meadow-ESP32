@@ -8,6 +8,7 @@
  */
 
 #pragma once
+#include <string>
 
 #include "sdkconfig.h"
 
@@ -146,7 +147,7 @@ private:
     /**
      *  @brief Populate the configuration object with the current configuration.
      */
-    static void PopulateConfiguration(Esp32Messaging::SystemConfiguration *);
+    static void PopulateConfiguration(Esp32Messaging::SystemConfiguration *config, std::string &defaultAccessPoint);
 
     /**
      * @brief Configure ADC1 for battery level monitoring.

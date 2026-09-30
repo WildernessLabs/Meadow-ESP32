@@ -181,6 +181,69 @@ const char *WiFiRequestHandler::DEFAULT_ACCESS_POINT_NAME = "DefaultAP";
  */
 char *WiFiRequestHandler::_password = nullptr;
 
+namespace
+{
+    /**
+     *  @brief Holds WiFiRequestHandler::CredentialsMutex() for the lifetime of the object.
+     *
+     *  Giving the mutex back in the destructor means it is released on every path out of
+     *  the scope, including an exception from the std::string copies taken while it is held.
+     */
+    class CredentialsLock
+    {
+    public:
+        /**
+         *  @brief Take the mutex, waiting for as long as it takes.
+         *
+         *  @param mutex
+         *      Mutex to hold.
+         */
+        explicit CredentialsLock(SemaphoreHandle_t mutex) : _mutex(mutex)
+        {
+            xSemaphoreTake(_mutex, portMAX_DELAY);
+        }
+
+        /**
+         *  @brief Give the mutex back.
+         */
+        ~CredentialsLock()
+        {
+            xSemaphoreGive(_mutex);
+        }
+
+        /**
+         *  @brief Deleted copy constructor, a copy would give the mutex back twice.
+         */
+        CredentialsLock(const CredentialsLock &other) = delete;
+
+        /**
+         *  @brief Deleted copy assignment operator, a copy would give the mutex back twice.
+         */
+        CredentialsLock &operator=(const CredentialsLock &other) = delete;
+
+    private:
+        /**
+         *  @brief Mutex being held.
+         */
+        SemaphoreHandle_t _mutex;
+    };
+} // namespace
+
+/**
+ *  @brief Mutex guarding _defaultAccessPoint and _password.
+ *
+ *  A function-local static is created exactly once, on first use, even when several tasks
+ *  get here at the same time, so no caller depends on the handler having been constructed.
+ *
+ *  @returns
+ *      The credentials mutex.
+ */
+SemaphoreHandle_t WiFiRequestHandler::CredentialsMutex()
+{
+    static const SemaphoreHandle_t mutex = xSemaphoreCreateMutex();
+    return (mutex);
+}
+
 /**
  *  @brief Name of the storage in NVS holding the password for the access point.
  */
@@ -331,8 +394,11 @@ WiFiRequestHandler::WiFiRequestHandler()
     //
     //  Get configuration from NVS.
     //
-    _defaultAccessPoint = const_cast<char *>(SystemRequestHandler::GetConfigurationValue(DEFAULT_ACCESS_POINT_NAME, _defaultAccessPoint));
-    _password = const_cast<char *>(SystemRequestHandler::GetConfigurationValue(PASSWORD_NAME, _password));
+    {
+        CredentialsLock lock(CredentialsMutex());
+        _defaultAccessPoint = const_cast<char *>(SystemRequestHandler::GetConfigurationValue(DEFAULT_ACCESS_POINT_NAME, _defaultAccessPoint));
+        _password = const_cast<char *>(SystemRequestHandler::GetConfigurationValue(PASSWORD_NAME, _password));
+    }
     _stationNetIfHandle = nullptr;
     _softApNetIfHandle = nullptr;
     _countryCode = SystemRequestHandler::GetConfigurationValue(COUNTRY_CODE_NAME, _validCountryCodes[0]);
@@ -536,11 +602,15 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetUseDhcp(bool value)
 }
 
 /**
- *  @brief Get the default access point.
+ *  @brief Get a copy of the default access point.
+ *
+ *  @returns
+ *      The default access point, empty when none is configured.
  */
-char *WiFiRequestHandler::GetDefaultAccessPoint()
+std::string WiFiRequestHandler::GetDefaultAccessPoint()
 {
-    return (_defaultAccessPoint);
+    CredentialsLock lock(CredentialsMutex());
+    return ((_defaultAccessPoint == nullptr) ? std::string() : std::string(_defaultAccessPoint));
 }
 
 /**
@@ -554,6 +624,11 @@ char *WiFiRequestHandler::GetDefaultAccessPoint()
  */
 StatusCodes::StatusCodes WiFiRequestHandler::SetDefaultAccessPoint(const char *value)
 {
+    //
+    //  Held for the comparison, the NVS write and the swap, so no reader copies the old
+    //  string while it is being released.
+    //
+    CredentialsLock lock(CredentialsMutex());
     TRACE_MESSAGE("WiFiRequestHandler::SetDefaultAccessPoint %s", (value == NULL) ? "NULL" : value);
     StatusCodes::StatusCodes result = StatusCodes::Failure;
 
@@ -589,11 +664,15 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetDefaultAccessPoint(const char *v
 }
 
 /**
- *  @brief Get the password for the default access point.
+ *  @brief Get a copy of the password for the default access point.
+ *
+ *  @returns
+ *      The password, empty when none is configured.
  */
-char *WiFiRequestHandler::GetPassword()
+std::string WiFiRequestHandler::GetPassword()
 {
-    return (_password);
+    CredentialsLock lock(CredentialsMutex());
+    return ((_password == nullptr) ? std::string() : std::string(_password));
 }
 
 /**
@@ -607,6 +686,11 @@ char *WiFiRequestHandler::GetPassword()
  */
 StatusCodes::StatusCodes WiFiRequestHandler::SetPassword(const char *value)
 {
+    //
+    //  Held for the comparison, the NVS write and the swap, so no reader copies the old
+    //  string while it is being released.
+    //
+    CredentialsLock lock(CredentialsMutex());
     TRACE_MESSAGE("WiFiRequestHandler::SetPassword %s", (value == NULL) ? "NULL" : value);
     StatusCodes::StatusCodes result = StatusCodes::Failure;
 
@@ -1982,12 +2066,17 @@ void WiFiRequestHandler::ConnectToDefaultAccessPoint(Message *message)
     //  clearing the pointer, and it stays that way for the rest of the app's life.  NULL
     //  itself is only ever seen the first time, before NVS has been read.
     //
-    char *access_point = GetDefaultAccessPoint();
-    if ((access_point != NULL) && (access_point[0] != '\0'))
+    //
+    //  Copies, held until the connection attempt is over: a configuration change on the
+    //  System task can replace the stored strings at any point during it.
+    //
+    const std::string accessPoint = GetDefaultAccessPoint();
+    const std::string password = GetPassword();
+    if (!accessPoint.empty())
     {
         Esp32Messaging::AccessPointInformation accessPointInformation = {};
-        accessPointInformation.NetworkName = access_point;
-        accessPointInformation.Password = GetPassword();
+        accessPointInformation.NetworkName = const_cast<char *>(accessPoint.c_str());
+        accessPointInformation.Password = const_cast<char *>(password.c_str());
         if (!_useDhcp)
         {
             accessPointInformation.IpAddress = GetIpAddress();

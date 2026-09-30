@@ -376,8 +376,11 @@ TEST_CASE("Connect to the default access point when none is configured", CLASS_O
 {
     MockMessageDispatcher *dispatcher = SetupWiFiDispatcher();
 
-    char *originalAccessPoint = WiFiRequestHandler::GetDefaultAccessPoint();
-    char *originalPassword = WiFiRequestHandler::GetPassword();
+    //
+    //  Copies, because clearing the settings below releases the stored strings.
+    //
+    const std::string originalAccessPoint = WiFiRequestHandler::GetDefaultAccessPoint();
+    const std::string originalPassword = WiFiRequestHandler::GetPassword();
     TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, WiFiRequestHandler::SetDefaultAccessPoint(NULL));
     TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, WiFiRequestHandler::SetPassword(NULL));
 
@@ -385,10 +388,8 @@ TEST_CASE("Connect to the default access point when none is configured", CLASS_O
 
     Message *response = WaitForResponseTo(dispatcher, Esp32Interfaces::WiFi, WiFiFunction::ConnectToDefaultAccessPoint, RadioTimeout());
 
-    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, WiFiRequestHandler::SetDefaultAccessPoint(originalAccessPoint));
-    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, WiFiRequestHandler::SetPassword(originalPassword));
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&originalAccessPoint));
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&originalPassword));
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, WiFiRequestHandler::SetDefaultAccessPoint(originalAccessPoint.c_str()));
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, WiFiRequestHandler::SetPassword(originalPassword.c_str()));
 
     ASSERT_RESPONSE(response, Esp32Interfaces::WiFi, WiFiFunction::ConnectToDefaultAccessPoint, StatusCodes::DefaultAccessPointNotConfigured);
     Message::DeleteMessage(response);

@@ -12,9 +12,13 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <atomic>
+#include <string>
 #include "unity.h"
 
 #include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/semphr.h"
 
 #include "Esp32Messaging.hpp"
 #include "Encoders.hpp"
@@ -632,8 +636,8 @@ TEST_CASE("An access point name with no password is refused", CLASS_OF_TESTS)
 
     char originalAccessPoint[64];
     char originalPassword[96];
-    snprintf(originalAccessPoint, sizeof(originalAccessPoint), "%s", SafeString(WiFiRequestHandler::GetDefaultAccessPoint()));
-    snprintf(originalPassword, sizeof(originalPassword), "%s", SafeString(WiFiRequestHandler::GetPassword()));
+    snprintf(originalAccessPoint, sizeof(originalAccessPoint), "%s", SafeString(WiFiRequestHandler::GetDefaultAccessPoint().c_str()));
+    snprintf(originalPassword, sizeof(originalPassword), "%s", SafeString(WiFiRequestHandler::GetPassword().c_str()));
 
     TEST_ASSERT_EQUAL(StatusCodes::InvalidPacket, SetItem(ConfigurationItems::DefaultApAndPassword, ACCESS_POINT_UNDER_TEST, strlen(ACCESS_POINT_UNDER_TEST) + 1));
 
@@ -643,8 +647,8 @@ TEST_CASE("An access point name with no password is refused", CLASS_OF_TESTS)
     valueLength += snprintf(reinterpret_cast<char *>(value) + valueLength, sizeof(value) - valueLength, "%s", originalPassword) + 1;
 
     TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, SetItem(ConfigurationItems::DefaultApAndPassword, value, valueLength));
-    TEST_ASSERT_EQUAL_STRING(originalAccessPoint, WiFiRequestHandler::GetDefaultAccessPoint());
-    TEST_ASSERT_EQUAL_STRING(originalPassword, WiFiRequestHandler::GetPassword());
+    TEST_ASSERT_EQUAL_STRING(originalAccessPoint, WiFiRequestHandler::GetDefaultAccessPoint().c_str());
+    TEST_ASSERT_EQUAL_STRING(originalPassword, WiFiRequestHandler::GetPassword().c_str());
 }
 
 /**
@@ -752,8 +756,8 @@ TEST_CASE("The default access point and password can be set", CLASS_OF_TESTS)
     //
     char originalAccessPoint[64];
     char originalPassword[96];
-    snprintf(originalAccessPoint, sizeof(originalAccessPoint), "%s", SafeString(WiFiRequestHandler::GetDefaultAccessPoint()));
-    snprintf(originalPassword, sizeof(originalPassword), "%s", SafeString(WiFiRequestHandler::GetPassword()));
+    snprintf(originalAccessPoint, sizeof(originalAccessPoint), "%s", SafeString(WiFiRequestHandler::GetDefaultAccessPoint().c_str()));
+    snprintf(originalPassword, sizeof(originalPassword), "%s", SafeString(WiFiRequestHandler::GetPassword().c_str()));
     printf("Default access point was %s at the start of this test\n", originalAccessPoint);
 
     uint8_t value[sizeof(originalAccessPoint) + sizeof(originalPassword)];
@@ -763,8 +767,8 @@ TEST_CASE("The default access point and password can be set", CLASS_OF_TESTS)
     valueLength += snprintf(reinterpret_cast<char *>(value) + valueLength, sizeof(value) - valueLength, "%s", PASSWORD_UNDER_TEST) + 1;
 
     TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, SetItem(ConfigurationItems::DefaultApAndPassword, value, valueLength));
-    TEST_ASSERT_EQUAL_STRING(ACCESS_POINT_UNDER_TEST, WiFiRequestHandler::GetDefaultAccessPoint());
-    TEST_ASSERT_EQUAL_STRING(PASSWORD_UNDER_TEST, WiFiRequestHandler::GetPassword());
+    TEST_ASSERT_EQUAL_STRING(ACCESS_POINT_UNDER_TEST, WiFiRequestHandler::GetDefaultAccessPoint().c_str());
+    TEST_ASSERT_EQUAL_STRING(PASSWORD_UNDER_TEST, WiFiRequestHandler::GetPassword().c_str());
 
     //
     //  Put back whatever the board was using.  The [WiFi] tests take their credentials
@@ -776,8 +780,8 @@ TEST_CASE("The default access point and password can be set", CLASS_OF_TESTS)
     valueLength += snprintf(reinterpret_cast<char *>(value) + valueLength, sizeof(value) - valueLength, "%s", originalPassword) + 1;
 
     TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, SetItem(ConfigurationItems::DefaultApAndPassword, value, valueLength));
-    TEST_ASSERT_EQUAL_STRING(originalAccessPoint, WiFiRequestHandler::GetDefaultAccessPoint());
-    TEST_ASSERT_EQUAL_STRING(originalPassword, WiFiRequestHandler::GetPassword());
+    TEST_ASSERT_EQUAL_STRING(originalAccessPoint, WiFiRequestHandler::GetDefaultAccessPoint().c_str());
+    TEST_ASSERT_EQUAL_STRING(originalPassword, WiFiRequestHandler::GetPassword().c_str());
 }
 
 /**
@@ -971,7 +975,7 @@ TEST_CASE("The system configuration can be read", CLASS_OF_TESTS)
     TEST_ASSERT_EQUAL_MESSAGE(response->PayloadLength, configuration.EncodedLength, "The decoded configuration did not use the whole payload.");
 
     TEST_ASSERT_EQUAL_STRING(SafeString(SystemRequestHandler::GetDeviceName()), configuration.DeviceName);
-    TEST_ASSERT_EQUAL_STRING(SafeString(WiFiRequestHandler::GetDefaultAccessPoint()), configuration.DefaultAccessPoint);
+    TEST_ASSERT_EQUAL_STRING(SafeString(WiFiRequestHandler::GetDefaultAccessPoint().c_str()), configuration.DefaultAccessPoint);
     TEST_ASSERT_EQUAL(WiFiRequestHandler::GetMaximumRetryCount(), configuration.MaximumRetryCount);
     TEST_ASSERT_EQUAL(WiFiRequestHandler::GetAntenna(), configuration.Antenna);
     TEST_ASSERT_EQUAL(SystemRequestHandler::GetMaximumMessageQueueLength(), configuration.MaximumMessageQueueLength);
@@ -1060,4 +1064,110 @@ TEST_CASE("The configuration is sent to the STM32 as an event", CLASS_OF_TESTS)
     TEST_ASSERT_EQUAL(WiFiRequestHandler::GetAntenna(), configuration.Antenna);
 
     Message::DeleteMessage(event);
+}
+
+/**
+ * @brief First of the two access point names the concurrency test alternates between.
+ */
+#define ALTERNATING_ACCESS_POINT_SHORT "NetworkOne"
+
+/**
+ * @brief Second of the two names, a different length so each change allocates a new string.
+ */
+#define ALTERNATING_ACCESS_POINT_LONG "AccessPointWithAMuchLongerName"
+
+/**
+ * @brief Number of times the writer task changes the default access point.
+ */
+#define ALTERNATING_CHANGES 200
+
+/**
+ * @brief State shared between the concurrency test and its writer task.
+ */
+struct AlternatingWriterContext
+{
+    /**
+     * @brief Set once the writer has made all of its changes.
+     */
+    std::atomic<bool> Finished {false};
+
+    /**
+     * @brief Number of changes the setter refused.
+     */
+    std::atomic<uint32_t> Failures {0};
+
+    /**
+     * @brief Given by the writer when it has finished.
+     */
+    SemaphoreHandle_t Done;
+};
+
+/**
+ * @brief Task that keeps changing the default access point between the two test names.
+ *
+ * @param parameter AlternatingWriterContext shared with the test.
+ */
+static void AlternatingWriterTask(void *parameter)
+{
+    AlternatingWriterContext *context = static_cast<AlternatingWriterContext *>(parameter);
+    for (uint32_t change = 0; change < ALTERNATING_CHANGES; change++)
+    {
+        const char *name = ((change % 2) == 0) ? ALTERNATING_ACCESS_POINT_LONG : ALTERNATING_ACCESS_POINT_SHORT;
+        if (WiFiRequestHandler::SetDefaultAccessPoint(name) != StatusCodes::CompletedOk)
+        {
+            context->Failures.fetch_add(1);
+        }
+    }
+    context->Finished.store(true);
+    xSemaphoreGive(context->Done);
+    vTaskDelete(nullptr);
+}
+
+/**
+ * @brief Check that the default access point reads back whole while another task changes it.
+ *
+ *  Regression check for issues #184 and #393.  The setter releases the old string and stores
+ *  a new one while the System task is handling a configuration request, and the WiFi task
+ *  reads the value to connect.  The getter used to return the stored pointer itself, so a
+ *  reader could be left on the released string.  Every read here must be exactly one of the
+ *  two names being written; a copy taken from released memory would not be.
+ */
+TEST_CASE("The default access point reads back whole while another task changes it", CLASS_OF_TESTS)
+{
+    EnsureHandlers();
+
+    const std::string originalAccessPoint = WiFiRequestHandler::GetDefaultAccessPoint();
+
+    //
+    //  Static so a writer that outlives a failed test cannot write to a dead stack frame.
+    //
+    static AlternatingWriterContext context;
+    context.Finished.store(false);
+    context.Failures.store(0);
+    context.Done = xSemaphoreCreateBinary();
+    TEST_ASSERT_NOT_NULL(context.Done);
+
+    TEST_ASSERT_EQUAL(pdPASS, xTaskCreatePinnedToCore(AlternatingWriterTask, "ApWriter", 4096, &context, tskIDLE_PRIORITY + 5, nullptr, 1));
+
+    uint32_t reads = 0;
+    uint32_t unexpected = 0;
+    while (!context.Finished.load())
+    {
+        const std::string current = WiFiRequestHandler::GetDefaultAccessPoint();
+        if ((current != ALTERNATING_ACCESS_POINT_SHORT) && (current != ALTERNATING_ACCESS_POINT_LONG) && (current != originalAccessPoint))
+        {
+            unexpected++;
+        }
+        reads++;
+    }
+    TEST_ASSERT_EQUAL(pdTRUE, xSemaphoreTake(context.Done, portMAX_DELAY));
+    vSemaphoreDelete(context.Done);
+
+    printf("%" PRIu32 " reads while the access point changed %d times, %" PRIu32 " unexpected.\n", reads, ALTERNATING_CHANGES, unexpected);
+    TEST_ASSERT_EQUAL_UINT32_MESSAGE(0, context.Failures.load(), "The setter refused a change.");
+    TEST_ASSERT_GREATER_THAN_UINT32_MESSAGE(0, reads, "The test did not read the access point while it was being changed.");
+    TEST_ASSERT_EQUAL_UINT32_MESSAGE(0, unexpected, "A read returned something other than a name being written.");
+
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, WiFiRequestHandler::SetDefaultAccessPoint(originalAccessPoint.c_str()));
+    TEST_ASSERT_EQUAL_STRING(originalAccessPoint.c_str(), WiFiRequestHandler::GetDefaultAccessPoint().c_str());
 }

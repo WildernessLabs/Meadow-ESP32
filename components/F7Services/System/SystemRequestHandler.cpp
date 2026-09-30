@@ -533,8 +533,13 @@ NvsManager::ErrorCodes SystemRequestHandler::SetConfigurationValue(const char *n
  *
  *  @param config
  *      Pointer to the Esp32Messaging::SystemConfiguration to be populated.
+ *
+ *  @param defaultAccessPoint
+ *      Storage for a copy of the default access point, which config->DefaultAccessPoint
+ *      points into, so it has to outlive config.  The stored value can be replaced from
+ *      another task at any time, so config cannot point at it directly.
  */
-void SystemRequestHandler::PopulateConfiguration(Esp32Messaging::SystemConfiguration *config)
+void SystemRequestHandler::PopulateConfiguration(Esp32Messaging::SystemConfiguration *config, std::string &defaultAccessPoint)
 {
     TRACE_MESSAGE("PopulateConfiguration: Enter");
 
@@ -548,7 +553,8 @@ void SystemRequestHandler::PopulateConfiguration(Esp32Messaging::SystemConfigura
     config->MaximumMessageQueueLength = static_cast<uint8_t>(GetMaximumMessageQueueLength());
     config->Antenna = WiFiRequestHandler::GetAntenna();
     config->MaximumRetryCount = WiFiRequestHandler::GetMaximumRetryCount();
-    config->DefaultAccessPoint = WiFiRequestHandler::GetDefaultAccessPoint();
+    defaultAccessPoint = WiFiRequestHandler::GetDefaultAccessPoint();
+    config->DefaultAccessPoint = const_cast<char *>(defaultAccessPoint.c_str());
     config->DeviceName = GetDeviceName();
     config->VersionMajor = g_application_version.major;
     config->VersionMinor = g_application_version.minor;
@@ -580,7 +586,8 @@ void SystemRequestHandler::SendConfigurationAsInterruptMessage()
     TRACE_MESSAGE("SendConfigurationAsInterruptMessage: Enter");
 
     Esp32Messaging::SystemConfiguration config = {};
-    PopulateConfiguration(&config);
+    std::string defaultAccessPoint;
+    PopulateConfiguration(&config, defaultAccessPoint);
 
     Message *message = static_cast<Message *>(pvPortMalloc(sizeof(Message)));
     memset(static_cast<void *>(message), 0, sizeof(Message));
@@ -605,7 +612,8 @@ void SystemRequestHandler::GetConfiguration(Message * const request)
 {
     TRACE_MESSAGE("GetConfiguration: Enter");
     Esp32Messaging::SystemConfiguration config = {};
-    PopulateConfiguration(&config);
+    std::string defaultAccessPoint;
+    PopulateConfiguration(&config, defaultAccessPoint);
 
     request->DeletePayload();
     request->PayloadLength = Encoders::EncodedSystemConfigurationBufferSize(&config);
