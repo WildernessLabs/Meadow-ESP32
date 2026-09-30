@@ -465,13 +465,27 @@ void BluetoothRequestHandler::SetCurrentValueForAttributeHandle(Message * const 
 {
     TRACE_MESSAGE("SetCurrentValueForAttributeHandle: Enter");
 
-    Esp32Messaging::BTServerDataSet *ds = Encoders::ExtractBTServerDataSet(request->Payload);
+    //
+    //  ExtractBTServerDataSet reads the handle straight from the payload, so a request with
+    //  no payload is refused before it is called.  It returns nullptr only when it cannot
+    //  allocate.
+    //
+    const bool hasPayload = (request->Payload != nullptr);
+    Esp32Messaging::BTServerDataSet *ds = hasPayload ? Encoders::ExtractBTServerDataSet(request->Payload) : nullptr;
     request->DeletePayload();
 
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
     if (ds == nullptr)
     {
-        result = StatusCodes::EspOutOfMemory;
+        if (hasPayload)
+        {
+            result = StatusCodes::EspOutOfMemory;
+        }
+        else
+        {
+            ERROR_MESSAGE("SetCurrentValueForAttributeHandle: the request carries no payload.");
+            result = StatusCodes::InvalidRequest;
+        }
     }
     else
     {
@@ -929,15 +943,37 @@ void BluetoothRequestHandler::Start(Message * const request)
 
     RaiseEvent(Esp32Interfaces::BlueTooth, BluetoothFunction::BluetoothStartingEvent, StatusCodes::CompletedOk);
 
-    Esp32Messaging::BTStackConfig *config = Encoders::ExtractBTStackConfig(request->Payload);
+    //
+    //  The extractor reads the payload without checking it exists, and returns nullptr only
+    //  when it cannot allocate, so both cases are dealt with here before anything is used.
+    //
+    const bool hasPayload = (request->Payload != nullptr);
+    Esp32Messaging::BTStackConfig *config = hasPayload ? Encoders::ExtractBTStackConfig(request->Payload) : nullptr;
     request->DeletePayload();
 
-    bool graphBuilt = _manager.BuildGraphFromJson(config->Config);
-    Encoders::FreeBTStackConfig(&config);
+    bool graphBuilt = false;
+    StatusCodes::StatusCodes refusal = StatusCodes::InvalidConfigurationFile;
+    if (config == nullptr)
+    {
+        if (hasPayload)
+        {
+            ERROR_MESSAGE("Start: could not allocate the stack configuration.");
+            refusal = StatusCodes::EspOutOfMemory;
+        }
+        else
+        {
+            ERROR_MESSAGE("Start: the request carries no configuration.");
+        }
+    }
+    else
+    {
+        graphBuilt = _manager.BuildGraphFromJson(config->Config);
+        Encoders::FreeBTStackConfig(&config);
+    }
 
     if (!graphBuilt)
     {
-        request->StatusCode = StatusCodes::InvalidConfigurationFile;
+        request->StatusCode = refusal;
     }
     else
     {
