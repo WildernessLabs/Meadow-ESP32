@@ -15,3 +15,12 @@
 #
 CONFIG_PARTITION_TABLE_CUSTOM_FILENAME="../partitions-develop.csv"
 CONFIG_PARTITION_TABLE_FILENAME="../partitions-develop.csv"
+
+#
+#   The development configuration aborts on any failed allocation, which stops a
+#   diagnostic build at the allocation that ran out.  The tests need the release
+#   behaviour instead, where the allocator returns nullptr, so the code handling running
+#   out of memory can be tested at all (issue #162).  A test that runs out of memory by
+#   accident now fails where the nullptr is used rather than at the allocation.
+#
+# CONFIG_HEAP_ABORT_WHEN_ALLOCATION_FAILS is not set

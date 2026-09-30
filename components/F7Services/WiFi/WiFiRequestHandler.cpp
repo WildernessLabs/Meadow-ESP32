@@ -620,7 +620,8 @@ std::string WiFiRequestHandler::GetDefaultAccessPoint()
  *      New default access point value.
  *
  *  @returns
- *      StatusCodes::Completed on success, StatusCodes::Failure if there is a problem.
+ *      StatusCodes::Completed on success, StatusCodes::EspOutOfMemory if the value cannot be
+ *      copied, StatusCodes::Failure if there is another problem.
  */
 StatusCodes::StatusCodes WiFiRequestHandler::SetDefaultAccessPoint(const char *value)
 {
@@ -647,17 +648,33 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetDefaultAccessPoint(const char *v
     }
     else
     {
-        if (SystemRequestHandler::SetConfigurationValue(DEFAULT_ACCESS_POINT_NAME, value) == NvsManager::ErrorCodes::Ok)
+        //
+        //  Copied before NVS is written: if memory runs out, neither NVS nor the value held
+        //  here changes, so the two cannot disagree.
+        //
+        char *copy = strdup(value);
+        if (copy == NULL)
         {
-            //
-            //  _emptyString is not on the heap and must not be released.
-            //
-            if (_defaultAccessPoint != WiFiRequestHandler::_emptyString)
+            result = StatusCodes::EspOutOfMemory;
+        }
+        else
+        {
+            if (SystemRequestHandler::SetConfigurationValue(DEFAULT_ACCESS_POINT_NAME, value) == NvsManager::ErrorCodes::Ok)
             {
-                free(_defaultAccessPoint);
+                //
+                //  _emptyString is not on the heap and must not be released.
+                //
+                if (_defaultAccessPoint != WiFiRequestHandler::_emptyString)
+                {
+                    free(_defaultAccessPoint);
+                }
+                _defaultAccessPoint = copy;
+                result = StatusCodes::CompletedOk;
             }
-            _defaultAccessPoint = strdup(value);
-            result = StatusCodes::CompletedOk;
+            else
+            {
+                free(copy);
+            }
         }
     }
     return (result);
@@ -682,7 +699,8 @@ std::string WiFiRequestHandler::GetPassword()
  *      New password value.
  *
  *  @returns
- *      StatusCodes::Completed on success, StatusCodes::Failure if there is a problem.
+ *      StatusCodes::Completed on success, StatusCodes::EspOutOfMemory if the value cannot be
+ *      copied, StatusCodes::Failure if there is another problem.
  */
 StatusCodes::StatusCodes WiFiRequestHandler::SetPassword(const char *value)
 {
@@ -709,17 +727,33 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetPassword(const char *value)
     }
     else
     {
-        if (SystemRequestHandler::SetConfigurationValue(PASSWORD_NAME, value) == NvsManager::ErrorCodes::Ok)
+        //
+        //  Copied before NVS is written: if memory runs out, neither NVS nor the value held
+        //  here changes, so the two cannot disagree.
+        //
+        char *copy = strdup(value);
+        if (copy == NULL)
         {
-            //
-            //  _emptyString is not on the heap and must not be released.
-            //
-            if (_password != WiFiRequestHandler::_emptyString)
+            result = StatusCodes::EspOutOfMemory;
+        }
+        else
+        {
+            if (SystemRequestHandler::SetConfigurationValue(PASSWORD_NAME, value) == NvsManager::ErrorCodes::Ok)
             {
-                free(_password);
+                //
+                //  _emptyString is not on the heap and must not be released.
+                //
+                if (_password != WiFiRequestHandler::_emptyString)
+                {
+                    free(_password);
+                }
+                _password = copy;
+                result = StatusCodes::CompletedOk;
             }
-            _password = strdup(value);
-            result = StatusCodes::CompletedOk;
+            else
+            {
+                free(copy);
+            }
         }
     }
     return (result);
@@ -2035,7 +2069,15 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
         }
         message->PayloadLength = Encoders::EncodedConnectEventDataBufferSize(&data);
         message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-        Encoders::EncodeConnectEventData(&data, message->Payload);
+        if (message->Payload == nullptr)
+        {
+            message->PayloadLength = 0;
+            result = StatusCodes::EspOutOfMemory;
+        }
+        else
+        {
+            Encoders::EncodeConnectEventData(&data, message->Payload);
+        }
     }
 
     message->MessageType = MessageTypes::Response;
@@ -2118,7 +2160,15 @@ void WiFiRequestHandler::ConnectToDefaultAccessPoint(Message *message)
 
     message->PayloadLength = Encoders::EncodedConnectEventDataBufferSize(&data);
     message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-    Encoders::EncodeConnectEventData(&data, message->Payload);
+    if (message->Payload == nullptr)
+    {
+        message->PayloadLength = 0;
+        result = StatusCodes::EspOutOfMemory;
+    }
+    else
+    {
+        Encoders::EncodeConnectEventData(&data, message->Payload);
+    }
 
     message->MessageType = MessageTypes::Response;
     message->StatusCode = result;
@@ -2340,44 +2390,71 @@ void WiFiRequestHandler::ScanForAccessPoints(Message *message)
                 uint16_t apCount = 0;
                 esp_wifi_scan_get_ap_num(&apCount);
                 TRACE_MESSAGE("ScanForAccessPoints: Number of access points found: %" PRIu16, apCount);
+                result = StatusCodes::CompletedOk;
                 if (apCount != 0)
                 {
+                    //
+                    //  Every block is checked before it is used, and all of them are released on
+                    //  every path out.  If the records cannot be copied out, the driver's own copy
+                    //  of the scan results is released instead, as esp_wifi_scan_get_ap_records
+                    //  would otherwise have done.
+                    //
                     Esp32Messaging::AccessPointList *accessPointList = static_cast<Esp32Messaging::AccessPointList *>(pvPortMalloc(sizeof(Esp32Messaging::AccessPointList)));
-                    accessPointList->NumberOfAccessPoints = apCount;
-                    //
-                    //  Now we get the access point information.
-                    //
                     wifi_ap_record_t *accessPoints = static_cast<wifi_ap_record_t *>(pvPortMalloc(apCount * sizeof(wifi_ap_record_t)));
-                    ESP_ERROR_CHECK(esp_wifi_scan_get_ap_records(&apCount, accessPoints));
-
                     Esp32Messaging::AccessPoint *accessPoint = static_cast<Esp32Messaging::AccessPoint *>(pvPortMalloc(sizeof(Esp32Messaging::AccessPoint)));
-                    int singleAccessPointSize = Encoders::EncodedAccessPointBufferSize(accessPoint);
-                    accessPointList->AccessPointsLength = singleAccessPointSize * apCount;
-                    accessPointList->AccessPoints = static_cast<uint8_t *>(pvPortMalloc(accessPointList->AccessPointsLength));
-                    uint8_t *currentLocation = accessPointList->AccessPoints;
-                    for (int index = 0; index < apCount; index++)
+                    if ((accessPointList == nullptr) || (accessPoints == nullptr) || (accessPoint == nullptr))
                     {
-                        memset(accessPoint, 0, sizeof(Esp32Messaging::AccessPoint));
-                        memcpy(accessPoint->Ssid, &accessPoints[index].ssid, sizeof(accessPoint->Ssid));
-                        memcpy(accessPoint->Bssid, &accessPoints[index].bssid, 6);
-                        accessPoint->PrimaryChannel = accessPoints[index].primary;
-                        accessPoint->SecondaryChannel = accessPoints[index].second;
-                        accessPoint->Rssi = accessPoints[index].rssi;
-                        accessPoint->AuthenticationMode = accessPoints[index].authmode;
-                        accessPoint->Protocols = accessPoints[index].phy_11b | accessPoints[index].phy_11g | accessPoints[index].phy_11n | accessPoints[index].phy_lr | accessPoints[index].wps;
-                        Encoders::EncodeAccessPoint(accessPoint, currentLocation);
-                        currentLocation += singleAccessPointSize;
+                        esp_wifi_clear_ap_list();
+                        result = StatusCodes::EspOutOfMemory;
+                    }
+                    else
+                    {
+                        memset(accessPointList, 0, sizeof(Esp32Messaging::AccessPointList));
+                        ESP_ERROR_CHECK(esp_wifi_scan_get_ap_records(&apCount, accessPoints));
+                        accessPointList->NumberOfAccessPoints = apCount;
+
+                        int singleAccessPointSize = Encoders::EncodedAccessPointBufferSize(accessPoint);
+                        accessPointList->AccessPointsLength = singleAccessPointSize * apCount;
+                        accessPointList->AccessPoints = static_cast<uint8_t *>(pvPortMalloc(accessPointList->AccessPointsLength));
+                        if (accessPointList->AccessPoints == nullptr)
+                        {
+                            result = StatusCodes::EspOutOfMemory;
+                        }
+                        else
+                        {
+                            uint8_t *currentLocation = accessPointList->AccessPoints;
+                            for (int index = 0; index < apCount; index++)
+                            {
+                                memset(accessPoint, 0, sizeof(Esp32Messaging::AccessPoint));
+                                memcpy(accessPoint->Ssid, &accessPoints[index].ssid, sizeof(accessPoint->Ssid));
+                                memcpy(accessPoint->Bssid, &accessPoints[index].bssid, 6);
+                                accessPoint->PrimaryChannel = accessPoints[index].primary;
+                                accessPoint->SecondaryChannel = accessPoints[index].second;
+                                accessPoint->Rssi = accessPoints[index].rssi;
+                                accessPoint->AuthenticationMode = accessPoints[index].authmode;
+                                accessPoint->Protocols = accessPoints[index].phy_11b | accessPoints[index].phy_11g | accessPoints[index].phy_11n | accessPoints[index].phy_lr | accessPoints[index].wps;
+                                Encoders::EncodeAccessPoint(accessPoint, currentLocation);
+                                currentLocation += singleAccessPointSize;
+                            }
+
+                            message->PayloadLength = Encoders::EncodedAccessPointListBufferSize(accessPointList);
+                            message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
+                            if (message->Payload == nullptr)
+                            {
+                                message->PayloadLength = 0;
+                                result = StatusCodes::EspOutOfMemory;
+                            }
+                            else
+                            {
+                                Encoders::EncodeAccessPointList(accessPointList, message->Payload);
+                            }
+                        }
+                        Utils::DeleteAndNullifyPointer(accessPointList->AccessPoints);
                     }
                     Utils::DeleteAndNullifyPointer(accessPoints);
                     Utils::DeleteAndNullifyPointer(accessPoint);
-
-                    message->PayloadLength = Encoders::EncodedAccessPointListBufferSize(accessPointList);
-                    message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-                    Encoders::EncodeAccessPointList(accessPointList, message->Payload);
-                    Utils::DeleteAndNullifyPointer(accessPointList->AccessPoints);
                     Utils::DeleteAndNullifyPointer(accessPointList);
                 }
-                result = StatusCodes::CompletedOk;
             }
             else
             {

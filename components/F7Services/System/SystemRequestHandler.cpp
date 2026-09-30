@@ -290,7 +290,8 @@ char *SystemRequestHandler::GetDeviceName()
  *      New name for the device.
  *
  *  @returns
- *      StatusCodes::Completed on success, StatusCodes::Failure if there is a problem.
+ *      StatusCodes::Completed on success, StatusCodes::EspOutOfMemory if the name cannot be
+ *      copied, StatusCodes::Failure if there is another problem.
  */
 StatusCodes::StatusCodes SystemRequestHandler::SetDeviceName(char *value)
 {
@@ -301,11 +302,27 @@ StatusCodes::StatusCodes SystemRequestHandler::SetDeviceName(char *value)
     }
     else
     {
-        if (SystemRequestHandler::SetConfigurationValue(DEVICE_NAME_NAME, value) == NvsManager::ErrorCodes::Ok)
+        //
+        //  Copied before NVS is written: if memory runs out, neither NVS nor the name held
+        //  here changes, so the two cannot disagree.
+        //
+        char *copy = DuplicateString(value);
+        if (copy == nullptr)
         {
-            Utils::DeleteAndNullifyPointer(_deviceName);
-            _deviceName = DuplicateString(value);
-            result = StatusCodes::CompletedOk;
+            result = StatusCodes::EspOutOfMemory;
+        }
+        else
+        {
+            if (SystemRequestHandler::SetConfigurationValue(DEVICE_NAME_NAME, value) == NvsManager::ErrorCodes::Ok)
+            {
+                Utils::DeleteAndNullifyPointer(_deviceName);
+                _deviceName = copy;
+                result = StatusCodes::CompletedOk;
+            }
+            else
+            {
+                Utils::DeleteAndNullifyPointer(copy);
+            }
         }
     }
     return (result);
@@ -590,6 +607,11 @@ void SystemRequestHandler::SendConfigurationAsInterruptMessage()
     PopulateConfiguration(&config, defaultAccessPoint);
 
     Message *message = static_cast<Message *>(pvPortMalloc(sizeof(Message)));
+    if (message == nullptr)
+    {
+        ERROR_MESSAGE("SendConfigurationAsInterruptMessage: cannot allocate the message, the configuration is not sent.");
+        return;
+    }
     memset(static_cast<void *>(message), 0, sizeof(Message));
     message->Interface = Esp32Interfaces::System;
     message->MessageType = MessageTypes::Event;
@@ -956,7 +978,15 @@ void SystemRequestHandler::GetBatteryChargeLevel(Message * const message)
     message->DeletePayload();
     message->PayloadLength = Encoders::EncodedIntegerResponseBufferSize(&response);
     message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-    Encoders::EncodeIntegerResponse(&response, message->Payload);
+    if (message->Payload == nullptr)
+    {
+        message->PayloadLength = 0;
+        result = StatusCodes::EspOutOfMemory;
+    }
+    else
+    {
+        Encoders::EncodeIntegerResponse(&response, message->Payload);
+    }
 
     message->MessageType = MessageTypes::Response;
     message->StatusCode = result;

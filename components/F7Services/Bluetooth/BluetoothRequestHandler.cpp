@@ -423,22 +423,42 @@ void BluetoothRequestHandler::GetHandles(Message * const request)
     response.HandlesLength = response.HandleCount * 2;
     response.Handles = static_cast<uint8_t *>(pvPortMalloc(response.HandlesLength));
 
-    if (_manager.GetHandles(reinterpret_cast<uint16_t *>(response.Handles), response.HandleCount))
+    //
+    //  With no handles to report, pvPortMalloc(0) may return nullptr without memory having
+    //  run out, so only a buffer that was needed and not obtained is a failure.
+    //
+    if ((response.HandlesLength > 0) && (response.Handles == nullptr))
     {
-        request->PayloadLength = Encoders::EncodedBTGetHandlesResponseBufferSize(&response);
-        request->Payload = static_cast<uint8_t *>(pvPortMalloc(request->PayloadLength));
-        Encoders::EncodeBTGetHandlesResponse(&response, request->Payload);
-        request->StatusCode = StatusCodes::CompletedOk;
+        ERROR_MESSAGE("GetHandles: cannot allocate %" PRIu32 " bytes for the handles", static_cast<uint32_t>(response.HandlesLength));
+        request->StatusCode = StatusCodes::EspOutOfMemory;
     }
     else
     {
-        //
-        //  The service graph needed more handles than GetHandleCount() predicted, so
-        //  response.Handles was only partially filled.  Report the failure rather than
-        //  send a payload built from it (issue #350).
-        //
-        ERROR_MESSAGE("GetHandles: the service graph needed more than %" PRIu16 " handles", response.HandleCount);
-        request->StatusCode = StatusCodes::Failure;
+        if (_manager.GetHandles(reinterpret_cast<uint16_t *>(response.Handles), response.HandleCount))
+        {
+            request->PayloadLength = Encoders::EncodedBTGetHandlesResponseBufferSize(&response);
+            request->Payload = static_cast<uint8_t *>(pvPortMalloc(request->PayloadLength));
+            if (request->Payload == nullptr)
+            {
+                request->PayloadLength = 0;
+                request->StatusCode = StatusCodes::EspOutOfMemory;
+            }
+            else
+            {
+                Encoders::EncodeBTGetHandlesResponse(&response, request->Payload);
+                request->StatusCode = StatusCodes::CompletedOk;
+            }
+        }
+        else
+        {
+            //
+            //  The service graph needed more handles than GetHandleCount() predicted, so
+            //  response.Handles was only partially filled.  Report the failure rather than
+            //  send a payload built from it (issue #350).
+            //
+            ERROR_MESSAGE("GetHandles: the service graph needed more than %" PRIu16 " handles", response.HandleCount);
+            request->StatusCode = StatusCodes::Failure;
+        }
     }
     Utils::DeleteAndNullifyPointer(response.Handles);
 

@@ -139,6 +139,16 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
     TRACE_MESSAGE("Header frame size: %" PRIu32, _headerFrameSize);
     _txBuffer = static_cast<uint8_t *>(heap_caps_calloc(Message::MAXIMUM_SPI_FRAME_SIZE, 1, MALLOC_CAP_DMA));
     _rxBuffer = static_cast<uint8_t *>(heap_caps_calloc(Message::MAXIMUM_SPI_FRAME_SIZE, 1, MALLOC_CAP_DMA));
+    //
+    //  Every SPI transaction uses these two buffers, so the link cannot run without them.
+    //  Fail here, the same way as spi_slave_initialize above, rather than on the first
+    //  transaction.
+    //
+    if ((_txBuffer == nullptr) || (_rxBuffer == nullptr))
+    {
+        ERROR_MESSAGE("Cannot allocate the %" PRIu16 " byte SPI DMA buffers.", Message::MAXIMUM_SPI_FRAME_SIZE);
+        ESP_ERROR_CHECK(ESP_ERR_NO_MEM);
+    }
     ClearTransmitAndReceiveBuffers();
 
     /*
