@@ -38,7 +38,7 @@ const char *MockMessageDispatcher::COMPONENT_NAME = "MockMessageDispatcher";
 MockMessageDispatcher::MockMessageDispatcher()
 {
     _outboundMessageQueueHandle = xQueueCreate(MAX_QUEUE_LENGTH, sizeof(Message *));
-    if (_outboundMessageQueueHandle == NULL)
+    if (_outboundMessageQueueHandle == nullptr)
     {
         ERROR_MESSAGE("Cannot allocate hardware transport queue.");
     }

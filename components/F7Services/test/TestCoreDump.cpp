@@ -275,7 +275,7 @@ TEST_CASE("Get core dump fragment", CLASS_OF_TESTS)
     TEST_ASSERT_NOT_EQUAL(0, information->IsValid);
     TEST_ASSERT_GREATER_THAN(0, information->CoreDumpSize);
     //
-    //  Test for NULL Payload handling.
+    //  Test for nullptr Payload handling.
     //
     Message *request = Message::CreateOnHeap(MessageTypes::Header, Esp32Interfaces::System, SystemFunction::GetCoreDumpFragment, StatusCodes::CompletedOk, MESSAGE_ID, nullptr, 0);
     TEST_ASSERT_NOT_NULL(request);

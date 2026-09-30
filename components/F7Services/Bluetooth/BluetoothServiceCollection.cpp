@@ -63,7 +63,7 @@ BluetoothService &BluetoothServiceCollection::Add(BluetoothService * const servi
         // Instance method callback binding.  Yay, c++!
         service->OnCharacteristicAdded = std::bind(&BluetoothServiceCollection::HandleServiceCharacteristicAdded, this, std::placeholders::_1);
 
-        if (OnServiceAdded != NULL)
+        if (OnServiceAdded != nullptr)
         {
             OnServiceAdded(service);
         }
@@ -151,7 +151,7 @@ void BluetoothServiceCollection::HandleServiceValueChanged(BluetoothCharacterist
  * @brief Find a service in the collection by UUID.
  *
  * @param uuid Pointer to an array of bytes containing the 16-bit UUID fro the service.
- * @return BluetoothService* Pointer to the service if found, NULL otherwise.
+ * @return BluetoothService* Pointer to the service if found, nullptr otherwise.
  */
 BluetoothService *BluetoothServiceCollection::Find(const uint8_t * const uuid)
 {
@@ -162,7 +162,7 @@ BluetoothService *BluetoothServiceCollection::Find(const uint8_t * const uuid)
  * @brief Find a service in the collection by UUID.
  *
  * @param uuid Uuid16 object containing the UUID of the service to be found.
- * @return BluetoothService* Pointer to the service if found, NULL otherwise.
+ * @return BluetoothService* Pointer to the service if found, nullptr otherwise.
  */
 BluetoothService *BluetoothServiceCollection::Find(const Uuid16 uuid)
 {
@@ -181,7 +181,7 @@ BluetoothService *BluetoothServiceCollection::Find(const Uuid16 uuid)
 
     TRACE_MESSAGE("Find: Exit");
 
-    return NULL;
+    return nullptr;
 }
 
 /**

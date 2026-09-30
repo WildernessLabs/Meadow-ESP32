@@ -140,7 +140,7 @@ assuming one.
 | File names | `PascalCase.ext` |
 
 **C++ specifics**:
-- `nullptr` not `NULL`
+- `nullptr` not `NULL`, except where the pointer belongs to a standard C or POSIX function, which is specified in terms of `NULL`. That covers a result checked from `fopen`, `opendir`, `readdir`, `strdup`, `strtok_r`, `strchr`, `memchr` or `getaddrinfo`, a field of a POSIX structure such as `addrinfo::ai_addr`, and `NULL` passed as an argument to `sendto`, `recvfrom` or `settimeofday`. FreeRTOS, ESP-IDF and cJSON are not standard C, so `pvPortMalloc`, handles, `esp_*` calls and our own pointers use `nullptr`.
 - `return()` style for return statements
 - `const` wherever appropriate
 - Use whole words, not abbreviations

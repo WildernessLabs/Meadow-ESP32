@@ -651,7 +651,7 @@ int32_t Mapping::GetValue(const MappingTable mapping, const MappingDirection typ
  */
 int32_t Mapping::GetValue(const MappingTable mapping, const MappingDirection type, const int32_t value, int32_t * const result)
 {
-    int_mapping_t *table = NULL;
+    int_mapping_t *table = nullptr;
     size_t size = 0;
     switch (mapping)
     {
@@ -710,7 +710,7 @@ int32_t Mapping::GetValue(const MappingTable mapping, const MappingDirection typ
     }
     size /= sizeof(int_mapping_t);
 
-    if (table != NULL)
+    if (table != nullptr)
     {
         for (size_t index = 0; index < size; index++)
         {
@@ -951,12 +951,12 @@ StatusCodes::StatusCodes Mapping::GetStatusCode(const esp_err_t error)
  *      Value to look up.
  *
  *  @returns
- *      String representing the specified value, NULL if the value
+ *      String representing the specified value, nullptr if the value
  *      could not be found.
  */
 const char *Mapping::GetStringValue(const Mapping::StringMappingTable mapping, const int32_t key)
 {
-    str_mapping_t *table = NULL;
+    str_mapping_t *table = nullptr;
     size_t size = 0;
     const char *result = _unknown;
     switch (mapping)
@@ -991,7 +991,7 @@ const char *Mapping::GetStringValue(const Mapping::StringMappingTable mapping, c
             break;
     }
 
-    if (table != NULL)
+    if (table != nullptr)
     {
         for (int index = 0; index < size; index++)
         {

@@ -111,7 +111,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetAddrInfo(Esp32Messaging::GetAddr
     Esp32Messaging::AddrInfo *extractedHints = Encoders::ExtractAddrInfo(request->Hints);
     Utils::DeleteAndNullifyPointer(request->Hints);
 
-    if (extractedHints == NULL)
+    if (extractedHints == nullptr)
     {
         return (StatusCodes::EspOutOfMemory);
     }
@@ -152,7 +152,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetAddrInfo(Esp32Messaging::GetAddr
             //
             a.AddrLength = Encoders::EncodedSockAddrBufferSize(&sa);
             a.Addr = static_cast<uint8_t *>(pvPortMalloc(a.AddrLength));
-            if (a.Addr == NULL)
+            if (a.Addr == nullptr)
             {
                 a.AddrLength = 0;
                 response->ResLength = 0;
@@ -172,7 +172,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetAddrInfo(Esp32Messaging::GetAddr
 
         response->ResLength = Encoders::EncodedAddrInfoBufferSize(&a);
         response->Res = static_cast<uint8_t *>(pvPortMalloc(response->ResLength));
-        if (response->Res == NULL)
+        if (response->Res == nullptr)
         {
             free(a.CanonName);
             Utils::DeleteAndNullifyPointer(a.Addr);
@@ -293,7 +293,7 @@ void WiFiRequestHandler::GetAddrInfo(void * const vpMessage)
     {
         message->PayloadLength = Encoders::EncodedGetAddrInfoResponseBufferSize(response);
         message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-        if (message->Payload != NULL)
+        if (message->Payload != nullptr)
         {
             Encoders::EncodeGetAddrInfoResponse(response, message->Payload);
             message->StatusCode = StatusCodes::CompletedOk;
@@ -417,7 +417,7 @@ void WiFiRequestHandler::Socket(void * const vpMessage)
     {
         message->PayloadLength = Encoders::EncodedIntegerAndErrnoResponseBufferSize(&response);
         message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-        if (message->Payload != NULL)
+        if (message->Payload != nullptr)
         {
             Encoders::EncodeIntegerAndErrnoResponse(&response, message->Payload);
             message->StatusCode = StatusCodes::CompletedOk;
@@ -564,7 +564,7 @@ void WiFiRequestHandler::Connect(void * const vpMessage)
     {
         message->PayloadLength = Encoders::EncodedIntegerAndErrnoResponseBufferSize(&response);
         message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-        if (message->Payload != NULL)
+        if (message->Payload != nullptr)
         {
             Encoders::EncodeIntegerAndErrnoResponse(&response, message->Payload);
             message->StatusCode = StatusCodes::CompletedOk;
@@ -622,7 +622,7 @@ void WiFiRequestHandler::FreeAddrInfo(void * const vpMessage)
     {
         Esp32Messaging::FreeAddrInfoRequest *request = Encoders::ExtractFreeAddrInfoRequest(message->Payload);
 
-        if (request != NULL)
+        if (request != nullptr)
         {
             struct addrinfo *addressInformation = TakeAddrInfoHandle(request->AddrInfoAddress);
             if (addressInformation != nullptr)
@@ -677,7 +677,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetSendReceiveOption(const int sock
     esp_tv.TvUsec = timeOut.tv_usec;
     response.OptionValueLength = Encoders::EncodedTimeValBufferSize(&esp_tv);
     response.OptionValue = static_cast<uint8_t *>(pvPortMalloc(response.OptionValueLength));
-    if (response.OptionValue == NULL)
+    if (response.OptionValue == nullptr)
     {
         response.ResponseErrno = Mapping::NuttxErrno(ENOBUFS);
         response.Result = -1;
@@ -711,7 +711,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetLingerOption(const int socket, c
     esp_lv.LOnOff = lingerOut.l_onoff;
     response.OptionValueLength = Encoders::EncodedLingerBufferSize(&esp_lv);
     response.OptionValue = static_cast<uint8_t *>(pvPortMalloc(response.OptionValueLength));
-    if (response.OptionValue == NULL)
+    if (response.OptionValue == nullptr)
     {
         response.ResponseErrno = Mapping::NuttxErrno(ENOBUFS);
         response.Result = -1;
@@ -744,7 +744,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetSendReceiveBuffer(const int sock
     esp_iv.Result = optionValue;
     response.OptionValueLength = Encoders::EncodedIntegerResponseBufferSize(&esp_iv);
     response.OptionValue = static_cast<uint8_t *>(pvPortMalloc(response.OptionValueLength));
-    if (response.OptionValue == NULL)
+    if (response.OptionValue == nullptr)
     {
         response.ResponseErrno = Mapping::NuttxErrno(ENOBUFS);
         response.Result = -1;
@@ -887,7 +887,7 @@ void WiFiRequestHandler::GetSockOpt(void * const vpMessage)
     {
         message->PayloadLength = Encoders::EncodedGetSockOptResponseBufferSize(&response);
         message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-        if (message->Payload != NULL)
+        if (message->Payload != nullptr)
         {
             Encoders::EncodeGetSockOptResponse(&response, message->Payload);
             message->StatusCode = StatusCodes::CompletedOk;
@@ -918,19 +918,19 @@ void WiFiRequestHandler::GetSockOpt(void * const vpMessage)
  *      Pointer to a socklen_t object to take the length of the extracted option value.
  *
  * @return uint8_t*
- *      Pointer to the extracted option value (integer) or NULL if there was a problem.
+ *      Pointer to the extracted option value (integer) or nullptr if there was a problem.
  */
 uint8_t *WiFiRequestHandler::ExtractIntegerSocketOptionValue(const uint8_t * const data, socklen_t * const length)
 {
-    uint8_t *result = NULL;
+    uint8_t *result = nullptr;
 
-    if (length != NULL)
+    if (length != nullptr)
     {
         *length = 0;
-        if (data != NULL)
+        if (data != nullptr)
         {
             int *intVal = reinterpret_cast<int *>(pvPortMalloc(sizeof(int)));
-            if (intVal != NULL)
+            if (intVal != nullptr)
             {
                 *intVal = Encoders::ExtractInt32(data);
                 *length = sizeof(*intVal);
@@ -961,8 +961,8 @@ uint8_t *WiFiRequestHandler::GetSocketOptionValue(const int name, uint8_t * cons
 {
     TRACE_MESSAGE("GetSocketOptionValue: Enter");
 
-    uint8_t *result = NULL;
-    if (length != NULL)
+    uint8_t *result = nullptr;
+    if (length != nullptr)
     {
         switch (name)
         {
@@ -970,10 +970,10 @@ uint8_t *WiFiRequestHandler::GetSocketOptionValue(const int name, uint8_t * cons
             case SO_RCVTIMEO: /* Set the receive timeout */
                 {
                     struct timeval *value = reinterpret_cast<struct timeval *>(pvPortMalloc(sizeof(struct timeval)));
-                    if (value != NULL)
+                    if (value != nullptr)
                     {
                         Esp32Messaging::TimeVal *tv = Encoders::ExtractTimeVal(optionValue);
-                        if (tv == NULL)
+                        if (tv == nullptr)
                         {
                             *length = 0;
                             Utils::DeleteAndNullifyPointer(value);
@@ -1046,9 +1046,9 @@ uint8_t *WiFiRequestHandler::GetTcpOptionValue(const int name, uint8_t * const o
 {
     TRACE_MESSAGE("GetTcpOptionValue: Enter");
 
-    uint8_t *result = NULL;
+    uint8_t *result = nullptr;
 
-    if (length != NULL)
+    if (length != nullptr)
     {
         switch (name)
         {
@@ -1109,7 +1109,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetSockOpt(const Esp32Messaging::Se
                     TRACE_MESSAGE("SetSockOpt: Cannot process option level: 0x%x", (uint) request->Level);
                     break;
             }
-            if (optionValue != NULL)
+            if (optionValue != nullptr)
             {
                 TRACE_MESSAGE("SetSockOpt: Setting socket option level to 0x%x, option name 0x%x for socket %ld", (uint) level, (uint) optionName, request->SocketHandle);
                 int descriptor = -1;
@@ -1131,7 +1131,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetSockOpt(const Esp32Messaging::Se
             else
             {
                 //
-                //  GetSocketOptionValue/GetTcpOptionValue return NULL for a recognised but
+                //  GetSocketOptionValue/GetTcpOptionValue return nullptr for a recognised but
                 //  unimplemented option, or an unsupported level.
                 //
                 response.Result = -1;
@@ -1218,7 +1218,7 @@ void WiFiRequestHandler::SetSockOpt(void * const vpMessage)
     {
         message->PayloadLength = Encoders::EncodedIntegerAndErrnoResponseBufferSize(&response);
         message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-        if (message->Payload == NULL)
+        if (message->Payload == nullptr)
         {
             message->PayloadLength = 0;
             message->StatusCode = StatusCodes::EspOutOfMemory;
@@ -1324,7 +1324,7 @@ void WiFiRequestHandler::Close(void * const vpMessage)
     {
         message->PayloadLength = Encoders::EncodedIntegerAndErrnoResponseBufferSize(&response);
         message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-        if (message->Payload == NULL)
+        if (message->Payload == nullptr)
         {
             message->PayloadLength = 0;
             message->StatusCode = StatusCodes::EspOutOfMemory;
@@ -1460,7 +1460,7 @@ void WiFiRequestHandler::Send(void * const vpMessage)
     {
         message->PayloadLength = Encoders::EncodedIntegerAndErrnoResponseBufferSize(&response);
         message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-        if (message->Payload == NULL)
+        if (message->Payload == nullptr)
         {
             message->PayloadLength = 0;
             message->StatusCode = StatusCodes::EspOutOfMemory;
@@ -1492,7 +1492,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::SendTo(Esp32Messaging::SendToReques
     response.Result = Mapping::GetEspFlagValue(Mapping::MessageFlags, request->Flags, &mappedFlags);
     if (response.Result == 0)
     {
-        Esp32Messaging::SockAddr *socketAddress = NULL;
+        Esp32Messaging::SockAddr *socketAddress = nullptr;
         int32_t family = 0;
         if (request->DestinationAddress)
         {
@@ -1517,7 +1517,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::SendTo(Esp32Messaging::SendToReques
         int destinationErrno = EFAULT;
         if (request->DestinationAddressLength != 0)
         {
-            if (request->DestinationAddress == NULL)
+            if (request->DestinationAddress == nullptr)
             {
                 //
                 //  A destination was supplied but could not be decoded at all.  Sending
@@ -1677,7 +1677,7 @@ void WiFiRequestHandler::SendTo(void * const vpMessage)
     {
         message->PayloadLength = Encoders::EncodedIntegerAndErrnoResponseBufferSize(&response);
         message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-        if (message->Payload == NULL)
+        if (message->Payload == nullptr)
         {
             message->PayloadLength = 0;
             message->StatusCode = StatusCodes::EspOutOfMemory;
@@ -1720,12 +1720,12 @@ StatusCodes::StatusCodes WiFiRequestHandler::RecvFrom(Esp32Messaging::RecvFromRe
     if (response.Result == 0)
     {
         TRACE_MESSAGE("Requesting %" PRIi32 " bytes from socket handle %" PRIi32, request->Length, request->SocketHandle);
-        struct sockaddr_in *sa = NULL;
+        struct sockaddr_in *sa = nullptr;
         socklen_t len;
         if (request->GetSourceAddress != 0)
         {
             sa = static_cast<struct sockaddr_in *>(pvPortMalloc(sizeof(struct sockaddr_in)));
-            if (sa == NULL)
+            if (sa == nullptr)
             {
                 response.Buffer = nullptr;
                 response.Result = -1;
@@ -1736,7 +1736,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::RecvFrom(Esp32Messaging::RecvFromRe
             len = sizeof(struct sockaddr_in);
         }
         response.Buffer = static_cast<uint8_t *>(pvPortMalloc(request->Length));
-        if (response.Buffer == NULL)
+        if (response.Buffer == nullptr)
         {
             response.Buffer = nullptr;
             response.Result = -1;
@@ -1749,7 +1749,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::RecvFrom(Esp32Messaging::RecvFromRe
             int descriptor = -1;
             if (FindSocket(request->SocketHandle, &descriptor))
             {
-                response.Result = recvfrom(descriptor, response.Buffer, request->Length, mappedFlags, reinterpret_cast<struct sockaddr *>(sa), (sa == NULL) ? NULL : &len);
+                response.Result = recvfrom(descriptor, response.Buffer, request->Length, mappedFlags, reinterpret_cast<struct sockaddr *>(sa), (sa == nullptr) ? NULL : &len);
             }
             else
             {
@@ -1772,7 +1772,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::RecvFrom(Esp32Messaging::RecvFromRe
                 socketAddress.Port = sa->sin_port;
                 response.SourceAddressLength = Encoders::EncodedSockAddrBufferSize(&socketAddress);
                 response.SourceAddress = static_cast<uint8_t *>(pvPortMalloc(response.SourceAddressLength));
-                if (response.SourceAddress == NULL)
+                if (response.SourceAddress == nullptr)
                 {
                     response.SourceAddressLength = 0;
                     response.SourceAddressLen = 0;
@@ -1795,7 +1795,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::RecvFrom(Esp32Messaging::RecvFromRe
             response.BufferLength = response.Result;
         }
 
-        if (sa != NULL)
+        if (sa != nullptr)
         {
             Utils::DeleteAndNullifyPointer(sa);
         }
@@ -1886,7 +1886,7 @@ void WiFiRequestHandler::RecvFrom(void * const vpMessage)
     {
         message->PayloadLength = Encoders::EncodedRecvFromResponseBufferSize(&response);
         message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-        if (message->Payload == NULL)
+        if (message->Payload == nullptr)
         {
             message->PayloadLength = 0;
             message->StatusCode = StatusCodes::EspOutOfMemory;
@@ -2069,7 +2069,7 @@ void WiFiRequestHandler::SendMsg(void * const vpMessage)
                 if (response.Result == 0)
                 {
                     struct sockaddr_in sa = {};
-                    struct sockaddr *psa = nullptr;
+                    struct sockaddr *psa = NULL;
                     socklen_t lenSa = 0;
 
                     const int nameErrno = MapMsgNameToSockAddr(request->Name, request->NameLength, &sa, &psa, &lenSa);
@@ -2156,7 +2156,7 @@ void WiFiRequestHandler::SendMsg(void * const vpMessage)
     {
         message->PayloadLength = Encoders::EncodedIntegerAndErrnoResponseBufferSize(&response);
         message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-        if (message->Payload == NULL)
+        if (message->Payload == nullptr)
         {
             message->PayloadLength = 0;
             message->StatusCode = StatusCodes::EspOutOfMemory;
@@ -2236,14 +2236,14 @@ void WiFiRequestHandler::RecvMsg(void * const vpMessage)
                     if (response.Result == 0)
                     {
                         response.Buffer = static_cast<uint8_t *>(pvPortMalloc(request->Length));
-                        if (response.Buffer == NULL)
+                        if (response.Buffer == nullptr)
                         {
                             response.Result = -1;
                             response.ResponseErrno = Mapping::NuttxErrno(ENOMEM);
                         }
                         else
                         {
-                            uint8_t *controlBuf = NULL;
+                            uint8_t *controlBuf = nullptr;
                             if (request->ControlLength > 0)
                             {
                                 controlBuf = static_cast<uint8_t *>(pvPortMalloc(request->ControlLength));
@@ -2264,7 +2264,7 @@ void WiFiRequestHandler::RecvMsg(void * const vpMessage)
                             mhdr.msg_iov = &iov;
                             mhdr.msg_iovlen = 1;
                             mhdr.msg_control = controlBuf;
-                            mhdr.msg_controllen = (controlBuf != NULL) ? request->ControlLength : 0;
+                            mhdr.msg_controllen = (controlBuf != nullptr) ? request->ControlLength : 0;
                             mhdr.msg_flags = 0;
 
                             TRACE_MESSAGE("RecvMsg: Requesting %" PRIi32 " bytes from socket handle %" PRIi32 ", control buffer %" PRIu32, request->Length, request->SocketHandle, request->ControlLength);
@@ -2307,11 +2307,11 @@ void WiFiRequestHandler::RecvMsg(void * const vpMessage)
                                     response.SourceAddressLen = 0;
                                 }
 
-                                if ((controlBuf != NULL) && (mhdr.msg_controllen > 0))
+                                if ((controlBuf != nullptr) && (mhdr.msg_controllen > 0))
                                 {
                                     response.ControlLength = mhdr.msg_controllen;
                                     response.Control = controlBuf;
-                                    controlBuf = NULL;
+                                    controlBuf = nullptr;
                                 }
                                 else
                                 {
@@ -2320,7 +2320,7 @@ void WiFiRequestHandler::RecvMsg(void * const vpMessage)
                                 }
                             }
 
-                            if (controlBuf != NULL)
+                            if (controlBuf != nullptr)
                             {
                                 vPortFree(controlBuf);
                             }
@@ -2366,7 +2366,7 @@ void WiFiRequestHandler::RecvMsg(void * const vpMessage)
     {
         message->PayloadLength = Encoders::EncodedRecvMsgResponseBufferSize(&response);
         message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-        if (message->Payload == NULL)
+        if (message->Payload == nullptr)
         {
             message->PayloadLength = 0;
             message->StatusCode = StatusCodes::EspOutOfMemory;
@@ -2419,7 +2419,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::Bind(Esp32Messaging::BindRequest *r
     }
 
     Esp32Messaging::SockAddr *socketAddress = Encoders::ExtractSockAddr(request->Addr);
-    if (socketAddress == NULL)
+    if (socketAddress == nullptr)
     {
         response.Result = -1;
         response.ResponseErrno = Mapping::NuttxErrno(ENOMEM);
@@ -2534,7 +2534,7 @@ void WiFiRequestHandler::Bind(void * const vpMessage)
     {
         message->PayloadLength = Encoders::EncodedIntegerAndErrnoResponseBufferSize(&response);
         message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-        if (message->Payload == NULL)
+        if (message->Payload == nullptr)
         {
             message->PayloadLength = 0;
             message->StatusCode = StatusCodes::EspOutOfMemory;
@@ -2633,7 +2633,7 @@ void WiFiRequestHandler::Listen(void * const vpMessage)
     {
         message->PayloadLength = Encoders::EncodedIntegerAndErrnoResponseBufferSize(&response);
         message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-        if (message->Payload == NULL)
+        if (message->Payload == nullptr)
         {
             message->PayloadLength = 0;
             message->StatusCode = StatusCodes::EspOutOfMemory;
@@ -2690,7 +2690,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::Accept(Esp32Messaging::AcceptReques
             memcpy(&sockAddr->Ip4Address, &sin->sin_addr, sizeof(sin->sin_addr));
             response.AddrLength = Encoders::EncodedSockAddrBufferSize(sockAddr);
             response.Addr = static_cast<uint8_t *>(pvPortMalloc(response.AddrLength));
-            if (response.Addr == NULL)
+            if (response.Addr == nullptr)
             {
                 Utils::DeleteAndNullifyPointer(sockAddr);
                 return (StatusCodes::EspOutOfMemory);
@@ -2787,7 +2787,7 @@ void WiFiRequestHandler::Accept(void * const vpMessage)
     {
         message->PayloadLength = Encoders::EncodedAcceptResponseBufferSize(&response);
         message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-        if (message->Payload == NULL)
+        if (message->Payload == nullptr)
         {
             message->PayloadLength = 0;
             message->StatusCode = StatusCodes::EspOutOfMemory;
@@ -2869,7 +2869,7 @@ void WiFiRequestHandler::Ioctl(void * const vpMessage)
                         memcpy(&sa.Ip4Address, &ipInfo.netmask, sizeof(ipInfo.netmask));
                         response.AddrLength = Encoders::EncodedSockAddrBufferSize(&sa);
                         response.Addr = static_cast<uint8_t *>(pvPortMalloc(response.AddrLength));
-                        if (response.Addr == NULL)
+                        if (response.Addr == nullptr)
                         {
                             response.Result = -1;
                             response.ResponseErrno = Mapping::NuttxErrno(ENOMEM);
@@ -2889,7 +2889,7 @@ void WiFiRequestHandler::Ioctl(void * const vpMessage)
                 case SIOCGIFHWADDR: /* Get hardware address */
                     response.AddrLength = 6;
                     response.Addr = static_cast<uint8_t *>(pvPortMalloc(6));
-                    if (response.Addr == NULL)
+                    if (response.Addr == nullptr)
                     {
                         response.Result = -1;
                         response.ResponseErrno = Mapping::NuttxErrno(ENOMEM);
@@ -2907,7 +2907,7 @@ void WiFiRequestHandler::Ioctl(void * const vpMessage)
                         memcpy(&sa.Ip4Address, &ipInfo.ip, sizeof(ipInfo.ip));
                         response.AddrLength = Encoders::EncodedSockAddrBufferSize(&sa);
                         response.Addr = static_cast<uint8_t *>(pvPortMalloc(response.AddrLength));
-                        if (response.Addr == NULL)
+                        if (response.Addr == nullptr)
                         {
                             response.Result = -1;
                             response.ResponseErrno = Mapping::NuttxErrno(ENOMEM);
@@ -2958,7 +2958,7 @@ void WiFiRequestHandler::Ioctl(void * const vpMessage)
     {
         message->PayloadLength = Encoders::EncodedIoctlResponseBufferSize(&response);
         message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-        if (message->Payload == NULL)
+        if (message->Payload == nullptr)
         {
             message->PayloadLength = 0;
             message->StatusCode = StatusCodes::EspOutOfMemory;
@@ -3012,7 +3012,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetSockPeerName(const Esp32Messagin
     if (response.Result == 0)
     {
         Esp32Messaging::SockAddr *sockAddr = static_cast<Esp32Messaging::SockAddr *>(pvPortMalloc(sizeof(Esp32Messaging::SockAddr)));
-        if (sockAddr == NULL)
+        if (sockAddr == nullptr)
         {
             response.AddrLength = 0;
             response.Addr = nullptr;
@@ -3027,7 +3027,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetSockPeerName(const Esp32Messagin
         memcpy(&sockAddr->Ip4Address, &sin->sin_addr, sizeof(sin->sin_addr));
         response.AddrLength = Encoders::EncodedSockAddrBufferSize(sockAddr);
         response.Addr = static_cast<uint8_t *>(pvPortMalloc(response.AddrLength));
-        if (response.Addr == NULL)
+        if (response.Addr == nullptr)
         {
             Utils::DeleteAndNullifyPointer(sockAddr);
             response.AddrLength = 0;
@@ -3129,7 +3129,7 @@ void WiFiRequestHandler::GetSockPeerName(void * const vpMessage, const WiFiFunct
     {
         message->PayloadLength = Encoders::EncodedGetSockPeerNameResponseBufferSize(&response);
         message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-        if (message->Payload == NULL)
+        if (message->Payload == nullptr)
         {
             message->PayloadLength = 0;
             message->StatusCode = StatusCodes::EspOutOfMemory;
@@ -3317,7 +3317,7 @@ int WiFiRequestHandler::PollSetup(void * const vpMessage)
     TRACE_MESSAGE("PollSetup: Enter");
 
     int result = 0;
-    if (vpMessage == NULL)
+    if (vpMessage == nullptr)
     {
         return (-1);
     }
@@ -3327,7 +3327,7 @@ int WiFiRequestHandler::PollSetup(void * const vpMessage)
         return (-1);
     }
     struct pollfd *fds = static_cast<struct pollfd *>(pvPortMalloc(2 * sizeof(struct pollfd)));
-    if (fds == NULL)
+    if (fds == nullptr)
     {
         return (-1);
     }
@@ -3494,7 +3494,7 @@ void WiFiRequestHandler::PollSocket(void * const requestId)
     TRACE_MESSAGE("PollSocket: Return value from poll: %ld", response.Result);
 
     Message *message = static_cast<Message *>(pvPortMalloc(sizeof(Message)));
-    if (message == NULL)
+    if (message == nullptr)
     {
         //
         //  There is not a lot we can do here - maybe consider a reset ???
@@ -3510,7 +3510,7 @@ void WiFiRequestHandler::PollSocket(void * const requestId)
         message->MessageID = _messageDispatcher->GetNextMessageID();
         message->PayloadLength = Encoders::EncodedInterruptPollResponseBufferSize(&response);
         message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-        if (message->Payload == NULL)
+        if (message->Payload == nullptr)
         {
             message->PayloadLength = 0;
             message->StatusCode = StatusCodes::EspOutOfMemory;
@@ -3605,7 +3605,7 @@ void WiFiRequestHandler::Poll(void * const vpMessage)
     {
         message->PayloadLength = Encoders::EncodedIntegerAndErrnoResponseBufferSize(&response);
         message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-        if (message->Payload == NULL)
+        if (message->Payload == nullptr)
         {
             message->PayloadLength = 0;
             message->StatusCode = StatusCodes::EspOutOfMemory;

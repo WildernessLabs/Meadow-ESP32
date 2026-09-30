@@ -30,7 +30,7 @@ const char *ThreadPool::COMPONENT_NAME = "ThreadPool";
 /**
  *  @brief Counting semaphore used to indicate if there are any thread available.
  */
-SemaphoreHandle_t ThreadPool::_threadsAvailable = NULL;
+SemaphoreHandle_t ThreadPool::_threadsAvailable = nullptr;
 
 /*
  * ----------------------------------------------------------------------------
@@ -48,7 +48,7 @@ ThreadPool::ThreadPool()
     TRACE_MESSAGE("ThreadPool: Enter");
 
     _threads = static_cast<Thread **>(pvPortMalloc(THREAD_POOL_SIZE * sizeof(Thread *)));
-    if (_threads == NULL)
+    if (_threads == nullptr)
     {
         throw ThreadPoolException("Cannot allocate memory for threads.");
     }
@@ -57,7 +57,7 @@ ThreadPool::ThreadPool()
     //  The count will be incremented as each thread is created and becomes available for use.
     //
     _threadsAvailable = xSemaphoreCreateCounting(THREAD_POOL_SIZE, 0);
-    if (_threadsAvailable == NULL)
+    if (_threadsAvailable == nullptr)
     {
         throw ThreadPoolException("Cannot create semaphore for ThreadPool.");
     }
@@ -65,7 +65,7 @@ ThreadPool::ThreadPool()
     for (uint8_t index = 0; index < THREAD_POOL_SIZE; index++)
     {
         char *name = static_cast<char *>(pvPortMalloc(15));
-        if (name != NULL)
+        if (name != nullptr)
         {
             snprintf(name, 15, "Thread-%02" PRIu8, index);
             _threads[index] = new Thread(name, ThreadPool::ThreadCompleted);
@@ -88,7 +88,7 @@ ThreadPool::ThreadPool()
  */
 ThreadPool::~ThreadPool()
 {
-    if (_threadsAvailable != NULL)
+    if (_threadsAvailable != nullptr)
     {
         for (uint32_t index = 0; index < THREAD_POOL_SIZE; index++)
         {

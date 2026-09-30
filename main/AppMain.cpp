@@ -135,7 +135,7 @@ extern "C" void app_main()
     //
     // heap_caps_print_heap_info(MALLOC_CAP_DEFAULT);
     // char *dummy = static_cast<char *>(pvPortMalloc(50000));
-    // if (dummy != NULL)
+    // if (dummy != nullptr)
     // {
     //     dummy[0] = 0;
     // }
@@ -150,5 +150,5 @@ extern "C" void app_main()
     //
     //  We suspend this task as the message processing is performed by the objects created above.
     //
-    vTaskSuspend(NULL);
+    vTaskSuspend(nullptr);
 }

@@ -100,7 +100,7 @@ private:
     /**
      *  @brief Semaphore indicating if the system is trying to synchronise with the STM32.
      */
-    SemaphoreHandle_t _synchronisationSemaphore = NULL;
+    SemaphoreHandle_t _synchronisationSemaphore = nullptr;
 
     /**
      *  @brief SPI Post Transmission callback

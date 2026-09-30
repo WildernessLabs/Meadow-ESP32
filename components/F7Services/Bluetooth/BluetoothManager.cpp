@@ -430,7 +430,7 @@ void BluetoothManager::GetDeviceInformation(const cJSON * const json)
 
     const cJSON * const deviceName = cJSON_GetObjectItem(json, DEVICE_NAME_KEY);
     memset(_deviceName, 0, sizeof(_deviceName));
-    if ((deviceName != NULL) && cJSON_IsString(deviceName))
+    if ((deviceName != nullptr) && cJSON_IsString(deviceName))
     {
         strncpy(_deviceName, deviceName->valuestring, sizeof(_deviceName) - 1);
     }
@@ -441,7 +441,7 @@ void BluetoothManager::GetDeviceInformation(const cJSON * const json)
     TRACE_MESSAGE("Device Name: %s\n", _deviceName);
 
     const cJSON * const identifier = cJSON_GetObjectItem(json, COMPANY_IDENTIFIER_KEY);
-    if ((identifier == NULL) || !cJSON_IsNumber(identifier))
+    if ((identifier == nullptr) || !cJSON_IsNumber(identifier))
     {
         _companyIdentifier = DEBUG_COMPANY_IDENTIFIER;
     }
@@ -470,25 +470,25 @@ uint32_t BluetoothManager::AddServices(const cJSON * const json)
 
     uint32_t rejected = 0;
     const cJSON * const services = cJSON_GetObjectItem(json, SERVICES_KEY);
-    if ((services == NULL) || !cJSON_IsArray(services))
+    if ((services == nullptr) || !cJSON_IsArray(services))
     {
         TRACE_MESSAGE(SERVICES_KEY " is not an array or is missing");
         return (rejected);
     }
 
-    cJSON *service_configuration = NULL;
+    cJSON *service_configuration = nullptr;
     cJSON_ArrayForEach(service_configuration, services)
     {
         const cJSON * const serviceName = cJSON_GetObjectItem(service_configuration, NAME_KEY);
         const cJSON * const serviceUUID = cJSON_GetObjectItem(service_configuration, UUID_KEY);
-        if ((serviceName == NULL) || !cJSON_IsString(serviceName))
+        if ((serviceName == nullptr) || !cJSON_IsString(serviceName))
         {
             ERROR_MESSAGE("Service " NAME_KEY " is missing or not a string, rejecting the service.");
             rejected++;
         }
         else
         {
-            if ((serviceUUID == NULL) || !cJSON_IsNumber(serviceUUID))
+            if ((serviceUUID == nullptr) || !cJSON_IsNumber(serviceUUID))
             {
                 ERROR_MESSAGE("Service " UUID_KEY " is missing or not a number, rejecting the service.");
                 rejected++;
@@ -535,24 +535,24 @@ uint32_t BluetoothManager::AddCharacteristics(const cJSON * const json, Bluetoot
         return (rejected);
     }
 
-    cJSON *characteristic = NULL;
+    cJSON *characteristic = nullptr;
     cJSON_ArrayForEach(characteristic, characteristics)
     {
         bool add = true;
         const cJSON * const permission = cJSON_GetObjectItem(characteristic, PERMISSION_KEY);
-        if ((permission == NULL) || !cJSON_IsNumber(permission))
+        if ((permission == nullptr) || !cJSON_IsNumber(permission))
         {
             TRACE_MESSAGE("Characteristic " PERMISSION_KEY " is missing or not a number");
             add = false;
         }
         const cJSON * const props = cJSON_GetObjectItem(characteristic, PROPERTIES_KEY);
-        if ((props == NULL) || !cJSON_IsNumber(props))
+        if ((props == nullptr) || !cJSON_IsNumber(props))
         {
             TRACE_MESSAGE("Characteristic " PROPERTIES_KEY " is missing or not a number");
             add = false;
         }
         const cJSON * const len = cJSON_GetObjectItem(characteristic, LENGTH_KEY);
-        if ((len == NULL) || !cJSON_IsNumber(len))
+        if ((len == nullptr) || !cJSON_IsNumber(len))
         {
             TRACE_MESSAGE("Characteristic " LENGTH_KEY " is missing or not a number");
             add = false;
@@ -570,7 +570,7 @@ uint32_t BluetoothManager::AddCharacteristics(const cJSON * const json, Bluetoot
             }
         }
         const cJSON * const uuid = cJSON_GetObjectItem(characteristic, UUID_KEY);
-        if ((uuid == NULL) || !(cJSON_IsNumber(uuid) || cJSON_IsString(uuid)))
+        if ((uuid == nullptr) || !(cJSON_IsNumber(uuid) || cJSON_IsString(uuid)))
         {
             TRACE_MESSAGE("Characteristic " UUID_KEY " is missing or not a number or string");
             add = false;
@@ -650,24 +650,24 @@ uint32_t BluetoothManager::AddDescriptors(const cJSON * const json, BluetoothCha
         return (rejected);
     }
 
-    cJSON *descriptor = NULL;
+    cJSON *descriptor = nullptr;
     cJSON_ArrayForEach(descriptor, descriptors)
     {
         bool add = true;
         const cJSON * const permission = cJSON_GetObjectItem(descriptor, PERMISSION_KEY);
-        if ((permission == NULL) || !cJSON_IsNumber(permission))
+        if ((permission == nullptr) || !cJSON_IsNumber(permission))
         {
             TRACE_MESSAGE("Descriptor " PERMISSION_KEY " is missing or not a number");
             add = false;
         }
         const cJSON * const uuid = cJSON_GetObjectItem(descriptor, UUID_KEY);
-        if ((uuid == NULL) || !(cJSON_IsNumber(uuid) || cJSON_IsString(uuid)))
+        if ((uuid == nullptr) || !(cJSON_IsNumber(uuid) || cJSON_IsString(uuid)))
         {
             TRACE_MESSAGE("Descriptor " UUID_KEY " is missing or not a number or string");
             add = false;
         }
         const cJSON * const len = cJSON_GetObjectItem(descriptor, LENGTH_KEY);
-        if ((len == NULL) || !cJSON_IsNumber(len))
+        if ((len == nullptr) || !cJSON_IsNumber(len))
         {
             TRACE_MESSAGE("Descriptor " LENGTH_KEY " is missing or not a number");
             add = false;
@@ -685,7 +685,7 @@ uint32_t BluetoothManager::AddDescriptors(const cJSON * const json, BluetoothCha
             }
         }
         const cJSON * const value = cJSON_GetObjectItem(descriptor, VALUE_KEY);
-        if ((value == NULL) || !(cJSON_IsNumber(value) || cJSON_IsString(value)))
+        if ((value == nullptr) || !(cJSON_IsNumber(value) || cJSON_IsString(value)))
         {
             TRACE_MESSAGE("Descriptor " VALUE_KEY " is missing or not a number or string");
             add = false;
@@ -820,10 +820,10 @@ bool BluetoothManager::BuildGraphFromJson(const char * const configuration)
     else
     {
         cJSON * const json = cJSON_Parse(configuration);
-        if (json == NULL)
+        if (json == nullptr)
         {
             const char *error_location = cJSON_GetErrorPtr();
-            if (error_location != NULL)
+            if (error_location != nullptr)
             {
                 TRACE_MESSAGE("BuildGraphFromJson: Error before '%s'", error_location);
             }
@@ -849,7 +849,7 @@ bool BluetoothManager::BuildGraphFromJson(const char * const configuration)
             }
         }
         //
-        //  The JSON library detects NULL and will simply return without action.
+        //  The JSON library detects nullptr and will simply return without action.
         //
         cJSON_Delete(json);
     }

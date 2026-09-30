@@ -82,7 +82,7 @@ void TransportProviderBase::Setup(MessageDispatcher *messageDispatcher)
 {
     _messageDispatcher = messageDispatcher;
     _outboundMessageQueueHandle = xQueueCreate(MAX_QUEUE_LENGTH, sizeof(Message *));
-    if (_outboundMessageQueueHandle == NULL)
+    if (_outboundMessageQueueHandle == nullptr)
     {
         ERROR_MESSAGE("Cannot allocate hardware transport queue.");
     }

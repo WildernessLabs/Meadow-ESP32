@@ -94,7 +94,7 @@ Logging::Logging()
 #if defined(PERFORMANCE_LOGGING)
     for (int index = 0; index < _numberOfPerformanceCounterSlots; index++)
     {
-        _performanceCounters[index] = NULL;
+        _performanceCounters[index] = nullptr;
     }
 #endif
 }
@@ -132,7 +132,7 @@ void Logging::Setup()
     //
     //  We won't use a buffer for sending data.
     //
-    uart_driver_install(LOGGING_UART_PORT_NUMBER, RX_BUFFER_SIZE * 2, 0, 0, NULL, 0);
+    uart_driver_install(LOGGING_UART_PORT_NUMBER, RX_BUFFER_SIZE * 2, 0, 0, nullptr, 0);
 
 #if defined(CONFIG_ENABLE_DIAGNOSTIC_THREAD)
     esp_log_level_set(Diagnostics::COMPONENT_NAME, ESP_LOG_INFO);
@@ -160,7 +160,7 @@ void Logging::Configure(const char * const components, uint32_t interface, uint3
     {
         bool turnAppLoggingOn = false;
 
-        if (components != NULL)
+        if (components != nullptr)
         {
             char *duplicate = strdup(components);
             if (duplicate != NULL)
@@ -468,13 +468,13 @@ void Logging::AddPerformanceCounterEntry(const char *method, int64_t start, int6
     int pd = duration & 0xffffffff;
     PerformanceCounterEntry *pce = static_cast<PerformanceCounterEntry *>(pvPortMalloc(sizeof(PerformanceCounterEntry)));
 
-    if (pce != NULL)
+    if (pce != nullptr)
     {
         pce->timestamp = esp_log_timestamp();
         pce->method = method;
         pce->ownsMethod = ownsMethod;
         pce->duration = pd;
-        if (_performanceCounters[_nextPerformanceCounterEntry] != NULL)
+        if (_performanceCounters[_nextPerformanceCounterEntry] != nullptr)
         {
             PerformanceCounterEntry *previous = _performanceCounters[_nextPerformanceCounterEntry];
             if (previous->ownsMethod)
@@ -511,7 +511,7 @@ void Logging::DumpPerformanceCounters()
     printf("Timestamp,Method,Duration\n");
     for (int index = 0; index < _numberOfPerformanceCounterSlots; index++)
     {
-        if (_performanceCounters[index] != NULL)
+        if (_performanceCounters[index] != nullptr)
         {
             PerformanceCounterEntry *pce = _performanceCounters[index];
             printf("%" PRIu32 ",%s,%" PRIu32 "\n", pce->timestamp, pce->method, pce->duration);

@@ -478,8 +478,8 @@ TEST_CASE("Connect to the default access point when none is configured", CLASS_O
     //
     const std::string originalAccessPoint = WiFiRequestHandler::GetDefaultAccessPoint();
     const std::string originalPassword = WiFiRequestHandler::GetPassword();
-    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, WiFiRequestHandler::SetDefaultAccessPoint(NULL));
-    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, WiFiRequestHandler::SetPassword(NULL));
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, WiFiRequestHandler::SetDefaultAccessPoint(nullptr));
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, WiFiRequestHandler::SetPassword(nullptr));
 
     QueueWiFiRequest(dispatcher, WiFiFunction::ConnectToDefaultAccessPoint);
 

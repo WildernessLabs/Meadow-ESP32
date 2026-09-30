@@ -123,10 +123,10 @@ const char *NvsManager::GetValue(const char *nameSpace, const char *name, const 
         if (error == ESP_OK)
         {
             size_t length = 0;
-            if (nvs_get_str(nvsHandle, name, NULL, &length) == ESP_OK)
+            if (nvs_get_str(nvsHandle, name, nullptr, &length) == ESP_OK)
             {
                 char *buffer = static_cast<char *>(pvPortMalloc(length));
-                if (buffer != NULL)
+                if (buffer != nullptr)
                 {
                     if (nvs_get_str(nvsHandle, name, buffer, &length) == ESP_OK)
                     {

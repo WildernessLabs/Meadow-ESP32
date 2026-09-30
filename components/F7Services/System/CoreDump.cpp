@@ -102,7 +102,7 @@ void CoreDump::GetInformation(void * const vpMessage)
 {
     TRACE_MESSAGE("GetInformation: Enter");
 
-    if (vpMessage == NULL)
+    if (vpMessage == nullptr)
     {
         return;
     }
@@ -110,8 +110,8 @@ void CoreDump::GetInformation(void * const vpMessage)
 
     Esp32Messaging::CoreDumpInformationResponse response = {};
     esp_partition_iterator_t partitions;
-    partitions = esp_partition_find(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_DATA_COREDUMP, NULL);
-    if (partitions != NULL)
+    partitions = esp_partition_find(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_DATA_COREDUMP, nullptr);
+    if (partitions != nullptr)
     {
         const esp_partition_t *partition = esp_partition_get(partitions);
         response.PartitionSize = partition->size;
@@ -142,7 +142,7 @@ void CoreDump::GetInformation(void * const vpMessage)
     //
     message->PayloadLength = Encoders::EncodedCoreDumpInformationBufferSize(&response);
     message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-    if (message->Payload != NULL)
+    if (message->Payload != nullptr)
     {
         Encoders::EncodeCoreDumpInformation(&response, message->Payload);
         message->StatusCode = StatusCodes::CompletedOk;
@@ -175,7 +175,7 @@ void CoreDump::GetFragment(void * const vpMessage)
 {
     TRACE_MESSAGE("GetFragment: Enter");
 
-    if (vpMessage == NULL)
+    if (vpMessage == nullptr)
     {
         return;
     }
@@ -184,7 +184,7 @@ void CoreDump::GetFragment(void * const vpMessage)
     StatusCodes::StatusCodes result = StatusCodes::Failure;
     Esp32Messaging::CoreDumpFragmentResponse response = {};
     Esp32Messaging::CoreDumpFragmentRequest *request = Encoders::ExtractCoreDumpFragmentRequest(message->Payload);
-    if (request == NULL)
+    if (request == nullptr)
     {
         if (message->Payload)
         {
@@ -198,8 +198,8 @@ void CoreDump::GetFragment(void * const vpMessage)
     else
     {
         esp_partition_iterator_t partitions;
-        partitions = esp_partition_find(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_DATA_COREDUMP, NULL);
-        if (partitions != NULL)
+        partitions = esp_partition_find(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_DATA_COREDUMP, nullptr);
+        if (partitions != nullptr)
         {
             const esp_partition_t *partition = esp_partition_get(partitions);
 #if CONFIG_ESP_COREDUMP_ENABLE_TO_FLASH
@@ -245,7 +245,7 @@ void CoreDump::GetFragment(void * const vpMessage)
                             }
 
                             uint8_t *data = static_cast<uint8_t *>(pvPortMalloc(fragmentSize));
-                            if (data == NULL)
+                            if (data == nullptr)
                             {
                                 result = StatusCodes::EspOutOfMemory;
                             }
@@ -278,7 +278,7 @@ void CoreDump::GetFragment(void * const vpMessage)
     {
         message->PayloadLength = Encoders::EncodedCoreDumpFragmentResponseBufferSize(&response);
         message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-        if (message->Payload != NULL)
+        if (message->Payload != nullptr)
         {
             Encoders::EncodeCoreDumpFragmentResponse(&response, message->Payload);
             message->StatusCode = StatusCodes::CompletedOk;
@@ -310,7 +310,7 @@ void CoreDump::Erase(void * const vpMessage)
 {
     TRACE_MESSAGE("Erase: Enter");
 
-    if (vpMessage == NULL)
+    if (vpMessage == nullptr)
     {
         return;
     }
@@ -319,8 +319,8 @@ void CoreDump::Erase(void * const vpMessage)
     StatusCodes::StatusCodes result = StatusCodes::Failure;
 
     esp_partition_iterator_t partitions;
-    partitions = esp_partition_find(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_DATA_COREDUMP, NULL);
-    if (partitions != NULL)
+    partitions = esp_partition_find(ESP_PARTITION_TYPE_DATA, ESP_PARTITION_SUBTYPE_DATA_COREDUMP, nullptr);
+    if (partitions != nullptr)
     {
         const esp_partition_t *partition = esp_partition_get(partitions);
         if (esp_partition_erase_range(partition, 0, partition->size) == ESP_OK)

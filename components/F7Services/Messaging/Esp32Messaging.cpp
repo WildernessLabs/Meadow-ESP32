@@ -57,7 +57,7 @@ Message *Message::CreateOnHeap(const uint8_t messageType, const uint8_t interfac
 {
     Message *result = static_cast<Message *>(pvPortMalloc(sizeof(Message)));
 
-    if (result != NULL)
+    if (result != nullptr)
     {
         //
         //  pvPortMalloc runs no constructor, so every member not set below, such as
@@ -145,7 +145,7 @@ Message *Message::CreateCopyOnHeap(const bool copyPayload)
  */
 void Message::DeletePayload()
 {
-    if (Payload != NULL)
+    if (Payload != nullptr)
     {
         vPortFree(Payload);
     }
