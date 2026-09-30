@@ -92,6 +92,16 @@
 #define DEVICE_NAME_STORAGE_NAME "DeviceName"
 
 /**
+ * @brief Name WiFiRequestHandler stores the default access point under in NVS.
+ */
+#define DEFAULT_ACCESS_POINT_STORAGE_NAME "DefaultAP"
+
+/**
+ * @brief Name WiFiRequestHandler stores the default access point password under in NVS.
+ */
+#define PASSWORD_STORAGE_NAME "Password"
+
+/**
  * @brief Name the maximum retry count is stored under in NVS.
  */
 #define RETRY_COUNT_STORAGE_NAME "MaxRetry"
@@ -1170,4 +1180,129 @@ TEST_CASE("The default access point reads back whole while another task changes 
 
     TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, WiFiRequestHandler::SetDefaultAccessPoint(originalAccessPoint.c_str()));
     TEST_ASSERT_EQUAL_STRING(originalAccessPoint.c_str(), WiFiRequestHandler::GetDefaultAccessPoint().c_str());
+}
+
+/**
+ * @brief Value the out of memory tests below try to set.  It must differ from anything
+ *        the device holds, so the setters do not take their "no change" shortcut.
+ */
+#define OUT_OF_MEMORY_VALUE "OutOfMemoryTest"
+
+/**
+ * @brief Take every block of heap that can still be allocated, so the next allocation fails.
+ *
+ *  The blocks are chained through their own first bytes, so holding them needs no memory
+ *  of its own.  Nothing that might allocate should run until ReleaseHeap is called, and
+ *  that includes printing.
+ *
+ * @return Head of the chain of blocks taken, for ReleaseHeap.
+ */
+static void *ExhaustHeap()
+{
+    void *chain = nullptr;
+    for (size_t size = 32768; size >= sizeof(void *); size /= 2)
+    {
+        void *block = pvPortMalloc(size);
+        while (block != nullptr)
+        {
+            *static_cast<void **>(block) = chain;
+            chain = block;
+            block = pvPortMalloc(size);
+        }
+    }
+    return (chain);
+}
+
+/**
+ * @brief Give back every block taken by ExhaustHeap.
+ *
+ * @param chain Head of the chain returned by ExhaustHeap.
+ */
+static void ReleaseHeap(void *chain)
+{
+    while (chain != nullptr)
+    {
+        void *next = *static_cast<void **>(chain);
+        vPortFree(chain);
+        chain = next;
+    }
+}
+
+/**
+ * @brief SetDeviceName reports running out of memory, and leaves both the name it holds
+ *        and the one in NVS as they were (issue #162).
+ *
+ *  It used to write NVS, then store whatever the copy returned, and report success even
+ *  when the copy failed and the name held became nullptr.
+ */
+TEST_CASE("SetDeviceName reports running out of memory and changes nothing", CLASS_OF_TESTS)
+{
+    EnsureHandlers();
+
+    char original[64];
+    snprintf(original, sizeof(original), "%s", SafeString(SystemRequestHandler::GetDeviceName()));
+    TEST_ASSERT_NOT_EQUAL(0, strcmp(original, OUT_OF_MEMORY_VALUE));
+
+    char value[] = OUT_OF_MEMORY_VALUE;
+    void *heap = ExhaustHeap();
+    const StatusCodes::StatusCodes result = SystemRequestHandler::SetDeviceName(value);
+    ReleaseHeap(heap);
+
+    TEST_ASSERT_EQUAL(StatusCodes::EspOutOfMemory, result);
+    TEST_ASSERT_EQUAL_STRING(original, SafeString(SystemRequestHandler::GetDeviceName()));
+    char stored[64];
+    ReadStoredString(DEVICE_NAME_STORAGE_NAME, stored, sizeof(stored));
+    TEST_ASSERT_EQUAL_STRING(original, stored);
+}
+
+/**
+ * @brief SetDefaultAccessPoint reports running out of memory, and leaves both the access
+ *        point it holds and the one in NVS as they were (issue #162).
+ */
+TEST_CASE("SetDefaultAccessPoint reports running out of memory and changes nothing", CLASS_OF_TESTS)
+{
+    EnsureHandlers();
+
+    //
+    //  Read first, as the getter allocates and also creates the credentials mutex the setter
+    //  takes, neither of which can happen once the heap is exhausted.
+    //
+    const std::string original = WiFiRequestHandler::GetDefaultAccessPoint();
+    TEST_ASSERT_NOT_EQUAL(0, strcmp(original.c_str(), OUT_OF_MEMORY_VALUE));
+    char storedBefore[64];
+    ReadStoredString(DEFAULT_ACCESS_POINT_STORAGE_NAME, storedBefore, sizeof(storedBefore));
+
+    void *heap = ExhaustHeap();
+    const StatusCodes::StatusCodes result = WiFiRequestHandler::SetDefaultAccessPoint(OUT_OF_MEMORY_VALUE);
+    ReleaseHeap(heap);
+
+    TEST_ASSERT_EQUAL(StatusCodes::EspOutOfMemory, result);
+    TEST_ASSERT_EQUAL_STRING(original.c_str(), WiFiRequestHandler::GetDefaultAccessPoint().c_str());
+    char storedAfter[64];
+    ReadStoredString(DEFAULT_ACCESS_POINT_STORAGE_NAME, storedAfter, sizeof(storedAfter));
+    TEST_ASSERT_EQUAL_STRING(storedBefore, storedAfter);
+}
+
+/**
+ * @brief SetPassword reports running out of memory, and leaves both the password it holds
+ *        and the one in NVS as they were (issue #162).
+ */
+TEST_CASE("SetPassword reports running out of memory and changes nothing", CLASS_OF_TESTS)
+{
+    EnsureHandlers();
+
+    const std::string original = WiFiRequestHandler::GetPassword();
+    TEST_ASSERT_NOT_EQUAL(0, strcmp(original.c_str(), OUT_OF_MEMORY_VALUE));
+    char storedBefore[64];
+    ReadStoredString(PASSWORD_STORAGE_NAME, storedBefore, sizeof(storedBefore));
+
+    void *heap = ExhaustHeap();
+    const StatusCodes::StatusCodes result = WiFiRequestHandler::SetPassword(OUT_OF_MEMORY_VALUE);
+    ReleaseHeap(heap);
+
+    TEST_ASSERT_EQUAL(StatusCodes::EspOutOfMemory, result);
+    TEST_ASSERT_EQUAL_STRING(original.c_str(), WiFiRequestHandler::GetPassword().c_str());
+    char storedAfter[64];
+    ReadStoredString(PASSWORD_STORAGE_NAME, storedAfter, sizeof(storedAfter));
+    TEST_ASSERT_EQUAL_STRING(storedBefore, storedAfter);
 }

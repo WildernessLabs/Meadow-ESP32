@@ -163,6 +163,16 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetAddrInfo(Esp32Messaging::GetAddr
         }
 
         a.CanonName = (addressInformation->ai_canonname == NULL) ? NULL : strdup(addressInformation->ai_canonname);
+        if ((addressInformation->ai_canonname != NULL) && (a.CanonName == NULL))
+        {
+            //
+            //  Reporting success without the canonical name would tell the STM32 there is none.
+            //
+            Utils::DeleteAndNullifyPointer(a.Addr);
+            response->ResLength = 0;
+            freeaddrinfo(addressInformation);
+            return (StatusCodes::EspOutOfMemory);
+        }
         a.Family = addressInformation->ai_family;
         a.Flags = addressInformation->ai_flags;
         a.Next = addressInformation->ai_next;
