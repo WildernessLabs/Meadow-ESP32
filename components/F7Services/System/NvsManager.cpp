@@ -134,7 +134,7 @@ const char *NvsManager::GetValue(const char *nameSpace, const char *name, const 
                     }
                     else
                     {
-                        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&buffer));
+                        Utils::DeleteAndNullifyPointer(buffer);
                     }
                 }
             }

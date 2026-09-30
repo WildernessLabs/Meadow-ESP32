@@ -106,7 +106,7 @@ TEST_CASE("A flashed file can be read back", CLASS_OF_TESTS)
     printf("Contents: %s", reinterpret_cast<const char *>(buffer));
     TEST_ASSERT_NOT_NULL_MESSAGE(strstr(reinterpret_cast<const char *>(buffer), FLASHED_FILE_FIRST_LINE), "The file did not hold the text the host wrote.");
 
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&buffer));
+    Utils::DeleteAndNullifyPointer(buffer);
 
     delete fs;
 }

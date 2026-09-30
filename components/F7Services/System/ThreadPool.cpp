@@ -97,7 +97,7 @@ ThreadPool::~ThreadPool()
                 delete _threads[index];
             }
         }
-        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&_threads));
+        Utils::DeleteAndNullifyPointer(_threads);
         vSemaphoreDelete(_threadsAvailable);
         _threadsAvailable = nullptr;
     }

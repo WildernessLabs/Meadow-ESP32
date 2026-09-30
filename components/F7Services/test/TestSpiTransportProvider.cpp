@@ -168,7 +168,7 @@ static void DecodeAndFreeAcknowledgement(spi_slave_transaction_t *transaction, u
     *messageType = decoded->MessageType;
     *statusCode = decoded->StatusCode;
 
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&decoded));
+    Utils::DeleteAndNullifyPointer(decoded);
     TestSpiTransportProvider::CallDeleteTransaction(_provider, transaction);
 }
 

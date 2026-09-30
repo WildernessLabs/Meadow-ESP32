@@ -164,7 +164,7 @@ static void ReadString(const cJSON * const json, const char *name, char **value)
 
     if (*value != nullptr)
     {
-        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(value));
+        Utils::DeleteAndNullifyPointer(*value);
     }
     *value = copy;
 }
@@ -301,11 +301,11 @@ void UnitTestConfiguration::Load()
             printf(", at character %d, at or near: %.24s", static_cast<int>(error - contents), error);
         }
         printf("\n");
-        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&contents));
+        Utils::DeleteAndNullifyPointer(contents);
         Halt("The configuration file does not hold valid JSON.");
     }
 
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&contents));
+    Utils::DeleteAndNullifyPointer(contents);
 
     ReadString(json, "WiFiNetwork", &_wiFiNetwork);
     ReadString(json, "WiFiPassword", &_wiFiPassword);

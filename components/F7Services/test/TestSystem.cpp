@@ -49,7 +49,7 @@ TEST_CASE("Get battery level", CLASS_OF_TESTS)
     TEST_ASSERT_NOT_NULL(integerResponse);
     TEST_ASSERT_GREATER_THAN(0, integerResponse->Result);
     printf("Battery level: %" PRIi32 " mV\n", integerResponse->Result);
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&integerResponse));
+    Utils::DeleteAndNullifyPointer(integerResponse);
 
     Message::DeleteMessage(response);
 

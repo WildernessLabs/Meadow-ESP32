@@ -437,7 +437,7 @@ Message *Encoders::ExtractMessage(uint8_t *buffer, const uint32_t bufferLength, 
             message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PacketLength));
             if (message->Payload == NULL)
             {
-                Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&message));
+                Utils::DeleteAndNullifyPointer(message);
             }
             else
             {
@@ -620,7 +620,7 @@ Esp32Messaging::ConfigurationValue *Encoders::ExtractConfigurationValue(uint8_t 
 
         if (configurationValue->Value == NULL)
         {
-            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&configurationValue));
+            Utils::DeleteAndNullifyPointer(configurationValue);
             return (nullptr);
         }
 
@@ -649,8 +649,8 @@ void Encoders::FreeConfigurationValue(Esp32Messaging::ConfigurationValue **confi
         return;
     }
 
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&(*configurationValue)->Value));
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(configurationValue));
+    Utils::DeleteAndNullifyPointer((*configurationValue)->Value);
+    Utils::DeleteAndNullifyPointer(*configurationValue);
 }
 
 /**
@@ -755,9 +755,9 @@ void Encoders::FreeAccessPointInformation(Esp32Messaging::AccessPointInformation
         return;
     }
 
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&(*accessPointInformation)->NetworkName));
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&(*accessPointInformation)->Password));
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(accessPointInformation));
+    Utils::DeleteAndNullifyPointer((*accessPointInformation)->NetworkName);
+    Utils::DeleteAndNullifyPointer((*accessPointInformation)->Password);
+    Utils::DeleteAndNullifyPointer(*accessPointInformation);
 }
 
 /**
@@ -1150,7 +1150,7 @@ Esp32Messaging::AddrInfo *Encoders::ExtractAddrInfo(uint8_t *buffer)
         addrInfo->Addr = static_cast<uint8_t *>(pvPortMalloc(addrInfo->AddrLength));
         if (addrInfo->Addr == NULL)
         {
-            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&addrInfo));
+            Utils::DeleteAndNullifyPointer(addrInfo);
             return (nullptr);
         }
         memcpy(addrInfo->Addr, buffer, addrInfo->AddrLength);
@@ -1181,9 +1181,9 @@ void Encoders::FreeAddrInfo(Esp32Messaging::AddrInfo **addrInfo)
         return;
     }
 
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&(*addrInfo)->Addr));
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&(*addrInfo)->CanonName));
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(addrInfo));
+    Utils::DeleteAndNullifyPointer((*addrInfo)->Addr);
+    Utils::DeleteAndNullifyPointer((*addrInfo)->CanonName);
+    Utils::DeleteAndNullifyPointer(*addrInfo);
 }
 
 /**
@@ -1219,9 +1219,9 @@ Esp32Messaging::GetAddrInfoRequest *Encoders::ExtractGetAddrInfoRequest(uint8_t 
         getAddrInfoRequest->Hints = static_cast<uint8_t *>(pvPortMalloc(getAddrInfoRequest->HintsLength));
         if (getAddrInfoRequest->Hints == NULL)
         {
-            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&getAddrInfoRequest->NodeName));
-            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&getAddrInfoRequest->ServName));
-            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&getAddrInfoRequest));
+            Utils::DeleteAndNullifyPointer(getAddrInfoRequest->NodeName);
+            Utils::DeleteAndNullifyPointer(getAddrInfoRequest->ServName);
+            Utils::DeleteAndNullifyPointer(getAddrInfoRequest);
             return (nullptr);
         }
         memcpy(getAddrInfoRequest->Hints, buffer, getAddrInfoRequest->HintsLength);
@@ -1249,10 +1249,10 @@ void Encoders::FreeGetAddrInfoRequest(Esp32Messaging::GetAddrInfoRequest **getAd
         return;
     }
 
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&(*getAddrInfoRequest)->NodeName));
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&(*getAddrInfoRequest)->ServName));
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&(*getAddrInfoRequest)->Hints));
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(getAddrInfoRequest));
+    Utils::DeleteAndNullifyPointer((*getAddrInfoRequest)->NodeName);
+    Utils::DeleteAndNullifyPointer((*getAddrInfoRequest)->ServName);
+    Utils::DeleteAndNullifyPointer((*getAddrInfoRequest)->Hints);
+    Utils::DeleteAndNullifyPointer(*getAddrInfoRequest);
 }
 
 /**
@@ -1418,7 +1418,7 @@ Esp32Messaging::ConnectRequest *Encoders::ExtractConnectRequest(uint8_t *buffer)
         connectRequest->Addr = static_cast<uint8_t *>(pvPortMalloc(connectRequest->AddrLength));
         if (connectRequest->Addr == NULL)
         {
-            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&connectRequest));
+            Utils::DeleteAndNullifyPointer(connectRequest);
             return (nullptr);
         }
         memcpy(connectRequest->Addr, buffer, connectRequest->AddrLength);
@@ -1446,8 +1446,8 @@ void Encoders::FreeConnectRequest(Esp32Messaging::ConnectRequest **connectReques
         return;
     }
 
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&(*connectRequest)->Addr));
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(connectRequest));
+    Utils::DeleteAndNullifyPointer((*connectRequest)->Addr);
+    Utils::DeleteAndNullifyPointer(*connectRequest);
 }
 
 /**
@@ -1569,7 +1569,7 @@ Esp32Messaging::SetSockOptRequest *Encoders::ExtractSetSockOptRequest(uint8_t *b
         setSockOptRequest->OptionValue = static_cast<uint8_t *>(pvPortMalloc(setSockOptRequest->OptionValueLength));
         if (setSockOptRequest->OptionValue == NULL)
         {
-            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&setSockOptRequest));
+            Utils::DeleteAndNullifyPointer(setSockOptRequest);
             return (nullptr);
         }
         memcpy(setSockOptRequest->OptionValue, buffer, setSockOptRequest->OptionValueLength);
@@ -1598,8 +1598,8 @@ void Encoders::FreeSetSockOptRequest(Esp32Messaging::SetSockOptRequest **setSock
         return;
     }
 
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&(*setSockOptRequest)->OptionValue));
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(setSockOptRequest));
+    Utils::DeleteAndNullifyPointer((*setSockOptRequest)->OptionValue);
+    Utils::DeleteAndNullifyPointer(*setSockOptRequest);
 }
 
 /**
@@ -1737,7 +1737,7 @@ Esp32Messaging::WriteRequest *Encoders::ExtractWriteRequest(uint8_t *buffer)
         writeRequest->Buffer = static_cast<uint8_t *>(pvPortMalloc(writeRequest->BufferLength));
         if (writeRequest->Buffer == NULL)
         {
-            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&writeRequest));
+            Utils::DeleteAndNullifyPointer(writeRequest);
             return (nullptr);
         }
         memcpy(writeRequest->Buffer, buffer, writeRequest->BufferLength);
@@ -1766,8 +1766,8 @@ void Encoders::FreeWriteRequest(Esp32Messaging::WriteRequest **writeRequest)
         return;
     }
 
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&(*writeRequest)->Buffer));
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(writeRequest));
+    Utils::DeleteAndNullifyPointer((*writeRequest)->Buffer);
+    Utils::DeleteAndNullifyPointer(*writeRequest);
 }
 
 /**
@@ -1924,7 +1924,7 @@ Esp32Messaging::SendRequest *Encoders::ExtractSendRequest(uint8_t *buffer)
         sendRequest->Buffer = static_cast<uint8_t *>(pvPortMalloc(sendRequest->BufferLength));
         if (sendRequest->Buffer == NULL)
         {
-            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&sendRequest));
+            Utils::DeleteAndNullifyPointer(sendRequest);
             return (nullptr);
         }
         memcpy(sendRequest->Buffer, buffer, sendRequest->BufferLength);
@@ -1955,8 +1955,8 @@ void Encoders::FreeSendRequest(Esp32Messaging::SendRequest **sendRequest)
         return;
     }
 
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&(*sendRequest)->Buffer));
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(sendRequest));
+    Utils::DeleteAndNullifyPointer((*sendRequest)->Buffer);
+    Utils::DeleteAndNullifyPointer(*sendRequest);
 }
 
 /**
@@ -1990,7 +1990,7 @@ Esp32Messaging::SendToRequest *Encoders::ExtractSendToRequest(uint8_t *buffer)
         sendToRequest->Buffer = static_cast<uint8_t *>(pvPortMalloc(sendToRequest->BufferLength));
         if (sendToRequest->Buffer == NULL)
         {
-            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&sendToRequest));
+            Utils::DeleteAndNullifyPointer(sendToRequest);
             return (nullptr);
         }
         memcpy(sendToRequest->Buffer, buffer, sendToRequest->BufferLength);
@@ -2011,8 +2011,8 @@ Esp32Messaging::SendToRequest *Encoders::ExtractSendToRequest(uint8_t *buffer)
         sendToRequest->DestinationAddress = static_cast<uint8_t *>(pvPortMalloc(sendToRequest->DestinationAddressLength));
         if (sendToRequest->DestinationAddress == NULL)
         {
-            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&sendToRequest->Buffer));
-            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&sendToRequest));
+            Utils::DeleteAndNullifyPointer(sendToRequest->Buffer);
+            Utils::DeleteAndNullifyPointer(sendToRequest);
             return (nullptr);
         }
         memcpy(sendToRequest->DestinationAddress, buffer, sendToRequest->DestinationAddressLength);
@@ -2040,9 +2040,9 @@ void Encoders::FreeSendToRequest(Esp32Messaging::SendToRequest **sendToRequest)
         return;
     }
 
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&(*sendToRequest)->Buffer));
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&(*sendToRequest)->DestinationAddress));
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(sendToRequest));
+    Utils::DeleteAndNullifyPointer((*sendToRequest)->Buffer);
+    Utils::DeleteAndNullifyPointer((*sendToRequest)->DestinationAddress);
+    Utils::DeleteAndNullifyPointer(*sendToRequest);
 }
 
 /**
@@ -2311,10 +2311,10 @@ void Encoders::FreeSendMsgRequest(Esp32Messaging::SendMsgRequest **sendMsgReques
         return;
     }
 
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&(*sendMsgRequest)->Name));
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&(*sendMsgRequest)->Buffer));
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&(*sendMsgRequest)->Control));
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(sendMsgRequest));
+    Utils::DeleteAndNullifyPointer((*sendMsgRequest)->Name);
+    Utils::DeleteAndNullifyPointer((*sendMsgRequest)->Buffer);
+    Utils::DeleteAndNullifyPointer((*sendMsgRequest)->Control);
+    Utils::DeleteAndNullifyPointer(*sendMsgRequest);
 }
 
 /**
@@ -2616,7 +2616,7 @@ Esp32Messaging::BindRequest *Encoders::ExtractBindRequest(uint8_t *buffer)
         bindRequest->Addr = static_cast<uint8_t *>(pvPortMalloc(bindRequest->AddrLength));
         if (bindRequest->Addr == NULL)
         {
-            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&bindRequest));
+            Utils::DeleteAndNullifyPointer(bindRequest);
             return (nullptr);
         }
         memcpy(bindRequest->Addr, buffer, bindRequest->AddrLength);
@@ -2644,8 +2644,8 @@ void Encoders::FreeBindRequest(Esp32Messaging::BindRequest **bindRequest)
         return;
     }
 
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&(*bindRequest)->Addr));
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(bindRequest));
+    Utils::DeleteAndNullifyPointer((*bindRequest)->Addr);
+    Utils::DeleteAndNullifyPointer(*bindRequest);
 }
 
 /**
@@ -2991,8 +2991,8 @@ void Encoders::FreeBTStackConfig(Esp32Messaging::BTStackConfig **bTStackConfig)
         return;
     }
 
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&(*bTStackConfig)->Config));
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(bTStackConfig));
+    Utils::DeleteAndNullifyPointer((*bTStackConfig)->Config);
+    Utils::DeleteAndNullifyPointer(*bTStackConfig);
 }
 
 /**
@@ -3104,7 +3104,7 @@ Esp32Messaging::BTServerDataSet *Encoders::ExtractBTServerDataSet(uint8_t *buffe
         bTServerDataSet->SetData = static_cast<uint8_t *>(pvPortMalloc(bTServerDataSet->SetDataLength));
         if (bTServerDataSet->SetData == NULL)
         {
-            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&bTServerDataSet));
+            Utils::DeleteAndNullifyPointer(bTServerDataSet);
             return (nullptr);
         }
         memcpy(bTServerDataSet->SetData, buffer, bTServerDataSet->SetDataLength);
@@ -3132,8 +3132,8 @@ void Encoders::FreeBTServerDataSet(Esp32Messaging::BTServerDataSet **bTServerDat
         return;
     }
 
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&(*bTServerDataSet)->SetData));
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(bTServerDataSet));
+    Utils::DeleteAndNullifyPointer((*bTServerDataSet)->SetData);
+    Utils::DeleteAndNullifyPointer(*bTServerDataSet);
 }
 
 /**
@@ -3213,8 +3213,8 @@ void Encoders::FreeFileDetails(Esp32Messaging::FileDetails **fileDetails)
         return;
     }
 
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&(*fileDetails)->Name));
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(fileDetails));
+    Utils::DeleteAndNullifyPointer((*fileDetails)->Name);
+    Utils::DeleteAndNullifyPointer(*fileDetails);
 }
 
 /**
@@ -3288,8 +3288,8 @@ Esp32Messaging::FileNameAndContents *Encoders::ExtractFileNameAndContents(uint8_
         fileNameAndContents->Contents = static_cast<uint8_t *>(pvPortMalloc(fileNameAndContents->ContentsLength));
         if (fileNameAndContents->Contents == NULL)
         {
-            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&fileNameAndContents->Name));
-            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&fileNameAndContents));
+            Utils::DeleteAndNullifyPointer(fileNameAndContents->Name);
+            Utils::DeleteAndNullifyPointer(fileNameAndContents);
             return (nullptr);
         }
         memcpy(fileNameAndContents->Contents, buffer, fileNameAndContents->ContentsLength);
@@ -3317,9 +3317,9 @@ void Encoders::FreeFileNameAndContents(Esp32Messaging::FileNameAndContents **fil
         return;
     }
 
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&(*fileNameAndContents)->Name));
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&(*fileNameAndContents)->Contents));
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(fileNameAndContents));
+    Utils::DeleteAndNullifyPointer((*fileNameAndContents)->Name);
+    Utils::DeleteAndNullifyPointer((*fileNameAndContents)->Contents);
+    Utils::DeleteAndNullifyPointer(*fileNameAndContents);
 }
 
 /**
@@ -3409,8 +3409,8 @@ void Encoders::FreeLoggingConfiguration(Esp32Messaging::LoggingConfiguration **l
         return;
     }
 
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&(*loggingConfiguration)->ComponentsToLog));
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(loggingConfiguration));
+    Utils::DeleteAndNullifyPointer((*loggingConfiguration)->ComponentsToLog);
+    Utils::DeleteAndNullifyPointer(*loggingConfiguration);
 }
 
 /**
@@ -3459,8 +3459,8 @@ void Encoders::FreeLogMessage(Esp32Messaging::LogMessage **logMessage)
         return;
     }
 
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&(*logMessage)->Message));
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(logMessage));
+    Utils::DeleteAndNullifyPointer((*logMessage)->Message);
+    Utils::DeleteAndNullifyPointer(*logMessage);
 }
 
 /**

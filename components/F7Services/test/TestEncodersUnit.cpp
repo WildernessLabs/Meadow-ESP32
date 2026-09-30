@@ -31,7 +31,7 @@ TEST_CASE("ExtractString decodes a terminated string", CLASS_OF_TESTS)
     char *result = Encoders::ExtractString(buffer, 6);
     TEST_ASSERT_NOT_NULL(result);
     TEST_ASSERT_EQUAL_STRING("hello", result);
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&result));
+    Utils::DeleteAndNullifyPointer(result);
 }
 
 /**
@@ -58,7 +58,7 @@ TEST_CASE("ExtractString finds a terminator inside maxLength", CLASS_OF_TESTS)
     char *result = Encoders::ExtractString(buffer, sizeof(buffer));
     TEST_ASSERT_NOT_NULL(result);
     TEST_ASSERT_EQUAL(10, strlen(result));
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&result));
+    Utils::DeleteAndNullifyPointer(result);
 }
 
 /**

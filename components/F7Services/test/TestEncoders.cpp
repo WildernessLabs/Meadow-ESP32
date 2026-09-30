@@ -104,7 +104,7 @@ namespace TestEncoders
             accessPointList->AccessPoints = static_cast<uint8_t *>(pvPortMalloc(accessPointList->AccessPointsLength));
             if (accessPointList->AccessPoints == nullptr)
             {
-                Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&accessPointList));
+                Utils::DeleteAndNullifyPointer(accessPointList);
                 return (nullptr);
             }
             memcpy(accessPointList->AccessPoints, buffer, accessPointList->AccessPointsLength);
@@ -131,9 +131,9 @@ namespace TestEncoders
 
         if ((*accessPointList)->AccessPoints != nullptr)
         {
-            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&(*accessPointList)->AccessPoints));
+            Utils::DeleteAndNullifyPointer((*accessPointList)->AccessPoints);
         }
-        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(accessPointList));
+        Utils::DeleteAndNullifyPointer(*accessPointList);
     }
 
     /**
@@ -194,7 +194,7 @@ namespace TestEncoders
             fileNameList->FileDetails = static_cast<uint8_t *>(pvPortMalloc(fileNameList->FileDetailsLength));
             if (fileNameList->FileDetails == nullptr)
             {
-                Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&fileNameList));
+                Utils::DeleteAndNullifyPointer(fileNameList);
                 return (nullptr);
             }
             memcpy(fileNameList->FileDetails, buffer, fileNameList->FileDetailsLength);
@@ -221,9 +221,9 @@ namespace TestEncoders
 
         if ((*fileNameList)->FileDetails != nullptr)
         {
-            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&(*fileNameList)->FileDetails));
+            Utils::DeleteAndNullifyPointer((*fileNameList)->FileDetails);
         }
-        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(fileNameList));
+        Utils::DeleteAndNullifyPointer(*fileNameList);
     }
 
     /**
@@ -327,7 +327,7 @@ namespace TestEncoders
             fragmentResponse->Data = static_cast<uint8_t *>(pvPortMalloc(fragmentResponse->Size));
             if (fragmentResponse->Data == nullptr)
             {
-                Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&fragmentResponse));
+                Utils::DeleteAndNullifyPointer(fragmentResponse);
                 return (nullptr);
             }
             memcpy(fragmentResponse->Data, buffer, fragmentResponse->Size);
@@ -354,9 +354,9 @@ namespace TestEncoders
 
         if ((*fragmentResponse)->Data != nullptr)
         {
-            Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&(*fragmentResponse)->Data));
+            Utils::DeleteAndNullifyPointer((*fragmentResponse)->Data);
         }
-        Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(fragmentResponse));
+        Utils::DeleteAndNullifyPointer(*fragmentResponse);
     }
 
     /**
@@ -828,7 +828,7 @@ namespace TestEncoders
             ioctlResponse->Addr = static_cast<uint8_t *>(pvPortMalloc(ioctlResponse->AddrLength));
             if (ioctlResponse->Addr == nullptr)
             {
-                Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&ioctlResponse));
+                Utils::DeleteAndNullifyPointer(ioctlResponse);
                 return (nullptr);
             }
             memcpy(ioctlResponse->Addr, buffer, ioctlResponse->AddrLength);

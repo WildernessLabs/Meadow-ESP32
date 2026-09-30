@@ -259,7 +259,7 @@ void CoreDump::GetFragment(void * const vpMessage)
                                 }
                                 else
                                 {
-                                    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&data));
+                                    Utils::DeleteAndNullifyPointer(data);
                                 }
                             }
                         }
@@ -271,7 +271,7 @@ void CoreDump::GetFragment(void * const vpMessage)
         }
     }
 
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&request));
+    Utils::DeleteAndNullifyPointer(request);
     message->DeletePayload();
 
     if (result == StatusCodes::CompletedOk)
@@ -293,7 +293,7 @@ void CoreDump::GetFragment(void * const vpMessage)
     {
         message->StatusCode = result;
     }
-    Utils::DeleteAndNullifyPointer(reinterpret_cast<void **>(&response.Data));
+    Utils::DeleteAndNullifyPointer(response.Data);
 
     message->MessageType = MessageTypes::Response;
     _messageDispatcher->QueueMessageForStm32(message);
