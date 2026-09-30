@@ -12,10 +12,12 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <sys/types.h>
 #include "unity.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "freertos/semphr.h"
 
 #include "MessageDispatcher.hpp"
 #include "MockTransportProvider.hpp"
@@ -309,4 +311,95 @@ TEST_CASE("An unknown System function is answered", CLASS_OF_TESTS)
 TEST_CASE("An unknown Bluetooth function is answered", CLASS_OF_TESTS)
 {
     CheckUnknownFunctionIsAnswered(SetupDispatcher(), Esp32Interfaces::BlueTooth);
+}
+
+/**
+ * @brief Gives the tests below read access to the transport's outbound queue mutex.
+ *
+ *  It is never instantiated: constructing a transport provider creates a new mutex and
+ *  replaces the one the dispatcher's transport is using.
+ */
+class OutboundQueueMutexProbe : public TransportProviderBase
+{
+public:
+    /**
+     * @brief The mutex guarding the outbound message queue.
+     *
+     * @return The mutex handle.
+     */
+    static SemaphoreHandle_t Mutex()
+    {
+        return (_outboundMessageQueueMutex);
+    }
+};
+
+/**
+ * @brief Set when the redirected output has carried the MessageWaiting control message.
+ */
+static bool _messageWaitingSeen = false;
+
+/**
+ * @brief Set when the queue mutex had a holder while MessageWaiting was being written.
+ */
+static bool _mutexHeldDuringMessageWaiting = false;
+
+/**
+ * @brief Write function for the stream standing in for stdout: note whether the queue
+ *        mutex is held when the MessageWaiting control message is written, then discard it.
+ *
+ * @param cookie Unused.
+ * @param buffer Bytes being written.
+ * @param size Number of bytes being written.
+ * @return size, as every byte is accepted.
+ */
+static ssize_t RecordMessageWaiting(void *cookie, const char *buffer, size_t size)
+{
+    (void) cookie;
+    if (memmem(buffer, size, "+++MW", 5) != NULL)
+    {
+        _messageWaitingSeen = true;
+        _mutexHeldDuringMessageWaiting |= (xSemaphoreGetMutexHolder(OutboundQueueMutexProbe::Mutex()) != nullptr);
+    }
+    return (static_cast<ssize_t>(size));
+}
+
+/**
+ * @brief Check that the MessageWaiting control message is written after the outbound queue
+ *        mutex is released, not while it is held (issue #271).
+ *
+ *  The control message is a blocking UART write.  Holding the mutex across it makes every
+ *  task queuing a message, and the transport provider task taking one off, wait on the
+ *  UART.  stdout is redirected for this task only, to an unbuffered stream whose write
+ *  function looks at the mutex at the moment the control message is written.
+ */
+TEST_CASE("MessageWaiting is sent after the outbound queue mutex is released", CLASS_OF_TESTS)
+{
+    MessageDispatcher *dispatcher = SetupDispatcher();
+    DrainTransport();
+
+    cookie_io_functions_t functions = {};
+    functions.write = RecordMessageWaiting;
+    FILE *recorder = fopencookie(nullptr, "w", functions);
+    TEST_ASSERT_NOT_NULL(recorder);
+    setvbuf(recorder, NULL, _IONBF, 0);
+
+    _messageWaitingSeen = false;
+    _mutexHeldDuringMessageWaiting = false;
+    Message *response = Message::CreateOnHeap(MessageTypes::Response, Esp32Interfaces::System, SystemFunction::GetConfiguration, StatusCodes::CompletedOk, TEST_MESSAGE_ID, nullptr, 0);
+    TEST_ASSERT_NOT_NULL(response);
+
+    FILE *console = stdout;
+    stdout = recorder;
+    const bool queued = dispatcher->QueueMessageForStm32(response);
+    stdout = console;
+    fclose(recorder);
+
+    TEST_ASSERT_TRUE(queued);
+    TEST_ASSERT_TRUE_MESSAGE(_messageWaitingSeen, "The MessageWaiting control message was not written.");
+    TEST_ASSERT_FALSE_MESSAGE(_mutexHeldDuringMessageWaiting, "MessageWaiting was written while the outbound queue mutex was held.");
+
+    Message *sent = _transport->GetOutboundMessage();
+    ASSERT_MESSAGE_ID(sent, TEST_MESSAGE_ID);
+    Message::DeleteMessage(sent);
+    TEST_ASSERT_EQUAL(0, _transport->OutboundMessageQueueLength());
 }
