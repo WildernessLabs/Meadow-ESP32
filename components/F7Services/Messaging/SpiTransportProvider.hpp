@@ -42,11 +42,6 @@ private:
     static constexpr uint32_t SYNCHRONISATION_TASK_STACK_SIZE = 4096;
 
     /**
-     *  @brief Maximum number of retries before the system gives up.
-     */
-    const int MAXIMUM_RETRY_COUNT = 3;
-
-    /**
      *  @brief Possible states for the SPI transport layer.
      */
     enum SpiStates { Invalid, WaitingForPacket, AcknowledgingPacket, SendingPacketDetails, SendingPacket, WaitingForPacketAcknowledgement };
@@ -78,11 +73,6 @@ private:
      *  @brief Size of a header / transport frame.
      */
     static uint32_t _headerFrameSize;
-
-    /**
-     *  @brief Retry count for sending messages.
-     */
-    uint32_t _retryCount = 0;
 
     /**
      *  @brief Message coming in from the STM32.
