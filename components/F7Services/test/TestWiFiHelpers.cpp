@@ -115,7 +115,7 @@ Message *CreateAccessPointMessage(const uint32_t function, const char *ssid, con
     uint8_t *buffer = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
     TEST_ASSERT_NOT_NULL(buffer);
     memset(buffer, 0, payloadLength);
-    Encoders::EncodeAccessPointInformation(&accessPointInformation, buffer);
+    TEST_ASSERT_TRUE(Encoders::EncodeAccessPointInformation(&accessPointInformation, buffer, payloadLength));
 
     Message *message = Message::CreateOnHeap(MessageTypes::Header, Esp32Interfaces::WiFi, function, StatusCodes::Failure, 0xff, buffer, payloadLength);
     TEST_ASSERT_NOT_NULL(message);

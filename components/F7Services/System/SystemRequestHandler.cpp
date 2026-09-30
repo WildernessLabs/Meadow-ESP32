@@ -597,7 +597,11 @@ void SystemRequestHandler::SendConfigurationAsInterruptMessage()
     message->StatusCode = StatusCodes::CompletedOk;
     message->PayloadLength = Encoders::EncodedSystemConfigurationBufferSize(&config);
     message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-    Encoders::EncodeSystemConfiguration(&config, message->Payload);
+    if ((message->Payload == nullptr) || !Encoders::EncodeSystemConfiguration(&config, message->Payload, message->PayloadLength))
+    {
+        message->DeletePayload();
+        message->StatusCode = StatusCodes::Failure;
+    }
     _messageDispatcher->QueueMessageForStm32(message);
     TRACE_MESSAGE("SendConfigurationAsInterruptMessage: Exit");
 }
@@ -618,9 +622,13 @@ void SystemRequestHandler::GetConfiguration(Message * const request)
     request->DeletePayload();
     request->PayloadLength = Encoders::EncodedSystemConfigurationBufferSize(&config);
     request->Payload = static_cast<uint8_t *>(pvPortMalloc(request->PayloadLength));
-    Encoders::EncodeSystemConfiguration(&config, request->Payload);
     request->MessageType = MessageTypes::Response;
     request->StatusCode = StatusCodes::CompletedOk;
+    if ((request->Payload == nullptr) || !Encoders::EncodeSystemConfiguration(&config, request->Payload, request->PayloadLength))
+    {
+        request->DeletePayload();
+        request->StatusCode = StatusCodes::Failure;
+    }
     _messageDispatcher->QueueMessageForStm32(request);
     TRACE_MESSAGE("GetConfiguration: Exit");
 }
