@@ -697,7 +697,7 @@ public:
     static void EncodeRecvFromResponse(const Esp32Messaging::RecvFromResponse * const, uint8_t *);
     static int EncodedRecvFromResponseBufferSize(const Esp32Messaging::RecvFromResponse * const);
 
-    static Esp32Messaging::SendMsgRequest *ExtractSendMsgRequest(uint8_t *);
+    static Esp32Messaging::SendMsgRequest *ExtractSendMsgRequest(const uint8_t *buffer, const uint32_t length, bool * const malformed);
     static void FreeSendMsgRequest(Esp32Messaging::SendMsgRequest **);
 
     static Esp32Messaging::RecvMsgRequest *ExtractRecvMsgRequest(uint8_t *);
