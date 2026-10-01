@@ -97,14 +97,24 @@ public:
     BluetoothCharacteristic &operator=(BluetoothCharacteristic &&other) = delete;
 
     /**
-     * @brief Characteristic declaration.
+     * @brief Get the characteristic declaration.
      */
-    BluetoothCharacteristicDeclaration *Declaration;
+    BluetoothCharacteristicDeclaration &GetDeclaration();
 
     /**
-     * @brief Characteristic value.
+     * @brief Get the characteristic declaration.
      */
-    BluetoothCharacteristicValue *Value;
+    const BluetoothCharacteristicDeclaration &GetDeclaration() const;
+
+    /**
+     * @brief Get the characteristic value.
+     */
+    BluetoothCharacteristicValue &GetValue();
+
+    /**
+     * @brief Get the characteristic value.
+     */
+    const BluetoothCharacteristicValue &GetValue() const;
 
     void AddDescriptor(BluetoothDescriptor * const descriptor);
 
@@ -126,6 +136,22 @@ public:
     std::vector<BluetoothDescriptor *> GetDescriptorDefinitions();
 
 private:
+    /**
+     * @brief Characteristic declaration.
+     *
+     *  Held as a member, not through a pointer, so its lifetime is the characteristic's and
+     *  nothing outside can release it (issue #449).  Callers reach it through GetDeclaration.
+     */
+    BluetoothCharacteristicDeclaration _declaration;
+
+    /**
+     * @brief Characteristic value.
+     *
+     *  Held as a member for the same reason as _declaration.  It is declared after
+     *  _declaration, so it is constructed after it.
+     */
+    BluetoothCharacteristicValue _value;
+
     /**
      * @brief Bluetooth descriptors for this characteristic.
      */

@@ -95,7 +95,7 @@ void BluetoothManager::HandleCharacteristicAdded(BluetoothCharacteristic *charac
 {
     TRACE_MESSAGE("HandleCharacteristicAdded: Enter");
 
-    TRACE_MESSAGE("New Characteristic: declaration @ 0x%04" PRIx16 " value @ 0x%04" PRIx16, characteristic->Declaration->Handle, characteristic->Value->Handle);
+    TRACE_MESSAGE("New Characteristic: declaration @ 0x%04" PRIx16 " value @ 0x%04" PRIx16, characteristic->GetDeclaration().Handle, characteristic->GetValue().Handle);
 
     TRACE_MESSAGE("HandleCharacteristicAdded: Exit");
 }
@@ -109,7 +109,7 @@ void BluetoothManager::HandleValueChanged(BluetoothCharacteristic *characteristi
 {
     TRACE_MESSAGE("HandleValueChanged: Enter");
 
-    TRACE_MESSAGE("New Characteristic Value: value @ 0x%04" PRIx16 " is %" PRIu16 " bytes", characteristic->Value->Handle, characteristic->Value->CurrentLength);
+    TRACE_MESSAGE("New Characteristic Value: value @ 0x%04" PRIx16 " is %" PRIu16 " bytes", characteristic->GetValue().Handle, characteristic->GetValue().CurrentLength);
 
     TRACE_MESSAGE("HandleValueChanged: Exit");
 }
@@ -158,8 +158,8 @@ bool BluetoothManager::GetHandles(uint16_t * const handles, const uint16_t capac
                 TRACE_MESSAGE("GetHandles: Exit - capacity %" PRIu16 " exceeded", capacity);
                 return (false);
             }
-            handles[index++] = characteristic->Declaration->Handle;
-            handles[index++] = characteristic->Value->Handle;
+            handles[index++] = characteristic->GetDeclaration().Handle;
+            handles[index++] = characteristic->GetValue().Handle;
 
             for (const auto &descriptor: characteristic->GetDescriptorDefinitions())
             {
@@ -189,9 +189,9 @@ CharacteristicProperty BluetoothManager::GetCharacteristicProperties(const uint1
     {
         for (const auto &characteristic: svc->GetCharacteristicDefinitions())
         {
-            if (characteristic->Value->Handle == handle)
+            if (characteristic->GetValue().Handle == handle)
             {
-                return characteristic->Declaration->Properties;
+                return characteristic->GetDeclaration().Properties;
             }
         }
     }
@@ -216,7 +216,7 @@ bool BluetoothManager::IsKnownCharacteristicHandle(const uint16_t handle)
     {
         for (const auto &characteristic: svc->GetCharacteristicDefinitions())
         {
-            if (characteristic->Value->Handle == handle)
+            if (characteristic->GetValue().Handle == handle)
             {
                 return (true);
             }
@@ -238,9 +238,9 @@ CharacteristicPermission BluetoothManager::GetCharacteristicPermissions(const ui
     {
         for (const auto &characteristic: svc->GetCharacteristicDefinitions())
         {
-            if (characteristic->Value->Handle == handle)
+            if (characteristic->GetValue().Handle == handle)
             {
-                return characteristic->Declaration->Permission;
+                return characteristic->GetDeclaration().Permission;
             }
         }
     }
@@ -286,24 +286,24 @@ bool BluetoothManager::SetHandles(const uint16_t * const handles, const uint16_t
                 TRACE_MESSAGE("SetHandles: Exit - handle count %" PRIu16 " exceeded", count);
                 return (false);
             }
-            characteristic->Declaration->Handle = handles[index++];
-            TRACE_MESSAGE("ATTRIBUTE TABLE DECLARATION HANDLE = 0x%04" PRIx16, characteristic->Declaration->Handle);
+            characteristic->GetDeclaration().Handle = handles[index++];
+            TRACE_MESSAGE("ATTRIBUTE TABLE DECLARATION HANDLE = 0x%04" PRIx16, characteristic->GetDeclaration().Handle);
 
-            characteristic->Value->Handle = handles[index++];
-            TRACE_MESSAGE("ATTRIBUTE TABLE VALUE HANDLE = 0x%04" PRIx16 " | max length = %" PRIu16, characteristic->Value->Handle, characteristic->Value->MaxLength);
-            auto val = length_val_s {.length = characteristic->Value->MaxLength, .value = new uint8_t[characteristic->Value->MaxLength]};
-            memset(val.value, 0, characteristic->Value->MaxLength);
+            characteristic->GetValue().Handle = handles[index++];
+            TRACE_MESSAGE("ATTRIBUTE TABLE VALUE HANDLE = 0x%04" PRIx16 " | max length = %" PRIu16, characteristic->GetValue().Handle, characteristic->GetValue().MaxLength);
+            auto val = length_val_s {.length = characteristic->GetValue().MaxLength, .value = new uint8_t[characteristic->GetValue().MaxLength]};
+            memset(val.value, 0, characteristic->GetValue().MaxLength);
 
-            TRACE_MESSAGE("Request for data for handle 0x%04" PRIx16, characteristic->Value->Handle);
+            TRACE_MESSAGE("Request for data for handle 0x%04" PRIx16, characteristic->GetValue().Handle);
 
-            auto existingValue = _valueMap.find(characteristic->Value->Handle);
+            auto existingValue = _valueMap.find(characteristic->GetValue().Handle);
             if (existingValue != _valueMap.end())
             {
                 delete[] existingValue->second.value;
             }
-            _valueMap.insert_or_assign(characteristic->Value->Handle, val);
+            _valueMap.insert_or_assign(characteristic->GetValue().Handle, val);
             // cross reference handles
-            characteristic->Declaration->ValueHandle = characteristic->Value->Handle;
+            characteristic->GetDeclaration().ValueHandle = characteristic->GetValue().Handle;
 
             for (const auto &descriptor: characteristic->GetDescriptorDefinitions())
             {

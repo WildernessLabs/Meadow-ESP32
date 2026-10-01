@@ -96,7 +96,7 @@ BluetoothCharacteristic &BluetoothService::AddCharacteristic(BluetoothCharacteri
         auto chr = (BluetoothCharacteristic*)*it;
 
         // only check non-zero handles since the handle will be zero when we generate the graph
-        if((characteristic->Declaration->Handle != 0) && (chr->Declaration->Handle == characteristic->Declaration->Handle))
+        if((characteristic->GetDeclaration().Handle != 0) && (chr->GetDeclaration().Handle == characteristic->GetDeclaration().Handle))
         {
             printf("Already exists.  Skipping");
             exists = true;
@@ -109,17 +109,17 @@ BluetoothCharacteristic &BluetoothService::AddCharacteristic(BluetoothCharacteri
     {
         /*
         // make sure handles are set
-        if(characteristic->Declaration->Handle == 0)
+        if(characteristic->GetDeclaration().Handle == 0)
         {
-            _handleManager->Assign(characteristic->Declaration);
+            _handleManager->Assign(&characteristic->GetDeclaration());
         }
-        if(characteristic->Value->Handle == 0)
+        if(characteristic->GetValue().Handle == 0)
         {
-            _handleManager->Assign(characteristic->Value);
+            _handleManager->Assign(&characteristic->GetValue());
         }
 
         // cross reference handles
-        characteristic->Declaration->ValueHandle = characteristic->Value->Handle;
+        characteristic->GetDeclaration().ValueHandle = characteristic->GetValue().Handle;
 
         */
 

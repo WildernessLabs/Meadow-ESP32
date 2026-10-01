@@ -8,6 +8,7 @@
  */
 
 #include "BluetoothCharacteristicValue.hpp"
+#include "BluetoothCharacteristic.hpp"
 #include "BluetoothComponentName.hpp"
 
 #include "Logging.hpp"
