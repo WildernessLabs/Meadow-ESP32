@@ -243,13 +243,20 @@ static void DerivePreSharedKeyHex(const char *ssid, const char *passphrase, char
  *  test network, which uses WPA2-PSK, with its derived key instead of its passphrase: a
  *  successful connection shows the unterminated 64-byte value is read correctly.
  *
- * @note The station is disconnected first, as in "Connect to access point".
+ * @note The station is disconnected first, and automatic reconnection is turned on, as in
+ *       "Connect to access point".  Automatic reconnection is off after every boot, and
+ *       without it a single refused association fails the test; the test network's router
+ *       sometimes refuses the first one after a cold boot ("Association refused
+ *       temporarily").  Retrying does not weaken the test: the connection still has to
+ *       succeed with the 64-digit key.
  */
 TEST_CASE("Connect to access point using its 64-digit hex pre-shared key", CLASS_OF_TESTS)
 {
     MockMessageDispatcher *dispatcher = SetupWiFiDispatcher();
 
     EnsureDisconnected(dispatcher);
+
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, WiFiRequestHandler::SetAutomaticReconnect(true));
 
     char hexKey[(2 * PRE_SHARED_KEY_LENGTH) + 1] = {};
     DerivePreSharedKeyHex(UnitTestConfiguration::WiFiNetwork(), UnitTestConfiguration::WiFiPassword(), hexKey);
