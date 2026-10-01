@@ -30,6 +30,7 @@
 #include "Logging.hpp"
 #include "ProgressiveDelay.hpp"
 #include "Utils.hpp"
+#include "MutexLock.hpp"
 #include "SystemRequestHandler.hpp"
 
 /*
@@ -73,11 +74,6 @@ std::map<int32_t, int> WiFiRequestHandler::_socketHandles;
 SemaphoreHandle_t WiFiRequestHandler::_socketHandlesMutex = nullptr;
 
 /**
- *  @brief Handle for the completed poll requests.
- */
-QueueHandle_t WiFiRequestHandler::_completedPollRequestsQueue = nullptr;
-
-/**
  *  @brief GPIO Pin connected to the antenna selection switch
  *  which will connect the on board antenna to the ESP32.
  */
@@ -102,7 +98,7 @@ const int WiFiRequestHandler::POLL_FD_INDEX = 0;
 /**
  *  @brief Network Interface Handle for the board when running in station mode i.e. as a device connected to an access point.
  */
-esp_netif_t *WiFiRequestHandler::_stationNetIfHandle;
+std::atomic<esp_netif_t *> WiFiRequestHandler::_stationNetIfHandle(nullptr);
 
 /**
  *  @brief Network Interface Handle for the board when it is acting as a soft access point.
@@ -117,7 +113,7 @@ const char *WiFiRequestHandler::ANTENNA_TYPE_NAME = "Antenna";
  *  @brief Should the system automatically reconnect to an access point should there
  *  be a problem and the current connection is dropped.
  */
-bool WiFiRequestHandler::_automaticReconnect = false;
+std::atomic<bool> WiFiRequestHandler::_automaticReconnect(false);
 
 /**
  *  @brief Name of the NVS storage holding the _automaticReconnect value.
@@ -127,7 +123,7 @@ const char *WiFiRequestHandler::AUTOMATIC_RECONNECT_NAME = "AutoReconnect";
 /**
  *  @brief Maximum number of times a failed event should retry before raising an error.
  */
-uint32_t WiFiRequestHandler::_maximumRetryCount = WiFiRequestHandler::DEFAULT_MAXIMUM_RETRY_COUNT;
+std::atomic<uint32_t> WiFiRequestHandler::_maximumRetryCount(WiFiRequestHandler::DEFAULT_MAXIMUM_RETRY_COUNT);
 
 /**
  *  @brief Name of the NVS storage holding the _maximumRetryCount value.
@@ -159,7 +155,7 @@ const char *WiFiRequestHandler::GET_TIME_AT_STARTUP_NAME = "GetTime";
 /**
  *  @brief Indicate if we should use DHCP.
  */
-bool WiFiRequestHandler::_useDhcp = false;
+std::atomic<bool> WiFiRequestHandler::_useDhcp(false);
 
 /**
  *  @brief Name of the storage holding the _useDhcp configuration setting.
@@ -180,54 +176,6 @@ const char *WiFiRequestHandler::DEFAULT_ACCESS_POINT_NAME = "DefaultAP";
  *  @brief Password for the access point.
  */
 char *WiFiRequestHandler::_password = nullptr;
-
-namespace
-{
-    /**
-     *  @brief Holds WiFiRequestHandler::CredentialsMutex() for the lifetime of the object.
-     *
-     *  Giving the mutex back in the destructor means it is released on every path out of
-     *  the scope, including an exception from the std::string copies taken while it is held.
-     */
-    class CredentialsLock
-    {
-    public:
-        /**
-         *  @brief Take the mutex, waiting for as long as it takes.
-         *
-         *  @param mutex
-         *      Mutex to hold.
-         */
-        explicit CredentialsLock(SemaphoreHandle_t mutex) : _mutex(mutex)
-        {
-            xSemaphoreTake(_mutex, portMAX_DELAY);
-        }
-
-        /**
-         *  @brief Give the mutex back.
-         */
-        ~CredentialsLock()
-        {
-            xSemaphoreGive(_mutex);
-        }
-
-        /**
-         *  @brief Deleted copy constructor, a copy would give the mutex back twice.
-         */
-        CredentialsLock(const CredentialsLock &other) = delete;
-
-        /**
-         *  @brief Deleted copy assignment operator, a copy would give the mutex back twice.
-         */
-        CredentialsLock &operator=(const CredentialsLock &other) = delete;
-
-    private:
-        /**
-         *  @brief Mutex being held.
-         */
-        SemaphoreHandle_t _mutex;
-    };
-} // namespace
 
 /**
  *  @brief Mutex guarding _defaultAccessPoint and _password.
@@ -267,7 +215,7 @@ const char *WiFiRequestHandler::COUNTRY_CODE_NAME = "CountryCode";
 /**
  * @brief Country code for the WiFi configuration.
  */
-const char *WiFiRequestHandler::_countryCode = nullptr;
+std::atomic<const char *> WiFiRequestHandler::_countryCode(nullptr);
 
 /**
  *  @brief Name of the NTP server to be used when using NTP to set the time
@@ -293,7 +241,7 @@ const char *WiFiRequestHandler::_timezone = "UTC";
 /**
  *  @brief Static IP address when not using DHCP.
  */
-uint32_t WiFiRequestHandler::_staticIpAddress = 0;
+std::atomic<uint32_t> WiFiRequestHandler::_staticIpAddress(0);
 
 /**
  *  @brief Name of the storage space holding the static IP address.
@@ -303,7 +251,7 @@ const char *WiFiRequestHandler::STATIC_IP_ADDRESS_NAME = "IpAddress";
 /**
  *  @brief Static subnet mask when not using DHCP.
  */
-uint32_t WiFiRequestHandler::_staticSubNetMask = 0;
+std::atomic<uint32_t> WiFiRequestHandler::_staticSubNetMask(0);
 
 /**
  *  @brief Name of the storage space holding the static subnet mask.
@@ -313,7 +261,7 @@ const char *WiFiRequestHandler::STATIC_SUBNET_MASK_NAME = "SubnetMask";
 /**
  *  @brief DNS server when not using DHCP.
  */
-uint32_t WiFiRequestHandler::_dnsServer = 0;
+std::atomic<uint32_t> WiFiRequestHandler::_dnsServer(0);
 
 /**
  *  @brief Name of the storage in NVS holding the DNS server IP address.
@@ -323,7 +271,7 @@ const char *WiFiRequestHandler::DNS_SERVER_NAME = "DnsServer";
 /**
  *  @brief IP address of the default gateway when not using DHCP.
  */
-uint32_t WiFiRequestHandler::_defaultGateway = 0;
+std::atomic<uint32_t> WiFiRequestHandler::_defaultGateway(0);
 
 /**
  *  @brief Name of the storage space holding the IP address of the default gateway.
@@ -358,7 +306,7 @@ bool WiFiRequestHandler::_softApMacAddressOverrideIsSet = false;
 /**
  *  @brief Default value for the WiFi timeout.
  */
-uint32_t WiFiRequestHandler::_wifiTimeout = 30000;
+std::atomic<uint32_t> WiFiRequestHandler::_wifiTimeout(30000);
 
 /**
  *  @brief Name of the storage space holding the default WiFi timeout.
@@ -395,26 +343,39 @@ WiFiRequestHandler::WiFiRequestHandler()
     //  Get configuration from NVS.
     //
     {
-        CredentialsLock lock(CredentialsMutex());
+        MutexLock lock(CredentialsMutex());
         _defaultAccessPoint = const_cast<char *>(SystemRequestHandler::GetConfigurationValue(DEFAULT_ACCESS_POINT_NAME, _defaultAccessPoint));
         _password = const_cast<char *>(SystemRequestHandler::GetConfigurationValue(PASSWORD_NAME, _password));
     }
     _stationNetIfHandle = nullptr;
     _softApNetIfHandle = nullptr;
-    _countryCode = SystemRequestHandler::GetConfigurationValue(COUNTRY_CODE_NAME, _validCountryCodes[0]);
-    if (!IsValidCountryCode(_countryCode))
     {
         //
-        //  NVS held a country code that predates _validCountryCodes, or was corrupted, or
-        //  written by another code path.  Fall back to the default rather than carrying an
-        //  unvalidated value into esp_wifi_set_country_code().
+        //  GetConfigurationValue returns a copy on the heap, or the default itself when NVS
+        //  holds nothing.  Only the matching entry of _validCountryCodes is kept, so the copy
+        //  is released here rather than held.
         //
-        ERROR_MESSAGE("WiFiRequestHandler: NVS held an invalid country code (%s); using the default.", (_countryCode == nullptr) ? "<null>" : _countryCode);
-        _countryCode = _validCountryCodes[0];
+        const char *stored = SystemRequestHandler::GetConfigurationValue(COUNTRY_CODE_NAME, _validCountryCodes[0]);
+        const char *countryCode = FindCountryCode(stored);
+        if (countryCode == nullptr)
+        {
+            //
+            //  NVS held a country code that predates _validCountryCodes, or was corrupted, or
+            //  written by another code path.  Fall back to the default rather than carrying an
+            //  unvalidated value into esp_wifi_set_country_code().
+            //
+            ERROR_MESSAGE("WiFiRequestHandler: NVS held an invalid country code (%s); using the default.", (stored == nullptr) ? "<null>" : stored);
+            countryCode = _validCountryCodes[0];
+        }
+        if ((stored != nullptr) && (stored != _validCountryCodes[0]))
+        {
+            Utils::DeleteAndNullifyPointer(stored);
+        }
+        _countryCode = countryCode;
+        TRACE_MESSAGE("WiFiRequestHandler: Country code is %s", countryCode);
     }
-    TRACE_MESSAGE("WiFiRequestHandler: Country code is %s", _countryCode);
     _maximumRetryCount = SystemRequestHandler::GetConfigurationValue(MAXIMUM_RETRY_COUNT_NAME, static_cast<uint32_t>(DEFAULT_MAXIMUM_RETRY_COUNT));
-    TRACE_MESSAGE("WiFiRequestHandler: Maximum retry count is %" PRIu32, _maximumRetryCount);
+    TRACE_MESSAGE("WiFiRequestHandler: Maximum retry count is %" PRIu32, _maximumRetryCount.load());
     //
     //  Setup the timezones ready for when we get the time from a timeserver.
     //
@@ -448,8 +409,6 @@ WiFiRequestHandler::WiFiRequestHandler()
     //
     ClearIpAndDisconnectData();
     memset(&_apInformation, 0, sizeof(wifi_event_sta_connected_t));
-    _lastIdfErrorCode = ESP_OK;
-    _ipChanged = false;
     _progressiveDelay = new ProgressiveDelay();
     WiFiRequestHandler::_emptyString[0] = 0;
 }
@@ -495,7 +454,8 @@ WiFiRequestHandler::~WiFiRequestHandler()
  */
 uint32_t WiFiRequestHandler::GetMaximumRetryCount()
 {
-    return (_maximumRetryCount == 0 ? 3 : _maximumRetryCount);
+    const uint32_t maximumRetryCount = _maximumRetryCount.load();
+    return ((maximumRetryCount == 0) ? 3 : maximumRetryCount);
 }
 
 /**
@@ -609,7 +569,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetUseDhcp(bool value)
  */
 std::string WiFiRequestHandler::GetDefaultAccessPoint()
 {
-    CredentialsLock lock(CredentialsMutex());
+    MutexLock lock(CredentialsMutex());
     return ((_defaultAccessPoint == nullptr) ? std::string() : std::string(_defaultAccessPoint));
 }
 
@@ -629,7 +589,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetDefaultAccessPoint(const char *v
     //  Held for the comparison, the NVS write and the swap, so no reader copies the old
     //  string while it is being released.
     //
-    CredentialsLock lock(CredentialsMutex());
+    MutexLock lock(CredentialsMutex());
     TRACE_MESSAGE("WiFiRequestHandler::SetDefaultAccessPoint %s", (value == nullptr) ? "NULL" : value);
     StatusCodes::StatusCodes result = StatusCodes::Failure;
 
@@ -688,7 +648,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetDefaultAccessPoint(const char *v
  */
 std::string WiFiRequestHandler::GetPassword()
 {
-    CredentialsLock lock(CredentialsMutex());
+    MutexLock lock(CredentialsMutex());
     return ((_password == nullptr) ? std::string() : std::string(_password));
 }
 
@@ -708,7 +668,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetPassword(const char *value)
     //  Held for the comparison, the NVS write and the swap, so no reader copies the old
     //  string while it is being released.
     //
-    CredentialsLock lock(CredentialsMutex());
+    MutexLock lock(CredentialsMutex());
     TRACE_MESSAGE("WiFiRequestHandler::SetPassword %s", (value == nullptr) ? "NULL" : value);
     StatusCodes::StatusCodes result = StatusCodes::Failure;
 
@@ -764,7 +724,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetPassword(const char *value)
  */
 const char *WiFiRequestHandler::GetCountryCode()
 {
-    return (WiFiRequestHandler::_countryCode);
+    return (WiFiRequestHandler::_countryCode.load());
 }
 
 /**
@@ -778,7 +738,22 @@ const char *WiFiRequestHandler::GetCountryCode()
  */
 bool WiFiRequestHandler::IsValidCountryCode(const char *code)
 {
-    bool result = false;
+    return (FindCountryCode(code) != nullptr);
+}
+
+/**
+ *  @brief Find the entry of _validCountryCodes matching the given country code.
+ *
+ *  @param code
+ *      Country code to look up, which may be nullptr.
+ *
+ *  @returns
+ *      The matching entry of _validCountryCodes, which is never released, or nullptr if code
+ *      is not one of them.
+ */
+const char *WiFiRequestHandler::FindCountryCode(const char *code)
+{
+    const char *result = nullptr;
 
     if (code != nullptr)
     {
@@ -786,7 +761,7 @@ bool WiFiRequestHandler::IsValidCountryCode(const char *code)
         {
             if (!strcmp(code, WiFiRequestHandler::_validCountryCodes[countryCodeIndex]))
             {
-                result = true;
+                result = WiFiRequestHandler::_validCountryCodes[countryCodeIndex];
                 break;
             }
         }
@@ -808,28 +783,21 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetCountryCode(const char *value)
     TRACE_MESSAGE("WiFiRequestHandler::SetCountryCode %s", (value == nullptr) ? "NULL" : value);
     StatusCodes::StatusCodes result = StatusCodes::InvalidCountryCode;
 
-    if ((value != nullptr) && (_countryCode != nullptr) && !strcmp(value, _countryCode))
+    //
+    //  The code kept is the matching entry of _validCountryCodes, which is never released,
+    //  so a reader on another task can never be left holding a freed string (issue #168).
+    //
+    const char *countryCode = FindCountryCode(value);
+    if ((countryCode != nullptr) && (countryCode == _countryCode.load()))
     {
         result = StatusCodes::CompletedOk;
     }
     else
     {
-        if (IsValidCountryCode(value))
+        if ((countryCode != nullptr) && (SystemRequestHandler::SetConfigurationValue(COUNTRY_CODE_NAME, countryCode) == NvsManager::ErrorCodes::Ok))
         {
-            if (SystemRequestHandler::SetConfigurationValue(COUNTRY_CODE_NAME, value) == NvsManager::ErrorCodes::Ok)
-            {
-                const char *previousCountryCode = _countryCode;
-                _countryCode = SystemRequestHandler::GetConfigurationValue(COUNTRY_CODE_NAME, WiFiRequestHandler::_validCountryCodes[0]);
-                //
-                //  _validCountryCodes[0] is not on the heap and must not be released; it is the only
-                //  literal GetConfigurationValue can hand back here, so anything else came from NVS.
-                //
-                if ((previousCountryCode != nullptr) && (previousCountryCode != WiFiRequestHandler::_validCountryCodes[0]))
-                {
-                    Utils::DeleteAndNullifyPointer(previousCountryCode);
-                }
-                result = StatusCodes::CompletedOk;
-            }
+            _countryCode = countryCode;
+            result = StatusCodes::CompletedOk;
         }
     }
     return (result);
@@ -966,6 +934,21 @@ void WiFiRequestHandler::GetMacAddress(uint8_t * const macAddress, wifi_interfac
 }
 
 /**
+ *  @brief Mutex guarding _stationMacAddressOverride and _stationMacAddressOverrideIsSet.
+ *
+ *  A function-local static is created exactly once, on first use, even when several tasks
+ *  get here at the same time.
+ *
+ *  @returns
+ *      The station MAC address override mutex.
+ */
+SemaphoreHandle_t WiFiRequestHandler::StationMacAddressOverrideMutex()
+{
+    static const SemaphoreHandle_t mutex = xSemaphoreCreateMutex();
+    return (mutex);
+}
+
+/**
  *  @brief Set the MAC address of the board.
  *
  *  @note esp_wifi_set_mac() can only be called once the WiFi driver is initialised and the
@@ -993,6 +976,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetMacAddress(const uint8_t * const
     {
         if (interface == WIFI_IF_STA)
         {
+            MutexLock lock(StationMacAddressOverrideMutex());
             memcpy(_stationMacAddressOverride, macAddress, sizeof(_stationMacAddressOverride));
             _stationMacAddressOverrideIsSet = true;
         }
@@ -1297,7 +1281,7 @@ void WiFiRequestHandler::RaiseNetworkConnectingEvent()
 {
     TRACE_MESSAGE("RaiseNetworkConnectingEvent: Enter");
 
-    SendIntegerResult(Esp32Interfaces::WiFi, WiFiFunction::NetworkConnectingEvent, StatusCodes::CompletedOk, _currentRetryCount);
+    SendIntegerResult(Esp32Interfaces::WiFi, WiFiFunction::NetworkConnectingEvent, StatusCodes::CompletedOk, _currentRetryCount.load());
 
     TRACE_MESSAGE("RaiseNetworkConnectingEvent: Exit");
 }
@@ -1309,7 +1293,7 @@ void WiFiRequestHandler::RaiseNetworkRetryCountExceededEvent()
 {
     TRACE_MESSAGE("RaiseNetworkRetryCountExceededEvent: Enter");
 
-    SendIntegerResult(Esp32Interfaces::WiFi, WiFiFunction::NetworkConnectionRetryCountExceededEvent, StatusCodes::CompletedOk, _currentRetryCount);
+    SendIntegerResult(Esp32Interfaces::WiFi, WiFiFunction::NetworkConnectionRetryCountExceededEvent, StatusCodes::CompletedOk, _currentRetryCount.load());
 
     TRACE_MESSAGE("RaiseNetworkRetryCountExceededEvent: Exit");
 }
@@ -1926,7 +1910,6 @@ StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const Esp32Mes
     }
 
     _currentRetryCount = 0;
-    _lastIdfErrorCode = ESP_OK;
     ClearIpAndDisconnectData();
     if (!(bits & WIFI_INTERFACE_STARTED_BIT))
     {
@@ -1968,20 +1951,17 @@ StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const Esp32Mes
             wifi_config.sta.pmf_cfg = {.capable = true, .required = false};
             memcpy(wifi_config.sta.ssid, accessPointInformation->NetworkName, strlen(accessPointInformation->NetworkName));
             memcpy(wifi_config.sta.password, password, strlen(password));
-            // _lastIdfErrorCode = esp_wifi_set_mode(WIFI_MODE_STA);
-            if (_lastIdfErrorCode == ESP_OK)
+            //
+            //  A local rather than a member: StationStartedEvent runs on the event loop while
+            //  this runs on the WiFi task, and a shared value could be overwritten between
+            //  these calls (issue #168).
+            //
+            esp_err_t idfResult = esp_wifi_set_config(WIFI_IF_STA, &wifi_config);
+            if (idfResult == ESP_OK)
             {
-                _lastIdfErrorCode = esp_wifi_set_config(WIFI_IF_STA, &wifi_config);
+                idfResult = esp_wifi_connect();
             }
-            // if (_lastIdfErrorCode == ESP_OK)
-            // {
-            //     _lastIdfErrorCode = esp_wifi_start();
-            // }
-            if (_lastIdfErrorCode == ESP_OK)
-            {
-                _lastIdfErrorCode = esp_wifi_connect();
-            }
-            if (_lastIdfErrorCode == ESP_OK)
+            if (idfResult == ESP_OK)
             {
                 bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_HAVE_IP_BIT | WIFI_ERROR_BIT, pdFALSE, pdFALSE, GetWiFiTimeout() / portTICK_PERIOD_MS);
                 if (bits & WIFI_ERROR_BIT)
@@ -2003,7 +1983,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const Esp32Mes
             else
             {
                 int32_t found;
-                result = static_cast<StatusCodes::StatusCodes>(Mapping::GetStmValue(Mapping::EspErrorCodes, static_cast<int32_t>(_lastIdfErrorCode), &found));
+                result = static_cast<StatusCodes::StatusCodes>(Mapping::GetStmValue(Mapping::EspErrorCodes, static_cast<int32_t>(idfResult), &found));
             }
         }
     }
@@ -2065,7 +2045,6 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
             TRACE_MESSAGE("Failed to connect to access point, code: %" PRIu8, _disconnectData.reason);
             data.Reason = _disconnectData.reason;
             ClearIpAndDisconnectData();
-            _lastIdfErrorCode = ESP_OK;
         }
         message->PayloadLength = Encoders::EncodedConnectEventDataBufferSize(&data);
         message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
@@ -2145,7 +2124,6 @@ void WiFiRequestHandler::ConnectToDefaultAccessPoint(Message *message)
             memcpy(static_cast<void *>(data.Bssid), static_cast<void *>(_disconnectData.bssid), sizeof(data.Bssid));
             data.Reason = _disconnectData.reason;
             ClearIpAndDisconnectData();
-            _lastIdfErrorCode = ESP_OK;
         }
     }
     else
@@ -2299,7 +2277,7 @@ esp_err_t WiFiRequestHandler::StartWiFiInterface(const wifi_mode_t mode, const E
             //  _countryCode is validated on both read (constructor) and write
             //  (SetCountryCode), so it is always one of _validCountryCodes here.
             //
-            result = esp_wifi_set_country_code(_countryCode, false);
+            result = esp_wifi_set_country_code(_countryCode.load(), false);
         }
 
         if (result == ESP_OK)
@@ -2317,9 +2295,23 @@ esp_err_t WiFiRequestHandler::StartWiFiInterface(const wifi_mode_t mode, const E
             result = esp_wifi_set_mode(mode);
         }
 
-        if ((result == ESP_OK) && _stationMacAddressOverrideIsSet && ((mode == WIFI_MODE_STA) || (mode == WIFI_MODE_APSTA)))
+        if ((result == ESP_OK) && ((mode == WIFI_MODE_STA) || (mode == WIFI_MODE_APSTA)))
         {
-            result = esp_wifi_set_mac(WIFI_IF_STA, _stationMacAddressOverride);
+            //
+            //  Copied under the lock, so a SetMacAddress on the System task cannot leave half
+            //  an old address and half a new one to apply.
+            //
+            uint8_t stationMacAddress[sizeof(_stationMacAddressOverride)];
+            bool stationMacAddressIsSet = false;
+            {
+                MutexLock lock(StationMacAddressOverrideMutex());
+                stationMacAddressIsSet = _stationMacAddressOverrideIsSet;
+                memcpy(stationMacAddress, _stationMacAddressOverride, sizeof(stationMacAddress));
+            }
+            if (stationMacAddressIsSet)
+            {
+                result = esp_wifi_set_mac(WIFI_IF_STA, stationMacAddress);
+            }
         }
 
         if ((result == ESP_OK) && _softApMacAddressOverrideIsSet && ((mode == WIFI_MODE_AP) || (mode == WIFI_MODE_APSTA)))
@@ -2499,7 +2491,6 @@ void WiFiRequestHandler::StationGotIpEvent(ip_event_got_ip_t *eventData)
     TRACE_MESSAGE("StationGotIpEvent: Enter");
     _currentRetryCount = 0;
     memcpy(&_ipInformation, &eventData->ip_info, sizeof(esp_netif_ip_info_t));
-    _ipChanged = eventData->ip_changed;
 
     if (_useDhcp)
     {
@@ -2517,13 +2508,12 @@ void WiFiRequestHandler::StationGotIpEvent(ip_event_got_ip_t *eventData)
 void WiFiRequestHandler::StationStartedEvent()
 {
     TRACE_MESSAGE("StationStartedEvent: Enter");
-    const char *deviceName = SystemRequestHandler::GetDeviceName();
-    if (deviceName == nullptr)
-    {
-        deviceName = "Meadow";
-    }
-    _lastIdfErrorCode = esp_netif_set_hostname(_stationNetIfHandle, deviceName);
-    if (_lastIdfErrorCode != ESP_OK)
+    //
+    //  A copy, as the System task can replace the stored name at any time (issue #168).
+    //
+    const std::string deviceName = SystemRequestHandler::GetDeviceName();
+    const esp_err_t hostnameResult = esp_netif_set_hostname(_stationNetIfHandle, deviceName.empty() ? "Meadow" : deviceName.c_str());
+    if (hostnameResult != ESP_OK)
     {
         xEventGroupClearBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTED_BIT | WIFI_INTERFACE_STARTING_BIT | WIFI_CONNECTING_BIT);
         xEventGroupSetBits(_xWiFiEventGroup, WIFI_ERROR_BIT);
@@ -2604,14 +2594,19 @@ void WiFiRequestHandler::StationDisconnectedEvent(wifi_event_sta_disconnected_t 
             _currentRetryCount = 0;
             RaiseDisconnectEvent();
         }
-        if (GetAutomaticReconnect() && (_currentRetryCount < maximumRetryCount))
+        //
+        //  Read once, so the check, the first-attempt test and the trace all see the same
+        //  count even if the WiFi task resets it meanwhile.
+        //
+        const uint32_t retryCount = _currentRetryCount.load();
+        if (GetAutomaticReconnect() && (retryCount < maximumRetryCount))
         {
-            TRACE_MESSAGE("StationDisconnectedEvent: Reconnecting, retry count %" PRIi32 ", maximum %" PRIu32, _currentRetryCount, maximumRetryCount);
+            TRACE_MESSAGE("StationDisconnectedEvent: Reconnecting, retry count %" PRIu32 ", maximum %" PRIu32, retryCount, maximumRetryCount);
             //
             //  the system is configured to automatically reconnect and we have not exceeded the retry count.
             //
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_CONNECTING_BIT);
-            if (_currentRetryCount == 0)
+            if (retryCount == 0)
             {
                 RaiseNetworkConnectingEvent();
                 _progressiveDelay->Restart();
@@ -2624,7 +2619,7 @@ void WiFiRequestHandler::StationDisconnectedEvent(wifi_event_sta_disconnected_t 
         }
         else
         {
-            TRACE_MESSAGE("StationDisconnectedEvent: Not reconnecting, retry count %" PRIi32 ", maximum %" PRIu32, _currentRetryCount, maximumRetryCount);
+            TRACE_MESSAGE("StationDisconnectedEvent: Not reconnecting, retry count %" PRIu32 ", maximum %" PRIu32, retryCount, maximumRetryCount);
             //
             //  Here we were connected or we have been trying to connect and there two possibilities:
             //      1.  We are not configured to automatically reconnect.

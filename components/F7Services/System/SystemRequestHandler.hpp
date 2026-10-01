@@ -51,8 +51,16 @@ private:
 
     /**
      *  @brief Name of the device on the network.
+     *
+     *  Set on the System task and read on others, such as the event loop when the WiFi
+     *  station starts, so it is only touched with DeviceNameMutex() held (issue #168).
      */
     static char *_deviceName;
+
+    /**
+     *  @brief Mutex guarding _deviceName.
+     */
+    static SemaphoreHandle_t DeviceNameMutex();
 
     /**
      *  @brief Name of the storage in NVS holding the name of the device.
@@ -147,7 +155,7 @@ private:
     /**
      *  @brief Populate the configuration object with the current configuration.
      */
-    static void PopulateConfiguration(Esp32Messaging::SystemConfiguration *config, std::string &defaultAccessPoint);
+    static void PopulateConfiguration(Esp32Messaging::SystemConfiguration *config, std::string &defaultAccessPoint, std::string &deviceName);
 
     /**
      * @brief Configure ADC1 for battery level monitoring.
@@ -233,8 +241,11 @@ public:
 
     /**
      *  @brief Get / Set the name of the device on the network.
+     *
+     *  GetDeviceName returns a copy, as the name held here can be replaced from another
+     *  task at any time.  It is empty if no name is held.
      */
-    static char *GetDeviceName();
+    static std::string GetDeviceName();
     static StatusCodes::StatusCodes SetDeviceName(char *);
 
     /**

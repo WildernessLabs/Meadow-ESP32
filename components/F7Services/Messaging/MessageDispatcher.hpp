@@ -9,6 +9,9 @@
 
 #pragma once
 
+#include "freertos/FreeRTOS.h"
+#include "freertos/event_groups.h"
+
 #include "Esp32Messaging.hpp"
 #include "IMessageDispatcher.hpp"
 #include "TransportProviderBase.hpp"
@@ -64,6 +67,22 @@ private:
      *  at any time.
      */
     SemaphoreHandle_t _messageIdMutex;
+
+    /**
+     *  @brief Set once all of the request handlers exist.
+     *
+     *  The transport provider's task starts taking requests from the STM32 as soon as it is
+     *  set up, which has to happen before the handlers are created as they can queue
+     *  messages for the STM32 while they start.  Requests wait on this rather than finding
+     *  no handler to give them to (issue #168).  Setting and waiting on the bit also makes
+     *  the handler pointers visible to the transport provider's task.
+     */
+    EventGroupHandle_t _handlersReady;
+
+    /**
+     *  @brief Bit in _handlersReady set once the request handlers have been created.
+     */
+    static constexpr EventBits_t HANDLERS_READY_BIT = BIT0;
 
     /**
      *  @brief Last message ID that was granted by the system.  This always defaults

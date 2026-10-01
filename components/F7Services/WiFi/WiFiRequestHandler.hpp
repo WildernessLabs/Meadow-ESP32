@@ -24,6 +24,7 @@
 
 #include "errno.h"
 #include <string.h>
+#include <atomic>
 #include <map>
 #include <string>
 #include <iterator>
@@ -75,6 +76,12 @@
  */
 class WiFiRequestHandler : public RequestHandlerBase
 {
+    //
+    //  AddAddrInfoHandle and TakeAddrInfoHandle are private; the tests drive them directly
+    //  from several tasks at once to check the handle table's locking (issue #168).
+    //
+    friend class TestAddrInfoHandles;
+
 private:
     /**
      *  @brief Hold the information about the originating poll request and the pollfd's.
@@ -245,15 +252,12 @@ private:
 
     /**
      *  @brief Current retry count.
-     */
-    uint32_t _currentRetryCount = 0;
-
-    /**
-     *  @brief Last error code from a call into the ESP IDF.
      *
-     *  This can be used to track errors when using events.
+     *  Reset on the WiFi task when a connection or scan starts, and reset, read and
+     *  incremented on the event loop as the station disconnects and reconnects, so it is
+     *  atomic (issue #168).
      */
-    esp_err_t _lastIdfErrorCode;
+    std::atomic<uint32_t> _currentRetryCount {0};
 
     /**
      *  @brief Information about the access point that we have connected to.
@@ -277,15 +281,12 @@ private:
     esp_netif_ip_info_t _ipInformation;
 
     /**
-     *  @brief Indicate if the IP address information has changed.
-     */
-    bool _ipChanged;
-
-    /**
      *  @brief Network Interface Handle for the board when running in station mode
      *  i.e. as a device connected to an access point.
+     *
+     *  Created and destroyed on the WiFi task, cleared on the event loop when the station stops, and read by the POSIX handlers on the thread pool, so it is atomic (issue #168).
      */
-    static esp_netif_t *_stationNetIfHandle;
+    static std::atomic<esp_netif_t *> _stationNetIfHandle;
 
     /**
      *  @brief Network Interface Handle for the board when it is acting as a soft
@@ -301,8 +302,10 @@ private:
     /**
      *  @brief Should the system automatically reconnect to an access point should there
      *  be a problem and the current connection is dropped.
+     *
+     *  Set on the System task and read on the WiFi task and the event loop, so it is atomic (issue #168).
      */
-    static bool _automaticReconnect;
+    static std::atomic<bool> _automaticReconnect;
 
     /**
      *  @brief Name of the NVS storage holding the _automaticReconnect value.
@@ -321,8 +324,10 @@ private:
 
     /**
      *  Maximum number of times a failed event should retry before raising an error.
+     *
+     *  Set on the System task and read on the WiFi task and the event loop, so it is atomic (issue #168).
      */
-    static uint32_t _maximumRetryCount;
+    static std::atomic<uint32_t> _maximumRetryCount;
 
     /**
      *  @brief Name of the NVS storage holding the _maximumRetryCount value.
@@ -348,8 +353,10 @@ private:
 
     /**
      *  @brief Indicate if we should use DHCP.
+     *
+     *  Set on the System task and read on the WiFi task and the event loop, so it is atomic (issue #168).
      */
-    static bool _useDhcp;
+    static std::atomic<bool> _useDhcp;
 
     /**
      *  @brief Name of the storage holding the _useDhcp configuration setting.
@@ -392,8 +399,12 @@ private:
 
     /**
      * @brief Country code for the WiFi configuration.
+     *
+     *  Always points at an entry of _validCountryCodes, never at a copy on the heap, so it
+     *  is never released.  It is set on the System task and read on the WiFi task, so it is
+     *  atomic, and a reader always sees one valid code or another (issue #168).
      */
-    static const char *_countryCode;
+    static std::atomic<const char *> _countryCode;
 
     /**
      * @brief Name of the storage in NVS holding the country code.
@@ -423,8 +434,10 @@ private:
 
     /**
      *  @brief Static IP address when not using DHCP.
+     *
+     *  Set on the System task and read on the WiFi task and the event loop, so it is atomic (issue #168).
      */
-    static uint32_t _staticIpAddress;
+    static std::atomic<uint32_t> _staticIpAddress;
 
     /**
      *  @brief Name of the storage space holding the static IP address.
@@ -433,8 +446,10 @@ private:
 
     /**
      *  @brief Static subnet mask when not using DHCP.
+     *
+     *  Set on the System task and read on the WiFi task and the event loop, so it is atomic (issue #168).
      */
-    static uint32_t _staticSubNetMask;
+    static std::atomic<uint32_t> _staticSubNetMask;
 
     /**
      * @brief Name of the storage holding the static subnet mask.
@@ -443,8 +458,10 @@ private:
 
     /**
      *  @brief DNS server when not using DHCP.
+     *
+     *  Set on the System task and read on the WiFi task and the event loop, so it is atomic (issue #168).
      */
-    static uint32_t _dnsServer;
+    static std::atomic<uint32_t> _dnsServer;
 
     /**
      *  @brief Name of the storage in NVS holding the DNS server IP address.
@@ -453,8 +470,10 @@ private:
 
     /**
      *  @brief IP address of the default gateway when not using DHCP.
+     *
+     *  Set on the System task and read on the WiFi task and the event loop, so it is atomic (issue #168).
      */
-    static uint32_t _defaultGateway;
+    static std::atomic<uint32_t> _defaultGateway;
 
     /**
      *  @brief Name of the storage space holding the IP address of the default gateway.
@@ -474,6 +493,14 @@ private:
     static bool _stationMacAddressOverrideIsSet;
 
     /**
+     *  @brief Mutex guarding _stationMacAddressOverride and _stationMacAddressOverrideIsSet.
+     *
+     *  SetMacAddress runs on the System task and StartWiFiInterface applies the address on
+     *  the WiFi task, and six bytes and a flag cannot be updated atomically (issue #168).
+     */
+    static SemaphoreHandle_t StationMacAddressOverrideMutex();
+
+    /**
      *  @brief Software access point MAC address requested through SetMacAddress, applied
      *      the next time the access point interface starts.  Only meaningful when
      *      _softApMacAddressOverrideIsSet is true.
@@ -488,8 +515,10 @@ private:
 
     /**
      *  @brief Default value for the WiFi timeout.
+     *
+     *  Set on the System task and read on the WiFi task and the event loop, so it is atomic (issue #168).
      */
-    static uint32_t _wifiTimeout;
+    static std::atomic<uint32_t> _wifiTimeout;
 
     /**
      *  @brief Name of the storage space holding the default WiFi timeout.
@@ -521,16 +550,6 @@ private:
      *  @brief Mutex for _socketHandles, which handlers on several pool threads use at once.
      */
     static SemaphoreHandle_t _socketHandlesMutex;
-
-    /**
-     *  @brief Handle for the completed poll requests.
-     */
-    static QueueHandle_t _completedPollRequestsQueue;
-
-    /**
-     *  @brief Method that will deal with completed poll requests.
-     */
-    TaskHandle_t _completedPollRequestsTaskHandle;
 
     /**
      * @brief Mutex for the list of connected nodes.
@@ -721,6 +740,18 @@ private:
     static bool IsValidCountryCode(const char *code);
 
     /**
+     *  @brief Find the entry of _validCountryCodes matching the given country code.
+     *
+     *  @param code
+     *      Country code to look up, which may be nullptr.
+     *
+     *  @returns
+     *      The matching entry of _validCountryCodes, which is never released, or nullptr if
+     *      code is not one of them.
+     */
+    static const char *FindCountryCode(const char *code);
+
+    /**
      *  @brief Convert the Antenna enum representation of an antenna into a GPIO pin number.
      */
     static gpio_num_t ConvertAntennaToPin(AntennaTypes::AntennaTypes antenna);
@@ -842,6 +873,11 @@ private:
      *  0 is never assigned, so it doubles as an unambiguous "no handle" value.
      */
     static uint32_t _nextAddrInfoHandle;
+
+    /**
+     *  @brief Mutex for _addrInfoHandles and _nextAddrInfoHandle.
+     */
+    static SemaphoreHandle_t AddrInfoHandlesMutex();
 
     /**
      * @brief Record addressInformation under a new handle for a later FreeAddrInfo call

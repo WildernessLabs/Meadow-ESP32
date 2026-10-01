@@ -10,6 +10,8 @@
 #pragma once
 
 #include "cJSON.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/semphr.h"
 
 #include "BluetoothServiceCollection.hpp"
 #include "BluetoothAttribute.hpp"
@@ -112,6 +114,16 @@ private:
      * @brief Map of the values for the BluetoothManager along with their IDs.
      */
     std::map<uint16_t, length_val_s> _valueMap;
+
+    /**
+     *  @brief Recursive mutex guarding _valueMap and the handles in Services.
+     *
+     *  The value map and the handles are used both on the Bluetooth task, as requests from
+     *  the STM32 arrive, and on the Bluedroid task, as a client reads a value or the stack
+     *  hands back the attribute table's handles.  Recursive, as BuildGraphFromJson calls
+     *  DeleteAllServices while holding it (issue #168).
+     */
+    SemaphoreHandle_t _graphMutex;
 
     /**
      * @brief Debug company identifier if none is specified.

@@ -207,3 +207,31 @@ TEST_CASE("Maximum retry count can be set and read back", CLASS_OF_TESTS)
     TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, WiFiRequestHandler::SetMaximumRetryCount(original));
     TEST_ASSERT_EQUAL(original, WiFiRequestHandler::GetMaximumRetryCount());
 }
+
+/**
+ * @brief Check that a country code read before the code changes can still be read after.
+ *
+ *  SetCountryCode runs on the System task while StartWiFiInterface passes the code to the
+ *  WiFi driver on the WiFi task.  The code used to be a copy on the heap that SetCountryCode
+ *  released as soon as it stored the next one, so a reader holding it was left with freed
+ *  memory (issue #168).  It is now always one of the handler's own fixed strings.  "GB" is
+ *  set first because in the old code that was the case where a heap copy was held.
+ */
+TEST_CASE("A country code read before a change can still be read after it", CLASS_OF_TESTS)
+{
+    EnsureRequestHandler();
+
+    char original[8];
+    snprintf(original, sizeof(original), "%s", WiFiRequestHandler::GetCountryCode());
+
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, WiFiRequestHandler::SetCountryCode(COUNTRY_CODE_HIDDEN_APS));
+    const char * const held = WiFiRequestHandler::GetCountryCode();
+    TEST_ASSERT_EQUAL_STRING(COUNTRY_CODE_HIDDEN_APS, held);
+
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, WiFiRequestHandler::SetCountryCode(COUNTRY_CODE_DEFAULT));
+    TEST_ASSERT_EQUAL_STRING(COUNTRY_CODE_DEFAULT, WiFiRequestHandler::GetCountryCode());
+    TEST_ASSERT_EQUAL_STRING_MESSAGE(COUNTRY_CODE_HIDDEN_APS, held, "A country code read before the change was released by it.");
+
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, WiFiRequestHandler::SetCountryCode(original));
+    TEST_ASSERT_EQUAL_STRING(original, WiFiRequestHandler::GetCountryCode());
+}

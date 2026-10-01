@@ -15,6 +15,7 @@
 #include "WiFiRequestHandler.hpp"
 #include "Mapping.hpp"
 #include "Utils.hpp"
+#include "MutexLock.hpp"
 #include "SystemRequestHandler.hpp"
 #include "Exceptions/ThreadPoolException.hpp"
 
@@ -38,6 +39,23 @@ std::map<uint32_t, struct addrinfo *> WiFiRequestHandler::_addrInfoHandles;
  */
 uint32_t WiFiRequestHandler::_nextAddrInfoHandle = 1;
 
+/**
+ * @brief Mutex for _addrInfoHandles and _nextAddrInfoHandle.
+ *
+ *  GetAddrInfo and FreeAddrInfo run on thread pool workers, and the WiFi task hands the next
+ *  request to the pool without waiting for the last one, so several can change the map at
+ *  once (issue #168).  A function-local static is created exactly once, on first use, even
+ *  when several tasks get here together.
+ *
+ * @returns
+ *      The mutex.
+ */
+SemaphoreHandle_t WiFiRequestHandler::AddrInfoHandlesMutex()
+{
+    static const SemaphoreHandle_t mutex = xSemaphoreCreateMutex();
+    return (mutex);
+}
+
 /*
  * ----------------------------------------------------------------------------
  *
@@ -58,6 +76,7 @@ uint32_t WiFiRequestHandler::_nextAddrInfoHandle = 1;
  */
 uint32_t WiFiRequestHandler::AddAddrInfoHandle(struct addrinfo * const addressInformation)
 {
+    MutexLock lock(AddrInfoHandlesMutex());
     const uint32_t handle = _nextAddrInfoHandle;
 
     _nextAddrInfoHandle++;
@@ -88,6 +107,7 @@ struct addrinfo *WiFiRequestHandler::TakeAddrInfoHandle(const uint32_t handle)
 {
     struct addrinfo *result = nullptr;
 
+    MutexLock lock(AddrInfoHandlesMutex());
     auto entry = _addrInfoHandles.find(handle);
     if (entry != _addrInfoHandles.end())
     {
@@ -108,19 +128,33 @@ struct addrinfo *WiFiRequestHandler::TakeAddrInfoHandle(const uint32_t handle)
  */
 StatusCodes::StatusCodes WiFiRequestHandler::GetAddrInfo(Esp32Messaging::GetAddrInfoRequest * const request, Esp32Messaging::GetAddrInfoResponse * const response)
 {
-    Esp32Messaging::AddrInfo *extractedHints = Encoders::ExtractAddrInfo(request->Hints);
-    Utils::DeleteAndNullifyPointer(request->Hints);
-
-    if (extractedHints == nullptr)
-    {
-        return (StatusCodes::EspOutOfMemory);
-    }
-
+    //
+    //  POSIX allows getaddrinfo with no hints, and a request without them used to crash
+    //  here, as ExtractAddrInfo read the hints without checking there were any.  A request
+    //  with no hints now passes NULL, which getaddrinfo treats as asking for any family,
+    //  socket type and protocol.
+    //
     struct addrinfo hints = {};
-    hints.ai_family = extractedHints->Family;
-    hints.ai_socktype = extractedHints->SocketType;
+    const bool hasHints = (request->Hints != nullptr) && (request->HintsLength > 0);
+    if (hasHints)
+    {
+        Esp32Messaging::AddrInfo *extractedHints = Encoders::ExtractAddrInfo(request->Hints);
+        Utils::DeleteAndNullifyPointer(request->Hints);
 
-    Encoders::FreeAddrInfo(&extractedHints);
+        if (extractedHints == nullptr)
+        {
+            return (StatusCodes::EspOutOfMemory);
+        }
+
+        hints.ai_family = extractedHints->Family;
+        hints.ai_socktype = extractedHints->SocketType;
+
+        Encoders::FreeAddrInfo(&extractedHints);
+    }
+    else
+    {
+        Utils::DeleteAndNullifyPointer(request->Hints);
+    }
     //
     //  This will hold a pointer to a chain of one or more addrinfo structures.
     //
@@ -129,7 +163,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetAddrInfo(Esp32Messaging::GetAddr
     //  memory.
     //
     struct addrinfo *addressInformation = nullptr;
-    int errorCode = getaddrinfo(request->NodeName, request->ServName, &hints, &addressInformation);
+    int errorCode = getaddrinfo(request->NodeName, request->ServName, hasHints ? &hints : NULL, &addressInformation);
 
     response->AddrInfoResponseErrno = Mapping::NuttxErrno(errorCode);
     if ((errorCode == 0) || (addressInformation != NULL))
