@@ -408,7 +408,10 @@ WiFiRequestHandler::WiFiRequestHandler()
     //  Finally set some default values for private fields.
     //
     ClearIpAndDisconnectData();
-    memset(&_apInformation, 0, sizeof(wifi_event_sta_connected_t));
+    {
+        MutexLock lock(EventStateMutex());
+        memset(&_apInformation, 0, sizeof(wifi_event_sta_connected_t));
+    }
     _progressiveDelay = new ProgressiveDelay();
     WiFiRequestHandler::_emptyString[0] = 0;
 }
@@ -1069,12 +1072,40 @@ WiFiRequestHandler *WiFiRequestHandler::GetInstance()
 }
 
 /**
+ *  @brief Mutex guarding _apInformation, _disconnectData and _ipInformation.
+ *
+ *  A function-local static is created exactly once, on first use, even when several tasks
+ *  get here at the same time.
+ *
+ *  @returns
+ *      The event state mutex.
+ */
+SemaphoreHandle_t WiFiRequestHandler::EventStateMutex()
+{
+    static const SemaphoreHandle_t mutex = xSemaphoreCreateMutex();
+    return (mutex);
+}
+
+/**
+ *  @brief Get a copy of the data from the most recent disconnection.
+ *
+ *  @returns
+ *      Copy of _disconnectData, taken under EventStateMutex().
+ */
+wifi_event_sta_disconnected_t WiFiRequestHandler::GetDisconnectData()
+{
+    MutexLock lock(EventStateMutex());
+    return (_disconnectData);
+}
+
+/**
  *  @brief Clear the IP and disconnect data.
  */
 void WiFiRequestHandler::ClearIpAndDisconnectData()
 {
     if (_instance != nullptr)
     {
+        MutexLock lock(EventStateMutex());
         memset(&_instance->_disconnectData, 0, sizeof(_disconnectData));
         memset(&_instance->_ipInformation, 0, sizeof(_ipInformation));
     }
@@ -1181,18 +1212,29 @@ void WiFiRequestHandler::PopulateConnectionEventDataStructure(Esp32Messaging::Co
 
     *ed = {};
     //
+    //  Copied under the lock, so the IP and access point details all come from the same
+    //  events rather than some from an event that arrives part way through (issue #287).
+    //
+    esp_netif_ip_info_t ipInformation;
+    wifi_event_sta_connected_t apInformation;
+    {
+        MutexLock lock(EventStateMutex());
+        ipInformation = _ipInformation;
+        apInformation = _apInformation;
+    }
+    //
     //  IP information.
     //
-    memcpy(&ed->IpAddress, &_ipInformation.ip.addr, sizeof(ed->IpAddress));
-    memcpy(&ed->SubnetMask, &_ipInformation.netmask.addr, sizeof(ed->SubnetMask));
-    memcpy(&ed->Gateway, &_ipInformation.gw.addr, sizeof(ed->Gateway));
+    memcpy(&ed->IpAddress, &ipInformation.ip.addr, sizeof(ed->IpAddress));
+    memcpy(&ed->SubnetMask, &ipInformation.netmask.addr, sizeof(ed->SubnetMask));
+    memcpy(&ed->Gateway, &ipInformation.gw.addr, sizeof(ed->Gateway));
     //
     //  Access point information.
     //
-    memcpy(&ed->Ssid, _apInformation.ssid, _apInformation.ssid_len);
-    memcpy(&ed->Bssid, _apInformation.bssid, sizeof(ed->Bssid));
-    ed->Channel = _apInformation.channel;
-    Mapping::GetStmValue(Mapping::NetworkAuthenticationType, _apInformation.authmode, reinterpret_cast<int8_t *>(&ed->AuthenticationMode));
+    memcpy(&ed->Ssid, apInformation.ssid, apInformation.ssid_len);
+    memcpy(&ed->Bssid, apInformation.bssid, sizeof(ed->Bssid));
+    ed->Channel = apInformation.channel;
+    Mapping::GetStmValue(Mapping::NetworkAuthenticationType, apInformation.authmode, reinterpret_cast<int8_t *>(&ed->AuthenticationMode));
 
     TRACE_MESSAGE("PopulateConnectionEventDataStructure: Exit");
 }
@@ -1246,16 +1288,22 @@ void WiFiRequestHandler::RaiseDisconnectEvent()
     {
         memset(ed, 0, sizeof(Esp32Messaging::DisconnectEventData));
 
+        //
+        //  A copy taken under the lock, so the ssid, its length and the reason all come from
+        //  the same disconnection (issue #287).
+        //
+        const wifi_event_sta_disconnected_t disconnectData = GetDisconnectData();
+
         // Station information
         //
-        //  _disconnectData.ssid is 32 bytes, one shorter than ed->Ssid, so the copy length
+        //  disconnectData.ssid is 32 bytes, one shorter than ed->Ssid, so the copy length
         //  must come from the source, not sizeof(ed->Ssid); the memset above already
         //  NUL-terminates ed->Ssid.
         //
-        memcpy(&ed->Ssid, &_disconnectData.ssid, sizeof(_disconnectData.ssid));
-        memcpy(&ed->SsidLength, &_disconnectData.ssid_len, sizeof(ed->SsidLength));
-        memcpy(&ed->Bssid, &_disconnectData.bssid, sizeof(ed->Bssid));
-        memcpy(&ed->Reason, &_disconnectData.reason, sizeof(ed->Reason));
+        memcpy(&ed->Ssid, &disconnectData.ssid, sizeof(disconnectData.ssid));
+        memcpy(&ed->SsidLength, &disconnectData.ssid_len, sizeof(ed->SsidLength));
+        memcpy(&ed->Bssid, &disconnectData.bssid, sizeof(ed->Bssid));
+        memcpy(&ed->Reason, &disconnectData.reason, sizeof(ed->Reason));
 
         uint32_t payloadLength = Encoders::EncodeDisconnectEventDataBufferSize(ed);
         uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
@@ -2040,10 +2088,11 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
         }
         else
         {
-            memcpy(static_cast<void *>(data.Ssid), static_cast<void *>(_disconnectData.ssid), _disconnectData.ssid_len);
-            memcpy(static_cast<void *>(data.Bssid), static_cast<void *>(_disconnectData.bssid), sizeof(data.Bssid));
-            TRACE_MESSAGE("Failed to connect to access point, code: %" PRIu8, _disconnectData.reason);
-            data.Reason = _disconnectData.reason;
+            const wifi_event_sta_disconnected_t disconnectData = GetDisconnectData();
+            memcpy(static_cast<void *>(data.Ssid), static_cast<const void *>(disconnectData.ssid), disconnectData.ssid_len);
+            memcpy(static_cast<void *>(data.Bssid), static_cast<const void *>(disconnectData.bssid), sizeof(data.Bssid));
+            TRACE_MESSAGE("Failed to connect to access point, code: %" PRIu8, disconnectData.reason);
+            data.Reason = disconnectData.reason;
             ClearIpAndDisconnectData();
         }
         message->PayloadLength = Encoders::EncodedConnectEventDataBufferSize(&data);
@@ -2120,9 +2169,10 @@ void WiFiRequestHandler::ConnectToDefaultAccessPoint(Message *message)
         }
         else
         {
-            memcpy(static_cast<void *>(data.Ssid), static_cast<void *>(_disconnectData.ssid), _disconnectData.ssid_len);
-            memcpy(static_cast<void *>(data.Bssid), static_cast<void *>(_disconnectData.bssid), sizeof(data.Bssid));
-            data.Reason = _disconnectData.reason;
+            const wifi_event_sta_disconnected_t disconnectData = GetDisconnectData();
+            memcpy(static_cast<void *>(data.Ssid), static_cast<const void *>(disconnectData.ssid), disconnectData.ssid_len);
+            memcpy(static_cast<void *>(data.Bssid), static_cast<const void *>(disconnectData.bssid), sizeof(data.Bssid));
+            data.Reason = disconnectData.reason;
             ClearIpAndDisconnectData();
         }
     }
@@ -2490,7 +2540,10 @@ void WiFiRequestHandler::StationGotIpEvent(ip_event_got_ip_t *eventData)
 {
     TRACE_MESSAGE("StationGotIpEvent: Enter");
     _currentRetryCount = 0;
-    memcpy(&_ipInformation, &eventData->ip_info, sizeof(esp_netif_ip_info_t));
+    {
+        MutexLock lock(EventStateMutex());
+        memcpy(&_ipInformation, &eventData->ip_info, sizeof(esp_netif_ip_info_t));
+    }
 
     if (_useDhcp)
     {
@@ -2550,7 +2603,10 @@ void WiFiRequestHandler::StationStoppedEvent()
 void WiFiRequestHandler::StationConnectedEvent(wifi_event_sta_connected_t *eventData)
 {
     TRACE_MESSAGE("StationConnectedEvent: Enter");
-    memcpy(&_apInformation, eventData, sizeof(wifi_event_sta_connected_t));
+    {
+        MutexLock lock(EventStateMutex());
+        memcpy(&_apInformation, eventData, sizeof(wifi_event_sta_connected_t));
+    }
 
     xEventGroupClearBits(_xWiFiEventGroup, WIFI_CONNECTING_BIT);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT);
@@ -2570,7 +2626,10 @@ void WiFiRequestHandler::StationDisconnectedEvent(wifi_event_sta_disconnected_t 
 {
     TRACE_MESSAGE("StationDisconnectedEvent: Enter");
 
-    memcpy(&_disconnectData, eventData, sizeof(wifi_event_sta_disconnected_t));
+    {
+        MutexLock lock(EventStateMutex());
+        memcpy(&_disconnectData, eventData, sizeof(wifi_event_sta_disconnected_t));
+    }
 
     bool raiseDisconnectedEvent = true;
     EventBits_t bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT | WIFI_CONNECTING_BIT | WIFI_DISCONNECT_REQUESTED_BIT, pdFALSE, pdFALSE, 0);
@@ -2640,8 +2699,11 @@ void WiFiRequestHandler::StationDisconnectedEvent(wifi_event_sta_disconnected_t 
     if (raiseDisconnectedEvent)
     {
         RaiseDisconnectEvent();
-        memset(&_apInformation, 0, sizeof(wifi_event_sta_connected_t));
-        memset(&_ipInformation, 0, sizeof(_ipInformation));
+        {
+            MutexLock lock(EventStateMutex());
+            memset(&_apInformation, 0, sizeof(wifi_event_sta_connected_t));
+            memset(&_ipInformation, 0, sizeof(_ipInformation));
+        }
         xEventGroupClearBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT | WIFI_CONNECTING_BIT | WIFI_HAVE_IP_BIT);
         xEventGroupSetBits(_xWiFiEventGroup, WIFI_ERROR_BIT);
     }

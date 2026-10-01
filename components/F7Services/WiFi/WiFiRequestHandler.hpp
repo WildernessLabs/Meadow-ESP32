@@ -82,6 +82,12 @@ class WiFiRequestHandler : public RequestHandlerBase
     //
     friend class TestAddrInfoHandles;
 
+    //
+    //  The event structures are private; the tests write and read them from tasks on both
+    //  cores to check that readers never see a record torn between two events (issue #287).
+    //
+    friend class TestWiFiEventState;
+
 private:
     /**
      *  @brief Hold the information about the originating poll request and the pollfd's.
@@ -279,6 +285,21 @@ private:
      *  This will be filled with 0 at startup and when the device disconnects from an access point.
      */
     esp_netif_ip_info_t _ipInformation;
+
+    /**
+     *  @brief Mutex guarding _apInformation, _disconnectData and _ipInformation.
+     *
+     *  The structures are written by the WiFi and IP event handlers on the ESP-IDF event
+     *  loop and read on the WiFi task to build responses, so a reader could see, for
+     *  example, an ssid and an ssid_len from two different events (issue #287).  Every
+     *  access copies in or out under this mutex and uses the copy.
+     */
+    static SemaphoreHandle_t EventStateMutex();
+
+    /**
+     *  @brief Get a copy of the data from the most recent disconnection.
+     */
+    wifi_event_sta_disconnected_t GetDisconnectData();
 
     /**
      *  @brief Network Interface Handle for the board when running in station mode

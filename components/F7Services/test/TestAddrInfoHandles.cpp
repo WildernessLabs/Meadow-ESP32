@@ -96,6 +96,13 @@ struct HandleTaskContext
      * @brief Given once by each task when it has finished.
      */
     SemaphoreHandle_t Finished;
+
+    /**
+     * @brief Taken by each task before it starts, and given by the test once every task
+     *        exists, so they all run at once.  Without it a task at a higher priority than
+     *        the test runs to completion before the test creates the next one.
+     */
+    SemaphoreHandle_t Start;
 };
 
 /**
@@ -127,6 +134,7 @@ static void HandleTask(void *parameter)
     HandleTaskArguments *arguments = static_cast<HandleTaskArguments *>(parameter);
     HandleTaskContext *context = arguments->Context;
     const uintptr_t base = 0x10000000u + (arguments->Index * 0x01000000u);
+    xSemaphoreTake(context->Start, portMAX_DELAY);
 
     for (uint32_t iteration = 0; iteration < HANDLES_PER_TASK; iteration++)
     {
@@ -167,12 +175,18 @@ TEST_CASE("AddrInfo handles can be issued and taken back from several tasks at o
     context.RepeatTakes.store(0);
     context.Finished = xSemaphoreCreateCounting(HANDLE_TASKS, 0);
     TEST_ASSERT_NOT_NULL(context.Finished);
+    context.Start = xSemaphoreCreateCounting(HANDLE_TASKS, 0);
+    TEST_ASSERT_NOT_NULL(context.Start);
 
     for (uint32_t index = 0; index < HANDLE_TASKS; index++)
     {
         arguments[index].Context = &context;
         arguments[index].Index = index;
         TEST_ASSERT_EQUAL(pdPASS, xTaskCreatePinnedToCore(HandleTask, "AddrInfoHandles", 4096, &arguments[index], tskIDLE_PRIORITY + 5, nullptr, index % 2));
+    }
+    for (uint32_t index = 0; index < HANDLE_TASKS; index++)
+    {
+        xSemaphoreGive(context.Start);
     }
     for (uint32_t index = 0; index < HANDLE_TASKS; index++)
     {
@@ -185,4 +199,5 @@ TEST_CASE("AddrInfo handles can be issued and taken back from several tasks at o
     TEST_ASSERT_EQUAL_MESSAGE(heldAtStart, TestAddrInfoHandles::Count(), "The table holds handles that were taken back.");
 
     vSemaphoreDelete(context.Finished);
+    vSemaphoreDelete(context.Start);
 }
