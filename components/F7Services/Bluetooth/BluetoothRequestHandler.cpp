@@ -81,17 +81,10 @@ bool BluetoothRequestHandler::_responseDataConfigured = false;
 uint8_t BluetoothRequestHandler::_manufacturerData[2] = {};
 
 /**
- * @brief Dummy UUID for the advertising service.  This is taken from the ESP-IDF examples.
+ * @brief The Bluetooth base UUID, 0000xxxx-0000-1000-8000-00805F9B34FB, least significant
+ *        byte first.  A 16-bit UUID xxxx occupies bytes 12 and 13.
  */
-// clang-format off
-uint8_t BluetoothRequestHandler::_dummyAdvertisingServiceUuid[ADVERTISING_SERVICE_UUID_LENGTH] = {
-    /* LSB <--------------------------------------------------------------------------------> MSB */
-    // First UUID, 16bit, [12],[13] is the value
-    0xfb, 0x34, 0x9b, 0x5f, 0x80, 0x00, 0x00, 0x80, 0x00, 0x10, 0x00, 0x00, 0xee, 0x00, 0x00, 0x00,
-    // Second UUID, 32bit, [12], [13], [14], [15] is the value
-    0xfb, 0x34, 0x9b, 0x5f, 0x80, 0x00, 0x00, 0x80, 0x00, 0x10, 0x00, 0x00, 0xee, 0x00, 0x00, 0x00,
-};
-// clang-format on
+static const uint8_t BLUETOOTH_BASE_UUID[ESP_UUID_LEN_128] = {0xfb, 0x34, 0x9b, 0x5f, 0x80, 0x00, 0x00, 0x80, 0x00, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
 /**
  * @brief Variable holding the UUID of the primary service (0x2800).
@@ -218,10 +211,28 @@ void BluetoothRequestHandler::GenerateAdvertisingData()
     _manufacturerData[0] = static_cast<uint8_t>((companyIdentifier & 0x00FF));
     _manufacturerData[1] = static_cast<uint8_t>(((companyIdentifier & 0xFF00) >> 8));
 
+    //
+    //  The advertising packet and the scan response are 31 bytes each (issue #345).  The
+    //  advertising packet carries the flags (3 bytes), TX power (3), the connection interval
+    //  range (6), the company identifier (4) and the configured service's 16-bit UUID (4),
+    //  20 bytes in all.  The name, the one field whose length the configuration chooses,
+    //  goes in the scan response on its own, which leaves it the most room.
+    //
+    memset(_advertisingServiceUuid, 0, sizeof(_advertisingServiceUuid));
+    uint16_t advertisedUuidLength = 0;
+    const std::vector<BluetoothService *> services = _manager.Services.GetServiceDefinitions();
+    if (!services.empty())
+    {
+        const uint16_t serviceUuid = services.front()->Uuid;
+        memcpy(_advertisingServiceUuid, BLUETOOTH_BASE_UUID, sizeof(_advertisingServiceUuid));
+        _advertisingServiceUuid[12] = static_cast<uint8_t>(serviceUuid & 0x00ff);
+        _advertisingServiceUuid[13] = static_cast<uint8_t>((serviceUuid & 0xff00) >> 8);
+        advertisedUuidLength = sizeof(_advertisingServiceUuid);
+    }
+
     memset(&_advertisingData, 0, sizeof(esp_ble_adv_data_t));
-    /* The length of adv data must be less than 31 bytes */
     _advertisingData.set_scan_rsp = false;
-    _advertisingData.include_name = true;
+    _advertisingData.include_name = false;
     _advertisingData.include_txpower = true;
     _advertisingData.min_interval = 0x0006; // slave connection min interval, Time = min_interval * 1.25 msec
     _advertisingData.max_interval = 0x0010; // slave connection max interval, Time = max_interval * 1.25 msec
@@ -230,17 +241,14 @@ void BluetoothRequestHandler::GenerateAdvertisingData()
     _advertisingData.p_manufacturer_data = _manufacturerData;
     _advertisingData.service_data_len = 0;
     _advertisingData.p_service_data = nullptr;
-    _advertisingData.service_uuid_len = sizeof(_dummyAdvertisingServiceUuid);
-    _advertisingData.p_service_uuid = _dummyAdvertisingServiceUuid;
+    _advertisingData.service_uuid_len = advertisedUuidLength;
+    _advertisingData.p_service_uuid = (advertisedUuidLength == 0) ? nullptr : _advertisingServiceUuid;
     _advertisingData.flag = (ESP_BLE_ADV_FLAG_GEN_DISC | ESP_BLE_ADV_FLAG_BREDR_NOT_SPT);
 
     // Scan response data
     memset(&_scanResponseData, 0, sizeof(esp_ble_adv_data_t));
     _scanResponseData.set_scan_rsp = true;
     _scanResponseData.include_name = true;
-    _scanResponseData.include_txpower = true;
-    _scanResponseData.manufacturer_len = sizeof(_manufacturerData);
-    _scanResponseData.p_manufacturer_data = _manufacturerData;
 
     // Advertising parameters
     memset(&_advertisingParameters, 0, sizeof(esp_ble_adv_params_t));
