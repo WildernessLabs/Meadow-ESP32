@@ -343,17 +343,38 @@ WiFiRequestHandler::WiFiRequestHandler()
     //  Get configuration from NVS.
     //
     {
+        //
+        //  GetConfigurationValue returns a copy the caller owns, so a value already held is
+        //  replaced, and released, only when NVS actually holds one.  _emptyString is not on
+        //  the heap and is never released.
+        //
         MutexLock lock(CredentialsMutex());
-        _defaultAccessPoint = const_cast<char *>(SystemRequestHandler::GetConfigurationValue(DEFAULT_ACCESS_POINT_NAME, _defaultAccessPoint));
-        _password = const_cast<char *>(SystemRequestHandler::GetConfigurationValue(PASSWORD_NAME, _password));
+        char *storedAccessPoint = const_cast<char *>(SystemRequestHandler::GetConfigurationValue(DEFAULT_ACCESS_POINT_NAME, nullptr));
+        if (storedAccessPoint != nullptr)
+        {
+            if ((_defaultAccessPoint != nullptr) && (_defaultAccessPoint != WiFiRequestHandler::_emptyString))
+            {
+                free(_defaultAccessPoint);
+            }
+            _defaultAccessPoint = storedAccessPoint;
+        }
+        char *storedPassword = const_cast<char *>(SystemRequestHandler::GetConfigurationValue(PASSWORD_NAME, nullptr));
+        if (storedPassword != nullptr)
+        {
+            if ((_password != nullptr) && (_password != WiFiRequestHandler::_emptyString))
+            {
+                free(_password);
+            }
+            _password = storedPassword;
+        }
     }
     _stationNetIfHandle = nullptr;
     _softApNetIfHandle = nullptr;
     {
         //
-        //  GetConfigurationValue returns a copy on the heap, or the default itself when NVS
-        //  holds nothing.  Only the matching entry of _validCountryCodes is kept, so the copy
-        //  is released here rather than held.
+        //  GetConfigurationValue returns a copy on the heap the caller owns, of the stored
+        //  code or of the default.  Only the matching entry of _validCountryCodes is kept, so
+        //  the copy is released here rather than held.
         //
         const char *stored = SystemRequestHandler::GetConfigurationValue(COUNTRY_CODE_NAME, _validCountryCodes[0]);
         const char *countryCode = FindCountryCode(stored);
@@ -367,10 +388,7 @@ WiFiRequestHandler::WiFiRequestHandler()
             ERROR_MESSAGE("WiFiRequestHandler: NVS held an invalid country code (%s); using the default.", (stored == nullptr) ? "<null>" : stored);
             countryCode = _validCountryCodes[0];
         }
-        if ((stored != nullptr) && (stored != _validCountryCodes[0]))
-        {
-            Utils::DeleteAndNullifyPointer(stored);
-        }
+        Utils::DeleteAndNullifyPointer(stored);
         _countryCode = countryCode;
         TRACE_MESSAGE("WiFiRequestHandler: Country code is %s", countryCode);
     }

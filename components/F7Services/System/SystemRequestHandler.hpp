@@ -184,7 +184,10 @@ public:
     void Setup() override;
 
     /**
-     *  @brief Get a string configuration value.
+     *  @brief Get a string configuration value, as a copy on the heap that the caller owns.
+     *
+     *  The stored value, or a copy of the default if none is stored; never the default
+     *  itself.  Release it with Utils::DeleteAndNullifyPointer.
      */
     static const char *GetConfigurationValue(const char *, const char *);
 
