@@ -14,6 +14,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/queue.h"
+#include "freertos/semphr.h"
 #include "esp_system.h"
 #include "esp_log.h"
 #include "esp_timer.h"
@@ -170,6 +171,15 @@ private:
      *  @brief Table to hold the performance counters;
      */
     static PerformanceCounterEntry *_performanceCounters[MAX_PERFORMANCE_COUNTERS];
+
+    /**
+     *  @brief Mutex guarding _performanceCounters and _nextPerformanceCounterEntry.
+     *
+     *  Entries are added from the thread pool workers and the SPI task, and dumped from a
+     *  worker, so two tasks could otherwise take the same slot and release the same entry
+     *  twice (issue #168).
+     */
+    static SemaphoreHandle_t PerformanceCountersMutex();
 #endif
 
 public:

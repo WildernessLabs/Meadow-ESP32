@@ -34,6 +34,7 @@
 
 #include "BluetoothManager.hpp"
 
+#include <atomic>
 #include <vector>
 #include <string>
 
@@ -120,8 +121,11 @@ private:
 
     /**
      * @brief The handle that is assigned a connection when a device connects over Bluetooth.
+     *
+     *  Set by the Bluedroid callbacks on connect and disconnect, and read on the Bluetooth
+     *  task when a value changes, so it is atomic and read once per use (issue #168).
      */
-    static uint16_t _connectionHandle;
+    static std::atomic<uint16_t> _connectionHandle;
 
     /**
      * @brief Hold the manufacturer data for these service.

@@ -25,6 +25,7 @@
 #include "Diagnostics.hpp"
 #include "Heap.hpp"
 #include "Utils.hpp"
+#include "MutexLock.hpp"
 #include "AppMain.hpp"
 
 #include "SystemRequestHandler.hpp"
@@ -474,20 +475,28 @@ void Logging::AddPerformanceCounterEntry(const char *method, int64_t start, int6
         pce->method = method;
         pce->ownsMethod = ownsMethod;
         pce->duration = pd;
-        if (_performanceCounters[_nextPerformanceCounterEntry] != nullptr)
+        //
+        //  The slot is claimed and the entry it held taken out under the lock, so no two
+        //  tasks get the same slot; the old entry is released after the lock is given back.
+        //
+        PerformanceCounterEntry *previous = nullptr;
         {
-            PerformanceCounterEntry *previous = _performanceCounters[_nextPerformanceCounterEntry];
+            MutexLock lock(PerformanceCountersMutex());
+            previous = _performanceCounters[_nextPerformanceCounterEntry];
+            _performanceCounters[_nextPerformanceCounterEntry] = pce;
+            _nextPerformanceCounterEntry++;
+            if (_nextPerformanceCounterEntry >= _numberOfPerformanceCounterSlots)
+            {
+                _nextPerformanceCounterEntry = 0;
+            }
+        }
+        if (previous != nullptr)
+        {
             if (previous->ownsMethod)
             {
                 free(const_cast<char *>(previous->method));
             }
-            Utils::DeleteAndNullifyPointer(_performanceCounters[_nextPerformanceCounterEntry]);
-        }
-        _performanceCounters[_nextPerformanceCounterEntry] = pce;
-        _nextPerformanceCounterEntry++;
-        if (_nextPerformanceCounterEntry >= _numberOfPerformanceCounterSlots)
-        {
-            _nextPerformanceCounterEntry = 0;
+            Utils::DeleteAndNullifyPointer(previous);
         }
     }
     else
@@ -504,10 +513,29 @@ void Logging::AddPerformanceCounterEntry(const char *method, int64_t start, int6
 }
 
 /**
+ *  @brief Mutex guarding _performanceCounters and _nextPerformanceCounterEntry.
+ *
+ *  A function-local static is created exactly once, on first use, even when several tasks
+ *  get here at the same time.
+ *
+ *  @returns
+ *      The performance counter mutex.
+ */
+SemaphoreHandle_t Logging::PerformanceCountersMutex()
+{
+    static const SemaphoreHandle_t mutex = xSemaphoreCreateMutex();
+    return (mutex);
+}
+
+/**
  *  @brief Dump the table of performance counters.
  */
 void Logging::DumpPerformanceCounters()
 {
+    //
+    //  Held while the table is printed, so no entry is released part way through.
+    //
+    MutexLock lock(PerformanceCountersMutex());
     printf("Timestamp,Method,Duration\n");
     for (int index = 0; index < _numberOfPerformanceCounterSlots; index++)
     {

@@ -14,6 +14,7 @@
 
 #include "Esp32Messaging.hpp"
 #include "BluetoothManager.hpp"
+#include "MutexLock.hpp"
 #include "BluetoothComponentName.hpp"
 
 /*
@@ -56,6 +57,13 @@ const char *BluetoothManager::COMPONENT_NAME = BLUETOOTH_COMPONENT_NAME;
 BluetoothManager::BluetoothManager() : Services(&this->_handleManager)
 {
     TRACE_MESSAGE("BluetoothManager: Enter");
+
+    _graphMutex = xSemaphoreCreateRecursiveMutex();
+    if (_graphMutex == nullptr)
+    {
+        ERROR_MESSAGE("BluetoothManager: cannot create the service graph mutex.");
+        ESP_ERROR_CHECK(ESP_ERR_NO_MEM);
+    }
 
     Services.OnServiceAdded = &BluetoothManager::HandleServiceAdded;
     Services.OnCharacteristicAdded = &BluetoothManager::HandleCharacteristicAdded;
@@ -138,6 +146,7 @@ void BluetoothManager::HandleDescriptorAdded(BluetoothDescriptor *descriptor)
  */
 bool BluetoothManager::GetHandles(uint16_t * const handles, const uint16_t capacity)
 {
+    RecursiveMutexLock lock(_graphMutex);
     TRACE_MESSAGE("GetHandles: Enter");
 
     uint16_t index = 0;
@@ -185,6 +194,7 @@ bool BluetoothManager::GetHandles(uint16_t * const handles, const uint16_t capac
  */
 CharacteristicProperty BluetoothManager::GetCharacteristicProperties(const uint16_t handle)
 {
+    RecursiveMutexLock lock(_graphMutex);
     for (const auto &svc: Services.GetServiceDefinitions())
     {
         for (const auto &characteristic: svc->GetCharacteristicDefinitions())
@@ -212,6 +222,7 @@ CharacteristicProperty BluetoothManager::GetCharacteristicProperties(const uint1
  */
 bool BluetoothManager::IsKnownCharacteristicHandle(const uint16_t handle)
 {
+    RecursiveMutexLock lock(_graphMutex);
     for (const auto &svc: Services.GetServiceDefinitions())
     {
         for (const auto &characteristic: svc->GetCharacteristicDefinitions())
@@ -234,6 +245,7 @@ bool BluetoothManager::IsKnownCharacteristicHandle(const uint16_t handle)
  */
 CharacteristicPermission BluetoothManager::GetCharacteristicPermissions(const uint16_t handle)
 {
+    RecursiveMutexLock lock(_graphMutex);
     for (const auto &svc: Services.GetServiceDefinitions())
     {
         for (const auto &characteristic: svc->GetCharacteristicDefinitions())
@@ -259,6 +271,7 @@ CharacteristicPermission BluetoothManager::GetCharacteristicPermissions(const ui
  */
 bool BluetoothManager::SetHandles(const uint16_t * const handles, const uint16_t count)
 {
+    RecursiveMutexLock lock(_graphMutex);
     TRACE_MESSAGE("SetHandles: Enter");
 
     TRACE_MESSAGE("Handles: ");
@@ -335,6 +348,7 @@ bool BluetoothManager::SetHandles(const uint16_t * const handles, const uint16_t
  */
 bool BluetoothManager::GetCurrentValueForAttributeHandle(const uint16_t handle, uint8_t *pData, const uint16_t capacity, uint16_t * const pLen)
 {
+    RecursiveMutexLock lock(_graphMutex);
     TRACE_MESSAGE("GetCurrentValueForAttributeHandle: Enter");
 
     // TODO: go get the data from the STM - for now we just increment to test the data is changing
@@ -375,6 +389,7 @@ bool BluetoothManager::GetCurrentValueForAttributeHandle(const uint16_t handle, 
  */
 void BluetoothManager::SetCurrentValueForAttributeHandle(const uint16_t handle, const uint8_t * const pData, const uint16_t len)
 {
+    RecursiveMutexLock lock(_graphMutex);
     TRACE_MESSAGE("SetCurrentValueForAttributeHandle: Enter");
 
     TRACE_MESSAGE("Received %" PRIu16 " bytes of data for attribute handle 0x%04" PRIx16, len, handle);
@@ -406,6 +421,7 @@ void BluetoothManager::SetCurrentValueForAttributeHandle(const uint16_t handle, 
  */
 bool BluetoothManager::DeleteAllServices()
 {
+    RecursiveMutexLock lock(_graphMutex);
     TRACE_MESSAGE("DeleteAllServices: Enter");
 
     for (const auto val: _valueMap)
@@ -809,6 +825,7 @@ void BluetoothManager::ParseUuid(const cJSON * const json, Uuid16 &uuid16, Uuid1
  */
 bool BluetoothManager::BuildGraphFromJson(const char * const configuration)
 {
+    RecursiveMutexLock lock(_graphMutex);
     TRACE_MESSAGE("BuildGraphFromJson: Enter");
 
     bool result = false;

@@ -32,6 +32,7 @@
 #include "version.h"
 #include "CoreDump.hpp"
 #include "Utils.hpp"
+#include "MutexLock.hpp"
 #include "Logging.hpp"
 #include "Diagnostics.hpp"
 #include "Heap.hpp"
@@ -150,10 +151,13 @@ SystemRequestHandler::SystemRequestHandler(IMessageDispatcher *messageDispatcher
     //  Ask for the name with no default so that _deviceName always owns storage on
     //  the heap; a non-heap default would make it unsafe to release on reassignment.
     //
-    _deviceName = const_cast<char *>(GetConfigurationValue(DEVICE_NAME_NAME, nullptr));
-    if (_deviceName == nullptr)
     {
-        _deviceName = DuplicateString(DEVICE_NAME_DEFAULT_VALUE);
+        MutexLock lock(DeviceNameMutex());
+        _deviceName = const_cast<char *>(GetConfigurationValue(DEVICE_NAME_NAME, nullptr));
+        if (_deviceName == nullptr)
+        {
+            _deviceName = DuplicateString(DEVICE_NAME_DEFAULT_VALUE);
+        }
     }
     _messageDispatcher = messageDispatcher;
 
@@ -172,7 +176,10 @@ SystemRequestHandler::SystemRequestHandler(IMessageDispatcher *messageDispatcher
  */
 SystemRequestHandler::~SystemRequestHandler()
 {
-    Utils::DeleteAndNullifyPointer(_deviceName);
+    {
+        MutexLock lock(DeviceNameMutex());
+        Utils::DeleteAndNullifyPointer(_deviceName);
+    }
 
     //
     //  The file system unmounts the partition as it goes, so releasing it here is what
@@ -276,11 +283,33 @@ StatusCodes::StatusCodes SystemRequestHandler::SetMaximumMessageQueueLength(uint
 }
 
 /**
- *  @brief Get the device name.
+ *  @brief Mutex guarding _deviceName.
+ *
+ *  A function-local static is created exactly once, on first use, even when several tasks
+ *  get here at the same time, so no caller depends on the handler having been constructed.
+ *
+ *  @returns
+ *      The device name mutex.
  */
-char *SystemRequestHandler::GetDeviceName()
+SemaphoreHandle_t SystemRequestHandler::DeviceNameMutex()
 {
-    return (_deviceName);
+    static const SemaphoreHandle_t mutex = xSemaphoreCreateMutex();
+    return (mutex);
+}
+
+/**
+ *  @brief Get a copy of the device name.
+ *
+ *  A copy is returned rather than the stored pointer, as SetDeviceName can release the
+ *  stored name on another task at any time (issue #168).
+ *
+ *  @returns
+ *      Copy of the device name, empty if none is held.
+ */
+std::string SystemRequestHandler::GetDeviceName()
+{
+    MutexLock lock(DeviceNameMutex());
+    return ((_deviceName == nullptr) ? std::string() : std::string(_deviceName));
 }
 
 /**
@@ -295,6 +324,11 @@ char *SystemRequestHandler::GetDeviceName()
  */
 StatusCodes::StatusCodes SystemRequestHandler::SetDeviceName(char *value)
 {
+    //
+    //  Held for the comparison, the NVS write and the swap, so no reader copies the old
+    //  name while it is being released.
+    //
+    MutexLock lock(DeviceNameMutex());
     StatusCodes::StatusCodes result = StatusCodes::Failure;
     if ((_deviceName != nullptr) && (strcmp(value, _deviceName) == 0))
     {
@@ -555,8 +589,12 @@ NvsManager::ErrorCodes SystemRequestHandler::SetConfigurationValue(const char *n
  *      Storage for a copy of the default access point, which config->DefaultAccessPoint
  *      points into, so it has to outlive config.  The stored value can be replaced from
  *      another task at any time, so config cannot point at it directly.
+ *
+ *  @param deviceName
+ *      Storage for a copy of the device name, which config->DeviceName points into, for
+ *      the same reason.
  */
-void SystemRequestHandler::PopulateConfiguration(Esp32Messaging::SystemConfiguration *config, std::string &defaultAccessPoint)
+void SystemRequestHandler::PopulateConfiguration(Esp32Messaging::SystemConfiguration *config, std::string &defaultAccessPoint, std::string &deviceName)
 {
     TRACE_MESSAGE("PopulateConfiguration: Enter");
 
@@ -572,7 +610,8 @@ void SystemRequestHandler::PopulateConfiguration(Esp32Messaging::SystemConfigura
     config->MaximumRetryCount = WiFiRequestHandler::GetMaximumRetryCount();
     defaultAccessPoint = WiFiRequestHandler::GetDefaultAccessPoint();
     config->DefaultAccessPoint = const_cast<char *>(defaultAccessPoint.c_str());
-    config->DeviceName = GetDeviceName();
+    deviceName = GetDeviceName();
+    config->DeviceName = deviceName.empty() ? nullptr : const_cast<char *>(deviceName.c_str());
     config->VersionMajor = g_application_version.major;
     config->VersionMinor = g_application_version.minor;
     config->VersionRevision = g_application_version.revision;
@@ -604,7 +643,8 @@ void SystemRequestHandler::SendConfigurationAsInterruptMessage()
 
     Esp32Messaging::SystemConfiguration config = {};
     std::string defaultAccessPoint;
-    PopulateConfiguration(&config, defaultAccessPoint);
+    std::string deviceName;
+    PopulateConfiguration(&config, defaultAccessPoint, deviceName);
 
     Message *message = static_cast<Message *>(pvPortMalloc(sizeof(Message)));
     if (message == nullptr)
@@ -639,7 +679,8 @@ void SystemRequestHandler::GetConfiguration(Message * const request)
     TRACE_MESSAGE("GetConfiguration: Enter");
     Esp32Messaging::SystemConfiguration config = {};
     std::string defaultAccessPoint;
-    PopulateConfiguration(&config, defaultAccessPoint);
+    std::string deviceName;
+    PopulateConfiguration(&config, defaultAccessPoint, deviceName);
 
     request->DeletePayload();
     request->PayloadLength = Encoders::EncodedSystemConfigurationBufferSize(&config);

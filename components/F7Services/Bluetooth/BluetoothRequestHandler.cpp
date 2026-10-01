@@ -63,7 +63,7 @@ esp_gatt_if_t BluetoothRequestHandler::_gattsInterfaceHandle = ESP_GATT_IF_NONE;
 /**
  * @brief The handle that is assigned a connection when a device connects over Bluetooth.
  */
-uint16_t BluetoothRequestHandler::_connectionHandle = INVALID_CONNECTION_HANDLE;
+std::atomic<uint16_t> BluetoothRequestHandler::_connectionHandle(INVALID_CONNECTION_HANDLE);
 
 /**
  * @brief Indicate if we have configured the advertising data.
@@ -526,13 +526,18 @@ void BluetoothRequestHandler::SetCurrentValueForAttributeHandle(Message * const 
             else
             {
                 _manager.SetCurrentValueForAttributeHandle(ds->Handle, ds->SetData, static_cast<uint16_t>(ds->SetDataLength));
-                if (_connectionHandle != INVALID_CONNECTION_HANDLE)
+                //
+                //  Read once: a disconnect on the Bluedroid task can change it between a check
+                //  and a later read, sending the notification to INVALID_CONNECTION_HANDLE.
+                //
+                const uint16_t connectionHandle = _connectionHandle.load();
+                if (connectionHandle != INVALID_CONNECTION_HANDLE)
                 {
                     if ((_manager.GetCharacteristicProperties(ds->Handle) & CharacteristicProperty::Notify) == CharacteristicProperty::Notify)
                     {
-                        if (esp_ble_gatts_send_indicate(_gattsInterfaceHandle, _connectionHandle, ds->Handle, static_cast<uint16_t>(ds->SetDataLength), ds->SetData, false) != ESP_OK)
+                        if (esp_ble_gatts_send_indicate(_gattsInterfaceHandle, connectionHandle, ds->Handle, static_cast<uint16_t>(ds->SetDataLength), ds->SetData, false) != ESP_OK)
                         {
-                            TRACE_MESSAGE("Failed to send indication to connection ID 0x%04" PRIx16, _connectionHandle);
+                            TRACE_MESSAGE("Failed to send indication to connection ID 0x%04" PRIx16, connectionHandle);
                             result = StatusCodes::Failure;
                         }
                     }
@@ -959,6 +964,23 @@ void BluetoothRequestHandler::Start(Message * const request)
     RaiseEvent(Esp32Interfaces::BlueTooth, BluetoothFunction::BluetoothStartingEvent, StatusCodes::CompletedOk);
 
     //
+    //  A second Start while the stack is up would rebuild the service graph, releasing the
+    //  value buffers, while the Bluedroid task may be reading them to answer a client (issue
+    //  #168).  The stack stays up after a Start that failed or timed out too, so this is
+    //  checked against the stack itself rather than a flag of our own.  Stop first.
+    //
+    if (esp_bluedroid_get_status() != ESP_BLUEDROID_STATUS_UNINITIALIZED)
+    {
+        ERROR_MESSAGE("Start: the Bluetooth stack is already running; stop it first.");
+        request->DeletePayload();
+        request->StatusCode = StatusCodes::BluetoothAlreadyStarted;
+        request->MessageType = MessageTypes::Response;
+        _messageDispatcher->QueueMessageForStm32(request);
+        TRACE_MESSAGE("Start: Exit");
+        return;
+    }
+
+    //
     //  The extractor reads the payload without checking it exists, and returns nullptr only
     //  when it cannot allocate, so both cases are dealt with here before anything is used.
     //
@@ -1219,7 +1241,7 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
             {
                 ERROR_MESSAGE("Start advertising failed, error code = %" PRIi32 ", %s", ret, esp_err_to_name(ret));
             }
-            _connectionHandle = 0xffff;
+            _connectionHandle = INVALID_CONNECTION_HANDLE;
             GetInstance()->RaiseEvent(Esp32Interfaces::BlueTooth, BluetoothFunction::ClientDisconnectedEvent, StatusCodes::CompletedOk);
             break;
         case ESP_GATTS_OPEN_EVT:

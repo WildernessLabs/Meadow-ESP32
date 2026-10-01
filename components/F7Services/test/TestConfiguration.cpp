@@ -728,11 +728,11 @@ TEST_CASE("The device name can be set", CLASS_OF_TESTS)
     EnsureHandlers();
 
     char original[64];
-    snprintf(original, sizeof(original), "%s", SafeString(SystemRequestHandler::GetDeviceName()));
+    snprintf(original, sizeof(original), "%s", SystemRequestHandler::GetDeviceName().c_str());
     printf("Device name was %s at the start of this test\n", original);
 
     TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, SetStringItem(ConfigurationItems::DeviceName, DEVICE_NAME_UNDER_TEST));
-    TEST_ASSERT_EQUAL_STRING(DEVICE_NAME_UNDER_TEST, SystemRequestHandler::GetDeviceName());
+    TEST_ASSERT_EQUAL_STRING(DEVICE_NAME_UNDER_TEST, SystemRequestHandler::GetDeviceName().c_str());
 
     char stored[64];
     TEST_ASSERT_TRUE_MESSAGE(ReadStoredString(DEVICE_NAME_STORAGE_NAME, stored, sizeof(stored)), "The device name was not written to NVS.");
@@ -742,10 +742,10 @@ TEST_CASE("The device name can be set", CLASS_OF_TESTS)
     //  Setting the name it already holds is accepted and changes nothing.
     //
     TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, SetStringItem(ConfigurationItems::DeviceName, DEVICE_NAME_UNDER_TEST));
-    TEST_ASSERT_EQUAL_STRING(DEVICE_NAME_UNDER_TEST, SystemRequestHandler::GetDeviceName());
+    TEST_ASSERT_EQUAL_STRING(DEVICE_NAME_UNDER_TEST, SystemRequestHandler::GetDeviceName().c_str());
 
     TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, SetStringItem(ConfigurationItems::DeviceName, original));
-    TEST_ASSERT_EQUAL_STRING(original, SystemRequestHandler::GetDeviceName());
+    TEST_ASSERT_EQUAL_STRING(original, SystemRequestHandler::GetDeviceName().c_str());
 }
 
 /**
@@ -984,7 +984,7 @@ TEST_CASE("The system configuration can be read", CLASS_OF_TESTS)
     TEST_ASSERT_EQUAL_MESSAGE(expectedLength, response->PayloadLength, "The configuration payload is not the length the encoding gives it.");
     TEST_ASSERT_EQUAL_MESSAGE(response->PayloadLength, configuration.EncodedLength, "The decoded configuration did not use the whole payload.");
 
-    TEST_ASSERT_EQUAL_STRING(SafeString(SystemRequestHandler::GetDeviceName()), configuration.DeviceName);
+    TEST_ASSERT_EQUAL_STRING(SystemRequestHandler::GetDeviceName().c_str(), configuration.DeviceName);
     TEST_ASSERT_EQUAL_STRING(SafeString(WiFiRequestHandler::GetDefaultAccessPoint().c_str()), configuration.DefaultAccessPoint);
     TEST_ASSERT_EQUAL(WiFiRequestHandler::GetMaximumRetryCount(), configuration.MaximumRetryCount);
     TEST_ASSERT_EQUAL(WiFiRequestHandler::GetAntenna(), configuration.Antenna);
@@ -1020,7 +1020,7 @@ TEST_CASE("A configuration item that was set is reported in the configuration", 
     EnsureHandlers();
 
     char original[64];
-    snprintf(original, sizeof(original), "%s", SafeString(SystemRequestHandler::GetDeviceName()));
+    snprintf(original, sizeof(original), "%s", SystemRequestHandler::GetDeviceName().c_str());
 
     TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, SetStringItem(ConfigurationItems::DeviceName, DEVICE_NAME_UNDER_TEST));
 
@@ -1070,7 +1070,7 @@ TEST_CASE("The configuration is sent to the STM32 as an event", CLASS_OF_TESTS)
     DecodedConfiguration configuration = {};
     DecodeSystemConfiguration(event->Payload, &configuration);
     TEST_ASSERT_EQUAL_MESSAGE(event->PayloadLength, configuration.EncodedLength, "The decoded configuration did not use the whole payload.");
-    TEST_ASSERT_EQUAL_STRING(SafeString(SystemRequestHandler::GetDeviceName()), configuration.DeviceName);
+    TEST_ASSERT_EQUAL_STRING(SystemRequestHandler::GetDeviceName().c_str(), configuration.DeviceName);
     TEST_ASSERT_EQUAL(WiFiRequestHandler::GetAntenna(), configuration.Antenna);
 
     Message::DeleteMessage(event);
@@ -1240,7 +1240,7 @@ TEST_CASE("SetDeviceName reports running out of memory and changes nothing", CLA
     EnsureHandlers();
 
     char original[64];
-    snprintf(original, sizeof(original), "%s", SafeString(SystemRequestHandler::GetDeviceName()));
+    snprintf(original, sizeof(original), "%s", SystemRequestHandler::GetDeviceName().c_str());
     TEST_ASSERT_NOT_EQUAL(0, strcmp(original, OUT_OF_MEMORY_VALUE));
 
     char value[] = OUT_OF_MEMORY_VALUE;
@@ -1249,7 +1249,7 @@ TEST_CASE("SetDeviceName reports running out of memory and changes nothing", CLA
     ReleaseHeap(heap);
 
     TEST_ASSERT_EQUAL(StatusCodes::EspOutOfMemory, result);
-    TEST_ASSERT_EQUAL_STRING(original, SafeString(SystemRequestHandler::GetDeviceName()));
+    TEST_ASSERT_EQUAL_STRING(original, SystemRequestHandler::GetDeviceName().c_str());
     char stored[64];
     ReadStoredString(DEVICE_NAME_STORAGE_NAME, stored, sizeof(stored));
     TEST_ASSERT_EQUAL_STRING(original, stored);
@@ -1305,4 +1305,28 @@ TEST_CASE("SetPassword reports running out of memory and changes nothing", CLASS
     char storedAfter[64];
     ReadStoredString(PASSWORD_STORAGE_NAME, storedAfter, sizeof(storedAfter));
     TEST_ASSERT_EQUAL_STRING(storedBefore, storedAfter);
+}
+
+/**
+ * @brief Check that the device name read before a change is a copy the change cannot release.
+ *
+ *  SetDeviceName runs on the System task, and the event loop reads the name to set the
+ *  station's hostname.  GetDeviceName used to return the stored pointer, which
+ *  SetDeviceName released as soon as it stored the next name (issue #168).  It now returns
+ *  a copy, taken under the same lock SetDeviceName holds.
+ */
+TEST_CASE("The device name read before a change is not released by it", CLASS_OF_TESTS)
+{
+    EnsureHandlers();
+
+    const std::string original = SystemRequestHandler::GetDeviceName();
+    TEST_ASSERT_NOT_EQUAL(0, strcmp(original.c_str(), DEVICE_NAME_UNDER_TEST));
+
+    const std::string held = SystemRequestHandler::GetDeviceName();
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, SetStringItem(ConfigurationItems::DeviceName, DEVICE_NAME_UNDER_TEST));
+    TEST_ASSERT_EQUAL_STRING(DEVICE_NAME_UNDER_TEST, SystemRequestHandler::GetDeviceName().c_str());
+    TEST_ASSERT_EQUAL_STRING_MESSAGE(original.c_str(), held.c_str(), "A device name read before the change was altered by it.");
+
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, SetStringItem(ConfigurationItems::DeviceName, original.c_str()));
+    TEST_ASSERT_EQUAL_STRING(original.c_str(), SystemRequestHandler::GetDeviceName().c_str());
 }

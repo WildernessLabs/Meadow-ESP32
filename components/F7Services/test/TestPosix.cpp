@@ -1061,3 +1061,172 @@ TEST_CASE("SendMsg refuses an iovec count its payload cannot hold", CLASS_OF_TES
 
     CloseSocket(dispatcher, socketHandle);
 }
+
+/**
+ * @brief Number of GetAddrInfo requests sent together, before any of their responses are
+ *        collected.  More than the thread pool has workers, so every worker is busy.
+ */
+#define ADDRINFO_BURST 8
+
+/**
+ * @brief Number of rounds of GetAddrInfo and FreeAddrInfo bursts.
+ */
+#define ADDRINFO_ROUNDS 200
+
+/**
+ * @brief Queue a GetAddrInfo request for "localhost" without waiting for its response.
+ *
+ * @param dispatcher Dispatcher to queue the request on.
+ * @param withHints True to send empty hints, false to send none at all.
+ */
+static void QueueLocalhostGetAddrInfo(MockMessageDispatcher *dispatcher, const bool withHints = true)
+{
+    //
+    //  The STM32's layout: node name, service name, the hints length, then the hints as an
+    //  encoded AddrInfo, or a hints length of 0 for none.  Empty hints ask for any family and
+    //  any socket type, the same as no hints.
+    //
+    static const char NODE_NAME[] = "localhost";
+    static const char SERVICE_NAME[] = "80";
+    const Esp32Messaging::AddrInfo hints = {};
+    const uint32_t hintsLength = withHints ? static_cast<uint32_t>(Encoders::EncodedAddrInfoBufferSize(&hints)) : 0;
+    const uint32_t hintsOffset = sizeof(NODE_NAME) + sizeof(SERVICE_NAME) + 4;
+    const uint32_t payloadLength = hintsOffset + hintsLength;
+    uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
+    TEST_ASSERT_NOT_NULL(payload);
+    memcpy(payload, NODE_NAME, sizeof(NODE_NAME));
+    memcpy(payload + sizeof(NODE_NAME), SERVICE_NAME, sizeof(SERVICE_NAME));
+    Encoders::EncodeUInt32(hintsLength, payload + sizeof(NODE_NAME) + sizeof(SERVICE_NAME));
+    if (withHints)
+    {
+        TEST_ASSERT_TRUE(Encoders::EncodeAddrInfo(&hints, payload + hintsOffset, hintsLength));
+    }
+
+    Message *request = Message::CreateOnHeap(MessageTypes::Header, Esp32Interfaces::WiFi, WiFiFunction::GetAddrInfo, StatusCodes::Failure, 0xff, payload, payloadLength);
+    TEST_ASSERT_NOT_NULL(request);
+    dispatcher->QueueMessageForEsp32(request);
+}
+
+/**
+ * @brief Queue a FreeAddrInfo request for a handle without waiting for its response.
+ *
+ * @param dispatcher Dispatcher to queue the request on.
+ * @param handle Handle a GetAddrInfo response carried.
+ */
+static void QueueFreeAddrInfo(MockMessageDispatcher *dispatcher, const uint32_t handle)
+{
+    uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(sizeof(uint32_t)));
+    TEST_ASSERT_NOT_NULL(payload);
+    Encoders::EncodeUInt32(handle, payload);
+
+    Message *request = Message::CreateOnHeap(MessageTypes::Header, Esp32Interfaces::WiFi, WiFiFunction::FreeAddrInfo, StatusCodes::Failure, 0xff, payload, sizeof(uint32_t));
+    TEST_ASSERT_NOT_NULL(request);
+    dispatcher->QueueMessageForEsp32(request);
+}
+
+/**
+ * @brief Run one round: a burst of GetAddrInfo requests, then a burst of FreeAddrInfo
+ *        requests for the handles they returned.
+ *
+ * @param dispatcher Dispatcher to queue the requests on.
+ */
+static void RunAddrInfoRound(MockMessageDispatcher *dispatcher)
+{
+    for (uint32_t index = 0; index < ADDRINFO_BURST; index++)
+    {
+        QueueLocalhostGetAddrInfo(dispatcher);
+    }
+
+    uint32_t handles[ADDRINFO_BURST] = {};
+    for (uint32_t index = 0; index < ADDRINFO_BURST; index++)
+    {
+        Message *response = WaitForResponseTo(dispatcher, Esp32Interfaces::WiFi, WiFiFunction::GetAddrInfo, SOCKET_RESPONSE_TIMEOUT);
+        TEST_ASSERT_NOT_NULL_MESSAGE(response, "A GetAddrInfo request was never answered.");
+        TEST_ASSERT_EQUAL_MESSAGE(StatusCodes::CompletedOk, response->StatusCode, "GetAddrInfo for localhost failed.");
+        //
+        //  The response is the errno and the length of the encoded addrinfo, then the
+        //  addrinfo itself, which starts with the handle FreeAddrInfo is given back.  The
+        //  errno is not checked: on success it is NuttxErrno(0), which the errno table has
+        //  no entry for, so it reads EFAULT.
+        //
+        TEST_ASSERT_GREATER_OR_EQUAL_UINT32(12, response->PayloadLength);
+        TEST_ASSERT_GREATER_THAN_UINT32_MESSAGE(0, Encoders::ExtractUInt32(response->Payload + 4), "GetAddrInfo for localhost returned no address information.");
+        handles[index] = Encoders::ExtractUInt32(response->Payload + 8);
+        TEST_ASSERT_NOT_EQUAL_MESSAGE(0, handles[index], "GetAddrInfo issued the reserved handle 0.");
+        for (uint32_t earlier = 0; earlier < index; earlier++)
+        {
+            TEST_ASSERT_NOT_EQUAL_MESSAGE(handles[earlier], handles[index], "Two GetAddrInfo requests were issued the same handle.");
+        }
+        Message::DeleteMessage(response);
+    }
+
+    for (uint32_t index = 0; index < ADDRINFO_BURST; index++)
+    {
+        QueueFreeAddrInfo(dispatcher, handles[index]);
+    }
+    for (uint32_t index = 0; index < ADDRINFO_BURST; index++)
+    {
+        Message *response = WaitForResponseTo(dispatcher, Esp32Interfaces::WiFi, WiFiFunction::FreeAddrInfo, SOCKET_RESPONSE_TIMEOUT);
+        TEST_ASSERT_NOT_NULL_MESSAGE(response, "A FreeAddrInfo request was never answered.");
+        TEST_ASSERT_EQUAL_MESSAGE(StatusCodes::CompletedOk, response->StatusCode, "FreeAddrInfo refused a handle GetAddrInfo had issued.");
+        Message::DeleteMessage(response);
+    }
+}
+
+/**
+ * @brief Check that GetAddrInfo and FreeAddrInfo running on several thread pool workers at
+ *        once issue and take back handles without losing or duplicating any (issue #168).
+ *
+ *  The WiFi task hands each POSIX request to the thread pool and takes the next one at
+ *  once, so a burst of requests runs on several workers together.  The handle table and
+ *  the counter that issues handles had no lock, so concurrent requests could corrupt the
+ *  table, issue a handle twice, or lose one.  Every handle issued must be unique and must
+ *  be accepted back, and the heap must be where it started.
+ */
+TEST_CASE("GetAddrInfo and FreeAddrInfo handles survive requests on several workers at once", CLASS_OF_TESTS)
+{
+    MockMessageDispatcher *dispatcher = SetupConnectedDispatcher();
+
+    //
+    //  One round first, so anything allocated once on first use is not counted as a leak.
+    //
+    RunAddrInfoRound(dispatcher);
+    const uint32_t heapAtStart = esp_get_free_heap_size();
+
+    for (uint32_t round = 0; round < ADDRINFO_ROUNDS; round++)
+    {
+        RunAddrInfoRound(dispatcher);
+    }
+
+    const uint32_t heapAtEnd = esp_get_free_heap_size();
+    printf("Free heap %" PRIu32 " bytes before the rounds, %" PRIu32 " after.\n", heapAtStart, heapAtEnd);
+    TEST_ASSERT_GREATER_OR_EQUAL_UINT32_MESSAGE(heapAtStart - 512, heapAtEnd, "The handle table lost addrinfo chains or table entries.");
+}
+
+/**
+ * @brief Check that GetAddrInfo answers a request that carries no hints.
+ *
+ *  POSIX allows getaddrinfo with no hints.  GetAddrInfo used to decode the hints without
+ *  checking there were any, so a request with a hints length of 0 crashed the ESP32
+ *  (LoadProhibited in Encoders::ExtractAddrInfo).  Found while writing the test above.
+ */
+TEST_CASE("GetAddrInfo answers a request with no hints", CLASS_OF_TESTS)
+{
+    MockMessageDispatcher *dispatcher = SetupConnectedDispatcher();
+
+    QueueLocalhostGetAddrInfo(dispatcher, false);
+    Message *response = WaitForResponseTo(dispatcher, Esp32Interfaces::WiFi, WiFiFunction::GetAddrInfo, SOCKET_RESPONSE_TIMEOUT);
+    TEST_ASSERT_NOT_NULL_MESSAGE(response, "The GetAddrInfo request was never answered.");
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
+    TEST_ASSERT_GREATER_OR_EQUAL_UINT32(12, response->PayloadLength);
+    TEST_ASSERT_GREATER_THAN_UINT32_MESSAGE(0, Encoders::ExtractUInt32(response->Payload + 4), "GetAddrInfo for localhost returned no address information.");
+    const uint32_t handle = Encoders::ExtractUInt32(response->Payload + 8);
+    TEST_ASSERT_NOT_EQUAL(0, handle);
+    Message::DeleteMessage(response);
+
+    QueueFreeAddrInfo(dispatcher, handle);
+    response = WaitForResponseTo(dispatcher, Esp32Interfaces::WiFi, WiFiFunction::FreeAddrInfo, SOCKET_RESPONSE_TIMEOUT);
+    TEST_ASSERT_NOT_NULL_MESSAGE(response, "The FreeAddrInfo request was never answered.");
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, response->StatusCode);
+    Message::DeleteMessage(response);
+}

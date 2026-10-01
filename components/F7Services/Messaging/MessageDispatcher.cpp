@@ -41,8 +41,12 @@ const char *MessageDispatcher::COMPONENT_NAME = "MessageDispatcher";
 /**
  *  @brief Default constructor.
  */
-MessageDispatcher::MessageDispatcher() : _messageIdMutex(xSemaphoreCreateMutex())
+MessageDispatcher::MessageDispatcher() : _messageIdMutex(xSemaphoreCreateMutex()), _handlersReady(xEventGroupCreate())
 {
+    if (_handlersReady == nullptr)
+    {
+        ESP_ERROR_CHECK(ESP_ERR_NO_MEM);
+    }
 }
 
 /**
@@ -63,6 +67,7 @@ MessageDispatcher::MessageDispatcher(TransportProviderBase * const transportProv
     _bluetoothRequestHandler = BluetoothRequestHandler::GetInstance(this);
     _systemRequestHandler = new SystemRequestHandler(this);
     _systemRequestHandler->Setup();
+    xEventGroupSetBits(_handlersReady, HANDLERS_READY_BIT);
 }
 
 /**
@@ -91,6 +96,12 @@ MessageDispatcher::~MessageDispatcher()
 bool MessageDispatcher::QueueMessageForEsp32(Message *request)
 {
     TRACE_MESSAGE("QueueMessageForEsp32: Enter");
+    //
+    //  A request can arrive while the constructor is still creating the handlers.  It waits
+    //  for them rather than finding no handler, being dropped and never answered.  Once the
+    //  bit is set this returns at once.
+    //
+    xEventGroupWaitBits(_handlersReady, HANDLERS_READY_BIT, pdFALSE, pdTRUE, portMAX_DELAY);
     RequestHandlerBase *provider = nullptr;
 
 #if defined(PERFORMANCE_LOGGING)
