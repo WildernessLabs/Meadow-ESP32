@@ -103,6 +103,10 @@ protected:
 
     /**
      *  @brief Mutex for the outbound message queue.
+     *
+     *  Static, like the queue it guards, because the firmware has exactly one transport
+     *  provider: SpiTransportProvider refuses a second instance.  The constructor creates
+     *  it, so constructing another transport provider (only the tests do) replaces it.
      */
     static SemaphoreHandle_t _outboundMessageQueueMutex;
 

@@ -9,6 +9,7 @@
 
 #include "sdkconfig.h"
 
+#include "Utils.hpp"
 #include "Encoders.hpp"
 #include "Esp32Messaging.hpp"
 #include "Logging.hpp"
@@ -41,12 +42,8 @@ const char *MessageDispatcher::COMPONENT_NAME = "MessageDispatcher";
 /**
  *  @brief Default constructor.
  */
-MessageDispatcher::MessageDispatcher() : _messageIdMutex(xSemaphoreCreateMutex()), _handlersReady(xEventGroupCreate())
+MessageDispatcher::MessageDispatcher() : _messageIdMutex(Utils::RequireCreated(xSemaphoreCreateMutex(), "the message ID mutex")), _handlersReady(Utils::RequireCreated(xEventGroupCreate(), "the handlers ready event group"))
 {
-    if (_handlersReady == nullptr)
-    {
-        ESP_ERROR_CHECK(ESP_ERR_NO_MEM);
-    }
 }
 
 /**

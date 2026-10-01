@@ -62,4 +62,41 @@ namespace Utils
      * @return void* Pointer to the reallocated memory block, or nullptr if allocation fails.
      */
     void *Realloc(void *ptr, size_t oldSize, size_t newSize);
+
+    /**
+     * @brief Log that a FreeRTOS object could not be created, and stop.
+     *
+     *  Used where a semaphore, queue, event group or task the firmware cannot run without
+     *  fails to be created, which in practice means memory ran out at start-up.  Stopping
+     *  here, with the object named, is clearer than the FreeRTOS assertion the first use of
+     *  a null handle would otherwise raise later and elsewhere (issue #272).
+     *
+     * @param what Description of the object that could not be created.
+     */
+    [[noreturn]] void CreationFailed(const char * const what);
+
+    /**
+     * @brief Check that a FreeRTOS object was created, stopping with a diagnostic if not.
+     *
+     * @tparam T Handle type, such as SemaphoreHandle_t, QueueHandle_t or EventGroupHandle_t.
+     * @param handle Handle returned by the creation call.
+     * @param what Description of the object, for the diagnostic.
+     * @return The handle, which is never nullptr.
+     */
+    template<typename T> T RequireCreated(T handle, const char * const what)
+    {
+        if (handle == nullptr)
+        {
+            CreationFailed(what);
+        }
+        return (handle);
+    }
+
+    /**
+     * @brief Check that xTaskCreate or xTaskCreatePinnedToCore succeeded, stopping with a diagnostic if not.
+     *
+     * @param result Value returned by the creation call.
+     * @param what Description of the task, for the diagnostic.
+     */
+    void RequireTaskCreated(const BaseType_t result, const char * const what);
 }; // namespace Utils

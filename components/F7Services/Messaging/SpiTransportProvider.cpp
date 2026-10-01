@@ -159,13 +159,13 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
     /*
      *  Set up the task and that will process the SPI messages.
      */
-    _synchronisationSemaphore = xSemaphoreCreateBinary();
-    xTaskCreate(SynchronisationTask, "SPISyncTask", SYNCHRONISATION_TASK_STACK_SIZE, this, PRIORITY_SPI_SYNCHRONISATION_TASK, &SpiTransportProvider::_synchronisationTaskHandle);
+    _synchronisationSemaphore = Utils::RequireCreated(xSemaphoreCreateBinary(), "the SPI synchronisation semaphore");
+    Utils::RequireTaskCreated(xTaskCreate(SynchronisationTask, "SPISyncTask", SYNCHRONISATION_TASK_STACK_SIZE, this, PRIORITY_SPI_SYNCHRONISATION_TASK, &SpiTransportProvider::_synchronisationTaskHandle), "the SPI synchronisation task");
 
     /*
      *  Set up the task and that will process the SPI messages.
      */
-    xTaskCreate(Task, COMPONENT_NAME, SPI_TASK_STACK_SIZE, this, PRIORITY_SPI_TASK, &SpiTransportProvider::_transportProviderTaskHandle);
+    Utils::RequireTaskCreated(xTaskCreate(Task, COMPONENT_NAME, SPI_TASK_STACK_SIZE, this, PRIORITY_SPI_TASK, &SpiTransportProvider::_transportProviderTaskHandle), "the SPI task");
 
     SendControlMessageToStm32(ControlMessageType::Ready);
 }

@@ -52,7 +52,7 @@ uint32_t WiFiRequestHandler::_nextAddrInfoHandle = 1;
  */
 SemaphoreHandle_t WiFiRequestHandler::AddrInfoHandlesMutex()
 {
-    static const SemaphoreHandle_t mutex = xSemaphoreCreateMutex();
+    static const SemaphoreHandle_t mutex = Utils::RequireCreated(xSemaphoreCreateMutex(), "the addrinfo handle table mutex");
     return (mutex);
 }
 

@@ -196,13 +196,13 @@ void BluetoothRequestHandler::Setup()
 
     RequestHandlerBase::Setup();
 
-    _xBtEventGroup = xEventGroupCreate();
+    _xBtEventGroup = Utils::RequireCreated(xEventGroupCreate(), "the Bluetooth event group");
 
     TRACE_MESSAGE("BT controller mem release...");
 
     ESP_ERROR_CHECK(esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT));
 
-    xTaskCreate(Task, _taskName, TASK_STACK_SIZE, this, PRIORITY_BLUETOOTH_TASK, &_taskHandle);
+    Utils::RequireTaskCreated(xTaskCreate(Task, _taskName, TASK_STACK_SIZE, this, PRIORITY_BLUETOOTH_TASK, &_taskHandle), "the Bluetooth task");
 
     TRACE_MESSAGE("Setup: Exit");
 }

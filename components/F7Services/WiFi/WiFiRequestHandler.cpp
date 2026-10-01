@@ -188,7 +188,7 @@ char *WiFiRequestHandler::_password = nullptr;
  */
 SemaphoreHandle_t WiFiRequestHandler::CredentialsMutex()
 {
-    static const SemaphoreHandle_t mutex = xSemaphoreCreateMutex();
+    static const SemaphoreHandle_t mutex = Utils::RequireCreated(xSemaphoreCreateMutex(), "the WiFi credentials mutex");
     return (mutex);
 }
 
@@ -384,24 +384,12 @@ WiFiRequestHandler::WiFiRequestHandler()
     //
     //  Set up the structures need to deal with poll() requests in an asynchronous manner.
     //
-    _pollRequestListMutex = xSemaphoreCreateMutex();
-    if (_pollRequestListMutex == nullptr)
-    {
-        ERROR_MESSAGE("WiFiRequestHandler: Cannot create poll request list mutex.");
-    }
-    _socketHandlesMutex = xSemaphoreCreateMutex();
-    if (_socketHandlesMutex == nullptr)
-    {
-        ERROR_MESSAGE("WiFiRequestHandler: Cannot create socket handle table mutex.");
-    }
+    _pollRequestListMutex = Utils::RequireCreated(xSemaphoreCreateMutex(), "the poll request list mutex");
+    _socketHandlesMutex = Utils::RequireCreated(xSemaphoreCreateMutex(), "the socket handle table mutex");
     //
     //  Get ready for nodes connecting when configured as an access point.
     //
-    _connectedNodesListMutex = xSemaphoreCreateMutex();
-    if (_connectedNodesListMutex == nullptr)
-    {
-        ERROR_MESSAGE("WiFiRequestHandler: Cannot create connected nodes list mutex.");
-    }
+    _connectedNodesListMutex = Utils::RequireCreated(xSemaphoreCreateMutex(), "the connected nodes list mutex");
     _connectedNodes.clear();
 
     //
@@ -947,7 +935,7 @@ void WiFiRequestHandler::GetMacAddress(uint8_t * const macAddress, wifi_interfac
  */
 SemaphoreHandle_t WiFiRequestHandler::StationMacAddressOverrideMutex()
 {
-    static const SemaphoreHandle_t mutex = xSemaphoreCreateMutex();
+    static const SemaphoreHandle_t mutex = Utils::RequireCreated(xSemaphoreCreateMutex(), "the station MAC address override mutex");
     return (mutex);
 }
 
@@ -1082,7 +1070,7 @@ WiFiRequestHandler *WiFiRequestHandler::GetInstance()
  */
 SemaphoreHandle_t WiFiRequestHandler::EventStateMutex()
 {
-    static const SemaphoreHandle_t mutex = xSemaphoreCreateMutex();
+    static const SemaphoreHandle_t mutex = Utils::RequireCreated(xSemaphoreCreateMutex(), "the WiFi event state mutex");
     return (mutex);
 }
 
@@ -1193,10 +1181,10 @@ void WiFiRequestHandler::Setup()
     /*
      *  Now create the objects necessary for the WiFi tasks.
      */
-    _xWiFiEventGroup = xEventGroupCreate();
+    _xWiFiEventGroup = Utils::RequireCreated(xEventGroupCreate(), "the WiFi event group");
     xEventGroupClearBits(_xWiFiEventGroup, WIFI_ALL_BITS);
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
-    xTaskCreate(Task, COMPONENT_NAME, TASK_STACK_SIZE, this, PRIORITY_WIFI_TASK, &_taskHandle);
+    Utils::RequireTaskCreated(xTaskCreate(Task, COMPONENT_NAME, TASK_STACK_SIZE, this, PRIORITY_WIFI_TASK, &_taskHandle), "the WiFi task");
     TRACE_MESSAGE("Setup: Exit");
 }
 

@@ -10,6 +10,7 @@
 #include "cJSON.h"
 #include "esp_gatt_defs.h"
 
+#include "Utils.hpp"
 #include "Logging.hpp"
 
 #include "Esp32Messaging.hpp"
@@ -58,12 +59,7 @@ BluetoothManager::BluetoothManager() : Services(&this->_handleManager)
 {
     TRACE_MESSAGE("BluetoothManager: Enter");
 
-    _graphMutex = xSemaphoreCreateRecursiveMutex();
-    if (_graphMutex == nullptr)
-    {
-        ERROR_MESSAGE("BluetoothManager: cannot create the service graph mutex.");
-        ESP_ERROR_CHECK(ESP_ERR_NO_MEM);
-    }
+    _graphMutex = Utils::RequireCreated(xSemaphoreCreateRecursiveMutex(), "the Bluetooth service graph mutex");
 
     Services.OnServiceAdded = &BluetoothManager::HandleServiceAdded;
     Services.OnCharacteristicAdded = &BluetoothManager::HandleCharacteristicAdded;
