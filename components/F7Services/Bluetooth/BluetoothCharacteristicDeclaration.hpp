@@ -10,7 +10,7 @@
 #pragma once
 
 #include "BluetoothAttribute.hpp"
-#include "BluetoothCharacteristic.hpp"
+#include "Uuid.hpp"
 
 /**
  * @brief Class holding a Bluetooth characteristic declaration.

@@ -372,23 +372,23 @@ void BluetoothRequestHandler::GenerateAttributeTable()
             // declaration attribute
             _attribute_table[index++] = {
                 {ESP_GATT_AUTO_RSP},
-                {ESP_UUID_LEN_16, reinterpret_cast<uint8_t *>(&characteristic->Declaration->Uuid), static_cast<uint16_t>(characteristic->Declaration->Permission), CHAR_DECLARATION_SIZE, CHAR_DECLARATION_SIZE, reinterpret_cast<uint8_t *>(&characteristic->Declaration->Properties)}};
+                {ESP_UUID_LEN_16, reinterpret_cast<uint8_t *>(&characteristic->GetDeclaration().Uuid), static_cast<uint16_t>(characteristic->GetDeclaration().Permission), CHAR_DECLARATION_SIZE, CHAR_DECLARATION_SIZE, reinterpret_cast<uint8_t *>(&characteristic->GetDeclaration().Properties)}};
 
             TRACE_MESSAGE("ATTRIBUTE TABLE VALUE AT %" PRId32, index);
             // value attribute
             // the first param here (ESP_GATT_RSP_BY_APP) means that we'll handle the request for data manually rather than allowing the API to respond with
             // data in the parameter database.  We need to call to the STM for data, so this is sensible.
-            if (characteristic->Value->Is128())
+            if (characteristic->GetValue().Is128())
             {
                 _attribute_table[index++] = {
                     {ESP_GATT_RSP_BY_APP},
-                    {ESP_UUID_LEN_128, reinterpret_cast<uint8_t *>(&characteristic->Value->uuid128), static_cast<uint16_t>(characteristic->Value->Permission), characteristic->Value->MaxLength, 0, nullptr}}; // <- 0, nullptr means "current value length is 0, current value data is null"
+                    {ESP_UUID_LEN_128, reinterpret_cast<uint8_t *>(&characteristic->GetValue().uuid128), static_cast<uint16_t>(characteristic->GetValue().Permission), characteristic->GetValue().MaxLength, 0, nullptr}}; // <- 0, nullptr means "current value length is 0, current value data is null"
             }
             else
             {
                 _attribute_table[index++] = {
                     {ESP_GATT_RSP_BY_APP},
-                    {ESP_UUID_LEN_16, reinterpret_cast<uint8_t *>(&characteristic->Value->uuid16), static_cast<uint16_t>(characteristic->Value->Permission), characteristic->Value->MaxLength, 0, nullptr}}; // <- 0, nullptr means "current value length is 0, current value data is null"
+                    {ESP_UUID_LEN_16, reinterpret_cast<uint8_t *>(&characteristic->GetValue().uuid16), static_cast<uint16_t>(characteristic->GetValue().Permission), characteristic->GetValue().MaxLength, 0, nullptr}}; // <- 0, nullptr means "current value length is 0, current value data is null"
             }
 
             for (const auto &descriptor: characteristic->GetDescriptorDefinitions())

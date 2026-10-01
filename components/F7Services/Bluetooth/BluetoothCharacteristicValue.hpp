@@ -14,8 +14,12 @@
 
 #include "Uuid.hpp"
 #include "BluetoothAttribute.hpp"
-#include "BluetoothCharacteristic.hpp"
 
+//
+//  Only a pointer to the characteristic is held, so a forward declaration is enough.  The
+//  characteristic holds this value as a member, so including BluetoothCharacteristic.hpp
+//  here would need this class complete before it is defined.
+//
 class BluetoothCharacteristic;
 
 /**

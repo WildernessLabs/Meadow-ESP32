@@ -9,10 +9,13 @@
 
 #include <string>
 #include <string.h>
+#include <type_traits>
 #include "esp_gatt_defs.h"
 #include "unity.h"
+#include "esp_system.h"
 
 #include "BluetoothAttribute.hpp"
+#include "BluetoothCharacteristic.hpp"
 #include "BluetoothDescriptor.hpp"
 #include "BluetoothManager.hpp"
 #include "Uuid.hpp"
@@ -101,7 +104,7 @@ TEST_CASE("BuildGraphFromJson accepts a characteristic of the GATT maximum lengt
     const std::vector<BluetoothCharacteristic *> accepted = BuildSingleService(manager, ServiceJson(CharacteristicJson(0x2a01, ESP_GATT_MAX_ATTR_LEN, "")));
 
     TEST_ASSERT_EQUAL(1, accepted.size());
-    TEST_ASSERT_EQUAL_UINT16(ESP_GATT_MAX_ATTR_LEN, accepted[0]->Value->MaxLength);
+    TEST_ASSERT_EQUAL_UINT16(ESP_GATT_MAX_ATTR_LEN, accepted[0]->GetValue().MaxLength);
 
     manager.DeleteAllServices();
 }
@@ -212,7 +215,7 @@ TEST_CASE("GetCurrentValueForAttributeHandle copies no more than the capacity", 
     //
     const uint16_t handles[] = {0x0028, 0x0029, 0x002a};
     TEST_ASSERT_TRUE(manager.SetHandles(handles, sizeof(handles) / sizeof(handles[0])));
-    const uint16_t valueHandle = accepted[0]->Value->Handle;
+    const uint16_t valueHandle = accepted[0]->GetValue().Handle;
 
     uint8_t pattern[VALUE_LENGTH];
     for (uint16_t index = 0; index < VALUE_LENGTH; index++)
@@ -264,4 +267,90 @@ TEST_CASE("BluetoothDescriptor copies no more than the value length it is given"
 
     BluetoothDescriptor emptyDescriptor(nullptr, Uuid16(static_cast<uint16_t>(0x2901)), CharacteristicPermission::Read, MAXIMUM_LENGTH, nullptr, 0);
     TEST_ASSERT_EQUAL_UINT16(0, emptyDescriptor.CurrentLength);
+}
+
+/*
+ *  Issue #449: the characteristic's declaration and value used to be public owning
+ *  pointers, which the destructor deleted, so a caller could delete either one first and
+ *  cause a double free.  They are now members reached through accessors returning
+ *  references.  These checks are made at compile time, so the file does not build against
+ *  a characteristic that still exposes them.
+ */
+
+/**
+ * @brief True if Declaration can be reached from outside T.  A template, so that a member
+ *        that is private or missing is a substitution failure, giving false, rather than an
+ *        error.
+ */
+template<typename T> constexpr bool DECLARATION_IS_EXPOSED = requires(T & characteristic)
+{
+    characteristic.Declaration;
+};
+
+/**
+ * @brief True if Value can be reached from outside T.
+ */
+template<typename T> constexpr bool VALUE_IS_EXPOSED = requires(T & characteristic)
+{
+    characteristic.Value;
+};
+
+static_assert(!DECLARATION_IS_EXPOSED<BluetoothCharacteristic>, "BluetoothCharacteristic exposes its declaration directly.");
+static_assert(!VALUE_IS_EXPOSED<BluetoothCharacteristic>, "BluetoothCharacteristic exposes its value directly.");
+static_assert(std::is_lvalue_reference_v<decltype(std::declval<BluetoothCharacteristic &>().GetDeclaration())>, "GetDeclaration must return a reference, not an owning pointer.");
+static_assert(std::is_lvalue_reference_v<decltype(std::declval<BluetoothCharacteristic &>().GetValue())>, "GetValue must return a reference, not an owning pointer.");
+
+/**
+ * @brief Number of characteristics created and destroyed by the lifetime test.
+ */
+#define CHARACTERISTIC_LIFETIME_ITERATIONS 50
+
+/**
+ * @brief A characteristic's declaration and value are created with it, the declaration
+ *        records the value's handle, and assigning a handle through the accessors reaches
+ *        the characteristic's own objects.
+ */
+TEST_CASE("A characteristic owns its declaration and value", CLASS_OF_TESTS)
+{
+    BluetoothCharacteristic *characteristic = new BluetoothCharacteristic(Uuid16(0x2a19), CharacteristicPermission::Read, CharacteristicProperty::Read, 20);
+    TEST_ASSERT_NOT_NULL(characteristic);
+
+    TEST_ASSERT_EQUAL_UINT16(characteristic->GetValue().Handle, characteristic->GetDeclaration().ValueHandle);
+    TEST_ASSERT_EQUAL_UINT16(20, characteristic->GetValue().MaxLength);
+
+    characteristic->GetDeclaration().Handle = 0x0010;
+    characteristic->GetValue().Handle = 0x0011;
+    TEST_ASSERT_EQUAL_UINT16(0x0010, characteristic->GetDeclaration().Handle);
+    TEST_ASSERT_EQUAL_UINT16(0x0011, characteristic->GetValue().Handle);
+    TEST_ASSERT_EQUAL_PTR(&characteristic->GetValue(), &characteristic->GetValue());
+
+    const BluetoothCharacteristic &readOnly = *characteristic;
+    TEST_ASSERT_EQUAL_UINT16(0x0011, readOnly.GetValue().Handle);
+    TEST_ASSERT_EQUAL_UINT16(0x0010, readOnly.GetDeclaration().Handle);
+
+    delete characteristic;
+}
+
+/**
+ * @brief Creating and destroying characteristics of both UUID sizes returns all of their
+ *        memory, the declaration and value included, and frees nothing twice.
+ *
+ *  The test build uses comprehensive heap poisoning, so a double free would abort here
+ *  rather than pass.
+ */
+TEST_CASE("Creating and destroying characteristics releases all of their memory", CLASS_OF_TESTS)
+{
+    //
+    //  One round first, so anything allocated once on first use is not counted as a leak.
+    //
+    delete new BluetoothCharacteristic(Uuid16(0x2a19), CharacteristicPermission::Read, CharacteristicProperty::Read, 20);
+    const uint32_t heapAtStart = esp_get_free_heap_size();
+
+    for (uint32_t iteration = 0; iteration < CHARACTERISTIC_LIFETIME_ITERATIONS; iteration++)
+    {
+        delete new BluetoothCharacteristic(Uuid16(0x2a19), CharacteristicPermission::Read, CharacteristicProperty::Read | CharacteristicProperty::Notify, 64);
+        delete new BluetoothCharacteristic(Uuid128("6e400001-b5a3-f393-e0a9-e50e24dcca9e"), CharacteristicPermission::Read | CharacteristicPermission::Write, CharacteristicProperty::Write, 128);
+    }
+
+    TEST_ASSERT_EQUAL_UINT32(heapAtStart, esp_get_free_heap_size());
 }

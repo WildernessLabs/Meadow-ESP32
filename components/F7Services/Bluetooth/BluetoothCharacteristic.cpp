@@ -38,7 +38,7 @@ const char *BluetoothCharacteristic::COMPONENT_NAME = BLUETOOTH_COMPONENT_NAME;
  * @param property Characteristic properties.
  * @param maxValueLength Maximum length of he value data.
  */
-BluetoothCharacteristic::BluetoothCharacteristic(const Uuid16 uuid, const CharacteristicPermission permission, const CharacteristicProperty property, const int maxValueLength)
+BluetoothCharacteristic::BluetoothCharacteristic(const Uuid16 uuid, const CharacteristicPermission permission, const CharacteristicProperty property, const int maxValueLength) : _declaration(uuid, permission, property), _value(this, uuid, permission, maxValueLength)
 {
     TRACE_MESSAGE("BluetoothCharacteristic(UUID16): Enter");
 
@@ -46,16 +46,11 @@ BluetoothCharacteristic::BluetoothCharacteristic(const Uuid16 uuid, const Charac
 
     // TODO: a HANDLE needs to get assigned.  Not sure if the caller would send it, or we auto-gen
 
-    // Create the declaration attribute
-    Declaration = new BluetoothCharacteristicDeclaration(uuid, permission, property);
-
-    // Create the value attribute
-    // TODO: it's permission might differ from the declaration?  Ugh.
+    // TODO: the value's permission might differ from the declaration's.
     // TODO: allow a default value to be passed in
-    Value = new BluetoothCharacteristicValue(this, uuid, permission, maxValueLength);
 
     // Update the declaration to point to the value
-    Declaration->ValueHandle = Value->Handle;
+    _declaration.ValueHandle = _value.Handle;
 
     TRACE_MESSAGE("BluetoothCharacteristic(UUID16): Exit");
 }
@@ -68,7 +63,7 @@ BluetoothCharacteristic::BluetoothCharacteristic(const Uuid16 uuid, const Charac
  * @param property Characteristic properties.
  * @param maxValueLength Maximum length of he value data.
  */
-BluetoothCharacteristic::BluetoothCharacteristic(const Uuid128 uuid, const CharacteristicPermission permission, const CharacteristicProperty property, const int maxValueLength)
+BluetoothCharacteristic::BluetoothCharacteristic(const Uuid128 uuid, const CharacteristicPermission permission, const CharacteristicProperty property, const int maxValueLength) : _declaration(uuid, permission, property), _value(this, uuid, permission, maxValueLength)
 {
     TRACE_MESSAGE("BluetoothCharacteristic(UUID128): Enter");
 
@@ -76,16 +71,11 @@ BluetoothCharacteristic::BluetoothCharacteristic(const Uuid128 uuid, const Chara
 
     // TODO: a HANDLE needs to get assigned.  Not sure if the caller would send it, or we auto-gen
 
-    // Create the declaration attribute
-    Declaration = new BluetoothCharacteristicDeclaration(uuid, permission, property);
-
-    // Create the value attribute
-    // TODO: it's permission might differ from the declaration?  Ugh.
+    // TODO: the value's permission might differ from the declaration's.
     // TODO: allow a default value to be passed in
-    Value = new BluetoothCharacteristicValue(this, uuid, permission, maxValueLength);
 
     // Update the declaration to point to the value
-    Declaration->ValueHandle = Value->Handle;
+    _declaration.ValueHandle = _value.Handle;
 
     TRACE_MESSAGE("BluetoothCharacteristic(UUID128): Exit");
 }
@@ -103,10 +93,61 @@ BluetoothCharacteristic::~BluetoothCharacteristic()
     }
     _descriptors.clear();
 
-    delete Declaration;
-    delete Value;
-
     TRACE_MESSAGE("~BluetoothCharacteristic: Exit");
+}
+
+/*
+ * ----------------------------------------------------------------------------
+ *
+ *                              Accessors
+ *
+ * ----------------------------------------------------------------------------
+ */
+
+/**
+ * @brief Get the characteristic declaration.
+ *
+ *  The declaration belongs to the characteristic and lives as long as it does.  The
+ *  reference is for reading the declaration and assigning its handles, not for keeping it.
+ *
+ * @return BluetoothCharacteristicDeclaration& The declaration.
+ */
+BluetoothCharacteristicDeclaration &BluetoothCharacteristic::GetDeclaration()
+{
+    return (_declaration);
+}
+
+/**
+ * @brief Get the characteristic declaration.
+ *
+ * @return const BluetoothCharacteristicDeclaration& The declaration.
+ */
+const BluetoothCharacteristicDeclaration &BluetoothCharacteristic::GetDeclaration() const
+{
+    return (_declaration);
+}
+
+/**
+ * @brief Get the characteristic value.
+ *
+ *  The value belongs to the characteristic and lives as long as it does.  The reference is
+ *  for reading the value and assigning its handle, not for keeping it.
+ *
+ * @return BluetoothCharacteristicValue& The value.
+ */
+BluetoothCharacteristicValue &BluetoothCharacteristic::GetValue()
+{
+    return (_value);
+}
+
+/**
+ * @brief Get the characteristic value.
+ *
+ * @return const BluetoothCharacteristicValue& The value.
+ */
+const BluetoothCharacteristicValue &BluetoothCharacteristic::GetValue() const
+{
+    return (_value);
 }
 
 /*
