@@ -64,8 +64,13 @@ public:
         const std::string configuration = "{\"deviceName\":\"MeadowF7\",\"companyIdentifier\":741,\"services\":[{\"name\":\"Service A\",\"uuid\":" + std::to_string(ADVERTISING_TEST_SERVICE_UUID) + ",\"characteristics\":[{\"uuid\":10755,\"permission\":17,\"props\":10,\"len\":4}]}]}";
         TEST_ASSERT_TRUE_MESSAGE(BluetoothRequestHandler::_manager.BuildGraphFromJson(configuration.c_str()), "The configuration was not parsed.");
 
+        //
+        //  The dispatcher is a static shared by every handler, so the handler made here
+        //  replaces it for all of them until Release() puts it back.
+        //
         _savedInstance = BluetoothRequestHandler::_instance;
         _savedInstantiated = BluetoothRequestHandler::_instantiated;
+        _savedDispatcher = BluetoothRequestHandler::_messageDispatcher;
         BluetoothRequestHandler::_instance = nullptr;
         BluetoothRequestHandler::_instantiated = false;
         BluetoothRequestHandler *handler = new BluetoothRequestHandler(nullptr);
@@ -84,7 +89,9 @@ public:
         delete handler;
         BluetoothRequestHandler::_instance = _savedInstance;
         BluetoothRequestHandler::_instantiated = _savedInstantiated;
+        BluetoothRequestHandler::_messageDispatcher = _savedDispatcher;
         _savedInstance = nullptr;
+        _savedDispatcher = nullptr;
     }
 
     /**
@@ -121,10 +128,16 @@ private:
      * @brief Instantiation guard set aside while the test's own handler is in use.
      */
     static bool _savedInstantiated;
+
+    /**
+     * @brief Shared dispatcher set aside while the test's own handler is in use.
+     */
+    static IMessageDispatcher *_savedDispatcher;
 };
 
 BluetoothRequestHandler *TestBluetoothAdvertising::_savedInstance = nullptr;
 bool TestBluetoothAdvertising::_savedInstantiated = false;
+IMessageDispatcher *TestBluetoothAdvertising::_savedDispatcher = nullptr;
 
 /**
  * @brief Bytes the service UUID list takes once Bluedroid has shortened the UUIDs.

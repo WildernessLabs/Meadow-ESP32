@@ -64,6 +64,9 @@ esp_gatt_if_t BluetoothRequestHandler::_gattsInterfaceHandle = ESP_GATT_IF_NONE;
  * @brief The handle that is assigned a connection when a device connects over Bluetooth.
  */
 std::atomic<uint16_t> BluetoothRequestHandler::_connectionHandle(INVALID_CONNECTION_HANDLE);
+uint8_t *BluetoothRequestHandler::_preparedWriteValue = nullptr;
+uint16_t BluetoothRequestHandler::_preparedWriteHandle = 0;
+uint16_t BluetoothRequestHandler::_preparedWriteLength = 0;
 
 /**
  * @brief Indicate if we have configured the advertising data.
@@ -962,6 +965,79 @@ void BluetoothRequestHandler::OnDataWriteRequest(const uint16_t handle, uint8_t 
 }
 
 /**
+ * @brief Add one piece of a prepared (long) write to the value being collected.
+ *
+ *  Called on the Bluedroid task only, as are ExecuteWrite and DiscardPreparedWrite, so the
+ *  prepared write state needs no lock.
+ *
+ * @param handle Attribute being written.
+ * @param offset Offset of this piece in the value.
+ * @param value Bytes of this piece.
+ * @param length Number of bytes in this piece.
+ *
+ * @return ESP_GATT_OK if the piece was kept, otherwise the status to send the client.
+ */
+esp_gatt_status_t BluetoothRequestHandler::PrepareWrite(const uint16_t handle, const uint16_t offset, const uint8_t * const value, const uint16_t length)
+{
+    if (offset > ESP_GATT_MAX_ATTR_LEN)
+    {
+        return (ESP_GATT_INVALID_OFFSET);
+    }
+    if ((static_cast<uint32_t>(offset) + length) > ESP_GATT_MAX_ATTR_LEN)
+    {
+        return (ESP_GATT_INVALID_ATTR_LEN);
+    }
+    if ((_preparedWriteValue != nullptr) && (handle != _preparedWriteHandle))
+    {
+        return (ESP_GATT_PREPARE_Q_FULL);
+    }
+    if (_preparedWriteValue == nullptr)
+    {
+        _preparedWriteValue = static_cast<uint8_t *>(pvPortMalloc(ESP_GATT_MAX_ATTR_LEN));
+        if (_preparedWriteValue == nullptr)
+        {
+            return (ESP_GATT_NO_RESOURCES);
+        }
+        memset(_preparedWriteValue, 0, ESP_GATT_MAX_ATTR_LEN);
+        _preparedWriteHandle = handle;
+        _preparedWriteLength = 0;
+    }
+    if (length > 0)
+    {
+        memcpy(_preparedWriteValue + offset, value, length);
+    }
+    if ((offset + length) > _preparedWriteLength)
+    {
+        _preparedWriteLength = offset + length;
+    }
+    return (ESP_GATT_OK);
+}
+
+/**
+ * @brief Finish a prepared write: deliver the value collected to the STM32, or discard it.
+ *
+ * @param execute true to deliver the value, false if the client cancelled the write.
+ */
+void BluetoothRequestHandler::ExecuteWrite(const bool execute)
+{
+    if (execute && (_preparedWriteValue != nullptr))
+    {
+        OnDataWriteRequest(_preparedWriteHandle, _preparedWriteValue, _preparedWriteLength);
+    }
+    DiscardPreparedWrite();
+}
+
+/**
+ * @brief Discard any prepared write that has not been executed.
+ */
+void BluetoothRequestHandler::DiscardPreparedWrite()
+{
+    Utils::DeleteAndNullifyPointer(_preparedWriteValue);
+    _preparedWriteHandle = 0;
+    _preparedWriteLength = 0;
+}
+
+/**
  * @brief Build the service and characteristic graph from the JSON configuration.
  *
  * @param request Message containing the JSON configuration.
@@ -1162,12 +1238,56 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
             break;
         case ESP_GATTS_WRITE_EVT:
             {
-                TRACE_MESSAGE("ESP_GATTS_WRITE_EVT, write handle 0x%04" PRIx16, param->write.handle);
+                TRACE_MESSAGE("ESP_GATTS_WRITE_EVT, write handle 0x%04" PRIx16 ", offset %" PRIu16 ", length %" PRIu16, param->write.handle, param->write.offset, param->write.len);
+                //
+                //  Every write to a characteristic's value reaches the STM32, whether or not
+                //  the client wants a response: a write without response is the usual way to
+                //  send data quickly (issue #299).  A prepared write is one piece of a long
+                //  value; the pieces are delivered together when the client executes them.
+                //
+                //  Descriptors, such as the client configuration a client writes to
+                //  subscribe, are answered by Bluedroid (ESP_GATT_AUTO_RSP).  Their writes
+                //  are reported here too, with need_rsp false, but were never passed to the
+                //  STM32 and still are not.
+                //
+                esp_gatt_status_t status = ESP_GATT_OK;
+                esp_gatt_rsp_t *response = nullptr;
+                if (param->write.is_prep)
+                {
+                    status = PrepareWrite(param->write.handle, param->write.offset, param->write.value, param->write.len);
+                    //
+                    //  A prepared write is answered with the piece it carried, so the client
+                    //  can check it arrived intact.
+                    //
+                    if (param->write.need_rsp)
+                    {
+                        response = static_cast<esp_gatt_rsp_t *>(pvPortMalloc(sizeof(esp_gatt_rsp_t)));
+                        if (response == nullptr)
+                        {
+                            status = ESP_GATT_NO_RESOURCES;
+                        }
+                        else
+                        {
+                            memset(response, 0, sizeof(esp_gatt_rsp_t));
+                            response->attr_value.handle = param->write.handle;
+                            response->attr_value.offset = param->write.offset;
+                            response->attr_value.len = param->write.len;
+                            response->attr_value.auth_req = ESP_GATT_AUTH_REQ_NONE;
+                            memcpy(response->attr_value.value, param->write.value, param->write.len);
+                        }
+                    }
+                }
+                else
+                {
+                    if (param->write.need_rsp || _manager.IsCharacteristicValueHandle(param->write.handle))
+                    {
+                        OnDataWriteRequest(param->write.handle, param->write.value, param->write.len);
+                    }
+                }
+
                 if (param->write.need_rsp)
                 {
-                    OnDataWriteRequest(param->write.handle, param->write.value, param->write.len);
-
-                    ret = esp_ble_gatts_send_response(gatts_if, param->write.conn_id, param->write.trans_id, ESP_GATT_OK, nullptr);
+                    ret = esp_ble_gatts_send_response(gatts_if, param->write.conn_id, param->write.trans_id, status, response);
                     if (ret)
                     {
                         ERROR_MESSAGE("esp_ble_gatts_send_response failed, error code = %" PRIi32, ret);
@@ -1177,10 +1297,17 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
                         TRACE_MESSAGE("esp_ble_gatts_send_response succeeded");
                     }
                 }
+                Utils::DeleteAndNullifyPointer(response);
             }
             break;
         case ESP_GATTS_EXEC_WRITE_EVT:
-            TRACE_MESSAGE("ESP_GATTS_EXEC_WRITE_EVT");
+            TRACE_MESSAGE("ESP_GATTS_EXEC_WRITE_EVT, flag %" PRIu8, param->exec_write.exec_write_flag);
+            ExecuteWrite(param->exec_write.exec_write_flag == ESP_GATT_PREP_WRITE_EXEC);
+            ret = esp_ble_gatts_send_response(gatts_if, param->exec_write.conn_id, param->exec_write.trans_id, ESP_GATT_OK, nullptr);
+            if (ret)
+            {
+                ERROR_MESSAGE("esp_ble_gatts_send_response failed, error code = %" PRIi32, ret);
+            }
             break;
         case ESP_GATTS_MTU_EVT:
             TRACE_MESSAGE("ESP_GATTS_MTU_EVT");
@@ -1244,6 +1371,10 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
             break;
         case ESP_GATTS_DISCONNECT_EVT:
             TRACE_MESSAGE("ESP_GATTS_DISCONNECT_EVT, disconnect reason 0x%" PRIx32, param->disconnect.reason);
+            //
+            //  A long write the client did not finish before it went is not delivered.
+            //
+            DiscardPreparedWrite();
             /* start advertising again when missing the connect */
             ret = esp_ble_gap_start_advertising(GetInstance()->GetAdvertisingParameters());
             if (ret)

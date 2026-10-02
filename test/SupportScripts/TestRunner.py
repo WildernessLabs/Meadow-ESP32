@@ -104,6 +104,8 @@ BLUETOOTH_CLIENTS = {
         lambda arguments: ['WriteNumberCharacteristicSoakTest.py', '--iterations', str(arguments.soak_iterations)],
     'Soak test notifying characteristic, number of iterations controlled by client (MeadowF7NotifyTest, Espressif)':
         lambda arguments: ['NotifyCharacteristicSoakTest.py', '--iterations', str(arguments.soak_iterations)],
+    'A write without response and a long write reach the STM32 (MeadowWriteTest, Espressif)':
+        lambda arguments: ['WriteDeliveryClient.py'],
 }
 
 

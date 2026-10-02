@@ -963,6 +963,67 @@ TEST_CASE("Soak test writing numeric characteristic, number of iterations contro
 }
 
 /**
+ * @brief Length of the long value WriteDeliveryClient.py writes, longer than one packet.
+ */
+#define WRITE_DELIVERY_LONG_LENGTH 512
+
+/**
+ * @brief Check that a write without response and a long write both reach the STM32.
+ *
+ *  WriteDeliveryClient.py is the client.  It writes 11 22 33 44 without asking for a
+ *  response, then writes WRITE_DELIVERY_LONG_LENGTH bytes, (index * 3 + 1) & 0xff, with a
+ *  response.  The long value does not fit in one packet, so the client's stack sends it as
+ *  prepared writes followed by an execute.  Before issue #299 neither reached the STM32.
+ */
+TEST_CASE("A write without response and a long write reach the STM32 (MeadowWriteTest, Espressif)", CLASS_OF_TESTS)
+{
+    printf("Starting Bluetooth service for MeadowWriteTest, Company ID Espressif (0x02e5)\n");
+
+    MockMessageDispatcher *dispatcher = SetupMessageDispatcher();
+    TEST_ASSERT_NOT_NULL(dispatcher);
+
+    StartBluetoothService(dispatcher, meadow_write_json);
+    WaitForClientConnection(dispatcher);
+
+    const uint8_t shortValue[] = {0x11, 0x22, 0x33, 0x44};
+    uint8_t longValue[WRITE_DELIVERY_LONG_LENGTH];
+    for (uint32_t index = 0; index < sizeof(longValue); index++)
+    {
+        longValue[index] = static_cast<uint8_t>((index * 3) + 1);
+    }
+    const uint8_t *expectedValues[] = {shortValue, longValue};
+    const uint32_t expectedLengths[] = {sizeof(shortValue), sizeof(longValue)};
+    const char *descriptions[] = {"The write without response", "The long write"};
+
+    for (uint32_t write = 0; write < 2; write++)
+    {
+        WaitForOutboundMessage(dispatcher, CLIENT_CONNECTION_TIMEOUT);
+        Message *event = dispatcher->GetOutboundMessage();
+        TEST_ASSERT_NOT_NULL_MESSAGE(event, descriptions[write]);
+        if (event->Function != BluetoothFunction::ClientWriteRequestEvent)
+        {
+            printf("%s did not reach the STM32; event %" PRIu32 " came instead.\n", descriptions[write], event->Function);
+        }
+        ASSERT_EVENT(event, Esp32Interfaces::BlueTooth, BluetoothFunction::ClientWriteRequestEvent, StatusCodes::CompletedOk);
+        const uint32_t length = Encoders::ExtractUInt32(event->Payload + 2);
+        printf("%s delivered %" PRIu32 " bytes.\n", descriptions[write], length);
+        TEST_ASSERT_EQUAL_UINT32_MESSAGE(expectedLengths[write], length, descriptions[write]);
+        TEST_ASSERT_EQUAL_UINT8_ARRAY_MESSAGE(expectedValues[write], event->Payload + 6, length, descriptions[write]);
+        Message::DeleteMessage(event);
+    }
+
+    WaitForOutboundMessage(dispatcher, CLIENT_CONNECTION_TIMEOUT);
+    Message *event = dispatcher->GetOutboundMessage();
+    TEST_ASSERT_NOT_NULL(event);
+    ASSERT_EVENT(event, Esp32Interfaces::BlueTooth, BluetoothFunction::ClientDisconnectedEvent, StatusCodes::CompletedOk);
+    Message::DeleteMessage(event);
+
+    StopBluetoothService(dispatcher);
+
+    ResetMessageDispatcher();
+}
+
+/**
  * @brief Soak test the notification path: the device notifies a number, the client
  *        writes it back, and the device notifies the next one.
  *
