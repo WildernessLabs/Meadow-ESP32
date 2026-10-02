@@ -9,8 +9,11 @@
 
 #pragma once
 
+#include <stdio.h>
+
 #include "esp_littlefs.h"
 
+#include "Encoders.hpp"
 #include "Esp32Messaging.hpp"
 #include "SharedEnums.hpp"
 
@@ -87,6 +90,27 @@ private:
      *      Status code the response should carry.
      */
     void SendResponse(Message *message, const StatusCodes::StatusCodes result);
+
+    /**
+     * @brief Read an open file and encode it, with its name, as the payload of message.
+     *
+     * @param file
+     *      File to read, positioned at its start.
+     *
+     * @param length
+     *      Length of the file in bytes, already checked to fit in one response.
+     *
+     * @param fileData
+     *      Name of the file, with no contents.  The contents read are added to it.
+     *
+     * @param message
+     *      Message whose payload receives the encoded file name and contents.
+     *
+     * @returns
+     *      CompletedOk if the whole file was read and encoded, EspOutOfMemory if memory ran
+     *      out, otherwise Failure.
+     */
+    StatusCodes::StatusCodes ReadOpenFile(FILE * const file, const uint32_t length, Esp32Messaging::FileNameAndContents * const fileData, Message * const message);
 
 public:
     /**
