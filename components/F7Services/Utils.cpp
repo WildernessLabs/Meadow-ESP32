@@ -23,6 +23,14 @@
 #include "esp_err.h"
 
 /**
+ * @brief Name the logging macros use for messages from these functions.
+ *
+ *  Utils is a namespace rather than a class with a COMPONENT_NAME member, so the macros
+ *  that use COMPONENT_NAME would not compile here when TRACE_MESSAGES is defined.
+ */
+static const char * const UTILS_COMPONENT_NAME = "Utils";
+
+/**
  * @brief Format a number with commas as thousands separators.
  *
  * @param number The number to format.
@@ -126,7 +134,7 @@ void *Utils::Realloc(void *ptr, size_t oldSize, size_t newSize)
  */
 void Utils::CreationFailed(const char * const what)
 {
-    ERROR_MESSAGE("Cannot create %s.", what);
+    ERROR_MESSAGE_SPECIFY_COMPONENT(UTILS_COMPONENT_NAME, "Cannot create %s.", what);
     ESP_ERROR_CHECK(ESP_ERR_NO_MEM);
     //
     //  ESP_ERROR_CHECK does not return for an error, but the compiler cannot tell.
