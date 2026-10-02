@@ -150,10 +150,11 @@ const char *NvsManager::GetValue(const char *nameSpace, const char *name, const 
 
     if (!found && (defaultValue != nullptr))
     {
-        char *copy = static_cast<char *>(pvPortMalloc(strlen(defaultValue) + 1));
+        const size_t length = strlen(defaultValue) + 1;
+        char *copy = static_cast<char *>(pvPortMalloc(length));
         if (copy != nullptr)
         {
-            strcpy(copy, defaultValue);
+            memcpy(copy, defaultValue, length);
         }
         result = copy;
     }

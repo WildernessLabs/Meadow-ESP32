@@ -551,7 +551,7 @@ void WiFiRequestHandler::Connect(void * const vpMessage)
                             sa.sin_len = sizeof(struct sockaddr_in);
                             TRACE_MESSAGE("Connect: Connecting socket: %ld", request->SocketHandle);
                             TRACE_MESSAGE("Connect: Family: %d", sa.sin_family);
-                            TRACE_MESSAGE("Connect: IP address: %s", inet_ntoa(sa.sin_addr));
+                            TRACE_MESSAGE("Connect: IP address: %s", Utils::Ipv4AddressToString(sa.sin_addr.s_addr).c_str());
                             TRACE_MESSAGE("Connect: Port: %d", ntohs(sa.sin_port));
                             int descriptor = -1;
                             if (FindSocket(request->SocketHandle, &descriptor))
@@ -1593,7 +1593,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::SendTo(Esp32Messaging::SendToReques
                 lenSa = sizeof(sa);
                 TRACE_MESSAGE("SendTo: Connecting socket: %" PRIi32, request->SocketHandle);
                 TRACE_MESSAGE("SendTo: Family: %" PRIi32, sa.sin_family);
-                TRACE_MESSAGE("SendTo: IP address: %s", inet_ntoa(sa.sin_addr));
+                TRACE_MESSAGE("SendTo: IP address: %s", Utils::Ipv4AddressToString(sa.sin_addr.s_addr).c_str());
                 TRACE_MESSAGE("SendTo: Port: %" PRIi32, ntohs(sa.sin_port));
             }
         }
@@ -2480,7 +2480,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::Bind(Esp32Messaging::BindRequest *r
         memcpy(&sa.sin_addr, &socketAddress->Ip4Address, sizeof(socketAddress->Ip4Address));
         TRACE_MESSAGE("Bind: Socket handle: %" PRIi32, request->SocketHandle);
         TRACE_MESSAGE("Bind: Family: %" PRIi32, sa.sin_family);
-        TRACE_MESSAGE("Bind: IP address: %s", inet_ntoa(sa.sin_addr));
+        TRACE_MESSAGE("Bind: IP address: %s", Utils::Ipv4AddressToString(sa.sin_addr.s_addr).c_str());
         TRACE_MESSAGE("Bind: Port: %" PRIu16, ntohs(sa.sin_port));
         int descriptor = -1;
         if (FindSocket(request->SocketHandle, &descriptor))
@@ -2744,7 +2744,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::Accept(Esp32Messaging::AcceptReques
             response.ResponseErrno = 0;
             TRACE_MESSAGE("Accept: Socket handle: %ld", response.Result);
             TRACE_MESSAGE("Accept: Family: %d", sin->sin_family);
-            TRACE_MESSAGE("Accept: IP address: %s", inet_ntoa(sin->sin_addr));
+            TRACE_MESSAGE("Accept: IP address: %s", Utils::Ipv4AddressToString(sin->sin_addr.s_addr).c_str());
             TRACE_MESSAGE("Accept: Port: %d", ntohs(sin->sin_port));
         }
         else
@@ -3085,7 +3085,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetSockPeerName(const Esp32Messagin
         response.ResponseErrno = 0;
         TRACE_MESSAGE("GetSockPeerName: Socket handle: %" PRIi32, request->SocketHandle);
         TRACE_MESSAGE("GetSockPeerName: Family: %" PRIi32, sin->sin_family);
-        TRACE_MESSAGE("GetSockPeerName: IP address: %s", inet_ntoa(sin->sin_addr));
+        TRACE_MESSAGE("GetSockPeerName: IP address: %s", Utils::Ipv4AddressToString(sin->sin_addr.s_addr).c_str());
         TRACE_MESSAGE("GetSockPeerName: Port: %" PRIi32, ntohs(sin->sin_port));
     }
     else

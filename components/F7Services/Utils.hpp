@@ -33,6 +33,18 @@ namespace Utils
     std::string NumberWithCommas(uint32_t number);
 
     /**
+     * @brief Format an IPv4 address in dotted decimal.
+     *
+     *  Unlike inet_ntoa, which formats into one static buffer shared by every caller and
+     *  every task, each call returns its own string, so two addresses can be formatted in
+     *  one statement or on two tasks at once (issue #171).
+     *
+     * @param address Address in network byte order, as held in in_addr::s_addr.
+     * @return std::string The address, for example "192.168.1.1".
+     */
+    std::string Ipv4AddressToString(const uint32_t address);
+
+    /**
      * @brief Release heap storage obtained from pvPortMalloc and set the caller's pointer to nullptr.
      *
      * Taking the pointer by reference means callers pass the pointer itself rather than
