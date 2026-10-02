@@ -823,11 +823,6 @@ private:
     void StationDisconnectedEvent(wifi_event_sta_disconnected_t *);
 
     /**
-     *  @brief Process the change in authentication mode event (WIFI_EVENT_STA_AUTHMODE_CHANGE).
-     */
-    void AuthenticationModeChangedEvent(wifi_event_sta_authmode_change_t *);
-
-    /**
      * @brief Process the node connecting to access point event.
      *
      * @param eventData
