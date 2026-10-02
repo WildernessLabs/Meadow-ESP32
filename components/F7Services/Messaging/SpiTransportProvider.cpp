@@ -273,9 +273,14 @@ void SpiTransportProvider::ClearTransmitAndReceiveBuffers()
 /**
  *  @brief Create a new acknowledgement transaction (ACK or NAK) ready to transmit to the STM32.
  *
- *  This method allocates the transaction and two buffers on the heap.  It is essential
- *  that the caller cleans up both the transaction and the buffers after they are no
- *  longer necessary.
+ *  The transaction is allocated on the heap and must be released with DeleteTransaction.
+ *  It points at the provider's own _txBuffer and _rxBuffer, which DeleteTransaction does
+ *  not free.
+ *
+ *  The transaction holds nothing from message or from the copy made of it here, so the
+ *  copy can be deleted as soon as the transaction exists (issue #235).
+ *  CreateSpiTransaction encodes every header field by value into _txBuffer.  The copy
+ *  carries no payload, so nothing is copied from a payload either.
  *
  *  @param message
  *      Message to acknowledge.
@@ -298,6 +303,10 @@ spi_slave_transaction_t *SpiTransportProvider::CreateAcknowledgementTransaction(
     copyOfMessage->MessageType = messageType;
     copyOfMessage->StatusCode = static_cast<uint32_t>(code);
     spi_slave_transaction_t *transaction = CreateSpiTransaction(copyOfMessage);
+    //
+    //  Safe to delete now: the transaction refers only to _txBuffer and _rxBuffer, and
+    //  the acknowledgement has already been encoded into _txBuffer by value.
+    //
     Message::DeleteMessage(copyOfMessage);
 
     TRACE_MESSAGE("CreateAcknowledgementTransaction: Exit");
@@ -307,9 +316,10 @@ spi_slave_transaction_t *SpiTransportProvider::CreateAcknowledgementTransaction(
 /**
  *  @brief Create a new SPI transaction.
  *
- *  This method allocates the transaction and two buffers on the heap.  It is essential
- *  that the caller cleans up both the transaction and the buffers after they are no
- *  longer necessary.
+ *  The transaction is allocated on the heap and must be released with DeleteTransaction.
+ *  Its buffers are the provider's own _txBuffer and _rxBuffer, which are cleared first.
+ *  message is encoded into _txBuffer by value, so the transaction keeps no pointer into
+ *  message and message may be deleted once this returns.
  *
  *  @param message
  *      Message to send, this can be set to nullptr.  If this parameter is not nullptr

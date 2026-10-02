@@ -435,20 +435,31 @@ bool BluetoothManager::DeleteAllServices()
  * @brief Get the device information from the JSON configuration.
  *
  * @param json Pointer to the cJSON object holding the configuration.
+ *
+ * @return true if the device name can be advertised, false if it is longer than
+ *         MAXIMUM_ADVERTISED_NAME_LENGTH, in which case the default name is kept.
  */
-void BluetoothManager::GetDeviceInformation(const cJSON * const json)
+bool BluetoothManager::GetDeviceInformation(const cJSON * const json)
 {
     TRACE_MESSAGE("GetDeviceInformation: Enter");
 
+    bool result = true;
     const cJSON * const deviceName = cJSON_GetObjectItem(json, DEVICE_NAME_KEY);
     memset(_deviceName, 0, sizeof(_deviceName));
+    strncpy(_deviceName, DEFAULT_DEVICE_NAME, sizeof(_deviceName) - 1);
     if ((deviceName != nullptr) && cJSON_IsString(deviceName))
     {
-        strncpy(_deviceName, deviceName->valuestring, sizeof(_deviceName) - 1);
-    }
-    else
-    {
-        strncpy(_deviceName, DEFAULT_DEVICE_NAME, sizeof(_deviceName) - 1);
+        const size_t length = strlen(deviceName->valuestring);
+        if (length > MAXIMUM_ADVERTISED_NAME_LENGTH)
+        {
+            ERROR_MESSAGE("GetDeviceInformation: The device name is %" PRIu32 " bytes, more than the %" PRIu32 " the scan response can hold.", static_cast<uint32_t>(length), static_cast<uint32_t>(MAXIMUM_ADVERTISED_NAME_LENGTH));
+            result = false;
+        }
+        else
+        {
+            memset(_deviceName, 0, sizeof(_deviceName));
+            memcpy(_deviceName, deviceName->valuestring, length);
+        }
     }
     TRACE_MESSAGE("Device Name: %s\n", _deviceName);
 
@@ -464,6 +475,7 @@ void BluetoothManager::GetDeviceInformation(const cJSON * const json)
     TRACE_MESSAGE("Company identifier: 0x%04" PRIx16, _companyIdentifier);
 
     TRACE_MESSAGE("GetDeviceInformation: Exit");
+    return (result);
 }
 
 /**
@@ -843,7 +855,7 @@ bool BluetoothManager::BuildGraphFromJson(const char * const configuration)
         }
         else
         {
-            GetDeviceInformation(json);
+            const bool nameAccepted = GetDeviceInformation(json);
             //
             //  A configuration with any entry that could not be used, or with no usable
             //  service at all, is refused as a whole rather than started in part: the
@@ -851,7 +863,7 @@ bool BluetoothManager::BuildGraphFromJson(const char * const configuration)
             //  is released so a later Start does not add to it.
             //
             const uint32_t rejected = AddServices(json);
-            if ((rejected > 0) || Services.GetServiceDefinitions().empty())
+            if (!nameAccepted || (rejected > 0) || Services.GetServiceDefinitions().empty())
             {
                 ERROR_MESSAGE("BuildGraphFromJson: %" PRIu32 " entries rejected, %" PRIu32 " services built; refusing the configuration.", rejected, static_cast<uint32_t>(Services.GetServiceDefinitions().size()));
                 DeleteAllServices();

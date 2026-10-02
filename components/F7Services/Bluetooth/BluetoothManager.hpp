@@ -154,8 +154,11 @@ private:
      * @brief Get the device information from the JSON configuration.
      *
      * @param json Pointer to the cJSON object holding the configuration.
+     *
+     * @return true if the device name can be advertised, false if it is longer than
+     *         MAXIMUM_ADVERTISED_NAME_LENGTH, in which case the default name is kept.
      */
-    void GetDeviceInformation(const cJSON * const json);
+    bool GetDeviceInformation(const cJSON * const json);
 
     /**
      * @brief Add services from the JSON configuration.
@@ -201,15 +204,22 @@ private:
      */
     uint16_t _companyIdentifier;
 
+public:
     /**
-     * @brief Maximum length, in bytes including the null terminator, of the device name.
+     * @brief Longest device name, in bytes, that a configuration may give.
+     *
+     *  The name is advertised on its own in the scan response, which is 31 bytes, and
+     *  the name's length and type bytes take 2 of them.  A longer name was either sent
+     *  shortened or, past Bluedroid's own limit, refused by esp_ble_gap_set_device_name
+     *  with nothing reported to the STM32 (issue #344).
      */
-    static constexpr size_t MAXIMUM_DEVICE_NAME_LENGTH = 256;
+    static constexpr size_t MAXIMUM_ADVERTISED_NAME_LENGTH = 29;
 
+private:
     /**
-     * @brief Name of the device.
+     * @brief Name of the device, with room for the null terminator.
      */
-    char _deviceName[MAXIMUM_DEVICE_NAME_LENGTH];
+    char _deviceName[MAXIMUM_ADVERTISED_NAME_LENGTH + 1];
 
 public:
     /**
