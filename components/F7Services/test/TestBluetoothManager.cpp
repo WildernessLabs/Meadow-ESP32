@@ -183,6 +183,52 @@ TEST_CASE("BuildGraphFromJson refuses a configuration with no services", CLASS_O
 }
 
 /**
+ * @brief Longest device name the scan response holds whole: 31 bytes less the name's length and type bytes.
+ */
+#define LONGEST_ADVERTISED_NAME 29
+
+/**
+ * @brief Configuration holding one valid service and the given device name.
+ *
+ * @param deviceName Device name to configure.
+ *
+ * @return Configuration text for BluetoothManager::BuildGraphFromJson.
+ */
+static std::string NamedServiceJson(const std::string &deviceName)
+{
+    return ("{\"deviceName\":\"" + deviceName + "\",\"services\":[{\"name\":\"Test service\",\"uuid\":254,\"characteristics\":[" + CharacteristicJson(0x2a01, 4, "") + "]}]}");
+}
+
+/**
+ * @brief A device name that fills the scan response is accepted and kept whole.
+ */
+TEST_CASE("BuildGraphFromJson accepts the longest device name the scan response holds", CLASS_OF_TESTS)
+{
+    BluetoothManager manager;
+    const std::string deviceName(LONGEST_ADVERTISED_NAME, 'M');
+    BuildSingleService(manager, NamedServiceJson(deviceName));
+    TEST_ASSERT_EQUAL_STRING_MESSAGE(deviceName.c_str(), manager.GetDeviceName(), "The device name was not kept whole.");
+}
+
+/**
+ * @brief A device name too long for the scan response refuses the configuration.
+ *
+ *  A longer name used to be accepted.  It was then advertised shortened or, past
+ *  Bluedroid's own limit, refused by esp_ble_gap_set_device_name with nothing reported
+ *  to the STM32 (issue #344).
+ */
+TEST_CASE("BuildGraphFromJson refuses a device name too long for the scan response", CLASS_OF_TESTS)
+{
+    BluetoothManager manager;
+    const size_t lengths[] = {LONGEST_ADVERTISED_NAME + 1, 64, 300};
+    for (const size_t length: lengths)
+    {
+        CheckConfigurationIsRefused(manager, NamedServiceJson(std::string(length, 'M')), "A device name too long for the scan response was accepted.");
+        TEST_ASSERT_LESS_OR_EQUAL_UINT32_MESSAGE(LONGEST_ADVERTISED_NAME, strlen(manager.GetDeviceName()), "A refused device name was kept.");
+    }
+}
+
+/**
  * @brief A characteristics or descriptors key that is present but not an array refuses the configuration.
  */
 TEST_CASE("BuildGraphFromJson refuses characteristics or descriptors that are not arrays", CLASS_OF_TESTS)

@@ -218,6 +218,7 @@ void BluetoothRequestHandler::GenerateAdvertisingData()
     //  20 bytes in all.  The name, the one field whose length the configuration chooses,
     //  goes in the scan response on its own, which leaves it the most room.
     //
+    static_assert((BluetoothManager::MAXIMUM_ADVERTISED_NAME_LENGTH + 2) <= MAXIMUM_ADVERTISING_DATA_LENGTH, "The longest device name must fit in the scan response.");
     memset(_advertisingServiceUuid, 0, sizeof(_advertisingServiceUuid));
     uint16_t advertisedUuidLength = 0;
     const std::vector<BluetoothService *> services = _manager.Services.GetServiceDefinitions();
