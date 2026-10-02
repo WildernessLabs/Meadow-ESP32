@@ -21,6 +21,7 @@
 
 #include <stdlib.h>
 #include "esp_err.h"
+#include "lwip/sockets.h"
 
 /**
  * @brief Name the logging macros use for messages from these functions.
@@ -50,7 +51,7 @@ std::string Utils::NumberWithCommas(uint64_t number)
 
     int commas = (len - 1) / 3;
     char temp[27];
-    strcpy(temp, buffer);
+    memcpy(temp, buffer, len + 1);
 
     int tempIndex = len;
     int bufIndex = len + commas;
@@ -125,6 +126,24 @@ void *Utils::Realloc(void *ptr, size_t oldSize, size_t newSize)
         }
     }
     return (result);
+}
+
+/**
+ * @brief Format an IPv4 address in dotted decimal.
+ *
+ * @param address Address in network byte order, as held in in_addr::s_addr.
+ * @return std::string The address, for example "192.168.1.1".
+ */
+std::string Utils::Ipv4AddressToString(const uint32_t address)
+{
+    char text[INET_ADDRSTRLEN];
+    struct in_addr value;
+    value.s_addr = address;
+    if (inet_ntop(AF_INET, &value, text, sizeof(text)) == NULL)
+    {
+        text[0] = '\0';
+    }
+    return (std::string(text));
 }
 
 /**

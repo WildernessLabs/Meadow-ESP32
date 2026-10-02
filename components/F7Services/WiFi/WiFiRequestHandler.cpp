@@ -2299,11 +2299,9 @@ esp_err_t WiFiRequestHandler::StartWiFiInterface(const wifi_mode_t mode, const E
             result = esp_netif_dhcpc_stop(_stationNetIfHandle);
             if (result == ESP_OK)
             {
-                char ip[INET_ADDRSTRLEN], subnet[INET_ADDRSTRLEN], gateway[INET_ADDRSTRLEN];
-                strcpy(ip, inet_ntoa(accessPointInformation->IpAddress));
-                strcpy(subnet, inet_ntoa(accessPointInformation->SubnetMask));
-                strcpy(gateway, inet_ntoa(accessPointInformation->Gateway));
-                TRACE_MESSAGE("Configuring static IP address, IP: %s, subnet mask %s, default gateway %s", ip, subnet, gateway);
+                TRACE_MESSAGE(
+                    "Configuring static IP address, IP: %s, subnet mask %s, default gateway %s", Utils::Ipv4AddressToString(accessPointInformation->IpAddress).c_str(), Utils::Ipv4AddressToString(accessPointInformation->SubnetMask).c_str(),
+                    Utils::Ipv4AddressToString(accessPointInformation->Gateway).c_str());
 
                 esp_netif_ip_info_t ip_info;
                 ip_info.ip.addr = accessPointInformation->IpAddress;

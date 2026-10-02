@@ -104,10 +104,11 @@ static char *DuplicateString(const char *value)
         return (nullptr);
     }
 
-    char *result = static_cast<char *>(pvPortMalloc(strlen(value) + 1));
+    const size_t length = strlen(value) + 1;
+    char *result = static_cast<char *>(pvPortMalloc(length));
     if (result != nullptr)
     {
-        strcpy(result, value);
+        memcpy(result, value, length);
     }
     return (result);
 }
