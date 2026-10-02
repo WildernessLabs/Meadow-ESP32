@@ -1311,7 +1311,7 @@ void WiFiRequestHandler::RaiseDisconnectEvent()
         memcpy(&ed->Bssid, &disconnectData.bssid, sizeof(ed->Bssid));
         memcpy(&ed->Reason, &disconnectData.reason, sizeof(ed->Reason));
 
-        uint32_t payloadLength = Encoders::EncodeDisconnectEventDataBufferSize(ed);
+        uint32_t payloadLength = Encoders::EncodedDisconnectEventDataBufferSize(ed);
         uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
         if (payload != nullptr)
         {

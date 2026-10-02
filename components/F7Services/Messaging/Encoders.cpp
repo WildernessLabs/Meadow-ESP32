@@ -888,7 +888,7 @@ int Encoders::EncodedConnectEventDataBufferSize(const Esp32Messaging::ConnectEve
 /**
  *  Convert the DisconnectEventData object into a byte stream that can be sent to the STM32.
  *
- *  The amount of memory required can be obtained by calling the EncodeDisconnectEventDataBufferSize method.
+ *  The amount of memory required can be obtained by calling the EncodedDisconnectEventDataBufferSize method.
  *
  *  @param disconnectEventData
  *      DisconnectEventData object to be encoded.
@@ -918,7 +918,7 @@ void Encoders::EncodeDisconnectEventData(const Esp32Messaging::DisconnectEventDa
  *  @returns
  *      Number of bytes required to hold the encoded DisconnectEventData object.
  */
-int Encoders::EncodeDisconnectEventDataBufferSize(const Esp32Messaging::DisconnectEventData * const disconnectEventData)
+int Encoders::EncodedDisconnectEventDataBufferSize(const Esp32Messaging::DisconnectEventData * const disconnectEventData)
 {
     return (42);
 }
