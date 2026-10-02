@@ -291,6 +291,18 @@ public:
     }
 
     /**
+     * @brief Is this the handle of a characteristic's value?
+     *
+     *  Characteristic values are answered by the firmware (ESP_GATT_RSP_BY_APP).
+     *  Descriptors are answered by Bluedroid, which still reports their writes.
+     *
+     * @param handle Handle to look up.
+     *
+     * @return true if handle holds a characteristic's value.
+     */
+    bool IsCharacteristicValueHandle(const uint16_t handle);
+
+    /**
      * @brief Get the current value for a attribute with the specified handle.
      *
      * @return true if the handle is known and pData/pLen were filled in, false if the

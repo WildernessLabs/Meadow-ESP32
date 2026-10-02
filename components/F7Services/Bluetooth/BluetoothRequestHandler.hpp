@@ -50,6 +50,11 @@ class BluetoothRequestHandler : public RequestHandlerBase
      */
     friend class TestBluetoothAdvertising;
 
+    /**
+     * @brief Test access to the prepared write handling (issue #299).
+     */
+    friend class TestBluetoothWrites;
+
 private:
     /**
      *  Event group bits.
@@ -251,6 +256,50 @@ private:
      * @brief Write request event handler (this has to be static as it is called from C APIs).
      */
     static void OnDataWriteRequest(const uint16_t handle, uint8_t * const data, const uint16_t dataLength);
+
+    /**
+     * @brief Add one piece of a prepared (long) write to the value being collected.
+     *
+     *  A client writing a value longer than one packet sends it as prepared writes, each
+     *  giving its offset, and then asks for them to be executed.  The pieces are collected
+     *  here and delivered to the STM32 as one write by ExecuteWrite (issue #299).  One
+     *  attribute is collected at a time.
+     *
+     * @param handle Attribute being written.
+     * @param offset Offset of this piece in the value.
+     * @param value Bytes of this piece.
+     * @param length Number of bytes in this piece.
+     *
+     * @return ESP_GATT_OK if the piece was kept, otherwise the status to send the client.
+     */
+    static esp_gatt_status_t PrepareWrite(const uint16_t handle, const uint16_t offset, const uint8_t * const value, const uint16_t length);
+
+    /**
+     * @brief Finish a prepared write: deliver the value collected to the STM32, or discard it.
+     *
+     * @param execute true to deliver the value, false if the client cancelled the write.
+     */
+    static void ExecuteWrite(const bool execute);
+
+    /**
+     * @brief Discard any prepared write that has not been executed.
+     */
+    static void DiscardPreparedWrite();
+
+    /**
+     * @brief Value being collected from prepared writes, or nullptr if none is in progress.
+     */
+    static uint8_t *_preparedWriteValue;
+
+    /**
+     * @brief Attribute the prepared write is for.
+     */
+    static uint16_t _preparedWriteHandle;
+
+    /**
+     * @brief Length of the value collected so far: the end of the furthest piece.
+     */
+    static uint16_t _preparedWriteLength;
 
     /*
      *  Construct a new Bluetooth request handler object with reference to a

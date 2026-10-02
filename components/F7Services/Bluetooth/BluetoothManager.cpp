@@ -332,6 +332,19 @@ bool BluetoothManager::SetHandles(const uint16_t * const handles, const uint16_t
 }
 
 /**
+ * @brief Is this the handle of a characteristic's value?
+ *
+ * @param handle Handle to look up.
+ *
+ * @return true if handle holds a characteristic's value.
+ */
+bool BluetoothManager::IsCharacteristicValueHandle(const uint16_t handle)
+{
+    RecursiveMutexLock lock(_graphMutex);
+    return (_valueMap.find(handle) != _valueMap.end());
+}
+
+/**
  * @brief Get the current value for a attribute with the specified handle.
  *
  * @param handle Handle to look up.

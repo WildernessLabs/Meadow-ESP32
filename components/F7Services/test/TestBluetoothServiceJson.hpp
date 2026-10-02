@@ -239,4 +239,27 @@ const char *meadow_f7_notify_json = R"({
     ]
 })";
 
+//
+//  One characteristic that takes both writes with and without a response (props 14) and
+//  holds a value longer than one packet, for the write delivery test (issue #299).
+//
+const char *meadow_write_json = R"({
+    "deviceName":"MeadowWriteTest",
+    "companyIdentifier":741,
+    "services": [
+        {
+            "name":"WriteService",
+            "uuid":252,
+            "characteristics": [
+                {
+                    "uuid":"01ae99d6-8a61-11eb-8dcd-0242ac1300dd",
+                    "permission":17,
+                    "props":14,
+                    "len":512
+                }
+            ]
+        }
+    ]
+})";
+
 #endif // _TEST_BLUETOOTH_SERVICE_JSON_HPP_
