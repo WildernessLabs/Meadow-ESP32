@@ -293,7 +293,7 @@ StatusCodes::StatusCodes SystemRequestHandler::SetMaximumMessageQueueLength(uint
  */
 SemaphoreHandle_t SystemRequestHandler::DeviceNameMutex()
 {
-    static const SemaphoreHandle_t mutex = xSemaphoreCreateMutex();
+    static const SemaphoreHandle_t mutex = Utils::RequireCreated(xSemaphoreCreateMutex(), "the device name mutex");
     return (mutex);
 }
 
@@ -376,7 +376,7 @@ StatusCodes::StatusCodes SystemRequestHandler::SetDeviceName(char *value)
 void SystemRequestHandler::Setup()
 {
     RequestHandlerBase::Setup();
-    xTaskCreate(Task, COMPONENT_NAME, TASK_STACK_SIZE, this, PRIORITY_SYSTEM_TASK, &_taskHandle);
+    Utils::RequireTaskCreated(xTaskCreate(Task, COMPONENT_NAME, TASK_STACK_SIZE, this, PRIORITY_SYSTEM_TASK, &_taskHandle), "the System task");
 }
 
 /**

@@ -95,11 +95,7 @@ RequestHandlerBase::~RequestHandlerBase()
  */
 void RequestHandlerBase::Setup()
 {
-    _queueHandle = xQueueCreate(MAX_QUEUE_LENGTH, sizeof(Message *));
-    if (_queueHandle == nullptr)
-    {
-        ERROR_MESSAGE("Cannot allocate ESP32 handler queue.");
-    }
+    _queueHandle = Utils::RequireCreated(xQueueCreate(MAX_QUEUE_LENGTH, sizeof(Message *)), "a request handler queue");
 }
 
 /**

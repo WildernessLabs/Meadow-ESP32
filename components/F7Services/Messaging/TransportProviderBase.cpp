@@ -18,6 +18,7 @@
 
 #include "driver/gpio.h"
 
+#include "Utils.hpp"
 #include "TransportProviderBase.hpp"
 #include "Encoders.hpp"
 #include "Logging.hpp"
@@ -53,11 +54,7 @@ TaskHandle_t TransportProviderBase::_transportProviderTaskHandle = nullptr;
  */
 TransportProviderBase::TransportProviderBase()
 {
-    _outboundMessageQueueMutex = xSemaphoreCreateMutex();
-    if (!_outboundMessageQueueMutex)
-    {
-        ERROR_MESSAGE("Cannot create outbound message queue mutex.");
-    }
+    _outboundMessageQueueMutex = Utils::RequireCreated(xSemaphoreCreateMutex(), "the outbound message queue mutex");
 }
 
 /**
@@ -81,11 +78,7 @@ TransportProviderBase::~TransportProviderBase()
 void TransportProviderBase::Setup(MessageDispatcher *messageDispatcher)
 {
     _messageDispatcher = messageDispatcher;
-    _outboundMessageQueueHandle = xQueueCreate(MAX_QUEUE_LENGTH, sizeof(Message *));
-    if (_outboundMessageQueueHandle == nullptr)
-    {
-        ERROR_MESSAGE("Cannot allocate hardware transport queue.");
-    }
+    _outboundMessageQueueHandle = Utils::RequireCreated(xQueueCreate(MAX_QUEUE_LENGTH, sizeof(Message *)), "the outbound message queue");
 }
 
 /**

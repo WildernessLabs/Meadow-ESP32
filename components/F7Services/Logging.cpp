@@ -523,7 +523,7 @@ void Logging::AddPerformanceCounterEntry(const char *method, int64_t start, int6
  */
 SemaphoreHandle_t Logging::PerformanceCountersMutex()
 {
-    static const SemaphoreHandle_t mutex = xSemaphoreCreateMutex();
+    static const SemaphoreHandle_t mutex = Utils::RequireCreated(xSemaphoreCreateMutex(), "the performance counter mutex");
     return (mutex);
 }
 

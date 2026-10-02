@@ -17,6 +17,10 @@
 #include <string>
 
 #include "Utils.hpp"
+#include "Logging.hpp"
+
+#include <stdlib.h>
+#include "esp_err.h"
 
 /**
  * @brief Format a number with commas as thousands separators.
@@ -113,4 +117,33 @@ void *Utils::Realloc(void *ptr, size_t oldSize, size_t newSize)
         }
     }
     return (result);
+}
+
+/**
+ * @brief Log that a FreeRTOS object could not be created, and stop.
+ *
+ * @param what Description of the object that could not be created.
+ */
+void Utils::CreationFailed(const char * const what)
+{
+    ERROR_MESSAGE("Cannot create %s.", what);
+    ESP_ERROR_CHECK(ESP_ERR_NO_MEM);
+    //
+    //  ESP_ERROR_CHECK does not return for an error, but the compiler cannot tell.
+    //
+    abort();
+}
+
+/**
+ * @brief Check that xTaskCreate or xTaskCreatePinnedToCore succeeded, stopping with a diagnostic if not.
+ *
+ * @param result Value returned by the creation call.
+ * @param what Description of the task, for the diagnostic.
+ */
+void Utils::RequireTaskCreated(const BaseType_t result, const char * const what)
+{
+    if (result != pdPASS)
+    {
+        CreationFailed(what);
+    }
 }
