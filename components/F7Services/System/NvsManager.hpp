@@ -50,7 +50,10 @@ public:
     static void Setup();
 
     /**
-     *  @brief Get a string value.
+     *  @brief Get a string value, as a copy on the heap that the caller owns.
+     *
+     *  The stored value, or a copy of defaultValue if none is stored; never defaultValue
+     *  itself.  Release it with Utils::DeleteAndNullifyPointer.
      */
     static const char *GetValue(const char *nameSpace, const char *name, const char *defaultValue);
 

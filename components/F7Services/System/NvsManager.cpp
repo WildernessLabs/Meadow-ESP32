@@ -16,6 +16,8 @@
 #include "nvs_flash.h"
 #include "nvs.h"
 
+#include <string.h>
+
 #include "NvsManager.hpp"
 #include "Exceptions/MultipleInstancesException.hpp"
 #include "Utils.hpp"
@@ -95,9 +97,7 @@ void NvsManager::Setup()
 /**
  *  @brief Get a string value.
  *
- *  Get a value from NVS.  If a value with the specified name cannot be found
- *  then the default value is returned and the default value is written to
- *  NVS.
+ *  Get a value from NVS, or the default value if none is stored under the name.
  *
  *  @param nameSpace
  *      Name of the namespace to read the value from.
@@ -106,16 +106,21 @@ void NvsManager::Setup()
  *      Name of the value to read from NVS.
  *
  *  @param defaultValue
- *      Default value to be used if the value is not found.
+ *      Default value to be used if the value is not found, may be nullptr.
  *
  *  @returns
- *      Current boolean value or the default value if a value could not be found.
+ *      A copy on the heap that the caller owns and must release with
+ *      Utils::DeleteAndNullifyPointer: the stored value, or a copy of defaultValue if no
+ *      value is stored.  nullptr if no value is stored and defaultValue is nullptr, or if
+ *      memory runs out.  The result is never defaultValue itself, so a caller never has to
+ *      work out whether it may release what it was given (issue #306).
  */
 const char *NvsManager::GetValue(const char *nameSpace, const char *name, const char *defaultValue)
 {
     nvs_handle nvsHandle;
     esp_err_t error;
-    const char *result = defaultValue;
+    const char *result = nullptr;
+    bool found = false;
 
     if (_nvsAvailable)
     {
@@ -131,6 +136,7 @@ const char *NvsManager::GetValue(const char *nameSpace, const char *name, const 
                     if (nvs_get_str(nvsHandle, name, buffer, &length) == ESP_OK)
                     {
                         result = buffer;
+                        found = true;
                     }
                     else
                     {
@@ -142,6 +148,15 @@ const char *NvsManager::GetValue(const char *nameSpace, const char *name, const 
         }
     }
 
+    if (!found && (defaultValue != nullptr))
+    {
+        char *copy = static_cast<char *>(pvPortMalloc(strlen(defaultValue) + 1));
+        if (copy != nullptr)
+        {
+            strcpy(copy, defaultValue);
+        }
+        result = copy;
+    }
     return (result);
 }
 

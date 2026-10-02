@@ -148,16 +148,13 @@ SystemRequestHandler::SystemRequestHandler(IMessageDispatcher *messageDispatcher
     //
     _maximumMessageQueueLength = GetConfigurationValue(MAXIMUM_MESSAGE_QUEUE_LENGTH_NAME, _maximumMessageQueueLength);
     //
-    //  Ask for the name with no default so that _deviceName always owns storage on
-    //  the heap; a non-heap default would make it unsafe to release on reassignment.
+    //  GetConfigurationValue always returns a copy on the heap, of the stored name or of the
+    //  default, so _deviceName always owns what it holds and is safe to release later.  It
+    //  is nullptr only if memory ran out.
     //
     {
         MutexLock lock(DeviceNameMutex());
-        _deviceName = const_cast<char *>(GetConfigurationValue(DEVICE_NAME_NAME, nullptr));
-        if (_deviceName == nullptr)
-        {
-            _deviceName = DuplicateString(DEVICE_NAME_DEFAULT_VALUE);
-        }
+        _deviceName = const_cast<char *>(GetConfigurationValue(DEVICE_NAME_NAME, DEVICE_NAME_DEFAULT_VALUE));
     }
     _messageDispatcher = messageDispatcher;
 
@@ -382,18 +379,20 @@ void SystemRequestHandler::Setup()
 /**
  *  @brief Get a string configuration value.
  *
- *  Get a value from NVS.  If a value with the specified name cannot be found
- *  then the default value is returned and the default value is written to
- *  NVS.
+ *  Get a value from NVS, or the default value if none is stored under the name.
  *
  *  @param name
  *      Name of the configuration value to read from NVS.
  *
  *  @param defaultValue
- *      Default value to be used if the value is not found.
+ *      Default value to be used if the value is not found, may be nullptr.
  *
  *  @returns
- *      Current boolean value or the default value if a value could not be found.
+ *      A copy on the heap that the caller owns and must release with
+ *      Utils::DeleteAndNullifyPointer: the stored value, or a copy of defaultValue if no
+ *      value is stored.  nullptr if no value is stored and defaultValue is nullptr, or if
+ *      memory runs out.  The result is never defaultValue itself, so a caller never has to
+ *      work out whether it may release what it was given (issue #306).
  */
 const char *SystemRequestHandler::GetConfigurationValue(const char *name, const char *defaultValue)
 {

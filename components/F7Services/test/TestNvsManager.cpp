@@ -108,10 +108,25 @@ TEST_CASE("NVS Manager operations", CLASS_OF_TESTS)
     //
     //  ---- String default value (key never written) ----
     //
+    //  The default comes back as a copy the caller owns, never as the default pointer
+    //  itself, so every result can be released the same way (issue #306).  The result used
+    //  to be the default pointer on a miss and a heap copy otherwise, and callers could not
+    //  tell which they had.
+    //
     {
         const char *defaultValue = "fallback";
         const char *retrieved = NvsManager::GetValue(TEST_NAMESPACE, "str_missing", defaultValue);
-        TEST_ASSERT_EQUAL_PTR(defaultValue, retrieved); // pointer equality: no allocation on miss
+        TEST_ASSERT_NOT_NULL(retrieved);
+        TEST_ASSERT_NOT_EQUAL_MESSAGE(defaultValue, retrieved, "GetValue returned the default pointer rather than a copy.");
+        TEST_ASSERT_EQUAL_STRING(defaultValue, retrieved);
+        Utils::DeleteAndNullifyPointer(retrieved);
+    }
+
+    //
+    //  ---- String default of nullptr (key never written) ----
+    //
+    {
+        TEST_ASSERT_NULL(NvsManager::GetValue(TEST_NAMESPACE, "str_missing", nullptr));
     }
 
     //
