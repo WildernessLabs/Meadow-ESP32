@@ -120,6 +120,9 @@ private:
 
     /**
      *  @brief Send an ACK or NAK with the specified code.
+     *
+     *  The transaction is self-contained: it refers only to _txBuffer and _rxBuffer, so
+     *  message can be released once this returns (issue #235).
      */
     spi_slave_transaction_t *CreateAcknowledgementTransaction(Message *message, StatusCodes::StatusCodes code, uint8_t messageType);
 
