@@ -625,7 +625,7 @@ public:
     static int EncodedConnectEventDataBufferSize(const Esp32Messaging::ConnectEventData * const);
 
     static void EncodeDisconnectEventData(const Esp32Messaging::DisconnectEventData * const, uint8_t *);
-    static int EncodeDisconnectEventDataBufferSize(const Esp32Messaging::DisconnectEventData * const);
+    static int EncodedDisconnectEventDataBufferSize(const Esp32Messaging::DisconnectEventData * const);
 
     static void EncodeNodeConnectionChangeEventData(const Esp32Messaging::NodeConnectionChangeEventData * const, uint8_t *);
     static int EncodedNodeConnectionChangeEventDataBufferSize(const Esp32Messaging::NodeConnectionChangeEventData * const);
@@ -721,9 +721,6 @@ public:
 
     static void EncodeAcceptResponse(const Esp32Messaging::AcceptResponse * const, uint8_t *);
     static int EncodedAcceptResponseBufferSize(const Esp32Messaging::AcceptResponse * const);
-
-    static void EncodeIoctlRequest(const Esp32Messaging::IoctlRequest * const, uint8_t *);
-    static int EncodedIoctlRequestBufferSize(const Esp32Messaging::IoctlRequest * const);
 
     static Esp32Messaging::IoctlRequest *ExtractIoctlRequest(uint8_t *);
     static void EncodeIoctlResponse(const Esp32Messaging::IoctlResponse * const, uint8_t *);
