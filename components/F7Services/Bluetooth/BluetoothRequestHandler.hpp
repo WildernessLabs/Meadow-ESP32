@@ -45,6 +45,11 @@
  */
 class BluetoothRequestHandler : public RequestHandlerBase
 {
+    /**
+     * @brief Test access to the generated advertising data (issue #345).
+     */
+    friend class TestBluetoothAdvertising;
+
 private:
     /**
      *  Event group bits.
@@ -80,9 +85,9 @@ private:
     static const int INSTANCE_ID = 0;
 
     /**
-     * @brief Size of the advertising service UUID.
+     * @brief Largest legacy advertising packet, and largest scan response, in bytes.
      */
-    static const int ADVERTISING_SERVICE_UUID_LENGTH = 32;
+    static constexpr uint32_t MAXIMUM_ADVERTISING_DATA_LENGTH = 31;
 
     /**
      *  @brief Stack size for the Bluetooth request handler task.
@@ -134,7 +139,15 @@ private:
 
     static bool _advertisingDataConfigured;
 
-    static uint8_t _dummyAdvertisingServiceUuid[ADVERTISING_SERVICE_UUID_LENGTH];
+    /**
+     * @brief UUID of the configured service, as advertised.
+     *
+     *  Bluedroid takes each advertised UUID as a full 128-bit value and shortens it to 16
+     *  bits itself when it is built on the Bluetooth base UUID, as every service here is.
+     *  This used to hold two placeholder UUIDs from the ESP-IDF examples, which with the
+     *  name and TX power did not fit in the 31-byte advertising packet (issue #345).
+     */
+    uint8_t _advertisingServiceUuid[ESP_UUID_LEN_128];
 
     /**
      * @brief Has the response data been configured?
