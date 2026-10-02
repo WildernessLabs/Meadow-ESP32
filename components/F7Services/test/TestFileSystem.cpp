@@ -764,6 +764,128 @@ TEST_CASE("ReadFile returns FileNotFound for non-existent file", CLASS_OF_TESTS)
 }
 
 /**
+ * @brief Write a file of the given length to the file system, filled with a repeating pattern.
+ *
+ * @param filename Name of the file to write.
+ * @param length Number of bytes in the file.
+ */
+static void WritePatternFile(const char *filename, const uint32_t length)
+{
+    uint8_t *buffer = static_cast<uint8_t *>(pvPortMalloc((length == 0) ? 1 : length));
+    TEST_ASSERT_NOT_NULL(buffer);
+    for (uint32_t index = 0; index < length; index++)
+    {
+        buffer[index] = static_cast<uint8_t>(index & 0xff);
+    }
+    const int written = WriteTestFile(filename, buffer, static_cast<int>(length));
+    Utils::DeleteAndNullifyPointer(buffer);
+    TEST_ASSERT_EQUAL_INT_MESSAGE(static_cast<int>(length), written, "The test file was not written in full.");
+}
+
+/**
+ * @brief Read a file through ReadFile and return the response.
+ *
+ * @param context Test context holding the file system under test.
+ * @param filename Name of the file to read.
+ *
+ * @return The response, which the caller releases.
+ */
+static Message *ReadThroughFileSystem(FileSystemTestContext *context, const char *filename)
+{
+    Message *readMessage = CreateFileNameAndContentsMessage(SystemFunction::FileSystemReadFile, filename, nullptr, 0);
+    context->Fs->ReadFile(readMessage);
+    ASSERT_OUTBOUND_QUEUE_LENGTH(context->Dispatcher, 1);
+    Message *response = context->Dispatcher->GetOutboundMessage();
+    ASSERT_OUTBOUND_QUEUE_LENGTH(context->Dispatcher, 0);
+    return (response);
+}
+
+/**
+ * @brief Length of the longest file whose ReadFile response fits in one payload.
+ *
+ * @param filename Name of the file.
+ *
+ * @return Length in bytes.
+ */
+static uint32_t LongestReadableFile(const char *filename)
+{
+    Esp32Messaging::FileNameAndContents nameOnly = {};
+    nameOnly.Name = const_cast<char *>(filename);
+    return (Message::MAXIMUM_PAYLOAD_LENGTH - static_cast<uint32_t>(Encoders::EncodedFileNameAndContentsBufferSize(&nameOnly)));
+}
+
+/**
+ * @brief Check that an empty file is read as a successful response with no contents.
+ *
+ *  An empty file used to be read through a zero-length allocation, which can return
+ *  nullptr, and was then reported as running out of memory (issue #310).
+ */
+TEST_CASE("ReadFile reads an empty file as no contents", CLASS_OF_TESTS)
+{
+    FileSystemTestContext context = {};
+    CreateFileSystemTestContext(&context, true);
+    WritePatternFile(TEST_FILE_NAME, 0);
+
+    Message *response = ReadThroughFileSystem(&context, TEST_FILE_NAME);
+    ASSERT_RESPONSE(response, Esp32Interfaces::System, SystemFunction::FileSystemReadFile, StatusCodes::CompletedOk);
+    ASSERT_HAS_PAYLOAD(response);
+    Esp32Messaging::FileNameAndContents *fileContents = Encoders::ExtractFileNameAndContents(response->Payload);
+    TEST_ASSERT_NOT_NULL(fileContents);
+    TEST_ASSERT_EQUAL_STRING(TEST_FILE_NAME, fileContents->Name);
+    TEST_ASSERT_EQUAL_UINT32_MESSAGE(0, fileContents->ContentsLength, "An empty file was read with contents.");
+    Encoders::FreeFileNameAndContents(&fileContents);
+    Message::DeleteMessage(response);
+
+    ReleaseFileSystemTestContext(&context);
+}
+
+/**
+ * @brief Check that a file whose response fills the payload exactly is read in full.
+ */
+TEST_CASE("ReadFile reads the longest file one response can hold", CLASS_OF_TESTS)
+{
+    FileSystemTestContext context = {};
+    CreateFileSystemTestContext(&context, true);
+    const uint32_t length = LongestReadableFile(TEST_FILE_NAME);
+    WritePatternFile(TEST_FILE_NAME, length);
+
+    Message *response = ReadThroughFileSystem(&context, TEST_FILE_NAME);
+    ASSERT_RESPONSE(response, Esp32Interfaces::System, SystemFunction::FileSystemReadFile, StatusCodes::CompletedOk);
+    TEST_ASSERT_EQUAL_UINT32_MESSAGE(Message::MAXIMUM_PAYLOAD_LENGTH, response->PayloadLength, "The response does not fill the payload exactly.");
+    Esp32Messaging::FileNameAndContents *fileContents = Encoders::ExtractFileNameAndContents(response->Payload);
+    TEST_ASSERT_NOT_NULL(fileContents);
+    TEST_ASSERT_EQUAL_UINT32(length, fileContents->ContentsLength);
+    for (uint32_t index = 0; index < length; index++)
+    {
+        TEST_ASSERT_EQUAL_UINT8_MESSAGE(static_cast<uint8_t>(index & 0xff), fileContents->Contents[index], "The contents read differ from the file.");
+    }
+    Encoders::FreeFileNameAndContents(&fileContents);
+    Message::DeleteMessage(response);
+
+    ReleaseFileSystemTestContext(&context);
+}
+
+/**
+ * @brief Check that a file too long for one response is refused rather than sent.
+ *
+ *  A response longer than Message::MAXIMUM_PAYLOAD_LENGTH breaks the protocol, so the
+ *  read is refused with no payload (issue #310).
+ */
+TEST_CASE("ReadFile refuses a file too long for one response", CLASS_OF_TESTS)
+{
+    FileSystemTestContext context = {};
+    CreateFileSystemTestContext(&context, true);
+    WritePatternFile(TEST_FILE_NAME, LongestReadableFile(TEST_FILE_NAME) + 1);
+
+    Message *response = ReadThroughFileSystem(&context, TEST_FILE_NAME);
+    ASSERT_RESPONSE(response, Esp32Interfaces::System, SystemFunction::FileSystemReadFile, StatusCodes::Failure);
+    ASSERT_NO_PAYLOAD(response);
+    Message::DeleteMessage(response);
+
+    ReleaseFileSystemTestContext(&context);
+}
+
+/**
  * @brief Check that WriteFile returns Failure when the file system is full.
  *
  *  The file system is filled by writing LITTLEFS_BLOCK_SIZE-byte files via C stdio,

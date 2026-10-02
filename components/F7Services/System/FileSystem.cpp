@@ -343,6 +343,87 @@ void FileSystem::SendResponse(Message *message, const StatusCodes::StatusCodes r
 }
 
 /**
+ * @brief Read an open file into fileData and encode it as the payload of message.
+ *
+ *  An empty file is read as no contents rather than through a zero-length allocation,
+ *  which may return nullptr and would then be reported as running out of memory.
+ *  Anything less than the full file is a short read, which must not be reported as
+ *  though the whole file arrived.
+ *
+ * @param file
+ *      File to read, positioned at its start.
+ *
+ * @param length
+ *      Length of the file in bytes, already checked to fit in one response.
+ *
+ * @param fileData
+ *      Name of the file, with no contents.  The contents read are added to it, and are
+ *      released again if the read fails.
+ *
+ * @param message
+ *      Message whose payload receives the encoded file name and contents.
+ *
+ * @returns
+ *      CompletedOk if the whole file was read and encoded, EspOutOfMemory if memory ran
+ *      out, otherwise Failure.
+ */
+StatusCodes::StatusCodes FileSystem::ReadOpenFile(FILE * const file, const uint32_t length, Esp32Messaging::FileNameAndContents * const fileData, Message * const message)
+{
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
+
+    if (length > 0)
+    {
+        fileData->Contents = static_cast<uint8_t *>(pvPortMalloc(length));
+        if (fileData->Contents == nullptr)
+        {
+            result = StatusCodes::EspOutOfMemory;
+        }
+        else
+        {
+            TRACE_MESSAGE("Reading %" PRIu32 " bytes from file %s", length, fileData->Name);
+            const size_t amountRead = fread(static_cast<void *>(fileData->Contents), 1, length, file);
+            if (amountRead == length)
+            {
+                fileData->ContentsLength = length;
+                TRACE_MESSAGE("Read %" PRIu32 " bytes", length);
+                TRACE_HEX_BUFFER(fileData->Contents, length);
+            }
+            else
+            {
+                ERROR_MESSAGE("ReadFile: read %" PRIu32 " of the %" PRIu32 " bytes in %s.", static_cast<uint32_t>(amountRead), length, fileData->Name);
+                result = StatusCodes::Failure;
+            }
+        }
+    }
+
+    if (result == StatusCodes::CompletedOk)
+    {
+        message->PayloadLength = Encoders::EncodedFileNameAndContentsBufferSize(fileData);
+        message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
+        if (message->Payload == nullptr)
+        {
+            message->PayloadLength = 0;
+            result = StatusCodes::EspOutOfMemory;
+        }
+        else
+        {
+            if (!Encoders::EncodeFileNameAndContents(fileData, message->Payload, message->PayloadLength))
+            {
+                message->DeletePayload();
+                result = StatusCodes::Failure;
+            }
+        }
+    }
+
+    if (result != StatusCodes::CompletedOk)
+    {
+        Utils::DeleteAndNullifyPointer(fileData->Contents);
+        fileData->ContentsLength = 0;
+    }
+    return (result);
+}
+
+/**
  * @brief Read a file from the file system.
  *
  * @param message
@@ -389,51 +470,20 @@ void FileSystem::ReadFile(Message * const message)
                     //
                     Utils::DeleteAndNullifyPointer(fileData->Contents);
                     fileData->ContentsLength = 0;
-                    fileData->Contents = static_cast<uint8_t *>(pvPortMalloc(fileInfo.st_size));
-                    if (fileData->Contents != nullptr)
+                    //
+                    //  The whole file goes back in one response, so a file whose response would
+                    //  be longer than the protocol's payload maximum is refused before anything
+                    //  is allocated for it (issue #310).
+                    //
+                    const uint32_t responseOverhead = static_cast<uint32_t>(Encoders::EncodedFileNameAndContentsBufferSize(fileData));
+                    if ((fileInfo.st_size < 0) || (static_cast<uint64_t>(fileInfo.st_size) > (Message::MAXIMUM_PAYLOAD_LENGTH - responseOverhead)))
                     {
-                        TRACE_MESSAGE("Reading %" PRIi32 " bytes from file %s", static_cast<int32_t>(fileInfo.st_size), fileData->Name);
-                        size_t amountRead = fread(static_cast<void *>(fileData->Contents), 1, fileInfo.st_size, file);
-                        //
-                        //  Anything less than the full file is a short read, which must not be
-                        //  reported as though the whole file arrived.
-                        //
-                        if (amountRead == static_cast<size_t>(fileInfo.st_size))
-                        {
-                            fileData->ContentsLength = static_cast<uint32_t>(amountRead);
-                            TRACE_MESSAGE("Read %" PRIi32 " bytes", static_cast<int32_t>(amountRead));
-                            TRACE_HEX_BUFFER(fileData->Contents, amountRead);
-
-                            message->PayloadLength = Encoders::EncodedFileNameAndContentsBufferSize(fileData);
-                            message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-                            if (message->Payload == nullptr)
-                            {
-                                message->PayloadLength = 0;
-                                result = StatusCodes::EspOutOfMemory;
-                            }
-                            else
-                            {
-                                if (Encoders::EncodeFileNameAndContents(fileData, message->Payload, message->PayloadLength))
-                                {
-                                    result = StatusCodes::CompletedOk;
-                                }
-                                else
-                                {
-                                    message->DeletePayload();
-                                    result = StatusCodes::Failure;
-                                }
-                            }
-                        }
-                        if (result != StatusCodes::CompletedOk)
-                        {
-                            Utils::DeleteAndNullifyPointer(fileData->Contents);
-                            fileData->ContentsLength = 0;
-                        }
+                        ERROR_MESSAGE("ReadFile: %s is %" PRIi32 " bytes, more than one response can hold.", fileData->Name, static_cast<int32_t>(fileInfo.st_size));
+                        result = StatusCodes::Failure;
                     }
                     else
                     {
-                        fileData->ContentsLength = 0;
-                        result = StatusCodes::EspOutOfMemory;
+                        result = ReadOpenFile(file, static_cast<uint32_t>(fileInfo.st_size), fileData, message);
                     }
                 }
                 fclose(file);
