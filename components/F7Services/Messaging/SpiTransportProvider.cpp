@@ -749,8 +749,10 @@ spi_slave_transaction_t *SpiTransportProvider::PacketDetailsSent(spi_slave_trans
     {
         TRACE_MESSAGE("Sending outbound message");
         UpdatePacketInformation(_outboundMessage);
-        ClearTransmitAndReceiveBuffers();
-        Encoders::EncodeMessage(_outboundMessage, _txBuffer, false);
+        //
+        //  CreateSpiTransaction clears the buffers and encodes the packet, so it is encoded
+        //  here only once (issue #319).
+        //
         newTransaction = CreateSpiTransaction(_outboundMessage);
         _currentState = SendingPacket;
     }
@@ -826,8 +828,9 @@ spi_slave_transaction_t *SpiTransportProvider::PacketAcknowledgementReceived(spi
             else
             {
                 TRACE_MESSAGE("Preparing next packet.");
-                ClearTransmitAndReceiveBuffers();
-                Encoders::EncodeMessage(_outboundMessage, _txBuffer, false);
+                //
+                //  CreateSpiTransaction clears the buffers and encodes the packet (issue #319).
+                //
                 newTransaction = CreateSpiTransaction(_outboundMessage);
                 _currentState = SendingPacket;
             }

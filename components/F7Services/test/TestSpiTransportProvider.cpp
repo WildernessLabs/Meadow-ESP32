@@ -109,6 +109,54 @@ public:
     {
         return (SpiTransportProvider::_rxBuffer);
     }
+
+    /**
+     * @brief Call the private CreateSpiTransaction method.
+     */
+    static spi_slave_transaction_t *CallCreateSpiTransaction(SpiTransportProvider *provider, Message *message)
+    {
+        return (provider->CreateSpiTransaction(message));
+    }
+
+    /**
+     * @brief Call the private PacketDetailsSent method.
+     */
+    static spi_slave_transaction_t *CallPacketDetailsSent(SpiTransportProvider *provider, spi_slave_transaction_t *transaction)
+    {
+        return (provider->PacketDetailsSent(transaction));
+    }
+
+    /**
+     * @brief Call the private PacketAcknowledgementReceived method.
+     */
+    static spi_slave_transaction_t *CallPacketAcknowledgementReceived(SpiTransportProvider *provider, spi_slave_transaction_t *transaction)
+    {
+        return (provider->PacketAcknowledgementReceived(transaction));
+    }
+
+    /**
+     * @brief Read the private _outboundMessage field.
+     */
+    static Message *GetOutboundMessage(SpiTransportProvider *provider)
+    {
+        return (provider->_outboundMessage);
+    }
+
+    /**
+     * @brief Overwrite the private _outboundMessage field.
+     */
+    static void SetOutboundMessage(SpiTransportProvider *provider, Message *message)
+    {
+        provider->_outboundMessage = message;
+    }
+
+    /**
+     * @brief Put the private, static state machine back in its idle state.
+     */
+    static void ResetState()
+    {
+        SpiTransportProvider::_currentState = SpiTransportProvider::WaitingForPacket;
+    }
 };
 
 /**
@@ -323,4 +371,79 @@ TEST_CASE("An acknowledgement transaction holds nothing from the message it was 
 
     Utils::DeleteAndNullifyPointer(decoded);
     TestSpiTransportProvider::CallDeleteTransaction(provider, transaction);
+}
+
+/**
+ * @brief Check that a transaction transmits the outbound message's current packet, encoded once.
+ *
+ * @param transaction Transaction to check.
+ * @param message Outbound message, with its packet offset and length already advanced.
+ * @param offset Packet offset expected.
+ * @param length Packet length expected.
+ */
+static void CheckPacketTransaction(spi_slave_transaction_t *transaction, Message *message, const uint16_t offset, const uint16_t length)
+{
+    TEST_ASSERT_NOT_NULL_MESSAGE(transaction, "No transaction was returned for the packet.");
+    TEST_ASSERT_EQUAL_UINT16_MESSAGE(offset, message->PacketOffset, "The packet offset is wrong.");
+    TEST_ASSERT_EQUAL_UINT16_MESSAGE(length, message->PacketLength, "The packet length is wrong.");
+
+    uint8_t *expected = static_cast<uint8_t *>(pvPortMalloc(Message::MAXIMUM_SPI_FRAME_SIZE));
+    TEST_ASSERT_NOT_NULL(expected);
+    memset(expected, 0, Message::MAXIMUM_SPI_FRAME_SIZE);
+    Encoders::EncodeMessage(message, expected, false);
+    const bool same = (memcmp(expected, transaction->tx_buffer, Message::MAXIMUM_SPI_FRAME_SIZE) == 0);
+    Utils::DeleteAndNullifyPointer(expected);
+    TEST_ASSERT_TRUE_MESSAGE(same, "The transaction does not transmit the packet as EncodeMessage encodes it.");
+}
+
+/**
+ * @brief Check that each packet of a multi-packet message is sent as one encoding of that packet.
+ *
+ *  PacketDetailsSent and PacketAcknowledgementReceived each encoded the packet into
+ *  _txBuffer and then called CreateSpiTransaction, which cleared the buffer and encoded it
+ *  again (issue #319).  Now only CreateSpiTransaction encodes it.  The frames sent must be
+ *  unchanged, so this walks a three-packet message through both handlers.
+ */
+TEST_CASE("Each packet of an outbound message is transmitted as EncodeMessage encodes it", CLASS_OF_TESTS)
+{
+    SpiTransportProvider *provider = EnsureProvider();
+    ResetIncomingMessage();
+
+    const uint32_t payloadLength = (2 * Message::MAXIMUM_PACKET_SIZE) + 10;
+    uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
+    TEST_ASSERT_NOT_NULL(payload);
+    for (uint32_t index = 0; index < payloadLength; index++)
+    {
+        payload[index] = static_cast<uint8_t>(index * 7);
+    }
+    Message *message = Message::CreateOnHeap(MessageTypes::Response, Esp32Interfaces::WiFi, 3, StatusCodes::CompletedOk, 99, payload, payloadLength);
+    TEST_ASSERT_NOT_NULL(message);
+    TestSpiTransportProvider::SetOutboundMessage(provider, message);
+
+    //
+    //  The header has been sent, so the first packet goes next.
+    //
+    spi_slave_transaction_t *transaction = TestSpiTransportProvider::CallCreateSpiTransaction(provider, nullptr);
+    transaction = TestSpiTransportProvider::CallPacketDetailsSent(provider, transaction);
+    CheckPacketTransaction(transaction, message, 0, Message::MAXIMUM_PACKET_SIZE);
+
+    //
+    //  The STM32 acknowledges each packet, and the next one goes.
+    //
+    Message *acknowledgement = Message::CreateOnHeap(MessageTypes::Ack, Esp32Interfaces::Transport, 0, StatusCodes::CompletedOk, 99, nullptr, 0);
+    TEST_ASSERT_NOT_NULL(acknowledgement);
+    const uint16_t expectedOffsets[] = {Message::MAXIMUM_PACKET_SIZE, 2 * Message::MAXIMUM_PACKET_SIZE};
+    const uint16_t expectedLengths[] = {Message::MAXIMUM_PACKET_SIZE, 10};
+    for (uint32_t packet = 0; packet < 2; packet++)
+    {
+        Encoders::EncodeMessage(acknowledgement, static_cast<uint8_t *>(transaction->rx_buffer), true);
+        transaction = TestSpiTransportProvider::CallPacketAcknowledgementReceived(provider, transaction);
+        CheckPacketTransaction(transaction, message, expectedOffsets[packet], expectedLengths[packet]);
+    }
+    Message::DeleteMessage(acknowledgement);
+
+    TestSpiTransportProvider::CallDeleteTransaction(provider, transaction);
+    TestSpiTransportProvider::SetOutboundMessage(provider, nullptr);
+    TestSpiTransportProvider::ResetState();
+    Message::DeleteMessage(message);
 }
