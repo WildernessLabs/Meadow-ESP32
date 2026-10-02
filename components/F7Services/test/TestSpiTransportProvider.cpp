@@ -85,6 +85,30 @@ public:
     {
         provider->DeleteTransaction(transaction);
     }
+
+    /**
+     * @brief Call the private CreateAcknowledgementTransaction method.
+     */
+    static spi_slave_transaction_t *CallCreateAcknowledgementTransaction(SpiTransportProvider *provider, Message *message, const StatusCodes::StatusCodes code, const uint8_t messageType)
+    {
+        return (provider->CreateAcknowledgementTransaction(message, code, messageType));
+    }
+
+    /**
+     * @brief Read the private, static _txBuffer field.
+     */
+    static uint8_t *GetTransmitBuffer()
+    {
+        return (SpiTransportProvider::_txBuffer);
+    }
+
+    /**
+     * @brief Read the private, static _rxBuffer field.
+     */
+    static uint8_t *GetReceiveBuffer()
+    {
+        return (SpiTransportProvider::_rxBuffer);
+    }
 };
 
 /**
@@ -257,4 +281,46 @@ TEST_CASE("ProcessInboundPacket rejects a PayloadLength above the protocol maxim
     TEST_ASSERT_EQUAL(StatusCodes::InvalidPacket, statusCode);
 
     TEST_ASSERT_NULL_MESSAGE(TestSpiTransportProvider::GetIncomingMessage(provider), "A rejected fragment must not become the pending incoming message.");
+}
+
+/**
+ * @brief Check that an acknowledgement transaction holds nothing from the message it was made from.
+ *
+ *  CreateAcknowledgementTransaction deletes its copy of the message as soon as the
+ *  transaction exists (issue #235).  The test build poisons freed heap, so any field the
+ *  transaction still read through that copy, or through the original once it is also
+ *  deleted here, would decode as poison rather than as the acknowledgement.
+ */
+TEST_CASE("An acknowledgement transaction holds nothing from the message it was made from", CLASS_OF_TESTS)
+{
+    SpiTransportProvider *provider = EnsureProvider();
+    ResetIncomingMessage();
+
+    const uint32_t MESSAGE_ID = 0x12345678;
+    const uint32_t FUNCTION = 0x0a0b0c0d;
+    uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(32));
+    TEST_ASSERT_NOT_NULL(payload);
+    memset(payload, 0xa5, 32);
+    Message *message = Message::CreateOnHeap(MessageTypes::Header, Esp32Interfaces::WiFi, FUNCTION, StatusCodes::CompletedOk, MESSAGE_ID, payload, 32);
+    TEST_ASSERT_NOT_NULL(message);
+
+    spi_slave_transaction_t *transaction = TestSpiTransportProvider::CallCreateAcknowledgementTransaction(provider, message, StatusCodes::Failure, MessageTypes::Nak);
+    TEST_ASSERT_NOT_NULL(transaction);
+    Message::DeleteMessage(message);
+
+    TEST_ASSERT_EQUAL_PTR_MESSAGE(TestSpiTransportProvider::GetTransmitBuffer(), transaction->tx_buffer, "The transaction does not transmit from the provider's own buffer.");
+    TEST_ASSERT_EQUAL_PTR_MESSAGE(TestSpiTransportProvider::GetReceiveBuffer(), transaction->rx_buffer, "The transaction does not receive into the provider's own buffer.");
+
+    uint8_t *txBuffer = static_cast<uint8_t *>(const_cast<void *>(transaction->tx_buffer));
+    Message *decoded = Encoders::ExtractMessage(txBuffer, TestSpiTransportProvider::GetHeaderFrameSize(), true);
+    TEST_ASSERT_NOT_NULL_MESSAGE(decoded, "The acknowledgement could not be decoded; its CRC did not match.");
+    TEST_ASSERT_EQUAL_UINT8(MessageTypes::Nak, decoded->MessageType);
+    TEST_ASSERT_EQUAL_UINT32(StatusCodes::Failure, decoded->StatusCode);
+    TEST_ASSERT_EQUAL_UINT8(Esp32Interfaces::WiFi, decoded->Interface);
+    TEST_ASSERT_EQUAL_UINT32(FUNCTION, decoded->Function);
+    TEST_ASSERT_EQUAL_UINT32(MESSAGE_ID, decoded->MessageID);
+    TEST_ASSERT_EQUAL_UINT32_MESSAGE(0, decoded->PayloadLength, "The acknowledgement declares a payload.");
+
+    Utils::DeleteAndNullifyPointer(decoded);
+    TestSpiTransportProvider::CallDeleteTransaction(provider, transaction);
 }
