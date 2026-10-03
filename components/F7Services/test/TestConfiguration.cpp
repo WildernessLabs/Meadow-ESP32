@@ -15,6 +15,7 @@
 #include <atomic>
 #include <string>
 #include "unity.h"
+#include "esp_system.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -1197,6 +1198,56 @@ TEST_CASE("The default access point reads back whole while another task changes 
 
     TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, WiFiRequestHandler::SetDefaultAccessPoint(originalAccessPoint.c_str()));
     TEST_ASSERT_EQUAL_STRING(originalAccessPoint.c_str(), WiFiRequestHandler::GetDefaultAccessPoint().c_str());
+}
+
+/**
+ * @brief Bytes the free heap may fall by over the replacement test, for bookkeeping that is not a leak.
+ */
+#define REPLACEMENT_HEAP_ALLOWANCE 1024
+
+/**
+ * @brief Number of times the replacement test changes the access point and the password.
+ */
+#define REPLACEMENT_CHANGES 20
+
+/**
+ * @brief Check that replacing the default access point and the password releases what they held.
+ *
+ *  Both hold either a copy NvsManager made, when the handler read it at start up, or a copy
+ *  the setter made.  Both are made with pvPortMalloc, so both are released with vPortFree;
+ *  they used to be made with strdup, or came from NVS, and were released with free
+ *  (issue #163).  The two share a heap, so what this can catch is a copy that is not
+ *  released at all.
+ */
+TEST_CASE("Replacing the default access point and password releases what they held", CLASS_OF_TESTS)
+{
+    EnsureHandlers();
+
+    const std::string originalAccessPoint = WiFiRequestHandler::GetDefaultAccessPoint();
+    const std::string originalPassword = WiFiRequestHandler::GetPassword();
+
+    //
+    //  Settle any one-off allocation before the heap is measured.
+    //
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, WiFiRequestHandler::SetDefaultAccessPoint("AccessPointOne"));
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, WiFiRequestHandler::SetPassword("PasswordOne"));
+
+    const uint32_t heapBefore = esp_get_free_heap_size();
+    for (uint32_t change = 0; change < REPLACEMENT_CHANGES; change++)
+    {
+        const bool even = ((change % 2) == 0);
+        TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, WiFiRequestHandler::SetDefaultAccessPoint(even ? "AccessPointNumberTwo" : "AccessPointOne"));
+        TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, WiFiRequestHandler::SetPassword(even ? "PasswordNumberTwo" : "PasswordOne"));
+    }
+    const uint32_t heapAfter = esp_get_free_heap_size();
+
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, WiFiRequestHandler::SetDefaultAccessPoint(originalAccessPoint.c_str()));
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, WiFiRequestHandler::SetPassword(originalPassword.c_str()));
+    TEST_ASSERT_EQUAL_STRING(originalAccessPoint.c_str(), WiFiRequestHandler::GetDefaultAccessPoint().c_str());
+    TEST_ASSERT_EQUAL_STRING(originalPassword.c_str(), WiFiRequestHandler::GetPassword().c_str());
+
+    const uint32_t fall = (heapBefore > heapAfter) ? (heapBefore - heapAfter) : 0;
+    TEST_ASSERT_LESS_OR_EQUAL_UINT32_MESSAGE(REPLACEMENT_HEAP_ALLOWANCE, fall, "The free heap fell too far, which suggests a replaced value is not released.");
 }
 
 /**
