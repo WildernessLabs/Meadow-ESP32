@@ -229,6 +229,123 @@ TEST_CASE("BuildGraphFromJson refuses a device name too long for the scan respon
 }
 
 /**
+ * @brief Properties of a characteristic that notifies, indicates, both, or neither.
+ */
+#define PROPERTIES_NOTIFY 0x10
+#define PROPERTIES_INDICATE 0x20
+#define PROPERTIES_READ_WRITE 0x0a
+
+/**
+ * @brief JSON for a characteristic with the given properties and one descriptor of the given UUID, length and value.
+ *
+ * @param properties Value of the characteristic's "props" entry.
+ * @param descriptors Comma separated descriptor objects, or an empty string for none.
+ *
+ * @return JSON object text for the characteristic.
+ */
+static std::string PropertiesCharacteristicJson(const int properties, const std::string &descriptors)
+{
+    std::string json = "{\"uuid\":10755,\"permission\":17,\"props\":" + std::to_string(properties) + ",\"len\":4";
+    if (!descriptors.empty())
+    {
+        json += ",\"descriptors\":[" + descriptors + "]";
+    }
+    return (json + "}");
+}
+
+/**
+ * @brief The Client Characteristic Configuration descriptors a characteristic holds.
+ *
+ * @param characteristic Characteristic to look in.
+ *
+ * @return Those of its descriptors that have UUID 0x2902.
+ */
+static std::vector<BluetoothDescriptor *> ClientConfigurationDescriptors(BluetoothCharacteristic *characteristic)
+{
+    std::vector<BluetoothDescriptor *> result;
+    for (BluetoothDescriptor *descriptor: characteristic->GetDescriptorDefinitions())
+    {
+        if (!descriptor->Is128() && (static_cast<uint16_t>(descriptor->uuid16) == CLIENT_CHARACTERISTIC_CONFIGURATION_UUID))
+        {
+            result.push_back(descriptor);
+        }
+    }
+    return (result);
+}
+
+TEST_CASE("BuildGraphFromJson adds a client configuration descriptor to a notifying or indicating characteristic", CLASS_OF_TESTS)
+{
+    const int properties[] = {PROPERTIES_NOTIFY, PROPERTIES_INDICATE, PROPERTIES_NOTIFY | PROPERTIES_INDICATE | PROPERTIES_READ_WRITE};
+    for (const int property: properties)
+    {
+        BluetoothManager manager;
+        const std::vector<BluetoothCharacteristic *> characteristics = BuildSingleService(manager, ServiceJson(PropertiesCharacteristicJson(property, "")));
+        TEST_ASSERT_EQUAL_UINT32(1, characteristics.size());
+        const std::vector<BluetoothDescriptor *> cccd = ClientConfigurationDescriptors(characteristics[0]);
+        TEST_ASSERT_EQUAL_UINT32_MESSAGE(1, cccd.size(), "A subscribable characteristic has no client configuration descriptor.");
+        TEST_ASSERT_EQUAL_UINT16_MESSAGE(CLIENT_CHARACTERISTIC_CONFIGURATION_LENGTH, cccd[0]->MaxLength, "The descriptor is not two bytes long.");
+        TEST_ASSERT_EQUAL_UINT16_MESSAGE(CLIENT_CHARACTERISTIC_CONFIGURATION_LENGTH, cccd[0]->CurrentLength, "The descriptor's value is not two bytes long.");
+        TEST_ASSERT_EQUAL_UINT16_MESSAGE(static_cast<uint16_t>(CharacteristicPermission::Read | CharacteristicPermission::Write), static_cast<uint16_t>(cccd[0]->Permission), "The descriptor is not readable and writable.");
+        TEST_ASSERT_EQUAL_UINT8_MESSAGE(0, cccd[0]->GetValue()[0], "The descriptor does not start at 0.");
+        TEST_ASSERT_EQUAL_UINT8_MESSAGE(0, cccd[0]->GetValue()[1], "The descriptor does not start at 0.");
+    }
+}
+
+TEST_CASE("BuildGraphFromJson adds no client configuration descriptor to a characteristic that does not notify", CLASS_OF_TESTS)
+{
+    BluetoothManager manager;
+    const std::vector<BluetoothCharacteristic *> characteristics = BuildSingleService(manager, ServiceJson(PropertiesCharacteristicJson(PROPERTIES_READ_WRITE, "")));
+    TEST_ASSERT_EQUAL_UINT32(0, characteristics[0]->GetDescriptorDefinitions().size());
+}
+
+TEST_CASE("BuildGraphFromJson keeps a client configuration descriptor the configuration declares", CLASS_OF_TESTS)
+{
+    BluetoothManager manager;
+    const std::string declared = DescriptorJson(CLIENT_CHARACTERISTIC_CONFIGURATION_UUID, CLIENT_CHARACTERISTIC_CONFIGURATION_LENGTH);
+    const std::string other = DescriptorJson(0x2901, 4);
+    const std::vector<BluetoothCharacteristic *> characteristics = BuildSingleService(manager, ServiceJson(PropertiesCharacteristicJson(PROPERTIES_NOTIFY, other + "," + declared)));
+    TEST_ASSERT_EQUAL_UINT32_MESSAGE(1, ClientConfigurationDescriptors(characteristics[0]).size(), "A second client configuration descriptor was added.");
+    TEST_ASSERT_EQUAL_UINT32_MESSAGE(2, characteristics[0]->GetDescriptorDefinitions().size(), "The declared descriptors were not all kept.");
+}
+
+TEST_CASE("BuildGraphFromJson corrects a client configuration descriptor declared with the wrong length", CLASS_OF_TESTS)
+{
+    //
+    //  A one byte descriptor made a client's subscribe write fail with "invalid length".
+    //
+    const int lengths[] = {1, 4};
+    for (const int length: lengths)
+    {
+        BluetoothManager manager;
+        const std::string declared = DescriptorJson(CLIENT_CHARACTERISTIC_CONFIGURATION_UUID, length);
+        const std::vector<BluetoothCharacteristic *> characteristics = BuildSingleService(manager, ServiceJson(PropertiesCharacteristicJson(PROPERTIES_NOTIFY, declared)));
+        const std::vector<BluetoothDescriptor *> cccd = ClientConfigurationDescriptors(characteristics[0]);
+        TEST_ASSERT_EQUAL_UINT32(1, cccd.size());
+        TEST_ASSERT_EQUAL_UINT16_MESSAGE(CLIENT_CHARACTERISTIC_CONFIGURATION_LENGTH, cccd[0]->MaxLength, "The descriptor was not corrected to two bytes.");
+        TEST_ASSERT_EQUAL_UINT16_MESSAGE(CLIENT_CHARACTERISTIC_CONFIGURATION_LENGTH, cccd[0]->CurrentLength, "The descriptor's value was not corrected to two bytes.");
+    }
+}
+
+TEST_CASE("The client configuration descriptor takes the handle after the characteristic's value", CLASS_OF_TESTS)
+{
+    BluetoothManager manager;
+    const std::string json = "{\"deviceName\":\"MeadowTest\",\"services\":[{\"name\":\"S\",\"uuid\":254,\"characteristics\":[" + PropertiesCharacteristicJson(PROPERTIES_NOTIFY, "") + "," + PropertiesCharacteristicJson(PROPERTIES_READ_WRITE, "") + "]}]}";
+    TEST_ASSERT_TRUE(manager.BuildGraphFromJson(json.c_str()));
+    //
+    //  Service, then declaration, value and descriptor of the first characteristic, then the
+    //  declaration and value of the second.
+    //
+    const uint16_t handles[] = {0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x2d};
+    TEST_ASSERT_TRUE(manager.SetHandles(handles, sizeof(handles) / sizeof(handles[0])));
+    const std::vector<BluetoothCharacteristic *> characteristics = manager.GetServiceDefinitions()[0]->GetCharacteristicDefinitions();
+    TEST_ASSERT_EQUAL_UINT16(0x2a, characteristics[0]->GetValue().Handle);
+    const std::vector<BluetoothDescriptor *> descriptors = characteristics[0]->GetDescriptorDefinitions();
+    TEST_ASSERT_EQUAL_UINT32_MESSAGE(1, descriptors.size(), "The notifying characteristic has no descriptor to take a handle.");
+    TEST_ASSERT_EQUAL_UINT16(0x2b, descriptors[0]->Handle);
+    TEST_ASSERT_EQUAL_UINT16(0x2d, characteristics[1]->GetValue().Handle);
+}
+
+/**
  * @brief A characteristics or descriptors key that is present but not an array refuses the configuration.
  */
 TEST_CASE("BuildGraphFromJson refuses characteristics or descriptors that are not arrays", CLASS_OF_TESTS)

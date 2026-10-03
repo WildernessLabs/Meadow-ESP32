@@ -25,6 +25,16 @@
 #define DEVICE_NAME_KEY "deviceName"
 
 /**
+ * @brief 16-bit UUID of the Client Characteristic Configuration descriptor (CCCD).
+ */
+#define CLIENT_CHARACTERISTIC_CONFIGURATION_UUID 0x2902
+
+/**
+ * @brief Length, in bytes, of the Client Characteristic Configuration descriptor's value.
+ */
+#define CLIENT_CHARACTERISTIC_CONFIGURATION_LENGTH 2
+
+/**
  * @brief Default device name if none is specified.
  */
 #define DEFAULT_DEVICE_NAME "MeadowF7"
@@ -188,6 +198,19 @@ private:
      * @return Number of descriptor entries rejected.
      */
     uint32_t AddDescriptors(const cJSON * const json, BluetoothCharacteristic * const characteristic);
+
+    /**
+     * @brief Give a notifying or indicating characteristic a Client Characteristic Configuration descriptor.
+     *
+     *  A client subscribes by writing this descriptor, so without one CoreBluetooth reports
+     *  "the attribute could not be found" and never delivers the value (issue #496).  A
+     *  descriptor the configuration declares is kept; if its length is wrong it was corrected
+     *  by AddDescriptors.
+     *
+     * @param characteristic Characteristic that has had its configured descriptors added.
+     * @param properties Properties the configuration gave the characteristic.
+     */
+    void AddClientCharacteristicConfiguration(BluetoothCharacteristic * const characteristic, const uint16_t properties);
 
     /**
      * @brief Parse UUID from cJSON object.

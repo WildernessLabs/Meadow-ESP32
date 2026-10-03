@@ -70,10 +70,9 @@ const char *meadow_b_json = R"(
 //
 //  Meadow device with no company identifier.
 //
-//  The firmware does not add a Client Characteristic Configuration descriptor (0x2902) to
-//  a notifying characteristic, so one is declared here.  Without it a client cannot
-//  subscribe: CoreBluetooth reports "attribute not found" and never delivers the value.
-//  The descriptor is two bytes, and 0 means no subscription.
+//  The notifying characteristics declare no Client Characteristic Configuration descriptor
+//  (0x2902).  The firmware adds one, which a client needs in order to subscribe: without
+//  it CoreBluetooth reports "attribute not found" and never delivers the value (issue #496).
 //
 const char *meadow_c_json = R"(
 {
@@ -87,15 +86,7 @@ const char *meadow_c_json = R"(
                     "uuid": "017e99d6-8a61-11eb-8dcd-0242ac130003",
                     "permission": 17,
                     "props": 26,
-                    "len": 4,
-                    "descriptors": [
-                        {
-                        "uuid": 10498,
-                        "permission": 17,
-                        "len": 2,
-                        "value": 0
-                        }
-                    ]
+                    "len": 4
                 },
                 {
                     "uuid": 10755,

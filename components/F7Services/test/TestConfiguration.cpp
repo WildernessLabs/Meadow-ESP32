@@ -19,6 +19,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/semphr.h"
+#include "esp_rom_sys.h"
 
 #include "Esp32Messaging.hpp"
 #include "Encoders.hpp"
@@ -1092,6 +1093,20 @@ TEST_CASE("The configuration is sent to the STM32 as an event", CLASS_OF_TESTS)
 #define ALTERNATING_CHANGES 200
 
 /**
+ * @brief Microseconds the reader and the writer each wait between turns.
+ *
+ *  The reader and the setter take the same mutex, and a FreeRTOS mutex is not fair across
+ *  cores.  When one task gives it up, the other, waiting on the other core, needs a few
+ *  microseconds to wake, and a task that goes straight back round takes the mutex again
+ *  first.  With no gap at all, the reader starved the writer and the test never ended; that
+ *  happened when this test ran after [Emulated] in the same boot.  With a gap in the reader
+ *  only, the writer, which holds the mutex for each NVS write, starved the reader to
+ *  9 reads in 200 changes.  A gap in both lets each take its turn.  It is far longer than
+ *  the wake up and far shorter than a change, so reads still land between the writer's.
+ */
+#define TURN_GAP_MICROSECONDS 200
+
+/**
  * @brief State shared between the concurrency test and its writer task.
  */
 struct AlternatingWriterContext
@@ -1127,6 +1142,7 @@ static void AlternatingWriterTask(void *parameter)
         {
             context->Failures.fetch_add(1);
         }
+        esp_rom_delay_us(TURN_GAP_MICROSECONDS);
     }
     context->Finished.store(true);
     xSemaphoreGive(context->Done);
@@ -1169,6 +1185,7 @@ TEST_CASE("The default access point reads back whole while another task changes 
             unexpected++;
         }
         reads++;
+        esp_rom_delay_us(TURN_GAP_MICROSECONDS);
     }
     TEST_ASSERT_EQUAL(pdTRUE, xSemaphoreTake(context.Done, portMAX_DELAY));
     vSemaphoreDelete(context.Done);
