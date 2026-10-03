@@ -647,6 +647,7 @@ uint32_t BluetoothManager::AddCharacteristics(const cJSON * const json, Bluetoot
             TRACE_MESSAGE("    Characteristic : " UUID_KEY " %s, " PERMISSION_KEY ": %d, " PROPERTIES_KEY ": %d, " LENGTH_KEY ": %d", buffer, permissions, properties, length);
 
             rejected += AddDescriptors(characteristic, new_characteristic);
+            AddClientCharacteristicConfiguration(new_characteristic, properties);
             service->AddCharacteristic(new_characteristic);
         }
         else
@@ -738,6 +739,17 @@ uint32_t BluetoothManager::AddDescriptors(const cJSON * const json, BluetoothCha
             uint16_t permissions = static_cast<uint16_t>(permission->valueint);
             uint16_t length = static_cast<uint16_t>(len->valueint);
 
+            //
+            //  A client configuration descriptor is two bytes.  A client's subscribe write is
+            //  refused with "invalid length" if it is declared any other length (issue #496), so
+            //  it is corrected here rather than left for the application developer to find.
+            //
+            if (!is128bits && (static_cast<uint16_t>(uuid16bits) == CLIENT_CHARACTERISTIC_CONFIGURATION_UUID) && (length != CLIENT_CHARACTERISTIC_CONFIGURATION_LENGTH))
+            {
+                ESP_LOGW(COMPONENT_NAME, "The client characteristic configuration descriptor is declared %" PRIu16 " bytes long; using %d.", length, CLIENT_CHARACTERISTIC_CONFIGURATION_LENGTH);
+                length = CLIENT_CHARACTERISTIC_CONFIGURATION_LENGTH;
+            }
+
             /*
              *  BluetoothDescriptor's constructor copies MaxLength bytes starting at the
              *  pointer we give it, so that pointer has to reference length real bytes of
@@ -802,6 +814,41 @@ uint32_t BluetoothManager::AddDescriptors(const cJSON * const json, BluetoothCha
 
     TRACE_MESSAGE("AddDescriptors: Exit");
     return (rejected);
+}
+
+/**
+ * @brief Give a notifying or indicating characteristic a Client Characteristic Configuration descriptor.
+ *
+ *  A client subscribes by writing this descriptor, so without one CoreBluetooth reports
+ *  "the attribute could not be found" and never delivers the value (issue #496).  A
+ *  descriptor the configuration declares is kept.  One that is added here is two bytes,
+ *  readable and writable, and starts at 0 (no subscription).
+ *
+ *  The descriptor takes a handle after the characteristic's value, so the handles of
+ *  everything after it in the attribute table move up by one.  The value's own handle does not.
+ *
+ * @param characteristic Characteristic that has had its configured descriptors added.
+ * @param properties Properties the configuration gave the characteristic.
+ */
+void BluetoothManager::AddClientCharacteristicConfiguration(BluetoothCharacteristic * const characteristic, const uint16_t properties)
+{
+    const uint16_t subscribable = static_cast<uint16_t>(CharacteristicProperty::Notify) | static_cast<uint16_t>(CharacteristicProperty::Indicate);
+    if ((properties & subscribable) == 0)
+    {
+        return;
+    }
+
+    for (const auto &descriptor: characteristic->GetDescriptorDefinitions())
+    {
+        if (!descriptor->Is128() && (static_cast<uint16_t>(descriptor->uuid16) == CLIENT_CHARACTERISTIC_CONFIGURATION_UUID))
+        {
+            return;
+        }
+    }
+
+    const uint8_t value[CLIENT_CHARACTERISTIC_CONFIGURATION_LENGTH] = {0, 0};
+    characteristic->AddDescriptor(new BluetoothDescriptor(characteristic, Uuid16(CLIENT_CHARACTERISTIC_CONFIGURATION_UUID), CharacteristicPermission::Read | CharacteristicPermission::Write, CLIENT_CHARACTERISTIC_CONFIGURATION_LENGTH, value, CLIENT_CHARACTERISTIC_CONFIGURATION_LENGTH));
+    TRACE_MESSAGE("        Descriptor : added the client characteristic configuration descriptor (" PROPERTIES_KEY ": %" PRIu16 ")", properties);
 }
 
 /**

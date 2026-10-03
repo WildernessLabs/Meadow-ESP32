@@ -60,9 +60,10 @@
  * @brief Number of handles the MeadowA service returns.
  *
  *  The service, plus a declaration and a value handle for each of its two
- *  characteristics; neither has a descriptor.
+ *  characteristics, and the Client Characteristic Configuration descriptor the firmware
+ *  adds to the second, which notifies (issue #496).
  */
-#define MEADOW_A_HANDLE_COUNT 5
+#define MEADOW_A_HANDLE_COUNT 6
 
 /**
  * @brief Number of handles the MeadowF7 service returns.
