@@ -2419,11 +2419,16 @@ esp_err_t WiFiRequestHandler::StartWiFiInterface(const wifi_mode_t mode, const E
 
         if (result != ESP_OK)
         {
+            //
+            //  Returned to the caller, which answers the STM32 with CannotStartNetworkInterface.
+            //  This used to be followed by ESP_ERROR_CHECK(result), which reset the board for
+            //  a start that failed, such as one that was refused a configuration (issue #248).
+            //
+            ESP_LOGE(COMPONENT_NAME, "StartWiFiInterface: the interface could not be started, error %" PRIi32 " (%s)", static_cast<int32_t>(result), esp_err_to_name(result));
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_ERROR_BIT);
             xEventGroupClearBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTING_BIT);
         }
     }
-    ESP_ERROR_CHECK(result);
 
     TRACE_MESSAGE("StartWiFiInterface: Exit");
     return (result);
@@ -2467,9 +2472,24 @@ void WiFiRequestHandler::ScanForAccessPoints(Message *message)
             //  incomplete scan.
             //
             xEventGroupClearBits(_xWiFiEventGroup, WIFI_SCAN_COMPLETE_BIT);
-            ESP_ERROR_CHECK(esp_wifi_scan_start(nullptr, true));
-
-            bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_SCAN_COMPLETE_BIT, pdFALSE, pdFALSE, GetWiFiTimeout() / portTICK_PERIOD_MS);
+            //
+            //  A scan is refused while another is running or the station is connecting.  That is
+            //  something the STM32 can ask for, so it is reported to it and does not reset the
+            //  board (issue #248).
+            //
+            bool scanRefused = false;
+            const esp_err_t scanResult = esp_wifi_scan_start(nullptr, true);
+            if (scanResult != ESP_OK)
+            {
+                ESP_LOGE(COMPONENT_NAME, "ScanForAccessPoints: the scan could not be started, error %" PRIi32 " (%s)", static_cast<int32_t>(scanResult), esp_err_to_name(scanResult));
+                result = Mapping::GetStatusCode(scanResult);
+                scanRefused = true;
+                bits = 0;
+            }
+            else
+            {
+                bits = xEventGroupWaitBits(_xWiFiEventGroup, WIFI_SCAN_COMPLETE_BIT, pdFALSE, pdFALSE, GetWiFiTimeout() / portTICK_PERIOD_MS);
+            }
             if (bits & WIFI_SCAN_COMPLETE_BIT)
             {
                 uint16_t apCount = 0;
@@ -2495,43 +2515,56 @@ void WiFiRequestHandler::ScanForAccessPoints(Message *message)
                     else
                     {
                         memset(accessPointList, 0, sizeof(Esp32Messaging::AccessPointList));
-                        ESP_ERROR_CHECK(esp_wifi_scan_get_ap_records(&apCount, accessPoints));
-                        accessPointList->NumberOfAccessPoints = apCount;
-
-                        int singleAccessPointSize = Encoders::EncodedAccessPointBufferSize(accessPoint);
-                        accessPointList->AccessPointsLength = singleAccessPointSize * apCount;
-                        accessPointList->AccessPoints = static_cast<uint8_t *>(pvPortMalloc(accessPointList->AccessPointsLength));
-                        if (accessPointList->AccessPoints == nullptr)
+                        const esp_err_t recordsResult = esp_wifi_scan_get_ap_records(&apCount, accessPoints);
+                        if (recordsResult != ESP_OK)
                         {
-                            result = StatusCodes::EspOutOfMemory;
+                            //
+                            //  The results could not be read out, so the driver's copy is released
+                            //  as it would have been, and the scan is reported as failed.
+                            //
+                            ESP_LOGE(COMPONENT_NAME, "ScanForAccessPoints: the results could not be read, error %" PRIi32 " (%s)", static_cast<int32_t>(recordsResult), esp_err_to_name(recordsResult));
+                            esp_wifi_clear_ap_list();
+                            result = Mapping::GetStatusCode(recordsResult);
                         }
                         else
                         {
-                            uint8_t *currentLocation = accessPointList->AccessPoints;
-                            for (int index = 0; index < apCount; index++)
-                            {
-                                memset(accessPoint, 0, sizeof(Esp32Messaging::AccessPoint));
-                                memcpy(accessPoint->Ssid, &accessPoints[index].ssid, sizeof(accessPoint->Ssid));
-                                memcpy(accessPoint->Bssid, &accessPoints[index].bssid, 6);
-                                accessPoint->PrimaryChannel = accessPoints[index].primary;
-                                accessPoint->SecondaryChannel = accessPoints[index].second;
-                                accessPoint->Rssi = accessPoints[index].rssi;
-                                accessPoint->AuthenticationMode = accessPoints[index].authmode;
-                                accessPoint->Protocols = accessPoints[index].phy_11b | accessPoints[index].phy_11g | accessPoints[index].phy_11n | accessPoints[index].phy_lr | accessPoints[index].wps;
-                                Encoders::EncodeAccessPoint(accessPoint, currentLocation);
-                                currentLocation += singleAccessPointSize;
-                            }
+                            accessPointList->NumberOfAccessPoints = apCount;
 
-                            message->PayloadLength = Encoders::EncodedAccessPointListBufferSize(accessPointList);
-                            message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
-                            if (message->Payload == nullptr)
+                            int singleAccessPointSize = Encoders::EncodedAccessPointBufferSize(accessPoint);
+                            accessPointList->AccessPointsLength = singleAccessPointSize * apCount;
+                            accessPointList->AccessPoints = static_cast<uint8_t *>(pvPortMalloc(accessPointList->AccessPointsLength));
+                            if (accessPointList->AccessPoints == nullptr)
                             {
-                                message->PayloadLength = 0;
                                 result = StatusCodes::EspOutOfMemory;
                             }
                             else
                             {
-                                Encoders::EncodeAccessPointList(accessPointList, message->Payload);
+                                uint8_t *currentLocation = accessPointList->AccessPoints;
+                                for (int index = 0; index < apCount; index++)
+                                {
+                                    memset(accessPoint, 0, sizeof(Esp32Messaging::AccessPoint));
+                                    memcpy(accessPoint->Ssid, &accessPoints[index].ssid, sizeof(accessPoint->Ssid));
+                                    memcpy(accessPoint->Bssid, &accessPoints[index].bssid, 6);
+                                    accessPoint->PrimaryChannel = accessPoints[index].primary;
+                                    accessPoint->SecondaryChannel = accessPoints[index].second;
+                                    accessPoint->Rssi = accessPoints[index].rssi;
+                                    accessPoint->AuthenticationMode = accessPoints[index].authmode;
+                                    accessPoint->Protocols = accessPoints[index].phy_11b | accessPoints[index].phy_11g | accessPoints[index].phy_11n | accessPoints[index].phy_lr | accessPoints[index].wps;
+                                    Encoders::EncodeAccessPoint(accessPoint, currentLocation);
+                                    currentLocation += singleAccessPointSize;
+                                }
+
+                                message->PayloadLength = Encoders::EncodedAccessPointListBufferSize(accessPointList);
+                                message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
+                                if (message->Payload == nullptr)
+                                {
+                                    message->PayloadLength = 0;
+                                    result = StatusCodes::EspOutOfMemory;
+                                }
+                                else
+                                {
+                                    Encoders::EncodeAccessPointList(accessPointList, message->Payload);
+                                }
                             }
                         }
                         Utils::DeleteAndNullifyPointer(accessPointList->AccessPoints);
@@ -2543,8 +2576,14 @@ void WiFiRequestHandler::ScanForAccessPoints(Message *message)
             }
             else
             {
-                TRACE_MESSAGE("ScanForAccessPoints: Scan timeout.");
-                result = StatusCodes::Timeout;
+                //
+                //  A scan that was refused has already set its own status.
+                //
+                if (!scanRefused)
+                {
+                    TRACE_MESSAGE("ScanForAccessPoints: Scan timeout.");
+                    result = StatusCodes::Timeout;
+                }
             }
         }
         else

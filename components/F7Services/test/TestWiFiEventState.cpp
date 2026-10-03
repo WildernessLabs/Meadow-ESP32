@@ -133,6 +133,57 @@ public:
     }
 
     /**
+     * @brief Call the private StartWiFiInterface method, with an event group for it to use.
+     *
+     * @param handler Handler to start.
+     * @param mode Mode to start it in.
+     *
+     * @return What StartWiFiInterface returned.
+     */
+    static esp_err_t StartInterface(WiFiRequestHandler *handler, const wifi_mode_t mode)
+    {
+        if (WiFiRequestHandler::_xWiFiEventGroup == nullptr)
+        {
+            WiFiRequestHandler::_xWiFiEventGroup = xEventGroupCreate();
+            TEST_ASSERT_NOT_NULL(WiFiRequestHandler::_xWiFiEventGroup);
+        }
+        return (handler->StartWiFiInterface(mode, nullptr));
+    }
+
+    /**
+     * @brief Call the private StopWiFIAdapter method.
+     */
+    static StatusCodes::StatusCodes StopAdapter(WiFiRequestHandler *handler)
+    {
+        return (handler->StopWiFIAdapter());
+    }
+
+    /**
+     * @brief Whether the handler's event group holds the error bit and the starting bit.
+     *
+     * @param error Set to whether WIFI_ERROR_BIT is set.
+     * @param starting Set to whether WIFI_INTERFACE_STARTING_BIT is set.
+     * @param started Set to whether WIFI_INTERFACE_STARTED_BIT is set.
+     */
+    static void StartBits(bool &error, bool &starting, bool &started)
+    {
+        const EventBits_t bits = xEventGroupGetBits(WiFiRequestHandler::_xWiFiEventGroup);
+        error = ((bits & WiFiRequestHandler::WIFI_ERROR_BIT) != 0);
+        starting = ((bits & WiFiRequestHandler::WIFI_INTERFACE_STARTING_BIT) != 0);
+        started = ((bits & WiFiRequestHandler::WIFI_INTERFACE_STARTED_BIT) != 0);
+    }
+
+    /**
+     * @brief Clear the event group's bits and delete it, so no state is left for another test.
+     */
+    static void ReleaseStartState()
+    {
+        xEventGroupClearBits(WiFiRequestHandler::_xWiFiEventGroup, 0xffffff);
+        vEventGroupDelete(WiFiRequestHandler::_xWiFiEventGroup);
+        WiFiRequestHandler::_xWiFiEventGroup = nullptr;
+    }
+
+    /**
      * @brief Restore an empty access point record.
      *
      * @param handler Handler to clear.
@@ -605,4 +656,35 @@ TEST_CASE("The maximum connections event is not queued when it cannot be made", 
     DrainOutbound(dispatcher);
     TestWiFiEventState::ClearConnectedNodes(handler);
     TEST_ASSERT_EQUAL_MESSAGE(0, queued, "The maximum connections event was queued though it could not be made.");
+}
+
+/**
+ * @brief Check an interface that cannot start returns the error, and the next start works (issue #248).
+ *
+ *  StartWiFiInterface returned its error to callers that checked it, then called
+ *  ESP_ERROR_CHECK on it, which reset the board.  A mode the driver refuses is a start that
+ *  fails; the callers answer the STM32 with CannotStartNetworkInterface.
+ *
+ *  This starts the radio, so it is hardware only.
+ */
+TEST_CASE("An interface that cannot start returns the error and the next start works", "[WiFiEventState][HardwareOnly]")
+{
+    WiFiRequestHandler *handler = TestWiFiEventState::Handler();
+
+    const esp_err_t failed = TestWiFiEventState::StartInterface(handler, WIFI_MODE_MAX);
+    TEST_ASSERT_NOT_EQUAL_MESSAGE(ESP_OK, failed, "The driver accepted a mode it should refuse.");
+    bool error = false;
+    bool starting = false;
+    bool started = false;
+    TestWiFiEventState::StartBits(error, starting, started);
+    TEST_ASSERT_TRUE_MESSAGE(error, "The failed start did not set the error bit.");
+    TEST_ASSERT_FALSE_MESSAGE(starting, "The failed start left the starting bit set.");
+    TEST_ASSERT_FALSE_MESSAGE(started, "The failed start set the started bit.");
+
+    //
+    //  Nothing the failed start left behind stops the next one.
+    //
+    TEST_ASSERT_EQUAL_MESSAGE(ESP_OK, TestWiFiEventState::StartInterface(handler, WIFI_MODE_STA), "The start after a failed start failed too.");
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, TestWiFiEventState::StopAdapter(handler));
+    TestWiFiEventState::ReleaseStartState();
 }
