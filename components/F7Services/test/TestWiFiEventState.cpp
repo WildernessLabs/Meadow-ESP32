@@ -12,8 +12,12 @@
 #include <stdio.h>
 #include <string.h>
 #include "freertos/FreeRTOS.h"
+#include "freertos/event_groups.h"
 #include "freertos/semphr.h"
 #include "freertos/task.h"
+#include "esp_event.h"
+#include "esp_netif.h"
+#include "esp_wifi_default.h"
 #include "unity.h"
 
 #include "MockMessageDispatcher.hpp"
@@ -80,6 +84,49 @@ public:
     static void Populate(WiFiRequestHandler *handler, Esp32Messaging::ConnectEventData *data)
     {
         handler->PopulateConnectionEventDataStructure(data);
+    }
+
+    /**
+     * @brief The station network interface the handler holds.
+     */
+    static esp_netif_t *StationNetworkInterface()
+    {
+        return (WiFiRequestHandler::_stationNetIfHandle);
+    }
+
+    /**
+     * @brief Give the handler a station network interface to hold.
+     */
+    static void SetStationNetworkInterface(esp_netif_t *networkInterface)
+    {
+        WiFiRequestHandler::_stationNetIfHandle = networkInterface;
+    }
+
+    /**
+     * @brief Call the private DestroyNetworkInterfaces method.
+     */
+    static void DestroyNetworkInterfaces(WiFiRequestHandler *handler)
+    {
+        handler->DestroyNetworkInterfaces();
+    }
+
+    /**
+     * @brief Call the private StationStoppedEvent method, with an event group for it to clear bits in.
+     */
+    static void StationStopped(WiFiRequestHandler *handler)
+    {
+        const bool madeEventGroup = (WiFiRequestHandler::_xWiFiEventGroup == nullptr);
+        if (madeEventGroup)
+        {
+            WiFiRequestHandler::_xWiFiEventGroup = xEventGroupCreate();
+            TEST_ASSERT_NOT_NULL(WiFiRequestHandler::_xWiFiEventGroup);
+        }
+        handler->StationStoppedEvent();
+        if (madeEventGroup)
+        {
+            vEventGroupDelete(WiFiRequestHandler::_xWiFiEventGroup);
+            WiFiRequestHandler::_xWiFiEventGroup = nullptr;
+        }
     }
 
     /**
@@ -235,4 +282,70 @@ TEST_CASE("Connection details are never read part way through an update", CLASS_
     TestWiFiEventState::Clear(context.Handler);
     vSemaphoreDelete(context.Finished);
     vSemaphoreDelete(context.Start);
+}
+
+/**
+ * @brief Make the station network interface the way StartWiFiInterface does.
+ *
+ *  esp_netif_init() does nothing the second time, and the default event loop is made once
+ *  and kept, which is what StartWiFiInterface now accepts.
+ *
+ * @return The network interface.
+ */
+static esp_netif_t *MakeStationNetworkInterface()
+{
+    TEST_ASSERT_EQUAL(ESP_OK, esp_netif_init());
+    const esp_err_t loop = esp_event_loop_create_default();
+    TEST_ASSERT_TRUE_MESSAGE((loop == ESP_OK) || (loop == ESP_ERR_INVALID_STATE), "The default event loop could not be made.");
+    esp_netif_t *networkInterface = esp_netif_create_default_wifi_sta();
+    TEST_ASSERT_NOT_NULL(networkInterface);
+    return (networkInterface);
+}
+
+/**
+ * @brief Check the network interfaces are destroyed, so another can be made (issue #292).
+ *
+ *  A station network interface is made every time the WiFi interface starts, and making a
+ *  second while the first exists is refused with a duplicate key and aborts the board.  Before
+ *  this the stop path only set the handle to nullptr.
+ */
+TEST_CASE("Destroying the network interfaces lets the station one be made again", CLASS_OF_TESTS)
+{
+    WiFiRequestHandler *handler = TestWiFiEventState::Handler();
+
+    TestWiFiEventState::SetStationNetworkInterface(MakeStationNetworkInterface());
+    TestWiFiEventState::DestroyNetworkInterfaces(handler);
+    TEST_ASSERT_NULL_MESSAGE(TestWiFiEventState::StationNetworkInterface(), "The station network interface handle was not cleared.");
+
+    //
+    //  Making another with the same key aborts the board if the first still exists.
+    //
+    esp_netif_t *second = MakeStationNetworkInterface();
+    TestWiFiEventState::SetStationNetworkInterface(second);
+    TestWiFiEventState::DestroyNetworkInterfaces(handler);
+    TEST_ASSERT_NULL(TestWiFiEventState::StationNetworkInterface());
+
+    //
+    //  There is nothing to destroy the third time, which must not be an error.
+    //
+    TestWiFiEventState::DestroyNetworkInterfaces(handler);
+}
+
+/**
+ * @brief Check the station stopped event leaves the station network interface for the stop path to destroy (issue #292).
+ *
+ *  The event used to set the handle to nullptr, so by the time StopWiFIAdapter() came to
+ *  destroy the interface there was no handle to destroy it with.
+ */
+TEST_CASE("The station stopped event keeps the station network interface", CLASS_OF_TESTS)
+{
+    WiFiRequestHandler *handler = TestWiFiEventState::Handler();
+
+    esp_netif_t *networkInterface = MakeStationNetworkInterface();
+    TestWiFiEventState::SetStationNetworkInterface(networkInterface);
+    TestWiFiEventState::StationStopped(handler);
+    esp_netif_t *held = TestWiFiEventState::StationNetworkInterface();
+
+    TestWiFiEventState::DestroyNetworkInterfaces(handler);
+    TEST_ASSERT_EQUAL_PTR_MESSAGE(networkInterface, held, "The station stopped event dropped the station network interface.");
 }

@@ -818,6 +818,11 @@ private:
     void StationConnectedEvent(wifi_event_sta_connected_t *);
 
     /**
+     *  @brief Destroy the station and soft access point network interfaces, if there are any.
+     */
+    void DestroyNetworkInterfaces();
+
+    /**
      *  @brief Processes the station disconnected event (WIFI_EVENT_STA_DISCONNECTED).
      */
     void StationDisconnectedEvent(wifi_event_sta_disconnected_t *);
