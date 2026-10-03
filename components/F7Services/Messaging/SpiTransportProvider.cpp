@@ -127,6 +127,10 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
     slaveConfiguration.post_trans_cb = SpiPostTransmissionCallback;
     slaveConfiguration.post_setup_cb = SpiPostSetupCallback;
 
+    //
+    //  Without the SPI bus there is no link to the STM32, so this is a start-up failure with nothing
+    //  to recover to.  ESP_ERROR_CHECK is kept, and resets the board (issue #248).
+    //
     ESP_ERROR_CHECK(spi_slave_initialize(VSPI_HOST, &spiBusConfiguration, &slaveConfiguration, 1));
 
     /*
@@ -919,6 +923,12 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessMessages(spi_slave_transac
     uint32_t notificationBits = 0;
 
     TRACE_MESSAGE("ProcessMessages: Waiting for notification, current state: %s", SpiStateString(_currentState));
+    //
+    //  The transaction is always the same size and the wait is portMAX_DELAY, so neither this nor
+    //  spi_slave_get_trans_result below can fail from anything the STM32 sends; a failure means the
+    //  driver's own state is broken, which is not recoverable here.  ESP_ERROR_CHECK is kept
+    //  (issue #248).
+    //
     ESP_ERROR_CHECK(spi_slave_queue_trans(VSPI_HOST, transaction, portMAX_DELAY));
     //
     //  notificationBits is not examined because STM32_INTERRUPT_NOTIFICATION_BIT is the

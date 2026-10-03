@@ -9,6 +9,8 @@
 
 #include "sdkconfig.h"
 
+#include <inttypes.h>
+
 #include "freertos/FreeRTOS.h"
 #include "esp_log.h"
 
@@ -87,11 +89,23 @@ void NvsManager::Setup()
     if ((result == ESP_ERR_NVS_NO_FREE_PAGES) || (result == ESP_ERR_NVS_NEW_VERSION_FOUND))
     {
         ESP_LOGI(__func__, "Formatting NVS.");
-        ESP_ERROR_CHECK(nvs_flash_erase());
-        result = nvs_flash_init();
+        result = nvs_flash_erase();
+        if (result == ESP_OK)
+        {
+            result = nvs_flash_init();
+        }
     }
-    ESP_ERROR_CHECK(result);
+
+    //
+    //  The getters and setters check _nvsAvailable: the getters return their defaults and the
+    //  setters report NotAvailable.  A board whose NVS cannot be used runs with its defaults
+    //  and says so, rather than resetting at every start (issue #248).
+    //
     _nvsAvailable = (result == ESP_OK);
+    if (!_nvsAvailable)
+    {
+        ESP_LOGE(__func__, "NVS is not available, error %" PRIi32 " (%s).  Defaults will be used and nothing will be saved.", static_cast<int32_t>(result), esp_err_to_name(result));
+    }
 }
 
 /**

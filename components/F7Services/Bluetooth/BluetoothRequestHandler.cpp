@@ -197,7 +197,15 @@ void BluetoothRequestHandler::Setup()
 
     TRACE_MESSAGE("BT controller mem release...");
 
-    ESP_ERROR_CHECK(esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT));
+    //
+    //  Only gives back the memory the unused classic Bluetooth controller holds, so Bluetooth
+    //  works without it and a failure is not worth resetting the board for (issue #248).
+    //
+    const esp_err_t memoryRelease = esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT);
+    if (memoryRelease != ESP_OK)
+    {
+        ESP_LOGE(COMPONENT_NAME, "Setup: could not release the classic Bluetooth controller memory, error %" PRIi32 " (%s)", static_cast<int32_t>(memoryRelease), esp_err_to_name(memoryRelease));
+    }
 
     Utils::RequireTaskCreated(xTaskCreate(Task, _taskName, TASK_STACK_SIZE, this, PRIORITY_BLUETOOTH_TASK, &_taskHandle), "the Bluetooth task");
 
