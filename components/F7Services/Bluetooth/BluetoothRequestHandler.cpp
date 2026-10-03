@@ -64,6 +64,7 @@ esp_gatt_if_t BluetoothRequestHandler::_gattsInterfaceHandle = ESP_GATT_IF_NONE;
  * @brief The handle that is assigned a connection when a device connects over Bluetooth.
  */
 std::atomic<uint16_t> BluetoothRequestHandler::_connectionHandle(INVALID_CONNECTION_HANDLE);
+std::atomic<uint32_t> BluetoothRequestHandler::_notificationsSent(0);
 uint8_t *BluetoothRequestHandler::_preparedWriteValue = nullptr;
 uint16_t BluetoothRequestHandler::_preparedWriteHandle = 0;
 uint16_t BluetoothRequestHandler::_preparedWriteLength = 0;
@@ -482,6 +483,52 @@ void BluetoothRequestHandler::GetHandles(Message * const request)
 }
 
 /**
+ * @brief Has the connected client enabled notifications for the characteristic with this value handle?
+ *
+ *  The stack keeps the value the client wrote to the characteristic's Client Characteristic
+ *  Configuration descriptor, which this reads back.
+ *
+ * @param valueHandle Handle of the characteristic's value.
+ *
+ * @return true if the client set the notification bit.
+ */
+bool BluetoothRequestHandler::NotificationsEnabled(const uint16_t valueHandle)
+{
+    const uint16_t configurationHandle = _manager.GetClientConfigurationHandle(valueHandle);
+    if (configurationHandle == 0)
+    {
+        return (false);
+    }
+
+    uint16_t length = 0;
+    const uint8_t *value = nullptr;
+    if ((esp_ble_gatts_get_attr_value(configurationHandle, &length, &value) != ESP_GATT_OK) || (value == nullptr) || (length < CLIENT_CHARACTERISTIC_CONFIGURATION_LENGTH))
+    {
+        return (false);
+    }
+    return (BluetoothManager::ClientConfigurationEnablesNotifications(static_cast<uint16_t>(value[0] | (value[1] << 8))));
+}
+
+/**
+ * @brief Set every client configuration back to 0, no notifications or indications.
+ *
+ *  A client that is not bonded starts each connection unsubscribed.  The stack holds one
+ *  value for each descriptor, so without this a client that connects after another one
+ *  subscribed would be sent notifications it never asked for (issue #572).
+ */
+void BluetoothRequestHandler::ResetClientConfigurations()
+{
+    const uint8_t unsubscribed[CLIENT_CHARACTERISTIC_CONFIGURATION_LENGTH] = {0, 0};
+    for (const uint16_t handle: _manager.GetClientConfigurationHandles())
+    {
+        if (esp_ble_gatts_set_attr_value(handle, sizeof(unsubscribed), unsubscribed) != ESP_OK)
+        {
+            ERROR_MESSAGE("Could not reset the client configuration at handle 0x%04" PRIx16, handle);
+        }
+    }
+}
+
+/**
  * @brief Set the value for the specified attribute handle.
  *
  *  SetDataLength is a uint32_t from the wire, but esp_ble_gatts_send_indicate's length
@@ -545,12 +592,21 @@ void BluetoothRequestHandler::SetCurrentValueForAttributeHandle(Message * const 
                 const uint16_t connectionHandle = _connectionHandle.load();
                 if (connectionHandle != INVALID_CONNECTION_HANDLE)
                 {
-                    if ((_manager.GetCharacteristicProperties(ds->Handle) & CharacteristicProperty::Notify) == CharacteristicProperty::Notify)
+                    //
+                    //  The value is stored above whatever the client has asked for, so it can
+                    //  still read it.  A notification goes only to a client that has enabled
+                    //  them in the characteristic's client configuration (issue #572).
+                    //
+                    if (((_manager.GetCharacteristicProperties(ds->Handle) & CharacteristicProperty::Notify) == CharacteristicProperty::Notify) && NotificationsEnabled(ds->Handle))
                     {
                         if (esp_ble_gatts_send_indicate(_gattsInterfaceHandle, connectionHandle, ds->Handle, static_cast<uint16_t>(ds->SetDataLength), ds->SetData, false) != ESP_OK)
                         {
                             TRACE_MESSAGE("Failed to send indication to connection ID 0x%04" PRIx16, connectionHandle);
                             result = StatusCodes::Failure;
+                        }
+                        else
+                        {
+                            _notificationsSent++;
                         }
                     }
                 }
@@ -1375,6 +1431,7 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
             //  A long write the client did not finish before it went is not delivered.
             //
             DiscardPreparedWrite();
+            ResetClientConfigurations();
             /* start advertising again when missing the connect */
             ret = esp_ble_gap_start_advertising(GetInstance()->GetAdvertisingParameters());
             if (ret)

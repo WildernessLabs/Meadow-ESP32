@@ -345,6 +345,39 @@ TEST_CASE("The client configuration descriptor takes the handle after the charac
     TEST_ASSERT_EQUAL_UINT16(0x2d, characteristics[1]->GetValue().Handle);
 }
 
+TEST_CASE("A client configuration enables notifications only when bit 0 is set", CLASS_OF_TESTS)
+{
+    TEST_ASSERT_FALSE_MESSAGE(BluetoothManager::ClientConfigurationEnablesNotifications(0x0000), "Notifications are enabled with nothing set.");
+    TEST_ASSERT_TRUE_MESSAGE(BluetoothManager::ClientConfigurationEnablesNotifications(0x0001), "Notifications are not enabled by bit 0.");
+    TEST_ASSERT_FALSE_MESSAGE(BluetoothManager::ClientConfigurationEnablesNotifications(0x0002), "Indications alone enable notifications.");
+    TEST_ASSERT_TRUE_MESSAGE(BluetoothManager::ClientConfigurationEnablesNotifications(0x0003), "Notifications and indications together do not enable notifications.");
+}
+
+TEST_CASE("The client configuration handle is found from the characteristic's value handle", CLASS_OF_TESTS)
+{
+    BluetoothManager manager;
+    const std::string json =
+        "{\"deviceName\":\"MeadowTest\",\"services\":[{\"name\":\"S\",\"uuid\":254,\"characteristics\":[" + PropertiesCharacteristicJson(PROPERTIES_NOTIFY, "") + "," + PropertiesCharacteristicJson(PROPERTIES_READ_WRITE, "") + "," + PropertiesCharacteristicJson(PROPERTIES_NOTIFY, "") + "]}]}";
+    TEST_ASSERT_TRUE(manager.BuildGraphFromJson(json.c_str()));
+    //
+    //  Service; declaration, value and descriptor of the first characteristic; declaration
+    //  and value of the second; declaration, value and descriptor of the third.
+    //
+    const uint16_t handles[] = {0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f, 0x30};
+    TEST_ASSERT_TRUE(manager.SetHandles(handles, sizeof(handles) / sizeof(handles[0])));
+
+    TEST_ASSERT_EQUAL_UINT16_MESSAGE(0x2b, manager.GetClientConfigurationHandle(0x2a), "The first characteristic's descriptor was not found.");
+    TEST_ASSERT_EQUAL_UINT16_MESSAGE(0x30, manager.GetClientConfigurationHandle(0x2f), "The third characteristic's descriptor was not found.");
+    TEST_ASSERT_EQUAL_UINT16_MESSAGE(0, manager.GetClientConfigurationHandle(0x2d), "A characteristic that does not notify has a descriptor.");
+    TEST_ASSERT_EQUAL_UINT16_MESSAGE(0, manager.GetClientConfigurationHandle(0x2b), "The descriptor's own handle was taken for a value.");
+    TEST_ASSERT_EQUAL_UINT16_MESSAGE(0, manager.GetClientConfigurationHandle(0x1234), "An unknown handle has a descriptor.");
+
+    const std::vector<uint16_t> all = manager.GetClientConfigurationHandles();
+    TEST_ASSERT_EQUAL_UINT32(2, all.size());
+    TEST_ASSERT_EQUAL_UINT16(0x2b, all[0]);
+    TEST_ASSERT_EQUAL_UINT16(0x30, all[1]);
+}
+
 /**
  * @brief A characteristics or descriptors key that is present but not an array refuses the configuration.
  */

@@ -253,4 +253,34 @@ const char *meadow_write_json = R"({
     ]
 })";
 
+//
+//  A notifying characteristic that declares no client configuration descriptor, which the
+//  firmware adds, and a characteristic the client writes to say it has finished a step, for
+//  the subscription test (issue #572).
+//
+const char *meadow_subscription_json = R"({
+    "deviceName":"MeadowSubscribe",
+    "companyIdentifier":741,
+    "services": [
+        {
+            "name":"SubscriptionService",
+            "uuid":251,
+            "characteristics": [
+                {
+                    "uuid":"01be99d6-8a61-11eb-8dcd-0242ac1300ee",
+                    "permission":17,
+                    "props":18,
+                    "len":4
+                },
+                {
+                    "uuid":"01ce99d6-8a61-11eb-8dcd-0242ac1300ff",
+                    "permission":17,
+                    "props":8,
+                    "len":4
+                }
+            ]
+        }
+    ]
+})";
+
 #endif // _TEST_BLUETOOTH_SERVICE_JSON_HPP_

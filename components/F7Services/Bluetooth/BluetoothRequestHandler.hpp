@@ -145,6 +145,11 @@ private:
     static bool _advertisingDataConfigured;
 
     /**
+     * @brief Notifications sent to a client, counted for NotificationsSent.
+     */
+    static std::atomic<uint32_t> _notificationsSent;
+
+    /**
      * @brief UUID of the configured service, as advertised.
      *
      *  Bluedroid takes each advertised UUID as a full 128-bit value and shortens it to 16
@@ -287,6 +292,11 @@ private:
     static void DiscardPreparedWrite();
 
     /**
+     * @brief Set every client configuration back to 0, no notifications or indications.
+     */
+    static void ResetClientConfigurations();
+
+    /**
      * @brief Value being collected from prepared writes, or nullptr if none is in progress.
      */
     static uint8_t *_preparedWriteValue;
@@ -327,6 +337,28 @@ public:
     virtual ~BluetoothRequestHandler() override;
 
     static BluetoothManager _manager;
+
+    /**
+     * @brief Has the connected client enabled notifications for the characteristic with this value handle?
+     *
+     *  Read back from the stack, which holds the value the client wrote to the
+     *  characteristic's Client Characteristic Configuration descriptor (issue #572).
+     *
+     * @param valueHandle Handle of the characteristic's value.
+     *
+     * @return true if the client set the notification bit.
+     */
+    static bool NotificationsEnabled(const uint16_t valueHandle);
+
+    /**
+     * @brief Number of notifications sent to a client since the board started.
+     *
+     * @return The count.
+     */
+    static uint32_t NotificationsSent()
+    {
+        return (_notificationsSent.load());
+    }
 
     /**
      * @brief This instance (used to ensure only one instance is created).
