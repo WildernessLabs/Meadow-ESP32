@@ -1031,16 +1031,24 @@ void SpiTransportProvider::Task(void *pvParameters)
 }
 
 /**
- *  @brief Task to send synchronisation pulses to the STM32.
+ *  @brief Task to send control signals to the STM32.
  *
  *  There can sometimes be a problem with the synchronisation between the ESP32 and the
  *  STM32.  This arises due to the real-time nature of the startup process.  So the signal
- *  the STM32 indicating the readiness of the ESP32 may be missed as the interrupt
- *  handler on the STM32 is not set up when the ESP32 sends the "Message waiting"
- *  signal to the STM32.
+ *  to the STM32 indicating the readiness of the ESP32 may be missed as the interrupt
+ *  handler on the STM32 is not set up when the ESP32 sends it.
  *
- *  To overcome this, this task will send the message waiting signal to the STM32 every 500ms.
- *  The binary synchronisation semaphore indicates if the request has been made or not.
+ *  To overcome this, the task sends the current control signal ("+++RDY" at first) every
+ *  GetControlSignalDelay() ticks, 2 seconds, until the SPI interface is ready, so an STM32
+ *  that missed one sees the next.  The task waits that long on the binary synchronisation
+ *  semaphore.  The semaphore is a wake up and not a lock: SpiPostSetupCallback gives it
+ *  when the SPI interface has been set up for a transaction.  The first time, the callback
+ *  also changes the signal to "+++SIR" and the delay to portMAX_DELAY, so from then on the
+ *  signal is sent only when the semaphore is given.
+ *
+ *  The signal is sent whether the take succeeded or timed out, so the result is not what
+ *  decides it.  A timeout is the periodic resend, and skipping the send on one would stop
+ *  the resend that this task exists for (issue #323).  It is only traced.
  *
  *  Note that this method is static in order to allow the C methods in
  *  FreeRTOS to call the method.
@@ -1057,7 +1065,8 @@ void SpiTransportProvider::SynchronisationTask(void *pvParameters)
     //
     while (true)
     {
-        xSemaphoreTake(sender->_synchronisationSemaphore, sender->GetControlSignalDelay());
+        const bool signalled = (xSemaphoreTake(sender->_synchronisationSemaphore, sender->GetControlSignalDelay()) == pdTRUE);
+        TRACE_MESSAGE("SynchronisationTask: %s", signalled ? "given by the post setup callback" : "timed out, sending the signal again");
         sender->SendControlMessageToStm32(sender->GetControlSignalMessage());
     }
 }

@@ -447,3 +447,32 @@ TEST_CASE("Each packet of an outbound message is transmitted as EncodeMessage en
     TestSpiTransportProvider::ResetState();
     Message::DeleteMessage(message);
 }
+
+/**
+ * @brief Check how often the synchronisation task repeats the control signal it is sending.
+ *
+ *  SynchronisationTask sends the control signal whether its semaphore take succeeded or
+ *  timed out (issue #323).  A timeout is the periodic resend that lets an STM32 that missed
+ *  the first "+++RDY" see the next, so while the signal is Ready it is resent every two
+ *  seconds.  SpiPostSetupCallback changes it to SpiInterfaceReady, and the delay to
+ *  portMAX_DELAY, when the SPI interface is first set up, after which it is sent only when
+ *  the semaphore is given.  Which of the two the shared provider is in depends on whether
+ *  the board has had any SPI traffic, so either pair is accepted.  Changing the delay of
+ *  either would change what the STM32 sees at start up.
+ */
+TEST_CASE("The control signal is resent every two seconds until the SPI interface is ready", CLASS_OF_TESTS)
+{
+    SpiTransportProvider *provider = EnsureProvider();
+    const TransportProviderBase::ControlMessageType signal = provider->GetControlSignalMessage();
+    const TickType_t delay = provider->GetControlSignalDelay();
+
+    if (signal == TransportProviderBase::ControlMessageType::Ready)
+    {
+        TEST_ASSERT_EQUAL_UINT32_MESSAGE(pdMS_TO_TICKS(2000), delay, "The Ready signal is not resent every two seconds.");
+    }
+    else
+    {
+        TEST_ASSERT_EQUAL_MESSAGE(TransportProviderBase::ControlMessageType::SpiInterfaceReady, signal, "The control signal is neither Ready nor SpiInterfaceReady.");
+        TEST_ASSERT_EQUAL_UINT32_MESSAGE(portMAX_DELAY, delay, "The SpiInterfaceReady signal is not sent only when signalled.");
+    }
+}
