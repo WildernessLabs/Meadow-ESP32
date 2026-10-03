@@ -339,6 +339,39 @@ public:
     void SetCurrentValueForAttributeHandle(const uint16_t handle, const uint8_t * const pData, const uint16_t len);
 
     /**
+     * @brief Get the handle of the Client Characteristic Configuration descriptor of the characteristic whose value has this handle.
+     *
+     *  Every characteristic that notifies or indicates has one (issue #496).
+     *
+     * @param valueHandle Handle of the characteristic's value.
+     *
+     * @return Handle of the descriptor, or 0 if the handle is not a characteristic value or the characteristic has none.
+     */
+    uint16_t GetClientConfigurationHandle(const uint16_t valueHandle);
+
+    /**
+     * @brief Get the handles of every Client Characteristic Configuration descriptor in the graph.
+     *
+     * @return The handles, in the order the characteristics were configured.
+     */
+    std::vector<uint16_t> GetClientConfigurationHandles();
+
+    /**
+     * @brief Does this Client Characteristic Configuration value ask for notifications?
+     *
+     *  Bit 0 enables notifications and bit 1 indications.  A server sends a notification
+     *  only to a client that has set bit 0 (issue #572).
+     *
+     * @param configuration The two byte value a client wrote, as a little endian number.
+     *
+     * @return true if bit 0 is set.
+     */
+    static bool ClientConfigurationEnablesNotifications(const uint16_t configuration)
+    {
+        return ((configuration & 0x0001) != 0);
+    }
+
+    /**
      * @brief Get the properties for the characteristic with the specified handle.
      */
     CharacteristicProperty GetCharacteristicProperties(const uint16_t handle);

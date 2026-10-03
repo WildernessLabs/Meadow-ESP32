@@ -1025,6 +1025,149 @@ TEST_CASE("A write without response and a long write reach the STM32 (MeadowWrit
 }
 
 /**
+ * @brief Number of handles the MeadowSubscribe service returns.
+ *
+ *  The service, the declaration, value and client configuration descriptor of the notifying
+ *  characteristic, and the declaration and value of the characteristic the client writes to
+ *  say it has finished a step.
+ */
+#define SUBSCRIPTION_HANDLE_COUNT 6
+
+/**
+ * @brief Indexes, among the MeadowSubscribe handles, of the notifying value and the step value.
+ */
+#define SUBSCRIPTION_NOTIFY_VALUE_INDEX 2
+#define SUBSCRIPTION_STEP_VALUE_INDEX 5
+
+/**
+ * @brief Number of steps the subscription client works through.
+ */
+#define SUBSCRIPTION_STEPS 4
+
+/**
+ * @brief Wait for the client to write the number of the step it has finished.
+ *
+ * @param dispatcher Dispatcher whose outbound queue is being read.
+ * @param stepHandle Handle the client writes the step number to.
+ * @param step Number of the step expected.
+ */
+static void WaitForSubscriptionStep(MockMessageDispatcher *dispatcher, const uint16_t stepHandle, const uint32_t step)
+{
+    WaitForOutboundMessage(dispatcher, CLIENT_CONNECTION_TIMEOUT);
+    Message *event = dispatcher->GetOutboundMessage();
+    TEST_ASSERT_NOT_NULL_MESSAGE(event, "The client did not report its step.");
+    uint16_t handle = 0;
+    uint32_t value = 0;
+    ExtractClientWrite(event, handle, value);
+    TEST_ASSERT_EQUAL_UINT16(stepHandle, handle);
+    TEST_ASSERT_EQUAL_UINT32(step, value);
+}
+
+/**
+ * @brief Set the value of the notifying characteristic, wait for the response and check whether a notification was sent.
+ *
+ *  A client that has not subscribed never shows that a notification was sent to it, because
+ *  CoreBluetooth drops one for a characteristic it is not subscribed to.  So the firmware's
+ *  own count of notifications sent is checked, along with the client configuration the
+ *  stack holds.
+ *
+ * @param dispatcher Dispatcher whose outbound queue is being read.
+ * @param valueHandle Handle of the notifying characteristic's value.
+ * @param value Value to set.
+ * @param subscribed Whether the client is subscribed, so whether a notification must be sent.
+ */
+static void SetSubscriptionValue(MockMessageDispatcher *dispatcher, const uint16_t valueHandle, const uint32_t value, const bool subscribed)
+{
+    const uint32_t sentBefore = BluetoothRequestHandler::NotificationsSent();
+    TEST_ASSERT_EQUAL_MESSAGE(subscribed, BluetoothRequestHandler::NotificationsEnabled(valueHandle), subscribed ? "The client subscribed but its client configuration does not say so." : "The client configuration says the client is subscribed when it is not.");
+
+    QueueServerDataSet(dispatcher, valueHandle, value);
+    WaitForOutboundMessage(dispatcher, CLIENT_CONNECTION_TIMEOUT);
+    Message *response = dispatcher->GetOutboundMessage();
+    TEST_ASSERT_NOT_NULL_MESSAGE(response, "No response to the write.");
+    ASSERT_RESPONSE(response, Esp32Interfaces::BlueTooth, BluetoothFunction::ServerDataSet, StatusCodes::CompletedOk);
+    ASSERT_NO_PAYLOAD(response);
+    Message::DeleteMessage(response);
+
+    TEST_ASSERT_EQUAL_UINT32_MESSAGE(sentBefore + (subscribed ? 1 : 0), BluetoothRequestHandler::NotificationsSent(), subscribed ? "No notification was sent to a subscribed client." : "A notification was sent to a client that is not subscribed.");
+}
+
+/**
+ * @brief Wait for the client to disconnect.
+ *
+ * @param dispatcher Dispatcher whose outbound queue is being read.
+ */
+static void WaitForClientDisconnection(MockMessageDispatcher *dispatcher)
+{
+    WaitForOutboundMessage(dispatcher, CLIENT_CONNECTION_TIMEOUT);
+    Message *event = dispatcher->GetOutboundMessage();
+    TEST_ASSERT_NOT_NULL_MESSAGE(event, "The client did not disconnect.");
+    ASSERT_EVENT(event, Esp32Interfaces::BlueTooth, BluetoothFunction::ClientDisconnectedEvent, StatusCodes::CompletedOk);
+    Message::DeleteMessage(event);
+}
+
+/**
+ * @brief Check that a value is notified only to a client that has subscribed (issue #572).
+ *
+ *  SubscriptionClient.py is the client.  It tells the firmware each time it has finished a
+ *  step by writing the step number, and the firmware then sets the notifying
+ *  characteristic's value to the step number repeated in every nibble (0x11111111, 0x22222222
+ *  and so on):
+ *
+ *      1. Not subscribed.  No notification, but the value can be read.
+ *      2. Subscribed.  The notification arrives.
+ *      3. Unsubscribed again.  No notification, and the value can be read.
+ *      4. The client subscribes and disconnects without unsubscribing, then connects again
+ *         and does not subscribe.  No notification: a new connection starts unsubscribed.
+ *
+ *  The reconnection is waited for without the prompt WaitForClientConnection prints, because
+ *  TestRunner starts a client every time it sees that prompt.
+ */
+TEST_CASE("Notifications are sent only to a client that has subscribed (MeadowSubscribe, Espressif)", CLASS_OF_TESTS)
+{
+    printf("Starting Bluetooth service for MeadowSubscribe, Company ID Espressif (0x02e5)\n");
+
+    MockMessageDispatcher *dispatcher = SetupMessageDispatcher();
+    TEST_ASSERT_NOT_NULL(dispatcher);
+
+    StartBluetoothService(dispatcher, meadow_subscription_json);
+
+    uint16_t handles[SUBSCRIPTION_HANDLE_COUNT];
+    GetServiceHandles(dispatcher, SUBSCRIPTION_HANDLE_COUNT, handles);
+    const uint16_t valueHandle = handles[SUBSCRIPTION_NOTIFY_VALUE_INDEX];
+    const uint16_t stepHandle = handles[SUBSCRIPTION_STEP_VALUE_INDEX];
+
+    WaitForClientConnection(dispatcher);
+
+    //
+    //  Only step 2 has the client subscribed.
+    //
+    for (uint32_t step = 1; step <= 3; step++)
+    {
+        WaitForSubscriptionStep(dispatcher, stepHandle, step);
+        SetSubscriptionValue(dispatcher, valueHandle, step * 0x11111111, step == 2);
+    }
+
+    WaitForClientDisconnection(dispatcher);
+    printf("Waiting for the client to connect again.\n");
+    WaitForOutboundMessage(dispatcher, CLIENT_CONNECTION_TIMEOUT);
+    Message *connected = dispatcher->GetOutboundMessage();
+    TEST_ASSERT_NOT_NULL_MESSAGE(connected, "The client did not connect again.");
+    ASSERT_EVENT(connected, Esp32Interfaces::BlueTooth, BluetoothFunction::ClientConnectedEvent, StatusCodes::CompletedOk);
+    Message::DeleteMessage(connected);
+
+    WaitForSubscriptionStep(dispatcher, stepHandle, SUBSCRIPTION_STEPS);
+    SetSubscriptionValue(dispatcher, valueHandle, SUBSCRIPTION_STEPS * 0x11111111, false);
+
+    WaitForClientDisconnection(dispatcher);
+    ASSERT_OUTBOUND_QUEUE_LENGTH(dispatcher, 0);
+
+    StopBluetoothService(dispatcher);
+
+    ResetMessageDispatcher();
+}
+
+/**
  * @brief Soak test the notification path: the device notifies a number, the client
  *        writes it back, and the device notifies the next one.
  *

@@ -345,6 +345,64 @@ bool BluetoothManager::IsCharacteristicValueHandle(const uint16_t handle)
 }
 
 /**
+ * @brief Get the handle of the Client Characteristic Configuration descriptor of the characteristic whose value has this handle.
+ *
+ * @param valueHandle Handle of the characteristic's value.
+ *
+ * @return Handle of the descriptor, or 0 if the handle is not a characteristic value or the characteristic has none.
+ */
+uint16_t BluetoothManager::GetClientConfigurationHandle(const uint16_t valueHandle)
+{
+    RecursiveMutexLock lock(_graphMutex);
+
+    uint16_t result = 0;
+    for (const auto &service: Services.GetServiceDefinitions())
+    {
+        for (const auto &characteristic: service->GetCharacteristicDefinitions())
+        {
+            if (characteristic->GetValue().Handle != valueHandle)
+            {
+                continue;
+            }
+            for (const auto &descriptor: characteristic->GetDescriptorDefinitions())
+            {
+                if (!descriptor->Is128() && (static_cast<uint16_t>(descriptor->uuid16) == CLIENT_CHARACTERISTIC_CONFIGURATION_UUID))
+                {
+                    result = descriptor->Handle;
+                }
+            }
+        }
+    }
+    return (result);
+}
+
+/**
+ * @brief Get the handles of every Client Characteristic Configuration descriptor in the graph.
+ *
+ * @return The handles, in the order the characteristics were configured.
+ */
+std::vector<uint16_t> BluetoothManager::GetClientConfigurationHandles()
+{
+    RecursiveMutexLock lock(_graphMutex);
+
+    std::vector<uint16_t> result;
+    for (const auto &service: Services.GetServiceDefinitions())
+    {
+        for (const auto &characteristic: service->GetCharacteristicDefinitions())
+        {
+            for (const auto &descriptor: characteristic->GetDescriptorDefinitions())
+            {
+                if (!descriptor->Is128() && (static_cast<uint16_t>(descriptor->uuid16) == CLIENT_CHARACTERISTIC_CONFIGURATION_UUID))
+                {
+                    result.push_back(descriptor->Handle);
+                }
+            }
+        }
+    }
+    return (result);
+}
+
+/**
  * @brief Get the current value for a attribute with the specified handle.
  *
  * @param handle Handle to look up.
