@@ -147,6 +147,28 @@ std::string Utils::Ipv4AddressToString(const uint32_t address)
 }
 
 /**
+ * @brief Make a copy of a string on the FreeRTOS heap.
+ *
+ * @param value String to copy; nullptr gives nullptr.
+ * @return Pointer to the copy, or nullptr if value is nullptr or memory ran out.
+ */
+char *Utils::DuplicateString(const char *value)
+{
+    if (value == nullptr)
+    {
+        return (nullptr);
+    }
+
+    const size_t length = strlen(value) + 1;
+    char *result = static_cast<char *>(pvPortMalloc(length));
+    if (result != nullptr)
+    {
+        memcpy(result, value, length);
+    }
+    return (result);
+}
+
+/**
  * @brief Log that a FreeRTOS object could not be created, and stop.
  *
  * @param what Description of the object that could not be created.

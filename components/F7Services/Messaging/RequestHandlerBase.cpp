@@ -230,24 +230,23 @@ void RequestHandlerBase::SendIntegerResult(const uint8_t interface, const uint32
 {
     TRACE_MESSAGE("SendIntegerResult - Enter");
 
-    Esp32Messaging::IntegerResponse *response = new Esp32Messaging::IntegerResponse();
+    //
+    //  Only encoded from, so it is kept on the stack.  It used to be made with new and
+    //  released with Utils::DeleteAndNullifyPointer, which frees with vPortFree (issue #163).
+    //
+    Esp32Messaging::IntegerResponse response = {};
+    response.Result = value;
+    const uint32_t payloadLength = Encoders::EncodedIntegerResponseBufferSize(&response);
+    uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
 
-    if (response != nullptr)
+    if (payload != nullptr)
     {
-        response->Result = value;
-        uint32_t payloadLength = Encoders::EncodedIntegerResponseBufferSize(response);
-        uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
-
-        if (payload != nullptr)
-        {
-            Encoders::EncodeIntegerResponse(response, payload);
-            RaiseEvent(interface, function, statusCode, payload, payloadLength);
-        }
-        Utils::DeleteAndNullifyPointer(response);
+        Encoders::EncodeIntegerResponse(&response, payload);
+        RaiseEvent(interface, function, statusCode, payload, payloadLength);
     }
     else
     {
-        TRACE_MESSAGE("Failed to allocate memory for IntegerResponse");
+        TRACE_MESSAGE("Failed to allocate memory for the IntegerResponse payload");
     }
 
     TRACE_MESSAGE("SendIntegerResult - Exit");

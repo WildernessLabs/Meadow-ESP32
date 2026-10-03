@@ -67,6 +67,23 @@ MockMessageDispatcher *SetupMessageDispatcher(void);
 void ResetMessageDispatcher(void);
 
 /**
+ * @brief Take every block of heap that can still be allocated, so the next allocation fails.
+ *
+ *  The blocks are chained through their own first bytes, so holding them needs no memory
+ *  of its own.  Nothing that might allocate should run until ReleaseHeap is called.
+ *
+ * @return Head of the chain of blocks taken, for ReleaseHeap.
+ */
+void *ExhaustHeap(void);
+
+/**
+ * @brief Give back every block taken by ExhaustHeap.
+ *
+ * @param chain Head of the chain returned by ExhaustHeap.
+ */
+void ReleaseHeap(void *chain);
+
+/**
  * @brief Wait for a message to arrive in the outbound queue, or for a timeout.
  *
  * @note This method allows for a request to take a time to respond.

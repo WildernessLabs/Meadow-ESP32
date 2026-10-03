@@ -390,11 +390,6 @@ private:
     static char *_defaultAccessPoint;
 
     /**
-     *  @brief Name of the storage in NVS holding the default access point.
-     */
-    static const char *DEFAULT_ACCESS_POINT_NAME;
-
-    /**
      *  @brief Password for the access point.
      */
     static char *_password;
@@ -407,11 +402,6 @@ private:
      *  apart.  Created on first use so the setters and getters are safe whenever they run.
      */
     static SemaphoreHandle_t CredentialsMutex();
-
-    /**
-     *  @brief Name of the storage in NVS holding the password for the access point.
-     */
-    static const char *PASSWORD_NAME;
 
     /**
      *  @brief List of valid country codes.
@@ -1174,6 +1164,16 @@ public:
      *  @brief Name of the component / task for the WiFi system.
      */
     static const char *COMPONENT_NAME;
+
+    /**
+     *  @brief Name of the storage in NVS holding the default access point.
+     */
+    static const char *DEFAULT_ACCESS_POINT_NAME;
+
+    /**
+     *  @brief Name of the storage in NVS holding the password for the access point.
+     */
+    static const char *PASSWORD_NAME;
 
     /**
      *  @brief Constructor for the WiFi object.

@@ -85,34 +85,6 @@ const char *SystemRequestHandler::DEVICE_NAME_NAME = "DeviceName";
  */
 static const char *DEVICE_NAME_DEFAULT_VALUE = "MeadowF7";
 
-/**
- *  @brief Make a copy of a string on the heap.
- *
- *  The copy is allocated with pvPortMalloc so that it can be released with
- *  Utils::DeleteAndNullifyPointer, matching the storage returned by NvsManager.
- *
- *  @param value
- *      String to be copied.
- *
- *  @returns
- *      Pointer to the copy of the string, nullptr if the copy could not be made.
- */
-static char *DuplicateString(const char *value)
-{
-    if (value == nullptr)
-    {
-        return (nullptr);
-    }
-
-    const size_t length = strlen(value) + 1;
-    char *result = static_cast<char *>(pvPortMalloc(length));
-    if (result != nullptr)
-    {
-        memcpy(result, value, length);
-    }
-    return (result);
-}
-
 /*
  * ----------------------------------------------------------------------------
  *
@@ -338,7 +310,7 @@ StatusCodes::StatusCodes SystemRequestHandler::SetDeviceName(char *value)
         //  Copied before NVS is written: if memory runs out, neither NVS nor the name held
         //  here changes, so the two cannot disagree.
         //
-        char *copy = DuplicateString(value);
+        char *copy = Utils::DuplicateString(value);
         if (copy == nullptr)
         {
             result = StatusCodes::EspOutOfMemory;

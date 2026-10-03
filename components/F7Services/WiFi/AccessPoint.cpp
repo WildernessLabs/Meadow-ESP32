@@ -320,8 +320,10 @@ void WiFiRequestHandler::AccessPointStartedEvent()
         }
     }
 
-    Message *message = Message::CreateOnHeap(MessageTypes::Event, Esp32Interfaces::WiFi, WiFiFunction::AccessPointStartedEvent, result, _messageDispatcher->GetNextMessageID(), payload, payloadLength);
-    _messageDispatcher->QueueMessageForStm32(message);
+    //
+    //  RaiseEvent checks the message was made and releases the payload if it was not (issue #388).
+    //
+    RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::AccessPointStartedEvent, result, payload, payloadLength);
 
     xEventGroupSetBits(_xWiFiEventGroup, WIFI_ACCESS_POINT_STARTED_BIT);
 
@@ -339,8 +341,7 @@ void WiFiRequestHandler::AccessPointStoppedEvent()
     _connectedNodes.clear();
     UnlockConnectedNodesMap();
 
-    Message *message = Message::CreateOnHeap(MessageTypes::Event, Esp32Interfaces::WiFi, WiFiFunction::AccessPointStoppedEvent, StatusCodes::CompletedOk, _messageDispatcher->GetNextMessageID(), nullptr, 0);
-    _messageDispatcher->QueueMessageForStm32(message);
+    RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::AccessPointStoppedEvent, StatusCodes::CompletedOk);
 
     xEventGroupClearBits(_xWiFiEventGroup, WIFI_ACCESS_POINT_STARTED_BIT);
 
@@ -363,8 +364,11 @@ void WiFiRequestHandler::RaiseNodeConnectionChangeEvent(WiFiFunction::WiFiFuncti
     if (payload)
     {
         Encoders::EncodeNodeConnectionChangeEventData(data, payload);
-        Message *message = Message::CreateOnHeap(MessageTypes::Event, Esp32Interfaces::WiFi, event_type, StatusCodes::CompletedOk, _messageDispatcher->GetNextMessageID(), payload, payloadLength);
-        _messageDispatcher->QueueMessageForStm32(message);
+        RaiseEvent(Esp32Interfaces::WiFi, event_type, StatusCodes::CompletedOk, payload, payloadLength);
+    }
+    else
+    {
+        ERROR_MESSAGE("Cannot allocate the payload for event %s", Logging::FunctionName(Esp32Interfaces::WiFi, event_type));
     }
 }
 
@@ -398,8 +402,7 @@ void WiFiRequestHandler::NodeConnectedEvent(ip_event_ap_staipassigned_t *eventDa
 
     if (_connectedNodes.size() >= ESP_WIFI_MAX_CONN_NUM)
     {
-        Message *maxConnMessage = Message::CreateOnHeap(MessageTypes::Event, Esp32Interfaces::WiFi, WiFiFunction::MaximumConnectionsReachedEvent, StatusCodes::CompletedOk, _messageDispatcher->GetNextMessageID(), nullptr, 0);
-        _messageDispatcher->QueueMessageForStm32(maxConnMessage);
+        RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::MaximumConnectionsReachedEvent, StatusCodes::CompletedOk);
     }
 
     UnlockConnectedNodesMap();
