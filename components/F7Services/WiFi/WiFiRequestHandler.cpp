@@ -1770,7 +1770,30 @@ StatusCodes::StatusCodes WiFiRequestHandler::PrepareForDeepSleep()
 }
 
 /**
+ *  @brief Destroy the station and soft access point network interfaces, if there are any.
+ *
+ *  esp_netif_create_default_wifi_sta() and esp_netif_create_default_wifi_ap() are called every
+ *  time the interface starts, and the interface they make outlives the WiFi driver.  Without
+ *  this each stop and start leaked one, with its DHCP client state, and a second one with the
+ *  same key is refused (issue #292).  esp_netif_destroy_default_wifi() does nothing for a
+ *  nullptr, so it is safe to call when only one of them was made.
+ */
+void WiFiRequestHandler::DestroyNetworkInterfaces()
+{
+    esp_netif_destroy_default_wifi(_stationNetIfHandle);
+    _stationNetIfHandle = nullptr;
+    esp_netif_destroy_default_wifi(_softApNetIfHandle);
+    _softApNetIfHandle = nullptr;
+}
+
+/**
  *  @brief Stop the WiFi adapter.
+ *
+ *  The network interfaces made when the adapter started are destroyed, so the next start can
+ *  make them again.  esp_netif_init() and the default event loop are left as they are on
+ *  purpose: esp_netif_init() does nothing the second time, and the default event loop has
+ *  no owner but the application, so it is created once and StartWiFiInterface() accepts one
+ *  that exists (issue #292).
  */
 StatusCodes::StatusCodes WiFiRequestHandler::StopWiFIAdapter()
 {
@@ -1806,6 +1829,11 @@ StatusCodes::StatusCodes WiFiRequestHandler::StopWiFIAdapter()
     if (result == ESP_OK)
     {
         result = esp_wifi_deinit();
+    }
+
+    if (result == ESP_OK)
+    {
+        DestroyNetworkInterfaces();
     }
 
     if (result != ESP_OK)
@@ -2264,12 +2292,23 @@ esp_err_t WiFiRequestHandler::StartWiFiInterface(const wifi_mode_t mode, const E
         if (result == ESP_OK)
         {
             result = esp_event_loop_create_default();
+            //
+            //  The default event loop is made once and kept, so a restart finds it there
+            //  (issue #292).  That is not a failure.
+            //
+            if (result == ESP_ERR_INVALID_STATE)
+            {
+                result = ESP_OK;
+            }
         }
 
         if (result == ESP_OK)
         {
-            _stationNetIfHandle = nullptr;
-            _softApNetIfHandle = nullptr;
+            //
+            //  A start that failed part way leaves interfaces made, and a second one with the
+            //  same key is refused, so clear any out first.
+            //
+            DestroyNetworkInterfaces();
             if ((mode == WIFI_MODE_STA) || (mode == WIFI_MODE_APSTA))
             {
                 _stationNetIfHandle = esp_netif_create_default_wifi_sta();
@@ -2590,7 +2629,11 @@ void WiFiRequestHandler::StationStoppedEvent()
 {
     TRACE_MESSAGE("StationStoppedEvent: Enter");
 
-    _stationNetIfHandle = nullptr;
+    //
+    //  The station network interface is not destroyed by the driver stopping, so its handle is
+    //  kept for StopWiFIAdapter() to destroy.  This used to set it to nullptr, which left the
+    //  interface made and never destroyed (issue #292).
+    //
     xEventGroupClearBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTED_BIT | WIFI_INTERFACE_STARTING_BIT);
 
     TRACE_MESSAGE("StationStoppedEvent: Exit");

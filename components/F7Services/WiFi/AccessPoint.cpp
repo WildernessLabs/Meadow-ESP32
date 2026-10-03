@@ -263,7 +263,14 @@ void WiFiRequestHandler::StopAccessPoint(Message *message)
                 result = StatusCodes::Failure;
             }
 
-            _softApNetIfHandle = nullptr;
+            //
+            //  The access point network interface is kept, not destroyed and not set to nullptr
+            //  (issue #292).  Clearing the access point configuration above restarts the access
+            //  point, so an AccessPointStartedEvent can still be on its way, and it reads the
+            //  interface; destroying it here let that event use freed memory.  Starting the
+            //  access point again reuses the interface held, and StopWiFIAdapter() destroys it
+            //  with the station one, after the event handlers are unregistered.
+            //
         }
     }
 

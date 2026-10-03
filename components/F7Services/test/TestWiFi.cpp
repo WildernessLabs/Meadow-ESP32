@@ -23,6 +23,7 @@
 #include <string>
 #include <string.h>
 #include "unity.h"
+#include "esp_system.h"
 #include "mbedtls/md.h"
 #include "mbedtls/pkcs5.h"
 
@@ -155,6 +156,57 @@ static void TestScanForAccessPoints(unsigned numberOfScans = 1)
 TEST_CASE("Scan for access points", CLASS_OF_TESTS)
 {
     TestScanForAccessPoints();
+}
+
+/**
+ * @brief Number of times the interface is started and fully stopped in one boot.
+ */
+#define RESTART_CYCLES 3
+
+/**
+ * @brief Bytes the free heap may fall by over the restart cycles, for bookkeeping that is not a leak.
+ *
+ *  A network interface and its DHCP client state held a leak of more than this on every cycle.
+ */
+#define RESTART_HEAP_ALLOWANCE 2048
+
+/**
+ * @brief Start the WiFi interface with a scan, then stop it completely, several times in one boot.
+ *
+ *  A scan starts the interface and a disconnect that turns the interface off stops it.  The
+ *  second start used to abort the board, because the default event loop made by the first
+ *  already existed (issue #524), and then because the first network interface had never been
+ *  destroyed, so making another with the same key was refused (issue #292).
+ *
+ *  The heap is measured after the first cycle, which makes the one-off allocations, and again
+ *  after the rest, so a network interface left behind by each stop shows.
+ */
+TEST_CASE("The WiFi interface starts again after a full stop, repeatedly in one boot", CLASS_OF_TESTS)
+{
+    MockMessageDispatcher *dispatcher = SetupWiFiDispatcher();
+
+    uint32_t heapAfterFirstCycle = 0;
+    for (unsigned cycle = 0; cycle < RESTART_CYCLES; cycle++)
+    {
+        EnsureWiFiInterfaceStopped(dispatcher);
+
+        QueueWiFiRequest(dispatcher, WiFiFunction::GetAccessPoints);
+        Message *response = WaitForResponseTo(dispatcher, Esp32Interfaces::WiFi, WiFiFunction::GetAccessPoints, RadioTimeout());
+        TEST_ASSERT_NOT_NULL_MESSAGE(response, "No response to the scan request after the interface was started again.");
+        ASSERT_RESPONSE(response, Esp32Interfaces::WiFi, WiFiFunction::GetAccessPoints, StatusCodes::CompletedOk);
+        Message::DeleteMessage(response);
+
+        EnsureWiFiInterfaceStopped(dispatcher);
+        if (cycle == 0)
+        {
+            heapAfterFirstCycle = esp_get_free_heap_size();
+        }
+        printf("Cycle %u: free heap %" PRIu32 " bytes.\n", cycle + 1, static_cast<uint32_t>(esp_get_free_heap_size()));
+    }
+
+    const uint32_t heapAfterLastCycle = esp_get_free_heap_size();
+    const uint32_t fall = (heapAfterFirstCycle > heapAfterLastCycle) ? (heapAfterFirstCycle - heapAfterLastCycle) : 0;
+    TEST_ASSERT_LESS_OR_EQUAL_UINT32_MESSAGE(RESTART_HEAP_ALLOWANCE, fall, "The free heap fell too far over the restarts, which suggests each stop leaves something behind.");
 }
 
 /**
