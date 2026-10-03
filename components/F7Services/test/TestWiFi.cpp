@@ -30,6 +30,7 @@
 #include "Esp32Messaging.hpp"
 #include "Encoders.hpp"
 #include "SharedEnums.hpp"
+#include "SystemRequestHandler.hpp"
 #include "WiFiRequestHandler.hpp"
 #include "Utils.hpp"
 
@@ -481,12 +482,28 @@ TEST_CASE("Connect to the default access point when none is configured", CLASS_O
     MockMessageDispatcher *dispatcher = SetupWiFiDispatcher();
 
     //
-    //  Copies, because clearing the settings below releases the stored strings.
+    //  The handler is made when the first WiFi request is queued, and it reads the access
+    //  point and password from NVS then.  Until it exists the stored strings are null, so
+    //  clearing them with the setters does nothing, and the handler would go on to load
+    //  whatever NVS holds.  The test then tried a real connection and got
+    //  CannotConnectToAccessPoint whenever NVS held an access point.  So the originals are
+    //  read from NVS, and the settings are cleared with the request the STM32 sends, which
+    //  makes the handler first and then clears what it loaded.
     //
-    const std::string originalAccessPoint = WiFiRequestHandler::GetDefaultAccessPoint();
-    const std::string originalPassword = WiFiRequestHandler::GetPassword();
-    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, WiFiRequestHandler::SetDefaultAccessPoint(nullptr));
-    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, WiFiRequestHandler::SetPassword(nullptr));
+    const char *storedAccessPoint = SystemRequestHandler::GetConfigurationValue(WiFiRequestHandler::DEFAULT_ACCESS_POINT_NAME, "");
+    const char *storedPassword = SystemRequestHandler::GetConfigurationValue(WiFiRequestHandler::PASSWORD_NAME, "");
+    TEST_ASSERT_NOT_NULL(storedAccessPoint);
+    TEST_ASSERT_NOT_NULL(storedPassword);
+    const std::string originalAccessPoint = storedAccessPoint;
+    const std::string originalPassword = storedPassword;
+    Utils::DeleteAndNullifyPointer(storedAccessPoint);
+    Utils::DeleteAndNullifyPointer(storedPassword);
+
+    QueueWiFiRequest(dispatcher, WiFiFunction::ClearDefaultAccessPoint);
+    Message *cleared = WaitForResponseTo(dispatcher, Esp32Interfaces::WiFi, WiFiFunction::ClearDefaultAccessPoint, RadioTimeout());
+    TEST_ASSERT_NOT_NULL_MESSAGE(cleared, "No response to the clear default access point request.");
+    ASSERT_RESPONSE(cleared, Esp32Interfaces::WiFi, WiFiFunction::ClearDefaultAccessPoint, StatusCodes::CompletedOk);
+    Message::DeleteMessage(cleared);
 
     QueueWiFiRequest(dispatcher, WiFiFunction::ConnectToDefaultAccessPoint);
 

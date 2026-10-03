@@ -352,18 +352,18 @@ WiFiRequestHandler::WiFiRequestHandler()
         char *storedAccessPoint = const_cast<char *>(SystemRequestHandler::GetConfigurationValue(DEFAULT_ACCESS_POINT_NAME, nullptr));
         if (storedAccessPoint != nullptr)
         {
-            if ((_defaultAccessPoint != nullptr) && (_defaultAccessPoint != WiFiRequestHandler::_emptyString))
+            if (_defaultAccessPoint != WiFiRequestHandler::_emptyString)
             {
-                free(_defaultAccessPoint);
+                Utils::DeleteAndNullifyPointer(_defaultAccessPoint);
             }
             _defaultAccessPoint = storedAccessPoint;
         }
         char *storedPassword = const_cast<char *>(SystemRequestHandler::GetConfigurationValue(PASSWORD_NAME, nullptr));
         if (storedPassword != nullptr)
         {
-            if ((_password != nullptr) && (_password != WiFiRequestHandler::_emptyString))
+            if (_password != WiFiRequestHandler::_emptyString)
             {
-                free(_password);
+                Utils::DeleteAndNullifyPointer(_password);
             }
             _password = storedPassword;
         }
@@ -621,8 +621,8 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetDefaultAccessPoint(const char *v
         //  Copied before NVS is written: if memory runs out, neither NVS nor the value held
         //  here changes, so the two cannot disagree.
         //
-        char *copy = strdup(value);
-        if (copy == NULL)
+        char *copy = Utils::DuplicateString(value);
+        if (copy == nullptr)
         {
             result = StatusCodes::EspOutOfMemory;
         }
@@ -635,14 +635,14 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetDefaultAccessPoint(const char *v
                 //
                 if (_defaultAccessPoint != WiFiRequestHandler::_emptyString)
                 {
-                    free(_defaultAccessPoint);
+                    Utils::DeleteAndNullifyPointer(_defaultAccessPoint);
                 }
                 _defaultAccessPoint = copy;
                 result = StatusCodes::CompletedOk;
             }
             else
             {
-                free(copy);
+                Utils::DeleteAndNullifyPointer(copy);
             }
         }
     }
@@ -700,8 +700,8 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetPassword(const char *value)
         //  Copied before NVS is written: if memory runs out, neither NVS nor the value held
         //  here changes, so the two cannot disagree.
         //
-        char *copy = strdup(value);
-        if (copy == NULL)
+        char *copy = Utils::DuplicateString(value);
+        if (copy == nullptr)
         {
             result = StatusCodes::EspOutOfMemory;
         }
@@ -714,14 +714,14 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetPassword(const char *value)
                 //
                 if (_password != WiFiRequestHandler::_emptyString)
                 {
-                    free(_password);
+                    Utils::DeleteAndNullifyPointer(_password);
                 }
                 _password = copy;
                 result = StatusCodes::CompletedOk;
             }
             else
             {
-                free(copy);
+                Utils::DeleteAndNullifyPointer(copy);
             }
         }
     }

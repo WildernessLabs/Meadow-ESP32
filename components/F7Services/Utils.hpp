@@ -11,6 +11,7 @@
 
 #include <stdint.h>
 #include <string>
+#include <type_traits>
 
 #include "freertos/FreeRTOS.h"
 
@@ -51,19 +52,35 @@ namespace Utils
      * reinterpret_cast<void **>(&pointer).  Writing nullptr through a void ** into a T * is
      * undefined behaviour under strict aliasing, and the cast accepted any address at all.
      *
-     * @note This releases with vPortFree, so it is only for storage from pvPortMalloc.
+     * @note This releases with vPortFree, so it is only for storage from pvPortMalloc, which includes
+     *       Utils::DuplicateString.  It must not be given memory from new, malloc or strdup, which
+     *       are released with delete, free and free.  They share a heap in this build, so a mismatch
+     *       corrupts nothing today, but the pairs are not interchangeable (issue #163).  Because it
+     *       does not run destructors, it also refuses at compile time a type that needs one.
      *
      * @tparam T Type the pointer points to; it may be const.
      * @param pointer Pointer to release, set to nullptr on return.  A nullptr is ignored.
      */
     template<typename T> void DeleteAndNullifyPointer(T *&pointer)
     {
+        static_assert(std::is_void_v<T> || std::is_trivially_destructible_v<T>, "DeleteAndNullifyPointer does not run destructors; use delete for an object made with new.");
         if (pointer != nullptr)
         {
             vPortFree(const_cast<void *>(static_cast<const void *>(pointer)));
             pointer = nullptr;
         }
     }
+
+    /**
+     * @brief Make a copy of a string on the FreeRTOS heap.
+     *
+     *  The copy is allocated with pvPortMalloc, so release it with DeleteAndNullifyPointer,
+     *  like the strings NvsManager returns.  strdup would be released with free instead.
+     *
+     * @param value String to copy; nullptr gives nullptr.
+     * @return Pointer to the copy, or nullptr if value is nullptr or memory ran out.
+     */
+    char *DuplicateString(const char *value);
 
     /**
      * @brief Reallocate memory using the ESP32's pvPortMalloc function.
