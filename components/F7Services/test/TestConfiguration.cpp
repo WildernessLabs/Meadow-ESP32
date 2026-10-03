@@ -1257,46 +1257,6 @@ TEST_CASE("Replacing the default access point and password releases what they he
 #define OUT_OF_MEMORY_VALUE "OutOfMemoryTest"
 
 /**
- * @brief Take every block of heap that can still be allocated, so the next allocation fails.
- *
- *  The blocks are chained through their own first bytes, so holding them needs no memory
- *  of its own.  Nothing that might allocate should run until ReleaseHeap is called, and
- *  that includes printing.
- *
- * @return Head of the chain of blocks taken, for ReleaseHeap.
- */
-static void *ExhaustHeap()
-{
-    void *chain = nullptr;
-    for (size_t size = 32768; size >= sizeof(void *); size /= 2)
-    {
-        void *block = pvPortMalloc(size);
-        while (block != nullptr)
-        {
-            *static_cast<void **>(block) = chain;
-            chain = block;
-            block = pvPortMalloc(size);
-        }
-    }
-    return (chain);
-}
-
-/**
- * @brief Give back every block taken by ExhaustHeap.
- *
- * @param chain Head of the chain returned by ExhaustHeap.
- */
-static void ReleaseHeap(void *chain)
-{
-    while (chain != nullptr)
-    {
-        void *next = *static_cast<void **>(chain);
-        vPortFree(chain);
-        chain = next;
-    }
-}
-
-/**
  * @brief SetDeviceName reports running out of memory, and leaves both the name it holds
  *        and the one in NVS as they were (issue #162).
  *

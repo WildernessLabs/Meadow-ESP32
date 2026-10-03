@@ -199,3 +199,43 @@ void DrainOutboundQueue(MockMessageDispatcher *dispatcher, const uint32_t settli
         WaitForResponse(dispatcher, settlingTime);
     }
 }
+
+/**
+ * @brief Take every block of heap that can still be allocated, so the next allocation fails.
+ *
+ *  The blocks are chained through their own first bytes, so holding them needs no memory
+ *  of its own.  Nothing that might allocate should run until ReleaseHeap is called, and
+ *  that includes printing.
+ *
+ * @return Head of the chain of blocks taken, for ReleaseHeap.
+ */
+void *ExhaustHeap(void)
+{
+    void *chain = nullptr;
+    for (size_t size = 32768; size >= sizeof(void *); size /= 2)
+    {
+        void *block = pvPortMalloc(size);
+        while (block != nullptr)
+        {
+            *static_cast<void **>(block) = chain;
+            chain = block;
+            block = pvPortMalloc(size);
+        }
+    }
+    return (chain);
+}
+
+/**
+ * @brief Give back every block taken by ExhaustHeap.
+ *
+ * @param chain Head of the chain returned by ExhaustHeap.
+ */
+void ReleaseHeap(void *chain)
+{
+    while (chain != nullptr)
+    {
+        void *next = *static_cast<void **>(chain);
+        vPortFree(chain);
+        chain = next;
+    }
+}
