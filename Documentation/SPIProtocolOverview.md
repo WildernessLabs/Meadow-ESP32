@@ -43,6 +43,7 @@ The lower part of the diagram shows the step markers used to reference the vario
 The ESP32 uses a UART to send control signals to the STM32.  These signals are simple text messages and each signal starts with *+++*.  The following signals are recognised by the STM32:
 
 * +++RST,*code*
+* +++RDY
 * +++MW
 * +++SIR
 * +++BSY
@@ -52,6 +53,10 @@ Each control signal must be on a new line and must be the only data on the line.
 #### +++RST,*code* - ESP32 Reset
 
 This signal indicates that the ESP32 has reset and the reason for the reset is indicated by *code*.
+
+#### +++RDY - ESP32 Ready
+
+The ESP32 has started.  The STM32's interrupt handler may not have been set up when the first one was sent, so the ESP32 sends it again every 2 seconds until the SPI interface is ready, when it starts sending *+++SIR* instead.  The STM32 only traces it.
 
 #### +++MW - Message Waiting
 
