@@ -2897,94 +2897,102 @@ void WiFiRequestHandler::Ioctl(void * const vpMessage)
         if (IsConnected())
         {
             Esp32Messaging::IoctlRequest *request = Encoders::ExtractIoctlRequest(message->Payload);
-
-            esp_netif_ip_info_t ipInfo;
-            Esp32Messaging::SockAddr sa = {};
-
-            Mapping::GetStmValue(Mapping::AddressFamily, AF_INET, reinterpret_cast<int8_t *>(&sa.Family));
-            response.AddrLength = 0;
-            response.Addr = nullptr;
-
-            switch (request->Command)
+            if (request == nullptr)
             {
-                case SIOCGIFNETMASK: /* Get network mask */
-                    if (esp_netif_get_ip_info(_stationNetIfHandle, &ipInfo) == ESP_OK)
-                    {
-                        memcpy(&sa.Ip4Address, &ipInfo.netmask, sizeof(ipInfo.netmask));
-                        response.AddrLength = Encoders::EncodedSockAddrBufferSize(&sa);
-                        response.Addr = static_cast<uint8_t *>(pvPortMalloc(response.AddrLength));
-                        if (response.Addr == nullptr)
-                        {
-                            response.Result = -1;
-                            response.ResponseErrno = Mapping::NuttxErrno(ENOMEM);
-                            result = StatusCodes::EspOutOfMemory;
-                        }
-                        else
-                        {
-                            Encoders::EncodeSockAddr(&sa, response.Addr);
-                        }
-                    }
-                    else
-                    {
-                        response.Result = -1;
-                        response.ResponseErrno = Mapping::NuttxErrno(EIO);
-                    }
-                    break;
-                case SIOCGIFHWADDR: /* Get hardware address */
-                    response.AddrLength = 6;
-                    response.Addr = static_cast<uint8_t *>(pvPortMalloc(6));
-                    if (response.Addr == nullptr)
-                    {
-                        response.Result = -1;
-                        response.ResponseErrno = Mapping::NuttxErrno(ENOMEM);
-                        result = StatusCodes::EspOutOfMemory;
-                    }
-                    else
-                    {
-                        GetMacAddress(response.Addr, WIFI_IF_STA);
-                    }
-                    break;
-                case SIOCGIFADDR: /* Get IP address */
-                case SIOCGIFCONF: /* Return an interface list (IPv4) */
-                    if (esp_netif_get_ip_info(_stationNetIfHandle, &ipInfo) == ESP_OK)
-                    {
-                        memcpy(&sa.Ip4Address, &ipInfo.ip, sizeof(ipInfo.ip));
-                        response.AddrLength = Encoders::EncodedSockAddrBufferSize(&sa);
-                        response.Addr = static_cast<uint8_t *>(pvPortMalloc(response.AddrLength));
-                        if (response.Addr == nullptr)
-                        {
-                            response.Result = -1;
-                            response.ResponseErrno = Mapping::NuttxErrno(ENOMEM);
-                            result = StatusCodes::EspOutOfMemory;
-                        }
-                        else
-                        {
-                            Encoders::EncodeSockAddr(&sa, response.Addr);
-                        }
-                    }
-                    else
-                    {
-                        response.Result = -1;
-                        response.ResponseErrno = Mapping::NuttxErrno(EIO);
-                    }
-                    break;
-                case SIOCGIFFLAGS: /* Gets the interface flags */
-                    if (esp_netif_get_ip_info(_stationNetIfHandle, &ipInfo) == ESP_OK)
-                    {
-                        response.Flags = IFF_UP;
-                    }
-                    else
-                    {
-                        response.Flags = IFF_DOWN;
-                    }
-                    break;
-                default:
-                    response.Result = -1;
-                    response.ResponseErrno = Mapping::NuttxErrno(EINVAL);
-                    TRACE_MESSAGE("Unknown ioctl request %04" PRIx32, static_cast<uint32_t>(request->Command));
-                    break;
+                response.Result = -1;
+                response.ResponseErrno = Mapping::NuttxErrno(ENOMEM);
+                result = StatusCodes::EspOutOfMemory;
             }
-            Utils::DeleteAndNullifyPointer(request);
+            else
+            {
+                esp_netif_ip_info_t ipInfo;
+                Esp32Messaging::SockAddr sa = {};
+
+                Mapping::GetStmValue(Mapping::AddressFamily, AF_INET, reinterpret_cast<int8_t *>(&sa.Family));
+                response.AddrLength = 0;
+                response.Addr = nullptr;
+
+                switch (request->Command)
+                {
+                    case SIOCGIFNETMASK: /* Get network mask */
+                        if (esp_netif_get_ip_info(_stationNetIfHandle, &ipInfo) == ESP_OK)
+                        {
+                            memcpy(&sa.Ip4Address, &ipInfo.netmask, sizeof(ipInfo.netmask));
+                            response.AddrLength = Encoders::EncodedSockAddrBufferSize(&sa);
+                            response.Addr = static_cast<uint8_t *>(pvPortMalloc(response.AddrLength));
+                            if (response.Addr == nullptr)
+                            {
+                                response.Result = -1;
+                                response.ResponseErrno = Mapping::NuttxErrno(ENOMEM);
+                                result = StatusCodes::EspOutOfMemory;
+                            }
+                            else
+                            {
+                                Encoders::EncodeSockAddr(&sa, response.Addr);
+                            }
+                        }
+                        else
+                        {
+                            response.Result = -1;
+                            response.ResponseErrno = Mapping::NuttxErrno(EIO);
+                        }
+                        break;
+                    case SIOCGIFHWADDR: /* Get hardware address */
+                        response.AddrLength = 6;
+                        response.Addr = static_cast<uint8_t *>(pvPortMalloc(6));
+                        if (response.Addr == nullptr)
+                        {
+                            response.Result = -1;
+                            response.ResponseErrno = Mapping::NuttxErrno(ENOMEM);
+                            result = StatusCodes::EspOutOfMemory;
+                        }
+                        else
+                        {
+                            GetMacAddress(response.Addr, WIFI_IF_STA);
+                        }
+                        break;
+                    case SIOCGIFADDR: /* Get IP address */
+                    case SIOCGIFCONF: /* Return an interface list (IPv4) */
+                        if (esp_netif_get_ip_info(_stationNetIfHandle, &ipInfo) == ESP_OK)
+                        {
+                            memcpy(&sa.Ip4Address, &ipInfo.ip, sizeof(ipInfo.ip));
+                            response.AddrLength = Encoders::EncodedSockAddrBufferSize(&sa);
+                            response.Addr = static_cast<uint8_t *>(pvPortMalloc(response.AddrLength));
+                            if (response.Addr == nullptr)
+                            {
+                                response.Result = -1;
+                                response.ResponseErrno = Mapping::NuttxErrno(ENOMEM);
+                                result = StatusCodes::EspOutOfMemory;
+                            }
+                            else
+                            {
+                                Encoders::EncodeSockAddr(&sa, response.Addr);
+                            }
+                        }
+                        else
+                        {
+                            response.Result = -1;
+                            response.ResponseErrno = Mapping::NuttxErrno(EIO);
+                        }
+                        break;
+                    case SIOCGIFFLAGS: /* Gets the interface flags */
+                        if (esp_netif_get_ip_info(_stationNetIfHandle, &ipInfo) == ESP_OK)
+                        {
+                            response.Flags = IFF_UP;
+                        }
+                        else
+                        {
+                            response.Flags = IFF_DOWN;
+                        }
+                        break;
+                    default:
+                        response.Result = -1;
+                        response.ResponseErrno = Mapping::NuttxErrno(EINVAL);
+                        TRACE_MESSAGE("Unknown ioctl request %04" PRIx32, static_cast<uint32_t>(request->Command));
+                        break;
+                }
+                Utils::DeleteAndNullifyPointer(request);
+            }
         }
         else
         {
