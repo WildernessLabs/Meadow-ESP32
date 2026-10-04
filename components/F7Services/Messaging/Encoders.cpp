@@ -407,8 +407,9 @@ uint32_t Encoders::ProgressiveCRC32(const uint32_t currentChecksum, const uint8_
  *  Nothing is read beyond bufferLength, and the buffer is not changed.  The CRC is checked with the
  *  four CRC bytes counted as zero, which is how it was calculated, rather than by zeroing them in
  *  the caller's buffer.  A buffer too short to hold a header and the ignored bytes, or longer than
- *  one SPI frame, is refused, and so is a packet that declares more payload than the buffer holds,
- *  even when its CRC is right (issue #267).
+ *  one SPI frame, is refused (issue #267).  So is a packet longer than Message::MAXIMUM_PACKET_SIZE,
+ *  one that declares more payload than the buffer holds, and one that announces a payload but
+ *  carries none of it, even when its CRC is right (issue #216).
  *
  *  @param buffer
  *      Byte (uint8_t) array containing the encoded message.
@@ -443,10 +444,26 @@ Message *Encoders::ExtractMessage(const uint8_t *buffer, const uint32_t bufferLe
     Message *message = nullptr;
     if (crc == calculated)
     {
+        //
+        //  The packet length and the payload length are the sender's, and CRC32 says only that the sender
+        //  meant them.  A packet is never longer than the protocol allows or than the bytes received after
+        //  the header, and a message that announces a payload carries some of it in this packet
+        //  (issues #216 and #267).
+        //
         const uint16_t packetLength = ExtractUInt16(buffer + Message::CRC_OFFSET + sizeof(uint32_t) + sizeof(uint16_t));
-        if (!headerOnly && ((Message::HEADER_SIZE + static_cast<uint32_t>(packetLength)) > (bufferLength - Message::SPI_MESSAGE_OVERHEAD)))
+        if (packetLength > Message::MAXIMUM_PACKET_SIZE)
         {
             return (nullptr);
+        }
+        if (!headerOnly)
+        {
+            const uint32_t payloadLength = ExtractUInt32(buffer + Message::HEADER_SIZE - sizeof(uint32_t));
+            const bool packetFits = ((Message::HEADER_SIZE + static_cast<uint32_t>(packetLength)) <= (bufferLength - Message::SPI_MESSAGE_OVERHEAD));
+            const bool packetCarriesPayload = ((payloadLength == 0) || (packetLength > 0));
+            if (!packetFits || !packetCarriesPayload)
+            {
+                return (nullptr);
+            }
         }
 
         message = static_cast<Message *>(pvPortMalloc(sizeof(Message)));
