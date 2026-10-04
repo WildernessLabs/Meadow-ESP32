@@ -832,7 +832,13 @@ spi_slave_transaction_t *SpiTransportProvider::PacketAcknowledgementReceived(spi
 {
     TRACE_MESSAGE("PacketAcknowledgementReceived: Enter");
 
-    Message *incomingMessage = Encoders::ExtractMessage(static_cast<uint8_t *>(transaction->rx_buffer), _headerFrameSize, true);
+    //
+    //  The acknowledgement is decoded from the number of bytes the driver received, as an inbound message is, and
+    //  not from the size of a header frame, which is only what the sender is expected to send.  The CRC covers
+    //  the frame as it was sent, so it is checked over the frame as it was received (issue #321).
+    //
+    const uint32_t receivedLength = transaction->trans_len / 8;
+    Message *incomingMessage = Encoders::ExtractMessage(static_cast<uint8_t *>(transaction->rx_buffer), receivedLength, true);
     DeleteTransaction(transaction);
     spi_slave_transaction_t *newTransaction = nullptr;
     //
