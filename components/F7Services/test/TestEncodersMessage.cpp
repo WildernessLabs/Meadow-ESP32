@@ -252,3 +252,119 @@ TEST_CASE("ExtractMessage refuses a packet that declares more payload than the b
     vPortFree(buffer);
     Message::DeleteMessage(message);
 }
+
+/**
+ * @brief Offset of the packet length in an encoded packet: the protocol number, the CRC and the packet offset.
+ */
+#define PACKET_LENGTH_OFFSET 7
+
+/**
+ * @brief Offset of the payload length in an encoded packet: the last field of the header.
+ */
+#define PAYLOAD_LENGTH_OFFSET (Message::HEADER_SIZE - 4)
+
+/**
+ * @brief Calculate the CRC of an encoded packet again, as a sender would after changing its header.
+ *
+ * @param buffer The encoded packet.
+ * @param length Number of bytes in it.
+ */
+static void Reseal(uint8_t *buffer, const uint32_t length)
+{
+    Encoders::EncodeUInt32(0, buffer + Message::CRC_OFFSET);
+    Encoders::EncodeUInt32(Encoders::CRC32(buffer, length - Message::SPI_MESSAGE_OVERHEAD), buffer + Message::CRC_OFFSET);
+}
+
+/**
+ * @brief Encode a message into a whole SPI frame, as the STM32 sends it.
+ *
+ * @param message Message to encode.
+ *
+ * @return The frame, which the caller releases.
+ */
+static uint8_t *EncodeIntoFrame(const Message *message)
+{
+    uint8_t *frame = CreateBuffer(Message::MAXIMUM_SPI_FRAME_SIZE);
+    TEST_ASSERT_TRUE(Encoders::EncodeMessage(message, frame, Message::MAXIMUM_SPI_FRAME_SIZE, false));
+    return (frame);
+}
+
+TEST_CASE("ExtractMessage refuses a packet length of 0xFFFF in a full frame", CLASS_OF_TESTS)
+{
+    //
+    //  A frame of 4092 bytes declaring a packet of 0xFFFF used to be copied from about 61KB past
+    //  the start of the buffer, taking the heap that follows it (issue #216).
+    //
+    Message *message = CreateMessage();
+    uint8_t *frame = EncodeIntoFrame(message);
+    Encoders::EncodeUInt16(0xffff, frame + PACKET_LENGTH_OFFSET);
+    Reseal(frame, Message::MAXIMUM_SPI_FRAME_SIZE);
+
+    TEST_ASSERT_NULL_MESSAGE(Encoders::ExtractMessage(frame, Message::MAXIMUM_SPI_FRAME_SIZE, false), "A packet of 0xFFFF bytes was extracted from a 4092 byte frame.");
+    TEST_ASSERT_NULL_MESSAGE(Encoders::ExtractMessage(frame, Message::MAXIMUM_SPI_FRAME_SIZE, true), "A header declaring a packet of 0xFFFF bytes was accepted.");
+
+    vPortFree(frame);
+    Message::DeleteMessage(message);
+}
+
+TEST_CASE("ExtractMessage accepts the longest packet the protocol allows and refuses one byte more", CLASS_OF_TESTS)
+{
+    uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(Message::MAXIMUM_PACKET_SIZE + 1));
+    TEST_ASSERT_NOT_NULL(payload);
+    for (uint32_t index = 0; index < Message::MAXIMUM_PACKET_SIZE + 1; index++)
+    {
+        payload[index] = static_cast<uint8_t>(index);
+    }
+    Message *message = Message::CreateOnHeap(MessageTypes::Header, Esp32Interfaces::WiFi, 7, StatusCodes::CompletedOk, 99, payload, Message::MAXIMUM_PACKET_SIZE + 1);
+    TEST_ASSERT_NOT_NULL(message);
+    message->PacketOffset = 0;
+    message->PacketLength = Message::MAXIMUM_PACKET_SIZE;
+
+    uint8_t *frame = EncodeIntoFrame(message);
+    Message *decoded = Encoders::ExtractMessage(frame, Message::MAXIMUM_SPI_FRAME_SIZE, false);
+    TEST_ASSERT_NOT_NULL_MESSAGE(decoded, "The longest packet the protocol allows was refused.");
+    TEST_ASSERT_EQUAL_UINT16(Message::MAXIMUM_PACKET_SIZE, decoded->PacketLength);
+    TEST_ASSERT_EQUAL_MEMORY(payload, decoded->Payload, Message::MAXIMUM_PACKET_SIZE);
+    Message::DeleteMessage(decoded);
+
+    Encoders::EncodeUInt16(Message::MAXIMUM_PACKET_SIZE + 1, frame + PACKET_LENGTH_OFFSET);
+    Reseal(frame, Message::MAXIMUM_SPI_FRAME_SIZE);
+    TEST_ASSERT_NULL_MESSAGE(Encoders::ExtractMessage(frame, Message::MAXIMUM_SPI_FRAME_SIZE, false), "A packet one byte longer than the protocol allows was extracted.");
+
+    vPortFree(frame);
+    Message::DeleteMessage(message);
+}
+
+TEST_CASE("ExtractMessage refuses a message that announces a payload and carries none of it", CLASS_OF_TESTS)
+{
+    //
+    //  A packet length of zero with a payload to follow made a zero byte allocation, then a copy of that length.
+    //
+    Message *message = CreateMessage();
+    uint8_t *frame = EncodeIntoFrame(message);
+    Encoders::EncodeUInt16(0, frame + PACKET_LENGTH_OFFSET);
+    Reseal(frame, Message::MAXIMUM_SPI_FRAME_SIZE);
+
+    TEST_ASSERT_NULL_MESSAGE(Encoders::ExtractMessage(frame, Message::MAXIMUM_SPI_FRAME_SIZE, false), "A message announcing a payload and carrying none was extracted.");
+
+    //
+    //  A header on its own, which carries no payload, is still what it was.
+    //
+    Message *header = Encoders::ExtractMessage(frame, Message::MAXIMUM_SPI_FRAME_SIZE, true);
+    TEST_ASSERT_NOT_NULL(header);
+    TEST_ASSERT_EQUAL_UINT32(PAYLOAD_LENGTH, header->PayloadLength);
+    Message::DeleteMessage(header);
+
+    //
+    //  And a message that announces no payload may carry no packet.
+    //
+    Encoders::EncodeUInt32(0, frame + PAYLOAD_LENGTH_OFFSET);
+    Reseal(frame, Message::MAXIMUM_SPI_FRAME_SIZE);
+    Message *empty = Encoders::ExtractMessage(frame, Message::MAXIMUM_SPI_FRAME_SIZE, false);
+    TEST_ASSERT_NOT_NULL_MESSAGE(empty, "A message with no payload was refused.");
+    TEST_ASSERT_NULL(empty->Payload);
+    Message::DeleteMessage(empty);
+
+    vPortFree(frame);
+    Message::DeleteMessage(message);
+}
