@@ -1149,6 +1149,30 @@ gpio_num_t WiFiRequestHandler::ConvertAntennaToPin(AntennaTypes::AntennaTypes an
 }
 
 /**
+ *  @brief Limit the number of access points reported to the number that fit in one message.
+ *
+ *  The size of the scan grows with the number of networks in range, in the records read from
+ *  the driver and in the message built from them, so a crowded environment must not be able to
+ *  ask for more than a message can hold (issue #389).  The records past the limit are dropped,
+ *  as the driver releases them when the records are read.
+ *
+ *  @param found
+ *      Number of access points the scan found.
+ *
+ *  @returns
+ *      The number to report, no more than MAXIMUM_ACCESS_POINTS.
+ */
+uint16_t WiFiRequestHandler::LimitAccessPointCount(const uint16_t found)
+{
+    if (found > MAXIMUM_ACCESS_POINTS)
+    {
+        ESP_LOGW(COMPONENT_NAME, "Found %" PRIu16 " access points, reporting the first %" PRIu16 ".", found, static_cast<uint16_t>(MAXIMUM_ACCESS_POINTS));
+        return (MAXIMUM_ACCESS_POINTS);
+    }
+    return (found);
+}
+
+/**
  *  @brief Combine the protocol flags of a scanned access point into one value.
  *
  *  @param record
@@ -1918,23 +1942,32 @@ void WiFiRequestHandler::DisconnectFromAccessPoint(Message *message)
     TRACE_MESSAGE("DisconnectFromAccessPoint(Message): Enter");
 
     StatusCodes::StatusCodes sc = StatusCodes::CompletedOk;
-    if (IsConnected())
-    {
-        //
-        //  The bit is only set when there is a connection to drop.  It is cleared by
-        //  StationDisconnectedEvent, which is only raised when a disconnection actually
-        //  happens, so setting it with nothing connected leaves it set for good.  The
-        //  next connection attempt to fail would then be taken for a requested
-        //  disconnection and would not be retried.
-        //
-        xEventGroupSetBits(_xWiFiEventGroup, WIFI_DISCONNECT_REQUESTED_BIT);
-        sc = DisconnectFromAccessPoint();
-    }
-    if (sc == StatusCodes::CompletedOk)
-    {
-        Esp32Messaging::DisconnectFromAccessPointRequest *request = Encoders::ExtractDisconnectFromAccessPointRequest(message->Payload);
 
-        if (request->TurnOffWiFiInterface == 1)
+    //
+    //  The extractor reads the payload without checking it exists and returns nullptr only when it
+    //  cannot allocate, so both are dealt with before anything is disconnected (issue #389).
+    //
+    Esp32Messaging::DisconnectFromAccessPointRequest *request = (message->Payload != nullptr) ? Encoders::ExtractDisconnectFromAccessPointRequest(message->Payload) : nullptr;
+    if (request == nullptr)
+    {
+        ERROR_MESSAGE("DisconnectFromAccessPoint: %s.", (message->Payload == nullptr) ? "the request carries no payload" : "could not allocate the request");
+        sc = (message->Payload == nullptr) ? StatusCodes::InvalidRequest : StatusCodes::EspOutOfMemory;
+    }
+    else
+    {
+        if (IsConnected())
+        {
+            //
+            //  The bit is only set when there is a connection to drop.  It is cleared by
+            //  StationDisconnectedEvent, which is only raised when a disconnection actually
+            //  happens, so setting it with nothing connected leaves it set for good.  The
+            //  next connection attempt to fail would then be taken for a requested
+            //  disconnection and would not be retried.
+            //
+            xEventGroupSetBits(_xWiFiEventGroup, WIFI_DISCONNECT_REQUESTED_BIT);
+            sc = DisconnectFromAccessPoint();
+        }
+        if ((sc == StatusCodes::CompletedOk) && (request->TurnOffWiFiInterface == 1))
         {
             sc = StopWiFIAdapter();
         }
@@ -1960,22 +1993,35 @@ void WiFiRequestHandler::SetAntennaRequest(Message *message)
 {
     TRACE_MESSAGE("SetAntennaRequest: Enter");
 
-    Esp32Messaging::SetAntennaRequest *request = Encoders::ExtractSetAntennaRequest(message->Payload);
+    //
+    //  The extractor reads the payload without checking it exists and returns nullptr only when it
+    //  cannot allocate, so both are dealt with before the antenna is touched (issue #389).
+    //
+    Esp32Messaging::SetAntennaRequest *request = (message->Payload != nullptr) ? Encoders::ExtractSetAntennaRequest(message->Payload) : nullptr;
+    const bool hasPayload = (message->Payload != nullptr);
     message->DeletePayload();
 
-    TRACE_MESSAGE("Switching antenna to %" PRIu8 " with persist set to %" PRIu8, request->Antenna, request->Persist);
-
-    if (request->Persist)
+    if (request == nullptr)
     {
-        SetAntenna(request->Antenna); // This method also switches the antenna.
+        ERROR_MESSAGE("SetAntennaRequest: %s.", hasPayload ? "could not allocate the request" : "the request carries no payload");
+        message->StatusCode = hasPayload ? StatusCodes::EspOutOfMemory : StatusCodes::InvalidRequest;
     }
     else
     {
-        SwitchAntenna(static_cast<AntennaTypes::AntennaTypes>(request->Antenna));
-    }
+        TRACE_MESSAGE("Switching antenna to %" PRIu8 " with persist set to %" PRIu8, request->Antenna, request->Persist);
 
-    Utils::DeleteAndNullifyPointer(request);
-    message->StatusCode = StatusCodes::CompletedOk;
+        if (request->Persist)
+        {
+            SetAntenna(request->Antenna); // This method also switches the antenna.
+        }
+        else
+        {
+            SwitchAntenna(static_cast<AntennaTypes::AntennaTypes>(request->Antenna));
+        }
+
+        Utils::DeleteAndNullifyPointer(request);
+        message->StatusCode = StatusCodes::CompletedOk;
+    }
     message->MessageType = MessageTypes::Response;
     _messageDispatcher->QueueMessageForStm32(message);
 
@@ -2531,6 +2577,7 @@ void WiFiRequestHandler::ScanForAccessPoints(Message *message)
                 uint16_t apCount = 0;
                 esp_wifi_scan_get_ap_num(&apCount);
                 TRACE_MESSAGE("ScanForAccessPoints: Number of access points found: %" PRIu16, apCount);
+                apCount = LimitAccessPointCount(apCount);
                 result = StatusCodes::CompletedOk;
                 if (apCount != 0)
                 {

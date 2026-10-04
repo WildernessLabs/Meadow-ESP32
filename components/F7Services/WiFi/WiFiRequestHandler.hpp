@@ -88,6 +88,12 @@ class WiFiRequestHandler : public RequestHandlerBase
     //
     friend class TestWiFiEventState;
 
+    //
+    //  Requests with no payload, and the access point count limit, are checked directly
+    //  (issue #389).
+    //
+    friend class TestWiFiRequestValidation;
+
     /**
      * @brief Test access to the access point protocol flags (issue #249).
      */
@@ -783,6 +789,23 @@ private:
      *  @return The protocols as a combination of WiFiAccessPointProtocols values.
      */
     static uint32_t ConvertProtocols(const wifi_ap_record_t &record);
+
+    /**
+     *  @brief Largest number of access points a scan reports.
+     *
+     *  A list is an 8 byte header and then 47 bytes for each access point
+     *  (Encoders::EncodedAccessPointBufferSize), and has to fit in one message.
+     */
+    static constexpr uint16_t MAXIMUM_ACCESS_POINTS = 174;
+
+    /**
+     *  @brief Limit the number of access points reported to the number that fit in one message.
+     *
+     *  @param found Number of access points the scan found.
+     *
+     *  @return The number to report, no more than MAXIMUM_ACCESS_POINTS.
+     */
+    static uint16_t LimitAccessPointCount(const uint16_t found);
 
     /**
      *  @brief Change the current antenna and activate it.
