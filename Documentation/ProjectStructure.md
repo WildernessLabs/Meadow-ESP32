@@ -232,7 +232,7 @@ The system uses FreeRTOS threading:
 ## Message Processing Pipeline
 
 1. **Receive**: SPI task receives message from STM32
-2. **Validate**: Verify CRC and message structure
+2. **Validate**: Check the message structure against the bytes received (`Encoders::PacketIsWellFormed`), then verify the CRC. The two are independent: the CRC shows transmission integrity only, so the structure checks never depend on it (see `MessageFormat.md`)
 3. **Parse**: Extract header and payload
 4. **Route**: Message dispatcher determines target subsystem
 5. **Handle**: Appropriate handler processes the message

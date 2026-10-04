@@ -396,6 +396,58 @@ uint32_t Encoders::ProgressiveCRC32(const uint32_t currentChecksum, const uint8_
 }
 
 /**
+ *  @brief Check that the header of an encoded packet is well formed and that what it declares fits in the bytes received.
+ *
+ *  This reads only the header and the number of bytes received.  It does not look at the CRC and does
+ *  not depend on it.  A CRC that verifies shows the frame arrived as it was sent, nothing more, so a frame
+ *  from an STM32 that is working but wrong, one that is intact and carries bad lengths, has to be refused
+ *  by these checks and not by the CRC.  The checks are therefore made unconditionally and ahead of it
+ *  (issue #277).
+ *
+ *  A packet is well formed when:
+ *      - the buffer holds a header and the four bytes at the end that are ignored, and no more than one frame;
+ *      - the packet is no longer than Message::MAXIMUM_PACKET_SIZE;
+ *      - unless only the header is wanted, the packet lies inside the bytes received after the header, and a
+ *        message that announces a payload carries some of it in this packet (issues #216 and #267).
+ *
+ *  @param buffer
+ *      Byte (uint8_t) array containing the encoded message.
+ *
+ *  @param bufferLength
+ *      Number of bytes in the buffer.
+ *
+ *  @param headerOnly
+ *      Indicate if only the header is to be extracted (i.e. the payload is not looked at).
+ *
+ *  @returns
+ *      true if the packet is well formed.
+ */
+bool Encoders::PacketIsWellFormed(const uint8_t *buffer, const uint32_t bufferLength, const bool headerOnly)
+{
+    if ((buffer == nullptr) || (bufferLength < (Message::HEADER_SIZE + Message::SPI_MESSAGE_OVERHEAD)) || (bufferLength > Message::MAXIMUM_SPI_FRAME_SIZE))
+    {
+        return (false);
+    }
+
+    const uint16_t packetLength = ExtractUInt16(buffer + Message::CRC_OFFSET + sizeof(uint32_t) + sizeof(uint16_t));
+    if (packetLength > Message::MAXIMUM_PACKET_SIZE)
+    {
+        return (false);
+    }
+    if (!headerOnly)
+    {
+        const uint32_t payloadLength = ExtractUInt32(buffer + Message::HEADER_SIZE - sizeof(uint32_t));
+        const bool packetFits = ((Message::HEADER_SIZE + static_cast<uint32_t>(packetLength)) <= (bufferLength - Message::SPI_MESSAGE_OVERHEAD));
+        const bool packetCarriesPayload = ((payloadLength == 0) || (packetLength > 0));
+        if (!packetFits || !packetCarriesPayload)
+        {
+            return (false);
+        }
+    }
+    return (true);
+}
+
+/**
  *  @brief Extract a message from a block of memory and create a new Message object.
  *
  *  Note:
@@ -404,12 +456,13 @@ uint32_t Encoders::ProgressiveCRC32(const uint32_t currentChecksum, const uint8_
  *  four bytes when calculating CRCs (we do not know what they will contain
  *  post transmission).
  *
+ *  The CRC establishes that the frame arrived as it was sent.  It does not establish that the frame is
+ *  well formed, so PacketIsWellFormed() is checked first, whatever the CRC says, and the CRC is a second,
+ *  separate test that a frame has to pass as well (issue #277).
+ *
  *  Nothing is read beyond bufferLength, and the buffer is not changed.  The CRC is checked with the
  *  four CRC bytes counted as zero, which is how it was calculated, rather than by zeroing them in
- *  the caller's buffer.  A buffer too short to hold a header and the ignored bytes, or longer than
- *  one SPI frame, is refused (issue #267).  So is a packet longer than Message::MAXIMUM_PACKET_SIZE,
- *  one that declares more payload than the buffer holds, and one that announces a payload but
- *  carries none of it, even when its CRC is right (issue #216).
+ *  the caller's buffer (issue #267).
  *
  *  @param buffer
  *      Byte (uint8_t) array containing the encoded message.
@@ -422,13 +475,13 @@ uint32_t Encoders::ProgressiveCRC32(const uint32_t currentChecksum, const uint8_
  *      (i.e. do not copy the payload).
  *
  *  @returns
- *      New Message object extracted from the buffer, nullptr if the buffer is not a valid message
- *      or memory runs out.  The Message object will be placed on the FreeRTOS heap (use
- *      Utils::DeleteAndNullifyPointer to release the storage).
+ *      New Message object extracted from the buffer, nullptr if the buffer is not a well formed
+ *      message with a correct CRC, or memory runs out.  The Message object will be placed on the
+ *      FreeRTOS heap (use Utils::DeleteAndNullifyPointer to release the storage).
  */
 Message *Encoders::ExtractMessage(const uint8_t *buffer, const uint32_t bufferLength, const bool headerOnly)
 {
-    if ((buffer == nullptr) || (bufferLength < (Message::HEADER_SIZE + Message::SPI_MESSAGE_OVERHEAD)) || (bufferLength > Message::MAXIMUM_SPI_FRAME_SIZE))
+    if (!PacketIsWellFormed(buffer, bufferLength, headerOnly))
     {
         return (nullptr);
     }
@@ -444,28 +497,6 @@ Message *Encoders::ExtractMessage(const uint8_t *buffer, const uint32_t bufferLe
     Message *message = nullptr;
     if (crc == calculated)
     {
-        //
-        //  The packet length and the payload length are the sender's, and CRC32 says only that the sender
-        //  meant them.  A packet is never longer than the protocol allows or than the bytes received after
-        //  the header, and a message that announces a payload carries some of it in this packet
-        //  (issues #216 and #267).
-        //
-        const uint16_t packetLength = ExtractUInt16(buffer + Message::CRC_OFFSET + sizeof(uint32_t) + sizeof(uint16_t));
-        if (packetLength > Message::MAXIMUM_PACKET_SIZE)
-        {
-            return (nullptr);
-        }
-        if (!headerOnly)
-        {
-            const uint32_t payloadLength = ExtractUInt32(buffer + Message::HEADER_SIZE - sizeof(uint32_t));
-            const bool packetFits = ((Message::HEADER_SIZE + static_cast<uint32_t>(packetLength)) <= (bufferLength - Message::SPI_MESSAGE_OVERHEAD));
-            const bool packetCarriesPayload = ((payloadLength == 0) || (packetLength > 0));
-            if (!packetFits || !packetCarriesPayload)
-            {
-                return (nullptr);
-            }
-        }
-
         message = static_cast<Message *>(pvPortMalloc(sizeof(Message)));
 
         if (message == nullptr)

@@ -64,6 +64,8 @@ The payload length may be zero if the message is simple.
 
 Each message sent has a 32-bit CRC value.  This is filled with 0 when the CRC is calculated and then populated with the 32-bit value before the message is sent.
 
+The CRC shows that a message arrived as it was sent.  It does not show that the message is well formed: an STM32 that is working but wrong sends frames that arrive intact and carry bad lengths.  The receiver therefore checks the packet length, the payload length and every count and length inside a payload against the bytes it actually received, whatever the CRC says, and a message has to pass both those checks and the CRC.  The SPI bus has one peer, so integrity is all that is needed; the CRC is not an authentication.
+
 ## Message Payload
 
 The message payload is a sequence of bytes that the interface will require in order to process the request.

@@ -607,6 +607,7 @@ public:
     static uint32_t CRC32(const uint8_t *, const uint16_t);
     static uint32_t ProgressiveCRC32(const uint32_t, const uint8_t);
     static bool EncodeMessage(const Message * const, uint8_t * const, const uint32_t, const bool);
+    static bool PacketIsWellFormed(const uint8_t *, const uint32_t, const bool);
     static Message *ExtractMessage(const uint8_t *, const uint32_t, const bool);
 
     static bool EncodeSystemConfiguration(const Esp32Messaging::SystemConfiguration * const, uint8_t *, const uint32_t);
