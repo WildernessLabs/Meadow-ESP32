@@ -271,10 +271,13 @@ The project uses CMake and ESP-IDF's build system:
 `partitions.csv` defines the flash memory layout:
 - Bootloader
 - Partition table
-- Application
 - Non-volatile storage (NVS)
-- OTA update slots
-- File system (SPIFFS)
+- PHY initialisation data
+- Application (`factory`)
+- Core dump
+- File system (LittleFS)
+
+There are no OTA update slots: the managed application performs updates and rewrites the `factory` partition in place.  See [Firmware Updates](FirmwareUpdate.md).
 
 ### SDK Configuration
 - `sdkconfig.defaults`: Default settings

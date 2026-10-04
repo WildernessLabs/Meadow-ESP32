@@ -118,6 +118,8 @@ to be useful.
 | coredump | 0x330000 | 512 KB |
 | littlefs | 0x3c0000 | 256 KB |
 
+There are no OTA partitions by design: the managed application performs field updates and rewrites `factory` in place (`Documentation/FirmwareUpdate.md`).
+
 `littlefs` is at 0x3c0000 in both, so one filesystem image serves either build.
 `mkfsimage.sh` reads the offset from whichever table `sdkconfig` names rather than
 assuming one.
@@ -163,5 +165,6 @@ assuming one.
 - `CommunicationsOverview.md` — STM32↔ESP32 protocol
 - `SPIProtocolOverview.md` — SPI low-level details
 - `MessageFormat.md` — message structure
+- `FirmwareUpdate.md` — how field updates are done (by the managed application; no OTA)
 - `Diagnostics.md` — debugging techniques
 - `Tools.md` — VS Code, Docker, OpenOCD, GDB setup
