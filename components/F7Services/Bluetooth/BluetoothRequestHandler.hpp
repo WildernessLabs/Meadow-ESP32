@@ -42,6 +42,11 @@
  *  @brief Bluetooth request handler object.
  *
  *  This class deals with dispatching Bluetooth requests.
+ *
+ *  Bluetooth events do not come through the ESP-IDF event loop, as WiFi events do, so this class
+ *  registers no handler with esp_event_handler_register.  The Bluedroid stack reports everything
+ *  through two callbacks, GAPEventHandler and GATTSProfileEventHandler, registered when the
+ *  service starts, and every Bluetooth event is handled in those (issues #185 and #392).
  */
 class BluetoothRequestHandler : public RequestHandlerBase
 {
@@ -203,12 +208,6 @@ private:
      *  This method will dispatch incoming messages to the appropriate request handler.
      */
     void DispatchRequest(Message *) override;
-
-    /**
-     *  This instance method contains the event loop code and processes the event for the
-     *  EventLoop method.
-     */
-    void EventHandlerHelper(esp_event_base_t, int32_t, void *);
 
     /**
      * @brief Maximum size of the transmission unit.  BLE supports up to 512 bytes.
@@ -395,16 +394,6 @@ public:
      *  Provide and additional setup operations not covered by the constructors.
      */
     void Setup() override;
-
-    /**
-     *  This is the event handler called by FreeRTOS.  It merely passes the event on to
-     *  an internal private event handler within the class.
-     *
-     *  This method is static to allow it to be accessed from the C APIs.  This method will
-     *  pass the processing on to the instance method in order to allow the event loop to
-     *  have access to the class level variables, not just the static variable.
-     */
-    static void EventHandler(void *, esp_event_base_t, int32_t, void *);
 
     /**
      * @brief Prepare the Bluetooth interface for deep sleep.

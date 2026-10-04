@@ -670,68 +670,6 @@ void BluetoothRequestHandler::DispatchRequest(Message *request)
 }
 
 /**
- *  @brief Event loop for the IDF system.
- *
- *  Perform the actual event loop handling on behalf of the static method set up for the
- *  IDF event handler.
- *
- *  See the notes for the WiFiRequestHandler::EventHandler for more information as to why this
- *  method is necessary.
- *
- *  @param eventBase
- *      Subsystem that created the event.  This will be one of WIFI_EVENT or IP_EVENT.
- *
- *  @param eventId
- *      Type of event that has occurred.  This will vary depending upon the subsystem
- *      that generated the event.
- *
- *  @param eventData
- *      Data specific to the event that has occurred.
- */
-void BluetoothRequestHandler::EventHandlerHelper(esp_event_base_t eventBase, int32_t eventId, void *eventData)
-{
-    TRACE_MESSAGE("EventHandlerHelper: Enter with base %s and id 0x%" PRIx32, eventBase, static_cast<uint32_t>(eventId));
-
-    TRACE_MESSAGE("EventHandlerHelper: Exit");
-}
-
-/**
- *  @brief Event loop for the IDF system.
- *
- *  Event loop (handler) for the Bluetooth events as discussed in the following ESP-IDF document:
- *
- *  https://docs.espressif.com/projects/esp-idf/en/release-v4.1/api-reference/system/esp_event.html
- *
- *  This method passes the data on to an instance helper method.  This is done for convenience as it
- *  allows access to the member variables and methods without having to use the sender context or
- *  convert methods / variables / constants to static members.
- *
- *  @param arg
- *      Argument data specified when the event loop was first registered with
- *      esp_event_handler_register.  arg should point to the instance of the WiFiRequestHandler
- *      that registered the event loop.
- *
- *  @param eventBase
- *      Subsystem that created the event.  This will be one of WIFI_EVENT or IP_EVENT.
- *
- *  @param eventId
- *      Type of event that has occurred.  This will vary depending upon the subsystem
- *      that generated the event.
- *
- *  @param eventData
- *      Data specific to the event that has occurred.
- */
-void BluetoothRequestHandler::EventHandler(void *arg, esp_event_base_t eventBase, int32_t eventId, void *eventData)
-{
-    TRACE_MESSAGE("EventHandler: Enter");
-
-    BluetoothRequestHandler *sender = static_cast<BluetoothRequestHandler *>(arg);
-    sender->EventHandlerHelper(eventBase, eventId, eventData);
-
-    TRACE_MESSAGE("EventHandler: Exit");
-}
-
-/**
  * @brief Prepare the Bluetooth interface for deep sleep.
  */
 StatusCodes::StatusCodes BluetoothRequestHandler::PrepareForDeepSleep()
