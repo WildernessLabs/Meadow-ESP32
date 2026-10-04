@@ -9,3 +9,6 @@ idf_component_register(SRCS "unit_tests.c"
                                 # "../../components/F7Services/Bluetooth"
                                 # "../../components/F7Services/Diagnostics"
 )
+
+include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/WarningsAsErrors.cmake)
+meadow_warnings_as_errors(${COMPONENT_LIB})

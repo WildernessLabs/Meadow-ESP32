@@ -151,6 +151,7 @@ assuming one.
 
 - `build.sh` injects git commit hash, branch, and build timestamp into `main/build_info.h` from `build_info.template`, then restores the template after build.
 - SPI transaction hard limit: **4092 bytes** (hardware constraint).
+- **Warnings in our code are errors.** `cmake/WarningsAsErrors.cmake` adds `-Werror` (and re-enables the warnings ESP-IDF demotes, such as unused variables) to `main`, `components/F7Services` and its `test` component, and to `test/main`. Managed components keep the ESP-IDF settings, so their warnings stay warnings. A new component of ours should call `meadow_warnings_as_errors(${COMPONENT_LIB})` after `idf_component_register()`.
 - SDK config files: `sdkconfig.defaults` (release), `sdkconfig.develop` (merged on `--develop`), `sdkconfig` (generated, not committed).
 - Managed dependencies (via `idf_component.yml`): `joltwallet/littlefs` v1.5.5. `espressif/cjson` ==1.7.19 is also declared but gated to `idf_version >=6.0`; on the 5.3+ toolchain this project actually builds with, that rule never matches, so JSON parsing uses ESP-IDF's bundled `json` component instead (cJSON 1.7.19, verified free of the known CVE).
 

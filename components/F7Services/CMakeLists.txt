@@ -46,3 +46,6 @@ idf_component_register( SRCS    ${F7SERVICES_SOURCES}
                                 esp_event
                                 json
                                 )
+
+include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/WarningsAsErrors.cmake)
+meadow_warnings_as_errors(${COMPONENT_LIB})
