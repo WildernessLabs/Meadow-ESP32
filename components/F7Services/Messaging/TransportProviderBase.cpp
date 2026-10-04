@@ -19,6 +19,8 @@
 #include "driver/gpio.h"
 
 #include "Utils.hpp"
+#include "esp_attr.h"
+
 #include "TransportProviderBase.hpp"
 #include "Encoders.hpp"
 #include "Logging.hpp"
@@ -287,7 +289,7 @@ void TransportProviderBase::SendControlMessageToStm32(const ControlMessageType m
  * @return TransportProviderBase::ControlMessageType
  *      The current control signal message.
  */
-TransportProviderBase::ControlMessageType TransportProviderBase::GetControlSignalMessage()
+TransportProviderBase::ControlMessageType IRAM_ATTR TransportProviderBase::GetControlSignalMessage()
 {
     return (_controlSignalMessage);
 }
@@ -298,7 +300,7 @@ TransportProviderBase::ControlMessageType TransportProviderBase::GetControlSigna
  * @param messageType
  *      The control signal message to be sent.
  */
-void TransportProviderBase::SetControlSignalMessage(const ControlMessageType messageType)
+void IRAM_ATTR TransportProviderBase::SetControlSignalMessage(const ControlMessageType messageType)
 {
     _controlSignalMessage = messageType;
 }
@@ -320,7 +322,7 @@ TickType_t TransportProviderBase::GetControlSignalDelay()
  * @param delay
  *      Number of ticks between attempts to take the semaphore.
  */
-void TransportProviderBase::SetControlSignalDelay(const TickType_t delay)
+void IRAM_ATTR TransportProviderBase::SetControlSignalDelay(const TickType_t delay)
 {
     _controlSignalDelay = delay;
 }

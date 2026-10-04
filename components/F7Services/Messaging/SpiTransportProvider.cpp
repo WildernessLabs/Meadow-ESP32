@@ -13,6 +13,8 @@
 
 #include "esp_heap_caps.h"
 
+#include "esp_attr.h"
+
 #include "SpiTransportProvider.hpp"
 #include "Esp32Messaging.hpp"
 #include "Encoders.hpp"
@@ -128,6 +130,11 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
     slaveConfiguration.post_setup_cb = SpiPostSetupCallback;
 
     //
+    //  The post setup callback gives this semaphore, so it exists before the callback is registered.
+    //
+    _synchronisationSemaphore = Utils::RequireCreated(xSemaphoreCreateBinary(), "the SPI synchronisation semaphore");
+
+    //
     //  Without the SPI bus there is no link to the STM32, so this is a start-up failure with nothing
     //  to recover to.  ESP_ERROR_CHECK is kept, and resets the board (issue #248).
     //
@@ -163,7 +170,6 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
     /*
      *  Set up the task and that will process the SPI messages.
      */
-    _synchronisationSemaphore = Utils::RequireCreated(xSemaphoreCreateBinary(), "the SPI synchronisation semaphore");
     Utils::RequireTaskCreated(xTaskCreate(SynchronisationTask, "SPISyncTask", SYNCHRONISATION_TASK_STACK_SIZE, this, PRIORITY_SPI_SYNCHRONISATION_TASK, &SpiTransportProvider::_synchronisationTaskHandle), "the SPI synchronisation task");
 
     /*
@@ -432,17 +438,31 @@ void SpiTransportProvider::SpiPostTransmissionCallback(spi_slave_transaction_t *
  *      spi_slave_transaction_t structure containing information about the
  *      SPI transaction that has just completed.
  */
-void SpiTransportProvider::SpiPostSetupCallback(spi_slave_transaction_t *transaction)
+void IRAM_ATTR SpiTransportProvider::SpiPostSetupCallback(spi_slave_transaction_t *transaction)
 {
-    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
-    if (_spiInstance->GetControlSignalMessage() == TransportProviderBase::ControlMessageType::Ready)
+    //
+    //  This runs in the SPI interrupt, which with CONFIG_SPI_SLAVE_ISR_IN_IRAM can run while flash
+    //  is being written, so everything it calls has to be in IRAM too (issue #269).  Nothing is
+    //  queued with the driver until the SPI task asks, so this should not run before the task and
+    //  the semaphore exist, but notifying a task that does not exist asserts, so check rather than
+    //  rely on that.
+    //
+    SpiTransportProvider * const instance = _spiInstance;
+    const TaskHandle_t taskHandle = _transportProviderTaskHandle;
+    if ((instance == nullptr) || (taskHandle == nullptr) || (instance->_synchronisationSemaphore == nullptr))
     {
-        _spiInstance->SetControlSignalMessage(TransportProviderBase::ControlMessageType::SpiInterfaceReady);
-        _spiInstance->SetControlSignalDelay(portMAX_DELAY);
+        return;
     }
-    xTaskNotifyFromISR(_transportProviderTaskHandle, TransportProviderBase::STM32_INTERRUPT_NOTIFICATION_BIT, eSetBits, &xHigherPriorityTaskWoken);
-    xSemaphoreGiveFromISR(_spiInstance->_synchronisationSemaphore, &xHigherPriorityTaskWoken);
-    portYIELD_FROM_ISR();
+
+    BaseType_t higherPriorityTaskWoken = pdFALSE;
+    if (instance->GetControlSignalMessage() == TransportProviderBase::ControlMessageType::Ready)
+    {
+        instance->SetControlSignalMessage(TransportProviderBase::ControlMessageType::SpiInterfaceReady);
+        instance->SetControlSignalDelay(portMAX_DELAY);
+    }
+    xTaskNotifyFromISR(taskHandle, TransportProviderBase::STM32_INTERRUPT_NOTIFICATION_BIT, eSetBits, &higherPriorityTaskWoken);
+    xSemaphoreGiveFromISR(instance->_synchronisationSemaphore, &higherPriorityTaskWoken);
+    portYIELD_FROM_ISR(higherPriorityTaskWoken);
 }
 
 /**
