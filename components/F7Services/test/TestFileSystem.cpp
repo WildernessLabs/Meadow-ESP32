@@ -270,6 +270,49 @@ TEST_CASE("WriteFile rejects a zero-length file", CLASS_OF_TESTS)
 }
 
 /**
+ * @brief Check that WriteFile refuses a request that declares more contents than it carries.
+ *
+ *  The contents length is read from the payload and was used as an allocation and copy size
+ *  without checking that the payload held that many bytes, so a length a little over the real
+ *  one copied heap from past the end of the payload into the file, and one near 4GB failed the
+ *  allocation (issue #226).  The request is now refused as invalid and creates no file.
+ */
+TEST_CASE("WriteFile refuses a request that declares more contents than it carries", CLASS_OF_TESTS)
+{
+    static const uint32_t DECLARED_LENGTHS[] = {0xfffffff0, 0x7fffffff, 64, 5};
+
+    FileSystemTestContext context = {};
+    CreateFileSystemTestContext(&context, true);
+
+    for (const uint32_t declared: DECLARED_LENGTHS)
+    {
+        //
+        //  A valid request for 4 bytes of contents, with the declared length overwritten.  The length
+        //  field follows the file name and its terminator.
+        //
+        static const uint8_t CONTENTS[] = {1, 2, 3, 4};
+        Message *writeMessage = CreateFileNameAndContentsMessage(SystemFunction::FileSystemWriteFile, TEST_FILE_NAME, CONTENTS, sizeof(CONTENTS));
+        const uint32_t lengthOffset = strlen(TEST_FILE_NAME) + 1;
+        for (uint32_t index = 0; index < sizeof(uint32_t); index++)
+        {
+            writeMessage->Payload[lengthOffset + index] = static_cast<uint8_t>(declared >> (8 * index));
+        }
+
+        context.Fs->WriteFile(writeMessage);
+
+        ASSERT_OUTBOUND_QUEUE_LENGTH(context.Dispatcher, 1);
+        Message *response = context.Dispatcher->GetOutboundMessage();
+        ASSERT_RESPONSE(response, Esp32Interfaces::System, SystemFunction::FileSystemWriteFile, StatusCodes::InvalidRequest);
+        ASSERT_NO_PAYLOAD(response);
+        TEST_ASSERT_EQUAL_MESSAGE(0, CountFiles(), "A request declaring more contents than it carried created a file.");
+
+        Message::DeleteMessage(writeMessage);
+    }
+
+    ReleaseFileSystemTestContext(&context);
+}
+
+/**
  * @brief Check that WriteFile rejects a request with no file name.
  *
  *  A request with no Name previously reached std::string::operator+=(nullptr), which is
@@ -428,7 +471,7 @@ TEST_CASE("Reading a file", CLASS_OF_TESTS)
 
     ASSERT_OUTBOUND_QUEUE_LENGTH(context.Dispatcher, 0);
 
-    Esp32Messaging::FileNameAndContents *fileContents = Encoders::ExtractFileNameAndContents(response->Payload);
+    Esp32Messaging::FileNameAndContents *fileContents = Encoders::ExtractFileNameAndContents(response->Payload, response->PayloadLength);
     TEST_ASSERT_NOT_NULL(fileContents);
     TEST_ASSERT_GREATER_THAN(0, fileContents->ContentsLength);
     TEST_ASSERT_NOT_NULL(fileContents->Contents);
@@ -456,7 +499,7 @@ static void ReadFileWithRequestContents(FileSystemTestContext *context, const ui
     Message *response = context->Dispatcher->GetOutboundMessage();
     ASSERT_RESPONSE(response, Esp32Interfaces::System, SystemFunction::FileSystemReadFile, StatusCodes::CompletedOk);
 
-    Esp32Messaging::FileNameAndContents *fileContents = Encoders::ExtractFileNameAndContents(response->Payload);
+    Esp32Messaging::FileNameAndContents *fileContents = Encoders::ExtractFileNameAndContents(response->Payload, response->PayloadLength);
     TEST_ASSERT_NOT_NULL(fileContents);
     TEST_ASSERT_EQUAL(strlen(TEST_FILE_CONTENTS), fileContents->ContentsLength);
     TEST_ASSERT_EQUAL_MEMORY(TEST_FILE_CONTENTS, fileContents->Contents, strlen(TEST_FILE_CONTENTS));
@@ -572,11 +615,15 @@ TEST_CASE("Get list of files", CLASS_OF_TESTS)
     TEST_ASSERT_NOT_NULL(files->FileDetails);
 
     uint8_t *buffer = files->FileDetails;
+    uint32_t remaining = files->FileDetailsLength;
     for (int index = 0; index < files->NumberOfFiles; index++)
     {
-        Esp32Messaging::FileDetails *file = Encoders::ExtractFileDetails(buffer);
+        Esp32Messaging::FileDetails *file = Encoders::ExtractFileDetails(buffer, remaining);
         TEST_ASSERT_NOT_NULL(file);
-        buffer += strlen(file->Name) + 1 + sizeof(uint16_t);
+        const uint32_t consumed = strlen(file->Name) + 1 + sizeof(uint16_t);
+        TEST_ASSERT_LESS_OR_EQUAL_UINT32(remaining, consumed);
+        buffer += consumed;
+        remaining -= consumed;
         if (strcmp(file->Name, TEST_FILE_NAME) == 0)
         {
             TEST_ASSERT_EQUAL(strlen(TEST_FILE_CONTENTS), file->Length);
@@ -829,7 +876,7 @@ TEST_CASE("ReadFile reads an empty file as no contents", CLASS_OF_TESTS)
     Message *response = ReadThroughFileSystem(&context, TEST_FILE_NAME);
     ASSERT_RESPONSE(response, Esp32Interfaces::System, SystemFunction::FileSystemReadFile, StatusCodes::CompletedOk);
     ASSERT_HAS_PAYLOAD(response);
-    Esp32Messaging::FileNameAndContents *fileContents = Encoders::ExtractFileNameAndContents(response->Payload);
+    Esp32Messaging::FileNameAndContents *fileContents = Encoders::ExtractFileNameAndContents(response->Payload, response->PayloadLength);
     TEST_ASSERT_NOT_NULL(fileContents);
     TEST_ASSERT_EQUAL_STRING(TEST_FILE_NAME, fileContents->Name);
     TEST_ASSERT_EQUAL_UINT32_MESSAGE(0, fileContents->ContentsLength, "An empty file was read with contents.");
@@ -852,7 +899,7 @@ TEST_CASE("ReadFile reads the longest file one response can hold", CLASS_OF_TEST
     Message *response = ReadThroughFileSystem(&context, TEST_FILE_NAME);
     ASSERT_RESPONSE(response, Esp32Interfaces::System, SystemFunction::FileSystemReadFile, StatusCodes::CompletedOk);
     TEST_ASSERT_EQUAL_UINT32_MESSAGE(Message::MAXIMUM_PAYLOAD_LENGTH, response->PayloadLength, "The response does not fill the payload exactly.");
-    Esp32Messaging::FileNameAndContents *fileContents = Encoders::ExtractFileNameAndContents(response->Payload);
+    Esp32Messaging::FileNameAndContents *fileContents = Encoders::ExtractFileNameAndContents(response->Payload, response->PayloadLength);
     TEST_ASSERT_NOT_NULL(fileContents);
     TEST_ASSERT_EQUAL_UINT32(length, fileContents->ContentsLength);
     for (uint32_t index = 0; index < length; index++)

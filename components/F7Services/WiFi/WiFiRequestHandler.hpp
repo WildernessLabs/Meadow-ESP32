@@ -733,7 +733,7 @@ private:
      *
      * @return Esp32Messaging::AccessPointInformation*
      */
-    Esp32Messaging::AccessPointInformation *ExtractAndValidateAccessPointInformation(uint8_t *);
+    Esp32Messaging::AccessPointInformation *ExtractAndValidateAccessPointInformation(uint8_t *, const uint32_t);
 
     /**
      * @brief Raise a node connect / disconnect event for the C# code.
@@ -889,17 +889,17 @@ private:
     /**
      * @brief Extract an encoded integer setsockopt option value.
      */
-    static uint8_t *ExtractIntegerSocketOptionValue(const uint8_t * const data, socklen_t * const length);
+    static uint8_t *ExtractIntegerSocketOptionValue(const uint8_t * const data, const uint32_t dataLength, socklen_t * const length);
 
     /**
      * @brief Setup the socket value and length for calls to SetSockOpt.
      */
-    static uint8_t *GetSocketOptionValue(const int name, uint8_t * const optionValue, socklen_t * const length);
+    static uint8_t *GetSocketOptionValue(const int name, uint8_t * const optionValue, const uint32_t optionValueLength, socklen_t * const length);
 
     /**
      * @brief Setup the TCP value and length for calls to SetSockOpt.
      */
-    static uint8_t *GetTcpOptionValue(const int name, uint8_t * const optionValue, socklen_t * const length);
+    static uint8_t *GetTcpOptionValue(const int name, uint8_t * const optionValue, const uint32_t optionValueLength, socklen_t * const length);
 
     //----------------------------------------------------------------------
     //

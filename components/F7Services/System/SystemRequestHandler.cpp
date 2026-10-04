@@ -721,7 +721,8 @@ void SystemRequestHandler::SetConfigurationItem(Message * const request)
         return;
     }
 
-    Esp32Messaging::ConfigurationValue *value = Encoders::ExtractConfigurationValue(request->Payload);
+    bool malformed = false;
+    Esp32Messaging::ConfigurationValue *value = Encoders::ExtractConfigurationValue(request->Payload, request->PayloadLength, &malformed);
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
     if (value)
     {
@@ -861,7 +862,7 @@ void SystemRequestHandler::SetConfigurationItem(Message * const request)
     }
     else
     {
-        result = StatusCodes::EspOutOfMemory;
+        result = malformed ? StatusCodes::InvalidPacket : StatusCodes::EspOutOfMemory;
     }
     Encoders::FreeConfigurationValue(&value);
     request->DeletePayload();
@@ -1018,7 +1019,7 @@ void SystemRequestHandler::LoggingConfiguration(Message *message)
 {
     TRACE_MESSAGE("LoggingConfiguration: Enter");
 
-    Esp32Messaging::LoggingConfiguration *config = Encoders::ExtractLoggingConfiguration(message->Payload);
+    Esp32Messaging::LoggingConfiguration *config = Encoders::ExtractLoggingConfiguration(message->Payload, message->PayloadLength);
 
     if (config)
     {
@@ -1044,7 +1045,7 @@ void SystemRequestHandler::LogMessage(Message *message)
 {
     TRACE_MESSAGE("LogMessage: Enter");
 
-    Esp32Messaging::LogMessage *logMessage = Encoders::ExtractLogMessage(message->Payload);
+    Esp32Messaging::LogMessage *logMessage = Encoders::ExtractLogMessage(message->Payload, message->PayloadLength);
 
     if (logMessage)
     {

@@ -8,6 +8,7 @@
  */
 
 #include "Encoders.hpp"
+#include "PayloadReader.hpp"
 #include "Logging.hpp"
 #include "SpiTransportProvider.hpp"
 #include "Utils.hpp"
@@ -637,43 +638,50 @@ int Encoders::EncodedSystemConfigurationBufferSize(const Esp32Messaging::SystemC
  *
  *  @returns
  *      Pointer to a ConfigurationValue object.
+ *
+ *  @param length
+ *      Number of bytes in that block, the message's PayloadLength.  Nothing past it is read, and
+ *      no length the payload declares is trusted until it has been checked against it
+ *      (issue #226).
+ *
+ *  @param malformed
+ *      If not nullptr, set to true when the payload is too short for what it declares and false
+ *      otherwise, so the caller can tell a malformed request from running out of memory.
  */
-Esp32Messaging::ConfigurationValue *Encoders::ExtractConfigurationValue(uint8_t *buffer)
+Esp32Messaging::ConfigurationValue *Encoders::ExtractConfigurationValue(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
-    if (buffer == nullptr)
+    PayloadReader reader(buffer, length);
+    Esp32Messaging::ConfigurationValue *result = static_cast<Esp32Messaging::ConfigurationValue *>(pvPortMalloc(sizeof(Esp32Messaging::ConfigurationValue)));
+
+    if (result == nullptr)
     {
-        return (nullptr);
-    }
-
-    Esp32Messaging::ConfigurationValue *configurationValue = static_cast<Esp32Messaging::ConfigurationValue *>(pvPortMalloc(sizeof(Esp32Messaging::ConfigurationValue)));
-
-    if (configurationValue == nullptr)
-    {
-        return (nullptr);
-    }
-
-    configurationValue->Item = ExtractUInt32(buffer);
-    buffer += 4;
-    configurationValue->ValueLength = ExtractUInt32(buffer);
-    buffer += 4;
-    if (configurationValue->ValueLength > 0)
-    {
-        configurationValue->Value = static_cast<uint8_t *>(pvPortMalloc(configurationValue->ValueLength));
-
-        if (configurationValue->Value == nullptr)
+        if (malformed != nullptr)
         {
-            Utils::DeleteAndNullifyPointer(configurationValue);
-            return (nullptr);
+            *malformed = false;
         }
+        return (nullptr);
+    }
+    memset(result, 0, sizeof(Esp32Messaging::ConfigurationValue));
 
-        memcpy(configurationValue->Value, buffer, configurationValue->ValueLength);
-        buffer += configurationValue->ValueLength;
-    }
-    else
+    result->Item = reader.ReadUInt32();
+    result->ValueLength = reader.ReadUInt32();
+    result->Value = reader.ReadBlock(result->ValueLength);
+
+    if (reader.Failed())
     {
-        configurationValue->Value = nullptr;
+        Utils::DeleteAndNullifyPointer(result->Value);
+        Utils::DeleteAndNullifyPointer(result);
+        if (malformed != nullptr)
+        {
+            *malformed = !reader.OutOfMemory();
+        }
+        return (nullptr);
     }
-    return (configurationValue);
+    if (malformed != nullptr)
+    {
+        *malformed = false;
+    }
+    return (result);
 }
 
 /**
@@ -768,32 +776,56 @@ int Encoders::EncodedAccessPointInformationBufferSize(const Esp32Messaging::Acce
  *
  *  @returns
  *      Pointer to a AccessPointInformation object.
+ *
+ *  @param length
+ *      Number of bytes in that block, the message's PayloadLength.  Nothing past it is read, and
+ *      no length the payload declares is trusted until it has been checked against it
+ *      (issue #226).
+ *
+ *  @param malformed
+ *      If not nullptr, set to true when the payload is too short for what it declares and false
+ *      otherwise, so the caller can tell a malformed request from running out of memory.
  */
-Esp32Messaging::AccessPointInformation *Encoders::ExtractAccessPointInformation(uint8_t *buffer)
+Esp32Messaging::AccessPointInformation *Encoders::ExtractAccessPointInformation(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
-    Esp32Messaging::AccessPointInformation *accessPointInformation = static_cast<Esp32Messaging::AccessPointInformation *>(pvPortMalloc(sizeof(Esp32Messaging::AccessPointInformation)));
+    PayloadReader reader(buffer, length);
+    Esp32Messaging::AccessPointInformation *result = static_cast<Esp32Messaging::AccessPointInformation *>(pvPortMalloc(sizeof(Esp32Messaging::AccessPointInformation)));
 
-    if (accessPointInformation == nullptr)
+    if (result == nullptr)
     {
+        if (malformed != nullptr)
+        {
+            *malformed = false;
+        }
         return (nullptr);
     }
+    memset(result, 0, sizeof(Esp32Messaging::AccessPointInformation));
 
-    accessPointInformation->NetworkName = ExtractString(buffer);
-    buffer += Encoders::StringLength(accessPointInformation->NetworkName) + 1;
-    accessPointInformation->Password = ExtractString(buffer);
-    buffer += Encoders::StringLength(accessPointInformation->Password) + 1;
-    accessPointInformation->IpAddress = ExtractUInt32(buffer);
-    buffer += 4;
-    accessPointInformation->SubnetMask = ExtractUInt32(buffer);
-    buffer += 4;
-    accessPointInformation->Gateway = ExtractUInt32(buffer);
-    buffer += 4;
-    accessPointInformation->WiFiAuthenticationMode = *buffer;
-    buffer += 1;
-    accessPointInformation->Channel = *buffer;
-    buffer += 1;
-    accessPointInformation->Hidden = *buffer;
-    return (accessPointInformation);
+    result->NetworkName = reader.ReadString();
+    result->Password = reader.ReadString();
+    result->IpAddress = reader.ReadUInt32();
+    result->SubnetMask = reader.ReadUInt32();
+    result->Gateway = reader.ReadUInt32();
+    result->WiFiAuthenticationMode = reader.ReadByte();
+    result->Channel = reader.ReadByte();
+    result->Hidden = reader.ReadByte();
+
+    if (reader.Failed())
+    {
+        Utils::DeleteAndNullifyPointer(result->NetworkName);
+        Utils::DeleteAndNullifyPointer(result->Password);
+        Utils::DeleteAndNullifyPointer(result);
+        if (malformed != nullptr)
+        {
+            *malformed = !reader.OutOfMemory();
+        }
+        return (nullptr);
+    }
+    if (malformed != nullptr)
+    {
+        *malformed = false;
+    }
+    return (result);
 }
 
 /**
@@ -827,18 +859,47 @@ void Encoders::FreeAccessPointInformation(Esp32Messaging::AccessPointInformation
  *
  *  @returns
  *      Pointer to a DisconnectFromAccessPointRequest object.
+ *
+ *  @param length
+ *      Number of bytes in that block, the message's PayloadLength.  Nothing past it is read, and
+ *      no length the payload declares is trusted until it has been checked against it
+ *      (issue #226).
+ *
+ *  @param malformed
+ *      If not nullptr, set to true when the payload is too short for what it declares and false
+ *      otherwise, so the caller can tell a malformed request from running out of memory.
  */
-Esp32Messaging::DisconnectFromAccessPointRequest *Encoders::ExtractDisconnectFromAccessPointRequest(uint8_t *buffer)
+Esp32Messaging::DisconnectFromAccessPointRequest *Encoders::ExtractDisconnectFromAccessPointRequest(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
-    Esp32Messaging::DisconnectFromAccessPointRequest *disconnectFromAccessPointRequest = static_cast<Esp32Messaging::DisconnectFromAccessPointRequest *>(pvPortMalloc(sizeof(Esp32Messaging::DisconnectFromAccessPointRequest)));
+    PayloadReader reader(buffer, length);
+    Esp32Messaging::DisconnectFromAccessPointRequest *result = static_cast<Esp32Messaging::DisconnectFromAccessPointRequest *>(pvPortMalloc(sizeof(Esp32Messaging::DisconnectFromAccessPointRequest)));
 
-    if (disconnectFromAccessPointRequest == nullptr)
+    if (result == nullptr)
     {
+        if (malformed != nullptr)
+        {
+            *malformed = false;
+        }
         return (nullptr);
     }
+    memset(result, 0, sizeof(Esp32Messaging::DisconnectFromAccessPointRequest));
 
-    disconnectFromAccessPointRequest->TurnOffWiFiInterface = *buffer;
-    return (disconnectFromAccessPointRequest);
+    result->TurnOffWiFiInterface = reader.ReadByte();
+
+    if (reader.Failed())
+    {
+        Utils::DeleteAndNullifyPointer(result);
+        if (malformed != nullptr)
+        {
+            *malformed = !reader.OutOfMemory();
+        }
+        return (nullptr);
+    }
+    if (malformed != nullptr)
+    {
+        *malformed = false;
+    }
+    return (result);
 }
 
 /**
@@ -1087,28 +1148,52 @@ int Encoders::EncodedSockAddrBufferSize(const Esp32Messaging::SockAddr * const s
  *
  *  @returns
  *      Pointer to a SockAddr object.
+ *
+ *  @param length
+ *      Number of bytes in that block, the message's PayloadLength.  Nothing past it is read, and
+ *      no length the payload declares is trusted until it has been checked against it
+ *      (issue #226).
+ *
+ *  @param malformed
+ *      If not nullptr, set to true when the payload is too short for what it declares and false
+ *      otherwise, so the caller can tell a malformed request from running out of memory.
  */
-Esp32Messaging::SockAddr *Encoders::ExtractSockAddr(uint8_t *buffer)
+Esp32Messaging::SockAddr *Encoders::ExtractSockAddr(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
-    Esp32Messaging::SockAddr *sockAddr = static_cast<Esp32Messaging::SockAddr *>(pvPortMalloc(sizeof(Esp32Messaging::SockAddr)));
+    PayloadReader reader(buffer, length);
+    Esp32Messaging::SockAddr *result = static_cast<Esp32Messaging::SockAddr *>(pvPortMalloc(sizeof(Esp32Messaging::SockAddr)));
 
-    if (sockAddr == nullptr)
+    if (result == nullptr)
     {
+        if (malformed != nullptr)
+        {
+            *malformed = false;
+        }
         return (nullptr);
     }
+    memset(result, 0, sizeof(Esp32Messaging::SockAddr));
 
-    sockAddr->Family = *buffer;
-    buffer += 1;
-    sockAddr->Port = ExtractUInt16(buffer);
-    buffer += 2;
-    sockAddr->Ip4Address = ExtractUInt32(buffer);
-    buffer += 4;
-    sockAddr->FlowInfo = ExtractUInt32(buffer);
-    buffer += 4;
-    memcpy(sockAddr->Ip6Address, buffer, 16);
-    buffer += 16;
-    sockAddr->ScopeID = ExtractUInt32(buffer);
-    return (sockAddr);
+    result->Family = reader.ReadByte();
+    result->Port = reader.ReadUInt16();
+    result->Ip4Address = reader.ReadUInt32();
+    result->FlowInfo = reader.ReadUInt32();
+    reader.ReadBytes(result->Ip6Address, 16);
+    result->ScopeID = reader.ReadUInt32();
+
+    if (reader.Failed())
+    {
+        Utils::DeleteAndNullifyPointer(result);
+        if (malformed != nullptr)
+        {
+            *malformed = !reader.OutOfMemory();
+        }
+        return (nullptr);
+    }
+    if (malformed != nullptr)
+    {
+        *malformed = false;
+    }
+    return (result);
 }
 
 /**
@@ -1202,49 +1287,58 @@ int Encoders::EncodedAddrInfoBufferSize(const Esp32Messaging::AddrInfo * const a
  *
  *  @returns
  *      Pointer to a AddrInfo object.
+ *
+ *  @param length
+ *      Number of bytes in that block, the message's PayloadLength.  Nothing past it is read, and
+ *      no length the payload declares is trusted until it has been checked against it
+ *      (issue #226).
+ *
+ *  @param malformed
+ *      If not nullptr, set to true when the payload is too short for what it declares and false
+ *      otherwise, so the caller can tell a malformed request from running out of memory.
  */
-Esp32Messaging::AddrInfo *Encoders::ExtractAddrInfo(uint8_t *buffer)
+Esp32Messaging::AddrInfo *Encoders::ExtractAddrInfo(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
-    Esp32Messaging::AddrInfo *addrInfo = static_cast<Esp32Messaging::AddrInfo *>(pvPortMalloc(sizeof(Esp32Messaging::AddrInfo)));
+    PayloadReader reader(buffer, length);
+    Esp32Messaging::AddrInfo *result = static_cast<Esp32Messaging::AddrInfo *>(pvPortMalloc(sizeof(Esp32Messaging::AddrInfo)));
 
-    if (addrInfo == nullptr)
+    if (result == nullptr)
     {
+        if (malformed != nullptr)
+        {
+            *malformed = false;
+        }
         return (nullptr);
     }
+    memset(result, 0, sizeof(Esp32Messaging::AddrInfo));
 
-    addrInfo->MyHeapAddress = ExtractUInt32(buffer);
-    buffer += 4;
-    addrInfo->Flags = ExtractInt32(buffer);
-    buffer += 4;
-    addrInfo->Family = ExtractInt32(buffer);
-    buffer += 4;
-    addrInfo->SocketType = ExtractInt32(buffer);
-    buffer += 4;
-    addrInfo->Protocol = ExtractInt32(buffer);
-    buffer += 4;
-    addrInfo->AddrLen = ExtractUInt32(buffer);
-    buffer += 4;
-    addrInfo->AddrLength = ExtractUInt32(buffer);
-    buffer += 4;
-    if (addrInfo->AddrLength > 0)
+    result->MyHeapAddress = reader.ReadUInt32();
+    result->Flags = reader.ReadInt32();
+    result->Family = reader.ReadInt32();
+    result->SocketType = reader.ReadInt32();
+    result->Protocol = reader.ReadInt32();
+    result->AddrLen = reader.ReadUInt32();
+    result->AddrLength = reader.ReadUInt32();
+    result->Addr = reader.ReadBlock(result->AddrLength);
+    result->CanonName = reader.ReadString();
+    result->Next = reinterpret_cast<void *>(reader.ReadUInt32());
+
+    if (reader.Failed())
     {
-        addrInfo->Addr = static_cast<uint8_t *>(pvPortMalloc(addrInfo->AddrLength));
-        if (addrInfo->Addr == nullptr)
+        Utils::DeleteAndNullifyPointer(result->Addr);
+        Utils::DeleteAndNullifyPointer(result->CanonName);
+        Utils::DeleteAndNullifyPointer(result);
+        if (malformed != nullptr)
         {
-            Utils::DeleteAndNullifyPointer(addrInfo);
-            return (nullptr);
+            *malformed = !reader.OutOfMemory();
         }
-        memcpy(addrInfo->Addr, buffer, addrInfo->AddrLength);
-        buffer += addrInfo->AddrLength;
+        return (nullptr);
     }
-    else
+    if (malformed != nullptr)
     {
-        addrInfo->Addr = nullptr;
+        *malformed = false;
     }
-    addrInfo->CanonName = ExtractString(buffer);
-    buffer += Encoders::StringLength(addrInfo->CanonName) + 1;
-    addrInfo->Next = reinterpret_cast<void *>(ExtractUInt32(buffer));
-    return (addrInfo);
+    return (result);
 }
 
 /**
@@ -1279,40 +1373,53 @@ void Encoders::FreeAddrInfo(Esp32Messaging::AddrInfo **addrInfo)
  *
  *  @returns
  *      Pointer to a GetAddrInfoRequest object.
+ *
+ *  @param length
+ *      Number of bytes in that block, the message's PayloadLength.  Nothing past it is read, and
+ *      no length the payload declares is trusted until it has been checked against it
+ *      (issue #226).
+ *
+ *  @param malformed
+ *      If not nullptr, set to true when the payload is too short for what it declares and false
+ *      otherwise, so the caller can tell a malformed request from running out of memory.
  */
-Esp32Messaging::GetAddrInfoRequest *Encoders::ExtractGetAddrInfoRequest(uint8_t *buffer)
+Esp32Messaging::GetAddrInfoRequest *Encoders::ExtractGetAddrInfoRequest(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
-    Esp32Messaging::GetAddrInfoRequest *getAddrInfoRequest = static_cast<Esp32Messaging::GetAddrInfoRequest *>(pvPortMalloc(sizeof(Esp32Messaging::GetAddrInfoRequest)));
+    PayloadReader reader(buffer, length);
+    Esp32Messaging::GetAddrInfoRequest *result = static_cast<Esp32Messaging::GetAddrInfoRequest *>(pvPortMalloc(sizeof(Esp32Messaging::GetAddrInfoRequest)));
 
-    if (getAddrInfoRequest == nullptr)
+    if (result == nullptr)
     {
+        if (malformed != nullptr)
+        {
+            *malformed = false;
+        }
         return (nullptr);
     }
+    memset(result, 0, sizeof(Esp32Messaging::GetAddrInfoRequest));
 
-    getAddrInfoRequest->NodeName = ExtractString(buffer);
-    buffer += Encoders::StringLength(getAddrInfoRequest->NodeName) + 1;
-    getAddrInfoRequest->ServName = ExtractString(buffer);
-    buffer += Encoders::StringLength(getAddrInfoRequest->ServName) + 1;
-    getAddrInfoRequest->HintsLength = ExtractUInt32(buffer);
-    buffer += 4;
-    if (getAddrInfoRequest->HintsLength > 0)
+    result->NodeName = reader.ReadString();
+    result->ServName = reader.ReadString();
+    result->HintsLength = reader.ReadUInt32();
+    result->Hints = reader.ReadBlock(result->HintsLength);
+
+    if (reader.Failed())
     {
-        getAddrInfoRequest->Hints = static_cast<uint8_t *>(pvPortMalloc(getAddrInfoRequest->HintsLength));
-        if (getAddrInfoRequest->Hints == nullptr)
+        Utils::DeleteAndNullifyPointer(result->NodeName);
+        Utils::DeleteAndNullifyPointer(result->ServName);
+        Utils::DeleteAndNullifyPointer(result->Hints);
+        Utils::DeleteAndNullifyPointer(result);
+        if (malformed != nullptr)
         {
-            Utils::DeleteAndNullifyPointer(getAddrInfoRequest->NodeName);
-            Utils::DeleteAndNullifyPointer(getAddrInfoRequest->ServName);
-            Utils::DeleteAndNullifyPointer(getAddrInfoRequest);
-            return (nullptr);
+            *malformed = !reader.OutOfMemory();
         }
-        memcpy(getAddrInfoRequest->Hints, buffer, getAddrInfoRequest->HintsLength);
-        buffer += getAddrInfoRequest->HintsLength;
+        return (nullptr);
     }
-    else
+    if (malformed != nullptr)
     {
-        getAddrInfoRequest->Hints = nullptr;
+        *malformed = false;
     }
-    return (getAddrInfoRequest);
+    return (result);
 }
 
 /**
@@ -1386,24 +1493,50 @@ int Encoders::EncodedGetAddrInfoResponseBufferSize(const Esp32Messaging::GetAddr
  *
  *  @returns
  *      Pointer to a SocketRequest object.
+ *
+ *  @param length
+ *      Number of bytes in that block, the message's PayloadLength.  Nothing past it is read, and
+ *      no length the payload declares is trusted until it has been checked against it
+ *      (issue #226).
+ *
+ *  @param malformed
+ *      If not nullptr, set to true when the payload is too short for what it declares and false
+ *      otherwise, so the caller can tell a malformed request from running out of memory.
  */
-Esp32Messaging::SocketRequest *Encoders::ExtractSocketRequest(uint8_t *buffer)
+Esp32Messaging::SocketRequest *Encoders::ExtractSocketRequest(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
-    Esp32Messaging::SocketRequest *socketRequest = static_cast<Esp32Messaging::SocketRequest *>(pvPortMalloc(sizeof(Esp32Messaging::SocketRequest)));
+    PayloadReader reader(buffer, length);
+    Esp32Messaging::SocketRequest *result = static_cast<Esp32Messaging::SocketRequest *>(pvPortMalloc(sizeof(Esp32Messaging::SocketRequest)));
 
-    if (socketRequest == nullptr)
+    if (result == nullptr)
     {
+        if (malformed != nullptr)
+        {
+            *malformed = false;
+        }
         return (nullptr);
     }
+    memset(result, 0, sizeof(Esp32Messaging::SocketRequest));
 
-    socketRequest->AddressInformation = reinterpret_cast<void *>(ExtractUInt32(buffer));
-    buffer += 4;
-    socketRequest->Domain = ExtractInt32(buffer);
-    buffer += 4;
-    socketRequest->Type = ExtractInt32(buffer);
-    buffer += 4;
-    socketRequest->Protocol = ExtractInt32(buffer);
-    return (socketRequest);
+    result->AddressInformation = reinterpret_cast<void *>(reader.ReadUInt32());
+    result->Domain = reader.ReadInt32();
+    result->Type = reader.ReadInt32();
+    result->Protocol = reader.ReadInt32();
+
+    if (reader.Failed())
+    {
+        Utils::DeleteAndNullifyPointer(result);
+        if (malformed != nullptr)
+        {
+            *malformed = !reader.OutOfMemory();
+        }
+        return (nullptr);
+    }
+    if (malformed != nullptr)
+    {
+        *malformed = false;
+    }
+    return (result);
 }
 
 /**
@@ -1480,36 +1613,50 @@ int Encoders::EncodedIntegerAndErrnoResponseBufferSize(const Esp32Messaging::Int
  *
  *  @returns
  *      Pointer to a ConnectRequest object.
+ *
+ *  @param length
+ *      Number of bytes in that block, the message's PayloadLength.  Nothing past it is read, and
+ *      no length the payload declares is trusted until it has been checked against it
+ *      (issue #226).
+ *
+ *  @param malformed
+ *      If not nullptr, set to true when the payload is too short for what it declares and false
+ *      otherwise, so the caller can tell a malformed request from running out of memory.
  */
-Esp32Messaging::ConnectRequest *Encoders::ExtractConnectRequest(uint8_t *buffer)
+Esp32Messaging::ConnectRequest *Encoders::ExtractConnectRequest(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
-    Esp32Messaging::ConnectRequest *connectRequest = static_cast<Esp32Messaging::ConnectRequest *>(pvPortMalloc(sizeof(Esp32Messaging::ConnectRequest)));
+    PayloadReader reader(buffer, length);
+    Esp32Messaging::ConnectRequest *result = static_cast<Esp32Messaging::ConnectRequest *>(pvPortMalloc(sizeof(Esp32Messaging::ConnectRequest)));
 
-    if (connectRequest == nullptr)
+    if (result == nullptr)
     {
+        if (malformed != nullptr)
+        {
+            *malformed = false;
+        }
         return (nullptr);
     }
+    memset(result, 0, sizeof(Esp32Messaging::ConnectRequest));
 
-    connectRequest->SocketHandle = ExtractInt32(buffer);
-    buffer += 4;
-    connectRequest->AddrLength = ExtractUInt32(buffer);
-    buffer += 4;
-    if (connectRequest->AddrLength > 0)
+    result->SocketHandle = reader.ReadInt32();
+    result->AddrLength = reader.ReadUInt32();
+    result->Addr = reader.ReadBlock(result->AddrLength);
+
+    if (reader.Failed())
     {
-        connectRequest->Addr = static_cast<uint8_t *>(pvPortMalloc(connectRequest->AddrLength));
-        if (connectRequest->Addr == nullptr)
+        Utils::DeleteAndNullifyPointer(result->Addr);
+        Utils::DeleteAndNullifyPointer(result);
+        if (malformed != nullptr)
         {
-            Utils::DeleteAndNullifyPointer(connectRequest);
-            return (nullptr);
+            *malformed = !reader.OutOfMemory();
         }
-        memcpy(connectRequest->Addr, buffer, connectRequest->AddrLength);
-        buffer += connectRequest->AddrLength;
+        return (nullptr);
     }
-    else
+    if (malformed != nullptr)
     {
-        connectRequest->Addr = nullptr;
+        *malformed = false;
     }
-    return (connectRequest);
+    return (result);
 }
 
 /**
@@ -1542,18 +1689,47 @@ void Encoders::FreeConnectRequest(Esp32Messaging::ConnectRequest **connectReques
  *
  *  @returns
  *      Pointer to a FreeAddrInfoRequest object.
+ *
+ *  @param length
+ *      Number of bytes in that block, the message's PayloadLength.  Nothing past it is read, and
+ *      no length the payload declares is trusted until it has been checked against it
+ *      (issue #226).
+ *
+ *  @param malformed
+ *      If not nullptr, set to true when the payload is too short for what it declares and false
+ *      otherwise, so the caller can tell a malformed request from running out of memory.
  */
-Esp32Messaging::FreeAddrInfoRequest *Encoders::ExtractFreeAddrInfoRequest(uint8_t *buffer)
+Esp32Messaging::FreeAddrInfoRequest *Encoders::ExtractFreeAddrInfoRequest(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
-    Esp32Messaging::FreeAddrInfoRequest *freeAddrInfoRequest = static_cast<Esp32Messaging::FreeAddrInfoRequest *>(pvPortMalloc(sizeof(Esp32Messaging::FreeAddrInfoRequest)));
+    PayloadReader reader(buffer, length);
+    Esp32Messaging::FreeAddrInfoRequest *result = static_cast<Esp32Messaging::FreeAddrInfoRequest *>(pvPortMalloc(sizeof(Esp32Messaging::FreeAddrInfoRequest)));
 
-    if (freeAddrInfoRequest == nullptr)
+    if (result == nullptr)
     {
+        if (malformed != nullptr)
+        {
+            *malformed = false;
+        }
         return (nullptr);
     }
+    memset(result, 0, sizeof(Esp32Messaging::FreeAddrInfoRequest));
 
-    freeAddrInfoRequest->AddrInfoAddress = ExtractUInt32(buffer);
-    return (freeAddrInfoRequest);
+    result->AddrInfoAddress = reader.ReadUInt32();
+
+    if (reader.Failed())
+    {
+        Utils::DeleteAndNullifyPointer(result);
+        if (malformed != nullptr)
+        {
+            *malformed = !reader.OutOfMemory();
+        }
+        return (nullptr);
+    }
+    if (malformed != nullptr)
+    {
+        *malformed = false;
+    }
+    return (result);
 }
 
 /**
@@ -1599,20 +1775,48 @@ int Encoders::EncodedTimeValBufferSize(const Esp32Messaging::TimeVal * const tim
  *
  *  @returns
  *      Pointer to a TimeVal object.
+ *
+ *  @param length
+ *      Number of bytes in that block, the message's PayloadLength.  Nothing past it is read, and
+ *      no length the payload declares is trusted until it has been checked against it
+ *      (issue #226).
+ *
+ *  @param malformed
+ *      If not nullptr, set to true when the payload is too short for what it declares and false
+ *      otherwise, so the caller can tell a malformed request from running out of memory.
  */
-Esp32Messaging::TimeVal *Encoders::ExtractTimeVal(uint8_t *buffer)
+Esp32Messaging::TimeVal *Encoders::ExtractTimeVal(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
-    Esp32Messaging::TimeVal *timeVal = static_cast<Esp32Messaging::TimeVal *>(pvPortMalloc(sizeof(Esp32Messaging::TimeVal)));
+    PayloadReader reader(buffer, length);
+    Esp32Messaging::TimeVal *result = static_cast<Esp32Messaging::TimeVal *>(pvPortMalloc(sizeof(Esp32Messaging::TimeVal)));
 
-    if (timeVal == nullptr)
+    if (result == nullptr)
     {
+        if (malformed != nullptr)
+        {
+            *malformed = false;
+        }
         return (nullptr);
     }
+    memset(result, 0, sizeof(Esp32Messaging::TimeVal));
 
-    timeVal->TvSec = ExtractUInt32(buffer);
-    buffer += 4;
-    timeVal->TvUsec = ExtractUInt32(buffer);
-    return (timeVal);
+    result->TvSec = reader.ReadUInt32();
+    result->TvUsec = reader.ReadUInt32();
+
+    if (reader.Failed())
+    {
+        Utils::DeleteAndNullifyPointer(result);
+        if (malformed != nullptr)
+        {
+            *malformed = !reader.OutOfMemory();
+        }
+        return (nullptr);
+    }
+    if (malformed != nullptr)
+    {
+        *malformed = false;
+    }
+    return (result);
 }
 
 /**
@@ -1627,41 +1831,53 @@ Esp32Messaging::TimeVal *Encoders::ExtractTimeVal(uint8_t *buffer)
  *
  *  @returns
  *      Pointer to a SetSockOptRequest object.
+ *
+ *  @param length
+ *      Number of bytes in that block, the message's PayloadLength.  Nothing past it is read, and
+ *      no length the payload declares is trusted until it has been checked against it
+ *      (issue #226).
+ *
+ *  @param malformed
+ *      If not nullptr, set to true when the payload is too short for what it declares and false
+ *      otherwise, so the caller can tell a malformed request from running out of memory.
  */
-Esp32Messaging::SetSockOptRequest *Encoders::ExtractSetSockOptRequest(uint8_t *buffer)
+Esp32Messaging::SetSockOptRequest *Encoders::ExtractSetSockOptRequest(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
-    Esp32Messaging::SetSockOptRequest *setSockOptRequest = static_cast<Esp32Messaging::SetSockOptRequest *>(pvPortMalloc(sizeof(Esp32Messaging::SetSockOptRequest)));
+    PayloadReader reader(buffer, length);
+    Esp32Messaging::SetSockOptRequest *result = static_cast<Esp32Messaging::SetSockOptRequest *>(pvPortMalloc(sizeof(Esp32Messaging::SetSockOptRequest)));
 
-    if (setSockOptRequest == nullptr)
+    if (result == nullptr)
     {
+        if (malformed != nullptr)
+        {
+            *malformed = false;
+        }
         return (nullptr);
     }
+    memset(result, 0, sizeof(Esp32Messaging::SetSockOptRequest));
 
-    setSockOptRequest->SocketHandle = ExtractInt32(buffer);
-    buffer += 4;
-    setSockOptRequest->Level = ExtractInt32(buffer);
-    buffer += 4;
-    setSockOptRequest->OptionName = ExtractInt32(buffer);
-    buffer += 4;
-    setSockOptRequest->OptionValueLength = ExtractUInt32(buffer);
-    buffer += 4;
-    if (setSockOptRequest->OptionValueLength > 0)
+    result->SocketHandle = reader.ReadInt32();
+    result->Level = reader.ReadInt32();
+    result->OptionName = reader.ReadInt32();
+    result->OptionValueLength = reader.ReadUInt32();
+    result->OptionValue = reader.ReadBlock(result->OptionValueLength);
+    result->OptionLen = reader.ReadInt32();
+
+    if (reader.Failed())
     {
-        setSockOptRequest->OptionValue = static_cast<uint8_t *>(pvPortMalloc(setSockOptRequest->OptionValueLength));
-        if (setSockOptRequest->OptionValue == nullptr)
+        Utils::DeleteAndNullifyPointer(result->OptionValue);
+        Utils::DeleteAndNullifyPointer(result);
+        if (malformed != nullptr)
         {
-            Utils::DeleteAndNullifyPointer(setSockOptRequest);
-            return (nullptr);
+            *malformed = !reader.OutOfMemory();
         }
-        memcpy(setSockOptRequest->OptionValue, buffer, setSockOptRequest->OptionValueLength);
-        buffer += setSockOptRequest->OptionValueLength;
+        return (nullptr);
     }
-    else
+    if (malformed != nullptr)
     {
-        setSockOptRequest->OptionValue = nullptr;
+        *malformed = false;
     }
-    setSockOptRequest->OptionLen = ExtractInt32(buffer);
-    return (setSockOptRequest);
+    return (result);
 }
 
 /**
@@ -1694,22 +1910,49 @@ void Encoders::FreeSetSockOptRequest(Esp32Messaging::SetSockOptRequest **setSock
  *
  *  @returns
  *      Pointer to a GetSockOptRequest object.
+ *
+ *  @param length
+ *      Number of bytes in that block, the message's PayloadLength.  Nothing past it is read, and
+ *      no length the payload declares is trusted until it has been checked against it
+ *      (issue #226).
+ *
+ *  @param malformed
+ *      If not nullptr, set to true when the payload is too short for what it declares and false
+ *      otherwise, so the caller can tell a malformed request from running out of memory.
  */
-Esp32Messaging::GetSockOptRequest *Encoders::ExtractGetSockOptRequest(uint8_t *buffer)
+Esp32Messaging::GetSockOptRequest *Encoders::ExtractGetSockOptRequest(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
-    Esp32Messaging::GetSockOptRequest *getSockOptRequest = static_cast<Esp32Messaging::GetSockOptRequest *>(pvPortMalloc(sizeof(Esp32Messaging::GetSockOptRequest)));
+    PayloadReader reader(buffer, length);
+    Esp32Messaging::GetSockOptRequest *result = static_cast<Esp32Messaging::GetSockOptRequest *>(pvPortMalloc(sizeof(Esp32Messaging::GetSockOptRequest)));
 
-    if (getSockOptRequest == nullptr)
+    if (result == nullptr)
     {
+        if (malformed != nullptr)
+        {
+            *malformed = false;
+        }
         return (nullptr);
     }
+    memset(result, 0, sizeof(Esp32Messaging::GetSockOptRequest));
 
-    getSockOptRequest->SocketHandle = ExtractInt32(buffer);
-    buffer += 4;
-    getSockOptRequest->Level = ExtractInt32(buffer);
-    buffer += 4;
-    getSockOptRequest->OptionName = ExtractInt32(buffer);
-    return (getSockOptRequest);
+    result->SocketHandle = reader.ReadInt32();
+    result->Level = reader.ReadInt32();
+    result->OptionName = reader.ReadInt32();
+
+    if (reader.Failed())
+    {
+        Utils::DeleteAndNullifyPointer(result);
+        if (malformed != nullptr)
+        {
+            *malformed = !reader.OutOfMemory();
+        }
+        return (nullptr);
+    }
+    if (malformed != nullptr)
+    {
+        *malformed = false;
+    }
+    return (result);
 }
 
 /**
@@ -1799,37 +2042,51 @@ int Encoders::EncodedLingerBufferSize(const Esp32Messaging::Linger * const linge
  *
  *  @returns
  *      Pointer to a WriteRequest object.
+ *
+ *  @param length
+ *      Number of bytes in that block, the message's PayloadLength.  Nothing past it is read, and
+ *      no length the payload declares is trusted until it has been checked against it
+ *      (issue #226).
+ *
+ *  @param malformed
+ *      If not nullptr, set to true when the payload is too short for what it declares and false
+ *      otherwise, so the caller can tell a malformed request from running out of memory.
  */
-Esp32Messaging::WriteRequest *Encoders::ExtractWriteRequest(uint8_t *buffer)
+Esp32Messaging::WriteRequest *Encoders::ExtractWriteRequest(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
-    Esp32Messaging::WriteRequest *writeRequest = static_cast<Esp32Messaging::WriteRequest *>(pvPortMalloc(sizeof(Esp32Messaging::WriteRequest)));
+    PayloadReader reader(buffer, length);
+    Esp32Messaging::WriteRequest *result = static_cast<Esp32Messaging::WriteRequest *>(pvPortMalloc(sizeof(Esp32Messaging::WriteRequest)));
 
-    if (writeRequest == nullptr)
+    if (result == nullptr)
     {
+        if (malformed != nullptr)
+        {
+            *malformed = false;
+        }
         return (nullptr);
     }
+    memset(result, 0, sizeof(Esp32Messaging::WriteRequest));
 
-    writeRequest->SocketHandle = ExtractInt32(buffer);
-    buffer += 4;
-    writeRequest->BufferLength = ExtractUInt32(buffer);
-    buffer += 4;
-    if (writeRequest->BufferLength > 0)
+    result->SocketHandle = reader.ReadInt32();
+    result->BufferLength = reader.ReadUInt32();
+    result->Buffer = reader.ReadBlock(result->BufferLength);
+    result->Count = reader.ReadInt32();
+
+    if (reader.Failed())
     {
-        writeRequest->Buffer = static_cast<uint8_t *>(pvPortMalloc(writeRequest->BufferLength));
-        if (writeRequest->Buffer == nullptr)
+        Utils::DeleteAndNullifyPointer(result->Buffer);
+        Utils::DeleteAndNullifyPointer(result);
+        if (malformed != nullptr)
         {
-            Utils::DeleteAndNullifyPointer(writeRequest);
-            return (nullptr);
+            *malformed = !reader.OutOfMemory();
         }
-        memcpy(writeRequest->Buffer, buffer, writeRequest->BufferLength);
-        buffer += writeRequest->BufferLength;
+        return (nullptr);
     }
-    else
+    if (malformed != nullptr)
     {
-        writeRequest->Buffer = nullptr;
+        *malformed = false;
     }
-    writeRequest->Count = ExtractInt32(buffer);
-    return (writeRequest);
+    return (result);
 }
 
 /**
@@ -1862,20 +2119,48 @@ void Encoders::FreeWriteRequest(Esp32Messaging::WriteRequest **writeRequest)
  *
  *  @returns
  *      Pointer to a ReadRequest object.
+ *
+ *  @param length
+ *      Number of bytes in that block, the message's PayloadLength.  Nothing past it is read, and
+ *      no length the payload declares is trusted until it has been checked against it
+ *      (issue #226).
+ *
+ *  @param malformed
+ *      If not nullptr, set to true when the payload is too short for what it declares and false
+ *      otherwise, so the caller can tell a malformed request from running out of memory.
  */
-Esp32Messaging::ReadRequest *Encoders::ExtractReadRequest(uint8_t *buffer)
+Esp32Messaging::ReadRequest *Encoders::ExtractReadRequest(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
-    Esp32Messaging::ReadRequest *readRequest = static_cast<Esp32Messaging::ReadRequest *>(pvPortMalloc(sizeof(Esp32Messaging::ReadRequest)));
+    PayloadReader reader(buffer, length);
+    Esp32Messaging::ReadRequest *result = static_cast<Esp32Messaging::ReadRequest *>(pvPortMalloc(sizeof(Esp32Messaging::ReadRequest)));
 
-    if (readRequest == nullptr)
+    if (result == nullptr)
     {
+        if (malformed != nullptr)
+        {
+            *malformed = false;
+        }
         return (nullptr);
     }
+    memset(result, 0, sizeof(Esp32Messaging::ReadRequest));
 
-    readRequest->SocketHandle = ExtractInt32(buffer);
-    buffer += 4;
-    readRequest->Count = ExtractInt32(buffer);
-    return (readRequest);
+    result->SocketHandle = reader.ReadInt32();
+    result->Count = reader.ReadInt32();
+
+    if (reader.Failed())
+    {
+        Utils::DeleteAndNullifyPointer(result);
+        if (malformed != nullptr)
+        {
+            *malformed = !reader.OutOfMemory();
+        }
+        return (nullptr);
+    }
+    if (malformed != nullptr)
+    {
+        *malformed = false;
+    }
+    return (result);
 }
 
 /**
@@ -1930,18 +2215,47 @@ int Encoders::EncodedReadResponseBufferSize(const Esp32Messaging::ReadResponse *
  *
  *  @returns
  *      Pointer to a CloseRequest object.
+ *
+ *  @param length
+ *      Number of bytes in that block, the message's PayloadLength.  Nothing past it is read, and
+ *      no length the payload declares is trusted until it has been checked against it
+ *      (issue #226).
+ *
+ *  @param malformed
+ *      If not nullptr, set to true when the payload is too short for what it declares and false
+ *      otherwise, so the caller can tell a malformed request from running out of memory.
  */
-Esp32Messaging::CloseRequest *Encoders::ExtractCloseRequest(uint8_t *buffer)
+Esp32Messaging::CloseRequest *Encoders::ExtractCloseRequest(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
-    Esp32Messaging::CloseRequest *closeRequest = static_cast<Esp32Messaging::CloseRequest *>(pvPortMalloc(sizeof(Esp32Messaging::CloseRequest)));
+    PayloadReader reader(buffer, length);
+    Esp32Messaging::CloseRequest *result = static_cast<Esp32Messaging::CloseRequest *>(pvPortMalloc(sizeof(Esp32Messaging::CloseRequest)));
 
-    if (closeRequest == nullptr)
+    if (result == nullptr)
     {
+        if (malformed != nullptr)
+        {
+            *malformed = false;
+        }
         return (nullptr);
     }
+    memset(result, 0, sizeof(Esp32Messaging::CloseRequest));
 
-    closeRequest->SocketHandle = ExtractInt32(buffer);
-    return (closeRequest);
+    result->SocketHandle = reader.ReadInt32();
+
+    if (reader.Failed())
+    {
+        Utils::DeleteAndNullifyPointer(result);
+        if (malformed != nullptr)
+        {
+            *malformed = !reader.OutOfMemory();
+        }
+        return (nullptr);
+    }
+    if (malformed != nullptr)
+    {
+        *malformed = false;
+    }
+    return (result);
 }
 
 /**
@@ -1986,39 +2300,52 @@ int Encoders::EncodedGetBatteryChargeLevelResponseBufferSize(const Esp32Messagin
  *
  *  @returns
  *      Pointer to a SendRequest object.
+ *
+ *  @param length
+ *      Number of bytes in that block, the message's PayloadLength.  Nothing past it is read, and
+ *      no length the payload declares is trusted until it has been checked against it
+ *      (issue #226).
+ *
+ *  @param malformed
+ *      If not nullptr, set to true when the payload is too short for what it declares and false
+ *      otherwise, so the caller can tell a malformed request from running out of memory.
  */
-Esp32Messaging::SendRequest *Encoders::ExtractSendRequest(uint8_t *buffer)
+Esp32Messaging::SendRequest *Encoders::ExtractSendRequest(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
-    Esp32Messaging::SendRequest *sendRequest = static_cast<Esp32Messaging::SendRequest *>(pvPortMalloc(sizeof(Esp32Messaging::SendRequest)));
+    PayloadReader reader(buffer, length);
+    Esp32Messaging::SendRequest *result = static_cast<Esp32Messaging::SendRequest *>(pvPortMalloc(sizeof(Esp32Messaging::SendRequest)));
 
-    if (sendRequest == nullptr)
+    if (result == nullptr)
     {
+        if (malformed != nullptr)
+        {
+            *malformed = false;
+        }
         return (nullptr);
     }
+    memset(result, 0, sizeof(Esp32Messaging::SendRequest));
 
-    sendRequest->SocketHandle = ExtractInt32(buffer);
-    buffer += 4;
-    sendRequest->BufferLength = ExtractUInt32(buffer);
-    buffer += 4;
-    if (sendRequest->BufferLength > 0)
+    result->SocketHandle = reader.ReadInt32();
+    result->BufferLength = reader.ReadUInt32();
+    result->Buffer = reader.ReadBlock(result->BufferLength);
+    result->Length = reader.ReadInt32();
+    result->Flags = reader.ReadInt32();
+
+    if (reader.Failed())
     {
-        sendRequest->Buffer = static_cast<uint8_t *>(pvPortMalloc(sendRequest->BufferLength));
-        if (sendRequest->Buffer == nullptr)
+        Utils::DeleteAndNullifyPointer(result->Buffer);
+        Utils::DeleteAndNullifyPointer(result);
+        if (malformed != nullptr)
         {
-            Utils::DeleteAndNullifyPointer(sendRequest);
-            return (nullptr);
+            *malformed = !reader.OutOfMemory();
         }
-        memcpy(sendRequest->Buffer, buffer, sendRequest->BufferLength);
-        buffer += sendRequest->BufferLength;
+        return (nullptr);
     }
-    else
+    if (malformed != nullptr)
     {
-        sendRequest->Buffer = nullptr;
+        *malformed = false;
     }
-    sendRequest->Length = ExtractInt32(buffer);
-    buffer += 4;
-    sendRequest->Flags = ExtractInt32(buffer);
-    return (sendRequest);
+    return (result);
 }
 
 /**
@@ -2052,58 +2379,55 @@ void Encoders::FreeSendRequest(Esp32Messaging::SendRequest **sendRequest)
  *
  *  @returns
  *      Pointer to a SendToRequest object.
+ *
+ *  @param length
+ *      Number of bytes in that block, the message's PayloadLength.  Nothing past it is read, and
+ *      no length the payload declares is trusted until it has been checked against it
+ *      (issue #226).
+ *
+ *  @param malformed
+ *      If not nullptr, set to true when the payload is too short for what it declares and false
+ *      otherwise, so the caller can tell a malformed request from running out of memory.
  */
-Esp32Messaging::SendToRequest *Encoders::ExtractSendToRequest(uint8_t *buffer)
+Esp32Messaging::SendToRequest *Encoders::ExtractSendToRequest(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
-    Esp32Messaging::SendToRequest *sendToRequest = static_cast<Esp32Messaging::SendToRequest *>(pvPortMalloc(sizeof(Esp32Messaging::SendToRequest)));
+    PayloadReader reader(buffer, length);
+    Esp32Messaging::SendToRequest *result = static_cast<Esp32Messaging::SendToRequest *>(pvPortMalloc(sizeof(Esp32Messaging::SendToRequest)));
 
-    if (sendToRequest == nullptr)
+    if (result == nullptr)
     {
+        if (malformed != nullptr)
+        {
+            *malformed = false;
+        }
         return (nullptr);
     }
+    memset(result, 0, sizeof(Esp32Messaging::SendToRequest));
 
-    sendToRequest->SocketHandle = ExtractInt32(buffer);
-    buffer += 4;
-    sendToRequest->BufferLength = ExtractUInt32(buffer);
-    buffer += 4;
-    if (sendToRequest->BufferLength > 0)
+    result->SocketHandle = reader.ReadInt32();
+    result->BufferLength = reader.ReadUInt32();
+    result->Buffer = reader.ReadBlock(result->BufferLength);
+    result->Length = reader.ReadInt32();
+    result->Flags = reader.ReadInt32();
+    result->DestinationAddressLength = reader.ReadUInt32();
+    result->DestinationAddress = reader.ReadBlock(result->DestinationAddressLength);
+
+    if (reader.Failed())
     {
-        sendToRequest->Buffer = static_cast<uint8_t *>(pvPortMalloc(sendToRequest->BufferLength));
-        if (sendToRequest->Buffer == nullptr)
+        Utils::DeleteAndNullifyPointer(result->Buffer);
+        Utils::DeleteAndNullifyPointer(result->DestinationAddress);
+        Utils::DeleteAndNullifyPointer(result);
+        if (malformed != nullptr)
         {
-            Utils::DeleteAndNullifyPointer(sendToRequest);
-            return (nullptr);
+            *malformed = !reader.OutOfMemory();
         }
-        memcpy(sendToRequest->Buffer, buffer, sendToRequest->BufferLength);
-        buffer += sendToRequest->BufferLength;
+        return (nullptr);
     }
-    else
+    if (malformed != nullptr)
     {
-        sendToRequest->Buffer = nullptr;
+        *malformed = false;
     }
-    sendToRequest->Length = ExtractInt32(buffer);
-    buffer += 4;
-    sendToRequest->Flags = ExtractInt32(buffer);
-    buffer += 4;
-    sendToRequest->DestinationAddressLength = ExtractUInt32(buffer);
-    buffer += 4;
-    if (sendToRequest->DestinationAddressLength > 0)
-    {
-        sendToRequest->DestinationAddress = static_cast<uint8_t *>(pvPortMalloc(sendToRequest->DestinationAddressLength));
-        if (sendToRequest->DestinationAddress == nullptr)
-        {
-            Utils::DeleteAndNullifyPointer(sendToRequest->Buffer);
-            Utils::DeleteAndNullifyPointer(sendToRequest);
-            return (nullptr);
-        }
-        memcpy(sendToRequest->DestinationAddress, buffer, sendToRequest->DestinationAddressLength);
-        buffer += sendToRequest->DestinationAddressLength;
-    }
-    else
-    {
-        sendToRequest->DestinationAddress = nullptr;
-    }
-    return (sendToRequest);
+    return (result);
 }
 
 /**
@@ -2137,24 +2461,50 @@ void Encoders::FreeSendToRequest(Esp32Messaging::SendToRequest **sendToRequest)
  *
  *  @returns
  *      Pointer to a RecvFromRequest object.
+ *
+ *  @param length
+ *      Number of bytes in that block, the message's PayloadLength.  Nothing past it is read, and
+ *      no length the payload declares is trusted until it has been checked against it
+ *      (issue #226).
+ *
+ *  @param malformed
+ *      If not nullptr, set to true when the payload is too short for what it declares and false
+ *      otherwise, so the caller can tell a malformed request from running out of memory.
  */
-Esp32Messaging::RecvFromRequest *Encoders::ExtractRecvFromRequest(uint8_t *buffer)
+Esp32Messaging::RecvFromRequest *Encoders::ExtractRecvFromRequest(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
-    Esp32Messaging::RecvFromRequest *recvFromRequest = static_cast<Esp32Messaging::RecvFromRequest *>(pvPortMalloc(sizeof(Esp32Messaging::RecvFromRequest)));
+    PayloadReader reader(buffer, length);
+    Esp32Messaging::RecvFromRequest *result = static_cast<Esp32Messaging::RecvFromRequest *>(pvPortMalloc(sizeof(Esp32Messaging::RecvFromRequest)));
 
-    if (recvFromRequest == nullptr)
+    if (result == nullptr)
     {
+        if (malformed != nullptr)
+        {
+            *malformed = false;
+        }
         return (nullptr);
     }
+    memset(result, 0, sizeof(Esp32Messaging::RecvFromRequest));
 
-    recvFromRequest->SocketHandle = ExtractInt32(buffer);
-    buffer += 4;
-    recvFromRequest->Length = ExtractInt32(buffer);
-    buffer += 4;
-    recvFromRequest->Flags = ExtractInt32(buffer);
-    buffer += 4;
-    recvFromRequest->GetSourceAddress = ExtractInt32(buffer);
-    return (recvFromRequest);
+    result->SocketHandle = reader.ReadInt32();
+    result->Length = reader.ReadInt32();
+    result->Flags = reader.ReadInt32();
+    result->GetSourceAddress = reader.ReadInt32();
+
+    if (reader.Failed())
+    {
+        Utils::DeleteAndNullifyPointer(result);
+        if (malformed != nullptr)
+        {
+            *malformed = !reader.OutOfMemory();
+        }
+        return (nullptr);
+    }
+    if (malformed != nullptr)
+    {
+        *malformed = false;
+    }
+    return (result);
 }
 
 /**
@@ -2416,32 +2766,52 @@ void Encoders::FreeSendMsgRequest(Esp32Messaging::SendMsgRequest **sendMsgReques
  *
  *  @returns
  *      Pointer to a RecvMsgRequest object.
+ *
+ *  @param length
+ *      Number of bytes in that block, the message's PayloadLength.  Nothing past it is read, and
+ *      no length the payload declares is trusted until it has been checked against it
+ *      (issue #226).
+ *
+ *  @param malformed
+ *      If not nullptr, set to true when the payload is too short for what it declares and false
+ *      otherwise, so the caller can tell a malformed request from running out of memory.
  */
 // cppcheck-suppress unusedFunction symbolName=ExtractRecvMsgRequest
-Esp32Messaging::RecvMsgRequest *Encoders::ExtractRecvMsgRequest(uint8_t *buffer)
+Esp32Messaging::RecvMsgRequest *Encoders::ExtractRecvMsgRequest(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
-    if (buffer == nullptr)
+    PayloadReader reader(buffer, length);
+    Esp32Messaging::RecvMsgRequest *result = static_cast<Esp32Messaging::RecvMsgRequest *>(pvPortMalloc(sizeof(Esp32Messaging::RecvMsgRequest)));
+
+    if (result == nullptr)
     {
+        if (malformed != nullptr)
+        {
+            *malformed = false;
+        }
         return (nullptr);
     }
+    memset(result, 0, sizeof(Esp32Messaging::RecvMsgRequest));
 
-    Esp32Messaging::RecvMsgRequest *recvMsgRequest = static_cast<Esp32Messaging::RecvMsgRequest *>(pvPortMalloc(sizeof(Esp32Messaging::RecvMsgRequest)));
+    result->SocketHandle = reader.ReadInt32();
+    result->Length = reader.ReadInt32();
+    result->Flags = reader.ReadInt32();
+    result->GetSourceAddress = reader.ReadInt32();
+    result->ControlLength = reader.ReadUInt32();
 
-    if (recvMsgRequest == nullptr)
+    if (reader.Failed())
     {
+        Utils::DeleteAndNullifyPointer(result);
+        if (malformed != nullptr)
+        {
+            *malformed = !reader.OutOfMemory();
+        }
         return (nullptr);
     }
-
-    recvMsgRequest->SocketHandle = ExtractInt32(buffer);
-    buffer += 4;
-    recvMsgRequest->Length = ExtractInt32(buffer);
-    buffer += 4;
-    recvMsgRequest->Flags = ExtractInt32(buffer);
-    buffer += 4;
-    recvMsgRequest->GetSourceAddress = ExtractInt32(buffer);
-    buffer += 4;
-    recvMsgRequest->ControlLength = ExtractUInt32(buffer);
-    return (recvMsgRequest);
+    if (malformed != nullptr)
+    {
+        *malformed = false;
+    }
+    return (result);
 }
 
 /**
@@ -2545,26 +2915,51 @@ int Encoders::EncodedRecvMsgResponseBufferSize(const Esp32Messaging::RecvMsgResp
  *
  *  @returns
  *      Pointer to a PollRequest object.
+ *
+ *  @param length
+ *      Number of bytes in that block, the message's PayloadLength.  Nothing past it is read, and
+ *      no length the payload declares is trusted until it has been checked against it
+ *      (issue #226).
+ *
+ *  @param malformed
+ *      If not nullptr, set to true when the payload is too short for what it declares and false
+ *      otherwise, so the caller can tell a malformed request from running out of memory.
  */
-Esp32Messaging::PollRequest *Encoders::ExtractPollRequest(uint8_t *buffer)
+Esp32Messaging::PollRequest *Encoders::ExtractPollRequest(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
-    Esp32Messaging::PollRequest *pollRequest = static_cast<Esp32Messaging::PollRequest *>(pvPortMalloc(sizeof(Esp32Messaging::PollRequest)));
+    PayloadReader reader(buffer, length);
+    Esp32Messaging::PollRequest *result = static_cast<Esp32Messaging::PollRequest *>(pvPortMalloc(sizeof(Esp32Messaging::PollRequest)));
 
-    if (pollRequest == nullptr)
+    if (result == nullptr)
     {
+        if (malformed != nullptr)
+        {
+            *malformed = false;
+        }
         return (nullptr);
     }
+    memset(result, 0, sizeof(Esp32Messaging::PollRequest));
 
-    pollRequest->SocketHandle = ExtractInt32(buffer);
-    buffer += 4;
-    pollRequest->Events = ExtractUInt16(buffer);
-    buffer += 2;
-    pollRequest->Timeout = ExtractInt32(buffer);
-    buffer += 4;
-    pollRequest->Setup = ExtractInt32(buffer);
-    buffer += 4;
-    pollRequest->SetupMessageId = ExtractUInt32(buffer);
-    return (pollRequest);
+    result->SocketHandle = reader.ReadInt32();
+    result->Events = reader.ReadUInt16();
+    result->Timeout = reader.ReadInt32();
+    result->Setup = reader.ReadInt32();
+    result->SetupMessageId = reader.ReadUInt32();
+
+    if (reader.Failed())
+    {
+        Utils::DeleteAndNullifyPointer(result);
+        if (malformed != nullptr)
+        {
+            *malformed = !reader.OutOfMemory();
+        }
+        return (nullptr);
+    }
+    if (malformed != nullptr)
+    {
+        *malformed = false;
+    }
+    return (result);
 }
 
 /**
@@ -2650,20 +3045,48 @@ int Encoders::EncodedInterruptPollResponseBufferSize(const Esp32Messaging::Inter
  *
  *  @returns
  *      Pointer to a ListenRequest object.
+ *
+ *  @param length
+ *      Number of bytes in that block, the message's PayloadLength.  Nothing past it is read, and
+ *      no length the payload declares is trusted until it has been checked against it
+ *      (issue #226).
+ *
+ *  @param malformed
+ *      If not nullptr, set to true when the payload is too short for what it declares and false
+ *      otherwise, so the caller can tell a malformed request from running out of memory.
  */
-Esp32Messaging::ListenRequest *Encoders::ExtractListenRequest(uint8_t *buffer)
+Esp32Messaging::ListenRequest *Encoders::ExtractListenRequest(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
-    Esp32Messaging::ListenRequest *listenRequest = static_cast<Esp32Messaging::ListenRequest *>(pvPortMalloc(sizeof(Esp32Messaging::ListenRequest)));
+    PayloadReader reader(buffer, length);
+    Esp32Messaging::ListenRequest *result = static_cast<Esp32Messaging::ListenRequest *>(pvPortMalloc(sizeof(Esp32Messaging::ListenRequest)));
 
-    if (listenRequest == nullptr)
+    if (result == nullptr)
     {
+        if (malformed != nullptr)
+        {
+            *malformed = false;
+        }
         return (nullptr);
     }
+    memset(result, 0, sizeof(Esp32Messaging::ListenRequest));
 
-    listenRequest->SocketHandle = ExtractInt32(buffer);
-    buffer += 4;
-    listenRequest->BackLog = ExtractInt32(buffer);
-    return (listenRequest);
+    result->SocketHandle = reader.ReadInt32();
+    result->BackLog = reader.ReadInt32();
+
+    if (reader.Failed())
+    {
+        Utils::DeleteAndNullifyPointer(result);
+        if (malformed != nullptr)
+        {
+            *malformed = !reader.OutOfMemory();
+        }
+        return (nullptr);
+    }
+    if (malformed != nullptr)
+    {
+        *malformed = false;
+    }
+    return (result);
 }
 
 /**
@@ -2678,36 +3101,50 @@ Esp32Messaging::ListenRequest *Encoders::ExtractListenRequest(uint8_t *buffer)
  *
  *  @returns
  *      Pointer to a BindRequest object.
+ *
+ *  @param length
+ *      Number of bytes in that block, the message's PayloadLength.  Nothing past it is read, and
+ *      no length the payload declares is trusted until it has been checked against it
+ *      (issue #226).
+ *
+ *  @param malformed
+ *      If not nullptr, set to true when the payload is too short for what it declares and false
+ *      otherwise, so the caller can tell a malformed request from running out of memory.
  */
-Esp32Messaging::BindRequest *Encoders::ExtractBindRequest(uint8_t *buffer)
+Esp32Messaging::BindRequest *Encoders::ExtractBindRequest(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
-    Esp32Messaging::BindRequest *bindRequest = static_cast<Esp32Messaging::BindRequest *>(pvPortMalloc(sizeof(Esp32Messaging::BindRequest)));
+    PayloadReader reader(buffer, length);
+    Esp32Messaging::BindRequest *result = static_cast<Esp32Messaging::BindRequest *>(pvPortMalloc(sizeof(Esp32Messaging::BindRequest)));
 
-    if (bindRequest == nullptr)
+    if (result == nullptr)
     {
+        if (malformed != nullptr)
+        {
+            *malformed = false;
+        }
         return (nullptr);
     }
+    memset(result, 0, sizeof(Esp32Messaging::BindRequest));
 
-    bindRequest->SocketHandle = ExtractInt32(buffer);
-    buffer += 4;
-    bindRequest->AddrLength = ExtractUInt32(buffer);
-    buffer += 4;
-    if (bindRequest->AddrLength > 0)
+    result->SocketHandle = reader.ReadInt32();
+    result->AddrLength = reader.ReadUInt32();
+    result->Addr = reader.ReadBlock(result->AddrLength);
+
+    if (reader.Failed())
     {
-        bindRequest->Addr = static_cast<uint8_t *>(pvPortMalloc(bindRequest->AddrLength));
-        if (bindRequest->Addr == nullptr)
+        Utils::DeleteAndNullifyPointer(result->Addr);
+        Utils::DeleteAndNullifyPointer(result);
+        if (malformed != nullptr)
         {
-            Utils::DeleteAndNullifyPointer(bindRequest);
-            return (nullptr);
+            *malformed = !reader.OutOfMemory();
         }
-        memcpy(bindRequest->Addr, buffer, bindRequest->AddrLength);
-        buffer += bindRequest->AddrLength;
+        return (nullptr);
     }
-    else
+    if (malformed != nullptr)
     {
-        bindRequest->Addr = nullptr;
+        *malformed = false;
     }
-    return (bindRequest);
+    return (result);
 }
 
 /**
@@ -2740,18 +3177,47 @@ void Encoders::FreeBindRequest(Esp32Messaging::BindRequest **bindRequest)
  *
  *  @returns
  *      Pointer to a AcceptRequest object.
+ *
+ *  @param length
+ *      Number of bytes in that block, the message's PayloadLength.  Nothing past it is read, and
+ *      no length the payload declares is trusted until it has been checked against it
+ *      (issue #226).
+ *
+ *  @param malformed
+ *      If not nullptr, set to true when the payload is too short for what it declares and false
+ *      otherwise, so the caller can tell a malformed request from running out of memory.
  */
-Esp32Messaging::AcceptRequest *Encoders::ExtractAcceptRequest(uint8_t *buffer)
+Esp32Messaging::AcceptRequest *Encoders::ExtractAcceptRequest(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
-    Esp32Messaging::AcceptRequest *acceptRequest = static_cast<Esp32Messaging::AcceptRequest *>(pvPortMalloc(sizeof(Esp32Messaging::AcceptRequest)));
+    PayloadReader reader(buffer, length);
+    Esp32Messaging::AcceptRequest *result = static_cast<Esp32Messaging::AcceptRequest *>(pvPortMalloc(sizeof(Esp32Messaging::AcceptRequest)));
 
-    if (acceptRequest == nullptr)
+    if (result == nullptr)
     {
+        if (malformed != nullptr)
+        {
+            *malformed = false;
+        }
         return (nullptr);
     }
+    memset(result, 0, sizeof(Esp32Messaging::AcceptRequest));
 
-    acceptRequest->SocketHandle = ExtractInt32(buffer);
-    return (acceptRequest);
+    result->SocketHandle = reader.ReadInt32();
+
+    if (reader.Failed())
+    {
+        Utils::DeleteAndNullifyPointer(result);
+        if (malformed != nullptr)
+        {
+            *malformed = !reader.OutOfMemory();
+        }
+        return (nullptr);
+    }
+    if (malformed != nullptr)
+    {
+        *malformed = false;
+    }
+    return (result);
 }
 
 /**
@@ -2806,18 +3272,47 @@ int Encoders::EncodedAcceptResponseBufferSize(const Esp32Messaging::AcceptRespon
  *
  *  @returns
  *      Pointer to a IoctlRequest object.
+ *
+ *  @param length
+ *      Number of bytes in that block, the message's PayloadLength.  Nothing past it is read, and
+ *      no length the payload declares is trusted until it has been checked against it
+ *      (issue #226).
+ *
+ *  @param malformed
+ *      If not nullptr, set to true when the payload is too short for what it declares and false
+ *      otherwise, so the caller can tell a malformed request from running out of memory.
  */
-Esp32Messaging::IoctlRequest *Encoders::ExtractIoctlRequest(uint8_t *buffer)
+Esp32Messaging::IoctlRequest *Encoders::ExtractIoctlRequest(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
-    Esp32Messaging::IoctlRequest *ioctlRequest = static_cast<Esp32Messaging::IoctlRequest *>(pvPortMalloc(sizeof(Esp32Messaging::IoctlRequest)));
+    PayloadReader reader(buffer, length);
+    Esp32Messaging::IoctlRequest *result = static_cast<Esp32Messaging::IoctlRequest *>(pvPortMalloc(sizeof(Esp32Messaging::IoctlRequest)));
 
-    if (ioctlRequest == nullptr)
+    if (result == nullptr)
     {
+        if (malformed != nullptr)
+        {
+            *malformed = false;
+        }
         return (nullptr);
     }
+    memset(result, 0, sizeof(Esp32Messaging::IoctlRequest));
 
-    ioctlRequest->Command = ExtractInt32(buffer);
-    return (ioctlRequest);
+    result->Command = reader.ReadInt32();
+
+    if (reader.Failed())
+    {
+        Utils::DeleteAndNullifyPointer(result);
+        if (malformed != nullptr)
+        {
+            *malformed = !reader.OutOfMemory();
+        }
+        return (nullptr);
+    }
+    if (malformed != nullptr)
+    {
+        *malformed = false;
+    }
+    return (result);
 }
 
 /**
@@ -2874,18 +3369,47 @@ int Encoders::EncodedIoctlResponseBufferSize(const Esp32Messaging::IoctlResponse
  *
  *  @returns
  *      Pointer to a GetSockPeerNameRequest object.
+ *
+ *  @param length
+ *      Number of bytes in that block, the message's PayloadLength.  Nothing past it is read, and
+ *      no length the payload declares is trusted until it has been checked against it
+ *      (issue #226).
+ *
+ *  @param malformed
+ *      If not nullptr, set to true when the payload is too short for what it declares and false
+ *      otherwise, so the caller can tell a malformed request from running out of memory.
  */
-Esp32Messaging::GetSockPeerNameRequest *Encoders::ExtractGetSockPeerNameRequest(uint8_t *buffer)
+Esp32Messaging::GetSockPeerNameRequest *Encoders::ExtractGetSockPeerNameRequest(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
-    Esp32Messaging::GetSockPeerNameRequest *getSockPeerNameRequest = static_cast<Esp32Messaging::GetSockPeerNameRequest *>(pvPortMalloc(sizeof(Esp32Messaging::GetSockPeerNameRequest)));
+    PayloadReader reader(buffer, length);
+    Esp32Messaging::GetSockPeerNameRequest *result = static_cast<Esp32Messaging::GetSockPeerNameRequest *>(pvPortMalloc(sizeof(Esp32Messaging::GetSockPeerNameRequest)));
 
-    if (getSockPeerNameRequest == nullptr)
+    if (result == nullptr)
     {
+        if (malformed != nullptr)
+        {
+            *malformed = false;
+        }
         return (nullptr);
     }
+    memset(result, 0, sizeof(Esp32Messaging::GetSockPeerNameRequest));
 
-    getSockPeerNameRequest->SocketHandle = ExtractInt32(buffer);
-    return (getSockPeerNameRequest);
+    result->SocketHandle = reader.ReadInt32();
+
+    if (reader.Failed())
+    {
+        Utils::DeleteAndNullifyPointer(result);
+        if (malformed != nullptr)
+        {
+            *malformed = !reader.OutOfMemory();
+        }
+        return (nullptr);
+    }
+    if (malformed != nullptr)
+    {
+        *malformed = false;
+    }
+    return (result);
 }
 
 /**
@@ -3015,20 +3539,48 @@ int Encoders::EncodedEventDataPayloadBufferSize(const Esp32Messaging::EventDataP
  *
  *  @returns
  *      Pointer to a SetAntennaRequest object.
+ *
+ *  @param length
+ *      Number of bytes in that block, the message's PayloadLength.  Nothing past it is read, and
+ *      no length the payload declares is trusted until it has been checked against it
+ *      (issue #226).
+ *
+ *  @param malformed
+ *      If not nullptr, set to true when the payload is too short for what it declares and false
+ *      otherwise, so the caller can tell a malformed request from running out of memory.
  */
-Esp32Messaging::SetAntennaRequest *Encoders::ExtractSetAntennaRequest(uint8_t *buffer)
+Esp32Messaging::SetAntennaRequest *Encoders::ExtractSetAntennaRequest(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
-    Esp32Messaging::SetAntennaRequest *setAntennaRequest = static_cast<Esp32Messaging::SetAntennaRequest *>(pvPortMalloc(sizeof(Esp32Messaging::SetAntennaRequest)));
+    PayloadReader reader(buffer, length);
+    Esp32Messaging::SetAntennaRequest *result = static_cast<Esp32Messaging::SetAntennaRequest *>(pvPortMalloc(sizeof(Esp32Messaging::SetAntennaRequest)));
 
-    if (setAntennaRequest == nullptr)
+    if (result == nullptr)
     {
+        if (malformed != nullptr)
+        {
+            *malformed = false;
+        }
         return (nullptr);
     }
+    memset(result, 0, sizeof(Esp32Messaging::SetAntennaRequest));
 
-    setAntennaRequest->Antenna = *buffer;
-    buffer += 1;
-    setAntennaRequest->Persist = *buffer;
-    return (setAntennaRequest);
+    result->Antenna = reader.ReadByte();
+    result->Persist = reader.ReadByte();
+
+    if (reader.Failed())
+    {
+        Utils::DeleteAndNullifyPointer(result);
+        if (malformed != nullptr)
+        {
+            *malformed = !reader.OutOfMemory();
+        }
+        return (nullptr);
+    }
+    if (malformed != nullptr)
+    {
+        *malformed = false;
+    }
+    return (result);
 }
 
 /**
@@ -3043,18 +3595,48 @@ Esp32Messaging::SetAntennaRequest *Encoders::ExtractSetAntennaRequest(uint8_t *b
  *
  *  @returns
  *      Pointer to a BTStackConfig object.
+ *
+ *  @param length
+ *      Number of bytes in that block, the message's PayloadLength.  Nothing past it is read, and
+ *      no length the payload declares is trusted until it has been checked against it
+ *      (issue #226).
+ *
+ *  @param malformed
+ *      If not nullptr, set to true when the payload is too short for what it declares and false
+ *      otherwise, so the caller can tell a malformed request from running out of memory.
  */
-Esp32Messaging::BTStackConfig *Encoders::ExtractBTStackConfig(uint8_t *buffer)
+Esp32Messaging::BTStackConfig *Encoders::ExtractBTStackConfig(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
-    Esp32Messaging::BTStackConfig *bTStackConfig = static_cast<Esp32Messaging::BTStackConfig *>(pvPortMalloc(sizeof(Esp32Messaging::BTStackConfig)));
+    PayloadReader reader(buffer, length);
+    Esp32Messaging::BTStackConfig *result = static_cast<Esp32Messaging::BTStackConfig *>(pvPortMalloc(sizeof(Esp32Messaging::BTStackConfig)));
 
-    if (bTStackConfig == nullptr)
+    if (result == nullptr)
     {
+        if (malformed != nullptr)
+        {
+            *malformed = false;
+        }
         return (nullptr);
     }
+    memset(result, 0, sizeof(Esp32Messaging::BTStackConfig));
 
-    bTStackConfig->Config = ExtractString(buffer);
-    return (bTStackConfig);
+    result->Config = reader.ReadString();
+
+    if (reader.Failed())
+    {
+        Utils::DeleteAndNullifyPointer(result->Config);
+        Utils::DeleteAndNullifyPointer(result);
+        if (malformed != nullptr)
+        {
+            *malformed = !reader.OutOfMemory();
+        }
+        return (nullptr);
+    }
+    if (malformed != nullptr)
+    {
+        *malformed = false;
+    }
+    return (result);
 }
 
 /**
@@ -3166,36 +3748,50 @@ int Encoders::EncodedBTGetHandlesResponseBufferSize(const Esp32Messaging::BTGetH
  *
  *  @returns
  *      Pointer to a BTServerDataSet object.
+ *
+ *  @param length
+ *      Number of bytes in that block, the message's PayloadLength.  Nothing past it is read, and
+ *      no length the payload declares is trusted until it has been checked against it
+ *      (issue #226).
+ *
+ *  @param malformed
+ *      If not nullptr, set to true when the payload is too short for what it declares and false
+ *      otherwise, so the caller can tell a malformed request from running out of memory.
  */
-Esp32Messaging::BTServerDataSet *Encoders::ExtractBTServerDataSet(uint8_t *buffer)
+Esp32Messaging::BTServerDataSet *Encoders::ExtractBTServerDataSet(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
-    Esp32Messaging::BTServerDataSet *bTServerDataSet = static_cast<Esp32Messaging::BTServerDataSet *>(pvPortMalloc(sizeof(Esp32Messaging::BTServerDataSet)));
+    PayloadReader reader(buffer, length);
+    Esp32Messaging::BTServerDataSet *result = static_cast<Esp32Messaging::BTServerDataSet *>(pvPortMalloc(sizeof(Esp32Messaging::BTServerDataSet)));
 
-    if (bTServerDataSet == nullptr)
+    if (result == nullptr)
     {
+        if (malformed != nullptr)
+        {
+            *malformed = false;
+        }
         return (nullptr);
     }
+    memset(result, 0, sizeof(Esp32Messaging::BTServerDataSet));
 
-    bTServerDataSet->Handle = ExtractUInt16(buffer);
-    buffer += 2;
-    bTServerDataSet->SetDataLength = ExtractUInt32(buffer);
-    buffer += 4;
-    if (bTServerDataSet->SetDataLength > 0)
+    result->Handle = reader.ReadUInt16();
+    result->SetDataLength = reader.ReadUInt32();
+    result->SetData = reader.ReadBlock(result->SetDataLength);
+
+    if (reader.Failed())
     {
-        bTServerDataSet->SetData = static_cast<uint8_t *>(pvPortMalloc(bTServerDataSet->SetDataLength));
-        if (bTServerDataSet->SetData == nullptr)
+        Utils::DeleteAndNullifyPointer(result->SetData);
+        Utils::DeleteAndNullifyPointer(result);
+        if (malformed != nullptr)
         {
-            Utils::DeleteAndNullifyPointer(bTServerDataSet);
-            return (nullptr);
+            *malformed = !reader.OutOfMemory();
         }
-        memcpy(bTServerDataSet->SetData, buffer, bTServerDataSet->SetDataLength);
-        buffer += bTServerDataSet->SetDataLength;
+        return (nullptr);
     }
-    else
+    if (malformed != nullptr)
     {
-        bTServerDataSet->SetData = nullptr;
+        *malformed = false;
     }
-    return (bTServerDataSet);
+    return (result);
 }
 
 /**
@@ -3279,20 +3875,49 @@ int Encoders::EncodedFileDetailsBufferSize(const Esp32Messaging::FileDetails * c
  *
  *  @returns
  *      Pointer to a FileDetails object.
+ *
+ *  @param length
+ *      Number of bytes in that block, the message's PayloadLength.  Nothing past it is read, and
+ *      no length the payload declares is trusted until it has been checked against it
+ *      (issue #226).
+ *
+ *  @param malformed
+ *      If not nullptr, set to true when the payload is too short for what it declares and false
+ *      otherwise, so the caller can tell a malformed request from running out of memory.
  */
-Esp32Messaging::FileDetails *Encoders::ExtractFileDetails(uint8_t *buffer)
+Esp32Messaging::FileDetails *Encoders::ExtractFileDetails(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
-    Esp32Messaging::FileDetails *fileDetails = static_cast<Esp32Messaging::FileDetails *>(pvPortMalloc(sizeof(Esp32Messaging::FileDetails)));
+    PayloadReader reader(buffer, length);
+    Esp32Messaging::FileDetails *result = static_cast<Esp32Messaging::FileDetails *>(pvPortMalloc(sizeof(Esp32Messaging::FileDetails)));
 
-    if (fileDetails == nullptr)
+    if (result == nullptr)
     {
+        if (malformed != nullptr)
+        {
+            *malformed = false;
+        }
         return (nullptr);
     }
+    memset(result, 0, sizeof(Esp32Messaging::FileDetails));
 
-    fileDetails->Name = ExtractString(buffer);
-    buffer += Encoders::StringLength(fileDetails->Name) + 1;
-    fileDetails->Length = ExtractUInt16(buffer);
-    return (fileDetails);
+    result->Name = reader.ReadString();
+    result->Length = reader.ReadUInt16();
+
+    if (reader.Failed())
+    {
+        Utils::DeleteAndNullifyPointer(result->Name);
+        Utils::DeleteAndNullifyPointer(result);
+        if (malformed != nullptr)
+        {
+            *malformed = !reader.OutOfMemory();
+        }
+        return (nullptr);
+    }
+    if (malformed != nullptr)
+    {
+        *malformed = false;
+    }
+    return (result);
 }
 
 /**
@@ -3382,37 +4007,51 @@ int Encoders::EncodedFileNameAndContentsBufferSize(const Esp32Messaging::FileNam
  *
  *  @returns
  *      Pointer to a FileNameAndContents object.
+ *
+ *  @param length
+ *      Number of bytes in that block, the message's PayloadLength.  Nothing past it is read, and
+ *      no length the payload declares is trusted until it has been checked against it
+ *      (issue #226).
+ *
+ *  @param malformed
+ *      If not nullptr, set to true when the payload is too short for what it declares and false
+ *      otherwise, so the caller can tell a malformed request from running out of memory.
  */
-Esp32Messaging::FileNameAndContents *Encoders::ExtractFileNameAndContents(uint8_t *buffer)
+Esp32Messaging::FileNameAndContents *Encoders::ExtractFileNameAndContents(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
-    Esp32Messaging::FileNameAndContents *fileNameAndContents = static_cast<Esp32Messaging::FileNameAndContents *>(pvPortMalloc(sizeof(Esp32Messaging::FileNameAndContents)));
+    PayloadReader reader(buffer, length);
+    Esp32Messaging::FileNameAndContents *result = static_cast<Esp32Messaging::FileNameAndContents *>(pvPortMalloc(sizeof(Esp32Messaging::FileNameAndContents)));
 
-    if (fileNameAndContents == nullptr)
+    if (result == nullptr)
     {
+        if (malformed != nullptr)
+        {
+            *malformed = false;
+        }
         return (nullptr);
     }
+    memset(result, 0, sizeof(Esp32Messaging::FileNameAndContents));
 
-    fileNameAndContents->Name = ExtractString(buffer);
-    buffer += Encoders::StringLength(fileNameAndContents->Name) + 1;
-    fileNameAndContents->ContentsLength = ExtractUInt32(buffer);
-    buffer += 4;
-    if (fileNameAndContents->ContentsLength > 0)
+    result->Name = reader.ReadString();
+    result->ContentsLength = reader.ReadUInt32();
+    result->Contents = reader.ReadBlock(result->ContentsLength);
+
+    if (reader.Failed())
     {
-        fileNameAndContents->Contents = static_cast<uint8_t *>(pvPortMalloc(fileNameAndContents->ContentsLength));
-        if (fileNameAndContents->Contents == nullptr)
+        Utils::DeleteAndNullifyPointer(result->Name);
+        Utils::DeleteAndNullifyPointer(result->Contents);
+        Utils::DeleteAndNullifyPointer(result);
+        if (malformed != nullptr)
         {
-            Utils::DeleteAndNullifyPointer(fileNameAndContents->Name);
-            Utils::DeleteAndNullifyPointer(fileNameAndContents);
-            return (nullptr);
+            *malformed = !reader.OutOfMemory();
         }
-        memcpy(fileNameAndContents->Contents, buffer, fileNameAndContents->ContentsLength);
-        buffer += fileNameAndContents->ContentsLength;
+        return (nullptr);
     }
-    else
+    if (malformed != nullptr)
     {
-        fileNameAndContents->Contents = nullptr;
+        *malformed = false;
     }
-    return (fileNameAndContents);
+    return (result);
 }
 
 /**
@@ -3482,29 +4121,50 @@ int Encoders::EncodedFileNameListBufferSize(const Esp32Messaging::FileNameList *
  *
  * @param buffer Block of memory holding the encoded logging configuration.
  * @return Esp32Messaging::LoggingConfiguration* Pointer to the extracted logging configuration.
+ *
+ *  @param length
+ *      Number of bytes in that block, the message's PayloadLength.  Nothing past it is read, and
+ *      no length the payload declares is trusted until it has been checked against it
+ *      (issue #226).
+ *
+ *  @param malformed
+ *      If not nullptr, set to true when the payload is too short for what it declares and false
+ *      otherwise, so the caller can tell a malformed request from running out of memory.
  */
-Esp32Messaging::LoggingConfiguration *Encoders::ExtractLoggingConfiguration(uint8_t *buffer)
+Esp32Messaging::LoggingConfiguration *Encoders::ExtractLoggingConfiguration(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
-    Esp32Messaging::LoggingConfiguration *loggingConfiguration = static_cast<Esp32Messaging::LoggingConfiguration *>(pvPortMalloc(sizeof(Esp32Messaging::LoggingConfiguration)));
+    PayloadReader reader(buffer, length);
+    Esp32Messaging::LoggingConfiguration *result = static_cast<Esp32Messaging::LoggingConfiguration *>(pvPortMalloc(sizeof(Esp32Messaging::LoggingConfiguration)));
 
-    if (loggingConfiguration == nullptr)
+    if (result == nullptr)
     {
+        if (malformed != nullptr)
+        {
+            *malformed = false;
+        }
         return (nullptr);
     }
+    memset(result, 0, sizeof(Esp32Messaging::LoggingConfiguration));
 
-    loggingConfiguration->Interface = *buffer;
-    buffer++;
-    loggingConfiguration->UdpPort = ExtractUInt16(buffer);
-    buffer += 2;
-    if (*buffer == 0)
+    result->Interface = reader.ReadByte();
+    result->UdpPort = reader.ReadUInt16();
+    result->ComponentsToLog = reader.ReadString();
+
+    if (reader.Failed())
     {
-        loggingConfiguration->ComponentsToLog = nullptr;
+        Utils::DeleteAndNullifyPointer(result->ComponentsToLog);
+        Utils::DeleteAndNullifyPointer(result);
+        if (malformed != nullptr)
+        {
+            *malformed = !reader.OutOfMemory();
+        }
+        return (nullptr);
     }
-    else
+    if (malformed != nullptr)
     {
-        loggingConfiguration->ComponentsToLog = ExtractString(buffer);
+        *malformed = false;
     }
-    return (loggingConfiguration);
+    return (result);
 }
 
 /**
@@ -3534,27 +4194,49 @@ void Encoders::FreeLoggingConfiguration(Esp32Messaging::LoggingConfiguration **l
  *
  * @param buffer Block of memory holding the encoded log message.
  * @return Esp32Messaging::LogMessage* Pointer to the extracted log message.
+ *
+ *  @param length
+ *      Number of bytes in that block, the message's PayloadLength.  Nothing past it is read, and
+ *      no length the payload declares is trusted until it has been checked against it
+ *      (issue #226).
+ *
+ *  @param malformed
+ *      If not nullptr, set to true when the payload is too short for what it declares and false
+ *      otherwise, so the caller can tell a malformed request from running out of memory.
  */
-Esp32Messaging::LogMessage *Encoders::ExtractLogMessage(uint8_t *buffer)
+Esp32Messaging::LogMessage *Encoders::ExtractLogMessage(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
-    Esp32Messaging::LogMessage *logMessage = static_cast<Esp32Messaging::LogMessage *>(pvPortMalloc(sizeof(Esp32Messaging::LogMessage)));
+    PayloadReader reader(buffer, length);
+    Esp32Messaging::LogMessage *result = static_cast<Esp32Messaging::LogMessage *>(pvPortMalloc(sizeof(Esp32Messaging::LogMessage)));
 
-    if (logMessage == nullptr)
+    if (result == nullptr)
     {
+        if (malformed != nullptr)
+        {
+            *malformed = false;
+        }
         return (nullptr);
     }
+    memset(result, 0, sizeof(Esp32Messaging::LogMessage));
 
-    logMessage->Level = *buffer;
-    buffer++;
-    if (*buffer == 0)
+    result->Level = reader.ReadByte();
+    result->Message = reader.ReadString();
+
+    if (reader.Failed())
     {
-        logMessage->Message = nullptr;
+        Utils::DeleteAndNullifyPointer(result->Message);
+        Utils::DeleteAndNullifyPointer(result);
+        if (malformed != nullptr)
+        {
+            *malformed = !reader.OutOfMemory();
+        }
+        return (nullptr);
     }
-    else
+    if (malformed != nullptr)
     {
-        logMessage->Message = ExtractString(buffer);
+        *malformed = false;
     }
-    return (logMessage);
+    return (result);
 }
 
 /**
@@ -3647,25 +4329,48 @@ int Encoders::EncodedCoreDumpInformationBufferSize(const Esp32Messaging::CoreDum
  *
  * @param buffer Block of memory holding the encoded core dump fragment request.
  * @return Esp32Messaging::CoreDumpFragmentRequest* Pointer to the extracted core dump fragment request.
+ *
+ *  @param length
+ *      Number of bytes in that block, the message's PayloadLength.  Nothing past it is read, and
+ *      no length the payload declares is trusted until it has been checked against it
+ *      (issue #226).
+ *
+ *  @param malformed
+ *      If not nullptr, set to true when the payload is too short for what it declares and false
+ *      otherwise, so the caller can tell a malformed request from running out of memory.
  */
-Esp32Messaging::CoreDumpFragmentRequest *Encoders::ExtractCoreDumpFragmentRequest(uint8_t *buffer)
+Esp32Messaging::CoreDumpFragmentRequest *Encoders::ExtractCoreDumpFragmentRequest(const uint8_t *buffer, const uint32_t length, bool * const malformed)
 {
-    if (buffer == nullptr)
+    PayloadReader reader(buffer, length);
+    Esp32Messaging::CoreDumpFragmentRequest *result = static_cast<Esp32Messaging::CoreDumpFragmentRequest *>(pvPortMalloc(sizeof(Esp32Messaging::CoreDumpFragmentRequest)));
+
+    if (result == nullptr)
     {
+        if (malformed != nullptr)
+        {
+            *malformed = false;
+        }
         return (nullptr);
     }
+    memset(result, 0, sizeof(Esp32Messaging::CoreDumpFragmentRequest));
 
-    Esp32Messaging::CoreDumpFragmentRequest *fragmentRequest = static_cast<Esp32Messaging::CoreDumpFragmentRequest *>(pvPortMalloc(sizeof(Esp32Messaging::CoreDumpFragmentRequest)));
-    if (fragmentRequest == nullptr)
+    result->Offset = reader.ReadUInt32();
+    result->Size = reader.ReadUInt32();
+
+    if (reader.Failed())
     {
+        Utils::DeleteAndNullifyPointer(result);
+        if (malformed != nullptr)
+        {
+            *malformed = !reader.OutOfMemory();
+        }
         return (nullptr);
     }
-
-    fragmentRequest->Offset = ExtractUInt32(buffer);
-    buffer += 4;
-    fragmentRequest->Size = ExtractUInt32(buffer);
-
-    return (fragmentRequest);
+    if (malformed != nullptr)
+    {
+        *malformed = false;
+    }
+    return (result);
 }
 
 /**

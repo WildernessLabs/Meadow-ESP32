@@ -1944,14 +1944,15 @@ void WiFiRequestHandler::DisconnectFromAccessPoint(Message *message)
     StatusCodes::StatusCodes sc = StatusCodes::CompletedOk;
 
     //
-    //  The extractor reads the payload without checking it exists and returns nullptr only when it
-    //  cannot allocate, so both are dealt with before anything is disconnected (issue #389).
+    //  A request with no payload, or one too short, is refused before anything is disconnected
+    //  (issues #389 and #226).
     //
-    Esp32Messaging::DisconnectFromAccessPointRequest *request = (message->Payload != nullptr) ? Encoders::ExtractDisconnectFromAccessPointRequest(message->Payload) : nullptr;
+    bool malformed = false;
+    Esp32Messaging::DisconnectFromAccessPointRequest *request = Encoders::ExtractDisconnectFromAccessPointRequest(message->Payload, message->PayloadLength, &malformed);
     if (request == nullptr)
     {
-        ERROR_MESSAGE("DisconnectFromAccessPoint: %s.", (message->Payload == nullptr) ? "the request carries no payload" : "could not allocate the request");
-        sc = (message->Payload == nullptr) ? StatusCodes::InvalidRequest : StatusCodes::EspOutOfMemory;
+        ERROR_MESSAGE("DisconnectFromAccessPoint: %s.", malformed ? "the request is missing or too short" : "could not allocate the request");
+        sc = malformed ? StatusCodes::InvalidRequest : StatusCodes::EspOutOfMemory;
     }
     else
     {
@@ -1994,17 +1995,17 @@ void WiFiRequestHandler::SetAntennaRequest(Message *message)
     TRACE_MESSAGE("SetAntennaRequest: Enter");
 
     //
-    //  The extractor reads the payload without checking it exists and returns nullptr only when it
-    //  cannot allocate, so both are dealt with before the antenna is touched (issue #389).
+    //  A request with no payload, or one too short, is refused before the antenna is touched
+    //  (issues #389 and #226).
     //
-    Esp32Messaging::SetAntennaRequest *request = (message->Payload != nullptr) ? Encoders::ExtractSetAntennaRequest(message->Payload) : nullptr;
-    const bool hasPayload = (message->Payload != nullptr);
+    bool malformed = false;
+    Esp32Messaging::SetAntennaRequest *request = Encoders::ExtractSetAntennaRequest(message->Payload, message->PayloadLength, &malformed);
     message->DeletePayload();
 
     if (request == nullptr)
     {
-        ERROR_MESSAGE("SetAntennaRequest: %s.", hasPayload ? "could not allocate the request" : "the request carries no payload");
-        message->StatusCode = hasPayload ? StatusCodes::EspOutOfMemory : StatusCodes::InvalidRequest;
+        ERROR_MESSAGE("SetAntennaRequest: %s.", malformed ? "the request is missing or too short" : "could not allocate the request");
+        message->StatusCode = malformed ? StatusCodes::InvalidRequest : StatusCodes::EspOutOfMemory;
     }
     else
     {
@@ -2166,12 +2167,13 @@ void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
     TRACE_MESSAGE("ConnectToAccessPoint: Enter");
     StatusCodes::StatusCodes result;
 
-    Esp32Messaging::AccessPointInformation *accessPointInformation = Encoders::ExtractAccessPointInformation(message->Payload);
+    bool malformed = false;
+    Esp32Messaging::AccessPointInformation *accessPointInformation = Encoders::ExtractAccessPointInformation(message->Payload, message->PayloadLength, &malformed);
     message->DeletePayload();
 
     if (!accessPointInformation)
     {
-        result = StatusCodes::EspOutOfMemory;
+        result = malformed ? StatusCodes::InvalidRequest : StatusCodes::EspOutOfMemory;
     }
     else
     {

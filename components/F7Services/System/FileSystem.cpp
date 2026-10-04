@@ -434,7 +434,8 @@ void FileSystem::ReadFile(Message * const message)
     TRACE_MESSAGE("ReadFile: Enter");
 
     StatusCodes::StatusCodes result = StatusCodes::Failure;
-    Esp32Messaging::FileNameAndContents *fileData = Encoders::ExtractFileNameAndContents(message->Payload);
+    bool malformed = false;
+    Esp32Messaging::FileNameAndContents *fileData = Encoders::ExtractFileNameAndContents(message->Payload, message->PayloadLength, &malformed);
     message->DeletePayload();
 
     if (fileData)
@@ -491,6 +492,13 @@ void FileSystem::ReadFile(Message * const message)
         }
         Encoders::FreeFileNameAndContents(&fileData);
     }
+    else
+    {
+        if (malformed)
+        {
+            result = StatusCodes::InvalidRequest;
+        }
+    }
 
     SendResponse(message, result);
 
@@ -508,7 +516,8 @@ void FileSystem::WriteFile(Message * const message)
     TRACE_MESSAGE("WriteFile: Enter");
 
     StatusCodes::StatusCodes result = StatusCodes::Failure;
-    Esp32Messaging::FileNameAndContents *fileData = Encoders::ExtractFileNameAndContents(message->Payload);
+    bool malformed = false;
+    Esp32Messaging::FileNameAndContents *fileData = Encoders::ExtractFileNameAndContents(message->Payload, message->PayloadLength, &malformed);
     message->DeletePayload();
 
     if (fileData)
@@ -549,7 +558,7 @@ void FileSystem::WriteFile(Message * const message)
     }
     else
     {
-        result = StatusCodes::EspOutOfMemory;
+        result = malformed ? StatusCodes::InvalidRequest : StatusCodes::EspOutOfMemory;
     }
 
     SendResponse(message, result);
@@ -568,7 +577,8 @@ void FileSystem::DeleteFile(Message * const message)
     TRACE_MESSAGE("DeleteFile: Enter");
 
     StatusCodes::StatusCodes result = StatusCodes::Failure;
-    Esp32Messaging::FileDetails *details = Encoders::ExtractFileDetails(message->Payload);
+    bool malformed = false;
+    Esp32Messaging::FileDetails *details = Encoders::ExtractFileDetails(message->Payload, message->PayloadLength, &malformed);
     message->DeletePayload();
 
     if (details)
@@ -599,7 +609,7 @@ void FileSystem::DeleteFile(Message * const message)
     }
     else
     {
-        result = StatusCodes::EspOutOfMemory;
+        result = malformed ? StatusCodes::InvalidRequest : StatusCodes::EspOutOfMemory;
     }
 
     SendResponse(message, result);
