@@ -178,6 +178,9 @@ void TransportProviderBase::DumpMessageAtHeadOfQueue()
  *  Reporting the failure as a message to the STM32 is not possible as that would
  *  need a slot on the queue that is full.
  *
+ *  A payload longer than Message::MAXIMUM_PAYLOAD_LENGTH is removed, and the message's status
+ *  set to Failure, before it is queued.
+ *
  *  @note This method takes ownership of the message.  The message is deleted if it
  *        cannot be queued, so the caller must not use it afterwards.
  *
@@ -190,6 +193,19 @@ void TransportProviderBase::DumpMessageAtHeadOfQueue()
 bool TransportProviderBase::QueueMessageForStm32(Message *message)
 {
     bool result = false;
+    //
+    //  The payload of a message is sent as packets, and the packet arithmetic and the STM32's
+    //  reassembly both assume the protocol maximum.  Every outbound message goes through here, so
+    //  this is where a payload that is too long is refused, whatever built it: a response sized from
+    //  a file or a directory listing, say.  The message is still sent, without its payload, so that
+    //  the request is answered and the STM32 is told it failed (issue #275).
+    //
+    if ((message != nullptr) && (message->PayloadLength > Message::MAXIMUM_PAYLOAD_LENGTH))
+    {
+        ERROR_MESSAGE("A message payload of %" PRIu32 " bytes is more than the protocol maximum of %" PRIu32 "; sending the message without it.", message->PayloadLength, Message::MAXIMUM_PAYLOAD_LENGTH);
+        message->DeletePayload();
+        message->StatusCode = StatusCodes::Failure;
+    }
     //
     //  The transport provider task is the only task that takes messages off the queue and
     //  it only does so when the STM32 asks for one.  Pausing in that task would send the

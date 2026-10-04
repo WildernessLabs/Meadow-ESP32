@@ -375,7 +375,7 @@ void SpiTransportProvider::UpdatePacketInformation(Message *message)
 
     TRACE_MESSAGE("Initial offset %" PRIu16 ", length %" PRIu16, message->PacketOffset, message->PacketLength);
     message->PacketOffset += message->PacketLength;
-    uint16_t amountRemaining = message->PayloadLength - message->PacketOffset;
+    const uint32_t amountRemaining = (message->PayloadLength > message->PacketOffset) ? (message->PayloadLength - message->PacketOffset) : 0;
     if (amountRemaining <= Message::MAXIMUM_PACKET_SIZE)
     {
         message->PacketLength = amountRemaining;
