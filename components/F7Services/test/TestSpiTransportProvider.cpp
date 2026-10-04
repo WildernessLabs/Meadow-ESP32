@@ -466,7 +466,7 @@ static void CheckPacketTransaction(spi_slave_transaction_t *transaction, Message
     uint8_t *expected = static_cast<uint8_t *>(pvPortMalloc(Message::MAXIMUM_SPI_FRAME_SIZE));
     TEST_ASSERT_NOT_NULL(expected);
     memset(expected, 0, Message::MAXIMUM_SPI_FRAME_SIZE);
-    Encoders::EncodeMessage(message, expected, false);
+    TEST_ASSERT_TRUE(Encoders::EncodeMessage(message, expected, Message::MAXIMUM_SPI_FRAME_SIZE, false));
     const bool same = (memcmp(expected, transaction->tx_buffer, Message::MAXIMUM_SPI_FRAME_SIZE) == 0);
     Utils::DeleteAndNullifyPointer(expected);
     TEST_ASSERT_TRUE_MESSAGE(same, "The transaction does not transmit the packet as EncodeMessage encodes it.");
@@ -512,7 +512,7 @@ TEST_CASE("Each packet of an outbound message is transmitted as EncodeMessage en
     const uint16_t expectedLengths[] = {Message::MAXIMUM_PACKET_SIZE, 10};
     for (uint32_t packet = 0; packet < 2; packet++)
     {
-        Encoders::EncodeMessage(acknowledgement, static_cast<uint8_t *>(transaction->rx_buffer), true);
+        TEST_ASSERT_TRUE(Encoders::EncodeMessage(acknowledgement, static_cast<uint8_t *>(transaction->rx_buffer), Message::MAXIMUM_SPI_FRAME_SIZE, true));
         transaction = TestSpiTransportProvider::CallPacketAcknowledgementReceived(provider, transaction);
         CheckPacketTransaction(transaction, message, expectedOffsets[packet], expectedLengths[packet]);
     }

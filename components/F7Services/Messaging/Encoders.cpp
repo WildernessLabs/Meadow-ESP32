@@ -404,29 +404,51 @@ uint32_t Encoders::ProgressiveCRC32(const uint32_t currentChecksum, const uint8_
  *  four bytes when calculating CRCs (we do not know what they will contain
  *  post transmission).
  *
+ *  Nothing is read beyond bufferLength, and the buffer is not changed.  The CRC is checked with the
+ *  four CRC bytes counted as zero, which is how it was calculated, rather than by zeroing them in
+ *  the caller's buffer.  A buffer too short to hold a header and the ignored bytes, or longer than
+ *  one SPI frame, is refused, and so is a packet that declares more payload than the buffer holds,
+ *  even when its CRC is right (issue #267).
+ *
  *  @param buffer
  *      Byte (uint8_t) array containing the encoded message.
  *
  *  @param bufferLength
- *      Size of the buffer.
+ *      Number of bytes in the buffer.
  *
  *  @param headerOnly
  *      Indicate if we should extract the header information only
  *      (i.e. do not copy the payload).
  *
  *  @returns
- *      New Message object extracted from the buffer.  The Message object
- *      will be placed on the FreeRTOS heap (use Utils::DeleteAndNullifyPointer to release the
- *      storage).
+ *      New Message object extracted from the buffer, nullptr if the buffer is not a valid message
+ *      or memory runs out.  The Message object will be placed on the FreeRTOS heap (use
+ *      Utils::DeleteAndNullifyPointer to release the storage).
  */
-Message *Encoders::ExtractMessage(uint8_t *buffer, const uint32_t bufferLength, const bool headerOnly)
+Message *Encoders::ExtractMessage(const uint8_t *buffer, const uint32_t bufferLength, const bool headerOnly)
 {
-    uint32_t crc = ExtractUInt32(buffer + Message::CRC_OFFSET);
-    EncodeUInt32(0, buffer + Message::CRC_OFFSET);
+    if ((buffer == nullptr) || (bufferLength < (Message::HEADER_SIZE + Message::SPI_MESSAGE_OVERHEAD)) || (bufferLength > Message::MAXIMUM_SPI_FRAME_SIZE))
+    {
+        return (nullptr);
+    }
+
+    const uint32_t crc = ExtractUInt32(buffer + Message::CRC_OFFSET);
+    uint32_t calculated = CRC32_SEED;
+    for (uint32_t index = 0; index < (bufferLength - Message::SPI_MESSAGE_OVERHEAD); index++)
+    {
+        const bool inCrcField = (index >= Message::CRC_OFFSET) && (index < (Message::CRC_OFFSET + sizeof(uint32_t)));
+        calculated = ProgressiveCRC32(calculated, inCrcField ? 0 : buffer[index]); // See note in comment above.
+    }
 
     Message *message = nullptr;
-    if (crc == CRC32(buffer, bufferLength - 4)) // See note in comment above.
+    if (crc == calculated)
     {
+        const uint16_t packetLength = ExtractUInt16(buffer + Message::CRC_OFFSET + sizeof(uint32_t) + sizeof(uint16_t));
+        if (!headerOnly && ((Message::HEADER_SIZE + static_cast<uint32_t>(packetLength)) > (bufferLength - Message::SPI_MESSAGE_OVERHEAD)))
+        {
+            return (nullptr);
+        }
+
         message = static_cast<Message *>(pvPortMalloc(sizeof(Message)));
 
         if (message == nullptr)
@@ -475,58 +497,77 @@ Message *Encoders::ExtractMessage(uint8_t *buffer, const uint32_t bufferLength, 
 /**
  *  @brief Encode a message into a block of memory.
  *
+ *  Everything is checked before anything is written, so a message that is refused leaves the buffer
+ *  as it was.  The packet needs CalculateSpiBufferSize(EncodedPacketSize()) bytes, which is the whole
+ *  of it, including the bytes the SPI interface may corrupt.  A message whose packet claims bytes
+ *  its payload does not hold is refused too (issue #267).
+ *
  *  @param message
  *      Message structure to encode in to the byte buffer.
  *
  *  @param buffer
  *      Pointer to the block of memory that will contain the encoded message.
  *
+ *  @param bufferLength
+ *      Number of bytes allocated for buffer.  Nothing is written beyond it.
+ *
  *  @param headerOnly
  *      Copy this as a header only (i.e. do not copy the payload).
  *
  *  @returns
- *     Byte buffer containing the encoded message.  The storage
- *     Will be placed on the FreeRTOS heap (use Utils::DeleteAndNullifyPointer to release the
- *     storage).
+ *      true if the message was encoded, false if there is no message or buffer, the buffer is too
+ *      small, or the packet does not lie within the payload.
  */
-void Encoders::EncodeMessage(const Message * const message, uint8_t * const buffer, const bool headerOnly)
+bool Encoders::EncodeMessage(const Message * const message, uint8_t * const buffer, const uint32_t bufferLength, const bool headerOnly)
 {
-    if (buffer)
+    if ((message == nullptr) || (buffer == nullptr))
     {
-        uint32_t messageSize = EncodedPacketSize(message, headerOnly);
-        uint32_t bufferSize = Encoders::CalculateSpiBufferSize(messageSize);
-        TRACE_MESSAGE_SPECIFY_COMPONENT(SpiTransportProvider::COMPONENT_NAME, "Encoding %" PRIu32 " bytes as a %" PRIu32 " byte packet", messageSize, bufferSize);
-
-        uint8_t *next_location = buffer;
-
-        memset(buffer, 0, bufferSize);
-        *next_location = Message::PROTOCOL_NUMBER;
-        next_location++;
-        EncodeUInt32(0, next_location);
-        next_location += 4;
-        EncodeUInt16(message->PacketOffset, next_location);
-        next_location += 2;
-        EncodeUInt16(message->PacketLength, next_location);
-        next_location += 2;
-        *next_location = message->MessageType;
-        next_location++;
-        *next_location = message->Interface;
-        next_location++;
-        EncodeUInt32(message->Function, next_location);
-        next_location += 4;
-        EncodeUInt32(message->StatusCode, next_location);
-        next_location += 4;
-        EncodeUInt32(message->MessageID, next_location);
-        next_location += 4;
-        EncodeUInt32(message->PayloadLength, next_location);
-        next_location += 4;
-        if (!headerOnly && (message->PacketLength > 0))
-        {
-            memcpy(next_location, message->Payload + message->PacketOffset, message->PacketLength);
-        }
-        uint32_t crc = CRC32(buffer, bufferSize - 4);
-        EncodeUInt32(crc, buffer + Message::CRC_OFFSET);
+        return (false);
     }
+
+    const uint32_t messageSize = EncodedPacketSize(message, headerOnly);
+    const uint32_t bufferSize = Encoders::CalculateSpiBufferSize(messageSize);
+    if (bufferSize > bufferLength)
+    {
+        return (false);
+    }
+    const bool copyPayload = !headerOnly && (message->PacketLength > 0);
+    if (copyPayload && ((message->Payload == nullptr) || ((static_cast<uint64_t>(message->PacketOffset) + message->PacketLength) > message->PayloadLength)))
+    {
+        return (false);
+    }
+    TRACE_MESSAGE_SPECIFY_COMPONENT(SpiTransportProvider::COMPONENT_NAME, "Encoding %" PRIu32 " bytes as a %" PRIu32 " byte packet", messageSize, bufferSize);
+
+    uint8_t *next_location = buffer;
+
+    memset(buffer, 0, bufferSize);
+    *next_location = Message::PROTOCOL_NUMBER;
+    next_location++;
+    EncodeUInt32(0, next_location);
+    next_location += 4;
+    EncodeUInt16(message->PacketOffset, next_location);
+    next_location += 2;
+    EncodeUInt16(message->PacketLength, next_location);
+    next_location += 2;
+    *next_location = message->MessageType;
+    next_location++;
+    *next_location = message->Interface;
+    next_location++;
+    EncodeUInt32(message->Function, next_location);
+    next_location += 4;
+    EncodeUInt32(message->StatusCode, next_location);
+    next_location += 4;
+    EncodeUInt32(message->MessageID, next_location);
+    next_location += 4;
+    EncodeUInt32(message->PayloadLength, next_location);
+    next_location += 4;
+    if (copyPayload)
+    {
+        memcpy(next_location, message->Payload + message->PacketOffset, message->PacketLength);
+    }
+    uint32_t crc = CRC32(buffer, bufferSize - 4);
+    EncodeUInt32(crc, buffer + Message::CRC_OFFSET);
+    return (true);
 }
 
 /**
