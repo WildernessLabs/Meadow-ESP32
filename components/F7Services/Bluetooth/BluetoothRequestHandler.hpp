@@ -55,6 +55,11 @@ class BluetoothRequestHandler : public RequestHandlerBase
      */
     friend class TestBluetoothWrites;
 
+    /**
+     * @brief Test access to starting and stopping the stack (issue #296).
+     */
+    friend class TestBluetoothUnwind;
+
 private:
     /**
      *  Event group bits.
@@ -246,6 +251,13 @@ private:
      * @brief Stop the Bluetooth stack.
      */
     void Stop(Message * const request);
+
+    /**
+     * @brief Take down whatever part of the Bluetooth stack is up.
+     *
+     * @return true if everything that was up has been taken down.
+     */
+    bool TearDownStack();
 
     /**
      * @brief Shutdown the Bluetooth stack.
