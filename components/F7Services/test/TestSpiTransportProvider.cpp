@@ -227,6 +227,79 @@ public:
     }
 
     /**
+     * @brief Call the private UpdatePacketInformation method.
+     */
+    static void CallUpdatePacketInformation(SpiTransportProvider *provider, Message *message)
+    {
+        provider->UpdatePacketInformation(message);
+    }
+
+    /**
+     * @brief Give the provider an outbound queue and mutex if it has none.
+     *
+     *  The queue is made by the message dispatcher in the firmware, and these tests have none.
+     *
+     * @return true if they were made here, and so are to be released with ReleaseOutboundQueue.
+     */
+    static bool EnsureOutboundQueue()
+    {
+        if (SpiTransportProvider::_outboundMessageQueueHandle != nullptr)
+        {
+            return (false);
+        }
+        SpiTransportProvider::_outboundMessageQueueHandle = xQueueCreate(8, sizeof(Message *));
+        SpiTransportProvider::_outboundMessageQueueMutex = xSemaphoreCreateMutex();
+        TEST_ASSERT_NOT_NULL(SpiTransportProvider::_outboundMessageQueueHandle);
+        TEST_ASSERT_NOT_NULL(SpiTransportProvider::_outboundMessageQueueMutex);
+        return (true);
+    }
+
+    /**
+     * @brief Release the queue and mutex made by EnsureOutboundQueue, and any message still on the queue.
+     */
+    static void ReleaseOutboundQueue()
+    {
+        Message *queued = nullptr;
+        while (xQueueReceive(SpiTransportProvider::_outboundMessageQueueHandle, &queued, 0) == pdPASS)
+        {
+            Message::DeleteMessage(queued);
+        }
+        vQueueDelete(SpiTransportProvider::_outboundMessageQueueHandle);
+        vSemaphoreDelete(SpiTransportProvider::_outboundMessageQueueMutex);
+        SpiTransportProvider::_outboundMessageQueueHandle = nullptr;
+        SpiTransportProvider::_outboundMessageQueueMutex = nullptr;
+    }
+
+    /**
+     * @brief Take the message with a message ID off the outbound queue, putting back the others.
+     *
+     * @param messageId ID of the message wanted.
+     *
+     * @return The message, nullptr if it is not on the queue.
+     */
+    static Message *TakeQueuedMessage(const uint32_t messageId)
+    {
+        Message *found = nullptr;
+        const UBaseType_t waiting = uxQueueMessagesWaiting(SpiTransportProvider::_outboundMessageQueueHandle);
+        for (UBaseType_t index = 0; index < waiting; index++)
+        {
+            Message *queued = nullptr;
+            if (xQueueReceive(SpiTransportProvider::_outboundMessageQueueHandle, &queued, 0) == pdPASS)
+            {
+                if ((found == nullptr) && (queued->MessageID == messageId))
+                {
+                    found = queued;
+                }
+                else
+                {
+                    xQueueSendToBack(SpiTransportProvider::_outboundMessageQueueHandle, &queued, 0);
+                }
+            }
+        }
+        return (found);
+    }
+
+    /**
      * @brief Put the private, static state machine back in its idle state.
      */
     static void ResetState()
@@ -600,4 +673,117 @@ TEST_CASE("The SPI post setup callback does nothing before the task and semaphor
     TestSpiTransportProvider::CallPostSetupCallback();
     TestSpiTransportProvider::ExchangeInstance(instance);
     TEST_ASSERT_EQUAL(messageBefore, provider->GetControlSignalMessage());
+}
+
+/**
+ * @brief Make a message to send with a payload of a length, every byte of it a recognisable value.
+ *
+ * @param messageId ID for the message.
+ * @param payloadLength Number of bytes in the payload.
+ *
+ * @return The message, which the queue or the caller releases.
+ */
+static Message *CreateOutboundMessage(const uint32_t messageId, const uint32_t payloadLength)
+{
+    uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
+    TEST_ASSERT_NOT_NULL(payload);
+    memset(payload, 0xc3, payloadLength);
+    Message *message = Message::CreateOnHeap(MessageTypes::Response, Esp32Interfaces::System, 17, StatusCodes::CompletedOk, messageId, payload, payloadLength);
+    TEST_ASSERT_NOT_NULL(message);
+    return (message);
+}
+
+TEST_CASE("A payload longer than the protocol maximum is not queued for the STM32", CLASS_OF_TESTS)
+{
+    SpiTransportProvider *provider = EnsureProvider();
+    const uint32_t LONG_ID = 0x27500001;
+    const uint32_t LONGEST_ID = 0x27500002;
+    const uint32_t HUGE_ID = 0x27500003;
+    const bool madeQueue = TestSpiTransportProvider::EnsureOutboundQueue();
+
+    //
+    //  A payload of the maximum goes through as it is, and one byte more goes without its payload and
+    //  with a failure status, the function and message ID it answers kept.
+    //
+    TEST_ASSERT_TRUE(provider->QueueMessageForStm32(CreateOutboundMessage(LONGEST_ID, Message::MAXIMUM_PAYLOAD_LENGTH)));
+    TEST_ASSERT_TRUE(provider->QueueMessageForStm32(CreateOutboundMessage(LONG_ID, Message::MAXIMUM_PAYLOAD_LENGTH + 1)));
+    TEST_ASSERT_TRUE(provider->QueueMessageForStm32(CreateOutboundMessage(HUGE_ID, 70000)));
+
+    Message *longest = TestSpiTransportProvider::TakeQueuedMessage(LONGEST_ID);
+    TEST_ASSERT_NOT_NULL(longest);
+    TEST_ASSERT_EQUAL_UINT32_MESSAGE(Message::MAXIMUM_PAYLOAD_LENGTH, longest->PayloadLength, "A payload of the maximum length was changed.");
+    TEST_ASSERT_NOT_NULL(longest->Payload);
+    TEST_ASSERT_EQUAL_UINT32(StatusCodes::CompletedOk, longest->StatusCode);
+    Message::DeleteMessage(longest);
+
+    Message *refused = TestSpiTransportProvider::TakeQueuedMessage(LONG_ID);
+    TEST_ASSERT_NOT_NULL(refused);
+    TEST_ASSERT_EQUAL_UINT32_MESSAGE(0, refused->PayloadLength, "A payload one byte over the maximum was queued.");
+    TEST_ASSERT_NULL(refused->Payload);
+    TEST_ASSERT_EQUAL_UINT32(StatusCodes::Failure, refused->StatusCode);
+    TEST_ASSERT_EQUAL_UINT32(17, refused->Function);
+    TEST_ASSERT_EQUAL_UINT8(Esp32Interfaces::System, refused->Interface);
+    Message::DeleteMessage(refused);
+
+    Message *huge = TestSpiTransportProvider::TakeQueuedMessage(HUGE_ID);
+    TEST_ASSERT_NOT_NULL(huge);
+    TEST_ASSERT_EQUAL_UINT32_MESSAGE(0, huge->PayloadLength, "A payload of 70000 bytes was queued.");
+    TEST_ASSERT_NULL(huge->Payload);
+    TEST_ASSERT_EQUAL_UINT32(StatusCodes::Failure, huge->StatusCode);
+    Message::DeleteMessage(huge);
+
+    if (madeQueue)
+    {
+        TestSpiTransportProvider::ReleaseOutboundQueue();
+    }
+}
+
+TEST_CASE("The packets of a payload are worked out in 32 bits", CLASS_OF_TESTS)
+{
+    SpiTransportProvider *provider = EnsureProvider();
+
+    //
+    //  The payload is never read here, only its length.  The first packet is 4061 bytes, and so is the
+    //  next: worked out in 16 bits the remaining 65939 bytes wrapped to 429.
+    //
+    Message *message = Message::CreateOnHeap(MessageTypes::Response, Esp32Interfaces::System, 17, StatusCodes::CompletedOk, 1, nullptr, 0);
+    TEST_ASSERT_NOT_NULL(message);
+    message->PayloadLength = 70000;
+    message->PacketOffset = 0;
+    message->PacketLength = 0;
+
+    TestSpiTransportProvider::CallUpdatePacketInformation(provider, message);
+    TEST_ASSERT_EQUAL_UINT16(0, message->PacketOffset);
+    TEST_ASSERT_EQUAL_UINT16(Message::MAXIMUM_PACKET_SIZE, message->PacketLength);
+    TestSpiTransportProvider::CallUpdatePacketInformation(provider, message);
+    TEST_ASSERT_EQUAL_UINT16(Message::MAXIMUM_PACKET_SIZE, message->PacketOffset);
+    TEST_ASSERT_EQUAL_UINT16_MESSAGE(Message::MAXIMUM_PACKET_SIZE, message->PacketLength, "The second packet of a long payload was cut short.");
+
+    //
+    //  The packets of a payload of the maximum: two full ones and what is left.
+    //
+    message->PayloadLength = Message::MAXIMUM_PAYLOAD_LENGTH;
+    message->PacketOffset = 0;
+    message->PacketLength = 0;
+    const uint16_t expected[] = {Message::MAXIMUM_PACKET_SIZE, Message::MAXIMUM_PACKET_SIZE, Message::MAXIMUM_PAYLOAD_LENGTH - (2 * Message::MAXIMUM_PACKET_SIZE)};
+    uint32_t sent = 0;
+    for (const uint16_t length: expected)
+    {
+        TestSpiTransportProvider::CallUpdatePacketInformation(provider, message);
+        TEST_ASSERT_EQUAL_UINT16(sent, message->PacketOffset);
+        TEST_ASSERT_EQUAL_UINT16(length, message->PacketLength);
+        sent += length;
+    }
+    TEST_ASSERT_EQUAL_UINT32(Message::MAXIMUM_PAYLOAD_LENGTH, sent);
+
+    //
+    //  An offset past the end of the payload leaves nothing to send, rather than wrapping.
+    //
+    message->PayloadLength = 100;
+    message->PacketOffset = 200;
+    message->PacketLength = 0;
+    TestSpiTransportProvider::CallUpdatePacketInformation(provider, message);
+    TEST_ASSERT_EQUAL_UINT16(0, message->PacketLength);
+
+    Message::DeleteMessage(message);
 }
