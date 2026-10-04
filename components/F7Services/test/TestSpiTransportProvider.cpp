@@ -235,6 +235,14 @@ public:
     }
 
     /**
+     * @brief The provider's outbound queue.
+     */
+    static QueueHandle_t OutboundQueue()
+    {
+        return (SpiTransportProvider::_outboundMessageQueueHandle);
+    }
+
+    /**
      * @brief Give the provider an outbound queue and mutex if it has none.
      *
      *  The queue is made by the message dispatcher in the firmware, and these tests have none.
@@ -819,10 +827,11 @@ static spi_slave_transaction_t *SendFirstPacket(SpiTransportProvider *provider, 
  *
  * @param transaction Transaction to receive it.
  * @param frameLength Number of bytes the sender is taken to have sent.
+ * @param messageType Type of the message: an Ack, or a Nak.
  */
-static void ReceiveAcknowledgement(spi_slave_transaction_t *transaction, const uint32_t frameLength)
+static void ReceiveAcknowledgement(spi_slave_transaction_t *transaction, const uint32_t frameLength, const uint8_t messageType = MessageTypes::Ack)
 {
-    Message *acknowledgement = Message::CreateOnHeap(MessageTypes::Ack, Esp32Interfaces::Transport, 0, StatusCodes::CompletedOk, 99, nullptr, 0);
+    Message *acknowledgement = Message::CreateOnHeap(messageType, Esp32Interfaces::Transport, 0, StatusCodes::CompletedOk, 99, nullptr, 0);
     TEST_ASSERT_NOT_NULL(acknowledgement);
     uint8_t *buffer = static_cast<uint8_t *>(transaction->rx_buffer);
     memset(buffer, 0, Message::MAXIMUM_SPI_FRAME_SIZE);
@@ -865,6 +874,56 @@ TEST_CASE("An acknowledgement is decoded from the number of bytes received", CLA
     transaction = TestSpiTransportProvider::CallPacketAcknowledgementReceived(provider, transaction);
     TEST_ASSERT_NOT_NULL(transaction);
     TEST_ASSERT_NULL_MESSAGE(TestSpiTransportProvider::GetOutboundMessage(provider), "A frame too short for a header was taken for an acknowledgement.");
+    TestSpiTransportProvider::CallDeleteTransaction(provider, transaction);
+    TestSpiTransportProvider::ResetState();
+
+    if (madeQueue)
+    {
+        TestSpiTransportProvider::ReleaseOutboundQueue();
+    }
+}
+
+/**
+ * @brief Number of messages on the provider's outbound queue.
+ */
+static UBaseType_t QueuedMessageCount()
+{
+    return (uxQueueMessagesWaiting(TestSpiTransportProvider::OutboundQueue()));
+}
+
+TEST_CASE("An acknowledgement with no outbound message to acknowledge is ignored", CLASS_OF_TESTS)
+{
+    SpiTransportProvider *provider = EnsureProvider();
+    ResetIncomingMessage();
+    const bool madeQueue = TestSpiTransportProvider::EnsureOutboundQueue();
+    TestSpiTransportProvider::SetOutboundMessage(provider, nullptr);
+
+    //
+    //  An acknowledgement, a negative one, and a frame that is not a message at all, each arriving when the
+    //  outbound message has already gone.  The first used to be passed to UpdatePacketInformation as a null
+    //  message, and the others put a null message on the queue for the transport task to dereference (issue #233).
+    //
+    const uint8_t types[] = {MessageTypes::Ack, MessageTypes::Nak};
+    for (const uint8_t type: types)
+    {
+        spi_slave_transaction_t *transaction = TestSpiTransportProvider::CallCreateSpiTransaction(provider, nullptr);
+        ReceiveAcknowledgement(transaction, TestSpiTransportProvider::GetHeaderFrameSize(), type);
+        const UBaseType_t queuedBefore = QueuedMessageCount();
+        transaction = TestSpiTransportProvider::CallPacketAcknowledgementReceived(provider, transaction);
+        TEST_ASSERT_NOT_NULL_MESSAGE(transaction, "No transaction was returned after an acknowledgement with nothing to acknowledge.");
+        TEST_ASSERT_EQUAL_UINT32_MESSAGE(queuedBefore, QueuedMessageCount(), "An acknowledgement with no outbound message put something on the queue.");
+        TEST_ASSERT_NULL(TestSpiTransportProvider::GetOutboundMessage(provider));
+        TestSpiTransportProvider::CallDeleteTransaction(provider, transaction);
+        TestSpiTransportProvider::ResetState();
+    }
+
+    spi_slave_transaction_t *transaction = TestSpiTransportProvider::CallCreateSpiTransaction(provider, nullptr);
+    memset(transaction->rx_buffer, 0xff, Message::MAXIMUM_SPI_FRAME_SIZE);
+    transaction->trans_len = TestSpiTransportProvider::GetHeaderFrameSize() * 8;
+    const UBaseType_t queuedBefore = QueuedMessageCount();
+    transaction = TestSpiTransportProvider::CallPacketAcknowledgementReceived(provider, transaction);
+    TEST_ASSERT_NOT_NULL(transaction);
+    TEST_ASSERT_EQUAL_UINT32_MESSAGE(queuedBefore, QueuedMessageCount(), "A frame that could not be decoded, with no outbound message, put something on the queue.");
     TestSpiTransportProvider::CallDeleteTransaction(provider, transaction);
     TestSpiTransportProvider::ResetState();
 
