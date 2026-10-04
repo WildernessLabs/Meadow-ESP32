@@ -348,7 +348,10 @@ spi_slave_transaction_t *SpiTransportProvider::CreateSpiTransaction(Message *mes
     ClearTransmitAndReceiveBuffers();
     if (message)
     {
-        Encoders::EncodeMessage(message, _txBuffer, false);
+        if (!Encoders::EncodeMessage(message, _txBuffer, Message::MAXIMUM_SPI_FRAME_SIZE, false))
+        {
+            ERROR_MESSAGE("CreateSpiTransaction: the message could not be encoded; sending an empty frame.");
+        }
     }
     transaction->rx_buffer = _rxBuffer;
     transaction->tx_buffer = _txBuffer;
@@ -521,7 +524,10 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessTransportMessage(Message *
                 message->StatusCode = StatusCodes::NoMessagesWaiting;
             }
             newTransaction = CreateSpiTransaction(nullptr);
-            Encoders::EncodeMessage(message, _txBuffer, true);
+            if (!Encoders::EncodeMessage(message, _txBuffer, Message::MAXIMUM_SPI_FRAME_SIZE, true))
+            {
+                ERROR_MESSAGE("ProcessTransportMessage: the response could not be encoded; sending an empty frame.");
+            }
             Message::DeleteMessage(message);
             _currentState = SendingPacketDetails;
             break;
