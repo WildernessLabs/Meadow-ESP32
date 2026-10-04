@@ -228,7 +228,7 @@ idf.py -j 1 build
 
 ## Flashing the Device
 
-Once built, the application must be flashed to the ESP32. See [Development Tools](Tools.md) for detailed flashing instructions.
+Once built, the application must be flashed to the ESP32. See [Development Tools](Tools.md) for detailed flashing instructions.  Updates to devices in the field are performed by the managed application, not the ESP32; see [Firmware Updates](FirmwareUpdate.md).
 
 ## Next Steps
 
