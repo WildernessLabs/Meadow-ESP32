@@ -368,3 +368,87 @@ TEST_CASE("ExtractMessage refuses a message that announces a payload and carries
     vPortFree(frame);
     Message::DeleteMessage(message);
 }
+
+/**
+ * @brief Set the CRC in an encoded packet to a value that cannot be right.
+ *
+ * @param buffer The encoded packet.
+ */
+static void SpoilCrc(uint8_t *buffer)
+{
+    Encoders::EncodeUInt32(Encoders::ExtractUInt32(buffer + Message::CRC_OFFSET) ^ 0x00000001, buffer + Message::CRC_OFFSET);
+}
+
+TEST_CASE("Whether a packet is well formed does not depend on its CRC", CLASS_OF_TESTS)
+{
+    //
+    //  The CRC shows a frame arrived as it was sent, not that it is well formed, so the structure is
+    //  checked on its own, and a frame has to pass that and the CRC (issue #277).
+    //
+    Message *message = CreateMessage();
+    uint8_t *frame = EncodeIntoFrame(message);
+    const uint32_t length = Message::MAXIMUM_SPI_FRAME_SIZE;
+    //
+    //  The encoder's CRC covers the packet and its padding, not the whole frame, so seal the frame as received.
+    //
+    Reseal(frame, length);
+
+    TEST_ASSERT_TRUE(Encoders::PacketIsWellFormed(frame, length, false));
+    Message *good = Encoders::ExtractMessage(frame, length, false);
+    TEST_ASSERT_NOT_NULL(good);
+    Message::DeleteMessage(good);
+
+    //
+    //  A wrong CRC on a well formed packet: still well formed, and refused by the CRC.
+    //
+    SpoilCrc(frame);
+    TEST_ASSERT_TRUE_MESSAGE(Encoders::PacketIsWellFormed(frame, length, false), "A packet's structure was judged by its CRC.");
+    TEST_ASSERT_NULL_MESSAGE(Encoders::ExtractMessage(frame, length, false), "A packet with a wrong CRC was extracted.");
+    TEST_ASSERT_NULL(Encoders::ExtractMessage(frame, length, true));
+
+    //
+    //  A bad length with a right CRC, and with a wrong one, is not well formed either way.
+    //
+    Encoders::EncodeUInt16(0xffff, frame + PACKET_LENGTH_OFFSET);
+    TEST_ASSERT_FALSE_MESSAGE(Encoders::PacketIsWellFormed(frame, length, false), "A packet with a bad length was judged well formed because its CRC was wrong.");
+    TEST_ASSERT_FALSE(Encoders::PacketIsWellFormed(frame, length, true));
+    Reseal(frame, length);
+    TEST_ASSERT_FALSE_MESSAGE(Encoders::PacketIsWellFormed(frame, length, false), "A packet with a bad length was judged well formed because its CRC was right.");
+    TEST_ASSERT_NULL(Encoders::ExtractMessage(frame, length, false));
+
+    //
+    //  A packet announcing a payload and carrying none, with a wrong CRC.
+    //
+    Encoders::EncodeUInt16(0, frame + PACKET_LENGTH_OFFSET);
+    SpoilCrc(frame);
+    TEST_ASSERT_FALSE(Encoders::PacketIsWellFormed(frame, length, false));
+    TEST_ASSERT_TRUE_MESSAGE(Encoders::PacketIsWellFormed(frame, length, true), "A header on its own was judged by the payload it announces.");
+
+    //
+    //  Buffers that cannot hold a header, and none at all.
+    //
+    TEST_ASSERT_FALSE(Encoders::PacketIsWellFormed(nullptr, length, false));
+    TEST_ASSERT_FALSE(Encoders::PacketIsWellFormed(frame, Message::HEADER_SIZE + Message::SPI_MESSAGE_OVERHEAD - 1, true));
+    TEST_ASSERT_FALSE(Encoders::PacketIsWellFormed(frame, Message::MAXIMUM_SPI_FRAME_SIZE + 1, true));
+
+    vPortFree(frame);
+    Message::DeleteMessage(message);
+}
+
+TEST_CASE("A well formed packet whose contents were damaged is refused by the CRC", CLASS_OF_TESTS)
+{
+    Message *message = CreateMessage();
+    uint8_t *frame = EncodeIntoFrame(message);
+    const uint32_t length = Message::MAXIMUM_SPI_FRAME_SIZE;
+    //
+    //  The encoder's CRC covers the packet and its padding, not the whole frame, so seal the frame as received.
+    //
+    Reseal(frame, length);
+
+    frame[Message::HEADER_SIZE + 3] ^= 0x40;
+    TEST_ASSERT_TRUE(Encoders::PacketIsWellFormed(frame, length, false));
+    TEST_ASSERT_NULL_MESSAGE(Encoders::ExtractMessage(frame, length, false), "A frame damaged in transmission was extracted.");
+
+    vPortFree(frame);
+    Message::DeleteMessage(message);
+}
