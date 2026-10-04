@@ -993,6 +993,40 @@ namespace WiFiAuthenticationMode
 
 } // namespace WiFiAuthenticationMode
 
+namespace WiFiAccessPointProtocols
+{
+    /*
+     *    Protocols an access point supports.  The values are flags, one bit each, and are combined with a bitwise OR.
+     */
+    enum WiFiAccessPointProtocols : uint32_t {
+        /// <summary>
+        /// WiFiAccessPointProtocols - None
+        /// </summary>
+        None = 0x00,
+        /// <summary>
+        /// WiFiAccessPointProtocols - Phy11b
+        /// </summary>
+        Phy11b = 0x01,
+        /// <summary>
+        /// WiFiAccessPointProtocols - Phy11g
+        /// </summary>
+        Phy11g = 0x02,
+        /// <summary>
+        /// WiFiAccessPointProtocols - Phy11n
+        /// </summary>
+        Phy11n = 0x04,
+        /// <summary>
+        /// WiFiAccessPointProtocols - PhyLowRate
+        /// </summary>
+        PhyLowRate = 0x08,
+        /// <summary>
+        /// WiFiAccessPointProtocols - Wps
+        /// </summary>
+        Wps = 0x10
+    };
+
+} // namespace WiFiAccessPointProtocols
+
 namespace WiFiCountryPolicy
 {
     /*

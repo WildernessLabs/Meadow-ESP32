@@ -88,6 +88,11 @@ class WiFiRequestHandler : public RequestHandlerBase
     //
     friend class TestWiFiEventState;
 
+    /**
+     * @brief Test access to the access point protocol flags (issue #249).
+     */
+    friend class TestAccessPointProtocols;
+
 private:
     /**
      *  @brief Hold the information about the originating poll request and the pollfd's.
@@ -766,6 +771,18 @@ private:
      *  @brief Convert the Antenna enum representation of an antenna into a GPIO pin number.
      */
     static gpio_num_t ConvertAntennaToPin(AntennaTypes::AntennaTypes antenna);
+
+    /**
+     *  @brief Combine the protocol flags of a scanned access point into one WiFiAccessPointProtocols value.
+     *
+     *  Each flag of the record is a one bit field, so they cannot just be ORed together: the result
+     *  would only ever be 0 or 1 (issue #249).  Each is given its own bit of the shared enum.
+     *
+     *  @param record Access point record from a scan.
+     *
+     *  @return The protocols as a combination of WiFiAccessPointProtocols values.
+     */
+    static uint32_t ConvertProtocols(const wifi_ap_record_t &record);
 
     /**
      *  @brief Change the current antenna and activate it.

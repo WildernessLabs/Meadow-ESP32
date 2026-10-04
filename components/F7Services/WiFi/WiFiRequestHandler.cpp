@@ -1149,6 +1149,42 @@ gpio_num_t WiFiRequestHandler::ConvertAntennaToPin(AntennaTypes::AntennaTypes an
 }
 
 /**
+ *  @brief Combine the protocol flags of a scanned access point into one value.
+ *
+ *  @param record
+ *      Access point record from a scan.
+ *
+ *  @returns
+ *      The protocols as a combination of WiFiAccessPointProtocols values.
+ */
+uint32_t WiFiRequestHandler::ConvertProtocols(const wifi_ap_record_t &record)
+{
+    uint32_t protocols = WiFiAccessPointProtocols::None;
+
+    if (record.phy_11b != 0)
+    {
+        protocols |= WiFiAccessPointProtocols::Phy11b;
+    }
+    if (record.phy_11g != 0)
+    {
+        protocols |= WiFiAccessPointProtocols::Phy11g;
+    }
+    if (record.phy_11n != 0)
+    {
+        protocols |= WiFiAccessPointProtocols::Phy11n;
+    }
+    if (record.phy_lr != 0)
+    {
+        protocols |= WiFiAccessPointProtocols::PhyLowRate;
+    }
+    if (record.wps != 0)
+    {
+        protocols |= WiFiAccessPointProtocols::Wps;
+    }
+    return (protocols);
+}
+
+/**
  *  @brief Change the current antenna in use.
  *
  *  Note that this does not change the actual default antenna in use, it just switches to a new one.
@@ -2549,7 +2585,7 @@ void WiFiRequestHandler::ScanForAccessPoints(Message *message)
                                     accessPoint->SecondaryChannel = accessPoints[index].second;
                                     accessPoint->Rssi = accessPoints[index].rssi;
                                     accessPoint->AuthenticationMode = accessPoints[index].authmode;
-                                    accessPoint->Protocols = accessPoints[index].phy_11b | accessPoints[index].phy_11g | accessPoints[index].phy_11n | accessPoints[index].phy_lr | accessPoints[index].wps;
+                                    accessPoint->Protocols = ConvertProtocols(accessPoints[index]);
                                     Encoders::EncodeAccessPoint(accessPoint, currentLocation);
                                     currentLocation += singleAccessPointSize;
                                 }
