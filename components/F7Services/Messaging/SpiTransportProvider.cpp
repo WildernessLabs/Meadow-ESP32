@@ -846,41 +846,54 @@ spi_slave_transaction_t *SpiTransportProvider::PacketAcknowledgementReceived(spi
     //  unless the state is changed.
     //
     _currentState = WaitingForPacket;
-    if (incomingMessage)
+    //
+    //  The outbound message is the one being sent, and it is released when its last packet is acknowledged or
+    //  when it goes back on the queue.  An acknowledgement that arrives when there is none, after the message has
+    //  gone, has nothing to acknowledge.  It must not be passed to UpdatePacketInformation or put on the queue,
+    //  where a null message would be taken off by the transport task and dereferenced (issue #233).
+    //
+    if (_outboundMessage == nullptr)
     {
-        if (incomingMessage->MessageType == MessageTypes::Ack)
+        ERROR_MESSAGE("PacketAcknowledgementReceived: a %s arrived with no outbound message to acknowledge, ignoring it.", (incomingMessage == nullptr) ? "frame that cannot be decoded" : "message");
+    }
+    else
+    {
+        if (incomingMessage)
         {
+            if (incomingMessage->MessageType == MessageTypes::Ack)
+            {
 #if defined(PERFORMANCE_LOGGING)
-            PERFORMANCE_LOGGING_EXIT();
-            Logging::AddPerformanceCounterEntry(Logging::MessageSummary(_outboundMessage), _outboundMessage->PerformanceLoggingStart, performance_logging_end, true);
+                PERFORMANCE_LOGGING_EXIT();
+                Logging::AddPerformanceCounterEntry(Logging::MessageSummary(_outboundMessage), _outboundMessage->PerformanceLoggingStart, performance_logging_end, true);
 #endif
 
-            UpdatePacketInformation(_outboundMessage);
-            if (_outboundMessage->PacketLength == 0)
-            {
-                Message::DeleteMessage(_outboundMessage);
-                TRACE_MESSAGE("Final packet sent.");
+                UpdatePacketInformation(_outboundMessage);
+                if (_outboundMessage->PacketLength == 0)
+                {
+                    Message::DeleteMessage(_outboundMessage);
+                    TRACE_MESSAGE("Final packet sent.");
+                }
+                else
+                {
+                    TRACE_MESSAGE("Preparing next packet.");
+                    //
+                    //  CreateSpiTransaction clears the buffers and encodes the packet (issue #319).
+                    //
+                    newTransaction = CreateSpiTransaction(_outboundMessage);
+                    _currentState = SendingPacket;
+                }
             }
             else
             {
-                TRACE_MESSAGE("Preparing next packet.");
-                //
-                //  CreateSpiTransaction clears the buffers and encodes the packet (issue #319).
-                //
-                newTransaction = CreateSpiTransaction(_outboundMessage);
-                _currentState = SendingPacket;
+                TRACE_MESSAGE("Message is not ACK %02" PRIx8, incomingMessage->MessageType);
+                QueueMessageForStm32(_outboundMessage);
             }
         }
         else
         {
-            TRACE_MESSAGE("Message is not ACK %02" PRIx8, incomingMessage->MessageType);
+            TRACE_MESSAGE("Incoming message cannot be decoded.");
             QueueMessageForStm32(_outboundMessage);
         }
-    }
-    else
-    {
-        TRACE_MESSAGE("Incoming message cannot be decoded.");
-        QueueMessageForStm32(_outboundMessage);
     }
     Message::DeleteMessage(incomingMessage);
     if (_currentState == WaitingForPacket)
