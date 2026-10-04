@@ -183,12 +183,13 @@ void CoreDump::GetFragment(void * const vpMessage)
     Message * const message = static_cast<Message *>(vpMessage);
     StatusCodes::StatusCodes result = StatusCodes::Failure;
     Esp32Messaging::CoreDumpFragmentResponse response = {};
-    Esp32Messaging::CoreDumpFragmentRequest *request = Encoders::ExtractCoreDumpFragmentRequest(message->Payload);
+    bool malformed = false;
+    Esp32Messaging::CoreDumpFragmentRequest *request = Encoders::ExtractCoreDumpFragmentRequest(message->Payload, message->PayloadLength, &malformed);
     if (request == nullptr)
     {
         if (message->Payload)
         {
-            result = StatusCodes::EspOutOfMemory;
+            result = malformed ? StatusCodes::InvalidRequest : StatusCodes::EspOutOfMemory;
         }
         else
         {

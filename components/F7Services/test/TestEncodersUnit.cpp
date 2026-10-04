@@ -453,7 +453,7 @@ TEST_CASE("EncodeAccessPointInformation stays inside the buffer it is given", CL
     TEST_ASSERT_NOT_NULL(encoded);
     CheckEncoderStaysInsideBuffer(requiredLength, [&information](uint8_t *buffer, const uint32_t bufferLength) { return (Encoders::EncodeAccessPointInformation(&information, buffer, bufferLength)); }, encoded);
 
-    Esp32Messaging::AccessPointInformation *decoded = Encoders::ExtractAccessPointInformation(encoded);
+    Esp32Messaging::AccessPointInformation *decoded = Encoders::ExtractAccessPointInformation(encoded, requiredLength);
     TEST_ASSERT_NOT_NULL(decoded);
     TEST_ASSERT_EQUAL_STRING("Network", decoded->NetworkName);
     TEST_ASSERT_EQUAL_STRING("Password", decoded->Password);
@@ -482,7 +482,7 @@ TEST_CASE("EncodeAddrInfo stays inside the buffer it is given", CLASS_OF_TESTS)
     TEST_ASSERT_NOT_NULL(encoded);
     CheckEncoderStaysInsideBuffer(requiredLength, [&addrInfo](uint8_t *buffer, const uint32_t bufferLength) { return (Encoders::EncodeAddrInfo(&addrInfo, buffer, bufferLength)); }, encoded);
 
-    Esp32Messaging::AddrInfo *decoded = Encoders::ExtractAddrInfo(encoded);
+    Esp32Messaging::AddrInfo *decoded = Encoders::ExtractAddrInfo(encoded, requiredLength);
     TEST_ASSERT_NOT_NULL(decoded);
     TEST_ASSERT_EQUAL_UINT32(42, decoded->MyHeapAddress);
     TEST_ASSERT_EQUAL_UINT32(sizeof(address), decoded->AddrLength);
@@ -507,7 +507,7 @@ TEST_CASE("EncodeFileDetails stays inside the buffer it is given", CLASS_OF_TEST
     TEST_ASSERT_NOT_NULL(encoded);
     CheckEncoderStaysInsideBuffer(requiredLength, [&details](uint8_t *buffer, const uint32_t bufferLength) { return (Encoders::EncodeFileDetails(&details, buffer, bufferLength)); }, encoded);
 
-    Esp32Messaging::FileDetails *decoded = Encoders::ExtractFileDetails(encoded);
+    Esp32Messaging::FileDetails *decoded = Encoders::ExtractFileDetails(encoded, requiredLength);
     TEST_ASSERT_NOT_NULL(decoded);
     TEST_ASSERT_EQUAL_STRING("config.json", decoded->Name);
     TEST_ASSERT_EQUAL_UINT16(0x1234, decoded->Length);
@@ -532,7 +532,7 @@ TEST_CASE("EncodeFileNameAndContents stays inside the buffer it is given", CLASS
     TEST_ASSERT_NOT_NULL(encoded);
     CheckEncoderStaysInsideBuffer(requiredLength, [&file](uint8_t *buffer, const uint32_t bufferLength) { return (Encoders::EncodeFileNameAndContents(&file, buffer, bufferLength)); }, encoded);
 
-    Esp32Messaging::FileNameAndContents *decoded = Encoders::ExtractFileNameAndContents(encoded);
+    Esp32Messaging::FileNameAndContents *decoded = Encoders::ExtractFileNameAndContents(encoded, requiredLength);
     TEST_ASSERT_NOT_NULL(decoded);
     TEST_ASSERT_EQUAL_STRING("data.bin", decoded->Name);
     TEST_ASSERT_EQUAL_UINT32(sizeof(contents), decoded->ContentsLength);

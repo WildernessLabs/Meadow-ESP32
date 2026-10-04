@@ -58,16 +58,19 @@ void WiFiRequestHandler::UnlockConnectedNodesMap()
  * @param data
  *      Pointer to a block of memory holding the encoded access point information.
  *
+ * @param dataLength
+ *      Number of bytes in that block, the message's PayloadLength.
+ *
  * @return Esp32Messaging::AccessPointInformation*
  *      Pointer to validated access point information, nullptr if there is a problem.
  */
-Esp32Messaging::AccessPointInformation *WiFiRequestHandler::ExtractAndValidateAccessPointInformation(uint8_t *data)
+Esp32Messaging::AccessPointInformation *WiFiRequestHandler::ExtractAndValidateAccessPointInformation(uint8_t *data, const uint32_t dataLength)
 {
     Esp32Messaging::AccessPointInformation *result = nullptr;
 
     if (data)
     {
-        result = Encoders::ExtractAccessPointInformation(data);
+        result = Encoders::ExtractAccessPointInformation(data, dataLength);
         if (result)
         {
             bool error = (!result->NetworkName) || (strlen(result->NetworkName) == 0) || (strlen(result->NetworkName) > MAXIMUM_SSID_LENGTH);
@@ -95,7 +98,7 @@ void WiFiRequestHandler::StartAccessPoint(Message *message)
 
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
 
-    Esp32Messaging::AccessPointInformation *accessPointInformation = ExtractAndValidateAccessPointInformation(message->Payload);
+    Esp32Messaging::AccessPointInformation *accessPointInformation = ExtractAndValidateAccessPointInformation(message->Payload, message->PayloadLength);
     message->DeletePayload();
 
     if (accessPointInformation)

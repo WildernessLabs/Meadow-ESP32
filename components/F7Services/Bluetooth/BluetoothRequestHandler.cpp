@@ -553,12 +553,13 @@ void BluetoothRequestHandler::SetCurrentValueForAttributeHandle(Message * const 
     TRACE_MESSAGE("SetCurrentValueForAttributeHandle: Enter");
 
     //
-    //  ExtractBTServerDataSet reads the handle straight from the payload, so a request with
-    //  no payload is refused before it is called.  It returns nullptr only when it cannot
-    //  allocate.
+    //  A request with no payload is refused as invalid.  ExtractBTServerDataSet also returns
+    //  nullptr when the payload is too short for what it declares, which is invalid too, and
+    //  when it cannot allocate.
     //
     const bool hasPayload = (request->Payload != nullptr);
-    Esp32Messaging::BTServerDataSet *ds = hasPayload ? Encoders::ExtractBTServerDataSet(request->Payload) : nullptr;
+    bool malformed = false;
+    Esp32Messaging::BTServerDataSet *ds = hasPayload ? Encoders::ExtractBTServerDataSet(request->Payload, request->PayloadLength, &malformed) : nullptr;
     request->DeletePayload();
 
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
@@ -566,7 +567,7 @@ void BluetoothRequestHandler::SetCurrentValueForAttributeHandle(Message * const 
     {
         if (hasPayload)
         {
-            result = StatusCodes::EspOutOfMemory;
+            result = malformed ? StatusCodes::InvalidRequest : StatusCodes::EspOutOfMemory;
         }
         else
         {
@@ -1181,25 +1182,34 @@ void BluetoothRequestHandler::Start(Message * const request)
     }
 
     //
-    //  The extractor reads the payload without checking it exists, and returns nullptr only
-    //  when it cannot allocate, so both cases are dealt with here before anything is used.
+    //  The extractor returns nullptr for a payload that is missing, one whose configuration is
+    //  not terminated within it, and when it cannot allocate, so all three are dealt with here
+    //  before anything is used.
     //
     const bool hasPayload = (request->Payload != nullptr);
-    Esp32Messaging::BTStackConfig *config = hasPayload ? Encoders::ExtractBTStackConfig(request->Payload) : nullptr;
+    bool configMalformed = false;
+    Esp32Messaging::BTStackConfig *config = hasPayload ? Encoders::ExtractBTStackConfig(request->Payload, request->PayloadLength, &configMalformed) : nullptr;
     request->DeletePayload();
 
     bool graphBuilt = false;
     StatusCodes::StatusCodes refusal = StatusCodes::InvalidConfigurationFile;
     if (config == nullptr)
     {
-        if (hasPayload)
+        if (!hasPayload)
         {
-            ERROR_MESSAGE("Start: could not allocate the stack configuration.");
-            refusal = StatusCodes::EspOutOfMemory;
+            ERROR_MESSAGE("Start: the request carries no configuration.");
         }
         else
         {
-            ERROR_MESSAGE("Start: the request carries no configuration.");
+            if (configMalformed)
+            {
+                ERROR_MESSAGE("Start: the configuration is not terminated within the payload.");
+            }
+            else
+            {
+                ERROR_MESSAGE("Start: could not allocate the stack configuration.");
+                refusal = StatusCodes::EspOutOfMemory;
+            }
         }
     }
     else

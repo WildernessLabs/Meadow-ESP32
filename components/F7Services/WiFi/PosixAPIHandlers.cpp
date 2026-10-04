@@ -138,12 +138,13 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetAddrInfo(Esp32Messaging::GetAddr
     const bool hasHints = (request->Hints != nullptr) && (request->HintsLength > 0);
     if (hasHints)
     {
-        Esp32Messaging::AddrInfo *extractedHints = Encoders::ExtractAddrInfo(request->Hints);
+        bool hintsMalformed = false;
+        Esp32Messaging::AddrInfo *extractedHints = Encoders::ExtractAddrInfo(request->Hints, request->HintsLength, &hintsMalformed);
         Utils::DeleteAndNullifyPointer(request->Hints);
 
         if (extractedHints == nullptr)
         {
-            return (StatusCodes::EspOutOfMemory);
+            return (hintsMalformed ? StatusCodes::InvalidRequest : StatusCodes::EspOutOfMemory);
         }
 
         hints.ai_family = extractedHints->Family;
@@ -300,7 +301,8 @@ void WiFiRequestHandler::GetAddrInfo(void * const vpMessage)
             memset(response, 0, sizeof(Esp32Messaging::GetAddrInfoResponse));
             if (IsConnected())
             {
-                Esp32Messaging::GetAddrInfoRequest *request = Encoders::ExtractGetAddrInfoRequest(message->Payload);
+                bool malformed = false;
+                Esp32Messaging::GetAddrInfoRequest *request = Encoders::ExtractGetAddrInfoRequest(message->Payload, message->PayloadLength, &malformed);
                 if (request)
                 {
                     result = GetAddrInfo(request, response);
@@ -311,7 +313,7 @@ void WiFiRequestHandler::GetAddrInfo(void * const vpMessage)
                 }
                 else
                 {
-                    result = StatusCodes::EspOutOfMemory;
+                    result = malformed ? StatusCodes::InvalidRequest : StatusCodes::EspOutOfMemory;
                 }
             }
             else
@@ -403,7 +405,8 @@ void WiFiRequestHandler::Socket(void * const vpMessage)
     {
         if (IsConnected())
         {
-            Esp32Messaging::SocketRequest *request = Encoders::ExtractSocketRequest(message->Payload);
+            bool malformed = false;
+            Esp32Messaging::SocketRequest *request = Encoders::ExtractSocketRequest(message->Payload, message->PayloadLength, &malformed);
             if (request)
             {
                 TRACE_MESSAGE("Socket: Creating socket on domain %" PRIi32 ", type %" PRIi32 " and protocol %" PRIi32, request->Domain, request->Type, request->Protocol);
@@ -439,7 +442,7 @@ void WiFiRequestHandler::Socket(void * const vpMessage)
             }
             else
             {
-                result = StatusCodes::EspOutOfMemory;
+                result = malformed ? StatusCodes::InvalidRequest : StatusCodes::EspOutOfMemory;
             }
         }
         else
@@ -523,7 +526,8 @@ void WiFiRequestHandler::Connect(void * const vpMessage)
     {
         if (IsConnected())
         {
-            Esp32Messaging::ConnectRequest *request = Encoders::ExtractConnectRequest(message->Payload);
+            bool malformed = false;
+            Esp32Messaging::ConnectRequest *request = Encoders::ExtractConnectRequest(message->Payload, message->PayloadLength, &malformed);
             if (request)
             {
                 if (request->AddrLength == 0)
@@ -537,7 +541,8 @@ void WiFiRequestHandler::Connect(void * const vpMessage)
                 }
                 else
                 {
-                    Esp32Messaging::SockAddr *socketAddress = Encoders::ExtractSockAddr(request->Addr);
+                    bool addressMalformed = false;
+                    Esp32Messaging::SockAddr *socketAddress = Encoders::ExtractSockAddr(request->Addr, request->AddrLength, &addressMalformed);
                     if (socketAddress)
                     {
                         struct sockaddr_in sa = {};
@@ -578,14 +583,14 @@ void WiFiRequestHandler::Connect(void * const vpMessage)
                     }
                     else
                     {
-                        result = StatusCodes::EspOutOfMemory;
+                        result = addressMalformed ? StatusCodes::InvalidRequest : StatusCodes::EspOutOfMemory;
                     }
                 }
                 Encoders::FreeConnectRequest(&request);
             }
             else
             {
-                result = StatusCodes::EspOutOfMemory;
+                result = malformed ? StatusCodes::InvalidRequest : StatusCodes::EspOutOfMemory;
             }
         }
         else
@@ -664,7 +669,8 @@ void WiFiRequestHandler::FreeAddrInfo(void * const vpMessage)
     }
     else
     {
-        Esp32Messaging::FreeAddrInfoRequest *request = Encoders::ExtractFreeAddrInfoRequest(message->Payload);
+        bool malformed = false;
+        Esp32Messaging::FreeAddrInfoRequest *request = Encoders::ExtractFreeAddrInfoRequest(message->Payload, message->PayloadLength, &malformed);
 
         if (request != nullptr)
         {
@@ -688,7 +694,7 @@ void WiFiRequestHandler::FreeAddrInfo(void * const vpMessage)
         }
         else
         {
-            message->StatusCode = StatusCodes::EspOutOfMemory;
+            message->StatusCode = malformed ? StatusCodes::InvalidRequest : StatusCodes::EspOutOfMemory;
         }
     }
 
@@ -845,7 +851,8 @@ void WiFiRequestHandler::GetSockOpt(void * const vpMessage)
     {
         if (IsConnected())
         {
-            Esp32Messaging::GetSockOptRequest *request = Encoders::ExtractGetSockOptRequest(message->Payload);
+            bool malformed = false;
+            Esp32Messaging::GetSockOptRequest *request = Encoders::ExtractGetSockOptRequest(message->Payload, message->PayloadLength, &malformed);
             if (request)
             {
                 int32_t optionName = 0;
@@ -908,8 +915,8 @@ void WiFiRequestHandler::GetSockOpt(void * const vpMessage)
             else
             {
                 response.Result = -1;
-                response.ResponseErrno = Mapping::NuttxErrno(ENOMEM);
-                result = StatusCodes::EspOutOfMemory;
+                response.ResponseErrno = Mapping::NuttxErrno(malformed ? EINVAL : ENOMEM);
+                result = malformed ? StatusCodes::InvalidRequest : StatusCodes::EspOutOfMemory;
             }
             TRACE_MESSAGE("GetSockOpt: Result: %" PRIi32 ", errno: %" PRIi32 " - %s", response.Result, response.ResponseErrno, strerror(response.ResponseErrno));
             Utils::DeleteAndNullifyPointer(request);
@@ -958,20 +965,26 @@ void WiFiRequestHandler::GetSockOpt(void * const vpMessage)
  * @param data
  *      Source of the socket option data (the option value).
  *
+ * @param dataLength
+ *      Number of bytes in the option value.
+ *
  * @param length
  *      Pointer to a socklen_t object to take the length of the extracted option value.
  *
  * @return uint8_t*
  *      Pointer to the extracted option value (integer) or nullptr if there was a problem.
  */
-uint8_t *WiFiRequestHandler::ExtractIntegerSocketOptionValue(const uint8_t * const data, socklen_t * const length)
+uint8_t *WiFiRequestHandler::ExtractIntegerSocketOptionValue(const uint8_t * const data, const uint32_t dataLength, socklen_t * const length)
 {
     uint8_t *result = nullptr;
 
     if (length != nullptr)
     {
         *length = 0;
-        if (data != nullptr)
+        //
+        //  The value is 4 bytes on the wire, and the request can declare fewer (issue #226).
+        //
+        if ((data != nullptr) && (dataLength >= sizeof(int32_t)))
         {
             int *intVal = reinterpret_cast<int *>(pvPortMalloc(sizeof(int)));
             if (intVal != nullptr)
@@ -995,13 +1008,16 @@ uint8_t *WiFiRequestHandler::ExtractIntegerSocketOptionValue(const uint8_t * con
  * @param optionValue
  *      Pointer to the source data.
  *
+ * @param optionValueLength
+ *      Number of bytes in the option value.
+ *
  * @param length
  *      Pointer to a socklen_t object to take the length of the option value.
  *
  * @return uint8_t *
  *      Pointer the the decoded option value.
  */
-uint8_t *WiFiRequestHandler::GetSocketOptionValue(const int name, uint8_t * const optionValue, socklen_t * const length)
+uint8_t *WiFiRequestHandler::GetSocketOptionValue(const int name, uint8_t * const optionValue, const uint32_t optionValueLength, socklen_t * const length)
 {
     TRACE_MESSAGE("GetSocketOptionValue: Enter");
 
@@ -1016,7 +1032,7 @@ uint8_t *WiFiRequestHandler::GetSocketOptionValue(const int name, uint8_t * cons
                     struct timeval *value = reinterpret_cast<struct timeval *>(pvPortMalloc(sizeof(struct timeval)));
                     if (value != nullptr)
                     {
-                        Esp32Messaging::TimeVal *tv = Encoders::ExtractTimeVal(optionValue);
+                        Esp32Messaging::TimeVal *tv = Encoders::ExtractTimeVal(optionValue, optionValueLength);
                         if (tv == nullptr)
                         {
                             *length = 0;
@@ -1035,7 +1051,7 @@ uint8_t *WiFiRequestHandler::GetSocketOptionValue(const int name, uint8_t * cons
                 break;
             case SO_REUSEADDR:  /* Reuse local addresses when binding */
             case SO_RCVBUF:     /* Set the receive buffer size */
-                result = ExtractIntegerSocketOptionValue(optionValue, length);
+                result = ExtractIntegerSocketOptionValue(optionValue, optionValueLength, length);
                 break;
             case SO_LINGER:     /* Linger on close if data present */
                 TRACE_MESSAGE("SetSockOpt: Implement SO_LINGER");
@@ -1080,13 +1096,16 @@ uint8_t *WiFiRequestHandler::GetSocketOptionValue(const int name, uint8_t * cons
  * @param optionValue
  *      Pointer to the source data.
  *
+ * @param optionValueLength
+ *      Number of bytes in the option value.
+ *
  * @param length
  *      Pointer to a socklen_t object to take the length of the option value.
  *
  * @return uint8_t *
  *      Pointer the the decoded option value.
  */
-uint8_t *WiFiRequestHandler::GetTcpOptionValue(const int name, uint8_t * const optionValue, socklen_t * const length)
+uint8_t *WiFiRequestHandler::GetTcpOptionValue(const int name, uint8_t * const optionValue, const uint32_t optionValueLength, socklen_t * const length)
 {
     TRACE_MESSAGE("GetTcpOptionValue: Enter");
 
@@ -1097,7 +1116,7 @@ uint8_t *WiFiRequestHandler::GetTcpOptionValue(const int name, uint8_t * const o
         switch (name)
         {
             case TCP_NODELAY:
-                result = ExtractIntegerSocketOptionValue(optionValue, length);
+                result = ExtractIntegerSocketOptionValue(optionValue, optionValueLength, length);
                 break;
             default:
                 *length = 0;
@@ -1144,10 +1163,10 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetSockOpt(const Esp32Messaging::Se
             switch (level)
             {
                 case SOL_SOCKET:
-                    optionValue = GetSocketOptionValue(optionName, request->OptionValue, &optionLength);
+                    optionValue = GetSocketOptionValue(optionName, request->OptionValue, request->OptionValueLength, &optionLength);
                     break;
                 case IPPROTO_TCP:
-                    optionValue = GetTcpOptionValue(optionName, request->OptionValue, &optionLength);
+                    optionValue = GetTcpOptionValue(optionName, request->OptionValue, request->OptionValueLength, &optionLength);
                     break;
                 default:
                     TRACE_MESSAGE("SetSockOpt: Cannot process option level: 0x%x", (uint) request->Level);
@@ -1230,7 +1249,8 @@ void WiFiRequestHandler::SetSockOpt(void * const vpMessage)
     {
         if (IsConnected())
         {
-            Esp32Messaging::SetSockOptRequest *request = Encoders::ExtractSetSockOptRequest(message->Payload);
+            bool malformed = false;
+            Esp32Messaging::SetSockOptRequest *request = Encoders::ExtractSetSockOptRequest(message->Payload, message->PayloadLength, &malformed);
             if (request)
             {
                 result = SetSockOpt(request, response);
@@ -1238,8 +1258,8 @@ void WiFiRequestHandler::SetSockOpt(void * const vpMessage)
             else
             {
                 response.Result = -1;
-                response.ResponseErrno = Mapping::NuttxErrno(ENOMEM);
-                result = StatusCodes::EspOutOfMemory;
+                response.ResponseErrno = Mapping::NuttxErrno(malformed ? EINVAL : ENOMEM);
+                result = malformed ? StatusCodes::InvalidRequest : StatusCodes::EspOutOfMemory;
             }
 
             Encoders::FreeSetSockOptRequest(&request);
@@ -1323,7 +1343,8 @@ void WiFiRequestHandler::Close(void * const vpMessage)
     {
         if (IsConnected())
         {
-            Esp32Messaging::CloseRequest *request = Encoders::ExtractCloseRequest(message->Payload);
+            bool malformed = false;
+            Esp32Messaging::CloseRequest *request = Encoders::ExtractCloseRequest(message->Payload, message->PayloadLength, &malformed);
             if (request)
             {
                 int descriptor = -1;
@@ -1349,7 +1370,7 @@ void WiFiRequestHandler::Close(void * const vpMessage)
             }
             else
             {
-                result = StatusCodes::EspOutOfMemory;
+                result = malformed ? StatusCodes::InvalidRequest : StatusCodes::EspOutOfMemory;
             }
         }
         else
@@ -1433,7 +1454,8 @@ void WiFiRequestHandler::Send(void * const vpMessage)
     {
         if (IsConnected())
         {
-            Esp32Messaging::SendRequest *request = Encoders::ExtractSendRequest(message->Payload);
+            bool malformed = false;
+            Esp32Messaging::SendRequest *request = Encoders::ExtractSendRequest(message->Payload, message->PayloadLength, &malformed);
             if (request)
             {
                 //
@@ -1485,7 +1507,7 @@ void WiFiRequestHandler::Send(void * const vpMessage)
             }
             else
             {
-                result = StatusCodes::EspOutOfMemory;
+                result = malformed ? StatusCodes::InvalidRequest : StatusCodes::EspOutOfMemory;
             }
         }
         else
@@ -1540,7 +1562,8 @@ StatusCodes::StatusCodes WiFiRequestHandler::SendTo(Esp32Messaging::SendToReques
         int32_t family = 0;
         if (request->DestinationAddress)
         {
-            socketAddress = Encoders::ExtractSockAddr(request->DestinationAddress);
+            bool addressMalformed = false;
+            socketAddress = Encoders::ExtractSockAddr(request->DestinationAddress, request->DestinationAddressLength, &addressMalformed);
             if (socketAddress)
             {
                 Mapping::GetEspValue(Mapping::AddressFamily, socketAddress->Family, &family);
@@ -1549,8 +1572,8 @@ StatusCodes::StatusCodes WiFiRequestHandler::SendTo(Esp32Messaging::SendToReques
             else
             {
                 response.Result = -1;
-                response.ResponseErrno = Mapping::NuttxErrno(ENOMEM);
-                return (StatusCodes::EspOutOfMemory);
+                response.ResponseErrno = Mapping::NuttxErrno(addressMalformed ? EINVAL : ENOMEM);
+                return (addressMalformed ? StatusCodes::InvalidRequest : StatusCodes::EspOutOfMemory);
             }
         }
 
@@ -1674,7 +1697,8 @@ void WiFiRequestHandler::SendTo(void * const vpMessage)
     {
         if (IsConnected())
         {
-            Esp32Messaging::SendToRequest *request = Encoders::ExtractSendToRequest(message->Payload);
+            bool malformed = false;
+            Esp32Messaging::SendToRequest *request = Encoders::ExtractSendToRequest(message->Payload, message->PayloadLength, &malformed);
             if (request)
             {
                 //
@@ -1702,7 +1726,7 @@ void WiFiRequestHandler::SendTo(void * const vpMessage)
             }
             else
             {
-                result = StatusCodes::EspOutOfMemory;
+                result = malformed ? StatusCodes::InvalidRequest : StatusCodes::EspOutOfMemory;
             }
         }
         else
@@ -1899,7 +1923,8 @@ void WiFiRequestHandler::RecvFrom(void * const vpMessage)
     {
         if (IsConnected())
         {
-            Esp32Messaging::RecvFromRequest *request = Encoders::ExtractRecvFromRequest(message->Payload);
+            bool malformed = false;
+            Esp32Messaging::RecvFromRequest *request = Encoders::ExtractRecvFromRequest(message->Payload, message->PayloadLength, &malformed);
             if (request)
             {
                 result = RecvFrom(request, response);
@@ -1908,7 +1933,11 @@ void WiFiRequestHandler::RecvFrom(void * const vpMessage)
             else
             {
                 response.Result = -1;
-                response.ResponseErrno = Mapping::NuttxErrno(ENOMEM);
+                response.ResponseErrno = Mapping::NuttxErrno(malformed ? EINVAL : ENOMEM);
+                if (malformed)
+                {
+                    result = StatusCodes::InvalidRequest;
+                }
             }
         }
         else
@@ -2264,7 +2293,8 @@ void WiFiRequestHandler::RecvMsg(void * const vpMessage)
     {
         if (IsConnected())
         {
-            Esp32Messaging::RecvMsgRequest *request = Encoders::ExtractRecvMsgRequest(message->Payload);
+            bool malformed = false;
+            Esp32Messaging::RecvMsgRequest *request = Encoders::ExtractRecvMsgRequest(message->Payload, message->PayloadLength, &malformed);
 
             if (request)
             {
@@ -2382,7 +2412,7 @@ void WiFiRequestHandler::RecvMsg(void * const vpMessage)
             }
             else
             {
-                result = StatusCodes::EspOutOfMemory;
+                result = malformed ? StatusCodes::InvalidRequest : StatusCodes::EspOutOfMemory;
             }
         }
         else
@@ -2462,12 +2492,13 @@ StatusCodes::StatusCodes WiFiRequestHandler::Bind(Esp32Messaging::BindRequest *r
         return (StatusCodes::CompletedOk);
     }
 
-    Esp32Messaging::SockAddr *socketAddress = Encoders::ExtractSockAddr(request->Addr);
+    bool addressMalformed = false;
+    Esp32Messaging::SockAddr *socketAddress = Encoders::ExtractSockAddr(request->Addr, request->AddrLength, &addressMalformed);
     if (socketAddress == nullptr)
     {
         response.Result = -1;
-        response.ResponseErrno = Mapping::NuttxErrno(ENOMEM);
-        return (StatusCodes::EspOutOfMemory);
+        response.ResponseErrno = Mapping::NuttxErrno(addressMalformed ? EINVAL : ENOMEM);
+        return (addressMalformed ? StatusCodes::InvalidRequest : StatusCodes::EspOutOfMemory);
     }
 
     struct sockaddr_in sa = {};
@@ -2551,7 +2582,8 @@ void WiFiRequestHandler::Bind(void * const vpMessage)
     {
         if (IsConnected())
         {
-            Esp32Messaging::BindRequest *request = Encoders::ExtractBindRequest(message->Payload);
+            bool malformed = false;
+            Esp32Messaging::BindRequest *request = Encoders::ExtractBindRequest(message->Payload, message->PayloadLength, &malformed);
             if (request)
             {
                 result = Bind(request, response);
@@ -2559,7 +2591,7 @@ void WiFiRequestHandler::Bind(void * const vpMessage)
             }
             else
             {
-                result = StatusCodes::EspOutOfMemory;
+                result = malformed ? StatusCodes::InvalidRequest : StatusCodes::EspOutOfMemory;
             }
         }
         else
@@ -2639,7 +2671,8 @@ void WiFiRequestHandler::Listen(void * const vpMessage)
     {
         if (IsConnected())
         {
-            Esp32Messaging::ListenRequest *request = Encoders::ExtractListenRequest(message->Payload);
+            bool malformed = false;
+            Esp32Messaging::ListenRequest *request = Encoders::ExtractListenRequest(message->Payload, message->PayloadLength, &malformed);
             if (request)
             {
                 int descriptor = -1;
@@ -2657,7 +2690,7 @@ void WiFiRequestHandler::Listen(void * const vpMessage)
             }
             else
             {
-                result = StatusCodes::EspOutOfMemory;
+                result = malformed ? StatusCodes::InvalidRequest : StatusCodes::EspOutOfMemory;
             }
         }
         else
@@ -2803,7 +2836,8 @@ void WiFiRequestHandler::Accept(void * const vpMessage)
     {
         if (IsConnected())
         {
-            Esp32Messaging::AcceptRequest *request = Encoders::ExtractAcceptRequest(message->Payload);
+            bool malformed = false;
+            Esp32Messaging::AcceptRequest *request = Encoders::ExtractAcceptRequest(message->Payload, message->PayloadLength, &malformed);
             if (request)
             {
                 result = Accept(request, response);
@@ -2811,7 +2845,7 @@ void WiFiRequestHandler::Accept(void * const vpMessage)
             }
             else
             {
-                result = StatusCodes::EspOutOfMemory;
+                result = malformed ? StatusCodes::InvalidRequest : StatusCodes::EspOutOfMemory;
             }
         }
         else
@@ -2896,12 +2930,13 @@ void WiFiRequestHandler::Ioctl(void * const vpMessage)
     {
         if (IsConnected())
         {
-            Esp32Messaging::IoctlRequest *request = Encoders::ExtractIoctlRequest(message->Payload);
+            bool malformed = false;
+            Esp32Messaging::IoctlRequest *request = Encoders::ExtractIoctlRequest(message->Payload, message->PayloadLength, &malformed);
             if (request == nullptr)
             {
                 response.Result = -1;
-                response.ResponseErrno = Mapping::NuttxErrno(ENOMEM);
-                result = StatusCodes::EspOutOfMemory;
+                response.ResponseErrno = Mapping::NuttxErrno(malformed ? EINVAL : ENOMEM);
+                result = malformed ? StatusCodes::InvalidRequest : StatusCodes::EspOutOfMemory;
             }
             else
             {
@@ -3151,7 +3186,8 @@ void WiFiRequestHandler::GetSockPeerName(void * const vpMessage, const WiFiFunct
     {
         if (IsConnected())
         {
-            Esp32Messaging::GetSockPeerNameRequest *request = Encoders::ExtractGetSockPeerNameRequest(message->Payload);
+            bool malformed = false;
+            Esp32Messaging::GetSockPeerNameRequest *request = Encoders::ExtractGetSockPeerNameRequest(message->Payload, message->PayloadLength, &malformed);
             if (request)
             {
                 result = GetSockPeerName(request, methodToCall, response);
@@ -3159,8 +3195,8 @@ void WiFiRequestHandler::GetSockPeerName(void * const vpMessage, const WiFiFunct
             else
             {
                 response.Result = -1;
-                response.ResponseErrno = Mapping::NuttxErrno(ENOMEM);
-                result = StatusCodes::EspOutOfMemory;
+                response.ResponseErrno = Mapping::NuttxErrno(malformed ? EINVAL : ENOMEM);
+                result = malformed ? StatusCodes::InvalidRequest : StatusCodes::EspOutOfMemory;
             }
 
             Utils::DeleteAndNullifyPointer(request);
@@ -3617,7 +3653,8 @@ void WiFiRequestHandler::Poll(void * const vpMessage)
     {
         if (IsConnected())
         {
-            Esp32Messaging::PollRequest *request = Encoders::ExtractPollRequest(message->Payload);
+            bool malformed = false;
+            Esp32Messaging::PollRequest *request = Encoders::ExtractPollRequest(message->Payload, message->PayloadLength, &malformed);
             if (request)
             {
                 if (request->Setup == 1)
@@ -3637,7 +3674,7 @@ void WiFiRequestHandler::Poll(void * const vpMessage)
             }
             else
             {
-                result = StatusCodes::EspOutOfMemory;
+                result = malformed ? StatusCodes::InvalidRequest : StatusCodes::EspOutOfMemory;
             }
         }
         else

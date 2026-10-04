@@ -620,7 +620,7 @@ static void TestStartAccessPoint(const char *ssid, const char *password, uint32_
                 {
                     ASSERT_EVENT(response, Esp32Interfaces::WiFi, WiFiFunction::AccessPointStartedEvent, StatusCodes::CompletedOk);
                     TEST_ASSERT_NOT_NULL(response->Payload);
-                    Esp32Messaging::AccessPointInformation *info = Encoders::ExtractAccessPointInformation(response->Payload);
+                    Esp32Messaging::AccessPointInformation *info = Encoders::ExtractAccessPointInformation(response->Payload, response->PayloadLength);
                     TEST_ASSERT_NOT_NULL(info);
                     reportedIpAddress = info->IpAddress;
                     Encoders::FreeAccessPointInformation(&info);
