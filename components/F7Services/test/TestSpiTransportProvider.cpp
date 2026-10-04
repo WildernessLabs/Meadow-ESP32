@@ -586,6 +586,10 @@ TEST_CASE("Each packet of an outbound message is transmitted as EncodeMessage en
     for (uint32_t packet = 0; packet < 2; packet++)
     {
         TEST_ASSERT_TRUE(Encoders::EncodeMessage(acknowledgement, static_cast<uint8_t *>(transaction->rx_buffer), Message::MAXIMUM_SPI_FRAME_SIZE, true));
+        //
+        //  The driver reports the number of bits it received, which is the size of a header frame for an acknowledgement.
+        //
+        transaction->trans_len = TestSpiTransportProvider::GetHeaderFrameSize() * 8;
         transaction = TestSpiTransportProvider::CallPacketAcknowledgementReceived(provider, transaction);
         CheckPacketTransaction(transaction, message, expectedOffsets[packet], expectedLengths[packet]);
     }
@@ -786,4 +790,86 @@ TEST_CASE("The packets of a payload are worked out in 32 bits", CLASS_OF_TESTS)
     TEST_ASSERT_EQUAL_UINT16(0, message->PacketLength);
 
     Message::DeleteMessage(message);
+}
+
+/**
+ * @brief Make an outbound message of three packets, send its header and its first packet, and return the transaction for the first packet.
+ *
+ * @param provider Provider to send it with.
+ * @param message Filled in with the outbound message, which the provider holds.
+ *
+ * @return The transaction whose acknowledgement is next.
+ */
+static spi_slave_transaction_t *SendFirstPacket(SpiTransportProvider *provider, Message **message)
+{
+    const uint32_t payloadLength = (2 * Message::MAXIMUM_PACKET_SIZE) + 10;
+    uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
+    TEST_ASSERT_NOT_NULL(payload);
+    memset(payload, 0x3c, payloadLength);
+    *message = Message::CreateOnHeap(MessageTypes::Response, Esp32Interfaces::WiFi, 3, StatusCodes::CompletedOk, 99, payload, payloadLength);
+    TEST_ASSERT_NOT_NULL(*message);
+    TestSpiTransportProvider::SetOutboundMessage(provider, *message);
+
+    spi_slave_transaction_t *transaction = TestSpiTransportProvider::CallCreateSpiTransaction(provider, nullptr);
+    return (TestSpiTransportProvider::CallPacketDetailsSent(provider, transaction));
+}
+
+/**
+ * @brief Put an acknowledgement for the message in a transaction's receive buffer, as a frame of a length, sealed with a CRC over all of it.
+ *
+ * @param transaction Transaction to receive it.
+ * @param frameLength Number of bytes the sender is taken to have sent.
+ */
+static void ReceiveAcknowledgement(spi_slave_transaction_t *transaction, const uint32_t frameLength)
+{
+    Message *acknowledgement = Message::CreateOnHeap(MessageTypes::Ack, Esp32Interfaces::Transport, 0, StatusCodes::CompletedOk, 99, nullptr, 0);
+    TEST_ASSERT_NOT_NULL(acknowledgement);
+    uint8_t *buffer = static_cast<uint8_t *>(transaction->rx_buffer);
+    memset(buffer, 0, Message::MAXIMUM_SPI_FRAME_SIZE);
+    TEST_ASSERT_TRUE(Encoders::EncodeMessage(acknowledgement, buffer, Message::MAXIMUM_SPI_FRAME_SIZE, true));
+    Message::DeleteMessage(acknowledgement);
+    Encoders::EncodeUInt32(0, buffer + Message::CRC_OFFSET);
+    Encoders::EncodeUInt32(Encoders::CRC32(buffer, frameLength - Message::SPI_MESSAGE_OVERHEAD), buffer + Message::CRC_OFFSET);
+    transaction->trans_len = frameLength * 8;
+}
+
+TEST_CASE("An acknowledgement is decoded from the number of bytes received", CLASS_OF_TESTS)
+{
+    SpiTransportProvider *provider = EnsureProvider();
+    ResetIncomingMessage();
+    const bool madeQueue = TestSpiTransportProvider::EnsureOutboundQueue();
+
+    //
+    //  A frame of 64 bytes, longer than a header frame, with a CRC over all of it.  Decoded as a header frame
+    //  of 32 bytes its CRC did not match and the acknowledgement was lost (issue #321).
+    //
+    Message *message = nullptr;
+    spi_slave_transaction_t *transaction = SendFirstPacket(provider, &message);
+    ReceiveAcknowledgement(transaction, 64);
+    transaction = TestSpiTransportProvider::CallPacketAcknowledgementReceived(provider, transaction);
+    TEST_ASSERT_NOT_NULL(transaction);
+    TEST_ASSERT_EQUAL_PTR_MESSAGE(message, TestSpiTransportProvider::GetOutboundMessage(provider), "An acknowledgement of the length received was not accepted.");
+    TEST_ASSERT_EQUAL_UINT16(Message::MAXIMUM_PACKET_SIZE, message->PacketOffset);
+    TestSpiTransportProvider::CallDeleteTransaction(provider, transaction);
+    TestSpiTransportProvider::SetOutboundMessage(provider, nullptr);
+    TestSpiTransportProvider::ResetState();
+    Message::DeleteMessage(message);
+
+    //
+    //  A frame that is too short to hold a header is not an acknowledgement, whatever the buffer beyond it holds.
+    //  The message goes back on the queue to be sent again.
+    //
+    transaction = SendFirstPacket(provider, &message);
+    ReceiveAcknowledgement(transaction, TestSpiTransportProvider::GetHeaderFrameSize());
+    transaction->trans_len = 16 * 8;
+    transaction = TestSpiTransportProvider::CallPacketAcknowledgementReceived(provider, transaction);
+    TEST_ASSERT_NOT_NULL(transaction);
+    TEST_ASSERT_NULL_MESSAGE(TestSpiTransportProvider::GetOutboundMessage(provider), "A frame too short for a header was taken for an acknowledgement.");
+    TestSpiTransportProvider::CallDeleteTransaction(provider, transaction);
+    TestSpiTransportProvider::ResetState();
+
+    if (madeQueue)
+    {
+        TestSpiTransportProvider::ReleaseOutboundQueue();
+    }
 }
