@@ -1095,7 +1095,10 @@ void SpiTransportProvider::SynchronisationTask(void *pvParameters)
     //
     while (true)
     {
-        const bool signalled = (xSemaphoreTake(sender->_synchronisationSemaphore, sender->GetControlSignalDelay()) == pdTRUE);
+        //
+        //  Only the trace message reads this, and trace messages compile out of a release build.
+        //
+        [[maybe_unused]] const bool signalled = (xSemaphoreTake(sender->_synchronisationSemaphore, sender->GetControlSignalDelay()) == pdTRUE);
         TRACE_MESSAGE("SynchronisationTask: %s", signalled ? "given by the post setup callback" : "timed out, sending the signal again");
         sender->SendControlMessageToStm32(sender->GetControlSignalMessage());
     }
