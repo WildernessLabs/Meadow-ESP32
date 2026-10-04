@@ -143,6 +143,12 @@ void ThreadPool::Execute(method_t method, void *parameter)
             }
             TRACE_MESSAGE("Execute: Thread %" PRIu8 " not available", index);
         }
+        //
+        //  Taking the semaphore promised a free thread, but none could be claimed.  The token
+        //  was taken for a method that will never run, so nothing will give it back later
+        //  (issue #229).  Without this the pool loses a thread for good each time.
+        //
+        xSemaphoreGive(_threadsAvailable);
     }
 
     TRACE_MESSAGE("Execute: No threads available");

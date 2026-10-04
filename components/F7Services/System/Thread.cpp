@@ -9,6 +9,10 @@
 
 #include "sdkconfig.h"
 
+#include <exception>
+
+#include "esp_log.h"
+
 #include "Globals.hpp"
 #include "Logging.hpp"
 #include "Thread.hpp"
@@ -271,8 +275,27 @@ void Thread::Task(void *taskParameters)
         method_t method = sender->GetMethod();
         if (method)
         {
-            method(sender->GetParameter());
-            sender->TaskCompleted();
+            //
+            //  A method that throws must not stop the thread being handed back.  Nothing above
+            //  this task can catch the exception, so it would also end the program (issue #229).
+            //
+            try
+            {
+                method(sender->GetParameter());
+            }
+            catch (const std::exception &exception)
+            {
+                ESP_LOGE(COMPONENT_NAME, "A method run on thread %s threw: %s", sender->_name, exception.what());
+            }
+            catch (...)
+            {
+                ESP_LOGE(COMPONENT_NAME, "A method run on thread %s threw something that is not an exception.", sender->_name);
+            }
         }
+        //
+        //  Every wake-up is a method that was claimed with TryExecute, which marked the thread busy
+        //  and took a pool token, so each has to be completed even if the method was nullptr.
+        //
+        sender->TaskCompleted();
     }
 }

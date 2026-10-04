@@ -21,6 +21,11 @@
  */
 class ThreadPool
 {
+    /**
+     * @brief Test access to the threads and the token semaphore (issue #229).
+     */
+    friend class TestThreadPoolTokens;
+
 private:
     /**
      *  @brief Size of the thread pool.

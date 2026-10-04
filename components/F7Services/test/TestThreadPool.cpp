@@ -346,3 +346,80 @@ TEST_CASE("ThreadPool gives concurrent callers separate threads", CLASS_OF_TESTS
     vSemaphoreDelete(context.Finished);
     delete context.Pool;
 }
+
+/**
+ * @brief Test access to the pool's threads and token semaphore.
+ */
+class TestThreadPoolTokens
+{
+public:
+    /**
+     * @brief Claim every thread directly, so that the pool has a token but no thread to give it.
+     *
+     * @param pool Pool whose threads are claimed.
+     */
+    static void OccupyEveryThread(ThreadPool *pool)
+    {
+        for (int index = 0; index < EXPECTED_THREAD_POOL_SIZE; index++)
+        {
+            TEST_ASSERT_TRUE(pool->_threads[index]->TryExecute(OccupyingMethod, nullptr));
+        }
+    }
+
+    /**
+     * @brief Number of tokens the pool holds.
+     *
+     * @return The count.
+     */
+    static uint32_t Tokens()
+    {
+        return (uxSemaphoreGetCount(ThreadPool::_threadsAvailable));
+    }
+};
+
+/**
+ * @brief Check that the pool keeps its token when it takes one and finds no thread to give it to.
+ *
+ *  Taking the token and finding a free thread are separate steps, so the first can succeed
+ *  and the second fail.  The refused request used to keep the token, so the pool's capacity
+ *  fell by one each time until it refused everything (issue #229).
+ */
+TEST_CASE("ThreadPool keeps its token when no thread can be claimed", CLASS_OF_TESTS)
+{
+    ResetCounters();
+    _occupyingMethodDuration.store(2 * METHOD_SETTLING_TIME);
+
+    ThreadPool *pool = new ThreadPool();
+    TEST_ASSERT_NOT_NULL(pool);
+    TEST_ASSERT_EQUAL(EXPECTED_THREAD_POOL_SIZE, TestThreadPoolTokens::Tokens());
+
+    TestThreadPoolTokens::OccupyEveryThread(pool);
+
+    for (int attempt = 0; attempt < EXPECTED_THREAD_POOL_SIZE + 1; attempt++)
+    {
+        bool caught = false;
+        try
+        {
+            pool->Execute(QuickMethod, nullptr);
+        }
+        catch (const ThreadPoolException &)
+        {
+            caught = true;
+        }
+        TEST_ASSERT_TRUE_MESSAGE(caught, "A pool with every thread busy accepted work.");
+        TEST_ASSERT_EQUAL_MESSAGE(EXPECTED_THREAD_POOL_SIZE, TestThreadPoolTokens::Tokens(), "A refused request kept its token.");
+    }
+
+    //
+    //  Once the threads are free the pool is as good as new, however many requests were refused.
+    //
+    vTaskDelay((_occupyingMethodDuration.load() + METHOD_SETTLING_TIME) / portTICK_PERIOD_MS);
+    for (int index = 0; index < EXPECTED_THREAD_POOL_SIZE; index++)
+    {
+        pool->Execute(QuickMethod, nullptr);
+    }
+    vTaskDelay(METHOD_SETTLING_TIME / portTICK_PERIOD_MS);
+    TEST_ASSERT_EQUAL_MESSAGE(2 * EXPECTED_THREAD_POOL_SIZE, _methodsFinished.load(), "The pool did not run a method on every thread once they were free.");
+
+    delete pool;
+}

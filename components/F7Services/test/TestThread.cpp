@@ -313,3 +313,54 @@ TEST_CASE("Thread TryExecute claims an idle thread and refuses a busy one", CLAS
 
     delete thread;
 }
+
+/**
+ * @brief Method that throws, to check the thread survives it.
+ *
+ * @param parameter Parameter passed through by the thread.
+ */
+static void ThrowingMethod(void *parameter)
+{
+    (void) parameter;
+    _methodCallCount.fetch_add(1);
+    throw ThreadPoolException("A method that always throws.");
+}
+
+/**
+ * @brief Check that a thread is handed back when the method it ran threw.
+ *
+ *  Nothing above the task can catch the exception, so without a catch in the task it
+ *  reaches std::terminate and the board resets (issue #229).  The thread must also report
+ *  that it finished, or the pool never gets its token back and the thread stays busy.
+ */
+TEST_CASE("Thread is handed back when its method throws", CLASS_OF_TESTS)
+{
+    ResetCounters();
+
+    Thread *thread = CreateThread("TestThrow", CountingCompletionMethod);
+
+    thread->Execute(ThrowingMethod, nullptr);
+    vTaskDelay(METHOD_SETTLING_TIME / portTICK_PERIOD_MS);
+
+    TEST_ASSERT_EQUAL(1, _methodCallCount.load());
+    TEST_ASSERT_EQUAL_MESSAGE(1, _completedCallCount.load(), "The thread did not report that it had finished.");
+    TEST_ASSERT_FALSE_MESSAGE(thread->IsBusy(), "The thread is still busy after its method threw.");
+
+    //
+    //  A method that is nullptr has nothing to run but is still a claim that must be completed.
+    //
+    thread->Execute(nullptr, nullptr);
+    vTaskDelay(METHOD_SETTLING_TIME / portTICK_PERIOD_MS);
+    TEST_ASSERT_EQUAL(2, _completedCallCount.load());
+    TEST_ASSERT_FALSE(thread->IsBusy());
+
+    //
+    //  It runs another method afterwards.
+    //
+    thread->Execute(CountingMethod, nullptr);
+    vTaskDelay(METHOD_SETTLING_TIME / portTICK_PERIOD_MS);
+    TEST_ASSERT_EQUAL(2, _methodCallCount.load());
+    TEST_ASSERT_EQUAL(3, _completedCallCount.load());
+
+    delete thread;
+}
