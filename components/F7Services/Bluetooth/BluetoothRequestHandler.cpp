@@ -755,6 +755,10 @@ StatusCodes::StatusCodes BluetoothRequestHandler::PrepareForDeepSleep()
 /**
  * @brief Start the Bluetooth stack.
  *
+ *  A stage that fails undoes the stages before it, in reverse order, so that the stack is
+ *  left down and a later Start can try again.  Left up, the controller refuses to be
+ *  initialised a second time and its memory stays allocated (issue #296).
+ *
  * @return true if the system was started, false otherwise.
  */
 bool BluetoothRequestHandler::StartBluetoothService()
@@ -769,6 +773,7 @@ bool BluetoothRequestHandler::StartBluetoothService()
     if (ret)
     {
         TRACE_MESSAGE("%s enable controller failed: %s", __func__, esp_err_to_name(ret));
+        TearDownStack();
         return false;
     }
 
@@ -777,6 +782,7 @@ bool BluetoothRequestHandler::StartBluetoothService()
     if (ret)
     {
         ERROR_MESSAGE("esp_bt_controller_enable failed, code %" PRIi32 ", %s", ret, esp_err_to_name(ret));
+        TearDownStack();
         return false;
     }
 
@@ -785,6 +791,7 @@ bool BluetoothRequestHandler::StartBluetoothService()
     if (ret)
     {
         ERROR_MESSAGE("esp_bluedroid_init failed %" PRIi32, ret);
+        TearDownStack();
         return false;
     }
 
@@ -793,6 +800,7 @@ bool BluetoothRequestHandler::StartBluetoothService()
     if (ret)
     {
         ERROR_MESSAGE("%s enable bluetooth failed: %s", __func__, esp_err_to_name(ret));
+        TearDownStack();
         return false;
     }
 
@@ -801,6 +809,7 @@ bool BluetoothRequestHandler::StartBluetoothService()
     if (ret)
     {
         ERROR_MESSAGE("gatts register error, error code = %" PRIi32, ret);
+        TearDownStack();
         return false;
     }
 
@@ -809,6 +818,7 @@ bool BluetoothRequestHandler::StartBluetoothService()
     if (ret)
     {
         ERROR_MESSAGE("gap register error, error code = %" PRIi32, ret);
+        TearDownStack();
         return false;
     }
 
@@ -817,6 +827,7 @@ bool BluetoothRequestHandler::StartBluetoothService()
     if (ret)
     {
         ERROR_MESSAGE("gatts app register error, error code = %" PRIi32, ret);
+        TearDownStack();
         return false;
     }
 
@@ -874,7 +885,91 @@ void BluetoothRequestHandler::SignalServiceStart(const bool started)
 }
 
 /**
+ * @brief Take down whatever part of the Bluetooth stack is up, in the reverse of the order it came up in.
+ *
+ *  Each stage is undone only if the stack says it was reached, so this can be used on a stack that
+ *  was only partly started as well as on one that is fully running.  It carries on after a stage
+ *  fails, so that one refusal does not leave the stages below it up as well.
+ *
+ * @return true if every stage that was up has been taken down, false if one refused.
+ */
+bool BluetoothRequestHandler::TearDownStack()
+{
+    bool tornDown = true;
+
+    if (esp_bluedroid_get_status() == ESP_BLUEDROID_STATUS_ENABLED)
+    {
+        //
+        //  Disabling the stack stops advertising anyway, so failing to ask is not a reason to leave it up.
+        //
+        TRACE_MESSAGE("TearDownStack: esp_ble_gap_stop_advertising");
+        if (esp_ble_gap_stop_advertising() != ESP_OK)
+        {
+            ERROR_MESSAGE("Failed to stop advertising");
+        }
+
+        if (_gattsInterfaceHandle != ESP_GATT_IF_NONE)
+        {
+            TRACE_MESSAGE("TearDownStack: esp_ble_gatts_app_unregister");
+            if (esp_ble_gatts_app_unregister(_gattsInterfaceHandle) != ESP_OK)
+            {
+                ERROR_MESSAGE("Failed to unregister GATTS app");
+            }
+            _gattsInterfaceHandle = ESP_GATT_IF_NONE;
+        }
+
+        TRACE_MESSAGE("TearDownStack: esp_bluedroid_disable");
+        if (esp_bluedroid_disable() != ESP_OK)
+        {
+            ERROR_MESSAGE("Failed to disable bluetooth stack");
+            tornDown = false;
+        }
+    }
+
+    if (esp_bluedroid_get_status() == ESP_BLUEDROID_STATUS_INITIALIZED)
+    {
+        TRACE_MESSAGE("TearDownStack: esp_bluedroid_deinit");
+        if (esp_bluedroid_deinit() != ESP_OK)
+        {
+            ERROR_MESSAGE("Failed to deinitialise bluetooth stack");
+            tornDown = false;
+        }
+    }
+
+    //
+    //  In the past we have seen some failures during teardown and a delay here seemed to help.
+    //  Current testing indicates that the delay is not needed.  This comment remains for future
+    //  reference in case it is needed again.
+    //
+
+    if (esp_bt_controller_get_status() == ESP_BT_CONTROLLER_STATUS_ENABLED)
+    {
+        TRACE_MESSAGE("TearDownStack: esp_bt_controller_disable");
+        if (esp_bt_controller_disable() != ESP_OK)
+        {
+            ERROR_MESSAGE("Failed to disable BT controller");
+            tornDown = false;
+        }
+    }
+
+    if (esp_bt_controller_get_status() == ESP_BT_CONTROLLER_STATUS_INITED)
+    {
+        TRACE_MESSAGE("TearDownStack: esp_bt_controller_deinit");
+        if (esp_bt_controller_deinit() != ESP_OK)
+        {
+            ERROR_MESSAGE("Failed to deinitialise BT controller");
+            tornDown = false;
+        }
+    }
+
+    return (tornDown);
+}
+
+/**
  * @brief Teardown the Bluetooth stack by turning off the Bluetooth adapter.
+ *
+ *  This also takes down a stack that was only partly started, which is how a Start that failed
+ *  or timed out is recovered from (issue #296).
  *
  * @return true if the system was stopped, false otherwise.
  */
@@ -882,61 +977,17 @@ bool BluetoothRequestHandler::StopBluetoothService()
 {
     TRACE_MESSAGE("StopBluetoothService: Enter");
 
-    TRACE_MESSAGE("Stop: esp_ble_gap_stop_advertising");
-    if (esp_ble_gap_stop_advertising() != ESP_OK)
+    if ((esp_bluedroid_get_status() == ESP_BLUEDROID_STATUS_UNINITIALIZED) && (esp_bt_controller_get_status() == ESP_BT_CONTROLLER_STATUS_IDLE))
     {
-        ERROR_MESSAGE("Failed to stop advertising");
+        ERROR_MESSAGE("Stop: the Bluetooth stack is not running.");
         return false;
     }
 
-    if (_gattsInterfaceHandle != ESP_GATT_IF_NONE)
-    {
-        TRACE_MESSAGE("Stop: esp_ble_gatts_app_unregister");
-        if (esp_ble_gatts_app_unregister(_gattsInterfaceHandle) != ESP_OK)
-        {
-            ERROR_MESSAGE("Failed to unregister GATTS app");
-            return false;
-        }
-    }
-
-    TRACE_MESSAGE("Stop: esp_bluedroid_disable");
-    if (esp_bluedroid_disable() != ESP_OK)
-    {
-        ERROR_MESSAGE("Failed to disable bluetooth stack");
-        return false;
-    }
-
-    TRACE_MESSAGE("Stop: esp_bluedroid_deinit");
-    if (esp_bluedroid_deinit() != ESP_OK)
-    {
-        ERROR_MESSAGE("Failed to deinitialise bluetooth stack");
-        return false;
-    }
-
-    //
-    //  In the past we have seen some failures during teardown and the delay below seemed to help.
-    //  Current testing indicates that the delay is not needed.  The code and this comment remain
-    //  for future reference incase it is needed again.
-    //
-    // vTaskDelay(500 / portTICK_PERIOD_MS);
-
-    TRACE_MESSAGE("Stop: esp_bt_controller_disable");
-    if (esp_bt_controller_disable() != ESP_OK)
-    {
-        ERROR_MESSAGE("Failed to disable BT controller");
-        return false;
-    }
-
-    TRACE_MESSAGE("Stop: esp_bt_controller_deinit");
-    if (esp_bt_controller_deinit() != ESP_OK)
-    {
-        ERROR_MESSAGE("Failed to deinitialise BT controller");
-        return false;
-    }
+    const bool stopped = TearDownStack();
 
     TRACE_MESSAGE("StopBluetoothService: Exit");
 
-    return true;
+    return (stopped);
 }
 
 /**
