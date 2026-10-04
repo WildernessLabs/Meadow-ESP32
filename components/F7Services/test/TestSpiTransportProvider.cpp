@@ -9,6 +9,7 @@
 
 #include <string.h>
 
+#include "esp_memory_utils.h"
 #include "unity.h"
 
 #include "SpiTransportProvider.hpp"
@@ -148,6 +149,81 @@ public:
     static void SetOutboundMessage(SpiTransportProvider *provider, Message *message)
     {
         provider->_outboundMessage = message;
+    }
+
+    /**
+     * @brief Call the private post setup callback, as the SPI interrupt does.
+     */
+    static void CallPostSetupCallback()
+    {
+        SpiTransportProvider::SpiPostSetupCallback(nullptr);
+    }
+
+    /**
+     * @brief Address of the post setup callback.
+     */
+    static const void *PostSetupCallbackAddress()
+    {
+        return (reinterpret_cast<const void *>(&SpiTransportProvider::SpiPostSetupCallback));
+    }
+
+    /**
+     * @brief Overwrite the private, static instance pointer the callback uses.
+     *
+     * @return The pointer that was there.
+     */
+    static SpiTransportProvider *ExchangeInstance(SpiTransportProvider *instance)
+    {
+        SpiTransportProvider * const previous = SpiTransportProvider::_spiInstance;
+        SpiTransportProvider::_spiInstance = instance;
+        return (previous);
+    }
+
+    /**
+     * @brief Overwrite the task handle the callback notifies.
+     *
+     * @return The handle that was there.
+     */
+    static TaskHandle_t ExchangeTaskHandle(TaskHandle_t handle)
+    {
+        TaskHandle_t const previous = SpiTransportProvider::_transportProviderTaskHandle;
+        SpiTransportProvider::_transportProviderTaskHandle = handle;
+        return (previous);
+    }
+
+    /**
+     * @brief Overwrite the semaphore the callback gives.
+     *
+     * @return The semaphore that was there.
+     */
+    static SemaphoreHandle_t ExchangeSemaphore(SpiTransportProvider *provider, SemaphoreHandle_t semaphore)
+    {
+        SemaphoreHandle_t const previous = provider->_synchronisationSemaphore;
+        provider->_synchronisationSemaphore = semaphore;
+        return (previous);
+    }
+
+    /**
+     * @brief Address of the first instruction of a member function.
+     *
+     *  A member function pointer is not convertible to a pointer, but on this ABI its first word
+     *  is the address of a function that is not virtual, which these are not.
+     */
+    template<typename MemberFunction> static const void *MemberFunctionAddress(const MemberFunction function)
+    {
+        const void *address = nullptr;
+        memcpy(&address, &function, sizeof(address));
+        return (address);
+    }
+
+    /**
+     * @brief Addresses of the control signal accessors the post setup callback calls.
+     */
+    static void ControlSignalAccessorAddresses(const void *addresses[3])
+    {
+        addresses[0] = MemberFunctionAddress(&TransportProviderBase::GetControlSignalMessage);
+        addresses[1] = MemberFunctionAddress(&TransportProviderBase::SetControlSignalMessage);
+        addresses[2] = MemberFunctionAddress(&TransportProviderBase::SetControlSignalDelay);
     }
 
     /**
@@ -475,4 +551,53 @@ TEST_CASE("The control signal is resent every two seconds until the SPI interfac
         TEST_ASSERT_EQUAL_MESSAGE(TransportProviderBase::ControlMessageType::SpiInterfaceReady, signal, "The control signal is neither Ready nor SpiInterfaceReady.");
         TEST_ASSERT_EQUAL_UINT32_MESSAGE(portMAX_DELAY, delay, "The SpiInterfaceReady signal is not sent only when signalled.");
     }
+}
+
+/**
+ * @brief Check that the post setup callback and the functions it calls are in IRAM.
+ *
+ *  The SPI interrupt runs from IRAM so that it can run while flash is being written, and
+ *  a call into flash from it then faults (issue #269).
+ */
+TEST_CASE("The SPI post setup callback and the functions it calls are in IRAM", CLASS_OF_TESTS)
+{
+    TEST_ASSERT_TRUE_MESSAGE(esp_ptr_in_iram(TestSpiTransportProvider::PostSetupCallbackAddress()), "SpiPostSetupCallback is not in IRAM.");
+
+    const void *addresses[3] = {};
+    TestSpiTransportProvider::ControlSignalAccessorAddresses(addresses);
+    TEST_ASSERT_TRUE_MESSAGE(esp_ptr_in_iram(addresses[0]), "GetControlSignalMessage is not in IRAM.");
+    TEST_ASSERT_TRUE_MESSAGE(esp_ptr_in_iram(addresses[1]), "SetControlSignalMessage is not in IRAM.");
+    TEST_ASSERT_TRUE_MESSAGE(esp_ptr_in_iram(addresses[2]), "SetControlSignalDelay is not in IRAM.");
+}
+
+/**
+ * @brief Check that the post setup callback does nothing while what it needs does not exist yet.
+ *
+ *  Notifying a task that does not exist asserts, which in the interrupt resets the board.  Each
+ *  thing the callback needs is taken away in turn and put back.  The control signal must be as it
+ *  was, as the callback is meant to do nothing at all.
+ */
+TEST_CASE("The SPI post setup callback does nothing before the task and semaphore exist", CLASS_OF_TESTS)
+{
+    SpiTransportProvider *provider = EnsureProvider();
+    TEST_ASSERT_NOT_NULL(provider);
+
+    const TransportProviderBase::ControlMessageType messageBefore = provider->GetControlSignalMessage();
+    const TickType_t delayBefore = provider->GetControlSignalDelay();
+
+    TaskHandle_t const taskHandle = TestSpiTransportProvider::ExchangeTaskHandle(nullptr);
+    TestSpiTransportProvider::CallPostSetupCallback();
+    TestSpiTransportProvider::ExchangeTaskHandle(taskHandle);
+    TEST_ASSERT_EQUAL_MESSAGE(messageBefore, provider->GetControlSignalMessage(), "The callback changed the control signal without a task.");
+    TEST_ASSERT_EQUAL(delayBefore, provider->GetControlSignalDelay());
+
+    SemaphoreHandle_t const semaphore = TestSpiTransportProvider::ExchangeSemaphore(provider, nullptr);
+    TestSpiTransportProvider::CallPostSetupCallback();
+    TestSpiTransportProvider::ExchangeSemaphore(provider, semaphore);
+    TEST_ASSERT_EQUAL_MESSAGE(messageBefore, provider->GetControlSignalMessage(), "The callback changed the control signal without a semaphore.");
+
+    SpiTransportProvider * const instance = TestSpiTransportProvider::ExchangeInstance(nullptr);
+    TestSpiTransportProvider::CallPostSetupCallback();
+    TestSpiTransportProvider::ExchangeInstance(instance);
+    TEST_ASSERT_EQUAL(messageBefore, provider->GetControlSignalMessage());
 }
