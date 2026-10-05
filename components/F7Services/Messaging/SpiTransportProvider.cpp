@@ -1067,7 +1067,13 @@ spi_slave_transaction_t *SpiTransportProvider::HandleTransaction(spi_slave_trans
 {
     spi_slave_transaction_t *newTransaction = nullptr;
 
-    if (SendingData() || MessageContainsData(static_cast<uint8_t *>(transaction->rx_buffer), transaction->length / 8))
+    //
+    //  Only the bytes the driver received are looked at.  length is the size of the transaction, which is always the
+    //  whole frame, and trans_len is how much of it was clocked in.  PacketReceived uses trans_len for the same
+    //  purpose (issue #320).
+    //
+    const uint32_t receivedLength = transaction->trans_len / 8;
+    if (SendingData() || MessageContainsData(static_cast<uint8_t *>(transaction->rx_buffer), receivedLength))
     {
         switch (_currentState)
         {

@@ -1204,3 +1204,50 @@ TEST_CASE("The acknowledgements of frames that are not messages are identical to
     vPortFree(expected);
     Message::DeleteMessage(reference);
 }
+
+TEST_CASE("Only the bytes received decide whether a transaction carried anything", CLASS_OF_TESTS)
+{
+    SpiTransportProvider *provider = EnsureProvider();
+    ResetIncomingMessage();
+    TestSpiTransportProvider::SetOutboundMessage(provider, nullptr);
+    TestSpiTransportProvider::ResetState();
+
+    //
+    //  One byte was received and it was zero.  Further along the frame there is something that is not zero, which
+    //  was not received and is not part of the exchange.  The whole frame used to be scanned, so it was taken for data
+    //  and a packet was decoded from it (issue #320).
+    //
+    spi_slave_transaction_t *transaction = TestSpiTransportProvider::CallCreateSpiTransaction(provider, nullptr);
+    static_cast<uint8_t *>(transaction->rx_buffer)[100] = 0xff;
+    transaction->trans_len = 8;
+    spi_slave_transaction_t *next = TestSpiTransportProvider::CallHandleTransaction(provider, transaction);
+    TEST_ASSERT_EQUAL_PTR_MESSAGE(transaction, next, "Bytes beyond those received were taken for data.");
+    TEST_ASSERT_EQUAL_INT(TestSpiTransportProvider::WaitingState(), TestSpiTransportProvider::GetState());
+
+    //
+    //  The same byte inside what was received is data, and is answered: too little to be a header, so a negative
+    //  acknowledgement.
+    //
+    transaction = TestSpiTransportProvider::CallCreateSpiTransaction(provider, nullptr);
+    static_cast<uint8_t *>(transaction->rx_buffer)[3] = 0xff;
+    transaction->trans_len = 16 * 8;
+    next = TestSpiTransportProvider::CallHandleTransaction(provider, transaction);
+    TEST_ASSERT_NOT_NULL(next);
+    uint8_t messageType = 0;
+    uint32_t statusCode = 0;
+    DecodeAndFreeAcknowledgement(next, &messageType, &statusCode);
+    TEST_ASSERT_EQUAL_UINT8(MessageTypes::Nak, messageType);
+    TEST_ASSERT_EQUAL_UINT32(StatusCodes::InvalidHeader, statusCode);
+
+    //
+    //  Nothing received at all is nothing.
+    //
+    transaction = TestSpiTransportProvider::CallCreateSpiTransaction(provider, nullptr);
+    static_cast<uint8_t *>(transaction->rx_buffer)[0] = 0xff;
+    transaction->trans_len = 0;
+    next = TestSpiTransportProvider::CallHandleTransaction(provider, transaction);
+    TEST_ASSERT_EQUAL_PTR_MESSAGE(transaction, next, "A transaction that received nothing was taken for data.");
+
+    TestSpiTransportProvider::CallDeleteTransaction(provider, next);
+    TestSpiTransportProvider::ResetState();
+}
