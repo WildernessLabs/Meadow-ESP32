@@ -9,6 +9,7 @@
 #include "sdkconfig.h"
 
 #include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 #include "freertos/FreeRTOS.h"
 #include "unity.h"
@@ -451,4 +452,24 @@ TEST_CASE("A well formed packet whose contents were damaged is refused by the CR
 
     vPortFree(frame);
     Message::DeleteMessage(message);
+}
+
+/**
+ * @brief The SPI buffer is a multiple of 4 bytes and never smaller than 8 plus the overhead (issue #273).
+ *
+ *  The minimum used to be overwritten by the alignment, so a request of 1 to 3 bytes was given 4.
+ */
+TEST_CASE("CalculateSpiBufferSize rounds up to a multiple of 4 and is never below the minimum", CLASS_OF_TESTS)
+{
+    static constexpr uint32_t MINIMUM = 8;
+    //
+    //  Each pair is a requested size and the size it is rounded up to before the overhead is added.
+    //
+    const uint32_t cases[][2] = {{0, MINIMUM}, {1, MINIMUM}, {2, MINIMUM}, {3, MINIMUM}, {4, MINIMUM}, {5, MINIMUM}, {7, MINIMUM}, {8, 8}, {9, 12}, {12, 12}, {13, 16}, {4092, 4092}, {4093, 4096}};
+    for (const auto &entry: cases)
+    {
+        char message[48];
+        snprintf(message, sizeof(message), "A request of %lu bytes.", static_cast<unsigned long>(entry[0]));
+        TEST_ASSERT_EQUAL_UINT32_MESSAGE(entry[1] + Message::SPI_MESSAGE_OVERHEAD, Encoders::CalculateSpiBufferSize(entry[0]), message);
+    }
 }
