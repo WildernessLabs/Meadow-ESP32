@@ -3349,26 +3349,70 @@ void WiFiRequestHandler::ReleaseSocket(const int32_t handle)
 }
 
 /**
- *  @brief Open a dummy socket to be used by the Poll methods to terminate a poll request.
+ *  @brief Open the socket a poll request is woken up with.
  *
- *  This socket is never connected or sent to; it exists only to be closed from another
- *  task to wake a blocked poll() early.  Its address family does not have to match
- *  anything, so no DNS lookup is needed to create it (issue #282) - a getaddrinfo
- *  failure was previously misread as success (>= 0 is always true for it) and could
- *  dereference a null addrinfo.
+ *  A poll() on the caller's socket also waits on this one, so a datagram sent to it ends the poll early.
+ *  It is bound to the loopback address and connected to its own address, so the datagram sent with
+ *  send() goes to the socket itself and makes it readable.  An unconnected socket had no destination,
+ *  and nothing written to it ever reached the poll (issue #239).
+ *
+ *  The address family does not have to match anything, so no DNS lookup is needed to create it
+ *  (issue #282) - a getaddrinfo failure was previously misread as success (>= 0 is always true for it)
+ *  and could dereference a null addrinfo.
  *
  *  @returns
- *      Handle to the socket that has just been opened of -1 if there is a problem.
+ *      Handle to the socket that has just been opened or -1 if there is a problem.
  */
-int WiFiRequestHandler::OpenDummySocket()
+int WiFiRequestHandler::OpenWakeSocket()
 {
-    TRACE_MESSAGE("OpenDummySocket: Enter");
+    TRACE_MESSAGE("OpenWakeSocket: Enter");
 
-    int dummy_socket_fd = socket(AF_INET, SOCK_DGRAM, 0);
+    int wakeSocket = socket(AF_INET, SOCK_DGRAM, 0);
+    if (wakeSocket >= 0)
+    {
+        struct sockaddr_in address = {};
+        address.sin_family = AF_INET;
+        address.sin_len = sizeof(address);
+        address.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+        address.sin_port = 0;
+        socklen_t length = sizeof(address);
+        if ((bind(wakeSocket, reinterpret_cast<struct sockaddr *>(&address), sizeof(address)) < 0) || (getsockname(wakeSocket, reinterpret_cast<struct sockaddr *>(&address), &length) < 0) || (connect(wakeSocket, reinterpret_cast<struct sockaddr *>(&address), sizeof(address)) < 0))
+        {
+            const int savedErrno = errno;
+            close(wakeSocket);
+            errno = savedErrno;
+            wakeSocket = -1;
+        }
+    }
 
-    TRACE_MESSAGE("OpenDummySocket: Exit, result %d", dummy_socket_fd);
+    TRACE_MESSAGE("OpenWakeSocket: Exit, result %d", wakeSocket);
 
-    return (dummy_socket_fd);
+    return (wakeSocket);
+}
+
+/**
+ *  @brief Close the socket of an active poll request and release the request.
+ *
+ *  Whoever releases a request is the only one that closes its socket, and nothing releases a request
+ *  that a task is still blocked in poll() on (issue #395).
+ *
+ *  @param activePoll
+ *      Request to release, taken by reference so the caller's pointer is nullified.
+ */
+void WiFiRequestHandler::ReleaseActivePoll(ActivePoll *&activePoll)
+{
+    if (activePoll != nullptr)
+    {
+        if (activePoll->Descriptors[POLL_DUMMY_FD_INDEX].fd >= 0)
+        {
+            close(activePoll->Descriptors[POLL_DUMMY_FD_INDEX].fd);
+        }
+        if (activePoll->Finished != nullptr)
+        {
+            vSemaphoreDelete(activePoll->Finished);
+        }
+        Utils::DeleteAndNullifyPointer(activePoll);
+    }
 }
 
 /**
@@ -3378,7 +3422,7 @@ void WiFiRequestHandler::DumpActivePollRequests()
 {
     TRACE_MESSAGE("DumpActivePollRequests: Enter");
     LockPollRequests();
-    std::map<uint32_t, struct pollfd *>::iterator it = _pollRequests.begin();
+    std::map<uint32_t, ActivePoll *>::iterator it = _pollRequests.begin();
     while (it != _pollRequests.end())
     {
         //
@@ -3386,12 +3430,68 @@ void WiFiRequestHandler::DumpActivePollRequests()
         //  Basically, we are trying to keep the compiler happy and not generate misleading warnings.
         //
         // cppcheck-suppress unreadVariable symbolName=fds
-        __attribute__((unused)) struct pollfd *fds = static_cast<struct pollfd *>(it->second);
+        __attribute__((unused)) struct pollfd *fds = it->second->Descriptors;
         TRACE_MESSAGE("DumpActiveRequests: Key %08x, socket %d, dummy socket %d", (uint) it->first, fds[POLL_FD_INDEX].fd, fds[POLL_DUMMY_FD_INDEX].fd);
         it++;
     }
     UnlockPollRequests();
     TRACE_MESSAGE("DumpActivePollRequests: Exit");
+}
+
+/**
+ *  @brief Make a poll request, with its wake socket, and add it to the active requests.
+ *
+ *  @param descriptor
+ *      The socket to poll.
+ *
+ *  @param events
+ *      The ESP-IDF events to poll for.
+ *
+ *  @param requestId
+ *      Message ID of the setup request, which names the request.
+ *
+ *  @returns
+ *      The request, nullptr if it could not be made or there is already one with this ID.
+ */
+WiFiRequestHandler::ActivePoll *WiFiRequestHandler::CreateActivePoll(const int descriptor, const int32_t events, const uint32_t requestId)
+{
+    ActivePoll *activePoll = static_cast<ActivePoll *>(pvPortMalloc(sizeof(ActivePoll)));
+    if (activePoll == nullptr)
+    {
+        return (nullptr);
+    }
+    memset(activePoll, 0, sizeof(ActivePoll));
+    activePoll->Descriptors[POLL_DUMMY_FD_INDEX].fd = -1;
+    activePoll->Finished = xSemaphoreCreateBinary();
+    if (activePoll->Finished == nullptr)
+    {
+        ReleaseActivePoll(activePoll);
+        return (nullptr);
+    }
+
+    const int wakeSocket = OpenWakeSocket();
+    if (wakeSocket < 0)
+    {
+        ReleaseActivePoll(activePoll);
+        return (nullptr);
+    }
+
+    activePoll->RequestId = requestId;
+    activePoll->Descriptors[POLL_FD_INDEX].fd = descriptor;
+    activePoll->Descriptors[POLL_FD_INDEX].events = static_cast<uint16_t>(events & 0xffff);
+    activePoll->Descriptors[POLL_DUMMY_FD_INDEX].fd = wakeSocket;
+    activePoll->Descriptors[POLL_DUMMY_FD_INDEX].events = POLLIN;
+
+    LockPollRequests();
+    const bool inserted = _pollRequests.insert({requestId, activePoll}).second;
+    UnlockPollRequests();
+
+    if (!inserted)
+    {
+        TRACE_MESSAGE("CreateActivePoll: Duplicate setup message ID 0x%08x, rejecting", (uint) requestId);
+        ReleaseActivePoll(activePoll);
+    }
+    return (activePoll);
 }
 
 /**
@@ -3409,45 +3509,20 @@ int WiFiRequestHandler::PollSetup(void * const vpMessage)
     {
         return (-1);
     }
-    int descriptor = -1;
-    if (!FindSocket(static_cast<Esp32Messaging::PollRequest *>(vpMessage)->SocketHandle, &descriptor))
-    {
-        return (-1);
-    }
-    struct pollfd *fds = static_cast<struct pollfd *>(pvPortMalloc(2 * sizeof(struct pollfd)));
-    if (fds == nullptr)
-    {
-        return (-1);
-    }
-
-    int dummy_socket_handle = OpenDummySocket();
-    if (dummy_socket_handle < 0)
-    {
-        Utils::DeleteAndNullifyPointer(fds);
-        return (-1);
-    }
-
     Esp32Messaging::PollRequest * const request = static_cast<Esp32Messaging::PollRequest *>(vpMessage);
-    memset(fds, 0, 2 * sizeof(struct pollfd));
+    int descriptor = -1;
+    if (!FindSocket(request->SocketHandle, &descriptor))
+    {
+        return (-1);
+    }
+
     int32_t events;
     Mapping::GetEspFlagValue(Mapping::PollEvents, request->Events, &events);
-
-    fds[WiFiRequestHandler::POLL_FD_INDEX].fd = descriptor;
-    fds[WiFiRequestHandler::POLL_FD_INDEX].events = static_cast<uint16_t>(events & 0xffff);
-    fds[WiFiRequestHandler::POLL_DUMMY_FD_INDEX].fd = dummy_socket_handle;
-    fds[WiFiRequestHandler::POLL_DUMMY_FD_INDEX].events = POLLIN;
-
     TRACE_MESSAGE("Poll: Requested Nuttx events 0x%04x maps to ESP events 0x%04x", request->Events, (uint) events);
 
-    LockPollRequests();
-    bool inserted = _pollRequests.insert({request->SetupMessageId, fds}).second;
-    UnlockPollRequests();
-
-    if (!inserted)
+    ActivePoll *activePoll = CreateActivePoll(descriptor, events, request->SetupMessageId);
+    if (activePoll == nullptr)
     {
-        TRACE_MESSAGE("PollSetup: Duplicate setup message ID 0x%08x, rejecting", (uint) request->SetupMessageId);
-        close(dummy_socket_handle);
-        Utils::DeleteAndNullifyPointer(fds);
         return (-1);
     }
 
@@ -3457,22 +3532,21 @@ int WiFiRequestHandler::PollSetup(void * const vpMessage)
 
     try
     {
-        SystemRequestHandler::SharedThreadPool()->Execute(PollSocket, reinterpret_cast<void *>(request->SetupMessageId));
+        SystemRequestHandler::SharedThreadPool()->Execute(PollSocket, reinterpret_cast<void *>(activePoll));
     }
     catch (const ThreadPoolException &)
     {
         //
         //  The pool has no free worker to run PollSocket, so nothing will ever call
-        //  PollTeardown for this request.  The entry, the dummy socket and fds have to be
-        //  cleaned up here instead, mirroring the duplicate-setup-message-ID rejection
-        //  above.
+        //  PollTeardown for this request.  The entry and the request have to be cleaned up
+        //  here instead, mirroring the duplicate-setup-message-ID rejection above.  No
+        //  worker has seen the request, so it is released directly.
         //
         TRACE_MESSAGE("PollSetup: Thread pool exhausted, rejecting");
         LockPollRequests();
         _pollRequests.erase(request->SetupMessageId);
         UnlockPollRequests();
-        close(dummy_socket_handle);
-        Utils::DeleteAndNullifyPointer(fds);
+        ReleaseActivePoll(activePoll);
         return (-1);
     }
 
@@ -3484,8 +3558,16 @@ int WiFiRequestHandler::PollSetup(void * const vpMessage)
 /**
  *  @brief Teardown a poll request that has previously been setup by PollSetup.
  *
+ *  The request is claimed under the lock, so the poll worker can no longer complete it, and the worker
+ *  is woken through its wake socket.  This then waits for the worker to leave poll() and say that it has
+ *  finished with the request, and only then closes the socket and frees the request, so the socket is
+ *  closed once and nothing is freed under a poll() that is still using it (issues #239 and #395).
+ *
  *  @param message
  *      Message structure containing the parameters for the poll method.
+ *
+ *  @returns
+ *      0 if the request was torn down or had already completed, -1 if the worker did not stop.
  */
 int WiFiRequestHandler::PollTeardown(void * const vpMessage)
 {
@@ -3498,29 +3580,59 @@ int WiFiRequestHandler::PollTeardown(void * const vpMessage)
     DumpActivePollRequests();
 #endif
 
+    ActivePoll *activePoll = nullptr;
     LockPollRequests();
-    std::map<uint32_t, struct pollfd *>::iterator it = _pollRequests.find(request->SetupMessageId);
+    std::map<uint32_t, ActivePoll *>::iterator it = _pollRequests.find(request->SetupMessageId);
     if (it != _pollRequests.end())
     {
         TRACE_MESSAGE("PollTeardown: Found socket handle for request 0x%08x", (uint) request->SetupMessageId);
-        struct pollfd *fds = static_cast<struct pollfd *>(it->second);
-        result = write(fds[WiFiRequestHandler::POLL_DUMMY_FD_INDEX].fd, "E", 1); // Writing to the dummy file descriptor should end the poll request.
-        if (close(fds[WiFiRequestHandler::POLL_DUMMY_FD_INDEX].fd) < 0)
-        {
-            result = -1;
-        }
-        Utils::DeleteAndNullifyPointer(fds);
+        activePoll = it->second;
+        activePoll->Cancelled = true;
         _pollRequests.erase(it);
+    }
+    UnlockPollRequests();
+
+    if (activePoll == nullptr)
+    {
+        //
+        //  We do not treat this as an error as the request completed, and was removed by the worker,
+        //  before the teardown arrived.
+        //
+        TRACE_MESSAGE("PollTeardown: Cannot find request %08x", (uint) request->SetupMessageId);
     }
     else
     {
         //
-        //  We do not treat this as an error as the request information may have been removed by the
-        //  interrupt handler.
+        //  The wake socket is connected to itself, so this makes it readable and ends the poll.  If it fails
+        //  the worker is only released by an event on the polled socket, which the wait below allows for.
         //
-        TRACE_MESSAGE("PollTeardown: Cannot find request %08x", (uint) request->SetupMessageId);
+        if (send(activePoll->Descriptors[POLL_DUMMY_FD_INDEX].fd, "E", 1, 0) < 0)
+        {
+            ERROR_MESSAGE("PollTeardown: Cannot wake the poll for request 0x%08x, errno %d", (uint) request->SetupMessageId, errno);
+        }
+
+        xSemaphoreTake(activePoll->Finished, _pollCancelTimeout / portTICK_PERIOD_MS);
+        LockPollRequests();
+        const bool workerDone = activePoll->WorkerDone;
+        if (!workerDone)
+        {
+            //
+            //  The worker is still in poll().  It frees the request itself when it comes out.
+            //
+            activePoll->Abandoned = true;
+        }
+        UnlockPollRequests();
+        if (workerDone)
+        {
+            ReleaseActivePoll(activePoll);
+        }
+        else
+        {
+            ERROR_MESSAGE("PollTeardown: The poll for request 0x%08x did not stop within the timeout", (uint) request->SetupMessageId);
+            errno = ETIMEDOUT;
+            result = -1;
+        }
     }
-    UnlockPollRequests();
 
 #if defined(WIFI_DEBUG)
     DumpActivePollRequests();
@@ -3534,52 +3646,77 @@ int WiFiRequestHandler::PollTeardown(void * const vpMessage)
 /**
  *  @brief Execute the actual request to poll a socket.
  *
- *  @param message
- *      Message structure containing the parameters for the poll method.
+ *  The worker owns the request until it comes out of poll().  If the request has been torn down in the
+ *  meantime the teardown owns it from then on: the worker says it has finished, or frees the request itself
+ *  if the teardown gave up waiting, and sends nothing, since the STM32 has already forgotten the request.
+ *  Otherwise the worker removes the request, frees it, and reports the result to the STM32.
+ *
+ *  @param activePoll
+ *      The request to poll, a pointer to an ActivePoll that PollSetup put in _pollRequests.
  */
-void WiFiRequestHandler::PollSocket(void * const requestId)
+void WiFiRequestHandler::PollSocket(void * const activePollPointer)
 {
     TRACE_MESSAGE("PollSocket: Enter");
 
+    ActivePoll *activePoll = static_cast<ActivePoll *>(activePollPointer);
     Esp32Messaging::InterruptPollResponse response = {};
 
     LockPollRequests();
-    std::map<uint32_t, struct pollfd *>::iterator it = _pollRequests.find(reinterpret_cast<uint32_t>(requestId));
+    const bool cancelledBeforeStart = activePoll->Cancelled;
     UnlockPollRequests();
-    if (it != _pollRequests.end())
+
+    if (!cancelledBeforeStart)
     {
-        struct pollfd *fds = static_cast<struct pollfd *>(it->second);
-        response.Result = poll(fds, 2, -1);
+        response.Result = poll(activePoll->Descriptors, 2, -1);
         if (response.Result < 0)
         {
             response.ResponseErrno = Mapping::NuttxErrno(errno);
         }
+    }
+
+    bool report = false;
+    LockPollRequests();
+    if (activePoll->Cancelled)
+    {
+        if (activePoll->Abandoned)
+        {
+            UnlockPollRequests();
+            ReleaseActivePoll(activePoll);
+            LockPollRequests();
+        }
         else
         {
-            LockPollRequests();
-            it = _pollRequests.find(reinterpret_cast<uint32_t>(requestId)); // Get again in case anything has changed.
-            if (it != _pollRequests.end())
-            {
-                Mapping::GetStmFlagValue(Mapping::PollEvents, fds[POLL_FD_INDEX].revents, reinterpret_cast<int16_t *>(&response.ReturnedEvents));
-                if (response.ReturnedEvents != 0)
-                {
-                    response.Result = 1;
-                }
-                TRACE_MESSAGE("PollSocket: Returned ESP32 events 0x%04x maps to NuttX events 0x%04x", fds[POLL_FD_INDEX].revents, response.ReturnedEvents);
-                response.SetupMessageId = reinterpret_cast<uint32_t>(requestId);
-                close(fds[POLL_DUMMY_FD_INDEX].fd);
-                Utils::DeleteAndNullifyPointer(fds);
-                _pollRequests.erase(it);
-            }
-            else
-            {
-                response.Result = -1;
-                response.ResponseErrno = Mapping::NuttxErrno(EFAULT);
-            }
-            UnlockPollRequests();
+            activePoll->WorkerDone = true;
+            xSemaphoreGive(activePoll->Finished);
         }
     }
+    else
+    {
+        if (response.Result >= 0)
+        {
+            Mapping::GetStmFlagValue(Mapping::PollEvents, activePoll->Descriptors[POLL_FD_INDEX].revents, reinterpret_cast<int16_t *>(&response.ReturnedEvents));
+            if (response.ReturnedEvents != 0)
+            {
+                response.Result = 1;
+            }
+            TRACE_MESSAGE("PollSocket: Returned ESP32 events 0x%04x maps to NuttX events 0x%04x", activePoll->Descriptors[POLL_FD_INDEX].revents, response.ReturnedEvents);
+        }
+        response.SetupMessageId = activePoll->RequestId;
+        _pollRequests.erase(activePoll->RequestId);
+        report = true;
+    }
+    UnlockPollRequests();
+    if (report)
+    {
+        ReleaseActivePoll(activePoll);
+    }
     TRACE_MESSAGE("PollSocket: Return value from poll: %ld", response.Result);
+
+    if (!report)
+    {
+        TRACE_MESSAGE("PollSocket: Exit, torn down");
+        return;
+    }
 
     Message *message = static_cast<Message *>(pvPortMalloc(sizeof(Message)));
     if (message == nullptr)
