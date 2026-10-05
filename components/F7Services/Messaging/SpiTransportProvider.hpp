@@ -164,6 +164,16 @@ private:
     spi_slave_transaction_t *ProcessTransportMessage(Message *request);
 
     /**
+     *  @brief Work out what a finished transaction means in the current state and prepare the next one.
+     */
+    spi_slave_transaction_t *HandleTransaction(spi_slave_transaction_t *transaction);
+
+    /**
+     *  @brief Put the state machine back in its starting state after finding it in a state it does not know.
+     */
+    spi_slave_transaction_t *RecoverFromUnknownState(spi_slave_transaction_t *transaction);
+
+    /**
      *  @brief Process the newly received packet of data and return transaction to be used as the response.
      */
     spi_slave_transaction_t *ProcessInboundPacket(Message *packet);
