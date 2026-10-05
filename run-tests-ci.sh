@@ -86,10 +86,12 @@ SELECTORS+=('[WiFiConfiguration]')
 
 #
 #   The SpiTransportProvider tests run under QEMU but are not tagged [Emulated], and they
-#   have to come last.  Building the provider starts its synchronisation task, which prints
-#   +++RDY to the console every half second for the rest of the boot.  The runner takes
-#   that output for the echo of a selector the device may have dropped, so a selector after
-#   these tests can wait forever.  See issue #499.
+#   are kept last.  Building the provider starts its synchronisation task, which prints
+#   +++RDY to the console every half second for the rest of the boot.  The runner used to
+#   take that output for the echo of a selector the device had dropped, so a selector after
+#   these tests could wait forever (issue #499).  It now accepts only the echo of the
+#   selector itself, so that no longer happens; the order is kept because the provider
+#   stays alive for the rest of the boot and nothing after it needs it.
 #
 SELECTORS+=('[SpiTransportProvider]')
 

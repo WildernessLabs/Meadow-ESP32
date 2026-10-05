@@ -20,6 +20,7 @@
 #include "esp_timer.h"
 #include "driver/uart.h"
 #include "soc/uart_struct.h"
+#include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
 #include "Gpio.hpp"
@@ -140,16 +141,79 @@ private:
     static const int TX_BUFFER_SIZE = 1024;
 
     /**
-     * @brief Is the logging system configured?
-     *
-     * This is used to prevent multiple configuration attempts.
+     * @brief Test access to the log destination (issue #356).
      */
-    static bool _configured;
+    friend class TestLogging;
+
+    /**
+     * @brief Where the log messages are going now: one of Esp32LogDestination.
+     */
+    static uint8_t _destination;
+
+    /**
+     * @brief UDP port the log messages are sent to when the destination is UDP.
+     */
+    static uint16_t _udpPort;
+
+    /**
+     * @brief Socket the log messages are sent on when the destination is UDP, -1 if there is none.
+     */
+    static int _udpSocket;
+
+    /**
+     * @brief Address the UDP log messages are sent to, in network byte order: broadcast unless a test changes it.
+     */
+    static uint32_t _udpAddress;
+
+    /**
+     * @brief The function that wrote log messages before the UDP one was put in front of it.
+     */
+    static vprintf_like_t _previousLogOutput;
+
+    /**
+     * @brief Guards the buffer a UDP log message is formatted in.
+     */
+    static SemaphoreHandle_t _udpMutex;
+
+    /**
+     * @brief Largest log message sent in one UDP datagram; a longer one is cut.
+     */
+    static const int UDP_LOG_MESSAGE_SIZE = 256;
+
+    /**
+     * @brief Buffer a UDP log message is formatted in.
+     */
+    static char _udpBuffer[UDP_LOG_MESSAGE_SIZE];
+
+    /**
+     * @brief Set the log level of a component, or of every component in a named group.
+     */
+    static bool SetComponentLogging(const char * const component, const esp_log_level_t level);
 
     /**
      * @brief Turn logging on for the specified component.
      */
     static bool TurnLoggingOn(const char * const component);
+
+    /**
+     * @brief Turn logging off for every component the configuration can turn on.
+     */
+    static void TurnAllLoggingOff();
+
+    /**
+     * @brief Start sending the log messages over UDP as well as writing them out as before.
+     */
+    static StatusCodes::StatusCodes StartUdpLogging(const uint16_t port);
+
+    /**
+     * @brief Stop sending the log messages over UDP and put back the output that was there before.
+     */
+    static void StopUdpLogging();
+
+    /**
+     * @brief The log output function while UDP logging is on.
+     */
+    static int UdpLogOutput(const char *format, va_list arguments);
 
 #if defined(PERFORMANCE_LOGGING)
     /**
@@ -206,7 +270,7 @@ public:
     /**
      * @brief Configure the logging system.
      */
-    static void Configure(const char * const components, uint32_t interface, uint32_t udpPort);
+    static StatusCodes::StatusCodes Configure(const char * const components, uint32_t interface, uint32_t udpPort);
 
     /**
      *  @brief Translate the ESP-IDF error codes into StatusCodes.
