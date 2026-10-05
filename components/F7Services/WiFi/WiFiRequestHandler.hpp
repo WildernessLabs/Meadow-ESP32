@@ -99,6 +99,11 @@ class WiFiRequestHandler : public RequestHandlerBase
      */
     friend class TestAccessPointProtocols;
 
+    /**
+     * @brief Test access to the poll request protocol between a worker and a teardown (issues #239 and #395).
+     */
+    friend class TestPollTeardown;
+
 private:
     /**
      *  @brief Hold the information about the originating poll request and the pollfd's.
@@ -243,7 +248,7 @@ private:
     static const gpio_num_t EXTERNAL_ANTENNA_PIN;
 
     /**
-     *  @brief Index of the dummy socket file descriptor in poll request.
+     *  @brief Index of the wake socket file descriptor in poll request.
      */
     static const int POLL_DUMMY_FD_INDEX;
 
@@ -548,9 +553,57 @@ private:
     static const char *DEFAULT_WIFI_TIMEOUT_NAME;
 
     /**
+     *  @brief A poll request that is active, and the state its worker and its teardown share.
+     *
+     *  The worker that runs PollSocket owns the request while it is blocked in poll().  The flags
+     *  are read and written only with the poll request list locked.  A teardown claims the request by
+     *  removing it from the list and setting Cancelled, wakes the poll, and waits for the worker to
+     *  say Finished; whichever of the two comes last releases it (issue #395).
+     */
+    struct ActivePoll
+    {
+        /**
+         *  @brief The polled socket, at POLL_FD_INDEX, and the wake socket, at POLL_DUMMY_FD_INDEX.
+         */
+        struct pollfd Descriptors[2];
+
+        /**
+         *  @brief Message ID of the setup request, the key of the request in the list.
+         */
+        uint32_t RequestId;
+
+        /**
+         *  @brief Given by the worker when it has finished with a request that was torn down.
+         */
+        SemaphoreHandle_t Finished;
+
+        /**
+         *  @brief Set by the teardown that claimed the request.
+         */
+        bool Cancelled;
+
+        /**
+         *  @brief Set by the worker, for a torn down request, once it no longer uses the request.
+         */
+        bool WorkerDone;
+
+        /**
+         *  @brief Set by a teardown that stopped waiting, leaving the worker to free the request.
+         */
+        bool Abandoned;
+    };
+
+    /**
      *  @brief List of active poll requests.
      */
-    static std::map<uint32_t, struct pollfd *> _pollRequests;
+    static std::map<uint32_t, ActivePoll *> _pollRequests;
+
+    /**
+     *  @brief Milliseconds a teardown waits for the poll to stop.
+     *
+     *  Not constant so that a test can shorten it.
+     */
+    static uint32_t _pollCancelTimeout;
 
     /**
      *  @brief Mutex for the poll request linked list.
@@ -1092,9 +1145,19 @@ private:
     static void PollSocket(void * const pvMessage);
 
     /**
-     *  @brief Open a dummy socket to be used by the Poll methods to terminate a poll request.
+     *  @brief Open the socket a poll request is woken up with, connected to itself.
      */
-    static int OpenDummySocket();
+    static int OpenWakeSocket();
+
+    /**
+     *  @brief Make a poll request with its wake socket and add it to the active requests.
+     */
+    static ActivePoll *CreateActivePoll(const int descriptor, const int32_t events, const uint32_t requestId);
+
+    /**
+     *  @brief Close the wake socket of a poll request and free the request.
+     */
+    static void ReleaseActivePoll(ActivePoll *&activePoll);
 
     /**
      *  @brief Record a socket this handler created and return the handle the STM32 should use for it.

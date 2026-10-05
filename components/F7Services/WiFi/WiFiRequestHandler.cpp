@@ -56,12 +56,17 @@ EventGroupHandle_t WiFiRequestHandler::_xWiFiEventGroup = nullptr;
 /**
  *  @brief List of active poll requests.
  */
-std::map<uint32_t, struct pollfd *> WiFiRequestHandler::_pollRequests;
+std::map<uint32_t, WiFiRequestHandler::ActivePoll *> WiFiRequestHandler::_pollRequests;
 
 /**
  *  @brief Mutex for the poll request linked list.
  */
 SemaphoreHandle_t WiFiRequestHandler::_pollRequestListMutex = nullptr;
+
+/**
+ *  @brief Milliseconds a poll teardown waits for the poll to stop before it leaves the request to the poll worker.
+ */
+uint32_t WiFiRequestHandler::_pollCancelTimeout = 5000;
 
 /**
  *  @brief Socket handles the STM32 has been given, mapped to the lwIP descriptors behind them.
