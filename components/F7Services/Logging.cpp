@@ -10,6 +10,7 @@
 #include "sdkconfig.h"
 
 #include "esp32/rom/gpio.h"
+#include "lwip/sockets.h"
 #include <string.h>
 #include <limits.h>
 
@@ -54,9 +55,39 @@
 const char *Logging::COMPONENT_NAME = "Logging";
 
 /**
- *  @brief Is the logging system configured?
+ *  @brief Where the log messages are going now: one of Esp32LogDestination.
  */
-bool Logging::_configured = false;
+uint8_t Logging::_destination = Esp32LogDestination::Uart;
+
+/**
+ *  @brief UDP port the log messages are sent to when the destination is UDP.
+ */
+uint16_t Logging::_udpPort = 0;
+
+/**
+ *  @brief Socket the log messages are sent on when the destination is UDP, -1 if there is none.
+ */
+int Logging::_udpSocket = -1;
+
+/**
+ *  @brief Address the UDP log messages are sent to, in network byte order: broadcast unless a test changes it.
+ */
+uint32_t Logging::_udpAddress = 0xffffffff;
+
+/**
+ *  @brief The function that wrote log messages before the UDP one was put in front of it.
+ */
+vprintf_like_t Logging::_previousLogOutput = nullptr;
+
+/**
+ *  @brief Guards the buffer a UDP log message is formatted in.
+ */
+SemaphoreHandle_t Logging::_udpMutex = nullptr;
+
+/**
+ *  @brief Buffer a UDP log message is formatted in.
+ */
+char Logging::_udpBuffer[Logging::UDP_LOG_MESSAGE_SIZE];
 
 #if defined(PERFORMANCE_LOGGING)
 
@@ -151,13 +182,46 @@ void Logging::Setup()
 /**
  * @brief Configure the logging system.
  *
+ * A request replaces the one before it: logging is turned off for every component first, then turned on for
+ * the ones named, so a second request can both add and remove.  The request is checked before anything is
+ * changed, so one that cannot be honoured leaves the configuration as it was.
+ *
  * @param components Names of the components to be logged.
- * @param interface Destination for the log messages.
+ * @param interface Destination for the log messages: Esp32LogDestination None, Uart or UDP.
  * @param udpPort UDP port for the log messages when UDP is enabled.
+ *
+ * @return CompletedOk if the configuration was applied, InvalidRequest if the destination is not one that
+ *         exists or UDP is asked for with no port, NotImplemented if it is JTAG, and Failure if the UDP
+ *         socket cannot be opened (issue #356).
  */
-void Logging::Configure(const char * const components, uint32_t interface, uint32_t udpPort)
+StatusCodes::StatusCodes Logging::Configure(const char * const components, uint32_t interface, uint32_t udpPort)
 {
-    if (!_configured)
+    switch (interface)
+    {
+        case Esp32LogDestination::None:
+        case Esp32LogDestination::Uart:
+            break;
+        case Esp32LogDestination::UDP:
+            if ((udpPort == 0) || (udpPort > UINT16_MAX))
+            {
+                return (StatusCodes::InvalidRequest);
+            }
+            break;
+        case Esp32LogDestination::Jtag:
+            return (StatusCodes::NotImplemented);
+        default:
+            return (StatusCodes::InvalidRequest);
+    }
+
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
+    StopUdpLogging();
+    TurnAllLoggingOff();
+    if (interface == Esp32LogDestination::UDP)
+    {
+        result = StartUdpLogging(static_cast<uint16_t>(udpPort));
+    }
+
+    if ((result == StatusCodes::CompletedOk) && (interface != Esp32LogDestination::None))
     {
         bool turnAppLoggingOn = false;
 
@@ -181,9 +245,104 @@ void Logging::Configure(const char * const components, uint32_t interface, uint3
         {
             esp_log_level_set(APP_MAIN_COMPONENT_NAME, ESP_LOG_INFO);
         }
-
-        _configured = true;
     }
+
+    _destination = (result == StatusCodes::CompletedOk) ? static_cast<uint8_t>(interface) : static_cast<uint8_t>(Esp32LogDestination::None);
+    return (result);
+}
+
+/**
+ * @brief Send the log messages over UDP as well as writing them out as before.
+ *
+ * The messages go to the broadcast address on the port, so anything on the network listening there sees them.
+ * The output that was in use is kept and still called, so the UART output goes on.
+ *
+ * @param port UDP port to send to.
+ *
+ * @return CompletedOk, or Failure if the socket or the mutex cannot be made.
+ */
+StatusCodes::StatusCodes Logging::StartUdpLogging(const uint16_t port)
+{
+    if (_udpMutex == nullptr)
+    {
+        _udpMutex = xSemaphoreCreateMutex();
+        if (_udpMutex == nullptr)
+        {
+            return (StatusCodes::Failure);
+        }
+    }
+
+    _udpSocket = socket(AF_INET, SOCK_DGRAM, 0);
+    if (_udpSocket < 0)
+    {
+        _udpSocket = -1;
+        return (StatusCodes::Failure);
+    }
+    const int enable = 1;
+    setsockopt(_udpSocket, SOL_SOCKET, SO_BROADCAST, &enable, sizeof(enable));
+
+    _udpPort = port;
+    _previousLogOutput = esp_log_set_vprintf(UdpLogOutput);
+    return (StatusCodes::CompletedOk);
+}
+
+/**
+ * @brief Stop sending the log messages over UDP and put back the output that was there before.
+ */
+void Logging::StopUdpLogging()
+{
+    if (_udpSocket >= 0)
+    {
+        esp_log_set_vprintf(_previousLogOutput);
+        _previousLogOutput = nullptr;
+        //
+        //  Taken under the mutex so that a message that is being sent is not sent on a closed socket.
+        //
+        xSemaphoreTake(_udpMutex, portMAX_DELAY);
+        const int socketToClose = _udpSocket;
+        _udpSocket = -1;
+        xSemaphoreGive(_udpMutex);
+        close(socketToClose);
+    }
+}
+
+/**
+ * @brief The log output function while UDP logging is on.
+ *
+ * It writes the message out as before and also sends it as a datagram.  It never waits: if another task is
+ * sending a message at this moment, or the datagram cannot be sent at once, the message goes to the UART only.
+ * Nothing in here logs, so it cannot call itself.
+ *
+ * @param format Format of the message.
+ * @param arguments Values for the format.
+ *
+ * @return What the output that was in use before returned.
+ */
+int Logging::UdpLogOutput(const char *format, va_list arguments)
+{
+    if ((_udpSocket >= 0) && (xSemaphoreTake(_udpMutex, 0) == pdTRUE))
+    {
+        if (_udpSocket >= 0)
+        {
+            va_list copy;
+            va_copy(copy, arguments);
+            const int length = vsnprintf(_udpBuffer, sizeof(_udpBuffer), format, copy);
+            va_end(copy);
+            if (length > 0)
+            {
+                struct sockaddr_in destination = {};
+                destination.sin_family = AF_INET;
+                destination.sin_len = sizeof(destination);
+                destination.sin_port = htons(_udpPort);
+                destination.sin_addr.s_addr = _udpAddress;
+                const size_t size = (static_cast<size_t>(length) < sizeof(_udpBuffer)) ? static_cast<size_t>(length) : sizeof(_udpBuffer) - 1;
+                sendto(_udpSocket, _udpBuffer, size, MSG_DONTWAIT, reinterpret_cast<struct sockaddr *>(&destination), sizeof(destination));
+            }
+        }
+        xSemaphoreGive(_udpMutex);
+    }
+
+    return ((_previousLogOutput != nullptr) ? _previousLogOutput(format, arguments) : vprintf(format, arguments));
 }
 
 /**
@@ -196,7 +355,7 @@ void Logging::Configure(const char * const components, uint32_t interface, uint3
  *
  * @return True if the component was found and logging was enabled, false otherwise.
  */
-bool Logging::TurnLoggingOn(const char * const component)
+bool Logging::SetComponentLogging(const char * const component, const esp_log_level_t level)
 {
     if (component != NULL)
     {
@@ -206,47 +365,72 @@ bool Logging::TurnLoggingOn(const char * const component)
         //
         if (!strcasecmp(component, WiFiRequestHandler::COMPONENT_NAME))
         {
-            esp_log_level_set(WiFiRequestHandler::COMPONENT_NAME, ESP_LOG_INFO);
+            esp_log_level_set(WiFiRequestHandler::COMPONENT_NAME, level);
             return (true);
         }
         if (!strcasecmp(component, SystemRequestHandler::COMPONENT_NAME))
         {
-            esp_log_level_set(SystemRequestHandler::COMPONENT_NAME, ESP_LOG_INFO);
-            esp_log_level_set(FileSystem::COMPONENT_NAME, ESP_LOG_INFO);
-            esp_log_level_set(CoreDump::COMPONENT_NAME, ESP_LOG_INFO);
+            esp_log_level_set(SystemRequestHandler::COMPONENT_NAME, level);
+            esp_log_level_set(FileSystem::COMPONENT_NAME, level);
+            esp_log_level_set(CoreDump::COMPONENT_NAME, level);
             return (true);
         }
         if (!strcasecmp(component, CoreDump::COMPONENT_NAME))
         {
-            esp_log_level_set(CoreDump::COMPONENT_NAME, ESP_LOG_INFO);
+            esp_log_level_set(CoreDump::COMPONENT_NAME, level);
             return (true);
         }
         if (!strcasecmp(component, BluetoothRequestHandler::COMPONENT_NAME))
         {
-            esp_log_level_set(BluetoothRequestHandler::COMPONENT_NAME, ESP_LOG_INFO);
+            esp_log_level_set(BluetoothRequestHandler::COMPONENT_NAME, level);
             return (true);
         }
         if (!strcasecmp(component, SpiTransportProvider::COMPONENT_NAME))
         {
-            esp_log_level_set(SpiTransportProvider::COMPONENT_NAME, ESP_LOG_INFO);
+            esp_log_level_set(SpiTransportProvider::COMPONENT_NAME, level);
             return (true);
         }
         if (!strcasecmp(component, Thread::COMPONENT_NAME))
         {
-            esp_log_level_set(Thread::COMPONENT_NAME, ESP_LOG_INFO);
-            esp_log_level_set(ThreadPool::COMPONENT_NAME, ESP_LOG_INFO);
+            esp_log_level_set(Thread::COMPONENT_NAME, level);
+            esp_log_level_set(ThreadPool::COMPONENT_NAME, level);
             return (true);
         }
         if (!strcasecmp(component, "Messages"))
         {
-            esp_log_level_set(RequestHandlerBase::COMPONENT_NAME, ESP_LOG_INFO);
-            esp_log_level_set(TransportProviderBase::COMPONENT_NAME, ESP_LOG_INFO);
-            esp_log_level_set(MessageDispatcher::COMPONENT_NAME, ESP_LOG_INFO);
+            esp_log_level_set(RequestHandlerBase::COMPONENT_NAME, level);
+            esp_log_level_set(TransportProviderBase::COMPONENT_NAME, level);
+            esp_log_level_set(MessageDispatcher::COMPONENT_NAME, level);
             return (true);
         }
     }
 
     return (false);
+}
+
+/**
+ * @brief Turn logging on for the specified component, or for every component in the named group.
+ *
+ * @param component Name of the component, or the group.
+ *
+ * @return True if the name was known.
+ */
+bool Logging::TurnLoggingOn(const char * const component)
+{
+    return (SetComponentLogging(component, ESP_LOG_INFO));
+}
+
+/**
+ * @brief Turn logging off for every component, and group of components, the configuration can turn on.
+ */
+void Logging::TurnAllLoggingOff()
+{
+    const char * const groups[] = {WiFiRequestHandler::COMPONENT_NAME, SystemRequestHandler::COMPONENT_NAME, CoreDump::COMPONENT_NAME, BluetoothRequestHandler::COMPONENT_NAME, SpiTransportProvider::COMPONENT_NAME, Thread::COMPONENT_NAME, "Messages"};
+    for (const char * const group: groups)
+    {
+        SetComponentLogging(group, ESP_LOG_NONE);
+    }
+    esp_log_level_set(APP_MAIN_COMPONENT_NAME, ESP_LOG_NONE);
 }
 
 /**

@@ -1023,8 +1023,17 @@ void SystemRequestHandler::LoggingConfiguration(Message *message)
 
     if (config)
     {
-        Logging::Configure(config->ComponentsToLog, config->Interface, config->UdpPort);
+        const StatusCodes::StatusCodes result = Logging::Configure(config->ComponentsToLog, config->Interface, config->UdpPort);
         Encoders::FreeLoggingConfiguration(&config);
+        if (result != StatusCodes::CompletedOk)
+        {
+            //
+            //  There is nobody waiting for an answer, so a request that could not be honoured is reported as
+            //  an error event (issue #356).
+            //
+            ERROR_MESSAGE("LoggingConfiguration: The configuration was not applied, status %" PRIu32, static_cast<uint32_t>(result));
+            RaiseEvent(Esp32Interfaces::System, SystemFunction::ErrorEvent, result);
+        }
     }
 
     //
