@@ -308,6 +308,54 @@ public:
     }
 
     /**
+     * @brief Call the private HandleTransaction method.
+     */
+    static spi_slave_transaction_t *CallHandleTransaction(SpiTransportProvider *provider, spi_slave_transaction_t *transaction)
+    {
+        return (provider->HandleTransaction(transaction));
+    }
+
+    /**
+     * @brief Call the private ProcessTransportMessage method.
+     */
+    static spi_slave_transaction_t *CallProcessTransportMessage(SpiTransportProvider *provider, Message *request)
+    {
+        return (provider->ProcessTransportMessage(request));
+    }
+
+    /**
+     * @brief Put the private, static state machine in a state, which need not be one it has.
+     */
+    static void SetState(const int state)
+    {
+        SpiTransportProvider::_currentState = static_cast<SpiTransportProvider::SpiStates>(state);
+    }
+
+    /**
+     * @brief Read the private, static state.
+     */
+    static int GetState()
+    {
+        return (static_cast<int>(SpiTransportProvider::_currentState));
+    }
+
+    /**
+     * @brief The state the machine waits for a packet in.
+     */
+    static int WaitingState()
+    {
+        return (static_cast<int>(SpiTransportProvider::WaitingForPacket));
+    }
+
+    /**
+     * @brief The state the machine acknowledges a packet in.
+     */
+    static int AcknowledgingState()
+    {
+        return (static_cast<int>(SpiTransportProvider::AcknowledgingPacket));
+    }
+
+    /**
      * @brief Put the private, static state machine back in its idle state.
      */
     static void ResetState()
@@ -931,4 +979,63 @@ TEST_CASE("An acknowledgement with no outbound message to acknowledge is ignored
     {
         TestSpiTransportProvider::ReleaseOutboundQueue();
     }
+}
+
+TEST_CASE("A state the machine does not know is recovered from", CLASS_OF_TESTS)
+{
+    SpiTransportProvider *provider = EnsureProvider();
+    ResetIncomingMessage();
+
+    //
+    //  The Invalid state, and the two values after the last of the five states the machine works in (the enumeration
+    //  has room for eight), with a message half received and one half sent.  The result used to be a null transaction,
+    //  which the task loop queued and so reset the board (issues #176 and #232).
+    //
+    const int unknownStates[] = {0, 6, 7};
+    for (const int unknownState: unknownStates)
+    {
+        TestSpiTransportProvider::SetOutboundMessage(provider, Message::CreateOnHeap(MessageTypes::Response, Esp32Interfaces::WiFi, 3, StatusCodes::CompletedOk, 7, nullptr, 0));
+        TestSpiTransportProvider::SetIncomingMessage(provider, Message::CreateOnHeap(MessageTypes::Header, Esp32Interfaces::WiFi, 3, StatusCodes::CompletedOk, 8, nullptr, 0));
+        TestSpiTransportProvider::SetState(unknownState);
+
+        spi_slave_transaction_t *transaction = TestSpiTransportProvider::CallCreateSpiTransaction(provider, nullptr);
+        memset(transaction->rx_buffer, 0xff, Message::MAXIMUM_SPI_FRAME_SIZE);
+        transaction->trans_len = TestSpiTransportProvider::GetHeaderFrameSize() * 8;
+        spi_slave_transaction_t *next = TestSpiTransportProvider::CallHandleTransaction(provider, transaction);
+
+        TEST_ASSERT_NOT_NULL_MESSAGE(next, "An unknown state returned no transaction.");
+        TEST_ASSERT_EQUAL_INT_MESSAGE(TestSpiTransportProvider::WaitingState(), TestSpiTransportProvider::GetState(), "The state machine was not put back to waiting for a packet.");
+        TEST_ASSERT_NULL_MESSAGE(TestSpiTransportProvider::GetOutboundMessage(provider), "The outbound message was kept in a state that was not known.");
+        TEST_ASSERT_NULL_MESSAGE(TestSpiTransportProvider::GetIncomingMessage(provider), "The message being received was kept in a state that was not known.");
+        TestSpiTransportProvider::CallDeleteTransaction(provider, next);
+    }
+    TestSpiTransportProvider::ResetState();
+}
+
+TEST_CASE("A transport request for a function that is not known is refused", CLASS_OF_TESTS)
+{
+    SpiTransportProvider *provider = EnsureProvider();
+    ResetIncomingMessage();
+    TestSpiTransportProvider::SetOutboundMessage(provider, nullptr);
+    TestSpiTransportProvider::SetState(TestSpiTransportProvider::AcknowledgingState());
+
+    //
+    //  Used to return a null transaction, and so reset the board (issue #232).  It is now answered with a negative
+    //  acknowledgement, like any other message the machine does not expect.
+    //
+    Message *request = Message::CreateOnHeap(MessageTypes::Transport, Esp32Interfaces::Transport, 0xfffe, StatusCodes::CompletedOk, 21, nullptr, 0);
+    TEST_ASSERT_NOT_NULL(request);
+    spi_slave_transaction_t *transaction = TestSpiTransportProvider::CallProcessTransportMessage(provider, request);
+    Message::DeleteMessage(request);
+    TEST_ASSERT_NOT_NULL_MESSAGE(transaction, "An unknown transport function returned no transaction.");
+
+    uint8_t messageType = 0;
+    uint32_t statusCode = 0;
+    DecodeAndFreeAcknowledgement(transaction, &messageType, &statusCode);
+    TEST_ASSERT_EQUAL(MessageTypes::Nak, messageType);
+    TEST_ASSERT_EQUAL(StatusCodes::UnexpectedData, statusCode);
+    TEST_ASSERT_EQUAL_INT(TestSpiTransportProvider::AcknowledgingState(), TestSpiTransportProvider::GetState());
+
+    TestSpiTransportProvider::SetOutboundMessage(provider, nullptr);
+    TestSpiTransportProvider::ResetState();
 }

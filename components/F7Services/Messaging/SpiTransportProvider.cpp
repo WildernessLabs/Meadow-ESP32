@@ -532,7 +532,14 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessTransportMessage(Message *
             _currentState = SendingPacketDetails;
             break;
         default:
-            TRACE_MESSAGE("ProcessTransportMessage: Transport function %" PRIu32 " not recognised.", request->Function);
+            //
+            //  Say so to the STM32, as for any other message this does not expect.  The state is already
+            //  AcknowledgingPacket, so the next transaction takes the negative acknowledgement and then
+            //  waits for a packet (issue #232).
+            //
+            ERROR_MESSAGE("ProcessTransportMessage: Transport function %" PRIu32 " not recognised.", request->Function);
+            _outboundMessage = Message::CreateOnHeap(MessageTypes::Nak, Esp32Interfaces::Transport, 0, StatusCodes::UnexpectedData);
+            newTransaction = CreateAcknowledgementTransaction(_outboundMessage, StatusCodes::UnexpectedData, MessageTypes::Nak);
             break;
     }
     TRACE_MESSAGE("ProcessTransportMessage: Exit");
@@ -964,7 +971,6 @@ bool SpiTransportProvider::SendingData()
  */
 spi_slave_transaction_t *SpiTransportProvider::ProcessMessages(spi_slave_transaction_t *transaction)
 {
-    spi_slave_transaction_t *newTransaction = nullptr;
     uint32_t notificationBits = 0;
 
     TRACE_MESSAGE("ProcessMessages: Waiting for notification, current state: %s", SpiStateString(_currentState));
@@ -987,6 +993,26 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessMessages(spi_slave_transac
     //  is mandatory when spi_slave_queue_trans is used.
     //
     ESP_ERROR_CHECK(spi_slave_get_trans_result(VSPI_HOST, &transaction, portMAX_DELAY));
+    return (HandleTransaction(transaction));
+}
+
+/**
+ *  @brief Work out what a transaction that has just finished means in the current state, and prepare the next one.
+ *
+ *  Every path returns a valid transaction, because the task loop queues whatever this returns and a
+ *  null transaction would reset the board.  A state this does not know is not left alone: the state machine
+ *  is put back to a known state and the exchange is abandoned (issues #176 and #232).
+ *
+ *  @param transaction
+ *      The transaction that has just finished.  Ownership passes to this method, which releases it.
+ *
+ *  @returns
+ *      The transaction to queue next, never nullptr.
+ */
+spi_slave_transaction_t *SpiTransportProvider::HandleTransaction(spi_slave_transaction_t *transaction)
+{
+    spi_slave_transaction_t *newTransaction = nullptr;
+
     if (SendingData() || MessageContainsData(static_cast<uint8_t *>(transaction->rx_buffer), transaction->length / 8))
     {
         switch (_currentState)
@@ -1014,16 +1040,44 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessMessages(spi_slave_transac
                 break;
 
             default:
-                ERROR_MESSAGE("ProcessMessages: Unhandled state: %s", SpiStateString(_currentState));
+                newTransaction = RecoverFromUnknownState(transaction);
                 break;
         }
     }
     else
     {
-        TRACE_MESSAGE("ProcessMessages: Empty buffer, discarding data and staying in state %s", SpiStateString(_currentState));
+        TRACE_MESSAGE("HandleTransaction: Empty buffer, discarding data and staying in state %s", SpiStateString(_currentState));
         newTransaction = transaction;
     }
     return (newTransaction);
+}
+
+/**
+ *  @brief Put the state machine back in its starting state after finding it in a state it does not know.
+ *
+ *  Nothing says what the exchange was part way through, so whatever message was being received or sent
+ *  is abandoned, and the STM32 is left to ask again.  The next transaction waits for a packet.
+ *
+ *  @param transaction
+ *      The transaction that has just finished.  Released here.
+ *
+ *  @returns
+ *      A transaction that waits for a packet.
+ */
+spi_slave_transaction_t *SpiTransportProvider::RecoverFromUnknownState(spi_slave_transaction_t *transaction)
+{
+    ERROR_MESSAGE("RecoverFromUnknownState: Unhandled state %d (%s), going back to WaitingForPacket and dropping the message in progress.", static_cast<int>(_currentState), SpiStateString(_currentState));
+    DeleteTransaction(transaction);
+    if (_incomingMessage != nullptr)
+    {
+        Message::DeleteMessage(_incomingMessage);
+    }
+    if (_outboundMessage != nullptr)
+    {
+        Message::DeleteMessage(_outboundMessage);
+    }
+    _currentState = WaitingForPacket;
+    return (CreateSpiTransaction(nullptr));
 }
 
 /**
