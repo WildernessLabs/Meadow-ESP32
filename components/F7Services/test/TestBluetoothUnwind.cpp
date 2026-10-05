@@ -133,6 +133,33 @@ public:
     }
 
     /**
+     * @brief Make a handler of the test's own, bring the stack up as far as a state, destroy the handler, and put the shared one back.
+     *
+     *  The handler is created without Setup(), so it starts no task of its own.
+     *
+     * @param state How far to bring the stack up before the handler is destroyed.
+     */
+    static void DestroyHandlerWithStackUp(const StackState state)
+    {
+        Handler();
+        BluetoothRequestHandler * const savedInstance = BluetoothRequestHandler::_instance;
+        const bool savedInstantiated = BluetoothRequestHandler::_instantiated;
+        IMessageDispatcher * const savedDispatcher = BluetoothRequestHandler::_messageDispatcher;
+        BluetoothRequestHandler::_instance = nullptr;
+        BluetoothRequestHandler::_instantiated = false;
+        BluetoothRequestHandler * const handler = new BluetoothRequestHandler(savedDispatcher);
+        TEST_ASSERT_NOT_NULL(handler);
+
+        BringUp(state);
+        delete handler;
+
+        BluetoothRequestHandler::_instance = savedInstance;
+        BluetoothRequestHandler::_instantiated = savedInstantiated;
+        BluetoothRequestHandler::_messageDispatcher = savedDispatcher;
+        CheckStackIsDown();
+    }
+
+    /**
      * @brief Stop the service when nothing is running.
      *
      * @return The result of the stop.
@@ -174,4 +201,17 @@ TEST_CASE("Stop takes down a stack that is only partly up", CLASS_OF_TESTS)
 TEST_CASE("Stop still reports failure when nothing is running", CLASS_OF_TESTS)
 {
     TEST_ASSERT_FALSE(TestBluetoothUnwind::StopWhenNothingIsRunning());
+}
+
+TEST_CASE("Destroying the handler takes the stack down", CLASS_OF_TESTS)
+{
+    //
+    //  The stack keeps calling the handler's callbacks and reading its attribute table until it is down, and the
+    //  callbacks cannot be unregistered, so the handler's destructor has to take the stack down before it goes
+    //  (issue #183).  Each state the stack can be left in is tried.
+    //
+    TestBluetoothUnwind::DestroyHandlerWithStackUp(StackState::ControllerInitialised);
+    TestBluetoothUnwind::DestroyHandlerWithStackUp(StackState::ControllerEnabled);
+    TestBluetoothUnwind::DestroyHandlerWithStackUp(StackState::BluedroidInitialised);
+    TestBluetoothUnwind::DestroyHandlerWithStackUp(StackState::BluedroidEnabled);
 }

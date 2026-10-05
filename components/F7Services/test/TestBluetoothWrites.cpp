@@ -155,6 +155,63 @@ public:
     }
 
     /**
+     * @brief Take the handler away, as when it has been destroyed, leaving the stack's callbacks with none to find.
+     *
+     * @return The handler that was there, for Restore().
+     */
+    static BluetoothRequestHandler *Forget()
+    {
+        BluetoothRequestHandler * const previous = BluetoothRequestHandler::_instance;
+        BluetoothRequestHandler::_instance = nullptr;
+        return (previous);
+    }
+
+    /**
+     * @brief Put back the handler Forget() took away.
+     */
+    static void Restore(BluetoothRequestHandler *handler)
+    {
+        BluetoothRequestHandler::_instance = handler;
+    }
+
+    /**
+     * @brief The handler, nullptr if there is none.
+     */
+    static BluetoothRequestHandler *Current()
+    {
+        return (BluetoothRequestHandler::_instance);
+    }
+
+    /**
+     * @brief Pass a GATTS event to the callback, as Bluedroid does.
+     */
+    static void GattsEvent(const esp_gatts_cb_event_t event)
+    {
+        esp_ble_gatts_cb_param_t param = {};
+        param.write.handle = WRITE_HANDLE;
+        param.write.need_rsp = false;
+        param.write.len = 0;
+        BluetoothRequestHandler::GATTSProfileEventHandler(event, 0, &param);
+    }
+
+    /**
+     * @brief Pass a GAP event to the callback, as Bluedroid does.
+     */
+    static void GapEvent(const esp_gap_ble_cb_event_t event)
+    {
+        esp_ble_gap_cb_param_t param = {};
+        BluetoothRequestHandler::GAPEventHandler(event, &param);
+    }
+
+    /**
+     * @brief Call the private OnDataWriteRequest method.
+     */
+    static void DataWrite(const uint16_t handle, uint8_t *data, const uint16_t length)
+    {
+        BluetoothRequestHandler::OnDataWriteRequest(handle, data, length);
+    }
+
+    /**
      * @brief Call the private PrepareWrite method.
      */
     static esp_gatt_status_t Prepare(const uint16_t handle, const uint16_t offset, const uint8_t *value, const uint16_t length)
@@ -371,4 +428,34 @@ TEST_CASE("Prepared writes outside the attribute or to a second attribute are re
     TestBluetoothWrites::Execute(false);
 
     TestBluetoothWrites::Release();
+}
+
+TEST_CASE("The Bluetooth callbacks ignore events that arrive when there is no handler", CLASS_OF_TESTS)
+{
+    //
+    //  The stack calls the GAP and GATTS callbacks for as long as it runs and cannot be told the handler has gone,
+    //  so an event can arrive after it was destroyed.  The callbacks used to dereference the null pointer
+    //  (issue #183).  Every event that used the handler is passed in.
+    //
+    BluetoothRequestHandler * const handler = TestBluetoothWrites::Forget();
+    TEST_ASSERT_NULL(TestBluetoothWrites::Current());
+
+    const esp_gatts_cb_event_t gattsEvents[] = {ESP_GATTS_REG_EVT, ESP_GATTS_WRITE_EVT, ESP_GATTS_CONNECT_EVT, ESP_GATTS_DISCONNECT_EVT, ESP_GATTS_CREAT_ATTR_TAB_EVT, ESP_GATTS_START_EVT};
+    for (const esp_gatts_cb_event_t event: gattsEvents)
+    {
+        TestBluetoothWrites::GattsEvent(event);
+    }
+    const esp_gap_ble_cb_event_t gapEvents[] = {ESP_GAP_BLE_ADV_DATA_SET_COMPLETE_EVT, ESP_GAP_BLE_SCAN_RSP_DATA_SET_COMPLETE_EVT, ESP_GAP_BLE_ADV_START_COMPLETE_EVT, ESP_GAP_BLE_ADV_STOP_COMPLETE_EVT, ESP_GAP_BLE_UPDATE_CONN_PARAMS_EVT};
+    for (const esp_gap_ble_cb_event_t event: gapEvents)
+    {
+        TestBluetoothWrites::GapEvent(event);
+    }
+    uint8_t data[] = {1, 2, 3, 4};
+    TestBluetoothWrites::DataWrite(WRITE_HANDLE, data, sizeof(data));
+
+    //
+    //  Nothing made a handler to answer them with.
+    //
+    TEST_ASSERT_NULL_MESSAGE(TestBluetoothWrites::Current(), "A callback made a handler for an event that arrived with none.");
+    TestBluetoothWrites::Restore(handler);
 }
