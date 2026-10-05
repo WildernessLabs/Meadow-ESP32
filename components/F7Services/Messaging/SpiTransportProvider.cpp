@@ -51,6 +51,16 @@ SpiTransportProvider *SpiTransportProvider::_spiInstance = nullptr;
  */
 SpiTransportProvider::SpiStates SpiTransportProvider::_currentState = Invalid;
 
+/**
+ *  @brief A transaction to use when none can be allocated (issue #232).
+ *
+ *  A transaction only points at the provider's own two buffers, so one made here is as good as one from the
+ *  heap.  CreateSpiTransaction returns it when the heap has none to give, because the task loop queues whatever
+ *  it is given and a null transaction resets the board.  There is only one transaction in use at a time, so one is
+ *  enough, and DeleteTransaction does not free it.
+ */
+spi_slave_transaction_t SpiTransportProvider::_fallbackTransaction = {};
+
 TaskHandle_t SpiTransportProvider::_synchronisationTaskHandle = nullptr;
 
 /**
@@ -283,7 +293,8 @@ void SpiTransportProvider::ClearTransmitAndReceiveBuffers()
 /**
  *  @brief Create a new acknowledgement transaction (ACK or NAK) ready to transmit to the STM32.
  *
- *  The transaction is allocated on the heap and must be released with DeleteTransaction.
+ *  The transaction is allocated on the heap, or is the provider's fallback one if the heap has none to give,
+ *  so the result is never null.  It must be released with DeleteTransaction.
  *  It points at the provider's own _txBuffer and _rxBuffer, which DeleteTransaction does
  *  not free.
  *
@@ -309,18 +320,47 @@ spi_slave_transaction_t *SpiTransportProvider::CreateAcknowledgementTransaction(
     TRACE_MESSAGE("CreateAcknowledgementTransaction: Enter");
 
     TRACE_MESSAGE("Message type: 0x%02" PRIx8, messageType);
-    Message *copyOfMessage = message->CreateCopyOnHeap(false);
-    copyOfMessage->MessageType = messageType;
-    copyOfMessage->StatusCode = static_cast<uint32_t>(code);
-    spi_slave_transaction_t *transaction = CreateSpiTransaction(copyOfMessage);
     //
-    //  Safe to delete now: the transaction refers only to _txBuffer and _rxBuffer, and
-    //  the acknowledgement has already been encoded into _txBuffer by value.
+    //  The acknowledgement is encoded into _txBuffer by value, so it need not live on the heap, where an
+    //  allocation can fail.  It has the identity of the message it acknowledges and no payload (issue #232).
     //
-    Message::DeleteMessage(copyOfMessage);
+    Message acknowledgement;
+    memset(static_cast<void *>(&acknowledgement), 0, sizeof(acknowledgement));
+    acknowledgement.MessageType = messageType;
+    acknowledgement.Interface = message->Interface;
+    acknowledgement.Function = message->Function;
+    acknowledgement.StatusCode = static_cast<uint32_t>(code);
+    acknowledgement.MessageID = message->MessageID;
+    spi_slave_transaction_t *transaction = CreateSpiTransaction(&acknowledgement);
 
     TRACE_MESSAGE("CreateAcknowledgementTransaction: Exit");
     return (transaction);
+}
+
+/**
+ *  @brief Create a transaction that sends an acknowledgement that is not for a particular message.
+ *
+ *  This is the answer to a frame that was not a usable message: a bad CRC, a header that is too short,
+ *  or a message the machine does not expect.  It carries the transport interface and no identity, and
+ *  no storage is allocated for it (issue #232).
+ *
+ *  @param code
+ *      Status code to return.
+ *
+ *  @param messageType
+ *      Type of message to return, an Ack or a Nak.
+ *
+ *  @return pointer to spi_slave_transaction_t object
+ *      The transaction, never nullptr.
+ */
+spi_slave_transaction_t *SpiTransportProvider::CreateTransportAcknowledgement(StatusCodes::StatusCodes code, uint8_t messageType)
+{
+    Message acknowledgement;
+    memset(static_cast<void *>(&acknowledgement), 0, sizeof(acknowledgement));
+    acknowledgement.MessageType = messageType;
+    acknowledgement.Interface = Esp32Interfaces::Transport;
+    acknowledgement.StatusCode = static_cast<uint32_t>(code);
+    return (CreateSpiTransaction(&acknowledgement));
 }
 
 /**
@@ -343,6 +383,11 @@ spi_slave_transaction_t *SpiTransportProvider::CreateSpiTransaction(Message *mes
 {
     TRACE_MESSAGE("CreateSpiTransaction: Enter");
     spi_slave_transaction_t *transaction = static_cast<spi_slave_transaction_t *>(pvPortMalloc(sizeof(spi_slave_transaction_t)));
+    if (transaction == nullptr)
+    {
+        ERROR_MESSAGE("CreateSpiTransaction: Cannot allocate a transaction, using the fallback one.");
+        transaction = &_fallbackTransaction;
+    }
 
     memset(transaction, 0, sizeof(spi_slave_transaction_t));
     ClearTransmitAndReceiveBuffers();
@@ -402,6 +447,13 @@ void SpiTransportProvider::UpdatePacketInformation(Message *message)
 void SpiTransportProvider::DeleteTransaction(spi_slave_transaction_t *&transaction)
 {
     TRACE_MESSAGE("DeleteTransaction: Enter");
+    if (transaction == &_fallbackTransaction)
+    {
+        //
+        //  Not allocated, so not freed.  It points at the provider's own buffers.
+        //
+        transaction = nullptr;
+    }
     if (transaction)
     {
         if (transaction->rx_buffer && (transaction->rx_buffer != _rxBuffer))
@@ -496,12 +548,19 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessTransportMessage(Message *
 {
     TRACE_MESSAGE("ProcessTransportMessage: Enter");
     spi_slave_transaction_t *newTransaction = nullptr;
-    Message *message;
+    Message response;
     switch (request->Function)
     {
         case TransportFunction::SendResponse:
-            message = Message::CreateOnHeap(MessageTypes::Transport | MessageTypes::Ack, Esp32Interfaces::Transport, TransportFunction::SendResponse, StatusCodes::CompletedOk);
-            message->MessageID = request->MessageID;
+            //
+            //  This is encoded into _txBuffer by value, so it lives on the stack and cannot fail to allocate.
+            //
+            memset(static_cast<void *>(&response), 0, sizeof(response));
+            response.MessageType = MessageTypes::Transport | MessageTypes::Ack;
+            response.Interface = Esp32Interfaces::Transport;
+            response.Function = TransportFunction::SendResponse;
+            response.StatusCode = StatusCodes::CompletedOk;
+            response.MessageID = request->MessageID;
             if (OutboundMessageQueueLength() > 0)
             {
                 _outboundMessage = GetOutboundMessage();
@@ -516,23 +575,28 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessTransportMessage(Message *
                     TRACE_MESSAGE("");
 
                     _currentState = SendingPacketDetails;
-                    message->PayloadLength = _outboundMessage->PayloadLength;
+                    response.PayloadLength = _outboundMessage->PayloadLength;
                 }
             }
             else
             {
-                message->StatusCode = StatusCodes::NoMessagesWaiting;
+                response.StatusCode = StatusCodes::NoMessagesWaiting;
             }
             newTransaction = CreateSpiTransaction(nullptr);
-            if (!Encoders::EncodeMessage(message, _txBuffer, Message::MAXIMUM_SPI_FRAME_SIZE, true))
+            if (!Encoders::EncodeMessage(&response, _txBuffer, Message::MAXIMUM_SPI_FRAME_SIZE, true))
             {
                 ERROR_MESSAGE("ProcessTransportMessage: the response could not be encoded; sending an empty frame.");
             }
-            Message::DeleteMessage(message);
             _currentState = SendingPacketDetails;
             break;
         default:
-            TRACE_MESSAGE("ProcessTransportMessage: Transport function %" PRIu32 " not recognised.", request->Function);
+            //
+            //  Say so to the STM32, as for any other message this does not expect.  The state is already
+            //  AcknowledgingPacket, so the next transaction takes the negative acknowledgement and then
+            //  waits for a packet (issue #232).
+            //
+            ERROR_MESSAGE("ProcessTransportMessage: Transport function %" PRIu32 " not recognised.", request->Function);
+            newTransaction = CreateTransportAcknowledgement(StatusCodes::UnexpectedData, MessageTypes::Nak);
             break;
     }
     TRACE_MESSAGE("ProcessTransportMessage: Exit");
@@ -700,8 +764,7 @@ spi_slave_transaction_t *SpiTransportProvider::PacketReceived(spi_slave_transact
             }
             responseCode = StatusCodes::CrcError;
             messageType = MessageTypes::Nak;
-            _outboundMessage = Message::CreateOnHeap(messageType, Esp32Interfaces::Transport, 0, responseCode);
-            newTransaction = CreateAcknowledgementTransaction(_outboundMessage, responseCode, messageType);
+            newTransaction = CreateTransportAcknowledgement(responseCode, messageType);
         }
         else
         {
@@ -718,8 +781,7 @@ spi_slave_transaction_t *SpiTransportProvider::PacketReceived(spi_slave_transact
                     responseCode = StatusCodes::UnexpectedData;
                     messageType = MessageTypes::Nak;
                     Message::DeleteMessage(incomingPacket);
-                    _outboundMessage = Message::CreateOnHeap(messageType, Esp32Interfaces::Transport, 0, responseCode);
-                    newTransaction = CreateAcknowledgementTransaction(_outboundMessage, responseCode, messageType);
+                    newTransaction = CreateTransportAcknowledgement(responseCode, messageType);
                     break;
             }
         }
@@ -728,8 +790,7 @@ spi_slave_transaction_t *SpiTransportProvider::PacketReceived(spi_slave_transact
     {
         responseCode = StatusCodes::InvalidHeader;
         messageType = MessageTypes::Nak;
-        _outboundMessage = Message::CreateOnHeap(messageType, Esp32Interfaces::Transport, 0, responseCode);
-        newTransaction = CreateAcknowledgementTransaction(_outboundMessage, responseCode, messageType);
+        newTransaction = CreateTransportAcknowledgement(responseCode, messageType);
     }
     DeleteTransaction(transaction);
     TRACE_MESSAGE("InboundMessageReceived: Exit");
@@ -964,7 +1025,6 @@ bool SpiTransportProvider::SendingData()
  */
 spi_slave_transaction_t *SpiTransportProvider::ProcessMessages(spi_slave_transaction_t *transaction)
 {
-    spi_slave_transaction_t *newTransaction = nullptr;
     uint32_t notificationBits = 0;
 
     TRACE_MESSAGE("ProcessMessages: Waiting for notification, current state: %s", SpiStateString(_currentState));
@@ -987,6 +1047,26 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessMessages(spi_slave_transac
     //  is mandatory when spi_slave_queue_trans is used.
     //
     ESP_ERROR_CHECK(spi_slave_get_trans_result(VSPI_HOST, &transaction, portMAX_DELAY));
+    return (HandleTransaction(transaction));
+}
+
+/**
+ *  @brief Work out what a transaction that has just finished means in the current state, and prepare the next one.
+ *
+ *  Every path returns a valid transaction, because the task loop queues whatever this returns and a
+ *  null transaction would reset the board.  A state this does not know is not left alone: the state machine
+ *  is put back to a known state and the exchange is abandoned (issues #176 and #232).
+ *
+ *  @param transaction
+ *      The transaction that has just finished.  Ownership passes to this method, which releases it.
+ *
+ *  @returns
+ *      The transaction to queue next, never nullptr.
+ */
+spi_slave_transaction_t *SpiTransportProvider::HandleTransaction(spi_slave_transaction_t *transaction)
+{
+    spi_slave_transaction_t *newTransaction = nullptr;
+
     if (SendingData() || MessageContainsData(static_cast<uint8_t *>(transaction->rx_buffer), transaction->length / 8))
     {
         switch (_currentState)
@@ -1014,16 +1094,44 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessMessages(spi_slave_transac
                 break;
 
             default:
-                ERROR_MESSAGE("ProcessMessages: Unhandled state: %s", SpiStateString(_currentState));
+                newTransaction = RecoverFromUnknownState(transaction);
                 break;
         }
     }
     else
     {
-        TRACE_MESSAGE("ProcessMessages: Empty buffer, discarding data and staying in state %s", SpiStateString(_currentState));
+        TRACE_MESSAGE("HandleTransaction: Empty buffer, discarding data and staying in state %s", SpiStateString(_currentState));
         newTransaction = transaction;
     }
     return (newTransaction);
+}
+
+/**
+ *  @brief Put the state machine back in its starting state after finding it in a state it does not know.
+ *
+ *  Nothing says what the exchange was part way through, so whatever message was being received or sent
+ *  is abandoned, and the STM32 is left to ask again.  The next transaction waits for a packet.
+ *
+ *  @param transaction
+ *      The transaction that has just finished.  Released here.
+ *
+ *  @returns
+ *      A transaction that waits for a packet.
+ */
+spi_slave_transaction_t *SpiTransportProvider::RecoverFromUnknownState(spi_slave_transaction_t *transaction)
+{
+    ERROR_MESSAGE("RecoverFromUnknownState: Unhandled state %d (%s), going back to WaitingForPacket and dropping the message in progress.", static_cast<int>(_currentState), SpiStateString(_currentState));
+    DeleteTransaction(transaction);
+    if (_incomingMessage != nullptr)
+    {
+        Message::DeleteMessage(_incomingMessage);
+    }
+    if (_outboundMessage != nullptr)
+    {
+        Message::DeleteMessage(_outboundMessage);
+    }
+    _currentState = WaitingForPacket;
+    return (CreateSpiTransaction(nullptr));
 }
 
 /**

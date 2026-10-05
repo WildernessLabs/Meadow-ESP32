@@ -308,6 +308,54 @@ public:
     }
 
     /**
+     * @brief Call the private HandleTransaction method.
+     */
+    static spi_slave_transaction_t *CallHandleTransaction(SpiTransportProvider *provider, spi_slave_transaction_t *transaction)
+    {
+        return (provider->HandleTransaction(transaction));
+    }
+
+    /**
+     * @brief Call the private ProcessTransportMessage method.
+     */
+    static spi_slave_transaction_t *CallProcessTransportMessage(SpiTransportProvider *provider, Message *request)
+    {
+        return (provider->ProcessTransportMessage(request));
+    }
+
+    /**
+     * @brief Put the private, static state machine in a state, which need not be one it has.
+     */
+    static void SetState(const int state)
+    {
+        SpiTransportProvider::_currentState = static_cast<SpiTransportProvider::SpiStates>(state);
+    }
+
+    /**
+     * @brief Read the private, static state.
+     */
+    static int GetState()
+    {
+        return (static_cast<int>(SpiTransportProvider::_currentState));
+    }
+
+    /**
+     * @brief The state the machine waits for a packet in.
+     */
+    static int WaitingState()
+    {
+        return (static_cast<int>(SpiTransportProvider::WaitingForPacket));
+    }
+
+    /**
+     * @brief The state the machine acknowledges a packet in.
+     */
+    static int AcknowledgingState()
+    {
+        return (static_cast<int>(SpiTransportProvider::AcknowledgingPacket));
+    }
+
+    /**
      * @brief Put the private, static state machine back in its idle state.
      */
     static void ResetState()
@@ -931,4 +979,228 @@ TEST_CASE("An acknowledgement with no outbound message to acknowledge is ignored
     {
         TestSpiTransportProvider::ReleaseOutboundQueue();
     }
+}
+
+TEST_CASE("A state the machine does not know is recovered from", CLASS_OF_TESTS)
+{
+    SpiTransportProvider *provider = EnsureProvider();
+    ResetIncomingMessage();
+
+    //
+    //  The Invalid state, and the two values after the last of the five states the machine works in (the enumeration
+    //  has room for eight), with a message half received and one half sent.  The result used to be a null transaction,
+    //  which the task loop queued and so reset the board (issues #176 and #232).
+    //
+    const int unknownStates[] = {0, 6, 7};
+    for (const int unknownState: unknownStates)
+    {
+        TestSpiTransportProvider::SetOutboundMessage(provider, Message::CreateOnHeap(MessageTypes::Response, Esp32Interfaces::WiFi, 3, StatusCodes::CompletedOk, 7, nullptr, 0));
+        TestSpiTransportProvider::SetIncomingMessage(provider, Message::CreateOnHeap(MessageTypes::Header, Esp32Interfaces::WiFi, 3, StatusCodes::CompletedOk, 8, nullptr, 0));
+        TestSpiTransportProvider::SetState(unknownState);
+
+        spi_slave_transaction_t *transaction = TestSpiTransportProvider::CallCreateSpiTransaction(provider, nullptr);
+        memset(transaction->rx_buffer, 0xff, Message::MAXIMUM_SPI_FRAME_SIZE);
+        transaction->trans_len = TestSpiTransportProvider::GetHeaderFrameSize() * 8;
+        spi_slave_transaction_t *next = TestSpiTransportProvider::CallHandleTransaction(provider, transaction);
+
+        TEST_ASSERT_NOT_NULL_MESSAGE(next, "An unknown state returned no transaction.");
+        TEST_ASSERT_EQUAL_INT_MESSAGE(TestSpiTransportProvider::WaitingState(), TestSpiTransportProvider::GetState(), "The state machine was not put back to waiting for a packet.");
+        TEST_ASSERT_NULL_MESSAGE(TestSpiTransportProvider::GetOutboundMessage(provider), "The outbound message was kept in a state that was not known.");
+        TEST_ASSERT_NULL_MESSAGE(TestSpiTransportProvider::GetIncomingMessage(provider), "The message being received was kept in a state that was not known.");
+        TestSpiTransportProvider::CallDeleteTransaction(provider, next);
+    }
+    TestSpiTransportProvider::ResetState();
+}
+
+TEST_CASE("A transport request for a function that is not known is refused", CLASS_OF_TESTS)
+{
+    SpiTransportProvider *provider = EnsureProvider();
+    ResetIncomingMessage();
+    TestSpiTransportProvider::SetOutboundMessage(provider, nullptr);
+    TestSpiTransportProvider::SetState(TestSpiTransportProvider::AcknowledgingState());
+
+    //
+    //  Used to return a null transaction, and so reset the board (issue #232).  It is now answered with a negative
+    //  acknowledgement, like any other message the machine does not expect.
+    //
+    Message *request = Message::CreateOnHeap(MessageTypes::Transport, Esp32Interfaces::Transport, 0xfffe, StatusCodes::CompletedOk, 21, nullptr, 0);
+    TEST_ASSERT_NOT_NULL(request);
+    spi_slave_transaction_t *transaction = TestSpiTransportProvider::CallProcessTransportMessage(provider, request);
+    Message::DeleteMessage(request);
+    TEST_ASSERT_NOT_NULL_MESSAGE(transaction, "An unknown transport function returned no transaction.");
+
+    uint8_t messageType = 0;
+    uint32_t statusCode = 0;
+    DecodeAndFreeAcknowledgement(transaction, &messageType, &statusCode);
+    TEST_ASSERT_EQUAL(MessageTypes::Nak, messageType);
+    TEST_ASSERT_EQUAL(StatusCodes::UnexpectedData, statusCode);
+    TEST_ASSERT_EQUAL_INT(TestSpiTransportProvider::AcknowledgingState(), TestSpiTransportProvider::GetState());
+
+    TestSpiTransportProvider::SetOutboundMessage(provider, nullptr);
+    TestSpiTransportProvider::ResetState();
+}
+
+/**
+ * @brief Take every block of heap there is, so that the next allocation fails.
+ *
+ *  The blocks are chained through their own first bytes, so no allocation is needed to keep them.
+ *
+ * @return The first of the blocks.
+ */
+static void *ExhaustHeap()
+{
+    static const size_t SIZES[] = {4096, 1024, 256, 64, 32, 16};
+    void *head = nullptr;
+    for (const size_t size: SIZES)
+    {
+        void *block;
+        while ((block = pvPortMalloc(size)) != nullptr)
+        {
+            *static_cast<void **>(block) = head;
+            head = block;
+        }
+    }
+    return (head);
+}
+
+/**
+ * @brief Give back the blocks ExhaustHeap took.
+ *
+ * @param head The first of them.
+ */
+static void ReleaseHeap(void *head)
+{
+    while (head != nullptr)
+    {
+        void *next = *static_cast<void **>(head);
+        vPortFree(head);
+        head = next;
+    }
+}
+
+/**
+ * @brief Bytes of a frame copied out for decoding: the size of a header frame, which holds an acknowledgement.
+ */
+#define HEADER_FRAME_COPY_SIZE 32
+
+TEST_CASE("The SPI transaction path works with no heap left", CLASS_OF_TESTS)
+{
+    SpiTransportProvider *provider = EnsureProvider();
+    ResetIncomingMessage();
+    const bool madeQueue = TestSpiTransportProvider::EnsureOutboundQueue();
+    TestSpiTransportProvider::SetOutboundMessage(provider, nullptr);
+
+    //
+    //  Everything that is needed is made before the heap is taken, the paths are run with none left, and the
+    //  results are only examined after it is given back, because the test framework needs heap too.
+    //
+    Message *unknownTransportRequest = Message::CreateOnHeap(MessageTypes::Transport, Esp32Interfaces::Transport, 0xfffe, StatusCodes::CompletedOk, 21, nullptr, 0);
+    Message *responseRequest = Message::CreateOnHeap(MessageTypes::Transport, Esp32Interfaces::Transport, TransportFunction::SendResponse, StatusCodes::CompletedOk, 22, nullptr, 0);
+    Message *acknowledged = Message::CreateOnHeap(MessageTypes::Header, Esp32Interfaces::WiFi, 3, StatusCodes::CompletedOk, 23, nullptr, 0);
+    TEST_ASSERT_NOT_NULL(unknownTransportRequest);
+    TEST_ASSERT_NOT_NULL(responseRequest);
+    TEST_ASSERT_NOT_NULL(acknowledged);
+    spi_slave_transaction_t *badFrame = TestSpiTransportProvider::CallCreateSpiTransaction(provider, nullptr);
+
+    //
+    //  Every transaction sends from the provider's one transmit buffer, so each frame is copied out as soon
+    //  as it is made.
+    //
+    uint8_t acknowledgementFrame[HEADER_FRAME_COPY_SIZE];
+    uint8_t unknownFunctionFrame[HEADER_FRAME_COPY_SIZE];
+    uint8_t crcErrorFrame[HEADER_FRAME_COPY_SIZE];
+
+    void *hog = ExhaustHeap();
+    const bool allocationFails = (pvPortMalloc(sizeof(spi_slave_transaction_t)) == nullptr);
+
+    spi_slave_transaction_t *plain = TestSpiTransportProvider::CallCreateSpiTransaction(provider, nullptr);
+    spi_slave_transaction_t *acknowledgement = TestSpiTransportProvider::CallCreateAcknowledgementTransaction(provider, acknowledged, StatusCodes::Failure, MessageTypes::Nak);
+    memcpy(acknowledgementFrame, acknowledgement->tx_buffer, HEADER_FRAME_COPY_SIZE);
+    TestSpiTransportProvider::SetState(TestSpiTransportProvider::AcknowledgingState());
+    spi_slave_transaction_t *unknownFunction = TestSpiTransportProvider::CallProcessTransportMessage(provider, unknownTransportRequest);
+    memcpy(unknownFunctionFrame, unknownFunction->tx_buffer, HEADER_FRAME_COPY_SIZE);
+    TestSpiTransportProvider::SetState(TestSpiTransportProvider::AcknowledgingState());
+    spi_slave_transaction_t *noMessages = TestSpiTransportProvider::CallProcessTransportMessage(provider, responseRequest);
+    TestSpiTransportProvider::ResetState();
+    //
+    //  The receive buffer is shared too, and making the transactions above cleared it.
+    //
+    memset(badFrame->rx_buffer, 0xff, Message::MAXIMUM_SPI_FRAME_SIZE);
+    badFrame->trans_len = TestSpiTransportProvider::GetHeaderFrameSize() * 8;
+    spi_slave_transaction_t *crcError = TestSpiTransportProvider::CallHandleTransaction(provider, badFrame);
+    memcpy(crcErrorFrame, crcError->tx_buffer, HEADER_FRAME_COPY_SIZE);
+
+    ReleaseHeap(hog);
+
+    TEST_ASSERT_TRUE_MESSAGE(allocationFails, "The heap was not exhausted, so this tests nothing.");
+    TEST_ASSERT_NOT_NULL_MESSAGE(plain, "No transaction could be made with no heap left.");
+    TEST_ASSERT_NOT_NULL_MESSAGE(acknowledgement, "No acknowledgement could be made with no heap left.");
+    TEST_ASSERT_NOT_NULL_MESSAGE(unknownFunction, "An unknown transport function could not be refused with no heap left.");
+    TEST_ASSERT_NOT_NULL_MESSAGE(noMessages, "A request for a response could not be answered with no heap left.");
+    TEST_ASSERT_NOT_NULL_MESSAGE(crcError, "A frame that failed its CRC could not be refused with no heap left.");
+
+    //
+    //  The acknowledgements still say what they should: the message they are for, and why.
+    //
+    Message *decoded = Encoders::ExtractMessage(acknowledgementFrame, HEADER_FRAME_COPY_SIZE, true);
+    TEST_ASSERT_NOT_NULL(decoded);
+    TEST_ASSERT_EQUAL_UINT8(MessageTypes::Nak, decoded->MessageType);
+    TEST_ASSERT_EQUAL_UINT32(StatusCodes::Failure, decoded->StatusCode);
+    TEST_ASSERT_EQUAL_UINT8(Esp32Interfaces::WiFi, decoded->Interface);
+    TEST_ASSERT_EQUAL_UINT32(3, decoded->Function);
+    TEST_ASSERT_EQUAL_UINT32(23, decoded->MessageID);
+    Message::DeleteMessage(decoded);
+
+    decoded = Encoders::ExtractMessage(unknownFunctionFrame, HEADER_FRAME_COPY_SIZE, true);
+    TEST_ASSERT_NOT_NULL(decoded);
+    TEST_ASSERT_EQUAL_UINT8(MessageTypes::Nak, decoded->MessageType);
+    TEST_ASSERT_EQUAL_UINT32(StatusCodes::UnexpectedData, decoded->StatusCode);
+    Message::DeleteMessage(decoded);
+
+    decoded = Encoders::ExtractMessage(crcErrorFrame, HEADER_FRAME_COPY_SIZE, true);
+    TEST_ASSERT_NOT_NULL(decoded);
+    TEST_ASSERT_EQUAL_UINT8(MessageTypes::Nak, decoded->MessageType);
+    TEST_ASSERT_EQUAL_UINT32(StatusCodes::CrcError, decoded->StatusCode);
+    Message::DeleteMessage(decoded);
+
+    TestSpiTransportProvider::CallDeleteTransaction(provider, unknownFunction);
+    TestSpiTransportProvider::CallDeleteTransaction(provider, crcError);
+    TestSpiTransportProvider::CallDeleteTransaction(provider, plain);
+    TestSpiTransportProvider::CallDeleteTransaction(provider, acknowledgement);
+    TestSpiTransportProvider::CallDeleteTransaction(provider, noMessages);
+    TEST_ASSERT_NULL_MESSAGE(plain, "A transaction was not released.");
+    Message::DeleteMessage(unknownTransportRequest);
+    Message::DeleteMessage(responseRequest);
+    Message::DeleteMessage(acknowledged);
+    TestSpiTransportProvider::SetOutboundMessage(provider, nullptr);
+    TestSpiTransportProvider::ResetState();
+    if (madeQueue)
+    {
+        TestSpiTransportProvider::ReleaseOutboundQueue();
+    }
+}
+
+TEST_CASE("The acknowledgements of frames that are not messages are identical to the ones that were allocated", CLASS_OF_TESTS)
+{
+    SpiTransportProvider *provider = EnsureProvider();
+    ResetIncomingMessage();
+
+    //
+    //  A Nak for a bad CRC, with the transport interface, a zero function and message ID: what the frame used to be
+    //  when it was built from a message allocated for the purpose.
+    //
+    Message *reference = Message::CreateOnHeap(MessageTypes::Nak, Esp32Interfaces::Transport, 0, StatusCodes::CrcError);
+    TEST_ASSERT_NOT_NULL(reference);
+    uint8_t *expected = static_cast<uint8_t *>(pvPortMalloc(Message::MAXIMUM_SPI_FRAME_SIZE));
+    TEST_ASSERT_NOT_NULL(expected);
+    memset(expected, 0, Message::MAXIMUM_SPI_FRAME_SIZE);
+    TEST_ASSERT_TRUE(Encoders::EncodeMessage(reference, expected, Message::MAXIMUM_SPI_FRAME_SIZE, false));
+
+    spi_slave_transaction_t *transaction = TestSpiTransportProvider::CallCreateAcknowledgementTransaction(provider, reference, StatusCodes::CrcError, MessageTypes::Nak);
+    TEST_ASSERT_NOT_NULL(transaction);
+    TEST_ASSERT_EQUAL_MEMORY_MESSAGE(expected, transaction->tx_buffer, Message::MAXIMUM_SPI_FRAME_SIZE, "The acknowledgement was not encoded as it used to be.");
+
+    TestSpiTransportProvider::CallDeleteTransaction(provider, transaction);
+    vPortFree(expected);
+    Message::DeleteMessage(reference);
 }
