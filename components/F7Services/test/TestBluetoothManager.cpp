@@ -423,7 +423,7 @@ TEST_CASE("GetCurrentValueForAttributeHandle copies no more than the capacity", 
     uint8_t buffer[VALUE_LENGTH + 8];
     memset(buffer, GUARD, sizeof(buffer));
     uint16_t length = 0;
-    TEST_ASSERT_TRUE(manager.GetCurrentValueForAttributeHandle(valueHandle, buffer, SHORT_CAPACITY, &length));
+    TEST_ASSERT_EQUAL(ESP_GATT_OK, manager.GetCurrentValueForAttributeHandle(valueHandle, 0, buffer, SHORT_CAPACITY, &length));
     TEST_ASSERT_EQUAL_UINT16(SHORT_CAPACITY, length);
     TEST_ASSERT_EQUAL_HEX8_ARRAY(pattern, buffer, SHORT_CAPACITY);
     for (uint16_t index = SHORT_CAPACITY; index < sizeof(buffer); index++)
@@ -432,10 +432,84 @@ TEST_CASE("GetCurrentValueForAttributeHandle copies no more than the capacity", 
     }
 
     memset(buffer, GUARD, sizeof(buffer));
-    TEST_ASSERT_TRUE(manager.GetCurrentValueForAttributeHandle(valueHandle, buffer, sizeof(buffer), &length));
+    TEST_ASSERT_EQUAL(ESP_GATT_OK, manager.GetCurrentValueForAttributeHandle(valueHandle, 0, buffer, sizeof(buffer), &length));
     TEST_ASSERT_EQUAL_UINT16(VALUE_LENGTH, length);
     TEST_ASSERT_EQUAL_HEX8_ARRAY(pattern, buffer, VALUE_LENGTH);
     TEST_ASSERT_EQUAL_HEX8(GUARD, buffer[VALUE_LENGTH]);
+
+    manager.DeleteAllServices();
+}
+
+/**
+ * @brief A read at an offset returns the value from that offset (issue #528).
+ *
+ *  A value longer than the MTU is read as a Read Request and then Read Blob Requests at
+ *  increasing offsets, and each must be answered from its own offset rather than from the
+ *  start of the value.
+ */
+TEST_CASE("GetCurrentValueForAttributeHandle returns the value from the offset asked for", CLASS_OF_TESTS)
+{
+    static constexpr uint16_t VALUE_LENGTH = 32;
+    static constexpr uint16_t OFFSET = 10;
+    static constexpr uint8_t GUARD = 0x55;
+
+    BluetoothManager manager;
+    const std::vector<BluetoothCharacteristic *> accepted = BuildSingleService(manager, ServiceJson(CharacteristicJson(0x2a01, VALUE_LENGTH, "")));
+    TEST_ASSERT_EQUAL(1, accepted.size());
+    const uint16_t handles[] = {0x0028, 0x0029, 0x002a};
+    TEST_ASSERT_TRUE(manager.SetHandles(handles, sizeof(handles) / sizeof(handles[0])));
+    const uint16_t valueHandle = accepted[0]->GetValue().Handle;
+
+    uint8_t pattern[VALUE_LENGTH];
+    for (uint16_t index = 0; index < VALUE_LENGTH; index++)
+    {
+        pattern[index] = static_cast<uint8_t>(index + 1);
+    }
+    manager.SetCurrentValueForAttributeHandle(valueHandle, pattern, VALUE_LENGTH);
+
+    uint8_t buffer[VALUE_LENGTH + 8];
+    uint16_t length = 0;
+
+    //
+    //  Inside the value: the rest of it, from the offset.
+    //
+    memset(buffer, GUARD, sizeof(buffer));
+    TEST_ASSERT_EQUAL(ESP_GATT_OK, manager.GetCurrentValueForAttributeHandle(valueHandle, OFFSET, buffer, sizeof(buffer), &length));
+    TEST_ASSERT_EQUAL_UINT16_MESSAGE(VALUE_LENGTH - OFFSET, length, "A read at an offset did not return the rest of the value.");
+    TEST_ASSERT_EQUAL_HEX8_ARRAY_MESSAGE(pattern + OFFSET, buffer, VALUE_LENGTH - OFFSET, "A read at an offset returned the wrong bytes.");
+    TEST_ASSERT_EQUAL_HEX8(GUARD, buffer[VALUE_LENGTH - OFFSET]);
+
+    //
+    //  Inside the value with a small buffer: the bytes from the offset, no more than fit.
+    //
+    memset(buffer, GUARD, sizeof(buffer));
+    TEST_ASSERT_EQUAL(ESP_GATT_OK, manager.GetCurrentValueForAttributeHandle(valueHandle, OFFSET, buffer, 4, &length));
+    TEST_ASSERT_EQUAL_UINT16(4, length);
+    TEST_ASSERT_EQUAL_HEX8_ARRAY(pattern + OFFSET, buffer, 4);
+    TEST_ASSERT_EQUAL_HEX8(GUARD, buffer[4]);
+
+    //
+    //  At the length of the value: allowed, and there is nothing left to return.
+    //
+    memset(buffer, GUARD, sizeof(buffer));
+    TEST_ASSERT_EQUAL(ESP_GATT_OK, manager.GetCurrentValueForAttributeHandle(valueHandle, VALUE_LENGTH, buffer, sizeof(buffer), &length));
+    TEST_ASSERT_EQUAL_UINT16(0, length);
+    TEST_ASSERT_EQUAL_HEX8(GUARD, buffer[0]);
+
+    //
+    //  Past the length of the value: refused, and nothing is written.
+    //
+    memset(buffer, GUARD, sizeof(buffer));
+    length = 99;
+    TEST_ASSERT_EQUAL_MESSAGE(ESP_GATT_INVALID_OFFSET, manager.GetCurrentValueForAttributeHandle(valueHandle, VALUE_LENGTH + 1, buffer, sizeof(buffer), &length), "An offset past the end of the value was accepted.");
+    TEST_ASSERT_EQUAL_UINT16(0, length);
+    TEST_ASSERT_EQUAL_HEX8(GUARD, buffer[0]);
+
+    //
+    //  An unknown handle is still reported as one, whatever the offset.
+    //
+    TEST_ASSERT_EQUAL(ESP_GATT_INVALID_HANDLE, manager.GetCurrentValueForAttributeHandle(0x0fff, OFFSET, buffer, sizeof(buffer), &length));
+    TEST_ASSERT_EQUAL_UINT16(0, length);
 
     manager.DeleteAllServices();
 }

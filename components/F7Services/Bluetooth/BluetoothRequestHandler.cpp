@@ -1317,11 +1317,18 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
 
                     rsp.attr_value.handle = param->read.handle;
 
-                    // go get the currently known value from the manager
-                    bool handleFound = _manager.GetCurrentValueForAttributeHandle(param->read.handle, rsp.attr_value.value, static_cast<uint16_t>(sizeof(rsp.attr_value.value)), &rsp.attr_value.len);
+                    //
+                    //  A value longer than the MTU is read in pieces: a Read Request, then Read Blob
+                    //  Requests at increasing offsets.  Each gets the part of the value from its
+                    //  offset (issue #528).
+                    //
+                    rsp.attr_value.offset = param->read.offset;
 
-                    TRACE_MESSAGE("  Sending read response of %" PRIu16 " bytes", rsp.attr_value.len);
-                    ret = esp_ble_gatts_send_response(gatts_if, param->read.conn_id, param->read.trans_id, handleFound ? ESP_GATT_OK : ESP_GATT_INVALID_HANDLE, &rsp);
+                    // go get the currently known value from the manager
+                    const esp_gatt_status_t status = _manager.GetCurrentValueForAttributeHandle(param->read.handle, param->read.offset, rsp.attr_value.value, static_cast<uint16_t>(sizeof(rsp.attr_value.value)), &rsp.attr_value.len);
+
+                    TRACE_MESSAGE("  Sending read response of %" PRIu16 " bytes from offset %" PRIu16, rsp.attr_value.len, param->read.offset);
+                    ret = esp_ble_gatts_send_response(gatts_if, param->read.conn_id, param->read.trans_id, status, &rsp);
 
                     if (ret)
                     {
