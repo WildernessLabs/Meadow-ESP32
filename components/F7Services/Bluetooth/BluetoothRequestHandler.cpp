@@ -169,6 +169,15 @@ BluetoothRequestHandler::~BluetoothRequestHandler()
     //  is given a freed object.  The constructor rejects a second instance by throwing
     //  and nothing catches that, so the guard has to go back with it.
     //
+    //
+    //  The Bluetooth stack calls GAPEventHandler and GATTSProfileEventHandler, and reads the attribute table, for
+    //  as long as it is running.  There is no way to unregister those callbacks, so the stack is taken down
+    //  first, while there is still a handler for them to find, and only then is what they use released and the
+    //  handler forgotten.  Nothing is up in the usual case, and this does nothing (issue #183).
+    //
+    TearDownStack();
+    DiscardPreparedWrite();
+
     delete[] _attribute_table;
     _attribute_table = nullptr;
 
@@ -992,6 +1001,16 @@ void BluetoothRequestHandler::OnDataWriteRequest(const uint16_t handle, uint8_t 
 {
     TRACE_MESSAGE("OnDataWriteRequest: Enter");
 
+    //
+    //  The write comes from the Bluetooth stack, which can outlive the handler, so there may be nobody to tell (issue #183).
+    //
+    BluetoothRequestHandler * const instance = GetInstance();
+    if (instance == nullptr)
+    {
+        ERROR_MESSAGE("OnDataWriteRequest: There is no Bluetooth handler, ignoring the write.");
+        return;
+    }
+
     Esp32Messaging::BTDataWriteRequest *request = static_cast<Esp32Messaging::BTDataWriteRequest *>(pvPortMalloc(sizeof(Esp32Messaging::BTDataWriteRequest)));
     if (request == nullptr)
     {
@@ -1013,7 +1032,7 @@ void BluetoothRequestHandler::OnDataWriteRequest(const uint16_t handle, uint8_t 
     Encoders::EncodeBTDataWriteRequest(request, payload);
     Utils::DeleteAndNullifyPointer(request);
 
-    GetInstance()->RaiseEvent(Esp32Interfaces::BlueTooth, BluetoothFunction::ClientWriteRequestEvent, StatusCodes::CompletedOk, payload, payload_length);
+    instance->RaiseEvent(Esp32Interfaces::BlueTooth, BluetoothFunction::ClientWriteRequestEvent, StatusCodes::CompletedOk, payload, payload_length);
 
     TRACE_MESSAGE("OnDataWriteRequest: Exit");
 }
@@ -1217,6 +1236,18 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
 {
     TRACE_MESSAGE("GATTSProfileEventHandler: Enter");
 
+    //
+    //  The stack calls this for as long as it is running, and does not know when the handler has gone.  An event
+    //  that arrives with no handler has nobody to be reported to and nothing to act on, so it is ignored rather
+    //  than dereferencing a null pointer (issue #183).
+    //
+    BluetoothRequestHandler * const instance = GetInstance();
+    if (instance == nullptr)
+    {
+        ERROR_MESSAGE("GATTSProfileEventHandler: Event %d arrived with no Bluetooth handler, ignoring it.", static_cast<int>(event));
+        return;
+    }
+
     esp_err_t ret = ESP_OK;
     switch (event)
     {
@@ -1227,7 +1258,7 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
                 if (param->reg.status != ESP_GATT_OK)
                 {
                     ERROR_MESSAGE("Registering the GATT application failed, status 0x%" PRIx32, static_cast<uint32_t>(param->reg.status));
-                    GetInstance()->SignalServiceStart(false);
+                    instance->SignalServiceStart(false);
                     break;
                 }
 
@@ -1241,7 +1272,7 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
                 // turn on some security
                 //               esp_ble_gap_config_local_privacy(true);
 
-                ret = esp_ble_gap_config_adv_data(GetInstance()->GetAdvertisingData());
+                ret = esp_ble_gap_config_adv_data(instance->GetAdvertisingData());
                 if (ret)
                 {
                     ERROR_MESSAGE("Config adv data failed, error code = %" PRIi32 ", %s", ret, esp_err_to_name(ret));
@@ -1249,7 +1280,7 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
                 _advertisingDataConfigured = true;
 
                 // configure our BLE scan response
-                ret = esp_ble_gap_config_adv_data(GetInstance()->GetScanResponseData());
+                ret = esp_ble_gap_config_adv_data(instance->GetScanResponseData());
                 if (ret)
                 {
                     ERROR_MESSAGE("Config scan response data failed, error code = %" PRIi32 ", %s", ret, esp_err_to_name(ret));
@@ -1259,11 +1290,11 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
                 TRACE_MESSAGE("BLE advertising configured.  Creating attributes...");
 
                 // set the attribute table - this requires the services be already-defined in the Manager
-                esp_err_t create_attr_ret = esp_ble_gatts_create_attr_tab(GetInstance()->GetAttributeTable(), gatts_if, GetInstance()->GetAttributeTableLength(), BluetoothRequestHandler::INSTANCE_ID);
+                esp_err_t create_attr_ret = esp_ble_gatts_create_attr_tab(instance->GetAttributeTable(), gatts_if, instance->GetAttributeTableLength(), BluetoothRequestHandler::INSTANCE_ID);
                 if (create_attr_ret)
                 {
                     ERROR_MESSAGE("Create attr table failed, error code = %" PRIi32, create_attr_ret);
-                    GetInstance()->SignalServiceStart(false);
+                    instance->SignalServiceStart(false);
                 }
                 else
                 {
@@ -1380,11 +1411,11 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
             break;
         case ESP_GATTS_UNREG_EVT:
             TRACE_MESSAGE("ESP_GATTS_UNREG_EVT");
-            // if (esp_ble_gatts_stop_service(GetInstance()->_serviceHandle) != ESP_OK)
+            // if (esp_ble_gatts_stop_service(instance->_serviceHandle) != ESP_OK)
             // {
             //     ERROR_MESSAGE("Failed to stop service");
             // }
-            // GetInstance()->_serviceHandle = -1;
+            // instance->_serviceHandle = -1;
             break;
         case ESP_GATTS_DELETE_EVT:
             TRACE_MESSAGE("ESP_GATTS_DELETE_EVT");
@@ -1394,12 +1425,12 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
             TRACE_MESSAGE("ESP_GATTS_START_EVT");
             if (param->start.status == ESP_GATT_OK)
             {
-                GetInstance()->SignalServiceStart(true);
+                instance->SignalServiceStart(true);
             }
             else
             {
                 ERROR_MESSAGE("Starting the service failed, status 0x%" PRIx32, static_cast<uint32_t>(param->start.status));
-                GetInstance()->SignalServiceStart(false);
+                instance->SignalServiceStart(false);
             }
             break;
         case ESP_GATTS_STOP_EVT:
@@ -1430,7 +1461,7 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
                     ERROR_MESSAGE("Update connection parameters failed, error code = %" PRIi32 ", %s", ret, esp_err_to_name(ret));
                 }
             }
-            GetInstance()->RaiseEvent(Esp32Interfaces::BlueTooth, BluetoothFunction::ClientConnectedEvent, StatusCodes::CompletedOk);
+            instance->RaiseEvent(Esp32Interfaces::BlueTooth, BluetoothFunction::ClientConnectedEvent, StatusCodes::CompletedOk);
             break;
         case ESP_GATTS_DISCONNECT_EVT:
             TRACE_MESSAGE("ESP_GATTS_DISCONNECT_EVT, disconnect reason 0x%" PRIx32, param->disconnect.reason);
@@ -1440,13 +1471,13 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
             DiscardPreparedWrite();
             ResetClientConfigurations();
             /* start advertising again when missing the connect */
-            ret = esp_ble_gap_start_advertising(GetInstance()->GetAdvertisingParameters());
+            ret = esp_ble_gap_start_advertising(instance->GetAdvertisingParameters());
             if (ret)
             {
                 ERROR_MESSAGE("Start advertising failed, error code = %" PRIi32 ", %s", ret, esp_err_to_name(ret));
             }
             _connectionHandle = INVALID_CONNECTION_HANDLE;
-            GetInstance()->RaiseEvent(Esp32Interfaces::BlueTooth, BluetoothFunction::ClientDisconnectedEvent, StatusCodes::CompletedOk);
+            instance->RaiseEvent(Esp32Interfaces::BlueTooth, BluetoothFunction::ClientDisconnectedEvent, StatusCodes::CompletedOk);
             break;
         case ESP_GATTS_OPEN_EVT:
             TRACE_MESSAGE("ESP_GATTS_OPEN_EVT");
@@ -1478,14 +1509,14 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
             if (param->add_attr_tab.status != ESP_GATT_OK)
             {
                 ERROR_MESSAGE("Create attribute table failed, error code=0x%" PRIx32, param->add_attr_tab.status);
-                GetInstance()->SignalServiceStart(false);
+                instance->SignalServiceStart(false);
             }
             else
             {
-                if (param->add_attr_tab.num_handle != GetInstance()->GetAttributeTableLength())
+                if (param->add_attr_tab.num_handle != instance->GetAttributeTableLength())
                 {
-                    ERROR_MESSAGE("Create attribute table failed, num_handle (%" PRIu16 ") does not match the expected attribute table length (%" PRIu16 ")", param->add_attr_tab.num_handle, GetInstance()->GetAttributeTableLength());
-                    GetInstance()->SignalServiceStart(false);
+                    ERROR_MESSAGE("Create attribute table failed, num_handle (%" PRIu16 ") does not match the expected attribute table length (%" PRIu16 ")", param->add_attr_tab.num_handle, instance->GetAttributeTableLength());
+                    instance->SignalServiceStart(false);
                 }
                 else
                 {
@@ -1499,19 +1530,19 @@ void BluetoothRequestHandler::GATTSProfileEventHandler(esp_gatts_cb_event_t even
                         //  applied the service graph is not safe to start.
                         //
                         ERROR_MESSAGE("SetHandles failed, the service graph needed more than %" PRIu16 " handles", param->add_attr_tab.num_handle);
-                        GetInstance()->SignalServiceStart(false);
+                        instance->SignalServiceStart(false);
                     }
                     else
                     {
                         // now fire up the service (which is the first attribute in the attribute table) by handle.
                         // TODO: right now we're cheating
                         TRACE_MESSAGE("Starting service with handle 0x%04" PRIx16, param->add_attr_tab.handles[0]);
-                        GetInstance()->_serviceHandle = param->add_attr_tab.handles[0];
+                        instance->_serviceHandle = param->add_attr_tab.handles[0];
                         ret = esp_ble_gatts_start_service(param->add_attr_tab.handles[0]);
                         if (ret != ESP_OK)
                         {
                             ERROR_MESSAGE("Requesting the service start failed, error code = %" PRIi32 ", %s", ret, esp_err_to_name(ret));
-                            GetInstance()->SignalServiceStart(false);
+                            instance->SignalServiceStart(false);
                         }
                     }
                 }
@@ -1535,6 +1566,16 @@ void BluetoothRequestHandler::GAPEventHandler(esp_gap_ble_cb_event_t event, esp_
 {
     TRACE_MESSAGE("GAPEventHandler: Enter");
 
+    //
+    //  See GATTSProfileEventHandler: an event with no handler to act on is ignored (issue #183).
+    //
+    BluetoothRequestHandler * const instance = GetInstance();
+    if (instance == nullptr)
+    {
+        ERROR_MESSAGE("GAPEventHandler: Event %d arrived with no Bluetooth handler, ignoring it.", static_cast<int>(event));
+        return;
+    }
+
     switch (event)
     {
         case ESP_GAP_BLE_SCAN_RSP_DATA_SET_COMPLETE_EVT: // 1
@@ -1543,7 +1584,7 @@ void BluetoothRequestHandler::GAPEventHandler(esp_gap_ble_cb_event_t event, esp_
             if (!_advertisingDataConfigured)
             {
                 TRACE_MESSAGE("Scan data set.  Starting advertising...");
-                esp_err_t ret = esp_ble_gap_start_advertising(GetInstance()->GetAdvertisingParameters());
+                esp_err_t ret = esp_ble_gap_start_advertising(instance->GetAdvertisingParameters());
                 if (ret)
                 {
                     ERROR_MESSAGE("Start advertising failed, error code = %" PRIi32 ", %s", ret, esp_err_to_name(ret));
@@ -1557,7 +1598,7 @@ void BluetoothRequestHandler::GAPEventHandler(esp_gap_ble_cb_event_t event, esp_
             if (!_responseDataConfigured)
             {
                 TRACE_MESSAGE("Advertising data set.  Starting advertising...");
-                esp_err_t ret = esp_ble_gap_start_advertising(GetInstance()->GetAdvertisingParameters());
+                esp_err_t ret = esp_ble_gap_start_advertising(instance->GetAdvertisingParameters());
                 if (ret)
                 {
                     ERROR_MESSAGE("Start advertising failed, error code = %" PRIi32 ", %s", ret, esp_err_to_name(ret));
@@ -1647,7 +1688,7 @@ void BluetoothRequestHandler::GAPEventHandler(esp_gap_ble_cb_event_t event, esp_
                 }
 
                 TRACE_MESSAGE("GAP 22: local privacy set. Configuring advertising");
-                esp_err_t ret = esp_ble_gap_config_adv_data(GetInstance()->GetAdvertisingData());
+                esp_err_t ret = esp_ble_gap_config_adv_data(instance->GetAdvertisingData());
                 if (ret)
                 {
                     ERROR_MESSAGE("Config adv data failed, error code = %" PRIi32, ret);
@@ -1657,7 +1698,7 @@ void BluetoothRequestHandler::GAPEventHandler(esp_gap_ble_cb_event_t event, esp_
                     _advertisingDataConfigured = true;
                 }
 
-                ret = esp_ble_gap_config_adv_data(GetInstance()->GetScanResponseData());
+                ret = esp_ble_gap_config_adv_data(instance->GetScanResponseData());
                 if (ret)
                 {
                     ERROR_MESSAGE("Config adv data failed, error code = %" PRIi32, ret);
