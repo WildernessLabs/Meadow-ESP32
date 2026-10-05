@@ -126,10 +126,17 @@ struct Message
     static const uint32_t INVALID_MESSAGE_ID = 0xffffffff;
 
     //
-    //  A Message is plain data.  Every one is allocated with pvPortMalloc, by CreateOnHeap,
+    //  A Message is plain data.  Most are allocated with pvPortMalloc, by CreateOnHeap,
     //  CreateCopyOnHeap or a decoder, and released with DeleteMessage, so no constructor
-    //  would ever run and none is declared.  CreateOnHeap zeroes the whole structure.
+    //  would run for them.  CreateOnHeap zeroes the whole structure.  The few that live on
+    //  the stack, because they are only encoded and never queued, are zeroed by the code
+    //  that makes them (issue #232).
     //
+
+    /**
+     *  @brief Default constructor, which does nothing.  It has to be declared because the copy constructor is.
+     */
+    Message() = default;
 
     /**
      *  @brief Deleted copy constructor: a copy would share Payload and release it twice.

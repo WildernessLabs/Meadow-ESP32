@@ -60,6 +60,11 @@ private:
     static SpiStates _currentState;
 
     /**
+     *  @brief The transaction used when none can be allocated.
+     */
+    static spi_slave_transaction_t _fallbackTransaction;
+
+    /**
      *  @brief Buffer to hold a Message header worth of data.
      */
     static uint8_t *_rxBuffer;
@@ -208,6 +213,11 @@ private:
      *  @brief Setup a new transaction using the information in the message.
      */
     spi_slave_transaction_t *CreateSpiTransaction(Message *message);
+
+    /**
+     *  @brief Create a transaction that sends an acknowledgement that is not for a particular message.
+     */
+    spi_slave_transaction_t *CreateTransportAcknowledgement(StatusCodes::StatusCodes code, uint8_t messageType);
 
     /**
      *  @brief Clear the data buffers used to send and receive data.
