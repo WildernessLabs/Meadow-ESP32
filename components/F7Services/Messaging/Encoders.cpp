@@ -30,15 +30,20 @@
  */
 uint32_t Encoders::CalculateSpiBufferSize(const uint32_t requestedSize)
 {
+    //
+    //  Round up to a multiple of 4 first, then raise the result to the minimum of 8, so both rules
+    //  hold.  Applied the other way round the alignment overwrote the minimum, and a request of 1 to
+    //  3 bytes gave 4 (issue #273).
+    //
     uint32_t result = requestedSize;
 
+    if ((result & 3) != 0)
+    {
+        result = (result & 0xfffffffc) + 4;
+    }
     if (result < 8)
     {
         result = 8;
-    }
-    if ((requestedSize & 3) != 0)
-    {
-        result = (requestedSize & 0xfffffffc) + 4;
     }
     //
     //  There is an issue with the SPI interface that can corrupt the last
