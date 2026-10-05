@@ -326,12 +326,13 @@ public:
     bool IsCharacteristicValueHandle(const uint16_t handle);
 
     /**
-     * @brief Get the current value for a attribute with the specified handle.
+     * @brief Get the current value for a attribute with the specified handle, starting at an offset.
      *
-     * @return true if the handle is known and pData/pLen were filled in, false if the
-     *  handle is unknown.
+     * @return ESP_GATT_OK if the handle is known and pData/pLen were filled in,
+     *  ESP_GATT_INVALID_HANDLE if the handle is unknown, ESP_GATT_INVALID_OFFSET if the
+     *  offset is beyond the length of the value.
      */
-    bool GetCurrentValueForAttributeHandle(const uint16_t handle, uint8_t *pData, const uint16_t capacity, uint16_t * const pLen);
+    esp_gatt_status_t GetCurrentValueForAttributeHandle(const uint16_t handle, const uint16_t offset, uint8_t *pData, const uint16_t capacity, uint16_t * const pLen);
 
     /**
      * @brief @brief Set the value for a attribute with the specified handle.

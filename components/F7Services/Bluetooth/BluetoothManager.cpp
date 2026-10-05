@@ -403,48 +403,65 @@ std::vector<uint16_t> BluetoothManager::GetClientConfigurationHandles()
 }
 
 /**
- * @brief Get the current value for a attribute with the specified handle.
+ * @brief Get the current value for a attribute with the specified handle, starting at an offset.
+ *
+ *  A value longer than the connection's MTU is read as a Read Request followed by Read
+ *  Blob Requests at increasing offsets, so each request gets the part of the value from
+ *  its offset (issue #528).
  *
  * @param handle Handle to look up.
- * @param pData Pointer to a block of memory to take the value.
+ * @param offset Offset into the value that the part to return starts at.
+ * @param pData Pointer to a block of memory to take the part of the value.
  * @param capacity Size of the block at pData; no more than this many bytes are copied.
  * @param pLen Pointer to a variable that will hold the length of the data that is being copied.
  *
- * @return true if the handle is known and pData/pLen were filled in, false if the handle
- *  is unknown, in which case pLen is set to 0 and pData is left untouched.
+ * @return ESP_GATT_OK if the handle is known and pData/pLen were filled in (an offset equal to the
+ *  length of the value gives no bytes); ESP_GATT_INVALID_HANDLE if the handle is unknown;
+ *  ESP_GATT_INVALID_OFFSET if the offset is beyond the length of the value.  In the last two
+ *  pLen is set to 0 and pData is left untouched.
  */
-bool BluetoothManager::GetCurrentValueForAttributeHandle(const uint16_t handle, uint8_t *pData, const uint16_t capacity, uint16_t * const pLen)
+esp_gatt_status_t BluetoothManager::GetCurrentValueForAttributeHandle(const uint16_t handle, const uint16_t offset, uint8_t *pData, const uint16_t capacity, uint16_t * const pLen)
 {
     RecursiveMutexLock lock(_graphMutex);
     TRACE_MESSAGE("GetCurrentValueForAttributeHandle: Enter");
 
     // TODO: go get the data from the STM - for now we just increment to test the data is changing
     auto existing = _valueMap.find(handle);
-    bool found = (existing != _valueMap.end());
+    esp_gatt_status_t status = ESP_GATT_OK;
 
-    if (found)
-    {
-        TRACE_MESSAGE("Request for data for handle 0x%04" PRIx16, handle);
-        TRACE_MESSAGE(" known length = %" PRIu16, existing->second.length);
-
-        uint16_t length = existing->second.length;
-        if (length > capacity)
-        {
-            ERROR_MESSAGE("GetCurrentValueForAttributeHandle: value of %" PRIu16 " bytes for handle 0x%04" PRIx16 " truncated to %" PRIu16 ".", length, handle, capacity);
-            length = capacity;
-        }
-        memcpy(pData, existing->second.value, length);
-        *pLen = length;
-    }
-    else
+    if (existing == _valueMap.end())
     {
         TRACE_MESSAGE("Request for data with unknown handle 0x%04" PRIx16, handle);
         *pLen = 0;
+        status = ESP_GATT_INVALID_HANDLE;
+    }
+    else
+    {
+        TRACE_MESSAGE("Request for data for handle 0x%04" PRIx16 " offset %" PRIu16, handle, offset);
+        TRACE_MESSAGE(" known length = %" PRIu16, existing->second.length);
+
+        if (offset > existing->second.length)
+        {
+            ERROR_MESSAGE("GetCurrentValueForAttributeHandle: offset %" PRIu16 " is beyond the %" PRIu16 " bytes of handle 0x%04" PRIx16 ".", offset, existing->second.length, handle);
+            *pLen = 0;
+            status = ESP_GATT_INVALID_OFFSET;
+        }
+        else
+        {
+            uint16_t length = static_cast<uint16_t>(existing->second.length - offset);
+            if (length > capacity)
+            {
+                ERROR_MESSAGE("GetCurrentValueForAttributeHandle: %" PRIu16 " bytes from offset %" PRIu16 " for handle 0x%04" PRIx16 " truncated to %" PRIu16 ".", length, offset, handle, capacity);
+                length = capacity;
+            }
+            memcpy(pData, existing->second.value + offset, length);
+            *pLen = length;
+        }
     }
 
     TRACE_MESSAGE("GetCurrentValueForAttributeHandle: Exit");
 
-    return (found);
+    return (status);
 }
 
 /**

@@ -254,6 +254,29 @@ const char *meadow_write_json = R"({
 })";
 
 //
+//  One readable characteristic holding the longest value the stack accepts, longer than the
+//  499 bytes a read returns at the 500 byte MTU, for the long read test (issue #528).
+//
+const char *meadow_read_json = R"({
+    "deviceName":"MeadowReadTest",
+    "companyIdentifier":741,
+    "services": [
+        {
+            "name":"ReadService",
+            "uuid":250,
+            "characteristics": [
+                {
+                    "uuid":"01de99d6-8a61-11eb-8dcd-0242ac130100",
+                    "permission":1,
+                    "props":2,
+                    "len":517
+                }
+            ]
+        }
+    ]
+})";
+
+//
 //  A notifying characteristic that declares no client configuration descriptor, which the
 //  firmware adds, and a characteristic the client writes to say it has finished a step, for
 //  the subscription test (issue #572).

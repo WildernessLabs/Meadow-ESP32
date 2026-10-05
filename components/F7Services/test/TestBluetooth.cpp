@@ -1025,6 +1025,71 @@ TEST_CASE("A write without response and a long write reach the STM32 (MeadowWrit
 }
 
 /**
+ * @brief Length of the value ReadClient.py reads, longer than a read returns at the 500 byte MTU.
+ */
+#define LONG_READ_LENGTH 517
+
+/**
+ * @brief Number of handles the MeadowReadTest service returns: the service, and the declaration and value of its characteristic.
+ */
+#define LONG_READ_HANDLE_COUNT 3
+
+/**
+ * @brief Index, among the MeadowReadTest handles, of the characteristic's value.
+ */
+#define LONG_READ_VALUE_INDEX 2
+
+/**
+ * @brief Check that a client reading a value longer than one packet gets all of it.
+ *
+ *  The firmware sets LONG_READ_LENGTH bytes, (index * 7 + 3) & 0xff, on the characteristic.
+ *  LongReadClient.py reads it and compares what comes back.  The first read returns what
+ *  fits in the MTU and the rest follows as Read Blob Requests at increasing offsets, each
+ *  of which used to be answered with the start of the value again (issue #528).  517 bytes
+ *  is more than a read returns at the firmware's 500 byte MTU, so this holds whatever MTU
+ *  the client negotiates.
+ */
+TEST_CASE("A value longer than the MTU is read in full (MeadowReadTest, Espressif)", CLASS_OF_TESTS)
+{
+    printf("Starting Bluetooth service for MeadowReadTest, Company ID Espressif (0x02e5)\n");
+
+    MockMessageDispatcher *dispatcher = SetupMessageDispatcher();
+    TEST_ASSERT_NOT_NULL(dispatcher);
+
+    StartBluetoothService(dispatcher, meadow_read_json);
+
+    uint16_t handles[LONG_READ_HANDLE_COUNT];
+    GetServiceHandles(dispatcher, LONG_READ_HANDLE_COUNT, handles);
+
+    uint8_t value[LONG_READ_LENGTH];
+    for (uint32_t index = 0; index < sizeof(value); index++)
+    {
+        value[index] = static_cast<uint8_t>((index * 7) + 3);
+    }
+    QueueServerDataSetRaw(dispatcher, handles[LONG_READ_VALUE_INDEX], sizeof(value), value);
+    WaitForOutboundMessage(dispatcher, CLIENT_CONNECTION_TIMEOUT);
+    Message *response = dispatcher->GetOutboundMessage();
+    TEST_ASSERT_NOT_NULL(response);
+    ASSERT_RESPONSE(response, Esp32Interfaces::BlueTooth, BluetoothFunction::ServerDataSet, StatusCodes::CompletedOk);
+    Message::DeleteMessage(response);
+
+    WaitForClientConnection(dispatcher);
+
+    //
+    //  The client checks the value and leaves.
+    //
+    WaitForOutboundMessage(dispatcher, CLIENT_CONNECTION_TIMEOUT);
+    Message *event = dispatcher->GetOutboundMessage();
+    TEST_ASSERT_NOT_NULL(event);
+    ASSERT_EVENT(event, Esp32Interfaces::BlueTooth, BluetoothFunction::ClientDisconnectedEvent, StatusCodes::CompletedOk);
+    Message::DeleteMessage(event);
+
+    StopBluetoothService(dispatcher);
+
+    ResetMessageDispatcher();
+}
+
+/**
  * @brief Number of handles the MeadowSubscribe service returns.
  *
  *  The service, the declaration, value and client configuration descriptor of the notifying
