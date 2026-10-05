@@ -75,6 +75,13 @@ QEMU_SCRIPT = os.path.normpath(
 #   for the device to echo it back, before the selector is treated as ignored.
 #
 SELECTOR_ATTEMPTS = 5
+
+#
+#   The ESP32 prints its SPI control messages (+++RDY, +++SIR) to the console, and the
+#   provider's synchronisation task goes on printing them for the rest of the boot (issue
+#   #499).  They are not the device's reply to a selector.
+#
+CONTROL_MESSAGE = re.compile(r'\+\+\+[A-Z]+')
 SELECTOR_ACKNOWLEDGE_SECONDS = 5
 
 DEFAULT_SERIAL_PORT = 5555
@@ -314,13 +321,15 @@ def RunSelector(transport, selector, timeout, transcript, observer=None):
     the two is therefore discarded, and the run then waits out its whole timeout for a
     reply that will never come.  The prompt alone is not proof the device is ready, so
     the selector is sent again if nothing comes back; unity_gets() echoes what it
-    receives, which makes any output an acknowledgement.
+    receives, so the echo of the selector itself is the acknowledgement.  Other output,
+    such as the +++RDY control message the SPI synchronisation task keeps printing, is
+    not (issue #499).
     '''
     mark = len(transcript)
 
     for attempt in range(SELECTOR_ATTEMPTS):
         transport.write((selector + '\n').encode())
-        _, acknowledged = ReadUntil(transport, lambda text: text.strip() != '',
+        _, acknowledged = ReadUntil(transport, lambda text: selector in CONTROL_MESSAGE.sub('', text),
                                     SELECTOR_ACKNOWLEDGE_SECONDS, transcript, observer)
         if acknowledged:
             break
