@@ -149,6 +149,11 @@ bool MockMessageDispatcher::QueueMessageForStm32(Message *message)
 
     Logging::DumpMessage("QueueMessageForStm32: Message queued", message);
 
+    if (QueueObserver != nullptr)
+    {
+        QueueObserver(QueueObserverContext);
+    }
+
     if (xQueueSendToBack(_outboundMessageQueueHandle, &message, 0) != pdPASS)
     {
         ERROR_MESSAGE("Cannot queue message, dropping it.");

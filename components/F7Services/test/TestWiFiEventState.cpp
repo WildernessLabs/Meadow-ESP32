@@ -267,6 +267,30 @@ public:
     }
 
     /**
+     * @brief Call the private NodeDisconnectedEvent method for a station.
+     *
+     * @param handler Handler to call it on.
+     * @param lastByte Last byte of the station's address, the only one that varies.
+     */
+    static void NodeDisconnected(WiFiRequestHandler *handler, const uint8_t lastByte)
+    {
+        wifi_event_ap_stadisconnected_t event = {};
+        event.mac[0] = 0x02;
+        event.mac[5] = lastByte;
+        handler->NodeDisconnectedEvent(&event);
+    }
+
+    /**
+     * @brief Whether the connected nodes list is locked by a task.
+     *
+     * @param handler Handler whose list is checked.
+     */
+    static bool ConnectedNodesLocked(WiFiRequestHandler *handler)
+    {
+        return (xSemaphoreGetMutexHolder(handler->_connectedNodesListMutex) != nullptr);
+    }
+
+    /**
      * @brief Fill the connected nodes map with stations that are not the one NodeConnected adds.
      *
      *  NodeConnected(handler, lastByte) finds or adds a station by the six bytes of its address.
@@ -687,4 +711,59 @@ TEST_CASE("An interface that cannot start returns the error and the next start w
     TEST_ASSERT_EQUAL_MESSAGE(ESP_OK, TestWiFiEventState::StartInterface(handler, WIFI_MODE_STA), "The start after a failed start failed too.");
     TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, TestWiFiEventState::StopAdapter(handler));
     TestWiFiEventState::ReleaseStartState();
+}
+
+/**
+ * @brief Set when the connected nodes list was locked as an event was queued for the STM32.
+ */
+static bool _lockedWhileQueuing = false;
+
+/**
+ * @brief Called as an event is queued: note whether the connected nodes list is locked.
+ *
+ * @param context The handler whose list is checked.
+ */
+static void NoteWhetherLocked(void *context)
+{
+    _lockedWhileQueuing |= TestWiFiEventState::ConnectedNodesLocked(static_cast<WiFiRequestHandler *>(context));
+}
+
+/**
+ * @brief Check the connected nodes list is not locked while the node events are queued (issue #550).
+ *
+ *  Queuing an event allocates, takes the outbound queue's mutex, writes to the UART and can
+ *  wait for room in the queue, so holding the list's mutex across it blocked the event task and
+ *  everything else that wanted the list.
+ */
+TEST_CASE("The connected nodes list is not locked while the node events are queued", CLASS_OF_TESTS)
+{
+    WiFiRequestHandler *handler = TestWiFiEventState::Handler();
+    MockMessageDispatcher *dispatcher = TestWiFiEventState::Dispatcher(handler);
+    TestWiFiEventState::ClearConnectedNodes(handler);
+    DrainOutbound(dispatcher);
+    dispatcher->QueueObserver = NoteWhetherLocked;
+    dispatcher->QueueObserverContext = handler;
+    _lockedWhileQueuing = false;
+
+    //
+    //  The connect event, and the maximum connections event that follows it when the access
+    //  point fills up.
+    //
+    TestWiFiEventState::FillConnectedNodes(handler, MAXIMUM_STATIONS - 1, -1);
+    TestWiFiEventState::NodeConnected(handler, TEST_STATION);
+    Message *event0 = NextEvent(dispatcher, WiFiFunction::NodeConnectedEvent);
+    Message::DeleteMessage(event0);
+    Message *event1 = NextEvent(dispatcher, WiFiFunction::MaximumConnectionsReachedEvent);
+    Message::DeleteMessage(event1);
+    TEST_ASSERT_FALSE_MESSAGE(_lockedWhileQueuing, "The connected nodes list was locked while a connect event was queued.");
+
+    TestWiFiEventState::NodeDisconnected(handler, TEST_STATION);
+    Message *event2 = NextEvent(dispatcher, WiFiFunction::NodeDisconnectedEvent);
+    Message::DeleteMessage(event2);
+    TEST_ASSERT_FALSE_MESSAGE(_lockedWhileQueuing, "The connected nodes list was locked while a disconnect event was queued.");
+
+    dispatcher->QueueObserver = nullptr;
+    dispatcher->QueueObserverContext = nullptr;
+    TestWiFiEventState::ClearConnectedNodes(handler);
+    DrainOutbound(dispatcher);
 }
