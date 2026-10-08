@@ -249,32 +249,28 @@ void WiFiRequestHandler::StopAccessPoint(Message *message)
     }
     else
     {
-        wifi_config_t config = {};
-        if (esp_wifi_set_config(WIFI_IF_AP, &config) != ESP_OK)
+        //
+        //  Switch back to station-only mode, which stops the access point.  If the station
+        //  connection is active the STA interface is preserved; otherwise the device returns
+        //  to an idle station state.
+        //
+        //  The access point configuration is not cleared first.  Writing an empty one to a
+        //  running access point restarts it, so an AccessPointStartedEvent followed the stop
+        //  and the access point appeared to start again (issue #517).  StartAccessPoint sets
+        //  the configuration every time, so nothing is gained by clearing it.
+        //
+        if (esp_wifi_set_mode(WIFI_MODE_STA) != ESP_OK)
         {
             result = StatusCodes::Failure;
         }
-        else
-        {
-            //
-            //  Switch back to station-only mode.  If the station connection is
-            //  active the STA interface is preserved; otherwise the device returns
-            //  to an idle station state.
-            //
-            if (esp_wifi_set_mode(WIFI_MODE_STA) != ESP_OK)
-            {
-                result = StatusCodes::Failure;
-            }
 
-            //
-            //  The access point network interface is kept, not destroyed and not set to nullptr
-            //  (issue #292).  Clearing the access point configuration above restarts the access
-            //  point, so an AccessPointStartedEvent can still be on its way, and it reads the
-            //  interface; destroying it here let that event use freed memory.  Starting the
-            //  access point again reuses the interface held, and StopWiFIAdapter() destroys it
-            //  with the station one, after the event handlers are unregistered.
-            //
-        }
+        //
+        //  The access point network interface is kept, not destroyed and not set to nullptr
+        //  (issue #292).  The access point's events still read it as it stops; destroying it
+        //  here let one use freed memory.  Starting the access point again reuses the
+        //  interface held, and StopWiFIAdapter() destroys it with the station one, after the
+        //  event handlers are unregistered.
+        //
     }
 
     message->MessageType = MessageTypes::Response;
