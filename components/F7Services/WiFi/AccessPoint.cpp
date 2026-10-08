@@ -61,26 +61,65 @@ void WiFiRequestHandler::UnlockConnectedNodesMap()
  * @param dataLength
  *      Number of bytes in that block, the message's PayloadLength.
  *
+ * @param status
+ *      Why nullptr was returned: InvalidWiFiCredentials for a password the soft-AP cannot
+ *      be started with, CannotStartAccessPoint for anything else wrong with the request.
+ *
  * @return Esp32Messaging::AccessPointInformation*
  *      Pointer to validated access point information, nullptr if there is a problem.
  */
-Esp32Messaging::AccessPointInformation *WiFiRequestHandler::ExtractAndValidateAccessPointInformation(uint8_t *data, const uint32_t dataLength)
+Esp32Messaging::AccessPointInformation *WiFiRequestHandler::ExtractAndValidateAccessPointInformation(uint8_t *data, const uint32_t dataLength, StatusCodes::StatusCodes &status)
 {
     Esp32Messaging::AccessPointInformation *result = nullptr;
+    status = StatusCodes::CannotStartAccessPoint;
 
     if (data)
     {
         result = Encoders::ExtractAccessPointInformation(data, dataLength);
         if (result)
         {
-            bool error = (!result->NetworkName) || (strlen(result->NetworkName) == 0) || (strlen(result->NetworkName) > MAXIMUM_SSID_LENGTH);
-            error |= (!result->Password) || (strlen(result->Password) > MAXIMUM_PASSWORD_LENGTH);
+            const bool nameError = (!result->NetworkName) || (strlen(result->NetworkName) == 0) || (strlen(result->NetworkName) > MAXIMUM_SSID_LENGTH);
+            const bool passwordError = !IsValidAccessPointPassword(result->Password);
             // error |= (result->IpAddress == 0) || (result->SubnetMask == 0) || (result->Gateway == 0);
-            if (error)
+            if (nameError || passwordError)
             {
+                //
+                //  Refused before the interface is touched, so a password that cannot work is
+                //  reported as one rather than as a soft-AP that would not start (issue #537).
+                //
+                if (!nameError)
+                {
+                    status = StatusCodes::InvalidWiFiCredentials;
+                }
                 Encoders::FreeAccessPointInformation(&result);
             }
         }
+    }
+
+    return (result);
+}
+
+/**
+ * @brief Is this a password the soft-AP can be started with?
+ *
+ *  StartAccessPoint always sets WPA/WPA2 authentication, so the password has to be a passphrase of
+ *  8 to 63 characters.  A shorter one, including an empty one, cannot start a working soft-AP.  64
+ *  characters is refused until it is established on hardware that the soft-AP would take it as a
+ *  hexadecimal key (issue #537).
+ *
+ * @param password
+ *      Password to check, nullptr if there is none.
+ *
+ * @return true if the soft-AP can be started with the password.
+ */
+bool WiFiRequestHandler::IsValidAccessPointPassword(const char *password)
+{
+    bool result = false;
+
+    if (password != nullptr)
+    {
+        const size_t length = strlen(password);
+        result = (length >= MINIMUM_ACCESS_POINT_PASSPHRASE_LENGTH) && (length <= MAXIMUM_ACCESS_POINT_PASSPHRASE_LENGTH);
     }
 
     return (result);
@@ -98,7 +137,8 @@ void WiFiRequestHandler::StartAccessPoint(Message *message)
 
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
 
-    Esp32Messaging::AccessPointInformation *accessPointInformation = ExtractAndValidateAccessPointInformation(message->Payload, message->PayloadLength);
+    StatusCodes::StatusCodes refusal = StatusCodes::CannotStartAccessPoint;
+    Esp32Messaging::AccessPointInformation *accessPointInformation = ExtractAndValidateAccessPointInformation(message->Payload, message->PayloadLength, refusal);
     message->DeletePayload();
 
     if (accessPointInformation)
@@ -217,7 +257,7 @@ void WiFiRequestHandler::StartAccessPoint(Message *message)
     }
     else
     {
-        result = StatusCodes::CannotStartAccessPoint;
+        result = refusal;
     }
 
     message->MessageType = MessageTypes::Response;
