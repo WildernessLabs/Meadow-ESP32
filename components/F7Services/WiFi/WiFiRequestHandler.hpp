@@ -651,6 +651,10 @@ private:
 
     /**
      * @brief List of the nodes connected to this device in configured as an access point.
+     *
+     *  A node is added when it associates, with the IP address 0, and the lease completes the
+     *  record with the address it was given (issue #332).  So the list holds every associated
+     *  node, and only those with an address have been reported to the STM32.
      */
     std::map<uint64_t, uint32_t> _connectedNodes;
 
@@ -942,6 +946,17 @@ private:
      *  @brief Processes the station disconnected event (WIFI_EVENT_STA_DISCONNECTED).
      */
     void StationDisconnectedEvent(wifi_event_sta_disconnected_t *);
+
+    /**
+     * @brief Process a node associating with the access point.
+     *
+     *  The node is added to the connected nodes with no IP address.  It is reported to the
+     *  STM32 when it is given one (issue #332).
+     *
+     * @param eventData
+     *      Information about the node that has associated, including its MAC address.
+     */
+    void NodeAssociatedEvent(wifi_event_ap_staconnected_t *eventData);
 
     /**
      * @brief Process the node connecting to access point event.

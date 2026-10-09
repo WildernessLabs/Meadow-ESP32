@@ -416,11 +416,49 @@ void WiFiRequestHandler::RaiseNodeConnectionChangeEvent(WiFiFunction::WiFiFuncti
 }
 
 /**
+ * @brief Process a node associating with the access point.
+ *
+ *        The node is added to the connected nodes with the IP address 0, so that it is in the
+ *        list from the time it associates rather than only once it has a lease.  A node that
+ *        never gets a lease is then found when it disconnects (issue #332).  Nothing is
+ *        reported to the STM32 until the node is given an address.
+ *
+ * @param eventData
+ *      Association event data, which carries the station MAC address.
+ */
+void WiFiRequestHandler::NodeAssociatedEvent(wifi_event_ap_staconnected_t *eventData)
+{
+    TRACE_MESSAGE("NodeAssociatedEvent: Enter");
+
+    uint64_t key = 0;
+    memcpy(&key, &eventData->mac, 6);
+
+    LockConnectedNodesMap();
+
+    // cppcheck-suppress unknownMacro
+    TRACE_MESSAGE("NodeAssociatedEvent: MAC " MACSTR, MAC2STR(eventData->mac));
+
+    //
+    //  A node that already has an address keeps it.
+    //
+    if (_connectedNodes.find(key) == _connectedNodes.end())
+    {
+        _connectedNodes[key] = 0;
+    }
+
+    UnlockConnectedNodesMap();
+
+    TRACE_MESSAGE("NodeAssociatedEvent: Exit");
+}
+
+/**
  * @brief Process the node connecting to access point event.
  *
  *        Called when the DHCP server has assigned an IP to a newly connected
  *        station.  The event data contains both the station MAC address and
- *        the assigned IP so no secondary STA-list query is required.
+ *        the assigned IP so no secondary STA-list query is required.  This
+ *        completes the record NodeAssociatedEvent made, or makes it if the
+ *        association was not seen.
  *
  * @param eventData
  *      DHCP-assignment event data — carries the station MAC and IP address.
@@ -471,10 +509,18 @@ void WiFiRequestHandler::NodeDisconnectedEvent(wifi_event_ap_stadisconnected_t *
     if (it != _connectedNodes.end())
     {
         TRACE_MESSAGE("NodeDisconnectedEvent: Found MAC address " MACSTR, MAC2STR(eventData->mac));
+        //
+        //  The STM32 was told of the node only if it was given an address, so only then is it
+        //  told that the node has gone.
+        //
+        const bool reported = (it->second != 0);
         _connectedNodes.erase(it);
-        Esp32Messaging::NodeConnectionChangeEventData data = {};
-        memcpy(&data.MacAddress, &eventData->mac, 6);
-        RaiseNodeConnectionChangeEvent(WiFiFunction::NodeDisconnectedEvent, &data);
+        if (reported)
+        {
+            Esp32Messaging::NodeConnectionChangeEventData data = {};
+            memcpy(&data.MacAddress, &eventData->mac, 6);
+            RaiseNodeConnectionChangeEvent(WiFiFunction::NodeDisconnectedEvent, &data);
+        }
     }
     else
     {
