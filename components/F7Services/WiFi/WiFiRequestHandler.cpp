@@ -1578,6 +1578,7 @@ void WiFiRequestHandler::EventHandlerHelper(esp_event_base_t eventBase, int32_t 
                 break;
             case WIFI_EVENT_AP_STACONNECTED:
                 TRACE_MESSAGE("EventHandlerHelper: WIFI_EVENT_AP_STACONNECTED");
+                NodeAssociatedEvent(static_cast<wifi_event_ap_staconnected_t *>(eventData));
                 break;
             case WIFI_EVENT_AP_STADISCONNECTED:
                 TRACE_MESSAGE("EventHandlerHelper: WIFI_EVENT_AP_STADISCONNECTED");

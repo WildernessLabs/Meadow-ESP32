@@ -267,6 +267,20 @@ public:
     }
 
     /**
+     * @brief Call the private NodeAssociatedEvent method for a station.
+     *
+     * @param handler Handler to call it on.
+     * @param lastByte Last byte of the station's address, the only one that varies.
+     */
+    static void NodeAssociated(WiFiRequestHandler *handler, const uint8_t lastByte)
+    {
+        wifi_event_ap_staconnected_t event = {};
+        event.mac[0] = 0x02;
+        event.mac[5] = lastByte;
+        handler->NodeAssociatedEvent(&event);
+    }
+
+    /**
      * @brief Call the private NodeDisconnectedEvent method for a station.
      *
      * @param handler Handler to call it on.
@@ -288,6 +302,41 @@ public:
     static bool ConnectedNodesLocked(WiFiRequestHandler *handler)
     {
         return (xSemaphoreGetMutexHolder(handler->_connectedNodesListMutex) != nullptr);
+    }
+
+    /**
+     * @brief Number of stations in the connected nodes list.
+     *
+     * @param handler Handler whose list is counted.
+     */
+    static size_t ConnectedNodeCount(WiFiRequestHandler *handler)
+    {
+        handler->LockConnectedNodesMap();
+        const size_t count = handler->_connectedNodes.size();
+        handler->UnlockConnectedNodesMap();
+        return (count);
+    }
+
+    /**
+     * @brief IP address held for a station in the connected nodes list.
+     *
+     * @param handler Handler whose list is read.
+     * @param lastByte Last byte of the station's address, the only one that varies.
+     * @param found Set to whether the station is in the list.
+     *
+     * @return The address, 0 if the station has none or is not in the list.
+     */
+    static uint32_t ConnectedNodeAddress(WiFiRequestHandler *handler, const uint8_t lastByte, bool &found)
+    {
+        uint64_t key = 0;
+        const uint8_t mac[6] = {0x02, 0, 0, 0, 0, lastByte};
+        memcpy(&key, mac, sizeof(mac));
+        handler->LockConnectedNodesMap();
+        const auto entry = handler->_connectedNodes.find(key);
+        found = (entry != handler->_connectedNodes.end());
+        const uint32_t address = found ? entry->second : 0;
+        handler->UnlockConnectedNodesMap();
+        return (address);
     }
 
     /**
@@ -711,6 +760,97 @@ TEST_CASE("An interface that cannot start returns the error and the next start w
     TEST_ASSERT_EQUAL_MESSAGE(ESP_OK, TestWiFiEventState::StartInterface(handler, WIFI_MODE_STA), "The start after a failed start failed too.");
     TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, TestWiFiEventState::StopAdapter(handler));
     TestWiFiEventState::ReleaseStartState();
+}
+
+/**
+ * @brief Check a station is in the connected nodes as soon as it associates, with no address, and is not reported (issue #332).
+ */
+TEST_CASE("A station is added to the connected nodes when it associates", CLASS_OF_TESTS)
+{
+    WiFiRequestHandler *handler = TestWiFiEventState::Handler();
+    MockMessageDispatcher *dispatcher = TestWiFiEventState::Dispatcher(handler);
+    TestWiFiEventState::ClearConnectedNodes(handler);
+    DrainOutbound(dispatcher);
+
+    TestWiFiEventState::NodeAssociated(handler, TEST_STATION);
+
+    bool found = false;
+    const uint32_t address = TestWiFiEventState::ConnectedNodeAddress(handler, TEST_STATION, found);
+    TEST_ASSERT_TRUE_MESSAGE(found, "A station that associated was not added to the connected nodes.");
+    TEST_ASSERT_EQUAL_UINT32_MESSAGE(0, address, "A station with no lease was given an address.");
+    TEST_ASSERT_EQUAL_MESSAGE(0, dispatcher->OutboundMessageQueueLength(), "A station with no lease was reported to the STM32.");
+
+    TestWiFiEventState::ClearConnectedNodes(handler);
+}
+
+/**
+ * @brief Check the lease completes the record the association made, rather than adding a second one (issue #332).
+ */
+TEST_CASE("A station's lease completes the record made when it associated", CLASS_OF_TESTS)
+{
+    WiFiRequestHandler *handler = TestWiFiEventState::Handler();
+    MockMessageDispatcher *dispatcher = TestWiFiEventState::Dispatcher(handler);
+    TestWiFiEventState::ClearConnectedNodes(handler);
+    DrainOutbound(dispatcher);
+
+    TestWiFiEventState::NodeAssociated(handler, TEST_STATION);
+    TestWiFiEventState::NodeConnected(handler, TEST_STATION);
+
+    bool found = false;
+    TEST_ASSERT_EQUAL_UINT32(0x0204a8c0, TestWiFiEventState::ConnectedNodeAddress(handler, TEST_STATION, found));
+    TEST_ASSERT_TRUE(found);
+    TEST_ASSERT_EQUAL_MESSAGE(1, TestWiFiEventState::ConnectedNodeCount(handler), "The lease added a second record for the station.");
+    Message *connected = NextEvent(dispatcher, WiFiFunction::NodeConnectedEvent);
+    ASSERT_HAS_PAYLOAD(connected);
+    Message::DeleteMessage(connected);
+
+    //
+    //  Associating again, as a station that roams back does, leaves the address it has.
+    //
+    TestWiFiEventState::NodeAssociated(handler, TEST_STATION);
+    TEST_ASSERT_EQUAL_UINT32_MESSAGE(0x0204a8c0, TestWiFiEventState::ConnectedNodeAddress(handler, TEST_STATION, found), "A second association cleared the address.");
+
+    TestWiFiEventState::ClearConnectedNodes(handler);
+    DrainOutbound(dispatcher);
+}
+
+/**
+ * @brief Check a station that never got a lease is removed when it leaves, without an event the STM32 has no connection for (issue #332).
+ */
+TEST_CASE("A station that never got a lease is removed when it disconnects", CLASS_OF_TESTS)
+{
+    WiFiRequestHandler *handler = TestWiFiEventState::Handler();
+    MockMessageDispatcher *dispatcher = TestWiFiEventState::Dispatcher(handler);
+    TestWiFiEventState::ClearConnectedNodes(handler);
+    DrainOutbound(dispatcher);
+
+    TestWiFiEventState::NodeAssociated(handler, TEST_STATION);
+    TestWiFiEventState::NodeDisconnected(handler, TEST_STATION);
+
+    TEST_ASSERT_EQUAL_MESSAGE(0, TestWiFiEventState::ConnectedNodeCount(handler), "The station was left in the connected nodes.");
+    TEST_ASSERT_EQUAL_MESSAGE(0, dispatcher->OutboundMessageQueueLength(), "A disconnection was reported for a station the STM32 never saw connect.");
+}
+
+/**
+ * @brief Check a station that had a lease is removed and reported when it leaves (issue #332).
+ */
+TEST_CASE("A station that had a lease is reported when it disconnects", CLASS_OF_TESTS)
+{
+    WiFiRequestHandler *handler = TestWiFiEventState::Handler();
+    MockMessageDispatcher *dispatcher = TestWiFiEventState::Dispatcher(handler);
+    TestWiFiEventState::ClearConnectedNodes(handler);
+    DrainOutbound(dispatcher);
+
+    TestWiFiEventState::NodeAssociated(handler, TEST_STATION);
+    TestWiFiEventState::NodeConnected(handler, TEST_STATION);
+    DrainOutbound(dispatcher);
+    TestWiFiEventState::NodeDisconnected(handler, TEST_STATION);
+
+    TEST_ASSERT_EQUAL(0, TestWiFiEventState::ConnectedNodeCount(handler));
+    Message *disconnected = NextEvent(dispatcher, WiFiFunction::NodeDisconnectedEvent);
+    ASSERT_HAS_PAYLOAD(disconnected);
+    Message::DeleteMessage(disconnected);
+    TEST_ASSERT_EQUAL(0, dispatcher->OutboundMessageQueueLength());
 }
 
 /**

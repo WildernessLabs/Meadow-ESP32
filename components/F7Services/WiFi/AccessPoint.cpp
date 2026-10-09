@@ -61,26 +61,65 @@ void WiFiRequestHandler::UnlockConnectedNodesMap()
  * @param dataLength
  *      Number of bytes in that block, the message's PayloadLength.
  *
+ * @param status
+ *      Why nullptr was returned: InvalidWiFiCredentials for a password the soft-AP cannot
+ *      be started with, CannotStartAccessPoint for anything else wrong with the request.
+ *
  * @return Esp32Messaging::AccessPointInformation*
  *      Pointer to validated access point information, nullptr if there is a problem.
  */
-Esp32Messaging::AccessPointInformation *WiFiRequestHandler::ExtractAndValidateAccessPointInformation(uint8_t *data, const uint32_t dataLength)
+Esp32Messaging::AccessPointInformation *WiFiRequestHandler::ExtractAndValidateAccessPointInformation(uint8_t *data, const uint32_t dataLength, StatusCodes::StatusCodes &status)
 {
     Esp32Messaging::AccessPointInformation *result = nullptr;
+    status = StatusCodes::CannotStartAccessPoint;
 
     if (data)
     {
         result = Encoders::ExtractAccessPointInformation(data, dataLength);
         if (result)
         {
-            bool error = (!result->NetworkName) || (strlen(result->NetworkName) == 0) || (strlen(result->NetworkName) > MAXIMUM_SSID_LENGTH);
-            error |= (!result->Password) || (strlen(result->Password) > MAXIMUM_PASSWORD_LENGTH);
+            const bool nameError = (!result->NetworkName) || (strlen(result->NetworkName) == 0) || (strlen(result->NetworkName) > MAXIMUM_SSID_LENGTH);
+            const bool passwordError = !IsValidAccessPointPassword(result->Password);
             // error |= (result->IpAddress == 0) || (result->SubnetMask == 0) || (result->Gateway == 0);
-            if (error)
+            if (nameError || passwordError)
             {
+                //
+                //  Refused before the interface is touched, so a password that cannot work is
+                //  reported as one rather than as a soft-AP that would not start (issue #537).
+                //
+                if (!nameError)
+                {
+                    status = StatusCodes::InvalidWiFiCredentials;
+                }
                 Encoders::FreeAccessPointInformation(&result);
             }
         }
+    }
+
+    return (result);
+}
+
+/**
+ * @brief Is this a password the soft-AP can be started with?
+ *
+ *  StartAccessPoint always sets WPA/WPA2 authentication, so the password has to be a passphrase of
+ *  8 to 63 characters.  A shorter one, including an empty one, cannot start a working soft-AP.  64
+ *  characters is refused until it is established on hardware that the soft-AP would take it as a
+ *  hexadecimal key (issue #537).
+ *
+ * @param password
+ *      Password to check, nullptr if there is none.
+ *
+ * @return true if the soft-AP can be started with the password.
+ */
+bool WiFiRequestHandler::IsValidAccessPointPassword(const char *password)
+{
+    bool result = false;
+
+    if (password != nullptr)
+    {
+        const size_t length = strlen(password);
+        result = (length >= MINIMUM_ACCESS_POINT_PASSPHRASE_LENGTH) && (length <= MAXIMUM_ACCESS_POINT_PASSPHRASE_LENGTH);
     }
 
     return (result);
@@ -98,7 +137,8 @@ void WiFiRequestHandler::StartAccessPoint(Message *message)
 
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
 
-    Esp32Messaging::AccessPointInformation *accessPointInformation = ExtractAndValidateAccessPointInformation(message->Payload, message->PayloadLength);
+    StatusCodes::StatusCodes refusal = StatusCodes::CannotStartAccessPoint;
+    Esp32Messaging::AccessPointInformation *accessPointInformation = ExtractAndValidateAccessPointInformation(message->Payload, message->PayloadLength, refusal);
     message->DeletePayload();
 
     if (accessPointInformation)
@@ -217,7 +257,7 @@ void WiFiRequestHandler::StartAccessPoint(Message *message)
     }
     else
     {
-        result = StatusCodes::CannotStartAccessPoint;
+        result = refusal;
     }
 
     message->MessageType = MessageTypes::Response;
@@ -249,32 +289,28 @@ void WiFiRequestHandler::StopAccessPoint(Message *message)
     }
     else
     {
-        wifi_config_t config = {};
-        if (esp_wifi_set_config(WIFI_IF_AP, &config) != ESP_OK)
+        //
+        //  Switch back to station-only mode, which stops the access point.  If the station
+        //  connection is active the STA interface is preserved; otherwise the device returns
+        //  to an idle station state.
+        //
+        //  The access point configuration is not cleared first.  Writing an empty one to a
+        //  running access point restarts it, so an AccessPointStartedEvent followed the stop
+        //  and the access point appeared to start again (issue #517).  StartAccessPoint sets
+        //  the configuration every time, so nothing is gained by clearing it.
+        //
+        if (esp_wifi_set_mode(WIFI_MODE_STA) != ESP_OK)
         {
             result = StatusCodes::Failure;
         }
-        else
-        {
-            //
-            //  Switch back to station-only mode.  If the station connection is
-            //  active the STA interface is preserved; otherwise the device returns
-            //  to an idle station state.
-            //
-            if (esp_wifi_set_mode(WIFI_MODE_STA) != ESP_OK)
-            {
-                result = StatusCodes::Failure;
-            }
 
-            //
-            //  The access point network interface is kept, not destroyed and not set to nullptr
-            //  (issue #292).  Clearing the access point configuration above restarts the access
-            //  point, so an AccessPointStartedEvent can still be on its way, and it reads the
-            //  interface; destroying it here let that event use freed memory.  Starting the
-            //  access point again reuses the interface held, and StopWiFIAdapter() destroys it
-            //  with the station one, after the event handlers are unregistered.
-            //
-        }
+        //
+        //  The access point network interface is kept, not destroyed and not set to nullptr
+        //  (issue #292).  The access point's events still read it as it stops; destroying it
+        //  here let one use freed memory.  Starting the access point again reuses the
+        //  interface held, and StopWiFIAdapter() destroys it with the station one, after the
+        //  event handlers are unregistered.
+        //
     }
 
     message->MessageType = MessageTypes::Response;
@@ -376,11 +412,49 @@ void WiFiRequestHandler::RaiseNodeConnectionChangeEvent(WiFiFunction::WiFiFuncti
 }
 
 /**
+ * @brief Process a node associating with the access point.
+ *
+ *        The node is added to the connected nodes with the IP address 0, so that it is in the
+ *        list from the time it associates rather than only once it has a lease.  A node that
+ *        never gets a lease is then found when it disconnects (issue #332).  Nothing is
+ *        reported to the STM32 until the node is given an address.
+ *
+ * @param eventData
+ *      Association event data, which carries the station MAC address.
+ */
+void WiFiRequestHandler::NodeAssociatedEvent(wifi_event_ap_staconnected_t *eventData)
+{
+    TRACE_MESSAGE("NodeAssociatedEvent: Enter");
+
+    uint64_t key = 0;
+    memcpy(&key, &eventData->mac, 6);
+
+    LockConnectedNodesMap();
+
+    // cppcheck-suppress unknownMacro
+    TRACE_MESSAGE("NodeAssociatedEvent: MAC " MACSTR, MAC2STR(eventData->mac));
+
+    //
+    //  A node that already has an address keeps it.
+    //
+    if (_connectedNodes.find(key) == _connectedNodes.end())
+    {
+        _connectedNodes[key] = 0;
+    }
+
+    UnlockConnectedNodesMap();
+
+    TRACE_MESSAGE("NodeAssociatedEvent: Exit");
+}
+
+/**
  * @brief Process the node connecting to access point event.
  *
  *        Called when the DHCP server has assigned an IP to a newly connected
  *        station.  The event data contains both the station MAC address and
- *        the assigned IP so no secondary STA-list query is required.
+ *        the assigned IP so no secondary STA-list query is required.  This
+ *        completes the record NodeAssociatedEvent made, or makes it if the
+ *        association was not seen.
  *
  * @param eventData
  *      DHCP-assignment event data — carries the station MAC and IP address.
@@ -439,6 +513,11 @@ void WiFiRequestHandler::NodeDisconnectedEvent(wifi_event_ap_stadisconnected_t *
     LockConnectedNodesMap();
     std::map<uint64_t, uint32_t>::iterator it = _connectedNodes.find(key);
     const bool found = (it != _connectedNodes.end());
+    //
+    //  The STM32 was told of the node only if it was given an address, so only then is it
+    //  told that the node has gone (issue #332).
+    //
+    const bool reported = found && (it->second != 0);
     if (found)
     {
         _connectedNodes.erase(it);
@@ -448,9 +527,12 @@ void WiFiRequestHandler::NodeDisconnectedEvent(wifi_event_ap_stadisconnected_t *
     if (found)
     {
         TRACE_MESSAGE("NodeDisconnectedEvent: Found MAC address " MACSTR, MAC2STR(eventData->mac));
-        Esp32Messaging::NodeConnectionChangeEventData data = {};
-        memcpy(&data.MacAddress, &eventData->mac, 6);
-        RaiseNodeConnectionChangeEvent(WiFiFunction::NodeDisconnectedEvent, &data);
+        if (reported)
+        {
+            Esp32Messaging::NodeConnectionChangeEventData data = {};
+            memcpy(&data.MacAddress, &eventData->mac, 6);
+            RaiseNodeConnectionChangeEvent(WiFiFunction::NodeDisconnectedEvent, &data);
+        }
     }
     else
     {

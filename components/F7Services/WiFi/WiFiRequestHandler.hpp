@@ -104,6 +104,11 @@ class WiFiRequestHandler : public RequestHandlerBase
      */
     friend class TestPollTeardown;
 
+    /**
+     * @brief Test access to the soft-AP password checks (issue #537).
+     */
+    friend class TestAccessPointPassword;
+
 private:
     /**
      *  @brief Hold the information about the originating poll request and the pollfd's.
@@ -234,6 +239,19 @@ private:
      *  @brief Maximum length of the password for the access point.
      */
     const int MAXIMUM_PASSWORD_LENGTH = 64;
+
+    /**
+     *  @brief Shortest passphrase the soft-AP accepts: WPA2 passphrases are 8 to 63 characters (issue #537).
+     */
+    static constexpr size_t MINIMUM_ACCESS_POINT_PASSPHRASE_LENGTH = 8;
+
+    /**
+     *  @brief Longest passphrase the soft-AP accepts.
+     *
+     *  A 64 character value is not accepted: whether the soft-AP would take it as a hexadecimal
+     *  key has not been established on hardware (issue #537).
+     */
+    static constexpr size_t MAXIMUM_ACCESS_POINT_PASSPHRASE_LENGTH = 63;
 
     /**
      *  @brief GPIO Pin connected to the antenna selection switch
@@ -633,6 +651,10 @@ private:
 
     /**
      * @brief List of the nodes connected to this device in configured as an access point.
+     *
+     *  A node is added when it associates, with the IP address 0, and the lease completes the
+     *  record with the address it was given (issue #332).  So the list holds every associated
+     *  node, and only those with an address have been reported to the STM32.
      */
     std::map<uint64_t, uint32_t> _connectedNodes;
 
@@ -784,9 +806,24 @@ private:
     /**
      * @brief Extract and validate the access point information.
      *
+     * @param status Set to the reason when nullptr is returned.
+     *
      * @return Esp32Messaging::AccessPointInformation*
      */
-    Esp32Messaging::AccessPointInformation *ExtractAndValidateAccessPointInformation(uint8_t *, const uint32_t);
+    Esp32Messaging::AccessPointInformation *ExtractAndValidateAccessPointInformation(uint8_t *, const uint32_t, StatusCodes::StatusCodes &status);
+
+    /**
+     * @brief Is this a password the soft-AP can be started with?
+     *
+     *  The soft-AP is always started with WPA/WPA2 authentication, so the password is a
+     *  passphrase of 8 to 63 characters.  An empty password is only valid for an open soft-AP,
+     *  which cannot be requested yet (issue #294).
+     *
+     * @param password Password to check.
+     *
+     * @return true if the soft-AP can be started with the password.
+     */
+    static bool IsValidAccessPointPassword(const char *password);
 
     /**
      * @brief Raise a node connect / disconnect event for the C# code.
@@ -909,6 +946,17 @@ private:
      *  @brief Processes the station disconnected event (WIFI_EVENT_STA_DISCONNECTED).
      */
     void StationDisconnectedEvent(wifi_event_sta_disconnected_t *);
+
+    /**
+     * @brief Process a node associating with the access point.
+     *
+     *  The node is added to the connected nodes with no IP address.  It is reported to the
+     *  STM32 when it is given one (issue #332).
+     *
+     * @param eventData
+     *      Information about the node that has associated, including its MAC address.
+     */
+    void NodeAssociatedEvent(wifi_event_ap_staconnected_t *eventData);
 
     /**
      * @brief Process the node connecting to access point event.
