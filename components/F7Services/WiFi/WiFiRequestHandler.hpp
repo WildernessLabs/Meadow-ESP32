@@ -254,6 +254,13 @@ private:
     static constexpr size_t MAXIMUM_ACCESS_POINT_PASSPHRASE_LENGTH = 63;
 
     /**
+     *  @brief Highest channel number a soft-AP can be asked for; 0 leaves the channel to the ESP32 (issue #294).
+     *
+     *  Which of the channels the radio may use depends on the country, and the WiFi driver refuses the others.
+     */
+    static constexpr uint8_t MAXIMUM_ACCESS_POINT_CHANNEL = 14;
+
+    /**
      *  @brief GPIO Pin connected to the antenna selection switch
      *  which will connect the on board antenna to the ESP32.
      */
@@ -813,17 +820,44 @@ private:
     Esp32Messaging::AccessPointInformation *ExtractAndValidateAccessPointInformation(uint8_t *, const uint32_t, StatusCodes::StatusCodes &status);
 
     /**
-     * @brief Is this a password the soft-AP can be started with?
+     * @brief Is this a passphrase the soft-AP can be started with, for a mode that has one?
      *
-     *  The soft-AP is always started with WPA/WPA2 authentication, so the password is a
-     *  passphrase of 8 to 63 characters.  An empty password is only valid for an open soft-AP,
-     *  which cannot be requested yet (issue #294).
+     *  A passphrase is 8 to 63 characters.  64 characters is refused until it is established on
+     *  hardware that the soft-AP takes them as a hexadecimal key (issue #537).
      *
      * @param password Password to check.
      *
      * @return true if the soft-AP can be started with the password.
      */
     static bool IsValidAccessPointPassword(const char *password);
+
+    /**
+     * @brief Work out the authentication mode the soft-AP is started with (issue #294).
+     *
+     *  No password means an open soft-AP, whatever mode was asked for.  With a password the mode
+     *  asked for is used: WPA, WPA2, WPA/WPA2, WPA3 or WPA2/WPA3 with a passphrase of 8 to 63
+     *  characters.  Open with a password is refused rather than quietly leaving the soft-AP
+     *  unprotected, WEP and WPA2 Enterprise are not supported by a soft-AP, and a mode that is
+     *  not one of WiFiAuthenticationMode is invalid.
+     *
+     * @param password Password asked for; nullptr, which is what an empty one is decoded as, and "" are no password.
+     * @param requestedMode WiFiAuthenticationMode asked for.
+     * @param authenticationMode Set to the mode the soft-AP is started with when the result is CompletedOk.
+     *
+     * @return CompletedOk, InvalidWiFiCredentials for a password the mode cannot use, NotImplemented
+     *  for a mode a soft-AP does not support, InvalidRequest for a mode that does not exist.
+     */
+    static StatusCodes::StatusCodes ResolveAccessPointAuthentication(const char *password, const uint8_t requestedMode, wifi_auth_mode_t &authenticationMode);
+
+    /**
+     * @brief Build the soft-AP configuration from the access point information asked for (issue #294).
+     *
+     *  The information must have been through ExtractAndValidateAccessPointInformation.
+     *
+     * @param information Validated access point information.
+     * @param config Set to the soft-AP configuration.
+     */
+    static void BuildAccessPointConfiguration(const Esp32Messaging::AccessPointInformation *information, wifi_config_t &config);
 
     /**
      * @brief Raise a node connect / disconnect event for the C# code.

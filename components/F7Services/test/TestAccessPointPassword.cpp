@@ -50,6 +50,31 @@ public:
     }
 
     /**
+     * @brief Work out the authentication mode for a password and a requested mode.
+     *
+     * @param password Password asked for.
+     * @param requestedMode WiFiAuthenticationMode asked for.
+     * @param authenticationMode Set to the mode the soft-AP would be started with.
+     *
+     * @return The status of the resolution.
+     */
+    static StatusCodes::StatusCodes Resolve(const char *password, const uint8_t requestedMode, wifi_auth_mode_t &authenticationMode)
+    {
+        return (WiFiRequestHandler::ResolveAccessPointAuthentication(password, requestedMode, authenticationMode));
+    }
+
+    /**
+     * @brief Build the soft-AP configuration for access point information.
+     *
+     * @param information Validated access point information.
+     * @param config Set to the configuration.
+     */
+    static void Configure(const Esp32Messaging::AccessPointInformation *information, wifi_config_t &config)
+    {
+        WiFiRequestHandler::BuildAccessPointConfiguration(information, config);
+    }
+
+    /**
      * @brief Get the handler, making one that does not start the radio if there is none.
      *
      * @param dispatcher Dispatcher a new handler is given.
@@ -74,16 +99,18 @@ public:
      * @param ssid Name of the soft-AP.
      * @param password Password of the soft-AP.
      * @param status Set to the reason the request was refused.
+     * @param authenticationMode WiFiAuthenticationMode asked for.
+     * @param channel Channel asked for.
      *
      * @return true if the request was accepted.
      */
-    static bool Accepts(const char *ssid, const char *password, StatusCodes::StatusCodes &status)
+    static bool Accepts(const char *ssid, const char *password, StatusCodes::StatusCodes &status, const uint8_t authenticationMode = WiFiAuthenticationMode::WpaWpa2Psk, const uint8_t channel = 0)
     {
         MockMessageDispatcher *dispatcher = new MockMessageDispatcher(nullptr);
         TEST_ASSERT_NOT_NULL(dispatcher);
         WiFiRequestHandler *handler = Handler(dispatcher);
 
-        Message *request = CreateAccessPointMessage(WiFiFunction::StartAccessPoint, ssid, password);
+        Message *request = CreateAccessPointMessage(WiFiFunction::StartAccessPoint, ssid, password, 0, 0, 0, authenticationMode, channel);
         Esp32Messaging::AccessPointInformation *information = handler->ExtractAndValidateAccessPointInformation(request->Payload, request->PayloadLength, status);
         const bool accepted = (information != nullptr);
         Encoders::FreeAccessPointInformation(&information);
@@ -100,10 +127,11 @@ public:
      * @param ssid Name of the soft-AP.
      * @param password Password of the soft-AP.
      * @param interfaceTouched Set to true if the request started the WiFi interface or the soft-AP.
+     * @param authenticationMode WiFiAuthenticationMode asked for.
      *
      * @return The status of the response.
      */
-    static StatusCodes::StatusCodes Start(const char *ssid, const char *password, bool &interfaceTouched)
+    static StatusCodes::StatusCodes Start(const char *ssid, const char *password, bool &interfaceTouched, const uint8_t authenticationMode = WiFiAuthenticationMode::WpaWpa2Psk)
     {
         MockMessageDispatcher *dispatcher = new MockMessageDispatcher(nullptr);
         TEST_ASSERT_NOT_NULL(dispatcher);
@@ -118,7 +146,7 @@ public:
         IMessageDispatcher * const savedDispatcher = WiFiRequestHandler::_messageDispatcher;
         WiFiRequestHandler::_messageDispatcher = dispatcher;
 
-        Message *request = CreateAccessPointMessage(WiFiFunction::StartAccessPoint, ssid, password);
+        Message *request = CreateAccessPointMessage(WiFiFunction::StartAccessPoint, ssid, password, 0, 0, 0, authenticationMode);
         handler->StartAccessPoint(request);
 
         const EventBits_t bits = xEventGroupGetBits(WiFiRequestHandler::_xWiFiEventGroup);
@@ -191,7 +219,7 @@ TEST_CASE("A soft-AP request is checked for its password as well as its name", C
 TEST_CASE("A soft-AP request with a password that cannot be used is refused before the interface is touched", CLASS_OF_TESTS)
 {
     char password[PASSWORD_BUFFER_SIZE];
-    const size_t lengths[] = {0, 1, 7, 64};
+    const size_t lengths[] = {1, 7, 64};
 
     for (const size_t length: lengths)
     {
@@ -202,4 +230,129 @@ TEST_CASE("A soft-AP request with a password that cannot be used is refused befo
         TEST_ASSERT_EQUAL_MESSAGE(StatusCodes::InvalidWiFiCredentials, status, message);
         TEST_ASSERT_FALSE_MESSAGE(interfaceTouched, message);
     }
+}
+
+TEST_CASE("The soft-AP authentication mode follows the password and the mode asked for", CLASS_OF_TESTS)
+{
+    wifi_auth_mode_t mode = WIFI_AUTH_MAX;
+
+    //
+    //  No password is an open soft-AP, whatever mode was asked for.
+    //
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, TestAccessPointPassword::Resolve("", WiFiAuthenticationMode::Open, mode));
+    TEST_ASSERT_EQUAL(WIFI_AUTH_OPEN, mode);
+    mode = WIFI_AUTH_MAX;
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, TestAccessPointPassword::Resolve("", WiFiAuthenticationMode::Wpa2Psk, mode));
+    TEST_ASSERT_EQUAL_MESSAGE(WIFI_AUTH_OPEN, mode, "No password did not give an open soft-AP.");
+    mode = WIFI_AUTH_MAX;
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, TestAccessPointPassword::Resolve(nullptr, WiFiAuthenticationMode::Wpa2Psk, mode));
+    TEST_ASSERT_EQUAL_MESSAGE(WIFI_AUTH_OPEN, mode, "A password that decoded as nothing did not give an open soft-AP.");
+
+    //
+    //  With a password, the mode asked for is the mode used.
+    //
+    const struct
+    {
+        uint8_t Requested;
+        wifi_auth_mode_t Expected;
+    } supported[] = {
+        {WiFiAuthenticationMode::WpaPsk, WIFI_AUTH_WPA_PSK}, {WiFiAuthenticationMode::Wpa2Psk, WIFI_AUTH_WPA2_PSK}, {WiFiAuthenticationMode::WpaWpa2Psk, WIFI_AUTH_WPA_WPA2_PSK}, {WiFiAuthenticationMode::Wpa3Psk, WIFI_AUTH_WPA3_PSK}, {WiFiAuthenticationMode::Wpa2Wpa3Psk, WIFI_AUTH_WPA2_WPA3_PSK},
+    };
+
+    for (const auto &entry: supported)
+    {
+        mode = WIFI_AUTH_MAX;
+        TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, TestAccessPointPassword::Resolve("MeadowTest1234", entry.Requested, mode));
+        TEST_ASSERT_EQUAL_MESSAGE(entry.Expected, mode, "The authentication mode asked for was not the one used.");
+        TEST_ASSERT_EQUAL_MESSAGE(StatusCodes::InvalidWiFiCredentials, TestAccessPointPassword::Resolve("short", entry.Requested, mode), "A passphrase shorter than 8 characters was accepted.");
+    }
+
+    //
+    //  What a soft-AP cannot do is refused, not changed into something else.
+    //
+    TEST_ASSERT_EQUAL_MESSAGE(StatusCodes::InvalidWiFiCredentials, TestAccessPointPassword::Resolve("MeadowTest1234", WiFiAuthenticationMode::Open, mode), "An open soft-AP with a password was accepted.");
+    TEST_ASSERT_EQUAL(StatusCodes::NotImplemented, TestAccessPointPassword::Resolve("MeadowTest1234", WiFiAuthenticationMode::Wep, mode));
+    TEST_ASSERT_EQUAL(StatusCodes::NotImplemented, TestAccessPointPassword::Resolve("MeadowTest1234", WiFiAuthenticationMode::Wpa2Enterprise, mode));
+    TEST_ASSERT_EQUAL(StatusCodes::InvalidRequest, TestAccessPointPassword::Resolve("MeadowTest1234", 8, mode));
+}
+
+TEST_CASE("A soft-AP request for a channel that does not exist is refused", CLASS_OF_TESTS)
+{
+    StatusCodes::StatusCodes status = StatusCodes::CompletedOk;
+
+    TEST_ASSERT_TRUE_MESSAGE(TestAccessPointPassword::Accepts("MeadowAP", "MeadowTest1234", status, WiFiAuthenticationMode::Wpa2Psk, 0), "Channel 0, left to the ESP32, was refused.");
+    TEST_ASSERT_TRUE(TestAccessPointPassword::Accepts("MeadowAP", "MeadowTest1234", status, WiFiAuthenticationMode::Wpa2Psk, 1));
+    TEST_ASSERT_TRUE(TestAccessPointPassword::Accepts("MeadowAP", "MeadowTest1234", status, WiFiAuthenticationMode::Wpa2Psk, 14));
+    TEST_ASSERT_FALSE_MESSAGE(TestAccessPointPassword::Accepts("MeadowAP", "MeadowTest1234", status, WiFiAuthenticationMode::Wpa2Psk, 15), "Channel 15 was accepted.");
+    TEST_ASSERT_EQUAL(StatusCodes::InvalidRequest, status);
+    TEST_ASSERT_FALSE(TestAccessPointPassword::Accepts("MeadowAP", "MeadowTest1234", status, WiFiAuthenticationMode::Wpa2Psk, 255));
+    TEST_ASSERT_EQUAL(StatusCodes::InvalidRequest, status);
+
+    //
+    //  An open request, and one for a mode a soft-AP cannot do, are refused on the same request.
+    //
+    TEST_ASSERT_TRUE_MESSAGE(TestAccessPointPassword::Accepts("MeadowAP", "", status, WiFiAuthenticationMode::Open), "An open soft-AP was refused.");
+    TEST_ASSERT_FALSE(TestAccessPointPassword::Accepts("MeadowAP", "MeadowTest1234", status, WiFiAuthenticationMode::Open));
+    TEST_ASSERT_EQUAL(StatusCodes::InvalidWiFiCredentials, status);
+    TEST_ASSERT_FALSE(TestAccessPointPassword::Accepts("MeadowAP", "MeadowTest1234", status, WiFiAuthenticationMode::Wep));
+    TEST_ASSERT_EQUAL(StatusCodes::NotImplemented, status);
+}
+
+TEST_CASE("The soft-AP configuration holds the mode, channel and hidden flag asked for", CLASS_OF_TESTS)
+{
+    char name[] = "MeadowAP";
+    char password[] = "MeadowTest1234";
+    Esp32Messaging::AccessPointInformation information = {};
+    information.NetworkName = name;
+    information.Password = password;
+    information.WiFiAuthenticationMode = WiFiAuthenticationMode::Wpa2Psk;
+    information.Channel = 6;
+    information.Hidden = 1;
+
+    wifi_config_t config = {};
+    TestAccessPointPassword::Configure(&information, config);
+    TEST_ASSERT_EQUAL_MESSAGE(WIFI_AUTH_WPA2_PSK, config.ap.authmode, "The authentication mode asked for was not applied.");
+    TEST_ASSERT_EQUAL_MESSAGE(6, config.ap.channel, "The channel asked for was not applied.");
+    TEST_ASSERT_EQUAL_MESSAGE(1, config.ap.ssid_hidden, "The hidden flag asked for was not applied.");
+    TEST_ASSERT_EQUAL_UINT8(strlen(name), config.ap.ssid_len);
+    TEST_ASSERT_EQUAL_STRING(name, reinterpret_cast<const char *>(config.ap.ssid));
+    TEST_ASSERT_EQUAL_STRING(password, reinterpret_cast<const char *>(config.ap.password));
+
+    //
+    //  The defaults leave the channel to the ESP32 and the name visible.
+    //
+    information.WiFiAuthenticationMode = WiFiAuthenticationMode::WpaWpa2Psk;
+    information.Channel = 0;
+    information.Hidden = 0;
+    TestAccessPointPassword::Configure(&information, config);
+    TEST_ASSERT_EQUAL(WIFI_AUTH_WPA_WPA2_PSK, config.ap.authmode);
+    TEST_ASSERT_EQUAL(0, config.ap.channel);
+    TEST_ASSERT_EQUAL(0, config.ap.ssid_hidden);
+
+    //
+    //  No password is an open soft-AP, and WPA3 needs protected management frames.
+    //
+    char noPassword[] = "";
+    information.Password = noPassword;
+    TestAccessPointPassword::Configure(&information, config);
+    TEST_ASSERT_EQUAL_MESSAGE(WIFI_AUTH_OPEN, config.ap.authmode, "No password did not give an open soft-AP.");
+
+    information.Password = password;
+    information.WiFiAuthenticationMode = WiFiAuthenticationMode::Wpa3Psk;
+    TestAccessPointPassword::Configure(&information, config);
+    TEST_ASSERT_EQUAL(WIFI_AUTH_WPA3_PSK, config.ap.authmode);
+    TEST_ASSERT_TRUE(config.ap.pmf_cfg.required);
+    information.WiFiAuthenticationMode = WiFiAuthenticationMode::Wpa2Wpa3Psk;
+    TestAccessPointPassword::Configure(&information, config);
+    TEST_ASSERT_EQUAL(WIFI_AUTH_WPA2_WPA3_PSK, config.ap.authmode);
+    TEST_ASSERT_TRUE(config.ap.pmf_cfg.capable);
+    TEST_ASSERT_FALSE(config.ap.pmf_cfg.required);
+}
+
+TEST_CASE("A soft-AP request for an open soft-AP with a password is refused before the interface is touched", CLASS_OF_TESTS)
+{
+    bool interfaceTouched = true;
+    const StatusCodes::StatusCodes status = TestAccessPointPassword::Start("MeadowAP", "MeadowTest1234", interfaceTouched, WiFiAuthenticationMode::Open);
+    TEST_ASSERT_EQUAL(StatusCodes::InvalidWiFiCredentials, status);
+    TEST_ASSERT_FALSE(interfaceTouched);
 }
