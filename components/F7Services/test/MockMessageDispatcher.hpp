@@ -92,6 +92,17 @@ public:
     static const char *COMPONENT_NAME;
 
     /**
+     *  @brief Function a test can set to be called with the observer context just before a
+     *  message is queued for the STM32, to look at what the caller holds at that moment.
+     */
+    void (*QueueObserver)(void *context) = nullptr;
+
+    /**
+     *  @brief Context passed to QueueObserver.
+     */
+    void *QueueObserverContext = nullptr;
+
+    /**
      *  @brief Constructor for the Message Dispatcher.
      */
     explicit MockMessageDispatcher(TransportProviderBase *transportProvider);

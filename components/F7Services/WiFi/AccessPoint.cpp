@@ -466,23 +466,29 @@ void WiFiRequestHandler::NodeConnectedEvent(ip_event_ap_staipassigned_t *eventDa
     uint64_t key = 0;
     memcpy(&key, &eventData->mac, 6);
 
-    LockConnectedNodesMap();
-
     // cppcheck-suppress unknownMacro
     TRACE_MESSAGE("NodeConnectedEvent: MAC " MACSTR " assigned IP " IPSTR, MAC2STR(eventData->mac), IP2STR(&eventData->ip));
 
     Esp32Messaging::NodeConnectionChangeEventData data = {};
     memcpy(&data.MacAddress, &eventData->mac, 6);
     memcpy(&data.IpAddress, &eventData->ip, sizeof(uint32_t));
+
+    //
+    //  The list is locked only while it is updated.  Queuing an event allocates, takes the
+    //  outbound queue's mutex, writes to the UART and can wait for room in the queue, so it is
+    //  done after the lock is released (issue #550).
+    //
+    LockConnectedNodesMap();
     _connectedNodes[key] = data.IpAddress;
+    const bool maximumReached = (_connectedNodes.size() >= ESP_WIFI_MAX_CONN_NUM);
+    UnlockConnectedNodesMap();
+
     RaiseNodeConnectionChangeEvent(WiFiFunction::NodeConnectedEvent, &data);
 
-    if (_connectedNodes.size() >= ESP_WIFI_MAX_CONN_NUM)
+    if (maximumReached)
     {
         RaiseEvent(Esp32Interfaces::WiFi, WiFiFunction::MaximumConnectionsReachedEvent, StatusCodes::CompletedOk);
     }
-
-    UnlockConnectedNodesMap();
 
     TRACE_MESSAGE("NodeConnectedEvent: Exit");
 }
@@ -500,17 +506,27 @@ void WiFiRequestHandler::NodeDisconnectedEvent(wifi_event_ap_stadisconnected_t *
     uint64_t key = 0;
     memcpy(&key, &eventData->mac, 6);
 
+    //
+    //  The list is locked only while it is updated; the event is raised after it is released
+    //  (issue #550).
+    //
     LockConnectedNodesMap();
     std::map<uint64_t, uint32_t>::iterator it = _connectedNodes.find(key);
-    if (it != _connectedNodes.end())
+    const bool found = (it != _connectedNodes.end());
+    //
+    //  The STM32 was told of the node only if it was given an address, so only then is it
+    //  told that the node has gone (issue #332).
+    //
+    const bool reported = found && (it->second != 0);
+    if (found)
+    {
+        _connectedNodes.erase(it);
+    }
+    UnlockConnectedNodesMap();
+
+    if (found)
     {
         TRACE_MESSAGE("NodeDisconnectedEvent: Found MAC address " MACSTR, MAC2STR(eventData->mac));
-        //
-        //  The STM32 was told of the node only if it was given an address, so only then is it
-        //  told that the node has gone.
-        //
-        const bool reported = (it->second != 0);
-        _connectedNodes.erase(it);
         if (reported)
         {
             Esp32Messaging::NodeConnectionChangeEventData data = {};
@@ -522,7 +538,6 @@ void WiFiRequestHandler::NodeDisconnectedEvent(wifi_event_ap_stadisconnected_t *
     {
         TRACE_MESSAGE("NodeDisconnectedEvent raised but the node could not be found in the connected nodes list.");
     }
-    UnlockConnectedNodesMap();
 
     TRACE_MESSAGE("NodeDisconnectedEvent: Exit");
 }
