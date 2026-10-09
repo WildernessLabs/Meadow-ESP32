@@ -828,7 +828,7 @@ private:
     /**
      * @brief Raise a node connect / disconnect event for the C# code.
      */
-    void RaiseNodeConnectionChangeEvent(WiFiFunction::WiFiFunction event_type, Esp32Messaging::NodeConnectionChangeEventData *data);
+    void RaiseNodeConnectionChangeEvent(WiFiFunction::WiFiFunction eventType, Esp32Messaging::NodeConnectionChangeEventData *data);
 
     /**
      *  @brief Get a list of available access points.

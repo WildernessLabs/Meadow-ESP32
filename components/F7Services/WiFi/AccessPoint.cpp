@@ -9,22 +9,13 @@
 
 #include "sdkconfig.h"
 
-#include "driver/gpio.h"
-#include "esp_system.h"
 #include "esp_wifi.h"
 #include "esp_event.h"
 #include "esp_mac.h"
 #include "esp_netif.h"
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-#include "lwip/apps/sntp.h"
 
-#include "NvsManager.hpp"
 #include "WiFiRequestHandler.hpp"
-#include "Exceptions/MultipleInstancesException.hpp"
-#include "Mapping.hpp"
 #include "Logging.hpp"
 #include "Utils.hpp"
 
@@ -185,23 +176,31 @@ void WiFiRequestHandler::StartAccessPoint(Message *message)
             {
                 result = StatusCodes::CannotStartNetworkInterface;
             }
-            else if (_softApNetIfHandle == nullptr)
+            else
             {
-                _softApNetIfHandle = esp_netif_create_default_wifi_ap();
                 if (_softApNetIfHandle == nullptr)
                 {
-                    result = StatusCodes::CannotStartNetworkInterface;
+                    _softApNetIfHandle = esp_netif_create_default_wifi_ap();
+                    if (_softApNetIfHandle == nullptr)
+                    {
+                        result = StatusCodes::CannotStartNetworkInterface;
+                    }
                 }
             }
         }
 
         if (result == StatusCodes::CompletedOk)
         {
-            TRACE_MESSAGE("StartAccessPoint: Creating access point: %s, password %s", accessPointInformation->NetworkName, accessPointInformation->Password);
+            //
+            //  The password is not traced: a trace would put it in the log in clear.
+            //
+            TRACE_MESSAGE("StartAccessPoint: Creating access point: %s", accessPointInformation->NetworkName);
+            const size_t networkNameLength = strlen(accessPointInformation->NetworkName);
+            const size_t passwordLength = strlen(accessPointInformation->Password);
             wifi_config_t config = {};
-            config.ap.ssid_len = strlen(accessPointInformation->NetworkName);
-            memcpy(config.ap.ssid, accessPointInformation->NetworkName, strlen(accessPointInformation->NetworkName));
-            memcpy(config.ap.password, accessPointInformation->Password, strlen(accessPointInformation->Password));
+            config.ap.ssid_len = static_cast<uint8_t>(networkNameLength);
+            memcpy(config.ap.ssid, accessPointInformation->NetworkName, networkNameLength);
+            memcpy(config.ap.password, accessPointInformation->Password, passwordLength);
             config.ap.max_connection = ESP_WIFI_MAX_CONN_NUM;
             config.ap.authmode = WIFI_AUTH_WPA_WPA2_PSK;
             esp_err_t error = esp_wifi_set_config(WIFI_IF_AP, &config);
@@ -216,17 +215,17 @@ void WiFiRequestHandler::StartAccessPoint(Message *message)
                 {
                     if (esp_netif_dhcps_stop(_softApNetIfHandle) == ESP_OK)
                     {
-                        char ip[INET_ADDRSTRLEN], sn[INET_ADDRSTRLEN], gw[INET_ADDRSTRLEN];
-                        strcpy(ip, inet_ntoa(ipAddress));
-                        strcpy(sn, inet_ntoa(subnetMask));
-                        strcpy(gw, inet_ntoa(gateway));
-                        TRACE_MESSAGE("StartAccessPoint: Configuring access point DHCP server, IP: %s, subnet mask %s, default gateway %s", ip, sn, gw);
+                        char ipText[INET_ADDRSTRLEN], subnetMaskText[INET_ADDRSTRLEN], gatewayText[INET_ADDRSTRLEN];
+                        inet_ntoa_r(ipAddress, ipText, sizeof(ipText));
+                        inet_ntoa_r(subnetMask, subnetMaskText, sizeof(subnetMaskText));
+                        inet_ntoa_r(gateway, gatewayText, sizeof(gatewayText));
+                        TRACE_MESSAGE("StartAccessPoint: Configuring access point DHCP server, IP: %s, subnet mask %s, default gateway %s", ipText, subnetMaskText, gatewayText);
 
-                        esp_netif_ip_info_t ip_info;
-                        ip_info.ip.addr = ipAddress;
-                        ip_info.gw.addr = gateway;
-                        ip_info.netmask.addr = subnetMask;
-                        if (esp_netif_set_ip_info(_softApNetIfHandle, &ip_info) != ESP_OK)
+                        esp_netif_ip_info_t ipInformation = {};
+                        ipInformation.ip.addr = ipAddress;
+                        ipInformation.gw.addr = gateway;
+                        ipInformation.netmask.addr = subnetMask;
+                        if (esp_netif_set_ip_info(_softApNetIfHandle, &ipInformation) != ESP_OK)
                         {
                             result = StatusCodes::DhcpConfigurationError;
                         }
@@ -342,16 +341,16 @@ void WiFiRequestHandler::AccessPointStartedEvent()
     uint8_t *payload = nullptr;
     uint32_t payloadLength = 0;
 
-    esp_netif_ip_info_t ip_info;
-    if (esp_netif_get_ip_info(_softApNetIfHandle, &ip_info) == ESP_OK)
+    esp_netif_ip_info_t ipInformation = {};
+    if (esp_netif_get_ip_info(_softApNetIfHandle, &ipInformation) == ESP_OK)
     {
-        Esp32Messaging::AccessPointInformation info = {};
-        info.IpAddress = ip_info.ip.addr;
-        info.SubnetMask = ip_info.netmask.addr;
-        info.Gateway = ip_info.gw.addr;
-        payloadLength = Encoders::EncodedAccessPointInformationBufferSize(&info);
+        Esp32Messaging::AccessPointInformation accessPointInformation = {};
+        accessPointInformation.IpAddress = ipInformation.ip.addr;
+        accessPointInformation.SubnetMask = ipInformation.netmask.addr;
+        accessPointInformation.Gateway = ipInformation.gw.addr;
+        payloadLength = Encoders::EncodedAccessPointInformationBufferSize(&accessPointInformation);
         payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
-        if ((payload == nullptr) || !Encoders::EncodeAccessPointInformation(&info, payload, payloadLength))
+        if ((payload == nullptr) || !Encoders::EncodeAccessPointInformation(&accessPointInformation, payload, payloadLength))
         {
             Utils::DeleteAndNullifyPointer(payload);
             payloadLength = 0;
@@ -388,26 +387,26 @@ void WiFiRequestHandler::AccessPointStoppedEvent()
 }
 
 /**
- * @brief Raise an event for a node connecting ot disconnecting.
+ * @brief Raise an event for a node connecting or disconnecting.
  *
- * @param event_type
+ * @param eventType
  *      Type of event to raise, NodeConnectedEvent or NodeDisconnectedEvent
  *
  * @param data
  *      Information about the node (MAC and possibly IP address).
  */
-void WiFiRequestHandler::RaiseNodeConnectionChangeEvent(WiFiFunction::WiFiFunction event_type, Esp32Messaging::NodeConnectionChangeEventData *data)
+void WiFiRequestHandler::RaiseNodeConnectionChangeEvent(WiFiFunction::WiFiFunction eventType, Esp32Messaging::NodeConnectionChangeEventData *data)
 {
     uint32_t payloadLength = Encoders::EncodedNodeConnectionChangeEventDataBufferSize(data);
     uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
-    if (payload)
+    if (payload != nullptr)
     {
         Encoders::EncodeNodeConnectionChangeEventData(data, payload);
-        RaiseEvent(Esp32Interfaces::WiFi, event_type, StatusCodes::CompletedOk, payload, payloadLength);
+        RaiseEvent(Esp32Interfaces::WiFi, eventType, StatusCodes::CompletedOk, payload, payloadLength);
     }
     else
     {
-        ERROR_MESSAGE("Cannot allocate the payload for event %s", Logging::FunctionName(Esp32Interfaces::WiFi, event_type));
+        ERROR_MESSAGE("Cannot allocate the payload for event %s", Logging::FunctionName(Esp32Interfaces::WiFi, eventType));
     }
 }
 
