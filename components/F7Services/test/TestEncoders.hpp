@@ -254,9 +254,9 @@ namespace TestEncoders
     const int32_t NUTTX_AF_INET6 = 10;
 
     /**
-     * @brief EAFNOSUPPORT using the NuttX errno numbering.
+     * @brief EAFNOSUPPORT using the NuttX 12 errno numbering.
      */
-    const int32_t NUTTX_EAFNOSUPPORT = 106;
+    const int32_t NUTTX_EAFNOSUPPORT = 97;
 
     /**
      * @brief Encode a socket request into a newly allocated buffer.
