@@ -98,10 +98,13 @@ unsigned RadioTimeout()
  * @param ipAddress Static IP address for the access point, 0 to use the default.
  * @param subnetMask Subnet mask for the access point, 0 to use the default.
  * @param gateway Gateway for the access point, 0 to use the default.
+ * @param authenticationMode WiFiAuthenticationMode the soft access point is asked for.
+ * @param channel Channel the soft access point is asked for, 0 to leave it to the ESP32.
+ * @param hidden Non zero to ask for the soft access point's name to be hidden.
  *
  * @return Pointer to a message holding the encoded credentials in its payload.
  */
-Message *CreateAccessPointMessage(const uint32_t function, const char *ssid, const char *password, const uint32_t ipAddress, const uint32_t subnetMask, const uint32_t gateway)
+Message *CreateAccessPointMessage(const uint32_t function, const char *ssid, const char *password, const uint32_t ipAddress, const uint32_t subnetMask, const uint32_t gateway, const uint8_t authenticationMode, const uint8_t channel, const uint8_t hidden)
 {
     Esp32Messaging::AccessPointInformation accessPointInformation = {};
     memset(&accessPointInformation, 0, sizeof(Esp32Messaging::AccessPointInformation));
@@ -110,6 +113,9 @@ Message *CreateAccessPointMessage(const uint32_t function, const char *ssid, con
     accessPointInformation.IpAddress = ipAddress;
     accessPointInformation.SubnetMask = subnetMask;
     accessPointInformation.Gateway = gateway;
+    accessPointInformation.WiFiAuthenticationMode = authenticationMode;
+    accessPointInformation.Channel = channel;
+    accessPointInformation.Hidden = hidden;
 
     uint32_t payloadLength = Encoders::EncodedAccessPointInformationBufferSize(&accessPointInformation);
     uint8_t *buffer = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
@@ -133,10 +139,13 @@ Message *CreateAccessPointMessage(const uint32_t function, const char *ssid, con
  * @param ipAddress Static IP address for the access point, 0 to use the default.
  * @param subnetMask Subnet mask for the access point, 0 to use the default.
  * @param gateway Gateway for the access point, 0 to use the default.
+ * @param authenticationMode WiFiAuthenticationMode the soft access point is asked for.
+ * @param channel Channel the soft access point is asked for, 0 to leave it to the ESP32.
+ * @param hidden Non zero to ask for the soft access point's name to be hidden.
  */
-void QueueAccessPointRequest(MockMessageDispatcher *dispatcher, const uint32_t function, const char *ssid, const char *password, const uint32_t ipAddress, const uint32_t subnetMask, const uint32_t gateway)
+void QueueAccessPointRequest(MockMessageDispatcher *dispatcher, const uint32_t function, const char *ssid, const char *password, const uint32_t ipAddress, const uint32_t subnetMask, const uint32_t gateway, const uint8_t authenticationMode, const uint8_t channel, const uint8_t hidden)
 {
-    Message *request = CreateAccessPointMessage(function, ssid, password, ipAddress, subnetMask, gateway);
+    Message *request = CreateAccessPointMessage(function, ssid, password, ipAddress, subnetMask, gateway, authenticationMode, channel, hidden);
 
     dispatcher->QueueMessageForEsp32(request);
 }

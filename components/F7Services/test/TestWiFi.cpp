@@ -585,14 +585,17 @@ TEST_CASE("Connect to the default access point when none is configured", CLASS_O
  * @param ipAddress Optional static IP address for the DHCP server (0 for default).
  * @param subnetMask Optional static subnet mask (0 for default).
  * @param gateway Optional static gateway (0 for default).
+ * @param authenticationMode WiFiAuthenticationMode asked for.
+ * @param channel Channel asked for (0 to leave it to the ESP32).
+ * @param hidden Non zero to ask for the name to be hidden.
  */
-static void TestStartAccessPoint(const char *ssid, const char *password, uint32_t ipAddress = 0, uint32_t subnetMask = 0, uint32_t gateway = 0)
+static void TestStartAccessPoint(const char *ssid, const char *password, uint32_t ipAddress = 0, uint32_t subnetMask = 0, uint32_t gateway = 0, const uint8_t authenticationMode = WiFiAuthenticationMode::WpaWpa2Psk, const uint8_t channel = 0, const uint8_t hidden = 0)
 {
     MockMessageDispatcher *dispatcher = SetupWiFiDispatcher();
 
     EnsureAccessPointStopped(dispatcher);
 
-    QueueAccessPointRequest(dispatcher, WiFiFunction::StartAccessPoint, ssid, password, ipAddress, subnetMask, gateway);
+    QueueAccessPointRequest(dispatcher, WiFiFunction::StartAccessPoint, ssid, password, ipAddress, subnetMask, gateway, authenticationMode, channel, hidden);
 
     const unsigned timeout = RadioTimeout();
     WaitForResponse(dispatcher, timeout);
@@ -650,6 +653,43 @@ static void TestStartAccessPoint(const char *ssid, const char *password, uint32_
 TEST_CASE("Start access point", CLASS_OF_TESTS)
 {
     TestStartAccessPoint(AP_SSID, AP_PASSWORD);
+}
+
+/**
+ * @brief Check the configuration the WiFi driver holds for the soft access point.
+ *
+ * @param authenticationMode Authentication mode expected.
+ * @param channel Channel expected, 0 if any is acceptable.
+ * @param hidden Whether the name is expected to be hidden.
+ */
+static void CheckAccessPointConfiguration(const wifi_auth_mode_t authenticationMode, const uint8_t channel, const bool hidden)
+{
+    wifi_config_t config = {};
+    TEST_ASSERT_EQUAL(ESP_OK, esp_wifi_get_config(WIFI_IF_AP, &config));
+    TEST_ASSERT_EQUAL_MESSAGE(authenticationMode, config.ap.authmode, "The soft access point does not have the authentication mode that was asked for.");
+    TEST_ASSERT_EQUAL_MESSAGE(hidden ? 1 : 0, config.ap.ssid_hidden, "The soft access point does not have the hidden flag that was asked for.");
+    if (channel != 0)
+    {
+        TEST_ASSERT_EQUAL_MESSAGE(channel, config.ap.channel, "The soft access point is not on the channel that was asked for.");
+    }
+}
+
+/**
+ * @brief Start an open soft access point: no password means no authentication (issue #294).
+ */
+TEST_CASE("Start open access point", CLASS_OF_TESTS)
+{
+    TestStartAccessPoint(AP_SSID, "", 0, 0, 0, WiFiAuthenticationMode::Open);
+    CheckAccessPointConfiguration(WIFI_AUTH_OPEN, 0, false);
+}
+
+/**
+ * @brief Start a soft access point with the authentication mode, channel and hidden flag asked for (issue #294).
+ */
+TEST_CASE("Start access point with the authentication mode, channel and hidden flag asked for", CLASS_OF_TESTS)
+{
+    TestStartAccessPoint(AP_SSID, AP_PASSWORD, 0, 0, 0, WiFiAuthenticationMode::Wpa2Psk, 6, 1);
+    CheckAccessPointConfiguration(WIFI_AUTH_WPA2_PSK, 6, true);
 }
 
 /**

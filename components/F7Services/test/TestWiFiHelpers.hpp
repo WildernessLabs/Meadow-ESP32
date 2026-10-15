@@ -77,10 +77,14 @@ unsigned RadioTimeout(void);
  * @param ipAddress Static IP address for the access point, 0 to use the default.
  * @param subnetMask Subnet mask for the access point, 0 to use the default.
  * @param gateway Gateway for the access point, 0 to use the default.
+ * @param authenticationMode WiFiAuthenticationMode the soft access point is asked for, WPA/WPA2 unless the test says otherwise.
+ * @param channel Channel the soft access point is asked for, 0 to leave it to the ESP32.
+ * @param hidden Non zero to ask for the soft access point's name to be hidden.
  *
  * @return Pointer to a message holding the encoded credentials in its payload.
  */
-Message *CreateAccessPointMessage(const uint32_t function, const char *ssid, const char *password, const uint32_t ipAddress = 0, const uint32_t subnetMask = 0, const uint32_t gateway = 0);
+Message *CreateAccessPointMessage(
+    const uint32_t function, const char *ssid, const char *password, const uint32_t ipAddress = 0, const uint32_t subnetMask = 0, const uint32_t gateway = 0, const uint8_t authenticationMode = WiFiAuthenticationMode::WpaWpa2Psk, const uint8_t channel = 0, const uint8_t hidden = 0);
 
 /**
  * @brief Queue a request carrying a network name and password.
@@ -92,8 +96,13 @@ Message *CreateAccessPointMessage(const uint32_t function, const char *ssid, con
  * @param ipAddress Static IP address for the access point, 0 to use the default.
  * @param subnetMask Subnet mask for the access point, 0 to use the default.
  * @param gateway Gateway for the access point, 0 to use the default.
+ * @param authenticationMode WiFiAuthenticationMode the soft access point is asked for.
+ * @param channel Channel the soft access point is asked for, 0 to leave it to the ESP32.
+ * @param hidden Non zero to ask for the soft access point's name to be hidden.
  */
-void QueueAccessPointRequest(MockMessageDispatcher *dispatcher, const uint32_t function, const char *ssid, const char *password, const uint32_t ipAddress = 0, const uint32_t subnetMask = 0, const uint32_t gateway = 0);
+void QueueAccessPointRequest(
+    MockMessageDispatcher *dispatcher, const uint32_t function, const char *ssid, const char *password, const uint32_t ipAddress = 0, const uint32_t subnetMask = 0, const uint32_t gateway = 0, const uint8_t authenticationMode = WiFiAuthenticationMode::WpaWpa2Psk, const uint8_t channel = 0,
+    const uint8_t hidden = 0);
 
 /**
  * @brief Queue a request that carries no payload.
