@@ -38,13 +38,13 @@ static const char *_unknown = "Unknown";
  *  STM value is first, ESP value second.
  */
 Mapping::int_mapping_t Mapping::_addressFamilies[] = {
-    {1, AF_UNSPEC},
+    {0, AF_UNSPEC},
     {2, AF_INET},
     {10, AF_INET6},
 #if LWIP_IPV6
     {10, AF_INET6} /* AF_INET6 */
 #else              /* LWIP_IPV6 */
-    {1, AF_INET6} /* AF_UNSPEC */
+    {0, AF_INET6} /* AF_UNSPEC */
 #endif
 };
 
@@ -68,7 +68,7 @@ Mapping::int_mapping_t Mapping::_tcpOptions[] = {{0x10, TCP_NODELAY}, {0x11, TCP
  *
  *  STM value is first, ESP value second.
  */
-Mapping::int_mapping_t Mapping::_protocolFamilies[] = {{2, PF_INET}, {10, PF_INET6}, {1, PF_UNSPEC}};
+Mapping::int_mapping_t Mapping::_protocolFamilies[] = {{2, PF_INET}, {10, PF_INET6}, {0, PF_UNSPEC}};
 
 /**
  *  @brief Map the STM32 socket types to ESP32 socket types.
@@ -78,11 +78,14 @@ Mapping::int_mapping_t Mapping::_protocolFamilies[] = {{2, PF_INET}, {10, PF_INE
 Mapping::int_mapping_t Mapping::_socketTypes[] = {{1, SOCK_STREAM}, {2, SOCK_DGRAM}, {3, SOCK_RAW}};
 
 /**
- *  @brief Map the STM32 socket types to ESP32 socket types.
+ *  @brief Map the STM32 socket option levels to ESP32 socket option levels.
  *
- *  STM value is first, ESP value second.
+ *  STM value is first, ESP value second.  NuttX 12 uses the Linux levels
+ *  (since NuttX 10.0, upstream commit b296adc3bb2, "socket/SOL: sync the SOL
+ *  index with linux"): SOL_SOCKET is 1, SOL_IP is IPPROTO_IP (0) and SOL_TCP is
+ *  IPPROTO_TCP (6).  NuttX 7 used 0 for SOL_SOCKET and 3 for SOL_TCP.
  */
-Mapping::int_mapping_t Mapping::_socketLevels[] = {{0, SOL_SOCKET}, {3, IPPROTO_TCP}, {6, IPPROTO_TCP}};
+Mapping::int_mapping_t Mapping::_socketLevels[] = {{1, SOL_SOCKET}, {0, IPPROTO_IP}, {6, IPPROTO_TCP}};
 
 /**
  *  @brief Map the STM32 error codes to ESP32 error codes.
