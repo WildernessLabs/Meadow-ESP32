@@ -1,0 +1,11 @@
+[
+  {
+    "target_name": "esp32-pico-d4",
+    "setup_cmd": "echo 'No host setup needed: the build runs in the ESP-IDF Docker image'",
+    "build_cmd": "docker run --rm -v $PWD:/project -w /project espressif/idf:release-v5.5 ./build.sh --build --fullclean",
+    "elf": "build/MeadowComms.elf",
+    "ld": "build/esp-idf/esp_system/ld/memory.ld build/esp-idf/esp_system/ld/sections.ld",
+    "map_file": "build/MeadowComms.map",
+    "linker_vars": ""
+  }
+]
