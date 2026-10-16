@@ -810,6 +810,50 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetSendReceiveBuffer(const int sock
 }
 
 /**
+ * @brief Process the SO_ERROR get socket option (pending socket error).
+ *
+ * Used to complete a non-blocking connect: once the socket polls writable, the
+ * F7/.NET reads SO_ERROR to obtain the final connect result (0 = connected).
+ * The value is itself an errno, so it is mapped ESP->NuttX (0 stays 0) so the
+ * F7/.NET interprets it consistently with every other errno on the wire.
+ */
+StatusCodes::StatusCodes WiFiRequestHandler::GetErrorOption(const int socket, const int level, const int optionName, Esp32Messaging::GetSockOptResponse &response)
+{
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
+
+    Esp32Messaging::IntegerResponse esp_iv = {};
+
+    int optionValue = 0;
+    socklen_t optionLength = sizeof(int);
+    response.Result = getsockopt(socket, level, optionName, static_cast<void *>(&optionValue), &optionLength);
+    if (response.Result == 0)
+    {
+        response.ResponseErrno = 0;
+    }
+    else
+    {
+        response.ResponseErrno = Mapping::NuttxErrno(errno);
+    }
+
+    esp_iv.Result = (optionValue == 0) ? 0 : Mapping::NuttxErrno(optionValue);
+    response.OptionValueLength = Encoders::EncodedIntegerResponseBufferSize(&esp_iv);
+    response.OptionValue = static_cast<uint8_t *>(pvPortMalloc(response.OptionValueLength));
+    if (response.OptionValue == nullptr)
+    {
+        response.ResponseErrno = Mapping::NuttxErrno(ENOBUFS);
+        response.Result = -1;
+        response.OptionValueLength = 0;
+        result = StatusCodes::EspOutOfMemory;
+    }
+    else
+    {
+        Encoders::EncodeIntegerResponse(&esp_iv, response.OptionValue);
+    }
+
+    return (result);
+}
+
+/**
  *  @brief Expose the POSIX getsockopt method to the STM32.
  *
  *  @param message
@@ -897,8 +941,8 @@ void WiFiRequestHandler::GetSockOpt(void * const vpMessage)
                         case SO_DONTLINGER: /* Don't linger on close if data present */
                             TRACE_MESSAGE("GetSockOpt: Implement SO_DONTLINGER");
                             break;
-                        case SO_ERROR:      /* Get error status and clear */
-                            TRACE_MESSAGE("GetSockOpt: Implement SO_ERROR");
+                        case SO_ERROR:      /* Get error status and clear (non-blocking connect result) */
+                            result = GetErrorOption(request->SocketHandle, level, optionName, response);
                             break;
                         case SO_TYPE:       /* Get socket type */
                             TRACE_MESSAGE("GetSockOpt: Implement SO_TYPE");
@@ -2732,6 +2776,120 @@ void WiFiRequestHandler::Listen(void * const vpMessage)
 }
 
 /**
+ *  @brief Expose the POSIX shutdown method to the STM32.
+ *
+ *  @param message
+ *      Message structure containing the parameters for the shutdown method.
+ */
+void WiFiRequestHandler::Shutdown(void * const vpMessage)
+{
+    TRACE_MESSAGE("Shutdown: Enter");
+    PERFORMANCE_LOGGING_ENTER();
+
+    Message * const message = static_cast<Message *>(vpMessage);
+
+    if (message == nullptr)
+    {
+        //
+        //  There is no message to attach a status code to and no MessageID to correlate a
+        //  response with, so the failure is reported as an event instead of a response.
+        //
+        ERROR_MESSAGE("Shutdown: Received a null message; cannot process the request.");
+        if (_instance != nullptr)
+        {
+            _instance->RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
+        }
+        PERFORMANCE_LOGGING_EXIT();
+        PERFORMANCE_LOGGING_ADD_ENTRY();
+        TRACE_MESSAGE("Shutdown: Exit");
+        return;
+    }
+
+    Esp32Messaging::IntegerAndErrnoResponse response = {};
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
+
+    if (message->Payload == nullptr)
+    {
+        ERROR_MESSAGE("Shutdown: Received a message with a null payload.");
+        result = StatusCodes::InvalidRequest;
+    }
+    else
+    {
+        if (IsConnected())
+        {
+            bool malformed = false;
+            Esp32Messaging::ShutdownRequest *request = Encoders::ExtractShutdownRequest(message->Payload, message->PayloadLength, &malformed);
+            if (request)
+            {
+                int descriptor = -1;
+                if (FindSocket(request->SocketHandle, &descriptor))
+                {
+                    //
+                    //  NuttX numbers how 1 (SHUT_RD), 2 (SHUT_WR) and 3 (SHUT_RDWR) while lwIP uses
+                    //  0, 1 and 2, so the STM32 value is translated here, as errno values are.
+                    //
+                    if ((request->How >= 1) && (request->How <= 3))
+                    {
+                        response.Result = shutdown(descriptor, request->How - 1);
+                    }
+                    else
+                    {
+                        response.Result = -1;
+                        errno = EINVAL;
+                    }
+                }
+                else
+                {
+                    response.Result = -1;
+                    errno = EBADF;
+                }
+                response.ResponseErrno = (response.Result == 0) ? 0 : Mapping::NuttxErrno(errno);
+                Utils::DeleteAndNullifyPointer(request);
+            }
+            else
+            {
+                result = malformed ? StatusCodes::InvalidRequest : StatusCodes::EspOutOfMemory;
+            }
+        }
+        else
+        {
+            response.Result = -1;
+            response.ResponseErrno = Mapping::NuttxErrno(ENETDOWN);
+        }
+    }
+
+    message->DeletePayload();
+
+    if (result != StatusCodes::CompletedOk)
+    {
+        message->StatusCode = result;
+    }
+    else
+    {
+        message->PayloadLength = Encoders::EncodedIntegerAndErrnoResponseBufferSize(&response);
+        message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
+        if (message->Payload == nullptr)
+        {
+            message->PayloadLength = 0;
+            message->StatusCode = StatusCodes::EspOutOfMemory;
+        }
+        else
+        {
+            Encoders::EncodeIntegerAndErrnoResponse(&response, message->Payload);
+            message->StatusCode = StatusCodes::CompletedOk;
+        }
+    }
+
+    message->MessageType = MessageTypes::Response;
+    _messageDispatcher->QueueMessageForStm32(message);
+
+    PERFORMANCE_LOGGING_EXIT();
+    PERFORMANCE_LOGGING_ADD_ENTRY();
+    PERFORMANCE_LOGGING_DUMP_RESULTS();
+    TRACE_MESSAGE("Shutdown: Exit");
+}
+
+/**
  * @brief Process the accept request from the STM32.
  *
  * @param request Request from the STM32.
@@ -3018,6 +3176,50 @@ void WiFiRequestHandler::Ioctl(void * const vpMessage)
                         else
                         {
                             response.Flags = IFF_DOWN;
+                        }
+                        break;
+                    case SIOCSESPNONBLOCK: /* Meadow/ESPCP: set or clear O_NONBLOCK on the lwip socket */
+                        //
+                        //  The one per-socket ioctl.  NuttX appends two int32s to the command:
+                        //  [Command(4)][SocketHandle(4)][NonBlocking(4)].  The generated
+                        //  IoctlRequest only carries Command, so the extras are read from the
+                        //  payload, after checking that they are there.  SocketHandle is the
+                        //  lwip fd (as setsockopt uses); lwip_fcntl honours only O_NONBLOCK on
+                        //  F_SETFL.
+                        //
+                        if (message->PayloadLength < (3 * sizeof(int32_t)))
+                        {
+                            response.Result = -1;
+                            response.ResponseErrno = Mapping::NuttxErrno(EINVAL);
+                            result = StatusCodes::InvalidRequest;
+                        }
+                        else
+                        {
+                            const int socketHandle = static_cast<int>(Encoders::ExtractInt32(message->Payload + sizeof(int32_t)));
+                            const int nonBlocking = static_cast<int>(Encoders::ExtractInt32(message->Payload + (2 * sizeof(int32_t))));
+                            int flags = lwip_fcntl(socketHandle, F_GETFL, 0);
+                            if (flags < 0)
+                            {
+                                response.Result = -1;
+                                response.ResponseErrno = Mapping::NuttxErrno(errno);
+                            }
+                            else
+                            {
+                                if (nonBlocking != 0)
+                                {
+                                    flags |= O_NONBLOCK;
+                                }
+                                else
+                                {
+                                    flags &= ~O_NONBLOCK;
+                                }
+                                response.Result = lwip_fcntl(socketHandle, F_SETFL, flags);
+                                if (response.Result != 0)
+                                {
+                                    response.ResponseErrno = Mapping::NuttxErrno(errno);
+                                }
+                            }
+                            TRACE_MESSAGE("Ioctl SIOCSESPNONBLOCK: socket %d nonblock=%d result=%ld", socketHandle, nonBlocking, static_cast<long>(response.Result));
                         }
                         break;
                     default:
