@@ -361,6 +361,12 @@ namespace Esp32Messaging
         int32_t BackLog;
     };
 
+    struct ShutdownRequest
+    {
+        int32_t SocketHandle;
+        int32_t How;
+    };
+
     struct BindRequest
     {
         int32_t SocketHandle;
@@ -714,6 +720,7 @@ public:
     static int EncodedInterruptPollResponseBufferSize(const Esp32Messaging::InterruptPollResponse * const);
 
     static Esp32Messaging::ListenRequest *ExtractListenRequest(const uint8_t *buffer, const uint32_t length, bool * const malformed = nullptr);
+    static Esp32Messaging::ShutdownRequest *ExtractShutdownRequest(const uint8_t *buffer, const uint32_t length, bool * const malformed = nullptr);
 
     static Esp32Messaging::BindRequest *ExtractBindRequest(const uint8_t *buffer, const uint32_t length, bool * const malformed = nullptr);
     static void FreeBindRequest(Esp32Messaging::BindRequest **);
