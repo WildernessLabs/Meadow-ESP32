@@ -2776,6 +2776,120 @@ void WiFiRequestHandler::Listen(void * const vpMessage)
 }
 
 /**
+ *  @brief Expose the POSIX shutdown method to the STM32.
+ *
+ *  @param message
+ *      Message structure containing the parameters for the shutdown method.
+ */
+void WiFiRequestHandler::Shutdown(void * const vpMessage)
+{
+    TRACE_MESSAGE("Shutdown: Enter");
+    PERFORMANCE_LOGGING_ENTER();
+
+    Message * const message = static_cast<Message *>(vpMessage);
+
+    if (message == nullptr)
+    {
+        //
+        //  There is no message to attach a status code to and no MessageID to correlate a
+        //  response with, so the failure is reported as an event instead of a response.
+        //
+        ERROR_MESSAGE("Shutdown: Received a null message; cannot process the request.");
+        if (_instance != nullptr)
+        {
+            _instance->RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
+        }
+        PERFORMANCE_LOGGING_EXIT();
+        PERFORMANCE_LOGGING_ADD_ENTRY();
+        TRACE_MESSAGE("Shutdown: Exit");
+        return;
+    }
+
+    Esp32Messaging::IntegerAndErrnoResponse response = {};
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
+
+    if (message->Payload == nullptr)
+    {
+        ERROR_MESSAGE("Shutdown: Received a message with a null payload.");
+        result = StatusCodes::InvalidRequest;
+    }
+    else
+    {
+        if (IsConnected())
+        {
+            bool malformed = false;
+            Esp32Messaging::ShutdownRequest *request = Encoders::ExtractShutdownRequest(message->Payload, message->PayloadLength, &malformed);
+            if (request)
+            {
+                int descriptor = -1;
+                if (FindSocket(request->SocketHandle, &descriptor))
+                {
+                    //
+                    //  NuttX numbers how 1 (SHUT_RD), 2 (SHUT_WR) and 3 (SHUT_RDWR) while lwIP uses
+                    //  0, 1 and 2, so the STM32 value is translated here, as errno values are.
+                    //
+                    if ((request->How >= 1) && (request->How <= 3))
+                    {
+                        response.Result = shutdown(descriptor, request->How - 1);
+                    }
+                    else
+                    {
+                        response.Result = -1;
+                        errno = EINVAL;
+                    }
+                }
+                else
+                {
+                    response.Result = -1;
+                    errno = EBADF;
+                }
+                response.ResponseErrno = (response.Result == 0) ? 0 : Mapping::NuttxErrno(errno);
+                Utils::DeleteAndNullifyPointer(request);
+            }
+            else
+            {
+                result = malformed ? StatusCodes::InvalidRequest : StatusCodes::EspOutOfMemory;
+            }
+        }
+        else
+        {
+            response.Result = -1;
+            response.ResponseErrno = Mapping::NuttxErrno(ENETDOWN);
+        }
+    }
+
+    message->DeletePayload();
+
+    if (result != StatusCodes::CompletedOk)
+    {
+        message->StatusCode = result;
+    }
+    else
+    {
+        message->PayloadLength = Encoders::EncodedIntegerAndErrnoResponseBufferSize(&response);
+        message->Payload = static_cast<uint8_t *>(pvPortMalloc(message->PayloadLength));
+        if (message->Payload == nullptr)
+        {
+            message->PayloadLength = 0;
+            message->StatusCode = StatusCodes::EspOutOfMemory;
+        }
+        else
+        {
+            Encoders::EncodeIntegerAndErrnoResponse(&response, message->Payload);
+            message->StatusCode = StatusCodes::CompletedOk;
+        }
+    }
+
+    message->MessageType = MessageTypes::Response;
+    _messageDispatcher->QueueMessageForStm32(message);
+
+    PERFORMANCE_LOGGING_EXIT();
+    PERFORMANCE_LOGGING_ADD_ENTRY();
+    PERFORMANCE_LOGGING_DUMP_RESULTS();
+    TRACE_MESSAGE("Shutdown: Exit");
+}
+
+/**
  * @brief Process the accept request from the STM32.
  *
  * @param request Request from the STM32.

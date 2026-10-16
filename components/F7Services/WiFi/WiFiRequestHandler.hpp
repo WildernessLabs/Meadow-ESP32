@@ -1268,6 +1268,11 @@ private:
     static void Listen(void * const vpMessage);
 
     /**
+     *  @brief Provide a mechanism for the STM32 to call the shutdown method.
+     */
+    static void Shutdown(void * const vpMessage);
+
+    /**
      * @brief Process the accept request from the STM32.
      *
      * @param request Request from the STM32.

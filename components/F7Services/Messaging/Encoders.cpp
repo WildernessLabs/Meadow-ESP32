@@ -3184,6 +3184,61 @@ Esp32Messaging::ListenRequest *Encoders::ExtractListenRequest(const uint8_t *buf
 }
 
 /**
+ *  Extract the ShutdownRequest object that is encoded in the given buffer.
+ *
+ *  Note that the returned pointer points to a block of memory on the heap and
+ *  this should eventually be released calling Utils::DeleteAndNullifyPointer(...).
+ *
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded ShutdownRequest object.
+ *
+ *  @returns
+ *      Pointer to a ShutdownRequest object.
+ *
+ *  @param length
+ *      Number of bytes in that block, the message's PayloadLength.  Nothing past it is read, and
+ *      no length the payload declares is trusted until it has been checked against it
+ *      (issue #226).
+ *
+ *  @param malformed
+ *      If not nullptr, set to true when the payload is too short for what it declares and false
+ *      otherwise, so the caller can tell a malformed request from running out of memory.
+ */
+Esp32Messaging::ShutdownRequest *Encoders::ExtractShutdownRequest(const uint8_t *buffer, const uint32_t length, bool * const malformed)
+{
+    PayloadReader reader(buffer, length);
+    Esp32Messaging::ShutdownRequest *result = static_cast<Esp32Messaging::ShutdownRequest *>(pvPortMalloc(sizeof(Esp32Messaging::ShutdownRequest)));
+
+    if (result == nullptr)
+    {
+        if (malformed != nullptr)
+        {
+            *malformed = false;
+        }
+        return (nullptr);
+    }
+    memset(result, 0, sizeof(Esp32Messaging::ShutdownRequest));
+
+    result->SocketHandle = reader.ReadInt32();
+    result->How = reader.ReadInt32();
+
+    if (reader.Failed())
+    {
+        Utils::DeleteAndNullifyPointer(result);
+        if (malformed != nullptr)
+        {
+            *malformed = !reader.OutOfMemory();
+        }
+        return (nullptr);
+    }
+    if (malformed != nullptr)
+    {
+        *malformed = false;
+    }
+    return (result);
+}
+
+/**
  *  Extract the BindRequest object that is encoded in the given buffer.
  *
  *  Note that the returned object holds nested allocations, so it should eventually be
