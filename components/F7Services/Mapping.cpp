@@ -80,12 +80,15 @@ Mapping::int_mapping_t Mapping::_socketTypes[] = {{1, SOCK_STREAM}, {2, SOCK_DGR
 /**
  *  @brief Map the STM32 socket option levels to ESP32 socket option levels.
  *
- *  STM value is first, ESP value second.  NuttX 12 uses the Linux levels
- *  (since NuttX 10.0, upstream commit b296adc3bb2, "socket/SOL: sync the SOL
- *  index with linux"): SOL_SOCKET is 1, SOL_IP is IPPROTO_IP (0) and SOL_TCP is
- *  IPPROTO_TCP (6).  NuttX 7 used 0 for SOL_SOCKET and 3 for SOL_TCP.
+ *  STM value is first, ESP value second.  The STM values are the NuttX 7
+ *  levels, which are the wire format for both Meadow.OS versions: SOL_SOCKET 0,
+ *  SOL_IP 1, SOL_TCP 3 and SOL_UDP 4, with IPPROTO_TCP (6) and IPPROTO_UDP (17)
+ *  also accepted as levels.  NuttX 12 renumbered the levels (SOL_SOCKET 1,
+ *  SOL_IP 0), and the same number means different levels in the two versions,
+ *  so a NuttX 12 OS converts its levels to these values before sending them
+ *  (espcp_mapping.c in Meadow.OS).
  */
-Mapping::int_mapping_t Mapping::_socketLevels[] = {{1, SOL_SOCKET}, {0, IPPROTO_IP}, {6, IPPROTO_TCP}};
+Mapping::int_mapping_t Mapping::_socketLevels[] = {{0, SOL_SOCKET}, {1, IPPROTO_IP}, {3, IPPROTO_TCP}, {4, IPPROTO_UDP}, {6, IPPROTO_TCP}, {17, IPPROTO_UDP}};
 
 /**
  *  @brief Map the STM32 error codes to ESP32 error codes.
