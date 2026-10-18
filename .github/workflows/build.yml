@@ -26,3 +26,34 @@ jobs:
 
     - name: Show the exit code
       run: echo "The exit code was ${{ steps.esp-idf-build.outputs.result }}"
+
+    #
+    #   Artifacts match those published by the Azure pipeline (azure-pipelines.yml):
+    #   "network" holds the release binaries and their checksums in one folder,
+    #   "build" the binaries, ELF and map files with the build tree layout.
+    #
+    - name: Collect the release binaries
+      run: |
+        mkdir -p "$RUNNER_TEMP/network"
+        cp build/MeadowComms.bin build/MeadowComms.bin.md5 \
+           build/bootloader/bootloader.bin build/bootloader/bootloader.bin.md5 \
+           build/partition_table/partition-table.bin build/partition_table/partition-table.bin.md5 \
+           "$RUNNER_TEMP/network/"
+
+    - name: Upload the release binaries
+      uses: actions/upload-artifact@v7
+      with:
+        name: network
+        if-no-files-found: error
+        path: ${{ runner.temp }}/network/
+
+    - name: Upload the build output
+      uses: actions/upload-artifact@v7
+      with:
+        name: build
+        if-no-files-found: error
+        path: |
+          build/**/*.elf
+          build/**/*.map
+          build/**/*.bin
+          build/**/*.md5
