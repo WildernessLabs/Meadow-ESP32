@@ -70,17 +70,29 @@ Esp32Messaging::AccessPointInformation *WiFiRequestHandler::ExtractAndValidateAc
         if (result)
         {
             const bool nameError = (!result->NetworkName) || (strlen(result->NetworkName) == 0) || (strlen(result->NetworkName) > MAXIMUM_SSID_LENGTH);
-            const bool passwordError = !IsValidAccessPointPassword(result->Password);
             // error |= (result->IpAddress == 0) || (result->SubnetMask == 0) || (result->Gateway == 0);
-            if (nameError || passwordError)
+            //
+            //  Refused before the interface is touched, so a request that cannot work is reported
+            //  as the reason rather than as a soft-AP that would not start (issues #537 and #294).
+            //
+            StatusCodes::StatusCodes refusal = StatusCodes::CompletedOk;
+            if (!nameError)
             {
-                //
-                //  Refused before the interface is touched, so a password that cannot work is
-                //  reported as one rather than as a soft-AP that would not start (issue #537).
-                //
+                if (result->Channel > MAXIMUM_ACCESS_POINT_CHANNEL)
+                {
+                    refusal = StatusCodes::InvalidRequest;
+                }
+                else
+                {
+                    wifi_auth_mode_t authenticationMode = WIFI_AUTH_OPEN;
+                    refusal = ResolveAccessPointAuthentication(result->Password, result->WiFiAuthenticationMode, authenticationMode);
+                }
+            }
+            if (nameError || (refusal != StatusCodes::CompletedOk))
+            {
                 if (!nameError)
                 {
-                    status = StatusCodes::InvalidWiFiCredentials;
+                    status = refusal;
                 }
                 Encoders::FreeAccessPointInformation(&result);
             }
@@ -91,10 +103,9 @@ Esp32Messaging::AccessPointInformation *WiFiRequestHandler::ExtractAndValidateAc
 }
 
 /**
- * @brief Is this a password the soft-AP can be started with?
+ * @brief Is this a passphrase the soft-AP can be started with, for a mode that has one?
  *
- *  StartAccessPoint always sets WPA/WPA2 authentication, so the password has to be a passphrase of
- *  8 to 63 characters.  A shorter one, including an empty one, cannot start a working soft-AP.  64
+ *  A passphrase is 8 to 63 characters.  A shorter one cannot start a working soft-AP.  64
  *  characters is refused until it is established on hardware that the soft-AP would take it as a
  *  hexadecimal key (issue #537).
  *
@@ -114,6 +125,119 @@ bool WiFiRequestHandler::IsValidAccessPointPassword(const char *password)
     }
 
     return (result);
+}
+
+/**
+ * @brief Work out the authentication mode the soft-AP is started with (issue #294).
+ *
+ *  No password means an open soft-AP, whatever mode was asked for.  With a password the mode asked
+ *  for is used.  Open with a password is refused rather than quietly leaving the soft-AP
+ *  unprotected, and WEP and WPA2 Enterprise are not supported by a soft-AP.
+ *
+ * @param password
+ *      Password asked for; nullptr, which is what an empty one is decoded as, and "" are no password.
+ *
+ * @param requestedMode
+ *      WiFiAuthenticationMode asked for.
+ *
+ * @param authenticationMode
+ *      Set to the mode the soft-AP is started with when the result is CompletedOk.
+ *
+ * @return StatusCodes::StatusCodes
+ *      CompletedOk, InvalidWiFiCredentials for a password the mode cannot use, NotImplemented for a
+ *      mode a soft-AP does not support, InvalidRequest for a mode that does not exist.
+ */
+StatusCodes::StatusCodes WiFiRequestHandler::ResolveAccessPointAuthentication(const char *password, const uint8_t requestedMode, wifi_auth_mode_t &authenticationMode)
+{
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
+
+    //
+    //  An empty password is decoded as nullptr, so that is no password too.
+    //
+    if ((password == nullptr) || (strlen(password) == 0))
+    {
+        authenticationMode = WIFI_AUTH_OPEN;
+    }
+    else
+    {
+        switch (requestedMode)
+        {
+            case WiFiAuthenticationMode::Open:
+                result = StatusCodes::InvalidWiFiCredentials;
+                break;
+            case WiFiAuthenticationMode::Wep:
+            case WiFiAuthenticationMode::Wpa2Enterprise:
+                result = StatusCodes::NotImplemented;
+                break;
+            case WiFiAuthenticationMode::WpaPsk:
+                authenticationMode = WIFI_AUTH_WPA_PSK;
+                break;
+            case WiFiAuthenticationMode::Wpa2Psk:
+                authenticationMode = WIFI_AUTH_WPA2_PSK;
+                break;
+            case WiFiAuthenticationMode::WpaWpa2Psk:
+                authenticationMode = WIFI_AUTH_WPA_WPA2_PSK;
+                break;
+            case WiFiAuthenticationMode::Wpa3Psk:
+                authenticationMode = WIFI_AUTH_WPA3_PSK;
+                break;
+            case WiFiAuthenticationMode::Wpa2Wpa3Psk:
+                authenticationMode = WIFI_AUTH_WPA2_WPA3_PSK;
+                break;
+            default:
+                result = StatusCodes::InvalidRequest;
+                break;
+        }
+        if ((result == StatusCodes::CompletedOk) && !IsValidAccessPointPassword(password))
+        {
+            result = StatusCodes::InvalidWiFiCredentials;
+        }
+    }
+
+    return (result);
+}
+
+/**
+ * @brief Build the soft-AP configuration from the access point information asked for (issue #294).
+ *
+ *  The authentication mode, the channel and whether the name is hidden are the ones asked for.  A
+ *  channel of 0 is left to the ESP32.
+ *
+ * @param information
+ *      Access point information that has been through ExtractAndValidateAccessPointInformation.
+ *
+ * @param config
+ *      Set to the soft-AP configuration.
+ */
+void WiFiRequestHandler::BuildAccessPointConfiguration(const Esp32Messaging::AccessPointInformation *information, wifi_config_t &config)
+{
+    config = {};
+
+    const size_t networkNameLength = strlen(information->NetworkName);
+    const size_t passwordLength = (information->Password != nullptr) ? strlen(information->Password) : 0;
+    config.ap.ssid_len = static_cast<uint8_t>(networkNameLength);
+    memcpy(config.ap.ssid, information->NetworkName, networkNameLength);
+    if (passwordLength > 0)
+    {
+        memcpy(config.ap.password, information->Password, passwordLength);
+    }
+    config.ap.max_connection = ESP_WIFI_MAX_CONN_NUM;
+
+    wifi_auth_mode_t authenticationMode = WIFI_AUTH_OPEN;
+    ResolveAccessPointAuthentication(information->Password, information->WiFiAuthenticationMode, authenticationMode);
+    config.ap.authmode = authenticationMode;
+    config.ap.channel = information->Channel;
+    config.ap.ssid_hidden = (information->Hidden != 0) ? 1 : 0;
+
+    //
+    //  WPA3 needs protected management frames, required for WPA3 alone and offered for WPA2/WPA3.
+    //
+    if ((authenticationMode == WIFI_AUTH_WPA3_PSK) || (authenticationMode == WIFI_AUTH_WPA2_WPA3_PSK))
+    {
+        config.ap.pmf_cfg.capable = true;
+        config.ap.pmf_cfg.required = (authenticationMode == WIFI_AUTH_WPA3_PSK);
+        config.ap.sae_pwe_h2e = WPA3_SAE_PWE_BOTH;
+    }
 }
 
 /**
@@ -195,14 +319,8 @@ void WiFiRequestHandler::StartAccessPoint(Message *message)
             //  The password is not traced: a trace would put it in the log in clear.
             //
             TRACE_MESSAGE("StartAccessPoint: Creating access point: %s", accessPointInformation->NetworkName);
-            const size_t networkNameLength = strlen(accessPointInformation->NetworkName);
-            const size_t passwordLength = strlen(accessPointInformation->Password);
-            wifi_config_t config = {};
-            config.ap.ssid_len = static_cast<uint8_t>(networkNameLength);
-            memcpy(config.ap.ssid, accessPointInformation->NetworkName, networkNameLength);
-            memcpy(config.ap.password, accessPointInformation->Password, passwordLength);
-            config.ap.max_connection = ESP_WIFI_MAX_CONN_NUM;
-            config.ap.authmode = WIFI_AUTH_WPA_WPA2_PSK;
+            wifi_config_t config;
+            BuildAccessPointConfiguration(accessPointInformation, config);
             esp_err_t error = esp_wifi_set_config(WIFI_IF_AP, &config);
             if (error != ESP_OK)
             {
