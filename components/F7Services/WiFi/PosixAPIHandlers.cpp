@@ -3181,7 +3181,7 @@ void WiFiRequestHandler::Ioctl(void * const vpMessage)
                     case SIOCSESPNONBLOCK: /* Set or clear O_NONBLOCK on the lwip socket */
                         //
                         //  The generated IoctlRequest only carries Command, so the extras are read from the
-                        //  payload, after checking that they are there.  SocketHandle is the lwip fd 
+                        //  payload, after checking that they are there.  SocketHandle is the lwip fd
                         //  (as setsockopt uses); lwip_fcntl honours only O_NONBLOCK on F_SETFL.
                         //
                         if (message->PayloadLength < (3 * sizeof(int32_t)))
