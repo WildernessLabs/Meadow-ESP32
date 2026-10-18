@@ -13,8 +13,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    #
+    #   Full history is needed because the build number is the count of
+    #   commits since version.txt last changed (build.sh); a shallow clone
+    #   always gives 0.  blob:none keeps the fetch small.
+    #
     - name: Checkout source code
       uses: actions/checkout@v7
+      with:
+        fetch-depth: 0
+        filter: blob:none
 
     - name: Update submodules
       run: git submodule update --init --recursive
