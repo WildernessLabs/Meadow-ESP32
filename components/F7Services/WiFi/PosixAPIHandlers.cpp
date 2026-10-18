@@ -3178,14 +3178,11 @@ void WiFiRequestHandler::Ioctl(void * const vpMessage)
                             response.Flags = IFF_DOWN;
                         }
                         break;
-                    case SIOCSESPNONBLOCK: /* Meadow/ESPCP: set or clear O_NONBLOCK on the lwip socket */
+                    case SIOCSESPNONBLOCK: /* Set or clear O_NONBLOCK on the lwip socket */
                         //
-                        //  The one per-socket ioctl.  NuttX appends two int32s to the command:
-                        //  [Command(4)][SocketHandle(4)][NonBlocking(4)].  The generated
-                        //  IoctlRequest only carries Command, so the extras are read from the
-                        //  payload, after checking that they are there.  SocketHandle is the
-                        //  lwip fd (as setsockopt uses); lwip_fcntl honours only O_NONBLOCK on
-                        //  F_SETFL.
+                        //  The generated IoctlRequest only carries Command, so the extras are read from the
+                        //  payload, after checking that they are there.  SocketHandle is the lwip fd 
+                        //  (as setsockopt uses); lwip_fcntl honours only O_NONBLOCK on F_SETFL.
                         //
                         if (message->PayloadLength < (3 * sizeof(int32_t)))
                         {
