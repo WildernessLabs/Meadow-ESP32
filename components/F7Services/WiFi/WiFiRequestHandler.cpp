@@ -1768,6 +1768,10 @@ void WiFiRequestHandler::DispatchRequest(Message *request)
                 SystemRequestHandler::SharedThreadPool()->Execute(Listen, static_cast<void *>(request));
                 xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
                 break;
+            case WiFiFunction::Shutdown:
+                SystemRequestHandler::SharedThreadPool()->Execute(Shutdown, static_cast<void *>(request));
+                xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);
+                break;
             case WiFiFunction::Ioctl:
                 SystemRequestHandler::SharedThreadPool()->Execute(Ioctl, static_cast<void *>(request));
                 xEventGroupSetBits(_xWiFiEventGroup, WIFI_READY_FOR_NEXT_COMMAND_BIT);

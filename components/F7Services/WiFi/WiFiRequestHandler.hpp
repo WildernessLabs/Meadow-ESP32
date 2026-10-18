@@ -69,6 +69,12 @@
 #define SIOCGIFNAME _SIOC(0x002A)    /* Get interface name string */
 
 /**
+ * Meadow/ESPCP: NuttX emits this per-socket ioctl to push a socket's O_NONBLOCK state down
+ * to the matching lwip socket here (NuttX has no FIONBIO).
+ */
+#define SIOCSESPNONBLOCK _SIOC(0x00F0)
+
+/**
  *  @brief WiFi class
  *
  *  Encapsulate the properties and methods required to provide the
@@ -1121,6 +1127,15 @@ private:
     static StatusCodes::StatusCodes GetSendReceiveBuffer(const int socket, const int level, const int optionName, Esp32Messaging::GetSockOptResponse &response);
 
     /**
+     * @brief Process the SO_ERROR get socket option (pending socket error).
+     *
+     * Needed for non-blocking connect: after the socket polls writable the F7/.NET
+     * reads SO_ERROR to get the final connect result (0 = success). The value is an
+     * errno, so it is translated ESP->NuttX before being returned.
+     */
+    static StatusCodes::StatusCodes GetErrorOption(const int socket, const int level, const int optionName, Esp32Messaging::GetSockOptResponse &response);
+
+    /**
      *  @brief Provide a mechanism for the STM32 to call the getsockopt method.
      */
     static void GetSockOpt(void * const vpMessage);
@@ -1251,6 +1266,11 @@ private:
      *  @brief Provide a mechanism for the STM32 to call the listen method.
      */
     static void Listen(void * const vpMessage);
+
+    /**
+     *  @brief Provide a mechanism for the STM32 to call the shutdown method.
+     */
+    static void Shutdown(void * const vpMessage);
 
     /**
      * @brief Process the accept request from the STM32.
