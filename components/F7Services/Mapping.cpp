@@ -80,20 +80,24 @@ Mapping::int_mapping_t Mapping::_socketTypes[] = {{1, SOCK_STREAM}, {2, SOCK_DGR
 /**
  *  @brief Map the STM32 socket option levels to ESP32 socket option levels.
  *
- *  STM value is first, ESP value second.  NuttX 12 uses the Linux levels
- *  (since NuttX 10.0, upstream commit b296adc3bb2, "socket/SOL: sync the SOL
- *  index with linux"): SOL_SOCKET is 1, SOL_IP is IPPROTO_IP (0) and SOL_TCP is
- *  IPPROTO_TCP (6).  NuttX 7 used 0 for SOL_SOCKET and 3 for SOL_TCP.
+ *  STM value is first, ESP value second.  The STM values are the NuttX 7
+ *  levels, which are the wire format for both Meadow.OS versions: SOL_SOCKET 0,
+ *  SOL_IP 1, SOL_TCP 3 and SOL_UDP 4, with IPPROTO_TCP (6) and IPPROTO_UDP (17)
+ *  also accepted as levels.  NuttX 12 renumbered the levels (SOL_SOCKET 1,
+ *  SOL_IP 0), and the same number means different levels in the two versions,
+ *  so a NuttX 12 OS converts its levels to these values before sending them
+ *  (espcp_mapping.c in Meadow.OS).
  */
-Mapping::int_mapping_t Mapping::_socketLevels[] = {{1, SOL_SOCKET}, {0, IPPROTO_IP}, {6, IPPROTO_TCP}};
+Mapping::int_mapping_t Mapping::_socketLevels[] = {{0, SOL_SOCKET}, {1, IPPROTO_IP}, {3, IPPROTO_TCP}, {4, IPPROTO_UDP}, {6, IPPROTO_TCP}, {17, IPPROTO_UDP}};
 
 /**
  *  @brief Map the STM32 error codes to ESP32 error codes.
  *
- *  STM value is first, ESP value second.  The STM values are the NuttX 12
- *  errno values (nuttx/include/errno.h), which follow Linux asm-generic since
- *  NuttX 12.0 (upstream commit 153060d34dd, "Update errno to match
- *  asm-generic").  Earlier versions of this table used the NuttX 7 numbers.
+ *  STM value is first, ESP value second.  The STM values are the wire format
+ *  for both Meadow.OS versions: the NuttX 7 errno numbering, which is the same
+ *  as newlib's, so this table is the identity for every value it lists.  NuttX
+ *  12 renumbered errno (upstream 153060d34dd), so a NuttX 12 OS converts these
+ *  values to its own when it receives them (espcp_mapping.c in Meadow.OS).
  */
 Mapping::int_mapping_t Mapping::_errno[] = {
     {1, EPERM},
@@ -131,29 +135,29 @@ Mapping::int_mapping_t Mapping::_errno[] = {
     {32, EPIPE},
     {33, EDOM},
     {34, ERANGE},
-    {42, ENOMSG},
-    {43, EIDRM},
+    {35, ENOMSG},
+    {36, EIDRM},
     /*
-    { 44, ECHRNG },
-    { 45, EL2NSYNC },
-    { 46, EL3HLT },
-    { 47, EL3RST },
-    { 48, ELNRNG },
-    { 49, EUNATCH },
-    { 50, ENOCSI },
-    { 51, EL2HLT },
+    { 37, ECHRNG },
+    { 38, EL2NSYNC },
+    { 39, EL3HLT },
+    { 40, EL3RST },
+    { 41, ELNRNG },
+    { 42, EUNATCH },
+    { 43, ENOCSI },
+    { 44, EL2HLT },
     */
-    {35, EDEADLK},
-    {37, ENOLCK},
+    {45, EDEADLK},
+    {46, ENOLCK},
     /*
-    { 52, EBADE },
-    { 53, EBADR },
-    { 54, EXFULL },
-    { 55, ENOANO },
-    { 56, EBADRQC },
-    { 57, EBADSLT },
-    { 35, EDEADLOCK },
-    { 59, EBFONT },
+    { 50, EBADE },
+    { 51, EBADR },
+    { 52, EXFULL },
+    { 53, ENOANO },
+    { 54, EBADRQC },
+    { 55, EBADSLT },
+    { 56, EDEADLOCK },
+    { 57, EBFONT },
     */
     {60, ENOSTR},
     {61, ENODATA},
@@ -171,70 +175,70 @@ Mapping::int_mapping_t Mapping::_errno[] = {
     { 70, ECOMM },
     */
     {71, EPROTO},
-    {72, EMULTIHOP},
+    {74, EMULTIHOP},
     /*
-    { 134, ELBIN },
-    { 73, EDOTDOT },
+    { 75, ELBIN },
+    { 76, EDOTDOT },
     */
-    {74, EBADMSG},
-    {135, EFTYPE},
+    {77, EBADMSG},
+    {79, EFTYPE},
     /*
-    { 76, ENOTUNIQ },
-    { 77, EBADFD },
-    { 78, EREMCHG },
-    { 79, ELIBACC },
-    { 80, ELIBBAD },
-    { 81, ELIBSCN },
-    { 82, ELIBMAX },
-    { 83, ELIBEXEC },
-    { 38, ENOSYS },
-    { 136, ENMFILE },
+    { 80, ENOTUNIQ },
+    { 81, EBADFD },
+    { 82, EREMCHG },
+    { 83, ELIBACC },
+    { 84, ELIBBAD },
+    { 85, ELIBSCN },
+    { 86, ELIBMAX },
+    { 87, ELIBEXEC },
+    { 88, ENOSYS },
+    { 89, ENMFILE },
     */
-    {39, ENOTEMPTY},
-    {36, ENAMETOOLONG},
-    {40, ELOOP},
+    {90, ENOTEMPTY},
+    {91, ENAMETOOLONG},
+    {92, ELOOP},
     {95, EOPNOTSUPP},
     {96, EPFNOSUPPORT},
     {104, ECONNRESET},
     {105, ENOBUFS},
-    {97, EAFNOSUPPORT},
-    {91, EPROTOTYPE},
-    {88, ENOTSOCK},
-    {92, ENOPROTOOPT},
-    {108, ESHUTDOWN},
+    {106, EAFNOSUPPORT},
+    {107, EPROTOTYPE},
+    {108, ENOTSOCK},
+    {109, ENOPROTOOPT},
+    {110, ESHUTDOWN},
     {111, ECONNREFUSED},
-    {98, EADDRINUSE},
-    {103, ECONNABORTED},
-    {101, ENETUNREACH},
-    {100, ENETDOWN},
-    {110, ETIMEDOUT},
-    {112, EHOSTDOWN},
-    {113, EHOSTUNREACH},
-    {115, EINPROGRESS},
-    {114, EALREADY},
-    {89, EDESTADDRREQ},
-    {90, EMSGSIZE},
-    {93, EPROTONOSUPPORT},
-    // { 94, ESOCKTNOSUPPORT },
-    {99, EADDRNOTAVAIL},
-    {102, ENETRESET},
-    {106, EISCONN},
-    {107, ENOTCONN},
-    {109, ETOOMANYREFS},
-    // { 137, EPROCLIM },
-    // { 87, EUSERS },
-    {122, EDQUOT},
-    {116, ESTALE},
-    {138, ENOTSUP},
-    // { 123, ENOMEDIUM },
-    // { 139, ENOSHARE },
-    // { 140, ECASECLASH },
-    {84, EILSEQ},
-    {75, EOVERFLOW},
-    {125, ECANCELED},
-    {131, ENOTRECOVERABLE},
-    {130, EOWNERDEAD}
-    // { 86, ESTRPIPE }
+    {112, EADDRINUSE},
+    {113, ECONNABORTED},
+    {114, ENETUNREACH},
+    {115, ENETDOWN},
+    {116, ETIMEDOUT},
+    {117, EHOSTDOWN},
+    {118, EHOSTUNREACH},
+    {119, EINPROGRESS},
+    {120, EALREADY},
+    {121, EDESTADDRREQ},
+    {122, EMSGSIZE},
+    {123, EPROTONOSUPPORT},
+    // { 124, ESOCKTNOSUPPORT },
+    {125, EADDRNOTAVAIL},
+    {126, ENETRESET},
+    {127, EISCONN},
+    {128, ENOTCONN},
+    {129, ETOOMANYREFS},
+    // { 130, EPROCLIM },
+    // { 131, EUSERS },
+    {132, EDQUOT},
+    {133, ESTALE},
+    {134, ENOTSUP},
+    // { 135, ENOMEDIUM },
+    // { 136, ENOSHARE },
+    // { 137, ECASECLASH },
+    {138, EILSEQ},
+    {139, EOVERFLOW},
+    {140, ECANCELED},
+    {141, ENOTRECOVERABLE},
+    {142, EOWNERDEAD}
+    // { 143, ESTRPIPE }
 };
 
 /**
