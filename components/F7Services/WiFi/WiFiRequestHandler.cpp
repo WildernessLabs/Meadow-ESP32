@@ -2845,8 +2845,7 @@ static const char *DisconnectReasonName(uint8_t reason)
 void WiFiRequestHandler::StationDisconnectedEvent(wifi_event_sta_disconnected_t *eventData)
 {
     TRACE_MESSAGE("StationDisconnectedEvent: Enter");
-    TRACE_MESSAGE("StationDisconnectedEvent: Reason %u (%s), RSSI %d", static_cast<unsigned>(eventData->reason),
-                  DisconnectReasonName(eventData->reason), static_cast<int>(eventData->rssi));
+    TRACE_MESSAGE("StationDisconnectedEvent: Reason %u (%s), RSSI %d", static_cast<unsigned>(eventData->reason), DisconnectReasonName(eventData->reason), static_cast<int>(eventData->rssi));
 
     {
         MutexLock lock(EventStateMutex());
