@@ -2798,6 +2798,48 @@ void WiFiRequestHandler::StationConnectedEvent(wifi_event_sta_connected_t *event
 }
 
 /**
+ *  @brief Name of a WiFi disconnect reason, for the log.
+ *
+ *  Only used by TRACE_MESSAGE(), which expands to nothing without TRACE_MESSAGES, so it is
+ *  marked [[maybe_unused]].
+ *
+ *  @param reason
+ *      Reason code from the disconnected event (wifi_err_reason_t).
+ *
+ *  @return Name of the reason, or "other" for a code that is not one of the common ones.
+ */
+[[maybe_unused]] static const char *DisconnectReasonName(uint8_t reason)
+{
+    switch (reason)
+    {
+        case WIFI_REASON_UNSPECIFIED:
+            return "UNSPECIFIED";
+        case WIFI_REASON_AUTH_EXPIRE:
+            return "AUTH_EXPIRE";
+        case WIFI_REASON_AUTH_LEAVE:
+            return "AUTH_LEAVE";
+        case WIFI_REASON_ASSOC_LEAVE:
+            return "ASSOC_LEAVE";
+        case WIFI_REASON_4WAY_HANDSHAKE_TIMEOUT:
+            return "4WAY_HANDSHAKE_TIMEOUT";
+        case WIFI_REASON_BEACON_TIMEOUT:
+            return "BEACON_TIMEOUT";
+        case WIFI_REASON_NO_AP_FOUND:
+            return "NO_AP_FOUND";
+        case WIFI_REASON_AUTH_FAIL:
+            return "AUTH_FAIL";
+        case WIFI_REASON_ASSOC_FAIL:
+            return "ASSOC_FAIL";
+        case WIFI_REASON_HANDSHAKE_TIMEOUT:
+            return "HANDSHAKE_TIMEOUT";
+        case WIFI_REASON_CONNECTION_FAIL:
+            return "CONNECTION_FAIL";
+        default:
+            return "other";
+    }
+}
+
+/**
  *  @brief Process the WiFi disconnected event.
  *
  *  @param eventData
@@ -2806,6 +2848,7 @@ void WiFiRequestHandler::StationConnectedEvent(wifi_event_sta_connected_t *event
 void WiFiRequestHandler::StationDisconnectedEvent(wifi_event_sta_disconnected_t *eventData)
 {
     TRACE_MESSAGE("StationDisconnectedEvent: Enter");
+    TRACE_MESSAGE("StationDisconnectedEvent: Reason %u (%s), RSSI %d", static_cast<unsigned>(eventData->reason), DisconnectReasonName(eventData->reason), static_cast<int>(eventData->rssi));
 
     {
         MutexLock lock(EventStateMutex());
