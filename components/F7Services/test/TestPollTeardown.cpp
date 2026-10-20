@@ -128,9 +128,9 @@ public:
     /**
      * @brief Make a poll request, as PollSetup does.
      */
-    static WiFiRequestHandler::ActivePoll *Create(const int descriptor, const int32_t events, const uint32_t requestId)
+    static WiFiRequestHandler::ActivePoll *Create(const int descriptor, const int32_t events, const uint32_t requestId, const int32_t timeoutMs = -1)
     {
-        return (WiFiRequestHandler::CreateActivePoll(descriptor, events, requestId));
+        return (WiFiRequestHandler::CreateActivePoll(descriptor, events, requestId, timeoutMs));
     }
 
     /**
@@ -367,6 +367,36 @@ TEST_CASE("A poll that completes sends its result and removes the request", CLAS
     //
     TEST_ASSERT_EQUAL_INT(0, TestPollTeardown::Teardown(requestId));
     TEST_ASSERT_TRUE(TestPollTeardown::IsOpen(descriptor));
+
+    close(descriptor);
+    TestPollTeardown::Finish();
+}
+
+TEST_CASE("A poll with a timeout ends when it runs out, and sends its result with no events", CLASS_OF_TESTS)
+{
+    TestPollTeardown::Start();
+    const int descriptor = TestPollTeardown::OpenPolledSocket();
+    const uint32_t requestId = 0x0000039a;
+    TestPollTeardown::MessagesSent();
+
+    //
+    //  Nothing is ever sent to the socket, so only the timeout can end the poll.
+    //
+    TestPollTeardown::Poll *activePoll = TestPollTeardown::Create(descriptor, POLLIN, requestId, 300);
+    TEST_ASSERT_NOT_NULL(activePoll);
+    const int wakeSocket = TestPollTeardown::WakeSocket(activePoll);
+    WorkerContext context = {};
+    TestPollTeardown::StartWorker(activePoll, &context);
+    TEST_ASSERT_TRUE_MESSAGE(TestPollTeardown::WaitForWorker(&context), "A poll with a timeout did not end when it ran out.");
+
+    Message *event = TestPollTeardown::NextMessage();
+    TEST_ASSERT_NOT_NULL_MESSAGE(event, "A poll that timed out did not send the STM32 its result.");
+    TEST_ASSERT_EQUAL_UINT8(MessageTypes::Event, event->MessageType);
+    TEST_ASSERT_EQUAL_UINT32(WiFiFunction::InterruptPollResponse, event->Function);
+    Message::DeleteMessage(event);
+
+    TEST_ASSERT_EQUAL_UINT32_MESSAGE(0, TestPollTeardown::ActiveRequests(), "A poll that timed out was left in the list.");
+    TEST_ASSERT_FALSE_MESSAGE(TestPollTeardown::IsOpen(wakeSocket), "The worker left the wake socket open.");
 
     close(descriptor);
     TestPollTeardown::Finish();

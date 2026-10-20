@@ -3649,10 +3649,13 @@ void WiFiRequestHandler::DumpActivePollRequests()
  *  @param requestId
  *      Message ID of the setup request, which names the request.
  *
+ *  @param timeoutMs
+ *      How long to poll, in milliseconds.  Zero or less polls until the socket has an event.
+ *
  *  @returns
  *      The request, nullptr if it could not be made or there is already one with this ID.
  */
-WiFiRequestHandler::ActivePoll *WiFiRequestHandler::CreateActivePoll(const int descriptor, const int32_t events, const uint32_t requestId)
+WiFiRequestHandler::ActivePoll *WiFiRequestHandler::CreateActivePoll(const int descriptor, const int32_t events, const uint32_t requestId, const int32_t timeoutMs)
 {
     ActivePoll *activePoll = static_cast<ActivePoll *>(pvPortMalloc(sizeof(ActivePoll)));
     if (activePoll == nullptr)
@@ -3676,6 +3679,7 @@ WiFiRequestHandler::ActivePoll *WiFiRequestHandler::CreateActivePoll(const int d
     }
 
     activePoll->RequestId = requestId;
+    activePoll->TimeoutMs = (timeoutMs > 0) ? timeoutMs : -1;
     activePoll->Descriptors[POLL_FD_INDEX].fd = descriptor;
     activePoll->Descriptors[POLL_FD_INDEX].events = static_cast<uint16_t>(events & 0xffff);
     activePoll->Descriptors[POLL_DUMMY_FD_INDEX].fd = wakeSocket;
@@ -3719,7 +3723,7 @@ int WiFiRequestHandler::PollSetup(void * const vpMessage)
     Mapping::GetEspFlagValue(Mapping::PollEvents, request->Events, &events);
     TRACE_MESSAGE("Poll: Requested Nuttx events 0x%04x maps to ESP events 0x%04x", request->Events, (uint) events);
 
-    ActivePoll *activePoll = CreateActivePoll(descriptor, events, request->SetupMessageId);
+    ActivePoll *activePoll = CreateActivePoll(descriptor, events, request->SetupMessageId, request->Timeout);
     if (activePoll == nullptr)
     {
         return (-1);
@@ -3866,7 +3870,15 @@ void WiFiRequestHandler::PollSocket(void * const activePollPointer)
 
     if (!cancelledBeforeStart)
     {
-        response.Result = poll(activePoll->Descriptors, 2, -1);
+        //
+        //  A poll whose time runs out returns 0 with no events, which is reported to the STM32 like any other
+        //  result, so the worker is released even if the teardown never arrives.
+        //
+        response.Result = poll(activePoll->Descriptors, 2, activePoll->TimeoutMs);
+        if (response.Result == 0)
+        {
+            TRACE_MESSAGE("PollSocket: Poll for request 0x%08x timed out after %ld ms", (uint) activePoll->RequestId, (long) activePoll->TimeoutMs);
+        }
         if (response.Result < 0)
         {
             response.ResponseErrno = Mapping::NuttxErrno(errno);
