@@ -622,6 +622,14 @@ private:
          *  @brief Set by a teardown that stopped waiting, leaving the worker to free the request.
          */
         bool Abandoned;
+
+        /**
+         *  @brief How long the worker polls, in milliseconds, or -1 to poll until the socket has an event.
+         *
+         *  Taken from the setup request.  When it runs out, the poll ends with no events and the worker reports
+         *  that to the STM32, which frees the worker of a poll whose teardown was lost.
+         */
+        int32_t TimeoutMs;
     };
 
     /**
@@ -1249,7 +1257,7 @@ private:
     /**
      *  @brief Make a poll request with its wake socket and add it to the active requests.
      */
-    static ActivePoll *CreateActivePoll(const int descriptor, const int32_t events, const uint32_t requestId);
+    static ActivePoll *CreateActivePoll(const int descriptor, const int32_t events, const uint32_t requestId, const int32_t timeoutMs = -1);
 
     /**
      *  @brief Close the wake socket of a poll request and free the request.
