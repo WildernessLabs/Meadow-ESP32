@@ -2800,12 +2800,15 @@ void WiFiRequestHandler::StationConnectedEvent(wifi_event_sta_connected_t *event
 /**
  *  @brief Name of a WiFi disconnect reason, for the log.
  *
+ *  Only used by TRACE_MESSAGE(), which expands to nothing without TRACE_MESSAGES, so it is
+ *  marked [[maybe_unused]].
+ *
  *  @param reason
  *      Reason code from the disconnected event (wifi_err_reason_t).
  *
  *  @return Name of the reason, or "other" for a code that is not one of the common ones.
  */
-static const char *DisconnectReasonName(uint8_t reason)
+[[maybe_unused]] static const char *DisconnectReasonName(uint8_t reason)
 {
     switch (reason)
     {
