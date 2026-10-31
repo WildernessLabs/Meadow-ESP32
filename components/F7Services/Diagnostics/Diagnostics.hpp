@@ -26,6 +26,14 @@ private:
     static constexpr uint32_t TASK_STACK_SIZE = 8192;
 
     /**
+     *  @brief Priority of the diagnostics task.
+     *
+     *  Just above idle, so that taking a report does not displace the tasks being measured.
+     *  It used to be 5, above several of them.
+     */
+    static constexpr UBaseType_t TASK_PRIORITY = tskIDLE_PRIORITY + 1;
+
+    /**
      *  @brief Extra entries allocated in the task array, for tasks created between counting
      *         the tasks and reading their state.
      */
