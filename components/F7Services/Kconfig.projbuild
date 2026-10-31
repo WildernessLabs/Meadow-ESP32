@@ -41,6 +41,14 @@ menu "Meadow COMMS Project Build Configuration"
             Number of records that can be stored in the trace buffer.  This is used to store information
             about heap memory allocations and deallocations in order to attempt to detect memory leaks.
 
+    config MEADOW_METRICS
+        bool "Keep metrics (counters, gauges and latency histograms)"
+        default y
+        help
+            Keeps counters, gauges and histograms of request latency and handler time in
+            every build, release included.  Recording one is a few atomic operations on
+            statically allocated memory.  Turn it off to compile the calls away.
+
     config MEADOW_SYSVIEW_EVENTS
         bool "Record Meadow events in SystemView traces"
         depends on APPTRACE_SV_ENABLE
