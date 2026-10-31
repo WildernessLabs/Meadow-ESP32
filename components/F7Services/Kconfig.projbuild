@@ -32,15 +32,6 @@ menu "Meadow COMMS Project Build Configuration"
             when a debugger is attached and reporting the heap component at the INFO logging
             level.
 
-    config HOOK_REGISTER_SIZE
-        int "Hook register size"
-        range 1000 10000
-        default 4000
-        depends on HEAP_USE_HOOKS
-        help
-            Number of pointers that can be stored in the hook register.  This is used to store information
-            about heap memory allocations and deallocations in order to attempt to detect double frees.
-
     config TRACE_RECORD_NUM
         int "Number of standalone trace records"
         range 10 500
@@ -49,16 +40,4 @@ menu "Meadow COMMS Project Build Configuration"
         help
             Number of records that can be stored in the trace buffer.  This is used to store information
             about heap memory allocations and deallocations in order to attempt to detect memory leaks.
-
-    config ENABLE_DETAILED_TASK_DIAGNOSTICS
-        bool "Enable detailed task diagnostics"
-        default n
-        help
-            This option enables detailed task diagnostics to monitor task performance and detect issues.
-
-    config ENABLE_PERFORMANCE_LOGGING
-        bool "Enable performance logging"
-        default n
-        help
-            This option enables performance logging to track system metrics.
 endmenu
