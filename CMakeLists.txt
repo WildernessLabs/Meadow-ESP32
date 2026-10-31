@@ -27,6 +27,14 @@ if (DEBUG EQUAL 1)
     message(STATUS "Enabling debug mode.")
     list(APPEND SDKCONFIG_FILES "\;sdkconfig.develop")
 endif()
+#
+#   SystemView tracing (build.sh --sysview) is merged last so that it can add to either
+#   configuration.
+#
+if (SYSVIEW EQUAL 1)
+    message(STATUS "Enabling SystemView tracing.")
+    list(APPEND SDKCONFIG_FILES "\;sdkconfig.sysview")
+endif()
 set(SDKCONFIG_DEFAULTS ${SDKCONFIG_FILES})
 
 #

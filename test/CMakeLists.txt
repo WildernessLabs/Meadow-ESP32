@@ -21,6 +21,15 @@ set(EXTRA_COMPONENT_DIRS "../components")
 #
 file(REMOVE sdkconfig)
 set(SDKCONFIG_FILES "sdkconfig.defaults\;../sdkconfig.develop\;sdkconfig.develop")
+
+#
+#   SystemView tracing (build.sh --sysview) uses the same partial file as the application,
+#   merged last.
+#
+if (SYSVIEW EQUAL 1)
+    message(STATUS "Enabling SystemView tracing.")
+    set(SDKCONFIG_FILES "${SDKCONFIG_FILES}\;../sdkconfig.sysview")
+endif()
 set(SDKCONFIG_DEFAULTS ${SDKCONFIG_FILES})
 
 # Set the components to include the tests for.

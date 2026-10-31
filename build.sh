@@ -91,6 +91,9 @@ case $i in
     -pl|--performancelogging)
     IDF_DEFINES+=" -DPERFORMANCE_LOGGING=1"
     ;;
+    --sysview)
+    IDF_DEFINES+=" -DSYSVIEW=1"
+    ;;
     --develop)
     IDF_DEFINES+=" -DDEBUG=1"
     ;;
@@ -151,6 +154,8 @@ if $HELP; then
     echo "--sbom                  Generate a Software Bill of Materials (SBOM) in SPDX format."
     echo "-d=* | --debug=*        Turn on debug for selected system(s). Valid values (comma separated): WIFI, SPI, BT, SYSTEM."
     echo "--develop               Enable development mode (adds -DDEVELOP=1 to the build)"
+    echo "--sysview               Build with SEGGER SystemView tracing over JTAG (merges sdkconfig.sysview)."
+    echo "                        Use with --fullclean when changing to or from a SystemView build."
     echo ""
     exit 0
 fi
