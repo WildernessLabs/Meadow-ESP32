@@ -25,14 +25,6 @@
 #define CLASS_OF_TESTS "[Diagnostics][Emulated]"
 
 /**
- * @brief Class of the tests in this file that need a board.
- *
- * Under QEMU the run-time counters stay at zero even with the statistics turned on, so the
- * busy task test can only show anything on hardware.
- */
-#define CLASS_OF_HARDWARE_TESTS "[Diagnostics][HardwareOnly]"
-
-/**
  * @brief Time the busy task spends running, in microseconds.
  */
 #define BUSY_TIME_US 200000
@@ -137,7 +129,7 @@ static void BusyTask(void *parameters)
     vTaskSuspend(nullptr);
 }
 
-TEST_CASE("Run-time statistics count the CPU time a busy task uses", CLASS_OF_HARDWARE_TESTS)
+TEST_CASE("Run-time statistics count the CPU time a busy task uses", CLASS_OF_TESTS)
 {
     _busyTaskFinished = xSemaphoreCreateBinary();
     TEST_ASSERT_NOT_NULL(_busyTaskFinished);
@@ -145,6 +137,17 @@ TEST_CASE("Run-time statistics count the CPU time a busy task uses", CLASS_OF_HA
     TaskHandle_t busyTask = nullptr;
     TEST_ASSERT_EQUAL(pdPASS, xTaskCreatePinnedToCore(BusyTask, "BusyTask", 2048, nullptr, 1, &busyTask, 1));
     TEST_ASSERT_EQUAL_MESSAGE(pdTRUE, xSemaphoreTake(_busyTaskFinished, pdMS_TO_TICKS(5000)), "The busy task did not finish.");
+
+    //
+    //  A task's run time is only added to its counter when it is switched out, and nothing
+    //  switches the busy task out until it suspends itself.  Reading the counter as soon as
+    //  the semaphore arrives can catch it still running with nothing yet counted.
+    //
+    for (int attempt = 0; (attempt < 100) && (eTaskGetState(busyTask) != eSuspended); attempt++)
+    {
+        vTaskDelay(pdMS_TO_TICKS(10));
+    }
+    TEST_ASSERT_EQUAL_MESSAGE(eSuspended, eTaskGetState(busyTask), "The busy task did not suspend itself.");
 
     TaskStatus_t status;
     vTaskGetInfo(busyTask, &status, pdFALSE, eInvalid);
