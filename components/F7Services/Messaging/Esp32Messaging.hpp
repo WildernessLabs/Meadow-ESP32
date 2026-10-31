@@ -67,6 +67,13 @@ struct Message
 #endif
 
     /**
+     *  Time the whole request arrived from the STM32 (esp_timer_get_time), 0 for a message that
+     *  did not start as a request.  A handler that recycles the request as its response keeps it,
+     *  so the time to the STM32 acknowledging the response can be measured.
+     */
+    int64_t ReceivedTime;
+
+    /**
      *  @brief Size of an encoded message header (in bytes).
      */
     static const uint32_t HEADER_SIZE = 27;

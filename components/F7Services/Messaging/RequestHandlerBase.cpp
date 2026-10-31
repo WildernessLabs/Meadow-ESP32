@@ -16,6 +16,7 @@
 
 #include "Encoders.hpp"
 #include "RequestHandlerBase.hpp"
+#include "Metrics.hpp"
 #include "Profile.hpp"
 #include "Logging.hpp"
 #include "MessageDispatcher.hpp"
@@ -125,6 +126,9 @@ void RequestHandlerBase::Task(void *pvParameters)
             //  request as the response, which may be sent and deleted before it returns.
             //
             ProfileSpan span(ProfileEvent::HandleRequest, ProfileEvent::HandleRequestDone, message->MessageID, message->Interface, message->Function);
+            MetricHistogram handlerTime = MetricHistogram::NumberOfHistograms;
+            const bool timed = Metrics::HandlerTimeFor(message->Interface, handlerTime);
+            MetricTimer timer(handlerTime, timed);
             sender->DispatchRequest(message);
         }
     }
