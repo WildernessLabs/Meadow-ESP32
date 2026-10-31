@@ -94,6 +94,9 @@ case $i in
     --sysview)
     IDF_DEFINES+=" -DSYSVIEW=1"
     ;;
+    --heaptrace)
+    IDF_DEFINES+=" -DHEAPTRACE=1"
+    ;;
     --develop)
     IDF_DEFINES+=" -DDEBUG=1"
     ;;
@@ -156,6 +159,7 @@ if $HELP; then
     echo "--develop               Enable development mode (adds -DDEVELOP=1 to the build)"
     echo "--sysview               Build with SEGGER SystemView tracing over JTAG (merges sdkconfig.sysview)."
     echo "                        Use with --fullclean when changing to or from a SystemView build."
+    echo "--heaptrace             With --sysview, send every allocation and free to the host (merges sdkconfig.heaptrace)."
     echo ""
     exit 0
 fi

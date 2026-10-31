@@ -1,0 +1,20 @@
+#
+#   Heap tracing to the host.
+#
+#   Merged after sdkconfig.sysview when build.sh (or test/build.sh) is given --heaptrace as
+#   well as --sysview.  Every allocation and free is sent, with the addresses of the
+#   functions that made it, as a SystemView event while a capture is running.  ESP-IDF's
+#   sysviewtrace_proc.py turns a capture into a list of the allocations never freed.  See
+#   Documentation/Diagnostics.md.
+#
+#   This replaces the standalone tracing sdkconfig.develop turns on, which keeps a limited
+#   number of records on the ESP32 instead.
+#
+# CONFIG_HEAP_TRACING_STANDALONE is not set
+CONFIG_HEAP_TRACING_TOHOST=y
+
+#
+#   Number of callers recorded with each allocation.  Each one adds four bytes to every
+#   event, so more of them fill the trace buffer sooner.
+#
+CONFIG_HEAP_TRACING_STACK_DEPTH=4
