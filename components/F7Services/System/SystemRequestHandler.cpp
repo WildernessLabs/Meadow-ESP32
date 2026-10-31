@@ -135,10 +135,10 @@ SystemRequestHandler::SystemRequestHandler(IMessageDispatcher *messageDispatcher
     _fileSystem->Setup();
     _coreDump = new CoreDump(_messageDispatcher);
 
-#if defined(CONFIG_ENABLE_DIAGNOSTIC_THREAD)
-    Diagnostics::Setup();
+#if CONFIG_MEADOW_DIAGNOSTICS_PERIOD_MS > 0
+    Diagnostics::Setup(CONFIG_MEADOW_DIAGNOSTICS_PERIOD_MS);
 #endif
-#if defined(CONFIG_ENABLE_DIAGNOSTIC_THREAD) || defined(CONFIG_HEAP_TRACING_TOHOST)
+#if defined(CONFIG_HEAP_TRACING_TOHOST)
     Heap::Setup();
 #endif
 }

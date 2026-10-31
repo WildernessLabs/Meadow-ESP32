@@ -154,10 +154,6 @@ void Logging::Setup()
     //
     uart_driver_install(LOGGING_UART_PORT_NUMBER, RX_BUFFER_SIZE * 2, 0, 0, nullptr, 0);
 
-#if defined(CONFIG_ENABLE_DIAGNOSTIC_THREAD)
-    esp_log_level_set(Diagnostics::COMPONENT_NAME, ESP_LOG_INFO);
-#endif
-
 #if defined(CONFIG_ENABLE_HEAP_INTEGRITY_CHECKS)
     #pragma message "Heap integrity checks enabled, setting heap logging level to INFO."
     esp_log_level_set(Heap::COMPONENT_NAME, ESP_LOG_INFO);

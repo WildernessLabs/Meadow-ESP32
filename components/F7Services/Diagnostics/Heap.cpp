@@ -153,32 +153,6 @@ void Heap::HostTracingTask(void *parameters)
 #endif
 
 /**
- * @brief Report comprehensive heap information.
- */
-void Heap::ReportUsage()
-{
-    ESP_LOGI(COMPONENT_NAME, "Memory Usage");
-    //
-    //  The integrity check walks every block of every heap under the heap locks, so it is
-    //  only run when the integrity checks are configured, like every other caller of it.
-    //
-#if defined(CONFIG_ENABLE_HEAP_INTEGRITY_CHECKS)
-    ESP_LOGI(COMPONENT_NAME, "Heap integrity check: %s", CheckIntegrity() ? "PASS" : "FAILED");
-#endif
-
-    multi_heap_info_t heap_info;
-    heap_caps_get_info(&heap_info, MALLOC_CAP_DEFAULT);
-
-    ESP_LOGI(COMPONENT_NAME, "Total heap: %s bytes", Utils::NumberWithCommas((uint64_t) (heap_info.total_allocated_bytes + heap_info.total_free_bytes)).c_str());
-    ESP_LOGI(COMPONENT_NAME, "Free heap: %s bytes", Utils::NumberWithCommas((uint64_t) heap_info.total_free_bytes).c_str());
-    ESP_LOGI(COMPONENT_NAME, "Allocated heap: %s bytes", Utils::NumberWithCommas((uint64_t) heap_info.total_allocated_bytes).c_str());
-    ESP_LOGI(COMPONENT_NAME, "Free blocks: %s", Utils::NumberWithCommas((uint64_t) heap_info.free_blocks).c_str());
-    ESP_LOGI(COMPONENT_NAME, "Largest free block: %s bytes", Utils::NumberWithCommas((uint64_t) heap_info.largest_free_block).c_str());
-    ESP_LOGI(COMPONENT_NAME, "Minimum free heap: %s bytes", Utils::NumberWithCommas((uint64_t) esp_get_minimum_free_heap_size()).c_str());
-    ESP_LOGI(COMPONENT_NAME, "Heap fragmentation: %" PRIu32 "%%", heap_info.total_free_bytes ? (100 - (heap_info.largest_free_block * 100) / heap_info.total_free_bytes) : 0);
-}
-
-/**
  * @brief Check heap integrity and report any issues.
  *
  * @return true if heap is valid, false if corruption detected
@@ -316,66 +290,3 @@ void Heap::ReportStatistics()
 
     TRACE_MESSAGE("ReportStatistics: Exit");
 }
-
-#if defined(CONFIG_HEAP_TASK_TRACKING)
-
-/**
- * @brief Report heap usage by task.
- *
- * This method reports the heap usage for each task in the system.
- */
-void Heap::ReportHeapUseByTask()
-{
-    //
-    //  These used to be called as the argument of assert(), so a failure, such as running
-    //  short of memory for the arrays, aborted the device from inside a diagnostic report,
-    //  and a build with NDEBUG and CONFIG_COMPILER_ASSERT_NDEBUG_EVALUATE off would not have
-    //  called them at all.  A failure is now reported and the report skipped.  The
-    //  allocation can fail after allocating some of its three arrays, and it clears the
-    //  pointers first, so freeing is safe on either path.
-    //
-    heap_all_tasks_stat_t allTasksStatistics;
-    esp_err_t result = heap_caps_alloc_all_task_stat_arrays(&allTasksStatistics);
-    if (result != ESP_OK)
-    {
-        ESP_LOGE(COMPONENT_NAME, "Cannot allocate memory for the heap use by task: %s", esp_err_to_name(result));
-        heap_caps_free_all_task_stat_arrays(&allTasksStatistics);
-        return;
-    }
-    result = heap_caps_get_all_task_stat(&allTasksStatistics);
-    if (result != ESP_OK)
-    {
-        ESP_LOGE(COMPONENT_NAME, "Cannot read the heap use by task: %s", esp_err_to_name(result));
-        heap_caps_free_all_task_stat_arrays(&allTasksStatistics);
-        return;
-    }
-
-    ESP_LOGI(COMPONENT_NAME, "--------------------------------------------------------------------------------");
-    ESP_LOGI(COMPONENT_NAME, "                        Printing All Tasks Information\n");
-    ESP_LOGI(COMPONENT_NAME, "--------------------------------------------------------------------------------");
-    for (size_t task_idx = 0; task_idx < allTasksStatistics.task_count; task_idx++)
-    {
-        task_stat_t taskStatistics = allTasksStatistics.stat_arr[task_idx];
-        ESP_LOGI(COMPONENT_NAME, "%s: %s: Peak Usage %" PRIu16 ", Current Usage %" PRIu16, taskStatistics.name, taskStatistics.is_alive ? "ALIVE  " : "DELETED", taskStatistics.overall_peak_usage, taskStatistics.overall_current_usage);
-
-        for (size_t heapIndex = 0; heapIndex < taskStatistics.heap_count; heapIndex++)
-        {
-            heap_stat_t heapStatistics = taskStatistics.heap_stat[heapIndex];
-            ESP_LOGI(
-                COMPONENT_NAME, "    %s: Caps: %" PRIu32 ". Size %" PRIu16 ", Current Usage %" PRIu16 ", Peak Usage %" PRIu16 ", alloc count %" PRIu16, heapStatistics.name, heapStatistics.caps, heapStatistics.size, heapStatistics.current_usage, heapStatistics.peak_usage, heapStatistics.alloc_count);
-
-            for (size_t allocationIndex = 0; allocationIndex < heapStatistics.alloc_count; allocationIndex++)
-            {
-                heap_task_block_t allocation = heapStatistics.alloc_stat[allocationIndex];
-                ESP_LOGI(COMPONENT_NAME, "        %p: Size: %" PRIu32, allocation.address, allocation.size);
-            }
-        }
-    }
-    ESP_LOGI(COMPONENT_NAME, "--------------------------------------------------------------------------------");
-    ESP_LOGI(COMPONENT_NAME, "                        End of All Tasks Information\n");
-    ESP_LOGI(COMPONENT_NAME, "--------------------------------------------------------------------------------");
-
-    heap_caps_free_all_task_stat_arrays(&allTasksStatistics);
-}
-
-#endif // CONFIG_HEAP_TASK_TRACKING

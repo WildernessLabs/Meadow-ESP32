@@ -11,27 +11,46 @@
 
 #include <sdkconfig.h>
 
+#include <stddef.h>
 #include <stdint.h>
-#include <string>
 
+#include "esp_heap_caps.h"
 #include "freertos/FreeRTOS.h"
+#include "freertos/semphr.h"
 #include "freertos/task.h"
 
+/**
+ * @brief Takes diagnostic snapshots of the system and writes them as records.
+ *
+ * A snapshot describes the tasks (with the CPU time each has used since the last snapshot),
+ * the load on each core, the heap by kind of memory, the metrics, and the network statistics
+ * when lwIP keeps them.  Each part is written as one line, a record, starting @diag and
+ * holding comma separated values, so the records can be picked out of the log and turned
+ * into tables by tools/diagnostics/parse_diag.py.  All the records of one snapshot carry the
+ * same sequence number.
+ *
+ * Snapshots are taken when asked for, or every CONFIG_MEADOW_DIAGNOSTICS_PERIOD_MS by a low
+ * priority task.
+ */
 class Diagnostics
 {
 private:
     /**
-     *  @brief Stack size for the diagnostics task.
+     *  @brief Stack size for the snapshot task.
      */
-    static constexpr uint32_t TASK_STACK_SIZE = 8192;
+    static constexpr uint32_t TASK_STACK_SIZE = 4096;
 
     /**
-     *  @brief Priority of the diagnostics task.
+     *  @brief Priority of the snapshot task.
      *
-     *  Just above idle, so that taking a report does not displace the tasks being measured.
-     *  It used to be 5, above several of them.
+     *  Just above idle, so that taking a snapshot does not displace the tasks being measured.
      */
     static constexpr UBaseType_t TASK_PRIORITY = tskIDLE_PRIORITY + 1;
+
+    /**
+     *  @brief Shortest period between snapshots, in milliseconds.
+     */
+    static constexpr uint32_t MINIMUM_PERIOD_MS = 1000;
 
     /**
      *  @brief Extra entries allocated in the task array, for tasks created between counting
@@ -79,6 +98,21 @@ private:
     static configRUN_TIME_COUNTER_TYPE _previousTotalRunTime;
 
     /**
+     *  @brief Sequence number of the last snapshot taken, 0 before the first.
+     */
+    static uint32_t _sequence;
+
+    /**
+     *  @brief The snapshot task, nullptr until Setup has made it.
+     */
+    static TaskHandle_t _taskHandle;
+
+    /**
+     *  @brief Period between snapshots in milliseconds, 0 for snapshots only when asked for.
+     */
+    static uint32_t _period;
+
+    /**
      * @brief Run time a task has used since the last report.
      *
      * The counters are unsigned, so the difference is right even when a counter has wrapped
@@ -115,59 +149,114 @@ private:
     friend class TestDiagnostics;
 
     /**
-     *  @brief Lock for controlling access to the members of this class.
+     * @brief Mutex that stops two snapshots being written at once.
+     *
+     * @return The mutex.
      */
-    static SemaphoreHandle_t _outputBinarySemaphore;
+    static SemaphoreHandle_t SnapshotMutex();
 
     /**
-     * @brief Report system uptime information.
+     * @brief The snapshot task: takes a snapshot each period, or when asked.
+     *
+     * @param parameters Not used.
      */
-    static void ReportSystemUptime();
+    static void Task(void *parameters);
 
     /**
-     * @brief Report task information.
+     * @brief Write one record: @diag, then the values formatted as for printf.
+     *
+     * @param format Format of the values.
+     */
+    static void WriteRecord(const char *format, ...) __attribute__((format(printf, 1, 2)));
+
+    /**
+     * @brief Write a record for each task and one for the load on the cores.
+     *
+     * @param sequence Sequence number of the snapshot.
+     */
+    static void WriteTasks(const uint32_t sequence);
+
+    /**
+     * @brief Write a record for each kind of heap memory.
+     *
+     * @param sequence Sequence number of the snapshot.
+     */
+    static void WriteHeap(const uint32_t sequence);
+
+    /**
+     * @brief Write the record for one kind of heap memory.
+     *
+     * @param sequence Sequence number of the snapshot.
+     * @param name Name of the kind of memory.
+     * @param caps Capabilities that select it.
+     */
+    static void WriteHeapRegion(const uint32_t sequence, const char *name, const uint32_t caps);
+
+    /**
+     * @brief Write a record of the heap each task is using (with CONFIG_HEAP_TASK_TRACKING).
+     *
+     * @param sequence Sequence number of the snapshot.
+     */
+    static void WriteTaskHeap(const uint32_t sequence);
+
+    /**
+     * @brief Write a record for each counter, gauge and histogram (with CONFIG_MEADOW_METRICS).
+     *
+     * @param sequence Sequence number of the snapshot.
+     */
+    static void WriteMetrics(const uint32_t sequence);
+
+    /**
+     * @brief Write a record for each network protocol (with CONFIG_LWIP_STATS).
+     *
+     * @param sequence Sequence number of the snapshot.
+     */
+    static void WriteNetwork(const uint32_t sequence);
+
+    /**
+     * @brief Name of a task state, for the records.
      *
      * @param state Task state.
-     * @return Character representation of the task state.
+     * @return Its name.
      */
-    static std::string TaskStateToString(const eTaskState state);
-
-    /**
-     * @brief Translate core ID to string representation.
-     *
-     * @param coreID Core ID to translate.
-     * @return std::string String representation of the core ID.
-     */
-    static std::string TranslateCoreID(const BaseType_t coreID);
-
-    /**
-     * @brief Report task information.
-     */
-    static void ReportTaskInformation();
-
-    /**
-     * @brief FreeRTOS task function for the diagnostics thread.
-     */
-    static void Thread(void *pvParameters);
+    static const char *TaskStateName(const eTaskState state);
 
 public:
     /**
-     * @brief Name of the component / task.
+     * @brief Name of the component; the records are logged under it.
      */
     static const char *COMPONENT_NAME;
 
     /**
-     * @brief Setup the diagnostics system.
+     *  @brief Largest record, in characters, including the @diag prefix.  A longer one is cut.
      */
-    static void Setup();
+    static constexpr size_t RECORD_SIZE = 256;
 
     /**
-     * @brief Lock the output semaphore.
+     * @brief Start the snapshot task.  Calling it again does nothing.
+     *
+     * @param periodMilliseconds Time between snapshots, or 0 to take them only when asked for
+     *                           with RequestSnapshot.  A period below one second is raised to
+     *                           one second.
      */
-    static void LockOutput();
+    static void Setup(const uint32_t periodMilliseconds);
 
     /**
-     * @brief Unlock the output semaphore.
+     * @brief Ask the snapshot task to take a snapshot now.  Does nothing before Setup.
      */
-    static void UnlockOutput();
+    static void RequestSnapshot();
+
+    /**
+     * @brief Take a snapshot now, in the calling task, and write its records.
+     *
+     * @return Sequence number of the snapshot.
+     */
+    static uint32_t TakeSnapshot();
+
+    /**
+     * @brief Sequence number of the last snapshot taken, 0 before the first.
+     *
+     * @return The sequence number.
+     */
+    static uint32_t LastSequence();
 };
