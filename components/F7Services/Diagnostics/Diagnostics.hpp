@@ -32,6 +32,81 @@ private:
     static constexpr UBaseType_t TASK_ARRAY_HEADROOM = 4;
 
     /**
+     *  @brief Number of tasks whose run time is remembered from one report to the next.
+     *
+     *  A task beyond this many is reported with its run time since boot rather than since
+     *  the last report.
+     */
+    static constexpr size_t MAXIMUM_TRACKED_TASKS = 48;
+
+    /**
+     *  @brief Run time a task had used when the last report was made.
+     */
+    struct RunTimeSample
+    {
+        /**
+         *  @brief FreeRTOS task number, unique for the life of the application.
+         */
+        UBaseType_t taskNumber;
+
+        /**
+         *  @brief Run-time counter of the task when the sample was taken.
+         */
+        configRUN_TIME_COUNTER_TYPE runTime;
+    };
+
+    /**
+     *  @brief Run time of each task at the last report.
+     */
+    static RunTimeSample _previousRunTimes[MAXIMUM_TRACKED_TASKS];
+
+    /**
+     *  @brief Number of entries in _previousRunTimes that are in use.
+     */
+    static size_t _numberOfPreviousRunTimes;
+
+    /**
+     *  @brief Total run time (time since boot) at the last report.
+     */
+    static configRUN_TIME_COUNTER_TYPE _previousTotalRunTime;
+
+    /**
+     * @brief Run time a task has used since the last report.
+     *
+     * The counters are unsigned, so the difference is right even when a counter has wrapped
+     * between the two reports.  A task that was not in the last report has used all of its
+     * run time since then.
+     *
+     * @param taskNumber FreeRTOS task number.
+     * @param runTime Run-time counter of the task now.
+     * @return Run time used since the last report.
+     */
+    static configRUN_TIME_COUNTER_TYPE RunTimeSinceLastReport(const UBaseType_t taskNumber, const configRUN_TIME_COUNTER_TYPE runTime);
+
+    /**
+     * @brief Remember the run time of each task for the next report.
+     *
+     * @param tasks Task states read by uxTaskGetSystemState.
+     * @param numberOfTasks Number of entries in tasks.
+     * @param totalRunTime Total run time read by uxTaskGetSystemState.
+     */
+    static void RememberRunTimes(const TaskStatus_t *tasks, const UBaseType_t numberOfTasks, const configRUN_TIME_COUNTER_TYPE totalRunTime);
+
+    /**
+     * @brief Percentage of one core that a run time represents over an interval.
+     *
+     * @param runTime Run time used in the interval.
+     * @param interval Length of the interval in the same units.
+     * @return Percentage, or 0 if the interval is empty.
+     */
+    static uint32_t PercentageOfInterval(const configRUN_TIME_COUNTER_TYPE runTime, const configRUN_TIME_COUNTER_TYPE interval);
+
+    /**
+     * @brief Gives the tests access to the private members.
+     */
+    friend class TestDiagnostics;
+
+    /**
      *  @brief Lock for controlling access to the members of this class.
      */
     static SemaphoreHandle_t _outputBinarySemaphore;
