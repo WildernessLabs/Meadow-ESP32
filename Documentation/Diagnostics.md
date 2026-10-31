@@ -76,9 +76,9 @@ fragmentation (how much of the free heap is outside the largest block). With
 `Heap` wraps the ESP-IDF heap tracing API: `Heap::Setup`, `StartTracing`, `StopTracing`,
 `DumpTraceRecords` and `ReportStatistics`. Standalone tracing
 (`CONFIG_HEAP_TRACING_STANDALONE`, on in `sdkconfig.develop`) keeps
-`CONFIG_TRACE_RECORD_NUM` records on the device. Tracing to the host
-(`CONFIG_HEAP_TRACING_TOHOST`) sends them over JTAG; `gdbinit.tohost` starts and stops
-the capture at `heap_trace_start` and `heap_trace_stop`.
+`CONFIG_TRACE_RECORD_NUM` records on the device. Tracing to the host sends every
+allocation and free over JTAG instead; see
+[Heap Tracing to the Host](#heap-tracing-to-the-host).
 
 ## Performance Logging
 
@@ -168,6 +168,70 @@ ESP-IDF can also summarise a trace without SystemView:
 python $IDF_PATH/tools/esp_app_trace/sysviewtrace_proc.py -b build/MeadowComms.elf file://trace/<file>.SVDat
 python $IDF_PATH/tools/esp_app_trace/sysviewtrace_proc.py -d -b build/MeadowComms.elf file://trace/<file>.SVDat   # every event
 ```
+
+### Meadow Events
+
+A SystemView build also records what the firmware is doing, as the events of a Meadow
+SystemView module (`components/F7Services/Diagnostics/Profile.hpp`):
+
+| Event | Values | Recorded |
+|---|---|---|
+| 0 `SpiTransaction` | SPI state, bytes received | When an SPI transaction with the STM32 finishes |
+| 1 `SpiProcess`, 2 `SpiProcessDone` | SPI state | Around the handling of that transaction |
+| 3 `RequestReceived` | message ID, interface, function | When a whole request reaches the dispatcher |
+| 4 `HandleRequest`, 5 `HandleRequestDone` | message ID, interface, function (the end: message ID) | Around a request handler's work on the request |
+| 6 `MessageQueued` | message ID, message type, messages on the queue | When a response or event is queued for the STM32 |
+| 7 `MessageAcknowledged` | message ID | When the STM32 acknowledges the last packet of a message |
+
+A request's life is also marked with a SystemView marker keyed on its message ID, from
+`RequestReceived` to the `MessageAcknowledged` of its response, which SystemView shows as
+one span across tasks.
+
+The events are on with `CONFIG_MEADOW_SYSVIEW_EVENTS`, which a `--sysview` build sets;
+without SystemView the calls compile to nothing. The firmware describes the module to
+SystemView itself. Copy `tools/diagnostics/SYSVIEW_Meadow.txt` into SystemView's
+`Description` folder (on a Mac, `/Applications/SEGGER/SystemView/Description`) to see the
+names of the interfaces, message types and SPI states rather than their numbers.
+
+SystemView numbers a module's events from where the module was registered, so the IDs
+in a trace depend on what else registered first: with heap tracing the heap module takes
+512 and 513 and the Meadow events start at 514. ESP-IDF's `sysviewtrace_proc.py` prints
+them as `SysViewEvent(<id>)` with their raw values.
+
+A span ends with an event of its own (`SpiProcessDone`, `HandleRequestDone`) rather than
+SystemView's end-of-call record, because ESP-IDF's `sysviewtrace_proc.py` cannot read
+that record ("Unknown event ID 28"), and that would stop it producing the heap leak
+report.
+
+### The Log in SystemView
+
+In a SystemView build, `Logging::Configure` with the JTAG destination
+(`Esp32LogDestination::Jtag`) sends the log to the trace instead of the UART, where
+SystemView shows it in its terminal window on the same time line as the tasks and
+events. Any other destination puts the UART back. Without SystemView, JTAG is refused
+with `NotImplemented` as before.
+
+### Heap Tracing to the Host
+
+```bash
+./build.sh --build --fullclean --develop --sysview --heaptrace
+./build.sh --flash
+./sysview.sh --from-boot --seconds=30 --output=heap.SVDat
+python $IDF_PATH/tools/esp_app_trace/sysviewtrace_proc.py -p -i heap -b build/MeadowComms.elf file://heap.SVDat
+```
+
+`--heaptrace` (only with `--sysview`; the tests take it too) merges `sdkconfig.heaptrace`,
+which replaces standalone heap tracing with tracing to the host: every allocation and
+free, with the four functions that called it, becomes a SystemView event while a capture
+is running. Tracing starts by itself when a capture starts (`Heap::Setup`, called by
+`SystemRequestHandler`, starts it from a task of its own, because `heap_trace_start`
+waits for the capture). `sysviewtrace_proc.py -p -i heap` then lists the allocations the
+capture saw that were not freed during it, with their callers, and ends with a line such
+as "Found 90 leaked bytes in 2 blocks". An allocation still in use when the capture ends
+is counted, so read the list rather than the total: a leak is an allocation that keeps
+appearing as the capture gets longer.
+
+`gdbinit.tohost` does the same from GDB, starting the capture at `heap_trace_start`.
 
 ### Limits
 
