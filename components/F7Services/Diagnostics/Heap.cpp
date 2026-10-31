@@ -121,12 +121,13 @@ void Heap::Setup()
 void Heap::ReportUsage()
 {
     ESP_LOGI(COMPONENT_NAME, "Memory Usage");
-    bool valid = heap_caps_check_integrity_all(true);
-    ESP_LOGI(COMPONENT_NAME, "Heap integrity check: %s", valid ? "PASS" : "FAILED");
-    if (!valid)
-    {
-        DEBUG_BREAKPOINT();
-    }
+    //
+    //  The integrity check walks every block of every heap under the heap locks, so it is
+    //  only run when the integrity checks are configured, like every other caller of it.
+    //
+#if defined(CONFIG_ENABLE_HEAP_INTEGRITY_CHECKS)
+    ESP_LOGI(COMPONENT_NAME, "Heap integrity check: %s", CheckIntegrity() ? "PASS" : "FAILED");
+#endif
 
     multi_heap_info_t heap_info;
     heap_caps_get_info(&heap_info, MALLOC_CAP_DEFAULT);
