@@ -17,10 +17,9 @@ CONFIG_PARTITION_TABLE_MD5=y
 CONFIG_ESP_COREDUMP_CAPTURE_DRAM=y
 
 #
-#   Should we enable the diagnostic thread ?
+#   The diagnostic thread is off.  To turn it on, set CONFIG_ENABLE_DIAGNOSTIC_THREAD=y.
 #
 # CONFIG_ENABLE_DIAGNOSTIC_THREAD is not set
-# CONFIG_ENABLE_DIAGNOSTIC_THREAD=y
 
 #
 #   Enable various assertions to be turned on.
@@ -48,7 +47,6 @@ CONFIG_COMPILER_OPTIMIZATION_ASSERTION_LEVEL=2
 #
 #   Heap configuration.
 #
-# CONFIG_HEAP_TRACING_STANDALONE is not set
 CONFIG_HEAP_TRACING_STANDALONE=y
 #
 #   The number of records standalone tracing keeps is CONFIG_TRACE_RECORD_NUM, defined in
@@ -64,7 +62,12 @@ CONFIG_HEAP_ABORT_WHEN_ALLOCATION_FAILS=y
 # CONFIG_HEAP_POISONING_DISABLED is not set
 # CONFIG_HEAP_POISONING_LIGHT is not set
 CONFIG_HEAP_POISONING_COMPREHENSIVE=y
-CONFIG_ENABLE_HEAP_INTEGRITY_CHECKS=y
+#
+#   The heap integrity checks walk every block of every heap each time a message is queued
+#   for the STM32, and they are off.  The file used to set the option and then unset it on
+#   the next line; the second line won, and this keeps that.
+#   To turn them on, set CONFIG_ENABLE_HEAP_INTEGRITY_CHECKS=y.
+#
 # CONFIG_ENABLE_HEAP_INTEGRITY_CHECKS is not set
 
 #
