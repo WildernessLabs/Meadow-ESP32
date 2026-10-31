@@ -22,6 +22,16 @@ CONFIG_ESP_COREDUMP_CAPTURE_DRAM=y
 # CONFIG_ENABLE_DIAGNOSTIC_THREAD is not set
 
 #
+#   Count the CPU time each task uses, so the diagnostics can report the load per task and
+#   per core.  Without this the run-time counters FreeRTOS reports never move.  The clock
+#   is esp_timer (1 MHz); the 32-bit counter wraps after about 71 minutes, which the
+#   diagnostics allow for by only ever working with the difference between two readings.
+#
+CONFIG_FREERTOS_GENERATE_RUN_TIME_STATS=y
+CONFIG_FREERTOS_RUN_TIME_STATS_USING_ESP_TIMER=y
+CONFIG_FREERTOS_RUN_TIME_COUNTER_TYPE_U32=y
+
+#
 #   Enable various assertions to be turned on.
 #
 # CONFIG_LWIP_ESP_LWIP_ASSERT=y
