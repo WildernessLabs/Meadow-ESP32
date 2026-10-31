@@ -48,13 +48,11 @@ const char *Heap::COMPONENT_NAME = "HeapDiagnostics";
 /**
  * @brief Number of records standalone heap tracing keeps.
  *
- * @note This used to be read from CONFIG_TRACE_RECORD_NUM, but ESP-IDF has no Kconfig
- *       symbol of that name, so setting it in sdkconfig.develop only raised a warning
- *       and the value never reached sdkconfig.h.  The file therefore did not compile
- *       whenever standalone tracing was turned on.  The count belongs with the code that
- *       allocates the records rather than with the configuration, so it is set here.
+ * @note CONFIG_TRACE_RECORD_NUM is defined in the F7Services Kconfig.projbuild.  It used
+ *       to be defined in main, which the test project does not build, so the test build
+ *       never had the symbol and a fixed count was used here instead.
  */
-static const uint32_t TRACE_RECORD_COUNT = 100;
+static const uint32_t TRACE_RECORD_COUNT = CONFIG_TRACE_RECORD_NUM;
 
 /**
  * @brief Maximum number of heap trace records.

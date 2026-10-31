@@ -51,10 +51,10 @@ CONFIG_COMPILER_OPTIMIZATION_ASSERTION_LEVEL=2
 # CONFIG_HEAP_TRACING_STANDALONE is not set
 CONFIG_HEAP_TRACING_STANDALONE=y
 #
-#   The number of trace records standalone tracing keeps is set in Heap.cpp.  There is no
-#   Kconfig symbol for it, so a CONFIG_TRACE_RECORD_NUM here only raised a warning and
-#   left the code without a value to compile against.
+#   The number of records standalone tracing keeps is CONFIG_TRACE_RECORD_NUM, defined in
+#   components/F7Services/Kconfig.projbuild with a default of 100.
 #
+# CONFIG_TRACE_RECORD_NUM=100
 # CONFIG_HEAP_TRACING_TOHOST is not set
 # CONFIG_HEAP_TRACING_TOHOST=y
 # CONFIG_HEAP_TRACING_STACK_DEPTH=5
