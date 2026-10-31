@@ -80,6 +80,41 @@ fragmentation (how much of the free heap is outside the largest block). With
 allocation and free over JTAG instead; see
 [Heap Tracing to the Host](#heap-tracing-to-the-host).
 
+## Metrics
+
+`Metrics` (`components/F7Services/Diagnostics/Metrics.hpp`) keeps a small, fixed set of
+numbers about the firmware in every build, release included, so that there is something
+to look at without JTAG or a special build. Recording one is a few atomic operations on
+statically allocated memory: no allocation, no lock and no formatting. Turn them off with
+`CONFIG_MEADOW_METRICS` (on by default) to compile the calls away.
+
+| Kind | Name | What |
+|---|---|---|
+| Counter | `SpiTransactions` | SPI transactions with the STM32 that finished |
+| Counter | `RequestsReceived` | Whole requests that reached the dispatcher |
+| Counter | `ResponsesQueued`, `EventsQueued` | Messages put on the queue for the STM32 |
+| Counter | `MessagesDropped` | Messages dropped because the queue stayed full |
+| Counter | `AllocationFailures` | Heap allocations that failed |
+| Gauge | `OutboundQueueDepth` | Messages waiting for the STM32 now, and the most there have been |
+| Gauge | `FailedAllocationSize` | Size of the last failed allocation, and the largest |
+| Histogram | `WiFiRequestLatency`, `BluetoothRequestLatency`, `SystemRequestLatency` | Time from a request arriving to the STM32 acknowledging the last packet of its response |
+| Histogram | `WiFiHandlerTime`, `BluetoothHandlerTime`, `SystemHandlerTime` | Time a request handler spends on a request |
+
+A histogram has 24 buckets: bucket 0 holds 0 us and bucket n holds 2^(n-1) us up to 2^n us,
+the last holding everything from about 4.2 seconds up. Each also keeps the count, the
+total and the longest time.
+
+A request is timed only if its handler sends the request back as the response, which
+most do; a response built as a new message carries no arrival time.
+
+Failed allocations are counted from `heap_caps_register_failed_alloc_callback`. The heap
+takes one callback, so the develop build's report of each failure (`AppMain.cpp`) is
+passed to `Metrics::Setup` and called from the metrics' callback.
+
+The per-function detail the old performance logging recorded (`--performancelogging`, now
+removed) comes from SystemView instead: the `HandleRequest` span times every request with
+its interface and function.
+
 ## Tracing with SystemView
 
 [SEGGER SystemView](https://www.segger.com/products/development-tools/systemview/) shows
