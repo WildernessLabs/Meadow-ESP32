@@ -288,9 +288,29 @@ void Heap::ReportStatistics()
  */
 void Heap::ReportHeapUseByTask()
 {
+    //
+    //  These used to be called as the argument of assert(), so a failure, such as running
+    //  short of memory for the arrays, aborted the device from inside a diagnostic report,
+    //  and a build with NDEBUG and CONFIG_COMPILER_ASSERT_NDEBUG_EVALUATE off would not have
+    //  called them at all.  A failure is now reported and the report skipped.  The
+    //  allocation can fail after allocating some of its three arrays, and it clears the
+    //  pointers first, so freeing is safe on either path.
+    //
     heap_all_tasks_stat_t allTasksStatistics;
-    assert(heap_caps_alloc_all_task_stat_arrays(&allTasksStatistics) == ESP_OK);
-    assert(heap_caps_get_all_task_stat(&allTasksStatistics) == ESP_OK);
+    esp_err_t result = heap_caps_alloc_all_task_stat_arrays(&allTasksStatistics);
+    if (result != ESP_OK)
+    {
+        ESP_LOGE(COMPONENT_NAME, "Cannot allocate memory for the heap use by task: %s", esp_err_to_name(result));
+        heap_caps_free_all_task_stat_arrays(&allTasksStatistics);
+        return;
+    }
+    result = heap_caps_get_all_task_stat(&allTasksStatistics);
+    if (result != ESP_OK)
+    {
+        ESP_LOGE(COMPONENT_NAME, "Cannot read the heap use by task: %s", esp_err_to_name(result));
+        heap_caps_free_all_task_stat_arrays(&allTasksStatistics);
+        return;
+    }
 
     ESP_LOGI(COMPONENT_NAME, "--------------------------------------------------------------------------------");
     ESP_LOGI(COMPONENT_NAME, "                        Printing All Tasks Information\n");
