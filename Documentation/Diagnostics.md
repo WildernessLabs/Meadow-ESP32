@@ -87,6 +87,100 @@ the capture at `heap_trace_start` and `heap_trace_stop`.
 POSIX handlers, and the round trip of each message to the STM32, take, in a ring of 500
 entries that is printed as CSV at the end of `Listen` and `Shutdown`.
 
+## Tracing with SystemView
+
+[SEGGER SystemView](https://www.segger.com/products/development-tools/systemview/) shows
+what each core was running and when: every task switch, every interrupt, every timer
+callback and every blocking FreeRTOS call, on one time line per core. It answers
+questions the log cannot, such as why a request took 40 ms, which task kept another one
+waiting, or how much of a core an interrupt takes.
+
+ESP-IDF provides the target side (the `app_trace` component). The trace leaves the
+ESP32 over JTAG through the ESP-Prog, and OpenOCD writes it to a file that SystemView
+opens.
+
+### Hardware
+
+An ESP-Prog connected to the 10-pin JTAG header, as for flashing over JTAG (see
+[Tools](Tools.md)). The JTAG pins are GPIO 12 to 15; the SPI link to the STM32 uses
+GPIO 5, 18, 19 and 23 and the log UART GPIO 1 and 21, so tracing does not disturb either.
+
+The ESP-Prog enumerates as two serial ports. The first is the JTAG channel, which
+OpenOCD uses; the second is the console.
+
+### Building
+
+```bash
+./build.sh --build --fullclean --develop --sysview      # or without --develop
+./build.sh --flash
+```
+
+`--sysview` merges `sdkconfig.sysview` after the other configuration files. It turns on
+application tracing to JTAG and SystemView with all of the FreeRTOS events, and it moves
+the heap, ring buffer and FreeRTOS API functions out of IRAM to make room for the trace
+hooks (about 7.3 KB of IRAM): without that, both the release and the develop build
+overflow IRAM. A traced build's heap and FreeRTOS calls can therefore be slightly slower
+than an untraced build's, because they can miss the flash cache.
+
+Change to or from a SystemView build with `--fullclean`, because the root `sdkconfig` is
+kept between builds.
+
+The tests are traced the same way: `test/build.sh --build --fullclean --sysview`.
+
+### Capturing
+
+Set up ESP-IDF in the shell (OpenOCD comes with it), then from the root of the
+repository:
+
+```bash
+./sysview.sh                     # trace the running application until Ctrl+C
+./sysview.sh --seconds=10        # trace for ten seconds
+./sysview.sh --from-boot         # reset, run to app_main, trace from there
+./sysview.sh --output=run.SVDat  # choose the file (default trace/meadow-<date>-<time>.SVDat)
+```
+
+The script starts OpenOCD with the same configuration as `flash.sh`
+(`interface/ftdi/esp_ftdi.cfg` and `board/esp-wroom-32.cfg`; change it with
+`OPENOCD_CONFIG`), starts the capture, and shuts OpenOCD down at the end. OpenOCD's
+output goes next to the trace file as `<name>.openocd.log`; it ends with the size of the
+trace and the number of bytes lost.
+
+`--from-boot` cannot start tracing at the reset itself, because the reset drops the
+trace connection. Instead it stops the ESP32 at `app_main` on a hardware breakpoint and
+starts the capture there, which still shows every application task being created. It
+reads the address of `app_main` from `build/MeadowComms.elf`; pass
+`--elf=test/build/MeadowComms.elf` to trace the tests.
+
+If the capture reports a size of 0 and OpenOCD's log shows `esp32.cpu1` failing
+examination, the ESP32 is being held in reset, usually by a serial monitor or esptool
+having left the reset line asserted. Open and close the console port (or press the
+reset button) and try again.
+
+### Viewing
+
+The capture uses `esp sysview_mcore`, which writes both cores into one file in SEGGER's
+multi-core format. Open it with SystemView 3.60 or later. `./sysview.sh --per-core` writes
+one file per core instead, for older versions of SystemView.
+
+ESP-IDF can also summarise a trace without SystemView:
+
+```bash
+python $IDF_PATH/tools/esp_app_trace/sysviewtrace_proc.py -b build/MeadowComms.elf file://trace/<file>.SVDat
+python $IDF_PATH/tools/esp_app_trace/sysviewtrace_proc.py -d -b build/MeadowComms.elf file://trace/<file>.SVDat   # every event
+```
+
+### Limits
+
+* JTAG carries a little over 200 KiB/s of trace. A busy system makes events faster than
+  that: tracing the `[Emulated]` tests on the bench board gave 5.3 MB in 30 seconds with
+  214 overflows on each core. A task waits up to 500 us
+  (`CONFIG_APPTRACE_SV_BUF_WAIT_TMO`) for room in the trace buffer, after which the event
+  is dropped and SystemView shows an overflow. The time line stays correct around an
+  overflow, but the events in it are missing. Turning off events you do not need in
+  `sdkconfig.sysview` (the idle and timer events, say) leaves room for the rest.
+* SystemView over a UART instead of JTAG exists in ESP-IDF but traces only one core, and
+  is not set up here.
+
 ## Core Dumps
 
 A crash saves a core dump to the `coredump` partition, which the STM32 can read back.

@@ -159,6 +159,14 @@ points it back at the one file in the root of the repository. That file holds no
 else: the development configuration itself is not copied, so the tests and the
 application cannot drift apart.
 
+### Tracing the Tests with SystemView
+
+`./build.sh --build --fullclean --sysview` merges `../sdkconfig.sysview`, the same file the
+application uses, so a test run can be traced over JTAG with `sysview.sh` from the root
+of the repository (`--elf=test/build/MeadowComms.elf` with `--from-boot`). The tests
+are built without SystemView otherwise. See
+[Diagnostics](Diagnostics.md#tracing-with-systemview).
+
 ### Test Build Output
 
 The test build creates a test application with an interactive menu system for selecting and running individual tests:
