@@ -1,3 +1,11 @@
+#
+#   Build options for the Meadow ESP32 services.
+#
+#   These live in the F7Services component rather than in main so that the test project,
+#   which builds F7Services but not main, sees them too.  When they were in main the test
+#   build did not know the symbols, so anything sdkconfig.develop set for them was dropped
+#   with a warning and the code they guard was never compiled into the tests.
+#
 menu "Meadow COMMS Project Build Configuration"
 
     config ENABLE_DIAGNOSTIC_THREAD
