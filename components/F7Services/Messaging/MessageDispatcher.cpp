@@ -14,6 +14,7 @@
 #include "Esp32Messaging.hpp"
 #include "Logging.hpp"
 #include "MessageDispatcher.hpp"
+#include "Profile.hpp"
 #include "SystemRequestHandler.hpp"
 #include "BluetoothRequestHandler.hpp"
 #include "WiFiRequestHandler.hpp"
@@ -100,6 +101,13 @@ bool MessageDispatcher::QueueMessageForEsp32(Message *request)
     //
     xEventGroupWaitBits(_handlersReady, HANDLERS_READY_BIT, pdFALSE, pdTRUE, portMAX_DELAY);
     RequestHandlerBase *provider = nullptr;
+
+    //
+    //  The message ID marks the request's life in a SystemView trace until the STM32
+    //  acknowledges the response.
+    //
+    Profile::MessageStart(request->MessageID);
+    Profile::Record(ProfileEvent::RequestReceived, request->MessageID, request->Interface, request->Function);
 
 #if defined(PERFORMANCE_LOGGING)
     request->PerformanceLoggingStart = esp_timer_get_time();

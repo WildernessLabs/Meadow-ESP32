@@ -16,6 +16,7 @@
 #include "esp_attr.h"
 
 #include "SpiTransportProvider.hpp"
+#include "Profile.hpp"
 #include "Esp32Messaging.hpp"
 #include "Encoders.hpp"
 #include "Globals.hpp"
@@ -931,7 +932,14 @@ spi_slave_transaction_t *SpiTransportProvider::PacketAcknowledgementReceived(spi
                 UpdatePacketInformation(_outboundMessage);
                 if (_outboundMessage->PacketLength == 0)
                 {
+                    const uint32_t messageId = _outboundMessage->MessageID;
+                    const bool isResponse = ((_outboundMessage->MessageType & MessageTypes::Response) != 0);
                     Message::DeleteMessage(_outboundMessage);
+                    Profile::Record(ProfileEvent::MessageAcknowledged, messageId);
+                    if (isResponse)
+                    {
+                        Profile::MessageStop(messageId);
+                    }
                     TRACE_MESSAGE("Final packet sent.");
                 }
                 else
@@ -1047,6 +1055,8 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessMessages(spi_slave_transac
     //  is mandatory when spi_slave_queue_trans is used.
     //
     ESP_ERROR_CHECK(spi_slave_get_trans_result(VSPI_HOST, &transaction, portMAX_DELAY));
+    Profile::Record(ProfileEvent::SpiTransaction, static_cast<uint32_t>(_currentState), transaction->trans_len / 8);
+    ProfileSpan span(ProfileEvent::SpiProcess, ProfileEvent::SpiProcessDone, static_cast<uint32_t>(_currentState));
     return (HandleTransaction(transaction));
 }
 
