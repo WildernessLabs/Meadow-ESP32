@@ -239,24 +239,26 @@ std::string Diagnostics::TranslateCoreID(const BaseType_t coreID)
  */
 void Diagnostics::ReportTaskInformation()
 {
-    TaskStatus_t *tasks;
-    volatile UBaseType_t numberOfTasks;
-    unsigned long totalRunTime;
-
-    numberOfTasks = uxTaskGetNumberOfTasks();
-    tasks = static_cast<TaskStatus_t *>(pvPortMalloc(numberOfTasks * sizeof(TaskStatus_t)));
+    //
+    //  The array is sized from the number of tasks now, but uxTaskGetSystemState is called
+    //  afterwards and fills nothing at all if a task has been created in between and the
+    //  array is too small.  Leave room for a few more and use the count it returns.
+    //
+    const UBaseType_t capacity = uxTaskGetNumberOfTasks() + TASK_ARRAY_HEADROOM;
+    TaskStatus_t *tasks = static_cast<TaskStatus_t *>(pvPortMalloc(capacity * sizeof(TaskStatus_t)));
     if (tasks != nullptr)
     {
-        ESP_LOGI(COMPONENT_NAME, "Number of tasks: %" PRIu32, numberOfTasks);
-        ESP_LOGI(COMPONENT_NAME, "ID  Core Task Name        State     Priority Stack Watermark Run-time Percentage");
-        numberOfTasks = uxTaskGetSystemState(tasks, numberOfTasks, &totalRunTime);
+        configRUN_TIME_COUNTER_TYPE totalRunTime = 0;
+        const UBaseType_t numberOfTasks = uxTaskGetSystemState(tasks, capacity, &totalRunTime);
         totalRunTime /= 100UL;
-        for (int index = 0; index < numberOfTasks; index++)
+        ESP_LOGI(COMPONENT_NAME, "Number of tasks: %" PRIu32, static_cast<uint32_t>(numberOfTasks));
+        ESP_LOGI(COMPONENT_NAME, "ID  Core Task Name        State     Priority Stack Watermark Run-time Percentage");
+        for (UBaseType_t index = 0; index < numberOfTasks; index++)
         {
-            unsigned long runTimePercentage;
+            uint32_t runTimePercentage;
             if (totalRunTime > 0)
             {
-                runTimePercentage = tasks[index].ulRunTimeCounter / totalRunTime;
+                runTimePercentage = static_cast<uint32_t>(tasks[index].ulRunTimeCounter / totalRunTime);
             }
             else
             {
@@ -264,14 +266,13 @@ void Diagnostics::ReportTaskInformation()
             }
             std::string taskState = TaskStateToString(tasks[index].eCurrentState);
             std::string coreID = TranslateCoreID(tasks[index].xCoreID);
-            ESP_LOGI(
-                COMPONENT_NAME, "%-2" PRIu32 "    %s  %-16s %-9s %2" PRIu32 " (%2" PRIu32 ")  %15u %8lu  %3lu%%", tasks[index].xTaskNumber, coreID.c_str(), tasks[index].pcTaskName, taskState.c_str(), tasks[index].uxCurrentPriority, tasks[index].uxBasePriority, tasks[index].usStackHighWaterMark,
-                tasks[index].ulRunTimeCounter, runTimePercentage);
+            ESP_LOGI(COMPONENT_NAME, "%-2" PRIu32 "    %s  %-16s %-9s %2" PRIu32 " (%2" PRIu32 ")  %15" PRIu32 " %8" PRIu32 "  %3" PRIu32 "%%", static_cast<uint32_t>(tasks[index].xTaskNumber), coreID.c_str(), tasks[index].pcTaskName, taskState.c_str(), static_cast<uint32_t>(tasks[index].uxCurrentPriority),
+                     static_cast<uint32_t>(tasks[index].uxBasePriority), static_cast<uint32_t>(tasks[index].usStackHighWaterMark), static_cast<uint32_t>(tasks[index].ulRunTimeCounter), runTimePercentage);
         }
         Utils::DeleteAndNullifyPointer(tasks);
     }
     else
     {
-        ESP_LOGI(COMPONENT_NAME, "Cannot allocate memory for task information.\n");
+        ESP_LOGI(COMPONENT_NAME, "Cannot allocate memory for task information.");
     }
 }

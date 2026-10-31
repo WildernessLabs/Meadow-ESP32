@@ -26,6 +26,12 @@ private:
     static constexpr uint32_t TASK_STACK_SIZE = 8192;
 
     /**
+     *  @brief Extra entries allocated in the task array, for tasks created between counting
+     *         the tasks and reading their state.
+     */
+    static constexpr UBaseType_t TASK_ARRAY_HEADROOM = 4;
+
+    /**
      *  @brief Lock for controlling access to the members of this class.
      */
     static SemaphoreHandle_t _outputBinarySemaphore;
