@@ -62,10 +62,6 @@ struct Message
      */
     uint32_t PayloadLength;
 
-#if defined(PERFORMANCE_LOGGING)
-    int64_t PerformanceLoggingStart;
-#endif
-
     /**
      *  Time the whole request arrived from the STM32 (esp_timer_get_time), 0 for a message that
      *  did not start as a request.  A handler that recycles the request as its response keeps it,

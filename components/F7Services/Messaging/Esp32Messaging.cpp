@@ -61,7 +61,7 @@ Message *Message::CreateOnHeap(const uint8_t messageType, const uint8_t interfac
     {
         //
         //  pvPortMalloc runs no constructor, so every member not set below, such as
-        //  PerformanceLoggingStart, would otherwise start as whatever the heap held.
+        //  ReceivedTime, would otherwise start as whatever the heap held.
         //
         memset(static_cast<void *>(result), 0, sizeof(Message));
         result->MessageType = messageType;

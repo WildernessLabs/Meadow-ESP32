@@ -80,13 +80,6 @@ fragmentation (how much of the free heap is outside the largest block). With
 allocation and free over JTAG instead; see
 [Heap Tracing to the Host](#heap-tracing-to-the-host).
 
-## Performance Logging
-
-`./build.sh --performancelogging` defines `PERFORMANCE_LOGGING`, which turns on the
-`PERFORMANCE_LOGGING_*` macros in `Logging.hpp`. They record how long the instrumented
-POSIX handlers, and the round trip of each message to the STM32, take, in a ring of 500
-entries that is printed as CSV at the end of `Listen` and `Shutdown`.
-
 ## Tracing with SystemView
 
 [SEGGER SystemView](https://www.segger.com/products/development-tools/systemview/) shows

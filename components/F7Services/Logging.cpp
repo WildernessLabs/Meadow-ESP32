@@ -48,10 +48,6 @@
 #include "ThreadPool.hpp"
 #include "CoreDump.hpp"
 
-#if defined(PERFORMANCE_LOGGING)
-    #pragma message "Performance logging is enabled."
-#endif
-
 /*
  * ---------------------------------------------------------------------------
  *
@@ -107,25 +103,6 @@ char Logging::_udpBuffer[Logging::UDP_LOG_MESSAGE_SIZE];
 vprintf_like_t Logging::_outputBeforeSystemView = nullptr;
 #endif
 
-#if defined(PERFORMANCE_LOGGING)
-
-/**
- *  @brief Next performance counter entry to use.
- */
-int Logging::_nextPerformanceCounterEntry = 0;
-
-/**
- *  @brief Number of performance counter slots in the circular buffer.
- */
-int Logging::_numberOfPerformanceCounterSlots = MAX_PERFORMANCE_COUNTERS;
-
-/**
- *  @brief Table to hold the performance counters;
- */
-Logging::PerformanceCounterEntry *Logging::_performanceCounters[MAX_PERFORMANCE_COUNTERS];
-
-#endif
-
 /*
  * ---------------------------------------------------------------------------
  *
@@ -140,13 +117,6 @@ Logging::PerformanceCounterEntry *Logging::_performanceCounters[MAX_PERFORMANCE_
 Logging::Logging()
 {
     esp_log_level_set(Logging::COMPONENT_NAME, ESP_LOG_INFO);
-
-#if defined(PERFORMANCE_LOGGING)
-    for (int index = 0; index < _numberOfPerformanceCounterSlots; index++)
-    {
-        _performanceCounters[index] = nullptr;
-    }
-#endif
 }
 
 /**
@@ -662,133 +632,3 @@ void Logging::DumpMessage(const char * const componentName, const Message * cons
         TRACE_MESSAGE_SPECIFY_COMPONENT(componentName, "Message pointer is invalid.");
     }
 }
-
-/**
- *  @brief Generate a single line summary of the message.
- *
- *  @param message
- *      Message to be summarised.
- *
- *  @return
- *      Pointer to a string containing the message ID, interface and function requested.
- */
-char *Logging::MessageSummary(const Message * const message)
-{
-    char buffer[200];
-
-    snprintf(buffer, 200, "ID: 0x%08" PRIx32 " Interface: %s Function: %s", message->MessageID, InterfaceName(message->Interface), FunctionName(message->Interface, message->Function));
-    return (strdup(buffer));
-}
-
-#if defined(PERFORMANCE_LOGGING)
-
-/**
- *  @brief Add an entry to the table of performance counters.
- *
- *  @param method
- *      Name of the method (or event) being recorded.
- *
- *  @param start
- *      Time since the chip started in microseconds of the start of the event.
- *
- *  @param end
- *      Time since the chip started in microseconds of the end of the event.
- *
- *  @param ownsMethod
- *      True if method is heap-allocated and this call is handing over ownership of
- *      it, so it is freed when the entry is later released.  False (the default,
- *      matching every existing caller) for a string literal such as __func__.
- */
-void Logging::AddPerformanceCounterEntry(const char *method, int64_t start, int64_t end, bool ownsMethod)
-{
-    uint64_t duration;
-    if (start <= end) // Check if the counter has wrapped around.
-    {
-        duration = end - start;
-    }
-    else
-    {
-        duration = LONG_LONG_MAX - start + end;
-    }
-    int pd = duration & 0xffffffff;
-    PerformanceCounterEntry *pce = static_cast<PerformanceCounterEntry *>(pvPortMalloc(sizeof(PerformanceCounterEntry)));
-
-    if (pce != nullptr)
-    {
-        pce->timestamp = esp_log_timestamp();
-        pce->method = method;
-        pce->ownsMethod = ownsMethod;
-        pce->duration = pd;
-        //
-        //  The slot is claimed and the entry it held taken out under the lock, so no two
-        //  tasks get the same slot; the old entry is released after the lock is given back.
-        //
-        PerformanceCounterEntry *previous = nullptr;
-        {
-            MutexLock lock(PerformanceCountersMutex());
-            previous = _performanceCounters[_nextPerformanceCounterEntry];
-            _performanceCounters[_nextPerformanceCounterEntry] = pce;
-            _nextPerformanceCounterEntry++;
-            if (_nextPerformanceCounterEntry >= _numberOfPerformanceCounterSlots)
-            {
-                _nextPerformanceCounterEntry = 0;
-            }
-        }
-        if (previous != nullptr)
-        {
-            if (previous->ownsMethod)
-            {
-                free(const_cast<char *>(previous->method));
-            }
-            Utils::DeleteAndNullifyPointer(previous);
-        }
-    }
-    else
-    {
-        if (ownsMethod)
-        {
-            //
-            //  The entry could not be stored, so nothing will ever release method through it;
-            //  free it here instead so ownership is not dropped on this path.
-            //
-            free(const_cast<char *>(method));
-        }
-    }
-}
-
-/**
- *  @brief Mutex guarding _performanceCounters and _nextPerformanceCounterEntry.
- *
- *  A function-local static is created exactly once, on first use, even when several tasks
- *  get here at the same time.
- *
- *  @returns
- *      The performance counter mutex.
- */
-SemaphoreHandle_t Logging::PerformanceCountersMutex()
-{
-    static const SemaphoreHandle_t mutex = Utils::RequireCreated(xSemaphoreCreateMutex(), "the performance counter mutex");
-    return (mutex);
-}
-
-/**
- *  @brief Dump the table of performance counters.
- */
-void Logging::DumpPerformanceCounters()
-{
-    //
-    //  Held while the table is printed, so no entry is released part way through.
-    //
-    MutexLock lock(PerformanceCountersMutex());
-    printf("Timestamp,Method,Duration\n");
-    for (int index = 0; index < _numberOfPerformanceCounterSlots; index++)
-    {
-        if (_performanceCounters[index] != nullptr)
-        {
-            PerformanceCounterEntry *pce = _performanceCounters[index];
-            printf("%" PRIu32 ",%s,%" PRIu32 "\n", pce->timestamp, pce->method, pce->duration);
-        }
-    }
-}
-
-#endif

@@ -925,11 +925,6 @@ spi_slave_transaction_t *SpiTransportProvider::PacketAcknowledgementReceived(spi
         {
             if (incomingMessage->MessageType == MessageTypes::Ack)
             {
-#if defined(PERFORMANCE_LOGGING)
-                PERFORMANCE_LOGGING_EXIT();
-                Logging::AddPerformanceCounterEntry(Logging::MessageSummary(_outboundMessage), _outboundMessage->PerformanceLoggingStart, performance_logging_end, true);
-#endif
-
                 UpdatePacketInformation(_outboundMessage);
                 if (_outboundMessage->PacketLength == 0)
                 {

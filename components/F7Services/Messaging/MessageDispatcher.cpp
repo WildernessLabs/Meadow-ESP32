@@ -112,9 +112,6 @@ bool MessageDispatcher::QueueMessageForEsp32(Message *request)
     Metrics::Increment(MetricCounter::RequestsReceived);
     request->ReceivedTime = esp_timer_get_time();
 
-#if defined(PERFORMANCE_LOGGING)
-    request->PerformanceLoggingStart = esp_timer_get_time();
-#endif
     switch (static_cast<Esp32Interfaces::Esp32Interfaces>(request->Interface))
     {
         case Esp32Interfaces::WiFi:
