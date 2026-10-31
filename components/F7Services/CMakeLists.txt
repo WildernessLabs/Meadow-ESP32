@@ -20,6 +20,7 @@ idf_component_register( SRCS    ${F7SERVICES_SOURCES}
                                 "Diagnostics"
 
                         REQUIRES 
+                                app_trace
                                 bt
                                 cxx 
                                 driver 

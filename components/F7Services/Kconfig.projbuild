@@ -40,4 +40,14 @@ menu "Meadow COMMS Project Build Configuration"
         help
             Number of records that can be stored in the trace buffer.  This is used to store information
             about heap memory allocations and deallocations in order to attempt to detect memory leaks.
+
+    config MEADOW_SYSVIEW_EVENTS
+        bool "Record Meadow events in SystemView traces"
+        depends on APPTRACE_SV_ENABLE
+        default y
+        help
+            Records the Meadow events (SPI transactions, requests, responses) in a SystemView
+            trace alongside the FreeRTOS events, as the Meadow SystemView module.  Only
+            available in a build with SystemView (build.sh --sysview).
+
 endmenu
