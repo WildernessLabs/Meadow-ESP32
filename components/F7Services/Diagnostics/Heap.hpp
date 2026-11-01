@@ -42,11 +42,6 @@ public:
     static void Setup();
 
     /**
-     * @brief Report comprehensive heap information.
-     */
-    static void ReportUsage();
-
-    /**
      * @brief Check heap integrity and report any issues.
      *
      * @return true if heap is valid, false if corruption detected
@@ -74,15 +69,6 @@ public:
      * @brief Report current heap tracing statistics.
      */
     static void ReportStatistics();
-
-#if defined(CONFIG_HEAP_TASK_TRACKING)
-
-    /**
-     * @brief Report heap usage by task.
-     */
-    static void ReportHeapUseByTask();
-
-#endif
 
 private:
     /**
