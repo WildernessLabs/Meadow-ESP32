@@ -215,6 +215,23 @@ private:
      */
     static int UdpLogOutput(const char *format, va_list arguments);
 
+#if defined(CONFIG_APPTRACE_SV_ENABLE)
+    /**
+     * @brief The function that wrote log messages before they were sent to SystemView, nullptr when they are not.
+     */
+    static vprintf_like_t _outputBeforeSystemView;
+
+    /**
+     * @brief Send the log messages to the SystemView trace instead of the UART.
+     */
+    static void StartSystemViewLogging();
+
+    /**
+     * @brief Stop sending the log messages to SystemView and put back the output that was there before.
+     */
+    static void StopSystemViewLogging();
+#endif
+
 #if defined(PERFORMANCE_LOGGING)
     /**
      *  @brief Maximum number of performance counters to be held in the circular buffer.

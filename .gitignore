@@ -123,3 +123,5 @@ unittest.config.json
 #   or by a branch that predates the change, cannot be committed by accident.
 #
 secrets.h
+trace/
+*.SVDat

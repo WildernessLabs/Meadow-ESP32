@@ -27,6 +27,26 @@ if (DEBUG EQUAL 1)
     message(STATUS "Enabling debug mode.")
     list(APPEND SDKCONFIG_FILES "\;sdkconfig.develop")
 endif()
+#
+#   SystemView tracing (build.sh --sysview) is merged last so that it can add to either
+#   configuration.
+#
+if (SYSVIEW EQUAL 1)
+    message(STATUS "Enabling SystemView tracing.")
+    list(APPEND SDKCONFIG_FILES "\;sdkconfig.sysview")
+endif()
+
+#
+#   Heap tracing to the host (build.sh --heaptrace) sends its records through SystemView,
+#   so it needs --sysview as well.
+#
+if (HEAPTRACE EQUAL 1)
+    if (NOT SYSVIEW EQUAL 1)
+        message(FATAL_ERROR "--heaptrace sends the heap records through SystemView, so it needs --sysview as well.")
+    endif()
+    message(STATUS "Enabling heap tracing to the host.")
+    list(APPEND SDKCONFIG_FILES "\;sdkconfig.heaptrace")
+endif()
 set(SDKCONFIG_DEFAULTS ${SDKCONFIG_FILES})
 
 #

@@ -90,6 +90,30 @@ private:
      */
     static bool _isRunning;
 
+    /**
+     * @brief True once Setup has run, so that running it again does nothing.
+     */
+    static bool _isSetup;
+
+#if defined(CONFIG_HEAP_TRACING_TOHOST)
+
+    /**
+     * @brief Stack size of the task that starts heap tracing to the host.
+     */
+    static constexpr uint32_t HOST_TRACING_TASK_STACK_SIZE = 3072;
+
+    /**
+     * @brief Start heap tracing to the host once a SystemView capture starts.
+     *
+     * heap_trace_start waits until the host starts a capture, so it is called from a task of
+     * its own rather than holding up whoever called Setup.
+     *
+     * @param parameters Not used.
+     */
+    static void HostTracingTask(void *parameters);
+
+#endif
+
 #if defined(CONFIG_HEAP_TRACING_STANDALONE)
 
     /**

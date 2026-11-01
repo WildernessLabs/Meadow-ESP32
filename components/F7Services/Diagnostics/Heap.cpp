@@ -25,6 +25,8 @@
 
 #include "esp_heap_task_info.h"
 #include "esp_heap_trace.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 
 #include "Utils.hpp"
 #include "Debug.hpp"
@@ -66,6 +68,11 @@ heap_trace_record_t *Heap::_traceRecords = nullptr;
  */
 bool Heap::_isRunning = false;
 
+/**
+ * @brief True once Setup has run, so that running it again does nothing.
+ */
+bool Heap::_isSetup = false;
+
 /*
  * ---------------------------------------------------------------------------
  *
@@ -76,9 +83,18 @@ bool Heap::_isRunning = false;
 
 /**
  * @brief Initialize the heap diagnostic subsystem.
+ *
+ * With heap tracing to the host, tracing is started as soon as a SystemView capture starts,
+ * so a capture shows every allocation from then on.  Setup may be called more than once (each
+ * SystemRequestHandler calls it); only the first call does anything.
  */
 void Heap::Setup()
 {
+    if (_isSetup)
+    {
+        return;
+    }
+    _isSetup = true;
     esp_log_level_set(COMPONENT_NAME, ESP_LOG_INFO);
 
     TRACE_MESSAGE("Setup: Enter");
@@ -107,6 +123,12 @@ void Heap::Setup()
     else
     {
         TRACE_MESSAGE("Heap tracing initialized successfully");
+    #if defined(CONFIG_HEAP_TRACING_TOHOST)
+        if (xTaskCreate(HostTracingTask, "HeapTrace", HOST_TRACING_TASK_STACK_SIZE, nullptr, tskIDLE_PRIORITY + 1, nullptr) != pdPASS)
+        {
+            ERROR_MESSAGE("Failed to create the task that starts heap tracing to the host");
+        }
+    #endif
     }
 #else
     TRACE_MESSAGE("Heap tracing not configured");
@@ -114,6 +136,21 @@ void Heap::Setup()
 
     TRACE_MESSAGE("Setup: Exit");
 }
+
+#if defined(CONFIG_HEAP_TRACING_TOHOST)
+
+/**
+ * @brief Start heap tracing to the host once a SystemView capture starts.
+ *
+ * @param parameters Not used.
+ */
+void Heap::HostTracingTask(void *parameters)
+{
+    StartTracing(HEAP_TRACE_ALL);
+    vTaskDelete(nullptr);
+}
+
+#endif
 
 /**
  * @brief Report comprehensive heap information.

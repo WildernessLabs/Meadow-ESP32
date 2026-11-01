@@ -1,3 +1,11 @@
+#
+#   Capture a SystemView trace with heap tracing to the host, from GDB.
+#
+#   Build with ./build.sh --build --fullclean --sysview --heaptrace, flash, start OpenOCD,
+#   then run xtensa-esp32-elf-gdb -x gdbinit.tohost build/MeadowComms.elf.  The capture
+#   starts when heap tracing starts (at boot) and stops at heap_trace_stop or when GDB is
+#   interrupted; sysview.sh --from-boot does the same without GDB.
+#
 target remote :3333
 
 mon reset halt
@@ -5,13 +13,13 @@ maintenance flush register-cache
 
 tb heap_trace_start
 commands
-mon esp sysview start file:./heap.svdat
+mon esp sysview_mcore start file://heap.SVDat 1
 c
 end
 
 tb heap_trace_stop
 commands
-mon esp sysview stop
+mon esp sysview_mcore stop
 end
 
 c
