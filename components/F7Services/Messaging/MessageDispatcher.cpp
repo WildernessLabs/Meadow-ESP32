@@ -14,6 +14,7 @@
 #include "Esp32Messaging.hpp"
 #include "Logging.hpp"
 #include "MessageDispatcher.hpp"
+#include "Metrics.hpp"
 #include "Profile.hpp"
 #include "SystemRequestHandler.hpp"
 #include "BluetoothRequestHandler.hpp"
@@ -108,10 +109,9 @@ bool MessageDispatcher::QueueMessageForEsp32(Message *request)
     //
     Profile::MessageStart(request->MessageID);
     Profile::Record(ProfileEvent::RequestReceived, request->MessageID, request->Interface, request->Function);
+    Metrics::Increment(MetricCounter::RequestsReceived);
+    request->ReceivedTime = esp_timer_get_time();
 
-#if defined(PERFORMANCE_LOGGING)
-    request->PerformanceLoggingStart = esp_timer_get_time();
-#endif
     switch (static_cast<Esp32Interfaces::Esp32Interfaces>(request->Interface))
     {
         case Esp32Interfaces::WiFi:

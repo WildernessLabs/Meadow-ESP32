@@ -264,7 +264,6 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetAddrInfo(Esp32Messaging::GetAddr
 void WiFiRequestHandler::GetAddrInfo(void * const vpMessage)
 {
     TRACE_MESSAGE("GetAddrInfo: Enter");
-    PERFORMANCE_LOGGING_ENTER();
 
     Message * const message = static_cast<Message *>(vpMessage);
 
@@ -279,8 +278,6 @@ void WiFiRequestHandler::GetAddrInfo(void * const vpMessage)
         {
             _instance->RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
         }
-        PERFORMANCE_LOGGING_EXIT();
-        PERFORMANCE_LOGGING_ADD_ENTRY();
         TRACE_MESSAGE("GetAddrInfo: Exit");
         return;
     }
@@ -358,8 +355,6 @@ void WiFiRequestHandler::GetAddrInfo(void * const vpMessage)
     message->MessageType = MessageTypes::Response;
     _messageDispatcher->QueueMessageForStm32(message);
 
-    PERFORMANCE_LOGGING_EXIT();
-    PERFORMANCE_LOGGING_ADD_ENTRY();
     TRACE_MESSAGE("GetAddrInfo: Exit");
 }
 
@@ -372,7 +367,6 @@ void WiFiRequestHandler::GetAddrInfo(void * const vpMessage)
 void WiFiRequestHandler::Socket(void * const vpMessage)
 {
     TRACE_MESSAGE("Socket: Enter");
-    PERFORMANCE_LOGGING_ENTER();
 
     Message * const message = static_cast<Message *>(vpMessage);
 
@@ -387,8 +381,6 @@ void WiFiRequestHandler::Socket(void * const vpMessage)
         {
             _instance->RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
         }
-        PERFORMANCE_LOGGING_EXIT();
-        PERFORMANCE_LOGGING_ADD_ENTRY();
         TRACE_MESSAGE("Socket: Exit");
         return;
     }
@@ -479,8 +471,6 @@ void WiFiRequestHandler::Socket(void * const vpMessage)
     message->MessageType = MessageTypes::Response;
     _messageDispatcher->QueueMessageForStm32(message);
 
-    PERFORMANCE_LOGGING_EXIT();
-    PERFORMANCE_LOGGING_ADD_ENTRY();
     TRACE_MESSAGE("Socket: Exit");
 }
 
@@ -493,7 +483,6 @@ void WiFiRequestHandler::Socket(void * const vpMessage)
 void WiFiRequestHandler::Connect(void * const vpMessage)
 {
     TRACE_MESSAGE("Connect: Enter");
-    PERFORMANCE_LOGGING_ENTER();
 
     Message * const message = static_cast<Message *>(vpMessage);
 
@@ -508,8 +497,6 @@ void WiFiRequestHandler::Connect(void * const vpMessage)
         {
             _instance->RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
         }
-        PERFORMANCE_LOGGING_EXIT();
-        PERFORMANCE_LOGGING_ADD_ENTRY();
         TRACE_MESSAGE("Connect: Exit");
         return;
     }
@@ -627,8 +614,6 @@ void WiFiRequestHandler::Connect(void * const vpMessage)
     message->MessageType = MessageTypes::Response;
     _messageDispatcher->QueueMessageForStm32(message);
 
-    PERFORMANCE_LOGGING_EXIT();
-    PERFORMANCE_LOGGING_ADD_ENTRY();
     TRACE_MESSAGE("Connect: Exit");
 }
 
@@ -641,7 +626,6 @@ void WiFiRequestHandler::Connect(void * const vpMessage)
 void WiFiRequestHandler::FreeAddrInfo(void * const vpMessage)
 {
     TRACE_MESSAGE("FreeAddrInfo: Enter");
-    PERFORMANCE_LOGGING_ENTER();
 
     Message * const message = static_cast<Message *>(vpMessage);
 
@@ -656,8 +640,6 @@ void WiFiRequestHandler::FreeAddrInfo(void * const vpMessage)
         {
             _instance->RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
         }
-        PERFORMANCE_LOGGING_EXIT();
-        PERFORMANCE_LOGGING_ADD_ENTRY();
         TRACE_MESSAGE("FreeAddrInfo: Exit");
         return;
     }
@@ -703,8 +685,6 @@ void WiFiRequestHandler::FreeAddrInfo(void * const vpMessage)
 
     _messageDispatcher->QueueMessageForStm32(message);
 
-    PERFORMANCE_LOGGING_EXIT();
-    PERFORMANCE_LOGGING_ADD_ENTRY();
     TRACE_MESSAGE("FreeAddrInfo: Exit");
 }
 
@@ -862,7 +842,6 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetErrorOption(const int socket, co
 void WiFiRequestHandler::GetSockOpt(void * const vpMessage)
 {
     TRACE_MESSAGE("GetSockOpt: Enter");
-    PERFORMANCE_LOGGING_ENTER();
 
     Message * const message = static_cast<Message *>(vpMessage);
 
@@ -877,8 +856,6 @@ void WiFiRequestHandler::GetSockOpt(void * const vpMessage)
         {
             _instance->RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
         }
-        PERFORMANCE_LOGGING_EXIT();
-        PERFORMANCE_LOGGING_ADD_ENTRY();
         TRACE_MESSAGE("GetSockOpt: Exit");
         return;
     }
@@ -998,8 +975,6 @@ void WiFiRequestHandler::GetSockOpt(void * const vpMessage)
     message->MessageType = MessageTypes::Response;
     _messageDispatcher->QueueMessageForStm32(message);
 
-    PERFORMANCE_LOGGING_EXIT();
-    PERFORMANCE_LOGGING_ADD_ENTRY();
     TRACE_MESSAGE("GetSockOpt: Exit");
 }
 
@@ -1260,7 +1235,6 @@ StatusCodes::StatusCodes WiFiRequestHandler::SetSockOpt(const Esp32Messaging::Se
 void WiFiRequestHandler::SetSockOpt(void * const vpMessage)
 {
     TRACE_MESSAGE("SetSockOpt: Enter");
-    PERFORMANCE_LOGGING_ENTER();
 
     Message * const message = static_cast<Message *>(vpMessage);
 
@@ -1275,8 +1249,6 @@ void WiFiRequestHandler::SetSockOpt(void * const vpMessage)
         {
             _instance->RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
         }
-        PERFORMANCE_LOGGING_EXIT();
-        PERFORMANCE_LOGGING_ADD_ENTRY();
         TRACE_MESSAGE("SetSockOpt: Exit");
         return;
     }
@@ -1340,8 +1312,6 @@ void WiFiRequestHandler::SetSockOpt(void * const vpMessage)
     message->MessageType = MessageTypes::Response;
     _messageDispatcher->QueueMessageForStm32(message);
 
-    PERFORMANCE_LOGGING_EXIT();
-    PERFORMANCE_LOGGING_ADD_ENTRY();
     TRACE_MESSAGE("SetSockOpt: Exit");
 }
 
@@ -1354,7 +1324,6 @@ void WiFiRequestHandler::SetSockOpt(void * const vpMessage)
 void WiFiRequestHandler::Close(void * const vpMessage)
 {
     TRACE_MESSAGE("Close: Enter");
-    PERFORMANCE_LOGGING_ENTER();
 
     Message * const message = static_cast<Message *>(vpMessage);
 
@@ -1369,8 +1338,6 @@ void WiFiRequestHandler::Close(void * const vpMessage)
         {
             _instance->RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
         }
-        PERFORMANCE_LOGGING_EXIT();
-        PERFORMANCE_LOGGING_ADD_ENTRY();
         TRACE_MESSAGE("Close: Exit");
         return;
     }
@@ -1451,8 +1418,6 @@ void WiFiRequestHandler::Close(void * const vpMessage)
     message->MessageType = MessageTypes::Response;
     _messageDispatcher->QueueMessageForStm32(message);
 
-    PERFORMANCE_LOGGING_EXIT();
-    PERFORMANCE_LOGGING_ADD_ENTRY();
     TRACE_MESSAGE("Close: Exit");
 }
 
@@ -1465,7 +1430,6 @@ void WiFiRequestHandler::Close(void * const vpMessage)
 void WiFiRequestHandler::Send(void * const vpMessage)
 {
     TRACE_MESSAGE("Send: Enter");
-    PERFORMANCE_LOGGING_ENTER();
 
     Message * const message = static_cast<Message *>(vpMessage);
 
@@ -1480,8 +1444,6 @@ void WiFiRequestHandler::Send(void * const vpMessage)
         {
             _instance->RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
         }
-        PERFORMANCE_LOGGING_EXIT();
-        PERFORMANCE_LOGGING_ADD_ENTRY();
         TRACE_MESSAGE("Send: Exit");
         return;
     }
@@ -1584,8 +1546,6 @@ void WiFiRequestHandler::Send(void * const vpMessage)
     message->MessageType = MessageTypes::Response;
     _messageDispatcher->QueueMessageForStm32(message);
 
-    PERFORMANCE_LOGGING_EXIT();
-    PERFORMANCE_LOGGING_ADD_ENTRY();
     TRACE_MESSAGE("Send: Exit");
 }
 
@@ -1708,7 +1668,6 @@ StatusCodes::StatusCodes WiFiRequestHandler::SendTo(Esp32Messaging::SendToReques
 void WiFiRequestHandler::SendTo(void * const vpMessage)
 {
     TRACE_MESSAGE("SendTo: Enter");
-    PERFORMANCE_LOGGING_ENTER();
 
     Message * const message = static_cast<Message *>(vpMessage);
 
@@ -1723,8 +1682,6 @@ void WiFiRequestHandler::SendTo(void * const vpMessage)
         {
             _instance->RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
         }
-        PERFORMANCE_LOGGING_EXIT();
-        PERFORMANCE_LOGGING_ADD_ENTRY();
         TRACE_MESSAGE("SendTo: Exit");
         return;
     }
@@ -1803,8 +1760,6 @@ void WiFiRequestHandler::SendTo(void * const vpMessage)
     message->MessageType = MessageTypes::Response;
     _messageDispatcher->QueueMessageForStm32(message);
 
-    PERFORMANCE_LOGGING_EXIT();
-    PERFORMANCE_LOGGING_ADD_ENTRY();
     TRACE_MESSAGE("SendTo: Exit");
 }
 
@@ -1934,7 +1889,6 @@ StatusCodes::StatusCodes WiFiRequestHandler::RecvFrom(Esp32Messaging::RecvFromRe
 void WiFiRequestHandler::RecvFrom(void * const vpMessage)
 {
     TRACE_MESSAGE("RecvFrom: Enter");
-    PERFORMANCE_LOGGING_ENTER();
 
     Message * const message = static_cast<Message *>(vpMessage);
 
@@ -1949,8 +1903,6 @@ void WiFiRequestHandler::RecvFrom(void * const vpMessage)
         {
             _instance->RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
         }
-        PERFORMANCE_LOGGING_EXIT();
-        PERFORMANCE_LOGGING_ADD_ENTRY();
         TRACE_MESSAGE("RecvFrom: Exit");
         return;
     }
@@ -2021,8 +1973,6 @@ void WiFiRequestHandler::RecvFrom(void * const vpMessage)
     message->MessageType = MessageTypes::Response;
     _messageDispatcher->QueueMessageForStm32(message);
 
-    PERFORMANCE_LOGGING_EXIT();
-    PERFORMANCE_LOGGING_ADD_ENTRY();
     TRACE_MESSAGE("RecvFrom: Exit");
 }
 
@@ -2142,7 +2092,6 @@ static void EncodeSourceAddressToResponse(const struct sockaddr_in * const sa, c
 void WiFiRequestHandler::SendMsg(void * const vpMessage)
 {
     TRACE_MESSAGE("SendMsg: Enter");
-    PERFORMANCE_LOGGING_ENTER();
 
     Message * const message = static_cast<Message *>(vpMessage);
 
@@ -2157,8 +2106,6 @@ void WiFiRequestHandler::SendMsg(void * const vpMessage)
         {
             _instance->RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
         }
-        PERFORMANCE_LOGGING_EXIT();
-        PERFORMANCE_LOGGING_ADD_ENTRY();
         TRACE_MESSAGE("SendMsg: Exit");
         return;
     }
@@ -2287,8 +2234,6 @@ void WiFiRequestHandler::SendMsg(void * const vpMessage)
     message->MessageType = MessageTypes::Response;
     _messageDispatcher->QueueMessageForStm32(message);
 
-    PERFORMANCE_LOGGING_EXIT();
-    PERFORMANCE_LOGGING_ADD_ENTRY();
     TRACE_MESSAGE("SendMsg: Exit");
 }
 
@@ -2304,7 +2249,6 @@ void WiFiRequestHandler::SendMsg(void * const vpMessage)
 void WiFiRequestHandler::RecvMsg(void * const vpMessage)
 {
     TRACE_MESSAGE("RecvMsg: Enter");
-    PERFORMANCE_LOGGING_ENTER();
 
     Message * const message = static_cast<Message *>(vpMessage);
 
@@ -2319,8 +2263,6 @@ void WiFiRequestHandler::RecvMsg(void * const vpMessage)
         {
             _instance->RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
         }
-        PERFORMANCE_LOGGING_EXIT();
-        PERFORMANCE_LOGGING_ADD_ENTRY();
         TRACE_MESSAGE("RecvMsg: Exit");
         return;
     }
@@ -2510,8 +2452,6 @@ void WiFiRequestHandler::RecvMsg(void * const vpMessage)
     message->MessageType = MessageTypes::Response;
     _messageDispatcher->QueueMessageForStm32(message);
 
-    PERFORMANCE_LOGGING_EXIT();
-    PERFORMANCE_LOGGING_ADD_ENTRY();
     TRACE_MESSAGE("RecvMsg: Exit");
 }
 
@@ -2593,7 +2533,6 @@ StatusCodes::StatusCodes WiFiRequestHandler::Bind(Esp32Messaging::BindRequest *r
 void WiFiRequestHandler::Bind(void * const vpMessage)
 {
     TRACE_MESSAGE("Bind: Enter");
-    PERFORMANCE_LOGGING_ENTER();
 
     Message * const message = static_cast<Message *>(vpMessage);
 
@@ -2608,8 +2547,6 @@ void WiFiRequestHandler::Bind(void * const vpMessage)
         {
             _instance->RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
         }
-        PERFORMANCE_LOGGING_EXIT();
-        PERFORMANCE_LOGGING_ADD_ENTRY();
         TRACE_MESSAGE("Bind: Exit");
         return;
     }
@@ -2668,8 +2605,6 @@ void WiFiRequestHandler::Bind(void * const vpMessage)
     message->MessageType = MessageTypes::Response;
     _messageDispatcher->QueueMessageForStm32(message);
 
-    PERFORMANCE_LOGGING_EXIT();
-    PERFORMANCE_LOGGING_ADD_ENTRY();
     TRACE_MESSAGE("Bind: Exit");
 }
 
@@ -2682,7 +2617,6 @@ void WiFiRequestHandler::Bind(void * const vpMessage)
 void WiFiRequestHandler::Listen(void * const vpMessage)
 {
     TRACE_MESSAGE("Listen: Enter");
-    PERFORMANCE_LOGGING_ENTER();
 
     Message * const message = static_cast<Message *>(vpMessage);
 
@@ -2697,8 +2631,6 @@ void WiFiRequestHandler::Listen(void * const vpMessage)
         {
             _instance->RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
         }
-        PERFORMANCE_LOGGING_EXIT();
-        PERFORMANCE_LOGGING_ADD_ENTRY();
         TRACE_MESSAGE("Listen: Exit");
         return;
     }
@@ -2769,9 +2701,6 @@ void WiFiRequestHandler::Listen(void * const vpMessage)
     message->MessageType = MessageTypes::Response;
     _messageDispatcher->QueueMessageForStm32(message);
 
-    PERFORMANCE_LOGGING_EXIT();
-    PERFORMANCE_LOGGING_ADD_ENTRY();
-    PERFORMANCE_LOGGING_DUMP_RESULTS();
     TRACE_MESSAGE("Listen: Exit");
 }
 
@@ -2784,7 +2713,6 @@ void WiFiRequestHandler::Listen(void * const vpMessage)
 void WiFiRequestHandler::Shutdown(void * const vpMessage)
 {
     TRACE_MESSAGE("Shutdown: Enter");
-    PERFORMANCE_LOGGING_ENTER();
 
     Message * const message = static_cast<Message *>(vpMessage);
 
@@ -2799,8 +2727,6 @@ void WiFiRequestHandler::Shutdown(void * const vpMessage)
         {
             _instance->RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
         }
-        PERFORMANCE_LOGGING_EXIT();
-        PERFORMANCE_LOGGING_ADD_ENTRY();
         TRACE_MESSAGE("Shutdown: Exit");
         return;
     }
@@ -2883,9 +2809,6 @@ void WiFiRequestHandler::Shutdown(void * const vpMessage)
     message->MessageType = MessageTypes::Response;
     _messageDispatcher->QueueMessageForStm32(message);
 
-    PERFORMANCE_LOGGING_EXIT();
-    PERFORMANCE_LOGGING_ADD_ENTRY();
-    PERFORMANCE_LOGGING_DUMP_RESULTS();
     TRACE_MESSAGE("Shutdown: Exit");
 }
 
@@ -2961,7 +2884,6 @@ StatusCodes::StatusCodes WiFiRequestHandler::Accept(Esp32Messaging::AcceptReques
 void WiFiRequestHandler::Accept(void * const vpMessage)
 {
     TRACE_MESSAGE("Accept: Enter");
-    PERFORMANCE_LOGGING_ENTER();
 
     Message * const message = static_cast<Message *>(vpMessage);
 
@@ -2976,8 +2898,6 @@ void WiFiRequestHandler::Accept(void * const vpMessage)
         {
             _instance->RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
         }
-        PERFORMANCE_LOGGING_EXIT();
-        PERFORMANCE_LOGGING_ADD_ENTRY();
         TRACE_MESSAGE("Accept: Exit");
         return;
     }
@@ -3038,8 +2958,6 @@ void WiFiRequestHandler::Accept(void * const vpMessage)
     message->MessageType = MessageTypes::Response;
     _messageDispatcher->QueueMessageForStm32(message);
 
-    PERFORMANCE_LOGGING_EXIT();
-    PERFORMANCE_LOGGING_ADD_ENTRY();
     TRACE_MESSAGE("Accept: Exit");
 }
 
@@ -3055,7 +2973,6 @@ void WiFiRequestHandler::Accept(void * const vpMessage)
 void WiFiRequestHandler::Ioctl(void * const vpMessage)
 {
     TRACE_MESSAGE("Ioctl: Enter");
-    PERFORMANCE_LOGGING_ENTER();
 
     Message * const message = static_cast<Message *>(vpMessage);
 
@@ -3070,8 +2987,6 @@ void WiFiRequestHandler::Ioctl(void * const vpMessage)
         {
             _instance->RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
         }
-        PERFORMANCE_LOGGING_EXIT();
-        PERFORMANCE_LOGGING_ADD_ENTRY();
         TRACE_MESSAGE("Ioctl: Exit");
         return;
     }
@@ -3259,8 +3174,6 @@ void WiFiRequestHandler::Ioctl(void * const vpMessage)
     message->MessageType = MessageTypes::Response;
     _messageDispatcher->QueueMessageForStm32(message);
 
-    PERFORMANCE_LOGGING_EXIT();
-    PERFORMANCE_LOGGING_ADD_ENTRY();
     TRACE_MESSAGE("Ioctl: Exit");
 }
 
@@ -3352,7 +3265,6 @@ StatusCodes::StatusCodes WiFiRequestHandler::GetSockPeerName(const Esp32Messagin
 void WiFiRequestHandler::GetSockPeerName(void * const vpMessage, const WiFiFunction::WiFiFunction methodToCall)
 {
     TRACE_MESSAGE("GetSockPeerName: Enter");
-    PERFORMANCE_LOGGING_ENTER();
 
     Message * const message = static_cast<Message *>(vpMessage);
 
@@ -3367,8 +3279,6 @@ void WiFiRequestHandler::GetSockPeerName(void * const vpMessage, const WiFiFunct
         {
             _instance->RaiseErrorEvent(StatusCodes::InvalidRequest, nullptr, 0);
         }
-        PERFORMANCE_LOGGING_EXIT();
-        PERFORMANCE_LOGGING_ADD_ENTRY();
         TRACE_MESSAGE("GetSockPeerName: Exit");
         return;
     }
@@ -3431,8 +3341,6 @@ void WiFiRequestHandler::GetSockPeerName(void * const vpMessage, const WiFiFunct
     message->MessageType = MessageTypes::Response;
     _messageDispatcher->QueueMessageForStm32(message);
 
-    PERFORMANCE_LOGGING_EXIT();
-    PERFORMANCE_LOGGING_ADD_ENTRY();
     TRACE_MESSAGE("GetSockPeerName: Exit");
 }
 

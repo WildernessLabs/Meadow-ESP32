@@ -102,10 +102,6 @@ if (DIAGNOSTICS EQUAL 1)
     add_compile_definitions(DIAGNOSTICS)
 endif()
 
-if (PERFORMANCE_LOGGING EQUAL 1)
-    add_compile_definitions(PERFORMANCE_LOGGING)
-endif()
-
 if (HEAP_SIZE GREATER 0)
     add_compile_definitions(HEAP_SIZE=${HEAP_SIZE})
 endif()

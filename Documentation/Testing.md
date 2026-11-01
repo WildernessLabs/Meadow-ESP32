@@ -838,13 +838,8 @@ Individual test files contain detailed documentation:
 
 ## Performance Testing
 
-For performance benchmarks, enable performance logging:
-
-```bash
-./build.sh --develop --build -DPERFORMANCE_LOGGING=1
-```
-
-Performance metrics are output to the serial console during test execution.
+To see where the time goes in a test, build the tests with `--sysview` and trace them with
+`sysview.sh`; see [Diagnostics](Diagnostics.md#tracing-with-systemview).
 
 ## Next Steps
 

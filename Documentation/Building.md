@@ -73,7 +73,6 @@ The `build.sh` script provides multiple options for different build scenarios:
 |--------|-------------|
 | `--develop` | Enable development mode with debug code |
 | `-tm`, `--tracemessages` | Enable message tracing |
-| `-pl`, `--performancelogging` | Enable performance logging of method entry and exit times |
 | `--sysview` | Build with SEGGER SystemView tracing over JTAG (merges `sdkconfig.sysview`); see [Diagnostics](Diagnostics.md#tracing-with-systemview). Use `--fullclean` when changing to or from a SystemView build |
 
 #### Subsystem-Specific Debug Options
@@ -121,7 +120,7 @@ Examples:
 
 #### Build with All Debugging Features
 ```bash
-./build.sh --build --develop --tracemessages --performancelogging
+./build.sh --build --develop --tracemessages
 ```
 
 ### Direct ESP-IDF Commands
@@ -175,7 +174,6 @@ Common defines include:
 - `MESSAGES_DEBUG` - Enable message protocol debug output
 - `TRACE_MESSAGES` - Enable detailed message tracing
 - `DIAGNOSTICS` - Enable diagnostic features
-- `PERFORMANCE_LOGGING` - Enable performance logging
 
 ## Memory Configuration
 

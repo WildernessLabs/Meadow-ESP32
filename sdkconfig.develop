@@ -17,9 +17,16 @@ CONFIG_PARTITION_TABLE_MD5=y
 CONFIG_ESP_COREDUMP_CAPTURE_DRAM=y
 
 #
-#   The diagnostic thread is off.  To turn it on, set CONFIG_ENABLE_DIAGNOSTIC_THREAD=y.
+#   No periodic diagnostic snapshots.  To have one written every ten seconds, set
+#   CONFIG_MEADOW_DIAGNOSTICS_PERIOD_MS=10000.
 #
-# CONFIG_ENABLE_DIAGNOSTIC_THREAD is not set
+CONFIG_MEADOW_DIAGNOSTICS_PERIOD_MS=0
+
+#
+#   lwIP keeps counts of the packets sent, received and dropped by each protocol, which the
+#   diagnostic snapshot reports.
+#
+CONFIG_LWIP_STATS=y
 
 #
 #   Count the CPU time each task uses, so the diagnostics can report the load per task and

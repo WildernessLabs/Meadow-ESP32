@@ -16,6 +16,7 @@
 #include "esp_attr.h"
 
 #include "SpiTransportProvider.hpp"
+#include "Metrics.hpp"
 #include "Profile.hpp"
 #include "Esp32Messaging.hpp"
 #include "Encoders.hpp"
@@ -924,16 +925,16 @@ spi_slave_transaction_t *SpiTransportProvider::PacketAcknowledgementReceived(spi
         {
             if (incomingMessage->MessageType == MessageTypes::Ack)
             {
-#if defined(PERFORMANCE_LOGGING)
-                PERFORMANCE_LOGGING_EXIT();
-                Logging::AddPerformanceCounterEntry(Logging::MessageSummary(_outboundMessage), _outboundMessage->PerformanceLoggingStart, performance_logging_end, true);
-#endif
-
                 UpdatePacketInformation(_outboundMessage);
                 if (_outboundMessage->PacketLength == 0)
                 {
                     const uint32_t messageId = _outboundMessage->MessageID;
                     const bool isResponse = ((_outboundMessage->MessageType & MessageTypes::Response) != 0);
+                    MetricHistogram latency = MetricHistogram::NumberOfHistograms;
+                    if (isResponse && (_outboundMessage->ReceivedTime != 0) && Metrics::RequestLatencyFor(_outboundMessage->Interface, latency))
+                    {
+                        Metrics::Record(latency, static_cast<uint32_t>(esp_timer_get_time() - _outboundMessage->ReceivedTime));
+                    }
                     Message::DeleteMessage(_outboundMessage);
                     Profile::Record(ProfileEvent::MessageAcknowledged, messageId);
                     if (isResponse)
@@ -1056,6 +1057,7 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessMessages(spi_slave_transac
     //
     ESP_ERROR_CHECK(spi_slave_get_trans_result(VSPI_HOST, &transaction, portMAX_DELAY));
     Profile::Record(ProfileEvent::SpiTransaction, static_cast<uint32_t>(_currentState), transaction->trans_len / 8);
+    Metrics::Increment(MetricCounter::SpiTransactions);
     ProfileSpan span(ProfileEvent::SpiProcess, ProfileEvent::SpiProcessDone, static_cast<uint32_t>(_currentState));
     return (HandleTransaction(transaction));
 }
