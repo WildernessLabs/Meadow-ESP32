@@ -11,6 +11,17 @@
 
 #include "esp32/rom/gpio.h"
 #include "lwip/sockets.h"
+#if defined(CONFIG_APPTRACE_SV_ENABLE)
+    //
+    //  esp_app_trace_util.h, which esp_sysview_trace.h includes, chains an assignment to a
+    //  volatile member.  C++20 deprecates that and -Werror makes it an error.  The header is
+    //  ESP-IDF's, so the warning is turned off for it alone.
+    //
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wvolatile"
+    #include "esp_sysview_trace.h"
+    #pragma GCC diagnostic pop
+#endif
 #include <string.h>
 #include <limits.h>
 
@@ -88,6 +99,13 @@ SemaphoreHandle_t Logging::_udpMutex = nullptr;
  *  @brief Buffer a UDP log message is formatted in.
  */
 char Logging::_udpBuffer[Logging::UDP_LOG_MESSAGE_SIZE];
+
+#if defined(CONFIG_APPTRACE_SV_ENABLE)
+/**
+ *  @brief The function that wrote log messages before they were sent to SystemView, nullptr when they are not.
+ */
+vprintf_like_t Logging::_outputBeforeSystemView = nullptr;
+#endif
 
 #if defined(PERFORMANCE_LOGGING)
 
@@ -187,11 +205,13 @@ void Logging::Setup()
  * changed, so one that cannot be honoured leaves the configuration as it was.
  *
  * @param components Names of the components to be logged.
- * @param interface Destination for the log messages: Esp32LogDestination None, Uart or UDP.
+ * @param interface Destination for the log messages: Esp32LogDestination None, Uart, UDP, or Jtag, which sends
+ *                  them to the SystemView trace in a build with SystemView (build.sh --sysview).
  * @param udpPort UDP port for the log messages when UDP is enabled.
  *
  * @return CompletedOk if the configuration was applied, InvalidRequest if the destination is not one that
- *         exists or UDP is asked for with no port, NotImplemented if it is JTAG, and Failure if the UDP
+ *         exists or UDP is asked for with no port, NotImplemented if it is JTAG in a build without SystemView, and
+ *         Failure if the UDP
  *         socket cannot be opened (issue #356).
  */
 StatusCodes::StatusCodes Logging::Configure(const char * const components, uint32_t interface, uint32_t udpPort)
@@ -208,18 +228,31 @@ StatusCodes::StatusCodes Logging::Configure(const char * const components, uint3
             }
             break;
         case Esp32LogDestination::Jtag:
+#if defined(CONFIG_APPTRACE_SV_ENABLE)
+            break;
+#else
             return (StatusCodes::NotImplemented);
+#endif
         default:
             return (StatusCodes::InvalidRequest);
     }
 
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
     StopUdpLogging();
+#if defined(CONFIG_APPTRACE_SV_ENABLE)
+    StopSystemViewLogging();
+#endif
     TurnAllLoggingOff();
     if (interface == Esp32LogDestination::UDP)
     {
         result = StartUdpLogging(static_cast<uint16_t>(udpPort));
     }
+#if defined(CONFIG_APPTRACE_SV_ENABLE)
+    if (interface == Esp32LogDestination::Jtag)
+    {
+        StartSystemViewLogging();
+    }
+#endif
 
     if ((result == StatusCodes::CompletedOk) && (interface != Esp32LogDestination::None))
     {
@@ -285,6 +318,33 @@ StatusCodes::StatusCodes Logging::StartUdpLogging(const uint16_t port)
     _previousLogOutput = esp_log_set_vprintf(UdpLogOutput);
     return (StatusCodes::CompletedOk);
 }
+
+#if defined(CONFIG_APPTRACE_SV_ENABLE)
+
+/**
+ * @brief Send the log messages to the SystemView trace instead of the UART.
+ *
+ * They appear in SystemView's terminal window, on the same time line as the tasks.  While no
+ * capture is running they go nowhere.
+ */
+void Logging::StartSystemViewLogging()
+{
+    _outputBeforeSystemView = esp_log_set_vprintf(esp_sysview_vprintf);
+}
+
+/**
+ * @brief Stop sending the log messages to SystemView and put back the output that was there before.
+ */
+void Logging::StopSystemViewLogging()
+{
+    if (_outputBeforeSystemView != nullptr)
+    {
+        esp_log_set_vprintf(_outputBeforeSystemView);
+        _outputBeforeSystemView = nullptr;
+    }
+}
+
+#endif
 
 /**
  * @brief Stop sending the log messages over UDP and put back the output that was there before.
