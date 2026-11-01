@@ -117,6 +117,8 @@ BLUETOOTH_CLIENTS = {
         lambda arguments: ['LongReadClient.py'],
     'Notifications are sent only to a client that has subscribed (MeadowSubscribe, Espressif)':
         lambda arguments: ['SubscriptionClient.py'],
+    'A client pairs and bonds to use an encrypted characteristic (MeadowPair, Espressif)':
+        lambda arguments: ['PairingClient.py'],
 }
 
 

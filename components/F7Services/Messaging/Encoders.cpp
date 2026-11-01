@@ -3963,6 +3963,212 @@ void Encoders::FreeBTServerDataSet(Esp32Messaging::BTServerDataSet **bTServerDat
 }
 
 /**
+ *  Extract the BTDeviceAddress object that is encoded in the given buffer.
+ *
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded BTDeviceAddress object.
+ *
+ *  @returns
+ *      Pointer to a BTDeviceAddress object, released with Utils::DeleteAndNullifyPointer.
+ *
+ *  @param length
+ *      Number of bytes in that block, the message's PayloadLength.  Nothing past it is read.
+ *
+ *  @param malformed
+ *      If not nullptr, set to true when the payload is too short for what it declares and false
+ *      otherwise, so the caller can tell a malformed request from running out of memory.
+ */
+Esp32Messaging::BTDeviceAddress *Encoders::ExtractBTDeviceAddress(const uint8_t *buffer, const uint32_t length, bool * const malformed)
+{
+    PayloadReader reader(buffer, length);
+    Esp32Messaging::BTDeviceAddress *result = static_cast<Esp32Messaging::BTDeviceAddress *>(pvPortMalloc(sizeof(Esp32Messaging::BTDeviceAddress)));
+
+    if (result == nullptr)
+    {
+        if (malformed != nullptr)
+        {
+            *malformed = false;
+        }
+        return (nullptr);
+    }
+    memset(result, 0, sizeof(Esp32Messaging::BTDeviceAddress));
+
+    reader.ReadBytes(result->Address, sizeof(result->Address));
+
+    if (reader.Failed())
+    {
+        Utils::DeleteAndNullifyPointer(result);
+        if (malformed != nullptr)
+        {
+            *malformed = !reader.OutOfMemory();
+        }
+        return (nullptr);
+    }
+    if (malformed != nullptr)
+    {
+        *malformed = false;
+    }
+    return (result);
+}
+
+/**
+ *  Extract the BTPairingReply object that is encoded in the given buffer.
+ *
+ *  @param buffer
+ *      Pointer to a block of memory holding the encoded BTPairingReply object.
+ *
+ *  @returns
+ *      Pointer to a BTPairingReply object, released with Utils::DeleteAndNullifyPointer.
+ *
+ *  @param length
+ *      Number of bytes in that block, the message's PayloadLength.  Nothing past it is read.
+ *
+ *  @param malformed
+ *      If not nullptr, set to true when the payload is too short for what it declares and false
+ *      otherwise, so the caller can tell a malformed request from running out of memory.
+ */
+Esp32Messaging::BTPairingReply *Encoders::ExtractBTPairingReply(const uint8_t *buffer, const uint32_t length, bool * const malformed)
+{
+    PayloadReader reader(buffer, length);
+    Esp32Messaging::BTPairingReply *result = static_cast<Esp32Messaging::BTPairingReply *>(pvPortMalloc(sizeof(Esp32Messaging::BTPairingReply)));
+
+    if (result == nullptr)
+    {
+        if (malformed != nullptr)
+        {
+            *malformed = false;
+        }
+        return (nullptr);
+    }
+    memset(result, 0, sizeof(Esp32Messaging::BTPairingReply));
+
+    reader.ReadBytes(result->Address, sizeof(result->Address));
+    result->Accept = reader.ReadByte();
+    result->Passkey = reader.ReadUInt32();
+
+    if (reader.Failed())
+    {
+        Utils::DeleteAndNullifyPointer(result);
+        if (malformed != nullptr)
+        {
+            *malformed = !reader.OutOfMemory();
+        }
+        return (nullptr);
+    }
+    if (malformed != nullptr)
+    {
+        *malformed = false;
+    }
+    return (result);
+}
+
+/**
+ *  Convert the BTPairingEventData object into a byte stream that can be sent to the STM32.
+ *
+ *  The amount of memory required can be obtained by calling the EncodedBTPairingEventDataBufferSize method.
+ *
+ *  @param bTPairingEventData
+ *      BTPairingEventData object to be encoded.
+ *
+ *  @param buffer
+ *      Pointer to a block of memory large enough to hold the encoded BTPairingEventData object.
+ */
+void Encoders::EncodeBTPairingEventData(const Esp32Messaging::BTPairingEventData * const bTPairingEventData, uint8_t *buffer)
+{
+    memcpy(buffer, bTPairingEventData->Address, sizeof(bTPairingEventData->Address));
+    buffer += sizeof(bTPairingEventData->Address);
+    EncodeUInt32(bTPairingEventData->Passkey, buffer);
+}
+
+/**
+ *  Calculate the amount of memory required to hold the given instance of the BTPairingEventData object.
+ *
+ *  @param bTPairingEventData
+ *      BTPairingEventData object to be encoded.
+ *
+ *  @returns
+ *      Number of bytes required to hold the encoded BTPairingEventData object.
+ */
+int Encoders::EncodedBTPairingEventDataBufferSize(const Esp32Messaging::BTPairingEventData * const bTPairingEventData)
+{
+    return (Esp32Messaging::BT_ADDRESS_LENGTH + 4);
+}
+
+/**
+ *  Convert the BTAuthenticationCompleteEventData object into a byte stream that can be sent to the STM32.
+ *
+ *  The amount of memory required can be obtained by calling the
+ *  EncodedBTAuthenticationCompleteEventDataBufferSize method.
+ *
+ *  @param bTAuthenticationCompleteEventData
+ *      BTAuthenticationCompleteEventData object to be encoded.
+ *
+ *  @param buffer
+ *      Pointer to a block of memory large enough to hold the encoded object.
+ */
+void Encoders::EncodeBTAuthenticationCompleteEventData(const Esp32Messaging::BTAuthenticationCompleteEventData * const bTAuthenticationCompleteEventData, uint8_t *buffer)
+{
+    memcpy(buffer, bTAuthenticationCompleteEventData->Address, sizeof(bTAuthenticationCompleteEventData->Address));
+    buffer += sizeof(bTAuthenticationCompleteEventData->Address);
+    *buffer++ = bTAuthenticationCompleteEventData->AddressType;
+    *buffer++ = bTAuthenticationCompleteEventData->AuthenticationMode;
+    *buffer++ = bTAuthenticationCompleteEventData->FailureReason;
+    *buffer = bTAuthenticationCompleteEventData->Bonded;
+}
+
+/**
+ *  Calculate the amount of memory required to hold the given instance of the
+ *  BTAuthenticationCompleteEventData object.
+ *
+ *  @param bTAuthenticationCompleteEventData
+ *      BTAuthenticationCompleteEventData object to be encoded.
+ *
+ *  @returns
+ *      Number of bytes required to hold the encoded object.
+ */
+int Encoders::EncodedBTAuthenticationCompleteEventDataBufferSize(const Esp32Messaging::BTAuthenticationCompleteEventData * const bTAuthenticationCompleteEventData)
+{
+    return (Esp32Messaging::BT_ADDRESS_LENGTH + 4);
+}
+
+/**
+ *  Convert the BTBondedDevicesResponse object into a byte stream that can be sent to the STM32.
+ *
+ *  The layout matches BTGetHandlesResponse: the count, the length of the list in bytes, then the list.
+ *
+ *  @param bTBondedDevicesResponse
+ *      BTBondedDevicesResponse object to be encoded.
+ *
+ *  @param buffer
+ *      Pointer to a block of memory large enough to hold the encoded BTBondedDevicesResponse object.
+ */
+void Encoders::EncodeBTBondedDevicesResponse(const Esp32Messaging::BTBondedDevicesResponse * const bTBondedDevicesResponse, uint8_t *buffer)
+{
+    EncodeUInt16(bTBondedDevicesResponse->DeviceCount, buffer);
+    buffer += 2;
+    EncodeUInt32(bTBondedDevicesResponse->DevicesLength, buffer);
+    buffer += 4;
+    if (bTBondedDevicesResponse->DevicesLength > 0)
+    {
+        memcpy(buffer, bTBondedDevicesResponse->Devices, bTBondedDevicesResponse->DevicesLength);
+    }
+}
+
+/**
+ *  Calculate the amount of memory required to hold the given instance of the BTBondedDevicesResponse object.
+ *
+ *  @param bTBondedDevicesResponse
+ *      BTBondedDevicesResponse object to be encoded.
+ *
+ *  @returns
+ *      Number of bytes required to hold the encoded BTBondedDevicesResponse object.
+ */
+int Encoders::EncodedBTBondedDevicesResponseBufferSize(const Esp32Messaging::BTBondedDevicesResponse * const bTBondedDevicesResponse)
+{
+    return (static_cast<int>(bTBondedDevicesResponse->DevicesLength) + 6);
+}
+
+/**
  *  Convert the FileDetails object into a byte stream that can be sent to the STM32.
  *
  *  The amount of memory required can be obtained by calling the EncodedFileDetailsBufferSize method.

@@ -10,6 +10,7 @@
 #include <dirent.h>
 #include <string>
 #include <string.h>
+#include <vector>
 #include "esp_heap_caps.h"
 #include "esp_system.h"
 #include "esp_timer.h"
@@ -288,6 +289,40 @@ TEST_CASE("Start is refused when the request has no payload", "[Bluetooth][Emula
     TEST_ASSERT_NOT_NULL(dispatcher);
 
     RunBluetoothLifecycleRequest(dispatcher, BluetoothFunction::Start, BluetoothFunction::BluetoothStartingEvent, NO_COMPLETION_EVENT, StatusCodes::InvalidConfigurationFile, nullptr, 0);
+
+    ResetMessageDispatcher();
+}
+
+/**
+ * @brief Check that Start is refused when an attribute needs MITM protection the security settings do not demand.
+ *
+ *  No pairing could reach such an attribute (issue #398).  The configuration is refused before
+ *  anything touches the radio, so it runs under emulation.
+ */
+TEST_CASE("Start is refused when an attribute needs MITM protection the security settings do not demand", "[Bluetooth][Emulated]")
+{
+    static const char *unreachableJson = R"({
+    "deviceName":"MeadowMitm",
+    "services": [
+        {
+            "name":"MitmService",
+            "uuid":248,
+            "characteristics": [ { "uuid":10755, "permission":68, "props":10, "len":4 } ]
+        }
+    ]
+})";
+
+    MockMessageDispatcher *dispatcher = SetupMessageDispatcher();
+    TEST_ASSERT_NOT_NULL(dispatcher);
+
+    Esp32Messaging::BTStackConfig stackConfig = {};
+    stackConfig.Config = const_cast<char *>(unreachableJson);
+    const uint32_t payloadLength = TestEncoders::EncodedBTStackConfigBufferSize(&stackConfig);
+    uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
+    TEST_ASSERT_NOT_NULL(payload);
+    TestEncoders::EncodeBTStackConfig(&stackConfig, payload);
+
+    RunBluetoothLifecycleRequest(dispatcher, BluetoothFunction::Start, BluetoothFunction::BluetoothStartingEvent, NO_COMPLETION_EVENT, StatusCodes::InvalidConfigurationFile, payload, payloadLength);
 
     ResetMessageDispatcher();
 }
@@ -1359,6 +1394,256 @@ TEST_CASE("Soak test notifying characteristic, number of iterations controlled b
     printf("Client returned %" PRIu32 " notifications.\n", acknowledged);
 
     monitor.Check(acknowledged, "The free heap fell too far, which suggests a leak in the notification path.");
+
+    StopBluetoothService(dispatcher);
+
+    ResetMessageDispatcher();
+}
+
+/**
+ * @brief Send a bond request through the dispatcher and return its response.
+ *
+ * @param dispatcher Dispatcher to queue the request on.
+ * @param function GetBondedDevices, RemoveBond or RemoveAllBonds.
+ * @param address Address the request is about, nullptr for a request without one.
+ *
+ * @return The response, which the caller releases.
+ */
+static Message *SendBondRequest(MockMessageDispatcher *dispatcher, const uint32_t function, const uint8_t * const address)
+{
+    uint8_t *payload = nullptr;
+    uint32_t payloadLength = 0;
+    if (address != nullptr)
+    {
+        payloadLength = Esp32Messaging::BT_ADDRESS_LENGTH;
+        payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
+        TEST_ASSERT_NOT_NULL(payload);
+        memcpy(payload, address, payloadLength);
+    }
+    Message *response = SendRequest(dispatcher, Esp32Interfaces::BlueTooth, function, payload, payloadLength, BLUETOOTH_RESPONSE_TIMEOUT);
+    TEST_ASSERT_NOT_NULL_MESSAGE(response, "A bond request was not answered.");
+    return (response);
+}
+
+/**
+ * @brief Get the bonded devices and check the response is a whole list.
+ *
+ * @param dispatcher Dispatcher to queue the request on.
+ *
+ * @return The entries: each device's address followed by its type.
+ */
+static std::vector<uint8_t> GetBondedDevices(MockMessageDispatcher *dispatcher)
+{
+    Message *response = SendBondRequest(dispatcher, BluetoothFunction::GetBondedDevices, nullptr);
+    ASSERT_RESPONSE(response, Esp32Interfaces::BlueTooth, BluetoothFunction::GetBondedDevices, StatusCodes::CompletedOk);
+    TEST_ASSERT_GREATER_OR_EQUAL_UINT32(6, response->PayloadLength);
+    const uint16_t count = Encoders::ExtractUInt16(response->Payload);
+    const uint32_t length = Encoders::ExtractUInt32(response->Payload + 2);
+    TEST_ASSERT_EQUAL_UINT32_MESSAGE(count * Esp32Messaging::BT_BONDED_DEVICE_ENTRY_LENGTH, length, "The list length does not match the number of devices.");
+    TEST_ASSERT_EQUAL_UINT32_MESSAGE(6 + length, response->PayloadLength, "The payload does not hold the whole list.");
+    printf("%" PRIu16 " bonded devices.\n", count);
+    const std::vector<uint8_t> entries(response->Payload + 6, response->Payload + 6 + length);
+    Message::DeleteMessage(response);
+    return (entries);
+}
+
+/**
+ * @brief Is an address in a list of bonded devices?
+ *
+ * @param entries Entries from GetBondedDevices.
+ * @param address Address to look for.
+ *
+ * @return true if it is in the list.
+ */
+static bool ListHolds(const std::vector<uint8_t> &entries, const uint8_t * const address)
+{
+    for (size_t index = 0; (index + Esp32Messaging::BT_BONDED_DEVICE_ENTRY_LENGTH) <= entries.size(); index += Esp32Messaging::BT_BONDED_DEVICE_ENTRY_LENGTH)
+    {
+        if (memcmp(entries.data() + index, address, Esp32Messaging::BT_ADDRESS_LENGTH) == 0)
+        {
+            return (true);
+        }
+    }
+    return (false);
+}
+
+/**
+ * @brief Start applies every security setting, and bonds can be listed and removed (issue #398).
+ *
+ *  Start fails if the stack refuses any of the security settings, so starting MeadowBond, which
+ *  uses all of them, shows they were taken.  No client is needed.  RemoveAllBonds removes every
+ *  bond the board holds, including one a client made in "A client pairs and bonds..."; remove
+ *  MeadowPair from that client's Bluetooth settings before pairing it again.
+ */
+TEST_CASE("Start applies every security setting, and bonds can be listed and removed (MeadowBond, Espressif)", CLASS_OF_TESTS)
+{
+    printf("Starting Bluetooth service for MeadowBond, Company ID Espressif (0x02e5)\n");
+
+    MockMessageDispatcher *dispatcher = SetupMessageDispatcher();
+    TEST_ASSERT_NOT_NULL(dispatcher);
+
+    StartBluetoothService(dispatcher, meadow_bond_json);
+
+    GetBondedDevices(dispatcher);
+
+    const uint8_t stranger[Esp32Messaging::BT_ADDRESS_LENGTH] = {0x02, 0x00, 0x00, 0x00, 0x00, 0x01};
+    Message *response = SendBondRequest(dispatcher, BluetoothFunction::RemoveBond, stranger);
+    ASSERT_RESPONSE(response, Esp32Interfaces::BlueTooth, BluetoothFunction::RemoveBond, StatusCodes::BluetoothDeviceNotBonded);
+    Message::DeleteMessage(response);
+
+    response = SendBondRequest(dispatcher, BluetoothFunction::RemoveAllBonds, nullptr);
+    ASSERT_RESPONSE(response, Esp32Interfaces::BlueTooth, BluetoothFunction::RemoveAllBonds, StatusCodes::CompletedOk);
+    Message::DeleteMessage(response);
+    TEST_ASSERT_EQUAL_MESSAGE(0, GetBondedDevices(dispatcher).size(), "Bonds were left after RemoveAllBonds.");
+
+    StopBluetoothService(dispatcher);
+
+    //
+    //  The bonds are kept by the stack, so with it stopped they cannot be listed.
+    //
+    response = SendBondRequest(dispatcher, BluetoothFunction::GetBondedDevices, nullptr);
+    ASSERT_RESPONSE(response, Esp32Interfaces::BlueTooth, BluetoothFunction::GetBondedDevices, StatusCodes::BluetoothNotStarted);
+    Message::DeleteMessage(response);
+
+    ResetMessageDispatcher();
+}
+
+/**
+ * @brief Value the pairing test puts in the encrypted characteristic for the client to read: "PAIR".
+ */
+#define PAIRING_VALUE 0x52494150
+
+/**
+ * @brief Number of handles the MeadowPair service returns: service, declaration, value and client configuration.
+ */
+#define PAIRING_HANDLE_COUNT 4
+
+/**
+ * @brief Index of the encrypted characteristic's value among the MeadowPair handles.
+ */
+#define PAIRING_VALUE_INDEX 2
+
+/**
+ * @brief Follow one connection of the pairing client until it disconnects.
+ *
+ *  The link must be encrypted, with the client bonded, before the client writes the number of
+ *  the connection to the characteristic.  When it does, it must be subscribed to notifications:
+ *  in the first connection because it subscribed, in the second because a bonded client's
+ *  subscription is kept from one connection to the next.
+ *
+ * @param dispatcher Dispatcher whose outbound queue is being read.
+ * @param valueHandle Handle of the encrypted characteristic's value.
+ * @param connection Number of the connection, 1 or 2, which the client writes.
+ * @param address Set to the address the client is bonded with.
+ */
+static void FollowPairingConnection(MockMessageDispatcher *dispatcher, const uint16_t valueHandle, const uint32_t connection, uint8_t * const address)
+{
+    bool authenticated = false;
+    bool written = false;
+    bool disconnected = false;
+    while (!disconnected)
+    {
+        WaitForOutboundMessage(dispatcher, CLIENT_CONNECTION_TIMEOUT);
+        Message *event = dispatcher->GetOutboundMessage();
+        TEST_ASSERT_NOT_NULL_MESSAGE(event, "The client did not finish the connection.");
+        switch (event->Function)
+        {
+            case BluetoothFunction::AuthenticationCompleteEvent:
+                ASSERT_EVENT(event, Esp32Interfaces::BlueTooth, BluetoothFunction::AuthenticationCompleteEvent, StatusCodes::CompletedOk);
+                TEST_ASSERT_EQUAL_UINT32(Esp32Messaging::BT_ADDRESS_LENGTH + 4, event->PayloadLength);
+                TEST_ASSERT_EQUAL_UINT8_MESSAGE(1, event->Payload[9], "The client is not in the bond list.");
+                memcpy(address, event->Payload, Esp32Messaging::BT_ADDRESS_LENGTH);
+                printf("Connection %" PRIu32 ": encrypted, authentication mode 0x%02" PRIx8 ".\n", connection, event->Payload[7]);
+                authenticated = true;
+                break;
+            case BluetoothFunction::ClientWriteRequestEvent:
+                {
+                    TEST_ASSERT_TRUE_MESSAGE(authenticated, "The encrypted characteristic was written before the link was encrypted.");
+                    uint16_t handle = 0;
+                    uint32_t value = 0;
+                    ExtractClientWrite(event, handle, value);
+                    event = nullptr;
+                    TEST_ASSERT_EQUAL_UINT16(valueHandle, handle);
+                    TEST_ASSERT_EQUAL_UINT32_MESSAGE(connection, value, "The client wrote the wrong connection number.");
+                    TEST_ASSERT_TRUE_MESSAGE(BluetoothRequestHandler::NotificationsEnabled(valueHandle), (connection == 1) ? "The client's subscription was not recorded." : "The bonded client's subscription was not restored when it reconnected.");
+                    written = true;
+                }
+                break;
+            case BluetoothFunction::ClientDisconnectedEvent:
+                disconnected = true;
+                break;
+            default:
+                printf("Unexpected Bluetooth message, function %" PRIu32 ".\n", event->Function);
+                TEST_FAIL_MESSAGE("Unexpected message during the pairing connection.");
+                break;
+        }
+        if (event != nullptr)
+        {
+            Message::DeleteMessage(event);
+        }
+    }
+    TEST_ASSERT_TRUE_MESSAGE(authenticated, "The link was never encrypted.");
+    TEST_ASSERT_TRUE_MESSAGE(written, "The client did not write the encrypted characteristic.");
+}
+
+/**
+ * @brief A client pairs, bonds, and keeps its subscription when it reconnects (issue #398).
+ *
+ *  PairingClient.py is the client.  It reads the characteristic, which needs encryption, so the
+ *  client pairs (Just Works, with bonding).  The operating system may ask for the pairing to be
+ *  confirmed, which is why this test is not in the [Bluetooth] tag: click Connect or Pair when
+ *  asked.  The client then subscribes, writes 1, disconnects, reconnects without subscribing and
+ *  writes 2.
+ *
+ *  The bond is kept, so the test can be run again: the client then encrypts with its stored keys
+ *  rather than pairing.  If the board's bonds have been removed since (see MeadowBond), remove
+ *  MeadowPair from the client's Bluetooth settings first.
+ */
+TEST_CASE("A client pairs and bonds to use an encrypted characteristic (MeadowPair, Espressif)", "[BluetoothPairing][HardwareOnly]")
+{
+    printf("Starting Bluetooth service for MeadowPair, Company ID Espressif (0x02e5)\n");
+
+    MockMessageDispatcher *dispatcher = SetupMessageDispatcher();
+    TEST_ASSERT_NOT_NULL(dispatcher);
+
+    StartBluetoothService(dispatcher, meadow_pair_json);
+
+    uint16_t handles[PAIRING_HANDLE_COUNT];
+    GetServiceHandles(dispatcher, PAIRING_HANDLE_COUNT, handles);
+    const uint16_t valueHandle = handles[PAIRING_VALUE_INDEX];
+
+    QueueServerDataSet(dispatcher, valueHandle, PAIRING_VALUE);
+    Message *response = WaitForResponseTo(dispatcher, Esp32Interfaces::BlueTooth, BluetoothFunction::ServerDataSet, BLUETOOTH_RESPONSE_TIMEOUT);
+    TEST_ASSERT_NOT_NULL(response);
+    ASSERT_RESPONSE(response, Esp32Interfaces::BlueTooth, BluetoothFunction::ServerDataSet, StatusCodes::CompletedOk);
+    Message::DeleteMessage(response);
+
+    //
+    //  Not WaitForClientConnection, which needs the connection to be the only message queued: a
+    //  client that is already bonded encrypts as soon as it connects, so the authentication event
+    //  can be queued alongside it.  The prompt is the same, as TestRunner starts the client on it.
+    //
+    printf("Please connect client within %d seconds.\n", CLIENT_CONNECTION_TIMEOUT / 1000);
+    WaitForOutboundMessage(dispatcher, CLIENT_CONNECTION_TIMEOUT);
+    Message *firstConnection = dispatcher->GetOutboundMessage();
+    TEST_ASSERT_NOT_NULL_MESSAGE(firstConnection, "The client did not connect.");
+    ASSERT_EVENT(firstConnection, Esp32Interfaces::BlueTooth, BluetoothFunction::ClientConnectedEvent, StatusCodes::CompletedOk);
+    Message::DeleteMessage(firstConnection);
+    uint8_t address[Esp32Messaging::BT_ADDRESS_LENGTH] = {};
+    FollowPairingConnection(dispatcher, valueHandle, 1, address);
+    TEST_ASSERT_FALSE_MESSAGE(BluetoothRequestHandler::NotificationsEnabled(valueHandle), "The subscription was left switched on with no client connected.");
+
+    printf("Waiting for the client to connect again.\n");
+    WaitForOutboundMessage(dispatcher, CLIENT_CONNECTION_TIMEOUT);
+    Message *connected = dispatcher->GetOutboundMessage();
+    TEST_ASSERT_NOT_NULL_MESSAGE(connected, "The client did not connect again.");
+    ASSERT_EVENT(connected, Esp32Interfaces::BlueTooth, BluetoothFunction::ClientConnectedEvent, StatusCodes::CompletedOk);
+    Message::DeleteMessage(connected);
+    uint8_t reconnected[Esp32Messaging::BT_ADDRESS_LENGTH] = {};
+    FollowPairingConnection(dispatcher, valueHandle, 2, reconnected);
+    TEST_ASSERT_EQUAL_UINT8_ARRAY_MESSAGE(address, reconnected, sizeof(address), "The client came back under a different bonded address.");
+
+    TEST_ASSERT_TRUE_MESSAGE(ListHolds(GetBondedDevices(dispatcher), address), "The client is not in the bond list.");
 
     StopBluetoothService(dispatcher);
 

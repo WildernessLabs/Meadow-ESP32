@@ -306,4 +306,60 @@ const char *meadow_subscription_json = R"({
     ]
 })";
 
+/**
+ * @brief Service using every security setting, with a characteristic that needs MITM protection
+ *        to read (4) and to write (64), and that notifies (props 26: read, write, notify).
+ */
+const char *meadow_bond_json = R"({
+    "deviceName":"MeadowBond",
+    "companyIdentifier":741,
+    "security": {
+        "ioCapability":1,
+        "bonding":true,
+        "mitm":true,
+        "secureConnectionsOnly":true,
+        "encryptOnConnect":true,
+        "acceptPairing":true
+    },
+    "services": [
+        {
+            "name":"BondService",
+            "uuid":250,
+            "characteristics": [
+                {
+                    "uuid":"01de99d6-8a61-11eb-8dcd-0242ac1300aa",
+                    "permission":68,
+                    "props":26,
+                    "len":4
+                }
+            ]
+        }
+    ]
+})";
+
+/**
+ * @brief Service a client has to pair with to use: the characteristic needs encryption to read
+ *        (2) and to write (32), and notifies (props 26: read, write, notify), so subscribing needs
+ *        encryption too.  The security settings are the defaults, so the pairing is Just Works and
+ *        the client keeps a bond.
+ */
+const char *meadow_pair_json = R"({
+    "deviceName":"MeadowPair",
+    "companyIdentifier":741,
+    "services": [
+        {
+            "name":"PairService",
+            "uuid":249,
+            "characteristics": [
+                {
+                    "uuid":"01ee99d6-8a61-11eb-8dcd-0242ac1300bb",
+                    "permission":34,
+                    "props":26,
+                    "len":4
+                }
+            ]
+        }
+    ]
+})";
+
 #endif // _TEST_BLUETOOTH_SERVICE_JSON_HPP_

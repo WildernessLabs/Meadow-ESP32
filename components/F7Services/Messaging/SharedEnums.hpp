@@ -283,6 +283,16 @@ namespace StatusCodes
          * @brief Invalid WiFi country code.
          */
         InvalidCountryCode = 62,
+
+        /**
+         * @brief The Bluetooth stack is not running, so a request that needs it cannot be answered.
+         */
+        BluetoothNotStarted = 63,
+
+        /**
+         * @brief The device named in a Bluetooth request is not bonded.
+         */
+        BluetoothDeviceNotBonded = 64,
     };
 
 } // namespace StatusCodes
@@ -669,6 +679,42 @@ namespace BluetoothFunction
          * @brief Indicate that a client has disconnected from the Bluetooth service.
          */
         ClientDisconnectedEvent = 10,
+        /**
+         * @brief Answer a PasskeyRequestEvent with the passkey the user entered, or refuse the pairing.
+         */
+        PasskeyReply = 11,
+        /**
+         * @brief Answer a NumericComparisonRequestEvent: accept the pairing if the numbers matched.
+         */
+        NumericComparisonReply = 12,
+        /**
+         * @brief Get the addresses of the devices bonded with this one.
+         */
+        GetBondedDevices = 13,
+        /**
+         * @brief Remove the bond with one device.
+         */
+        RemoveBond = 14,
+        /**
+         * @brief Remove the bonds with every device.
+         */
+        RemoveAllBonds = 15,
+        /**
+         * @brief Show the user this passkey so that they can type it into the client.
+         */
+        PasskeyDisplayEvent = 16,
+        /**
+         * @brief Ask the user for the passkey the client is showing, answered by PasskeyReply.
+         */
+        PasskeyRequestEvent = 17,
+        /**
+         * @brief Ask the user whether the client shows this number, answered by NumericComparisonReply.
+         */
+        NumericComparisonRequestEvent = 18,
+        /**
+         * @brief Pairing, or encryption with a bonded client, has finished, successfully or not.
+         */
+        AuthenticationCompleteEvent = 19,
     };
 } // namespace BluetoothFunction
 
