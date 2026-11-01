@@ -13,6 +13,17 @@
 #include "esp_netif.h"
 #include "lwip/sockets.h"
 #include "unity.h"
+#if defined(CONFIG_APPTRACE_SV_ENABLE)
+    //
+    //  esp_app_trace_util.h, which esp_sysview_trace.h includes, chains an assignment to a
+    //  volatile member.  C++20 deprecates that and -Werror makes it an error.  The header is
+    //  ESP-IDF's, so the warning is turned off for it alone.
+    //
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wvolatile"
+    #include "esp_sysview_trace.h"
+    #pragma GCC diagnostic pop
+#endif
 
 #include "Logging.hpp"
 #include "SharedEnums.hpp"
@@ -126,7 +137,9 @@ TEST_CASE("A logging configuration that cannot be honoured is refused and change
     TestLogging::Reset();
     TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, Logging::Configure("WiFi", Esp32LogDestination::Uart, 0));
 
-    TEST_ASSERT_EQUAL_MESSAGE(StatusCodes::NotImplemented, Logging::Configure("Thread", Esp32LogDestination::Jtag, 0), "JTAG logging was accepted.");
+#if !defined(CONFIG_APPTRACE_SV_ENABLE)
+    TEST_ASSERT_EQUAL_MESSAGE(StatusCodes::NotImplemented, Logging::Configure("Thread", Esp32LogDestination::Jtag, 0), "JTAG logging was accepted in a build without SystemView.");
+#endif
     TEST_ASSERT_EQUAL_MESSAGE(StatusCodes::InvalidRequest, Logging::Configure("Thread", 9, 0), "A destination that does not exist was accepted.");
     TEST_ASSERT_EQUAL_MESSAGE(StatusCodes::InvalidRequest, Logging::Configure("Thread", Esp32LogDestination::UDP, 0), "UDP logging with no port was accepted.");
     TEST_ASSERT_EQUAL_MESSAGE(StatusCodes::InvalidRequest, Logging::Configure("Thread", Esp32LogDestination::UDP, 70000), "UDP logging to a port above 65535 was accepted.");
@@ -192,3 +205,35 @@ TEST_CASE("Log messages are sent over UDP to the port asked for, and stop when t
     close(receiver);
     TestLogging::Reset();
 }
+
+#if defined(CONFIG_APPTRACE_SV_ENABLE)
+
+/**
+ * @brief The log output function in use now.
+ *
+ * @return The function esp_log is calling to write messages.
+ */
+static vprintf_like_t CurrentLogOutput()
+{
+    const vprintf_like_t current = esp_log_set_vprintf(vprintf);
+    esp_log_set_vprintf(current);
+    return (current);
+}
+
+TEST_CASE("JTAG logging sends the log messages to SystemView and puts the output back afterwards", CLASS_OF_TESTS)
+{
+    TestLogging::Reset();
+    const vprintf_like_t before = CurrentLogOutput();
+
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, Logging::Configure("Thread", Esp32LogDestination::Jtag, 0));
+    TEST_ASSERT_EQUAL_UINT8(Esp32LogDestination::Jtag, TestLogging::Destination());
+    TEST_ASSERT_TRUE(LogsInformation(Thread::COMPONENT_NAME));
+    TEST_ASSERT_TRUE_MESSAGE(CurrentLogOutput() == esp_sysview_vprintf, "The log is not going to SystemView.");
+
+    TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, Logging::Configure("Thread", Esp32LogDestination::Uart, 0));
+    TEST_ASSERT_TRUE_MESSAGE(CurrentLogOutput() == before, "The log output was not put back.");
+
+    TestLogging::Reset();
+}
+
+#endif

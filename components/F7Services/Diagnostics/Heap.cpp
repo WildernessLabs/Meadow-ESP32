@@ -25,6 +25,8 @@
 
 #include "esp_heap_task_info.h"
 #include "esp_heap_trace.h"
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
 
 #include "Utils.hpp"
 #include "Debug.hpp"
@@ -48,13 +50,11 @@ const char *Heap::COMPONENT_NAME = "HeapDiagnostics";
 /**
  * @brief Number of records standalone heap tracing keeps.
  *
- * @note This used to be read from CONFIG_TRACE_RECORD_NUM, but ESP-IDF has no Kconfig
- *       symbol of that name, so setting it in sdkconfig.develop only raised a warning
- *       and the value never reached sdkconfig.h.  The file therefore did not compile
- *       whenever standalone tracing was turned on.  The count belongs with the code that
- *       allocates the records rather than with the configuration, so it is set here.
+ * @note CONFIG_TRACE_RECORD_NUM is defined in the F7Services Kconfig.projbuild.  It used
+ *       to be defined in main, which the test project does not build, so the test build
+ *       never had the symbol and a fixed count was used here instead.
  */
-static const uint32_t TRACE_RECORD_COUNT = 100;
+static const uint32_t TRACE_RECORD_COUNT = CONFIG_TRACE_RECORD_NUM;
 
 /**
  * @brief Maximum number of heap trace records.
@@ -68,6 +68,11 @@ heap_trace_record_t *Heap::_traceRecords = nullptr;
  */
 bool Heap::_isRunning = false;
 
+/**
+ * @brief True once Setup has run, so that running it again does nothing.
+ */
+bool Heap::_isSetup = false;
+
 /*
  * ---------------------------------------------------------------------------
  *
@@ -78,9 +83,18 @@ bool Heap::_isRunning = false;
 
 /**
  * @brief Initialize the heap diagnostic subsystem.
+ *
+ * With heap tracing to the host, tracing is started as soon as a SystemView capture starts,
+ * so a capture shows every allocation from then on.  Setup may be called more than once (each
+ * SystemRequestHandler calls it); only the first call does anything.
  */
 void Heap::Setup()
 {
+    if (_isSetup)
+    {
+        return;
+    }
+    _isSetup = true;
     esp_log_level_set(COMPONENT_NAME, ESP_LOG_INFO);
 
     TRACE_MESSAGE("Setup: Enter");
@@ -109,6 +123,12 @@ void Heap::Setup()
     else
     {
         TRACE_MESSAGE("Heap tracing initialized successfully");
+    #if defined(CONFIG_HEAP_TRACING_TOHOST)
+        if (xTaskCreate(HostTracingTask, "HeapTrace", HOST_TRACING_TASK_STACK_SIZE, nullptr, tskIDLE_PRIORITY + 1, nullptr) != pdPASS)
+        {
+            ERROR_MESSAGE("Failed to create the task that starts heap tracing to the host");
+        }
+    #endif
     }
 #else
     TRACE_MESSAGE("Heap tracing not configured");
@@ -117,30 +137,20 @@ void Heap::Setup()
     TRACE_MESSAGE("Setup: Exit");
 }
 
+#if defined(CONFIG_HEAP_TRACING_TOHOST)
+
 /**
- * @brief Report comprehensive heap information.
+ * @brief Start heap tracing to the host once a SystemView capture starts.
+ *
+ * @param parameters Not used.
  */
-void Heap::ReportUsage()
+void Heap::HostTracingTask(void *parameters)
 {
-    ESP_LOGI(COMPONENT_NAME, "Memory Usage");
-    bool valid = heap_caps_check_integrity_all(true);
-    ESP_LOGI(COMPONENT_NAME, "Heap integrity check: %s", valid ? "PASS" : "FAILED");
-    if (!valid)
-    {
-        DEBUG_BREAKPOINT();
-    }
-
-    multi_heap_info_t heap_info;
-    heap_caps_get_info(&heap_info, MALLOC_CAP_DEFAULT);
-
-    ESP_LOGI(COMPONENT_NAME, "Total heap: %s bytes", Utils::NumberWithCommas((uint64_t) (heap_info.total_allocated_bytes + heap_info.total_free_bytes)).c_str());
-    ESP_LOGI(COMPONENT_NAME, "Free heap: %s bytes", Utils::NumberWithCommas((uint64_t) heap_info.total_free_bytes).c_str());
-    ESP_LOGI(COMPONENT_NAME, "Allocated heap: %s bytes", Utils::NumberWithCommas((uint64_t) heap_info.total_allocated_bytes).c_str());
-    ESP_LOGI(COMPONENT_NAME, "Free blocks: %s", Utils::NumberWithCommas((uint64_t) heap_info.free_blocks).c_str());
-    ESP_LOGI(COMPONENT_NAME, "Largest free block: %s bytes", Utils::NumberWithCommas((uint64_t) heap_info.largest_free_block).c_str());
-    ESP_LOGI(COMPONENT_NAME, "Minimum free heap: %s bytes", Utils::NumberWithCommas((uint64_t) esp_get_minimum_free_heap_size()).c_str());
-    ESP_LOGI(COMPONENT_NAME, "Heap fragmentation: %" PRIu32 "%%", heap_info.total_free_bytes ? (100 - (heap_info.largest_free_block * 100) / heap_info.total_free_bytes) : 0);
+    StartTracing(HEAP_TRACE_ALL);
+    vTaskDelete(nullptr);
 }
+
+#endif
 
 /**
  * @brief Check heap integrity and report any issues.
@@ -280,46 +290,3 @@ void Heap::ReportStatistics()
 
     TRACE_MESSAGE("ReportStatistics: Exit");
 }
-
-#if defined(CONFIG_HEAP_TASK_TRACKING)
-
-/**
- * @brief Report heap usage by task.
- *
- * This method reports the heap usage for each task in the system.
- */
-void Heap::ReportHeapUseByTask()
-{
-    heap_all_tasks_stat_t allTasksStatistics;
-    assert(heap_caps_alloc_all_task_stat_arrays(&allTasksStatistics) == ESP_OK);
-    assert(heap_caps_get_all_task_stat(&allTasksStatistics) == ESP_OK);
-
-    ESP_LOGI(COMPONENT_NAME, "--------------------------------------------------------------------------------");
-    ESP_LOGI(COMPONENT_NAME, "                        Printing All Tasks Information\n");
-    ESP_LOGI(COMPONENT_NAME, "--------------------------------------------------------------------------------");
-    for (size_t task_idx = 0; task_idx < allTasksStatistics.task_count; task_idx++)
-    {
-        task_stat_t taskStatistics = allTasksStatistics.stat_arr[task_idx];
-        ESP_LOGI(COMPONENT_NAME, "%s: %s: Peak Usage %" PRIu16 ", Current Usage %" PRIu16, taskStatistics.name, taskStatistics.is_alive ? "ALIVE  " : "DELETED", taskStatistics.overall_peak_usage, taskStatistics.overall_current_usage);
-
-        for (size_t heapIndex = 0; heapIndex < taskStatistics.heap_count; heapIndex++)
-        {
-            heap_stat_t heapStatistics = taskStatistics.heap_stat[heapIndex];
-            ESP_LOGI(
-                COMPONENT_NAME, "    %s: Caps: %" PRIu32 ". Size %" PRIu16 ", Current Usage %" PRIu16 ", Peak Usage %" PRIu16 ", alloc count %" PRIu16, heapStatistics.name, heapStatistics.caps, heapStatistics.size, heapStatistics.current_usage, heapStatistics.peak_usage, heapStatistics.alloc_count);
-
-            for (size_t allocationIndex = 0; allocationIndex < heapStatistics.alloc_count; allocationIndex++)
-            {
-                heap_task_block_t allocation = heapStatistics.alloc_stat[allocationIndex];
-                ESP_LOGI(COMPONENT_NAME, "        %p: Size: %" PRIu32, allocation.address, allocation.size);
-            }
-        }
-    }
-    ESP_LOGI(COMPONENT_NAME, "--------------------------------------------------------------------------------");
-    ESP_LOGI(COMPONENT_NAME, "                        End of All Tasks Information\n");
-    ESP_LOGI(COMPONENT_NAME, "--------------------------------------------------------------------------------");
-
-    heap_caps_free_all_task_stat_arrays(&allTasksStatistics);
-}
-
-#endif // CONFIG_HEAP_TASK_TRACKING

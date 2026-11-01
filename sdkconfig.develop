@@ -17,10 +17,26 @@ CONFIG_PARTITION_TABLE_MD5=y
 CONFIG_ESP_COREDUMP_CAPTURE_DRAM=y
 
 #
-#   Should we enable the diagnostic thread ?
+#   No periodic diagnostic snapshots.  To have one written every ten seconds, set
+#   CONFIG_MEADOW_DIAGNOSTICS_PERIOD_MS=10000.
 #
-# CONFIG_ENABLE_DIAGNOSTIC_THREAD is not set
-# CONFIG_ENABLE_DIAGNOSTIC_THREAD=y
+CONFIG_MEADOW_DIAGNOSTICS_PERIOD_MS=0
+
+#
+#   lwIP keeps counts of the packets sent, received and dropped by each protocol, which the
+#   diagnostic snapshot reports.
+#
+CONFIG_LWIP_STATS=y
+
+#
+#   Count the CPU time each task uses, so the diagnostics can report the load per task and
+#   per core.  Without this the run-time counters FreeRTOS reports never move.  The clock
+#   is esp_timer (1 MHz); the 32-bit counter wraps after about 71 minutes, which the
+#   diagnostics allow for by only ever working with the difference between two readings.
+#
+CONFIG_FREERTOS_GENERATE_RUN_TIME_STATS=y
+CONFIG_FREERTOS_RUN_TIME_STATS_USING_ESP_TIMER=y
+CONFIG_FREERTOS_RUN_TIME_COUNTER_TYPE_U32=y
 
 #
 #   Enable various assertions to be turned on.
@@ -48,13 +64,12 @@ CONFIG_COMPILER_OPTIMIZATION_ASSERTION_LEVEL=2
 #
 #   Heap configuration.
 #
-# CONFIG_HEAP_TRACING_STANDALONE is not set
 CONFIG_HEAP_TRACING_STANDALONE=y
 #
-#   The number of trace records standalone tracing keeps is set in Heap.cpp.  There is no
-#   Kconfig symbol for it, so a CONFIG_TRACE_RECORD_NUM here only raised a warning and
-#   left the code without a value to compile against.
+#   The number of records standalone tracing keeps is CONFIG_TRACE_RECORD_NUM, defined in
+#   components/F7Services/Kconfig.projbuild with a default of 100.
 #
+# CONFIG_TRACE_RECORD_NUM=100
 # CONFIG_HEAP_TRACING_TOHOST is not set
 # CONFIG_HEAP_TRACING_TOHOST=y
 # CONFIG_HEAP_TRACING_STACK_DEPTH=5
@@ -64,7 +79,12 @@ CONFIG_HEAP_ABORT_WHEN_ALLOCATION_FAILS=y
 # CONFIG_HEAP_POISONING_DISABLED is not set
 # CONFIG_HEAP_POISONING_LIGHT is not set
 CONFIG_HEAP_POISONING_COMPREHENSIVE=y
-CONFIG_ENABLE_HEAP_INTEGRITY_CHECKS=y
+#
+#   The heap integrity checks walk every block of every heap each time a message is queued
+#   for the STM32, and they are off.  The file used to set the option and then unset it on
+#   the next line; the second line won, and this keeps that.
+#   To turn them on, set CONFIG_ENABLE_HEAP_INTEGRITY_CHECKS=y.
+#
 # CONFIG_ENABLE_HEAP_INTEGRITY_CHECKS is not set
 
 #

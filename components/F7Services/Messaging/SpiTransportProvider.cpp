@@ -16,6 +16,8 @@
 #include "esp_attr.h"
 
 #include "SpiTransportProvider.hpp"
+#include "Metrics.hpp"
+#include "Profile.hpp"
 #include "Esp32Messaging.hpp"
 #include "Encoders.hpp"
 #include "Globals.hpp"
@@ -923,15 +925,22 @@ spi_slave_transaction_t *SpiTransportProvider::PacketAcknowledgementReceived(spi
         {
             if (incomingMessage->MessageType == MessageTypes::Ack)
             {
-#if defined(PERFORMANCE_LOGGING)
-                PERFORMANCE_LOGGING_EXIT();
-                Logging::AddPerformanceCounterEntry(Logging::MessageSummary(_outboundMessage), _outboundMessage->PerformanceLoggingStart, performance_logging_end, true);
-#endif
-
                 UpdatePacketInformation(_outboundMessage);
                 if (_outboundMessage->PacketLength == 0)
                 {
+                    const uint32_t messageId = _outboundMessage->MessageID;
+                    const bool isResponse = ((_outboundMessage->MessageType & MessageTypes::Response) != 0);
+                    MetricHistogram latency = MetricHistogram::NumberOfHistograms;
+                    if (isResponse && (_outboundMessage->ReceivedTime != 0) && Metrics::RequestLatencyFor(_outboundMessage->Interface, latency))
+                    {
+                        Metrics::Record(latency, static_cast<uint32_t>(esp_timer_get_time() - _outboundMessage->ReceivedTime));
+                    }
                     Message::DeleteMessage(_outboundMessage);
+                    Profile::Record(ProfileEvent::MessageAcknowledged, messageId);
+                    if (isResponse)
+                    {
+                        Profile::MessageStop(messageId);
+                    }
                     TRACE_MESSAGE("Final packet sent.");
                 }
                 else
@@ -1047,6 +1056,9 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessMessages(spi_slave_transac
     //  is mandatory when spi_slave_queue_trans is used.
     //
     ESP_ERROR_CHECK(spi_slave_get_trans_result(VSPI_HOST, &transaction, portMAX_DELAY));
+    Profile::Record(ProfileEvent::SpiTransaction, static_cast<uint32_t>(_currentState), transaction->trans_len / 8);
+    Metrics::Increment(MetricCounter::SpiTransactions);
+    ProfileSpan span(ProfileEvent::SpiProcess, ProfileEvent::SpiProcessDone, static_cast<uint32_t>(_currentState));
     return (HandleTransaction(transaction));
 }
 
@@ -1165,14 +1177,6 @@ void SpiTransportProvider::Task(void *pvParameters)
         vTaskDelay(10 / portTICK_PERIOD_MS);
     }
 
-    //
-    //  Uncomment if heap standalone heap tracing is needed.
-    //
-    //  This code and the code in the while loop will check for memory leaks
-    //  occurring in the request / response message processing cycle.
-    //
-    // Heap::StartTracing();
-
     spi_slave_transaction_t *transaction = sender->CreateSpiTransaction(nullptr);
     while (true)
     {
@@ -1180,16 +1184,6 @@ void SpiTransportProvider::Task(void *pvParameters)
         TRACE_MESSAGE("****************************** New State ******************************");
         TRACE_MESSAGE("");
         transaction = sender->ProcessMessages(transaction);
-
-        //
-        //  Uncomment if heap standalone heap tracing is needed.
-        //
-        // Heap::StopTracing();
-        // Diagnostics::LockOutput();
-        // Heap::DumpTraceRecords();
-        // Diagnostics::UnlockOutput();
-
-        // Heap::StartTracing();
     }
     //
     //  We should only get here if the code in the while loop generates a fault.

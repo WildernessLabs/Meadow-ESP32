@@ -11,6 +11,17 @@
 
 #include "esp32/rom/gpio.h"
 #include "lwip/sockets.h"
+#if defined(CONFIG_APPTRACE_SV_ENABLE)
+    //
+    //  esp_app_trace_util.h, which esp_sysview_trace.h includes, chains an assignment to a
+    //  volatile member.  C++20 deprecates that and -Werror makes it an error.  The header is
+    //  ESP-IDF's, so the warning is turned off for it alone.
+    //
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wvolatile"
+    #include "esp_sysview_trace.h"
+    #pragma GCC diagnostic pop
+#endif
 #include <string.h>
 #include <limits.h>
 
@@ -36,10 +47,6 @@
 #include "Thread.hpp"
 #include "ThreadPool.hpp"
 #include "CoreDump.hpp"
-
-#if defined(PERFORMANCE_LOGGING)
-    #pragma message "Performance logging is enabled."
-#endif
 
 /*
  * ---------------------------------------------------------------------------
@@ -89,23 +96,11 @@ SemaphoreHandle_t Logging::_udpMutex = nullptr;
  */
 char Logging::_udpBuffer[Logging::UDP_LOG_MESSAGE_SIZE];
 
-#if defined(PERFORMANCE_LOGGING)
-
+#if defined(CONFIG_APPTRACE_SV_ENABLE)
 /**
- *  @brief Next performance counter entry to use.
+ *  @brief The function that wrote log messages before they were sent to SystemView, nullptr when they are not.
  */
-int Logging::_nextPerformanceCounterEntry = 0;
-
-/**
- *  @brief Number of performance counter slots in the circular buffer.
- */
-int Logging::_numberOfPerformanceCounterSlots = MAX_PERFORMANCE_COUNTERS;
-
-/**
- *  @brief Table to hold the performance counters;
- */
-Logging::PerformanceCounterEntry *Logging::_performanceCounters[MAX_PERFORMANCE_COUNTERS];
-
+vprintf_like_t Logging::_outputBeforeSystemView = nullptr;
 #endif
 
 /*
@@ -122,13 +117,6 @@ Logging::PerformanceCounterEntry *Logging::_performanceCounters[MAX_PERFORMANCE_
 Logging::Logging()
 {
     esp_log_level_set(Logging::COMPONENT_NAME, ESP_LOG_INFO);
-
-#if defined(PERFORMANCE_LOGGING)
-    for (int index = 0; index < _numberOfPerformanceCounterSlots; index++)
-    {
-        _performanceCounters[index] = nullptr;
-    }
-#endif
 }
 
 /**
@@ -166,10 +154,6 @@ void Logging::Setup()
     //
     uart_driver_install(LOGGING_UART_PORT_NUMBER, RX_BUFFER_SIZE * 2, 0, 0, nullptr, 0);
 
-#if defined(CONFIG_ENABLE_DIAGNOSTIC_THREAD)
-    esp_log_level_set(Diagnostics::COMPONENT_NAME, ESP_LOG_INFO);
-#endif
-
 #if defined(CONFIG_ENABLE_HEAP_INTEGRITY_CHECKS)
     #pragma message "Heap integrity checks enabled, setting heap logging level to INFO."
     esp_log_level_set(Heap::COMPONENT_NAME, ESP_LOG_INFO);
@@ -187,11 +171,13 @@ void Logging::Setup()
  * changed, so one that cannot be honoured leaves the configuration as it was.
  *
  * @param components Names of the components to be logged.
- * @param interface Destination for the log messages: Esp32LogDestination None, Uart or UDP.
+ * @param interface Destination for the log messages: Esp32LogDestination None, Uart, UDP, or Jtag, which sends
+ *                  them to the SystemView trace in a build with SystemView (build.sh --sysview).
  * @param udpPort UDP port for the log messages when UDP is enabled.
  *
  * @return CompletedOk if the configuration was applied, InvalidRequest if the destination is not one that
- *         exists or UDP is asked for with no port, NotImplemented if it is JTAG, and Failure if the UDP
+ *         exists or UDP is asked for with no port, NotImplemented if it is JTAG in a build without SystemView, and
+ *         Failure if the UDP
  *         socket cannot be opened (issue #356).
  */
 StatusCodes::StatusCodes Logging::Configure(const char * const components, uint32_t interface, uint32_t udpPort)
@@ -208,18 +194,31 @@ StatusCodes::StatusCodes Logging::Configure(const char * const components, uint3
             }
             break;
         case Esp32LogDestination::Jtag:
+#if defined(CONFIG_APPTRACE_SV_ENABLE)
+            break;
+#else
             return (StatusCodes::NotImplemented);
+#endif
         default:
             return (StatusCodes::InvalidRequest);
     }
 
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
     StopUdpLogging();
+#if defined(CONFIG_APPTRACE_SV_ENABLE)
+    StopSystemViewLogging();
+#endif
     TurnAllLoggingOff();
     if (interface == Esp32LogDestination::UDP)
     {
         result = StartUdpLogging(static_cast<uint16_t>(udpPort));
     }
+#if defined(CONFIG_APPTRACE_SV_ENABLE)
+    if (interface == Esp32LogDestination::Jtag)
+    {
+        StartSystemViewLogging();
+    }
+#endif
 
     if ((result == StatusCodes::CompletedOk) && (interface != Esp32LogDestination::None))
     {
@@ -285,6 +284,33 @@ StatusCodes::StatusCodes Logging::StartUdpLogging(const uint16_t port)
     _previousLogOutput = esp_log_set_vprintf(UdpLogOutput);
     return (StatusCodes::CompletedOk);
 }
+
+#if defined(CONFIG_APPTRACE_SV_ENABLE)
+
+/**
+ * @brief Send the log messages to the SystemView trace instead of the UART.
+ *
+ * They appear in SystemView's terminal window, on the same time line as the tasks.  While no
+ * capture is running they go nowhere.
+ */
+void Logging::StartSystemViewLogging()
+{
+    _outputBeforeSystemView = esp_log_set_vprintf(esp_sysview_vprintf);
+}
+
+/**
+ * @brief Stop sending the log messages to SystemView and put back the output that was there before.
+ */
+void Logging::StopSystemViewLogging()
+{
+    if (_outputBeforeSystemView != nullptr)
+    {
+        esp_log_set_vprintf(_outputBeforeSystemView);
+        _outputBeforeSystemView = nullptr;
+    }
+}
+
+#endif
 
 /**
  * @brief Stop sending the log messages over UDP and put back the output that was there before.
@@ -602,133 +628,3 @@ void Logging::DumpMessage(const char * const componentName, const Message * cons
         TRACE_MESSAGE_SPECIFY_COMPONENT(componentName, "Message pointer is invalid.");
     }
 }
-
-/**
- *  @brief Generate a single line summary of the message.
- *
- *  @param message
- *      Message to be summarised.
- *
- *  @return
- *      Pointer to a string containing the message ID, interface and function requested.
- */
-char *Logging::MessageSummary(const Message * const message)
-{
-    char buffer[200];
-
-    snprintf(buffer, 200, "ID: 0x%08" PRIx32 " Interface: %s Function: %s", message->MessageID, InterfaceName(message->Interface), FunctionName(message->Interface, message->Function));
-    return (strdup(buffer));
-}
-
-#if defined(PERFORMANCE_LOGGING)
-
-/**
- *  @brief Add an entry to the table of performance counters.
- *
- *  @param method
- *      Name of the method (or event) being recorded.
- *
- *  @param start
- *      Time since the chip started in microseconds of the start of the event.
- *
- *  @param end
- *      Time since the chip started in microseconds of the end of the event.
- *
- *  @param ownsMethod
- *      True if method is heap-allocated and this call is handing over ownership of
- *      it, so it is freed when the entry is later released.  False (the default,
- *      matching every existing caller) for a string literal such as __func__.
- */
-void Logging::AddPerformanceCounterEntry(const char *method, int64_t start, int64_t end, bool ownsMethod)
-{
-    uint64_t duration;
-    if (start <= end) // Check if the counter has wrapped around.
-    {
-        duration = end - start;
-    }
-    else
-    {
-        duration = LONG_LONG_MAX - start + end;
-    }
-    int pd = duration & 0xffffffff;
-    PerformanceCounterEntry *pce = static_cast<PerformanceCounterEntry *>(pvPortMalloc(sizeof(PerformanceCounterEntry)));
-
-    if (pce != nullptr)
-    {
-        pce->timestamp = esp_log_timestamp();
-        pce->method = method;
-        pce->ownsMethod = ownsMethod;
-        pce->duration = pd;
-        //
-        //  The slot is claimed and the entry it held taken out under the lock, so no two
-        //  tasks get the same slot; the old entry is released after the lock is given back.
-        //
-        PerformanceCounterEntry *previous = nullptr;
-        {
-            MutexLock lock(PerformanceCountersMutex());
-            previous = _performanceCounters[_nextPerformanceCounterEntry];
-            _performanceCounters[_nextPerformanceCounterEntry] = pce;
-            _nextPerformanceCounterEntry++;
-            if (_nextPerformanceCounterEntry >= _numberOfPerformanceCounterSlots)
-            {
-                _nextPerformanceCounterEntry = 0;
-            }
-        }
-        if (previous != nullptr)
-        {
-            if (previous->ownsMethod)
-            {
-                free(const_cast<char *>(previous->method));
-            }
-            Utils::DeleteAndNullifyPointer(previous);
-        }
-    }
-    else
-    {
-        if (ownsMethod)
-        {
-            //
-            //  The entry could not be stored, so nothing will ever release method through it;
-            //  free it here instead so ownership is not dropped on this path.
-            //
-            free(const_cast<char *>(method));
-        }
-    }
-}
-
-/**
- *  @brief Mutex guarding _performanceCounters and _nextPerformanceCounterEntry.
- *
- *  A function-local static is created exactly once, on first use, even when several tasks
- *  get here at the same time.
- *
- *  @returns
- *      The performance counter mutex.
- */
-SemaphoreHandle_t Logging::PerformanceCountersMutex()
-{
-    static const SemaphoreHandle_t mutex = Utils::RequireCreated(xSemaphoreCreateMutex(), "the performance counter mutex");
-    return (mutex);
-}
-
-/**
- *  @brief Dump the table of performance counters.
- */
-void Logging::DumpPerformanceCounters()
-{
-    //
-    //  Held while the table is printed, so no entry is released part way through.
-    //
-    MutexLock lock(PerformanceCountersMutex());
-    printf("Timestamp,Method,Duration\n");
-    for (int index = 0; index < _numberOfPerformanceCounterSlots; index++)
-    {
-        if (_performanceCounters[index] != nullptr)
-        {
-            PerformanceCounterEntry *pce = _performanceCounters[index];
-            printf("%" PRIu32 ",%s,%" PRIu32 "\n", pce->timestamp, pce->method, pce->duration);
-        }
-    }
-}
-
-#endif

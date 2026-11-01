@@ -1,0 +1,54 @@
+#
+#   Build options for the Meadow ESP32 services.
+#
+#   These live in the F7Services component rather than in main so that the test project,
+#   which builds F7Services but not main, sees them too.  When they were in main the test
+#   build did not know the symbols, so anything sdkconfig.develop set for them was dropped
+#   with a warning and the code they guard was never compiled into the tests.
+#
+menu "Meadow COMMS Project Build Configuration"
+
+    config MEADOW_DIAGNOSTICS_PERIOD_MS
+        int "Diagnostic snapshot period (ms, 0 = off)"
+        range 0 3600000
+        default 0
+        help
+            Time between the diagnostic snapshots written to the log (tasks, CPU load, heap,
+            metrics and network statistics; see Documentation/Diagnostics.md).  0 takes no
+            periodic snapshots.  A period below 1,000 ms is raised to 1,000 ms.
+
+    config ENABLE_HEAP_INTEGRITY_CHECKS
+        bool "Enable heap integrity checks"
+        default n
+        help
+            This option enables a heap integrity check, breaking to the debugger on corruption
+            when a debugger is attached and reporting the heap component at the INFO logging
+            level.
+
+    config TRACE_RECORD_NUM
+        int "Number of standalone trace records"
+        range 10 500
+        default 100
+        depends on HEAP_TRACING_STANDALONE
+        help
+            Number of records that can be stored in the trace buffer.  This is used to store information
+            about heap memory allocations and deallocations in order to attempt to detect memory leaks.
+
+    config MEADOW_METRICS
+        bool "Keep metrics (counters, gauges and latency histograms)"
+        default y
+        help
+            Keeps counters, gauges and histograms of request latency and handler time in
+            every build, release included.  Recording one is a few atomic operations on
+            statically allocated memory.  Turn it off to compile the calls away.
+
+    config MEADOW_SYSVIEW_EVENTS
+        bool "Record Meadow events in SystemView traces"
+        depends on APPTRACE_SV_ENABLE
+        default y
+        help
+            Records the Meadow events (SPI transactions, requests, responses) in a SystemView
+            trace alongside the FreeRTOS events, as the Meadow SystemView module.  Only
+            available in a build with SystemView (build.sh --sysview).
+
+endmenu

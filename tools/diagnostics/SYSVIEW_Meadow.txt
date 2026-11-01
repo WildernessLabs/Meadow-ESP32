@@ -1,0 +1,31 @@
+#
+#   SystemView description of the Meadow ESP32 events.
+#
+#   Copy this file into the Description folder of the SystemView installation (on a Mac,
+#   /Applications/SEGGER/SystemView/Description) so that SystemView shows the names of the
+#   interfaces, message types and SPI states rather than their numbers.  The firmware also
+#   describes the events itself (Profile.cpp), so SystemView shows them without this file,
+#   with numbers in place of the names.
+#
+#   The event numbers are ProfileEvent in components/F7Services/Diagnostics/Profile.hpp and
+#   must be kept in step with it.
+#
+
+#
+#   Types.
+#
+NamedType Interface 0=None 1=WiFi 2=Bluetooth 3=MeshNetwork 4=System 5=Transport 6=WiredEthernet
+NamedType MessageType 0x00=Ack 0x01=Nak 0x02=Reset 0x04=Event 0x10=Response 0x20=Transport 0x40=Header 0x80=Data
+NamedType SpiState 0=Invalid 1=WaitingForPacket 2=AcknowledgingPacket 3=SendingPacketDetails 4=SendingPacket 5=WaitingForPacketAcknowledgement
+
+#
+#   Events.
+#
+0     SpiTransaction           state=%SpiState bytes=%u
+1     SpiProcess               state=%SpiState
+2     SpiProcessDone           state=%SpiState
+3     RequestReceived          id=%p interface=%Interface function=%u
+4     HandleRequest            id=%p interface=%Interface function=%u
+5     HandleRequestDone        id=%p
+6     MessageQueued            id=%p type=%MessageType depth=%u
+7     MessageAcknowledged      id=%p
