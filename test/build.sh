@@ -69,6 +69,12 @@ case $i in
     -tm|--tracemessages)
     IDF_DEFINES+=" -DTRACE_MESSAGES=1"
     ;;
+    --sysview)
+    IDF_DEFINES+=" -DSYSVIEW=1"
+    ;;
+    --heaptrace)
+    IDF_DEFINES+=" -DHEAPTRACE=1"
+    ;;
     --MENUCONFIG)
     MENUCONFIG=true
     ;;
@@ -119,6 +125,8 @@ if $HELP; then
     echo "-q | --qemu             Generate a QEMU flash image from the build output"
     echo "--fullclean             Perform a full clean followed by a build"
     echo "-tm | --tracemessages   Enable heap tracing."
+    echo "--sysview               Build with SEGGER SystemView tracing over JTAG (merges ../sdkconfig.sysview)."
+    echo "--heaptrace             With --sysview, send every allocation and free to the host (merges ../sdkconfig.heaptrace)."
     echo "--menuconfig            Enter the menu configuration system overwriting sdkconfig.defaults"
     echo "-d=* | --debug=*        Turn on debug for selected system(s). Valid values (comma separated): WIFI, SPI, BT, SYSTEM."
     echo ""

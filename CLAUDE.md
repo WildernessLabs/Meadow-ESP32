@@ -34,6 +34,7 @@ idf.py monitor
 |------|--------|
 | `--develop` | `DEBUG=1` + debug symbols |
 | `--tracemessages` | SPI message protocol tracing |
+| `--sysview` | SEGGER SystemView tracing over JTAG (`sdkconfig.sysview`); capture with `./sysview.sh` |
 
 ## Testing
 

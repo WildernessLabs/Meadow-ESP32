@@ -17,6 +17,7 @@
 #include "Encoders.hpp"
 #include "NvsManager.hpp"
 #include "Logging.hpp"
+#include "Metrics.hpp"
 #include "MessageDispatcher.hpp"
 #include "SpiTransportProvider.hpp"
 #include "SystemRequestHandler.hpp"
@@ -98,9 +99,14 @@ void heap_caps_alloc_failed_hook(size_t requestedSize, uint32_t caps, const char
 // cppcheck-suppress unusedFunction symbolName=app_main
 extern "C" void app_main()
 {
+    //
+    //  Failed allocations are counted in every build.  The heap takes one callback, so the
+    //  develop build's report of each failure is called from the metrics' callback.
+    //
 #if defined(DEBUG)
-    esp_err_t error = heap_caps_register_failed_alloc_callback(heap_caps_alloc_failed_hook);
-    ESP_ERROR_CHECK(error);
+    Metrics::Setup(heap_caps_alloc_failed_hook);
+#else
+    Metrics::Setup();
 #endif
 
     Logging::Setup();

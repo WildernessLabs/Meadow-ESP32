@@ -88,8 +88,11 @@ case $i in
     -tm|--tracemessages)
     IDF_DEFINES+=" -DTRACE_MESSAGES=1"
     ;;
-    -pl|--performancelogging)
-    IDF_DEFINES+=" -DPERFORMANCE_LOGGING=1"
+    --sysview)
+    IDF_DEFINES+=" -DSYSVIEW=1"
+    ;;
+    --heaptrace)
+    IDF_DEFINES+=" -DHEAPTRACE=1"
     ;;
     --develop)
     IDF_DEFINES+=" -DDEBUG=1"
@@ -146,11 +149,13 @@ if $HELP; then
     echo "-v | --verbose          Display commands as they are executed (default)"
     echo "-s | --silent           Execute commands silently"
     echo "-tm | --tracemessages   Enable trace and debug message output."
-    echo "-pl | --performancelogging  Enable performance logging of method entry and exit times."
     echo "--dryrun                Perform a dry run (do not execute commands)"
     echo "--sbom                  Generate a Software Bill of Materials (SBOM) in SPDX format."
     echo "-d=* | --debug=*        Turn on debug for selected system(s). Valid values (comma separated): WIFI, SPI, BT, SYSTEM."
     echo "--develop               Enable development mode (adds -DDEVELOP=1 to the build)"
+    echo "--sysview               Build with SEGGER SystemView tracing over JTAG (merges sdkconfig.sysview)."
+    echo "                        Use with --fullclean when changing to or from a SystemView build."
+    echo "--heaptrace             With --sysview, send every allocation and free to the host (merges sdkconfig.heaptrace)."
     echo ""
     exit 0
 fi

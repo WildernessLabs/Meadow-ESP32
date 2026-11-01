@@ -22,6 +22,8 @@
 #include "esp_attr.h"
 
 #include "TransportProviderBase.hpp"
+#include "Metrics.hpp"
+#include "Profile.hpp"
 #include "Encoders.hpp"
 #include "Logging.hpp"
 #include "Heap.hpp"
@@ -123,6 +125,7 @@ Message *TransportProviderBase::GetOutboundMessage()
             {
                 result = nullptr;
             }
+            Metrics::Set(MetricGauge::OutboundQueueDepth, static_cast<uint32_t>(uxQueueMessagesWaiting(_outboundMessageQueueHandle)));
         }
         xSemaphoreGive(_outboundMessageQueueMutex);
     }
@@ -220,12 +223,19 @@ bool TransportProviderBase::QueueMessageForStm32(Message *message)
     //
     Heap::CheckIntegrity();
     Logging::DumpMessage(COMPONENT_NAME, message);
+    //
+    //  Taken now for the same reason: the message may be gone once it is on the queue.
+    //
+    const uint32_t messageId = (message != nullptr) ? message->MessageID : 0;
+    const uint32_t messageType = (message != nullptr) ? message->MessageType : 0;
+    UBaseType_t queueDepth = 0;
 
     for (uint32_t attempt = 0; (attempt < attempts) && !result; attempt++)
     {
         if (xSemaphoreTake(_outboundMessageQueueMutex, portMAX_DELAY) == pdTRUE)
         {
             result = (xQueueSendToBack(_outboundMessageQueueHandle, &message, 0) == pdPASS);
+            queueDepth = uxQueueMessagesWaiting(_outboundMessageQueueHandle);
             xSemaphoreGive(_outboundMessageQueueMutex);
         }
         //
@@ -241,11 +251,15 @@ bool TransportProviderBase::QueueMessageForStm32(Message *message)
 
     if (result)
     {
+        Profile::Record(ProfileEvent::MessageQueued, messageId, messageType, static_cast<uint32_t>(queueDepth));
+        Metrics::Increment(((messageType & MessageTypes::Event) != 0) ? MetricCounter::EventsQueued : MetricCounter::ResponsesQueued);
+        Metrics::Set(MetricGauge::OutboundQueueDepth, static_cast<uint32_t>(queueDepth));
         SendControlMessageToStm32(ControlMessageType::MessageWaiting);
     }
     else
     {
         ERROR_MESSAGE("Cannot queue message after %" PRIu32 " attempt(s), dropping it.", attempts);
+        Metrics::Increment(MetricCounter::MessagesDropped);
         SendControlMessageToStm32(ControlMessageType::Busy);
         Message::DeleteMessage(message);
     }

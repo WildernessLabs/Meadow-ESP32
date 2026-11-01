@@ -16,6 +16,8 @@
 
 #include "Encoders.hpp"
 #include "RequestHandlerBase.hpp"
+#include "Metrics.hpp"
+#include "Profile.hpp"
 #include "Logging.hpp"
 #include "MessageDispatcher.hpp"
 #include "Utils.hpp"
@@ -120,6 +122,13 @@ void RequestHandlerBase::Task(void *pvParameters)
             //  We check that the message is valid before dispatching it meaning
             //  that we don't have to do this in the request handlers.
             //
+            //  The span takes what it records from the request now: the handler recycles the
+            //  request as the response, which may be sent and deleted before it returns.
+            //
+            ProfileSpan span(ProfileEvent::HandleRequest, ProfileEvent::HandleRequestDone, message->MessageID, message->Interface, message->Function);
+            MetricHistogram handlerTime = MetricHistogram::NumberOfHistograms;
+            const bool timed = Metrics::HandlerTimeFor(message->Interface, handlerTime);
+            MetricTimer timer(handlerTime, timed);
             sender->DispatchRequest(message);
         }
     }

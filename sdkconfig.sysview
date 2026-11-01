@@ -1,0 +1,58 @@
+#
+#   SEGGER SystemView tracing over JTAG.
+#
+#   Merged after the other configuration files when build.sh (or test/build.sh) is given
+#   --sysview.  See Documentation/Diagnostics.md for how to capture and view a trace.
+#
+#   Application level tracing sends the trace data to the host through the JTAG interface
+#   (the ESP-Prog), where OpenOCD writes it to a file that SystemView opens.
+#
+CONFIG_APPTRACE_DEST_JTAG=y
+CONFIG_APPTRACE_ENABLE=y
+CONFIG_APPTRACE_SV_ENABLE=y
+CONFIG_APPTRACE_SV_DEST_JTAG=y
+
+#
+#   A hardware timer gives both cores the same time base, so events from the two cores line
+#   up in the trace.
+#
+CONFIG_APPTRACE_SV_TS_SOURCE_GPTIMER=y
+
+#
+#   How long a task waits for room in the trace buffer before the event is dropped (and an
+#   overflow event recorded), in microseconds.  -1 would make it wait for ever, stopping the
+#   application whenever the host stops reading.
+#
+CONFIG_APPTRACE_SV_BUF_WAIT_TMO=500
+
+#
+#   Making room in IRAM.
+#
+#   The trace hooks run inside the scheduler and the interrupt handlers, so SystemView and
+#   application tracing put about 7.3 KB of code in IRAM.  Without these settings the
+#   release build overflows IRAM by about 5 KB and the develop build by about 3.3 KB.
+#
+#   These move the heap, ring buffer and FreeRTOS API functions into flash, as the test
+#   build already does.  The functions an interrupt handler may call (the FromISR family)
+#   stay in IRAM.  The cost is that a call can now miss the flash cache, which adds a
+#   little time to heap and FreeRTOS calls in a traced build: keep that in mind when
+#   reading very short spans.
+#
+CONFIG_HEAP_PLACE_FUNCTION_INTO_FLASH=y
+CONFIG_RINGBUF_PLACE_FUNCTIONS_INTO_FLASH=y
+CONFIG_FREERTOS_PLACE_FUNCTIONS_INTO_FLASH=y
+
+CONFIG_APPTRACE_SV_MAX_TASKS=32
+CONFIG_APPTRACE_SV_EVT_OVERFLOW_ENABLE=y
+CONFIG_APPTRACE_SV_EVT_ISR_ENTER_ENABLE=y
+CONFIG_APPTRACE_SV_EVT_ISR_EXIT_ENABLE=y
+CONFIG_APPTRACE_SV_EVT_ISR_TO_SCHED_ENABLE=y
+CONFIG_APPTRACE_SV_EVT_TASK_START_EXEC_ENABLE=y
+CONFIG_APPTRACE_SV_EVT_TASK_STOP_EXEC_ENABLE=y
+CONFIG_APPTRACE_SV_EVT_TASK_START_READY_ENABLE=y
+CONFIG_APPTRACE_SV_EVT_TASK_STOP_READY_ENABLE=y
+CONFIG_APPTRACE_SV_EVT_TASK_CREATE_ENABLE=y
+CONFIG_APPTRACE_SV_EVT_TASK_TERMINATE_ENABLE=y
+CONFIG_APPTRACE_SV_EVT_IDLE_ENABLE=y
+CONFIG_APPTRACE_SV_EVT_TIMER_ENTER_ENABLE=y
+CONFIG_APPTRACE_SV_EVT_TIMER_EXIT_ENABLE=y

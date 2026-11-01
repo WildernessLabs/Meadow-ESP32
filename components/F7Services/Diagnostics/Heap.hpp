@@ -42,11 +42,6 @@ public:
     static void Setup();
 
     /**
-     * @brief Report comprehensive heap information.
-     */
-    static void ReportUsage();
-
-    /**
      * @brief Check heap integrity and report any issues.
      *
      * @return true if heap is valid, false if corruption detected
@@ -75,20 +70,35 @@ public:
      */
     static void ReportStatistics();
 
-#if defined(CONFIG_HEAP_TASK_TRACKING)
-
-    /**
-     * @brief Report heap usage by task.
-     */
-    static void ReportHeapUseByTask();
-
-#endif
-
 private:
     /**
      * @brief Flag indicating whether heap tracing is currently active.
      */
     static bool _isRunning;
+
+    /**
+     * @brief True once Setup has run, so that running it again does nothing.
+     */
+    static bool _isSetup;
+
+#if defined(CONFIG_HEAP_TRACING_TOHOST)
+
+    /**
+     * @brief Stack size of the task that starts heap tracing to the host.
+     */
+    static constexpr uint32_t HOST_TRACING_TASK_STACK_SIZE = 3072;
+
+    /**
+     * @brief Start heap tracing to the host once a SystemView capture starts.
+     *
+     * heap_trace_start waits until the host starts a capture, so it is called from a task of
+     * its own rather than holding up whoever called Setup.
+     *
+     * @param parameters Not used.
+     */
+    static void HostTracingTask(void *parameters);
+
+#endif
 
 #if defined(CONFIG_HEAP_TRACING_STANDALONE)
 
