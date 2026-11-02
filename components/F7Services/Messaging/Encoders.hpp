@@ -461,6 +461,77 @@ namespace Esp32Messaging
         uint8_t *SetData;
     };
 
+    /**
+     * @brief Length of a Bluetooth device address, in bytes.
+     */
+    constexpr uint32_t BT_ADDRESS_LENGTH = 6;
+
+    /**
+     * @brief Address of a Bluetooth device, most significant byte first, as it is usually written.
+     */
+    struct BTDeviceAddress
+    {
+        uint8_t Address[BT_ADDRESS_LENGTH];
+    };
+
+    /**
+     * @brief Payload of PasskeyDisplayEvent, PasskeyRequestEvent and NumericComparisonRequestEvent.
+     *
+     *  Passkey is the number to show the user; it is 0 in a PasskeyRequestEvent, which asks for one.
+     */
+    struct BTPairingEventData
+    {
+        uint8_t Address[BT_ADDRESS_LENGTH];
+        uint32_t Passkey;
+    };
+
+    /**
+     * @brief Payload of PasskeyReply and NumericComparisonReply.
+     *
+     *  Accept is non-zero to go on with the pairing.  Passkey is the number the user entered, and
+     *  is ignored by NumericComparisonReply.
+     */
+    struct BTPairingReply
+    {
+        uint8_t Address[BT_ADDRESS_LENGTH];
+        uint8_t Accept;
+        uint32_t Passkey;
+    };
+
+    /**
+     * @brief Payload of AuthenticationCompleteEvent.
+     *
+     *  The event's status code says whether authentication succeeded.  AuthenticationMode holds the
+     *  ESP_LE_AUTH_* bits achieved, FailureReason the SMP reason when it failed, and Bonded is non-zero
+     *  when the device is now in the bond list.
+     */
+    struct BTAuthenticationCompleteEventData
+    {
+        uint8_t Address[BT_ADDRESS_LENGTH];
+        uint8_t AddressType;
+        uint8_t AuthenticationMode;
+        uint8_t FailureReason;
+        uint8_t Bonded;
+    };
+
+    /**
+     * @brief Response to GetBondedDevices.
+     *
+     *  Devices holds DeviceCount entries of BT_BONDED_DEVICE_ENTRY_LENGTH bytes: the address followed
+     *  by its type, 0 for public and 1 for random.
+     */
+    struct BTBondedDevicesResponse
+    {
+        uint16_t DeviceCount;
+        uint32_t DevicesLength;
+        uint8_t *Devices;
+    };
+
+    /**
+     * @brief Length of one device in a BTBondedDevicesResponse: the address and its type.
+     */
+    constexpr uint32_t BT_BONDED_DEVICE_ENTRY_LENGTH = BT_ADDRESS_LENGTH + 1;
+
     struct FileDetails
     {
         char *Name;
@@ -754,6 +825,14 @@ public:
     static int EncodedBTGetHandlesResponseBufferSize(const Esp32Messaging::BTGetHandlesResponse * const);
     static Esp32Messaging::BTServerDataSet *ExtractBTServerDataSet(const uint8_t *buffer, const uint32_t length, bool * const malformed = nullptr);
     static void FreeBTServerDataSet(Esp32Messaging::BTServerDataSet **);
+    static Esp32Messaging::BTDeviceAddress *ExtractBTDeviceAddress(const uint8_t *buffer, const uint32_t length, bool * const malformed = nullptr);
+    static Esp32Messaging::BTPairingReply *ExtractBTPairingReply(const uint8_t *buffer, const uint32_t length, bool * const malformed = nullptr);
+    static void EncodeBTPairingEventData(const Esp32Messaging::BTPairingEventData * const, uint8_t *);
+    static int EncodedBTPairingEventDataBufferSize(const Esp32Messaging::BTPairingEventData * const);
+    static void EncodeBTAuthenticationCompleteEventData(const Esp32Messaging::BTAuthenticationCompleteEventData * const, uint8_t *);
+    static int EncodedBTAuthenticationCompleteEventDataBufferSize(const Esp32Messaging::BTAuthenticationCompleteEventData * const);
+    static void EncodeBTBondedDevicesResponse(const Esp32Messaging::BTBondedDevicesResponse * const, uint8_t *);
+    static int EncodedBTBondedDevicesResponseBufferSize(const Esp32Messaging::BTBondedDevicesResponse * const);
 
     static bool EncodeFileDetails(const Esp32Messaging::FileDetails * const, uint8_t *, const uint32_t);
     static int EncodedFileDetailsBufferSize(const Esp32Messaging::FileDetails * const);

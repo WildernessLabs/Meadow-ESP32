@@ -10,12 +10,14 @@
 #pragma once
 
 #include "cJSON.h"
+#include "esp_gatt_defs.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/semphr.h"
 
 #include "BluetoothServiceCollection.hpp"
 #include "BluetoothAttribute.hpp"
 #include "BluetoothHandleManager.hpp"
+#include "BluetoothSecurityConfiguration.hpp"
 #include <vector>
 #include <map>
 
@@ -213,6 +215,31 @@ private:
     void AddClientCharacteristicConfiguration(BluetoothCharacteristic * const characteristic, const uint16_t properties);
 
     /**
+     * @brief Make subscribing to a characteristic need the same security as reading its value.
+     *
+     *  Raises the write permission of the characteristic's Client Characteristic Configuration
+     *  descriptor, whether the configuration declared it or AddClientCharacteristicConfiguration
+     *  added it, so a client that has not paired cannot subscribe to a protected value and be sent
+     *  it in notifications.
+     *
+     * @param characteristic Characteristic that has all its descriptors.
+     * @param permission Permission the configuration gave the characteristic.
+     */
+    void ProtectClientCharacteristicConfiguration(BluetoothCharacteristic * const characteristic, const uint16_t permission);
+
+    /**
+     * @brief Count the characteristics and descriptors that need a pairing protected against a man in the middle.
+     *
+     * @return Number of attributes whose permission needs MITM protection.
+     */
+    uint32_t CountAttributesNeedingMitm();
+
+    /**
+     * @brief How clients pair and bond, from the configuration's "security" object.
+     */
+    BluetoothSecurityConfiguration _security;
+
+    /**
      * @brief Parse UUID from cJSON object.
      *
      * @param json cJSON object containing the UUID.
@@ -304,6 +331,15 @@ public:
     {
         return (_deviceName);
     }
+
+    /**
+     * @brief Get the security settings from the last configuration that was accepted.
+     *
+     *  A configuration that was refused, or one with no "security" object, leaves the defaults.
+     *
+     * @return A copy of the settings.
+     */
+    BluetoothSecurityConfiguration GetSecurityConfiguration();
 
     /**
      * @brief Get the services collections.

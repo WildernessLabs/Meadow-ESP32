@@ -245,6 +245,16 @@ test is `BLUETOOTH_CLIENTS` in `TestRunner.py`.
 | Notify characteristic, multiple descriptors (MeadowD, no company identifier) | `NotifyCharacteristicClient.py --name MeadowD` |
 | Soak test writing numeric characteristic, number of iterations controlled by client (MeadowF7, Espressif) | `WriteNumberCharacteristicSoakTest.py` |
 | Soak test notifying characteristic, number of iterations controlled by client (MeadowF7NotifyTest, Espressif) | `NotifyCharacteristicSoakTest.py` |
+| A client pairs and bonds to use an encrypted characteristic (MeadowPair, Espressif) | `PairingClient.py` |
+
+The pairing test carries `[BluetoothPairing]` rather than `[Bluetooth]`, so an unattended
+`[Bluetooth]` run never includes it: macOS asks for the first pairing to be confirmed, and
+someone has to accept it within the 60 seconds. Run it on its own with `'[BluetoothPairing]'`.
+It leaves the bond in place on both sides, so a second run encrypts with the stored keys and
+asks nothing. `[Bluetooth]` includes "Start applies every security setting, and bonds can be
+listed and removed (MeadowBond, Espressif)", which removes every bond the board holds. After
+that the pairing client fails with "Peer removed pairing information" until MeadowPair is
+removed from the Mac's Bluetooth settings.
 
 The clients use [Bleak](https://github.com/hbldh/bleak), which the ESP-IDF Python
 environment does not include. Keep it in a virtual environment of its own and point the

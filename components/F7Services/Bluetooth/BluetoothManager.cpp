@@ -723,6 +723,7 @@ uint32_t BluetoothManager::AddCharacteristics(const cJSON * const json, Bluetoot
 
             rejected += AddDescriptors(characteristic, new_characteristic);
             AddClientCharacteristicConfiguration(new_characteristic, properties);
+            ProtectClientCharacteristicConfiguration(new_characteristic, permissions);
             service->AddCharacteristic(new_characteristic);
         }
         else
@@ -927,6 +928,65 @@ void BluetoothManager::AddClientCharacteristicConfiguration(BluetoothCharacteris
 }
 
 /**
+ * @brief Make subscribing to a characteristic need the same security as reading its value.
+ *
+ *  Notifications are sent to whoever subscribed, without the stack checking the value's own
+ *  permission, so the protection has to be on the subscription (issue #398).
+ *
+ * @param characteristic Characteristic that has all its descriptors.
+ * @param permission Permission the configuration gave the characteristic.
+ */
+void BluetoothManager::ProtectClientCharacteristicConfiguration(BluetoothCharacteristic * const characteristic, const uint16_t permission)
+{
+    for (const auto &descriptor: characteristic->GetDescriptorDefinitions())
+    {
+        if (!descriptor->Is128() && (static_cast<uint16_t>(descriptor->uuid16) == CLIENT_CHARACTERISTIC_CONFIGURATION_UUID))
+        {
+            descriptor->Permission = BluetoothSecurityConfiguration::ClientConfigurationPermission(descriptor->Permission, static_cast<CharacteristicPermission>(permission));
+        }
+    }
+}
+
+/**
+ * @brief Count the characteristics and descriptors that need a pairing protected against a man in the middle.
+ *
+ * @return Number of attributes whose permission needs MITM protection.
+ */
+uint32_t BluetoothManager::CountAttributesNeedingMitm()
+{
+    uint32_t count = 0;
+    for (const auto &service: Services.GetServiceDefinitions())
+    {
+        for (const auto &characteristic: service->GetCharacteristicDefinitions())
+        {
+            if (BluetoothSecurityConfiguration::PermissionRequiresMitm(characteristic->GetValue().Permission))
+            {
+                count++;
+            }
+            for (const auto &descriptor: characteristic->GetDescriptorDefinitions())
+            {
+                if (BluetoothSecurityConfiguration::PermissionRequiresMitm(descriptor->Permission))
+                {
+                    count++;
+                }
+            }
+        }
+    }
+    return (count);
+}
+
+/**
+ * @brief Get the security settings from the last configuration that was accepted.
+ *
+ * @return A copy of the settings.
+ */
+BluetoothSecurityConfiguration BluetoothManager::GetSecurityConfiguration()
+{
+    RecursiveMutexLock lock(_graphMutex);
+    return (_security);
+}
+
+/**
  * @brief Parse UUID from cJSON object.
  *
  * @note This method assumes that the validity of the json has already been established and that
@@ -991,6 +1051,7 @@ bool BluetoothManager::BuildGraphFromJson(const char * const configuration)
         else
         {
             const bool nameAccepted = GetDeviceInformation(json);
+            const bool securityAccepted = _security.Parse(cJSON_GetObjectItem(json, SECURITY_KEY));
             //
             //  A configuration with any entry that could not be used, or with no usable
             //  service at all, is refused as a whole rather than started in part: the
@@ -998,10 +1059,21 @@ bool BluetoothManager::BuildGraphFromJson(const char * const configuration)
             //  is released so a later Start does not add to it.
             //
             const uint32_t rejected = AddServices(json);
-            if (!nameAccepted || (rejected > 0) || Services.GetServiceDefinitions().empty())
+            //
+            //  An attribute that needs MITM protection can only be reached after a pairing that
+            //  provides it, which the security settings have to demand.  Otherwise it could never
+            //  be read or written, which is refused here rather than found by the client.
+            //
+            const uint32_t needingMitm = _security.Mitm ? 0 : CountAttributesNeedingMitm();
+            if (needingMitm > 0)
+            {
+                ERROR_MESSAGE("BuildGraphFromJson: %" PRIu32 " attributes need MITM protection but the security settings do not ask for it.", needingMitm);
+            }
+            if (!nameAccepted || !securityAccepted || (rejected > 0) || (needingMitm > 0) || Services.GetServiceDefinitions().empty())
             {
                 ERROR_MESSAGE("BuildGraphFromJson: %" PRIu32 " entries rejected, %" PRIu32 " services built; refusing the configuration.", rejected, static_cast<uint32_t>(Services.GetServiceDefinitions().size()));
                 DeleteAllServices();
+                _security.SetDefaults();
             }
             else
             {

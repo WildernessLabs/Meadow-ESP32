@@ -326,6 +326,8 @@ Mapping::str_mapping_t Mapping::_statusCodes[] = {
     {StatusCodes::AccessPointAlreadyStarted, "AccessPointAlreadyStarted"},
     {StatusCodes::FileNotFound, "FileNotFound"},
     {StatusCodes::InvalidRequest, "InvalidRequest"},
+    {StatusCodes::BluetoothNotStarted, "BluetoothNotStarted"},
+    {StatusCodes::BluetoothDeviceNotBonded, "BluetoothDeviceNotBonded"},
 };
 
 /**
@@ -387,6 +389,15 @@ Mapping::str_mapping_t Mapping::_bluetoothFunctionNames[] = {
     {BluetoothFunction::BluetoothStoppedEvent, "BluetoothStoppedEvent"},
     {BluetoothFunction::ClientConnectedEvent, "ClientConnectedEvent"},
     {BluetoothFunction::ClientDisconnectedEvent, "ClientDisconnectedEvent"},
+    {BluetoothFunction::PasskeyReply, "PasskeyReply"},
+    {BluetoothFunction::NumericComparisonReply, "NumericComparisonReply"},
+    {BluetoothFunction::GetBondedDevices, "GetBondedDevices"},
+    {BluetoothFunction::RemoveBond, "RemoveBond"},
+    {BluetoothFunction::RemoveAllBonds, "RemoveAllBonds"},
+    {BluetoothFunction::PasskeyDisplayEvent, "PasskeyDisplayEvent"},
+    {BluetoothFunction::PasskeyRequestEvent, "PasskeyRequestEvent"},
+    {BluetoothFunction::NumericComparisonRequestEvent, "NumericComparisonRequestEvent"},
+    {BluetoothFunction::AuthenticationCompleteEvent, "AuthenticationCompleteEvent"},
 };
 
 /**

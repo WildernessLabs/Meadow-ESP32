@@ -33,6 +33,7 @@
 #include "SharedEnums.hpp"
 
 #include "BluetoothManager.hpp"
+#include "BluetoothPairing.hpp"
 
 #include <atomic>
 #include <vector>
@@ -65,6 +66,11 @@ class BluetoothRequestHandler : public RequestHandlerBase
      */
     friend class TestBluetoothUnwind;
 
+    /**
+     * @brief Test access to pairing and bonding (issue #398).
+     */
+    friend class TestBluetoothPairing;
+
 private:
     /**
      *  Event group bits.
@@ -93,6 +99,24 @@ private:
      *  @brief Milliseconds Start() waits for the service to start or fail before it gives up.
      */
     static constexpr uint32_t SERVICE_START_TIMEOUT = 5000;
+
+    /**
+     *  @brief Set by the GAP event handler when the stack has removed a bond.
+     *
+     *  Removing a bond finishes asynchronously, so RemoveBond and RemoveAllBonds wait for this bit
+     *  or BT_BOND_REMOVE_FAILED_BIT before they answer the STM32.
+     */
+    static const int BT_BOND_REMOVED_BIT = BIT3;
+
+    /**
+     *  @brief Set by the GAP event handler when the stack could not remove a bond.
+     */
+    static const int BT_BOND_REMOVE_FAILED_BIT = BIT4;
+
+    /**
+     *  @brief Milliseconds to wait for the stack to remove one bond.
+     */
+    static constexpr uint32_t BOND_REMOVE_TIMEOUT = 2000;
 
     /**
      * @brief Instance ID for the Bluetooth service.
@@ -242,6 +266,144 @@ private:
     void SignalServiceStart(const bool started);
 
     /**
+     * @brief Give the stack the pairing and bonding settings.
+     *
+     *  Every setting is checked: a stack that refused one would pair with weaker security than
+     *  the STM32 asked for, so the service does not start (issue #398).
+     *
+     * @param security Settings to give the stack.
+     *
+     * @return true if the stack took every setting.
+     */
+    static bool ApplySecurityParameters(const BluetoothSecurityConfiguration &security);
+
+    /**
+     * @brief Tell RemoveBond whether the stack removed the bond.
+     *
+     * @param removed true if the bond was removed.
+     */
+    void SignalBondRemoved(const bool removed);
+
+    /**
+     * @brief Answer a PasskeyRequestEvent with the passkey the user entered (PasskeyReply).
+     *
+     * @param request Request from the STM32, a BTPairingReply.
+     */
+    void PasskeyReply(Message * const request);
+
+    /**
+     * @brief Answer a NumericComparisonRequestEvent (NumericComparisonReply).
+     *
+     * @param request Request from the STM32, a BTPairingReply.
+     */
+    void NumericComparisonReply(Message * const request);
+
+    /**
+     * @brief Pass the STM32's answer to a question about pairing to the stack.
+     *
+     * @param request Request from the STM32, a BTPairingReply.
+     * @param reply Kind of reply the request is.
+     */
+    void ReplyToPairing(Message * const request, const BluetoothPairing::PendingReply reply);
+
+    /**
+     * @brief Send the STM32 the addresses of the bonded devices (GetBondedDevices).
+     *
+     * @param request Request from the STM32.
+     */
+    void GetBondedDevices(Message * const request);
+
+    /**
+     * @brief Remove the bond with one device (RemoveBond).
+     *
+     * @param request Request from the STM32, a BTDeviceAddress.
+     */
+    void RemoveBond(Message * const request);
+
+    /**
+     * @brief Remove the bond with every device (RemoveAllBonds).
+     *
+     * @param request Request from the STM32.
+     */
+    void RemoveAllBonds(Message * const request);
+
+    /**
+     * @brief Ask the stack to remove one bond and wait for it to finish.
+     *
+     * @param address Device whose bond is to be removed.
+     *
+     * @return CompletedOk, BluetoothDeviceNotBonded, Timeout or Failure.
+     */
+    StatusCodes::StatusCodes RemoveOneBond(const esp_bd_addr_t address);
+
+    /**
+     * @brief Get the devices that are bonded with this one.
+     *
+     * @param devices Set to the bonded devices.
+     *
+     * @return true if the stack listed them, false if it could not.
+     */
+    static bool ListBondedDevices(std::vector<esp_ble_bond_dev_t> &devices);
+
+    /**
+     * @brief Is this device bonded?
+     *
+     * @param address Address to look for in the bond list.
+     *
+     * @return true if it is in the bond list.
+     */
+    static bool IsBonded(const esp_bd_addr_t address);
+
+    /**
+     * @brief Answer a client's request to pair, as the security settings allow.
+     *
+     * @param address Client asking to pair.
+     */
+    static void OnSecurityRequest(esp_bd_addr_t address);
+
+    /**
+     * @brief Tell the STM32 about a step in pairing that needs the user.
+     *
+     * @param event PasskeyDisplayEvent, PasskeyRequestEvent or NumericComparisonRequestEvent.
+     * @param address Client being paired with.
+     * @param passkey Number to show the user, 0 when one is being asked for.
+     */
+    static void RaisePairingEvent(const BluetoothFunction::BluetoothFunction event, const esp_bd_addr_t address, const uint32_t passkey);
+
+    /**
+     * @brief Act on the end of pairing, or of encryption with a bonded client, and tell the STM32.
+     *
+     * @param complete What the stack reported.
+     */
+    static void OnAuthenticationComplete(const esp_ble_auth_cmpl_t &complete);
+
+    /**
+     * @brief Act on a client connecting.
+     *
+     * @param address Client that has connected.
+     */
+    static void OnClientConnected(esp_bd_addr_t address);
+
+    /**
+     * @brief Act on the client disconnecting: keep its subscriptions if it is bonded, then clear them.
+     */
+    static void OnClientDisconnected();
+
+    /**
+     * @brief Read the value of every Client Characteristic Configuration descriptor from the stack.
+     *
+     * @return The values, in the order of the descriptors in the service graph.
+     */
+    static std::vector<BluetoothPairing::ClientConfiguration> ReadClientConfigurations();
+
+    /**
+     * @brief Give a bonded client back the subscriptions it had when it last disconnected.
+     *
+     * @param address Address the client is bonded with.
+     */
+    static void RestoreClientConfigurations(const esp_bd_addr_t address);
+
+    /**
      * @brief Get the Handles and send them to the STM32.
      */
     void GetHandles(Message * const request);
@@ -348,6 +510,11 @@ public:
     virtual ~BluetoothRequestHandler() override;
 
     static BluetoothManager _manager;
+
+    /**
+     * @brief Replies the STM32 owes for a pairing in progress, and bonded clients' subscriptions.
+     */
+    static BluetoothPairing _pairing;
 
     /**
      * @brief Has the connected client enabled notifications for the characteristic with this value handle?

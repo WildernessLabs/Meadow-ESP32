@@ -167,5 +167,6 @@ assuming one.
 - `SPIProtocolOverview.md` — SPI low-level details
 - `MessageFormat.md` — message structure
 - `FirmwareUpdate.md` — how field updates are done (by the managed application; no OTA)
+- `BluetoothSecurity.md` — BLE pairing and bonding: the `security` settings, the pairing and bond messages
 - `Diagnostics.md` — debugging techniques
 - `Tools.md` — VS Code, Docker, OpenOCD, GDB setup
