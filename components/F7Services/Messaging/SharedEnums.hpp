@@ -293,6 +293,26 @@ namespace StatusCodes
          * @brief The device named in a Bluetooth request is not bonded.
          */
         BluetoothDeviceNotBonded = 64,
+
+        //
+        //  The three network deadlock codes are set by the STM32's watchdog, not the ESP32, when a
+        //  socket call has not been answered.  The STM32 used 47 to 49 for them, which the ESP32 had
+        //  already given to the codes above, so they move here to keep one meaning per value.
+        //
+        /**
+         * @brief Possible network deadlock detected on close() (set by the STM32).
+         */
+        NetworkCloseDeadlock = 65,
+
+        /**
+         * @brief Possible network deadlock detected on poll() (set by the STM32).
+         */
+        NetworkPollDeadlock = 66,
+
+        /**
+         * @brief Possible network deadlock detected on socket() (set by the STM32).
+         */
+        NetworkSocketDeadlock = 67,
     };
 
 } // namespace StatusCodes
