@@ -328,6 +328,9 @@ Mapping::str_mapping_t Mapping::_statusCodes[] = {
     {StatusCodes::InvalidRequest, "InvalidRequest"},
     {StatusCodes::BluetoothNotStarted, "BluetoothNotStarted"},
     {StatusCodes::BluetoothDeviceNotBonded, "BluetoothDeviceNotBonded"},
+    {StatusCodes::NetworkCloseDeadlock, "NetworkCloseDeadlock"},
+    {StatusCodes::NetworkPollDeadlock, "NetworkPollDeadlock"},
+    {StatusCodes::NetworkSocketDeadlock, "NetworkSocketDeadlock"},
 };
 
 /**
