@@ -70,10 +70,9 @@ cd "$BUILD_DIR"
 
 #
 #   Use the esptool bundled with ESP-IDF rather than any standalone esptool that may be
-#   on the path.  A separately installed esptool 5 renames the merge_bin command and its
-#   flash options, which then disagree with the flash_args file the build writes.  The
-#   bundled module accepts the spelling in that file on both a developer machine and in
-#   the ESP-IDF container.
+#   on the path, so that the command matches the flash_args file the build writes.  ESP-IDF 6
+#   bundles esptool 5, which spells the command merge-bin and the padding option
+#   --pad-to-size (the old merge_bin and --fill-flash-size are deprecated aliases).
 #
 if command -v python > /dev/null; then
     PYTHON=python
@@ -81,9 +80,9 @@ else
     PYTHON=python3
 fi
 
-$PYTHON -m esptool --chip "$TARGET" merge_bin \
+$PYTHON -m esptool --chip "$TARGET" merge-bin \
     --output qemu_flash.bin \
-    --fill-flash-size "$FLASH_SIZE" \
+    --pad-to-size "$FLASH_SIZE" \
     @flash_args > /dev/null
 
 #

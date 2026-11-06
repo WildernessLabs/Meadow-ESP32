@@ -24,8 +24,7 @@
 #include <string.h>
 #include "unity.h"
 #include "esp_system.h"
-#include "mbedtls/md.h"
-#include "mbedtls/pkcs5.h"
+#include "psa/crypto.h"
 
 #include "MockMessageDispatcher.hpp"
 #include "Esp32Messaging.hpp"
@@ -267,6 +266,47 @@ TEST_CASE("Connect to access point", CLASS_OF_TESTS)
 #define PRE_SHARED_KEY_ITERATIONS 4096
 
 /**
+ * @brief Derive a WPA2 pre-shared key with PBKDF2-HMAC-SHA1 through the PSA key derivation API.
+ *
+ *  mbedTLS 4 (ESP-IDF 6) made mbedtls_pkcs5_pbkdf2_hmac_ext private, so the derivation goes
+ *  through PSA instead.  The inputs have to be given in this order: cost, salt, password.
+ *
+ * @param ssid Network name, the salt.
+ * @param passphrase Passphrase for the network, the password.
+ * @param key Buffer of PRE_SHARED_KEY_LENGTH bytes for the key.
+ * @return PSA_SUCCESS, or the status of the first PSA call that failed.
+ */
+static psa_status_t DerivePreSharedKey(const char *ssid, const char *passphrase, uint8_t *key)
+{
+    psa_status_t status = psa_crypto_init();
+    if (status != PSA_SUCCESS)
+    {
+        return (status);
+    }
+
+    psa_key_derivation_operation_t operation = PSA_KEY_DERIVATION_OPERATION_INIT;
+    status = psa_key_derivation_setup(&operation, PSA_ALG_PBKDF2_HMAC(PSA_ALG_SHA_1));
+    if (status == PSA_SUCCESS)
+    {
+        status = psa_key_derivation_input_integer(&operation, PSA_KEY_DERIVATION_INPUT_COST, PRE_SHARED_KEY_ITERATIONS);
+    }
+    if (status == PSA_SUCCESS)
+    {
+        status = psa_key_derivation_input_bytes(&operation, PSA_KEY_DERIVATION_INPUT_SALT, reinterpret_cast<const uint8_t *>(ssid), strlen(ssid));
+    }
+    if (status == PSA_SUCCESS)
+    {
+        status = psa_key_derivation_input_bytes(&operation, PSA_KEY_DERIVATION_INPUT_PASSWORD, reinterpret_cast<const uint8_t *>(passphrase), strlen(passphrase));
+    }
+    if (status == PSA_SUCCESS)
+    {
+        status = psa_key_derivation_output_bytes(&operation, key, PRE_SHARED_KEY_LENGTH);
+    }
+    psa_key_derivation_abort(&operation);
+    return (status);
+}
+
+/**
  * @brief Derive the 64-hex-digit pre-shared key for a WPA2 network from its SSID and passphrase.
  *
  *  This is the key WPA2 itself derives, PBKDF2-HMAC-SHA1 over the passphrase with the SSID
@@ -279,12 +319,25 @@ TEST_CASE("Connect to access point", CLASS_OF_TESTS)
 static void DerivePreSharedKeyHex(const char *ssid, const char *passphrase, char *hexKey)
 {
     uint8_t key[PRE_SHARED_KEY_LENGTH];
-    TEST_ASSERT_EQUAL_INT_MESSAGE(
-        0, mbedtls_pkcs5_pbkdf2_hmac_ext(MBEDTLS_MD_SHA1, reinterpret_cast<const unsigned char *>(passphrase), strlen(passphrase), reinterpret_cast<const unsigned char *>(ssid), strlen(ssid), PRE_SHARED_KEY_ITERATIONS, sizeof(key), key), "Could not derive the pre-shared key.");
+    TEST_ASSERT_EQUAL_INT_MESSAGE(PSA_SUCCESS, DerivePreSharedKey(ssid, passphrase, key), "Could not derive the pre-shared key.");
     for (uint32_t index = 0; index < sizeof(key); index++)
     {
         snprintf(hexKey + (2 * index), 3, "%02x", key[index]);
     }
+}
+
+/**
+ * @brief Check the pre-shared key derivation against the test vector in IEEE 802.11i, annex H.4.
+ *
+ *  The 64-character password test depends on this key being the one an access point derives.
+ *  It needs no radio, so it runs under QEMU and catches a broken PBKDF2 there rather than as a
+ *  refused association on the bench.
+ */
+TEST_CASE("Pre-shared key derivation matches the IEEE 802.11i test vector", "[WiFi][Emulated]")
+{
+    char hexKey[(2 * PRE_SHARED_KEY_LENGTH) + 1];
+    DerivePreSharedKeyHex("IEEE", "password", hexKey);
+    TEST_ASSERT_EQUAL_STRING("f42c6fc52df0ebef9ebb4b90b38a5f902e83fe1b135a70e23aed762e9710a12e", hexKey);
 }
 
 /**

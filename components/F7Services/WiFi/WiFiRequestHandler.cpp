@@ -1608,9 +1608,9 @@ void WiFiRequestHandler::EventHandlerHelper(esp_event_base_t eventBase, int32_t 
                 case IP_EVENT_STA_LOST_IP:
                     TRACE_MESSAGE("EventHandlerHelper: IP_EVENT_STA_LOST_IP");
                     break;
-                case IP_EVENT_AP_STAIPASSIGNED:
-                    TRACE_MESSAGE("EventHandlerHelper: IP_EVENT_AP_STAIPASSIGNED");
-                    NodeConnectedEvent(static_cast<ip_event_ap_staipassigned_t *>(eventData));
+                case IP_EVENT_ASSIGNED_IP_TO_CLIENT:
+                    TRACE_MESSAGE("EventHandlerHelper: IP_EVENT_ASSIGNED_IP_TO_CLIENT");
+                    NodeConnectedEvent(static_cast<ip_event_assigned_ip_to_client_t *>(eventData));
                     break;
                 case IP_EVENT_GOT_IP6:
                     TRACE_MESSAGE("EventHandlerHelper: IP_EVENT_GOT_IP6");

@@ -1,6 +1,4 @@
 dependencies:
+  idf: ">=6.1"
   joltwallet/littlefs: ==1.23.1
-  espressif/cjson:
-    version: "==1.7.19"
-    rules:
-      - if: "idf_version >=6.0"
+  espressif/cjson: ==1.7.19

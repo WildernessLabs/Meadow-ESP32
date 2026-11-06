@@ -23,7 +23,10 @@ idf_component_register( SRCS    ${F7SERVICES_SOURCES}
                                 app_trace
                                 bt
                                 cxx 
-                                driver 
+                                esp_adc
+                                esp_driver_gpio
+                                esp_driver_spi
+                                esp_driver_uart
                                 efuse 
                                 fatfs 
                                 freertos 
@@ -45,7 +48,7 @@ idf_component_register( SRCS    ${F7SERVICES_SOURCES}
                                 espcoredump 
                                 esp_common 
                                 esp_event
-                                json
+                                espressif__cjson
                                 )
 
 include(${CMAKE_CURRENT_LIST_DIR}/../../cmake/WarningsAsErrors.cmake)

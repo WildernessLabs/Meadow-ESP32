@@ -7,7 +7,7 @@
 #   container to reproduce a CI failure, which is the main reason the logic lives here
 #   rather than in the workflow file:
 #
-#       docker run --rm -v $PWD:/project -w /project espressif/idf:release-v5.5 \
+#       docker run --rm -v $PWD:/project -w /project espressif/idf:release-v6.1 \
 #           ./run-tests-ci.sh
 #
 #   Only the tests that need no radio and no analogue hardware are run.  See

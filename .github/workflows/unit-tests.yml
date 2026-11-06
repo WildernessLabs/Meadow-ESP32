@@ -24,7 +24,7 @@ jobs:
       run: git submodule update --init --recursive
 
     - name: Build and run the tests under QEMU
-      run: docker run --rm -v $PWD:/project -w /project espressif/idf:release-v5.5 ./run-tests-ci.sh
+      run: docker run --rm -v $PWD:/project -w /project espressif/idf:release-v6.1 ./run-tests-ci.sh
       id: qemu-tests
 
     - name: Publish the test results

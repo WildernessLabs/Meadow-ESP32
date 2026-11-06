@@ -373,7 +373,7 @@ The workflow itself is a thin wrapper. All of the work is in `run-tests-ci.sh` a
 root of the repository, which runs inside the ESP-IDF container:
 
 ```bash
-docker run --rm -v $PWD:/project -w /project espressif/idf:release-v5.5 ./run-tests-ci.sh
+docker run --rm -v $PWD:/project -w /project espressif/idf:release-v6.1 ./run-tests-ci.sh
 ```
 
 Running that same command locally reproduces a CI failure exactly, which is the reason

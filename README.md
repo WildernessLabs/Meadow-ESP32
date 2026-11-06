@@ -13,7 +13,7 @@ Services are provided to the STM32 through the SPI interface connected to the ST
 ### Building
 
 ```bash
-# Install ESP-IDF 5.3+ (via VS Code extension or manually)
+# Install ESP-IDF 6.1 (via EIM, the VS Code extension, or manually)
 ./build.sh --build          # Build release version
 ./build.sh --develop        # Build with debug symbols
 ./build.sh --help           # See all options
