@@ -1013,7 +1013,7 @@ private:
      *      Information about the node that has connected to the access point,
      *      including its MAC address and the DHCP-assigned IP address.
      */
-    void NodeConnectedEvent(ip_event_ap_staipassigned_t *eventData);
+    void NodeConnectedEvent(ip_event_assigned_ip_to_client_t *eventData);
 
     /**
      * @brief Processes the node disconnecting from the access point event.

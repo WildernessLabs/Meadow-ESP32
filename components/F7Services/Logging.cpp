@@ -11,16 +11,12 @@
 
 #include "esp32/rom/gpio.h"
 #include "lwip/sockets.h"
-#if defined(CONFIG_APPTRACE_SV_ENABLE)
+#if defined(CONFIG_MEADOW_SYSVIEW)
     //
-    //  esp_app_trace_util.h, which esp_sysview_trace.h includes, chains an assignment to a
-    //  volatile member.  C++20 deprecates that and -Werror makes it an error.  The header is
-    //  ESP-IDF's, so the warning is turned off for it alone.
+    //  esp_sysview_vprintf comes from the espressif/esp_sysview managed component, which is
+    //  where SystemView lives from ESP-IDF 6.
     //
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wvolatile"
-    #include "esp_sysview_trace.h"
-    #pragma GCC diagnostic pop
+    #include "esp_sysview_heap_trace_module.h"
 #endif
 #include <string.h>
 #include <limits.h>
@@ -96,7 +92,7 @@ SemaphoreHandle_t Logging::_udpMutex = nullptr;
  */
 char Logging::_udpBuffer[Logging::UDP_LOG_MESSAGE_SIZE];
 
-#if defined(CONFIG_APPTRACE_SV_ENABLE)
+#if defined(CONFIG_MEADOW_SYSVIEW)
 /**
  *  @brief The function that wrote log messages before they were sent to SystemView, nullptr when they are not.
  */
@@ -146,7 +142,7 @@ void Logging::Setup()
 {
     esp_log_level_set("*", ESP_LOG_NONE);
 
-    const uart_config_t loggingUARTConfig = {.baud_rate = 115200, .data_bits = UART_DATA_8_BITS, .parity = UART_PARITY_DISABLE, .stop_bits = UART_STOP_BITS_1, .flow_ctrl = UART_HW_FLOWCTRL_DISABLE, .rx_flow_ctrl_thresh = 0, .source_clk = UART_SCLK_DEFAULT, .flags = {}};
+    const uart_config_t loggingUARTConfig = {.baud_rate = 115200, .data_bits = UART_DATA_8_BITS, .parity = UART_PARITY_DISABLE, .stop_bits = UART_STOP_BITS_1, .flow_ctrl = UART_HW_FLOWCTRL_DISABLE, .rx_flow_ctrl_thresh = 0, .rx_glitch_filt_thresh = 0, .source_clk = UART_SCLK_DEFAULT, .flags = {}};
     uart_param_config(LOGGING_UART_PORT_NUMBER, &loggingUARTConfig);
     uart_set_pin(LOGGING_UART_PORT_NUMBER, Gpio::LOGGING_TX_PIN, Gpio::LOGGING_RX_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
     //
@@ -194,7 +190,7 @@ StatusCodes::StatusCodes Logging::Configure(const char * const components, uint3
             }
             break;
         case Esp32LogDestination::Jtag:
-#if defined(CONFIG_APPTRACE_SV_ENABLE)
+#if defined(CONFIG_MEADOW_SYSVIEW)
             break;
 #else
             return (StatusCodes::NotImplemented);
@@ -205,7 +201,7 @@ StatusCodes::StatusCodes Logging::Configure(const char * const components, uint3
 
     StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
     StopUdpLogging();
-#if defined(CONFIG_APPTRACE_SV_ENABLE)
+#if defined(CONFIG_MEADOW_SYSVIEW)
     StopSystemViewLogging();
 #endif
     TurnAllLoggingOff();
@@ -213,7 +209,7 @@ StatusCodes::StatusCodes Logging::Configure(const char * const components, uint3
     {
         result = StartUdpLogging(static_cast<uint16_t>(udpPort));
     }
-#if defined(CONFIG_APPTRACE_SV_ENABLE)
+#if defined(CONFIG_MEADOW_SYSVIEW)
     if (interface == Esp32LogDestination::Jtag)
     {
         StartSystemViewLogging();
@@ -285,7 +281,7 @@ StatusCodes::StatusCodes Logging::StartUdpLogging(const uint16_t port)
     return (StatusCodes::CompletedOk);
 }
 
-#if defined(CONFIG_APPTRACE_SV_ENABLE)
+#if defined(CONFIG_MEADOW_SYSVIEW)
 
 /**
  * @brief Send the log messages to the SystemView trace instead of the UART.

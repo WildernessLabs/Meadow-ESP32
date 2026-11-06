@@ -10,7 +10,7 @@ The individual component tests are located in the [*components/F7Services/test*]
 
 The unit test application reads its settings from *unittest.config.json*, a file written to the board's file system by *mkfsimage.sh* rather than compiled into the application.  Changing a network or a server address therefore needs no rebuild.  The file is ignored (from a git perspective) to keep developer secrets from being added to GitHub; the template it is copied from, *test/main/unittest.config.json.template*, is in source control.  Copy the template to *test/fsimage/unittest.config.json*, edit it, and write it to the board with `./mkfsimage.sh --flash`.
 
-*mkfsimage.sh* builds *mklittlefs* from the managed components, so the test project has to have been configured at least once; after a `--fullclean` run `idf.py reconfigure` in *test* before building the image.  A failed mount is not reported, so the proof that the image arrived is the board listing the settings at startup.
+*mkfsimage.sh* builds the image with *littlefs-python*, at the version the managed littlefs component names, so the test project has to have been configured at least once; after a `--fullclean` run `idf.py reconfigure` in *test* before building the image.  A failed mount is not reported, so the proof that the image arrived is the board listing the settings at startup.
 
 The tests can be built using the *test/build.sh* script using the same command line arguments as the main development build script.
 

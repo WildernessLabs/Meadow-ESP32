@@ -1608,9 +1608,9 @@ void WiFiRequestHandler::EventHandlerHelper(esp_event_base_t eventBase, int32_t 
                 case IP_EVENT_STA_LOST_IP:
                     TRACE_MESSAGE("EventHandlerHelper: IP_EVENT_STA_LOST_IP");
                     break;
-                case IP_EVENT_AP_STAIPASSIGNED:
-                    TRACE_MESSAGE("EventHandlerHelper: IP_EVENT_AP_STAIPASSIGNED");
-                    NodeConnectedEvent(static_cast<ip_event_ap_staipassigned_t *>(eventData));
+                case IP_EVENT_ASSIGNED_IP_TO_CLIENT:
+                    TRACE_MESSAGE("EventHandlerHelper: IP_EVENT_ASSIGNED_IP_TO_CLIENT");
+                    NodeConnectedEvent(static_cast<ip_event_assigned_ip_to_client_t *>(eventData));
                     break;
                 case IP_EVENT_GOT_IP6:
                     TRACE_MESSAGE("EventHandlerHelper: IP_EVENT_GOT_IP6");
@@ -2444,10 +2444,12 @@ esp_err_t WiFiRequestHandler::StartWiFiInterface(const wifi_mode_t mode, const E
             }
         }
 
+        bool driverInitialised = false;
         if (result == ESP_OK)
         {
             wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
             result = esp_wifi_init(&cfg);
+            driverInitialised = (result == ESP_OK);
         }
 
         if (result == ESP_OK)
@@ -2519,6 +2521,22 @@ esp_err_t WiFiRequestHandler::StartWiFiInterface(const wifi_mode_t mode, const E
             //  a start that failed, such as one that was refused a configuration (issue #248).
             //
             ESP_LOGE(COMPONENT_NAME, "StartWiFiInterface: the interface could not be started, error %" PRIi32 " (%s)", static_cast<int32_t>(result), esp_err_to_name(result));
+            //
+            //  Undo the driver initialisation so the next start makes it again.  ESP-IDF 6
+            //  refuses esp_wifi_init on a driver that is already initialised
+            //  (ESP_ERR_INVALID_STATE) where ESP-IDF 5 accepted it, so without this a start
+            //  that failed after the initialisation stopped every later start until a reboot.
+            //  The event handlers go with it, as in StopWiFiAdapter.  esp_wifi_start is the last
+            //  step, so the driver was never started and needs no esp_wifi_stop.  The results
+            //  are not checked: a handler that was never registered is not an error here, and
+            //  the start has already failed.
+            //
+            if (driverInitialised)
+            {
+                (void) esp_event_handler_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, &WiFiRequestHandler::EventHandler);
+                (void) esp_event_handler_unregister(IP_EVENT, ESP_EVENT_ANY_ID, &WiFiRequestHandler::EventHandler);
+                (void) esp_wifi_deinit();
+            }
             xEventGroupSetBits(_xWiFiEventGroup, WIFI_ERROR_BIT);
             xEventGroupClearBits(_xWiFiEventGroup, WIFI_INTERFACE_STARTING_BIT);
         }

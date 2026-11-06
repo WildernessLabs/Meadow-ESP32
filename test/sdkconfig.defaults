@@ -12,12 +12,6 @@ CONFIG_COMPILER_ORPHAN_SECTIONS_PLACE=y
 CONFIG_BT_ENABLED=y
 CONFIG_BT_BTU_TASK_STACK_SIZE=4096
 CONFIG_BTDM_SCAN_DUPL_CACHE_SIZE=200
-CONFIG_TWAI_ERRATA_FIX_BUS_OFF_REC=n
-CONFIG_TWAI_ERRATA_FIX_TX_INTR_LOST=n
-CONFIG_TWAI_ERRATA_FIX_RX_FRAME_INVALID=n
-CONFIG_TWAI_ERRATA_FIX_RX_FIFO_CORRUPT=n
-CONFIG_TWAI_ERRATA_FIX_LISTEN_ONLY_DOM=n
-CONFIG_ETH_SPI_ETHERNET_DM9051=y
 CONFIG_ESP_PHY_REDUCE_TX_POWER=y
 CONFIG_ESP_IPC_TASK_STACK_SIZE=2048
 CONFIG_ESP_WIFI_NVS_ENABLED=n
@@ -37,6 +31,16 @@ CONFIG_LWIP_HOOK_IP6_INPUT_NONE=y
 CONFIG_MBEDTLS_HARDWARE_MPI=n
 CONFIG_MBEDTLS_ECP_FIXED_POINT_OPTIM=y
 CONFIG_LITTLEFS_FLUSH_FILE_EVERY_WRITE=y
+#
+#   Keep writing LittleFS on-disk version 2.0.  The littlefs component 1.23.1 (LittleFS 2.11)
+#   writes version 2.1 by default, as every LittleFS from 2.6 does, upgrading a 2.0 partition
+#   on its first write.  Firmware built with component 1.5.5 (LittleFS 2.5, the ESP-IDF 5.5
+#   releases) cannot mount 2.1, and FileSystem formats a partition it cannot mount, so going
+#   back to such a release would erase the certificates and keys stored there.  Version 2.0
+#   loses only the forward-looking erase-state checksums.
+#
+CONFIG_LITTLEFS_MULTIVERSION=y
+CONFIG_LITTLEFS_DISK_VERSION_2_0=y
 CONFIG_LWIP_CHECK_THREAD_SAFETY=y
 #
 #   CONFIG_COMPILER_STACK_CHECK_MODE_ALL runs out of IRAM.
@@ -82,13 +86,9 @@ CONFIG_COMPILER_STACK_CHECK_MODE_STRONG=y
 #   For more information see:
 #       https://docs.espressif.com/projects/esp-idf/en/v5.3.2/esp32/api-guides/performance/ram-usage.html#optimizing-iram-usage
 #
-#   Enable CONFIG_FREERTOS_PLACE_FUNCTIONS_INTO_FLASH. Provided these functions
-#   are not incorrectly used from ISRs, this option is safe to enable in all configurations.
-CONFIG_FREERTOS_PLACE_FUNCTIONS_INTO_FLASH=y
-#
-#   Enable CONFIG_RINGBUF_PLACE_FUNCTIONS_INTO_FLASH. Provided these functions
-#   are not incorrectly used from ISRs, this option is safe to enable in all configurations.
-CONFIG_RINGBUF_PLACE_FUNCTIONS_INTO_FLASH=y
+#   ESP-IDF 6 places the FreeRTOS and ring buffer functions in flash by default, so the
+#   FREERTOS_PLACE_FUNCTIONS_INTO_FLASH and RINGBUF_PLACE_FUNCTIONS_INTO_FLASH options this
+#   file used to set no longer exist.  CONFIG_FREERTOS_IN_IRAM=y would put FreeRTOS back.
 #
 #   Enable CONFIG_RINGBUF_PLACE_ISR_FUNCTIONS_INTO_FLASH. This option is not
 #   safe to use if the ISR ringbuf functions are used from an IRAM interrupt
@@ -143,7 +143,6 @@ CONFIG_HEAP_PLACE_FUNCTION_INTO_FLASH=y
 #
 # ESP-Driver:GPIO Configurations
 #
-# CONFIG_GPIO_ESP32_SUPPORT_SWITCH_SLP_PULL is not set
 # CONFIG_GPIO_CTRL_FUNC_IN_IRAM is not set
 # end of ESP-Driver:GPIO Configurations
 
@@ -152,6 +151,6 @@ CONFIG_HEAP_PLACE_FUNCTION_INTO_FLASH=y
 #
 CONFIG_GPTIMER_ISR_HANDLER_IN_IRAM=n
 # CONFIG_GPTIMER_CTRL_FUNC_IN_IRAM is not set
-# CONFIG_GPTIMER_ISR_IRAM_SAFE is not set
+# CONFIG_GPTIMER_ISR_CACHE_SAFE is not set
 # CONFIG_GPTIMER_ENABLE_DEBUG_LOG is not set
 # end of ESP-Driver:GPTimer Configurations

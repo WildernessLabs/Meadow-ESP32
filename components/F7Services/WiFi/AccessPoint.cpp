@@ -576,7 +576,7 @@ void WiFiRequestHandler::NodeAssociatedEvent(wifi_event_ap_staconnected_t *event
  * @param eventData
  *      DHCP-assignment event data — carries the station MAC and IP address.
  */
-void WiFiRequestHandler::NodeConnectedEvent(ip_event_ap_staipassigned_t *eventData)
+void WiFiRequestHandler::NodeConnectedEvent(ip_event_assigned_ip_to_client_t *eventData)
 {
     TRACE_MESSAGE("NodeConnectedEvent: Enter");
 

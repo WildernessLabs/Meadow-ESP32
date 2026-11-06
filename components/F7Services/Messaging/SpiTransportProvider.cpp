@@ -150,7 +150,7 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
     //  Without the SPI bus there is no link to the STM32, so this is a start-up failure with nothing
     //  to recover to.  ESP_ERROR_CHECK is kept, and resets the board (issue #248).
     //
-    ESP_ERROR_CHECK(spi_slave_initialize(VSPI_HOST, &spiBusConfiguration, &slaveConfiguration, 1));
+    ESP_ERROR_CHECK(spi_slave_initialize(SPI3_HOST, &spiBusConfiguration, &slaveConfiguration, 1));
 
     /*
      *  The initial state is to wait for a message header to be sent by the STM32.
@@ -197,7 +197,7 @@ SpiTransportProvider::SpiTransportProvider() : TransportProviderBase()
  */
 SpiTransportProvider::~SpiTransportProvider()
 {
-    spi_slave_free(VSPI_HOST);
+    spi_slave_free(SPI3_HOST);
     if (_rxBuffer)
     {
         Utils::DeleteAndNullifyPointer(_rxBuffer);
@@ -1043,7 +1043,7 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessMessages(spi_slave_transac
     //  driver's own state is broken, which is not recoverable here.  ESP_ERROR_CHECK is kept
     //  (issue #248).
     //
-    ESP_ERROR_CHECK(spi_slave_queue_trans(VSPI_HOST, transaction, portMAX_DELAY));
+    ESP_ERROR_CHECK(spi_slave_queue_trans(SPI3_HOST, transaction, portMAX_DELAY));
     //
     //  notificationBits is not examined because STM32_INTERRUPT_NOTIFICATION_BIT is the
     //  only bit this task is ever notified with (see SpiPostSetupCallback), so every
@@ -1055,7 +1055,7 @@ spi_slave_transaction_t *SpiTransportProvider::ProcessMessages(spi_slave_transac
     //  ESP-IDF documentation states that a call to spi_slave_get_trans_result
     //  is mandatory when spi_slave_queue_trans is used.
     //
-    ESP_ERROR_CHECK(spi_slave_get_trans_result(VSPI_HOST, &transaction, portMAX_DELAY));
+    ESP_ERROR_CHECK(spi_slave_get_trans_result(SPI3_HOST, &transaction, portMAX_DELAY));
     Profile::Record(ProfileEvent::SpiTransaction, static_cast<uint32_t>(_currentState), transaction->trans_len / 8);
     Metrics::Increment(MetricCounter::SpiTransactions);
     ProfileSpan span(ProfileEvent::SpiProcess, ProfileEvent::SpiProcessDone, static_cast<uint32_t>(_currentState));

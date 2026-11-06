@@ -198,7 +198,9 @@ callback and every blocking FreeRTOS call, on one time line per core. It answers
 questions the log cannot, such as why a request took 40 ms, which task kept another one
 waiting, or how much of a core an interrupt takes.
 
-ESP-IDF provides the target side (the `app_trace` component). The trace leaves the
+The target side is SEGGER's SystemView code in the `espressif/esp_sysview` managed
+component, which ESP-IDF's `esp_trace` component loads as its external trace library
+(before ESP-IDF 6 it was part of ESP-IDF's `app_trace`). The trace leaves the
 ESP32 over JTAG through the ESP-Prog, and OpenOCD writes it to a file that SystemView
 opens.
 
@@ -341,7 +343,7 @@ appearing as the capture gets longer.
 * JTAG carries a little over 200 KiB/s of trace. A busy system makes events faster than
   that: tracing the `[Emulated]` tests on the bench board gave 5.3 MB in 30 seconds with
   214 overflows on each core. A task waits up to 500 us
-  (`CONFIG_APPTRACE_SV_BUF_WAIT_TMO`) for room in the trace buffer, after which the event
+  (`CONFIG_SEGGER_SYSVIEW_BUF_WAIT_TMO`) for room in the trace buffer, after which the event
   is dropped and SystemView shows an overflow. The time line stays correct around an
   overflow, but the events in it are missing. Turning off events you do not need in
   `sdkconfig.sysview` (the idle and timer events, say) leaves room for the rest.

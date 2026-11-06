@@ -229,6 +229,40 @@ void CollectConnectionMessages(MockMessageDispatcher *dispatcher, const unsigned
 }
 
 /**
+ * @brief Milliseconds between checks of the outbound queue while waiting for the access point stopped event.
+ */
+static const unsigned ACCESS_POINT_STOPPED_POLL_INTERVAL = 10;
+
+/**
+ * @brief Wait for the event saying the soft access point has stopped, discarding anything before it.
+ *
+ *  Gives up after STOP_ACCESS_POINT_TIMEOUT; whatever arrives later is left for the caller's drain.
+ *
+ * @param dispatcher Dispatcher whose outbound queue is being read.
+ */
+static void WaitForAccessPointStoppedEvent(MockMessageDispatcher *dispatcher)
+{
+    unsigned waited = 0;
+    while (waited < STOP_ACCESS_POINT_TIMEOUT)
+    {
+        Message *message = dispatcher->GetOutboundMessage();
+        if (message == nullptr)
+        {
+            vTaskDelay(pdMS_TO_TICKS(ACCESS_POINT_STOPPED_POLL_INTERVAL));
+            waited += ACCESS_POINT_STOPPED_POLL_INTERVAL;
+            continue;
+        }
+
+        const bool isStoppedEvent = (message->MessageType == MessageTypes::Event) && (message->Interface == Esp32Interfaces::WiFi) && (message->Function == WiFiFunction::AccessPointStoppedEvent);
+        Message::DeleteMessage(message);
+        if (isStoppedEvent)
+        {
+            return;
+        }
+    }
+}
+
+/**
  * @brief Stop the soft access point, whether or not it is running.
  *
  * @param dispatcher Dispatcher to queue the request on.
@@ -238,15 +272,24 @@ void EnsureAccessPointStopped(MockMessageDispatcher *dispatcher)
     QueueWiFiRequest(dispatcher, WiFiFunction::StopAccessPoint);
 
     Message *response = WaitForResponseTo(dispatcher, Esp32Interfaces::WiFi, WiFiFunction::StopAccessPoint, STOP_ACCESS_POINT_TIMEOUT);
+    bool stopped = false;
     if (response != nullptr)
     {
+        stopped = (response->StatusCode == StatusCodes::CompletedOk);
         Message::DeleteMessage(response);
     }
 
     //
     //  Stopping the access point raises an event of its own, which would otherwise be
-    //  waiting in the queue when the test makes its first real request.
+    //  waiting in the queue when the test makes its first real request.  Under ESP-IDF 5
+    //  the event was queued before the response to the stop request; under ESP-IDF 6 it
+    //  can come after it, so when an access point was stopped the event is waited for
+    //  rather than assumed to be there already.
     //
+    if (stopped)
+    {
+        WaitForAccessPointStoppedEvent(dispatcher);
+    }
     DrainOutboundQueue(dispatcher, 0);
 }
 

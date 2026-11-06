@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Meadow-ESP32** is ESP32 firmware (C++20/C11, ESP-IDF 5.3+, FreeRTOS) that provides WiFi, Bluetooth, POSIX networking, and file storage services to an external STM32 microcontroller via SPI and UART.
+**Meadow-ESP32** is ESP32 firmware (C++20/C11, ESP-IDF 6.1, FreeRTOS) that provides WiFi, Bluetooth, POSIX networking, and file storage services to an external STM32 microcontroller via SPI and UART.
 
 - **Target**: ESP32-PICO-D4
 - **STM32→ESP32**: UART for control/state, SPI for request/response
@@ -156,7 +156,8 @@ assuming one.
 - SPI transaction hard limit: **4092 bytes** (hardware constraint).
 - **Warnings in our code are errors.** `cmake/WarningsAsErrors.cmake` adds `-Werror` (and re-enables the warnings ESP-IDF demotes, such as unused variables) to `main`, `components/F7Services` and its `test` component, and to `test/main`. Managed components keep the ESP-IDF settings, so their warnings stay warnings. A new component of ours should call `meadow_warnings_as_errors(${COMPONENT_LIB})` after `idf_component_register()`.
 - SDK config files: `sdkconfig.defaults` (release), `sdkconfig.develop` (merged on `--develop`), `sdkconfig` (generated, not committed).
-- Managed dependencies (via `idf_component.yml`): `joltwallet/littlefs` v1.5.5. `espressif/cjson` ==1.7.19 is also declared but gated to `idf_version >=6.0`; on the 5.3+ toolchain this project actually builds with, that rule never matches, so JSON parsing uses ESP-IDF's bundled `json` component instead (cJSON 1.7.19, verified free of the known CVE).
+- Managed dependencies (via `idf_component.yml`): `joltwallet/littlefs` ==1.23.1, `espressif/cjson` ==1.7.19 (ESP-IDF 6 no longer bundles a `json` component; cJSON 1.7.19 is verified free of the known CVE) and `espressif/esp_sysview` ==1.1.2 (SystemView left ESP-IDF in 6.0; it builds to nothing unless `sdkconfig.sysview` selects it).
+- LittleFS is held at on-disk version 2.0 (`CONFIG_LITTLEFS_MULTIVERSION`, `CONFIG_LITTLEFS_DISK_VERSION_2_0`) so that firmware built with littlefs 1.5.5 can still mount the partition; it formats one it cannot mount. `mkfsimage.sh` builds images with littlefs-python at the same version.
 
 ## Documentation
 

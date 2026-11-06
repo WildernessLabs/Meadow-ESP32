@@ -69,9 +69,9 @@ FileSystem::FileSystem()
     _config.format_if_mount_failed = true;
     _config.dont_mount = false;
     //
-    //  The following options are not used in LittleFS version 1.5.5.
-    //  They are left here for future reference if we uplift LittleFS to a
-    //  more recent version.
+    //  The littlefs component 1.23.1 also has these options.  Their defaults (read and
+    //  write, partition found by its label, no growing on mount) are what is wanted, so
+    //  they are left as they are.
     //
     // _config.read_only = false;
     // _config.partition = nullptr;

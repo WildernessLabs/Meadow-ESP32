@@ -42,9 +42,19 @@ menu "Meadow COMMS Project Build Configuration"
             every build, release included.  Recording one is a few atomic operations on
             statically allocated memory.  Turn it off to compile the calls away.
 
+    config MEADOW_SYSVIEW
+        bool
+        default y if ESP_TRACE_LIB_EXTERNAL
+        help
+            Set in a build that traces with SEGGER SystemView (build.sh --sysview).  From
+            ESP-IDF 6 SystemView is the espressif/esp_sysview managed component, which
+            esp_trace loads as its external trace library, so this follows
+            ESP_TRACE_LIB_EXTERNAL.  The code tests this rather than the ESP-IDF option so
+            that the condition says what it means.
+
     config MEADOW_SYSVIEW_EVENTS
         bool "Record Meadow events in SystemView traces"
-        depends on APPTRACE_SV_ENABLE
+        depends on MEADOW_SYSVIEW
         default y
         help
             Records the Meadow events (SPI transactions, requests, responses) in a SystemView

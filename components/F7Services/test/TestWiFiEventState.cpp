@@ -259,7 +259,7 @@ public:
      */
     static void NodeConnected(WiFiRequestHandler *handler, const uint8_t lastByte)
     {
-        ip_event_ap_staipassigned_t event = {};
+        ip_event_assigned_ip_to_client_t event = {};
         event.mac[0] = 0x02;
         event.mac[5] = lastByte;
         event.ip.addr = 0x0204a8c0;
