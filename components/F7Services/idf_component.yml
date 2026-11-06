@@ -1,5 +1,5 @@
 dependencies:
-  joltwallet/littlefs: ==1.5.5
+  joltwallet/littlefs: ==1.23.1
   espressif/cjson:
     version: "==1.7.19"
     rules:

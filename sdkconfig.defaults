@@ -37,6 +37,16 @@ CONFIG_LWIP_HOOK_IP6_INPUT_NONE=y
 CONFIG_MBEDTLS_HARDWARE_MPI=n
 CONFIG_MBEDTLS_ECP_FIXED_POINT_OPTIM=y
 CONFIG_LITTLEFS_FLUSH_FILE_EVERY_WRITE=y
+#
+#   Keep writing LittleFS on-disk version 2.0.  The littlefs component 1.23.1 (LittleFS 2.11)
+#   writes version 2.1 by default, as every LittleFS from 2.6 does, upgrading a 2.0 partition
+#   on its first write.  Firmware built with component 1.5.5 (LittleFS 2.5, the ESP-IDF 5.5
+#   releases) cannot mount 2.1, and FileSystem formats a partition it cannot mount, so going
+#   back to such a release would erase the certificates and keys stored there.  Version 2.0
+#   loses only the forward-looking erase-state checksums.
+#
+CONFIG_LITTLEFS_MULTIVERSION=y
+CONFIG_LITTLEFS_DISK_VERSION_2_0=y
 CONFIG_LWIP_CHECK_THREAD_SAFETY=y
 #
 #   CONFIG_COMPILER_STACK_CHECK_MODE_ALL runs out of IRAM.
