@@ -13,16 +13,12 @@
 #include "esp_netif.h"
 #include "lwip/sockets.h"
 #include "unity.h"
-#if defined(CONFIG_APPTRACE_SV_ENABLE)
+#if defined(CONFIG_MEADOW_SYSVIEW)
     //
-    //  esp_app_trace_util.h, which esp_sysview_trace.h includes, chains an assignment to a
-    //  volatile member.  C++20 deprecates that and -Werror makes it an error.  The header is
-    //  ESP-IDF's, so the warning is turned off for it alone.
+    //  esp_sysview_vprintf comes from the espressif/esp_sysview managed component, which is
+    //  where SystemView lives from ESP-IDF 6.
     //
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wvolatile"
-    #include "esp_sysview_trace.h"
-    #pragma GCC diagnostic pop
+    #include "esp_sysview_heap_trace_module.h"
 #endif
 
 #include "Logging.hpp"
@@ -137,7 +133,7 @@ TEST_CASE("A logging configuration that cannot be honoured is refused and change
     TestLogging::Reset();
     TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, Logging::Configure("WiFi", Esp32LogDestination::Uart, 0));
 
-#if !defined(CONFIG_APPTRACE_SV_ENABLE)
+#if !defined(CONFIG_MEADOW_SYSVIEW)
     TEST_ASSERT_EQUAL_MESSAGE(StatusCodes::NotImplemented, Logging::Configure("Thread", Esp32LogDestination::Jtag, 0), "JTAG logging was accepted in a build without SystemView.");
 #endif
     TEST_ASSERT_EQUAL_MESSAGE(StatusCodes::InvalidRequest, Logging::Configure("Thread", 9, 0), "A destination that does not exist was accepted.");
@@ -206,7 +202,7 @@ TEST_CASE("Log messages are sent over UDP to the port asked for, and stop when t
     TestLogging::Reset();
 }
 
-#if defined(CONFIG_APPTRACE_SV_ENABLE)
+#if defined(CONFIG_MEADOW_SYSVIEW)
 
 /**
  * @brief The log output function in use now.

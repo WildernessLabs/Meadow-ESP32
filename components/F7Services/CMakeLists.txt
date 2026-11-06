@@ -20,7 +20,7 @@ idf_component_register( SRCS    ${F7SERVICES_SOURCES}
                                 "Diagnostics"
 
                         REQUIRES 
-                                app_trace
+                                espressif__esp_sysview
                                 bt
                                 cxx 
                                 esp_adc

@@ -165,7 +165,7 @@ private:
      */
     static int UdpLogOutput(const char *format, va_list arguments);
 
-#if defined(CONFIG_APPTRACE_SV_ENABLE)
+#if defined(CONFIG_MEADOW_SYSVIEW)
     /**
      * @brief The function that wrote log messages before they were sent to SystemView, nullptr when they are not.
      */
