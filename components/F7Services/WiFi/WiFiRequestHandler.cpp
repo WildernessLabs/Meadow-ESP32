@@ -2157,8 +2157,13 @@ StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const Esp32Mes
             }
             else
             {
-                int32_t found;
-                result = static_cast<StatusCodes::StatusCodes>(Mapping::GetStmValue(Mapping::EspErrorCodes, static_cast<int32_t>(idfResult), &found));
+                //
+                //  The driver refused the connection, so no attempt is in progress.  The status
+                //  is the mapped error, or UnmappedErrorCode: GetStmValue's own return is 0 for
+                //  any mapped error, which told the STM32 the connection had worked (issue #633).
+                //
+                xEventGroupClearBits(_xWiFiEventGroup, WIFI_CONNECTING_BIT);
+                result = Mapping::GetStatusCode(idfResult);
             }
         }
     }
