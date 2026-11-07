@@ -174,6 +174,54 @@ public:
     }
 
     /**
+     * @brief Leave the station state a dropped disconnected event leaves behind (issue #634).
+     *
+     *  DisconnectFromAccessPoint has cleared WIFI_CONNECTED_BIT, so it is not set here; with it set
+     *  the stop path would ask the driver to disconnect first.  The IP address and access point
+     *  are stored under the event state mutex, as the got IP and connected events store them.
+     *
+     * @param handler Handler to give the state to.
+     */
+    static void PlantStaleStationState(WiFiRequestHandler *handler)
+    {
+        {
+            MutexLock lock(WiFiRequestHandler::EventStateMutex());
+            memset(&handler->_apInformation, 0, sizeof(handler->_apInformation));
+            memcpy(handler->_apInformation.ssid, "Stale", 5);
+            handler->_apInformation.ssid_len = 5;
+            handler->_apInformation.channel = 6;
+            handler->_ipInformation.ip.addr = 0x0a01a8c0;
+            handler->_ipInformation.gw.addr = 0x0101a8c0;
+            handler->_ipInformation.netmask.addr = 0x00ffffff;
+        }
+        xEventGroupSetBits(WiFiRequestHandler::_xWiFiEventGroup, WiFiRequestHandler::WIFI_CONNECTING_BIT | WiFiRequestHandler::WIFI_HAVE_IP_BIT | WiFiRequestHandler::WIFI_DISCONNECT_REQUESTED_BIT);
+    }
+
+    /**
+     * @brief The station connection bits still set in the handler's event group.
+     *
+     * @return The set bits among WIFI_CONNECTED_BIT, WIFI_CONNECTING_BIT, WIFI_HAVE_IP_BIT and WIFI_DISCONNECT_REQUESTED_BIT.
+     */
+    static EventBits_t StationConnectionBits()
+    {
+        const EventBits_t stationBits = WiFiRequestHandler::WIFI_CONNECTED_BIT | WiFiRequestHandler::WIFI_CONNECTING_BIT | WiFiRequestHandler::WIFI_HAVE_IP_BIT | WiFiRequestHandler::WIFI_DISCONNECT_REQUESTED_BIT;
+        return (xEventGroupGetBits(WiFiRequestHandler::_xWiFiEventGroup) & stationBits);
+    }
+
+    /**
+     * @brief Whether the stored access point and IP information are both empty, read under the event state mutex.
+     *
+     * @param handler Handler whose information is read.
+     */
+    static bool StationInformationIsEmpty(WiFiRequestHandler *handler)
+    {
+        const wifi_event_sta_connected_t emptyAccessPoint = {};
+        const esp_netif_ip_info_t emptyIp = {};
+        MutexLock lock(WiFiRequestHandler::EventStateMutex());
+        return ((memcmp(&handler->_apInformation, &emptyAccessPoint, sizeof(emptyAccessPoint)) == 0) && (memcmp(&handler->_ipInformation, &emptyIp, sizeof(emptyIp)) == 0));
+    }
+
+    /**
      * @brief Clear the event group's bits and delete it, so no state is left for another test.
      */
     static void ReleaseStartState()
@@ -760,6 +808,34 @@ TEST_CASE("An interface that cannot start returns the error and the next start w
     TEST_ASSERT_EQUAL_MESSAGE(ESP_OK, TestWiFiEventState::StartInterface(handler, WIFI_MODE_STA), "The start after a failed start failed too.");
     TEST_ASSERT_EQUAL(StatusCodes::CompletedOk, TestWiFiEventState::StopAdapter(handler));
     TestWiFiEventState::ReleaseStartState();
+}
+
+/**
+ * @brief Check stopping the adapter clears the station connection state (issue #634).
+ *
+ *  The stop path unregistered the event handlers straight after stopping the driver, so a
+ *  disconnected event still queued was dropped and WIFI_HAVE_IP_BIT stayed set.  Every later
+ *  connect then returned WiFiAlreadyStarted until a reboot.  The state a dropped event leaves
+ *  is planted here, and with nothing connected no event comes to clear it.
+ *
+ *  This starts the radio, so it is hardware only: under QEMU starting the driver asserts in
+ *  esp_phy_enable(), and stopping a driver that was never started is refused.
+ */
+TEST_CASE("Stopping the WiFi adapter clears the station connection state", "[WiFiEventState][HardwareOnly]")
+{
+    WiFiRequestHandler *handler = TestWiFiEventState::Handler();
+
+    TEST_ASSERT_EQUAL_MESSAGE(ESP_OK, TestWiFiEventState::StartInterface(handler, WIFI_MODE_STA), "The station interface did not start.");
+    TestWiFiEventState::PlantStaleStationState(handler);
+
+    const StatusCodes::StatusCodes stopped = TestWiFiEventState::StopAdapter(handler);
+    const EventBits_t remaining = TestWiFiEventState::StationConnectionBits();
+    const bool informationEmpty = TestWiFiEventState::StationInformationIsEmpty(handler);
+    TestWiFiEventState::ReleaseStartState();
+
+    TEST_ASSERT_EQUAL_MESSAGE(StatusCodes::CompletedOk, stopped, "The adapter did not stop.");
+    TEST_ASSERT_EQUAL_HEX32_MESSAGE(0, remaining, "Stopping the adapter left station connection bits set.");
+    TEST_ASSERT_TRUE_MESSAGE(informationEmpty, "Stopping the adapter left the access point or IP information stored.");
 }
 
 /**
