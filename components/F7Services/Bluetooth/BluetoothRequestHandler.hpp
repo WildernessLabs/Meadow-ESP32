@@ -71,6 +71,11 @@ class BluetoothRequestHandler : public RequestHandlerBase
      */
     friend class TestBluetoothPairing;
 
+    /**
+     * @brief Test access to the attribute table and the handles reported from it (issue #636).
+     */
+    friend class TestBluetoothHandles;
+
 private:
     /**
      *  Event group bits.
@@ -211,7 +216,7 @@ private:
     /**
      * @brief Number of elements in the attribute table.
      */
-    uint16_t _attributeTableLength;
+    uint16_t _attributeTableLength = 0;
 
     /**
      * @brief Advertising data content, according to "Supplement to the Bluetooth Core Specification".
@@ -407,6 +412,14 @@ private:
      * @brief Get the Handles and send them to the STM32.
      */
     void GetHandles(Message * const request);
+
+    /**
+     * @brief Release the attribute table and set its length back to 0.
+     *
+     *  Called wherever the service graph the table was built from is deleted, and only while
+     *  the Bluetooth stack is down, as the stack reads the table while it is running.
+     */
+    void ReleaseAttributeTable();
 
     /**
      * @brief Stop the Bluetooth stack.

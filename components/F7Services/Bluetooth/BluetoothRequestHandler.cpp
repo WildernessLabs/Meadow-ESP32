@@ -180,8 +180,7 @@ BluetoothRequestHandler::~BluetoothRequestHandler()
     DiscardPreparedWrite();
     _pairing.Reset();
 
-    delete[] _attribute_table;
-    _attribute_table = nullptr;
+    ReleaseAttributeTable();
 
     _instance = nullptr;
     _instantiated = false;
@@ -457,6 +456,10 @@ void BluetoothRequestHandler::GetHandles(Message * const request)
     response.HandleCount = GetHandleCount();
     response.HandlesLength = response.HandleCount * 2;
     response.Handles = static_cast<uint8_t *>(pvPortMalloc(response.HandlesLength));
+    if (response.Handles != nullptr)
+    {
+        memset(response.Handles, 0, response.HandlesLength);
+    }
 
     //
     //  With no handles to report, pvPortMalloc(0) may return nullptr without memory having
@@ -502,6 +505,20 @@ void BluetoothRequestHandler::GetHandles(Message * const request)
     _messageDispatcher->QueueMessageForStm32(request);
 
     TRACE_MESSAGE("GetHandles: Exit");
+}
+
+/**
+ * @brief Release the attribute table and set its length back to 0.
+ *
+ *  The length is the number of handles GetHandles reports, so it has to go with the service
+ *  graph the table was built from.  Left behind, GetHandles sent that many handles of
+ *  uninitialised memory for a graph that no longer existed (issue #636).
+ */
+void BluetoothRequestHandler::ReleaseAttributeTable()
+{
+    delete[] _attribute_table;
+    _attribute_table = nullptr;
+    _attributeTableLength = 0;
 }
 
 /**
@@ -1543,7 +1560,7 @@ void BluetoothRequestHandler::Stop(Message * const request)
     _pairing.Reset();
     if (stopped)
     {
-        request->StatusCode = StatusCodes::CompletedOk;
+        ReleaseAttributeTable();
         if (_manager.DeleteAllServices())
         {
             request->StatusCode = StatusCodes::CompletedOk;
@@ -1765,6 +1782,10 @@ void BluetoothRequestHandler::Start(Message * const request)
     {
         graphBuilt = _manager.BuildGraphFromJson(config->Config);
         Encoders::FreeBTStackConfig(&config);
+        if (!graphBuilt)
+        {
+            ReleaseAttributeTable();
+        }
     }
 
     if (!graphBuilt)

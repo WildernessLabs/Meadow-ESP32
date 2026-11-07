@@ -535,6 +535,28 @@ TEST_CASE("Stop Bluetooth Service (will start MeadowA service first)", CLASS_OF_
 }
 
 /**
+ * @brief Check that GetHandles reports no handles once the service has been stopped.
+ *
+ *  Stop deleted the service graph but kept the attribute table length, so GetHandles went on
+ *  reporting that many handles, sent from a buffer nothing had written (issue #636).  Stop
+ *  only deletes the graph once the stack is down, which needs the radio.
+ */
+TEST_CASE("GetHandles reports no handles after Bluetooth has been stopped (MeadowA, Espressif)", CLASS_OF_TESTS)
+{
+    MockMessageDispatcher *dispatcher = SetupMessageDispatcher();
+    TEST_ASSERT_NOT_NULL(dispatcher);
+
+    StartBluetoothService(dispatcher, meadow_a_json);
+    uint16_t handles[MEADOW_A_HANDLE_COUNT];
+    GetServiceHandles(dispatcher, MEADOW_A_HANDLE_COUNT, handles);
+
+    StopBluetoothService(dispatcher);
+    GetServiceHandles(dispatcher, 0, handles);
+
+    ResetMessageDispatcher();
+}
+
+/**
  * @brief Send a Start request with the given configuration and check it is answered Failure.
  *
  *  No BluetoothStartedEvent may be raised, then or afterwards, and the Bluetooth stack the
