@@ -17,6 +17,7 @@
 #include "freertos/task.h"
 #include "esp_event.h"
 #include "esp_netif.h"
+#include "esp_wifi.h"
 #include "esp_wifi_default.h"
 #include "unity.h"
 
@@ -424,6 +425,43 @@ public:
         handler->LockConnectedNodesMap();
         handler->_connectedNodes.clear();
         handler->UnlockConnectedNodesMap();
+    }
+
+    /**
+     * @brief Mark the WiFi interface as started, so a connection goes straight to the driver without starting the radio.
+     */
+    static void MarkInterfaceStarted()
+    {
+        xEventGroupSetBits(WiFiRequestHandler::_xWiFiEventGroup, WiFiRequestHandler::WIFI_INTERFACE_STARTED_BIT);
+    }
+
+    /**
+     * @brief Clear the started bit MarkInterfaceStarted set, for an event group this test did not make.
+     */
+    static void MarkInterfaceStopped()
+    {
+        xEventGroupClearBits(WiFiRequestHandler::_xWiFiEventGroup, WiFiRequestHandler::WIFI_INTERFACE_STARTED_BIT);
+    }
+
+    /**
+     * @brief Call the private ConnectToAccessPoint method.
+     *
+     * @param handler Handler to connect.
+     * @param accessPointInformation Access point to connect to.
+     *
+     * @return What ConnectToAccessPoint returned.
+     */
+    static StatusCodes::StatusCodes Connect(WiFiRequestHandler *handler, const Esp32Messaging::AccessPointInformation *accessPointInformation)
+    {
+        return (handler->ConnectToAccessPoint(accessPointInformation));
+    }
+
+    /**
+     * @brief Whether the handler's event group holds the connecting bit.
+     */
+    static bool Connecting()
+    {
+        return ((xEventGroupGetBits(WiFiRequestHandler::_xWiFiEventGroup) & WiFiRequestHandler::WIFI_CONNECTING_BIT) != 0);
     }
 };
 
@@ -982,4 +1020,47 @@ TEST_CASE("The connected nodes list is not locked while the node events are queu
     dispatcher->QueueObserverContext = nullptr;
     TestWiFiEventState::ClearConnectedNodes(handler);
     DrainOutbound(dispatcher);
+}
+
+/**
+ * @brief Check a connection the driver refuses is reported as the driver's error, and leaves no connection in progress (issue #633).
+ *
+ *  ConnectToAccessPoint took its status from the return of Mapping::GetStmValue, which is 0
+ *  for any error in the table, so a refused esp_wifi_set_config or esp_wifi_connect told the
+ *  STM32 the connection had worked.  WIFI_CONNECTING_BIT was also left set.
+ *
+ *  Marking the interface started skips the radio start, so esp_wifi_set_config is called on a
+ *  driver that was never initialised and refuses with ESP_ERR_WIFI_NOT_INIT, which runs under
+ *  QEMU.
+ */
+TEST_CASE("A connection the driver refuses is reported as a failure", CLASS_OF_TESTS)
+{
+    wifi_mode_t mode = WIFI_MODE_NULL;
+    TEST_ASSERT_EQUAL_MESSAGE(ESP_ERR_WIFI_NOT_INIT, esp_wifi_get_mode(&mode), "This test needs a WiFi driver that has not been initialised.");
+
+    WiFiRequestHandler *handler = TestWiFiEventState::Handler();
+    MockMessageDispatcher *dispatcher = TestWiFiEventState::Dispatcher(handler);
+    const bool madeEventGroup = TestWiFiEventState::GiveEventGroup();
+    DrainOutbound(dispatcher);
+    TestWiFiEventState::MarkInterfaceStarted();
+
+    char networkName[] = "Issue633";
+    char password[] = "Password";
+    Esp32Messaging::AccessPointInformation accessPointInformation = {};
+    accessPointInformation.NetworkName = networkName;
+    accessPointInformation.Password = password;
+    const StatusCodes::StatusCodes result = TestWiFiEventState::Connect(handler, &accessPointInformation);
+    const bool connecting = TestWiFiEventState::Connecting();
+
+    DrainOutbound(dispatcher);
+    if (madeEventGroup)
+    {
+        TestWiFiEventState::ReleaseEventGroup();
+    }
+    else
+    {
+        TestWiFiEventState::MarkInterfaceStopped();
+    }
+    TEST_ASSERT_EQUAL_MESSAGE(StatusCodes::EspWiFiNotStarted, result, "The refused connection was not reported as the driver's error.");
+    TEST_ASSERT_FALSE_MESSAGE(connecting, "The refused connection left the connecting bit set.");
 }
