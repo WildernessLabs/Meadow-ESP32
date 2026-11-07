@@ -1904,6 +1904,21 @@ StatusCodes::StatusCodes WiFiRequestHandler::StopWiFIAdapter()
     if (result == ESP_OK)
     {
         DestroyNetworkInterfaces();
+
+        //
+        //  With the driver stopped and deinitialised there is no station connection, so its state
+        //  is cleared here rather than left to StationDisconnectedEvent.  Unregistering the handlers
+        //  does not wait for events already queued, so a disconnected event still in the loop's
+        //  queue is dropped.  WIFI_HAVE_IP_BIT left set made every later ConnectToAccessPoint
+        //  return WiFiAlreadyStarted until a reboot, and WIFI_DISCONNECT_REQUESTED_BIT left set
+        //  made the next real drop look requested, so it was not retried (issue #634).
+        //
+        {
+            MutexLock lock(EventStateMutex());
+            memset(&_apInformation, 0, sizeof(_apInformation));
+            memset(&_ipInformation, 0, sizeof(_ipInformation));
+        }
+        xEventGroupClearBits(_xWiFiEventGroup, WIFI_CONNECTED_BIT | WIFI_CONNECTING_BIT | WIFI_HAVE_IP_BIT | WIFI_DISCONNECT_REQUESTED_BIT);
     }
 
     if (result != ESP_OK)
