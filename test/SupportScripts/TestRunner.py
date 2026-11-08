@@ -33,11 +33,18 @@ for its client, the matching script from this directory is started alongside it 
 the interpreter named by --bluetooth-python, which needs the packages listed in
 requirements.txt.  A client that fails fails the selector.
 
+On macOS the run stops before a client is started if the computer is still paired with
+the board, except for the pairing test, which makes that bond on purpose.  macOS keeps
+the services it saw when it paired and does not look for them again, so every other
+client would fail to find its service.
+
 Exit status is 0 when every selector passed, 1 when a test failed, 2 when a selector
-produced no result before the timeout, and 3 when the device rebooted unexpectedly.
+produced no result before the timeout or the run stopped because the computer is still
+paired with the board, and 3 when the device rebooted unexpectedly.
 '''
 
 import argparse
+import json
 import os
 import re
 import socket
@@ -120,6 +127,59 @@ BLUETOOTH_CLIENTS = {
     'A client pairs and bonds to use an encrypted characteristic (MeadowPair, Espressif)':
         lambda arguments: ['PairingClient.py'],
 }
+
+#
+#   The pairing test bonds the computer to the board and leaves the bond in place, so
+#   that a second run encrypts with the stored keys.  It is the one client that expects
+#   the computer to be paired with the board.
+#
+CLIENTS_THAT_EXPECT_A_BOND = {
+    'A client pairs and bonds to use an encrypted characteristic (MeadowPair, Espressif)',
+}
+
+#
+#   The Bluetooth controller prints the board's address each time the stack starts:
+#       I (1141) BTDM_INIT: Bluetooth MAC: 34:5f:45:3e:19:a2
+#
+BLUETOOTH_ADDRESS = re.compile(r'Bluetooth MAC: ((?:[0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2})')
+
+
+class HostStillPaired(Exception):
+    '''
+    The computer is still paired with the board, so a client test would be misled.
+
+    A Mac that holds a bond with a device keeps the services it discovered when it bonded
+    and does not discover them again.  The board offers a different service in almost
+    every Bluetooth test, so a client does not find its own service, fails, and leaves
+    the board's stack running, which fails every test after it.
+    '''
+
+
+def HostPairedDevices():
+    '''
+    List the Bluetooth devices this computer is paired with.
+
+    Returns a dictionary from upper case address to device name.  Only macOS can be
+    asked, through system_profiler; on any other system, or if the answer cannot be read,
+    None is returned and nothing is checked.
+    '''
+    if sys.platform != 'darwin':
+        return None
+    try:
+        output = subprocess.run(['system_profiler', '-json', 'SPBluetoothDataType'],
+                                capture_output=True, text=True, timeout=30, check=True).stdout
+        controller = json.loads(output)['SPBluetoothDataType'][0]
+    except (OSError, subprocess.SubprocessError, ValueError, KeyError, IndexError):
+        return None
+
+    devices = {}
+    for group in ('device_connected', 'device_not_connected'):
+        for entry in controller.get(group, []):
+            for name, details in entry.items():
+                address = details.get('device_address')
+                if address:
+                    devices[address.upper()] = name
+    return devices
 
 
 class Transport:
@@ -238,6 +298,7 @@ class ClientLauncher:
         self._pending = ''
         self._currentTest = None
         self._clients = []
+        self._boardAddress = None
 
     def Observe(self, text):
         '''Process console output as it arrives.'''
@@ -247,10 +308,33 @@ class ClientLauncher:
         for line in lines:
             line = line.rstrip('\r')
             started = TEST_STARTED.match(line)
+            address = BLUETOOTH_ADDRESS.search(line)
             if started:
                 self._currentTest = started.group(1)
+            elif address:
+                self._boardAddress = address.group(1).upper()
             elif CLIENT_PROMPT in line:
                 self._Launch()
+
+    def _CheckHostIsNotPaired(self):
+        '''
+        Raise HostStillPaired if this computer is paired with the board.
+
+        The board's address is known once its Bluetooth stack has started, which it has
+        by the time a test asks for a client.
+        '''
+        if (self._boardAddress is None) or (self._currentTest in CLIENTS_THAT_EXPECT_A_BOND):
+            return
+        paired = HostPairedDevices()
+        if (paired is None) or (self._boardAddress not in paired):
+            return
+        name = paired[self._boardAddress]
+        raise HostStillPaired(
+            f'This computer is still paired with the board, as "{name}" ({self._boardAddress}).\n'
+            f'macOS keeps the services it saw when it paired and does not look for them again, '
+            f'so the client for "{self._currentTest}" would not find its service and the tests '
+            f'after it would fail as well.\n'
+            f'Remove "{name}" in System Settings, Bluetooth, then run the tests again.')
 
     def _Launch(self):
         '''Start the client for the current test, if one is registered.'''
@@ -258,6 +342,7 @@ class ClientLauncher:
         if client is None:
             print(f'No Bluetooth client is registered for "{self._currentTest}"; it will time out.')
             return
+        self._CheckHostIsNotPaired()
         command = client(self._arguments)
         command = [self._python, os.path.join(SUPPORT_SCRIPTS, command[0])] + command[1:]
         print(f'Starting Bluetooth client {os.path.basename(command[1])}.')
@@ -288,6 +373,9 @@ class ClientLauncher:
                 print(f'The Bluetooth client for "{test}" failed with exit status {process.returncode}.')
             if verbose or process.returncode != 0:
                 print(log.strip())
+            if (process.returncode == 0) and (test in CLIENTS_THAT_EXPECT_A_BOND):
+                print('This computer is now paired with the board.  Remove the pairing in System '
+                      'Settings, Bluetooth, before the next [Bluetooth] run.')
         self._clients = []
         return succeeded
 
@@ -498,9 +586,18 @@ def main():
 
         for selector in arguments.selectors:
             print(f'\n=== {selector} ===')
-            result, segment, counts = RunSelector(transport, selector,
-                                                  arguments.timeout, transcript,
-                                                  launcher.Observe)
+            mark = len(transcript)
+            try:
+                result, segment, counts = RunSelector(transport, selector,
+                                                      arguments.timeout, transcript,
+                                                      launcher.Observe)
+            except HostStillPaired as error:
+                launcher.Finish(arguments.verbose)
+                results.append((selector, 'stopped: the computer is still paired with the board',
+                                ''.join(transcript[mark:])))
+                print(error)
+                status = 2
+                break
             clientsSucceeded = launcher.Finish(arguments.verbose)
 
             #
