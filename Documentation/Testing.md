@@ -258,6 +258,16 @@ listed and removed (MeadowBond, Espressif)", which removes every bond the board 
 that the pairing client fails with "Peer removed pairing information" until MeadowPair is
 removed from the Mac's Bluetooth settings.
 
+While the Mac holds that bond, the other clients cannot work. macOS keeps the services it
+saw when it paired and does not look for them again, so a client such as MeadowC's does
+not find its own service and fails, and the board's stack, left
+running, fails every test after it. The runner therefore checks, before it starts any
+client other than the pairing client, whether the Mac is paired with the board: it reads
+the board's address from the `Bluetooth MAC:` line the controller prints and looks for it
+in `system_profiler SPBluetoothDataType`. If it is there, the run stops with exit status 2
+and names the device to remove (System Settings, Bluetooth). After a successful pairing
+test the runner prints a reminder to remove the pairing. The check runs on macOS only.
+
 The clients use [Bleak](https://github.com/hbldh/bleak), which the ESP-IDF Python
 environment does not include. Keep it in a virtual environment of its own and point the
 runner at it:
