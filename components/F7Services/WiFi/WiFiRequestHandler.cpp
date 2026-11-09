@@ -14,11 +14,9 @@
 #include "esp_wifi.h"
 #include "esp_event.h"
 #include "esp_mac.h"
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include "lwip/apps/sntp.h"
 #include <inttypes.h>
 
 #include "Globals.hpp"
@@ -80,7 +78,7 @@ SemaphoreHandle_t WiFiRequestHandler::_socketHandlesMutex = nullptr;
 
 /**
  *  @brief GPIO Pin connected to the antenna selection switch
- *  which will connect the on board antenna to the ESP32.
+ *  which will connect the onboard antenna to the ESP32.
  */
 const gpio_num_t WiFiRequestHandler::ON_BOARD_ANTENNA_PIN = GPIO_NUM_26;
 
@@ -771,11 +769,11 @@ const char *WiFiRequestHandler::FindCountryCode(const char *code)
 
     if (code != nullptr)
     {
-        for (uint32_t countryCodeIndex = 0; countryCodeIndex < (sizeof(WiFiRequestHandler::_validCountryCodes) / sizeof(WiFiRequestHandler::_validCountryCodes[0])); countryCodeIndex++)
+        for (auto _validCountryCode : WiFiRequestHandler::_validCountryCodes)
         {
-            if (!strcmp(code, WiFiRequestHandler::_validCountryCodes[countryCodeIndex]))
+            if (!strcmp(code, _validCountryCode))
             {
-                result = WiFiRequestHandler::_validCountryCodes[countryCodeIndex];
+                result = _validCountryCode;
                 break;
             }
         }
@@ -1103,7 +1101,7 @@ SemaphoreHandle_t WiFiRequestHandler::EventStateMutex()
  *  @returns
  *      Copy of _disconnectData, taken under EventStateMutex().
  */
-wifi_event_sta_disconnected_t WiFiRequestHandler::GetDisconnectData()
+wifi_event_sta_disconnected_t WiFiRequestHandler::GetDisconnectData() const
 {
     MutexLock lock(EventStateMutex());
     return (_disconnectData);
@@ -1134,19 +1132,19 @@ void WiFiRequestHandler::NtpServerCallback(struct timeval *tv)
 
     TRACE_MESSAGE("Setting time to %" PRIi32, static_cast<int32_t>(tv->tv_sec));
 
-    settimeofday(tv, NULL);
+    settimeofday(tv, nullptr);
 
     TRACE_MESSAGE("NtpServerCallback: Exit");
 }
 
 /**
- *  @brief Convert the antenna enum into a GPIO pin number
+ *  @brief Convert the antenna enum into a GPIO pin
  *
  *  @param antenna
  *      Enum representing the antenna to be converted.
  *
  *  @returns
- *      GPIO pin number connected to the appropriate antenna.
+ *      GPIO pin connected to the appropriate antenna.
  */
 gpio_num_t WiFiRequestHandler::ConvertAntennaToPin(AntennaTypes::AntennaTypes antenna)
 {
@@ -1277,7 +1275,7 @@ void WiFiRequestHandler::Setup()
  *  @param ed
  *    Pointer to the connection event data structure to be populated.
  */
-void WiFiRequestHandler::PopulateConnectionEventDataStructure(Esp32Messaging::ConnectEventData * const ed)
+void WiFiRequestHandler::PopulateConnectionEventDataStructure(Esp32Messaging::ConnectEventData * const ed) const
 {
     TRACE_MESSAGE("PopulateConnectionEventDataStructure: Enter");
 
@@ -1316,16 +1314,16 @@ void WiFiRequestHandler::PopulateConnectionEventDataStructure(Esp32Messaging::Co
  *  @param status
  *     Status code to send back to the STM32.
  */
-void WiFiRequestHandler::RaiseConnectToAccessPointEvent(StatusCodes::StatusCodes status)
+void WiFiRequestHandler::RaiseConnectToAccessPointEvent(const StatusCodes::StatusCodes status)
 {
     TRACE_MESSAGE("RaiseConnectToAccessPointEvent: Enter");
 
-    Esp32Messaging::ConnectEventData *ed = static_cast<Esp32Messaging::ConnectEventData *>(pvPortMalloc(sizeof(Esp32Messaging::ConnectEventData)));
+    auto ed = static_cast<Esp32Messaging::ConnectEventData *>(pvPortMalloc(sizeof(Esp32Messaging::ConnectEventData)));
     if (ed != nullptr)
     {
         PopulateConnectionEventDataStructure(ed);
         uint32_t payloadLength = Encoders::EncodedConnectEventDataBufferSize(ed);
-        uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
+        auto payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
         if (payload != nullptr)
         {
             Encoders::EncodeConnectEventData(ed, payload);
@@ -1353,7 +1351,7 @@ void WiFiRequestHandler::RaiseDisconnectEvent()
 {
     TRACE_MESSAGE("RaiseDisconnectEvent: Enter");
 
-    Esp32Messaging::DisconnectEventData *ed = static_cast<Esp32Messaging::DisconnectEventData *>(pvPortMalloc(sizeof(Esp32Messaging::DisconnectEventData)));
+    auto ed = static_cast<Esp32Messaging::DisconnectEventData *>(pvPortMalloc(sizeof(Esp32Messaging::DisconnectEventData)));
 
     if (ed != nullptr)
     {
@@ -1377,7 +1375,7 @@ void WiFiRequestHandler::RaiseDisconnectEvent()
         memcpy(&ed->Reason, &disconnectData.reason, sizeof(ed->Reason));
 
         uint32_t payloadLength = Encoders::EncodedDisconnectEventDataBufferSize(ed);
-        uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
+        auto payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
         if (payload != nullptr)
         {
             Encoders::EncodeDisconnectEventData(ed, payload);
@@ -1476,7 +1474,7 @@ void WiFiRequestHandler::RaiseNetworkGotIpEvent()
         ERROR_MESSAGE("Failed to get DNS information for the station network interface.");
     }
 
-    Esp32Messaging::GotIpEventData *ed = static_cast<Esp32Messaging::GotIpEventData *>(pvPortMalloc(sizeof(Esp32Messaging::GotIpEventData)));
+    auto ed = static_cast<Esp32Messaging::GotIpEventData *>(pvPortMalloc(sizeof(Esp32Messaging::GotIpEventData)));
     if (ed != nullptr)
     {
         memset(ed, 0, sizeof(Esp32Messaging::GotIpEventData));
@@ -1485,7 +1483,7 @@ void WiFiRequestHandler::RaiseNetworkGotIpEvent()
             memcpy(&ed->DnsAddress, &dnsInformation.ip.u_addr.ip4.addr, sizeof(ed->DnsAddress));
         }
         uint32_t payloadLength = Encoders::EncodedGotIpEventDataBufferSize(ed);
-        uint8_t *payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
+        auto payload = static_cast<uint8_t *>(pvPortMalloc(payloadLength));
         if (payload != nullptr)
         {
             Encoders::EncodeGotIpEventData(ed, payload);
@@ -1662,7 +1660,7 @@ void WiFiRequestHandler::EventHandlerHelper(esp_event_base_t eventBase, int32_t 
 void WiFiRequestHandler::EventHandler(void *arg, esp_event_base_t eventBase, int32_t eventId, void *eventData)
 {
     TRACE_MESSAGE("EventHandler: Enter");
-    WiFiRequestHandler *sender = static_cast<WiFiRequestHandler *>(arg);
+    auto sender = static_cast<WiFiRequestHandler *>(arg);
     sender->EventHandlerHelper(eventBase, eventId, eventData);
     TRACE_MESSAGE("EventHandler: Exit");
 }
@@ -2072,11 +2070,7 @@ bool WiFiRequestHandler::IsConnected()
 /**
  *  @brief Connect to a specified access point.
  *
- *  @param ssid
- *      SSID of the access point.
- *
- *  @param password
- *      Password for the access point.
+ *  @param accessPointInformation Pointer to the access point information.
  */
 StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const Esp32Messaging::AccessPointInformation *accessPointInformation)
 {
@@ -2195,7 +2189,7 @@ StatusCodes::StatusCodes WiFiRequestHandler::ConnectToAccessPoint(const Esp32Mes
 void WiFiRequestHandler::ConnectToAccessPoint(Message *message)
 {
     TRACE_MESSAGE("ConnectToAccessPoint: Enter");
-    StatusCodes::StatusCodes result;
+    StatusCodes::StatusCodes result = StatusCodes::CompletedOk;
 
     bool malformed = false;
     Esp32Messaging::AccessPointInformation *accessPointInformation = Encoders::ExtractAccessPointInformation(message->Payload, message->PayloadLength, &malformed);
@@ -2637,9 +2631,9 @@ void WiFiRequestHandler::ScanForAccessPoints(Message *message)
                     //  of the scan results is released instead, as esp_wifi_scan_get_ap_records
                     //  would otherwise have done.
                     //
-                    Esp32Messaging::AccessPointList *accessPointList = static_cast<Esp32Messaging::AccessPointList *>(pvPortMalloc(sizeof(Esp32Messaging::AccessPointList)));
-                    wifi_ap_record_t *accessPoints = static_cast<wifi_ap_record_t *>(pvPortMalloc(apCount * sizeof(wifi_ap_record_t)));
-                    Esp32Messaging::AccessPoint *accessPoint = static_cast<Esp32Messaging::AccessPoint *>(pvPortMalloc(sizeof(Esp32Messaging::AccessPoint)));
+                    auto accessPointList = static_cast<Esp32Messaging::AccessPointList *>(pvPortMalloc(sizeof(Esp32Messaging::AccessPointList)));
+                    auto accessPoints = static_cast<wifi_ap_record_t *>(pvPortMalloc(apCount * sizeof(wifi_ap_record_t)));
+                    auto accessPoint = static_cast<Esp32Messaging::AccessPoint *>(pvPortMalloc(sizeof(Esp32Messaging::AccessPoint)));
                     if ((accessPointList == nullptr) || (accessPoints == nullptr) || (accessPoint == nullptr))
                     {
                         esp_wifi_clear_ap_list();
@@ -2751,7 +2745,7 @@ void WiFiRequestHandler::ScanForAccessPoints(Message *message)
  *  @param eventData
  *      Data for the IP event.
  */
-void WiFiRequestHandler::StationGotIpEvent(ip_event_got_ip_t *eventData)
+void WiFiRequestHandler::StationGotIpEvent(const ip_event_got_ip_t *eventData)
 {
     TRACE_MESSAGE("StationGotIpEvent: Enter");
     _currentRetryCount = 0;
@@ -2819,7 +2813,7 @@ void WiFiRequestHandler::StationStoppedEvent()
  *  @param eventData
  *      Data for the connection event.
  */
-void WiFiRequestHandler::StationConnectedEvent(wifi_event_sta_connected_t *eventData)
+void WiFiRequestHandler::StationConnectedEvent(const wifi_event_sta_connected_t *eventData)
 {
     TRACE_MESSAGE("StationConnectedEvent: Enter");
     {
@@ -2846,7 +2840,7 @@ void WiFiRequestHandler::StationConnectedEvent(wifi_event_sta_connected_t *event
  *
  *  @return Name of the reason, or "other" for a code that is not one of the common ones.
  */
-[[maybe_unused]] static const char *DisconnectReasonName(uint8_t reason)
+[[maybe_unused]] static const char *DisconnectReasonName(const uint8_t reason)
 {
     switch (reason)
     {
@@ -2883,7 +2877,7 @@ void WiFiRequestHandler::StationConnectedEvent(wifi_event_sta_connected_t *event
  *  @param eventData
  *      Data for the disconnected event.
  */
-void WiFiRequestHandler::StationDisconnectedEvent(wifi_event_sta_disconnected_t *eventData)
+void WiFiRequestHandler::StationDisconnectedEvent(const wifi_event_sta_disconnected_t *eventData)
 {
     TRACE_MESSAGE("StationDisconnectedEvent: Enter");
     TRACE_MESSAGE("StationDisconnectedEvent: Reason %u (%s), RSSI %d", static_cast<unsigned>(eventData->reason), DisconnectReasonName(eventData->reason), static_cast<int>(eventData->rssi));
