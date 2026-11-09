@@ -9,25 +9,19 @@
 
 #pragma once
 
-#include "sdkconfig.h"
+#include <sdkconfig.h>
 
 #include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
 #include "freertos/queue.h"
 #include "freertos/event_groups.h"
-#include "lwip/err.h"
-#include "lwip/sys.h"
 #include "lwip/sockets.h"
 #include "lwip/netdb.h"
 #include "lwip/dns.h"
 #include "esp_wifi.h"
 
-#include "errno.h"
-#include <string.h>
 #include <atomic>
 #include <map>
 #include <string>
-#include <iterator>
 
 #include "MessageDispatcher.hpp"
 #include "Esp32Messaging.hpp"
@@ -142,74 +136,74 @@ private:
      *  two events, network start and got IP.  The request only ends when the IP address
      *  has been granted.
      */
-    static const int WIFI_READY_FOR_NEXT_COMMAND_BIT = BIT0;
+    static constexpr int WIFI_READY_FOR_NEXT_COMMAND_BIT = BIT0;
 
     /**
      *  @brief Indicate if the system is in the process of connecting to an access point.
      */
-    static const int WIFI_CONNECTING_BIT = BIT1;
+    static constexpr int WIFI_CONNECTING_BIT = BIT1;
 
     /**
      *  @brief When set, this bit indicates that we have an active WiFi connection.
      */
-    static const int WIFI_CONNECTED_BIT = BIT2;
+    static constexpr int WIFI_CONNECTED_BIT = BIT2;
 
     /**
      *  @brief When set, this indicates that the system been granted an IP address from the access point.
      */
-    static const int WIFI_HAVE_IP_BIT = BIT3;
+    static constexpr int WIFI_HAVE_IP_BIT = BIT3;
 
     /**
      *  @brief Indicate if an explicit disconnect has been requested.
      */
-    static const int WIFI_DISCONNECT_REQUESTED_BIT = BIT4;
+    static constexpr int WIFI_DISCONNECT_REQUESTED_BIT = BIT4;
 
     /**
      *  @brief Indicate if the WiFi system has been initialised OK.
      */
-    static const int WIFI_INTERFACE_STARTING_BIT = BIT5;
+    static constexpr int WIFI_INTERFACE_STARTING_BIT = BIT5;
 
     /**
      *  @brief Indicate if the WiFi system has been initialised OK.
      */
-    static const int WIFI_INTERFACE_STARTED_BIT = BIT6;
+    static constexpr int WIFI_INTERFACE_STARTED_BIT = BIT6;
 
     /**
      *  @brief Indicate if the a request to stop the WiFi interface has been made.
      */
-    static const int WIFI_INTERFACE_STOP_REQUESTED_BIT = BIT7;
+    static constexpr int WIFI_INTERFACE_STOP_REQUESTED_BIT = BIT7;
 
     /**
      *  @brief Indicate if the scan for access points has completed.
      */
-    static const int WIFI_SCAN_COMPLETE_BIT = BIT8;
+    static constexpr int WIFI_SCAN_COMPLETE_BIT = BIT8;
 
     /**
      *  @brief Indicate a reset of the WiFi interface has been requested.
      */
-    static const int WIFI_RESET_BIT = BIT9;
+    static constexpr int WIFI_RESET_BIT = BIT9;
 
     /**
      * @brief Indicated if an access point is running on this device.
      */
-    static const int WIFI_ACCESS_POINT_STARTED_BIT = BIT10;
+    static constexpr int WIFI_ACCESS_POINT_STARTED_BIT = BIT10;
 
     /**
      * @brief USed to indicate that the access point is starting.
      */
-    static const int WIFI_STARTING_ACCESS_POINT_BIT = BIT11;
+    static constexpr int WIFI_STARTING_ACCESS_POINT_BIT = BIT11;
 
     /**
      *  @brief Indicate that some sort of error has occurred.
      *
      *  This will usually be problems with connections, getting the system started etc.
      */
-    static const int WIFI_ERROR_BIT = BIT23;
+    static constexpr int WIFI_ERROR_BIT = BIT23;
 
     /**
      * @brief All of the bits that could be set in an event group.
      */
-    static const int WIFI_ALL_BITS = 0x00ffffff;
+    static constexpr int WIFI_ALL_BITS = 0x00ffffff;
 
     /**
      *  @brief Stack size for the WiFi task.
@@ -317,21 +311,21 @@ private:
      *
      *  This will be filled with 0 at startup and when the device disconnects from an access point.
      */
-    wifi_event_sta_connected_t _apInformation;
+    wifi_event_sta_connected_t _apInformation{};
 
     /**
      *  @brief Information about the disconnect reason.
      *
      *  This will be filled with 0 at startup and should only be populated following a disconnect event.
      */
-    wifi_event_sta_disconnected_t _disconnectData;
+    wifi_event_sta_disconnected_t _disconnectData{};
 
     /**
      *  @brief Current IP information (IP address, subnet mask and gateway).
      *
      *  This will be filled with 0 at startup and when the device disconnects from an access point.
      */
-    esp_netif_ip_info_t _ipInformation;
+    esp_netif_ip_info_t _ipInformation{};
 
     /**
      *  @brief Mutex guarding _apInformation, _disconnectData and _ipInformation.
@@ -346,7 +340,7 @@ private:
     /**
      *  @brief Get a copy of the data from the most recent disconnection.
      */
-    wifi_event_sta_disconnected_t GetDisconnectData();
+    wifi_event_sta_disconnected_t GetDisconnectData() const;
 
     /**
      *  @brief Network Interface Handle for the board when running in station mode
@@ -728,12 +722,12 @@ private:
     /**
      *  Process the request from the managed code to change the antenna.
      */
-    void SetAntennaRequest(Message *);
+    static void SetAntennaRequest(Message *);
 
     /**
      *  @brief Copy the IP and access point structure into the connection event data structure.
      */
-    void PopulateConnectionEventDataStructure(Esp32Messaging::ConnectEventData * const ed);
+    void PopulateConnectionEventDataStructure(Esp32Messaging::ConnectEventData *ed) const;
 
     /**
      *  @brief Raise the ConnectToAccessPointEvent for the managed code.
@@ -769,13 +763,13 @@ private:
      *  @param payloadLength
      *      Number of bytes in payload.
      */
-    void RaiseErrorEvent(StatusCodes::StatusCodes statusCode, uint8_t *payload, uint32_t payloadLength);
+    static void RaiseErrorEvent(StatusCodes::StatusCodes statusCode, uint8_t *payload, uint32_t payloadLength);
 
     /**
      *  @brief Start the network interface ready for the device to be configured
      *  as either an access point (softAP) or as a network device (station).
      */
-    esp_err_t StartWiFiInterface(const wifi_mode_t mode, const Esp32Messaging::AccessPointInformation *accessPointInformation);
+    esp_err_t StartWiFiInterface(wifi_mode_t mode, const Esp32Messaging::AccessPointInformation *accessPointInformation);
 
     /**
      *  @brief Stop the WiFi Adapter.
@@ -787,7 +781,7 @@ private:
     /**
      *  @brief Disconnect from any access points.
      */
-    StatusCodes::StatusCodes DisconnectFromAccessPoint();
+    static StatusCodes::StatusCodes DisconnectFromAccessPoint();
 
     /**
      *  @brief Disconnect from the current access point.
@@ -810,11 +804,6 @@ private:
     void ConnectToDefaultAccessPoint(Message *message);
 
     /**
-     *  @brief Process the result of the connect to access point request.
-     */
-    void ProcessConnectionResult(Message *, StatusCodes::StatusCodes, bool);
-
-    /**
      *  @brief Start the access point.
      */
     void StartAccessPoint(Message *message);
@@ -831,7 +820,7 @@ private:
      *
      * @return Esp32Messaging::AccessPointInformation*
      */
-    Esp32Messaging::AccessPointInformation *ExtractAndValidateAccessPointInformation(uint8_t *, const uint32_t, StatusCodes::StatusCodes &status);
+    Esp32Messaging::AccessPointInformation *ExtractAndValidateAccessPointInformation(uint8_t *, uint32_t, StatusCodes::StatusCodes &status);
 
     /**
      * @brief Is this a passphrase the soft-AP can be started with, for a mode that has one?
@@ -861,7 +850,7 @@ private:
      * @return CompletedOk, InvalidWiFiCredentials for a password the mode cannot use, NotImplemented
      *  for a mode a soft-AP does not support, InvalidRequest for a mode that does not exist.
      */
-    static StatusCodes::StatusCodes ResolveAccessPointAuthentication(const char *password, const uint8_t requestedMode, wifi_auth_mode_t &authenticationMode);
+    static StatusCodes::StatusCodes ResolveAccessPointAuthentication(const char *password, uint8_t requestedMode, wifi_auth_mode_t &authenticationMode);
 
     /**
      * @brief Build the soft-AP configuration from the access point information asked for (issue #294).
@@ -886,7 +875,7 @@ private:
     /**
      *  @brief Clear the default access point and password from NVS.
      */
-    void ClearDefaultAccessPointAndPassword(Message *message);
+    static void ClearDefaultAccessPointAndPassword(Message *message);
 
     /**
      *  @brief Indicate whether the given country code is one of _validCountryCodes.
@@ -912,7 +901,7 @@ private:
     static const char *FindCountryCode(const char *code);
 
     /**
-     *  @brief Convert the Antenna enum representation of an antenna into a GPIO pin number.
+     *  @brief Convert the Antenna enum representation of an antenna into a GPIO pin.
      */
     static gpio_num_t ConvertAntennaToPin(AntennaTypes::AntennaTypes antenna);
 
@@ -943,7 +932,7 @@ private:
      *
      *  @return The number to report, no more than MAXIMUM_ACCESS_POINTS.
      */
-    static uint16_t LimitAccessPointCount(const uint16_t found);
+    static uint16_t LimitAccessPointCount(uint16_t found);
 
     /**
      *  @brief Change the current antenna and activate it.
@@ -958,12 +947,12 @@ private:
     /**
      *  @brief Process the station started event (WIFI_EVENT_STA_START).
      */
-    void StationStartedEvent();
+    static void StationStartedEvent();
 
     /**
      *  @brief Process the station stopped event (WIFI_EVENT_STA_STOP).
      */
-    void StationStoppedEvent();
+    static void StationStoppedEvent();
 
     /**
      *  @brief Process the access point stopped event (WIFI_EVENT_AP_START).
@@ -978,22 +967,22 @@ private:
     /**
      *  @brief Process the WiFi connecting and getting an IP address event
      */
-    void StationGotIpEvent(ip_event_got_ip_t *);
+    void StationGotIpEvent(const ip_event_got_ip_t *);
 
     /**
      *  @brief Process the station connected to access point event (WIFI_EVENT_STA_CONNECTED).
      */
-    void StationConnectedEvent(wifi_event_sta_connected_t *);
+    void StationConnectedEvent(const wifi_event_sta_connected_t *);
 
     /**
      *  @brief Destroy the station and soft access point network interfaces, if there are any.
      */
-    void DestroyNetworkInterfaces();
+    static void DestroyNetworkInterfaces();
 
     /**
      *  @brief Processes the station disconnected event (WIFI_EVENT_STA_DISCONNECTED).
      */
-    void StationDisconnectedEvent(wifi_event_sta_disconnected_t *);
+    void StationDisconnectedEvent(const wifi_event_sta_disconnected_t *);
 
     /**
      * @brief Process a node associating with the access point.
@@ -1038,17 +1027,17 @@ private:
     /**
      * @brief Extract an encoded integer setsockopt option value.
      */
-    static uint8_t *ExtractIntegerSocketOptionValue(const uint8_t * const data, const uint32_t dataLength, socklen_t * const length);
+    static uint8_t *ExtractIntegerSocketOptionValue(const uint8_t *data, uint32_t dataLength, socklen_t *length);
 
     /**
      * @brief Setup the socket value and length for calls to SetSockOpt.
      */
-    static uint8_t *GetSocketOptionValue(const int name, uint8_t * const optionValue, const uint32_t optionValueLength, socklen_t * const length);
+    static uint8_t *GetSocketOptionValue(int name, const uint8_t *optionValue, uint32_t optionValueLength, socklen_t *length);
 
     /**
      * @brief Setup the TCP value and length for calls to SetSockOpt.
      */
-    static uint8_t *GetTcpOptionValue(const int name, uint8_t * const optionValue, const uint32_t optionValueLength, socklen_t * const length);
+    static uint8_t *GetTcpOptionValue(int name, const uint8_t *optionValue, uint32_t optionValueLength, socklen_t *length);
 
     //----------------------------------------------------------------------
     //
@@ -1091,7 +1080,7 @@ private:
      * @returns
      *      Handle to send to the STM32 in place of addressInformation's real address.
      */
-    static uint32_t AddAddrInfoHandle(struct addrinfo * const addressInformation);
+    static uint32_t AddAddrInfoHandle(struct addrinfo *addressInformation);
 
     /**
      * @brief Look up and remove the addrinfo chain recorded under handle.
@@ -1103,32 +1092,32 @@ private:
      *      The addrinfo chain, or nullptr if handle is not currently held, either because
      *      it was never issued or because it has already been taken.
      */
-    static struct addrinfo *TakeAddrInfoHandle(const uint32_t handle);
+    static struct addrinfo *TakeAddrInfoHandle(uint32_t handle);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the getaddrinfo method.
      */
-    static StatusCodes::StatusCodes GetAddrInfo(Esp32Messaging::GetAddrInfoRequest * const request, Esp32Messaging::GetAddrInfoResponse * const response);
+    static StatusCodes::StatusCodes GetAddrInfo(Esp32Messaging::GetAddrInfoRequest *request, Esp32Messaging::GetAddrInfoResponse *response);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the getaddrinfo method.
      */
-    static void GetAddrInfo(void * const vpMessage);
+    static void GetAddrInfo(void *vpMessage);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the socket method.
      */
-    static void Socket(void * const vpMessage);
+    static void Socket(void *vpMessage);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the connect method.
      */
-    static void Connect(void * const vpMessage);
+    static void Connect(void *vpMessage);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the freeaddrinfo method.
      */
-    static void FreeAddrInfo(void * const vpMessage);
+    static void FreeAddrInfo(void *vpMessage);
 
     /**
      * @brief Process the setsockopt request from the STM32.
@@ -1140,33 +1129,27 @@ private:
      *         StatusCodes::Failure if there is an invalid parameter or mapping error,
      *         StatusCodes::EspOutOfMemory if memory allocation fails.
      */
-    static StatusCodes::StatusCodes SetSockOpt(const Esp32Messaging::SetSockOptRequest * const request, Esp32Messaging::IntegerAndErrnoResponse &response);
+    static StatusCodes::StatusCodes SetSockOpt(const Esp32Messaging::SetSockOptRequest *request, Esp32Messaging::IntegerAndErrnoResponse &response);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the setsockopt method.
      */
-    static void SetSockOpt(void * const vpMessage);
+    static void SetSockOpt(void *vpMessage);
 
     /**
      * @brief Process the SO_SNDTIMEO and SO_SNDTIMEO get socket option.
-     *
-     * @param vpMessage Pointer to the request.
      */
-    static StatusCodes::StatusCodes GetSendReceiveOption(const int socket, const int level, const int optionName, Esp32Messaging::GetSockOptResponse &response);
+    static StatusCodes::StatusCodes GetSendReceiveOption(int socket, int level, int optionName, Esp32Messaging::GetSockOptResponse &response);
 
     /**
      * @brief Process the SO_LINGER get socket option.
-     *
-     * @param vpMessage Pointer to the request.
      */
-    static StatusCodes::StatusCodes GetLingerOption(const int socket, const int level, const int optionName, Esp32Messaging::GetSockOptResponse &response);
+    static StatusCodes::StatusCodes GetLingerOption(int socket, int level, int optionName, Esp32Messaging::GetSockOptResponse &response);
 
     /**
      * @brief Process the SO_RCVBUF get socket option.
-     *
-     * @param vpMessage Pointer to the request.
      */
-    static StatusCodes::StatusCodes GetSendReceiveBuffer(const int socket, const int level, const int optionName, Esp32Messaging::GetSockOptResponse &response);
+    static StatusCodes::StatusCodes GetSendReceiveBuffer(int socket, int level, int optionName, Esp32Messaging::GetSockOptResponse &response);
 
     /**
      * @brief Process the SO_ERROR get socket option (pending socket error).
@@ -1175,18 +1158,18 @@ private:
      * reads SO_ERROR to get the final connect result (0 = success). The value is an
      * errno, so it is translated ESP->NuttX before being returned.
      */
-    static StatusCodes::StatusCodes GetErrorOption(const int socket, const int level, const int optionName, Esp32Messaging::GetSockOptResponse &response);
+    static StatusCodes::StatusCodes GetErrorOption(int socket, int level, int optionName, Esp32Messaging::GetSockOptResponse &response);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the getsockopt method.
      */
-    static void GetSockOpt(void * const vpMessage);
+    static void GetSockOpt(void *vpMessage);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the close method.
      */
 
-    static void Close(void * const vpMessage);
+    static void Close(void *vpMessage);
 
     /**
      * @brief Provide a mechanism for the STM32 to call the sendto method.
@@ -1197,17 +1180,17 @@ private:
      * @return StatusCodes::CompletedOk if the sendto operation succeeds,
      *         StatusCodes::EspOutOfMemory if memory allocation fails.
      */
-    static StatusCodes::StatusCodes SendTo(Esp32Messaging::SendToRequest *request, Esp32Messaging::IntegerAndErrnoResponse &response);
+    static StatusCodes::StatusCodes SendTo(const Esp32Messaging::SendToRequest *request, Esp32Messaging::IntegerAndErrnoResponse &response);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the sendto method.
      */
-    static void SendTo(void * const vpMessage);
+    static void SendTo(void *vpMessage);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the send method.
      */
-    static void Send(void * const vpMessage);
+    static void Send(void *vpMessage);
 
     /**
      * @brief Process the recvfrom request from the STM32.
@@ -1222,32 +1205,32 @@ private:
     /**
      *  @brief Provide a mechanism for the STM32 to call the sendmsg method.
      */
-    static void SendMsg(void * const vpMessage);
+    static void SendMsg(void *vpMessage);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the recvmsg method.
      */
-    static void RecvMsg(void * const vpMessage);
+    static void RecvMsg(void *vpMessage);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the recvfrom method.
      */
-    static void RecvFrom(void * const vpMessage);
+    static void RecvFrom(void *vpMessage);
 
     /**
      *  @brief Setup a poll request an assign it to a thread in the thread pool.
      */
-    static int PollSetup(void * const vpMessage);
+    static int PollSetup(void *vpMessage);
 
     /**
      *  @brief Teardown a poll request that has previously been setup by PollSetup.
      */
-    static int PollTeardown(void * const pvMessage);
+    static int PollTeardown(void *pvMessage);
 
     /**
      *  @brief Execute the actual request to poll a socket.
      */
-    static void PollSocket(void * const pvMessage);
+    static void PollSocket(void *pvMessage);
 
     /**
      *  @brief Open the socket a poll request is woken up with, connected to itself.
@@ -1257,7 +1240,7 @@ private:
     /**
      *  @brief Make a poll request with its wake socket and add it to the active requests.
      */
-    static ActivePoll *CreateActivePoll(const int descriptor, const int32_t events, const uint32_t requestId, const int32_t timeoutMs = -1);
+    static ActivePoll *CreateActivePoll(int descriptor, int32_t events, uint32_t requestId, int32_t timeoutMs = -1);
 
     /**
      *  @brief Close the wake socket of a poll request and free the request.
@@ -1267,17 +1250,17 @@ private:
     /**
      *  @brief Record a socket this handler created and return the handle the STM32 should use for it.
      */
-    static int32_t RegisterSocket(const int descriptor);
+    static int32_t RegisterSocket(int descriptor);
 
     /**
      *  @brief Find the lwIP descriptor behind a socket handle from the STM32.
      */
-    static bool FindSocket(const int32_t handle, int * const descriptor);
+    static bool FindSocket(int32_t handle, int *descriptor);
 
     /**
      *  @brief Forget a socket handle once the socket behind it has been closed.
      */
-    static void ReleaseSocket(const int32_t handle);
+    static void ReleaseSocket(int32_t handle);
 
     /**
      *  @brief Debug method to dump all of the active poll requests.
@@ -1287,7 +1270,7 @@ private:
     /**
      *  @brief Provide a mechanism for the STM32 to call the poll method.
      */
-    static void Poll(void * const vpMessage);
+    static void Poll(void *vpMessage);
 
     /**
      * @brief Bind a socket to an address.
@@ -1297,22 +1280,22 @@ private:
      * @return StatusCodes::StatusCodes Returns StatusCodes::CompletedOk if the operation succeeds,
      *         StatusCodes::EspOutOfMemory if memory allocation fails.
      */
-    static StatusCodes::StatusCodes Bind(Esp32Messaging::BindRequest *request, Esp32Messaging::IntegerAndErrnoResponse &response);
+    static StatusCodes::StatusCodes Bind(const Esp32Messaging::BindRequest *request, Esp32Messaging::IntegerAndErrnoResponse &response);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the bind method.
      */
-    static void Bind(void * const vpMessage);
+    static void Bind(void *vpMessage);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the listen method.
      */
-    static void Listen(void * const vpMessage);
+    static void Listen(void *vpMessage);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the shutdown method.
      */
-    static void Shutdown(void * const vpMessage);
+    static void Shutdown(void *vpMessage);
 
     /**
      * @brief Process the accept request from the STM32.
@@ -1328,12 +1311,12 @@ private:
     /**
      *  @brief Provide a mechanism for the STM32 to call the accept method.
      */
-    static void Accept(void * const vpMessage);
+    static void Accept(void *vpMessage);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the simulated ioctl method.
      */
-    static void Ioctl(void * const vpMessage);
+    static void Ioctl(void *vpMessage);
 
     /**
      * @brief Provide a mechanism to call the getsockname or getpeername.
@@ -1345,22 +1328,22 @@ private:
      * @return StatusCodes::StatusCodes Returns StatusCodes::CompletedOk if the operation succeeds,
      *         StatusCodes::EspOutOfMemory if memory allocation fails.
      */
-    static StatusCodes::StatusCodes GetSockPeerName(const Esp32Messaging::GetSockPeerNameRequest * const request, const WiFiFunction::WiFiFunction methodToCall, Esp32Messaging::GetSockPeerNameResponse &response);
+    static StatusCodes::StatusCodes GetSockPeerName(const Esp32Messaging::GetSockPeerNameRequest *request, WiFiFunction::WiFiFunction methodToCall, Esp32Messaging::GetSockPeerNameResponse &response);
 
     /**
      *  @brief Provide a mechanism to call the getsockname or getpeername.
      */
-    static void GetSockPeerName(void * const vpMessage, const WiFiFunction::WiFiFunction request);
+    static void GetSockPeerName(void *vpMessage, WiFiFunction::WiFiFunction request);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the simulated getsockname method.
      */
-    static void GetSockName(void * const vpMessage);
+    static void GetSockName(void *vpMessage);
 
     /**
      *  @brief Provide a mechanism for the STM32 to call the simulated getpeername method.
      */
-    static void GetPeerName(void * const vpMessage);
+    static void GetPeerName(void *vpMessage);
 
     /**
      *  @brief Method called when the time server has supplied updated time information.
@@ -1396,7 +1379,7 @@ public:
     /**
      *  @brief Private destructor for the class.
      */
-    virtual ~WiFiRequestHandler() override;
+    ~WiFiRequestHandler() override;
 
     /**
      *  @brief Perform and class level setup required before an instance can be used.
@@ -1491,8 +1474,8 @@ public:
     /**
      *  @brief Get / Set the MAC address of the interface.
      */
-    static void GetMacAddress(uint8_t * const macAddress, wifi_interface_t interface);
-    static StatusCodes::StatusCodes SetMacAddress(const uint8_t * const macAddress, wifi_interface_t interface);
+    static void GetMacAddress(uint8_t *macAddress, wifi_interface_t interface);
+    static StatusCodes::StatusCodes SetMacAddress(const uint8_t *macAddress, wifi_interface_t interface);
 
     /**
      *  @brief Get / Set the current antenna in use.
